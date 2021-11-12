@@ -3898,21 +3898,21 @@ def percentile(a,
     method : str, optional
         This parameter specifies the method to use for estimating the
         percentile.  There are many different methods, some unique to NumPy.
-        See the notes for explanation.  The options aligning with the R types
-        and the H&F paper are:
+        See the notes for explanation.  The options sorted by their R type
+        as summarized in the H&F paper [1]_ are:
 
-        * (H&F 1): 'inverted_cdf'
-        * (H&F 2): 'averaged_inverted_cdf'
-        * (H&F 3): 'closest_observation'
-        * (H&F 4): 'interpolated_inverted_cdf'
-        * (H&F 5): 'hazen'
-        * (H&F 6): 'weibull'
-        * (H&F 7): 'linear'  (default)
-        * (H&F 8): 'median_unbiased'
-        * (H&F 9): 'normal_unbiased'
+        1. 'inverted_cdf'
+        2. 'averaged_inverted_cdf'
+        3. 'closest_observation'
+        4. 'interpolated_inverted_cdf'
+        5. 'hazen'
+        6. 'weibull'
+        7. 'linear'  (default)
+        8. 'median_unbiased'
+        9. 'normal_unbiased'
 
-        Mainly for compatibility reasons, NumPy also supports the following
-        options which appear to be unique to NumPy:
+        The first three methods are discontiuous.  NumPy further defines the
+        following discontinuous variations of the default 'linear' (7.) option:
 
         * 'lower'
         * 'higher',
@@ -4177,21 +4177,21 @@ def quantile(a,
     method : str, optional
         This parameter specifies the method to use for estimating the
         quantile.  There are many different methods, some unique to NumPy.
-        See the notes for explanation.  The options aligning with the R types
-        and the H&F paper are:
+        See the notes for explanation.  The options sorted by their R type
+        as summarized in the H&F paper [1]_ are:
 
-        * (H&F 1): 'inverted_cdf'
-        * (H&F 2): 'averaged_inverted_cdf'
-        * (H&F 3): 'closest_observation'
-        * (H&F 4): 'interpolated_inverted_cdf'
-        * (H&F 5): 'hazen'
-        * (H&F 6): 'weibull'
-        * (H&F 7): 'linear'  (default)
-        * (H&F 8): 'median_unbiased'
-        * (H&F 9): 'normal_unbiased'
+        1. 'inverted_cdf'
+        2. 'averaged_inverted_cdf'
+        3. 'closest_observation'
+        4. 'interpolated_inverted_cdf'
+        5. 'hazen'
+        6. 'weibull'
+        7. 'linear'  (default)
+        8. 'median_unbiased'
+        9. 'normal_unbiased'
 
-        Mainly for compatibility reasons, NumPy also supports the following
-        options which appear to be unique to NumPy:
+        The first three methods are discontiuous.  NumPy further defines the
+        following discontinuous variations of the default 'linear' (7.) option:
 
         * 'lower'
         * 'higher',
