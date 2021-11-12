@@ -538,8 +538,8 @@ def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
     Mismatched elements: 1 / 2 (50%)
     Max absolute difference: 6.66669964e-09
     Max relative difference: 2.85715698e-09
-     x: array([1.         , 2.333333333])
-     y: array([1.        , 2.33333334])
+     ACTUAL: array([1.         , 2.333333333])
+     DESIRED: array([1.        , 2.33333334])
 
     """
     __tracebackhide__ = True  # Hide traceback for py.test
@@ -741,7 +741,8 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
             msg = build_err_msg([x, y],
                                 err_msg + '\nx and y %s location mismatch:'
                                 % (hasval), verbose=verbose, header=header,
-                                names=('x', 'y'), precision=precision)
+                                names=('ACTUAL', 'DESIRED'),
+                                precision=precision)
             raise AssertionError(msg)
         # If there is a scalar, then here we know the array has the same
         # flag as it everywhere, so we should return the scalar flag.
@@ -759,7 +760,8 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
                                 err_msg
                                 + f'\n(shapes {x.shape}, {y.shape} mismatch)',
                                 verbose=verbose, header=header,
-                                names=('x', 'y'), precision=precision)
+                                names=('ACTUAL', 'DESIRED'),
+                                precision=precision)
             raise AssertionError(msg)
 
         flagged = bool_(False)
@@ -840,7 +842,8 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
             err_msg += '\n' + '\n'.join(remarks)
             msg = build_err_msg([ox, oy], err_msg,
                                 verbose=verbose, header=header,
-                                names=('x', 'y'), precision=precision)
+                                names=('ACTUAL', 'DESIRED'),
+                                precision=precision)
             raise AssertionError(msg)
     except ValueError:
         import traceback
@@ -848,7 +851,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
         header = f'error during assertion:\n\n{efmt}\n\n{header}'
 
         msg = build_err_msg([x, y], err_msg, verbose=verbose, header=header,
-                            names=('x', 'y'), precision=precision)
+                            names=('ACTUAL', 'DESIRED'), precision=precision)
         raise ValueError(msg)
 
 
@@ -913,8 +916,8 @@ def assert_array_equal(x, y, err_msg='', verbose=True):
     Mismatched elements: 1 / 3 (33.3%)
     Max absolute difference: 4.4408921e-16
     Max relative difference: 1.41357986e-16
-     x: array([1.      , 3.141593,      nan])
-     y: array([1.      , 3.141593,      nan])
+     ACTUAL: array([1.      , 3.141593,      nan])
+     DESIRED: array([1.      , 3.141593,      nan])
 
     Use `assert_allclose` or one of the nulp (number of floating point values)
     functions for these cases instead:
@@ -997,8 +1000,8 @@ def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
     Mismatched elements: 1 / 3 (33.3%)
     Max absolute difference: 6.e-05
     Max relative difference: 2.57136612e-05
-     x: array([1.     , 2.33333,     nan])
-     y: array([1.     , 2.33339,     nan])
+     ACTUAL: array([1.     , 2.33333,     nan])
+     DESIRED: array([1.     , 2.33339,     nan])
 
     >>> np.testing.assert_array_almost_equal([1.0,2.33333,np.nan],
     ...                                      [1.0,2.33333, 5], decimal=5)
@@ -1008,8 +1011,8 @@ def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
     Arrays are not almost equal to 5 decimals
     <BLANKLINE>
     x and y nan location mismatch:
-     x: array([1.     , 2.33333,     nan])
-     y: array([1.     , 2.33333, 5.     ])
+     ACTUAL: array([1.     , 2.33333,     nan])
+     DESIRED: array([1.     , 2.33333, 5.     ])
 
     """
     __tracebackhide__ = True  # Hide traceback for py.test
@@ -1098,8 +1101,8 @@ def assert_array_less(x, y, err_msg='', verbose=True):
     Mismatched elements: 1 / 3 (33.3%)
     Max absolute difference: 1.
     Max relative difference: 0.5
-     x: array([ 1.,  1., nan])
-     y: array([ 1.,  2., nan])
+     ACTUAL: array([ 1.,  1., nan])
+     DESIRED: array([ 1.,  2., nan])
 
     >>> np.testing.assert_array_less([1.0, 4.0], 3)
     Traceback (most recent call last):
@@ -1110,8 +1113,8 @@ def assert_array_less(x, y, err_msg='', verbose=True):
     Mismatched elements: 1 / 2 (50%)
     Max absolute difference: 2.
     Max relative difference: 0.66666667
-     x: array([1., 4.])
-     y: array(3)
+     ACTUAL: array([1., 4.])
+     DESIRED: array(3)
 
     >>> np.testing.assert_array_less([1.0, 2.0, 3.0], [4])
     Traceback (most recent call last):
@@ -1120,8 +1123,8 @@ def assert_array_less(x, y, err_msg='', verbose=True):
     Arrays are not less-ordered
     <BLANKLINE>
     (shapes (3,), (1,) mismatch)
-     x: array([1., 2., 3.])
-     y: array([4])
+     ACTUAL: array([1., 2., 3.])
+     DESIRED: array([4])
 
     """
     __tracebackhide__ = True  # Hide traceback for py.test
