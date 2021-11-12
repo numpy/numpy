@@ -519,10 +519,10 @@ class TestAlmostEqual(_GenericTest):
         assert_equal(msgs[5], 'Max relative difference: 3.33328889e-06')
         assert_equal(
             msgs[6],
-            ' x: array([1.00000000001, 2.00000000002, 3.00003      ])')
+            ' ACTUAL: array([1.00000000001, 2.00000000002, 3.00003      ])')
         assert_equal(
             msgs[7],
-            ' y: array([1.00000000002, 2.00000000003, 3.00004      ])')
+            ' DESIRED: array([1.00000000002, 2.00000000003, 3.00004      ])')
 
         # With the default value of decimal digits, only the 3rd element
         # differs. Note that we only check for the formatting of the arrays
@@ -533,8 +533,8 @@ class TestAlmostEqual(_GenericTest):
         assert_equal(msgs[3], 'Mismatched elements: 1 / 3 (33.3%)')
         assert_equal(msgs[4], 'Max absolute difference: 1.e-05')
         assert_equal(msgs[5], 'Max relative difference: 3.33328889e-06')
-        assert_equal(msgs[6], ' x: array([1.     , 2.     , 3.00003])')
-        assert_equal(msgs[7], ' y: array([1.     , 2.     , 3.00004])')
+        assert_equal(msgs[6], ' ACTUAL: array([1.     , 2.     , 3.00003])')
+        assert_equal(msgs[7], ' DESIRED: array([1.     , 2.     , 3.00004])')
 
         # Check the error message when input includes inf
         x = np.array([np.inf, 0])
@@ -545,8 +545,8 @@ class TestAlmostEqual(_GenericTest):
         assert_equal(msgs[3], 'Mismatched elements: 1 / 2 (50%)')
         assert_equal(msgs[4], 'Max absolute difference: 1.')
         assert_equal(msgs[5], 'Max relative difference: 1.')
-        assert_equal(msgs[6], ' x: array([inf,  0.])')
-        assert_equal(msgs[7], ' y: array([inf,  1.])')
+        assert_equal(msgs[6], ' ACTUAL: array([inf,  0.])')
+        assert_equal(msgs[7], ' DESIRED: array([inf,  1.])')
 
         # Check the error message when dividing by zero
         x = np.array([1, 2])
