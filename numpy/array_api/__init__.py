@@ -136,7 +136,7 @@ from ._creation_functions import (
     empty,
     empty_like,
     eye,
-    _from_dlpack,
+    from_dlpack,
     full,
     full_like,
     linspace,
@@ -155,7 +155,7 @@ __all__ += [
     "empty",
     "empty_like",
     "eye",
-    "_from_dlpack",
+    "from_dlpack",
     "full",
     "full_like",
     "linspace",
@@ -169,6 +169,7 @@ __all__ += [
 ]
 
 from ._data_type_functions import (
+    astype,
     broadcast_arrays,
     broadcast_to,
     can_cast,
@@ -178,6 +179,7 @@ from ._data_type_functions import (
 )
 
 __all__ += [
+    "astype",
     "broadcast_arrays",
     "broadcast_to",
     "can_cast",
@@ -358,9 +360,9 @@ from ._searching_functions import argmax, argmin, nonzero, where
 
 __all__ += ["argmax", "argmin", "nonzero", "where"]
 
-from ._set_functions import unique
+from ._set_functions import unique_all, unique_counts, unique_inverse, unique_values
 
-__all__ += ["unique"]
+__all__ += ["unique_all", "unique_counts", "unique_inverse", "unique_values"]
 
 from ._sorting_functions import argsort, sort
 

@@ -11,11 +11,13 @@ from .._creation_functions import (
     full,
     full_like,
     linspace,
+    meshgrid,
     ones,
     ones_like,
     zeros,
     zeros_like,
 )
+from .._dtypes import float32, float64
 from .._array_object import Array
 
 
@@ -124,3 +126,11 @@ def test_zeros_like_errors():
     assert_raises(ValueError, lambda: zeros_like(asarray(1), device="gpu"))
     assert_raises(ValueError, lambda: zeros_like(asarray(1), dtype=int))
     assert_raises(ValueError, lambda: zeros_like(asarray(1), dtype="i"))
+
+def test_meshgrid_dtype_errors():
+    # Doesn't raise
+    meshgrid()
+    meshgrid(asarray([1.], dtype=float32))
+    meshgrid(asarray([1.], dtype=float32), asarray([1.], dtype=float32))
+
+    assert_raises(ValueError, lambda: meshgrid(asarray([1.], dtype=float32), asarray([1.], dtype=float64)))

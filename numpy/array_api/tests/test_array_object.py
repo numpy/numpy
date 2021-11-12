@@ -3,7 +3,7 @@ import operator
 from numpy.testing import assert_raises
 import numpy as np
 
-from .. import ones, asarray, result_type
+from .. import ones, asarray, result_type, all, equal
 from .._dtypes import (
     _all_dtypes,
     _boolean_dtypes,
@@ -39,18 +39,18 @@ def test_validate_index():
     assert_raises(IndexError, lambda: a[:-4])
     assert_raises(IndexError, lambda: a[:3:-1])
     assert_raises(IndexError, lambda: a[:-5:-1])
-    assert_raises(IndexError, lambda: a[3:])
+    assert_raises(IndexError, lambda: a[4:])
     assert_raises(IndexError, lambda: a[-4:])
-    assert_raises(IndexError, lambda: a[3::-1])
+    assert_raises(IndexError, lambda: a[4::-1])
     assert_raises(IndexError, lambda: a[-4::-1])
 
     assert_raises(IndexError, lambda: a[...,:5])
     assert_raises(IndexError, lambda: a[...,:-5])
-    assert_raises(IndexError, lambda: a[...,:4:-1])
+    assert_raises(IndexError, lambda: a[...,:5:-1])
     assert_raises(IndexError, lambda: a[...,:-6:-1])
-    assert_raises(IndexError, lambda: a[...,4:])
+    assert_raises(IndexError, lambda: a[...,5:])
     assert_raises(IndexError, lambda: a[...,-5:])
-    assert_raises(IndexError, lambda: a[...,4::-1])
+    assert_raises(IndexError, lambda: a[...,5::-1])
     assert_raises(IndexError, lambda: a[...,-5::-1])
 
     # Boolean indices cannot be part of a larger tuple index
@@ -74,6 +74,11 @@ def test_validate_index():
     assert_raises(IndexError, lambda: a[None, ...])
     assert_raises(IndexError, lambda: a[..., None])
 
+    # Multiaxis indices must contain exactly as many indices as dimensions
+    assert_raises(IndexError, lambda: a[()])
+    assert_raises(IndexError, lambda: a[0,])
+    assert_raises(IndexError, lambda: a[0])
+    assert_raises(IndexError, lambda: a[:])
 
 def test_operators():
     # For every operator, we test that it works for the required type
@@ -291,8 +296,8 @@ def test_device_property():
     a = ones((3, 4))
     assert a.device == 'cpu'
 
-    assert np.array_equal(a.to_device('cpu'), a)
+    assert all(equal(a.to_device('cpu'), a))
     assert_raises(ValueError, lambda: a.to_device('gpu'))
 
-    assert np.array_equal(asarray(a, device='cpu'), a)
+    assert all(equal(asarray(a, device='cpu'), a))
     assert_raises(ValueError, lambda: asarray(a, device='gpu'))
