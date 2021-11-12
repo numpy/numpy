@@ -721,8 +721,8 @@ class _Distutils:
         except subprocess.CalledProcessError as exc:
             o = exc.output
             s = exc.returncode
-        except OSError:
-            o = b''
+        except OSError as e:
+            o = e
             s = 127
         else:
             return None
