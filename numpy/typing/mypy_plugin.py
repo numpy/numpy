@@ -33,7 +33,8 @@ To enable the plugin, one must add it to their mypy `configuration file`_:
 
 from __future__ import annotations
 
-import typing as t
+from collections.abc import Iterable
+from typing import Final, TYPE_CHECKING, Callable
 
 import numpy as np
 
@@ -44,15 +45,15 @@ try:
     from mypy.nodes import MypyFile, ImportFrom, Statement
     from mypy.build import PRI_MED
 
-    _HookFunc = t.Callable[[AnalyzeTypeContext], Type]
+    _HookFunc = Callable[[AnalyzeTypeContext], Type]
     MYPY_EX: None | ModuleNotFoundError = None
 except ModuleNotFoundError as ex:
     MYPY_EX = ex
 
-__all__: t.List[str] = []
+__all__: list[str] = []
 
 
-def _get_precision_dict() -> t.Dict[str, str]:
+def _get_precision_dict() -> dict[str, str]:
     names = [
         ("_NBitByte", np.byte),
         ("_NBitShort", np.short),
@@ -73,7 +74,7 @@ def _get_precision_dict() -> t.Dict[str, str]:
     return ret
 
 
-def _get_extended_precision_list() -> t.List[str]:
+def _get_extended_precision_list() -> list[str]:
     extended_types = [np.ulonglong, np.longlong, np.longdouble, np.clongdouble]
     extended_names = {
         "uint128",
@@ -107,13 +108,13 @@ def _get_c_intp_name() -> str:
 
 #: A dictionary mapping type-aliases in `numpy.typing._nbit` to
 #: concrete `numpy.typing.NBitBase` subclasses.
-_PRECISION_DICT: t.Final = _get_precision_dict()
+_PRECISION_DICT: Final = _get_precision_dict()
 
 #: A list with the names of all extended precision `np.number` subclasses.
-_EXTENDED_PRECISION_LIST: t.Final = _get_extended_precision_list()
+_EXTENDED_PRECISION_LIST: Final = _get_extended_precision_list()
 
 #: The name of the ctypes quivalent of `np.intp`
-_C_INTP: t.Final = _get_c_intp_name()
+_C_INTP: Final = _get_c_intp_name()
 
 
 def _hook(ctx: AnalyzeTypeContext) -> Type:
@@ -124,20 +125,19 @@ def _hook(ctx: AnalyzeTypeContext) -> Type:
     return api.named_type(name_new)
 
 
-if t.TYPE_CHECKING or MYPY_EX is None:
-    def _index(iterable: t.Iterable[Statement], id: str) -> int:
+if TYPE_CHECKING or MYPY_EX is None:
+    def _index(iterable: Iterable[Statement], id: str) -> int:
         """Identify the first ``ImportFrom`` instance the specified `id`."""
         for i, value in enumerate(iterable):
             if getattr(value, "id", None) == id:
                 return i
-        else:
-            raise ValueError("Failed to identify a `ImportFrom` instance "
-                             f"with the following id: {id!r}")
+        raise ValueError("Failed to identify a `ImportFrom` instance "
+                         f"with the following id: {id!r}")
 
     def _override_imports(
         file: MypyFile,
         module: str,
-        imports: t.List[t.Tuple[str, t.Optional[str]]],
+        imports: list[tuple[str, None | str]],
     ) -> None:
         """Override the first `module`-based import with new `imports`."""
         # Construct a new `from module import y` statement
@@ -145,7 +145,7 @@ if t.TYPE_CHECKING or MYPY_EX is None:
         import_obj.is_top_level = True
 
         # Replace the first `module`-based import statement with `import_obj`
-        for lst in [file.defs, file.imports]:  # type: t.List[Statement]
+        for lst in [file.defs, file.imports]:  # type: list[Statement]
             i = _index(lst, module)
             lst[i] = import_obj
 
@@ -153,7 +153,8 @@ if t.TYPE_CHECKING or MYPY_EX is None:
         """A mypy plugin for handling versus numpy-specific typing tasks."""
 
         def get_type_analyze_hook(self, fullname: str) -> None | _HookFunc:
-            """Set the precision of platform-specific `numpy.number` subclasses.
+            """Set the precision of platform-specific `numpy.number`
+            subclasses.
 
             For example: `numpy.int_`, `numpy.longlong` and `numpy.longdouble`.
             """
@@ -161,7 +162,9 @@ if t.TYPE_CHECKING or MYPY_EX is None:
                 return _hook
             return None
 
-        def get_additional_deps(self, file: MypyFile) -> t.List[t.Tuple[int, str, int]]:
+        def get_additional_deps(
+            self, file: MypyFile
+        ) -> list[tuple[int, str, int]]:
             """Handle all import-based overrides.
 
             * Import platform-specific extended-precision `numpy.number`
@@ -184,11 +187,11 @@ if t.TYPE_CHECKING or MYPY_EX is None:
                 )
             return ret
 
-    def plugin(version: str) -> t.Type[_NumpyPlugin]:
+    def plugin(version: str) -> type[_NumpyPlugin]:
         """An entry-point for mypy."""
         return _NumpyPlugin
 
 else:
-    def plugin(version: str) -> t.Type[_NumpyPlugin]:
+    def plugin(version: str) -> type[_NumpyPlugin]:
         """An entry-point for mypy."""
         raise MYPY_EX

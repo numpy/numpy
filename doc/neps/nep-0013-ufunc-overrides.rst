@@ -556,7 +556,7 @@ in turn immediately raises :exc:`TypeError`, because one of its operands
 ``arr.__array_ufunc__``, which will return :obj:`NotImplemented`, which
 we catch.
 
-.. note :: the reason for not allowing in-place operations to return
+.. note:: the reason for not allowing in-place operations to return
    :obj:`NotImplemented` is that these cannot generically be replaced by
    a simple reverse operation: most array operations assume the contents
    of the instance are changed in-place, and do not expect a new

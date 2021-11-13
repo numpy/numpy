@@ -804,6 +804,9 @@ def histogram2d(x, y, bins=10, range=None, normed=None, weights=None,
     >>> plt.show()
     """
     from numpy import histogramdd
+    
+    if len(x) != len(y):
+        raise ValueError('x and y must have the same length.')
 
     try:
         N = len(bins)

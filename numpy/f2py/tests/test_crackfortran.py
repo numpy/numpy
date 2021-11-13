@@ -264,3 +264,20 @@ class TestDimSpec(util.F2PyTest):
             # the same sized array
             sz1, _ = get_arr_size(n1)
             assert sz == sz1, (n, n1, sz, sz1)
+
+
+class TestModuleDeclaration():
+    def test_dependencies(self, tmp_path):
+        f_path = tmp_path / "mod.f90"
+        with f_path.open('w') as ff:
+            ff.write(textwrap.dedent("""\
+            module foo
+              type bar
+                character(len = 4) :: text
+              end type bar
+              type(bar), parameter :: abar = bar('abar')
+            end module foo
+            """))
+        mod = crackfortran.crackfortran([str(f_path)])
+        assert len(mod) == 1
+        assert mod[0]['vars']['abar']['='] == "bar('abar')"

@@ -1192,3 +1192,41 @@ class TestUFuncForcedDTypeWarning(_DeprecationTestCase):
             np.maximum(arr, arr, dtype="m8[ns]")  # previously used the "ns"
         with pytest.warns(DeprecationWarning, match=self.message):
             np.maximum.reduce(arr, dtype="m8[ns]")  # never preserved the "ns"
+
+
+PARTITION_DICT = {
+    "partition method": np.arange(10).partition,
+    "argpartition method": np.arange(10).argpartition,
+    "partition function": lambda kth: np.partition(np.arange(10), kth),
+    "argpartition function": lambda kth: np.argpartition(np.arange(10), kth),
+}
+
+
+@pytest.mark.parametrize("func", PARTITION_DICT.values(), ids=PARTITION_DICT)
+class TestPartitionBoolIndex(_DeprecationTestCase):
+    # Deprecated 2021-09-29, NumPy 1.22
+    warning_cls = DeprecationWarning
+    message = "Passing booleans as partition index is deprecated"
+
+    def test_deprecated(self, func):
+        self.assert_deprecated(lambda: func(True))
+        self.assert_deprecated(lambda: func([False, True]))
+
+    def test_not_deprecated(self, func):
+        self.assert_not_deprecated(lambda: func(1))
+        self.assert_not_deprecated(lambda: func([0, 1]))
+
+
+class TestMachAr(_DeprecationTestCase):
+    # Deprecated 2021-10-19, NumPy 1.22
+    warning_cls = DeprecationWarning
+
+    def test_deprecated(self):
+        self.assert_deprecated(lambda: np.MachAr)
+
+    def test_deprecated_module(self):
+        self.assert_deprecated(lambda: getattr(np.core, "machar"))
+
+    def test_deprecated_attr(self):
+        finfo = np.finfo(float)
+        self.assert_deprecated(lambda: getattr(finfo, "machar"))

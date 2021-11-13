@@ -1,4 +1,14 @@
-from typing import Any, List, Sequence, Tuple, Union, Type, TypeVar, Protocol, TypedDict
+from typing import (
+    Any,
+    List,
+    Sequence,
+    Tuple,
+    Union,
+    Type,
+    TypeVar,
+    Protocol,
+    TypedDict,
+)
 
 import numpy as np
 
@@ -55,17 +65,22 @@ class _DTypeDictBase(TypedDict):
     names: Sequence[str]
     formats: Sequence[_DTypeLikeNested]
 
+
 # Mandatory + optional keys
 class _DTypeDict(_DTypeDictBase, total=False):
+    # Only `str` elements are usable as indexing aliases,
+    # but `titles` can in principle accept any object
     offsets: Sequence[int]
-    titles: Sequence[Any]  # Only `str` elements are usable as indexing aliases, but all objects are legal
+    titles: Sequence[Any]
     itemsize: int
     aligned: bool
+
 
 # A protocol for anything with the dtype attribute
 class _SupportsDType(Protocol[_DType_co]):
     @property
     def dtype(self) -> _DType_co: ...
+
 
 # Would create a dtype[np.void]
 _VoidDTypeLike = Union[
@@ -93,7 +108,7 @@ DTypeLike = Union[
     # default data type (float64)
     None,
     # array-scalar types and generic types
-    Type[Any],  # TODO: enumerate these when we add type hints for numpy scalars
+    Type[Any],  # NOTE: We're stuck with `Type[Any]` due to object dtypes
     # anything with a dtype attribute
     _SupportsDType[DType[Any]],
     # character codes, type strings or comma-separated fields, e.g., 'float64'

@@ -68,6 +68,9 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "typeinfo.h"
 
 #include "get_attr_string.h"
+#include "experimental_public_dtype_api.h"  /* _get_experimental_dtype_api */
+
+#include "npy_dlpack.h"
 
 /*
  *****************************************************************************
@@ -4230,7 +4233,6 @@ _reload_guard(PyObject *NPY_UNUSED(self)) {
     Py_RETURN_NONE;
 }
 
-
 static struct PyMethodDef array_module_methods[] = {
     {"_get_implementing_args",
         (PyCFunction)array__get_implementing_args,
@@ -4419,7 +4421,9 @@ static struct PyMethodDef array_module_methods[] = {
     {"_discover_array_parameters", (PyCFunction)_discover_array_parameters,
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"_get_castingimpl",  (PyCFunction)_get_castingimpl,
-     METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_VARARGS | METH_KEYWORDS, NULL},
+    {"_get_experimental_dtype_api", (PyCFunction)_get_experimental_dtype_api,
+        METH_O, NULL},
     /* from umath */
     {"frompyfunc",
         (PyCFunction) ufunc_frompyfunc,
@@ -4430,6 +4434,12 @@ static struct PyMethodDef array_module_methods[] = {
     {"geterrobj",
         (PyCFunction) ufunc_geterr,
         METH_VARARGS, NULL},
+    {"get_handler_name",
+        (PyCFunction) get_handler_name,
+        METH_VARARGS, NULL},
+    {"get_handler_version",
+        (PyCFunction) get_handler_version,
+        METH_VARARGS, NULL},
     {"_add_newdoc_ufunc", (PyCFunction)add_newdoc_ufunc,
         METH_VARARGS, NULL},
     {"_get_sfloat_dtype",
@@ -4439,6 +4449,8 @@ static struct PyMethodDef array_module_methods[] = {
     {"_reload_guard", (PyCFunction)_reload_guard,
         METH_NOARGS,
         "Give a warning on reload and big warning in sub-interpreters."},
+    {"_from_dlpack", (PyCFunction)_from_dlpack,
+        METH_O, NULL},
     {NULL, NULL, 0, NULL}                /* sentinel */
 };
 
@@ -4669,14 +4681,14 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
     PyObject *m, *d, *s;
     PyObject *c_api;
 
-    /* Initialize CPU features */
-    if (npy_cpu_init() < 0) {
-        goto err;
-    }
-
     /* Create the module and add the functions */
     m = PyModule_Create(&moduledef);
     if (!m) {
+        return NULL;
+    }
+
+    /* Initialize CPU features */
+    if (npy_cpu_init() < 0) {
         goto err;
     }
 
@@ -4907,6 +4919,23 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
     if (initumath(m) != 0) {
         goto err;
     }
+    /*
+     * Initialize the default PyDataMem_Handler capsule singleton.
+     */
+    PyDataMem_DefaultHandler = PyCapsule_New(&default_handler, "mem_handler", NULL);
+    if (PyDataMem_DefaultHandler == NULL) {
+        goto err;
+    }
+#if (!defined(PYPY_VERSION_NUM) || PYPY_VERSION_NUM >= 0x07030600)
+    /*
+     * Initialize the context-local current handler
+     * with the default PyDataMem_Handler capsule.
+    */
+    current_handler = PyContextVar_New("current_allocator", PyDataMem_DefaultHandler);
+    if (current_handler == NULL) {
+        goto err;
+    }
+#endif
     return m;
 
  err:
@@ -4914,5 +4943,6 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
         PyErr_SetString(PyExc_RuntimeError,
                         "cannot load multiarray module.");
     }
+    Py_DECREF(m);
     return NULL;
 }

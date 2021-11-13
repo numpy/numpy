@@ -30,7 +30,7 @@ from numpy.core.multiarray import normalize_axis_index
 from numpy.core.overrides import set_module
 from numpy.core import overrides
 from numpy.lib.twodim_base import triu, eye
-from numpy.linalg import lapack_lite, _umath_linalg
+from numpy.linalg import _umath_linalg
 
 
 array_function_dispatch = functools.partial(
@@ -1680,7 +1680,7 @@ def cond(x, p=None):
     x : (..., M, N) array_like
         The matrix whose condition number is sought.
     p : {None, 1, -1, 2, -2, inf, -inf, 'fro'}, optional
-        Order of the norm:
+        Order of the norm used in the condition number computation:
 
         =====  ============================
         p      norm for matrices
@@ -1695,7 +1695,7 @@ def cond(x, p=None):
         -2     smallest singular value
         =====  ============================
 
-        inf means the numpy.inf object, and the Frobenius norm is
+        inf means the `numpy.inf` object, and the Frobenius norm is
         the root-of-sum-of-squares norm.
 
     Returns

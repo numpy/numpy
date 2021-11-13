@@ -1304,12 +1304,12 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
     The solution is the coefficients of the polynomial `p` that minimizes
     the sum of the weighted squared errors
 
-    .. math :: E = \\sum_j w_j^2 * |y_j - p(x_j)|^2,
+    .. math:: E = \\sum_j w_j^2 * |y_j - p(x_j)|^2,
 
     where the :math:`w_j` are the weights. This problem is solved by
     setting up the (typically) over-determined matrix equation:
 
-    .. math :: V(x) * c = w * y,
+    .. math:: V(x) * c = w * y,
 
     where `V` is the weighted pseudo Vandermonde matrix of `x`, `c` are the
     coefficients to be solved for, `w` are the weights, and `y` are the

@@ -668,7 +668,7 @@ add_newdoc('numpy.core.umath', 'bitwise_or',
 
     Examples
     --------
-    The number 13 has the binaray representation ``00001101``. Likewise,
+    The number 13 has the binary representation ``00001101``. Likewise,
     16 is represented by ``00010000``.  The bit-wise OR of 13 and 16 is
     then ``000111011``, or 29:
 
@@ -1091,9 +1091,7 @@ add_newdoc('numpy.core.umath', 'divide',
 
     Behavior on division by zero can be changed using ``seterr``.
 
-    In Python 2, when both ``x1`` and ``x2`` are of an integer type,
-    ``divide`` will behave like ``floor_divide``. In Python 3, it behaves
-    like ``true_divide``.
+    Behaves like ``true_divide``.
 
     Examples
     --------
@@ -1105,27 +1103,6 @@ add_newdoc('numpy.core.umath', 'divide',
     array([[ NaN,  1. ,  1. ],
            [ Inf,  4. ,  2.5],
            [ Inf,  7. ,  4. ]])
-
-    Note the behavior with integer types (Python 2 only):
-
-    >>> np.divide(2, 4)
-    0
-    >>> np.divide(2, 4.)
-    0.5
-
-    Division by zero always yields zero in integer arithmetic (again,
-    Python 2 only), and does not raise an exception or a warning:
-
-    >>> np.divide(np.array([0, 1], dtype=int), np.array([0, 0], dtype=int))
-    array([0, 0])
-
-    Division by zero can, however, be caught using ``seterr``:
-
-    >>> old_err_state = np.seterr(divide='raise')
-    >>> np.divide(1, 0)
-    Traceback (most recent call last):
-      File "<stdin>", line 1, in <module>
-    FloatingPointError: divide by zero encountered in divide
 
     >>> ignored_states = np.seterr(**old_err_state)
     >>> np.divide(1, 0)
@@ -1443,7 +1420,7 @@ add_newdoc('numpy.core.umath', 'floor_divide',
 
 add_newdoc('numpy.core.umath', 'fmod',
     """
-    Return the element-wise remainder of division.
+    Returns the element-wise remainder of division.
 
     This is the NumPy implementation of the C library function fmod, the
     remainder has the same sign as the dividend `x1`. It is equivalent to
@@ -1701,7 +1678,7 @@ add_newdoc('numpy.core.umath', 'invert',
 
 add_newdoc('numpy.core.umath', 'isfinite',
     """
-    Test element-wise for finiteness (not infinity or not Not a Number).
+    Test element-wise for finiteness (not infinity and not Not a Number).
 
     The result is returned as a boolean array.
 
@@ -3088,8 +3065,14 @@ add_newdoc('numpy.core.umath', 'power',
     First array elements raised to powers from second array, element-wise.
 
     Raise each base in `x1` to the positionally-corresponding power in
-    `x2`.  `x1` and `x2` must be broadcastable to the same shape. Note that an
-    integer type raised to a negative integer power will raise a ValueError.
+    `x2`.  `x1` and `x2` must be broadcastable to the same shape.
+
+    An integer type raised to a negative integer power will raise a
+    ``ValueError``.
+
+    Negative values raised to a non-integral value will return ``nan``.
+    To get complex results, cast the input to complex, or specify the
+    ``dtype`` to be ``complex`` (see the example below).
 
     Parameters
     ----------
@@ -3144,6 +3127,21 @@ add_newdoc('numpy.core.umath', 'power',
     >>> x1 ** x2
     array([ 0,  1,  8, 27, 16,  5])
 
+    Negative values raised to a non-integral value will result in ``nan``
+    (and a warning will be generated).
+
+    >>> x3 = np.array([-1.0, -4.0])
+    >>> with np.errstate(invalid='ignore'):
+    ...     p = np.power(x3, 1.5)
+    ...
+    >>> p
+    array([nan, nan])
+
+    To get complex results, give the argument ``dtype=complex``.
+
+    >>> np.power(x3, 1.5, dtype=complex)
+    array([-1.83697020e-16-1.j, -1.46957616e-15-8.j])
+
     """)
 
 add_newdoc('numpy.core.umath', 'float_power',
@@ -3156,6 +3154,10 @@ add_newdoc('numpy.core.umath', 'float_power',
     floats with a minimum precision of float64 so that the result is always
     inexact.  The intent is that the function will return a usable result for
     negative powers and seldom overflow for positive powers.
+
+    Negative values raised to a non-integral value will return ``nan``.
+    To get complex results, cast the input to complex, or specify the
+    ``dtype`` to be ``complex`` (see the example below).
 
     .. versionadded:: 1.12.0
 
@@ -3203,6 +3205,21 @@ add_newdoc('numpy.core.umath', 'float_power',
     >>> np.float_power(x1, x2)
     array([[  0.,   1.,   8.,  27.,  16.,   5.],
            [  0.,   1.,   8.,  27.,  16.,   5.]])
+
+    Negative values raised to a non-integral value will result in ``nan``
+    (and a warning will be generated).
+
+    >>> x3 = np.array([-1, -4])
+    >>> with np.errstate(invalid='ignore'):
+    ...     p = np.float_power(x3, 1.5)
+    ...
+    >>> p
+    array([nan, nan])
+
+    To get complex results, give the argument ``dtype=complex``.
+
+    >>> np.float_power(x3, 1.5, dtype=complex)
+    array([-1.83697020e-16-1.j, -1.46957616e-15-8.j])
 
     """)
 
@@ -3315,7 +3332,7 @@ add_newdoc('numpy.core.umath', 'reciprocal',
 
 add_newdoc('numpy.core.umath', 'remainder',
     """
-    Return element-wise remainder of division.
+    Returns the element-wise remainder of division.
 
     Computes the remainder complementary to the `floor_divide` function.  It is
     equivalent to the Python modulus operator``x1 % x2`` and has the same sign
@@ -4038,9 +4055,8 @@ add_newdoc('numpy.core.umath', 'true_divide',
     """
     Returns a true division of the inputs, element-wise.
 
-    Instead of the Python traditional 'floor division', this returns a true
-    division.  True division adjusts the output type to present the best
-    answer, regardless of input types.
+    Unlike 'floor division', true division adjusts the output type
+    to present the best answer, regardless of input types.
 
     Parameters
     ----------

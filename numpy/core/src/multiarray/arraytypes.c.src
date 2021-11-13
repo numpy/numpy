@@ -62,7 +62,7 @@ get_dummy_stack_array(PyArrayObject *orig)
     PyArrayObject_fields new_fields;
     new_fields.flags = PyArray_FLAGS(orig);
     /* Set to NULL so the dummy object can be distinguished from the real one */
-    Py_TYPE(&new_fields) = NULL;
+    Py_SET_TYPE(&new_fields, NULL);
     new_fields.base = (PyObject *)orig;
     return new_fields;
 }
@@ -2759,10 +2759,10 @@ VOID_nonzero (char *ip, PyArrayObject *ap)
             dummy_fields.descr = new;
             if ((new->alignment > 1) && !__ALIGNED(ip + offset,
                         new->alignment)) {
-                PyArray_CLEARFLAGS(ap, NPY_ARRAY_ALIGNED);
+                PyArray_CLEARFLAGS(dummy_arr, NPY_ARRAY_ALIGNED);
             }
             else {
-                PyArray_ENABLEFLAGS(ap, NPY_ARRAY_ALIGNED);
+                PyArray_ENABLEFLAGS(dummy_arr, NPY_ARRAY_ALIGNED);
             }
             if (new->f->nonzero(ip+offset, dummy_arr)) {
                 nonz = NPY_TRUE;
@@ -3093,6 +3093,10 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
     if (!PyArray_HASFIELDS(ap)) {
         return STRING_compare(ip1, ip2, ap);
     }
+    PyObject *mem_handler = PyDataMem_GetHandler();
+    if (mem_handler == NULL) {
+        goto finish;
+    }
     descr = PyArray_DESCR(ap);
     /*
      * Compare on the first-field.  If equal, then
@@ -3107,15 +3111,19 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
         if (_unpack_field(tup, &new, &offset) < 0) {
             goto finish;
         }
-        /* descr is the only field checked by compare or copyswap */
+        /* Set the fields needed by compare or copyswap */
         dummy_struct.descr = new;
+
         swap = PyArray_ISBYTESWAPPED(dummy);
         nip1 = ip1 + offset;
         nip2 = ip2 + offset;
         if (swap || new->alignment > 1) {
             if (swap || !npy_is_aligned(nip1, new->alignment)) {
-                /* create buffer and copy */
-                nip1 = npy_alloc_cache(new->elsize);
+                /*
+                 * create temporary buffer and copy,
+                 * always use the current handler for internal allocations
+                 */
+                nip1 = PyDataMem_UserNEW(new->elsize, mem_handler);
                 if (nip1 == NULL) {
                     goto finish;
                 }
@@ -3124,11 +3132,15 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
                     new->f->copyswap(nip1, NULL, swap, dummy);
             }
             if (swap || !npy_is_aligned(nip2, new->alignment)) {
-                /* create buffer and copy */
-                nip2 = npy_alloc_cache(new->elsize);
+                /*
+                 * create temporary buffer and copy,
+                 * always use the current handler for internal allocations
+                 */
+                nip2 = PyDataMem_UserNEW(new->elsize, mem_handler);
                 if (nip2 == NULL) {
                     if (nip1 != ip1 + offset) {
-                        npy_free_cache(nip1, new->elsize);
+                        /* destroy temporary buffer */
+                        PyDataMem_UserFREE(nip1, new->elsize, mem_handler);
                     }
                     goto finish;
                 }
@@ -3140,10 +3152,12 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
         res = new->f->compare(nip1, nip2, dummy);
         if (swap || new->alignment > 1) {
             if (nip1 != ip1 + offset) {
-                npy_free_cache(nip1, new->elsize);
+                /* destroy temporary buffer */
+                PyDataMem_UserFREE(nip1, new->elsize, mem_handler);
             }
             if (nip2 != ip2 + offset) {
-                npy_free_cache(nip2, new->elsize);
+                /* destroy temporary buffer */
+                PyDataMem_UserFREE(nip2, new->elsize, mem_handler);
             }
         }
         if (res != 0) {
@@ -3152,6 +3166,7 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
     }
 
 finish:
+    Py_XDECREF(mem_handler);
     return res;
 }
 

@@ -14,6 +14,7 @@ CONFIG = os.path.join(
 # computing the diff itself.
 EXCLUDE = (
     "numpy/typing/tests/data/",
+    "numpy/typing/_char_codes.py",
     "numpy/__config__.py",
     "numpy/f2py",
 )

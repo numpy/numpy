@@ -419,7 +419,7 @@ def hermmulx(c):
 
     .. math::
 
-    xP_i(x) = (P_{i + 1}(x)/2 + i*P_{i - 1}(x))
+        xP_i(x) = (P_{i + 1}(x)/2 + i*P_{i - 1}(x))
 
     Examples
     --------

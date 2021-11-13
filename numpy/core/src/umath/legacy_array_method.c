@@ -217,6 +217,25 @@ PyArray_NewLegacyWrappingArrayMethod(PyUFuncObject *ufunc,
      */
     int any_output_flexible = 0;
     NPY_ARRAYMETHOD_FLAGS flags = 0;
+    if (ufunc->nargs == 3 &&
+            signature[0]->type_num == NPY_BOOL &&
+            signature[1]->type_num == NPY_BOOL &&
+            signature[2]->type_num == NPY_BOOL && (
+                strcmp(ufunc->name, "logical_or") == 0 ||
+                strcmp(ufunc->name, "logical_and") == 0 ||
+                strcmp(ufunc->name, "logical_xor") == 0)) {
+        /*
+         * This is a logical ufunc, and the `??->?` loop`. It is always OK
+         * to cast any input to bool, because that cast is defined by
+         * truthiness.
+         * This allows to ensure two things:
+         * 1. `np.all`/`np.any` know that force casting the input is OK
+         *    (they must do this since there are no `?l->?`, etc. loops)
+         * 2. The logical functions automatically work for any DType
+         *    implementing a cast to boolean.
+         */
+        flags = _NPY_METH_FORCE_CAST_INPUTS;
+    }
 
     for (int i = 0; i < ufunc->nin+ufunc->nout; i++) {
         if (signature[i]->singleton->flags & (

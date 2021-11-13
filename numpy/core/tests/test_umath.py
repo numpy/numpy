@@ -15,7 +15,7 @@ from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_raises_regex,
     assert_array_equal, assert_almost_equal, assert_array_almost_equal,
     assert_array_max_ulp, assert_allclose, assert_no_warnings, suppress_warnings,
-    _gen_alignment_data, assert_array_almost_equal_nulp, assert_warns
+    _gen_alignment_data, assert_array_almost_equal_nulp
     )
 
 def get_glibc_version():
@@ -972,6 +972,12 @@ class TestLog:
         x = np.array([2, 0.937500, 3, 0.947500, 1.054697])
         xf = np.log(x)
         assert_almost_equal(np.log(x, out=x), xf)
+
+        # test log() of max for dtype does not raise
+        for dt in ['f', 'd', 'g']:
+            with np.errstate(all='raise'):
+                x = np.finfo(dt).max
+                np.log(x)
 
     def test_log_strides(self):
         np.random.seed(42)
@@ -3852,3 +3858,39 @@ def test_outer_exceeds_maxdims():
     with assert_raises(ValueError):
         np.add.outer(deep, deep)
 
+def test_bad_legacy_ufunc_silent_errors():
+    # legacy ufuncs can't report errors and NumPy can't check if the GIL
+    # is released.  So NumPy has to check after the GIL is released just to
+    # cover all bases.  `np.power` uses/used to use this.
+    arr = np.arange(3).astype(np.float64)
+
+    with pytest.raises(RuntimeError, match=r"How unexpected :\)!"):
+        ncu_tests.always_error(arr, arr)
+
+    with pytest.raises(RuntimeError, match=r"How unexpected :\)!"):
+        # not contiguous means the fast-path cannot be taken
+        non_contig = arr.repeat(20).reshape(-1, 6)[:, ::2]
+        ncu_tests.always_error(non_contig, arr)
+
+    with pytest.raises(RuntimeError, match=r"How unexpected :\)!"):
+        ncu_tests.always_error.outer(arr, arr)
+
+    with pytest.raises(RuntimeError, match=r"How unexpected :\)!"):
+        ncu_tests.always_error.reduce(arr)
+
+    with pytest.raises(RuntimeError, match=r"How unexpected :\)!"):
+        ncu_tests.always_error.reduceat(arr, [0, 1])
+
+    with pytest.raises(RuntimeError, match=r"How unexpected :\)!"):
+        ncu_tests.always_error.accumulate(arr)
+
+    with pytest.raises(RuntimeError, match=r"How unexpected :\)!"):
+        ncu_tests.always_error.at(arr, [0, 1, 2], arr)
+
+
+@pytest.mark.parametrize('x1', [np.arange(3.0), [0.0, 1.0, 2.0]])
+def test_bad_legacy_gufunc_silent_errors(x1):
+    # Verify that an exception raised in a gufunc loop propagates correctly.
+    # The signature of always_error_gufunc is '(i),()->()'.
+    with pytest.raises(RuntimeError, match=r"How unexpected :\)!"):
+        ncu_tests.always_error_gufunc(x1, 0.0)

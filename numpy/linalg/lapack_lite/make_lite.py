@@ -341,10 +341,7 @@ def main():
     lapack_src_dir = sys.argv[2]
     output_dir = os.path.join(os.path.dirname(__file__), 'build')
 
-    try:
-        shutil.rmtree(output_dir)
-    except:
-        pass
+    shutil.rmtree(output_dir, ignore_errors=True)
     os.makedirs(output_dir)
 
     wrapped_routines, ignores = getWrappedRoutineNames(wrapped_routines_file)

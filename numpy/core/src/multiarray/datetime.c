@@ -13,6 +13,7 @@
 #include <Python.h>
 
 #include "numpy/arrayobject.h"
+#include "numpyos.h"
 
 #include "npy_config.h"
 #include "npy_pycompat.h"
@@ -723,11 +724,20 @@ parse_datetime_extended_unit_from_string(char const *str, Py_ssize_t len,
 {
     char const *substr = str, *substrend = NULL;
     int den = 1;
+    npy_longlong true_meta_val;
 
     /* First comes an optional integer multiplier */
     out_meta->num = (int)strtol_const(substr, &substrend, 10);
     if (substr == substrend) {
         out_meta->num = 1;
+    }
+    else {
+        // check for 32-bit integer overflow
+        char *endptr = NULL;
+        true_meta_val = NumPyOS_strtoll(substr, &endptr, 10);
+        if (true_meta_val > INT_MAX || true_meta_val < 0) {
+            goto bad_input;
+        }
     }
     substr = substrend;
 
@@ -3776,7 +3786,17 @@ time_to_time_resolve_descriptors(
     meta2 = get_datetime_metadata_from_dtype(loop_descrs[1]);
     assert(meta2 != NULL);
 
-    if (meta1->base == meta2->base && meta1->num == meta2->num) {
+    if ((meta1->base == meta2->base && meta1->num == meta2->num) ||
+            // handle some common metric prefix conversions
+            // 1000 fold conversions
+            ((meta2->base >= 7) && (meta1->base - meta2->base == 1)
+              && ((meta1->num / meta2->num) == 1000)) ||
+            // 10^6 fold conversions
+            ((meta2->base >= 7) && (meta1->base - meta2->base == 2)
+              && ((meta1->num / meta2->num) == 1000000)) ||
+            // 10^9 fold conversions
+            ((meta2->base >= 7) && (meta1->base - meta2->base == 3)
+              && ((meta1->num / meta2->num) == 1000000000))) {
         if (byteorder_may_allow_view) {
             return NPY_NO_CASTING | byteorder_may_allow_view;
         }

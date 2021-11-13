@@ -9,7 +9,6 @@ if TYPE_CHECKING:
         Device,
         Dtype,
         NestedSequence,
-        SupportsDLPack,
         SupportsBufferProtocol,
     )
     from collections.abc import Sequence
@@ -36,7 +35,6 @@ def asarray(
         int,
         float,
         NestedSequence[bool | int | float],
-        SupportsDLPack,
         SupportsBufferProtocol,
     ],
     /,
@@ -60,7 +58,9 @@ def asarray(
     if copy is False:
         # Note: copy=False is not yet implemented in np.asarray
         raise NotImplementedError("copy=False is not yet implemented")
-    if isinstance(obj, Array) and (dtype is None or obj.dtype == dtype):
+    if isinstance(obj, Array):
+        if dtype is not None and obj.dtype != dtype:
+            copy = True
         if copy is True:
             return Array._new(np.array(obj._array, copy=True, dtype=dtype))
         return obj
@@ -134,7 +134,7 @@ def eye(
     n_cols: Optional[int] = None,
     /,
     *,
-    k: Optional[int] = 0,
+    k: int = 0,
     dtype: Optional[Dtype] = None,
     device: Optional[Device] = None,
 ) -> Array:
@@ -152,8 +152,9 @@ def eye(
 
 
 def from_dlpack(x: object, /) -> Array:
-    # Note: dlpack support is not yet implemented on Array
-    raise NotImplementedError("DLPack support is not yet implemented")
+    from ._array_object import Array
+
+    return Array._new(np._from_dlpack(x))
 
 
 def full(
@@ -232,13 +233,19 @@ def linspace(
     return Array._new(np.linspace(start, stop, num, dtype=dtype, endpoint=endpoint))
 
 
-def meshgrid(*arrays: Sequence[Array], indexing: str = "xy") -> List[Array, ...]:
+def meshgrid(*arrays: Array, indexing: str = "xy") -> List[Array]:
     """
     Array API compatible wrapper for :py:func:`np.meshgrid <numpy.meshgrid>`.
 
     See its docstring for more information.
     """
     from ._array_object import Array
+
+    # Note: unlike np.meshgrid, only inputs with all the same dtype are
+    # allowed
+
+    if len({a.dtype for a in arrays}) > 1:
+        raise ValueError("meshgrid inputs must all have the same dtype")
 
     return [
         Array._new(array)
