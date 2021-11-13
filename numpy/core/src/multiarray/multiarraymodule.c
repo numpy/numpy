@@ -4919,16 +4919,19 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
     if (initumath(m) != 0) {
         goto err;
     }
-#if (!defined(PYPY_VERSION_NUM) || PYPY_VERSION_NUM >= 0x07030600)
     /*
-     * Initialize the context-local PyDataMem_Handler capsule.
+     * Initialize the default PyDataMem_Handler capsule singleton.
      */
-    c_api = PyCapsule_New(&default_handler, "mem_handler", NULL);
-    if (c_api == NULL) {
+    PyDataMem_DefaultHandler = PyCapsule_New(&default_handler, "mem_handler", NULL);
+    if (PyDataMem_DefaultHandler == NULL) {
         goto err;
     }
-    current_handler = PyContextVar_New("current_allocator", c_api);
-    Py_DECREF(c_api);
+#if (!defined(PYPY_VERSION_NUM) || PYPY_VERSION_NUM >= 0x07030600)
+    /*
+     * Initialize the context-local current handler
+     * with the default PyDataMem_Handler capsule.
+    */
+    current_handler = PyContextVar_New("current_allocator", PyDataMem_DefaultHandler);
     if (current_handler == NULL) {
         goto err;
     }

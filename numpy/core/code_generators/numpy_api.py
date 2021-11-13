@@ -19,6 +19,7 @@ from code_generators.genapi import StealRef, NonNull
 multiarray_global_vars = {
     'NPY_NUMUSERTYPES':             (7, 'int'),
     'NPY_DEFAULT_ASSIGN_CASTING':   (292, 'NPY_CASTING'),
+    'PyDataMem_DefaultHandler':     (306, 'PyObject*'),
 }
 
 multiarray_scalar_bool_values = {
