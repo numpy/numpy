@@ -343,4 +343,41 @@ NPYV_IMPL_VSX_REST_PARTIAL_TYPES(f32, s32)
 NPYV_IMPL_VSX_REST_PARTIAL_TYPES(u64, s64)
 NPYV_IMPL_VSX_REST_PARTIAL_TYPES(f64, s64)
 
+/*********************************
+ * Lookup table
+ *********************************/
+// uses vector as indexes into a table
+// that contains 32 elements of float32.
+NPY_FINLINE npyv_f32 npyv_lut32_f32(const float *table, npyv_u32 idx)
+{
+    const unsigned i0 = vec_extract(idx, 0);
+    const unsigned i1 = vec_extract(idx, 1);
+    const unsigned i2 = vec_extract(idx, 2);
+    const unsigned i3 = vec_extract(idx, 3);
+    npyv_f32 r = vec_promote(table[i0], 0);
+             r = vec_insert(table[i1], r, 1);
+             r = vec_insert(table[i2], r, 2);
+             r = vec_insert(table[i3], r, 3);
+    return r;
+}
+NPY_FINLINE npyv_u32 npyv_lut32_u32(const npy_uint32 *table, npyv_u32 idx)
+{ return npyv_reinterpret_u32_f32(npyv_lut32_f32((const float*)table, idx)); }
+NPY_FINLINE npyv_s32 npyv_lut32_s32(const npy_int32 *table, npyv_u32 idx)
+{ return npyv_reinterpret_s32_f32(npyv_lut32_f32((const float*)table, idx)); }
+
+// uses vector as indexes into a table
+// that contains 16 elements of float64.
+NPY_FINLINE npyv_f64 npyv_lut16_f64(const double *table, npyv_u64 idx)
+{
+    const unsigned i0 = vec_extract((npyv_u32)idx, 0);
+    const unsigned i1 = vec_extract((npyv_u32)idx, 2);
+    npyv_f64 r = vec_promote(table[i0], 0);
+             r = vec_insert(table[i1], r, 1);
+    return r;
+}
+NPY_FINLINE npyv_u64 npyv_lut16_u64(const npy_uint64 *table, npyv_u64 idx)
+{ return npyv_reinterpret_u64_f64(npyv_lut16_f64((const double*)table, idx)); }
+NPY_FINLINE npyv_s64 npyv_lut16_s64(const npy_int64 *table, npyv_u64 idx)
+{ return npyv_reinterpret_s64_f64(npyv_lut16_f64((const double*)table, idx)); }
+
 #endif // _NPY_SIMD_VSX_MEMORY_H
