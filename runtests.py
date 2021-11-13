@@ -192,7 +192,12 @@ def main(argv):
         site_dir, site_dir_noarch = build_project(args)
         sys.path.insert(0, site_dir)
         sys.path.insert(0, site_dir_noarch)
-        os.environ['PYTHONPATH'] = site_dir + os.pathsep + site_dir_noarch
+        os.environ['PYTHONPATH'] = \
+            os.pathsep.join((
+                site_dir, 
+                site_dir_noarch, 
+                os.environ.get('PYTHONPATH', '')
+            ))
     else:
         _temp = __import__(PROJECT_MODULE)
         site_dir = os.path.sep.join(_temp.__file__.split(os.path.sep)[:-2])
@@ -493,7 +498,8 @@ def build_project(args):
         os.makedirs(site_dir)
     if not os.path.exists(site_dir_noarch):
         os.makedirs(site_dir_noarch)
-    env['PYTHONPATH'] = site_dir + os.pathsep + site_dir_noarch
+    env['PYTHONPATH'] = \
+        os.pathsep.join((site_dir, site_dir_noarch, env.get('PYTHONPATH', '')))
 
     log_filename = os.path.join(ROOT_DIR, 'build.log')
 
