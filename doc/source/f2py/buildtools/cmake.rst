@@ -33,6 +33,13 @@ initialize a ``CMakeLists.txt`` file as follows:
 .. literalinclude:: ./../code/CMakeLists.txt
     :language: cmake
 
+A key element of the ``CMakeLists.txt`` file defined above is that the
+``add_custom_command`` is used to generate the wrapper ``C`` files and then
+added as a dependency of the actual shared library target via a
+``add_custom_target`` directive which prevents the command from running every
+time. Additionally, the method used for obtaining the ``fortranobject.c`` file
+can also be used to grab the ``numpy`` headers on older ``cmake`` versions.
+
 This then works in the same manner as the other modules, although the naming
 conventions are different and the output library is not automatically prefixed
 with the ``cython`` information.
