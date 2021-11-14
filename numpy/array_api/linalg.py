@@ -12,7 +12,7 @@ from typing import NamedTuple
 import numpy.linalg
 import numpy as np
 
-class EIGHResult(NamedTuple):
+class EighResult(NamedTuple):
     eigenvalues: Array
     eigenvectors: Array
 
@@ -20,7 +20,7 @@ class QRResult(NamedTuple):
     Q: Array
     R: Array
 
-class SLOGDETResult(NamedTuple):
+class SlogdetResult(NamedTuple):
     sign: Array
     logabsdet: Array
 
@@ -90,7 +90,7 @@ def diagonal(x: Array, /, *, offset: int = 0) -> Array:
 
 
 # Note: the keyword argument name upper is different from np.linalg.eigh
-def eigh(x: Array, /) -> EIGHResult:
+def eigh(x: Array, /) -> EighResult:
     """
     Array API compatible wrapper for :py:func:`np.linalg.eigh <numpy.linalg.eigh>`.
 
@@ -103,7 +103,7 @@ def eigh(x: Array, /) -> EIGHResult:
 
     # Note: the return type here is a namedtuple, which is different from
     # np.eigh, which only returns a tuple.
-    return EIGHResult(*map(Array._new, np.linalg.eigh(x._array)))
+    return EighResult(*map(Array._new, np.linalg.eigh(x._array)))
 
 
 # Note: the keyword argument name upper is different from np.linalg.eigvalsh
@@ -255,9 +255,6 @@ def qr(x: Array, /, *, mode: Literal['reduced', 'complete'] = 'reduced') -> QRRe
 
     See its docstring for more information.
     """
-    # Note: qr is supposed to support stacks of matrices, but
-    # np.linalg.qr does not yet.
-
     # Note: the restriction to floating-point dtypes only is different from
     # np.linalg.qr.
     if x.dtype not in _floating_dtypes:
@@ -267,7 +264,7 @@ def qr(x: Array, /, *, mode: Literal['reduced', 'complete'] = 'reduced') -> QRRe
     # np.linalg.qr, which only returns a tuple.
     return QRResult(*map(Array._new, np.linalg.qr(x._array, mode=mode)))
 
-def slogdet(x: Array, /) -> SLOGDETResult:
+def slogdet(x: Array, /) -> SlogdetResult:
     """
     Array API compatible wrapper for :py:func:`np.linalg.slogdet <numpy.linalg.slogdet>`.
 
@@ -280,7 +277,7 @@ def slogdet(x: Array, /) -> SLOGDETResult:
 
     # Note: the return type here is a namedtuple, which is different from
     # np.linalg.slogdet, which only returns a tuple.
-    return SLOGDETResult(*map(Array._new, np.linalg.slogdet(x._array)))
+    return SlogdetResult(*map(Array._new, np.linalg.slogdet(x._array)))
 
 # Note: unlike np.linalg.solve, the array API solve() only accepts x2 as a
 # vector when it is exactly 1-dimensional. All other cases treat x2 as a stack
@@ -374,7 +371,7 @@ def trace(x: Array, /, *, offset: int = 0) -> Array:
     return Array._new(np.asarray(np.trace(x._array, offset=offset, axis1=-2, axis2=-1)))
 
 # Note: vecdot is not in NumPy
-def vecdot(x1: Array, x2: Array, /, *, axis: int = None) -> Array:
+def vecdot(x1: Array, x2: Array, /, *, axis: int = -1) -> Array:
     return tensordot(x1, x2, axes=((axis,), (axis,)))
 
 
@@ -406,5 +403,6 @@ def vector_norm(x: Array, /, *, axis: Optional[Union[int, Tuple[int, int]]] = No
         a = np.transpose(a, newshape).reshape((np.prod([a.shape[i] for i in axis]), *[a.shape[i] for i in rest]))
         axis = 0
     return Array._new(np.linalg.norm(a, axis=axis, keepdims=keepdims, ord=ord))
+
 
 __all__ = ['cholesky', 'cross', 'det', 'diagonal', 'eigh', 'eigvalsh', 'inv', 'matmul', 'matrix_norm', 'matrix_power', 'matrix_rank', 'matrix_transpose', 'outer', 'pinv', 'qr', 'slogdet', 'solve', 'svd', 'svdvals', 'tensordot', 'trace', 'vecdot', 'vector_norm']
