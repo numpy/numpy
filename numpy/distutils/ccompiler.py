@@ -144,12 +144,18 @@ def CCompiler_spawn(self, cmd, display=None):
     except subprocess.CalledProcessError as exc:
         o = exc.output
         s = exc.returncode
-    except OSError:
+    except OSError as e:
         # OSError doesn't have the same hooks for the exception
         # output, but exec_command() historically would use an
         # empty string for EnvironmentError (base class for
         # OSError)
-        o = b''
+        # o = b''
+        # still that would make the end-user lost in translation!
+        o = f"\n\n{e}\n\n\n"
+        try:
+            o = o.encode(sys.stdout.encoding)
+        except AttributeError:
+            o = o.encode('utf8')
         # status previously used by exec_command() for parent
         # of OSError
         s = 127
