@@ -229,7 +229,7 @@ gentype_multiply(PyObject *m1, PyObject *m2)
  * #convert = Long*8, LongLong*2#
  */
 static PyObject *
-@type@_bit_count(PyObject *self)
+@type@_bit_count(PyObject *self, PyObject *NPY_UNUSED(ignored))
 {
     @type@ scalar = PyArrayScalar_VAL(self, @Name@);
     uint8_t count = npy_popcount@c@(scalar);
@@ -1160,7 +1160,7 @@ gentype_size_get(PyObject *NPY_UNUSED(self), void *NPY_UNUSED(ignored))
 }
 
 static PyObject *
-gentype_sizeof(PyObject *self)
+gentype_sizeof(PyObject *self, PyObject *NPY_UNUSED(ignored))
 {
     Py_ssize_t nbytes;
     PyObject * isz = gentype_itemsize_get(self, NULL);
@@ -1918,7 +1918,7 @@ static PyObject *
  */
 /* Heavily copied from the builtin float.as_integer_ratio */
 static PyObject *
-@name@_as_integer_ratio(PyObject *self)
+@name@_as_integer_ratio(PyObject *self, PyObject *NPY_UNUSED(ignored))
 {
 #if @is_half@
     npy_double val = npy_half_to_double(PyArrayScalar_VAL(self, @Name@));
@@ -1999,7 +1999,7 @@ error:
  *  #c    = f, f, , l#
  */
 static PyObject *
-@name@_is_integer(PyObject *self)
+@name@_is_integer(PyObject *self, PyObject *NPY_UNUSED(ignored))
 {
 #if @is_half@
     npy_double val = npy_half_to_double(PyArrayScalar_VAL(self, @Name@));
@@ -2022,7 +2022,7 @@ static PyObject *
 /**end repeat**/
 
 static PyObject *
-integer_is_integer(PyObject *self) {
+integer_is_integer(PyObject *self, PyObject *NPY_UNUSED(args)) {
     Py_RETURN_TRUE;
 }
 
