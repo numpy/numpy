@@ -286,7 +286,7 @@ def scaninputline(inputline):
         sys.exit()
     if not os.path.isdir(buildpath):
         if not verbose:
-            outmess('Creating build directory %s' % (buildpath))
+            outmess('Creating build directory %s\n' % (buildpath))
         os.mkdir(buildpath)
     if signsfile:
         signsfile = os.path.join(buildpath, signsfile)
