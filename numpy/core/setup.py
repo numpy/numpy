@@ -668,6 +668,13 @@ def configuration(parent_package='',top_path=None):
                 )
              ),
         ):
+            is_cpp = lang == 'c++'
+            if is_cpp:
+                # this a workround to get rid of invalid c++ flags
+                # without doing big changes to config.
+                # c tested first, compiler should be here
+                bk_c = config_cmd.compiler
+                config_cmd.compiler = bk_c.cxx_compiler()
             st = config_cmd.try_link(test_code, lang=lang)
             if not st:
                 # rerun the failing command in verbose mode
@@ -677,6 +684,8 @@ def configuration(parent_package='',top_path=None):
                     f"Broken toolchain: cannot link a simple {lang.upper()} "
                     f"program. {note}"
                 )
+            if is_cpp:
+                config_cmd.compiler = bk_c
         mlibs = check_mathlib(config_cmd)
 
         posix_mlib = ' '.join(['-l%s' % l for l in mlibs])
