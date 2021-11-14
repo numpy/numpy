@@ -25,3 +25,7 @@ Build Systems
    meson
    cmake
    skbuild
+
+.. note::
+   ``make`` has no place in a modern multi-language setup, and so is not
+   discussed further.
