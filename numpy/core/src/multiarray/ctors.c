@@ -758,14 +758,6 @@ PyArray_NewFromDescr_int(
         for (int i = 0; i < nd; i++) {
             fa->dimensions[i] = dims[i];
 
-            if (fa->dimensions[i] == 0) {
-                /*
-                 * Compare to PyArray_OverflowMultiplyList that
-                 * returns 0 in this case.
-                 */
-                continue;
-            }
-
             if (fa->dimensions[i] < 0) {
                 PyErr_SetString(PyExc_ValueError,
                         "negative dimensions are not allowed");
