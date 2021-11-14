@@ -45,13 +45,14 @@ conventions are different and the output library is not automatically prefixed
 with the ``cython`` information.
 
 .. code:: bash
-          ls .
-          # CMakeLists.txt fib1.f
-          mkdir build && cd build
-          cmake ..
-          make
-          python -c "import numpy as np; import fibby; a = np.zeros(9); fibby.fib(a); print (a)"
-          # [ 0.  1.  1.  2.  3.  5.  8. 13. 21.]
+
+    ls .
+    # CMakeLists.txt fib1.f
+    mkdir build && cd build
+    cmake ..
+    make
+    python -c "import numpy as np; import fibby; a = np.zeros(9); fibby.fib(a); print (a)"
+    # [ 0.  1.  1.  2.  3.  5.  8. 13. 21.]
 
 This is particularly useful where an existing toolchain already exists and
 ``scikit-build`` or other additional ``python`` dependencies are discouraged.
