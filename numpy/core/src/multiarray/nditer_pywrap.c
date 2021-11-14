@@ -1484,7 +1484,7 @@ npyiter_itviews_get(NewNpyArrayIterObject *self, void *NPY_UNUSED(ignored))
 }
 
 static PyObject *
-npyiter_next(NewNpyArrayIterObject *self, PyObject *NPY_UNUSED(unused))
+npyiter_next(NewNpyArrayIterObject *self)
 {
     if (self->iter == NULL || self->iternext == NULL ||
                 self->finished) {
