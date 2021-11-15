@@ -3567,6 +3567,7 @@ cdef class Generator:
         (3, 3, 2)
 
         We can use a different method other than the default to factorize cov:
+
         >>> y = rng.multivariate_normal(mean, cov, (3, 3), method='cholesky')
         >>> y.shape
         (3, 3, 2)
