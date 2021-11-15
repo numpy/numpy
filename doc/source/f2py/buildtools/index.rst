@@ -41,9 +41,14 @@ Broadly speaking there are three cases which arise when considering the outputs 
 
 Fortran 77 programs
    - Input file ``blah.f``
-   - Generates ``blahmodule.c`` **default name**
+   - Generates
 
-   In this instance, only a ``C`` wrapper file is generated and only one file needs to be kept track of.
+     + ``blahmodule.c``
+     + ``f2pywrappers.f``
+
+   When no ``COMMON`` blocks are present only a ``C`` wrapper file is generated.
+   Wrappers are also generated to rewrite assumed shape arrays as automatic
+   arrays.
 
 Fortran 90 programs
    - Input file ``blah.f``
@@ -52,7 +57,8 @@ Fortran 90 programs
      + ``blahmodule.c``
      + ``blah-f2pywrappers2.f90``
 
-   The secondary wrapper is used to handle code which is subdivided into modules.
+   The secondary wrapper is used to handle code which is subdivided into
+   modules. It rewrites assumed shape arrays as automatic arrays.
 
 Signature files
    - Input file ``blah.pyf``
@@ -60,8 +66,12 @@ Signature files
 
      + ``blahmodule.c``
      + ``blah-f2pywrappers2.f90`` (occasionally)
+     + ``f2pywrappers.f`` (occasionally)
 
-   Signature files ``.pyf`` do not signal their language standard via the file extension, they may generate the module wrapper depending on their contents; which shifts the burden of checking for generated files onto the build system.
+   Signature files ``.pyf`` do not signal their language standard via the file
+   extension, they may generate the F90 and F77 specific wrappers depending on
+   their contents; which shifts the burden of checking for generated files onto
+   the build system.
 
 
 In theory keeping the above requirements in hand, any build system can be
