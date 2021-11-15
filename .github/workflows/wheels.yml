@@ -54,11 +54,20 @@ jobs:
           python: "38"
           platform: manylinux_x86_64
         - os: ubuntu-latest
+          python: "38"
+          platform: manylinux_i686
+        - os: ubuntu-latest
           python: "39"
           platform: manylinux_x86_64
         - os: ubuntu-latest
+          python: "39"
+          platform: manylinux_i686
+        - os: ubuntu-latest
           python: "310"
           platform: manylinux_x86_64
+        - os: ubuntu-latest
+          python: "310"
+          platform: manylinux_i686
 
         # macos builds
         - os: macos-latest
