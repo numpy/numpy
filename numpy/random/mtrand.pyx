@@ -4079,11 +4079,11 @@ cdef class RandomState:
         >>> x.shape
         (3, 3, 2)
 
-        The following is probably true, given that 0.6 is roughly twice the
-        standard deviation:
+        The following is probably true, given that 2.0 is twice the standard
+        deviation of the distribution of each component:
 
-        >>> list((x[0,0,:] - mean) < 0.6)
-        [True, True] # random
+        >>> list((x[0,0,:] - mean) < 2.0)
+        [True, True]  # random
 
         """
         from numpy.linalg import svd
