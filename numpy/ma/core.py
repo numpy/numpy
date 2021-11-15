@@ -5226,7 +5226,7 @@ class MaskedArray(ndarray):
         Notes
         -----
         The default size of the intermediate and return values used for
-        integer inputs is platform-dependent. This is in constast from
+        integer inputs is platform-dependent. This is in contrast from
         `numpy.mean` which has a fixed default `dtype` of `float64`.
 
         Examples
