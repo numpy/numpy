@@ -5211,6 +5211,8 @@ class MaskedArray(ndarray):
     def mean(self, axis=None, dtype=None, out=None, keepdims=np._NoValue):
         """
         Returns the average of the array elements along given axis.
+        `int32` or `uint32` intermediate and return values are used for
+        integer inputs.
 
         Masked entries are ignored, and result elements which are not
         finite will be masked.
