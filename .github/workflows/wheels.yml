@@ -97,6 +97,7 @@ jobs:
           NPY_USE_BLAS_ILP64: 1
           CIBW_BUILD: cp${{ matrix.python }}-${{ matrix.platform }}
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
+          CIBW_MANYLINUX_I686_IMAGE: manylinux2014
           CIBW_ENVIRONMENT_LINUX: CFLAGS='-std=c99 -fno-strict-aliasing'
                                   LDFLAGS='-Wl,--strip-debug'
                                   OPENBLAS64_=/usr/local
