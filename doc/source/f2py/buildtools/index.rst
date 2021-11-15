@@ -37,7 +37,7 @@ Building an extension module which includes Python and Fortran consists of:
 
 - Python libraries and development headers
 
-Broadly speaking there are two cases which arise when considering the outputs of ``f2py``:
+Broadly speaking there are three cases which arise when considering the outputs of ``f2py``:
 
 Fortran 77 programs
    - Input file ``blah.f``
@@ -48,14 +48,29 @@ Fortran 77 programs
 Fortran 90 programs
    - Input file ``blah.f``
    - Generates:
+
      + ``blahmodule.c``
      + ``blah-f2pywrappers2.f90``
 
    The secondary wrapper is used to handle code which is subdivided into modules.
 
+Signature files
+   - Input file ``blah.pyf``
+   - Generates:
+
+     + ``blahmodule.c``
+     + ``blah-f2pywrappers2.f90`` (occasionally)
+
+   Signature files ``.pyf`` do not signal their language standard via the file extension, they may generate the module wrapper depending on their contents; which shifts the burden of checking for generated files onto the build system.
+
+
 In theory keeping the above requirements in hand, any build system can be
 adapted to generate ``f2py`` extension modules. Here we will cover a subset of
 the more popular systems.
+
+.. note::
+   ``make`` has no place in a modern multi-language setup, and so is not
+   discussed further.
 
 Build Systems
 ==============
@@ -67,7 +82,3 @@ Build Systems
    meson
    cmake
    skbuild
-
-.. note::
-   ``make`` has no place in a modern multi-language setup, and so is not
-   discussed further.

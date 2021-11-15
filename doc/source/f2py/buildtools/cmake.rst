@@ -18,8 +18,8 @@ but the `official CMake Tutorials`_ are a fantastic resource.
    ``f2py`` is not particularly native or pleasant; and a more natural approach
    is to consider :ref:`f2py-skbuild`
 
-Fibonacci Walkthrough
-=======================
+Fibonacci Walkthrough (F77)
+===========================
 
 Returning to the ``fib``  example from :ref:`f2py-getting-started` section.
 
