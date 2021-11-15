@@ -82,6 +82,30 @@ possible. The easiest way to solve this is to let ``f2py`` deal with it:
    python -c 'import fib2'
 
 
+Automating wrapper generation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+A major pain point in the workflow defined above, is the manual tracking of
+inputs. Although it would require more effort to figure out the actual outputs
+for reasons discussed in :ref:`f2py-bldsys`.
+
+However, we can augment our workflow in a straightforward to take into account
+files for which the outputs are known when the build system is set up.
+
+.. literalinclude:: ./../code/meson_upd.build
+    :language: meson
+
+This can be compiled and run as before.
+
+.. code-block:: bash
+
+    rm -rf builddir
+    meson setup builddir
+    meson compile -C builddir
+    cd builddir
+    python -c "import numpy as np; import fibby; a = np.zeros(9); fibby.fib(a); print (a)"
+    # [ 0.  1.  1.  2.  3.  5.  8. 13. 21.]
+
 Salient points
 ===============
 

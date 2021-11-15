@@ -24,8 +24,7 @@ fibby_source = custom_target('fibbymodule.c',
                             input : ['fib1.f'],
                             output : ['fibbymodule.c'],
                             command : [ py3, '-m', 'numpy.f2py', '@INPUT@',
-                            '-m', 'fibby', '--lower' ]
-                            )
+                            '-m', 'fibby', '--lower' ])
 
 inc_np = include_directories(incdir_numpy, incdir_f2py)
 
