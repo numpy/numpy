@@ -1170,10 +1170,10 @@ def analyzeline(m, case, line):
                                 groupcache[groupcounter]['args'].append(k)
                         else:
                             errmess(
-                                'analyzeline: intent(callback) %s is ignored' % (k))
+                                'analyzeline: intent(callback) %s is ignored\n' % (k))
                     else:
                         errmess('analyzeline: intent(callback) %s is already'
-                                ' in argument list' % (k))
+                                ' in argument list\n' % (k))
             if case in ['optional', 'required', 'public', 'external', 'private', 'intrinsic']:
                 ap = case
             if 'attrspec' in edecl[k]:
@@ -1868,11 +1868,11 @@ def get_useparameters(block, param_map=None):
             continue
         # XXX: apply mapping
         if mapping:
-            errmess('get_useparameters: mapping for %s not impl.' % (mapping))
+            errmess('get_useparameters: mapping for %s not impl.\n' % (mapping))
         for k, v in list(params.items()):
             if k in param_map:
                 outmess('get_useparameters: overriding parameter %s with'
-                        ' value from module %s' % (repr(k), repr(usename)))
+                        ' value from module %s\n' % (repr(k), repr(usename)))
             param_map[k] = v
 
     return param_map
@@ -2385,7 +2385,7 @@ def get_parameters(vars, global_params={}):
 
             elif iscomplex(vars[n]):
                 outmess(f'get_parameters[TODO]: '
-                        f'implement evaluation of complex expression {v}')
+                        f'implement evaluation of complex expression {v}\n')
 
             try:
                 params[n] = eval(v, g_params, params)
@@ -2633,7 +2633,7 @@ def analyzevars(block):
                             vars[n]['intent'].append('c')
                     else:
                         errmess(
-                            "analyzevars: charselector=%r unhandled." % (d))
+                            "analyzevars: charselector=%r unhandled.\n" % (d))
 
         if 'check' not in vars[n] and 'args' in block and n in block['args']:
             # n is an argument that has no checks defined. Here we
