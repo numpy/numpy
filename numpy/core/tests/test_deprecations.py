@@ -1246,7 +1246,7 @@ class TestQuantileInterpolationDeprecation(_DeprecationTestCase):
             [np.percentile, np.quantile, np.nanpercentile, np.nanquantile])
     def test_both_passed(self, func):
         with warnings.catch_warnings():
-            # catch the warning, but make sure it does not raise:
+            # catch the DeprecationWarning so that it does not raise:
             warnings.simplefilter("always", DeprecationWarning)
             with pytest.raises(TypeError):
                 func([0., 1.], 0., interpolation="nearest", method="nearest")

@@ -61,7 +61,7 @@ __all__ = [
 # is made of a integer part (a.k.a 'i' or 'left') and a fractional part
 # (a.k.a 'g' or 'gamma')
 #
-# Each _QuantileMethods has two properties
+# Each method in _QuantileMethods has two properties
 # get_virtual_index : Callable
 #   The function used to compute the virtual_index.
 # fix_gamma : Callable
