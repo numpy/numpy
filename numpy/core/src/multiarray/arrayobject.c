@@ -263,7 +263,7 @@ PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
      */
     ndim = PyArray_DiscoverDTypeAndShape(src_object,
             PyArray_NDIM(dest), dims, &cache,
-            NPY_DTYPE(PyArray_DESCR(dest)), PyArray_DESCR(dest), &dtype);
+            NPY_DTYPE(PyArray_DESCR(dest)), PyArray_DESCR(dest), &dtype, 0);
     if (ndim < 0) {
         return -1;
     }

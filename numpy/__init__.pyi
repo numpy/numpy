@@ -5,6 +5,7 @@ import mmap
 import ctypes as ct
 import array as _array
 import datetime as dt
+import enum
 from abc import abstractmethod
 from types import TracebackType, MappingProxyType
 from contextlib import ContextDecorator
@@ -1745,7 +1746,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
         order: _OrderKACF = ...,
         casting: _CastingKind = ...,
         subok: bool = ...,
-        copy: bool = ...,
+        copy: bool | _CopyMode = ...,
     ) -> NDArray[_ScalarType]: ...
     @overload
     def astype(
@@ -1754,7 +1755,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
         order: _OrderKACF = ...,
         casting: _CastingKind = ...,
         subok: bool = ...,
-        copy: bool = ...,
+        copy: bool | _CopyMode = ...,
     ) -> NDArray[Any]: ...
 
     @overload
@@ -2495,7 +2496,7 @@ class generic(_ArrayOrScalarCommon):
         order: _OrderKACF = ...,
         casting: _CastingKind = ...,
         subok: bool = ...,
-        copy: bool = ...,
+        copy: bool | _CopyMode = ...,
     ) -> _ScalarType: ...
     @overload
     def astype(
@@ -2504,7 +2505,7 @@ class generic(_ArrayOrScalarCommon):
         order: _OrderKACF = ...,
         casting: _CastingKind = ...,
         subok: bool = ...,
-        copy: bool = ...,
+        copy: bool | _CopyMode = ...,
     ) -> Any: ...
 
     # NOTE: `view` will perform a 0D->scalar cast,
@@ -3252,6 +3253,11 @@ true_divide: _UFunc_Nin2_Nout1[L['true_divide'], L[11], None]
 trunc: _UFunc_Nin1_Nout1[L['trunc'], L[7], None]
 
 abs = absolute
+
+class _CopyMode(enum.Enum):
+    ALWAYS: L[True]
+    IF_NEEDED: L[False]
+    NEVER: L[2]
 
 # Warnings
 class ModuleDeprecationWarning(DeprecationWarning): ...

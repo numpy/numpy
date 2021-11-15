@@ -1562,7 +1562,7 @@ _prepend_ones(PyArrayObject *arr, int nd, int ndmin, NPY_ORDER order)
 
 static NPY_INLINE PyObject *
 _array_fromobject_generic(
-        PyObject *op, PyArray_Descr *type, npy_bool copy, NPY_ORDER order,
+        PyObject *op, PyArray_Descr *type, _PyArray_CopyMode copy, NPY_ORDER order,
         npy_bool subok, int ndmin)
 {
     PyArrayObject *oparr = NULL, *ret = NULL;
@@ -1579,12 +1579,17 @@ _array_fromobject_generic(
     if (PyArray_CheckExact(op) || (subok && PyArray_Check(op))) {
         oparr = (PyArrayObject *)op;
         if (type == NULL) {
-            if (!copy && STRIDING_OK(oparr, order)) {
+            if (copy != NPY_COPY_ALWAYS && STRIDING_OK(oparr, order)) {
                 ret = oparr;
                 Py_INCREF(ret);
                 goto finish;
             }
             else {
+                if (copy == NPY_COPY_NEVER) {
+                    PyErr_SetString(PyExc_ValueError,
+                            "Unable to avoid copy while creating a new array.");
+                    return NULL;
+                }
                 ret = (PyArrayObject *)PyArray_NewCopy(oparr, order);
                 goto finish;
             }
@@ -1592,12 +1597,17 @@ _array_fromobject_generic(
         /* One more chance */
         oldtype = PyArray_DESCR(oparr);
         if (PyArray_EquivTypes(oldtype, type)) {
-            if (!copy && STRIDING_OK(oparr, order)) {
+            if (copy != NPY_COPY_ALWAYS && STRIDING_OK(oparr, order)) {
                 Py_INCREF(op);
                 ret = oparr;
                 goto finish;
             }
             else {
+                if (copy == NPY_COPY_NEVER) {
+                    PyErr_SetString(PyExc_ValueError,
+                            "Unable to avoid copy while creating a new array.");
+                    return NULL;
+                }
                 ret = (PyArrayObject *)PyArray_NewCopy(oparr, order);
                 if (oldtype == type || ret == NULL) {
                     goto finish;
@@ -1610,8 +1620,11 @@ _array_fromobject_generic(
         }
     }
 
-    if (copy) {
+    if (copy == NPY_COPY_ALWAYS) {
         flags = NPY_ARRAY_ENSURECOPY;
+    }
+    else if (copy == NPY_COPY_NEVER ) {
+        flags = NPY_ARRAY_ENSURENOCOPY;
     }
     if (order == NPY_CORDER) {
         flags |= NPY_ARRAY_C_CONTIGUOUS;
@@ -1656,7 +1669,7 @@ array_array(PyObject *NPY_UNUSED(ignored),
 {
     PyObject *op;
     npy_bool subok = NPY_FALSE;
-    npy_bool copy = NPY_TRUE;
+    _PyArray_CopyMode copy = NPY_COPY_ALWAYS;
     int ndmin = 0;
     PyArray_Descr *type = NULL;
     NPY_ORDER order = NPY_KEEPORDER;
@@ -1667,7 +1680,7 @@ array_array(PyObject *NPY_UNUSED(ignored),
         if (npy_parse_arguments("array", args, len_args, kwnames,
                 "object", NULL, &op,
                 "|dtype", &PyArray_DescrConverter2, &type,
-                "$copy", &PyArray_BoolConverter, &copy,
+                "$copy", &PyArray_CopyConverter, &copy,
                 "$order", &PyArray_OrderConverter, &order,
                 "$subok", &PyArray_BoolConverter, &subok,
                 "$ndmin", &PyArray_PythonPyIntFromInt, &ndmin,

@@ -834,15 +834,15 @@ array_astype(PyArrayObject *self,
      */
     NPY_CASTING casting = NPY_UNSAFE_CASTING;
     NPY_ORDER order = NPY_KEEPORDER;
-    int forcecopy = 1, subok = 1;
+    _PyArray_CopyMode forcecopy = 1;
+    int subok = 1;
     NPY_PREPARE_ARGPARSER;
-
     if (npy_parse_arguments("astype", args, len_args, kwnames,
             "dtype", &PyArray_DescrConverter, &dtype,
             "|order", &PyArray_OrderConverter, &order,
             "|casting", &PyArray_CastingConverter, &casting,
             "|subok", &PyArray_PythonPyIntFromInt, &subok,
-            "|copy", &PyArray_PythonPyIntFromInt, &forcecopy,
+            "|copy", &PyArray_CopyConverter, &forcecopy,
             NULL, NULL, NULL) < 0) {
         Py_XDECREF(dtype);
         return NULL;
@@ -859,20 +859,29 @@ array_astype(PyArrayObject *self,
      * and it's not a subtype if subok is False, then we
      * can skip the copy.
      */
-    if (!forcecopy && (order == NPY_KEEPORDER ||
-                       (order == NPY_ANYORDER &&
-                            (PyArray_IS_C_CONTIGUOUS(self) ||
-                            PyArray_IS_F_CONTIGUOUS(self))) ||
-                       (order == NPY_CORDER &&
-                            PyArray_IS_C_CONTIGUOUS(self)) ||
-                       (order == NPY_FORTRANORDER &&
-                            PyArray_IS_F_CONTIGUOUS(self))) &&
-                    (subok || PyArray_CheckExact(self)) &&
-                    PyArray_EquivTypes(dtype, PyArray_DESCR(self))) {
+    if (forcecopy != NPY_COPY_ALWAYS && 
+                    (order == NPY_KEEPORDER ||
+                    (order == NPY_ANYORDER &&
+                        (PyArray_IS_C_CONTIGUOUS(self) ||
+                        PyArray_IS_F_CONTIGUOUS(self))) ||
+                    (order == NPY_CORDER &&
+                        PyArray_IS_C_CONTIGUOUS(self)) ||
+                    (order == NPY_FORTRANORDER &&
+                        PyArray_IS_F_CONTIGUOUS(self))) &&
+                (subok || PyArray_CheckExact(self)) &&
+                PyArray_EquivTypes(dtype, PyArray_DESCR(self))) {
         Py_DECREF(dtype);
         Py_INCREF(self);
         return (PyObject *)self;
     }
+
+    if (forcecopy == NPY_COPY_NEVER) {
+        PyErr_SetString(PyExc_ValueError,
+                "Unable to avoid copy while casting in never copy mode.");
+        Py_DECREF(dtype);
+        return NULL;
+    }
+    
     if (!PyArray_CanCastArrayTo(self, dtype, casting)) {
         PyErr_Clear();
         npy_set_invalid_cast_error(

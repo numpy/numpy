@@ -41,7 +41,7 @@ def asarray(
     *,
     dtype: Optional[Dtype] = None,
     device: Optional[Device] = None,
-    copy: Optional[bool] = None,
+    copy: Optional[Union[bool, np._CopyMode]] = None,
 ) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.asarray <numpy.asarray>`.
@@ -55,13 +55,13 @@ def asarray(
     _check_valid_dtype(dtype)
     if device not in ["cpu", None]:
         raise ValueError(f"Unsupported device {device!r}")
-    if copy is False:
+    if copy in (False, np._CopyMode.IF_NEEDED):
         # Note: copy=False is not yet implemented in np.asarray
         raise NotImplementedError("copy=False is not yet implemented")
     if isinstance(obj, Array):
         if dtype is not None and obj.dtype != dtype:
             copy = True
-        if copy is True:
+        if copy in (True, np._CopyMode.ALWAYS):
             return Array._new(np.array(obj._array, copy=True, dtype=dtype))
         return obj
     if dtype is None and isinstance(obj, int) and (obj > 2 ** 64 or obj < -(2 ** 63)):
