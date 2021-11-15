@@ -5211,8 +5211,6 @@ class MaskedArray(ndarray):
     def mean(self, axis=None, dtype=None, out=None, keepdims=np._NoValue):
         """
         Returns the average of the array elements along given axis.
-        `int32` or `uint32` intermediate and return values are used for
-        integer inputs.
 
         Masked entries are ignored, and result elements which are not
         finite will be masked.
@@ -5224,6 +5222,12 @@ class MaskedArray(ndarray):
         numpy.ndarray.mean : corresponding function for ndarrays
         numpy.mean : Equivalent function
         numpy.ma.average : Weighted average.
+
+        Notes
+        -----
+        The default size of the intermediate and return values used for
+        integer inputs is platform-dependent. This is in constast from
+        `numpy.mean` which has a fixed default `dtype` of `float64`.
 
         Examples
         --------
