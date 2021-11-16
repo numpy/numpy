@@ -743,7 +743,7 @@ _default_compilers = (
     ('win32', ('gnu', 'intelv', 'absoft', 'compaqv', 'intelev', 'gnu95', 'g95',
                'intelvem', 'intelem', 'flang')),
     ('cygwin.*', ('gnu', 'intelv', 'absoft', 'compaqv', 'intelev', 'gnu95', 'g95')),
-    ('linux.*', ('gnu95', 'intel', 'lahey', 'pg', 'nv', 'absoft', 'nag', 'vast', 'compaq',
+    ('linux.*', ('arm', 'gnu95', 'intel', 'lahey', 'pg', 'nv', 'absoft', 'nag', 'vast', 'compaq',
                  'intele', 'intelem', 'gnu', 'g95', 'pathf95', 'nagfor', 'fujitsu')),
     ('darwin.*', ('gnu95', 'nag', 'nagfor', 'absoft', 'ibm', 'intel', 'gnu',
                  'g95', 'pg')),
