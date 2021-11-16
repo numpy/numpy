@@ -1,5 +1,5 @@
 ### setup project ###
-cmake_minimum_required(VERSION 3.17.3)
+cmake_minimum_required(VERSION 3.17.3) # 3.17 > for Python3_SOABI
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 project(fibby
@@ -41,15 +41,21 @@ message(STATUS ${Python3_INCLUDE_DIRS})
 message(STATUS ${F2PY_INCLUDE_DIR})
 message(STATUS ${Python3_NumPy_INCLUDE_DIRS})
 
+# Vars
+set(f2py_module_name "fibby")
+set(fortran_src_file "${CMAKE_SOURCE_DIR}/fib1.f")
+set(f2py_module_c "${f2py_module_name}module.c")
+set(generated_module_file "${f2py_module_name}${Python3_SOABI}")
+
 # Generate sources
 add_custom_target(
   genpyf
-  DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_PROJECT_NAME}module.c"
+  DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/${f2py_module_c}"
   )
 add_custom_command(
-  OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_PROJECT_NAME}module.c"
+  OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/${f2py_module_c}"
   COMMAND ${Python3_EXECUTABLE}  -m "numpy.f2py"
-                   "${CMAKE_SOURCE_DIR}/fib1.f"
+                   "${fortran_src_file}"
                    -m "fibby"
                    --lower # Important
   DEPENDS fib1.f # Fortran source
@@ -57,9 +63,9 @@ add_custom_command(
 
 # Set up target
 add_library(${CMAKE_PROJECT_NAME} SHARED
-  "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_PROJECT_NAME}module.c" # Generated
+  "${CMAKE_CURRENT_BINARY_DIR}/${f2py_module_c}" # Generated
   "${F2PY_INCLUDE_DIR}/fortranobject.c" # From NumPy
-  fib1.f # Fortran source(s)
+  "${fortran_src_file}" # Fortran source(s)
   )
 
 # Depend on sources

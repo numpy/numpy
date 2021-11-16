@@ -53,7 +53,7 @@ Fortran 77 programs
    arrays.
 
 Fortran 90 programs
-   - Input file ``blah.f``
+   - Input file ``blah.f90``
    - Generates:
 
      + ``blahmodule.c``
@@ -75,6 +75,10 @@ Signature files
    their contents; which shifts the burden of checking for generated files onto
    the build system.
 
+.. note::
+
+   The signature file output situation is being reconsidered in `issue 20385`_ .
+
 
 In theory keeping the above requirements in hand, any build system can be
 adapted to generate ``f2py`` extension modules. Here we will cover a subset of
@@ -94,3 +98,5 @@ Build Systems
    meson
    cmake
    skbuild
+
+.. _`issue 20385`: https://github.com/numpy/numpy/issues/20385

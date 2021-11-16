@@ -5,7 +5,8 @@ Using via ``scikit-build``
 ============================
 
 ``scikit-build`` provides two separate concepts geared towards the users of Python extension modules.
-1. A ``setuptools`` replacement
+
+1. A ``setuptools`` replacement (legacy behaviour)
 2. A series of ``cmake`` modules with definitions which help building Python extensions
 
 .. note::
@@ -53,6 +54,13 @@ The resulting extension can be built and loaded in the standard workflow.
 ``setuptools`` replacement
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+.. note::
+
+   **As of November 2021**
+
+   The behavior described here of driving the ``cmake`` build of a module is
+   considered to be legacy behaviour and should not be depended on.
+
 The utility of ``scikit-build`` lies in being able to drive the generation of
 more than extension modules, in particular a common usage pattern is the
 generation of Python distributables (for example for PyPI).
@@ -62,13 +70,15 @@ The workflow with ``scikit-build`` straightforwardly supports such packaging req
 .. literalinclude:: ./../code/setup_skbuild.py
    :language: python
 
-Along with a commiserate ``pyproject.toml``
+Along with a commensurate ``pyproject.toml``
 
 .. literalinclude:: ./../code/pyproj_skbuild.toml
    :language: toml
 
 Together these can build the extension using ``cmake`` in tandem with other
-standard ``setuptools`` outputs.
+standard ``setuptools`` outputs. Running ``cmake`` through ``setup.py`` is
+mostly used when it is necessary to integrate with extension modules not built
+with ``cmake``.
 
 .. code:: bash
 

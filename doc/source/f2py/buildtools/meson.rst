@@ -31,12 +31,6 @@ examples from :ref:`f2py-getting-started` section:
 .. literalinclude:: ./../code/meson.build
     :language: meson
 
-.. note::
-
-    * The ``fortranobject.{c,h}`` files have to be included in the manner shown,
-      by referencing the ``.c`` file and adding to the include directories.
-    * The warning level is lower than that of a build set up with ``meson init``
-
 At this point the build will complete, but the import will fail:
 
 .. code-block:: bash

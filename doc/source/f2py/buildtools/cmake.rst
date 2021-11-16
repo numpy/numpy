@@ -10,7 +10,7 @@ learning curve is steeper since CMake syntax is not pythonic and is closer to
 
 However, the trade-off is enhanced flexibility and support for most architectures
 and compilers. An introduction to the syntax is out of scope for this document,
-but the `official CMake Tutorials`_ are a fantastic resource.
+but this `extensive CMake collection`_ of resources is great.
 
 .. note::
 
@@ -57,4 +57,4 @@ with the ``cython`` information.
 This is particularly useful where an existing toolchain already exists and
 ``scikit-build`` or other additional ``python`` dependencies are discouraged.
 
-.. _official CMake Tutorials: https://cmake.org/cmake/help/latest/guide/tutorial/index.html
+.. _extensive CMake collection: https://cliutils.gitlab.io/modern-cmake/
