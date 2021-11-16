@@ -416,7 +416,7 @@ def run_main(comline_list):
 
     Examples
     --------
-    .. literalinclude:: code/results/run_main_session.dat
+    .. literalinclude:: ../../source/f2py/code/results/run_main_session.dat
         :language: python
 
     """

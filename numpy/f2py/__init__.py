@@ -71,7 +71,7 @@ def compile(source,
 
     Examples
     --------
-    .. literalinclude:: code/results/compile_session.dat
+    .. literalinclude:: ../../source/f2py/code/results/compile_session.dat
         :language: python
 
     """
