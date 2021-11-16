@@ -2842,7 +2842,7 @@ class MaskedArray(ndarray):
         # still has the _mask attribute like MaskedArrays
         if hasattr(data, '_mask') and not isinstance(data, ndarray):
             _data._mask = data._mask
-
+            # FIXME: should we set `_data._sharedmask = True`? 
         # Process mask.
         # Type of the mask
         mdtype = make_mask_descr(_data.dtype)
