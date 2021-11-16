@@ -1808,19 +1808,38 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     # Initialize the filehandle, the LineSplitter and the NameValidator
     try:
         if isinstance(fname, os_PathLike):
-            fname = os_fspath(fname)
+            try:
+                fname = os_fspath(fname)
+            except TypeError as e:
+                    raise TypeError(
+                        f"fname must be a string.\n"
+                        f"Got {type(fname)} instead."
+                    ) from e 
+
         if isinstance(fname, str):
             fid = np.lib._datasource.open(fname, 'rt', encoding=encoding)
-            fid_ctx = contextlib.closing(fid)
+
+            try:
+                fid_ctx = contextlib.closing(fid)
+            except TypeError as e:
+                    raise TypeError(
+                        f"expecting file object.\n"
+                        f"Got {type(fid)} instead."
+                    ) from e 
         else:
             fid = fname
             fid_ctx = contextlib.nullcontext(fid)
-        fhd = iter(fid)
+        try:
+            fhd = iter(fid)
+        except TypeError as e:
+                raise TypeError(
+                    f"expecting iterable sequence such as sets, tuples, etc.\n"
+                    f"Got {type(fid)} instead."
+                ) from e 
     except TypeError as e:
-        raise TypeError(
-            f"fname must be a string, filehandle, list of strings,\n"
-            f"or generator. Got {type(fname)} instead."
-        ) from e
+            raise e
+    
+
 
     with fid_ctx:
         split_line = LineSplitter(delimiter=delimiter, comments=comments,
