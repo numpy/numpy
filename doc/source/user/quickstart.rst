@@ -1274,7 +1274,6 @@ set <https://en.wikipedia.org/wiki/Mandelbrot_set>`__:
     ...     return divtime
     >>> plt.clf()
     >>> plt.imshow(mandelbrot(400, 400))
-    <matplotlib.image.AxesImage object at 0x...>
 
 The second way of indexing with booleans is more similar to integer
 indexing; for each dimension of the array we give a 1D boolean array

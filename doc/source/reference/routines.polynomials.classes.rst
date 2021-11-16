@@ -294,7 +294,6 @@ polynomials up to degree 5 are plotted below.
     ...     ax = plt.plot(x, T.basis(i)(x), lw=2, label=f"$T_{i}$")
     ...
     >>> plt.legend(loc="upper left")
-    <matplotlib.legend.Legend object at 0x...>
     >>> plt.show()
 
 In the range -1 <= `x` <= 1 they are nice, equiripple functions lying between +/- 1.
@@ -309,7 +308,6 @@ The same plots over the range -2 <= `x` <= 2 look very different:
     ...     ax = plt.plot(x, T.basis(i)(x), lw=2, label=f"$T_{i}$")
     ...
     >>> plt.legend(loc="lower right")
-    <matplotlib.legend.Legend object at 0x...>
     >>> plt.show()
 
 As can be seen, the "good" parts have shrunk to insignificance. In using
@@ -335,10 +333,8 @@ illustrated below for a fit to a noisy sine curve.
     >>> y = np.sin(x) + np.random.normal(scale=.1, size=x.shape)
     >>> p = T.fit(x, y, 5)
     >>> plt.plot(x, y, 'o')
-    [<matplotlib.lines.Line2D object at 0x...>]
     >>> xx, yy = p.linspace()
     >>> plt.plot(xx, yy, lw=2)
-    [<matplotlib.lines.Line2D object at 0x...>]
     >>> p.domain
     array([0.        ,  6.28318531])
     >>> p.window

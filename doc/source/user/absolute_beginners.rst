@@ -1654,7 +1654,6 @@ If you already have Matplotlib installed, you can import it with::
 All you need to do to plot your values is run::
 
   >>> plt.plot(a)
-  [<matplotlib.lines.Line2D object at 0x...>]
 
   # If you are running from a command line, you may need to do this:
   # >>> plt.show()
@@ -1668,9 +1667,7 @@ For example, you can plot a 1D array like this::
   >>> x = np.linspace(0, 5, 20)
   >>> y = np.linspace(0, 10, 20)
   >>> plt.plot(x, y, 'purple') # line
-  [<matplotlib.lines.Line2D object at 0x...>]
   >>> plt.plot(x, y, 'o')      # dots
-  [<matplotlib.lines.Line2D object at 0x...>]
 
 .. plot:: user/plots/matplotlib2.py
    :align: center
