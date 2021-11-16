@@ -28,9 +28,7 @@ def get_glibc_version():
 
 
 glibcver = get_glibc_version()
-glibc_newerthan_2_17 = pytest.mark.xfail(
-        glibcver != '0.0' and glibcver < '2.17',
-        reason="Older glibc versions may not raise appropriate FP exceptions")
+glibc_older_than = lambda x: (glibcver != '0.0' and glibcver < x)
 
 def on_powerpc():
     """ True if we are running on a Power PC platform."""
@@ -49,14 +47,6 @@ def bad_arcsinh():
     v2 = np.arcsinh(np.complex256(x)).real
     # The eps for float128 is 1-e33, so this is way bigger
     return abs((v1 / v2) - 1.0) > 1e-23
-
-if platform.machine() == 'aarch64' and bad_arcsinh():
-    skip_longcomplex_msg = ('Trig functions of np.longcomplex values known to be '
-                            'inaccurate on aarch64 for some compilation '
-                            'configurations, should be fixed by building on a '
-                            'platform using glibc>2.17')
-else:
-    skip_longcomplex_msg = ''
 
 
 class _FilterInvalids:
@@ -1022,9 +1012,11 @@ class TestSpecialFloats:
             yf = np.array(y, dtype=dt)
             assert_equal(np.exp(yf), xf)
 
-    # Older version of glibc may not raise the correct FP exceptions
     # See: https://github.com/numpy/numpy/issues/19192
-    @glibc_newerthan_2_17
+    @pytest.mark.xfail(
+        glibc_older_than("2.17"),
+        reason="Older glibc versions may not raise appropriate FP exceptions"
+    )
     def test_exp_exceptions(self):
         with np.errstate(over='raise'):
             assert_raises(FloatingPointError, np.exp, np.float32(100.))
@@ -1405,8 +1397,10 @@ class TestAVXFloat32Transcendental:
         M = np.int_(N/20)
         index = np.random.randint(low=0, high=N, size=M)
         x_f32 = np.float32(np.random.uniform(low=-100.,high=100.,size=N))
-        # test coverage for elements > 117435.992f for which glibc is used
-        x_f32[index] = np.float32(10E+10*np.random.rand(M))
+        if not glibc_older_than("2.17"):
+            # test coverage for elements > 117435.992f for which glibc is used
+            # this is known to be problematic on old glibc, so skip it there
+            x_f32[index] = np.float32(10E+10*np.random.rand(M))
         x_f64 = np.float64(x_f32)
         assert_array_max_ulp(np.sin(x_f32), np.float32(np.sin(x_f64)), maxulp=2)
         assert_array_max_ulp(np.cos(x_f32), np.float32(np.cos(x_f64)), maxulp=2)
@@ -3439,13 +3433,14 @@ class TestComplexFunctions:
         x_series = np.logspace(-20, -3.001, 200)
         x_basic = np.logspace(-2.999, 0, 10, endpoint=False)
 
-        if dtype is np.longcomplex:
+        if glibc_older_than("2.19") and dtype is np.longcomplex:
+            if (platform.machine() == 'aarch64' and bad_arcsinh()):
+                pytest.skip("Trig functions of np.longcomplex values known "
+                            "to be inaccurate on aarch64 for some compilation "
+                            "configurations.")
             # It's not guaranteed that the system-provided arc functions
             # are accurate down to a few epsilons. (Eg. on Linux 64-bit)
             # So, give more leeway for long complex tests here:
-            # Can use 2.1 for > Ubuntu LTS Trusty (2014), glibc = 2.19.
-            if skip_longcomplex_msg:
-                pytest.skip(skip_longcomplex_msg)
             check(x_series, 50.0*eps)
         else:
             check(x_series, 2.1*eps)
