@@ -190,4 +190,37 @@ NPY_FINLINE npyv_s64 npyv_min_s64(npyv_s64 a, npyv_s64 b)
     #define npyv_ceil_f64 vrndpq_f64
 #endif // NPY_SIMD_F64
 
+// trunc
+#ifdef NPY_HAVE_ASIMD
+    #define npyv_trunc_f32 vrndq_f32
+#else
+   NPY_FINLINE npyv_f32 npyv_trunc_f32(npyv_f32 a)
+   {
+        const npyv_s32 szero = vreinterpretq_s32_f32(vdupq_n_f32(-0.0f));
+        const npyv_s32 max_int = vdupq_n_s32(0x7fffffff);
+        /**
+         * On armv7, vcvtq.f32 handles special cases as follows:
+         *  NaN return 0
+         * +inf or +outrange return 0x80000000(-0.0f)
+         * -inf or -outrange return 0x7fffffff(nan)
+         */
+        npyv_s32 roundi = vcvtq_s32_f32(a);
+        npyv_f32 round = vcvtq_f32_s32(roundi);
+        // respect signed zero, e.g. -0.5 -> -0.0
+        npyv_f32 rzero = vreinterpretq_f32_s32(vorrq_s32(
+            vreinterpretq_s32_f32(round),
+            vandq_s32(vreinterpretq_s32_f32(a), szero)
+        ));
+        // if nan or overflow return a
+        npyv_u32 nnan = npyv_notnan_f32(a);
+        npyv_u32 overflow = vorrq_u32(
+            vceqq_s32(roundi, szero), vceqq_s32(roundi, max_int)
+        );
+        return vbslq_f32(vbicq_u32(nnan, overflow), rzero, a);
+   }
+#endif
+#if NPY_SIMD_F64
+    #define npyv_trunc_f64 vrndq_f64
+#endif // NPY_SIMD_F64
+
 #endif // _NPY_SIMD_NEON_MATH_H
