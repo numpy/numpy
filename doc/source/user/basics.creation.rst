@@ -75,11 +75,10 @@ assign a new type that satisfies all of the array elements involved in
 the computation, here ``uint32`` and ``int32`` can both be represented in
 as ``int64``. 
 
-The default NumPy behavior is to create arrays in either 64-bit signed
-integers (32-bit signed integers on Windows platform) or double precision
-floating point numbers, ``int64`` (``int32`` on Windows platform) and
-``float``, respectively. If you expect your arrays to be a certain type,
-then you need to specify the ``dtype`` while you create the array. 
+The default NumPy behavior is to create arrays in either 32 or 64-bit signed 
+integers (platform dependent) or double precision floating point numbers, 
+int32/int64 and float, respectively. If you expect your arrays to be a 
+certain type, then you need to specify the dtype while you create the array.
 
 2) Intrinsic NumPy array creation functions
 ===========================================
