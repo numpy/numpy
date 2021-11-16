@@ -1108,12 +1108,12 @@ class TestNanFunctions_Quantile:
         # this is worth retesting, because quantile does not make a copy
         p0 = np.array([0, 0.75, 0.25, 0.5, 1.0])
         p = p0.copy()
-        np.nanquantile(np.arange(100.), p, interpolation="midpoint")
+        np.nanquantile(np.arange(100.), p, method="midpoint")
         assert_array_equal(p, p0)
 
         p0 = p0.tolist()
         p = p.tolist()
-        np.nanquantile(np.arange(100.), p, interpolation="midpoint")
+        np.nanquantile(np.arange(100.), p, method="midpoint")
         assert_array_equal(p, p0)
 
     @pytest.mark.parametrize("axis", [None, 0, 1])

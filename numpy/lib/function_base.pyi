@@ -500,7 +500,7 @@ def median(
     keepdims: bool = ...,
 ) -> _ArrayType: ...
 
-_InterpolationKind = L[
+_MethodKind = L[
     "inverted_cdf",
     "averaged_inverted_cdf",
     "closest_observation",
@@ -523,7 +523,7 @@ def percentile(
     axis: None = ...,
     out: None = ...,
     overwrite_input: bool = ...,
-    interpolation: _InterpolationKind = ...,
+    method: _MethodKind = ...,
     keepdims: L[False] = ...,
 ) -> floating[Any]: ...
 @overload
@@ -533,7 +533,7 @@ def percentile(
     axis: None = ...,
     out: None = ...,
     overwrite_input: bool = ...,
-    interpolation: _InterpolationKind = ...,
+    method: _MethodKind = ...,
     keepdims: L[False] = ...,
 ) -> complexfloating[Any, Any]: ...
 @overload
@@ -543,7 +543,7 @@ def percentile(
     axis: None = ...,
     out: None = ...,
     overwrite_input: bool = ...,
-    interpolation: _InterpolationKind = ...,
+    method: _MethodKind = ...,
     keepdims: L[False] = ...,
 ) -> timedelta64: ...
 @overload
@@ -553,7 +553,7 @@ def percentile(
     axis: None = ...,
     out: None = ...,
     overwrite_input: bool = ...,
-    interpolation: _InterpolationKind = ...,
+    method: _MethodKind = ...,
     keepdims: L[False] = ...,
 ) -> datetime64: ...
 @overload
@@ -563,7 +563,7 @@ def percentile(
     axis: None = ...,
     out: None = ...,
     overwrite_input: bool = ...,
-    interpolation: _InterpolationKind = ...,
+    method: _MethodKind = ...,
     keepdims: L[False] = ...,
 ) -> Any: ...
 @overload
@@ -573,7 +573,7 @@ def percentile(
     axis: None = ...,
     out: None = ...,
     overwrite_input: bool = ...,
-    interpolation: _InterpolationKind = ...,
+    method: _MethodKind = ...,
     keepdims: L[False] = ...,
 ) -> NDArray[floating[Any]]: ...
 @overload
@@ -583,7 +583,7 @@ def percentile(
     axis: None = ...,
     out: None = ...,
     overwrite_input: bool = ...,
-    interpolation: _InterpolationKind = ...,
+    method: _MethodKind = ...,
     keepdims: L[False] = ...,
 ) -> NDArray[complexfloating[Any, Any]]: ...
 @overload
@@ -593,7 +593,7 @@ def percentile(
     axis: None = ...,
     out: None = ...,
     overwrite_input: bool = ...,
-    interpolation: _InterpolationKind = ...,
+    method: _MethodKind = ...,
     keepdims: L[False] = ...,
 ) -> NDArray[timedelta64]: ...
 @overload
@@ -603,7 +603,7 @@ def percentile(
     axis: None = ...,
     out: None = ...,
     overwrite_input: bool = ...,
-    interpolation: _InterpolationKind = ...,
+    method: _MethodKind = ...,
     keepdims: L[False] = ...,
 ) -> NDArray[datetime64]: ...
 @overload
@@ -613,7 +613,7 @@ def percentile(
     axis: None = ...,
     out: None = ...,
     overwrite_input: bool = ...,
-    interpolation: _InterpolationKind = ...,
+    method: _MethodKind = ...,
     keepdims: L[False] = ...,
 ) -> NDArray[object_]: ...
 @overload
@@ -623,7 +623,7 @@ def percentile(
     axis: None | _ShapeLike = ...,
     out: None = ...,
     overwrite_input: bool = ...,
-    interpolation: _InterpolationKind = ...,
+    method: _MethodKind = ...,
     keepdims: bool = ...,
 ) -> Any: ...
 @overload
@@ -633,7 +633,7 @@ def percentile(
     axis: None | _ShapeLike = ...,
     out: _ArrayType = ...,
     overwrite_input: bool = ...,
-    interpolation: _InterpolationKind = ...,
+    method: _MethodKind = ...,
     keepdims: bool = ...,
 ) -> _ArrayType: ...
 
