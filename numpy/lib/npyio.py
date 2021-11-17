@@ -1811,36 +1811,32 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             try:
                 fname = os_fspath(fname)
             except TypeError as e:
-                    raise TypeError(
-                        f"fname must be a string.\n"
-                        f"Got {type(fname)} instead."
-                    ) from e 
-
+                raise TypeError(
+                    f"fname must be a string.\n"
+                    f"Got {type(fname)} instead."
+                ) from e 
         if isinstance(fname, str):
             fid = np.lib._datasource.open(fname, 'rt', encoding=encoding)
-
             try:
                 fid_ctx = contextlib.closing(fid)
             except TypeError as e:
-                    raise TypeError(
-                        f"expecting file object.\n"
-                        f"Got {type(fid)} instead."
-                    ) from e 
+                raise TypeError(
+                    f"expecting file object.\n"
+                    f"Got {type(fid)} instead."
+                ) from e 
         else:
             fid = fname
             fid_ctx = contextlib.nullcontext(fid)
         try:
             fhd = iter(fid)
         except TypeError as e:
-                raise TypeError(
-                    f"expecting iterable sequence such as sets, tuples, etc.\n"
-                    f"Got {type(fid)} instead."
-                ) from e 
+            raise TypeError(
+                f"expecting iterable sequence such as sets, tuples, etc.\n"
+                f"Got {type(fid)} instead."
+            ) from e 
     except TypeError as e:
-            raise e
+        raise e
     
-
-
     with fid_ctx:
         split_line = LineSplitter(delimiter=delimiter, comments=comments,
                                   autostrip=autostrip, encoding=encoding)
