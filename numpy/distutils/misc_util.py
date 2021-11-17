@@ -31,8 +31,6 @@ def clean_up_temporary_directory():
 
 atexit.register(clean_up_temporary_directory)
 
-from numpy.compat import npy_load_module
-
 __all__ = ['Configuration', 'get_numpy_include_dirs', 'default_config_dict',
            'dict_append', 'appendpath', 'generate_config_py',
            'get_cmd', 'allpath', 'get_mathlibs',
@@ -44,7 +42,8 @@ __all__ = ['Configuration', 'get_numpy_include_dirs', 'default_config_dict',
            'dot_join', 'get_frame', 'minrelpath', 'njoin',
            'is_sequence', 'is_string', 'as_list', 'gpaths', 'get_language',
            'get_build_architecture', 'get_info', 'get_pkg_info',
-           'get_num_build_jobs', 'sanitize_cxx_flags']
+           'get_num_build_jobs', 'sanitize_cxx_flags',
+           'exec_mod_from_location']
 
 class InstallableLib:
     """
@@ -945,9 +944,8 @@ class Configuration:
         try:
             setup_name = os.path.splitext(os.path.basename(setup_py))[0]
             n = dot_join(self.name, subpackage_name, setup_name)
-            setup_module = npy_load_module('_'.join(n.split('.')),
-                                           setup_py,
-                                           ('.py', 'U', 1))
+            setup_module = exec_mod_from_location(
+                                '_'.join(n.split('.')), setup_py)
             if not hasattr(setup_module, 'configuration'):
                 if not self.options['assume_default_configuration']:
                     self.warn('Assuming default configuration '\
@@ -1993,8 +1991,8 @@ class Configuration:
                 name = os.path.splitext(os.path.basename(fn))[0]
                 n = dot_join(self.name, name)
                 try:
-                    version_module = npy_load_module('_'.join(n.split('.')),
-                                                     fn, info)
+                    version_module = exec_mod_from_location(
+                                        '_'.join(n.split('.')), fn)
                 except ImportError as e:
                     self.warn(str(e))
                     version_module = None
@@ -2490,4 +2488,14 @@ def sanitize_cxx_flags(cxxflags):
     '''
     return [flag for flag in cxxflags if flag not in _cxx_ignore_flags]
 
+
+def exec_mod_from_location(modname, modfile):
+    '''
+    Use importlib machinery to import a module `modname` from the file
+    `modfile`
+    '''
+    spec = importlib.util.spec_from_file_location(modname, modfile)
+    foo = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(foo)
+    return foo
 
