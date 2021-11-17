@@ -1526,7 +1526,8 @@ def ndenumerate(a):
 
     Return an iterator yielding pairs of array coordinates and values of
     elements that are not masked.
-
+    .. versionadded:: 1.23.0
+    
     Parameters
     ----------
     a : array_like
