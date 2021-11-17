@@ -1980,7 +1980,7 @@ def shape(a):
 
     See Also
     --------
-    len
+    len : ``len(a)`` is equivalent to ``np.shape(a)[0]`` for 1+-dim arrays.
     ndarray.shape : Equivalent array method.
 
     Examples
