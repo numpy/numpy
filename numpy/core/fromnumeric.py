@@ -1980,7 +1980,8 @@ def shape(a):
 
     See Also
     --------
-    len : ``len(a)`` is equivalent to ``np.shape(a)[0]`` for 1+-dim arrays.
+    len : ``len(a)`` is equivalent to ``np.shape(a)[0]`` for N-D arrays with
+          ``N>=1``.
     ndarray.shape : Equivalent array method.
 
     Examples
@@ -1995,7 +1996,7 @@ def shape(a):
     ()
 
     >>> a = np.array([(1, 2), (3, 4), (5, 6)],
-                     dtype=[('x', 'i4'), ('y', 'i4')])
+    ...              dtype=[('x', 'i4'), ('y', 'i4')])
     >>> np.shape(a)
     (3,)
     >>> a.shape
