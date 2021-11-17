@@ -8187,18 +8187,6 @@ def test_scalar_element_deletion():
     assert_raises(ValueError, a[0].__delitem__, 'x')
 
 
-class TestMemEventHook:
-    def test_mem_seteventhook(self):
-        # The actual tests are within the C code in
-        # multiarray/_multiarray_tests.c.src
-        _multiarray_tests.test_pydatamem_seteventhook_start()
-        # force an allocation and free of a numpy array
-        # needs to be larger then limit of small memory cacher in ctors.c
-        a = np.zeros(1000)
-        del a
-        break_cycles()
-        _multiarray_tests.test_pydatamem_seteventhook_end()
-
 class TestMapIter:
     def test_mapiter(self):
         # The actual tests are within the C code in
