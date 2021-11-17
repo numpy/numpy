@@ -2949,6 +2949,10 @@ nonstructured_to_structured_resolve_descriptors(
         if (base_casting < 0) {
             return -1;
         }
+        if (given_descrs[1]->elsize == given_descrs[1]->subarray->base->elsize) {
+            /* A single field, view is OK if sub-view is */
+            *view_offset = sub_view_offset;
+        }
         casting = PyArray_MinCastSafety(casting, base_casting);
     }
     else if (given_descrs[1]->names != NULL) {
@@ -2965,15 +2969,26 @@ nonstructured_to_structured_resolve_descriptors(
             PyObject *key, *tuple;
             while (PyDict_Next(given_descrs[1]->fields, &pos, &key, &tuple)) {
                 PyArray_Descr *field_descr = (PyArray_Descr *)PyTuple_GET_ITEM(tuple, 0);
+                npy_intp field_view_off = NPY_MIN_INTP;
                 NPY_CASTING field_casting = PyArray_GetCastInfo(
-                        given_descrs[0], field_descr, NULL, view_offset);
+                        given_descrs[0], field_descr, NULL, &field_view_off);
                 casting = PyArray_MinCastSafety(casting, field_casting);
                 if (casting < 0) {
                     return -1;
                 }
+                if (field_view_off != NPY_MIN_INTP) {
+                    npy_intp to_off = PyLong_AsSsize_t(PyTuple_GET_ITEM(tuple, 1));
+                    if (error_converting(to_off)) {
+                        return -1;
+                    }
+                    *view_offset = field_view_off - to_off;
+                }
             }
             if (PyTuple_Size(given_descrs[1]->names) != 1) {
-                /* A view cannot be acceptable, unset whatever the loop set */
+                /*
+                 * Assume that a view is impossible when there is more than one
+                 * field.  (Fields could overlap, but that seems weird...)
+                 */
                 *view_offset = NPY_MIN_INTP;
             }
         }
@@ -2984,7 +2999,7 @@ nonstructured_to_structured_resolve_descriptors(
                 !PyDataType_REFCHK(given_descrs[0])) {
             /*
              * A simple view, at the moment considered "safe" (the refcheck is
-             * probably not necessary, but more future proof
+             * probably not necessary, but more future proof)
              */
             *view_offset = 0;
             casting = NPY_SAFE_CASTING;
@@ -2994,6 +3009,10 @@ nonstructured_to_structured_resolve_descriptors(
         }
         else {
             casting = NPY_UNSAFE_CASTING;
+            /* new elsize is smaller so a view is OK (reject refs for now) */
+            if (!PyDataType_REFCHK(given_descrs[0])) {
+                *view_offset = 0;
+            }
         }
     }
 
@@ -3089,6 +3108,8 @@ PyArray_GetGenericToVoidCastingImpl(void)
     method->casting = -1;
     method->resolve_descriptors = &nonstructured_to_structured_resolve_descriptors;
     method->get_strided_loop = &nonstructured_to_structured_get_loop;
+    method->nin = 1;
+    method->nout = 1;
 
     return (PyObject *)method;
 }
@@ -3100,12 +3121,18 @@ structured_to_nonstructured_resolve_descriptors(
         PyArray_DTypeMeta *dtypes[2],
         PyArray_Descr *given_descrs[2],
         PyArray_Descr *loop_descrs[2],
-        npy_intp *NPY_UNUSED(view_offset))
+        npy_intp *view_offset)
 {
     PyArray_Descr *base_descr;
+    /* The structured part may allow a view (and have its own offset): */
+    npy_intp struct_view_offset = NPY_MIN_INTP;
 
     if (given_descrs[0]->subarray != NULL) {
         base_descr = given_descrs[0]->subarray->base;
+        /* A view is possible if the subarray has exactly one element: */
+        if (given_descrs[0]->elsize == given_descrs[0]->subarray->base->elsize) {
+            struct_view_offset = 0;
+        }
     }
     else if (given_descrs[0]->names != NULL) {
         if (PyTuple_Size(given_descrs[0]->names) != 1) {
@@ -3115,6 +3142,10 @@ structured_to_nonstructured_resolve_descriptors(
         PyObject *key = PyTuple_GetItem(given_descrs[0]->names, 0);
         PyObject *base_tup = PyDict_GetItem(given_descrs[0]->fields, key);
         base_descr = (PyArray_Descr *)PyTuple_GET_ITEM(base_tup, 0);
+        struct_view_offset = PyLong_AsSsize_t(PyTuple_GET_ITEM(base_tup, 1));
+        if (error_converting(struct_view_offset)) {
+            return -1;
+        }
     }
     else {
         /*
@@ -3122,21 +3153,29 @@ structured_to_nonstructured_resolve_descriptors(
          * at this time they go back to legacy behaviour using getitem/setitem.
          */
         base_descr = NULL;
+        struct_view_offset = 0;
     }
 
     /*
      * The cast is always considered unsafe, so the PyArray_GetCastInfo
-     * result currently does not matter.
+     * result currently only matters for the view_offset.
      */
-    npy_intp view_offset;
+    npy_intp base_view_offset = NPY_MIN_INTP;
     if (base_descr != NULL && PyArray_GetCastInfo(
-            base_descr, given_descrs[1], dtypes[1], &view_offset) < 0) {
+            base_descr, given_descrs[1], dtypes[1], &base_view_offset) < 0) {
         return -1;
+    }
+    if (base_view_offset != NPY_MIN_INTP
+            && struct_view_offset != NPY_MIN_INTP) {
+        *view_offset = base_view_offset + struct_view_offset;
     }
 
     /* Void dtypes always do the full cast. */
     if (given_descrs[1] == NULL) {
         loop_descrs[1] = NPY_DT_CALL_default_descr(dtypes[1]);
+        if (loop_descrs[1] == NULL) {
+            return -1;
+        }
         /*
          * Special case strings here, it should be useless (and only actually
          * work for empty arrays).  Possibly this should simply raise for
@@ -3230,6 +3269,8 @@ PyArray_GetVoidToGenericCastingImpl(void)
     method->casting = -1;
     method->resolve_descriptors = &structured_to_nonstructured_resolve_descriptors;
     method->get_strided_loop = &structured_to_nonstructured_get_loop;
+    method->nin = 1;
+    method->nout = 1;
 
     return (PyObject *)method;
 }
@@ -3247,14 +3288,14 @@ static NPY_CASTING
 can_cast_fields_safety(
         PyArray_Descr *from, PyArray_Descr *to, npy_intp *view_offset)
 {
-    NPY_CASTING casting = NPY_NO_CASTING;
-    *view_offset = 0;  /* if there are no fields, a view is OK. */
-
     Py_ssize_t field_count = PyTuple_Size(from->names);
     if (field_count != PyTuple_Size(to->names)) {
         /* TODO: This should be rejected! */
         return NPY_UNSAFE_CASTING;
     }
+
+    NPY_CASTING casting = NPY_NO_CASTING;
+    *view_offset = 0;  /* if there are no fields, a view is OK. */
     for (Py_ssize_t i = 0; i < field_count; i++) {
         npy_intp field_view_off = NPY_MIN_INTP;
         PyObject *from_key = PyTuple_GET_ITEM(from->names, i);
@@ -3295,7 +3336,10 @@ can_cast_fields_safety(
             field_view_off = field_view_off - to_off + from_off;
         }
 
-        /* Propagate view offset if all match, otherwise set to invalid */
+        /*
+         * If there is one field, use its field offset.  After that propagate
+         * the view offset if they match and set to "invalid" if not.
+         */
         if (i == 0) {
             *view_offset = field_view_off;
         }
@@ -3372,14 +3416,15 @@ void_to_void_resolve_descriptors(
                 given_descrs[1]->subarray == NULL) {
         /* Both are plain void dtypes */
         if (given_descrs[0]->elsize == given_descrs[1]->elsize) {
-            *view_offset = 0;
             casting = NPY_NO_CASTING;
+            *view_offset = 0;
         }
         else if (given_descrs[0]->elsize < given_descrs[1]->elsize) {
             casting = NPY_SAFE_CASTING;
         }
         else {
             casting = NPY_SAME_KIND_CASTING;
+            *view_offset = 0;
         }
     }
     else {
@@ -3393,40 +3438,53 @@ void_to_void_resolve_descriptors(
 
         /* If the shapes do not match, this is at most an unsafe cast */
         casting = NPY_UNSAFE_CASTING;
+        /*
+         * We can use a view in two cases:
+         * 1. The shapes and elsizes matches, so any view offset applies to
+         *    each element of the subarray identically.
+         *    (in practice this probably implies the `view_offset` will be 0)
+         * 2. There is exactly one element and the subarray has no effect
+         *    (can be tested by checking if the itemsizes of the base matches)
+         */
+        npy_bool subarray_layout_supports_view = NPY_FALSE;
         if (from_sub && to_sub) {
             int res = PyObject_RichCompareBool(from_sub->shape, to_sub->shape, Py_EQ);
             if (res < 0) {
                 return -1;
             }
             else if (res) {
-                /* Both are subarrays and the shape matches */
+                /* Both are subarrays and the shape matches, could be no cast */
                 casting = NPY_NO_CASTING;
-                if (from_sub->base->elsize == to_sub->base->elsize) {
-                    /*
-                     * may be a view if base is a also 0-offset view, the
-                     * itemsizes must match, or the base "stride" would differ.
-                     */
-                    *view_offset = 0;
+                /* May be a view if there is one element or elsizes match */
+                if (from_sub->base->elsize == to_sub->base->elsize
+                        || given_descrs[0]->elsize == from_sub->base->elsize) {
+                    subarray_layout_supports_view = NPY_TRUE;
                 }
             }
         }
-        /*
-         * TODO: If the subarrays have size 1 (or the one of them) a view is
-         *       in theory possible in some additional cases since the elsize
-         *       requirement above is not strictly required.
-         */
+        else if (from_sub) {
+            /* May use a view if "from" has only a single element: */
+            if (given_descrs[0]->elsize == from_sub->base->elsize) {
+                subarray_layout_supports_view = NPY_TRUE;
+            }
+        }
+        else {
+            /* May use a view if "from" has only a single element: */
+            if (given_descrs[1]->elsize == to_sub->base->elsize) {
+                subarray_layout_supports_view = NPY_TRUE;
+            }
+        }
+
         PyArray_Descr *from_base = (from_sub == NULL) ? given_descrs[0] : from_sub->base;
         PyArray_Descr *to_base = (to_sub == NULL) ? given_descrs[1] : to_sub->base;
         /* An offset for  */
-        npy_intp base_off = NPY_MIN_INTP;
         NPY_CASTING field_casting = PyArray_GetCastInfo(
-                from_base, to_base, NULL, &base_off);
+                from_base, to_base, NULL, view_offset);
+        if (!subarray_layout_supports_view) {
+            *view_offset = NPY_MIN_INTP;
+        }
         if (field_casting < 0) {
             return -1;
-        }
-        if (base_off != 0) {
-            /* Only a zero offset can work for multiple contiguous elements */
-            *view_offset = NPY_MIN_INTP;
         }
         casting = PyArray_MinCastSafety(casting, field_casting);
     }

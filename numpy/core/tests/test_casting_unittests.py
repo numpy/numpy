@@ -737,6 +737,43 @@ class TestCasting:
         # The shifts of the fields are not identical, a view is not possible:
         assert view_off is None
 
+    @pytest.mark.parametrize(("from_dt", "to_dt", "expected_off"), [
+            # Subarray cases:
+            ("i", "(1,1)i", 0),
+            ("(1,1)i", "i", 0),
+            ("(2,1)i", "(2,1)i", 0),
+            # field cases (field to field is tested explicitly also):
+            ("i", dict(names=["a"], formats=["i"], offsets=[2]), -2),
+            (dict(names=["a"], formats=["i"], offsets=[2]), "i", 2),
+            # Currently considered not viewable, due to multiple fields
+            # even though they overlap (maybe we should not allow that?)
+            ("i", dict(names=["a", "b"], formats=["i", "i"], offsets=[2, 2]),
+             None),
+            # different number of fields can't work, should probably just fail
+            # so it never reports "viewable":
+            ("i,i", "i,i,i", None),
+            # Unstructured void cases:
+            ("i4", "V3", 0),  # void smaller or equal
+            ("i4", "V4", 0),  # void smaller or equal
+            ("i4", "V10", None),  # void is larger (no view)
+            ("O", "V4", None),  # currently reject objects for view here.
+            ("O", "V8", None),  # currently reject objects for view here.
+            ("V4", "V3", 0),
+            ("V4", "V4", 0),
+            ("V3", "V4", None),
+            ("V4", "i4", None),
+        ])
+    def test_structured_view_offsets_paramteric(
+            self, from_dt, to_dt, expected_off):
+        # TODO: While this test is fairly thorough, right now, it does not
+        # really test some paths that may have nonzero offsets (they don't
+        # really exists).
+        from_dt = np.dtype(from_dt)
+        to_dt = np.dtype(to_dt)
+        cast = get_castingimpl(type(from_dt), type(to_dt))
+        _, _, view_off = cast._resolve_descriptors((from_dt, to_dt))
+        assert view_off == expected_off
+
     @pytest.mark.parametrize("dtype", np.typecodes["All"])
     def test_object_casts_NULL_None_equivalence(self, dtype):
         # None to <other> casts may succeed or fail, but a NULL'ed array must
