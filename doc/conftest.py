@@ -13,10 +13,13 @@ matplotlib.use('agg', force=True)
 # https://github.com/wooyek/pytest-doctest-ellipsis-markers (MIT license)
 OutputChecker = doctest.OutputChecker
 
+empty_line_markers = ['<matplotlib.', '<mpl_toolkits.mplot3d.']
 class SkipMatplotlibOutputChecker(doctest.OutputChecker):
     def check_output(self, want, got, optionflags):
-        if '<matplotlib.' in got:
-            got = ''
+        for marker in empty_line_markers:
+            if marker in got:
+                got = ''
+                break
         return OutputChecker.check_output(self, want, got, optionflags)
 
 doctest.OutputChecker = SkipMatplotlibOutputChecker
