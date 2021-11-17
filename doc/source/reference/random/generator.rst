@@ -71,17 +71,17 @@ By default, `Generator.permuted` returns a copy.  To operate in-place with
 `Generator.permuted`, pass the same array as the first argument *and* as
 the value of the ``out`` parameter.  For example,
 
-    >>> rng = np.random.default_rng(12345)
+    >>> rng = np.random.default_rng()
     >>> x = np.arange(0, 15).reshape(3, 5)
-    >>> x
+    >>> x #doctest: +SKIP
     array([[ 0,  1,  2,  3,  4],
            [ 5,  6,  7,  8,  9],
            [10, 11, 12, 13, 14]])
     >>> y = rng.permuted(x, axis=1, out=x)
-    >>> x
-    array([[ 4,  3,  0,  2,  1],
-           [ 9,  7,  6,  8,  5],
-           [10, 12, 13, 11, 14]])
+    >>> x #doctest: +SKIP
+    array([[ 1,  0,  2,  4,  3],  # random
+           [ 6,  7,  8,  9,  5],
+           [10, 14, 11, 13, 12]])
 
 Note that when ``out`` is given, the return value is ``out``:
 
@@ -97,16 +97,16 @@ which dimension of the input array to use as the sequence. In the case of a
 two-dimensional array, ``axis=0`` will, in effect, rearrange the rows of the
 array, and  ``axis=1`` will rearrange the columns.  For example
 
-    >>> rng = np.random.default_rng(2345)
+    >>> rng = np.random.default_rng()
     >>> x = np.arange(0, 15).reshape(3, 5)
     >>> x
     array([[ 0,  1,  2,  3,  4],
            [ 5,  6,  7,  8,  9],
            [10, 11, 12, 13, 14]])
-    >>> rng.permutation(x, axis=1)
-    array([[ 4,  2,  1,  3,  0],
-           [ 9,  7,  6,  8,  5],
-           [14, 12, 11, 13, 10]])
+    >>> rng.permutation(x, axis=1) #doctest: +SKIP
+    array([[ 1,  3,  2,  0,  4],  # random
+           [ 6,  8,  7,  5,  9],
+           [11, 13, 12, 10, 14]])
 
 Note that the columns have been rearranged "in bulk": the values within
 each column have not changed.
@@ -116,10 +116,10 @@ how `numpy.sort` treats it.  Each slice along the given axis is shuffled
 independently of the others.  Compare the following example of the use of
 `Generator.permuted` to the above example of `Generator.permutation`:
 
-    >>> rng.permuted(x, axis=1)
-    array([[ 1,  2,  0,  3,  4],
-           [ 7,  9,  8,  6,  5],
-           [13, 11, 10, 14, 12]])
+    >>> rng.permuted(x, axis=1) #doctest: +SKIP
+    array([[ 1,  0,  2,  4,  3],  # random
+           [ 5,  7,  6,  9,  8],
+           [10, 14, 12, 13, 11]])
 
 In this example, the values within each row (i.e. the values along
 ``axis=1``) have been shuffled independently.  This is not a "bulk"
@@ -131,11 +131,11 @@ Shuffling non-NumPy sequences
 a sequence that is not a NumPy array, it shuffles that sequence in-place.
 For example,
 
-    >>> rng = np.random.default_rng(3456)
+    >>> rng = np.random.default_rng()
     >>> a = ['A', 'B', 'C', 'D', 'E']
     >>> rng.shuffle(a)  # shuffle the list in-place
-    >>> a
-    ['B', 'E', 'A', 'D', 'C']
+    >>> a #doctest: +SKIP
+    ['B', 'D', 'A', 'E', 'C']  # random
 
 Distributions
 =============
