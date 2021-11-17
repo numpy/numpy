@@ -1,3 +1,0 @@
-Added support for LoongArch
-------------------------------------------------
-LoongArch is a new instruction set, numpy compilation failure on LoongArch architecture, so add the commit.

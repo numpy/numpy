@@ -61,4 +61,5 @@
 0x0000000e = 17a0f366e55ec05e5c5c149123478452
 
 # Version 15 (NumPy 1.22) Configurable memory allocations
+# Version 14 (NumPy 1.23) No change.
 0x0000000f = b8783365b873681cd204be50cdfb448d

@@ -227,13 +227,13 @@ class MGridClass(nd_grid):
 
     See Also
     --------
-    numpy.lib.index_tricks.nd_grid : class of `ogrid` and `mgrid` objects
+    lib.index_tricks.nd_grid : class of `ogrid` and `mgrid` objects
     ogrid : like mgrid but returns open (not fleshed out) mesh grids
     r_ : array concatenator
 
     Examples
     --------
-    >>> np.mgrid[0:5,0:5]
+    >>> np.mgrid[0:5, 0:5]
     array([[[0, 0, 0, 0, 0],
             [1, 1, 1, 1, 1],
             [2, 2, 2, 2, 2],
