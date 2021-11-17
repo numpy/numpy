@@ -1,3 +1,0 @@
-* the misspelled keyword argument ``delimitor`` of
-  ``numpy.ma.mrecords.fromtextfile()`` has been changed into
-  ``delimiter``, using it will emit a deprecation warning.
