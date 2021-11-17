@@ -1987,18 +1987,19 @@ def shape(a):
     --------
     >>> np.shape(np.eye(3))
     (3, 3)
-    >>> np.shape([[1, 2]])
+    >>> np.shape([[1, 3]])
     (1, 2)
     >>> np.shape([0])
     (1,)
     >>> np.shape(0)
     ()
 
-    >>> a = np.array([(1, 2), (3, 4)], dtype=[('x', 'i4'), ('y', 'i4')])
+    >>> a = np.array([(1, 2), (3, 4), (5, 6)],
+                     dtype=[('x', 'i4'), ('y', 'i4')])
     >>> np.shape(a)
-    (2,)
+    (3,)
     >>> a.shape
-    (2,)
+    (3,)
 
     """
     try:
