@@ -2481,7 +2481,7 @@ def get_build_architecture():
     return get_build_architecture()
 
 
-_cxx_ignore_flags = {'-Werror=implicit-function-declaration'}
+_cxx_ignore_flags = {'-Werror=implicit-function-declaration', '-std=c99'}
 
 
 def sanitize_cxx_flags(cxxflags):
