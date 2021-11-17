@@ -967,7 +967,7 @@ All you need to do is pass in the number of elements you want it to generate::
   array([1., 1., 1.])
   >>> np.zeros(3)
   array([0., 0., 0.])
-  >>> rng = np.random.default_rng(0) # the simplest way to generate random numbers
+  >>> rng = np.random.default_rng()  # the simplest way to generate random numbers
   >>> rng.random(3) #doctest: +SKIP
   array([0.63696169, 0.26978671, 0.04097352])
 
@@ -1684,7 +1684,6 @@ With Matplotlib, you have access to an enormous number of visualization options.
   >>> Z = np.sin(R)
 
   >>> ax.plot_surface(X, Y, Z, rstride=1, cstride=1, cmap='viridis')
-  <mpl_toolkits.mplot3d.art3d.Poly3DCollection object at 0x...>
 
 .. plot:: user/plots/matplotlib3.py
    :align: center
