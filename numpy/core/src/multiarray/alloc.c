@@ -242,7 +242,6 @@ PyDataMem_SetEventHook(PyDataMem_EventHookFunc *newhook,
     WARN_NO_RETURN(PyExc_DeprecationWarning,
                      "PyDataMem_SetEventHook is deprecated, use tracemalloc "
                      "and the 'np.lib.tracemalloc_domain' domain");
-    PyErr_Clear();
     temp = _PyDataMem_eventhook;
     _PyDataMem_eventhook = newhook;
     if (old_data != NULL) {
@@ -468,7 +467,6 @@ PyDataMem_UserFREE(void *ptr, size_t size, PyObject *mem_handler)
     if (handler == NULL) {
         WARN_NO_RETURN(PyExc_RuntimeWarning,
                      "Could not get pointer to 'mem_handler' from PyCapsule");
-        PyErr_Clear();
         return;
     }
     PyTraceMalloc_Untrack(NPY_TRACE_DOMAIN, (npy_uintp)ptr);
