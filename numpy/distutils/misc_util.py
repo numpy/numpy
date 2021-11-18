@@ -2492,7 +2492,8 @@ def sanitize_cxx_flags(cxxflags):
 def exec_mod_from_location(modname, modfile):
     '''
     Use importlib machinery to import a module `modname` from the file
-    `modfile`
+    `modfile`. Depending on the `spec.loader`, the module may not be
+    registered in sys.modules.
     '''
     spec = importlib.util.spec_from_file_location(modname, modfile)
     foo = importlib.util.module_from_spec(spec)
