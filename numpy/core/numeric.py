@@ -1800,7 +1800,7 @@ def fromfunction(function, shape, *, dtype=float, like=None, **kwargs):
         `shape`.  Each parameter represents the coordinates of the array
         varying along a specific axis.  For example, if `shape`
         were ``(2, 2)``, then the parameters would be
-        ``array([[0, 0], [0, 1]])`` and ``array([[1, 0], [1, 1]])``
+        ``array([[0, 0], [1, 1]])`` and ``array([[0, 1], [0, 1]])``
     shape : (N,) tuple of ints
         Shape of the output array, which also determines the shape of
         the coordinate arrays passed to `function`.
@@ -1829,6 +1829,14 @@ def fromfunction(function, shape, *, dtype=float, like=None, **kwargs):
 
     Examples
     --------
+    >>> np.fromfunction(lambda i, j: i, (2, 2), dtype=float)
+    array([[0., 0.],
+           [1., 1.]])
+           
+    >>> np.fromfunction(lambda i, j: j, (2, 2), dtype=float)    
+    array([[0., 1.],
+           [0., 1.]])
+           
     >>> np.fromfunction(lambda i, j: i == j, (3, 3), dtype=int)
     array([[ True, False, False],
            [False,  True, False],
