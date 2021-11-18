@@ -1345,7 +1345,8 @@ npyiter_remove_multi_index(NewNpyArrayIterObject *self, PyObject *NPY_UNUSED(arg
 }
 
 static PyObject *
-npyiter_enable_external_loop(NewNpyArrayIterObject *self, PyObject *NPY_UNUSED(args))
+npyiter_enable_external_loop(
+    NewNpyArrayIterObject *self, PyObject *NPY_UNUSED(args))
 {
     if (self->iter == NULL) {
         PyErr_SetString(PyExc_ValueError,
