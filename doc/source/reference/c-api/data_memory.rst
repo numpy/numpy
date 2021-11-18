@@ -20,8 +20,8 @@ Historical overview
 Since version 1.7.0, NumPy has exposed a set of ``PyDataMem_*`` functions
 (:c:func:`PyDataMem_NEW`, :c:func:`PyDataMem_FREE`, :c:func:`PyDataMem_RENEW`)
 which are backed by `alloc`, `free`, `realloc` respectively. In that version
-NumPy also exposed the `PyDataMem_EventHook` function described below, which
-wrap the OS-level calls.
+NumPy also exposed the `PyDataMem_EventHook` function (now deprecated)
+described below, which wrap the OS-level calls.
 
 Since those early days, Python also improved its memory management
 capabilities, and began providing
@@ -50,10 +50,10 @@ management routines can use :c:func:`PyDataMem_SetHandler`, which uses a
 :c:type:`PyDataMem_Handler` structure to hold pointers to functions used to
 manage the data memory. The calls are still wrapped by internal routines to
 call :c:func:`PyTraceMalloc_Track`, :c:func:`PyTraceMalloc_Untrack`, and will
-use the :c:func:`PyDataMem_EventHookFunc` mechanism. Since the functions may
-change during the lifetime of the process, each ``ndarray`` carries with it the
-functions used at the time of its instantiation, and these will be used to
-reallocate or free the data memory of the instance.
+use the deprecated :c:func:`PyDataMem_EventHookFunc` mechanism. Since the
+functions may change during the lifetime of the process, each ``ndarray``
+carries with it the functions used at the time of its instantiation, and these
+will be used to reallocate or free the data memory of the instance.
 
 .. c:type:: PyDataMem_Handler
 
@@ -119,7 +119,9 @@ For an example of setting up and using the PyDataMem_Handler, see the test in
     thread.  The hook should be written to be reentrant, if it performs
     operations that might cause new allocation events (such as the
     creation/destruction numpy objects, or creating/destroying Python
-    objects which might cause a gc)
+    objects which might cause a gc).
+
+    Deprecated in v1.23
 
 What happens when deallocating if there is no policy set
 --------------------------------------------------------
