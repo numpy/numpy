@@ -285,7 +285,8 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
     ----------
     file : file-like object, string, or pathlib.Path
         The file to read. File-like objects must support the
-        ``seek()`` and ``read()`` methods. Pickled files require that the
+        ``seek()`` and ``read()`` methods and must always 
+        be opened in binary mode.  Pickled files require that the
         file-like object support the ``readline()`` method as well.
     mmap_mode : {None, 'r+', 'r', 'w+', 'c'}, optional
         If not None, then memory-map the file, using the given mode (see

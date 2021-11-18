@@ -4,7 +4,6 @@ import numpy as np
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_almost_equal,
     assert_array_almost_equal, assert_raises, assert_raises_regex,
-    assert_warns
     )
 from numpy.lib.index_tricks import (
     mgrid, ogrid, ndenumerate, fill_diagonal, diag_indices, diag_indices_from,

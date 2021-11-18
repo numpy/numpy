@@ -193,6 +193,10 @@ resolve_implementation_info(PyUFuncObject *ufunc,
                 /* Unspecified out always matches (see below for inputs) */
                 continue;
             }
+            if (resolver_dtype == (PyArray_DTypeMeta *)Py_None) {
+                /* always matches */
+                continue;
+            }
             if (given_dtype == resolver_dtype) {
                 continue;
             }
@@ -267,8 +271,39 @@ resolve_implementation_info(PyUFuncObject *ufunc,
                  *       the subclass should be considered a better match
                  *       (subclasses are always more specific).
                  */
+                /* Whether this (normally output) dtype was specified at all */
+                if (op_dtypes[i] == NULL) {
+                    /*
+                     * When DType is completely unspecified, prefer abstract
+                     * over concrete, assuming it will resolve.
+                     * Furthermore, we cannot decide which abstract/None
+                     * is "better", only concrete ones which are subclasses
+                     * of Abstract ones are defined as worse.
+                     */
+                    npy_bool prev_is_concrete = NPY_FALSE;
+                    npy_bool new_is_concrete = NPY_FALSE;
+                    if ((prev_dtype != Py_None) &&
+                            !NPY_DT_is_abstract((PyArray_DTypeMeta *)prev_dtype)) {
+                        prev_is_concrete = NPY_TRUE;
+                    }
+                    if ((new_dtype != Py_None) &&
+                            !NPY_DT_is_abstract((PyArray_DTypeMeta *)new_dtype)) {
+                        new_is_concrete = NPY_TRUE;
+                    }
+                    if (prev_is_concrete == new_is_concrete) {
+                        best = -1;
+                    }
+                    else if (prev_is_concrete) {
+                        unambiguously_equally_good = 0;
+                        best = 1;
+                    }
+                    else {
+                        unambiguously_equally_good = 0;
+                        best = 0;
+                    }
+                }
                 /* If either is None, the other is strictly more specific */
-                if (prev_dtype == Py_None) {
+                else if (prev_dtype == Py_None) {
                     unambiguously_equally_good = 0;
                     best = 1;
                 }
@@ -289,13 +324,29 @@ resolve_implementation_info(PyUFuncObject *ufunc,
                      */
                     best = -1;
                 }
+                else if (!NPY_DT_is_abstract((PyArray_DTypeMeta *)prev_dtype)) {
+                    /* old is not abstract, so better (both not possible) */
+                    unambiguously_equally_good = 0;
+                    best = 0;
+                }
+                else if (!NPY_DT_is_abstract((PyArray_DTypeMeta *)new_dtype)) {
+                    /* new is not abstract, so better (both not possible) */
+                    unambiguously_equally_good = 0;
+                    best = 1;
+                }
                 /*
-                 * TODO: Unreachable, but we will need logic for abstract
-                 *       DTypes to decide if one is a subclass of the other
-                 *       (And their subclass relation is well defined.)
+                 * TODO: This will need logic for abstract DTypes to decide if
+                 *       one is a subclass of the other (And their subclass
+                 *       relation is well defined).  For now, we bail out
+                 *       in cas someone manages to get here.
                  */
                 else {
-                    assert(0);
+                    PyErr_SetString(PyExc_NotImplementedError,
+                            "deciding which one of two abstract dtypes is "
+                            "a better match is not yet implemented.  This "
+                            "will pick the better (or bail) in the future.");
+                    *out_info = NULL;
+                    return -1;
                 }
 
                 if ((current_best != -1) && (current_best != best)) {
@@ -612,6 +663,35 @@ promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
             }
             return info;
         }
+        else if (info == NULL && op_dtypes[0] == NULL) {
+            /*
+             * If we have a reduction, fill in the unspecified input/array
+             * assuming it should have the same dtype as the operand input
+             * (or the output one if given).
+             * Then, try again.  In some cases, this will choose different
+             * paths, such as `ll->?` instead of an `??->?` loop for `np.equal`
+             * when the input is `.l->.` (`.` meaning undefined).  This will
+             * then cause an error.  But cast to `?` would always lose
+             * information, and in many cases important information:
+             *
+             * ```python
+             * from operator import eq
+             * from functools import reduce
+             *
+             * reduce(eq, [1, 2, 3]) != reduce(eq, [True, True, True])
+             * ```
+             *
+             * The special cases being `logical_(and|or|xor)` which can always
+             * cast to boolean ahead of time and still give the right answer
+             * (unsafe cast to bool is fine here). We special case these at
+             * the time of this comment (NumPy 1.21).
+             */
+            assert(ufunc->nin == 2 && ufunc->nout == 1);
+            op_dtypes[0] = op_dtypes[2] != NULL ? op_dtypes[2] : op_dtypes[1];
+            Py_INCREF(op_dtypes[0]);
+            return promote_and_get_info_and_ufuncimpl(ufunc,
+                    ops, signature, op_dtypes, allow_legacy_promotion, 1);
+        }
     }
 
     /*
@@ -743,3 +823,94 @@ promote_and_get_ufuncimpl(PyUFuncObject *ufunc,
 
     return method;
 }
+
+
+/*
+ * Special promoter for the logical ufuncs.  The logical ufuncs can always
+ * use the ??->? and still get the correct output (as long as the output
+ * is not supposed to be `object`).
+ */
+static int
+logical_ufunc_promoter(PyUFuncObject *NPY_UNUSED(ufunc),
+        PyArray_DTypeMeta *op_dtypes[], PyArray_DTypeMeta *signature[],
+        PyArray_DTypeMeta *new_op_dtypes[])
+{
+    /*
+     * If we find any object DType at all, we currently force to object.
+     * However, if the output is specified and not object, there is no point,
+     * it should be just as well to cast the input rather than doing the
+     * unsafe out cast.
+     */
+    int force_object = 0;
+
+    for (int i = 0; i < 3; i++) {
+        PyArray_DTypeMeta *item;
+        if (signature[i] != NULL) {
+            item = signature[i];
+            Py_INCREF(item);
+            if (item->type_num == NPY_OBJECT) {
+                force_object = 1;
+            }
+        }
+        else {
+            /* Always override to boolean */
+            item = PyArray_DTypeFromTypeNum(NPY_BOOL);
+            if (op_dtypes[i] != NULL && op_dtypes[i]->type_num == NPY_OBJECT) {
+                force_object = 1;
+            }
+        }
+        new_op_dtypes[i] = item;
+    }
+
+    if (!force_object || (op_dtypes[2] != NULL
+                          && op_dtypes[2]->type_num != NPY_OBJECT)) {
+        return 0;
+    }
+    /*
+     * Actually, we have to use the OBJECT loop after all, set all we can
+     * to object (that might not work out, but try).
+     *
+     * NOTE: Change this to check for `op_dtypes[0] == NULL` to STOP
+     *       returning `object` for `np.logical_and.reduce(obj_arr)`
+     *       which will also affect `np.all` and `np.any`!
+     */
+    for (int i = 0; i < 3; i++) {
+        if (signature[i] != NULL) {
+            continue;
+        }
+        Py_SETREF(new_op_dtypes[i], PyArray_DTypeFromTypeNum(NPY_OBJECT));
+    }
+    return 0;
+}
+
+
+NPY_NO_EXPORT int
+install_logical_ufunc_promoter(PyObject *ufunc)
+{
+    if (PyObject_Type(ufunc) != (PyObject *)&PyUFunc_Type) {
+        PyErr_SetString(PyExc_RuntimeError,
+                "internal numpy array, logical ufunc was not a ufunc?!");
+        return -1;
+    }
+    PyObject *dtype_tuple = PyTuple_Pack(3,
+            &PyArrayDescr_Type, &PyArrayDescr_Type, &PyArrayDescr_Type, NULL);
+    if (dtype_tuple == NULL) {
+        return -1;
+    }
+    PyObject *promoter = PyCapsule_New(&logical_ufunc_promoter,
+            "numpy._ufunc_promoter", NULL);
+    if (promoter == NULL) {
+        Py_DECREF(dtype_tuple);
+        return -1;
+    }
+
+    PyObject *info = PyTuple_Pack(2, dtype_tuple, promoter);
+    Py_DECREF(dtype_tuple);
+    Py_DECREF(promoter);
+    if (info == NULL) {
+        return -1;
+    }
+
+    return PyUFunc_AddLoop((PyUFuncObject *)ufunc, info, 0);
+}
+

@@ -2193,7 +2193,7 @@ PrintFloat_Printf_g(PyObject *obj, int precision)
     }
     else if (PyArray_IsScalar(obj, LongDouble)) {
         npy_longdouble x = PyArrayScalar_VAL(obj, LongDouble);
-        PyOS_snprintf(str, sizeof(str), "%.*Lg", precision, x);
+        PyOS_snprintf(str, sizeof(str), "%.*" NPY_LONGDOUBLE_FMT, precision, x);
     }
     else{
         double val = PyFloat_AsDouble(obj);
@@ -2363,6 +2363,17 @@ run_intp_converter(PyObject* NPY_UNUSED(self), PyObject *args)
     return tup;
 }
 
+/* used to test NPY_ARRAY_ENSURENOCOPY raises ValueError */
+static PyObject*
+npy_ensurenocopy(PyObject* NPY_UNUSED(self), PyObject* args)
+{
+    int flags = NPY_ARRAY_ENSURENOCOPY;
+    if (!PyArray_CheckFromAny(args, NULL, 0, 0, flags, NULL)) {
+        return NULL;
+    }
+    Py_RETURN_NONE;
+}
+
 static PyMethodDef Multiarray_TestsMethods[] = {
     {"argparse_example_function",
          (PyCFunction)argparse_example_function,
@@ -2423,6 +2434,9 @@ static PyMethodDef Multiarray_TestsMethods[] = {
         METH_O, NULL},
     {"npy_discard",
         npy_discard,
+        METH_O, NULL},
+    {"npy_ensurenocopy",
+        npy_ensurenocopy,
         METH_O, NULL},
     {"get_buffer_info",
         get_buffer_info,

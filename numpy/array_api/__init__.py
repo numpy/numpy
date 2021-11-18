@@ -109,9 +109,6 @@ Still TODO in this module are:
 - The spec is still in an RFC phase and may still have minor updates, which
   will need to be reflected here.
 
-- The linear algebra extension in the spec will be added in a future pull
-  request.
-
 - Complex number support in array API spec is planned but not yet finalized,
   as are the fft extension and certain linear algebra functions such as eig
   that require complex dtypes.
@@ -169,6 +166,7 @@ __all__ += [
 ]
 
 from ._data_type_functions import (
+    astype,
     broadcast_arrays,
     broadcast_to,
     can_cast,
@@ -178,6 +176,7 @@ from ._data_type_functions import (
 )
 
 __all__ += [
+    "astype",
     "broadcast_arrays",
     "broadcast_to",
     "can_cast",
@@ -332,12 +331,13 @@ __all__ += [
     "trunc",
 ]
 
-# einsum is not yet implemented in the array API spec.
+# linalg is an extension in the array API spec, which is a sub-namespace. Only
+# a subset of functions in it are imported into the top-level namespace.
+from . import linalg
 
-# from ._linear_algebra_functions import einsum
-# __all__ += ['einsum']
+__all__ += ["linalg"]
 
-from ._linear_algebra_functions import matmul, tensordot, matrix_transpose, vecdot
+from .linalg import matmul, tensordot, matrix_transpose, vecdot
 
 __all__ += ["matmul", "tensordot", "matrix_transpose", "vecdot"]
 
@@ -358,9 +358,9 @@ from ._searching_functions import argmax, argmin, nonzero, where
 
 __all__ += ["argmax", "argmin", "nonzero", "where"]
 
-from ._set_functions import unique
+from ._set_functions import unique_all, unique_counts, unique_inverse, unique_values
 
-__all__ += ["unique"]
+__all__ += ["unique_all", "unique_counts", "unique_inverse", "unique_values"]
 
 from ._sorting_functions import argsort, sort
 

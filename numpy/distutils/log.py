@@ -87,3 +87,25 @@ _global_color_map = {
 
 # don't use INFO,.. flags in set_verbosity, these flags are for set_threshold.
 set_verbosity(0, force=True)
+
+
+_error = error
+_warn = warn
+_info = info
+_debug = debug
+
+
+def error(msg, *a, **kw):
+    _error(f"ERROR: {msg}", *a, **kw)
+
+
+def warn(msg, *a, **kw):
+    _warn(f"WARN: {msg}", *a, **kw)
+
+
+def info(msg, *a, **kw):
+    _info(f"INFO: {msg}", *a, **kw)
+
+
+def debug(msg, *a, **kw):
+    _debug(f"DEBUG: {msg}", *a, **kw)

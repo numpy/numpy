@@ -109,7 +109,7 @@ stages:
       # the docs even though i.e., numba uses another in their
       # azure config for mac os -- Microsoft has indicated
       # they will patch this issue
-      vmImage: macOS-10.14
+      vmImage: 'macOS-1015'
     strategy:
       maxParallel: 3
       matrix:
@@ -230,7 +230,7 @@ stages:
 
   - job: Windows
     pool:
-      vmImage: 'VS2017-Win2016'
+      vmImage: 'windows-latest'
     strategy:
       maxParallel: 6
       matrix:

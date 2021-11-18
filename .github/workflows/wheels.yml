@@ -1,0 +1,104 @@
+# Workflow to build and test wheels.
+# To work on the wheel building infrastructure on a fork, comment out:
+#
+# if: github.repository == 'numpy/numpy'
+#
+# in the get_commit_message job. Be sure to include [cd build] in your commit
+# message to trigger the build. All files related to wheel building are located
+# at tools/wheels/
+name: Wheel builder
+
+on:
+  schedule:
+    # Nightly build at 1:42 UTC
+    - cron: "42 1 * * *"
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  get_commit_message:
+    name: Get commit message
+    runs-on: ubuntu-latest
+    if: github.repository == 'numpy/numpy'
+    outputs:
+      message: ${{ steps.commit_message.outputs.message }}
+    steps:
+      - name: Checkout numpy
+        uses: actions/checkout@v2
+        # Gets the correct commit message for pull request
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Get commit message
+        id: commit_message
+        run: |
+          set -xe
+          COMMIT_MSG=$(git log --no-merges -1 --oneline)
+          echo "::set-output name=message::$COMMIT_MSG"
+
+  build_wheels:
+    name: Build wheel for cp${{ matrix.python }}-${{ matrix.platform }}
+    needs: get_commit_message
+    if: >-
+      contains(needs.get_commit_message.outputs.message, '[wheel build]') ||
+      github.event_name == 'schedule' ||
+      github.event_name == 'workflow_dispatch'
+    runs-on: ${{ matrix.os }}
+    strategy:
+      # Ensure that a wheel builder finishes even if another fails
+      fail-fast: false
+      matrix:
+        include:
+        # manylinux builds
+        - os: ubuntu-latest
+          python: "38"
+          platform: manylinux_x86_64
+        - os: ubuntu-latest
+          python: "39"
+          platform: manylinux_x86_64
+        - os: ubuntu-latest
+          python: "310"
+          platform: manylinux_x86_64
+
+        # macos builds
+        - os: macos-latest
+          python: "38"
+          platform: macosx_x86_64
+        - os: macos-latest
+          python: "39"
+          platform: macosx_x86_64
+        - os: macos-latest
+          python: "310"
+          platform: macosx_x86_64
+
+    steps:
+      - name: Checkout numpy
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+          # versioneer.py requires the latest tag to be reachable. Here we
+          # fetch the complete history to get access to the tags.
+          # A shallow clone can work when the following issue is resolved:
+          # https://github.com/actions/checkout/issues/338
+          fetch-depth: 0
+
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v2.1.3
+        env:
+          NPY_USE_BLAS_ILP64: 1
+          CIBW_BUILD: cp${{ matrix.python }}-${{ matrix.platform }}
+          CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
+          CIBW_ENVIRONMENT_LINUX: CFLAGS='-std=c99 -fno-strict-aliasing'
+                                  LDFLAGS='-Wl,--strip-debug'
+                                  OPENBLAS64_=/usr/local
+          # MACOS linker doesn't support stripping symbols
+          CIBW_ENVIRONMENT_MACOS: CFLAGS='-std=c99 -fno-strict-aliasing'
+                                  OPENBLAS64_=/usr/local
+          CIBW_BUILD_VERBOSITY: 3
+          CIBW_BEFORE_BUILD: bash {project}/tools/wheels/cibw_before_build.sh {project}
+          CIBW_BEFORE_TEST: pip install -r {project}/test_requirements.txt
+          CIBW_TEST_COMMAND:  bash {project}/tools/wheels/cibw_test_command.sh {project}
+
+      - uses: actions/upload-artifact@v2
+        with:
+          path: ./wheelhouse/*.whl

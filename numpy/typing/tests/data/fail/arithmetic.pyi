@@ -28,6 +28,7 @@ AR_LIKE_M: List[np.datetime64]
 # NOTE: mypys `NoReturn` errors are, unfortunately, not that great
 _1 = AR_b - AR_LIKE_b  # E: Need type annotation
 _2 = AR_LIKE_b - AR_b  # E: Need type annotation
+AR_i - bytes()  # E: No overload variant
 
 AR_f - AR_LIKE_m  # E: Unsupported operand types
 AR_f - AR_LIKE_M  # E: Unsupported operand types
@@ -91,11 +92,11 @@ AR_f *= AR_LIKE_m  # E: incompatible type
 
 # Array power
 
-AR_b **= AR_LIKE_b  # E: incompatible type
-AR_b **= AR_LIKE_u  # E: incompatible type
-AR_b **= AR_LIKE_i  # E: incompatible type
-AR_b **= AR_LIKE_f  # E: incompatible type
-AR_b **= AR_LIKE_c  # E: incompatible type
+AR_b **= AR_LIKE_b  # E: Invalid self argument
+AR_b **= AR_LIKE_u  # E: Invalid self argument
+AR_b **= AR_LIKE_i  # E: Invalid self argument
+AR_b **= AR_LIKE_f  # E: Invalid self argument
+AR_b **= AR_LIKE_c  # E: Invalid self argument
 
 AR_u **= AR_LIKE_i  # E: incompatible type
 AR_u **= AR_LIKE_f  # E: incompatible type

@@ -234,6 +234,15 @@ def sqrt(x):
     >>> np.emath.sqrt([-1,4])
     array([0.+1.j, 2.+0.j])
 
+    Different results are expected because:
+    floating point 0.0 and -0.0 are distinct.
+
+    For more control, explicitly use complex() as follows:
+
+    >>> np.emath.sqrt(complex(-4.0, 0.0))
+    2j
+    >>> np.emath.sqrt(complex(-4.0, -0.0))
+    -2j
     """
     x = _fix_real_lt_zero(x)
     return nx.sqrt(x)

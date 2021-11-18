@@ -355,12 +355,10 @@ struct NpyAuxData_tag {
 #define NPY_ERR(str) fprintf(stderr, #str); fflush(stderr);
 #define NPY_ERR2(str) fprintf(stderr, str); fflush(stderr);
 
-  /*
-   * Macros to define how array, and dimension/strides data is
-   * allocated.
-   */
-
-  /* Data buffer - PyDataMem_NEW/FREE/RENEW are in multiarraymodule.c */
+/*
+* Macros to define how array, and dimension/strides data is
+* allocated. These should be made private
+*/
 
 #define NPY_USE_PYMEM 1
 
@@ -667,6 +665,29 @@ typedef struct _arr_descr {
 } PyArray_ArrayDescr;
 
 /*
+ * Memory handler structure for array data.
+ */
+/* The declaration of free differs from PyMemAllocatorEx */
+typedef struct {
+    void *ctx;
+    void* (*malloc) (void *ctx, size_t size);
+    void* (*calloc) (void *ctx, size_t nelem, size_t elsize);
+    void* (*realloc) (void *ctx, void *ptr, size_t new_size);
+    void (*free) (void *ctx, void *ptr, size_t size);
+    /*
+     * This is the end of the version=1 struct. Only add new fields after
+     * this line
+     */
+} PyDataMemAllocator;
+
+typedef struct {
+    char name[127];  /* multiple of 64 to keep the struct aligned */
+    uint8_t version; /* currently 1 */
+    PyDataMemAllocator allocator;
+} PyDataMem_Handler;
+
+
+/*
  * The main array object structure.
  *
  * It has been recommended to use the inline functions defined below
@@ -716,6 +737,10 @@ typedef struct tagPyArrayObject_fields {
     /* For weak references */
     PyObject *weakreflist;
     void *_buffer_info;  /* private buffer info, tagged to allow warning */
+    /*
+     * For malloc/calloc/realloc/free per object
+     */
+    PyObject *mem_handler;
 } PyArrayObject_fields;
 
 /*
@@ -843,7 +868,7 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 
 /*
  * Always copy the array. Returned arrays are always CONTIGUOUS,
- * ALIGNED, and WRITEABLE.
+ * ALIGNED, and WRITEABLE. See also: NPY_ARRAY_ENSURENOCOPY = 0x4000.
  *
  * This flag may be requested in constructor functions.
  */
@@ -911,6 +936,13 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
  */
 #define NPY_ARRAY_UPDATEIFCOPY    0x1000 /* Deprecated in 1.14 */
 #define NPY_ARRAY_WRITEBACKIFCOPY 0x2000
+
+/*
+ * No copy may be made while converting from an object/array (result is a view)
+ *
+ * This flag may be requested in constructor functions.
+ */
+#define NPY_ARRAY_ENSURENOCOPY 0x4000
 
 /*
  * NOTE: there are also internal flags defined in multiarray/arrayobject.h,
@@ -1657,6 +1689,12 @@ static NPY_INLINE void
 PyArray_CLEARFLAGS(PyArrayObject *arr, int flags)
 {
     ((PyArrayObject_fields *)arr)->flags &= ~flags;
+}
+
+static NPY_INLINE NPY_RETURNS_BORROWED_REF PyObject *
+PyArray_HANDLER(PyArrayObject *arr)
+{
+    return ((PyArrayObject_fields *)arr)->mem_handler;
 }
 
 #define PyTypeNum_ISBOOL(type) ((type) == NPY_BOOL)

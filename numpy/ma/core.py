@@ -1065,7 +1065,7 @@ class _MaskedBinaryOperation(_MaskedUFunc):
             tr = self.f.reduce(t, axis)
             mr = nomask
         else:
-            tr = self.f.reduce(t, axis, dtype=dtype or t.dtype)
+            tr = self.f.reduce(t, axis, dtype=dtype)
             mr = umath.logical_and.reduce(m, axis)
 
         if not tr.shape:
@@ -2837,6 +2837,12 @@ class MaskedArray(ndarray):
             _data = ndarray.view(_data, type(data))
         else:
             _data = ndarray.view(_data, cls)
+
+        # Handle the case where data is not a subclass of ndarray, but
+        # still has the _mask attribute like MaskedArrays
+        if hasattr(data, '_mask') and not isinstance(data, ndarray):
+            _data._mask = data._mask
+            # FIXME: should we set `_data._sharedmask = True`? 
         # Process mask.
         # Type of the mask
         mdtype = make_mask_descr(_data.dtype)

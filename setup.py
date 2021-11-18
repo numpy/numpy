@@ -30,8 +30,7 @@ import re
 
 # Python supported version checks. Keep right after stdlib imports to ensure we
 # get a sensible error for older Python versions
-# This needs to be changed to 3.8 for 1.22 release, but 3.7 is needed for LGTM.
-if sys.version_info[:2] < (3, 7):
+if sys.version_info[:2] < (3, 8):
     raise RuntimeError("Python version >= 3.8 required.")
 
 
@@ -55,7 +54,10 @@ FULLVERSION = versioneer.get_version()
 # 1.22.0 ... -> ISRELEASED == True, VERSION == 1.22.0
 # 1.22.0rc1 ... -> ISRELEASED == True, VERSION == 1.22.0
 ISRELEASED = re.search(r'(dev|\+)', FULLVERSION) is None
-MAJOR, MINOR, MICRO = re.match(r'(\d+)\.(\d+)\.(\d+)', FULLVERSION).groups()
+_V_MATCH = re.match(r'(\d+)\.(\d+)\.(\d+)', FULLVERSION)
+if _V_MATCH is None:
+    raise RuntimeError(f'Cannot parse version {FULLVERSION}')
+MAJOR, MINOR, MICRO = _V_MATCH.groups()
 VERSION = '{}.{}.{}'.format(MAJOR, MINOR, MICRO)
 
 # The first version not in the `Programming Language :: Python :: ...` classifiers above
@@ -210,9 +212,8 @@ def get_build_overrides():
     class new_build_clib(build_clib):
         def build_a_library(self, build_info, lib_name, libraries):
             if _needs_gcc_c99_flag(self):
-                args = build_info.get('extra_compiler_args') or []
-                args.append('-std=c99')
-                build_info['extra_compiler_args'] = args
+                build_info['extra_cflags'] = ['-std=c99']
+            build_info['extra_cxxflags'] = ['-std=c++11']
             build_clib.build_a_library(self, build_info, lib_name, libraries)
 
     class new_build_ext(build_ext):
@@ -409,7 +410,8 @@ def setup_package():
         python_requires='>=3.8',
         zip_safe=False,
         entry_points={
-            'console_scripts': f2py_cmds
+            'console_scripts': f2py_cmds,
+            'array_api': ['numpy = numpy.array_api'],
         },
     )
 

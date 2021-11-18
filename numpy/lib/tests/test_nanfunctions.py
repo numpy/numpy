@@ -5,8 +5,8 @@ import inspect
 import numpy as np
 from numpy.lib.nanfunctions import _nan_mask, _replace_nan
 from numpy.testing import (
-    assert_, assert_equal, assert_almost_equal, assert_no_warnings,
-    assert_raises, assert_array_equal, suppress_warnings
+    assert_, assert_equal, assert_almost_equal, assert_raises,
+    assert_array_equal, suppress_warnings
     )
 
 
@@ -1108,12 +1108,12 @@ class TestNanFunctions_Quantile:
         # this is worth retesting, because quantile does not make a copy
         p0 = np.array([0, 0.75, 0.25, 0.5, 1.0])
         p = p0.copy()
-        np.nanquantile(np.arange(100.), p, interpolation="midpoint")
+        np.nanquantile(np.arange(100.), p, method="midpoint")
         assert_array_equal(p, p0)
 
         p0 = p0.tolist()
         p = p.tolist()
-        np.nanquantile(np.arange(100.), p, interpolation="midpoint")
+        np.nanquantile(np.arange(100.), p, method="midpoint")
         assert_array_equal(p, p0)
 
     @pytest.mark.parametrize("axis", [None, 0, 1])

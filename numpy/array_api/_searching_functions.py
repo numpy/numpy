@@ -43,4 +43,5 @@ def where(condition: Array, x1: Array, x2: Array, /) -> Array:
     """
     # Call result type here just to raise on disallowed type combinations
     _result_type(x1.dtype, x2.dtype)
+    x1, x2 = Array._normalize_two_args(x1, x2)
     return Array._new(np.where(condition._array, x1._array, x2._array))

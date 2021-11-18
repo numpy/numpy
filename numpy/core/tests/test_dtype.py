@@ -3,7 +3,6 @@ import operator
 import pytest
 import ctypes
 import gc
-import warnings
 import types
 from typing import Any
 
@@ -628,6 +627,12 @@ class TestSubarray:
         t2 = np.dtype('2i4', align=True)
         assert_equal(t1.alignment, t2.alignment)
 
+    def test_aligned_empty(self):
+        # Mainly regression test for gh-19696: construction failed completely
+        dt = np.dtype([], align=True)
+        assert dt == np.dtype([])
+        dt = np.dtype({"names": [], "formats": [], "itemsize": 0}, align=True)
+        assert dt == np.dtype([])
 
 def iter_struct_object_dtypes():
     """
@@ -724,26 +729,30 @@ class TestStructuredObjectRefcounting:
     def test_structured_object_indexing(self, shape, index, items_changed,
                                         dt, pat, count, singleton):
         """Structured object reference counting for advanced indexing."""
-        zero = 0
-        one = 1
+        # Use two small negative values (should be singletons, but less likely
+        # to run into race-conditions).  This failed in some threaded envs
+        # When using 0 and 1.  If it fails again, should remove all explicit
+        # checks, and rely on `pytest-leaks` reference count checker only.
+        val0 = -4
+        val1 = -5
 
-        arr = np.zeros(shape, dt)
+        arr = np.full(shape, val0, dt)
 
         gc.collect()
-        before_zero = sys.getrefcount(zero)
-        before_one = sys.getrefcount(one)
+        before_val0 = sys.getrefcount(val0)
+        before_val1 = sys.getrefcount(val1)
         # Test item getting:
         part = arr[index]
-        after_zero = sys.getrefcount(zero)
-        assert after_zero - before_zero == count * items_changed
+        after_val0 = sys.getrefcount(val0)
+        assert after_val0 - before_val0 == count * items_changed
         del part
         # Test item setting:
-        arr[index] = one
+        arr[index] = val1
         gc.collect()
-        after_zero = sys.getrefcount(zero)
-        after_one = sys.getrefcount(one)
-        assert before_zero - after_zero == count * items_changed
-        assert after_one - before_one == count * items_changed
+        after_val0 = sys.getrefcount(val0)
+        after_val1 = sys.getrefcount(val1)
+        assert before_val0 - after_val0 == count * items_changed
+        assert after_val1 - before_val1 == count * items_changed
 
     @pytest.mark.parametrize(['dt', 'pat', 'count', 'singleton'],
                              iter_struct_object_dtypes())
