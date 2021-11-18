@@ -5,7 +5,6 @@ import pytest
 import threading
 import traceback
 import time
-import random
 
 import numpy as np
 from numpy.testing import assert_, assert_equal, IS_PYPY

@@ -1223,14 +1223,24 @@ def nanmedian(a, axis=None, out=None, overwrite_input=False, keepdims=np._NoValu
         return r
 
 
-def _nanpercentile_dispatcher(a, q, axis=None, out=None, overwrite_input=None,
-                              interpolation=None, keepdims=None):
+def _nanpercentile_dispatcher(
+        a, q, axis=None, out=None, overwrite_input=None,
+        method=None, keepdims=None, *, interpolation=None):
     return (a, q, out)
 
 
 @array_function_dispatch(_nanpercentile_dispatcher)
-def nanpercentile(a, q, axis=None, out=None, overwrite_input=False,
-                  interpolation='linear', keepdims=np._NoValue):
+def nanpercentile(
+        a,
+        q,
+        axis=None,
+        out=None,
+        overwrite_input=False,
+        method="linear",
+        keepdims=np._NoValue,
+        *,
+        interpolation=None,
+):
     """
     Compute the qth percentile of the data along the specified axis,
     while ignoring nan values.
@@ -1245,32 +1255,49 @@ def nanpercentile(a, q, axis=None, out=None, overwrite_input=False,
         Input array or object that can be converted to an array, containing
         nan values to be ignored.
     q : array_like of float
-        Percentile or sequence of percentiles to compute, which must be between
-        0 and 100 inclusive.
+        Percentile or sequence of percentiles to compute, which must be
+        between 0 and 100 inclusive.
     axis : {int, tuple of int, None}, optional
-        Axis or axes along which the percentiles are computed. The
-        default is to compute the percentile(s) along a flattened
-        version of the array.
+        Axis or axes along which the percentiles are computed. The default
+        is to compute the percentile(s) along a flattened version of the
+        array.
     out : ndarray, optional
-        Alternative output array in which to place the result. It must
-        have the same shape and buffer length as the expected output,
-        but the type (of the output) will be cast if necessary.
+        Alternative output array in which to place the result. It must have
+        the same shape and buffer length as the expected output, but the
+        type (of the output) will be cast if necessary.
     overwrite_input : bool, optional
-        If True, then allow the input array `a` to be modified by intermediate
-        calculations, to save memory. In this case, the contents of the input
-        `a` after this function completes is undefined.
-    interpolation : {'linear', 'lower', 'higher', 'midpoint', 'nearest'}
-        This optional parameter specifies the interpolation method to
-        use when the desired percentile lies between two data points
-        ``i < j``:
+        If True, then allow the input array `a` to be modified by
+        intermediate calculations, to save memory. In this case, the
+        contents of the input `a` after this function completes is
+        undefined.
+    method : str, optional
+        This parameter specifies the method to use for estimating the
+        percentile.  There are many different methods, some unique to NumPy.
+        See the notes for explanation.  The options sorted by their R type
+        as summarized in the H&F paper [1]_ are:
 
-        * 'linear': ``i + (j - i) * fraction``, where ``fraction``
-          is the fractional part of the index surrounded by ``i``
-          and ``j``.
-        * 'lower': ``i``.
-        * 'higher': ``j``.
-        * 'nearest': ``i`` or ``j``, whichever is nearest.
-        * 'midpoint': ``(i + j) / 2``.
+        1. 'inverted_cdf'
+        2. 'averaged_inverted_cdf'
+        3. 'closest_observation'
+        4. 'interpolated_inverted_cdf'
+        5. 'hazen'
+        6. 'weibull'
+        7. 'linear'  (default)
+        8. 'median_unbiased'
+        9. 'normal_unbiased'
+
+        The first three methods are discontiuous.  NumPy further defines the
+        following discontinuous variations of the default 'linear' (7.) option:
+
+        * 'lower'
+        * 'higher',
+        * 'midpoint'
+        * 'nearest'
+
+        .. versionchanged:: 1.22.0
+            This argument was previously called "interpolation" and only
+            offered the "linear" default and last four options.
+
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left in
         the result as dimensions with size one. With this option, the
@@ -1281,6 +1308,11 @@ def nanpercentile(a, q, axis=None, out=None, overwrite_input=False,
         `mean` function of the underlying array.  If the array is
         a sub-class and `mean` does not have the kwarg `keepdims` this
         will raise a RuntimeError.
+
+    interpolation : str, optional
+        Deprecated name for the method keyword argument.
+
+        .. deprecated:: 1.22.0
 
     Returns
     -------
@@ -1299,18 +1331,11 @@ def nanpercentile(a, q, axis=None, out=None, overwrite_input=False,
     nanmean
     nanmedian : equivalent to ``nanpercentile(..., 50)``
     percentile, median, mean
-    nanquantile : equivalent to nanpercentile, but with q in the range [0, 1].
+    nanquantile : equivalent to nanpercentile, except q in range [0, 1].
 
     Notes
     -----
-    Given a vector ``V`` of length ``N``, the ``q``-th percentile of
-    ``V`` is the value ``q/100`` of the way from the minimum to the
-    maximum in a sorted copy of ``V``. The values and distances of
-    the two nearest neighbors as well as the `interpolation` parameter
-    will determine the percentile if the normalized ranking does not
-    match the location of ``q`` exactly. This function is the same as
-    the median if ``q=50``, the same as the minimum if ``q=0`` and the
-    same as the maximum if ``q=100``.
+    For more information please see `numpy.percentile`
 
     Examples
     --------
@@ -1340,23 +1365,44 @@ def nanpercentile(a, q, axis=None, out=None, overwrite_input=False,
     array([7., 2.])
     >>> assert not np.all(a==b)
 
+    References
+    ----------
+    .. [1] R. J. Hyndman and Y. Fan,
+       "Sample quantiles in statistical packages,"
+       The American Statistician, 50(4), pp. 361-365, 1996
+
     """
+    if interpolation is not None:
+        method = function_base._check_interpolation_as_method(
+            method, interpolation, "nanpercentile")
+
     a = np.asanyarray(a)
-    q = np.true_divide(q, 100.0)  # handles the asarray for us too
+    q = np.true_divide(q, 100.0)
+    # undo any decay that the ufunc performed (see gh-13105)
+    q = np.asanyarray(q)
     if not function_base._quantile_is_valid(q):
         raise ValueError("Percentiles must be in the range [0, 100]")
     return _nanquantile_unchecked(
-        a, q, axis, out, overwrite_input, interpolation, keepdims)
+        a, q, axis, out, overwrite_input, method, keepdims)
 
 
 def _nanquantile_dispatcher(a, q, axis=None, out=None, overwrite_input=None,
-                            interpolation=None, keepdims=None):
+                            method=None, keepdims=None, *, interpolation=None):
     return (a, q, out)
 
 
 @array_function_dispatch(_nanquantile_dispatcher)
-def nanquantile(a, q, axis=None, out=None, overwrite_input=False,
-                interpolation='linear', keepdims=np._NoValue):
+def nanquantile(
+        a,
+        q,
+        axis=None,
+        out=None,
+        overwrite_input=False,
+        method="linear",
+        keepdims=np._NoValue,
+        *,
+        interpolation=None,
+):
     """
     Compute the qth quantile of the data along the specified axis,
     while ignoring nan values.
@@ -1384,18 +1430,33 @@ def nanquantile(a, q, axis=None, out=None, overwrite_input=False,
         If True, then allow the input array `a` to be modified by intermediate
         calculations, to save memory. In this case, the contents of the input
         `a` after this function completes is undefined.
-    interpolation : {'linear', 'lower', 'higher', 'midpoint', 'nearest'}
-        This optional parameter specifies the interpolation method to
-        use when the desired quantile lies between two data points
-        ``i < j``:
+    method : str, optional
+        This parameter specifies the method to use for estimating the
+        quantile.  There are many different methods, some unique to NumPy.
+        See the notes for explanation.  The options sorted by their R type
+        as summarized in the H&F paper [1]_ are:
 
-        * linear: ``i + (j - i) * fraction``, where ``fraction``
-          is the fractional part of the index surrounded by ``i``
-          and ``j``.
-        * lower: ``i``.
-        * higher: ``j``.
-        * nearest: ``i`` or ``j``, whichever is nearest.
-        * midpoint: ``(i + j) / 2``.
+        1. 'inverted_cdf'
+        2. 'averaged_inverted_cdf'
+        3. 'closest_observation'
+        4. 'interpolated_inverted_cdf'
+        5. 'hazen'
+        6. 'weibull'
+        7. 'linear'  (default)
+        8. 'median_unbiased'
+        9. 'normal_unbiased'
+
+        The first three methods are discontiuous.  NumPy further defines the
+        following discontinuous variations of the default 'linear' (7.) option:
+
+        * 'lower'
+        * 'higher',
+        * 'midpoint'
+        * 'nearest'
+
+        .. versionchanged:: 1.22.0
+            This argument was previously called "interpolation" and only
+            offered the "linear" default and last four options.
 
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left in
@@ -1407,6 +1468,11 @@ def nanquantile(a, q, axis=None, out=None, overwrite_input=False,
         `mean` function of the underlying array.  If the array is
         a sub-class and `mean` does not have the kwarg `keepdims` this
         will raise a RuntimeError.
+
+    interpolation : str, optional
+        Deprecated name for the method keyword argument.
+
+        .. deprecated:: 1.22.0
 
     Returns
     -------
@@ -1426,6 +1492,10 @@ def nanquantile(a, q, axis=None, out=None, overwrite_input=False,
     nanmean, nanmedian
     nanmedian : equivalent to ``nanquantile(..., 0.5)``
     nanpercentile : same as nanquantile, but with q in the range [0, 100].
+
+    Notes
+    -----
+    For more information please see `numpy.quantile`
 
     Examples
     --------
@@ -1453,27 +1523,47 @@ def nanquantile(a, q, axis=None, out=None, overwrite_input=False,
     >>> np.nanquantile(b, 0.5, axis=1, overwrite_input=True)
     array([7., 2.])
     >>> assert not np.all(a==b)
+
+    References
+    ----------
+    .. [1] R. J. Hyndman and Y. Fan,
+       "Sample quantiles in statistical packages,"
+       The American Statistician, 50(4), pp. 361-365, 1996
+
     """
+    if interpolation is not None:
+        method = function_base._check_interpolation_as_method(
+            method, interpolation, "nanquantile")
+
     a = np.asanyarray(a)
     q = np.asanyarray(q)
     if not function_base._quantile_is_valid(q):
         raise ValueError("Quantiles must be in the range [0, 1]")
     return _nanquantile_unchecked(
-        a, q, axis, out, overwrite_input, interpolation, keepdims)
+        a, q, axis, out, overwrite_input, method, keepdims)
 
 
-def _nanquantile_unchecked(a, q, axis=None, out=None, overwrite_input=False,
-                           interpolation='linear', keepdims=np._NoValue):
+def _nanquantile_unchecked(
+        a,
+        q,
+        axis=None,
+        out=None,
+        overwrite_input=False,
+        method="linear",
+        keepdims=np._NoValue,
+):
     """Assumes that q is in [0, 1], and is an ndarray"""
     # apply_along_axis in _nanpercentile doesn't handle empty arrays well,
     # so deal them upfront
     if a.size == 0:
         return np.nanmean(a, axis, out=out, keepdims=keepdims)
-
-    r, k = function_base._ureduce(
-        a, func=_nanquantile_ureduce_func, q=q, axis=axis, out=out,
-        overwrite_input=overwrite_input, interpolation=interpolation
-    )
+    r, k = function_base._ureduce(a,
+                                  func=_nanquantile_ureduce_func,
+                                  q=q,
+                                  axis=axis,
+                                  out=out,
+                                  overwrite_input=overwrite_input,
+                                  method=method)
     if keepdims and keepdims is not np._NoValue:
         return r.reshape(q.shape + k)
     else:
@@ -1481,7 +1571,7 @@ def _nanquantile_unchecked(a, q, axis=None, out=None, overwrite_input=False,
 
 
 def _nanquantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
-                              interpolation='linear'):
+                              method="linear"):
     """
     Private function that doesn't support extended axis or keepdims.
     These methods are extended to this function using _ureduce
@@ -1489,10 +1579,10 @@ def _nanquantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
     """
     if axis is None or a.ndim == 1:
         part = a.ravel()
-        result = _nanquantile_1d(part, q, overwrite_input, interpolation)
+        result = _nanquantile_1d(part, q, overwrite_input, method)
     else:
         result = np.apply_along_axis(_nanquantile_1d, axis, a, q,
-                                     overwrite_input, interpolation)
+                                     overwrite_input, method)
         # apply_along_axis fills in collapsed axis with results.
         # Move that axis to the beginning to match percentile's
         # convention.
@@ -1504,7 +1594,7 @@ def _nanquantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
     return result
 
 
-def _nanquantile_1d(arr1d, q, overwrite_input=False, interpolation='linear'):
+def _nanquantile_1d(arr1d, q, overwrite_input=False, method="linear"):
     """
     Private function for rank 1 arrays. Compute quantile ignoring NaNs.
     See nanpercentile for parameter usage
@@ -1516,7 +1606,7 @@ def _nanquantile_1d(arr1d, q, overwrite_input=False, interpolation='linear'):
         return np.full(q.shape, np.nan, dtype=arr1d.dtype)[()]
 
     return function_base._quantile_unchecked(
-        arr1d, q, overwrite_input=overwrite_input, interpolation=interpolation)
+        arr1d, q, overwrite_input=overwrite_input, method=method)
 
 
 def _nanvar_dispatcher(a, axis=None, dtype=None, out=None, ddof=None,

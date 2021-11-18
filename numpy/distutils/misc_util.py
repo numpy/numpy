@@ -11,6 +11,7 @@ import multiprocessing
 import textwrap
 import importlib.util
 from threading import local as tlocal
+from functools import reduce
 
 import distutils
 from distutils.errors import DistutilsError
@@ -43,7 +44,7 @@ __all__ = ['Configuration', 'get_numpy_include_dirs', 'default_config_dict',
            'dot_join', 'get_frame', 'minrelpath', 'njoin',
            'is_sequence', 'is_string', 'as_list', 'gpaths', 'get_language',
            'get_build_architecture', 'get_info', 'get_pkg_info',
-           'get_num_build_jobs']
+           'get_num_build_jobs', 'sanitize_cxx_flags']
 
 class InstallableLib:
     """
@@ -2478,3 +2479,15 @@ def get_build_architecture():
     # systems, so delay the import to here.
     from distutils.msvccompiler import get_build_architecture
     return get_build_architecture()
+
+
+_cxx_ignore_flags = {'-Werror=implicit-function-declaration', '-std=c99'}
+
+
+def sanitize_cxx_flags(cxxflags):
+    '''
+    Some flags are valid for C but not C++. Prune them.
+    '''
+    return [flag for flag in cxxflags if flag not in _cxx_ignore_flags]
+
+

@@ -1,3 +1,5 @@
+.. _f2py-getting-started:
+
 ======================================
  Three ways to wrap - getting started
 ======================================

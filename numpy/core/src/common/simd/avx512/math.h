@@ -35,7 +35,7 @@ NPY_FINLINE npyv_f64 npyv_abs_f64(npyv_f64 a)
     return _mm512_range_pd(a, a, 8);
 #else
     return npyv_and_f64(
-        a, _mm512_castsi512_pd(_mm512_set1_epi64(0x7fffffffffffffffLL))
+        a, _mm512_castsi512_pd(npyv_setall_s64(0x7fffffffffffffffLL))
     );
 #endif
 }
@@ -111,5 +111,13 @@ NPY_FINLINE npyv_f64 npyv_minp_f64(npyv_f64 a, npyv_f64 b)
 #define npyv_min_s32 _mm512_min_epi32
 #define npyv_min_u64 _mm512_min_epu64
 #define npyv_min_s64 _mm512_min_epi64
+
+// ceil
+#define npyv_ceil_f32(A) _mm512_roundscale_ps(A, _MM_FROUND_TO_POS_INF)
+#define npyv_ceil_f64(A) _mm512_roundscale_pd(A, _MM_FROUND_TO_POS_INF)
+
+// trunc
+#define npyv_trunc_f32(A) _mm512_roundscale_ps(A, _MM_FROUND_TO_ZERO)
+#define npyv_trunc_f64(A) _mm512_roundscale_pd(A, _MM_FROUND_TO_ZERO)
 
 #endif // _NPY_SIMD_AVX512_MATH_H

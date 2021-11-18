@@ -88,16 +88,16 @@ NPY_FINLINE npyv_f32 npyv_recip_f32(npyv_f32 a)
 #define npyv_max_f64 vmaxq_f64
 // Maximum, supports IEEE floating-point arithmetic (IEC 60559),
 // - If one of the two vectors contains NaN, the equivalent element of the other vector is set
-// - Only if both corresponded elements are NaN, NaN is set. 
+// - Only if both corresponded elements are NaN, NaN is set.
 #ifdef NPY_HAVE_ASIMD
     #define npyv_maxp_f32 vmaxnmq_f32
 #else
     NPY_FINLINE npyv_f32 npyv_maxp_f32(npyv_f32 a, npyv_f32 b)
-    { 
+    {
         npyv_u32 nn_a = vceqq_f32(a, a);
         npyv_u32 nn_b = vceqq_f32(b, b);
         return vmaxq_f32(vbslq_f32(nn_a, a, b), vbslq_f32(nn_b, b, a));
-    } 
+    }
 #endif
 #if NPY_SIMD_F64
     #define npyv_maxp_f64 vmaxnmq_f64
@@ -123,16 +123,16 @@ NPY_FINLINE npyv_s64 npyv_max_s64(npyv_s64 a, npyv_s64 b)
 #define npyv_min_f64 vminq_f64
 // Minimum, supports IEEE floating-point arithmetic (IEC 60559),
 // - If one of the two vectors contains NaN, the equivalent element of the other vector is set
-// - Only if both corresponded elements are NaN, NaN is set. 
+// - Only if both corresponded elements are NaN, NaN is set.
 #ifdef NPY_HAVE_ASIMD
     #define npyv_minp_f32 vminnmq_f32
 #else
     NPY_FINLINE npyv_f32 npyv_minp_f32(npyv_f32 a, npyv_f32 b)
-    { 
+    {
         npyv_u32 nn_a = vceqq_f32(a, a);
         npyv_u32 nn_b = vceqq_f32(b, b);
         return vminq_f32(vbslq_f32(nn_a, a, b), vbslq_f32(nn_b, b, a));
-    } 
+    }
 #endif
 #if NPY_SIMD_F64
     #define npyv_minp_f64 vminnmq_f64
@@ -152,5 +152,75 @@ NPY_FINLINE npyv_s64 npyv_min_s64(npyv_s64 a, npyv_s64 b)
 {
     return vbslq_s64(npyv_cmplt_s64(a, b), a, b);
 }
+
+// ceil
+#ifdef NPY_HAVE_ASIMD
+    #define npyv_ceil_f32 vrndpq_f32
+#else
+   NPY_FINLINE npyv_f32 npyv_ceil_f32(npyv_f32 a)
+   {
+        const npyv_s32 szero = vreinterpretq_s32_f32(vdupq_n_f32(-0.0f));
+        const npyv_u32 one = vreinterpretq_u32_f32(vdupq_n_f32(1.0f));
+        const npyv_s32 max_int = vdupq_n_s32(0x7fffffff);
+        /**
+         * On armv7, vcvtq.f32 handles special cases as follows:
+         *  NaN return 0
+         * +inf or +outrange return 0x80000000(-0.0f)
+         * -inf or -outrange return 0x7fffffff(nan)
+         */
+        npyv_s32 roundi = vcvtq_s32_f32(a);
+        npyv_f32 round = vcvtq_f32_s32(roundi);
+        npyv_f32 ceil = vaddq_f32(round, vreinterpretq_f32_u32(
+            vandq_u32(vcltq_f32(round, a), one))
+        );
+        // respect signed zero, e.g. -0.5 -> -0.0
+        npyv_f32 rzero = vreinterpretq_f32_s32(vorrq_s32(
+            vreinterpretq_s32_f32(ceil),
+            vandq_s32(vreinterpretq_s32_f32(a), szero)
+        ));
+        // if nan or overflow return a
+        npyv_u32 nnan = npyv_notnan_f32(a);
+        npyv_u32 overflow = vorrq_u32(
+            vceqq_s32(roundi, szero), vceqq_s32(roundi, max_int)
+        );
+        return vbslq_f32(vbicq_u32(nnan, overflow), rzero, a);
+   }
+#endif
+#if NPY_SIMD_F64
+    #define npyv_ceil_f64 vrndpq_f64
+#endif // NPY_SIMD_F64
+
+// trunc
+#ifdef NPY_HAVE_ASIMD
+    #define npyv_trunc_f32 vrndq_f32
+#else
+   NPY_FINLINE npyv_f32 npyv_trunc_f32(npyv_f32 a)
+   {
+        const npyv_s32 szero = vreinterpretq_s32_f32(vdupq_n_f32(-0.0f));
+        const npyv_s32 max_int = vdupq_n_s32(0x7fffffff);
+        /**
+         * On armv7, vcvtq.f32 handles special cases as follows:
+         *  NaN return 0
+         * +inf or +outrange return 0x80000000(-0.0f)
+         * -inf or -outrange return 0x7fffffff(nan)
+         */
+        npyv_s32 roundi = vcvtq_s32_f32(a);
+        npyv_f32 round = vcvtq_f32_s32(roundi);
+        // respect signed zero, e.g. -0.5 -> -0.0
+        npyv_f32 rzero = vreinterpretq_f32_s32(vorrq_s32(
+            vreinterpretq_s32_f32(round),
+            vandq_s32(vreinterpretq_s32_f32(a), szero)
+        ));
+        // if nan or overflow return a
+        npyv_u32 nnan = npyv_notnan_f32(a);
+        npyv_u32 overflow = vorrq_u32(
+            vceqq_s32(roundi, szero), vceqq_s32(roundi, max_int)
+        );
+        return vbslq_f32(vbicq_u32(nnan, overflow), rzero, a);
+   }
+#endif
+#if NPY_SIMD_F64
+    #define npyv_trunc_f64 vrndq_f64
+#endif // NPY_SIMD_F64
 
 #endif // _NPY_SIMD_NEON_MATH_H

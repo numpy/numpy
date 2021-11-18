@@ -69,4 +69,12 @@ NPY_FINLINE npyv_f64 npyv_square_f64(npyv_f64 a)
 #define npyv_min_u64 vec_min
 #define npyv_min_s64 vec_min
 
+// ceil
+#define npyv_ceil_f32 vec_ceil
+#define npyv_ceil_f64 vec_ceil
+
+// trunc
+#define npyv_trunc_f32 vec_trunc
+#define npyv_trunc_f64 vec_trunc
+
 #endif // _NPY_SIMD_VSX_MATH_H

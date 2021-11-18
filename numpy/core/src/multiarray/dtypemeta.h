@@ -74,9 +74,9 @@ typedef struct {
 #define NPY_DTYPE(descr) ((PyArray_DTypeMeta *)Py_TYPE(descr))
 #define NPY_DT_SLOTS(dtype) ((NPY_DType_Slots *)(dtype)->dt_slots)
 
-#define NPY_DT_is_legacy(dtype) ((dtype)->flags & NPY_DT_LEGACY)
-#define NPY_DT_is_abstract(dtype) ((dtype)->flags & NPY_DT_ABSTRACT)
-#define NPY_DT_is_parametric(dtype) ((dtype)->flags & NPY_DT_PARAMETRIC)
+#define NPY_DT_is_legacy(dtype) (((dtype)->flags & NPY_DT_LEGACY) != 0)
+#define NPY_DT_is_abstract(dtype) (((dtype)->flags & NPY_DT_ABSTRACT) != 0)
+#define NPY_DT_is_parametric(dtype) (((dtype)->flags & NPY_DT_PARAMETRIC) != 0)
 
 /*
  * Macros for convenient classmethod calls, since these require

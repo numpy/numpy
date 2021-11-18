@@ -88,13 +88,13 @@ Notes
 The implementations of multiplication, division, integration, and
 differentiation use the algebraic identities [1]_:
 
-.. math ::
+.. math::
     T_n(x) = \\frac{z^n + z^{-n}}{2} \\\\
     z\\frac{dx}{dz} = \\frac{z - z^{-1}}{2}.
 
 where
 
-.. math :: x = \\frac{z + z^{-1}}{2}.
+.. math:: x = \\frac{z + z^{-1}}{2}.
 
 These identities allow a Chebyshev series to be expressed as a finite,
 symmetric Laurent series.  In this module, this sort of Laurent series

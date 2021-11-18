@@ -24,41 +24,41 @@ class ImagObj:
 
 reveal_type(np.mintypecode(["f8"], typeset="qfQF"))
 
-reveal_type(np.asfarray(AR_f8))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
-reveal_type(np.asfarray(AR_LIKE_f))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
-reveal_type(np.asfarray(AR_f8, dtype="c16"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.complexfloating[Any, Any]]]
-reveal_type(np.asfarray(AR_f8, dtype="i8"))  # E: numpy.ndarray[Any, numpy.dtype[numpy.floating[Any]]]
+reveal_type(np.asfarray(AR_f8))  # E: ndarray[Any, dtype[{float64}]]
+reveal_type(np.asfarray(AR_LIKE_f))  # E: ndarray[Any, dtype[{float64}]]
+reveal_type(np.asfarray(AR_f8, dtype="c16"))  # E: ndarray[Any, dtype[complexfloating[Any, Any]]]
+reveal_type(np.asfarray(AR_f8, dtype="i8"))  # E: ndarray[Any, dtype[floating[Any]]]
 
 reveal_type(np.real(RealObj()))  # E: slice
-reveal_type(np.real(AR_f8))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
-reveal_type(np.real(AR_c16))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
-reveal_type(np.real(AR_LIKE_f))  # E: numpy.ndarray[Any, numpy.dtype[Any]]
+reveal_type(np.real(AR_f8))  # E: ndarray[Any, dtype[{float64}]]
+reveal_type(np.real(AR_c16))  # E: ndarray[Any, dtype[{float64}]]
+reveal_type(np.real(AR_LIKE_f))  # E: ndarray[Any, dtype[Any]]
 
 reveal_type(np.imag(ImagObj()))  # E: slice
-reveal_type(np.imag(AR_f8))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
-reveal_type(np.imag(AR_c16))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
-reveal_type(np.imag(AR_LIKE_f))  # E: numpy.ndarray[Any, numpy.dtype[Any]]
+reveal_type(np.imag(AR_f8))  # E: ndarray[Any, dtype[{float64}]]
+reveal_type(np.imag(AR_c16))  # E: ndarray[Any, dtype[{float64}]]
+reveal_type(np.imag(AR_LIKE_f))  # E: ndarray[Any, dtype[Any]]
 
-reveal_type(np.iscomplex(f8))  # E: numpy.bool_
-reveal_type(np.iscomplex(AR_f8))  # E: numpy.ndarray[Any, numpy.dtype[numpy.bool_]]
-reveal_type(np.iscomplex(AR_LIKE_f))  # E: numpy.ndarray[Any, numpy.dtype[numpy.bool_]]
+reveal_type(np.iscomplex(f8))  # E: bool_
+reveal_type(np.iscomplex(AR_f8))  # E: ndarray[Any, dtype[bool_]]
+reveal_type(np.iscomplex(AR_LIKE_f))  # E: ndarray[Any, dtype[bool_]]
 
-reveal_type(np.isreal(f8))  # E: numpy.bool_
-reveal_type(np.isreal(AR_f8))  # E: numpy.ndarray[Any, numpy.dtype[numpy.bool_]]
-reveal_type(np.isreal(AR_LIKE_f))  # E: numpy.ndarray[Any, numpy.dtype[numpy.bool_]]
+reveal_type(np.isreal(f8))  # E: bool_
+reveal_type(np.isreal(AR_f8))  # E: ndarray[Any, dtype[bool_]]
+reveal_type(np.isreal(AR_LIKE_f))  # E: ndarray[Any, dtype[bool_]]
 
 reveal_type(np.iscomplexobj(f8))  # E: bool
 reveal_type(np.isrealobj(f8))  # E: bool
 
 reveal_type(np.nan_to_num(f8))  # E: {float64}
 reveal_type(np.nan_to_num(f, copy=True))  # E: Any
-reveal_type(np.nan_to_num(AR_f8, nan=1.5))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
-reveal_type(np.nan_to_num(AR_LIKE_f, posinf=9999))  # E: numpy.ndarray[Any, numpy.dtype[Any]]
+reveal_type(np.nan_to_num(AR_f8, nan=1.5))  # E: ndarray[Any, dtype[{float64}]]
+reveal_type(np.nan_to_num(AR_LIKE_f, posinf=9999))  # E: ndarray[Any, dtype[Any]]
 
-reveal_type(np.real_if_close(AR_f8))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
-reveal_type(np.real_if_close(AR_c16))  # E: Union[numpy.ndarray[Any, numpy.dtype[{float64}]], numpy.ndarray[Any, numpy.dtype[{complex128}]]]
-reveal_type(np.real_if_close(AR_c8))  # E: Union[numpy.ndarray[Any, numpy.dtype[{float32}]], numpy.ndarray[Any, numpy.dtype[{complex64}]]]
-reveal_type(np.real_if_close(AR_LIKE_f))  # E: numpy.ndarray[Any, numpy.dtype[Any]]
+reveal_type(np.real_if_close(AR_f8))  # E: ndarray[Any, dtype[{float64}]]
+reveal_type(np.real_if_close(AR_c16))  # E: Union[ndarray[Any, dtype[{float64}]], ndarray[Any, dtype[{complex128}]]]
+reveal_type(np.real_if_close(AR_c8))  # E: Union[ndarray[Any, dtype[{float32}]], ndarray[Any, dtype[{complex64}]]]
+reveal_type(np.real_if_close(AR_LIKE_f))  # E: ndarray[Any, dtype[Any]]
 
 reveal_type(np.typename("h"))  # E: Literal['short']
 reveal_type(np.typename("B"))  # E: Literal['unsigned char']

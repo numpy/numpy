@@ -1,0 +1,6 @@
+Deprecate PyDataMem_SetEventHook
+--------------------------------
+
+The ability to track allocations is now built-in to python via ``tracemalloc``.
+The hook function ``PyDataMem_SetEventHook`` has been deprecated and the
+demonstration of its use in tool/allocation_tracking has been removed.

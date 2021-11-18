@@ -10,8 +10,8 @@ int main(void)
     float32x4_t vf   = vdupq_n_f32(1.0f);
     float32x2_t vlf  = vdup_n_f32(1.0f);
 
-    int ret  = (int)vget_lane_f32(vfmlal_low_u32(vlf, vlhp, vlhp), 0);
-        ret += (int)vgetq_lane_f32(vfmlslq_high_u32(vf, vhp, vhp), 0);
+    int ret  = (int)vget_lane_f32(vfmlal_low_f16(vlf, vlhp, vlhp), 0);
+        ret += (int)vgetq_lane_f32(vfmlslq_high_f16(vf, vhp, vhp), 0);
 
     return ret;
 }

@@ -9,6 +9,7 @@ are available in the main ``numpy`` namespace - use that instead.
 from numpy.version import version as __version__
 
 import os
+import warnings
 
 # disables OpenBLAS affinity setting of the main thread that limits
 # python threads or processes to one core
@@ -80,8 +81,8 @@ from .memmap import *
 from .defchararray import chararray
 from . import function_base
 from .function_base import *
-from . import machar
-from .machar import *
+from . import _machar
+from ._machar import *
 from . import getlimits
 from .getlimits import *
 from . import shape_base
@@ -105,11 +106,9 @@ from . import _methods
 
 __all__ = ['char', 'rec', 'memmap']
 __all__ += numeric.__all__
-__all__ += fromnumeric.__all__
 __all__ += ['record', 'recarray', 'format_parser']
 __all__ += ['chararray']
 __all__ += function_base.__all__
-__all__ += machar.__all__
 __all__ += getlimits.__all__
 __all__ += shape_base.__all__
 __all__ += einsumfunc.__all__
@@ -149,6 +148,17 @@ def _DType_reduce(DType):
         return "dtype"  # must pickle `np.dtype` as a singleton.
     scalar_type = DType.type  # pickle the scalar type for reconstruction
     return _DType_reconstruct, (scalar_type,)
+
+
+def __getattr__(name):
+    # Deprecated 2021-10-20, NumPy 1.22
+    if name == "machar":
+        warnings.warn(
+            "The `np.core.machar` module is deprecated (NumPy 1.22)",
+            DeprecationWarning, stacklevel=2,
+        )
+        return _machar
+    raise AttributeError(f"Module {__name__!r} has no attribute {name!r}")
 
 
 import copyreg

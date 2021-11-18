@@ -550,7 +550,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
     -----
     The solution minimizes the squared error
 
-    .. math ::
+    .. math::
         E = \\sum_{j=0}^k |p(x_j) - y_j|^2
 
     in the equations::

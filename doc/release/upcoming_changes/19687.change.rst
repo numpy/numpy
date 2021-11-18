@@ -1,8 +1,0 @@
-str/repr of complex dtypes now include space after punctuation
---------------------------------------------------------------
-
-The repr of ``np.dtype({"names": ["a"], "formats": [int], "offsets": [2]})`` is
-now ``dtype({'names': ['a'], 'formats': ['<i8'], 'offsets': [2], 'itemsize': 10})``,
-whereas spaces where previously omitted after colons and between fields.
-
-The old behavior can be restored via ``np.set_printoptions(legacy="1.21")``.

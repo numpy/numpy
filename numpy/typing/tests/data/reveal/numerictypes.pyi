@@ -21,7 +21,7 @@ reveal_type(np.issubclass_(1, 1))  # E: Literal[False]
 reveal_type(np.sctype2char("S8"))  # E: str
 reveal_type(np.sctype2char(list))  # E: str
 
-reveal_type(np.find_common_type([np.int64], [np.int64]))  # E: numpy.dtype[Any]
+reveal_type(np.find_common_type([np.int64], [np.int64]))  # E: dtype[Any]
 
 reveal_type(np.cast[int])  # E: _CastFunc
 reveal_type(np.cast["i8"])  # E: _CastFunc

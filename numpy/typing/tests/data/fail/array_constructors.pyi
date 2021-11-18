@@ -10,7 +10,7 @@ np.zeros("test")  # E: incompatible type
 np.zeros()  # E: require at least one argument
 
 np.ones("test")  # E: incompatible type
-np.ones()  # E: Missing positional argument
+np.ones()  # E: require at least one argument
 
 np.array(0, float, True)  # E: No overload variant
 

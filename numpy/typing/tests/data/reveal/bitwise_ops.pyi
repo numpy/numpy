@@ -75,17 +75,17 @@ reveal_type(u4 | u4)  # E: {uint32}
 reveal_type(u4 ^ u4)  # E: {uint32}
 reveal_type(u4 & u4)  # E: {uint32}
 
-reveal_type(u4 << i4)  # E: numpy.signedinteger[Any]
-reveal_type(u4 >> i4)  # E: numpy.signedinteger[Any]
-reveal_type(u4 | i4)  # E: numpy.signedinteger[Any]
-reveal_type(u4 ^ i4)  # E: numpy.signedinteger[Any]
-reveal_type(u4 & i4)  # E: numpy.signedinteger[Any]
+reveal_type(u4 << i4)  # E: signedinteger[Any]
+reveal_type(u4 >> i4)  # E: signedinteger[Any]
+reveal_type(u4 | i4)  # E: signedinteger[Any]
+reveal_type(u4 ^ i4)  # E: signedinteger[Any]
+reveal_type(u4 & i4)  # E: signedinteger[Any]
 
-reveal_type(u4 << i)  # E: numpy.signedinteger[Any]
-reveal_type(u4 >> i)  # E: numpy.signedinteger[Any]
-reveal_type(u4 | i)  # E: numpy.signedinteger[Any]
-reveal_type(u4 ^ i)  # E: numpy.signedinteger[Any]
-reveal_type(u4 & i)  # E: numpy.signedinteger[Any]
+reveal_type(u4 << i)  # E: signedinteger[Any]
+reveal_type(u4 >> i)  # E: signedinteger[Any]
+reveal_type(u4 | i)  # E: signedinteger[Any]
+reveal_type(u4 ^ i)  # E: signedinteger[Any]
+reveal_type(u4 & i)  # E: signedinteger[Any]
 
 reveal_type(u8 << b_)  # E: {uint64}
 reveal_type(u8 >> b_)  # E: {uint64}
@@ -101,9 +101,9 @@ reveal_type(u8 & b)  # E: {uint64}
 
 reveal_type(b_ << b_)  # E: {int8}
 reveal_type(b_ >> b_)  # E: {int8}
-reveal_type(b_ | b_)  # E: numpy.bool_
-reveal_type(b_ ^ b_)  # E: numpy.bool_
-reveal_type(b_ & b_)  # E: numpy.bool_
+reveal_type(b_ | b_)  # E: bool_
+reveal_type(b_ ^ b_)  # E: bool_
+reveal_type(b_ & b_)  # E: bool_
 
 reveal_type(b_ << AR)  # E: Any
 reveal_type(b_ >> AR)  # E: Any
@@ -113,9 +113,9 @@ reveal_type(b_ & AR)  # E: Any
 
 reveal_type(b_ << b)  # E: {int8}
 reveal_type(b_ >> b)  # E: {int8}
-reveal_type(b_ | b)  # E: numpy.bool_
-reveal_type(b_ ^ b)  # E: numpy.bool_
-reveal_type(b_ & b)  # E: numpy.bool_
+reveal_type(b_ | b)  # E: bool_
+reveal_type(b_ ^ b)  # E: bool_
+reveal_type(b_ & b)  # E: bool_
 
 reveal_type(b_ << i)  # E: {int_}
 reveal_type(b_ >> i)  # E: {int_}
@@ -127,5 +127,5 @@ reveal_type(~i8)  # E: {int64}
 reveal_type(~i4)  # E: {int32}
 reveal_type(~u8)  # E: {uint64}
 reveal_type(~u4)  # E: {uint32}
-reveal_type(~b_)  # E: numpy.bool_
+reveal_type(~b_)  # E: bool_
 reveal_type(~AR)  # E: Any

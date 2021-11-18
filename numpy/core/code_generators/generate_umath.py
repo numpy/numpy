@@ -829,7 +829,7 @@ defdict = {
           docstrings.get('numpy.core.umath.ceil'),
           None,
           TD('e', f='ceil', astype={'e': 'f'}),
-          TD(inexactvec, simd=[('fma', 'fd'), ('avx512f', 'fd')]),
+          TD(inexactvec, dispatch=[('loops_unary_fp', 'fd')]),
           TD('fdg', f='ceil'),
           TD(O, f='npy_ObjectCeil'),
           ),

@@ -27,6 +27,25 @@ typedef npy_int64  npyv_lanetype_s64;
 typedef float      npyv_lanetype_f32;
 typedef double     npyv_lanetype_f64;
 
+#if defined(_MSC_VER) && defined(_M_IX86)
+/*
+ * Avoid using any of the following intrinsics with MSVC 32-bit,
+ * even if they are apparently work on newer versions.
+ * They had bad impact on the generated instructions,
+ * sometimes the compiler deal with them without the respect
+ * of 32-bit mode which lead to crush due to execute 64-bit
+ * instructions and other times generate bad emulated instructions. 
+ */
+    #undef _mm512_set1_epi64
+    #undef _mm256_set1_epi64x
+    #undef _mm_set1_epi64x
+    #undef _mm512_setr_epi64x
+    #undef _mm256_setr_epi64x
+    #undef _mm_setr_epi64x
+    #undef _mm512_set_epi64x
+    #undef _mm256_set_epi64x
+    #undef _mm_set_epi64x
+#endif
 #if defined(NPY_HAVE_AVX512F) && !defined(NPY_SIMD_FORCE_256) && !defined(NPY_SIMD_FORCE_128)
     #include "avx512/avx512.h"
 #elif defined(NPY_HAVE_AVX2) && !defined(NPY_SIMD_FORCE_128)

@@ -20,32 +20,32 @@ reveal_type(nd.tolist())  # E: Any
 # dumps is pretty simple
 
 # astype
-reveal_type(nd.astype("float"))  # E: numpy.ndarray[Any, numpy.dtype[Any]]
-reveal_type(nd.astype(float))  # E: numpy.ndarray[Any, numpy.dtype[Any]]
-reveal_type(nd.astype(np.float64))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
-reveal_type(nd.astype(np.float64, "K"))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
-reveal_type(nd.astype(np.float64, "K", "unsafe"))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
-reveal_type(nd.astype(np.float64, "K", "unsafe", True))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
-reveal_type(nd.astype(np.float64, "K", "unsafe", True, True))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
+reveal_type(nd.astype("float"))  # E: ndarray[Any, dtype[Any]]
+reveal_type(nd.astype(float))  # E: ndarray[Any, dtype[Any]]
+reveal_type(nd.astype(np.float64))  # E: ndarray[Any, dtype[{float64}]]
+reveal_type(nd.astype(np.float64, "K"))  # E: ndarray[Any, dtype[{float64}]]
+reveal_type(nd.astype(np.float64, "K", "unsafe"))  # E: ndarray[Any, dtype[{float64}]]
+reveal_type(nd.astype(np.float64, "K", "unsafe", True))  # E: ndarray[Any, dtype[{float64}]]
+reveal_type(nd.astype(np.float64, "K", "unsafe", True, True))  # E: ndarray[Any, dtype[{float64}]]
 
 # byteswap
-reveal_type(nd.byteswap())  # E: numpy.ndarray[Any, numpy.dtype[{int_}]]
-reveal_type(nd.byteswap(True))  # E: numpy.ndarray[Any, numpy.dtype[{int_}]]
+reveal_type(nd.byteswap())  # E: ndarray[Any, dtype[{int_}]]
+reveal_type(nd.byteswap(True))  # E: ndarray[Any, dtype[{int_}]]
 
 # copy
-reveal_type(nd.copy())  # E: numpy.ndarray[Any, numpy.dtype[{int_}]]
-reveal_type(nd.copy("C"))  # E: numpy.ndarray[Any, numpy.dtype[{int_}]]
+reveal_type(nd.copy())  # E: ndarray[Any, dtype[{int_}]]
+reveal_type(nd.copy("C"))  # E: ndarray[Any, dtype[{int_}]]
 
-reveal_type(nd.view())  # E: numpy.ndarray[Any, numpy.dtype[{int_}]]
-reveal_type(nd.view(np.float64))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
-reveal_type(nd.view(float))  # E: numpy.ndarray[Any, numpy.dtype[Any]]
-reveal_type(nd.view(np.float64, np.matrix))  # E: numpy.matrix[Any, Any]
+reveal_type(nd.view())  # E: ndarray[Any, dtype[{int_}]]
+reveal_type(nd.view(np.float64))  # E: ndarray[Any, dtype[{float64}]]
+reveal_type(nd.view(float))  # E: ndarray[Any, dtype[Any]]
+reveal_type(nd.view(np.float64, np.matrix))  # E: matrix[Any, Any]
 
 # getfield
-reveal_type(nd.getfield("float"))  # E: numpy.ndarray[Any, numpy.dtype[Any]]
-reveal_type(nd.getfield(float))  # E: numpy.ndarray[Any, numpy.dtype[Any]]
-reveal_type(nd.getfield(np.float64))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
-reveal_type(nd.getfield(np.float64, 8))  # E: numpy.ndarray[Any, numpy.dtype[{float64}]]
+reveal_type(nd.getfield("float"))  # E: ndarray[Any, dtype[Any]]
+reveal_type(nd.getfield(float))  # E: ndarray[Any, dtype[Any]]
+reveal_type(nd.getfield(np.float64))  # E: ndarray[Any, dtype[{float64}]]
+reveal_type(nd.getfield(np.float64, 8))  # E: ndarray[Any, dtype[{float64}]]
 
 # setflags does not return a value
 # fill does not return a value

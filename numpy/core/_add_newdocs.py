@@ -328,7 +328,7 @@ add_newdoc('numpy.core', 'nditer',
     ...     with it:
     ...         for (a, b, c) in it:
     ...             addop(a, b, out=c)
-    ...     return it.operands[2]
+    ...         return it.operands[2]
 
     Here is the same function, but following the C-style pattern:
 
@@ -1573,6 +1573,19 @@ add_newdoc('numpy.core.multiarray', 'frombuffer',
         array_function_like_doc,
     ))
 
+add_newdoc('numpy.core.multiarray', '_from_dlpack',
+    """
+    _from_dlpack(x, /)
+
+    Create a NumPy array from an object implementing the ``__dlpack__``
+    protocol.
+
+    See Also
+    --------
+    `Array API documentation
+    <https://data-apis.org/array-api/latest/design_topics/data_interchange.html#syntax-for-data-interchange-with-dlpack>`_
+    """)
+
 add_newdoc('numpy.core', 'fastCopyAndTranspose',
     """_fastCopyAndTranspose(a)""")
 
@@ -2263,6 +2276,15 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('__array_priority__',
 add_newdoc('numpy.core.multiarray', 'ndarray', ('__array_struct__',
     """Array protocol: C-struct side."""))
 
+add_newdoc('numpy.core.multiarray', 'ndarray', ('__dlpack__',
+    """a.__dlpack__(*, stream=None)
+    
+    DLPack Protocol: Part of the Array API."""))
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('__dlpack_device__',
+    """a.__dlpack_device__()
+    
+    DLPack Protocol: Part of the Array API."""))
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('base',
     """
@@ -2819,7 +2841,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('__class_getitem__',
     >>> import numpy as np
 
     >>> np.ndarray[Any, np.dtype[Any]]
-    numpy.ndarray[typing.Any, numpy.dtype[Any]]
+    numpy.ndarray[typing.Any, numpy.dtype[typing.Any]]
 
     Notes
     -----
@@ -4725,6 +4747,26 @@ add_newdoc('numpy.core.umath', '_add_newdoc_ufunc',
     be a problem if the user is repeatedly creating ufuncs with
     no documentation, adding documentation via add_newdoc_ufunc,
     and then throwing away the ufunc.
+    """)
+
+add_newdoc('numpy.core.multiarray', 'get_handler_name',
+    """
+    get_handler_name(a: ndarray) -> str,None
+
+    Return the name of the memory handler used by `a`. If not provided, return
+    the name of the memory handler that will be used to allocate data for the
+    next `ndarray` in this context. May return None if `a` does not own its
+    memory, in which case you can traverse ``a.base`` for a memory handler.
+    """)
+
+add_newdoc('numpy.core.multiarray', 'get_handler_version',
+    """
+    get_handler_version(a: ndarray) -> int,None
+
+    Return the version of the memory handler used by `a`. If not provided,
+    return the version of the memory handler that will be used to allocate data
+    for the next `ndarray` in this context. May return None if `a` does not own
+    its memory, in which case you can traverse ``a.base`` for a memory handler.
     """)
 
 add_newdoc('numpy.core.multiarray', '_set_madvise_hugepage',

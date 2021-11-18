@@ -780,6 +780,13 @@ _masked_stridedloop_data_free(NpyAuxData *auxdata)
  * This function wraps a regular unmasked strided-loop as a
  * masked strided-loop, only calling the function for elements
  * where the mask is True.
+ *
+ * TODO: Reductions also use this code to implement masked reductions.
+ *       Before consolidating them, reductions had a special case for
+ *       broadcasts: when the mask stride was 0 the code does not check all
+ *       elements as `npy_memchr` currently does.
+ *       It may be worthwhile to add such an optimization again if broadcasted
+ *       masks are common enough.
  */
 static int
 generic_masked_strided_loop(PyArrayMethod_Context *context,

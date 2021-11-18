@@ -46,7 +46,7 @@ class TestFinfo:
                        [np.float16, np.float32, np.float64, np.complex64,
                         np.complex128]))
         for dt1, dt2 in dts:
-            for attr in ('bits', 'eps', 'epsneg', 'iexp', 'machar', 'machep',
+            for attr in ('bits', 'eps', 'epsneg', 'iexp', 'machep',
                          'max', 'maxexp', 'min', 'minexp', 'negep', 'nexp',
                          'nmant', 'precision', 'resolution', 'tiny',
                          'smallest_normal', 'smallest_subnormal'):

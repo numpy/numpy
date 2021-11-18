@@ -46,25 +46,27 @@ def assert_state_equal(actual, target):
             assert actual[key] == target[key]
 
 
+def uint32_to_float32(u):
+    return ((u >> np.uint32(8)) * (1.0 / 2**24)).astype(np.float32)
+
+
 def uniform32_from_uint64(x):
     x = np.uint64(x)
     upper = np.array(x >> np.uint64(32), dtype=np.uint32)
     lower = np.uint64(0xffffffff)
     lower = np.array(x & lower, dtype=np.uint32)
     joined = np.column_stack([lower, upper]).ravel()
-    out = (joined >> np.uint32(9)) * (1.0 / 2 ** 23)
-    return out.astype(np.float32)
+    return uint32_to_float32(joined)
 
 
 def uniform32_from_uint53(x):
     x = np.uint64(x) >> np.uint64(16)
     x = np.uint32(x & np.uint64(0xffffffff))
-    out = (x >> np.uint32(9)) * (1.0 / 2 ** 23)
-    return out.astype(np.float32)
+    return uint32_to_float32(x)
 
 
 def uniform32_from_uint32(x):
-    return (x >> np.uint32(9)) * (1.0 / 2 ** 23)
+    return uint32_to_float32(x)
 
 
 def uniform32_from_uint(x, bits):
@@ -125,6 +127,7 @@ def gauss_from_uint(x, n, bits):
         gauss.append(f * x1)
 
     return gauss[:n]
+
 
 def test_seedsequence():
     from numpy.random.bit_generator import (ISeedSequence,

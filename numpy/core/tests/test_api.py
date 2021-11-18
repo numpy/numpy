@@ -598,3 +598,31 @@ def test_broadcast_arrays():
 def test_full_from_list(shape, fill_value, expected_output):
     output = np.full(shape, fill_value)
     assert_equal(output, expected_output)
+
+def test_astype_copyflag():
+    # test the various copyflag options
+    arr = np.arange(10, dtype=np.intp)
+
+    res_true = arr.astype(np.intp, copy=True)
+    assert not np.may_share_memory(arr, res_true)
+    res_always = arr.astype(np.intp, copy=np._CopyMode.ALWAYS)
+    assert not np.may_share_memory(arr, res_always)
+
+    res_false = arr.astype(np.intp, copy=False)
+    # `res_false is arr` currently, but check `may_share_memory`.
+    assert np.may_share_memory(arr, res_false)
+    res_if_needed = arr.astype(np.intp, copy=np._CopyMode.IF_NEEDED)
+    # `res_if_needed is arr` currently, but check `may_share_memory`.
+    assert np.may_share_memory(arr, res_if_needed)
+
+    res_never = arr.astype(np.intp, copy=np._CopyMode.NEVER)
+    assert np.may_share_memory(arr, res_never)
+
+    # Simple tests for when a copy is necessary:
+    res_false = arr.astype(np.float64, copy=False)
+    assert_array_equal(res_false, arr)
+    res_if_needed = arr.astype(np.float64, 
+                               copy=np._CopyMode.IF_NEEDED)
+    assert_array_equal(res_if_needed, arr)
+    assert_raises(ValueError, arr.astype, np.float64,
+                  copy=np._CopyMode.NEVER)
