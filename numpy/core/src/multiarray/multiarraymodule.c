@@ -4212,7 +4212,7 @@ normalize_axis_index(PyObject *NPY_UNUSED(self),
 
 
 static PyObject *
-_reload_guard(PyObject *NPY_UNUSED(self)) {
+_reload_guard(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args)) {
     static int initialized = 0;
 
 #if !defined(PYPY_VERSION)
