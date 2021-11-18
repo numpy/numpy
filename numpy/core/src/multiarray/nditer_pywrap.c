@@ -1320,7 +1320,8 @@ npyiter_remove_axis(NewNpyArrayIterObject *self, PyObject *args)
 }
 
 static PyObject *
-npyiter_remove_multi_index(NewNpyArrayIterObject *self, PyObject *NPY_UNUSED(args))
+npyiter_remove_multi_index(
+    NewNpyArrayIterObject *self, PyObject *NPY_UNUSED(args))
 {
     if (self->iter == NULL) {
         PyErr_SetString(PyExc_ValueError,
