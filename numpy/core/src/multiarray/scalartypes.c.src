@@ -229,7 +229,7 @@ gentype_multiply(PyObject *m1, PyObject *m2)
  * #convert = Long*8, LongLong*2#
  */
 static PyObject *
-@type@_bit_count(PyObject *self, PyObject *NPY_UNUSED(ignored))
+@type@_bit_count(PyObject *self, PyObject *NPY_UNUSED(args))
 {
     @type@ scalar = PyArrayScalar_VAL(self, @Name@);
     uint8_t count = npy_popcount@c@(scalar);
@@ -1085,19 +1085,19 @@ gentype_richcompare(PyObject *self, PyObject *other, int cmp_op)
 }
 
 static PyObject *
-gentype_ndim_get(PyObject *NPY_UNUSED(self), void *NPY_UNUSED(ignored))
+gentype_ndim_get(PyObject *NPY_UNUSED(self), void *NPY_UNUSED(args))
 {
     return PyLong_FromLong(0);
 }
 
 static PyObject *
-gentype_flags_get(PyObject *NPY_UNUSED(self), void *NPY_UNUSED(ignored))
+gentype_flags_get(PyObject *NPY_UNUSED(self), void *NPY_UNUSED(args))
 {
     return PyArray_NewFlagsObject(NULL);
 }
 
 static PyObject *
-voidtype_flags_get(PyVoidScalarObject *self, void *NPY_UNUSED(ignored))
+voidtype_flags_get(PyVoidScalarObject *self, void *NPY_UNUSED(args))
 {
     PyObject *flagobj;
     flagobj = PyArrayFlags_Type.tp_alloc(&PyArrayFlags_Type, 0);
@@ -1110,7 +1110,7 @@ voidtype_flags_get(PyVoidScalarObject *self, void *NPY_UNUSED(ignored))
 }
 
 static PyObject *
-voidtype_dtypedescr_get(PyVoidScalarObject *self, void *NPY_UNUSED(ignored))
+voidtype_dtypedescr_get(PyVoidScalarObject *self, void *NPY_UNUSED(args))
 {
     Py_INCREF(self->descr);
     return (PyObject *)self->descr;
@@ -1118,7 +1118,7 @@ voidtype_dtypedescr_get(PyVoidScalarObject *self, void *NPY_UNUSED(ignored))
 
 
 static PyObject *
-inttype_numerator_get(PyObject *self, void *NPY_UNUSED(ignored))
+inttype_numerator_get(PyObject *self, void *NPY_UNUSED(args))
 {
     Py_INCREF(self);
     return self;
@@ -1126,21 +1126,21 @@ inttype_numerator_get(PyObject *self, void *NPY_UNUSED(ignored))
 
 
 static PyObject *
-inttype_denominator_get(PyObject *self, void *NPY_UNUSED(ignored))
+inttype_denominator_get(PyObject *self, void *NPY_UNUSED(args))
 {
     return PyLong_FromLong(1);
 }
 
 
 static PyObject *
-gentype_data_get(PyObject *self, void *NPY_UNUSED(ignored))
+gentype_data_get(PyObject *self, void *NPY_UNUSED(args))
 {
     return PyMemoryView_FromObject(self);
 }
 
 
 static PyObject *
-gentype_itemsize_get(PyObject *self, void *NPY_UNUSED(ignored))
+gentype_itemsize_get(PyObject *self, void *NPY_UNUSED(args))
 {
     PyArray_Descr *typecode;
     PyObject *ret;
@@ -1154,13 +1154,13 @@ gentype_itemsize_get(PyObject *self, void *NPY_UNUSED(ignored))
 }
 
 static PyObject *
-gentype_size_get(PyObject *NPY_UNUSED(self), void *NPY_UNUSED(ignored))
+gentype_size_get(PyObject *NPY_UNUSED(self), void *NPY_UNUSED(args))
 {
     return PyLong_FromLong(1);
 }
 
 static PyObject *
-gentype_sizeof(PyObject *self, PyObject *NPY_UNUSED(ignored))
+gentype_sizeof(PyObject *self, PyObject *NPY_UNUSED(args))
 {
     Py_ssize_t nbytes;
     PyObject * isz = gentype_itemsize_get(self, NULL);
@@ -1192,7 +1192,7 @@ gentype_struct_free(PyObject *ptr)
 }
 
 static PyObject *
-gentype_struct_get(PyObject *self, void *NPY_UNUSED(ignored))
+gentype_struct_get(PyObject *self, void *NPY_UNUSED(args))
 {
     PyArrayObject *arr;
     PyArrayInterface *inter;
@@ -1218,20 +1218,20 @@ gentype_struct_get(PyObject *self, void *NPY_UNUSED(ignored))
 }
 
 static PyObject *
-gentype_priority_get(PyObject *NPY_UNUSED(self), void *NPY_UNUSED(ignored))
+gentype_priority_get(PyObject *NPY_UNUSED(self), void *NPY_UNUSED(args))
 {
     return PyFloat_FromDouble(NPY_SCALAR_PRIORITY);
 }
 
 static PyObject *
-gentype_shape_get(PyObject *NPY_UNUSED(self), void *NPY_UNUSED(ignored))
+gentype_shape_get(PyObject *NPY_UNUSED(self), void *NPY_UNUSED(args))
 {
     return PyTuple_New(0);
 }
 
 
 static PyObject *
-gentype_interface_get(PyObject *self, void *NPY_UNUSED(ignored))
+gentype_interface_get(PyObject *self, void *NPY_UNUSED(args))
 {
     PyArrayObject *arr;
     PyObject *inter;
@@ -1251,20 +1251,20 @@ gentype_interface_get(PyObject *self, void *NPY_UNUSED(ignored))
 
 
 static PyObject *
-gentype_typedescr_get(PyObject *self, void *NPY_UNUSED(ignored))
+gentype_typedescr_get(PyObject *self, void *NPY_UNUSED(args))
 {
     return (PyObject *)PyArray_DescrFromScalar(self);
 }
 
 
 static PyObject *
-gentype_base_get(PyObject *NPY_UNUSED(self), void *NPY_UNUSED(ignored))
+gentype_base_get(PyObject *NPY_UNUSED(self), void *NPY_UNUSED(args))
 {
     Py_RETURN_NONE;
 }
 
 static PyObject *
-voidtype_base_get(PyVoidScalarObject *self, void *NPY_UNUSED(ignored))
+voidtype_base_get(PyVoidScalarObject *self, void *NPY_UNUSED(args))
 {
     if (self->base == NULL) {
         Py_RETURN_NONE;
@@ -1295,7 +1295,7 @@ _realdescr_fromcomplexscalar(PyObject *self, int *typenum)
 }
 
 static PyObject *
-gentype_real_get(PyObject *self, void *NPY_UNUSED(ignored))
+gentype_real_get(PyObject *self, void *NPY_UNUSED(args))
 {
     PyArray_Descr *typecode;
     PyObject *ret;
@@ -1322,7 +1322,7 @@ gentype_real_get(PyObject *self, void *NPY_UNUSED(ignored))
 }
 
 static PyObject *
-gentype_imag_get(PyObject *self, void *NPY_UNUSED(ignored))
+gentype_imag_get(PyObject *self, void *NPY_UNUSED(args))
 {
     PyArray_Descr *typecode=NULL;
     PyObject *ret;
@@ -1362,7 +1362,7 @@ gentype_imag_get(PyObject *self, void *NPY_UNUSED(ignored))
 }
 
 static PyObject *
-gentype_flat_get(PyObject *self, void *NPY_UNUSED(ignored))
+gentype_flat_get(PyObject *self, void *NPY_UNUSED(args))
 {
     PyObject *ret, *arr;
 
@@ -1377,7 +1377,7 @@ gentype_flat_get(PyObject *self, void *NPY_UNUSED(ignored))
 
 
 static PyObject *
-gentype_transpose_get(PyObject *self, void *NPY_UNUSED(ignored))
+gentype_transpose_get(PyObject *self, void *NPY_UNUSED(args))
 {
     Py_INCREF(self);
     return self;
@@ -1918,7 +1918,7 @@ static PyObject *
  */
 /* Heavily copied from the builtin float.as_integer_ratio */
 static PyObject *
-@name@_as_integer_ratio(PyObject *self, PyObject *NPY_UNUSED(ignored))
+@name@_as_integer_ratio(PyObject *self, PyObject *NPY_UNUSED(args))
 {
 #if @is_half@
     npy_double val = npy_half_to_double(PyArrayScalar_VAL(self, @Name@));
@@ -1999,7 +1999,7 @@ error:
  *  #c    = f, f, , l#
  */
 static PyObject *
-@name@_is_integer(PyObject *self, PyObject *NPY_UNUSED(ignored))
+@name@_is_integer(PyObject *self, PyObject *NPY_UNUSED(args))
 {
 #if @is_half@
     npy_double val = npy_half_to_double(PyArrayScalar_VAL(self, @Name@));
