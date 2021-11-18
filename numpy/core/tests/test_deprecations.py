@@ -13,7 +13,8 @@ import sys
 
 import numpy as np
 from numpy.testing import (
-    assert_raises, assert_warns, assert_, assert_array_equal, SkipTest, KnownFailureException
+    assert_raises, assert_warns, assert_, assert_array_equal, SkipTest,
+    KnownFailureException, break_cycles,
     )
 
 from numpy.core._multiarray_tests import fromstring_null_term_c_api
@@ -1250,3 +1251,22 @@ class TestQuantileInterpolationDeprecation(_DeprecationTestCase):
             warnings.simplefilter("always", DeprecationWarning)
             with pytest.raises(TypeError):
                 func([0., 1.], 0., interpolation="nearest", method="nearest")
+
+
+class TestMemEventHook(_DeprecationTestCase):
+    # Deprecated 2021-11-18, NumPy 1.23
+    def test_mem_seteventhook(self):
+        # The actual tests are within the C code in
+        # multiarray/_multiarray_tests.c.src
+        import numpy.core._multiarray_tests as ma_tests
+        with pytest.warns(DeprecationWarning,
+                          match='PyDataMem_SetEventHook is deprecated'):
+            ma_tests.test_pydatamem_seteventhook_start()
+        # force an allocation and free of a numpy array
+        # needs to be larger then limit of small memory cacher in ctors.c
+        a = np.zeros(1000)
+        del a
+        break_cycles()
+        with pytest.warns(DeprecationWarning,
+                          match='PyDataMem_SetEventHook is deprecated'):
+            ma_tests.test_pydatamem_seteventhook_end()
