@@ -1,6 +1,6 @@
 /*@targets
  ** $maxopt baseline
- ** neon
+ ** neon asimd
  **/
 #define _UMATHMODULE
 #define _MULTIARRAYMODULE
@@ -13,659 +13,460 @@
 // Provides the various *_LOOP macros
 #include "fast_loop_macros.h"
 
-
-//##############################################################################
-//## Maximum, Minimum
-//##############################################################################
-
-#ifdef NPY_HAVE_NEON
-//******************************************************************************
-//** NEON Min / Max
-//******************************************************************************
-
-
-//------------------------------------------------------------------------------
-//-- Integer
-//------------------------------------------------------------------------------
-
-
+/*******************************************************************************
+ ** Scalar intrinsics
+ ******************************************************************************/
+// signed/unsigned int
+#define scalar_max_i(A, B) ((A > B) ? A : B)
+#define scalar_min_i(A, B) ((A < B) ? A : B)
+// fp, propagates NaNs
+#if !defined(__aarch64__)
+#define scalar_max_f(A, B) ((A >= B || npy_isnan(A)) ? A : B)
+#define scalar_max_d scalar_max_f
+#define scalar_max_l scalar_max_f
+#define scalar_min_f(A, B) ((A <= B || npy_isnan(A)) ? A : B)
+#define scalar_min_d scalar_min_f
+#define scalar_min_l scalar_min_f
+// fp, ignores NaNs
+#define scalar_maxp_f fmaxf
+#define scalar_maxp_d fmax
+#define scalar_maxp_l fmaxl
+#define scalar_minp_f fminf
+#define scalar_minp_d fmin
+#define scalar_minp_l fminl
+#elif defined(__aarch64__)
 /**begin repeat
- * #TYPE = BYTE, UBYTE, SHORT, USHORT, INT, UINT,
- *         LONG, ULONG, LONGLONG, ULONGLONG#
- * #type = npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
- *         npy_long, npy_ulong, npy_longlong, npy_ulonglong#
- * #sfx = s8, u8, s16, u16, s32, u32,
- *        s64, u64, s64, u64#
- * #HAVE_NEON_IMPL = 1*8, HAVE_NEON_IMPL_LONGLONG*2#
- */
-
-// Implementation below assumes longlong and ulonglong are 64-bit.
-#if @HAVE_NEON_IMPL@
-
-/**begin repeat1
-* Arithmetic
-* # kind = maximum, minimum#
-* # OP = >, <#
-* # vop = max, min#
-*/
-
-#define SCALAR_OP @TYPE@_scalar_@vop@
-static inline @type@ SCALAR_OP(@type@ a, @type@ b){
-    return ((a @OP@ b) ? a : b);
-}
-
-static inline npy_intp
-simd_reduce_@TYPE@_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, npy_intp i)
-{
-    @type@ *iop1 = (@type@ *)args[0];
-    @type@ io1 = iop1[0];
-    @type@ *ip2 = (@type@ *)args[1];
-    npy_intp is2 = steps[1];
-    npy_intp n = dimensions[0];
-
-    const int vectorsPerLoop = 8;
-    const size_t elemPerVector = NPY_SIMD_WIDTH / sizeof(@type@);
-    npy_intp elemPerLoop = vectorsPerLoop * elemPerVector;
-
-    // SIMD if possible
-    if((i+elemPerLoop) <= n && is2 == sizeof(@type@)){
-        #define NPYV_CAST (const npyv_lanetype_@sfx@ *)
-        npyv_@sfx@ m0 = npyv_load_@sfx@(NPYV_CAST &ip2[i + 0 * elemPerVector]);
-        npyv_@sfx@ m1 = npyv_load_@sfx@(NPYV_CAST &ip2[i + 1 * elemPerVector]);
-        npyv_@sfx@ m2 = npyv_load_@sfx@(NPYV_CAST &ip2[i + 2 * elemPerVector]);
-        npyv_@sfx@ m3 = npyv_load_@sfx@(NPYV_CAST &ip2[i + 3 * elemPerVector]);
-        npyv_@sfx@ m4 = npyv_load_@sfx@(NPYV_CAST &ip2[i + 4 * elemPerVector]);
-        npyv_@sfx@ m5 = npyv_load_@sfx@(NPYV_CAST &ip2[i + 5 * elemPerVector]);
-        npyv_@sfx@ m6 = npyv_load_@sfx@(NPYV_CAST &ip2[i + 6 * elemPerVector]);
-        npyv_@sfx@ m7 = npyv_load_@sfx@(NPYV_CAST &ip2[i + 7 * elemPerVector]);
-
-        i += elemPerLoop;
-        for(; (i+elemPerLoop)<=n; i+=elemPerLoop){
-            npyv_@sfx@ v0 = npyv_load_@sfx@(NPYV_CAST &ip2[i + 0 * elemPerVector]);
-            npyv_@sfx@ v1 = npyv_load_@sfx@(NPYV_CAST &ip2[i + 1 * elemPerVector]);
-            npyv_@sfx@ v2 = npyv_load_@sfx@(NPYV_CAST &ip2[i + 2 * elemPerVector]);
-            npyv_@sfx@ v3 = npyv_load_@sfx@(NPYV_CAST &ip2[i + 3 * elemPerVector]);
-            npyv_@sfx@ v4 = npyv_load_@sfx@(NPYV_CAST &ip2[i + 4 * elemPerVector]);
-            npyv_@sfx@ v5 = npyv_load_@sfx@(NPYV_CAST &ip2[i + 5 * elemPerVector]);
-            npyv_@sfx@ v6 = npyv_load_@sfx@(NPYV_CAST &ip2[i + 6 * elemPerVector]);
-            npyv_@sfx@ v7 = npyv_load_@sfx@(NPYV_CAST &ip2[i + 7 * elemPerVector]);
-
-            m0 = npyv_@vop@_@sfx@(m0, v0);
-            m1 = npyv_@vop@_@sfx@(m1, v1);
-            m2 = npyv_@vop@_@sfx@(m2, v2);
-            m3 = npyv_@vop@_@sfx@(m3, v3);
-            m4 = npyv_@vop@_@sfx@(m4, v4);
-            m5 = npyv_@vop@_@sfx@(m5, v5);
-            m6 = npyv_@vop@_@sfx@(m6, v6);
-            m7 = npyv_@vop@_@sfx@(m7, v7);
-        }
-
-        #undef NPYV_CAST
-
-        m0 = npyv_@vop@_@sfx@(m0, m1);
-        m2 = npyv_@vop@_@sfx@(m2, m3);
-        m4 = npyv_@vop@_@sfx@(m4, m5);
-        m6 = npyv_@vop@_@sfx@(m6, m7);
-
-        m0 = npyv_@vop@_@sfx@(m0, m2);
-        m4 = npyv_@vop@_@sfx@(m4, m6);
-
-        m0 = npyv_@vop@_@sfx@(m0, m4);
-
-        @type@ r = npyv_reduce_@vop@_@sfx@(m0);
-
-        io1 = SCALAR_OP(io1, r);
-    }
-
-    *((@type@ *)iop1) = io1;
-
-    return i;
-}
-
-static inline npy_intp
-scalar_reduce_@TYPE@_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, npy_intp i)
-{
-    @type@ *iop1 = (@type@ *)args[0];
-    @type@ io1 = iop1[0];
-    char *ip2 = args[1];
-    npy_intp is2 = steps[1];
-    npy_intp n = dimensions[0];
-
-    // 8x scalar
-    npy_intp elemPerLoop = 8;
-    if((i+elemPerLoop) <= n){
-        @type@ m0 = *((@type@ *)(ip2 + (i + 0) * is2));
-        @type@ m1 = *((@type@ *)(ip2 + (i + 1) * is2));
-        @type@ m2 = *((@type@ *)(ip2 + (i + 2) * is2));
-        @type@ m3 = *((@type@ *)(ip2 + (i + 3) * is2));
-        @type@ m4 = *((@type@ *)(ip2 + (i + 4) * is2));
-        @type@ m5 = *((@type@ *)(ip2 + (i + 5) * is2));
-        @type@ m6 = *((@type@ *)(ip2 + (i + 6) * is2));
-        @type@ m7 = *((@type@ *)(ip2 + (i + 7) * is2));
-
-        i += elemPerLoop;
-        for(; (i+elemPerLoop)<=n; i+=elemPerLoop){
-            @type@ v0 = *((@type@ *)(ip2 + (i + 0) * is2));
-            @type@ v1 = *((@type@ *)(ip2 + (i + 1) * is2));
-            @type@ v2 = *((@type@ *)(ip2 + (i + 2) * is2));
-            @type@ v3 = *((@type@ *)(ip2 + (i + 3) * is2));
-            @type@ v4 = *((@type@ *)(ip2 + (i + 4) * is2));
-            @type@ v5 = *((@type@ *)(ip2 + (i + 5) * is2));
-            @type@ v6 = *((@type@ *)(ip2 + (i + 6) * is2));
-            @type@ v7 = *((@type@ *)(ip2 + (i + 7) * is2));
-
-            m0 = SCALAR_OP(m0, v0);
-            m1 = SCALAR_OP(m1, v1);
-            m2 = SCALAR_OP(m2, v2);
-            m3 = SCALAR_OP(m3, v3);
-            m4 = SCALAR_OP(m4, v4);
-            m5 = SCALAR_OP(m5, v5);
-            m6 = SCALAR_OP(m6, v6);
-            m7 = SCALAR_OP(m7, v7);
-        }
-
-        m0 = SCALAR_OP(m0, m1);
-        m2 = SCALAR_OP(m2, m3);
-        m4 = SCALAR_OP(m4, m5);
-        m6 = SCALAR_OP(m6, m7);
-
-        m0 = SCALAR_OP(m0, m2);
-        m4 = SCALAR_OP(m4, m6);
-
-        m0 = SCALAR_OP(m0, m4);
-
-        io1 = SCALAR_OP(io1, m0);
-    }
-
-    *((@type@ *)iop1) = io1;
-
-    return i;
-}
-
-static inline void
-run_reduce_@TYPE@_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps)
-{
-    @type@ *iop1 = (@type@ *)args[0];
-    @type@ io1 = iop1[0];
-    char *ip2 = args[1];
-    npy_intp is2 = steps[1];
-    npy_intp n = dimensions[0];
-    npy_intp i;
-
-    const int vectorsPerLoop = 8;
-    const size_t elemPerVector = NPY_SIMD_WIDTH / sizeof(@type@);
-    npy_intp elemPerLoop = vectorsPerLoop * elemPerVector;
-
-    i = 0;
-
-    if((i+elemPerLoop) <= n && is2 == sizeof(@type@)){
-        // SIMD - do as many iterations as we can with vectors
-        i = simd_reduce_@TYPE@_@kind@(args, dimensions, steps, i);
-    } else{
-        // Unrolled scalar - do as many iterations as we can with unrolled loops
-        i = scalar_reduce_@TYPE@_@kind@(args, dimensions, steps, i);
-    }
-
-    // Scalar - finish up any remaining iterations
-    io1 = iop1[0];
-    ip2 += i * is2;
-    for(; i<n; ++i, ip2 += is2){
-        const @type@ in2 = *(@type@ *)ip2;
-        io1 = SCALAR_OP(io1, in2);
-    }
-    *((@type@ *)iop1) = io1;
-}
-
-static inline npy_intp
-simd_binary_@TYPE@_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, npy_intp i)
-{
-    char *ip1 = args[0], *ip2 = args[1], *op1 = args[2];
-    npy_intp is1 = steps[0], is2 = steps[1], os1 = steps[2];
-    npy_intp n = dimensions[0];
-
-    const int vectorsPerLoop = 6;
-    const int elemPerVector = NPY_SIMD_WIDTH / sizeof(@type@);
-    int elemPerLoop = vectorsPerLoop * elemPerVector;
-
-    if(IS_BINARY_STRIDE_ONE(sizeof(@type@), NPY_SIMD_WIDTH)){
-        for(; (i+elemPerLoop)<=n; i+=elemPerLoop){
-            npyv_@sfx@ v0 =  npyv_load_@sfx@((const npyv_lanetype_@sfx@ *)(ip1 + (i + 0 * elemPerVector) * is1));
-            npyv_@sfx@ v1 =  npyv_load_@sfx@((const npyv_lanetype_@sfx@ *)(ip1 + (i + 1 * elemPerVector) * is1));
-            npyv_@sfx@ v2 =  npyv_load_@sfx@((const npyv_lanetype_@sfx@ *)(ip1 + (i + 2 * elemPerVector) * is1));
-            npyv_@sfx@ v3 =  npyv_load_@sfx@((const npyv_lanetype_@sfx@ *)(ip1 + (i + 3 * elemPerVector) * is1));
-            npyv_@sfx@ v4 =  npyv_load_@sfx@((const npyv_lanetype_@sfx@ *)(ip1 + (i + 4 * elemPerVector) * is1));
-            npyv_@sfx@ v5 =  npyv_load_@sfx@((const npyv_lanetype_@sfx@ *)(ip1 + (i + 5 * elemPerVector) * is1));
-
-            npyv_@sfx@ u0 =  npyv_load_@sfx@((const npyv_lanetype_@sfx@ *)(ip2 + (i + 0 * elemPerVector) * is2));
-            npyv_@sfx@ u1 =  npyv_load_@sfx@((const npyv_lanetype_@sfx@ *)(ip2 + (i + 1 * elemPerVector) * is2));
-            npyv_@sfx@ u2 =  npyv_load_@sfx@((const npyv_lanetype_@sfx@ *)(ip2 + (i + 2 * elemPerVector) * is2));
-            npyv_@sfx@ u3 =  npyv_load_@sfx@((const npyv_lanetype_@sfx@ *)(ip2 + (i + 3 * elemPerVector) * is2));
-            npyv_@sfx@ u4 =  npyv_load_@sfx@((const npyv_lanetype_@sfx@ *)(ip2 + (i + 4 * elemPerVector) * is2));
-            npyv_@sfx@ u5 =  npyv_load_@sfx@((const npyv_lanetype_@sfx@ *)(ip2 + (i + 5 * elemPerVector) * is2));
-
-            npyv_@sfx@ m0 = npyv_@vop@_@sfx@(v0, u0);
-            npyv_@sfx@ m1 = npyv_@vop@_@sfx@(v1, u1);
-            npyv_@sfx@ m2 = npyv_@vop@_@sfx@(v2, u2);
-            npyv_@sfx@ m3 = npyv_@vop@_@sfx@(v3, u3);
-            npyv_@sfx@ m4 = npyv_@vop@_@sfx@(v4, u4);
-            npyv_@sfx@ m5 = npyv_@vop@_@sfx@(v5, u5);
-
-            npyv_store_@sfx@((npyv_lanetype_@sfx@ *)(op1 + (i + 0 * elemPerVector) * os1), m0);
-            npyv_store_@sfx@((npyv_lanetype_@sfx@ *)(op1 + (i + 1 * elemPerVector) * os1), m1);
-            npyv_store_@sfx@((npyv_lanetype_@sfx@ *)(op1 + (i + 2 * elemPerVector) * os1), m2);
-            npyv_store_@sfx@((npyv_lanetype_@sfx@ *)(op1 + (i + 3 * elemPerVector) * os1), m3);
-            npyv_store_@sfx@((npyv_lanetype_@sfx@ *)(op1 + (i + 4 * elemPerVector) * os1), m4);
-            npyv_store_@sfx@((npyv_lanetype_@sfx@ *)(op1 + (i + 5 * elemPerVector) * os1), m5);
-        }
-    }
-    
-    return i;
-}
-
-static inline npy_intp
-scalar_binary_@TYPE@_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, npy_intp i)
-{
-    char *ip1 = args[0], *ip2 = args[1], *op1 = args[2];
-    npy_intp is1 = steps[0], is2 = steps[1], os1 = steps[2];
-    npy_intp n = dimensions[0];
-
-    npy_intp elemPerLoop = 4;
-    for(; (i+elemPerLoop)<=n; i+=elemPerLoop){
-        /* Note, we can't just load all, do all ops, then store all here.
-         * Sometimes ufuncs are called with `accumulate`, which makes the
-         * assumption that previous iterations have finished before next
-         * iteration.  For example, the output of iteration 2 depends on the
-         * result of iteration 1.
-         */
-
-        /**begin repeat2
-         * #unroll = 0, 1, 2, 3#
-         */
-        @type@ v@unroll@ = *((@type@ *)(ip1 + (i + @unroll@) * is1));
-        @type@ u@unroll@ = *((@type@ *)(ip2 + (i + @unroll@) * is2));
-        *((@type@ *)(op1 + (i + @unroll@) * os1)) = SCALAR_OP(v@unroll@, u@unroll@);
-        /**end repeat2**/
-    }
-
-    return i;
-}
-
-static inline void
-run_binary_@TYPE@_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps)
-{
-    BINARY_DEFS
-
-    i = 0;
-
-    if(IS_BLOCKABLE_BINARY(sizeof(@type@), NPY_SIMD_WIDTH) &&
-            nomemoverlap(ip1, is1 * n, op1, os1 * n) &&
-            nomemoverlap(ip2, is2 * n, op1, os1 * n))
-    {
-        // SIMD - do as many iterations as we can with vectors
-        i = simd_binary_@TYPE@_@kind@(args, dimensions, steps, i);
-    } else {
-        // Unrolled scalar - do as many iterations as we can with unrolled loops
-        i = scalar_binary_@TYPE@_@kind@(args, dimensions, steps, i);
-    }
-
-
-    // Scalar - finish up any remaining iterations
-    ip1 += is1 * i;
-    ip2 += is2 * i;
-    op1 += os1 * i;
-    for(; i < n; i++, ip1 += is1, ip2 += is2, op1 += os1){
-        const @type@ in1 = *(@type@ *)ip1;
-        const @type@ in2 = *(@type@ *)ip2;
-        
-        *((@type@ *)op1) = SCALAR_OP(in1, in2);
-    }
-}
-
-NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
-(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
-{
-    if (IS_BINARY_REDUCE) {
-        run_reduce_@TYPE@_@kind@(args, dimensions, steps);
-    } else {
-        run_binary_@TYPE@_@kind@(args, dimensions, steps);
-    }
-}
-
-#undef SCALAR_OP
-
-/**end repeat1**/
-
-#endif // @HAVE_NEON_IMPL@
-
-/**end repeat**/
-
-
-//------------------------------------------------------------------------------
-//-- Float
-//------------------------------------------------------------------------------
-
-/**begin repeat
- * #TYPE = FLOAT, DOUBLE, LONGDOUBLE#
  * #type = npy_float, npy_double, npy_longdouble#
- * #sfx = f32, f64, f64#
- * #asmType = s, d, d#
- * #HAVE_NEON_IMPL = 1*2, HAVE_NEON_IMPL_LONGDOUBLE#
+ * #scalar_sfx = f, d, l#
+ * #asm_sfx = s, d, d#
  */
-
-// Implementation below assumes longdouble is 64-bit.
-#if @HAVE_NEON_IMPL@
-
 /**begin repeat1
-* Arithmetic
-* # kind = maximum, minimum, fmax, fmin#
-* # OP = >=, <=, >=, <=#
-* # vop = max, min, maxp, minp#
-* # asmInstr = fmax, fmin, fmaxnm, fminnm#
-* # PROPAGATE_NAN = 1, 1, 0, 0#
-*/
-
-#define SCALAR_OP @TYPE@_scalar_@vop@
-static inline @type@ SCALAR_OP(@type@ a, @type@ b){
-#ifdef __aarch64__
+ * #op = max, min, maxp, minp#
+ * #asm_instr = fmax, fmin, fmaxnm, fminnm#
+ */
+static inline @type@ scalar_@op@_@scalar_sfx@(@type@ a, @type@ b){
     @type@ result = 0;
     __asm(
-        "@asmInstr@ %@asmType@[result], %@asmType@[a], %@asmType@[b]"
+        "@asm_instr@ %@asm_sfx@[result], %@asm_sfx@[a], %@asm_sfx@[b]"
         : [result] "=w" (result)
         : [a] "w" (a), [b] "w" (b)
     );
     return result;
-#else
-
-#if @PROPAGATE_NAN@
-    return ((a @OP@ b || npy_isnan(a)) ? a : b);
-#else
-    return ((a @OP@ b || npy_isnan(b)) ? a : b);
-#endif
-#endif // __aarch64__
 }
+/**end repeat1**/
+/**end repeat**/
+#endif // !defined(__aarch64__)
 
-static inline npy_intp
-simd_reduce_@TYPE@_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, npy_intp i)
+/*******************************************************************************
+ ** extra SIMD intrinsics
+ ******************************************************************************/
+
+#if NPY_SIMD
+/**begin repeat
+ * #sfx = s8, u8, s16, u16, s32, u32, s64, u64#
+ * #is_64 = 0*6, 1*2#
+ */
+#if defined(NPY_HAVE_ASIMD) && defined(__aarch64__)
+    #if !@is_64@
+        #define npyv_reduce_min_@sfx@ vminvq_@sfx@
+        #define npyv_reduce_max_@sfx@ vmaxvq_@sfx@
+    #else
+        NPY_FINLINE npyv_lanetype_@sfx@ npyv_reduce_min_@sfx@(npyv_@sfx@ v)
+        {
+            npyv_lanetype_@sfx@ a = vgetq_lane_@sfx@(v, 0);
+            npyv_lanetype_@sfx@ b = vgetq_lane_@sfx@(v, 1);
+            npyv_lanetype_@sfx@ result = (a < b) ? a : b;
+            return result;
+        }
+        NPY_FINLINE npyv_lanetype_@sfx@ npyv_reduce_max_@sfx@(npyv_@sfx@ v)
+        {
+            npyv_lanetype_@sfx@ a = vgetq_lane_@sfx@(v, 0);
+            npyv_lanetype_@sfx@ b = vgetq_lane_@sfx@(v, 1);
+            npyv_lanetype_@sfx@ result = (a > b) ? a : b;
+            return result;
+        }
+    #endif // !@is_64@
+#else
+    /**begin repeat1
+     * #intrin = min, max#
+     */
+    NPY_FINLINE npyv_lanetype_@sfx@ npyv_reduce_@intrin@_@sfx@(npyv_@sfx@ v)
+    {
+        npyv_lanetype_@sfx@ s[npyv_nlanes_@sfx@];
+        npyv_storea_@sfx@(s, v);
+        npyv_lanetype_@sfx@ result = s[0];
+        for(int i=1; i<npyv_nlanes_@sfx@; ++i){
+            result = scalar_@intrin@_i(result, s[i]);
+        }
+        return result;
+    }
+    /**end repeat1**/
+#endif
+/**end repeat**/
+#endif // NPY_SIMD
+
+/**begin repeat
+ * #sfx = f32, f64#
+ * #bsfx = b32, b64#
+ * #simd_chk = NPY_SIMD, NPY_SIMD_F64#
+ * #scalar_sfx = f, d#
+ */
+#if @simd_chk@
+#if defined(NPY_HAVE_ASIMD) && defined(__aarch64__)
+    #define npyv_minn_@sfx@ vminq_@sfx@
+    #define npyv_maxn_@sfx@ vmaxq_@sfx@
+    #define npyv_reduce_minn_@sfx@ vminvq_@sfx@
+    #define npyv_reduce_maxn_@sfx@ vmaxvq_@sfx@
+    #define npyv_reduce_minp_@sfx@ vminnmvq_@sfx@
+    #define npyv_reduce_maxp_@sfx@ vmaxnmvq_@sfx@
+#else
+    /**begin repeat1
+     * #intrin = min, max#
+     */
+    // propagates NaNs
+    NPY_FINLINE npyv_@sfx@ npyv_@intrin@n_@sfx@(npyv_@sfx@ a, npyv_@sfx@ b)
+    {
+        npyv_@sfx@ result = npyv_@intrin@_@sfx@(a, b);
+        result = npyv_select_@sfx@(npyv_notnan_@sfx@(b), result, b);
+        result = npyv_select_@sfx@(npyv_notnan_@sfx@(a), result, a);
+        return result;
+    }
+    /**end repeat1**/
+    /**begin repeat1
+     * #intrin = minn, maxn, minp, maxp#
+     * #scalar_intrin = min, max, minp, maxp#
+     */
+    NPY_FINLINE npyv_lanetype_@sfx@ npyv_reduce_@intrin@_@sfx@(npyv_@sfx@ v)
+    {
+        npyv_lanetype_@sfx@ s[npyv_nlanes_@sfx@];
+        npyv_storea_@sfx@(s, v);
+        npyv_lanetype_@sfx@ result = s[0];
+        for(int i=1; i<npyv_nlanes_@sfx@; ++i){
+            result = scalar_@scalar_intrin@_@scalar_sfx@(result, s[i]);
+        }
+        return result;
+    }
+    /**end repeat1**/
+#endif
+#endif // simd_chk
+/**end repeat**/
+
+/*******************************************************************************
+ ** Defining the SIMD kernels
+ ******************************************************************************/
+
+/**begin repeat
+ * #sfx = s8, u8, s16, u16, s32, u32, s64, u64, f32, f64#
+ * #simd_chk = NPY_SIMD*9, NPY_SIMD_F64#
+ * #is_fp = 0*8, 1, 1#
+ * #scalar_sfx = i*8, f, d#
+ */
+/**begin repeat1
+ * # intrin = max, min, maxp, minp#
+ * # fp_only = 0, 0, 1, 1#
+ */
+#define SCALAR_OP scalar_@intrin@_@scalar_sfx@
+#if @simd_chk@ && (!@fp_only@ || (@is_fp@ && @fp_only@))
+#if @is_fp@ && !@fp_only@
+    #define V_INTRIN npyv_@intrin@n_@sfx@ // propagates NaNs
+    #define V_REDUCE_INTRIN npyv_reduce_@intrin@n_@sfx@
+#else
+    #define V_INTRIN npyv_@intrin@_@sfx@
+    #define V_REDUCE_INTRIN npyv_reduce_@intrin@_@sfx@
+#endif
+
+// contiguous input.
+static inline void
+simd_reduce_c_@intrin@_@sfx@(const npyv_lanetype_@sfx@ *ip, npyv_lanetype_@sfx@ *op1, npy_intp len)
 {
-    @type@ *iop1 = (@type@ *)args[0];
-    @type@ io1 = iop1[0];
-    @type@ *ip2 = (@type@ *)args[1];
-    npy_intp is2 = steps[1];
-    npy_intp n = dimensions[0];
-
+    // Note, 8x unroll was chosen for best results on Apple M1
     const int vectorsPerLoop = 8;
-    const size_t elemPerVector = NPY_SIMD_WIDTH / sizeof(@type@);
+    const size_t elemPerVector = NPY_SIMD_WIDTH / sizeof(npyv_lanetype_@sfx@);
     npy_intp elemPerLoop = vectorsPerLoop * elemPerVector;
 
+    npy_intp i = 0;
+    npyv_lanetype_@sfx@ io1 = op1[0];
+
     // SIMD if possible
-    if((i+elemPerLoop) <= n && is2 == sizeof(@type@)){
-        npyv_@sfx@ m0 = npyv_load_@sfx@(&ip2[i + 0 * elemPerVector]);
-        npyv_@sfx@ m1 = npyv_load_@sfx@(&ip2[i + 1 * elemPerVector]);
-        npyv_@sfx@ m2 = npyv_load_@sfx@(&ip2[i + 2 * elemPerVector]);
-        npyv_@sfx@ m3 = npyv_load_@sfx@(&ip2[i + 3 * elemPerVector]);
-        npyv_@sfx@ m4 = npyv_load_@sfx@(&ip2[i + 4 * elemPerVector]);
-        npyv_@sfx@ m5 = npyv_load_@sfx@(&ip2[i + 5 * elemPerVector]);
-        npyv_@sfx@ m6 = npyv_load_@sfx@(&ip2[i + 6 * elemPerVector]);
-        npyv_@sfx@ m7 = npyv_load_@sfx@(&ip2[i + 7 * elemPerVector]);
+    if((i+elemPerLoop) <= len){
+        npyv_@sfx@ m0 = npyv_load_@sfx@(&ip[i + 0 * elemPerVector]);
+        npyv_@sfx@ m1 = npyv_load_@sfx@(&ip[i + 1 * elemPerVector]);
+        npyv_@sfx@ m2 = npyv_load_@sfx@(&ip[i + 2 * elemPerVector]);
+        npyv_@sfx@ m3 = npyv_load_@sfx@(&ip[i + 3 * elemPerVector]);
+        npyv_@sfx@ m4 = npyv_load_@sfx@(&ip[i + 4 * elemPerVector]);
+        npyv_@sfx@ m5 = npyv_load_@sfx@(&ip[i + 5 * elemPerVector]);
+        npyv_@sfx@ m6 = npyv_load_@sfx@(&ip[i + 6 * elemPerVector]);
+        npyv_@sfx@ m7 = npyv_load_@sfx@(&ip[i + 7 * elemPerVector]);
 
         i += elemPerLoop;
-        for(; (i+elemPerLoop)<=n; i+=elemPerLoop){
-            npyv_@sfx@ v0 = npyv_load_@sfx@(&ip2[i + 0 * elemPerVector]);
-            npyv_@sfx@ v1 = npyv_load_@sfx@(&ip2[i + 1 * elemPerVector]);
-            npyv_@sfx@ v2 = npyv_load_@sfx@(&ip2[i + 2 * elemPerVector]);
-            npyv_@sfx@ v3 = npyv_load_@sfx@(&ip2[i + 3 * elemPerVector]);
-            npyv_@sfx@ v4 = npyv_load_@sfx@(&ip2[i + 4 * elemPerVector]);
-            npyv_@sfx@ v5 = npyv_load_@sfx@(&ip2[i + 5 * elemPerVector]);
-            npyv_@sfx@ v6 = npyv_load_@sfx@(&ip2[i + 6 * elemPerVector]);
-            npyv_@sfx@ v7 = npyv_load_@sfx@(&ip2[i + 7 * elemPerVector]);
+        for(; (i+elemPerLoop)<=len; i+=elemPerLoop){
+            npyv_@sfx@ v0 = npyv_load_@sfx@(&ip[i + 0 * elemPerVector]);
+            npyv_@sfx@ v1 = npyv_load_@sfx@(&ip[i + 1 * elemPerVector]);
+            npyv_@sfx@ v2 = npyv_load_@sfx@(&ip[i + 2 * elemPerVector]);
+            npyv_@sfx@ v3 = npyv_load_@sfx@(&ip[i + 3 * elemPerVector]);
+            npyv_@sfx@ v4 = npyv_load_@sfx@(&ip[i + 4 * elemPerVector]);
+            npyv_@sfx@ v5 = npyv_load_@sfx@(&ip[i + 5 * elemPerVector]);
+            npyv_@sfx@ v6 = npyv_load_@sfx@(&ip[i + 6 * elemPerVector]);
+            npyv_@sfx@ v7 = npyv_load_@sfx@(&ip[i + 7 * elemPerVector]);
 
-            m0 = npyv_@vop@_@sfx@(m0, v0);
-            m1 = npyv_@vop@_@sfx@(m1, v1);
-            m2 = npyv_@vop@_@sfx@(m2, v2);
-            m3 = npyv_@vop@_@sfx@(m3, v3);
-            m4 = npyv_@vop@_@sfx@(m4, v4);
-            m5 = npyv_@vop@_@sfx@(m5, v5);
-            m6 = npyv_@vop@_@sfx@(m6, v6);
-            m7 = npyv_@vop@_@sfx@(m7, v7);
+            m0 = V_INTRIN(m0, v0);
+            m1 = V_INTRIN(m1, v1);
+            m2 = V_INTRIN(m2, v2);
+            m3 = V_INTRIN(m3, v3);
+            m4 = V_INTRIN(m4, v4);
+            m5 = V_INTRIN(m5, v5);
+            m6 = V_INTRIN(m6, v6);
+            m7 = V_INTRIN(m7, v7);
         }
 
-        m0 = npyv_@vop@_@sfx@(m0, m1);
-        m2 = npyv_@vop@_@sfx@(m2, m3);
-        m4 = npyv_@vop@_@sfx@(m4, m5);
-        m6 = npyv_@vop@_@sfx@(m6, m7);
+        m0 = V_INTRIN(m0, m1);
+        m2 = V_INTRIN(m2, m3);
+        m4 = V_INTRIN(m4, m5);
+        m6 = V_INTRIN(m6, m7);
 
-        m0 = npyv_@vop@_@sfx@(m0, m2);
-        m4 = npyv_@vop@_@sfx@(m4, m6);
+        m0 = V_INTRIN(m0, m2);
+        m4 = V_INTRIN(m4, m6);
 
-        m0 = npyv_@vop@_@sfx@(m0, m4);
+        m0 = V_INTRIN(m0, m4);
 
-        @type@ r = npyv_reduce_@vop@_@sfx@(m0);
+        npyv_lanetype_@sfx@ r = V_REDUCE_INTRIN(m0);
 
         io1 = SCALAR_OP(io1, r);
     }
 
-    *((@type@ *)iop1) = io1;
-
-    return i;
-}
-
-static inline npy_intp
-scalar_reduce_@TYPE@_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, npy_intp i)
-{
-    @type@ *iop1 = (@type@ *)args[0];
-    @type@ io1 = iop1[0];
-    char *ip2 = args[1];
-    npy_intp is2 = steps[1];
-    npy_intp n = dimensions[0];
-
-    // 8x scalar
-    npy_intp elemPerLoop = 8;
-    if((i+elemPerLoop) <= n){
-        @type@ m0 = *((@type@ *)(ip2 + (i + 0) * is2));
-        @type@ m1 = *((@type@ *)(ip2 + (i + 1) * is2));
-        @type@ m2 = *((@type@ *)(ip2 + (i + 2) * is2));
-        @type@ m3 = *((@type@ *)(ip2 + (i + 3) * is2));
-        @type@ m4 = *((@type@ *)(ip2 + (i + 4) * is2));
-        @type@ m5 = *((@type@ *)(ip2 + (i + 5) * is2));
-        @type@ m6 = *((@type@ *)(ip2 + (i + 6) * is2));
-        @type@ m7 = *((@type@ *)(ip2 + (i + 7) * is2));
-
-        i += elemPerLoop;
-        for(; (i+elemPerLoop)<=n; i+=elemPerLoop){
-            @type@ v0 = *((@type@ *)(ip2 + (i + 0) * is2));
-            @type@ v1 = *((@type@ *)(ip2 + (i + 1) * is2));
-            @type@ v2 = *((@type@ *)(ip2 + (i + 2) * is2));
-            @type@ v3 = *((@type@ *)(ip2 + (i + 3) * is2));
-            @type@ v4 = *((@type@ *)(ip2 + (i + 4) * is2));
-            @type@ v5 = *((@type@ *)(ip2 + (i + 5) * is2));
-            @type@ v6 = *((@type@ *)(ip2 + (i + 6) * is2));
-            @type@ v7 = *((@type@ *)(ip2 + (i + 7) * is2));
-
-            m0 = SCALAR_OP(m0, v0);
-            m1 = SCALAR_OP(m1, v1);
-            m2 = SCALAR_OP(m2, v2);
-            m3 = SCALAR_OP(m3, v3);
-            m4 = SCALAR_OP(m4, v4);
-            m5 = SCALAR_OP(m5, v5);
-            m6 = SCALAR_OP(m6, v6);
-            m7 = SCALAR_OP(m7, v7);
-        }
-
-        m0 = SCALAR_OP(m0, m1);
-        m2 = SCALAR_OP(m2, m3);
-        m4 = SCALAR_OP(m4, m5);
-        m6 = SCALAR_OP(m6, m7);
-
-        m0 = SCALAR_OP(m0, m2);
-        m4 = SCALAR_OP(m4, m6);
-
-        m0 = SCALAR_OP(m0, m4);
-
-        io1 = SCALAR_OP(io1, m0);
-    }
-
-    *((@type@ *)iop1) = io1;
-
-    return i;
-}
-
-static inline void
-run_reduce_@TYPE@_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps)
-{
-    @type@ *iop1 = (@type@ *)args[0];
-    @type@ io1 = iop1[0];
-    char *ip2 = args[1];
-    npy_intp is2 = steps[1];
-    npy_intp n = dimensions[0];
-    npy_intp i;
-
-    const int vectorsPerLoop = 8;
-    const size_t elemPerVector = NPY_SIMD_WIDTH / sizeof(@type@);
-    npy_intp elemPerLoop = vectorsPerLoop * elemPerVector;
-
-    i = 0;
-
-    if((i+elemPerLoop) <= n && is2 == sizeof(@type@)){
-        // SIMD - do as many iterations as we can with vectors
-        i = simd_reduce_@TYPE@_@kind@(args, dimensions, steps, i);
-    } else{
-        // Unrolled scalar - do as many iterations as we can with unrolled loops
-        i = scalar_reduce_@TYPE@_@kind@(args, dimensions, steps, i);
-    }
-
     // Scalar - finish up any remaining iterations
-    io1 = iop1[0];
-    ip2 += i * is2;
-    for(; i<n; ++i, ip2 += is2){
-        const @type@ in2 = *(@type@ *)ip2;
+    for(; i<len; ++i){
+        const npyv_lanetype_@sfx@ in2 = ip[i];
         io1 = SCALAR_OP(io1, in2);
     }
-    *((@type@ *)iop1) = io1;
+    op1[0] = io1;
 }
 
-static inline npy_intp
-simd_binary_@TYPE@_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, npy_intp i)
+// contiguous inputs and output.
+static inline void
+simd_binary_ccc_@intrin@_@sfx@(const npyv_lanetype_@sfx@ *ip1, const npyv_lanetype_@sfx@ *ip2,
+                                     npyv_lanetype_@sfx@ *op1, npy_intp len)
 {
-    char *ip1 = args[0], *ip2 = args[1], *op1 = args[2];
-    npy_intp is1 = steps[0], is2 = steps[1], os1 = steps[2];
-    npy_intp n = dimensions[0];
-
+    // Note, 6x unroll was chosen for best results on Apple M1
     const int vectorsPerLoop = 6;
-    const int elemPerVector = NPY_SIMD_WIDTH / sizeof(@type@);
+    const int elemPerVector = NPY_SIMD_WIDTH / sizeof(npyv_lanetype_@sfx@);
     int elemPerLoop = vectorsPerLoop * elemPerVector;
 
-    if(IS_BINARY_STRIDE_ONE(sizeof(@type@), NPY_SIMD_WIDTH)){
-        for(; (i+elemPerLoop)<=n; i+=elemPerLoop){
-            npyv_@sfx@ v0 =  npyv_load_@sfx@((const npyv_lanetype_@sfx@ *)(ip1 + (i + 0 * elemPerVector) * is1));
-            npyv_@sfx@ v1 =  npyv_load_@sfx@((const npyv_lanetype_@sfx@ *)(ip1 + (i + 1 * elemPerVector) * is1));
-            npyv_@sfx@ v2 =  npyv_load_@sfx@((const npyv_lanetype_@sfx@ *)(ip1 + (i + 2 * elemPerVector) * is1));
-            npyv_@sfx@ v3 =  npyv_load_@sfx@((const npyv_lanetype_@sfx@ *)(ip1 + (i + 3 * elemPerVector) * is1));
-            npyv_@sfx@ v4 =  npyv_load_@sfx@((const npyv_lanetype_@sfx@ *)(ip1 + (i + 4 * elemPerVector) * is1));
-            npyv_@sfx@ v5 =  npyv_load_@sfx@((const npyv_lanetype_@sfx@ *)(ip1 + (i + 5 * elemPerVector) * is1));
+    npy_intp i = 0;
 
-            npyv_@sfx@ u0 =  npyv_load_@sfx@((const npyv_lanetype_@sfx@ *)(ip2 + (i + 0 * elemPerVector) * is2));
-            npyv_@sfx@ u1 =  npyv_load_@sfx@((const npyv_lanetype_@sfx@ *)(ip2 + (i + 1 * elemPerVector) * is2));
-            npyv_@sfx@ u2 =  npyv_load_@sfx@((const npyv_lanetype_@sfx@ *)(ip2 + (i + 2 * elemPerVector) * is2));
-            npyv_@sfx@ u3 =  npyv_load_@sfx@((const npyv_lanetype_@sfx@ *)(ip2 + (i + 3 * elemPerVector) * is2));
-            npyv_@sfx@ u4 =  npyv_load_@sfx@((const npyv_lanetype_@sfx@ *)(ip2 + (i + 4 * elemPerVector) * is2));
-            npyv_@sfx@ u5 =  npyv_load_@sfx@((const npyv_lanetype_@sfx@ *)(ip2 + (i + 5 * elemPerVector) * is2));
+    for(; (i+elemPerLoop)<=len; i+=elemPerLoop){
+        npyv_@sfx@ v0 =  npyv_load_@sfx@(&ip1[i + 0 * elemPerVector]);
+        npyv_@sfx@ v1 =  npyv_load_@sfx@(&ip1[i + 1 * elemPerVector]);
+        npyv_@sfx@ v2 =  npyv_load_@sfx@(&ip1[i + 2 * elemPerVector]);
+        npyv_@sfx@ v3 =  npyv_load_@sfx@(&ip1[i + 3 * elemPerVector]);
+        npyv_@sfx@ v4 =  npyv_load_@sfx@(&ip1[i + 4 * elemPerVector]);
+        npyv_@sfx@ v5 =  npyv_load_@sfx@(&ip1[i + 5 * elemPerVector]);
 
-            npyv_@sfx@ m0 = npyv_@vop@_@sfx@(v0, u0);
-            npyv_@sfx@ m1 = npyv_@vop@_@sfx@(v1, u1);
-            npyv_@sfx@ m2 = npyv_@vop@_@sfx@(v2, u2);
-            npyv_@sfx@ m3 = npyv_@vop@_@sfx@(v3, u3);
-            npyv_@sfx@ m4 = npyv_@vop@_@sfx@(v4, u4);
-            npyv_@sfx@ m5 = npyv_@vop@_@sfx@(v5, u5);
+        npyv_@sfx@ u0 =  npyv_load_@sfx@(&ip2[i + 0 * elemPerVector]);
+        npyv_@sfx@ u1 =  npyv_load_@sfx@(&ip2[i + 1 * elemPerVector]);
+        npyv_@sfx@ u2 =  npyv_load_@sfx@(&ip2[i + 2 * elemPerVector]);
+        npyv_@sfx@ u3 =  npyv_load_@sfx@(&ip2[i + 3 * elemPerVector]);
+        npyv_@sfx@ u4 =  npyv_load_@sfx@(&ip2[i + 4 * elemPerVector]);
+        npyv_@sfx@ u5 =  npyv_load_@sfx@(&ip2[i + 5 * elemPerVector]);
 
-            npyv_store_@sfx@((npyv_lanetype_@sfx@ *)(op1 + (i + 0 * elemPerVector) * os1), m0);
-            npyv_store_@sfx@((npyv_lanetype_@sfx@ *)(op1 + (i + 1 * elemPerVector) * os1), m1);
-            npyv_store_@sfx@((npyv_lanetype_@sfx@ *)(op1 + (i + 2 * elemPerVector) * os1), m2);
-            npyv_store_@sfx@((npyv_lanetype_@sfx@ *)(op1 + (i + 3 * elemPerVector) * os1), m3);
-            npyv_store_@sfx@((npyv_lanetype_@sfx@ *)(op1 + (i + 4 * elemPerVector) * os1), m4);
-            npyv_store_@sfx@((npyv_lanetype_@sfx@ *)(op1 + (i + 5 * elemPerVector) * os1), m5);
-        }
-    }
-    
-    return i;
-}
+        npyv_@sfx@ m0 = V_INTRIN(v0, u0);
+        npyv_@sfx@ m1 = V_INTRIN(v1, u1);
+        npyv_@sfx@ m2 = V_INTRIN(v2, u2);
+        npyv_@sfx@ m3 = V_INTRIN(v3, u3);
+        npyv_@sfx@ m4 = V_INTRIN(v4, u4);
+        npyv_@sfx@ m5 = V_INTRIN(v5, u5);
 
-static inline npy_intp
-scalar_binary_@TYPE@_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, npy_intp i)
-{
-    char *ip1 = args[0], *ip2 = args[1], *op1 = args[2];
-    npy_intp is1 = steps[0], is2 = steps[1], os1 = steps[2];
-    npy_intp n = dimensions[0];
-
-    npy_intp elemPerLoop = 4;
-    for(; (i+elemPerLoop)<=n; i+=elemPerLoop){
-        /* Note, we can't just load all, do all ops, then store all here.
-         * Sometimes ufuncs are called with `accumulate`, which makes the
-         * assumption that previous iterations have finished before next
-         * iteration.  For example, the output of iteration 2 depends on the
-         * result of iteration 1.
-         */
-
-        /**begin repeat2
-         * #unroll = 0, 1, 2, 3#
-         */
-        @type@ v@unroll@ = *((@type@ *)(ip1 + (i + @unroll@) * is1));
-        @type@ u@unroll@ = *((@type@ *)(ip2 + (i + @unroll@) * is2));
-        *((@type@ *)(op1 + (i + @unroll@) * os1)) = SCALAR_OP(v@unroll@, u@unroll@);
-        /**end repeat2**/
-    }
-
-    return i;
-}
-
-static inline void
-run_binary_@TYPE@_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps)
-{
-    BINARY_DEFS
-
-    i = 0;
-
-    if(IS_BLOCKABLE_BINARY(sizeof(@type@), NPY_SIMD_WIDTH) &&
-            nomemoverlap(ip1, is1 * n, op1, os1 * n) &&
-            nomemoverlap(ip2, is2 * n, op1, os1 * n))
-    {
-        // SIMD - do as many iterations as we can with vectors
-        i = simd_binary_@TYPE@_@kind@(args, dimensions, steps, i);
-    } else {
-        // Unrolled scalar - do as many iterations as we can with unrolled loops
-        i = scalar_binary_@TYPE@_@kind@(args, dimensions, steps, i);
+        npyv_store_@sfx@(&op1[i + 0 * elemPerVector], m0);
+        npyv_store_@sfx@(&op1[i + 1 * elemPerVector], m1);
+        npyv_store_@sfx@(&op1[i + 2 * elemPerVector], m2);
+        npyv_store_@sfx@(&op1[i + 3 * elemPerVector], m3);
+        npyv_store_@sfx@(&op1[i + 4 * elemPerVector], m4);
+        npyv_store_@sfx@(&op1[i + 5 * elemPerVector], m5);
     }
 
     // Scalar - finish up any remaining iterations
-    ip1 += is1 * i;
-    ip2 += is2 * i;
-    op1 += os1 * i;
-    for(; i < n; i++, ip1 += is1, ip2 += is2, op1 += os1){
-        const @type@ in1 = *(@type@ *)ip1;
-        const @type@ in2 = *(@type@ *)ip2;
+    for(; i<len; ++i){
+        const npyv_lanetype_@sfx@ in1 = ip1[i];
+        const npyv_lanetype_@sfx@ in2 = ip2[i];
         
-        *((@type@ *)op1) = SCALAR_OP(in1, in2);
+        op1[i] = SCALAR_OP(in1, in2);
     }
 }
 
+#undef V_INTRIN
+#undef V_REDUCE_INTRIN
+
+#endif // simd_chk && (!fp_only || (is_fp && fp_only))
+
+#undef SCALAR_OP
+/**end repeat1**/
+/**end repeat**/
+
+/*******************************************************************************
+ ** Defining ufunc inner functions
+ ******************************************************************************/
+/**begin repeat
+ * #TYPE = UBYTE, USHORT, UINT, ULONG, ULONGLONG,
+ *         BYTE, SHORT, INT, LONG, LONGLONG,
+ *         FLOAT, DOUBLE, LONGDOUBLE#
+ *
+ * #BTYPE = BYTE, SHORT, INT,  LONG, LONGLONG,
+ *          BYTE, SHORT, INT, LONG, LONGLONG,
+ *          FLOAT, DOUBLE, LONGDOUBLE#
+ * #type = npy_ubyte, npy_ushort, npy_uint, npy_ulong, npy_ulonglong,
+ *         npy_byte, npy_short, npy_int, npy_long, npy_longlong,
+ *         float, double, long double#
+ *
+ * #is_fp = 0*10, 1*3#
+ * #is_unsigend = 1*5, 0*5, 0*3#
+ * #scalar_sfx = i*10, f, d, l#
+ */
+#undef TO_SIMD_SFX
+#if 0
+/**begin repeat1
+ * #len = 8, 16, 32, 64#
+ */
+#elif NPY_SIMD && NPY_BITSOF_@BTYPE@ == @len@
+    #if @is_fp@
+        #define TO_SIMD_SFX(X) X##_f@len@
+        #if NPY_BITSOF_@BTYPE@ == 64 && !NPY_SIMD_F64
+            #undef TO_SIMD_SFX
+        #endif
+    #elif @is_unsigend@
+        #define TO_SIMD_SFX(X) X##_u@len@
+    #else
+        #define TO_SIMD_SFX(X) X##_s@len@
+    #endif
+/**end repeat1**/
+#endif
+
+/**begin repeat1
+ * # kind = maximum, minimum, fmax, fmin#
+ * # intrin = max, min, maxp, minp#
+ * # fp_only = 0, 0, 1, 1#
+ */
+#if !@fp_only@ || (@is_fp@ && @fp_only@)
+#define SCALAR_OP scalar_@intrin@_@scalar_sfx@
 
 NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
 (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
+    char *ip1 = args[0], *ip2 = args[1], *op1 = args[2];
+    npy_intp is1 = steps[0], is2 = steps[1], os1 = steps[2],
+             len = dimensions[0];
+    npy_intp i = 0;
+#ifdef TO_SIMD_SFX
+    #undef STYPE
+    #define STYPE TO_SIMD_SFX(npyv_lanetype)
     if (IS_BINARY_REDUCE) {
-        run_reduce_@TYPE@_@kind@(args, dimensions, steps);
-    } else {
-        run_binary_@TYPE@_@kind@(args, dimensions, steps);
+        // reduce and contiguous
+        if (is2 == sizeof(@type@)) {
+            TO_SIMD_SFX(simd_reduce_c_@intrin@)(
+                (STYPE*)ip2, (STYPE*)op1, len
+            );
+            goto clear_fp;
+        }
     }
+    else if (!is_mem_overlap(ip1, is1, op1, os1, len) &&
+        !is_mem_overlap(ip2, is2, op1, os1, len)
+    ) {
+        // no overlap and operands are binary contiguous
+        if (IS_BINARY_CONT(@type@, @type@)) {
+            TO_SIMD_SFX(simd_binary_ccc_@intrin@)(
+                (STYPE*)ip1, (STYPE*)ip2, (STYPE*)op1, len
+            );
+            goto clear_fp;
+        }
+    }
+#endif // TO_SIMD_SFX
+#ifndef NPY_DISABLE_OPTIMIZATION
+    // scalar unrolls
+    if (IS_BINARY_REDUCE) {
+        // Note, 8x unroll was chosen for best results on Apple M1
+        npy_intp elemPerLoop = 8;
+        if((i+elemPerLoop) <= len){
+            @type@ m0 = *((@type@ *)(ip2 + (i + 0) * is2));
+            @type@ m1 = *((@type@ *)(ip2 + (i + 1) * is2));
+            @type@ m2 = *((@type@ *)(ip2 + (i + 2) * is2));
+            @type@ m3 = *((@type@ *)(ip2 + (i + 3) * is2));
+            @type@ m4 = *((@type@ *)(ip2 + (i + 4) * is2));
+            @type@ m5 = *((@type@ *)(ip2 + (i + 5) * is2));
+            @type@ m6 = *((@type@ *)(ip2 + (i + 6) * is2));
+            @type@ m7 = *((@type@ *)(ip2 + (i + 7) * is2));
 
+            i += elemPerLoop;
+            for(; (i+elemPerLoop)<=len; i+=elemPerLoop){
+                @type@ v0 = *((@type@ *)(ip2 + (i + 0) * is2));
+                @type@ v1 = *((@type@ *)(ip2 + (i + 1) * is2));
+                @type@ v2 = *((@type@ *)(ip2 + (i + 2) * is2));
+                @type@ v3 = *((@type@ *)(ip2 + (i + 3) * is2));
+                @type@ v4 = *((@type@ *)(ip2 + (i + 4) * is2));
+                @type@ v5 = *((@type@ *)(ip2 + (i + 5) * is2));
+                @type@ v6 = *((@type@ *)(ip2 + (i + 6) * is2));
+                @type@ v7 = *((@type@ *)(ip2 + (i + 7) * is2));
+
+                m0 = SCALAR_OP(m0, v0);
+                m1 = SCALAR_OP(m1, v1);
+                m2 = SCALAR_OP(m2, v2);
+                m3 = SCALAR_OP(m3, v3);
+                m4 = SCALAR_OP(m4, v4);
+                m5 = SCALAR_OP(m5, v5);
+                m6 = SCALAR_OP(m6, v6);
+                m7 = SCALAR_OP(m7, v7);
+            }
+
+            m0 = SCALAR_OP(m0, m1);
+            m2 = SCALAR_OP(m2, m3);
+            m4 = SCALAR_OP(m4, m5);
+            m6 = SCALAR_OP(m6, m7);
+
+            m0 = SCALAR_OP(m0, m2);
+            m4 = SCALAR_OP(m4, m6);
+
+            m0 = SCALAR_OP(m0, m4);
+
+             *((@type@ *)op1) = SCALAR_OP(*((@type@ *)op1), m0);
+        }
+    } else{
+        // Note, 4x unroll was chosen for best results on Apple M1
+        npy_intp elemPerLoop = 4;
+        for(; (i+elemPerLoop)<=len; i+=elemPerLoop){
+            /* Note, we can't just load all, do all ops, then store all here.
+             * Sometimes ufuncs are called with `accumulate`, which makes the
+             * assumption that previous iterations have finished before next
+             * iteration.  For example, the output of iteration 2 depends on the
+             * result of iteration 1.
+             */
+
+            /**begin repeat2
+             * #unroll = 0, 1, 2, 3#
+             */
+            @type@ v@unroll@ = *((@type@ *)(ip1 + (i + @unroll@) * is1));
+            @type@ u@unroll@ = *((@type@ *)(ip2 + (i + @unroll@) * is2));
+            *((@type@ *)(op1 + (i + @unroll@) * os1)) = SCALAR_OP(v@unroll@, u@unroll@);
+            /**end repeat2**/
+        }
+    }
+#endif // NPY_DISABLE_OPTIMIZATION
+    ip1 += is1 * i;
+    ip2 += is2 * i;
+    op1 += os1 * i;
+    for (; i < len; ++i, ip1 += is1, ip2 += is2, op1 += os1) {
+        const @type@ in1 = *(@type@ *)ip1;
+        const @type@ in2 = *(@type@ *)ip2;
+        *((@type@ *)op1) = SCALAR_OP(in1, in2);
+    }
+#ifdef TO_SIMD_SFX
+clear_fp:;
+#endif
+#if @is_fp@
     npy_clear_floatstatus_barrier((char*)dimensions);
+#endif
 }
 
 #undef SCALAR_OP
 
+#endif // !fp_only || (is_fp && fp_only)
 /**end repeat1**/
-
-#endif // @HAVE_NEON_IMPL@
-
 /**end repeat**/
 
-#endif // NPY_HAVE_NEON
