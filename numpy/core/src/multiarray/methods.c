@@ -2246,7 +2246,7 @@ array_dumps(PyArrayObject *self, PyObject *args, PyObject *kwds)
 
 
 static PyObject *
-array_sizeof(PyArrayObject *self)
+array_sizeof(PyArrayObject *self, PyObject *NPY_UNUSED(args))
 {
     /* object + dimension and strides */
     Py_ssize_t nbytes = Py_TYPE(self)->tp_basicsize +
