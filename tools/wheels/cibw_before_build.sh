@@ -1,24 +1,31 @@
 set -xe
 
 PROJECT_DIR="$1"
-UNAME="$(uname)"
 
 # Update license
-if [[ $UNAME == "Linux" ]] ; then
+# TODO: Add in License for Windows
+if [[ $RUNNER_OS == "Linux" ]] ; then
     cat $PROJECT_DIR/tools/wheels/LICENSE_linux.txt >> $PROJECT_DIR/LICENSE.txt
-elif [[ $UNAME == "Darwin" ]]; then
+elif [[ $RUNNER_OS == "macOS" ]]; then
     cat $PROJECT_DIR/tools/wheels/LICENSE_osx.txt >> $PROJECT_DIR/LICENSE.txt
+elif [[ $RUNNER_OS == "Windows" ]]; then
+    cat $PROJECT_DIR/tools/wheels/LICENSE_win32.txt >> $PROJECT_DIR/LICENSE.txt
 fi
 
 # Install Openblas
-if [[ $UNAME == "Linux" || $UNAME == "Darwin" ]] ; then
+if [[ $RUNNER_OS == "Linux" || $RUNNER_OS == "macOS" ]] ; then
     basedir=$(python tools/openblas_support.py)
     cp -r $basedir/lib/* /usr/local/lib
     cp $basedir/include/* /usr/local/include
+elif [[ $RUNNER_OS == "Windows" ]]; then
+    PYTHONPATH=tools python -c "import openblas_support; openblas_support.make_init('numpy')"
+    target=$(python tools/openblas_support.py)
+    mkdir -p openblas
+    cp $target openblas
 fi
 
 # Install GFortran
-if [[ $UNAME == "Darwin" ]]; then
+if [[ $RUNNER_OS == "macOS" ]]; then
     # same version of gfortran as the openblas-libs and numpy-wheel builds
     curl -L https://github.com/MacPython/gfortran-install/raw/master/archives/gfortran-4.9.0-Mavericks.dmg -o gfortran.dmg
     GFORTRAN_SHA256=$(shasum -a 256 gfortran.dmg)
