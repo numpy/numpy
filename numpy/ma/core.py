@@ -5666,9 +5666,12 @@ class MaskedArray(ndarray):
 
         Parameters
         ----------
-        axis : {None, int}, optional
+        axis : None or int or tuple of ints, optional
             Axis along which to operate.  By default, ``axis`` is None and the
             flattened input is used.
+            .. versionadded:: 1.7.0
+            If this is a tuple of ints, the minimum is selected over multiple
+            axes, instead of a single axis or all the axes as before.
         out : array_like, optional
             Alternative output array in which to place the result.  Must be of
             the same shape and buffer length as the expected output.
@@ -5800,9 +5803,12 @@ class MaskedArray(ndarray):
 
         Parameters
         ----------
-        axis : {None, int}, optional
+        axis : None or int or tuple of ints, optional
             Axis along which to operate.  By default, ``axis`` is None and the
             flattened input is used.
+            .. versionadded:: 1.7.0
+            If this is a tuple of ints, the maximum is selected over multiple
+            axes, instead of a single axis or all the axes as before.
         out : array_like, optional
             Alternative output array in which to place the result.  Must
             be of the same shape and buffer length as the expected output.
