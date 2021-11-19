@@ -76,7 +76,7 @@ def test_cython(tmp_path):
     assert so1 is not None
     assert so2 is not None
     # import the so's without adding the directory to sys.path
-    extending = exec_mod_from_location('extending', so1)
+    exec_mod_from_location('extending', so1)
     extending_distributions = exec_mod_from_location(
                     'extending_distributions', so2)
     # actually test the cython c-extension
