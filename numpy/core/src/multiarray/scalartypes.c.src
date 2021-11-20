@@ -2044,6 +2044,34 @@ static PyObject *
     npy_@name@_hex(val, buf);
     return PyUnicode_FromString(buf);
 }
+
+static PyObject *
+@name@_fromhex(PyObject *cls, PyObject *arg) {
+    const char *string;
+    Py_ssize_t length;
+    PyObject *result;
+#if @is_half@
+    npy_double value;
+#else
+    npy_@name@ value;
+#endif
+
+    string = PyUnicode_AsUTF8AndSize(arg, &length);
+    if (string == NULL) {
+        return NULL;
+    }
+
+    if (npy_@name@_fromhex(string, &value) == NPY_FALSE) {
+        return NULL;
+    }
+
+    result = PyFloat_FromDouble(value);
+    if (cls != (PyObject *)&PyFloat_Type && result != NULL) {
+        Py_SETREF(result, PyObject_CallFunctionObjArgs(cls, result, NULL));
+    }
+
+    return result;
+}
 /**end repeat**/
 
 static PyObject *
@@ -2353,6 +2381,9 @@ static PyMethodDef @name@type_methods[] = {
     {"hex",
         (PyCFunction)@name@_hex,
         METH_NOARGS, NULL},
+    {"fromhex",
+        (PyCFunction)@name@_fromhex,
+        METH_CLASS | METH_O, NULL},
     {"is_integer",
         (PyCFunction)@name@_is_integer,
         METH_NOARGS, NULL},
