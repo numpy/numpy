@@ -5,6 +5,7 @@ import fractions
 import platform
 import types
 from typing import Any, Type
+from math import copysign
 
 import pytest
 import numpy as np
@@ -202,3 +203,31 @@ class TestBitCount:
             assert np.uint64(a - 1).bit_count() == exp
             assert np.uint64(a ^ 63).bit_count() == 7
             assert np.uint64((a - 1) ^ 510).bit_count() == exp - 8
+
+class TestFloatHex:
+    # derived in part from the cpython test "HexFloatTestCase"
+
+    def identical(self, x, y):
+        # check that floats x and y are identical, or that both
+        # are NaNs
+        if np.isnan(x) or np.isnan(y):
+            if np.isnan(x) == np.isnan(y):
+                return True
+        elif x == y and (
+                x != 0.0 or np.copysign(1.0, x) == np.copysign(1.0, y)
+            ):
+            return True
+
+        return False
+
+    def roundtrip(self, x):
+        return x.fromhex(x.hex())
+
+    @pytest.mark.parametrize("ftype", np.sctypes['float'])
+    def test_roundtrip(self, ftype):
+        finfo = np.finfo(ftype)
+        fltMax, fltMin = finfo.max, finfo.min
+        fltEps, fltTiny = finfo.eps, finfo.tiny
+
+        for x in [fltMax, fltMin, fltEps, fltTiny, 0.0, np.nan, np.inf]:
+            assert self.identical(x, self.roundtrip(x))
