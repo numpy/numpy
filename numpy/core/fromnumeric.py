@@ -17,7 +17,7 @@ _dt_ = nt.sctype2char
 
 # functions that are methods
 __all__ = [
-    'alen', 'all', 'alltrue', 'amax', 'amin', 'any', 'argmax',
+    'all', 'alltrue', 'amax', 'amin', 'any', 'argmax',
     'argmin', 'argpartition', 'argsort', 'around', 'choose', 'clip',
     'compress', 'cumprod', 'cumproduct', 'cumsum', 'diagonal', 'mean',
     'ndim', 'nonzero', 'partition', 'prod', 'product', 'ptp', 'put',
@@ -2915,51 +2915,6 @@ def amin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     """
     return _wrapreduction(a, np.minimum, 'min', axis, None, out,
                           keepdims=keepdims, initial=initial, where=where)
-
-
-def _alen_dispathcer(a):
-    return (a,)
-
-
-@array_function_dispatch(_alen_dispathcer)
-def alen(a):
-    """
-    Return the length of the first dimension of the input array.
-
-    .. deprecated:: 1.18
-       `numpy.alen` is deprecated, use `len` instead.
-
-    Parameters
-    ----------
-    a : array_like
-       Input array.
-
-    Returns
-    -------
-    alen : int
-       Length of the first dimension of `a`.
-
-    See Also
-    --------
-    shape, size
-
-    Examples
-    --------
-    >>> a = np.zeros((7,4,5))
-    >>> a.shape[0]
-    7
-    >>> np.alen(a)
-    7
-
-    """
-    # NumPy 1.18.0, 2019-08-02
-    warnings.warn(
-        "`np.alen` is deprecated, use `len` instead",
-        DeprecationWarning, stacklevel=2)
-    try:
-        return len(a)
-    except TypeError:
-        return len(array(a, ndmin=1))
 
 
 def _prod_dispatcher(a, axis=None, dtype=None, out=None, keepdims=None,
