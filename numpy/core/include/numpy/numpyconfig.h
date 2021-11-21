@@ -23,12 +23,18 @@
     #undef NPY_SIZEOF_LONGDOUBLE
     #undef NPY_SIZEOF_COMPLEX_LONGDOUBLE
 
-    #ifdef __x86_64
-        #define NPY_SIZEOF_LONGDOUBLE         16
-        #define NPY_SIZEOF_COMPLEX_LONGDOUBLE 32
-    #elif defined(__arm64__)
+    #if defined(__arm64__)
         #define NPY_SIZEOF_LONGDOUBLE         8
         #define NPY_SIZEOF_COMPLEX_LONGDOUBLE 16
+    #elif defined(__x86_64)
+        #define NPY_SIZEOF_LONGDOUBLE         16
+        #define NPY_SIZEOF_COMPLEX_LONGDOUBLE 32
+    #elif defined (__i386)
+        #define NPY_SIZEOF_LONGDOUBLE         12
+        #define NPY_SIZEOF_COMPLEX_LONGDOUBLE 24
+    #elif defined(__ppc__) || defined (__ppc64__)
+        #define NPY_SIZEOF_LONGDOUBLE         16
+        #define NPY_SIZEOF_COMPLEX_LONGDOUBLE 32
     #else
         #error "unknown architecture"
     #endif
