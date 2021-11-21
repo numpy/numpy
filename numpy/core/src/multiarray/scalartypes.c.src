@@ -2049,9 +2049,9 @@ static PyObject *
 @name@_fromhex(PyObject *cls, PyObject *arg) {
     const char *string;
     Py_ssize_t length;
-    PyObject *result;
+    PyObject *ret;
 #if @is_half@
-    npy_double value;
+    npy_float value;
 #else
     npy_@name@ value;
 #endif
@@ -2065,12 +2065,17 @@ static PyObject *
         return NULL;
     }
 
-    result = PyFloat_FromDouble(value);
-    if (cls != (PyObject *)&PyFloat_Type && result != NULL) {
-        Py_SETREF(result, PyObject_CallFunctionObjArgs(cls, result, NULL));
+    ret = PyArrayScalar_New(@Name@);
+    if (ret == NULL) {
+        return NULL;
     }
+#if @is_half@
+    PyArrayScalar_ASSIGN(ret, @Name@, npy_float_to_half(value));
+#else
+    PyArrayScalar_ASSIGN(ret, @Name@, value);
+#endif
 
-    return result;
+    return ret;
 }
 /**end repeat**/
 

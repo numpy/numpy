@@ -831,7 +831,7 @@ hex_from_char(char c) {
    of the form 4k+1. */
 #define TOHEX_NBITS @C@DBL_MANT_DIG + 3 - (@C@DBL_MANT_DIG+2)%4
 #if @is_half@
-    #define DBL_TYPE npy_double
+    #define DBL_TYPE npy_float
 #else
     #define DBL_TYPE npy_@name@
 #endif
@@ -855,7 +855,7 @@ npy_@name@_hex(DBL_TYPE x, char *buff) {
 
     m = npy_frexp@c@(npy_fabs@c@(x), &e);
     shift = 1 - Py_MAX(@C@DBL_MIN_EXP - e, 0);
-    m = ldexp(m, shift);
+    m = ldexp@c@(m, shift);
     e -= shift;
 
     si = 0;
@@ -1050,23 +1050,23 @@ npy_@name@_fromhex(const char *string, DBL_TYPE *result)
         top_exp++;
 
     /* catch almost all nonextreme cases of overflow and underflow here */
-    if (top_exp < DBL_MIN_EXP - DBL_MANT_DIG) {
+    if (top_exp < @C@DBL_MIN_EXP - @C@DBL_MANT_DIG) {
         x = 0.0;
         goto finished;
     }
-    if (top_exp > DBL_MAX_EXP)
+    if (top_exp > @C@DBL_MAX_EXP)
         goto overflow_error;
 
     /* lsb = exponent of least significant bit of the *rounded* value.
        This is top_exp - DBL_MANT_DIG unless result is subnormal. */
-    lsb = Py_MAX(top_exp, (long)DBL_MIN_EXP) - DBL_MANT_DIG;
+    lsb = Py_MAX(top_exp, (long)@C@DBL_MIN_EXP) - @C@DBL_MANT_DIG;
 
     x = 0.0;
     if (exp >= lsb) {
         /* no rounding required */
         for (i = ndigits-1; i >= 0; i--)
             x = 16.0*x + HEX_DIGIT(i);
-        x = ldexp(x, (int)(exp));
+        x = ldexp@c@(x, (int)(exp));
         goto finished;
     }
     /* rounding required.  key_digit is the index of the hex digit
@@ -1076,7 +1076,7 @@ npy_@name@_fromhex(const char *string, DBL_TYPE *result)
     for (i = ndigits-1; i > key_digit; i--)
         x = 16.0*x + HEX_DIGIT(i);
     digit = HEX_DIGIT(key_digit);
-    x = 16.0*x + (double)(digit & (16-2*half_eps));
+    x = 16.0*x + (DBL_TYPE)(digit & (16-2*half_eps));
 
     /* round-half-even: round up if bit lsb-1 is 1 and at least one of
        bits lsb, lsb-2, lsb-3, lsb-4, ... is 1. */
@@ -1094,13 +1094,13 @@ npy_@name@_fromhex(const char *string, DBL_TYPE *result)
         if (round_up) {
             x += 2*half_eps;
             if (top_exp == @C@DBL_MAX_EXP &&
-                x == ldexp((double)(2*half_eps), @C@DBL_MANT_DIG))
+                x == ldexp@c@((DBL_TYPE)(2*half_eps), @C@DBL_MANT_DIG))
                 /* overflow corner case: pre-rounded value <
                    2**DBL_MAX_EXP; rounded=2**DBL_MAX_EXP. */
                 goto overflow_error;
         }
     }
-    x = ldexp(x, (int)(exp+4*key_digit));
+    x = ldexp@c@(x, (int)(exp+4*key_digit));
 
   finished:
     /* optional trailing whitespace leading to the end of the string */
@@ -1109,9 +1109,7 @@ npy_@name@_fromhex(const char *string, DBL_TYPE *result)
     if (s != s_end)
         goto parse_error;
     *result = negate ? -x : x;
-    // if (type != &PyFloat_Type && result != NULL) {
-    //     Py_SETREF(result, PyObject_CallOneArg((PyObject *)type, result));
-    // }
+
     return NPY_TRUE;
 
   overflow_error:
