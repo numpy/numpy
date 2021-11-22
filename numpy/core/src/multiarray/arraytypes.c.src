@@ -3113,10 +3113,9 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
     PyArray_Descr *descr;
     PyObject *names, *key;
     PyObject *tup;
-    PyArrayObject_fields dummy_struct;
-    PyArrayObject *dummy = (PyArrayObject *)&dummy_struct;
     char *nip1, *nip2;
     int i, res = 0, swap = 0;
+    PyArrayObject *dummy = NULL;
 
     if (!PyArray_HASFIELDS(ap)) {
         return STRING_compare(ip1, ip2, ap);
@@ -3126,6 +3125,10 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
         goto finish;
     }
     descr = PyArray_DESCR(ap);
+    dummy = get_tmp_array(ap);
+    if (dummy == NULL) {
+        goto finish;
+    }
     /*
      * Compare on the first-field.  If equal, then
      * compare on the second-field, etc.
@@ -3140,9 +3143,9 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
             goto finish;
         }
         /* Set the fields needed by compare or copyswap */
-        dummy_struct.descr = new;
+        _set_descr(dummy, new);
 
-        swap = PyArray_ISBYTESWAPPED(dummy);
+        swap = PyDataType_ISBYTESWAPPED(new);
         nip1 = ip1 + offset;
         nip2 = ip2 + offset;
         if (swap || new->alignment > 1) {
@@ -3195,6 +3198,7 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
 
 finish:
     Py_XDECREF(mem_handler);
+    Py_XDECREF(dummy);
     return res;
 }
 
