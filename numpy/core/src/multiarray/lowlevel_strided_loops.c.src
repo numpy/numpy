@@ -1461,6 +1461,9 @@ mapiter_trivial_@name@(PyArrayObject *self, PyArrayObject *ind,
     int is_aligned = IsUintAligned(self) && IsUintAligned(result);
     int needs_api = PyDataType_REFCHK(PyArray_DESCR(self));
 
+    // XXX: sadness
+    needs_api = 1;
+
     PyArray_CopySwapFunc *copyswap = PyArray_DESCR(self)->f->copyswap;
     NPY_BEGIN_THREADS_DEF;
 

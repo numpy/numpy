@@ -154,7 +154,7 @@ _strided_to_strided_copy_references(
 typedef struct {
     NpyAuxData base;
     PyArray_GetItemFunc *getitem;
-    PyArrayObject_fields arr_fields;
+    PyArrayObject *arr;
     NPY_cast_info decref_src;
 } _any_to_object_auxdata;
 
@@ -164,7 +164,7 @@ _any_to_object_auxdata_free(NpyAuxData *auxdata)
 {
     _any_to_object_auxdata *data = (_any_to_object_auxdata *)auxdata;
 
-    Py_DECREF(data->arr_fields.descr);
+    Py_DECREF(data->arr);
     NPY_cast_info_xfree(&data->decref_src);
     PyMem_Free(data);
 }
@@ -179,8 +179,8 @@ _any_to_object_auxdata_clone(NpyAuxData *auxdata)
 
     res->base = data->base;
     res->getitem = data->getitem;
-    res->arr_fields = data->arr_fields;
-    Py_INCREF(res->arr_fields.descr);
+    res->arr = data->arr;
+    Py_INCREF(res->arr);
 
     if (data->decref_src.func != NULL) {
         if (NPY_cast_info_copy(&res->decref_src, &data->decref_src) < 0) {
@@ -212,7 +212,7 @@ _strided_to_strided_any_to_object(
     while (N > 0) {
         memcpy(&dst_ref, dst, sizeof(dst_ref));
         Py_XDECREF(dst_ref);
-        dst_ref = data->getitem(src, &data->arr_fields);
+        dst_ref = data->getitem(src, data->arr);
         memcpy(dst, &dst_ref, sizeof(PyObject *));
 
         if (dst_ref == NULL) {
@@ -253,11 +253,13 @@ any_to_object_get_loop(
     _any_to_object_auxdata *data = (_any_to_object_auxdata *)*out_transferdata;
     data->base.free = &_any_to_object_auxdata_free;
     data->base.clone = &_any_to_object_auxdata_clone;
-    data->arr_fields.base = NULL;
-    data->arr_fields.descr = context->descriptors[0];
-    Py_INCREF(data->arr_fields.descr);
-    data->arr_fields.flags = aligned ? NPY_ARRAY_ALIGNED : 0;
-    data->arr_fields.nd = 0;
+    PyArray_Descr *dtype = context->descriptors[0];
+    Py_INCREF(dtype);
+    npy_intp shape = 1;
+    data->arr = PyArray_NewFromDescr_int(
+            &PyArray_Type, dtype, 1,
+            &shape, NULL, NULL,
+            0, NULL, NULL, 0, 1);
 
     data->getitem = context->descriptors[0]->f->getitem;
     NPY_cast_info_init(&data->decref_src);

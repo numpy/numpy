@@ -44,29 +44,33 @@
 
 
 /*
- * Define a stack allocated dummy array with only the minimum information set:
+ * Define a dummy array with only the minimum information set:
  *   1. The descr, the main field interesting here.
- *   2. The flags, which are needed for alignment;.
- *   3. The type is set to NULL and the base is the original array, if this
- *      is used within a subarray getitem to create a new view, the base
- *      must be walked until the type is not NULL.
+ *   2. The flags, which are needed for alignment.
+ *   3. The base is set to orig (or its base), which is used in the subarray
+ *      case of VOID_getitem.
  *
- * The following should create errors in debug mode (if deallocated
- * incorrectly), since base would be incorrectly decref'd as well.
- * This is especially important for nonzero and copyswap, which may run with
- * the GIL released.
  */
-static NPY_INLINE PyArrayObject_fields
-get_dummy_stack_array(PyArrayObject *orig)
+static NPY_INLINE PyArrayObject *
+get_tmp_array(PyArrayObject *orig)
 {
-    PyArrayObject_fields new_fields;
-    new_fields.flags = PyArray_FLAGS(orig);
-    /* Set to NULL so the dummy object can be distinguished from the real one */
-    Py_SET_TYPE(&new_fields, NULL);
-    new_fields.base = (PyObject *)orig;
-    return new_fields;
+    PyArray_Descr *dtype = PyArray_DESCR(orig);
+    Py_INCREF(dtype);
+    npy_intp shape = 1;
+    PyObject *ret = PyArray_NewFromDescr_int(
+            &PyArray_Type, dtype, 1,
+            &shape, NULL, NULL,
+            PyArray_FLAGS(orig), NULL, (PyObject *)orig, 0, 1);
+    return (PyArrayObject *)ret;
 }
 
+/* Replace tmp_array->descr with new_descr */
+static NPY_INLINE void
+_set_descr(PyArrayObject *tmp_array, PyArray_Descr *new_descr)
+{
+    Py_INCREF(new_descr);
+    Py_SETREF(((PyArrayObject_fields *)tmp_array)->descr, new_descr);
+}
 
 /* check for sequences, but ignore the types numpy considers scalars */
 static NPY_INLINE npy_bool
@@ -716,8 +720,10 @@ VOID_getitem(void *input, void *vap)
         int i, n;
         PyObject *ret;
         PyObject *tup;
-        PyArrayObject_fields dummy_fields = get_dummy_stack_array(ap);
-        PyArrayObject *dummy_arr = (PyArrayObject *)&dummy_fields;
+        PyArrayObject *dummy_arr = get_tmp_array(ap);
+        if (dummy_arr == NULL) {
+            return NULL;
+        }
 
         /* get the names from the fields dictionary*/
         names = descr->names;
@@ -730,9 +736,10 @@ VOID_getitem(void *input, void *vap)
             tup = PyDict_GetItem(descr->fields, key);
             if (_unpack_field(tup, &new, &offset) < 0) {
                 Py_DECREF(ret);
+                Py_DECREF(dummy_arr);
                 return NULL;
             }
-            dummy_fields.descr = new;
+            _set_descr(dummy_arr, new);
             /* update alignment based on offset */
             if ((new->alignment > 1)
                     && ((((npy_intp)(ip+offset)) % new->alignment) != 0)) {
@@ -743,6 +750,7 @@ VOID_getitem(void *input, void *vap)
             }
             PyTuple_SET_ITEM(ret, i, PyArray_GETITEM(dummy_arr, ip+offset));
         }
+        Py_DECREF(dummy_arr);
         return ret;
     }
 
@@ -762,24 +770,18 @@ VOID_getitem(void *input, void *vap)
         /*
          * NOTE: There is the possibility of recursive calls from the above
          *       field branch. These calls use a dummy arr for thread
-         *       (and general) safety. However, we must set the base array,
-         *       so if such a dummy array was passed (its type is NULL),
-         *       we have walk its base until the initial array is found.
+         *       (and general) safety.
          *
-         * TODO: This should be fixed, the next "generation" of GETITEM will
+         * TODO: The next "generation" of GETITEM will
          *       probably need to pass in the original array (in addition
          *       to the dtype as a method). Alternatively, VOID dtypes
          *       could have special handling.
          */
-        PyObject *base = (PyObject *)ap;
-        while (Py_TYPE(base) == NULL) {
-            base = PyArray_BASE((PyArrayObject *)base);
-        }
         ret = (PyArrayObject *)PyArray_NewFromDescrAndBase(
                 &PyArray_Type, descr->subarray->base,
                 shape.len, shape.ptr, NULL, ip,
                 PyArray_FLAGS(ap) & ~NPY_ARRAY_F_CONTIGUOUS,
-                NULL, base);
+                NULL, (PyObject*)ap);
         npy_free_cache_dim_obj(shape);
         return (PyObject *)ret;
     }
@@ -815,7 +817,7 @@ _setup_field(int i, PyArray_Descr *descr, PyArrayObject *arr,
         return -1;
     }
 
-    ((PyArrayObject_fields *)(arr))->descr = new;
+    _set_descr(arr, new);
     if ((new->alignment > 1) &&
                 ((((uintptr_t)dstdata + offset) % new->alignment) != 0)) {
         PyArray_CLEARFLAGS(arr, NPY_ARRAY_ALIGNED);
@@ -834,8 +836,6 @@ _setup_field(int i, PyArray_Descr *descr, PyArrayObject *arr,
 static int
 _copy_and_return_void_setitem(PyArray_Descr *dstdescr, char *dstdata,
                               PyArray_Descr *srcdescr, char *srcdata){
-    PyArrayObject_fields dummy_struct;
-    PyArrayObject *dummy_arr = (PyArrayObject *)&dummy_struct;
     npy_int names_size = PyTuple_GET_SIZE(dstdescr->names);
     npy_intp offset;
     npy_int i;
@@ -843,6 +843,12 @@ _copy_and_return_void_setitem(PyArray_Descr *dstdescr, char *dstdata,
 
     /* Fast path if dtypes are equal */
     if (PyArray_EquivTypes(srcdescr, dstdescr)) {
+        Py_INCREF(dstdescr);
+        npy_intp shape = 1;
+        PyArrayObject *dummy_arr = (PyArrayObject *)PyArray_NewFromDescr_int(
+                &PyArray_Type, dstdescr, 1,
+                &shape, NULL, NULL,
+                0, NULL, NULL, 0, 1);
         for (i = 0; i < names_size; i++) {
             /* neither line can ever fail, in principle */
             if (_setup_field(i, dstdescr, dummy_arr, &offset, dstdata)) {
@@ -851,6 +857,7 @@ _copy_and_return_void_setitem(PyArray_Descr *dstdescr, char *dstdata,
             PyArray_DESCR(dummy_arr)->f->copyswap(dstdata + offset,
                     srcdata + offset, 0, dummy_arr);
         }
+        Py_DECREF(dummy_arr);
         return 0;
     }
 
@@ -908,8 +915,10 @@ VOID_setitem(PyObject *op, void *input, void *vap)
                 return -1;
             }
 
-            PyArrayObject_fields dummy_fields = get_dummy_stack_array(ap);
-            PyArrayObject *dummy_arr = (PyArrayObject *)&dummy_fields;
+            PyArrayObject *dummy_arr = get_tmp_array(ap);
+            if (dummy_arr == NULL) {
+                return -1;
+            }
 
             for (i = 0; i < names_size; i++) {
                 PyObject *item;
@@ -929,13 +938,16 @@ VOID_setitem(PyObject *op, void *input, void *vap)
                     break;
                 }
             }
+            Py_DECREF(dummy_arr);
         }
         else {
             /* Otherwise must be non-void scalar. Try to assign to each field */
             npy_intp names_size = PyTuple_GET_SIZE(descr->names);
 
-            PyArrayObject_fields dummy_fields = get_dummy_stack_array(ap);
-            PyArrayObject *dummy_arr = (PyArrayObject *)&dummy_fields;
+            PyArrayObject *dummy_arr = get_tmp_array(ap);
+            if (dummy_arr == NULL) {
+                return -1;
+            }
 
             for (i = 0; i < names_size; i++) {
                 /* temporarily make ap have only this field */
@@ -949,6 +961,7 @@ VOID_setitem(PyObject *op, void *input, void *vap)
                     break;
                 }
             }
+            Py_DECREF(dummy_arr);
         }
 
         if (failed) {
@@ -2345,8 +2358,10 @@ VOID_copyswapn (char *dst, npy_intp dstride, char *src, npy_intp sstride,
         PyObject *key, *value;
         Py_ssize_t pos = 0;
 
-        PyArrayObject_fields dummy_fields = get_dummy_stack_array(arr);
-        PyArrayObject *dummy_arr = (PyArrayObject *)&dummy_fields;
+        PyArrayObject *dummy_arr = get_tmp_array(arr);
+        if (dummy_arr == NULL) {
+            return;
+        }
 
         while (PyDict_Next(descr->fields, &pos, &key, &value)) {
             npy_intp offset;
@@ -2358,7 +2373,7 @@ VOID_copyswapn (char *dst, npy_intp dstride, char *src, npy_intp sstride,
                 return;
             }
 
-            dummy_fields.descr = new;
+            _set_descr(dummy_arr, new);
             new->f->copyswapn(dst+offset, dstride,
                     (src != NULL ? src+offset : NULL),
                     sstride, n, swap, dummy_arr);
@@ -2396,9 +2411,11 @@ VOID_copyswapn (char *dst, npy_intp dstride, char *src, npy_intp sstride,
             return;
         }
 
-        PyArrayObject_fields dummy_fields = get_dummy_stack_array(arr);
-        PyArrayObject *dummy_arr = (PyArrayObject *)&dummy_fields;
-        ((PyArrayObject_fields *)dummy_arr)->descr = new;
+        PyArrayObject *dummy_arr = get_tmp_array(arr);
+        if (dummy_arr == NULL) {
+            return;
+        }
+        _set_descr(dummy_arr, new);
 
         num = descr->elsize / subitemsize;
         for (i = 0; i < n; i++) {
@@ -2409,6 +2426,7 @@ VOID_copyswapn (char *dst, npy_intp dstride, char *src, npy_intp sstride,
                 srcptr += sstride;
             }
         }
+        Py_DECREF(dummy_arr);
         return;
     }
     /* Must be a naive Void type (e.g. a "V8") so simple copy is sufficient. */
@@ -2432,8 +2450,10 @@ VOID_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
         PyObject *key, *value;
         Py_ssize_t pos = 0;
 
-        PyArrayObject_fields dummy_fields = get_dummy_stack_array(arr);
-        PyArrayObject *dummy_arr = (PyArrayObject *)&dummy_fields;
+        PyArrayObject *dummy_arr = get_tmp_array(arr);
+        if (dummy_arr == NULL) {
+            return;
+        }
 
         while (PyDict_Next(descr->fields, &pos, &key, &value)) {
             npy_intp offset;
@@ -2443,13 +2463,15 @@ VOID_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
                 continue;
             }
             if (_unpack_field(value, &new, &offset) < 0) {
+                Py_DECREF(dummy_arr);
                 return;
             }
-            dummy_fields.descr = new;
+            _set_descr(dummy_arr, new);
             new->f->copyswap(dst+offset,
                     (src != NULL ? src+offset : NULL),
                     swap, dummy_arr);
         }
+        Py_DECREF(dummy_arr);
         return;
     }
     if (PyDataType_HASSUBARRAY(descr)) {
@@ -2479,13 +2501,16 @@ VOID_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
             return;
         }
 
-        PyArrayObject_fields dummy_fields = get_dummy_stack_array(arr);
-        PyArrayObject *dummy_arr = (PyArrayObject *)&dummy_fields;
-        dummy_fields.descr = new;
+        PyArrayObject *dummy_arr = get_tmp_array(arr);
+        if (dummy_arr == NULL) {
+            return;
+        }
+        _set_descr(dummy_arr, new);
 
         num = descr->elsize / subitemsize;
         new->f->copyswapn(dst, subitemsize, src,
                 subitemsize, num, swap, dummy_arr);
+        Py_DECREF(dummy_arr);
         return;
     }
     /* Must be a naive Void type (e.g. a "V8") so simple copy is sufficient. */
@@ -2741,8 +2766,10 @@ VOID_nonzero (char *ip, PyArrayObject *ap)
         PyArray_Descr *descr;
         PyObject *key, *value;
         Py_ssize_t pos = 0;
-        PyArrayObject_fields dummy_fields = get_dummy_stack_array(ap);
-        PyArrayObject *dummy_arr = (PyArrayObject *)&dummy_fields;
+        PyArrayObject *dummy_arr = get_tmp_array(ap);
+        if (dummy_arr == NULL) {
+            return nonz;
+        }
 
         descr = PyArray_DESCR(ap);
         while (PyDict_Next(descr->fields, &pos, &key, &value)) {
@@ -2756,7 +2783,7 @@ VOID_nonzero (char *ip, PyArrayObject *ap)
                 continue;
             }
 
-            dummy_fields.descr = new;
+            _set_descr(dummy_arr, new);
             if ((new->alignment > 1) && !__ALIGNED(ip + offset,
                         new->alignment)) {
                 PyArray_CLEARFLAGS(dummy_arr, NPY_ARRAY_ALIGNED);
@@ -2769,6 +2796,7 @@ VOID_nonzero (char *ip, PyArrayObject *ap)
                 break;
             }
         }
+        Py_DECREF(dummy_arr);
         return nonz;
     }
     len = PyArray_DESCR(ap)->elsize;
