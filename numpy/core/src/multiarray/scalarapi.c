@@ -722,12 +722,20 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
         /* copyswap needs an array object, but only actually cares about the
          * dtype
          */
-        PyArrayObject_fields dummy_arr;
+        int fake_base = 0;
         if (base == NULL) {
-            dummy_arr.descr = descr;
-            base = (PyObject *)&dummy_arr;
+            fake_base = 1;
+            npy_intp shape = 1;
+            Py_INCREF(descr);
+            base = PyArray_NewFromDescr_int(
+                    &PyArray_Type, descr, 1,
+                    &shape, NULL, NULL,
+                    0, NULL, NULL, 0, 1);
         }
         copyswap(buff, data, swap, base);
+        if (fake_base) {
+            Py_CLEAR(base);
+        }
 
         /* truncation occurs here */
         PyObject *u = PyUnicode_FromKindAndData(PyUnicode_4BYTE_KIND, buff, itemsize / 4);
