@@ -18,6 +18,7 @@
 #include "get_attr_string.h"
 #include "mem_overlap.h"
 #include "array_coercion.h"
+#include "ctors.h"
 
 /*
  * The casting to use for implicit assignment operations resulting from
@@ -330,6 +331,28 @@ end:
     Py_XDECREF(shape2);
     Py_XDECREF(shape1_i);
     Py_XDECREF(shape2_j);
+}
+
+/*
+ * Define a dummy array with only the information required by
+ * dtype member functions such as descr->f->getitem:
+ *   1. The descr, the main field interesting here.
+ *   2. The flags, which are needed for alignment.
+ *   3. The base is set to orig (or its base), which is used in the subarray
+ *      case of VOID_getitem.
+ *
+ */
+NPY_NO_EXPORT PyArrayObject *
+get_tmp_array(PyArrayObject *orig)
+{
+    PyArray_Descr *dtype = PyArray_DESCR(orig);
+    Py_INCREF(dtype);
+    npy_intp shape = 1;
+    PyObject *ret = PyArray_NewFromDescr_int(
+            &PyArray_Type, dtype, 1,
+            &shape, NULL, NULL,
+            PyArray_FLAGS(orig), NULL, (PyObject *)orig, 0, 1);
+    return (PyArrayObject *)ret;
 }
 
 /**

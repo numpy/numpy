@@ -76,6 +76,17 @@ convert_shape_to_string(npy_intp n, npy_intp const *vals, char *ending);
 NPY_NO_EXPORT void
 dot_alignment_error(PyArrayObject *a, int i, PyArrayObject *b, int j);
 
+NPY_NO_EXPORT PyArrayObject *
+get_tmp_array(PyArrayObject *orig);
+
+/* Replace tmp_array->descr with new_descr */
+static NPY_INLINE void
+_set_descr(PyArrayObject *tmp_array, PyArray_Descr *new_descr)
+{
+    Py_INCREF(new_descr);
+    Py_SETREF(((PyArrayObject_fields *)tmp_array)->descr, new_descr);
+}
+
 /**
  * unpack tuple of dtype->fields (descr, offset, title[not-needed])
  *
