@@ -33,5 +33,9 @@ The optimization process in NumPy is carried out in three layers:
    NumPy community had a deep discussion before implementing this work,
    please check `NEP-38`_ for more clarification.
 
+.. toctree::
+
+    build-options
+
 .. _`NEP-38`: https://numpy.org/neps/nep-0038-SIMD-optimizations.html
 
