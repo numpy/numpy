@@ -12,7 +12,7 @@ over 602 pull requests. There have been many improvements, highlights are:
   release.
 * A preliminary version of the proposed Array-API is provided. This is a step
   in creating a standard collection of functions that can be used across
-  application such as CuPy and JAX.
+  applications such as CuPy and JAX.
 * NumPy now has a DLPack backend. DLPack provides a common interchange format
   for array (tensor) data.
 * New methods for ``quantile``, ``percentile``, and related functions. The new
@@ -39,14 +39,13 @@ Expired deprecations
 
 Deprecated numeric style dtype strings have been removed
 --------------------------------------------------------
-* Using the strings ``"Bytes0"``, ``"Datetime64"``, ``"Str0"``, ``"Uint32"``,
-  and ``"Uint64"`` as a dtype will now raise a ``TypeError``.
+Using the strings ``"Bytes0"``, ``"Datetime64"``, ``"Str0"``, ``"Uint32"``,
+and ``"Uint64"`` as a dtype will now raise a ``TypeError``.
 
-  (`gh-19539 <https://github.com/numpy/numpy/pull/19539>`__)
+(`gh-19539 <https://github.com/numpy/numpy/pull/19539>`__)
 
 Expired deprecations for ``loads``, ``ndfromtxt``, and ``mafromtxt`` in npyio
 -----------------------------------------------------------------------------
-
 ``numpy.loads`` was deprecated in v1.15, with the recommendation that users use
 ``pickle.loads`` instead.  ``ndfromtxt`` and ``mafromtxt`` were both deprecated
 in v1.17 - users should use ``numpy.genfromtxt`` instead with the appropriate
