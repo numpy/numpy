@@ -1807,36 +1807,23 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         byte_converters = False
 
     # Initialize the filehandle, the LineSplitter and the NameValidator
+   
+    if isinstance(fname, os_PathLike):
+        fname = os_fspath(fname)
+    if isinstance(fname, str):
+        fid = np.lib._datasource.open(fname, 'rt', encoding=encoding)
+        fid_ctx = contextlib.closing(fid)
+    else:
+        fid = fname
+        fid_ctx = contextlib.nullcontext(fid)
     try:
-        if isinstance(fname, os_PathLike):
-            try:
-                fname = os_fspath(fname)
-            except TypeError as e:
-                raise TypeError(
-                    f"fname must be a string.\n"
-                    f"Got {type(fname)} instead."
-                ) from e 
-        if isinstance(fname, str):
-            fid = np.lib._datasource.open(fname, 'rt', encoding=encoding)
-            try:
-                fid_ctx = contextlib.closing(fid)
-            except TypeError as e:
-                raise TypeError(
-                    f"expecting file object.\n"
-                    f"Got {type(fid)} instead."
-                ) from e 
-        else:
-            fid = fname
-            fid_ctx = contextlib.nullcontext(fid)
-        try:
-            fhd = iter(fid)
-        except TypeError as e:
-            raise TypeError(
-                f"expecting iterable sequence such as sets, tuples, etc.\n"
-                f"Got {type(fid)} instead."
-            ) from e 
+        fhd = iter(fid)
     except TypeError as e:
-        raise e
+        raise TypeError(
+            "fname must be a string, a filehandle, a sequence of strings,\n"
+            f"or an iterator of strings. Got {type(fname)} instead."
+        ) from e
+    
     
     with fid_ctx:
         split_line = LineSplitter(delimiter=delimiter, comments=comments,
