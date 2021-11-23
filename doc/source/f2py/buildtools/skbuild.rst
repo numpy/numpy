@@ -44,9 +44,9 @@ The resulting extension can be built and loaded in the standard workflow.
 
     ls .
     # CMakeLists.txt fib1.f
-    mkdir build && cd build
-    cmake ..
-    make
+    cmake -S . -B build
+    cmake --build build
+    cd build
     python -c "import numpy as np; import fibby; a = np.zeros(9); fibby.fib(a); print (a)"
     # [ 0.  1.  1.  2.  3.  5.  8. 13. 21.]
 
