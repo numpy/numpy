@@ -396,56 +396,76 @@ find_scalar_descriptor(
 NPY_NO_EXPORT int
 PyArray_Pack(PyArray_Descr *descr, char *item, PyObject *value)
 {
-    PyArrayObject_fields arr_fields = {
-            .flags = NPY_ARRAY_WRITEABLE,  /* assume array is not behaved. */
-        };
-    Py_SET_TYPE(&arr_fields, &PyArray_Type);
-    Py_SET_REFCNT(&arr_fields, 1);
+    PyArrayObject *dummy_arr = dummy_array_new(
+            descr, NPY_ARRAY_WRITEABLE, NULL);
+    if (dummy_arr == NULL) {
+        return -1;
+    }
 
     if (NPY_UNLIKELY(descr->type_num == NPY_OBJECT)) {
         /*
          * We always have store objects directly, casting will lose some
          * type information. Any other dtype discards the type information.
          * TODO: For a Categorical[object] this path may be necessary?
+         * NOTE: OBJECT_setitem doesn't care about the NPY_ARRAY_ALIGNED flag
          */
-        arr_fields.descr = descr;
-        return descr->f->setitem(value, item, &arr_fields);
+        int result = descr->f->setitem(value, item, dummy_arr);
+        Py_DECREF(dummy_arr);
+        return result;
     }
 
     /* discover_dtype_from_pyobject includes a check for is_known_scalar_type */
     PyArray_DTypeMeta *DType = discover_dtype_from_pyobject(
             value, NULL, NPY_DTYPE(descr));
     if (DType == NULL) {
+        Py_DECREF(dummy_arr);
         return -1;
     }
     if (DType == NPY_DTYPE(descr) || DType == (PyArray_DTypeMeta *)Py_None) {
         /* We can set the element directly (or at least will try to) */
         Py_XDECREF(DType);
-        arr_fields.descr = descr;
-        return descr->f->setitem(value, item, &arr_fields);
+        if (npy_is_aligned(item, descr->alignment)) {
+            PyArray_ENABLEFLAGS(dummy_arr, NPY_ARRAY_ALIGNED);
+        }
+        else {
+            PyArray_CLEARFLAGS(dummy_arr, NPY_ARRAY_ALIGNED);
+        }
+        int result = descr->f->setitem(value, item, dummy_arr);
+        Py_DECREF(dummy_arr);
+        return result;
     }
     PyArray_Descr *tmp_descr;
     tmp_descr = NPY_DT_CALL_discover_descr_from_pyobject(DType, value);
     Py_DECREF(DType);
     if (tmp_descr == NULL) {
+        Py_DECREF(dummy_arr);
         return -1;
     }
 
     char *data = PyObject_Malloc(tmp_descr->elsize);
     if (data == NULL) {
         PyErr_NoMemory();
+        Py_DECREF(dummy_arr);
         Py_DECREF(tmp_descr);
         return -1;
     }
     if (PyDataType_FLAGCHK(tmp_descr, NPY_NEEDS_INIT)) {
         memset(data, 0, tmp_descr->elsize);
     }
-    arr_fields.descr = tmp_descr;
-    if (tmp_descr->f->setitem(value, data, &arr_fields) < 0) {
+    _set_descr(dummy_arr, tmp_descr);
+    if (npy_is_aligned(item, tmp_descr->alignment)) {
+        PyArray_ENABLEFLAGS(dummy_arr, NPY_ARRAY_ALIGNED);
+    }
+    else {
+        PyArray_CLEARFLAGS(dummy_arr, NPY_ARRAY_ALIGNED);
+    }
+    if (tmp_descr->f->setitem(value, data, dummy_arr) < 0) {
         PyObject_Free(data);
+        Py_DECREF(dummy_arr);
         Py_DECREF(tmp_descr);
         return -1;
     }
+    Py_DECREF(dummy_arr);
     if (PyDataType_REFCHK(tmp_descr)) {
         /* We could probably use move-references above */
         PyArray_Item_INCREF(data, tmp_descr);

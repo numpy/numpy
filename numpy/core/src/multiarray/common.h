@@ -77,6 +77,9 @@ NPY_NO_EXPORT void
 dot_alignment_error(PyArrayObject *a, int i, PyArrayObject *b, int j);
 
 NPY_NO_EXPORT PyArrayObject *
+dummy_array_new(PyArray_Descr *descr, npy_intp flags, PyObject *base);
+
+NPY_NO_EXPORT PyArrayObject *
 get_tmp_array(PyArrayObject *orig);
 
 /* Replace tmp_array->descr with new_descr */

@@ -333,6 +333,22 @@ end:
     Py_XDECREF(shape2_j);
 }
 
+
+NPY_NO_EXPORT PyArrayObject *
+dummy_array_new(PyArray_Descr *descr, npy_intp flags, PyObject *base)
+{
+    PyArrayObject_fields *fa = (PyArrayObject_fields *)PyArray_Type.tp_alloc(&PyArray_Type, 0);
+    if (fa == NULL) {
+        return NULL;
+    }
+    Py_XINCREF(descr);
+    fa->descr = descr;
+    fa->flags = flags;
+    Py_XINCREF(base);
+    fa->base = base;
+    return (PyArrayObject *)fa;
+}
+
 /*
  * Define a dummy array with only the information required by
  * dtype member functions such as descr->f->getitem:
