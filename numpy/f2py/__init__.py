@@ -47,11 +47,11 @@ def compile(source,
     source_fn : str, optional
         Name of the file where the fortran source is written.
         The default is to use a temporary file with the extension
-        provided by the `extension` parameter
-    extension : {'.f', '.f90'}, optional
+        provided by the ``extension`` parameter
+    extension : ``{'.f', '.f90'}``, optional
         Filename extension if `source_fn` is not provided.
         The extension tells which fortran standard is used.
-        The default is `.f`, which implies F77 standard.
+        The default is ``.f``, which implies F77 standard.
 
         .. versionadded:: 1.11.0
 
@@ -124,7 +124,7 @@ def compile(source,
 
 def get_include():
     """
-    Return the directory that contains the fortranobject.c and .h files.
+    Return the directory that contains the ``fortranobject.c`` and ``.h`` files.
 
     .. note::
 
@@ -151,15 +151,15 @@ def get_include():
     building a Python extension using a ``.pyf`` signature file is a two-step
     process. For a module ``mymod``:
 
-        - Step 1: run ``python -m numpy.f2py mymod.pyf --quiet``. This
-          generates ``_mymodmodule.c`` and (if needed)
-          ``_fblas-f2pywrappers.f`` files next to ``mymod.pyf``.
-        - Step 2: build your Python extension module. This requires the
-          following source files:
+    * Step 1: run ``python -m numpy.f2py mymod.pyf --quiet``. This
+      generates ``_mymodmodule.c`` and (if needed)
+      ``_fblas-f2pywrappers.f`` files next to ``mymod.pyf``.
+    * Step 2: build your Python extension module. This requires the
+      following source files:
 
-              - ``_mymodmodule.c``
-              - ``_mymod-f2pywrappers.f`` (if it was generated in step 1)
-              - ``fortranobject.c``
+      * ``_mymodmodule.c``
+      * ``_mymod-f2pywrappers.f`` (if it was generated in Step 1)
+      * ``fortranobject.c``
 
     See Also
     --------
