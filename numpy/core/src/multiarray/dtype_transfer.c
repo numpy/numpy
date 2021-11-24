@@ -256,7 +256,7 @@ any_to_object_get_loop(
     PyArray_Descr *dtype = context->descriptors[0];
     Py_INCREF(dtype);
     npy_intp shape = 1;
-    data->arr = PyArray_NewFromDescr_int(
+    data->arr = (PyArrayObject *)PyArray_NewFromDescr_int(
             &PyArray_Type, dtype, 1,
             &shape, NULL, NULL,
             0, NULL, NULL, 0, 1);
