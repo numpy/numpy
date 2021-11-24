@@ -12,7 +12,7 @@ dependencies:
   - compilers
   - openblas
   - nomkl
-  - setuptools=58.4
+  - setuptools=59.2.0
   # For testing
   - pytest
   - pytest-cov
