@@ -53,7 +53,7 @@ add_custom_command(
 )
 
 # Set up target
-python3_add_LIBRARY(${CMAKE_PROJECT_NAME} MODULE WITH_SOABI
+Python_add_library(${CMAKE_PROJECT_NAME} MODULE WITH_SOABI
   "${CMAKE_CURRENT_BINARY_DIR}/${f2py_module_c}" # Generated
   "${F2PY_INCLUDE_DIR}/fortranobject.c" # From NumPy
   "${fortran_src_file}" # Fortran source(s)
