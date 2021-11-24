@@ -499,7 +499,8 @@ def info(object=None, maxwidth=76, output=None, toplevel='numpy'):
         Printing width.
     output : file like object, optional
         File like object that the output is written to, default is
-        ``None``.  The object has to be opened in 'w' or 'a' mode.
+        ``None``, in which case ``sys.stdout`` will be used.
+        The object has to be opened in 'w' or 'a' mode.
     toplevel : str, optional
         Start search at this level.
 
