@@ -203,16 +203,17 @@ method is called whenever the system internally allocates a new array from an
 object which is a subclass (subtype) of the ndarray. It can be used to change
 attributes after construction, or to update meta-information from the “parent.”
 
-The ``__array_wrap__`` method “wraps up the action” in the sense of allowing a
-subclass to set the type of the return value and update attributes and metadata.
-This can be seen as the opposite of the ``__array__`` method. At the end of
-every ufunc, this method is called on the input object with the
-highest *array priority*, or the output object if one was specified. The
+The ``__array_wrap__`` method “wraps up the action” in the sense of allowing any
+object (such as user-defined functions) to set the type of its return value and
+update attributes and metadata. This can be seen as the opposite of the
+``__array__`` method. At the end of every object that implements
+``__array_wrap__``, this method is called on the input object with the highest
+*array priority*, or the output object if one was specified. The
 ``__array_priority__`` attribute is used to determine what type of object to
 return in situations where there is more than one possibility for the Python
-type of the returned object. Subclasses may opt to use this method to transform
-the output array into an instance of the subclass and update metadata before
-returning the array to the user.
+type of the returned object. For example, subclasses may opt to use this method
+to transform the output array into an instance of the subclass and update
+metadata before returning the array to the user.
 
 For more information on these methods, see :ref:`basics.subclassing` and
 :ref:`specific-array-subtyping`.
@@ -295,7 +296,7 @@ explicit conversion:
          [20.0855, 54.5982]], dtype=torch.float64)
 
 Also, note that the return type of this function is compatible with the initial
-data type.
+data type. 
 
 .. admonition:: Warning
 
@@ -313,6 +314,23 @@ data type.
    `__torch_function__ implementation
    <https://github.com/pytorch/pytorch/blob/master/torch/overrides.py>`__
    for details.
+
+Note also that we can see ``__array_wrap__`` in action here, even though
+``torch.Tensor`` is not a subclass of ndarray::
+
+   >>> import torch
+   >>> t = torch.arange(4)
+   >>> np.abs(t)
+   tensor([0, 1, 2, 3])
+   >>> wrap = lambda self, array: np.asarray(array)
+   >>> torch.Tensor.__array_wrap__ = wrap
+   >>> t = torch.arange(4)
+   >>> np.abs(t)
+   array([0, 1, 2, 3])
+
+PyTorch implements ``__array_wrap__`` to be able to get tensors back from NumPy
+functions, and we can modify it directly to control which type of objects are
+returned from these functions.
 
 Example: CuPy arrays
 ~~~~~~~~~~~~~~~~~~~~
