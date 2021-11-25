@@ -399,7 +399,7 @@ PyArray_Pack(PyArray_Descr *descr, char *item, PyObject *value)
     static PyArrayObject *dummy_arr = NULL;
     if (dummy_arr == NULL) {
         dummy_arr = dummy_array_new(
-                descr, NPY_ARRAY_WRITEABLE, NULL);
+                NULL, NPY_ARRAY_WRITEABLE, NULL);
         if (dummy_arr == NULL) {
             return -1;
         }
@@ -414,6 +414,7 @@ PyArray_Pack(PyArray_Descr *descr, char *item, PyObject *value)
          */
         _set_descr(dummy_arr, descr);
         int result = descr->f->setitem(value, item, dummy_arr);
+        _set_descr(dummy_arr, NULL);
         return result;
     }
 
@@ -434,6 +435,7 @@ PyArray_Pack(PyArray_Descr *descr, char *item, PyObject *value)
             PyArray_CLEARFLAGS(dummy_arr, NPY_ARRAY_ALIGNED);
         }
         int result = descr->f->setitem(value, item, dummy_arr);
+        _set_descr(dummy_arr, NULL);
         return result;
     }
     PyArray_Descr *tmp_descr;
@@ -461,9 +463,11 @@ PyArray_Pack(PyArray_Descr *descr, char *item, PyObject *value)
     }
     if (tmp_descr->f->setitem(value, data, dummy_arr) < 0) {
         PyObject_Free(data);
+        _set_descr(dummy_arr, NULL);
         Py_DECREF(tmp_descr);
         return -1;
     }
+    _set_descr(dummy_arr, NULL);
     if (PyDataType_REFCHK(tmp_descr)) {
         /* We could probably use move-references above */
         PyArray_Item_INCREF(data, tmp_descr);

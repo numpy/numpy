@@ -86,8 +86,10 @@ get_tmp_array(PyArrayObject *orig);
 static NPY_INLINE void
 _set_descr(PyArrayObject *tmp_array, PyArray_Descr *new_descr)
 {
-    Py_INCREF(new_descr);
-    Py_SETREF(((PyArrayObject_fields *)tmp_array)->descr, new_descr);
+    Py_XINCREF(new_descr);
+    PyArray_Descr *old = PyArray_DESCR(tmp_array);
+    ((PyArrayObject_fields *)tmp_array)->descr = new_descr;
+    Py_XDECREF(old);
 }
 
 /**
