@@ -645,9 +645,9 @@ class _Distutils:
     @staticmethod
     def dist_load_module(name, path):
         """Load a module from file, required by the abstract class '_Cache'."""
-        from numpy.compat import npy_load_module
+        from .misc_util import exec_mod_from_location
         try:
-            return npy_load_module(name, path)
+            return exec_mod_from_location(name, path)
         except Exception as e:
             _Distutils.dist_log(e, stderr=True)
         return None
