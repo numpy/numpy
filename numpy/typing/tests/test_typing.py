@@ -136,7 +136,7 @@ def test_fail(path: str) -> None:
     output_mypy = OUTPUT_MYPY
     assert path in output_mypy
     for error_line in output_mypy[path]:
-        error_line = _strip_filename(error_line)
+        error_line = _strip_filename(error_line).split("\n", 1)[0]
         match = re.match(
             r"(?P<lineno>\d+): (error|note): .+$",
             error_line,
