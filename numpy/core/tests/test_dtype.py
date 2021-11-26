@@ -621,6 +621,12 @@ class TestSubarray:
         t2 = np.dtype('2i4', align=True)
         assert_equal(t1.alignment, t2.alignment)
 
+    def test_aligned_empty(self):
+        # Mainly regression test for gh-19696: construction failed completely
+        dt = np.dtype([], align=True)
+        assert dt == np.dtype([])
+        dt = np.dtype({"names": [], "formats": [], "itemsize": 0}, align=True)
+        assert dt == np.dtype([])
 
 def iter_struct_object_dtypes():
     """

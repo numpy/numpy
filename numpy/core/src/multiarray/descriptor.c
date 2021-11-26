@@ -1325,7 +1325,7 @@ _convert_from_dict(PyObject *obj, int align)
             goto fail;
         }
         /* If align is set, make sure the alignment divides into the size */
-        if (align && itemsize % new->alignment != 0) {
+        if (align && new->alignment > 0 && itemsize % new->alignment != 0) {
             PyErr_Format(PyExc_ValueError,
                     "NumPy dtype descriptor requires alignment of %d bytes, "
                     "which is not divisible into the specified itemsize %d",
