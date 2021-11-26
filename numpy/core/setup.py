@@ -654,16 +654,38 @@ def configuration(parent_package='',top_path=None):
         # but we cannot use add_installed_pkg_config here either, so we only
         # update the substitution dictionary during npymath build
         config_cmd = config.get_config_cmd()
-
         # Check that the toolchain works, to fail early if it doesn't
         # (avoid late errors with MATHLIB which are confusing if the
         # compiler does not work).
-        st = config_cmd.try_link('int main(void) { return 0;}')
-        if not st:
-            # rerun the failing command in verbose mode
-            config_cmd.compiler.verbose = True
-            config_cmd.try_link('int main(void) { return 0;}')
-            raise RuntimeError("Broken toolchain: cannot link a simple C program")
+        for lang, test_code, note in (
+            ('c', 'int main(void) { return 0;}', ''),
+            ('c++', (
+                    'int main(void)'
+                    '{ auto x = 0.0; return static_cast<int>(x); }'
+                ), (
+                    'note: A compiler with support for C++11 language '
+                    'features is required.'
+                )
+             ),
+        ):
+            is_cpp = lang == 'c++'
+            if is_cpp:
+                # this a workround to get rid of invalid c++ flags
+                # without doing big changes to config.
+                # c tested first, compiler should be here
+                bk_c = config_cmd.compiler
+                config_cmd.compiler = bk_c.cxx_compiler()
+            st = config_cmd.try_link(test_code, lang=lang)
+            if not st:
+                # rerun the failing command in verbose mode
+                config_cmd.compiler.verbose = True
+                config_cmd.try_link(test_code, lang=lang)
+                raise RuntimeError(
+                    f"Broken toolchain: cannot link a simple {lang.upper()} "
+                    f"program. {note}"
+                )
+            if is_cpp:
+                config_cmd.compiler = bk_c
         mlibs = check_mathlib(config_cmd)
 
         posix_mlib = ' '.join(['-l%s' % l for l in mlibs])
