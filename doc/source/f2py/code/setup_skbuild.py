@@ -6,5 +6,5 @@ setup(
     description="a minimal example package (fortran version)",
     license="MIT",
     packages=['fibby'],
-    cmake_args=['-DSKBUILD=ON']
+    python_requires=">=3.7",
 )
