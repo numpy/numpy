@@ -1520,18 +1520,26 @@ mr_ = mr_class()
 #---- Find unmasked data ---
 #####--------------------------------------------------------------------------
 
-def ndenumerate(a):
+def ndenumerate(a, compressed=True):
     """
     Multidimensional index iterator.
 
-    Return an iterator yielding pairs of array coordinates and values of
-    elements that are not masked.
+    Return an iterator yielding pairs of array coordinates and values,
+    skipping elements that are masked. With `compressed=False`,
+    `ma.masked` is yielded as the value of masked elements. This
+    behavior differs from that of `numpy.ndenumerate`, which yields the
+    value of the underlying data array.
+
+    Notes
+    -----
     .. versionadded:: 1.23.0
-    
+
     Parameters
     ----------
     a : array_like
         An array with (possibly) masked elements.
+    compressed : bool, optional
+        If True (default), masked elements are skipped.
 
     See Also
     --------
@@ -1560,10 +1568,24 @@ def ndenumerate(a):
     (1, 1) 4
     (2, 0) 6
     (2, 2) 8
+
+    >>> for index, x in np.ma.ndenumerate(a, compressed=False):
+    ...     print(index, x)
+    (0, 0) 0
+    (0, 1) 1
+    (0, 2) 2
+    (1, 0) --
+    (1, 1) 4
+    (1, 2) --
+    (2, 0) 6
+    (2, 1) --
+    (2, 2) 8
     """
-    for it, masked in zip(np.ndenumerate(a), getmaskarray(a).flat):
-        if not masked:
+    for it, mask in zip(np.ndenumerate(a), getmaskarray(a).flat):
+        if not mask:
             yield it
+        elif not compressed:
+            yield it[0], masked
 
 
 def flatnotmasked_edges(a):
