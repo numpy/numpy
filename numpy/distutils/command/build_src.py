@@ -581,8 +581,8 @@ class build_src(build_ext.build_ext):
         if not skip_f2py:
             import numpy.f2py
             d = os.path.dirname(numpy.f2py.__file__)
-            source_c = os.path.join(d, 'src', 'fortranobject.c')
-            source_h = os.path.join(d, 'src', 'fortranobject.h')
+            source_c = os.path.join(d, 'csrcs', 'fortranobject.c')
+            source_h = os.path.join(d, 'csrcs', 'fortranobject.h')
             if newer(source_c, target_c) or newer(source_h, target_h):
                 self.mkpath(os.path.dirname(target_c))
                 self.copy_file(source_c, target_c)

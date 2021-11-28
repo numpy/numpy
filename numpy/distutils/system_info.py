@@ -2767,7 +2767,7 @@ class f2py_info(system_info):
             import numpy.f2py as f2py
         except ImportError:
             return
-        f2py_dir = os.path.join(os.path.dirname(f2py.__file__), 'src')
+        f2py_dir = os.path.join(os.path.dirname(f2py.__file__), 'csrcs')
         self.set_info(sources=[os.path.join(f2py_dir, 'fortranobject.c')],
                       include_dirs=[f2py_dir])
         return
