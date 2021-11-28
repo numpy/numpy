@@ -56,11 +56,11 @@ import copy
 from pathlib import Path
 
 # __version__.version is now the same as the NumPy version
-from . import __version__
+from numpy.f2py import __version__
 f2py_version = __version__.version
 numpy_version = __version__.version
 
-from .auxfuncs import (
+from numpy.f2py.stds.auxfuncs import (
     applyrules, debugcapi, dictappend, errmess, gentitle, getargs2,
     hascallstatement, hasexternals, hasinitvalue, hasnote, hasresultnote,
     isarray, isarrayofstrings, iscomplex, iscomplexarray,
@@ -77,12 +77,12 @@ from .auxfuncs import (
     l_and, l_not, l_or, outmess, replace, stripcomma, requiresf90wrapper
 )
 
-from . import capi_maps
-from . import cfuncs
-from . import common_rules
-from . import use_rules
-from . import f90mod_rules
-from . import func2subr
+from numpy.f2py.stds.pyf import capi_maps
+from numpy.f2py.codegen import cfuncs
+from numpy.f2py.stds.f77 import common_rules
+from numpy.f2py.stds.f90 import use_rules
+from numpy.f2py.stds.f90 import f90mod_rules
+from numpy.f2py.codegen import func2subr
 
 options = {}
 sepdict = {}

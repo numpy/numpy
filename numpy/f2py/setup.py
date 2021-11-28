@@ -28,9 +28,16 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('tests')
     config.add_data_dir('tests/src')
     config.add_data_files(
-        'src/fortranobject.c',
-        'src/fortranobject.h')
+        'csrcs/fortranobject.c',
+        'csrcs/fortranobject.h')
     config.add_data_files('*.pyi')
+    config.add_subpackage('codegen')
+    config.add_subpackage('frontend')
+    config.add_subpackage('stds')
+    config.add_subpackage('stds/f77')
+    config.add_subpackage('stds/f90')
+    config.add_subpackage('stds/pyf')
+    config.add_subpackage('utils')
     return config
 
 

@@ -1,34 +1,11 @@
 import pytest
+from numpy.testing import assert_raises
+from numpy.f2py.stds.symbolic import (
+    Expr, Op, ArithOp, Language, as_symbol, as_number, as_string, as_array,
+    as_complex, as_terms, as_factors, eliminate_quotes, insert_quotes,
+    fromstring, as_expr, as_apply, as_numer_denom, as_ternary, as_ref,
+    as_deref, normalize, as_eq, as_ne, as_lt, as_gt, as_le, as_ge)
 
-from numpy.f2py.symbolic import (
-    Expr,
-    Op,
-    ArithOp,
-    Language,
-    as_symbol,
-    as_number,
-    as_string,
-    as_array,
-    as_complex,
-    as_terms,
-    as_factors,
-    eliminate_quotes,
-    insert_quotes,
-    fromstring,
-    as_expr,
-    as_apply,
-    as_numer_denom,
-    as_ternary,
-    as_ref,
-    as_deref,
-    normalize,
-    as_eq,
-    as_ne,
-    as_lt,
-    as_gt,
-    as_le,
-    as_ge,
-)
 from . import util
 
 

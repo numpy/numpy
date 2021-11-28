@@ -20,7 +20,7 @@ __version__ = "$Revision: 1.3 $"[10:-1]
 f2py_version = 'See `f2py -v`'
 
 
-from .auxfuncs import (
+from numpy.f2py.stds.auxfuncs import (
     applyrules, dictappend, gentitle, hasnote, outmess
 )
 

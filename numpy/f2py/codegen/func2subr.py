@@ -19,7 +19,7 @@ f2py_version = 'See `f2py -v`'
 
 import copy
 
-from .auxfuncs import (
+from numpy.f2py.stds.auxfuncs import (
     getfortranname, isexternal, isfunction, isfunction_wrap, isintent_in,
     isintent_out, islogicalfunction, ismoduleroutine, isscalar,
     issubroutine, issubroutine_wrap, outmess, show

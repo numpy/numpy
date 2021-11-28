@@ -20,14 +20,14 @@ import pprint
 import re
 from pathlib import Path
 
-from . import crackfortran
-from . import rules
-from . import cb_rules
-from . import auxfuncs
-from . import cfuncs
-from . import f90mod_rules
-from . import __version__
-from . import capi_maps
+from numpy.f2py.frontend import crackfortran
+from numpy.f2py.codegen import rules
+from numpy.f2py.stds.pyf import cb_rules
+from numpy.f2py.stds import auxfuncs
+from numpy.f2py.codegen import cfuncs
+from numpy.f2py.stds.f90 import f90mod_rules
+from numpy.f2py import __version__
+from numpy.f2py.stds.pyf import capi_maps
 
 f2py_version = __version__.version
 numpy_version = __version__.version
@@ -433,8 +433,8 @@ def run_main(comline_list):
     """
     crackfortran.reset_global_f2py_vars()
     f2pydir = os.path.dirname(os.path.abspath(cfuncs.__file__))
-    fobjhsrc = os.path.join(f2pydir, 'src', 'fortranobject.h')
-    fobjcsrc = os.path.join(f2pydir, 'src', 'fortranobject.c')
+    fobjhsrc = os.path.join(f2pydir, '..', 'csrcs', 'fortranobject.h')
+    fobjcsrc = os.path.join(f2pydir, '..', 'csrcs', 'fortranobject.c')
     files, options = scaninputline(comline_list)
     auxfuncs.options = options
     capi_maps.load_f2cmap_file(options['f2cmap_file'])
