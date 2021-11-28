@@ -6,18 +6,13 @@ from numpy.testing import assert_raises, assert_equal
 
 from . import util
 
-
-def _path(*a):
-    return os.path.join(*((os.path.dirname(__file__),) + a))
-
-
 class TestParameters(util.F2PyTest):
     # Check that intent(in out) translates as intent(inout)
-    sources = [_path('src', 'parameter', 'constant_real.f90'),
-               _path('src', 'parameter', 'constant_integer.f90'),
-               _path('src', 'parameter', 'constant_both.f90'),
-               _path('src', 'parameter', 'constant_compound.f90'),
-               _path('src', 'parameter', 'constant_non_compound.f90'),
+    sources = [util.getpath('tests', 'src', 'parameter', 'constant_real.f90'),
+               util.getpath('tests', 'src', 'parameter', 'constant_integer.f90'),
+               util.getpath('tests', 'src', 'parameter', 'constant_both.f90'),
+               util.getpath('tests', 'src', 'parameter', 'constant_compound.f90'),
+               util.getpath('tests', 'src', 'parameter', 'constant_non_compound.f90'),
     ]
 
     @pytest.mark.slow

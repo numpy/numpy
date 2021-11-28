@@ -5,12 +5,8 @@ from numpy.testing import assert_equal
 from . import util
 
 
-def _path(*a):
-    return os.path.join(*((os.path.dirname(__file__),) + a))
-
-
 class TestSizeSumExample(util.F2PyTest):
-    sources = [_path('src', 'size', 'foo.f90')]
+    sources = [util.getpath('tests', 'src', 'size', 'foo.f90')]
 
     @pytest.mark.slow
     def test_all(self):

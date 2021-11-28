@@ -7,11 +7,8 @@ from . import util
 
 from numpy.testing import assert_array_equal
 
-def _path(*a):
-    return os.path.join(*((os.path.dirname(__file__),) + a))
-
 class TestCommonBlock(util.F2PyTest):
-    sources = [_path('src', 'common', 'block.f')]
+    sources = [util.getpath('tests', 'src', 'common', 'block.f')]
 
     @pytest.mark.skipif(sys.platform=='win32',
                         reason='Fails with MinGW64 Gfortran (Issue #9673)')

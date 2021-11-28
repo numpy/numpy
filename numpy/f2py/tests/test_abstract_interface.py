@@ -1,3 +1,4 @@
+from pathlib import Path
 import textwrap
 from . import util
 from numpy.f2py import crackfortran
@@ -50,16 +51,15 @@ class TestAbstractInterface(util.F2PyTest):
 
     def test_parse_abstract_interface(self, tmp_path):
         # Test gh18403
-        f_path = tmp_path / "gh18403_mod.f90"
-        with f_path.open('w') as ff:
-            ff.write(textwrap.dedent("""\
-                module test
-                  abstract interface
-                    subroutine foo()
-                    end subroutine
-                  end interface
-                end module test
-                """))
+        f_path = Path(tmp_path / "gh18403_mod.f90")
+        f_path.write_text(textwrap.dedent("""\
+            module test
+              abstract interface
+                subroutine foo()
+                end subroutine
+              end interface
+            end module test
+            """))
         mod = crackfortran.crackfortran([str(f_path)])
         assert len(mod) == 1
         assert len(mod[0]['body']) == 1

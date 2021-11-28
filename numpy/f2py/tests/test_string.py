@@ -6,12 +6,8 @@ import numpy as np
 from . import util
 
 
-def _path(*a):
-    return os.path.join(*((os.path.dirname(__file__),) + a))
-
-
 class TestString(util.F2PyTest):
-    sources = [_path('src', 'string', 'char.f90')]
+    sources = [util.getpath('tests', 'src', 'string', 'char.f90')]
 
     @pytest.mark.slow
     def test_char(self):

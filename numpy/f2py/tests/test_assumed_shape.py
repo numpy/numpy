@@ -6,16 +6,12 @@ from numpy.testing import assert_
 from . import util
 
 
-def _path(*a):
-    return os.path.join(*((os.path.dirname(__file__),) + a))
-
-
 class TestAssumedShapeSumExample(util.F2PyTest):
-    sources = [_path('src', 'assumed_shape', 'foo_free.f90'),
-               _path('src', 'assumed_shape', 'foo_use.f90'),
-               _path('src', 'assumed_shape', 'precision.f90'),
-               _path('src', 'assumed_shape', 'foo_mod.f90'),
-               _path('src', 'assumed_shape', '.f2py_f2cmap'),
+    sources = [util.getpath('tests', 'src', 'assumed_shape', 'foo_free.f90'),
+               util.getpath('tests', 'src', 'assumed_shape', 'foo_use.f90'),
+               util.getpath('tests', 'src', 'assumed_shape', 'precision.f90'),
+               util.getpath('tests', 'src', 'assumed_shape', 'foo_mod.f90'),
+               util.getpath('tests', 'src', 'assumed_shape', '.f2py_f2cmap'),
                ]
 
     @pytest.mark.slow

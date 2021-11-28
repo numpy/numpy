@@ -12,7 +12,6 @@ from . import util
 
 wrap = None
 
-
 def setup_module():
     """
     Build the required testing extension module
@@ -31,9 +30,9 @@ def setup_module():
                              define_macros=[])
         """
         d = os.path.dirname(__file__)
-        src = [os.path.join(d, 'src', 'array_from_pyobj', 'wrapmodule.c'),
-               os.path.join(d, '..', 'src', 'fortranobject.c'),
-               os.path.join(d, '..', 'src', 'fortranobject.h')]
+        src = [util.getpath('tests', 'src', 'array_from_pyobj', 'wrapmodule.c'),
+               util.getpath('src', 'fortranobject.c'),
+               util.getpath('src', 'fortranobject.h')]
         wrap = util.build_module_distutils(src, config_code,
                                            'test_array_from_pyobj_ext')
 

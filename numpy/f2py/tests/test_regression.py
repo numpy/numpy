@@ -7,13 +7,9 @@ from numpy.testing import assert_, assert_raises, assert_equal, assert_string_eq
 from . import util
 
 
-def _path(*a):
-    return os.path.join(*((os.path.dirname(__file__),) + a))
-
-
 class TestIntentInOut(util.F2PyTest):
     # Check that intent(in out) translates as intent(inout)
-    sources = [_path('src', 'regression', 'inout.f90')]
+    sources = [util.getpath('tests', 'src', 'regression', 'inout.f90')]
 
     @pytest.mark.slow
     def test_inout(self):
@@ -30,7 +26,7 @@ class TestIntentInOut(util.F2PyTest):
 class TestNumpyVersionAttribute(util.F2PyTest):
     # Check that th attribute __f2py_numpy_version__ is present
     # in the compiled module and that has the value np.__version__.
-    sources = [_path('src', 'regression', 'inout.f90')]
+    sources = [util.getpath('tests', 'src', 'regression', 'inout.f90')]
 
     @pytest.mark.slow
     def test_numpy_version_attribute(self):

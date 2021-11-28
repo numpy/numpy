@@ -7,12 +7,8 @@ from . import util
 from numpy.testing import assert_equal, IS_PYPY
 
 
-def _path(*a):
-    return os.path.join(*((os.path.dirname(__file__),) + a))
-
-
 class TestModuleDocString(util.F2PyTest):
-    sources = [_path('src', 'module_data', 'module_data_docstring.f90')]
+    sources = [util.getpath('tests', 'src', 'module_data', 'module_data_docstring.f90')]
 
     @pytest.mark.skipif(sys.platform=='win32',
                         reason='Fails with MinGW64 Gfortran (Issue #9673)')
