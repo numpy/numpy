@@ -15,6 +15,7 @@ import atexit
 import textwrap
 import re
 import pytest
+import contextlib
 
 from pathlib import Path
 from numpy.compat import asbytes, asstr
@@ -95,8 +96,8 @@ def build_module(source_files, options=[], skip=[], only=[], module_name=None):
 
     """
 
-    code = ("import sys; sys.path = %s; import numpy.f2py as f2py2e; "
-            "f2py2e.main()" % repr(sys.path))
+    code = ("import sys; sys.path = %s; import numpy.f2py; "
+            "numpy.f2py.main()" % repr(sys.path))
 
     d = get_module_dir()
 
@@ -365,3 +366,12 @@ def getpath(*a):
     # Package root
     d = Path(__file__).parent.parent.resolve()
     return d.joinpath(*a)
+
+@contextlib.contextmanager
+def switchdir(path):
+    curpath = Path.cwd()
+    os.chdir(path)
+    try:
+        yield
+    finally:
+        os.chdir(curpath)
