@@ -157,7 +157,6 @@ numpy/core/src/npysort/sort.c
 numpy/core/src/private/npy_binsearch.h
 numpy/core/src/private/npy_partition.h
 numpy/core/src/private/templ_common.h
-numpy/core/src/umath/_operand_flag_tests.c
 numpy/core/src/umath/_rational_tests.c
 numpy/core/src/umath/_struct_ufunc_tests.c
 numpy/core/src/umath/_umath_tests.c

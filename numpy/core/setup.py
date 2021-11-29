@@ -1065,7 +1065,7 @@ def configuration(parent_package='',top_path=None):
     #######################################################################
 
     config.add_extension('_operand_flag_tests',
-                    sources=[join('src', 'umath', '_operand_flag_tests.c.src')])
+                    sources=[join('src', 'umath', '_operand_flag_tests.c')])
 
     #######################################################################
     #                        SIMD module                                  #
