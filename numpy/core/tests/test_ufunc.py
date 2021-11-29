@@ -2134,6 +2134,29 @@ class TestUfunc:
             # It would be safe, but not equiv casting:
             ufunc(a, c, out=out, casting="equiv")
 
+    def test_reducelike_out_promotes(self):
+        # Check that the out argument to reductions is considered for
+        # promotion.  See also gh-20455.
+        # Note that these paths could prefer `initial=` in the future and
+        # do not up-cast to the default integer for add and prod
+        arr = np.ones(1000, dtype=np.uint8)
+        out = np.zeros((), dtype=np.uint16)
+        assert np.add.reduce(arr, out=out) == 1000
+        arr[:10] = 2
+        assert np.multiply.reduce(arr, out=out) == 2**10
+
+        # For legacy dtypes, the signature currently has to be forced if `out=`
+        # is passed.  The two paths below should differ, without `dtype=` the
+        # expected result should be: `np.prod(arr.astype("f8")).astype("f4")`!
+        arr = np.full(5, 2**25-1, dtype=np.int64)
+
+        # float32 and int64 promote to float64:
+        res = np.zeros((), dtype=np.float32)
+        # If `dtype=` is passed, the calculation is forced to float32:
+        single_res = np.zeros((), dtype=np.float32)
+        np.multiply.reduce(arr, out=single_res, dtype=np.float32)
+        assert single_res != res
+
     def test_reduce_noncontig_output(self):
         # Check that reduction deals with non-contiguous output arrays
         # appropriately.

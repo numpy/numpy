@@ -2717,11 +2717,11 @@ reducelike_promote_and_resolve(PyUFuncObject *ufunc,
         char *method)
 {
     /*
-     * Note that the `ops` is not realy correct.  But legacy resolution
+     * Note that the `ops` is not really correct.  But legacy resolution
      * cannot quite handle the correct ops (e.g. a NULL first item if `out`
-     * is NULL), and it should only matter in very strange cases.
+     * is NULL) so we pass `arr` instead in that case.
      */
-    PyArrayObject *ops[3] = {arr, arr, NULL};
+    PyArrayObject *ops[3] = {out ? out : arr, arr, out};
     /*
      * TODO: If `out` is not provided, arguably `initial` could define
      *       the first DType (and maybe also the out one), that way
@@ -2738,6 +2738,21 @@ reducelike_promote_and_resolve(PyUFuncObject *ufunc,
         Py_INCREF(operation_DTypes[0]);
         operation_DTypes[2] = operation_DTypes[0];
         Py_INCREF(operation_DTypes[2]);
+        /*
+         * We have to force the dtype, because otherwise value based casting
+         * may ignore the request entirely.  This means that `out=` the same
+         * as `dtype=`, which should probably not be forced normally, so we
+         * only do it for legacy DTypes...
+         */
+        if (NPY_DT_is_legacy(operation_DTypes[0])
+                && NPY_DT_is_legacy(operation_DTypes[1])) {
+            if (signature[0] == NULL) {
+                Py_INCREF(operation_DTypes[0]);
+                signature[0] = operation_DTypes[0];
+                Py_INCREF(operation_DTypes[0]);
+                signature[2] = operation_DTypes[0];
+            }
+        }
     }
 
     PyArrayMethodObject *ufuncimpl = promote_and_get_ufuncimpl(ufunc,
