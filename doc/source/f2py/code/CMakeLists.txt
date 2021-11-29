@@ -15,13 +15,13 @@ if(PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
 endif()
 
 # Grab Python, 3.7 or newer
-find_package(Python3 3.7 REQUIRED
+find_package(Python 3.7 REQUIRED
   COMPONENTS Interpreter Development.Module NumPy)
 
 # Grab the variables from a local Python installation
 # F2PY headers
 execute_process(
-  COMMAND "${Python3_EXECUTABLE}"
+  COMMAND "${Python_EXECUTABLE}"
   -c "import numpy.f2py; print(numpy.f2py.get_include())"
   OUTPUT_VARIABLE F2PY_INCLUDE_DIR
   OUTPUT_STRIP_TRAILING_WHITESPACE
@@ -29,9 +29,9 @@ execute_process(
 
 # Print out the discovered paths
 include(CMakePrintHelpers)
-cmake_print_variables(Python3_INCLUDE_DIRS)
+cmake_print_variables(Python_INCLUDE_DIRS)
 cmake_print_variables(F2PY_INCLUDE_DIR)
-cmake_print_variables(Python3_NumPy_INCLUDE_DIRS)
+cmake_print_variables(Python_NumPy_INCLUDE_DIRS)
 
 # Common variables
 set(f2py_module_name "fibby")
@@ -45,7 +45,7 @@ add_custom_target(
 )
 add_custom_command(
   OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/${f2py_module_c}"
-  COMMAND ${Python3_EXECUTABLE}  -m "numpy.f2py"
+  COMMAND ${Python_EXECUTABLE}  -m "numpy.f2py"
                    "${fortran_src_file}"
                    -m "fibby"
                    --lower # Important
@@ -53,13 +53,13 @@ add_custom_command(
 )
 
 # Set up target
-python3_add_LIBRARY(${CMAKE_PROJECT_NAME} MODULE WITH_SOABI
+Python_add_library(${CMAKE_PROJECT_NAME} MODULE WITH_SOABI
   "${CMAKE_CURRENT_BINARY_DIR}/${f2py_module_c}" # Generated
   "${F2PY_INCLUDE_DIR}/fortranobject.c" # From NumPy
   "${fortran_src_file}" # Fortran source(s)
 )
 
 # Depend on sources
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Python3::NumPy)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Python::NumPy)
 add_dependencies(${CMAKE_PROJECT_NAME} genpyf)
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE "${F2PY_INCLUDE_DIR}")
