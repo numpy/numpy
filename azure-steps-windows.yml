@@ -22,7 +22,7 @@ steps:
     python -mensurepip
     echo "##vso[task.prependpath]$pypypath"
   condition: contains(variables['PYTHON_VERSION'], 'PyPy')
-  displayName: "Install PyPy pre-release"
+  displayName: "Install PyPy3.8 "
 
 - script: python -m pip install --upgrade pip wheel
   displayName: 'Install tools'
