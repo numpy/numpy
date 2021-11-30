@@ -21,9 +21,10 @@ from numpy.distutils import log
 from numpy.distutils.exec_command import (
     filepath_from_subprocess_output, forward_bytes_to_stdout
 )
-from numpy.distutils.misc_util import cyg2win32, is_sequence, mingw32, \
-                                      get_num_build_jobs, \
-                                      _commandline_dep_string
+from numpy.distutils.misc_util import (
+        cyg2win32, is_sequence, mingw32, get_num_build_jobs,
+        _commandline_dep_string, sanitize_cxx_flags
+)
 
 # globals for parallel build management
 import threading
@@ -682,7 +683,10 @@ def CCompiler_cxx_compiler(self):
         return self
 
     cxx = copy(self)
-    cxx.compiler_so = [cxx.compiler_cxx[0]] + cxx.compiler_so[1:]
+    cxx.compiler_cxx = cxx.compiler_cxx
+    cxx.compiler_so = [cxx.compiler_cxx[0]] + \
+                      sanitize_cxx_flags(cxx.compiler_so[1:])
+    #cxx.compiler_so = [cxx.compiler_cxx[0]] + cxx.compiler_so[1:]
     if sys.platform.startswith('aix') and 'ld_so_aix' in cxx.linker_so[0]:
         # AIX needs the ld_so_aix script included with Python
         cxx.linker_so = [cxx.linker_so[0], cxx.compiler_cxx[0]] \
