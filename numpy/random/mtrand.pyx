@@ -4241,7 +4241,9 @@ cdef class RandomState:
         cdef long ni
 
         parr = <np.ndarray>np.PyArray_FROMANY(
-            pvals, np.NPY_DOUBLE, 1, 1, np.NPY_ARRAY_ALIGNED | np.NPY_ARRAY_C_CONTIGUOUS)
+            pvals, np.NPY_DOUBLE, 0, 1, np.NPY_ARRAY_ALIGNED | np.NPY_ARRAY_C_CONTIGUOUS)
+        if np.PyArray_NDIM(parr) == 0:
+            raise TypeError("pvals must be a 1-d sequence")
         d = np.PyArray_SIZE(parr)
         pix = <double*>np.PyArray_DATA(parr)
         check_array_constraint(parr, 'pvals', CONS_BOUNDED_0_1)

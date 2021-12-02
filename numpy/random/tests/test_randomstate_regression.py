@@ -208,3 +208,9 @@ def test_multinomial_empty():
     # Ensure that empty p-vals are correctly handled
     assert random.multinomial(10, []).shape == (0,)
     assert random.multinomial(3, [], size=(7, 5, 3)).shape == (7, 5, 3, 0)
+
+
+def test_multinomial_1d_pval():
+    # gh-20483
+    with pytest.raises(TypeError, match="pvals must be a 1-d"):
+        random.multinomial(10, 0.3)
