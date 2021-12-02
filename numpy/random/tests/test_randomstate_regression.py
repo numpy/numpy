@@ -201,3 +201,16 @@ class TestRegression:
                              [3, 4, 2, 3, 3, 1, 5, 3, 1, 3]])
         assert_array_equal(random.binomial([[0], [10]], 0.25, size=(2, 10)),
                            expected)
+
+
+def test_multinomial_empty():
+    # gh-20483
+    # Ensure that empty p-vals are correctly handled
+    assert random.multinomial(10, []).shape == (0,)
+    assert random.multinomial(3, [], size=(7, 5, 3)).shape == (7, 5, 3, 0)
+
+
+def test_multinomial_1d_pval():
+    # gh-20483
+    with pytest.raises(TypeError, match="pvals must be a 1-d"):
+        random.multinomial(10, 0.3)
