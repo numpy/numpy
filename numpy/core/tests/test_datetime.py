@@ -1437,7 +1437,7 @@ class TestDateTime:
 
         # NaTs
         with suppress_warnings() as sup:
-            sup.filter(RuntimeWarning,  r".*encountered in true\_divide")
+            sup.filter(RuntimeWarning,  r".*encountered in divide")
             nat = np.timedelta64('NaT')
             for tp in (int, float):
                 assert_equal(np.timedelta64(1) / tp(0), nat)

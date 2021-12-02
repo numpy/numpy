@@ -322,7 +322,7 @@ defdict = {
           ],
           TD(O, f='PyNumber_Multiply'),
           ),
-#'divide' : aliased to true_divide in umathmodule.c:initumath
+#'true_divide' : aliased to divide in umathmodule.c:initumath
 'floor_divide':
     Ufunc(2, 1, None, # One is only a unit to the right, not the left
           docstrings.get('numpy.core.umath.floor_divide'),
@@ -336,9 +336,9 @@ defdict = {
           ],
           TD(O, f='PyNumber_FloorDivide'),
           ),
-'true_divide':
+'divide':
     Ufunc(2, 1, None, # One is only a unit to the right, not the left
-          docstrings.get('numpy.core.umath.true_divide'),
+          docstrings.get('numpy.core.umath.divide'),
           'PyUFunc_TrueDivisionTypeResolver',
           TD(flts+cmplx, cfunc_alias='divide', dispatch=[('loops_arithm_fp', 'fd')]),
           [TypeDescription('m', FullTypeDescr, 'mq', 'm', cfunc_alias='divide'),
