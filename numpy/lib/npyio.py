@@ -1594,8 +1594,7 @@ def _genfromtxt_dispatcher(fname, dtype=None, comments=None, delimiter=None,
                            replace_space=None, autostrip=None, case_sensitive=None,
                            defaultfmt=None, unpack=None, usemask=None, loose=None,
                            invalid_raise=None, max_rows=None, encoding=None,
-                           ndmin=None,
-                           *, like=None):
+                           *, ndmin=None, like=None):
     return (like,)
 
 
@@ -1608,8 +1607,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                deletechars=''.join(sorted(NameValidator.defaultdeletechars)),
                replace_space='_', autostrip=False, case_sensitive=True,
                defaultfmt="f%i", unpack=None, usemask=False, loose=True,
-               invalid_raise=True, max_rows=None, encoding='bytes', ndmin=0,
-               *, like=None):
+               invalid_raise=True, max_rows=None, encoding='bytes',
+               *, ndmin=0, like=None):
     """
     Load data from a text file, with missing values handled as specified.
 
