@@ -6,11 +6,12 @@ from numpy.testing import assert_, assert_equal, IS_PYPY
 from . import util
 
 
-
 class TestMixed(util.F2PyTest):
-    sources = [util.getpath('tests', 'src', 'mixed', 'foo.f'),
-               util.getpath('tests', 'src', 'mixed', 'foo_fixed.f90'),
-               util.getpath('tests', 'src', 'mixed', 'foo_free.f90')]
+    sources = [
+        util.getpath("tests", "src", "mixed", "foo.f"),
+        util.getpath("tests", "src", "mixed", "foo_fixed.f90"),
+        util.getpath("tests", "src", "mixed", "foo_free.f90"),
+    ]
 
     def test_all(self):
         assert_(self.module.bar11() == 11)

@@ -6,7 +6,7 @@ from . import util
 
 
 class TestSizeSumExample(util.F2PyTest):
-    sources = [util.getpath('tests', 'src', 'size', 'foo.f90')]
+    sources = [util.getpath("tests", "src", "size", "foo.f90")]
 
     @pytest.mark.slow
     def test_all(self):
