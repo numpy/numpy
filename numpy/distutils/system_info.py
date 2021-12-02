@@ -504,7 +504,7 @@ def get_info(name, notfound_action=0):
     cl = {'armpl': armpl_info,
           'blas_armpl': blas_armpl_info,
           'lapack_armpl': lapack_armpl_info,
-          'fftw3_armpl' : fftw3_armpl_info,
+          'fftw3_armpl': fftw3_armpl_info,
           'atlas': atlas_info,  # use lapack_opt or blas_opt instead
           'atlas_threads': atlas_threads_info,                # ditto
           'atlas_blas': atlas_blas_info,
@@ -1161,11 +1161,10 @@ class fftw3_armpl_info(fftw_info):
     section = 'fftw3'
     dir_env_var = 'ARMPL_DIR'
     notfounderror = FFTWNotFoundError
-    ver_info = [{'name':'fftw3',
-                    'libs':['armpl_lp64_mp'],
-                    'includes':['fftw3.h'],
-                    'macros':[('SCIPY_FFTW3_H', None)]},
-                  ]
+    ver_info = [{'name': 'fftw3',
+                    'libs': ['armpl_lp64_mp'],
+                    'includes': ['fftw3.h'],
+                    'macros': [('SCIPY_FFTW3_H', None)]}]
 
 
 class dfftw_info(fftw_info):
