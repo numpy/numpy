@@ -76,7 +76,7 @@ reveal_type(np.fromregex(bytes_reader, "test", np.float64))  # E: ndarray[Any, d
 
 reveal_type(np.genfromtxt(bytes_file))  # E: ndarray[Any, dtype[{float64}]]
 reveal_type(np.genfromtxt(pathlib_path, dtype=np.str_))  # E: ndarray[Any, dtype[str_]]
-reveal_type(np.genfromtxt(str_path, dtype=str, skiprows=2))  # E: ndarray[Any, dtype[Any]]
+reveal_type(np.genfromtxt(str_path, dtype=str, skip_header=2))  # E: ndarray[Any, dtype[Any]]
 reveal_type(np.genfromtxt(str_file, comments="test"))  # E: ndarray[Any, dtype[{float64}]]
 reveal_type(np.genfromtxt(str_path, delimiter="\n"))  # E: ndarray[Any, dtype[{float64}]]
 reveal_type(np.genfromtxt(str_path, ndmin=2))  # E: ndarray[Any, dtype[{float64}]]
