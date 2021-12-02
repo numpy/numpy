@@ -1,4 +1,4 @@
-"""Skeleton Fortran to Python Interface Generator."""
+"""Fortran to Python Interface Generator."""
 
 import sys
 
