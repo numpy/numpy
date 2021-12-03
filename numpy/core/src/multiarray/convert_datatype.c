@@ -70,7 +70,10 @@ NPY_NO_EXPORT PyObject *
 PyArray_GetCastingImpl(PyArray_DTypeMeta *from, PyArray_DTypeMeta *to)
 {
     PyObject *res;
-    if (from == to) {
+    if (NPY_DT_SLOTS(from) == NULL) {
+        res = NULL;
+    }
+    else if (from == to) {
         res = NPY_DT_SLOTS(from)->within_dtype_castingimpl;
     }
     else {
