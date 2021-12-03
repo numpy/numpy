@@ -106,7 +106,7 @@ Valgrind is a powerful tool to find certain memory access problems and should
 be run on complicated C code.
 Basic use of ``valgrind`` usually requires no more than::
 
-    PYTHONMALLOC=malloc python runtests.py
+    PYTHONMALLOC=malloc valgrind python runtests.py
 
 where ``PYTHONMALLOC=malloc`` is necessary to avoid false positives from python
 itself.
