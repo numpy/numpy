@@ -2543,6 +2543,17 @@ class TestPathUsage:
             assert_(isinstance(test, np.recarray))
             assert_equal(test, control)
 
+    def test_invalid_encoding(self):
+        with pytest.raises(TypeError, 
+            match="encoding argument should be str or None") as ptr:
+            np.genfromtxt("test_io.py", encoding=int)
+            np.loadtxt("test_io.py", encoding=int)
+
+            np.genfromtxt(StringIO("a b c"), encoding=int)
+            np.loadtxt(StringIO("a b c"), encoding=int)
+
+        assert len(ptr.traceback) == 4
+
 
 def test_gzip_load():
     a = np.random.random((5, 5))

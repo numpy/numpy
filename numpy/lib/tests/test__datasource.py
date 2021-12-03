@@ -154,6 +154,12 @@ class TestDataSourceOpen:
         fp.close()
         assert_equal(magic_line, result)
 
+    def test_valid_encoding(self):
+        local_file = valid_textfile(self.tmpdir)
+        with pytest.raises(TypeError, 
+            match="encoding argument should be str or None"):
+            self.ds.open(local_file, encoding=int)
+
 
 class TestDataSourceExists:
     def setup(self):

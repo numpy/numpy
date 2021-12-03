@@ -517,6 +517,10 @@ class DataSource:
         # TODO: Add a ``subdir`` parameter for specifying the subdirectory
         #       used to store URLs in self._destpath.
 
+        if encoding is not None and not isinstance(encoding, str):
+            raise TypeError(f"The encoding argument should be str or None, "
+                            f"got {encoding!r} instead")
+
         if self._isurl(path) and self._iswritemode(mode):
             raise ValueError("URLs are not writeable")
 

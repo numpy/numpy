@@ -1036,35 +1036,30 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     dtype_types, packer = _loadtxt_flatten_dtype_internal(dtype)
 
     fh_closing_ctx = contextlib.nullcontext()
-    try:
-        if isinstance(fname, os_PathLike):
-            fname = os_fspath(fname)
-        if _is_string_like(fname):
-            fh = np.lib._datasource.open(fname, 'rt', encoding=encoding)
-            fencoding = getattr(fh, 'encoding', 'latin1')
-            line_iter = iter(fh)
-            fh_closing_ctx = contextlib.closing(fh)
+
+    if isinstance(fname, os_PathLike):
+        fname = os_fspath(fname)
+    if _is_string_like(fname):
+        fh = np.lib._datasource.open(fname, 'rt', encoding=encoding)
+        fencoding = getattr(fh, 'encoding', 'latin1')
+        line_iter = iter(fh)
+        fh_closing_ctx = contextlib.closing(fh)
+    else:
+        line_iter = iter(fname)
+        fencoding = getattr(fname, 'encoding', 'latin1')
+        try:
+            first_line = next(line_iter)
+        except StopIteration:
+            pass  # Nothing matters if line_iter is empty.
         else:
-            line_iter = iter(fname)
-            fencoding = getattr(fname, 'encoding', 'latin1')
-            try:
-                first_line = next(line_iter)
-            except StopIteration:
-                pass  # Nothing matters if line_iter is empty.
-            else:
-                # Put first_line back.
-                line_iter = itertools.chain([first_line], line_iter)
-                if isinstance(first_line, bytes):
-                    # Using latin1 matches _decode_line's behavior.
-                    decoder = methodcaller(
-                        "decode",
-                        encoding if encoding is not None else "latin1")
-                    line_iter = map(decoder, line_iter)
-    except TypeError as e:
-        raise ValueError(
-            f"fname must be a string, filehandle, list of strings,\n"
-            f"or generator. Got {type(fname)} instead."
-        ) from e
+            # Put first_line back.
+            line_iter = itertools.chain([first_line], line_iter)
+            if isinstance(first_line, bytes):
+                # Using latin1 matches _decode_line's behavior.
+                decoder = methodcaller(
+                    "decode",
+                    encoding if encoding is not None else "latin1")
+                line_iter = map(decoder, line_iter)
 
     with fh_closing_ctx:
 
@@ -1815,13 +1810,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     else:
         fid = fname
         fid_ctx = contextlib.nullcontext(fid)
-    try:
-        fhd = iter(fid)
-    except TypeError as e:
-        raise TypeError(
-            "fname must be a string, a filehandle, a sequence of strings,\n"
-            f"or an iterator of strings. Got {type(fname)} instead."
-        ) from e
+    fhd = iter(fid)
+
     with fid_ctx:
         split_line = LineSplitter(delimiter=delimiter, comments=comments,
                                   autostrip=autostrip, encoding=encoding)
