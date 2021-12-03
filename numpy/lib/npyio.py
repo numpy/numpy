@@ -1807,7 +1807,6 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         byte_converters = False
 
     # Initialize the filehandle, the LineSplitter and the NameValidator
-   
     if isinstance(fname, os_PathLike):
         fname = os_fspath(fname)
     if isinstance(fname, str):
@@ -1823,8 +1822,6 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             "fname must be a string, a filehandle, a sequence of strings,\n"
             f"or an iterator of strings. Got {type(fname)} instead."
         ) from e
-    
-    
     with fid_ctx:
         split_line = LineSplitter(delimiter=delimiter, comments=comments,
                                   autostrip=autostrip, encoding=encoding)
