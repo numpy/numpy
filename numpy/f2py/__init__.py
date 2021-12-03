@@ -1,5 +1,7 @@
 """Fortran to Python Interface Generator."""
 
+__all__ = ['run_main', 'compile', 'get_include']
+
 import sys
 
 from numpy.f2py import frontend
