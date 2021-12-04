@@ -1762,12 +1762,15 @@ class TestUfunc:
         result = _rational_tests.test_add(a, b)
         assert_equal(result, target)
 
-        # But since we use the old type resolver, this may not work
-        # for dtype variations unless the output dtype is given:
+        # This works even more generally, so long the default common-dtype
+        # promoter works out:
         result = _rational_tests.test_add(a, b.astype(np.uint16), out=c)
         assert_equal(result, target)
+
+        # But, it can be fooled, e.g. (use scalars, which forces legacy
+        # type resolution to kick in, which then fails):
         with assert_raises(TypeError):
-            _rational_tests.test_add(a, b.astype(np.uint16))
+            _rational_tests.test_add(a, np.uint16(2))
 
     def test_operand_flags(self):
         a = np.arange(16, dtype='l').reshape(4, 4)

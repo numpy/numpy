@@ -2033,15 +2033,15 @@ class TestDateTime:
         # subtracting two datetime64 works, but we cannot reduce it, since
         # the result of that subtraction will have a different dtype.
         arr = np.array(["2021-12-02", "2019-05-12"], dtype="M8[ms]")
-        msg = r"the resolved dtypes are not compatible with subtract\."
+        msg = r"ufunc 'subtract' did not contain a loop with signature "
 
-        with pytest.raises(TypeError, match=msg + "reduce"):
+        with pytest.raises(TypeError, match=msg):
             np.subtract.reduce(arr)
 
-        with pytest.raises(TypeError, match=msg + "accumulate"):
+        with pytest.raises(TypeError, match=msg):
             np.subtract.accumulate(arr)
 
-        with pytest.raises(TypeError, match=msg + "reduceat"):
+        with pytest.raises(TypeError, match=msg):
             np.subtract.reduceat(arr, [0])
 
     def test_datetime_busday_offset(self):

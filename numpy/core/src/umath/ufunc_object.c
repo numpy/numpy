@@ -2756,7 +2756,7 @@ reducelike_promote_and_resolve(PyUFuncObject *ufunc,
     }
 
     PyArrayMethodObject *ufuncimpl = promote_and_get_ufuncimpl(ufunc,
-            ops, signature, operation_DTypes, NPY_FALSE, NPY_TRUE);
+            ops, signature, operation_DTypes, NPY_FALSE, NPY_FALSE);
     Py_DECREF(operation_DTypes[1]);
     if (out != NULL) {
         Py_DECREF(operation_DTypes[0]);
@@ -2786,8 +2786,10 @@ reducelike_promote_and_resolve(PyUFuncObject *ufunc,
     if (out_descrs[0] != out_descrs[2] || (
             enforce_uniform_args && out_descrs[0] != out_descrs[1])) {
         PyErr_Format(PyExc_TypeError,
-                "the resolved dtypes are not compatible with %s.%s",
-                ufunc_get_name_cstr(ufunc), method);
+                "the resolved dtypes are not compatible with %s.%s. "
+                "Resolved (%R, %R, %R)",
+                ufunc_get_name_cstr(ufunc), method,
+                out_descrs[0], out_descrs[1], out_descrs[2]);
         goto fail;
     }
     /* TODO: This really should _not_ be unsafe casting (same above)! */
@@ -5205,6 +5207,61 @@ PyUFunc_FromFuncAndDataAndSignatureAndIdentity(PyUFuncGenericFunction *func, voi
 
         info = add_and_return_legacy_wrapping_ufunc_loop(ufunc, op_dtypes, 1);
         if (info == NULL) {
+            Py_DECREF(ufunc);
+            return NULL;
+        }
+    }
+
+    PyObject *promoter = NULL;
+    if (ufunc->ntypes == 1) {
+        npy_bool all_object = NPY_TRUE;
+        for (int i = 0; i < ufunc->nargs; i++) {
+            if (ufunc->types[i] != NPY_OBJECT) {
+                all_object = NPY_FALSE;
+                break;
+            }
+        }
+        if (all_object) {
+            promoter = PyCapsule_New(&object_only_ufunc_promoter,
+                    "numpy._ufunc_promoter", NULL);
+            if (promoter == NULL) {
+                Py_DECREF(ufunc);
+                return NULL;
+            }
+        }
+    }
+    if (promoter == NULL && ufunc->nin > 1) {
+        promoter = PyCapsule_New(&default_ufunc_promoter,
+                "numpy._ufunc_promoter", NULL);
+        if (promoter == NULL) {
+            Py_DECREF(ufunc);
+            return NULL;
+        }
+    }
+    if (promoter != NULL) {
+        /* Always install default promoter using the common DType */
+        PyObject *dtype_tuple = PyTuple_New(ufunc->nargs);
+        if (dtype_tuple == NULL) {
+            Py_DECREF(promoter);
+            Py_DECREF(ufunc);
+            return NULL;
+        }
+        for (int i = 0; i < ufunc->nargs; i++) {
+            Py_INCREF(Py_None);
+            PyTuple_SET_ITEM(dtype_tuple, i, Py_None);
+        }
+        PyObject *info = PyTuple_Pack(2, dtype_tuple, promoter);
+        Py_DECREF(dtype_tuple);
+        Py_DECREF(promoter);
+        if (info == NULL) {
+            Py_DECREF(ufunc);
+            return NULL;
+        }
+
+        int res = PyUFunc_AddLoop((PyUFuncObject *)ufunc, info, 0);
+        Py_DECREF(info);
+        if (res < 0) {
+            Py_DECREF(ufunc);
             return NULL;
         }
     }
