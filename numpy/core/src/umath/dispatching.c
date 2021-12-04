@@ -779,6 +779,14 @@ promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
  * only work with DType (classes/types).  This is because it has to ensure
  * that legacy (value-based promotion) is used when necessary.
  *
+ * NOTE: The machinery here currently ignores output arguments unless
+ *       they are part of the signature.  This slightly limits unsafe loop
+ *       specializations, which is important for the `ensure_reduce_compatible`
+ *       fallback mode.
+ *       To fix this, the caching mechanism (and dispatching) can be extended.
+ *       When/if that happens, the `ensure_reduce_compatible` could be
+ *       deprecated (it should never kick in because promotion kick in first).
+ *
  * @param ufunc The ufunc object, used mainly for the fallback.
  * @param ops The array operands (used only for the fallback).
  * @param signature As input, the DType signature fixed explicitly by the user.
@@ -791,6 +799,13 @@ promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
  *        these including clearing the output.
  * @param force_legacy_promotion If set, we have to use the old type resolution
  *        to implement value-based promotion/casting.
+ * @param ensure_reduce_compatible Must be set for reductions, in which case
+ *        the found implementation is checked for reduce-like compatibility.
+ *        If it is *not* compatible and `signature[2] != NULL`, we assume its
+ *        output DType is correct (see NOTE above).
+ *        If removed, promotion may require information about whether this
+ *        is a reduction, so the more likely case is to always keep fixing this
+ *        when necessary, but push down the handling so it can be cached.
  */
 NPY_NO_EXPORT PyArrayMethodObject *
 promote_and_get_ufuncimpl(PyUFuncObject *ufunc,
@@ -798,7 +813,8 @@ promote_and_get_ufuncimpl(PyUFuncObject *ufunc,
         PyArray_DTypeMeta *signature[],
         PyArray_DTypeMeta *op_dtypes[],
         npy_bool force_legacy_promotion,
-        npy_bool allow_legacy_promotion)
+        npy_bool allow_legacy_promotion,
+        npy_bool ensure_reduce_compatible)
 {
     int nin = ufunc->nin, nargs = ufunc->nargs;
 
@@ -852,8 +868,26 @@ promote_and_get_ufuncimpl(PyUFuncObject *ufunc,
 
     PyArrayMethodObject *method = (PyArrayMethodObject *)PyTuple_GET_ITEM(info, 1);
 
-    /* Fill `signature` with final DTypes used by the ArrayMethod/inner-loop */
+    /*
+     * In certain cases (only the logical ufuncs really), the loop we found may
+     * not be reduce-compatible.  Since the machinery can't distinguish a
+     * reduction with an output from a normal ufunc call, we have to assume
+     * the result DType is correct and force it for the input (if not forced
+     * already).
+     * NOTE: This does assume that all loops are "safe" see the NOTE in this
+     *       comment.  That could be relaxed, in which case we may need to
+     *       cache if a call was for a reduction.
+     */
     PyObject *all_dtypes = PyTuple_GET_ITEM(info, 0);
+    if (ensure_reduce_compatible && signature[0] == NULL &&
+            PyTuple_GET_ITEM(all_dtypes, 0) != PyTuple_GET_ITEM(all_dtypes, 2)) {
+        signature[0] = (PyArray_DTypeMeta *)PyTuple_GET_ITEM(all_dtypes, 2);
+        Py_INCREF(signature[0]);
+        return promote_and_get_ufuncimpl(ufunc,
+                ops, signature, op_dtypes,
+                force_legacy_promotion, allow_legacy_promotion, NPY_FALSE);
+    }
+
     for (int i = 0; i < nargs; i++) {
         if (signature[i] == NULL) {
             signature[i] = (PyArray_DTypeMeta *)PyTuple_GET_ITEM(all_dtypes, i);

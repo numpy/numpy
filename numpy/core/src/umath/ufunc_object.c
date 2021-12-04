@@ -2741,7 +2741,7 @@ reducelike_promote_and_resolve(PyUFuncObject *ufunc,
     }
 
     PyArrayMethodObject *ufuncimpl = promote_and_get_ufuncimpl(ufunc,
-            ops, signature, operation_DTypes, NPY_FALSE, NPY_FALSE);
+            ops, signature, operation_DTypes, NPY_FALSE, NPY_FALSE, NPY_TRUE);
     /* Output can currently get cleared, others XDECREF in case of error */
     Py_XDECREF(operation_DTypes[1]);
     if (out != NULL) {
@@ -4855,7 +4855,8 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
      */
     PyArrayMethodObject *ufuncimpl = promote_and_get_ufuncimpl(ufunc,
             operands, signature,
-            operand_DTypes, force_legacy_promotion, allow_legacy_promotion);
+            operand_DTypes, force_legacy_promotion, allow_legacy_promotion,
+            NPY_FALSE);
     if (ufuncimpl == NULL) {
         goto fail;
     }
@@ -6021,7 +6022,7 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
 
     PyArrayMethodObject *ufuncimpl = promote_and_get_ufuncimpl(ufunc,
             operands, signature, operand_DTypes,
-            force_legacy_promotion, allow_legacy_promotion);
+            force_legacy_promotion, allow_legacy_promotion, NPY_FALSE);
     if (ufuncimpl == NULL) {
         goto fail;
     }
