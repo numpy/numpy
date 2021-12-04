@@ -315,6 +315,7 @@ SKIP_LIST = [
     "numpy.core.code_generators.generate_numpy_api",
     "numpy.core.code_generators.generate_ufunc_api",
     "numpy.core.code_generators.numpy_api",
+    "numpy.core.code_generators.generate_umath_doc",
     "numpy.core.cversions",
     "numpy.core.generate_numpy_api",
     "numpy.distutils.msvc9compiler",

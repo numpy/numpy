@@ -965,6 +965,19 @@ def configuration(parent_package='',top_path=None):
                                                  generate_umath.__file__))
         return []
 
+    def generate_umath_doc_header(ext, build_dir):
+        target = join(build_dir, header_dir, '_umath_doc_generated.h')
+        dir = os.path.dirname(target)
+        if not os.path.exists(dir):
+            os.makedirs(dir)
+
+        generate_umath_doc_py = join(codegen_dir, 'generate_umath_doc.py')
+        if newer(generate_umath_doc_py, target):
+            n = dot_join(config.name, 'generate_umath_doc')
+            generate_umath_doc = npy_load_module(
+                '_'.join(n.split('.')), generate_umath_doc_py, ('.py', 'U', 1))
+            generate_umath_doc.write_code(target)
+
     umath_src = [
             join('src', 'umath', 'umathmodule.c'),
             join('src', 'umath', 'reduction.c'),
@@ -1004,6 +1017,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'umath', 'simd.inc.src'),
             join('src', 'umath', 'override.h'),
             join(codegen_dir, 'generate_ufunc_api.py'),
+            join(codegen_dir, 'ufunc_docstrings.py'),
             ]
 
     svml_path = join('numpy', 'core', 'src', 'umath', 'svml')
@@ -1023,6 +1037,7 @@ def configuration(parent_package='',top_path=None):
                                   join(codegen_dir, 'generate_numpy_api.py'),
                                   join('*.py'),
                                   generate_umath_c,
+                                  generate_umath_doc_header,
                                   generate_ufunc_api,
                                  ],
                          depends=deps + multiarray_deps + umath_deps +
