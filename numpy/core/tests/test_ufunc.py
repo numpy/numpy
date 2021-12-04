@@ -2126,6 +2126,12 @@ class TestUfunc:
         c = np.array([1., 2.])
         assert_array_equal(ufunc(a, c), ufunc([True, True], True))
         assert ufunc.reduce(a) == True
+        # check that the output has no effect:
+        out = np.zeros(2, dtype=np.int32)
+        expected = ufunc([True, True], True).astype(out.dtype)
+        assert_array_equal(ufunc(a, c, out=out), expected)
+        out = np.zeros((), dtype=np.int32)
+        assert ufunc.reduce(a, out=out) == True
 
     @pytest.mark.parametrize("ufunc",
              [np.logical_and, np.logical_or, np.logical_xor])
