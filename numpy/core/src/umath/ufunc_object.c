@@ -998,10 +998,6 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
     }
     if (*allow_legacy_promotion && (!all_scalar && any_scalar)) {
         *force_legacy_promotion = should_use_min_scalar(nin, out_op, 0, NULL);
-        /*
-         * TODO: if this is False, we end up in a "very slow" path that should
-         *       be avoided.  This makes `int_arr + 0.` ~40% slower.
-         */
     }
 
     /* Convert and fill in output arguments */
