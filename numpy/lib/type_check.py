@@ -6,7 +6,7 @@ import warnings
 
 __all__ = ['iscomplexobj', 'isrealobj', 'imag', 'iscomplex',
            'isreal', 'nan_to_num', 'real', 'real_if_close',
-           'typename', 'asfarray', 'mintypecode', 'asscalar',
+           'typename', 'asfarray', 'mintypecode',
            'common_type']
 
 import numpy.core.numeric as _nx
@@ -276,22 +276,22 @@ def isreal(x):
     >>> a = np.array([1+1j, 1+0j, 4.5, 3, 2, 2j], dtype=complex)
     >>> np.isreal(a)
     array([False,  True,  True,  True,  True, False])
-    
+
     The function does not work on string arrays.
 
     >>> a = np.array([2j, "a"], dtype="U")
     >>> np.isreal(a)  # Warns about non-elementwise comparison
     False
-    
+
     Returns True for all elements in input array of ``dtype=object`` even if
     any of the elements is complex.
 
     >>> a = np.array([1, "2", 3+4j], dtype=object)
     >>> np.isreal(a)
     array([ True,  True,  True])
-    
+
     isreal should not be used with object arrays
-    
+
     >>> a = np.array([1+2j, 2+1j], dtype=object)
     >>> np.isreal(a)
     array([ True,  True])
@@ -405,14 +405,14 @@ def _nan_to_num_dispatcher(x, copy=None, nan=None, posinf=None, neginf=None):
 def nan_to_num(x, copy=True, nan=0.0, posinf=None, neginf=None):
     """
     Replace NaN with zero and infinity with large finite numbers (default
-    behaviour) or with the numbers defined by the user using the `nan`, 
+    behaviour) or with the numbers defined by the user using the `nan`,
     `posinf` and/or `neginf` keywords.
 
     If `x` is inexact, NaN is replaced by zero or by the user defined value in
-    `nan` keyword, infinity is replaced by the largest finite floating point 
-    values representable by ``x.dtype`` or by the user defined value in 
-    `posinf` keyword and -infinity is replaced by the most negative finite 
-    floating point values representable by ``x.dtype`` or by the user defined 
+    `nan` keyword, infinity is replaced by the largest finite floating point
+    values representable by ``x.dtype`` or by the user defined value in
+    `posinf` keyword and -infinity is replaced by the most negative finite
+    floating point values representable by ``x.dtype`` or by the user defined
     value in `neginf` keyword.
 
     For complex dtypes, the above is applied to each of the real and
@@ -429,27 +429,27 @@ def nan_to_num(x, copy=True, nan=0.0, posinf=None, neginf=None):
         in-place (False). The in-place operation only occurs if
         casting to an array does not require a copy.
         Default is True.
-        
+
         .. versionadded:: 1.13
     nan : int, float, optional
-        Value to be used to fill NaN values. If no value is passed 
+        Value to be used to fill NaN values. If no value is passed
         then NaN values will be replaced with 0.0.
-        
+
         .. versionadded:: 1.17
     posinf : int, float, optional
-        Value to be used to fill positive infinity values. If no value is 
+        Value to be used to fill positive infinity values. If no value is
         passed then positive infinity values will be replaced with a very
         large number.
-        
+
         .. versionadded:: 1.17
     neginf : int, float, optional
-        Value to be used to fill negative infinity values. If no value is 
+        Value to be used to fill negative infinity values. If no value is
         passed then negative infinity values will be replaced with a very
         small (or negative) number.
-        
+
         .. versionadded:: 1.17
 
-        
+
 
     Returns
     -------
@@ -483,7 +483,7 @@ def nan_to_num(x, copy=True, nan=0.0, posinf=None, neginf=None):
     array([ 1.79769313e+308, -1.79769313e+308,  0.00000000e+000, # may vary
            -1.28000000e+002,  1.28000000e+002])
     >>> np.nan_to_num(x, nan=-9999, posinf=33333333, neginf=33333333)
-    array([ 3.3333333e+07,  3.3333333e+07, -9.9990000e+03, 
+    array([ 3.3333333e+07,  3.3333333e+07, -9.9990000e+03,
            -1.2800000e+02,  1.2800000e+02])
     >>> y = np.array([complex(np.inf, np.nan), np.nan, complex(np.nan, np.inf)])
     array([  1.79769313e+308,  -1.79769313e+308,   0.00000000e+000, # may vary
@@ -529,7 +529,7 @@ def _real_if_close_dispatcher(a, tol=None):
 @array_function_dispatch(_real_if_close_dispatcher)
 def real_if_close(a, tol=100):
     """
-    If input is complex with all imaginary parts close to zero, return 
+    If input is complex with all imaginary parts close to zero, return
     real parts.
 
     "Close to zero" is defined as `tol` * (machine epsilon of the type for
@@ -582,40 +582,6 @@ def real_if_close(a, tol=100):
         a = a.real
     return a
 
-
-def _asscalar_dispatcher(a):
-    # 2018-10-10, 1.16
-    warnings.warn('np.asscalar(a) is deprecated since NumPy v1.16, use '
-                  'a.item() instead', DeprecationWarning, stacklevel=3)
-    return (a,)
-
-
-@array_function_dispatch(_asscalar_dispatcher)
-def asscalar(a):
-    """
-    Convert an array of size 1 to its scalar equivalent.
-
-    .. deprecated:: 1.16
-
-        Deprecated, use `numpy.ndarray.item()` instead.
-
-    Parameters
-    ----------
-    a : ndarray
-        Input array of size 1.
-
-    Returns
-    -------
-    out : scalar
-        Scalar representation of `a`. The output data type is the same type
-        returned by the input's `item` method.
-
-    Examples
-    --------
-    >>> np.asscalar(np.array([24]))
-    24
-    """
-    return a.item()
 
 #-----------------------------------------------------------------------------
 

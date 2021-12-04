@@ -4240,18 +4240,21 @@ cdef class RandomState:
         ValueError: pvals < 0, pvals > 1 or pvals contains NaNs
 
         """
-        cdef np.npy_intp d, i, sz, offset
+        cdef np.npy_intp d, i, sz, offset, niter
         cdef np.ndarray parr, mnarr
         cdef double *pix
         cdef long *mnix
         cdef long ni
 
-        d = len(pvals)
         parr = <np.ndarray>np.PyArray_FROMANY(
-            pvals, np.NPY_DOUBLE, 1, 1, np.NPY_ARRAY_ALIGNED | np.NPY_ARRAY_C_CONTIGUOUS)
+            pvals, np.NPY_DOUBLE, 0, 1, np.NPY_ARRAY_ALIGNED | np.NPY_ARRAY_C_CONTIGUOUS)
+        if np.PyArray_NDIM(parr) == 0:
+            raise TypeError("pvals must be a 1-d sequence")
+        d = np.PyArray_SIZE(parr)
         pix = <double*>np.PyArray_DATA(parr)
         check_array_constraint(parr, 'pvals', CONS_BOUNDED_0_1)
-        if kahan_sum(pix, d-1) > (1.0 + 1e-12):
+        # Only check if pvals is non-empty due no checks in kahan_sum
+        if d and kahan_sum(pix, d-1) > (1.0 + 1e-12):
             # When floating, but not float dtype, and close, improve the error
             # 1.0001 works for float16 and float32
             if (isinstance(pvals, np.ndarray)
@@ -4266,7 +4269,6 @@ cdef class RandomState:
             else:
                 msg = "sum(pvals[:-1]) > 1.0"
             raise ValueError(msg)
-
         if size is None:
             shape = (d,)
         else:
@@ -4274,7 +4276,6 @@ cdef class RandomState:
                 shape = (operator.index(size), d)
             except:
                 shape = tuple(size) + (d,)
-
         multin = np.zeros(shape, dtype=int)
         mnarr = <np.ndarray>multin
         mnix = <long*>np.PyArray_DATA(mnarr)
@@ -4282,8 +4283,10 @@ cdef class RandomState:
         ni = n
         check_constraint(ni, 'n', CONS_NON_NEGATIVE)
         offset = 0
+        # gh-20483: Avoids divide by 0
+        niter = sz // d if d else 0
         with self.lock, nogil:
-            for i in range(sz // d):
+            for i in range(niter):
                 legacy_random_multinomial(&self._bitgen, ni, &mnix[offset], pix, d, &self._binomial)
                 offset += d
 

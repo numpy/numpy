@@ -109,4 +109,8 @@ NPY_FINLINE npyv_s64 npyv_min_s64(npyv_s64 a, npyv_s64 b)
 #define npyv_ceil_f32 _mm256_ceil_ps
 #define npyv_ceil_f64 _mm256_ceil_pd
 
+// trunc
+#define npyv_trunc_f32(A) _mm256_round_ps(A, _MM_FROUND_TO_ZERO)
+#define npyv_trunc_f64(A) _mm256_round_pd(A, _MM_FROUND_TO_ZERO)
+
 #endif // _NPY_SIMD_AVX2_MATH_H

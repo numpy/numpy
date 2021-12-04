@@ -151,9 +151,6 @@ def real_if_close(
     tol: float = ...,
 ) -> NDArray[Any]: ...
 
-# NOTE: deprecated
-# def asscalar(a): ...
-
 @overload
 def typename(char: L['S1']) -> L['character']: ...
 @overload

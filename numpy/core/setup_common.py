@@ -44,6 +44,7 @@ C_ABI_VERSION = 0x01000009
 # 0x0000000e - 1.20.x
 # 0x0000000e - 1.21.x
 # 0x0000000f - 1.22.x
+# 0x0000000f - 1.23.x
 C_API_VERSION = 0x0000000f
 
 class MismatchCAPIWarning(Warning):

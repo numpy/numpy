@@ -21,10 +21,10 @@ np.linspace(0, 2, retstep=b'False')  # E: No overload variant
 np.linspace(0, 2, dtype=0)  # E: No overload variant
 np.linspace(0, 2, axis=None)  # E: No overload variant
 
-np.logspace(None, 'bob')  # E: Argument 1
-np.logspace(0, 2, base=None)  # E: Argument "base"
+np.logspace(None, 'bob')  # E: No overload variant
+np.logspace(0, 2, base=None)  # E: No overload variant
 
-np.geomspace(None, 'bob')  # E: Argument 1
+np.geomspace(None, 'bob')  # E: No overload variant
 
 np.stack(generator)  # E: No overload variant
 np.hstack({1, 2})  # E: No overload variant

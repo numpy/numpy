@@ -6888,26 +6888,6 @@ class TestInner:
             assert_equal(np.inner(b, a).transpose(2,3,0,1), desired)
 
 
-class TestAlen:
-    def test_basic(self):
-        with pytest.warns(DeprecationWarning):
-            m = np.array([1, 2, 3])
-            assert_equal(np.alen(m), 3)
-
-            m = np.array([[1, 2, 3], [4, 5, 7]])
-            assert_equal(np.alen(m), 2)
-
-            m = [1, 2, 3]
-            assert_equal(np.alen(m), 3)
-
-            m = [[1, 2, 3], [4, 5, 7]]
-            assert_equal(np.alen(m), 2)
-
-    def test_singleton(self):
-        with pytest.warns(DeprecationWarning):
-            assert_equal(np.alen(5), 1)
-
-
 class TestChoose:
     def setup(self):
         self.x = 2*np.ones((3,), dtype=int)
@@ -7832,9 +7812,9 @@ class TestArrayCreationCopyArgument(object):
             pyscalar = arr.item(0)
 
             # Test never-copy raises error:
-            assert_raises(ValueError, np.array, scalar, 
+            assert_raises(ValueError, np.array, scalar,
                             copy=np._CopyMode.NEVER)
-            assert_raises(ValueError, np.array, pyscalar, 
+            assert_raises(ValueError, np.array, pyscalar,
                             copy=np._CopyMode.NEVER)
             assert_raises(ValueError, np.array, pyscalar,
                             copy=self.RaiseOnBool())
@@ -8186,18 +8166,6 @@ def test_scalar_element_deletion():
     a = np.zeros(2, dtype=[('x', 'int'), ('y', 'int')])
     assert_raises(ValueError, a[0].__delitem__, 'x')
 
-
-class TestMemEventHook:
-    def test_mem_seteventhook(self):
-        # The actual tests are within the C code in
-        # multiarray/_multiarray_tests.c.src
-        _multiarray_tests.test_pydatamem_seteventhook_start()
-        # force an allocation and free of a numpy array
-        # needs to be larger then limit of small memory cacher in ctors.c
-        a = np.zeros(1000)
-        del a
-        break_cycles()
-        _multiarray_tests.test_pydatamem_seteventhook_end()
 
 class TestMapIter:
     def test_mapiter(self):

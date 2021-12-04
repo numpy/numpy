@@ -5,6 +5,7 @@ Release notes
 .. toctree::
     :maxdepth: 3
 
+    1.23.0 <release/1.23.0-notes>
     1.22.0 <release/1.22.0-notes>
     1.21.4 <release/1.21.4-notes>
     1.21.3 <release/1.21.3-notes>

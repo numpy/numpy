@@ -23,9 +23,9 @@ from Python.
 
    usage
    f2py.getting-started
-   distutils
    python-usage
    signature-file
+   buildtools/index
    advanced
 
 .. _Python: https://www.python.org/

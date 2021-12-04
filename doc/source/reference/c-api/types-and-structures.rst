@@ -286,6 +286,11 @@ PyArrayDescr_Type and PyArray_Descr
        array like behavior. Each bit in this member is a flag which are named
        as:
 
+   .. c:member:: int alignment
+
+       Non-NULL if this type is an array (C-contiguous) of some other type
+
+
 ..
   dedented to allow internal linking, pending a refactoring
 

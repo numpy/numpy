@@ -2658,8 +2658,9 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('shape',
 
     See Also
     --------
-    numpy.reshape : similar function
-    ndarray.reshape : similar method
+    numpy.shape : Equivalent getter function.
+    numpy.reshape : Function similar to setting ``shape``.
+    ndarray.reshape : Method similar to setting ``shape``.
 
     """))
 

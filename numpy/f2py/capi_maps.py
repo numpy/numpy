@@ -442,7 +442,7 @@ def getpydocsign(a, var):
         sigout = sig
     else:
         errmess(
-            'getpydocsign: Could not resolve docsignature for "%s".\\n' % a)
+            'getpydocsign: Could not resolve docsignature for "%s".\n' % a)
     return sig, sigout
 
 

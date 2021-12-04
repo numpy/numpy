@@ -136,7 +136,7 @@ def test_fail(path: str) -> None:
     output_mypy = OUTPUT_MYPY
     assert path in output_mypy
     for error_line in output_mypy[path]:
-        error_line = _strip_filename(error_line)
+        error_line = _strip_filename(error_line).split("\n", 1)[0]
         match = re.match(
             r"(?P<lineno>\d+): (error|note): .+$",
             error_line,
@@ -368,6 +368,7 @@ Expression: {}
 Expected reveal: {!r}
 Observed reveal: {!r}
 """
+_STRIP_PATTERN = re.compile(r"(\w+\.)+(\w+)")
 
 
 def _test_reveal(
@@ -378,9 +379,8 @@ def _test_reveal(
     lineno: int,
 ) -> None:
     """Error-reporting helper function for `test_reveal`."""
-    strip_pattern = re.compile(r"(\w+\.)+(\w+)")
-    stripped_reveal = strip_pattern.sub(strip_func, reveal)
-    stripped_expected_reveal = strip_pattern.sub(strip_func, expected_reveal)
+    stripped_reveal = _STRIP_PATTERN.sub(strip_func, reveal)
+    stripped_expected_reveal = _STRIP_PATTERN.sub(strip_func, expected_reveal)
     if stripped_reveal not in stripped_expected_reveal:
         raise AssertionError(
             _REVEAL_MSG.format(lineno,
