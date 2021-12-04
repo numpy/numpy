@@ -2738,29 +2738,15 @@ reducelike_promote_and_resolve(PyUFuncObject *ufunc,
         Py_INCREF(operation_DTypes[0]);
         operation_DTypes[2] = operation_DTypes[0];
         Py_INCREF(operation_DTypes[2]);
-        /*
-         * We have to force the dtype, because otherwise value based casting
-         * may ignore the request entirely.  This means that `out=` the same
-         * as `dtype=`, which should probably not be forced normally, so we
-         * only do it for legacy DTypes...
-         */
-        if (NPY_DT_is_legacy(operation_DTypes[0])
-                && NPY_DT_is_legacy(operation_DTypes[1])) {
-            if (signature[0] == NULL) {
-                Py_INCREF(operation_DTypes[0]);
-                signature[0] = operation_DTypes[0];
-                Py_INCREF(operation_DTypes[0]);
-                signature[2] = operation_DTypes[0];
-            }
-        }
     }
 
     PyArrayMethodObject *ufuncimpl = promote_and_get_ufuncimpl(ufunc,
             ops, signature, operation_DTypes, NPY_FALSE, NPY_FALSE);
-    Py_DECREF(operation_DTypes[1]);
+    /* Output can currently get cleared, others XDECREF in case of error */
+    Py_XDECREF(operation_DTypes[1]);
     if (out != NULL) {
-        Py_DECREF(operation_DTypes[0]);
-        Py_DECREF(operation_DTypes[2]);
+        Py_XDECREF(operation_DTypes[0]);
+        Py_XDECREF(operation_DTypes[2]);
     }
     if (ufuncimpl == NULL) {
         return NULL;

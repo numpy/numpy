@@ -53,6 +53,9 @@
 #include "ufunc_type_resolution.h"
 
 
+#define PROMOTION_DEBUG_TRACING 0
+
+
 /* forward declaration */
 static NPY_INLINE PyObject *
 promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
@@ -184,6 +187,17 @@ resolve_implementation_info(PyUFuncObject *ufunc,
     Py_ssize_t size = PySequence_Length(ufunc->_loops);
     PyObject *best_dtypes = NULL;
     PyObject *best_resolver_info = NULL;
+
+#if PROMOTION_DEBUG_TRACING
+    printf("Promoting for '%s' promoters only: %d\n",
+            ufunc->name ? ufunc->name : "<unknown>", (int)only_promoters);
+    printf("    DTypes: ");
+    PyObject *tmp = PyArray_TupleFromItems(ufunc->nargs, op_dtypes, 1);
+    PyObject_Print(tmp, stdout, 0);
+    Py_DECREF(tmp);
+    printf("\n");
+    Py_DECREF(tmp);
+#endif
 
     for (Py_ssize_t res_idx = 0; res_idx < size; res_idx++) {
         /* Test all resolvers  */
@@ -774,7 +788,7 @@ promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
  *        either by the `signature` or by an `operand`.
  *        (outputs and the second input can be NULL for reductions).
  *        NOTE: In some cases, the promotion machinery may currently modify
- *        these.
+ *        these including clearing the output.
  * @param force_legacy_promotion If set, we have to use the old type resolution
  *        to implement value-based promotion/casting.
  */
@@ -802,7 +816,7 @@ promote_and_get_ufuncimpl(PyUFuncObject *ufunc,
             Py_XSETREF(op_dtypes[i], signature[i]);
             assert(i >= ufunc->nin || !NPY_DT_is_abstract(signature[i]));
         }
-        else if (i > nin) {
+        else if (i >= nin) {
             /*
              * We currently just ignore outputs if not in signature, this will
              * always give the/a correct result (limits registering specialized
