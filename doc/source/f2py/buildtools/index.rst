@@ -27,6 +27,7 @@ Building an extension module which includes Python and Fortran consists of:
 
   + A ``C`` wrapper file is always created
   + Code with modules require an additional ``.f90`` wrapper
+  + Code with functions generate an additional ``.f`` wrapper
 
 - ``fortranobject.{c,h}``
 
@@ -46,7 +47,7 @@ Fortran 77 programs
    - Generates
 
      + ``blahmodule.c``
-     + ``f2pywrappers.f``
+     + ``blah-f2pywrappers.f``
 
    When no ``COMMON`` blocks are present only a ``C`` wrapper file is generated.
    Wrappers are also generated to rewrite assumed shape arrays as automatic
@@ -57,10 +58,12 @@ Fortran 90 programs
    - Generates:
 
      + ``blahmodule.c``
+     + ``blah-f2pywrappers.f``
      + ``blah-f2pywrappers2.f90``
 
-   The secondary wrapper is used to handle code which is subdivided into
-   modules. It rewrites assumed shape arrays as automatic arrays.
+   The ``f90`` wrapper is used to handle code which is subdivided into
+   modules. The ``f`` wrapper makes ``subroutines`` for  ``functions``. It
+   rewrites assumed shape arrays as automatic arrays.
 
 Signature files
    - Input file ``blah.pyf``
@@ -68,7 +71,7 @@ Signature files
 
      + ``blahmodule.c``
      + ``blah-f2pywrappers2.f90`` (occasionally)
-     + ``f2pywrappers.f`` (occasionally)
+     + ``blah-f2pywrappers.f`` (occasionally)
 
    Signature files ``.pyf`` do not signal their language standard via the file
    extension, they may generate the F90 and F77 specific wrappers depending on
