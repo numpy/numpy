@@ -90,113 +90,16 @@ end python module c_ext_return_real
         self.check_function(getattr(self.module, name), name)
 
 
-class TestF77ReturnReal(TestReturnReal):
-    code = """
-       function t0(value)
-         real value
-         real t0
-         t0 = value
-       end
-       function t4(value)
-         real*4 value
-         real*4 t4
-         t4 = value
-       end
-       function t8(value)
-         real*8 value
-         real*8 t8
-         t8 = value
-       end
-       function td(value)
-         double precision value
-         double precision td
-         td = value
-       end
-
-       subroutine s0(t0,value)
-         real value
-         real t0
-cf2py    intent(out) t0
-         t0 = value
-       end
-       subroutine s4(t4,value)
-         real*4 value
-         real*4 t4
-cf2py    intent(out) t4
-         t4 = value
-       end
-       subroutine s8(t8,value)
-         real*8 value
-         real*8 t8
-cf2py    intent(out) t8
-         t8 = value
-       end
-       subroutine sd(td,value)
-         double precision value
-         double precision td
-cf2py    intent(out) td
-         td = value
-       end
-    """
+class TestFReturnReal(TestReturnReal):
+    sources = [
+        util.getpath("tests", "src", "return_real", "foo77.f"),
+        util.getpath("tests", "src", "return_real", "foo90.f90"),
+    ]
 
     @pytest.mark.parametrize("name", "t0,t4,t8,td,s0,s4,s8,sd".split(","))
-    def test_all(self, name):
+    def test_all_f77(self, name):
         self.check_function(getattr(self.module, name), name)
 
-
-class TestF90ReturnReal(TestReturnReal):
-    suffix = ".f90"
-    code = """
-module f90_return_real
-  contains
-       function t0(value)
-         real :: value
-         real :: t0
-         t0 = value
-       end function t0
-       function t4(value)
-         real(kind=4) :: value
-         real(kind=4) :: t4
-         t4 = value
-       end function t4
-       function t8(value)
-         real(kind=8) :: value
-         real(kind=8) :: t8
-         t8 = value
-       end function t8
-       function td(value)
-         double precision :: value
-         double precision :: td
-         td = value
-       end function td
-
-       subroutine s0(t0,value)
-         real :: value
-         real :: t0
-!f2py    intent(out) t0
-         t0 = value
-       end subroutine s0
-       subroutine s4(t4,value)
-         real(kind=4) :: value
-         real(kind=4) :: t4
-!f2py    intent(out) t4
-         t4 = value
-       end subroutine s4
-       subroutine s8(t8,value)
-         real(kind=8) :: value
-         real(kind=8) :: t8
-!f2py    intent(out) t8
-         t8 = value
-       end subroutine s8
-       subroutine sd(td,value)
-         double precision :: value
-         double precision :: td
-!f2py    intent(out) td
-         td = value
-       end subroutine sd
-end module f90_return_real
-    """
-
     @pytest.mark.parametrize("name", "t0,t4,t8,td,s0,s4,s8,sd".split(","))
-    def test_all(self, name):
+    def test_all_f90(self, name):
         self.check_function(getattr(self.module.f90_return_real, name), name)

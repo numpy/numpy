@@ -12,70 +12,7 @@ from . import util
 
 
 class TestF77Callback(util.F2PyTest):
-    code = """
-       subroutine t(fun,a)
-       integer a
-cf2py  intent(out) a
-       external fun
-       call fun(a)
-       end
-
-       subroutine func(a)
-cf2py  intent(in,out) a
-       integer a
-       a = a + 11
-       end
-
-       subroutine func0(a)
-cf2py  intent(out) a
-       integer a
-       a = 11
-       end
-
-       subroutine t2(a)
-cf2py  intent(callback) fun
-       integer a
-cf2py  intent(out) a
-       external fun
-       call fun(a)
-       end
-
-       subroutine string_callback(callback, a)
-       external callback
-       double precision callback
-       double precision a
-       character*1 r
-cf2py  intent(out) a
-       r = 'r'
-       a = callback(r)
-       end
-
-       subroutine string_callback_array(callback, cu, lencu, a)
-       external callback
-       integer callback
-       integer lencu
-       character*8 cu(lencu)
-       integer a
-cf2py  intent(out) a
-
-       a = callback(cu, lencu)
-       end
-
-       subroutine hidden_callback(a, r)
-       external global_f
-cf2py  intent(callback, hide) global_f
-       integer a, r, global_f
-cf2py  intent(out) r
-       r = global_f(a)
-       end
-
-       subroutine hidden_callback2(a, r)
-       external global_f
-       integer a, r, global_f
-cf2py  intent(out) r
-       r = global_f(a)
-       end
-    """
+    sources = [util.getpath("tests", "src", "callback", "foo.f")]
 
     @pytest.mark.parametrize("name", "t,t2".split(","))
     def test_all(self, name):
@@ -263,18 +200,7 @@ class TestF77CallbackPythonTLS(TestF77Callback):
 
 
 class TestF90Callback(util.F2PyTest):
-
-    suffix = ".f90"
-
-    code = textwrap.dedent("""
-        function gh17797(f, y) result(r)
-          external f
-          integer(8) :: r, f
-          integer(8), dimension(:) :: y
-          r = f(0)
-          r = r + sum(y)
-        end function gh17797
-        """)
+    sources = [util.getpath("tests", "src", "callback", "gh17797.f90")]
 
     def test_gh17797(self):
         def incr(x):
@@ -291,28 +217,7 @@ class TestGH18335(util.F2PyTest):
     implemented as a separate test class. Do not extend this test with
     other tests!
     """
-
-    suffix = ".f90"
-
-    code = textwrap.dedent("""
-        ! When gh18335_workaround is defined as an extension,
-        ! the issue cannot be reproduced.
-        !subroutine gh18335_workaround(f, y)
-        !  implicit none
-        !  external f
-        !  integer(kind=1) :: y(1)
-        !  call f(y)
-        !end subroutine gh18335_workaround
-
-        function gh18335(f) result (r)
-          implicit none
-          external f
-          integer(kind=1) :: y(1), r
-          y(1) = 123
-          call f(y)
-          r = y(1)
-        end function gh18335
-        """)
+    sources = [util.getpath("tests", "src", "callback", "gh18335.f90")]
 
     def test_gh18335(self):
         def foo(x):

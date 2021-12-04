@@ -50,114 +50,17 @@ class TestReturnComplex(util.F2PyTest):
             pass
 
 
-class TestF77ReturnComplex(TestReturnComplex):
-    code = """
-       function t0(value)
-         complex value
-         complex t0
-         t0 = value
-       end
-       function t8(value)
-         complex*8 value
-         complex*8 t8
-         t8 = value
-       end
-       function t16(value)
-         complex*16 value
-         complex*16 t16
-         t16 = value
-       end
-       function td(value)
-         double complex value
-         double complex td
-         td = value
-       end
-
-       subroutine s0(t0,value)
-         complex value
-         complex t0
-cf2py    intent(out) t0
-         t0 = value
-       end
-       subroutine s8(t8,value)
-         complex*8 value
-         complex*8 t8
-cf2py    intent(out) t8
-         t8 = value
-       end
-       subroutine s16(t16,value)
-         complex*16 value
-         complex*16 t16
-cf2py    intent(out) t16
-         t16 = value
-       end
-       subroutine sd(td,value)
-         double complex value
-         double complex td
-cf2py    intent(out) td
-         td = value
-       end
-    """
+class TestFReturnComplex(TestReturnComplex):
+    sources = [
+        util.getpath("tests", "src", "return_complex", "foo77.f"),
+        util.getpath("tests", "src", "return_complex", "foo90.f90"),
+    ]
 
     @pytest.mark.parametrize("name", "t0,t8,t16,td,s0,s8,s16,sd".split(","))
-    def test_all(self, name):
+    def test_all_f77(self, name):
         self.check_function(getattr(self.module, name), name)
 
-
-class TestF90ReturnComplex(TestReturnComplex):
-    suffix = ".f90"
-    code = """
-module f90_return_complex
-  contains
-       function t0(value)
-         complex :: value
-         complex :: t0
-         t0 = value
-       end function t0
-       function t8(value)
-         complex(kind=4) :: value
-         complex(kind=4) :: t8
-         t8 = value
-       end function t8
-       function t16(value)
-         complex(kind=8) :: value
-         complex(kind=8) :: t16
-         t16 = value
-       end function t16
-       function td(value)
-         double complex :: value
-         double complex :: td
-         td = value
-       end function td
-
-       subroutine s0(t0,value)
-         complex :: value
-         complex :: t0
-!f2py    intent(out) t0
-         t0 = value
-       end subroutine s0
-       subroutine s8(t8,value)
-         complex(kind=4) :: value
-         complex(kind=4) :: t8
-!f2py    intent(out) t8
-         t8 = value
-       end subroutine s8
-       subroutine s16(t16,value)
-         complex(kind=8) :: value
-         complex(kind=8) :: t16
-!f2py    intent(out) t16
-         t16 = value
-       end subroutine s16
-       subroutine sd(td,value)
-         double complex :: value
-         double complex :: td
-!f2py    intent(out) td
-         td = value
-       end subroutine sd
-end module f90_return_complex
-    """
-
     @pytest.mark.parametrize("name", "t0,t8,t16,td,s0,s8,s16,sd".split(","))
-    def test_all(self, name):
+    def test_all_f90(self, name):
         self.check_function(getattr(self.module.f90_return_complex, name),
                             name)
