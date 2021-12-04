@@ -1425,6 +1425,10 @@ class TestFromTxt(LoadTxtBase):
                             ('F', 25.0, 60.0)], dtype=descriptor)
         assert_equal(test, control)
 
+    def test_bad_fname(self):
+        with pytest.raises(TypeError, match='fname must be a string,'):
+            np.genfromtxt(123)
+
     def test_commented_header(self):
         # Check that names can be retrieved even if the line is commented out.
         data = TextIO("""
