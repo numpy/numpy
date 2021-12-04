@@ -4079,12 +4079,18 @@ cdef class RandomState:
         >>> x.shape
         (3, 3, 2)
 
-        The following is probably true, given that 2.0 is twice the standard
-        deviation of the distribution of each component:
+        Here we generate a scatter plot of 800 samples from the bivariate
+        normal distribution with mean (0, 0) and covariance matrix
+        [[6, -3], [-3, 3.5]].
 
-        >>> list((x[0,0,:] - mean) < 2.0)
-        [True, True]  # random
+        >>> cov = np.array([[6, -3], [-3, 3.5]])
+        >>> pts = np.random.multivariate_normal([0, 0], cov, size=800)
 
+        >>> import matplotlib.pyplot as plt
+        >>> plt.plot(pts[:, 0], pts[:, 1], '.', alpha=0.5)
+        >>> plt.axis('equal')
+        >>> plt.grid()
+        >>> plt.show()
         """
         from numpy.linalg import svd
 
