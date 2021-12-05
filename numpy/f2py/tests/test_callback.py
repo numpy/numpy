@@ -77,7 +77,7 @@ cf2py  intent(out) r
        end
     """
 
-    @pytest.mark.parametrize('name', 't,t2'.split(','))
+    @pytest.mark.parametrize("name", "t,t2".split(","))
     def test_all(self, name):
         self.check_function(name)
 
@@ -116,18 +116,18 @@ cf2py  intent(out) r
         t = getattr(self.module, name)
         r = t(lambda: 4)
         assert_(r == 4, repr(r))
-        r = t(lambda a: 5, fun_extra_args=(6,))
+        r = t(lambda a: 5, fun_extra_args=(6, ))
         assert_(r == 5, repr(r))
-        r = t(lambda a: a, fun_extra_args=(6,))
+        r = t(lambda a: a, fun_extra_args=(6, ))
         assert_(r == 6, repr(r))
-        r = t(lambda a: 5 + a, fun_extra_args=(7,))
+        r = t(lambda a: 5 + a, fun_extra_args=(7, ))
         assert_(r == 12, repr(r))
-        r = t(lambda a: math.degrees(a), fun_extra_args=(math.pi,))
+        r = t(lambda a: math.degrees(a), fun_extra_args=(math.pi, ))
         assert_(r == 180, repr(r))
-        r = t(math.degrees, fun_extra_args=(math.pi,))
+        r = t(math.degrees, fun_extra_args=(math.pi, ))
         assert_(r == 180, repr(r))
 
-        r = t(self.module.func, fun_extra_args=(6,))
+        r = t(self.module.func, fun_extra_args=(6, ))
         assert_(r == 17, repr(r))
         r = t(self.module.func0)
         assert_(r == 11, repr(r))
@@ -135,48 +135,47 @@ cf2py  intent(out) r
         assert_(r == 11, repr(r))
 
         class A:
-
             def __call__(self):
                 return 7
 
             def mth(self):
                 return 9
+
         a = A()
         r = t(a)
         assert_(r == 7, repr(r))
         r = t(a.mth)
         assert_(r == 9, repr(r))
 
-    @pytest.mark.skipif(sys.platform=='win32',
-                        reason='Fails with MinGW64 Gfortran (Issue #9673)')
+    @pytest.mark.skipif(sys.platform == "win32",
+                        reason="Fails with MinGW64 Gfortran (Issue #9673)")
     def test_string_callback(self):
-
         def callback(code):
-            if code == 'r':
+            if code == "r":
                 return 0
             else:
                 return 1
 
-        f = getattr(self.module, 'string_callback')
+        f = getattr(self.module, "string_callback")
         r = f(callback)
         assert_(r == 0, repr(r))
 
-    @pytest.mark.skipif(sys.platform=='win32',
-                        reason='Fails with MinGW64 Gfortran (Issue #9673)')
+    @pytest.mark.skipif(sys.platform == "win32",
+                        reason="Fails with MinGW64 Gfortran (Issue #9673)")
     def test_string_callback_array(self):
         # See gh-10027
-        cu = np.zeros((1, 8), 'S1')
+        cu = np.zeros((1, 8), "S1")
 
         def callback(cu, lencu):
             if cu.shape != (lencu, 8):
                 return 1
-            if cu.dtype != 'S1':
+            if cu.dtype != "S1":
                 return 2
-            if not np.all(cu == b''):
+            if not np.all(cu == b""):
                 return 3
             return 0
 
-        f = getattr(self.module, 'string_callback_array')
+        f = getattr(self.module, "string_callback_array")
         res = f(callback, cu, len(cu))
         assert_(res == 0, repr(res))
 
@@ -205,8 +204,10 @@ cf2py  intent(out) r
             except Exception:
                 errors.append(traceback.format_exc())
 
-        threads = [threading.Thread(target=runner, args=(arg,))
-                   for arg in ("t", "t2") for n in range(20)]
+        threads = [
+            threading.Thread(target=runner, args=(arg, ))
+            for arg in ("t", "t2") for n in range(20)
+        ]
 
         for t in threads:
             t.start()
@@ -222,12 +223,12 @@ cf2py  intent(out) r
         try:
             self.module.hidden_callback(2)
         except Exception as msg:
-            assert_(str(msg).startswith('Callback global_f not defined'))
+            assert_(str(msg).startswith("Callback global_f not defined"))
 
         try:
             self.module.hidden_callback2(2)
         except Exception as msg:
-            assert_(str(msg).startswith('cb: Callback global_f not defined'))
+            assert_(str(msg).startswith("cb: Callback global_f not defined"))
 
         self.module.global_f = lambda x: x + 1
         r = self.module.hidden_callback(2)
@@ -241,7 +242,7 @@ cf2py  intent(out) r
         try:
             self.module.hidden_callback(2)
         except Exception as msg:
-            assert_(str(msg).startswith('Callback global_f not defined'))
+            assert_(str(msg).startswith("Callback global_f not defined"))
 
         self.module.global_f = lambda x=0: x + 3
         r = self.module.hidden_callback(2)
@@ -257,15 +258,15 @@ class TestF77CallbackPythonTLS(TestF77Callback):
     Callback tests using Python thread-local storage instead of
     compiler-provided
     """
+
     options = ["-DF2PY_USE_PYTHON_TLS"]
 
 
 class TestF90Callback(util.F2PyTest):
 
-    suffix = '.f90'
+    suffix = ".f90"
 
-    code = textwrap.dedent(
-        """
+    code = textwrap.dedent("""
         function gh17797(f, y) result(r)
           external f
           integer(8) :: r, f
@@ -276,7 +277,6 @@ class TestF90Callback(util.F2PyTest):
         """)
 
     def test_gh17797(self):
-
         def incr(x):
             return x + 123
 
@@ -292,10 +292,9 @@ class TestGH18335(util.F2PyTest):
     other tests!
     """
 
-    suffix = '.f90'
+    suffix = ".f90"
 
-    code = textwrap.dedent(
-        """
+    code = textwrap.dedent("""
         ! When gh18335_workaround is defined as an extension,
         ! the issue cannot be reproduced.
         !subroutine gh18335_workaround(f, y)
@@ -316,7 +315,6 @@ class TestGH18335(util.F2PyTest):
         """)
 
     def test_gh18335(self):
-
         def foo(x):
             x[0] += 1
 
