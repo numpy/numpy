@@ -62,13 +62,13 @@ jobs:
           platform: manylinux_x86_64
 
         # macos builds
-        - os: macos-latest
+        - os: macos-10.15
           python: "38"
           platform: macosx_x86_64
-        - os: macos-latest
+        - os: macos-10.15
           python: "39"
           platform: macosx_x86_64
-        - os: macos-latest
+        - os: macos-10.15
           python: "310"
           platform: macosx_x86_64
           
