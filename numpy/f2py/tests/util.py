@@ -16,6 +16,7 @@ import textwrap
 import re
 import pytest
 import contextlib
+import numpy
 
 from pathlib import Path
 from numpy.compat import asbytes, asstr
@@ -98,8 +99,7 @@ def build_module(source_files, options=[], skip=[], only=[], module_name=None):
 
     """
 
-    code = "import sys; sys.path = %s; import numpy.f2py; " "numpy.f2py.main()" % repr(
-        sys.path)
+    code = f"import sys; sys.path = {sys.path!r}; import numpy.f2py; numpy.f2py.main()"
 
     d = get_module_dir()
 
@@ -188,10 +188,10 @@ def _get_compiler_status():
 
     # XXX: this is really ugly. But I don't know how to invoke Distutils
     #      in a safer way...
-    code = textwrap.dedent("""\
+    code = textwrap.dedent(f"""\
         import os
         import sys
-        sys.path = %(syspath)s
+        sys.path = {repr(sys.path)}
 
         def configuration(parent_name='',top_path=None):
             global config
@@ -203,7 +203,7 @@ def _get_compiler_status():
         setup(configuration=configuration)
 
         config_cmd = config.get_config_cmd()
-        have_c = config_cmd.try_compile('void foo() {}')
+        have_c = config_cmd.try_compile('void foo() {{}}')
         print('COMPILERS:%%d,%%d,%%d' %% (have_c,
                                           config.have_f77c(),
                                           config.have_f90c()))
@@ -275,22 +275,21 @@ def build_module_distutils(source_files, config_code, module_name, **kw):
     # Build script
     config_code = textwrap.dedent(config_code).replace("\n", "\n    ")
 
-    code = (textwrap.dedent("""\
-        import os
-        import sys
-        sys.path = %(syspath)s
+    code = fr"""
+import os
+import sys
+sys.path = {repr(sys.path)}
 
-        def configuration(parent_name='',top_path=None):
-            from numpy.distutils.misc_util import Configuration
-            config = Configuration('', parent_name, top_path)
-            %(config_code)s
-            return config
+def configuration(parent_name='',top_path=None):
+    from numpy.distutils.misc_util import Configuration
+    config = Configuration('', parent_name, top_path)
+    {config_code}
+    return config
 
-        if __name__ == "__main__":
-            from numpy.distutils.core import setup
-            setup(configuration=configuration)
-        """) % dict(config_code=config_code, syspath=repr(sys.path)))
-
+if __name__ == "__main__":
+    from numpy.distutils.core import setup
+    setup(configuration=configuration)
+    """
     script = os.path.join(d, get_temp_module_name() + ".py")
     dst_sources.append(script)
     with open(script, "wb") as f:
@@ -392,7 +391,7 @@ class F2PyTest:
 
 def getpath(*a):
     # Package root
-    d = Path(__file__).parent.parent.resolve()
+    d = Path(numpy.f2py.__file__).parent.resolve()
     return d.joinpath(*a)
 
 

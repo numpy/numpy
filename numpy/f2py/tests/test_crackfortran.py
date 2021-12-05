@@ -42,9 +42,8 @@ class TestNoSpace(util.F2PyTest):
 class TestPublicPrivate:
     def test_defaultPrivate(self, tmp_path):
         f_path = tmp_path / "mod.f90"
-        with f_path.open("w") as ff:
-            ff.write(
-                textwrap.dedent("""\
+        f_path.write_text(
+            textwrap.dedent("""\
             module foo
               private
               integer :: a

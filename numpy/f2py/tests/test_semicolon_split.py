@@ -13,8 +13,8 @@ from numpy.testing import assert_equal
 class TestMultiline(util.F2PyTest):
     suffix = ".pyf"
     module_name = "multiline"
-    code = """
-python module {module}
+    code = f"""
+python module {module_name}
     usercode '''
 void foo(int* x) {{
     char dummy = ';';
@@ -27,8 +27,8 @@ void foo(int* x) {{
             integer intent(out) :: x
         end subroutine foo
     end interface
-end python module {module}
-    """.format(module=module_name)
+end python module {module_name}
+    """
 
     def test_multiline(self):
         assert_equal(self.module.foo(), 42)
@@ -42,8 +42,8 @@ end python module {module}
 class TestCallstatement(util.F2PyTest):
     suffix = ".pyf"
     module_name = "callstatement"
-    code = """
-python module {module}
+    code = f"""
+python module {module_name}
     usercode '''
 void foo(int* x) {{
 }}
@@ -59,8 +59,8 @@ void foo(int* x) {{
             }}
         end subroutine foo
     end interface
-end python module {module}
-    """.format(module=module_name)
+end python module {module_name}
+    """
 
     def test_callstatement(self):
         assert_equal(self.module.foo(), 42)
