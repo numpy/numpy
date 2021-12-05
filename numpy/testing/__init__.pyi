@@ -48,11 +48,16 @@ from numpy.testing._private.utils import (
     HAS_LAPACK64 as HAS_LAPACK64,
 )
 
-__all__: List[str]
-__path__: List[str]
-test: PytestTester
+__all__:
+    List[str]
+__path__:
+    List[str]
+test:
+    PytestTester
+
 
 def run_module_suite(
     file_to_run: None | str = ...,
     argv: None | List[str] = ...,
 ) -> None: ...
+
