@@ -3573,7 +3573,7 @@ cdef class Generator:
         (3, 3, 2)
 
         Here we generate 800 samples from the bivariate normal distribution
-        with mean (0, 0) and covariance matrix [[6, -3], [-3, 3.5]].  The
+        with mean [0, 0] and covariance matrix [[6, -3], [-3, 3.5]].  The
         expected variances of the first and second components of the sample
         are 6 and 3.5, respectively, and the expected correlation
         coefficient is -3/sqrt(6*3.5) ≈ -0.65465.
