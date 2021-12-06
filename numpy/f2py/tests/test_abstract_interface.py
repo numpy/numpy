@@ -3,8 +3,6 @@ import textwrap
 from . import util
 from numpy.f2py import crackfortran
 
-from numpy.testing import assert_
-
 
 class TestAbstractInterface(util.F2PyTest):
     sources = [util.getpath("tests", "src", "abstract_interface", "foo.f90")]
@@ -12,7 +10,7 @@ class TestAbstractInterface(util.F2PyTest):
     skip = ["add1", "add2"]
 
     def test_abstract_interface(self):
-        assert_(self.module.ops_module.foo(3, 5) == (8, 13))
+        assert self.module.ops_module.foo(3, 5) == (8, 13)
 
     def test_parse_abstract_interface(self):
         # Test gh18403

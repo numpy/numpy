@@ -4,7 +4,6 @@
 import sys
 import pytest
 
-from numpy.testing import assert_equal
 from . import util
 
 
@@ -14,4 +13,4 @@ class TestQuotedCharacter(util.F2PyTest):
     @pytest.mark.skipif(sys.platform == "win32",
                         reason="Fails with MinGW64 Gfortran (Issue #9673)")
     def test_quoted_character(self):
-        assert_equal(self.module.foo(), (b"'", b'"', b";", b"!", b"(", b")"))
+        assert self.module.foo() == (b"'", b'"', b";", b"!", b"(", b")")

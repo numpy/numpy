@@ -1,6 +1,5 @@
 import pytest
 import numpy as np
-from numpy.testing import assert_array_equal, assert_equal
 from numpy.f2py.crackfortran import markinnerspaces
 from . import util
 from numpy.f2py import crackfortran
@@ -16,9 +15,9 @@ class TestNoSpace(util.F2PyTest):
         k = np.array([1, 2, 3], dtype=np.float64)
         w = np.array([1, 2, 3], dtype=np.float64)
         self.module.subb(k)
-        assert_array_equal(k, w + 1)
+        assert np.allclose(k, w + 1)
         self.module.subc([w, k])
-        assert_array_equal(k, w + 1)
+        assert np.allclose(k, w + 1)
         assert self.module.t0(23) == b"2"
 
 
@@ -80,21 +79,19 @@ class TestMarkinnerspaces:
     def test_do_not_touch_normal_spaces(self):
         test_list = ["a ", " a", "a b c", "'abcdefghij'"]
         for i in test_list:
-            assert_equal(markinnerspaces(i), i)
+            assert markinnerspaces(i) == i
 
     def test_one_relevant_space(self):
-        assert_equal(markinnerspaces("a 'b c' \\' \\'"), "a 'b@_@c' \\' \\'")
-        assert_equal(markinnerspaces(r'a "b c" \" \"'), r'a "b@_@c" \" \"')
+        assert markinnerspaces("a 'b c' \\' \\'") == "a 'b@_@c' \\' \\'"
+        assert markinnerspaces(r'a "b c" \" \"') == r'a "b@_@c" \" \"'
 
     def test_ignore_inner_quotes(self):
-        assert_equal(markinnerspaces("a 'b c\" \" d' e"),
-                     "a 'b@_@c\"@_@\"@_@d' e")
-        assert_equal(markinnerspaces("a \"b c' ' d\" e"),
-                     "a \"b@_@c'@_@'@_@d\" e")
+        assert markinnerspaces("a 'b c\" \" d' e") == "a 'b@_@c\"@_@\"@_@d' e"
+        assert markinnerspaces("a \"b c' ' d\" e") == "a \"b@_@c'@_@'@_@d\" e"
 
     def test_multiple_relevant_spaces(self):
-        assert_equal(markinnerspaces("a 'b c' 'd e'"), "a 'b@_@c' 'd@_@e'")
-        assert_equal(markinnerspaces(r'a "b c" "d e"'), r'a "b@_@c" "d@_@e"')
+        assert markinnerspaces("a 'b c' 'd e'") == "a 'b@_@c' 'd@_@e'"
+        assert markinnerspaces(r'a "b c" "d e"') == r'a "b@_@c" "d@_@e"'
 
 
 class TestDimSpec(util.F2PyTest):

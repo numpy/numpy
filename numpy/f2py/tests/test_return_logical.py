@@ -1,50 +1,49 @@
 import pytest
 
 from numpy import array
-from numpy.testing import assert_, assert_raises
 from . import util
 
 
 class TestReturnLogical(util.F2PyTest):
     def check_function(self, t):
-        assert_(t(True) == 1, repr(t(True)))
-        assert_(t(False) == 0, repr(t(False)))
-        assert_(t(0) == 0)
-        assert_(t(None) == 0)
-        assert_(t(0.0) == 0)
-        assert_(t(0j) == 0)
-        assert_(t(1j) == 1)
-        assert_(t(234) == 1)
-        assert_(t(234.6) == 1)
-        assert_(t(234.6 + 3j) == 1)
-        assert_(t("234") == 1)
-        assert_(t("aaa") == 1)
-        assert_(t("") == 0)
-        assert_(t([]) == 0)
-        assert_(t(()) == 0)
-        assert_(t({}) == 0)
-        assert_(t(t) == 1)
-        assert_(t(-234) == 1)
-        assert_(t(10**100) == 1)
-        assert_(t([234]) == 1)
-        assert_(t((234, )) == 1)
-        assert_(t(array(234)) == 1)
-        assert_(t(array([234])) == 1)
-        assert_(t(array([[234]])) == 1)
-        assert_(t(array([234], "b")) == 1)
-        assert_(t(array([234], "h")) == 1)
-        assert_(t(array([234], "i")) == 1)
-        assert_(t(array([234], "l")) == 1)
-        assert_(t(array([234], "f")) == 1)
-        assert_(t(array([234], "d")) == 1)
-        assert_(t(array([234 + 3j], "F")) == 1)
-        assert_(t(array([234], "D")) == 1)
-        assert_(t(array(0)) == 0)
-        assert_(t(array([0])) == 0)
-        assert_(t(array([[0]])) == 0)
-        assert_(t(array([0j])) == 0)
-        assert_(t(array([1])) == 1)
-        assert_raises(ValueError, t, array([0, 0]))
+        assert t(True) == 1
+        assert t(False) == 0
+        assert t(0) == 0
+        assert t(None) == 0
+        assert t(0.0) == 0
+        assert t(0j) == 0
+        assert t(1j) == 1
+        assert t(234) == 1
+        assert t(234.6) == 1
+        assert t(234.6 + 3j) == 1
+        assert t("234") == 1
+        assert t("aaa") == 1
+        assert t("") == 0
+        assert t([]) == 0
+        assert t(()) == 0
+        assert t({}) == 0
+        assert t(t) == 1
+        assert t(-234) == 1
+        assert t(10**100) == 1
+        assert t([234]) == 1
+        assert t((234, )) == 1
+        assert t(array(234)) == 1
+        assert t(array([234])) == 1
+        assert t(array([[234]])) == 1
+        assert t(array([234], "b")) == 1
+        assert t(array([234], "h")) == 1
+        assert t(array([234], "i")) == 1
+        assert t(array([234], "l")) == 1
+        assert t(array([234], "f")) == 1
+        assert t(array([234], "d")) == 1
+        assert t(array([234 + 3j], "F")) == 1
+        assert t(array([234], "D")) == 1
+        assert t(array(0)) == 0
+        assert t(array([0])) == 0
+        assert t(array([[0]])) == 0
+        assert t(array([0j])) == 0
+        assert t(array([1])) == 1
+        pytest.raises(ValueError, t, array([0, 0]))
 
 
 class TestFReturnLogical(TestReturnLogical):

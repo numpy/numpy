@@ -9,7 +9,6 @@ import pytest
 
 import numpy.f2py
 
-from numpy.testing import assert_equal
 from . import util
 
 
@@ -60,7 +59,7 @@ def test_f2py_init_compile(extra_args):
                                          source_fn=source_fn)
 
             # check for compile success return value
-            assert_equal(ret_val, 0)
+            assert ret_val == 0
 
     # we are not currently able to import the Python-Fortran
     # interface module on Windows / Appveyor, even though we do get
@@ -71,7 +70,7 @@ def test_f2py_init_compile(extra_args):
         # result of the sum operation
         return_check = import_module(modname)
         calc_result = return_check.foo()
-        assert_equal(calc_result, 15)
+        assert calc_result == 15
         # Removal from sys.modules, is not as such necessary. Even with
         # removal, the module (dict) stays alive.
         del sys.modules[modname]
@@ -81,7 +80,7 @@ def test_f2py_init_compile_failure():
     # verify an appropriate integer status value returned by
     # f2py.compile() when invalid Fortran is provided
     ret_val = numpy.f2py.compile(b"invalid")
-    assert_equal(ret_val, 1)
+    assert ret_val == 1
 
 
 def test_f2py_init_compile_bad_cmd():
@@ -97,7 +96,7 @@ def test_f2py_init_compile_bad_cmd():
 
         # the OSError should take precedence over invalid Fortran
         ret_val = numpy.f2py.compile(b"invalid")
-        assert_equal(ret_val, 127)
+        assert ret_val == 127
     finally:
         sys.executable = temp
 
@@ -115,4 +114,4 @@ def test_compile_from_strings(tmpdir, fsource):
         ret_val = numpy.f2py.compile(fsource,
                                      modulename="test_compile_from_strings",
                                      extension=".f90")
-        assert_equal(ret_val, 0)
+        assert ret_val == 0

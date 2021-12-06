@@ -2,7 +2,6 @@ import platform
 import pytest
 
 from numpy import array
-from numpy.testing import assert_, assert_raises
 from . import util
 
 
@@ -12,38 +11,38 @@ class TestReturnReal(util.F2PyTest):
             err = 1e-5
         else:
             err = 0.0
-        assert_(abs(t(234) - 234.0) <= err)
-        assert_(abs(t(234.6) - 234.6) <= err)
-        assert_(abs(t("234") - 234) <= err)
-        assert_(abs(t("234.6") - 234.6) <= err)
-        assert_(abs(t(-234) + 234) <= err)
-        assert_(abs(t([234]) - 234) <= err)
-        assert_(abs(t((234, )) - 234.0) <= err)
-        assert_(abs(t(array(234)) - 234.0) <= err)
-        assert_(abs(t(array([234])) - 234.0) <= err)
-        assert_(abs(t(array([[234]])) - 234.0) <= err)
-        assert_(abs(t(array([234], "b")) + 22) <= err)
-        assert_(abs(t(array([234], "h")) - 234.0) <= err)
-        assert_(abs(t(array([234], "i")) - 234.0) <= err)
-        assert_(abs(t(array([234], "l")) - 234.0) <= err)
-        assert_(abs(t(array([234], "B")) - 234.0) <= err)
-        assert_(abs(t(array([234], "f")) - 234.0) <= err)
-        assert_(abs(t(array([234], "d")) - 234.0) <= err)
+        assert abs(t(234) - 234.0) <= err
+        assert abs(t(234.6) - 234.6) <= err
+        assert abs(t("234") - 234) <= err
+        assert abs(t("234.6") - 234.6) <= err
+        assert abs(t(-234) + 234) <= err
+        assert abs(t([234]) - 234) <= err
+        assert abs(t((234, )) - 234.0) <= err
+        assert abs(t(array(234)) - 234.0) <= err
+        assert abs(t(array([234])) - 234.0) <= err
+        assert abs(t(array([[234]])) - 234.0) <= err
+        assert abs(t(array([234], "b")) + 22) <= err
+        assert abs(t(array([234], "h")) - 234.0) <= err
+        assert abs(t(array([234], "i")) - 234.0) <= err
+        assert abs(t(array([234], "l")) - 234.0) <= err
+        assert abs(t(array([234], "B")) - 234.0) <= err
+        assert abs(t(array([234], "f")) - 234.0) <= err
+        assert abs(t(array([234], "d")) - 234.0) <= err
         if tname in ["t0", "t4", "s0", "s4"]:
-            assert_(t(1e200) == t(1e300))  # inf
+            assert t(1e200) == t(1e300)  # inf
 
-        # assert_raises(ValueError, t, array([234], 'S1'))
-        assert_raises(ValueError, t, "abc")
+        # pytest.raises(ValueError, t, array([234], 'S1'))
+        pytest.raises(ValueError, t, "abc")
 
-        assert_raises(IndexError, t, [])
-        assert_raises(IndexError, t, ())
+        pytest.raises(IndexError, t, [])
+        pytest.raises(IndexError, t, ())
 
-        assert_raises(Exception, t, t)
-        assert_raises(Exception, t, {})
+        pytest.raises(Exception, t, t)
+        pytest.raises(Exception, t, {})
 
         try:
             r = t(10**400)
-            assert_(repr(r) in ["inf", "Infinity"], repr(r))
+            assert repr(r) in ["inf", "Infinity"]
         except OverflowError:
             pass
 
