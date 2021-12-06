@@ -108,6 +108,17 @@ class Array:
             mid = np.array2string(self._array, separator=', ', prefix=prefix, suffix=suffix)
         return prefix + mid + suffix
 
+    # This function is not required by the spec, but we implement it here for
+    # convenience so that np.asarray(np.array_api.Array) will work.
+    def __array__(self, dtype=None):
+        """
+        Warning: this method is NOT part of the array API spec. Implementers
+        of other libraries need not include it, and users should not assume it
+        will be present in other implementations.
+
+        """
+        return np.asarray(self._array, dtype=dtype)
+
     # These are various helper functions to make the array behavior match the
     # spec in places where it either deviates from or is more strict than
     # NumPy behavior
