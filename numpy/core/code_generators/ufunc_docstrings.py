@@ -1099,9 +1099,9 @@ add_newdoc('numpy.core.umath', 'divide',
     >>> x1 = np.arange(9.0).reshape((3, 3))
     >>> x2 = np.arange(3.0)
     >>> np.divide(x1, x2)
-    array([[ NaN,  1. ,  1. ],
-           [ Inf,  4. ,  2.5],
-           [ Inf,  7. ,  4. ]])
+    array([[nan, 1. , 1. ],
+           [inf, 4. , 2.5],
+           [inf, 7. , 4. ]])
 
     The ``/`` operator can be used as a shorthand for ``np.divide`` on
     ndarrays.
