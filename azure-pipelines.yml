@@ -230,7 +230,7 @@ stages:
 
   - job: Windows
     pool:
-      vmImage: 'windows-latest'
+      vmImage: 'windows-2019'
     strategy:
       maxParallel: 6
       matrix:
