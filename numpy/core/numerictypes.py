@@ -516,7 +516,7 @@ def _scalar_type_key(typ):
     return (dt.kind.lower(), dt.itemsize)
 
 
-ScalarType = [int, float, complex, int, bool, bytes, str, memoryview]
+ScalarType = [int, float, complex, bool, bytes, str, memoryview]
 ScalarType += sorted(_concrete_types, key=_scalar_type_key)
 ScalarType = tuple(ScalarType)
 
