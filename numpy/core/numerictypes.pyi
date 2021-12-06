@@ -137,7 +137,6 @@ ScalarType: tuple[
     type[int],
     type[float],
     type[complex],
-    type[int],
     type[bool],
     type[bytes],
     type[str],
