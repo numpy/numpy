@@ -2023,25 +2023,37 @@ static PyObject *
 static PyObject *
 @name@_hex(PyObject *self) {
 #if @is_half@
-    npy_double val = npy_half_to_double(PyArrayScalar_VAL(self, @Name@));
+    npy_float val = npy_half_to_float(PyArrayScalar_VAL(self, @Name@));
 #else
     npy_@name@ val = PyArrayScalar_VAL(self, @Name@);
 #endif
     // xref: https://stackoverflow.com/a/15197157/5671364
     char buf[
         1 + // sign, '-' or '+'
+#if @is_half@
+        (NPY_SIZEOF_FLOAT * CHAR_BIT + 3) / 4 + // mantissa hex digits max
+#else
         (NPY_SIZEOF_@NAME@ * CHAR_BIT + 3) / 4 + // mantissa hex digits max
+#endif
         1 + // decimal point, '.'
         1 + // mantissa-exponent separator, 'p'
         1 + // mantissa sign, '-' or '+'
+#if @is_half@
+        (NPY_SIZEOF_FLOAT * CHAR_BIT + 2) / 3 + // exponent decimal digits max
+#else
         (NPY_SIZEOF_@NAME@ * CHAR_BIT + 2) / 3 + // exponent decimal digits max
+#endif
         1 // string terminator, '\0'
     ];
 
     if (npy_isnan(val) || !npy_isfinite(val)) {
         return floattype_str(self);
     }
+#if @is_half@
+    npy_float_hex(val, buf);
+#else
     npy_@name@_hex(val, buf);
+#endif
     return PyUnicode_FromString(buf);
 }
 
@@ -2061,7 +2073,11 @@ static PyObject *
         return NULL;
     }
 
+#if @is_half@
+    if (npy_float_fromhex(string, &value) == NPY_FALSE) {
+#else
     if (npy_@name@_fromhex(string, &value) == NPY_FALSE) {
+#endif
         return NULL;
     }
 

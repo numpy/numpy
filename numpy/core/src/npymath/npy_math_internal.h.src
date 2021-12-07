@@ -821,24 +821,19 @@ hex_from_char(char c) {
 #define FDBL_MAX_EXP FLT_MAX_EXP
 
 /**begin repeat
- *  #name = half, float, double, longdouble#
- *  #is_half = 1,0,0,0#
- *  #c    = f, f, , l#
- *  #C    = F, F, , L#
+ *  #name = float, double, longdouble#
+ *  #c    = f, , l#
+ *  #C    = F, , L#
  */
 
 /* TOHEX_NBITS is DBL_MANT_DIG rounded up to the next integer
    of the form 4k+1. */
 #define TOHEX_NBITS @C@DBL_MANT_DIG + 3 - (@C@DBL_MANT_DIG+2)%4
-#if @is_half@
-    #define DBL_TYPE npy_float
-#else
-    #define DBL_TYPE npy_@name@
-#endif
+
 /* Heavily copied from the builtin float.hex */
 NPY_INPLACE void
-npy_@name@_hex(DBL_TYPE x, char *buff) {
-    DBL_TYPE m;
+npy_@name@_hex(npy_@name@ x, char *buff) {
+    npy_@name@ m;
     int e, shift, i, si, esign;
     /* Space for 1+(TOHEX_NBITS-1)/4 digits, a decimal point, and the
        trailing NUL byte. */
@@ -892,9 +887,9 @@ npy_@name@_hex(DBL_TYPE x, char *buff) {
  * should not be used.
  */
 NPY_INPLACE npy_bool
-npy_@name@_fromhex(const char *string, DBL_TYPE *result)
+npy_@name@_fromhex(const char *string, npy_@name@ *result)
 {
-    DBL_TYPE x;
+    npy_@name@ x;
     long exp, top_exp, lsb, key_digit;
     const char *s, *coeff_start, *s_store, *coeff_end, *exp_start, *s_end;
     npy_int half_eps, digit, round_up, negate=0;
@@ -1076,7 +1071,7 @@ npy_@name@_fromhex(const char *string, DBL_TYPE *result)
     for (i = ndigits-1; i > key_digit; i--)
         x = 16.0*x + HEX_DIGIT(i);
     digit = HEX_DIGIT(key_digit);
-    x = 16.0*x + (DBL_TYPE)(digit & (16-2*half_eps));
+    x = 16.0*x + (npy_@name@)(digit & (16-2*half_eps));
 
     /* round-half-even: round up if bit lsb-1 is 1 and at least one of
        bits lsb, lsb-2, lsb-3, lsb-4, ... is 1. */
@@ -1094,7 +1089,7 @@ npy_@name@_fromhex(const char *string, DBL_TYPE *result)
         if (round_up) {
             x += 2*half_eps;
             if (top_exp == @C@DBL_MAX_EXP &&
-                x == ldexp@c@((DBL_TYPE)(2*half_eps), @C@DBL_MANT_DIG))
+                x == ldexp@c@((npy_@name@)(2*half_eps), @C@DBL_MANT_DIG))
                 /* overflow corner case: pre-rounded value <
                    2**DBL_MAX_EXP; rounded=2**DBL_MAX_EXP. */
                 goto overflow_error;
@@ -1129,7 +1124,6 @@ npy_@name@_fromhex(const char *string, DBL_TYPE *result)
 }
 
 #undef TOHEX_NBITS
-#undef DBL_TYPE
 /**end repeat**/
 
 #undef FDBL_MANT_DIG
