@@ -506,6 +506,20 @@ class TestInterpolate:
                 c = cheb.chebinterpolate(powx, deg, (p,))
                 assert_almost_equal(cheb.chebval(x, c), powx(x, p), decimal=12)
 
+    def test_2d_approximation(self):
+
+        def powxy(x, y, p):
+            return (x+y)**p
+
+        x = np.linspace(-1, 1, 10)
+        x1, x2 = np.meshgrid(x, x)
+        for deg in range(0, 10):
+            for p in range(0, deg + 1):
+                c = cheb.chebinterpolate(powxy, (deg, deg), (p,))
+                assert_almost_equal(cheb.chebval2d(x1, x2, c),
+                                    powxy(x1, x2, p),
+                                    decimal=12)
+
 
 class TestCompanion:
 
