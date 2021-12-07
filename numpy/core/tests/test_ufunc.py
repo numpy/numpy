@@ -2171,6 +2171,26 @@ class TestUfunc:
         np.multiply.reduce(arr, out=single_res, dtype=np.float32)
         assert single_res != res
 
+    def test_reducelike_output_needs_identical_cast(self):
+        # Checks the case where the we have a simple byte-swap works, maily
+        # tests that this is not rejected directly.
+        # (interesting because we require descriptor identity in reducelikes).
+        arr = np.ones(20, dtype="f8")
+        out = np.empty((), dtype=arr.dtype.newbyteorder())
+        expected = np.add.reduce(arr)
+        np.add.reduce(arr, out=out)
+        assert_array_equal(expected, out)
+        # Check reduceat:
+        out = np.empty(2, dtype=arr.dtype.newbyteorder())
+        expected = np.add.reduceat(arr, [0, 1])
+        np.add.reduceat(arr, [0, 1], out=out)
+        assert_array_equal(expected, out)
+        # And accumulate:
+        out = np.empty(arr.shape, dtype=arr.dtype.newbyteorder())
+        expected = np.add.accumulate(arr)
+        np.add.accumulate(arr, out=out)
+        assert_array_equal(expected, out)
+
     def test_reduce_noncontig_output(self):
         # Check that reduction deals with non-contiguous output arrays
         # appropriately.
