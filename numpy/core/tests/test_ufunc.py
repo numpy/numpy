@@ -1762,12 +1762,15 @@ class TestUfunc:
         result = _rational_tests.test_add(a, b)
         assert_equal(result, target)
 
-        # But since we use the old type resolver, this may not work
-        # for dtype variations unless the output dtype is given:
+        # This works even more generally, so long the default common-dtype
+        # promoter works out:
         result = _rational_tests.test_add(a, b.astype(np.uint16), out=c)
         assert_equal(result, target)
+
+        # But, it can be fooled, e.g. (use scalars, which forces legacy
+        # type resolution to kick in, which then fails):
         with assert_raises(TypeError):
-            _rational_tests.test_add(a, b.astype(np.uint16))
+            _rational_tests.test_add(a, np.uint16(2))
 
     def test_operand_flags(self):
         a = np.arange(16, dtype='l').reshape(4, 4)
@@ -2123,6 +2126,17 @@ class TestUfunc:
         c = np.array([1., 2.])
         assert_array_equal(ufunc(a, c), ufunc([True, True], True))
         assert ufunc.reduce(a) == True
+        # check that the output has no effect:
+        out = np.zeros(2, dtype=np.int32)
+        expected = ufunc([True, True], True).astype(out.dtype)
+        assert_array_equal(ufunc(a, c, out=out), expected)
+        out = np.zeros((), dtype=np.int32)
+        assert ufunc.reduce(a, out=out) == True
+        # Last check, test reduction when out and a match (the complexity here
+        # is that the "i,i->?" may seem right, but should not match.
+        a = np.array([3], dtype="i")
+        out = np.zeros((), dtype=a.dtype)
+        assert ufunc.reduce(a, out=out) == 1
 
     @pytest.mark.parametrize("ufunc",
              [np.logical_and, np.logical_or, np.logical_xor])
@@ -2133,6 +2147,49 @@ class TestUfunc:
         with pytest.raises(TypeError):
             # It would be safe, but not equiv casting:
             ufunc(a, c, out=out, casting="equiv")
+
+    def test_reducelike_out_promotes(self):
+        # Check that the out argument to reductions is considered for
+        # promotion.  See also gh-20455.
+        # Note that these paths could prefer `initial=` in the future and
+        # do not up-cast to the default integer for add and prod
+        arr = np.ones(1000, dtype=np.uint8)
+        out = np.zeros((), dtype=np.uint16)
+        assert np.add.reduce(arr, out=out) == 1000
+        arr[:10] = 2
+        assert np.multiply.reduce(arr, out=out) == 2**10
+
+        # For legacy dtypes, the signature currently has to be forced if `out=`
+        # is passed.  The two paths below should differ, without `dtype=` the
+        # expected result should be: `np.prod(arr.astype("f8")).astype("f4")`!
+        arr = np.full(5, 2**25-1, dtype=np.int64)
+
+        # float32 and int64 promote to float64:
+        res = np.zeros((), dtype=np.float32)
+        # If `dtype=` is passed, the calculation is forced to float32:
+        single_res = np.zeros((), dtype=np.float32)
+        np.multiply.reduce(arr, out=single_res, dtype=np.float32)
+        assert single_res != res
+
+    def test_reducelike_output_needs_identical_cast(self):
+        # Checks the case where the we have a simple byte-swap works, maily
+        # tests that this is not rejected directly.
+        # (interesting because we require descriptor identity in reducelikes).
+        arr = np.ones(20, dtype="f8")
+        out = np.empty((), dtype=arr.dtype.newbyteorder())
+        expected = np.add.reduce(arr)
+        np.add.reduce(arr, out=out)
+        assert_array_equal(expected, out)
+        # Check reduceat:
+        out = np.empty(2, dtype=arr.dtype.newbyteorder())
+        expected = np.add.reduceat(arr, [0, 1])
+        np.add.reduceat(arr, [0, 1], out=out)
+        assert_array_equal(expected, out)
+        # And accumulate:
+        out = np.empty(arr.shape, dtype=arr.dtype.newbyteorder())
+        expected = np.add.accumulate(arr)
+        np.add.accumulate(arr, out=out)
+        assert_array_equal(expected, out)
 
     def test_reduce_noncontig_output(self):
         # Check that reduction deals with non-contiguous output arrays
