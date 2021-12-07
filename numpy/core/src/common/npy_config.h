@@ -135,10 +135,6 @@
 /* np.power(..., dtype=np.complex256) doesn't report overflow */
 #undef HAVE_CPOWL
 #undef HAVE_CEXPL
-
-/* Builtin abs reports overflow */
-#undef HAVE_CABSL
-#undef HAVE_HYPOTL
 #endif
 
 /* Disable broken gnu trig functions */
