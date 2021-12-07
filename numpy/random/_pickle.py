@@ -81,3 +81,4 @@ def __randomstate_ctor(bit_generator_name='MT19937'):
                                                    'BitGenerator module.')
 
     return RandomState(bit_generator())
+

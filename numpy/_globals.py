@@ -77,6 +77,7 @@ class _NoValueType:
 
     """
     __instance = None
+
     def __new__(cls):
         # ensure that only one instance exists
         if not cls.__instance:
@@ -127,3 +128,4 @@ class _CopyMode(enum.Enum):
 
 
 _CopyMode.__module__ = 'numpy'
+
