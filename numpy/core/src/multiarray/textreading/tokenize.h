@@ -3,6 +3,8 @@
 #define _TOKENIZE_H_
 
 #include <Python.h>
+#include "numpy/ndarraytypes.h"
+
 #include "textreading/stream.h"
 #include "textreading/parser_config.h"
 
@@ -37,7 +39,7 @@ typedef struct {
     tokenizer_parsing_state unquoted_state;
     int unicode_kind;
     int buf_state;
-    size_t num_fields;
+    npy_intp num_fields;
     /* the buffer we are currently working on */
     char *pos;
     char *end;
@@ -48,8 +50,8 @@ typedef struct {
      * second byte is there to allow easy appending of an additional empty
      * word at the end (this word is also NUL terminated).
      */
-    size_t field_buffer_length;
-    size_t field_buffer_pos;
+    npy_intp field_buffer_length;
+    npy_intp field_buffer_pos;
     Py_UCS4 *field_buffer;
 
     /*
@@ -60,7 +62,7 @@ typedef struct {
      * The tokenizer assumes at least one field is allocated.
      */
     field_info *fields;
-    size_t fields_size;
+    npy_intp fields_size;
 } tokenizer_state;
 
 

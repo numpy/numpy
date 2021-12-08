@@ -52,8 +52,8 @@ static NPY_INLINE int
 copy_to_field_buffer_@type@(tokenizer_state *ts,
         const @type@ *chunk_start, const @type@ *chunk_end)
 {
-    size_t chunk_length = chunk_end - chunk_start;
-    size_t size = chunk_length + ts->field_buffer_pos + 2;
+    npy_intp chunk_length = chunk_end - chunk_start;
+    npy_intp size = chunk_length + ts->field_buffer_pos + 2;
 
     if (NPY_UNLIKELY(ts->field_buffer_length < size)) {
         npy_intp alloc_size = grow_size_and_multiply(&size, 32, sizeof(Py_UCS4));
@@ -88,8 +88,8 @@ add_field(tokenizer_state *ts)
     /* The previous field is done, advance to keep a NUL byte at the end */
     ts->field_buffer_pos += 1;
 
-    if (NPY_UNLIKELY((size_t)ts->num_fields + 1 > ts->fields_size)) {
-        size_t size = (size_t)ts->num_fields;
+    if (NPY_UNLIKELY(ts->num_fields + 1 > ts->fields_size)) {
+        npy_intp size = ts->num_fields;
 
         npy_intp alloc_size = grow_size_and_multiply(
                 &size, 4, sizeof(field_info));

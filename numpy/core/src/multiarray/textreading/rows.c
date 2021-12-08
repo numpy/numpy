@@ -157,7 +157,7 @@ read_rows(stream *s,
 {
     char *data_ptr = NULL;
     int current_num_fields;
-    size_t row_size = out_descr->elsize;
+    npy_intp row_size = out_descr->elsize;
     PyObject **conv_funcs = NULL;
 
     bool needs_init = PyDataType_FLAGCHK(out_descr, NPY_NEEDS_INIT);
@@ -169,7 +169,7 @@ read_rows(stream *s,
     /* Make sure we own `data_array` for the purpose of error handling */
     Py_XINCREF(data_array);
     size_t rows_per_block = 1;  /* will be increased depending on row size */
-    Py_ssize_t data_allocated_rows = 0;
+    npy_intp data_allocated_rows = 0;
 
     int ts_result = 0;
     tokenizer_state ts;
@@ -290,7 +290,7 @@ read_rows(stream *s,
              * Grow by ~25% and rounded up to the next rows_per_block
              * NOTE: This is based on very crude timings and could be refined!
              */
-            size_t new_rows = data_allocated_rows;
+            npy_intp new_rows = data_allocated_rows;
             npy_intp alloc_size = grow_size_and_multiply(
                     &new_rows, rows_per_block, row_size);
             if (alloc_size < 0) {
