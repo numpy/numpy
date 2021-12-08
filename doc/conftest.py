@@ -22,6 +22,7 @@ class SkipMatplotlibOutputChecker(doctest.OutputChecker):
                 break
         return OutputChecker.check_output(self, want, got, optionflags)
 
+
 doctest.OutputChecker = SkipMatplotlibOutputChecker
 
 @pytest.fixture(autouse=True)
