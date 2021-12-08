@@ -4539,9 +4539,6 @@ static struct PyMethodDef array_module_methods[] = {
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"_monotonicity", (PyCFunction)arr__monotonicity,
         METH_VARARGS | METH_KEYWORDS, NULL},
-    {"implement_array_function",
-        (PyCFunction)array_implement_array_function,
-        METH_VARARGS, NULL},
     {"interp", (PyCFunction)arr_interp,
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"interp_complex", (PyCFunction)arr_interp_complex,
@@ -5112,6 +5109,12 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
     if (set_typeinfo(d) != 0) {
         goto err;
     }
+    if (PyType_Ready(&PyArrayFunctionDispatcher_Type) < 0) {
+        goto err;
+    }
+    PyDict_SetItemString(
+            d, "_ArrayFunctionDispatcher",
+            (PyObject *)&PyArrayFunctionDispatcher_Type);
     if (PyType_Ready(&PyArrayMethod_Type) < 0) {
         goto err;
     }
