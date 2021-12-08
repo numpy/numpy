@@ -62,7 +62,7 @@ promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
         PyArrayObject *const ops[],
         PyArray_DTypeMeta *signature[],
         PyArray_DTypeMeta *op_dtypes[],
-        npy_bool allow_legacy_promotion, npy_bool cache);
+        npy_bool allow_legacy_promotion);
 
 
 /**
@@ -490,10 +490,9 @@ call_promoter_and_recurse(PyUFuncObject *ufunc, PyObject *promoter,
     if (Py_EnterRecursiveCall(" during ufunc promotion.") != 0) {
         goto finish;
     }
-    /* TODO: The caching logic here may need revising: */
     resolved_info = promote_and_get_info_and_ufuncimpl(ufunc,
             operands, signature, new_op_dtypes,
-            /* no legacy promotion */ NPY_FALSE, /* cache */ NPY_TRUE);
+            /* no legacy promotion */ NPY_FALSE);
 
     Py_LeaveRecursiveCall();
 
@@ -658,7 +657,7 @@ promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
         PyArrayObject *const ops[],
         PyArray_DTypeMeta *signature[],
         PyArray_DTypeMeta *op_dtypes[],
-        npy_bool allow_legacy_promotion, npy_bool cache)
+        npy_bool allow_legacy_promotion)
 {
     /*
      * Fetch the dispatching info which consists of the implementation and
@@ -677,8 +676,8 @@ promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
     }
 
     /*
-     * If `info == NULL`, the caching failed, repeat using the full resolution
-     * in `resolve_implementation_info`.
+     * If `info == NULL`, loading from cache failed, use the full resolution
+     * in `resolve_implementation_info` (which caches its result on success).
      */
     if (info == NULL) {
         if (resolve_implementation_info(ufunc,
@@ -691,7 +690,7 @@ promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
              * Found the ArrayMethod and NOT promoter.  Before returning it
              * add it to the cache for faster lookup in the future.
              */
-            if (cache && PyArrayIdentityHash_SetItem(ufunc->_dispatch_cache,
+            if (PyArrayIdentityHash_SetItem(ufunc->_dispatch_cache,
                     (PyObject **)op_dtypes, info, 0) < 0) {
                 return NULL;
             }
@@ -712,6 +711,11 @@ promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
             return NULL;
         }
         else if (info != NULL) {
+            /* Add result to the cache using the original types: */
+            if (PyArrayIdentityHash_SetItem(ufunc->_dispatch_cache,
+                    (PyObject **)op_dtypes, info, 0) < 0) {
+                return NULL;
+            }
             return info;
         }
     }
@@ -735,7 +739,12 @@ promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
         return NULL;
     }
     info = promote_and_get_info_and_ufuncimpl(ufunc,
-            ops, signature, new_op_dtypes, NPY_FALSE, cacheable);
+            ops, signature, new_op_dtypes, NPY_FALSE);
+    /* Add this to the cache using the original types: */
+    if (cacheable && PyArrayIdentityHash_SetItem(ufunc->_dispatch_cache,
+            (PyObject **)op_dtypes, info, 0) < 0) {
+        return NULL;
+    }
     for (int i = 0; i < ufunc->nargs; i++) {
         Py_XDECREF(new_op_dtypes);
     }
@@ -828,7 +837,7 @@ promote_and_get_ufuncimpl(PyUFuncObject *ufunc,
     }
 
     PyObject *info = promote_and_get_info_and_ufuncimpl(ufunc,
-            ops, signature, op_dtypes, allow_legacy_promotion, NPY_TRUE);
+            ops, signature, op_dtypes, allow_legacy_promotion);
 
     if (info == NULL) {
         if (!PyErr_Occurred()) {
