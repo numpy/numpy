@@ -44,11 +44,6 @@ _readtext_from_stream(stream *s, parser_config *pc,
     int ncols;
     field_type *ft = NULL;
 
-    /* TODO: Find better solution maybe? */
-    if (double_descr == NULL) {
-        double_descr = PyArray_DescrFromType(NPY_DOUBLE);
-    }
-
     /*
      * If dtypes[0] is dtype the input was not structured and the result
      * is considered "homogeneous" and we have to discover the number of
@@ -124,7 +119,6 @@ _load_from_filelike(PyObject *NPY_UNUSED(mod),
         .comment = '#',
         .quote = '"',
         .imaginary_unit = 'j',
-        .allow_float_for_int = true,
         .allow_embedded_newline = true,
         .delimiter_is_whitespace = false,
         .ignore_leading_whitespace = false,

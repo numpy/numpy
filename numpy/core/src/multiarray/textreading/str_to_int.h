@@ -7,7 +7,6 @@
 
 #include "textreading/parser_config.h"
 
-extern NPY_NO_EXPORT PyArray_Descr *double_descr;
 
 /*
  * The following two string conversion functions are largely equivalent

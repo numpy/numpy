@@ -56,12 +56,6 @@ typedef struct {
     Py_UCS4 imaginary_unit;
 
      /*
-      *  If true, when an integer dtype is given, the field is allowed
-      *  to contain a floating point value.  It will be cast to the
-      *  integer type.
-      */
-     bool allow_float_for_int;
-     /*
       * Data should be encoded as `latin1` when using python converter
       * (implementing `loadtxt` default Python 2 compatibility mode).
       * The c byte converter is used when the user requested `dtype="S"`.
