@@ -48,7 +48,7 @@ basic statistical operations, random simulation and much more.
 
     .. link-button:: getting_started
         :type: ref
-        :text: To the getting started page
+        :text: 
         :classes: stretched-link
     
     ---
@@ -60,12 +60,10 @@ basic statistical operations, random simulation and much more.
     The user guide provides in-depth information on the
     key concepts of pandas with useful background information and explanation.
 
-    +++
-
     .. link-button:: user
-            :type: ref
-            :text: 
-            :classes: stretched-link
+        :type: ref
+        :text: 
+        :classes: stretched-link
 
     ---
     :img-top: ../source/_static/index-images/api.svg
@@ -78,12 +76,10 @@ basic statistical operations, random simulation and much more.
     methods work and which parameters can be used. It assumes that you have an
     understanding of the key concepts.
 
-    +++
-
     .. link-button:: reference
-            :type: ref
-            :text: To the reference guide
-            :classes: stretched-link
+        :type: ref
+        :text: 
+        :classes: stretched-link 
 
     ---
     :img-top: ../source/_static/index-images/contributor.svg
@@ -95,12 +91,10 @@ basic statistical operations, random simulation and much more.
     documentation? The contributing guidelines will guide you through the
     process of improving NumPy.
 
-    +++
-
     .. link-button:: devindex
-            :type: ref
-            :text: To the development guide
-            :classes: stretched-link
+        :type: ref
+        :text: 
+        :classes: stretched-link
 
 .. This is not really the index page, that is found in
    _templates/indexcontent.html The toctree content here will be added to the
