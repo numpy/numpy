@@ -3433,7 +3433,7 @@ class TestComplexFunctions:
         x_series = np.logspace(-20, -3.001, 200)
         x_basic = np.logspace(-2.999, 0, 10, endpoint=False)
 
-        if glibc_older_than("2.19") and dtype is np.longcomplex:
+        if dtype is np.longcomplex:
             if (platform.machine() == 'aarch64' and bad_arcsinh()):
                 pytest.skip("Trig functions of np.longcomplex values known "
                             "to be inaccurate on aarch64 for some compilation "

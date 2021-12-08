@@ -17,7 +17,7 @@ _dt_ = nt.sctype2char
 
 # functions that are methods
 __all__ = [
-    'alen', 'all', 'alltrue', 'amax', 'amin', 'any', 'argmax',
+    'all', 'alltrue', 'amax', 'amin', 'any', 'argmax',
     'argmin', 'argpartition', 'argsort', 'around', 'choose', 'clip',
     'compress', 'cumprod', 'cumproduct', 'cumsum', 'diagonal', 'mean',
     'ndim', 'nonzero', 'partition', 'prod', 'product', 'ptp', 'put',
@@ -1980,25 +1980,27 @@ def shape(a):
 
     See Also
     --------
-    len
+    len : ``len(a)`` is equivalent to ``np.shape(a)[0]`` for N-D arrays with
+          ``N>=1``.
     ndarray.shape : Equivalent array method.
 
     Examples
     --------
     >>> np.shape(np.eye(3))
     (3, 3)
-    >>> np.shape([[1, 2]])
+    >>> np.shape([[1, 3]])
     (1, 2)
     >>> np.shape([0])
     (1,)
     >>> np.shape(0)
     ()
 
-    >>> a = np.array([(1, 2), (3, 4)], dtype=[('x', 'i4'), ('y', 'i4')])
+    >>> a = np.array([(1, 2), (3, 4), (5, 6)],
+    ...              dtype=[('x', 'i4'), ('y', 'i4')])
     >>> np.shape(a)
-    (2,)
+    (3,)
     >>> a.shape
-    (2,)
+    (3,)
 
     """
     try:
@@ -2915,51 +2917,6 @@ def amin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     """
     return _wrapreduction(a, np.minimum, 'min', axis, None, out,
                           keepdims=keepdims, initial=initial, where=where)
-
-
-def _alen_dispathcer(a):
-    return (a,)
-
-
-@array_function_dispatch(_alen_dispathcer)
-def alen(a):
-    """
-    Return the length of the first dimension of the input array.
-
-    .. deprecated:: 1.18
-       `numpy.alen` is deprecated, use `len` instead.
-
-    Parameters
-    ----------
-    a : array_like
-       Input array.
-
-    Returns
-    -------
-    alen : int
-       Length of the first dimension of `a`.
-
-    See Also
-    --------
-    shape, size
-
-    Examples
-    --------
-    >>> a = np.zeros((7,4,5))
-    >>> a.shape[0]
-    7
-    >>> np.alen(a)
-    7
-
-    """
-    # NumPy 1.18.0, 2019-08-02
-    warnings.warn(
-        "`np.alen` is deprecated, use `len` instead",
-        DeprecationWarning, stacklevel=2)
-    try:
-        return len(a)
-    except TypeError:
-        return len(array(a, ndmin=1))
 
 
 def _prod_dispatcher(a, axis=None, dtype=None, out=None, keepdims=None,

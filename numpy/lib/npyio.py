@@ -285,7 +285,8 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
     ----------
     file : file-like object, string, or pathlib.Path
         The file to read. File-like objects must support the
-        ``seek()`` and ``read()`` methods. Pickled files require that the
+        ``seek()`` and ``read()`` methods and must always 
+        be opened in binary mode.  Pickled files require that the
         file-like object support the ``readline()`` method as well.
     mmap_mode : {None, 'r+', 'r', 'w+', 'c'}, optional
         If not None, then memory-map the file, using the given mode (see
@@ -1806,22 +1807,21 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         byte_converters = False
 
     # Initialize the filehandle, the LineSplitter and the NameValidator
+    if isinstance(fname, os_PathLike):
+        fname = os_fspath(fname)
+    if isinstance(fname, str):
+        fid = np.lib._datasource.open(fname, 'rt', encoding=encoding)
+        fid_ctx = contextlib.closing(fid)
+    else:
+        fid = fname
+        fid_ctx = contextlib.nullcontext(fid)
     try:
-        if isinstance(fname, os_PathLike):
-            fname = os_fspath(fname)
-        if isinstance(fname, str):
-            fid = np.lib._datasource.open(fname, 'rt', encoding=encoding)
-            fid_ctx = contextlib.closing(fid)
-        else:
-            fid = fname
-            fid_ctx = contextlib.nullcontext(fid)
         fhd = iter(fid)
     except TypeError as e:
         raise TypeError(
-            f"fname must be a string, filehandle, list of strings,\n"
-            f"or generator. Got {type(fname)} instead."
+            "fname must be a string, a filehandle, a sequence of strings,\n"
+            f"or an iterator of strings. Got {type(fname)} instead."
         ) from e
-
     with fid_ctx:
         split_line = LineSplitter(delimiter=delimiter, comments=comments,
                                   autostrip=autostrip, encoding=encoding)

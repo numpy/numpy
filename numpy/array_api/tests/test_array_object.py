@@ -4,6 +4,7 @@ from numpy.testing import assert_raises
 import numpy as np
 
 from .. import ones, asarray, result_type, all, equal
+from .._array_object import Array
 from .._dtypes import (
     _all_dtypes,
     _boolean_dtypes,
@@ -301,3 +302,23 @@ def test_device_property():
 
     assert all(equal(asarray(a, device='cpu'), a))
     assert_raises(ValueError, lambda: asarray(a, device='gpu'))
+
+def test_array_properties():
+    a = ones((1, 2, 3))
+    b = ones((2, 3))
+    assert_raises(ValueError, lambda: a.T)
+
+    assert isinstance(b.T, Array)
+    assert b.T.shape == (3, 2)
+
+    assert isinstance(a.mT, Array)
+    assert a.mT.shape == (1, 3, 2)
+    assert isinstance(b.mT, Array)
+    assert b.mT.shape == (3, 2)
+
+def test___array__():
+    a = ones((2, 3), dtype=int16)
+    assert np.asarray(a) is a._array
+    b = np.asarray(a, dtype=np.float64)
+    assert np.all(np.equal(b, np.ones((2, 3), dtype=np.float64)))
+    assert b.dtype == np.float64

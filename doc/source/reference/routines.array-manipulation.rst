@@ -59,7 +59,6 @@ Changing kind of array
    asfortranarray
    ascontiguousarray
    asarray_chkfinite
-   asscalar
    require
 
 Joining arrays

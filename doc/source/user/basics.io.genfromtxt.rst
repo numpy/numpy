@@ -231,9 +231,7 @@ When ``dtype=None``, the type of each column is determined iteratively from
 its data.  We start by checking whether a string can be converted to a
 boolean (that is, if the string matches ``true`` or ``false`` in lower
 cases); then whether it can be converted to an integer, then to a float,
-then to a complex and eventually to a string.  This behavior may be changed
-by modifying the default mapper of the
-:class:`~numpy.lib._iotools.StringConverter` class.
+then to a complex and eventually to a string.
 
 The option ``dtype=None`` is provided for convenience.  However, it is
 significantly slower than setting the dtype explicitly.
@@ -514,15 +512,15 @@ output array will then be a :class:`~numpy.ma.MaskedArray`.
 Shortcut functions
 ==================
 
-In addition to :func:`~numpy.genfromtxt`, the :mod:`numpy.lib.npyio` module
+In addition to :func:`~numpy.genfromtxt`, the ``numpy.lib.npyio`` module
 provides several convenience functions derived from
 :func:`~numpy.genfromtxt`.  These functions work the same way as the
 original, but they have different default values.
 
-:func:`~numpy.npyio.recfromtxt`
+``numpy.lib.npyio.recfromtxt``
    Returns a standard :class:`numpy.recarray` (if ``usemask=False``) or a
-   :class:`~numpy.ma.mrecords.MaskedRecords` array (if ``usemaske=True``).  The
+   ``numpy.ma.mrecords.MaskedRecords`` array (if ``usemaske=True``).  The
    default dtype is ``dtype=None``, meaning that the types of each column
    will be automatically determined.
-:func:`~numpy.npyio.recfromcsv`
-   Like :func:`~numpy.npyio.recfromtxt`, but with a default ``delimiter=","``.
+``numpy.lib.npyio.recfromcsv``
+   Like ``numpy.lib.npyio.recfromtxt``, but with a default ``delimiter=","``.

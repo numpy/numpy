@@ -998,10 +998,6 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
     }
     if (*allow_legacy_promotion && (!all_scalar && any_scalar)) {
         *force_legacy_promotion = should_use_min_scalar(nin, out_op, 0, NULL);
-        /*
-         * TODO: if this is False, we end up in a "very slow" path that should
-         *       be avoided.  This makes `int_arr + 0.` ~40% slower.
-         */
     }
 
     /* Convert and fill in output arguments */
@@ -2717,11 +2713,11 @@ reducelike_promote_and_resolve(PyUFuncObject *ufunc,
         char *method)
 {
     /*
-     * Note that the `ops` is not realy correct.  But legacy resolution
+     * Note that the `ops` is not really correct.  But legacy resolution
      * cannot quite handle the correct ops (e.g. a NULL first item if `out`
-     * is NULL), and it should only matter in very strange cases.
+     * is NULL) so we pass `arr` instead in that case.
      */
-    PyArrayObject *ops[3] = {arr, arr, NULL};
+    PyArrayObject *ops[3] = {out ? out : arr, arr, out};
     /*
      * TODO: If `out` is not provided, arguably `initial` could define
      *       the first DType (and maybe also the out one), that way
@@ -2741,11 +2737,12 @@ reducelike_promote_and_resolve(PyUFuncObject *ufunc,
     }
 
     PyArrayMethodObject *ufuncimpl = promote_and_get_ufuncimpl(ufunc,
-            ops, signature, operation_DTypes, NPY_FALSE, NPY_TRUE);
-    Py_DECREF(operation_DTypes[1]);
+            ops, signature, operation_DTypes, NPY_FALSE, NPY_FALSE, NPY_TRUE);
+    /* Output can currently get cleared, others XDECREF in case of error */
+    Py_XDECREF(operation_DTypes[1]);
     if (out != NULL) {
-        Py_DECREF(operation_DTypes[0]);
-        Py_DECREF(operation_DTypes[2]);
+        Py_XDECREF(operation_DTypes[0]);
+        Py_XDECREF(operation_DTypes[2]);
     }
     if (ufuncimpl == NULL) {
         return NULL;
@@ -2771,8 +2768,10 @@ reducelike_promote_and_resolve(PyUFuncObject *ufunc,
     if (out_descrs[0] != out_descrs[2] || (
             enforce_uniform_args && out_descrs[0] != out_descrs[1])) {
         PyErr_Format(PyExc_TypeError,
-                "the resolved dtypes are not compatible with %s.%s",
-                ufunc_get_name_cstr(ufunc), method);
+                "the resolved dtypes are not compatible with %s.%s. "
+                "Resolved (%R, %R, %R)",
+                ufunc_get_name_cstr(ufunc), method,
+                out_descrs[0], out_descrs[1], out_descrs[2]);
         goto fail;
     }
     /* TODO: This really should _not_ be unsafe casting (same above)! */
@@ -4852,7 +4851,8 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
      */
     PyArrayMethodObject *ufuncimpl = promote_and_get_ufuncimpl(ufunc,
             operands, signature,
-            operand_DTypes, force_legacy_promotion, allow_legacy_promotion);
+            operand_DTypes, force_legacy_promotion, allow_legacy_promotion,
+            NPY_FALSE);
     if (ufuncimpl == NULL) {
         goto fail;
     }
@@ -5190,6 +5190,61 @@ PyUFunc_FromFuncAndDataAndSignatureAndIdentity(PyUFuncGenericFunction *func, voi
 
         info = add_and_return_legacy_wrapping_ufunc_loop(ufunc, op_dtypes, 1);
         if (info == NULL) {
+            Py_DECREF(ufunc);
+            return NULL;
+        }
+    }
+
+    PyObject *promoter = NULL;
+    if (ufunc->ntypes == 1) {
+        npy_bool all_object = NPY_TRUE;
+        for (int i = 0; i < ufunc->nargs; i++) {
+            if (ufunc->types[i] != NPY_OBJECT) {
+                all_object = NPY_FALSE;
+                break;
+            }
+        }
+        if (all_object) {
+            promoter = PyCapsule_New(&object_only_ufunc_promoter,
+                    "numpy._ufunc_promoter", NULL);
+            if (promoter == NULL) {
+                Py_DECREF(ufunc);
+                return NULL;
+            }
+        }
+    }
+    if (promoter == NULL && ufunc->nin > 1) {
+        promoter = PyCapsule_New(&default_ufunc_promoter,
+                "numpy._ufunc_promoter", NULL);
+        if (promoter == NULL) {
+            Py_DECREF(ufunc);
+            return NULL;
+        }
+    }
+    if (promoter != NULL) {
+        /* Always install default promoter using the common DType */
+        PyObject *dtype_tuple = PyTuple_New(ufunc->nargs);
+        if (dtype_tuple == NULL) {
+            Py_DECREF(promoter);
+            Py_DECREF(ufunc);
+            return NULL;
+        }
+        for (int i = 0; i < ufunc->nargs; i++) {
+            Py_INCREF(Py_None);
+            PyTuple_SET_ITEM(dtype_tuple, i, Py_None);
+        }
+        PyObject *info = PyTuple_Pack(2, dtype_tuple, promoter);
+        Py_DECREF(dtype_tuple);
+        Py_DECREF(promoter);
+        if (info == NULL) {
+            Py_DECREF(ufunc);
+            return NULL;
+        }
+
+        int res = PyUFunc_AddLoop((PyUFuncObject *)ufunc, info, 0);
+        Py_DECREF(info);
+        if (res < 0) {
+            Py_DECREF(ufunc);
             return NULL;
         }
     }
@@ -5963,7 +6018,7 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
 
     PyArrayMethodObject *ufuncimpl = promote_and_get_ufuncimpl(ufunc,
             operands, signature, operand_DTypes,
-            force_legacy_promotion, allow_legacy_promotion);
+            force_legacy_promotion, allow_legacy_promotion, NPY_FALSE);
     if (ufuncimpl == NULL) {
         goto fail;
     }

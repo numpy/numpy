@@ -1829,6 +1829,14 @@ def fromfunction(function, shape, *, dtype=float, like=None, **kwargs):
 
     Examples
     --------
+    >>> np.fromfunction(lambda i, j: i, (2, 2), dtype=float)
+    array([[0., 0.],
+           [1., 1.]])
+           
+    >>> np.fromfunction(lambda i, j: j, (2, 2), dtype=float)    
+    array([[0., 1.],
+           [0., 1.]])
+           
     >>> np.fromfunction(lambda i, j: i == j, (3, 3), dtype=int)
     array([[ True, False, False],
            [False,  True, False],

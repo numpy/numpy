@@ -50,26 +50,37 @@ jobs:
       matrix:
         include:
         # manylinux builds
-        - os: ubuntu-latest
+        - os: ubuntu-20.04
           python: "38"
           platform: manylinux_x86_64
-        - os: ubuntu-latest
+        - os: ubuntu-20.04
           python: "39"
           platform: manylinux_x86_64
-        - os: ubuntu-latest
+        - os: ubuntu-20.04
           python: "310"
           platform: manylinux_x86_64
 
-        # macos builds
-        - os: macos-latest
+        # MacOS builds
+        - os: macos-10.15
           python: "38"
-          platform: macosx_x86_64
-        - os: macos-latest
+          platform: macosx_*
+        - os: macos-10.15
           python: "39"
-          platform: macosx_x86_64
-        - os: macos-latest
+          platform: macosx_*
+        - os: macos-10.15
           python: "310"
-          platform: macosx_x86_64
+          platform: macosx_*
+
+        # Windows builds
+        - os: windows-2019
+          python: "38"
+          platform: win_amd64
+        - os: windows-2019
+          python: "39"
+          platform: win_amd64
+        - os: windows-2019
+          python: "310"
+          platform: win_amd64
 
     steps:
       - name: Checkout numpy
@@ -91,9 +102,22 @@ jobs:
           CIBW_ENVIRONMENT_LINUX: CFLAGS='-std=c99 -fno-strict-aliasing'
                                   LDFLAGS='-Wl,--strip-debug'
                                   OPENBLAS64_=/usr/local
+                                  RUNNER_OS='Linux'
           # MACOS linker doesn't support stripping symbols
           CIBW_ENVIRONMENT_MACOS: CFLAGS='-std=c99 -fno-strict-aliasing'
                                   OPENBLAS64_=/usr/local
+                                  CC=clang
+                                  CXX=clang++
+          # TODO: Add universal2 wheels, we need to fuse them manually
+          # instead of going through cibuildwheel
+          # This is because cibuildwheel tries to make a fat wheel
+          # https://github.com/multi-build/multibuild/blame/devel/README.rst#L541-L565
+          # for more info
+          CIBW_ARCHS_MACOS: x86_64 arm64
+          CIBW_TEST_SKIP: "*_arm64 *_universal2:arm64"
+          # Hardcode for now,blas stuff needs changes for 32-bit
+          CIBW_ENVIRONMENT_WINDOWS: NPY_USE_BLAS_ILP64=1
+                                    OPENBLAS64_=openblas
           CIBW_BUILD_VERBOSITY: 3
           CIBW_BEFORE_BUILD: bash {project}/tools/wheels/cibw_before_build.sh {project}
           CIBW_BEFORE_TEST: pip install -r {project}/test_requirements.txt

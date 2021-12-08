@@ -386,7 +386,7 @@ avx512_permute_x8var_pd(__m512d t0, __m512d t1, __m512d t2, __m512d t3,
  * #and_masks =_mm256_and_ps, _mm512_kand#
  * #xor_masks =_mm256_xor_ps, _mm512_kxor#
  * #fmadd = _mm256_fmadd_ps, _mm512_fmadd_ps#
- * #mask_to_int = _mm256_movemask_ps, #
+ * #mask_to_int = _mm256_movemask_ps, npyv_tobits_b32#
  * #full_mask= 0xFF, 0xFFFF#
  * #masked_store = _mm256_maskstore_ps, _mm512_mask_storeu_ps#
  * #cvtps_epi32 = _mm256_cvtps_epi32, #
@@ -833,11 +833,19 @@ AVX512F_exp_DOUBLE(npy_double * op,
         op += num_lanes;
         num_remaining_elements -= num_lanes;
     }
-    if (overflow_mask) {
+    /*
+     * Don't count on the compiler for cast between mask and int registers.
+     * On gcc7 with flags -march>=nocona -O3 can cause FP stack overflow
+     * which may lead to putting NaN into certain HW/FP calculations.
+     *
+     * For more details, please check the comments in:
+     * - https://github.com/numpy/numpy/issues/20356
+     */
+    if (npyv_tobits_b64(overflow_mask)) {
         npy_set_floatstatus_overflow();
     }
 
-    if (underflow_mask) {
+    if (npyv_tobits_b64(underflow_mask)) {
         npy_set_floatstatus_underflow();
     }
 }
@@ -1062,10 +1070,10 @@ AVX512F_log_DOUBLE(npy_double * op,
         num_remaining_elements -= num_lanes;
     }
 
-    if (invalid_mask) {
+    if (npyv_tobits_b64(invalid_mask)) {
         npy_set_floatstatus_invalid();
     }
-    if (divide_by_zero_mask) {
+    if (npyv_tobits_b64(divide_by_zero_mask)) {
         npy_set_floatstatus_divbyzero();
     }
 }

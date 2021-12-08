@@ -1,12 +1,10 @@
-### setup project ###
-cmake_minimum_required(VERSION 3.17.3) # 3.17 > for Python3_SOABI
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+cmake_minimum_required(VERSION 3.18) # Needed to avoid requiring embedded Python libs too
 
 project(fibby
   VERSION 1.0
   DESCRIPTION "FIB module"
   LANGUAGES C Fortran
-  )
+)
 
 # Safety net
 if(PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
@@ -16,65 +14,52 @@ if(PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
   )
 endif()
 
-# Grab Python
-find_package(Python3 3.9 REQUIRED
-  COMPONENTS Interpreter Development NumPy)
+# Grab Python, 3.7 or newer
+find_package(Python 3.7 REQUIRED
+  COMPONENTS Interpreter Development.Module NumPy)
 
 # Grab the variables from a local Python installation
 # F2PY headers
 execute_process(
-  COMMAND "${Python3_EXECUTABLE}"
+  COMMAND "${Python_EXECUTABLE}"
   -c "import numpy.f2py; print(numpy.f2py.get_include())"
   OUTPUT_VARIABLE F2PY_INCLUDE_DIR
   OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
-# Project scope; consider using target_include_directories instead
-include_directories(
-  BEFORE
-  ${Python3_INCLUDE_DIRS}
-  ${Python3_NumPy_INCLUDE_DIRS}
-  ${F2PY_INCLUDE_DIR}
-  )
+# Print out the discovered paths
+include(CMakePrintHelpers)
+cmake_print_variables(Python_INCLUDE_DIRS)
+cmake_print_variables(F2PY_INCLUDE_DIR)
+cmake_print_variables(Python_NumPy_INCLUDE_DIRS)
 
-message(STATUS ${Python3_INCLUDE_DIRS})
-message(STATUS ${F2PY_INCLUDE_DIR})
-message(STATUS ${Python3_NumPy_INCLUDE_DIRS})
-
-# Vars
+# Common variables
 set(f2py_module_name "fibby")
 set(fortran_src_file "${CMAKE_SOURCE_DIR}/fib1.f")
 set(f2py_module_c "${f2py_module_name}module.c")
-set(generated_module_file "${f2py_module_name}${Python3_SOABI}")
 
 # Generate sources
 add_custom_target(
   genpyf
   DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/${f2py_module_c}"
-  )
+)
 add_custom_command(
   OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/${f2py_module_c}"
-  COMMAND ${Python3_EXECUTABLE}  -m "numpy.f2py"
+  COMMAND ${Python_EXECUTABLE}  -m "numpy.f2py"
                    "${fortran_src_file}"
                    -m "fibby"
                    --lower # Important
   DEPENDS fib1.f # Fortran source
-  )
+)
 
 # Set up target
-add_library(${CMAKE_PROJECT_NAME} SHARED
+Python_add_library(${CMAKE_PROJECT_NAME} MODULE WITH_SOABI
   "${CMAKE_CURRENT_BINARY_DIR}/${f2py_module_c}" # Generated
   "${F2PY_INCLUDE_DIR}/fortranobject.c" # From NumPy
   "${fortran_src_file}" # Fortran source(s)
-  )
+)
 
 # Depend on sources
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Python::NumPy)
 add_dependencies(${CMAKE_PROJECT_NAME} genpyf)
-
-set_target_properties(
-     ${CMAKE_PROJECT_NAME}
-    PROPERTIES
-        PREFIX ""
-        OUTPUT_NAME "${CMAKE_PROJECT_NAME}"
-        LINKER_LANGUAGE C
-    )
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE "${F2PY_INCLUDE_DIR}")

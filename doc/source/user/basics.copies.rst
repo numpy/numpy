@@ -39,6 +39,8 @@ do not reflect on the original array. Making a copy is slower and
 memory-consuming but sometimes necessary. A copy can be forced by using
 :meth:`.ndarray.copy`.
 
+.. _indexing-operations:
+
 Indexing operations
 ===================
 
