@@ -1089,9 +1089,8 @@ add_newdoc('numpy.core.umath', 'divide',
     -----
     Equivalent to ``x1`` / ``x2`` in terms of array-broadcasting.
 
-    Behavior on division by zero can be changed using ``seterr``.
-
-    Behaves like ``true_divide``.
+    The ``true_divide(x1, x2)`` function is an alias for
+    ``divide(x1, x2)``.
 
     Examples
     --------
@@ -1100,13 +1099,9 @@ add_newdoc('numpy.core.umath', 'divide',
     >>> x1 = np.arange(9.0).reshape((3, 3))
     >>> x2 = np.arange(3.0)
     >>> np.divide(x1, x2)
-    array([[ NaN,  1. ,  1. ],
-           [ Inf,  4. ,  2.5],
-           [ Inf,  7. ,  4. ]])
-
-    >>> ignored_states = np.seterr(**old_err_state)
-    >>> np.divide(1, 0)
-    0
+    array([[nan, 1. , 1. ],
+           [inf, 4. , 2.5],
+           [inf, 7. , 4. ]])
 
     The ``/`` operator can be used as a shorthand for ``np.divide`` on
     ndarrays.
@@ -4049,54 +4044,6 @@ add_newdoc('numpy.core.umath', 'tanh',
     Traceback (most recent call last):
       File "<stdin>", line 1, in <module>
     ValueError: operands could not be broadcast together with shapes (3,3) (2,2)
-
-    """)
-
-add_newdoc('numpy.core.umath', 'true_divide',
-    """
-    Returns a true division of the inputs, element-wise.
-
-    Unlike 'floor division', true division adjusts the output type
-    to present the best answer, regardless of input types.
-
-    Parameters
-    ----------
-    x1 : array_like
-        Dividend array.
-    x2 : array_like
-        Divisor array.
-        $BROADCASTABLE_2
-    $PARAMS
-
-    Returns
-    -------
-    out : ndarray or scalar
-        $OUT_SCALAR_2
-
-    Notes
-    -----
-    In Python, ``//`` is the floor division operator and ``/`` the
-    true division operator.  The ``true_divide(x1, x2)`` function is
-    equivalent to true division in Python.
-
-    Examples
-    --------
-    >>> x = np.arange(5)
-    >>> np.true_divide(x, 4)
-    array([ 0.  ,  0.25,  0.5 ,  0.75,  1.  ])
-
-    >>> x/4
-    array([ 0.  ,  0.25,  0.5 ,  0.75,  1.  ])
-
-    >>> x//4
-    array([0, 0, 0, 0, 1])
-
-    The ``/`` operator can be used as a shorthand for ``np.true_divide`` on
-    ndarrays.
-
-    >>> x = np.arange(5)
-    >>> x / 4
-    array([0.  , 0.25, 0.5 , 0.75, 1.  ])
 
     """)
 
