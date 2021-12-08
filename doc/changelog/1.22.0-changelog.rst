@@ -2,7 +2,7 @@
 Contributors
 ============
 
-A total of 150 people contributed to this release.  People with a "+" by their
+A total of 151 people contributed to this release.  People with a "+" by their
 names contributed a patch for the first time.
 
 * @DWesl
@@ -55,6 +55,7 @@ names contributed a patch for the first time.
 * Elisha Hollander +
 * Eric Wieser
 * Eskild Eriksen +
+* Evan Miller +
 * Fayas Noushad +
 * Gagandeep Singh +
 * Ganesh Kathiresan
@@ -159,7 +160,7 @@ names contributed a patch for the first time.
 Pull requests merged
 ====================
 
-A total of 575 pull requests were merged for this release.
+A total of 587 pull requests were merged for this release.
 
 * `#15847 <https://github.com/numpy/numpy/pull/15847>`__: BUG: avoid infinite recurrence on dependencies in crackfortran
 * `#16740 <https://github.com/numpy/numpy/pull/16740>`__: ENH: Add broadcast support to Generator.multinomial
@@ -735,4 +736,16 @@ A total of 575 pull requests were merged for this release.
 * `#20420 <https://github.com/numpy/numpy/pull/20420>`__: BUG: Clear errors correctly in F2PY conversions
 * `#20429 <https://github.com/numpy/numpy/pull/20429>`__: MAINT: Fix longdouble precision check in test_umath.py
 * `#20430 <https://github.com/numpy/numpy/pull/20430>`__: MAINT: Fix METH_NOARGS function signatures
+* `#20434 <https://github.com/numpy/numpy/pull/20434>`__: REL: Prepare for the NumPy 1.22.0r1 release.
 * `#20436 <https://github.com/numpy/numpy/pull/20436>`__: BUG: Fix an incorrect protocol used in ``np.lib.shape_base``
+* `#20473 <https://github.com/numpy/numpy/pull/20473>`__: BUG: Fix two overload-related problems
+* `#20474 <https://github.com/numpy/numpy/pull/20474>`__: TST: remove obsolete TestF77Mismatch
+* `#20475 <https://github.com/numpy/numpy/pull/20475>`__: MAINT: Update the required setuptools version.
+* `#20476 <https://github.com/numpy/numpy/pull/20476>`__: BUG: Restore support for i386 and PowerPC (OS X)
+* `#20487 <https://github.com/numpy/numpy/pull/20487>`__: MAINT: update wheel to version that supports python3.10
+* `#20496 <https://github.com/numpy/numpy/pull/20496>`__: TST: use pypy3.8-v7.3.7 final versions
+* `#20502 <https://github.com/numpy/numpy/pull/20502>`__: BUG: Fix the .T attribute in the array_api namespace
+* `#20503 <https://github.com/numpy/numpy/pull/20503>`__: BUG: Protect divide by 0 in multinomial distribution.
+* `#20535 <https://github.com/numpy/numpy/pull/20535>`__: BUG: Fix reduce promotion with out argument
+* `#20538 <https://github.com/numpy/numpy/pull/20538>`__: BUG: Fix handling of the dtype parameter to numpy.array_api.prod()
+* `#20539 <https://github.com/numpy/numpy/pull/20539>`__: PERF: Fix performance bug in dispatching cache
