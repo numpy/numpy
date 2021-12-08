@@ -290,7 +290,7 @@ def seterrcall(func):
     >>> save_err = np.seterr(all='log')
 
     >>> np.array([1, 2, 3]) / 0.0
-    LOG: Warning: divide by zero encountered in true_divide
+    LOG: Warning: divide by zero encountered in divide
     array([inf, inf, inf])
 
     >>> np.seterrcall(saved_handler)
