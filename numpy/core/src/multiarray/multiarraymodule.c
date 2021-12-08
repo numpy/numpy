@@ -2460,7 +2460,8 @@ array_frombuffer(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds
 }
 
 static PyObject *
-array_concatenate(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
+array_concatenate(PyObject *NPY_UNUSED(dummy),
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     PyObject *a0;
     PyObject *out = NULL;
@@ -2469,10 +2470,15 @@ array_concatenate(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
     PyObject *casting_obj = NULL;
     PyObject *res;
     int axis = 0;
-    static char *kwlist[] = {"seq", "axis", "out", "dtype", "casting", NULL};
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O&O$O&O:concatenate", kwlist,
-                &a0, PyArray_AxisConverter, &axis, &out,
-                PyArray_DescrConverter2, &dtype, &casting_obj)) {
+
+    NPY_PREPARE_ARGPARSER;
+    if (npy_parse_arguments("concatenate", args, len_args, kwnames,
+            "seq", NULL, &a0,
+            "|axis", &PyArray_AxisConverter, &axis,
+            "|out", NULL, &out,
+            "$dtype", &PyArray_DescrConverter2, &dtype,
+            "$casting", NULL, &casting_obj,
+            NULL, NULL, NULL) < 0) {
         return NULL;
     }
     int casting_not_passed = 0;
@@ -4453,7 +4459,7 @@ static struct PyMethodDef array_module_methods[] = {
         METH_VARARGS|METH_KEYWORDS, NULL},
     {"concatenate",
         (PyCFunction)array_concatenate,
-        METH_VARARGS|METH_KEYWORDS, NULL},
+        METH_FASTCALL|METH_KEYWORDS, NULL},
     {"inner",
         (PyCFunction)array_innerproduct,
         METH_VARARGS, NULL},
