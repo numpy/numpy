@@ -41,13 +41,22 @@ create_conv_funcs(
         PyErr_NoMemory();
         return NULL;
     }
+
     if (converters == Py_None) {
+        return conv_funcs;
+    }
+    else if (PyCallable_Check(converters)) {
+        /* a single converter used for all columns individually */
+        for (int i = 0; i < num_fields; i++) {
+            Py_INCREF(converters);
+            conv_funcs[i] = converters;
+        }
         return conv_funcs;
     }
     else if (!PyDict_Check(converters)) {
         PyErr_SetString(PyExc_TypeError,
                 "converters must be a dictionary mapping columns to converter "
-                "functions.");
+                "functions or a single callable.");
         return NULL;
     }
 

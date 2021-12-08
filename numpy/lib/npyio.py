@@ -831,12 +831,13 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
     max_rows : int, optional
         Maximum number of rows of data to read.  Default is to read the
         entire file.
-    converters : dict, optional
-        A dictionary mapping column number to a function that will parse the
-        column string into the desired value. E.g. if column 0 is a date
-        string: ``converters = {0: datestr2num}``. Converters can also be used
-        to provide a default value for missing data, e.g.
-        ``converters = {3: lambda s: float(s.strip() or 0)}``.
+    converters : dict or callable, optional
+        A function to parse all columns strings into the desired value, or
+        a dictionary mapping column number to a parser function.
+        E.g. if column 0 is a date string: ``converters = {0: datestr2num}``.
+        Converters can also be used to provide a default value for missing
+        data, e.g. ``converters = lambda s: float(s.strip() or 0)`` will
+        convert empty fields to 0.
         Default: None
     ndmin : int, optional
         Minimum dimension of the array returned.
@@ -1100,12 +1101,13 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     delimiter : str, optional
         The string used to separate values. For backwards compatibility, byte
         strings will be decoded as 'latin1'. The default is whitespace.
-    converters : dict, optional
-        A dictionary mapping column number to a function that will parse the
-        column string into the desired value.  E.g., if column 0 is a date
-        string: ``converters = {0: datestr2num}``.  Converters can also be
-        used to provide a default value for missing data (but see also
-        `genfromtxt`): ``converters = {3: lambda s: float(s.strip() or 0)}``.
+    converters : dict or callable, optional
+        A function to parse all columns strings into the desired value, or
+        a dictionary mapping column number to a parser function.
+        E.g. if column 0 is a date string: ``converters = {0: datestr2num}``.
+        Converters can also be used to provide a default value for missing
+        data, e.g. ``converters = lambda s: float(s.strip() or 0)`` will
+        convert empty fields to 0.
         Default: None.
     skiprows : int, optional
         Skip the first `skiprows` lines, including comments; default: 0.
