@@ -1,4 +1,5 @@
-from numpy.testing import assert_raises
+import pytest
+
 from numpy.f2py.symbolic import (
     Expr,
     Op,
@@ -464,7 +465,7 @@ class TestSymbolic(util.F2PyTest):
         assert ((z + y) * x + y).linear_solve(x) == (z + y, y)
         assert (z * y * x + y).linear_solve(x) == (z * y, y)
 
-        assert_raises(RuntimeError, lambda: (x * x).linear_solve(x))
+        pytest.raises(RuntimeError, lambda: (x * x).linear_solve(x))
 
     def test_as_numer_denom(self):
         x = as_symbol("x")
