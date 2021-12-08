@@ -181,6 +181,12 @@ typedef PyObject *_ufunc_addloop_fromspec_func(
 /*
  * Type of the C promoter function, which must be wrapped into a
  * PyCapsule with name "numpy._ufunc_promoter".
+ *
+ * Note that currently the output dtypes are always NULL unless they are
+ * also part of the signature.  This is an implementation detail and could
+ * change in the future.  However, in general promoters should not have a
+ * need for output dtypes.
+ * (There are potential use-cases, these are currently unsupported.)
  */
 typedef int promoter_function(PyObject *ufunc,
         PyArray_DTypeMeta *op_dtypes[], PyArray_DTypeMeta *signature[],
