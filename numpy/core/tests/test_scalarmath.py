@@ -683,7 +683,10 @@ class TestAbs:
     def test_builtin_abs(self, dtype):
         if (
                 sys.platform == "cygwin" and dtype == np.clongdouble and
-                _LooseVersion(platform.release().split("-")[0]) < _LooseVersion("3.3.0")
+                (
+                    _LooseVersion(platform.release().split("-")[0])
+                    < _LooseVersion("3.3.0")
+                )
         ):
             pytest.xfail(
                 reason="absl is computed in double precision on cygwin < 3.3"
@@ -694,7 +697,10 @@ class TestAbs:
     def test_numpy_abs(self, dtype):
         if (
                 sys.platform == "cygwin" and dtype == np.clongdouble and
-                _LooseVersion(platform.release().split("-")[0]) < _LooseVersion("3.3.0")
+                (
+                    _LooseVersion(platform.release().split("-")[0])
+                    < _LooseVersion("3.3.0")
+                )
         ):
             pytest.xfail(
                 reason="absl is computed in double precision on cygwin < 3.3"
