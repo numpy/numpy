@@ -135,6 +135,22 @@
 /* np.power(..., dtype=np.complex256) doesn't report overflow */
 #undef HAVE_CPOWL
 #undef HAVE_CEXPL
+
+#include <cygwin/version.h>
+#if CYGWIN_VERSION_DLL_MAJOR < 3003
+/* https://cygwin.com/pipermail/cygwin-announce/2021-October/010268.html */
+/* Builtin abs reports overflow */
+#undef HAVE_CABSL
+#undef HAVE_HYPOTL
+#endif
+
+#if CYGWIN_VERSION_DLL_MAJOR < 3002
+/* https://cygwin.com/pipermail/cygwin-announce/2021-March/009987.html */
+/* Segfault */
+#undef HAVE_MODFL
+/* sqrt(-inf) returns -inf instead of -nan */
+#undef HAVE_SQRTL
+#endif
 #endif
 
 /* Disable broken gnu trig functions */
