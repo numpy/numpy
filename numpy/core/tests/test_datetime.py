@@ -2029,11 +2029,17 @@ class TestDateTime:
         assert_equal(np.maximum.reduce(a),
                      np.timedelta64(7, 's'))
 
+    def test_timedelta_correct_mean(self):
+        # test mainly because it worked only via a bug in that allowed:
+        # `timedelta.sum(dtype="f8")` to ignore the dtype request.
+        a = np.arange(1000, dtype="m8[s]")
+        assert_array_equal(a.mean(), a.sum() / len(a))
+
     def test_datetime_no_subtract_reducelike(self):
         # subtracting two datetime64 works, but we cannot reduce it, since
         # the result of that subtraction will have a different dtype.
         arr = np.array(["2021-12-02", "2019-05-12"], dtype="M8[ms]")
-        msg = r"ufunc 'subtract' did not contain a loop with signature "
+        msg = r"the resolved dtypes are not compatible"
 
         with pytest.raises(TypeError, match=msg):
             np.subtract.reduce(arr)
