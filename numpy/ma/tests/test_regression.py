@@ -89,3 +89,11 @@ class TestRegression:
     def test_masked_array_tobytes_fortran(self):
         ma = np.ma.arange(4).reshape((2,2))
         assert_array_equal(ma.tobytes(order='F'), ma.T.tobytes())
+
+    def test_itruediv_nan(self):
+        # see gh-20506
+        a = np.ma.array([1, np.nan])
+        b = [1, np.nan]
+        a /= b
+        assert_array_equal(a, np.ma.array([1, np.nan], mask=[False, True]))
+        assert_array_equal(a.mask, [False, True])
