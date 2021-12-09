@@ -160,7 +160,7 @@ names contributed a patch for the first time.
 Pull requests merged
 ====================
 
-A total of 587 pull requests were merged for this release.
+A total of 589 pull requests were merged for this release.
 
 * `#15847 <https://github.com/numpy/numpy/pull/15847>`__: BUG: avoid infinite recurrence on dependencies in crackfortran
 * `#16740 <https://github.com/numpy/numpy/pull/16740>`__: ENH: Add broadcast support to Generator.multinomial
@@ -749,3 +749,5 @@ A total of 587 pull requests were merged for this release.
 * `#20535 <https://github.com/numpy/numpy/pull/20535>`__: BUG: Fix reduce promotion with out argument
 * `#20538 <https://github.com/numpy/numpy/pull/20538>`__: BUG: Fix handling of the dtype parameter to numpy.array_api.prod()
 * `#20539 <https://github.com/numpy/numpy/pull/20539>`__: PERF: Fix performance bug in dispatching cache
+* `#20541 <https://github.com/numpy/numpy/pull/20541>`__: REL: Prepare for NumPy 1.22.0rc2 release.
+* `#20548 <https://github.com/numpy/numpy/pull/20548>`__: REV: Revert adding a default ufunc promoter
