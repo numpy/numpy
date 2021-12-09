@@ -8,7 +8,7 @@ NEP 38 — Using SIMD optimization instructions for performance
 :Status: Accepted
 :Type: Standards
 :Created: 2019-11-25
-:Resolution: http://numpy-discussion.10968.n7.nabble.com/NEP-38-Universal-SIMD-intrinsics-td47854.html
+:Resolution: https://mail.python.org/archives/list/numpy-discussion@python.org/thread/PVWJ74UVBRZ5ZWF6MDU7EUSJXVNILAQB/#PVWJ74UVBRZ5ZWF6MDU7EUSJXVNILAQB
 
 
 Abstract
