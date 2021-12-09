@@ -302,7 +302,7 @@ This is different from monkeypatching in a few different ways:
   so there is at least the loose sense of an API contract. Monkeypatching
   does not provide this ability.
 * There is the ability of locally switching the backend.
-* It has been `suggested <http://numpy-discussion.10968.n7.nabble.com/NEP-31-Context-local-and-global-overrides-of-the-NumPy-API-tp47452p47472.html>`_
+* It has been `suggested <https://mail.python.org/archives/list/numpy-discussion@python.org/message/PS7EN3CRT6XERNTCN56MAYOXFFFEC55G/>`_
   that the reason that 1.17 hasn't landed in the Anaconda defaults channel is
   due to the incompatibility between monkeypatching and ``__array_function__``,
   as monkeypatching would bypass the protocol completely.
@@ -640,9 +640,9 @@ References and Footnotes
 
 .. [4] NEP 13 — A Mechanism for Overriding Ufuncs: https://numpy.org/neps/nep-0013-ufunc-overrides.html
 
-.. [5] Reply to Adding to the non-dispatched implementation of NumPy methods: http://numpy-discussion.10968.n7.nabble.com/Adding-to-the-non-dispatched-implementation-of-NumPy-methods-tp46816p46874.html
+.. [5] Reply to Adding to the non-dispatched implementation of NumPy methods: https://mail.python.org/archives/list/numpy-discussion@python.org/thread/5GUDMALWDIRHITG5YUOCV343J66QSX3U/#5GUDMALWDIRHITG5YUOCV343J66QSX3U
 
-.. [6] Custom Dtype/Units discussion: http://numpy-discussion.10968.n7.nabble.com/Custom-Dtype-Units-discussion-td43262.html
+.. [6] Custom Dtype/Units discussion: https://mail.python.org/archives/list/numpy-discussion@python.org/thread/RZYCVT6C3F7UDV6NA6FEV4MC5FKS6RDA/#RZYCVT6C3F7UDV6NA6FEV4MC5FKS6RDA
 
 .. [7] The epic dtype cleanup plan: https://github.com/numpy/numpy/issues/2899
 
