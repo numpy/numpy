@@ -302,7 +302,7 @@ This is different from monkeypatching in a few different ways:
   so there is at least the loose sense of an API contract. Monkeypatching
   does not provide this ability.
 * There is the ability of locally switching the backend.
-* It has been `suggested <https://mail.python.org/archives/list/numpy-discussion@python.org/thread/X3IJH4M4YUYRF6N5XZKL7XT6OBJ2U2EA/#RJQXTDWXWGVX3XIKDJI7BYP2X2OIE632>`_
+* It has been `suggested <https://mail.python.org/archives/list/numpy-discussion@python.org/message/PS7EN3CRT6XERNTCN56MAYOXFFFEC55G/>`_
   that the reason that 1.17 hasn't landed in the Anaconda defaults channel is
   due to the incompatibility between monkeypatching and ``__array_function__``,
   as monkeypatching would bypass the protocol completely.
