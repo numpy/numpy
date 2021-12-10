@@ -4,7 +4,8 @@ from os import path
 import sys
 import pytest
 from ctypes import c_longlong, c_double, c_float, c_int, cast, pointer, POINTER
-from numpy.testing import assert_array_max_ulp, _glibc_older_than
+from numpy.testing import assert_array_max_ulp
+from numpy.testing._private.utils import _glibc_older_than
 from numpy.core._multiarray_umath import __cpu_features__
 
 IS_AVX = __cpu_features__.get('AVX512F', False) or \

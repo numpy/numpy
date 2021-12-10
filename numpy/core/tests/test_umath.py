@@ -15,8 +15,9 @@ from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_raises_regex,
     assert_array_equal, assert_almost_equal, assert_array_almost_equal,
     assert_array_max_ulp, assert_allclose, assert_no_warnings, suppress_warnings,
-    _gen_alignment_data, assert_array_almost_equal_nulp, _glibc_older_than
+    _gen_alignment_data, assert_array_almost_equal_nulp
     )
+from numpy.testing._private.utils import _glibc_older_than
 
 
 def on_powerpc():
