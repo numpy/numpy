@@ -1710,10 +1710,12 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
     if (flags & NPY_ARRAY_ENSURENOCOPY ) {
         PyErr_SetString(PyExc_ValueError,
                 "Unable to avoid copy while creating an array.");
+        Py_DECREF(dtype);
+        npy_free_coercion_cache(cache);
         return NULL;
     }
 
-    if (cache == 0 && newtype != NULL &&
+    if (cache == NULL && newtype != NULL &&
             PyDataType_ISSIGNED(newtype) && PyArray_IsScalar(op, Generic)) {
         assert(ndim == 0);
         /*
