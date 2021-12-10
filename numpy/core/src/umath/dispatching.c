@@ -641,7 +641,7 @@ add_and_return_legacy_wrapping_ufunc_loop(PyUFuncObject *ufunc,
         Py_DECREF(info);
         return NULL;
     }
-
+    Py_DECREF(info);  /* now borrowed from the ufunc's list of loops */
     return info;
 }
 

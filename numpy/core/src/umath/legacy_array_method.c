@@ -224,6 +224,10 @@ get_wrapped_legacy_ufunc_loop(PyArrayMethod_Context *context,
     *out_loop = &generic_wrapped_legacy_loop;
     *out_transferdata = get_new_loop_data(
             loop, user_data, (*flags & NPY_METH_REQUIRES_PYAPI) != 0);
+    if (*out_transferdata == NULL) {
+        PyErr_NoMemory();
+        return -1;
+    }
     return 0;
 }
 
