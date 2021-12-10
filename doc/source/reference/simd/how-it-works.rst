@@ -1,19 +1,19 @@
-*****************************
-How the CPU dispatcher works?
-*****************************
+**********************************
+How does the CPU dispatcher work?
+**********************************
 
 NumPy dispatcher is based on multi-source compiling, which means taking
 a certain source and compiling it multiple times with different compiler
 flags and also with different **C** definitions that affect the code
-paths to enable certain instruction-sets for each compiled object
-depending on the required optimizations, then combining the returned
-objects together.
+paths. This enables certain instruction-sets for each compiled object
+depending on the required optimizations and ends with linking the
+returned objects together.
 
 .. figure:: ../figures/opt-infra.png
 
 This mechanism should support all compilers and it doesn't require any
-compiler-specific extension, but at the same time it is adds a few steps to
-normal compilation that are explained as follows:
+compiler-specific extension, but at the same time it adds a few steps to
+normal compilation that are explained as follows.
 
 1- Configuration
 ~~~~~~~~~~~~~~~~
@@ -46,7 +46,7 @@ headers of instruction-sets for the required optimizations that have been
 validated during the previous step.
 
 It also contains extra C definitions that are used for defining NumPy's
-Python-level module attributes ``__cpu_baseline__`` and ``__cpu_dispaٍtch__``.
+Python-level module attributes ``__cpu_baseline__`` and ``__cpu_dispatch__``.
 
 **What is in this header?**
 
@@ -211,8 +211,8 @@ through ``--cpu-dispatch``, but it can also represent other options such as:
   also used for forward declarations.
 
   The generated header takes the name of the dispatch-able source after
-  excluding the extension and replace it with '**.h**', for example
-  assume we have a dispatch-able source called **hello.dispatch.c** and
+  excluding the extension and replace it with ``.h``, for example
+  assume we have a dispatch-able source called ``hello.dispatch.c`` and
   contains the following:
 
   .. code:: c

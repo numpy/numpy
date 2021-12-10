@@ -6,7 +6,7 @@ Description
 -----------
 
 The following options are mainly used to change the default behavior of optimizations
-that targeting certain CPU features:
+that target certain CPU features:
 
 - ``--cpu-baseline``: minimal set of required CPU features.
    Default value is ``min`` which provides the minimum CPU features that can
@@ -15,39 +15,41 @@ that targeting certain CPU features:
    .. note::
 
      During the runtime, NumPy modules will fail to load if any of specified features
-     are not supported by the target CPU (raise python runtime error).
+     are not supported by the target CPU (raises Python runtime error).
 
 - ``--cpu-dispatch``: dispatched set of additional CPU features.
    Default value is ``max -xop -fma4`` which enables all CPU
-   features, except for AMD legacy features(in case of X86).
+   features, except for AMD legacy features (in case of X86).
 
    .. note::
 
       During the runtime, NumPy modules will skip any specified features
       that are not available in the target CPU.
 
-These options are accessible through Distutils commands
-`build`, `build_clib` and `build_ext`, they accept a set of
-:ref:`CPU features <opt-supported-features>` or groups of features that
-gather several features or :ref:`special options <opt-special-options>` that
+These options are accessible through :py:mod:`distutils` commands
+`distutils.command.build`, `distutils.command.build_clib` and
+`distutils.command.build_ext`.
+They accept a set of :ref:`CPU features <opt-supported-features>`
+or groups of features that gather several features or
+:ref:`special options <opt-special-options>` that
 perform a series of procedures.
 
 .. note::
 
-    If `build_clib`` or `build_ext` are not specified by the user,
-    the arguments of `build` will be used instead, which also holds the default values.
+    If ``build_clib`` or ``build_ext`` are not specified by the user,
+    the arguments of ``build`` will be used instead, which also holds the default values.
 
-To customize both `build_ext` and `build_clib`::
+To customize both ``build_ext`` and ``build_clib``::
 
     cd /path/to/numpy
     python setup.py build --cpu-baseline="avx2 fma3" install --user
 
-To customize only `build_ext`::
+To customize only ``build_ext``::
 
     cd /path/to/numpy
     python setup.py build_ext --cpu-baseline="avx2 fma3" install --user
 
-To customize only `build_clib`::
+To customize only ``build_clib``::
 
     cd /path/to/numpy
     python setup.py build_clib --cpu-baseline="avx2 fma3" install --user
@@ -77,7 +79,7 @@ I am building NumPy for my local use
 And I do not intend to export the build to other users or target a
 different CPU than what the host has.
 
-set `native` for baseline, or manualy specify the CPU features in case of option
+Set `native` for baseline, or manualy specify the CPU features in case of option
 `native` isn't supported by your platform::
 
     python setup.py build --cpu-baseline="native" bdist
@@ -89,18 +91,18 @@ since all supported features are already defined within the baseline features::
 
 .. note::
 
-    A fatal error will be raised if `native` wasn't supported by the host platform.
+    A fatal error will be raised if `native` isn't supported by the host platform.
 
 I do not want to support the old processors of the `x86` architecture
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-since most of the CPUs nowadays support at least `AVX`, `F16C` features::
+Since most of the CPUs nowadays support at least `AVX`, `F16C` features, you can use::
 
     python setup.py build --cpu-baseline="avx f16c" bdist
 
 .. note::
 
-    `--cpu-baseline` force combine all implied features, so there's no need
+    ``--cpu-baseline`` force combine all implied features, so there's no need
     to add SSE features.
 
 
@@ -146,7 +148,7 @@ Special Options
 - ``NONE``: enable no features.
 
 - ``NATIVE``: Enables all CPU features that supported by the host CPU,
-  this operation is based on the compiler flags (`-march=native, -xHost, /QxHost`)
+  this operation is based on the compiler flags (``-march=native``, ``-xHost``, ``/QxHost``)
 
 - ``MIN``: Enables the minimum CPU features that can safely run on a wide range of platforms:
 
@@ -192,16 +194,16 @@ Behaviors
     python setup.py build --cpu-dispatch="avx2+avx512f"
 
   all works but arguments should be enclosed in quotes or escaped
-  by backslash if any spaces envoloved.
+  by backslash if any spaces are used.
 
-- ``--cpu-baseline`` combains all implied CPU features, for example::
+- ``--cpu-baseline`` combines all implied CPU features, for example::
 
     python setup.py build --cpu-baseline=sse42
     # equivalent to
     python setup.py build --cpu-baseline="sse sse2 sse3 ssse3 sse41 popcnt sse42"
 
 - ``--cpu-baseline`` will be treated as "native" if compiler native flag
-  `-march=native` or `-xHost` or `QxHost` is enabled through environment variable
+  ``-march=native`` or ``-xHost`` or ``/QxHost`` is enabled through environment variable
   `CFLAGS`::
 
     export CFLAGS="-march=native"
@@ -210,11 +212,11 @@ Behaviors
     python setup.py build --cpu-baseline=native install --user
 
 - ``--cpu-baseline`` escapes any specified features that aren't supported
-   by the target platform or compiler rather than raising fatal errors.
+  by the target platform or compiler rather than raising fatal errors.
 
    .. note::
 
-        Since ``--cpu-baseline`` combains all implied features, the maximum
+        Since ``--cpu-baseline`` combines all implied features, the maximum
         supported of implied features will be enabled rather than escape all of them.
         For example::
 
@@ -224,7 +226,7 @@ Behaviors
            python setup.py build --cpu-baseline="sse sse2 sse3 ssse3 sse41 popcnt sse42"
 
 - ``--cpu-dispatch`` does not combain any of implied CPU features,
-   so you must add them unless you want to disable one or all of them::
+  so you must add them unless you want to disable one or all of them::
 
     # Only dispatches AVX2 and FMA3
     python setup.py build --cpu-dispatch=avx2,fma3
@@ -232,10 +234,10 @@ Behaviors
     python setup.py build --cpu-baseline=ssse3,sse41,sse42,avx,avx2,fma3
 
 - ``--cpu-dispatch`` escapes any specified baseline features and also escapes
-   any features not supported by the target platform or compiler without rasing
-   fatal errors.
+  any features not supported by the target platform or compiler without rasing
+  fatal errors.
 
-Eventually, You should always check the final report through the build log
+Eventually, you should always check the final report through the build log
 to verify the enabled features. See :ref:`opt-build-report` for more details.
 
 .. _opt-platform-differences:
@@ -253,10 +255,10 @@ These conditions can be divided into two parts, as follows:
 The need to align certain CPU features that are assured to be supported by
 successive generations of the same architecture, some cases:
 
-  - On ppc64le ``VSX(ISA 2.06)`` and ``VSX2(ISA 2.07)`` both imply one another since the
-    first generation that supports little-endian mode is Power-8`(ISA 2.07)`
-  - On AArch64 ``NEON NEON_FP16 NEON_VFPV4 ASIMD`` implies each other since they are part of the
-    hardware baseline.
+- On ppc64le ``VSX(ISA 2.06)`` and ``VSX2(ISA 2.07)`` both imply one another since the
+  first generation that supports little-endian mode is Power-8`(ISA 2.07)`
+- On AArch64 ``NEON NEON_FP16 NEON_VFPV4 ASIMD`` implies each other since they are part of the
+  hardware baseline.
 
 For example::
 
@@ -330,23 +332,23 @@ and here is how it looks on x86_64/gcc:
 .. literalinclude:: log_example.txt
    :language: bash
 
-As you see, there is a separate report for each of `build_ext` and `build_clib`
+As you see, there is a separate report for each of ``build_ext`` and ``build_clib``
 that includes several sections, and each section has several values, representing the following:
 
 **Platform**:
 
-- :enabled:`Architecture`: The architecture name of target CPU, it should be one of
-  (x86, x64, ppc64, ppc64le, armhf, aarch64, unknown)
+- :enabled:`Architecture`: The architecture name of target CPU. It should be one of
+  ``x86``, ``x64``, ``ppc64``, ``ppc64le``, ``armhf``, ``aarch64`` or ``unknown``.
 
-- :enabled:`Compiler`: The compiler name, it should be one of
-  (gcc, clang, msvc, icc, iccw, unix-like)
+- :enabled:`Compiler`: The compiler name. It should be one of
+  gcc, clang, msvc, icc, iccw or unix-like.
 
 **CPU baseline**:
 
 - :enabled:`Requested`: The specific features and options to ``--cpu-baseline`` as-is.
 - :enabled:`Enabled`: The final set of enabled CPU features.
-- :enabled:`Flags`: The compiler flags that been used to all NumPy `C/C++` sources
-  during the compilation except for temporary sources that been used for generating
+- :enabled:`Flags`: The compiler flags that were used to all NumPy `C/C++` sources
+  during the compilation except for temporary sources that have been used for generating
   the binary objects of dispatched features.
 - :enabled:`Extra checks`: list of internal checks that activate certain functionality
   or intrinsics related to the enabled features, useful for debugging when it comes
@@ -360,14 +362,14 @@ that includes several sections, and each section has several values, representin
   the features for which optimizations have been generated are shown in the
   form of several sections with similar properties explained as follows:
 
-    - :enabled:`One or multiple dispatched feature`: The implied CPU features.
-    - :enabled:`Flags`: The compiler flags that been used for these features.
-    - :enabled:`Extra checks`: Similar to the baseline but for these dispatched features.
-    - :enabled:`Detect`: Set of CPU features that need be detected in runtime in order to
-      execute the generated optimizations.
-    - The lines that come after the above property and end with a ':' on a separate line,
-      represent the paths of c/c++ sources that define the generated optimizations.
+  - :enabled:`One or multiple dispatched feature`: The implied CPU features.
+  - :enabled:`Flags`: The compiler flags that been used for these features.
+  - :enabled:`Extra checks`: Similar to the baseline but for these dispatched features.
+  - :enabled:`Detect`: Set of CPU features that need be detected in runtime in order to
+    execute the generated optimizations.
+  - The lines that come after the above property and end with a ':' on a separate line,
+    represent the paths of c/c++ sources that define the generated optimizations.
 
 Runtime Trace
 -------------
-TODO
+To be completed.
