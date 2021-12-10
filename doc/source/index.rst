@@ -43,10 +43,10 @@ basic statistical operations, random simulation and much more.
     Getting Started
     ^^^^^^^^^^^^^^^
 
-    The user guide provides in-depth information on the key concepts of NumPy
-    with useful background information and explanation.
+    New to NumPy? Check out the Absolute Beginner's Guide. It contains an
+    introduction to NumPy's main concepts and links to additional tutorials.
 
-    .. link-button:: getting_started
+    .. link-button:: ../source/user/absolute_beginners
         :type: ref
         :text: 
         :classes: stretched-link
