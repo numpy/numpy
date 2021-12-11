@@ -37,64 +37,38 @@ jobs:
           echo "::set-output name=message::$COMMIT_MSG"
 
   build_wheels:
-    name: Build wheel for ${{ matrix.python }}-${{ matrix.platform }}
+    name: Build wheel for ${{ matrix.python }}-${{ matrix.buildplat[1] }}
     needs: get_commit_message
     if: >-
       contains(needs.get_commit_message.outputs.message, '[wheel build]') ||
       github.event_name == 'schedule' ||
       github.event_name == 'workflow_dispatch'
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.buildplat[0] }}
     strategy:
       # Ensure that a wheel builder finishes even if another fails
       fail-fast: false
       matrix:
+        # Github Actions doesn't support pairing matrix values together, let's improvise
+        # https://github.com/github/feedback/discussions/7835#discussioncomment-1769026
+        buildplat: 
+        - [ubuntu-20.04, manylinux_x86_64]
+        - [macos-10.15, macosx_*]
+        - [windows-2019, win_amd64]
+        python: ["cp38", "cp39", "cp310"]
         include:
-        # manylinux builds
-        - os: ubuntu-20.04
-          python: "cp38"
-          platform: manylinux_x86_64
-        - os: ubuntu-20.04
-          python: "cp39"
-          platform: manylinux_x86_64
-        - os: ubuntu-20.04
-          python: "cp310"
-          platform: manylinux_x86_64
         # manylinux pypy builds
-        - os: ubuntu-20.04
-          python: "pp38"
-          platform: manylinux_x86_64
+        - buildplat: [ubuntu-20.04, manylinux_x86_64]
+          python: pp38
 
-        # MacOS builds
-        - os: macos-10.15
-          python: "cp38"
-          platform: macosx_*
-        - os: macos-10.15
-          python: "cp39"
-          platform: macosx_*
-        - os: macos-10.15
-          python: "cp310"
-          platform: macosx_*
         # MacOS PyPy builds
         # Disabled for now because of a PyPy bug
         # that prevents successful compilation
-        #- os: macos-10.15
+        #- buildplat: [macos-10.15, macosx_x86_64] 
         #  python: "pp38"
-        #  platform: macosx_x86_64
 
-        # Windows builds
-        - os: windows-2019
-          python: "cp38"
-          platform: win_amd64
-        - os: windows-2019
-          python: "cp39"
-          platform: win_amd64
-        - os: windows-2019
-          python: "cp310"
-          platform: win_amd64
         # Windows PyPy builds
-        - os: windows-2019
+        - buildplat: [windows-2019, win_amd64]
           python: "pp38"
-          platform: win_amd64
 
     steps:
       - name: Checkout numpy
@@ -111,7 +85,7 @@ jobs:
         uses: pypa/cibuildwheel@v2.3.0
         env:
           NPY_USE_BLAS_ILP64: 1
-          CIBW_BUILD: ${{ matrix.python }}-${{ matrix.platform }}
+          CIBW_BUILD: ${{ matrix.python }}-${{ matrix.buildplat[1] }}
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
           CIBW_ENVIRONMENT_LINUX: CFLAGS='-std=c99 -fno-strict-aliasing'
                                   LDFLAGS='-Wl,--strip-debug'
