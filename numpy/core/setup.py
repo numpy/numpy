@@ -411,7 +411,8 @@ def visibility_define(config):
         return ''
 
 def configuration(parent_package='',top_path=None):
-    from numpy.distutils.misc_util import Configuration, dot_join
+    from numpy.distutils.misc_util import (Configuration, dot_join,
+                                           exec_mod_from_location)
     from numpy.distutils.system_info import (get_info, blas_opt_info,
                                              lapack_opt_info)
 
@@ -428,8 +429,8 @@ def configuration(parent_package='',top_path=None):
 
     generate_umath_py = join(codegen_dir, 'generate_umath.py')
     n = dot_join(config.name, 'generate_umath')
-    generate_umath = npy_load_module('_'.join(n.split('.')),
-                                     generate_umath_py, ('.py', 'U', 1))
+    generate_umath = exec_mod_from_location('_'.join(n.split('.')),
+                                            generate_umath_py)
 
     header_dir = 'include/numpy'  # this is relative to config.path_in_package
 
@@ -966,6 +967,8 @@ def configuration(parent_package='',top_path=None):
         return []
 
     def generate_umath_doc_header(ext, build_dir):
+        from numpy.distutils.misc_util import exec_mod_from_location
+
         target = join(build_dir, header_dir, '_umath_doc_generated.h')
         dir = os.path.dirname(target)
         if not os.path.exists(dir):
@@ -974,8 +977,8 @@ def configuration(parent_package='',top_path=None):
         generate_umath_doc_py = join(codegen_dir, 'generate_umath_doc.py')
         if newer(generate_umath_doc_py, target):
             n = dot_join(config.name, 'generate_umath_doc')
-            generate_umath_doc = npy_load_module(
-                '_'.join(n.split('.')), generate_umath_doc_py, ('.py', 'U', 1))
+            generate_umath_doc = exec_mod_from_location(
+                '_'.join(n.split('.')), generate_umath_doc_py)
             generate_umath_doc.write_code(target)
 
     umath_src = [
