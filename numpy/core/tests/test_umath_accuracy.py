@@ -5,11 +5,14 @@ import sys
 import pytest
 from ctypes import c_longlong, c_double, c_float, c_int, cast, pointer, POINTER
 from numpy.testing import assert_array_max_ulp
+from numpy.testing._private.utils import _glibc_older_than
 from numpy.core._multiarray_umath import __cpu_features__
 
 IS_AVX = __cpu_features__.get('AVX512F', False) or \
         (__cpu_features__.get('FMA3', False) and __cpu_features__.get('AVX2', False))
-runtest = sys.platform.startswith('linux') and IS_AVX
+# only run on linux with AVX, also avoid old glibc (numpy/numpy#20448).
+runtest = (sys.platform.startswith('linux')
+           and IS_AVX and not _glibc_older_than("2.17"))
 platform_skip = pytest.mark.skipif(not runtest,
                                    reason="avoid testing inconsistent platform "
                                    "library implementations")
