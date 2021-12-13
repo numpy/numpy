@@ -228,7 +228,7 @@ class _Config:
         x64 = "SSE SSE2 SSE3",
         ppc64 = '', # play it safe
         ppc64le = "VSX VSX2",
-        s390x = "VX",
+        s390x = '', # play it safe
         armhf = '', # play it safe
         aarch64 = "NEON NEON_FP16 NEON_VFPV4 ASIMD"
     )
@@ -487,16 +487,12 @@ class _Config:
                     flags="-march=arch11 -mzvector"
                 ),
                 VXE = dict(
-                    flags="-march=arch12 -mzvector", implies_detect=False
+                    flags="-march=arch12", implies_detect=False
                 ),
                 VXE2 = dict(
-                    flags="-march=arch13 -mzvector", implies_detect=False
+                    flags="-march=arch13", implies_detect=False
                 )
             )
-            if self.cc_is_clang:
-                partial["VX"]["flags"] = "-march=arch11 -mzvector"
-                partial["VXE"]["flags"] = "-march=arch12 -mzvector"
-                partial["VXE2"]["flags"] = "-march=arch13 -mzvector"
 
             return partial
 

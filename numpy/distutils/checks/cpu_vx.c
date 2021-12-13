@@ -3,13 +3,14 @@
 #endif
 
 #include <vecintrin.h>
-#include<stdio.h>
-
-__vector int input= {1, 2, 4, 5 };
-
-int main(void)
+int main(int argc, char **argv)
 {
-   __vector int  out;
-   out = vec_abs(input);
-   return out[0];
+    __vector double x = vec_abs(vec_xl(argc, (double*)argv));
+    __vector double y = vec_load_len((double*)argv, (unsigned int)argc);
+
+    x = vec_round(vec_ceil(x) + vec_floor(y));
+    __vector bool long long m = vec_cmpge(x, y);
+    __vector long long i = vec_signed(vec_sel(x, y, m));
+
+    return (int)vec_extract(i, 0);
 }

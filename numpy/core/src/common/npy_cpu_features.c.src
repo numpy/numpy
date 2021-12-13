@@ -512,7 +512,7 @@ npy__cpu_init_features(void)
 
 /***************** ZARCH ******************/
 
-#elif defined(NPY_CPU_S390) || defined(__s390x__)
+#elif defined(__s390x__)
 
 #include <sys/auxv.h>
 #ifndef HWCAP_S390_VXE
