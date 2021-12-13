@@ -760,9 +760,10 @@ def _ensure_ndmin_ndarray(a, *, ndmin: int):
 _loadtxt_chunksize = 50000
 
 
-def _loadtxt_dispatcher(fname, dtype=None, comments=None, delimiter=None,
-                        converters=None, skiprows=None, usecols=None, unpack=None,
-                        ndmin=None, encoding=None, max_rows=None, *, like=None):
+def _loadtxt_dispatcher(
+        fname, dtype=None, comments=None, delimiter=None,
+        converters=None, skiprows=None, usecols=None, unpack=None,
+        ndmin=None, encoding=None, max_rows=None, *, like=None):
     return (like,)
 
 
@@ -798,9 +799,9 @@ _loadtxt_chunksize = 50000
 
 
 def _read(fname, *, delimiter=',', comment='#', quote='"',
-         imaginary_unit='j', usecols=None, skiprows=0,
-         max_rows=None, converters=None, ndmin=None, unpack=False,
-         dtype=np.float64, encoding="bytes"):
+          imaginary_unit='j', usecols=None, skiprows=0,
+          max_rows=None, converters=None, ndmin=None, unpack=False,
+          dtype=np.float64, encoding="bytes"):
     r"""
     Read a NumPy array from a text file.
 
@@ -898,7 +899,7 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
 
     read_dtype_via_object_chunks = None
     if dtype.kind in 'SUM' and (
-            dtype == "S0" or dtype == "U0" or  dtype == "M8" or dtype == 'm8'):
+            dtype == "S0" or dtype == "U0" or dtype == "M8" or dtype == 'm8'):
         # This is a legacy "flexible" dtype.  We do not truly support
         # parametric dtypes currently (no dtype discovery step in the core),
         # but have to support these for backward compatibility.
@@ -952,9 +953,9 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
         #       rare enough to not optimize for.
         if quote != "":
             raise ValueError(
-                "when multiple comments or a multi-character comment is given, "
-                "quotes are not supported.  In this case the quote character "
-                "must be set to the empty string: `quote=''`.")
+                "when multiple comments or a multi-character comment is "
+                "given, quotes are not supported.  In this case the quote "
+                "character must be set to the empty string: `quote=''`.")
     else:
         # No preprocessing necessary
         assert comments is None
@@ -1011,7 +1012,7 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
         else:
             # This branch reads the file into chunks of object arrays and then
             # casts them to the desired actual dtype.  This ensures correct
-            # string-length and datetime-unit discovery (as for `arr.astype()`).
+            # string-length and datetime-unit discovery (like `arr.astype()`).
             # Due to chunking, certain error reports are less clear, currently.
             if filelike:
                 data = iter(data)  # cannot chunk when reading from file
@@ -1228,7 +1229,8 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     else:
         if isinstance(comment, (str, bytes)):
             comment = [comment]
-        comment = [x.decode('latin1') if isinstance(x, bytes) else x for x in comment]
+        comment = [
+            x.decode('latin1') if isinstance(x, bytes) else x for x in comment]
 
     arr = _read(fname, dtype=dtype, comment=comment, delimiter=delimiter,
                 converters=converters, skiprows=skiprows, usecols=usecols,
