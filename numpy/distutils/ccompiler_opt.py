@@ -228,7 +228,7 @@ class _Config:
         x64 = "SSE SSE2 SSE3",
         ppc64 = '', # play it safe
         ppc64le = "VSX VSX2",
-        s390x = '', # play it safe
+        s390x = '',
         armhf = '', # play it safe
         aarch64 = "NEON NEON_FP16 NEON_VFPV4 ASIMD"
     )
