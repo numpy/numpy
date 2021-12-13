@@ -20,8 +20,8 @@ def normalize_doc(docstring):
 def write_code(target):
     with open(target, 'w') as fid:
         fid.write(
-            "#ifndef NUMPY_CORE_INCLUDE__UMATH_DOC_GENERATED_H\n"
-            "#define NUMPY_CORE_INCLUDE__UMATH_DOC_GENERATED_H\n"
+            "#ifndef NUMPY_CORE_INCLUDE__UMATH_DOC_GENERATED_H_\n"
+            "#define NUMPY_CORE_INCLUDE__UMATH_DOC_GENERATED_H_\n"
         )
         for place, string in docstrings.docdict.items():
             cdef_name = f"DOC_{place.upper().replace('.', '_')}"
