@@ -6,12 +6,9 @@
 #define _MULTIARRAYMODULE
 #include "numpy/arrayobject.h"
 #include "numpy/npy_3kcompat.h"
+#include "alloc.h"
 
-#include <stdio.h>
 #include <string.h>
-#include <stdlib.h>
-#include <time.h>
-#include <math.h>
 #include <stdbool.h>
 
 #include "textreading/stream.h"
@@ -310,8 +307,9 @@ read_rows(stream *s,
                 goto error;
             }
 
-            char *new_data = PyDataMem_RENEW(
-                    PyArray_BYTES(data_array), alloc_size ? alloc_size : 1);
+            char *new_data = PyDataMem_UserRENEW(
+                    PyArray_BYTES(data_array), alloc_size ? alloc_size : 1,
+                    PyArray_HANDLER(data_array));
             if (new_data == NULL) {
                 PyErr_NoMemory();
                 goto error;
@@ -426,8 +424,9 @@ read_rows(stream *s,
      */
     if (data_array_allocated && data_allocated_rows != row_count) {
         size_t size = row_count * row_size;
-        char *new_data = PyDataMem_RENEW(
-                PyArray_BYTES(data_array), size ? size : 1);
+        char *new_data = PyDataMem_UserRENEW(
+                PyArray_BYTES(data_array), size ? size : 1,
+                PyArray_HANDLER(data_array));
         if (new_data == NULL) {
             Py_DECREF(data_array);
             PyErr_NoMemory();
