@@ -1,6 +1,8 @@
 /*@targets
  ** $maxopt baseline
  ** neon asimd
+ ** sse2 avx2 avx512_skx
+ ** vsx2
  **/
 #define _UMATHMODULE
 #define _MULTIARRAYMODULE
@@ -20,7 +22,6 @@
 #define scalar_max_i(A, B) ((A > B) ? A : B)
 #define scalar_min_i(A, B) ((A < B) ? A : B)
 // fp, propagates NaNs
-#if !defined(__aarch64__)
 #define scalar_max_f(A, B) ((A >= B || npy_isnan(A)) ? A : B)
 #define scalar_max_d scalar_max_f
 #define scalar_max_l scalar_max_f
@@ -34,28 +35,61 @@
 #define scalar_minp_f fminf
 #define scalar_minp_d fmin
 #define scalar_minp_l fminl
-#elif defined(__aarch64__)
+
+// special optimization for fp scalars propagates NaNs
+// since there're no C99 support for it
+#ifndef NPY_DISABLE_OPTIMIZATION
 /**begin repeat
- * #type = npy_float, npy_double, npy_longdouble#
- * #scalar_sfx = f, d, l#
- * #asm_sfx = s, d, d#
+ * #type = npy_float, npy_double#
+ * #sfx = f32, f64#
+ * #c_sfx = f, d#
+ * #isa_sfx = s, d#
+ * #sse_type = __m128, __m128d#
  */
 /**begin repeat1
- * #op = max, min, maxp, minp#
- * #asm_instr = fmax, fmin, fmaxnm, fminnm#
+ * #op = max, min#
+ * #neon_instr = fmax, fmin#
  */
-static inline @type@ scalar_@op@_@scalar_sfx@(@type@ a, @type@ b){
+#ifdef NPY_HAVE_SSE2
+#undef scalar_@op@_@c_sfx@
+NPY_FINLINE @type@ scalar_@op@_@c_sfx@(@type@ a, @type@ b) {
+    @sse_type@ va = _mm_set_s@isa_sfx@(a);
+    @sse_type@ vb = _mm_set_s@isa_sfx@(b);
+    @sse_type@ rv = _mm_@op@_s@isa_sfx@(va, vb);
+    // X86 handel second operand
+    @sse_type@ nn = _mm_cmpord_s@isa_sfx@(va, va);
+    #ifdef NPY_HAVE_SSE41
+    rv = _mm_blendv_p@isa_sfx@(va, rv, nn);
+    #else
+    rv = _mm_xor_p@isa_sfx@(va, _mm_and_p@isa_sfx@(_mm_xor_p@isa_sfx@(va, rv), nn));
+    #endif
+    return _mm_cvts@isa_sfx@_@sfx@(rv);
+}
+#endif // SSE2
+#ifdef __aarch64__
+#undef scalar_@op@_@c_sfx@
+NPY_FINLINE @type@ scalar_@op@_@c_sfx@(@type@ a, @type@ b) {
     @type@ result = 0;
     __asm(
-        "@asm_instr@ %@asm_sfx@[result], %@asm_sfx@[a], %@asm_sfx@[b]"
+        "@neon_instr@ %@isa_sfx@[result], %@isa_sfx@[a], %@isa_sfx@[b]"
         : [result] "=w" (result)
         : [a] "w" (a), [b] "w" (b)
     );
     return result;
 }
+#endif // __aarch64__
 /**end repeat1**/
 /**end repeat**/
-#endif // !defined(__aarch64__)
+#endif // NPY_DISABLE_OPTIMIZATION
+// mapping to double if its possible
+#if NPY_BITSOF_DOUBLE == NPY_BITSOF_LONGDOUBLE
+/**begin repeat
+ * #op = max, min, maxp, minp#
+ */
+    #undef scalar_@op@_l
+    #define scalar_@op@_l scalar_@op@_d
+/**end repeat**/
+#endif
 
 /*******************************************************************************
  ** extra SIMD intrinsics
@@ -92,7 +126,7 @@ static inline @type@ scalar_@op@_@scalar_sfx@(@type@ a, @type@ b){
      */
     NPY_FINLINE npyv_lanetype_@sfx@ npyv_reduce_@intrin@_@sfx@(npyv_@sfx@ v)
     {
-        npyv_lanetype_@sfx@ s[npyv_nlanes_@sfx@];
+        npyv_lanetype_@sfx@ NPY_DECL_ALIGNED(NPY_SIMD_WIDTH) s[npyv_nlanes_@sfx@];
         npyv_storea_@sfx@(s, v);
         npyv_lanetype_@sfx@ result = s[0];
         for(int i=1; i<npyv_nlanes_@sfx@; ++i){
@@ -127,7 +161,11 @@ static inline @type@ scalar_@op@_@scalar_sfx@(@type@ a, @type@ b){
     NPY_FINLINE npyv_@sfx@ npyv_@intrin@n_@sfx@(npyv_@sfx@ a, npyv_@sfx@ b)
     {
         npyv_@sfx@ result = npyv_@intrin@_@sfx@(a, b);
+        // result = npyv_select_@sfx@(npyv_notnan_@sfx@(b), result, b);
+     // X86 handle second operand
+    #ifndef NPY_HAVE_SSE2
         result = npyv_select_@sfx@(npyv_notnan_@sfx@(b), result, b);
+    #endif
         result = npyv_select_@sfx@(npyv_notnan_@sfx@(a), result, a);
         return result;
     }
@@ -138,7 +176,7 @@ static inline @type@ scalar_@op@_@scalar_sfx@(@type@ a, @type@ b){
      */
     NPY_FINLINE npyv_lanetype_@sfx@ npyv_reduce_@intrin@_@sfx@(npyv_@sfx@ v)
     {
-        npyv_lanetype_@sfx@ s[npyv_nlanes_@sfx@];
+        npyv_lanetype_@sfx@ NPY_DECL_ALIGNED(NPY_SIMD_WIDTH) s[npyv_nlanes_@sfx@];
         npyv_storea_@sfx@(s, v);
         npyv_lanetype_@sfx@ result = s[0];
         for(int i=1; i<npyv_nlanes_@sfx@; ++i){
@@ -315,10 +353,10 @@ simd_binary_ccc_@intrin@_@sfx@(const npyv_lanetype_@sfx@ *ip1, const npyv_lanety
  *          FLOAT, DOUBLE, LONGDOUBLE#
  * #type = npy_ubyte, npy_ushort, npy_uint, npy_ulong, npy_ulonglong,
  *         npy_byte, npy_short, npy_int, npy_long, npy_longlong,
- *         float, double, long double#
+ *         npy_float, npy_double, npy_longdouble#
  *
  * #is_fp = 0*10, 1*3#
- * #is_unsigend = 1*5, 0*5, 0*3#
+ * #is_unsigned = 1*5, 0*5, 0*3#
  * #scalar_sfx = i*10, f, d, l#
  */
 #undef TO_SIMD_SFX
@@ -332,7 +370,7 @@ simd_binary_ccc_@intrin@_@sfx@(const npyv_lanetype_@sfx@ *ip1, const npyv_lanety
         #if NPY_BITSOF_@BTYPE@ == 64 && !NPY_SIMD_F64
             #undef TO_SIMD_SFX
         #endif
-    #elif @is_unsigend@
+    #elif @is_unsigned@
         #define TO_SIMD_SFX(X) X##_u@len@
     #else
         #define TO_SIMD_SFX(X) X##_s@len@
