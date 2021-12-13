@@ -38,7 +38,7 @@ NPY_FINLINE npyv_f64 npyv_square_f64(npyv_f64 a)
 #define npyv_max_f64 vec_max
 // Maximum, supports IEEE floating-point arithmetic (IEC 60559),
 // - If one of the two vectors contains NaN, the equivalent element of the other vector is set
-// - Only if both corresponded elements are NaN, NaN is set. 
+// - Only if both corresponded elements are NaN, NaN is set.
 #define npyv_maxp_f32 vec_max
 #define npyv_maxp_f64 vec_max
 // Maximum, integer operations
@@ -56,7 +56,7 @@ NPY_FINLINE npyv_f64 npyv_square_f64(npyv_f64 a)
 #define npyv_min_f64 vec_min
 // Minimum, supports IEEE floating-point arithmetic (IEC 60559),
 // - If one of the two vectors contains NaN, the equivalent element of the other vector is set
-// - Only if both corresponded elements are NaN, NaN is set. 
+// - Only if both corresponded elements are NaN, NaN is set.
 #define npyv_minp_f32 vec_min
 #define npyv_minp_f64 vec_min
 // Minimum, integer operations
@@ -68,6 +68,10 @@ NPY_FINLINE npyv_f64 npyv_square_f64(npyv_f64 a)
 #define npyv_min_s32 vec_min
 #define npyv_min_u64 vec_min
 #define npyv_min_s64 vec_min
+
+// round to nearest int even
+#define npyv_rint_f32 vec_rint
+#define npyv_rint_f64 vec_rint
 
 // ceil
 #define npyv_ceil_f32 vec_ceil
