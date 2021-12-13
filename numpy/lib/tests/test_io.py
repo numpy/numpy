@@ -695,7 +695,7 @@ class TestLoadTxt(LoadTxtBase):
         assert_array_equal(x, a)
 
         d = TextIO()
-        d.write('M 64.0 75.0\nF 25.0 60.0')
+        d.write('M 64 75.0\nF 25 60.0')
         d.seek(0)
         mydescriptor = {'names': ('gender', 'age', 'weight'),
                         'formats': ('S1', 'i4', 'f4')}
@@ -981,7 +981,8 @@ class TestLoadTxt(LoadTxtBase):
         c.write(inp)
         for dt in [float, np.float32]:
             c.seek(0)
-            res = np.loadtxt(c, dtype=dt)
+            res = np.loadtxt(
+                c, dtype=dt, converters=float.fromhex, encoding="latin1")
             assert_equal(res, tgt, err_msg="%s" % dt)
 
     def test_default_float_converter_no_default_hex_conversion(self):
@@ -990,9 +991,8 @@ class TestLoadTxt(LoadTxtBase):
         is not called by default. Regression test related to gh-19598.
         """
         c = TextIO("a b c")
-        with pytest.raises(
-            ValueError, match="could not convert string to float"
-        ):
+        with pytest.raises(ValueError,
+                match=".*convert string 'a' to float64 at row 0, column 1"):
             np.loadtxt(c)
 
     def test_default_float_converter_exception(self):
@@ -1001,9 +1001,8 @@ class TestLoadTxt(LoadTxtBase):
         conversion is correct. Regression test related to gh-19598.
         """
         c = TextIO("qrs tuv")  # Invalid values for default float converter
-        with pytest.raises(
-            ValueError, match="could not convert string to float"
-        ):
+        with pytest.raises(ValueError,
+                match="could not convert string 'qrs' to float64"):
             np.loadtxt(c)
 
     def test_from_complex(self):
