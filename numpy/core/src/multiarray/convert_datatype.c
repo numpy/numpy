@@ -410,7 +410,8 @@ _get_cast_safety_from_castingimpl(PyArrayMethodObject *castingimpl,
      * 2. Equivalent-casting + 0 view offset is (usually) the definition
      *    of a "no" cast.  However, changing the order of fields can also
      *    create descriptors that are not equivalent but views.
-     * Note that unsafe casts can have a view offset.
+     * Note that unsafe casts can have a view offset.  For example, in
+     * principle, casting `<i8` to `<i4` is a cast with 0 offset.
      */
     if (*view_offset != 0) {
         assert(casting != NPY_NO_CASTING);

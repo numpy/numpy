@@ -712,30 +712,29 @@ class TestCasting:
         assert np.can_cast("V4", dtype, casting=casting) == expected
         assert np.can_cast(dtype, "V4", casting=casting) == expected
 
-    def test_structured_field_offsets(self):
+    @pytest.mark.parametrize(["to_dt", "expected_off"],
+            [  # Same as `from_dt` but with both fields shifted:
+             (np.dtype({"names": ["a", "b"], "formats": ["i4", "f4"],
+                        "offsets": [2, 6]}), -2),
+             # Additional change of the names
+             # TODO: Tests will need changing for order vs. name based casting:
+             (np.dtype({"names": ["b", "a"], "formats": ["f4", "i4"],
+                        "offsets": [6, 2]}), -2),
+             # Incompatible field offset change (offsets -2 and 0)
+             (np.dtype({"names": ["b", "a"], "formats": ["f4", "i4"],
+                        "offsets": [6, 0]}), None)])
+    def test_structured_field_offsets(self, to_dt, expected_off):
         # This checks the cast-safety and view offset for swapped and "shifted"
         # fields which are viewable
-        # TODO: Test will need adaptation for order vs. name based casting:
         from_dt = np.dtype({"names": ["a", "b"],
                             "formats": ["i4", "f4"],
                             "offsets": [0, 4]})
-        to_dt1 = np.dtype({"names": ["b", "a"],
-                           "formats": ["f4", "i4"],
-                           "offsets": [6, 2]})
-        cast = get_castingimpl(type(from_dt), type(to_dt1))
-        safety, _, view_off = cast._resolve_descriptors((from_dt, to_dt1))
+        cast = get_castingimpl(type(from_dt), type(to_dt))
+        safety, _, view_off = cast._resolve_descriptors((from_dt, to_dt))
         assert safety == Casting.equiv
         # Shifting the original data pointer by -2 will align both by
         # effectively adding 2 bytes of spacing before `from_dt`.
-        assert view_off == -2
-
-        to_dt2 = np.dtype({"names": ["b", "a"],
-                           "formats": ["f4", "i4"],
-                           "offsets": [6, 0]})
-        safety, _, view_off = cast._resolve_descriptors((from_dt, to_dt2))
-        assert safety == Casting.equiv
-        # The shifts of the fields are not identical, a view is not possible:
-        assert view_off is None
+        assert view_off == expected_off
 
     @pytest.mark.parametrize(("from_dt", "to_dt", "expected_off"), [
             # Subarray cases:
@@ -761,7 +760,11 @@ class TestCasting:
             ("V4", "V3", 0),
             ("V4", "V4", 0),
             ("V3", "V4", None),
+            # Note that currently void-to-other cast goes via byte-strings
+            # and is not a "view" based cast like the opposite direction:
             ("V4", "i4", None),
+            # completely invalid/impossible cast:
+            ("i,i", "i,i,i", None),
         ])
     def test_structured_view_offsets_paramteric(
             self, from_dt, to_dt, expected_off):

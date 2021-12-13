@@ -115,9 +115,10 @@ is_contiguous(
 /**
  * The default method to fetch the correct loop for a cast or ufunc
  * (at the time of writing only casts).
- * The default version can return loops explicitly registered during method
- * creation. It does specialize contiguous loops, although has to check
- * all descriptors itemsizes for this.
+ * Note that the default function provided here will only indicate that a cast
+ * can be done as a view (i.e., arr.view(new_dtype)) when this is trivially
+ * true, i.e., for cast safety "no-cast". It will not recognize view as an
+ * option for other casts (e.g., viewing '>i8' as '>i4' with an offset of 4).
  *
  * @param context
  * @param aligned
@@ -508,8 +509,9 @@ boundarraymethod_dealloc(PyObject *self)
 
 
 /*
- * Calls resolve_descriptors() and returns the casting level and the resolved
- * descriptors as a tuple. If the operation is impossible returns (-1, None).
+ * Calls resolve_descriptors() and returns the casting level, the resolved
+ * descriptors as a tuple, and a possible view-offset (integer or None).
+ * If the operation is impossible returns (-1, None, None).
  * May raise an error, but usually should not.
  * The function validates the casting attribute compared to the returned
  * casting level.
@@ -598,8 +600,8 @@ boundarraymethod__resolve_descripors(
     }
 
     /*
-     * The casting flags should be the most generic casting level (except the
-     * cast-is-view flag.  If no input is parametric, it must match exactly.
+     * The casting flags should be the most generic casting level.
+     * If no input is parametric, it must match exactly.
      *
      * (Note that these checks are only debugging checks.)
      */
