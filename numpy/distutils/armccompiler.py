@@ -17,11 +17,11 @@ class ArmCCompiler(UnixCCompiler):
         cc_compiler = self.cc_exe
         cxx_compiler = self.cxx_exe
         self.set_executables(compiler=cc_compiler +
-                                      ' -mcpu=native -O3 -fPIC',
+                                      ' -O3 -fPIC',
                              compiler_so=cc_compiler +
-                                         ' -mcpu=native -O3 -fPIC',
+                                         ' -O3 -fPIC',
                              compiler_cxx=cxx_compiler +
-                                          ' -mcpu=native -O3 -fPIC',
+                                          ' -O3 -fPIC',
                              linker_exe=cc_compiler +
                                         ' -lamath',
                              linker_so=cc_compiler +
