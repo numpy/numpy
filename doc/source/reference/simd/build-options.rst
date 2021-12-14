@@ -165,6 +165,7 @@ Special Options
        ARMHF                                  ``NONE``
        ARM64 A.K. AARCH64                     ``NEON`` ``NEON_FP16`` ``NEON_VFPV4``
                                               ``ASIMD``
+       IBM/ZSYSTEM(S390X)                     ``NONE``
       ======================================  =======================================
 
 - ``MAX``: Enables all supported CPU features by the compiler and platform.
@@ -338,7 +339,7 @@ that includes several sections, and each section has several values, representin
 **Platform**:
 
 - :enabled:`Architecture`: The architecture name of target CPU. It should be one of
-  ``x86``, ``x64``, ``ppc64``, ``ppc64le``, ``armhf``, ``aarch64`` or ``unknown``.
+  ``x86``, ``x64``, ``ppc64``, ``ppc64le``, ``armhf``, ``aarch64``, ``s390x`` or ``unknown``.
 
 - :enabled:`Compiler`: The compiler name. It should be one of
   gcc, clang, msvc, icc, iccw or unix-like.
