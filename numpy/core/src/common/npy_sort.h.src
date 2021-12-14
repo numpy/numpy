@@ -18,6 +18,11 @@ static NPY_INLINE int npy_get_msb(npy_uintp unum)
     return depth_limit;
 }
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 
 /*
  *****************************************************************************
@@ -101,5 +106,9 @@ NPY_NO_EXPORT int npy_aquicksort(void *vec, npy_intp *ind, npy_intp cnt, void *a
 NPY_NO_EXPORT int npy_aheapsort(void *vec, npy_intp *ind, npy_intp cnt, void *arr);
 NPY_NO_EXPORT int npy_amergesort(void *vec, npy_intp *ind, npy_intp cnt, void *arr);
 NPY_NO_EXPORT int npy_atimsort(void *vec, npy_intp *ind, npy_intp cnt, void *arr);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
