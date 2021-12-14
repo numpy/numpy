@@ -1,4 +1,4 @@
-.. generated via /home/seiko/work/repos/numpy/doc/source/reference/simd/./gen_features.py
+.. generated via /home/seiko/work/repos/review/numpy/doc/source/reference/simd/gen_features.py
 
 On x86
 ~~~~~~
@@ -90,4 +90,17 @@ On ARMv8/A64
     ``ASIMDDP``    ``NEON`` ``NEON_FP16`` ``NEON_VFPV4`` ``ASIMD``            
     ``ASIMDFHM``   ``NEON`` ``NEON_FP16`` ``NEON_VFPV4`` ``ASIMD`` ``ASIMDHP``
     ============== ===========================================================
+
+On IBM/ZSYSTEM(S390X)
+~~~~~~~~~~~~~~~~~~~~~
+.. table::
+    :align: left
+
+    ======== ==============
+    Name     Implies       
+    ======== ==============
+    ``VX``                 
+    ``VXE``  ``VX``        
+    ``VXE2`` ``VX`` ``VXE``
+    ======== ==============
 

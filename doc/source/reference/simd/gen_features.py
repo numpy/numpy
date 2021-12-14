@@ -158,6 +158,7 @@ if __name__ == '__main__':
     pretty_names = {
         "PPC64": "IBM/POWER big-endian",
         "PPC64LE": "IBM/POWER little-endian",
+        "S390X": "IBM/ZSYSTEM(S390X)",
         "ARMHF": "ARMv7/A32",
         "AARCH64": "ARMv8/A64",
         "ICC": "Intel Compiler",
@@ -170,7 +171,7 @@ if __name__ == '__main__':
     with open(path.join(gen_path, 'cpu_features.inc'), 'wt') as fd:
         fd.write(f'.. generated via {__file__}\n\n')
         for arch in (
-            ("x86", "PPC64", "PPC64LE", "ARMHF", "AARCH64")
+            ("x86", "PPC64", "PPC64LE", "ARMHF", "AARCH64", "S390X")
         ):
             title = "On " + pretty_names.get(arch, arch)
             table = Features(arch, 'gcc').table()
@@ -183,7 +184,8 @@ if __name__ == '__main__':
             ("PPC64", ("clang",)),
             ("PPC64LE", ("clang",)),
             ("ARMHF", ("clang",)),
-            ("AARCH64", ("clang",))
+            ("AARCH64", ("clang",)),
+            ("S390X", ("clang",))
         ):
             arch_pname = pretty_names.get(arch, arch)
             for cc in cc_names:

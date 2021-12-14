@@ -146,6 +146,17 @@ class Test_POWER_Features(AbstractTest):
     def load_flags(self):
         self.load_flags_auxv()
 
+
+is_zarch = re.match("^(s390x)", machine, re.IGNORECASE)
+@pytest.mark.skipif(not is_linux or not is_zarch,
+                    reason="Only for Linux and IBM Z")
+class Test_ZARCH_Features(AbstractTest):
+    features = ["VX", "VXE", "VXE2"]
+
+    def load_flags(self):
+        self.load_flags_auxv()
+
+
 is_arm = re.match("^(arm|aarch64)", machine, re.IGNORECASE)
 @pytest.mark.skipif(not is_linux or not is_arm, reason="Only for Linux and ARM")
 class Test_ARM_Features(AbstractTest):
