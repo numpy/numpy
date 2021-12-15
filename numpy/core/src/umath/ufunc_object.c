@@ -2738,12 +2738,10 @@ reducelike_promote_and_resolve(PyUFuncObject *ufunc,
 
     PyArrayMethodObject *ufuncimpl = promote_and_get_ufuncimpl(ufunc,
             ops, signature, operation_DTypes, NPY_FALSE, NPY_TRUE, NPY_TRUE);
-    /* Output can currently get cleared, others XDECREF in case of error */
+    /* DTypes may currently get filled in fallbacks and XDECREF for error: */
+    Py_XDECREF(operation_DTypes[0]);
     Py_XDECREF(operation_DTypes[1]);
-    if (out != NULL) {
-        Py_XDECREF(operation_DTypes[0]);
-        Py_XDECREF(operation_DTypes[2]);
-    }
+    Py_XDECREF(operation_DTypes[2]);
     if (ufuncimpl == NULL) {
         return NULL;
     }
@@ -4892,6 +4890,7 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
      */
     Py_XDECREF(wheremask);
     for (int i = 0; i < nop; i++) {
+        Py_DECREF(signature[i]);
         Py_XDECREF(operand_DTypes[i]);
         Py_DECREF(operation_descrs[i]);
         if (i < nin) {
@@ -4915,6 +4914,7 @@ fail:
     Py_XDECREF(wheremask);
     for (int i = 0; i < ufunc->nargs; i++) {
         Py_XDECREF(operands[i]);
+        Py_XDECREF(signature[i]);
         Py_XDECREF(operand_DTypes[i]);
         Py_XDECREF(operation_descrs[i]);
         if (i < nout) {
@@ -6154,7 +6154,9 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
     Py_XDECREF(op2_array);
     Py_XDECREF(iter);
     Py_XDECREF(iter2);
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < nop; i++) {
+        Py_DECREF(signature[i]);
+        Py_XDECREF(operand_DTypes[i]);
         Py_XDECREF(operation_descrs[i]);
         Py_XDECREF(array_operands[i]);
     }
@@ -6180,6 +6182,8 @@ fail:
     Py_XDECREF(iter);
     Py_XDECREF(iter2);
     for (int i = 0; i < 3; i++) {
+        Py_XDECREF(signature[i]);
+        Py_XDECREF(operand_DTypes[i]);
         Py_XDECREF(operation_descrs[i]);
         Py_XDECREF(array_operands[i]);
     }
