@@ -742,13 +742,14 @@ promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
     }
     info = promote_and_get_info_and_ufuncimpl(ufunc,
             ops, signature, new_op_dtypes, NPY_FALSE);
+    for (int i = 0; i < ufunc->nargs; i++) {
+        Py_XDECREF(new_op_dtypes[i]);
+    }
+
     /* Add this to the cache using the original types: */
     if (cacheable && PyArrayIdentityHash_SetItem(ufunc->_dispatch_cache,
             (PyObject **)op_dtypes, info, 0) < 0) {
         return NULL;
-    }
-    for (int i = 0; i < ufunc->nargs; i++) {
-        Py_XDECREF(new_op_dtypes);
     }
     return info;
 }

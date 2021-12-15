@@ -1962,6 +1962,7 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
         if (flags & NPY_ARRAY_ENSURENOCOPY ) {
             PyErr_SetString(PyExc_ValueError,
                     "Unable to avoid copy while creating an array from given array.");
+            Py_DECREF(newtype);
             return NULL;
         }
 
