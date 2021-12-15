@@ -2046,7 +2046,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
         }
     }
 
-    if ((PyArray_FLAGS(self) & NPY_ARRAY_OWNDATA) && nbytes != 0) {
+    if ((PyArray_FLAGS(self) & NPY_ARRAY_OWNDATA)) {
         /*
          * Allocation will never be 0, see comment in ctors.c
          * line 820
@@ -2072,6 +2072,8 @@ array_setstate(PyArrayObject *self, PyObject *args)
         fa->dimensions = NULL;
     }
 
+    fa->flags = NPY_ARRAY_DEFAULT;
+
     fa->nd = nd;
 
     if (nd > 0) {
@@ -2090,26 +2092,16 @@ array_setstate(PyArrayObject *self, PyObject *args)
                                &(fa->flags));
     }
 
-    if (nbytes == 0) {
-        /* Nothing more to do, it should be OK to use the array data as-is */
-        if (!PyDataType_FLAGCHK(typecode, NPY_LIST_PICKLE)) {
-            Py_DECREF(rawdata);
-        }
-        /* Update flags. TODO: not all (maybe none) need updating */
-        PyArray_UpdateFlags(self, NPY_ARRAY_UPDATE_ALL);
-        Py_RETURN_NONE;
-    }
-    else {
-        /* Otherwise the data is already cleared */
-        assert(!PyArray_CHKFLAGS(self, NPY_ARRAY_OWNDATA));
-    }
-
     if (!PyDataType_FLAGCHK(typecode, NPY_LIST_PICKLE)) {
         int swap = PyArray_ISBYTESWAPPED(self);
         /* Bytes should always be considered immutable, but we just grab the
          * pointer if they are large, to save memory. */
         if (!IsAligned(self) || swap || (len <= 1000)) {
             npy_intp num = PyArray_NBYTES(self);
+            if (num == 0) {
+                Py_DECREF(rawdata);
+                Py_RETURN_NONE;
+            }
             /* Store the handler in case the default is modified */
             Py_XDECREF(fa->mem_handler);
             fa->mem_handler = PyDataMem_GetHandler();
@@ -2119,7 +2111,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
             }
             fa->data = PyDataMem_UserNEW(num, PyArray_HANDLER(self));
             if (PyArray_DATA(self) == NULL) {
-                Py_CLEAR(fa->mem_handler);
+                Py_DECREF(fa->mem_handler);
                 Py_DECREF(rawdata);
                 return PyErr_NoMemory();
             }
@@ -2156,16 +2148,21 @@ array_setstate(PyArrayObject *self, PyObject *args)
         }
         else {
             /* The handlers should never be called in this case */
-            Py_CLEAR(fa->mem_handler);
+            Py_XDECREF(fa->mem_handler);
+            fa->mem_handler = NULL;
             fa->data = datastr;
             if (PyArray_SetBaseObject(self, rawdata) < 0) {
+                Py_DECREF(rawdata);
                 return NULL;
             }
         }
     }
     else {
         npy_intp num = PyArray_NBYTES(self);
-        assert(num != 0 && PyArray_DESCR(self)->elsize != 0);
+        int elsize = PyArray_DESCR(self)->elsize;
+        if (num == 0 || elsize == 0) {
+            Py_RETURN_NONE;
+        }
         /* Store the functions in case the default handler is modified */
         Py_XDECREF(fa->mem_handler);
         fa->mem_handler = PyDataMem_GetHandler();
@@ -2174,7 +2171,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
         }
         fa->data = PyDataMem_UserNEW(num, PyArray_HANDLER(self));
         if (PyArray_DATA(self) == NULL) {
-            Py_CLEAR(fa->mem_handler);
+            Py_DECREF(fa->mem_handler);
             return PyErr_NoMemory();
         }
         if (PyDataType_FLAGCHK(PyArray_DESCR(self), NPY_NEEDS_INIT)) {
@@ -2183,6 +2180,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
         PyArray_ENABLEFLAGS(self, NPY_ARRAY_OWNDATA);
         fa->base = NULL;
         if (_setlist_pkl(self, rawdata) < 0) {
+            Py_DECREF(fa->mem_handler);
             return NULL;
         }
     }
