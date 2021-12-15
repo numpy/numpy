@@ -14,7 +14,7 @@ following steps:
   needed to create wrapper functions.
 
   * Optionally, F2PY-created signature files can be edited to optimize wrapper
-    functions, to make them "smarter" and more "Pythonic".
+    functions, which can make them "smarter" and more "Pythonic".
 
 * F2PY reads a signature file and writes a Python C/API module containing
   Fortran/C/Python bindings.
@@ -63,6 +63,12 @@ or, alternatively, if the ``f2py`` command-line tool is available,
 ::
 
   f2py -c fib1.f -m fib1
+
+.. note::
+
+  Because the ``f2py`` command might not be available in all system, notably on
+  Windows, we will use the ``python -m numpy.f2py`` command throughout this
+  guide.
 
 This command compiles and wraps ``fib1.f`` (``-c``) to create the extension
 module ``fib1.so`` (``-m``) in the current directory. A list of command line

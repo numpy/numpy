@@ -16,6 +16,13 @@ constructs that are irrelevant for creating the interface. However, this also
 means that syntax errors are not caught by F2PY and will only be caught when the
 library is built.
 
+.. note::
+
+  Currently, F2PY may fail with valid Fortran constructs, such as intrinsic
+  modules. If this happens, you can check the
+  :ref:`NumPy GitHub issue tracker <https://github.com/numpy/numpy/issues>` for
+  possible workarounds or work-in-progress ideas.
+
 In general, the contents of the signature files are case-sensitive. When
 scanning Fortran codes to generate a signature file, F2PY lowers all cases
 automatically except in multi-line blocks or when the ``--no-lower`` option is
@@ -596,10 +603,10 @@ Extensions
 F2PY directives
 ^^^^^^^^^^^^^^^^
 
-The F2PY directives allow using F2PY signature file constructs in
-Fortran 77/90 source codes. With this feature one  can (almost) completely skip
-the intermediate signature file generation and apply F2PY directly to Fortran
-source codes.
+The F2PY directives allow using F2PY signature file constructs in Fortran 77/90
+source codes. With this feature one  can (almost) completely skip the
+intermediate signature file generation and apply F2PY directly to Fortran source
+codes.
 
 F2PY directives have the following form::
 
