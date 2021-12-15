@@ -899,7 +899,11 @@ class _CCompiler:
     cc_on_x64 : bool
         True when the target architecture is 64-bit x86
     cc_on_ppc64 : bool
-        True when the target architecture is 64-bit big-endian PowerPC
+        True when the target architecture is 64-bit big-endian powerpc
+    cc_on_ppc64le : bool
+        True when the target architecture is 64-bit litle-endian powerpc
+    cc_on_s390x : bool
+        True when the target architecture is IBM/ZARCH on linux
     cc_on_armhf : bool
         True when the target architecture is 32-bit ARMv7+
     cc_on_aarch64 : bool
@@ -1009,7 +1013,7 @@ class _CCompiler:
             self.cc_is_gcc = True
 
         self.cc_march = "unknown"
-        for arch in ("x86", "x64", "ppc64", "ppc64le", 
+        for arch in ("x86", "x64", "ppc64", "ppc64le",
                      "armhf", "aarch64", "s390x"):
             if getattr(self, "cc_on_" + arch):
                 self.cc_march = arch
@@ -1090,7 +1094,9 @@ class _CCompiler:
     _cc_normalize_unix_frgx = re.compile(
         # 2- to remove any flags starts with
         # -march, -mcpu, -x(INTEL) and '-m' without '='
-        r"^(?!(-mcpu=|-march=|-x[A-Z0-9\-]))(?!-m[a-z0-9\-\.]*.$)"
+        r"^(?!(-mcpu=|-march=|-x[A-Z0-9\-]|-m[a-z0-9\-\.]*.$))|"
+        # exclude:
+        r"(?:-mzvector)"
     )
     _cc_normalize_unix_krgx = re.compile(
         # 3- keep only the highest of
