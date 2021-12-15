@@ -20,7 +20,7 @@ library is built.
 
   Currently, F2PY may fail with valid Fortran constructs, such as intrinsic
   modules. If this happens, you can check the
-  :ref:`NumPy GitHub issue tracker <https://github.com/numpy/numpy/issues>` for
+  `NumPy GitHub issue tracker <https://github.com/numpy/numpy/issues>`_ for
   possible workarounds or work-in-progress ideas.
 
 In general, the contents of the signature files are case-sensitive. When

@@ -216,6 +216,8 @@ Now, instead of generating the extension module directly, we will create a
 signature file for this subroutine first. This is a common pattern for
 multi-step extension module generation. In this case, after running
 
+.. code-block:: python
+
 	python -m numpy.f2py myroutine.f90 -h myroutine.pyf
 
 the following signature file is generated:
