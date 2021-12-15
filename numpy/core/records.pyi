@@ -181,3 +181,57 @@ def array(
     byteorder: None | _ByteOrder = ...,
     copy: bool = ...,
 ) -> _RecArray[record]: ...
+@overload
+def array(
+    obj: None,
+    dtype: DTypeLike,
+    shape: _ShapeLike,
+    offset: int = ...,
+    formats: None = ...,
+    names: None = ...,
+    titles: None = ...,
+    aligned: bool = ...,
+    byteorder: None = ...,
+    copy: bool = ...,
+) -> _RecArray[Any]: ...
+@overload
+def array(
+    obj: None,
+    dtype: None = ...,
+    *,
+    shape: _ShapeLike,
+    offset: int = ...,
+    formats: DTypeLike,
+    names: None | str | Sequence[str] = ...,
+    titles: None | str | Sequence[str] = ...,
+    aligned: bool = ...,
+    byteorder: None | _ByteOrder = ...,
+    copy: bool = ...,
+) -> _RecArray[record]: ...
+@overload
+def array(
+    obj: _SupportsReadInto,
+    dtype: DTypeLike,
+    shape: None | _ShapeLike = ...,
+    offset: int = ...,
+    formats: None = ...,
+    names: None = ...,
+    titles: None = ...,
+    aligned: bool = ...,
+    byteorder: None = ...,
+    copy: bool = ...,
+) -> _RecArray[Any]: ...
+@overload
+def array(
+    obj: _SupportsReadInto,
+    dtype: None = ...,
+    shape: None | _ShapeLike = ...,
+    offset: int = ...,
+    *,
+    formats: DTypeLike,
+    names: None | str | Sequence[str] = ...,
+    titles: None | str | Sequence[str] = ...,
+    aligned: bool = ...,
+    byteorder: None | _ByteOrder = ...,
+    copy: bool = ...,
+) -> _RecArray[record]: ...
