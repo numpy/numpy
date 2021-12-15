@@ -443,7 +443,7 @@ class _Test_CCompilerOpt:
             ppc64_clang="-maltivec -mvsx -mpower8-vector",
             armhf_gcc="-mfpu=neon-fp16 -mfp16-format=ieee",
             aarch64="",
-            s390="-mzvector -march=arch12"
+            s390x="-mzvector -march=arch12"
         )
         # testing normalize -march
         self.expect_flags(
@@ -466,6 +466,10 @@ class _Test_CCompilerOpt:
         self.expect_flags(
             "asimddp asimdhp asimdfhm",
             aarch64_gcc=r"-march=armv8.2-a\+dotprod\+fp16\+fp16fml"
+        )
+        self.expect_flags(
+            "vx vxe vxe2",
+            s390x=r"-mzvector -march=arch13"
         )
 
     def test_targets_exceptions(self):
