@@ -583,6 +583,10 @@ legacy_promote_using_legacy_type_resolver(PyUFuncObject *ufunc,
             NPY_UNSAFE_CASTING, (PyArrayObject **)ops, type_tuple,
             out_descrs) < 0) {
         Py_XDECREF(type_tuple);
+        /* Not all legacy resolvers clean up on failures: */
+        for (int i = 0; i < nargs; i++) {
+            Py_CLEAR(out_descrs[i]);
+        }
         return -1;
     }
     Py_XDECREF(type_tuple);
