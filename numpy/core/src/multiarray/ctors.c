@@ -1301,9 +1301,10 @@ _array_from_array_like(PyObject *op,
      * We skip bytes and unicode since they are considered scalars. Unicode
      * would fail but bytes would be incorrectly converted to a uint8 array.
      */
-    if (!PyBytes_Check(op) && !PyUnicode_Check(op)) {
+    if (PyObject_CheckBuffer(op) && !PyBytes_Check(op) && !PyUnicode_Check(op)) {
         PyObject *memoryview = PyMemoryView_FromObject(op);
         if (memoryview == NULL) {
+            /* TODO: Should probably not blanket ignore errors. */
             PyErr_Clear();
         }
         else {
