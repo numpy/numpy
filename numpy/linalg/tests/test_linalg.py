@@ -2103,6 +2103,27 @@ class TestTensorinv:
         assert_allclose(np.tensordot(ainv, b, 1), np.linalg.tensorsolve(a, b))
 
 
+class TestTensorsolve:
+
+    @pytest.mark.parametrize("a, axes", [
+        (np.ones((4, 6, 8, 2)), None),
+        (np.ones((3, 3, 2)), (0, 2)),
+        ])
+    def test_non_square_handling(self, a, axes):
+        with assert_raises(LinAlgError):
+            b = np.ones(a.shape[:2])
+            linalg.tensorsolve(a, b, axes=axes)
+
+    @pytest.mark.parametrize("shape",
+        [(2, 3, 6), (3, 4, 4, 3), (0, 3, 3, 0)],
+    )
+    def test_tensorsolve_result(self, shape):
+        a = np.random.randn(*shape)
+        b = np.ones(a.shape[:2])
+        x = np.linalg.tensorsolve(a, b)
+        assert_allclose(np.tensordot(a, x, axes=len(x.shape)), b)
+
+
 def test_unsupported_commontype():
     # linalg gracefully handles unsupported type
     arr = np.array([[1, -2], [2, 5]], dtype='float16')

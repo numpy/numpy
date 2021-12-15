@@ -299,7 +299,13 @@ def tensorsolve(a, b, axes=None):
     for k in oldshape:
         prod *= k
 
-    a = a.reshape(-1, prod)
+    if a.size != prod ** 2:
+        raise LinAlgError(
+            "Input arrays must satisfy the requirement \
+            prod(a.shape[b.ndim:]) == prod(a.shape[:b.ndim])"
+        )
+
+    a = a.reshape(prod, prod)
     b = b.ravel()
     res = wrap(solve(a, b))
     res.shape = oldshape
