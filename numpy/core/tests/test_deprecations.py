@@ -380,18 +380,6 @@ class TestPyArray_AS2D(_DeprecationTestCase):
         assert_raises(NotImplementedError, npy_pyarrayas2d_deprecation)
 
 
-class Test_UPDATEIFCOPY(_DeprecationTestCase):
-    """
-    v1.14 deprecates creating an array with the UPDATEIFCOPY flag, use
-    WRITEBACKIFCOPY instead
-    """
-    def test_npy_updateifcopy_deprecation(self):
-        from numpy.core._multiarray_tests import npy_updateifcopy_deprecation
-        arr = np.arange(9).reshape(3, 3)
-        v = arr.T
-        self.assert_deprecated(npy_updateifcopy_deprecation, args=(v,))
-
-
 class TestDatetimeEvent(_DeprecationTestCase):
     # 2017-08-11, 1.14.0
     def test_3_tuple(self):
