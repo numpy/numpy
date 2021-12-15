@@ -94,6 +94,7 @@ simd_sequence_from_iterable(PyObject *obj, simd_data_type dtype, Py_ssize_t min_
             "minimum acceptable size of the required sequence is %d, given(%d)",
             min_size, seq_size
         );
+        Py_DECREF(seq_obj);
         return NULL;
     }
     npyv_lanetype_u8 *dst = simd_sequence_new(seq_size, dtype);

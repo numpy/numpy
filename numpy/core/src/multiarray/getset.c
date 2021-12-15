@@ -401,6 +401,7 @@ array_data_set(PyArrayObject *self, PyObject *op, void *NPY_UNUSED(ignored))
             return -1;
         }
         PyDataMem_UserFREE(PyArray_DATA(self), nbytes, handler);
+        Py_CLEAR(((PyArrayObject_fields *)self)->mem_handler);
     }
     if (PyArray_BASE(self)) {
         if ((PyArray_FLAGS(self) & NPY_ARRAY_WRITEBACKIFCOPY) ||
