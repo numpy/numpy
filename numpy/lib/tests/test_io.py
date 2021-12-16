@@ -2438,13 +2438,14 @@ M   33  21.99
         assert_equal((), test.shape)
         assert_equal(expected.dtype, test.dtype)
 
-    def test_ndmin_keyword(self):
+    @pytest.mark.parametrize("ndim", [0, 1, 2])
+    def test_ndmin_keyword(self, ndim: int):
         # lets have the same behaivour of ndmin as loadtxt
         # as they should be the same for non-missing values
         txt = "42"
 
-        a = np.loadtxt(StringIO(txt), ndmin=1)
-        b = np.genfromtxt(StringIO(txt), ndmin=1)
+        a = np.loadtxt(StringIO(txt), ndmin=ndim)
+        b = np.genfromtxt(StringIO(txt), ndmin=ndim)
 
         assert_array_equal(a, b)
 
