@@ -2365,6 +2365,10 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
 
     xfin = isfinite(x)
     yfin = isfinite(y)
+    xinf = isinf(x)
+    yinf = isinf(y)
+    xinf_flag = False
+    yinf_flag = False
     if all(xfin) and all(yfin):
         return within_tol(x, y, atol, rtol)
     else:
@@ -2373,6 +2377,11 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
         # Because we're using boolean indexing, x & y must be the same shape.
         # Ideally, we'd just do x, y = broadcast_arrays(x, y). It's in
         # lib.stride_tricks, though, so we can't import it here.
+        if isinstance(x, complex) and xinf:
+            xinf_flag = True
+        if isinstance(y, complex) and yinf:
+            yinf_flag = True
+
         x = x * ones_like(cond)
         y = y * ones_like(cond)
         # Avoid subtraction with infinite/nan values...
