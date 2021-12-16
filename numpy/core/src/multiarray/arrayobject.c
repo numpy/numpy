@@ -493,10 +493,6 @@ array_dealloc(PyArrayObject *self)
         if (PyDataType_FLAGCHK(fa->descr, NPY_ITEM_REFCOUNT)) {
             PyArray_XDECREF(self);
         }
-        /*
-         * Allocation will never be 0, see comment in ctors.c
-         * line 820
-         */
         if (fa->mem_handler == NULL) {
             char *env = getenv("NUMPY_WARN_IF_NO_MEM_POLICY");
             if ((env != NULL) && (strncmp(env, "1", 1) == 0)) {
@@ -509,7 +505,14 @@ array_dealloc(PyArrayObject *self)
             free(fa->data);
         }
         else {
-            size_t nbytes = PyArray_NBYTES_ALLOCATED(self);
+            /*
+             * In theory `PyArray_NBYTES_ALLOCATED`, but differs somewhere?
+             * So instead just use the knowledge that 0 is impossible.
+             */
+            size_t nbytes = PyArray_NBYTES(self);
+            if (nbytes == 0) {
+                nbytes = 1;
+            }
             PyDataMem_UserFREE(fa->data, nbytes, fa->mem_handler);
             Py_DECREF(fa->mem_handler);
         }
