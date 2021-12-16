@@ -93,7 +93,6 @@ _FlagsKind = L[
     'ALIGNED', 'A',
     'WRITEABLE', 'W',
     'OWNDATA', 'O',
-    'UPDATEIFCOPY', 'U',
     'WRITEBACKIFCOPY', 'X',
 ]
 

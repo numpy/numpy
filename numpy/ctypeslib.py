@@ -261,7 +261,6 @@ def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
           - WRITEABLE / W
           - ALIGNED / A
           - WRITEBACKIFCOPY / X
-          - UPDATEIFCOPY / U
 
     Returns
     -------
