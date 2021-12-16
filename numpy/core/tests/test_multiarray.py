@@ -7793,6 +7793,26 @@ class TestNewBufferProtocol:
         # Fix buffer info again before we delete (or we lose the memory)
         _multiarray_tests.corrupt_or_fix_bufferinfo(obj)
 
+    def test_no_suboffsets(self):
+        try:
+            import _testbuffer
+        except ImportError:
+            raise pytest.skip("_testbuffer is not available")
+
+        for shape in [(2, 3), (2, 3, 4)]:
+            data = list(range(np.prod(shape)))
+            buffer = _testbuffer.ndarray(data, shape, format='i',
+                                         flags=_testbuffer.ND_PIL)
+            msg = "NumPy currently does not support.*suboffsets"
+            with pytest.raises(BufferError, match=msg):
+                np.asarray(buffer)
+            with pytest.raises(BufferError, match=msg):
+                np.asarray([buffer])
+
+            # Also check (unrelated and more limited but similar) frombuffer:
+            with pytest.raises(BufferError):
+                np.frombuffer(buffer)
+
 
 class TestArrayCreationCopyArgument(object):
 
