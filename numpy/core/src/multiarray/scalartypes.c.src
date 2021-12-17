@@ -2585,6 +2585,7 @@ gentype_arrtype_getbuffer(PyObject *self, Py_buffer *view, int flags)
                 "user-defined scalar %R registered for built-in dtype %S? "
                 "This should be impossible.",
                 self, descr);
+        Py_DECREF(descr);
         return -1;
     }
     view->ndim = 0;
