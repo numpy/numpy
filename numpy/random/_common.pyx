@@ -171,8 +171,23 @@ cdef object prepare_ctypes(bitgen_t *bitgen):
     return _ctypes
 
 cdef double kahan_sum(double *darr, np.npy_intp n):
+    """
+    Parameters
+    ----------
+    darr : reference to double array
+        Address of values to sum
+    n : intp
+        Length of d
+    
+    Returns
+    -------
+    float
+        The sum. 0.0 if n <= 0.
+    """
     cdef double c, y, t, sum
     cdef np.npy_intp i
+    if n <= 0:
+        return 0.0
     sum = darr[0]
     c = 0.0
     for i in range(1, n):
