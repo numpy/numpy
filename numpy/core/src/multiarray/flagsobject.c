@@ -659,7 +659,7 @@ arrayflags_print(PyArrayFlagsObject *self)
     return PyUnicode_FromFormat(
                         "  %s : %s\n  %s : %s\n"
                         "  %s : %s\n  %s : %s%s\n"
-                        "  %s : %s\n  %s : %s\n"
+                        "  %s : %s\n  %s : %s\n",
                         "C_CONTIGUOUS",    _torf_(fl, NPY_ARRAY_C_CONTIGUOUS),
                         "F_CONTIGUOUS",    _torf_(fl, NPY_ARRAY_F_CONTIGUOUS),
                         "OWNDATA",         _torf_(fl, NPY_ARRAY_OWNDATA),
