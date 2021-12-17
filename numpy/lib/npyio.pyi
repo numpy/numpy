@@ -140,7 +140,7 @@ def savez_compressed(
 def loadtxt(
     fname: str | os.PathLike[str] | Iterable[str] | Iterable[bytes],
     dtype: None = ...,
-    comments: str | Sequence[str] = ...,
+    comments: None | str | Sequence[str] = ...,
     delimiter: None | str = ...,
     converters: None | Mapping[int | str, Callable[[str], Any]] = ...,
     skiprows: int = ...,
@@ -156,7 +156,7 @@ def loadtxt(
 def loadtxt(
     fname: str | os.PathLike[str] | Iterable[str] | Iterable[bytes],
     dtype: _DTypeLike[_SCT],
-    comments: str | Sequence[str] = ...,
+    comments: None | str | Sequence[str] = ...,
     delimiter: None | str = ...,
     converters: None | Mapping[int | str, Callable[[str], Any]] = ...,
     skiprows: int = ...,
@@ -172,7 +172,7 @@ def loadtxt(
 def loadtxt(
     fname: str | os.PathLike[str] | Iterable[str] | Iterable[bytes],
     dtype: DTypeLike,
-    comments: str | Sequence[str] = ...,
+    comments: None | str | Sequence[str] = ...,
     delimiter: None | str = ...,
     converters: None | Mapping[int | str, Callable[[str], Any]] = ...,
     skiprows: int = ...,
