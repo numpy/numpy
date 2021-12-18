@@ -2,7 +2,7 @@
 Contributors
 ============
 
-A total of 151 people contributed to this release.  People with a "+" by their
+A total of 152 people contributed to this release.  People with a "+" by their
 names contributed a patch for the first time.
 
 * @DWesl
@@ -87,6 +87,7 @@ names contributed a patch for the first time.
 * Jérome Eertmans
 * Jérôme Kieffer +
 * KIU Shueng Chuan +
+* Kazuki Sakamoto +
 * Kenichi Maehashi
 * Kenny Huynh +
 * Kent R. Spillner +
@@ -160,7 +161,7 @@ names contributed a patch for the first time.
 Pull requests merged
 ====================
 
-A total of 589 pull requests were merged for this release.
+A total of 602 pull requests were merged for this release.
 
 * `#15847 <https://github.com/numpy/numpy/pull/15847>`__: BUG: avoid infinite recurrence on dependencies in crackfortran
 * `#16740 <https://github.com/numpy/numpy/pull/16740>`__: ENH: Add broadcast support to Generator.multinomial
@@ -751,3 +752,16 @@ A total of 589 pull requests were merged for this release.
 * `#20539 <https://github.com/numpy/numpy/pull/20539>`__: PERF: Fix performance bug in dispatching cache
 * `#20541 <https://github.com/numpy/numpy/pull/20541>`__: REL: Prepare for NumPy 1.22.0rc2 release.
 * `#20548 <https://github.com/numpy/numpy/pull/20548>`__: REV: Revert adding a default ufunc promoter
+* `#20576 <https://github.com/numpy/numpy/pull/20576>`__: BUG: Fix small issues found using valgrind
+* `#20577 <https://github.com/numpy/numpy/pull/20577>`__: BUG: Fix sorting of int8/int16
+* `#20578 <https://github.com/numpy/numpy/pull/20578>`__: ENH: Add ``__array__`` to the array_api Array object
+* `#20579 <https://github.com/numpy/numpy/pull/20579>`__: MAINT: make sure CI stays on VS2019 unless changed explicitly
+* `#20585 <https://github.com/numpy/numpy/pull/20585>`__: DOC: Update front page of documentation with Sphinx-Panels
+* `#20598 <https://github.com/numpy/numpy/pull/20598>`__: BUG: Fix issues (mainly) found using pytest-leaks
+* `#20599 <https://github.com/numpy/numpy/pull/20599>`__: MAINT: Fix two minor typing-related problems
+* `#20600 <https://github.com/numpy/numpy/pull/20600>`__: BUG: Fix leaks found using pytest-leaks
+* `#20601 <https://github.com/numpy/numpy/pull/20601>`__: MAINT: Check for buffer interface support rather than try/except
+* `#20602 <https://github.com/numpy/numpy/pull/20602>`__: BUG: Fix PyInit__umath_linalg type
+* `#20605 <https://github.com/numpy/numpy/pull/20605>`__: DEV: add a warningfilter to fix pytest workflow.
+* `#20614 <https://github.com/numpy/numpy/pull/20614>`__: TST: Bump mypy: 0.910 -> 0.920
+* `#20617 <https://github.com/numpy/numpy/pull/20617>`__: MAINT: Help boost::python libraries at least not crash
