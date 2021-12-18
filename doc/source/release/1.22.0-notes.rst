@@ -3,8 +3,8 @@
 ==========================
 NumPy 1.22.0 Release Notes
 ==========================
-NumPy 1.22.0 is a big release featuring the work of 151 contributers spread
-over 589 pull requests. There have been many improvements, highlights are:
+NumPy 1.22.0 is a big release featuring the work of 152 contributers spread
+over 602 pull requests. There have been many improvements, highlights are:
 
 * Annotations of the main namespace are essentially complete. Upstream is a
   moving target, so there will likely be further improvements, but the major
