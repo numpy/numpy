@@ -170,7 +170,7 @@ def _num_fromflags(flaglist):
     return num
 
 _flagnames = ['C_CONTIGUOUS', 'F_CONTIGUOUS', 'ALIGNED', 'WRITEABLE',
-              'OWNDATA', 'UPDATEIFCOPY', 'WRITEBACKIFCOPY']
+              'OWNDATA', 'WRITEBACKIFCOPY']
 def _flags_fromnum(num):
     res = []
     for key in _flagnames:
@@ -261,7 +261,6 @@ def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
           - WRITEABLE / W
           - ALIGNED / A
           - WRITEBACKIFCOPY / X
-          - UPDATEIFCOPY / U
 
     Returns
     -------

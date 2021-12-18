@@ -2477,11 +2477,6 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('flags',
         This array is a copy of some other array. The C-API function
         PyArray_ResolveWritebackIfCopy must be called before deallocating
         to the base array will be updated with the contents of this array.
-    UPDATEIFCOPY (U)
-        (Deprecated, use WRITEBACKIFCOPY) This array is a copy of some other array.
-        When this array is
-        deallocated, the base array will be updated with the contents of
-        this array.
     FNC
         F_CONTIGUOUS and not C_CONTIGUOUS.
     FORC
@@ -2499,13 +2494,12 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('flags',
     or by using lowercased attribute names (as in ``a.flags.writeable``). Short flag
     names are only supported in dictionary access.
 
-    Only the WRITEBACKIFCOPY, UPDATEIFCOPY, WRITEABLE, and ALIGNED flags can be
+    Only the WRITEBACKIFCOPY, WRITEABLE, and ALIGNED flags can be
     changed by the user, via direct assignment to the attribute or dictionary
     entry, or by calling `ndarray.setflags`.
 
     The array flags cannot be set arbitrarily:
 
-    - UPDATEIFCOPY can only be set ``False``.
     - WRITEBACKIFCOPY can only be set ``False``.
     - ALIGNED can only be set ``True`` if the data is truly aligned.
     - WRITEABLE can only be set ``True`` if the array owns its own memory
@@ -3907,13 +3901,13 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('setflags',
     """
     a.setflags(write=None, align=None, uic=None)
 
-    Set array flags WRITEABLE, ALIGNED, (WRITEBACKIFCOPY and UPDATEIFCOPY),
+    Set array flags WRITEABLE, ALIGNED, WRITEBACKIFCOPY,
     respectively.
 
     These Boolean-valued flags affect how numpy interprets the memory
     area used by `a` (see Notes below). The ALIGNED flag can only
     be set to True if the data is actually aligned according to the type.
-    The WRITEBACKIFCOPY and (deprecated) UPDATEIFCOPY flags can never be set
+    The WRITEBACKIFCOPY and flag can never be set
     to True. The flag WRITEABLE can only be set to True if the array owns its
     own memory, or the ultimate owner of the memory exposes a writeable buffer
     interface, or is a string. (The exception for string is made so that
@@ -3933,14 +3927,12 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('setflags',
     Array flags provide information about how the memory area used
     for the array is to be interpreted. There are 7 Boolean flags
     in use, only four of which can be changed by the user:
-    WRITEBACKIFCOPY, UPDATEIFCOPY, WRITEABLE, and ALIGNED.
+    WRITEBACKIFCOPY, WRITEABLE, and ALIGNED.
 
     WRITEABLE (W) the data area can be written to;
 
     ALIGNED (A) the data and strides are aligned appropriately for the hardware
     (as determined by the compiler);
-
-    UPDATEIFCOPY (U) (deprecated), replaced by WRITEBACKIFCOPY;
 
     WRITEBACKIFCOPY (X) this array is a copy of some other array (referenced
     by .base). When the C-API function PyArray_ResolveWritebackIfCopy is
@@ -3965,7 +3957,6 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('setflags',
       WRITEABLE : True
       ALIGNED : True
       WRITEBACKIFCOPY : False
-      UPDATEIFCOPY : False
     >>> y.setflags(write=0, align=0)
     >>> y.flags
       C_CONTIGUOUS : True
@@ -3974,7 +3965,6 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('setflags',
       WRITEABLE : False
       ALIGNED : False
       WRITEBACKIFCOPY : False
-      UPDATEIFCOPY : False
     >>> y.setflags(uic=1)
     Traceback (most recent call last):
       File "<stdin>", line 1, in <module>

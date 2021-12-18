@@ -234,11 +234,6 @@ class TestFlags:
         assert_equal(self.a.flags.owndata, True)
         assert_equal(self.a.flags.writeable, True)
         assert_equal(self.a.flags.aligned, True)
-        with assert_warns(DeprecationWarning):
-            assert_equal(self.a.flags.updateifcopy, False)
-        with assert_warns(DeprecationWarning):
-            assert_equal(self.a.flags['U'], False)
-            assert_equal(self.a.flags['UPDATEIFCOPY'], False)
         assert_equal(self.a.flags.writebackifcopy, False)
         assert_equal(self.a.flags['X'], False)
         assert_equal(self.a.flags['WRITEBACKIFCOPY'], False)
@@ -5381,19 +5376,8 @@ class TestFlat:
 
         assert_(c.flags.writeable is False)
         assert_(d.flags.writeable is False)
-        # for 1.14 all are set to non-writeable on the way to replacing the
-        # UPDATEIFCOPY array returned for non-contiguous arrays.
         assert_(e.flags.writeable is True)
         assert_(f.flags.writeable is False)
-        with assert_warns(DeprecationWarning):
-            assert_(c.flags.updateifcopy is False)
-        with assert_warns(DeprecationWarning):
-            assert_(d.flags.updateifcopy is False)
-        with assert_warns(DeprecationWarning):
-            assert_(e.flags.updateifcopy is False)
-        with assert_warns(DeprecationWarning):
-            # UPDATEIFCOPY is removed.
-            assert_(f.flags.updateifcopy is False)
         assert_(c.flags.writebackifcopy is False)
         assert_(d.flags.writebackifcopy is False)
         assert_(e.flags.writebackifcopy is False)

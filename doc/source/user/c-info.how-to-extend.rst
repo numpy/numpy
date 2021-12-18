@@ -459,9 +459,8 @@ writeable). The syntax is
             must be called before :c:func:`Py_DECREF` at
             the end of the interface routine to write back the temporary data
             into the original array passed in. Use
-            of the :c:data:`NPY_ARRAY_WRITEBACKIFCOPY` or
-            :c:data:`NPY_ARRAY_UPDATEIFCOPY` flags requires that the input
-            object is already an array (because other objects cannot
+            of the :c:data:`NPY_ARRAY_WRITEBACKIFCOPY` flag requires that the
+            input object is already an array (because other objects cannot
             be automatically updated in this fashion). If an error
             occurs use :c:func:`PyArray_DiscardWritebackIfCopy` (obj) on an
             array with these flags set. This will set the underlying base array
