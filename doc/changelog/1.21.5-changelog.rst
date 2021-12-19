@@ -1,14 +1,3 @@
-.. currentmodule:: numpy
-
-==========================
-NumPy 1.21.5 Release Notes
-==========================
-
-NumPy 1.21.5 is a maintenance release that fixes a few bugs discovered after
-the 1.21.4 release and does some maintenance to extend the 1.21.x lifetime.
-The Python versions supported in this release are 3.7-3.10. If you want to
-compile your own version using gcc-11, you will need to use gcc-11.2+ to avoid
-problems.
 
 Contributors
 ============
@@ -19,7 +8,7 @@ names contributed a patch for the first time.
 * Bas van Beek
 * Charles Harris
 * Matti Picus
-* Rohit Goswami
+* Rohit Goswami +
 * Ross Barnowski
 * Sayed Adel
 * Sebastian Berg
@@ -29,7 +18,7 @@ Pull requests merged
 
 A total of 11 pull requests were merged for this release.
 
-* `#20357 <https://github.com/numpy/numpy/pull/20357>`__: MAINT: Do not forward ``__(deep)copy__`` calls of ``_GenericAlias``...
+* `#20357 <https://github.com/numpy/numpy/pull/20357>`__: MAINT: Do not forward `__(deep)copy__` calls of `_GenericAlias`...
 * `#20462 <https://github.com/numpy/numpy/pull/20462>`__: BUG: Fix float16 einsum fastpaths using wrong tempvar
 * `#20463 <https://github.com/numpy/numpy/pull/20463>`__: BUG, DIST: Print os error message when the executable not exist
 * `#20464 <https://github.com/numpy/numpy/pull/20464>`__: BLD: Verify the ability to compile C++ sources before initiating...
