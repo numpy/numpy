@@ -19,6 +19,9 @@ over 602 pull requests. There have been many improvements, highlights are:
   methods provide a complete set of the methods commonly found in the
   literature.
 * A new configurable allocator for use by downstream projects.
+* The universal functions have been refactored to implement most of
+  :ref:`NEP 43 <NEP43>`.  This also unlocks the ability to experiment with the
+  future DType API.
 
 These are in addition to the ongoing work to provide SIMD support for commonly
 used functions, improvements to F2PY, and better documentation.
@@ -170,6 +173,15 @@ The customization was part of a never-implemented feature to allow for faster
 masked operations.
 
 (`gh-19259 <https://github.com/numpy/numpy/pull/19259>`__)
+
+Experimental exposure of future DType and UFunc API
+---------------------------------------------------
+The new header ``experimental_public_dtype_api.h`` allows to experiment with
+future API for improved universal function and especially user DType support.
+At this time it is advisable to experiment using the development version
+of NumPy since some changes are expected and new features will be unlocked.
+
+(`gh-19919 <https://github.com/numpy/numpy/pull/19919>`__)
 
 
 New Features
