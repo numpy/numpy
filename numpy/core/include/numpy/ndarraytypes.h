@@ -221,13 +221,6 @@ typedef enum {
         NPY_SAME_KIND_CASTING=3,
         /* Allow any casts */
         NPY_UNSAFE_CASTING=4,
-        /*
-         * Flag to allow signalling that a cast is a view, this flag is not
-         * valid when requesting a cast of specific safety.
-         * _NPY_CAST_IS_VIEW|NPY_EQUIV_CASTING means the same as NPY_NO_CASTING.
-         */
-        // TODO-DTYPES: Needs to be documented.
-        _NPY_CAST_IS_VIEW = 1 << 16,
 } NPY_CASTING;
 
 typedef enum {

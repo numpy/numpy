@@ -76,7 +76,6 @@ class Casting(enum.IntEnum):
     safe = 2
     same_kind = 3
     unsafe = 4
-    cast_is_view = 1 << 16
 
 
 def _get_cancast_table():
@@ -259,14 +258,14 @@ class TestCasting:
                 del default
 
                 for to_dt in [to_Dt(), to_Dt().newbyteorder()]:
-                    casting, (from_res, to_res) = cast._resolve_descriptors(
-                        (from_dt, to_dt))
+                    casting, (from_res, to_res), view_off = (
+                            cast._resolve_descriptors((from_dt, to_dt)))
                     assert(type(from_res) == from_Dt)
                     assert(type(to_res) == to_Dt)
-                    if casting & Casting.cast_is_view:
+                    if view_off is not None:
                         # If a view is acceptable, this is "no" casting
                         # and byte order must be matching.
-                        assert casting == Casting.no | Casting.cast_is_view
+                        assert casting == Casting.no
                         # The above table lists this as "equivalent"
                         assert Casting.equiv == CAST_TABLE[from_Dt][to_Dt]
                         # Note that to_res may not be the same as from_dt
@@ -299,7 +298,7 @@ class TestCasting:
             to_dt = to_dt.values[0]
             cast = get_castingimpl(type(from_dt), type(to_dt))
 
-            casting, (from_res, to_res) = cast._resolve_descriptors(
+            casting, (from_res, to_res), view_off = cast._resolve_descriptors(
                 (from_dt, to_dt))
 
             if from_res is not from_dt or to_res is not to_dt:
@@ -307,7 +306,7 @@ class TestCasting:
                 # each of which should is tested individually.
                 return
 
-            safe = (casting & ~Casting.cast_is_view) <= Casting.safe
+            safe = casting <= Casting.safe
             del from_res, to_res, casting
 
             arr1, arr2, values = self.get_data(from_dt, to_dt)
@@ -355,14 +354,15 @@ class TestCasting:
         for time_dt in time_dtypes:
             cast = get_castingimpl(type(from_dt), type(time_dt))
 
-            casting, (from_res, to_res) = cast._resolve_descriptors(
+            casting, (from_res, to_res), view_off = cast._resolve_descriptors(
                 (from_dt, time_dt))
 
             assert from_res is from_dt
             assert to_res is time_dt
             del from_res, to_res
 
-            assert(casting & CAST_TABLE[from_Dt][type(time_dt)])
+            assert casting & CAST_TABLE[from_Dt][type(time_dt)]
+            assert view_off is None
 
             int64_dt = np.dtype(np.int64)
             arr1, arr2, values = self.get_data(from_dt, int64_dt)
@@ -391,31 +391,37 @@ class TestCasting:
             assert arr2_o.tobytes() == arr2.tobytes()
 
     @pytest.mark.parametrize(
-            ["from_dt", "to_dt", "expected_casting", "nom", "denom"],
-            [("M8[ns]", None,
-                  Casting.no | Casting.cast_is_view, 1, 1),
-             (str(np.dtype("M8[ns]").newbyteorder()), None, Casting.equiv, 1, 1),
-             ("M8", "M8[ms]", Casting.safe | Casting.cast_is_view, 1, 1),
-             ("M8[ms]", "M8", Casting.unsafe, 1, 1),  # should be invalid cast
-             ("M8[5ms]", "M8[5ms]", Casting.no | Casting.cast_is_view, 1, 1),
-             ("M8[ns]", "M8[ms]", Casting.same_kind, 1, 10**6),
-             ("M8[ms]", "M8[ns]", Casting.safe, 10**6, 1),
-             ("M8[ms]", "M8[7ms]", Casting.same_kind, 1, 7),
-             ("M8[4D]", "M8[1M]", Casting.same_kind, None,
+            ["from_dt", "to_dt", "expected_casting", "expected_view_off",
+             "nom", "denom"],
+            [("M8[ns]", None, Casting.no, 0, 1, 1),
+             (str(np.dtype("M8[ns]").newbyteorder()), None,
+                  Casting.equiv, None, 1, 1),
+             ("M8", "M8[ms]", Casting.safe, 0, 1, 1),
+             # should be invalid cast:
+             ("M8[ms]", "M8", Casting.unsafe, None, 1, 1),
+             ("M8[5ms]", "M8[5ms]", Casting.no, 0, 1, 1),
+             ("M8[ns]", "M8[ms]", Casting.same_kind, None, 1, 10**6),
+             ("M8[ms]", "M8[ns]", Casting.safe, None, 10**6, 1),
+             ("M8[ms]", "M8[7ms]", Casting.same_kind, None, 1, 7),
+             ("M8[4D]", "M8[1M]", Casting.same_kind, None, None,
                   # give full values based on NumPy 1.19.x
                   [-2**63, 0, -1, 1314, -1315, 564442610]),
-             ("m8[ns]", None, Casting.no | Casting.cast_is_view, 1, 1),
-             (str(np.dtype("m8[ns]").newbyteorder()), None, Casting.equiv, 1, 1),
-             ("m8", "m8[ms]", Casting.safe | Casting.cast_is_view, 1, 1),
-             ("m8[ms]", "m8", Casting.unsafe, 1, 1),  # should be invalid cast
-             ("m8[5ms]", "m8[5ms]", Casting.no | Casting.cast_is_view, 1, 1),
-             ("m8[ns]", "m8[ms]", Casting.same_kind, 1, 10**6),
-             ("m8[ms]", "m8[ns]", Casting.safe, 10**6, 1),
-             ("m8[ms]", "m8[7ms]", Casting.same_kind, 1, 7),
-             ("m8[4D]", "m8[1M]", Casting.unsafe, None,
+             ("m8[ns]", None, Casting.no, 0, 1, 1),
+             (str(np.dtype("m8[ns]").newbyteorder()), None,
+                  Casting.equiv, None, 1, 1),
+             ("m8", "m8[ms]", Casting.safe, 0, 1, 1),
+             # should be invalid cast:
+             ("m8[ms]", "m8", Casting.unsafe, None, 1, 1),
+             ("m8[5ms]", "m8[5ms]", Casting.no, 0, 1, 1),
+             ("m8[ns]", "m8[ms]", Casting.same_kind, None, 1, 10**6),
+             ("m8[ms]", "m8[ns]", Casting.safe, None, 10**6, 1),
+             ("m8[ms]", "m8[7ms]", Casting.same_kind, None, 1, 7),
+             ("m8[4D]", "m8[1M]", Casting.unsafe, None, None,
                   # give full values based on NumPy 1.19.x
                   [-2**63, 0, 0, 1314, -1315, 564442610])])
-    def test_time_to_time(self, from_dt, to_dt, expected_casting, nom, denom):
+    def test_time_to_time(self, from_dt, to_dt,
+                          expected_casting, expected_view_off,
+                          nom, denom):
         from_dt = np.dtype(from_dt)
         if to_dt is not None:
             to_dt = np.dtype(to_dt)
@@ -428,10 +434,12 @@ class TestCasting:
 
         DType = type(from_dt)
         cast = get_castingimpl(DType, DType)
-        casting, (from_res, to_res) = cast._resolve_descriptors((from_dt, to_dt))
+        casting, (from_res, to_res), view_off = cast._resolve_descriptors(
+                (from_dt, to_dt))
         assert from_res is from_dt
         assert to_res is to_dt or to_dt is None
         assert casting == expected_casting
+        assert view_off == expected_view_off
 
         if nom is not None:
             expected_out = (values * nom // denom).view(to_res)
@@ -476,9 +484,11 @@ class TestCasting:
         expected_length = get_expected_stringlength(other_dt)
         string_dt = np.dtype(f"{string_char}{expected_length}")
 
-        safety, (res_other_dt, res_dt) = cast._resolve_descriptors((other_dt, None))
+        safety, (res_other_dt, res_dt), view_off = cast._resolve_descriptors(
+                (other_dt, None))
         assert res_dt.itemsize == expected_length * fact
         assert safety == Casting.safe  # we consider to string casts "safe"
+        assert view_off is None
         assert isinstance(res_dt, string_DT)
 
         # These casts currently implement changing the string length, so
@@ -490,19 +500,24 @@ class TestCasting:
                 expected_safety = Casting.same_kind
 
             to_dt = self.string_with_modified_length(string_dt, change_length)
-            safety, (_, res_dt) = cast._resolve_descriptors((other_dt, to_dt))
+            safety, (_, res_dt), view_off = cast._resolve_descriptors(
+                    (other_dt, to_dt))
             assert res_dt is to_dt
             assert safety == expected_safety
+            assert view_off is None
 
         # The opposite direction is always considered unsafe:
         cast = get_castingimpl(string_DT, other_DT)
 
-        safety, _ = cast._resolve_descriptors((string_dt, other_dt))
+        safety, _, view_off = cast._resolve_descriptors((string_dt, other_dt))
         assert safety == Casting.unsafe
+        assert view_off is None
 
         cast = get_castingimpl(string_DT, other_DT)
-        safety, (_, res_dt) = cast._resolve_descriptors((string_dt, None))
+        safety, (_, res_dt), view_off = cast._resolve_descriptors(
+            (string_dt, None))
         assert safety == Casting.unsafe
+        assert view_off is None
         assert other_dt is res_dt  # returns the singleton for simple dtypes
 
     @pytest.mark.parametrize("string_char", ["S", "U"])
@@ -521,7 +536,8 @@ class TestCasting:
 
         cast = get_castingimpl(type(other_dt), string_DT)
         cast_back = get_castingimpl(string_DT, type(other_dt))
-        _, (res_other_dt, string_dt) = cast._resolve_descriptors((other_dt, None))
+        _, (res_other_dt, string_dt), _ = cast._resolve_descriptors(
+                (other_dt, None))
 
         if res_other_dt is not other_dt:
             # do not support non-native byteorder, skip test in that case
@@ -580,13 +596,16 @@ class TestCasting:
         expected_length = other_dt.itemsize // div
         string_dt = np.dtype(f"{string_char}{expected_length}")
 
-        safety, (res_other_dt, res_dt) = cast._resolve_descriptors((other_dt, None))
+        safety, (res_other_dt, res_dt), view_off = cast._resolve_descriptors(
+                (other_dt, None))
         assert res_dt.itemsize == expected_length * fact
         assert isinstance(res_dt, string_DT)
 
+        expected_view_off = None
         if other_dt.char == string_char:
             if other_dt.isnative:
-                expected_safety = Casting.no | Casting.cast_is_view
+                expected_safety = Casting.no
+                expected_view_off = 0
             else:
                 expected_safety = Casting.equiv
         elif string_char == "U":
@@ -594,13 +613,19 @@ class TestCasting:
         else:
             expected_safety = Casting.unsafe
 
+        assert view_off == expected_view_off
         assert expected_safety == safety
 
         for change_length in [-1, 0, 1]:
             to_dt = self.string_with_modified_length(string_dt, change_length)
-            safety, (_, res_dt) = cast._resolve_descriptors((other_dt, to_dt))
+            safety, (_, res_dt), view_off = cast._resolve_descriptors(
+                    (other_dt, to_dt))
 
             assert res_dt is to_dt
+            if change_length <= 0:
+                assert view_off == expected_view_off
+            else:
+                assert view_off is None
             if expected_safety == Casting.unsafe:
                 assert safety == expected_safety
             elif change_length < 0:
@@ -655,12 +680,16 @@ class TestCasting:
         object_dtype = type(np.dtype(object))
         cast = get_castingimpl(object_dtype, type(dtype))
 
-        safety, (_, res_dt) = cast._resolve_descriptors((np.dtype("O"), dtype))
+        safety, (_, res_dt), view_off = cast._resolve_descriptors(
+                (np.dtype("O"), dtype))
         assert safety == Casting.unsafe
+        assert view_off is None
         assert res_dt is dtype
 
-        safety, (_, res_dt) = cast._resolve_descriptors((np.dtype("O"), None))
+        safety, (_, res_dt), view_off = cast._resolve_descriptors(
+                (np.dtype("O"), None))
         assert safety == Casting.unsafe
+        assert view_off is None
         assert res_dt == dtype.newbyteorder("=")
 
     @pytest.mark.parametrize("dtype", simple_dtype_instances())
@@ -669,8 +698,10 @@ class TestCasting:
         object_dtype = type(np.dtype(object))
         cast = get_castingimpl(type(dtype), object_dtype)
 
-        safety, (_, res_dt) = cast._resolve_descriptors((dtype, None))
+        safety, (_, res_dt), view_off = cast._resolve_descriptors(
+                (dtype, None))
         assert safety == Casting.safe
+        assert view_off is None
         assert res_dt is np.dtype("O")
 
     @pytest.mark.parametrize("casting", ["no", "unsafe"])
@@ -680,6 +711,71 @@ class TestCasting:
         expected = casting == "unsafe"
         assert np.can_cast("V4", dtype, casting=casting) == expected
         assert np.can_cast(dtype, "V4", casting=casting) == expected
+
+    @pytest.mark.parametrize(["to_dt", "expected_off"],
+            [  # Same as `from_dt` but with both fields shifted:
+             (np.dtype({"names": ["a", "b"], "formats": ["i4", "f4"],
+                        "offsets": [2, 6]}), -2),
+             # Additional change of the names
+             # TODO: Tests will need changing for order vs. name based casting:
+             (np.dtype({"names": ["b", "a"], "formats": ["f4", "i4"],
+                        "offsets": [6, 2]}), -2),
+             # Incompatible field offset change (offsets -2 and 0)
+             (np.dtype({"names": ["b", "a"], "formats": ["f4", "i4"],
+                        "offsets": [6, 0]}), None)])
+    def test_structured_field_offsets(self, to_dt, expected_off):
+        # This checks the cast-safety and view offset for swapped and "shifted"
+        # fields which are viewable
+        from_dt = np.dtype({"names": ["a", "b"],
+                            "formats": ["i4", "f4"],
+                            "offsets": [0, 4]})
+        cast = get_castingimpl(type(from_dt), type(to_dt))
+        safety, _, view_off = cast._resolve_descriptors((from_dt, to_dt))
+        assert safety == Casting.equiv
+        # Shifting the original data pointer by -2 will align both by
+        # effectively adding 2 bytes of spacing before `from_dt`.
+        assert view_off == expected_off
+
+    @pytest.mark.parametrize(("from_dt", "to_dt", "expected_off"), [
+            # Subarray cases:
+            ("i", "(1,1)i", 0),
+            ("(1,1)i", "i", 0),
+            ("(2,1)i", "(2,1)i", 0),
+            # field cases (field to field is tested explicitly also):
+            ("i", dict(names=["a"], formats=["i"], offsets=[2]), -2),
+            (dict(names=["a"], formats=["i"], offsets=[2]), "i", 2),
+            # Currently considered not viewable, due to multiple fields
+            # even though they overlap (maybe we should not allow that?)
+            ("i", dict(names=["a", "b"], formats=["i", "i"], offsets=[2, 2]),
+             None),
+            # different number of fields can't work, should probably just fail
+            # so it never reports "viewable":
+            ("i,i", "i,i,i", None),
+            # Unstructured void cases:
+            ("i4", "V3", 0),  # void smaller or equal
+            ("i4", "V4", 0),  # void smaller or equal
+            ("i4", "V10", None),  # void is larger (no view)
+            ("O", "V4", None),  # currently reject objects for view here.
+            ("O", "V8", None),  # currently reject objects for view here.
+            ("V4", "V3", 0),
+            ("V4", "V4", 0),
+            ("V3", "V4", None),
+            # Note that currently void-to-other cast goes via byte-strings
+            # and is not a "view" based cast like the opposite direction:
+            ("V4", "i4", None),
+            # completely invalid/impossible cast:
+            ("i,i", "i,i,i", None),
+        ])
+    def test_structured_view_offsets_paramteric(
+            self, from_dt, to_dt, expected_off):
+        # TODO: While this test is fairly thorough, right now, it does not
+        # really test some paths that may have nonzero offsets (they don't
+        # really exists).
+        from_dt = np.dtype(from_dt)
+        to_dt = np.dtype(to_dt)
+        cast = get_castingimpl(type(from_dt), type(to_dt))
+        _, _, view_off = cast._resolve_descriptors((from_dt, to_dt))
+        assert view_off == expected_off
 
     @pytest.mark.parametrize("dtype", np.typecodes["All"])
     def test_object_casts_NULL_None_equivalence(self, dtype):

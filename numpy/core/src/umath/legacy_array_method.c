@@ -103,7 +103,8 @@ NPY_NO_EXPORT NPY_CASTING
 wrapped_legacy_resolve_descriptors(PyArrayMethodObject *NPY_UNUSED(self),
         PyArray_DTypeMeta *NPY_UNUSED(dtypes[]),
         PyArray_Descr *NPY_UNUSED(given_descrs[]),
-        PyArray_Descr *NPY_UNUSED(loop_descrs[]))
+        PyArray_Descr *NPY_UNUSED(loop_descrs[]),
+        npy_intp *NPY_UNUSED(view_offset))
 {
     PyErr_SetString(PyExc_RuntimeError,
             "cannot use legacy wrapping ArrayMethod without calling the ufunc "
@@ -121,7 +122,8 @@ simple_legacy_resolve_descriptors(
         PyArrayMethodObject *method,
         PyArray_DTypeMeta **dtypes,
         PyArray_Descr **given_descrs,
-        PyArray_Descr **output_descrs)
+        PyArray_Descr **output_descrs,
+        npy_intp *NPY_UNUSED(view_offset))
 {
     int i = 0;
     int nin = method->nin;

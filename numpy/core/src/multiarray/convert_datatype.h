@@ -68,8 +68,9 @@ NPY_NO_EXPORT NPY_CASTING
 PyArray_MinCastSafety(NPY_CASTING casting1, NPY_CASTING casting2);
 
 NPY_NO_EXPORT NPY_CASTING
-PyArray_GetCastSafety(
-        PyArray_Descr *from, PyArray_Descr *to, PyArray_DTypeMeta *to_dtype);
+PyArray_GetCastInfo(
+        PyArray_Descr *from, PyArray_Descr *to, PyArray_DTypeMeta *to_dtype,
+        npy_intp *view_offset);
 
 NPY_NO_EXPORT int
 PyArray_CheckCastSafety(NPY_CASTING casting,
@@ -80,7 +81,8 @@ legacy_same_dtype_resolve_descriptors(
         PyArrayMethodObject *self,
         PyArray_DTypeMeta *dtypes[2],
         PyArray_Descr *given_descrs[2],
-        PyArray_Descr *loop_descrs[2]);
+        PyArray_Descr *loop_descrs[2],
+        npy_intp *view_offset);
 
 NPY_NO_EXPORT int
 legacy_cast_get_strided_loop(
@@ -94,7 +96,8 @@ simple_cast_resolve_descriptors(
         PyArrayMethodObject *self,
         PyArray_DTypeMeta *dtypes[2],
         PyArray_Descr *input_descrs[2],
-        PyArray_Descr *loop_descrs[2]);
+        PyArray_Descr *loop_descrs[2],
+        npy_intp *view_offset);
 
 NPY_NO_EXPORT int
 PyArray_InitializeCasts(void);

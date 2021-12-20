@@ -48,13 +48,19 @@
  *
  * We could allow setting the output descriptors specifically to simplify
  * this step.
+ *
+ * Note that the default version will indicate that the cast can be done
+ * as using `arr.view(new_dtype)` if the default cast-safety is
+ * set to "no-cast".  This default function cannot be used if a view may
+ * be sufficient for casting but the cast is not always "no-cast".
  */
 static NPY_CASTING
 default_resolve_descriptors(
         PyArrayMethodObject *method,
         PyArray_DTypeMeta **dtypes,
         PyArray_Descr **input_descrs,
-        PyArray_Descr **output_descrs)
+        PyArray_Descr **output_descrs,
+        npy_intp *view_offset)
 {
     int nin = method->nin;
     int nout = method->nout;
@@ -76,6 +82,13 @@ default_resolve_descriptors(
      * abstract ones or unspecified outputs).  We can use the common-dtype
      * operation to provide a default here.
      */
+    if (method->casting == NPY_NO_CASTING) {
+        /*
+         * By (current) definition no-casting should imply viewable.  This
+         * is currently indicated for example for object to object cast.
+         */
+        *view_offset = 0;
+    }
     return method->casting;
 
   fail:
@@ -102,9 +115,10 @@ is_contiguous(
 /**
  * The default method to fetch the correct loop for a cast or ufunc
  * (at the time of writing only casts).
- * The default version can return loops explicitly registered during method
- * creation. It does specialize contiguous loops, although has to check
- * all descriptors itemsizes for this.
+ * Note that the default function provided here will only indicate that a cast
+ * can be done as a view (i.e., arr.view(new_dtype)) when this is trivially
+ * true, i.e., for cast safety "no-cast". It will not recognize view as an
+ * option for other casts (e.g., viewing '>i8' as '>i4' with an offset of 4).
  *
  * @param context
  * @param aligned
@@ -166,7 +180,7 @@ validate_spec(PyArrayMethod_Spec *spec)
                 "not exceed %d. (method: %s)", NPY_MAXARGS, spec->name);
         return -1;
     }
-    switch (spec->casting & ~_NPY_CAST_IS_VIEW) {
+    switch (spec->casting) {
         case NPY_NO_CASTING:
         case NPY_EQUIV_CASTING:
         case NPY_SAFE_CASTING:
@@ -495,8 +509,9 @@ boundarraymethod_dealloc(PyObject *self)
 
 
 /*
- * Calls resolve_descriptors() and returns the casting level and the resolved
- * descriptors as a tuple. If the operation is impossible returns (-1, None).
+ * Calls resolve_descriptors() and returns the casting level, the resolved
+ * descriptors as a tuple, and a possible view-offset (integer or None).
+ * If the operation is impossible returns (-1, None, None).
  * May raise an error, but usually should not.
  * The function validates the casting attribute compared to the returned
  * casting level.
@@ -551,14 +566,15 @@ boundarraymethod__resolve_descripors(
         }
     }
 
+    npy_intp view_offset = NPY_MIN_INTP;
     NPY_CASTING casting = self->method->resolve_descriptors(
-            self->method, self->dtypes, given_descrs, loop_descrs);
+            self->method, self->dtypes, given_descrs, loop_descrs, &view_offset);
 
     if (casting < 0 && PyErr_Occurred()) {
         return NULL;
     }
     else if (casting < 0) {
-        return Py_BuildValue("iO", casting, Py_None);
+        return Py_BuildValue("iO", casting, Py_None, Py_None);
     }
 
     PyObject *result_tuple = PyTuple_New(nin + nout);
@@ -570,9 +586,22 @@ boundarraymethod__resolve_descripors(
         PyTuple_SET_ITEM(result_tuple, i, (PyObject *)loop_descrs[i]);
     }
 
+    PyObject *view_offset_obj;
+    if (view_offset == NPY_MIN_INTP) {
+        Py_INCREF(Py_None);
+        view_offset_obj = Py_None;
+    }
+    else {
+        view_offset_obj = PyLong_FromSsize_t(view_offset);
+        if (view_offset_obj == NULL) {
+            Py_DECREF(result_tuple);
+            return NULL;
+        }
+    }
+
     /*
-     * The casting flags should be the most generic casting level (except the
-     * cast-is-view flag.  If no input is parametric, it must match exactly.
+     * The casting flags should be the most generic casting level.
+     * If no input is parametric, it must match exactly.
      *
      * (Note that these checks are only debugging checks.)
      */
@@ -584,7 +613,7 @@ boundarraymethod__resolve_descripors(
         }
     }
     if (self->method->casting != -1) {
-        NPY_CASTING cast = casting & ~_NPY_CAST_IS_VIEW;
+        NPY_CASTING cast = casting;
         if (self->method->casting !=
                 PyArray_MinCastSafety(cast, self->method->casting)) {
             PyErr_Format(PyExc_RuntimeError,
@@ -592,6 +621,7 @@ boundarraymethod__resolve_descripors(
                     "(set level is %d, got %d for method %s)",
                     self->method->casting, cast, self->method->name);
             Py_DECREF(result_tuple);
+            Py_DECREF(view_offset_obj);
             return NULL;
         }
         if (!parametric) {
@@ -608,12 +638,13 @@ boundarraymethod__resolve_descripors(
                         "(set level is %d, got %d for method %s)",
                         self->method->casting, cast, self->method->name);
                 Py_DECREF(result_tuple);
+                Py_DECREF(view_offset_obj);
                 return NULL;
             }
         }
     }
 
-    return Py_BuildValue("iN", casting, result_tuple);
+    return Py_BuildValue("iNN", casting, result_tuple, view_offset_obj);
 }
 
 
@@ -694,8 +725,9 @@ boundarraymethod__simple_strided_call(
         return NULL;
     }
 
+    npy_intp view_offset = NPY_MIN_INTP;
     NPY_CASTING casting = self->method->resolve_descriptors(
-            self->method, self->dtypes, descrs, out_descrs);
+            self->method, self->dtypes, descrs, out_descrs, &view_offset);
 
     if (casting < 0) {
         PyObject *err_type = NULL, *err_value = NULL, *err_traceback = NULL;
