@@ -4483,6 +4483,9 @@ cdef class RandomState:
             char* x_ptr
             char* buf_ptr
 
+        if isinstance(x, np.ndarray) and not x.flags.writeable:
+            raise ValueError('array is read-only')
+
         if type(x) is np.ndarray and x.ndim == 1 and x.size:
             # Fast, statically typed path: shuffle the underlying buffer.
             # Only for non-empty, 1d objects of class ndarray (subclasses such

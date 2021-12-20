@@ -32,6 +32,8 @@ from ._common cimport (POISSON_LAM_MAX, CONS_POSITIVE, CONS_NONE,
 
 cdef extern from "numpy/arrayobject.h":
     int PyArray_ResolveWritebackIfCopy(np.ndarray)
+    int PyArray_FailUnlessWriteable(np.PyArrayObject *obj,
+                                    const char *name) except -1
     object PyArray_FromArray(np.PyArrayObject *, np.PyArray_Descr *, int)
 
     enum:
@@ -4416,6 +4418,7 @@ cdef class Generator:
         else:
             if type(out) is not np.ndarray:
                 raise TypeError('out must be a numpy array')
+            PyArray_FailUnlessWriteable(<np.PyArrayObject *>out, "out")
             if out.shape != x.shape:
                 raise ValueError('out must have the same shape as x')
             np.copyto(out, x, casting='safe')
@@ -4524,6 +4527,8 @@ cdef class Generator:
             char* buf_ptr
 
         if isinstance(x, np.ndarray):
+            if not x.flags.writeable:
+                raise ValueError('array is read-only')
             # Only call ndim on ndarrays, see GH 18142
             axis = normalize_axis_index(axis, np.ndim(x))
 
