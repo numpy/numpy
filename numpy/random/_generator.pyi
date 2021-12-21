@@ -76,7 +76,7 @@ class Generator:
     def standard_normal(  # type: ignore[misc]
         self,
         size: None = ...,
-        dtype: Union[_DTypeLikeFloat32, _DTypeLikeFloat64] = ...,
+        dtype: _DTypeLikeFloat32 | _DTypeLikeFloat64 = ...,
         out: None = ...,
     ) -> float: ...
     @overload
@@ -112,7 +112,7 @@ class Generator:
     def standard_exponential(  # type: ignore[misc]
         self,
         size: None = ...,
-        dtype: Union[_DTypeLikeFloat32, _DTypeLikeFloat64] = ...,
+        dtype: _DTypeLikeFloat32 | _DTypeLikeFloat64 = ...,
         method: Literal["zig", "inv"] = ...,
         out: None = ...,
     ) -> float: ...
@@ -155,7 +155,7 @@ class Generator:
     def random(  # type: ignore[misc]
         self,
         size: None = ...,
-        dtype: Union[_DTypeLikeFloat32, _DTypeLikeFloat64] = ...,
+        dtype: _DTypeLikeFloat32 | _DTypeLikeFloat64 = ...,
         out: None = ...,
     ) -> float: ...
     @overload
@@ -218,7 +218,7 @@ class Generator:
         low: int,
         high: None | int = ...,
         size: None = ...,
-        dtype: Union[_DTypeLikeInt, _DTypeLikeUInt] = ...,
+        dtype: _DTypeLikeInt | _DTypeLikeUInt = ...,
         endpoint: bool = ...,
     ) -> int: ...
     @overload
@@ -243,7 +243,7 @@ class Generator:
         low: _ArrayLikeInt_co,
         high: None | _ArrayLikeInt_co = ...,
         size: None | _ShapeLike = ...,
-        dtype: Union[dtype[int8], Type[int8], _Int8Codes, _SupportsDType[dtype[int8]]] = ...,
+        dtype: dtype[int8] | Type[int8] | _Int8Codes | _SupportsDType[dtype[int8]] = ...,
         endpoint: bool = ...,
     ) -> ndarray[Any, dtype[int8]]: ...
     @overload
@@ -252,7 +252,7 @@ class Generator:
         low: _ArrayLikeInt_co,
         high: None | _ArrayLikeInt_co = ...,
         size: None | _ShapeLike = ...,
-        dtype: Union[dtype[int16], Type[int16], _Int16Codes, _SupportsDType[dtype[int16]]] = ...,
+        dtype: dtype[int16] | Type[int16] | _Int16Codes | _SupportsDType[dtype[int16]] = ...,
         endpoint: bool = ...,
     ) -> ndarray[Any, dtype[int16]]: ...
     @overload
@@ -261,16 +261,16 @@ class Generator:
         low: _ArrayLikeInt_co,
         high: None | _ArrayLikeInt_co = ...,
         size: None | _ShapeLike = ...,
-        dtype: Union[dtype[int32], Type[int32], _Int32Codes, _SupportsDType[dtype[int32]]] = ...,
+        dtype: dtype[int32] | Type[int32] | _Int32Codes | _SupportsDType[dtype[int32]] = ...,
         endpoint: bool = ...,
-    ) -> ndarray[Any, dtype[Union[int32]]]: ...
+    ) -> ndarray[Any, dtype[int32]]: ...
     @overload
     def integers(  # type: ignore[misc]
         self,
         low: _ArrayLikeInt_co,
         high: None | _ArrayLikeInt_co = ...,
         size: None | _ShapeLike = ...,
-        dtype: None | Union[dtype[int64], Type[int64], _Int64Codes, _SupportsDType[dtype[int64]]] = ...,
+        dtype: None | dtype[int64] | Type[int64] | _Int64Codes | _SupportsDType[dtype[int64]] = ...,
         endpoint: bool = ...,
     ) -> ndarray[Any, dtype[int64]]: ...
     @overload
@@ -279,7 +279,7 @@ class Generator:
         low: _ArrayLikeInt_co,
         high: None | _ArrayLikeInt_co = ...,
         size: None | _ShapeLike = ...,
-        dtype: Union[dtype[uint8], Type[uint8], _UInt8Codes, _SupportsDType[dtype[uint8]]] = ...,
+        dtype: dtype[uint8] | Type[uint8] | _UInt8Codes | _SupportsDType[dtype[uint8]] = ...,
         endpoint: bool = ...,
     ) -> ndarray[Any, dtype[uint8]]: ...
     @overload
@@ -288,20 +288,16 @@ class Generator:
         low: _ArrayLikeInt_co,
         high: None | _ArrayLikeInt_co = ...,
         size: None | _ShapeLike = ...,
-        dtype: Union[
-            dtype[uint16], Type[uint16], _UInt16Codes, _SupportsDType[dtype[uint16]]
-        ] = ...,
+        dtype: dtype[uint16] | Type[uint16] | _UInt16Codes | _SupportsDType[dtype[uint16]] = ...,
         endpoint: bool = ...,
-    ) -> ndarray[Any, dtype[Union[uint16]]]: ...
+    ) -> ndarray[Any, dtype[uint16]]: ...
     @overload
     def integers(  # type: ignore[misc]
         self,
         low: _ArrayLikeInt_co,
         high: None | _ArrayLikeInt_co = ...,
         size: None | _ShapeLike = ...,
-        dtype: Union[
-            dtype[uint32], Type[uint32], _UInt32Codes, _SupportsDType[dtype[uint32]]
-        ] = ...,
+        dtype: dtype[uint32] | Type[uint32] | _UInt32Codes | _SupportsDType[dtype[uint32]] = ...,
         endpoint: bool = ...,
     ) -> ndarray[Any, dtype[uint32]]: ...
     @overload
@@ -310,9 +306,7 @@ class Generator:
         low: _ArrayLikeInt_co,
         high: None | _ArrayLikeInt_co = ...,
         size: None | _ShapeLike = ...,
-        dtype: Union[
-            dtype[uint64], Type[uint64], _UInt64Codes, _SupportsDType[dtype[uint64]]
-        ] = ...,
+        dtype: dtype[uint64] | Type[uint64] | _UInt64Codes | _SupportsDType[dtype[uint64]] = ...,
         endpoint: bool = ...,
     ) -> ndarray[Any, dtype[uint64]]: ...
     @overload
@@ -321,9 +315,7 @@ class Generator:
         low: _ArrayLikeInt_co,
         high: None | _ArrayLikeInt_co = ...,
         size: None | _ShapeLike = ...,
-        dtype: Union[
-            dtype[int_], Type[int], Type[int_], _IntCodes, _SupportsDType[dtype[int_]]
-        ] = ...,
+        dtype: dtype[int_] | Type[int] | Type[int_] | _IntCodes | _SupportsDType[dtype[int_]] = ...,
         endpoint: bool = ...,
     ) -> ndarray[Any, dtype[int_]]: ...
     @overload
@@ -332,10 +324,10 @@ class Generator:
         low: _ArrayLikeInt_co,
         high: None | _ArrayLikeInt_co = ...,
         size: None | _ShapeLike = ...,
-        dtype: Union[dtype[uint], Type[uint], _UIntCodes, _SupportsDType[dtype[uint]]] = ...,
+        dtype: dtype[uint] | Type[uint] | _UIntCodes | _SupportsDType[dtype[uint]] = ...,
         endpoint: bool = ...,
     ) -> ndarray[Any, dtype[uint]]: ...
-    # TODO: Use a TypeVar _T here to get away from Any output?  Should be int->ndarray[Any,dtype[int64]], ArrayLike[_T] -> Union[_T, ndarray[Any,Any]]
+    # TODO: Use a TypeVar _T here to get away from Any output?  Should be int->ndarray[Any,dtype[int64]], ArrayLike[_T] -> _T | ndarray[Any,Any]
     @overload
     def choice(
         self,
@@ -399,7 +391,7 @@ class Generator:
         self,
         shape: float,
         size: None = ...,
-        dtype: Union[_DTypeLikeFloat32, _DTypeLikeFloat64] = ...,
+        dtype: _DTypeLikeFloat32 | _DTypeLikeFloat64 = ...,
         out: None = ...,
     ) -> float: ...
     @overload
@@ -641,5 +633,5 @@ class Generator:
     def shuffle(self, x: ArrayLike, axis: int = ...) -> None: ...
 
 def default_rng(
-    seed: Union[None, _ArrayLikeInt_co, SeedSequence, BitGenerator, Generator] = ...
+    seed: None | _ArrayLikeInt_co | SeedSequence | BitGenerator | Generator = ...
 ) -> Generator: ...

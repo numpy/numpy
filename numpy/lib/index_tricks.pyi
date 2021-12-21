@@ -5,7 +5,6 @@ from typing import (
     Generic,
     overload,
     List,
-    Union,
     Sequence,
     Literal,
     SupportsIndex,
@@ -79,12 +78,12 @@ class nd_grid(Generic[_BoolType]):
     @overload
     def __getitem__(
         self: nd_grid[Literal[False]],
-        key: Union[slice, Sequence[slice]],
+        key: slice | Sequence[slice],
     ) -> NDArray[Any]: ...
     @overload
     def __getitem__(
         self: nd_grid[Literal[True]],
-        key: Union[slice, Sequence[slice]],
+        key: slice | Sequence[slice],
     ) -> List[NDArray[Any]]: ...
 
 class MGridClass(nd_grid[Literal[False]]):

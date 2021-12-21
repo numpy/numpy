@@ -1,5 +1,5 @@
 from types import TracebackType
-from typing import Any, Callable, Union, Type, Literal, TypedDict, SupportsIndex
+from typing import Any, Callable, Type, Literal, TypedDict, SupportsIndex
 
 # Using a private class is by no means ideal, but it is simply a consequence
 # of a `contextlib.context` returning an instance of aforementioned class

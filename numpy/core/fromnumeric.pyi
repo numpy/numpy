@@ -18,6 +18,7 @@ from numpy import (
 from numpy.typing import (
     DTypeLike,
     ArrayLike,
+    NDArray,
     _ShapeLike,
     _Shape,
     _ArrayLikeBool_co,
@@ -86,7 +87,7 @@ def swapaxes(
 
 def transpose(
     a: ArrayLike,
-    axes: Union[None, Sequence[int], ndarray] = ...
+    axes: None | Sequence[int] | NDArray[Any] = ...
 ) -> ndarray: ...
 
 def partition(
@@ -94,7 +95,7 @@ def partition(
     kth: _ArrayLikeInt_co,
     axis: None | int = ...,
     kind: _PartitionKind = ...,
-    order: Union[None, str, Sequence[str]] = ...,
+    order: None | str | Sequence[str] = ...,
 ) -> ndarray: ...
 
 def argpartition(
@@ -102,21 +103,21 @@ def argpartition(
     kth: _ArrayLikeInt_co,
     axis: None | int = ...,
     kind: _PartitionKind = ...,
-    order: Union[None, str, Sequence[str]] = ...,
+    order: None | str | Sequence[str] = ...,
 ) -> Any: ...
 
 def sort(
     a: ArrayLike,
     axis: None | int = ...,
     kind: None | _SortKind = ...,
-    order: Union[None, str, Sequence[str]] = ...,
+    order: None | str | Sequence[str] = ...,
 ) -> ndarray: ...
 
 def argsort(
     a: ArrayLike,
     axis: None | int = ...,
     kind: None | _SortKind = ...,
-    order: Union[None, str, Sequence[str]] = ...,
+    order: None | str | Sequence[str] = ...,
 ) -> ndarray: ...
 
 @overload

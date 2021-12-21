@@ -295,14 +295,14 @@ def unravel_index(
 def ravel_multi_index(  # type: ignore[misc]
     multi_index: Sequence[_IntLike_co],
     dims: Sequence[SupportsIndex],
-    mode: Union[_ModeKind, Tuple[_ModeKind, ...]] = ...,
+    mode: _ModeKind | Tuple[_ModeKind, ...] = ...,
     order: _OrderCF = ...,
 ) -> intp: ...
 @overload
 def ravel_multi_index(
     multi_index: Sequence[_ArrayLikeInt_co],
     dims: Sequence[SupportsIndex],
-    mode: Union[_ModeKind, Tuple[_ModeKind, ...]] = ...,
+    mode: _ModeKind | Tuple[_ModeKind, ...] = ...,
     order: _OrderCF = ...,
 ) -> NDArray[intp]: ...
 
@@ -382,7 +382,7 @@ def lexsort(
 ) -> Any: ...
 
 def can_cast(
-    from_: Union[ArrayLike, DTypeLike],
+    from_: ArrayLike | DTypeLike,
     to: DTypeLike,
     casting: None | _CastingKind = ...,
 ) -> bool: ...
@@ -392,7 +392,7 @@ def min_scalar_type(
 ) -> dtype[Any]: ...
 
 def result_type(
-    *arrays_and_dtypes: Union[ArrayLike, DTypeLike],
+    *arrays_and_dtypes: ArrayLike | DTypeLike,
 ) -> dtype[Any]: ...
 
 @overload

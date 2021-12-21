@@ -2,7 +2,6 @@ from typing import (
     Literal as L,
     Any,
     List,
-    Union,
     TypeVar,
     Tuple,
     overload,

@@ -1,4 +1,4 @@
-from typing import Dict, Union, Type, List, TypedDict
+from typing import Dict, Type, List, TypedDict
 
 from numpy import generic, signedinteger, unsignedinteger, floating, complexfloating
 
@@ -9,5 +9,5 @@ class _SCTypes(TypedDict):
     complex: List[Type[complexfloating]]
     others: List[type]
 
-sctypeDict: Dict[Union[int, str], Type[generic]]
+sctypeDict: Dict[int | str, Type[generic]]
 sctypes: _SCTypes

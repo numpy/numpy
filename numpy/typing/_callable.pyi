@@ -11,7 +11,6 @@ See the `Mypy documentation`_ on protocols for more details.
 from __future__ import annotations
 
 from typing import (
-    Union,
     TypeVar,
     overload,
     Any,
@@ -310,11 +309,11 @@ class _ComplexOp(Protocol[_NBit1]):
     @overload
     def __call__(
         self,
-        other: Union[
-            integer[_NBit2],
-            floating[_NBit2],
-            complexfloating[_NBit2, _NBit2],
-        ], /,
+        other: (
+            integer[_NBit2]
+            | floating[_NBit2]
+            | complexfloating[_NBit2, _NBit2]
+        ), /,
     ) -> complexfloating[_NBit1 | _NBit2, _NBit1 | _NBit2]: ...
 
 class _NumberOp(Protocol):

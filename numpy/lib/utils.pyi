@@ -8,7 +8,6 @@ from typing import (
     Sequence,
     Tuple,
     TypeVar,
-    Union,
     Protocol,
 )
 
@@ -67,7 +66,7 @@ def deprecate_with_doc(msg: None | str) -> _Deprecate: ...
 # implementing the `__array_interface__` protocol. The caveat is
 # that certain keys, marked as optional in the spec, must be present for
 #  `byte_bounds`. This concerns `"strides"` and `"data"`.
-def byte_bounds(a: Union[generic, ndarray[Any, Any]]) -> Tuple[int, int]: ...
+def byte_bounds(a: generic | ndarray[Any, Any]) -> Tuple[int, int]: ...
 
 def who(vardict: None | Mapping[str, ndarray[Any, Any]] = ...) -> None: ...
 
@@ -85,10 +84,10 @@ def source(
 
 def lookfor(
     what: str,
-    module: Union[None, str, Sequence[str]] = ...,
+    module: None | str | Sequence[str] = ...,
     import_modules: bool = ...,
     regenerate: bool = ...,
     output: None | _SupportsWrite[str] =...,
 ) -> None: ...
 
-def safe_eval(source: Union[str, AST]) -> Any: ...
+def safe_eval(source: str | AST) -> Any: ...

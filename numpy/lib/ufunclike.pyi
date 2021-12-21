@@ -1,4 +1,4 @@
-from typing import Any, overload, TypeVar, List, Union
+from typing import Any, overload, TypeVar, List
 
 from numpy import floating, bool_, object_, ndarray
 from numpy.typing import (
@@ -29,7 +29,7 @@ def fix(
 ) -> NDArray[object_]: ...
 @overload
 def fix(
-    x: Union[_ArrayLikeFloat_co, _ArrayLikeObject_co],
+    x: _ArrayLikeFloat_co | _ArrayLikeObject_co,
     out: _ArrayType,
 ) -> _ArrayType: ...
 

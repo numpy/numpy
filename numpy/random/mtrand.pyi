@@ -62,7 +62,7 @@ _DTypeLikeFloat64 = Union[
 
 class RandomState:
     _bit_generator: BitGenerator
-    def __init__(self, seed: Union[None, _ArrayLikeInt_co, BitGenerator] = ...) -> None: ...
+    def __init__(self, seed: None | _ArrayLikeInt_co | BitGenerator = ...) -> None: ...
     def __repr__(self) -> str: ...
     def __str__(self) -> str: ...
     def __getstate__(self) -> Dict[str, Any]: ...
@@ -74,9 +74,9 @@ class RandomState:
     @overload
     def get_state(
         self, legacy: Literal[True] = ...
-    ) -> Union[Dict[str, Any], Tuple[str, ndarray[Any, dtype[uint32]], int, int, float]]: ...
+    ) -> Dict[str, Any] | Tuple[str, ndarray[Any, dtype[uint32]], int, int, float]: ...
     def set_state(
-        self, state: Union[Dict[str, Any], Tuple[str, ndarray[Any, dtype[uint32]], int, int, float]]
+        self, state: Dict[str, Any] | Tuple[str, ndarray[Any, dtype[uint32]], int, int, float]
     ) -> None: ...
     @overload
     def random_sample(self, size: None = ...) -> float: ...  # type: ignore[misc]
@@ -126,7 +126,7 @@ class RandomState:
         low: int,
         high: None | int = ...,
         size: None = ...,
-        dtype: Union[_DTypeLikeInt, _DTypeLikeUInt] = ...,
+        dtype: _DTypeLikeInt | _DTypeLikeUInt = ...,
     ) -> int: ...
     @overload
     def randint(  # type: ignore[misc]
@@ -149,7 +149,7 @@ class RandomState:
         low: _ArrayLikeInt_co,
         high: None | _ArrayLikeInt_co = ...,
         size: None | _ShapeLike = ...,
-        dtype: Union[dtype[int8], Type[int8], _Int8Codes, _SupportsDType[dtype[int8]]] = ...,
+        dtype: dtype[int8] | Type[int8] | _Int8Codes | _SupportsDType[dtype[int8]] = ...,
     ) -> ndarray[Any, dtype[int8]]: ...
     @overload
     def randint(  # type: ignore[misc]
@@ -157,7 +157,7 @@ class RandomState:
         low: _ArrayLikeInt_co,
         high: None | _ArrayLikeInt_co = ...,
         size: None | _ShapeLike = ...,
-        dtype: Union[dtype[int16], Type[int16], _Int16Codes, _SupportsDType[dtype[int16]]] = ...,
+        dtype: dtype[int16] | Type[int16] | _Int16Codes | _SupportsDType[dtype[int16]] = ...,
     ) -> ndarray[Any, dtype[int16]]: ...
     @overload
     def randint(  # type: ignore[misc]
@@ -165,8 +165,8 @@ class RandomState:
         low: _ArrayLikeInt_co,
         high: None | _ArrayLikeInt_co = ...,
         size: None | _ShapeLike = ...,
-        dtype: Union[dtype[int32], Type[int32], _Int32Codes, _SupportsDType[dtype[int32]]] = ...,
-    ) -> ndarray[Any, dtype[Union[int32]]]: ...
+        dtype: dtype[int32] | Type[int32] | _Int32Codes | _SupportsDType[dtype[int32]] = ...,
+    ) -> ndarray[Any, dtype[int32]]: ...
     @overload
     def randint(  # type: ignore[misc]
         self,
@@ -181,7 +181,7 @@ class RandomState:
         low: _ArrayLikeInt_co,
         high: None | _ArrayLikeInt_co = ...,
         size: None | _ShapeLike = ...,
-        dtype: Union[dtype[uint8], Type[uint8], _UInt8Codes, _SupportsDType[dtype[uint8]]] = ...,
+        dtype: dtype[uint8] | Type[uint8] | _UInt8Codes | _SupportsDType[dtype[uint8]] = ...,
     ) -> ndarray[Any, dtype[uint8]]: ...
     @overload
     def randint(  # type: ignore[misc]
@@ -189,19 +189,15 @@ class RandomState:
         low: _ArrayLikeInt_co,
         high: None | _ArrayLikeInt_co = ...,
         size: None | _ShapeLike = ...,
-        dtype: Union[
-            dtype[uint16], Type[uint16], _UInt16Codes, _SupportsDType[dtype[uint16]]
-        ] = ...,
-    ) -> ndarray[Any, dtype[Union[uint16]]]: ...
+        dtype: dtype[uint16] | Type[uint16] | _UInt16Codes | _SupportsDType[dtype[uint16]] = ...,
+    ) -> ndarray[Any, dtype[uint16]]: ...
     @overload
     def randint(  # type: ignore[misc]
         self,
         low: _ArrayLikeInt_co,
         high: None | _ArrayLikeInt_co = ...,
         size: None | _ShapeLike = ...,
-        dtype: Union[
-            dtype[uint32], Type[uint32], _UInt32Codes, _SupportsDType[dtype[uint32]]
-        ] = ...,
+        dtype: dtype[uint32] | Type[uint32] | _UInt32Codes | _SupportsDType[dtype[uint32]] = ...,
     ) -> ndarray[Any, dtype[uint32]]: ...
     @overload
     def randint(  # type: ignore[misc]
@@ -209,9 +205,7 @@ class RandomState:
         low: _ArrayLikeInt_co,
         high: None | _ArrayLikeInt_co = ...,
         size: None | _ShapeLike = ...,
-        dtype: Union[
-            dtype[uint64], Type[uint64], _UInt64Codes, _SupportsDType[dtype[uint64]]
-        ] = ...,
+        dtype: dtype[uint64] | Type[uint64] | _UInt64Codes | _SupportsDType[dtype[uint64]] = ...,
     ) -> ndarray[Any, dtype[uint64]]: ...
     @overload
     def randint(  # type: ignore[misc]
@@ -219,9 +213,7 @@ class RandomState:
         low: _ArrayLikeInt_co,
         high: None | _ArrayLikeInt_co = ...,
         size: None | _ShapeLike = ...,
-        dtype: Union[
-            dtype[int_], Type[int], Type[int_], _IntCodes, _SupportsDType[dtype[int_]]
-        ] = ...,
+        dtype: dtype[int_] | Type[int] | Type[int_] | _IntCodes | _SupportsDType[dtype[int_]] = ...,
     ) -> ndarray[Any, dtype[int_]]: ...
     @overload
     def randint(  # type: ignore[misc]
@@ -229,7 +221,7 @@ class RandomState:
         low: _ArrayLikeInt_co,
         high: None | _ArrayLikeInt_co = ...,
         size: None | _ShapeLike = ...,
-        dtype: Union[dtype[uint], Type[uint], _UIntCodes, _SupportsDType[dtype[uint]]] = ...,
+        dtype: dtype[uint] | Type[uint] | _UIntCodes | _SupportsDType[dtype[uint]] = ...,
     ) -> ndarray[Any, dtype[uint]]: ...
     def bytes(self, length: int) -> bytes: ...
     @overload

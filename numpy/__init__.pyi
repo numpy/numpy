@@ -949,11 +949,11 @@ class flatiter(Generic[_NdArraySubClass]):
     @overload
     def __getitem__(
         self: flatiter[ndarray[Any, dtype[_ScalarType]]],
-        key: Union[int, integer],
+        key: int | integer,
     ) -> _ScalarType: ...
     @overload
     def __getitem__(
-        self, key: Union[_ArrayLikeInt, slice, ellipsis],
+        self, key: _ArrayLikeInt | slice | ellipsis
     ) -> _NdArraySubClass: ...
     @overload
     def __array__(self: flatiter[ndarray[Any, _DType]], dtype: None = ..., /) -> ndarray[Any, _DType]: ...
@@ -1121,7 +1121,7 @@ class _ArrayOrScalarCommon:
         self,
         axis: None | SupportsIndex = ...,
         kind: None | _SortKind = ...,
-        order: Union[None, str, Sequence[str]] = ...,
+        order: None | str | Sequence[str] = ...,
     ) -> ndarray: ...
 
     @overload
@@ -1519,20 +1519,20 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
     ) -> ndarray[_ShapeType2, _DType]: ...
 
     @overload
-    def __getitem__(self, key: Union[
-        SupportsIndex,
-        _ArrayLikeInt_co,
-        Tuple[SupportsIndex | _ArrayLikeInt_co, ...],
-    ]) -> Any: ...
+    def __getitem__(self, key: (
+        SupportsIndex
+        | _ArrayLikeInt_co
+        | Tuple[SupportsIndex | _ArrayLikeInt_co, ...]
+    )) -> Any: ...
     @overload
-    def __getitem__(self, key: Union[
-        None,
-        slice,
-        ellipsis,
-        SupportsIndex,
-        _ArrayLikeInt_co,
-        Tuple[None | slice | ellipsis | _ArrayLikeInt_co | SupportsIndex, ...],
-    ]) -> ndarray[Any, _DType_co]: ...
+    def __getitem__(self, key: (
+        None
+        | slice
+        | ellipsis
+        | SupportsIndex
+        | _ArrayLikeInt_co
+        | Tuple[None | slice | ellipsis | _ArrayLikeInt_co | SupportsIndex, ...]
+    )) -> ndarray[Any, _DType_co]: ...
     @overload
     def __getitem__(self: NDArray[void], key: str) -> NDArray[Any]: ...
     @overload
@@ -1582,7 +1582,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
 
     def squeeze(
         self,
-        axis: Union[SupportsIndex, Tuple[SupportsIndex, ...]] = ...,
+        axis: SupportsIndex | Tuple[SupportsIndex, ...] = ...,
     ) -> ndarray[Any, _DType_co]: ...
 
     def swapaxes(
@@ -1601,7 +1601,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
         kth: _ArrayLikeInt_co,
         axis: None | SupportsIndex = ...,
         kind: _PartitionKind = ...,
-        order: Union[None, str, Sequence[str]] = ...,
+        order: None | str | Sequence[str] = ...,
     ) -> ndarray[Any, _dtype[intp]]: ...
 
     def diagonal(
@@ -1628,7 +1628,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
         kth: _ArrayLikeInt_co,
         axis: SupportsIndex = ...,
         kind: _PartitionKind = ...,
-        order: Union[None, str, Sequence[str]] = ...,
+        order: None | str | Sequence[str] = ...,
     ) -> None: ...
 
     # `put` is technically available to `generic`,
@@ -1666,7 +1666,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
         self,
         axis: SupportsIndex = ...,
         kind: None | _SortKind = ...,
-        order: Union[None, str, Sequence[str]] = ...,
+        order: None | str | Sequence[str] = ...,
     ) -> None: ...
 
     @overload
@@ -2592,7 +2592,7 @@ class generic(_ArrayOrScalarCommon):
     ) -> ndarray[Any, _dtype[_ScalarType]]: ...
 
     def squeeze(
-        self: _ScalarType, axis: Union[L[0], Tuple[()]] = ...
+        self: _ScalarType, axis: L[0] | Tuple[()] = ...
     ) -> _ScalarType: ...
     def transpose(self: _ScalarType, axes: Tuple[()] = ..., /) -> _ScalarType: ...
     # Keep `dtype` at the bottom to avoid name conflicts with `np.dtype`
@@ -3272,7 +3272,7 @@ class AxisError(ValueError, IndexError):
     @overload
     def __init__(self, axis: int, ndim: int, msg_prefix: None | str = ...) -> None: ...
 
-_CallType = TypeVar("_CallType", bound=Union[_ErrFunc, _SupportsWrite[str]])
+_CallType = TypeVar("_CallType", bound=_ErrFunc | _SupportsWrite[str])
 
 class errstate(Generic[_CallType], ContextDecorator):
     call: _CallType
@@ -3327,7 +3327,7 @@ class ndindex:
 class DataSource:
     def __init__(
         self,
-        destpath: Union[None, str, os.PathLike[str]] = ...,
+        destpath: None | str | os.PathLike[str] = ...,
     ) -> None: ...
     def __del__(self) -> None: ...
     def abspath(self, path: str) -> str: ...
@@ -3478,29 +3478,29 @@ class recarray(ndarray[_ShapeType, _DType_co]):
     def __getattribute__(self, attr: str) -> Any: ...
     def __setattr__(self, attr: str, val: ArrayLike) -> None: ...
     @overload
-    def __getitem__(self, indx: Union[
-        SupportsIndex,
-        _ArrayLikeInt_co,
-        Tuple[SupportsIndex | _ArrayLikeInt_co, ...],
-    ]) -> Any: ...
+    def __getitem__(self, indx: (
+        SupportsIndex
+        | _ArrayLikeInt_co
+        | Tuple[SupportsIndex | _ArrayLikeInt_co, ...]
+    )) -> Any: ...
     @overload
-    def __getitem__(self: recarray[Any, dtype[void]], indx: Union[
-        None,
-        slice,
-        ellipsis,
-        SupportsIndex,
-        _ArrayLikeInt_co,
-        Tuple[None | slice | ellipsis | _ArrayLikeInt_co | SupportsIndex, ...],
-    ]) -> recarray[Any, _DType_co]: ...
+    def __getitem__(self: recarray[Any, dtype[void]], indx: (
+        None
+        | slice
+        | ellipsis
+        | SupportsIndex
+        | _ArrayLikeInt_co
+        | Tuple[None | slice | ellipsis | _ArrayLikeInt_co | SupportsIndex, ...]
+    )) -> recarray[Any, _DType_co]: ...
     @overload
-    def __getitem__(self, indx: Union[
-        None,
-        slice,
-        ellipsis,
-        SupportsIndex,
-        _ArrayLikeInt_co,
-        Tuple[None | slice | ellipsis | _ArrayLikeInt_co | SupportsIndex, ...],
-    ]) -> ndarray[Any, _DType_co]: ...
+    def __getitem__(self, indx: (
+        None
+        | slice
+        | ellipsis
+        | SupportsIndex
+        | _ArrayLikeInt_co
+        | Tuple[None | slice | ellipsis | _ArrayLikeInt_co | SupportsIndex, ...]
+    )) -> ndarray[Any, _DType_co]: ...
     @overload
     def __getitem__(self, indx: str) -> NDArray[Any]: ...
     @overload
@@ -3781,20 +3781,20 @@ class matrix(ndarray[_ShapeType, _DType_co]):
     def __array_finalize__(self, obj: NDArray[Any]) -> None: ...
 
     @overload
-    def __getitem__(self, key: Union[
-        SupportsIndex,
-        _ArrayLikeInt_co,
-        Tuple[SupportsIndex | _ArrayLikeInt_co, ...],
-    ]) -> Any: ...
+    def __getitem__(self, key: (
+        SupportsIndex
+        | _ArrayLikeInt_co
+        | Tuple[SupportsIndex | _ArrayLikeInt_co, ...]
+    )) -> Any: ...
     @overload
-    def __getitem__(self, key: Union[
-        None,
-        slice,
-        ellipsis,
-        SupportsIndex,
-        _ArrayLikeInt_co,
-        Tuple[None | slice | ellipsis | _ArrayLikeInt_co | SupportsIndex, ...],
-    ]) -> matrix[Any, _DType_co]: ...
+    def __getitem__(self, key: (
+        None
+        | slice
+        | ellipsis
+        | SupportsIndex
+        | _ArrayLikeInt_co
+        | Tuple[None | slice | ellipsis | _ArrayLikeInt_co | SupportsIndex, ...]
+    )) -> matrix[Any, _DType_co]: ...
     @overload
     def __getitem__(self: NDArray[void], key: str) -> matrix[Any, dtype[Any]]: ...
     @overload
