@@ -2,7 +2,6 @@ import platform
 import pytest
 
 from . import util
-from numpy.testing import assert_equal
 
 
 @pytest.mark.skipif(
@@ -31,7 +30,7 @@ end python module {module_name}
     """
 
     def test_multiline(self):
-        assert_equal(self.module.foo(), 42)
+        assert self.module.foo() == 42
 
 
 @pytest.mark.skipif(
@@ -63,4 +62,4 @@ end python module {module_name}
     """
 
     def test_callstatement(self):
-        assert_equal(self.module.foo(), 42)
+        assert self.module.foo() == 42

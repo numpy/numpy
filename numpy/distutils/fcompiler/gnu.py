@@ -324,7 +324,7 @@ class Gnu95FCompiler(GnuFCompiler):
             c_archs[c_archs.index("i386")] = "i686"
         # check the arches the Fortran compiler supports, and compare with
         # arch flags from C compiler
-        for arch in ["ppc", "i686", "x86_64", "ppc64"]:
+        for arch in ["ppc", "i686", "x86_64", "ppc64", "s390x"]:
             if _can_target(cmd, arch) and arch in c_archs:
                 arch_flags.extend(["-arch", arch])
         return arch_flags

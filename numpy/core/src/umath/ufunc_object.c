@@ -1073,13 +1073,15 @@ check_for_trivial_loop(PyArrayMethodObject *ufuncimpl,
         int must_copy = !PyArray_ISALIGNED(op[i]);
 
         if (dtypes[i] != PyArray_DESCR(op[i])) {
-            NPY_CASTING safety = PyArray_GetCastSafety(
-                    PyArray_DESCR(op[i]), dtypes[i], NULL);
+            npy_intp view_offset;
+            NPY_CASTING safety = PyArray_GetCastInfo(
+                    PyArray_DESCR(op[i]), dtypes[i], NULL, &view_offset);
             if (safety < 0 && PyErr_Occurred()) {
                 /* A proper error during a cast check, should be rare */
                 return -1;
             }
-            if (!(safety & _NPY_CAST_IS_VIEW)) {
+            if (view_offset != 0) {
+                /* NOTE: Could possibly implement non-zero view offsets */
                 must_copy = 1;
             }
 
@@ -2737,13 +2739,11 @@ reducelike_promote_and_resolve(PyUFuncObject *ufunc,
     }
 
     PyArrayMethodObject *ufuncimpl = promote_and_get_ufuncimpl(ufunc,
-            ops, signature, operation_DTypes, NPY_FALSE, NPY_FALSE, NPY_TRUE);
-    /* Output can currently get cleared, others XDECREF in case of error */
+            ops, signature, operation_DTypes, NPY_FALSE, NPY_TRUE, NPY_TRUE);
+    /* DTypes may currently get filled in fallbacks and XDECREF for error: */
+    Py_XDECREF(operation_DTypes[0]);
     Py_XDECREF(operation_DTypes[1]);
-    if (out != NULL) {
-        Py_XDECREF(operation_DTypes[0]);
-        Py_XDECREF(operation_DTypes[2]);
-    }
+    Py_XDECREF(operation_DTypes[2]);
     if (ufuncimpl == NULL) {
         return NULL;
     }
@@ -4510,8 +4510,10 @@ resolve_descriptors(int nop,
 
     if (ufuncimpl->resolve_descriptors != &wrapped_legacy_resolve_descriptors) {
         /* The default: use the `ufuncimpl` as nature intended it */
+        npy_intp view_offset = NPY_MIN_INTP;  /* currently ignored */
+
         NPY_CASTING safety = ufuncimpl->resolve_descriptors(ufuncimpl,
-                signature, original_dtypes, dtypes);
+                signature, original_dtypes, dtypes, &view_offset);
         if (safety < 0) {
             goto finish;
         }
@@ -4892,6 +4894,7 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
      */
     Py_XDECREF(wheremask);
     for (int i = 0; i < nop; i++) {
+        Py_DECREF(signature[i]);
         Py_XDECREF(operand_DTypes[i]);
         Py_DECREF(operation_descrs[i]);
         if (i < nin) {
@@ -4915,6 +4918,7 @@ fail:
     Py_XDECREF(wheremask);
     for (int i = 0; i < ufunc->nargs; i++) {
         Py_XDECREF(operands[i]);
+        Py_XDECREF(signature[i]);
         Py_XDECREF(operand_DTypes[i]);
         Py_XDECREF(operation_descrs[i]);
         if (i < nout) {
@@ -5194,60 +5198,18 @@ PyUFunc_FromFuncAndDataAndSignatureAndIdentity(PyUFuncGenericFunction *func, voi
             return NULL;
         }
     }
-
-    PyObject *promoter = NULL;
-    if (ufunc->ntypes == 1) {
-        npy_bool all_object = NPY_TRUE;
-        for (int i = 0; i < ufunc->nargs; i++) {
-            if (ufunc->types[i] != NPY_OBJECT) {
-                all_object = NPY_FALSE;
-                break;
-            }
-        }
-        if (all_object) {
-            promoter = PyCapsule_New(&object_only_ufunc_promoter,
-                    "numpy._ufunc_promoter", NULL);
-            if (promoter == NULL) {
-                Py_DECREF(ufunc);
-                return NULL;
-            }
-        }
-    }
-    if (promoter == NULL && ufunc->nin > 1) {
-        promoter = PyCapsule_New(&default_ufunc_promoter,
-                "numpy._ufunc_promoter", NULL);
-        if (promoter == NULL) {
-            Py_DECREF(ufunc);
-            return NULL;
-        }
-    }
-    if (promoter != NULL) {
-        /* Always install default promoter using the common DType */
-        PyObject *dtype_tuple = PyTuple_New(ufunc->nargs);
-        if (dtype_tuple == NULL) {
-            Py_DECREF(promoter);
-            Py_DECREF(ufunc);
-            return NULL;
-        }
-        for (int i = 0; i < ufunc->nargs; i++) {
-            Py_INCREF(Py_None);
-            PyTuple_SET_ITEM(dtype_tuple, i, Py_None);
-        }
-        PyObject *info = PyTuple_Pack(2, dtype_tuple, promoter);
-        Py_DECREF(dtype_tuple);
-        Py_DECREF(promoter);
-        if (info == NULL) {
-            Py_DECREF(ufunc);
-            return NULL;
-        }
-
-        int res = PyUFunc_AddLoop((PyUFuncObject *)ufunc, info, 0);
-        Py_DECREF(info);
-        if (res < 0) {
-            Py_DECREF(ufunc);
-            return NULL;
-        }
-    }
+    /*
+     * TODO: I tried adding a default promoter here (either all object for
+     *       some special cases, or all homogeneous).  Those are reasonable
+     *       defaults, but short-cut a deprecated SciPy loop, where the
+     *       homogeneous loop `ddd->d` was deprecated, but an inhomogeneous
+     *       one `dld->d` should be picked.
+     *       The default promoter *is* a reasonable default, but switched that
+     *       behaviour.
+     *       Another problem appeared due to buggy type-resolution for
+     *       datetimes, this meant that `timedelta.sum(dtype="f8")` returned
+     *       datetimes (and not floats or error), arguably wrong, but...
+     */
     return (PyObject *)ufunc;
 }
 
@@ -6196,7 +6158,9 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
     Py_XDECREF(op2_array);
     Py_XDECREF(iter);
     Py_XDECREF(iter2);
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < nop; i++) {
+        Py_DECREF(signature[i]);
+        Py_XDECREF(operand_DTypes[i]);
         Py_XDECREF(operation_descrs[i]);
         Py_XDECREF(array_operands[i]);
     }
@@ -6222,6 +6186,8 @@ fail:
     Py_XDECREF(iter);
     Py_XDECREF(iter2);
     for (int i = 0; i < 3; i++) {
+        Py_XDECREF(signature[i]);
+        Py_XDECREF(operand_DTypes[i]);
         Py_XDECREF(operation_descrs[i]);
         Py_XDECREF(array_operands[i]);
     }

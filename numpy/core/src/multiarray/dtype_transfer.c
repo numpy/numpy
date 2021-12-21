@@ -2991,7 +2991,8 @@ _strided_to_strided_multistep_cast(
  * transferfunction and transferdata.
  */
 static NPY_INLINE int
-init_cast_info(NPY_cast_info *cast_info, NPY_CASTING *casting,
+init_cast_info(
+        NPY_cast_info *cast_info, NPY_CASTING *casting, npy_intp *view_offset,
         PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype, int main_step)
 {
     PyObject *meth = PyArray_GetCastingImpl(
@@ -3016,7 +3017,8 @@ init_cast_info(NPY_cast_info *cast_info, NPY_CASTING *casting,
     PyArray_Descr *in_descr[2] = {src_dtype, dst_dtype};
 
     *casting = cast_info->context.method->resolve_descriptors(
-            cast_info->context.method, dtypes, in_descr, cast_info->descriptors);
+            cast_info->context.method, dtypes,
+            in_descr, cast_info->descriptors, view_offset);
     if (NPY_UNLIKELY(*casting < 0)) {
         if (!PyErr_Occurred()) {
             PyErr_Format(PyExc_TypeError,
@@ -3071,6 +3073,9 @@ _clear_cast_info_after_get_loop_failure(NPY_cast_info *cast_info)
  * transfer function from the each casting implementation (ArrayMethod).
  * May set the transfer function to NULL when the cast can be achieved using
  * a view.
+ * TODO: Expand the view functionality for general offsets, not just 0:
+ *       Partial casts could be skipped also for `view_offset != 0`.
+ *
  * The `out_needs_api` flag must be initialized.
  *
  * NOTE: In theory casting errors here could be slightly misleading in case
@@ -3101,9 +3106,12 @@ define_cast_for_descrs(
     castdata.main.func = NULL;
     castdata.to.func = NULL;
     castdata.from.func = NULL;
+    /* `view_offset` passed to `init_cast_info` but unused for the main cast */
+    npy_intp view_offset = NPY_MIN_INTP;
     NPY_CASTING casting = -1;
 
-    if (init_cast_info(cast_info, &casting, src_dtype, dst_dtype, 1) < 0) {
+    if (init_cast_info(
+            cast_info, &casting, &view_offset, src_dtype, dst_dtype, 1) < 0) {
         return -1;
     }
 
@@ -3123,17 +3131,18 @@ define_cast_for_descrs(
      */
     if (NPY_UNLIKELY(src_dtype != cast_info->descriptors[0] || must_wrap)) {
         NPY_CASTING from_casting = -1;
+        npy_intp from_view_offset = NPY_MIN_INTP;
         /* Cast function may not support the input, wrap if necessary */
         if (init_cast_info(
-                &castdata.from, &from_casting,
+                &castdata.from, &from_casting, &from_view_offset,
                 src_dtype, cast_info->descriptors[0], 0) < 0) {
             goto fail;
         }
         casting = PyArray_MinCastSafety(casting, from_casting);
 
         /* Prepare the actual cast (if necessary): */
-        if (from_casting & _NPY_CAST_IS_VIEW && !must_wrap) {
-            /* This step is not necessary and can be skipped. */
+        if (from_view_offset == 0 && !must_wrap) {
+            /* This step is not necessary and can be skipped */
             castdata.from.func = &_dec_src_ref_nop;  /* avoid NULL */
             NPY_cast_info_xfree(&castdata.from);
         }
@@ -3161,16 +3170,17 @@ define_cast_for_descrs(
      */
     if (NPY_UNLIKELY(dst_dtype != cast_info->descriptors[1] || must_wrap)) {
         NPY_CASTING to_casting = -1;
+        npy_intp to_view_offset = NPY_MIN_INTP;
         /* Cast function may not support the output, wrap if necessary */
         if (init_cast_info(
-                &castdata.to, &to_casting,
+                &castdata.to, &to_casting, &to_view_offset,
                 cast_info->descriptors[1], dst_dtype,  0) < 0) {
             goto fail;
         }
         casting = PyArray_MinCastSafety(casting, to_casting);
 
         /* Prepare the actual cast (if necessary): */
-        if (to_casting & _NPY_CAST_IS_VIEW && !must_wrap) {
+        if (to_view_offset == 0 && !must_wrap) {
             /* This step is not necessary and can be skipped. */
             castdata.to.func = &_dec_src_ref_nop;  /* avoid NULL */
             NPY_cast_info_xfree(&castdata.to);

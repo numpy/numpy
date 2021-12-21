@@ -4811,7 +4811,6 @@ class MaskedArray(ndarray):
           WRITEABLE : True
           ALIGNED : True
           WRITEBACKIFCOPY : False
-          UPDATEIFCOPY : False
 
         """
         return self.flags['CONTIGUOUS']

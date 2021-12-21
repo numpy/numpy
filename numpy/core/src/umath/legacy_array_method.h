@@ -27,7 +27,7 @@ get_wrapped_legacy_ufunc_loop(PyArrayMethod_Context *context,
 
 NPY_NO_EXPORT NPY_CASTING
 wrapped_legacy_resolve_descriptors(PyArrayMethodObject *,
-        PyArray_DTypeMeta **, PyArray_Descr **, PyArray_Descr **);
+        PyArray_DTypeMeta **, PyArray_Descr **, PyArray_Descr **, npy_intp *);
 
 
 #endif  /*_NPY_LEGACY_ARRAY_METHOD_H */

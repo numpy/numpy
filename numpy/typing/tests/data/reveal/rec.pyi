@@ -104,3 +104,24 @@ reveal_type(np.rec.array(  # recarray[Any, dtype[record]]
     formats=[np.int64, np.float64],
     names=["i8", "f8"]
 ))
+
+reveal_type(np.rec.array(  # recarray[Any, dtype[Any]]
+    None,
+    dtype=np.float64,
+    shape=(10, 3),
+))
+reveal_type(np.rec.array(  # recarray[Any, dtype[Any]]
+    None,
+    formats=[np.int64, np.float64],
+    names=["i8", "f8"],
+    shape=(10, 3),
+))
+reveal_type(np.rec.array(  # recarray[Any, dtype[Any]]
+    file_obj,
+    dtype=np.float64,
+))
+reveal_type(np.rec.array(  # recarray[Any, dtype[Any]]
+    file_obj,
+    formats=[np.int64, np.float64],
+    names=["i8", "f8"],
+))

@@ -70,7 +70,8 @@ typedef NPY_CASTING (resolve_descriptors_function)(
         struct PyArrayMethodObject_tag *method,
         PyArray_DTypeMeta **dtypes,
         PyArray_Descr **given_descrs,
-        PyArray_Descr **loop_descrs);
+        PyArray_Descr **loop_descrs,
+        npy_intp *view_offset);
 
 
 typedef int (get_loop_function)(

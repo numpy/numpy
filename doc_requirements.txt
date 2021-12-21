@@ -6,3 +6,4 @@ matplotlib
 pandas
 pydata-sphinx-theme
 breathe
+sphinx-panels

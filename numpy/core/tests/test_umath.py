@@ -17,18 +17,8 @@ from numpy.testing import (
     assert_array_max_ulp, assert_allclose, assert_no_warnings, suppress_warnings,
     _gen_alignment_data, assert_array_almost_equal_nulp
     )
+from numpy.testing._private.utils import _glibc_older_than
 
-def get_glibc_version():
-    try:
-        ver = os.confstr('CS_GNU_LIBC_VERSION').rsplit(' ')[1]
-    except Exception as inst:
-        ver = '0.0'
-
-    return ver
-
-
-glibcver = get_glibc_version()
-glibc_older_than = lambda x: (glibcver != '0.0' and glibcver < x)
 
 def on_powerpc():
     """ True if we are running on a Power PC platform."""
@@ -1014,7 +1004,7 @@ class TestSpecialFloats:
 
     # See: https://github.com/numpy/numpy/issues/19192
     @pytest.mark.xfail(
-        glibc_older_than("2.17"),
+        _glibc_older_than("2.17"),
         reason="Older glibc versions may not raise appropriate FP exceptions"
     )
     def test_exp_exceptions(self):
@@ -1262,6 +1252,11 @@ class TestSpecialFloats:
                     assert_raises(FloatingPointError, np.arctanh,
                                   np.array(value, dtype=dt))
 
+    # See: https://github.com/numpy/numpy/issues/20448
+    @pytest.mark.xfail(
+        _glibc_older_than("2.17"),
+        reason="Older glibc versions may not raise appropriate FP exceptions"
+    )
     def test_exp2(self):
         with np.errstate(all='ignore'):
             in_ = [np.nan, -np.nan, np.inf, -np.inf]
@@ -1397,7 +1392,7 @@ class TestAVXFloat32Transcendental:
         M = np.int_(N/20)
         index = np.random.randint(low=0, high=N, size=M)
         x_f32 = np.float32(np.random.uniform(low=-100.,high=100.,size=N))
-        if not glibc_older_than("2.17"):
+        if not _glibc_older_than("2.17"):
             # test coverage for elements > 117435.992f for which glibc is used
             # this is known to be problematic on old glibc, so skip it there
             x_f32[index] = np.float32(10E+10*np.random.rand(M))

@@ -4,6 +4,7 @@ import warnings
 import itertools
 import operator
 import platform
+from distutils.version import LooseVersion as _LooseVersion
 import pytest
 from hypothesis import given, settings, Verbosity
 from hypothesis.strategies import sampled_from
@@ -680,17 +681,29 @@ class TestAbs:
 
     @pytest.mark.parametrize("dtype", floating_types + complex_floating_types)
     def test_builtin_abs(self, dtype):
-        if sys.platform == "cygwin" and dtype == np.clongdouble:
+        if (
+                sys.platform == "cygwin" and dtype == np.clongdouble and
+                (
+                    _LooseVersion(platform.release().split("-")[0])
+                    < _LooseVersion("3.3.0")
+                )
+        ):
             pytest.xfail(
-                reason="absl is computed in double precision on cygwin"
+                reason="absl is computed in double precision on cygwin < 3.3"
             )
         self._test_abs_func(abs, dtype)
 
     @pytest.mark.parametrize("dtype", floating_types + complex_floating_types)
     def test_numpy_abs(self, dtype):
-        if sys.platform == "cygwin" and dtype == np.clongdouble:
+        if (
+                sys.platform == "cygwin" and dtype == np.clongdouble and
+                (
+                    _LooseVersion(platform.release().split("-")[0])
+                    < _LooseVersion("3.3.0")
+                )
+        ):
             pytest.xfail(
-                reason="absl is computed in double precision on cygwin"
+                reason="absl is computed in double precision on cygwin < 3.3"
             )
         self._test_abs_func(np.abs, dtype)
 

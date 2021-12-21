@@ -228,6 +228,7 @@ class _Config:
         x64 = "SSE SSE2 SSE3",
         ppc64 = '', # play it safe
         ppc64le = "VSX VSX2",
+        s390x = '',
         armhf = '', # play it safe
         aarch64 = "NEON NEON_FP16 NEON_VFPV4 ASIMD"
     )
@@ -293,6 +294,13 @@ class _Config:
         VSX2 = dict(interest=2, implies="VSX", implies_detect=False),
         ## Power9/ISA 3.00
         VSX3 = dict(interest=3, implies="VSX2", implies_detect=False),
+        # IBM/Z
+        ## VX(z13) support
+        VX = dict(interest=1, headers="vecintrin.h"),
+        ## Vector-Enhancements Facility
+        VXE = dict(interest=2, implies="VX", implies_detect=False),
+        ## Vector-Enhancements Facility 2
+        VXE2 = dict(interest=3, implies="VXE", implies_detect=False),
         # ARM
         NEON  = dict(interest=1, headers="arm_neon.h"),
         NEON_FP16 = dict(interest=2, implies="NEON"),
@@ -471,6 +479,23 @@ class _Config:
                 partial["VSX3"]["flags"] = "-mpower9-vector"
 
             return partial
+
+        on_zarch = self.cc_on_s390x
+        if on_zarch:
+            partial = dict(
+                VX = dict(
+                    flags="-march=arch11 -mzvector"
+                ),
+                VXE = dict(
+                    flags="-march=arch12", implies_detect=False
+                ),
+                VXE2 = dict(
+                    flags="-march=arch13", implies_detect=False
+                )
+            )
+
+            return partial
+
 
         if self.cc_on_aarch64 and is_unix: return dict(
             NEON = dict(
@@ -874,7 +899,11 @@ class _CCompiler:
     cc_on_x64 : bool
         True when the target architecture is 64-bit x86
     cc_on_ppc64 : bool
-        True when the target architecture is 64-bit big-endian PowerPC
+        True when the target architecture is 64-bit big-endian powerpc
+    cc_on_ppc64le : bool
+        True when the target architecture is 64-bit litle-endian powerpc
+    cc_on_s390x : bool
+        True when the target architecture is IBM/ZARCH on linux
     cc_on_armhf : bool
         True when the target architecture is 32-bit ARMv7+
     cc_on_aarch64 : bool
@@ -919,6 +948,7 @@ class _CCompiler:
             ("cc_on_ppc64",    ".*(powerpc|ppc)64.*"),
             ("cc_on_aarch64",  ".*(aarch64|arm64).*"),
             ("cc_on_armhf",    ".*arm.*"),
+            ("cc_on_s390x",    ".*s390x.*"),
             # undefined platform
             ("cc_on_noarch",    ""),
         )
@@ -983,7 +1013,8 @@ class _CCompiler:
             self.cc_is_gcc = True
 
         self.cc_march = "unknown"
-        for arch in ("x86", "x64", "ppc64", "ppc64le", "armhf", "aarch64"):
+        for arch in ("x86", "x64", "ppc64", "ppc64le",
+                     "armhf", "aarch64", "s390x"):
             if getattr(self, "cc_on_" + arch):
                 self.cc_march = arch
                 break
@@ -1063,7 +1094,9 @@ class _CCompiler:
     _cc_normalize_unix_frgx = re.compile(
         # 2- to remove any flags starts with
         # -march, -mcpu, -x(INTEL) and '-m' without '='
-        r"^(?!(-mcpu=|-march=|-x[A-Z0-9\-]))(?!-m[a-z0-9\-\.]*.$)"
+        r"^(?!(-mcpu=|-march=|-x[A-Z0-9\-]|-m[a-z0-9\-\.]*.$))|"
+        # exclude:
+        r"(?:-mzvector)"
     )
     _cc_normalize_unix_krgx = re.compile(
         # 3- keep only the highest of

@@ -1203,8 +1203,7 @@ gentype_struct_get(PyObject *self, void *NPY_UNUSED(ignored))
     inter->two = 2;
     inter->nd = 0;
     inter->flags = PyArray_FLAGS(arr);
-    inter->flags &= ~(NPY_ARRAY_UPDATEIFCOPY | NPY_ARRAY_WRITEBACKIFCOPY |
-                      NPY_ARRAY_OWNDATA);
+    inter->flags &= ~(NPY_ARRAY_WRITEBACKIFCOPY | NPY_ARRAY_OWNDATA);
     inter->flags |= NPY_ARRAY_NOTSWAPPED;
     inter->typekind = PyArray_DESCR(arr)->kind;
     inter->itemsize = PyArray_DESCR(arr)->elsize;
@@ -2585,6 +2584,7 @@ gentype_arrtype_getbuffer(PyObject *self, Py_buffer *view, int flags)
                 "user-defined scalar %R registered for built-in dtype %S? "
                 "This should be impossible.",
                 self, descr);
+        Py_DECREF(descr);
         return -1;
     }
     view->ndim = 0;

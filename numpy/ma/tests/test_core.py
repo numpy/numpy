@@ -3422,6 +3422,10 @@ class TestMaskedArrayMethods:
         assert_equal(sortedx._data, [1, 2, -2, -1, 0])
         assert_equal(sortedx._mask, [1, 1, 0, 0, 0])
 
+        x = array([0, -1], dtype=np.int8)
+        sortedx = sort(x, kind="stable")
+        assert_equal(sortedx, array([-1, 0], dtype=np.int8))
+
     def test_stable_sort(self):
         x = array([1, 2, 3, 1, 2, 3], dtype=np.uint8)
         expected = array([0, 3, 1, 4, 2, 5])

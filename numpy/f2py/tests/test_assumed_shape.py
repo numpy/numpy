@@ -2,7 +2,6 @@ import os
 import pytest
 import tempfile
 
-from numpy.testing import assert_
 from . import util
 
 
@@ -18,16 +17,16 @@ class TestAssumedShapeSumExample(util.F2PyTest):
     @pytest.mark.slow
     def test_all(self):
         r = self.module.fsum([1, 2])
-        assert_(r == 3, repr(r))
+        assert r == 3
         r = self.module.sum([1, 2])
-        assert_(r == 3, repr(r))
+        assert r == 3
         r = self.module.sum_with_use([1, 2])
-        assert_(r == 3, repr(r))
+        assert r == 3
 
         r = self.module.mod.sum([1, 2])
-        assert_(r == 3, repr(r))
+        assert r == 3
         r = self.module.mod.fsum([1, 2])
-        assert_(r == 3, repr(r))
+        assert r == 3
 
 
 class TestF2cmapOption(TestAssumedShapeSumExample):

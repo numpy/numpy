@@ -62,6 +62,7 @@ npy_cpu_features_dict(void)
      *            AVX512IFMA, AVX512VBMI, AVX512VBMI2, AVX512BITALG,
      *            AVX512_KNL, AVX512_KNM, AVX512_SKX, AVX512_CLX, AVX512_CNL, AVX512_ICL,
      *            VSX, VSX2, VSX3,
+     *            VX, VXE, VXE2,
      *            NEON, NEON_FP16, NEON_VFPV4, ASIMD, FPHP, ASIMDHP, ASIMDDP, ASIMDFHM#
     */
         if (PyDict_SetItemString(dict, "@feature@",
@@ -508,6 +509,42 @@ npy__cpu_init_features(void)
     #endif
 #endif
 }
+
+/***************** ZARCH ******************/
+
+#elif defined(__s390x__)
+
+#include <sys/auxv.h>
+#ifndef HWCAP_S390_VXE
+    #define HWCAP_S390_VXE 8192
+#endif
+
+#ifndef HWCAP_S390_VXRS_EXT2
+    #define HWCAP_S390_VXRS_EXT2 32768
+#endif
+
+static void
+npy__cpu_init_features(void)
+{
+    memset(npy__cpu_have, 0, sizeof(npy__cpu_have[0]) * NPY_CPU_FEATURE_MAX);
+    
+    unsigned int hwcap = getauxval(AT_HWCAP);
+    if ((hwcap & HWCAP_S390_VX) == 0) {
+        return;
+    }
+
+    if (hwcap & HWCAP_S390_VXRS_EXT2) {
+       npy__cpu_have[NPY_CPU_FEATURE_VX]  =
+       npy__cpu_have[NPY_CPU_FEATURE_VXE] =
+       npy__cpu_have[NPY_CPU_FEATURE_VXE2] = 1;
+       return;
+    }
+    
+    npy__cpu_have[NPY_CPU_FEATURE_VXE] = (hwcap & HWCAP_S390_VXE) != 0;
+
+    npy__cpu_have[NPY_CPU_FEATURE_VX]  = 1;
+}
+
 
 /***************** ARM ******************/
 

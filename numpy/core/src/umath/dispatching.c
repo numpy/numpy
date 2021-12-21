@@ -583,6 +583,10 @@ legacy_promote_using_legacy_type_resolver(PyUFuncObject *ufunc,
             NPY_UNSAFE_CASTING, (PyArrayObject **)ops, type_tuple,
             out_descrs) < 0) {
         Py_XDECREF(type_tuple);
+        /* Not all legacy resolvers clean up on failures: */
+        for (int i = 0; i < nargs; i++) {
+            Py_CLEAR(out_descrs[i]);
+        }
         return -1;
     }
     Py_XDECREF(type_tuple);
@@ -592,17 +596,19 @@ legacy_promote_using_legacy_type_resolver(PyUFuncObject *ufunc,
         Py_INCREF(operation_DTypes[i]);
         Py_DECREF(out_descrs[i]);
     }
-    if (ufunc->type_resolver == &PyUFunc_SimpleBinaryComparisonTypeResolver) {
-        /*
-         * In this one case, the deprecation means that we actually override
-         * the signature.
-         */
-        for (int i = 0; i < nargs; i++) {
-            if (signature[i] != NULL && signature[i] != operation_DTypes[i]) {
-                Py_INCREF(operation_DTypes[i]);
-                Py_SETREF(signature[i], operation_DTypes[i]);
-                *out_cacheable = 0;
-            }
+    /*
+     * The PyUFunc_SimpleBinaryComparisonTypeResolver has a deprecation
+     * warning (ignoring `dtype=`) and cannot be cached.
+     * All datetime ones *should* have a warning, but currently don't,
+     * but ignore all signature passing also.  So they can also
+     * not be cached, and they mutate the signature which of course is wrong,
+     * but not doing it would confuse the code later.
+     */
+    for (int i = 0; i < nargs; i++) {
+        if (signature[i] != NULL && signature[i] != operation_DTypes[i]) {
+            Py_INCREF(operation_DTypes[i]);
+            Py_SETREF(signature[i], operation_DTypes[i]);
+            *out_cacheable = 0;
         }
     }
     return 0;
@@ -639,7 +645,7 @@ add_and_return_legacy_wrapping_ufunc_loop(PyUFuncObject *ufunc,
         Py_DECREF(info);
         return NULL;
     }
-
+    Py_DECREF(info);  /* now borrowed from the ufunc's list of loops */
     return info;
 }
 
@@ -740,13 +746,14 @@ promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
     }
     info = promote_and_get_info_and_ufuncimpl(ufunc,
             ops, signature, new_op_dtypes, NPY_FALSE);
+    for (int i = 0; i < ufunc->nargs; i++) {
+        Py_XDECREF(new_op_dtypes[i]);
+    }
+
     /* Add this to the cache using the original types: */
     if (cacheable && PyArrayIdentityHash_SetItem(ufunc->_dispatch_cache,
             (PyObject **)op_dtypes, info, 0) < 0) {
         return NULL;
-    }
-    for (int i = 0; i < ufunc->nargs; i++) {
-        Py_XDECREF(new_op_dtypes);
     }
     return info;
 }

@@ -55,8 +55,8 @@ is to create a flexible enough interface without burdening normative users.
 .. _`issue 5312`: https://github.com/numpy/numpy/issues/5312
 .. _`from 2017`: https://github.com/numpy/numpy/issues/5312#issuecomment-315234656
 .. _`in 2005`: https://numpy-discussion.scipy.narkive.com/MvmMkJcK/numpy-arrays-data-allocation-and-simd-alignement
-.. _`here`: http://numpy-discussion.10968.n7.nabble.com/Aligned-configurable-memory-allocation-td39712.html
-.. _`and here`: http://numpy-discussion.10968.n7.nabble.com/Numpy-s-policy-for-releasing-memory-td1533.html
+.. _`here`: https://mail.python.org/archives/list/numpy-discussion@python.org/thread/YPC5BGPUMKT2MLBP6O3FMPC35LFM2CCH/#YPC5BGPUMKT2MLBP6O3FMPC35LFM2CCH
+.. _`and here`: https://mail.python.org/archives/list/numpy-discussion@python.org/thread/IQK3EPIIRE3V4BPNAMJ2ZST3NUG2MK2A/#IQK3EPIIRE3V4BPNAMJ2ZST3NUG2MK2A
 .. _`issue 14177`: https://github.com/numpy/numpy/issues/14177
 .. _`filprofiler`: https://github.com/pythonspeed/filprofiler/blob/master/design/allocator-overrides.md
 .. _`electric fence`: https://github.com/boundarydevices/efence
