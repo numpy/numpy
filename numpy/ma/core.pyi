@@ -1,4 +1,5 @@
-from typing import Any, TypeVar, Callable
+from collections.abc import Callable
+from typing import Any, TypeVar
 from numpy import ndarray, dtype, float64
 
 from numpy import (

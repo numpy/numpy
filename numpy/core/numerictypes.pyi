@@ -1,12 +1,12 @@
 import sys
 import types
+from collections.abc import Iterable
 from typing import (
     Literal as L,
     Union,
     overload,
     Any,
     TypeVar,
-    Iterable,
     Protocol,
     TypedDict,
 )

@@ -1,6 +1,7 @@
 import os
 import subprocess
-from typing import Literal as L, Any, Iterable, overload, TypedDict
+from collections.abc import Iterable
+from typing import Literal as L, Any, overload, TypedDict
 
 from numpy._pytesttester import PytestTester
 

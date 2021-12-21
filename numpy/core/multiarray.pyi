@@ -2,15 +2,13 @@
 
 import os
 import datetime as dt
+from collections.abc import Sequence, Callable, Iterable
 from typing import (
     Literal as L,
     Any,
-    Callable,
-    Iterable,
     overload,
     TypeVar,
     Union,
-    Sequence,
     SupportsIndex,
     final,
     Final,

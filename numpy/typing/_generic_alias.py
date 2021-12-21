@@ -2,12 +2,10 @@ from __future__ import annotations
 
 import sys
 import types
+from collections.abc import Generator, Iterable, Iterator
 from typing import (
     Any,
     ClassVar,
-    Generator,
-    Iterable,
-    Iterator,
     NoReturn,
     TypeVar,
     TYPE_CHECKING,

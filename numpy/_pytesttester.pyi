@@ -1,4 +1,5 @@
-from typing import Iterable, Literal as L
+from collections.abc import Iterable
+from typing import Literal as L
 
 __all__: list[str]
 

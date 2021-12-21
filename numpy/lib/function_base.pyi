@@ -1,16 +1,13 @@
 import sys
+from collections.abc import Sequence, Iterator, Callable, Iterable
 from typing import (
     Literal as L,
-    Sequence,
     Union,
     Any,
     TypeVar,
-    Iterator,
     overload,
-    Callable,
     Protocol,
     SupportsIndex,
-    Iterable,
     SupportsInt,
 )
 

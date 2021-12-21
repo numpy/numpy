@@ -1,11 +1,9 @@
 import abc
 from threading import Lock
+from collections.abc import Callable, Mapping, Sequence
 from typing import (
     Any,
-    Callable,
-    Mapping,
     NamedTuple,
-    Sequence,
     TypedDict,
     TypeVar,
     Union,

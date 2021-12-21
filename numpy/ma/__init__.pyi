@@ -1,5 +1,3 @@
-from typing import Any
-
 from numpy._pytesttester import PytestTester
 
 from numpy.ma import extras as extras

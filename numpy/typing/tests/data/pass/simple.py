@@ -2,7 +2,7 @@
 import operator
 
 import numpy as np
-from typing import Iterable  # noqa: F401
+from collections.abc import Iterable
 
 # Basic checks
 array = np.array([1, 2])

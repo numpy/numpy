@@ -1,5 +1,3 @@
-from typing import Any
-
 from numpy.linalg.linalg import (
     matrix_power as matrix_power,
     solve as solve,

@@ -2,22 +2,17 @@ import os
 import sys
 import zipfile
 import types
+from re import Pattern
+from collections.abc import Collection, Mapping, Iterator, Sequence, Callable, Iterable
 from typing import (
-    Collection,
     Literal as L,
     Any,
-    Mapping,
     TypeVar,
     Generic,
-    Iterator,
     Union,
     IO,
     overload,
-    Sequence,
-    Callable,
-    Pattern,
     Protocol,
-    Iterable,
 )
 
 from numpy import (

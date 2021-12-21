@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from functools import partial
-from typing import Callable
+from collections.abc import Callable
 
 import pytest  # type: ignore
 import numpy as np

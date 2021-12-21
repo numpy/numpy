@@ -167,26 +167,25 @@ from numpy.typing._extended_precision import (
     complex512 as complex512,
 )
 
-from typing import (
-    Literal as L,
-    Any,
-    ByteString,
+from collections.abc import (
     Callable,
     Container,
-    Callable,
-    Generic,
-    IO,
     Iterable,
     Iterator,
     Mapping,
-    NoReturn,
-    overload,
     Sequence,
     Sized,
+)
+from typing import (
+    Literal as L,
+    Any,
+    Generic,
+    IO,
+    NoReturn,
+    overload,
     SupportsComplex,
     SupportsFloat,
     SupportsInt,
-    Text,
     TypeVar,
     Union,
     Protocol,

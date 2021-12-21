@@ -1,6 +1,6 @@
+from collections.abc import Iterable
 from typing import (
     Literal as L,
-    Iterable,
     overload,
     TypeVar,
     Any,

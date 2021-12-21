@@ -1,8 +1,8 @@
+from collections.abc import Sequence
 from typing import (
     Literal as L,
     Any,
     SupportsIndex,
-    Sequence,
 )
 
 from numpy.typing import (

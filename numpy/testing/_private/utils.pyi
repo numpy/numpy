@@ -5,17 +5,15 @@ import types
 import warnings
 import unittest
 import contextlib
+from re import Pattern
+from collections.abc import Callable, Iterable, Sequence
 from typing import (
     Literal as L,
     Any,
     AnyStr,
-    Callable,
     ClassVar,
-    Iterable,
     NoReturn,
     overload,
-    Pattern,
-    Sequence,
     type_check_only,
     TypeVar,
     Union,

@@ -1,8 +1,7 @@
+from collections.abc import Callable, Sequence
 from typing import (
     Any,
     Union,
-    Sequence,
-    Callable,
     overload,
     TypeVar,
     Literal,

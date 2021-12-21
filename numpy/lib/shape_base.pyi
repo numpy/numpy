@@ -1,4 +1,5 @@
-from typing import TypeVar, Callable, Sequence, Any, overload, SupportsIndex, Protocol
+from collections.abc import Callable, Sequence
+from typing import TypeVar, Any, overload, SupportsIndex, Protocol
 
 from numpy import (
     generic,

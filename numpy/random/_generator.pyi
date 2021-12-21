@@ -1,4 +1,5 @@
-from typing import Any, Callable, Union, overload, TypeVar, Literal
+from collections.abc import Callable
+from typing import Any, Union, overload, TypeVar, Literal
 
 from numpy import (
     bool_,

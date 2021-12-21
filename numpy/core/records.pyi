@@ -1,9 +1,8 @@
 import os
+from collections.abc import Sequence, Iterable
 from typing import (
-    Sequence,
     Any,
     TypeVar,
-    Iterable,
     overload,
     Protocol,
 )

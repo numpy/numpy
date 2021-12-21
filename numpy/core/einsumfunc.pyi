@@ -1,4 +1,5 @@
-from typing import TypeVar, Any, overload, Union, Sequence, Literal
+from collections.abc import Sequence
+from typing import TypeVar, Any, overload, Union, Literal
 
 from numpy import (
     ndarray,

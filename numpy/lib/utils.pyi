@@ -1,10 +1,8 @@
 from ast import AST
+from collections.abc import Callable, Mapping, Sequence
 from typing import (
     Any,
-    Callable,
-    Mapping,
     overload,
-    Sequence,
     TypeVar,
     Protocol,
 )

@@ -1,7 +1,7 @@
+from collections.abc import Generator
 from typing import (
     Any,
     TypeVar,
-    Generator,
     Union,
     overload,
 )

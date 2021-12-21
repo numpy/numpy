@@ -1,4 +1,5 @@
-from typing import TypeVar, Union, Iterable, overload, Literal
+from collections.abc import Iterable
+from typing import TypeVar, Union, overload, Literal
 
 from numpy import ndarray
 from numpy.typing import ArrayLike, DTypeLike

@@ -5,8 +5,7 @@ import copy
 import types
 import pickle
 import weakref
-from collections.abc import Callable
-from typing import TypeVar, Any, Union
+from typing import TypeVar, Any, Union, Callable
 
 import pytest
 import numpy as np

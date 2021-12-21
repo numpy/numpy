@@ -1,5 +1,6 @@
 import datetime as dt
-from typing import Union, Sequence, Any, overload, TypeVar, Literal
+from collections.abc import Sequence
+from typing import Union, Any, overload, TypeVar, Literal
 
 from numpy import (
     ndarray,

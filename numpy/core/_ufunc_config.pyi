@@ -1,4 +1,5 @@
-from typing import Callable, Any, Literal, TypedDict
+from collections.abc import Callable
+from typing import Any, Literal, TypedDict
 
 from numpy import _SupportsWrite
 
