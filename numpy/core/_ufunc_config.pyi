@@ -1,4 +1,4 @@
-from typing import Optional, Union, Callable, Any, Literal, TypedDict
+from typing import Union, Callable, Any, Literal, TypedDict
 
 from numpy import _SupportsWrite
 
@@ -12,18 +12,18 @@ class _ErrDict(TypedDict):
     invalid: _ErrKind
 
 class _ErrDictOptional(TypedDict, total=False):
-    all: Optional[_ErrKind]
-    divide: Optional[_ErrKind]
-    over: Optional[_ErrKind]
-    under: Optional[_ErrKind]
-    invalid: Optional[_ErrKind]
+    all: None | _ErrKind
+    divide: None | _ErrKind
+    over: None | _ErrKind
+    under: None | _ErrKind
+    invalid: None | _ErrKind
 
 def seterr(
-    all: Optional[_ErrKind] = ...,
-    divide: Optional[_ErrKind] = ...,
-    over: Optional[_ErrKind] = ...,
-    under: Optional[_ErrKind] = ...,
-    invalid: Optional[_ErrKind] = ...,
+    all: None | _ErrKind = ...,
+    divide: None | _ErrKind = ...,
+    over: None | _ErrKind = ...,
+    under: None | _ErrKind = ...,
+    invalid: None | _ErrKind = ...,
 ) -> _ErrDict: ...
 def geterr() -> _ErrDict: ...
 def setbufsize(size: int) -> int: ...

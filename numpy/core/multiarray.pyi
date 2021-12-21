@@ -7,7 +7,6 @@ from typing import (
     Any,
     Callable,
     Iterable,
-    Optional,
     overload,
     TypeVar,
     List,
@@ -138,7 +137,7 @@ def empty_like(
     dtype: None = ...,
     order: _OrderKACF = ...,
     subok: bool = ...,
-    shape: Optional[_ShapeLike] = ...,
+    shape: None | _ShapeLike = ...,
 ) -> _ArrayType: ...
 @overload
 def empty_like(
@@ -146,7 +145,7 @@ def empty_like(
     dtype: None = ...,
     order: _OrderKACF = ...,
     subok: bool = ...,
-    shape: Optional[_ShapeLike] = ...,
+    shape: None | _ShapeLike = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def empty_like(
@@ -154,7 +153,7 @@ def empty_like(
     dtype: None = ...,
     order: _OrderKACF = ...,
     subok: bool = ...,
-    shape: Optional[_ShapeLike] = ...,
+    shape: None | _ShapeLike = ...,
 ) -> NDArray[Any]: ...
 @overload
 def empty_like(
@@ -162,7 +161,7 @@ def empty_like(
     dtype: _DTypeLike[_SCT],
     order: _OrderKACF = ...,
     subok: bool = ...,
-    shape: Optional[_ShapeLike] = ...,
+    shape: None | _ShapeLike = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def empty_like(
@@ -170,7 +169,7 @@ def empty_like(
     dtype: DTypeLike,
     order: _OrderKACF = ...,
     subok: bool = ...,
-    shape: Optional[_ShapeLike] = ...,
+    shape: None | _ShapeLike = ...,
 ) -> NDArray[Any]: ...
 
 @overload
@@ -311,51 +310,51 @@ def ravel_multi_index(
 def concatenate(  # type: ignore[misc]
     arrays: _ArrayLike[_SCT],
     /,
-    axis: Optional[SupportsIndex] = ...,
+    axis: None | SupportsIndex = ...,
     out: None = ...,
     *,
     dtype: None = ...,
-    casting: Optional[_CastingKind] = ...
+    casting: None | _CastingKind = ...
 ) -> NDArray[_SCT]: ...
 @overload
 def concatenate(  # type: ignore[misc]
     arrays: ArrayLike,
     /,
-    axis: Optional[SupportsIndex] = ...,
+    axis: None | SupportsIndex = ...,
     out: None = ...,
     *,
     dtype: None = ...,
-    casting: Optional[_CastingKind] = ...
+    casting: None | _CastingKind = ...
 ) -> NDArray[Any]: ...
 @overload
 def concatenate(  # type: ignore[misc]
     arrays: ArrayLike,
     /,
-    axis: Optional[SupportsIndex] = ...,
+    axis: None | SupportsIndex = ...,
     out: None = ...,
     *,
     dtype: _DTypeLike[_SCT],
-    casting: Optional[_CastingKind] = ...
+    casting: None | _CastingKind = ...
 ) -> NDArray[_SCT]: ...
 @overload
 def concatenate(  # type: ignore[misc]
     arrays: ArrayLike,
     /,
-    axis: Optional[SupportsIndex] = ...,
+    axis: None | SupportsIndex = ...,
     out: None = ...,
     *,
     dtype: DTypeLike,
-    casting: Optional[_CastingKind] = ...
+    casting: None | _CastingKind = ...
 ) -> NDArray[Any]: ...
 @overload
 def concatenate(
     arrays: ArrayLike,
     /,
-    axis: Optional[SupportsIndex] = ...,
+    axis: None | SupportsIndex = ...,
     out: _ArrayType = ...,
     *,
     dtype: DTypeLike = ...,
-    casting: Optional[_CastingKind] = ...
+    casting: None | _CastingKind = ...
 ) -> _ArrayType: ...
 
 def inner(
@@ -379,13 +378,13 @@ def where(
 
 def lexsort(
     keys: ArrayLike,
-    axis: Optional[SupportsIndex] = ...,
+    axis: None | SupportsIndex = ...,
 ) -> Any: ...
 
 def can_cast(
     from_: Union[ArrayLike, DTypeLike],
     to: DTypeLike,
-    casting: Optional[_CastingKind] = ...,
+    casting: None | _CastingKind = ...,
 ) -> bool: ...
 
 def min_scalar_type(
@@ -421,15 +420,15 @@ def vdot(a: Any, b: _ArrayLikeObject_co, /) -> Any: ...
 def bincount(
     x: ArrayLike,
     /,
-    weights: Optional[ArrayLike] = ...,
+    weights: None | ArrayLike = ...,
     minlength: SupportsIndex = ...,
 ) -> NDArray[intp]: ...
 
 def copyto(
     dst: NDArray[Any],
     src: ArrayLike,
-    casting: Optional[_CastingKind] = ...,
-    where: Optional[_ArrayLikeBool_co] = ...,
+    casting: None | _CastingKind = ...,
+    where: None | _ArrayLikeBool_co = ...,
 ) -> None: ...
 
 def putmask(
@@ -441,15 +440,15 @@ def putmask(
 def packbits(
     a: _ArrayLikeInt_co,
     /,
-    axis: Optional[SupportsIndex] = ...,
+    axis: None | SupportsIndex = ...,
     bitorder: L["big", "little"] = ...,
 ) -> NDArray[uint8]: ...
 
 def unpackbits(
     a: _ArrayLike[uint8],
     /,
-    axis: Optional[SupportsIndex] = ...,
-    count: Optional[SupportsIndex] = ...,
+    axis: None | SupportsIndex = ...,
+    count: None | SupportsIndex = ...,
     bitorder: L["big", "little"] = ...,
 ) -> NDArray[uint8]: ...
 
@@ -457,14 +456,14 @@ def shares_memory(
     a: object,
     b: object,
     /,
-    max_work: Optional[int] = ...,
+    max_work: None | int = ...,
 ) -> bool: ...
 
 def may_share_memory(
     a: object,
     b: object,
     /,
-    max_work: Optional[int] = ...,
+    max_work: None | int = ...,
 ) -> bool: ...
 
 @overload

@@ -13,7 +13,6 @@ from typing import (
     TypeVar,
     Type,
     Generic,
-    Optional,
     overload,
     Iterable,
     ClassVar,
@@ -77,7 +76,7 @@ from numpy.typing import (
 
 # TODO: Add a proper `_Shape` bound once we've got variadic typevars
 _DType = TypeVar("_DType", bound=dtype[Any])
-_DTypeOptional = TypeVar("_DTypeOptional", bound=Optional[dtype[Any]])
+_DTypeOptional = TypeVar("_DTypeOptional", bound=None | dtype[Any])
 _SCT = TypeVar("_SCT", bound=generic)
 
 _DTypeLike = Union[

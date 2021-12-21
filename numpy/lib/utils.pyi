@@ -4,7 +4,6 @@ from typing import (
     Callable,
     List,
     Mapping,
-    Optional,
     overload,
     Sequence,
     Tuple,
@@ -31,14 +30,14 @@ class _SupportsWrite(Protocol[_T_contra]):
 __all__: List[str]
 
 class _Deprecate:
-    old_name: Optional[str]
-    new_name: Optional[str]
-    message: Optional[str]
+    old_name: None | str
+    new_name: None | str
+    message: None | str
     def __init__(
         self,
-        old_name: Optional[str] = ...,
-        new_name: Optional[str] = ...,
-        message: Optional[str] = ...,
+        old_name: None | str = ...,
+        new_name: None | str = ...,
+        message: None | str = ...,
     ) -> None: ...
     # NOTE: `__call__` can in principle take arbitrary `*args` and `**kwargs`,
     # even though they aren't used for anything
@@ -49,20 +48,20 @@ def get_include() -> str: ...
 @overload
 def deprecate(
     *,
-    old_name: Optional[str] = ...,
-    new_name: Optional[str] = ...,
-    message: Optional[str] = ...,
+    old_name: None | str = ...,
+    new_name: None | str = ...,
+    message: None | str = ...,
 ) -> _Deprecate: ...
 @overload
 def deprecate(
     func: _FuncType,
     /,
-    old_name: Optional[str] = ...,
-    new_name: Optional[str] = ...,
-    message: Optional[str] = ...,
+    old_name: None | str = ...,
+    new_name: None | str = ...,
+    message: None | str = ...,
 ) -> _FuncType: ...
 
-def deprecate_with_doc(msg: Optional[str]) -> _Deprecate: ...
+def deprecate_with_doc(msg: None | str) -> _Deprecate: ...
 
 # NOTE: In practice `byte_bounds` can (potentially) take any object
 # implementing the `__array_interface__` protocol. The caveat is
@@ -70,18 +69,18 @@ def deprecate_with_doc(msg: Optional[str]) -> _Deprecate: ...
 #  `byte_bounds`. This concerns `"strides"` and `"data"`.
 def byte_bounds(a: Union[generic, ndarray[Any, Any]]) -> Tuple[int, int]: ...
 
-def who(vardict: Optional[Mapping[str, ndarray[Any, Any]]] = ...) -> None: ...
+def who(vardict: None | Mapping[str, ndarray[Any, Any]] = ...) -> None: ...
 
 def info(
     object: object = ...,
     maxwidth: int = ...,
-    output: Optional[_SupportsWrite[str]] = ...,
+    output: None | _SupportsWrite[str] = ...,
     toplevel: str = ...,
 ) -> None: ...
 
 def source(
     object: object,
-    output: Optional[_SupportsWrite[str]] = ...,
+    output: None | _SupportsWrite[str] = ...,
 ) -> None: ...
 
 def lookfor(
@@ -89,7 +88,7 @@ def lookfor(
     module: Union[None, str, Sequence[str]] = ...,
     import_modules: bool = ...,
     regenerate: bool = ...,
-    output: Optional[_SupportsWrite[str]] =...,
+    output: None | _SupportsWrite[str] =...,
 ) -> None: ...
 
 def safe_eval(source: Union[str, AST]) -> Any: ...

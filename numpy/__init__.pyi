@@ -182,7 +182,6 @@ from typing import (
     List,
     Mapping,
     NoReturn,
-    Optional,
     overload,
     Sequence,
     Sized,
@@ -961,9 +960,9 @@ class flatiter(Generic[_NdArraySubClass]):
     @overload
     def __array__(self, dtype: _DType, /) -> ndarray[Any, _DType]: ...
 
-_OrderKACF = Optional[L["K", "A", "C", "F"]]
-_OrderACF = Optional[L["A", "C", "F"]]
-_OrderCF = Optional[L["C", "F"]]
+_OrderKACF = L[None, "K", "A", "C", "F"]
+_OrderACF = L[None, "A", "C", "F"]
+_OrderCF = L[None, "C", "F"]
 
 _ModeKind = L["raise", "wrap", "clip"]
 _PartitionKind = L["introselect"]
@@ -1034,14 +1033,14 @@ class _ArrayOrScalarCommon:
     @overload
     def all(
         self,
-        axis: Optional[_ShapeLike] = ...,
+        axis: None | _ShapeLike = ...,
         out: None = ...,
         keepdims: bool = ...,
     ) -> Any: ...
     @overload
     def all(
         self,
-        axis: Optional[_ShapeLike] = ...,
+        axis: None | _ShapeLike = ...,
         out: _NdArraySubClass = ...,
         keepdims: bool = ...,
     ) -> _NdArraySubClass: ...
@@ -1056,14 +1055,14 @@ class _ArrayOrScalarCommon:
     @overload
     def any(
         self,
-        axis: Optional[_ShapeLike] = ...,
+        axis: None | _ShapeLike = ...,
         out: None = ...,
         keepdims: bool = ...,
     ) -> Any: ...
     @overload
     def any(
         self,
-        axis: Optional[_ShapeLike] = ...,
+        axis: None | _ShapeLike = ...,
         out: _NdArraySubClass = ...,
         keepdims: bool = ...,
     ) -> _NdArraySubClass: ...
@@ -1087,7 +1086,7 @@ class _ArrayOrScalarCommon:
     @overload
     def argmax(
         self,
-        axis: Optional[_ShapeLike] = ...,
+        axis: None | _ShapeLike = ...,
         out: _NdArraySubClass = ...,
         *,
         keepdims: bool = ...,
@@ -1112,7 +1111,7 @@ class _ArrayOrScalarCommon:
     @overload
     def argmin(
         self,
-        axis: Optional[_ShapeLike] = ...,
+        axis: None | _ShapeLike = ...,
         out: _NdArraySubClass = ...,
         *,
         keepdims: bool = ...,
@@ -1120,8 +1119,8 @@ class _ArrayOrScalarCommon:
 
     def argsort(
         self,
-        axis: Optional[SupportsIndex] = ...,
-        kind: Optional[_SortKind] = ...,
+        axis: None | SupportsIndex = ...,
+        kind: None | _SortKind = ...,
         order: Union[None, str, Sequence[str]] = ...,
     ) -> ndarray: ...
 
@@ -1144,7 +1143,7 @@ class _ArrayOrScalarCommon:
     def clip(
         self,
         min: ArrayLike = ...,
-        max: Optional[ArrayLike] = ...,
+        max: None | ArrayLike = ...,
         out: None = ...,
         **kwargs: Any,
     ) -> ndarray: ...
@@ -1160,7 +1159,7 @@ class _ArrayOrScalarCommon:
     def clip(
         self,
         min: ArrayLike = ...,
-        max: Optional[ArrayLike] = ...,
+        max: None | ArrayLike = ...,
         out: _NdArraySubClass = ...,
         **kwargs: Any,
     ) -> _NdArraySubClass: ...
@@ -1177,14 +1176,14 @@ class _ArrayOrScalarCommon:
     def compress(
         self,
         a: ArrayLike,
-        axis: Optional[SupportsIndex] = ...,
+        axis: None | SupportsIndex = ...,
         out: None = ...,
     ) -> ndarray: ...
     @overload
     def compress(
         self,
         a: ArrayLike,
-        axis: Optional[SupportsIndex] = ...,
+        axis: None | SupportsIndex = ...,
         out: _NdArraySubClass = ...,
     ) -> _NdArraySubClass: ...
 
@@ -1195,14 +1194,14 @@ class _ArrayOrScalarCommon:
     @overload
     def cumprod(
         self,
-        axis: Optional[SupportsIndex] = ...,
+        axis: None | SupportsIndex = ...,
         dtype: DTypeLike = ...,
         out: None = ...,
     ) -> ndarray: ...
     @overload
     def cumprod(
         self,
-        axis: Optional[SupportsIndex] = ...,
+        axis: None | SupportsIndex = ...,
         dtype: DTypeLike = ...,
         out: _NdArraySubClass = ...,
     ) -> _NdArraySubClass: ...
@@ -1210,14 +1209,14 @@ class _ArrayOrScalarCommon:
     @overload
     def cumsum(
         self,
-        axis: Optional[SupportsIndex] = ...,
+        axis: None | SupportsIndex = ...,
         dtype: DTypeLike = ...,
         out: None = ...,
     ) -> ndarray: ...
     @overload
     def cumsum(
         self,
-        axis: Optional[SupportsIndex] = ...,
+        axis: None | SupportsIndex = ...,
         dtype: DTypeLike = ...,
         out: _NdArraySubClass = ...,
     ) -> _NdArraySubClass: ...
@@ -1225,7 +1224,7 @@ class _ArrayOrScalarCommon:
     @overload
     def max(
         self,
-        axis: Optional[_ShapeLike] = ...,
+        axis: None | _ShapeLike = ...,
         out: None = ...,
         keepdims: bool = ...,
         initial: _NumberLike_co = ...,
@@ -1234,7 +1233,7 @@ class _ArrayOrScalarCommon:
     @overload
     def max(
         self,
-        axis: Optional[_ShapeLike] = ...,
+        axis: None | _ShapeLike = ...,
         out: _NdArraySubClass = ...,
         keepdims: bool = ...,
         initial: _NumberLike_co = ...,
@@ -1244,7 +1243,7 @@ class _ArrayOrScalarCommon:
     @overload
     def mean(
         self,
-        axis: Optional[_ShapeLike] = ...,
+        axis: None | _ShapeLike = ...,
         dtype: DTypeLike = ...,
         out: None = ...,
         keepdims: bool = ...,
@@ -1252,7 +1251,7 @@ class _ArrayOrScalarCommon:
     @overload
     def mean(
         self,
-        axis: Optional[_ShapeLike] = ...,
+        axis: None | _ShapeLike = ...,
         dtype: DTypeLike = ...,
         out: _NdArraySubClass = ...,
         keepdims: bool = ...,
@@ -1261,7 +1260,7 @@ class _ArrayOrScalarCommon:
     @overload
     def min(
         self,
-        axis: Optional[_ShapeLike] = ...,
+        axis: None | _ShapeLike = ...,
         out: None = ...,
         keepdims: bool = ...,
         initial: _NumberLike_co = ...,
@@ -1270,7 +1269,7 @@ class _ArrayOrScalarCommon:
     @overload
     def min(
         self,
-        axis: Optional[_ShapeLike] = ...,
+        axis: None | _ShapeLike = ...,
         out: _NdArraySubClass = ...,
         keepdims: bool = ...,
         initial: _NumberLike_co = ...,
@@ -1285,7 +1284,7 @@ class _ArrayOrScalarCommon:
     @overload
     def prod(
         self,
-        axis: Optional[_ShapeLike] = ...,
+        axis: None | _ShapeLike = ...,
         dtype: DTypeLike = ...,
         out: None = ...,
         keepdims: bool = ...,
@@ -1295,7 +1294,7 @@ class _ArrayOrScalarCommon:
     @overload
     def prod(
         self,
-        axis: Optional[_ShapeLike] = ...,
+        axis: None | _ShapeLike = ...,
         dtype: DTypeLike = ...,
         out: _NdArraySubClass = ...,
         keepdims: bool = ...,
@@ -1306,14 +1305,14 @@ class _ArrayOrScalarCommon:
     @overload
     def ptp(
         self,
-        axis: Optional[_ShapeLike] = ...,
+        axis: None | _ShapeLike = ...,
         out: None = ...,
         keepdims: bool = ...,
     ) -> Any: ...
     @overload
     def ptp(
         self,
-        axis: Optional[_ShapeLike] = ...,
+        axis: None | _ShapeLike = ...,
         out: _NdArraySubClass = ...,
         keepdims: bool = ...,
     ) -> _NdArraySubClass: ...
@@ -1334,7 +1333,7 @@ class _ArrayOrScalarCommon:
     @overload
     def std(
         self,
-        axis: Optional[_ShapeLike] = ...,
+        axis: None | _ShapeLike = ...,
         dtype: DTypeLike = ...,
         out: None = ...,
         ddof: int = ...,
@@ -1343,7 +1342,7 @@ class _ArrayOrScalarCommon:
     @overload
     def std(
         self,
-        axis: Optional[_ShapeLike] = ...,
+        axis: None | _ShapeLike = ...,
         dtype: DTypeLike = ...,
         out: _NdArraySubClass = ...,
         ddof: int = ...,
@@ -1353,7 +1352,7 @@ class _ArrayOrScalarCommon:
     @overload
     def sum(
         self,
-        axis: Optional[_ShapeLike] = ...,
+        axis: None | _ShapeLike = ...,
         dtype: DTypeLike = ...,
         out: None = ...,
         keepdims: bool = ...,
@@ -1363,7 +1362,7 @@ class _ArrayOrScalarCommon:
     @overload
     def sum(
         self,
-        axis: Optional[_ShapeLike] = ...,
+        axis: None | _ShapeLike = ...,
         dtype: DTypeLike = ...,
         out: _NdArraySubClass = ...,
         keepdims: bool = ...,
@@ -1374,7 +1373,7 @@ class _ArrayOrScalarCommon:
     @overload
     def var(
         self,
-        axis: Optional[_ShapeLike] = ...,
+        axis: None | _ShapeLike = ...,
         dtype: DTypeLike = ...,
         out: None = ...,
         ddof: int = ...,
@@ -1383,7 +1382,7 @@ class _ArrayOrScalarCommon:
     @overload
     def var(
         self,
-        axis: Optional[_ShapeLike] = ...,
+        axis: None | _ShapeLike = ...,
         dtype: DTypeLike = ...,
         out: _NdArraySubClass = ...,
         ddof: int = ...,
@@ -1451,7 +1450,7 @@ class _SupportsImag(Protocol[_T_co]):
 
 class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
     @property
-    def base(self) -> Optional[ndarray]: ...
+    def base(self) -> None | ndarray: ...
     @property
     def ndim(self) -> int: ...
     @property
@@ -1600,7 +1599,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
     def argpartition(
         self,
         kth: _ArrayLikeInt_co,
-        axis: Optional[SupportsIndex] = ...,
+        axis: None | SupportsIndex = ...,
         kind: _PartitionKind = ...,
         order: Union[None, str, Sequence[str]] = ...,
     ) -> ndarray[Any, _dtype[intp]]: ...
@@ -1646,14 +1645,14 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
         self,  # >= 1D array
         v: _ScalarLike_co,  # 0D array-like
         side: _SortSide = ...,
-        sorter: Optional[_ArrayLikeInt_co] = ...,
+        sorter: None | _ArrayLikeInt_co = ...,
     ) -> intp: ...
     @overload
     def searchsorted(
         self,  # >= 1D array
         v: ArrayLike,
         side: _SortSide = ...,
-        sorter: Optional[_ArrayLikeInt_co] = ...,
+        sorter: None | _ArrayLikeInt_co = ...,
     ) -> ndarray[Any, _dtype[intp]]: ...
 
     def setfield(
@@ -1666,7 +1665,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
     def sort(
         self,
         axis: SupportsIndex = ...,
-        kind: Optional[_SortKind] = ...,
+        kind: None | _SortKind = ...,
         order: Union[None, str, Sequence[str]] = ...,
     ) -> None: ...
 
@@ -1693,7 +1692,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
     def take(  # type: ignore[misc]
         self: ndarray[Any, _dtype[_ScalarType]],
         indices: _IntLike_co,
-        axis: Optional[SupportsIndex] = ...,
+        axis: None | SupportsIndex = ...,
         out: None = ...,
         mode: _ModeKind = ...,
     ) -> _ScalarType: ...
@@ -1701,7 +1700,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
     def take(  # type: ignore[misc]
         self,
         indices: _ArrayLikeInt_co,
-        axis: Optional[SupportsIndex] = ...,
+        axis: None | SupportsIndex = ...,
         out: None = ...,
         mode: _ModeKind = ...,
     ) -> ndarray[Any, _DType_co]: ...
@@ -1709,7 +1708,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
     def take(
         self,
         indices: _ArrayLikeInt_co,
-        axis: Optional[SupportsIndex] = ...,
+        axis: None | SupportsIndex = ...,
         out: _NdArraySubClass = ...,
         mode: _ModeKind = ...,
     ) -> _NdArraySubClass: ...
@@ -1717,7 +1716,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
     def repeat(
         self,
         repeats: _ArrayLikeInt_co,
-        axis: Optional[SupportsIndex] = ...,
+        axis: None | SupportsIndex = ...,
     ) -> ndarray[Any, _DType_co]: ...
 
     def flatten(
@@ -2546,7 +2545,7 @@ class generic(_ArrayOrScalarCommon):
     def take(  # type: ignore[misc]
         self: _ScalarType,
         indices: _IntLike_co,
-        axis: Optional[SupportsIndex] = ...,
+        axis: None | SupportsIndex = ...,
         out: None = ...,
         mode: _ModeKind = ...,
     ) -> _ScalarType: ...
@@ -2554,7 +2553,7 @@ class generic(_ArrayOrScalarCommon):
     def take(  # type: ignore[misc]
         self: _ScalarType,
         indices: _ArrayLikeInt_co,
-        axis: Optional[SupportsIndex] = ...,
+        axis: None | SupportsIndex = ...,
         out: None = ...,
         mode: _ModeKind = ...,
     ) -> ndarray[Any, _dtype[_ScalarType]]: ...
@@ -2562,7 +2561,7 @@ class generic(_ArrayOrScalarCommon):
     def take(
         self,
         indices: _ArrayLikeInt_co,
-        axis: Optional[SupportsIndex] = ...,
+        axis: None | SupportsIndex = ...,
         out: _NdArraySubClass = ...,
         mode: _ModeKind = ...,
     ) -> _NdArraySubClass: ...
@@ -2570,7 +2569,7 @@ class generic(_ArrayOrScalarCommon):
     def repeat(
         self: _ScalarType,
         repeats: _ArrayLikeInt_co,
-        axis: Optional[SupportsIndex] = ...,
+        axis: None | SupportsIndex = ...,
     ) -> ndarray[Any, _dtype[_ScalarType]]: ...
 
     def flatten(
@@ -3144,7 +3143,7 @@ class ufunc:
     def identity(self) -> Any: ...
     # This is None for ufuncs and a string for gufuncs.
     @property
-    def signature(self) -> Optional[str]: ...
+    def signature(self) -> None | str: ...
     # The next four methods will always exist, but they will just
     # raise a ValueError ufuncs with that don't accept two input
     # arguments and return one output argument. Because of that we
@@ -3284,18 +3283,18 @@ class errstate(Generic[_CallType], ContextDecorator):
         self,
         *,
         call: _CallType = ...,
-        all: Optional[_ErrKind] = ...,
-        divide: Optional[_ErrKind] = ...,
-        over: Optional[_ErrKind] = ...,
-        under: Optional[_ErrKind] = ...,
-        invalid: Optional[_ErrKind] = ...,
+        all: None | _ErrKind = ...,
+        divide: None | _ErrKind = ...,
+        over: None | _ErrKind = ...,
+        under: None | _ErrKind = ...,
+        invalid: None | _ErrKind = ...,
     ) -> None: ...
     def __enter__(self) -> None: ...
     def __exit__(
         self,
-        exc_type: Optional[Type[BaseException]],
-        exc_value: Optional[BaseException],
-        traceback: Optional[TracebackType],
+        exc_type: None | Type[BaseException],
+        exc_value: None | BaseException,
+        traceback: None | TracebackType,
         /,
     ) -> None: ...
 
@@ -3340,8 +3339,8 @@ class DataSource:
         self,
         path: str,
         mode: str = ...,
-        encoding: Optional[str] = ...,
-        newline: Optional[str] = ...,
+        encoding: None | str = ...,
+        newline: None | str = ...,
     ) -> IO[Any]: ...
 
 # TODO: The type of each `__next__` and `iters` return-type depends

@@ -1,4 +1,4 @@
-from typing import Any, TypeVar, Type, overload, Optional, Generic
+from typing import Any, TypeVar, Type, overload, Generic
 import ctypes as ct
 
 from numpy import ndarray
@@ -6,7 +6,7 @@ from numpy.ctypeslib import c_intp
 
 _CastT = TypeVar("_CastT", bound=ct._CanCastTo)  # Copied from `ctypes.cast`
 _CT = TypeVar("_CT", bound=ct._CData)
-_PT = TypeVar("_PT", bound=Optional[int])
+_PT = TypeVar("_PT", bound=None | int)
 
 # TODO: Let the likes of `shape_as` and `strides_as` return `None`
 # for 0D arrays once we've got shape-support

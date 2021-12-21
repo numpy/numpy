@@ -7,7 +7,6 @@ from typing import (
     List,
     Mapping,
     NamedTuple,
-    Optional,
     Sequence,
     Tuple,
     Type,
@@ -108,7 +107,7 @@ class BitGenerator(abc.ABC):
     @overload
     def random_raw(self, size: _ShapeLike = ..., output: Literal[True] = ...) -> ndarray[Any, dtype[uint64]]: ...  # type: ignore[misc]
     @overload
-    def random_raw(self, size: Optional[_ShapeLike] = ..., output: Literal[False] = ...) -> None: ...  # type: ignore[misc]
+    def random_raw(self, size: None | _ShapeLike = ..., output: Literal[False] = ...) -> None: ...  # type: ignore[misc]
     def _benchmark(self, cnt: int, method: str = ...) -> None: ...
     @property
     def ctypes(self) -> _Interface: ...
