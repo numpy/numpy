@@ -1,4 +1,4 @@
-from typing import Sequence, Tuple, List, Any
+from typing import Sequence, Any
 import numpy.typing as npt
 
 a: Sequence[int]
@@ -6,8 +6,8 @@ b: Sequence[Sequence[int]]
 c: Sequence[Sequence[Sequence[int]]]
 d: Sequence[Sequence[Sequence[Sequence[int]]]]
 e: Sequence[bool]
-f: Tuple[int, ...]
-g: List[int]
+f: tuple[int, ...]
+g: list[int]
 h: Sequence[Any]
 
 def func(a: npt._NestedSequence[int]) -> None:

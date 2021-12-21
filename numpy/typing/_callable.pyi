@@ -14,7 +14,6 @@ from typing import (
     TypeVar,
     overload,
     Any,
-    Tuple,
     NoReturn,
     Protocol,
 )
@@ -50,7 +49,7 @@ _T1 = TypeVar("_T1")
 _T2 = TypeVar("_T2")
 _T1_contra = TypeVar("_T1_contra", contravariant=True)
 _T2_contra = TypeVar("_T2_contra", contravariant=True)
-_2Tuple = Tuple[_T1, _T1]
+_2Tuple = tuple[_T1, _T1]
 
 _NBit1 = TypeVar("_NBit1", bound=NBitBase)
 _NBit2 = TypeVar("_NBit2", bound=NBitBase)

@@ -1,4 +1,3 @@
-from typing import List
 import numpy as np
 import numpy.typing as npt
 
@@ -12,7 +11,7 @@ AR_M: npt.NDArray[np.datetime64]
 
 M: np.datetime64
 
-AR_LIKE_f: List[float]
+AR_LIKE_f: list[float]
 
 def func(a: int) -> None: ...
 

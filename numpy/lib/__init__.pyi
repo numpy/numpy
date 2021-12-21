@@ -1,5 +1,5 @@
 import math as math
-from typing import Any, List
+from typing import Any
 
 from numpy._pytesttester import PytestTester
 
@@ -237,8 +237,8 @@ from numpy.core.multiarray import (
     tracemalloc_domain as tracemalloc_domain,
 )
 
-__all__: List[str]
-__path__: List[str]
+__all__: list[str]
+__path__: list[str]
 test: PytestTester
 
 __version__ = version

@@ -1,6 +1,6 @@
 import numpy as np
 from numpy.typing import NDArray
-from typing import Any, List
+from typing import Any
 
 i8: np.int64
 f8: np.float64
@@ -9,7 +9,7 @@ AR_b: NDArray[np.bool_]
 AR_i8: NDArray[np.int64]
 AR_f8: NDArray[np.float64]
 
-AR_LIKE_f8: List[float]
+AR_LIKE_f8: list[float]
 
 reveal_type(np.take_along_axis(AR_f8, AR_i8, axis=1))  # E: ndarray[Any, dtype[{float64}]]
 reveal_type(np.take_along_axis(f8, AR_i8, axis=None))  # E: ndarray[Any, dtype[{float64}]]

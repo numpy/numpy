@@ -1,4 +1,4 @@
-from typing import Any, Callable, Dict, Tuple, Type, Union, overload, TypeVar, Literal
+from typing import Any, Callable, Union, overload, TypeVar, Literal
 
 from numpy import (
     bool_,
@@ -48,7 +48,7 @@ _ArrayType = TypeVar("_ArrayType", bound=ndarray[Any, Any])
 _DTypeLikeFloat32 = Union[
     dtype[float32],
     _SupportsDType[dtype[float32]],
-    Type[float32],
+    type[float32],
     _Float32Codes,
     _SingleCodes,
 ]
@@ -56,8 +56,8 @@ _DTypeLikeFloat32 = Union[
 _DTypeLikeFloat64 = Union[
     dtype[float64],
     _SupportsDType[dtype[float64]],
-    Type[float],
-    Type[float64],
+    type[float],
+    type[float64],
     _Float64Codes,
     _DoubleCodes,
 ]
@@ -66,9 +66,9 @@ class Generator:
     def __init__(self, bit_generator: BitGenerator) -> None: ...
     def __repr__(self) -> str: ...
     def __str__(self) -> str: ...
-    def __getstate__(self) -> Dict[str, Any]: ...
-    def __setstate__(self, state: Dict[str, Any]) -> None: ...
-    def __reduce__(self) -> Tuple[Callable[[str], Generator], Tuple[str], Dict[str, Any]]: ...
+    def __getstate__(self) -> dict[str, Any]: ...
+    def __setstate__(self, state: dict[str, Any]) -> None: ...
+    def __reduce__(self) -> tuple[Callable[[str], Generator], tuple[str], dict[str, Any]]: ...
     @property
     def bit_generator(self) -> BitGenerator: ...
     def bytes(self, length: int) -> bytes: ...
@@ -243,7 +243,7 @@ class Generator:
         low: _ArrayLikeInt_co,
         high: None | _ArrayLikeInt_co = ...,
         size: None | _ShapeLike = ...,
-        dtype: dtype[int8] | Type[int8] | _Int8Codes | _SupportsDType[dtype[int8]] = ...,
+        dtype: dtype[int8] | type[int8] | _Int8Codes | _SupportsDType[dtype[int8]] = ...,
         endpoint: bool = ...,
     ) -> ndarray[Any, dtype[int8]]: ...
     @overload
@@ -252,7 +252,7 @@ class Generator:
         low: _ArrayLikeInt_co,
         high: None | _ArrayLikeInt_co = ...,
         size: None | _ShapeLike = ...,
-        dtype: dtype[int16] | Type[int16] | _Int16Codes | _SupportsDType[dtype[int16]] = ...,
+        dtype: dtype[int16] | type[int16] | _Int16Codes | _SupportsDType[dtype[int16]] = ...,
         endpoint: bool = ...,
     ) -> ndarray[Any, dtype[int16]]: ...
     @overload
@@ -261,7 +261,7 @@ class Generator:
         low: _ArrayLikeInt_co,
         high: None | _ArrayLikeInt_co = ...,
         size: None | _ShapeLike = ...,
-        dtype: dtype[int32] | Type[int32] | _Int32Codes | _SupportsDType[dtype[int32]] = ...,
+        dtype: dtype[int32] | type[int32] | _Int32Codes | _SupportsDType[dtype[int32]] = ...,
         endpoint: bool = ...,
     ) -> ndarray[Any, dtype[int32]]: ...
     @overload
@@ -270,7 +270,7 @@ class Generator:
         low: _ArrayLikeInt_co,
         high: None | _ArrayLikeInt_co = ...,
         size: None | _ShapeLike = ...,
-        dtype: None | dtype[int64] | Type[int64] | _Int64Codes | _SupportsDType[dtype[int64]] = ...,
+        dtype: None | dtype[int64] | type[int64] | _Int64Codes | _SupportsDType[dtype[int64]] = ...,
         endpoint: bool = ...,
     ) -> ndarray[Any, dtype[int64]]: ...
     @overload
@@ -279,7 +279,7 @@ class Generator:
         low: _ArrayLikeInt_co,
         high: None | _ArrayLikeInt_co = ...,
         size: None | _ShapeLike = ...,
-        dtype: dtype[uint8] | Type[uint8] | _UInt8Codes | _SupportsDType[dtype[uint8]] = ...,
+        dtype: dtype[uint8] | type[uint8] | _UInt8Codes | _SupportsDType[dtype[uint8]] = ...,
         endpoint: bool = ...,
     ) -> ndarray[Any, dtype[uint8]]: ...
     @overload
@@ -288,7 +288,7 @@ class Generator:
         low: _ArrayLikeInt_co,
         high: None | _ArrayLikeInt_co = ...,
         size: None | _ShapeLike = ...,
-        dtype: dtype[uint16] | Type[uint16] | _UInt16Codes | _SupportsDType[dtype[uint16]] = ...,
+        dtype: dtype[uint16] | type[uint16] | _UInt16Codes | _SupportsDType[dtype[uint16]] = ...,
         endpoint: bool = ...,
     ) -> ndarray[Any, dtype[uint16]]: ...
     @overload
@@ -297,7 +297,7 @@ class Generator:
         low: _ArrayLikeInt_co,
         high: None | _ArrayLikeInt_co = ...,
         size: None | _ShapeLike = ...,
-        dtype: dtype[uint32] | Type[uint32] | _UInt32Codes | _SupportsDType[dtype[uint32]] = ...,
+        dtype: dtype[uint32] | type[uint32] | _UInt32Codes | _SupportsDType[dtype[uint32]] = ...,
         endpoint: bool = ...,
     ) -> ndarray[Any, dtype[uint32]]: ...
     @overload
@@ -306,7 +306,7 @@ class Generator:
         low: _ArrayLikeInt_co,
         high: None | _ArrayLikeInt_co = ...,
         size: None | _ShapeLike = ...,
-        dtype: dtype[uint64] | Type[uint64] | _UInt64Codes | _SupportsDType[dtype[uint64]] = ...,
+        dtype: dtype[uint64] | type[uint64] | _UInt64Codes | _SupportsDType[dtype[uint64]] = ...,
         endpoint: bool = ...,
     ) -> ndarray[Any, dtype[uint64]]: ...
     @overload
@@ -315,7 +315,7 @@ class Generator:
         low: _ArrayLikeInt_co,
         high: None | _ArrayLikeInt_co = ...,
         size: None | _ShapeLike = ...,
-        dtype: dtype[int_] | Type[int] | Type[int_] | _IntCodes | _SupportsDType[dtype[int_]] = ...,
+        dtype: dtype[int_] | type[int] | type[int_] | _IntCodes | _SupportsDType[dtype[int_]] = ...,
         endpoint: bool = ...,
     ) -> ndarray[Any, dtype[int_]]: ...
     @overload
@@ -324,7 +324,7 @@ class Generator:
         low: _ArrayLikeInt_co,
         high: None | _ArrayLikeInt_co = ...,
         size: None | _ShapeLike = ...,
-        dtype: dtype[uint] | Type[uint] | _UIntCodes | _SupportsDType[dtype[uint]] = ...,
+        dtype: dtype[uint] | type[uint] | _UIntCodes | _SupportsDType[dtype[uint]] = ...,
         endpoint: bool = ...,
     ) -> ndarray[Any, dtype[uint]]: ...
     # TODO: Use a TypeVar _T here to get away from Any output?  Should be int->ndarray[Any,dtype[int64]], ArrayLike[_T] -> _T | ndarray[Any,Any]

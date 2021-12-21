@@ -1,6 +1,5 @@
 from typing import (
     Literal as L,
-    List,
     Sequence,
 )
 
@@ -9,7 +8,7 @@ from numpy.typing import ArrayLike, NDArray, _ArrayLikeNumber_co
 
 _NormKind = L[None, "backward", "ortho", "forward"]
 
-__all__: List[str]
+__all__: list[str]
 
 def fft(
     a: ArrayLike,

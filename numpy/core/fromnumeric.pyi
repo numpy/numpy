@@ -1,5 +1,5 @@
 import datetime as dt
-from typing import Union, Sequence, Tuple, Any, overload, TypeVar, Literal
+from typing import Union, Sequence, Any, overload, TypeVar, Literal
 
 from numpy import (
     ndarray,
@@ -203,7 +203,7 @@ def trace(
 
 def ravel(a: ArrayLike, order: _OrderKACF = ...) -> ndarray: ...
 
-def nonzero(a: ArrayLike) -> Tuple[ndarray, ...]: ...
+def nonzero(a: ArrayLike) -> tuple[ndarray, ...]: ...
 
 def shape(a: ArrayLike) -> _Shape: ...
 

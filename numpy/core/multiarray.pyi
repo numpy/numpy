@@ -9,11 +9,8 @@ from typing import (
     Iterable,
     overload,
     TypeVar,
-    List,
-    Type,
     Union,
     Sequence,
-    Tuple,
     SupportsIndex,
     final,
     Final,
@@ -89,7 +86,7 @@ _ArrayType = TypeVar("_ArrayType", bound=NDArray[Any])
 # Subscriptable subsets of `npt.DTypeLike` and `npt.ArrayLike`
 _DTypeLike = Union[
     dtype[_SCT],
-    Type[_SCT],
+    type[_SCT],
     _SupportsDType[dtype[_SCT]],
 ]
 _ArrayLike = _FiniteNestedSequence[_SupportsArray[dtype[_SCT]]]
@@ -119,7 +116,7 @@ _RollKind = L[  # `raise` is deliberately excluded
     "modifiedpreceding",
 ]
 
-__all__: List[str]
+__all__: list[str]
 
 ALLOW_THREADS: Final[int]  # 0 or 1 (system-specific)
 BUFSIZE: L[8192]
@@ -283,26 +280,26 @@ def unravel_index(  # type: ignore[misc]
     indices: _IntLike_co,
     shape: _ShapeLike,
     order: _OrderCF = ...,
-) -> Tuple[intp, ...]: ...
+) -> tuple[intp, ...]: ...
 @overload
 def unravel_index(
     indices: _ArrayLikeInt_co,
     shape: _ShapeLike,
     order: _OrderCF = ...,
-) -> Tuple[NDArray[intp], ...]: ...
+) -> tuple[NDArray[intp], ...]: ...
 
 @overload
 def ravel_multi_index(  # type: ignore[misc]
     multi_index: Sequence[_IntLike_co],
     dims: Sequence[SupportsIndex],
-    mode: _ModeKind | Tuple[_ModeKind, ...] = ...,
+    mode: _ModeKind | tuple[_ModeKind, ...] = ...,
     order: _OrderCF = ...,
 ) -> intp: ...
 @overload
 def ravel_multi_index(
     multi_index: Sequence[_ArrayLikeInt_co],
     dims: Sequence[SupportsIndex],
-    mode: _ModeKind | Tuple[_ModeKind, ...] = ...,
+    mode: _ModeKind | tuple[_ModeKind, ...] = ...,
     order: _OrderCF = ...,
 ) -> NDArray[intp]: ...
 
@@ -367,7 +364,7 @@ def inner(
 def where(
     condition: ArrayLike,
     /,
-) -> Tuple[NDArray[intp], ...]: ...
+) -> tuple[NDArray[intp], ...]: ...
 @overload
 def where(
     condition: ArrayLike,
@@ -598,10 +595,10 @@ def asfortranarray(
     like: ArrayLike = ...,
 ) -> NDArray[Any]: ...
 
-# In practice `List[Any]` is list with an int, int and a valid
+# In practice `list[Any]` is list with an int, int and a valid
 # `np.seterrcall()` object
-def geterrobj() -> List[Any]: ...
-def seterrobj(errobj: List[Any], /) -> None: ...
+def geterrobj() -> list[Any]: ...
+def seterrobj(errobj: list[Any], /) -> None: ...
 
 def promote_types(__type1: DTypeLike, __type2: DTypeLike) -> dtype[Any]: ...
 
@@ -810,7 +807,7 @@ def arange(
 
 def datetime_data(
     dtype: str | _DTypeLike[datetime64] | _DTypeLike[timedelta64], /,
-) -> Tuple[str, int]: ...
+) -> tuple[str, int]: ...
 
 # The datetime functions perform unsafe casts to `datetime64[D]`,
 # so a lot of different argument types are allowed here
@@ -1023,4 +1020,4 @@ def nested_iters(
     order: _OrderKACF = ...,
     casting: _CastingKind = ...,
     buffersize: SupportsIndex = ...,
-) -> Tuple[nditer, ...]: ...
+) -> tuple[nditer, ...]: ...

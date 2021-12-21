@@ -1,7 +1,7 @@
 import abc
-from typing import Any, List, ClassVar
+from typing import Any, ClassVar
 
-__all__: List[str]
+__all__: list[str]
 
 class ABCPolyBase(abc.ABC):
     __hash__: ClassVar[None]  # type: ignore[assignment]

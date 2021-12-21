@@ -5,7 +5,6 @@ Does not include tests which fall under ``array_constructors``.
 
 """
 
-from typing import List
 import numpy as np
 import numpy.typing as npt
 
@@ -22,7 +21,7 @@ AR_c16: npt.NDArray[np.complex128]
 AR_m: npt.NDArray[np.timedelta64]
 AR_O: npt.NDArray[np.object_]
 
-B: List[int]
+B: list[int]
 C: SubClass
 
 reveal_type(np.count_nonzero(i8))  # E: int

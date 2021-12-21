@@ -2,11 +2,9 @@ from ast import AST
 from typing import (
     Any,
     Callable,
-    List,
     Mapping,
     overload,
     Sequence,
-    Tuple,
     TypeVar,
     Protocol,
 )
@@ -26,7 +24,7 @@ _FuncType = TypeVar("_FuncType", bound=Callable[..., Any])
 class _SupportsWrite(Protocol[_T_contra]):
     def write(self, s: _T_contra, /) -> Any: ...
 
-__all__: List[str]
+__all__: list[str]
 
 class _Deprecate:
     old_name: None | str
@@ -66,7 +64,7 @@ def deprecate_with_doc(msg: None | str) -> _Deprecate: ...
 # implementing the `__array_interface__` protocol. The caveat is
 # that certain keys, marked as optional in the spec, must be present for
 #  `byte_bounds`. This concerns `"strides"` and `"data"`.
-def byte_bounds(a: generic | ndarray[Any, Any]) -> Tuple[int, int]: ...
+def byte_bounds(a: generic | ndarray[Any, Any]) -> tuple[int, int]: ...
 
 def who(vardict: None | Mapping[str, ndarray[Any, Any]] = ...) -> None: ...
 

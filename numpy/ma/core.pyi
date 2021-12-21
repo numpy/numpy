@@ -1,4 +1,4 @@
-from typing import Any, List, TypeVar, Callable
+from typing import Any, TypeVar, Callable
 from numpy import ndarray, dtype, float64
 
 from numpy import (
@@ -23,7 +23,7 @@ from numpy.lib.function_base import (
 _ShapeType = TypeVar("_ShapeType", bound=Any)
 _DType_co = TypeVar("_DType_co", bound=dtype[Any], covariant=True)
 
-__all__: List[str]
+__all__: list[str]
 
 MaskType = bool_
 nomask: bool_

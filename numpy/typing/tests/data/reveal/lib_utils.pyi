@@ -1,10 +1,10 @@
 from io import StringIO
-from typing import Any, Dict
+from typing import Any
 
 import numpy as np
 
 AR: np.ndarray[Any, np.dtype[np.float64]]
-AR_DICT: Dict[str, np.ndarray[Any, np.dtype[np.float64]]]
+AR_DICT: dict[str, np.ndarray[Any, np.dtype[np.float64]]]
 FILE: StringIO
 
 def func(a: int) -> bool: ...

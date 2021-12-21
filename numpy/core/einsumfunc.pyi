@@ -1,4 +1,4 @@
-from typing import List, TypeVar, Any, overload, Union, Tuple, Sequence, Literal
+from typing import TypeVar, Any, overload, Union, Sequence, Literal
 
 from numpy import (
     ndarray,
@@ -34,7 +34,7 @@ _OptimizeKind = None | bool | Literal["greedy", "optimal"] | Sequence[Any]
 _CastingSafe = Literal["no", "equiv", "safe", "same_kind"]
 _CastingUnsafe = Literal["unsafe"]
 
-__all__: List[str]
+__all__: list[str]
 
 # TODO: Properly handle the `casting`-based combinatorics
 # TODO: We need to evaluate the content `__subscripts` in order
@@ -140,4 +140,4 @@ def einsum_path(
     /,
     *operands: _ArrayLikeComplex_co,
     optimize: _OptimizeKind = ...,
-) -> Tuple[List[Any], str]: ...
+) -> tuple[list[Any], str]: ...

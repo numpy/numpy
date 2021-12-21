@@ -1,10 +1,10 @@
-from typing import List, Dict, Any
+from typing import Any
 import numpy as np
 import numpy.typing as npt
 
 AR_f8: npt.NDArray[np.float64]
-AR_LIKE_f: List[float]
-interface_dict: Dict[str, Any]
+AR_LIKE_f: list[float]
+interface_dict: dict[str, Any]
 
 reveal_type(np.lib.stride_tricks.DummyArray(interface_dict))  # E: lib.stride_tricks.DummyArray
 

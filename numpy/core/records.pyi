@@ -1,12 +1,10 @@
 import os
 from typing import (
-    List,
     Sequence,
     Any,
     TypeVar,
     Iterable,
     overload,
-    Tuple,
     Protocol,
 )
 
@@ -39,7 +37,7 @@ class _SupportsReadInto(Protocol):
     def tell(self, /) -> int: ...
     def readinto(self, buffer: memoryview, /) -> int: ...
 
-__all__: List[str]
+__all__: list[str]
 
 @overload
 def fromarrays(
@@ -67,7 +65,7 @@ def fromarrays(
 
 @overload
 def fromrecords(
-    recList: _ArrayLikeVoid_co | Tuple[Any, ...] | _NestedSequence[Tuple[Any, ...]],
+    recList: _ArrayLikeVoid_co | tuple[Any, ...] | _NestedSequence[tuple[Any, ...]],
     dtype: DTypeLike = ...,
     shape: None | _ShapeLike = ...,
     formats: None = ...,
@@ -78,7 +76,7 @@ def fromrecords(
 ) -> _RecArray[record]: ...
 @overload
 def fromrecords(
-    recList: _ArrayLikeVoid_co | Tuple[Any, ...] | _NestedSequence[Tuple[Any, ...]],
+    recList: _ArrayLikeVoid_co | tuple[Any, ...] | _NestedSequence[tuple[Any, ...]],
     dtype: None = ...,
     shape: None | _ShapeLike = ...,
     *,

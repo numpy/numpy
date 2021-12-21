@@ -1,4 +1,4 @@
-from typing import List, overload, Any
+from typing import overload, Any
 
 from numpy import complexfloating
 
@@ -10,7 +10,7 @@ from numpy.typing import (
     _FloatLike_co,
 )
 
-__all__: List[str]
+__all__: list[str]
 
 @overload
 def sqrt(x: _FloatLike_co) -> Any: ...

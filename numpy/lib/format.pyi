@@ -1,8 +1,8 @@
-from typing import Any, List, Set, Literal, Final
+from typing import Any, Literal, Final
 
-__all__: List[str]
+__all__: list[str]
 
-EXPECTED_KEYS: Final[Set[str]]
+EXPECTED_KEYS: Final[set[str]]
 MAGIC_PREFIX: Final[bytes]
 MAGIC_LEN: Literal[8]
 ARRAY_ALIGN: Literal[64]

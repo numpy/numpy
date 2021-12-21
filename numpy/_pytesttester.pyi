@@ -1,6 +1,6 @@
-from typing import List, Iterable, Literal as L
+from typing import Iterable, Literal as L
 
-__all__: List[str]
+__all__: list[str]
 
 class PytestTester:
     module_name: str

@@ -3,13 +3,9 @@ from threading import Lock
 from typing import (
     Any,
     Callable,
-    Dict,
-    List,
     Mapping,
     NamedTuple,
     Sequence,
-    Tuple,
-    Type,
     TypedDict,
     TypeVar,
     Union,
@@ -25,19 +21,19 @@ _T = TypeVar("_T")
 _DTypeLikeUint32 = Union[
     dtype[uint32],
     _SupportsDType[dtype[uint32]],
-    Type[uint32],
+    type[uint32],
     _UInt32Codes,
 ]
 _DTypeLikeUint64 = Union[
     dtype[uint64],
     _SupportsDType[dtype[uint64]],
-    Type[uint64],
+    type[uint64],
     _UInt64Codes,
 ]
 
 class _SeedSeqState(TypedDict):
     entropy: None | int | Sequence[int]
-    spawn_key: Tuple[int, ...]
+    spawn_key: tuple[int, ...]
     pool_size: int
     n_children_spawned: int
 
@@ -57,17 +53,17 @@ class ISeedSequence(abc.ABC):
 
 class ISpawnableSeedSequence(ISeedSequence):
     @abc.abstractmethod
-    def spawn(self: _T, n_children: int) -> List[_T]: ...
+    def spawn(self: _T, n_children: int) -> list[_T]: ...
 
 class SeedlessSeedSequence(ISpawnableSeedSequence):
     def generate_state(
         self, n_words: int, dtype: _DTypeLikeUint32 | _DTypeLikeUint64 = ...
     ) -> ndarray[Any, dtype[uint32 | uint64]]: ...
-    def spawn(self: _T, n_children: int) -> List[_T]: ...
+    def spawn(self: _T, n_children: int) -> list[_T]: ...
 
 class SeedSequence(ISpawnableSeedSequence):
     entropy: None | int | Sequence[int]
-    spawn_key: Tuple[int, ...]
+    spawn_key: tuple[int, ...]
     pool_size: int
     n_children_spawned: int
     pool: ndarray[Any, dtype[uint32]]
@@ -87,16 +83,16 @@ class SeedSequence(ISpawnableSeedSequence):
     def generate_state(
         self, n_words: int, dtype: _DTypeLikeUint32 | _DTypeLikeUint64 = ...
     ) -> ndarray[Any, dtype[uint32 | uint64]]: ...
-    def spawn(self, n_children: int) -> List[SeedSequence]: ...
+    def spawn(self, n_children: int) -> list[SeedSequence]: ...
 
 class BitGenerator(abc.ABC):
     lock: Lock
     def __init__(self, seed: None | _ArrayLikeInt_co | SeedSequence = ...) -> None: ...
-    def __getstate__(self) -> Dict[str, Any]: ...
-    def __setstate__(self, state: Dict[str, Any]) -> None: ...
+    def __getstate__(self) -> dict[str, Any]: ...
+    def __setstate__(self, state: dict[str, Any]) -> None: ...
     def __reduce__(
         self,
-    ) -> Tuple[Callable[[str], BitGenerator], Tuple[str], Tuple[Dict[str, Any]]]: ...
+    ) -> tuple[Callable[[str], BitGenerator], tuple[str], tuple[dict[str, Any]]]: ...
     @abc.abstractmethod
     @property
     def state(self) -> Mapping[str, Any]: ...

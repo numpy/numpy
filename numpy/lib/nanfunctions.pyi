@@ -1,5 +1,3 @@
-from typing import List
-
 from numpy.core.fromnumeric import (
     amin,
     amax,
@@ -20,7 +18,7 @@ from numpy.lib.function_base import (
     quantile,
 )
 
-__all__: List[str]
+__all__: list[str]
 
 # NOTE: In reaility these functions are not aliases but distinct functions
 # with identical signatures.
