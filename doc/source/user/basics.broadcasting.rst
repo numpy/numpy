@@ -26,7 +26,7 @@ have exactly the same shape, as in the following example:
   >>> a = np.array([1.0, 2.0, 3.0])
   >>> b = np.array([2.0, 2.0, 2.0])
   >>> a * b
-  array([ 2.,  4.,  6.])
+  array([2.,  4.,  6.])
 
 NumPy's broadcasting rule relaxes this constraint when the arrays'
 shapes meet certain constraints. The simplest broadcasting example occurs
@@ -35,7 +35,7 @@ when an array and a scalar value are combined in an operation:
 >>> a = np.array([1.0, 2.0, 3.0])
 >>> b = 2.0
 >>> a * b
-array([ 2.,  4.,  6.])
+array([2.,  4.,  6.])
 
 The result is equivalent to the previous example where ``b`` was an array.
 We can think of the scalar ``b`` being *stretched* during the arithmetic
@@ -158,17 +158,17 @@ Here are examples of shapes that do not broadcast::
 
 An example of broadcasting when a 1-d array is added to a 2-d array::
 
-  >>> a = array([[ 0.0,  0.0,  0.0],
-  ...            [10.0, 10.0, 10.0],
-  ...            [20.0, 20.0, 20.0],
-  ...            [30.0, 30.0, 30.0]])
-  >>> b = array([1.0, 2.0, 3.0])
+  >>> a = np.array([[ 0.0,  0.0,  0.0],
+  ...               [10.0, 10.0, 10.0],
+  ...               [20.0, 20.0, 20.0],
+  ...               [30.0, 30.0, 30.0]])
+  >>> b = np.array([1.0, 2.0, 3.0])
   >>> a + b
   array([[  1.,   2.,   3.],
-          [ 11.,  12.,  13.],
-          [ 21.,  22.,  23.],
-          [ 31.,  32.,  33.]])
-  >>> b = array([1.0, 2.0, 3.0, 4.0])
+          [11.,  12.,  13.],
+          [21.,  22.,  23.],
+          [31.,  32.,  33.]])
+  >>> b = np.array([1.0, 2.0, 3.0, 4.0])
   >>> a + b 
   Traceback (most recent call last):
   ValueError: operands could not be broadcast together with shapes (4,3) (4,)
@@ -208,10 +208,10 @@ outer addition operation of two 1-d arrays::
   >>> a = np.array([0.0, 10.0, 20.0, 30.0])
   >>> b = np.array([1.0, 2.0, 3.0])
   >>> a[:, np.newaxis] + b
-  array([[  1.,   2.,   3.],
-         [ 11.,  12.,  13.],
-         [ 21.,  22.,  23.],
-         [ 31.,  32.,  33.]])
+  array([[ 1.,   2.,   3.],
+         [11.,  12.,  13.],
+         [21.,  22.,  23.],
+         [31.,  32.,  33.]])
 
 .. figure:: broadcasting_4.svg
     :alt: A 2-d array of shape (4, 1) and a 1-d array of shape (3) are

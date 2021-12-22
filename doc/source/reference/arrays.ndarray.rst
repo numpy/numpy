@@ -54,13 +54,13 @@ objects implementing the :class:`buffer` or :ref:`array
 
    >>> y = x[:,1]
    >>> y
-   array([2, 5])
+   array([2, 5], dtype=int32)
    >>> y[0] = 9 # this also changes the corresponding element in x
    >>> y
-   array([9, 5])
+   array([9, 5], dtype=int32)
    >>> x
    array([[1, 9, 3],
-          [4, 5, 6]])
+          [4, 5, 6]], dtype=int32)
 
 
 Constructing arrays

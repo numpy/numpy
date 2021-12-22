@@ -60,8 +60,8 @@ example, comma-separated files (CSV) use a comma (``,``) or a semicolon
 
    >>> data = u"1, 2, 3\n4, 5, 6"
    >>> np.genfromtxt(StringIO(data), delimiter=",")
-   array([[ 1.,  2.,  3.],
-          [ 4.,  5.,  6.]])
+   array([[1.,  2.,  3.],
+          [4.,  5.,  6.]])
 
 Another common separator is ``"\t"``, the tabulation character.  However,
 we are not limited to a single character, any string will do.  By default,
@@ -76,14 +76,14 @@ size) or to a sequence of integers (if columns can have different sizes)::
 
    >>> data = u"  1  2  3\n  4  5 67\n890123  4"
    >>> np.genfromtxt(StringIO(data), delimiter=3)
-   array([[   1.,    2.,    3.],
-          [   4.,    5.,   67.],
-          [ 890.,  123.,    4.]])
+   array([[  1.,    2.,    3.],
+          [  4.,    5.,   67.],
+          [890.,  123.,    4.]])
    >>> data = u"123456789\n   4  7 9\n   4567 9"
    >>> np.genfromtxt(StringIO(data), delimiter=(4, 3, 2))
-   array([[ 1234.,   567.,    89.],
-          [    4.,     7.,     9.],
-          [    4.,   567.,     9.]])
+   array([[1234.,   567.,    89.],
+          [   4.,     7.,     9.],
+          [   4.,   567.,     9.]])
 
 
 The ``autostrip`` argument
@@ -156,10 +156,10 @@ using the ``skip_footer`` attribute and giving it a value of ``n``::
 
    >>> data = u"\n".join(str(i) for i in range(10))
    >>> np.genfromtxt(StringIO(data),)
-   array([ 0.,  1.,  2.,  3.,  4.,  5.,  6.,  7.,  8.,  9.])
+   array([0.,  1.,  2.,  3.,  4.,  5.,  6.,  7.,  8.,  9.])
    >>> np.genfromtxt(StringIO(data),
    ...               skip_header=3, skip_footer=5)
-   array([ 3.,  4.])
+   array([3.,  4.])
 
 By default, ``skip_header=0`` and ``skip_footer=0``, meaning that no lines
 are skipped.
@@ -180,8 +180,8 @@ can use ``usecols=(0, -1)``::
 
    >>> data = u"1 2 3\n4 5 6"
    >>> np.genfromtxt(StringIO(data), usecols=(0, -1))
-   array([[ 1.,  3.],
-          [ 4.,  6.]])
+   array([[1.,  3.],
+          [4.,  6.]])
 
 If the columns have names, we can also select which columns to import by
 giving their name to the ``usecols`` argument, either as a sequence
@@ -190,12 +190,10 @@ of strings or a comma-separated string::
    >>> data = u"1 2 3\n4 5 6"
    >>> np.genfromtxt(StringIO(data),
    ...               names="a, b, c", usecols=("a", "c"))
-   array([(1.0, 3.0), (4.0, 6.0)],
-         dtype=[('a', '<f8'), ('c', '<f8')])
+   array([(1., 3.), (4., 6.)], dtype=[('a', '<f8'), ('c', '<f8')])
    >>> np.genfromtxt(StringIO(data),
    ...               names="a, b, c", usecols=("a, c"))
-       array([(1.0, 3.0), (4.0, 6.0)],
-             dtype=[('a', '<f8'), ('c', '<f8')])
+       array([(1., 3.), (4., 6.)], dtype=[('a', '<f8'), ('c', '<f8')])
 
 
 
@@ -258,7 +256,7 @@ sequence of strings or a comma-separated string::
 
    >>> data = StringIO("1 2 3\n 4 5 6")
    >>> np.genfromtxt(data, names="A, B, C")
-   array([(1.0, 2.0, 3.0), (4.0, 5.0, 6.0)],
+   array([(1., 2., 3.), (4., 5., 6.)],
          dtype=[('A', '<f8'), ('B', '<f8'), ('C', '<f8')])
 
 In the example above, we used the fact that by default, ``dtype=float``.
@@ -272,7 +270,7 @@ that case, we must use the ``names`` keyword with a value of
 
    >>> data = StringIO("So it goes\n#a b c\n1 2 3\n 4 5 6")
    >>> np.genfromtxt(data, skip_header=1, names=True)
-   array([(1.0, 2.0, 3.0), (4.0, 5.0, 6.0)],
+   array([(1., 2., 3.), (4., 5., 6.)],
          dtype=[('a', '<f8'), ('b', '<f8'), ('c', '<f8')])
 
 The default value of ``names`` is ``None``.  If we give any other
@@ -283,7 +281,7 @@ have defined with the dtype::
    >>> ndtype=[('a',int), ('b', float), ('c', int)]
    >>> names = ["A", "B", "C"]
    >>> np.genfromtxt(data, names=names, dtype=ndtype)
-   array([(1, 2.0, 3), (4, 5.0, 6)],
+   array([(1, 2., 3), (4, 5., 6)],
          dtype=[('A', '<i8'), ('B', '<f8'), ('C', '<i8')])
 
 
@@ -296,7 +294,7 @@ with the standard NumPy default of ``"f%i"``, yielding names like ``f0``,
 
    >>> data = StringIO("1 2 3\n 4 5 6")
    >>> np.genfromtxt(data, dtype=(int, float, int))
-   array([(1, 2.0, 3), (4, 5.0, 6)],
+   array([(1, 2., 3), (4, 5., 6)],
          dtype=[('f0', '<i8'), ('f1', '<f8'), ('f2', '<i8')])
 
 In the same way, if we don't give enough names to match the length of the
@@ -304,7 +302,7 @@ dtype, the missing names will be defined with this default template::
 
    >>> data = StringIO("1 2 3\n 4 5 6")
    >>> np.genfromtxt(data, dtype=(int, float, int), names="a")
-   array([(1, 2.0, 3), (4, 5.0, 6)],
+   array([(1, 2., 3), (4, 5., 6)],
          dtype=[('a', '<i8'), ('f0', '<f8'), ('f1', '<i8')])
 
 We can overwrite this default with the ``defaultfmt`` argument, that
@@ -312,7 +310,7 @@ takes any format string::
 
    >>> data = StringIO("1 2 3\n 4 5 6")
    >>> np.genfromtxt(data, dtype=(int, float, int), defaultfmt="var_%02i")
-   array([(1, 2.0, 3), (4, 5.0, 6)],
+   array([(1, 2., 3), (4, 5., 6)],
          dtype=[('var_00', '<i8'), ('var_01', '<f8'), ('var_02', '<i8')])
 
 .. note::
@@ -388,7 +386,7 @@ and ``' 78.9%'`` cannot be converted to float and we end up having
    >>> # Converted case ...
    >>> np.genfromtxt(StringIO(data), delimiter=",", names=names,
    ...               converters={1: convertfunc})
-   array([(1.0, 0.023, 45.0), (6.0, 0.78900000000000003, 0.0)],
+   array([(1., 0.023, 45.), (6., 0.789, 0.)],
          dtype=[('i', '<f8'), ('p', '<f8'), ('n', '<f8')])
 
 The same results can be obtained by using the name of the second column
@@ -397,7 +395,7 @@ The same results can be obtained by using the name of the second column
    >>> # Using a name for the converter ...
    >>> np.genfromtxt(StringIO(data), delimiter=",", names=names,
    ...               converters={"p": convertfunc})
-   array([(1.0, 0.023, 45.0), (6.0, 0.78900000000000003, 0.0)],
+   array([(1., 0.023, 45.), (6., 0.789, 0.)],
          dtype=[('i', '<f8'), ('p', '<f8'), ('n', '<f8')])
 
 

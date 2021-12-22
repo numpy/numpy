@@ -193,7 +193,7 @@ state of the memory. By default, the dtype of the created array is
            [[1, 1, 1, 1],
             [1, 1, 1, 1],
             [1, 1, 1, 1]]], dtype=int16)
-    >>> np.empty((2, 3))
+    >>> np.empty((2, 3)) #doctest: +SKIP
     array([[3.73603959e-262, 6.02658058e-154, 6.55490914e-260],  # may vary
            [5.30498948e-313, 3.14673309e-307, 1.00000000e+000]])
 
@@ -868,9 +868,9 @@ copy.
     >>> def f(x):
     ...     print(id(x))
     ...
-    >>> id(a)  # id is a unique identifier of an object
+    >>> id(a)  # id is a unique identifier of an object #doctest: +SKIP
     148293216  # may vary
-    >>> f(a)
+    >>> f(a)   #doctest: +SKIP
     148293216  # may vary
 
 View or Shallow Copy
@@ -1272,6 +1272,7 @@ set <https://en.wikipedia.org/wiki/Mandelbrot_set>`__:
     ...         z[diverge] = r                          # avoid diverging too much
     ...
     ...     return divtime
+    >>> plt.clf()
     >>> plt.imshow(mandelbrot(400, 400))
 
 The second way of indexing with booleans is more similar to integer
@@ -1468,9 +1469,10 @@ that ``pylab.hist`` plots the histogram automatically, while
     >>> v = rg.normal(mu, sigma, 10000)
     >>> # Plot a normalized histogram with 50 bins
     >>> plt.hist(v, bins=50, density=True)       # matplotlib version (plot)
+    (array...)
     >>> # Compute the histogram with numpy and then plot it
     >>> (n, bins) = np.histogram(v, bins=50, density=True)  # NumPy version (no plot)
-    >>> plt.plot(.5 * (bins[1:] + bins[:-1]), n)
+    >>> plt.plot(.5 * (bins[1:] + bins[:-1]), n) #doctest: +SKIP
 
 With Matplotlib >=3.4 you can also use ``plt.stairs(n, bins)``.
 

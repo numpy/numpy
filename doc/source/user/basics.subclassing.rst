@@ -48,7 +48,7 @@ ndarray of any subclass, and return a view of the array as another
 >>> # take a view of it, as our useless subclass
 >>> c_arr = arr.view(C)
 >>> type(c_arr)
-<class 'C'>
+<class '__main__.C'>
 
 .. _new-from-template:
 
@@ -63,7 +63,7 @@ For example:
 
 >>> v = c_arr[1:]
 >>> type(v) # the view is of type 'C'
-<class 'C'>
+<class '__main__.C'>
 >>> v is c_arr # but it's a new instance
 False
 
@@ -114,18 +114,15 @@ __new__ documentation
 
 For example, consider the following Python code:
 
-.. testcode::
-
-  class C:
-      def __new__(cls, *args):
-          print('Cls in __new__:', cls)
-          print('Args in __new__:', args)
-          # The `object` type __new__ method takes a single argument.
-          return object.__new__(cls)
-
-      def __init__(self, *args):
-          print('type(self) in __init__:', type(self))
-          print('Args in __init__:', args)
+>>> class C:
+>>>     def __new__(cls, *args):
+>>>         print('Cls in __new__:', cls)
+>>>         print('Args in __new__:', args)
+>>>         # The `object` type __new__ method takes a single argument.
+>>>         return object.__new__(cls)
+>>>     def __init__(self, *args):
+>>>         print('type(self) in __init__:', type(self))
+>>>         print('Args in __init__:', args)
 
 meaning that we get:
 

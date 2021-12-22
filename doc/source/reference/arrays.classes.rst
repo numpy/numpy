@@ -7,7 +7,6 @@ Standard array subclasses
 .. currentmodule:: numpy
 
 .. for doctests
-   >>> import numpy as np
    >>> np.random.seed(1)
 
 .. note::

@@ -143,15 +143,15 @@ backward compatibility with older packages such as Numeric.  Some
 documentation may still refer to these, for example::
 
   >>> np.array([1, 2, 3], dtype='f')
-  array([ 1.,  2.,  3.], dtype=float32)
+  array([1.,  2.,  3.], dtype=float32)
 
 We recommend using dtype objects instead.
 
 To convert the type of an array, use the .astype() method (preferred) or
 the type itself as a function. For example: ::
 
-    >>> z.astype(float)                 #doctest: +NORMALIZE_WHITESPACE
-    array([  0.,  1.,  2.])
+    >>> z.astype(float)
+    array([0.,  1.,  2.])
     >>> np.int8(z)
     array([0, 1, 2], dtype=int8)
 
@@ -170,7 +170,7 @@ and its byte-order.  The data type can also be used indirectly to query
 properties of the type, such as whether it is an integer::
 
     >>> d = np.dtype(int)
-    >>> d
+    >>> d #doctest: +SKIP
     dtype('int32')
 
     >>> np.issubdtype(d, np.integer)

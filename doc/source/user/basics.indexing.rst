@@ -328,6 +328,8 @@ If the index values are out of bounds then an ``IndexError`` is thrown::
     array([[3, 4],
           [5, 6]])
     >>> x[np.array([3, 4])]
+    Traceback (most recent call last):
+      ...
     IndexError: index 3 is out of bounds for axis 0 with size 3
 
 When the index consists of as many integer arrays as dimensions of the array
@@ -371,6 +373,8 @@ broadcast them to the same shape. If they cannot be broadcast to the same
 shape, an exception is raised::
 
     >>> y[np.array([0, 2, 4]), np.array([0, 1])]
+    Traceback (most recent call last):
+      ...
     IndexError: shape mismatch: indexing arrays could not be broadcast
     together with shapes (3,) (2,)
 
@@ -506,7 +510,7 @@ Or wish to add a constant to all negative elements::
     >>> x = np.array([1., -1., -2., 3])
     >>> x[x < 0] += 20
     >>> x
-    array([1., 19., 18., 3.])
+    array([ 1., 19., 18., 3.])
 
 In general if an index includes a Boolean array, the result will be
 identical to inserting ``obj.nonzero()`` into the same position
@@ -790,6 +794,8 @@ exceptions (assigning complex to floats or ints): ::
  >>> x[1]
  1
  >>> x[1] = 1.2j
+ Traceback (most recent call last):
+   ...
  TypeError: can't convert complex to int
 
 
