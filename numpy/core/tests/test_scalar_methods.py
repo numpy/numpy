@@ -231,3 +231,62 @@ class TestFloatHex:
 
         for x in [fltMax, fltMin, fltEps, fltTiny, 0.0, np.nan, np.inf]:
             assert self.identical(x, self.roundtrip(x))
+
+    @pytest.mark.parametrize("ftype", np.sctypes['float'])
+    def test_invalid_inputs(self, ftype):
+        invalid_inputs = [
+            'infi',   # misspelt infinities and nans
+            '-Infinit',
+            '++inf',
+            '-+Inf',
+            '--nan',
+            '+-NaN',
+            'snan',
+            'NaNs',
+            'nna',
+            'an',
+            'nf',
+            'nfinity',
+            'inity',
+            'iinity',
+            '0xnan',
+            '',
+            ' ',
+            'x1.0p0',
+            '0xX1.0p0',
+            '+ 0x1.0p0', # internal whitespace
+            '- 0x1.0p0',
+            '0 x1.0p0',
+            '0x 1.0p0',
+            '0x1 2.0p0',
+            '+0x1 .0p0',
+            '0x1. 0p0',
+            '-0x1.0 1p0',
+            '-0x1.0 p0',
+            '+0x1.0p +0',
+            '0x1.0p -0',
+            '0x1.0p 0',
+            '+0x1.0p+ 0',
+            '-0x1.0p- 0',
+            '++0x1.0p-0', # double signs
+            '--0x1.0p0',
+            '+-0x1.0p+0',
+            '-+0x1.0p0',
+            '0x1.0p++0',
+            '+0x1.0p+-0',
+            '-0x1.0p-+0',
+            '0x1.0p--0',
+            '0x1.0.p0',
+            '0x.p0', # no hex digits before or after point
+            '0x1,p0', # wrong decimal point character
+            '0x1pa',
+            '0x1p\uff10',  # fullwidth Unicode digits
+            '\uff10x1p0',
+            '0x\uff11p0',
+            '0x1.\uff10p0',
+            '0x1p0 \n 0x2p0',
+            '0x1p0\0 0x1p0',  # embedded null byte is not end of string
+            ]
+        for x in invalid_inputs:
+            with pytest.raises(ValueError):
+                result = ftype.fromhex(x)
