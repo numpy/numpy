@@ -16,6 +16,8 @@ Indexing on :class:`ndarrays <.ndarray>`
 
 :class:`ndarrays <ndarray>` can be indexed using the standard Python
 ``x[obj]`` syntax, where *x* is the array and *obj* the selection.
+Below we refer to any object *obj* that can be used to index an array *x*
+as a *selection object*.
 There are different kinds of indexing available depending on *obj*:
 basic indexing, advanced indexing and field access.
 
@@ -176,8 +178,9 @@ concepts to remember include:
       >>> x[5:]
       array([5, 6, 7, 8, 9])
 
-- If the number of objects in the selection tuple is less than
-  *N*, then ``:`` is assumed for any subsequent dimensions.
+- If the length of the selection object in the square brackets
+  is less than the *N* dimensions of the array, then ``:`` is assumed
+  for any remaining dimensions.
   For example::
 
       >>> x = np.array([[[1],[2],[3]], [[4],[5],[6]]])
@@ -190,13 +193,13 @@ concepts to remember include:
 
 - An integer, *i*, returns the same values as ``i:i+1``
   **except** the dimensionality of the returned object is reduced by
-  1. In particular, a selection tuple with the *p*-th
+  1. In particular, a selection object with the *p*-th
   element an integer (and all other entries ``:``) returns the
   corresponding sub-array with dimension *N - 1*. If *N = 1*
   then the returned object is an array scalar. These objects are
   explained in :ref:`arrays.scalars`.
 
-- If the selection tuple has all entries ``:`` except the
+- If the selection object has all entries ``:`` except the
   *p*-th entry which is a slice object ``i:j:k``,
   then the returned array has dimension *N* formed by
   concatenating the sub-arrays returned by integer indexing of
@@ -236,9 +239,9 @@ Dimensional indexing tools
 There are some tools to facilitate the easy matching of array shapes with
 expressions and in assignments.
 
-:py:data:`Ellipsis` expands to the number of ``:`` objects needed for the
-selection tuple to index all dimensions. In most cases, this means that the
-length of the expanded selection tuple is ``x.ndim``. There may only be a
+:py:data:`Ellipsis` expands to the number of ``:`` objects needed
+to index all dimensions. In most cases, this means that the
+length of the expanded selection object is ``x.ndim``. There may only be a
 single ellipsis present.
 From the above example::
 
@@ -252,10 +255,10 @@ This is equivalent to::
     array([[1, 2, 3],
           [4, 5, 6]])
 
-Each :const:`newaxis` object in the selection tuple serves to expand
+Each :const:`newaxis` object in the selection object serves to expand
 the dimensions of the resulting selection by one unit-length
 dimension.  The added dimension is the position of the :const:`newaxis`
-object in the selection tuple. :const:`newaxis` is an alias for
+in the selection object. :const:`newaxis` is an alias for
 ``None``, and ``None`` can be used in place of this with the same result.
 From the above example::
 
