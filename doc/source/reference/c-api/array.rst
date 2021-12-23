@@ -1623,6 +1623,17 @@ For all of these macros *arr* must be an instance of a (subclass of)
     calculations in NumPy that rely on the state of these flags do not
     repeat the calculation to update them.
 
+.. c:function:: int PyArray_FailUnlessWriteable(PyArrayObject *obj, const char *name)
+
+    This function does nothing and returns 0 if *obj* is writeable.
+    It raises an exception and returns -1 if *obj* is not writeable.
+    It may also do other house-keeping, such as issuing warnings on
+    arrays which are transitioning to become views. Always call this
+    function at some point before writing to an array.
+
+    *name* is a name for the array, used to give better error messages.
+    It can be something like "assignment destination", "output array",
+    or even just "array".
 
 Array method alternative API
 ----------------------------
