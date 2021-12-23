@@ -1,4 +1,5 @@
-from typing import TypeVar, Union, Iterable, overload, Literal
+from collections.abc import Iterable
+from typing import TypeVar, Union, overload, Literal
 
 from numpy import ndarray
 from numpy.typing import ArrayLike, DTypeLike
@@ -19,7 +20,7 @@ _RequirementsWithE = Union[_Requirements, _E]
 def require(
     a: _ArrayType,
     dtype: None = ...,
-    requirements: Union[None, _Requirements, Iterable[_Requirements]] = ...,
+    requirements: None | _Requirements | Iterable[_Requirements] = ...,
     *,
     like: ArrayLike = ...
 ) -> _ArrayType: ...
@@ -27,7 +28,7 @@ def require(
 def require(
     a: object,
     dtype: DTypeLike = ...,
-    requirements: Union[_E, Iterable[_RequirementsWithE]] = ...,
+    requirements: _E | Iterable[_RequirementsWithE] = ...,
     *,
     like: ArrayLike = ...
 ) -> ndarray: ...
@@ -35,7 +36,7 @@ def require(
 def require(
     a: object,
     dtype: DTypeLike = ...,
-    requirements: Union[None, _Requirements, Iterable[_Requirements]] = ...,
+    requirements: None | _Requirements | Iterable[_Requirements] = ...,
     *,
     like: ArrayLike = ...
 ) -> ndarray: ...

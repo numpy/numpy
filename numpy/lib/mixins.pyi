@@ -1,7 +1,6 @@
-from typing import List
 from abc import ABCMeta, abstractmethod
 
-__all__: List[str]
+__all__: list[str]
 
 # NOTE: `NDArrayOperatorsMixin` is not formally an abstract baseclass,
 # even though it's reliant on subclasses implementing `__array_ufunc__`

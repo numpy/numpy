@@ -1,4 +1,3 @@
-from typing import List
 import numpy as np
 import numpy.typing as npt
 
@@ -14,7 +13,7 @@ AR_f16: npt.NDArray[np.floating[npt._128Bit]]
 AR_c8: npt.NDArray[np.complex64]
 AR_c16: npt.NDArray[np.complex128]
 
-AR_LIKE_f: List[float]
+AR_LIKE_f: list[float]
 
 class RealObj:
     real: slice

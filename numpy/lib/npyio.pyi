@@ -2,24 +2,17 @@ import os
 import sys
 import zipfile
 import types
+from re import Pattern
+from collections.abc import Collection, Mapping, Iterator, Sequence, Callable, Iterable
 from typing import (
-    Collection,
     Literal as L,
     Any,
-    Mapping,
     TypeVar,
     Generic,
-    List,
-    Type,
-    Iterator,
     Union,
     IO,
     overload,
-    Sequence,
-    Callable,
-    Pattern,
     Protocol,
-    Iterable,
 )
 
 from numpy import (
@@ -49,7 +42,7 @@ _CharType_co = TypeVar("_CharType_co", str, bytes, covariant=True)
 _CharType_contra = TypeVar("_CharType_contra", str, bytes, contravariant=True)
 
 _DTypeLike = Union[
-    Type[_SCT],
+    type[_SCT],
     dtype[_SCT],
     _SupportsDType[dtype[_SCT]],
 ]
@@ -67,17 +60,17 @@ class _SupportsReadSeek(Protocol[_CharType_co]):
 class _SupportsWrite(Protocol[_CharType_contra]):
     def write(self, s: _CharType_contra, /) -> object: ...
 
-__all__: List[str]
+__all__: list[str]
 
 class BagObj(Generic[_T_co]):
     def __init__(self, obj: _SupportsGetItem[str, _T_co]) -> None: ...
     def __getattribute__(self, key: str) -> _T_co: ...
-    def __dir__(self) -> List[str]: ...
+    def __dir__(self) -> list[str]: ...
 
 class NpzFile(Mapping[str, NDArray[Any]]):
     zip: zipfile.ZipFile
     fid: None | IO[str]
-    files: List[str]
+    files: list[str]
     allow_pickle: bool
     pickle_kwargs: None | Mapping[str, Any]
     # Represent `f` as a mutable property so we can access the type of `self`
@@ -95,7 +88,7 @@ class NpzFile(Mapping[str, NDArray[Any]]):
     def __enter__(self: _T) -> _T: ...
     def __exit__(
         self,
-        exc_type: None | Type[BaseException],
+        exc_type: None | type[BaseException],
         exc_value: None | BaseException,
         traceback: None | types.TracebackType,
         /,

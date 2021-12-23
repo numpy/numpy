@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import re
 import sys
-from typing import Any, Callable, TypeVar
+from collections.abc import Callable
+from typing import Any, TypeVar
 from pathlib import Path
 
 import numpy as np

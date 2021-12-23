@@ -1,19 +1,13 @@
 import sys
+from collections.abc import Sequence, Iterator, Callable, Iterable
 from typing import (
     Literal as L,
-    List,
-    Type,
-    Sequence,
-    Tuple,
     Union,
     Any,
     TypeVar,
-    Iterator,
     overload,
-    Callable,
     Protocol,
     SupportsIndex,
-    Iterable,
     SupportsInt,
 )
 
@@ -73,11 +67,11 @@ _T_co = TypeVar("_T_co", covariant=True)
 _SCT = TypeVar("_SCT", bound=generic)
 _ArrayType = TypeVar("_ArrayType", bound=NDArray[Any])
 
-_2Tuple = Tuple[_T, _T]
+_2Tuple = tuple[_T, _T]
 _ArrayLike = _FiniteNestedSequence[_SupportsArray[dtype[_SCT]]]
 _DTypeLike = Union[
     dtype[_SCT],
-    Type[_SCT],
+    type[_SCT],
     _SupportsDType[dtype[_SCT]],
 ]
 
@@ -90,7 +84,7 @@ class _SupportsWriteFlush(Protocol):
     def write(self, s: str, /) -> object: ...
     def flush(self) -> object: ...
 
-__all__: List[str]
+__all__: list[str]
 
 # NOTE: This is in reality a re-export of `np.core.umath._add_newdoc_ufunc`
 def add_newdoc_ufunc(ufunc: ufunc, new_docstring: str, /) -> None: ...
@@ -99,13 +93,13 @@ def add_newdoc_ufunc(ufunc: ufunc, new_docstring: str, /) -> None: ...
 def rot90(
     m: _ArrayLike[_SCT],
     k: int = ...,
-    axes: Tuple[int, int] = ...,
+    axes: tuple[int, int] = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def rot90(
     m: ArrayLike,
     k: int = ...,
-    axes: Tuple[int, int] = ...,
+    axes: tuple[int, int] = ...,
 ) -> NDArray[Any]: ...
 
 @overload
@@ -654,7 +648,7 @@ def meshgrid(
     copy: bool = ...,
     sparse: bool = ...,
     indexing: L["xy", "ij"] = ...,
-) -> List[NDArray[Any]]: ...
+) -> list[NDArray[Any]]: ...
 
 @overload
 def delete(

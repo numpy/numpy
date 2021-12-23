@@ -1,9 +1,9 @@
-from typing import Sequence, Tuple, List
+from collections.abc import Sequence
 import numpy.typing as npt
 
 a: Sequence[float]
-b: List[complex]
-c: Tuple[str, ...]
+b: list[complex]
+c: tuple[str, ...]
 d: int
 e: str
 

@@ -1,5 +1,3 @@
-from typing import List
-
 from numpy._pytesttester import PytestTester
 
 from numpy.polynomial import (
@@ -17,8 +15,8 @@ from numpy.polynomial.laguerre import Laguerre as Laguerre
 from numpy.polynomial.legendre import Legendre as Legendre
 from numpy.polynomial.polynomial import Polynomial as Polynomial
 
-__all__: List[str]
-__path__: List[str]
+__all__: list[str]
+__path__: list[str]
 test: PytestTester
 
 def set_default_printstyle(style): ...

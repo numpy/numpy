@@ -1,5 +1,3 @@
-from typing import Type
-
 import numpy as np
 
 reveal_type(np.ModuleDeprecationWarning())  # E: ModuleDeprecationWarning

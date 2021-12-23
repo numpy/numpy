@@ -1,4 +1,4 @@
-from typing import List, Any, TypeVar
+from typing import Any, TypeVar
 from pathlib import Path
 
 import numpy as np
@@ -12,7 +12,7 @@ i8: np.int64
 
 A: npt.NDArray[np.float64]
 B: SubClass[np.float64]
-C: List[int]
+C: list[int]
 
 def func(i: int, j: int, **kwargs: Any) -> SubClass[np.float64]: ...
 

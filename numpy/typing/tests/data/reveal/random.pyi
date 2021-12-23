@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, List
+from typing import Any
 
 import numpy as np
 
@@ -79,13 +79,13 @@ D_arr_0p9: np.ndarray[Any, np.dtype[np.float64]] = np.array([0.9])
 D_arr_1p5: np.ndarray[Any, np.dtype[np.float64]] = np.array([1.5])
 I_arr_10: np.ndarray[Any, np.dtype[np.int_]] = np.array([10], dtype=np.int_)
 I_arr_20: np.ndarray[Any, np.dtype[np.int_]] = np.array([20], dtype=np.int_)
-D_arr_like_0p1: List[float] = [0.1]
-D_arr_like_0p5: List[float] = [0.5]
-D_arr_like_0p9: List[float] = [0.9]
-D_arr_like_1p5: List[float] = [1.5]
-I_arr_like_10: List[int] = [10]
-I_arr_like_20: List[int] = [20]
-D_2D_like: List[List[float]] = [[1, 2], [2, 3], [3, 4], [4, 5.1]]
+D_arr_like_0p1: list[float] = [0.1]
+D_arr_like_0p5: list[float] = [0.5]
+D_arr_like_0p9: list[float] = [0.9]
+D_arr_like_1p5: list[float] = [1.5]
+I_arr_like_10: list[int] = [10]
+I_arr_like_20: list[int] = [20]
+D_2D_like: list[list[float]] = [[1, 2], [2, 3], [3, 4], [4, 5.1]]
 D_2D: np.ndarray[Any, np.dtype[np.float64]] = np.array(D_2D_like)
 S_out: np.ndarray[Any, np.dtype[np.float32]] = np.empty(1, dtype=np.float32)
 D_out: np.ndarray[Any, np.dtype[np.float64]] = np.empty(1)
@@ -501,7 +501,7 @@ reveal_type(def_gen.integers([100]))  # E: ndarray[Any, dtype[signedinteger[typi
 reveal_type(def_gen.integers(0, [100]))  # E: ndarray[Any, dtype[signedinteger[typing._64Bit]]]
 
 I_bool_low: np.ndarray[Any, np.dtype[np.bool_]] = np.array([0], dtype=np.bool_)
-I_bool_low_like: List[int] = [0]
+I_bool_low_like: list[int] = [0]
 I_bool_high_open: np.ndarray[Any, np.dtype[np.bool_]] = np.array([1], dtype=np.bool_)
 I_bool_high_closed: np.ndarray[Any, np.dtype[np.bool_]] = np.array([1], dtype=np.bool_)
 
@@ -530,7 +530,7 @@ reveal_type(def_gen.integers(I_bool_low, I_bool_high_closed, dtype=np.bool_, end
 reveal_type(def_gen.integers(0, I_bool_high_closed, dtype=np.bool_, endpoint=True))  # E: ndarray[Any, dtype[bool_]
 
 I_u1_low: np.ndarray[Any, np.dtype[np.uint8]] = np.array([0], dtype=np.uint8)
-I_u1_low_like: List[int] = [0]
+I_u1_low_like: list[int] = [0]
 I_u1_high_open: np.ndarray[Any, np.dtype[np.uint8]] = np.array([255], dtype=np.uint8)
 I_u1_high_closed: np.ndarray[Any, np.dtype[np.uint8]] = np.array([255], dtype=np.uint8)
 
@@ -571,7 +571,7 @@ reveal_type(def_gen.integers(I_u1_low, I_u1_high_closed, dtype=np.uint8, endpoin
 reveal_type(def_gen.integers(0, I_u1_high_closed, dtype=np.uint8, endpoint=True))  # E: ndarray[Any, dtype[unsignedinteger[typing._8Bit]]]
 
 I_u2_low: np.ndarray[Any, np.dtype[np.uint16]] = np.array([0], dtype=np.uint16)
-I_u2_low_like: List[int] = [0]
+I_u2_low_like: list[int] = [0]
 I_u2_high_open: np.ndarray[Any, np.dtype[np.uint16]] = np.array([65535], dtype=np.uint16)
 I_u2_high_closed: np.ndarray[Any, np.dtype[np.uint16]] = np.array([65535], dtype=np.uint16)
 
@@ -612,7 +612,7 @@ reveal_type(def_gen.integers(I_u2_low, I_u2_high_closed, dtype=np.uint16, endpoi
 reveal_type(def_gen.integers(0, I_u2_high_closed, dtype=np.uint16, endpoint=True))  # E: ndarray[Any, dtype[unsignedinteger[typing._16Bit]]]
 
 I_u4_low: np.ndarray[Any, np.dtype[np.uint32]] = np.array([0], dtype=np.uint32)
-I_u4_low_like: List[int] = [0]
+I_u4_low_like: list[int] = [0]
 I_u4_high_open: np.ndarray[Any, np.dtype[np.uint32]] = np.array([4294967295], dtype=np.uint32)
 I_u4_high_closed: np.ndarray[Any, np.dtype[np.uint32]] = np.array([4294967295], dtype=np.uint32)
 
@@ -678,7 +678,7 @@ reveal_type(def_gen.integers(I_u4_low, I_u4_high_closed, dtype=np.uint, endpoint
 reveal_type(def_gen.integers(0, I_u4_high_closed, dtype=np.uint, endpoint=True))  # E: ndarray[Any, dtype[{uint}]]
 
 I_u8_low: np.ndarray[Any, np.dtype[np.uint64]] = np.array([0], dtype=np.uint64)
-I_u8_low_like: List[int] = [0]
+I_u8_low_like: list[int] = [0]
 I_u8_high_open: np.ndarray[Any, np.dtype[np.uint64]] = np.array([18446744073709551615], dtype=np.uint64)
 I_u8_high_closed: np.ndarray[Any, np.dtype[np.uint64]] = np.array([18446744073709551615], dtype=np.uint64)
 
@@ -719,7 +719,7 @@ reveal_type(def_gen.integers(I_u8_low, I_u8_high_closed, dtype=np.uint64, endpoi
 reveal_type(def_gen.integers(0, I_u8_high_closed, dtype=np.uint64, endpoint=True))  # E: ndarray[Any, dtype[unsignedinteger[typing._64Bit]]]
 
 I_i1_low: np.ndarray[Any, np.dtype[np.int8]] = np.array([-128], dtype=np.int8)
-I_i1_low_like: List[int] = [-128]
+I_i1_low_like: list[int] = [-128]
 I_i1_high_open: np.ndarray[Any, np.dtype[np.int8]] = np.array([127], dtype=np.int8)
 I_i1_high_closed: np.ndarray[Any, np.dtype[np.int8]] = np.array([127], dtype=np.int8)
 
@@ -760,7 +760,7 @@ reveal_type(def_gen.integers(I_i1_low, I_i1_high_closed, dtype=np.int8, endpoint
 reveal_type(def_gen.integers(-128, I_i1_high_closed, dtype=np.int8, endpoint=True))  # E: ndarray[Any, dtype[signedinteger[typing._8Bit]]]
 
 I_i2_low: np.ndarray[Any, np.dtype[np.int16]] = np.array([-32768], dtype=np.int16)
-I_i2_low_like: List[int] = [-32768]
+I_i2_low_like: list[int] = [-32768]
 I_i2_high_open: np.ndarray[Any, np.dtype[np.int16]] = np.array([32767], dtype=np.int16)
 I_i2_high_closed: np.ndarray[Any, np.dtype[np.int16]] = np.array([32767], dtype=np.int16)
 
@@ -801,7 +801,7 @@ reveal_type(def_gen.integers(I_i2_low, I_i2_high_closed, dtype=np.int16, endpoin
 reveal_type(def_gen.integers(-32768, I_i2_high_closed, dtype=np.int16, endpoint=True))  # E: ndarray[Any, dtype[signedinteger[typing._16Bit]]]
 
 I_i4_low: np.ndarray[Any, np.dtype[np.int32]] = np.array([-2147483648], dtype=np.int32)
-I_i4_low_like: List[int] = [-2147483648]
+I_i4_low_like: list[int] = [-2147483648]
 I_i4_high_open: np.ndarray[Any, np.dtype[np.int32]] = np.array([2147483647], dtype=np.int32)
 I_i4_high_closed: np.ndarray[Any, np.dtype[np.int32]] = np.array([2147483647], dtype=np.int32)
 
@@ -842,7 +842,7 @@ reveal_type(def_gen.integers(I_i4_low, I_i4_high_closed, dtype=np.int32, endpoin
 reveal_type(def_gen.integers(-2147483648, I_i4_high_closed, dtype=np.int32, endpoint=True))  # E: ndarray[Any, dtype[signedinteger[typing._32Bit]]]
 
 I_i8_low: np.ndarray[Any, np.dtype[np.int64]] = np.array([-9223372036854775808], dtype=np.int64)
-I_i8_low_like: List[int] = [-9223372036854775808]
+I_i8_low_like: list[int] = [-9223372036854775808]
 I_i8_high_open: np.ndarray[Any, np.dtype[np.int64]] = np.array([9223372036854775807], dtype=np.int64)
 I_i8_high_closed: np.ndarray[Any, np.dtype[np.int64]] = np.array([9223372036854775807], dtype=np.int64)
 

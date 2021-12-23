@@ -1,4 +1,4 @@
-from typing import Any, List
+from typing import Any
 from numpy.lib.index_tricks import AxisConcatenator
 
 from numpy.ma.core import (
@@ -6,7 +6,7 @@ from numpy.ma.core import (
     mask_rowcols as mask_rowcols,
 )
 
-__all__: List[str]
+__all__: list[str]
 
 def count_masked(arr, axis=...): ...
 def masked_all(shape, dtype = ...): ...

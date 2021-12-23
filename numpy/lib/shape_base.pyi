@@ -1,4 +1,5 @@
-from typing import List, TypeVar, Callable, Sequence, Any, overload, Tuple, SupportsIndex, Protocol
+from collections.abc import Callable, Sequence
+from typing import TypeVar, Any, overload, SupportsIndex, Protocol
 
 from numpy import (
     generic,
@@ -39,7 +40,7 @@ class _ArrayWrap(Protocol):
     def __call__(
         self,
         array: NDArray[Any],
-        context: None | Tuple[ufunc, Tuple[Any, ...], int] = ...,
+        context: None | tuple[ufunc, tuple[Any, ...], int] = ...,
         /,
     ) -> Any: ...
 
@@ -47,7 +48,7 @@ class _ArrayPrepare(Protocol):
     def __call__(
         self,
         array: NDArray[Any],
-        context: None | Tuple[ufunc, Tuple[Any, ...], int] = ...,
+        context: None | tuple[ufunc, tuple[Any, ...], int] = ...,
         /,
     ) -> Any: ...
 
@@ -59,7 +60,7 @@ class _SupportsArrayPrepare(Protocol):
     @property
     def __array_prepare__(self) -> _ArrayPrepare: ...
 
-__all__: List[str]
+__all__: list[str]
 
 row_stack = vstack
 
@@ -125,59 +126,59 @@ def array_split(
     ary: _ArrayLike[_SCT],
     indices_or_sections: _ShapeLike,
     axis: SupportsIndex = ...,
-) -> List[NDArray[_SCT]]: ...
+) -> list[NDArray[_SCT]]: ...
 @overload
 def array_split(
     ary: ArrayLike,
     indices_or_sections: _ShapeLike,
     axis: SupportsIndex = ...,
-) -> List[NDArray[Any]]: ...
+) -> list[NDArray[Any]]: ...
 
 @overload
 def split(
     ary: _ArrayLike[_SCT],
     indices_or_sections: _ShapeLike,
     axis: SupportsIndex = ...,
-) -> List[NDArray[_SCT]]: ...
+) -> list[NDArray[_SCT]]: ...
 @overload
 def split(
     ary: ArrayLike,
     indices_or_sections: _ShapeLike,
     axis: SupportsIndex = ...,
-) -> List[NDArray[Any]]: ...
+) -> list[NDArray[Any]]: ...
 
 @overload
 def hsplit(
     ary: _ArrayLike[_SCT],
     indices_or_sections: _ShapeLike,
-) -> List[NDArray[_SCT]]: ...
+) -> list[NDArray[_SCT]]: ...
 @overload
 def hsplit(
     ary: ArrayLike,
     indices_or_sections: _ShapeLike,
-) -> List[NDArray[Any]]: ...
+) -> list[NDArray[Any]]: ...
 
 @overload
 def vsplit(
     ary: _ArrayLike[_SCT],
     indices_or_sections: _ShapeLike,
-) -> List[NDArray[_SCT]]: ...
+) -> list[NDArray[_SCT]]: ...
 @overload
 def vsplit(
     ary: ArrayLike,
     indices_or_sections: _ShapeLike,
-) -> List[NDArray[Any]]: ...
+) -> list[NDArray[Any]]: ...
 
 @overload
 def dsplit(
     ary: _ArrayLike[_SCT],
     indices_or_sections: _ShapeLike,
-) -> List[NDArray[_SCT]]: ...
+) -> list[NDArray[_SCT]]: ...
 @overload
 def dsplit(
     ary: ArrayLike,
     indices_or_sections: _ShapeLike,
-) -> List[NDArray[Any]]: ...
+) -> list[NDArray[Any]]: ...
 
 @overload
 def get_array_prepare(*args: _SupportsArrayPrepare) -> _ArrayPrepare: ...

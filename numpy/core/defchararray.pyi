@@ -3,7 +3,6 @@ from typing import (
     overload,
     TypeVar,
     Any,
-    List,
 )
 
 from numpy import (
@@ -30,7 +29,7 @@ from numpy.core.multiarray import compare_chararrays as compare_chararrays
 _SCT = TypeVar("_SCT", str_, bytes_)
 _CharArray = chararray[Any, dtype[_SCT]]
 
-__all__: List[str]
+__all__: list[str]
 
 # Comparison
 @overload

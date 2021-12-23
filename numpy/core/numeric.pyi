@@ -1,14 +1,10 @@
+from collections.abc import Callable, Sequence
 from typing import (
     Any,
     Union,
-    Sequence,
-    Tuple,
-    Callable,
-    List,
     overload,
     TypeVar,
     Literal,
-    Type,
     SupportsAbs,
     SupportsIndex,
     NoReturn,
@@ -57,13 +53,13 @@ _ArrayType = TypeVar("_ArrayType", bound=NDArray[Any])
 
 _DTypeLike = Union[
     dtype[_SCT],
-    Type[_SCT],
+    type[_SCT],
     _SupportsDType[dtype[_SCT]],
 ]
 _ArrayLike = _FiniteNestedSequence[_SupportsArray[dtype[_SCT]]]
 _CorrelateMode = Literal["valid", "same", "full"]
 
-__all__: List[str]
+__all__: list[str]
 
 @overload
 def zeros_like(
@@ -406,43 +402,43 @@ def outer(
 def tensordot(
     a: _ArrayLikeBool_co,
     b: _ArrayLikeBool_co,
-    axes: int | Tuple[_ShapeLike, _ShapeLike] = ...,
+    axes: int | tuple[_ShapeLike, _ShapeLike] = ...,
 ) -> NDArray[bool_]: ...
 @overload
 def tensordot(
     a: _ArrayLikeUInt_co,
     b: _ArrayLikeUInt_co,
-    axes: int | Tuple[_ShapeLike, _ShapeLike] = ...,
+    axes: int | tuple[_ShapeLike, _ShapeLike] = ...,
 ) -> NDArray[unsignedinteger[Any]]: ...
 @overload
 def tensordot(
     a: _ArrayLikeInt_co,
     b: _ArrayLikeInt_co,
-    axes: int | Tuple[_ShapeLike, _ShapeLike] = ...,
+    axes: int | tuple[_ShapeLike, _ShapeLike] = ...,
 ) -> NDArray[signedinteger[Any]]: ...
 @overload
 def tensordot(
     a: _ArrayLikeFloat_co,
     b: _ArrayLikeFloat_co,
-    axes: int | Tuple[_ShapeLike, _ShapeLike] = ...,
+    axes: int | tuple[_ShapeLike, _ShapeLike] = ...,
 ) -> NDArray[floating[Any]]: ...
 @overload
 def tensordot(
     a: _ArrayLikeComplex_co,
     b: _ArrayLikeComplex_co,
-    axes: int | Tuple[_ShapeLike, _ShapeLike] = ...,
+    axes: int | tuple[_ShapeLike, _ShapeLike] = ...,
 ) -> NDArray[complexfloating[Any, Any]]: ...
 @overload
 def tensordot(
     a: _ArrayLikeTD64_co,
     b: _ArrayLikeTD64_co,
-    axes: int | Tuple[_ShapeLike, _ShapeLike] = ...,
+    axes: int | tuple[_ShapeLike, _ShapeLike] = ...,
 ) -> NDArray[timedelta64]: ...
 @overload
 def tensordot(
     a: _ArrayLikeObject_co,
     b: _ArrayLikeObject_co,
-    axes: int | Tuple[_ShapeLike, _ShapeLike] = ...,
+    axes: int | tuple[_ShapeLike, _ShapeLike] = ...,
 ) -> NDArray[object_]: ...
 
 @overload
@@ -528,15 +524,15 @@ def cross(
 @overload
 def indices(
     dimensions: Sequence[int],
-    dtype: Type[int] = ...,
+    dtype: type[int] = ...,
     sparse: Literal[False] = ...,
 ) -> NDArray[int_]: ...
 @overload
 def indices(
     dimensions: Sequence[int],
-    dtype: Type[int] = ...,
+    dtype: type[int] = ...,
     sparse: Literal[True] = ...,
-) -> Tuple[NDArray[int_], ...]: ...
+) -> tuple[NDArray[int_], ...]: ...
 @overload
 def indices(
     dimensions: Sequence[int],
@@ -548,7 +544,7 @@ def indices(
     dimensions: Sequence[int],
     dtype: _DTypeLike[_SCT],
     sparse: Literal[True],
-) -> Tuple[NDArray[_SCT], ...]: ...
+) -> tuple[NDArray[_SCT], ...]: ...
 @overload
 def indices(
     dimensions: Sequence[int],
@@ -560,7 +556,7 @@ def indices(
     dimensions: Sequence[int],
     dtype: DTypeLike,
     sparse: Literal[True],
-) -> Tuple[NDArray[Any], ...]: ...
+) -> tuple[NDArray[Any], ...]: ...
 
 def fromfunction(
     function: Callable[..., _T],

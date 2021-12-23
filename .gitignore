@@ -126,6 +126,7 @@ site.cfg
 numpy/core/include/numpy/__multiarray_api.c
 numpy/core/include/numpy/__ufunc_api.c
 numpy/core/include/numpy/__umath_generated.c
+numpy/core/include/numpy/_umath_doc_generated.h
 numpy/core/include/numpy/config.h
 numpy/core/include/numpy/multiarray_api.txt
 numpy/core/include/numpy/ufunc_api.txt

@@ -1,4 +1,4 @@
-from typing import List, Any, TypeVar, overload
+from typing import Any, TypeVar, overload
 
 from numpy import generic, dtype, integer, floating, complexfloating
 from numpy.typing import (
@@ -15,7 +15,7 @@ _SCT = TypeVar("_SCT", bound=generic)
 
 _ArrayLike = _FiniteNestedSequence[_SupportsArray[dtype[_SCT]]]
 
-__all__: List[str]
+__all__: list[str]
 
 @overload
 def fftshift(x: _ArrayLike[_SCT], axes: None | _ShapeLike = ...) -> NDArray[_SCT]: ...

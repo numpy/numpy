@@ -1,6 +1,6 @@
 import re
 import pathlib
-from typing import IO, List
+from typing import IO
 
 import numpy.typing as npt
 import numpy as np
@@ -14,7 +14,7 @@ bag_obj: np.lib.npyio.BagObj[int]
 npz_file: np.lib.npyio.NpzFile
 
 AR_i8: npt.NDArray[np.int64]
-AR_LIKE_f8: List[float]
+AR_LIKE_f8: list[float]
 
 class BytesWriter:
     def write(self, data: bytes) -> None: ...

@@ -1,5 +1,3 @@
-from typing import List
-
 from numpy._pytesttester import PytestTester
 
 from numpy import (
@@ -12,6 +10,6 @@ from numpy.matrixlib.defmatrix import (
     asmatrix as asmatrix,
 )
 
-__all__: List[str]
-__path__: List[str]
+__all__: list[str]
+__path__: list[str]
 test: PytestTester
