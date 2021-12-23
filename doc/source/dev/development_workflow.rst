@@ -185,6 +185,7 @@ Standard acronyms to start the commit message with are::
    REV: revert an earlier commit
    STY: style fix (whitespace, PEP8)
    TST: addition or modification of tests
+   TYP: static typing
    REL: related to releasing numpy
 
 Commands to skip continuous integration
