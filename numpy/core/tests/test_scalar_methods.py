@@ -235,7 +235,7 @@ class TestFloatHex:
     @pytest.mark.parametrize("ftype", np.sctypes['float'])
     def test_invalid_inputs(self, ftype):
         invalid_inputs = [
-            'infi',   # misspelt infinities and nans
+            'infi',  # misspelt infinities and nans
             '-Infinit',
             '++inf',
             '-+Inf',
@@ -254,7 +254,7 @@ class TestFloatHex:
             ' ',
             'x1.0p0',
             '0xX1.0p0',
-            '+ 0x1.0p0', # internal whitespace
+            '+ 0x1.0p0',  # internal whitespace
             '- 0x1.0p0',
             '0 x1.0p0',
             '0x 1.0p0',
@@ -268,7 +268,7 @@ class TestFloatHex:
             '0x1.0p 0',
             '+0x1.0p+ 0',
             '-0x1.0p- 0',
-            '++0x1.0p-0', # double signs
+            '++0x1.0p-0',  # double signs
             '--0x1.0p0',
             '+-0x1.0p+0',
             '-+0x1.0p0',
@@ -277,8 +277,8 @@ class TestFloatHex:
             '-0x1.0p-+0',
             '0x1.0p--0',
             '0x1.0.p0',
-            '0x.p0', # no hex digits before or after point
-            '0x1,p0', # wrong decimal point character
+            '0x.p0',  # no hex digits before or after point
+            '0x1,p0',  # wrong decimal point character
             '0x1pa',
             '0x1p\uff10',  # fullwidth Unicode digits
             '\uff10x1p0',
@@ -290,3 +290,23 @@ class TestFloatHex:
         for x in invalid_inputs:
             with pytest.raises(ValueError):
                 result = ftype.fromhex(x)
+
+    @pytest.mark.parametrize("ftype", np.sctypes['float'])
+    @pytest.mark.parametrize("value_pairs", [
+            ('inf', np.inf),
+            ('-Infinity', -np.inf),
+            ('nan', np.nan),
+            ('1.0', 1.0),
+            ('-0x.2', -0.125),
+            ('-0.0', -0.0)
+        ])
+    @pytest.mark.parametrize("lead", [
+            '', ' ', '\t', '\n', '\n \t', '\f', '\v', '\r'
+        ])
+    @pytest.mark.parametrize("trail", [
+            '', ' ', '\t', '\n', '\n \t', '\f', '\v', '\r'
+        ])
+    def test_whitespace(self, ftype, value_pairs, lead, trail):
+        inp, expected = value_pairs
+        got = ftype.fromhex(lead + inp + trail)
+        assert self.identical(got, expected)
