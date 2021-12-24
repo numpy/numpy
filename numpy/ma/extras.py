@@ -592,7 +592,7 @@ def average(a, axis=None, weights=None, returned=False):
         avg = a.mean(axis)
         scl = avg.dtype.type(a.count(axis))
     else:
-        wgt = np.asanyarray(weights)
+        wgt = asarray(weights)
 
         if issubclass(a.dtype.type, (np.integer, np.bool_)):
             result_dtype = np.result_type(a.dtype, wgt.dtype, 'f8')
@@ -618,6 +618,7 @@ def average(a, axis=None, weights=None, returned=False):
 
         if m is not nomask:
             wgt = wgt*(~a.mask)
+            wgt.mask |= a.mask
 
         scl = wgt.sum(axis=axis, dtype=result_dtype)
         avg = np.multiply(a, wgt, dtype=result_dtype).sum(axis)/scl
