@@ -1934,7 +1934,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
     PyObject *rawdata = NULL;
     char *datastr;
     Py_ssize_t len;
-    npy_intp size, dimensions[NPY_MAXDIMS];
+    npy_intp dimensions[NPY_MAXDIMS];
     int nd;
     npy_intp nbytes;
     int overflowed;
@@ -1976,11 +1976,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
      * since fa could be a 0-d or scalar, and then
      * PyDataMem_UserFREE will be confused
      */
-    size_t n_tofree = PyArray_NBYTES(self);
-    if (n_tofree == 0) {
-        PyArray_Descr *dtype = PyArray_DESCR(self);
-        n_tofree = dtype->elsize ? dtype->elsize : 1;
-    }
+    size_t n_tofree = PyArray_NBYTES_ALLOCATED(self);
     Py_XDECREF(PyArray_DESCR(self));
     fa->descr = typecode;
     Py_INCREF(typecode);
@@ -1988,16 +1984,38 @@ array_setstate(PyArrayObject *self, PyObject *args)
     if (nd < 0) {
         return NULL;
     }
-    size = PyArray_MultiplyList(dimensions, nd);
-    if (size < 0) {
-        /* More items than are addressable */
-        return PyErr_NoMemory();
+    /*
+     * We should do two things here:
+     * 1. Validate the input, that it is neither invalid, nor "too big"
+     *    ("too big" ignores dimensios of size 0).
+     * 2. Find `PyArray_NBYTES` of the result, as this is what we may need to
+     *    copy from the pickled data (may not match allocation currently if 0).
+     * Compare with `PyArray_NewFromDescr`, raise MemoryError for simplicity.
+     */
+    npy_bool empty = NPY_FALSE;
+    nbytes = 1;
+    for (int i = 0; i < nd; i++) {
+        if (dimensions[i] < 0) {
+            PyErr_SetString(PyExc_TypeError,
+                    "impossible dimension while unpickling array");
+            return NULL;
+        }
+        if (dimensions[i] == 0) {
+            empty = NPY_TRUE;
+        }
+        overflowed = npy_mul_with_overflow_intp(
+                &nbytes, nbytes, dimensions[i]);
+        if (overflowed) {
+            return PyErr_NoMemory();
+        }
     }
     overflowed = npy_mul_with_overflow_intp(
-        &nbytes, size, PyArray_DESCR(self)->elsize);
+            &nbytes, nbytes, PyArray_DESCR(self)->elsize);
     if (overflowed) {
-        /* More bytes than are addressable */
         return PyErr_NoMemory();
+    }
+    if (empty) {
+        nbytes = 0;
     }
 
     if (PyDataType_FLAGCHK(typecode, NPY_LIST_PICKLE)) {
@@ -2039,8 +2057,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
 
         if (len != nbytes) {
             PyErr_SetString(PyExc_ValueError,
-                            "buffer size does not"  \
-                            " match array size");
+                    "buffer size does not match array size");
             Py_DECREF(rawdata);
             return NULL;
         }
@@ -2096,21 +2113,18 @@ array_setstate(PyArrayObject *self, PyObject *args)
         /* Bytes should always be considered immutable, but we just grab the
          * pointer if they are large, to save memory. */
         if (!IsAligned(self) || swap || (len <= 1000)) {
-            npy_intp num = PyArray_NBYTES(self);
-            if (num == 0) {
-                Py_DECREF(rawdata);
-                Py_RETURN_NONE;
-            }
+            npy_intp num = PyArray_NBYTES_ALLOCATED(self);
             /* Store the handler in case the default is modified */
             Py_XDECREF(fa->mem_handler);
             fa->mem_handler = PyDataMem_GetHandler();
             if (fa->mem_handler == NULL) {
+                Py_CLEAR(fa->mem_handler);
                 Py_DECREF(rawdata);
                 return NULL;
             }
             fa->data = PyDataMem_UserNEW(num, PyArray_HANDLER(self));
             if (PyArray_DATA(self) == NULL) {
-                Py_DECREF(fa->mem_handler);
+                Py_CLEAR(fa->mem_handler);
                 Py_DECREF(rawdata);
                 return PyErr_NoMemory();
             }
@@ -2157,11 +2171,8 @@ array_setstate(PyArrayObject *self, PyObject *args)
         }
     }
     else {
-        npy_intp num = PyArray_NBYTES(self);
-        int elsize = PyArray_DESCR(self)->elsize;
-        if (num == 0 || elsize == 0) {
-            Py_RETURN_NONE;
-        }
+        npy_intp num = PyArray_NBYTES_ALLOCATED(self);
+
         /* Store the functions in case the default handler is modified */
         Py_XDECREF(fa->mem_handler);
         fa->mem_handler = PyDataMem_GetHandler();
@@ -2170,7 +2181,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
         }
         fa->data = PyDataMem_UserNEW(num, PyArray_HANDLER(self));
         if (PyArray_DATA(self) == NULL) {
-            Py_DECREF(fa->mem_handler);
+            Py_CLEAR(fa->mem_handler);
             return PyErr_NoMemory();
         }
         if (PyDataType_FLAGCHK(PyArray_DESCR(self), NPY_NEEDS_INIT)) {
@@ -2179,7 +2190,6 @@ array_setstate(PyArrayObject *self, PyObject *args)
         PyArray_ENABLEFLAGS(self, NPY_ARRAY_OWNDATA);
         fa->base = NULL;
         if (_setlist_pkl(self, rawdata) < 0) {
-            Py_DECREF(fa->mem_handler);
             return NULL;
         }
     }

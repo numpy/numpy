@@ -753,14 +753,20 @@ PyArray_NewFromDescr_int(
         }
         fa->strides = fa->dimensions + nd;
 
-        /* Copy dimensions, check them, and find total array size `nbytes` */
+        /*
+         * Copy dimensions, check them, and find total array size `nbytes`
+         *
+         * Note that we ignore 0-length dimensions, to match this in the `free`
+         * calls, `PyArray_NBYTES_ALLOCATED` is a private helper matching this
+         * behaviour, but without overflow checking.
+         */
         for (int i = 0; i < nd; i++) {
             fa->dimensions[i] = dims[i];
 
             if (fa->dimensions[i] == 0) {
                 /*
                  * Compare to PyArray_OverflowMultiplyList that
-                 * returns 0 in this case.
+                 * returns 0 in this case. See also `PyArray_NBYTES_ALLOCATED`.
                  */
                 continue;
             }
