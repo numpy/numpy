@@ -1783,10 +1783,15 @@ class TestQR:
 class TestCholesky:
     # TODO: are there no other tests for cholesky?
 
-    @pytest.mark.xfail(sys.platform == 'cygwin',
-                       reason="Consistently fails in CI")
-    @pytest.mark.parametrize('shape', [(1, 1), (2, 2), (3, 3), (50, 50), (3, 10, 10)])
-    @pytest.mark.parametrize('dtype', (np.float32, np.float64, np.complex64, np.complex128))
+    @pytest.mark.xfail(
+        sys.platform == 'cygwin', reason="Consistently fails in CI"
+    )
+    @pytest.mark.parametrize(
+        'shape', [(1, 1), (2, 2), (3, 3), (50, 50), (3, 10, 10)]
+    )
+    @pytest.mark.parametrize(
+        'dtype', (np.float32, np.float64, np.complex64, np.complex128)
+    )
     def test_basic_property(self, shape, dtype):
         # Check A = L L^H
         np.random.seed(1)
