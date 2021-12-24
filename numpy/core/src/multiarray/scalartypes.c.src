@@ -2059,7 +2059,7 @@ static PyObject *
 
 static PyObject *
 @name@_fromhex(PyObject *cls, PyObject *arg) {
-    const char *string;
+    const char *string, *string_end;
     Py_ssize_t length;
     PyObject *ret;
 #if @is_half@
@@ -2072,11 +2072,12 @@ static PyObject *
     if (string == NULL) {
         return NULL;
     }
+    string_end = string + length;
 
 #if @is_half@
-    if (npy_float_fromhex(string, &value) == NPY_FALSE) {
+    if (npy_float_fromhex(string, string_end, &value) == NPY_FALSE) {
 #else
-    if (npy_@name@_fromhex(string, &value) == NPY_FALSE) {
+    if (npy_@name@_fromhex(string, string_end, &value) == NPY_FALSE) {
 #endif
         return NULL;
     }

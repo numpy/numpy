@@ -887,11 +887,11 @@ npy_@name@_hex(npy_@name@ x, char *buff) {
  * should not be used.
  */
 NPY_INPLACE npy_bool
-npy_@name@_fromhex(const char *string, npy_@name@ *result)
+npy_@name@_fromhex(const char *s, const char *s_end, npy_@name@ *result)
 {
     npy_@name@ x;
     long exp, top_exp, lsb, key_digit;
-    const char *s, *coeff_start, *s_store, *coeff_end, *exp_start, *s_end;
+    const char *coeff_start, *s_store, *coeff_end, *exp_start;
     npy_int half_eps, digit, round_up, negate=0;
     Py_ssize_t ndigits, fdigits, i;
 
@@ -939,11 +939,6 @@ npy_@name@_fromhex(const char *string, npy_@name@ *result)
      * It's easy to show that if LONG_MIN/2 <= exp <= LONG_MAX/2 then both
      * exp+4*ndigits and exp-4*ndigits are within the range of a long.
      */
-
-    s = string;
-    if (s == NULL)
-        return NPY_FALSE;
-    s_end = s + strlen(s);
 
     /********************
      * Parse the string *
