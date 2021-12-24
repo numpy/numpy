@@ -501,7 +501,11 @@ def get_info(name, notfound_action=0):
       1 - display warning message
       2 - raise error
     """
-    cl = {'atlas': atlas_info,  # use lapack_opt or blas_opt instead
+    cl = {'armpl': armpl_info,
+          'blas_armpl': blas_armpl_info,
+          'lapack_armpl': lapack_armpl_info,
+          'fftw3_armpl': fftw3_armpl_info,
+          'atlas': atlas_info,  # use lapack_opt or blas_opt instead
           'atlas_threads': atlas_threads_info,                # ditto
           'atlas_blas': atlas_blas_info,
           'atlas_blas_threads': atlas_blas_threads_info,
@@ -1152,6 +1156,16 @@ class fftw3_info(fftw_info):
                     'macros':[('SCIPY_FFTW3_H', None)]},
                   ]
 
+    
+class fftw3_armpl_info(fftw_info):
+    section = 'fftw3'
+    dir_env_var = 'ARMPL_DIR'
+    notfounderror = FFTWNotFoundError
+    ver_info = [{'name': 'fftw3',
+                    'libs': ['armpl_lp64_mp'],
+                    'includes': ['fftw3.h'],
+                    'macros': [('SCIPY_FFTW3_H', None)]}]
+
 
 class dfftw_info(fftw_info):
     section = 'fftw'
@@ -1308,6 +1322,31 @@ class lapack_mkl_info(mkl_info):
 
 
 class blas_mkl_info(mkl_info):
+    pass
+
+
+class armpl_info(system_info):
+    section = 'armpl'
+    dir_env_var = 'ARMPL_DIR'
+    _lib_armpl = ['armpl_lp64_mp']
+
+    def calc_info(self):
+        lib_dirs = self.get_lib_dirs()
+        incl_dirs = self.get_include_dirs()
+        armpl_libs = self.get_libs('armpl_libs', self._lib_armpl)
+        info = self.check_libs2(lib_dirs, armpl_libs)
+        if info is None:
+            return
+        dict_append(info,
+                    define_macros=[('SCIPY_MKL_H', None),
+                                   ('HAVE_CBLAS', None)],
+                    include_dirs=incl_dirs)
+        self.set_info(**info)
+
+class lapack_armpl_info(armpl_info):
+    pass
+
+class blas_armpl_info(armpl_info):
     pass
 
 
@@ -1748,9 +1787,16 @@ class lapack_opt_info(system_info):
     notfounderror = LapackNotFoundError
 
     # List of all known LAPACK libraries, in the default order
-    lapack_order = ['mkl', 'openblas', 'flame',
+    lapack_order = ['armpl', 'mkl', 'openblas', 'flame',
                     'accelerate', 'atlas', 'lapack']
     order_env_var_name = 'NPY_LAPACK_ORDER'
+    
+    def _calc_info_armpl(self):
+        info = get_info('lapack_armpl')
+        if info:
+            self.set_info(**info)
+            return True
+        return False
 
     def _calc_info_mkl(self):
         info = get_info('lapack_mkl')
@@ -1925,9 +1971,16 @@ class blas_opt_info(system_info):
     notfounderror = BlasNotFoundError
     # List of all known BLAS libraries, in the default order
 
-    blas_order = ['mkl', 'blis', 'openblas',
+    blas_order = ['armpl', 'mkl', 'blis', 'openblas',
                   'accelerate', 'atlas', 'blas']
     order_env_var_name = 'NPY_BLAS_ORDER'
+    
+    def _calc_info_armpl(self):
+        info = get_info('blas_armpl')
+        if info:
+            self.set_info(**info)
+            return True
+        return False
 
     def _calc_info_mkl(self):
         info = get_info('blas_mkl')
