@@ -357,6 +357,59 @@ def _unsigned_subtract(a, b):
         return np.subtract(a, b, casting='unsafe', dtype=dt)
 
 
+def _weight_hist_bin_selectors(bin_name, a, range, weights):
+    """
+    proof-of-concept
+
+    Example
+    =======
+    >>> import numpy as np
+    >>> n = 100
+    >>> to_stack = []
+    >>> n = 100
+    >>> rng = np.random.RandomState(432)
+    >>> a = np.arange(n)
+    >>> weights = rng.randint(0, 100, size=n)
+    >>> _get_bin_edges(a, 'auto', None, weights)
+    >>> result = np.histogram(a=a, bins='auto', range=None, weights=weights)
+    """
+    minval, maxval = range
+
+    inlier_flags = (a >= minval) & (a <= maxval)
+    inlier_values = a[inlier_flags]
+    inlier_weights = weights[inlier_flags]
+
+    total = weights.sum()
+    ptp = maxval - minval
+
+    # _hist_bin_sqrt = ptp / np.sqrt(total)
+    _hist_bin_sturges = ptp / (np.log2(total) + 1.0)
+
+    # need a better weighted quantile here.
+    cumtotal = np.cumsum(inlier_weights)
+    quantiles = cumtotal / cumtotal[-1]
+    idx2, idx1 = np.searchsorted(quantiles, [0.75, 0.25])
+    iqr = inlier_values[idx2] - inlier_values[idx1]
+
+    _hist_bin_fd = 2.0 * iqr * total ** (-1.0 / 3.0)
+    fd_bw = _hist_bin_fd  # Freedman-Diaconis
+    sturges_bw = _hist_bin_sturges
+
+    if bin_name == 'auto':
+        if fd_bw:
+            bw_est = min(fd_bw, sturges_bw)
+        else:
+            # limited variance, so we return a len dependent bw estimator
+            bw_est = sturges_bw
+    elif bin_name == 'fd':
+        bw_est = fd_bw
+    elif bin_name == 'sturges':
+        bw_est = fd_bw
+    else:
+        raise NotImplementedError(bin_name)
+    return bw_est
+
+
 def _get_bin_edges(a, bins, range, weights):
     """
     Computes the bins used internally by `histogram`.
@@ -390,15 +443,6 @@ def _get_bin_edges(a, bins, range, weights):
             raise ValueError(
                 "{!r} is not a valid estimator for `bins`".format(bin_name))
 
-        if weights is not None:
-            # supported = {'auto', 'sturges', 'fd'}
-            supported = {}
-            if bins not in supported:
-                raise NotImplementedError(
-                    "Automated estimation of the number of "
-                    "bins is supported for {}".format(supported))
-
-
         first_edge, last_edge = _get_outer_edges(a, range)
 
         # truncate the range if needed
@@ -412,7 +456,10 @@ def _get_bin_edges(a, bins, range, weights):
             n_equal_bins = 1
         else:
             # Do not call selectors on empty arrays
-            width = _hist_bin_selectors[bin_name](a, (first_edge, last_edge))
+            if weights is not None:
+                width = _weight_hist_bin_selectors(bin_name, a, (first_edge, last_edge), weights)
+            else:
+                width = _hist_bin_selectors[bin_name](a, (first_edge, last_edge))
             if width:
                 n_equal_bins = int(np.ceil(_unsigned_subtract(last_edge, first_edge) / width))
             else:
