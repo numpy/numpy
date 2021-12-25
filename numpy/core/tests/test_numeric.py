@@ -3385,11 +3385,11 @@ class TestCross:
 
     def test_nested_diff_types(self):        
         #gh-19138
-        u=np.array([[195,8,9]],np.uint8)
-        v=np.array([250,166,68],np.int32)
-        z=np.array([[950, 11010, -30370]], dtype=np.int32)
-        assert_equal(np.cross(v,u), z)
-        assert_equal(np.cross(u,v), -z)
+        u = np.array([[195, 8, 9]], np.uint8)
+        v = np.array([250, 166, 68], np.int32)
+        z = np.array([[950, 11010, -30370]], dtype=np.int32)
+        assert_equal(np.cross(v, u), z)
+        assert_equal(np.cross(u, v), -z)
 
 
 def test_outer_out_param():

@@ -1623,8 +1623,8 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
     cp = empty(shape, dtype)
 
     # recast arrays as dtype
-    a=a.astype(dtype)
-    b=b.astype(dtype)
+    a = a.astype(dtype)
+    b = b.astype(dtype)
 
     # create local aliases for readability
     a0 = a[..., 0]
