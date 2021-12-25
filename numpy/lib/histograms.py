@@ -389,9 +389,15 @@ def _get_bin_edges(a, bins, range, weights):
         if bin_name not in _hist_bin_selectors:
             raise ValueError(
                 "{!r} is not a valid estimator for `bins`".format(bin_name))
+
         if weights is not None:
-            raise TypeError("Automated estimation of the number of "
-                            "bins is not supported for weighted data")
+            # supported = {'auto', 'sturges', 'fd'}
+            supported = {}
+            if bins not in supported:
+                raise NotImplementedError(
+                    "Automated estimation of the number of "
+                    "bins is supported for {}".format(supported))
+
 
         first_edge, last_edge = _get_outer_edges(a, range)
 
@@ -562,7 +568,7 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
     below, :math:`h` is the binwidth and :math:`n_h` is the number of
     bins. All estimators that compute bin counts are recast to bin width
     using the `ptp` of the data. The final bin count is obtained from
-    ``np.round(np.ceil(range / h))``. The final bin width is often less 
+    ``np.round(np.ceil(range / h))``. The final bin width is often less
     than what is returned by the estimators below.
 
     'auto' (maximum of the 'sturges' and 'fd' estimators)
@@ -1050,13 +1056,13 @@ def histogramdd(sample, bins=10, range=None, normed=None, weights=None,
             smin, smax = _get_outer_edges(sample[:,i], range[i])
             try:
                 n = operator.index(bins[i])
-            
+
             except TypeError as e:
                 raise TypeError(
                 	"`bins[{}]` must be an integer, when a scalar".format(i)
                 ) from e
-                
-            edges[i] = np.linspace(smin, smax, n + 1)    
+
+            edges[i] = np.linspace(smin, smax, n + 1)
         elif np.ndim(bins[i]) == 1:
             edges[i] = np.asarray(bins[i])
             if np.any(edges[i][:-1] > edges[i][1:]):
