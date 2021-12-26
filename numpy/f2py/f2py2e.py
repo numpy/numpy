@@ -82,6 +82,9 @@ Options:
                    file <modulename>module.c or extension module <modulename>.
                    Default is 'untitled'.
 
+  '-include<header>'  Writes additional headers in the C wrapper, can be passed
+                      multiple times, generates #include <header> each time.
+
   --[no-]lower     Do [not] lower the cases in <fortran files>. By default,
                    --lower is assumed with -h key, and --no-lower without -h key.
 

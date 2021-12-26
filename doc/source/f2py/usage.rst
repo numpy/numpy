@@ -220,6 +220,10 @@ Other options
   Do [not] lower the cases in ``<fortran files>``.  By default,
   ``--lower`` is assumed with ``-h`` switch, and ``--no-lower``
   without the ``-h`` switch.
+``-include<header>``
+  Writes additional headers in the C wrapper, can be passed multiple times,
+  generates #include <header> each time. Note that this is meant to be passed in
+  single quotes and without spaces, for example ``'-include<stdbool.h>'``
 ``--build-dir <dirname>``
   All F2PY generated files are created in ``<dirname>``.  Default is
   ``tempfile.mkdtemp()``.
