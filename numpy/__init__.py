@@ -344,7 +344,7 @@ else:
                    "by incorrect BLAS library being linked in, or by mixing "
                    "package managers (pip, conda, apt, ...). Search closed "
                    "numpy issues for similar problems.")
-            raise RuntimeError(msg.format(__file__)) from None
+            raise RuntimeError(msg.format(globals().get("__file__", "path NA"))) from None
 
     _sanity_check()
     del _sanity_check

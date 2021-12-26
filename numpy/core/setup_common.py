@@ -100,7 +100,7 @@ def check_api_version(apiversion, codegen_dir):
                "added in the C API, you have to update C_API_VERSION in %s."
                )
         warnings.warn(msg % (apiversion, curapi_hash, apiversion, api_hash,
-                             __file__),
+                             globals().get("__file__", "path NA")),
                       MismatchCAPIWarning, stacklevel=2)
 # Mandatory functions: if not found, fail the build
 MANDATORY_FUNCS = ["sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs",
