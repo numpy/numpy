@@ -233,6 +233,169 @@ class TestFloatHex:
             assert self.identical(x, self.roundtrip(x))
 
     @pytest.mark.parametrize("ftype", np.sctypes['float'])
+    def test_from_hex(self, ftype):
+        finfo = np.finfo(ftype)
+        MINEXP = finfo.minexp
+        MAXEXP = finfo.maxexp
+        NMANT = finfo.nmant
+
+        # two spellings of infinity, with optional signs; case-insensitive
+        self.identical(ftype.fromhex('inf'), np.inf)
+        self.identical(ftype.fromhex('+Inf'), np.inf)
+        self.identical(ftype.fromhex('-INF'), -np.inf)
+        self.identical(ftype.fromhex('iNf'), np.inf)
+        self.identical(ftype.fromhex('Infinity'), np.inf)
+        self.identical(ftype.fromhex('+INFINITY'), np.inf)
+        self.identical(ftype.fromhex('-infinity'), -np.inf)
+        self.identical(ftype.fromhex('-iNFiNitY'), -np.inf)
+
+        # nans with optional sign; case insensitive
+        self.identical(ftype.fromhex('nan'), np.nan)
+        self.identical(ftype.fromhex('+NaN'), np.nan)
+        self.identical(ftype.fromhex('-NaN'), np.nan)
+        self.identical(ftype.fromhex('-nAN'), np.nan)
+
+        # variations in input format
+        self.identical(ftype.fromhex('1'), 1.0)
+        self.identical(ftype.fromhex('+1'), 1.0)
+        self.identical(ftype.fromhex('1.'), 1.0)
+        self.identical(ftype.fromhex('1.0'), 1.0)
+        self.identical(ftype.fromhex('1.0p0'), 1.0)
+        self.identical(ftype.fromhex('01'), 1.0)
+        self.identical(ftype.fromhex('01.'), 1.0)
+        self.identical(ftype.fromhex('0x1'), 1.0)
+        self.identical(ftype.fromhex('0x1.'), 1.0)
+        self.identical(ftype.fromhex('0x1.0'), 1.0)
+        self.identical(ftype.fromhex('+0x1.0'), 1.0)
+        self.identical(ftype.fromhex('0x1p0'), 1.0)
+        self.identical(ftype.fromhex('0X1p0'), 1.0)
+        self.identical(ftype.fromhex('0X1P0'), 1.0)
+        self.identical(ftype.fromhex('0x1P0'), 1.0)
+        self.identical(ftype.fromhex('0x1.p0'), 1.0)
+        self.identical(ftype.fromhex('0x1.0p0'), 1.0)
+        self.identical(ftype.fromhex('+0x1p0'), 1.0)
+        self.identical(ftype.fromhex('0x01p0'), 1.0)
+        self.identical(ftype.fromhex('0x1p00'), 1.0)
+        self.identical(ftype.fromhex(' 0x1p0 '), 1.0)
+        self.identical(ftype.fromhex('\n 0x1p0'), 1.0)
+        self.identical(ftype.fromhex('0x1p0 \t'), 1.0)
+        self.identical(ftype.fromhex('0xap0'), 10.0)
+        self.identical(ftype.fromhex('0xAp0'), 10.0)
+        self.identical(ftype.fromhex('0xaP0'), 10.0)
+        self.identical(ftype.fromhex('0xAP0'), 10.0)
+        self.identical(ftype.fromhex('0xbep0'), 190.0)
+        self.identical(ftype.fromhex('0xBep0'), 190.0)
+        self.identical(ftype.fromhex('0xbEp0'), 190.0)
+        self.identical(ftype.fromhex('0XBE0P-4'), 190.0)
+        self.identical(ftype.fromhex('0xBEp0'), 190.0)
+        self.identical(ftype.fromhex('0xB.Ep4'), 190.0)
+        self.identical(ftype.fromhex('0x.BEp8'), 190.0)
+        self.identical(ftype.fromhex('0x.0BEp12'), 190.0)
+
+        # moving the point around
+        pi = ftype.fromhex('0x1.921fb54442d18p1')
+        self.identical(ftype.fromhex('0x.006487ed5110b46p11'), pi)
+        self.identical(ftype.fromhex('0x.00c90fdaa22168cp10'), pi)
+        self.identical(ftype.fromhex('0x.01921fb54442d18p9'), pi)
+        self.identical(ftype.fromhex('0x.03243f6a8885a3p8'), pi)
+        self.identical(ftype.fromhex('0x.06487ed5110b46p7'), pi)
+        self.identical(ftype.fromhex('0x.0c90fdaa22168cp6'), pi)
+        self.identical(ftype.fromhex('0x.1921fb54442d18p5'), pi)
+        self.identical(ftype.fromhex('0x.3243f6a8885a3p4'), pi)
+        self.identical(ftype.fromhex('0x.6487ed5110b46p3'), pi)
+        self.identical(ftype.fromhex('0x.c90fdaa22168cp2'), pi)
+        self.identical(ftype.fromhex('0x1.921fb54442d18p1'), pi)
+        self.identical(ftype.fromhex('0x3.243f6a8885a3p0'), pi)
+        self.identical(ftype.fromhex('0x6.487ed5110b46p-1'), pi)
+        self.identical(ftype.fromhex('0xc.90fdaa22168cp-2'), pi)
+        self.identical(ftype.fromhex('0x19.21fb54442d18p-3'), pi)
+        self.identical(ftype.fromhex('0x32.43f6a8885a3p-4'), pi)
+        self.identical(ftype.fromhex('0x64.87ed5110b46p-5'), pi)
+        self.identical(ftype.fromhex('0xc9.0fdaa22168cp-6'), pi)
+        self.identical(ftype.fromhex('0x192.1fb54442d18p-7'), pi)
+        self.identical(ftype.fromhex('0x324.3f6a8885a3p-8'), pi)
+        self.identical(ftype.fromhex('0x648.7ed5110b46p-9'), pi)
+        self.identical(ftype.fromhex('0xc90.fdaa22168cp-10'), pi)
+        self.identical(ftype.fromhex('0x1921.fb54442d18p-11'), pi)
+        # ...
+        self.identical(ftype.fromhex('0x1921fb54442d1.8p-47'), pi)
+        self.identical(ftype.fromhex('0x3243f6a8885a3p-48'), pi)
+        self.identical(ftype.fromhex('0x6487ed5110b46p-49'), pi)
+        self.identical(ftype.fromhex('0xc90fdaa22168cp-50'), pi)
+        self.identical(ftype.fromhex('0x1921fb54442d18p-51'), pi)
+        self.identical(ftype.fromhex('0x3243f6a8885a30p-52'), pi)
+        self.identical(ftype.fromhex('0x6487ed5110b460p-53'), pi)
+        self.identical(ftype.fromhex('0xc90fdaa22168c0p-54'), pi)
+        self.identical(ftype.fromhex('0x1921fb54442d180p-55'), pi)
+
+        # results that should overflow...
+        large_values = [
+            f"-0x1p{MAXEXP}", f"0x1p+{MAXEXP + 1}", f"+0X1p{MAXEXP + 5}",
+            f"-0x1p+{MAXEXP + 50}", f"0X1p123456789123456789",
+            f"+0X.8p+{MAXEXP + 1}", f"+0x0.8p{MAXEXP + 1}",
+            f"-0x0.4p{MAXEXP + 2}", f"0X2p+{MAXEXP - 1}",
+            f"0x2.p{MAXEXP - 1}", f"-0x2.0p+{MAXEXP - 1}",
+            f"+0X4p+{MAXEXP - 2}",
+            f"0x1.{'f' * (NMANT // 4 + 1)}p+{MAXEXP - 1}",
+            # for below case, last `f` is just to be sure
+            # for 128. It can also be `9` for 64, etc
+            f"-0X1.{'f' * (NMANT // 4)}fp{MAXEXP - 1}",
+            f"+0x3.{'f' * (NMANT // 4 + 1)}p{MAXEXP - 2}",
+            # XXX How are we getting to 970 for 64?
+            # f"0x3fffffffffffffp+{MAXEXP - NMANT}",
+            f"0x10000000000000000p{MAXEXP - NMANT}",
+            f"-0Xffffffffffffffffp{MAXEXP - NMANT}",
+        ]
+
+        for x in large_values:
+            with pytest.raises(OverflowError):
+                result = ftype.fromhex(x)
+
+        # ...and those that round to +-max float
+        self.identical(ftype.fromhex(
+        f"+0x1.{'f' * (NMANT // 4)}p+{MAXEXP - 1}"),
+                finfo.max)
+        self.identical(ftype.fromhex(
+        f"-0x1.{'f' * (NMANT // 4)}7p+{MAXEXP - 1}"),
+                finfo.max)
+        self.identical(ftype.fromhex(
+        f"+0x1.{'f' * (NMANT // 4)}7{'f' * (NMANT // 4 )}p+{MAXEXP - 1}"),
+                finfo.max)
+
+        # zeros
+        self.identical(ftype.fromhex(f'0x0p0'), 0.0)
+        self.identical(ftype.fromhex(f'0x0p{MAXEXP // 100 * 100}'), 0.0)
+        self.identical(ftype.fromhex(f'-0x0p{MAXEXP - 1}'), -0.0)
+        self.identical(ftype.fromhex(f'0X0p{MAXEXP}'), 0.0)
+        self.identical(ftype.fromhex(f'-0x0p{MAXEXP + 1}'), -0.0)
+        self.identical(ftype.fromhex(f'0X0p{MAXEXP // 100 * 100 * 2}'), 0.0)
+        self.identical(ftype.fromhex(f'0x0p123456789123456789'), 0.0)
+        self.identical(ftype.fromhex(f'-0X0p-0'), -0.0)
+        self.identical(ftype.fromhex(f'-0X0p-{MAXEXP // 100 * 100}'), -0.0)
+        self.identical(ftype.fromhex(f'0x0p-{MAXEXP - 1}'), 0.0)
+        self.identical(ftype.fromhex(f'-0X0p-{MAXEXP}'), -0.0)
+        self.identical(ftype.fromhex(f'-0x0p-{MAXEXP + 1}'), -0.0)
+        self.identical(ftype.fromhex(f'-0x0p-{MAXEXP + 50}'), -0.0)
+        self.identical(ftype.fromhex(f'0X0p-{MAXEXP + 51}'), 0.0)
+        self.identical(ftype.fromhex(f'-0x0p-{MAXEXP + 52}'), -0.0)
+        self.identical(ftype.fromhex(f'0x0p-{MAXEXP + 53}'), 0.0)
+        self.identical(ftype.fromhex(f'0X0p-{MAXEXP + 54}'), 0.0)
+        self.identical(ftype.fromhex(f'-0X0p-{MAXEXP // 100 * 100 * 2}'), -0.0)
+        self.identical(ftype.fromhex(f'-0x0p-123456789123456789'), -0.0)
+
+        # values that should underflow to 0
+
+
+        # check round-half-even is working correctly near 0 ...
+
+        # ... and near MIN ...
+
+        # ... and near 1.0.
+
+        # Regression test for a corner-case bug reported in b.p.o. 44954
+        # refer to python/cpython for more details
+
+    @pytest.mark.parametrize("ftype", np.sctypes['float'])
     def test_invalid_inputs(self, ftype):
         invalid_inputs = [
             'infi',  # misspelt infinities and nans
