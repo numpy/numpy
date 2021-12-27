@@ -53,6 +53,7 @@
  * is preserved.
  * ====================================================
  */
+#include <intrin.h>
 #include "npy_math_private.h"
 
 /* Magic binary numbers used by bit_count
