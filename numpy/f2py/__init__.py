@@ -166,7 +166,10 @@ def get_include():
     numpy.get_include : function that returns the numpy include directory
 
     """
-    return os.path.join(os.path.dirname(__file__), 'src')
+    try:
+        return os.path.join(os.path.dirname(__file__), 'src')
+    except NameError:
+        raise Exception("include files not available")
 
 
 if sys.version_info[:2] >= (3, 7):

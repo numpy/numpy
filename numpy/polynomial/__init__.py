@@ -178,8 +178,3 @@ def set_default_printstyle(style):
         _use_unicode = False
     from ._polybase import ABCPolyBase
     ABCPolyBase._use_unicode = _use_unicode
-
-
-from numpy._pytesttester import PytestTester
-test = PytestTester(__name__)
-del PytestTester

@@ -152,7 +152,7 @@ else:
     from . import linalg
     from . import fft
     from . import polynomial
-    from . import random
+    #####from . import random
     from . import ctypeslib
     from . import ma
     from . import matrixlib as _mat

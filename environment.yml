@@ -3,11 +3,11 @@
 #   $ conda env create -f environment.yml  # `mamba` works too for this command
 #   $ conda activate numpy-dev
 #
-name: numpy-dev
+name: numpy-dev39
 channels:
   - conda-forge
 dependencies:
-  - python
+  - python=3.9
   - cython
   - compilers
   - openblas

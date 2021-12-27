@@ -55,7 +55,7 @@ def run():
     if has_newnumpy:
         try:
             print('Found new numpy version %r in %s' %
-                  (numpy.__version__, numpy.__file__))
+                  (numpy.__version__, getattr(numpy, "__file__", "file NA")))
         except Exception as msg:
             print('error:', msg)
             print('------')
@@ -63,7 +63,7 @@ def run():
     if has_f2py2e:
         try:
             print('Found f2py2e version %r in %s' %
-                  (f2py2e.__version__.version, f2py2e.__file__))
+                  (f2py2e.__version__.version, getattr(f2py2e, "__file__", "file NA")))
         except Exception as msg:
             print('error:', msg)
             print('------')
@@ -73,11 +73,11 @@ def run():
             if has_numpy_distutils == 2:
                 print('Found numpy.distutils version %r in %r' % (
                     numpy.distutils.__version__,
-                    numpy.distutils.__file__))
+                    getattr(f2py2enumpy.distutils, "__file__", "file NA")))
             else:
                 print('Found numpy_distutils version %r in %r' % (
                     numpy_distutils.numpy_distutils_version.numpy_distutils_version,
-                    numpy_distutils.__file__))
+                    getattr(numpy_distutils, "__file__", "file NA")))
             print('------')
         except Exception as msg:
             print('error:', msg)
