@@ -16,6 +16,11 @@ variety of databases.
 
 All NumPy wheels distributed on PyPI are BSD licensed.
 
+NumPy requires ``pytest`` and ``hypothesis``.  Tests can then be run after
+installation with::
+
+    python -c 'import numpy; numpy.test()'
+
 """
 DOCLINES = (__doc__ or '').split("\n")
 
