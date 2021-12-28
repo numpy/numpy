@@ -41,7 +41,7 @@ It provides:
 
 Testing:
 
-NumPy requires `pytest`.  Tests can then be run after installation with:
+NumPy requires `pytest` and `hypothesis`.  Tests can then be run after installation with:
 
     python -c 'import numpy; numpy.test()'
 
@@ -57,7 +57,7 @@ may be a good starting point. If you are considering larger contributions
 to the source code, please contact us through the [mailing
 list](https://mail.python.org/mailman/listinfo/numpy-discussion) first.
 
-Writing code isn’t the only way to contribute to NumPy. You can also: 
+Writing code isn’t the only way to contribute to NumPy. You can also:
 - review pull requests
 - triage issues
 - develop tutorials, presentations, and other educational materials
@@ -77,7 +77,7 @@ numpy-team@googlegroups.com or on Slack (write numpy-team@googlegroups.com for
 an invitation).
 
 We also have a biweekly community call, details of which are announced on the
-mailing list. You are very welcome to join. 
+mailing list. You are very welcome to join.
 
 If you are new to contributing to open source, [this
 guide](https://opensource.guide/how-to-contribute/) helps explain why, what,
