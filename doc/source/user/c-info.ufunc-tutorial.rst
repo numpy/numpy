@@ -99,7 +99,7 @@ the module.
 
 
         /* This declares the logit function */
-        static PyObject* spam_logit(PyObject *self, PyObject *args);
+        static PyObject *spam_logit(PyObject *self, PyObject *args);
 
 
         /*
@@ -119,7 +119,7 @@ the module.
          * input args from Python.
          */
 
-        static PyObject* spam_logit(PyObject *self, PyObject *args)
+        static PyObject *spam_logit(PyObject *self, PyObject *args)
         {
             double p;
 
@@ -283,7 +283,7 @@ the primary thing that must be changed to create your own ufunc.
         /* The loop definition must precede the PyMODINIT_FUNC. */
 
         static void double_logit(char **args, npy_intp *dimensions,
-                                    npy_intp* steps, void* data)
+                                    npy_intp *steps, void *data)
         {
             npy_intp i;
             npy_intp n = dimensions[0];
@@ -463,7 +463,7 @@ the primary thing that must be changed to create your own ufunc.
         /* The loop definitions must precede the PyMODINIT_FUNC. */
 
         static void long_double_logit(char **args, npy_intp *dimensions,
-                                      npy_intp* steps, void* data)
+                                      npy_intp *steps, void *data)
         {
             npy_intp i;
             npy_intp n = dimensions[0];
@@ -485,7 +485,7 @@ the primary thing that must be changed to create your own ufunc.
         }
 
         static void double_logit(char **args, npy_intp *dimensions,
-                                 npy_intp* steps, void* data)
+                                 npy_intp *steps, void *data)
         {
             npy_intp i;
             npy_intp n = dimensions[0];
@@ -507,7 +507,7 @@ the primary thing that must be changed to create your own ufunc.
         }
 
         static void float_logit(char **args, npy_intp *dimensions,
-                                npy_intp* steps, void* data)
+                                npy_intp *steps, void *data)
         {
             npy_intp i;
             npy_intp n = dimensions[0];
@@ -530,7 +530,7 @@ the primary thing that must be changed to create your own ufunc.
 
 
         static void half_float_logit(char **args, npy_intp *dimensions,
-                                     npy_intp* steps, void* data)
+                                     npy_intp *steps, void *data)
         {
             npy_intp i;
             npy_intp n = dimensions[0];
@@ -728,7 +728,7 @@ as well as all other properties of a ufunc.
         /* The loop definition must precede the PyMODINIT_FUNC. */
 
         static void double_logitprod(char **args, npy_intp *dimensions,
-                                    npy_intp* steps, void* data)
+                                    npy_intp *steps, void *data)
         {
             npy_intp i;
             npy_intp n = dimensions[0];
@@ -857,7 +857,7 @@ The C file is given below.
         /* The loop definition must precede the PyMODINIT_FUNC. */
 
         static void add_uint64_triplet(char **args, npy_intp *dimensions,
-                                    npy_intp* steps, void* data)
+                                    npy_intp *steps, void *data)
         {
             npy_intp i;
             npy_intp is1=steps[0];
@@ -963,7 +963,7 @@ adapted from the umath module
         static PyUFuncGenericFunction atan2_functions[] = {
                               PyUFunc_ff_f, PyUFunc_dd_d,
                               PyUFunc_gg_g, PyUFunc_OO_O_method};
-        static void* atan2_data[] = {
+        static void *atan2_data[] = {
                               (void *)atan2f,(void *) atan2,
                               (void *)atan2l,(void *)"arctan2"};
         static char atan2_signatures[] = {
