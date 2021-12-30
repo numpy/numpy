@@ -101,7 +101,6 @@ the module.
         /* This declares the logit function */
         static PyObject *spam_logit(PyObject *self, PyObject *args);
 
-
         /*
          * This tells Python what methods this module has.
          * See the Python-C API for more information.
@@ -112,7 +111,6 @@ the module.
                 METH_VARARGS, "compute logit"},
             {NULL, NULL, 0, NULL}
         };
-
 
         /*
          * This actually defines the logit function for
@@ -135,7 +133,6 @@ the module.
             /*This builds the answer back into a python object */
             return Py_BuildValue("d", p);
         }
-
 
         /* This initiates the module using the above definitions. */
         static struct PyModuleDef moduledef = {
@@ -278,7 +275,7 @@ the primary thing that must be changed to create your own ufunc.
          */
 
         static PyMethodDef LogitMethods[] = {
-                {NULL, NULL, 0, NULL}
+            {NULL, NULL, 0, NULL}
         };
 
         /* The loop definition must precede the PyMODINIT_FUNC. */
@@ -458,7 +455,7 @@ is the primary thing that must be changed to create your own ufunc.
          */
 
         static PyMethodDef LogitMethods[] = {
-                {NULL, NULL, 0, NULL}
+            {NULL, NULL, 0, NULL}
         };
 
         /* The loop definitions must precede the PyMODINIT_FUNC. */
@@ -718,9 +715,8 @@ as well as all other properties of a ufunc.
          * docs.python.org.
          */
 
-
         static PyMethodDef LogitMethods[] = {
-                {NULL, NULL, 0, NULL}
+            {NULL, NULL, 0, NULL}
         };
 
         /* The loop definition must precede the PyMODINIT_FUNC. */
@@ -751,7 +747,6 @@ as well as all other properties of a ufunc.
                 out2 += out2_step;
             }
         }
-
 
         /*This a pointer to the above function*/
         PyUFuncGenericFunction funcs[1] = {&double_logitprod};
@@ -836,7 +831,6 @@ The C file is given below.
         #include "numpy/npy_3kcompat.h"
         #include <math.h>
 
-
         /*
          * add_triplet.c
          * This is the C code for creating your own
@@ -869,9 +863,9 @@ The C file is given below.
 
             for (i = 0; i < n; i++) {
 
-                x = (uint64_t*)i1;
-                y = (uint64_t*)i2;
-                z = (uint64_t*)op;
+                x = (uint64_t *)i1;
+                y = (uint64_t *)i2;
+                z = (uint64_t *)op;
 
                 z[0] = x[0] + y[0];
                 z[1] = x[1] + y[1];
