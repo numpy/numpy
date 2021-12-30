@@ -540,8 +540,7 @@ is the primary thing that must be changed to create your own ufunc.
             for (i = 0; i < n; i++) {
 
                 /* BEGIN main ufunc computation */
-                tmp = *(npy_half *)in;
-                tmp = npy_half_to_float(tmp);
+                tmp = npy_half_to_float(*(npy_half *)in);
                 tmp /= 1 - tmp;
                 tmp = logf(tmp);
                 *((npy_half *)out) = npy_float_to_half(tmp);
