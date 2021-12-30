@@ -2,7 +2,7 @@
 Contributors
 ============
 
-A total of 152 people contributed to this release.  People with a "+" by their
+A total of 153 people contributed to this release.  People with a "+" by their
 names contributed a patch for the first time.
 
 * @DWesl
@@ -144,6 +144,7 @@ names contributed a patch for the first time.
 * Stephannie Jimenez Gacha +
 * Tania Allard
 * Theodoros Nikolaou +
+* Thomas Green +
 * Thomas J. Fan
 * Thomas Li +
 * Tim Hoffmann
@@ -161,7 +162,7 @@ names contributed a patch for the first time.
 Pull requests merged
 ====================
 
-A total of 602 pull requests were merged for this release.
+A total of 609 pull requests were merged for this release.
 
 * `#15847 <https://github.com/numpy/numpy/pull/15847>`__: BUG: avoid infinite recurrence on dependencies in crackfortran
 * `#16740 <https://github.com/numpy/numpy/pull/16740>`__: ENH: Add broadcast support to Generator.multinomial
@@ -765,3 +766,10 @@ A total of 602 pull requests were merged for this release.
 * `#20605 <https://github.com/numpy/numpy/pull/20605>`__: DEV: add a warningfilter to fix pytest workflow.
 * `#20614 <https://github.com/numpy/numpy/pull/20614>`__: TST: Bump mypy: 0.910 -> 0.920
 * `#20617 <https://github.com/numpy/numpy/pull/20617>`__: MAINT: Help boost::python libraries at least not crash
+* `#20632 <https://github.com/numpy/numpy/pull/20632>`__: DOC: Document implementation of NEP 43 and experimental new DType...
+* `#20649 <https://github.com/numpy/numpy/pull/20649>`__: DOC: Modify SVG to be visible on Chrome
+* `#20650 <https://github.com/numpy/numpy/pull/20650>`__: BUG: Support env argument in CCompiler.spawn
+* `#20651 <https://github.com/numpy/numpy/pull/20651>`__: BUG: f2py: Simplify creation of an exception message.
+* `#20680 <https://github.com/numpy/numpy/pull/20680>`__: TYP,TST: Bump mypy to 0.930
+* `#20681 <https://github.com/numpy/numpy/pull/20681>`__: BUG: Fix setstate logic for empty arrays
+* `#20682 <https://github.com/numpy/numpy/pull/20682>`__: ENH: Add ARM Compiler with ARM Performance Library support
