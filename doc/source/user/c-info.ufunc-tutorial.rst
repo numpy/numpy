@@ -71,11 +71,11 @@ Example Non-ufunc extension
    pair: ufunc; adding new
 
 For comparison and general edification of the reader we provide
-a simple implementation of a C extension of logit that uses no
+a simple implementation of a C extension of ``logit`` that uses no
 numpy.
 
 To do this we need two files. The first is the C file which contains
-the actual code, and the second is the setup.py file used to create
+the actual code, and the second is the ``setup.py`` file used to create
 the module.
 
     .. code-block:: c
@@ -160,10 +160,10 @@ the module.
             return m;
         }
 
-To use the setup.py file, place setup.py and spammodule.c in the same
-folder. Then python setup.py build will build the module to import,
-or setup.py install will install the module to your site-packages
-directory.
+To use the ``setup.py file``, place ``setup.py`` and ``spammodule.c``
+in the same folder. Then ``python setup.py build`` will build the module to
+import, or ``python setup.py install`` will install the module to your
+site-packages directory.
 
     .. code-block:: python
 
@@ -203,9 +203,9 @@ directory.
 
 
 Once the spam module is imported into python, you can call logit
-via spam.logit. Note that the function used above cannot be applied
-as-is to numpy arrays. To do so we must call numpy.vectorize on it.
-For example, if a python interpreter is opened in the file containing
+via ``spam.logit``. Note that the function used above cannot be applied
+as-is to numpy arrays. To do so we must call :py:func:`numpy.vectorize`
+on it. For example, if a python interpreter is opened in the file containing
 the spam library or spam has been installed, one can perform the
 following commands:
 
@@ -225,10 +225,10 @@ TypeError: only length-1 arrays can be converted to Python scalars
 array([       -inf, -2.07944154, -1.25276297, -0.69314718, -0.22314355,
     0.22314355,  0.69314718,  1.25276297,  2.07944154,         inf])
 
-THE RESULTING LOGIT FUNCTION IS NOT FAST! numpy.vectorize simply
-loops over spam.logit. The loop is done at the C level, but the numpy
+THE RESULTING LOGIT FUNCTION IS NOT FAST! ``numpy.vectorize`` simply
+loops over ``spam.logit``. The loop is done at the C level, but the numpy
 array is constantly being parsed and build back up. This is expensive.
-When the author compared numpy.vectorize(spam.logit) against the
+When the author compared ``numpy.vectorize(spam.logit)`` against the
 logit ufuncs constructed below, the logit ufuncs were almost exactly
 4 times faster. Larger or smaller speedups are, of course, possible
 depending on the nature of the function.
@@ -242,13 +242,14 @@ Example NumPy ufunc for one dtype
 .. index::
    pair: ufunc; adding new
 
-For simplicity we give a ufunc for a single dtype, the 'f8' double.
-As in the previous section, we first give the .c file and then the
-setup.py file used to create the module containing the ufunc.
+For simplicity we give a ufunc for a single dtype, the ``'f8'``
+``double``. As in the previous section, we first give the ``.c`` file
+and then the ``setup.py`` file used to create the module containing the
+ufunc.
 
 The place in the code corresponding to the actual computations for
-the ufunc are marked with /\*BEGIN main ufunc computation\*/ and
-/\*END main ufunc computation\*/. The code in between those lines is
+the ufunc are marked with ``/\* BEGIN main ufunc computation \*/`` and
+``/\* END main ufunc computation \*/``. The code in between those lines is
 the primary thing that must be changed to create your own ufunc.
 
     .. code-block:: c
@@ -282,8 +283,8 @@ the primary thing that must be changed to create your own ufunc.
 
         /* The loop definition must precede the PyMODINIT_FUNC. */
 
-        static void double_logit(char **args, npy_intp *dimensions,
-                                    npy_intp *steps, void *data)
+        static void double_logit(char **args, const npy_intp *dimensions,
+                                 const npy_intp *steps, void *data)
         {
             npy_intp i;
             npy_intp n = dimensions[0];
@@ -293,18 +294,18 @@ the primary thing that must be changed to create your own ufunc.
             double tmp;
 
             for (i = 0; i < n; i++) {
-                /*BEGIN main ufunc computation*/
+                /* BEGIN main ufunc computation */
                 tmp = *(double *)in;
-                tmp /= 1-tmp;
+                tmp /= 1 - tmp;
                 *((double *)out) = log(tmp);
-                /*END main ufunc computation*/
+                /* END main ufunc computation */
 
                 in += in_step;
                 out += out_step;
             }
         }
 
-        /*This a pointer to the above function*/
+        /* This a pointer to the above function */
         PyUFuncGenericFunction funcs[1] = {&double_logit};
 
         /* These are the input and return dtypes of logit.*/
@@ -347,21 +348,23 @@ the primary thing that must be changed to create your own ufunc.
             return m;
         }
 
-This is a setup.py file for the above code. As before, the module
-can be build via calling python setup.py build at the command prompt,
-or installed to site-packages via python setup.py install.
+This is a ``setup.py file`` for the above code. As before, the module
+can be build via calling ``python setup.py build`` at the command prompt,
+or installed to site-packages via ``python setup.py install``. The module
+can also be placed into a local folder e.g. ``npufunc_directory`` below
+using ``python setup.py build_ext --inplace``.
 
     .. code-block:: python
 
         '''
-            setup.py file for logit.c
+            setup.py file for single_type_logit.c
             Note that since this is a numpy extension
             we use numpy.distutils instead of
             distutils from the python standard library.
 
             Calling
             $python setup.py build_ext --inplace
-            will build the extension library in the current file.
+            will build the extension library in the npufunc_directory.
 
             Calling
             $python setup.py build
@@ -382,7 +385,6 @@ or installed to site-packages via python setup.py install.
 
 
         def configuration(parent_package='', top_path=None):
-            import numpy
             from numpy.distutils.misc_util import Configuration
 
             config = Configuration('npufunc_directory',
@@ -418,13 +420,13 @@ Example NumPy ufunc with multiple dtypes
 
 We finally give an example of a full ufunc, with inner loops for
 half-floats, floats, doubles, and long doubles. As in the previous
-sections we first give the .c file and then the corresponding
-setup.py file.
+sections we first give the ``.c`` file and then the corresponding
+``setup.py`` file.
 
 The places in the code corresponding to the actual computations for
-the ufunc are marked with /\*BEGIN main ufunc computation\*/ and
-/\*END main ufunc computation\*/. The code in between those lines is
-the primary thing that must be changed to create your own ufunc.
+the ufunc are marked with ``/\* BEGIN main ufunc computation \*/`` and
+``/\* END main ufunc computation \*/``. The code in between those lines
+is the primary thing that must be changed to create your own ufunc.
 
 
     .. code-block:: c
@@ -455,37 +457,36 @@ the primary thing that must be changed to create your own ufunc.
          *
          */
 
-
         static PyMethodDef LogitMethods[] = {
                 {NULL, NULL, 0, NULL}
         };
 
         /* The loop definitions must precede the PyMODINIT_FUNC. */
 
-        static void long_double_logit(char **args, npy_intp *dimensions,
-                                      npy_intp *steps, void *data)
+        static void long_double_logit(char **args, const npy_intp *dimensions,
+                                      const npy_intp *steps, void *data)
         {
             npy_intp i;
             npy_intp n = dimensions[0];
-            char *in = args[0], *out=args[1];
+            char *in = args[0], *out = args[1];
             npy_intp in_step = steps[0], out_step = steps[1];
 
             long double tmp;
 
             for (i = 0; i < n; i++) {
-                /*BEGIN main ufunc computation*/
+                /* BEGIN main ufunc computation */
                 tmp = *(long double *)in;
-                tmp /= 1-tmp;
+                tmp /= 1 - tmp;
                 *((long double *)out) = logl(tmp);
-                /*END main ufunc computation*/
+                /* END main ufunc computation */
 
                 in += in_step;
                 out += out_step;
             }
         }
 
-        static void double_logit(char **args, npy_intp *dimensions,
-                                 npy_intp *steps, void *data)
+        static void double_logit(char **args, const npy_intp *dimensions,
+                                 const npy_intp *steps, void *data)
         {
             npy_intp i;
             npy_intp n = dimensions[0];
@@ -495,33 +496,33 @@ the primary thing that must be changed to create your own ufunc.
             double tmp;
 
             for (i = 0; i < n; i++) {
-                /*BEGIN main ufunc computation*/
+                /* BEGIN main ufunc computation */
                 tmp = *(double *)in;
-                tmp /= 1-tmp;
+                tmp /= 1 - tmp;
                 *((double *)out) = log(tmp);
-                /*END main ufunc computation*/
+                /* END main ufunc computation */
 
                 in += in_step;
                 out += out_step;
             }
         }
 
-        static void float_logit(char **args, npy_intp *dimensions,
-                                npy_intp *steps, void *data)
+        static void float_logit(char **args, const npy_intp *dimensions,
+                               const npy_intp *steps, void *data)
         {
             npy_intp i;
             npy_intp n = dimensions[0];
-            char *in=args[0], *out = args[1];
+            char *in = args[0], *out = args[1];
             npy_intp in_step = steps[0], out_step = steps[1];
 
             float tmp;
 
             for (i = 0; i < n; i++) {
-                /*BEGIN main ufunc computation*/
+                /* BEGIN main ufunc computation */
                 tmp = *(float *)in;
-                tmp /= 1-tmp;
+                tmp /= 1 - tmp;
                 *((float *)out) = logf(tmp);
-                /*END main ufunc computation*/
+                /* END main ufunc computation */
 
                 in += in_step;
                 out += out_step;
@@ -529,8 +530,8 @@ the primary thing that must be changed to create your own ufunc.
         }
 
 
-        static void half_float_logit(char **args, npy_intp *dimensions,
-                                     npy_intp *steps, void *data)
+        static void half_float_logit(char **args, const npy_intp *dimensions,
+                                    const npy_intp *steps, void *data)
         {
             npy_intp i;
             npy_intp n = dimensions[0];
@@ -541,13 +542,13 @@ the primary thing that must be changed to create your own ufunc.
 
             for (i = 0; i < n; i++) {
 
-                /*BEGIN main ufunc computation*/
+                /* BEGIN main ufunc computation */
                 tmp = *(npy_half *)in;
                 tmp = npy_half_to_float(tmp);
-                tmp /= 1-tmp;
+                tmp /= 1 - tmp;
                 tmp = logf(tmp);
                 *((npy_half *)out) = npy_float_to_half(tmp);
-                /*END main ufunc computation*/
+                /* END main ufunc computation */
 
                 in += in_step;
                 out += out_step;
@@ -562,9 +563,9 @@ the primary thing that must be changed to create your own ufunc.
                                            &long_double_logit};
 
         static char types[8] = {NPY_HALF, NPY_HALF,
-                        NPY_FLOAT, NPY_FLOAT,
-                        NPY_DOUBLE,NPY_DOUBLE,
-                        NPY_LONGDOUBLE, NPY_LONGDOUBLE};
+                                NPY_FLOAT, NPY_FLOAT,
+                                NPY_DOUBLE, NPY_DOUBLE,
+                                NPY_LONGDOUBLE, NPY_LONGDOUBLE};
         static void *data[4] = {NULL, NULL, NULL, NULL};
 
         static struct PyModuleDef moduledef = {
@@ -602,14 +603,14 @@ the primary thing that must be changed to create your own ufunc.
             return m;
         }
 
-This is a setup.py file for the above code. As before, the module
-can be build via calling python setup.py build at the command prompt,
-or installed to site-packages via python setup.py install.
+This is a ``setup.py`` file for the above code. As before, the module
+can be build via calling ``python setup.py build`` at the command prompt,
+or installed to site-packages via ``python setup.py install``.
 
     .. code-block:: python
 
         '''
-            setup.py file for logit.c
+            setup.py file for multi_type_logit.c
             Note that since this is a numpy extension
             we use numpy.distutils instead of
             distutils from the python standard library.
@@ -637,9 +638,7 @@ or installed to site-packages via python setup.py install.
 
 
         def configuration(parent_package='', top_path=None):
-            import numpy
-            from numpy.distutils.misc_util import Configuration
-            from numpy.distutils.misc_util import get_info
+            from numpy.distutils.misc_util import Configuration, get_info
 
             #Necessary for the half-float d-type.
             info = get_info('npymath')
@@ -676,10 +675,10 @@ Example NumPy ufunc with multiple arguments/return values
 
 Our final example is a ufunc with multiple arguments. It is a modification
 of the code for a logit ufunc for data with a single dtype. We
-compute (A*B, logit(A*B)).
+compute ``(A * B, logit(A * B))``.
 
 We only give the C code as the setup.py file is exactly the same as
-the setup.py file in `Example NumPy ufunc for one dtype`_, except that
+the ``setup.py`` file in `Example NumPy ufunc for one dtype`_, except that
 the line
 
     .. code-block:: python
@@ -692,9 +691,9 @@ is replaced with
 
         config.add_extension('npufunc', ['multi_arg_logit.c'])
 
-The C file is given below. The ufunc generated takes two arguments A
-and B. It returns a tuple whose first element is A*B and whose second
-element is logit(A*B). Note that it automatically supports broadcasting,
+The C file is given below. The ufunc generated takes two arguments ``A``
+and ``B``. It returns a tuple whose first element is ``A * B`` and whose second
+element is ``logit(A * B)``. Note that it automatically supports broadcasting,
 as well as all other properties of a ufunc.
 
     .. code-block:: c
@@ -716,8 +715,7 @@ as well as all other properties of a ufunc.
          *
          * Details explaining the Python-C API can be found under
          * 'Extending and Embedding' and 'Python/C API' at
-         * docs.python.org .
-         *
+         * docs.python.org.
          */
 
 
@@ -727,8 +725,8 @@ as well as all other properties of a ufunc.
 
         /* The loop definition must precede the PyMODINIT_FUNC. */
 
-        static void double_logitprod(char **args, npy_intp *dimensions,
-                                    npy_intp *steps, void *data)
+        static void double_logitprod(char **args, const npy_intp *dimensions,
+                                     const npy_intp *steps, void *data)
         {
             npy_intp i;
             npy_intp n = dimensions[0];
@@ -740,12 +738,12 @@ as well as all other properties of a ufunc.
             double tmp;
 
             for (i = 0; i < n; i++) {
-                /*BEGIN main ufunc computation*/
+                /* BEGIN main ufunc computation */
                 tmp = *(double *)in1;
                 tmp *= *(double *)in2;
                 *((double *)out1) = tmp;
-                *((double *)out2) = log(tmp/(1-tmp));
-                /*END main ufunc computation*/
+                *((double *)out2) = log(tmp / (1 - tmp));
+                /* END main ufunc computation */
 
                 in1 += in1_step;
                 in2 += in2_step;
@@ -762,7 +760,6 @@ as well as all other properties of a ufunc.
 
         static char types[4] = {NPY_DOUBLE, NPY_DOUBLE,
                                 NPY_DOUBLE, NPY_DOUBLE};
-
 
         static void *data[1] = {NULL};
 
@@ -809,13 +806,13 @@ Example NumPy ufunc with structured array dtype arguments
 
 This example shows how to create a ufunc for a structured array dtype.
 For the example we show a trivial ufunc for adding two arrays with dtype
-'u8,u8,u8'. The process is a bit different from the other examples since
+``'u8,u8,u8'``. The process is a bit different from the other examples since
 a call to :c:func:`PyUFunc_FromFuncAndData` doesn't fully register ufuncs for
 custom dtypes and structured array dtypes. We need to also call
 :c:func:`PyUFunc_RegisterLoopForDescr` to finish setting up the ufunc.
 
-We only give the C code as the setup.py file is exactly the same as
-the setup.py file in `Example NumPy ufunc for one dtype`_, except that
+We only give the C code as the ``setup.py`` file is exactly the same as
+the ``setup.py`` file in `Example NumPy ufunc for one dtype`_, except that
 the line
 
     .. code-block:: python
@@ -847,7 +844,7 @@ The C file is given below.
          *
          * Details explaining the Python-C API can be found under
          * 'Extending and Embedding' and 'Python/C API' at
-         * docs.python.org .
+         * docs.python.org.
          */
 
         static PyMethodDef StructUfuncTestMethods[] = {
@@ -856,19 +853,19 @@ The C file is given below.
 
         /* The loop definition must precede the PyMODINIT_FUNC. */
 
-        static void add_uint64_triplet(char **args, npy_intp *dimensions,
-                                    npy_intp *steps, void *data)
+        static void add_uint64_triplet(char **args, const npy_intp *dimensions,
+                                       const npy_intp *steps, void *data)
         {
             npy_intp i;
-            npy_intp is1=steps[0];
-            npy_intp is2=steps[1];
-            npy_intp os=steps[2];
-            npy_intp n=dimensions[0];
+            npy_intp is1 = steps[0];
+            npy_intp is2 = steps[1];
+            npy_intp os = steps[2];
+            npy_intp n = dimensions[0];
             uint64_t *x, *y, *z;
 
-            char *i1=args[0];
-            char *i2=args[1];
-            char *op=args[2];
+            char *i1 = args[0];
+            char *i2 = args[1];
+            char *op = args[2];
 
             for (i = 0; i < n; i++) {
 
@@ -924,11 +921,11 @@ The C file is given below.
 
             /* Create a new ufunc object */
             add_triplet = PyUFunc_FromFuncAndData(NULL, NULL, NULL, 0, 2, 1,
-                                            PyUFunc_None, "add_triplet",
-                                            "add_triplet_docstring", 0);
+                                                  PyUFunc_None, "add_triplet",
+                                                  "add_triplet_docstring", 0);
 
             dtype_dict = Py_BuildValue("[(s, s), (s, s), (s, s)]",
-                "f0", "u8", "f1", "u8", "f2", "u8");
+                                       "f0", "u8", "f1", "u8", "f2", "u8");
             PyArray_DescrConverter(dtype_dict, &dtype);
             Py_DECREF(dtype_dict);
 
@@ -938,10 +935,10 @@ The C file is given below.
 
             /* Register ufunc for structured dtype */
             PyUFunc_RegisterLoopForDescr(add_triplet,
-                                        dtype,
-                                        &add_uint64_triplet,
-                                        dtypes,
-                                        NULL);
+                                         dtype,
+                                         &add_uint64_triplet,
+                                         dtypes,
+                                         NULL);
 
             d = PyModule_GetDict(m);
 
@@ -964,8 +961,8 @@ adapted from the umath module
                               PyUFunc_ff_f, PyUFunc_dd_d,
                               PyUFunc_gg_g, PyUFunc_OO_O_method};
         static void *atan2_data[] = {
-                              (void *)atan2f,(void *) atan2,
-                              (void *)atan2l,(void *)"arctan2"};
+                              (void *)atan2f, (void *)atan2,
+                              (void *)atan2l, (void *)"arctan2"};
         static char atan2_signatures[] = {
                       NPY_FLOAT, NPY_FLOAT, NPY_FLOAT,
                       NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE,
