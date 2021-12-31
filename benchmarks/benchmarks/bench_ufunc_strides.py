@@ -44,27 +44,40 @@ class AVX_UFunc_log(Benchmark):
     def time_log(self, stride, dtype):
         np.log(self.arr[::stride])
 
-avx_bfuncs = ['maximum',
-              'minimum']
 
-class AVX_BFunc(Benchmark):
+binary_ufuncs = [
+    'maximum', 'minimum', 'fmax', 'fmin'
+]
+binary_dtype = ['f', 'd']
 
-    params = [avx_bfuncs, dtype, stride]
-    param_names = ['avx_based_bfunc', 'dtype', 'stride']
+class Binary(Benchmark):
+    param_names = ['ufunc', 'stride_in0', 'stride_in1', 'stride_out', 'dtype']
+    params = [binary_ufuncs, stride, stride, stride_out, binary_dtype]
     timeout = 10
 
-    def setup(self, ufuncname, dtype, stride):
+    def setup(self, ufuncname, stride_in0, stride_in1, stride_out, dtype):
         np.seterr(all='ignore')
         try:
             self.f = getattr(np, ufuncname)
         except AttributeError:
             raise NotImplementedError(f"No ufunc {ufuncname} found") from None
-        N = 10000
-        self.arr1 = np.array(np.random.rand(stride*N), dtype=dtype)
-        self.arr2 = np.array(np.random.rand(stride*N), dtype=dtype)
+        N = 100000
+        self.arr1 = np.array(np.random.rand(stride_in0*N), dtype=dtype)
+        self.arr2 = np.array(np.random.rand(stride_in1*N), dtype=dtype)
+        self.arr_out = np.empty(stride_out*N, dtype)
 
-    def time_ufunc(self, ufuncname, dtype, stride):
-        self.f(self.arr1[::stride], self.arr2[::stride])
+    def time_ufunc(self, ufuncname, stride_in0, stride_in1, stride_out, dtype):
+        self.f(self.arr1[::stride_in0], self.arr2[::stride_in1],
+               self.arr_out[::stride_out])
+
+
+binary_int_ufuncs = ['maximum', 'minimum']
+binary_int_dtype = ['b', 'B', 'h', 'H', 'i', 'I', 'l', 'L', 'q', 'Q']
+
+class BinaryInt(Binary):
+
+    param_names = ['ufunc', 'stride_in0', 'stride_in1', 'stride_out', 'dtype']
+    params = [binary_int_ufuncs, stride, stride, stride_out, binary_int_dtype]
 
 class AVX_ldexp(Benchmark):
 
