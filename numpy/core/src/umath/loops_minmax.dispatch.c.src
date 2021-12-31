@@ -192,7 +192,6 @@ NPY_FINLINE @type@ scalar_@op@_@c_sfx@(@type@ a, @type@ b) {
 /*******************************************************************************
  ** Defining the SIMD kernels
  ******************************************************************************/
-
 /**begin repeat
  * #sfx = s8, u8, s16, u16, s32, u32, s64, u64, f32, f64#
  * #simd_chk = NPY_SIMD*9, NPY_SIMD_F64#
@@ -205,6 +204,7 @@ NPY_FINLINE @type@ scalar_@op@_@c_sfx@(@type@ a, @type@ b) {
  */
 #define SCALAR_OP scalar_@intrin@_@scalar_sfx@
 #if @simd_chk@ && (!@fp_only@ || (@is_fp@ && @fp_only@))
+
 #if @is_fp@ && !@fp_only@
     #define V_INTRIN npyv_@intrin@n_@sfx@ // propagates NaNs
     #define V_REDUCE_INTRIN npyv_reduce_@intrin@n_@sfx@
@@ -217,67 +217,42 @@ NPY_FINLINE @type@ scalar_@op@_@c_sfx@(@type@ a, @type@ b) {
 static inline void
 simd_reduce_c_@intrin@_@sfx@(const npyv_lanetype_@sfx@ *ip, npyv_lanetype_@sfx@ *op1, npy_intp len)
 {
-    // Note, 8x unroll was chosen for best results on Apple M1
-    const int vectorsPerLoop = 8;
-    const size_t elemPerVector = NPY_SIMD_WIDTH / sizeof(npyv_lanetype_@sfx@);
-    npy_intp elemPerLoop = vectorsPerLoop * elemPerVector;
-
-    npy_intp i = 0;
-    npyv_lanetype_@sfx@ io1 = op1[0];
-
-    // SIMD if possible
-    if((i+elemPerLoop) <= len){
-        npyv_@sfx@ m0 = npyv_load_@sfx@(&ip[i + 0 * elemPerVector]);
-        npyv_@sfx@ m1 = npyv_load_@sfx@(&ip[i + 1 * elemPerVector]);
-        npyv_@sfx@ m2 = npyv_load_@sfx@(&ip[i + 2 * elemPerVector]);
-        npyv_@sfx@ m3 = npyv_load_@sfx@(&ip[i + 3 * elemPerVector]);
-        npyv_@sfx@ m4 = npyv_load_@sfx@(&ip[i + 4 * elemPerVector]);
-        npyv_@sfx@ m5 = npyv_load_@sfx@(&ip[i + 5 * elemPerVector]);
-        npyv_@sfx@ m6 = npyv_load_@sfx@(&ip[i + 6 * elemPerVector]);
-        npyv_@sfx@ m7 = npyv_load_@sfx@(&ip[i + 7 * elemPerVector]);
-
-        i += elemPerLoop;
-        for(; (i+elemPerLoop)<=len; i+=elemPerLoop){
-            npyv_@sfx@ v0 = npyv_load_@sfx@(&ip[i + 0 * elemPerVector]);
-            npyv_@sfx@ v1 = npyv_load_@sfx@(&ip[i + 1 * elemPerVector]);
-            npyv_@sfx@ v2 = npyv_load_@sfx@(&ip[i + 2 * elemPerVector]);
-            npyv_@sfx@ v3 = npyv_load_@sfx@(&ip[i + 3 * elemPerVector]);
-            npyv_@sfx@ v4 = npyv_load_@sfx@(&ip[i + 4 * elemPerVector]);
-            npyv_@sfx@ v5 = npyv_load_@sfx@(&ip[i + 5 * elemPerVector]);
-            npyv_@sfx@ v6 = npyv_load_@sfx@(&ip[i + 6 * elemPerVector]);
-            npyv_@sfx@ v7 = npyv_load_@sfx@(&ip[i + 7 * elemPerVector]);
-
-            m0 = V_INTRIN(m0, v0);
-            m1 = V_INTRIN(m1, v1);
-            m2 = V_INTRIN(m2, v2);
-            m3 = V_INTRIN(m3, v3);
-            m4 = V_INTRIN(m4, v4);
-            m5 = V_INTRIN(m5, v5);
-            m6 = V_INTRIN(m6, v6);
-            m7 = V_INTRIN(m7, v7);
-        }
-
-        m0 = V_INTRIN(m0, m1);
-        m2 = V_INTRIN(m2, m3);
-        m4 = V_INTRIN(m4, m5);
-        m6 = V_INTRIN(m6, m7);
-
-        m0 = V_INTRIN(m0, m2);
-        m4 = V_INTRIN(m4, m6);
-
-        m0 = V_INTRIN(m0, m4);
-
-        npyv_lanetype_@sfx@ r = V_REDUCE_INTRIN(m0);
-
-        io1 = SCALAR_OP(io1, r);
+    if (len < 1) {
+        return;
     }
+    const int vstep = npyv_nlanes_@sfx@;
+    const int wstep = vstep*8;
+    npyv_@sfx@ acc = npyv_setall_@sfx@(op1[0]);
+    for (; len >= wstep; len -= wstep, ip += wstep) {
+    #ifdef NPY_HAVE_SSE2
+        NPY_PREFETCH(ip + wstep, 0, 3);
+    #endif
+        npyv_@sfx@ v0 = npyv_load_@sfx@(ip + vstep * 0);
+        npyv_@sfx@ v1 = npyv_load_@sfx@(ip + vstep * 1);
+        npyv_@sfx@ v2 = npyv_load_@sfx@(ip + vstep * 2);
+        npyv_@sfx@ v3 = npyv_load_@sfx@(ip + vstep * 3);
 
+        npyv_@sfx@ v4 = npyv_load_@sfx@(ip + vstep * 4);
+        npyv_@sfx@ v5 = npyv_load_@sfx@(ip + vstep * 5);
+        npyv_@sfx@ v6 = npyv_load_@sfx@(ip + vstep * 6);
+        npyv_@sfx@ v7 = npyv_load_@sfx@(ip + vstep * 7);
+
+        npyv_@sfx@ r01 = V_INTRIN(v0, v1);
+        npyv_@sfx@ r23 = V_INTRIN(v2, v3);
+        npyv_@sfx@ r45 = V_INTRIN(v4, v5);
+        npyv_@sfx@ r67 = V_INTRIN(v6, v7);
+        acc = V_INTRIN(acc, V_INTRIN(V_INTRIN(r01, r23), V_INTRIN(r45, r67)));
+    }
+    for (; len >= vstep; len -= vstep, ip += vstep) {
+        acc = V_INTRIN(acc, npyv_load_@sfx@(ip));
+    }
+    npyv_lanetype_@sfx@ r = V_REDUCE_INTRIN(acc);
     // Scalar - finish up any remaining iterations
-    for(; i<len; ++i){
-        const npyv_lanetype_@sfx@ in2 = ip[i];
-        io1 = SCALAR_OP(io1, in2);
+    for (; len > 0; --len, ++ip) {
+        const npyv_lanetype_@sfx@ in2 = *ip;
+        r = SCALAR_OP(r, in2);
     }
-    op1[0] = io1;
+    op1[0] = r;
 }
 
 // contiguous inputs and output.
@@ -285,51 +260,102 @@ static inline void
 simd_binary_ccc_@intrin@_@sfx@(const npyv_lanetype_@sfx@ *ip1, const npyv_lanetype_@sfx@ *ip2,
                                      npyv_lanetype_@sfx@ *op1, npy_intp len)
 {
+#if NPY_SIMD_WIDTH == 128
     // Note, 6x unroll was chosen for best results on Apple M1
     const int vectorsPerLoop = 6;
-    const int elemPerVector = NPY_SIMD_WIDTH / sizeof(npyv_lanetype_@sfx@);
+#else
+    // To avoid memory bandwidth bottleneck
+    const int vectorsPerLoop = 2;
+#endif
+    const int elemPerVector = npyv_nlanes_@sfx@;
     int elemPerLoop = vectorsPerLoop * elemPerVector;
 
     npy_intp i = 0;
 
-    for(; (i+elemPerLoop)<=len; i+=elemPerLoop){
-        npyv_@sfx@ v0 =  npyv_load_@sfx@(&ip1[i + 0 * elemPerVector]);
-        npyv_@sfx@ v1 =  npyv_load_@sfx@(&ip1[i + 1 * elemPerVector]);
-        npyv_@sfx@ v2 =  npyv_load_@sfx@(&ip1[i + 2 * elemPerVector]);
-        npyv_@sfx@ v3 =  npyv_load_@sfx@(&ip1[i + 3 * elemPerVector]);
-        npyv_@sfx@ v4 =  npyv_load_@sfx@(&ip1[i + 4 * elemPerVector]);
-        npyv_@sfx@ v5 =  npyv_load_@sfx@(&ip1[i + 5 * elemPerVector]);
-
-        npyv_@sfx@ u0 =  npyv_load_@sfx@(&ip2[i + 0 * elemPerVector]);
-        npyv_@sfx@ u1 =  npyv_load_@sfx@(&ip2[i + 1 * elemPerVector]);
-        npyv_@sfx@ u2 =  npyv_load_@sfx@(&ip2[i + 2 * elemPerVector]);
-        npyv_@sfx@ u3 =  npyv_load_@sfx@(&ip2[i + 3 * elemPerVector]);
-        npyv_@sfx@ u4 =  npyv_load_@sfx@(&ip2[i + 4 * elemPerVector]);
-        npyv_@sfx@ u5 =  npyv_load_@sfx@(&ip2[i + 5 * elemPerVector]);
-
+    for (; (i+elemPerLoop) <= len; i += elemPerLoop) {
+        npyv_@sfx@ v0 = npyv_load_@sfx@(&ip1[i + 0 * elemPerVector]);
+        npyv_@sfx@ v1 = npyv_load_@sfx@(&ip1[i + 1 * elemPerVector]);
+    #if NPY_SIMD_WIDTH == 128
+        npyv_@sfx@ v2 = npyv_load_@sfx@(&ip1[i + 2 * elemPerVector]);
+        npyv_@sfx@ v3 = npyv_load_@sfx@(&ip1[i + 3 * elemPerVector]);
+        npyv_@sfx@ v4 = npyv_load_@sfx@(&ip1[i + 4 * elemPerVector]);
+        npyv_@sfx@ v5 = npyv_load_@sfx@(&ip1[i + 5 * elemPerVector]);
+    #endif
+        npyv_@sfx@ u0 = npyv_load_@sfx@(&ip2[i + 0 * elemPerVector]);
+        npyv_@sfx@ u1 = npyv_load_@sfx@(&ip2[i + 1 * elemPerVector]);
+    #if NPY_SIMD_WIDTH == 128
+        npyv_@sfx@ u2 = npyv_load_@sfx@(&ip2[i + 2 * elemPerVector]);
+        npyv_@sfx@ u3 = npyv_load_@sfx@(&ip2[i + 3 * elemPerVector]);
+        npyv_@sfx@ u4 = npyv_load_@sfx@(&ip2[i + 4 * elemPerVector]);
+        npyv_@sfx@ u5 = npyv_load_@sfx@(&ip2[i + 5 * elemPerVector]);
+    #endif
         npyv_@sfx@ m0 = V_INTRIN(v0, u0);
         npyv_@sfx@ m1 = V_INTRIN(v1, u1);
+    #if NPY_SIMD_WIDTH == 128
         npyv_@sfx@ m2 = V_INTRIN(v2, u2);
         npyv_@sfx@ m3 = V_INTRIN(v3, u3);
         npyv_@sfx@ m4 = V_INTRIN(v4, u4);
         npyv_@sfx@ m5 = V_INTRIN(v5, u5);
-
+    #endif
         npyv_store_@sfx@(&op1[i + 0 * elemPerVector], m0);
         npyv_store_@sfx@(&op1[i + 1 * elemPerVector], m1);
+    #if NPY_SIMD_WIDTH == 128
         npyv_store_@sfx@(&op1[i + 2 * elemPerVector], m2);
         npyv_store_@sfx@(&op1[i + 3 * elemPerVector], m3);
         npyv_store_@sfx@(&op1[i + 4 * elemPerVector], m4);
         npyv_store_@sfx@(&op1[i + 5 * elemPerVector], m5);
+    #endif
     }
-
+    for (; (i+elemPerVector) <= len; i += elemPerVector) {
+        npyv_@sfx@ v0 = npyv_load_@sfx@(ip1 + i);
+        npyv_@sfx@ u0 = npyv_load_@sfx@(ip2 + i);
+        npyv_@sfx@ m0 = V_INTRIN(v0, u0);
+        npyv_store_@sfx@(op1 + i, m0);
+    }
     // Scalar - finish up any remaining iterations
-    for(; i<len; ++i){
+    for (; i < len; ++i) {
         const npyv_lanetype_@sfx@ in1 = ip1[i];
         const npyv_lanetype_@sfx@ in2 = ip2[i];
-        
         op1[i] = SCALAR_OP(in1, in2);
     }
 }
+// non-contiguous for float 32/64-bit memory access
+#if @is_fp@
+static inline void
+simd_binary_@intrin@_@sfx@(const npyv_lanetype_@sfx@ *ip1, npy_intp sip1,
+                           const npyv_lanetype_@sfx@ *ip2, npy_intp sip2,
+                                 npyv_lanetype_@sfx@ *op1, npy_intp sop1,
+                                 npy_intp len)
+{
+    const int vstep = npyv_nlanes_@sfx@;
+    for (; len >= vstep; len -= vstep, ip1 += sip1*vstep,
+                         ip2 += sip2*vstep, op1 += sop1*vstep
+    ) {
+        npyv_@sfx@ a, b;
+        if (sip1 == 1) {
+            a = npyv_load_@sfx@(ip1);
+        } else {
+            a = npyv_loadn_@sfx@(ip1, sip1);
+        }
+        if (sip2 == 1) {
+            b = npyv_load_@sfx@(ip2);
+        } else {
+            b = npyv_loadn_@sfx@(ip2, sip2);
+        }
+        npyv_@sfx@ r = V_INTRIN(a, b);
+        if (sop1 == 1) {
+            npyv_store_@sfx@(op1, r);
+        } else {
+            npyv_storen_@sfx@(op1, sop1, r);
+        }
+    }
+    for (; len > 0; --len, ip1 += sip1, ip2 += sip2, op1 += sop1) {
+        const npyv_lanetype_@sfx@ a = *ip1;
+        const npyv_lanetype_@sfx@ b = *ip2;
+        *op1 = SCALAR_OP(a, b);
+    }
+}
+#endif
 
 #undef V_INTRIN
 #undef V_REDUCE_INTRIN
@@ -415,6 +441,20 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
             );
             goto clear_fp;
         }
+    // unroll scalars faster than non-contiguous vector load/store on Arm
+    #if !defined(NPY_HAVE_NEON) && @is_fp@
+        if (TO_SIMD_SFX(npyv_loadable_stride)(is1/sizeof(STYPE)) &&
+            TO_SIMD_SFX(npyv_loadable_stride)(is2/sizeof(STYPE)) &&
+            TO_SIMD_SFX(npyv_storable_stride)(os1/sizeof(STYPE))
+        ) {
+            TO_SIMD_SFX(simd_binary_@intrin@)(
+                (STYPE*)ip1, is1/sizeof(STYPE),
+                (STYPE*)ip2, is2/sizeof(STYPE),
+                (STYPE*)op1, os1/sizeof(STYPE), len
+            );
+            goto clear_fp;
+        }
+    #endif
     }
 #endif // TO_SIMD_SFX
 #ifndef NPY_DISABLE_OPTIMIZATION
@@ -495,7 +535,8 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
         *((@type@ *)op1) = SCALAR_OP(in1, in2);
     }
 #ifdef TO_SIMD_SFX
-clear_fp:;
+clear_fp:
+    npyv_cleanup();
 #endif
 #if @is_fp@
     npy_clear_floatstatus_barrier((char*)dimensions);
