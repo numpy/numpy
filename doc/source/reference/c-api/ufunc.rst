@@ -154,13 +154,13 @@ Functions
        ufunc object is alive.
 
     :param func:
-        Must to an array of length *ntypes* containing
+        Must point to an array of length *ntypes* containing
         :c:type:`PyUFuncGenericFunction` items.
 
     :param data:
-        Should be ``NULL`` or a pointer to an array of size *ntypes*
-        . This array may contain arbitrary extra-data to be passed to
-        the corresponding loop function in the func array.
+        A pointer to an array of size *ntypes* containing arbitrary
+        additional data to be passed to the corresponding loop function
+        in the `func` array. Must not be NULL, but may contain NULLs.
 
     :param types:
        Length ``(nin + nout) * ntypes`` array of ``char`` encoding the
