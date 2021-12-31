@@ -1528,7 +1528,7 @@ PyUFunc_DefaultLegacyInnerLoopSelector(PyUFuncObject *ufunc,
         }
         if (j == nargs) {
             *out_innerloop = ufunc->functions[i];
-            *out_innerloopdata = ufunc->data[i];
+            *out_innerloopdata = (ufunc->data == NULL) ? NULL : ufunc->data[i];
             return 0;
         }
 

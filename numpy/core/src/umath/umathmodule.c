@@ -56,7 +56,7 @@ object_ufunc_loop_selector(PyUFuncObject *ufunc,
                             int *out_needs_api)
 {
     *out_innerloop = ufunc->functions[0];
-    *out_innerloopdata = ufunc->data[0];
+    *out_innerloopdata = (ufunc->data == NULL) ? NULL : ufunc->data[0];
     *out_needs_api = 1;
 
     return 0;
