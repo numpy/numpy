@@ -1,6 +1,6 @@
-.. _reference:
-
 .. module:: numpy
+
+.. _reference:
 
 ###############
 NumPy Reference
