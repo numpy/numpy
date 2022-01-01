@@ -1991,6 +1991,36 @@ error:
 }
 /**end repeat**/
 
+
+/* Strips the extra mantissa places in buf
+ * which holds a valid `half` hex string.
+ */
+static void
+float_to_half_hex(char *buf) {
+    int mant_end, i = 0;
+
+    // read sign (+/-)
+    if (buf[i] == '+' || buf[i] == '-') {
+        i++;
+    }
+
+    // read mantissa (0xh.hh) and store end at mant_end
+    // Size of mantissa + decimal '.'
+    mant_end = i + (NPY_SIZEOF_HALF * CHAR_BIT + 3) / 4 + 1 + 1;
+    i = mant_end = mant_end+1;
+
+    // go to exponent via the mantissa-exponent separator, 'p'
+    while (buf[i++] != 'p');
+    i--;
+
+    // Override the extra mantissa
+    while (buf[i] != '\0') {
+        buf[mant_end++] = buf[i++];
+    }
+
+    buf[mant_end] = '\0';
+}
+
 /**begin repeat
  *  #name = half, float, double, longdouble#
  *  #Name = Half, Float, Double, LongDouble#
@@ -2020,40 +2050,89 @@ static PyObject *
     return ret;
 }
 
-static PyObject *
-@name@_hex(PyObject *self) {
 #if @is_half@
+static PyObject *
+half_hex(PyObject *self) {
+    npy_half half_val = PyArrayScalar_VAL(self, Half);
+
+    if (npy_half_isnan(half_val) || !npy_half_isfinite(half_val)) {
+        return halftype_str(self);
+    }
+
     npy_float val = npy_half_to_float(PyArrayScalar_VAL(self, @Name@));
-#else
-    npy_@name@ val = PyArrayScalar_VAL(self, @Name@);
-#endif
+
     // xref: https://stackoverflow.com/a/15197157/5671364
     char buf[
         1 + // sign, '-' or '+'
-#if @is_half@
         (NPY_SIZEOF_FLOAT * CHAR_BIT + 3) / 4 + // mantissa hex digits max
-#else
-        (NPY_SIZEOF_@NAME@ * CHAR_BIT + 3) / 4 + // mantissa hex digits max
-#endif
         1 + // decimal point, '.'
         1 + // mantissa-exponent separator, 'p'
         1 + // mantissa sign, '-' or '+'
-#if @is_half@
         (NPY_SIZEOF_FLOAT * CHAR_BIT + 2) / 3 + // exponent decimal digits max
-#else
-        (NPY_SIZEOF_@NAME@ * CHAR_BIT + 2) / 3 + // exponent decimal digits max
-#endif
         1 // string terminator, '\0'
     ];
 
-    if (npy_isnan(val) || !npy_isfinite(val)) {
-        return floattype_str(self);
-    }
-#if @is_half@
     npy_float_hex(val, buf);
+    float_to_half_hex(buf);
+    return PyUnicode_FromString(buf);
+}
+
+static PyObject *
+half_fromhex(PyObject *cls, PyObject *arg) {
+    const char *string, *string_end;
+    Py_ssize_t length;
+    PyObject *ret;
+    npy_float value;
+    npy_half half_value;
+
+    string = PyUnicode_AsUTF8AndSize(arg, &length);
+    if (string == NULL) {
+        return NULL;
+    }
+    string_end = string + length;
+
+    if (npy_float_fromhex(string, string_end, &value) == NPY_FALSE) {
+        return NULL;
+    }
+
+    ret = PyArrayScalar_New(Half);
+    if (ret == NULL) {
+        return NULL;
+    }
+
+    npy_clear_floatstatus_barrier((char *)&value);
+    half_value = npy_float_to_half(value);
+    if (npy_get_floatstatus_barrier((char *)&value) & NPY_FPE_OVERFLOW) {
+        PyErr_SetString(PyExc_OverflowError,
+            "hexadecimal value too large to represent as half");
+        return NULL;
+    }
+
+    PyArrayScalar_ASSIGN(ret, Half, half_value);
+
+    return ret;
+}
 #else
+static PyObject *
+@name@_hex(PyObject *self) {
+    npy_@name@ val = PyArrayScalar_VAL(self, @Name@);
+
+    if (npy_isnan(val) || !npy_isfinite(val)) {
+        return @name@type_str(self);
+    }
+
+    // xref: https://stackoverflow.com/a/15197157/5671364
+    char buf[
+        1 + // sign, '-' or '+'
+        (NPY_SIZEOF_@NAME@ * CHAR_BIT + 3) / 4 + // mantissa hex digits max
+        1 + // decimal point, '.'
+        1 + // mantissa-exponent separator, 'p'
+        1 + // mantissa sign, '-' or '+'
+        (NPY_SIZEOF_@NAME@ * CHAR_BIT + 2) / 3 + // exponent decimal digits max
+        1 // string terminator, '\0'
+    ];
+
     npy_@name@_hex(val, buf);
-#endif
     return PyUnicode_FromString(buf);
 }
 
@@ -2062,11 +2141,7 @@ static PyObject *
     const char *string, *string_end;
     Py_ssize_t length;
     PyObject *ret;
-#if @is_half@
-    npy_float value;
-#else
     npy_@name@ value;
-#endif
 
     string = PyUnicode_AsUTF8AndSize(arg, &length);
     if (string == NULL) {
@@ -2074,11 +2149,7 @@ static PyObject *
     }
     string_end = string + length;
 
-#if @is_half@
-    if (npy_float_fromhex(string, string_end, &value) == NPY_FALSE) {
-#else
     if (npy_@name@_fromhex(string, string_end, &value) == NPY_FALSE) {
-#endif
         return NULL;
     }
 
@@ -2086,14 +2157,11 @@ static PyObject *
     if (ret == NULL) {
         return NULL;
     }
-#if @is_half@
-    PyArrayScalar_ASSIGN(ret, @Name@, npy_float_to_half(value));
-#else
     PyArrayScalar_ASSIGN(ret, @Name@, value);
-#endif
 
     return ret;
 }
+#endif
 /**end repeat**/
 
 static PyObject *

@@ -884,7 +884,7 @@ npy_@name@_hex(npy_@name@ x, char *buff) {
 /* Heavily copied from the builtin float.fromhex
  * This function returns True if conversion is possible,
  * else returns false and value of the argument `result`
- * should not be used.
+ * should be used as resultant floating point value.
  */
 NPY_INPLACE npy_bool
 npy_@name@_fromhex(const char *s, const char *s_end, npy_@name@ *result)
@@ -1104,7 +1104,7 @@ npy_@name@_fromhex(const char *s, const char *s_end, npy_@name@ *result)
 
   overflow_error:
     PyErr_SetString(PyExc_OverflowError,
-                    "hexadecimal value too large to represent as a float");
+                    "hexadecimal value too large to represent as @name@");
     return NPY_FALSE;
 
   parse_error:
