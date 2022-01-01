@@ -1503,8 +1503,28 @@ def slice_(a, start, stop=None, step=None, chunksize=None):
 
     # Find the real base array
     base = a
-    while base.base is not None:
+    while base.base is not None and hasattr(base.base, '__array_interface__'):
         base = base.base
+    if base.base is not None:
+        # Deal with a non-numpy object
+        if not base.flags['C_CONTIGUOUS']:
+            # Make a buffer that covers the original data to the last element.
+            # This is hacky, but it's pretty much guaranteed to work.
+            # The underlying issue is that stride_tricks.as_stided uses the
+            # same conservative mechanism for changing a dtype as `.view` and
+            # ndarray. It will let you do crazy things with strides and
+            # offsets, but god forbid that you should unwitingly change the
+            # dtype of a non-c-contiguous array. All you need to do is
+            # introduce a new dimesion whenever you do that, and it's just as
+            # safe as any other stuff as_strided lets you do...
+            address = ndarray(buffer=base.base, offset=0, strides=0, dtype='B',
+                              shape=10).__array_interface__['data'][0]
+            ashape = narray(a.shape)
+            astrides = narray(a.strides)
+            fullsize = a.__array_interface__['data'][0] + a.dtype.itemsize + \
+                       (astrides * (ashape - 1))[astrides > 0].sum() - address
+            base = ndarray(buffer=base.base, dtype='B',
+                           strides=1, shape=fullsize)
     # ['data'][0] is the memory pointer to the buffer
     realoffset = (a.__array_interface__['data'][0] -
                   base.__array_interface__['data'][0])

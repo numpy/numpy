@@ -861,3 +861,41 @@ class TestSlice_:
         s[:] = ['x', 'yz']
         assert_array_equal(arr, ['x\x00c', 'yzf'])
 
+    def test_non_array_buffer(self):
+        """
+        Test with an underlying buffer not owned by numpy.
+        """
+        template = ['what\x00', 'is\x00\x00\x00',
+                    'going', 'on\x00\x00\x00', 'here?']
+        base = (('\x00' * 5).join(template) + ('\x00' * 5)).encode('utf-32')
+        dtype = np.dtype('U5')
+        shape = (len(template),)
+        strides = (2 * dtype.itemsize)
+        # Offset=4 because UTF-32 introduces a 4-byte BOM
+        arr = np.ndarray(buffer=base, strides=strides,
+                         shape=shape, dtype=dtype, offset=4)
+
+        result = np.char.slice_(arr, 1)
+        assert_array_equal(result, ['w', 'i', 'g', 'o', 'h'])
+        assert not result.flags['WRITEABLE']
+
+        result = np.char.slice_(arr, 0, step=4)
+        assert_array_equal(result, [['w', '\x00'], ['i', '\x00'], ['g', 'g'],
+                                    ['o', '\x00'], ['h', '?']])
+        assert not result.flags['WRITEABLE']
+
+        # Now do the same thing but with negative strides
+        strides = (-2 * dtype.itemsize)
+        offset = 4 + 8 * dtype.itemsize
+        arr = np.ndarray(buffer=base, strides=strides,
+                         shape=shape, dtype=dtype, offset=offset)
+
+        result = np.char.slice_(arr, 1)
+        assert_array_equal(result, ['h', 'o', 'g', 'i', 'w'])
+        assert not result.flags['WRITEABLE']
+
+        result = np.char.slice_(arr, 0, step=4)
+        assert_array_equal(result, [['h', '?'], ['o', '\x00'], ['g', 'g'],
+                                    ['i', '\x00'], ['w', '\x00']])
+        assert not result.flags['WRITEABLE']
+
