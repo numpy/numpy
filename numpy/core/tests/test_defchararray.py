@@ -671,3 +671,189 @@ def test_empty_indexing():
     # empty chararray instead of a chararray with a single empty string in it.
     s = np.chararray((4,))
     assert_(s[[]].size == 0)
+
+
+class TestSlice_:
+    """
+    Tests for the `slice_` function.
+    """
+    def setup(self):
+        """ Set up oft-reused arrays. """
+        self.arr = np.array(['This is a long string',
+                             'String proliferation is no joke',
+                             'Quick brown fox, lazy dog, you do the math'],
+                            dtype='<U50')
+        self.arr1d = np.array(['abc', 'def'], dtype='<U3')
+        self.arr2d = np.array([['abc', 'def'],
+                               ['ghi', 'jkl']], dtype='<U3')
+        self.arr3d = np.array([[['abc', 'def'], ['ghi', 'jkl']],
+                               [['mno', 'pqr'], ['stu', 'vwx']]], dtype='<U3')
+
+    def test_basic(self):
+        """
+        Show that all manner of slicing operations work:
+
+         1. start, stop only -> normal slice
+         2. start > stop -> empty strings
+         3. start, stop, step > 1 -> characters separated out
+         4. start > stop, step < 0 -> characters backwards and separated out
+         5. start < stop, step < 0 -> empty extra dimension
+         6. start, stop, chunksize > 1 -> overlapping slices
+         7. start < -N, N > stop > N - chunksize -> stop gets adjusted
+         8. start, stop, chunksize == step > 1 -> normal multiple slices
+         9. start < stop, -step == chunksize > 1 -> normal, reversed slices
+
+        Add more to the list if you feel it's necessary.
+        """
+        # 1.
+        assert_array_equal(np.char.slice_(self.arr, 3, 9),
+                           ['s is a', 'ing pr', 'ck bro'])
+        # 2.
+        assert_array_equal(np.char.slice_(self.arr, 9, 3), ['', '', ''])
+        # 3.
+        assert_array_equal(np.char.slice_(self.arr, 3, 25, 3),
+                           [list('ss nsi\x00\x00'),
+                            list('i ofaoin'),
+                            list('cbwf,a g')])
+        # 4.
+        assert_array_equal(np.char.slice_(self.arr, 15, 2, -3),
+                           [list('sn ss'),
+                            list('afo i'),
+                            list(',fwbc')])
+        # 5.
+        assert np.char.slice_(self.arr, 2, 15, -3).shape == (3, 0)
+        # 6.
+        assert_array_equal(np.char.slice_(self.arr, 7, 12, chunksize=4),
+                           [[' a l', 'a lo', ' lon', 'long', 'ong '],
+                            ['prol', 'roli', 'olif', 'life', 'ifer'],
+                            ['rown', 'own ', 'wn f', 'n fo', ' fox']])
+        # 7.
+        assert_array_equal(np.char.slice_(self.arr, -399, 50), self.arr)
+        assert_array_equal(np.char.slice_(self.arr, 0, 10000), self.arr)
+        assert_array_equal(np.char.slice_(self.arr, -399, 10000), self.arr)
+        assert_array_equal(np.char.slice_(self.arr, 10000, 50), ['', '', ''])
+        assert_array_equal(np.char.slice_(self.arr, 0, -399), ['', '', ''])
+        assert_array_equal(np.char.slice_(self.arr, 10000, -399), ['', '', ''])
+        # 8.
+        assert_array_equal(np.char.slice_(self.arr, 0, 15, step=5, chunksize=5),
+                           [['This ', 'is a ', 'long '],
+                            ['Strin', 'g pro', 'lifer'],
+                            ['Quick', ' brow', 'n fox']])
+        # 9.
+        assert_array_equal(np.char.slice_(self.arr, 16, step=-4, chunksize=4),
+                           [['trin', 'ng s', 'a lo', ' is ', 'This'],
+                            ['tion', 'fera', 'roli', 'ng p', 'Stri'],
+                            [' laz', 'fox,', 'own ', 'k br', 'Quic']])
+
+    def test_dtype(self):
+        """
+        Show that slice accepts any byteorder of S and U, but raises for
+        other types.
+        """
+        result = np.char.slice_(np.array(['abc', 'def'], dtype='<U3'), 1)
+        assert_array_equal(result, ['a', 'd'])
+        assert result.dtype.str == '<U1'
+
+        result = np.char.slice_(np.array(['abc', 'def'], dtype='>U3'), 1)
+        assert_array_equal(result, ['a', 'd'])
+        assert result.dtype.str == '>U1'
+
+        result = np.char.slice_(np.array(['abc', 'def'], dtype='S3'), 1)
+        assert_array_equal(result, [b'a', b'd'])
+        assert result.dtype.str == '|S1'
+
+        assert_raises(TypeError, np.char.slice_,
+                      np.array(['abc', 'def'], dtype=object), 1)
+        assert_raises(TypeError, np.char.slice_, [1, 2, 3], 1)
+
+    def test_start(self):
+        """
+        Show that start becomes stop only if both stop and step are None.
+        """
+        assert_array_equal(np.char.slice_(self.arr1d, 2), ['ab', 'de'])
+        assert_array_equal(np.char.slice_(self.arr1d, 2, stop=3), ['c', 'f'])
+        assert_array_equal(np.char.slice_(self.arr1d, 2, step=1), ['c', 'f'])
+        assert_array_equal(np.char.slice_(self.arr1d, 2, stop=3, step=1), ['c', 'f'])
+
+    def test_shape(self):
+        """
+        Show that input shape == output shape for step == 1 and chunksize == 1,
+        and has an extra dim otherwise.
+        """
+        result = np.char.slice_(self.arr2d, 1, 3)
+        assert result.ndim == self.arr2d.ndim
+        assert result.shape == self.arr2d.shape
+
+        result = np.char.slice_(self.arr2d, 1, 3, step=1)
+        assert result.ndim == self.arr2d.ndim
+        assert result.shape == self.arr2d.shape
+
+        result = np.char.slice_(self.arr2d, 1, 3, chunksize=1)
+        assert result.ndim == self.arr2d.ndim
+        assert result.shape == self.arr2d.shape
+
+        result = np.char.slice_(self.arr2d, 1, 3, step=1, chunksize=1)
+        assert result.ndim == self.arr2d.ndim
+        assert result.shape == self.arr2d.shape
+
+        result = np.char.slice_(self.arr2d, 1, 3, step=2)
+        assert result.ndim == self.arr2d.ndim + 1
+        assert result.shape == self.arr2d.shape + (1,)
+
+        result = np.char.slice_(self.arr2d, 1, 3, chunksize=2)
+        assert result.ndim == self.arr2d.ndim + 1
+        assert result.shape == self.arr2d.shape + (1,)
+
+        result = np.char.slice_(self.arr2d, 1, 3, chunksize=3)
+        assert result.ndim == self.arr2d.ndim + 1
+        assert result.shape == self.arr2d.shape + (0,)
+
+        result = np.char.slice_(self.arr2d, 1, 0, step=-1)
+        assert result.ndim == self.arr2d.ndim + 1
+        assert result.shape == self.arr2d.shape + (1,)
+
+        result = np.char.slice_(self.arr2d, 3, step=-1, chunksize=3)
+        assert result.ndim == self.arr2d.ndim + 1
+        assert result.shape == self.arr2d.shape + (1,)
+
+        # This one is very important: caught start < 0 case
+        result = np.char.slice_(self.arr2d, 3, step=-1, chunksize=4)
+        assert result.ndim == self.arr2d.ndim + 1
+        assert result.shape == self.arr2d.shape + (0,)
+
+    def test_chunksize(self):
+        """
+        Show that chunksize *must* be positive.
+        Show that chunksize > length of string is OK
+        """
+        assert_raises(ValueError, np.char.slice_, self.arr, 2, chunksize=0)
+        assert_raises(ValueError, np.char.slice_, self.arr, 2, chunksize=-1)
+
+        result = np.char.slice_(self.arr1d, 1, chunksize=4)
+        assert result.shape == (2, 0)
+        assert result.dtype == np.dtype('<U4')
+
+        result = np.char.slice_(self.arr1d, 1, step=-1, chunksize=4)
+        assert result.shape == (2, 0)
+        assert result.dtype == np.dtype('<U4')
+
+    def test_non_contiguous(self):
+        """ Show that a contiguous base will be found whether we like it or not. """
+        base = np.empty((10, 10), dtype='<U10')
+        base[3::5, 3::5] = self.arr2d
+        arr = base[-2::-5, 3::5]
+        assert not (arr.flags['C_CONTIGUOUS'] | arr.flags['F_CONTIGUOUS'])
+        result = np.char.slice_(arr, 2)
+        assert_array_equal(result, [['gh', 'jk'], ['ab', 'de']])
+        assert result.base is base
+
+    def test_writeback(self):
+        """ Show that returned slices write back to the original array. """
+        arr = self.arr1d.copy()
+        assert arr.base is None
+        s = np.char.slice_(arr, 2)
+        assert s.base is arr
+        assert s.dtype == np.dtype('<U2')
+        s[:] = ['x', 'yz']
+        assert_array_equal(arr, ['x\x00c', 'yzf'])
+

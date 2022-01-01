@@ -16,9 +16,11 @@ The preferred alias for `defchararray` is `numpy.char`.
 
 """
 import functools
+import warnings
+
 from .numerictypes import (
     string_, unicode_, integer, int_, object_, bool_, character)
-from .numeric import ndarray, compare_chararrays
+from .numeric import asanyarray, ndarray, compare_chararrays
 from .numeric import array as narray
 from numpy.core.multiarray import _vec_string
 from numpy.core.overrides import set_module
@@ -33,9 +35,9 @@ __all__ = [
     'find', 'index', 'isalnum', 'isalpha', 'isdigit', 'islower', 'isspace',
     'istitle', 'isupper', 'join', 'ljust', 'lower', 'lstrip', 'partition',
     'replace', 'rfind', 'rindex', 'rjust', 'rpartition', 'rsplit',
-    'rstrip', 'split', 'splitlines', 'startswith', 'strip', 'swapcase',
-    'title', 'translate', 'upper', 'zfill', 'isnumeric', 'isdecimal',
-    'array', 'asarray'
+    'rstrip', 'slice_', 'split', 'splitlines', 'startswith', 'strip',
+    'swapcase', 'title', 'translate', 'upper', 'zfill', 'isnumeric',
+    'isdecimal', 'array', 'asarray'
     ]
 
 
@@ -1396,6 +1398,147 @@ def rstrip(a, chars=None):
     """
     a_arr = numpy.asarray(a)
     return _vec_string(a_arr, a_arr.dtype, 'rstrip', (chars,))
+
+
+def _slice__dispatcher(a, start, stop=None, step=None, chunksize=None):
+    return (a,)
+
+
+@array_function_dispatch(_slice__dispatcher)
+def slice_(a, start, stop=None, step=None, chunksize=None):
+    """
+    Extract a slice from each element of string array `a`.
+
+    For the most part, the slicing notation is exactly as for normal
+    python slices:
+
+    - Negative `start` and `stop` add the length of the datatype
+      (not necessarily the length of the individual elements).
+    - Out-of-bounds limits are silently adjusted to the bounds they
+      exceed.
+    - If `start` is specified but `stop` is None, they are interpreted
+      as `start, stop = 0, start`, but only if `step` is not given.
+    - Inclusivity of the bounds depends on which way `step` is going,
+      with the beginning being inclusive and the end always being
+      exclusive.
+    - A `start` and `stop` in the wrong order results in an output full
+      of empty strings.
+
+    The `step` and `chunksize` parameters are handled a little
+    differently, especially since `chunksize` is not a normal slice
+    parameter. If both `step` and `chunksize` are `None` or 1, the
+    resulting datatype will be large enough to hold the requested
+    slice in a single element and the dimensions of the output will
+    match those of the input. If `chunksize` is not 1, **or** `step`
+    is not 1, then the output array will have an extra dimension and
+    a dtype that is `chunksize` characters long. This may yield
+    slightly unexpected results, because the actual end of the original
+    datatype will be effectively shortened by `chunksize - 1`. Unlike
+    `start` and `stop`, `chunksize` is never silently modified, so the
+    result may be empty if it is too large.
+
+    Every effort is made not to copy the data. Data is copied
+    when an unsuitable array-like class is used (e.g. `list`, or
+    anything else `numpy.asanyarray` would copy data for). The only
+    other circumstance under which the underlying data is copied is
+    if a contiguous base array can not be found for the data. A
+    warning is issued in the latter case because it is much harder
+    to catch under normal circumstances.
+
+    Parameters
+    ----------
+    a : array-like
+        Must have dtype `numpy.str_` or `numpy.unicode_`.
+    start : int
+        The start of the slice. Treated as `stop` if `stop` is not
+        provided.
+    stop : int, optional
+        The end of the slice.
+    step : int, optional
+        The number of steps between characters. Usually one, but can be
+        any other step size.
+    chunksize : int
+        The number of characters to extract at each step. Usually one,
+        but can be any other amount that fits into the length of the
+        string. Must be a positive integer.
+
+    Return
+    ------
+    slice : np.ndarray
+        A view of the original data, sliced to show strings of the
+        required size. The dimensions of the new array are the same
+        as those of the input for `step == chunksize == 1`, and
+        ``(*a.shape, (stop - start) // step)`` (after bounds are
+        computed) otherwise. The datatype is the same as that of `a`,
+        with same byte order and code as the input. Only the element
+        length differs, being either `stop - start` or `chunksize`,
+        respectively.
+    """
+    a = asanyarray(a)
+    dtype = a.dtype
+
+    if dtype.char not in 'US':
+        raise TypeError('Only U and S string datatypes supported. '
+                        f'Found {dtype.char}')
+
+    if chunksize is None:
+        chunksize = 1
+    elif chunksize < 1:
+        raise ValueError('chunksize must be a positive integer')
+
+    length = int(dtype.str[2:])
+
+    # Adjust the bounds using a slice object
+    if stop is None and step is None:
+        start, stop = 0, start
+    start, stop, step = slice(
+                start, stop, step
+            ).indices(max(0, length - chunksize + 1))
+    if start < 0:
+        start = stop = 0
+        step = 1
+
+    # Get the real dtype information
+    charsize = dtype.itemsize // length
+
+    # Find the real base array
+    base = a
+    while base.base is not None:
+        base = base.base
+    # ['data'][0] is the memory pointer to the buffer
+    realoffset = (a.__array_interface__['data'][0] -
+                  base.__array_interface__['data'][0])
+
+    # Compute the final view parameters
+    if step == 1 and chunksize == 1:
+        chunksize = max(stop - start, 0)
+        newshape = a.shape
+        newstrides = a.strides
+    else:
+        newshape = (*a.shape, max(0, (stop - start + (step - numpy.sign(step))) // step))
+        newstrides = (*a.strides, step * charsize)
+    newdtype = numpy.dtype(f'{dtype.str[:2]}{chunksize}')
+    newoffset = start * charsize
+
+    try:
+        # This should work 99% of the time
+        newarray = ndarray(buffer=base, offset=newoffset + realoffset,
+                           shape=newshape, strides=newstrides,
+                           dtype=newdtype)
+    except ValueError as e:
+        # Please don't change the contents of this string
+        if str(e) == 'ndarray is not contiguous':
+            warnings.warn('A contiguous base array could not be found. '
+                          'A slice of a copy will be returned. '
+                          'Writeback to the original array will not work.')
+            a = a.copy()
+            newarray = ndarray(buffer=a, offset=newoffset,
+                               shape=newshape, strides=newstrides,
+                               dtype=newdtype)
+        else:
+            # If we messed something else up, too bad
+            raise
+    return newarray
 
 
 @array_function_dispatch(_split_dispatcher)
