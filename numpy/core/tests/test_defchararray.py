@@ -773,7 +773,8 @@ class TestSlice_:
         assert_array_equal(np.char.slice_(self.arr1d, 2), ['ab', 'de'])
         assert_array_equal(np.char.slice_(self.arr1d, 2, stop=3), ['c', 'f'])
         assert_array_equal(np.char.slice_(self.arr1d, 2, step=1), ['c', 'f'])
-        assert_array_equal(np.char.slice_(self.arr1d, 2, stop=3, step=1), ['c', 'f'])
+        assert_array_equal(np.char.slice_(self.arr1d, 2, stop=3, step=1),
+                                                                  ['c', 'f'])
 
     def test_shape(self):
         """
@@ -834,11 +835,13 @@ class TestSlice_:
         assert result.dtype == np.dtype('<U4')
 
         result = np.char.slice_(self.arr1d, 1, step=-1, chunksize=4)
-        assert result.shape == (2, 0)
+        assert result.shape == (2   , 0)
         assert result.dtype == np.dtype('<U4')
 
     def test_non_contiguous(self):
-        """ Show that a contiguous base will be found whether we like it or not. """
+        """
+        Show that a contiguous base will be found whether we like it or not.
+        """
         base = np.empty((10, 10), dtype='<U10')
         base[3::5, 3::5] = self.arr2d
         arr = base[-2::-5, 3::5]

@@ -1515,7 +1515,8 @@ def slice_(a, start, stop=None, step=None, chunksize=None):
         newshape = a.shape
         newstrides = a.strides
     else:
-        newshape = (*a.shape, max(0, (stop - start + (step - numpy.sign(step))) // step))
+        newshape = (*a.shape,
+                max(0, (stop - start + (step - numpy.sign(step))) // step))
         newstrides = (*a.strides, step * charsize)
     newdtype = numpy.dtype(f'{dtype.str[:2]}{chunksize}')
     newoffset = start * charsize
