@@ -735,7 +735,8 @@ class TestSlice_:
         assert_array_equal(np.char.slice_(self.arr, 0, -399), ['', '', ''])
         assert_array_equal(np.char.slice_(self.arr, 10000, -399), ['', '', ''])
         # 8.
-        assert_array_equal(np.char.slice_(self.arr, 0, 15, step=5, chunksize=5),
+        assert_array_equal(
+                np.char.slice_(self.arr, 0, 15, step=5, chunksize=5),
                            [['This ', 'is a ', 'long '],
                             ['Strin', 'g pro', 'lifer'],
                             ['Quick', ' brow', 'n fox']])
@@ -835,7 +836,7 @@ class TestSlice_:
         assert result.dtype == np.dtype('<U4')
 
         result = np.char.slice_(self.arr1d, 1, step=-1, chunksize=4)
-        assert result.shape == (2   , 0)
+        assert result.shape == (2, 0)
         assert result.dtype == np.dtype('<U4')
 
     def test_non_contiguous(self):
