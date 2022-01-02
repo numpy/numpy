@@ -54,6 +54,9 @@
  * ====================================================
  */
 #include "npy_math_private.h"
+#ifdef _MSC_VER
+#  include <intrin.h>   // for __popcnt
+#endif
 
 /* Magic binary numbers used by bit_count
  * For type T, the magic numbers are computed as follows:
