@@ -1,0 +1,9 @@
+Added `numpy.char.slice_`
+-------------------------
+Allows slicing of strings within character arrays of type `np.str_` and
+`np.unicode_`. In addition to the normal slice parameters of `start`,
+`stop` and `step`, this function supports a `chunksize` parameter. Slices
+with `step == chunksize == 1` are treated slightly differently than other
+slices, in that they do not add an extra dimension to the array. This
+oft-requested feature is conceptually simple, but ran afoul of the dtype
+conversion checks in view creation until now.
