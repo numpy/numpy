@@ -735,11 +735,11 @@ class TestSlice_:
         assert_array_equal(np.char.slice_(self.arr, 0, -399), ['', '', ''])
         assert_array_equal(np.char.slice_(self.arr, 10000, -399), ['', '', ''])
         # 8.
-        assert_array_equal(
-                np.char.slice_(self.arr, 0, 15, step=5, chunksize=5),
-                               [['This ', 'is a ', 'long '],
-                                ['Strin', 'g pro', 'lifer'],
-                                ['Quick', ' brow', 'n fox']])
+        assert_array_equal(np.char.slice_(self.arr, 0, 15,
+                                          step=5, chunksize=5),
+                           [['This ', 'is a ', 'long '],
+                            ['Strin', 'g pro', 'lifer'],
+                            ['Quick', ' brow', 'n fox']])
         # 9.
         assert_array_equal(np.char.slice_(self.arr, 16, step=-4, chunksize=4),
                            [['trin', 'ng s', 'a lo', ' is ', 'This'],
