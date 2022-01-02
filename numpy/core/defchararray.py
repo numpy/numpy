@@ -1551,7 +1551,8 @@ def slice_(a, start, stop=None, step=None, chunksize=None):
         if str(e) == 'ndarray is not contiguous':
             warnings.warn('A contiguous base array could not be found. '
                           'A slice of a copy will be returned. '
-                          'Writeback to the original array will not work.')
+                          'Writeback to the original array will not work.',
+                          stacklevel=2)
             a = a.copy()
             newarray = ndarray(buffer=a, offset=newoffset,
                                shape=newshape, strides=newstrides,
