@@ -155,7 +155,6 @@ class TestDimSpec(util.F2PyTest):
 
     code = ""
     for count, dimspec in enumerate(all_dimspecs):
-        shape = dimspec.split(',')
         lst = [(d.split(":")[0] if ":" in d else "1") for d in dimspec.split(',')]
         code += code_template.format(
             count=count,
