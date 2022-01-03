@@ -55,6 +55,7 @@ class Array:
     functions, such as asarray().
 
     """
+    _array: np.ndarray
 
     # Use a custom constructor instead of __init__, as manually initializing
     # this class is not supported API.
@@ -124,6 +125,9 @@ class Array:
     # spec in places where it either deviates from or is more strict than
     # NumPy behavior
 
+    # NOTE: no valid type annotation possible.  E.g `Union[Array,
+    # NotImplemented]` is forbidden, see https://github.com/python/mypy/issues/363
+    # Maybe change returned object to `Literal['NotImplemented']`?
     def _check_allowed_dtypes(self, other, dtype_category, op):
         """
         Helper function for operators to only allow specific input dtypes
@@ -200,7 +204,7 @@ class Array:
         return Array._new(np.array(scalar, self.dtype))
 
     @staticmethod
-    def _normalize_two_args(x1, x2):
+    def _normalize_two_args(x1, x2) -> Tuple[Array, Array]:
         """
         Normalize inputs to two arg functions to fix type promotion rules
 
