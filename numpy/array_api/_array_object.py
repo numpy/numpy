@@ -30,6 +30,7 @@ from ._dtypes import (
 )
 
 from typing import TYPE_CHECKING, Optional, Tuple, Union, Any
+import types
 
 if TYPE_CHECKING:
     from ._typing import Any, PyCapsule, Device, Dtype
@@ -415,7 +416,7 @@ class Array:
 
     def __array_namespace__(
         self: Array, /, *, api_version: Optional[str] = None
-    ) -> Any:
+    ) -> types.ModuleType:
         if api_version is not None and not api_version.startswith("2021."):
             raise ValueError(f"Unrecognized array API version: {api_version!r}")
         return array_api
