@@ -78,7 +78,7 @@ def tarball_name(ftype='gztar'):
         return root + '.tar.gz'
     elif ftype == 'zip':
         return root + '.zip'
-    raise ValueError(f"Unknown type {type}")
+    raise ValueError(f"Unknown type: {type}")
 
 
 @task
@@ -195,11 +195,11 @@ def write_release_task(options, filename='README'):
     md_readme = paver.path.path(filename + '.md')
 
     # append hashes
-    with open(rst_readme, 'w') as freadme:
+    with open(rst_readme, 'w') as f:
         with open(notes) as fnotes:
-            freadme.write(fnotes.read())
+            f.write(fnotes.read())
 
-        freadme.writelines(textwrap.dedent(
+        f.writelines(textwrap.dedent(
             """
             Checksums
             =========
@@ -209,16 +209,16 @@ def write_release_task(options, filename='README'):
             ::
 
             """))
-        freadme.writelines([f'    {c}\n' for c in compute_md5(idirs)])
+        f.writelines([f'    {c}\n' for c in compute_md5(idirs)])
 
-        freadme.writelines(textwrap.dedent(
+        f.writelines(textwrap.dedent(
             """
             SHA256
             ------
             ::
 
             """))
-        freadme.writelines([f'    {c}\n' for c in compute_sha256(idirs)])
+        f.writelines([f'    {c}\n' for c in compute_sha256(idirs)])
 
     # generate md file using pandoc before signing
     sh(f"pandoc -s -o {md_readme} {rst_readme}")
