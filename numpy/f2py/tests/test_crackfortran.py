@@ -221,16 +221,21 @@ class TestDimSpec(util.F2PyTest):
       end subroutine
     """)
 
-    linear_dimspecs = ['n', '2*n', '2:n', 'n/2', '5 - n/2', '3*n:20',
-                       'n*(n+1):n*(n+5)']
-    nonlinear_dimspecs = ['2*n:3*n*n+2*n']
+    linear_dimspecs = [
+        "n", "2*n", "2:n", "n/2", "5 - n/2", "3*n:20", "n*(n+1):n*(n+5)",
+        "2*n, n"
+    ]
+    nonlinear_dimspecs = ["2*n:3*n*n+2*n"]
     all_dimspecs = linear_dimspecs + nonlinear_dimspecs
 
     code = ''
     for count, dimspec in enumerate(all_dimspecs):
+        lst = [(d.split(":")[0] if ":" in d else "1") for d in dimspec.split(',')]
         code += code_template.format(
-            count=count, dimspec=dimspec,
-            first=dimspec.split(':')[0] if ':' in dimspec else '1')
+            count=count,
+            dimspec=dimspec,
+            first=", ".join(lst),
+        )
 
     @pytest.mark.parametrize('dimspec', all_dimspecs)
     def test_array_size(self, dimspec):
@@ -240,7 +245,7 @@ class TestDimSpec(util.F2PyTest):
 
         for n in [1, 2, 3, 4, 5]:
             sz, a = get_arr_size(n)
-            assert len(a) == sz
+            assert a.size == sz
 
     @pytest.mark.parametrize('dimspec', all_dimspecs)
     def test_inv_array_size(self, dimspec):
