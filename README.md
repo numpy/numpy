@@ -22,7 +22,7 @@ https://stackoverflow.com/questions/tagged/numpy)
 [![Nature Paper](https://img.shields.io/badge/DOI-10.1038%2Fs41592--019--0686--2-blue)](
 https://doi.org/10.1038/s41586-020-2649-2)
 
-NumPy is the fundamental package needed for scientific computing with Python.
+NumPy is the fundamental package for scientific computing with Python.
 
 - **Website:** https://www.numpy.org
 - **Documentation:** https://numpy.org/doc
@@ -45,6 +45,14 @@ NumPy requires `pytest` and `hypothesis`.  Tests can then be run after installat
 
     python -c 'import numpy; numpy.test()'
 
+Code of Conduct
+----------------------
+
+NumPy is a community-driven open source project developed by a diverse group of
+[contributors](https://numpy.org/gallery/team.html). The NumPy leadership has made a strong
+commitment to creating an open, inclusive, and positive community. Please read the
+[NumPy Code of Conduct](https://numpy.org/code-of-conduct/) for guidance on how to interact
+with others in a way that makes our community thrive.
 
 Call for Contributions
 ----------------------
