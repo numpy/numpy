@@ -125,10 +125,7 @@ class Array:
     # spec in places where it either deviates from or is more strict than
     # NumPy behavior
 
-    # NOTE: no valid type annotation possible.  E.g `Union[Array,
-    # NotImplemented]` is forbidden, see https://github.com/python/mypy/issues/363
-    # Maybe change returned object to `Literal['NotImplemented']`?
-    def _check_allowed_dtypes(self, other, dtype_category, op):
+    def _check_allowed_dtypes(self, other: bool | int | float | Array, dtype_category: str, op: str) -> Array:
         """
         Helper function for operators to only allow specific input dtypes
 
