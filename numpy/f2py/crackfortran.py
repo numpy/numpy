@@ -2591,7 +2591,10 @@ def analyzevars(block):
                             if dsize.contains(s):
                                 try:
                                     a, b = dsize.linear_solve(s)
-                                    solve_v = lambda s: (s - b) / a
+
+                                    def solve_v(s, a=a, b=b):
+                                        return (s - b) / a
+
                                     all_symbols = set(a.symbols())
                                     all_symbols.update(b.symbols())
                                 except RuntimeError as msg:
