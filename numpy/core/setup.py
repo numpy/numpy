@@ -948,7 +948,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'common', 'npy_sort.h.src'),
             join('src', 'npysort', 'quicksort.c.src'),
             join('src', 'npysort', 'mergesort.c.src'),
-            join('src', 'npysort', 'timsort.c.src'),
+            join('src', 'npysort', 'timsort.cpp'),
             join('src', 'npysort', 'heapsort.c.src'),
             join('src', 'npysort', 'radixsort.cpp'),
             join('src', 'common', 'npy_partition.h.src'),
