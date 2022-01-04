@@ -224,6 +224,32 @@ class TestFloatHex:
         return x.fromhex(x.hex())
 
     @pytest.mark.parametrize("ftype", np.sctypes['float'])
+    def test_ends(self, ftype):
+        finfo = np.finfo(ftype)
+
+        # 2**MINEXP
+        assert self.identical(
+                finfo.smallest_normal, np.ldexp(ftype(1.0), finfo.minexp))
+
+        # 2**(MINEXP - NMANT)
+        assert self.identical(
+                finfo.smallest_subnormal,
+                np.ldexp(ftype(1.0), finfo.minexp-finfo.nmant))
+
+        # 2**(-NMANT)
+        assert self.identical(
+                finfo.eps, np.ldexp(ftype(1.0), -finfo.nmant))
+
+        # 2**(MAXEXP-1) - 2**((MAXEXP - 1) - NMANT - 1)
+        assert self.identical(
+                finfo.max,
+                2.*(np.ldexp(ftype(1.0),
+                    finfo.maxexp-1) - np.ldexp(ftype(1.0),
+                        finfo.maxexp - finfo.nmant - 2)
+                    )
+                )
+
+    @pytest.mark.parametrize("ftype", np.sctypes['float'])
     def test_roundtrip(self, ftype):
         finfo = np.finfo(ftype)
         fltMax, fltMin = finfo.max, finfo.min
@@ -238,95 +264,96 @@ class TestFloatHex:
         MINEXP = finfo.minexp
         MAXEXP = finfo.maxexp
         NMANT = finfo.nmant
+        TINY = finfo.smallest_subnormal
 
         # two spellings of infinity, with optional signs; case-insensitive
-        self.identical(ftype.fromhex('inf'), np.inf)
-        self.identical(ftype.fromhex('+Inf'), np.inf)
-        self.identical(ftype.fromhex('-INF'), -np.inf)
-        self.identical(ftype.fromhex('iNf'), np.inf)
-        self.identical(ftype.fromhex('Infinity'), np.inf)
-        self.identical(ftype.fromhex('+INFINITY'), np.inf)
-        self.identical(ftype.fromhex('-infinity'), -np.inf)
-        self.identical(ftype.fromhex('-iNFiNitY'), -np.inf)
+        assert self.identical(ftype.fromhex('inf'), np.inf)
+        assert self.identical(ftype.fromhex('+Inf'), np.inf)
+        assert self.identical(ftype.fromhex('-INF'), -np.inf)
+        assert self.identical(ftype.fromhex('iNf'), np.inf)
+        assert self.identical(ftype.fromhex('Infinity'), np.inf)
+        assert self.identical(ftype.fromhex('+INFINITY'), np.inf)
+        assert self.identical(ftype.fromhex('-infinity'), -np.inf)
+        assert self.identical(ftype.fromhex('-iNFiNitY'), -np.inf)
 
         # nans with optional sign; case insensitive
-        self.identical(ftype.fromhex('nan'), np.nan)
-        self.identical(ftype.fromhex('+NaN'), np.nan)
-        self.identical(ftype.fromhex('-NaN'), np.nan)
-        self.identical(ftype.fromhex('-nAN'), np.nan)
+        assert self.identical(ftype.fromhex('nan'), np.nan)
+        assert self.identical(ftype.fromhex('+NaN'), np.nan)
+        assert self.identical(ftype.fromhex('-NaN'), np.nan)
+        assert self.identical(ftype.fromhex('-nAN'), np.nan)
 
         # variations in input format
-        self.identical(ftype.fromhex('1'), 1.0)
-        self.identical(ftype.fromhex('+1'), 1.0)
-        self.identical(ftype.fromhex('1.'), 1.0)
-        self.identical(ftype.fromhex('1.0'), 1.0)
-        self.identical(ftype.fromhex('1.0p0'), 1.0)
-        self.identical(ftype.fromhex('01'), 1.0)
-        self.identical(ftype.fromhex('01.'), 1.0)
-        self.identical(ftype.fromhex('0x1'), 1.0)
-        self.identical(ftype.fromhex('0x1.'), 1.0)
-        self.identical(ftype.fromhex('0x1.0'), 1.0)
-        self.identical(ftype.fromhex('+0x1.0'), 1.0)
-        self.identical(ftype.fromhex('0x1p0'), 1.0)
-        self.identical(ftype.fromhex('0X1p0'), 1.0)
-        self.identical(ftype.fromhex('0X1P0'), 1.0)
-        self.identical(ftype.fromhex('0x1P0'), 1.0)
-        self.identical(ftype.fromhex('0x1.p0'), 1.0)
-        self.identical(ftype.fromhex('0x1.0p0'), 1.0)
-        self.identical(ftype.fromhex('+0x1p0'), 1.0)
-        self.identical(ftype.fromhex('0x01p0'), 1.0)
-        self.identical(ftype.fromhex('0x1p00'), 1.0)
-        self.identical(ftype.fromhex(' 0x1p0 '), 1.0)
-        self.identical(ftype.fromhex('\n 0x1p0'), 1.0)
-        self.identical(ftype.fromhex('0x1p0 \t'), 1.0)
-        self.identical(ftype.fromhex('0xap0'), 10.0)
-        self.identical(ftype.fromhex('0xAp0'), 10.0)
-        self.identical(ftype.fromhex('0xaP0'), 10.0)
-        self.identical(ftype.fromhex('0xAP0'), 10.0)
-        self.identical(ftype.fromhex('0xbep0'), 190.0)
-        self.identical(ftype.fromhex('0xBep0'), 190.0)
-        self.identical(ftype.fromhex('0xbEp0'), 190.0)
-        self.identical(ftype.fromhex('0XBE0P-4'), 190.0)
-        self.identical(ftype.fromhex('0xBEp0'), 190.0)
-        self.identical(ftype.fromhex('0xB.Ep4'), 190.0)
-        self.identical(ftype.fromhex('0x.BEp8'), 190.0)
-        self.identical(ftype.fromhex('0x.0BEp12'), 190.0)
+        assert self.identical(ftype.fromhex('1'), 1.0)
+        assert self.identical(ftype.fromhex('+1'), 1.0)
+        assert self.identical(ftype.fromhex('1.'), 1.0)
+        assert self.identical(ftype.fromhex('1.0'), 1.0)
+        assert self.identical(ftype.fromhex('1.0p0'), 1.0)
+        assert self.identical(ftype.fromhex('01'), 1.0)
+        assert self.identical(ftype.fromhex('01.'), 1.0)
+        assert self.identical(ftype.fromhex('0x1'), 1.0)
+        assert self.identical(ftype.fromhex('0x1.'), 1.0)
+        assert self.identical(ftype.fromhex('0x1.0'), 1.0)
+        assert self.identical(ftype.fromhex('+0x1.0'), 1.0)
+        assert self.identical(ftype.fromhex('0x1p0'), 1.0)
+        assert self.identical(ftype.fromhex('0X1p0'), 1.0)
+        assert self.identical(ftype.fromhex('0X1P0'), 1.0)
+        assert self.identical(ftype.fromhex('0x1P0'), 1.0)
+        assert self.identical(ftype.fromhex('0x1.p0'), 1.0)
+        assert self.identical(ftype.fromhex('0x1.0p0'), 1.0)
+        assert self.identical(ftype.fromhex('+0x1p0'), 1.0)
+        assert self.identical(ftype.fromhex('0x01p0'), 1.0)
+        assert self.identical(ftype.fromhex('0x1p00'), 1.0)
+        assert self.identical(ftype.fromhex(' 0x1p0 '), 1.0)
+        assert self.identical(ftype.fromhex('\n 0x1p0'), 1.0)
+        assert self.identical(ftype.fromhex('0x1p0 \t'), 1.0)
+        assert self.identical(ftype.fromhex('0xap0'), 10.0)
+        assert self.identical(ftype.fromhex('0xAp0'), 10.0)
+        assert self.identical(ftype.fromhex('0xaP0'), 10.0)
+        assert self.identical(ftype.fromhex('0xAP0'), 10.0)
+        assert self.identical(ftype.fromhex('0xbep0'), 190.0)
+        assert self.identical(ftype.fromhex('0xBep0'), 190.0)
+        assert self.identical(ftype.fromhex('0xbEp0'), 190.0)
+        assert self.identical(ftype.fromhex('0XBE0P-4'), 190.0)
+        assert self.identical(ftype.fromhex('0xBEp0'), 190.0)
+        assert self.identical(ftype.fromhex('0xB.Ep4'), 190.0)
+        assert self.identical(ftype.fromhex('0x.BEp8'), 190.0)
+        assert self.identical(ftype.fromhex('0x.0BEp12'), 190.0)
 
         # moving the point around
         pi = ftype.fromhex('0x1.921fb54442d18p1')
-        self.identical(ftype.fromhex('0x.006487ed5110b46p11'), pi)
-        self.identical(ftype.fromhex('0x.00c90fdaa22168cp10'), pi)
-        self.identical(ftype.fromhex('0x.01921fb54442d18p9'), pi)
-        self.identical(ftype.fromhex('0x.03243f6a8885a3p8'), pi)
-        self.identical(ftype.fromhex('0x.06487ed5110b46p7'), pi)
-        self.identical(ftype.fromhex('0x.0c90fdaa22168cp6'), pi)
-        self.identical(ftype.fromhex('0x.1921fb54442d18p5'), pi)
-        self.identical(ftype.fromhex('0x.3243f6a8885a3p4'), pi)
-        self.identical(ftype.fromhex('0x.6487ed5110b46p3'), pi)
-        self.identical(ftype.fromhex('0x.c90fdaa22168cp2'), pi)
-        self.identical(ftype.fromhex('0x1.921fb54442d18p1'), pi)
-        self.identical(ftype.fromhex('0x3.243f6a8885a3p0'), pi)
-        self.identical(ftype.fromhex('0x6.487ed5110b46p-1'), pi)
-        self.identical(ftype.fromhex('0xc.90fdaa22168cp-2'), pi)
-        self.identical(ftype.fromhex('0x19.21fb54442d18p-3'), pi)
-        self.identical(ftype.fromhex('0x32.43f6a8885a3p-4'), pi)
-        self.identical(ftype.fromhex('0x64.87ed5110b46p-5'), pi)
-        self.identical(ftype.fromhex('0xc9.0fdaa22168cp-6'), pi)
-        self.identical(ftype.fromhex('0x192.1fb54442d18p-7'), pi)
-        self.identical(ftype.fromhex('0x324.3f6a8885a3p-8'), pi)
-        self.identical(ftype.fromhex('0x648.7ed5110b46p-9'), pi)
-        self.identical(ftype.fromhex('0xc90.fdaa22168cp-10'), pi)
-        self.identical(ftype.fromhex('0x1921.fb54442d18p-11'), pi)
-        # ...
-        self.identical(ftype.fromhex('0x1921fb54442d1.8p-47'), pi)
-        self.identical(ftype.fromhex('0x3243f6a8885a3p-48'), pi)
-        self.identical(ftype.fromhex('0x6487ed5110b46p-49'), pi)
-        self.identical(ftype.fromhex('0xc90fdaa22168cp-50'), pi)
-        self.identical(ftype.fromhex('0x1921fb54442d18p-51'), pi)
-        self.identical(ftype.fromhex('0x3243f6a8885a30p-52'), pi)
-        self.identical(ftype.fromhex('0x6487ed5110b460p-53'), pi)
-        self.identical(ftype.fromhex('0xc90fdaa22168c0p-54'), pi)
-        self.identical(ftype.fromhex('0x1921fb54442d180p-55'), pi)
+        assert self.identical(ftype.fromhex('0x.006487ed5110b46p11'), pi)
+        assert self.identical(ftype.fromhex('0x.00c90fdaa22168cp10'), pi)
+        assert self.identical(ftype.fromhex('0x.01921fb54442d18p9'), pi)
+        assert self.identical(ftype.fromhex('0x.03243f6a8885a3p8'), pi)
+        assert self.identical(ftype.fromhex('0x.06487ed5110b46p7'), pi)
+        assert self.identical(ftype.fromhex('0x.0c90fdaa22168cp6'), pi)
+        assert self.identical(ftype.fromhex('0x.1921fb54442d18p5'), pi)
+        assert self.identical(ftype.fromhex('0x.3243f6a8885a3p4'), pi)
+        assert self.identical(ftype.fromhex('0x.6487ed5110b46p3'), pi)
+        assert self.identical(ftype.fromhex('0x.c90fdaa22168cp2'), pi)
+        assert self.identical(ftype.fromhex('0x1.921fb54442d18p1'), pi)
+        assert self.identical(ftype.fromhex('0x3.243f6a8885a3p0'), pi)
+        assert self.identical(ftype.fromhex('0x6.487ed5110b46p-1'), pi)
+        assert self.identical(ftype.fromhex('0xc.90fdaa22168cp-2'), pi)
+        assert self.identical(ftype.fromhex('0x19.21fb54442d18p-3'), pi)
+        assert self.identical(ftype.fromhex('0x32.43f6a8885a3p-4'), pi)
+        assert self.identical(ftype.fromhex('0x64.87ed5110b46p-5'), pi)
+        assert self.identical(ftype.fromhex('0xc9.0fdaa22168cp-6'), pi)
+        assert self.identical(ftype.fromhex('0x192.1fb54442d18p-7'), pi)
+        assert self.identical(ftype.fromhex('0x324.3f6a8885a3p-8'), pi)
+        assert self.identical(ftype.fromhex('0x648.7ed5110b46p-9'), pi)
+        assert self.identical(ftype.fromhex('0xc90.fdaa22168cp-10'), pi)
+        assert self.identical(ftype.fromhex('0x1921.fb54442d18p-11'), pi)
+        # ... TODO Make it go towards NMANT
+        assert self.identical(ftype.fromhex('0x1921fb54442d1.8p-47'), pi)
+        assert self.identical(ftype.fromhex('0x3243f6a8885a3p-48'), pi)
+        assert self.identical(ftype.fromhex('0x6487ed5110b46p-49'), pi)
+        assert self.identical(ftype.fromhex('0xc90fdaa22168cp-50'), pi)
+        assert self.identical(ftype.fromhex('0x1921fb54442d18p-51'), pi)
+        assert self.identical(ftype.fromhex('0x3243f6a8885a30p-52'), pi)
+        assert self.identical(ftype.fromhex('0x6487ed5110b460p-53'), pi)
+        assert self.identical(ftype.fromhex('0xc90fdaa22168c0p-54'), pi)
+        assert self.identical(ftype.fromhex('0x1921fb54442d180p-55'), pi)
 
         # results that should overflow...
         large_values = [
@@ -357,34 +384,66 @@ class TestFloatHex:
                 finfo.max)
         self.identical(ftype.fromhex(
         f"-0x1.{'f' * (NMANT // 4)}7p+{MAXEXP - 1}"),
-                finfo.max)
+                -finfo.max)
         self.identical(ftype.fromhex(
         f"+0x1.{'f' * (NMANT // 4)}7{'f' * (NMANT // 4 )}p+{MAXEXP - 1}"),
                 finfo.max)
 
         # zeros
-        self.identical(ftype.fromhex(f'0x0p0'), 0.0)
-        self.identical(ftype.fromhex(f'0x0p{MAXEXP // 100 * 100}'), 0.0)
-        self.identical(ftype.fromhex(f'-0x0p{MAXEXP - 1}'), -0.0)
-        self.identical(ftype.fromhex(f'0X0p{MAXEXP}'), 0.0)
-        self.identical(ftype.fromhex(f'-0x0p{MAXEXP + 1}'), -0.0)
-        self.identical(ftype.fromhex(f'0X0p{MAXEXP // 100 * 100 * 2}'), 0.0)
-        self.identical(ftype.fromhex(f'0x0p123456789123456789'), 0.0)
-        self.identical(ftype.fromhex(f'-0X0p-0'), -0.0)
-        self.identical(ftype.fromhex(f'-0X0p-{MAXEXP // 100 * 100}'), -0.0)
-        self.identical(ftype.fromhex(f'0x0p-{MAXEXP - 1}'), 0.0)
-        self.identical(ftype.fromhex(f'-0X0p-{MAXEXP}'), -0.0)
-        self.identical(ftype.fromhex(f'-0x0p-{MAXEXP + 1}'), -0.0)
-        self.identical(ftype.fromhex(f'-0x0p-{MAXEXP + 50}'), -0.0)
-        self.identical(ftype.fromhex(f'0X0p-{MAXEXP + 51}'), 0.0)
-        self.identical(ftype.fromhex(f'-0x0p-{MAXEXP + 52}'), -0.0)
-        self.identical(ftype.fromhex(f'0x0p-{MAXEXP + 53}'), 0.0)
-        self.identical(ftype.fromhex(f'0X0p-{MAXEXP + 54}'), 0.0)
-        self.identical(ftype.fromhex(f'-0X0p-{MAXEXP // 100 * 100 * 2}'), -0.0)
-        self.identical(ftype.fromhex(f'-0x0p-123456789123456789'), -0.0)
+        assert self.identical(ftype.fromhex(
+            f'0x0p0'), 0.0)
+        assert self.identical(ftype.fromhex(
+            f'0x0p{MAXEXP // 100 * 100}'), 0.0)
+        assert self.identical(ftype.fromhex(
+            f'-0x0p{MAXEXP - 1}'), -0.0)
+        assert self.identical(ftype.fromhex(
+            f'0X0p{MAXEXP}'), 0.0)
+        assert self.identical(ftype.fromhex(
+            f'-0x0p{MAXEXP + 1}'), -0.0)
+        assert self.identical(ftype.fromhex(
+            f'0X0p{MAXEXP // 100 * 100 * 2}'), 0.0)
+        assert self.identical(ftype.fromhex(
+            f'0x0p123456789123456789'), 0.0)
+        assert self.identical(ftype.fromhex(
+            f'-0X0p-0'), -0.0)
+        assert self.identical(ftype.fromhex(
+            f'-0X0p-{MAXEXP // 100 * 100}'), -0.0)
+        assert self.identical(ftype.fromhex(
+            f'0x0p-{MAXEXP - 1}'), 0.0)
+        assert self.identical(ftype.fromhex(
+            f'-0X0p-{MAXEXP}'), -0.0)
+        assert self.identical(ftype.fromhex(
+            f'-0x0p-{MAXEXP + 1}'), -0.0)
+        assert self.identical(ftype.fromhex(
+            f'-0x0p-{MAXEXP + NMANT - 4}'), -0.0)
+        assert self.identical(ftype.fromhex(
+            f'0X0p-{MAXEXP + NMANT - 3}'), 0.0)
+        assert self.identical(ftype.fromhex(
+            f'-0x0p-{MAXEXP + NMANT - 2}'), -0.0)
+        assert self.identical(ftype.fromhex(
+            f'0x0p-{MAXEXP + NMANT - 1}'), 0.0)
+        assert self.identical(ftype.fromhex(
+            f'0X0p-{MAXEXP + NMANT}'), 0.0)
+        assert self.identical(ftype.fromhex(
+            f'-0X0p-{MAXEXP // 100 * 100 * 2}'), -0.0)
+        assert self.identical(ftype.fromhex(
+            f'-0x0p-123456789123456789'), -0.0)
 
         # values that should underflow to 0
-
+        assert self.identical(ftype.fromhex(
+            f'0X1p-{MAXEXP + NMANT - 1}'), 0.0)
+        assert self.identical(ftype.fromhex(
+            f'-0X1p-{MAXEXP + NMANT - 1}'), -0.0)
+        assert self.identical(ftype.fromhex(
+            f'-0x1p-123456789123456789'), -0.0)
+        assert self.identical(
+            ftype.fromhex(
+                f'0x1.{"0" * (NMANT // 4 + 1)}1p-{MAXEXP + NMANT - 1}'), TINY)
+        assert self.identical(
+            ftype.fromhex(f'-0x1.1p-{MAXEXP + NMANT - 1}'), -TINY)
+        assert self.identical(
+            ftype.fromhex(
+                f'0x1.{"f" * (NMANT // 4 + 1)}p-{MAXEXP + NMANT - 1}'), TINY)
 
         # check round-half-even is working correctly near 0 ...
 
