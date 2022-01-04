@@ -2762,9 +2762,13 @@ reducelike_promote_and_resolve(PyUFuncObject *ufunc,
      * The first operand and output should be the same array, so they should
      * be identical.  The second argument can be different for reductions,
      * but is checked to be identical for accumulate and reduceat.
+     * Ideally, the type-resolver ensures that all are identical, but we do
+     * not enforce this here strictly.  Otherwise correct handling of
+     * byte-order changes (or metadata) requires a lot of care; see gh-20699.
      */
-    if (out_descrs[0] != out_descrs[2] || (
-            enforce_uniform_args && out_descrs[0] != out_descrs[1])) {
+    if (!PyArray_EquivTypes(out_descrs[0], out_descrs[2]) || (
+            enforce_uniform_args && !PyArray_EquivTypes(
+                    out_descrs[0], out_descrs[1]))) {
         PyErr_Format(PyExc_TypeError,
                 "the resolved dtypes are not compatible with %s.%s. "
                 "Resolved (%R, %R, %R)",
