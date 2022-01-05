@@ -322,11 +322,6 @@ Note also that we can see ``__array_wrap__`` in action here, even though
    >>> t = torch.arange(4)
    >>> np.abs(t)
    tensor([0, 1, 2, 3])
-   >>> wrap = lambda self, array: np.asarray(array)
-   >>> torch.Tensor.__array_wrap__ = wrap
-   >>> t = torch.arange(4)
-   >>> np.abs(t)
-   array([0, 1, 2, 3])
 
 PyTorch implements ``__array_wrap__`` to be able to get tensors back from NumPy
 functions, and we can modify it directly to control which type of objects are
