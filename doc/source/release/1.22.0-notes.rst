@@ -450,9 +450,9 @@ double precision functions respectively.
 
 (`gh-19478 <https://github.com/numpy/numpy/pull/19478>`__)
 
-OpenBLAS v0.3.17
+OpenBLAS v0.3.18
 ----------------
-Update the OpenBLAS used in testing and in wheels to v0.3.17
+Update the OpenBLAS used in testing and in wheels to v0.3.18
 
-(`gh-19462 <https://github.com/numpy/numpy/pull/19462>`__)
+(`gh-20058 <https://github.com/numpy/numpy/pull/20058>`__)
 
