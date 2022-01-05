@@ -2392,6 +2392,12 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('dtype',
     """
     Data-type of the array's elements.
 
+    .. warning::
+
+        Setting ``arr.dtype`` is discouraged and may be deprecated in the
+        future.  Setting will replace the ``dtype`` without modifying the
+        memory (see also `ndarray.view` and `ndarray.astype`).
+
     Parameters
     ----------
     None
@@ -2402,6 +2408,8 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('dtype',
 
     See Also
     --------
+    ndarray.astype : Cast the values contained in the array to a new data-type.
+    ndarray.view : Create a view of the same data but a different data-type.
     numpy.dtype
 
     Examples
@@ -2627,6 +2635,11 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('shape',
     the array and the remaining dimensions. Reshaping an array in-place will
     fail if a copy is required.
 
+    .. warning::
+
+        Setting ``arr.shape`` is discouraged and may be deprecated in the
+        future.  Using `ndarray.reshape` is the preferred approach.
+
     Examples
     --------
     >>> x = np.array([1, 2, 3, 4])
@@ -2696,6 +2709,12 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('strides',
 
     A more detailed explanation of strides can be found in the
     "ndarray.rst" file in the NumPy reference guide.
+
+    .. warning::
+
+        Setting ``arr.strides`` is discouraged and may be deprecated in the
+        future.  `numpy.lib.stride_tricks.as_strided` should be preferred
+        to create a new view of the same data in a safer way.
 
     Notes
     -----
