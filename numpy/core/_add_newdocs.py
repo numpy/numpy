@@ -2396,9 +2396,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('dtype',
 
         Setting ``arr.dtype`` is discouraged and may be deprecated in the
         future.  Setting will replace the ``dtype`` without modifying the
-        memory (see also `ndarray.view`).  This can be confusing, as it is
-        different from casting with `ndarray.astype` which returns the same
-        values in the new data-type.
+        memory (see also `ndarray.view` and `ndarray.astype`).
 
     Parameters
     ----------
