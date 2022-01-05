@@ -122,11 +122,7 @@ jobs:
                                     OPENBLAS=${{ env.IS_32_BIT == 'true' && 'openblas' || '' }}
                                     CFLAGS='${{ env.IS_32_BIT == 'true' && '-m32' || '' }}'
                                     LDFLAGS='${{ env.IS_32_BIT == 'true' && '-m32' || '' }}'
-          # TODO: Add universal2 wheels, we need to fuse them manually
-          # instead of going through cibuildwheel
-          # This is because cibuildwheel tries to make a fat wheel
-          # https://github.com/multi-build/multibuild/blame/devel/README.rst#L541-L565
-          # for more info
+          # universal2 done separately by manually fusing
           CIBW_ARCHS_MACOS: x86_64 arm64
           CIBW_TEST_SKIP: "*_arm64 *_universal2:arm64"
           CIBW_BUILD_VERBOSITY: 3
@@ -146,7 +142,7 @@ jobs:
           # trigger an upload to
           # https://anaconda.org/scipy-wheels-nightly/numpy
           # for cron jobs or "Run workflow" (restricted to main branch).
-          # Tags will upload to 
+          # Tags will upload to
           # https://anaconda.org/multibuild-wheels-staging/numpy
           # The tokens were originally generated at anaconda.org
           if [ "push" == "${{ github.event_name }}" ] && [ "${{ startsWith(github.ref, 'refs/tags/v') }}" ]; then
@@ -170,4 +166,62 @@ jobs:
             anaconda -t ${TOKEN} upload --no-progress --skip -u ${ANACONDA_ORG} ./wheelhouse/*.whl
             echo "PyPI-style index: https://pypi.anaconda.org/$ANACONDA_ORG/simple"
           fi
-
+  build_universal2_wheels:
+    needs: build_wheels
+    name: Build wheel for ${{ matrix.python[0] }}-macosx-universal2
+    runs-on: macos-10.15
+    strategy:
+      # Ensure that a wheel builder finishes even if another fails
+      fail-fast: false
+      matrix:
+        python:
+          - ['cp38', '3.8']
+          - ['cp39', '3.9']
+          - ['cp310', '3.10']
+    steps:
+      - name: Checkout numpy
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+          # versioneer.py requires the latest tag to be reachable. Here we
+          # fetch the complete history to get access to the tags.
+          # A shallow clone can work when the following issue is resolved:
+          # https://github.com/actions/checkout/issues/338
+          fetch-depth: 0
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python[1] }}
+          architecture: x64
+      - uses: actions/download-artifact@master
+        with:
+          name: ${{ matrix.python[0] }}-macosx
+          path: ./osx-wheels
+      - name: Fuse wheels
+        run: |
+          pip install delocate
+          wheelnames=$(find "$(pwd)/osx-wheels" -name "*.whl")
+          echo ${wheelnames[*]}
+          mkdir wheelhouse
+          delocate-fuse ${wheelnames[@]} -w wheelhouse
+          # delocate produces wheel with wrong filename
+          # rename to universal2 (FWIW, multibuild does this too)
+          wheelpath=$(find "$(pwd)/wheelhouse" -name "*.whl")
+          # Hardcoding this for now
+          # TODO: don't hardcode paths, this is tricky since we also
+          # are changing macosx SDK versions from 11 -> 10.9
+          newpath="${wheelpath/_11_0_arm64.whl/_10_9_universal2.whl}"
+          newpath="${newpath/_10_9_x86_64.whl/_10_9_universal2.whl}"
+          mv $wheelpath $newpath
+          ls wheelhouse
+      - name: Install wheels and test
+        run: |
+          pip install --find-links wheelhouse --no-index numpy
+          pip install -r test_requirements.txt
+          cd .. # Can't import numpy while inside numpy dir
+          bash numpy/tools/wheels/cibw_test_command.sh numpy
+      - uses: actions/upload-artifact@v2
+        with:
+          name: ${{ matrix.python[0] }}-macosx
+          path: ./wheelhouse/*.whl
