@@ -107,7 +107,7 @@ Types
 
             Arbitrary data (extra arguments, function names, *etc.* )
             that can be stored with the ufunc and will be passed in
-            when it is called.
+            when it is called. May be ``NULL``.
 
         This is an example of a func specialized for addition of doubles
         returning doubles.
@@ -158,9 +158,10 @@ Functions
         :c:type:`PyUFuncGenericFunction` items.
 
     :param data:
-        Should be ``NULL`` or a pointer to an array of size *ntypes*
-        . This array may contain arbitrary extra-data to be passed to
-        the corresponding loop function in the func array.
+        Should be ``NULL`` or a pointer to an array of size *ntypes*.
+        This array may contain arbitrary extra-data to be passed to
+        the corresponding loop function in the func array, including
+        ``NULL``.
 
     :param types:
        Length ``(nin + nout) * ntypes`` array of ``char`` encoding the
