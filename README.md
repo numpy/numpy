@@ -49,7 +49,7 @@ Code of Conduct
 ----------------------
 
 NumPy is a community-driven open source project developed by a diverse group of
-[contributors](https://numpy.org/gallery/team.html). The NumPy leadership has made a strong
+[contributors](https://numpy.org/teams/). The NumPy leadership has made a strong
 commitment to creating an open, inclusive, and positive community. Please read the
 [NumPy Code of Conduct](https://numpy.org/code-of-conduct/) for guidance on how to interact
 with others in a way that makes our community thrive.
