@@ -308,8 +308,6 @@ the primary thing that must be changed to create your own ufunc.
         /* These are the input and return dtypes of logit.*/
         static char types[2] = {NPY_DOUBLE, NPY_DOUBLE};
 
-        static void *data[1] = {NULL};
-
         static struct PyModuleDef moduledef = {
             PyModuleDef_HEAD_INIT,
             "npufunc",
@@ -333,7 +331,7 @@ the primary thing that must be changed to create your own ufunc.
             import_array();
             import_umath();
 
-            logit = PyUFunc_FromFuncAndData(funcs, data, types, 1, 1, 1,
+            logit = PyUFunc_FromFuncAndData(funcs, NULL, types, 1, 1, 1,
                                             PyUFunc_None, "logit",
                                             "logit_docstring", 0);
 
@@ -562,7 +560,6 @@ is the primary thing that must be changed to create your own ufunc.
                                 NPY_FLOAT, NPY_FLOAT,
                                 NPY_DOUBLE, NPY_DOUBLE,
                                 NPY_LONGDOUBLE, NPY_LONGDOUBLE};
-        static void *data[4] = {NULL, NULL, NULL, NULL};
 
         static struct PyModuleDef moduledef = {
             PyModuleDef_HEAD_INIT,
@@ -587,7 +584,7 @@ is the primary thing that must be changed to create your own ufunc.
             import_array();
             import_umath();
 
-            logit = PyUFunc_FromFuncAndData(funcs, data, types, 4, 1, 1,
+            logit = PyUFunc_FromFuncAndData(funcs, NULL, types, 4, 1, 1,
                                             PyUFunc_None, "logit",
                                             "logit_docstring", 0);
 
@@ -755,8 +752,6 @@ as well as all other properties of a ufunc.
         static char types[4] = {NPY_DOUBLE, NPY_DOUBLE,
                                 NPY_DOUBLE, NPY_DOUBLE};
 
-        static void *data[1] = {NULL};
-
         static struct PyModuleDef moduledef = {
             PyModuleDef_HEAD_INIT,
             "npufunc",
@@ -780,7 +775,7 @@ as well as all other properties of a ufunc.
             import_array();
             import_umath();
 
-            logit = PyUFunc_FromFuncAndData(funcs, data, types, 1, 2, 2,
+            logit = PyUFunc_FromFuncAndData(funcs, NULL, types, 1, 2, 2,
                                             PyUFunc_None, "logit",
                                             "logit_docstring", 0);
 
@@ -881,8 +876,6 @@ The C file is given below.
 
         /* These are the input and return dtypes of add_uint64_triplet. */
         static char types[3] = {NPY_UINT64, NPY_UINT64, NPY_UINT64};
-
-        static void *data[1] = {NULL};
 
         static struct PyModuleDef moduledef = {
             PyModuleDef_HEAD_INIT,
