@@ -3,7 +3,7 @@
 #
 # if: github.repository == 'numpy/numpy'
 #
-# in the get_commit_message job. Be sure to include [cd build] in your commit
+# in the get_commit_message job. Be sure to include [wheel build] in your commit
 # message to trigger the build. All files related to wheel building are located
 # at tools/wheels/
 name: Wheel builder
