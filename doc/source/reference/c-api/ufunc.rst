@@ -79,7 +79,7 @@ Types
 
 .. c:type:: PyUFuncGenericFunction
 
-    pointers to functions that actually implement the underlying
+    Pointers to functions that actually implement the underlying
     (element-by-element) function :math:`N` times with the following
     signature:
 
@@ -157,8 +157,8 @@ Functions
        ufunc object is alive.
 
     :param func:
-        Must to an array of length *ntypes* containing
-        :c:type:`PyUFuncGenericFunction` items.
+        Must point to an array containing *ntypes*
+        :c:type:`PyUFuncGenericFunction` elements.
 
     :param data:
         Should be ``NULL`` or a pointer to an array of size *ntypes*.
