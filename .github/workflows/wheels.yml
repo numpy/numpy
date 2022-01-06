@@ -123,4 +123,5 @@ jobs:
 
       - uses: actions/upload-artifact@v2
         with:
+          name: ${{ matrix.python }}-${{ startsWith(matrix.buildplat[1], 'macosx') && 'macosx' || matrix.buildplat[1] }}
           path: ./wheelhouse/*.whl
