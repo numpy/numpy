@@ -2155,7 +2155,8 @@ class TestUfunc:
         arr_le = np.arange(10, dtype="<i8")
 
         assert np.add.reduce(arr_be) == np.add.reduce(arr_le)
-        assert_array_equal(np.add.accumulate(arr_be), np.add.accumulate(arr_le))
+        assert_array_equal(
+            np.add.accumulate(arr_be), np.add.accumulate(arr_le))
         assert_array_equal(
             np.add.reduceat(arr_be, [1]), np.add.reduceat(arr_le, [1]))
 
