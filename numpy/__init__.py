@@ -413,6 +413,11 @@ else:
     # it is tidier organized.
     core.multiarray._multiarray_umath._reload_guard()
 
+    # Tell PyInstaller where to find hook-numpy.py
+    def _pyinstaller_hooks_dir():
+        from pathlib import Path
+        return [str(Path(__file__).with_name("_pyinstaller").resolve())]
+
 
 # get the version using versioneer
 from .version import __version__, git_revision as __git_version__
