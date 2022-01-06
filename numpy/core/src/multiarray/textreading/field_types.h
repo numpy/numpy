@@ -10,14 +10,15 @@
 
 #include "textreading/parser_config.h"
 
-/*
- * The original code had some error details, but I assume that we don't need
- * it.  Printing the string from which we tried to modify it should be fine.
- * This should potentially be public NumPy API, although it is tricky, NumPy
+/**
+ * Function defining the conversion for each value.
  *
- * This function must support unaligned memory access.
+ * This function must support unaligned memory access.  As of now, there is
+ * no special error handling (in whatever form):  We assume that it is always
+ * reasonable to raise a `ValueError` noting the string that failed to be
+ * converted.
  *
- * NOTE: An earlier version of the code had unused default versions (pandas
+ * NOTE: An earlier version of the code had unused default values (pandas
  *       does this) when columns are missing.  We could define this either
  *       by passing `NULL` in, or by adding a default explicitly somewhere.
  *       (I think users should probably have to define the default, at which
@@ -26,6 +27,23 @@
  * NOTE: We are currently passing the parser config, this could be made public
  *       or could be set up to be dtype specific/private.  Always passing
  *       pconfig fully seems easier right now even if it may change.
+ *       (A future use-case may for example be user-specified strings that are
+ *       considered boolean True or False).
+ *
+ * TODO: Aside from nailing down the above notes, it may be nice to expose
+ *       these function publically.  This could allow user DTypes to provide
+ *       a converter or custom converters written in C rather than Python.
+ *
+ * @param descr The NumPy descriptor of the field (may be byte-swapped, etc.)
+ * @param str Pointer to the beginning of the UCS4 string to be parsed.
+ * @param end Pointer to the end of the UCS4 string.  This value is currently
+ *            guaranteed to be `\0`, ensuring that parsers can rely on
+ *            nul-termination.
+ * @param dataptr The pointer where to store the parsed value
+ * @param pconfig Additional configuration for the parser.
+ * @returns 0 on success and -1 on failure.  If the return value is -1 an
+ *          error may or may not be set.  If an error is set, it is chained
+ *          behind the generic ValueError.
  */
 typedef int (set_from_ucs4_function)(
         PyArray_Descr *descr, const Py_UCS4 *str, const Py_UCS4 *end,

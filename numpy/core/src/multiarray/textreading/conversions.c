@@ -96,14 +96,7 @@ double_from_ucs4(
     return 0;
 }
 
-/*
- *  `item` must be the nul-terminated string that is to be
- *  converted to a double.
- *
- *  To be successful, to_double() must use *all* the characters
- *  in `item`.  E.g. "1.q25" will fail.  Leading and trailing 
- *  spaces are allowed.
- */
+
 int
 to_float(PyArray_Descr *descr,
         const Py_UCS4 *str, const Py_UCS4 *end, char *dataptr,

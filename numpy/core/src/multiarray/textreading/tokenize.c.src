@@ -294,7 +294,7 @@ tokenizer_core_@type@(tokenizer_state *ts, parser_config *const config)
  * maximum number of fields when known.
  *
  * Unlike other tokenizers, this one tries to work in chunks and copies
- * data to words only when it it has to.  The hope is that this makes multiple
+ * data to words only when it has to.  The hope is that this makes multiple
  * light-weight loops rather than a single heavy one, to allow e.g. quickly
  * scanning for the end of a field.
  */

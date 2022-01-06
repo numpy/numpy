@@ -956,9 +956,6 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
                 "when multiple comments or a multi-character comment is "
                 "given, quotes are not supported.  In this case the quote "
                 "character must be set to the empty string: `quote=''`.")
-    else:
-        # No preprocessing necessary
-        assert comments is None
 
     if len(imaginary_unit) != 1:
         raise ValueError('len(imaginary_unit) must be 1.')
