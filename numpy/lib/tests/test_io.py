@@ -2396,6 +2396,13 @@ M   33  21.99
         assert_equal(test['f1'], 17179869184)
         assert_equal(test['f2'], 1024)
 
+    def test_unpack_float_data(self):
+        txt = TextIO("1,2,3\n4,5,6\n7,8,9\n0.0,1.0,2.0")
+        a, b, c = np.loadtxt(txt, delimiter=",", unpack=True)
+        assert_array_equal(a, np.array([1.0, 4.0, 7.0, 0.0]))
+        assert_array_equal(b, np.array([2.0, 5.0, 8.0, 1.0]))
+        assert_array_equal(c, np.array([3.0, 6.0, 9.0, 2.0]))
+
     def test_unpack_structured(self):
         # Regression test for gh-4341
         # Unpacking should work on structured arrays
@@ -2682,3 +2689,480 @@ def test_load_refcount():
     with assert_no_gc_cycles():
         x = np.loadtxt(TextIO("0 1 2 3"), dtype=dt)
         assert_equal(x, np.array([((0, 1), (2, 3))], dtype=dt))
+
+
+def test_loadtxt_scientific_notation():
+    """Test that both 'e' and 'E' are parsed correctly."""
+    data = TextIO(
+        (
+            "1.0e-1,2.0E1,3.0\n"
+            "4.0e-2,5.0E-1,6.0\n"
+            "7.0e-3,8.0E1,9.0\n"
+            "0.0e-4,1.0E-1,2.0"
+        )
+    )
+    expected = np.array(
+        [[0.1, 20., 3.0], [0.04, 0.5, 6], [0.007, 80., 9], [0, 0.1, 2]]
+    )
+    assert_array_equal(np.loadtxt(data, delimiter=","), expected)
+
+
+@pytest.mark.parametrize("comment", ["..", "//", "@-", "this is a comment:"])
+def test_loadtxt_comment_multiple_chars(comment):
+    content = "# IGNORE\n1.5, 2.5# ABC\n3.0,4.0# XXX\n5.5,6.0\n"
+    txt = TextIO(content.replace("#", comment))
+    a = np.loadtxt(txt, delimiter=",", comments=comment)
+    assert_equal(a, [[1.5, 2.5], [3.0, 4.0], [5.5, 6.0]])
+
+
+@pytest.fixture
+def mixed_types_structured():
+    """
+    Fixture providing hetergeneous input data with a structured dtype, along
+    with the associated structured array.
+    """
+    data = TextIO(
+        (
+            "1000;2.4;alpha;-34\n"
+            "2000;3.1;beta;29\n"
+            "3500;9.9;gamma;120\n"
+            "4090;8.1;delta;0\n"
+            "5001;4.4;epsilon;-99\n"
+            "6543;7.8;omega;-1\n"
+        )
+    )
+    dtype = np.dtype(
+        [('f0', np.uint16), ('f1', np.float64), ('f2', 'S7'), ('f3', np.int8)]
+    )
+    expected = np.array(
+        [
+            (1000, 2.4, "alpha", -34),
+            (2000, 3.1, "beta", 29),
+            (3500, 9.9, "gamma", 120),
+            (4090, 8.1, "delta", 0),
+            (5001, 4.4, "epsilon", -99),
+            (6543, 7.8, "omega", -1)
+        ],
+        dtype=dtype
+    )
+    return data, dtype, expected
+
+
+@pytest.mark.parametrize('skiprows', [0, 1, 2, 3])
+def test_loadtxt_structured_dtype_and_skiprows_no_empty_lines(
+        skiprows, mixed_types_structured
+    ):
+    data, dtype, expected = mixed_types_structured
+    a = np.loadtxt(data, dtype=dtype, delimiter=";", skiprows=skiprows)
+    assert_array_equal(a, expected[skiprows:])
+
+
+def test_loadtxt_unpack_structured(mixed_types_structured):
+    data, dtype, expected = mixed_types_structured
+
+    a, b, c, d = np.loadtxt(data, dtype=dtype, delimiter=";", unpack=True)
+    assert_array_equal(a, expected["f0"])
+    assert_array_equal(b, expected["f1"])
+    assert_array_equal(c, expected["f2"])
+    assert_array_equal(d, expected["f3"])
+
+
+def test_loadtxt_structured_dtype_with_shape():
+    dtype = np.dtype([("a", "u1", 2), ("b", "u1", 2)])
+    data = TextIO("0,1,2,3\n6,7,8,9\n")
+    expected = np.array([((0, 1), (2, 3)), ((6, 7), (8, 9))], dtype=dtype)
+    assert_array_equal(np.loadtxt(data, delimiter=",", dtype=dtype), expected)
+
+
+def test_loadtxt_structured_dtype_with_multi_shape():
+    dtype = np.dtype([("a", "u1", (2, 2))])
+    data = TextIO("0 1 2 3\n")
+    expected = np.array([(((0, 1), (2, 3)),)], dtype=dtype)
+    assert_array_equal(np.loadtxt(data, dtype=dtype), expected)
+
+
+def test_loadtxt_nested_structured_subarray():
+    # Test from gh-16678
+    point = np.dtype([('x', float), ('y', float)])
+    dt = np.dtype([('code', int), ('points', point, (2,))])
+    data = TextIO("100,1,2,3,4\n200,5,6,7,8\n")
+    expected = np.array(
+        [
+            (100, [(1., 2.), (3., 4.)]),
+            (200, [(5., 6.), (7., 8.)]),
+        ],
+        dtype=dt
+    )
+    assert_array_equal(np.loadtxt(data, dtype=dt, delimiter=","), expected)
+
+
+def test_loadtxt_structured_dtype_offsets():
+    # An aligned structured dtype will have additional padding
+    dt = np.dtype("i1, i4, i1, i4, i1, i4", align=True)
+    data = TextIO("1,2,3,4,5,6\n7,8,9,10,11,12\n")
+    expected = np.array([(1, 2, 3, 4, 5, 6), (7, 8, 9, 10, 11, 12)], dtype=dt)
+    assert_array_equal(np.loadtxt(data, delimiter=",", dtype=dt), expected)
+
+
+@pytest.mark.parametrize("param", ("skiprows", "max_rows"))
+def test_loadtxt_exception_negative_row_limits(param):
+    """skiprows and max_rows should raise for negative parameters."""
+    with pytest.raises(ValueError, match="argument must be nonnegative"):
+        np.loadtxt("foo.bar", **{param: -3})
+
+
+@pytest.mark.parametrize("param", ("skiprows", "max_rows"))
+def test_loadtxt_exception_noninteger_row_limits(param):
+    with pytest.raises(TypeError, match="argument must be an integer"):
+        np.loadtxt("foo.bar", **{param: 1.0})
+
+
+@pytest.mark.parametrize(
+    "data, shape",
+    [
+        ("1 2 3 4 5\n", (1, 5)),  # Single row
+        ("1\n2\n3\n4\n5\n", (5, 1)),  # Single column
+    ]
+)
+def test_loadtxt_ndmin_single_row_or_col(data, shape):
+    arr = np.array([1, 2, 3, 4, 5])
+    arr2d = arr.reshape(shape)
+
+    assert_array_equal(np.loadtxt(TextIO(data), dtype=int), arr)
+    assert_array_equal(np.loadtxt(TextIO(data), dtype=int, ndmin=0), arr)
+    assert_array_equal(np.loadtxt(TextIO(data), dtype=int, ndmin=1), arr)
+    assert_array_equal(np.loadtxt(TextIO(data), dtype=int, ndmin=2), arr2d)
+
+
+@pytest.mark.parametrize("badval", [-1, 3, None, "plate of shrimp"])
+def test_loadtxt_bad_ndmin(badval):
+    with pytest.raises(ValueError, match="Illegal value of ndmin keyword"):
+        np.loadtxt("foo.bar", ndmin=badval)
+
+
+@pytest.mark.parametrize(
+    "ws",
+    (
+        "\t",  # tab
+        "\u2003",  # em
+        "\u00A0",  # non-break
+        "\u3000",  # ideographic space
+    )
+)
+def test_loadtxt_blank_lines_spaces_delimit(ws):
+    txt = StringIO(
+        f"1 2{ws}30\n\n4 5 60\n  {ws}  \n7 8 {ws} 90\n  # comment\n3 2 1"
+    )
+    # NOTE: It is unclear that the `  # comment` should succeed. Except
+    #       for delimiter=None, which should use any whitespace (and maybe
+    #       should just be implemented closer to Python
+    expected = np.array([[1, 2, 30], [4, 5, 60], [7, 8, 90], [3, 2, 1]])
+    assert_equal(
+        np.loadtxt(txt, dtype=int, delimiter='', comments="#"), expected
+    )
+
+
+def test_loadtxt_blank_lines_normal_delimiter():
+    txt = StringIO('1,2,30\n\n4,5,60\n\n7,8,90\n# comment\n3,2,1')
+    expected = np.array([[1, 2, 30], [4, 5, 60], [7, 8, 90], [3, 2, 1]])
+    assert_equal(
+        np.loadtxt(txt, dtype=int, delimiter=',', comments="#"), expected
+    )
+
+
+@pytest.mark.parametrize("dtype", (float, object))
+def test_loadtxt_maxrows_no_blank_lines(dtype):
+    txt = TextIO("1.5,2.5\n3.0,4.0\n5.5,6.0")
+    res = np.loadtxt(txt, dtype=dtype, delimiter=",", max_rows=2)
+    assert_equal(res.dtype, dtype)
+    assert_equal(res, np.array([["1.5", "2.5"], ["3.0", "4.0"]], dtype=dtype))
+
+
+@pytest.mark.parametrize("dtype", (np.dtype("f8"), np.dtype("i2")))
+def test_loadtxt_exception_message_bad_values(dtype):
+    txt = TextIO("1.0,2.0\n3.0,XXX\n5.5,6.0")
+    msg = f"could not convert string .XXX. to {dtype} at row 1, column 2"
+    with pytest.raises(ValueError, match=msg):
+        np.loadtxt(txt, dtype=dtype, delimiter=",")
+
+
+def test_loadtxt_converters_negative_indices():
+    txt = TextIO('1.5,2.5\n3.0,XXX\n5.5,6.0')
+    conv = {-1: lambda s: np.nan if s == 'XXX' else float(s)}
+    expected = np.array([[1.5, 2.5], [3.0, np.nan], [5.5, 6.0]])
+    res = np.loadtxt(
+        txt, dtype=np.float64, delimiter=",", converters=conv, encoding=None
+    )
+    assert_equal(res, expected)
+
+
+def test_loadtxt_converters_negative_indices_with_usecols():
+    txt = TextIO('1.5,2.5,3.5\n3.0,4.0,XXX\n5.5,6.0,7.5\n')
+    conv = {-1: lambda s: np.nan if s == 'XXX' else float(s)}
+    expected = np.array([[1.5, 3.5], [3.0, np.nan], [5.5, 7.5]])
+    res = np.loadtxt(
+        txt,
+        dtype=np.float64,
+        delimiter=",",
+        converters=conv,
+        usecols=[0, -1],
+        encoding=None,
+    )
+    assert_equal(res, expected)
+
+
+def test_loadtxt_ragged_usecols():
+    # usecols, and negative ones, work even with varying number of columns.
+    txt = TextIO("0,0,XXX\n0,XXX,0,XXX\n0,XXX,XXX,0,XXX\n")
+    expected = np.array([[0, 0], [0, 0], [0, 0]])
+    res = np.loadtxt(txt, dtype=float, delimiter=",", usecols=[0, -2])
+    assert_equal(res, expected)
+
+
+def test_loadtxt_empty_usecols():
+    txt = TextIO("0,0,XXX\n0,XXX,0,XXX\n0,XXX,XXX,0,XXX\n")
+    res = np.loadtxt(txt, dtype=np.dtype([]), delimiter=",", usecols=[])
+    assert res.shape == (3,)
+    assert res.dtype == np.dtype([])
+
+
+@pytest.mark.parametrize("c1", ["a", "の", "🫕"])
+@pytest.mark.parametrize("c2", ["a", "の", "🫕"])
+def test_loadtxt_large_unicode_characters(c1, c2):
+    # c1 and c2 span ascii, 16bit and 32bit range.
+    txt = StringIO(f"a,{c1},c,1.0\ne,{c2},2.0,g")
+    res = np.loadtxt(txt, dtype=np.dtype('U12'), delimiter=",")
+    expected = np.array(
+        [f"a,{c1},c,1.0".split(","), f"e,{c2},2.0,g".split(",")],
+        dtype=np.dtype('U12')
+    )
+    assert_equal(res, expected)
+
+
+def test_loadtxt_unicode_with_converter():
+    txt = StringIO("cat,dog\nαβγ,δεζ\nabc,def\n")
+    conv = {0: lambda s: s.upper()}
+    res = np.loadtxt(
+        txt,
+        dtype=np.dtype("U12"),
+        converters=conv,
+        delimiter=",",
+        encoding=None
+    )
+    expected = np.array([['CAT', 'dog'], ['ΑΒΓ', 'δεζ'], ['ABC', 'def']])
+    assert_equal(res, expected)
+
+
+def test_loadtxt_converter_with_structured_dtype():
+    txt = TextIO('1.5,2.5,Abc\n3.0,4.0,dEf\n5.5,6.0,ghI\n')
+    dt = np.dtype([('m', np.int32), ('r', np.float32), ('code', 'U8')])
+    conv = {0: lambda s: int(10*float(s)), -1: lambda s: s.upper()}
+    res = np.loadtxt(txt, dtype=dt, delimiter=",", converters=conv)
+    expected = np.array(
+        [(15, 2.5, 'ABC'), (30, 4.0, 'DEF'), (55, 6.0, 'GHI')], dtype=dt
+    )
+    assert_equal(res, expected)
+
+
+def test_loadtxt_converter_with_unicode_dtype():
+    """
+    With the default 'bytes' encoding, tokens are encoded prior to being passed
+    to the converter. This means that the output of the converter may be bytes
+    instead of unicode as expected by `read_rows`.
+
+    This test checks that outputs from the above scenario are properly decoded
+    prior to parsing by `read_rows`.
+    """
+    txt = StringIO('abc,def\nrst,xyz')
+    conv = bytes.upper
+    res = np.loadtxt(txt, dtype=np.dtype("U3"), converters=conv, delimiter=",")
+    expected = np.array([['ABC', 'DEF'], ['RST', 'XYZ']])
+    assert_equal(res, expected)
+
+
+def test_loadtxt_read_huge_row():
+    row = "1.5, 2.5," * 50000
+    row = row[:-1] + "\n"
+    txt = TextIO(row * 2)
+    res = np.loadtxt(txt, delimiter=",", dtype=float)
+    assert_equal(res, np.tile([1.5, 2.5], (2, 50000)))
+
+
+@pytest.mark.parametrize(
+    ("given_dtype", "expected_dtype"),
+    [
+        ("S", np.dtype("S5")),
+        ("U", np.dtype("U5")),
+    ],
+)
+def test_loadtxt_string_no_length_given(given_dtype, expected_dtype):
+    """
+    The given dtype is just 'S' or 'U' with no length. In these cases, the
+    length of the resulting dtype is determined by the longest string found
+    in the file.
+    """
+    txt = TextIO("AAA,5-1\nBBBBB,0-3\nC,4-9\n")
+    res = np.loadtxt(txt, dtype=given_dtype, delimiter=",")
+    expected = np.array(
+        [['AAA', '5-1'], ['BBBBB', '0-3'], ['C', '4-9']], dtype=expected_dtype
+    )
+    assert_equal(res, expected)
+    assert_equal(res.dtype, expected_dtype)
+
+
+def test_loadtxt_float_conversion():
+    """
+    Some tests that the conversion to float64 works as accurately as the Python
+    built-in `float` function. In a naive version of the float parser, these
+    strings resulted in values that were off by an ULP or two.
+    """
+    strings = [
+        '0.9999999999999999',
+        '9876543210.123456',
+        '5.43215432154321e+300',
+        '0.901',
+        '0.333',
+    ]
+    txt = TextIO('\n'.join(strings))
+    res = np.loadtxt(txt)
+    expected = np.array([float(s) for s in strings])
+    assert_equal(res, expected)
+
+
+def test_loadtxt_bool():
+    # Simple test for bool via integer
+    txt = TextIO("1, 0\n10, -1")
+    res = np.loadtxt(txt, dtype=bool, delimiter=",")
+    assert res.dtype == bool
+    assert_array_equal(res, [[True, False], [True, True]])
+    # Make sure we use only 1 and 0 on the byte level:
+    assert_array_equal(res.view(np.uint8), [[1, 0], [1, 1]])
+
+
+@pytest.mark.parametrize(
+    "dtype",
+    (
+        np.int8,
+        np.int16,
+        np.int32,
+        np.int64,
+        np.uint8,
+        np.uint16,
+        np.uint32,
+        np.uint64,
+    )
+)
+def test_loadtxt_implicit_cast_float_to_int(dtype):
+    """
+    Currently the parser_config flag `allow_flot_for_int` is hardcoded to be
+    true. This means that if the parsing of an integer value fails, the code
+    will attempt to parse it as a float, then cast the float value to an
+    integer. This flag is only used when an explicit dtype is given.
+    """
+    txt = TextIO("1.0, 2.1, 3.7\n4, 5, 6")
+    res = np.loadtxt(txt, dtype=dtype, delimiter=",")
+    expected = np.array([[1, 2, 3], [4, 5, 6]], dtype=dtype)
+    assert_equal(res, expected)
+
+
+@pytest.mark.parametrize("dtype", (np.complex64, np.complex128))
+@pytest.mark.parametrize("with_parens", (False, True))
+def test_loadtxt_complex_parsing(dtype, with_parens):
+    s = "(1.0-2.5j),3.75,(7+-5.0j)\n(4),(-19e2j),(0)"
+    if not with_parens:
+        s = s.replace("(", "").replace(")", "")
+
+    res = np.loadtxt(TextIO(s), dtype=dtype, delimiter=",")
+    expected = np.array(
+        [[1.0-2.5j, 3.75, 7-5j], [4.0, -1900j, 0]], dtype=dtype
+    )
+    assert_equal(res, expected)
+
+
+def test_loadtxt_read_from_generator():
+    def gen():
+        for i in range(4):
+            yield f"{i},{2*i},{i**2}"
+
+    res = np.loadtxt(gen(), dtype=int, delimiter=",")
+    expected = np.array([[0, 0, 0], [1, 2, 1], [2, 4, 4], [3, 6, 9]])
+    assert_equal(res, expected)
+
+
+def test_loadtxt_read_from_generator_multitype():
+    def gen():
+        for i in range(3):
+            yield f"{i} {i / 4}"
+
+    res = np.loadtxt(gen(), dtype="i, d", delimiter=" ")
+    expected = np.array([(0, 0.0), (1, 0.25), (2, 0.5)], dtype="i, d")
+    assert_equal(res, expected)
+
+
+def test_loadtxt_read_from_bad_generator():
+    def gen():
+        for entry in ["1,2", b"3, 5", 12738]:
+            yield entry
+
+    with pytest.raises(
+        TypeError, match=r"non-string returned while reading data"
+    ):
+        np.loadtxt(gen(), dtype="i, i", delimiter=",")
+
+
+@pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
+def test_loadtxt_object_cleanup_on_read_error():
+    sentinel = object()
+
+    already_read = 0
+    def conv(x):
+        nonlocal already_read
+        if already_read > 4999:
+            raise ValueError("failed half-way through!")
+        already_read += 1
+        return sentinel
+
+    txt = TextIO("x\n" * 10000)
+
+    with pytest.raises(ValueError, match="at row 5000, column 1"):
+        np.loadtxt(txt, dtype=object, converters={0: conv})
+
+    assert sys.getrefcount(sentinel) == 2
+
+
+def test_loadtxt_character_not_bytes_compatible():
+    """Test exception when a character cannot be encoded as 'S'."""
+    data = StringIO("–")  # == \u2013
+    with pytest.raises(ValueError):
+        np.loadtxt(data, dtype="S5")
+
+
+@pytest.mark.parametrize("conv", (0, [float], ""))
+def test_loadtxt_invalid_converter(conv):
+    msg = (
+        "converters must be a dictionary mapping columns to converter "
+        "functions or a single callable."
+    )
+    with pytest.raises(TypeError, match=msg):
+        np.loadtxt(TextIO("1 2\n3 4"), converters=conv)
+
+
+def test_loadtxt_converters_dict_raises_non_integer_key():
+    with pytest.raises(TypeError, match="keys of the converters dict"):
+        np.loadtxt(TextIO("1 2\n3 4"), converters={"a": int})
+    with pytest.raises(TypeError, match="keys of the converters dict"):
+        np.loadtxt(TextIO("1 2\n3 4"), converters={"a": int}, usecols=0)
+
+
+@pytest.mark.parametrize("bad_col_ind", (3, -3))
+def test_loadtxt_converters_dict_raises_non_col_key(bad_col_ind):
+    data = TextIO("1 2\n3 4")
+    with pytest.raises(ValueError, match="converter specified for column"):
+        np.loadtxt(data, converters={bad_col_ind: int})
+
+
+def test_loadtxt_converters_dict_raises_val_not_callable():
+    with pytest.raises(
+        TypeError, match="values of the converters dictionary must be callable"
+    ):
+        np.loadtxt(StringIO("1 2\n3 4"), converters={0: 1})
