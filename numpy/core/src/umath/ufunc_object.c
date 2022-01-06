@@ -3032,8 +3032,12 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
         return NULL;
     }
 
-    /* The below code assumes that all descriptors are identical: */
-    assert(descrs[0] == descrs[1] && descrs[0] == descrs[2]);
+    /*
+     * The below code assumes that all descriptors are interchangeable, we
+     * allow them to not be strictly identical (but they typically should be)
+     */
+    assert(PyArray_EquivTypes(descrs[0], descrs[1])
+           && PyArray_EquivTypes(descrs[0], descrs[2]));
 
     if (PyDataType_REFCHK(descrs[2]) && descrs[2]->type_num != NPY_OBJECT) {
         /* This can be removed, but the initial element copy needs fixing */
@@ -3445,8 +3449,12 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
         return NULL;
     }
 
-    /* The below code assumes that all descriptors are identical: */
-    assert(descrs[0] == descrs[1] && descrs[0] == descrs[2]);
+    /*
+     * The below code assumes that all descriptors are interchangeable, we
+     * allow them to not be strictly identical (but they typically should be)
+     */
+    assert(PyArray_EquivTypes(descrs[0], descrs[1])
+           && PyArray_EquivTypes(descrs[0], descrs[2]));
 
     if (PyDataType_REFCHK(descrs[2]) && descrs[2]->type_num != NPY_OBJECT) {
         /* This can be removed, but the initial element copy needs fixing */
