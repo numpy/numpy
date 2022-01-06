@@ -4469,14 +4469,13 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('view',
     memory.
 
     For ``a.view(some_dtype)``, if ``some_dtype`` has a different number of
-    bytes per entry than the previous dtype (for example, converting a
-    regular array to a structured array), then the behavior of the view
-    cannot be predicted just from the superficial appearance of ``a`` (shown
-    by ``print(a)``). It also depends on exactly how ``a`` is stored in
-    memory. Therefore if ``a`` is C-ordered versus fortran-ordered, versus
-    defined as a slice or transpose, etc., the view may give different
-    results.
+    bytes per entry than the previous dtype (for example, converting a regular
+    array to a structured array), then the last axis of ``a`` must be
+    contiguous. This axis will be resized in the result.
 
+    .. versionchanged:: 1.23.0
+       Only the last axis needs to be contiguous. Previously, the entire array
+       had to be C-contiguous.
 
     Examples
     --------
@@ -4521,19 +4520,34 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('view',
     Views that change the dtype size (bytes per entry) should normally be
     avoided on arrays defined by slices, transposes, fortran-ordering, etc.:
 
-    >>> x = np.array([[1,2,3],[4,5,6]], dtype=np.int16)
-    >>> y = x[:, 0:2]
+    >>> x = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.int16)
+    >>> y = x[:, ::2]
     >>> y
-    array([[1, 2],
-           [4, 5]], dtype=int16)
+    array([[1, 3],
+           [4, 6]], dtype=int16)
     >>> y.view(dtype=[('width', np.int16), ('length', np.int16)])
     Traceback (most recent call last):
         ...
-    ValueError: To change to a dtype of a different size, the array must be C-contiguous
+    ValueError: To change to a dtype of a different size, the last axis must be contiguous
     >>> z = y.copy()
     >>> z.view(dtype=[('width', np.int16), ('length', np.int16)])
-    array([[(1, 2)],
-           [(4, 5)]], dtype=[('width', '<i2'), ('length', '<i2')])
+    array([[(1, 3)],
+           [(4, 6)]], dtype=[('width', '<i2'), ('length', '<i2')])
+
+    However, views that change dtype are totally fine for arrays with a
+    contiguous last axis, even if the rest of the axes are not C-contiguous:
+
+    >>> x = np.arange(2 * 3 * 4, dtype=np.int8).reshape(2, 3, 4)
+    >>> x.transpose(1, 0, 2).view(np.int16)
+    array([[[ 256,  770],
+            [3340, 3854]],
+    <BLANKLINE>
+           [[1284, 1798],
+            [4368, 4882]],
+    <BLANKLINE>
+           [[2312, 2826],
+            [5396, 5910]]], dtype=int16)
+
     """))
 
 

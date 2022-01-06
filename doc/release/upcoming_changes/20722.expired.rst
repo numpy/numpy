@@ -1,0 +1,52 @@
+Changing to dtype of different size in F-contiguous arrays no longer permitted
+------------------------------------------------------------------------------
+
+Behavior deprecated in NumPy 1.11.0 allowed the following counterintuitive result::
+
+    >>> x = np.array(["aA", "bB", "cC", "dD", "eE", "fF"]).reshape(1, 2, 3).transpose()
+    >>> x.view('U1')  # deprecated behavior, shape (6, 2, 1)
+    DeprecationWarning: ...
+    array([[['a'],
+            ['d']],
+    
+           [['A'],
+            ['D']],
+    
+           [['b'],
+            ['e']],
+    
+           [['B'],
+            ['E']],
+    
+           [['c'],
+            ['f']],
+    
+           [['C'],
+            ['F']]], dtype='<U1')
+
+Now that the deprecation has expired, dtype reassignment only happens along the
+last axis, so the above will result in::
+
+    >>> x.view('U1')  # new behavior, shape (3, 2, 2)
+    array([[['a', 'A'],
+            ['d', 'D']],
+    
+           [['b', 'B'],
+            ['e', 'E']],
+    
+           [['c', 'C'],
+            ['f', 'F']]], dtype='<U1')
+
+When the last axis is not contiguous, an error is now raised in place of the `DeprecationWarning`::
+
+    >>> x = np.array(["aA", "bB", "cC", "dD", "eE", "fF"]).reshape(2, 3).transpose()
+    >>> x.view('U1')
+    ValueError: To change to a dtype of a different size, the last axis must be contiguous
+
+The new behavior is equivalent to the more intuitive::
+
+    >>> x.copy().view('U1')
+
+To replicate the old behavior on F-but-not-C-contiguous arrays, use::
+
+    >>> x.T.view('U1').T
