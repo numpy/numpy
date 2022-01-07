@@ -1495,8 +1495,12 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
         kwargs: Mapping[str, Any],
     ) -> Any: ...
 
-    @property
-    def __array_finalize__(self) -> None: ...
+    # TODO: The annotation should be changed to something along the lines of
+    # `None | Callable[..., object]` once mypy actually allows subclasses
+    # to narrow it down to either `None` or a method (this can't be done as of
+    # mypy 0.930; this is a bug).
+    # Xref https://github.com/numpy/numpy/issues/20717#issuecomment-1004430548
+    __array_finalize__: Any
 
     def __array_wrap__(
         self,
