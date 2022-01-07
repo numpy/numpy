@@ -875,15 +875,23 @@ PyArray_NewFromDescr_int(
     /*
      * call the __array_finalize__ method if a subtype was requested.
      * If obj is NULL use Py_None for the Python callback.
+     * For speed, we skip if __array_finalize__ is inherited from ndarray
+     * (since that function does nothing), or, for backward compatibility,
+     * if it is None.
      */
     if (subtype != &PyArray_Type) {
         PyObject *res, *func;
-
-        func = PyObject_GetAttr((PyObject *)fa, npy_ma_str_array_finalize);
+        static PyObject *ndarray_array_finalize = NULL;
+        /* First time, cache ndarray's __array_finalize__ */
+        if (ndarray_array_finalize == NULL) {
+            ndarray_array_finalize = PyObject_GetAttr(
+                (PyObject *)&PyArray_Type, npy_ma_str_array_finalize);
+        }
+        func = PyObject_GetAttr((PyObject *)subtype, npy_ma_str_array_finalize);
         if (func == NULL) {
             goto fail;
         }
-        else if (func == Py_None) {
+        else if (func == ndarray_array_finalize || func == Py_None) {
             Py_DECREF(func);
         }
         else {
@@ -903,7 +911,7 @@ PyArray_NewFromDescr_int(
                 if (obj == NULL) {
                     obj = Py_None;
                 }
-                res = PyObject_CallFunctionObjArgs(func, obj, NULL);
+                res = PyObject_CallFunctionObjArgs(func, (PyObject *)fa, obj, NULL);
                 Py_DECREF(func);
                 if (res == NULL) {
                     goto fail;

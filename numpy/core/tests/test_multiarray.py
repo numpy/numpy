@@ -8954,10 +8954,26 @@ class TestArrayFinalize:
         a = np.array(1).view(SavesBase)
         assert_(a.saved_base is a.base)
 
-    def test_bad_finalize(self):
+    def test_bad_finalize1(self):
         class BadAttributeArray(np.ndarray):
             @property
             def __array_finalize__(self):
+                raise RuntimeError("boohoo!")
+
+        with pytest.raises(TypeError, match="not callable"):
+            np.arange(10).view(BadAttributeArray)
+
+    def test_bad_finalize2(self):
+        class BadAttributeArray(np.ndarray):
+            def __array_finalize__(self):
+                raise RuntimeError("boohoo!")
+
+        with pytest.raises(TypeError, match="takes 1 positional"):
+            np.arange(10).view(BadAttributeArray)
+
+    def test_bad_finalize3(self):
+        class BadAttributeArray(np.ndarray):
+            def __array_finalize__(self, obj):
                 raise RuntimeError("boohoo!")
 
         with pytest.raises(RuntimeError, match="boohoo!"):
@@ -9004,6 +9020,14 @@ class TestArrayFinalize:
 
         a = np.array(1).view(SuperFinalize)
         assert_(a.saved_result is None)
+
+    def test_can_use_none(self):
+        # For backward compatibility, to show nothing needs finalizing.
+        class NoFinalize(np.ndarray):
+            __array_finalize__ = None
+
+        a = np.array(1).view(NoFinalize)
+        assert isinstance(a, NoFinalize)
 
 
 def test_orderconverter_with_nonASCII_unicode_ordering():
