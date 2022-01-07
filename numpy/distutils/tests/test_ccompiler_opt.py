@@ -405,7 +405,7 @@ class _Test_CCompilerOpt:
                 # in msvc, avx512_knl avx512_knm aren't supported
                 x86_msvc=".* xop fma4 .* avx512f .* avx512_skx .*",
                 armhf=".* asimd asimdhp asimddp .*",
-                ppc64="vsx vsx2 vsx3.*",
+                ppc64="vsx vsx2 vsx3 vsx4.*",
                 s390x="vx vxe vxe2.*"
             )
         # min
