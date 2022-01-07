@@ -926,15 +926,6 @@ array_transpose_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
     return PyArray_Transpose(self, NULL);
 }
 
-/* If this is None, no function call is made
-   --- default sub-class behavior
-*/
-static PyObject *
-array_finalize_get(PyArrayObject *NPY_UNUSED(self), void *NPY_UNUSED(ignored))
-{
-    Py_RETURN_NONE;
-}
-
 NPY_NO_EXPORT PyGetSetDef array_getsetlist[] = {
     {"ndim",
         (getter)array_ndim_get,
@@ -1006,10 +997,6 @@ NPY_NO_EXPORT PyGetSetDef array_getsetlist[] = {
         NULL, NULL},
     {"__array_priority__",
         (getter)array_priority_get,
-        NULL,
-        NULL, NULL},
-    {"__array_finalize__",
-        (getter)array_finalize_get,
         NULL,
         NULL, NULL},
     {NULL, NULL, NULL, NULL, NULL},  /* Sentinel */

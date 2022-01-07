@@ -8997,6 +8997,14 @@ class TestArrayFinalize:
         break_cycles()
         assert_(obj_ref() is None, "no references should remain")
 
+    def test_can_use_super(self):
+        class SuperFinalize(np.ndarray):
+            def __array_finalize__(self, obj):
+                self.saved_result = super().__array_finalize__(obj)
+
+        a = np.array(1).view(SuperFinalize)
+        assert_(a.saved_result is None)
+
 
 def test_orderconverter_with_nonASCII_unicode_ordering():
     # gh-7475
@@ -9201,7 +9209,7 @@ class TestViewDtype:
         # x is non-contiguous
         x = np.arange(10, dtype='<i4')[::2]
         with pytest.raises(ValueError,
-                           match='the last axis must be contiguous'): 
+                           match='the last axis must be contiguous'):
             x.view('<i2')
         expected = [[0, 0], [2, 0], [4, 0], [6, 0], [8, 0]]
         assert_array_equal(x[:, np.newaxis].view('<i2'), expected)

@@ -1,0 +1,5 @@
+``ndarray.__array_finalize__`` is now callable
+----------------------------------------------
+This means subclasses can now use ``super().__array_finalize__(obj)``
+without worrying whether ``ndarray`` is their superclass or not.
+The actual call remains a no-op.

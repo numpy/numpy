@@ -859,7 +859,7 @@ array_astype(PyArrayObject *self,
      * and it's not a subtype if subok is False, then we
      * can skip the copy.
      */
-    if (forcecopy != NPY_COPY_ALWAYS && 
+    if (forcecopy != NPY_COPY_ALWAYS &&
                     (order == NPY_KEEPORDER ||
                     (order == NPY_ANYORDER &&
                         (PyArray_IS_C_CONTIGUOUS(self) ||
@@ -881,7 +881,7 @@ array_astype(PyArrayObject *self,
         Py_DECREF(dtype);
         return NULL;
     }
-    
+
     if (!PyArray_CanCastArrayTo(self, dtype, casting)) {
         PyErr_Clear();
         npy_set_invalid_cast_error(
@@ -923,6 +923,13 @@ array_astype(PyArrayObject *self,
 }
 
 /* default sub-type implementation */
+
+
+static PyObject *
+array_finalizearray(PyArrayObject *self, PyObject *obj)
+{
+    Py_RETURN_NONE;
+}
 
 
 static PyObject *
@@ -2777,6 +2784,9 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
     {"__array_prepare__",
         (PyCFunction)array_preparearray,
         METH_VARARGS, NULL},
+    {"__array_finalize__",
+        (PyCFunction)array_finalizearray,
+        METH_O, NULL},
     {"__array_wrap__",
         (PyCFunction)array_wraparray,
         METH_VARARGS, NULL},
