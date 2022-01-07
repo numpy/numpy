@@ -591,8 +591,8 @@ def pow(x1: Array, x2: Array, /) -> Array:
 
     See its docstring for more information.
     """
-    if x1.dtype not in _floating_dtypes or x2.dtype not in _floating_dtypes:
-        raise TypeError("Only floating-point dtypes are allowed in pow")
+    if x1.dtype not in _numeric_dtypes or x2.dtype not in _numeric_dtypes:
+        raise TypeError("Only numeric dtypes are allowed in pow")
     # Call result type here just to raise on disallowed type combinations
     _result_type(x1.dtype, x2.dtype)
     x1, x2 = Array._normalize_two_args(x1, x2)

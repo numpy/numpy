@@ -66,7 +66,7 @@ def test_function_types():
         "negative": "numeric",
         "not_equal": "all",
         "positive": "numeric",
-        "pow": "floating-point",
+        "pow": "numeric",
         "remainder": "numeric",
         "round": "numeric",
         "sign": "numeric",
