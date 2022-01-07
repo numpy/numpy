@@ -1502,8 +1502,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
         kwargs: Mapping[str, Any],
     ) -> Any: ...
 
-    @property
-    def __array_finalize__(self) -> None: ...
+    __array_finalize__: Any
 
     def __array_wrap__(
         self,
