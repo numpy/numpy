@@ -656,15 +656,13 @@ class Array:
         res = self._array.__pos__()
         return self.__class__._new(res)
 
-    # PEP 484 requires int to be a subtype of float, but __pow__ should not
-    # accept int.
-    def __pow__(self: Array, other: Union[float, Array], /) -> Array:
+    def __pow__(self: Array, other: Union[int, float, Array], /) -> Array:
         """
         Performs the operation __pow__.
         """
         from ._elementwise_functions import pow
 
-        other = self._check_allowed_dtypes(other, "floating-point", "__pow__")
+        other = self._check_allowed_dtypes(other, "numeric", "__pow__")
         if other is NotImplemented:
             return other
         # Note: NumPy's __pow__ does not follow type promotion rules for 0-d
@@ -914,23 +912,23 @@ class Array:
         res = self._array.__ror__(other._array)
         return self.__class__._new(res)
 
-    def __ipow__(self: Array, other: Union[float, Array], /) -> Array:
+    def __ipow__(self: Array, other: Union[int, float, Array], /) -> Array:
         """
         Performs the operation __ipow__.
         """
-        other = self._check_allowed_dtypes(other, "floating-point", "__ipow__")
+        other = self._check_allowed_dtypes(other, "numeric", "__ipow__")
         if other is NotImplemented:
             return other
         self._array.__ipow__(other._array)
         return self
 
-    def __rpow__(self: Array, other: Union[float, Array], /) -> Array:
+    def __rpow__(self: Array, other: Union[int, float, Array], /) -> Array:
         """
         Performs the operation __rpow__.
         """
         from ._elementwise_functions import pow
 
-        other = self._check_allowed_dtypes(other, "floating-point", "__rpow__")
+        other = self._check_allowed_dtypes(other, "numeric", "__rpow__")
         if other is NotImplemented:
             return other
         # Note: NumPy's __pow__ does not follow the spec type promotion rules
