@@ -3367,7 +3367,7 @@ class busdaycalendar:
     def __new__(
         cls,
         weekmask: ArrayLike = ...,
-        holidays: ArrayLike = ...,
+        holidays: ArrayLike | dt.date | _NestedSequence[dt.date] = ...,
     ) -> busdaycalendar: ...
     @property
     def weekmask(self) -> NDArray[bool_]: ...
