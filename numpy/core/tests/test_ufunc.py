@@ -2148,6 +2148,18 @@ class TestUfunc:
             # It would be safe, but not equiv casting:
             ufunc(a, c, out=out, casting="equiv")
 
+    def test_reducelike_byteorder_resolution(self):
+        # See gh-20699, byte-order changes need some extra care in the type
+        # resolution to make the following succeed:
+        arr_be = np.arange(10, dtype=">i8")
+        arr_le = np.arange(10, dtype="<i8")
+
+        assert np.add.reduce(arr_be) == np.add.reduce(arr_le)
+        assert_array_equal(
+            np.add.accumulate(arr_be), np.add.accumulate(arr_le))
+        assert_array_equal(
+            np.add.reduceat(arr_be, [1]), np.add.reduceat(arr_le, [1]))
+
     def test_reducelike_out_promotes(self):
         # Check that the out argument to reductions is considered for
         # promotion.  See also gh-20455.
