@@ -249,6 +249,8 @@ tokenizer_core_@type@(tokenizer_state *ts, parser_config *const config)
             if (ts->buf_state != BUFFER_MAY_CONTAIN_NEWLINE) {
                 pos = stop;  /* advance to next buffer */
                 ts->state = TOKENIZE_LINE_END;
+                /* Ensure we don't think we have an empty line left to parse: */
+                ts->buf_state = BUFFER_MAY_CONTAIN_NEWLINE;
                 break;
             }
             for (; pos < stop; pos++) {
@@ -322,16 +324,20 @@ tokenize(stream *s, tokenizer_state *ts, parser_config *const config)
 
         if (NPY_UNLIKELY(ts->pos >= ts->end)) {
             if (ts->buf_state == BUFFER_IS_LINEND &&
-                    ts->state != TOKENIZE_QUOTED &&
-                    ts->state != TOKENIZE_CHECK_QUOTED) {
+                    ts->state != TOKENIZE_QUOTED) {
                 /*
                  * Finished line, do not read anymore (also do not eat \n).
                  * If we are in a quoted field and the "line" does not end with
                  * a newline, the quoted field will be missing it right now.
-                 * TODO: We should probably just insert a "\n" character here,
-                 *       which is also  closer to what the python code did
-                 *       (either by setting pos/end or manually).
+                 * (i.e. `np.loadtxt(['"a', 'b"'], dtype="S2")` reads "ab")
+                 * TODO: We should possibly insert a '\n' character when inside
+                 *       a quoted field the and '\n' character is not included
+                 *       in the string. `FileLike.readline()` does ensure it
+                 *       is included.
+                 *
+                 * Ensure we don't think we have an empty line left to parse:
                  */
+                ts->buf_state = BUFFER_MAY_CONTAIN_NEWLINE;
                 goto finish;
             }
             /* fetch new data */

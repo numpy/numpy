@@ -9,9 +9,8 @@
  * we definitely expect to get line-by-line buffers.
  */
 #define BUFFER_MAY_CONTAIN_NEWLINE 0
-#define BUFFER_IS_PARTIAL_LINE 1
-#define BUFFER_IS_LINEND 2
-#define BUFFER_IS_FILEEND 3
+#define BUFFER_IS_LINEND 1
+#define BUFFER_IS_FILEEND 2
 
 typedef struct _stream {
     void *stream_data;
