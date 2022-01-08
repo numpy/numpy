@@ -2858,7 +2858,7 @@ def test_loadtxt_blank_lines_spaces_delimit(ws):
     #       should just be implemented closer to Python
     expected = np.array([[1, 2, 30], [4, 5, 60], [7, 8, 90], [3, 2, 1]])
     assert_equal(
-        np.loadtxt(txt, dtype=int, delimiter='', comments="#"), expected
+        np.loadtxt(txt, dtype=int, delimiter=None, comments="#"), expected
     )
 
 
@@ -2880,8 +2880,8 @@ def test_loadtxt_maxrows_no_blank_lines(dtype):
 
 @pytest.mark.parametrize("dtype", (np.dtype("f8"), np.dtype("i2")))
 def test_loadtxt_exception_message_bad_values(dtype):
-    txt = TextIO("1.0,2.0\n3.0,XXX\n5.5,6.0")
-    msg = f"could not convert string .XXX. to {dtype} at row 1, column 2"
+    txt = TextIO("1,2\n3,XXX\n5,6")
+    msg = f"could not convert string 'XXX' to {dtype} at row 1, column 2"
     with pytest.raises(ValueError, match=msg):
         np.loadtxt(txt, dtype=dtype, delimiter=",")
 
