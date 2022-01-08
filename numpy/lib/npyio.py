@@ -811,15 +811,17 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
         The filename or the file to be read.
     delimiter : str, optional
         Field delimiter of the fields in line of the file.
-        Default is a comma, ','.
-    comment : str or sequence of str, optional
+        Default is a comma, ','.  If None any sequence of whitespace is
+        considered a delimiter.
+    comment : str or sequence of str or None, optional
         Character that begins a comment.  All text from the comment
         character to the end of the line is ignored.
         Multiple comments or multiple-character comment strings are supported,
         but may be slower and `quote` must be empty if used.
-    quote : str, optional
+        Use None to disable all use of comments.
+    quote : str or None, optional
         Character that is used to quote string fields. Default is '"'
-        (a double quote).
+        (a double quote). Use None to disable quote support.
     imaginary_unit : str, optional
         Character that represent the imaginay unit `sqrt(-1)`.
         Default is 'j'.
@@ -929,29 +931,33 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
 
     _ensure_ndmin_ndarray_check_param(ndmin)
 
-    if not isinstance(comment, str):
+    if comment is None:
+        comments = None
+    elif isinstance(comment, str):
+        if len(comment) > 1:  # length of 0 is rejected later
+            comments = (comment,)
+            comment = None
+        else:
+            comments = None
+    else:
         # assume comments are a sequence of strings
         comments = tuple(comment)
-        comment = ''
-        # If there is only one comment, and that comment has one character,
-        # the normal parsing can deal with it just fine.
-        if len(comments) == 1:
+        comment = None
+        if len(comments) == 0:
+            comments = None  # No comments at all
+        elif len(comments) == 1:
+            # If there is only one comment, and that comment has one character,
+            # the normal parsing can deal with it just fine.
             if isinstance(comments[0], str) and len(comments[0]) == 1:
                 comment = comments[0]
                 comments = None
-    elif len(comment) > 1:
-        comments = (comment,)
-        comment = ''
-    else:
-        comments = None
 
     # comment is now either a 1 or 0 character string or a tuple:
     if comments is not None:
-        assert comment == ''
         # Note: An earlier version support two character comments (and could
         #       have been extended to multiple characters, we assume this is
         #       rare enough to not optimize for.
-        if quote != "":
+        if quote is not None:
             raise ValueError(
                 "when multiple comments or a multi-character comment is "
                 "given, quotes are not supported.  In this case the quote "
@@ -1073,7 +1079,7 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
 @set_module('numpy')
 def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             converters=None, skiprows=0, usecols=None, unpack=False,
-            ndmin=0, encoding='bytes', max_rows=None, *, like=None):
+            ndmin=0, encoding='bytes', max_rows=None, *, quote=None, like=None):
     r"""
     Load data from a text file.
 
@@ -1092,7 +1098,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         each row will be interpreted as an element of the array.  In this
         case, the number of columns used must match the number of fields in
         the data-type.
-    comments : str or sequence of str, optional
+    comments : str or sequence of str or None, optional
         The characters or list of characters used to indicate the start of a
         comment. None implies no comments. For backwards compatibility, byte
         strings will be decoded as 'latin1'. The default is '#'.
@@ -1143,6 +1149,10 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         is to read all the lines.
 
         .. versionadded:: 1.16.0
+    quote : unicode character or None, optional
+        If given (normally ``"``) quoting support is enabled.  Double quotes
+        are considered a single escaped ones if found within a quoted field
+        (supporting the Excel csv dialect).
     ${ARRAY_FUNCTION_LIKE}
 
         .. versionadded:: 1.20.0
@@ -1211,9 +1221,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             max_rows=max_rows, like=like
         )
 
-    if delimiter is None:
-        delimiter = ''
-    elif isinstance(delimiter, bytes):
+    if isinstance(delimiter, bytes):
         delimiter.decode("latin1")
 
     if dtype is None:
@@ -1221,9 +1229,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
 
     comment = comments
     # Type conversions for Py3 convenience
-    if comment is None:
-        comment = ''
-    else:
+    if comment is not None:
         if isinstance(comment, (str, bytes)):
             comment = [comment]
         comment = [
@@ -1232,7 +1238,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     arr = _read(fname, dtype=dtype, comment=comment, delimiter=delimiter,
                 converters=converters, skiprows=skiprows, usecols=usecols,
                 unpack=unpack, ndmin=ndmin, encoding=encoding,
-                max_rows=max_rows, quote='')
+                max_rows=max_rows, quote=quote)
 
     return arr
 

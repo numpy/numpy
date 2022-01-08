@@ -85,15 +85,15 @@ _readtext_from_stream(stream *s, parser_config *pc,
 static int
 parse_control_character(PyObject *obj, Py_UCS4 *character)
 {
-    if (!PyUnicode_Check(obj) || PyUnicode_GetLength(obj) > 1) {
-        PyErr_Format(PyExc_TypeError,
-                "Control character must be a single unicode character or "
-                "empty unicode string; but got: %.100R", obj);
-        return 0;
-    }
-    if (PyUnicode_GET_LENGTH(obj) == 0) {
+    if (obj == Py_None) {
         *character = (Py_UCS4)-1;  /* character beyond unicode range */
         return 1;
+    }
+    if (!PyUnicode_Check(obj) || PyUnicode_GetLength(obj) != 1) {
+        PyErr_Format(PyExc_TypeError,
+                "Text reading control character must be a single unicode "
+                "character or None; but got: %.100R", obj);
+        return 0;
     }
     *character = PyUnicode_READ_CHAR(obj, 0);
     return 1;
