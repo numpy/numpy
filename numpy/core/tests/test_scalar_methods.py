@@ -264,7 +264,9 @@ class TestFloatHex:
         MINEXP = finfo.minexp
         MAXEXP = finfo.maxexp
         NMANT = finfo.nmant
+        MIN = finfo.smallest_normal
         TINY = finfo.smallest_subnormal
+        EPS = finfo.eps
 
         # two spellings of infinity, with optional signs; case-insensitive
         assert self.identical(ftype.fromhex('inf'), np.inf)
@@ -319,7 +321,8 @@ class TestFloatHex:
         assert self.identical(ftype.fromhex('0x.BEp8'), 190.0)
         assert self.identical(ftype.fromhex('0x.0BEp12'), 190.0)
 
-        # moving the point around
+        # moving the point around.
+        # TODO: Use proper Mantissa for each type
         pi = ftype.fromhex('0x1.921fb54442d18p1')
         assert self.identical(ftype.fromhex('0x.006487ed5110b46p11'), pi)
         assert self.identical(ftype.fromhex('0x.00c90fdaa22168cp10'), pi)
@@ -368,26 +371,15 @@ class TestFloatHex:
             # for 128. It can also be `9` for 64, etc
             f"-0X1.{'f' * (NMANT // 4)}fp{MAXEXP - 1}",
             f"+0x3.{'f' * (NMANT // 4 + 1)}p{MAXEXP - 2}",
-            # XXX How are we getting to 970 for 64?
-            # f"0x3fffffffffffffp+{MAXEXP - NMANT}",
-            f"0x10000000000000000p{MAXEXP - NMANT}",
-            f"-0Xffffffffffffffffp{MAXEXP - NMANT}",
+            # TODO Handle other cases.
+            # refer to python/cpython:Lib/test/test_float.py
         ]
 
         for x in large_values:
             with pytest.raises(OverflowError):
                 result = ftype.fromhex(x)
 
-        # ...and those that round to +-max float
-        self.identical(ftype.fromhex(
-        f"+0x1.{'f' * (NMANT // 4)}p+{MAXEXP - 1}"),
-                finfo.max)
-        self.identical(ftype.fromhex(
-        f"-0x1.{'f' * (NMANT // 4)}7p+{MAXEXP - 1}"),
-                -finfo.max)
-        self.identical(ftype.fromhex(
-        f"+0x1.{'f' * (NMANT // 4)}7{'f' * (NMANT // 4 )}p+{MAXEXP - 1}"),
-                finfo.max)
+        # TODO ...and those that round to +-max float
 
         # zeros
         assert self.identical(ftype.fromhex(
@@ -446,13 +438,60 @@ class TestFloatHex:
                 f'0x1.{"f" * (NMANT // 4 + 1)}p-{MAXEXP + NMANT - 1}'), TINY)
 
         # check round-half-even is working correctly near 0 ...
+        assert self.identical(ftype.fromhex(f'0x1p-{MAXEXP+NMANT}'), 0.0)
+        assert self.identical(ftype.fromhex(f'0X2p-{MAXEXP+NMANT}'), 0.0)
+        assert self.identical(ftype.fromhex(f'0X3p-{MAXEXP+NMANT}'), TINY)
+        assert self.identical(ftype.fromhex(f'0x4p-{MAXEXP+NMANT}'), TINY)
+        assert self.identical(ftype.fromhex(f'0X5p-{MAXEXP+NMANT}'), TINY)
+        assert self.identical(ftype.fromhex(f'0X6p-{MAXEXP+NMANT}'), 2*TINY)
+        assert self.identical(ftype.fromhex(f'0x7p-{MAXEXP+NMANT}'), 2*TINY)
+        assert self.identical(ftype.fromhex(f'0X8p-{MAXEXP+NMANT}'), 2*TINY)
+        assert self.identical(ftype.fromhex(f'0X9p-{MAXEXP+NMANT}'), 2*TINY)
+        assert self.identical(ftype.fromhex(f'0xap-{MAXEXP+NMANT}'), 2*TINY)
+        assert self.identical(ftype.fromhex(f'0Xbp-{MAXEXP+NMANT}'), 3*TINY)
+        assert self.identical(ftype.fromhex(f'0xcp-{MAXEXP+NMANT}'), 3*TINY)
+        assert self.identical(ftype.fromhex(f'0Xdp-{MAXEXP+NMANT}'), 3*TINY)
+        assert self.identical(ftype.fromhex(f'0Xep-{MAXEXP+NMANT}'), 4*TINY)
+        assert self.identical(ftype.fromhex(f'0xfp-{MAXEXP+NMANT}'), 4*TINY)
+        assert self.identical(ftype.fromhex(f'0x10p-{MAXEXP+NMANT}'), 4*TINY)
+        assert self.identical(ftype.fromhex(f'-0x1p-{MAXEXP+NMANT}'), -0.0)
+        assert self.identical(ftype.fromhex(f'-0X2p-{MAXEXP+NMANT}'), -0.0)
+        assert self.identical(ftype.fromhex(f'-0x3p-{MAXEXP+NMANT}'), -TINY)
+        assert self.identical(ftype.fromhex(f'-0X4p-{MAXEXP+NMANT}'), -TINY)
+        assert self.identical(ftype.fromhex(f'-0x5p-{MAXEXP+NMANT}'), -TINY)
+        assert self.identical(ftype.fromhex(f'-0x6p-{MAXEXP+NMANT}'), -2*TINY)
+        assert self.identical(ftype.fromhex(f'-0X7p-{MAXEXP+NMANT}'), -2*TINY)
+        assert self.identical(ftype.fromhex(f'-0X8p-{MAXEXP+NMANT}'), -2*TINY)
+        assert self.identical(ftype.fromhex(f'-0X9p-{MAXEXP+NMANT}'), -2*TINY)
+        assert self.identical(ftype.fromhex(f'-0Xap-{MAXEXP+NMANT}'), -2*TINY)
+        assert self.identical(ftype.fromhex(f'-0xbp-{MAXEXP+NMANT}'), -3*TINY)
+        assert self.identical(ftype.fromhex(f'-0xcp-{MAXEXP+NMANT}'), -3*TINY)
+        assert self.identical(ftype.fromhex(f'-0Xdp-{MAXEXP+NMANT}'), -3*TINY)
+        assert self.identical(ftype.fromhex(f'-0xep-{MAXEXP+NMANT}'), -4*TINY)
+        assert self.identical(ftype.fromhex(f'-0Xfp-{MAXEXP+NMANT}'), -4*TINY)
+        assert self.identical(ftype.fromhex(f'-0X10p-{MAXEXP+NMANT}'), -4*TINY)
 
-        # ... and near MIN ...
+        # TODO ... and near MIN ...
 
-        # ... and near 1.0.
+        # TODO ... and near 1.0.
 
         # Regression test for a corner-case bug reported in b.p.o. 44954
-        # refer to python/cpython for more details
+        # xref: https://bugs.python.org/issue44954
+        assert self.identical(ftype.fromhex(f'0x.8p{MINEXP - NMANT}'), 0.0)
+        assert self.identical(ftype.fromhex(f'0x.80p{MINEXP - NMANT}'), 0.0)
+        assert self.identical(ftype.fromhex(f'0x.81p{MINEXP - NMANT}'), TINY)
+        assert self.identical(ftype.fromhex(f'0x8p{MINEXP - NMANT - 4}'), 0.0)
+        assert self.identical(ftype.fromhex(
+            f'0x8.0p{MINEXP - NMANT - 4}'), 0.0)
+        assert self.identical(ftype.fromhex(
+            f'0x8.1p{MINEXP - NMANT - 4}'), TINY)
+        assert self.identical(ftype.fromhex(f'0x80p{MINEXP - NMANT - 8}'), 0.0)
+        assert self.identical(ftype.fromhex(
+            f'0x81p{MINEXP - NMANT - 8}'), TINY)
+        assert self.identical(ftype.fromhex(f'.8p{MINEXP - NMANT}'), 0.0)
+        assert self.identical(ftype.fromhex(f'8p{MINEXP - NMANT - 4}'), 0.0)
+        assert self.identical(ftype.fromhex(f'-.8p{MINEXP - NMANT}'), -0.0)
+        assert self.identical(ftype.fromhex(f'+8p{MINEXP - NMANT - 4}'), 0.0)
 
     @pytest.mark.parametrize("ftype", np.sctypes['float'])
     def test_invalid_inputs(self, ftype):
