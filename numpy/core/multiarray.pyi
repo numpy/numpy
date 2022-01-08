@@ -67,6 +67,7 @@ from numpy.typing import (
     NDArray,
     ArrayLike,
     _SupportsArray,
+    _NestedSequence,
     _FiniteNestedSequence,
     _ArrayLikeBool_co,
     _ArrayLikeUInt_co,
@@ -818,28 +819,28 @@ def datetime_data(
 
 @overload
 def busday_count(  # type: ignore[misc]
-    begindates: _ScalarLike_co,
-    enddates: _ScalarLike_co,
+    begindates: _ScalarLike_co | dt.date,
+    enddates: _ScalarLike_co | dt.date,
     weekmask: ArrayLike = ...,
-    holidays: None | ArrayLike = ...,
+    holidays: None | ArrayLike | dt.date | _NestedSequence[dt.date] = ...,
     busdaycal: None | busdaycalendar = ...,
     out: None = ...,
 ) -> int_: ...
 @overload
 def busday_count(  # type: ignore[misc]
-    begindates: ArrayLike,
-    enddates: ArrayLike,
+    begindates: ArrayLike | dt.date | _NestedSequence[dt.date],
+    enddates: ArrayLike | dt.date | _NestedSequence[dt.date],
     weekmask: ArrayLike = ...,
-    holidays: None | ArrayLike = ...,
+    holidays: None | ArrayLike | dt.date | _NestedSequence[dt.date] = ...,
     busdaycal: None | busdaycalendar = ...,
     out: None = ...,
 ) -> NDArray[int_]: ...
 @overload
 def busday_count(
-    begindates: ArrayLike,
-    enddates: ArrayLike,
+    begindates: ArrayLike | dt.date | _NestedSequence[dt.date],
+    enddates: ArrayLike | dt.date | _NestedSequence[dt.date],
     weekmask: ArrayLike = ...,
-    holidays: None | ArrayLike = ...,
+    holidays: None | ArrayLike | dt.date | _NestedSequence[dt.date] = ...,
     busdaycal: None | busdaycalendar = ...,
     out: _ArrayType = ...,
 ) -> _ArrayType: ...
@@ -847,100 +848,100 @@ def busday_count(
 # `roll="raise"` is (more or less?) equivalent to `casting="safe"`
 @overload
 def busday_offset(  # type: ignore[misc]
-    dates: datetime64,
-    offsets: _TD64Like_co,
+    dates: datetime64 | dt.date,
+    offsets: _TD64Like_co | dt.timedelta,
     roll: L["raise"] = ...,
     weekmask: ArrayLike = ...,
-    holidays: None | ArrayLike = ...,
+    holidays: None | ArrayLike | dt.date | _NestedSequence[dt.date] = ...,
     busdaycal: None | busdaycalendar = ...,
     out: None = ...,
 ) -> datetime64: ...
 @overload
 def busday_offset(  # type: ignore[misc]
-    dates: _ArrayLike[datetime64],
-    offsets: _ArrayLikeTD64_co,
+    dates: _ArrayLike[datetime64] | dt.date | _NestedSequence[dt.date],
+    offsets: _ArrayLikeTD64_co | dt.timedelta | _NestedSequence[dt.timedelta],
     roll: L["raise"] = ...,
     weekmask: ArrayLike = ...,
-    holidays: None | ArrayLike = ...,
+    holidays: None | ArrayLike | dt.date | _NestedSequence[dt.date] = ...,
     busdaycal: None | busdaycalendar = ...,
     out: None = ...,
 ) -> NDArray[datetime64]: ...
 @overload
 def busday_offset(  # type: ignore[misc]
-    dates: _ArrayLike[datetime64],
-    offsets: _ArrayLike[timedelta64],
+    dates: _ArrayLike[datetime64] | dt.date | _NestedSequence[dt.date],
+    offsets: _ArrayLikeTD64_co | dt.timedelta | _NestedSequence[dt.timedelta],
     roll: L["raise"] = ...,
     weekmask: ArrayLike = ...,
-    holidays: None | ArrayLike = ...,
+    holidays: None | ArrayLike | dt.date | _NestedSequence[dt.date] = ...,
     busdaycal: None | busdaycalendar = ...,
     out: _ArrayType = ...,
 ) -> _ArrayType: ...
 @overload
 def busday_offset(  # type: ignore[misc]
-    dates: _ScalarLike_co,
-    offsets: _ScalarLike_co,
+    dates: _ScalarLike_co | dt.date,
+    offsets: _ScalarLike_co | dt.timedelta,
     roll: _RollKind,
     weekmask: ArrayLike = ...,
-    holidays: None | ArrayLike = ...,
+    holidays: None | ArrayLike | dt.date | _NestedSequence[dt.date] = ...,
     busdaycal: None | busdaycalendar = ...,
     out: None = ...,
 ) -> datetime64: ...
 @overload
 def busday_offset(  # type: ignore[misc]
-    dates: ArrayLike,
-    offsets: ArrayLike,
+    dates: ArrayLike | dt.date | _NestedSequence[dt.date],
+    offsets: ArrayLike | dt.timedelta | _NestedSequence[dt.timedelta],
     roll: _RollKind,
     weekmask: ArrayLike = ...,
-    holidays: None | ArrayLike = ...,
+    holidays: None | ArrayLike | dt.date | _NestedSequence[dt.date] = ...,
     busdaycal: None | busdaycalendar = ...,
     out: None = ...,
 ) -> NDArray[datetime64]: ...
 @overload
 def busday_offset(
-    dates: ArrayLike,
-    offsets: ArrayLike,
+    dates: ArrayLike | dt.date | _NestedSequence[dt.date],
+    offsets: ArrayLike | dt.timedelta | _NestedSequence[dt.timedelta],
     roll: _RollKind,
     weekmask: ArrayLike = ...,
-    holidays: None | ArrayLike = ...,
+    holidays: None | ArrayLike | dt.date | _NestedSequence[dt.date] = ...,
     busdaycal: None | busdaycalendar = ...,
     out: _ArrayType = ...,
 ) -> _ArrayType: ...
 
 @overload
 def is_busday(  # type: ignore[misc]
-    dates: _ScalarLike_co,
+    dates: _ScalarLike_co | dt.date,
     weekmask: ArrayLike = ...,
-    holidays: None | ArrayLike = ...,
+    holidays: None | ArrayLike | dt.date | _NestedSequence[dt.date] = ...,
     busdaycal: None | busdaycalendar = ...,
     out: None = ...,
 ) -> bool_: ...
 @overload
 def is_busday(  # type: ignore[misc]
-    dates: ArrayLike,
+    dates: ArrayLike | _NestedSequence[dt.date],
     weekmask: ArrayLike = ...,
-    holidays: None | ArrayLike = ...,
+    holidays: None | ArrayLike | dt.date | _NestedSequence[dt.date] = ...,
     busdaycal: None | busdaycalendar = ...,
     out: None = ...,
 ) -> NDArray[bool_]: ...
 @overload
 def is_busday(
-    dates: ArrayLike,
+    dates: ArrayLike | _NestedSequence[dt.date],
     weekmask: ArrayLike = ...,
-    holidays: None | ArrayLike = ...,
+    holidays: None | ArrayLike | dt.date | _NestedSequence[dt.date] = ...,
     busdaycal: None | busdaycalendar = ...,
     out: _ArrayType = ...,
 ) -> _ArrayType: ...
 
 @overload
 def datetime_as_string(  # type: ignore[misc]
-    arr: datetime64,
+    arr: datetime64 | dt.date,
     unit: None | L["auto"] | _UnitKind = ...,
     timezone: L["naive", "UTC", "local"] | dt.tzinfo = ...,
     casting: _CastingKind = ...,
 ) -> str_: ...
 @overload
 def datetime_as_string(
-    arr: _ArrayLikeDT64_co,
+    arr: _ArrayLikeDT64_co | _NestedSequence[dt.date],
     unit: None | L["auto"] | _UnitKind = ...,
     timezone: L["naive", "UTC", "local"] | dt.tzinfo = ...,
     casting: _CastingKind = ...,
