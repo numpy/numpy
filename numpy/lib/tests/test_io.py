@@ -1131,8 +1131,8 @@ class TestLoadTxt(LoadTxtBase):
     @pytest.mark.skipif(locale.getpreferredencoding() == 'ANSI_X3.4-1968',
                         reason="Wrong preferred encoding")
     def test_binary_load(self):
-        butf8 = b"5,6,7,\xc3\x95scarscar\n\r15,2,3,hello\n\r"\
-                b"20,2,3,\xc3\x95scar\n\r"
+        butf8 = b"5,6,7,\xc3\x95scarscar\r\n15,2,3,hello\r\n"\
+                b"20,2,3,\xc3\x95scar\r\n"
         sutf8 = butf8.decode("UTF-8").replace("\r", "").splitlines()
         with temppath() as path:
             with open(path, "wb") as f:

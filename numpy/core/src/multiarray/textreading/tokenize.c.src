@@ -383,6 +383,13 @@ tokenize(stream *s, tokenizer_state *ts, parser_config *const config)
     }
 
   finish:
+    if (NPY_UNLIKELY(ts->pos != ts->end && ts->buf_state == BUFFER_IS_LINEND)) {
+        PyErr_SetString(PyExc_ValueError,
+                "Found an unquoted embedded newline within a single line of "
+                "input.  This is currently not supported.");
+        return -1;
+    }
+
     /* Finish the last field */
     if (add_field(ts) < 0) {
         return -1;
