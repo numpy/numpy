@@ -3039,31 +3039,11 @@ def test_loadtxt_bool():
     assert_array_equal(res.view(np.uint8), [[1, 0], [1, 1]])
 
 
-@pytest.mark.parametrize(
-    "dtype",
-    (
-        np.int8,
-        np.int16,
-        np.int32,
-        np.int64,
-        np.uint8,
-        np.uint16,
-        np.uint32,
-        np.uint64,
-    )
-)
-def test_loadtxt_implicit_cast_float_to_int(dtype):
-    """
-    Currently the parser_config flag `allow_flot_for_int` is hardcoded to be
-    true. This means that if the parsing of an integer value fails, the code
-    will attempt to parse it as a float, then cast the float value to an
-    integer. This flag is only used when an explicit dtype is given.
-    """
+@pytest.mark.parametrize("dtype", np.typecodes["AllInteger"])
+def test_loadtxt_implicit_cast_float_to_int_fails(dtype):
     txt = TextIO("1.0, 2.1, 3.7\n4, 5, 6")
-    res = np.loadtxt(txt, dtype=dtype, delimiter=",")
-    expected = np.array([[1, 2, 3], [4, 5, 6]], dtype=dtype)
-    assert_equal(res, expected)
-
+    with pytest.raises(ValueError):
+        np.loadtxt(txt, dtype=dtype, delimiter=",")
 
 @pytest.mark.parametrize("dtype", (np.complex64, np.complex128))
 @pytest.mark.parametrize("with_parens", (False, True))
