@@ -9021,14 +9021,6 @@ class TestArrayFinalize:
         a = np.array(1).view(SuperFinalize)
         assert_(a.saved_result is None)
 
-    def test_can_use_none(self):
-        # For backward compatibility, to show nothing needs finalizing.
-        class NoFinalize(np.ndarray):
-            __array_finalize__ = None
-
-        a = np.array(1).view(NoFinalize)
-        assert isinstance(a, NoFinalize)
-
 
 def test_orderconverter_with_nonASCII_unicode_ordering():
     # gh-7475

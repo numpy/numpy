@@ -891,8 +891,23 @@ PyArray_NewFromDescr_int(
         if (func == NULL) {
             goto fail;
         }
-        else if (func == ndarray_array_finalize || func == Py_None) {
+        else if (func == ndarray_array_finalize) {
             Py_DECREF(func);
+        }
+        else if (func == Py_None) {
+            Py_DECREF(func);
+            /*
+             * 2022-01-08, NumPy 1.23; when deprecation period is over, remove this
+             * whole stanza so one gets a "NoneType object is not callable" TypeError.
+             */
+            if (DEPRECATE(
+                    "Setting __array_finalize__ = None to indicate no finalization"
+                    "should be done is deprecated.  Instead, just inherit from "
+                    "ndarray or, if that is not possible, explicitly set to "
+                    "ndarray.__array_function__; this will raise a TypeError "
+                    "in the future. (Deprecated since NumPy 1.23)") < 0) {
+                goto fail;
+            }
         }
         else {
             if (PyCapsule_CheckExact(func)) {
