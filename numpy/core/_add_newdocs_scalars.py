@@ -352,6 +352,42 @@ for float_name in ('half', 'single', 'double', 'longdouble'):
         False
         """))
 
+for float_name, (hex_negative_point_1, hex_pi) in (
+        ('half', ('0x1.998p-4', '0x1.920p+1')),
+        ('single', ('-0x1.99999ap-4', '0x1.921fb6p+1')),
+        ('double', ('-0x1.999999999999ap-4', '0x1.921fb54442d18p+1')),
+        ('longdouble', ('-0x1.999999999999a000p-4', '0x1.921fb54442d18000p+1'))
+    ):
+    # TODO: We loose precision for 128 bits here, hence the ending 0s
+    pi_rounded = getattr(_numerictypes, float_name)(3.141592653589793116)
+    add_newdoc('numpy.core.numerictypes', float_name, ('hex',
+        f"""
+        {float_name}.hex() -> str
+
+        Return a hexadecimal representation of a floating-point number.
+
+        Examples
+        --------
+        >>> np.{float_name}(-0.1).hex()
+        '{hex_negative_point_1}'
+        >>> np.{float_name}({pi_rounded}).hex()
+        '{hex_pi}'
+        """))
+
+    add_newdoc('numpy.core.numerictypes', float_name, ('fromhex',
+        f"""
+        {float_name}.fromhex(str) -> {float_name}
+
+        Return a heddxadecimal representation of a floating-point number.
+
+        Examples
+        --------
+        >>> np.{float_name}.fromhex('{hex_negative_point_1}')
+        -0.1
+        >>> np.{float_name}.fromhex('{hex_pi}')
+        {pi_rounded}
+        """))
+
 for int_name in ('int8', 'uint8', 'int16', 'uint16', 'int32', 'uint32',
         'int64', 'uint64', 'int64', 'uint64', 'int64', 'uint64'):
     # Add negative examples for signed cases by checking typecode
