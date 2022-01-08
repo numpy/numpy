@@ -1521,8 +1521,13 @@ def analyzeline(m, case, line):
         groupcache[groupcounter]['common'] = commonkey
         previous_context = ('common', bn, groupcounter)
     elif case == 'use':
+        # Regular modules
         m1 = re.match(
             r'\A\s*(?P<name>\b\w+\b)\s*((,(\s*\bonly\b\s*:|(?P<notonly>))\s*(?P<list>.*))|)\s*\Z', m.group('after'), re.I)
+        # Intrinsic modules
+        mintrin = re.match(
+            r',?\s*(?P<isintrin>intrinsic)?\s*(::)?(?P<allintrin>((\s*,?\s*(?:\b\w+\b)\s*)*))\Z', m.group('after'), re.I
+        )
         if m1:
             mm = m1.groupdict()
             if 'use' not in groupcache[groupcounter]:
@@ -1549,6 +1554,19 @@ def analyzeline(m, case, line):
                     else:
                         rl[l] = l
                     groupcache[groupcounter]['use'][name]['map'] = rl
+        elif mintrin:
+            # Intrinsic check
+            intrmm = mintrin.groupdict()
+            if 'use' not in groupcache[groupcounter]:
+                groupcache[groupcounter]['use'] = {}
+            intrmm_ll = [x.strip() for x in intrmm['allintrin'].split(',')]
+            for l in intrmm_ll:
+                if not isvalidintrinsicmod(l):
+                    outmess(
+                        'analyzeline: Not a valid intrinsic, must be one of ["iso_c_binding", "iso_fortran_env", "ieee_exceptions", "ieee_arithmetic", "ieee_features"]'
+                    )
+                else:
+                      groupcache[groupcounter]['use'][l] = {}
             else:
                 pass
         else:
