@@ -44,9 +44,9 @@ __all__ = [
     'ismodule', 'ismoduleroutine', 'isoptional', 'isprivate', 'isrequired',
     'isroutine', 'isscalar', 'issigned_long_longarray', 'isstring',
     'isstringarray', 'isstring_or_stringarray', 'isstringfunction',
-    'issubroutine', 'get_f2py_modulename',
+    'issubroutine', 'get_f2py_modulename', 'isderivedtype',
     'issubroutine_wrap', 'isthreadsafe', 'isunsigned', 'isunsigned_char',
-    'isunsigned_chararray', 'isunsigned_long_long',
+    'isunsigned_chararray', 'isunsigned_long_long', 'isvalidintrinsicmod',
     'isunsigned_long_longarray', 'isunsigned_short',
     'isunsigned_shortarray', 'l_and', 'l_not', 'l_or', 'outmess',
     'replace', 'show', 'stripcomma', 'throw_error', 'isattr_value',
@@ -118,8 +118,12 @@ def isarray(var):
     return 'dimension' in var and not isexternal(var)
 
 
+def isderivedtype(var):
+    return var.get('typespec')=='type'
+
+
 def isscalar(var):
-    return not (isarray(var) or isstring(var) or isexternal(var))
+    return not (isarray(var) or isstring(var) or isexternal(var) or isderivedtype(var))
 
 
 def iscomplex(var):
@@ -937,3 +941,11 @@ def get_f2py_modulename(source):
                 name = m.group('name')
                 break
     return name
+
+# Intrinsic modules
+# References:
+# - J3/21-007: Draft Fortran 202x. https://j3-fortran.org/doc/year/21/21-007.pdf
+intrinsic_modules = ["iso_c_binding", "iso_fortran_env", "ieee_exceptions", "ieee_arithmetic", "ieee_features"]
+
+def isvalidintrinsicmod(modu):
+    return modu in intrinsic_modules
