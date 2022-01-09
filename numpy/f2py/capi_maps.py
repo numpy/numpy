@@ -17,7 +17,7 @@ f2py_version = __version__.version
 import copy
 import re
 import os
-from .crackfortran import markoutercomma
+from .auxfuncs import markoutercomma
 from . import cb_rules
 from ._isocbind import iso_c_binding_map
 

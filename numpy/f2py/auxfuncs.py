@@ -18,6 +18,7 @@ import pprint
 import sys
 import re
 import types
+import re
 from functools import reduce
 from copy import deepcopy
 
@@ -941,6 +942,73 @@ def get_f2py_modulename(source):
                 name = m.group('name')
                 break
     return name
+
+##################
+#  Crackfortran  #
+##################
+
+def split_by_unquoted(line, characters):
+    """
+    Splits the line into (line[:i], line[i:]),
+    where i is the index of first occurrence of one of the characters
+    not within quotes, or len(line) if no such index exists
+    """
+    assert not (set('"\'') & set(characters)), "cannot split by unquoted quotes"
+    r = re.compile(
+        r"\A(?P<before>({single_quoted}|{double_quoted}|{not_quoted})*)"
+        r"(?P<after>{char}.*)\Z".format(
+            not_quoted="[^\"'{}]".format(re.escape(characters)),
+            char="[{}]".format(re.escape(characters)),
+            single_quoted=r"('([^'\\]|(\\.))*')",
+            double_quoted=r'("([^"\\]|(\\.))*")'))
+    m = r.match(line)
+    if m:
+        d = m.groupdict()
+        return (d["before"], d["after"])
+    return (line, "")
+
+
+def markouterparen(line):
+    l = ''
+    f = 0
+    for c in line:
+        if c == '(':
+            f = f + 1
+            if f == 1:
+                l = l + '@(@'
+                continue
+        elif c == ')':
+            f = f - 1
+            if f == 0:
+                l = l + '@)@'
+                continue
+        l = l + c
+    return l
+
+
+def markoutercomma(line, comma=','):
+    l = ''
+    f = 0
+    before, after = split_by_unquoted(line, comma + '()')
+    l += before
+    while after:
+        if (after[0] == comma) and (f == 0):
+            l += '@' + comma + '@'
+        else:
+            l += after[0]
+            if after[0] == '(':
+                f += 1
+            elif after[0] == ')':
+                f -= 1
+        before, after = split_by_unquoted(after[1:], comma + '()')
+        l += before
+    assert not f, repr((f, line, l))
+    return l
+
+
+def unmarkouterparen(line):
+    r = line.replace('@(@', '(').replace('@)@', ')')
+    return r
 
 # Intrinsic modules
 # References:
