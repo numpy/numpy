@@ -129,7 +129,48 @@ f2cmap_all = {'real': {'': 'float', '4': 'float', '8': 'double',
               'double complex': {'': 'complex_double'},
               'double precision': {'': 'double'},
               'byte': {'': 'char'},
+              'type': {'': 'struct'},
+              'character': {'': 'string'}
               }
+# From:
+# https://gcc.gnu.org/onlinedocs/gfortran/ISO_005fC_005fBINDING.html
+iso_c_binding_map = {
+    # Integers
+    'c_int': 'int',
+    'c_short': 'short int',
+    'c_long': 'long int',
+    'c_long_long': 'long long int',
+    'c_signed_char': 'signed char',
+    'c_size_t': 'size_t',
+    'c_int8_t': 'int8_t',
+    'c_int16_t': 'int16_t',
+    'c_int32_t': 'int32_t',
+    'c_int64_t': 'int64_t',
+    'c_int_least8_t': 'int_least8_t',
+    'c_int_least16_t': 'int_least16_t',
+    'c_int_least32_t': 'int_least32_t',
+    'c_int_least64_t': 'int_least64_t',
+    'c_int_fast8_t': 'int_fast8_t',
+    'c_int_fast16_t': 'int_fast16_t',
+    'c_int_fast32_t': 'int_fast32_t',
+    'c_int_fast64_t': 'int_fast64_t',
+    'c_intmax_t': 'intmax_t',
+    'c_intptr_t': 'intptr_t',
+    'c_ptrdiff_t': 'ptrdiff_t',
+    # Floating Point Numbers
+    'c_float': 'float',
+    'c_double': 'double',
+    'c_long_double': 'long double',
+    # Complex Numbers
+    'c_float_complex': 'float _Complex',
+    'c_double_complex': 'double _Complex',
+    'c_long_double_complex': 'long double _Complex',
+    # Logical
+    'c_bool': '_Bool',
+    # Char
+    'c_char': 'char',
+}
+# TODO:Support ["iso_fortran_env", "ieee_exceptions", "ieee_arithmetic", "ieee_features"]
 
 f2cmap_all = deep_merge(f2cmap_all, iso_c_binding_map)
 f2cmap_default = copy.deepcopy(f2cmap_all)

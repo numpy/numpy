@@ -161,6 +161,7 @@ from . import __version__
 from .auxfuncs import *
 from . import auxfuncs as aux
 from . import symbolic
+from . import capi_maps as capim
 
 f2py_version = __version__.version
 
@@ -1492,6 +1493,8 @@ def analyzeline(m, case, line):
                                 'analyzeline: Not local=>use pattern found in %s\n' % repr(l))
                     else:
                         rl[l] = l
+                    if name == "iso_c_binding":
+                        rl = {k:capim.iso_c_binding_map.get(k) for k,v in rl.items()}
                     groupcache[groupcounter]['use'][name]['map'] = rl
         elif mintrin:
             # Intrinsic check
@@ -1500,12 +1503,25 @@ def analyzeline(m, case, line):
                 groupcache[groupcounter]['use'] = {}
             intrmm_ll = [x.strip() for x in intrmm['allintrin'].split(',')]
             for l in intrmm_ll:
-                if not isvalidintrinsicmod(l):
+                if l =="iso_c_binding":
+                    groupcache[groupcounter]['use'][l] = capim.iso_c_binding_map
+                elif l =="iso_fortran_env":
+                     outmess(
+                        'analyzeline: Not a valid intrinsic, must be one of ["iso_c_binding", "iso_fortran_env", "ieee_exceptions", "ieee_arithmetic", "ieee_features"]'
+                        'analyzeline: ISO_FORTRAN_ENV types are not yet supported'
+                    )
+                elif l =="ieee_exceptions":
+                    outmess(
+                        'analyzeline: IEEE_EXCEPTIONS are not yet supported'
+                    )
+                elif l =="ieee_arithmetic":
+                    outmess(
+                        'analyzeline: IEEE_ARITHMETIC are not yet supported'
+                     )
+                else:
                     outmess(
                         'analyzeline: Not a valid intrinsic, must be one of ["iso_c_binding", "iso_fortran_env", "ieee_exceptions", "ieee_arithmetic", "ieee_features"]'
                     )
-                else:
-                      groupcache[groupcounter]['use'][l] = {}
             else:
                 pass
         else:
