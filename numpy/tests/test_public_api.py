@@ -194,6 +194,7 @@ PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "f2py.rules",
     "f2py.symbolic",
     "f2py.use_rules",
+    "f2py.simple_derived_types",
     "fft.helper",
     "lib.user_array",  # note: not in np.lib, but probably should just be deleted
     "linalg.lapack_lite",
