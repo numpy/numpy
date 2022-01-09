@@ -71,7 +71,7 @@ from .auxfuncs import (
     islong_double, islong_doublefunction, islong_long,
     islong_longfunction, ismoduleroutine, isoptional, isrequired,
     isscalar, issigned_long_longarray, isstring, isstringarray,
-    isstringfunction, issubroutine, isattr_value,
+    isstringfunction, issubroutine, isattr_value, isderivedtype,
     issubroutine_wrap, isthreadsafe, isunsigned, isunsigned_char,
     isunsigned_chararray, isunsigned_long_long,
     isunsigned_long_longarray, isunsigned_short, isunsigned_shortarray,
@@ -83,6 +83,7 @@ from . import cfuncs
 from . import common_rules
 from . import use_rules
 from . import f90mod_rules
+from . import simple_derived_types as sdt
 from . import func2subr
 
 f2py_version = __version__.version
@@ -96,8 +97,8 @@ for k in ['decl',
           'cleanupfrompyobj',
           'topyarr', 'method',
           'pyobjfrom', 'closepyobjfrom',
-          'freemem',
-          'userincludes',
+          'freemem', 'typedefs_derivedtypefuncs',
+          'userincludes', 'typedefs_derivedtypedefs',
           'includes0', 'includes', 'typedefs', 'typedefs_generated',
           'cppmacros', 'cfuncs', 'callbacks',
           'latexdoc',
@@ -147,11 +148,17 @@ static PyObject *#modulename#_module;
 """ + gentitle("See f2py2e/cfuncs.py: typedefs_generated") + """
 #typedefs_generated#
 
+""" + gentitle("See f2py2e/simple_derived_types.py") + """
+#typedefs_derivedtypedefs#
+
 """ + gentitle("See f2py2e/cfuncs.py: cppmacros") + """
 #cppmacros#
 
 """ + gentitle("See f2py2e/cfuncs.py: cfuncs") + """
 #cfuncs#
+
+""" + gentitle("See f2py2e/simple_derived_types.py") + """
+#typedefs_derivedtypefuncs#
 
 """ + gentitle("See f2py2e/cfuncs.py: userincludes") + """
 #userincludes#
@@ -588,7 +595,7 @@ rout_rules = [
                  {iscomplexfunction: 'pyobj_from_#ctype#1'},
                  {islong_longfunction: 'long_long'},
                  {islong_doublefunction: 'long_double'}],
-        'returnformat': {l_not(isintent_hide): '#rformat#'},
+        'returnformat': {l_and(l_not(isintent_hide), l_not(isderivedtype)): '#rformat#'},
         'return': {iscomplexfunction: ',#name#_return_value_capi',
                    l_not(l_or(iscomplexfunction, isintent_hide)): ',#name#_return_value'},
         '_check': l_and(isfunction, l_not(isstringfunction), l_not(isfunction_wrap))
@@ -666,7 +673,7 @@ aux_rules = [
     },
     {  # Common
         'frompyobj': ['    /* Processing auxiliary variable #varname# */',
-                      {debugcapi: '    fprintf(stderr,"#vardebuginfo#\\n");'}, ],
+                      {l_and(debugcapi, l_not(isderivedtype)): '    fprintf(stderr,"#vardebuginfo#\\n");'}, ],
         'cleanupfrompyobj': '    /* End of cleaning variable #varname# */',
         'need': typedef_need_dict,
     },
@@ -751,8 +758,8 @@ arg_rules = [
         'separatorsfor': sepdict
     },
     {  # Common
-        'frompyobj': ['    /* Processing variable #varname# */',
-                      {debugcapi: '    fprintf(stderr,"#vardebuginfo#\\n");'}, ],
+        'frompyobj': [{l_not(isderivedtype):'    /* Processing variable #varname# */'},
+                      {l_and(debugcapi, l_not(isderivedtype)): '    fprintf(stderr,"#vardebuginfo#\\n");'}, ],
         'cleanupfrompyobj': '    /* End of cleaning variable #varname# */',
         '_depend': '',
         'need': typedef_need_dict,
@@ -1202,6 +1209,20 @@ if (#varname#_cb.capi==Py_None) {
         'callfortranappend': {isarrayofstrings: 'flen(#varname#),'},
         'need': 'string',
         '_check': isstringarray
+    },
+    # Derived types
+    {
+        'decl': ['    #ctype# #varname#;',
+                 '    memset(&#varname#, 0, sizeof(#ctype#));',
+                 '    PyObject *#varname#_capi = Py_None;'],
+        'args_capi': {isrequired: ',&#varname#_capi'},
+        'keys_capi': {isoptional: ',&#varname#_capi'},
+        'argformat': ['##varname#_format#'],
+        'callfortran':["##varname#_dcf#"],
+        'returnformat': "##varname#_drf#",
+        'return': "##varname#_ret#",
+        'need':['typedefs_derivedtypes'],
+        '_check':isderivedtype
     }
 ]
 
@@ -1243,7 +1264,12 @@ check_rules = [
 
 def buildmodule(m, um):
     """
-    Return
+    Parameters
+    ----------
+    m : dictionary
+        This is the dictionary representing the cracked form of the module.
+    um : string
+        This is the name of the module.
     """
     outmess('    Building module "%s"...\n' % (m['name']))
     ret = {}
@@ -1318,6 +1344,11 @@ def buildmodule(m, um):
     ar = applyrules(mr, vrd)
     rd = dictappend(rd, ar)
 
+    # Construct F90 simple derived type declarations
+    mr = sdt.buildhooks(m)
+    ar = applyrules(mr, vrd)
+    rd = dictappend(rd, ar)
+
     for u in um:
         ar = use_rules.buildusevars(u, m['use'][u['name']])
         rd = dictappend(rd, ar)
@@ -1341,6 +1372,10 @@ def buildmodule(m, um):
                 c = cfuncs.typedefs[k]
             elif k in cfuncs.typedefs_generated:
                 c = cfuncs.typedefs_generated[k]
+            elif k in cfuncs.typedefs_derivedtypedefs:
+                c = cfuncs.typedefs_derivedtypedefs[k]
+            elif k in cfuncs.typedefs_derivedtypefuncs:
+                c = cfuncs.typedefs_derivedtypefuncs[k]
             elif k in cfuncs.cppmacros:
                 c = cfuncs.cppmacros[k]
             elif k in cfuncs.cfuncs:
@@ -1469,6 +1504,17 @@ def buildapi(rout):
             ar = applyrules(r, vrd, rout)
             rd = dictappend(rd, ar)
 
+    # Derived type returns
+    isDerived = [True for x in var.values() if x.get('typespec')=='type']
+    if len(isDerived)>0:
+        mr = sdt.routine_rules(rout)
+        ar = applyrules(mr, vrd)
+        rd = dictappend(rd, ar)
+
+        marg = sdt.arg_rules(rout)
+        ar = applyrules(marg, vrd)
+        rd = dictappend(rd, ar)
+
     # Args
     nth, nthk = 0, 0
     savevrd = {}
@@ -1515,10 +1561,13 @@ def buildapi(rout):
                 vrd['check'] = c
                 ar = applyrules(check_rules, vrd, var[a])
                 rd = dictappend(rd, ar)
+
+    # Cleanup
     if isinstance(rd['cleanupfrompyobj'], list):
         rd['cleanupfrompyobj'].reverse()
     if isinstance(rd['closepyobjfrom'], list):
         rd['closepyobjfrom'].reverse()
+    # Documentation
     rd['docsignature'] = stripcomma(replace('#docsign##docsignopt##docsignxa#',
                                             {'docsign': rd['docsign'],
                                              'docsignopt': rd['docsignopt'],

@@ -25,9 +25,9 @@ errmess = sys.stderr.write
 ##################### Definitions ##################
 
 outneeds = {'includes0': [], 'includes': [], 'typedefs': [], 'typedefs_generated': [],
-            'typedefs_derivedtypes': [], 'userincludes': [],
-            'cppmacros': [], 'cfuncs': [], 'callbacks': [], 'f90modhooks': [],
-            'commonhooks': []}
+            'typedefs_derivedtypes': [], 'typedefs_derivedtypedefs': [],
+            'typedefs_derivedtypefuncs': [],'userincludes': [], 'cppmacros': [],
+            'cfuncs': [], 'callbacks': [], 'f90modhooks': [], 'commonhooks': []}
 needs = {}
 includes0 = {'includes0': '/*need_includes0*/'}
 includes = {'includes': '/*need_includes*/'}
@@ -35,6 +35,8 @@ userincludes = {'userincludes': '/*need_userincludes*/'}
 typedefs = {'typedefs': '/*need_typedefs*/'}
 typedefs_generated = {'typedefs_generated': '/*need_typedefs_generated*/'}
 typedefs_derivedtypes = {'typedefs_derivedtypes': '/*need_typedefs_derivedtypes*/'}
+typedefs_derivedtypedefs = {'typedefs_derivedtypedefs': '/*need_typedefs_derivedtypedefs*/'}
+typedefs_derivedtypefuncs = {'typedefs_derivedtypefuncs': '/*need_typedefs_derivedtypefuncs*/'}
 cppmacros = {'cppmacros': '/*need_cppmacros*/'}
 cfuncs = {'cfuncs': '/*need_cfuncs*/'}
 callbacks = {'callbacks': '/*need_callbacks*/'}
