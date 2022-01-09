@@ -323,7 +323,6 @@ class TestNameArgsPatternBacktracking:
             good_version_of_adversary = repeated_adversary + '@)@'
             assert nameargspattern.search(good_version_of_adversary)
 
-
 class TestFunctionReturn(util.F2PyTest):
     sources = [util.getpath("tests", "src", "crackfortran", "gh23598.f90")]
 
@@ -348,3 +347,18 @@ class TestF77CommonBlockReader():
         with contextlib.redirect_stdout(io.StringIO()) as stdout_f2py:
             mod = crackfortran.crackfortran([str(fpath)])
         assert "Mismatch" not in stdout_f2py.getvalue()
+
+
+class TestIntrinsicModule:
+    def test_dependencies_only(self, tmp_path):
+        fpath = util.getpath("tests", "src", "crackfortran", "isocbindonly.f90")
+        mod = crackfortran.crackfortran([str(fpath)])
+        assert len(mod) == 1
+        assert mod[0]["use"] == {'iso_c_binding': {'map': {'c_double': 'double', 'c_float': 'float'}, 'only': 1}}
+
+    def test_dependencies(self, tmp_path):
+        fpath = util.getpath("tests", "src", "crackfortran", "isocbind.f90")
+        mod = crackfortran.crackfortran([str(fpath)])
+        assert len(mod) == 1
+        from numpy.f2py import capi_maps as capim
+        assert list(mod[0]["use"].values())[0] == capim.iso_c_binding_map

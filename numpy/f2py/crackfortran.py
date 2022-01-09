@@ -162,6 +162,7 @@ from .auxfuncs import *
 from . import auxfuncs as aux
 from . import symbolic
 from . import capi_maps as capim
+from . import _isocbind as _isoc
 
 f2py_version = __version__.version
 
@@ -1494,7 +1495,7 @@ def analyzeline(m, case, line):
                     else:
                         rl[l] = l
                     if name == "iso_c_binding":
-                        rl = {k:capim.iso_c_binding_map.get(k) for k,v in rl.items()}
+                        rl = {k:_isoc.flatisoc.get(k) for k,v in rl.items()}
                     groupcache[groupcounter]['use'][name]['map'] = rl
         elif mintrin:
             # Intrinsic check
