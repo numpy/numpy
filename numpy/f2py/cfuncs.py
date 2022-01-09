@@ -25,7 +25,7 @@ errmess = sys.stderr.write
 ##################### Definitions ##################
 
 outneeds = {'includes0': [], 'includes': [], 'typedefs': [], 'typedefs_generated': [],
-            'userincludes': [],
+            'typedefs_derivedtypes': [], 'userincludes': [],
             'cppmacros': [], 'cfuncs': [], 'callbacks': [], 'f90modhooks': [],
             'commonhooks': []}
 needs = {}
@@ -34,6 +34,7 @@ includes = {'includes': '/*need_includes*/'}
 userincludes = {'userincludes': '/*need_userincludes*/'}
 typedefs = {'typedefs': '/*need_typedefs*/'}
 typedefs_generated = {'typedefs_generated': '/*need_typedefs_generated*/'}
+typedefs_derivedtypes = {'typedefs_derivedtypes': '/*need_typedefs_derivedtypes*/'}
 cppmacros = {'cppmacros': '/*need_cppmacros*/'}
 cfuncs = {'cfuncs': '/*need_cfuncs*/'}
 callbacks = {'callbacks': '/*need_callbacks*/'}
@@ -1444,6 +1445,8 @@ def append_needs(need, flag=1):
             n = 'typedefs'
         elif need in typedefs_generated:
             n = 'typedefs_generated'
+        elif need in typedefs_derivedtypes:
+            n = 'typedefs_derivedtypes'
         elif need in cppmacros:
             n = 'cppmacros'
         elif need in cfuncs:
