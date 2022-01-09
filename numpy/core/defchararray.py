@@ -1400,12 +1400,12 @@ def rstrip(a, chars=None):
     return _vec_string(a_arr, a_arr.dtype, 'rstrip', (chars,))
 
 
-def _slice__dispatcher(a, start, stop=None, step=None, chunksize=None):
+def _slice__dispatcher(a, start=None, stop=None, step=None, chunksize=None):
     return (a,)
 
 
 @array_function_dispatch(_slice__dispatcher)
-def slice_(a, start, stop=None, step=None, chunksize=None):
+def slice_(a, start=None, stop=None, step=None, chunksize=None):
     """
     Extract a slice from each element of string array `a`.
 
@@ -1416,8 +1416,6 @@ def slice_(a, start, stop=None, step=None, chunksize=None):
       (not necessarily the length of the individual elements).
     - Out-of-bounds limits are silently adjusted to the bounds they
       exceed.
-    - If `start` is specified but `stop` is None, they are interpreted
-      as `start, stop = 0, start`, but only if `step` is not given.
     - Inclusivity of the bounds depends on which way `step` is going,
       with the beginning being inclusive and the end always being
       exclusive.
@@ -1439,11 +1437,7 @@ def slice_(a, start, stop=None, step=None, chunksize=None):
 
     Every effort is made not to copy the data. Data is copied
     when an unsuitable array-like class is used (e.g. `list`, or
-    anything else `numpy.asanyarray` would copy data for). The only
-    other circumstance under which the underlying data is copied is
-    if a contiguous base array can not be found for the data. A
-    warning is issued in the latter case because it is much harder
-    to catch under normal circumstances.
+    anything else `numpy.asanyarray` would copy data for).
 
     Parameters
     ----------
@@ -1489,8 +1483,6 @@ def slice_(a, start, stop=None, step=None, chunksize=None):
     length = int(dtype.str[2:])
 
     # Adjust the bounds using a slice object
-    if stop is None and step is None:
-        start, stop = 0, start
     start, stop, step = slice(
                 start, stop, step
             ).indices(max(0, length - chunksize + 1))

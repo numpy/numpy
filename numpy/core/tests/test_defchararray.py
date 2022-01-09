@@ -751,31 +751,21 @@ class TestSlice_:
         Show that slice accepts any byteorder of S and U, but raises for
         other types.
         """
-        result = np.char.slice_(np.array(['abc', 'def'], dtype='<U3'), 1)
+        result = np.char.slice_(np.array(['abc', 'def'], dtype='<U3'), stop=1)
         assert_array_equal(result, ['a', 'd'])
         assert result.dtype.str == '<U1'
 
-        result = np.char.slice_(np.array(['abc', 'def'], dtype='>U3'), 1)
+        result = np.char.slice_(np.array(['abc', 'def'], dtype='>U3'), stop=1)
         assert_array_equal(result, ['a', 'd'])
         assert result.dtype.str == '>U1'
 
-        result = np.char.slice_(np.array(['abc', 'def'], dtype='S3'), 1)
+        result = np.char.slice_(np.array(['abc', 'def'], dtype='S3'), stop=1)
         assert_array_equal(result, [b'a', b'd'])
         assert result.dtype.str == '|S1'
 
         assert_raises(TypeError, np.char.slice_,
-                      np.array(['abc', 'def'], dtype=object), 1)
-        assert_raises(TypeError, np.char.slice_, [1, 2, 3], 1)
-
-    def test_start(self):
-        """
-        Show that start becomes stop only if both stop and step are None.
-        """
-        assert_array_equal(np.char.slice_(self.arr1d, 2), ['ab', 'de'])
-        assert_array_equal(np.char.slice_(self.arr1d, 2, stop=3), ['c', 'f'])
-        assert_array_equal(np.char.slice_(self.arr1d, 2, step=1), ['c', 'f'])
-        assert_array_equal(np.char.slice_(self.arr1d, 2, stop=3, step=1),
-                                                                  ['c', 'f'])
+                      np.array(['abc', 'def'], dtype=object), stop=1)
+        assert_raises(TypeError, np.char.slice_, [1, 2, 3], stop=1)
 
     def test_shape(self):
         """
@@ -828,14 +818,14 @@ class TestSlice_:
         Show that chunksize *must* be positive.
         Show that chunksize > length of string is OK
         """
-        assert_raises(ValueError, np.char.slice_, self.arr, 2, chunksize=0)
-        assert_raises(ValueError, np.char.slice_, self.arr, 2, chunksize=-1)
+        assert_raises(ValueError, np.char.slice_, self.arr, stop=2, chunksize=0)
+        assert_raises(ValueError, np.char.slice_, self.arr, stop=2, chunksize=-1)
 
-        result = np.char.slice_(self.arr1d, 1, chunksize=4)
+        result = np.char.slice_(self.arr1d, stop=1, chunksize=4)
         assert result.shape == (2, 0)
         assert result.dtype == np.dtype('<U4')
 
-        result = np.char.slice_(self.arr1d, 1, step=-1, chunksize=4)
+        result = np.char.slice_(self.arr1d, stop=1, step=-1, chunksize=4)
         assert result.shape == (2, 0)
         assert result.dtype == np.dtype('<U4')
 
@@ -847,7 +837,7 @@ class TestSlice_:
         base[3::5, 3::5] = self.arr2d
         arr = base[-2::-5, 3::5]
         assert not (arr.flags['C_CONTIGUOUS'] | arr.flags['F_CONTIGUOUS'])
-        result = np.char.slice_(arr, 2)
+        result = np.char.slice_(arr, stop=2)
         assert_array_equal(result, [['gh', 'jk'], ['ab', 'de']])
         assert result.base is base
 
@@ -855,7 +845,7 @@ class TestSlice_:
         """ Show that returned slices write back to the original array. """
         arr = self.arr1d.copy()
         assert arr.base is None
-        s = np.char.slice_(arr, 2)
+        s = np.char.slice_(arr, stop=2)
         assert s.base is arr
         assert s.dtype == np.dtype('<U2')
         s[:] = ['x', 'yz']
@@ -875,7 +865,7 @@ class TestSlice_:
         arr = np.ndarray(buffer=base, strides=strides,
                          shape=shape, dtype=dtype, offset=4)
 
-        result = np.char.slice_(arr, 1)
+        result = np.char.slice_(arr, stop=1)
         assert_array_equal(result, ['w', 'i', 'g', 'o', 'h'])
         assert not result.flags['WRITEABLE']
 
@@ -890,7 +880,7 @@ class TestSlice_:
         arr = np.ndarray(buffer=base, strides=strides,
                          shape=shape, dtype=dtype, offset=offset)
 
-        result = np.char.slice_(arr, 1)
+        result = np.char.slice_(arr, stop=1)
         assert_array_equal(result, ['h', 'o', 'g', 'i', 'w'])
         assert not result.flags['WRITEABLE']
 
