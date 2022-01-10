@@ -485,7 +485,9 @@ missing.
 
      >>> from numpy.lib.recfunctions import structured_to_unstructured
      >>> structured_to_unstructured(b[['x', 'z']])
-     array([0, 0, 0])
+     array([[0., 0.],
+            [0., 0.],
+            [0., 0.]], dtype=float32)
 
 
 Assignment to an array with a multi-field index modifies the original array::
@@ -590,7 +592,7 @@ The simplest way to create a record array is with
  >>> recordarr = np.rec.array([(1, 2., 'Hello'), (2, 3., "World")],
  ...                    dtype=[('foo', 'i4'),('bar', 'f4'), ('baz', 'S10')])
  >>> recordarr.bar
- array([ 2.,  3.], dtype=float32)
+ array([2., 3.], dtype=float32)
  >>> recordarr[1:2]
  rec.array([(2, 3., b'World')],
        dtype=[('foo', '<i4'), ('bar', '<f4'), ('baz', 'S10')])
