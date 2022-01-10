@@ -3158,7 +3158,6 @@ def test_loadtxt_quoted_field(q):
         [("alpha, x", 2.5), ("beta, y", 4.5), ("gamma, z", 5.0)], dtype=dtype
     )
 
-    # Test quote param default
     res = np.loadtxt(txt, dtype=dtype, delimiter=",", quotechar=q)
     assert_array_equal(res, expected)
 
