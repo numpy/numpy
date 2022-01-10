@@ -17,8 +17,8 @@ Its functionality can be split into three distinct parts:
 
   .. versionadded:: 1.22
 
-Examples
---------
+                                Examples
+                                --------
 To enable the plugin, one must add it to their mypy `configuration file`_:
 
 .. code-block:: ini
