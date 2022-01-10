@@ -3146,3 +3146,18 @@ def test_loadtxt_converters_dict_raises_val_not_callable():
         TypeError, match="values of the converters dictionary must be callable"
     ):
         np.loadtxt(StringIO("1 2\n3 4"), converters={0: 1})
+
+
+@pytest.mark.parametrize("q", ('"', "'", "`"))
+def test_loadtxt_quoted_field(q):
+    txt = TextIO(
+        f"{q}alpha, x{q}, 2.5\n{q}beta, y{q}, 4.5\n{q}gamma, z{q}, 5.0\n"
+    )
+    dtype = np.dtype([('f0', 'U8'), ('f1', np.float64)])
+    expected = np.array(
+        [("alpha, x", 2.5), ("beta, y", 4.5), ("gamma, z", 5.0)], dtype=dtype
+    )
+
+    # Test quote param default
+    res = np.loadtxt(txt, dtype=dtype, delimiter=",", quotechar=q)
+    assert_array_equal(res, expected)
