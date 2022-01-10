@@ -144,7 +144,7 @@ def test_array_array():
 
 @pytest.mark.parametrize("array", [True, False])
 def test_array_impossible_casts(array):
-    # All builtin types can forst cast as least theoretically
+    # All builtin types can be forcibly cast, at least theoretically,
     # but user dtypes cannot necessarily.
     rt = rational(1, 2)
     if array:

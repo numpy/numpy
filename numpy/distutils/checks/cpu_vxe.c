@@ -12,7 +12,7 @@ int main(int argc, char **argv)
     __vector bool int m = vec_cmpge(x, y);
     x = vec_sel(x, y, m);
 
-    // need to test the existance of intrin "vflls" since vec_doublee
+    // need to test the existence of intrin "vflls" since vec_doublee
     // is vec_doublee maps to wrong intrin "vfll".
     // see https://gcc.gnu.org/bugzilla/show_bug.cgi?id=100871
 #if defined(__GNUC__) && !defined(__clang__)

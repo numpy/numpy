@@ -337,7 +337,7 @@ PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
 
     /*
      * Note that we need to ensure that the iterator is reset before getting
-     * the fixed strides.  (The buffer information is unitialized before.)
+     * the fixed strides.  (The buffer information is uninitialized before.)
      */
     npy_intp fixed_strides[3];
     NpyIter_GetInnerFixedStrideArray(iter, fixed_strides);

@@ -833,7 +833,7 @@ add_newdoc('numpy.core.multiarray', 'array',
         the returned array will be forced to be a base-class array (default).
     ndmin : int, optional
         Specifies the minimum number of dimensions that the resulting
-        array should have.  Ones will be pre-pended to the shape as
+        array should have.  Ones will be prepended to the shape as
         needed to meet this requirement.
     ${ARRAY_FUNCTION_LIKE}
 
@@ -4093,7 +4093,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('partition',
 
     See Also
     --------
-    numpy.partition : Return a parititioned copy of an array.
+    numpy.partition : Return a partitioned copy of an array.
     argpartition : Indirect partition.
     sort : Full sort.
 

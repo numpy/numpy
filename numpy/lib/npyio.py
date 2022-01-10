@@ -818,7 +818,7 @@ def _loadtxt_pack_items(packing, items):
 
 def _ensure_ndmin_ndarray_check_param(ndmin):
     """Just checks if the param ndmin is supported on
-        _ensure_ndmin_ndarray. Is intented to be used as
+        _ensure_ndmin_ndarray. It is intended to be used as
         verification before running anything expensive.
         e.g. loadtxt, genfromtxt
     """

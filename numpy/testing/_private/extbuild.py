@@ -27,7 +27,7 @@ def build_and_import_extension(
     functions : list of fragments
         Each fragment is a sequence of func_name, calling convention, snippet.
     prologue : string
-        Code to preceed the rest, usually extra ``#include`` or ``#define``
+        Code to precede the rest, usually extra ``#include`` or ``#define``
         macros.
     build_dir : pathlib.Path
         Where to build the module, usually a temporary directory
