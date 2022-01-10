@@ -3229,3 +3229,17 @@ def test_loadtxt_structured_dtype_with_quotes():
     )
     res = np.loadtxt(data, dtype=dtype, delimiter=";", quotechar="'")
     assert_array_equal(res, expected)
+
+
+def test_loadtxt_quoted_field_is_not_empty():
+    txt = StringIO('1\n\n"4"\n""')
+    expected = np.array(["1", "4", ""], dtype="U1")
+    res = np.loadtxt(txt, delimiter=",", dtype="U1", quotechar='"')
+    assert_equal(res, expected)
+
+
+def test_loadtxt_consecutive_quotechar_escaped():
+    txt = TextIO('"Hello, my name is ""Monty""!"')
+    expected = np.array('Hello, my name is "Monty"!', dtype="U40")
+    res = np.loadtxt(txt, dtype="U40", delimiter=",", quotechar='"')
+    assert_equal(res, expected)
