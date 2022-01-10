@@ -1079,7 +1079,8 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
 @set_module('numpy')
 def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             converters=None, skiprows=0, usecols=None, unpack=False,
-            ndmin=0, encoding='bytes', max_rows=None, *, quote=None, like=None):
+            ndmin=0, encoding='bytes', max_rows=None, *, quotechar=None,
+            like=None):
     r"""
     Load data from a text file.
 
@@ -1149,10 +1150,16 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         is to read all the lines.
 
         .. versionadded:: 1.16.0
-    quote : unicode character or None, optional
-        If given (normally ``"``) quoting support is enabled.  Double quotes
-        are considered a single escaped ones if found within a quoted field
-        (supporting the Excel csv dialect).
+    quotechar : unicode character or None, optional
+        The character used to denote the start and end of a quoted item.
+        Occurrences of the delimiter or comment characters are ignored within
+        a quoted item. The default value is ``quotechar=None``, which means
+        quoting support is disabled.
+
+        If two consecutive instances of `quotechar` are found within a quoted
+        field, the first is treated as an escape character. See examples.
+
+        .. versionadded:: 1.23.0
     ${ARRAY_FUNCTION_LIKE}
 
         .. versionadded:: 1.20.0
@@ -1238,7 +1245,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     arr = _read(fname, dtype=dtype, comment=comment, delimiter=delimiter,
                 converters=converters, skiprows=skiprows, usecols=usecols,
                 unpack=unpack, ndmin=ndmin, encoding=encoding,
-                max_rows=max_rows, quote=quote)
+                max_rows=max_rows, quote=quotechar)
 
     return arr
 
