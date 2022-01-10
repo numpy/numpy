@@ -3161,3 +3161,19 @@ def test_loadtxt_quoted_field(q):
     # Test quote param default
     res = np.loadtxt(txt, dtype=dtype, delimiter=",", quotechar=q)
     assert_array_equal(res, expected)
+
+
+def test_loadtxt_quote_support_default():
+    """Support for quoted fields is disabled by default."""
+    txt = TextIO('"lat,long", 45, 30\n')
+    dtype = np.dtype([('f0', 'U24'), ('f1', np.float64), ('f2', np.float64)])
+
+    with pytest.raises(ValueError, match="the number of columns changed"):
+        np.loadtxt(txt, dtype=dtype, delimiter=",")
+
+    # Enable quoting support with non-None value for quotechar param
+    txt.seek(0)
+    expected = np.array([("lat,long", 45., 30.)], dtype=dtype)
+
+    res = np.loadtxt(txt, dtype=dtype, delimiter=",", quotechar='"')
+    assert_array_equal(res, expected)
