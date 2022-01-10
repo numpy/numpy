@@ -236,6 +236,11 @@ tokenizer_core_@type@(tokenizer_state *ts, parser_config *const config)
 
         case TOKENIZE_QUOTED_CHECK_DOUBLE_QUOTE:
             if (*pos == config->quote) {
+                /* Copy the quote character directly from the config: */
+                if (copy_to_field_buffer_Py_UCS4(ts,
+                        &config->quote, &config->quote+1) < 0) {
+                    return -1;
+                }
                 ts->state = TOKENIZE_QUOTED;
                 pos++;
             }
