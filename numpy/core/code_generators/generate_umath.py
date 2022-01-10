@@ -14,6 +14,7 @@ MinusInfinity = 'PyFloat_FromDouble(-NPY_INFINITY)'
 ReorderableNone = "(Py_INCREF(Py_None), Py_None)"
 
 class docstrings:
+    @staticmethod
     def get(place):
         """
         Returns the C #definition name of docstring according
