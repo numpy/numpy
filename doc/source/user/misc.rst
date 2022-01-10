@@ -81,7 +81,7 @@ Examples
  >>> np.zeros(5,dtype=np.float32)/0.
  Traceback (most recent call last):
  ...
- RuntimeWarning: invalid value encountered in true_divide
+ RuntimeWarning: invalid value encountered in divide
  >>> j = np.seterr(under='ignore')
  >>> np.array([1.e-100])**10
  array([0.])
