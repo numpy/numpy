@@ -960,8 +960,8 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
         if quote is not None:
             raise ValueError(
                 "when multiple comments or a multi-character comment is "
-                "given, quotes are not supported.  In this case the quote "
-                "character must be set to the empty string: `quote=''`.")
+                "given, quotes are not supported.  In this case quotechar "
+                "must be set to None.")
 
     if len(imaginary_unit) != 1:
         raise ValueError('len(imaginary_unit) must be 1.')
