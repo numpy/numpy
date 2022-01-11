@@ -46,11 +46,13 @@ to_bool(PyArray_Descr *NPY_UNUSED(descr),
 static NPY_INLINE int
 double_from_ucs4(
         const Py_UCS4 *str, const Py_UCS4 *end,
-        bool skip_trailing_whitespace, double *result, const Py_UCS4 **p_end)
+        bool strip_whitespace, double *result, const Py_UCS4 **p_end)
 {
     /* skip leading whitespace */
-    while (Py_UNICODE_ISSPACE(*str)) {
-        str++;
+    if (strip_whitespace) {
+        while (Py_UNICODE_ISSPACE(*str)) {
+            str++;
+        }
     }
     if (str == end) {
         return -1;  /* empty or only whitespace: not a floating point number */
@@ -69,7 +71,9 @@ double_from_ucs4(
     char *c = ascii;
     for (; str < end; str++, c++) {
         if (NPY_UNLIKELY(*str >= 128)) {
-            break;  /* the following cannot be a number anymore */
+            /* Character cannot be used, ignore for end calculation and stop */
+            end = str;
+            break;
         }
         *c = (char)(*str);
     }
@@ -86,7 +90,7 @@ double_from_ucs4(
         return -1;
     }
 
-    if (skip_trailing_whitespace) {
+    if (strip_whitespace) {
         /* and then skip any remainig whitespace: */
         while (Py_UNICODE_ISSPACE(*end)) {
             end++;
@@ -158,6 +162,10 @@ to_complex_int(
     if (allow_parens && (*item == '(')) {
         unmatched_opening_paren = true;
         ++item;
+        /* Allow whitespace within the parentheses: "( 1j)" */
+        while (Py_UNICODE_ISSPACE(*item)) {
+            ++item;
+        }
     }
     if (double_from_ucs4(item, token_end, false, p_real, &p_end) < 0) {
         return false;
@@ -168,23 +176,15 @@ to_complex_int(
         return !unmatched_opening_paren;
     }
     if (*p_end == imaginary_unit) {
-        // Pure imaginary part only (e.g "1.5j")
+        /* Only an imaginary part (e.g "1.5j") */
         *p_imag = *p_real;
         *p_real = 0.0;
         ++p_end;
-        if (unmatched_opening_paren && (*p_end == ')')) {
-            ++p_end;
-            unmatched_opening_paren = false;
-        }
     }
-    else if (unmatched_opening_paren && (*p_end == ')')) {
-        *p_imag = 0.0;
-        ++p_end;
-        unmatched_opening_paren = false;
-    }
-    else {
+    else if (*p_end == '+' || *p_end == '-') {
+        /* Imaginary part still to parse */
         if (*p_end == '+') {
-            ++p_end;
+            ++p_end;  /* Advance to support +- (and ++) */
         }
         if (double_from_ucs4(p_end, token_end, false, p_imag, &p_end) < 0) {
             return false;
@@ -193,11 +193,25 @@ to_complex_int(
             return false;
         }
         ++p_end;
-        if (unmatched_opening_paren && (*p_end == ')')) {
+    }
+    else {
+        *p_imag = 0;
+    }
+
+    if (unmatched_opening_paren) {
+        /* Allow whitespace inside brackets as in "(1+2j )" or "( 1j )" */
+        while (Py_UNICODE_ISSPACE(*p_end)) {
             ++p_end;
-            unmatched_opening_paren = false;
+        }
+        if (*p_end == ')') {
+            ++p_end;
+        }
+        else {
+            /* parentheses was not closed */
+            return false;
         }
     }
+
     while (Py_UNICODE_ISSPACE(*p_end)) {
         ++p_end;
     }

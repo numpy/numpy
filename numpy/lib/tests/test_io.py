@@ -3263,3 +3263,30 @@ def test_loadtxt_warn_on_skipped_data(skiprows):
     txt = TextIO(data)
     with pytest.warns(UserWarning, match="input contained no data"):
         np.loadtxt(txt, skiprows=skiprows)
+
+
+@pytest.mark.parametrize("dtype",
+        np.typecodes["AllInteger"] + "efdFD" + "?")
+def test_loadtxt_unicode_whitespace_stripping(dtype):
+    # Test that all numeric types (and bool) strip whitespace correctly
+    # \u202F is a narrow no-break space, `\n` is just a whitespace if quoted.
+    # Currently, skip float128 as it did not always support this and has no
+    # "custom" parsing:
+    txt = StringIO(' 3 ,"\u202F2\n"')
+    res = np.loadtxt(txt, dtype=dtype, delimiter=",", quotechar='"')
+    assert_array_equal(res, np.array([3, 2]).astype(dtype))
+
+@pytest.mark.parametrize("dtype", "FD")
+def test_loadtxt_unicode_whitespace_stripping_complex(dtype):
+    # Complex has a few extra cases since it has two components and parentheses
+    line = " 1 , 2+3j , ( 4+5j ), ( 6+-7j )  , 8j , ( 9j ) \n"
+    data = [line, line.replace(" ", "\u202F")]
+    res = np.loadtxt(data, dtype=dtype, delimiter=',')
+    assert_array_equal(res, np.array([[1, 2+3j, 4+5j, 6-7j, 8j, 9j]] * 2))
+
+@pytest.mark.parametrize("dtype", "FD")
+@pytest.mark.parametrize("field",
+        ["1 +2j", "1+ 2j", "1+2 j", "1+-+3", "(1j", "(1", "(1+2j", "1+2j)"])
+def test_loadtxt_bad_complex(dtype, field):
+    with pytest.raises(ValueError):
+        np.loadtxt([field + "\n"], dtype=dtype, delimiter=",")
