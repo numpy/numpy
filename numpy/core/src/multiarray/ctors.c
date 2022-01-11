@@ -933,6 +933,14 @@ PyArray_NewFromDescr_int(
     int i;
     npy_intp nbytes;
 
+    if ((unsigned int)nd > (unsigned int)NPY_MAXDIMS) {
+        PyErr_Format(PyExc_ValueError,
+                     "number of dimensions must be within [0, %d]",
+                     NPY_MAXDIMS);
+        Py_DECREF(descr);
+        return NULL;
+    }
+
     if (descr->subarray) {
         PyObject *ret;
         npy_intp newdims[2*NPY_MAXDIMS];
@@ -952,13 +960,6 @@ PyArray_NewFromDescr_int(
         return ret;
     }
 
-    if ((unsigned int)nd > (unsigned int)NPY_MAXDIMS) {
-        PyErr_Format(PyExc_ValueError,
-                     "number of dimensions must be within [0, %d]",
-                     NPY_MAXDIMS);
-        Py_DECREF(descr);
-        return NULL;
-    }
 
     /* Check datatype element size */
     nbytes = descr->elsize;
