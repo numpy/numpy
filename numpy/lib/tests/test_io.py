@@ -3242,3 +3242,26 @@ def test_loadtxt_consecutive_quotechar_escaped():
     expected = np.array('Hello, my name is "Monty"!', dtype="U40")
     res = np.loadtxt(txt, dtype="U40", delimiter=",", quotechar='"')
     assert_equal(res, expected)
+
+
+@pytest.mark.parametrize("data", ("", "\n\n\n", "# 1 2 3\n# 4 5 6\n"))
+@pytest.mark.parametrize("ndmin", (0, 1, 2))
+def test_loadtxt_warn_on_no_data(data, ndmin):
+    """Check that a UserWarning is emitted when no data is read from input."""
+    txt = TextIO(data)
+    with pytest.warns(UserWarning, match="input contained no data"):
+        np.loadtxt(txt, ndmin=ndmin)
+
+    with NamedTemporaryFile(mode="w") as fh:
+        fh.write(data)
+        fh.seek(0)
+        with pytest.warns(UserWarning, match="input contained no data"):
+            np.loadtxt(txt, ndmin=ndmin)
+
+
+@pytest.mark.parametrize("skiprows", (2, 3))
+def test_loadtxt_warn_on_skipped_data(skiprows):
+    data = "1 2 3\n4 5 6"
+    txt = TextIO(data)
+    with pytest.warns(UserWarning, match="input contained no data"):
+        np.loadtxt(txt, skiprows=skiprows)
