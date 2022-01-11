@@ -1062,12 +1062,13 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
 
     arr = _ensure_ndmin_ndarray(arr, ndmin=ndmin)
 
-    if arr.shape[0] == 0:
-        warnings.warn(
-            f'loadtxt: input contained no data: "{fname}"',
-            category=UserWarning,
-            stacklevel=2
-        )
+    if arr.shape:
+        if arr.shape[0] == 0:
+            warnings.warn(
+                f'loadtxt: input contained no data: "{fname}"',
+                category=UserWarning,
+                stacklevel=2
+            )
 
     if unpack:
         # Handle unpack like np.loadtxt.

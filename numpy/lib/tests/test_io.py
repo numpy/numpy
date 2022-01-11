@@ -919,8 +919,7 @@ class TestLoadTxt(LoadTxtBase):
             assert_array_equal(x, a)
 
     def test_empty_file(self):
-        with suppress_warnings() as sup:
-            sup.filter(message="loadtxt: Empty input file:")
+        with pytest.warns(UserWarning, match="input contained no data"):
             c = TextIO()
             x = np.loadtxt(c)
             assert_equal(x.shape, (0,))
@@ -1098,8 +1097,7 @@ class TestLoadTxt(LoadTxtBase):
         assert_(x.shape == (3,))
 
         # Test ndmin kw with empty file.
-        with suppress_warnings() as sup:
-            sup.filter(message="loadtxt: Empty input file:")
+        with pytest.warns(UserWarning, match="input contained no data"):
             f = TextIO()
             assert_(np.loadtxt(f, ndmin=2).shape == (0, 1,))
             assert_(np.loadtxt(f, ndmin=1).shape == (0,))
