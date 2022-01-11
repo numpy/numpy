@@ -2265,10 +2265,6 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('__array_interface__',
     """Array protocol: Python side."""))
 
 
-add_newdoc('numpy.core.multiarray', 'ndarray', ('__array_finalize__',
-    """None."""))
-
-
 add_newdoc('numpy.core.multiarray', 'ndarray', ('__array_priority__',
     """Array priority."""))
 
@@ -2278,12 +2274,12 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('__array_struct__',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('__dlpack__',
     """a.__dlpack__(*, stream=None)
-    
+
     DLPack Protocol: Part of the Array API."""))
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('__dlpack_device__',
     """a.__dlpack_device__()
-    
+
     DLPack Protocol: Part of the Array API."""))
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('base',
@@ -2807,6 +2803,14 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('__array__',
     Returns either a new reference to self if dtype is not given or a new array
     of provided data type if dtype is different from the current dtype of the
     array.
+
+    """))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('__array_finalize__',
+    """a.__array_finalize__(obj, /)
+
+    Present so subclasses can call super. Does nothing.
 
     """))
 

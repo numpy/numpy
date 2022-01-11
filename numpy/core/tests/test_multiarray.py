@@ -8954,10 +8954,26 @@ class TestArrayFinalize:
         a = np.array(1).view(SavesBase)
         assert_(a.saved_base is a.base)
 
-    def test_bad_finalize(self):
+    def test_bad_finalize1(self):
         class BadAttributeArray(np.ndarray):
             @property
             def __array_finalize__(self):
+                raise RuntimeError("boohoo!")
+
+        with pytest.raises(TypeError, match="not callable"):
+            np.arange(10).view(BadAttributeArray)
+
+    def test_bad_finalize2(self):
+        class BadAttributeArray(np.ndarray):
+            def __array_finalize__(self):
+                raise RuntimeError("boohoo!")
+
+        with pytest.raises(TypeError, match="takes 1 positional"):
+            np.arange(10).view(BadAttributeArray)
+
+    def test_bad_finalize3(self):
+        class BadAttributeArray(np.ndarray):
+            def __array_finalize__(self, obj):
                 raise RuntimeError("boohoo!")
 
         with pytest.raises(RuntimeError, match="boohoo!"):
@@ -8996,6 +9012,14 @@ class TestArrayFinalize:
         del obj_subarray
         break_cycles()
         assert_(obj_ref() is None, "no references should remain")
+
+    def test_can_use_super(self):
+        class SuperFinalize(np.ndarray):
+            def __array_finalize__(self, obj):
+                self.saved_result = super().__array_finalize__(obj)
+
+        a = np.array(1).view(SuperFinalize)
+        assert_(a.saved_result is None)
 
 
 def test_orderconverter_with_nonASCII_unicode_ordering():
@@ -9201,7 +9225,7 @@ class TestViewDtype:
         # x is non-contiguous
         x = np.arange(10, dtype='<i4')[::2]
         with pytest.raises(ValueError,
-                           match='the last axis must be contiguous'): 
+                           match='the last axis must be contiguous'):
             x.view('<i2')
         expected = [[0, 0], [2, 0], [4, 0], [6, 0], [8, 0]]
         assert_array_equal(x[:, np.newaxis].view('<i2'), expected)

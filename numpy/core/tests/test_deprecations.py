@@ -1239,3 +1239,14 @@ class TestMemEventHook(_DeprecationTestCase):
         with pytest.warns(DeprecationWarning,
                           match='PyDataMem_SetEventHook is deprecated'):
             ma_tests.test_pydatamem_seteventhook_end()
+
+
+class TestArrayFinalizeNone(_DeprecationTestCase):
+    message = "Setting __array_finalize__ = None"
+
+    def test_use_none_is_deprecated(self):
+        # Deprecated way that ndarray itself showed nothing needs finalizing.
+        class NoFinalize(np.ndarray):
+            __array_finalize__ = None
+
+        self.assert_deprecated(lambda: np.array(1).view(NoFinalize))

@@ -28,8 +28,7 @@ class SubArray(np.ndarray):
         return x
 
     def __array_finalize__(self, obj):
-        if callable(getattr(super(), '__array_finalize__', None)):
-            super().__array_finalize__(obj)
+        super().__array_finalize__(obj)
         self.info = getattr(obj, 'info', {}).copy()
         return
 
@@ -315,7 +314,7 @@ class TestSubclassing:
         assert_startswith(repr(mx), 'masked_array')
         xsub = SubArray(x)
         mxsub = masked_array(xsub, mask=[True, False, True, False, False])
-        assert_startswith(repr(mxsub), 
+        assert_startswith(repr(mxsub),
             f'masked_{SubArray.__name__}(data=[--, 1, --, 3, 4]')
 
     def test_subclass_str(self):
