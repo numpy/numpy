@@ -66,6 +66,10 @@ double_from_ucs4(
     size_t str_len = end - str;
     if (str_len > 128) {
         heap_buf = PyMem_MALLOC(str_len);
+        if (heap_buf == NULL) {
+            PyErr_NoMemory();
+            return -1;
+        }
         ascii = heap_buf;
     }
     char *c = ascii;

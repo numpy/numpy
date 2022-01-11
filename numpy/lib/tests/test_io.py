@@ -2986,6 +2986,15 @@ def test_loadtxt_read_huge_row():
     assert_equal(res, np.tile([1.5, 2.5], (2, 50000)))
 
 
+@pytest.mark.parametrize("dtype", "edfgFDG")
+def test_loadtxt_huge_float(dtype):
+    # Covers a non-optimized path that is rarely taken:
+    field = "0" * 1000 + ".123456789"
+    dtype = np.dtype(dtype)
+    value = np.loadtxt([field], dtype=dtype)[()]
+    assert value == dtype.type("0.123456789")
+
+
 @pytest.mark.parametrize(
     ("given_dtype", "expected_dtype"),
     [
