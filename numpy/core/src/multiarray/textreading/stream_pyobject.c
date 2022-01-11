@@ -118,8 +118,8 @@ fb_del(stream *strm)
     Py_XDECREF(fb->chunksize);
     Py_XDECREF(fb->chunk);
 
-    free(fb);
-    free(strm);
+    PyMem_FREE(fb);
+    PyMem_FREE(strm);
 
     return 0;
 }
@@ -131,7 +131,7 @@ stream_python_file(PyObject *obj, const char *encoding)
     python_chunks_from_file *fb;
     stream *strm;
 
-    fb = (python_chunks_from_file *) malloc(sizeof(python_chunks_from_file));
+    fb = (python_chunks_from_file *)PyMem_MALLOC(sizeof(python_chunks_from_file));
     if (fb == NULL) {
         PyErr_NoMemory();
         return NULL;
@@ -143,10 +143,10 @@ stream_python_file(PyObject *obj, const char *encoding)
     fb->chunk = NULL;
     fb->encoding = encoding;
 
-    strm = (stream *) malloc(sizeof(stream));
+    strm = (stream *)PyMem_MALLOC(sizeof(stream));
     if (strm == NULL) {
         PyErr_NoMemory();
-        free(fb);
+        PyMem_FREE(fb);
         return NULL;
     }
 
@@ -197,8 +197,8 @@ it_del(stream *strm)
     Py_XDECREF(it->iterator);
     Py_XDECREF(it->line);
 
-    free(it);
-    free(strm);
+    PyMem_FREE(it);
+    PyMem_FREE(strm);
 
     return 0;
 }
@@ -235,7 +235,7 @@ stream_python_iterable(PyObject *obj, const char *encoding)
     python_lines_from_iterator *it;
     stream *strm;
 
-    it = (python_lines_from_iterator *)malloc(sizeof(*it));
+    it = (python_lines_from_iterator *)PyMem_MALLOC(sizeof(*it));
     if (it == NULL) {
         PyErr_NoMemory();
         return NULL;
@@ -245,10 +245,10 @@ stream_python_iterable(PyObject *obj, const char *encoding)
     it->line = NULL;
     it->encoding = encoding;
 
-    strm = (stream *) malloc(sizeof(stream));
+    strm = (stream *)PyMem_MALLOC(sizeof(stream));
     if (strm == NULL) {
         PyErr_NoMemory();
-        free(it);
+        PyMem_FREE(it);
         return NULL;
     }
     if (!PyIter_Check(obj)) {
