@@ -201,7 +201,7 @@ class TestSymbolic(util.F2PyTest):
         assert (x + (x - y) / (x + y) +
                 n).tostring(language=language) == "123 + x + (x - y) / (x + y)"
 
-        assert as_ternary(x, y, z).tostring(language=language) == "(x ? y : z)"
+        assert as_ternary(x, y, z).tostring(language=language) == "(x?y:z)"
         assert as_eq(x, y).tostring(language=language) == "x == y"
         assert as_ne(x, y).tostring(language=language) == "x != y"
         assert as_lt(x, y).tostring(language=language) == "x < y"

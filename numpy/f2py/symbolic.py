@@ -381,7 +381,7 @@ class Expr:
                                              language=language)
                                   for a in self.data]
             if language is Language.C:
-                r = f'({cond} ? {expr1} : {expr2})'
+                r = f'({cond}?{expr1}:{expr2})'
             elif language is Language.Python:
                 r = f'({expr1} if {cond} else {expr2})'
             elif language is Language.Fortran:
