@@ -1,5 +1,5 @@
-#ifndef STR_TO_INT_H
-#define STR_TO_INT_H
+#ifndef NUMPY_CORE_SRC_MULTIARRAY_TEXTREADING_STR_TO_INT_H_
+#define NUMPY_CORE_SRC_MULTIARRAY_TEXTREADING_STR_TO_INT_H_
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
@@ -156,7 +156,7 @@ str_to_uint64(
 
 
 #define DECLARE_TO_INT_PROTOTYPE(intw)                                  \
-    int                                                                 \
+    NPY_NO_EXPORT int                                                   \
     to_##intw(PyArray_Descr *descr,                                     \
             const Py_UCS4 *str, const Py_UCS4 *end, char *dataptr,      \
             parser_config *pconfig);
@@ -171,4 +171,4 @@ DECLARE_TO_INT_PROTOTYPE(uint16)
 DECLARE_TO_INT_PROTOTYPE(uint32)
 DECLARE_TO_INT_PROTOTYPE(uint64)
 
-#endif
+#endif  /* NUMPY_CORE_SRC_MULTIARRAY_TEXTREADING_STR_TO_INT_H_ */

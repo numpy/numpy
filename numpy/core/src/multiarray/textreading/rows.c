@@ -29,7 +29,7 @@
 /*
  *  Create the array of converter functions from the Python converters.
  */
-PyObject **
+static PyObject **
 create_conv_funcs(
         PyObject *converters, int num_fields, int32_t *usecols)
 {
@@ -153,7 +153,7 @@ create_conv_funcs(
  * @returns Returns the result as an array object or NULL on error.  The result
  *          is always a new reference (even when `data_array` was passed in).
  */
-PyArrayObject *
+NPY_NO_EXPORT PyArrayObject *
 read_rows(stream *s,
         npy_intp max_rows, int num_field_types, field_type *field_types,
         parser_config *pconfig, int num_usecols, int *usecols,

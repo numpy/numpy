@@ -305,7 +305,7 @@ tokenizer_core_@type@(tokenizer_state *ts, parser_config *const config)
  * light-weight loops rather than a single heavy one, to allow e.g. quickly
  * scanning for the end of a field.
  */
-int
+NPY_NO_EXPORT int
 tokenize(stream *s, tokenizer_state *ts, parser_config *const config)
 {
     assert(ts->fields_size >= 2);
@@ -414,7 +414,7 @@ tokenize(stream *s, tokenizer_state *ts, parser_config *const config)
 }
 
 
-void
+NPY_NO_EXPORT void
 tokenizer_clear(tokenizer_state *ts)
 {
     PyMem_FREE(ts->field_buffer);
@@ -432,7 +432,7 @@ tokenizer_clear(tokenizer_state *ts)
  * variables into the tokenizer.  This would improve the cache locality during
  * tokenizing.
  */
-int
+NPY_NO_EXPORT int
 tokenizer_init(tokenizer_state *ts, parser_config *config)
 {
     /* State and buf_state could be moved into tokenize if we go by row */

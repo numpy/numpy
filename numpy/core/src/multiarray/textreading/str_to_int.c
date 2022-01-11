@@ -11,7 +11,7 @@ NPY_NO_EXPORT PyArray_Descr *double_descr = NULL;
 
 
 #define DECLARE_TO_INT(intw, INT_MIN, INT_MAX)                              \
-    int                                                                     \
+    NPY_NO_EXPORT int                                                       \
     to_##intw(PyArray_Descr *descr,                                         \
             const Py_UCS4 *str, const Py_UCS4 *end, char *dataptr,          \
             parser_config *pconfig)                                         \
@@ -33,7 +33,7 @@ NPY_NO_EXPORT PyArray_Descr *double_descr = NULL;
     }
 
 #define DECLARE_TO_UINT(uintw, UINT_MAX)                                    \
-    int                                                                     \
+    NPY_NO_EXPORT int                                                       \
     to_##uintw(PyArray_Descr *descr,                                        \
             const Py_UCS4 *str, const Py_UCS4 *end, char *dataptr,          \
             parser_config *pconfig)                                         \

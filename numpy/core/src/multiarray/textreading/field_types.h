@@ -1,6 +1,6 @@
 
-#ifndef _FIELD_TYPES_H_
-#define _FIELD_TYPES_H_
+#ifndef NUMPY_CORE_SRC_MULTIARRAY_TEXTREADING_FIELD_TYPES_H_
+#define NUMPY_CORE_SRC_MULTIARRAY_TEXTREADING_FIELD_TYPES_H_
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -58,10 +58,10 @@ typedef struct _field_type {
 } field_type;
 
 
-void
+NPY_NO_EXPORT void
 field_types_xclear(int num_field_types, field_type *ft);
 
-npy_intp
+NPY_NO_EXPORT npy_intp
 field_types_create(PyArray_Descr *descr, field_type **ft);
 
-#endif
+#endif  /* NUMPY_CORE_SRC_MULTIARRAY_TEXTREADING_FIELD_TYPES_H_ */

@@ -1,5 +1,5 @@
-#ifndef _STREAM_H_
-#define _STREAM_H_
+#ifndef NUMPY_CORE_SRC_MULTIARRAY_TEXTREADING_STREAM_H_
+#define NUMPY_CORE_SRC_MULTIARRAY_TEXTREADING_STREAM_H_
 
 #include <stdint.h>
 
@@ -25,4 +25,4 @@ typedef struct _stream {
         ((s)->stream_nextbuf((s)->stream_data, start, end, kind))
 #define stream_close(s)    ((s)->stream_close((s)))
 
-#endif
+#endif  /* NUMPY_CORE_SRC_MULTIARRAY_TEXTREADING_STREAM_H_ */

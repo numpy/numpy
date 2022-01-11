@@ -1,16 +1,16 @@
 
-#ifndef _STREAM_PYTHON_FILE_BY_LINE
-#define _STREAM_PYTHON_FILE_BY_LINE
+#ifndef NUMPY_CORE_SRC_MULTIARRAY_TEXTREADING_STREAM_PYOBJECT_H_
+#define NUMPY_CORE_SRC_MULTIARRAY_TEXTREADING_STREAM_PYOBJECT_H_
 
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
 #include "textreading/stream.h"
 
-stream *
+NPY_NO_EXPORT stream *
 stream_python_file(PyObject *obj, const char *encoding);
 
-stream *
+NPY_NO_EXPORT stream *
 stream_python_iterable(PyObject *obj, const char *encoding);
 
-#endif
+#endif  /* NUMPY_CORE_SRC_MULTIARRAY_TEXTREADING_STREAM_PYOBJECT_H_ */

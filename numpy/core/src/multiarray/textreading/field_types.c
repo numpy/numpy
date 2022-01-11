@@ -10,7 +10,7 @@
 #include "textreading/growth.h"
 
 
-void
+NPY_NO_EXPORT void
 field_types_xclear(int num_field_types, field_type *ft) {
     assert(num_field_types >= 0);
     if (ft == NULL) {
@@ -176,7 +176,7 @@ field_type_grow_recursive(PyArray_Descr *descr,
  * we copy the itemsize, but the main thing is that we check for custom
  * converters.
  */
-npy_intp
+NPY_NO_EXPORT npy_intp
 field_types_create(PyArray_Descr *descr, field_type **ft)
 {
     if (descr->subarray != NULL) {

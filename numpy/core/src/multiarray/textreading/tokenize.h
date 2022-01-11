@@ -1,6 +1,6 @@
 
-#ifndef _TOKENIZE_H_
-#define _TOKENIZE_H_
+#ifndef NUMPY_CORE_SRC_MULTIARRAY_TEXTREADING_TOKENIZE_H_
+#define NUMPY_CORE_SRC_MULTIARRAY_TEXTREADING_TOKENIZE_H_
 
 #include <Python.h>
 #include "numpy/ndarraytypes.h"
@@ -24,7 +24,6 @@ typedef enum {
     TOKENIZE_EAT_CRLF,  /* "\r\n" support (carriage return, line feed) */
     TOKENIZE_GOTO_LINE_END,
 } tokenizer_parsing_state;
-
 
 
 typedef struct {
@@ -66,14 +65,14 @@ typedef struct {
 } tokenizer_state;
 
 
-void
+NPY_NO_EXPORT void
 tokenizer_clear(tokenizer_state *ts);
 
 
-int
+NPY_NO_EXPORT int
 tokenizer_init(tokenizer_state *ts, parser_config *config);
 
-int
+NPY_NO_EXPORT int
 tokenize(stream *s, tokenizer_state *ts, parser_config *const config);
 
-#endif
+#endif  /* NUMPY_CORE_SRC_MULTIARRAY_TEXTREADING_TOKENIZE_H_ */

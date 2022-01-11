@@ -1,7 +1,7 @@
-#ifndef _NPY_GROWTH_H
-#define _NPY_GROWTH_H
+#ifndef NUMPY_CORE_SRC_MULTIARRAY_TEXTREADING_GROWTH_H_
+#define NUMPY_CORE_SRC_MULTIARRAY_TEXTREADING_GROWTH_H_
 
 NPY_NO_EXPORT npy_intp
 grow_size_and_multiply(npy_intp *size, npy_intp min_grow, npy_intp itemsize);
 
-#endif  /*_NPY_GROWTH_H */
+#endif  /* NUMPY_CORE_SRC_MULTIARRAY_TEXTREADING_GROWTH_H_ */

@@ -1,6 +1,6 @@
 
-#ifndef _PARSER_CONFIG_H_
-#define _PARSER_CONFIG_H_
+#ifndef NUMPY_CORE_SRC_MULTIARRAY_TEXTREADING_PARSER_CONFIG_H_
+#define NUMPY_CORE_SRC_MULTIARRAY_TEXTREADING_PARSER_CONFIG_H_
 
 #include <stdbool.h>
 
@@ -68,4 +68,4 @@ typedef struct {
 } parser_config;
 
 
-#endif
+#endif  /* NUMPY_CORE_SRC_MULTIARRAY_TEXTREADING_PARSER_CONFIG_H_ */

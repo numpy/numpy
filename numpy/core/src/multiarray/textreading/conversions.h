@@ -1,5 +1,5 @@
-#ifndef CONVERSIONS_H
-#define CONVERSIONS_H
+#ifndef NUMPY_CORE_SRC_MULTIARRAY_TEXTREADING_CONVERSIONS_H_
+#define NUMPY_CORE_SRC_MULTIARRAY_TEXTREADING_CONVERSIONS_H_
 
 #include <stdbool.h>
 
@@ -9,49 +9,49 @@
 
 #include "textreading/parser_config.h"
 
-int
+NPY_NO_EXPORT int
 to_bool(PyArray_Descr *descr,
         const Py_UCS4 *str, const Py_UCS4 *end, char *dataptr,
         parser_config *pconfig);
 
-int
+NPY_NO_EXPORT int
 to_float(PyArray_Descr *descr,
         const Py_UCS4 *str, const Py_UCS4 *end, char *dataptr,
         parser_config *pconfig);
 
-int
+NPY_NO_EXPORT int
 to_double(PyArray_Descr *descr,
         const Py_UCS4 *str, const Py_UCS4 *end, char *dataptr,
         parser_config *pconfig);
 
-int
+NPY_NO_EXPORT int
 to_cfloat(PyArray_Descr *descr,
         const Py_UCS4 *str, const Py_UCS4 *end, char *dataptr,
         parser_config *pconfig);
 
-int
+NPY_NO_EXPORT int
 to_cdouble(PyArray_Descr *descr,
         const Py_UCS4 *str, const Py_UCS4 *end, char *dataptr,
         parser_config *pconfig);
 
-int
+NPY_NO_EXPORT int
 to_string(PyArray_Descr *descr,
         const Py_UCS4 *str, const Py_UCS4 *end, char *dataptr,
         parser_config *unused);
 
-int
+NPY_NO_EXPORT int
 to_unicode(PyArray_Descr *descr,
         const Py_UCS4 *str, const Py_UCS4 *end, char *dataptr,
         parser_config *unused);
 
-int
+NPY_NO_EXPORT int
 to_generic_with_converter(PyArray_Descr *descr,
         const Py_UCS4 *str, const Py_UCS4 *end, char *dataptr,
         parser_config *unused, PyObject *func);
 
-int
+NPY_NO_EXPORT int
 to_generic(PyArray_Descr *descr,
         const Py_UCS4 *str, const Py_UCS4 *end, char *dataptr,
         parser_config *pconfig);
 
-#endif
+#endif  /* NUMPY_CORE_SRC_MULTIARRAY_TEXTREADING_CONVERSIONS_H_ */

@@ -125,7 +125,7 @@ fb_del(stream *strm)
 }
 
 
-stream *
+NPY_NO_EXPORT stream *
 stream_python_file(PyObject *obj, const char *encoding)
 {
     python_chunks_from_file *fb;
@@ -229,7 +229,7 @@ it_nextbuf(python_lines_from_iterator *it, char **start, char **end, int *kind)
 }
 
 
-stream *
+NPY_NO_EXPORT stream *
 stream_python_iterable(PyObject *obj, const char *encoding)
 {
     python_lines_from_iterator *it;

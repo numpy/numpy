@@ -14,7 +14,7 @@
 /*
  * Coercion to boolean is done via integer right now.
  */
-int
+NPY_NO_EXPORT int
 to_bool(PyArray_Descr *NPY_UNUSED(descr),
         const Py_UCS4 *str, const Py_UCS4 *end, char *dataptr,
         parser_config *NPY_UNUSED(pconfig))
@@ -97,7 +97,7 @@ double_from_ucs4(
 }
 
 
-int
+NPY_NO_EXPORT int
 to_float(PyArray_Descr *descr,
         const Py_UCS4 *str, const Py_UCS4 *end, char *dataptr,
         parser_config *NPY_UNUSED(pconfig))
@@ -120,7 +120,7 @@ to_float(PyArray_Descr *descr,
 }
 
 
-int
+NPY_NO_EXPORT int
 to_double(PyArray_Descr *descr,
         const Py_UCS4 *str, const Py_UCS4 *end, char *dataptr,
         parser_config *NPY_UNUSED(pconfig))
@@ -205,7 +205,7 @@ to_complex_int(
 }
 
 
-int
+NPY_NO_EXPORT int
 to_cfloat(PyArray_Descr *descr,
         const Py_UCS4 *str, const Py_UCS4 *end, char *dataptr,
         parser_config *pconfig)
@@ -229,7 +229,7 @@ to_cfloat(PyArray_Descr *descr,
 }
 
 
-int
+NPY_NO_EXPORT int
 to_cdouble(PyArray_Descr *descr,
         const Py_UCS4 *str, const Py_UCS4 *end, char *dataptr,
         parser_config *pconfig)
@@ -255,7 +255,7 @@ to_cdouble(PyArray_Descr *descr,
 /*
  * String and unicode conversion functions.
  */
-int
+NPY_NO_EXPORT int
 to_string(PyArray_Descr *descr,
         const Py_UCS4 *str, const Py_UCS4 *end, char *dataptr,
         parser_config *NPY_UNUSED(unused))
@@ -284,7 +284,7 @@ to_string(PyArray_Descr *descr,
 }
 
 
-int
+NPY_NO_EXPORT int
 to_unicode(PyArray_Descr *descr,
         const Py_UCS4 *str, const Py_UCS4 *end, char *dataptr,
         parser_config *NPY_UNUSED(unused))
@@ -334,7 +334,7 @@ call_converter_function(
 }
 
 
-int
+NPY_NO_EXPORT int
 to_generic_with_converter(PyArray_Descr *descr,
         const Py_UCS4 *str, const Py_UCS4 *end, char *dataptr,
         parser_config *config, PyObject *func)
@@ -359,7 +359,7 @@ to_generic_with_converter(PyArray_Descr *descr,
 }
 
 
-int
+NPY_NO_EXPORT int
 to_generic(PyArray_Descr *descr,
         const Py_UCS4 *str, const Py_UCS4 *end, char *dataptr,
         parser_config *config)
