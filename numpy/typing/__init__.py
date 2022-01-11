@@ -343,6 +343,7 @@ from ._array_like import (
     _ArrayLike,
     _FiniteNestedSequence,
     _SupportsArray,
+    _SupportsArrayFunc,
     _ArrayLikeInt,
     _ArrayLikeBool_co,
     _ArrayLikeUInt_co,
