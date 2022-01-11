@@ -41,14 +41,21 @@ def unique_all(x: Array, /) -> UniqueAllResult:
 
     See its docstring for more information.
     """
-    res = np.unique(
+    values, indices, inverse_indices, counts = np.unique(
         x._array,
         return_counts=True,
         return_index=True,
         return_inverse=True,
     )
-
-    return UniqueAllResult(*[Array._new(i) for i in res])
+    # np.unique() flattens inverse indices, but they need to share x's shape
+    # See https://github.com/numpy/numpy/issues/20638
+    inverse_indices = inverse_indices.reshape(x.shape)
+    return UniqueAllResult(
+        Array._new(values),
+        Array._new(indices),
+        Array._new(inverse_indices),
+        Array._new(counts),
+    )
 
 
 def unique_counts(x: Array, /) -> UniqueCountsResult:
@@ -68,13 +75,16 @@ def unique_inverse(x: Array, /) -> UniqueInverseResult:
 
     See its docstring for more information.
     """
-    res = np.unique(
+    values, inverse_indices = np.unique(
         x._array,
         return_counts=False,
         return_index=False,
         return_inverse=True,
     )
-    return UniqueInverseResult(*[Array._new(i) for i in res])
+    # np.unique() flattens inverse indices, but they need to share x's shape
+    # See https://github.com/numpy/numpy/issues/20638
+    inverse_indices = inverse_indices.reshape(x.shape)
+    return UniqueInverseResult(Array._new(values), Array._new(inverse_indices))
 
 
 def unique_values(x: Array, /) -> Array:
