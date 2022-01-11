@@ -61,6 +61,7 @@ from numpy.typing import (
     NDArray,
     ArrayLike,
     _SupportsArray,
+    _SupportsArrayFunc,
     _NestedSequence,
     _FiniteNestedSequence,
     _ArrayLikeBool_co,
@@ -177,7 +178,7 @@ def array(
     order: _OrderKACF = ...,
     subok: L[True],
     ndmin: int = ...,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
 ) -> _ArrayType: ...
 @overload
 def array(
@@ -188,7 +189,7 @@ def array(
     order: _OrderKACF = ...,
     subok: bool = ...,
     ndmin: int = ...,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def array(
@@ -199,7 +200,7 @@ def array(
     order: _OrderKACF = ...,
     subok: bool = ...,
     ndmin: int = ...,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 @overload
 def array(
@@ -210,7 +211,7 @@ def array(
     order: _OrderKACF = ...,
     subok: bool = ...,
     ndmin: int = ...,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def array(
@@ -221,7 +222,7 @@ def array(
     order: _OrderKACF = ...,
     subok: bool = ...,
     ndmin: int = ...,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 
 @overload
@@ -230,7 +231,7 @@ def zeros(
     dtype: None = ...,
     order: _OrderCF = ...,
     *,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
 ) -> NDArray[float64]: ...
 @overload
 def zeros(
@@ -238,7 +239,7 @@ def zeros(
     dtype: _DTypeLike[_SCT],
     order: _OrderCF = ...,
     *,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def zeros(
@@ -246,7 +247,7 @@ def zeros(
     dtype: DTypeLike,
     order: _OrderCF = ...,
     *,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 
 @overload
@@ -255,7 +256,7 @@ def empty(
     dtype: None = ...,
     order: _OrderCF = ...,
     *,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
 ) -> NDArray[float64]: ...
 @overload
 def empty(
@@ -263,7 +264,7 @@ def empty(
     dtype: _DTypeLike[_SCT],
     order: _OrderCF = ...,
     *,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def empty(
@@ -271,7 +272,7 @@ def empty(
     dtype: DTypeLike,
     order: _OrderCF = ...,
     *,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 
 @overload
@@ -468,7 +469,7 @@ def asarray(
     dtype: None = ...,
     order: _OrderKACF = ...,
     *,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def asarray(
@@ -476,7 +477,7 @@ def asarray(
     dtype: None = ...,
     order: _OrderKACF = ...,
     *,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 @overload
 def asarray(
@@ -484,7 +485,7 @@ def asarray(
     dtype: _DTypeLike[_SCT],
     order: _OrderKACF = ...,
     *,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def asarray(
@@ -492,7 +493,7 @@ def asarray(
     dtype: DTypeLike,
     order: _OrderKACF = ...,
     *,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 
 @overload
@@ -501,7 +502,7 @@ def asanyarray(
     dtype: None = ...,
     order: _OrderKACF = ...,
     *,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
 ) -> _ArrayType: ...
 @overload
 def asanyarray(
@@ -509,7 +510,7 @@ def asanyarray(
     dtype: None = ...,
     order: _OrderKACF = ...,
     *,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def asanyarray(
@@ -517,7 +518,7 @@ def asanyarray(
     dtype: None = ...,
     order: _OrderKACF = ...,
     *,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 @overload
 def asanyarray(
@@ -525,7 +526,7 @@ def asanyarray(
     dtype: _DTypeLike[_SCT],
     order: _OrderKACF = ...,
     *,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def asanyarray(
@@ -533,7 +534,7 @@ def asanyarray(
     dtype: DTypeLike,
     order: _OrderKACF = ...,
     *,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 
 @overload
@@ -541,28 +542,28 @@ def ascontiguousarray(
     a: _ArrayLike[_SCT],
     dtype: None = ...,
     *,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def ascontiguousarray(
     a: object,
     dtype: None = ...,
     *,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 @overload
 def ascontiguousarray(
     a: Any,
     dtype: _DTypeLike[_SCT],
     *,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def ascontiguousarray(
     a: Any,
     dtype: DTypeLike,
     *,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 
 @overload
@@ -570,28 +571,28 @@ def asfortranarray(
     a: _ArrayLike[_SCT],
     dtype: None = ...,
     *,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def asfortranarray(
     a: object,
     dtype: None = ...,
     *,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 @overload
 def asfortranarray(
     a: Any,
     dtype: _DTypeLike[_SCT],
     *,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def asfortranarray(
     a: Any,
     dtype: DTypeLike,
     *,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 
 # In practice `list[Any]` is list with an int, int and a valid
@@ -609,7 +610,7 @@ def fromstring(
     count: SupportsIndex = ...,
     *,
     sep: str,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
 ) -> NDArray[float64]: ...
 @overload
 def fromstring(
@@ -618,7 +619,7 @@ def fromstring(
     count: SupportsIndex = ...,
     *,
     sep: str,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def fromstring(
@@ -627,7 +628,7 @@ def fromstring(
     count: SupportsIndex = ...,
     *,
     sep: str,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 
 def frompyfunc(
@@ -646,7 +647,7 @@ def fromfile(
     sep: str = ...,
     offset: SupportsIndex = ...,
     *,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
 ) -> NDArray[float64]: ...
 @overload
 def fromfile(
@@ -656,7 +657,7 @@ def fromfile(
     sep: str = ...,
     offset: SupportsIndex = ...,
     *,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def fromfile(
@@ -666,7 +667,7 @@ def fromfile(
     sep: str = ...,
     offset: SupportsIndex = ...,
     *,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 
 @overload
@@ -675,7 +676,7 @@ def fromiter(
     dtype: _DTypeLike[_SCT],
     count: SupportsIndex = ...,
     *,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def fromiter(
@@ -683,7 +684,7 @@ def fromiter(
     dtype: DTypeLike,
     count: SupportsIndex = ...,
     *,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 
 @overload
@@ -693,7 +694,7 @@ def frombuffer(
     count: SupportsIndex = ...,
     offset: SupportsIndex = ...,
     *,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
 ) -> NDArray[float64]: ...
 @overload
 def frombuffer(
@@ -702,7 +703,7 @@ def frombuffer(
     count: SupportsIndex = ...,
     offset: SupportsIndex = ...,
     *,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def frombuffer(
@@ -711,7 +712,7 @@ def frombuffer(
     count: SupportsIndex = ...,
     offset: SupportsIndex = ...,
     *,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 
 @overload
@@ -719,7 +720,7 @@ def arange(  # type: ignore[misc]
     stop: _IntLike_co,
     /, *,
     dtype: None = ...,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
 ) -> NDArray[signedinteger[Any]]: ...
 @overload
 def arange(  # type: ignore[misc]
@@ -728,14 +729,14 @@ def arange(  # type: ignore[misc]
     step: _IntLike_co = ...,
     dtype: None = ...,
     *,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
 ) -> NDArray[signedinteger[Any]]: ...
 @overload
 def arange(  # type: ignore[misc]
     stop: _FloatLike_co,
     /, *,
     dtype: None = ...,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
 ) -> NDArray[floating[Any]]: ...
 @overload
 def arange(  # type: ignore[misc]
@@ -744,14 +745,14 @@ def arange(  # type: ignore[misc]
     step: _FloatLike_co = ...,
     dtype: None = ...,
     *,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
 ) -> NDArray[floating[Any]]: ...
 @overload
 def arange(
     stop: _TD64Like_co,
     /, *,
     dtype: None = ...,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
 ) -> NDArray[timedelta64]: ...
 @overload
 def arange(
@@ -760,7 +761,7 @@ def arange(
     step: _TD64Like_co = ...,
     dtype: None = ...,
     *,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
 ) -> NDArray[timedelta64]: ...
 @overload
 def arange(  # both start and stop must always be specified for datetime64
@@ -769,14 +770,14 @@ def arange(  # both start and stop must always be specified for datetime64
     step: datetime64 = ...,
     dtype: None = ...,
     *,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
 ) -> NDArray[datetime64]: ...
 @overload
 def arange(
     stop: Any,
     /, *,
     dtype: _DTypeLike[_SCT],
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def arange(
@@ -785,14 +786,14 @@ def arange(
     step: Any = ...,
     dtype: _DTypeLike[_SCT] = ...,
     *,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def arange(
     stop: Any, /,
     *,
     dtype: DTypeLike,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 @overload
 def arange(
@@ -801,7 +802,7 @@ def arange(
     step: Any = ...,
     dtype: DTypeLike = ...,
     *,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 
 def datetime_data(

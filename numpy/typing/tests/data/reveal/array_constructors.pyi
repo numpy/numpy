@@ -28,6 +28,7 @@ reveal_type(np.array(B, subok=True))  # E: SubClass[{float64}]
 reveal_type(np.array([1, 1.0]))  # E: ndarray[Any, dtype[Any]]
 reveal_type(np.array(A, dtype=np.int64))  # E: ndarray[Any, dtype[{int64}]]
 reveal_type(np.array(A, dtype='c16'))  # E: ndarray[Any, dtype[Any]]
+reveal_type(np.array(A, like=A))  # E: ndarray[Any, dtype[{float64}]]
 
 reveal_type(np.zeros([1, 5, 6]))  # E: ndarray[Any, dtype[{float64}]]
 reveal_type(np.zeros([1, 5, 6], dtype=np.int64))  # E: ndarray[Any, dtype[{int64}]]

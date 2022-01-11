@@ -31,6 +31,7 @@ from numpy.typing import (
     NDArray,
     _FiniteNestedSequence,
     _SupportsArray,
+    _SupportsArrayFunc,
     _ArrayLikeInt_co,
     _ArrayLikeFloat_co,
     _ArrayLikeComplex_co,
@@ -73,7 +74,7 @@ def eye(
     dtype: None = ...,
     order: _OrderCF = ...,
     *,
-    like: None | ArrayLike = ...,
+    like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[float64]: ...
 @overload
 def eye(
@@ -83,7 +84,7 @@ def eye(
     dtype: _DTypeLike[_SCT] = ...,
     order: _OrderCF = ...,
     *,
-    like: None | ArrayLike = ...,
+    like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def eye(
@@ -93,7 +94,7 @@ def eye(
     dtype: DTypeLike = ...,
     order: _OrderCF = ...,
     *,
-    like: None | ArrayLike = ...,
+    like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 
 @overload
@@ -113,7 +114,7 @@ def tri(
     k: int = ...,
     dtype: None = ...,
     *,
-    like: None | ArrayLike = ...
+    like: None | _SupportsArrayFunc = ...
 ) -> NDArray[float64]: ...
 @overload
 def tri(
@@ -122,7 +123,7 @@ def tri(
     k: int = ...,
     dtype: _DTypeLike[_SCT] = ...,
     *,
-    like: None | ArrayLike = ...
+    like: None | _SupportsArrayFunc = ...
 ) -> NDArray[_SCT]: ...
 @overload
 def tri(
@@ -131,7 +132,7 @@ def tri(
     k: int = ...,
     dtype: DTypeLike = ...,
     *,
-    like: None | ArrayLike = ...
+    like: None | _SupportsArrayFunc = ...
 ) -> NDArray[Any]: ...
 
 @overload
