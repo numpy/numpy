@@ -37,6 +37,7 @@ from numpy.typing import (
     _SupportsDType,
     _FiniteNestedSequence,
     _SupportsArray,
+    _SupportsArrayFunc,
     _ScalarLike_co,
     _ArrayLikeBool_co,
     _ArrayLikeUInt_co,
@@ -108,7 +109,7 @@ def ones(
     dtype: None = ...,
     order: _OrderCF = ...,
     *,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
 ) -> NDArray[float64]: ...
 @overload
 def ones(
@@ -116,7 +117,7 @@ def ones(
     dtype: _DTypeLike[_SCT],
     order: _OrderCF = ...,
     *,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def ones(
@@ -124,7 +125,7 @@ def ones(
     dtype: DTypeLike,
     order: _OrderCF = ...,
     *,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 
 @overload
@@ -175,7 +176,7 @@ def full(
     dtype: None = ...,
     order: _OrderCF = ...,
     *,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 @overload
 def full(
@@ -184,7 +185,7 @@ def full(
     dtype: _DTypeLike[_SCT],
     order: _OrderCF = ...,
     *,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def full(
@@ -193,7 +194,7 @@ def full(
     dtype: DTypeLike,
     order: _OrderCF = ...,
     *,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 
 @overload
@@ -563,7 +564,7 @@ def fromfunction(
     shape: Sequence[int],
     *,
     dtype: DTypeLike = ...,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
     **kwargs: Any,
 ) -> _T: ...
 
@@ -584,21 +585,21 @@ def identity(
     n: int,
     dtype: None = ...,
     *,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
 ) -> NDArray[float64]: ...
 @overload
 def identity(
     n: int,
     dtype: _DTypeLike[_SCT],
     *,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def identity(
     n: int,
     dtype: DTypeLike,
     *,
-    like: ArrayLike = ...,
+    like: _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 
 def allclose(
