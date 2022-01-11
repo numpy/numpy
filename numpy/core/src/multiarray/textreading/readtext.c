@@ -172,6 +172,25 @@ _load_from_filelike(PyObject *NPY_UNUSED(mod),
             return NULL;
         }
     }
+    /*
+     * TODO: It would be nicer to move usecol parsing to C, but we don't have
+     *       quite the right helper in NumPy yet so using a 1D, 32bit,
+     *       contiguous array.  (and ensure this is true)
+     * NOTE: This should never fail as the public API ensures the conditions
+     *       are met.
+     */
+    if (usecols != Py_None) {
+        if (!PyArray_CheckExact(usecols)
+                || PyArray_NDIM((PyArrayObject *)usecols) != 1
+                || !PyArray_ISCARRAY((PyArrayObject *)usecols)
+                || PyArray_DESCR((PyArrayObject *)usecols)->kind != 'i'
+                || PyArray_DESCR((PyArrayObject *)usecols)->elsize != 4
+                || PyArray_ISBYTESWAPPED((PyArrayObject *)usecols)) {
+            PyErr_SetString(PyExc_RuntimeError,
+                    "Internally a bad value was passed for usecols.");
+            return NULL;
+        }
+    }
 
     stream *s;
     if (filelike) {
