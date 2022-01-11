@@ -16,7 +16,7 @@ Get the local copy of the code
 
 From the command line::
 
-   git clone git://github.com/numpy/numpy.git
+   git clone https://github.com/numpy/numpy.git
 
 You now have a copy of the code tree in the new ``numpy`` directory.
 If this doesn't work you can try the alternative read-only url::
