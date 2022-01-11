@@ -3273,6 +3273,19 @@ def test_loadtxt_warn_on_skipped_data(skiprows):
     with pytest.warns(UserWarning, match="input contained no data"):
         np.loadtxt(txt, skiprows=skiprows)
 
+@pytest.mark.parametrize("dtype",
+        np.typecodes["AllInteger"] + np.typecodes["AllFloat"])
+@pytest.mark.parametrize("swap", [True, False])
+def test_loadtxt_byteswapping_and_unaligned(dtype, swap):
+    data = ["x,1\n"]  # no need for complicated data
+    dtype = np.dtype(dtype)
+    if swap:
+        dtype = dtype.newbyteorder()
+    full_dt = np.dtype([("a", "S1"), ("b", dtype)], align=False)
+    # The above ensures that the interesting "b" field is unaligned:
+    assert full_dt.fields["b"][1] == 1
+    res = np.loadtxt(data, dtype=full_dt, delimiter=",")
+    assert res["b"] == 1
 
 @pytest.mark.parametrize("dtype",
         np.typecodes["AllInteger"] + "efdFD" + "?")
