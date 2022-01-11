@@ -15,6 +15,7 @@ If the old behaviour is required, ``itertools.islice`` may be used::
 While generally much faster and improved, `numpy.loadtxt` may now fail to
 converter certain strings to numbers that were previously successfully read.
 The most important cases for this are:
+
 * Parsing floating point values such as ``1.0`` into integers will now fail
 * Parsing hexadecimal floats such as ``0x3p3`` will fail
 * An ``_`` was previously accepted as a thousands delimiter ``100_000``.
