@@ -1204,6 +1204,29 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     >>> y
     array([2., 4.])
 
+    The `converters` argument is used to specify functions to preprocess the
+    text prior to parsing. `converters` can be a dictionary that maps
+    preprocessing functions to each column:
+
+    >>> s = StringIO("1.618, 2.296\n3.141, 4.669\n")
+    >>> conv = {
+    ...     0: lambda x: np.floor(float(x)),  # conversion fn for column 0
+    ...     1: lambda x: np.ceil(float(x)),  # conversion fn for column 1
+    ... }
+    >>> np.loadtxt(s, delimiter=",", converters=conv)
+    array([[1., 3.],
+           [3., 5.]])
+
+    `converters` can be a callable instead of a dictionary, in which case it
+    is applied to all columns:
+
+    >>> s = StringIO("0xDE 0xAD\n0xC0 0xDE")
+    >>> import functools
+    >>> conv = functools.partial(int, base=16)
+    >>> np.loadtxt(s, converters=conv)
+    array([[222., 173.],
+           [192., 222.]])
+
     This example shows how `converters` can be used to convert a field
     with a trailing minus sign into a negative number.
 
@@ -1211,10 +1234,19 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     >>> def conv(fld):
     ...     return -float(fld[:-1]) if fld.endswith(b'-') else float(fld)
     ...
-    >>> np.loadtxt(s, converters={0: conv, 1: conv})
+    >>> np.loadtxt(s, converters=conv)
     array([[ 10.01, -31.25],
            [ 19.22,  64.31],
            [-17.57,  63.94]])
+
+    Note that with the default ``encoding="bytes"``, the inputs to the
+    converter function are latin-1 encoded byte strings. To deactivate the
+    implicit encoding prior to conversion, behavior use ``encoding=None``
+
+    >>> s = StringIO('10.01 31.25-\n19.22 64.31\n17.57- 63.94')
+    >>> conv = lambda x: -float(x[:-1]) if x.endswith('-') else float(x)
+    >>> np.loadtxt(s, converters=conv, encoding=None)
+
     """
 
     if like is not None:
