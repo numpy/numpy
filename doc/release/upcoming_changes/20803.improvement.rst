@@ -1,0 +1,16 @@
+Add a numeric ``numpy.version.__version_info__``
+------------------------------------------------
+
+This makes it easier and less error prone to write conditional code that
+depends on numpy version.
+
+We limit ``__version_info__`` tuple to be numeric only for now with only major/minor/patch.
+
+Dependencies can now check numpy version simply with, for example::
+
+   >>> import numpy
+   ... assert numpy.version.__version_info__ > (1, 22)
+
+
+For most complex comparison, you can make use of ``packaging.version.parse``
+which replace distutils's deprecated ``LooseVersion``.
