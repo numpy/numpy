@@ -1241,11 +1241,31 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
 
     Note that with the default ``encoding="bytes"``, the inputs to the
     converter function are latin-1 encoded byte strings. To deactivate the
-    implicit encoding prior to conversion, behavior use ``encoding=None``
+    implicit encoding prior to conversion, use ``encoding=None``
 
     >>> s = StringIO('10.01 31.25-\n19.22 64.31\n17.57- 63.94')
     >>> conv = lambda x: -float(x[:-1]) if x.endswith('-') else float(x)
     >>> np.loadtxt(s, converters=conv, encoding=None)
+    array([[ 10.01, -31.25],
+           [ 19.22,  64.31],
+           [-17.57,  63.94]])
+
+    Support for quoted fields is enabled with the `quotechar` parameter.
+    Comment and delimiter characters are ignored when they appear within a
+    quoted item delineated by `quotechar`:
+
+    >>> s = StringIO('"alpha, #42", 10.0\n"beta, #64", 2.0\n')
+    >>> dtype = np.dtype([("label", "U12"), ("value", float)])
+    >>> np.loadtxt(s, dtype=dtype, delimiter=",", quotechar='"')
+    array([('alpha, #42', 10.), ('beta, #64',  2.)],
+          dtype=[('label', '<U12'), ('value', '<f8')])
+
+    Two consecutive quote characters within a quoted field are treated as a
+    single escaped character:
+
+    >>> s = StringIO('"Hello, my name is ""Monty""!"')
+    >>> np.loadtxt(s, dtype="U", delimiter=",", quotechar='"')
+    array('Hello, my name is "Monty"!', dtype='<U26')
 
     """
 
