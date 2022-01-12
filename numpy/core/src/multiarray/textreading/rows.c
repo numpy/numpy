@@ -54,7 +54,7 @@ create_conv_funcs(
         PyErr_SetString(PyExc_TypeError,
                 "converters must be a dictionary mapping columns to converter "
                 "functions or a single callable.");
-        return NULL;
+        goto error;
     }
 
     PyObject *key, *value;

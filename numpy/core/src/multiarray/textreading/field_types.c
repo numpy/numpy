@@ -137,6 +137,7 @@ field_type_grow_recursive(PyArray_Descr *descr,
                 field_types_xclear(num_field_types, *ft);
                 return -1;
             }
+            Py_DECREF(tup);
             num_field_types = field_type_grow_recursive(
                     field_descr, num_field_types, ft, ft_size,
                     field_offset + offset);
