@@ -992,7 +992,7 @@ npyiter_check_per_op_flags(npy_uint32 op_flags, npyiter_opitflags *op_itflags)
 }
 
 /*
- * Prepares a a constructor operand.  Assumes a reference to 'op'
+ * Prepares a constructor operand.  Assumes a reference to 'op'
  * is owned, and that 'op' may be replaced.  Fills in 'op_dataptr',
  * 'op_dtype', and may modify 'op_itflags'.
  *

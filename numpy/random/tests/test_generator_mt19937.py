@@ -2563,7 +2563,7 @@ class TestSingleEltArrayInput:
 def test_jumped(config):
     # Each config contains the initial seed, a number of raw steps
     # the sha256 hashes of the initial and the final states' keys and
-    # the position of of the initial and the final state.
+    # the position of the initial and the final state.
     # These were produced using the original C implementation.
     seed = config["seed"]
     steps = config["steps"]

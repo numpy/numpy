@@ -65,7 +65,7 @@ cdef object random_raw(bitgen_t *bitgen, object lock, object size, object output
 
     Notes
     -----
-    This method directly exposes the the raw underlying pseudo-random
+    This method directly exposes the raw underlying pseudo-random
     number generator. All values are returned as unsigned 64-bit
     values irrespective of the number of bits produced by the PRNG.
 

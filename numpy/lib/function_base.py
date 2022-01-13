@@ -3551,8 +3551,8 @@ def sinc(x):
     Parameters
     ----------
     x : ndarray
-        Array (possibly multi-dimensional) of values for which to to
-        calculate ``sinc(x)``.
+        Array (possibly multi-dimensional) of values for which to calculate
+        ``sinc(x)``.
 
     Returns
     -------

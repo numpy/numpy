@@ -3393,8 +3393,8 @@ wrap_aligned_transferfunction(
  * For casts between two dtypes with the same type (within DType casts)
  * it also wraps the `copyswapn` function.
  *
- * This function is called called from `ArrayMethod.get_loop()` when a
- * specialized cast function is missing.
+ * This function is called from `ArrayMethod.get_loop()` when a specialized
+ * cast function is missing.
  *
  * In general, the legacy cast functions do not support unaligned access,
  * so an ArrayMethod using this must signal that.  In a few places we do

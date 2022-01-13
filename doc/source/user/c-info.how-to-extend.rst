@@ -111,7 +111,7 @@ Defining functions
 ==================
 
 The second argument passed in to the Py_InitModule function is a
-structure that makes it easy to to define functions in the module. In
+structure that makes it easy to define functions in the module. In
 the example given above, the mymethods structure would have been
 defined earlier in the file (usually right before the init{name}
 subroutine) to:
