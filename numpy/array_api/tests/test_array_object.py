@@ -98,7 +98,7 @@ def test_operators():
         "__mul__": "numeric",
         "__ne__": "all",
         "__or__": "integer_or_boolean",
-        "__pow__": "floating",
+        "__pow__": "numeric",
         "__rshift__": "integer",
         "__sub__": "numeric",
         "__truediv__": "floating",
