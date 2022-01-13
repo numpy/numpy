@@ -171,7 +171,7 @@ Functions
        `numpy.dtype.num` (built-in only) that the corresponding
        function in the ``func`` array accepts. For instance, for a comparison
        ufunc with three ``ntypes``, two ``nin`` and one ``nout``, where the
-       first function accepts `numpy.int32` and the the second
+       first function accepts `numpy.int32` and the second
        `numpy.int64`, with both returning `numpy.bool_`, ``types`` would
        be ``(char[]) {5, 5, 0, 7, 7, 0}`` since ``NPY_INT32`` is 5,
        ``NPY_INT64`` is 7, and ``NPY_BOOL`` is 0.

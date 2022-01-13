@@ -78,7 +78,7 @@ NPY_NO_EXPORT int
 PyUFunc_AddLoop(PyUFuncObject *ufunc, PyObject *info, int ignore_duplicate)
 {
     /*
-     * Validate the info object, this should likely move to to a different
+     * Validate the info object, this should likely move to a different
      * entry-point in the future (and is mostly unnecessary currently).
      */
     if (!PyTuple_CheckExact(info) || PyTuple_GET_SIZE(info) != 2) {

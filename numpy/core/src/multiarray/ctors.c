@@ -1637,8 +1637,8 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
          * Thus, we check if there is an array included, in that case we
          * give a FutureWarning.
          * When the warning is removed, PyArray_Pack will have to ensure
-         * that that it does not append the dimensions when creating the
-         * subarrays to assign `arr[0] = obj[0]`.
+         * that it does not append the dimensions when creating the subarrays
+         * to assign `arr[0] = obj[0]`.
          */
         int includes_array = 0;
         if (cache != NULL) {

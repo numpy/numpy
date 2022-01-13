@@ -112,7 +112,7 @@ Look it over
    - the ``main`` branch you just cloned on your own machine
    - the ``main`` branch from your fork on GitHub, which git named
      ``origin`` by default
-   - the ``main`` branch on the the main NumPy repo, which you named
+   - the ``main`` branch on the main NumPy repo, which you named
      ``upstream``.
 
    ::

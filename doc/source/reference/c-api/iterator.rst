@@ -653,7 +653,7 @@ Construction and Destruction
     may not be repeated.  The following example is how normal broadcasting
     applies to a 3-D array, a 2-D array, a 1-D array and a scalar.
 
-    **Note**: Before NumPy 1.8 ``oa_ndim == 0` was used for signalling that
+    **Note**: Before NumPy 1.8 ``oa_ndim == 0` was used for signalling
     that ``op_axes`` and ``itershape`` are unused. This is deprecated and
     should be replaced with -1. Better backward compatibility may be
     achieved by using :c:func:`NpyIter_MultiNew` for this case.

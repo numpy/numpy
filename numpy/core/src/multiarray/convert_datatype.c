@@ -3656,7 +3656,7 @@ PyArray_GetObjectToGenericCastingImpl(void)
 
 
 
-/* Any object object is simple (could even use the default) */
+/* Any object is simple (could even use the default) */
 static NPY_CASTING
 any_to_object_resolve_descriptors(
         PyArrayMethodObject *NPY_UNUSED(self),

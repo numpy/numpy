@@ -523,7 +523,7 @@ which inputs and outputs it converted. Hence, e.g.,
 >>> a.info
 {'inputs': [0, 1], 'outputs': [0]}
 
-Note that another approach would be to to use ``getattr(ufunc,
+Note that another approach would be to use ``getattr(ufunc,
 methods)(*inputs, **kwargs)`` instead of the ``super`` call. For this example,
 the result would be identical, but there is a difference if another operand
 also defines ``__array_ufunc__``. E.g., lets assume that we evalulate

@@ -341,7 +341,7 @@ intended host and not the build system, set::
 
 where ``${ARCH_TRIPLET}`` is an architecture-dependent suffix appropriate for
 the host architecture. (This should be the name of a ``_sysconfigdata`` file,
-without the ``.py`` extension, found in in the host Python library directory.)
+without the ``.py`` extension, found in the host Python library directory.)
 
 When using external linear algebra libraries, include and library directories
 should be provided for the desired libraries in ``site.cfg`` as described

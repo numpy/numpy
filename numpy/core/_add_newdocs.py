@@ -5253,7 +5253,7 @@ add_newdoc('numpy.core', 'ufunc', ('accumulate',
     dtype : data-type code, optional
         The data-type used to represent the intermediate results. Defaults
         to the data-type of the output array if such is provided, or the
-        the data-type of the input array if no output array is provided.
+        data-type of the input array if no output array is provided.
     out : ndarray, None, or tuple of ndarray and None, optional
         A location into which the result is stored. If not provided or None,
         a freshly-allocated array is returned. For consistency with

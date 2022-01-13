@@ -416,7 +416,7 @@ PyUFunc_SimpleBinaryComparisonTypeResolver(PyUFuncObject *ufunc,
             }
         }
         else {
-            /* Usually a failure, but let the the default version handle it */
+            /* Usually a failure, but let the default version handle it */
             return PyUFunc_DefaultTypeResolver(ufunc, casting,
                     operands, type_tup, out_dtypes);
         }
