@@ -7,6 +7,9 @@
  * When getting the next line, we hope that the buffer provider can already
  * give some information about the newlines, because for Python iterables
  * we definitely expect to get line-by-line buffers.
+ *
+ * BUFFER_IS_FILEEND must be returned when the end of the file is reached and
+ * must NOT be returned together with a valid (non-empty) buffer.
  */
 #define BUFFER_MAY_CONTAIN_NEWLINE 0
 #define BUFFER_IS_LINEND 1

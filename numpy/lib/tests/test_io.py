@@ -1204,6 +1204,30 @@ class TestLoadTxt(LoadTxtBase):
         a = np.array([[1, 2, 3, 5], [4, 5, 7, 8], [2, 1, 4, 5]], int)
         assert_array_equal(x, a)
 
+    @pytest.mark.parametrize(["skip", "data"], [
+            (1, ["ignored\n", "1,2\n", "\n", "3,4\n"]),
+            # "Bad" lines that do not end in newlines:
+            (1, ["ignored", "1,2", "", "3,4"]),
+            (1, StringIO("ignored\n1,2\n\n3,4")),
+            # Same as above, but do not skip any lines:
+            (0, ["-1,0\n", "1,2\n", "\n", "3,4\n"]),
+            (0, ["-1,0", "1,2", "", "3,4"]),
+            (0, StringIO("-1,0\n1,2\n\n3,4")),])
+    def test_max_rows_empty_lines(self, skip, data):
+        with pytest.warns(UserWarning,
+                    match=f"Input line 3.*max_rows={3-skip}"):
+            res = np.loadtxt(data, dtype=int, skiprows=skip, delimiter=",",
+                             max_rows=3-skip)
+            assert_array_equal(res, [[-1, 0], [1, 2], [3, 4]][skip:])
+
+        if isinstance(data, StringIO):
+            data.seek(0)
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", UserWarning)
+            with pytest.raises(UserWarning):
+                np.loadtxt(data, dtype=int, skiprows=skip, delimiter=",",
+                           max_rows=3-skip)
 
 class Testfromregex:
     def test_record(self):

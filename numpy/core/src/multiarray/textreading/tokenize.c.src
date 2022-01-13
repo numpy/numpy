@@ -254,8 +254,6 @@ tokenizer_core_@type@(tokenizer_state *ts, parser_config *const config)
             if (ts->buf_state != BUFFER_MAY_CONTAIN_NEWLINE) {
                 pos = stop;  /* advance to next buffer */
                 ts->state = TOKENIZE_LINE_END;
-                /* Ensure we don't think we have an empty line left to parse: */
-                ts->buf_state = BUFFER_MAY_CONTAIN_NEWLINE;
                 break;
             }
             for (; pos < stop; pos++) {
@@ -339,10 +337,7 @@ tokenize(stream *s, tokenizer_state *ts, parser_config *const config)
                  *       a quoted field the and '\n' character is not included
                  *       in the string. `FileLike.readline()` does ensure it
                  *       is included.
-                 *
-                 * Ensure we don't think we have an empty line left to parse:
                  */
-                ts->buf_state = BUFFER_MAY_CONTAIN_NEWLINE;
                 goto finish;
             }
             /* fetch new data */
@@ -388,11 +383,15 @@ tokenize(stream *s, tokenizer_state *ts, parser_config *const config)
     }
 
   finish:
-    if (NPY_UNLIKELY(ts->pos != ts->end && ts->buf_state == BUFFER_IS_LINEND)) {
-        PyErr_SetString(PyExc_ValueError,
-                "Found an unquoted embedded newline within a single line of "
-                "input.  This is currently not supported.");
-        return -1;
+    if (ts->buf_state == BUFFER_IS_LINEND) {
+        /* This line is "finished", make sure we don't touch it again: */
+        ts->buf_state = BUFFER_MAY_CONTAIN_NEWLINE;
+        if (NPY_UNLIKELY(ts->pos < ts->end)) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Found an unquoted embedded newline within a single line of "
+                    "input.  This is currently not supported.");
+            return -1;
+        }
     }
 
     /* Finish the last field */

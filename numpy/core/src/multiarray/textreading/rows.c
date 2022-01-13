@@ -176,6 +176,8 @@ read_rows(stream *s,
     Py_XINCREF(data_array);
     size_t rows_per_block = 1;  /* will be increased depending on row size */
     npy_intp data_allocated_rows = 0;
+    /* We give a warning if max_rows is used and an empty line is encountered */
+    bool give_empty_row_warning = max_rows >= 0;
 
     int ts_result = 0;
     tokenizer_state ts;
@@ -193,7 +195,7 @@ read_rows(stream *s,
         actual_num_fields = num_field_types;
     }
 
-    for (; skiplines > 0; skiplines--) {
+    for (Py_ssize_t i = 0; i < skiplines; i++) {
         ts.state = TOKENIZE_GOTO_LINE_END;
         ts_result = tokenize(s, &ts, pconfig);
         if (ts_result < 0) {
@@ -213,7 +215,29 @@ read_rows(stream *s,
         }
         current_num_fields = ts.num_fields;
         field_info *fields = ts.fields;
-        if (ts.num_fields == 0) {
+        if (NPY_UNLIKELY(ts.num_fields == 0)) {
+            /*
+             * Deprecated NumPy 1.23, 2021-01-13 (not really a deprecation,
+             * but similar policy should apply to removing the warning again)
+             */
+             /* Tokenizer may give a final "empty line" even if there is none */
+            if (give_empty_row_warning && ts_result == 0) {
+                give_empty_row_warning = false;
+                if (PyErr_WarnFormat(PyExc_UserWarning, 3,
+                        "Input line %zd contained no data and will not be "
+                        "counted towards `max_rows=%zd`.  This differs from "
+                        "the behaviour in NumPy <=1.22 which counted lines "
+                        "rather than rows.  If desired, the previous behaviour "
+                        "can be achieved by using `itertools.islice`.\n"
+                        "Please see the 1.23 release notes for an example on "
+                        "how to do this.  If you wish to ignore this warning, "
+                        "use `warnings.filterwarnings`.  This warning is "
+                        "expected to be removed in the future and is given "
+                        "only once per `loadtxt` call.",
+                        row_count + skiplines + 1, max_rows) < 0) {
+                    goto error;
+                }
+            }
             continue;  /* Ignore empty line */
         }
 
