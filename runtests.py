@@ -308,8 +308,8 @@ def main(argv):
             items += args.tests
         if args.submodule:
             items += [args.submodule]
-        for a in items:
-            bench_args.extend(['--bench', a])
+        for item in items:
+            bench_args.extend(['--bench', item])
 
         if not args.bench_compare:
             cmd = ['asv', 'run', '-n', '-e', '--python=same'] + bench_args
@@ -578,8 +578,8 @@ def asv_clear_cache(bench_path, h_commits, env_dir="env"):
     # FIXME: only clear the cache from the current environment dir
     asv_build_pattern = os.path.join(bench_path, env_dir, "*", "asv-build-cache")
     for asv_build_cache in glob.glob(asv_build_pattern, recursive=True):
-        for c in h_commits:
-            try: shutil.rmtree(os.path.join(asv_build_cache, c))
+        for commit in h_commits:
+            try: shutil.rmtree(os.path.join(asv_build_cache, commit))
             except OSError: pass
 
 def asv_substitute_config(in_config, out_config, **custom_vars):
@@ -613,8 +613,8 @@ def asv_substitute_config(in_config, out_config, **custom_vars):
 
     def sdbm_hash(*factors):
         chash = 0
-        for f in factors:
-            for char in str(f):
+        for factor in factors:
+            for char in str(factor):
                 chash  = ord(char) + (chash << 6) + (chash << 16) - chash
                 chash &= 0xFFFFFFFF
         return chash
@@ -645,8 +645,8 @@ def gcov_reset_counters():
     print("Removing previous GCOV .gcda files...")
     build_dir = os.path.join(ROOT_DIR, 'build')
     for dirpath, dirnames, filenames in os.walk(build_dir):
-        for fn in filenames:
-            if fn.endswith('.gcda') or fn.endswith('.da'):
+        for filename in filenames:
+            if filename.endswith('.gcda') or filename.endswith('.da'):
                 pth = os.path.join(dirpath, fn)
                 os.unlink(pth)
 
