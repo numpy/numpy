@@ -871,15 +871,26 @@ class TestLoadTxt(LoadTxtBase):
         bogus_idx = 1.5
         assert_raises_regex(
             TypeError,
-            '^usecols must be.*%s' % type(bogus_idx),
+            '^usecols must be.*%s' % type(bogus_idx).__name__,
             np.loadtxt, c, usecols=bogus_idx
             )
 
         assert_raises_regex(
             TypeError,
-            '^usecols must be.*%s' % type(bogus_idx),
+            '^usecols must be.*%s' % type(bogus_idx).__name__,
             np.loadtxt, c, usecols=[0, bogus_idx, 0]
             )
+
+    def test_bad_usecols(self):
+        with pytest.raises(OverflowError):
+            np.loadtxt(["1\n"], usecols=[2**64], delimiter=",")
+        with pytest.raises((ValueError, OverflowError)):
+            # Overflow error on 32bit platforms
+            np.loadtxt(["1\n"], usecols=[2**62], delimiter=",")
+        with pytest.raises(TypeError,
+                match="If a structured dtype .*. But 1 usecols were given and "
+                      "the number of fields is 3."):
+            np.loadtxt(["1,1\n"], dtype="i,(2)i", usecols=[0], delimiter=",")
 
     def test_fancy_dtype(self):
         c = TextIO()

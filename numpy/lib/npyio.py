@@ -909,25 +909,12 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
         dtype = np.dtype(object)
 
     if usecols is not None:
-        # Allow usecols to be a single int or a sequence of ints
+        # Allow usecols to be a single int or a sequence of ints, the C-code
+        # handles the rest
         try:
-            usecols_as_list = list(usecols)
+            usecols = list(usecols)
         except TypeError:
-            usecols_as_list = [usecols]
-        for col_idx in usecols_as_list:
-            try:
-                operator.index(col_idx)
-            except TypeError:
-                # Some unit tests for numpy.loadtxt require that the
-                # error message matches this format.
-                raise TypeError(
-                    "usecols must be an int or a sequence of ints but "
-                    "it contains at least one element of type %s" %
-                    type(col_idx),
-                    ) from None
-        # Fall back to existing code
-        usecols = np.array([operator.index(i) for i in usecols_as_list],
-                           dtype=np.int32)
+            usecols = [usecols]
 
     _ensure_ndmin_ndarray_check_param(ndmin)
 

@@ -31,7 +31,7 @@
  */
 static PyObject **
 create_conv_funcs(
-        PyObject *converters, int num_fields, int32_t *usecols)
+        PyObject *converters, int num_fields, Py_ssize_t *usecols)
 {
     PyObject **conv_funcs = PyMem_Calloc(num_fields, sizeof(PyObject *));
     if (conv_funcs == NULL) {
@@ -155,8 +155,8 @@ create_conv_funcs(
  */
 NPY_NO_EXPORT PyArrayObject *
 read_rows(stream *s,
-        npy_intp max_rows, int num_field_types, field_type *field_types,
-        parser_config *pconfig, int num_usecols, int *usecols,
+        npy_intp max_rows, Py_ssize_t num_field_types, field_type *field_types,
+        parser_config *pconfig, Py_ssize_t num_usecols, Py_ssize_t *usecols,
         Py_ssize_t skiplines, PyObject *converters,
         PyArrayObject *data_array, PyArray_Descr *out_descr,
         bool homogeneous)
@@ -187,6 +187,7 @@ read_rows(stream *s,
     int actual_num_fields = -1;
     if (usecols != NULL) {
         actual_num_fields = num_usecols;
+        assert(num_field_types == num_usecols);
     }
     else if (!homogeneous) {
         actual_num_fields = num_field_types;
@@ -330,9 +331,9 @@ read_rows(stream *s,
             }
         }
 
-        for (int i = 0; i < actual_num_fields; ++i) {
-            int f;  /* The field, either 0 (if homogeneous) or i. */
-            int col;  /* The column as read, remapped by usecols */
+        for (Py_ssize_t i = 0; i < actual_num_fields; ++i) {
+            Py_ssize_t f;  /* The field, either 0 (if homogeneous) or i. */
+            Py_ssize_t col;  /* The column as read, remapped by usecols */
             char *item_ptr;
             if (homogeneous) {
                 f = 0;
