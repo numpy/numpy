@@ -3546,7 +3546,8 @@ class MaskedArray(ndarray):
 
         Whether the mask of a masked array is hard or soft is determined by
         its `~ma.MaskedArray.hardmask` property. `harden_mask` sets
-        `~ma.MaskedArray.hardmask` to ``True``.
+        `~ma.MaskedArray.hardmask` to ``True`` (and returns the modified
+        self).
 
         See Also
         --------
@@ -3563,7 +3564,8 @@ class MaskedArray(ndarray):
 
         Whether the mask of a masked array is hard or soft is determined by
         its `~ma.MaskedArray.hardmask` property. `soften_mask` sets
-        `~ma.MaskedArray.hardmask` to ``False``.
+        `~ma.MaskedArray.hardmask` to ``False`` (and returns the modified
+        self).
 
         See Also
         --------
@@ -3593,7 +3595,7 @@ class MaskedArray(ndarray):
 
     def unshare_mask(self):
         """
-        Copy the mask and set the sharedmask flag to False.
+        Copy the mask and set the `sharedmask` flag to ``False``.
 
         Whether the mask is shared between masked arrays can be seen from
         the `sharedmask` property. `unshare_mask` ensures the mask is not shared.
