@@ -74,7 +74,7 @@ cannot describe casting for such parametric datatypes implemented outside of Num
 This additional functionality for supporting parametric datatypes introduces
 increased complexity within NumPy itself,
 and furthermore is not available to external user-defined datatypes.
-In general the concerns of different datatypes are not well well-encapsulated.
+In general the concerns of different datatypes are not well-encapsulated.
 This burden is exacerbated by the exposure of internal C structures,
 limiting the addition of new fields
 (for example to support new sorting methods [new_sort]_).
