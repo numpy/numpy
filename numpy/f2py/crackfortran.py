@@ -2686,7 +2686,7 @@ def analyzevars(block):
                                 # Skip a variable that
                                 # - n depends on
                                 # - has user-defined initialization expression
-                                # - has user-defined dependecies
+                                # - has user-defined dependencies
                                 continue
                             if solver is not None:
                                 # v can be solved from d, hence, we

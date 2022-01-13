@@ -141,7 +141,7 @@ typedef struct {
  * NOTE: Expected changes:
  *       * invert logic of floating point error flag
  *       * probably split runtime and general flags into two
- *       * should possibly not use an enum for typdef for more stable ABI?
+ *       * should possibly not use an enum for typedef for more stable ABI?
  */
 typedef enum {
     /* Flag for whether the GIL is required */

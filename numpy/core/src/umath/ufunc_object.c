@@ -2704,7 +2704,7 @@ PyUFunc_GenericFunction(PyUFuncObject *NPY_UNUSED(ufunc),
  * @param out_descrs New references to the resolved descriptors (on success).
  * @param method The ufunc method, "reduce", "reduceat", or "accumulate".
 
- * @returns ufuncimpl The `ArrayMethod` implemention to use. Or NULL if an
+ * @returns ufuncimpl The `ArrayMethod` implementation to use. Or NULL if an
  *          error occurred.
  */
 static PyArrayMethodObject *
