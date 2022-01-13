@@ -31,7 +31,7 @@
  */
 static PyObject **
 create_conv_funcs(
-        PyObject *converters, int num_fields, Py_ssize_t *usecols)
+        PyObject *converters, Py_ssize_t num_fields, const Py_ssize_t *usecols)
 {
     PyObject **conv_funcs = PyMem_Calloc(num_fields, sizeof(PyObject *));
     if (conv_funcs == NULL) {
@@ -44,7 +44,7 @@ create_conv_funcs(
     }
     else if (PyCallable_Check(converters)) {
         /* a single converter used for all columns individually */
-        for (int i = 0; i < num_fields; i++) {
+        for (Py_ssize_t i = 0; i < num_fields; i++) {
             Py_INCREF(converters);
             conv_funcs[i] = converters;
         }
@@ -77,7 +77,7 @@ create_conv_funcs(
              *    converters does not.  (This is a feature, since it allows
              *    us to correctly normalize converters to result column here.)
              */
-            int i = 0;
+            Py_ssize_t i = 0;
             for (; i < num_fields; i++) {
                 if (column == usecols[i]) {
                     column = i;
@@ -111,7 +111,7 @@ create_conv_funcs(
     return conv_funcs;
 
   error:
-    for (int i = 0; i < num_fields; i++) {
+    for (Py_ssize_t i = 0; i < num_fields; i++) {
         Py_XDECREF(conv_funcs[i]);
     }
     PyMem_FREE(conv_funcs);
@@ -184,7 +184,7 @@ read_rows(stream *s,
     }
 
     /* Set the actual number of fields if it is already known, otherwise -1 */
-    int actual_num_fields = -1;
+    Py_ssize_t actual_num_fields = -1;
     if (usecols != NULL) {
         actual_num_fields = num_usecols;
         assert(num_field_types == num_usecols);

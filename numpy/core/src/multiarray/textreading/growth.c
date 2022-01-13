@@ -6,6 +6,10 @@
 
 /*
  * Helper function taking the size input and growing it (based on min_grow).
+ * The current scheme is a minimum growth and a general growth by 25%
+ * overallocation.  This is then capped at 2**20 elements, as that propels us
+ * in the range of large page sizes (so it is presumably more than enough).
+ *
  * It further multiplies it with `itemsize` and ensures that all results fit
  * into an `npy_intp`.
  * Returns -1 if any overflow occurred or the result would not fit.
@@ -22,6 +26,10 @@ grow_size_and_multiply(npy_intp *size, npy_intp min_grow, npy_intp itemsize) {
         new_size += min_grow;
     }
     else {
+        if (growth > 1 << 20) {
+            /* limit growth to order of MiB (even hugepages are not larger) */
+            growth = 1 << 20;
+        }
         new_size += growth + min_grow - 1;
         new_size &= ~min_grow;
 
