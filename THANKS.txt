@@ -16,7 +16,7 @@ Travis Vaught for administration, community coordination and
 Joe Cooper and Jeff Strunk for administration.
 Eric Firing for bugfixes.
 Arnd Baecker for 64-bit testing.
-David Cooke for many code improvements including the auto-generated C-API,
+David Cooke for many code improvements including the auto-generated C-API
     and optimizations.
 Andrew Straw for help with the web-page, documentation, packaging and
     testing.
