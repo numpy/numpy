@@ -56,7 +56,7 @@ NPY_FINLINE @type@ scalar_@op@_@c_sfx@(@type@ a, @type@ b) {
     @sse_type@ va = _mm_set_s@isa_sfx@(a);
     @sse_type@ vb = _mm_set_s@isa_sfx@(b);
     @sse_type@ rv = _mm_@op@_s@isa_sfx@(va, vb);
-    // X86 handel second operand
+    // X86 handle second operand
     @sse_type@ nn = _mm_cmpord_s@isa_sfx@(va, va);
     #ifdef NPY_HAVE_SSE41
     rv = _mm_blendv_p@isa_sfx@(va, rv, nn);
