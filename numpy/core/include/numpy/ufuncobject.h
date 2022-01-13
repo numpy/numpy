@@ -173,7 +173,11 @@ typedef struct _tagPyUFuncObject {
          * but this was never implemented. (This is also why the above
          * selector is called the "legacy" selector.)
          */
-        vectorcallfunc vectorcall;
+        #ifndef Py_LIMITED_API
+            vectorcallfunc vectorcall;
+        #else
+            void *vectorcall;
+        #endif
 
         /* Was previously the `PyUFunc_MaskedInnerLoopSelectionFunc` */
         void *_always_null_previously_masked_innerloop_selector;
