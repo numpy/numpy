@@ -162,7 +162,7 @@ read_rows(stream *s,
         bool homogeneous)
 {
     char *data_ptr = NULL;
-    int current_num_fields;
+    Py_ssize_t current_num_fields;
     npy_intp row_size = out_descr->elsize;
     PyObject **conv_funcs = NULL;
 
