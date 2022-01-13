@@ -3542,7 +3542,7 @@ class MaskedArray(ndarray):
 
     def harden_mask(self):
         """
-        Force the mask to hard.
+        Force the mask to hard, preventing unmasking by assignment.
 
         Whether the mask of a masked array is hard or soft is determined by
         its `~ma.MaskedArray.hardmask` property. `harden_mask` sets
@@ -3551,6 +3551,7 @@ class MaskedArray(ndarray):
         See Also
         --------
         ma.MaskedArray.hardmask
+        ma.MaskedArray.soften_mask
 
         """
         self._hardmask = True
@@ -3558,7 +3559,7 @@ class MaskedArray(ndarray):
 
     def soften_mask(self):
         """
-        Force the mask to soft.
+        Force the mask to soft (default), allowing unmasking by assignment.
 
         Whether the mask of a masked array is hard or soft is determined by
         its `~ma.MaskedArray.hardmask` property. `soften_mask` sets
@@ -3567,6 +3568,7 @@ class MaskedArray(ndarray):
         See Also
         --------
         ma.MaskedArray.hardmask
+        ma.MaskedArray.harden_mask
 
         """
         self._hardmask = False
@@ -3574,7 +3576,19 @@ class MaskedArray(ndarray):
 
     @property
     def hardmask(self):
-        """ Hardness of the mask """
+        """
+        Specifies whether values can be unmasked through assignments.
+
+        By default, assigning definite values to masked array entries will
+        unmask them.  When `hardmask` is ``True``, the mask will not change
+        through assignments.
+        
+        See Also
+        --------
+        ma.MaskedArray.harden_mask
+        ma.MaskedArray.soften_mask
+
+        """
         return self._hardmask
 
     def unshare_mask(self):
