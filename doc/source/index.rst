@@ -58,7 +58,7 @@ basic statistical operations, random simulation and much more.
     ^^^^^^^^^^
 
     The user guide provides in-depth information on the
-    key concepts of pandas with useful background information and explanation.
+    key concepts of NumPy with useful background information and explanation.
 
     .. link-button:: user
         :type: ref
