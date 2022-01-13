@@ -804,7 +804,7 @@ the inner-loop operates on.
 This is necessary information for parametric dtypes since for example comparing
 two strings requires knowing the length of both strings.
 The ``Context`` can also hold potentially useful information such as the
-the original ``ufunc``, which can be helpful when reporting errors.
+original ``ufunc``, which can be helpful when reporting errors.
 
 In principle passing in Context is not necessary, as all information could be
 included in ``innerloop_data`` and set up in the ``get_loop`` function.
@@ -948,7 +948,7 @@ This wrapped ``ArrayMethod`` will have two additional methods:
   convert this to ``float64 + float64``.
 
 * ``wrap_outputs(Tuple[DType]: input_descr) -> Tuple[DType]`` replacing the
-  resolved descriptors with with the desired actual loop descriptors.
+  resolved descriptors with the desired actual loop descriptors.
   The original ``resolve_descriptors`` function will be called between these
   two calls, so that the output descriptors may not be set in the first call.
   In the above example it will use the ``float64`` as returned (which might
@@ -987,8 +987,8 @@ A different use-case is that of a ``Unit(float64, "m")`` DType, where
 the numerical type is part of the DType parameter.
 This approach is possible, but will require a custom ``ArrayMethod``
 which wraps existing loops.
-It must also always require require two steps of dispatching
-(one to the ``Unit`` DType and a second one for the numerical type).
+It must also always require two steps of dispatching (one to the ``Unit``
+DType and a second one for the numerical type).
 
 Furthermore, the efficient implementation will require the ability to
 fetch and reuse the inner-loop function from another ``ArrayMethod``.
@@ -1296,7 +1296,7 @@ of the current ufunc machinery (as well as casting).
 
 The implementation unfortunately will require large maintenance of the
 UFunc machinery, since both the actual UFunc loop calls, as well as the
-the initial dispatching steps have to be modified.
+initial dispatching steps have to be modified.
 
 In general, the correct ``ArrayMethod``, also those returned by a promoter,
 will be cached (or stored) inside a hashtable for efficient lookup.

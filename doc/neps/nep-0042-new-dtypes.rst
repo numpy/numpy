@@ -302,7 +302,7 @@ user-defined DType::
     class UserDtype(dtype): ...
 
 one can do ``np.ndarray[UserDtype]``, keeping annotations concise in
-that case without introducing boilerplate in NumPy itself. For a user
+that case without introducing boilerplate in NumPy itself. For a
 user-defined scalar type::
 
     class UserScalar(generic): ...
