@@ -3288,18 +3288,27 @@ def test_loadtxt_consecutive_quotechar_escaped():
 
 @pytest.mark.parametrize("data", ("", "\n\n\n", "# 1 2 3\n# 4 5 6\n"))
 @pytest.mark.parametrize("ndmin", (0, 1, 2))
-def test_loadtxt_warn_on_no_data(data, ndmin):
+@pytest.mark.parametrize("usecols", [None, (1, 2, 3)])
+def test_loadtxt_warn_on_no_data(data, ndmin, usecols):
     """Check that a UserWarning is emitted when no data is read from input."""
+    if usecols is not None:
+        expected_shape = (0, 3)
+    elif ndmin == 2:
+        expected_shape = (0, 1)  # guess a single column?!
+    else:
+        expected_shape = (0,)
+
     txt = TextIO(data)
     with pytest.warns(UserWarning, match="input contained no data"):
-        np.loadtxt(txt, ndmin=ndmin)
+        res = np.loadtxt(txt, ndmin=ndmin, usecols=usecols)
+    assert res.shape == expected_shape
 
     with NamedTemporaryFile(mode="w") as fh:
         fh.write(data)
         fh.seek(0)
         with pytest.warns(UserWarning, match="input contained no data"):
-            np.loadtxt(txt, ndmin=ndmin)
-
+            res = np.loadtxt(txt, ndmin=ndmin, usecols=usecols)
+        assert res.shape == expected_shape
 
 @pytest.mark.parametrize("skiprows", (2, 3))
 def test_loadtxt_warn_on_skipped_data(skiprows):
@@ -3309,7 +3318,7 @@ def test_loadtxt_warn_on_skipped_data(skiprows):
         np.loadtxt(txt, skiprows=skiprows)
 
 @pytest.mark.parametrize("dtype",
-        np.typecodes["AllInteger"] + np.typecodes["AllFloat"])
+        list(np.typecodes["AllInteger"] + np.typecodes["AllFloat"]) + ["U2"])
 @pytest.mark.parametrize("swap", [True, False])
 def test_loadtxt_byteswapping_and_unaligned(dtype, swap):
     data = ["x,1\n"]  # no need for complicated data
@@ -3320,7 +3329,7 @@ def test_loadtxt_byteswapping_and_unaligned(dtype, swap):
     # The above ensures that the interesting "b" field is unaligned:
     assert full_dt.fields["b"][1] == 1
     res = np.loadtxt(data, dtype=full_dt, delimiter=",")
-    assert res["b"] == 1
+    assert res["b"] == dtype.type(1)
 
 @pytest.mark.parametrize("dtype",
         np.typecodes["AllInteger"] + "efdFD" + "?")
@@ -3406,3 +3415,13 @@ class TestCReaderUnitTests:
                 match="error reading from object, expected an iterable"):
             np.core._multiarray_umath._load_from_filelike(
                 object(), dtype=np.dtype("i"), filelike=False)
+
+    def test_bad_type(self):
+        with pytest.raises(TypeError, match="internal error: dtype must"):
+            np.core._multiarray_umath._load_from_filelike(
+                object(), dtype="i", filelike=False)
+
+    def test_bad_encoding(self):
+        with pytest.raises(TypeError, match="encoding must be a unicode"):
+            np.core._multiarray_umath._load_from_filelike(
+                object(), dtype=np.dtype("i"), filelike=False, encoding=123)

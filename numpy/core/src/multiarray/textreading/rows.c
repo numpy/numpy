@@ -176,6 +176,7 @@ read_rows(stream *s,
     Py_XINCREF(data_array);
     size_t rows_per_block = 1;  /* will be increased depending on row size */
     npy_intp data_allocated_rows = 0;
+
     /* We give a warning if max_rows is used and an empty line is encountered */
     bool give_empty_row_warning = max_rows >= 0;
 
@@ -188,10 +189,11 @@ read_rows(stream *s,
     /* Set the actual number of fields if it is already known, otherwise -1 */
     Py_ssize_t actual_num_fields = -1;
     if (usecols != NULL) {
+        assert(homogeneous || num_field_types == num_usecols);
         actual_num_fields = num_usecols;
-        assert(num_field_types == num_usecols);
     }
     else if (!homogeneous) {
+        assert(usecols == NULL || num_field_types == num_usecols);
         actual_num_fields = num_field_types;
     }
 

@@ -5,6 +5,10 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#define _MULTIARRAYMODULE
+#include "lowlevel_strided_loops.h"
+
 #include "conversions.h"
 #include "str_to_int.h"
 
@@ -122,7 +126,7 @@ to_float(PyArray_Descr *descr,
     float val = (float)double_val;
     memcpy(dataptr, &val, sizeof(float));
     if (!PyArray_ISNBO(descr->byteorder)) {
-        descr->f->copyswap(dataptr, dataptr, 1, NULL);
+        npy_bswap4_unaligned(dataptr);
     }
     return 0;
 }
@@ -144,7 +148,7 @@ to_double(PyArray_Descr *descr,
 
     memcpy(dataptr, &val, sizeof(double));
     if (!PyArray_ISNBO(descr->byteorder)) {
-        descr->f->copyswap(dataptr, dataptr, 1, NULL);
+        npy_bswap8_unaligned(dataptr);
     }
     return 0;
 }
@@ -241,7 +245,8 @@ to_cfloat(PyArray_Descr *descr,
     npy_complex64 val = {(float)real, (float)imag};
     memcpy(dataptr, &val, sizeof(npy_complex64));
     if (!PyArray_ISNBO(descr->byteorder)) {
-        descr->f->copyswap(dataptr, dataptr, 1, NULL);
+        npy_bswap4_unaligned(dataptr);
+        npy_bswap4_unaligned(dataptr + 4);
     }
     return 0;
 }
@@ -264,7 +269,8 @@ to_cdouble(PyArray_Descr *descr,
     npy_complex128 val = {real, imag};
     memcpy(dataptr, &val, sizeof(npy_complex128));
     if (!PyArray_ISNBO(descr->byteorder)) {
-        descr->f->copyswap(dataptr, dataptr, 1, NULL);
+        npy_bswap8_unaligned(dataptr);
+        npy_bswap8_unaligned(dataptr + 8);
     }
     return 0;
 }
@@ -319,7 +325,11 @@ to_unicode(PyArray_Descr *descr,
     }
 
     if (!PyArray_ISNBO(descr->byteorder)) {
-        descr->f->copyswap(dataptr, dataptr, 1, NULL);
+        /* manual byteswap, unicode requires the array to be passed... */
+        for (int i = 0; i < descr->elsize; i++) {
+            npy_bswap4_unaligned(dataptr);
+            dataptr += 4;
+        }
     }
     return 0;
 }
