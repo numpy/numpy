@@ -19,6 +19,7 @@
 
 
 typedef struct {
+    stream stream;
     /* The Python file object being read. */
     PyObject *file;
 
@@ -111,14 +112,13 @@ fb_nextbuf(python_chunks_from_file *fb, char **start, char **end, int *kind)
 static int
 fb_del(stream *strm)
 {
-    python_chunks_from_file *fb = (python_chunks_from_file *)strm->stream_data;
+    python_chunks_from_file *fb = (python_chunks_from_file *)strm;
 
     Py_XDECREF(fb->file);
     Py_XDECREF(fb->read);
     Py_XDECREF(fb->chunksize);
     Py_XDECREF(fb->chunk);
 
-    PyMem_FREE(fb);
     PyMem_FREE(strm);
 
     return 0;
@@ -129,29 +129,19 @@ NPY_NO_EXPORT stream *
 stream_python_file(PyObject *obj, const char *encoding)
 {
     python_chunks_from_file *fb;
-    stream *strm;
 
-    fb = (python_chunks_from_file *)PyMem_MALLOC(sizeof(python_chunks_from_file));
+    fb = (python_chunks_from_file *)PyMem_Calloc(1, sizeof(python_chunks_from_file));
     if (fb == NULL) {
         PyErr_NoMemory();
         return NULL;
     }
 
-    fb->file = NULL;
-    fb->read = NULL;
-    fb->chunksize = NULL;
-    fb->chunk = NULL;
+    fb->stream.stream_nextbuf = (void *)&fb_nextbuf;
+    fb->stream.stream_close = &fb_del;
+
     fb->encoding = encoding;
-
-    strm = (stream *)PyMem_MALLOC(sizeof(stream));
-    if (strm == NULL) {
-        PyErr_NoMemory();
-        PyMem_FREE(fb);
-        return NULL;
-    }
-
+    Py_INCREF(obj);
     fb->file = obj;
-    Py_INCREF(fb->file);
 
     fb->read = PyObject_GetAttrString(obj, "read");
     if (fb->read == NULL) {
@@ -162,14 +152,10 @@ stream_python_file(PyObject *obj, const char *encoding)
         goto fail;
     }
 
-    strm->stream_data = (void *)fb;
-    strm->stream_nextbuf = (void *)&fb_nextbuf;
-    strm->stream_close = &fb_del;
-
-    return strm;
+    return (stream *)fb;
 
 fail:
-    fb_del(strm);
+    fb_del((stream *)fb);
     return NULL;
 }
 
@@ -178,6 +164,7 @@ fail:
  * Stream from a Python iterable by interpreting each item as a line in a file
  */
 typedef struct {
+    stream stream;
     /* The Python file object being read. */
     PyObject *iterator;
 
@@ -192,14 +179,12 @@ typedef struct {
 static int
 it_del(stream *strm)
 {
-    python_lines_from_iterator *it = (python_lines_from_iterator *)strm->stream_data;
+    python_lines_from_iterator *it = (python_lines_from_iterator *)strm;
 
     Py_XDECREF(it->iterator);
     Py_XDECREF(it->line);
 
-    PyMem_FREE(it);
     PyMem_FREE(strm);
-
     return 0;
 }
 
@@ -233,39 +218,25 @@ NPY_NO_EXPORT stream *
 stream_python_iterable(PyObject *obj, const char *encoding)
 {
     python_lines_from_iterator *it;
-    stream *strm;
 
-    it = (python_lines_from_iterator *)PyMem_MALLOC(sizeof(*it));
+    if (!PyIter_Check(obj)) {
+        PyErr_SetString(PyExc_TypeError,
+                "error reading from object, expected an iterable.");
+        return NULL;
+    }
+
+    it = (python_lines_from_iterator *)PyMem_Calloc(1, sizeof(*it));
     if (it == NULL) {
         PyErr_NoMemory();
         return NULL;
     }
 
-    it->iterator = NULL;
-    it->line = NULL;
-    it->encoding = encoding;
+    it->stream.stream_nextbuf = (void *)&it_nextbuf;
+    it->stream.stream_close = &it_del;
 
-    strm = (stream *)PyMem_MALLOC(sizeof(stream));
-    if (strm == NULL) {
-        PyErr_NoMemory();
-        PyMem_FREE(it);
-        return NULL;
-    }
-    if (!PyIter_Check(obj)) {
-        PyErr_SetString(PyExc_TypeError,
-                "error reading from object, expected an iterable.");
-        goto fail;
-    }
+    it->encoding = encoding;
     Py_INCREF(obj);
     it->iterator = obj;
 
-    strm->stream_data = (void *)it;
-    strm->stream_nextbuf = (void *)&it_nextbuf;
-    strm->stream_close = &it_del;
-
-    return strm;
-
-fail:
-    it_del(strm);
-    return NULL;
+    return (stream *)it;
 }

@@ -15,8 +15,18 @@
 #define BUFFER_IS_LINEND 1
 #define BUFFER_IS_FILEEND 2
 
+/*
+ * Base struct for streams.  We currently have two, a chunked reader for
+ * filelikes and a line-by-line for any iterable.
+ * As of writing, the chunked reader was only used for filelikes not already
+ * opened.  That is to preserve the amount read in case of an error exactly.
+ * If we drop this, we could read it more often (but not when `max_rows` is
+ * used).
+ *
+ * The "streams" can extend this struct to store their own data (so it is
+ * a very lightweight "object").
+ */
 typedef struct _stream {
-    void *stream_data;
     int (*stream_nextbuf)(void *sdata, char **start, char **end, int *kind);
     // Note that the first argument to stream_close is the stream pointer
     // itself, not the stream_data pointer.
@@ -25,7 +35,7 @@ typedef struct _stream {
 
 
 #define stream_nextbuf(s, start, end, kind)  \
-        ((s)->stream_nextbuf((s)->stream_data, start, end, kind))
+        ((s)->stream_nextbuf((s), start, end, kind))
 #define stream_close(s)    ((s)->stream_close((s)))
 
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_TEXTREADING_STREAM_H_ */

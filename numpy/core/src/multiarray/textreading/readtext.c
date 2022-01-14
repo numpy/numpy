@@ -214,7 +214,6 @@ _load_from_filelike(PyObject *NPY_UNUSED(mod),
         s = stream_python_iterable(file, encoding);
     }
     if (s == NULL) {
-        PyErr_Format(PyExc_RuntimeError, "Unable to access the file.");
         PyMem_FREE(usecols);
         return NULL;
     }

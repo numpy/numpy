@@ -3347,3 +3347,48 @@ def test_loadtxt_unicode_whitespace_stripping_complex(dtype):
 def test_loadtxt_bad_complex(dtype, field):
     with pytest.raises(ValueError):
         np.loadtxt([field + "\n"], dtype=dtype, delimiter=",")
+
+
+def test_loadtxt_iterator_fails_getting_next_line():
+    class BadSequence:
+        def __len__(self):
+            return 100
+
+        def __getitem__(self, item):
+            if item == 50:
+                raise RuntimeError("Bad things happened!")
+            return f"{item}, {item+1}"
+
+    with pytest.raises(RuntimeError, match="Bad things happened!"):
+        np.loadtxt(BadSequence(), dtype=int, delimiter=",")
+
+
+class TestCReaderUnitTests:
+    # These are internal tests for path that should not be possible to hit
+    # unless things go very very wrong somewhere.
+    def test_not_an_filelike(self):
+        with pytest.raises(AttributeError, match=".*read"):
+            np.core._multiarray_umath._load_from_filelike(
+                object(), dtype=np.dtype("i"), filelike=True)
+
+    def test_filelike_read_fails(self):
+        # Can only be reached if loadtxt opens the file, so it is hard to do
+        # via the public interface (although maybe not impossible considering
+        # the current "DataClass" backing).
+        class BadFileLike:
+            counter = 0
+            def read(self, size):
+                self.counter += 1
+                if self.counter > 20:
+                    raise RuntimeError("Bad bad bad!")
+                return "1,2,3\n"
+
+        with pytest.raises(RuntimeError, match="Bad bad bad!"):
+            np.core._multiarray_umath._load_from_filelike(
+                BadFileLike(), dtype=np.dtype("i"), filelike=True)
+
+    def test_not_an_iter(self):
+        with pytest.raises(TypeError,
+                match="error reading from object, expected an iterable"):
+            np.core._multiarray_umath._load_from_filelike(
+                object(), dtype=np.dtype("i"), filelike=False)
