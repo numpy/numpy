@@ -33,16 +33,15 @@ static PyObject **
 create_conv_funcs(
         PyObject *converters, Py_ssize_t num_fields, const Py_ssize_t *usecols)
 {
+    assert(converters != Py_None);
+
     PyObject **conv_funcs = PyMem_Calloc(num_fields, sizeof(PyObject *));
     if (conv_funcs == NULL) {
         PyErr_NoMemory();
         return NULL;
     }
 
-    if (converters == Py_None) {
-        return conv_funcs;
-    }
-    else if (PyCallable_Check(converters)) {
+    if (PyCallable_Check(converters)) {
         /* a single converter used for all columns individually */
         for (Py_ssize_t i = 0; i < num_fields; i++) {
             Py_INCREF(converters);
@@ -251,10 +250,12 @@ read_rows(stream *s,
                 actual_num_fields = current_num_fields;
             }
 
-            conv_funcs = create_conv_funcs(
-                    converters, actual_num_fields, usecols);
-            if (conv_funcs == NULL) {
-                goto error;
+            if (converters != Py_None) {
+                conv_funcs = create_conv_funcs(
+                        converters, actual_num_fields, usecols);
+                if (conv_funcs == NULL) {
+                    goto error;
+                }
             }
 
             /* Note that result_shape[1] is only used if homogeneous is true */
@@ -391,7 +392,7 @@ read_rows(stream *s,
             int parser_res;
             Py_UCS4 *str = ts.field_buffer + fields[col].offset;
             Py_UCS4 *end = ts.field_buffer + fields[col + 1].offset - 1;
-            if (conv_funcs[i] == NULL) {
+            if (conv_funcs == NULL || conv_funcs[i] == NULL) {
                 parser_res = field_types[f].set_from_ucs4(field_types[f].descr,
                         str, end, item_ptr, pconfig);
             }
