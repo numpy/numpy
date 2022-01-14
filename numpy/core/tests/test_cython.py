@@ -32,7 +32,7 @@ def install_temp(request, tmp_path):
     # Based in part on test_cython from random.tests.test_extending
 
     here = os.path.dirname(__file__)
-    ext_dir = os.path.join(here, "examples")
+    ext_dir = os.path.join(here, "examples", "cython")
 
     cytest = str(tmp_path / "cytest")
 
