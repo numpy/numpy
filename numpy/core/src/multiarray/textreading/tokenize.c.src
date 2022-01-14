@@ -348,17 +348,12 @@ tokenize(stream *s, tokenizer_state *ts, parser_config *const config)
             }
             if (ts->buf_state == BUFFER_IS_FILEEND) {
                 finished_reading_file = 1;
-                ts->pos = ts->end;  /* should be guaranteed, but make sure. */
+                ts->pos = ts->end;  /* stream should ensure this. */
                 goto finish;
             }
             else if (ts->pos == ts->end) {
-                if (ts->buf_state != BUFFER_IS_LINEND) {
-                    PyErr_SetString(PyExc_RuntimeError,
-                            "Reader returned an empty buffer, "
-                            "but did not indicate file or line end.");
-                    return -1;
-                }
-                /* Otherwise, we are OK with this and assume an empty line. */
+                /* This must be an empty line (and it must be indicated!). */
+                assert(ts->buf_state == BUFFER_IS_LINEND);
                 goto finish;
             }
         }

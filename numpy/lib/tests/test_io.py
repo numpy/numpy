@@ -3082,6 +3082,21 @@ def test_loadtxt_bool():
 
 
 @pytest.mark.parametrize("dtype", np.typecodes["AllInteger"])
+def test_loadtxt_integer_signs(dtype):
+    dtype = np.dtype(dtype)
+    assert np.loadtxt(["+2"], dtype=dtype) == 2
+    if dtype.kind == "u":
+        with pytest.raises(ValueError):
+            np.loadtxt(["-1\n"], dtype=dtype)
+    else:
+        assert np.loadtxt(["-2\n"], dtype=dtype) == -2
+
+    for sign in ["++", "+-", "--", "-+"]:
+        with pytest.raises(ValueError):
+            np.loadtxt([f"{sign}2\n"], dtype=dtype)
+
+
+@pytest.mark.parametrize("dtype", np.typecodes["AllInteger"])
 def test_loadtxt_implicit_cast_float_to_int_fails(dtype):
     txt = TextIO("1.0, 2.1, 3.7\n4, 5, 6")
     with pytest.raises(ValueError):
@@ -3356,6 +3371,40 @@ def test_loadtxt_unicode_whitespace_stripping_complex(dtype):
 def test_loadtxt_bad_complex(dtype, field):
     with pytest.raises(ValueError):
         np.loadtxt([field + "\n"], dtype=dtype, delimiter=",")
+
+
+@pytest.mark.parametrize("data", [
+        ["1,2\n", "2\n,3\n"],
+        ["1,2\n", "2\r,3\n"]])
+def test_loadtxt_bad_newline_in_iterator(data):
+    # In NumPy <=1.22 this was accepted, because newlines were completely
+    # ignored when the input was an iterable.  This could be changed, but right
+    # now, we raise an error.
+    with pytest.raises(ValueError,
+            match="Found an unquoted embedded newline within a single line"):
+        np.loadtxt(data, delimiter=",")
+
+@pytest.mark.parametrize("data", [
+    ["1,2\n", "2,3\r\n"],  # a universal newline
+    ["1,2\n", "'2\n',3\n"],  # a quoted newline
+    ["1,2\n", "'2\r',3\n"],
+    ["1,2\n", "'2\r\n',3\n"],
+])
+def test_loadtxt_good_newline_in_iterator(data):
+    # The quoted newlines will be untransformed here, but are just whitespace.
+    res = np.loadtxt(data, delimiter=",", quotechar="'")
+    assert_array_equal(res, [[1., 2.], [2., 3.]])
+
+
+@pytest.mark.parametrize("newline", ["\n", "\r", "\r\n"])
+def test_unviersal_newlines_quoted(newline):
+    # Check that universal newline support within the tokenizer is not applied
+    # to quoted fields.  (note that lines must end in newline or quoted
+    # fields will not include a newline at all)
+    data = ['1,"2\n"\n', '3,"4\n', '1"\n']
+    data = [row.replace("\n", newline) for row in data]
+    res = np.loadtxt(data, dtype=object, delimiter=",", quotechar='"')
+    assert_array_equal(res, [['1', f'2{newline}'], ['3', f'4{newline}1']])
 
 
 def test_loadtxt_iterator_fails_getting_next_line():
