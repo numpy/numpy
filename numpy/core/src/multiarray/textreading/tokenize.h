@@ -38,7 +38,6 @@ typedef struct {
     tokenizer_parsing_state unquoted_state;
     int unicode_kind;
     int buf_state;
-    npy_intp num_fields;
     /* the buffer we are currently working on */
     char *pos;
     char *end;
@@ -60,8 +59,9 @@ typedef struct {
      *
      * The tokenizer assumes at least one field is allocated.
      */
-    field_info *fields;
+    npy_intp num_fields;
     npy_intp fields_size;
+    field_info *fields;
 } tokenizer_state;
 
 

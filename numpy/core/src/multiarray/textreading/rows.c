@@ -388,23 +388,19 @@ read_rows(stream *s,
                 }
             }
 
-            bool err = 0;
+            int parser_res;
             Py_UCS4 *str = ts.field_buffer + fields[col].offset;
             Py_UCS4 *end = ts.field_buffer + fields[col + 1].offset - 1;
             if (conv_funcs[i] == NULL) {
-                if (field_types[f].set_from_ucs4(field_types[f].descr,
-                        str, end, item_ptr, pconfig) < 0) {
-                    err = true;
-                }
+                parser_res = field_types[f].set_from_ucs4(field_types[f].descr,
+                        str, end, item_ptr, pconfig);
             }
             else {
-                if (to_generic_with_converter(field_types[f].descr,
-                        str, end, item_ptr, pconfig, conv_funcs[i]) < 0) {
-                    err = true;
-                }
+                parser_res = to_generic_with_converter(field_types[f].descr,
+                        str, end, item_ptr, pconfig, conv_funcs[i]);
             }
 
-            if (NPY_UNLIKELY(err)) {
+            if (NPY_UNLIKELY(parser_res < 0)) {
                 PyObject *exc, *val, *tb;
                 PyErr_Fetch(&exc, &val, &tb);
 

@@ -304,6 +304,10 @@ tokenize(stream *s, tokenizer_state *ts, parser_config *const config)
     /* Add the first field */
 
     while (1) {
+        /*
+         * This loop adds new fields to the result (to make up a full row)
+         * until the row ends (typically a line end or the file end)
+         */
         if (ts->state == TOKENIZE_INIT) {
             /* Start a new field */
             if (add_field(ts) < 0) {
@@ -325,7 +329,7 @@ tokenize(stream *s, tokenizer_state *ts, parser_config *const config)
                  *       in the string. `FileLike.readline()` does ensure it
                  *       is included.
                  */
-                goto finish;
+                break;
             }
             /* fetch new data */
             ts->buf_state = stream_nextbuf(s,
@@ -336,12 +340,12 @@ tokenize(stream *s, tokenizer_state *ts, parser_config *const config)
             if (ts->buf_state == BUFFER_IS_FILEEND) {
                 finished_reading_file = 1;
                 ts->pos = ts->end;  /* stream should ensure this. */
-                goto finish;
+                break;
             }
             else if (ts->pos == ts->end) {
                 /* This must be an empty line (and it must be indicated!). */
                 assert(ts->buf_state == BUFFER_IS_LINEND);
-                goto finish;
+                break;
             }
         }
         int status;
@@ -360,11 +364,13 @@ tokenize(stream *s, tokenizer_state *ts, parser_config *const config)
         }
 
         if (ts->state == TOKENIZE_LINE_END) {
-            goto finish;
+            break;
         }
     }
 
-  finish:
+    /*
+     * We have finished tokenizing a full row into fields, finalize result
+     */
     if (ts->buf_state == BUFFER_IS_LINEND) {
         /* This line is "finished", make sure we don't touch it again: */
         ts->buf_state = BUFFER_MAY_CONTAIN_NEWLINE;
@@ -376,11 +382,12 @@ tokenize(stream *s, tokenizer_state *ts, parser_config *const config)
         }
     }
 
-    /* Finish the last field */
+    /* Finish the last field (we "append" one to store the last ones length) */
     if (add_field(ts) < 0) {
         return -1;
     }
     ts->num_fields -= 1;
+
     /*
      * If have one field, but that field is completely empty, this is an
      * empty line, and we just ignore it.
