@@ -16,7 +16,7 @@
  *
  * The actual functions are defined using macro templating below.
  */
-static NPY_INLINE int
+NPY_FINLINE int
 str_to_int64(
         const Py_UCS4 *p_item, const Py_UCS4 *p_end,
         int64_t int_min, int64_t int_max, int64_t *result)
@@ -96,7 +96,7 @@ str_to_int64(
 }
 
 
-static NPY_INLINE int
+NPY_FINLINE int
 str_to_uint64(
         const Py_UCS4 *p_item, const Py_UCS4 *p_end,
         uint64_t uint_max, uint64_t *result)

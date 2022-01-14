@@ -7,9 +7,6 @@
 #include "textreading/parser_config.h"
 
 
-NPY_NO_EXPORT PyArray_Descr *double_descr = NULL;
-
-
 #define DECLARE_TO_INT(intw, INT_MIN, INT_MAX)                              \
     NPY_NO_EXPORT int                                                       \
     to_##intw(PyArray_Descr *descr,                                         \
