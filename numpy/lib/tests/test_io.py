@@ -3474,3 +3474,18 @@ class TestCReaderUnitTests:
         with pytest.raises(TypeError, match="encoding must be a unicode"):
             np.core._multiarray_umath._load_from_filelike(
                 object(), dtype=np.dtype("i"), filelike=False, encoding=123)
+
+    @pytest.mark.parametrize("newline", ["\r", "\n", "\r\n"])
+    def test_manual_universal_newlines(self, newline):
+        # This is currently not available to users, because we should always
+        # open files with universal newlines enabled `newlines=None`.
+        # (And reading from an iterator uses slightly different code paths.)
+        # We have no real support for `newline="\r"` or `newline="\n" as the
+        # user cannot specify those options.
+        data = StringIO('0\n1\n"2\n"\n3\n4 #\n'.replace("\n", newline),
+                        newline="")
+
+        res = np.core._multiarray_umath._load_from_filelike(
+                data, dtype=np.dtype("U10"), filelike=True,
+                quote='"', comment="#", skiplines=1)
+        assert_array_equal(res[:, 0], ["1", f"2{newline}", "3", "4 "])
