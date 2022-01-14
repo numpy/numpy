@@ -799,7 +799,7 @@ _loadtxt_chunksize = 50000
 
 
 def _read(fname, *, delimiter=',', comment='#', quote='"',
-          imaginary_unit='j', usecols=None, skiprows=0,
+          imaginary_unit='j', usecols=None, skiplines=0,
           max_rows=None, converters=None, ndmin=None, unpack=False,
           dtype=np.float64, encoding="bytes"):
     r"""
@@ -829,7 +829,7 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
         A one-dimensional array of integer column numbers.  These are the
         columns from the file to be included in the array.  If this value
         is not given, all the columns are used.
-    skiprows : int, optional
+    skiplines : int, optional
         Number of lines to skip before interpreting the data in the file.
     max_rows : int, optional
         Maximum number of rows of data to read.  Default is to read the
@@ -953,7 +953,7 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
     if len(imaginary_unit) != 1:
         raise ValueError('len(imaginary_unit) must be 1.')
 
-    _check_nonneg_int(skiprows)
+    _check_nonneg_int(skiplines)
     if max_rows is not None:
         _check_nonneg_int(max_rows)
     else:
@@ -994,7 +994,7 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
             arr = _load_from_filelike(
                 data, delimiter=delimiter, comment=comment, quote=quote,
                 imaginary_unit=imaginary_unit,
-                usecols=usecols, skiprows=skiprows, max_rows=max_rows,
+                usecols=usecols, skiplines=skiplines, max_rows=max_rows,
                 converters=converters, dtype=dtype,
                 encoding=encoding, filelike=filelike,
                 byte_converters=byte_converters)
@@ -1021,7 +1021,7 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
                 next_arr = _load_from_filelike(
                     data, delimiter=delimiter, comment=comment, quote=quote,
                     imaginary_unit=imaginary_unit,
-                    usecols=usecols, skiprows=skiprows, max_rows=max_rows,
+                    usecols=usecols, skiplines=skiplines, max_rows=max_rows,
                     converters=converters, dtype=dtype,
                     encoding=encoding, filelike=filelike,
                     byte_converters=byte_converters,
@@ -1238,7 +1238,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             x.decode('latin1') if isinstance(x, bytes) else x for x in comment]
 
     arr = _read(fname, dtype=dtype, comment=comment, delimiter=delimiter,
-                converters=converters, skiprows=skiprows, usecols=usecols,
+                converters=converters, skiplines=skiprows, usecols=usecols,
                 unpack=unpack, ndmin=ndmin, encoding=encoding,
                 max_rows=max_rows, quote=quotechar)
 

@@ -37,7 +37,7 @@
 static PyObject *
 _readtext_from_stream(stream *s,
         parser_config *pc, Py_ssize_t num_usecols, Py_ssize_t usecols[],
-        Py_ssize_t skiprows, Py_ssize_t max_rows,
+        Py_ssize_t skiplines, Py_ssize_t max_rows,
         PyObject *converters, PyObject *dtype)
 {
     PyArrayObject *arr = NULL;
@@ -69,7 +69,7 @@ _readtext_from_stream(stream *s,
 
     arr = read_rows(
             s, max_rows, num_fields, ft, pc,
-            num_usecols, usecols, skiprows, converters,
+            num_usecols, usecols, skiplines, converters,
             NULL, out_dtype, homogeneous);
     if (arr == NULL) {
         goto finish;
@@ -105,7 +105,7 @@ _load_from_filelike(PyObject *NPY_UNUSED(mod),
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     PyObject *file;
-    Py_ssize_t skiprows = 0;
+    Py_ssize_t skiplines = 0;
     Py_ssize_t max_rows = -1;
     PyObject *usecols_obj = Py_None;
     PyObject *converters = Py_None;
@@ -136,7 +136,7 @@ _load_from_filelike(PyObject *NPY_UNUSED(mod),
             "|quote", &parse_control_character, &pc.quote,
             "|imaginary_unit", &parse_control_character, &pc.imaginary_unit,
             "|usecols", NULL, &usecols_obj,
-            "|skiprows", &PyArray_IntpFromPyIntConverter, &skiprows,
+            "|skiplines", &PyArray_IntpFromPyIntConverter, &skiplines,
             "|max_rows", &PyArray_IntpFromPyIntConverter, &max_rows,
             "|converters", NULL, &converters,
             "|dtype", NULL, &dtype,
@@ -220,7 +220,7 @@ _load_from_filelike(PyObject *NPY_UNUSED(mod),
     }
 
     arr = _readtext_from_stream(
-            s, &pc, num_usecols, usecols, skiprows, max_rows, converters, dtype);
+            s, &pc, num_usecols, usecols, skiplines, max_rows, converters, dtype);
     stream_close(s);
     PyMem_FREE(usecols);
     return arr;
