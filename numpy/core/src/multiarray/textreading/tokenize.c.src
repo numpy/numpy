@@ -210,20 +210,7 @@ tokenizer_core_@type@(tokenizer_state *ts, parser_config *const config)
         case TOKENIZE_QUOTED:
             chunk_start = pos;
             for (; pos < stop; pos++) {
-                if (!config->allow_embedded_newline) {
-                    if (*pos == '\r') {
-                        ts->state = TOKENIZE_EAT_CRLF;
-                        break;
-                    }
-                    else if (*pos == '\n') {
-                        ts->state = TOKENIZE_LINE_END;
-                        break;
-                    }
-                }
-                else if (*pos != config->quote) {
-                    /* inside the field, nothing to do. */
-                }
-                else {
+                if (*pos == config->quote) {
                     ts->state = TOKENIZE_QUOTED_CHECK_DOUBLE_QUOTE;
                     break;
                 }

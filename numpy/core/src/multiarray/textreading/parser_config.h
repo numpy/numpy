@@ -41,16 +41,6 @@ typedef struct {
     bool delimiter_is_whitespace;
 
     /*
-     *  A boolean value (0 or 1).  If 1, quoted fields may span
-     *  more than one line.  For example, the following
-     *      100, 200, "FOO
-     *      BAR"
-     *  is one "row", containing three fields: 100, 200 and "FOO\nBAR".
-     *  If 0, the parser considers an unclosed quote to be an error. (XXX Check!)
-     */
-    bool allow_embedded_newline;
-
-    /*
      *  The imaginary unit character. Default is `j`.
      */
     Py_UCS4 imaginary_unit;
