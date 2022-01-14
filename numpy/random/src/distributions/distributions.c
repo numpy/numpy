@@ -46,8 +46,8 @@ void random_standard_uniform_fill_f(bitgen_t *bitgen_state, npy_intp cnt, float 
 static double standard_exponential_unlikely(bitgen_t *bitgen_state,
                                                 uint8_t idx, double x) {
   if (idx == 0) {
-    /* Switch to 1.0 - U to avoid log(0.0), see GH 13361 */
-    return ziggurat_exp_r - npy_log1p(-next_double(bitgen_state));
+    /* The tail of the exponential looks exactly like its body */
+    return ziggurat_exp_r + random_standard_exponential(bitgen_state);
   } else if ((fe_double[idx - 1] - fe_double[idx]) * next_double(bitgen_state) +
                  fe_double[idx] <
              exp(-x)) {
@@ -83,8 +83,8 @@ void random_standard_exponential_fill(bitgen_t * bitgen_state, npy_intp cnt, dou
 static float standard_exponential_unlikely_f(bitgen_t *bitgen_state,
                                                  uint8_t idx, float x) {
   if (idx == 0) {
-    /* Switch to 1.0 - U to avoid log(0.0), see GH 13361 */
-    return ziggurat_exp_r_f - npy_log1pf(-next_float(bitgen_state));
+    /* The tail of the exponential looks exactly like its body */
+    return ziggurat_exp_r_f + random_standard_exponential_f(bitgen_state);
   } else if ((fe_float[idx - 1] - fe_float[idx]) * next_float(bitgen_state) +
                  fe_float[idx] <
              expf(-x)) {
@@ -154,9 +154,8 @@ double random_standard_normal(bitgen_t *bitgen_state) {
       return x; /* 99.3% of the time return here */
     if (idx == 0) {
       for (;;) {
-        /* Switch to 1.0 - U to avoid log(0.0), see GH 13361 */
-        xx = -ziggurat_nor_inv_r * npy_log1p(-next_double(bitgen_state));
-        yy = -npy_log1p(-next_double(bitgen_state));
+        xx = ziggurat_nor_inv_r * random_standard_exponential(bitgen_state);
+        yy = random_standard_exponential(bitgen_state);
         if (yy + yy > xx * xx)
           return ((rabs >> 8) & 0x1) ? -(ziggurat_nor_r + xx)
                                      : ziggurat_nor_r + xx;
@@ -195,9 +194,8 @@ float random_standard_normal_f(bitgen_t *bitgen_state) {
       return x; /* # 99.3% of the time return here */
     if (idx == 0) {
       for (;;) {
-        /* Switch to 1.0 - U to avoid log(0.0), see GH 13361 */
-        xx = -ziggurat_nor_inv_r_f * npy_log1pf(-next_float(bitgen_state));
-        yy = -npy_log1pf(-next_float(bitgen_state));
+        xx = ziggurat_nor_inv_r_f * random_standard_exponential_f(bitgen_state);
+        yy = random_standard_exponential_f(bitgen_state);
         if (yy + yy > xx * xx)
           return ((rabs >> 8) & 0x1) ? -(ziggurat_nor_r_f + xx)
                                      : ziggurat_nor_r_f + xx;
