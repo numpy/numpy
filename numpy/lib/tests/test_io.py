@@ -3387,6 +3387,20 @@ class TestCReaderUnitTests:
             np.core._multiarray_umath._load_from_filelike(
                 BadFileLike(), dtype=np.dtype("i"), filelike=True)
 
+    def test_filelike_bad_read(self):
+        # Can only be reached if loadtxt opens the file, so it is hard to do
+        # via the public interface (although maybe not impossible considering
+        # the current "DataClass" backing).
+        class BadFileLike:
+            counter = 0
+            def read(self, size):
+                return 1234  # not a string!
+
+        with pytest.raises(TypeError,
+                    match="non-string returned while reading data"):
+            np.core._multiarray_umath._load_from_filelike(
+                BadFileLike(), dtype=np.dtype("i"), filelike=True)
+
     def test_not_an_iter(self):
         with pytest.raises(TypeError,
                 match="error reading from object, expected an iterable"):

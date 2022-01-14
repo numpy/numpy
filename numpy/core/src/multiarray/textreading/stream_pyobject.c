@@ -28,9 +28,6 @@ typedef struct {
     /* Amount to read each time we call `obj.read()` */
     PyObject *chunksize;
 
-    /* file position when the file_buffer was created. */
-    off_t initial_file_pos;
-
     /* Python str object holding the line most recently read from the file. */
     PyObject *chunk;
 

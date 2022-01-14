@@ -189,6 +189,7 @@ _load_from_filelike(PyObject *NPY_UNUSED(mod),
         for (Py_ssize_t i = 0; i < num_usecols; i++) {
             PyObject *tmp = PySequence_GetItem(usecols_obj, i);
             if (tmp == NULL) {
+                PyMem_FREE(usecols);
                 return NULL;
             }
             usecols[i] = PyNumber_AsSsize_t(tmp, PyExc_OverflowError);
@@ -197,9 +198,10 @@ _load_from_filelike(PyObject *NPY_UNUSED(mod),
                     PyErr_Format(PyExc_TypeError,
                             "usecols must be an int or a sequence of ints but "
                             "it contains at least one element of type '%s'",
-                            tmp->ob_type->tp_name);
+                            Py_TYPE(tmp)->tp_name);
                 }
                 Py_DECREF(tmp);
+                PyMem_FREE(usecols);
                 return NULL;
             }
             Py_DECREF(tmp);
