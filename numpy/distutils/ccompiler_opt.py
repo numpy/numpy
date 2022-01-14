@@ -295,7 +295,8 @@ class _Config:
         ## Power9/ISA 3.00
         VSX3 = dict(interest=3, implies="VSX2", implies_detect=False),
         ## Power10/ISA 3.1
-        VSX4 = dict(interest=4, implies="VSX3", extra_checks="VSX4_MMA", implies_detect=False),
+        VSX4 = dict(interest=4, implies="VSX3", implies_detect=False,
+                    extra_checks="VSX4_MMA"),
         # IBM/Z
         ## VX(z13) support
         VX = dict(interest=1, headers="vecintrin.h"),
