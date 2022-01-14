@@ -7,7 +7,6 @@ work; they don't recognize anything like alpha/beta/rc/dev versions.
 """
 import re
 
-
 __all__ = ['NumpyVersion']
 
 
@@ -59,8 +58,9 @@ class NumpyVersion():
             raise ValueError("Not a valid numpy version string")
 
         self.version = ver_main.group()
-        self.major, self.minor, self.bugfix = [int(x) for x in
-            self.version.split('.')]
+        self.major, self.minor, self.bugfix = [
+            int(x) for x in self.version.split('.')
+        ]
         if len(vstring) == ver_main.end():
             self.pre_release = 'final'
         else:

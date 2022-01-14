@@ -7,7 +7,8 @@ __all__ = ['fix', 'isneginf', 'isposinf']
 
 import numpy.core.numeric as nx
 from numpy.core.overrides import (
-    array_function_dispatch, ARRAY_FUNCTION_ENABLED,
+    array_function_dispatch,
+    ARRAY_FUNCTION_ENABLED,
 )
 import warnings
 import functools
@@ -19,20 +20,21 @@ def _deprecate_out_named_y(f):
 
     In future, this decorator should be removed.
     """
+
     @functools.wraps(f)
     def func(x, out=None, **kwargs):
         if 'y' in kwargs:
             if 'out' in kwargs:
                 raise TypeError(
-                    "{} got multiple values for argument 'out'/'y'"
-                    .format(f.__name__)
-                )
+                    "{} got multiple values for argument 'out'/'y'".format(
+                        f.__name__))
             out = kwargs.pop('y')
             # NumPy 1.13.0, 2017-04-26
             warnings.warn(
                 "The name of the out argument to {} has changed from `y` to "
                 "`out`, to match other ufuncs.".format(f.__name__),
-                DeprecationWarning, stacklevel=3)
+                DeprecationWarning,
+                stacklevel=3)
         return f(x, out=out, **kwargs)
 
     return func
@@ -45,6 +47,7 @@ def _fix_out_named_y(f):
     This decorator should only be used if _deprecate_out_named_y is used on
     a corresponding dispatcher function.
     """
+
     @functools.wraps(f)
     def func(x, out=None, **kwargs):
         if 'y' in kwargs:

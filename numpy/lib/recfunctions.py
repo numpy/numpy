@@ -17,16 +17,29 @@ from numpy.testing import suppress_warnings
 
 _check_fill_value = np.ma.core._check_fill_value
 
-
 __all__ = [
-    'append_fields', 'apply_along_fields', 'assign_fields_by_name',
-    'drop_fields', 'find_duplicates', 'flatten_descr',
-    'get_fieldstructure', 'get_names', 'get_names_flat',
-    'join_by', 'merge_arrays', 'rec_append_fields',
-    'rec_drop_fields', 'rec_join', 'recursive_fill_fields',
-    'rename_fields', 'repack_fields', 'require_fields',
-    'stack_arrays', 'structured_to_unstructured', 'unstructured_to_structured',
-    ]
+    'append_fields',
+    'apply_along_fields',
+    'assign_fields_by_name',
+    'drop_fields',
+    'find_duplicates',
+    'flatten_descr',
+    'get_fieldstructure',
+    'get_names',
+    'get_names_flat',
+    'join_by',
+    'merge_arrays',
+    'rec_append_fields',
+    'rec_drop_fields',
+    'rec_join',
+    'recursive_fill_fields',
+    'rename_fields',
+    'repack_fields',
+    'require_fields',
+    'stack_arrays',
+    'structured_to_unstructured',
+    'unstructured_to_structured',
+]
 
 
 def _recursive_fill_fields_dispatcher(input, output):
@@ -97,10 +110,8 @@ def _get_fieldspec(dtype):
     else:
         fields = ((name, dtype.fields[name]) for name in dtype.names)
         # keep any titles, if present
-        return [
-            (name if len(f) == 2 else (f[2], name), f[0])
-            for name, f in fields
-        ]
+        return [(name if len(f) == 2 else (f[2], name), f[0])
+                for name, f in fields]
 
 
 def get_names(adtype):
@@ -188,7 +199,7 @@ def flatten_descr(ndtype):
     """
     names = ndtype.names
     if names is None:
-        return (('', ndtype),)
+        return (('', ndtype), )
     else:
         descr = []
         for field in names:
@@ -230,7 +241,11 @@ def _zip_descr(seqarrays, flatten=False):
     return _zip_dtype(seqarrays, flatten=flatten).descr
 
 
-def get_fieldstructure(adtype, lastname=None, parents=None,):
+def get_fieldstructure(
+    adtype,
+    lastname=None,
+    parents=None,
+):
     """
     Returns a dictionary with fields indexing lists of their parent fields.
 
@@ -263,7 +278,9 @@ def get_fieldstructure(adtype, lastname=None, parents=None,):
         current = adtype[name]
         if current.names is not None:
             if lastname:
-                parents[name] = [lastname, ]
+                parents[name] = [
+                    lastname,
+                ]
             else:
                 parents[name] = []
             parents.update(get_fieldstructure(current, name, parents))
@@ -272,7 +289,9 @@ def get_fieldstructure(adtype, lastname=None, parents=None,):
             if lastparent:
                 lastparent.append(lastname)
             elif lastname:
-                lastparent = [lastname, ]
+                lastparent = [
+                    lastname,
+                ]
             parents[name] = lastparent or []
     return parents
 
@@ -296,8 +315,7 @@ def _izip_fields(iterable):
 
     """
     for element in iterable:
-        if (hasattr(element, '__iter__') and
-                not isinstance(element, str)):
+        if (hasattr(element, '__iter__') and not isinstance(element, str)):
             yield from _izip_fields(element)
         elif isinstance(element, np.void) and len(tuple(element)) == 1:
             # this statement is the same from the previous expression
@@ -361,14 +379,20 @@ def _fix_defaults(output, defaults=None):
     return output
 
 
-def _merge_arrays_dispatcher(seqarrays, fill_value=None, flatten=None,
-                             usemask=None, asrecarray=None):
+def _merge_arrays_dispatcher(seqarrays,
+                             fill_value=None,
+                             flatten=None,
+                             usemask=None,
+                             asrecarray=None):
     return seqarrays
 
 
 @array_function_dispatch(_merge_arrays_dispatcher)
-def merge_arrays(seqarrays, fill_value=-1, flatten=False,
-                 usemask=False, asrecarray=False):
+def merge_arrays(seqarrays,
+                 fill_value=-1,
+                 flatten=False,
+                 usemask=False,
+                 asrecarray=False):
     """
     Merge arrays field by field.
 
@@ -423,7 +447,7 @@ def merge_arrays(seqarrays, fill_value=-1, flatten=False,
         # Make sure we have named fields
         if seqdtype.names is None:
             seqdtype = np.dtype([('', seqdtype)])
-        if not flatten or _zip_dtype((seqarrays,), flatten=True) == seqdtype:
+        if not flatten or _zip_dtype((seqarrays, ), flatten=True) == seqdtype:
             # Minimal processing needed: just make sure everything's a-ok
             seqarrays = seqarrays.ravel()
             # Find what type of array we must return
@@ -438,7 +462,7 @@ def merge_arrays(seqarrays, fill_value=-1, flatten=False,
                 seqtype = ndarray
             return seqarrays.view(dtype=seqdtype, type=seqtype)
         else:
-            seqarrays = (seqarrays,)
+            seqarrays = (seqarrays, )
     else:
         # Make sure we have arrays in the input sequence
         seqarrays = [np.asanyarray(_m) for _m in seqarrays]
@@ -466,7 +490,7 @@ def merge_arrays(seqarrays, fill_value=-1, flatten=False,
                         fmsk = True
                     else:
                         fval = np.array(fval, dtype=a.dtype, ndmin=1)
-                        fmsk = np.ones((1,), dtype=mask.dtype)
+                        fmsk = np.ones((1, ), dtype=mask.dtype)
             else:
                 fval = None
                 fmsk = True
@@ -495,7 +519,8 @@ def merge_arrays(seqarrays, fill_value=-1, flatten=False,
                 fval = None
             seqdata.append(itertools.chain(data, [fval] * nbmissing))
         output = np.fromiter(tuple(_izip_records(seqdata, flatten=flatten)),
-                             dtype=newdtype, count=maxlength)
+                             dtype=newdtype,
+                             count=maxlength)
         if asrecarray:
             output = output.view(recarray)
     # And we're done...
@@ -503,7 +528,7 @@ def merge_arrays(seqarrays, fill_value=-1, flatten=False,
 
 
 def _drop_fields_dispatcher(base, drop_names, usemask=None, asrecarray=None):
-    return (base,)
+    return (base, )
 
 
 @array_function_dispatch(_drop_fields_dispatcher)
@@ -597,7 +622,7 @@ def _keep_fields(base, keep_names, usemask=True, asrecarray=False):
 
 
 def _rec_drop_fields_dispatcher(base, drop_names):
-    return (base,)
+    return (base, )
 
 
 @array_function_dispatch(_rec_drop_fields_dispatcher)
@@ -609,7 +634,7 @@ def rec_drop_fields(base, drop_names):
 
 
 def _rename_fields_dispatcher(base, namemapper):
-    return (base,)
+    return (base, )
 
 
 @array_function_dispatch(_rename_fields_dispatcher)
@@ -636,6 +661,7 @@ def rename_fields(base, namemapper):
           dtype=[('A', '<i8'), ('b', [('ba', '<f8'), ('BB', '<f8', (2,))])])
 
     """
+
     def _recursive_rename_fields(ndtype, namemapper):
         newdtype = []
         for name in ndtype.names:
@@ -643,24 +669,34 @@ def rename_fields(base, namemapper):
             current = ndtype[name]
             if current.names is not None:
                 newdtype.append(
-                    (newname, _recursive_rename_fields(current, namemapper))
-                    )
+                    (newname, _recursive_rename_fields(current, namemapper)))
             else:
                 newdtype.append((newname, current))
         return newdtype
+
     newdtype = _recursive_rename_fields(base.dtype, namemapper)
     return base.view(newdtype)
 
 
-def _append_fields_dispatcher(base, names, data, dtypes=None,
-                              fill_value=None, usemask=None, asrecarray=None):
+def _append_fields_dispatcher(base,
+                              names,
+                              data,
+                              dtypes=None,
+                              fill_value=None,
+                              usemask=None,
+                              asrecarray=None):
     yield base
     yield from data
 
 
 @array_function_dispatch(_append_fields_dispatcher)
-def append_fields(base, names, data, dtypes=None,
-                  fill_value=-1, usemask=True, asrecarray=False):
+def append_fields(base,
+                  names,
+                  data,
+                  dtypes=None,
+                  fill_value=-1,
+                  usemask=True,
+                  asrecarray=False):
     """
     Add new fields to an existing array.
 
@@ -695,34 +731,44 @@ def append_fields(base, names, data, dtypes=None,
             msg = "The number of arrays does not match the number of names"
             raise ValueError(msg)
     elif isinstance(names, str):
-        names = [names, ]
-        data = [data, ]
+        names = [
+            names,
+        ]
+        data = [
+            data,
+        ]
     #
     if dtypes is None:
         data = [np.array(a, copy=False, subok=True) for a in data]
         data = [a.view([(name, a.dtype)]) for (name, a) in zip(names, data)]
     else:
         if not isinstance(dtypes, (tuple, list)):
-            dtypes = [dtypes, ]
+            dtypes = [
+                dtypes,
+            ]
         if len(data) != len(dtypes):
             if len(dtypes) == 1:
                 dtypes = dtypes * len(data)
             else:
                 msg = "The dtypes argument must be None, a dtype, or a list."
                 raise ValueError(msg)
-        data = [np.array(a, copy=False, subok=True, dtype=d).view([(n, d)])
-                for (a, n, d) in zip(data, names, dtypes)]
+        data = [
+            np.array(a, copy=False, subok=True, dtype=d).view([(n, d)])
+            for (a, n, d) in zip(data, names, dtypes)
+        ]
     #
     base = merge_arrays(base, usemask=usemask, fill_value=fill_value)
     if len(data) > 1:
-        data = merge_arrays(data, flatten=True, usemask=usemask,
+        data = merge_arrays(data,
+                            flatten=True,
+                            usemask=usemask,
                             fill_value=fill_value)
     else:
         data = data.pop()
     #
-    output = ma.masked_all(
-        max(len(base), len(data)),
-        dtype=_get_fieldspec(base.dtype) + _get_fieldspec(data.dtype))
+    output = ma.masked_all(max(len(base), len(data)),
+                           dtype=_get_fieldspec(base.dtype) +
+                           _get_fieldspec(data.dtype))
     output = recursive_fill_fields(base, output)
     output = recursive_fill_fields(data, output)
     #
@@ -765,12 +811,16 @@ def rec_append_fields(base, names, data, dtypes=None):
     -------
     appended_array : np.recarray
     """
-    return append_fields(base, names, data=data, dtypes=dtypes,
-                         asrecarray=True, usemask=False)
+    return append_fields(base,
+                         names,
+                         data=data,
+                         dtypes=dtypes,
+                         asrecarray=True,
+                         usemask=False)
 
 
 def _repack_fields_dispatcher(a, align=None, recurse=None):
-    return (a,)
+    return (a, )
 
 
 @array_function_dispatch(_repack_fields_dispatcher)
@@ -856,6 +906,7 @@ def repack_fields(a, align=False, recurse=False):
     dt = np.dtype(fieldinfo, align=align)
     return np.dtype((a.type, dt))
 
+
 def _get_fields_and_offsets(dt, offset=0):
     """
     Returns a flat list of (dtype, count, offset) tuples of all the
@@ -880,7 +931,7 @@ def _get_fields_and_offsets(dt, offset=0):
         f_dt, n = count_elem(f_dt)
 
         if f_dt.names is None:
-            fields.append((np.dtype((f_dt, (n,))), n, f_offset + offset))
+            fields.append((np.dtype((f_dt, (n, ))), n, f_offset + offset))
         else:
             subfields = _get_fields_and_offsets(f_dt, f_offset + offset)
             size = f_dt.itemsize
@@ -890,13 +941,17 @@ def _get_fields_and_offsets(dt, offset=0):
                     # optimization: avoid list comprehension if no subarray
                     fields.extend(subfields)
                 else:
-                    fields.extend([(d, c, o + i*size) for d, c, o in subfields])
+                    fields.extend([(d, c, o + i * size)
+                                   for d, c, o in subfields])
     return fields
 
 
-def _structured_to_unstructured_dispatcher(arr, dtype=None, copy=None,
+def _structured_to_unstructured_dispatcher(arr,
+                                           dtype=None,
+                                           copy=None,
                                            casting=None):
-    return (arr,)
+    return (arr, )
+
 
 @array_function_dispatch(_structured_to_unstructured_dispatcher)
 def structured_to_unstructured(arr, dtype=None, copy=False, casting='unsafe'):
@@ -974,30 +1029,43 @@ def structured_to_unstructured(arr, dtype=None, copy=False, casting='unsafe'):
 
     # first view using flattened fields (doesn't work for object arrays)
     # Note: dts may include a shape for subarrays
-    flattened_fields = np.dtype({'names': names,
-                                 'formats': dts,
-                                 'offsets': offsets,
-                                 'itemsize': arr.dtype.itemsize})
+    flattened_fields = np.dtype({
+        'names': names,
+        'formats': dts,
+        'offsets': offsets,
+        'itemsize': arr.dtype.itemsize
+    })
     with suppress_warnings() as sup:  # until 1.16 (gh-12447)
         sup.filter(FutureWarning, "Numpy has detected")
         arr = arr.view(flattened_fields)
 
     # next cast to a packed format with all fields converted to new dtype
-    packed_fields = np.dtype({'names': names,
-                              'formats': [(out_dtype, dt.shape) for dt in dts]})
+    packed_fields = np.dtype({
+        'names': names,
+        'formats': [(out_dtype, dt.shape) for dt in dts]
+    })
     arr = arr.astype(packed_fields, copy=copy, casting=casting)
 
     # finally is it safe to view the packed fields as the unstructured type
-    return arr.view((out_dtype, (sum(counts),)))
+    return arr.view((out_dtype, (sum(counts), )))
 
 
-def _unstructured_to_structured_dispatcher(arr, dtype=None, names=None,
-                                           align=None, copy=None, casting=None):
-    return (arr,)
+def _unstructured_to_structured_dispatcher(arr,
+                                           dtype=None,
+                                           names=None,
+                                           align=None,
+                                           copy=None,
+                                           casting=None):
+    return (arr, )
+
 
 @array_function_dispatch(_unstructured_to_structured_dispatcher)
-def unstructured_to_structured(arr, dtype=None, names=None, align=False,
-                               copy=False, casting='unsafe'):
+def unstructured_to_structured(arr,
+                               dtype=None,
+                               names=None,
+                               align=False,
+                               copy=False,
+                               casting='unsafe'):
     """
     Converts an n-D unstructured array into an (n-1)-D structured array.
 
@@ -1086,22 +1154,28 @@ def unstructured_to_structured(arr, dtype=None, names=None, align=False,
     # Use a series of views and casts to convert to a structured array:
 
     # first view as a packed structured array of one dtype
-    packed_fields = np.dtype({'names': names,
-                              'formats': [(arr.dtype, dt.shape) for dt in dts]})
+    packed_fields = np.dtype({
+        'names': names,
+        'formats': [(arr.dtype, dt.shape) for dt in dts]
+    })
     arr = np.ascontiguousarray(arr).view(packed_fields)
 
     # next cast to an unpacked but flattened format with varied dtypes
-    flattened_fields = np.dtype({'names': names,
-                                 'formats': dts,
-                                 'offsets': offsets,
-                                 'itemsize': out_dtype.itemsize})
+    flattened_fields = np.dtype({
+        'names': names,
+        'formats': dts,
+        'offsets': offsets,
+        'itemsize': out_dtype.itemsize
+    })
     arr = arr.astype(flattened_fields, copy=copy, casting=casting)
 
     # finally view as the final nested dtype and remove the last axis
     return arr.view(out_dtype)[..., 0]
 
+
 def _apply_along_fields_dispatcher(func, arr):
-    return (arr,)
+    return (arr, )
+
 
 @array_function_dispatch(_apply_along_fields_dispatcher)
 def apply_along_fields(func, arr):
@@ -1146,8 +1220,10 @@ def apply_along_fields(func, arr):
     # works and avoids axis requirement, but very, very slow:
     #return np.apply_along_axis(func, -1, uarr)
 
+
 def _assign_fields_by_name_dispatcher(dst, src, zero_unassigned=None):
     return dst, src
+
 
 @array_function_dispatch(_assign_fields_by_name_dispatcher)
 def assign_fields_by_name(dst, src, zero_unassigned=True):
@@ -1184,11 +1260,12 @@ def assign_fields_by_name(dst, src, zero_unassigned=True):
             if zero_unassigned:
                 dst[name] = 0
         else:
-            assign_fields_by_name(dst[name], src[name],
-                                  zero_unassigned)
+            assign_fields_by_name(dst[name], src[name], zero_unassigned)
+
 
 def _require_fields_dispatcher(array, required_dtype):
-    return (array,)
+    return (array, )
+
 
 @array_function_dispatch(_require_fields_dispatcher)
 def require_fields(array, required_dtype):
@@ -1234,13 +1311,19 @@ def require_fields(array, required_dtype):
     return out
 
 
-def _stack_arrays_dispatcher(arrays, defaults=None, usemask=None,
-                             asrecarray=None, autoconvert=None):
+def _stack_arrays_dispatcher(arrays,
+                             defaults=None,
+                             usemask=None,
+                             asrecarray=None,
+                             autoconvert=None):
     return arrays
 
 
 @array_function_dispatch(_stack_arrays_dispatcher)
-def stack_arrays(arrays, defaults=None, usemask=True, asrecarray=False,
+def stack_arrays(arrays,
+                 defaults=None,
+                 usemask=True,
+                 asrecarray=False,
                  autoconvert=False):
     """
     Superposes arrays fields by fields
@@ -1310,7 +1393,7 @@ def stack_arrays(arrays, defaults=None, usemask=True, asrecarray=False,
         output = ma.concatenate(seqarrays)
     else:
         #
-        output = ma.masked_all((np.sum(nrecords),), newdescr)
+        output = ma.masked_all((np.sum(nrecords), ), newdescr)
         offset = np.cumsum(np.r_[0, nrecords])
         seen = []
         for (a, n, i, j) in zip(seqarrays, fldnames, offset[:-1], offset[1:]):
@@ -1324,12 +1407,15 @@ def stack_arrays(arrays, defaults=None, usemask=True, asrecarray=False,
                         seen.append(name)
     #
     return _fix_output(_fix_defaults(output, defaults),
-                       usemask=usemask, asrecarray=asrecarray)
+                       usemask=usemask,
+                       asrecarray=asrecarray)
 
 
-def _find_duplicates_dispatcher(
-        a, key=None, ignoremask=None, return_index=None):
-    return (a,)
+def _find_duplicates_dispatcher(a,
+                                key=None,
+                                ignoremask=None,
+                                return_index=None):
+    return (a, )
 
 
 @array_function_dispatch(_find_duplicates_dispatcher)
@@ -1390,15 +1476,28 @@ def find_duplicates(a, key=None, ignoremask=True, return_index=False):
         return duplicates
 
 
-def _join_by_dispatcher(
-        key, r1, r2, jointype=None, r1postfix=None, r2postfix=None,
-        defaults=None, usemask=None, asrecarray=None):
+def _join_by_dispatcher(key,
+                        r1,
+                        r2,
+                        jointype=None,
+                        r1postfix=None,
+                        r2postfix=None,
+                        defaults=None,
+                        usemask=None,
+                        asrecarray=None):
     return (r1, r2)
 
 
 @array_function_dispatch(_join_by_dispatcher)
-def join_by(key, r1, r2, jointype='inner', r1postfix='1', r2postfix='2',
-            defaults=None, usemask=True, asrecarray=False):
+def join_by(key,
+            r1,
+            r2,
+            jointype='inner',
+            r1postfix='1',
+            r2postfix='2',
+            defaults=None,
+            usemask=True,
+            asrecarray=False):
     """
     Join arrays `r1` and `r2` on key `key`.
 
@@ -1449,17 +1548,16 @@ def join_by(key, r1, r2, jointype='inner', r1postfix='1', r2postfix='2',
     """
     # Check jointype
     if jointype not in ('inner', 'outer', 'leftouter'):
-        raise ValueError(
-                "The 'jointype' argument should be in 'inner', "
-                "'outer' or 'leftouter' (got '%s' instead)" % jointype
-                )
+        raise ValueError("The 'jointype' argument should be in 'inner', "
+                         "'outer' or 'leftouter' (got '%s' instead)" %
+                         jointype)
     # If we have a single key, put it in a tuple
     if isinstance(key, str):
-        key = (key,)
+        key = (key, )
 
     # Check the keys
     if len(set(key)) != len(key):
-        dup = next(x for n,x in enumerate(key) if x in key[n+1:])
+        dup = next(x for n, x in enumerate(key) if x in key[n + 1:])
         raise ValueError("duplicate join key %r" % dup)
     for name in key:
         if name not in r1.dtype.names:
@@ -1484,7 +1582,7 @@ def join_by(key, r1, r2, jointype='inner', r1postfix='1', r2postfix='2',
 
     # Make temporary arrays of just the keys
     #  (use order of keys in `r1` for back-compatibility)
-    key1 = [ n for n in r1names if n in key ]
+    key1 = [n for n in r1names if n in key]
     r1k = _keep_fields(r1, key1)
     r2k = _keep_fields(r2, key1)
 
@@ -1542,17 +1640,15 @@ def join_by(key, r1, r2, jointype='inner', r1postfix='1', r2postfix='2',
             else:
                 # The current field is not part of the key: add the suffixes,
                 # and place the new field adjacent to the old one
-                ndtype[nameidx:nameidx + 1] = [
-                    (fname + r1postfix, cdtype),
-                    (fname + r2postfix, fdtype)
-                ]
+                ndtype[nameidx:nameidx + 1] = [(fname + r1postfix, cdtype),
+                                               (fname + r2postfix, fdtype)]
     # Rebuild a dtype from the new fields
     ndtype = np.dtype(ndtype)
     # Find the largest nb of common fields :
     # r1cmn and r2cmn should be equal, but...
     cmn = max(r1cmn, r2cmn)
     # Construct an empty array
-    output = ma.masked_all((cmn + r1spc + r2spc,), dtype=ndtype)
+    output = ma.masked_all((cmn + r1spc + r2spc, ), dtype=ndtype)
     names = output.dtype.names
     for f in r1names:
         selected = s1[f]
@@ -1576,14 +1672,23 @@ def join_by(key, r1, r2, jointype='inner', r1postfix='1', r2postfix='2',
     return _fix_output(_fix_defaults(output, defaults), **kwargs)
 
 
-def _rec_join_dispatcher(
-        key, r1, r2, jointype=None, r1postfix=None, r2postfix=None,
-        defaults=None):
+def _rec_join_dispatcher(key,
+                         r1,
+                         r2,
+                         jointype=None,
+                         r1postfix=None,
+                         r2postfix=None,
+                         defaults=None):
     return (r1, r2)
 
 
 @array_function_dispatch(_rec_join_dispatcher)
-def rec_join(key, r1, r2, jointype='inner', r1postfix='1', r2postfix='2',
+def rec_join(key,
+             r1,
+             r2,
+             jointype='inner',
+             r1postfix='1',
+             r2postfix='2',
              defaults=None):
     """
     Join arrays `r1` and `r2` on keys.
@@ -1593,6 +1698,10 @@ def rec_join(key, r1, r2, jointype='inner', r1postfix='1', r2postfix='2',
     --------
     join_by : equivalent function
     """
-    kwargs = dict(jointype=jointype, r1postfix=r1postfix, r2postfix=r2postfix,
-                  defaults=defaults, usemask=False, asrecarray=True)
+    kwargs = dict(jointype=jointype,
+                  r1postfix=r1postfix,
+                  r2postfix=r2postfix,
+                  defaults=defaults,
+                  usemask=False,
+                  asrecarray=True)
     return join_by(key, r1, r2, **kwargs)

@@ -7,9 +7,7 @@ import numpy as np
 from numpy.core.overrides import array_function_dispatch
 from numpy.lib.index_tricks import ndindex
 
-
 __all__ = ['pad']
-
 
 ###############################################################################
 # Private utility functions.
@@ -52,7 +50,7 @@ def _slice_at_axis(sl, axis):
     >>> _slice_at_axis(slice(None, 3, -1), 1)
     (slice(None, None, None), slice(None, 3, -1), (...,))
     """
-    return (slice(None),) * axis + (sl,) + (...,)
+    return (slice(None), ) * axis + (sl, ) + (..., )
 
 
 def _view_roi(array, original_area_slice, axis):
@@ -79,7 +77,7 @@ def _view_roi(array, original_area_slice, axis):
         The region of interest of the original `array`.
     """
     axis += 1
-    sl = (slice(None),) * axis + original_area_slice[axis:]
+    sl = (slice(None), ) * axis + original_area_slice[axis:]
     return array[sl]
 
 
@@ -106,10 +104,8 @@ def _pad_simple(array, pad_width, fill_value=None):
         A tuple of slices pointing to the area of the original array.
     """
     # Allocate grown array
-    new_shape = tuple(
-        left + size + right
-        for size, (left, right) in zip(array.shape, pad_width)
-    )
+    new_shape = tuple(left + size + right
+                      for size, (left, right) in zip(array.shape, pad_width))
     order = 'F' if array.flags.fnc else 'C'  # Fortran and not also C-order
     padded = np.empty(new_shape, dtype=array.dtype, order=order)
 
@@ -119,8 +115,7 @@ def _pad_simple(array, pad_width, fill_value=None):
     # Copy old array into correct space
     original_area_slice = tuple(
         slice(left, left + size)
-        for size, (left, right) in zip(array.shape, pad_width)
-    )
+        for size, (left, right) in zip(array.shape, pad_width))
     padded[original_area_slice] = array
 
     return padded, original_area_slice
@@ -210,17 +205,13 @@ def _get_linear_ramps(padded, axis, width_pair, end_value_pair):
     left_ramp, right_ramp = (
         np.linspace(
             start=end_value,
-            stop=edge.squeeze(axis), # Dimension is replaced by linspace
+            stop=edge.squeeze(axis),  # Dimension is replaced by linspace
             num=width,
             endpoint=False,
             dtype=padded.dtype,
-            axis=axis
-        )
-        for end_value, edge, width in zip(
-            end_value_pair, edge_pair, width_pair
-        )
-    )
-        
+            axis=axis) for end_value, edge, width in zip(
+                end_value_pair, edge_pair, width_pair))
+
     # Reverse linear space in appropriate dimension
     right_ramp = right_ramp[_slice_at_axis(slice(None, None, -1), axis)]
 
@@ -273,8 +264,8 @@ def _get_stats(padded, axis, width_pair, length_pair, stat_func):
         raise ValueError("stat_length of 0 yields no value for padding")
 
     # Calculate statistic for the left side
-    left_slice = _slice_at_axis(
-        slice(left_index, left_index + left_length), axis)
+    left_slice = _slice_at_axis(slice(left_index, left_index + left_length),
+                                axis)
     left_chunk = padded[left_slice]
     left_stat = stat_func(left_chunk, axis=axis, keepdims=True)
     _round_if_needed(left_stat, padded.dtype)
@@ -363,8 +354,8 @@ def _set_reflect_both(padded, axis, width_pair, method, include_edge=False):
 
         if method == "odd":
             # Negate chunk and align with edge
-            edge_slice = _slice_at_axis(
-                slice(-right_pad - 1, -right_pad), axis)
+            edge_slice = _slice_at_axis(slice(-right_pad - 1, -right_pad),
+                                        axis)
             right_chunk = 2 * padded[edge_slice] - right_chunk
 
         # Insert chunk into padded area
@@ -415,9 +406,7 @@ def _set_wrap_both(padded, axis, width_pair):
         # pad area
         right_slice = _slice_at_axis(
             slice(-right_pad - min(period, left_pad),
-                  -right_pad if right_pad != 0 else None),
-            axis
-        )
+                  -right_pad if right_pad != 0 else None), axis)
         right_chunk = padded[right_slice]
 
         if left_pad > period:
@@ -435,13 +424,16 @@ def _set_wrap_both(padded, axis, width_pair):
         # Use min(period, right_pad) to ensure that chunk is not larger than
         # pad area
         left_slice = _slice_at_axis(
-            slice(left_pad, left_pad + min(period, right_pad),), axis)
+            slice(
+                left_pad,
+                left_pad + min(period, right_pad),
+            ), axis)
         left_chunk = padded[left_slice]
 
         if right_pad > period:
             # Chunk is smaller than pad area
-            pad_area = _slice_at_axis(
-                slice(-right_pad, -right_pad + period), axis)
+            pad_area = _slice_at_axis(slice(-right_pad, -right_pad + period),
+                                      axis)
             new_right_pad = right_pad - period
         else:
             # Chunk matches pad area
@@ -482,7 +474,7 @@ def _as_pairs(x, ndim, as_index=False):
     if x is None:
         # Pass through None as a special case, otherwise np.round(x) fails
         # with an AttributeError
-        return ((None, None),) * ndim
+        return ((None, None), ) * ndim
 
     x = np.array(x)
     if as_index:
@@ -498,7 +490,7 @@ def _as_pairs(x, ndim, as_index=False):
             x = x.ravel()  # Ensure x[0] works for x.ndim == 0, 1, 2
             if as_index and x < 0:
                 raise ValueError("index can't contain negative values")
-            return ((x[0], x[0]),) * ndim
+            return ((x[0], x[0]), ) * ndim
 
         if x.size == 2 and x.shape != (2, 1):
             # x was supplied with a single value for each side
@@ -508,7 +500,7 @@ def _as_pairs(x, ndim, as_index=False):
             x = x.ravel()  # Ensure x[0], x[1] works
             if as_index and (x[0] < 0 or x[1] < 0):
                 raise ValueError("index can't contain negative values")
-            return ((x[0], x[1]),) * ndim
+            return ((x[0], x[1]), ) * ndim
 
     if as_index and x.min() < 0:
         raise ValueError("index can't contain negative values")
@@ -519,7 +511,7 @@ def _as_pairs(x, ndim, as_index=False):
 
 
 def _pad_dispatcher(array, pad_width, mode=None, **kwargs):
-    return (array,)
+    return (array, )
 
 
 ###############################################################################
@@ -759,7 +751,7 @@ def pad(array, pad_width, mode='constant', **kwargs):
             # compute indices for the iteration axes, and append a trailing
             # ellipsis to prevent 0d arrays decaying to scalars (gh-8642)
             inds = ndindex(view.shape[:-1])
-            inds = (ind + (Ellipsis,) for ind in inds)
+            inds = (ind + (Ellipsis, ) for ind in inds)
             for ind in inds:
                 function(view[ind], pad_width[axis], axis, kwargs)
 
@@ -767,7 +759,9 @@ def pad(array, pad_width, mode='constant', **kwargs):
 
     # Make sure that no unsupported keywords were passed for the current mode
     allowed_kwargs = {
-        'empty': [], 'edge': [], 'wrap': [],
+        'empty': [],
+        'edge': [],
+        'wrap': [],
         'constant': ['constant_values'],
         'linear_ramp': ['end_values'],
         'maximum': ['stat_length'],
@@ -782,11 +776,16 @@ def pad(array, pad_width, mode='constant', **kwargs):
     except KeyError:
         raise ValueError("mode '{}' is not supported".format(mode)) from None
     if unsupported_kwargs:
-        raise ValueError("unsupported keyword arguments for mode '{}': {}"
-                         .format(mode, unsupported_kwargs))
+        raise ValueError(
+            "unsupported keyword arguments for mode '{}': {}".format(
+                mode, unsupported_kwargs))
 
-    stat_functions = {"maximum": np.amax, "minimum": np.amin,
-                      "mean": np.mean, "median": np.median}
+    stat_functions = {
+        "maximum": np.amax,
+        "minimum": np.amin,
+        "mean": np.mean,
+        "median": np.median
+    }
 
     # Create array with final shape and original values
     # (padded area is undefined)
@@ -813,8 +812,7 @@ def pad(array, pad_width, mode='constant', **kwargs):
             if array.shape[axis] == 0 and any(width_pair):
                 raise ValueError(
                     "can't extend empty axis {} using modes other than "
-                    "'constant' or 'empty'".format(axis)
-                )
+                    "'constant' or 'empty'".format(axis))
         # passed, don't need to do anything more as _pad_simple already
         # returned the correct result
 
@@ -849,8 +847,8 @@ def pad(array, pad_width, mode='constant', **kwargs):
                 # Extending singleton dimension for 'reflect' is legacy
                 # behavior; it really should raise an error.
                 edge_pair = _get_edges(padded, axis, (left_index, right_index))
-                _set_pad_area(
-                    padded, axis, (left_index, right_index), edge_pair)
+                _set_pad_area(padded, axis, (left_index, right_index),
+                              edge_pair)
                 continue
 
             roi = _view_roi(padded, original_area_slice, axis)
@@ -859,9 +857,7 @@ def pad(array, pad_width, mode='constant', **kwargs):
                 # values. This is necessary if the pad area is larger than
                 # the length of the original values in the current dimension.
                 left_index, right_index = _set_reflect_both(
-                    roi, axis, (left_index, right_index),
-                    method, include_edge
-                )
+                    roi, axis, (left_index, right_index), method, include_edge)
 
     elif mode == "wrap":
         for axis, (left_index, right_index) in zip(axes, pad_width):

@@ -3,26 +3,35 @@
 """
 import functools
 
-from numpy.core.numeric import (
-    asanyarray, arange, zeros, greater_equal, multiply, ones,
-    asarray, where, int8, int16, int32, int64, intp, empty, promote_types,
-    diagonal, nonzero, indices
-    )
+from numpy.core.numeric import (asanyarray, arange, zeros, greater_equal,
+                                multiply, ones, asarray, where, int8, int16,
+                                int32, int64, intp, empty, promote_types,
+                                diagonal, nonzero, indices)
 from numpy.core.overrides import set_array_function_like_doc, set_module
 from numpy.core import overrides
 from numpy.core import iinfo
 from numpy.lib.stride_tricks import broadcast_to
 
-
 __all__ = [
-    'diag', 'diagflat', 'eye', 'fliplr', 'flipud', 'tri', 'triu',
-    'tril', 'vander', 'histogram2d', 'mask_indices', 'tril_indices',
-    'tril_indices_from', 'triu_indices', 'triu_indices_from', ]
+    'diag',
+    'diagflat',
+    'eye',
+    'fliplr',
+    'flipud',
+    'tri',
+    'triu',
+    'tril',
+    'vander',
+    'histogram2d',
+    'mask_indices',
+    'tril_indices',
+    'tril_indices_from',
+    'triu_indices',
+    'triu_indices_from',
+]
 
-
-array_function_dispatch = functools.partial(
-    overrides.array_function_dispatch, module='numpy')
-
+array_function_dispatch = functools.partial(overrides.array_function_dispatch,
+                                            module='numpy')
 
 i1 = iinfo(int8)
 i2 = iinfo(int16)
@@ -41,7 +50,7 @@ def _min_int(low, high):
 
 
 def _flip_dispatcher(m):
-    return (m,)
+    return (m, )
 
 
 @array_function_dispatch(_flip_dispatcher)
@@ -155,7 +164,7 @@ def flipud(m):
 
 
 def _eye_dispatcher(N, M=None, k=None, dtype=None, order=None, *, like=None):
-    return (like,)
+    return (like, )
 
 
 @set_array_function_like_doc
@@ -218,17 +227,15 @@ def eye(N, M=None, k=0, dtype=float, order='C', *, like=None):
         i = k
     else:
         i = (-k) * M
-    m[:M-k].flat[i::M+1] = 1
+    m[:M - k].flat[i::M + 1] = 1
     return m
 
 
-_eye_with_like = array_function_dispatch(
-    _eye_dispatcher
-)(eye)
+_eye_with_like = array_function_dispatch(_eye_dispatcher)(eye)
 
 
 def _diag_dispatcher(v, k=None):
-    return (v,)
+    return (v, )
 
 
 @array_function_dispatch(_diag_dispatcher)
@@ -289,13 +296,13 @@ def diag(v, k=0):
     v = asanyarray(v)
     s = v.shape
     if len(s) == 1:
-        n = s[0]+abs(k)
+        n = s[0] + abs(k)
         res = zeros((n, n), v.dtype)
         if k >= 0:
             i = k
         else:
             i = (-k) * n
-        res[:n-k].flat[i::n+1] = v
+        res[:n - k].flat[i::n + 1] = v
         return res
     elif len(s) == 2:
         return diagonal(v, k)
@@ -352,11 +359,11 @@ def diagflat(v, k=0):
     n = s + abs(k)
     res = zeros((n, n), v.dtype)
     if (k >= 0):
-        i = arange(0, n-k, dtype=intp)
-        fi = i+k+i*n
+        i = arange(0, n - k, dtype=intp)
+        fi = i + k + i * n
     else:
-        i = arange(0, n+k, dtype=intp)
-        fi = i+(i-k)*n
+        i = arange(0, n + k, dtype=intp)
+        fi = i + (i - k) * n
     res.flat[fi] = v
     if not wrap:
         return res
@@ -364,7 +371,7 @@ def diagflat(v, k=0):
 
 
 def _tri_dispatcher(N, M=None, k=None, dtype=None, *, like=None):
-    return (like,)
+    return (like, )
 
 
 @set_array_function_like_doc
@@ -416,7 +423,7 @@ def tri(N, M=None, k=0, dtype=float, *, like=None):
         M = N
 
     m = greater_equal.outer(arange(N, dtype=_min_int(0, N)),
-                            arange(-k, M-k, dtype=_min_int(-k, M - k)))
+                            arange(-k, M - k, dtype=_min_int(-k, M - k)))
 
     # Avoid making a copy if the requested type is already bool
     m = m.astype(dtype, copy=False)
@@ -424,13 +431,11 @@ def tri(N, M=None, k=0, dtype=float, *, like=None):
     return m
 
 
-_tri_with_like = array_function_dispatch(
-    _tri_dispatcher
-)(tri)
+_tri_with_like = array_function_dispatch(_tri_dispatcher)(tri)
 
 
 def _trilu_dispatcher(m, k=None):
-    return (m,)
+    return (m, )
 
 
 @array_function_dispatch(_trilu_dispatcher)
@@ -527,13 +532,13 @@ def triu(m, k=0):
 
     """
     m = asanyarray(m)
-    mask = tri(*m.shape[-2:], k=k-1, dtype=bool)
+    mask = tri(*m.shape[-2:], k=k - 1, dtype=bool)
 
     return where(mask, zeros(1, m.dtype), m)
 
 
 def _vander_dispatcher(x, N=None, increasing=None):
-    return (x,)
+    return (x, )
 
 
 # Originally borrowed from John Hunter and matplotlib
@@ -628,8 +633,13 @@ def vander(x, N=None, increasing=False):
     return v
 
 
-def _histogram2d_dispatcher(x, y, bins=None, range=None, normed=None,
-                            weights=None, density=None):
+def _histogram2d_dispatcher(x,
+                            y,
+                            bins=None,
+                            range=None,
+                            normed=None,
+                            weights=None,
+                            density=None):
     yield x
     yield y
 
@@ -647,7 +657,12 @@ def _histogram2d_dispatcher(x, y, bins=None, range=None, normed=None,
 
 
 @array_function_dispatch(_histogram2d_dispatcher)
-def histogram2d(x, y, bins=10, range=None, normed=None, weights=None,
+def histogram2d(x,
+                y,
+                bins=10,
+                range=None,
+                normed=None,
+                weights=None,
                 density=None):
     """
     Compute the bi-dimensional histogram of two data samples.
@@ -804,7 +819,7 @@ def histogram2d(x, y, bins=10, range=None, normed=None, weights=None,
     >>> plt.show()
     """
     from numpy import histogramdd
-    
+
     if len(x) != len(y):
         raise ValueError('x and y must have the same length.')
 
@@ -971,12 +986,13 @@ def tril_indices(n, k=0, m=None):
     """
     tri_ = tri(n, m, k=k, dtype=bool)
 
-    return tuple(broadcast_to(inds, tri_.shape)[tri_]
-                 for inds in indices(tri_.shape, sparse=True))
+    return tuple(
+        broadcast_to(inds, tri_.shape)[tri_]
+        for inds in indices(tri_.shape, sparse=True))
 
 
 def _trilu_indices_form_dispatcher(arr, k=None):
-    return (arr,)
+    return (arr, )
 
 
 @array_function_dispatch(_trilu_indices_form_dispatcher)
@@ -1090,8 +1106,9 @@ def triu_indices(n, k=0, m=None):
     """
     tri_ = ~tri(n, m, k=k - 1, dtype=bool)
 
-    return tuple(broadcast_to(inds, tri_.shape)[tri_]
-                 for inds in indices(tri_.shape, sparse=True))
+    return tuple(
+        broadcast_to(inds, tri_.shape)[tri_]
+        for inds in indices(tri_.shape, sparse=True))
 
 
 @array_function_dispatch(_trilu_indices_form_dispatcher)

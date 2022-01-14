@@ -166,7 +166,10 @@ class LineSplitter:
         """
         return lambda input: [_.strip() for _ in method(input)]
 
-    def __init__(self, delimiter=None, comments='#', autostrip=True,
+    def __init__(self,
+                 delimiter=None,
+                 comments='#',
+                 autostrip=True,
                  encoding=None):
         delimiter = _decode_line(delimiter)
         comments = _decode_line(comments)
@@ -184,8 +187,8 @@ class LineSplitter:
             delimiter = [slice(i, j) for (i, j) in zip(idx[:-1], idx[1:])]
         # Delimiter is a single integer
         elif int(delimiter):
-            (_handyman, delimiter) = (
-                    self._fixedwidth_splitter, int(delimiter))
+            (_handyman, delimiter) = (self._fixedwidth_splitter,
+                                      int(delimiter))
         else:
             (_handyman, delimiter) = (self._delimited_splitter, None)
         self.delimiter = delimiter
@@ -281,8 +284,11 @@ class NameValidator:
     defaultexcludelist = ['return', 'file', 'print']
     defaultdeletechars = set(r"""~!@#$%^&*()-=+~\|]}[{';: /?.>,<""")
 
-    def __init__(self, excludelist=None, deletechars=None,
-                 case_sensitive=None, replace_space='_'):
+    def __init__(self,
+                 excludelist=None,
+                 deletechars=None,
+                 case_sensitive=None,
+                 replace_space='_'):
         # Process the exclusion list ..
         if excludelist is None:
             excludelist = []
@@ -340,7 +346,9 @@ class NameValidator:
                 return None
             names = []
         if isinstance(names, str):
-            names = [names, ]
+            names = [
+                names,
+            ]
         if nbfields is not None:
             nbnames = len(names)
             if (nbnames < nbfields):
@@ -495,27 +503,30 @@ class StringConverter:
         upgrade or not. Default is False.
 
     """
-    _mapper = [(nx.bool_, str2bool, False),
-               (nx.int_, int, -1),]
+    _mapper = [
+        (nx.bool_, str2bool, False),
+        (nx.int_, int, -1),
+    ]
 
     # On 32-bit systems, we need to make sure that we explicitly include
     # nx.int64 since ns.int_ is nx.int32.
     if nx.dtype(nx.int_).itemsize < nx.dtype(nx.int64).itemsize:
         _mapper.append((nx.int64, int, -1))
 
-    _mapper.extend([(nx.float64, float, nx.nan),
-                    (nx.complex128, complex, nx.nan + 0j),
-                    (nx.longdouble, nx.longdouble, nx.nan),
-                    # If a non-default dtype is passed, fall back to generic
-                    # ones (should only be used for the converter)
-                    (nx.integer, int, -1),
-                    (nx.floating, float, nx.nan),
-                    (nx.complexfloating, complex, nx.nan + 0j),
-                    # Last, try with the string types (must be last, because
-                    # `_mapper[-1]` is used as default in some cases)
-                    (nx.unicode_, asunicode, '???'),
-                    (nx.string_, asbytes, '???'),
-                    ])
+    _mapper.extend([
+        (nx.float64, float, nx.nan),
+        (nx.complex128, complex, nx.nan + 0j),
+        (nx.longdouble, nx.longdouble, nx.nan),
+        # If a non-default dtype is passed, fall back to generic
+        # ones (should only be used for the converter)
+        (nx.integer, int, -1),
+        (nx.floating, float, nx.nan),
+        (nx.complexfloating, complex, nx.nan + 0j),
+        # Last, try with the string types (must be last, because
+        # `_mapper[-1]` is used as default in some cases)
+        (nx.unicode_, asunicode, '???'),
+        (nx.string_, asbytes, '???'),
+    ])
 
     @classmethod
     def _getdtype(cls, val):
@@ -594,7 +605,10 @@ class StringConverter:
 
         raise LookupError
 
-    def __init__(self, dtype_or_func=None, default=None, missing_values=None,
+    def __init__(self,
+                 dtype_or_func=None,
+                 default=None,
+                 missing_values=None,
                  locked=False):
         # Defines a lock for upgrade
         self._locked = bool(locked)
@@ -628,7 +642,8 @@ class StringConverter:
 
             # find the best match in our mapper
             try:
-                self._status, (_, func, default_def) = self._find_map_entry(dtype)
+                self._status, (_, func,
+                               default_def) = self._find_map_entry(dtype)
             except LookupError:
                 # no match
                 self.default = default
@@ -752,7 +767,7 @@ class StringConverter:
     def iterupgrade(self, value):
         self._checked = True
         if not hasattr(value, '__iter__'):
-            value = (value,)
+            value = (value, )
         _strict_call = self._strict_call
         try:
             for _m in value:
@@ -761,8 +776,12 @@ class StringConverter:
             self._do_upgrade()
             self.iterupgrade(value)
 
-    def update(self, func, default=None, testing_value=None,
-               missing_values='', locked=False):
+    def update(self,
+               func,
+               default=None,
+               testing_value=None,
+               missing_values='',
+               locked=False):
         """
         Set StringConverter attributes directly.
 
@@ -881,7 +900,8 @@ def easy_dtype(ndtype, names=None, defaultfmt="f%i", **validationargs):
                 ndtype = np.dtype(list(zip(names, formats)))
             # Structured dtype: just validate the names as needed
             else:
-                ndtype.names = validate(names, nbfields=len(ndtype.names),
+                ndtype.names = validate(names,
+                                        nbfields=len(ndtype.names),
                                         defaultfmt=defaultfmt)
         # No implicit names
         elif ndtype.names is not None:

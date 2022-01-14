@@ -4,10 +4,11 @@
 import functools
 import warnings
 
-__all__ = ['iscomplexobj', 'isrealobj', 'imag', 'iscomplex',
-           'isreal', 'nan_to_num', 'real', 'real_if_close',
-           'typename', 'asfarray', 'mintypecode',
-           'common_type']
+__all__ = [
+    'iscomplexobj', 'isrealobj', 'imag', 'iscomplex', 'isreal', 'nan_to_num',
+    'real', 'real_if_close', 'typename', 'asfarray', 'mintypecode',
+    'common_type'
+]
 
 import numpy.core.numeric as _nx
 from numpy.core.numeric import asarray, asanyarray, isnan, zeros
@@ -15,10 +16,8 @@ from numpy.core.overrides import set_module
 from numpy.core import overrides
 from .ufunclike import isneginf, isposinf
 
-
-array_function_dispatch = functools.partial(
-    overrides.array_function_dispatch, module='numpy')
-
+array_function_dispatch = functools.partial(overrides.array_function_dispatch,
+                                            module='numpy')
 
 _typecodes_by_elsize = 'GDFgdfQqLlIiHhBb?'
 
@@ -78,7 +77,7 @@ def mintypecode(typechars, typeset='GDFgdf', default='d'):
 
 
 def _asfarray_dispatcher(a, dtype=None):
-    return (a,)
+    return (a, )
 
 
 @array_function_dispatch(_asfarray_dispatcher)
@@ -115,7 +114,7 @@ def asfarray(a, dtype=_nx.float_):
 
 
 def _real_dispatcher(val):
-    return (val,)
+    return (val, )
 
 
 @array_function_dispatch(_real_dispatcher)
@@ -161,7 +160,7 @@ def real(val):
 
 
 def _imag_dispatcher(val):
-    return (val,)
+    return (val, )
 
 
 @array_function_dispatch(_imag_dispatcher)
@@ -204,7 +203,7 @@ def imag(val):
 
 
 def _is_type_dispatcher(x):
-    return (x,)
+    return (x, )
 
 
 @array_function_dispatch(_is_type_dispatcher)
@@ -241,7 +240,7 @@ def iscomplex(x):
     if issubclass(ax.dtype.type, _nx.complexfloating):
         return ax.imag != 0
     res = zeros(ax.shape, bool)
-    return res[()]   # convert to scalar if needed
+    return res[()]  # convert to scalar if needed
 
 
 @array_function_dispatch(_is_type_dispatcher)
@@ -389,7 +388,9 @@ def isrealobj(x):
     """
     return not iscomplexobj(x)
 
+
 #-----------------------------------------------------------------------------
+
 
 def _getmaxmin(t):
     from numpy.core import getlimits
@@ -398,7 +399,7 @@ def _getmaxmin(t):
 
 
 def _nan_to_num_dispatcher(x, copy=None, nan=None, posinf=None, neginf=None):
-    return (x,)
+    return (x, )
 
 
 @array_function_dispatch(_nan_to_num_dispatcher)
@@ -505,7 +506,7 @@ def nan_to_num(x, copy=True, nan=0.0, posinf=None, neginf=None):
 
     iscomplex = issubclass(xtype, _nx.complexfloating)
 
-    dest = (x.real, x.imag) if iscomplex else (x,)
+    dest = (x.real, x.imag) if iscomplex else (x, )
     maxf, minf = _getmaxmin(x.real.dtype)
     if posinf is not None:
         maxf = posinf
@@ -520,10 +521,12 @@ def nan_to_num(x, copy=True, nan=0.0, posinf=None, neginf=None):
         _nx.copyto(d, minf, where=idx_neginf)
     return x[()] if isscalar else x
 
+
 #-----------------------------------------------------------------------------
 
+
 def _real_if_close_dispatcher(a, tol=None):
-    return (a,)
+    return (a, )
 
 
 @array_function_dispatch(_real_if_close_dispatcher)
@@ -585,29 +588,31 @@ def real_if_close(a, tol=100):
 
 #-----------------------------------------------------------------------------
 
-_namefromtype = {'S1': 'character',
-                 '?': 'bool',
-                 'b': 'signed char',
-                 'B': 'unsigned char',
-                 'h': 'short',
-                 'H': 'unsigned short',
-                 'i': 'integer',
-                 'I': 'unsigned integer',
-                 'l': 'long integer',
-                 'L': 'unsigned long integer',
-                 'q': 'long long integer',
-                 'Q': 'unsigned long long integer',
-                 'f': 'single precision',
-                 'd': 'double precision',
-                 'g': 'long precision',
-                 'F': 'complex single precision',
-                 'D': 'complex double precision',
-                 'G': 'complex long double precision',
-                 'S': 'string',
-                 'U': 'unicode',
-                 'V': 'void',
-                 'O': 'object'
-                 }
+_namefromtype = {
+    'S1': 'character',
+    '?': 'bool',
+    'b': 'signed char',
+    'B': 'unsigned char',
+    'h': 'short',
+    'H': 'unsigned short',
+    'i': 'integer',
+    'I': 'unsigned integer',
+    'l': 'long integer',
+    'L': 'unsigned long integer',
+    'q': 'long long integer',
+    'Q': 'unsigned long long integer',
+    'f': 'single precision',
+    'd': 'double precision',
+    'g': 'long precision',
+    'F': 'complex single precision',
+    'D': 'complex double precision',
+    'G': 'complex long double precision',
+    'S': 'string',
+    'U': 'unicode',
+    'V': 'void',
+    'O': 'object'
+}
+
 
 @set_module('numpy')
 def typename(char):
@@ -661,18 +666,21 @@ def typename(char):
     """
     return _namefromtype[char]
 
+
 #-----------------------------------------------------------------------------
 
 #determine the "minimum common type" for a group of arrays.
 array_type = [[_nx.half, _nx.single, _nx.double, _nx.longdouble],
               [None, _nx.csingle, _nx.cdouble, _nx.clongdouble]]
-array_precision = {_nx.half: 0,
-                   _nx.single: 1,
-                   _nx.double: 2,
-                   _nx.longdouble: 3,
-                   _nx.csingle: 1,
-                   _nx.cdouble: 2,
-                   _nx.clongdouble: 3}
+array_precision = {
+    _nx.half: 0,
+    _nx.single: 1,
+    _nx.double: 2,
+    _nx.longdouble: 3,
+    _nx.csingle: 1,
+    _nx.cdouble: 2,
+    _nx.clongdouble: 3
+}
 
 
 def _common_type_dispatcher(*arrays):

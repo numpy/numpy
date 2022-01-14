@@ -4,9 +4,8 @@ import math
 import warnings
 
 import numpy.core.numeric as _nx
-from numpy.core.numeric import (
-    asarray, ScalarType, array, alltrue, cumprod, arange, ndim
-)
+from numpy.core.numeric import (asarray, ScalarType, array, alltrue, cumprod,
+                                arange, ndim)
 from numpy.core.numerictypes import find_common_type, issubdtype
 
 import numpy.matrixlib as matrixlib
@@ -16,14 +15,12 @@ from numpy.core.overrides import set_module
 from numpy.core import overrides, linspace
 from numpy.lib.stride_tricks import as_strided
 
-
-array_function_dispatch = functools.partial(
-    overrides.array_function_dispatch, module='numpy')
-
+array_function_dispatch = functools.partial(overrides.array_function_dispatch,
+                                            module='numpy')
 
 __all__ = [
-    'ravel_multi_index', 'unravel_index', 'mgrid', 'ogrid', 'r_', 'c_',
-    's_', 'index_exp', 'ix_', 'ndenumerate', 'ndindex', 'fill_diagonal',
+    'ravel_multi_index', 'unravel_index', 'mgrid', 'ogrid', 'r_', 'c_', 's_',
+    'index_exp', 'ix_', 'ndenumerate', 'ndindex', 'fill_diagonal',
     'diag_indices', 'diag_indices_from'
 ]
 
@@ -102,7 +99,7 @@ def ix_(*args):
             raise ValueError("Cross index must be 1 dimensional")
         if issubdtype(new.dtype, _nx.bool_):
             new, = new.nonzero()
-        new = new.reshape((1,)*k + (new.size,) + (1,)*(nd-k-1))
+        new = new.reshape((1, ) * k + (new.size, ) + (1, ) * (nd - k - 1))
         out.append(new)
     return tuple(out)
 
@@ -162,13 +159,15 @@ class nd_grid:
                 else:
                     size.append(
                         int(math.ceil((kk.stop - start) / (step * 1.0))))
-                if (isinstance(step, (_nx.floating, float)) or
-                        isinstance(start, (_nx.floating, float)) or
-                        isinstance(kk.stop, (_nx.floating, float))):
+                if (isinstance(step, (_nx.floating, float))
+                        or isinstance(start, (_nx.floating, float))
+                        or isinstance(kk.stop, (_nx.floating, float))):
                     typ = float
             if self.sparse:
-                nn = [_nx.arange(_x, dtype=_t)
-                      for _x, _t in zip(size, (typ,)*len(size))]
+                nn = [
+                    _nx.arange(_x, dtype=_t)
+                    for _x, _t in zip(size, (typ, ) * len(size))
+                ]
             else:
                 nn = _nx.indices(size, typ)
             for k, kk in enumerate(key):
@@ -182,9 +181,9 @@ class nd_grid:
                     step = int(abs(step))
                     if step != 1:
                         step = (kk.stop - start) / float(step - 1)
-                nn[k] = (nn[k]*step+start)
+                nn[k] = (nn[k] * step + start)
             if self.sparse:
-                slobj = [_nx.newaxis]*len(size)
+                slobj = [_nx.newaxis] * len(size)
                 for k in range(len(size)):
                     slobj[k] = slice(None, None)
                     nn[k] = nn[k][tuple(slobj)]
@@ -200,8 +199,8 @@ class nd_grid:
                 step = abs(step)
                 length = int(step)
                 if step != 1:
-                    step = (key.stop-start)/float(step-1)
-                return _nx.arange(0, length, 1, float)*step + start
+                    step = (key.stop - start) / float(step - 1)
+                return _nx.arange(0, length, 1, float) * step + start
             else:
                 return _nx.arange(start, stop, step)
 
@@ -327,7 +326,7 @@ class AxisConcatenator:
             return mymat
 
         if not isinstance(key, tuple):
-            key = (key,)
+            key = (key, )
 
         # copy attributes, since they can be overridden in the first argument
         trans1d = self.trans1d
@@ -376,8 +375,8 @@ class AxisConcatenator:
                         continue
                     except Exception as e:
                         raise ValueError(
-                            "unknown special directive {!r}".format(item)
-                        ) from e
+                            "unknown special directive {!r}".format(
+                                item)) from e
                 try:
                     axis = int(item)
                     continue
@@ -420,6 +419,7 @@ class AxisConcatenator:
 
     def __len__(self):
         return 0
+
 
 # separate classes are used here instead of just making r_ = concatentor(0),
 # etc. because otherwise we couldn't get the doc string to come out right
@@ -657,9 +657,11 @@ class ndindex:
     def __init__(self, *shape):
         if len(shape) == 1 and isinstance(shape[0], tuple):
             shape = shape[0]
-        x = as_strided(_nx.zeros(1), shape=shape,
+        x = as_strided(_nx.zeros(1),
+                       shape=shape,
                        strides=_nx.zeros_like(shape))
-        self._it = _nx.nditer(x, flags=['multi_index', 'zerosize_ok'],
+        self._it = _nx.nditer(x,
+                              flags=['multi_index', 'zerosize_ok'],
                               order='C')
 
     def __iter__(self):
@@ -678,7 +680,8 @@ class ndindex:
         # NumPy 1.20.0, 2020-09-08
         warnings.warn(
             "`ndindex.ndincr()` is deprecated, use `next(ndindex)` instead",
-            DeprecationWarning, stacklevel=2)
+            DeprecationWarning,
+            stacklevel=2)
         next(self)
 
     def __next__(self):
@@ -707,6 +710,7 @@ class ndindex:
 # Cosmetic changes by T. Oliphant 2001
 #
 #
+
 
 class IndexExpression:
     """
@@ -757,7 +761,7 @@ class IndexExpression:
 
     def __getitem__(self, item):
         if self.maketuple and not isinstance(item, tuple):
-            return (item,)
+            return (item, )
         else:
             return item
 
@@ -767,13 +771,12 @@ s_ = IndexExpression(maketuple=False)
 
 # End contribution from Konrad.
 
-
 # The following functions complement those in twodim_base, but are
 # applicable to N-dimensions.
 
 
 def _fill_diagonal_dispatcher(a, val, wrap=None):
-    return (a,)
+    return (a, )
 
 
 @array_function_dispatch(_fill_diagonal_dispatcher)
@@ -976,11 +979,11 @@ def diag_indices(n, ndim=2):
 
     """
     idx = arange(n)
-    return (idx,) * ndim
+    return (idx, ) * ndim
 
 
 def _diag_indices_from(arr):
-    return (arr,)
+    return (arr, )
 
 
 @array_function_dispatch(_diag_indices_from)

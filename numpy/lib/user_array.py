@@ -5,12 +5,11 @@ Try to inherit from the ndarray instead of using this class as this is not
 complete.
 
 """
-from numpy.core import (
-    array, asarray, absolute, add, subtract, multiply, divide,
-    remainder, power, left_shift, right_shift, bitwise_and, bitwise_or,
-    bitwise_xor, invert, less, less_equal, not_equal, equal, greater,
-    greater_equal, shape, reshape, arange, sin, sqrt, transpose
-)
+from numpy.core import (array, asarray, absolute, add, subtract, multiply,
+                        divide, remainder, power, left_shift, right_shift,
+                        bitwise_and, bitwise_or, bitwise_xor, invert, less,
+                        less_equal, not_equal, equal, greater, greater_equal,
+                        shape, reshape, arange, sin, sqrt, transpose)
 
 
 class container:
@@ -27,6 +26,7 @@ class container:
     astype
 
     """
+
     def __init__(self, data, dtype=None, copy=True):
         self.array = array(data, dtype, copy=copy)
 
@@ -106,8 +106,9 @@ class container:
         return self
 
     def __divmod__(self, other):
-        return (self._rc(divide(self.array, other)),
-                self._rc(remainder(self.array, other)))
+        return (self._rc(divide(self.array,
+                                other)), self._rc(remainder(self.array,
+                                                            other)))
 
     def __rdivmod__(self, other):
         return (self._rc(divide(other, self.array)),
@@ -263,6 +264,7 @@ class container:
             return object.__getattribute__(self, attr)
         return self.array.__getattribute__(attr)
 
+
 #############################################################
 # Test of class container
 #############################################################
@@ -279,7 +281,7 @@ if __name__ == '__main__':
     # this did not change ua[0,0], which is not normal behavior
     ua_small[0, 0] = 10
     print(ua_small[0, 0], ua[0, 0])
-    print(sin(ua_small) / 3. * 6. + sqrt(ua_small ** 2))
+    print(sin(ua_small) / 3. * 6. + sqrt(ua_small**2))
     print(less(ua_small, 103), type(less(ua_small, 103)))
     print(type(ua_small * reshape(arange(15), shape(ua_small))))
     print(reshape(ua_small, (5, 3)))

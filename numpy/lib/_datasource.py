@@ -39,7 +39,6 @@ import io
 
 from numpy.core.overrides import set_module
 
-
 _open = open
 
 
@@ -58,10 +57,11 @@ def _check_mode(mode, encoding, newline):
     """
     if "t" in mode:
         if "b" in mode:
-            raise ValueError("Invalid mode: %r" % (mode,))
+            raise ValueError("Invalid mode: %r" % (mode, ))
     else:
         if encoding is not None:
-            raise ValueError("Argument 'encoding' not supported in binary mode")
+            raise ValueError(
+                "Argument 'encoding' not supported in binary mode")
         if newline is not None:
             raise ValueError("Argument 'newline' not supported in binary mode")
 
@@ -69,6 +69,7 @@ def _check_mode(mode, encoding, newline):
 # Using a class instead of a module-level dictionary
 # to reduce the initial 'import numpy' overhead by
 # deferring the import of lzma, bz2 and gzip until needed
+
 
 # TODO: .zip support, .tar support?
 class _FileOpeners:
@@ -150,7 +151,9 @@ class _FileOpeners:
         self._load()
         return self._file_openers[key]
 
+
 _file_openers = _FileOpeners()
+
 
 def open(path, mode='r', destpath=os.curdir, encoding=None, newline=None):
     """
@@ -296,7 +299,7 @@ class DataSource:
         if not self._iszip(filename):
             for zipext in _file_openers.keys():
                 if zipext:
-                    names.append(filename+zipext)
+                    names.append(filename + zipext)
         return names
 
     def _isurl(self, path):
@@ -477,7 +480,7 @@ class DataSource:
             try:
                 netfile = urlopen(path)
                 netfile.close()
-                del(netfile)
+                del (netfile)
                 return True
             except URLError:
                 return False
@@ -526,13 +529,15 @@ class DataSource:
             _fname, ext = self._splitzipext(found)
             if ext == 'bz2':
                 mode.replace("+", "")
-            return _file_openers[ext](found, mode=mode,
-                                      encoding=encoding, newline=newline)
+            return _file_openers[ext](found,
+                                      mode=mode,
+                                      encoding=encoding,
+                                      newline=newline)
         else:
             raise FileNotFoundError(f"{path} not found.")
 
 
-class Repository (DataSource):
+class Repository(DataSource):
     """
     Repository(baseurl, destpath='.')
 
@@ -586,7 +591,7 @@ class Repository (DataSource):
         if len(splitpath) == 1:
             result = os.path.join(self._baseurl, path)
         else:
-            result = path    # path contains baseurl already
+            result = path  # path contains baseurl already
         return result
 
     def _findfile(self, path):
@@ -679,8 +684,11 @@ class Repository (DataSource):
             File object.
 
         """
-        return DataSource.open(self, self._fullpath(path), mode,
-                               encoding=encoding, newline=newline)
+        return DataSource.open(self,
+                               self._fullpath(path),
+                               mode,
+                               encoding=encoding,
+                               newline=newline)
 
     def listdir(self):
         """
@@ -698,6 +706,6 @@ class Repository (DataSource):
         """
         if self._isurl(self._baseurl):
             raise NotImplementedError(
-                  "Directory listing of URLs, not supported yet.")
+                "Directory listing of URLs, not supported yet.")
         else:
             return os.listdir(self._baseurl)

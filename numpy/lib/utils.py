@@ -12,9 +12,10 @@ import numpy as np
 
 __all__ = [
     'issubclass_', 'issubsctype', 'issubdtype', 'deprecate',
-    'deprecate_with_doc', 'get_include', 'info', 'source', 'who',
-    'lookfor', 'byte_bounds', 'safe_eval'
-    ]
+    'deprecate_with_doc', 'get_include', 'info', 'source', 'who', 'lookfor',
+    'byte_bounds', 'safe_eval'
+]
+
 
 def get_include():
     """
@@ -91,7 +92,7 @@ class _Deprecate:
         if message is not None:
             depdoc += "\n" + message
 
-        def newfunc(*args,**kwds):
+        def newfunc(*args, **kwds):
             """`arrayrange` is deprecated, use `arange` instead!"""
             warnings.warn(depdoc, DeprecationWarning, stacklevel=2)
             return func(*args, **kwds)
@@ -225,6 +226,7 @@ def deprecate_with_doc(msg):
 # Determine if two arrays can share memory
 #--------------------------------------------
 
+
 def byte_bounds(a):
     """
     Returns pointers to the end-points of an array.
@@ -270,9 +272,9 @@ def byte_bounds(a):
     else:
         for shape, stride in zip(ashape, astrides):
             if stride < 0:
-                a_low += (shape-1)*stride
+                a_low += (shape - 1) * stride
             else:
-                a_high += (shape-1)*stride
+                a_high += (shape - 1) * stride
         a_high += bytes_a
     return a_low, a_high
 
@@ -344,8 +346,7 @@ def who(vardict=None):
                 original = 1
             shapestr = " x ".join(map(str, var.shape))
             bytestr = str(var.nbytes)
-            sta.append([namestr, shapestr, bytestr, var.dtype.name,
-                        original])
+            sta.append([namestr, shapestr, bytestr, var.dtype.name, original])
 
     maxname = 0
     maxshape = 0
@@ -365,22 +366,24 @@ def who(vardict=None):
         sp1 = max(10, maxname)
         sp2 = max(10, maxshape)
         sp3 = max(10, maxbyte)
-        prval = "Name %s Shape %s Bytes %s Type" % (sp1*' ', sp2*' ', sp3*' ')
-        print(prval + "\n" + "="*(len(prval)+5) + "\n")
+        prval = "Name %s Shape %s Bytes %s Type" % (sp1 * ' ', sp2 * ' ',
+                                                    sp3 * ' ')
+        print(prval + "\n" + "=" * (len(prval) + 5) + "\n")
 
     for val in sta:
-        print("%s %s %s %s %s %s %s" % (val[0], ' '*(sp1-len(val[0])+4),
-                                        val[1], ' '*(sp2-len(val[1])+5),
-                                        val[2], ' '*(sp3-len(val[2])+5),
-                                        val[3]))
+        print("%s %s %s %s %s %s %s" %
+              (val[0], ' ' * (sp1 - len(val[0]) + 4), val[1], ' ' *
+               (sp2 - len(val[1]) + 5), val[2], ' ' *
+               (sp3 - len(val[2]) + 5), val[3]))
     print("\nUpper bound on total bytes  =       %d" % totalbytes)
     return
 
-#-----------------------------------------------------------------------------
 
+#-----------------------------------------------------------------------------
 
 # NOTE:  pydoc defines a help function which works similarly to this
 #  except it uses a pager to take over the screen.
+
 
 # combine name and arguments and split to multiple lines of width
 # characters.  End lines on a comma and begin argument list indented with
@@ -399,19 +402,21 @@ def _split_line(name, arguments, width):
         k = k + len(argument) + len(addstr)
         if k > width:
             k = firstwidth + 1 + len(argument)
-            newstr = newstr + ",\n" + " "*(firstwidth+2) + argument
+            newstr = newstr + ",\n" + " " * (firstwidth + 2) + argument
         else:
             newstr = newstr + addstr + argument
     return newstr
 
+
 _namedict = None
 _dictlist = None
+
 
 # Traverse all module directories underneath globals
 # to see if something is defined
 def _makenamedict(module='numpy'):
     module = __import__(module, globals(), locals(), [])
-    thedict = {module.__name__:module.__dict__}
+    thedict = {module.__name__: module.__dict__}
     dictlist = [module.__name__]
     totraverse = [module.__dict__]
     while True:
@@ -465,10 +470,8 @@ def _info(obj, output=None):
     print("aligned: ", bp(obj.flags.aligned), file=output)
     print("contiguous: ", bp(obj.flags.contiguous), file=output)
     print("fortran: ", obj.flags.fortran, file=output)
-    print(
-        "data pointer: %s%s" % (hex(obj.ctypes._as_parameter_.value), extra),
-        file=output
-        )
+    print("data pointer: %s%s" % (hex(obj.ctypes._as_parameter_.value), extra),
+          file=output)
     print("byteorder: ", end=' ', file=output)
     if endian in ['|', '=']:
         print("%s%s%s" % (tic, sys.byteorder, tic), file=output)
@@ -539,8 +542,8 @@ def info(object=None, maxwidth=76, output=None, toplevel='numpy'):
     import pydoc
     import inspect
 
-    if (hasattr(object, '_ppimport_importer') or
-           hasattr(object, '_ppimport_module')):
+    if (hasattr(object, '_ppimport_importer')
+            or hasattr(object, '_ppimport_module')):
         object = object._ppimport_module
     elif hasattr(object, '_ppimport_attr'):
         object = object._ppimport_attr
@@ -563,13 +566,12 @@ def info(object=None, maxwidth=76, output=None, toplevel='numpy'):
                 if id(obj) in objlist:
                     print("\n     "
                           "*** Repeat reference found in %s *** " % namestr,
-                          file=output
-                          )
+                          file=output)
                 else:
                     objlist.append(id(obj))
                     print("     *** Found in %s ***" % namestr, file=output)
                     info(obj)
-                    print("-"*maxwidth, file=output)
+                    print("-" * maxwidth, file=output)
                 numfound += 1
             except KeyError:
                 pass
@@ -578,8 +580,7 @@ def info(object=None, maxwidth=76, output=None, toplevel='numpy'):
         else:
             print("\n     "
                   "*** Total of %d references found. ***" % numfound,
-                  file=output
-                  )
+                  file=output)
 
     elif inspect.isfunction(object) or inspect.ismethod(object):
         name = object.__name__
@@ -588,7 +589,7 @@ def info(object=None, maxwidth=76, output=None, toplevel='numpy'):
         except Exception:
             arguments = "()"
 
-        if len(name+arguments) > maxwidth:
+        if len(name + arguments) > maxwidth:
             argstr = _split_line(name, arguments, maxwidth)
         else:
             argstr = name + arguments
@@ -603,7 +604,7 @@ def info(object=None, maxwidth=76, output=None, toplevel='numpy'):
         except Exception:
             arguments = "()"
 
-        if len(name+arguments) > maxwidth:
+        if len(name + arguments) > maxwidth:
             argstr = _split_line(name, arguments, maxwidth)
         else:
             argstr = name + arguments
@@ -625,8 +626,7 @@ def info(object=None, maxwidth=76, output=None, toplevel='numpy'):
                 thisobj = getattr(object, meth, None)
                 if thisobj is not None:
                     methstr, other = pydoc.splitdoc(
-                            inspect.getdoc(thisobj) or "None"
-                            )
+                        inspect.getdoc(thisobj) or "None")
                 print("  %s  --  %s" % (meth, methstr), file=output)
 
     elif hasattr(object, '__doc__'):
@@ -693,7 +693,10 @@ _function_signature_re = re.compile(r"[a-z0-9_]+\(.*[,=].*\)", re.I)
 
 
 @set_module('numpy')
-def lookfor(what, module=None, import_modules=True, regenerate=False,
+def lookfor(what,
+            module=None,
+            import_modules=True,
+            regenerate=False,
             output=None):
     """
     Do a keyword search on docstrings.
@@ -763,8 +766,12 @@ def lookfor(what, module=None, import_modules=True, regenerate=False,
     # XXX: this is full Harrison-Stetson heuristics now,
     # XXX: it probably could be improved
 
-    kind_relevance = {'func': 1000, 'class': 1000,
-                      'module': -1000, 'object': -1000}
+    kind_relevance = {
+        'func': 1000,
+        'class': 1000,
+        'module': -1000,
+        'object': -1000
+    }
 
     def relevance(name, docstr, kind, index):
         r = 0
@@ -784,16 +791,18 @@ def lookfor(what, module=None, import_modules=True, regenerate=False,
 
     def relevance_value(a):
         return relevance(a, *cache[a])
+
     found.sort(key=relevance_value)
 
     # Pretty-print
     s = "Search results for '%s'" % (' '.join(whats))
-    help_text = [s, "-"*len(s)]
+    help_text = [s, "-" * len(s)]
     for name in found[::-1]:
         doc, kind, ix = cache[name]
 
-        doclines = [line.strip() for line in doc.strip().split("\n")
-                    if line.strip()]
+        doclines = [
+            line.strip() for line in doc.strip().split("\n") if line.strip()
+        ]
 
         # find a suitable short description
         try:
@@ -815,6 +824,7 @@ def lookfor(what, module=None, import_modules=True, regenerate=False,
         pager("\n".join(help_text))
     else:
         print("\n".join(help_text))
+
 
 def _lookfor_generate_cache(module, import_modules, regenerate):
     """
@@ -853,8 +863,8 @@ def _lookfor_generate_cache(module, import_modules, regenerate):
     elif isinstance(module, list) or isinstance(module, tuple):
         cache = {}
         for mod in module:
-            cache.update(_lookfor_generate_cache(mod, import_modules,
-                                                 regenerate))
+            cache.update(
+                _lookfor_generate_cache(mod, import_modules, regenerate))
         return cache
 
     if id(module) in _lookfor_caches and not regenerate:
@@ -888,8 +898,8 @@ def _lookfor_generate_cache(module, import_modules, regenerate):
                     for mod_path in os.listdir(pth):
                         this_py = os.path.join(pth, mod_path)
                         init_py = os.path.join(pth, mod_path, '__init__.py')
-                        if (os.path.isfile(this_py) and
-                                mod_path.endswith('.py')):
+                        if (os.path.isfile(this_py)
+                                and mod_path.endswith('.py')):
                             to_import = mod_path[:-3]
                         elif os.path.isfile(init_py):
                             to_import = mod_path
@@ -950,6 +960,7 @@ def _lookfor_generate_cache(module, import_modules, regenerate):
             cache[name] = (doc, kind, index)
 
     return cache
+
 
 def _getmembers(item):
     import inspect
@@ -1045,6 +1056,7 @@ def _median_nancheck(data, result, axis):
         result[n] = np.nan
     return result
 
+
 def _opt_info():
     """
     Returns a string contains the supported CPU features by the current build.
@@ -1056,9 +1068,9 @@ def _opt_info():
           end with `?`.
         - remained features are representing the baseline.
     """
-    from numpy.core._multiarray_umath import (
-        __cpu_features__, __cpu_baseline__, __cpu_dispatch__
-    )
+    from numpy.core._multiarray_umath import (__cpu_features__,
+                                              __cpu_baseline__,
+                                              __cpu_dispatch__)
 
     if len(__cpu_baseline__) == 0 and len(__cpu_dispatch__) == 0:
         return ''
@@ -1071,4 +1083,6 @@ def _opt_info():
             enabled_features += f" {feature}?"
 
     return enabled_features
+
+
 #-----------------------------------------------------------------------------

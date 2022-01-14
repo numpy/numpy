@@ -115,14 +115,22 @@ def as_strided(x, shape=None, strides=None, subok=False, writeable=True):
     return view
 
 
-def _sliding_window_view_dispatcher(x, window_shape, axis=None, *,
-                                    subok=None, writeable=None):
-    return (x,)
+def _sliding_window_view_dispatcher(x,
+                                    window_shape,
+                                    axis=None,
+                                    *,
+                                    subok=None,
+                                    writeable=None):
+    return (x, )
 
 
 @array_function_dispatch(_sliding_window_view_dispatcher)
-def sliding_window_view(x, window_shape, axis=None, *,
-                        subok=False, writeable=False):
+def sliding_window_view(x,
+                        window_shape,
+                        axis=None,
+                        *,
+                        subok=False,
+                        writeable=False):
     """
     Create a sliding window view into the array with the given window shape.
 
@@ -299,9 +307,8 @@ def sliding_window_view(x, window_shape, axis=None, *,
 
     Note that a sliding window approach is often **not** optimal (see Notes).
     """
-    window_shape = (tuple(window_shape)
-                    if np.iterable(window_shape)
-                    else (window_shape,))
+    window_shape = (tuple(window_shape) if np.iterable(window_shape) else
+                    (window_shape, ))
     # first convert input to array, possibly keeping subclass
     x = np.array(x, copy=False, subok=subok)
 
@@ -333,12 +340,15 @@ def sliding_window_view(x, window_shape, axis=None, *,
                 'window shape cannot be larger than input array shape')
         x_shape_trimmed[ax] -= dim - 1
     out_shape = tuple(x_shape_trimmed) + window_shape
-    return as_strided(x, strides=out_strides, shape=out_shape,
-                      subok=subok, writeable=writeable)
+    return as_strided(x,
+                      strides=out_strides,
+                      shape=out_shape,
+                      subok=subok,
+                      writeable=writeable)
 
 
 def _broadcast_to(array, shape, subok, readonly):
-    shape = tuple(shape) if np.iterable(shape) else (shape,)
+    shape = tuple(shape) if np.iterable(shape) else (shape, )
     array = np.array(array, copy=False, subok=subok)
     if not shape and array.shape:
         raise ValueError('cannot broadcast a non-scalar to a scalar array')
@@ -346,9 +356,11 @@ def _broadcast_to(array, shape, subok, readonly):
         raise ValueError('all elements of broadcast shape must be non-'
                          'negative')
     extras = []
-    it = np.nditer(
-        (array,), flags=['multi_index', 'refs_ok', 'zerosize_ok'] + extras,
-        op_flags=['readonly'], itershape=shape, order='C')
+    it = np.nditer((array, ),
+                   flags=['multi_index', 'refs_ok', 'zerosize_ok'] + extras,
+                   op_flags=['readonly'],
+                   itershape=shape,
+                   order='C')
     with it:
         # never really has writebackifcopy semantics
         broadcast = it.itviews[0]
@@ -361,7 +373,7 @@ def _broadcast_to(array, shape, subok, readonly):
 
 
 def _broadcast_to_dispatcher(array, shape, subok=None):
-    return (array,)
+    return (array, )
 
 
 @array_function_dispatch(_broadcast_to_dispatcher, module='numpy')
@@ -543,5 +555,7 @@ def broadcast_arrays(*args, subok=False):
         # Common case where nothing needs to be broadcasted.
         return args
 
-    return [_broadcast_to(array, shape, subok=subok, readonly=False)
-            for array in args]
+    return [
+        _broadcast_to(array, shape, subok=subok, readonly=False)
+        for array in args
+    ]
