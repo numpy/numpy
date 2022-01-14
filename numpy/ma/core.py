@@ -3590,6 +3590,33 @@ class MaskedArray(ndarray):
         ma.MaskedArray.harden_mask
         ma.MaskedArray.soften_mask
 
+        Examples
+        --------
+        >>> x = np.arange(10)
+        >>> m = np.ma.masked_array(x, x>5)
+        >>> assert not m.hardmask
+
+        Since `m` has a soft mask, assigning an element value unmasks that
+        element:
+
+        >>> m[8] = 42
+        >>> m
+        masked_array(data=[0, 1, 2, 3, 4, 5, --, --, 42, --],
+                     mask=[False, False, False, False, False, False,  True,  True,
+                           False,  True],
+               fill_value=999999)
+
+        After hardening, the mask is not affected by assignments:
+
+        >>> hardened = np.ma.harden_mask(m)
+        >>> assert m.hardmask and hardened is m
+        >>> m[:] = 23
+        >>> m
+        masked_array(data=[23, 23, 23, 23, 23, 23, --, --, 23, --],
+                     mask=[False, False, False, False, False, False,  True,  True,
+                           False,  True],
+               fill_value=999999)
+
         """
         return self._hardmask
 
