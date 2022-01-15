@@ -965,7 +965,6 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
     try:
         if isinstance(fname, os.PathLike):
             fname = os.fspath(fname)
-        # TODO: loadtxt actually uses `file + ''` to decide this?!
         if isinstance(fname, str):
             fh = np.lib._datasource.open(fname, 'rt', encoding=encoding)
             if encoding is None:
@@ -1047,6 +1046,10 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
             else:
                 arr = np.concatenate(chunks, axis=0)
 
+    # NOTE: ndmin works as advertised for structured dtypes, but normally
+    #       these would return a 1D result plus the structured dimension,
+    #       so ndmin=2 adds a third dimension even when no squeezing occurs.
+    #       A `squeeze=False` could be a better solution (pandas uses squeeze).
     arr = _ensure_ndmin_ndarray(arr, ndmin=ndmin)
 
     if arr.shape:
@@ -1058,8 +1061,7 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
             )
 
     if unpack:
-        # Handle unpack like np.loadtxt.
-        # XXX Check interaction with ndmin!
+        # Unpack structured dtypes if requested:
         dt = arr.dtype
         if dt.names is not None:
             # For structured arrays, return an array for each field.

@@ -322,12 +322,9 @@ tokenize(stream *s, tokenizer_state *ts, parser_config *const config)
                 /*
                  * Finished line, do not read anymore (also do not eat \n).
                  * If we are in a quoted field and the "line" does not end with
-                 * a newline, the quoted field will be missing it right now.
-                 * (i.e. `np.loadtxt(['"a', 'b"'], dtype="S2")` reads "ab")
-                 * TODO: We should possibly insert a '\n' character when inside
-                 *       a quoted field the and '\n' character is not included
-                 *       in the string. `FileLike.readline()` does ensure it
-                 *       is included.
+                 * a newline, the quoted field will not have it either.
+                 * I.e. `np.loadtxt(['"a', 'b"'], dtype="S2", quotechar='"')`
+                 * reads "ab". This matches `next(csv.reader(['"a', 'b"']))`.
                  */
                 break;
             }
