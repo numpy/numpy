@@ -642,15 +642,28 @@ def test_warn_on_skipped_data(skiprows):
         list(np.typecodes["AllInteger"] + np.typecodes["AllFloat"]) + ["U2"])
 @pytest.mark.parametrize("swap", [True, False])
 def test_byteswapping_and_unaligned(dtype, swap):
-    data = ["x,1\n"]  # no need for complicated data
+    # Try to create "interesting" values within the valid unicode range:
+    byte_data = np.array([0x012345, 0x023456] * 8, dtype=np.uint32)
     dtype = np.dtype(dtype)
+
+    # For (c)longdouble use double -> str -> longdouble to avoid round-tripping
+    # issues.  (A bit convoluted, but necessary due to rounding.)
+    if dtype.type == np.longdouble:
+        value = np.longdouble(str(byte_data.view(np.double).item(0)))
+    elif dtype.type == np.clongdouble:
+        value = np.clongdouble(str(byte_data.view(np.double).item(0)))
+    else:
+        value = byte_data.view(dtype).item(0)
+
+    data = [f"x,{value}\n"]
     if swap:
         dtype = dtype.newbyteorder()
     full_dt = np.dtype([("a", "S1"), ("b", dtype)], align=False)
     # The above ensures that the interesting "b" field is unaligned:
     assert full_dt.fields["b"][1] == 1
-    res = np.loadtxt(data, dtype=full_dt, delimiter=",")
-    assert res["b"] == dtype.type(1)
+    res = np.loadtxt(data, dtype=full_dt, delimiter=",", encoding=None,
+                     max_rows=1)  # max-rows prevents over-allocation
+    assert res["b"] == value
 
 
 @pytest.mark.parametrize("dtype",

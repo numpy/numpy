@@ -313,20 +313,19 @@ to_unicode(PyArray_Descr *descr,
         const Py_UCS4 *str, const Py_UCS4 *end, char *dataptr,
         parser_config *NPY_UNUSED(unused))
 {
-    size_t length = descr->elsize / 4;
+    int length = descr->elsize / 4;
 
-    if (length <= (size_t)(end - str)) {
+    if (length <= end - str) {
         memcpy(dataptr, str, length * 4);
     }
     else {
         size_t given_len = end - str;
         memcpy(dataptr, str, given_len * 4);
-        memset(dataptr + given_len * 4, '\0', (length -given_len) * 4);
+        memset(dataptr + given_len * 4, '\0', (length - given_len) * 4);
     }
 
     if (!PyArray_ISNBO(descr->byteorder)) {
-        /* manual byteswap, unicode requires the array to be passed... */
-        for (int i = 0; i < descr->elsize; i++) {
+        for (int i = 0; i < length; i++) {
             npy_bswap4_unaligned(dataptr);
             dataptr += 4;
         }

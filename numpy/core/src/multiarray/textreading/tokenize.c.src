@@ -275,20 +275,26 @@ tokenizer_core_@type@(tokenizer_state *ts, parser_config *const config)
 
 
 /*
- * This version now always copies the full "row" (all tokens).  This makes
+ * This tokenizer always copies the full "row" (all tokens).  This makes
  * two things easier:
  * 1. It means that every word is guaranteed to be followed by a NUL character
  *    (although it can include one as well).
- * 2. In the usecols case we can sniff the first row easier by parsing it
- *    fully.
+ * 2. If usecols are used we can sniff the first row easier by parsing it
+ *    fully.  Further, usecols can be negative so we may not know which row we
+ *    need up-front.
  *
  * The tokenizer could grow the ability to skip fields and check the
- * maximum number of fields when known.
+ * maximum number of fields when known, it is unclear that this is worthwhile.
  *
- * Unlike other tokenizers, this one tries to work in chunks and copies
- * data to words only when it has to.  The hope is that this makes multiple
- * light-weight loops rather than a single heavy one, to allow e.g. quickly
- * scanning for the end of a field.
+ * Unlike some tokenizers, this one tries to work in chunks and copies
+ * data in chunks as well.  The hope is that this makes multiple light-weight
+ * loops rather than a single heavy one, to allow e.g. quickly scanning for the
+ * end of a field.  Copying chunks also means we usually only check once per
+ * field whether the buffer is large enough.
+ * Different choices are possible, this one seems to work well, though.
+ *
+ * The core (main part) of the tokenizer is specialized for the three Python
+ * unicode flavors UCS1, UCS2, and UCS4 as a worthwhile optimization.
  */
 NPY_NO_EXPORT int
 tokenize(stream *s, tokenizer_state *ts, parser_config *const config)
@@ -301,7 +307,6 @@ tokenize(stream *s, tokenizer_state *ts, parser_config *const config)
     /* Reset to start of buffer */
     ts->field_buffer_pos = 0;
     ts->num_fields = 0;
-    /* Add the first field */
 
     while (1) {
         /*
