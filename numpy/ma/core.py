@@ -3602,8 +3602,8 @@ class MaskedArray(ndarray):
         >>> m[8] = 42
         >>> m
         masked_array(data=[0, 1, 2, 3, 4, 5, --, --, 42, --],
-                     mask=[False, False, False, False, False, False,  True,  True,
-                           False,  True],
+                     mask=[False, False, False, False, False, False,
+                           True, True, False, True],
                fill_value=999999)
 
         After hardening, the mask is not affected by assignments:
@@ -3613,8 +3613,8 @@ class MaskedArray(ndarray):
         >>> m[:] = 23
         >>> m
         masked_array(data=[23, 23, 23, 23, 23, 23, --, --, 23, --],
-                     mask=[False, False, False, False, False, False,  True,  True,
-                           False,  True],
+                     mask=[False, False, False, False, False, False,
+                           True, True, False, True],
                fill_value=999999)
 
         """
@@ -3625,8 +3625,8 @@ class MaskedArray(ndarray):
         Copy the mask and set the `sharedmask` flag to ``False``.
 
         Whether the mask is shared between masked arrays can be seen from
-        the `sharedmask` property. `unshare_mask` ensures the mask is not shared.
-        A copy of the mask is only made if it was shared.
+        the `sharedmask` property. `unshare_mask` ensures the mask is not
+        shared. A copy of the mask is only made if it was shared.
 
         See Also
         --------
