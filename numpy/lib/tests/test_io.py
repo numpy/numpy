@@ -1212,7 +1212,7 @@ class TestLoadTxt(LoadTxtBase):
             # Same as above, but do not skip any lines:
             (0, ["-1,0\n", "1,2\n", "\n", "3,4\n"]),
             (0, ["-1,0", "1,2", "", "3,4"]),
-            (0, StringIO("-1,0\n1,2\n\n3,4")),])
+            (0, StringIO("-1,0\n1,2\n\n3,4"))])
     def test_max_rows_empty_lines(self, skip, data):
         with pytest.warns(UserWarning,
                     match=f"Input line 3.*max_rows={3-skip}"):

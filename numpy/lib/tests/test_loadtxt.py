@@ -232,6 +232,10 @@ def test_converters_negative_indices_with_usecols():
     )
     assert_equal(res, expected)
 
+    # Second test with variable number of rows:
+    res = np.loadtxt(StringIO('''0,1,2\n0,1,2,3,4'''), delimiter=",",
+                     usecols=[0, -1], converters={-1: (lambda x: -1)})
+    assert_array_equal(res, [[0, -1], [0, -1]])
 
 def test_ragged_usecols():
     # usecols, and negative ones, work even with varying number of columns.
@@ -294,16 +298,17 @@ def test_converter_with_structured_dtype():
 
 def test_converter_with_unicode_dtype():
     """
-    With the default 'bytes' encoding, tokens are encoded prior to being passed
-    to the converter. This means that the output of the converter may be bytes
-    instead of unicode as expected by `read_rows`.
+    With the default 'bytes' encoding, tokens are encoded prior to being
+    passed to the converter. This means that the output of the converter may
+    be bytes instead of unicode as expected by `read_rows`.
 
     This test checks that outputs from the above scenario are properly decoded
     prior to parsing by `read_rows`.
     """
     txt = StringIO('abc,def\nrst,xyz')
     conv = bytes.upper
-    res = np.loadtxt(txt, dtype=np.dtype("U3"), converters=conv, delimiter=",")
+    res = np.loadtxt(
+            txt, dtype=np.dtype("U3"), converters=conv, delimiter=",")
     expected = np.array([['ABC', 'DEF'], ['RST', 'XYZ']])
     assert_equal(res, expected)
 
@@ -349,9 +354,9 @@ def test_string_no_length_given(given_dtype, expected_dtype):
 
 def test_float_conversion():
     """
-    Some tests that the conversion to float64 works as accurately as the Python
-    built-in `float` function. In a naive version of the float parser, these
-    strings resulted in values that were off by an ULP or two.
+    Some tests that the conversion to float64 works as accurately as the
+    Python built-in `float` function. In a naive version of the float parser,
+    these strings resulted in values that were off by an ULP or two.
     """
     strings = [
         '0.9999999999999999',
@@ -437,16 +442,15 @@ def test_read_from_bad_generator():
             yield entry
 
     with pytest.raises(
-            TypeError, match=r"non-string returned while reading data"
-    ):
+            TypeError, match=r"non-string returned while reading data"):
         np.loadtxt(gen(), dtype="i, i", delimiter=",")
 
 
 @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
 def test_object_cleanup_on_read_error():
     sentinel = object()
-
     already_read = 0
+
     def conv(x):
         nonlocal already_read
         if already_read > 4999:
@@ -494,9 +498,8 @@ def test_converters_dict_raises_non_col_key(bad_col_ind):
 
 
 def test_converters_dict_raises_val_not_callable():
-    with pytest.raises(
-            TypeError, match="values of the converters dictionary must be callable"
-    ):
+    with pytest.raises(TypeError,
+                match="values of the converters dictionary must be callable"):
         np.loadtxt(StringIO("1 2\n3 4"), converters={0: 1})
 
 
@@ -664,7 +667,8 @@ def test_unicode_whitespace_stripping(dtype):
 
 @pytest.mark.parametrize("dtype", "FD")
 def test_unicode_whitespace_stripping_complex(dtype):
-    # Complex has a few extra cases since it has two components and parentheses
+    # Complex has a few extra cases since it has two components and
+    # parentheses
     line = " 1 , 2+3j , ( 4+5j ), ( 6+-7j )  , 8j , ( 9j ) \n"
     data = [line, line.replace(" ", "\u202F")]
     res = np.loadtxt(data, dtype=dtype, delimiter=',')
@@ -699,7 +703,7 @@ def test_no_thousands_support(dtype):
     if dtype == "e":
         pytest.skip("half assignment currently uses Python float converter")
     if dtype in "eG":
-        pytest.xfail("clongdouble assignment is buggy (uses `complex` always).")
+        pytest.xfail("clongdouble assignment is buggy (uses `complex`?).")
 
     assert int("1_1") == float("1_1") == complex("1_1") == 11
     with pytest.raises(ValueError):
@@ -713,8 +717,8 @@ def test_bad_newline_in_iterator(data):
     # In NumPy <=1.22 this was accepted, because newlines were completely
     # ignored when the input was an iterable.  This could be changed, but right
     # now, we raise an error.
-    with pytest.raises(ValueError,
-                       match="Found an unquoted embedded newline within a single line"):
+    msg = "Found an unquoted embedded newline within a single line"
+    with pytest.raises(ValueError, match=msg):
         np.loadtxt(data, delimiter=",")
 
 
@@ -780,6 +784,7 @@ class TestCReaderUnitTests:
         # the current "DataClass" backing).
         class BadFileLike:
             counter = 0
+
             def read(self, size):
                 self.counter += 1
                 if self.counter > 20:
@@ -794,19 +799,21 @@ class TestCReaderUnitTests:
         # Can only be reached if loadtxt opens the file, so it is hard to do
         # via the public interface (although maybe not impossible considering
         # the current "DataClass" backing).
+
         class BadFileLike:
             counter = 0
+
             def read(self, size):
                 return 1234  # not a string!
 
         with pytest.raises(TypeError,
-                           match="non-string returned while reading data"):
+                    match="non-string returned while reading data"):
             np.core._multiarray_umath._load_from_filelike(
                 BadFileLike(), dtype=np.dtype("i"), filelike=True)
 
     def test_not_an_iter(self):
         with pytest.raises(TypeError,
-                           match="error reading from object, expected an iterable"):
+                    match="error reading from object, expected an iterable"):
             np.core._multiarray_umath._load_from_filelike(
                 object(), dtype=np.dtype("i"), filelike=False)
 
