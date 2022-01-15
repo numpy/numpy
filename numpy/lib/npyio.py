@@ -1057,7 +1057,7 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
             warnings.warn(
                 f'loadtxt: input contained no data: "{fname}"',
                 category=UserWarning,
-                stacklevel=2
+                stacklevel=3
             )
 
     if unpack:
