@@ -220,6 +220,40 @@ struct timedelta_tag : date_tag {
     }
 };
 
+struct string_tag {
+    using type = npy_char;
+    static constexpr NPY_TYPES type_value = NPY_STRING;
+    static int less(type const* a, type const* b, size_t len) {
+      return STRING_LT(a, b, len);
+    }
+    static int less_equal(type const* a, type const* b, size_t len) {
+      return !less(b, a, len);
+    }
+    static void swap(type* a, type* b, size_t len) {
+      STRING_SWAP(a, b, len);
+    }
+    static void copy(type * a, type const* b, size_t len) {
+      STRING_COPY(a, b, len);
+    }
+};
+
+struct unicode_tag {
+    using type = npy_ucs4;
+    static constexpr NPY_TYPES type_value = NPY_UNICODE;
+    static int less(type const* a, type const* b, size_t len) {
+      return UNICODE_LT(a, b, len);
+    }
+    static int less_equal(type const* a, type const* b, size_t len) {
+      return !less(b, a, len);
+    }
+    static void swap(type* a, type* b, size_t len) {
+      UNICODE_SWAP(a, b, len);
+    }
+    static void copy(type * a, type const* b, size_t len) {
+      UNICODE_COPY(a, b, len);
+    }
+};
+
 }  // namespace npy
 
 #endif

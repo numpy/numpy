@@ -259,7 +259,7 @@ CLONGDOUBLE_LT(npy_clongdouble a, npy_clongdouble b)
 
 
 NPY_INLINE static void
-STRING_COPY(char *s1, char *s2, size_t len)
+STRING_COPY(char *s1, char const*s2, size_t len)
 {
     memcpy(s1, s2, len);
 }
@@ -295,7 +295,7 @@ STRING_LT(const char *s1, const char *s2, size_t len)
 
 
 NPY_INLINE static void
-UNICODE_COPY(npy_ucs4 *s1, npy_ucs4 *s2, size_t len)
+UNICODE_COPY(npy_ucs4 *s1, npy_ucs4 const *s2, size_t len)
 {
     while(len--) {
         *s1++ = *s2++;
