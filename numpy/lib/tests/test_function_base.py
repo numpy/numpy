@@ -890,6 +890,19 @@ class TestDelete:
         with pytest.raises(IndexError):
             np.delete([0, 1, 2], np.array([], dtype=float))
 
+    def test_single_item_array(self):
+        a_del = delete(self.a, 1)
+        a_del_arr = delete(self.a, np.array([1]))
+        a_del_lst = delete(self.a, [1])
+        a_del_obj = delete(self.a, np.array([1], dtype=object))
+        assert_equal(a_del, a_del_arr, a_del_lst, a_del_obj)
+
+        nd_a_del = delete(self.nd_a, 1, axis=1)
+        nd_a_del_arr = delete(self.nd_a, np.array([1]), axis=1)
+        nd_a_del_lst = delete(self.nd_a, [1], axis=1)
+        nd_a_del_obj = delete(self.nd_a, np.array([1], dtype=object), axis=1)
+        assert_equal(nd_a_del, nd_a_del_arr, nd_a_del_lst, nd_a_del_obj)
+
 
 class TestGradient:
 

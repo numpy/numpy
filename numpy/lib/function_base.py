@@ -5101,9 +5101,8 @@ def delete(arr, obj, axis=None):
         obj = np.asarray(obj)
         if obj.size == 0 and not isinstance(_obj, np.ndarray):
             obj = obj.astype(intp)
-
-        elif obj.shape == (1,):
-            obj = obj.item()
+        elif obj.size == 1 and not isinstance(_obj, bool):
+            obj = obj.astype(intp).reshape(())
             single_value = True
 
     if single_value:
