@@ -8,8 +8,6 @@ import os
 import pathlib
 import sys
 import sysconfig
-from numpy.distutils.ccompiler import new_compiler
-from distutils.errors import CompileError
 
 __all__ = ['build_and_import_extension', 'compile_extension_module']
 
@@ -53,6 +51,7 @@ def build_and_import_extension(
     >>> assert not mod.test_bytes(u'abc')
     >>> assert mod.test_bytes(b'abc')
     """
+    from distutils.errors import CompileError
 
     body = prologue + _make_methods(functions, modname)
     init = """PyObject *mod = PyModule_Create(&moduledef);
@@ -221,6 +220,7 @@ def _c_compile(cfile, outputfilename, include_dirs=[], libraries=[],
 def build(cfile, outputfilename, compile_extra, link_extra,
           include_dirs, libraries, library_dirs):
     "cd into the directory where the cfile is, use distutils to build"
+    from numpy.distutils.ccompiler import new_compiler
 
     compiler = new_compiler(force=1, verbose=2)
     compiler.customize('')
