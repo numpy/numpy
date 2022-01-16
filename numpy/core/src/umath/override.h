@@ -6,6 +6,9 @@
 
 NPY_NO_EXPORT int
 PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
-                      PyObject *args, PyObject *kwds,
-                      PyObject **result);
+        PyObject *in_args, PyObject *out_args,
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames,
+        PyObject **result);
+
+
 #endif

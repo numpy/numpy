@@ -5,11 +5,12 @@ import copy
 import warnings
 import platform
 import textwrap
+import glob
 from os.path import join
 
 from numpy.distutils import log
 from distutils.dep_util import newer
-from distutils.sysconfig import get_config_var
+from sysconfig import get_config_var
 from numpy.compat import npy_load_module
 from setup_common import *  # noqa: F403
 
@@ -22,6 +23,11 @@ NPY_RELAXED_STRIDES_CHECKING = (os.environ.get('NPY_RELAXED_STRIDES_CHECKING', "
 # when relaxed stride checking is enabled.
 NPY_RELAXED_STRIDES_DEBUG = (os.environ.get('NPY_RELAXED_STRIDES_DEBUG', "0") != "0")
 NPY_RELAXED_STRIDES_DEBUG = NPY_RELAXED_STRIDES_DEBUG and NPY_RELAXED_STRIDES_CHECKING
+
+# Set NPY_DISABLE_SVML=1 in the environment to disable the vendored SVML
+# library. This option only has significance on a Linux x86_64 host and is most
+# useful to avoid improperly requiring SVML when cross compiling.
+NPY_DISABLE_SVML = (os.environ.get('NPY_DISABLE_SVML', "0") == "1")
 
 # XXX: ugly, we use a class to avoid calling twice some expensive functions in
 # config.h/numpyconfig.h. I don't see a better way because distutils force
@@ -63,6 +69,22 @@ class CallOnceOnly:
             out = copy.deepcopy(pickle.loads(self._check_complex))
         return out
 
+def can_link_svml():
+    """SVML library is supported only on x86_64 architecture and currently
+    only on linux
+    """
+    if NPY_DISABLE_SVML:
+        return False
+    machine = platform.machine()
+    system = platform.system()
+    return "x86_64" in machine and system == "Linux"
+
+def check_svml_submodule(svmlpath):
+    if not os.path.exists(svmlpath + "/README.md"):
+        raise RuntimeError("Missing `SVML` submodule! Run `git submodule "
+                           "update --init` to fix this.")
+    return True
+
 def pythonlib_dir():
     """return path where libpython* is."""
     if sys.platform == 'win32':
@@ -102,7 +124,7 @@ def win32_checks(deflist):
     if a == "Intel" or a == "AMD64":
         deflist.append('FORCE_NO_LONG_DOUBLE_FORMATTING')
 
-def check_math_capabilities(config, moredefs, mathlibs):
+def check_math_capabilities(config, ext, moredefs, mathlibs):
     def check_func(func_name):
         return config.check_func(func_name, libraries=mathlibs,
                                  decl=True, call=True)
@@ -167,6 +189,14 @@ def check_math_capabilities(config, moredefs, mathlibs):
     for dec, fn in OPTIONAL_FUNCTION_ATTRIBUTES:
         if config.check_gcc_function_attribute(dec, fn):
             moredefs.append((fname2def(fn), 1))
+            if fn == 'attribute_target_avx512f':
+                # GH-14787: Work around GCC<8.4 bug when compiling with AVX512
+                # support on Windows-based platforms
+                if (sys.platform in ('win32', 'cygwin') and
+                        config.check_compiler_gcc() and
+                        not config.check_gcc_version_at_least(8, 4)):
+                    ext.extra_compile_args.extend(
+                            ['-ffixed-xmm%s' % n for n in range(16, 32)])
 
     for dec, fn, code, header in OPTIONAL_FUNCTION_ATTRIBUTES_WITH_INTRINSICS:
         if config.check_gcc_function_attribute_with_intrinsics(dec, fn, code,
@@ -373,9 +403,9 @@ def check_mathlib(config_cmd):
             mathlibs = libs
             break
     else:
-        raise EnvironmentError("math library missing; rerun "
-                               "setup.py after setting the "
-                               "MATHLIB env variable")
+        raise RuntimeError(
+            "math library missing; rerun setup.py after setting the "
+            "MATHLIB env variable")
     return mathlibs
 
 def visibility_define(config):
@@ -388,14 +418,10 @@ def visibility_define(config):
         return ''
 
 def configuration(parent_package='',top_path=None):
-    from numpy.distutils.misc_util import Configuration, dot_join
+    from numpy.distutils.misc_util import (Configuration, dot_join,
+                                           exec_mod_from_location)
     from numpy.distutils.system_info import (get_info, blas_opt_info,
                                              lapack_opt_info)
-
-    # Accelerate is buggy, disallow it. See also numpy/linalg/setup.py
-    for opt_order in (blas_opt_info.blas_order, lapack_opt_info.lapack_order):
-        if 'accelerate' in opt_order:
-            opt_order.remove('accelerate')
 
     config = Configuration('core', parent_package, top_path)
     local_dir = config.local_path
@@ -410,8 +436,8 @@ def configuration(parent_package='',top_path=None):
 
     generate_umath_py = join(codegen_dir, 'generate_umath.py')
     n = dot_join(config.name, 'generate_umath')
-    generate_umath = npy_load_module('_'.join(n.split('.')),
-                                     generate_umath_py, ('.py', 'U', 1))
+    generate_umath = exec_mod_from_location('_'.join(n.split('.')),
+                                            generate_umath_py)
 
     header_dir = 'include/numpy'  # this is relative to config.path_in_package
 
@@ -434,7 +460,7 @@ def configuration(parent_package='',top_path=None):
             mathlibs = check_mathlib(config_cmd)
             moredefs.append(('MATHLIB', ','.join(mathlibs)))
 
-            check_math_capabilities(config_cmd, moredefs, mathlibs)
+            check_math_capabilities(config_cmd, ext, moredefs, mathlibs)
             moredefs.extend(cocache.check_ieee_macros(config_cmd)[0])
             moredefs.extend(cocache.check_complex(config_cmd, mathlibs)[0])
 
@@ -452,13 +478,20 @@ def configuration(parent_package='',top_path=None):
             # Inline check
             inline = config_cmd.check_inline()
 
+            if can_link_svml():
+                moredefs.append(('NPY_CAN_LINK_SVML', 1))
+
             # Use relaxed stride checking
             if NPY_RELAXED_STRIDES_CHECKING:
                 moredefs.append(('NPY_RELAXED_STRIDES_CHECKING', 1))
+            else:
+                moredefs.append(('NPY_RELAXED_STRIDES_CHECKING', 0))
 
             # Use bogus stride debug aid when relaxed strides are enabled
             if NPY_RELAXED_STRIDES_DEBUG:
                 moredefs.append(('NPY_RELAXED_STRIDES_DEBUG', 1))
+            else:
+                moredefs.append(('NPY_RELAXED_STRIDES_DEBUG', 0))
 
             # Get long double representation
             rep = check_long_double_representation(config_cmd)
@@ -489,7 +522,7 @@ def configuration(parent_package='',top_path=None):
                 # add the guard to make sure config.h is never included directly,
                 # but always through npy_config.h
                 target_f.write(textwrap.dedent("""
-                    #ifndef _NPY_NPY_CONFIG_H_
+                    #ifndef NUMPY_CORE_SRC_COMMON_NPY_CONFIG_H_
                     #error config.h should never be included directly, include npy_config.h instead
                     #endif
                     """))
@@ -618,6 +651,7 @@ def configuration(parent_package='',top_path=None):
     config.add_include_dirs(join('src', 'multiarray'))
     config.add_include_dirs(join('src', 'umath'))
     config.add_include_dirs(join('src', 'npysort'))
+    config.add_include_dirs(join('src', '_simd'))
 
     config.add_define_macros([("NPY_INTERNAL_BUILD", "1")]) # this macro indicates that Numpy build is in process
     config.add_define_macros([("HAVE_NPY_CONFIG_H", "1")])
@@ -646,16 +680,38 @@ def configuration(parent_package='',top_path=None):
         # but we cannot use add_installed_pkg_config here either, so we only
         # update the substitution dictionary during npymath build
         config_cmd = config.get_config_cmd()
-
         # Check that the toolchain works, to fail early if it doesn't
         # (avoid late errors with MATHLIB which are confusing if the
         # compiler does not work).
-        st = config_cmd.try_link('int main(void) { return 0;}')
-        if not st:
-            # rerun the failing command in verbose mode
-            config_cmd.compiler.verbose = True
-            config_cmd.try_link('int main(void) { return 0;}')
-            raise RuntimeError("Broken toolchain: cannot link a simple C program")
+        for lang, test_code, note in (
+            ('c', 'int main(void) { return 0;}', ''),
+            ('c++', (
+                    'int main(void)'
+                    '{ auto x = 0.0; return static_cast<int>(x); }'
+                ), (
+                    'note: A compiler with support for C++11 language '
+                    'features is required.'
+                )
+             ),
+        ):
+            is_cpp = lang == 'c++'
+            if is_cpp:
+                # this a workround to get rid of invalid c++ flags
+                # without doing big changes to config.
+                # c tested first, compiler should be here
+                bk_c = config_cmd.compiler
+                config_cmd.compiler = bk_c.cxx_compiler()
+            st = config_cmd.try_link(test_code, lang=lang)
+            if not st:
+                # rerun the failing command in verbose mode
+                config_cmd.compiler.verbose = True
+                config_cmd.try_link(test_code, lang=lang)
+                raise RuntimeError(
+                    f"Broken toolchain: cannot link a simple {lang.upper()} "
+                    f"program. {note}"
+                )
+            if is_cpp:
+                config_cmd.compiler = bk_c
         mlibs = check_mathlib(config_cmd)
 
         posix_mlib = ' '.join(['-l%s' % l for l in mlibs])
@@ -670,16 +726,24 @@ def configuration(parent_package='',top_path=None):
                        join('src', 'npymath', 'halffloat.c')
                        ]
 
-    # Must be true for CRT compilers but not MinGW/cygwin. See gh-9977.
-    # Intel and Clang also don't seem happy with /GL
-    is_msvc = (platform.platform().startswith('Windows') and
-               platform.python_compiler().startswith('MS'))
+    def gl_if_msvc(build_cmd):
+        """ Add flag if we are using MSVC compiler
+
+        We can't see this in our scope, because we have not initialized the
+        distutils build command, so use this deferred calculation to run when
+        we are building the library.
+        """
+        if build_cmd.compiler.compiler_type == 'msvc':
+            # explicitly disable whole-program optimization
+            return ['/GL-']
+        return []
+
     config.add_installed_library('npymath',
             sources=npymath_sources + [get_mathlib_info],
             install_dir='lib',
             build_info={
                 'include_dirs' : [],  # empty list required for creating npy_math_internal.h
-                'extra_compiler_args' : (['/GL-'] if is_msvc else []),
+                'extra_compiler_args': [gl_if_msvc],
             })
     config.add_npy_pkg_config("npymath.ini.in", "lib/npy-pkg-config",
             subst_dict)
@@ -687,33 +751,17 @@ def configuration(parent_package='',top_path=None):
             subst_dict)
 
     #######################################################################
-    #                         npysort library                             #
-    #######################################################################
-
-    # This library is created for the build but it is not installed
-    npysort_sources = [join('src', 'common', 'npy_sort.h.src'),
-                       join('src', 'npysort', 'quicksort.c.src'),
-                       join('src', 'npysort', 'mergesort.c.src'),
-                       join('src', 'npysort', 'timsort.c.src'),
-                       join('src', 'npysort', 'heapsort.c.src'),
-                       join('src', 'npysort', 'radixsort.c.src'),
-                       join('src', 'common', 'npy_partition.h.src'),
-                       join('src', 'npysort', 'selection.c.src'),
-                       join('src', 'common', 'npy_binsearch.h.src'),
-                       join('src', 'npysort', 'binsearch.c.src'),
-                       ]
-    config.add_library('npysort',
-                       sources=npysort_sources,
-                       include_dirs=[])
-
-    #######################################################################
     #                     multiarray_tests module                         #
     #######################################################################
 
     config.add_extension('_multiarray_tests',
                     sources=[join('src', 'multiarray', '_multiarray_tests.c.src'),
-                             join('src', 'common', 'mem_overlap.c')],
+                             join('src', 'common', 'mem_overlap.c'),
+                             join('src', 'common', 'npy_argparse.c'),
+                             join('src', 'common', 'npy_hashtable.c')],
                     depends=[join('src', 'common', 'mem_overlap.h'),
+                             join('src', 'common', 'npy_argparse.h'),
+                             join('src', 'common', 'npy_hashtable.h'),
                              join('src', 'common', 'npy_extint128.h')],
                     libraries=['npymath'])
 
@@ -722,28 +770,36 @@ def configuration(parent_package='',top_path=None):
     #######################################################################
 
     common_deps = [
+            join('src', 'common', 'dlpack', 'dlpack.h'),
             join('src', 'common', 'array_assign.h'),
             join('src', 'common', 'binop_override.h'),
             join('src', 'common', 'cblasfuncs.h'),
             join('src', 'common', 'lowlevel_strided_loops.h'),
             join('src', 'common', 'mem_overlap.h'),
+            join('src', 'common', 'npy_argparse.h'),
             join('src', 'common', 'npy_cblas.h'),
             join('src', 'common', 'npy_config.h'),
             join('src', 'common', 'npy_ctypes.h'),
+            join('src', 'common', 'npy_dlpack.h'),
             join('src', 'common', 'npy_extint128.h'),
             join('src', 'common', 'npy_import.h'),
+            join('src', 'common', 'npy_hashtable.h'),
             join('src', 'common', 'npy_longdouble.h'),
+            join('src', 'common', 'npy_svml.h'),
             join('src', 'common', 'templ_common.h.src'),
             join('src', 'common', 'ucsnarrow.h'),
             join('src', 'common', 'ufunc_override.h'),
             join('src', 'common', 'umathmodule.h'),
             join('src', 'common', 'numpyos.h'),
             join('src', 'common', 'npy_cpu_dispatch.h'),
+            join('src', 'common', 'simd', 'simd.h'),
             ]
 
     common_src = [
             join('src', 'common', 'array_assign.c'),
             join('src', 'common', 'mem_overlap.c'),
+            join('src', 'common', 'npy_argparse.c'),
+            join('src', 'common', 'npy_hashtable.c'),
             join('src', 'common', 'npy_longdouble.c'),
             join('src', 'common', 'templ_common.h.src'),
             join('src', 'common', 'ucsnarrow.c'),
@@ -774,22 +830,31 @@ def configuration(parent_package='',top_path=None):
     #######################################################################
 
     multiarray_deps = [
+            join('src', 'multiarray', 'abstractdtypes.h'),
             join('src', 'multiarray', 'arrayobject.h'),
             join('src', 'multiarray', 'arraytypes.h'),
             join('src', 'multiarray', 'arrayfunction_override.h'),
+            join('src', 'multiarray', 'array_coercion.h'),
+            join('src', 'multiarray', 'array_method.h'),
             join('src', 'multiarray', 'npy_buffer.h'),
             join('src', 'multiarray', 'calculation.h'),
             join('src', 'multiarray', 'common.h'),
+            join('src', 'multiarray', 'common_dtype.h'),
             join('src', 'multiarray', 'convert_datatype.h'),
             join('src', 'multiarray', 'convert.h'),
             join('src', 'multiarray', 'conversion_utils.h'),
             join('src', 'multiarray', 'ctors.h'),
             join('src', 'multiarray', 'descriptor.h'),
             join('src', 'multiarray', 'dtypemeta.h'),
+            join('src', 'multiarray', 'dtype_transfer.h'),
             join('src', 'multiarray', 'dragon4.h'),
+            join('src', 'multiarray', 'einsum_debug.h'),
+            join('src', 'multiarray', 'einsum_sumprod.h'),
+            join('src', 'multiarray', 'experimental_public_dtype_api.h'),
             join('src', 'multiarray', 'getset.h'),
             join('src', 'multiarray', 'hashdescr.h'),
             join('src', 'multiarray', 'iterators.h'),
+            join('src', 'multiarray', 'legacy_dtype_implementation.h'),
             join('src', 'multiarray', 'mapping.h'),
             join('src', 'multiarray', 'methods.h'),
             join('src', 'multiarray', 'multiarraymodule.h'),
@@ -822,12 +887,15 @@ def configuration(parent_package='',top_path=None):
             join('include', 'numpy', 'npy_1_7_deprecated_api.h'),
             # add library sources as distuils does not consider libraries
             # dependencies
-            ] + npysort_sources + npymath_sources
+            ] + npymath_sources
 
     multiarray_src = [
+            join('src', 'multiarray', 'abstractdtypes.c'),
             join('src', 'multiarray', 'alloc.c'),
             join('src', 'multiarray', 'arrayobject.c'),
             join('src', 'multiarray', 'arraytypes.c.src'),
+            join('src', 'multiarray', 'array_coercion.c'),
+            join('src', 'multiarray', 'array_method.c'),
             join('src', 'multiarray', 'array_assign_scalar.c'),
             join('src', 'multiarray', 'array_assign_array.c'),
             join('src', 'multiarray', 'arrayfunction_override.c'),
@@ -835,6 +903,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'calculation.c'),
             join('src', 'multiarray', 'compiled_base.c'),
             join('src', 'multiarray', 'common.c'),
+            join('src', 'multiarray', 'common_dtype.c'),
             join('src', 'multiarray', 'convert.c'),
             join('src', 'multiarray', 'convert_datatype.c'),
             join('src', 'multiarray', 'conversion_utils.c'),
@@ -844,15 +913,19 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'datetime_busday.c'),
             join('src', 'multiarray', 'datetime_busdaycal.c'),
             join('src', 'multiarray', 'descriptor.c'),
+            join('src', 'multiarray', 'dlpack.c'),
             join('src', 'multiarray', 'dtypemeta.c'),
             join('src', 'multiarray', 'dragon4.c'),
             join('src', 'multiarray', 'dtype_transfer.c'),
             join('src', 'multiarray', 'einsum.c.src'),
+            join('src', 'multiarray', 'einsum_sumprod.c.src'),
+            join('src', 'multiarray', 'experimental_public_dtype_api.c'),
             join('src', 'multiarray', 'flagsobject.c'),
             join('src', 'multiarray', 'getset.c'),
             join('src', 'multiarray', 'hashdescr.c'),
             join('src', 'multiarray', 'item_selection.c'),
             join('src', 'multiarray', 'iterators.c'),
+            join('src', 'multiarray', 'legacy_dtype_implementation.c'),
             join('src', 'multiarray', 'lowlevel_strided_loops.c.src'),
             join('src', 'multiarray', 'mapping.c'),
             join('src', 'multiarray', 'methods.c'),
@@ -872,6 +945,16 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'typeinfo.c'),
             join('src', 'multiarray', 'usertypes.c'),
             join('src', 'multiarray', 'vdot.c'),
+            join('src', 'common', 'npy_sort.h.src'),
+            join('src', 'npysort', 'quicksort.c.src'),
+            join('src', 'npysort', 'mergesort.c.src'),
+            join('src', 'npysort', 'timsort.c.src'),
+            join('src', 'npysort', 'heapsort.c.src'),
+            join('src', 'npysort', 'radixsort.cpp'),
+            join('src', 'common', 'npy_partition.h.src'),
+            join('src', 'npysort', 'selection.c.src'),
+            join('src', 'common', 'npy_binsearch.h'),
+            join('src', 'npysort', 'binsearch.cpp'),
             ]
 
     #######################################################################
@@ -890,22 +973,49 @@ def configuration(parent_package='',top_path=None):
                                                  generate_umath.__file__))
         return []
 
+    def generate_umath_doc_header(ext, build_dir):
+        from numpy.distutils.misc_util import exec_mod_from_location
+
+        target = join(build_dir, header_dir, '_umath_doc_generated.h')
+        dir = os.path.dirname(target)
+        if not os.path.exists(dir):
+            os.makedirs(dir)
+
+        generate_umath_doc_py = join(codegen_dir, 'generate_umath_doc.py')
+        if newer(generate_umath_doc_py, target):
+            n = dot_join(config.name, 'generate_umath_doc')
+            generate_umath_doc = exec_mod_from_location(
+                '_'.join(n.split('.')), generate_umath_doc_py)
+            generate_umath_doc.write_code(target)
+
     umath_src = [
             join('src', 'umath', 'umathmodule.c'),
             join('src', 'umath', 'reduction.c'),
             join('src', 'umath', 'funcs.inc.src'),
             join('src', 'umath', 'simd.inc.src'),
             join('src', 'umath', 'loops.h.src'),
+            join('src', 'umath', 'loops_utils.h.src'),
             join('src', 'umath', 'loops.c.src'),
+            join('src', 'umath', 'loops_unary_fp.dispatch.c.src'),
+            join('src', 'umath', 'loops_arithm_fp.dispatch.c.src'),
+            join('src', 'umath', 'loops_arithmetic.dispatch.c.src'),
+            join('src', 'umath', 'loops_minmax.dispatch.c.src'),
+            join('src', 'umath', 'loops_trigonometric.dispatch.c.src'),
+            join('src', 'umath', 'loops_umath_fp.dispatch.c.src'),
+            join('src', 'umath', 'loops_exponent_log.dispatch.c.src'),
             join('src', 'umath', 'matmul.h.src'),
             join('src', 'umath', 'matmul.c.src'),
-            join('src', 'umath', 'clip.h.src'),
-            join('src', 'umath', 'clip.c.src'),
+            join('src', 'umath', 'clip.h'),
+            join('src', 'umath', 'clip.cpp'),
+            join('src', 'umath', 'dispatching.c'),
+            join('src', 'umath', 'legacy_array_method.c'),
             join('src', 'umath', 'ufunc_object.c'),
             join('src', 'umath', 'extobj.c'),
             join('src', 'umath', 'scalarmath.c.src'),
             join('src', 'umath', 'ufunc_type_resolution.c'),
             join('src', 'umath', 'override.c'),
+            # For testing. Eventually, should use public API and be separate:
+            join('src', 'umath', '_scaled_float_dtype.c'),
             ]
 
     umath_deps = [
@@ -918,23 +1028,38 @@ def configuration(parent_package='',top_path=None):
             join('src', 'umath', 'simd.inc.src'),
             join('src', 'umath', 'override.h'),
             join(codegen_dir, 'generate_ufunc_api.py'),
+            join(codegen_dir, 'ufunc_docstrings.py'),
             ]
 
+    svml_path = join('numpy', 'core', 'src', 'umath', 'svml')
+    svml_objs = []
+    if can_link_svml() and check_svml_submodule(svml_path):
+        svml_objs = glob.glob(svml_path + '/**/*.s', recursive=True)
+
     config.add_extension('_multiarray_umath',
+                         # Forcing C language even though we have C++ sources.
+                         # It forces the C linker and don't link C++ runtime.
+                         language = 'c',
                          sources=multiarray_src + umath_src +
-                                 npymath_sources + common_src +
+                                 common_src +
                                  [generate_config_h,
                                   generate_numpyconfig_h,
                                   generate_numpy_api,
                                   join(codegen_dir, 'generate_numpy_api.py'),
                                   join('*.py'),
                                   generate_umath_c,
+                                  generate_umath_doc_header,
                                   generate_ufunc_api,
                                  ],
                          depends=deps + multiarray_deps + umath_deps +
                                 common_deps,
-                         libraries=['npymath', 'npysort'],
-                         extra_info=extra_info)
+                         libraries=['npymath'],
+                         extra_objects=svml_objs,
+                         extra_info=extra_info,
+                         extra_cxx_compile_args=['-std=c++11',
+                                                 '-D__STDC_VERSION__=0',
+                                                 '-fno-exceptions',
+                                                 '-fno-rtti'])
 
     #######################################################################
     #                        umath_tests module                           #
@@ -966,7 +1091,29 @@ def configuration(parent_package='',top_path=None):
     #######################################################################
 
     config.add_extension('_operand_flag_tests',
-                    sources=[join('src', 'umath', '_operand_flag_tests.c.src')])
+                    sources=[join('src', 'umath', '_operand_flag_tests.c')])
+
+    #######################################################################
+    #                        SIMD module                                  #
+    #######################################################################
+
+    config.add_extension('_simd', sources=[
+        join('src', 'common', 'npy_cpu_features.c.src'),
+        join('src', '_simd', '_simd.c'),
+        join('src', '_simd', '_simd_inc.h.src'),
+        join('src', '_simd', '_simd_data.inc.src'),
+        join('src', '_simd', '_simd.dispatch.c.src'),
+    ], depends=[
+        join('src', 'common', 'npy_cpu_dispatch.h'),
+        join('src', 'common', 'simd', 'simd.h'),
+        join('src', '_simd', '_simd.h'),
+        join('src', '_simd', '_simd_inc.h.src'),
+        join('src', '_simd', '_simd_data.inc.src'),
+        join('src', '_simd', '_simd_arg.inc'),
+        join('src', '_simd', '_simd_convert.inc'),
+        join('src', '_simd', '_simd_easyintrin.inc'),
+        join('src', '_simd', '_simd_vector.inc'),
+    ])
 
     config.add_subpackage('tests')
     config.add_data_dir('tests/data')

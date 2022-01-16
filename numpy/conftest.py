@@ -2,6 +2,7 @@
 Pytest configuration and fixtures for the Numpy test suite.
 """
 import os
+import tempfile
 
 import hypothesis
 import pytest
@@ -13,11 +14,31 @@ from numpy.core._multiarray_tests import get_fpu_mode
 _old_fpu_mode = None
 _collect_results = {}
 
-# See https://hypothesis.readthedocs.io/en/latest/settings.html
+# Use a known and persistent tmpdir for hypothesis' caches, which
+# can be automatically cleared by the OS or user.
+hypothesis.configuration.set_hypothesis_home_dir(
+    os.path.join(tempfile.gettempdir(), ".hypothesis")
+)
+
+# We register two custom profiles for Numpy - for details see
+# https://hypothesis.readthedocs.io/en/latest/settings.html
+# The first is designed for our own CI runs; the latter also 
+# forces determinism and is designed for use via np.test()
 hypothesis.settings.register_profile(
     name="numpy-profile", deadline=None, print_blob=True,
 )
-hypothesis.settings.load_profile("numpy-profile")
+hypothesis.settings.register_profile(
+    name="np.test() profile",
+    deadline=None, print_blob=True, database=None, derandomize=True,
+    suppress_health_check=hypothesis.HealthCheck.all(),
+)
+# Note that the default profile is chosen based on the presence 
+# of pytest.ini, but can be overridden by passing the 
+# --hypothesis-profile=NAME argument to pytest.
+_pytest_ini = os.path.join(os.path.dirname(__file__), "..", "pytest.ini")
+hypothesis.settings.load_profile(
+    "numpy-profile" if os.path.isfile(_pytest_ini) else "np.test() profile"
+)
 
 
 def pytest_configure(config):
@@ -92,3 +113,7 @@ def check_fpu_mode(request):
 @pytest.fixture(autouse=True)
 def add_np(doctest_namespace):
     doctest_namespace['np'] = numpy
+
+@pytest.fixture(autouse=True)
+def env_setup(monkeypatch):
+    monkeypatch.setenv('PYTHONHASHSEED', '0')

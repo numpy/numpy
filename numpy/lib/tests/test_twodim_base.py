@@ -18,6 +18,9 @@ import numpy as np
 from numpy.core.tests.test_overrides import requires_array_function
 
 
+import pytest
+
+
 def get_mat(n):
     data = arange(n)
     data = add.outer(data, data)
@@ -294,6 +297,13 @@ class TestHistogram2d:
         assert_raises(Exception, histogram2d, xy, xy, bins=[s_d])
         r = histogram2d(xy, xy, weights=s_d)
         assert_(r, ((ShouldDispatch,), (xy, xy), dict(weights=s_d)))
+
+    @pytest.mark.parametrize(("x_len", "y_len"), [(10, 11), (20, 19)])
+    def test_bad_length(self, x_len, y_len):
+        x, y = np.ones(x_len), np.ones(y_len)
+        with pytest.raises(ValueError,
+                           match='x and y must have the same length.'):
+            histogram2d(x, y)
 
 
 class TestTri:

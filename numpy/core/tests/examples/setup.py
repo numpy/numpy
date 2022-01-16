@@ -9,12 +9,11 @@ from Cython.Build import cythonize
 from setuptools.extension import Extension
 import os
 
-here = os.path.dirname(__file__)
 macros = [("NPY_NO_DEPRECATED_API", 0)]
 
 checks = Extension(
     "checks",
-    sources=[os.path.join(here, "checks.pyx")],
+    sources=[os.path.join('.', "checks.pyx")],
     include_dirs=[np.get_include()],
     define_macros=macros,
 )

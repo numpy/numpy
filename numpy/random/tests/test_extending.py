@@ -5,6 +5,7 @@ import subprocess
 import sys
 import warnings
 import numpy as np
+from numpy.distutils.misc_util import exec_mod_from_location
 
 try:
     import cffi
@@ -31,11 +32,11 @@ except ImportError:
     cython = None
 else:
     from distutils.version import LooseVersion
-    # Cython 0.29.14 is required for Python 3.8 and there are
+    # Cython 0.29.21 is required for Python 3.9 and there are
     # other fixes in the 0.29 series that are needed even for earlier
     # Python versions.
     # Note: keep in sync with the one in pyproject.toml
-    required_version = LooseVersion('0.29.14')
+    required_version = LooseVersion('0.29.21')
     if LooseVersion(cython_version) < required_version:
         # too old or wrong cython, skip the test
         cython = None
@@ -75,10 +76,9 @@ def test_cython(tmp_path):
     assert so1 is not None
     assert so2 is not None
     # import the so's without adding the directory to sys.path
-    from importlib.machinery import ExtensionFileLoader 
-    extending = ExtensionFileLoader('extending', so1).load_module()
-    extending_distributions = ExtensionFileLoader('extending_distributions', so2).load_module()
-
+    exec_mod_from_location('extending', so1)
+    extending_distributions = exec_mod_from_location(
+                    'extending_distributions', so2)
     # actually test the cython c-extension
     from numpy.random import PCG64
     values = extending_distributions.uniforms_ex(PCG64(0), 10, 'd')

@@ -1,0 +1,28 @@
+name: DoTheWork
+description: "checkout repo, build and run tests"
+runs:
+  using: composite
+  steps:
+  - name: Show env
+    shell: bash
+    run: |
+      echo NPY_RELAXED_STRIDES_DEBUG $NPY_RELAXED_STRIDES_DEBUG
+      echo NPY_RELAXED_STRIDES_CHECKING $NPY_RELAXED_STRIDES_CHECKING
+      echo CHECK_BLAS $CHECK_BLAS
+      echo DOWNLOAD_OPENBLAS $DOWNLOAD_OPENBLAS
+      echo USE_DEBUG $USE_DEBUG
+      echo NPY_USE_BLAS_ILP64 $NPY_USE_BLAS_ILP64
+      echo NUMPY_EXPERIMENTAL_ARRAY_FUNCTION $NUMPY_EXPERIMENTAL_ARRAY_FUNCTION
+      echo USE_ASV $USE_ASV
+      echo PATH $PATH
+      echo python `which python`
+      python -c "import sys; print(sys.version)"
+
+  - name: BeforeInstall
+    shell: bash
+    run: ./tools/travis-before-install.sh
+
+  - name: Test
+    shell: bash
+    run: ./tools/travis-test.sh
+

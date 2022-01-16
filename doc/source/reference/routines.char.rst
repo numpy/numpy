@@ -6,7 +6,7 @@ String operations
 .. module:: numpy.char
 
 The `numpy.char` module provides a set of vectorized string
-operations for arrays of type `numpy.string_` or `numpy.unicode_`.
+operations for arrays of type `numpy.str_` or `numpy.bytes_`.
 All of them are based on the string methods in the Python standard library.
 
 String operations

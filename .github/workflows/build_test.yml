@@ -1,0 +1,311 @@
+name: Build_Test
+
+on:
+  push:
+    branches:
+      - main
+      - maintenance/**
+  pull_request:
+    branches:
+      - main
+      - maintenance/**
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  DOWNLOAD_OPENBLAS: 1
+  PYTHON_VERSION: 3.8
+
+jobs:
+  lint:
+    if: "github.repository == 'numpy/numpy' && github.ref != 'refs/heads/main' && !contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]') && !contains(github.event.head_commit.message, '[skip github]')"
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    - uses: actions/setup-python@v2
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    - name: Install linter requirements
+      run:
+        python -m pip install -r linter_requirements.txt
+    - name: Run linter on PR diff
+      run:
+        python tools/linter.py --branch origin/${{ github.base_ref }}
+
+  smoke_test:
+    if: "github.repository == 'numpy/numpy' && !contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]') && !contains(github.event.head_commit.message, '[skip github]')"
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    - uses: actions/setup-python@v2
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    - uses: ./.github/actions
+
+  basic:
+    needs: [smoke_test]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10"]
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    - uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - uses: ./.github/actions
+
+  debug:
+    needs: [smoke_test]
+    runs-on: ubuntu-20.04
+    env:
+      USE_DEBUG: 1
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    - uses: actions/setup-python@v2
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    - uses: ./.github/actions
+
+  blas64:
+    needs: [smoke_test]
+    runs-on: ubuntu-latest
+    env:
+      NPY_USE_BLAS_ILP64: 1
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    - uses: actions/setup-python@v2
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    - uses: ./.github/actions
+
+  full:
+    needs: [smoke_test]
+    runs-on: ubuntu-18.04
+    env:
+      USE_WHEEL: 1
+      RUN_FULL_TESTS: 1
+      RUN_COVERAGE: 1
+      INSTALL_PICKLE5: 1
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    - uses: actions/setup-python@v2
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    - uses: ./.github/actions
+
+  benchmark:
+    needs: [smoke_test]
+    runs-on: ubuntu-latest
+    env:
+      PYTHONOPTIMIZE: 2
+      BLAS: None
+      LAPACK: None
+      ATLAS: None
+      NPY_BLAS_ORDER: mkl,blis,openblas,atlas,blas
+      NPY_LAPACK_ORDER: MKL,OPENBLAS,ATLAS,LAPACK
+      USE_ASV: 1
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    - uses: actions/setup-python@v2
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    - uses: ./.github/actions
+
+  no_relaxed_strides:
+    needs: [smoke_test]
+    runs-on: ubuntu-latest
+    env:
+      NPY_RELAXED_STRIDES_CHECKING: 0
+      CHECK_BLAS: 1
+      NPY_USE_BLAS_ILP64: 1
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    - uses: actions/setup-python@v2
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    - uses: ./.github/actions
+
+  use_wheel:
+    needs: [smoke_test]
+    runs-on: ubuntu-latest
+    env:
+      USE_WHEEL: 1
+      NPY_RELAXED_STRIDES_DEBUG: 1
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    - uses: actions/setup-python@v2
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    - uses: ./.github/actions
+
+  no_array_func:
+    needs: [smoke_test]
+    runs-on: ubuntu-latest
+    env:
+      NUMPY_EXPERIMENTAL_ARRAY_FUNCTION: 0
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    - uses: actions/setup-python@v2
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    - uses: ./.github/actions
+
+  no_openblas:
+    needs: [smoke_test]
+    runs-on: ubuntu-latest
+    env:
+      BLAS: None
+      LAPACK: None
+      ATLAS: None
+      DOWNLOAD_OPENBLAS: ''
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    - uses: actions/setup-python@v2
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    - uses: ./.github/actions
+
+  pypy38:
+    needs: [smoke_test]
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    - uses: actions/setup-python@v2
+      with:
+        python-version: pypy-3.8-v7.3.7
+    - uses: ./.github/actions
+
+  sdist:
+    needs: [smoke_test]
+    runs-on: ubuntu-latest
+    env:
+      USE_SDIST: 1
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    - uses: actions/setup-python@v2
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    - uses: ./.github/actions
+
+  armv7_simd_test:
+    needs: [smoke_test]
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    - name: Initialize binfmt_misc for qemu-user-static
+      run: |
+        docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+    - name: Creates new container
+      run: |
+        # use x86_64 cross-compiler to speed up the build
+        sudo apt update
+        sudo apt install -y gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
+        docker run --name the_container --interactive -v /:/host arm32v7/ubuntu:latest /bin/bash -c "
+          apt update &&
+          apt install -y git python3 python3-dev python3-pip &&
+          pip3 install cython==0.29.24 setuptools\<49.2.0 hypothesis==6.23.3 pytest==6.2.5 &&
+          ln -s /host/lib64 /lib64 &&
+          ln -s /host/lib/x86_64-linux-gnu /lib/x86_64-linux-gnu &&
+          ln -s /host/usr/arm-linux-gnueabihf /usr/arm-linux-gnueabihf &&
+          rm -rf /usr/lib/gcc/arm-linux-gnueabihf && ln -s /host/usr/lib/gcc-cross/arm-linux-gnueabihf /usr/lib/gcc/arm-linux-gnueabihf &&
+          rm -f /usr/bin/arm-linux-gnueabihf-gcc && ln -s /host/usr/bin/arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc &&
+          rm -f /usr/bin/arm-linux-gnueabihf-g++ && ln -s /host/usr/bin/arm-linux-gnueabihf-g++ /usr/bin/arm-linux-gnueabihf-g++ &&
+          rm -f /usr/bin/arm-linux-gnueabihf-ar && ln -s /host/usr/bin/arm-linux-gnueabihf-ar /usr/bin/arm-linux-gnueabihf-ar &&
+          rm -f /usr/bin/arm-linux-gnueabihf-as && ln -s /host/usr/bin/arm-linux-gnueabihf-as /usr/bin/arm-linux-gnueabihf-as &&
+          rm -f /usr/bin/arm-linux-gnueabihf-ld && ln -s /host/usr/bin/arm-linux-gnueabihf-ld /usr/bin/arm-linux-gnueabihf-ld &&
+          rm -f /usr/bin/arm-linux-gnueabihf-ld.bfd && ln -s /host/usr/bin/arm-linux-gnueabihf-ld.bfd /usr/bin/arm-linux-gnueabihf-ld.bfd
+        "
+        docker commit the_container the_container
+    - name: Build
+      run: |
+        sudo docker run --name the_build --interactive -v $(pwd):/numpy -v /:/host the_container /bin/bash -c "
+          uname -a &&
+          gcc --version &&
+          g++ --version &&
+          python3 --version &&
+          cd /numpy && python3 setup.py install
+        "
+        docker commit the_build the_build
+    - name: Run SIMD Tests
+      run: |
+        docker run --rm --interactive -v $(pwd):/numpy the_build /bin/bash -c "
+          cd /numpy && python3 runtests.py -n -v -- -k test_simd
+        "
+
+  sde_simd_avx512_test:
+    # Intel Software Development Emulator (SDE) is used to run a given program
+    # on a specific instruction set architecture and capture various performance details.
+    # see https://www.intel.com/content/www/us/en/developer/articles/tool/software-development-emulator.html
+    needs: [smoke_test]
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    - uses: actions/setup-python@v2
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    - name: Install Intel SDE
+      run: |
+        curl -o /tmp/sde.tar.bz2 https://www.intel.com/content/dam/develop/external/us/en/documents/downloads/sde-external-8.69.1-2021-07-18-lin.tar.bz2
+        mkdir /tmp/sde && tar -xvf /tmp/sde.tar.bz2 -C /tmp/sde/
+        sudo mv /tmp/sde/* /opt/sde && sudo ln -s /opt/sde/sde64 /usr/bin/sde
+    - name: Install dependencies
+      run: python -m pip install -r test_requirements.txt
+    - name: Build
+      run: python setup.py build
+           --simd-test="\$werror AVX512F AVX512_KNL AVX512_KNM AVX512_SKX AVX512_CLX AVX512_CNL AVX512_ICL"
+           install
+    # KNM implies KNL
+    - name: Run SIMD tests (Xeon PHI)
+      run: sde -knm -- python runtests.py -n -v -- -k test_simd
+    # ICL implies SKX, CLX and CNL
+    - name: Run SIMD tests (Ice Lake)
+      run: sde -icl -- python runtests.py -n -v -- -k test_simd

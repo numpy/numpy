@@ -11,8 +11,6 @@ $Date: 2005/05/06 10:57:33 $
 Pearu Peterson
 
 """
-__version__ = "$Revision: 1.60 $"[10:-1]
-
 from . import __version__
 f2py_version = __version__.version
 
@@ -50,7 +48,7 @@ c2py_map = {'double': 'float',
             'unsigned_char': 'int',                    # forced casting
             'short': 'int',                            # forced casting
             'unsigned_short': 'int',                   # forced casting
-            'int': 'int',                              # (forced casting)
+            'int': 'int',                              # forced casting
             'long': 'int',
             'long_long': 'long',
             'unsigned': 'int',                         # forced casting
@@ -97,8 +95,8 @@ if using_newcore:
                   'complex_double': 'NPY_CDOUBLE',
                   'complex_long_double': 'NPY_CDOUBLE',
                   'string':'NPY_STRING'
-
                   }
+
 c2pycode_map = {'double': 'd',
                 'float': 'f',
                 'long_double': 'd',                       # forced casting
@@ -116,6 +114,7 @@ c2pycode_map = {'double': 'd',
                 'complex_long_double': 'D',               # forced casting
                 'string': 'c'
                 }
+
 if using_newcore:
     c2pycode_map = {'double': 'd',
                     'float': 'f',
@@ -135,6 +134,7 @@ if using_newcore:
                     'complex_double': 'D',
                     'complex_long_double': 'G',
                     'string': 'S'}
+
 c2buildvalue_map = {'double': 'd',
                     'float': 'f',
                     'char': 'b',
@@ -147,10 +147,6 @@ c2buildvalue_map = {'double': 'd',
                     'complex_double': 'N',
                     'complex_long_double': 'N',
                     'string': 'y'}
-
-if using_newcore:
-    # c2buildvalue_map=???
-    pass
 
 f2cmap_all = {'real': {'': 'float', '4': 'float', '8': 'double',
                        '12': 'long_double', '16': 'long_double'},
@@ -187,22 +183,22 @@ def load_f2cmap_file(f2cmap_file):
             return
 
     # User defined additions to f2cmap_all.
-    # f2cmap_file must contain a dictionary of dictionaries, only.  For
+    # f2cmap_file must contain a dictionary of dictionaries, only. For
     # example, {'real':{'low':'float'}} means that Fortran 'real(low)' is
-    # interpreted as C 'float'.  This feature is useful for F90/95 users if
-    # they use PARAMETERSs in type specifications.
+    # interpreted as C 'float'. This feature is useful for F90/95 users if
+    # they use PARAMETERS in type specifications.
     try:
         outmess('Reading f2cmap from {!r} ...\n'.format(f2cmap_file))
         with open(f2cmap_file, 'r') as f:
             d = eval(f.read(), {}, {})
-        for k, d1 in list(d.items()):
-            for k1 in list(d1.keys()):
+        for k, d1 in d.items():
+            for k1 in d1.keys():
                 d1[k1.lower()] = d1[k1]
             d[k.lower()] = d[k]
-        for k in list(d.keys()):
+        for k in d.keys():
             if k not in f2cmap_all:
                 f2cmap_all[k] = {}
-            for k1 in list(d[k].keys()):
+            for k1 in d[k].keys():
                 if d[k][k1] in c2py_map:
                     if k1 in f2cmap_all[k]:
                         outmess(
@@ -281,11 +277,9 @@ def getctype(var):
                         errmess('getctype: "%s(kind=%s)" is mapped to C "%s" (to override define dict(%s = dict(%s="<C typespec>")) in %s/.f2py_f2cmap file).\n'
                                 % (typespec, var['kindselector']['kind'], ctype,
                                    typespec, var['kindselector']['kind'], os.getcwd()))
-
     else:
         if not isexternal(var):
-            errmess(
-                'getctype: No C-type found in "%s", assuming void.\n' % var)
+            errmess('getctype: No C-type found in "%s", assuming void.\n' % var)
     return ctype
 
 
@@ -309,7 +303,7 @@ def getstrlength(var):
             len = a['*']
         elif 'len' in a:
             len = a['len']
-    if re.match(r'\(\s*([*]|[:])\s*\)', len) or re.match(r'([*]|[:])', len):
+    if re.match(r'\(\s*(\*|:)\s*\)', len) or re.match(r'(\*|:)', len):
         if isintent_hide(var):
             errmess('getstrlength:intent(hide): expected a string with defined length but got: %s\n' % (
                 repr(var)))
@@ -448,7 +442,7 @@ def getpydocsign(a, var):
         sigout = sig
     else:
         errmess(
-            'getpydocsign: Could not resolve docsignature for "%s".\\n' % a)
+            'getpydocsign: Could not resolve docsignature for "%s".\n' % a)
     return sig, sigout
 
 
@@ -525,7 +519,7 @@ def sign2map(a, var):
         if f(var):
             intent_flags.append('F2PY_%s' % s)
     if intent_flags:
-        # XXX: Evaluate intent_flags here.
+        # TODO: Evaluate intent_flags here.
         ret['intent'] = '|'.join(intent_flags)
     else:
         ret['intent'] = 'F2PY_INTENT_IN'

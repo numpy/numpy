@@ -8,7 +8,8 @@ away.
 from unittest import TestCase
 
 from ._private.utils import *
-from ._private import decorators as dec
+from ._private.utils import (_assert_valid_refcount, _gen_alignment_data)
+from ._private import extbuild, decorators as dec
 from ._private.nosetester import (
     run_module_suite, NoseTester as Tester
     )

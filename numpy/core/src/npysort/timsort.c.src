@@ -42,7 +42,7 @@
 
 
 
-npy_intp compute_min_run(npy_intp num)
+static npy_intp compute_min_run(npy_intp num)
 {
     npy_intp r = 0;
 
@@ -476,7 +476,7 @@ force_collapse_@suff@(@type@ *arr, run *stack, npy_intp *stack_ptr,
 }
 
 
-int
+NPY_NO_EXPORT int
 timsort_@suff@(void *start, npy_intp num, void *NPY_UNUSED(varr))
 {
     int ret;
@@ -507,9 +507,7 @@ timsort_@suff@(void *start, npy_intp num, void *NPY_UNUSED(varr))
     ret = 0;
 cleanup:
 
-    if (buffer.pw != NULL) {
-        free(buffer.pw);
-    }
+    free(buffer.pw);
 
     return ret;
 }
@@ -854,7 +852,7 @@ aforce_collapse_@suff@(@type@ *arr, npy_intp *tosort, run *stack,
 }
 
 
-int
+NPY_NO_EXPORT int
 atimsort_@suff@(void *v, npy_intp *tosort, npy_intp num,
                 void *NPY_UNUSED(varr))
 {
@@ -904,7 +902,7 @@ cleanup:
  * run length to reduce the cost of insertion sort.
  */
 
-npy_intp compute_min_run_short(npy_intp num)
+static npy_intp compute_min_run_short(npy_intp num)
 {
     npy_intp r = 0;
 
@@ -1303,7 +1301,7 @@ force_collapse_@suff@(@type@ *arr, run *stack, npy_intp *stack_ptr,
 }
 
 
-int
+NPY_NO_EXPORT int
 timsort_@suff@(void *start, npy_intp num, void *varr)
 {
     PyArrayObject *arr = varr;
@@ -1691,7 +1689,7 @@ aforce_collapse_@suff@(@type@ *arr, npy_intp *tosort, run *stack,
 }
 
 
-int
+NPY_NO_EXPORT int
 atimsort_@suff@(void *start, npy_intp *tosort, npy_intp num, void *varr)
 {
     PyArrayObject *arr = varr;
@@ -2128,7 +2126,7 @@ npy_force_collapse(char *arr, run *stack, npy_intp *stack_ptr,
 }
 
 
-int
+NPY_NO_EXPORT int
 npy_timsort(void *start, npy_intp num, void *varr)
 {
     PyArrayObject *arr = varr;
@@ -2524,7 +2522,7 @@ npy_aforce_collapse(char *arr, npy_intp *tosort, run *stack,
 }
 
 
-int
+NPY_NO_EXPORT int
 npy_atimsort(void *start, npy_intp *tosort, npy_intp num, void *varr)
 {
     PyArrayObject *arr = varr;

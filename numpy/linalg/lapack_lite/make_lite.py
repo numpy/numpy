@@ -1,4 +1,5 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python2.7
+# WARNING! This a Python 2 script. Read README.rst for rationale.
 """
 Usage: make_lite.py <wrapped_routines_file> <lapack_dir>
 
@@ -20,7 +21,10 @@ import shutil
 import fortran
 import clapack_scrub
 
-from shutil import which
+try:
+    from distutils.spawn import find_executable as which  # Python 2
+except ImportError:
+    from shutil import which  # Python 3
 
 # Arguments to pass to f2c. You'll always want -A for ANSI C prototypes
 # Others of interest: -a to not make variables static by default
@@ -81,7 +85,8 @@ class FortranRoutine:
         return self._dependencies
 
     def __repr__(self):
-        return "FortranRoutine({!r}, filename={!r})".format(self.name, self.filename)
+        return "FortranRoutine({!r}, filename={!r})".format(self.name,
+                                                            self.filename)
 
 class UnknownFortranRoutine(FortranRoutine):
     """Wrapper for a Fortran routine for which the corresponding file
@@ -275,7 +280,7 @@ def scrubF2CSource(c_file):
 def ensure_executable(name):
     try:
         which(name)
-    except:
+    except Exception:
         raise SystemExit(name + ' not found')
 
 def create_name_header(output_dir):
@@ -336,10 +341,7 @@ def main():
     lapack_src_dir = sys.argv[2]
     output_dir = os.path.join(os.path.dirname(__file__), 'build')
 
-    try:
-        shutil.rmtree(output_dir)
-    except:
-        pass
+    shutil.rmtree(output_dir, ignore_errors=True)
     os.makedirs(output_dir)
 
     wrapped_routines, ignores = getWrappedRoutineNames(wrapped_routines_file)
@@ -350,7 +352,7 @@ def main():
     for typename in types:
         fortran_file = os.path.join(output_dir, 'f2c_%s.f' % typename)
         c_file = fortran_file[:-2] + '.c'
-        print('creating %s ...'  % c_file)
+        print('creating %s ...' % c_file)
         routines = library.allRoutinesByType(typename)
         concatenateRoutines(routines, fortran_file)
 

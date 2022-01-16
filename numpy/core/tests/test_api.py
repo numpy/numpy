@@ -144,12 +144,12 @@ def test_array_array():
 
 @pytest.mark.parametrize("array", [True, False])
 def test_array_impossible_casts(array):
-    # All builtin types can forst cast as least theoretically
+    # All builtin types can be forcibly cast, at least theoretically,
     # but user dtypes cannot necessarily.
     rt = rational(1, 2)
     if array:
         rt = np.array(rt)
-    with assert_raises(ValueError):
+    with assert_raises(TypeError):
         np.array(rt, dtype="M8")
 
 
@@ -281,6 +281,32 @@ def test_array_astype():
     a = np.array(1000, dtype='i4')
     assert_raises(TypeError, a.astype, 'U1', casting='safe')
 
+@pytest.mark.parametrize("dt", ["S", "U"])
+def test_array_astype_to_string_discovery_empty(dt):
+    # See also gh-19085
+    arr = np.array([""], dtype=object)
+    # Note, the itemsize is the `0 -> 1` logic, which should change.
+    # The important part the test is rather that it does not error.
+    assert arr.astype(dt).dtype.itemsize == np.dtype(f"{dt}1").itemsize
+
+    # check the same thing for `np.can_cast` (since it accepts arrays)
+    assert np.can_cast(arr, dt, casting="unsafe")
+    assert not np.can_cast(arr, dt, casting="same_kind")
+    # as well as for the object as a descriptor:
+    assert np.can_cast("O", dt, casting="unsafe")
+
+@pytest.mark.parametrize("dt", ["d", "f", "S13", "U32"])
+def test_array_astype_to_void(dt):
+    dt = np.dtype(dt)
+    arr = np.array([], dtype=dt)
+    assert arr.astype("V").dtype.itemsize == dt.itemsize
+
+def test_object_array_astype_to_void():
+    # This is different to `test_array_astype_to_void` as object arrays
+    # are inspected.  The default void is "V8" (8 is the length of double)
+    arr = np.array([], dtype="O").astype("V")
+    assert arr.dtype == "V8"
+
 @pytest.mark.parametrize("t",
     np.sctypes['uint'] + np.sctypes['int'] + np.sctypes['float']
 )
@@ -316,6 +342,29 @@ def test_string_to_boolean_cast_errors(dtype, out_dtype):
         arr = np.array([invalid], dtype=dtype)
         with assert_raises(ValueError):
             arr.astype(out_dtype)
+
+@pytest.mark.parametrize("str_type", [str, bytes, np.str_, np.unicode_])
+@pytest.mark.parametrize("scalar_type",
+        [np.complex64, np.complex128, np.clongdouble])
+def test_string_to_complex_cast(str_type, scalar_type):
+    value = scalar_type(b"1+3j")
+    assert scalar_type(value) == 1+3j
+    assert np.array([value], dtype=object).astype(scalar_type)[()] == 1+3j
+    assert np.array(value).astype(scalar_type)[()] == 1+3j
+    arr = np.zeros(1, dtype=scalar_type)
+    arr[0] = value
+    assert arr[0] == 1+3j
+
+@pytest.mark.parametrize("dtype", np.typecodes["AllFloat"])
+def test_none_to_nan_cast(dtype):
+    # Note that at the time of writing this test, the scalar constructors
+    # reject None
+    arr = np.zeros(1, dtype=dtype)
+    arr[0] = None
+    assert np.isnan(arr)[0]
+    assert np.isnan(np.array(None, dtype=dtype))[()]
+    assert np.isnan(np.array([None], dtype=dtype))[0]
+    assert np.isnan(np.array(None).astype(dtype))[()]
 
 def test_copyto_fromscalar():
     a = np.arange(6, dtype='f4').reshape(2, 3)
@@ -549,3 +598,31 @@ def test_broadcast_arrays():
 def test_full_from_list(shape, fill_value, expected_output):
     output = np.full(shape, fill_value)
     assert_equal(output, expected_output)
+
+def test_astype_copyflag():
+    # test the various copyflag options
+    arr = np.arange(10, dtype=np.intp)
+
+    res_true = arr.astype(np.intp, copy=True)
+    assert not np.may_share_memory(arr, res_true)
+    res_always = arr.astype(np.intp, copy=np._CopyMode.ALWAYS)
+    assert not np.may_share_memory(arr, res_always)
+
+    res_false = arr.astype(np.intp, copy=False)
+    # `res_false is arr` currently, but check `may_share_memory`.
+    assert np.may_share_memory(arr, res_false)
+    res_if_needed = arr.astype(np.intp, copy=np._CopyMode.IF_NEEDED)
+    # `res_if_needed is arr` currently, but check `may_share_memory`.
+    assert np.may_share_memory(arr, res_if_needed)
+
+    res_never = arr.astype(np.intp, copy=np._CopyMode.NEVER)
+    assert np.may_share_memory(arr, res_never)
+
+    # Simple tests for when a copy is necessary:
+    res_false = arr.astype(np.float64, copy=False)
+    assert_array_equal(res_false, arr)
+    res_if_needed = arr.astype(np.float64, 
+                               copy=np._CopyMode.IF_NEEDED)
+    assert_array_equal(res_if_needed, arr)
+    assert_raises(ValueError, arr.astype, np.float64,
+                  copy=np._CopyMode.NEVER)

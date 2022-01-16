@@ -1,5 +1,5 @@
-#ifndef _NPY_NUMPYOS_H_
-#define _NPY_NUMPYOS_H_
+#ifndef NUMPY_CORE_SRC_COMMON_NPY_NUMPYOS_H_
+#define NUMPY_CORE_SRC_COMMON_NPY_NUMPYOS_H_
 
 NPY_NO_EXPORT char*
 NumPyOS_ascii_formatd(char *buffer, size_t buf_size,
@@ -38,4 +38,5 @@ NumPyOS_strtoll(const char *str, char **endptr, int base);
 /* Convert a string to an int in an arbitrary base */
 NPY_NO_EXPORT npy_ulonglong
 NumPyOS_strtoull(const char *str, char **endptr, int base);
-#endif
+
+#endif  /* NUMPY_CORE_SRC_COMMON_NPY_NUMPYOS_H_ */

@@ -6,6 +6,10 @@
 #ifndef _NPY_UMATH_LOOPS_H_
 #define _NPY_UMATH_LOOPS_H_
 
+#ifndef NPY_NO_EXPORT
+    #define NPY_NO_EXPORT NPY_VISIBILITY_HIDDEN
+#endif
+
 #define BOOL_invert BOOL_logical_not
 #define BOOL_add BOOL_logical_or
 #define BOOL_bitwise_and BOOL_logical_and
@@ -17,7 +21,6 @@
 #define BOOL_minimum BOOL_logical_and
 #define BOOL_fmax BOOL_maximum
 #define BOOL_fmin BOOL_minimum
-
 
 /*
  *****************************************************************************
@@ -48,6 +51,18 @@ BOOL_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void
  **                           INTEGER LOOPS
  *****************************************************************************
  */
+
+#ifndef NPY_DISABLE_OPTIMIZATION
+    #include "loops_arithmetic.dispatch.h"
+#endif
+
+/**begin repeat
+ * #TYPE = UBYTE, USHORT, UINT, ULONG, ULONGLONG,
+           BYTE,  SHORT,  INT,  LONG,  LONGLONG#
+ */
+ NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void @TYPE@_divide,
+     (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func)))
+/**end repeat**/
 
 /**begin repeat
  * #TYPE = BYTE, SHORT, INT, LONG, LONGLONG#
@@ -137,9 +152,6 @@ NPY_NO_EXPORT void
 @S@@TYPE@_sign(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
 
 NPY_NO_EXPORT void
-@S@@TYPE@_divide(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
-
-NPY_NO_EXPORT void
 @S@@TYPE@_remainder(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
 
 NPY_NO_EXPORT void
@@ -167,13 +179,65 @@ NPY_NO_EXPORT void
  **                             FLOAT LOOPS                                 **
  *****************************************************************************
  */
+#ifndef NPY_DISABLE_OPTIMIZATION
+    #include "loops_unary_fp.dispatch.h"
+#endif
+/**begin repeat
+ *  #TYPE = FLOAT, DOUBLE#
+ */
+/**begin repeat1
+ * #kind = ceil, sqrt, absolute, square, reciprocal#
+ */
+NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void @TYPE@_@kind@,
+   (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data)))
+/**end repeat1**/
+/**end repeat**/
+
+#ifndef NPY_DISABLE_OPTIMIZATION
+    #include "loops_arithm_fp.dispatch.h"
+#endif
+/**begin repeat
+ *  #TYPE = FLOAT, DOUBLE#
+ */
+/**begin repeat1
+ * Arithmetic
+ * # kind = add, subtract, multiply, divide#
+ * # OP = +, -, *, /#
+ */
+NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void @TYPE@_@kind@,
+    (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func)))
+/**end repeat1**/
+/**end repeat**/
+
+#ifndef NPY_DISABLE_OPTIMIZATION
+    #include "loops_umath_fp.dispatch.h"
+#endif
 
 /**begin repeat
  *  #TYPE = FLOAT, DOUBLE#
  */
-NPY_NO_EXPORT void
-@TYPE@_sqrt(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
+/**begin repeat1
+ * #func = tanh, exp2, log2, log10, expm1, log1p, cbrt, tan, arcsin, arccos, arctan, sinh, cosh, arcsinh, arccosh, arctanh#
+ */
 
+NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void @TYPE@_@func@,
+    (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func)))
+
+/**end repeat1**/
+/**end repeat**/
+
+/**begin repeat
+ * #func = sin, cos#
+ */
+
+NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void DOUBLE_@func@,
+    (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func)))
+
+/**end repeat**/
+
+/**begin repeat
+ *  #TYPE = FLOAT, DOUBLE#
+ */
 /**begin repeat1
  * #func = maximum, minimum#
  */
@@ -181,45 +245,36 @@ NPY_NO_EXPORT void
 @TYPE@_@func@_avx512f(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
 
 /**end repeat1**/
-
-/**begin repeat1
- * #isa = avx512f, fma#
- */
-
-/**begin repeat2
- * #func = sqrt, absolute, square, reciprocal#
- */
-NPY_NO_EXPORT void
-@TYPE@_@func@_@isa@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
-
-/**end repeat2**/
-/**end repeat1**/
 /**end repeat**/
 
-NPY_NO_EXPORT void
-DOUBLE_exp(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
-
-NPY_NO_EXPORT void
-DOUBLE_exp_avx512f(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
-
+#ifndef NPY_DISABLE_OPTIMIZATION
+    #include "loops_trigonometric.dispatch.h"
+#endif
 /**begin repeat
- *  #func = sin, cos, exp, log#
+ *  #func = sin, cos#
  */
-NPY_NO_EXPORT void
-FLOAT_@func@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
+NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void FLOAT_@func@, (
+    char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func)
+))
+/**end repeat**/
 
+#ifndef NPY_DISABLE_OPTIMIZATION
+    #include "loops_exponent_log.dispatch.h"
+#endif
+/**begin repeat
+ *  #TYPE = FLOAT, DOUBLE#
+ */
 /**begin repeat1
- * #isa = avx512f, fma#
+ * # kind = exp, log, frexp, ldexp#
  */
-
-NPY_NO_EXPORT void
-FLOAT_@func@_@isa@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
-
+NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void @TYPE@_@kind@, (
+  char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func)
+))
 /**end repeat1**/
 /**end repeat**/
 
 /**begin repeat
- *  #func = rint, ceil, floor, trunc#
+ *  #func = rint, floor, trunc#
  */
 
 /**begin repeat1
@@ -339,19 +394,10 @@ NPY_NO_EXPORT void
 @TYPE@_frexp(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
 
 NPY_NO_EXPORT void
-@TYPE@_frexp_avx512_skx(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
-
-NPY_NO_EXPORT void
 @TYPE@_ldexp(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
 
 NPY_NO_EXPORT void
-@TYPE@_ldexp_avx512_skx(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
-
-NPY_NO_EXPORT void
 @TYPE@_ldexp_long(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
-
-#define @TYPE@_true_divide @TYPE@_divide
-
 /**end repeat**/
 
 
@@ -360,6 +406,19 @@ NPY_NO_EXPORT void
  **                           COMPLEX LOOPS                                 **
  *****************************************************************************
  */
+#ifndef NPY_DISABLE_OPTIMIZATION
+    #include "loops_arithm_fp.dispatch.h"
+#endif
+/**begin repeat
+ * #TYPE = CFLOAT, CDOUBLE#
+ */
+/**begin repeat1
+ * #kind = add, subtract, multiply#
+ */
+NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void @TYPE@_@kind@,
+   (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data)))
+/**end repeat1**/
+/**end repeat**/
 
 #define CGE(xr,xi,yr,yi) (xr > yr || (xr == yr && xi >= yi));
 #define CLE(xr,xi,yr,yi) (xr < yr || (xr == yr && xi <= yi));
@@ -373,33 +432,18 @@ NPY_NO_EXPORT void
  * #TYPE = FLOAT, DOUBLE, LONGDOUBLE#
  * #c = f, , l#
  * #C = F, , L#
- * #IFSIMD = 1, 1, 0#
  */
 
 /**begin repeat1
- * #isa = , _avx512f#
- */
-
-/**begin repeat2
  * arithmetic
- * #kind = add, subtract#
- * #OP = +, -#
+ * #kind = add, subtract, multiply#
  */
-
 NPY_NO_EXPORT void
-C@TYPE@_@kind@@isa@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
-
-/**end repeat2**/
-
-NPY_NO_EXPORT void
-C@TYPE@_multiply@isa@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
+C@TYPE@_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
 /**end repeat1**/
 
 NPY_NO_EXPORT void
 C@TYPE@_divide(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
-
-NPY_NO_EXPORT void
-C@TYPE@_floor_divide(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
 
 /**begin repeat1
  * #kind= greater, greater_equal, less, less_equal, equal, not_equal#
@@ -473,7 +517,6 @@ C@TYPE@_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, v
 NPY_NO_EXPORT void
 C@TYPE@_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
 /**end repeat1**/
-#define C@TYPE@_true_divide C@TYPE@_divide
 
 /**end repeat**/
 
@@ -586,10 +629,6 @@ NPY_NO_EXPORT void
 TIMEDELTA_mm_qm_divmod(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
 
 /* Special case equivalents to above functions */
-
-#define TIMEDELTA_mq_m_true_divide TIMEDELTA_mq_m_divide
-#define TIMEDELTA_md_m_true_divide TIMEDELTA_md_m_divide
-#define TIMEDELTA_mm_d_true_divide TIMEDELTA_mm_d_divide
 #define TIMEDELTA_mq_m_floor_divide TIMEDELTA_mq_m_divide
 #define TIMEDELTA_md_m_floor_divide TIMEDELTA_md_m_divide
 /* #define TIMEDELTA_mm_d_floor_divide TIMEDELTA_mm_d_divide */
@@ -617,6 +656,43 @@ OBJECT_sign(char **args, npy_intp const *dimensions, npy_intp const *steps, void
 
 NPY_NO_EXPORT void
 PyUFunc_OOO_O(char **args, npy_intp const *dimensions, npy_intp const *steps, void *func);
+
+/*
+ *****************************************************************************
+ **                            MIN/MAX LOOPS                                **
+ *****************************************************************************
+ */
+
+#ifndef NPY_DISABLE_OPTIMIZATION
+    #include "loops_minmax.dispatch.h"
+#endif
+
+//---------- Integers ----------
+
+/**begin repeat
+ * #TYPE = BYTE, UBYTE, SHORT, USHORT, INT, UINT,
+ *         LONG, ULONG, LONGLONG, ULONGLONG#
+ */
+/**begin repeat1
+ * #kind = maximum, minimum#
+ */
+ NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void @TYPE@_@kind@,
+   (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data)))
+/**end repeat1**/
+/**end repeat**/
+
+//---------- Float ----------
+
+ /**begin repeat
+  * #TYPE = FLOAT, DOUBLE, LONGDOUBLE#
+  */
+/**begin repeat1
+ * #kind = maximum, minimum, fmax, fmin#
+ */
+ NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void @TYPE@_@kind@,
+   (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data)))
+/**end repeat1**/
+/**end repeat**/
 
 /*
  *****************************************************************************

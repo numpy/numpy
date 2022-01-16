@@ -218,8 +218,6 @@ def hermeline(off, scl):
     """
     Hermite series whose graph is a straight line.
 
-
-
     Parameters
     ----------
     off, scl : scalars
@@ -233,7 +231,11 @@ def hermeline(off, scl):
 
     See Also
     --------
-    polyline, chebline
+    numpy.polynomial.polynomial.polyline
+    numpy.polynomial.chebyshev.chebline
+    numpy.polynomial.legendre.legline
+    numpy.polynomial.laguerre.lagline
+    numpy.polynomial.hermite.hermline
 
     Examples
     --------
@@ -287,7 +289,11 @@ def hermefromroots(roots):
 
     See Also
     --------
-    polyfromroots, legfromroots, lagfromroots, hermfromroots, chebfromroots
+    numpy.polynomial.polynomial.polyfromroots
+    numpy.polynomial.legendre.legfromroots
+    numpy.polynomial.laguerre.lagfromroots
+    numpy.polynomial.hermite.hermfromroots
+    numpy.polynomial.chebyshev.chebfromroots
 
     Examples
     --------
@@ -408,7 +414,7 @@ def hermemulx(c):
 
     .. math::
 
-    xP_i(x) = (P_{i + 1}(x) + iP_{i - 1}(x)))
+        xP_i(x) = (P_{i + 1}(x) + iP_{i - 1}(x)))
 
     Examples
     --------
@@ -1295,10 +1301,11 @@ def hermefit(x, y, deg, rcond=None, full=False, w=None):
         default) just the coefficients are returned, when True diagnostic
         information from the singular value decomposition is also returned.
     w : array_like, shape (`M`,), optional
-        Weights. If not None, the contribution of each point
-        ``(x[i],y[i])`` to the fit is weighted by `w[i]`. Ideally the
-        weights are chosen so that the errors of the products ``w[i]*y[i]``
-        all have the same variance.  The default value is None.
+        Weights. If not None, the weight ``w[i]`` applies to the unsquared
+        residual ``y[i] - y_hat[i]`` at ``x[i]``. Ideally the weights are
+        chosen so that the errors of the products ``w[i]*y[i]`` all have the
+        same variance.  When using inverse-variance weighting, use
+        ``w[i] = 1/sigma(y[i])``.  The default value is None.
 
     Returns
     -------
@@ -1308,20 +1315,20 @@ def hermefit(x, y, deg, rcond=None, full=False, w=None):
         `k`.
 
     [residuals, rank, singular_values, rcond] : list
-        These values are only returned if `full` = True
+        These values are only returned if ``full == True``
 
-        resid -- sum of squared residuals of the least squares fit
-        rank -- the numerical rank of the scaled Vandermonde matrix
-        sv -- singular values of the scaled Vandermonde matrix
-        rcond -- value of `rcond`.
+        - residuals -- sum of squared residuals of the least squares fit
+        - rank -- the numerical rank of the scaled Vandermonde matrix
+        - singular_values -- singular values of the scaled Vandermonde matrix
+        - rcond -- value of `rcond`.
 
-        For more details, see `linalg.lstsq`.
+        For more details, see `numpy.linalg.lstsq`.
 
     Warns
     -----
     RankWarning
         The rank of the coefficient matrix in the least-squares fit is
-        deficient. The warning is only raised if `full` = False.  The
+        deficient. The warning is only raised if ``full = False``.  The
         warnings can be turned off by
 
         >>> import warnings
@@ -1329,11 +1336,15 @@ def hermefit(x, y, deg, rcond=None, full=False, w=None):
 
     See Also
     --------
-    chebfit, legfit, polyfit, hermfit, polyfit
+    numpy.polynomial.chebyshev.chebfit
+    numpy.polynomial.legendre.legfit
+    numpy.polynomial.polynomial.polyfit
+    numpy.polynomial.hermite.hermfit
+    numpy.polynomial.laguerre.lagfit
     hermeval : Evaluates a Hermite series.
     hermevander : pseudo Vandermonde matrix of Hermite series.
     hermeweight : HermiteE weight function.
-    linalg.lstsq : Computes a least-squares fit from the matrix.
+    numpy.linalg.lstsq : Computes a least-squares fit from the matrix.
     scipy.interpolate.UnivariateSpline : Computes spline fits.
 
     Notes
@@ -1452,7 +1463,11 @@ def hermeroots(c):
 
     See Also
     --------
-    polyroots, legroots, lagroots, hermroots, chebroots
+    numpy.polynomial.polynomial.polyroots
+    numpy.polynomial.legendre.legroots
+    numpy.polynomial.laguerre.lagroots
+    numpy.polynomial.hermite.hermroots
+    numpy.polynomial.chebyshev.chebroots
 
     Notes
     -----
@@ -1669,7 +1684,6 @@ class HermiteE(ABCPolyBase):
     _fromroots = staticmethod(hermefromroots)
 
     # Virtual properties
-    nickname = 'herme'
     domain = np.array(hermedomain)
     window = np.array(hermedomain)
     basis_name = 'He'

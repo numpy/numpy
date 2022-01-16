@@ -1,5 +1,5 @@
-#ifndef _NPY_ARRAY_CTORS_H_
-#define _NPY_ARRAY_CTORS_H_
+#ifndef NUMPY_CORE_SRC_MULTIARRAY_CTORS_H_
+#define NUMPY_CORE_SRC_MULTIARRAY_CTORS_H_
 
 NPY_NO_EXPORT PyObject *
 PyArray_NewFromDescr(
@@ -30,13 +30,10 @@ PyArray_New(
         PyTypeObject *, int nd, npy_intp const *,
         int, npy_intp const*, void *, int, int, PyObject *);
 
-NPY_NO_EXPORT int
-PyArray_GetArrayParamsFromObject_int(PyObject *op,
-         PyArray_Descr *requested_dtype,
-         npy_bool writeable,
-         PyArray_Descr **out_dtype,
-         int *out_ndim, npy_intp *out_dims,
-         PyArrayObject **out_arr);
+NPY_NO_EXPORT PyObject *
+_array_from_array_like(PyObject *op,
+        PyArray_Descr *requested_dtype, npy_bool writeable, PyObject *context,
+        int never_copy);
 
 NPY_NO_EXPORT PyObject *
 PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
@@ -54,6 +51,10 @@ PyArray_FromStructInterface(PyObject *input);
 
 NPY_NO_EXPORT PyObject *
 PyArray_FromInterface(PyObject *input);
+
+NPY_NO_EXPORT PyObject *
+PyArray_FromArrayAttr_int(
+        PyObject *op, PyArray_Descr *descr, int never_copy);
 
 NPY_NO_EXPORT PyObject *
 PyArray_FromArrayAttr(PyObject *op, PyArray_Descr *typecode,
@@ -98,9 +99,6 @@ copy_and_swap(void *dst, void *src, int itemsize, npy_intp numitems,
 NPY_NO_EXPORT void
 byte_swap_vector(void *p, npy_intp n, int size);
 
-NPY_NO_EXPORT int
-PyArray_AssignFromSequence(PyArrayObject *self, PyObject *v);
-
 /*
  * Calls arr_of_subclass.__array_wrap__(towrap), in order to make 'towrap'
  * have the same ndarray subclass as 'arr_of_subclass'.
@@ -109,4 +107,4 @@ NPY_NO_EXPORT PyArrayObject *
 PyArray_SubclassWrap(PyArrayObject *arr_of_subclass, PyArrayObject *towrap);
 
 
-#endif
+#endif  /* NUMPY_CORE_SRC_MULTIARRAY_CTORS_H_ */

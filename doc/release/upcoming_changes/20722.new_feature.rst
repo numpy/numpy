@@ -1,0 +1,13 @@
+Changing to dtype of a different size now requires contiguity of only the last axis
+-----------------------------------------------------------------------------------
+
+Previously, viewing an array with a dtype of a different itemsize required that
+the entire array be C-contiguous. This limitation would unnecessarily force the
+user to make contiguous copies of non-contiguous arrays before being able to
+change the dtype.
+
+This change affects not only ``ndarray.view``, but other construction
+mechanisms, including the discouraged direct assignment to ``ndarray.dtype``.
+
+This change expires the deprecation regarding the viewing of F-contiguous
+arrays, described elsewhere in the release notes.

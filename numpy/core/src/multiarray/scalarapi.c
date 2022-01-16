@@ -1,9 +1,10 @@
-#define PY_SSIZE_T_CLEAN
-#include <Python.h>
-#include "structmember.h"
-
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
+
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+#include <structmember.h>
+
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
 
@@ -35,7 +36,7 @@ scalar_value(PyObject *scalar, PyArray_Descr *descr)
 {
     int type_num;
     int align;
-    npy_intp memloc;
+    uintptr_t memloc;
     if (descr == NULL) {
         descr = PyArray_DescrFromScalar(scalar);
         type_num = descr->type_num;
@@ -69,7 +70,7 @@ scalar_value(PyObject *scalar, PyArray_Descr *descr)
         CASE(TIMEDELTA, Timedelta);
 #undef CASE
         case NPY_STRING:
-            return (void *)PyString_AS_STRING(scalar);
+            return (void *)PyBytes_AsString(scalar);
         case NPY_UNICODE:
             /* lazy initialization, to reduce the memory used by string scalars */
             if (PyArrayScalar_VAL(scalar, Unicode) == NULL) {
@@ -138,10 +139,21 @@ scalar_value(PyObject *scalar, PyArray_Descr *descr)
     }
     else if (_CHK(Flexible)) {
         if (_CHK(String)) {
-            return (void *)PyString_AS_STRING(scalar);
+            return (void *)PyBytes_AS_STRING(scalar);
         }
         if (_CHK(Unicode)) {
-            return (void *)PyUnicode_AS_DATA(scalar);
+            /* Treat this the same as the NPY_UNICODE base class */
+
+            /* lazy initialization, to reduce the memory used by string scalars */
+            if (PyArrayScalar_VAL(scalar, Unicode) == NULL) {
+                Py_UCS4 *raw_data = PyUnicode_AsUCS4Copy(scalar);
+                if (raw_data == NULL) {
+                    return NULL;
+                }
+                PyArrayScalar_VAL(scalar, Unicode) = raw_data;
+                return (void *)raw_data;
+            }
+            return PyArrayScalar_VAL(scalar, Unicode);
         }
         if (_CHK(Void)) {
             /* Note: no & needed here, so can't use _IFCASE */
@@ -157,7 +169,7 @@ scalar_value(PyObject *scalar, PyArray_Descr *descr)
      * Use the alignment flag to figure out where the data begins
      * after a PyObject_HEAD
      */
-    memloc = (npy_intp)scalar;
+    memloc = (uintptr_t)scalar;
     memloc += sizeof(PyObject);
     /* now round-up to the nearest alignment value */
     align = descr->alignment;
@@ -221,8 +233,12 @@ PyArray_CastScalarToCtype(PyObject *scalar, void *ctypeptr,
     PyArray_VectorUnaryFunc* castfunc;
 
     descr = PyArray_DescrFromScalar(scalar);
+    if (descr == NULL) {
+        return -1;
+    }
     castfunc = PyArray_GetCastFunc(descr, outcode->type_num);
     if (castfunc == NULL) {
+        Py_DECREF(descr);
         return -1;
     }
     if (PyTypeNum_ISEXTENDED(descr->type_num) ||
@@ -242,6 +258,7 @@ PyArray_CastScalarToCtype(PyObject *scalar, void *ctypeptr,
                     NPY_ARRAY_CARRAY, NULL);
         if (aout == NULL) {
             Py_DECREF(ain);
+            Py_DECREF(descr);
             return -1;
         }
         castfunc(PyArray_DATA(ain), PyArray_DATA(aout), 1, ain, aout);
@@ -362,14 +379,15 @@ PyArray_FromScalar(PyObject *scalar, PyArray_Descr *outcode)
 NPY_NO_EXPORT PyObject *
 PyArray_ScalarFromObject(PyObject *object)
 {
-    PyObject *ret=NULL;
+    PyObject *ret = NULL;
+
     if (PyArray_IsZeroDim(object)) {
         return PyArray_ToScalar(PyArray_DATA((PyArrayObject *)object),
                                 (PyArrayObject *)object);
     }
     /*
      * Booleans in Python are implemented as a subclass of integers,
-     * so PyBool_Check must be called before PyInt_Check.
+     * so PyBool_Check must be called before PyLong_Check.
      */
     if (PyBool_Check(object)) {
         if (object == Py_True) {
@@ -379,42 +397,49 @@ PyArray_ScalarFromObject(PyObject *object)
             PyArrayScalar_RETURN_FALSE;
         }
     }
-    else if (PyInt_Check(object)) {
-        ret = PyArrayScalar_New(Long);
-        if (ret == NULL) {
-            return NULL;
+    else if (PyLong_Check(object)) {
+        /* Check if fits in long */
+        npy_long val_long = PyLong_AsLong(object);
+        if (!error_converting(val_long)) {
+            ret = PyArrayScalar_New(Long);
+            if (ret != NULL) {
+                PyArrayScalar_VAL(ret, Long) = val_long;
+            }
+            return ret;
         }
-        PyArrayScalar_VAL(ret, Long) = PyInt_AS_LONG(object);
+        PyErr_Clear();
+
+        /* Check if fits in long long */
+        npy_longlong val_longlong = PyLong_AsLongLong(object);
+        if (!error_converting(val_longlong)) {
+            ret = PyArrayScalar_New(LongLong);
+            if (ret != NULL) {
+                PyArrayScalar_VAL(ret, LongLong) = val_longlong;
+            }
+            return ret;
+        }
+        PyErr_Clear();
+
+        return NULL;
     }
     else if (PyFloat_Check(object)) {
         ret = PyArrayScalar_New(Double);
-        if (ret == NULL) {
-            return NULL;
+        if (ret != NULL) {
+            PyArrayScalar_VAL(ret, Double) = PyFloat_AS_DOUBLE(object);
         }
-        PyArrayScalar_VAL(ret, Double) = PyFloat_AS_DOUBLE(object);
+        return ret;
     }
     else if (PyComplex_Check(object)) {
         ret = PyArrayScalar_New(CDouble);
-        if (ret == NULL) {
-            return NULL;
+        if (ret != NULL) {
+            PyArrayScalar_VAL(ret, CDouble).real = PyComplex_RealAsDouble(object);
+            PyArrayScalar_VAL(ret, CDouble).imag = PyComplex_ImagAsDouble(object);
         }
-        PyArrayScalar_VAL(ret, CDouble).real = PyComplex_RealAsDouble(object);
-        PyArrayScalar_VAL(ret, CDouble).imag = PyComplex_ImagAsDouble(object);
+        return ret;
     }
-    else if (PyLong_Check(object)) {
-        npy_longlong val;
-        val = PyLong_AsLongLong(object);
-        if (error_converting(val)) {
-            PyErr_Clear();
-            return NULL;
-        }
-        ret = PyArrayScalar_New(LongLong);
-        if (ret == NULL) {
-            return NULL;
-        }
-        PyArrayScalar_VAL(ret, LongLong) = val;
+    else {
+        return NULL;
     }
-    return ret;
 }
 
 /*New reference */
@@ -602,7 +627,7 @@ PyArray_DescrFromScalar(PyObject *sc)
         PyArray_DESCR_REPLACE(descr);
         type_num = descr->type_num;
         if (type_num == NPY_STRING) {
-            descr->elsize = PyString_GET_SIZE(sc);
+            descr->elsize = PyBytes_GET_SIZE(sc);
         }
         else if (type_num == NPY_UNICODE) {
             descr->elsize = PyUnicode_GET_LENGTH(sc) * 4;
@@ -744,8 +769,8 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
     }
     if (PyTypeNum_ISFLEXIBLE(type_num)) {
         if (type_num == NPY_STRING) {
-            destptr = PyString_AS_STRING(obj);
-            ((PyStringObject *)obj)->ob_shash = -1;
+            destptr = PyBytes_AS_STRING(obj);
+            ((PyBytesObject *)obj)->ob_shash = -1;
             memcpy(destptr, data, itemsize);
             return obj;
         }

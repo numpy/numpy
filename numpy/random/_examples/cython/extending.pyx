@@ -31,7 +31,7 @@ def uniform_mean(Py_ssize_t n):
     random_values = np.empty(n)
     # Best practice is to acquire the lock whenever generating random values.
     # This prevents other threads from modifying the state. Acquiring the lock
-    # is only necessary if if the GIL is also released, as in this example.
+    # is only necessary if the GIL is also released, as in this example.
     with x.lock, nogil:
         for i in range(n):
             random_values[i] = rng.next_double(rng.state)

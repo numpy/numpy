@@ -162,7 +162,7 @@ Added experimental support for the AArch64 architecture.
 C API
 -----
 
-New function ``PyArray_RequireWriteable`` provides a consistent interface
+New function ``PyArray_FailUnlessWriteable`` provides a consistent interface
 for checking array writeability -- any C code which works with arrays whose
 WRITEABLE flag is not known to be True a priori, should make sure to call
 this function before writing.

@@ -1,9 +1,9 @@
-#ifndef _NPY_1_7_DEPRECATED_API_H
-#define _NPY_1_7_DEPRECATED_API_H
-
 #ifndef NPY_DEPRECATED_INCLUDES
 #error "Should never include npy_*_*_deprecated_api directly."
 #endif
+
+#ifndef NUMPY_CORE_INCLUDE_NUMPY_NPY_1_7_DEPRECATED_API_H_
+#define NUMPY_CORE_INCLUDE_NUMPY_NPY_1_7_DEPRECATED_API_H_
 
 /* Emit a warning if the user did not specifically request the old API */
 #ifndef NPY_NO_DEPRECATED_API
@@ -48,7 +48,6 @@
 #define NPY_ALIGNED        NPY_ARRAY_ALIGNED
 #define NPY_NOTSWAPPED     NPY_ARRAY_NOTSWAPPED
 #define NPY_WRITEABLE      NPY_ARRAY_WRITEABLE
-#define NPY_UPDATEIFCOPY   NPY_ARRAY_UPDATEIFCOPY
 #define NPY_BEHAVED        NPY_ARRAY_BEHAVED
 #define NPY_BEHAVED_NS     NPY_ARRAY_BEHAVED_NS
 #define NPY_CARRAY         NPY_ARRAY_CARRAY
@@ -122,4 +121,4 @@
  */
 #include "old_defines.h"
 
-#endif
+#endif  /* NUMPY_CORE_INCLUDE_NUMPY_NPY_1_7_DEPRECATED_API_H_ */

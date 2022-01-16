@@ -30,10 +30,26 @@ flexible broadcasting options.  For example, `numpy.linalg.solve` can handle
 "stacked" arrays, while `scipy.linalg.solve` accepts only a single square
 array as its first argument.
 
+.. note::
+
+   The term *matrix* as it is used on this page indicates a 2d `numpy.array`
+   object, and *not* a `numpy.matrix` object. The latter is no longer
+   recommended, even for linear algebra. See
+   :ref:`the matrix object documentation<matrix-objects>` for
+   more information.
+
+The ``@`` operator
+------------------
+
+Introduced in NumPy 1.10.0, the ``@`` operator is preferable to
+other methods when computing the matrix product between 2d arrays. The
+:func:`numpy.matmul` function implements the ``@`` operator.
+
 .. currentmodule:: numpy
 
 Matrix and vector products
 --------------------------
+
 .. autosummary::
    :toctree: generated/
 

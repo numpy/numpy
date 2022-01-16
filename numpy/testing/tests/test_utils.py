@@ -434,10 +434,10 @@ class TestArrayAlmostEqual(_GenericTest):
         # (which, e.g., astropy Quantity cannot usefully do). See gh-8452.
         class MyArray(np.ndarray):
             def __eq__(self, other):
-                return super(MyArray, self).__eq__(other).view(np.ndarray)
+                return super().__eq__(other).view(np.ndarray)
 
             def __lt__(self, other):
-                return super(MyArray, self).__lt__(other).view(np.ndarray)
+                return super().__lt__(other).view(np.ndarray)
 
             def all(self, *args, **kwargs):
                 raise NotImplementedError
@@ -585,10 +585,10 @@ class TestAlmostEqual(_GenericTest):
         # (which, e.g., astropy Quantity cannot usefully do). See gh-8452.
         class MyArray(np.ndarray):
             def __eq__(self, other):
-                return super(MyArray, self).__eq__(other).view(np.ndarray)
+                return super().__eq__(other).view(np.ndarray)
 
             def __lt__(self, other):
-                return super(MyArray, self).__lt__(other).view(np.ndarray)
+                return super().__lt__(other).view(np.ndarray)
 
             def all(self, *args, **kwargs):
                 raise NotImplementedError
@@ -903,6 +903,11 @@ class TestAssertAllclose:
             assert_allclose(a, b)
         msg = str(exc_info.value)
         assert_('Max relative difference: 0.5' in msg)
+
+    def test_timedelta(self):
+        # see gh-18286
+        a = np.array([[1, 2, 3, "NaT"]], dtype="m8[ns]")
+        assert_allclose(a, a)
 
 
 class TestArrayAlmostEqualNulp:
@@ -1240,7 +1245,7 @@ def assert_warn_len_equal(mod, n_in_context, py34=None, py37=None):
         if sys.version_info[:2] >= (3, 7):
             if py37 is not None:
                 n_in_context = py37
-        elif sys.version_info[:2] >= (3, 4):
+        else:
             if py34 is not None:
                 n_in_context = py34
     assert_equal(num_warns, n_in_context)
