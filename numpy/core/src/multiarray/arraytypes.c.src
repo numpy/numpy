@@ -2849,7 +2849,7 @@ static int
 #define LT(a,b) ((a) < (b) || ((b) != (b) && (a) ==(a)))
 
 static int
-@TYPE@_compare(@type@ *pa, @type@ *pb)
+@TYPE@_compare(@type@ *pa, @type@ *pb, PyArrayObject *NPY_UNUSED(ap))
 {
     const @type@ a = *pa;
     const @type@ b = *pb;
@@ -2869,7 +2869,7 @@ static int
 
 
 static int
-C@TYPE@_compare(@type@ *pa, @type@ *pb)
+C@TYPE@_compare(@type@ *pa, @type@ *pb, PyArrayObject *NPY_UNUSED(ap))
 {
     const @type@ ar = pa[0];
     const @type@ ai = pa[1];
@@ -2924,7 +2924,7 @@ C@TYPE@_compare(@type@ *pa, @type@ *pb)
  */
 
 static int
-@TYPE@_compare(@type@ *pa, @type@ *pb)
+@TYPE@_compare(@type@ *pa, @type@ *pb, PyArrayObject *NPY_UNUSED(ap))
 {
     const @type@ a = *pa;
     const @type@ b = *pb;
