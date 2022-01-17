@@ -892,6 +892,9 @@ def appenddecl(decl, decl2, force=1):
 
 selectpattern = re.compile(
     r'\s*(?P<this>(@\(@.*?@\)@|\*[\d*]+|\*\s*@\(@.*?@\)@|))(?P<after>.*)\Z', re.I)
+typedefpattern = re.compile(
+    r'(?:,(?P<attributes>[\w(),]+))?(::)?(?P<name>\b[a-z$_][\w$]*\b)'
+    r'(?:\((?P<params>[\w,]*)\))?\Z', re.I)
 nameargspattern = re.compile(
     r'\s*(?P<name>\b[\w$]+\b)\s*(@\(@\s*(?P<args>[\w\s,]*)\s*@\)@|)\s*((result(\s*@\(@\s*(?P<result>\b[\w$]+\b)\s*@\)@|))|(bind\s*@\(@\s*(?P<bind>.*)\s*@\)@))*\s*\Z', re.I)
 operatorpattern = re.compile(
@@ -912,6 +915,17 @@ def _is_intent_callback(vdecl):
         if _intentcallbackpattern.match(a):
             return 1
     return 0
+
+
+def _resolvetypedefpattern(line):
+    line = ''.join(line.split())  # removes whitespace
+    m1 = typedefpattern.match(line)
+    print(line, m1)
+    if m1:
+        attrs = m1.group('attributes')
+        attrs = [a.lower() for a in attrs.split(',')] if attrs else []
+        return m1.group('name'), attrs, m1.group('params')
+    return None, [], None
 
 
 def _resolvenameargspattern(line):
@@ -962,7 +976,13 @@ def analyzeline(m, case, line):
             block = 'python module'
         elif re.match(r'abstract\s*interface', block, re.I):
             block = 'abstract interface'
-        name, args, result, bind = _resolvenameargspattern(m.group('after'))
+        if block == 'type':
+            name, attrs, _ = _resolvetypedefpattern(m.group('after'))
+            groupcache[groupcounter]['vars'][name] = dict(attrspec = attrs)
+            args = []
+            result = None
+        else:
+            name, args, result, _ = _resolvenameargspattern(m.group('after'))
         if name is None:
             if block == 'block data':
                 name = '_BLOCK_DATA_'

@@ -44,6 +44,15 @@ class TestPublicPrivate:
         assert "private" not in mod["vars"]["seta"]["attrspec"]
         assert "public" in mod["vars"]["seta"]["attrspec"]
 
+    def test_access_type(self, tmp_path):
+        fpath = util.getpath("tests", "src", "crackfortran", "accesstype.f90")
+        mod = crackfortran.crackfortran([str(fpath)])
+        assert len(mod) == 1
+        tt = mod[0]['vars']
+        assert set(tt['a']['attrspec']) == {'private', 'bind(c)'}
+        assert set(tt['b_']['attrspec']) == {'public', 'bind(c)'}
+        assert set(tt['c']['attrspec']) == {'public'}
+
 
 class TestModuleProcedure():
     def test_moduleOperators(self, tmp_path):
