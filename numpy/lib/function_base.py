@@ -4907,7 +4907,7 @@ def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
 
     >>> x = np.linspace(-5, 5, 101)
     >>> y = np.linspace(-5, 5, 101)
-    >>> # full coorindate arrays
+    >>> # full coordinate arrays
     >>> xx, yy = np.meshgrid(x, y)
     >>> zz = np.sqrt(xx**2 + yy**2)
     >>> xx.shape, yy.shape, zz.shape
