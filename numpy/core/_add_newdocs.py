@@ -2943,7 +2943,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('any',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('argmax',
     """
-    a.argmax(axis=None, out=None)
+    a.argmax(axis=None, out=None, *, keepdims=False)
 
     Return indices of the maximum values along the given axis.
 
@@ -2958,7 +2958,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('argmax',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('argmin',
     """
-    a.argmin(axis=None, out=None)
+    a.argmin(axis=None, out=None, *, keepdims=False)
 
     Return indices of the minimum values along the given axis.
 
