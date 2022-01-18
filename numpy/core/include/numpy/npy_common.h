@@ -180,12 +180,6 @@
     defined(__MINGW32__) || defined(__MINGW64__)
     #include <io.h>
 
-/* mingw based on 3.4.5 has lseek but not ftell/fseek */
-#if defined(__MINGW32__) || defined(__MINGW64__)
-extern int __cdecl _fseeki64(FILE *, long long, int);
-extern long long __cdecl _ftelli64(FILE *);
-#endif
-
     #define npy_fseek _fseeki64
     #define npy_ftell _ftelli64
     #define npy_lseek _lseeki64
