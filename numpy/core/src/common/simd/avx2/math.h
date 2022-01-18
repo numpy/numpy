@@ -42,7 +42,7 @@ NPY_FINLINE npyv_f64 npyv_square_f64(npyv_f64 a)
 #define npyv_max_f64 _mm256_max_pd
 // Maximum, supports IEEE floating-point arithmetic (IEC 60559),
 // - If one of the two vectors contains NaN, the equivalent element of the other vector is set
-// - Only if both corresponded elements are NaN, NaN is set. 
+// - Only if both corresponded elements are NaN, NaN is set.
 NPY_FINLINE npyv_f32 npyv_maxp_f32(npyv_f32 a, npyv_f32 b)
 {
     __m256 nn  = _mm256_cmp_ps(b, b, _CMP_ORD_Q);
@@ -76,7 +76,7 @@ NPY_FINLINE npyv_s64 npyv_max_s64(npyv_s64 a, npyv_s64 b)
 #define npyv_min_f64 _mm256_min_pd
 // Minimum, supports IEEE floating-point arithmetic (IEC 60559),
 // - If one of the two vectors contains NaN, the equivalent element of the other vector is set
-// - Only if both corresponded elements are NaN, NaN is set. 
+// - Only if both corresponded elements are NaN, NaN is set.
 NPY_FINLINE npyv_f32 npyv_minp_f32(npyv_f32 a, npyv_f32 b)
 {
     __m256 nn  = _mm256_cmp_ps(b, b, _CMP_ORD_Q);
@@ -105,6 +105,10 @@ NPY_FINLINE npyv_s64 npyv_min_s64(npyv_s64 a, npyv_s64 b)
     return _mm256_blendv_epi8(a, b, _mm256_cmpgt_epi64(a, b));
 }
 
+// round to nearest intger even
+#define npyv_rint_f32(A) _mm256_round_ps(A, _MM_FROUND_TO_NEAREST_INT)
+#define npyv_rint_f64(A) _mm256_round_pd(A, _MM_FROUND_TO_NEAREST_INT)
+
 // ceil
 #define npyv_ceil_f32 _mm256_ceil_ps
 #define npyv_ceil_f64 _mm256_ceil_pd
@@ -112,5 +116,9 @@ NPY_FINLINE npyv_s64 npyv_min_s64(npyv_s64 a, npyv_s64 b)
 // trunc
 #define npyv_trunc_f32(A) _mm256_round_ps(A, _MM_FROUND_TO_ZERO)
 #define npyv_trunc_f64(A) _mm256_round_pd(A, _MM_FROUND_TO_ZERO)
+
+// floor
+#define npyv_floor_f32 _mm256_floor_ps
+#define npyv_floor_f64 _mm256_floor_pd
 
 #endif // _NPY_SIMD_AVX2_MATH_H

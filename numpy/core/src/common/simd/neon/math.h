@@ -153,6 +153,33 @@ NPY_FINLINE npyv_s64 npyv_min_s64(npyv_s64 a, npyv_s64 b)
     return vbslq_s64(npyv_cmplt_s64(a, b), a, b);
 }
 
+// round to nearest integer even
+NPY_FINLINE npyv_f32 npyv_rint_f32(npyv_f32 a)
+{
+#ifdef NPY_HAVE_ASIMD
+    return vrndnq_f32(a);
+#else
+    // ARMv7 NEON only supports fp to int truncate conversion.
+    // a magic trick of adding 1.5 * 2**23 is used for rounding
+    // to nearest even and then substract this magic number to get
+    // the integer.
+    const npyv_s32 szero = vreinterpretq_s32_f32(vdupq_n_f32(-0.0f));
+    const npyv_f32 magic = vdupq_n_f32(12582912.0f); // 1.5 * 2**23
+    npyv_f32 round = vsubq_f32(vaddq_f32(a, magic), magic);
+    npyv_b32 overflow = vcleq_f32(vabsq_f32(a), vreinterpretq_f32_u32(vdupq_n_u32(0x4b000000)));
+    round = vbslq_f32(overflow, round, a);
+    // signed zero
+    round = vreinterpretq_f32_s32(vorrq_s32(
+         vreinterpretq_s32_f32(round),
+         vandq_s32(vreinterpretq_s32_f32(a), szero)
+    ));
+    return round;
+#endif
+}
+#if NPY_SIMD_F64
+    #define npyv_rint_f64 vrndnq_f64
+#endif // NPY_SIMD_F64
+
 // ceil
 #ifdef NPY_HAVE_ASIMD
     #define npyv_ceil_f32 vrndpq_f32
@@ -221,6 +248,38 @@ NPY_FINLINE npyv_s64 npyv_min_s64(npyv_s64 a, npyv_s64 b)
 #endif
 #if NPY_SIMD_F64
     #define npyv_trunc_f64 vrndq_f64
+#endif // NPY_SIMD_F64
+
+// floor
+#ifdef NPY_HAVE_ASIMD
+    #define npyv_floor_f32 vrndmq_f32
+#else
+   NPY_FINLINE npyv_f32 npyv_floor_f32(npyv_f32 a)
+   {
+        const npyv_s32 szero = vreinterpretq_s32_f32(vdupq_n_f32(-0.0f));
+        const npyv_u32 one = vreinterpretq_u32_f32(vdupq_n_f32(1.0f));
+        const npyv_s32 max_int = vdupq_n_s32(0x7fffffff);
+
+        npyv_s32 roundi = vcvtq_s32_f32(a);
+        npyv_f32 round = vcvtq_f32_s32(roundi);
+        npyv_f32 floor = vsubq_f32(round, vreinterpretq_f32_u32(
+            vandq_u32(vcgtq_f32(round, a), one)
+        ));
+        // respect signed zero
+        npyv_f32 rzero = vreinterpretq_f32_s32(vorrq_s32(
+            vreinterpretq_s32_f32(floor),
+            vandq_s32(vreinterpretq_s32_f32(a), szero)
+        ));
+        npyv_u32 nnan = npyv_notnan_f32(a);
+        npyv_u32 overflow = vorrq_u32(
+            vceqq_s32(roundi, szero), vceqq_s32(roundi, max_int)
+        );
+
+       return vbslq_f32(vbicq_u32(nnan, overflow), rzero, a);
+   }
+#endif // NPY_HAVE_ASIMD
+#if NPY_SIMD_F64
+    #define npyv_floor_f64 vrndmq_f64
 #endif // NPY_SIMD_F64
 
 #endif // _NPY_SIMD_NEON_MATH_H

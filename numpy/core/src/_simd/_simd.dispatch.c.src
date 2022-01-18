@@ -381,7 +381,7 @@ SIMD_IMPL_INTRIN_1(sumup_@sfx@, @esfx@, v@sfx@)
  ***************************/
 #if @fp_only@
 /**begin repeat1
- * #intrin = sqrt, recip, abs, square, ceil, trunc#
+ * #intrin = sqrt, recip, abs, square, rint, ceil, trunc, floor#
  */
 SIMD_IMPL_INTRIN_1(@intrin@_@sfx@, v@sfx@, v@sfx@)
 /**end repeat1**/
@@ -615,7 +615,7 @@ SIMD_INTRIN_DEF(sumup_@sfx@)
  ***************************/
 #if @fp_only@
 /**begin repeat1
- * #intrin = sqrt, recip, abs, square, ceil, trunc#
+ * #intrin = sqrt, recip, abs, square, rint, ceil, trunc, floor#
  */
 SIMD_INTRIN_DEF(@intrin@_@sfx@)
 /**end repeat1**/
