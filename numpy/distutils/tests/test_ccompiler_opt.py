@@ -405,7 +405,7 @@ class _Test_CCompilerOpt:
                 # in msvc, avx512_knl avx512_knm aren't supported
                 x86_msvc=".* xop fma4 .* avx512f .* avx512_skx .*",
                 armhf=".* asimd asimdhp asimddp .*",
-                ppc64="vsx vsx2 vsx3.*",
+                ppc64="vsx vsx2 vsx3 vsx4.*",
                 s390x="vx vxe vxe2.*"
             )
         # min
@@ -544,13 +544,13 @@ class _Test_CCompilerOpt:
             """
             /*@targets
                 sse sse2 sse41 avx avx2 avx512f
-                vsx vsx2 vsx3
+                vsx vsx2 vsx3 vsx4
                 neon neon_fp16 asimdhp asimddp
                 vx vxe vxe2
             */
             """,
             baseline="avx vsx2 asimd vx vxe",
-            x86="avx512f avx2", armhf="asimddp asimdhp", ppc64="vsx3",
+            x86="avx512f avx2", armhf="asimddp asimdhp", ppc64="vsx4 vsx3",
             s390x="vxe2"
         )
         # test skipping non-dispatch features
@@ -558,7 +558,7 @@ class _Test_CCompilerOpt:
             """
             /*@targets
                 sse41 avx avx2 avx512f
-                vsx2 vsx3
+                vsx2 vsx3 vsx4
                 asimd asimdhp asimddp
                 vx vxe vxe2
             */
@@ -571,13 +571,13 @@ class _Test_CCompilerOpt:
             """
             /*@targets
                 sse2 sse41 avx2 avx512f
-                vsx2 vsx3
+                vsx2 vsx3 vsx4
                 neon asimdhp asimddp
                 vx vxe vxe2
             */
             """,
             baseline="",
-            trap_files=".*(avx2|avx512f|vsx3|asimddp|vxe2).c",
+            trap_files=".*(avx2|avx512f|vsx3|vsx4|asimddp|vxe2).c",
             x86="sse41 sse2", ppc64="vsx2", armhf="asimdhp neon",
             s390x="vxe vx"
         )

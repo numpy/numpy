@@ -65,6 +65,8 @@ enum npy_cpu_features
     NPY_CPU_FEATURE_VSX2              = 201,
     // POWER9
     NPY_CPU_FEATURE_VSX3              = 202,
+    // POWER10
+    NPY_CPU_FEATURE_VSX4              = 203,
 
     // ARM
     NPY_CPU_FEATURE_NEON              = 300,
@@ -167,8 +169,8 @@ npy_cpu_baseline_list(void);
  * On x64: ['SSSE3', 'SSE41', 'POPCNT', 'SSE42', 'AVX', 'F16C', 'FMA3', 'AVX2', 'AVX512F', ...]
  * On armhf: ['NEON', 'NEON_FP16', 'NEON_VPFV4', 'ASIMD', 'ASIMDHP', 'ASIMDDP', 'ASIMDFHM']
  * On aarch64: ['ASIMDHP', 'ASIMDDP', 'ASIMDFHM']
- * On ppc64:  ['VSX', 'VSX2', 'VSX3']
- * On ppc64le: ['VSX3']
+ * On ppc64:  ['VSX', 'VSX2', 'VSX3', 'VSX4']
+ * On ppc64le: ['VSX3', 'VSX4']
  * On s390x: ['VX', 'VXE', VXE2]
  * On any other arch or if the optimization is disabled: []
  */
