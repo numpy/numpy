@@ -323,6 +323,7 @@ NPY_NO_EXPORT int NPY_CPU_DISPATCH_CURFX(@TYPE@_@func@)
 #endif
 #ifdef TO_SIMD_SFX
     *mindx = TO_SIMD_SFX(simd_@func@)((TO_SIMD_SFX(npyv_lanetype)*)ip, n);
+    npyv_cleanup();
 #else
     @type@ mp = *ip;
     *mindx = 0;
@@ -380,6 +381,7 @@ NPY_NO_EXPORT int NPY_CPU_DISPATCH_CURFX(BOOL_argmax)
             break;
         }
     }
+    npyv_cleanup();
 #endif // NPY_SIMD
     for (; i < len; ++i) {
         if (ip[i]) {
