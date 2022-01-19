@@ -658,18 +658,20 @@ def test_warn_on_skipped_data(skiprows):
         ("float16", 3.07e-05),
         ("float32", 9.2557e-41), ("complex64", 9.2557e-41+2.8622554e-29j),
         ("float64", -1.758571353180402e-24),
-        ("complex128", 5.406409232372729e-29-1.758571353180402e-24j),
+        # Here and below, the repr side-steps a small loss of precision in
+        # complex `str` in PyPy (which is probably fine, as repr works):
+        ("complex128", repr(5.406409232372729e-29-1.758571353180402e-24j)),
         # Use integer values that fit into double.  Everything else leads to
         # problems due to longdoubles going via double and decimal strings
         # causing rounding errors.
         ("longdouble", 0x01020304050607),
-        ("clongdouble", 0x01020304050607 + (0x00121314151617 * 1j)),
+        ("clongdouble", repr(0x01020304050607 + (0x00121314151617 * 1j))),
         ("U2", "\U00010203\U000a0b0c")])
 @pytest.mark.parametrize("swap", [True, False])
 def test_byteswapping_and_unaligned(dtype, value, swap):
     # Try to create "interesting" values within the valid unicode range:
     dtype = np.dtype(dtype)
-    data = [f"x,{value}\n"]
+    data = [f"x,{value}\n"]  # repr as PyPy `str` truncates some
     if swap:
         dtype = dtype.newbyteorder()
     full_dt = np.dtype([("a", "S1"), ("b", dtype)], align=False)
