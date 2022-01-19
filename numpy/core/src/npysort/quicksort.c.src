@@ -52,8 +52,12 @@
 #include "npy_sort.h"
 #include "npysort_common.h"
 #include "npy_cpu_features.h"
-#include "qsort-32bit-avx512.h"
+#include "x86-qsort.h"
 #include <stdlib.h>
+
+#ifndef NPY_DISABLE_OPTIMIZATION
+    #include "x86-qsort.dispatch.h"
+#endif
 
 #define NOT_USED NPY_UNUSED(unused)
 /*
@@ -91,13 +95,14 @@
 NPY_NO_EXPORT int
 quicksort_@suff@(void *start, npy_intp num, void *NOT_USED)
 {
+
 #if @AVX512@
-#if defined HAVE_ATTRIBUTE_TARGET_AVX512_SKX_WITH_INTRINSICS
-    if(NPY_CPU_HAVE(AVX512_SKX)) {
-        avx512_qsort_@suff@(start, num);
-        return 0;
+    void (*dispfunc)(void*, npy_intp) = NULL;
+    NPY_CPU_DISPATCH_CALL_XB(dispfunc = &x86_quicksort_@suff@);
+    if (dispfunc) {
+       (*dispfunc)(start, num);
+       return 0;
     }
-#endif
 #endif
 
     @type@ vp;
