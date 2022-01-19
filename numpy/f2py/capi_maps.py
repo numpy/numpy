@@ -504,7 +504,7 @@ def sign2map(a, var):
     varname,ctype,atype
     init,init.r,init.i,pytype
     vardebuginfo,vardebugshowvalue,varshowvalue
-    varrfromat
+    varrformat
     intent
     """
     out_a = a
