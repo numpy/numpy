@@ -7,7 +7,7 @@ name: numpy-dev
 channels:
   - conda-forge
 dependencies:
-  - python
+  - python=3.9 #need to pin to avoid issues with builds
   - cython
   - compilers
   - openblas
@@ -21,13 +21,13 @@ dependencies:
   # For type annotations
   - mypy=0.931
   # For building docs
-  - sphinx=4.1.1
+  - sphinx=4.2.0
   - numpydoc=1.1.0
   - ipython
   - scipy
   - pandas
   - matplotlib
-  - pydata-sphinx-theme
+  - pydata-sphinx-theme=0.7.2
   - breathe
   # For linting
   - pycodestyle=2.7.0
