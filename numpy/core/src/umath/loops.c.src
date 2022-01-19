@@ -1506,62 +1506,6 @@ TIMEDELTA_mm_qm_divmod(char **args, npy_intp const *dimensions, npy_intp const *
  */
 
 /**begin repeat
- *  #func = rint, floor, trunc#
- *  #scalarf = npy_rint, npy_floor, npy_trunc#
- */
-
-/**begin repeat1
-*  #TYPE = FLOAT, DOUBLE#
-*  #type = npy_float, npy_double#
-*  #typesub = f, #
-*/
-
-NPY_NO_EXPORT NPY_GCC_OPT_3 void
-@TYPE@_@func@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
-{
-    UNARY_LOOP {
-        const @type@ in1 = *(@type@ *)ip1;
-        *(@type@ *)op1 = @scalarf@@typesub@(in1);
-    }
-}
-
-
-/**end repeat1**/
-/**end repeat**/
-
-/**begin repeat
- * #isa = avx512f, fma#
- * #ISA = AVX512F, FMA#
- * #CHK = HAVE_ATTRIBUTE_TARGET_AVX512F_WITH_INTRINSICS, HAVE_ATTRIBUTE_TARGET_AVX2_WITH_INTRINSICS#
- */
-
-/**begin repeat1
- *  #TYPE = FLOAT, DOUBLE#
- *  #type = npy_float, npy_double#
- *  #typesub = f, #
- */
-
-/**begin repeat2
- *  #func = rint, floor, trunc#
- *  #scalarf = npy_rint, npy_floor, npy_trunc#
- */
-
-NPY_NO_EXPORT NPY_GCC_OPT_3 void
-@TYPE@_@func@_@isa@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
-{
-    if (!run_unary_@isa@_@func@_@TYPE@(args, dimensions, steps)) {
-        UNARY_LOOP {
-            const @type@ in1 = *(@type@ *)ip1;
-            *(@type@ *)op1 = @scalarf@@typesub@(in1);
-        }
-    }
-}
-
-/**end repeat2**/
-/**end repeat1**/
-/**end repeat**/
-
-/**begin repeat
  * Float types
  *  #type = npy_float, npy_double, npy_longdouble#
  *  #TYPE = FLOAT, DOUBLE, LONGDOUBLE#

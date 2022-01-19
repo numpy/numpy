@@ -186,7 +186,7 @@ NPY_NO_EXPORT void
  *  #TYPE = FLOAT, DOUBLE#
  */
 /**begin repeat1
- * #kind = ceil, sqrt, absolute, square, reciprocal#
+ * #kind = rint, floor, trunc, ceil, sqrt, absolute, square, reciprocal#
  */
 NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void @TYPE@_@kind@,
    (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data)))
@@ -270,26 +270,6 @@ NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void FLOAT_@func@, (
 NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void @TYPE@_@kind@, (
   char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func)
 ))
-/**end repeat1**/
-/**end repeat**/
-
-/**begin repeat
- *  #func = rint, floor, trunc#
- */
-
-/**begin repeat1
-*  #TYPE = FLOAT, DOUBLE#
-*/
-
-NPY_NO_EXPORT NPY_GCC_OPT_3 void
-@TYPE@_@func@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data));
-
-/**begin repeat2
- * #isa = avx512f, fma#
- */
-NPY_NO_EXPORT NPY_GCC_OPT_3 void
-@TYPE@_@func@_@isa@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data));
-/**end repeat2**/
 /**end repeat1**/
 /**end repeat**/
 
