@@ -646,23 +646,25 @@ def test_warn_on_skipped_data(skiprows):
         np.loadtxt(txt, skiprows=skiprows)
 
 
-@pytest.mark.parametrize("dtype",
-        list(np.typecodes["AllInteger"] + np.typecodes["AllFloat"]) + ["U2"])
+@pytest.mark.parametrize(["dtype", "value"], [
+        ("i2", 0x0001), ("u2", 0x0001),
+        ("i4", 0x00010203), ("u4", 0x00010203),
+        ("i8", 0x0001020304050607), ("u8", 0x0001020304050607),
+        # The following values are constructed to lead to unique bytes:
+        ("float16", 3.07e-05),
+        ("float32", 9.2557e-41), ("complex64", 9.2557e-41+2.8622554e-29j),
+        ("float64", -1.758571353180402e-24),
+        ("complex128", 5.406409232372729e-29-1.758571353180402e-24j),
+        # Use integer values that fit into double.  Everything else leads to
+        # problems due to longdoubles going via double and decimal strings
+        # causing rounding errors.
+        ("longdouble", 0x01020304050607),
+        ("clongdouble", 0x01020304050607 + (0x00121314151617 * 1j)),
+        ("U2", "\U00010203\U000a0b0c")])
 @pytest.mark.parametrize("swap", [True, False])
-def test_byteswapping_and_unaligned(dtype, swap):
+def test_byteswapping_and_unaligned(dtype, value, swap):
     # Try to create "interesting" values within the valid unicode range:
-    byte_data = np.array([0x012345, 0x023456] * 8, dtype=np.uint32)
     dtype = np.dtype(dtype)
-
-    # For (c)longdouble use double -> str -> longdouble to avoid round-tripping
-    # issues.  (A bit convoluted, but necessary due to rounding.)
-    if dtype.type == np.longdouble:
-        value = np.longdouble(str(byte_data.view(np.double).item(0)))
-    elif dtype.type == np.clongdouble:
-        value = np.clongdouble(str(byte_data.view(np.double).item(0)))
-    else:
-        value = byte_data.view(dtype).item(0)
-
     data = [f"x,{value}\n"]
     if swap:
         dtype = dtype.newbyteorder()
@@ -671,7 +673,7 @@ def test_byteswapping_and_unaligned(dtype, swap):
     assert full_dt.fields["b"][1] == 1
     res = np.loadtxt(data, dtype=full_dt, delimiter=",", encoding=None,
                      max_rows=1)  # max-rows prevents over-allocation
-    assert res["b"] == value
+    assert res["b"] == dtype.type(value)
 
 
 @pytest.mark.parametrize("dtype",
