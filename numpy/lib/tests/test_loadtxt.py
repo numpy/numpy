@@ -491,6 +491,8 @@ def test_invalid_converter(conv):
         np.loadtxt(StringIO("1 2\n3 4"), converters=conv)
 
 
+@pytest.mark.skipif(IS_PYPY and sys.implementation.version <= (7, 3, 8),
+                    reason="PyPy bug in error formatting")
 def test_converters_dict_raises_non_integer_key():
     with pytest.raises(TypeError, match="keys of the converters dict"):
         np.loadtxt(StringIO("1 2\n3 4"), converters={"a": int})
@@ -541,6 +543,8 @@ def test_quote_support_default():
     assert_array_equal(res, expected)
 
 
+@pytest.mark.skipif(IS_PYPY and sys.implementation.version <= (7, 3, 8),
+                    reason="PyPy bug in error formatting")
 def test_quotechar_multichar_error():
     txt = StringIO("1,2\n3,4")
     msg = r".*must be a single unicode character or None"
