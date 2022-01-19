@@ -100,6 +100,84 @@ parse_control_character(PyObject *obj, Py_UCS4 *character)
 }
 
 
+/*
+ * A (somewhat verbose) check that none of the control characters match or are
+ * newline.  Most of these combinations are completely fine, just weird or
+ * surprising.
+ * (I.e. there is an implicit priority for control characters, so if a comment
+ * matches a delimiter, it would just be a comment.)
+ * In theory some `delimiter=None` paths could have a "meaning", but let us
+ * assume that users are better of setting one of the control chars to `None`
+ * for clarity.
+ *
+ * This also checks that the control characters cannot be newlines.
+ */
+static int
+error_if_matching_control_characters(
+        Py_UCS4 delimiter, Py_UCS4 quote, Py_UCS4 comment)
+{
+    char *control_char1;
+    char *control_char2 = NULL;
+    if (comment != (Py_UCS4)-1) {
+        control_char1 = "comment";
+        if (comment == '\r' || comment == '\n') {
+            goto error;
+        }
+        else if (comment == quote) {
+            control_char2 = "quotechar";
+            goto error;
+        }
+        else if (comment == delimiter) {
+            control_char2 = "delimiter";
+            goto error;
+        }
+    }
+    if (quote != (Py_UCS4)-1) {
+        control_char1 = "quotechar";
+        if (quote == '\r' || quote == '\n') {
+            goto error;
+        }
+        else if (quote == delimiter) {
+            control_char2 = "delimiter";
+            goto error;
+        }
+    }
+    if (delimiter != (Py_UCS4)-1) {
+        control_char1 = "delimiter";
+        if (delimiter == '\r' || delimiter == '\n') {
+            goto error;
+        }
+    }
+    /* The above doesn't work with delimiter=None, which means "whitespace" */
+    if (delimiter == (Py_UCS4)-1) {
+        control_char1 = "delimiter";
+        if (Py_UNICODE_ISSPACE(comment)) {
+            control_char2 = "comment";
+            goto error;
+        }
+        else if (Py_UNICODE_ISSPACE(quote)) {
+            control_char2 = "quotechar";
+            goto error;
+        }
+    }
+    return 0;
+
+  error:
+    if (control_char2 != NULL) {
+        PyErr_Format(PyExc_TypeError,
+                "control characters '%s' and '%s' are identical, please set one"
+                "of them to `None` to indicate that it should not be used.",
+                control_char1, control_char2);
+    }
+    else {
+        PyErr_Format(PyExc_TypeError,
+                "control character '%s' cannot be a newline (`\\r` or `\\n`).",
+                control_char1, control_char2);
+    }
+    return -1;
+}
+
+
 NPY_NO_EXPORT PyObject *
 _load_from_filelike(PyObject *NPY_UNUSED(mod),
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
@@ -145,6 +223,12 @@ _load_from_filelike(PyObject *NPY_UNUSED(mod),
             "|byte_converters", &PyArray_BoolConverter, &pc.python_byte_converters,
             "|c_byte_converters", PyArray_BoolConverter, &pc.c_byte_converters,
             NULL, NULL, NULL) < 0) {
+        return NULL;
+    }
+
+    /* Reject matching control characters, they just rarely make sense anyway */
+    if (error_if_matching_control_characters(
+            pc.delimiter, pc.quote, pc.comment) < 0) {
         return NULL;
     }
 
