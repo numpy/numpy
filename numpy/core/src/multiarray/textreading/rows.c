@@ -389,6 +389,11 @@ read_rows(stream *s,
                 }
             }
 
+            /*
+             * The following function calls represent the main "conversion"
+             * step, i.e. parsing the unicode string for each field and storing
+             * the result in the array.
+             */
             int parser_res;
             Py_UCS4 *str = ts.field_buffer + fields[col].offset;
             Py_UCS4 *end = ts.field_buffer + fields[col + 1].offset - 1;
