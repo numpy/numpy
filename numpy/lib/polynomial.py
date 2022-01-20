@@ -686,7 +686,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
                                  "to scale the covariance matrix")
             # note, this used to be: fac = resids / (len(x) - order - 2.0)
             # it was deciced that the "- 2" (originally justified by "Bayesian
-            # uncertainty analysis") is not was the user expects
+            # uncertainty analysis") is not what the user expects
             # (see gh-11196 and gh-11197)
             fac = resids / (len(x) - order)
         if y.ndim == 1:
