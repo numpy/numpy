@@ -87,7 +87,7 @@ enum NPY_TYPES {    NPY_BOOL=0,
                     /* The number of types not including the new 1.6 types */
                     NPY_NTYPES_ABI_COMPATIBLE=21
 };
-#ifdef _MSC_VER
+#if defined(_MSC_VER) && !defined(__clang__)
 #pragma deprecated(NPY_CHAR)
 #endif
 
