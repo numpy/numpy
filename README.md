@@ -13,7 +13,7 @@
 
 [![Powered by NumFOCUS](https://img.shields.io/badge/powered%20by-NumFOCUS-orange.svg?style=flat&colorA=E1523D&colorB=007D8A)](
 https://numfocus.org)
-[![Pypi Downloads](https://img.shields.io/pypi/dm/numpy.svg?label=Pypi%20downloads)](
+[![PyPI Downloads](https://img.shields.io/pypi/dm/numpy.svg?label=PyPI%20downloads)](
 https://pypi.org/project/numpy/)
 [![Conda Downloads](https://img.shields.io/conda/dn/conda-forge/numpy.svg?label=Conda%20downloads)](
 https://anaconda.org/conda-forge/numpy)
