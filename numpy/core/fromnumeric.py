@@ -3408,6 +3408,7 @@ def mean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue, *,
     0.55000000074505806 # may vary
 
     Specifying a where argument:
+
     >>> a = np.array([[5, 9, 13], [14, 10, 12], [11, 15, 19]])
     >>> np.mean(a)
     12.0
