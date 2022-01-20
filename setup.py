@@ -291,7 +291,7 @@ def parse_setuppy_commands():
 
               - `pip install .`       (from a git repo or downloaded source
                                        release)
-              - `pip install numpy`   (last NumPy release on PyPi)
+              - `pip install numpy`   (last NumPy release on PyPI)
 
             """))
         return True
@@ -303,7 +303,7 @@ def parse_setuppy_commands():
 
             To install NumPy from here with reliable uninstall, we recommend
             that you use `pip install .`. To install the latest NumPy release
-            from PyPi, use `pip install numpy`.
+            from PyPI, use `pip install numpy`.
 
             For help with build/installation issues, please ask on the
             numpy-discussion mailing list.  If you are sure that you have run
@@ -371,7 +371,7 @@ def get_docs_url():
     if 'dev' in VERSION:
         return "https://numpy.org/devdocs"
     else:
-        # For releases, this URL ends up on pypi.
+        # For releases, this URL ends up on PyPI.
         # By pinning the version, users looking at old PyPI releases can get
         # to the associated docs easily.
         return "https://numpy.org/doc/{}.{}".format(MAJOR, MINOR)
