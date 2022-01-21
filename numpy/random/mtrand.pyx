@@ -4341,7 +4341,7 @@ cdef class RandomState:
             The drawn samples, of shape ``(size, k)``.
 
         Raises
-        -------
+        ------
         ValueError
             If any value in ``alpha`` is less than or equal to zero
 
