@@ -22,12 +22,14 @@
 #define scalar_max_i(A, B) ((A > B) ? A : B)
 #define scalar_min_i(A, B) ((A < B) ? A : B)
 // fp, propagates NaNs
-#define scalar_max_f(A, B) ((A >= B || npy_isnan(A)) ? A : B)
-#define scalar_max_d scalar_max_f
-#define scalar_max_l scalar_max_f
-#define scalar_min_f(A, B) ((A <= B || npy_isnan(A)) ? A : B)
-#define scalar_min_d scalar_min_f
-#define scalar_min_l scalar_min_f
+#define scalar_max(A, B) ((A >= B || npy_isnan(A)) ? A : B)
+#define scalar_max_f scalar_max
+#define scalar_max_d scalar_max
+#define scalar_max_l scalar_max
+#define scalar_min(A, B) ((A <= B || npy_isnan(A)) ? A : B)
+#define scalar_min_f scalar_min
+#define scalar_min_d scalar_min
+#define scalar_min_l scalar_min
 // fp, ignores NaNs
 #define scalar_maxp_f fmaxf
 #define scalar_maxp_d fmax
