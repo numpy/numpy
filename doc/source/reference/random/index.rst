@@ -185,7 +185,7 @@ What's New or Different
   methods which are 2-10 times faster than NumPy's Box-Muller or inverse CDF
   implementations.
 * Optional ``dtype`` argument that accepts ``np.float32`` or ``np.float64``
-  to produce either single or double prevision uniform random variables for
+  to produce either single or double precision uniform random variables for
   select distributions
 * Optional ``out`` argument that allows existing arrays to be filled for
   select distributions
