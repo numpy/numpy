@@ -204,10 +204,10 @@ fragments in your commit message::
    ``[skip travis]``: skip TravisCI jobs
    ``[skip azurepipelines]``: skip Azure jobs
 
-*Note: unfortunately not all CI systems implement this feature well, or at all.
+*Note*: unfortunately not all CI systems implement this feature well, or at all.
 CircleCI supports ``ci skip`` but has no command to skip only CircleCI.
 Azure chooses to still run jobs with skip commands on PRs, the jobs only get
-skipped on merging to master.*
+skipped on merging to master.
 
 
 .. _workflow_mailing_list:
