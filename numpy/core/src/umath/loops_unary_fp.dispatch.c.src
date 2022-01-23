@@ -128,6 +128,9 @@ NPY_FINLINE double c_square_f64(double a)
         #if __clang_major__ < 10
         // Clang before v10
         #define WORKAROUND_CLANG_RECIPROCAL_BUG 1
+        #elif defined(_MSC_VER)
+        // clang-cl has the same bug
+        #define WORKAROUND_CLANG_RECIPROCAL_BUG 1
         #elif defined(NPY_CPU_X86) || defined(NPY_CPU_AMD64)
         // Clang v10+, targeting i386 or x86_64
         #define WORKAROUND_CLANG_RECIPROCAL_BUG 0
