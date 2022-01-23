@@ -1588,7 +1588,7 @@ If you created this array "a" ::
 
 .. for doctests
    The continuous integration truncates dataframe display without this setting.
-   >>> pd.set_option('max_columns', 10)
+   >>> pd.set_option('display.max_columns', 10)
 
 You could create a Pandas dataframe ::
 
