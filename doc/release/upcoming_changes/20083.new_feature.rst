@@ -1,0 +1,17 @@
+``hex`` and ``fromhex`` is now available to `numpy.floating`
+------------------------------------------------------------
+The float types have a new instance method :meth:`float.hex` and a
+corresponding new class method :meth:`float.fromhex` to convert
+floating-point numbers to and from hexadecimal strings,
+respectively.
+
+For more details on the methods see python docs on
+`float.hex <https://docs.python.org/3/library/stdtypes.html#float.hex>`__ and
+`float.fromhex <https://docs.python.org/3/library/stdtypes.html#float.fromhex>`__
+
+.. code-block:: python
+
+    >>> np.float32(np.pi).hex()
+    '0x1.921fb6p+1'
+    >>> np.float32.fromhex('0x1.921fb6p+1')
+    3.1415927
