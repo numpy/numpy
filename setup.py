@@ -421,6 +421,7 @@ def setup_package():
         entry_points={
             'console_scripts': f2py_cmds,
             'array_api': ['numpy = numpy.array_api'],
+            'pyinstaller40': ['hook-dirs = numpy:_pyinstaller_hooks_dir'],
         },
     )
 

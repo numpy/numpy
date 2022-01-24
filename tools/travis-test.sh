@@ -83,7 +83,7 @@ run_test()
   # in test_requirements.txt) does not provide a wheel, and the source tar
   # file does not install correctly when Python's optimization level is set
   # to strip docstrings (see https://github.com/eliben/pycparser/issues/291).
-  PYTHONOPTIMIZE="" $PIP install -r test_requirements.txt
+  PYTHONOPTIMIZE="" $PIP install -r test_requirements.txt pyinstaller
   DURATIONS_FLAG="--durations 10"
 
   if [ -n "$USE_DEBUG" ]; then
