@@ -131,13 +131,13 @@ def _unpack_tuple(x):
 
 
 def _unique_dispatcher(ar, return_index=None, return_inverse=None,
-                       return_counts=None, axis=None):
+                       return_counts=None, axis=None, equal_nans=None):
     return (ar,)
 
 
 @array_function_dispatch(_unique_dispatcher)
 def unique(ar, return_index=False, return_inverse=False,
-           return_counts=False, axis=None):
+           return_counts=False, axis=None, equal_nans=True):
     """
     Find the unique elements of an array.
 
@@ -162,8 +162,10 @@ def unique(ar, return_index=False, return_inverse=False,
     return_counts : bool, optional
         If True, also return the number of times each unique item appears
         in `ar`.
+    equals_nan : bool, optional
+        If True, collapses multiple NaN values in return array into 1
 
-        .. versionadded:: 1.9.0
+        .. versionchanged: NumPy 1.23
 
     axis : int or None, optional
         The axis to operate on. If None, `ar` will be flattened. If an integer,
@@ -188,8 +190,10 @@ def unique(ar, return_index=False, return_inverse=False,
     unique_counts : ndarray, optional
         The number of times each of the unique values comes up in the
         original array. Only provided if `return_counts` is True.
+    unique_1NaN : ndarray, optional
+        The sorted unique values with no duplicate NaN values
 
-        .. versionadded:: 1.9.0
+        .. versionchanged: NumPy 1.23
 
     See Also
     --------
@@ -269,7 +273,7 @@ def unique(ar, return_index=False, return_inverse=False,
     """
     ar = np.asanyarray(ar)
     if axis is None:
-        ret = _unique1d(ar, return_index, return_inverse, return_counts)
+        ret = _unique1d(ar, return_index, return_inverse, return_counts, equal_nans)
         return _unpack_tuple(ret)
 
     # axis was specified and not None
@@ -312,13 +316,13 @@ def unique(ar, return_index=False, return_inverse=False,
         return uniq
 
     output = _unique1d(consolidated, return_index,
-                       return_inverse, return_counts)
+                       return_inverse, return_counts, equal_nans)
     output = (reshape_uniq(output[0]),) + output[1:]
     return _unpack_tuple(output)
 
 
 def _unique1d(ar, return_index=False, return_inverse=False,
-              return_counts=False):
+              return_counts=False, equal_nans=True):
     """
     Find the unique elements of an array, ignoring shape.
     """
@@ -334,7 +338,7 @@ def _unique1d(ar, return_index=False, return_inverse=False,
         aux = ar
     mask = np.empty(aux.shape, dtype=np.bool_)
     mask[:1] = True
-    if aux.shape[0] > 0 and aux.dtype.kind in "cfmM" and np.isnan(aux[-1]):
+    if equal_nans and aux.shape[0] > 0 and aux.dtype.kind in "cfmM" and np.isnan(aux[-1]):
         if aux.dtype.kind == "c":  # for complex all NaNs are considered equivalent
             aux_firstnan = np.searchsorted(np.isnan(aux), True, side='left')
         else:
