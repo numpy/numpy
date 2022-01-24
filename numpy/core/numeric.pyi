@@ -1,7 +1,6 @@
 from collections.abc import Callable, Sequence
 from typing import (
     Any,
-    Union,
     overload,
     TypeVar,
     Literal,
@@ -13,7 +12,6 @@ from typing_extensions import TypeGuard
 
 from numpy import (
     ComplexWarning as ComplexWarning,
-    dtype,
     generic,
     unsignedinteger,
     signedinteger,
@@ -34,9 +32,8 @@ from numpy.typing import (
     NDArray,
     DTypeLike,
     _ShapeLike,
-    _SupportsDType,
-    _FiniteNestedSequence,
-    _SupportsArray,
+    _DTypeLike,
+    _ArrayLike,
     _SupportsArrayFunc,
     _ScalarLike_co,
     _ArrayLikeBool_co,
@@ -52,12 +49,6 @@ _T = TypeVar("_T")
 _SCT = TypeVar("_SCT", bound=generic)
 _ArrayType = TypeVar("_ArrayType", bound=NDArray[Any])
 
-_DTypeLike = Union[
-    dtype[_SCT],
-    type[_SCT],
-    _SupportsDType[dtype[_SCT]],
-]
-_ArrayLike = _FiniteNestedSequence[_SupportsArray[dtype[_SCT]]]
 _CorrelateMode = Literal["valid", "same", "full"]
 
 __all__: list[str]

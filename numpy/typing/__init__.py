@@ -323,6 +323,7 @@ from ._scalars import (
 from ._shape import _Shape, _ShapeLike
 from ._dtype_like import (
     DTypeLike as DTypeLike,
+    _DTypeLike,
     _SupportsDType,
     _VoidDTypeLike,
     _DTypeLikeBool,

@@ -33,7 +33,6 @@ from numpy import (
     ulonglong,
     single,
     double,
-    float_,
     longdouble,
     void,
 )
@@ -41,17 +40,15 @@ from numpy.core._internal import _ctypes
 from numpy.core.multiarray import flagsobj
 from numpy.typing import (
     # Arrays
-    ArrayLike,
     NDArray,
-    _FiniteNestedSequence,
-    _SupportsArray,
+    _ArrayLike,
 
     # Shapes
     _ShapeLike,
 
     # DTypes
     DTypeLike,
-    _SupportsDType,
+    _DTypeLike,
     _VoidDTypeLike,
     _BoolCodes,
     _UByteCodes,
@@ -73,13 +70,6 @@ from numpy.typing import (
 _DType = TypeVar("_DType", bound=dtype[Any])
 _DTypeOptional = TypeVar("_DTypeOptional", bound=None | dtype[Any])
 _SCT = TypeVar("_SCT", bound=generic)
-
-_DTypeLike = Union[
-    dtype[_SCT],
-    type[_SCT],
-    _SupportsDType[dtype[_SCT]],
-]
-_ArrayLike = _FiniteNestedSequence[_SupportsArray[dtype[_SCT]]]
 
 _FlagsKind = L[
     'C_CONTIGUOUS', 'CONTIGUOUS', 'C',

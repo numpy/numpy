@@ -46,17 +46,10 @@ from numpy.core._type_aliases import (
     sctypes as sctypes,
 )
 
-from numpy.typing import DTypeLike, ArrayLike, _SupportsDType
+from numpy.typing import DTypeLike, ArrayLike, _DTypeLike
 
 _T = TypeVar("_T")
 _SCT = TypeVar("_SCT", bound=generic)
-
-# A paramtrizable subset of `npt.DTypeLike`
-_DTypeLike = Union[
-    type[_SCT],
-    dtype[_SCT],
-    _SupportsDType[dtype[_SCT]],
-]
 
 class _CastFunc(Protocol):
     def __call__(

@@ -8,11 +8,9 @@ from typing import (
     Any,
     overload,
     TypeVar,
-    Union,
     SupportsIndex,
     final,
     Final,
-    Protocol,
 )
 
 from numpy import (
@@ -55,15 +53,14 @@ from numpy.typing import (
 
     # DTypes
     DTypeLike,
-    _SupportsDType,
+    _DTypeLike,
 
     # Arrays
     NDArray,
     ArrayLike,
-    _SupportsArray,
+    _ArrayLike,
     _SupportsArrayFunc,
     _NestedSequence,
-    _FiniteNestedSequence,
     _ArrayLikeBool_co,
     _ArrayLikeUInt_co,
     _ArrayLikeInt_co,
@@ -82,14 +79,6 @@ from numpy.typing import (
 
 _SCT = TypeVar("_SCT", bound=generic)
 _ArrayType = TypeVar("_ArrayType", bound=NDArray[Any])
-
-# Subscriptable subsets of `npt.DTypeLike` and `npt.ArrayLike`
-_DTypeLike = Union[
-    dtype[_SCT],
-    type[_SCT],
-    _SupportsDType[dtype[_SCT]],
-]
-_ArrayLike = _FiniteNestedSequence[_SupportsArray[dtype[_SCT]]]
 
 # Valid time units
 _UnitKind = L[

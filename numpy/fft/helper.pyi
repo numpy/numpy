@@ -1,19 +1,16 @@
 from typing import Any, TypeVar, overload
 
-from numpy import generic, dtype, integer, floating, complexfloating
+from numpy import generic, integer, floating, complexfloating
 from numpy.typing import (
     NDArray,
     ArrayLike,
     _ShapeLike,
-    _SupportsArray,
-    _FiniteNestedSequence,
+    _ArrayLike,
     _ArrayLikeFloat_co,
     _ArrayLikeComplex_co,
 )
 
 _SCT = TypeVar("_SCT", bound=generic)
-
-_ArrayLike = _FiniteNestedSequence[_SupportsArray[dtype[_SCT]]]
 
 __all__: list[str]
 
