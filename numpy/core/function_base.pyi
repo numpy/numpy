@@ -1,31 +1,21 @@
 from typing import (
     Literal as L,
     overload,
-    Union,
     Any,
     SupportsIndex,
     TypeVar,
 )
 
-from numpy import floating, complexfloating, generic, dtype
+from numpy import floating, complexfloating, generic
 from numpy.typing import (
     NDArray,
-    ArrayLike,
     DTypeLike,
-    _SupportsDType,
-    _SupportsArray,
-    _NumberLike_co,
+    _DTypeLike,
     _ArrayLikeFloat_co,
     _ArrayLikeComplex_co,
 )
 
 _SCT = TypeVar("_SCT", bound=generic)
-
-_DTypeLike = Union[
-    dtype[_SCT],
-    type[_SCT],
-    _SupportsDType[dtype[_SCT]],
-]
 
 __all__: list[str]
 

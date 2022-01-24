@@ -26,7 +26,7 @@ from numpy import (
 
 from numpy.typing import (
     DTypeLike,
-    _SupportsDType,
+    _DTypeLike,
     ArrayLike,
     NDArray,
     _FiniteNestedSequence,
@@ -47,11 +47,6 @@ _MaskFunc = Callable[
     NDArray[Union[number[Any], bool_, timedelta64, datetime64, object_]],
 ]
 
-_DTypeLike = Union[
-    type[_SCT],
-    dtype[_SCT],
-    _SupportsDType[dtype[_SCT]],
-]
 _ArrayLike = _FiniteNestedSequence[_SupportsArray[dtype[_SCT]]]
 
 __all__: list[str]

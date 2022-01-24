@@ -2,7 +2,6 @@ import sys
 from collections.abc import Sequence, Iterator, Callable, Iterable
 from typing import (
     Literal as L,
-    Union,
     Any,
     TypeVar,
     overload,
@@ -38,7 +37,7 @@ from numpy.typing import (
     DTypeLike,
     _ShapeLike,
     _ScalarLike_co,
-    _SupportsDType,
+    _DTypeLike,
     _FiniteNestedSequence,
     _SupportsArray,
     _ArrayLikeInt_co,
@@ -69,11 +68,6 @@ _ArrayType = TypeVar("_ArrayType", bound=NDArray[Any])
 
 _2Tuple = tuple[_T, _T]
 _ArrayLike = _FiniteNestedSequence[_SupportsArray[dtype[_SCT]]]
-_DTypeLike = Union[
-    dtype[_SCT],
-    type[_SCT],
-    _SupportsDType[dtype[_SCT]],
-]
 
 class _TrimZerosSequence(Protocol[_T_co]):
     def __len__(self) -> int: ...

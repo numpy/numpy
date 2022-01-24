@@ -51,7 +51,7 @@ from numpy.typing import (
 
     # DTypes
     DTypeLike,
-    _SupportsDType,
+    _DTypeLike,
     _VoidDTypeLike,
     _BoolCodes,
     _UByteCodes,
@@ -74,11 +74,6 @@ _DType = TypeVar("_DType", bound=dtype[Any])
 _DTypeOptional = TypeVar("_DTypeOptional", bound=None | dtype[Any])
 _SCT = TypeVar("_SCT", bound=generic)
 
-_DTypeLike = Union[
-    dtype[_SCT],
-    type[_SCT],
-    _SupportsDType[dtype[_SCT]],
-]
 _ArrayLike = _FiniteNestedSequence[_SupportsArray[dtype[_SCT]]]
 
 _FlagsKind = L[

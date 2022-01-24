@@ -38,6 +38,7 @@ from numpy.typing import (
 
     # DTypes
     DTypeLike,
+    _DTypeLike,
     _SupportsDType,
     _VoidDTypeLike,
 
@@ -1410,12 +1411,6 @@ _T_co = TypeVar("_T_co", covariant=True)
 _T_contra = TypeVar("_T_contra", contravariant=True)
 _2Tuple = tuple[_T, _T]
 _CastingKind = L["no", "equiv", "safe", "same_kind", "unsafe"]
-
-_DTypeLike = Union[
-    dtype[_ScalarType],
-    type[_ScalarType],
-    _SupportsDType[dtype[_ScalarType]],
-]
 
 _ArrayUInt_co = NDArray[Union[bool_, unsignedinteger[Any]]]
 _ArrayInt_co = NDArray[Union[bool_, integer[Any]]]

@@ -9,7 +9,6 @@ from typing import (
     Any,
     TypeVar,
     Generic,
-    Union,
     IO,
     overload,
     Protocol,
@@ -31,7 +30,7 @@ from numpy.typing import (
     ArrayLike,
     DTypeLike,
     NDArray,
-    _SupportsDType,
+    _DTypeLike,
     _SupportsArrayFunc,
 )
 
@@ -46,12 +45,6 @@ _T_co = TypeVar("_T_co", covariant=True)
 _SCT = TypeVar("_SCT", bound=generic)
 _CharType_co = TypeVar("_CharType_co", str, bytes, covariant=True)
 _CharType_contra = TypeVar("_CharType_contra", str, bytes, contravariant=True)
-
-_DTypeLike = Union[
-    type[_SCT],
-    dtype[_SCT],
-    _SupportsDType[dtype[_SCT]],
-]
 
 class _SupportsGetItem(Protocol[_T_contra, _T_co]):
     def __getitem__(self, key: _T_contra, /) -> _T_co: ...
