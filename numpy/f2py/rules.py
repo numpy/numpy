@@ -126,6 +126,7 @@ extern \"C\" {
 
 /* Unconditionally included */
 #include <Python.h>
+#include <numpy/npy_os.h>
 
 """ + gentitle("See f2py2e/cfuncs.py: includes") + """
 #includes#
