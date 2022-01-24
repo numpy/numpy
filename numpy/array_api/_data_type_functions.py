@@ -50,11 +50,17 @@ def can_cast(from_: Union[Dtype, Array], to: Dtype, /) -> bool:
 
     See its docstring for more information.
     """
-    from ._array_object import Array
-
     if isinstance(from_, Array):
-        from_ = from_._array
-    return np.can_cast(from_, to)
+        from_ = from_.dtype
+    elif from_ not in _all_dtypes:
+        raise TypeError(f"{from_=}, but should be an array_api array or dtype")
+    if to not in _all_dtypes:
+        raise TypeError(f"{to=}, but should be a dtype")
+    try:
+        dtype = _result_type(from_, to)
+        return to == dtype
+    except TypeError:
+        return False
 
 
 # These are internal objects for the return types of finfo and iinfo, since
