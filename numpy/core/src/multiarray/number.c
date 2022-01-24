@@ -833,7 +833,7 @@ _array_nonzero(PyArrayObject *mp)
         PyErr_SetString(PyExc_ValueError,
                         "The truth value of an array "
                         "with more than one element is ambiguous. "
-                        "Use a.any() or a.all()");
+                        "Consider using: a.any(), a.all(), a.max() or a.min()");
         return -1;
     }
 }

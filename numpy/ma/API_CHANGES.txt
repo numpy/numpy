@@ -111,7 +111,7 @@ converted to booleans:
   >>> bool(x)
   Traceback (most recent call last):
     File "<stdin>", line 1, in <module>
-  ValueError: The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()
+  ValueError: The truth value of an array with more than one element is ambiguous. Consider using: a.any(), a.all(), a.max() or a.min()
 
 
 ==================================
