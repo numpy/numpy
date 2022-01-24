@@ -57,6 +57,12 @@ _FiniteNestedSequence = Union[
     Sequence[Sequence[Sequence[Sequence[_T]]]],
 ]
 
+# A subset of `npt.ArrayLike` that can be parametrized w.r.t. `np.generic`
+_ArrayLike = Union[
+    _SupportsArray["dtype[_ScalarType]"],
+    _NestedSequence[_SupportsArray["dtype[_ScalarType]"]],
+]
+
 # A union representing array-like objects; consists of two typevars:
 # One representing types that can be parametrized w.r.t. `np.dtype`
 # and another one for the rest

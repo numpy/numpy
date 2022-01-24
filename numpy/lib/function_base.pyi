@@ -18,7 +18,6 @@ else:
 from numpy import (
     vectorize as vectorize,
     ufunc,
-    dtype,
     generic,
     floating,
     complexfloating,
@@ -38,8 +37,7 @@ from numpy.typing import (
     _ShapeLike,
     _ScalarLike_co,
     _DTypeLike,
-    _FiniteNestedSequence,
-    _SupportsArray,
+    _ArrayLike,
     _ArrayLikeInt_co,
     _ArrayLikeFloat_co,
     _ArrayLikeComplex_co,
@@ -67,7 +65,6 @@ _SCT = TypeVar("_SCT", bound=generic)
 _ArrayType = TypeVar("_ArrayType", bound=NDArray[Any])
 
 _2Tuple = tuple[_T, _T]
-_ArrayLike = _FiniteNestedSequence[_SupportsArray[dtype[_SCT]]]
 
 class _TrimZerosSequence(Protocol[_T_co]):
     def __len__(self) -> int: ...

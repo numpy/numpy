@@ -12,7 +12,6 @@ from typing_extensions import TypeGuard
 
 from numpy import (
     ComplexWarning as ComplexWarning,
-    dtype,
     generic,
     unsignedinteger,
     signedinteger,
@@ -34,8 +33,7 @@ from numpy.typing import (
     DTypeLike,
     _ShapeLike,
     _DTypeLike,
-    _FiniteNestedSequence,
-    _SupportsArray,
+    _ArrayLike,
     _SupportsArrayFunc,
     _ScalarLike_co,
     _ArrayLikeBool_co,
@@ -51,7 +49,6 @@ _T = TypeVar("_T")
 _SCT = TypeVar("_SCT", bound=generic)
 _ArrayType = TypeVar("_ArrayType", bound=NDArray[Any])
 
-_ArrayLike = _FiniteNestedSequence[_SupportsArray[dtype[_SCT]]]
 _CorrelateMode = Literal["valid", "same", "full"]
 
 __all__: list[str]

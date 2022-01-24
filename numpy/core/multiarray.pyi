@@ -58,10 +58,9 @@ from numpy.typing import (
     # Arrays
     NDArray,
     ArrayLike,
-    _SupportsArray,
+    _ArrayLike,
     _SupportsArrayFunc,
     _NestedSequence,
-    _FiniteNestedSequence,
     _ArrayLikeBool_co,
     _ArrayLikeUInt_co,
     _ArrayLikeInt_co,
@@ -80,8 +79,6 @@ from numpy.typing import (
 
 _SCT = TypeVar("_SCT", bound=generic)
 _ArrayType = TypeVar("_ArrayType", bound=NDArray[Any])
-
-_ArrayLike = _FiniteNestedSequence[_SupportsArray[dtype[_SCT]]]
 
 # Valid time units
 _UnitKind = L[

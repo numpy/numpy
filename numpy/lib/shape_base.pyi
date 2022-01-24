@@ -4,7 +4,6 @@ from typing import TypeVar, Any, overload, SupportsIndex, Protocol
 from numpy import (
     generic,
     integer,
-    dtype,
     ufunc,
     bool_,
     unsignedinteger,
@@ -18,21 +17,18 @@ from numpy.typing import (
     ArrayLike,
     NDArray,
     _ShapeLike,
-     _FiniteNestedSequence,
-     _SupportsArray,
-     _ArrayLikeBool_co,
-     _ArrayLikeUInt_co,
-     _ArrayLikeInt_co,
-     _ArrayLikeFloat_co,
-     _ArrayLikeComplex_co,
-     _ArrayLikeObject_co,
+    _ArrayLike,
+    _ArrayLikeBool_co,
+    _ArrayLikeUInt_co,
+    _ArrayLikeInt_co,
+    _ArrayLikeFloat_co,
+    _ArrayLikeComplex_co,
+    _ArrayLikeObject_co,
 )
 
 from numpy.core.shape_base import vstack
 
 _SCT = TypeVar("_SCT", bound=generic)
-
-_ArrayLike = _FiniteNestedSequence[_SupportsArray[dtype[_SCT]]]
 
 # The signatures of `__array_wrap__` and `__array_prepare__` are the same;
 # give them unique names for the sake of clarity

@@ -7,8 +7,6 @@ from typing import (
 )
 
 from numpy import (
-    ndarray,
-    dtype,
     generic,
     number,
     bool_,
@@ -28,9 +26,8 @@ from numpy.typing import (
     DTypeLike,
     _DTypeLike,
     ArrayLike,
+    _ArrayLike,
     NDArray,
-    _FiniteNestedSequence,
-    _SupportsArray,
     _SupportsArrayFunc,
     _ArrayLikeInt_co,
     _ArrayLikeFloat_co,
@@ -46,8 +43,6 @@ _MaskFunc = Callable[
     [NDArray[int_], _T],
     NDArray[Union[number[Any], bool_, timedelta64, datetime64, object_]],
 ]
-
-_ArrayLike = _FiniteNestedSequence[_SupportsArray[dtype[_SCT]]]
 
 __all__: list[str]
 

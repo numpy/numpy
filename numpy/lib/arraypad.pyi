@@ -6,14 +6,13 @@ from typing import (
     Protocol,
 )
 
-from numpy import ndarray, dtype, generic
+from numpy import generic
 
 from numpy.typing import (
     ArrayLike,
     NDArray,
     _ArrayLikeInt,
-    _FiniteNestedSequence,
-    _SupportsArray,
+    _ArrayLike,
 )
 
 _SCT = TypeVar("_SCT", bound=generic)
@@ -41,8 +40,6 @@ _ModeKind = L[
     "wrap",
     "empty",
 ]
-
-_ArrayLike = _FiniteNestedSequence[_SupportsArray[dtype[_SCT]]]
 
 __all__: list[str]
 
