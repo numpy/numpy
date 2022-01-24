@@ -20,7 +20,7 @@ jobs:
   get_commit_message:
     name: Get commit message
     runs-on: ubuntu-latest
-    if: github.repository == 'numpy/numpy'
+    # if: github.repository == 'numpy/numpy'
     outputs:
       message: ${{ steps.commit_message.outputs.message }}
     steps:
@@ -131,17 +131,17 @@ jobs:
         shell: bash
         run: |
           if [ "push" == "${{ github.event_name }}" ] && [ "${{ startsWith(github.ref, 'refs/tags/v') }}" ]; then
-			echo push and tag event
+            echo push and tag event
             echo "ANACONDA_ORG=multibuild-wheels-staging" >> $GITHUB_ENV
             echo "TOKEN=$MULTIBUILD_WHEELS_STAGING_ACCESS" >> $GITHUB_ENV
             echo "ANACONDA_UPLOAD=true" >> $GITHUB_ENV
           elif [ "schedule" == "${{ github.event_name }}" ] || [ "workflow_dispatch" == "${{ github.event_name }}" ]; then
-			echo scheduled or dispatched event
+            echo scheduled or dispatched event
             echo "ANACONDA_ORG=scipy-wheels-nightly" >> $GITHUB_ENV
             echo "TOKEN=$SCIPY_WHEELS_NIGHTLY_ACCESS" >> $GITHUB_ENV
             echo "ANACONDA_UPLOAD=true" >> $GITHUB_ENV
-		  else
-			echo non-dispatch event
+          else
+            echo non-dispatch event
             echo "ANACONDA_UPLOAD=false" >> $GITHUB_ENV
           fi
       - name: Upload wheels
@@ -162,13 +162,13 @@ jobs:
           # generated at anaconda.org for scipy-wheels-nightly
           echo ${PWD}
           if [ ${ANACONDA_UPLOAD} == true ]; then
-	      	if [ -z ${TOKEN} ]; then
-			  echo no token set, not uploading
-			else
+            if [ -z ${TOKEN} ]; then
+              echo no token set, not uploading
+            else
               python -m pip install git+https://github.com/Anaconda-Server/anaconda-client
               ls ./wheelhouse/*.whl
               anaconda -t ${TOKEN} upload --force -u ${ANACONDA_ORG} ./wheelhouse/*.whl
               echo "PyPI-style index: https://pypi.anaconda.org/$ANACONDA_ORG/simple"
-			fi
+            fi
           fi
 
