@@ -77,6 +77,8 @@ def put_along_axis(
     axis: None | int,
 ) -> None: ...
 
+# TODO: Use PEP 612 `ParamSpec` once mypy supports `Concatenate`
+# xref python/mypy#8645
 @overload
 def apply_along_axis(
     func1d: Callable[..., _ArrayLike[_SCT]],

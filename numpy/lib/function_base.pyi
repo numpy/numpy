@@ -195,6 +195,8 @@ def asarray_chkfinite(
     order: _OrderKACF = ...,
 ) -> NDArray[Any]: ...
 
+# TODO: Use PEP 612 `ParamSpec` once mypy supports `Concatenate`
+# xref python/mypy#8645
 @overload
 def piecewise(
     x: _ArrayLike[_SCT],
