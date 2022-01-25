@@ -261,12 +261,17 @@ fill_arraymethod_from_slots(
                 meth->resolve_descriptors = slot->pfunc;
                 continue;
             case NPY_METH_get_loop:
-                if (private) {
-                    /* Only allow override for private functions initially */
-                    meth->get_strided_loop = slot->pfunc;
-                    continue;
-                }
-                break;
+                /*
+                 * NOTE: get_loop is considered "unstable" in the public API,
+                 *       I do not like the signature, and the `move_references`
+                 *       parameter must NOT be used.
+                 *       (as in: we should not worry about changing it, but of
+                 *       course that would not break it immediately.)
+                 */
+                /* Only allow override for private functions initially */
+                meth->get_strided_loop = slot->pfunc;
+                continue;
+            /* "Typical" loops, supported used by the default `get_loop` */
             case NPY_METH_strided_loop:
                 meth->strided_loop = slot->pfunc;
                 continue;
