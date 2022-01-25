@@ -42,7 +42,8 @@ jobs:
     if: >-
       contains(needs.get_commit_message.outputs.message, '[wheel build]') ||
       github.event_name == 'schedule' ||
-      github.event_name == 'workflow_dispatch'
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v'))
     runs-on: ${{ matrix.buildplat[0] }}
     strategy:
       # Ensure that a wheel builder finishes even if another fails
