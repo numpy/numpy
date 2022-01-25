@@ -193,7 +193,7 @@ typedef struct {
     int nin, nout;
     NPY_CASTING casting;
     NPY_ARRAYMETHOD_FLAGS flags;
-    PyObject **dtypes;  /* array of DType class objects */
+    PyArray_DTypeMeta **dtypes;
     PyType_Slot *slots;
 } PyArrayMethod_Spec;
 
