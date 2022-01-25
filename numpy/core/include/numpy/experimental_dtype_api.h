@@ -101,20 +101,41 @@
 
 
 /*
- * Just a hack so I don't forget importing as much myself, I spend way too
- * much time noticing it the first time around :).
+ * There must be a better way?! -- Oh well, this is experimental
+ * (my issue with it, is that I cannot undef those helpers).
  */
-static void
-__not_imported(void)
-{
-    printf("*****\nCritical error, dtype API not imported\n*****\n");
-}
-static void *__uninitialized_table[] = {
-        &__not_imported, &__not_imported, &__not_imported, &__not_imported,
-        &__not_imported, &__not_imported, &__not_imported, &__not_imported};
+#if defined(PY_ARRAY_UNIQUE_SYMBOL)
+    #define NPY_EXP_DTYPE_API_CONCAT_HELPER2(x, y) x ## y
+    #define NPY_EXP_DTYPE_API_CONCAT_HELPER(arg) NPY_EXP_DTYPE_API_CONCAT_HELPER2(arg, __experimental_dtype_api_table)
+    #define __experimental_dtype_api_table NPY_EXP_DTYPE_API_CONCAT_HELPER(PY_ARRAY_UNIQUE_SYMBOL)
+#else
+    #define __experimental_dtype_api_table __experimental_dtype_api_table
+#endif
 
+/* Support for correct multi-file projects: */
+#if defined(NO_IMPORT) || defined(NO_IMPORT_ARRAY)
+    extern void **__experimental_dtype_api_table;
+#else
+    /*
+     * Just a hack so I don't forget importing as much myself, I spend way too
+     * much time noticing it the first time around :).
+     */
+    static void
+    __not_imported(void)
+    {
+        printf("*****\nCritical error, dtype API not imported\n*****\n");
+    }
 
-static void **__experimental_dtype_api_table = __uninitialized_table;
+    static void *__uninitialized_table[] = {
+            &__not_imported, &__not_imported, &__not_imported, &__not_imported,
+            &__not_imported, &__not_imported, &__not_imported, &__not_imported};
+
+    #if defined(PY_ARRAY_UNIQUE_SYMBOL)
+        void **__experimental_dtype_api_table = __uninitialized_table;
+    #else
+        static void **__experimental_dtype_api_table = __uninitialized_table;
+    #endif
+#endif
 
 
 /*
@@ -344,7 +365,9 @@ typedef PyArray_DTypeMeta *__promote_dtype_sequence(
  * runtime-check this.
  * You must call this function to use the symbols defined in this file.
  */
-#define __EXPERIMENTAL_DTYPE_VERSION 2
+#if !defined(NO_IMPORT) && !defined(NO_IMPORT_ARRAY)
+
+#define __EXPERIMENTAL_DTYPE_VERSION 3
 
 static int
 import_experimental_dtype_api(int version)
@@ -382,5 +405,7 @@ import_experimental_dtype_api(int version)
     }
     return 0;
 }
+
+#endif  /* !defined(NO_IMPORT) && !defined(NO_IMPORT_ARRAY) */
 
 #endif  /* NUMPY_CORE_INCLUDE_NUMPY_EXPERIMENTAL_DTYPE_API_H_ */
