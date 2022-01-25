@@ -97,9 +97,6 @@
 /***************************
  * Integer Division
  ***************************/
-/***
- * TODO: Add support for VSX4(Power10)
- */
 // See simd/intdiv.h for more clarification
 // divide each unsigned 8-bit element by a precomputed divisor
 NPY_FINLINE npyv_u8 npyv_divc_u8(npyv_u8 a, const npyv_u8x3 divisor)
