@@ -135,12 +135,12 @@ jobs:
           if [ "push" == "${{ github.event_name }}" ] && [ "${{ startsWith(github.ref, 'refs/tags/v') }}" ]; then
             echo push and tag event
             echo "ANACONDA_ORG=multibuild-wheels-staging" >> $GITHUB_ENV
-            echo "TOKEN=$MULTIBUILD_WHEELS_STAGING_ACCESS" >> $GITHUB_ENV
+            echo "TOKEN=${{ secrets.NUMPY_STAGING_UPLOAD_TOKEN }}" >> $GITHUB_ENV
             echo "ANACONDA_UPLOAD=true" >> $GITHUB_ENV
           elif [ "schedule" == "${{ github.event_name }}" ] || [ "workflow_dispatch" == "${{ github.event_name }}" ]; then
             echo scheduled or dispatched event
             echo "ANACONDA_ORG=scipy-wheels-nightly" >> $GITHUB_ENV
-            echo "TOKEN=$SCIPY_WHEELS_NIGHTLY_ACCESS" >> $GITHUB_ENV
+            echo "TOKEN=${{ secrets.NUMPY_NIGHTLY_UPLOAD_TOKEN }}" >> $GITHUB_ENV
             echo "ANACONDA_UPLOAD=true" >> $GITHUB_ENV
           else
             echo non-dispatch event
@@ -150,18 +150,12 @@ jobs:
         if: ${{ always() }}
         shell: bash
         run: |
-          # trigger an upload to the shared ecosystem
-          # infrastructure at: https://anaconda.org/scipy-wheels-nightly
-          # for cron jobs only (restricted to main branch once
-          # per week)
-          # SCIPY_WHEELS_NIGHTLY_ACCESS is a secret token
-          # used in Travis CI config, originally
-          #
-          # for merges (push events) we use the staging area instead;
-          # MULTIBUILD_WHEELS_STAGING_ACCESS is a secret token used in Travis
-          # CI config, originally generated at anaconda.org for
-          # multibuild-wheels-staging
-          # generated at anaconda.org for scipy-wheels-nightly
+          # trigger an upload to
+          # https://anaconda.org/scipy-wheels-nightly/numpy
+          # for cron jobs or "Run workflow" (restricted to main branch).
+          # Tags will upload to 
+          # https://anaconda.org/multibuild-wheels-staging/numpy
+          # The tokens were originally generated at anaconda.org
           echo ${PWD}
           if [ ${ANACONDA_UPLOAD} == true ]; then
             if [ -z ${TOKEN} ]; then
