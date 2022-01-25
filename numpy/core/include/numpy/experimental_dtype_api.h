@@ -355,6 +355,22 @@ typedef PyArray_DTypeMeta *__promote_dtype_sequence(
     ((__promote_dtype_sequence *)(__experimental_dtype_api_table[5]))
 
 
+typedef PyArray_Descr *__get_default_descr(
+        PyArray_DTypeMeta *DType);
+#define _PyArray_GetDefaultDescr \
+    ((__get_default_descr *)(__experimental_dtype_api_table[6]))
+
+static NPY_INLINE PyArray_Descr *
+PyArray_GetDefaultDescr(PyArray_DTypeMeta *DType)
+{
+    if (DType->singleton != NULL) {
+        Py_INCREF(DType->singleton);
+        return DType->singleton;
+    }
+    return _PyArray_GetDefaultDescr(DType);
+}
+
+
 /*
  * ********************************
  *         Initialization
@@ -367,7 +383,7 @@ typedef PyArray_DTypeMeta *__promote_dtype_sequence(
  */
 #if !defined(NO_IMPORT) && !defined(NO_IMPORT_ARRAY)
 
-#define __EXPERIMENTAL_DTYPE_VERSION 3
+#define __EXPERIMENTAL_DTYPE_VERSION 4
 
 static int
 import_experimental_dtype_api(int version)
@@ -395,7 +411,7 @@ import_experimental_dtype_api(int version)
     if (api == NULL) {
         return -1;
     }
-    __experimental_dtype_api_table = PyCapsule_GetPointer(api,
+    __experimental_dtype_api_table = (void **)PyCapsule_GetPointer(api,
             "experimental_dtype_api_table");
     Py_DECREF(api);
 

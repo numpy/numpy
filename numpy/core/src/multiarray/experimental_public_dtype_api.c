@@ -16,7 +16,7 @@
 #include "common_dtype.h"
 
 
-#define EXPERIMENTAL_DTYPE_API_VERSION 3
+#define EXPERIMENTAL_DTYPE_API_VERSION 4
 
 
 typedef struct{
@@ -358,6 +358,19 @@ PyUFunc_AddPromoter(
 }
 
 
+/*
+ * Lightweight function fetch a default instance of a DType class.
+ * Note that this version is named `_PyArray_GetDefaultDescr` with an
+ * underscore.  The `singleton` slot is public, so an inline version is
+ * provided that checks `singleton != NULL` first.
+ */
+static PyArray_Descr *
+_PyArray_GetDefaultDescr(PyArray_DTypeMeta *DType)
+{
+    return NPY_DT_CALL_default_descr(DType);
+}
+
+
 NPY_NO_EXPORT PyObject *
 _get_experimental_dtype_api(PyObject *NPY_UNUSED(mod), PyObject *arg)
 {
@@ -368,6 +381,7 @@ _get_experimental_dtype_api(PyObject *NPY_UNUSED(mod), PyObject *arg)
             &PyArrayInitDTypeMeta_FromSpec,
             &PyArray_CommonDType,
             &PyArray_PromoteDTypeSequence,
+            &_PyArray_GetDefaultDescr,
             NULL,
     };
 
