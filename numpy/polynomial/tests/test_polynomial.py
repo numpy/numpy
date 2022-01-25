@@ -581,6 +581,21 @@ class TestMisc:
         coef2 = poly.polyfit(x, y, [0, 2, 4])
         assert_almost_equal(poly.polyval(x, coef2), y)
         assert_almost_equal(coef1, coef2)
+        # test polyfit returns covariance matrix
+        x = [1., 2., 3., 4., 5., 6., 7., 8., 9.]
+        y = [1., 3., 2., 4., 5., 6., 6., 8., 9.]
+        yerr = [10., 5., 3., 2., 10., 10., 10., 10., 10.]
+        coef1, cov_matrix1 = poly.polyfit(x, y, 1, w=yerr, cov=True)
+        assert_almost_equal(coef1, [0, 1], decimal=1)
+        assert_almost_equal(cov_matrix1, [[0, 1.],[1.,1.]],decimal=0)
+        #
+        coef2, full_matrix1, cov_matrix2 = poly.polyfit(x, y, 1, full=True, cov=True)
+        assert_almost_equal(coef1, coef2, decimal=1)
+        assert_almost_equal(cov_matrix1, cov_matrix2, decimal=1)
+        assert_almost_equal(full_matrix1[0], 2.7, decimal=1)
+        assert_equal(full_matrix1[1], 2)
+        assert_almost_equal(full_matrix1[2], [1.4, 0.3],decimal=1)
+        assert_almost_equal(full_matrix1[3], 0, decimal=0)
 
     def test_polytrim(self):
         coef = [2, -1, 1, 0]
