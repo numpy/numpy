@@ -676,7 +676,6 @@ def _fit(vander_f, x, y, deg, rcond=None, full=False, w=None, cov=False):
         msg = "The fit may be poorly conditioned"
         warnings.warn(msg, RankWarning, stacklevel=2)
 
-
     if not full and not cov:
         return c
  
@@ -686,7 +685,7 @@ def _fit(vander_f, x, y, deg, rcond=None, full=False, w=None, cov=False):
         return_tuple.append([resids, rank, s, rcond])
     if cov:
         return_tuple.append(np.vander(c))
-    
+
     return tuple(return_tuple)
 
 
