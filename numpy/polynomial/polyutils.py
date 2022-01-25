@@ -32,10 +32,6 @@ import warnings
 
 import numpy as np
 
-import numpy.core.numeric as NX
-from numpy.core import dot
-from numpy.linalg import inv
-
 
 __all__ = [
     'RankWarning', 'as_series', 'trimseq',
