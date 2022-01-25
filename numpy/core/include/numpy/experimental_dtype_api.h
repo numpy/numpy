@@ -371,6 +371,61 @@ PyArray_GetDefaultDescr(PyArray_DTypeMeta *DType)
 }
 
 
+typedef PyArray_DTypeMeta *get_builtin_dtype_from_typenum(int);
+/*
+ * Helper to fetch a builtin NumPy DType using the type number API.
+ * This function cannot fail, but must only be used together with NPY_DOUBLE,
+ * etc.
+ * Eventually, we may expose these directly in the API
+ */
+#define PyArray_DTypeFromTypeNum \
+    ((get_builtin_dtype_from_typenum *)(__experimental_dtype_api_table[7]))
+
+
+/*
+ * NumPy's builtin DTypes:
+ * TODO: Should these be dereferenced: `(&(PyArray_DTypeMeta *)table[10]`?
+ */
+#define PyArray_BoolDType ((PyArray_DTypeMeta *)__experimental_dtype_api_table[10])
+/* Integers */
+#define PyArray_ByteDType ((PyArray_DTypeMeta *)__experimental_dtype_api_table[11])
+#define PyArray_UByteDType ((PyArray_DTypeMeta *)__experimental_dtype_api_table[12])
+#define PyArray_ShortDType ((PyArray_DTypeMeta *)__experimental_dtype_api_table[13])
+#define PyArray_UShortDType ((PyArray_DTypeMeta *)__experimental_dtype_api_table[14])
+#define PyArray_IntDType ((PyArray_DTypeMeta *)__experimental_dtype_api_table[15])
+#define PyArray_UIntDType ((PyArray_DTypeMeta *)__experimental_dtype_api_table[16])
+#define PyArray_LongDType ((PyArray_DTypeMeta *)__experimental_dtype_api_table[17])
+#define PyArray_ULongDType ((PyArray_DTypeMeta *)__experimental_dtype_api_table[18])
+#define PyArray_LongLongDType ((PyArray_DTypeMeta *)__experimental_dtype_api_table[19])
+#define PyArray_ULongLongDType ((PyArray_DTypeMeta *)__experimental_dtype_api_table[20])
+/* Integer aliases */
+#define PyArray_Int8Type ((PyArray_DTypeMeta *)__experimental_dtype_api_table[21])
+#define PyArray_UInt8DType ((PyArray_DTypeMeta *)__experimental_dtype_api_table[22])
+#define PyArray_Int16DType ((PyArray_DTypeMeta *)__experimental_dtype_api_table[23])
+#define PyArray_UInt16DType ((PyArray_DTypeMeta *)__experimental_dtype_api_table[24])
+#define PyArray_Int32DType ((PyArray_DTypeMeta *)__experimental_dtype_api_table[25])
+#define PyArray_UInt32DType ((PyArray_DTypeMeta *)__experimental_dtype_api_table[26])
+#define PyArray_Int64DType ((PyArray_DTypeMeta *)__experimental_dtype_api_table[27])
+#define PyArray_UInt64DType ((PyArray_DTypeMeta *)__experimental_dtype_api_table[28])
+#define PyArray_IntpDType ((PyArray_DTypeMeta *)__experimental_dtype_api_table[29])
+#define PyArray_UIntpDType ((PyArray_DTypeMeta *)__experimental_dtype_api_table[30])
+/* Floats */
+#define PyArray_HalfType ((PyArray_DTypeMeta *)__experimental_dtype_api_table[31])
+#define PyArray_FloatDType ((PyArray_DTypeMeta *)__experimental_dtype_api_table[32])
+#define PyArray_DoubleDType ((PyArray_DTypeMeta *)__experimental_dtype_api_table[33])
+#define PyArray_LongDoubleDType ((PyArray_DTypeMeta *)__experimental_dtype_api_table[34])
+/* Complex */
+#define PyArray_CFloatDType ((PyArray_DTypeMeta *)__experimental_dtype_api_table[35])
+#define PyArray_CDoubleDType ((PyArray_DTypeMeta *)__experimental_dtype_api_table[36])
+#define PyArray_CLongDoubleDType ((PyArray_DTypeMeta *)__experimental_dtype_api_table[37])
+/* String/Bytes */
+#define PyArray_StringDType ((PyArray_DTypeMeta *)__experimental_dtype_api_table[38])
+#define PyArray_UnicodeDType ((PyArray_DTypeMeta *)__experimental_dtype_api_table[39])
+/* Datetime/Timedelta */
+#define PyArray_DatetimeDType ((PyArray_DTypeMeta *)__experimental_dtype_api_table[40])
+#define PyArray_TimedeltaDType ((PyArray_DTypeMeta *)__experimental_dtype_api_table[41])
+
+
 /*
  * ********************************
  *         Initialization
