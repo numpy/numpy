@@ -1,3 +1,6 @@
+# To enable this workflow on a fork, comment out:
+#
+# if: github.repository == 'numpy/numpy'
 name: Test on Cygwin
 on:
   push:
@@ -9,6 +12,7 @@ on:
 jobs:
   cygwin_build_test:
     runs-on: windows-latest
+    if: github.repository == 'numpy/numpy'
     steps:
       - uses: actions/checkout@v2
         with:
