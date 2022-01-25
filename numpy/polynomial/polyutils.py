@@ -32,6 +32,7 @@ import warnings
 
 import numpy as np
 
+
 __all__ = [
     'RankWarning', 'as_series', 'trimseq',
     'trimcoef', 'getdomain', 'mapdomain', 'mapparms']
@@ -592,7 +593,7 @@ def _sub(c1, c2):
     return trimseq(ret)
 
 
-def _fit(vander_f, x, y, deg, rcond=None, full=False, w=None):
+def _fit(vander_f, x, y, deg, rcond=None, full=False, w=None, cov=False):
     """
     Helper function used to implement the ``<type>fit`` functions.
 
@@ -634,6 +635,7 @@ def _fit(vander_f, x, y, deg, rcond=None, full=False, w=None):
     # set up the least squares matrices in transposed form
     lhs = van.T
     rhs = y.T
+
     if w is not None:
         w = np.asarray(w) + 0.0
         if w.ndim != 1:
@@ -674,10 +676,18 @@ def _fit(vander_f, x, y, deg, rcond=None, full=False, w=None):
         msg = "The fit may be poorly conditioned"
         warnings.warn(msg, RankWarning, stacklevel=2)
 
-    if full:
-        return c, [resids, rank, s, rcond]
-    else:
+
+    if not full and not cov:
         return c
+ 
+    return_tuple = [c]
+
+    if full:
+        return_tuple.append([resids, rank, s, rcond])
+    if cov:
+        return_tuple.append(np.vander(c))
+    
+    return tuple(return_tuple)
 
 
 def _pow(mul_f, c, pow, maxpower):
