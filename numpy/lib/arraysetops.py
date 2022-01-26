@@ -18,7 +18,7 @@ import functools
 
 import numpy as np
 from numpy.core import overrides
-
+from numpy.core import multiarray
 
 array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy')
@@ -270,6 +270,14 @@ def unique(ar, return_index=False, return_inverse=False,
     >>> np.repeat(values, counts)
     array([1, 2, 2, 2, 3, 4, 6])    # original order not preserved
 
+    Return the values of an array treating NaNs unique from one another (default behavior NaN = NaN):
+
+    >>> np.unique([1, 1, 2, 2, 3, 3, np.nan, np.nan], equal_nans = False)
+    array([1, 2, 3, nan, nan])
+    >>> a = np.array([[1, np.nan, 0], [1, np.nan, 0], [2, 3, 4]])
+    >>> np.unique(a, axis = 0, equal_nans = False)
+    array([[1, nan, 0], [1, nan, 0], [2, 3, 4]])
+
     """
     ar = np.asanyarray(ar)
     if axis is None:
@@ -338,6 +346,30 @@ def _unique1d(ar, return_index=False, return_inverse=False,
         aux = ar
     mask = np.empty(aux.shape, dtype=np.bool_)
     mask[:1] = True
+
+    #modified version of numpy.array_equal which can resolve equal_NaN=True in variable dtype arrays
+    #eg. (1, "a", NaN) compared to itself is True while array_equal would throw exception on checking isNaN on non-numerics
+    def equals_nan(a1, a2):
+        try:
+            a1, a2 = multiarray.asarray(a1), multiarray.asarray(a2)
+        except Exception:
+            return False
+        if a1.shape != a2.shape:
+            return False
+        a1, a2 = a1.flat[0], a2.flat[0]
+        #compare a1 and a2 elementwise, and ignore inequalities triggered by NaNs on both sides, otherwise a triggered inequality returns False
+        for i in range(len(a1)):
+            if a1[i] != a2[i]:
+                try:
+                    if (np.isnan(a1[i]) and np.isnan(a2[i])):
+                        continue
+                    else:
+                        return False
+                except Exception:
+                    return False
+        return True
+        
+
     if equal_nans and aux.shape[0] > 0 and aux.dtype.kind in "cfmM" and np.isnan(aux[-1]):
         if aux.dtype.kind == "c":  # for complex all NaNs are considered equivalent
             aux_firstnan = np.searchsorted(np.isnan(aux), True, side='left')
@@ -348,6 +380,15 @@ def _unique1d(ar, return_index=False, return_inverse=False,
                 aux[1:aux_firstnan] != aux[:aux_firstnan - 1])
         mask[aux_firstnan] = True
         mask[aux_firstnan + 1:] = False
+    elif equal_nans and aux.shape[0] > 0 and len(aux.dtype) > 1:
+        tracker = 0
+        while tracker < len(aux) - 1:
+            if equals_nan(aux[tracker], aux[tracker+1]):
+                mask[tracker] = False
+            else:
+                mask[tracker] = True
+            tracker += 1
+        mask[-1] = True
     else:
         mask[1:] = aux[1:] != aux[:-1]
 
