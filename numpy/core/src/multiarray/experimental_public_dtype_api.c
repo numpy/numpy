@@ -332,6 +332,16 @@ PyUFunc_AddLoopFromSpec(PyObject *ufunc, PyArrayMethod_Spec *spec)
     return PyUFunc_AddLoop((PyUFuncObject *)ufunc, info, 0);
 }
 
+/*
+ * Function is defined in umath/wrapping_array_method.c
+ * (same/one compilation unit)
+ */
+NPY_NO_EXPORT int
+PyUFunc_AddWrappingLoop(PyObject *ufunc_obj,
+        PyArray_DTypeMeta *new_dtypes[], PyArray_DTypeMeta *wrapped_dtypes[],
+        translate_given_descrs_func *translate_given_descrs,
+        translate_loop_descrs_func *translate_loop_descrs);
+
 
 static int
 PyUFunc_AddPromoter(
@@ -382,7 +392,7 @@ _get_experimental_dtype_api(PyObject *NPY_UNUSED(mod), PyObject *arg)
             &PyArray_CommonDType,
             &PyArray_PromoteDTypeSequence,
             &_PyArray_GetDefaultDescr,
-            NULL,
+            &PyUFunc_AddWrappingLoop,
             NULL,
             NULL,
             /* NumPy's builtin DTypes (starting at offset 10 going to 41) */

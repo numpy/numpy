@@ -465,6 +465,15 @@ arraymethod_dealloc(PyObject *self)
 
     PyMem_Free(meth->name);
 
+    if (meth->wrapped_meth != NULL) {
+        /* Cleanup for wrapping array method (defined in umath) */
+        Py_DECREF(meth->wrapped_meth);
+        for (int i = 0; i < meth->nin + meth->nout; i++) {
+            Py_XDECREF(meth->wrapped_dtypes[i]);
+        }
+        PyMem_Free(meth->wrapped_dtypes);
+    }
+
     Py_TYPE(self)->tp_free(self);
 }
 

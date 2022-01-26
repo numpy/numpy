@@ -24,6 +24,12 @@
  *     Register a new loop for a ufunc.  This uses the `PyArrayMethod_Spec`
  *     which must be filled in (see in-line comments).
  *
+ * - PyUFunc_AddWrappingLoop:
+ *
+ *     Register a new loop which reuses an existing one, but modifies the
+ *     result dtypes.  Please search the internal NumPy docs for more info
+ *     at this point.  (Used for physical units dtype.)
+ *
  * - PyUFunc_AddPromoter:
  *
  *     Register a new promoter for a ufunc.  A promoter is a function stored
@@ -57,6 +63,16 @@
  *     "transitively".  If A promotes B and B promotes C, than A must generally
  *     also promote C; where "promotes" means implements the promotion.
  *     (There are some exceptions for abstract DTypes)
+ *
+ * - PyArray_GetDefaultDescr:
+ *
+ *     Given a DType class, returns the default instance (descriptor).
+ *     This is an inline function checking for `singleton` first and only
+ *     calls the `default_descr` function if necessary.
+ *
+ * - PyArray_DoubleDType, etc.:
+ *
+ *     Aliases to the DType classes for the builtin NumPy DTypes.
  *
  * WARNING
  * =======
@@ -207,6 +223,21 @@ typedef PyObject *_ufunc_addloop_fromspec_func(
 #define PyUFunc_AddLoopFromSpec \
     (*(_ufunc_addloop_fromspec_func *)(__experimental_dtype_api_table[0]))
 
+
+/* Please see the NumPy definitions in `array_method.h` for details on these */
+typedef int translate_given_descrs_func(int nin, int nout,
+        PyArray_DTypeMeta *wrapped_dtypes[],
+        PyArray_Descr *given_descrs[], PyArray_Descr *new_descrs[]);
+typedef int translate_loop_descrs_func(int nin, int nout,
+        PyArray_DTypeMeta *new_dtypes[], PyArray_Descr *given_descrs[],
+        PyArray_Descr *original_descrs[], PyArray_Descr *loop_descrs[]);
+
+typedef int _ufunc_wrapping_loop_func(PyObject *ufunc_obj,
+        PyArray_DTypeMeta *new_dtypes[], PyArray_DTypeMeta *wrapped_dtypes[],
+        translate_given_descrs_func *translate_given_descrs,
+        translate_loop_descrs_func *translate_loop_descrs);
+#define PyUFunc_AddWrappingLoop \
+    (*(_ufunc_wrapping_loop_func *)(__experimental_dtype_api_table[7]))
 
 /*
  * Type of the C promoter function, which must be wrapped into a
@@ -369,17 +400,6 @@ PyArray_GetDefaultDescr(PyArray_DTypeMeta *DType)
     }
     return _PyArray_GetDefaultDescr(DType);
 }
-
-
-typedef PyArray_DTypeMeta *get_builtin_dtype_from_typenum(int);
-/*
- * Helper to fetch a builtin NumPy DType using the type number API.
- * This function cannot fail, but must only be used together with NPY_DOUBLE,
- * etc.
- * Eventually, we may expose these directly in the API
- */
-#define PyArray_DTypeFromTypeNum \
-    ((get_builtin_dtype_from_typenum *)(__experimental_dtype_api_table[7]))
 
 
 /*

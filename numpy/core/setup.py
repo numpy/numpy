@@ -1009,6 +1009,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'umath', 'clip.cpp'),
             join('src', 'umath', 'dispatching.c'),
             join('src', 'umath', 'legacy_array_method.c'),
+            join('src', 'umath', 'wrapping_array_method.c'),
             join('src', 'umath', 'ufunc_object.c'),
             join('src', 'umath', 'extobj.c'),
             join('src', 'umath', 'scalarmath.c.src'),
