@@ -27,9 +27,7 @@
 #include "numpy/ndarraytypes.h"
 
 #include "common.h"
-#include "convert_datatype.h"
 #include "array_method.h"
-#include "dtype_transfer.h"
 #include "legacy_array_method.h"
 #include "dtypemeta.h"
 #include "dispatching.h"
