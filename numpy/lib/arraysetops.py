@@ -384,11 +384,11 @@ def _unique1d(ar, return_index=False, return_inverse=False,
         tracker = 0
         while tracker < len(aux) - 1:
             if equals_nan(aux[tracker], aux[tracker+1]):
-                mask[tracker] = False
+                mask[tracker + 1] = False
             else:
-                mask[tracker] = True
+                mask[tracker + 1] = True
             tracker += 1
-        mask[-1] = True
+            
     else:
         mask[1:] = aux[1:] != aux[:-1]
 

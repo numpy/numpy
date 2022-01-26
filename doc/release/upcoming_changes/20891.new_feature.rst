@@ -1,0 +1,6 @@
+New parameter ``equal_nans`` added to `np.unique`
+-----------------------------------------------------------------------------------
+
+`np.unique` was previously changed to treat NaN values as equal. Now this functionality is decided by setting the ``equal_nans`` parameter to True or False. 
+
+In adding this parameter, the ``equal_nans`` functionality was also fixed to work with the use of the ``axis`` parameter.
