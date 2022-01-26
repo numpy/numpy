@@ -133,7 +133,7 @@ is_contiguous(
 NPY_NO_EXPORT int
 npy_default_get_strided_loop(
         PyArrayMethod_Context *context,
-        int aligned, int NPY_UNUSED(move_references), npy_intp *strides,
+        int aligned, int NPY_UNUSED(move_references), const npy_intp *strides,
         PyArrayMethod_StridedLoop **out_loop, NpyAuxData **out_transferdata,
         NPY_ARRAYMETHOD_FLAGS *flags)
 {
