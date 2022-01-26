@@ -2128,11 +2128,31 @@ PyArray_FromStructInterface(PyObject *input)
         }
     }
 
+    /* a tuple to hold references */
+    PyObject *refs = PyTuple_New(2);
+    if (!refs) {
+        Py_DECREF(attr);
+        return NULL;
+    }
+
+    /* add a reference to the object sharing the data */
+    Py_INCREF(input);
+    PyTuple_SET_ITEM(refs, 0, input);
+
+    /* take a reference to the PyCapsule containing the PyArrayInterface
+     * structure. When the PyCapsule reference is released the PyCapsule
+     * destructor will free any resources that need to persist while numpy has
+     * access to the data. */
+    PyTuple_SET_ITEM(refs, 1,  attr);
+
+    /* create the numpy array, this call adds a reference to refs */
     PyObject *ret = PyArray_NewFromDescrAndBase(
             &PyArray_Type, thetype,
             inter->nd, inter->shape, inter->strides, inter->data,
-            inter->flags, NULL, input);
-    Py_DECREF(attr);
+            inter->flags, NULL, refs);
+
+    Py_DECREF(refs);
+
     return ret;
 
  fail:
