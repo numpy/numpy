@@ -5,7 +5,6 @@ from typing import Union, Any, overload, TypeVar, Literal
 from numpy import (
     ndarray,
     number,
-    integer,
     intp,
     bool_,
     generic,
@@ -27,26 +26,14 @@ from numpy.typing import (
     _ArrayLikeInt_co,
     _IntLike_co,
     _NumberLike_co,
+    _ScalarLike_co,
 )
 
-# Various annotations for scalars
-
-# While dt.datetime and dt.timedelta are not technically part of NumPy,
-# they are one of the rare few builtin scalars which serve as valid return types.
-# See https://github.com/numpy/numpy-stubs/pull/67#discussion_r412604113.
-_ScalarNumpy = Union[generic, dt.datetime, dt.timedelta]
-_ScalarBuiltin = Union[str, bytes, dt.date, dt.timedelta, bool, int, float, complex]
-_Scalar = Union[_ScalarBuiltin, _ScalarNumpy]
-
 _SCT = TypeVar("_SCT", bound=generic)
-_Number = TypeVar("_Number", bound=number)
 _ArrayType = TypeVar("_ArrayType", bound=NDArray[Any])
 
-# The signature of take() follows a common theme with its overloads:
-# 1. A generic comes in; the same generic comes out
-# 2. A scalar comes in; a generic comes out
-# 3. An array-like object comes in; some keyword ensures that a generic comes out
-# 4. An array-like object comes in; an ndarray or generic comes out
+__all__: list[str]
+
 def take(
     a: ArrayLike,
     indices: _ArrayLikeInt_co,
@@ -225,7 +212,7 @@ def argmin(
 @overload
 def searchsorted(
     a: ArrayLike,
-    v: _Scalar,
+    v: _ScalarLike_co,
     side: _SortSide = ...,
     sorter: None | _ArrayLikeInt_co = ...,  # 1D int array
 ) -> intp: ...
