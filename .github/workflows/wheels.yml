@@ -129,7 +129,7 @@ jobs:
           path: ./wheelhouse/*.whl
 
       - name: Setup Upload Variables
-        if: ${{ always() }}
+        if: success()
         shell: bash
         run: |
           if [ "push" == "${{ github.event_name }}" ] && [ "${{ startsWith(github.ref, 'refs/tags/v') }}" ]; then
@@ -147,7 +147,7 @@ jobs:
             echo "ANACONDA_UPLOAD=false" >> $GITHUB_ENV
           fi
       - name: Upload wheels
-        if: ${{ always() }}
+        if: env.TOKEN 
         shell: bash
         run: |
           # trigger an upload to
