@@ -271,6 +271,13 @@ PyArray_AxisConverter(PyObject *obj, int *axis)
         if (error_converting(*axis)) {
             return NPY_FAIL;
         }
+        if(*axis == NPY_MAXDIMS){
+            /* NumPy 1.20, 2022-01-08 */
+            if (DEPRECATE("axis = 32 is deprecated "
+                          "please use axis = None instead. ") < 0) {
+                return NPY_FAIL;
+            }
+        }
     }
     return NPY_SUCCEED;
 }
