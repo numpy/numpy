@@ -1628,11 +1628,11 @@ def notmasked_edges(a, axis=None):
 
 def flatnotmasked_contiguous(a):
     """
-    Find contiguous unmasked data in a masked array along the given axis.
+    Find contiguous unmasked data in a masked array.
 
     Parameters
     ----------
-    a : narray
+    a : array_like
         The input array.
 
     Returns
