@@ -1,0 +1,23 @@
+``array.fill(scalar)`` may behave slightly different
+----------------------------------------------------
+`~numpy.ndarray.fill` may in some cases behave slightly different
+now due to the fact that the logic is aligned with item assignment::
+
+    arr = np.array([1])  # with any dtype/value
+    arr.fill(scalar)
+    # is now identical to:
+    arr[0] = scalar
+
+When previously, effectively ``arr.fill(np.asarray(scalar))`` was used
+in many cases.
+The typical possible change is that errors will be given for example for
+``np.array([0]).fill(1e300)`` or ``np.array([0]).fill(np.nan)``.
+Previously, ``arr.fill()`` would unpack 0-D object arrays if the input
+array was also of object dtype, the 0-D array will now be stored as is::
+
+    >>> arr = np.array([0], dtype=object)
+    >>> arr.fill(np.array(None, dtype=object))
+    >>> arr
+    array([array(None, dtype=object)], dtype=object)
+
+Rather than ``array([None], dtype=object)``.

@@ -614,8 +614,8 @@ class TestBadSequences:
 
         obj.append([2, 3])
         obj.append(mylist([1, 2]))
-        with pytest.raises(RuntimeError):
-            np.array(obj)
+        # Does not crash:
+        np.array(obj)
 
     def test_replace_0d_array(self):
         # List to coerce, `mylist` will mutate the first element

@@ -378,6 +378,34 @@ find_scalar_descriptor(
 }
 
 
+/*
+ * Helper function for casting a raw value from one descriptor to another.
+ * This helper uses the normal casting machinery, but e.g. does not care about
+ * checking cast safety.
+ */
+static int
+cast_raw_scalar_item(
+        PyArray_Descr *from_descr, char *from_item,
+        PyArray_Descr *to_descr, char *to_item)
+{
+    int needs_api = 0;
+    NPY_cast_info cast_info;
+    if (PyArray_GetDTypeTransferFunction(
+            0, 0, 0, from_descr, to_descr, 0, &cast_info,
+            &needs_api) == NPY_FAIL) {
+        return -1;
+    }
+    char *args[2] = {from_item, to_item};
+    const npy_intp strides[2] = {0, 0};
+    const npy_intp length = 1;
+    int res = cast_info.func(&cast_info.context,
+            args, &length, strides, cast_info.auxdata);
+
+    NPY_cast_info_xfree(&cast_info);
+    return res;
+}
+
+
 /**
  * Assign a single element in an array from a python value.
  *
@@ -388,25 +416,34 @@ find_scalar_descriptor(
  * This function handles the cast, which is for example hit when assigning
  * a float128 to complex128.
  *
- * At this time, this function does not support arrays (historically we
- * mainly supported arrays through `__float__()`, etc.). Such support should
- * possibly be added (although when called from `PyArray_AssignFromCache`
- * the input cannot be an array).
- * Note that this is also problematic for some array-likes, such as
- * `astropy.units.Quantity` and `np.ma.masked`.  These are used to us calling
- * `__float__`/`__int__` for 0-D instances in many cases.
- * Eventually, we may want to define this as wrong: They must use DTypes
- * instead of (only) subclasses.  Until then, here as well as in
- * `PyArray_AssignFromCache` (which already does this), we need to special
- * case 0-D array-likes to behave like arbitrary (unknown!) Python objects.
+ * TODO: This function probably needs to be passed an "owner" for the sake of
+ *       future HPy (non CPython) support
+ *
+ * NOTE: We do support 0-D exact NumPy arrays correctly via casting here.
+ *       There be dragons, because we must NOT support generic array-likes.
+ *       The problem is that some (e.g. astropy's Quantity and our masked
+ *       arrays) have divergent behaviour for `__array__` as opposed to
+ *       `__float__`.  And they rely on that.
+ *       That is arguably bad as it limits the things that work seamlessly
+ *       because `__float__`, etc. cannot even begin to cover all of casting.
+ *       However, we have no choice.  We simply CANNOT support array-likes
+ *       here without finding a solution for this first.
+ *       And the only plausible one I see currently, is expanding protocols
+ *       in some form, either to indicate that we want a scalar or to indicate
+ *       that we want the unsafe version that `__array__` currently gives
+ *       for both objects.
+ *
+ *       If we ever figure out how to expand this to other array-likes, care
+ *       may need to be taken. `PyArray_FromAny`/`PyArray_AssignFromCache`
+ *       uses this function but know if the input is an array, array-like,
+ *       or scalar.  Relaxing things here should be OK, but looks a bit
+ *       like possible recursion, so it may make sense to make a "scalars only"
+ *       version of this function.
  *
  * @param descr
  * @param item
  * @param value
  * @return 0 on success -1 on failure.
- */
-/*
- * TODO: This function should possibly be public API.
  */
 NPY_NO_EXPORT int
 PyArray_Pack(PyArray_Descr *descr, char *item, PyObject *value)
@@ -432,6 +469,29 @@ PyArray_Pack(PyArray_Descr *descr, char *item, PyObject *value)
             value, NULL, NPY_DTYPE(descr));
     if (DType == NULL) {
         return -1;
+    }
+    if (DType == (PyArray_DTypeMeta *)Py_None && PyArray_CheckExact(value)
+            && PyArray_NDIM((PyArrayObject *)value) == 0) {
+        /*
+         * WARNING: Do NOT relax the above `PyArray_CheckExact`, unless you
+         *          read the function doc NOTE carefully and understood it.
+         *
+         * NOTE: The ndim == 0 check should probably be an error, but
+         *       unfortunately. `arr.__float__()` works for 1 element arrays
+         *       so in some contexts we need to let it handled like a scalar.
+         *       (If we manage to deprecate the above, we can do that.)
+         */
+        Py_DECREF(DType);
+
+        PyArrayObject *arr = (PyArrayObject *)value;
+        if (PyArray_DESCR(arr) == descr && !PyDataType_REFCHK(descr)) {
+            /* light-weight fast-path for when the descrs obviously matches */
+            memcpy(item, PyArray_BYTES(arr), descr->elsize);
+            return 0;  /* success (it was an array-like) */
+        }
+        return cast_raw_scalar_item(
+                PyArray_DESCR(arr), PyArray_BYTES(arr), descr, item);
+
     }
     if (DType == NPY_DTYPE(descr) || DType == (PyArray_DTypeMeta *)Py_None) {
         /* We can set the element directly (or at least will try to) */
@@ -461,30 +521,8 @@ PyArray_Pack(PyArray_Descr *descr, char *item, PyObject *value)
         Py_DECREF(tmp_descr);
         return -1;
     }
-    if (PyDataType_REFCHK(tmp_descr)) {
-        /* We could probably use move-references above */
-        PyArray_Item_INCREF(data, tmp_descr);
-    }
+    int res = cast_raw_scalar_item(tmp_descr, data, descr, item);
 
-    int res = 0;
-    int needs_api = 0;
-    NPY_cast_info cast_info;
-    if (PyArray_GetDTypeTransferFunction(
-            0, 0, 0, tmp_descr, descr, 0, &cast_info,
-            &needs_api) == NPY_FAIL) {
-        res = -1;
-        goto finish;
-    }
-    char *args[2] = {data, item};
-    const npy_intp strides[2] = {0, 0};
-    const npy_intp length = 1;
-    if (cast_info.func(&cast_info.context,
-            args, &length, strides, cast_info.auxdata) < 0) {
-        res = -1;
-    }
-    NPY_cast_info_xfree(&cast_info);
-
-  finish:
     if (PyDataType_REFCHK(tmp_descr)) {
         /* We could probably use move-references above */
         PyArray_Item_XDECREF(data, tmp_descr);
