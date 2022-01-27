@@ -944,11 +944,12 @@ class flatiter(Generic[_NdArraySubClass]):
     @overload
     def __getitem__(
         self: flatiter[ndarray[Any, dtype[_ScalarType]]],
-        key: int | integer,
+        key: int | integer | tuple[int | integer],
     ) -> _ScalarType: ...
     @overload
     def __getitem__(
-        self, key: _ArrayLikeInt | slice | ellipsis
+        self,
+        key: _ArrayLikeInt | slice | ellipsis | tuple[_ArrayLikeInt | slice | ellipsis],
     ) -> _NdArraySubClass: ...
     @overload
     def __array__(self: flatiter[ndarray[Any, _DType]], dtype: None = ..., /) -> ndarray[Any, _DType]: ...
