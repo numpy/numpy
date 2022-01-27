@@ -3,6 +3,7 @@
  ** sse2 sse41 avx2 avx512f avx512_skx
  ** vsx2 vsx4
  ** neon
+ ** vx
  **/
 #define _UMATHMODULE
 #define _MULTIARRAYMODULE
