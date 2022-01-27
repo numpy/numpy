@@ -2,8 +2,8 @@
     #error "Not a standalone header"
 #endif
 
-#ifndef _NPY_SIMD_VSX_REORDER_H
-#define _NPY_SIMD_VSX_REORDER_H
+#ifndef _NPY_SIMD_VEC_REORDER_H
+#define _NPY_SIMD_VEC_REORDER_H
 
 // combine lower part of two vectors
 #define npyv__combinel(A, B) vec_mergeh((npyv_u64)(A), (npyv_u64)(B))
@@ -15,7 +15,9 @@
 #define npyv_combinel_s32(A, B) ((npyv_s32)npyv__combinel(A, B))
 #define npyv_combinel_u64       vec_mergeh
 #define npyv_combinel_s64       vec_mergeh
-#define npyv_combinel_f32(A, B) ((npyv_f32)npyv__combinel(A, B))
+#if NPY_SIMD_F32
+    #define npyv_combinel_f32(A, B) ((npyv_f32)npyv__combinel(A, B))
+#endif
 #define npyv_combinel_f64       vec_mergeh
 
 // combine higher part of two vectors
@@ -28,14 +30,16 @@
 #define npyv_combineh_s32(A, B) ((npyv_s32)npyv__combineh(A, B))
 #define npyv_combineh_u64       vec_mergel
 #define npyv_combineh_s64       vec_mergel
-#define npyv_combineh_f32(A, B) ((npyv_f32)npyv__combineh(A, B))
+#if NPY_SIMD_F32
+    #define npyv_combineh_f32(A, B) ((npyv_f32)npyv__combineh(A, B))
+#endif
 #define npyv_combineh_f64       vec_mergel
 
 /*
  * combine: combine two vectors from lower and higher parts of two other vectors
  * zip: interleave two vectors
 */
-#define NPYV_IMPL_VSX_COMBINE_ZIP(T_VEC, SFX)                  \
+#define NPYV_IMPL_VEC_COMBINE_ZIP(T_VEC, SFX)                  \
     NPY_FINLINE T_VEC##x2 npyv_combine_##SFX(T_VEC a, T_VEC b) \
     {                                                          \
         T_VEC##x2 r;                                           \
@@ -51,16 +55,18 @@
         return r;                                              \
     }
 
-NPYV_IMPL_VSX_COMBINE_ZIP(npyv_u8,  u8)
-NPYV_IMPL_VSX_COMBINE_ZIP(npyv_s8,  s8)
-NPYV_IMPL_VSX_COMBINE_ZIP(npyv_u16, u16)
-NPYV_IMPL_VSX_COMBINE_ZIP(npyv_s16, s16)
-NPYV_IMPL_VSX_COMBINE_ZIP(npyv_u32, u32)
-NPYV_IMPL_VSX_COMBINE_ZIP(npyv_s32, s32)
-NPYV_IMPL_VSX_COMBINE_ZIP(npyv_u64, u64)
-NPYV_IMPL_VSX_COMBINE_ZIP(npyv_s64, s64)
-NPYV_IMPL_VSX_COMBINE_ZIP(npyv_f32, f32)
-NPYV_IMPL_VSX_COMBINE_ZIP(npyv_f64, f64)
+NPYV_IMPL_VEC_COMBINE_ZIP(npyv_u8,  u8)
+NPYV_IMPL_VEC_COMBINE_ZIP(npyv_s8,  s8)
+NPYV_IMPL_VEC_COMBINE_ZIP(npyv_u16, u16)
+NPYV_IMPL_VEC_COMBINE_ZIP(npyv_s16, s16)
+NPYV_IMPL_VEC_COMBINE_ZIP(npyv_u32, u32)
+NPYV_IMPL_VEC_COMBINE_ZIP(npyv_s32, s32)
+NPYV_IMPL_VEC_COMBINE_ZIP(npyv_u64, u64)
+NPYV_IMPL_VEC_COMBINE_ZIP(npyv_s64, s64)
+#if NPY_SIMD_F32
+    NPYV_IMPL_VEC_COMBINE_ZIP(npyv_f32, f32)
+#endif
+NPYV_IMPL_VEC_COMBINE_ZIP(npyv_f64, f64)
 
 // Reverse elements of each 64-bit lane
 NPY_FINLINE npyv_u8 npyv_rev64_u8(npyv_u8 a)
@@ -100,7 +106,9 @@ NPY_FINLINE npyv_u32 npyv_rev64_u32(npyv_u32 a)
 }
 NPY_FINLINE npyv_s32 npyv_rev64_s32(npyv_s32 a)
 { return (npyv_s32)npyv_rev64_u32((npyv_u32)a); }
-NPY_FINLINE npyv_f32 npyv_rev64_f32(npyv_f32 a)
-{ return (npyv_f32)npyv_rev64_u32((npyv_u32)a); }
+#if NPY_SIMD_F32
+    NPY_FINLINE npyv_f32 npyv_rev64_f32(npyv_f32 a)
+    { return (npyv_f32)npyv_rev64_u32((npyv_u32)a); }
+#endif
 
-#endif // _NPY_SIMD_VSX_REORDER_H
+#endif // _NPY_SIMD_VEC_REORDER_H
