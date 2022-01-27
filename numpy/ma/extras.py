@@ -1632,7 +1632,7 @@ def flatnotmasked_contiguous(a):
 
     Parameters
     ----------
-    a : narray
+    a : array_like
         The input array.
 
     Returns
