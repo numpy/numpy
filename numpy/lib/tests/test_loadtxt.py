@@ -6,7 +6,7 @@ These tests complement those found in `test_io.py`.
 
 import sys
 import pytest
-from tempfile import NamedTemporaryFile
+from tempfile import NamedTemporaryFile, mkstemp
 from io import StringIO
 
 import numpy as np
@@ -926,3 +926,25 @@ def test_control_character_newline_raises(nl):
         np.loadtxt(txt, comments=nl)
     with pytest.raises(TypeError, match="control character.*cannot be a newline"):
         np.loadtxt(txt, quotechar=nl)
+
+
+def test_datetime_parametric_unit_discovery():
+    """Check that the correct unit (e.g. month, day, second) is discovered from
+    the data when a user specifies a unitless datetime."""
+    # Unit should be "D" (days) due to last entry
+    data = ["2012-03"] * 50000 + ["2013-01-15"]
+    expected = np.array(data, dtype="M8[D]")
+
+    # file-like path
+    txt = StringIO("\n".join(data))
+    a = np.loadtxt(txt, dtype="M8")
+    assert a.dtype == expected.dtype
+    assert_equal(a, expected)
+
+    # file-obj path
+    fd, fname = mkstemp()
+    with open(fname, "w") as fh:
+        fh.write("\n".join(data))
+    a = np.loadtxt(fname, dtype="M8")
+    assert a.dtype == expected.dtype
+    assert_equal(a, expected)
