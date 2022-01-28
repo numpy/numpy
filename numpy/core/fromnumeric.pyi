@@ -248,6 +248,7 @@ def all(
     axis: None = ...,
     out: None = ...,
     keepdims: Literal[False] = ...,
+    *,
     where: _ArrayLikeBool_co = ...,
 ) -> bool_: ...
 @overload
