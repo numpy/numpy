@@ -257,6 +257,7 @@ def all(
     axis: None | _ShapeLike = ...,
     out: None | ndarray = ...,
     keepdims: bool = ...,
+    *,
     where: _ArrayLikeBool_co = ...,
 ) -> Any: ...
 
@@ -266,6 +267,7 @@ def any(
     axis: None = ...,
     out: None = ...,
     keepdims: Literal[False] = ...,
+    *,
     where: _ArrayLikeBool_co = ...,
 ) -> bool_: ...
 @overload
@@ -274,6 +276,7 @@ def any(
     axis: None | _ShapeLike = ...,
     out: None | ndarray = ...,
     keepdims: bool = ...,
+    *,
     where: _ArrayLikeBool_co = ...,
 ) -> Any: ...
 
@@ -349,6 +352,7 @@ def mean(
     dtype: DTypeLike = ...,
     out: None | ndarray = ...,
     keepdims: bool = ...,
+    *,
     where: _ArrayLikeBool_co = ...,
 ) -> Any: ...
 
@@ -359,6 +363,7 @@ def std(
     out: None | ndarray = ...,
     ddof: int = ...,
     keepdims: bool = ...,
+    *,
     where: _ArrayLikeBool_co = ...,
 ) -> Any: ...
 
@@ -369,5 +374,6 @@ def var(
     out: None | ndarray = ...,
     ddof: int = ...,
     keepdims: bool = ...,
+    *,
     where: _ArrayLikeBool_co = ...,
 ) -> Any: ...
