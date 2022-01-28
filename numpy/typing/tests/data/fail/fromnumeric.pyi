@@ -7,10 +7,10 @@ A.setflags(write=False)
 
 a = np.bool_(True)
 
-np.take(a, None)  # E: incompatible type
-np.take(a, axis=1.0)  # E: incompatible type
-np.take(A, out=1)  # E: incompatible type
-np.take(A, mode="bob")  # E: incompatible type
+np.take(a, None)  # E: No overload variant
+np.take(a, axis=1.0)  # E: No overload variant
+np.take(A, out=1)  # E: No overload variant
+np.take(A, mode="bob")  # E: No overload variant
 
 np.reshape(a, None)  # E: No overload variant
 np.reshape(A, 1, order="bob")  # E: No overload variant
@@ -80,9 +80,9 @@ np.diagonal(A, offset=None)  # E: No overload variant
 np.diagonal(A, axis1="bob")  # E: No overload variant
 np.diagonal(A, axis2=[])  # E: No overload variant
 
-np.trace(A, offset=None)  # E: Argument "offset" to "trace" has incompatible type
-np.trace(A, axis1="bob")  # E: Argument "axis1" to "trace" has incompatible type
-np.trace(A, axis2=[])  # E: Argument "axis2" to "trace" has incompatible type
+np.trace(A, offset=None)  # E: No overload variant
+np.trace(A, axis1="bob")  # E: No overload variant
+np.trace(A, axis2=[])  # E: No overload variant
 
 np.ravel(a, order="bob")  # E: No overload variant
 
@@ -91,11 +91,10 @@ np.compress(  # E: No overload variant
 )
 
 np.clip(a, 1, 2, out=1)  # E: No overload variant of "clip" matches argument type
-np.clip(1, None, None)  # E: No overload variant of "clip" matches argument type
 
-np.sum(a, axis=1.0)  # E: incompatible type
-np.sum(a, keepdims=1.0)  # E: incompatible type
-np.sum(a, initial=[1])  # E: incompatible type
+np.sum(a, axis=1.0)  # E: No overload variant
+np.sum(a, keepdims=1.0)  # E: No overload variant
+np.sum(a, initial=[1])  # E: No overload variant
 
 np.all(a, axis=1.0)  # E: No overload variant
 np.all(a, keepdims=1.0)  # E: No overload variant
@@ -105,24 +104,24 @@ np.any(a, axis=1.0)  # E: No overload variant
 np.any(a, keepdims=1.0)  # E: No overload variant
 np.any(a, out=1.0)  # E: No overload variant
 
-np.cumsum(a, axis=1.0)  # E: incompatible type
-np.cumsum(a, dtype=1.0)  # E: incompatible type
-np.cumsum(a, out=1.0)  # E: incompatible type
+np.cumsum(a, axis=1.0)  # E: No overload variant
+np.cumsum(a, dtype=1.0)  # E: No overload variant
+np.cumsum(a, out=1.0)  # E: No overload variant
 
-np.ptp(a, axis=1.0)  # E: incompatible type
-np.ptp(a, keepdims=1.0)  # E: incompatible type
-np.ptp(a, out=1.0)  # E: incompatible type
+np.ptp(a, axis=1.0)  # E: No overload variant
+np.ptp(a, keepdims=1.0)  # E: No overload variant
+np.ptp(a, out=1.0)  # E: No overload variant
 
-np.amax(a, axis=1.0)  # E: incompatible type
-np.amax(a, keepdims=1.0)  # E: incompatible type
-np.amax(a, out=1.0)  # E: incompatible type
-np.amax(a, initial=[1.0])  # E: incompatible type
+np.amax(a, axis=1.0)  # E: No overload variant
+np.amax(a, keepdims=1.0)  # E: No overload variant
+np.amax(a, out=1.0)  # E: No overload variant
+np.amax(a, initial=[1.0])  # E: No overload variant
 np.amax(a, where=[1.0])  # E: incompatible type
 
-np.amin(a, axis=1.0)  # E: incompatible type
-np.amin(a, keepdims=1.0)  # E: incompatible type
-np.amin(a, out=1.0)  # E: incompatible type
-np.amin(a, initial=[1.0])  # E: incompatible type
+np.amin(a, axis=1.0)  # E: No overload variant
+np.amin(a, keepdims=1.0)  # E: No overload variant
+np.amin(a, out=1.0)  # E: No overload variant
+np.amin(a, initial=[1.0])  # E: No overload variant
 np.amin(a, where=[1.0])  # E: incompatible type
 
 np.prod(a, axis=1.0)  # E: incompatible type

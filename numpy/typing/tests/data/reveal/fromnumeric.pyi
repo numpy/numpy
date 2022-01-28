@@ -3,21 +3,27 @@
 import numpy as np
 import numpy.typing as npt
 
+class NDArraySubclass(npt.NDArray[np.complex128]):
+    ...
+
 AR_b: npt.NDArray[np.bool_]
 AR_f4: npt.NDArray[np.float32]
 AR_i8: npt.NDArray[np.int64]
+AR_subclass: NDArraySubclass
 
 b: np.bool_
 f4: np.float32
 f: float
 
-reveal_type(np.take(b, 0))  # E: Any
-reveal_type(np.take(f4, 0))  # E: Any
+reveal_type(np.take(b, 0))  # E: bool_
+reveal_type(np.take(f4, 0))  # E: {float32}
 reveal_type(np.take(f, 0))  # E: Any
-reveal_type(np.take(AR_b, 0))  # E: Any
-reveal_type(np.take(AR_f4, 0))  # E: Any
-reveal_type(np.take(AR_b, [0]))  # E: Any
-reveal_type(np.take(AR_f4, [0]))  # E: Any
+reveal_type(np.take(AR_b, 0))  # E: bool_
+reveal_type(np.take(AR_f4, 0))  # E: {float32}
+reveal_type(np.take(AR_b, [0]))  # E: ndarray[Any, dtype[bool_]]
+reveal_type(np.take(AR_f4, [0]))  # E: ndarray[Any, dtype[{float32}]]
+reveal_type(np.take([1], [0]))  # E: ndarray[Any, dtype[Any]]
+reveal_type(np.take(AR_f4, [0], out=AR_subclass))  # E: NDArraySubclass
 
 reveal_type(np.reshape(b, 1))  # E: ndarray[Any, dtype[bool_]]
 reveal_type(np.reshape(f4, 1))  # E: ndarray[Any, dtype[{float32}]]
@@ -71,11 +77,13 @@ reveal_type(np.argmax(AR_b))  # E: {intp}
 reveal_type(np.argmax(AR_f4))  # E: {intp}
 reveal_type(np.argmax(AR_b, axis=0))  # E: Any
 reveal_type(np.argmax(AR_f4, axis=0))  # E: Any
+reveal_type(np.argmax(AR_f4, out=AR_subclass))  # E: NDArraySubclass
 
 reveal_type(np.argmin(AR_b))  # E: {intp}
 reveal_type(np.argmin(AR_f4))  # E: {intp}
 reveal_type(np.argmin(AR_b, axis=0))  # E: Any
 reveal_type(np.argmin(AR_f4, axis=0))  # E: Any
+reveal_type(np.argmin(AR_f4, out=AR_subclass))  # E: NDArraySubclass
 
 reveal_type(np.searchsorted(AR_b[0], 0))  # E: {intp}
 reveal_type(np.searchsorted(AR_f4[0], 0))  # E: {intp}
@@ -99,6 +107,7 @@ reveal_type(np.diagonal(AR_f4))  # E: ndarray[Any, dtype[{float32}]]
 
 reveal_type(np.trace(AR_b))  # E: Any
 reveal_type(np.trace(AR_f4))  # E: Any
+reveal_type(np.trace(AR_f4, out=AR_subclass))  # E: NDArraySubclass
 
 reveal_type(np.ravel(b))  # E: ndarray[Any, dtype[bool_]]
 reveal_type(np.ravel(f4))  # E: ndarray[Any, dtype[{float32}]]
@@ -124,19 +133,22 @@ reveal_type(np.compress([True], f))  # E: ndarray[Any, dtype[Any]]
 reveal_type(np.compress([True], AR_b))  # E: ndarray[Any, dtype[bool_]]
 reveal_type(np.compress([True], AR_f4))  # E: ndarray[Any, dtype[{float32}]]
 
-reveal_type(np.clip(b, 0, 1.0))  # E: Any
-reveal_type(np.clip(f4, -1, 1))  # E: Any
+reveal_type(np.clip(b, 0, 1.0))  # E: bool_
+reveal_type(np.clip(f4, -1, 1))  # E: {float32}
 reveal_type(np.clip(f, 0, 1))  # E: Any
-reveal_type(np.clip(AR_b, 0, 1))  # E: Any
-reveal_type(np.clip(AR_f4, 0, 1))  # E: Any
+reveal_type(np.clip(AR_b, 0, 1))  # E: ndarray[Any, dtype[bool_]]
+reveal_type(np.clip(AR_f4, 0, 1))  # E: ndarray[Any, dtype[{float32}]]
+reveal_type(np.clip([0], 0, 1))  # E: ndarray[Any, dtype[Any]]
+reveal_type(np.clip(AR_b, 0, 1, out=AR_subclass))  # E: NDArraySubclass
 
-reveal_type(np.sum(b))  # E: Any
-reveal_type(np.sum(f4))  # E: Any
+reveal_type(np.sum(b))  # E: bool_
+reveal_type(np.sum(f4))  # E: {float32}
 reveal_type(np.sum(f))  # E: Any
-reveal_type(np.sum(AR_b))  # E: Any
-reveal_type(np.sum(AR_f4))  # E: Any
+reveal_type(np.sum(AR_b))  # E: bool_
+reveal_type(np.sum(AR_f4))  # E: {float32}
 reveal_type(np.sum(AR_b, axis=0))  # E: Any
 reveal_type(np.sum(AR_f4, axis=0))  # E: Any
+reveal_type(np.sum(AR_f4, out=AR_subclass))  # E: NDArraySubclass
 
 reveal_type(np.all(b))  # E: bool_
 reveal_type(np.all(f4))  # E: bool_
@@ -147,6 +159,7 @@ reveal_type(np.all(AR_b, axis=0))  # E: Any
 reveal_type(np.all(AR_f4, axis=0))  # E: Any
 reveal_type(np.all(AR_b, keepdims=True))  # E: Any
 reveal_type(np.all(AR_f4, keepdims=True))  # E: Any
+reveal_type(np.all(AR_f4, out=AR_subclass))  # E: NDArraySubclass
 
 reveal_type(np.any(b))  # E: bool_
 reveal_type(np.any(f4))  # E: bool_
@@ -157,42 +170,49 @@ reveal_type(np.any(AR_b, axis=0))  # E: Any
 reveal_type(np.any(AR_f4, axis=0))  # E: Any
 reveal_type(np.any(AR_b, keepdims=True))  # E: Any
 reveal_type(np.any(AR_f4, keepdims=True))  # E: Any
+reveal_type(np.any(AR_f4, out=AR_subclass))  # E: NDArraySubclass
 
-reveal_type(np.cumsum(b))  # E: ndarray[Any, Any]
-reveal_type(np.cumsum(f4))  # E: ndarray[Any, Any]
-reveal_type(np.cumsum(f))  # E: ndarray[Any, Any]
-reveal_type(np.cumsum(AR_b))  # E: ndarray[Any, Any]
-reveal_type(np.cumsum(AR_f4))  # E: ndarray[Any, Any]
+reveal_type(np.cumsum(b))  # E: ndarray[Any, dtype[bool_]]
+reveal_type(np.cumsum(f4))  # E: ndarray[Any, dtype[{float32}]]
+reveal_type(np.cumsum(f))  # E: ndarray[Any, dtype[Any]]
+reveal_type(np.cumsum(AR_b))  # E: ndarray[Any, dtype[bool_]]
+reveal_type(np.cumsum(AR_f4))  # E: ndarray[Any, dtype[{float32}]]
+reveal_type(np.cumsum(f, dtype=float))  # E: ndarray[Any, dtype[Any]]
+reveal_type(np.cumsum(f, dtype=np.float64))  # E: ndarray[Any, dtype[{float64}]]
+reveal_type(np.cumsum(AR_f4, out=AR_subclass))  # E: NDArraySubclass
 
-reveal_type(np.ptp(b))  # E: Any
-reveal_type(np.ptp(f4))  # E: Any
+reveal_type(np.ptp(b))  # E: bool_
+reveal_type(np.ptp(f4))  # E: {float32}
 reveal_type(np.ptp(f))  # E: Any
-reveal_type(np.ptp(AR_b))  # E: Any
-reveal_type(np.ptp(AR_f4))  # E: Any
+reveal_type(np.ptp(AR_b))  # E: bool_
+reveal_type(np.ptp(AR_f4))  # E: {float32}
 reveal_type(np.ptp(AR_b, axis=0))  # E: Any
 reveal_type(np.ptp(AR_f4, axis=0))  # E: Any
 reveal_type(np.ptp(AR_b, keepdims=True))  # E: Any
 reveal_type(np.ptp(AR_f4, keepdims=True))  # E: Any
+reveal_type(np.ptp(AR_f4, out=AR_subclass))  # E: NDArraySubclass
 
-reveal_type(np.amax(b))  # E: Any
-reveal_type(np.amax(f4))  # E: Any
+reveal_type(np.amax(b))  # E: bool_
+reveal_type(np.amax(f4))  # E: {float32}
 reveal_type(np.amax(f))  # E: Any
-reveal_type(np.amax(AR_b))  # E: Any
-reveal_type(np.amax(AR_f4))  # E: Any
+reveal_type(np.amax(AR_b))  # E: bool_
+reveal_type(np.amax(AR_f4))  # E: {float32}
 reveal_type(np.amax(AR_b, axis=0))  # E: Any
 reveal_type(np.amax(AR_f4, axis=0))  # E: Any
 reveal_type(np.amax(AR_b, keepdims=True))  # E: Any
 reveal_type(np.amax(AR_f4, keepdims=True))  # E: Any
+reveal_type(np.amax(AR_f4, out=AR_subclass))  # E: NDArraySubclass
 
-reveal_type(np.amin(b))  # E: Any
-reveal_type(np.amin(f4))  # E: Any
+reveal_type(np.amin(b))  # E: bool_
+reveal_type(np.amin(f4))  # E: {float32}
 reveal_type(np.amin(f))  # E: Any
-reveal_type(np.amin(AR_b))  # E: Any
-reveal_type(np.amin(AR_f4))  # E: Any
+reveal_type(np.amin(AR_b))  # E: bool_
+reveal_type(np.amin(AR_f4))  # E: {float32}
 reveal_type(np.amin(AR_b, axis=0))  # E: Any
 reveal_type(np.amin(AR_f4, axis=0))  # E: Any
 reveal_type(np.amin(AR_b, keepdims=True))  # E: Any
 reveal_type(np.amin(AR_f4, keepdims=True))  # E: Any
+reveal_type(np.amin(AR_f4, out=AR_subclass))  # E: NDArraySubclass
 
 reveal_type(np.prod(b))  # E: Any
 reveal_type(np.prod(f4))  # E: Any
