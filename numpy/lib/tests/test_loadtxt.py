@@ -879,17 +879,17 @@ class TestCReaderUnitTests:
 
 
 def test_delimiter_comment_collision_raises():
-    with pytest.raises(TypeError, match="control characters.*are identical"):
+    with pytest.raises(TypeError, match=".*control characters.*incompatible"):
         np.loadtxt(StringIO("1, 2, 3"), delimiter=",", comments=",")
 
 
 def test_delimiter_quotechar_collision_raises():
-    with pytest.raises(TypeError, match="control characters.*are identical"):
+    with pytest.raises(TypeError, match=".*control characters.*incompatible"):
         np.loadtxt(StringIO("1, 2, 3"), delimiter=",", quotechar=",")
 
 
 def test_comment_quotechar_collision_raises():
-    with pytest.raises(TypeError, match="control characters.*are identical"):
+    with pytest.raises(TypeError, match=".*control characters.*incompatible"):
         np.loadtxt(StringIO("1 2 3"), comments="#", quotechar="#")
 
 
@@ -911,9 +911,9 @@ def test_delimiter_and_multiple_comments_collision_raises():
     )
 )
 def test_collision_with_default_delimiter_raises(ws):
-    with pytest.raises(TypeError, match="control characters.*are identical"):
+    with pytest.raises(TypeError, match=".*control characters.*incompatible"):
         np.loadtxt(StringIO(f"1{ws}2{ws}3\n4{ws}5{ws}6\n"), comments=ws)
-    with pytest.raises(TypeError, match="control characters.*are identical"):
+    with pytest.raises(TypeError, match=".*control characters.*incompatible"):
         np.loadtxt(StringIO(f"1{ws}2{ws}3\n4{ws}5{ws}6\n"), quotechar=ws)
 
 
