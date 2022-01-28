@@ -944,12 +944,22 @@ class flatiter(Generic[_NdArraySubClass]):
     @overload
     def __getitem__(
         self: flatiter[ndarray[Any, dtype[_ScalarType]]],
-        key: int | integer,
+        key: int | integer | tuple[int | integer],
     ) -> _ScalarType: ...
     @overload
     def __getitem__(
-        self, key: _ArrayLikeInt | slice | ellipsis
+        self,
+        key: _ArrayLikeInt | slice | ellipsis | tuple[_ArrayLikeInt | slice | ellipsis],
     ) -> _NdArraySubClass: ...
+    # TODO: `__setitem__` operates via `unsafe` casting rules, and can
+    # thus accept any type accepted by the relevant underlying `np.generic`
+    # constructor.
+    # This means that `value` must in reality be a supertype of `npt.ArrayLike`.
+    def __setitem__(
+        self,
+        key: _ArrayLikeInt | slice | ellipsis | tuple[_ArrayLikeInt | slice | ellipsis],
+        value: Any,
+    ) -> None: ...
     @overload
     def __array__(self: flatiter[ndarray[Any, _DType]], dtype: None = ..., /) -> ndarray[Any, _DType]: ...
     @overload
