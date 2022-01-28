@@ -1258,4 +1258,3 @@ class TestAxisNotMAXDIMS(_DeprecationTestCase):
     def test_deprecated(self):
         a = np.zeros((1,)*32)
         self.assert_deprecated(lambda: np.repeat(a, 1, axis=np.MAXDIMS))
-        
