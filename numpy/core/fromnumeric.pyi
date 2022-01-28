@@ -5,7 +5,6 @@ from typing import Union, Any, overload, TypeVar, Literal
 from numpy import (
     ndarray,
     number,
-    integer,
     intp,
     bool_,
     generic,
@@ -19,33 +18,22 @@ from numpy import (
 from numpy.typing import (
     DTypeLike,
     ArrayLike,
+    _ArrayLike,
     NDArray,
     _ShapeLike,
     _Shape,
     _ArrayLikeBool_co,
     _ArrayLikeInt_co,
+    _IntLike_co,
     _NumberLike_co,
+    _ScalarLike_co,
 )
 
-# Various annotations for scalars
+_SCT = TypeVar("_SCT", bound=generic)
+_ArrayType = TypeVar("_ArrayType", bound=NDArray[Any])
 
-# While dt.datetime and dt.timedelta are not technically part of NumPy,
-# they are one of the rare few builtin scalars which serve as valid return types.
-# See https://github.com/numpy/numpy-stubs/pull/67#discussion_r412604113.
-_ScalarNumpy = Union[generic, dt.datetime, dt.timedelta]
-_ScalarBuiltin = Union[str, bytes, dt.date, dt.timedelta, bool, int, float, complex]
-_Scalar = Union[_ScalarBuiltin, _ScalarNumpy]
+__all__: list[str]
 
-# Integers and booleans can generally be used interchangeably
-_ScalarGeneric = TypeVar("_ScalarGeneric", bound=generic)
-
-_Number = TypeVar("_Number", bound=number)
-
-# The signature of take() follows a common theme with its overloads:
-# 1. A generic comes in; the same generic comes out
-# 2. A scalar comes in; a generic comes out
-# 3. An array-like object comes in; some keyword ensures that a generic comes out
-# 4. An array-like object comes in; an ndarray or generic comes out
 def take(
     a: ArrayLike,
     indices: _ArrayLikeInt_co,
@@ -54,50 +42,108 @@ def take(
     mode: _ModeKind = ...,
 ) -> Any: ...
 
+@overload
+def reshape(
+    a: _ArrayLike[_SCT],
+    newshape: _ShapeLike,
+    order: _OrderACF = ...,
+) -> NDArray[_SCT]: ...
+@overload
 def reshape(
     a: ArrayLike,
     newshape: _ShapeLike,
     order: _OrderACF = ...,
-) -> ndarray: ...
+) -> NDArray[Any]: ...
 
+@overload
+def choose(
+    a: _IntLike_co,
+    choices: ArrayLike,
+    out: None = ...,
+    mode: _ModeKind = ...,
+) -> Any: ...
+@overload
+def choose(
+    a: _ArrayLikeInt_co,
+    choices: _ArrayLike[_SCT],
+    out: None = ...,
+    mode: _ModeKind = ...,
+) -> NDArray[_SCT]: ...
+@overload
 def choose(
     a: _ArrayLikeInt_co,
     choices: ArrayLike,
-    out: None | ndarray = ...,
+    out: None = ...,
     mode: _ModeKind = ...,
-) -> Any: ...
+) -> NDArray[Any]: ...
+@overload
+def choose(
+    a: _ArrayLikeInt_co,
+    choices: ArrayLike,
+    out: _ArrayType = ...,
+    mode: _ModeKind = ...,
+) -> _ArrayType: ...
 
+@overload
+def repeat(
+    a: _ArrayLike[_SCT],
+    repeats: _ArrayLikeInt_co,
+    axis: None | int = ...,
+) -> NDArray[_SCT]: ...
+@overload
 def repeat(
     a: ArrayLike,
     repeats: _ArrayLikeInt_co,
     axis: None | int = ...,
-) -> ndarray: ...
+) -> NDArray[Any]: ...
 
 def put(
-    a: ndarray,
+    a: NDArray[Any],
     ind: _ArrayLikeInt_co,
     v: ArrayLike,
     mode: _ModeKind = ...,
 ) -> None: ...
 
+@overload
+def swapaxes(
+    a: _ArrayLike[_SCT],
+    axis1: int,
+    axis2: int,
+) -> NDArray[_SCT]: ...
+@overload
 def swapaxes(
     a: ArrayLike,
     axis1: int,
     axis2: int,
-) -> ndarray: ...
+) -> NDArray[Any]: ...
 
+@overload
+def transpose(
+    a: _ArrayLike[_SCT],
+    axes: None | _ShapeLike = ...
+) -> NDArray[_SCT]: ...
+@overload
 def transpose(
     a: ArrayLike,
-    axes: None | Sequence[int] | NDArray[Any] = ...
-) -> ndarray: ...
+    axes: None | _ShapeLike = ...
+) -> NDArray[Any]: ...
 
+@overload
+def partition(
+    a: _ArrayLike[_SCT],
+    kth: _ArrayLikeInt_co,
+    axis: None | int = ...,
+    kind: _PartitionKind = ...,
+    order: None | str | Sequence[str] = ...,
+) -> NDArray[_SCT]: ...
+@overload
 def partition(
     a: ArrayLike,
     kth: _ArrayLikeInt_co,
     axis: None | int = ...,
     kind: _PartitionKind = ...,
     order: None | str | Sequence[str] = ...,
-) -> ndarray: ...
+) -> NDArray[Any]: ...
 
 def argpartition(
     a: ArrayLike,
@@ -105,21 +151,29 @@ def argpartition(
     axis: None | int = ...,
     kind: _PartitionKind = ...,
     order: None | str | Sequence[str] = ...,
-) -> Any: ...
+) -> NDArray[intp]: ...
 
+@overload
+def sort(
+    a: _ArrayLike[_SCT],
+    axis: None | int = ...,
+    kind: None | _SortKind = ...,
+    order: None | str | Sequence[str] = ...,
+) -> NDArray[_SCT]: ...
+@overload
 def sort(
     a: ArrayLike,
     axis: None | int = ...,
     kind: None | _SortKind = ...,
     order: None | str | Sequence[str] = ...,
-) -> ndarray: ...
+) -> NDArray[Any]: ...
 
 def argsort(
     a: ArrayLike,
     axis: None | int = ...,
     kind: None | _SortKind = ...,
     order: None | str | Sequence[str] = ...,
-) -> ndarray: ...
+) -> NDArray[intp]: ...
 
 @overload
 def argmax(
@@ -158,7 +212,7 @@ def argmin(
 @overload
 def searchsorted(
     a: ArrayLike,
-    v: _Scalar,
+    v: _ScalarLike_co,
     side: _SortSide = ...,
     sorter: None | _ArrayLikeInt_co = ...,  # 1D int array
 ) -> intp: ...
@@ -168,30 +222,49 @@ def searchsorted(
     v: ArrayLike,
     side: _SortSide = ...,
     sorter: None | _ArrayLikeInt_co = ...,  # 1D int array
-) -> ndarray: ...
+) -> NDArray[intp]: ...
 
+@overload
+def resize(
+    a: _ArrayLike[_SCT],
+    new_shape: _ShapeLike,
+) -> NDArray[_SCT]: ...
+@overload
 def resize(
     a: ArrayLike,
     new_shape: _ShapeLike,
-) -> ndarray: ...
+) -> NDArray[Any]: ...
 
 @overload
 def squeeze(
-    a: _ScalarGeneric,
+    a: _SCT,
     axis: None | _ShapeLike = ...,
-) -> _ScalarGeneric: ...
+) -> _SCT: ...
+@overload
+def squeeze(
+    a: _ArrayLike[_SCT],
+    axis: None | _ShapeLike = ...,
+) -> NDArray[_SCT]: ...
 @overload
 def squeeze(
     a: ArrayLike,
     axis: None | _ShapeLike = ...,
-) -> ndarray: ...
+) -> NDArray[Any]: ...
 
+@overload
+def diagonal(
+    a: _ArrayLike[_SCT],
+    offset: int = ...,
+    axis1: int = ...,
+    axis2: int = ...,  # >= 2D array
+) -> NDArray[_SCT]: ...
+@overload
 def diagonal(
     a: ArrayLike,
     offset: int = ...,
     axis1: int = ...,
     axis2: int = ...,  # >= 2D array
-) -> ndarray: ...
+) -> NDArray[Any]: ...
 
 def trace(
     a: ArrayLike,  # >= 2D array
@@ -202,18 +275,36 @@ def trace(
     out: None | ndarray = ...,
 ) -> Any: ...
 
-def ravel(a: ArrayLike, order: _OrderKACF = ...) -> ndarray: ...
+@overload
+def ravel(a: _ArrayLike[_SCT], order: _OrderKACF = ...) -> NDArray[_SCT]: ...
+@overload
+def ravel(a: ArrayLike, order: _OrderKACF = ...) -> NDArray[Any]: ...
 
-def nonzero(a: ArrayLike) -> tuple[ndarray, ...]: ...
+def nonzero(a: ArrayLike) -> tuple[NDArray[intp], ...]: ...
 
 def shape(a: ArrayLike) -> _Shape: ...
 
+@overload
 def compress(
-    condition: ArrayLike,  # 1D bool array
+    condition: _ArrayLikeBool_co,  # 1D bool array
+    a: _ArrayLike[_SCT],
+    axis: None | int = ...,
+    out: None = ...,
+) -> NDArray[_SCT]: ...
+@overload
+def compress(
+    condition: _ArrayLikeBool_co,  # 1D bool array
     a: ArrayLike,
     axis: None | int = ...,
-    out: None | ndarray = ...,
-) -> ndarray: ...
+    out: None = ...,
+) -> NDArray[Any]: ...
+@overload
+def compress(
+    condition: _ArrayLikeBool_co,  # 1D bool array
+    a: ArrayLike,
+    axis: None | int = ...,
+    out: _ArrayType = ...,
+) -> _ArrayType: ...
 
 @overload
 def clip(
