@@ -958,3 +958,14 @@ def test_datetime_parametric_unit_discovery(
     a = np.loadtxt(fname, dtype=unitless_dtype)
     assert a.dtype == expected.dtype
     assert_equal(a, expected)
+
+
+def test_control_character_empty():
+    with pytest.raises(TypeError, match="Text reading control character must"):
+        np.loadtxt(StringIO("1 2 3"), delimiter="")
+    with pytest.raises(TypeError, match="Text reading control character must"):
+        np.loadtxt(StringIO("1 2 3"), quotechar="")
+    with pytest.raises(ValueError, match="comments cannot be an empty string"):
+        np.loadtxt(StringIO("1 2 3"), comments="")
+    with pytest.raises(ValueError, match="comments cannot be an empty string"):
+        np.loadtxt(StringIO("1 2 3"), comments=["#", ""])

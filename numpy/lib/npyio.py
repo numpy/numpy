@@ -922,6 +922,11 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
         comments = None
     else:
         # assume comments are a sequence of strings
+        if "" in comment:
+            raise ValueError(
+                "comments cannot be an empty string. Use comments=None to "
+                "disable comments."
+            )
         comments = tuple(comment)
         comment = None
         if len(comments) == 0:
