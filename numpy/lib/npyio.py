@@ -1290,12 +1290,14 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         dtype = np.float64
 
     comment = comments
-    # Type conversions for Py3 convenience
+    # Control character type conversions for Py3 convenience
     if comment is not None:
         if isinstance(comment, (str, bytes)):
             comment = [comment]
         comment = [
             x.decode('latin1') if isinstance(x, bytes) else x for x in comment]
+    if isinstance(delimiter, bytes):
+        delimiter = delimiter.decode('latin1')
 
     arr = _read(fname, dtype=dtype, comment=comment, delimiter=delimiter,
                 converters=converters, skiplines=skiprows, usecols=usecols,
