@@ -165,8 +165,8 @@ error_if_matching_control_characters(
   error:
     if (control_char2 != NULL) {
         PyErr_Format(PyExc_TypeError,
-                "control characters '%s' and '%s' are identical, please set one"
-                "of them to `None` to indicate that it should not be used.",
+                "The values for control characters '%s' and '%s' are "
+                "incompatible",
                 control_char1, control_char2);
     }
     else {

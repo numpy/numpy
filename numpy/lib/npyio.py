@@ -920,12 +920,6 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
 
     if comment is None:
         comments = None
-    elif isinstance(comment, str):
-        if len(comment) > 1:  # length of 0 is rejected later
-            comments = (comment,)
-            comment = None
-        else:
-            comments = None
     else:
         # assume comments are a sequence of strings
         comments = tuple(comment)
@@ -938,6 +932,13 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
             if isinstance(comments[0], str) and len(comments[0]) == 1:
                 comment = comments[0]
                 comments = None
+        else:
+            # Input validation if there are multiple comment characters
+            if delimiter in comments:
+                raise TypeError(
+                    f"Comment characters '{comments}' cannot include the "
+                    f"delimiter '{delimiter}'"
+                )
 
     # comment is now either a 1 or 0 character string or a tuple:
     if comments is not None:

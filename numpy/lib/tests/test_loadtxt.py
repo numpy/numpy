@@ -876,3 +876,53 @@ class TestCReaderUnitTests:
             data, dtype=np.dtype("U10"), filelike=True,
             quote='"', comment="#", skiplines=1)
         assert_array_equal(res[:, 0], ["1", f"2{newline}", "3", "4 "])
+
+
+def test_delimiter_comment_collision_raises():
+    with pytest.raises(TypeError, match="control characters.*are identical"):
+        np.loadtxt(StringIO("1, 2, 3"), delimiter=",", comments=",")
+
+
+def test_delimiter_quotechar_collision_raises():
+    with pytest.raises(TypeError, match="control characters.*are identical"):
+        np.loadtxt(StringIO("1, 2, 3"), delimiter=",", quotechar=",")
+
+
+def test_comment_quotechar_collision_raises():
+    with pytest.raises(TypeError, match="control characters.*are identical"):
+        np.loadtxt(StringIO("1 2 3"), comments="#", quotechar="#")
+
+
+def test_delimiter_and_multiple_comments_collision_raises():
+    with pytest.raises(
+        TypeError, match="Comment characters.*cannot include the delimiter"
+    ):
+        np.loadtxt(StringIO("1, 2, 3"), delimiter=",", comments=["#", ","])
+
+
+@pytest.mark.parametrize(
+    "ws",
+    (
+        " ",  # space
+        "\t",  # tab
+        "\u2003",  # em
+        "\u00A0",  # non-break
+        "\u3000",  # ideographic space
+    )
+)
+def test_collision_with_default_delimiter_raises(ws):
+    with pytest.raises(TypeError, match="control characters.*are identical"):
+        np.loadtxt(StringIO(f"1{ws}2{ws}3\n4{ws}5{ws}6\n"), comments=ws)
+    with pytest.raises(TypeError, match="control characters.*are identical"):
+        np.loadtxt(StringIO(f"1{ws}2{ws}3\n4{ws}5{ws}6\n"), quotechar=ws)
+
+
+@pytest.mark.parametrize("nl", ("\n", "\r"))
+def test_control_character_newline_raises(nl):
+    txt = StringIO(f"1{nl}2{nl}3{nl}{nl}4{nl}5{nl}6{nl}{nl}")
+    with pytest.raises(TypeError, match="control character.*cannot be a newline"):
+        np.loadtxt(txt, delimiter=nl)
+    with pytest.raises(TypeError, match="control character.*cannot be a newline"):
+        np.loadtxt(txt, comments=nl)
+    with pytest.raises(TypeError, match="control character.*cannot be a newline"):
+        np.loadtxt(txt, quotechar=nl)
