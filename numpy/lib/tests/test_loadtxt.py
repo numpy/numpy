@@ -936,7 +936,7 @@ def test_control_character_newline_raises(nl):
     ],
 )
 @pytest.mark.parametrize("nrows", (10, 50000, 60000))  # lt, eq, gt chunksize
-def test_datetime_parametric_unit_discovery(
+def test_parametric_unit_discovery(
     generic_data, long_datum, unitless_dtype, expected_dtype, nrows
 ):
     """Check that the correct unit (e.g. month, day, second) is discovered from
@@ -956,6 +956,28 @@ def test_datetime_parametric_unit_discovery(
     with open(fname, "w") as fh:
         fh.write("\n".join(data))
     a = np.loadtxt(fname, dtype=unitless_dtype)
+    assert a.dtype == expected.dtype
+    assert_equal(a, expected)
+
+
+def test_str_dtype_unit_discovery_with_converter():
+    data = ["spam-a-lot"] * 60000 + ["XXXtis_but_a_scratch"]
+    expected = np.array(
+        ["spam-a-lot"] * 60000 + ["tis_but_a_scratch"], dtype="U17"
+    )
+    conv = lambda s: s.strip("XXX")
+
+    # file-like path
+    txt = StringIO("\n".join(data))
+    a = np.loadtxt(txt, dtype="U", converters=conv, encoding=None)
+    assert a.dtype == expected.dtype
+    assert_equal(a, expected)
+
+    # file-obj path
+    fd, fname = mkstemp()
+    with open(fname, "w") as fh:
+        fh.write("\n".join(data))
+    a = np.loadtxt(fname, dtype="U", converters=conv, encoding=None)
     assert a.dtype == expected.dtype
     assert_equal(a, expected)
 
