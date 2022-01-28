@@ -1024,6 +1024,8 @@ class _ArrayOrScalarCommon:
         axis: None = ...,
         out: None = ...,
         keepdims: L[False] = ...,
+        *,
+        where: _ArrayLikeBool_co = ...,
     ) -> bool_: ...
     @overload
     def all(
@@ -1031,6 +1033,8 @@ class _ArrayOrScalarCommon:
         axis: None | _ShapeLike = ...,
         out: None = ...,
         keepdims: bool = ...,
+        *,
+        where: _ArrayLikeBool_co = ...,
     ) -> Any: ...
     @overload
     def all(
@@ -1038,6 +1042,8 @@ class _ArrayOrScalarCommon:
         axis: None | _ShapeLike = ...,
         out: _NdArraySubClass = ...,
         keepdims: bool = ...,
+        *,
+        where: _ArrayLikeBool_co = ...,
     ) -> _NdArraySubClass: ...
 
     @overload
@@ -1046,6 +1052,8 @@ class _ArrayOrScalarCommon:
         axis: None = ...,
         out: None = ...,
         keepdims: L[False] = ...,
+        *,
+        where: _ArrayLikeBool_co = ...,
     ) -> bool_: ...
     @overload
     def any(
@@ -1053,6 +1061,8 @@ class _ArrayOrScalarCommon:
         axis: None | _ShapeLike = ...,
         out: None = ...,
         keepdims: bool = ...,
+        *,
+        where: _ArrayLikeBool_co = ...,
     ) -> Any: ...
     @overload
     def any(
@@ -1060,6 +1070,8 @@ class _ArrayOrScalarCommon:
         axis: None | _ShapeLike = ...,
         out: _NdArraySubClass = ...,
         keepdims: bool = ...,
+        *,
+        where: _ArrayLikeBool_co = ...,
     ) -> _NdArraySubClass: ...
 
     @overload
@@ -1242,6 +1254,8 @@ class _ArrayOrScalarCommon:
         dtype: DTypeLike = ...,
         out: None = ...,
         keepdims: bool = ...,
+        *,
+        where: _ArrayLikeBool_co = ...,
     ) -> Any: ...
     @overload
     def mean(
@@ -1250,6 +1264,8 @@ class _ArrayOrScalarCommon:
         dtype: DTypeLike = ...,
         out: _NdArraySubClass = ...,
         keepdims: bool = ...,
+        *,
+        where: _ArrayLikeBool_co = ...,
     ) -> _NdArraySubClass: ...
 
     @overload
@@ -1333,6 +1349,8 @@ class _ArrayOrScalarCommon:
         out: None = ...,
         ddof: int = ...,
         keepdims: bool = ...,
+        *,
+        where: _ArrayLikeBool_co = ...,
     ) -> Any: ...
     @overload
     def std(
@@ -1342,6 +1360,8 @@ class _ArrayOrScalarCommon:
         out: _NdArraySubClass = ...,
         ddof: int = ...,
         keepdims: bool = ...,
+        *,
+        where: _ArrayLikeBool_co = ...,
     ) -> _NdArraySubClass: ...
 
     @overload
@@ -1373,6 +1393,8 @@ class _ArrayOrScalarCommon:
         out: None = ...,
         ddof: int = ...,
         keepdims: bool = ...,
+        *,
+        where: _ArrayLikeBool_co = ...,
     ) -> Any: ...
     @overload
     def var(
@@ -1382,6 +1404,8 @@ class _ArrayOrScalarCommon:
         out: _NdArraySubClass = ...,
         ddof: int = ...,
         keepdims: bool = ...,
+        *,
+        where: _ArrayLikeBool_co = ...,
     ) -> _NdArraySubClass: ...
 
 _DType = TypeVar("_DType", bound=dtype[Any])
