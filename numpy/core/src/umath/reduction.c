@@ -17,6 +17,7 @@
 #include "numpy/arrayobject.h"
 
 #include "npy_pycompat.h"
+#include "array_assign.h"
 #include "ctors.h"
 
 #include "numpy/ufuncobject.h"
@@ -152,18 +153,12 @@ PyArray_CopyInitialReduceValues(
  *               so that support can be added in the future without breaking
  *               API compatibility. Pass in NULL.
  * axis_flags  : Flags indicating the reduction axes of 'operand'.
- * reorderable : If True, the reduction being done is reorderable, which
- *               means specifying multiple axes of reduction at once is ok,
- *               and the reduction code may calculate the reduction in an
- *               arbitrary order. The calculation may be reordered because
- *               of cache behavior or multithreading requirements.
  * keepdims    : If true, leaves the reduction dimensions in the result
  *               with size one.
  * subok       : If true, the result uses the subclass of operand, otherwise
  *               it is always a base class ndarray.
- * identity    : If Py_None, PyArray_CopyInitialReduceValues is used, otherwise
- *               this value is used to initialize the result to
- *               the reduction's unit.
+ * initial     : Initial value, if NULL the default is fetched from the
+ *               ArrayMethod (typically as the default from the ufunc).
  * loop        : `reduce_loop` from `ufunc_object.c`.  TODO: Refactor
  * data        : Data which is passed to the inner loop.
  * buffersize  : Buffer size for the iterator. For the default, pass in 0.
@@ -182,9 +177,9 @@ PyArray_CopyInitialReduceValues(
 NPY_NO_EXPORT PyArrayObject *
 PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
         PyArrayObject *operand, PyArrayObject *out, PyArrayObject *wheremask,
-        npy_bool *axis_flags, int reorderable, int keepdims,
-        PyObject *identity, PyArray_ReduceLoopFunc *loop,
-        void *data, npy_intp buffersize, const char *funcname, int errormask)
+        npy_bool *axis_flags, int keepdims,
+        PyObject *initial, PyArray_ReduceLoopFunc *loop,
+        npy_intp buffersize, const char *funcname, int errormask)
 {
     assert(loop != NULL);
     PyArrayObject *result = NULL;
@@ -198,38 +193,54 @@ PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
     /* Loop auxdata (must be freed on error) */
     NpyAuxData *auxdata = NULL;
 
-    /* More than one axis means multiple orders are possible */
-    if (!reorderable && count_axes(PyArray_NDIM(operand), axis_flags) > 1) {
-        PyErr_Format(PyExc_ValueError,
-                     "reduction operation '%s' is not reorderable, "
-                     "so at most one axis may be specified",
-                     funcname);
-        return NULL;
-    }
-    /* Can only use where with an initial ( from identity or argument) */
-    if (wheremask != NULL && identity == Py_None) {
-        PyErr_Format(PyExc_ValueError,
-                     "reduction operation '%s' does not have an identity, "
-                     "so to use a where mask one has to specify 'initial'",
-                     funcname);
-        return NULL;
-    }
-
-
     /* Set up the iterator */
     op[0] = out;
     op[1] = operand;
     op_dtypes[0] = context->descriptors[0];
     op_dtypes[1] = context->descriptors[1];
 
+    /*
+     * Fill in default or identity value and ask if this is reorderable.
+     * Note that if the initial value was provided, we pass `initial_buf=NULL`
+     * to the `get_identity` function to indicate that we only require the
+     * reorderable flag.
+     * If a `result` was passed in, it is possible that the result has a dtype
+     * differing to the operation one.
+     */
+    NPY_ARRAYMETHOD_IDENTITY_FLAGS identity_flags = 0;
+    char *identity_buf = NULL;
+    if (initial == NULL) {
+        /* Always init buffer (only necessary if it holds references) */
+        identity_buf = PyMem_Calloc(1, op_dtypes[0]->elsize);
+        if (identity_buf == NULL) {
+            PyErr_NoMemory();
+            goto fail;
+        }
+    }
+    if (context->method->get_identity(
+            context, identity_buf, &identity_flags) < 0) {
+        goto fail;
+    }
+    /* More than one axis means multiple orders are possible */
+    if (!(identity_flags & NPY_METH_IS_REORDERABLE)
+            && count_axes(PyArray_NDIM(operand), axis_flags) > 1) {
+        PyErr_Format(PyExc_ValueError,
+                "reduction operation '%s' is not reorderable, "
+                "so at most one axis may be specified",
+                funcname);
+        goto fail;
+    }
+
     it_flags = NPY_ITER_BUFFERED |
             NPY_ITER_EXTERNAL_LOOP |
             NPY_ITER_GROWINNER |
-            NPY_ITER_DONT_NEGATE_STRIDES |
             NPY_ITER_ZEROSIZE_OK |
             NPY_ITER_REFS_OK |
             NPY_ITER_DELAY_BUFALLOC |
             NPY_ITER_COPY_IF_OVERLAP;
+    if (!(identity_flags & NPY_METH_IS_REORDERABLE)) {
+        it_flags |= NPY_ITER_DONT_NEGATE_STRIDES;
+    }
     op_flags[0] = NPY_ITER_READWRITE |
                   NPY_ITER_ALIGNED |
                   NPY_ITER_ALLOCATE |
@@ -298,6 +309,7 @@ PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
     }
 
     result = NpyIter_GetOperandArray(iter)[0];
+    npy_bool empty_reduce = NpyIter_GetIterSize(iter) == 0;
 
     PyArrayMethod_StridedLoop *strided_loop;
     NPY_ARRAYMETHOD_FLAGS flags = 0;
@@ -313,12 +325,40 @@ PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
      * Initialize the result to the reduction unit if possible,
      * otherwise copy the initial values and get a view to the rest.
      */
-    if (identity != Py_None) {
-        if (PyArray_FillWithScalar(result, identity) < 0) {
+    if (initial != NULL && initial != Py_None) {
+        /*
+         * User provided an `initial` value and it is not `None`.
+         * NOTE: It may make sense to accept array-valued `initial`,
+         *       this would subtly (but rarely) change the coercion of
+         *       `initial`.  But it would be perfectly fine otherwise.
+         */
+        if (PyArray_FillWithScalar(result, initial) < 0) {
+            goto fail;
+        }
+    }
+    else if (identity_buf != NULL && (  /* cannot fill for `initial=None` */
+                identity_flags & NPY_METH_ITEM_IS_IDENTITY ||
+                (empty_reduce && identity_flags & NPY_METH_ITEM_IS_DEFAULT))) {
+        /* Loop provided an identity or default value, assign to result. */
+        int ret = raw_array_assign_scalar(
+                PyArray_NDIM(result), PyArray_DIMS(result),
+                PyArray_DESCR(result),
+                PyArray_BYTES(result), PyArray_STRIDES(result),
+                op_dtypes[0], identity_buf);
+        if (ret < 0) {
             goto fail;
         }
     }
     else {
+        /* Can only use where with an initial (from identity or argument) */
+        if (wheremask != NULL) {
+            PyErr_Format(PyExc_ValueError,
+                    "reduction operation '%s' does not have an identity, "
+                    "so to use a where mask one has to specify 'initial'",
+                    funcname);
+            return NULL;
+        }
+
         /*
          * For 1-D skip_first_count could be optimized to 0, but no-identity
          * reductions are not super common.
@@ -354,7 +394,7 @@ PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
         }
     }
 
-    if (NpyIter_GetIterSize(iter) != 0) {
+    if (!empty_reduce) {
         NpyIter_IterNextFunc *iternext;
         char **dataptr;
         npy_intp *strideptr;
@@ -387,6 +427,10 @@ PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
     }
     Py_INCREF(result);
 
+    if (identity_buf != NULL && PyDataType_REFCHK(PyArray_DESCR(result))) {
+        PyArray_Item_XDECREF(identity_buf, PyArray_DESCR(result));
+    }
+    PyMem_FREE(identity_buf);
     NPY_AUXDATA_FREE(auxdata);
     if (!NpyIter_Deallocate(iter)) {
         Py_DECREF(result);
@@ -395,6 +439,10 @@ PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
     return result;
 
 fail:
+    if (identity_buf != NULL && PyDataType_REFCHK(op_dtypes[0])) {
+        PyArray_Item_XDECREF(identity_buf, op_dtypes[0]);
+    }
+    PyMem_FREE(identity_buf);
     NPY_AUXDATA_FREE(auxdata);
     if (iter != NULL) {
         NpyIter_Deallocate(iter);

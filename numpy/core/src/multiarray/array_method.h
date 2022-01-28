@@ -104,6 +104,34 @@ typedef int (get_loop_function)(
         NPY_ARRAYMETHOD_FLAGS *flags);
 
 
+typedef enum {
+    /* The value can be used as a default for empty reductions */
+    NPY_METH_ITEM_IS_DEFAULT = 1 << 0,
+    /* The value represents the identity value */
+    NPY_METH_ITEM_IS_IDENTITY = 1 << 1,
+    /* The operation is fully reorderable (iteration order may be optimized) */
+    NPY_METH_IS_REORDERABLE = 1 << 2,
+} NPY_ARRAYMETHOD_IDENTITY_FLAGS;
+
+/*
+ * Query an ArrayMethod for its identity (for use with reductions) and whether
+ * its operation is reorderable (commutative).  These are not always the same:
+ * Matrix multiplication is non-commutative, but does have an identity.
+ *
+ * The function should fill `item` and flag whether this value may be used as
+ * a default and/or identity.
+ * (Normally, an identity is always a valid default.  However, NumPy makes an
+ * exception for `object` dtypes to ensure type-safety of the result.)
+ * If neither `NPY_METH_ITEM_IS_DEFAULT` or `NPY_METH_ITEM_IS_IDENTITY` is
+ * given, the value should be left uninitialized (no cleanup will be done).
+ *
+ * The function must return 0 on success and -1 on error (and clean up `item`).
+ */
+typedef int (get_identity_function)(
+        PyArrayMethod_Context *context, char *item,
+        NPY_ARRAYMETHOD_IDENTITY_FLAGS *flags);
+
+
 /*
  * The following functions are only used be the wrapping array method defined
  * in umath/wrapping_array_method.c
@@ -198,6 +226,7 @@ typedef struct PyArrayMethodObject_tag {
     PyArrayMethod_StridedLoop *contiguous_loop;
     PyArrayMethod_StridedLoop *unaligned_strided_loop;
     PyArrayMethod_StridedLoop *unaligned_contiguous_loop;
+    get_identity_function  *get_identity;
     /* Chunk only used for wrapping array method defined in umath */
     struct PyArrayMethodObject_tag *wrapped_meth;
     PyArray_DTypeMeta **wrapped_dtypes;
@@ -237,6 +266,7 @@ extern NPY_NO_EXPORT PyTypeObject PyBoundArrayMethod_Type;
 #define NPY_METH_contiguous_loop 4
 #define NPY_METH_unaligned_strided_loop 5
 #define NPY_METH_unaligned_contiguous_loop 6
+#define NPY_METH_get_identity 7
 
 
 /*

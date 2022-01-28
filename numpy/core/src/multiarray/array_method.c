@@ -27,15 +27,18 @@
  *    weak reference to the input DTypes.
  */
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#define _UMATHMODULE
 #define _MULTIARRAYMODULE
 
 #include <npy_pycompat.h>
 #include "arrayobject.h"
+#include "array_coercion.h"
 #include "array_method.h"
 #include "dtypemeta.h"
 #include "common_dtype.h"
 #include "convert_datatype.h"
 #include "common.h"
+#include "numpy/ufuncobject.h"
 
 
 /*
@@ -163,6 +166,53 @@ npy_default_get_strided_loop(
 }
 
 
+/* Declared in `ufunc_object.c` */
+NPY_NO_EXPORT PyObject *
+PyUFunc_GetIdentity(PyUFuncObject *ufunc, npy_bool *reorderable);
+
+/*
+ * The default `get_identity` attempts to look up the identity from the
+ * calling ufunc.
+ */
+static int
+default_get_identity_function(PyArrayMethod_Context *context,
+        char *item, NPY_ARRAYMETHOD_IDENTITY_FLAGS *flags)
+{
+    *flags = 0;
+
+    PyUFuncObject *ufunc = (PyUFuncObject *)context->caller;
+    if (!PyObject_TypeCheck(ufunc, &PyUFunc_Type)) {
+        /* Should not happen, but if it does, just give up */
+        return 0;
+    }
+
+    npy_bool reorderable;
+    PyObject *tmp = PyUFunc_GetIdentity(ufunc, &reorderable);
+    if (tmp == NULL) {
+        return -1;
+    }
+    if (reorderable) {
+        *flags |= NPY_METH_IS_REORDERABLE;
+    }
+    if (item == NULL) {
+        /* Only reorderable flag was requested (user provided initial value) */
+        return 0;
+    }
+
+    if (tmp != Py_None) {
+        /* We do not consider the value an identity for object dtype */
+        *flags |= NPY_METH_ITEM_IS_DEFAULT;
+        if (context->descriptors[0]->type_num != NPY_OBJECT) {
+            *flags |= NPY_METH_ITEM_IS_IDENTITY;
+        }
+        int res = PyArray_Pack(context->descriptors[0], item, tmp);
+        Py_DECREF(tmp);
+        return res;
+    }
+    return 0;
+}
+
+
 /**
  * Validate that the input is usable to create a new ArrayMethod.
  *
@@ -248,6 +298,7 @@ fill_arraymethod_from_slots(
     /* Set the defaults */
     meth->get_strided_loop = &npy_default_get_strided_loop;
     meth->resolve_descriptors = &default_resolve_descriptors;
+    meth->get_identity = default_get_identity_function;
 
     /* Fill in the slots passed by the user */
     /*
@@ -284,6 +335,8 @@ fill_arraymethod_from_slots(
             case NPY_METH_unaligned_contiguous_loop:
                 meth->unaligned_contiguous_loop = slot->pfunc;
                 continue;
+            case NPY_METH_get_identity:
+                meth->get_identity = slot->pfunc;
             default:
                 break;
         }

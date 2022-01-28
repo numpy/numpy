@@ -2085,12 +2085,16 @@ _get_coredim_sizes(PyUFuncObject *ufunc, PyArrayObject **op,
 }
 
 /*
- * Returns a new reference
+ * Returns a new reference to the ufunc identity.  Note that this identity
+ * is only a default identity value stored on the ufunc, since the invidiual
+ * ufunc loop (ArrayMethod) is queried for the actual identity.
+ *
  * TODO: store a reference in the ufunc object itself, rather than
  *       constructing one each time
  */
-static PyObject *
-_get_identity(PyUFuncObject *ufunc, npy_bool *reorderable) {
+NPY_NO_EXPORT PyObject *
+PyUFunc_GetIdentity(PyUFuncObject *ufunc, npy_bool *reorderable)
+{
     switch(ufunc->identity) {
     case PyUFunc_One:
         *reorderable = 1;
@@ -3006,10 +3010,8 @@ PyUFunc_Reduce(PyUFuncObject *ufunc,
         PyObject *initial, PyArrayObject *wheremask)
 {
     int iaxes, ndim;
-    npy_bool reorderable;
     npy_bool axis_flags[NPY_MAXDIMS];
-    PyArrayObject *result = NULL;
-    PyObject *identity;
+
     const char *ufunc_name = ufunc_get_name_cstr(ufunc);
     /* These parameters come from a TLS global */
     int buffersize = 0, errormask = 0;
@@ -3034,55 +3036,11 @@ PyUFunc_Reduce(PyUFuncObject *ufunc,
         return NULL;
     }
 
-    /*
-     * Promote and fetch ufuncimpl (currently needed to fix up the identity).
-     */
     PyArray_Descr *descrs[3];
     PyArrayMethodObject *ufuncimpl = reducelike_promote_and_resolve(ufunc,
             arr, out, signature, NPY_FALSE, descrs, NPY_UNSAFE_CASTING, "reduce");
     if (ufuncimpl == NULL) {
         return NULL;
-    }
-
-    /* Get the identity */
-    /* TODO: Both of these should be provided by the ArrayMethod! */
-    identity = _get_identity(ufunc, &reorderable);
-    if (identity == NULL) {
-        goto finish;
-    }
-
-    /* Get the initial value */
-    if (initial == NULL) {
-        initial = identity;
-
-        /*
-        * The identity for a dynamic dtype like
-        * object arrays can't be used in general
-        */
-        if (initial != Py_None && PyArray_ISOBJECT(arr) && PyArray_SIZE(arr) != 0) {
-            Py_DECREF(initial);
-            initial = Py_None;
-            Py_INCREF(initial);
-        }
-        else if (PyTypeNum_ISUNSIGNED(descrs[2]->type_num)
-                    && PyLong_CheckExact(initial)) {
-            /*
-             * This is a bit of a hack until we have truly loop specific
-             * identities.  Python -1 cannot be cast to unsigned so convert
-             * it to a NumPy scalar, but we use -1 for bitwise functions to
-             * signal all 1s.
-             * (A builtin identity would not overflow here, although we may
-             * unnecessary convert 0 and 1.)
-             */
-            Py_SETREF(initial, PyObject_CallFunctionObjArgs(
-                        (PyObject *)&PyLongArrType_Type, initial, NULL));
-            if (initial == NULL) {
-                goto finish;
-            }
-        }
-    } else {
-        Py_DECREF(identity);
-        Py_INCREF(initial);  /* match the reference count in the if above */
     }
 
     PyArrayMethod_Context context = {
@@ -3091,15 +3049,14 @@ PyUFunc_Reduce(PyUFuncObject *ufunc,
         .descriptors = descrs,
     };
 
-    result = PyUFunc_ReduceWrapper(&context,
-            arr, out, wheremask, axis_flags, reorderable, keepdims,
-            initial, reduce_loop, ufunc, buffersize, ufunc_name, errormask);
+    PyArrayObject *result = PyUFunc_ReduceWrapper(&context,
+            arr, out, wheremask, axis_flags, keepdims,
+            initial, reduce_loop, buffersize, ufunc_name, errormask);
 
   finish:
     for (int i = 0; i < 3; i++) {
         Py_DECREF(descrs[i]);
     }
-    Py_XDECREF(initial);
     return result;
 }
 
@@ -7018,7 +6975,7 @@ static PyObject *
 ufunc_get_identity(PyUFuncObject *ufunc, void *NPY_UNUSED(ignored))
 {
     npy_bool reorderable;
-    return _get_identity(ufunc, &reorderable);
+    return PyUFunc_GetIdentity(ufunc, &reorderable);
 }
 
 static PyObject *

@@ -1650,6 +1650,18 @@ class TestUfunc:
         a = a[1:, 1:, 1:]
         self.check_identityless_reduction(a)
 
+    def test_reduce_identity_depends_on_loop(self):
+        """
+        The type of the result should always depend on the selected loop, not
+        necessarily the output (only relevant for object arrays).
+        """
+        # For an object loop, the default value 0 with type int is used:
+        assert type(np.add.reduce([], dtype=object)) is int
+        out = np.array(None, dtype=object)
+        # When the loop is float but `out` is object this does not happen:
+        np.add.reduce([], out=out, dtype=np.float64)
+        assert type(out[()]) is not int
+
     def test_initial_reduction(self):
         # np.minimum.reduce is an identityless reduction
 
@@ -1670,6 +1682,8 @@ class TestUfunc:
         # Check initial=None raises ValueError for both types of ufunc reductions
         assert_raises(ValueError, np.minimum.reduce, [], initial=None)
         assert_raises(ValueError, np.add.reduce, [], initial=None)
+        # Also in the somewhat special object case:
+        assert_raises(ValueError, np.add.reduce, [], initial=None, dtype=object)
 
         # Check that np._NoValue gives default behavior.
         assert_equal(np.add.reduce([], initial=np._NoValue), 0)
@@ -2617,7 +2631,8 @@ def test_reduce_casterrors(offset):
     with pytest.raises(ValueError, match="invalid literal"):
         # This is an unsafe cast, but we currently always allow that.
         # Note that the double loop is picked, but the cast fails.
-        np.add.reduce(arr, dtype=np.intp, out=out)
+        # `initial=None` disables the use of an identity here.
+        np.add.reduce(arr, dtype=np.intp, out=out, initial=None)
     assert count == sys.getrefcount(value)
     # If an error occurred during casting, the operation is done at most until
     # the error occurs (the result of which would be `value * offset`) and -1
