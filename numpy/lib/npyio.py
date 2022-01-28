@@ -157,7 +157,7 @@ class NpzFile(Mapping):
     >>> _ = outfile.seek(0)
 
     >>> npz = np.load(outfile)
-    >>> isinstance(npz, np.lib.io.NpzFile)
+    >>> isinstance(npz, np.lib.npyio.NpzFile)
     True
     >>> sorted(npz.files)
     ['x', 'y']
