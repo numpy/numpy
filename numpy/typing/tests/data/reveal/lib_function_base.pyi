@@ -26,7 +26,7 @@ reveal_type(vectorized_func.signature)  # E: Union[None, builtins.str]
 reveal_type(vectorized_func.otypes)  # E: Union[None, builtins.str]
 reveal_type(vectorized_func.excluded)  # E: set[Union[builtins.int, builtins.str]]
 reveal_type(vectorized_func.__doc__)  # E: Union[None, builtins.str]
-reveal_type(vectorized_func([1]))  # E: ndarray[Any, dtype[Any]]
+reveal_type(vectorized_func([1]))  # E: Any
 reveal_type(np.vectorize(int))  # E: vectorize
 reveal_type(np.vectorize(  # E: vectorize
     int, otypes="i", doc="doc", excluded=(), cache=True, signature=None

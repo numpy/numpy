@@ -3679,6 +3679,8 @@ class memmap(ndarray[_ShapeType, _DType_co]):
     ) -> Any: ...
     def flush(self) -> None: ...
 
+# TODO: Add a mypy plugin for managing functions whose output type is dependant
+# on the literal value of some sort of signature (e.g. `einsum` and `vectorize`)
 class vectorize:
     pyfunc: Callable[..., Any]
     cache: bool
@@ -3695,7 +3697,7 @@ class vectorize:
         cache: bool = ...,
         signature: None | str = ...,
     ) -> None: ...
-    def __call__(self, *args: Any, **kwargs: Any) -> NDArray[Any]: ...
+    def __call__(self, *args: Any, **kwargs: Any) -> Any: ...
 
 class poly1d:
     @property
