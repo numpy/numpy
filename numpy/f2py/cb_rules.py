@@ -230,7 +230,7 @@ cb_rout_rules = [
         'latexdocstrcbs': '\\noindent Call-back functions:',
         'routnote': {hasnote: '--- #note#', l_not(hasnote): ''},
     }, {  # Function
-        'decl': '    #ctype# return_value;',
+        'decl': '    #ctype# return_value = 0;',
         'frompyobj': [{debugcapi: '    CFUNCSMESS("cb:Getting return_value->");'},
                       '    if (capi_j>capi_i)\n        GETSCALARFROMPYTUPLE(capi_return,capi_i++,&return_value,#ctype#,"#ctype#_from_pyobj failed in converting return_value of call-back function #name# to C #ctype#\\n");',
                       {debugcapi:
