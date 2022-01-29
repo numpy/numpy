@@ -246,6 +246,8 @@ def all(
     axis: None = ...,
     out: None = ...,
     keepdims: Literal[False] = ...,
+    *,
+    where: _ArrayLikeBool_co = ...,
 ) -> bool_: ...
 @overload
 def all(
@@ -253,6 +255,8 @@ def all(
     axis: Optional[_ShapeLike] = ...,
     out: Optional[ndarray] = ...,
     keepdims: bool = ...,
+    *,
+    where: _ArrayLikeBool_co = ...,
 ) -> Any: ...
 
 @overload
@@ -261,6 +265,8 @@ def any(
     axis: None = ...,
     out: None = ...,
     keepdims: Literal[False] = ...,
+    *,
+    where: _ArrayLikeBool_co = ...,
 ) -> bool_: ...
 @overload
 def any(
@@ -268,6 +274,8 @@ def any(
     axis: Optional[_ShapeLike] = ...,
     out: Optional[ndarray] = ...,
     keepdims: bool = ...,
+    *,
+    where: _ArrayLikeBool_co = ...,
 ) -> Any: ...
 
 def cumsum(
@@ -342,6 +350,8 @@ def mean(
     dtype: DTypeLike = ...,
     out: Optional[ndarray] = ...,
     keepdims: bool = ...,
+    *,
+    where: _ArrayLikeBool_co = ...,
 ) -> Any: ...
 
 def std(
@@ -351,6 +361,8 @@ def std(
     out: Optional[ndarray] = ...,
     ddof: int = ...,
     keepdims: bool = ...,
+    *,
+    where: _ArrayLikeBool_co = ...,
 ) -> Any: ...
 
 def var(
@@ -360,4 +372,6 @@ def var(
     out: Optional[ndarray] = ...,
     ddof: int = ...,
     keepdims: bool = ...,
+    *,
+    where: _ArrayLikeBool_co = ...,
 ) -> Any: ...
