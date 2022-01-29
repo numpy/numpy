@@ -887,7 +887,7 @@ npy_popcountu@c@(npy_@type@ a)
 /* use built-in popcount if present, else use our implementation */
 #if (defined(__clang__) || defined(__GNUC__)) && NPY_BITSOF_@STYPE@ >= 32
     return __builtin_popcount@c@(a);
-#elif defined(_MSC_VER) && NPY_BITSOF_@STYPE@ >= 16
+#elif defined(_MSC_VER) && NPY_BITSOF_@STYPE@ >= 16 && !defined(_M_ARM64) && !defined(_M_ARM)
     /* no builtin __popcnt64 for 32 bits */
     #if defined(_WIN64) || (defined(_WIN32) && NPY_BITSOF_@STYPE@ != 64)
         return TO_BITS_LEN(__popcnt)(a);
