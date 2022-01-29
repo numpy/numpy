@@ -1,18 +1,3 @@
-.. currentmodule:: numpy
-
-==========================
-NumPy 1.22.2 Release Notes
-==========================
-
-The NumPy 1.22.2 is maintenance release that fixes bugs discovered after the
-1.22.1 release. Notable fixes are:
-
-- Several build related fixes for downstream projects and other platforms.
-- Various Annotation fixes/additions.
-- Numpy wheels for Windows will use the 1.41 tool chain, fixing downstream link
-  problems for projects using NumPy provided libraries on Windows.
-
-The Python versions supported for this release are 3.8-3.10.
 
 Contributors
 ============
@@ -48,7 +33,6 @@ A total of 14 pull requests were merged for this release.
 * `#20910 <https://github.com/numpy/numpy/pull/20910>`__: BUG: distutils: fix building mixed C/Fortran extensions
 * `#20912 <https://github.com/numpy/numpy/pull/20912>`__: DOC,TST: Fix Pandas code example as per new release
 * `#20935 <https://github.com/numpy/numpy/pull/20935>`__: TYP, MAINT: Add annotations for ``flatiter.__setitem__``
-* `#20936 <https://github.com/numpy/numpy/pull/20936>`__: MAINT, TYP: Added missing where type hints in ``fromnumeric.pyi``
+* `#20936 <https://github.com/numpy/numpy/pull/20936>`__: MAINT, TYP: Added missing where typehints in ``fromnumeric.pyi``
 * `#20937 <https://github.com/numpy/numpy/pull/20937>`__: BUG: Fix build_ext interaction with non numpy extensions
 * `#20938 <https://github.com/numpy/numpy/pull/20938>`__: BUG: Fix missing intrinsics for windows/arm64 target
-
