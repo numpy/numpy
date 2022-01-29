@@ -393,8 +393,8 @@ class build_ext (old_build_ext):
             log.info("building '%s' extension", ext.name)
 
         extra_args = ext.extra_compile_args or []
-        extra_cflags = ext.extra_c_compile_args or []
-        extra_cxxflags = ext.extra_cxx_compile_args or []
+        extra_cflags = getattr(ext, 'extra_c_compile_args', None) or []
+        extra_cxxflags = getattr(ext, 'extra_cxx_compile_args', None) or []
 
         macros = ext.define_macros[:]
         for undef in ext.undef_macros:
