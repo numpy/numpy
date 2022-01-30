@@ -169,7 +169,7 @@ class _Config:
 
             If the compiler able to successfully compile the C file then `CCompilerOpt`
             will add a C ``#define`` for it into the main dispatch header, e.g.
-            ```#define {conf_c_prefix}_XXXX`` where ``XXXX`` is the case name in upper case.
+            ``#define {conf_c_prefix}_XXXX`` where ``XXXX`` is the case name in upper case.
 
         **NOTES**:
             * space can be used as separator with options that supports "str or list"
