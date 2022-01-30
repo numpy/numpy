@@ -1012,6 +1012,32 @@ class matrix(N.ndarray):
     getH = H.fget
     getI = I.fget
 
+    @property
+    def S(self):
+        """
+        Regard the matrix as a scalar.
+        If `self`.shape == (1, 1), then return `self`[0, 0], as it does
+        in MATLAB. Otherwise, raise ValueError().
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        ret : `self`.dtype
+            the element of index [0, 0]
+
+        Exceptions
+        ----------
+        ValueError 
+            when `self`.shape != (1, 1)
+        """
+        if self.shape == (1, 1):
+            return self[0, 0]
+        else:
+            raise ValueError(f"The matrix to be regarded as scalar must have shape (1, 1)")
+
 def _from_string(str, gdict, ldict):
     rows = str.split(';')
     rowtup = []

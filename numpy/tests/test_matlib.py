@@ -62,3 +62,14 @@ def test_mul_as_scalar():
     y = numpy.matlib.rand(1)
     assert_array_equal(x * y, x * y[0, 0])
     assert_array_equal(y * x, x * y[0, 0])
+
+def test_as_scalar():
+    x = numpy.matlib.rand(1)
+    y = numpy.matlib.rand(2)
+    assert_array_equal(x.S, x[0, 0])
+    try:
+        y.S 
+        assert_(False, "Failed to handle with non-(1,1)shape matrix "
+                       "converting to scalar")
+    except ValueError:
+        pass
