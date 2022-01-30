@@ -213,6 +213,9 @@ class matrix(N.ndarray):
         return out
 
     def __mul__(self, other):
+        if self.shape == (1, 1):
+            # Act as a scalar
+            return other * self[0, 0]
         if isinstance(other, (N.ndarray, list, tuple)) :
             # This promotes 1-D vectors to row vectors
             return N.dot(self, asmatrix(other))

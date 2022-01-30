@@ -56,3 +56,9 @@ def test_repmat():
     y = np.array([[0, 1, 2, 3, 0, 1, 2, 3],
                   [0, 1, 2, 3, 0, 1, 2, 3]])
     assert_array_equal(x, y)
+
+def test_mul_as_scalar():
+    x = numpy.matlib.rand(5, 5)
+    y = numpy.matlib.rand(1)
+    assert_array_equal(x * y, x * y[0, 0])
+    assert_array_equal(y * x, x * y[0, 0])
