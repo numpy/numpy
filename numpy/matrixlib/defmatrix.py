@@ -216,7 +216,7 @@ class matrix(N.ndarray):
         if self.shape == (1, 1):
             # Act as a scalar
             return other * self[0, 0]
-        if other.shape == (1, 1):
+        if isinstance(other, N.ndarray) and other.shape == (1, 1):
             return self * other[0, 0]
         if isinstance(other, (N.ndarray, list, tuple)) :
             # This promotes 1-D vectors to row vectors
