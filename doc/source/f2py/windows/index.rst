@@ -132,12 +132,28 @@ setting.
 
 It is possible use the resulting environment from a `standard command
 prompt`_. However, it is more pleasant to use a `developer powershell`_,
-with a `profile in Windows Terminal`_. So 
-this would essentially mean testing the compiler toolchain could look like:
+with a `profile in Windows Terminal`_. This can be achieved by adding the
+following block to the ``profiles->list`` section of the JSON file used to 
+configure Windows Terminal (see ``Settings->Open JSON file``):
+
+.. code-block:: json
+
+  {
+  "name": "Developer PowerShell for VS 2019",
+  "commandline": "powershell.exe -noe -c \"$vsPath = (Join-Path ${env:ProgramFiles(x86)} -ChildPath 'Microsoft Visual Studio\\2019\\BuildTools'); Import-Module (Join-Path $vsPath 'Common7\\Tools\\Microsoft.VisualStudio.DevShell.dll'); Enter-VsDevShell -VsInstallPath $vsPath -SkipAutomaticLocation\"",
+  "icon": "ms-appx:///ProfileIcons/{61c54bbd-c2c6-5271-96e7-009a87ff44bf}.png"
+  }
+
+Now, testing the compiler toolchain could look like:
 
 .. code-block:: powershell
 
    # New Windows Developer Powershell instance / tab
+   **********************************************************************
+   ** Visual Studio 2019 Developer PowerShell v16.11.9
+   ** Copyright (c) 2021 Microsoft Corporation
+   **********************************************************************
+   cd $HOME
    echo "#include<stdio.h>" > blah.cpp; echo 'int main(){printf("Hi");return 1;}' >> blah.cpp
    cl blah.cpp
   .\blah.exe
