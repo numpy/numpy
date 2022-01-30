@@ -10,8 +10,13 @@ name: Wheel builder
 
 on:
   schedule:
-    # Nightly build at 1:42 UTC
-    - cron: "42 1 * * *"
+  #        ┌───────────── minute (0 - 59)
+  #        │  ┌───────────── hour (0 - 23)
+  #        │  │ ┌───────────── day of the month (1 - 31)
+  #        │  │ │ ┌───────────── month (1 - 12 or JAN-DEC)
+  #        │  │ │ │ ┌───────────── day of the week (0 - 6 or SUN-SAT)
+  #        │  │ │ │ │
+  - cron: "42 1 * * 4"
   push:
   pull_request:
   workflow_dispatch:
