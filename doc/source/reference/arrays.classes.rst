@@ -383,6 +383,7 @@ arrays:
       matrix.H
       matrix.I
       matrix.A
+      matrix.S
 
 .. warning::
 
