@@ -1036,7 +1036,8 @@ class matrix(N.ndarray):
         if self.shape == (1, 1):
             return self[0, 0]
         else:
-            raise ValueError(f"The matrix to be regarded as scalar must have shape (1, 1)")
+            raise ValueError(f"The matrix to be regarded as scalar "
+                              "must have shape (1, 1)")
 
 def _from_string(str, gdict, ldict):
     rows = str.split(';')
