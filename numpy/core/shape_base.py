@@ -543,25 +543,23 @@ def _concatenate_shapes(shapes, axis):
     Returns
     -------
     shape: tuple of int
-        This tuple satisfies:
-        ```
-        shape, _ = _concatenate_shapes([arr.shape for shape in arrs], axis)
-        shape == concatenate(arrs, axis).shape
-        ```
+        This tuple satisfies::
+
+            shape, _ = _concatenate_shapes([arr.shape for shape in arrs], axis)
+            shape == concatenate(arrs, axis).shape
 
     slice_prefixes: tuple of (slice(start, end), )
         For a list of arrays being concatenated, this returns the slice
         in the larger array at axis that needs to be sliced into.
 
-        For example, the following holds:
-        ```
-        ret = concatenate([a, b, c], axis)
-        _, (sl_a, sl_b, sl_c) = concatenate_slices([a, b, c], axis)
+        For example, the following holds::
 
-        ret[(slice(None),) * axis + sl_a] == a
-        ret[(slice(None),) * axis + sl_b] == b
-        ret[(slice(None),) * axis + sl_c] == c
-        ```
+            ret = concatenate([a, b, c], axis)
+            _, (sl_a, sl_b, sl_c) = concatenate_slices([a, b, c], axis)
+
+            ret[(slice(None),) * axis + sl_a] == a
+            ret[(slice(None),) * axis + sl_b] == b
+            ret[(slice(None),) * axis + sl_c] == c
 
         These are called slice prefixes since they are used in the recursive
         blocking algorithm to compute the left-most slices during the
