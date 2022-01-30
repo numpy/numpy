@@ -1032,6 +1032,7 @@ class matrix(N.ndarray):
         ----------
         ValueError 
             when `self`.shape != (1, 1)
+
         """
         if self.shape == (1, 1):
             return self[0, 0]
