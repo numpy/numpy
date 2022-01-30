@@ -4,17 +4,83 @@
 F2PY and Windows
 =================
 
-.. note::
+.. warning::
 
 	F2PY support for Windows is not at par with Linux support, and 
 	OS specific flags can be seen via ``python -m numpy.f2py``
 
-Broadly speaking, there are two issues working with F2PY on Windows: the lack of actively
-developed FOSS Fortran compilers, and the linking issues related to the C
-runtime library for building Python-C extensions.
+Broadly speaking, there are two issues working with F2PY on Windows:
+-  the lack of actively developed FOSS Fortran compilers, and,
+- the linking issues related to the C runtime library for building Python-C extensions.
 
 The focus of this section is to establish a guideline for developing and
 extending Fortran modules for Python natively, via F2PY on Windows. 
+
+Overview
+========
+From a user perspective, the most UNIX compatible Windows
+development environment is through emulation, either via the Windows Subsystem
+on Linux, or facilitated by Docker. In a similar vein, traditional
+virtualization methods like VirtualBox are also reasonable methods to develop
+UNIX tools on Windows.
+
+Native Windows support is typically stunted beyond the usage of commerical compilers.
+However, most commerical compilers now have free plans which are sufficient for
+general use. Additionally, the Fortran language features supported by ``f2py``
+(partial coverage of Fortran 2003), means that newer toolchains are often not
+required. Briefly, then, for an end user, in order of use:
+
+Classic Intel Compilers (commercial)
+   These are maintained actively, though licensing restrictions may apply as
+   further detailed in :ref:`f2py-win-intel`.
+
+   Suitable for general use for those building native Windows programs by
+   building off of MSVC.
+
+MSYS2 (FOSS)
+   In conjunction with the ``mingw-w64`` project, ``gfortran`` and ``gcc``
+   toolchains can be used to natively build Windows programs.
+
+Windows Subsystem for Linux
+   Assuming the usage of ``gfortran``, this can be used for cross-compiling
+   Windows applications, but is significantly more complicated.
+
+Conda
+   Windows support for compilers in ``conda`` is facilitated by pulling MSYS2
+   binaries, however these `are outdated`_, and therefore not recommended (as of 30-01-2022).
+
+PGI Compilers (commerical)
+   Unmaintained but sufficient if an existing license is present. Works
+   natively, but has been superceeded by the Nvidia	HPC SDK, with no `native
+   Windows support`_.
+
+Cygwin (FOSS)
+   Can also be used for ``gfortran``. Howeve, the POSIX API compatibility layer provided by
+   Cygwin is meant to compile UNIX software on Windows, instead of building
+   native Windows programs. This means cross compilation is required.
+
+The compilation suites described so far are compatible with the `now
+deprecated`_ ``np.distutils`` build backend which is exposed by the F2PY CLI.
+Additional build system usage (``meson``, ``cmake``) as described in
+:ref:`f2py-bldsys` allows for a more flexible set of compiler
+backends including:
+
+Intel oneAPI
+   The newer Intel compilers (``ifx``, ``icx``) are based on LLVM and can be
+   used for native compilation. Licensing requirements can be onerous.
+
+Classic Flang (FOSS)
+   The backbone of the PGI compilers were cannibalized to form the "classic" or
+   `legacy version of Flang`_. This may be compiled from source and used
+   natively. `LLVM Flang`_ does not support Windows yet (30-01-2022).
+   
+LFortran (FOSS)
+   One of two LLVM based compilers. Not all of F2PY supported Fortran can be
+   compiled yet (30-01-2022) but uses MSVC for native linking.
+
+
+Baseline
+========
 
 For this document we will asume the following basic tools:
 
@@ -23,7 +89,7 @@ For this document we will asume the following basic tools:
 - Python 3.9 from `the Microsoft Store`_ and this can be tested with
    ``Get-Command python.exe`` resolving to
    ``C:\Users\$USERNAME\AppData\Local\Microsoft\WindowsApps\python.exe``
-- The  Microsoft Visual C++ (MSVC) toolset
+- The Microsoft Visual C++ (MSVC) toolset
 
 With this baseline configuration, we will further consider a configuration
 matrix as follows:
@@ -32,37 +98,24 @@ matrix as follows:
 
 .. table:: Support matrix, exe implies a Windows installer 
 
-  +----------------------+--------------------+------------+
-  | **Fortran Compiler** | **C/C++ Compiler** | **Source** |
-  +======================+====================+============+
-  | GFortran             | MSVC               | MSYS2/exe  |
-  +----------------------+--------------------+------------+
-  | GFortran             | GCC                | MSYS2      |
-  +----------------------+--------------------+------------+
-  | GFortran             | GCC                | WSL        |
-  +----------------------+--------------------+------------+
-  | GFortran             | GCC                | Cygwin     |
-  +----------------------+--------------------+------------+
-  | Classic Flang        | MSVC               | Source     |
-  +----------------------+--------------------+------------+
-  | Intel Fortran        | MSVC               | exe        |
-  +----------------------+--------------------+------------+
-  | Anaconda GFortran    | Anaconda GCC       | exe        |
-  +----------------------+--------------------+------------+
-
-From the point of view of a standard end-user, the most favored approach is the
-Intel Fortran and MSVC toolchain; however licensing restrictions still apply, as
-described further in the `f2py-win-intel`_.
-
-`This MSYS2 document`_ covers details of differences between MSYS2 and Cygwin.
-Broadly speaking, MSYS2 is geared towards building native Windows, while Cygwin
-is closer to providing a `more complete POSIX environment`_. Since MSVC is a
-core component of the Windows setup, its installation and the setup for the
-Powershell environment are described below.
+  +----------------------+--------------------+-------------------+
+  | **Fortran Compiler** | **C/C++ Compiler** | **Source**        |
+  +======================+====================+===================+
+  | Intel Fortran        | MSVC / ICC         | exe               |
+  +----------------------+--------------------+-------------------+
+  | GFortran             | MSVC               | MSYS2/exe         |
+  +----------------------+--------------------+-------------------+
+  | GFortran             | GCC                | WSL               |
+  +----------------------+--------------------+-------------------+
+  | Classic Flang        | MSVC               | Source / Conda    |
+  +----------------------+--------------------+-------------------+
+  | Anaconda GFortran    | Anaconda GCC       | exe               |
+  +----------------------+--------------------+-------------------+
 
 For an understanding of the key issues motivating the need for such a matrix
 `Pauli Virtanen's in-depth post on wheels with Fortran for Windows`_ is an
-excellent resource.
+excellent resource. An entertaining explanation of an application binary
+interface (ABI) can be found in this post by `JeanHeyd Meneide`_. 
 
 Powershell and MSVC
 ====================
@@ -81,7 +134,7 @@ prompt`_, it is more pleasant to use a `Powershell module like VCVars`_ which
 exposes a much simpler ``set (vcvars)``. So this would essentially mean testing
 the compiler toolchain could look like:
 
-.. code:: bash
+.. code-block:: powershell
 
    # New Powershell instance
    set (vcvars)
@@ -108,3 +161,10 @@ with ``$ENV:PATH``.
 .. _standard command prompt: https://docs.microsoft.com/en-us/cpp/build/building-on-the-command-line?view=msvc-160#developer_command_file_locations
 .. _Powershell module like VCVars: https://github.com/bruxisma/VCVars
 .. _Pauli Virtanen's in-depth post on wheels with Fortran for Windows: https://pav.iki.fi/blog/2017-10-08/pywingfortran.html#building-python-wheels-with-fortran-for-windows
+.. _Nvidia HPC SDK: https://www.pgroup.com/index.html
+.. _JeanHeyd Meneide: https://thephd.dev/binary-banshees-digital-demons-abi-c-c++-help-me-god-please
+.. _legacy version of Flang: https://github.com/flang-compiler/flang
+.. _native Windows support: https://developer.nvidia.com/nvidia-hpc-sdk-downloads#collapseFour
+.. _are outdated: https://github.com/conda-forge/conda-forge.github.io/issues/1044
+.. _now deprecated: https://github.com/numpy/numpy/pull/20875
+.. _LLVM Flang: https://releases.llvm.org/11.0.0/tools/flang/docs/ReleaseNotes.html
