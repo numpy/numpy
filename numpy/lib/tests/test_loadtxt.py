@@ -983,6 +983,8 @@ def test_str_dtype_unit_discovery_with_converter():
     assert_equal(a, expected)
 
 
+@pytest.mark.skipif(IS_PYPY and sys.implementation.version <= (7, 3, 8),
+                    reason="PyPy bug in error formatting")
 def test_control_character_empty():
     with pytest.raises(TypeError, match="Text reading control character must"):
         np.loadtxt(StringIO("1 2 3"), delimiter="")
