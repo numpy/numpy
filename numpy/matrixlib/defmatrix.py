@@ -1016,8 +1016,8 @@ class matrix(N.ndarray):
     def S(self):
         """
         Regard the matrix as a scalar.
-        If `self`.shape == (1, 1), then return `self`[0, 0], as it does
-        in MATLAB. Otherwise, raise ValueError().
+        If `self.shape == (1, 1)` then return `self[0, 0]` as it does
+        in MATLAB. Otherwise, `raise ValueError()`
 
         Parameters
         ----------
@@ -1025,13 +1025,13 @@ class matrix(N.ndarray):
 
         Returns
         -------
-        ret : `self`.dtype
+        ret : self.dtype
             the element of index [0, 0]
 
         Exceptions
         ----------
         ValueError 
-            when `self`.shape != (1, 1)
+            when `self.shape != (1, 1)`
 
         """
         if self.shape == (1, 1):
