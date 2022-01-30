@@ -85,6 +85,7 @@ Baseline
 For this document we will asume the following basic tools:
 
 - The IDE being considered is the community supported `Microsoft Visual Studio Code`_
+- The terminal being used is the `Windows Terminal`_
 - The shell environment is assumed to be `Powershell 7.x`_
 - Python 3.9 from `the Microsoft Store`_ and this can be tested with
    ``Get-Command python.exe`` resolving to
@@ -129,18 +130,18 @@ setting.
   This can take a significant amount of time as it includes a download of around
   2GB and requires a restart.
 
-Though it is possible use the resulting environment from a `standard command
-prompt`_, it is more pleasant to use a `Powershell module like VCVars`_ which
-exposes a much simpler ``set (vcvars)``. So this would essentially mean testing
-the compiler toolchain could look like:
+It is possible use the resulting environment from a `standard command
+prompt`_. However, it is more pleasant to use a `developer powershell`_,
+with a `profile in Windows Terminal`_. So 
+this would essentially mean testing the compiler toolchain could look like:
 
 .. code-block:: powershell
 
-   # New Powershell instance
-   set (vcvars)
+   # New Windows Developer Powershell instance / tab
    echo "#include<stdio.h>" > blah.cpp; echo 'int main(){printf("Hi");return 1;}' >> blah.cpp
    cl blah.cpp
-   # Hello
+  .\blah.exe
+   # Hi
    rm blah.cpp
 
 It is also possible to check that the environment has been updated correctly
@@ -157,9 +158,11 @@ with ``$ENV:PATH``.
 .. _more complete POSIX environment: https://www.cygwin.com/
 .. _This MSYS2 document: https://www.msys2.org/wiki/How-does-MSYS2-differ-from-Cygwin/
 .. _Build Tools for Visual Studio: https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2019
+.. _Windows Terminal: https://www.microsoft.com/en-us/p/windows-terminal/9n0dx20hk701?activetab=pivot:overviewtab
 .. _Powershell 7.x: https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-windows?view=powershell-7.1
 .. _standard command prompt: https://docs.microsoft.com/en-us/cpp/build/building-on-the-command-line?view=msvc-160#developer_command_file_locations
-.. _Powershell module like VCVars: https://github.com/bruxisma/VCVars
+.. _developer powershell: https://docs.microsoft.com/en-us/visualstudio/ide/reference/command-prompt-powershell?view=vs-2019
+.. _profile in Windows Terminal: https://techcommunity.microsoft.com/t5/microsoft-365-pnp-blog/add-developer-powershell-and-developer-command-prompt-for-visual/ba-p/2243078
 .. _Pauli Virtanen's in-depth post on wheels with Fortran for Windows: https://pav.iki.fi/blog/2017-10-08/pywingfortran.html#building-python-wheels-with-fortran-for-windows
 .. _Nvidia HPC SDK: https://www.pgroup.com/index.html
 .. _JeanHeyd Meneide: https://thephd.dev/binary-banshees-digital-demons-abi-c-c++-help-me-god-please
