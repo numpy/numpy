@@ -53,7 +53,7 @@ def configuration(parent_package='', top_path=None):
     if sys.platform == 'cygwin':
         # Export symbols without __declspec(dllexport) for using by cython.
         # Using __declspec(dllexport) does not export other necessary symbols
-        # in Cygwin package's Cython enviroment, making it impossible to
+        # in Cygwin package's Cython environment, making it impossible to
         # import modules.
         EXTRA_LINK_ARGS += ['-Wl,--export-all-symbols']
 
