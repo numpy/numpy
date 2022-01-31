@@ -100,14 +100,16 @@ def nep_metadata():
 
     return {'neps': neps, 'has_provisional': has_provisional}
 
-
-infile = 'index.rst.tmpl'
-outfile = 'index.rst'
-
 meta = nep_metadata()
 
-print(f'Compiling {infile} -> {outfile}')
-index = render(infile, meta)
+for nepcat in (
+    "index", "provisional", "accepted", "deferred", "finished", "meta",
+    "open", "rejected",
+):
+    infile = f"{nepcat}.rst.tmpl"
+    outfile =f"{nepcat}.rst"
 
-with open(outfile, 'w') as f:
-    f.write(index)
+    print(f'Compiling {infile} -> {outfile}')
+    index = render(infile, meta)
+    with open(outfile, 'w') as f:
+        f.write(index)
