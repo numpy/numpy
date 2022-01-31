@@ -31,7 +31,7 @@ import functools
 import warnings
 
 import numpy as np
-
+from numpy.linalg import inv
 
 __all__ = [
     'RankWarning', 'as_series', 'trimseq',
@@ -684,7 +684,20 @@ def _fit(vander_f, x, y, deg, rcond=None, full=False, w=None, cov=False):
     if full:
         return_tuple.append([resids, rank, s, rcond])
     if cov:
-        return_tuple.append(np.vander(c))
+        v_base = inv(np.dot(lhs, lhs.T))
+        if cov == "unscaled":
+            fac = 1
+        else:
+            if len(x) <= order:
+                raise ValueError("the number of data points must exceed order "
+                                 "to scale the covariance matrix")
+            fac = resids / (len(x) - order)
+        if y.ndim == 1:
+            covariance_matrix = v_base * fac
+        else:
+            covariance_matrix = v_base[:,:, np.newaxis] * fac
+
+        return_tuple.append(covariance_matrix)
 
     return tuple(return_tuple)
 

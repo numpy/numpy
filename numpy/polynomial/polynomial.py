@@ -1257,7 +1257,13 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
         chosen so that the errors of the products ``w[i]*y[i]`` all have the
         same variance.  When using inverse-variance weighting, use
         ``w[i] = 1/sigma(y[i])``.  The default value is None.
-
+    cov : bool, optional
+        If given and not False, return the covariance matrix. By default, 
+        the covariance are scaled by chi2/dof, where dof = M - (deg + 1), i.e., 
+        the weights are presumed to be  unreliable except in a relative sense and
+        everything is scaled such that the reduced chi2 is unity. This scaling is 
+        omitted if cov='unscaled', as is relevant for the case that the weights are
+        w = 1/sigma, with sigma known to be a reliable estimate of the uncertainty.
         .. versionadded:: 1.5.0
 
     Returns
@@ -1276,6 +1282,11 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
         - rcond -- value of `rcond`.
 
         For more details, see `numpy.linalg.lstsq`.
+
+    covariance_matrix : ndarray
+        This ndarray is only returned if ``cov == True``
+        It is the covariance matrix which is used to estimate uncertainties
+        in the fitted polynomial coefficients.
 
     Raises
     ------
