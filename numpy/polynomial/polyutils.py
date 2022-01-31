@@ -695,7 +695,7 @@ def _fit(vander_f, x, y, deg, rcond=None, full=False, w=None, cov=False):
         if y.ndim == 1:
             covariance_matrix = v_base * fac
         else:
-            covariance_matrix = v_base[:,:, np.newaxis] * fac
+            covariance_matrix = v_base[:, :, np.newaxis] * fac
 
         return_tuple.append(covariance_matrix)
 
