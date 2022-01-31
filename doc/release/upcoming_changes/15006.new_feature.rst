@@ -1,0 +1,7 @@
+crackfortran has support for operator and assignment overloading
+----------------------------------------------------------------
+``crackfortran`` parser now understands operator and assignment
+definitions in a module. They are added in the ``body`` list of the
+module which contains a new key ``implementedby`` listing the names
+of the subroutines or functions implementing the operator or
+assignment.

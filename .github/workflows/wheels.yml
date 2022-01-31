@@ -1,0 +1,127 @@
+# Workflow to build and test wheels.
+# To work on the wheel building infrastructure on a fork, comment out:
+#
+# if: github.repository == 'numpy/numpy'
+#
+# in the get_commit_message job. Be sure to include [wheel build] in your commit
+# message to trigger the build. All files related to wheel building are located
+# at tools/wheels/
+name: Wheel builder
+
+on:
+  schedule:
+    # Nightly build at 1:42 UTC
+    - cron: "42 1 * * *"
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  get_commit_message:
+    name: Get commit message
+    runs-on: ubuntu-latest
+    if: github.repository == 'numpy/numpy'
+    outputs:
+      message: ${{ steps.commit_message.outputs.message }}
+    steps:
+      - name: Checkout numpy
+        uses: actions/checkout@v2
+        # Gets the correct commit message for pull request
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Get commit message
+        id: commit_message
+        run: |
+          set -xe
+          COMMIT_MSG=$(git log --no-merges -1 --oneline)
+          echo "::set-output name=message::$COMMIT_MSG"
+
+  build_wheels:
+    name: Build wheel for ${{ matrix.python }}-${{ matrix.buildplat[1] }}
+    needs: get_commit_message
+    if: >-
+      contains(needs.get_commit_message.outputs.message, '[wheel build]') ||
+      github.event_name == 'schedule' ||
+      github.event_name == 'workflow_dispatch'
+    runs-on: ${{ matrix.buildplat[0] }}
+    strategy:
+      # Ensure that a wheel builder finishes even if another fails
+      fail-fast: false
+      matrix:
+        # Github Actions doesn't support pairing matrix values together, let's improvise
+        # https://github.com/github/feedback/discussions/7835#discussioncomment-1769026
+        buildplat:
+        - [ubuntu-20.04, manylinux_x86_64]
+        - [macos-10.15, macosx_*]
+        - [windows-2019, win_amd64]
+        - [windows-2019, win32]
+        python: ["cp38", "cp39", "cp310"]
+        include:
+        # manylinux pypy builds
+        - buildplat: [ubuntu-20.04, manylinux_x86_64]
+          python: pp38
+
+        # MacOS PyPy builds
+        # Disabled for now because of a PyPy bug
+        # that prevents successful compilation
+        #- buildplat: [macos-10.15, macosx_x86_64]
+        #  python: "pp38"
+
+        # Windows PyPy builds
+        - buildplat: [windows-2019, win_amd64]
+          python: "pp38"
+    env:
+      IS_32_BIT: ${{ matrix.buildplat[1] == 'win32' }}
+    steps:
+      - name: Checkout numpy
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+          # versioneer.py requires the latest tag to be reachable. Here we
+          # fetch the complete history to get access to the tags.
+          # A shallow clone can work when the following issue is resolved:
+          # https://github.com/actions/checkout/issues/338
+          fetch-depth: 0
+      - name: Configure mingw for 32-bit builds
+        run: |
+          # Force 32-bit mingw
+          choco uninstall mingw
+          choco install -y mingw --forcex86 --force --version=7.3.0
+          echo "C:\ProgramData\chocolatey\lib\mingw\tools\install\mingw32\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          refreshenv
+        if: ${{ env.IS_32_BIT == 'true' }}
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v2.3.0
+        env:
+          NPY_USE_BLAS_ILP64: ${{ env.IS_32_BIT == 'true' && '0' || '1' }}
+          CIBW_BUILD: ${{ matrix.python }}-${{ matrix.buildplat[1] }}
+          CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
+          CIBW_ENVIRONMENT_LINUX: CFLAGS='-std=c99 -fno-strict-aliasing'
+                                  LDFLAGS='-Wl,--strip-debug'
+                                  OPENBLAS64_=/usr/local
+                                  RUNNER_OS='Linux'
+          # MACOS linker doesn't support stripping symbols
+          CIBW_ENVIRONMENT_MACOS: CFLAGS='-std=c99 -fno-strict-aliasing'
+                                  OPENBLAS64_=/usr/local
+                                  CC=clang
+                                  CXX=clang++
+          CIBW_ENVIRONMENT_WINDOWS: OPENBLAS64_=${{ env.IS_32_BIT == 'false' && 'openblas' || '' }}
+                                    OPENBLAS=${{ env.IS_32_BIT == 'true' && 'openblas' || '' }}
+                                    CFLAGS='${{ env.IS_32_BIT == 'true' && '-m32' || '' }}'
+                                    LDFLAGS='${{ env.IS_32_BIT == 'true' && '-m32' || '' }}'
+          # TODO: Add universal2 wheels, we need to fuse them manually
+          # instead of going through cibuildwheel
+          # This is because cibuildwheel tries to make a fat wheel
+          # https://github.com/multi-build/multibuild/blame/devel/README.rst#L541-L565
+          # for more info
+          CIBW_ARCHS_MACOS: x86_64 arm64
+          CIBW_TEST_SKIP: "*_arm64 *_universal2:arm64"
+          CIBW_BUILD_VERBOSITY: 3
+          CIBW_BEFORE_BUILD: bash {project}/tools/wheels/cibw_before_build.sh {project}
+          CIBW_BEFORE_TEST: pip install -r {project}/test_requirements.txt
+          CIBW_TEST_COMMAND:  bash {project}/tools/wheels/cibw_test_command.sh {project}
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: ${{ matrix.python }}-${{ startsWith(matrix.buildplat[1], 'macosx') && 'macosx' || matrix.buildplat[1] }}
+          path: ./wheelhouse/*.whl

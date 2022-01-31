@@ -130,7 +130,6 @@ cdef extern from "numpy/arrayobject.h":
         NPY_ALIGNED
         NPY_NOTSWAPPED
         NPY_WRITEABLE
-        NPY_UPDATEIFCOPY
         NPY_ARR_HAS_DESCR
 
         NPY_BEHAVED
@@ -162,7 +161,7 @@ cdef extern from "numpy/arrayobject.h":
         NPY_ARRAY_ALIGNED
         NPY_ARRAY_NOTSWAPPED
         NPY_ARRAY_WRITEABLE
-        NPY_ARRAY_UPDATEIFCOPY
+        NPY_ARRAY_WRITEBACKIFCOPY
 
         NPY_ARRAY_BEHAVED
         NPY_ARRAY_BEHAVED_NS
@@ -868,8 +867,6 @@ cdef extern from "numpy/ufuncobject.h":
           void **, char *, int, int, int, int, char *, char *, int)
     int PyUFunc_RegisterLoopForType(ufunc, int,
                                     PyUFuncGenericFunction, int *, void *)
-    int PyUFunc_GenericFunction \
-        (ufunc, PyObject *, PyObject *, PyArrayObject **)
     void PyUFunc_f_f_As_d_d \
          (char **, npy_intp *, npy_intp *, void *)
     void PyUFunc_d_d \

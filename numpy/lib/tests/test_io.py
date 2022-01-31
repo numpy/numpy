@@ -580,7 +580,7 @@ class TestSaveTxt:
             memoryerror_raised.value = False
             try:
                 # The test takes at least 6GB of memory, writes a file larger
-                # than 4GB
+                # than 4GB. This tests the ``allowZip64`` kwarg to ``zipfile``
                 test_data = np.asarray([np.random.rand(
                                         np.random.randint(50,100),4)
                                         for i in range(800000)], dtype=object)
@@ -599,6 +599,9 @@ class TestSaveTxt:
         p.join()
         if memoryerror_raised.value:
             raise MemoryError("Child process raised a MemoryError exception")
+        # -9 indicates a SIGKILL, probably an OOM.
+        if p.exitcode == -9:
+            pytest.xfail("subprocess got a SIGKILL, apparently free memory was not sufficient")
         assert p.exitcode == 0
 
 class LoadTxtBase:
@@ -981,6 +984,28 @@ class TestLoadTxt(LoadTxtBase):
             res = np.loadtxt(c, dtype=dt)
             assert_equal(res, tgt, err_msg="%s" % dt)
 
+    def test_default_float_converter_no_default_hex_conversion(self):
+        """
+        Ensure that fromhex is only used for values with the correct prefix and
+        is not called by default. Regression test related to gh-19598.
+        """
+        c = TextIO("a b c")
+        with pytest.raises(
+            ValueError, match="could not convert string to float"
+        ):
+            np.loadtxt(c)
+
+    def test_default_float_converter_exception(self):
+        """
+        Ensure that the exception message raised during failed floating point
+        conversion is correct. Regression test related to gh-19598.
+        """
+        c = TextIO("qrs tuv")  # Invalid values for default float converter
+        with pytest.raises(
+            ValueError, match="could not convert string to float"
+        ):
+            np.loadtxt(c)
+
     def test_from_complex(self):
         tgt = (complex(1, 1), complex(1, -1))
         c = TextIO()
@@ -1171,6 +1196,7 @@ class TestLoadTxt(LoadTxtBase):
         a = np.array([[1, 2, 3, 5], [4, 5, 7, 8], [2, 1, 4, 5]], int)
         assert_array_equal(x, a)
 
+
 class Testfromregex:
     def test_record(self):
         c = TextIO()
@@ -1204,9 +1230,11 @@ class Testfromregex:
         a = np.array([(1312,), (1534,), (4444,)], dtype=dt)
         assert_array_equal(x, a)
 
-    def test_record_unicode(self):
+    @pytest.mark.parametrize("path_type", [str, Path])
+    def test_record_unicode(self, path_type):
         utf8 = b'\xcf\x96'
-        with temppath() as path:
+        with temppath() as str_path:
+            path = path_type(str_path)
             with open(path, 'wb') as f:
                 f.write(b'1.312 foo' + utf8 + b' \n1.534 bar\n4.444 qux')
 
@@ -1227,6 +1255,13 @@ class Testfromregex:
         a = np.array([1, 2, 3], dtype=dt)
         x = np.fromregex(c, regexp, dt)
         assert_array_equal(x, a)
+
+    def test_bad_dtype_not_structured(self):
+        regexp = re.compile(b'(\\d)')
+        c = BytesIO(b'123')
+        with pytest.raises(TypeError, match='structured datatype'):
+            np.fromregex(c, regexp, dtype=np.float64)
+
 
 #####--------------------------------------------------------------------------
 
@@ -1389,6 +1424,10 @@ class TestFromTxt(LoadTxtBase):
         control = np.array([('M', 64.0, 75.0),
                             ('F', 25.0, 60.0)], dtype=descriptor)
         assert_equal(test, control)
+
+    def test_bad_fname(self):
+        with pytest.raises(TypeError, match='fname must be a string,'):
+            np.genfromtxt(123)
 
     def test_commented_header(self):
         # Check that names can be retrieved even if the line is commented out.
@@ -2403,6 +2442,17 @@ M   33  21.99
         assert_equal((), test.shape)
         assert_equal(expected.dtype, test.dtype)
 
+    @pytest.mark.parametrize("ndim", [0, 1, 2])
+    def test_ndmin_keyword(self, ndim: int):
+        # lets have the same behaivour of ndmin as loadtxt
+        # as they should be the same for non-missing values
+        txt = "42"
+
+        a = np.loadtxt(StringIO(txt), ndmin=ndim)
+        b = np.genfromtxt(StringIO(txt), ndmin=ndim)
+
+        assert_array_equal(a, b)
+
 
 class TestPathUsage:
     # Test that pathlib.Path can be used
@@ -2477,28 +2527,6 @@ class TestPathUsage:
             np.savetxt(path, a)
             data = np.genfromtxt(path)
             assert_array_equal(a, data)
-
-    def test_ndfromtxt(self):
-        # Test outputting a standard ndarray
-        with temppath(suffix='.txt') as path:
-            path = Path(path)
-            with path.open('w') as f:
-                f.write(u'1 2\n3 4')
-
-            control = np.array([[1, 2], [3, 4]], dtype=int)
-            test = np.genfromtxt(path, dtype=int)
-            assert_array_equal(test, control)
-
-    def test_mafromtxt(self):
-        # From `test_fancy_dtype_alt` above
-        with temppath(suffix='.txt') as path:
-            path = Path(path)
-            with path.open('w') as f:
-                f.write(u'1,2,3.0\n4,5,6.0\n')
-
-            test = np.genfromtxt(path, delimiter=',', usemask=True)
-            control = ma.array([(1.0, 2.0, 3.0), (4.0, 5.0, 6.0)])
-            assert_equal(test, control)
 
     def test_recfromtxt(self):
         with temppath(suffix='.txt') as path:

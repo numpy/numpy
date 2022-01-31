@@ -88,4 +88,4 @@ Binary Format Description
 .. autosummary::
    :toctree: generated/
 
-    lib.format
+   lib.format

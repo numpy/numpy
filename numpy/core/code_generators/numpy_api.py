@@ -19,6 +19,7 @@ from code_generators.genapi import StealRef, NonNull
 multiarray_global_vars = {
     'NPY_NUMUSERTYPES':             (7, 'int'),
     'NPY_DEFAULT_ASSIGN_CASTING':   (292, 'NPY_CASTING'),
+    'PyDataMem_DefaultHandler':     (306, 'PyObject*'),
 }
 
 multiarray_scalar_bool_values = {
@@ -76,9 +77,9 @@ multiarray_types_api = {
     # End 1.6 API
 }
 
-#define NPY_NUMUSERTYPES (*(int *)PyArray_API[6])
-#define PyBoolArrType_Type (*(PyTypeObject *)PyArray_API[7])
-#define _PyArrayScalar_BoolValues ((PyBoolScalarObject *)PyArray_API[8])
+# define NPY_NUMUSERTYPES (*(int *)PyArray_API[6])
+# define PyBoolArrType_Type (*(PyTypeObject *)PyArray_API[7])
+# define _PyArrayScalar_BoolValues ((PyBoolScalarObject *)PyArray_API[8])
 
 multiarray_funcs_api = {
     'PyArray_GetNDArrayCVersion':           (0,),
@@ -350,6 +351,9 @@ multiarray_funcs_api = {
     'PyArray_ResolveWritebackIfCopy':       (302,),
     'PyArray_SetWritebackIfCopyBase':       (303,),
     # End 1.14 API
+    'PyDataMem_SetHandler':                 (304,),
+    'PyDataMem_GetHandler':                 (305,),
+    # End 1.21 API
 }
 
 ufunc_types_api = {

@@ -8,8 +8,7 @@ import warnings
 
 from . import numeric as _nx
 from . import overrides
-from ._asarray import array, asanyarray
-from .multiarray import normalize_axis_index
+from .multiarray import array, asanyarray, normalize_axis_index
 from . import fromnumeric as _from_nx
 
 
@@ -258,20 +257,20 @@ def vstack(tup):
     Examples
     --------
     >>> a = np.array([1, 2, 3])
-    >>> b = np.array([2, 3, 4])
+    >>> b = np.array([4, 5, 6])
     >>> np.vstack((a,b))
     array([[1, 2, 3],
-           [2, 3, 4]])
+           [4, 5, 6]])
 
     >>> a = np.array([[1], [2], [3]])
-    >>> b = np.array([[2], [3], [4]])
+    >>> b = np.array([[4], [5], [6]])
     >>> np.vstack((a,b))
     array([[1],
            [2],
            [3],
-           [2],
-           [3],
-           [4]])
+           [4],
+           [5],
+           [6]])
 
     """
     if not overrides.ARRAY_FUNCTION_ENABLED:
@@ -321,15 +320,15 @@ def hstack(tup):
     Examples
     --------
     >>> a = np.array((1,2,3))
-    >>> b = np.array((2,3,4))
+    >>> b = np.array((4,5,6))
     >>> np.hstack((a,b))
-    array([1, 2, 3, 2, 3, 4])
+    array([1, 2, 3, 4, 5, 6])
     >>> a = np.array([[1],[2],[3]])
-    >>> b = np.array([[2],[3],[4]])
+    >>> b = np.array([[4],[5],[6]])
     >>> np.hstack((a,b))
-    array([[1, 2],
-           [2, 3],
-           [3, 4]])
+    array([[1, 4],
+           [2, 5],
+           [3, 6]])
 
     """
     if not overrides.ARRAY_FUNCTION_ENABLED:
@@ -403,15 +402,15 @@ def stack(arrays, axis=0, out=None):
     (3, 4, 10)
 
     >>> a = np.array([1, 2, 3])
-    >>> b = np.array([2, 3, 4])
+    >>> b = np.array([4, 5, 6])
     >>> np.stack((a, b))
     array([[1, 2, 3],
-           [2, 3, 4]])
+           [4, 5, 6]])
 
     >>> np.stack((a, b), axis=-1)
-    array([[1, 2],
-           [2, 3],
-           [3, 4]])
+    array([[1, 4],
+           [2, 5],
+           [3, 6]])
 
     """
     if not overrides.ARRAY_FUNCTION_ENABLED:
@@ -544,25 +543,23 @@ def _concatenate_shapes(shapes, axis):
     Returns
     -------
     shape: tuple of int
-        This tuple satisfies:
-        ```
-        shape, _ = _concatenate_shapes([arr.shape for shape in arrs], axis)
-        shape == concatenate(arrs, axis).shape
-        ```
+        This tuple satisfies::
+
+            shape, _ = _concatenate_shapes([arr.shape for shape in arrs], axis)
+            shape == concatenate(arrs, axis).shape
 
     slice_prefixes: tuple of (slice(start, end), )
         For a list of arrays being concatenated, this returns the slice
         in the larger array at axis that needs to be sliced into.
 
-        For example, the following holds:
-        ```
-        ret = concatenate([a, b, c], axis)
-        _, (sl_a, sl_b, sl_c) = concatenate_slices([a, b, c], axis)
+        For example, the following holds::
 
-        ret[(slice(None),) * axis + sl_a] == a
-        ret[(slice(None),) * axis + sl_b] == b
-        ret[(slice(None),) * axis + sl_c] == c
-        ```
+            ret = concatenate([a, b, c], axis)
+            _, (sl_a, sl_b, sl_c) = concatenate_slices([a, b, c], axis)
+
+            ret[(slice(None),) * axis + sl_a] == a
+            ret[(slice(None),) * axis + sl_b] == b
+            ret[(slice(None),) * axis + sl_c] == c
 
         These are called slice prefixes since they are used in the recursive
         blocking algorithm to compute the left-most slices during the
@@ -607,7 +604,7 @@ def _block_info_recursion(arrays, max_depth, result_ndim, depth=0):
         The arrays to check
     max_depth : list of int
         The number of nested lists
-    result_ndim: int
+    result_ndim : int
         The number of dimensions in thefinal array.
 
     Returns
@@ -786,9 +783,9 @@ def block(arrays):
     array([1, 2, 3])
 
     >>> a = np.array([1, 2, 3])
-    >>> b = np.array([2, 3, 4])
+    >>> b = np.array([4, 5, 6])
     >>> np.block([a, b, 10])             # hstack([a, b, 10])
-    array([ 1,  2,  3,  2,  3,  4, 10])
+    array([ 1,  2,  3,  4,  5,  6, 10])
 
     >>> A = np.ones((2, 2), int)
     >>> B = 2 * A
@@ -799,10 +796,10 @@ def block(arrays):
     With a list of depth 2, `block` can be used in place of `vstack`:
 
     >>> a = np.array([1, 2, 3])
-    >>> b = np.array([2, 3, 4])
+    >>> b = np.array([4, 5, 6])
     >>> np.block([[a], [b]])             # vstack([a, b])
     array([[1, 2, 3],
-           [2, 3, 4]])
+           [4, 5, 6]])
 
     >>> A = np.ones((2, 2), int)
     >>> B = 2 * A

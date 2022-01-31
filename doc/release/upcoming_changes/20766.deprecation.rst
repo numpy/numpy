@@ -1,0 +1,3 @@
+* Setting ``__array_finalize__`` to ``None`` is deprecated.  It must now be
+  a method and may wish to call ``super().__array_finalize__(obj)`` after
+  checking for ``None`` or if the NumPy version is sufficiently new.

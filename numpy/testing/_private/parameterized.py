@@ -1,5 +1,5 @@
 """
-tl;dr: all code code is licensed under simplified BSD, unless stated otherwise.
+tl;dr: all code is licensed under simplified BSD, unless stated otherwise.
 
 Unless stated otherwise in the source files, all code is copyright 2010 David
 Wolever <david@wolever.net>. All rights reserved.
@@ -36,11 +36,6 @@ import warnings
 from functools import wraps
 from types import MethodType
 from collections import namedtuple
-
-try:
-    from collections import OrderedDict as MaybeOrderedDict
-except ImportError:
-    MaybeOrderedDict = dict
 
 from unittest import TestCase
 
@@ -113,13 +108,6 @@ class param(_param):
         return "param(*%r, **%r)" %self
 
 
-class QuietOrderedDict(MaybeOrderedDict):
-    """ When OrderedDict is available, use it to make sure that the kwargs in
-        doc strings are consistently ordered. """
-    __str__ = dict.__str__
-    __repr__ = dict.__repr__
-
-
 def parameterized_argument_value_pairs(func, p):
     """Return tuples of parameterized arguments and their values.
 
@@ -165,7 +153,7 @@ def parameterized_argument_value_pairs(func, p):
     ])
 
     seen_arg_names = {n for (n, _) in result}
-    keywords = QuietOrderedDict(sorted([
+    keywords = dict(sorted([
         (name, p.kwargs[name])
         for name in p.kwargs
         if name not in seen_arg_names
@@ -205,7 +193,7 @@ def default_doc_func(func, num, p):
     all_args_with_values = parameterized_argument_value_pairs(func, p)
 
     # Assumes that the function passed is a bound method.
-    descs = ["%s=%s" %(n, short_repr(v)) for n, v in all_args_with_values]
+    descs = [f'{n}={short_repr(v)}' for n, v in all_args_with_values]
 
     # The documentation might be a multiline string, so split it
     # and just work with the first string, ignoring the period
@@ -339,7 +327,7 @@ class parameterized:
                             "'@parameterized.expand' instead.")
 
     def _terrible_magic_get_defining_classes(self):
-        """ Returns the set of parent classes of the class currently being defined.
+        """ Returns the list of parent classes of the class currently being defined.
             Will likely only work if called from the ``parameterized`` decorator.
             This function is entirely @brandon_rhodes's fault, as he suggested
             the implementation: http://stackoverflow.com/a/8793684/71522

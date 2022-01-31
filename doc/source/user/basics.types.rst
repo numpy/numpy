@@ -1,3 +1,5 @@
+.. _basics.types:
+
 **********
 Data types
 **********
@@ -19,147 +21,85 @@ The primitive types supported are tied closely to those in C:
       - C type
       - Description
 
-    * - `np.bool_`
+    * - `numpy.bool_`
       - ``bool``
       - Boolean (True or False) stored as a byte
 
-    * - `np.byte`
+    * - `numpy.byte`
       - ``signed char``
       - Platform-defined
 
-    * - `np.ubyte`
+    * - `numpy.ubyte`
       - ``unsigned char``
       - Platform-defined
 
-    * - `np.short`
+    * - `numpy.short`
       - ``short``
       - Platform-defined
 
-    * - `np.ushort`
+    * - `numpy.ushort`
       - ``unsigned short``
       - Platform-defined
 
-    * - `np.intc`
+    * - `numpy.intc`
       - ``int``
       - Platform-defined
 
-    * - `np.uintc`
+    * - `numpy.uintc`
       - ``unsigned int``
       - Platform-defined
 
-    * - `np.int_`
+    * - `numpy.int_`
       - ``long``
       - Platform-defined
 
-    * - `np.uint`
+    * - `numpy.uint`
       - ``unsigned long``
       - Platform-defined
 
-    * - `np.longlong`
+    * - `numpy.longlong`
       - ``long long``
       - Platform-defined
 
-    * - `np.ulonglong`
+    * - `numpy.ulonglong`
       - ``unsigned long long``
       - Platform-defined
 
-    * - `np.half` / `np.float16`
+    * - `numpy.half` / `numpy.float16`
       -
       - Half precision float:
         sign bit, 5 bits exponent, 10 bits mantissa
 
-    * - `np.single`
+    * - `numpy.single`
       - ``float``
       - Platform-defined single precision float:
         typically sign bit, 8 bits exponent, 23 bits mantissa
 
-    * - `np.double`
+    * - `numpy.double`
       - ``double``
       - Platform-defined double precision float:
         typically sign bit, 11 bits exponent, 52 bits mantissa.
 
-    * - `np.longdouble`
+    * - `numpy.longdouble`
       - ``long double``
       - Platform-defined extended-precision float
 
-    * - `np.csingle`
+    * - `numpy.csingle`
       - ``float complex``
       - Complex number, represented by two single-precision floats (real and imaginary components)
 
-    * - `np.cdouble`
+    * - `numpy.cdouble`
       - ``double complex``
       - Complex number, represented by two double-precision floats (real and imaginary components).
 
-    * - `np.clongdouble`
+    * - `numpy.clongdouble`
       - ``long double complex``
       - Complex number, represented by two extended-precision floats (real and imaginary components).
 
 
 Since many of these have platform-dependent definitions, a set of fixed-size
-aliases are provided:
+aliases are provided (See :ref:`sized-aliases`).
 
-.. list-table::
-    :header-rows: 1
-
-    * - Numpy type
-      - C type
-      - Description
-
-    * - `np.int8`
-      - ``int8_t``
-      - Byte (-128 to 127)
-
-    * - `np.int16`
-      - ``int16_t``
-      - Integer (-32768 to 32767)
-
-    * - `np.int32`
-      - ``int32_t``
-      - Integer (-2147483648 to 2147483647)
-
-    * - `np.int64`
-      - ``int64_t``
-      - Integer (-9223372036854775808 to 9223372036854775807)
-
-    * - `np.uint8`
-      - ``uint8_t``
-      - Unsigned integer (0 to 255)
-
-    * - `np.uint16`
-      - ``uint16_t``
-      - Unsigned integer (0 to 65535)
-
-    * - `np.uint32`
-      - ``uint32_t``
-      - Unsigned integer (0 to 4294967295)
-
-    * - `np.uint64`
-      - ``uint64_t``
-      - Unsigned integer (0 to 18446744073709551615)
-
-    * - `np.intp`
-      - ``intptr_t``
-      - Integer used for indexing, typically the same as ``ssize_t``
-
-    * - `np.uintp`
-      - ``uintptr_t``
-      - Integer large enough to hold a pointer
-
-    * - `np.float32`
-      - ``float``
-      -
-
-    * - `np.float64` / `np.float_`
-      - ``double``
-      - Note that this matches the precision of the builtin python `float`.
-
-    * - `np.complex64`
-      - ``float complex``
-      - Complex number, represented by two 32-bit floats (real and imaginary components)
-
-    * - `np.complex128` / `np.complex_`
-      - ``double complex``
-      - Note that this matches the precision of the builtin python `complex`.
 
 
 NumPy numerical types are instances of ``dtype`` (data-type) objects, each
@@ -171,7 +111,7 @@ having unique characteristics.  Once you have imported NumPy using
 
 the dtypes are available as ``np.bool_``, ``np.float32``, etc.
 
-Advanced types, not listed in the table above, are explored in
+Advanced types, not listed above, are explored in
 section :ref:`structured_arrays`.
 
 There are 5 basic numerical types representing booleans (bool), integers (int),
@@ -203,15 +143,15 @@ backward compatibility with older packages such as Numeric.  Some
 documentation may still refer to these, for example::
 
   >>> np.array([1, 2, 3], dtype='f')
-  array([ 1.,  2.,  3.], dtype=float32)
+  array([1.,  2.,  3.], dtype=float32)
 
 We recommend using dtype objects instead.
 
 To convert the type of an array, use the .astype() method (preferred) or
 the type itself as a function. For example: ::
 
-    >>> z.astype(float)                 #doctest: +NORMALIZE_WHITESPACE
-    array([  0.,  1.,  2.])
+    >>> z.astype(float)
+    array([0.,  1.,  2.])
     >>> np.int8(z)
     array([0, 1, 2], dtype=int8)
 
@@ -230,7 +170,7 @@ and its byte-order.  The data type can also be used indirectly to query
 properties of the type, such as whether it is an integer::
 
     >>> d = np.dtype(int)
-    >>> d
+    >>> d #doctest: +SKIP
     dtype('int32')
 
     >>> np.issubdtype(d, np.integer)
@@ -261,12 +201,14 @@ identical behaviour between arrays and scalars, irrespective of whether the
 value is inside an array or not.  NumPy scalars also have many of the same
 methods arrays do.
 
+.. _overflow-errors:
+
 Overflow Errors
 ===============
 
 The fixed size of NumPy numeric types may cause overflow errors when a value
 requires more memory than available in the data type. For example, 
-`numpy.power` evaluates ``100 * 10 ** 8`` correctly for 64-bit integers,
+`numpy.power` evaluates ``100 ** 8`` correctly for 64-bit integers,
 but gives 1874919424 (incorrect) for a 32-bit integer.
 
     >>> np.power(100, 8, dtype=np.int64)
@@ -316,8 +258,8 @@ compiler's ``long double`` available as ``np.longdouble`` (and
 numpy provides with ``np.finfo(np.longdouble)``.
 
 NumPy does not provide a dtype with more precision than C's
-``long double``\\; in particular, the 128-bit IEEE quad precision
-data type (FORTRAN's ``REAL*16``\\) is not available.
+``long double``; in particular, the 128-bit IEEE quad precision
+data type (FORTRAN's ``REAL*16``) is not available.
 
 For efficient memory alignment, ``np.longdouble`` is usually stored
 padded with zero bits, either to 96 or 128 bits. Which is more efficient

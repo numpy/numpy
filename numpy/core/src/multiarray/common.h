@@ -1,10 +1,11 @@
-#ifndef _NPY_PRIVATE_COMMON_H_
-#define _NPY_PRIVATE_COMMON_H_
-#include "structmember.h"
-#include <numpy/npy_common.h>
-#include <numpy/ndarraytypes.h>
-#include <limits.h>
+#ifndef NUMPY_CORE_SRC_MULTIARRAY_COMMON_H_
+#define NUMPY_CORE_SRC_MULTIARRAY_COMMON_H_
+
+#include <structmember.h>
+#include "numpy/npy_common.h"
+#include "numpy/ndarraytypes.h"
 #include "npy_import.h"
+#include <limits.h>
 
 #define error_converting(x)  (((x) == -1) && PyErr_Occurred())
 
@@ -209,7 +210,7 @@ npy_is_aligned(const void * p, const npy_uintp alignment)
 }
 
 /* Get equivalent "uint" alignment given an itemsize, for use in copy code */
-static NPY_INLINE int
+static NPY_INLINE npy_uintp
 npy_uint_alignment(int itemsize)
 {
     npy_uintp alignment = 0; /* return value of 0 means unaligned */
@@ -267,7 +268,7 @@ npy_memchr(char * haystack, char needle,
     }
     else {
         /* usually find elements to skip path */
-        if (NPY_CPU_HAVE_UNALIGNED_ACCESS && needle == 0 && stride == 1) {
+        if (!NPY_ALIGNMENT_REQUIRED && needle == 0 && stride == 1) {
             /* iterate until last multiple of 4 */
             char * block_end = haystack + size - (size % sizeof(unsigned int));
             while (p < block_end) {
@@ -290,6 +291,63 @@ npy_memchr(char * haystack, char needle,
 
     return p;
 }
+
+/*
+ * Helper to work around issues with the allocation strategy currently
+ * allocating not 1 byte for empty arrays, but enough for an array where
+ * all 0 dimensions are replaced with size 1 (if the itemsize is not 0).
+ *
+ * This means that we can fill in nice (nonzero) strides and still handle
+ * slicing direct math without being in danger of leaving the allocated byte
+ * bounds.
+ * In practice, that probably does not matter, but in principle this would be
+ * undefined behaviour in C.  Another solution may be to force the strides
+ * to 0 in these cases.  See also gh-15788.
+ *
+ * Unlike the code in `PyArray_NewFromDescr` does no overflow checks.
+ */
+static NPY_INLINE npy_intp
+PyArray_NBYTES_ALLOCATED(PyArrayObject *arr)
+{
+    if (PyArray_ITEMSIZE(arr) == 0) {
+        return 1;
+    }
+    npy_intp nbytes = PyArray_ITEMSIZE(arr);
+    for (int i = 0; i < PyArray_NDIM(arr); i++) {
+        if (PyArray_DIMS(arr)[i] != 0) {
+            nbytes *= PyArray_DIMS(arr)[i];
+        }
+    }
+    return nbytes;
+}
+
+
+/*
+ * Simple helper to create a tuple from an array of items. The `make_null_none`
+ * flag means that NULL entries are replaced with None, which is occasionally
+ * useful.
+ */
+static NPY_INLINE PyObject *
+PyArray_TupleFromItems(int n, PyObject *const *items, int make_null_none)
+{
+    PyObject *tuple = PyTuple_New(n);
+    if (tuple == NULL) {
+        return NULL;
+    }
+    for (int i = 0; i < n; i ++) {
+        PyObject *tmp;
+        if (!make_null_none || items[i] != NULL) {
+            tmp = items[i];
+        }
+        else {
+            tmp = Py_None;
+        }
+        Py_INCREF(tmp);
+        PyTuple_SET_ITEM(tuple, i, tmp);
+    }
+    return tuple;
+}
+
 
 #include "ucsnarrow.h"
 
@@ -315,5 +373,4 @@ new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject* out,
  */
 #define NPY_ITER_REDUCTION_AXIS(axis) (axis + (1 << (NPY_BITSOF_INT - 2)))
 
-#endif
-
+#endif  /* NUMPY_CORE_SRC_MULTIARRAY_COMMON_H_ */

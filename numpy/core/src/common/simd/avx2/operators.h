@@ -61,6 +61,10 @@ NPY_FINLINE __m256i npyv_shr_s64(__m256i a, int c)
 #define npyv_and_s64 _mm256_and_si256
 #define npyv_and_f32 _mm256_and_ps
 #define npyv_and_f64 _mm256_and_pd
+#define npyv_and_b8  _mm256_and_si256
+#define npyv_and_b16 _mm256_and_si256
+#define npyv_and_b32 _mm256_and_si256
+#define npyv_and_b64 _mm256_and_si256
 
 // OR
 #define npyv_or_u8  _mm256_or_si256
@@ -73,6 +77,10 @@ NPY_FINLINE __m256i npyv_shr_s64(__m256i a, int c)
 #define npyv_or_s64 _mm256_or_si256
 #define npyv_or_f32 _mm256_or_ps
 #define npyv_or_f64 _mm256_or_pd
+#define npyv_or_b8  _mm256_or_si256
+#define npyv_or_b16 _mm256_or_si256
+#define npyv_or_b32 _mm256_or_si256
+#define npyv_or_b64 _mm256_or_si256
 
 // XOR
 #define npyv_xor_u8  _mm256_xor_si256
@@ -85,6 +93,10 @@ NPY_FINLINE __m256i npyv_shr_s64(__m256i a, int c)
 #define npyv_xor_s64 _mm256_xor_si256
 #define npyv_xor_f32 _mm256_xor_ps
 #define npyv_xor_f64 _mm256_xor_pd
+#define npyv_xor_b8  _mm256_xor_si256
+#define npyv_xor_b16 _mm256_xor_si256
+#define npyv_xor_b32 _mm256_xor_si256
+#define npyv_xor_b64 _mm256_xor_si256
 
 // NOT
 #define npyv_not_u8(A) _mm256_xor_si256(A, _mm256_set1_epi32(-1))
@@ -97,6 +109,10 @@ NPY_FINLINE __m256i npyv_shr_s64(__m256i a, int c)
 #define npyv_not_s64 npyv_not_u8
 #define npyv_not_f32(A) _mm256_xor_ps(A, _mm256_castsi256_ps(_mm256_set1_epi32(-1)))
 #define npyv_not_f64(A) _mm256_xor_pd(A, _mm256_castsi256_pd(_mm256_set1_epi32(-1)))
+#define npyv_not_b8  npyv_not_u8
+#define npyv_not_b16 npyv_not_u8
+#define npyv_not_b32 npyv_not_u8
+#define npyv_not_b64 npyv_not_u8
 
 /***************************
  * Comparison
@@ -196,5 +212,11 @@ NPY_FINLINE __m256i npyv_cmpge_u32(__m256i a, __m256i b)
 #define npyv_cmpgt_f64(A, B)  _mm256_castpd_si256(_mm256_cmp_pd(A, B, _CMP_GT_OQ))
 #define npyv_cmpge_f32(A, B)  _mm256_castps_si256(_mm256_cmp_ps(A, B, _CMP_GE_OQ))
 #define npyv_cmpge_f64(A, B)  _mm256_castpd_si256(_mm256_cmp_pd(A, B, _CMP_GE_OQ))
+
+// check special cases
+NPY_FINLINE npyv_b32 npyv_notnan_f32(npyv_f32 a)
+{ return _mm256_castps_si256(_mm256_cmp_ps(a, a, _CMP_ORD_Q)); }
+NPY_FINLINE npyv_b64 npyv_notnan_f64(npyv_f64 a)
+{ return _mm256_castpd_si256(_mm256_cmp_pd(a, a, _CMP_ORD_Q)); }
 
 #endif // _NPY_SIMD_AVX2_OPERATORS_H

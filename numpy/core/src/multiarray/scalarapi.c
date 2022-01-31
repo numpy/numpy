@@ -1,9 +1,10 @@
-#define PY_SSIZE_T_CLEAN
-#include <Python.h>
-#include "structmember.h"
-
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
+
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+#include <structmember.h>
+
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
 
@@ -35,7 +36,7 @@ scalar_value(PyObject *scalar, PyArray_Descr *descr)
 {
     int type_num;
     int align;
-    npy_intp memloc;
+    uintptr_t memloc;
     if (descr == NULL) {
         descr = PyArray_DescrFromScalar(scalar);
         type_num = descr->type_num;
@@ -168,7 +169,7 @@ scalar_value(PyObject *scalar, PyArray_Descr *descr)
      * Use the alignment flag to figure out where the data begins
      * after a PyObject_HEAD
      */
-    memloc = (npy_intp)scalar;
+    memloc = (uintptr_t)scalar;
     memloc += sizeof(PyObject);
     /* now round-up to the nearest alignment value */
     align = descr->alignment;
@@ -232,8 +233,12 @@ PyArray_CastScalarToCtype(PyObject *scalar, void *ctypeptr,
     PyArray_VectorUnaryFunc* castfunc;
 
     descr = PyArray_DescrFromScalar(scalar);
+    if (descr == NULL) {
+        return -1;
+    }
     castfunc = PyArray_GetCastFunc(descr, outcode->type_num);
     if (castfunc == NULL) {
+        Py_DECREF(descr);
         return -1;
     }
     if (PyTypeNum_ISEXTENDED(descr->type_num) ||
@@ -253,6 +258,7 @@ PyArray_CastScalarToCtype(PyObject *scalar, void *ctypeptr,
                     NPY_ARRAY_CARRAY, NULL);
         if (aout == NULL) {
             Py_DECREF(ain);
+            Py_DECREF(descr);
             return -1;
         }
         castfunc(PyArray_DATA(ain), PyArray_DATA(aout), 1, ain, aout);

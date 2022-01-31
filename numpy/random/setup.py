@@ -23,7 +23,7 @@ def configuration(parent_package='', top_path=None):
 
     # enable unix large file support on 32 bit systems
     # (64 bit off_t, lseek -> lseek64 etc.)
-    if sys.platform[:3] == "aix":
+    if sys.platform[:3] == 'aix':
         defs = [('_LARGE_FILES', None)]
     else:
         defs = [('_FILE_OFFSET_BITS', '64'),
@@ -50,6 +50,13 @@ def configuration(parent_package='', top_path=None):
         # Some bit generators require c99
         EXTRA_COMPILE_ARGS += ['-std=c99']
 
+    if sys.platform == 'cygwin':
+        # Export symbols without __declspec(dllexport) for using by cython.
+        # Using __declspec(dllexport) does not export other necessary symbols
+        # in Cygwin package's Cython environment, making it impossible to
+        # import modules.
+        EXTRA_LINK_ARGS += ['-Wl,--export-all-symbols']
+
     # Use legacy integer variable sizes
     LEGACY_DEFS = [('NP_RANDOM_LEGACY', '1')]
     PCG64_DEFS = []
@@ -65,12 +72,26 @@ def configuration(parent_package='', top_path=None):
         'src/distributions/random_mvhg_marginals.c',
         'src/distributions/random_hypergeometric.c',
     ]
+
+    def gl_if_msvc(build_cmd):
+        """ Add flag if we are using MSVC compiler
+
+        We can't see this in our scope, because we have not initialized the
+        distutils build command, so use this deferred calculation to run when
+        we are building the library.
+        """
+        # Keep in sync with numpy/core/setup.py
+        if build_cmd.compiler.compiler_type == 'msvc':
+            # explicitly disable whole-program optimization
+            return ['/GL-']
+        return []
+
     config.add_installed_library('npyrandom',
         sources=npyrandom_sources,
         install_dir='lib',
         build_info={
             'include_dirs' : [],  # empty list required for creating npyrandom.h
-            'extra_compiler_args' : (['/GL-'] if is_msvc else []),
+            'extra_compiler_args': [gl_if_msvc],
         })
 
     for gen in ['mt19937']:
@@ -116,7 +137,7 @@ def configuration(parent_package='', top_path=None):
         # gen.pyx, src/distributions/distributions.c
         config.add_extension(gen,
                              sources=[f'{gen}.c'],
-                             libraries=EXTRA_LIBRARIES,
+                             libraries=EXTRA_LIBRARIES + ['npymath'],
                              extra_compile_args=EXTRA_COMPILE_ARGS,
                              include_dirs=['.', 'src'],
                              extra_link_args=EXTRA_LINK_ARGS,
@@ -124,19 +145,21 @@ def configuration(parent_package='', top_path=None):
                              define_macros=defs,
                              )
     config.add_data_files('_bounded_integers.pxd')
+    mtrand_libs = ['m', 'npymath'] if os.name != 'nt' else ['npymath']
     config.add_extension('mtrand',
                          sources=['mtrand.c',
                                   'src/legacy/legacy-distributions.c',
                                   'src/distributions/distributions.c',
                                  ],
                          include_dirs=['.', 'src', 'src/legacy'],
-                         libraries=['m'] if os.name != 'nt' else [],
+                         libraries=mtrand_libs,
                          extra_compile_args=EXTRA_COMPILE_ARGS,
                          extra_link_args=EXTRA_LINK_ARGS,
                          depends=depends + ['mtrand.pyx'],
                          define_macros=defs + LEGACY_DEFS,
                          )
     config.add_data_files(*depends)
+    config.add_data_files('*.pyi')
     return config
 
 

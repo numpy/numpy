@@ -38,8 +38,18 @@ def arraylikes():
 
     yield subclass
 
+    class _SequenceLike():
+        # We are giving a warning that array-like's were also expected to be
+        # sequence-like in `np.array([array_like])`, this can be removed
+        # when the deprecation exired (started NumPy 1.20)
+        def __len__(self):
+            raise TypeError
+
+        def __getitem__(self):
+            raise TypeError
+
     # Array-interface
-    class ArrayDunder:
+    class ArrayDunder(_SequenceLike):
         def __init__(self, a):
             self.a = a
 
@@ -52,7 +62,7 @@ def arraylikes():
     yield param(memoryview, id="memoryview")
 
     # Array-interface
-    class ArrayInterface:
+    class ArrayInterface(_SequenceLike):
         def __init__(self, a):
             self.a = a  # need to hold on to keep interface valid
             self.__array_interface__ = a.__array_interface__
@@ -60,7 +70,7 @@ def arraylikes():
     yield param(ArrayInterface, id="__array_interface__")
 
     # Array-Struct
-    class ArrayStruct:
+    class ArrayStruct(_SequenceLike):
         def __init__(self, a):
             self.a = a  # need to hold on to keep struct valid
             self.__array_struct__ = a.__array_struct__
@@ -224,6 +234,7 @@ class TestScalarDiscovery:
 
     # Additionally to string this test also runs into a corner case
     # with datetime promotion (the difference is the promotion order).
+    @pytest.mark.filterwarnings("ignore:Promotion of numbers:FutureWarning")
     def test_scalar_promotion(self):
         for sc1, sc2 in product(scalar_instances(), scalar_instances()):
             sc1, sc2 = sc1.values[0], sc2.values[0]
@@ -309,6 +320,13 @@ class TestScalarDiscovery:
                 # coercion should also raise (error type may change)
                 with pytest.raises(Exception):
                     np.array(scalar, dtype=dtype)
+
+                if (isinstance(scalar, rational) and
+                        np.issubdtype(dtype, np.signedinteger)):
+                    return
+
+                with pytest.raises(Exception):
+                    np.array([scalar], dtype=dtype)
                 # assignment should also raise
                 res = np.zeros((), dtype=dtype)
                 with pytest.raises(Exception):
@@ -323,6 +341,20 @@ class TestScalarDiscovery:
             ass = np.zeros((), dtype=dtype)
             ass[()] = scalar
             assert_array_equal(ass, cast)
+
+    @pytest.mark.parametrize("pyscalar", [10, 10.32, 10.14j, 10**100])
+    def test_pyscalar_subclasses(self, pyscalar):
+        """NumPy arrays are read/write which means that anything but invariant
+        behaviour is on thin ice.  However, we currently are happy to discover
+        subclasses of Python float, int, complex the same as the base classes.
+        This should potentially be deprecated.
+        """
+        class MyScalar(type(pyscalar)):
+            pass
+
+        res = np.array(MyScalar(pyscalar))
+        expected = np.array(pyscalar)
+        assert_array_equal(res, expected)
 
     @pytest.mark.parametrize("dtype_char", np.typecodes["All"])
     def test_default_dtype_instance(self, dtype_char):
@@ -340,6 +372,30 @@ class TestScalarDiscovery:
         assert discovered_dtype == dtype
         assert discovered_dtype.itemsize == dtype.itemsize
 
+    @pytest.mark.parametrize("dtype", np.typecodes["Integer"])
+    def test_scalar_to_int_coerce_does_not_cast(self, dtype):
+        """
+        Signed integers are currently different in that they do not cast other
+        NumPy scalar, but instead use scalar.__int__(). The hardcoded
+        exception to this rule is `np.array(scalar, dtype=integer)`.
+        """
+        dtype = np.dtype(dtype)
+        invalid_int = np.ulonglong(-1)
+
+        float_nan = np.float64(np.nan)
+
+        for scalar in [float_nan, invalid_int]:
+            # This is a special case using casting logic and thus not failing:
+            coerced = np.array(scalar, dtype=dtype)
+            cast = np.array(scalar).astype(dtype)
+            assert_array_equal(coerced, cast)
+
+            # However these fail:
+            with pytest.raises((ValueError, OverflowError)):
+                np.array([scalar], dtype=dtype)
+            with pytest.raises((ValueError, OverflowError)):
+                cast[()] = scalar
+
 
 class TestTimeScalars:
     @pytest.mark.parametrize("dtype", [np.int64, np.float32])
@@ -349,13 +405,21 @@ class TestTimeScalars:
              param(np.datetime64("NaT", "generic"), id="datetime64[generic](NaT)"),
              param(np.datetime64(1, "D"), id="datetime64[D]")],)
     def test_coercion_basic(self, dtype, scalar):
+        # Note the `[scalar]` is there because np.array(scalar) uses stricter
+        # `scalar.__int__()` rules for backward compatibility right now.
         arr = np.array(scalar, dtype=dtype)
         cast = np.array(scalar).astype(dtype)
-        ass = np.ones((), dtype=dtype)
-        ass[()] = scalar  # raises, as would np.array([scalar], dtype=dtype)
-
         assert_array_equal(arr, cast)
-        assert_array_equal(cast, cast)
+
+        ass = np.ones((), dtype=dtype)
+        if issubclass(dtype, np.integer):
+            with pytest.raises(TypeError):
+                # raises, as would np.array([scalar], dtype=dtype), this is
+                # conversion from times, but behaviour of integers.
+                ass[()] = scalar
+        else:
+            ass[()] = scalar
+            assert_array_equal(ass, cast)
 
     @pytest.mark.parametrize("dtype", [np.int64, np.float32])
     @pytest.mark.parametrize("scalar",
@@ -380,7 +444,7 @@ class TestTimeScalars:
         # never use casting.  This is because casting will error in this
         # case, and traditionally in most cases the behaviour is maintained
         # like this.  (`np.array(scalar, dtype="U6")` would have failed before)
-        # TODO: This discrepency _should_ be resolved, either by relaxing the
+        # TODO: This discrepancy _should_ be resolved, either by relaxing the
         #       cast, or by deprecating the first part.
         scalar = np.datetime64(val, unit)
         dtype = np.dtype(dtype)
@@ -650,3 +714,54 @@ class TestArrayLikes:
                 np.array(arr)
             with pytest.raises(MemoryError):
                 np.array([arr])
+
+    @pytest.mark.parametrize("attribute",
+        ["__array_interface__", "__array__", "__array_struct__"])
+    @pytest.mark.parametrize("error", [RecursionError, MemoryError])
+    def test_bad_array_like_attributes(self, attribute, error):
+        # RecursionError and MemoryError are considered fatal. All errors
+        # (except AttributeError) should probably be raised in the future,
+        # but shapely made use of it, so it will require a deprecation.
+
+        class BadInterface:
+            def __getattr__(self, attr):
+                if attr == attribute:
+                    raise error
+                super().__getattr__(attr)
+
+        with pytest.raises(error):
+            np.array(BadInterface())
+
+    @pytest.mark.parametrize("error", [RecursionError, MemoryError])
+    def test_bad_array_like_bad_length(self, error):
+        # RecursionError and MemoryError are considered "critical" in
+        # sequences. We could expand this more generally though. (NumPy 1.20)
+        class BadSequence:
+            def __len__(self):
+                raise error
+            def __getitem__(self):
+                # must have getitem to be a Sequence
+                return 1
+
+        with pytest.raises(error):
+            np.array(BadSequence())
+
+
+class TestSpecialAttributeLookupFailure:
+    # An exception was raised while fetching the attribute
+
+    class WeirdArrayLike:
+        @property
+        def __array__(self):
+            raise RuntimeError("oops!")
+
+    class WeirdArrayInterface:
+        @property
+        def __array_interface__(self):
+            raise RuntimeError("oops!")
+
+    def test_deprecated(self):
+        with pytest.raises(RuntimeError):
+            np.array(self.WeirdArrayLike())
+        with pytest.raises(RuntimeError):
+            np.array(self.WeirdArrayInterface())

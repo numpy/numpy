@@ -4,22 +4,6 @@
 Contributing to NumPy
 #####################
 
-.. TODO: this is hidden because there's a bug in the pydata theme that won't render TOC items under headers
-
-.. toctree::
-   :hidden:
-
-   conduct/code_of_conduct
-   Git Basics <gitwash/index>
-   development_environment
-   development_workflow
-   ../benchmarking
-   style_guide
-   releasing
-   governance/index
-   howto-docs
-
-
 Not a coder? Not a problem! NumPy is multi-faceted, and we can use a lot of help.
 These are all activities we'd like to get help with (they're all important, so
 we list them in alphabetical order):
@@ -78,8 +62,8 @@ Here's the short summary, complete TOC links are below:
 
    * Pull the latest changes from upstream::
 
-      git checkout master
-      git pull upstream master
+      git checkout main
+      git pull upstream main
 
    * Create a branch for the feature you want to work on. Since the
      branch name will appear in the merge message, use a sensible name
@@ -123,7 +107,8 @@ Here's the short summary, complete TOC links are below:
      overall code quality benefits.  Therefore, please don't let the review
      discourage you from contributing: its only aim is to improve the quality
      of project, not to criticize (we are, after all, very grateful for the
-     time you're donating!).
+     time you're donating!). See our :ref:`Reviewer Guidelines
+     <reviewer-guidelines>` for more information.
 
    * To update your PR, make your changes on your local repository, commit,
      **run tests, and only if they succeed** push to your fork. As soon as
@@ -172,13 +157,15 @@ Here's the short summary, complete TOC links are below:
 For a more detailed discussion, read on and follow the links at the bottom of
 this page.
 
-Divergence between ``upstream/master`` and your feature branch
---------------------------------------------------------------
+Divergence between ``upstream/main`` and your feature branch
+------------------------------------------------------------
 
 If GitHub indicates that the branch of your Pull Request can no longer
 be merged automatically, you have to incorporate changes that have been made
 since you started into your branch. Our recommended way to do this is to
-:ref:`rebase on master<rebasing-on-master>`.
+:ref:`rebase on main <rebasing-on-main>`.
+
+.. _guidelines:
 
 Guidelines
 ----------
@@ -187,9 +174,11 @@ Guidelines
 * All code should be `documented <https://numpydoc.readthedocs.io/
   en/latest/format.html#docstring-standard>`_.
 * No changes are ever committed without review and approval by a core
-  team member.Please ask politely on the PR or on the `mailing list`_ if you
+  team member. Please ask politely on the PR or on the `mailing list`_ if you
   get no response to your pull request within a week.
 
+.. _stylistic-guidelines:
+  
 Stylistic Guidelines
 --------------------
 
@@ -197,7 +186,7 @@ Stylistic Guidelines
   pep-0008/>`_ (remove trailing white space, no tabs, etc.).  Check code with
   pyflakes / flake8.
 
-* Use numpy data types instead of strings (``np.uint8`` instead of
+* Use NumPy data types instead of strings (``np.uint8`` instead of
   ``"uint8"``).
 
 * Use the following import conventions::
@@ -234,46 +223,18 @@ This will create a report in ``build/coverage``, which can be viewed with::
 
   $ firefox build/coverage/index.html
 
+.. _building-docs:
+
 Building docs
 -------------
 
 To build docs, run ``make`` from the ``doc`` directory. ``make help`` lists
-all targets. For example, to build the HTML documentation, you can run:
-
-.. code:: sh
+all targets. For example, to build the HTML documentation, you can run::
 
     make html
 
-Then, all the HTML files will be generated in ``doc/build/html/``.
-Since the documentation is based on docstrings, the appropriate version of
-numpy must be installed in the host python used to run sphinx.
-
-Requirements
-~~~~~~~~~~~~
-
-`Sphinx <http://www.sphinx-doc.org/en/stable/>`__ is needed to build
-the documentation. Matplotlib, SciPy, and IPython are also required.
-
-These additional dependencies for building the documentation are listed in
-``doc_requirements.txt`` and can be conveniently installed with::
-
-    pip install -r doc_requirements.txt
-
-The numpy documentation also depends on the
-`numpydoc <https://numpydoc.readthedocs.io/en/latest/>`__ sphinx extension
-as well as an external sphinx theme.
-These extensions are included as git submodules and must be initialized
-before building the docs.
-From the ``doc/`` directory:
-
-.. code:: sh
-
-    git submodule update --init
-
-The documentation includes mathematical formulae with LaTeX formatting.
-A working LaTeX document production system
-(e.g. `texlive <https://www.tug.org/texlive/>`__) is required for the
-proper rendering of the LaTeX math in the documentation.
+To get the appropriate dependencies and other requirements,
+see :ref:`howto-build-docs`.
 
 Fixing Warnings
 ~~~~~~~~~~~~~~~
@@ -293,12 +254,15 @@ The rest of the story
 .. toctree::
    :maxdepth: 2
 
-   conduct/code_of_conduct
    Git Basics <gitwash/index>
    development_environment
+   development_gitpod
+   howto_build_docs
    development_workflow
+   development_advanced_debugging
+   reviewer_guidelines
    ../benchmarking
-   style_guide
+   NumPy C style guide <https://numpy.org/neps/nep-0045-c_style_guide.html>
    releasing
    governance/index
    howto-docs

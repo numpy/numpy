@@ -1,9 +1,10 @@
-#define PY_SSIZE_T_CLEAN
-#include <Python.h>
-#include "structmember.h"
-
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
+
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+#include <structmember.h>
+
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
 
@@ -27,7 +28,7 @@
 #include "alloc.h"
 #include "arraytypes.h"
 #include "array_coercion.h"
-
+#include "simd/simd.h"
 
 static NPY_GCC_OPT_3 NPY_INLINE int
 npy_fasttake_impl(
@@ -576,6 +577,10 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
         return NULL;
     }
 
+    if (PyArray_FailUnlessWriteable(self, "putmask: output array") < 0) {
+        return NULL;
+    }
+
     mask = (PyArrayObject *)PyArray_FROM_OTF(mask0, NPY_BOOL,
                                 NPY_ARRAY_CARRAY | NPY_ARRAY_FORCECAST);
     if (mask == NULL) {
@@ -771,6 +776,7 @@ PyArray_Repeat(PyArrayObject *aop, PyObject *op, int axis)
     return NULL;
 }
 
+
 /*NUMPY_API
  */
 NPY_NO_EXPORT PyObject *
@@ -902,7 +908,7 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
         Py_XDECREF(mps[i]);
     }
     Py_DECREF(ap);
-    npy_free_cache(mps, n * sizeof(mps[0]));
+    PyDataMem_FREE(mps);
     if (out != NULL && out != obj) {
         Py_INCREF(out);
         PyArray_ResolveWritebackIfCopy(obj);
@@ -917,7 +923,7 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
         Py_XDECREF(mps[i]);
     }
     Py_XDECREF(ap);
-    npy_free_cache(mps, n * sizeof(mps[0]));
+    PyDataMem_FREE(mps);
     PyArray_DiscardWritebackIfCopy(obj);
     Py_XDECREF(obj);
     return NULL;
@@ -957,14 +963,19 @@ _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
         return 0;
     }
 
+    PyObject *mem_handler = PyDataMem_GetHandler();
+    if (mem_handler == NULL) {
+        return -1;
+    }
     it = (PyArrayIterObject *)PyArray_IterAllButAxis((PyObject *)op, &axis);
     if (it == NULL) {
+        Py_DECREF(mem_handler);
         return -1;
     }
     size = it->size;
 
     if (needcopy) {
-        buffer = npy_alloc_cache(N * elsize);
+        buffer = PyDataMem_UserNEW(N * elsize, mem_handler);
         if (buffer == NULL) {
             ret = -1;
             goto fail;
@@ -1048,12 +1059,14 @@ _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
 
 fail:
     NPY_END_THREADS_DESCR(PyArray_DESCR(op));
-    npy_free_cache(buffer, N * elsize);
+    /* cleanup internal buffer */
+    PyDataMem_UserFREE(buffer, N * elsize, mem_handler);
     if (ret < 0 && !PyErr_Occurred()) {
         /* Out of memory during sorting or buffer creation */
         PyErr_NoMemory();
     }
     Py_DECREF(it);
+    Py_DECREF(mem_handler);
 
     return ret;
 }
@@ -1085,11 +1098,16 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
 
     NPY_BEGIN_THREADS_DEF;
 
+    PyObject *mem_handler = PyDataMem_GetHandler();
+    if (mem_handler == NULL) {
+        return NULL;
+    }
     rop = (PyArrayObject *)PyArray_NewFromDescr(
             Py_TYPE(op), PyArray_DescrFromType(NPY_INTP),
             PyArray_NDIM(op), PyArray_DIMS(op), NULL, NULL,
             0, (PyObject *)op);
     if (rop == NULL) {
+        Py_DECREF(mem_handler);
         return NULL;
     }
     rstride = PyArray_STRIDE(rop, axis);
@@ -1097,6 +1115,7 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
 
     /* Check if there is any argsorting to do */
     if (N <= 1 || PyArray_SIZE(op) == 0) {
+        Py_DECREF(mem_handler);
         memset(PyArray_DATA(rop), 0, PyArray_NBYTES(rop));
         return (PyObject *)rop;
     }
@@ -1110,7 +1129,7 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
     size = it->size;
 
     if (needcopy) {
-        valbuffer = npy_alloc_cache(N * elsize);
+        valbuffer = PyDataMem_UserNEW(N * elsize, mem_handler);
         if (valbuffer == NULL) {
             ret = -1;
             goto fail;
@@ -1118,7 +1137,8 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
     }
 
     if (needidxbuffer) {
-        idxbuffer = (npy_intp *)npy_alloc_cache(N * sizeof(npy_intp));
+        idxbuffer = (npy_intp *)PyDataMem_UserNEW(N * sizeof(npy_intp),
+                                                  mem_handler);
         if (idxbuffer == NULL) {
             ret = -1;
             goto fail;
@@ -1207,8 +1227,9 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
 
 fail:
     NPY_END_THREADS_DESCR(PyArray_DESCR(op));
-    npy_free_cache(valbuffer, N * elsize);
-    npy_free_cache(idxbuffer, N * sizeof(npy_intp));
+    /* cleanup internal buffers */
+    PyDataMem_UserFREE(valbuffer, N * elsize, mem_handler);
+    PyDataMem_UserFREE(idxbuffer, N * sizeof(npy_intp), mem_handler);
     if (ret < 0) {
         if (!PyErr_Occurred()) {
             /* Out of memory during sorting or buffer creation */
@@ -1219,6 +1240,7 @@ fail:
     }
     Py_XDECREF(it);
     Py_XDECREF(rit);
+    Py_DECREF(mem_handler);
 
     return (PyObject *)rop;
 }
@@ -1287,7 +1309,15 @@ partition_prep_kth_array(PyArrayObject * ktharray,
     npy_intp * kth;
     npy_intp nkth, i;
 
-    if (!PyArray_CanCastSafely(PyArray_TYPE(ktharray), NPY_INTP)) {
+    if (PyArray_ISBOOL(ktharray)) {
+        /* 2021-09-29, NumPy 1.22 */
+        if (DEPRECATE(
+                "Passing booleans as partition index is deprecated"
+                " (warning added in NumPy 1.22)") < 0) {
+            return NULL;
+        }
+    }
+    else if (!PyArray_ISINTEGER(ktharray)) {
         PyErr_Format(PyExc_TypeError, "Partition index must be integer");
         return NULL;
     }
@@ -2124,22 +2154,199 @@ count_nonzero_bytes_384(const npy_uint64 * w)
     return r;
 }
 
+#if NPY_SIMD
+/* Count the zero bytes between `*d` and `end`, updating `*d` to point to where to keep counting from. */
+NPY_FINLINE NPY_GCC_OPT_3 npyv_u8
+count_zero_bytes_u8(const npy_uint8 **d, const npy_uint8 *end, npy_uint8 max_count)
+{
+    const npyv_u8 vone = npyv_setall_u8(1);
+    const npyv_u8 vzero = npyv_zero_u8();
+
+    npy_intp lane_max = 0;
+    npyv_u8 vsum8 = npyv_zero_u8();
+    while (*d < end && lane_max <= max_count - 1) {
+        // we count zeros because `cmpeq` cheaper than `cmpneq` for most archs
+        npyv_u8 vt = npyv_cvt_u8_b8(npyv_cmpeq_u8(npyv_load_u8(*d), vzero));
+        vt = npyv_and_u8(vt, vone);
+        vsum8 = npyv_add_u8(vsum8, vt);
+        *d += npyv_nlanes_u8;
+        lane_max += 1;
+    }
+    return vsum8;
+}
+
+NPY_FINLINE NPY_GCC_OPT_3 npyv_u16x2
+count_zero_bytes_u16(const npy_uint8 **d, const npy_uint8 *end, npy_uint16 max_count)
+{
+    npyv_u16x2 vsum16;
+    vsum16.val[0] = vsum16.val[1] = npyv_zero_u16();
+    npy_intp lane_max = 0;
+    while (*d < end && lane_max <= max_count - NPY_MAX_UINT8) {
+        npyv_u8 vsum8 = count_zero_bytes_u8(d, end, NPY_MAX_UINT8);
+        npyv_u16x2 part = npyv_expand_u16_u8(vsum8);
+        vsum16.val[0] = npyv_add_u16(vsum16.val[0], part.val[0]);
+        vsum16.val[1] = npyv_add_u16(vsum16.val[1], part.val[1]);
+        lane_max += NPY_MAX_UINT8;
+    }
+    return vsum16;
+}
+#endif // NPY_SIMD
+/*
+ * Counts the number of non-zero values in a raw array.
+ * The one loop process is shown below(take SSE2 with 128bits vector for example):
+ *          |------------16 lanes---------|
+ *[vsum8]   255 255 255 ... 255 255 255 255 count_zero_bytes_u8: counting 255*16 elements
+ *                          !!
+ *           |------------8 lanes---------|
+ *[vsum16]   65535 65535 65535 ...   65535  count_zero_bytes_u16: counting (2*16-1)*16 elements
+ *           65535 65535 65535 ...   65535
+ *                          !!
+ *           |------------4 lanes---------|
+ *[sum_32_0] 65535    65535   65535   65535  count_nonzero_bytes
+ *           65535    65535   65535   65535
+ *[sum_32_1] 65535    65535   65535   65535
+ *           65535    65535   65535   65535
+ *                          !!
+ *                     (2*16-1)*16
+*/
+static NPY_INLINE NPY_GCC_OPT_3 npy_intp
+count_nonzero_u8(const char *data, npy_intp bstride, npy_uintp len)
+{
+    npy_intp count = 0;
+    if (bstride == 1) {
+    #if NPY_SIMD
+        npy_uintp len_m = len & -npyv_nlanes_u8;
+        npy_uintp zcount = 0;
+        for (const char *end = data + len_m; data < end;) {
+            npyv_u16x2 vsum16 = count_zero_bytes_u16((const npy_uint8**)&data, (const npy_uint8*)end, NPY_MAX_UINT16);
+            npyv_u32x2 sum_32_0 = npyv_expand_u32_u16(vsum16.val[0]);
+            npyv_u32x2 sum_32_1 = npyv_expand_u32_u16(vsum16.val[1]);
+            zcount += npyv_sum_u32(npyv_add_u32(
+                    npyv_add_u32(sum_32_0.val[0], sum_32_0.val[1]),
+                    npyv_add_u32(sum_32_1.val[0], sum_32_1.val[1])
+            ));
+        }
+        len  -= len_m;
+        count = len_m - zcount;
+    #else
+        if (!NPY_ALIGNMENT_REQUIRED || npy_is_aligned(data, sizeof(npy_uint64))) {
+            int step = 6 * sizeof(npy_uint64);
+            int left_bytes = len % step;
+            for (const char *end = data + len; data < end - left_bytes; data += step) {
+                 count += count_nonzero_bytes_384((const npy_uint64 *)data);
+            }
+            len = left_bytes;
+        }
+    #endif // NPY_SIMD
+    }
+    for (; len > 0; --len, data += bstride) {
+        count += (*data != 0);
+    }
+    return count;
+}
+
+static NPY_INLINE NPY_GCC_OPT_3 npy_intp
+count_nonzero_u16(const char *data, npy_intp bstride, npy_uintp len)
+{
+    npy_intp count = 0;
+#if NPY_SIMD
+    if (bstride == sizeof(npy_uint16)) {
+        npy_uintp zcount = 0, len_m = len & -npyv_nlanes_u16;
+        const npyv_u16 vone  = npyv_setall_u16(1);
+        const npyv_u16 vzero = npyv_zero_u16();
+
+        for (npy_uintp lenx = len_m; lenx > 0;) {
+            npyv_u16 vsum16 = npyv_zero_u16();
+            npy_uintp max16 = PyArray_MIN(lenx, NPY_MAX_UINT16*npyv_nlanes_u16);
+
+            for (const char *end = data + max16*bstride; data < end; data += NPY_SIMD_WIDTH) {
+                npyv_u16 mask = npyv_cvt_u16_b16(npyv_cmpeq_u16(npyv_load_u16((npy_uint16*)data), vzero));
+                         mask = npyv_and_u16(mask, vone);
+                       vsum16 = npyv_add_u16(vsum16, mask);
+            }
+            lenx   -= max16;
+            zcount += npyv_sumup_u16(vsum16);
+        }
+        len  -= len_m;
+        count = len_m - zcount;
+    }
+#endif
+    for (; len > 0; --len, data += bstride) {
+        count += (*(npy_uint16*)data != 0);
+    }
+    return count;
+}
+
+static NPY_INLINE NPY_GCC_OPT_3 npy_intp
+count_nonzero_u32(const char *data, npy_intp bstride, npy_uintp len)
+{
+    npy_intp count = 0;
+#if NPY_SIMD
+    if (bstride == sizeof(npy_uint32)) {
+        const npy_uintp max_iter = NPY_MAX_UINT32*npyv_nlanes_u32;
+        const npy_uintp len_m = (len > max_iter ? max_iter : len) & -npyv_nlanes_u32;
+        const npyv_u32 vone   = npyv_setall_u32(1);
+        const npyv_u32 vzero  = npyv_zero_u32();
+
+        npyv_u32 vsum32 = npyv_zero_u32();
+        for (const char *end = data + len_m*bstride; data < end; data += NPY_SIMD_WIDTH) {
+            npyv_u32 mask = npyv_cvt_u32_b32(npyv_cmpeq_u32(npyv_load_u32((npy_uint32*)data), vzero));
+                     mask = npyv_and_u32(mask, vone);
+                   vsum32 = npyv_add_u32(vsum32, mask);
+        }
+        const npyv_u32 maskevn = npyv_reinterpret_u32_u64(npyv_setall_u64(0xffffffffULL));
+        npyv_u64 odd  = npyv_shri_u64(npyv_reinterpret_u64_u32(vsum32), 32);
+        npyv_u64 even = npyv_reinterpret_u64_u32(npyv_and_u32(vsum32, maskevn));
+        count = len_m - npyv_sum_u64(npyv_add_u64(odd, even));
+        len  -= len_m;
+    }
+#endif
+    for (; len > 0; --len, data += bstride) {
+        count += (*(npy_uint32*)data != 0);
+    }
+    return count;
+}
+
+static NPY_INLINE NPY_GCC_OPT_3 npy_intp
+count_nonzero_u64(const char *data, npy_intp bstride, npy_uintp len)
+{
+    npy_intp count = 0;
+#if NPY_SIMD
+    if (bstride == sizeof(npy_uint64)) {
+        const npy_uintp len_m = len & -npyv_nlanes_u64;
+        const npyv_u64 vone   = npyv_setall_u64(1);
+        const npyv_u64 vzero  = npyv_zero_u64();
+
+        npyv_u64 vsum64 = npyv_zero_u64();
+        for (const char *end = data + len_m*bstride; data < end; data += NPY_SIMD_WIDTH) {
+            npyv_u64 mask = npyv_cvt_u64_b64(npyv_cmpeq_u64(npyv_load_u64((npy_uint64*)data), vzero));
+                     mask = npyv_and_u64(mask, vone);
+                   vsum64 = npyv_add_u64(vsum64, mask);
+        }
+        len  -= len_m;
+        count = len_m - npyv_sum_u64(vsum64);
+    }
+#endif
+    for (; len > 0; --len, data += bstride) {
+        count += (*(npy_uint64*)data != 0);
+    }
+    return count;
+}
 /*
  * Counts the number of True values in a raw boolean array. This
  * is a low-overhead function which does no heap allocations.
  *
  * Returns -1 on error.
  */
-NPY_NO_EXPORT npy_intp
-count_boolean_trues(int ndim, char *data, npy_intp const *ashape, npy_intp const *astrides)
+static NPY_GCC_OPT_3 npy_intp
+count_nonzero_int(int ndim, char *data, const npy_intp *ashape, const npy_intp *astrides, int elsize)
 {
+    assert(elsize <= 8);
     int idim;
     npy_intp shape[NPY_MAXDIMS], strides[NPY_MAXDIMS];
-    npy_intp i, coord[NPY_MAXDIMS];
-    npy_intp count = 0;
-    NPY_BEGIN_THREADS_DEF;
+    npy_intp coord[NPY_MAXDIMS];
 
-    /* Use raw iteration with no heap memory allocation */
+    // Use raw iteration with no heap memory allocation
     if (PyArray_PrepareOneRawArrayIter(
                     ndim, ashape,
                     data, astrides,
@@ -2148,45 +2355,43 @@ count_boolean_trues(int ndim, char *data, npy_intp const *ashape, npy_intp const
         return -1;
     }
 
-    /* Handle zero-sized array */
+    // Handle zero-sized array
     if (shape[0] == 0) {
         return 0;
     }
 
+    NPY_BEGIN_THREADS_DEF;
     NPY_BEGIN_THREADS_THRESHOLDED(shape[0]);
 
-    /* Special case for contiguous inner loop */
-    if (strides[0] == 1) {
-        NPY_RAW_ITER_START(idim, ndim, coord, shape) {
-            /* Process the innermost dimension */
-            const char *d = data;
-            const char *e = data + shape[0];
-            if (NPY_CPU_HAVE_UNALIGNED_ACCESS ||
-                    npy_is_aligned(d, sizeof(npy_uint64))) {
-                npy_uintp stride = 6 * sizeof(npy_uint64);
-                for (; d < e - (shape[0] % stride); d += stride) {
-                    count += count_nonzero_bytes_384((const npy_uint64 *)d);
-                }
-            }
-            for (; d < e; ++d) {
-                count += (*d != 0);
-            }
-        } NPY_RAW_ITER_ONE_NEXT(idim, ndim, coord, shape, data, strides);
+    #define NONZERO_CASE(LEN, SFX) \
+        case LEN: \
+            NPY_RAW_ITER_START(idim, ndim, coord, shape) { \
+                count += count_nonzero_##SFX(data, strides[0], shape[0]); \
+            } NPY_RAW_ITER_ONE_NEXT(idim, ndim, coord, shape, data, strides); \
+            break
+
+    npy_intp count = 0;
+    switch(elsize) {
+        NONZERO_CASE(1, u8);
+        NONZERO_CASE(2, u16);
+        NONZERO_CASE(4, u32);
+        NONZERO_CASE(8, u64);
     }
-    /* General inner loop */
-    else {
-        NPY_RAW_ITER_START(idim, ndim, coord, shape) {
-            char *d = data;
-            /* Process the innermost dimension */
-            for (i = 0; i < shape[0]; ++i, d += strides[0]) {
-                count += (*d != 0);
-            }
-        } NPY_RAW_ITER_ONE_NEXT(idim, ndim, coord, shape, data, strides);
-    }
+    #undef NONZERO_CASE
 
     NPY_END_THREADS;
-
     return count;
+}
+/*
+ * Counts the number of True values in a raw boolean array. This
+ * is a low-overhead function which does no heap allocations.
+ *
+ * Returns -1 on error.
+ */
+NPY_NO_EXPORT NPY_GCC_OPT_3 npy_intp
+count_boolean_trues(int ndim, char *data, npy_intp const *ashape, npy_intp const *astrides)
+{
+    return count_nonzero_int(ndim, data, ashape, astrides, 1);
 }
 
 /*NUMPY_API
@@ -2210,14 +2415,17 @@ PyArray_CountNonzero(PyArrayObject *self)
     npy_intp *strideptr, *innersizeptr;
     NPY_BEGIN_THREADS_DEF;
 
-    /* Special low-overhead version specific to the boolean type */
     dtype = PyArray_DESCR(self);
-    if (dtype->type_num == NPY_BOOL) {
-        return count_boolean_trues(PyArray_NDIM(self), PyArray_DATA(self),
-                        PyArray_DIMS(self), PyArray_STRIDES(self));
+    /* Special low-overhead version specific to the boolean/int types */
+    if (PyArray_ISALIGNED(self) && (
+            PyDataType_ISBOOL(dtype) || PyDataType_ISINTEGER(dtype))) {
+        return count_nonzero_int(
+            PyArray_NDIM(self), PyArray_BYTES(self), PyArray_DIMS(self),
+            PyArray_STRIDES(self), dtype->elsize
+        );
     }
-    nonzero = PyArray_DESCR(self)->f->nonzero;
 
+    nonzero = PyArray_DESCR(self)->f->nonzero;
     /* If it's a trivial one-dimensional loop, don't use an iterator */
     if (PyArray_TRIVIALLY_ITERABLE(self)) {
         needs_api = PyDataType_FLAGCHK(dtype, NPY_NEEDS_PYAPI);

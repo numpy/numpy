@@ -188,6 +188,8 @@ Info are easily retrieved from the `get_info` function in
 
   >>> info = np.distutils.misc_util.get_info('npymath')
   >>> config.add_extension('foo', sources=['foo.c'], extra_info=info)
+  <numpy.distutils.extension.Extension('foo') at 0x...>
+
 
 An additional list of paths to look for .ini files can be given to `get_info`.
 

@@ -7,8 +7,8 @@ Array creation routines
 
 .. currentmodule:: numpy
 
-Ones and zeros
---------------
+From shape or value
+-------------------
 .. autosummary::
    :toctree: generated/
 

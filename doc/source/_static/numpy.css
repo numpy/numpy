@@ -18,14 +18,8 @@ pre, code {
 }
 
 h1 {
-  font-style: "Lato", sans-serif;
+  font-family: "Lato", sans-serif;
   color: #013243; /* warm black */
-  font-weight: 700;
-  letter-spacing: -.04em;
-  text-align: right;
-  margin-top: 3rem;
-  margin-bottom: 4rem;
-  font-size: 3rem;
 }
 
 

@@ -784,7 +784,8 @@ def repack_fields(a, align=False, recurse=False):
 
     This method removes any overlaps and reorders the fields in memory so they
     have increasing byte offsets, and adds or removes padding bytes depending
-    on the `align` option, which behaves like the `align` option to `np.dtype`.
+    on the `align` option, which behaves like the `align` option to
+    `numpy.dtype`.
 
     If `align=False`, this method produces a "packed" memory layout in which
     each field starts at the byte the previous field ended, and any padding
@@ -819,7 +820,8 @@ def repack_fields(a, align=False, recurse=False):
     ...
     >>> dt = np.dtype('u1, <i8, <f8', align=True)
     >>> dt
-    dtype({'names':['f0','f1','f2'], 'formats':['u1','<i8','<f8'], 'offsets':[0,8,16], 'itemsize':24}, align=True)
+    dtype({'names': ['f0', 'f1', 'f2'], 'formats': ['u1', '<i8', '<f8'], \
+'offsets': [0, 8, 16], 'itemsize': 24}, align=True)
     >>> print_offsets(dt)
     offsets: [0, 8, 16]
     itemsize: 24
@@ -916,11 +918,12 @@ def structured_to_unstructured(arr, dtype=None, copy=False, casting='unsafe'):
     dtype : dtype, optional
        The dtype of the output unstructured array.
     copy : bool, optional
-        See copy argument to `ndarray.astype`. If true, always return a copy.
-        If false, and `dtype` requirements are satisfied, a view is returned.
+        See copy argument to `numpy.ndarray.astype`. If true, always return a
+        copy. If false, and `dtype` requirements are satisfied, a view is
+        returned.
     casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
-        See casting argument of `ndarray.astype`. Controls what kind of data
-        casting may occur.
+        See casting argument of `numpy.ndarray.astype`. Controls what kind of
+        data casting may occur.
 
     Returns
     -------
@@ -1019,11 +1022,12 @@ def unstructured_to_structured(arr, dtype=None, names=None, align=False,
     align : boolean, optional
        Whether to create an aligned memory layout.
     copy : bool, optional
-        See copy argument to `ndarray.astype`. If true, always return a copy.
-        If false, and `dtype` requirements are satisfied, a view is returned.
+        See copy argument to `numpy.ndarray.astype`. If true, always return a
+        copy. If false, and `dtype` requirements are satisfied, a view is
+        returned.
     casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
-        See casting argument of `ndarray.astype`. Controls what kind of data
-        casting may occur.
+        See casting argument of `numpy.ndarray.astype`. Controls what kind of
+        data casting may occur.
 
     Returns
     -------

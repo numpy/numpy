@@ -18,21 +18,33 @@
 #define npyv_zero_f64 _mm_setzero_pd
 
 // vector with a specific value set to all lanes
-#define npyv_setall_u8(VAL)  _mm_set1_epi8((char)VAL)
-#define npyv_setall_s8(VAL)  _mm_set1_epi8((char)VAL)
-#define npyv_setall_u16(VAL) _mm_set1_epi16((short)VAL)
-#define npyv_setall_s16(VAL) _mm_set1_epi16((short)VAL)
-#define npyv_setall_u32(VAL) _mm_set1_epi32((int)VAL)
-#define npyv_setall_s32(VAL) _mm_set1_epi32(VAL)
-#if !defined(__x86_64__) && !defined(_M_X64)
-    #define npyv_setall_u64(VAL) _mm_set_epi32((int)(VAL >> 32), (int)VAL, (int)(VAL >> 32), (int)VAL)
-    #define npyv_setall_s64 npyv_setall_u64
+#define npyv_setall_u8(VAL)  _mm_set1_epi8((char)(VAL))
+#define npyv_setall_s8(VAL)  _mm_set1_epi8((char)(VAL))
+#define npyv_setall_u16(VAL) _mm_set1_epi16((short)(VAL))
+#define npyv_setall_s16(VAL) _mm_set1_epi16((short)(VAL))
+#define npyv_setall_u32(VAL) _mm_set1_epi32((int)(VAL))
+#define npyv_setall_s32(VAL) _mm_set1_epi32((int)(VAL))
+#define npyv_setall_f32 _mm_set1_ps
+#define npyv_setall_f64 _mm_set1_pd
+
+NPY_FINLINE __m128i npyv__setr_epi64(npy_int64 i0, npy_int64 i1);
+
+NPY_FINLINE npyv_u64 npyv_setall_u64(npy_uint64 a)
+{
+#if defined(_MSC_VER) && defined(_M_IX86)
+    return npyv__setr_epi64((npy_int64)a, (npy_int64)a);
 #else
-    #define npyv_setall_u64(VAL) _mm_set1_epi64x(VAL)
-    #define npyv_setall_s64(VAL) _mm_set1_epi64x(VAL)
+    return _mm_set1_epi64x((npy_int64)a);
 #endif
-#define npyv_setall_f32(VAL) _mm_set1_ps(VAL)
-#define npyv_setall_f64(VAL) _mm_set1_pd(VAL)
+}
+NPY_FINLINE npyv_s64 npyv_setall_s64(npy_int64 a)
+{
+#if defined(_MSC_VER) && defined(_M_IX86)
+    return npyv__setr_epi64(a, a);
+#else
+    return _mm_set1_epi64x((npy_int64)a);
+#endif
+}
 
 /**
  * vector with specific values set to each lane and
@@ -58,7 +70,11 @@ NPY_FINLINE __m128i npyv__setr_epi32(int i0, int i1, int i2, int i3)
 }
 NPY_FINLINE __m128i npyv__setr_epi64(npy_int64 i0, npy_int64 i1)
 {
+#if defined(_MSC_VER) && defined(_M_IX86)
+    return _mm_setr_epi32((int)i0, (int)(i0 >> 32), (int)i1, (int)(i1 >> 32));
+#else
     return _mm_set_epi64x(i1, i0);
+#endif
 }
 NPY_FINLINE __m128 npyv__setr_ps(float i0, float i1, float i2, float i3)
 {

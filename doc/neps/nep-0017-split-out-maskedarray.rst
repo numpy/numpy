@@ -1,7 +1,7 @@
 .. _NEP17:
 
 ================================
-NEP 17 — Split Out Masked Arrays
+NEP 17 — Split out masked arrays
 ================================
 
 :Author: Stéfan van der Walt <stefanv@berkeley.edu>
@@ -123,7 +123,7 @@ References and Footnotes
 
 .. [1] Subclassing ndarray,
        https://docs.scipy.org/doc/numpy/user/basics.subclassing.html
-.. [2] PyPi: maskedarray, https://pypi.org/project/maskedarray/
+.. [2] PyPI: maskedarray, https://pypi.org/project/maskedarray/
 
 Copyright
 ---------

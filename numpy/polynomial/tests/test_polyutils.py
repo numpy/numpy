@@ -40,6 +40,21 @@ class TestMisc:
         assert_equal(pu.trimcoef(coef, 1), coef[:-3])
         assert_equal(pu.trimcoef(coef, 2), [0])
 
+    def test_vander_nd_exception(self):
+        # n_dims != len(points)
+        assert_raises(ValueError, pu._vander_nd, (), (1, 2, 3), [90])
+        # n_dims != len(degrees)
+        assert_raises(ValueError, pu._vander_nd, (), (), [90.65])
+        # n_dims == 0
+        assert_raises(ValueError, pu._vander_nd, (), (), [])
+
+    def test_div_zerodiv(self):
+        # c2[-1] == 0
+        assert_raises(ZeroDivisionError, pu._div, pu._div, (1, 2, 3), [0])
+
+    def test_pow_too_large(self):
+        # power > maxpower
+        assert_raises(ValueError, pu._pow, (), [1, 2, 3], 5, 4)
 
 class TestDomain:
 

@@ -70,7 +70,8 @@ static #name#_t *get_active_#name#(void) {
 
 /*typedef #rctype#(*#name#_typedef)(#optargs_td##args_td##strarglens_td##noargs#);*/
 #static# #rctype# #callbackname# (#optargs##args##strarglens##noargs#) {
-    #name#_t *cb;
+    #name#_t cb_local = { NULL, NULL, 0 };
+    #name#_t *cb = NULL;
     PyTupleObject *capi_arglist = NULL;
     PyObject *capi_return = NULL;
     PyObject *capi_tmp = NULL;
@@ -82,12 +83,17 @@ static #name#_t *get_active_#name#(void) {
 f2py_cb_start_clock();
 #endif
     cb = get_active_#name#();
+    if (cb == NULL) {
+        capi_longjmp_ok = 0;
+        cb = &cb_local;
+    }
     capi_arglist = cb->args_capi;
     CFUNCSMESS(\"cb:Call-back function #name# (maxnofargs=#maxnofargs#(-#nofoptargs#))\\n\");
     CFUNCSMESSPY(\"cb:#name#_capi=\",cb->capi);
     if (cb->capi==NULL) {
         capi_longjmp_ok = 0;
         cb->capi = PyObject_GetAttrString(#modulename#_module,\"#argname#\");
+        CFUNCSMESSPY(\"cb:#name#_capi=\",cb->capi);
     }
     if (cb->capi==NULL) {
         PyErr_SetString(#modulename#_error,\"cb: Callback #argname# not defined (as an argument or module #modulename# attribute).\\n\");
@@ -104,6 +110,7 @@ f2py_cb_start_clock();
         capi_tmp = PyObject_GetAttrString(#modulename#_module,\"#argname#_extra_args\");
         if (capi_tmp) {
             capi_arglist = (PyTupleObject *)PySequence_Tuple(capi_tmp);
+            Py_DECREF(capi_tmp);
             if (capi_arglist==NULL) {
                 PyErr_SetString(#modulename#_error,\"Failed to convert #modulename#.#argname#_extra_args to tuple.\\n\");
                 goto capi_fail;
@@ -184,7 +191,7 @@ capi_return_pt:
     'maxnofargs': '#maxnofargs#',
     'nofoptargs': '#nofoptargs#',
     'docstr': """\
-\tdef #argname#(#docsignature#): return #docreturn#\\n\\
+    def #argname#(#docsignature#): return #docreturn#\\n\\
 #docstrsigns#""",
     'latexdocstr': """
 {{}\\verb@def #argname#(#latexdocsignature#): return #docreturn#@{}}
@@ -212,10 +219,10 @@ cb_rout_rules = [
         'noargs': '',
         'setdims': '/*setdims*/',
         'docstrsigns': '', 'latexdocstrsigns': '',
-        'docstrreq': '\tRequired arguments:',
-        'docstropt': '\tOptional arguments:',
-        'docstrout': '\tReturn objects:',
-        'docstrcbs': '\tCall-back functions:',
+        'docstrreq': '    Required arguments:',
+        'docstropt': '    Optional arguments:',
+        'docstrout': '    Return objects:',
+        'docstrcbs': '    Call-back functions:',
         'docreturn': '', 'docsign': '', 'docsignopt': '',
         'latexdocstrreq': '\\noindent Required arguments:',
         'latexdocstropt': '\\noindent Optional arguments:',
@@ -299,7 +306,7 @@ return_value
                  'string.h', 'GETSCALARFROMPYTUPLE', '#ctype#'],
         '_check': iscomplexfunction
     },
-    {'docstrout': '\t\t#pydocsignout#',
+    {'docstrout': '        #pydocsignout#',
      'latexdocstrout': ['\\item[]{{}\\verb@#pydocsignout#@{}}',
                         {hasnote: '--- #note#'}],
      'docreturn': '#rname#,',
@@ -309,9 +316,9 @@ return_value
 
 cb_arg_rules = [
     {  # Doc
-        'docstropt': {l_and(isoptional, isintent_nothide): '\t\t#pydocsign#'},
-        'docstrreq': {l_and(isrequired, isintent_nothide): '\t\t#pydocsign#'},
-        'docstrout': {isintent_out: '\t\t#pydocsignout#'},
+        'docstropt': {l_and(isoptional, isintent_nothide): '        #pydocsign#'},
+        'docstrreq': {l_and(isrequired, isintent_nothide): '        #pydocsign#'},
+        'docstrout': {isintent_out: '        #pydocsignout#'},
         'latexdocstropt': {l_and(isoptional, isintent_nothide): ['\\item[]{{}\\verb@#pydocsign#@{}}',
                                                                  {hasnote: '--- #note#'}]},
         'latexdocstrreq': {l_and(isrequired, isintent_nothide): ['\\item[]{{}\\verb@#pydocsign#@{}}',
@@ -342,6 +349,7 @@ cb_arg_rules = [
             isarray: '#ctype# *',
             isstring: '#ctype#'
         },
+        'need': {l_or(isscalar, isarray, isstring): '#ctype#'},
         # untested with multiple args
         'strarglens': {isstring: ',int #varname_i#_cb_len'},
         'strarglens_td': {isstring: ',int'},  # untested with multiple args
@@ -484,7 +492,7 @@ def buildcallbacks(m):
 def buildcallback(rout, um):
     from . import capi_maps
 
-    outmess('\tConstructing call-back function "cb_%s_in_%s"\n' %
+    outmess('    Constructing call-back function "cb_%s_in_%s"\n' %
             (rout['name'], um))
     args, depargs = getargs(rout)
     capi_maps.depargs = depargs
@@ -604,6 +612,6 @@ def buildcallback(rout, um):
                                       'latexdocstr': ar['latexdocstr'],
                                       'argname': rd['argname']
                                       }
-    outmess('\t  %s\n' % (ar['docstrshort']))
+    outmess('      %s\n' % (ar['docstrshort']))
     return
 ################## Build call-back function #############

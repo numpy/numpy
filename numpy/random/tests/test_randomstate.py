@@ -26,24 +26,24 @@ INT_FUNCS = {'binomial': (100.0, 0.6),
 
 if np.iinfo(int).max < 2**32:
     # Windows and some 32-bit platforms, e.g., ARM
-    INT_FUNC_HASHES = {'binomial': '670e1c04223ffdbab27e08fbbad7bdba',
-                       'logseries': '6bd0183d2f8030c61b0d6e11aaa60caf',
-                       'geometric': '6e9df886f3e1e15a643168568d5280c0',
-                       'hypergeometric': '7964aa611b046aecd33063b90f4dec06',
-                       'multinomial': '68a0b049c16411ed0aa4aff3572431e4',
-                       'negative_binomial': 'dc265219eec62b4338d39f849cd36d09',
-                       'poisson': '7b4dce8e43552fc82701c2fa8e94dc6e',
-                       'zipf': 'fcd2a2095f34578723ac45e43aca48c5',
+    INT_FUNC_HASHES = {'binomial': '2fbead005fc63942decb5326d36a1f32fe2c9d32c904ee61e46866b88447c263',
+                       'logseries': '23ead5dcde35d4cfd4ef2c105e4c3d43304b45dc1b1444b7823b9ee4fa144ebb',
+                       'geometric': '0d764db64f5c3bad48c8c33551c13b4d07a1e7b470f77629bef6c985cac76fcf',
+                       'hypergeometric': '7b59bf2f1691626c5815cdcd9a49e1dd68697251d4521575219e4d2a1b8b2c67',
+                       'multinomial': 'd754fa5b92943a38ec07630de92362dd2e02c43577fc147417dc5b9db94ccdd3',
+                       'negative_binomial': '8eb216f7cb2a63cf55605422845caaff002fddc64a7dc8b2d45acd477a49e824',
+                       'poisson': '70c891d76104013ebd6f6bcf30d403a9074b886ff62e4e6b8eb605bf1a4673b7',
+                       'zipf': '01f074f97517cd5d21747148ac6ca4074dde7fcb7acbaec0a936606fecacd93f',
                        }
 else:
-    INT_FUNC_HASHES = {'binomial': 'b5f8dcd74f172836536deb3547257b14',
-                       'geometric': '8814571f45c87c59699d62ccd3d6c350',
-                       'hypergeometric': 'bc64ae5976eac452115a16dad2dcf642',
-                       'logseries': '84be924b37485a27c4a98797bc88a7a4',
-                       'multinomial': 'ec3c7f9cf9664044bb0c6fb106934200',
-                       'negative_binomial': '210533b2234943591364d0117a552969',
-                       'poisson': '0536a8850c79da0c78defd742dccc3e0',
-                       'zipf': 'f2841f504dd2525cd67cdcad7561e532',
+    INT_FUNC_HASHES = {'binomial': '8626dd9d052cb608e93d8868de0a7b347258b199493871a1dc56e2a26cacb112',
+                       'geometric': '8edd53d272e49c4fc8fbbe6c7d08d563d62e482921f3131d0a0e068af30f0db9',
+                       'hypergeometric': '83496cc4281c77b786c9b7ad88b74d42e01603a55c60577ebab81c3ba8d45657',
+                       'logseries': '65878a38747c176bc00e930ebafebb69d4e1e16cd3a704e264ea8f5e24f548db',
+                       'multinomial': '7a984ae6dca26fd25374479e118b22f55db0aedccd5a0f2584ceada33db98605',
+                       'negative_binomial': 'd636d968e6a24ae92ab52fe11c46ac45b0897e98714426764e820a7d77602a61',
+                       'poisson': '956552176f77e7c9cb20d0118fc9cf690be488d790ed4b4c4747b965e61b0bb4',
+                       'zipf': 'f84ba7feffda41e606e20b28dfc0f1ea9964a74574513d4a4cbc98433a8bfa45',
                        }
 
 
@@ -166,6 +166,14 @@ class TestMultinomial:
         random.seed(1432985819)
         contig = random.multinomial(100, pvals=np.ascontiguousarray(pvals))
         assert_array_equal(non_contig, contig)
+
+    def test_multinomial_pvals_float32(self):
+        x = np.array([9.9e-01, 9.9e-01, 1.0e-09, 1.0e-09, 1.0e-09, 1.0e-09,
+                      1.0e-09, 1.0e-09, 1.0e-09, 1.0e-09], dtype=np.float32)
+        pvals = x / x.sum()
+        match = r"[\w\s]*pvals array is cast to 64-bit floating"
+        with pytest.raises(ValueError, match=match):
+            random.multinomial(1, pvals)
 
 
 class TestSetState:
@@ -319,18 +327,18 @@ class TestRandint:
         assert_(vals.min() >= 0)
 
     def test_repeatability(self):
-        # We use a md5 hash of generated sequences of 1000 samples
+        # We use a sha256 hash of generated sequences of 1000 samples
         # in the range [0, 6) for all but bool, where the range
         # is [0, 2). Hashes are for little endian numbers.
-        tgt = {'bool': '7dd3170d7aa461d201a65f8bcf3944b0',
-               'int16': '1b7741b80964bb190c50d541dca1cac1',
-               'int32': '4dc9fcc2b395577ebb51793e58ed1a05',
-               'int64': '17db902806f448331b5a758d7d2ee672',
-               'int8': '27dd30c4e08a797063dffac2490b0be6',
-               'uint16': '1b7741b80964bb190c50d541dca1cac1',
-               'uint32': '4dc9fcc2b395577ebb51793e58ed1a05',
-               'uint64': '17db902806f448331b5a758d7d2ee672',
-               'uint8': '27dd30c4e08a797063dffac2490b0be6'}
+        tgt = {'bool': '509aea74d792fb931784c4b0135392c65aec64beee12b0cc167548a2c3d31e71',
+               'int16': '7b07f1a920e46f6d0fe02314155a2330bcfd7635e708da50e536c5ebb631a7d4',
+               'int32': 'e577bfed6c935de944424667e3da285012e741892dcb7051a8f1ce68ab05c92f',
+               'int64': '0fbead0b06759df2cfb55e43148822d4a1ff953c7eb19a5b08445a63bb64fa9e',
+               'int8': '001aac3a5acb935a9b186cbe14a1ca064b8bb2dd0b045d48abeacf74d0203404',
+               'uint16': '7b07f1a920e46f6d0fe02314155a2330bcfd7635e708da50e536c5ebb631a7d4',
+               'uint32': 'e577bfed6c935de944424667e3da285012e741892dcb7051a8f1ce68ab05c92f',
+               'uint64': '0fbead0b06759df2cfb55e43148822d4a1ff953c7eb19a5b08445a63bb64fa9e',
+               'uint8': '001aac3a5acb935a9b186cbe14a1ca064b8bb2dd0b045d48abeacf74d0203404'}
 
         for dt in self.itype[1:]:
             random.seed(1234)
@@ -341,13 +349,13 @@ class TestRandint:
             else:
                 val = self.rfunc(0, 6, size=1000, dtype=dt).byteswap()
 
-            res = hashlib.md5(val.view(np.int8)).hexdigest()
+            res = hashlib.sha256(val.view(np.int8)).hexdigest()
             assert_(tgt[np.dtype(dt).name] == res)
 
         # bools do not depend on endianness
         random.seed(1234)
         val = self.rfunc(0, 2, size=1000, dtype=bool).view(np.int8)
-        res = hashlib.md5(val).hexdigest()
+        res = hashlib.sha256(val).hexdigest()
         assert_(tgt[np.dtype(bool).name] == res)
 
     @pytest.mark.skipif(np.iinfo('l').max < 2**32,
@@ -642,7 +650,7 @@ class TestRandomDist:
         a = np.array([42, 1, 2])
         p = [None, None, None]
         assert_raises(ValueError, random.choice, a, p=p)
-    
+
     def test_choice_p_non_contiguous(self):
         p = np.ones(10) / 5
         p[1::2] = 3.0
@@ -698,6 +706,10 @@ class TestRandomDist:
             random.shuffle(b)
             assert_equal(
                 sorted(b.data[~b.mask]), sorted(b_orig.data[~b_orig.mask]))
+
+        def test_shuffle_invalid_objects(self):
+            x = np.array(3)
+            assert_raises(TypeError, random.shuffle, x)
 
     def test_permutation(self):
         random.seed(self.seed)
@@ -1233,6 +1245,15 @@ class TestRandomDist:
         random.seed(self.seed)
         r = random.vonmises(mu=0., kappa=1.1e-8, size=10**6)
         assert_(np.isfinite(r).all())
+
+    def test_vonmises_large(self):
+        # guard against changes in RandomState when Generator is fixed
+        random.seed(self.seed)
+        actual = random.vonmises(mu=0., kappa=1e7, size=3)
+        desired = np.array([4.634253748521111e-04,
+                            3.558873596114509e-04,
+                            -2.337119622577433e-04])
+        assert_array_almost_equal(actual, desired, decimal=8)
 
     def test_vonmises_nan(self):
         random.seed(self.seed)
@@ -1974,7 +1995,7 @@ class TestSingleEltArrayInput:
 # Ensure returned array dtype is correct for platform
 def test_integer_dtype(int_func):
     random.seed(123456789)
-    fname, args, md5 = int_func
+    fname, args, sha256 = int_func
     f = getattr(random, fname)
     actual = f(*args, size=2)
     assert_(actual.dtype == np.dtype('l'))
@@ -1982,13 +2003,13 @@ def test_integer_dtype(int_func):
 
 def test_integer_repeat(int_func):
     random.seed(123456789)
-    fname, args, md5 = int_func
+    fname, args, sha256 = int_func
     f = getattr(random, fname)
     val = f(*args, size=1000000)
     if sys.byteorder != 'little':
         val = val.byteswap()
-    res = hashlib.md5(val.view(np.int8)).hexdigest()
-    assert_(res == md5)
+    res = hashlib.sha256(val.view(np.int8)).hexdigest()
+    assert_(res == sha256)
 
 
 def test_broadcast_size_error():

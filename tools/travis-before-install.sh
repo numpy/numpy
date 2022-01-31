@@ -9,18 +9,25 @@ free -m
 df -h
 ulimit -a
 
+sudo apt update
+sudo apt install gfortran eatmydata libgfortran5
+
+if [ "$USE_DEBUG" ]
+then
+    sudo apt install python3-dbg python3-dev python3-setuptools
+fi
+
 mkdir builds
 pushd builds
 
 # Build into own virtualenv
 # We therefore control our own environment, avoid travis' numpy
-pip install -U virtualenv
 
 if [ -n "$USE_DEBUG" ]
 then
-  virtualenv --python=$(which python3-dbg) venv
+  python3-dbg -m venv venv
 else
-  virtualenv --python=python venv
+  python -m venv venv
 fi
 
 source venv/bin/activate

@@ -424,7 +424,16 @@ class TestRecord:
         # make sure we did not pickle the address
         assert not isinstance(obj, bytes)
 
-        assert_raises(TypeError, ctor, dtype, 13)
+        assert_raises(RuntimeError, ctor, dtype, 13)
+
+        # Test roundtrip:
+        dump = pickle.dumps(a[0])
+        unpickled = pickle.loads(dump)
+        assert a[0] == unpickled
+
+        # Also check the similar (impossible) "object scalar" path:
+        with pytest.warns(DeprecationWarning):
+            assert ctor(np.dtype("O"), data) is data
 
     def test_objview_record(self):
         # https://github.com/numpy/numpy/issues/2599

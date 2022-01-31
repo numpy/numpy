@@ -254,6 +254,10 @@ class TestSystemInfoReading:
         finally:
             os.chdir(previousDir)
 
+    HAS_MKL = "mkl_rt" in mkl_info().calc_libraries_info().get("libraries", [])
+
+    @pytest.mark.xfail(HAS_MKL, reason=("`[DEFAULT]` override doesn't work if "
+                                        "numpy is built with MKL support"))
     def test_overrides(self):
         previousDir = os.getcwd()
         cfg = os.path.join(self._dir1, 'site.cfg')
@@ -269,7 +273,7 @@ class TestSystemInfoReading:
             # But if we copy the values to a '[mkl]' section the value
             # is correct
             with open(cfg, 'r') as fid:
-                mkl = fid.read().replace('ALL', 'mkl')
+                mkl = fid.read().replace('[ALL]', '[mkl]', 1)
             with open(cfg, 'w') as fid:
                 fid.write(mkl)
             info = mkl_info()
@@ -277,7 +281,7 @@ class TestSystemInfoReading:
 
             # Also, the values will be taken from a section named '[DEFAULT]'
             with open(cfg, 'r') as fid:
-                dflt = fid.read().replace('mkl', 'DEFAULT')
+                dflt = fid.read().replace('[mkl]', '[DEFAULT]', 1)
             with open(cfg, 'w') as fid:
                 fid.write(dflt)
             info = mkl_info()

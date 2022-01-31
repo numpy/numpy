@@ -47,7 +47,7 @@
 .. _ipython git workflow: https://mail.python.org/pipermail/ipython-dev/2010-October/005632.html
 .. _git parable: http://tom.preston-werner.com/2009/05/19/the-git-parable.html
 .. _git foundation: http://matthew-brett.github.com/pydagogue/foundation.html
-.. _numpy/master: https://github.com/numpy/numpy
+.. _numpy/main: https://github.com/numpy/numpy
 .. _git cherry-pick: https://www.kernel.org/pub/software/scm/git/docs/git-cherry-pick.html
 .. _git blame: https://www.kernel.org/pub/software/scm/git/docs/git-blame.html
 .. _this blog post: https://github.com/blog/612-introducing-github-compare-view

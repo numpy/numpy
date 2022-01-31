@@ -20,13 +20,13 @@ maintainer email:  oliphant.travis@ieee.org
   Space Science Telescope Institute
   (J. Todd Miller, Perry Greenfield, Rick White)
 */
-#define PY_SSIZE_T_CLEAN
-#include <Python.h>
-#include "structmember.h"
-
-/*#include <stdio.h>*/
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
+
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+#include <structmember.h>
+
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
 
@@ -39,6 +39,10 @@ maintainer email:  oliphant.travis@ieee.org
 #include "usertypes.h"
 #include "dtypemeta.h"
 #include "scalartypes.h"
+#include "array_method.h"
+#include "convert_datatype.h"
+#include "legacy_dtype_implementation.h"
+
 
 NPY_NO_EXPORT PyArray_Descr **userdescrs=NULL;
 
@@ -196,7 +200,7 @@ PyArray_RegisterDataType(PyArray_Descr *descr)
         }
     }
     typenum = NPY_USERDEF + NPY_NUMUSERTYPES;
-    descr->type_num = typenum;
+    descr->type_num = -1;
     if (PyDataType_ISUNSIZED(descr)) {
         PyErr_SetString(PyExc_ValueError, "cannot register a" \
                         "flexible data-type");
@@ -215,17 +219,30 @@ PyArray_RegisterDataType(PyArray_Descr *descr)
                         " is missing.");
         return -1;
     }
-    if (descr->flags & (NPY_ITEM_IS_POINTER | NPY_ITEM_REFCOUNT)) {
-        PyErr_SetString(PyExc_ValueError,
-                "Legacy user dtypes referencing python objects or generally "
-                "allocated memory are unsupported. "
-                "If you see this error in an existing, working code base, "
-                "please contact the NumPy developers.");
-        return -1;
-    }
     if (descr->typeobj == NULL) {
         PyErr_SetString(PyExc_ValueError, "missing typeobject");
         return -1;
+    }
+    if (descr->flags & (NPY_ITEM_IS_POINTER | NPY_ITEM_REFCOUNT)) {
+        /*
+         * User dtype can't actually do reference counting, however, there
+         * are existing hacks (e.g. xpress), which use a structured one:
+         *     dtype((xpress.var, [('variable', 'O')]))
+         * so we have to support this. But such a structure must be constant
+         * (i.e. fixed at registration time, this is the case for `xpress`).
+         */
+        if (descr->names == NULL || descr->fields == NULL ||
+            !PyDict_CheckExact(descr->fields)) {
+            PyErr_Format(PyExc_ValueError,
+                    "Failed to register dtype for %S: Legacy user dtypes "
+                    "using `NPY_ITEM_IS_POINTER` or `NPY_ITEM_REFCOUNT` are "
+                    "unsupported.  It is possible to create such a dtype only "
+                    "if it is a structured dtype with names and fields "
+                    "hardcoded at registration time.\n"
+                    "Please contact the NumPy developers if this used to work "
+                    "but now fails.", descr->typeobj);
+            return -1;
+        }
     }
 
     if (test_deprecated_arrfuncs_members(f) < 0) {
@@ -238,13 +255,67 @@ PyArray_RegisterDataType(PyArray_Descr *descr)
         PyErr_SetString(PyExc_MemoryError, "RegisterDataType");
         return -1;
     }
+
     userdescrs[NPY_NUMUSERTYPES++] = descr;
 
+    descr->type_num = typenum;
     if (dtypemeta_wrap_legacy_descriptor(descr) < 0) {
+        descr->type_num = -1;
+        NPY_NUMUSERTYPES--;
         return -1;
     }
 
     return typenum;
+}
+
+
+/*
+ * Checks that there is no cast already cached using the new casting-impl
+ * mechanism.
+ * In that case, we do not clear out the cache (but otherwise silently
+ * continue).  Users should not modify casts after they have been used,
+ * but this may also happen accidentally during setup (and may never have
+ * mattered).  See https://github.com/numpy/numpy/issues/20009
+ */
+static int _warn_if_cast_exists_already(
+        PyArray_Descr *descr, int totype, char *funcname)
+{
+    PyArray_DTypeMeta *to_DType = PyArray_DTypeFromTypeNum(totype);
+    if (to_DType == NULL) {
+        return -1;
+    }
+    PyObject *cast_impl = PyDict_GetItemWithError(
+            NPY_DT_SLOTS(NPY_DTYPE(descr))->castingimpls, (PyObject *)to_DType);
+    Py_DECREF(to_DType);
+    if (cast_impl == NULL) {
+        if (PyErr_Occurred()) {
+            return -1;
+        }
+    }
+    else {
+        char *extra_msg;
+        if (cast_impl == Py_None) {
+            extra_msg = "the cast will continue to be considered impossible.";
+        }
+        else {
+            extra_msg = "the previous definition will continue to be used.";
+        }
+        Py_DECREF(cast_impl);
+        PyArray_Descr *to_descr = PyArray_DescrFromType(totype);
+        int ret = PyErr_WarnFormat(PyExc_RuntimeWarning, 1,
+                "A cast from %R to %R was registered/modified using `%s` "
+                "after the cast had been used.  "
+                "This registration will have (mostly) no effect: %s\n"
+                "The most likely fix is to ensure that casts are the first "
+                "thing initialized after dtype registration.  "
+                "Please contact the NumPy developers with any questions!",
+                descr, to_descr, funcname, extra_msg);
+        Py_DECREF(to_descr);
+        if (ret < 0) {
+            return -1;
+        }
+    }
+    return 0;
 }
 
 /*NUMPY_API
@@ -258,13 +329,18 @@ PyArray_RegisterCastFunc(PyArray_Descr *descr, int totype,
     PyObject *cobj, *key;
     int ret;
 
-    if (totype < NPY_NTYPES_ABI_COMPATIBLE) {
-        descr->f->cast[totype] = castfunc;
-        return 0;
-    }
     if (totype >= NPY_NTYPES && !PyTypeNum_ISUSERDEF(totype)) {
         PyErr_SetString(PyExc_TypeError, "invalid type number.");
         return -1;
+    }
+    if (_warn_if_cast_exists_already(
+            descr, totype, "PyArray_RegisterCastFunc") < 0) {
+        return -1;
+    }
+
+    if (totype < NPY_NTYPES_ABI_COMPATIBLE) {
+        descr->f->cast[totype] = castfunc;
+        return 0;
     }
     if (descr->f->castdict == NULL) {
         descr->f->castdict = PyDict_New();
@@ -303,8 +379,12 @@ PyArray_RegisterCanCast(PyArray_Descr *descr, int totype,
     if (!PyTypeNum_ISUSERDEF(descr->type_num) &&
                                         !PyTypeNum_ISUSERDEF(totype)) {
         PyErr_SetString(PyExc_ValueError,
-                        "At least one of the types provided to"
+                        "At least one of the types provided to "
                         "RegisterCanCast must be user-defined.");
+        return -1;
+    }
+    if (_warn_if_cast_exists_already(
+            descr, totype, "PyArray_RegisterCanCast") < 0) {
         return -1;
     }
 
@@ -367,7 +447,7 @@ legacy_userdtype_common_dtype_function(
 {
     int skind1 = NPY_NOSCALAR, skind2 = NPY_NOSCALAR, skind;
 
-    if (!other->legacy) {
+    if (!NPY_DT_is_legacy(other)) {
         /* legacy DTypes can always defer to new style ones */
         Py_INCREF(Py_NotImplemented);
         return (PyArray_DTypeMeta *)Py_NotImplemented;
@@ -401,7 +481,7 @@ legacy_userdtype_common_dtype_function(
      */
 
     /* Convert the 'kind' char into a scalar kind */
-    switch (cls->kind) {
+    switch (cls->singleton->kind) {
         case 'b':
             skind1 = NPY_BOOL_SCALAR;
             break;
@@ -418,7 +498,7 @@ legacy_userdtype_common_dtype_function(
             skind1 = NPY_COMPLEX_SCALAR;
             break;
     }
-    switch (other->kind) {
+    switch (other->singleton->kind) {
         case 'b':
             skind2 = NPY_BOOL_SCALAR;
             break;
@@ -470,4 +550,66 @@ legacy_userdtype_common_dtype_function(
 
     Py_INCREF(Py_NotImplemented);
     return (PyArray_DTypeMeta *)Py_NotImplemented;
+}
+
+
+/**
+ * This function wraps a legacy cast into an array-method. This is mostly
+ * used for legacy user-dtypes, but for example numeric to/from datetime
+ * casts were only defined that way as well.
+ *
+ * @param from
+ * @param to
+ * @param casting If `NPY_NO_CASTING` will check the legacy registered cast,
+ *        otherwise uses the provided cast.
+ */
+NPY_NO_EXPORT int
+PyArray_AddLegacyWrapping_CastingImpl(
+        PyArray_DTypeMeta *from, PyArray_DTypeMeta *to, NPY_CASTING casting)
+{
+    if (casting < 0) {
+        if (from == to) {
+            casting = NPY_NO_CASTING;
+        }
+        else if (PyArray_LegacyCanCastTypeTo(
+                from->singleton, to->singleton, NPY_SAFE_CASTING)) {
+            casting = NPY_SAFE_CASTING;
+        }
+        else if (PyArray_LegacyCanCastTypeTo(
+                from->singleton, to->singleton, NPY_SAME_KIND_CASTING)) {
+            casting = NPY_SAME_KIND_CASTING;
+        }
+        else {
+            casting = NPY_UNSAFE_CASTING;
+        }
+    }
+
+    PyArray_DTypeMeta *dtypes[2] = {from, to};
+    PyArrayMethod_Spec spec = {
+            /* Name is not actually used, but allows identifying these. */
+            .name = "legacy_cast",
+            .nin = 1,
+            .nout = 1,
+            .casting = casting,
+            .dtypes = dtypes,
+    };
+
+    if (from == to) {
+        spec.flags = NPY_METH_REQUIRES_PYAPI | NPY_METH_SUPPORTS_UNALIGNED;
+        PyType_Slot slots[] = {
+            {NPY_METH_get_loop, &legacy_cast_get_strided_loop},
+            {NPY_METH_resolve_descriptors, &legacy_same_dtype_resolve_descriptors},
+            {0, NULL}};
+        spec.slots = slots;
+        return PyArray_AddCastingImplementation_FromSpec(&spec, 1);
+    }
+    else {
+        spec.flags = NPY_METH_REQUIRES_PYAPI;
+        PyType_Slot slots[] = {
+            {NPY_METH_get_loop, &legacy_cast_get_strided_loop},
+            {NPY_METH_resolve_descriptors, &simple_cast_resolve_descriptors},
+            {0, NULL}};
+        spec.slots = slots;
+        return PyArray_AddCastingImplementation_FromSpec(&spec, 1);
+    }
 }

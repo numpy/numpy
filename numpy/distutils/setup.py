@@ -8,6 +8,7 @@ def configuration(parent_package='',top_path=None):
     config.add_data_files('site.cfg')
     config.add_data_files('mingw/gfortran_vs2003_hack.c')
     config.add_data_dir('checks')
+    config.add_data_files('*.pyi')
     config.make_config_py()
     return config
 

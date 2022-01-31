@@ -40,8 +40,12 @@ C_ABI_VERSION = 0x01000009
 # 0x0000000c - 1.14.x
 # 0x0000000c - 1.15.x
 # 0x0000000d - 1.16.x
-# 0x0000000e - 1.19.x
-C_API_VERSION = 0x0000000e
+# 0x0000000d - 1.19.x
+# 0x0000000e - 1.20.x
+# 0x0000000e - 1.21.x
+# 0x0000000f - 1.22.x
+# 0x0000000f - 1.23.x
+C_API_VERSION = 0x0000000f
 
 class MismatchCAPIWarning(Warning):
     pass
@@ -50,7 +54,7 @@ def is_released(config):
     """Return True if a released version of numpy is detected."""
     from distutils.version import LooseVersion
 
-    v = config.get_version('../version.py')
+    v = config.get_version('../_version.py')
     if v is None:
         raise ValueError("Could not get version")
     pv = LooseVersion(vstring=v).version
@@ -193,7 +197,8 @@ OPTIONAL_FUNCTION_ATTRIBUTES_WITH_INTRINSICS = [('__attribute__((target("avx2,fm
                                 ('__attribute__((target ("avx512f,avx512dq,avx512bw,avx512vl,avx512cd")))',
                                 'attribute_target_avx512_skx_with_intrinsics',
                                 '__mmask8 temp = _mm512_fpclass_pd_mask(_mm512_set1_pd(1.0), 0x01);\
-                                __m512i temp = _mm512_castps_si512(_mm512_set1_ps(1.0));\
+                                __m512i unused_temp = \
+                                    _mm512_castps_si512(_mm512_set1_ps(1.0));\
                                 _mm_mask_storeu_epi8(NULL, 0xFF, _mm_broadcastmb_epi64(temp))',
                                 'immintrin.h'),
                                 ]
@@ -316,8 +321,8 @@ def pyod(filename):
     out : seq
         list of lines of od output
 
-    Note
-    ----
+    Notes
+    -----
     We only implement enough to get the necessary information for long double
     representation, this is not intended as a compatible replacement for od.
     """

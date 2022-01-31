@@ -48,7 +48,7 @@ ndarray of any subclass, and return a view of the array as another
 >>> # take a view of it, as our useless subclass
 >>> c_arr = arr.view(C)
 >>> type(c_arr)
-<class 'C'>
+<class '__main__.C'>
 
 .. _new-from-template:
 
@@ -63,7 +63,7 @@ For example:
 
 >>> v = c_arr[1:]
 >>> type(v) # the view is of type 'C'
-<class 'C'>
+<class '__main__.C'>
 >>> v is c_arr # but it's a new instance
 False
 
@@ -92,8 +92,8 @@ Implications for subclassing
 
 If we subclass ndarray, we need to deal not only with explicit
 construction of our array type, but also :ref:`view-casting` or
-:ref:`new-from-template`.  NumPy has the machinery to do this, and this
-machinery that makes subclassing slightly non-standard.
+:ref:`new-from-template`.  NumPy has the machinery to do this, and it is
+this machinery that makes subclassing slightly non-standard.
 
 There are two aspects to the machinery that ndarray uses to support
 views and new-from-template in subclasses.
@@ -114,18 +114,15 @@ __new__ documentation
 
 For example, consider the following Python code:
 
-.. testcode::
-
-  class C:
-      def __new__(cls, *args):
-          print('Cls in __new__:', cls)
-          print('Args in __new__:', args)
-          # The `object` type __new__ method takes a single argument.
-          return object.__new__(cls)
-
-      def __init__(self, *args):
-          print('type(self) in __init__:', type(self))
-          print('Args in __init__:', args)
+>>> class C:
+>>>     def __new__(cls, *args):
+>>>         print('Cls in __new__:', cls)
+>>>         print('Args in __new__:', args)
+>>>         # The `object` type __new__ method takes a single argument.
+>>>         return object.__new__(cls)
+>>>     def __init__(self, *args):
+>>>         print('type(self) in __init__:', type(self))
+>>>         print('Args in __init__:', args)
 
 meaning that we get:
 
@@ -223,8 +220,8 @@ where our object creation housekeeping usually goes.
   new ndarray instance of its own class.  In practice this means that
   we, the authors of the code, will need to make a call to
   ``ndarray.__new__(MySubClass,...)``, a class-hierarchy prepared call to
-  ``super(MySubClass, cls).__new__(cls, ...)``, or do view casting of an
-  existing array (see below)
+  ``super().__new__(cls, ...)``, or do view casting of an existing array
+  (see below)
 * For view casting and new-from-template, the equivalent of
   ``ndarray.__new__(MySubClass,...`` is called, at the C level.
 
@@ -240,7 +237,7 @@ The following code allows us to look at the call sequences and arguments:
    class C(np.ndarray):
        def __new__(cls, *args, **kwargs):
            print('In __new__ with class %s' % cls)
-           return super(C, cls).__new__(cls, *args, **kwargs)
+           return super().__new__(cls, *args, **kwargs)
 
        def __init__(self, *args, **kwargs):
            # in practice you probably will not need or want an __init__
@@ -312,9 +309,8 @@ Simple example - adding an extra attribute to ndarray
           # ndarray input arguments.  This will call the standard
           # ndarray constructor, but return an object of our type.
           # It also triggers a call to InfoArray.__array_finalize__
-          obj = super(InfoArray, subtype).__new__(subtype, shape, dtype,
-                                                  buffer, offset, strides,
-                                                  order)
+          obj = super().__new__(subtype, shape, dtype,
+                                buffer, offset, strides, order)
           # set the new 'info' attribute to the value passed
           obj.info = info
           # Finally, we must return the newly created object:
@@ -486,8 +482,7 @@ following.
             if out_no:
                 info['outputs'] = out_no
 
-            results = super(A, self).__array_ufunc__(ufunc, method,
-                                                     *args, **kwargs)
+            results = super().__array_ufunc__(ufunc, method, *args, **kwargs)
             if results is NotImplemented:
                 return NotImplemented
 
@@ -528,7 +523,7 @@ which inputs and outputs it converted. Hence, e.g.,
 >>> a.info
 {'inputs': [0, 1], 'outputs': [0]}
 
-Note that another approach would be to to use ``getattr(ufunc,
+Note that another approach would be to use ``getattr(ufunc,
 methods)(*inputs, **kwargs)`` instead of the ``super`` call. For this example,
 the result would be identical, but there is a difference if another operand
 also defines ``__array_ufunc__``. E.g., lets assume that we evalulate
@@ -600,7 +595,7 @@ some print statements:
           print('   self is %s' % repr(self))
           print('   arr is %s' % repr(out_arr))
           # then just call the parent
-          return super(MySubClass, self).__array_wrap__(self, out_arr, context)
+          return super().__array_wrap__(self, out_arr, context)
 
 We run a ufunc on an instance of our new array:
 

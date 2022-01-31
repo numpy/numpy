@@ -8,18 +8,33 @@ jobs:
     docker:
       # CircleCI maintains a library of pre-built images
       # documented at https://circleci.com/docs/2.0/circleci-images/
-      - image: circleci/python:3.8.4
+      # circleci/python3.8 images come with old versions of Doxygen(1.6.x),
+      # therefore a new base image chose instead to guarantee to
+      # have a newer version >= 1.8.10 to avoid warnings
+      # that related to the default behaviors or non-exist config options
+      - image: cimg/base:2021.05
 
     working_directory: ~/repo
 
     steps:
-      - checkout
+      - checkout:
+      - run:
+          name: pull changes from merge
+          command: |
+            if [[ -v CI_PULL_REQUEST ]] ; then git pull --ff-only origin "refs/pull/${CI_PULL_REQUEST//*pull\//}/merge" ; fi
+
+      - run:
+          name: update submodules
+          command: |
+            git submodule init
+            git submodule update
 
       - run:
           name: create virtual environment, install dependencies
           command: |
             sudo apt-get update
-            sudo apt-get install -y graphviz texlive-fonts-recommended texlive-latex-recommended texlive-latex-extra texlive-generic-extra latexmk texlive-xetex
+            sudo apt-get install -y python3.8 python3.8-dev python3-venv graphviz texlive-fonts-recommended texlive-latex-recommended \
+              texlive-latex-extra latexmk texlive-xetex doxygen
             python3.8 -m venv venv
             . venv/bin/activate
 
@@ -29,16 +44,16 @@ jobs:
             . venv/bin/activate
             pip install --progress-bar=off --upgrade pip 'setuptools<49.2.0'
             pip install --progress-bar=off -r test_requirements.txt
-            pip install .
             pip install --progress-bar=off -r doc_requirements.txt
+            pip install .
 
       - run:
           name: create release notes
           command: |
             . venv/bin/activate
-            pip install git+https://github.com/hawkowl/towncrier.git@master
+            pip install towncrier
             VERSION=$(python -c "import setup; print(setup.VERSION)")
-            towncrier --version $VERSION --yes
+            towncrier build --version $VERSION --yes
             ./tools/ci/test_all_newsfragments_used.py
 
       - run:
@@ -49,18 +64,28 @@ jobs:
             python tools/refguide_check.py --rst
 
       - run:
-          name: build devdocs
+          name: build devdocs w/ref warnings
           command: |
             . venv/bin/activate
             cd doc
-            SPHINXOPTS=-q make -e html
+            # Don't use -q, show warning summary"
+            SPHINXOPTS="-j4 -n" make -e html || echo "ignoring errors for now, see gh-13114"
+
+      - run:
+          name: build devdocs
+          no_output_timeout: 30m
+          command: |
+            . venv/bin/activate
+            cd doc
+            make clean
+            SPHINXOPTS="-j4 -q" make -e html
 
       - run:
           name: build neps
           command: |
             . venv/bin/activate
             cd doc/neps
-            SPHINXOPTS=-q make -e html
+            SPHINXOPTS="-j4 -q" make -e html
 
       - store_artifacts:
           path: doc/build/html/
@@ -77,7 +102,7 @@ jobs:
       -  run:
           name: deploy devdocs
           command: |
-            if [ "${CIRCLE_BRANCH}" == "master" ]; then
+            if [ "${CIRCLE_BRANCH}" == "main" ]; then
               touch doc/build/html/.nojekyll
 
               ./tools/ci/push_docs_to_repo.py doc/build/html \
@@ -87,7 +112,7 @@ jobs:
                   --message "Docs build of $CIRCLE_SHA1" \
                   --force
             else
-              echo "Not on the master branch; skipping deployment"
+              echo "Not on the main branch; skipping deployment"
             fi
 
       - add_ssh_keys:
@@ -106,7 +131,7 @@ jobs:
       -  run:
           name: deploy neps
           command: |
-            if [ "${CIRCLE_BRANCH}" == "master" ]; then
+            if [ "${CIRCLE_BRANCH}" == "main" ]; then
               touch doc/neps/_build/html/.nojekyll
 
               ./tools/ci/push_docs_to_repo.py doc/neps/_build/html \
@@ -116,5 +141,5 @@ jobs:
                   --message "Docs build of $CIRCLE_SHA1" \
                   --force
             else
-              echo "Not on the master branch; skipping deployment"
+              echo "Not on the main branch; skipping deployment"
             fi

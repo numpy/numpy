@@ -32,7 +32,8 @@ class GnuFCompiler(FCompiler):
         """Handle the different versions of GNU fortran compilers"""
         # Strip warning(s) that may be emitted by gfortran
         while version_string.startswith('gfortran: warning'):
-            version_string = version_string[version_string.find('\n') + 1:]
+            version_string =\
+                version_string[version_string.find('\n') + 1:].strip()
 
         # Gfortran versions from after 2010 will output a simple string
         # (usually "x.y", "x.y.z" or "x.y.z-q") for ``-dumpversion``; older
@@ -112,7 +113,7 @@ class GnuFCompiler(FCompiler):
             # If MACOSX_DEPLOYMENT_TARGET is set, we simply trust the value
             # and leave it alone.  But, distutils will complain if the
             # environment's value is different from the one in the Python
-            # Makefile used to build Python.  We let disutils handle this
+            # Makefile used to build Python.  We let distutils handle this
             # error checking.
             if not target:
                 # If MACOSX_DEPLOYMENT_TARGET is not set in the environment,
@@ -126,7 +127,7 @@ class GnuFCompiler(FCompiler):
                     target = '10.9'
                     s = f'Env. variable MACOSX_DEPLOYMENT_TARGET set to {target}'
                     warnings.warn(s, stacklevel=2)
-                os.environ['MACOSX_DEPLOYMENT_TARGET'] = target
+                os.environ['MACOSX_DEPLOYMENT_TARGET'] = str(target)
             opt.extend(['-undefined', 'dynamic_lookup', '-bundle'])
         else:
             opt.append("-shared")
@@ -246,7 +247,7 @@ class GnuFCompiler(FCompiler):
         return []
 
     def runtime_library_dir_option(self, dir):
-        if sys.platform == 'win32':
+        if sys.platform == 'win32' or sys.platform == 'cygwin':
             # Linux/Solaris/Unix support RPATH, Windows does not
             raise NotImplementedError
 
@@ -323,7 +324,7 @@ class Gnu95FCompiler(GnuFCompiler):
             c_archs[c_archs.index("i386")] = "i686"
         # check the arches the Fortran compiler supports, and compare with
         # arch flags from C compiler
-        for arch in ["ppc", "i686", "x86_64", "ppc64"]:
+        for arch in ["ppc", "i686", "x86_64", "ppc64", "s390x"]:
             if _can_target(cmd, arch) and arch in c_archs:
                 arch_flags.extend(["-arch", arch])
         return arch_flags
@@ -534,7 +535,6 @@ def _can_target(cmd, arch):
                 os.remove(output)
     finally:
         os.remove(filename)
-    return False
 
 
 if __name__ == '__main__':

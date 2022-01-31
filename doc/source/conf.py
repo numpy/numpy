@@ -1,10 +1,66 @@
-# -*- coding: utf-8 -*-
 import os
 import re
 import sys
+import importlib
 
 # Minimum version, enforced by sphinx
-needs_sphinx = '2.2.0'
+needs_sphinx = '3.2.0'
+
+
+# This is a nasty hack to use platform-agnostic names for types in the
+# documentation.
+
+# must be kept alive to hold the patched names
+_name_cache = {}
+
+def replace_scalar_type_names():
+    """ Rename numpy types to use the canonical names to make sphinx behave """
+    import ctypes
+
+    Py_ssize_t = ctypes.c_int64 if ctypes.sizeof(ctypes.c_void_p) == 8 else ctypes.c_int32
+
+    class PyObject(ctypes.Structure):
+        pass
+
+    class PyTypeObject(ctypes.Structure):
+        pass
+
+    PyObject._fields_ = [
+        ('ob_refcnt', Py_ssize_t),
+        ('ob_type', ctypes.POINTER(PyTypeObject)),
+    ]
+
+
+    PyTypeObject._fields_ = [
+        # varhead
+        ('ob_base', PyObject),
+        ('ob_size', Py_ssize_t),
+        # declaration
+        ('tp_name', ctypes.c_char_p),
+    ]
+
+    # prevent numpy attaching docstrings to the scalar types
+    assert 'numpy.core._add_newdocs_scalars' not in sys.modules
+    sys.modules['numpy.core._add_newdocs_scalars'] = object()
+
+    import numpy
+
+    # change the __name__ of the scalar types
+    for name in [
+        'byte', 'short', 'intc', 'int_', 'longlong',
+        'ubyte', 'ushort', 'uintc', 'uint', 'ulonglong',
+        'half', 'single', 'double', 'longdouble',
+        'half', 'csingle', 'cdouble', 'clongdouble',
+    ]:
+        typ = getattr(numpy, name)
+        c_typ = PyTypeObject.from_address(id(typ))
+        c_typ.tp_name = _name_cache[typ] = b"numpy." + name.encode('utf8')
+
+    # now generate the docstrings as usual
+    del sys.modules['numpy.core._add_newdocs_scalars']
+    import numpy.core._add_newdocs_scalars
+
+replace_scalar_type_names()
 
 # -----------------------------------------------------------------------------
 # General configuration
@@ -27,10 +83,19 @@ extensions = [
     'matplotlib.sphinxext.plot_directive',
     'IPython.sphinxext.ipython_console_highlighting',
     'IPython.sphinxext.ipython_directive',
-    'sphinx.ext.imgmath',
+    'sphinx.ext.mathjax',
+    'sphinx_panels',
 ]
 
-imgmath_image_format = 'svg'
+skippable_extensions = [
+    ('breathe', 'skip generating C/C++ API from comment blocks.'),
+]
+for ext, warn in skippable_extensions:
+    ext_exist = importlib.util.find_spec(ext) is not None
+    if ext_exist:
+        extensions.append(ext)
+    else:
+        print(f"Unable to find Sphinx extension '{ext}', {warn}.")
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -38,11 +103,12 @@ templates_path = ['_templates']
 # The suffix of source filenames.
 source_suffix = '.rst'
 
-master_doc = 'contents'
+# Will change to `root_doc` in Sphinx 4
+master_doc = 'index'
 
 # General substitutions.
 project = 'NumPy'
-copyright = '2008-2020, The SciPy community'
+copyright = '2008-2022, NumPy Developers'
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
@@ -82,13 +148,18 @@ add_function_parentheses = False
 # output. They are ignored by default.
 #show_authors = False
 
-# The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'sphinx'
-
 def setup(app):
     # add a config value for `ifconfig` directives
     app.add_config_value('python_version_major', str(sys.version_info.major), 'env')
     app.add_lexer('NumPyC', NumPyLexer)
+
+# While these objects do have type `module`, the names are aliases for modules
+# elsewhere. Sphinx does not support referring to modules by an aliases name,
+# so we make the alias look like a "real" module for it.
+# If we deemed it desirable, we could in future make these real modules, which
+# would make `from numpy.char import split` work.
+sys.modules['numpy.char'] = numpy.char
+sys.modules['numpy.testing.dec'] = numpy.testing.dec
 
 # -----------------------------------------------------------------------------
 # HTML output
@@ -98,14 +169,16 @@ html_theme = 'pydata_sphinx_theme'
 
 html_logo = '_static/numpylogo.svg'
 
+html_favicon = '_static/favicon/favicon.ico'
+
 html_theme_options = {
+  "logo_link": "index",
   "github_url": "https://github.com/numpy/numpy",
   "twitter_url": "https://twitter.com/numpy_team",
-}
-
-
-html_additional_pages = {
-    'index': 'indexcontent.html',
+  "collapse_navigation": True,
+  "external_links": [
+      {"name": "Learn", "url": "https://numpy.org/numpy-tutorials/"}
+      ],
 }
 
 html_title = "%s v%s Manual" % (project, version)
@@ -122,6 +195,8 @@ htmlhelp_basename = 'numpy'
 if 'sphinx.ext.pngmath' in extensions:
     pngmath_use_preview = True
     pngmath_dvipng_args = ['-gamma', '1.5', '-D', '96', '-bg', 'Transparent']
+
+mathjax_path = "scipy-mathjax/MathJax.js?config=scipy-mathjax"
 
 plot_html_show_formats = False
 plot_html_show_source_link = False
@@ -224,9 +299,14 @@ intersphinx_mapping = {
     'neps': ('https://numpy.org/neps', None),
     'python': ('https://docs.python.org/dev', None),
     'scipy': ('https://docs.scipy.org/doc/scipy/reference', None),
-    'matplotlib': ('https://matplotlib.org', None),
+    'matplotlib': ('https://matplotlib.org/stable', None),
     'imageio': ('https://imageio.readthedocs.io/en/stable', None),
     'skimage': ('https://scikit-image.org/docs/stable', None),
+    'pandas': ('https://pandas.pydata.org/pandas-docs/stable', None),
+    'scipy-lecture-notes': ('https://scipy-lectures.org', None),
+    'pytest': ('https://docs.pytest.org/en/stable', None),
+    'numpy-tutorials': ('https://numpy.org/numpy-tutorials', None),
+    'numpydoc': ('https://numpydoc.readthedocs.io/en/latest', None),
 }
 
 
@@ -310,6 +390,17 @@ for name in ['sphinx.ext.linkcode', 'numpydoc.linkcode']:
 else:
     print("NOTE: linkcode extension not found -- no links to source generated")
 
+
+def _get_c_source_file(obj):
+    if issubclass(obj, numpy.generic):
+        return r"core/src/multiarray/scalartypes.c.src"
+    elif obj is numpy.ndarray:
+        return r"core/src/multiarray/arrayobject.c"
+    else:
+        # todo: come up with a better way to generate these
+        return None
+
+
 def linkcode_resolve(domain, info):
     """
     Determine the URL corresponding to Python object
@@ -340,27 +431,40 @@ def linkcode_resolve(domain, info):
     else:
         obj = unwrap(obj)
 
-    try:
-        fn = inspect.getsourcefile(obj)
-    except Exception:
-        fn = None
-    if not fn:
-        return None
+    fn = None
+    lineno = None
 
-    try:
-        source, lineno = inspect.getsourcelines(obj)
-    except Exception:
-        lineno = None
+    # Make a poor effort at linking C extension types
+    if isinstance(obj, type) and obj.__module__ == 'numpy':
+        fn = _get_c_source_file(obj)
+
+    if fn is None:
+        try:
+            fn = inspect.getsourcefile(obj)
+        except Exception:
+            fn = None
+        if not fn:
+            return None
+
+        # Ignore re-exports as their source files are not within the numpy repo
+        module = inspect.getmodule(obj)
+        if module is not None and not module.__name__.startswith("numpy"):
+            return None
+
+        try:
+            source, lineno = inspect.getsourcelines(obj)
+        except Exception:
+            lineno = None
+
+        fn = relpath(fn, start=dirname(numpy.__file__))
 
     if lineno:
         linespec = "#L%d-L%d" % (lineno, lineno + len(source) - 1)
     else:
         linespec = ""
 
-    fn = relpath(fn, start=dirname(numpy.__file__))
-
     if 'dev' in numpy.__version__:
-        return "https://github.com/numpy/numpy/blob/master/numpy/%s%s" % (
+        return "https://github.com/numpy/numpy/blob/main/numpy/%s%s" % (
            fn, linespec)
     else:
         return "https://github.com/numpy/numpy/blob/v%s/numpy/%s%s" % (
@@ -379,3 +483,11 @@ class NumPyLexer(CLexer):
             inherit,
         ],
     }
+
+
+# -----------------------------------------------------------------------------
+# Breathe & Doxygen
+# -----------------------------------------------------------------------------
+breathe_projects = dict(numpy=os.path.join("..", "build", "doxygen", "xml"))
+breathe_default_project = "numpy"
+breathe_default_members = ("members", "undoc-members", "protected-members")

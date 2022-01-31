@@ -29,18 +29,14 @@ from . import __version__
 from . import capi_maps
 
 f2py_version = __version__.version
+numpy_version = __version__.version
 errmess = sys.stderr.write
 # outmess=sys.stdout.write
 show = pprint.pprint
 outmess = auxfuncs.outmess
 
-try:
-    from numpy import __version__ as numpy_version
-except ImportError:
-    numpy_version = 'N/A'
-
-__usage__ = """\
-Usage:
+__usage__ =\
+f"""Usage:
 
 1) To construct extension module sources:
 
@@ -86,6 +82,9 @@ Options:
                    file <modulename>module.c or extension module <modulename>.
                    Default is 'untitled'.
 
+  '-include<header>'  Writes additional headers in the C wrapper, can be passed
+                      multiple times, generates #include <header> each time.
+
   --[no-]lower     Do [not] lower the cases in <fortran files>. By default,
                    --lower is assumed with -h key, and --no-lower without -h key.
 
@@ -97,8 +96,8 @@ Options:
   --[no-]latex-doc Create (or not) <modulename>module.tex.
                    Default is --no-latex-doc.
   --short-latex    Create 'incomplete' LaTeX document (without commands
-                   \\documentclass, \\tableofcontents, and \\begin{document},
-                   \\end{document}).
+                   \\documentclass, \\tableofcontents, and \\begin{{document}},
+                   \\end{{document}}).
 
   --[no-]rest-doc Create (or not) <modulename>module.rst.
                    Default is --no-rest-doc.
@@ -167,12 +166,12 @@ Extra options (only effective with -c):
   array. Integer <int> sets the threshold for array sizes when
   a message should be shown.
 
-Version:     %s
-numpy Version: %s
+Version:     {f2py_version}
+numpy Version: {numpy_version}
 Requires:    Python 3.5 or higher.
 License:     NumPy license (see LICENSE.txt in the NumPy source code)
 Copyright 1999 - 2011 Pearu Peterson all rights reserved.
-http://cens.ioc.ee/projects/f2py2e/""" % (f2py_version, numpy_version)
+https://web.archive.org/web/20140822061353/http://cens.ioc.ee/projects/f2py2e"""
 
 
 def scaninputline(inputline):
@@ -279,9 +278,8 @@ def scaninputline(inputline):
                 with open(l):
                     pass
                 files.append(l)
-            except IOError as detail:
-                errmess('IOError: %s. Skipping file "%s".\n' %
-                        (str(detail), l))
+            except OSError as detail:
+                errmess(f'OSError: {detail!s}. Skipping file "{l!s}".\n')
         elif f == -1:
             skipfuncs.append(l)
         elif f == 0:
@@ -291,7 +289,7 @@ def scaninputline(inputline):
         sys.exit()
     if not os.path.isdir(buildpath):
         if not verbose:
-            outmess('Creating build directory %s' % (buildpath))
+            outmess('Creating build directory %s\n' % (buildpath))
         os.mkdir(buildpath)
     if signsfile:
         signsfile = os.path.join(buildpath, signsfile)
@@ -363,33 +361,34 @@ def buildmodules(lst):
     cfuncs.buildcfuncs()
     outmess('Building modules...\n')
     modules, mnames, isusedby = [], [], {}
-    for i in range(len(lst)):
-        if '__user__' in lst[i]['name']:
-            cb_rules.buildcallbacks(lst[i])
+    for item in lst:
+        if '__user__' in item['name']:
+            cb_rules.buildcallbacks(item)
         else:
-            if 'use' in lst[i]:
-                for u in lst[i]['use'].keys():
+            if 'use' in item:
+                for u in item['use'].keys():
                     if u not in isusedby:
                         isusedby[u] = []
-                    isusedby[u].append(lst[i]['name'])
-            modules.append(lst[i])
-            mnames.append(lst[i]['name'])
+                    isusedby[u].append(item['name'])
+            modules.append(item)
+            mnames.append(item['name'])
     ret = {}
-    for i in range(len(mnames)):
-        if mnames[i] in isusedby:
+    for module, name in zip(modules, mnames):
+        if name in isusedby:
             outmess('\tSkipping module "%s" which is used by %s.\n' % (
-                mnames[i], ','.join(['"%s"' % s for s in isusedby[mnames[i]]])))
+                name, ','.join('"%s"' % s for s in isusedby[name])))
         else:
             um = []
-            if 'use' in modules[i]:
-                for u in modules[i]['use'].keys():
+            if 'use' in module:
+                for u in module['use'].keys():
                     if u in isusedby and u in mnames:
                         um.append(modules[mnames.index(u)])
                     else:
                         outmess(
-                            '\tModule "%s" uses nonexisting "%s" which will be ignored.\n' % (mnames[i], u))
-            ret[mnames[i]] = {}
-            dict_append(ret[mnames[i]], rules.buildmodule(modules[i], um))
+                            f'\tModule "{name}" uses nonexisting "{u}" '
+                            'which will be ignored.\n')
+            ret[name] = {}
+            dict_append(ret[name], rules.buildmodule(module, um))
     return ret
 
 
@@ -420,8 +419,8 @@ def run_main(comline_list):
 
     Examples
     --------
-    .. include:: run_main_session.dat
-        :literal:
+    .. literalinclude:: ../../source/f2py/code/results/run_main_session.dat
+        :language: python
 
     """
     crackfortran.reset_global_f2py_vars()
@@ -433,18 +432,20 @@ def run_main(comline_list):
     capi_maps.load_f2cmap_file(options['f2cmap_file'])
     postlist = callcrackfortran(files, options)
     isusedby = {}
-    for i in range(len(postlist)):
-        if 'use' in postlist[i]:
-            for u in postlist[i]['use'].keys():
+    for plist in postlist:
+        if 'use' in plist:
+            for u in plist['use'].keys():
                 if u not in isusedby:
                     isusedby[u] = []
-                isusedby[u].append(postlist[i]['name'])
-    for i in range(len(postlist)):
-        if postlist[i]['block'] == 'python module' and '__user__' in postlist[i]['name']:
-            if postlist[i]['name'] in isusedby:
+                isusedby[u].append(plist['name'])
+    for plist in postlist:
+        if plist['block'] == 'python module' and '__user__' in plist['name']:
+            if plist['name'] in isusedby:
                 # if not quiet:
-                outmess('Skipping Makefile build for module "%s" which is used by %s\n' % (
-                    postlist[i]['name'], ','.join(['"%s"' % s for s in isusedby[postlist[i]['name']]])))
+                outmess(
+                    f'Skipping Makefile build for module "{plist["name"]}" '
+                    'which is used by {}\n'.format(
+                        ','.join(f'"{s}"' for s in isusedby[plist['name']])))
     if 'signsfile' in options:
         if options['verbose'] > 1:
             outmess(
@@ -452,8 +453,8 @@ def run_main(comline_list):
             outmess('%s %s\n' %
                     (os.path.basename(sys.argv[0]), options['signsfile']))
         return
-    for i in range(len(postlist)):
-        if postlist[i]['block'] != 'python module':
+    for plist in postlist:
+        if plist['block'] != 'python module':
             if 'python module' not in options:
                 errmess(
                     'Tip: If your original code is Fortran source then you must use -m option.\n')
@@ -515,14 +516,14 @@ def run_compile():
         remove_build_dir = 1
         build_dir = tempfile.mkdtemp()
 
-    _reg1 = re.compile(r'[-][-]link[-]')
+    _reg1 = re.compile(r'--link-')
     sysinfo_flags = [_m for _m in sys.argv[1:] if _reg1.match(_m)]
     sys.argv = [_m for _m in sys.argv if _m not in sysinfo_flags]
     if sysinfo_flags:
         sysinfo_flags = [f[7:] for f in sysinfo_flags]
 
     _reg2 = re.compile(
-        r'[-][-]((no[-]|)(wrap[-]functions|lower)|debug[-]capi|quiet)|[-]include')
+        r'--((no-|)(wrap-functions|lower)|debug-capi|quiet)|-include')
     f2py_flags = [_m for _m in sys.argv[1:] if _reg2.match(_m)]
     sys.argv = [_m for _m in sys.argv if _m not in f2py_flags]
     f2py_flags2 = []
@@ -540,40 +541,39 @@ def run_compile():
 
     sys.argv = [_m for _m in sys.argv if _m not in f2py_flags2]
     _reg3 = re.compile(
-        r'[-][-]((f(90)?compiler([-]exec|)|compiler)=|help[-]compiler)')
+        r'--((f(90)?compiler(-exec|)|compiler)=|help-compiler)')
     flib_flags = [_m for _m in sys.argv[1:] if _reg3.match(_m)]
     sys.argv = [_m for _m in sys.argv if _m not in flib_flags]
     _reg4 = re.compile(
-        r'[-][-]((f(77|90)(flags|exec)|opt|arch)=|(debug|noopt|noarch|help[-]fcompiler))')
+        r'--((f(77|90)(flags|exec)|opt|arch)=|(debug|noopt|noarch|help-fcompiler))')
     fc_flags = [_m for _m in sys.argv[1:] if _reg4.match(_m)]
     sys.argv = [_m for _m in sys.argv if _m not in fc_flags]
 
-    if 1:
-        del_list = []
-        for s in flib_flags:
-            v = '--fcompiler='
-            if s[:len(v)] == v:
-                from numpy.distutils import fcompiler
-                fcompiler.load_all_fcompiler_classes()
-                allowed_keys = list(fcompiler.fcompiler_class.keys())
-                nv = ov = s[len(v):].lower()
-                if ov not in allowed_keys:
-                    vmap = {}  # XXX
-                    try:
-                        nv = vmap[ov]
-                    except KeyError:
-                        if ov not in vmap.values():
-                            print('Unknown vendor: "%s"' % (s[len(v):]))
-                    nv = ov
-                i = flib_flags.index(s)
-                flib_flags[i] = '--fcompiler=' + nv
-                continue
-        for s in del_list:
+    del_list = []
+    for s in flib_flags:
+        v = '--fcompiler='
+        if s[:len(v)] == v:
+            from numpy.distutils import fcompiler
+            fcompiler.load_all_fcompiler_classes()
+            allowed_keys = list(fcompiler.fcompiler_class.keys())
+            nv = ov = s[len(v):].lower()
+            if ov not in allowed_keys:
+                vmap = {}  # XXX
+                try:
+                    nv = vmap[ov]
+                except KeyError:
+                    if ov not in vmap.values():
+                        print('Unknown vendor: "%s"' % (s[len(v):]))
+                nv = ov
             i = flib_flags.index(s)
-            del flib_flags[i]
-        assert len(flib_flags) <= 2, repr(flib_flags)
+            flib_flags[i] = '--fcompiler=' + nv
+            continue
+    for s in del_list:
+        i = flib_flags.index(s)
+        del flib_flags[i]
+    assert len(flib_flags) <= 2, repr(flib_flags)
 
-    _reg5 = re.compile(r'[-][-](verbose)')
+    _reg5 = re.compile(r'--(verbose)')
     setup_flags = [_m for _m in sys.argv[1:] if _reg5.match(_m)]
     sys.argv = [_m for _m in sys.argv if _m not in setup_flags]
 
@@ -604,7 +604,7 @@ def run_compile():
             if modulename:
                 break
 
-    extra_objects, sources = filter_files('', '[.](o|a|so)', sources)
+    extra_objects, sources = filter_files('', '[.](o|a|so|dylib)', sources)
     include_dirs, sources = filter_files('-I', '', sources, remove_prefix=1)
     library_dirs, sources = filter_files('-L', '', sources, remove_prefix=1)
     libraries, sources = filter_files('-l', '', sources, remove_prefix=1)
@@ -650,7 +650,9 @@ def run_compile():
     sys.argv.extend(['build',
                      '--build-temp', build_dir,
                      '--build-base', build_dir,
-                     '--build-platlib', '.'])
+                     '--build-platlib', '.',
+                     # disable CCompilerOpt
+                     '--disable-optimization'])
     if fc_flags:
         sys.argv.extend(['config_fc'] + fc_flags)
     if flib_flags:

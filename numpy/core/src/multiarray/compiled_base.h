@@ -1,6 +1,7 @@
-#ifndef _NPY_PRIVATE__COMPILED_BASE_H_
-#define _NPY_PRIVATE__COMPILED_BASE_H_
-#include <numpy/ndarraytypes.h>
+#ifndef NUMPY_CORE_SRC_MULTIARRAY_COMPILED_BASE_H_
+#define NUMPY_CORE_SRC_MULTIARRAY_COMPILED_BASE_H_
+
+#include "numpy/ndarraytypes.h"
 
 NPY_NO_EXPORT PyObject *
 arr_insert(PyObject *, PyObject *, PyObject *);
@@ -23,4 +24,4 @@ io_pack(PyObject *, PyObject *, PyObject *);
 NPY_NO_EXPORT PyObject *
 io_unpack(PyObject *, PyObject *, PyObject *);
 
-#endif
+#endif  /* NUMPY_CORE_SRC_MULTIARRAY_COMPILED_BASE_H_ */

@@ -1,56 +1,187 @@
-import sys
-from typing import overload, Tuple, Union, Sequence, Any
+from typing import (
+    Literal as L,
+    overload,
+    Any,
+    SupportsIndex,
+    TypeVar,
+)
 
-from numpy import ndarray, inexact, _NumberLike
-from numpy.typing import ArrayLike, DtypeLike, _SupportsArray
+from numpy import floating, complexfloating, generic
+from numpy.typing import (
+    NDArray,
+    DTypeLike,
+    _DTypeLike,
+    _ArrayLikeFloat_co,
+    _ArrayLikeComplex_co,
+)
 
-if sys.version_info >= (3, 8):
-    from typing import SupportsIndex, Literal
-else:
-    from typing_extensions import Literal, Protocol
+_SCT = TypeVar("_SCT", bound=generic)
 
-    class SupportsIndex(Protocol):
-        def __index__(self) -> int: ...
+__all__: list[str]
 
-# TODO: wait for support for recursive types
-_ArrayLikeNested = Sequence[Sequence[Any]]
-_ArrayLikeNumber = Union[
-    _NumberLike, Sequence[_NumberLike], ndarray, _SupportsArray, _ArrayLikeNested
-]
 @overload
 def linspace(
-    start: _ArrayLikeNumber,
-    stop: _ArrayLikeNumber,
+    start: _ArrayLikeFloat_co,
+    stop: _ArrayLikeFloat_co,
     num: SupportsIndex = ...,
     endpoint: bool = ...,
-    retstep: Literal[False] = ...,
-    dtype: DtypeLike = ...,
+    retstep: L[False] = ...,
+    dtype: None = ...,
     axis: SupportsIndex = ...,
-) -> ndarray: ...
+) -> NDArray[floating[Any]]: ...
 @overload
 def linspace(
-    start: _ArrayLikeNumber,
-    stop: _ArrayLikeNumber,
+    start: _ArrayLikeComplex_co,
+    stop: _ArrayLikeComplex_co,
     num: SupportsIndex = ...,
     endpoint: bool = ...,
-    retstep: Literal[True] = ...,
-    dtype: DtypeLike = ...,
+    retstep: L[False] = ...,
+    dtype: None = ...,
     axis: SupportsIndex = ...,
-) -> Tuple[ndarray, inexact]: ...
+) -> NDArray[complexfloating[Any, Any]]: ...
+@overload
+def linspace(
+    start: _ArrayLikeComplex_co,
+    stop: _ArrayLikeComplex_co,
+    num: SupportsIndex = ...,
+    endpoint: bool = ...,
+    retstep: L[False] = ...,
+    dtype: _DTypeLike[_SCT] = ...,
+    axis: SupportsIndex = ...,
+) -> NDArray[_SCT]: ...
+@overload
+def linspace(
+    start: _ArrayLikeComplex_co,
+    stop: _ArrayLikeComplex_co,
+    num: SupportsIndex = ...,
+    endpoint: bool = ...,
+    retstep: L[False] = ...,
+    dtype: DTypeLike = ...,
+    axis: SupportsIndex = ...,
+) -> NDArray[Any]: ...
+@overload
+def linspace(
+    start: _ArrayLikeFloat_co,
+    stop: _ArrayLikeFloat_co,
+    num: SupportsIndex = ...,
+    endpoint: bool = ...,
+    retstep: L[True] = ...,
+    dtype: None = ...,
+    axis: SupportsIndex = ...,
+) -> tuple[NDArray[floating[Any]], floating[Any]]: ...
+@overload
+def linspace(
+    start: _ArrayLikeComplex_co,
+    stop: _ArrayLikeComplex_co,
+    num: SupportsIndex = ...,
+    endpoint: bool = ...,
+    retstep: L[True] = ...,
+    dtype: None = ...,
+    axis: SupportsIndex = ...,
+) -> tuple[NDArray[complexfloating[Any, Any]], complexfloating[Any, Any]]: ...
+@overload
+def linspace(
+    start: _ArrayLikeComplex_co,
+    stop: _ArrayLikeComplex_co,
+    num: SupportsIndex = ...,
+    endpoint: bool = ...,
+    retstep: L[True] = ...,
+    dtype: _DTypeLike[_SCT] = ...,
+    axis: SupportsIndex = ...,
+) -> tuple[NDArray[_SCT], _SCT]: ...
+@overload
+def linspace(
+    start: _ArrayLikeComplex_co,
+    stop: _ArrayLikeComplex_co,
+    num: SupportsIndex = ...,
+    endpoint: bool = ...,
+    retstep: L[True] = ...,
+    dtype: DTypeLike = ...,
+    axis: SupportsIndex = ...,
+) -> tuple[NDArray[Any], Any]: ...
+
+@overload
 def logspace(
-    start: _ArrayLikeNumber,
-    stop: _ArrayLikeNumber,
+    start: _ArrayLikeFloat_co,
+    stop: _ArrayLikeFloat_co,
     num: SupportsIndex = ...,
     endpoint: bool = ...,
-    base: _ArrayLikeNumber = ...,
-    dtype: DtypeLike = ...,
+    base: _ArrayLikeFloat_co = ...,
+    dtype: None = ...,
     axis: SupportsIndex = ...,
-) -> ndarray: ...
+) -> NDArray[floating[Any]]: ...
+@overload
+def logspace(
+    start: _ArrayLikeComplex_co,
+    stop: _ArrayLikeComplex_co,
+    num: SupportsIndex = ...,
+    endpoint: bool = ...,
+    base: _ArrayLikeComplex_co = ...,
+    dtype: None = ...,
+    axis: SupportsIndex = ...,
+) -> NDArray[complexfloating[Any, Any]]: ...
+@overload
+def logspace(
+    start: _ArrayLikeComplex_co,
+    stop: _ArrayLikeComplex_co,
+    num: SupportsIndex = ...,
+    endpoint: bool = ...,
+    base: _ArrayLikeComplex_co = ...,
+    dtype: _DTypeLike[_SCT] = ...,
+    axis: SupportsIndex = ...,
+) -> NDArray[_SCT]: ...
+@overload
+def logspace(
+    start: _ArrayLikeComplex_co,
+    stop: _ArrayLikeComplex_co,
+    num: SupportsIndex = ...,
+    endpoint: bool = ...,
+    base: _ArrayLikeComplex_co = ...,
+    dtype: DTypeLike = ...,
+    axis: SupportsIndex = ...,
+) -> NDArray[Any]: ...
+
+@overload
 def geomspace(
-    start: _ArrayLikeNumber,
-    stop: _ArrayLikeNumber,
+    start: _ArrayLikeFloat_co,
+    stop: _ArrayLikeFloat_co,
     num: SupportsIndex = ...,
     endpoint: bool = ...,
-    dtype: DtypeLike = ...,
+    dtype: None = ...,
     axis: SupportsIndex = ...,
-) -> ndarray: ...
+) -> NDArray[floating[Any]]: ...
+@overload
+def geomspace(
+    start: _ArrayLikeComplex_co,
+    stop: _ArrayLikeComplex_co,
+    num: SupportsIndex = ...,
+    endpoint: bool = ...,
+    dtype: None = ...,
+    axis: SupportsIndex = ...,
+) -> NDArray[complexfloating[Any, Any]]: ...
+@overload
+def geomspace(
+    start: _ArrayLikeComplex_co,
+    stop: _ArrayLikeComplex_co,
+    num: SupportsIndex = ...,
+    endpoint: bool = ...,
+    dtype: _DTypeLike[_SCT] = ...,
+    axis: SupportsIndex = ...,
+) -> NDArray[_SCT]: ...
+@overload
+def geomspace(
+    start: _ArrayLikeComplex_co,
+    stop: _ArrayLikeComplex_co,
+    num: SupportsIndex = ...,
+    endpoint: bool = ...,
+    dtype: DTypeLike = ...,
+    axis: SupportsIndex = ...,
+) -> NDArray[Any]: ...
+
+# Re-exported to `np.lib.function_base`
+def add_newdoc(
+    place: str,
+    obj: str,
+    doc: str | tuple[str, str] | list[tuple[str, str]],
+    warn_on_python: bool = ...,
+) -> None: ...

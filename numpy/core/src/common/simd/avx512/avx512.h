@@ -4,6 +4,10 @@
 #define NPY_SIMD 512
 #define NPY_SIMD_WIDTH 64
 #define NPY_SIMD_F64 1
+#define NPY_SIMD_FMA3 1 // native support
+// Enough limit to allow us to use _mm512_i32gather_* and _mm512_i32scatter_*
+#define NPY_SIMD_MAXLOAD_STRIDE32  (0x7fffffff / 16)
+#define NPY_SIMD_MAXSTORE_STRIDE32 (0x7fffffff / 16)
 
 typedef __m512i npyv_u8;
 typedef __m512i npyv_s8;
@@ -69,3 +73,5 @@ typedef struct { __m512d val[3]; } npyv_f64x3;
 #include "operators.h"
 #include "conversion.h"
 #include "arithmetic.h"
+#include "math.h"
+#include "maskop.h"
