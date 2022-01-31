@@ -1,5 +1,7 @@
 #if NPY_SIMD && defined(NPY_HAVE_AVX512_SKX) && defined(NPY_CAN_LINK_SVML)
+extern __m512 __svml_expf16(__m512 x);
 extern __m512 __svml_exp2f16(__m512 x);
+extern __m512 __svml_logf16(__m512 x);
 extern __m512 __svml_log2f16(__m512 x);
 extern __m512 __svml_log10f16(__m512 x);
 extern __m512 __svml_expm1f16(__m512 x);
@@ -19,7 +21,9 @@ extern __m512 __svml_asinhf16(__m512 x);
 extern __m512 __svml_acoshf16(__m512 x);
 extern __m512 __svml_atanhf16(__m512 x);
 
+extern __m512d __svml_exp8(__m512d x);
 extern __m512d __svml_exp28(__m512d x);
+extern __m512d __svml_log8(__m512d x);
 extern __m512d __svml_log28(__m512d x);
 extern __m512d __svml_log108(__m512d x);
 extern __m512d __svml_expm18(__m512d x);
