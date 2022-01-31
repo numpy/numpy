@@ -1,0 +1,7 @@
+Exceptions will be raised during array-like creation
+----------------------------------------------------
+
+When an object raised an exception during access of the special
+attributes ``__array__`` or ``__array_interface__``, this exception
+was usually ignored.
+This behaviour was deprecated in 1.21, and the exception will now be raised.
