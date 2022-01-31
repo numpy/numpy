@@ -303,7 +303,7 @@ class _Test_CCompilerOpt:
             return
         # check sanity of argument's validation
         for baseline, dispatch in (
-            ("unkown_feature - max +min", "unknown max min"), # unknowing features
+            ("unknown_feature - max +min", "unknown max min"), # unknowing features
             ("#avx2", "$vsx") # groups and polices aren't acceptable
         ) :
             try:
