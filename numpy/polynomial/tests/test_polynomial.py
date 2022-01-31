@@ -587,7 +587,11 @@ class TestMisc:
         yerr = [10., 5., 3., 2., 10., 10., 10., 10., 10.]
         coef1, cov_matrix = poly.polyfit(x, y, 1, w=yerr, cov=True)
         assert_almost_equal(coef1, [0, 1], decimal=1)
-        assert_almost_equal(cov_matrix, [[0.15, -0.02], [-0.02, 0.]], decimal=2)
+        assert_almost_equal(
+            cov_matrix,
+            [[0.15, -0.02],
+            [-0.02, 0.]],
+            decimal=2)
         #
         coef, full, cov = poly.polyfit(x, y, 1, full=True, cov=True)
         assert_almost_equal(coef1, coef, decimal=1)
