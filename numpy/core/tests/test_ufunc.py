@@ -14,6 +14,7 @@ from numpy.testing import (
     assert_almost_equal, assert_array_almost_equal, assert_no_warnings,
     assert_allclose, HAS_REFCOUNT, suppress_warnings
     )
+from numpy.testing._private.utils import requires_memory
 from numpy.compat import pickle
 
 
@@ -1554,6 +1555,17 @@ class TestUfunc:
         assert_equal(np.minimum.reduce(a, axis=2),
                                     [[0, 1, 1], [1, 1, 1]])
         assert_equal(np.minimum.reduce(a, axis=()), a)
+
+    @requires_memory(6 * 1024**3)
+    def test_identityless_reduction_huge_array(self):
+        # Regression test for gh-20921 (copying identity incorrectly failed)
+        arr = np.zeros((2, 2**31), 'uint8')
+        arr[:, 0] = [1, 3]
+        arr[:, -1] = [4, 1]
+        res = np.maximum.reduce(arr, axis=0)
+        del arr
+        assert res[0] == 3
+        assert res[-1] == 4
 
     def test_identityless_reduction_corder(self):
         a = np.empty((2, 3, 4), order='C')
