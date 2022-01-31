@@ -270,18 +270,22 @@ def unique(ar, return_index=False, return_inverse=False,
     >>> np.repeat(values, counts)
     array([1, 2, 2, 2, 3, 4, 6])    # original order not preserved
 
-    Return the values of an array treating NaNs unique from one another (default behavior NaN = NaN):
+    Return the values of an array with NaNs unique from one another:
 
-    >>> np.unique([1, 1, 2, 2, 3, 3, np.nan, np.nan], equal_nans = False)
-    array([1, 2, 3, nan, nan])
+    >>> a = np.unique([1, 1, 2, 2, 3, 3, np.nan, np.nan], equal_nans = False)
+    >>> b = np.array([1, 2, 3, np.nan, np.nan])
+    >>> np.array_equal(a, b, equal_nan = True)
+    True
     >>> a = np.array([[1, np.nan, 0], [1, np.nan, 0], [2, 3, 4]])
-    >>> np.unique(a, axis = 0, equal_nans = False)
-    array([[1, nan, 0], [1, nan, 0], [2, 3, 4]])
+    >>> b = np.unique(a, axis=0, equal_nans = False)
+    >>> np.array_equal(a, b, equal_nan = True)
+    True
 
     """
     ar = np.asanyarray(ar)
     if axis is None:
-        ret = _unique1d(ar, return_index, return_inverse, return_counts, equal_nans)
+        ret = _unique1d(ar, return_index, return_inverse,
+        return_counts, equal_nans)
         return _unpack_tuple(ret)
 
     # axis was specified and not None
@@ -347,8 +351,10 @@ def _unique1d(ar, return_index=False, return_inverse=False,
     mask = np.empty(aux.shape, dtype=np.bool_)
     mask[:1] = True
 
-    #modified version of numpy.array_equal which can resolve equal_NaN=True in variable dtype arrays
-    #eg. (1, "a", NaN) compared to itself is True while array_equal would throw exception on checking isNaN on non-numerics
+    # modified version of numpy.array_equal which can resolve equal_NaNs
+    # in variable dtype arrays.
+    # eg. (1, "a", NaN) compared to itself is True while array_equal would
+    # throw exception on checking isNaN on non-numerics
     def equals_nan(a1, a2):
         try:
             a1, a2 = multiarray.asarray(a1), multiarray.asarray(a2)
@@ -357,7 +363,8 @@ def _unique1d(ar, return_index=False, return_inverse=False,
         if a1.shape != a2.shape:
             return False
         a1, a2 = a1.flat[0], a2.flat[0]
-        #compare a1 and a2 elementwise, and ignore inequalities triggered by NaNs on both sides, otherwise a triggered inequality returns False
+        # compare a1 and a2 elementwise, and ignore inequalities if
+        # NaNs on both sides otherwise a triggered inequality returns False
         for i in range(len(a1)):
             if a1[i] != a2[i]:
                 try:
@@ -369,9 +376,9 @@ def _unique1d(ar, return_index=False, return_inverse=False,
                     return False
         return True
         
-
-    if equal_nans and aux.shape[0] > 0 and aux.dtype.kind in "cfmM" and np.isnan(aux[-1]):
-        if aux.dtype.kind == "c":  # for complex all NaNs are considered equivalent
+    if (equal_nans and aux.shape[0] > 0 and aux.dtype.kind in "cfmM" and
+    np.isnan(aux[-1])):
+        if aux.dtype.kind == "c":  # for complex all NaNs are equivalent
             aux_firstnan = np.searchsorted(np.isnan(aux), True, side='left')
         else:
             aux_firstnan = np.searchsorted(aux, aux[-1], side='left')

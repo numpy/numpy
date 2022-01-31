@@ -725,14 +725,15 @@ class TestUnique:
     def test_unique_equal_nans(self):
         # issue 20326, 20873
 
-        #1D array with NaN
+        # 1D array with NaN
         arr_1d = np.array([1, 1, 2, 2, 3, 3, np.nan, np.nan, 4, 4, 5, 6])
         result_1d_equal_nans = np.array([1, 2, 3, 4, 5, 6, np.nan])
         result_1d_notequal_nans = np.array([1, 2, 3, 4, 5, 6, np.nan, np.nan])
         assert_equal(np.unique(arr_1d), result_1d_equal_nans)
-        assert_equal(np.unique(arr_1d, equal_nans = False), result_1d_notequal_nans)
+        assert_equal(np.unique(arr_1d, equal_nans = False),
+        result_1d_notequal_nans)
 
-        #2D arrays with NaN
+        # 2D arrays with NaN
         arr_2d = np.array([[0, 1, 0, np.nan],
                         [1, 0, 0, np.nan],
                         [0, 1, 0, np.nan],
@@ -743,11 +744,14 @@ class TestUnique:
                                         [1, 0, 0, np.nan],
                                         [1, 0, 0, np.nan]])
         result_2d_equal_nans_flat = np.array([0, 1, np.nan])
-        result_2d_notequal_nans_flat = np.array([0, 1, np.nan, np.nan, np.nan, np.nan])
+        result_2d_notequal_nans_flat = np.array([0, 1, np.nan, np.nan,
+        np.nan, np.nan])
         assert_array_equal(np.unique(arr_2d, axis=0), result_2d_equal_nans)
-        assert_array_equal(np.unique(arr_2d, axis=0, equal_nans=False), result_2d_notequal_nans)
+        assert_array_equal(np.unique(arr_2d, axis=0, equal_nans=False),
+        result_2d_notequal_nans)
         assert_array_equal(np.unique(arr_2d), result_2d_equal_nans_flat)
-        assert_array_equal(np.unique(arr_2d, equal_nans = False), result_2d_notequal_nans_flat)
+        assert_array_equal(np.unique(arr_2d, equal_nans = False),
+        result_2d_notequal_nans_flat)
 
     def _run_axis_tests(self, dtype):
         data = np.array([[0, 1, 0, 0],
