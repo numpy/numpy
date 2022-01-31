@@ -1729,9 +1729,7 @@ class TestMaximum(_FilterInvalids):
         assert_equal(out, out_maxtrue)
 
     def test_precision(self):
-        dtypes = [np.float16, np.float32, np.float64]
-        if(hasattr(np, 'float128')):
-            dtypes.append(np.float128)
+        dtypes = [np.float16, np.float32, np.float64, np.longdouble]
 
         for dt in dtypes:
             dtmin = np.finfo(dt).min
@@ -1823,9 +1821,7 @@ class TestMinimum(_FilterInvalids):
         assert_equal(out, out_mintrue)
 
     def test_precision(self):
-        dtypes = [np.float16, np.float32, np.float64]
-        if(hasattr(np, 'float128')):
-            dtypes.append(np.float128)
+        dtypes = [np.float16, np.float32, np.float64, np.longdouble]
 
         for dt in dtypes:
             dtmin = np.finfo(dt).min
@@ -1888,9 +1884,7 @@ class TestFmax(_FilterInvalids):
             assert_equal(np.fmax(arg1, arg2), out)
 
     def test_precision(self):
-        dtypes = [np.float16, np.float32, np.float64]
-        if(hasattr(np, 'float128')):
-            dtypes.append(np.float128)
+        dtypes = [np.float16, np.float32, np.float64, np.longdouble]
 
         for dt in dtypes:
             dtmin = np.finfo(dt).min
@@ -1953,9 +1947,7 @@ class TestFmin(_FilterInvalids):
             assert_equal(np.fmin(arg1, arg2), out)
 
     def test_precision(self):
-        dtypes = [np.float16, np.float32, np.float64]
-        if(hasattr(np, 'float128')):
-            dtypes.append(np.float128)
+        dtypes = [np.float16, np.float32, np.float64, np.longdouble]
 
         for dt in dtypes:
             dtmin = np.finfo(dt).min
@@ -1974,7 +1966,6 @@ class TestFmin(_FilterInvalids):
             for v1, v2, expected in test_cases:
                 assert_equal(np.fmin([v1], [v2]), [expected])
                 assert_equal(np.fmin.reduce([v1, v2]), expected)
-
 
 
 class TestBool:
