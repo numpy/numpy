@@ -234,11 +234,11 @@ cb_rout_rules = [
         'frompyobj': [
             {debugcapi: '    CFUNCSMESS("cb:Getting return_value->");'},
             '''\
-    if (capi_j>capi_i)
+    if (capi_j>capi_i) {
         GETSCALARFROMPYTUPLE(capi_return,capi_i++,&return_value,#ctype#,
           "#ctype#_from_pyobj failed in converting return_value of"
           " call-back function #name# to C #ctype#\\n");
-    else {
+    } else {
         fprintf(stderr,"Warning: call-back function #name# did not provide"
                        " return value (index=%d, type=#ctype#)\\n",capi_i);
     }''',
@@ -257,9 +257,9 @@ cb_rout_rules = [
         'frompyobj': [
             {debugcapi: '    CFUNCSMESS("cb:Getting return_value->\\"");'},
             """\
-    if (capi_j>capi_i)
+    if (capi_j>capi_i) {
         GETSTRFROMPYTUPLE(capi_return,capi_i++,return_value,return_value_len);
-    else {
+    } else {
         fprintf(stderr,"Warning: call-back function #name# did not provide"
                        " return value (index=%d, type=#ctype#)\\n",capi_i);
     }""",
@@ -295,7 +295,7 @@ return_value
         'frompyobj': [
             {debugcapi: '    CFUNCSMESS("cb:Getting return_value->");'},
             """\
-    if (capi_j>capi_i)
+    if (capi_j>capi_i) {
 #ifdef F2PY_CB_RETURNCOMPLEX
         GETSCALARFROMPYTUPLE(capi_return,capi_i++,&return_value,#ctype#,
           \"#ctype#_from_pyobj failed in converting return_value of call-back\"
@@ -305,7 +305,7 @@ return_value
           \"#ctype#_from_pyobj failed in converting return_value of call-back\"
           \" function #name# to C #ctype#\\n\");
 #endif
-    else {
+    } else {
         fprintf(stderr,
                 \"Warning: call-back function #name# did not provide\"
                 \" return value (index=%d, type=#ctype#)\\n\",capi_i);
