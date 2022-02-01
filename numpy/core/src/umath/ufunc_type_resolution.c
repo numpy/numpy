@@ -641,7 +641,7 @@ PyUFunc_SimpleUniformOperationTypeResolver(
     /* Check against the casting rules */
     if (PyUFunc_ValidateCasting(ufunc, casting, operands, out_dtypes) < 0) {
         for (int iop = 0; iop < nop; iop++) {
-            Py_XDECREF(out_dtypes[iop]);
+            Py_DECREF(out_dtypes[iop]);
             out_dtypes[iop] = NULL;
         }
         return -1;
