@@ -35,11 +35,15 @@
  *   x = SNaN,   r = QNaN
  *
  *
- *   ALGORITHM DETAILS
- *   We handle special values in a callout function, aside from main path
- *   computations. "Special" for this algorithm are:
- *   INF, NAN, |x| > HUGE_THRESHOLD
+ *  ALGORITHM DETAILS
  *
+ *  SVML handel |x| > HUGE_THRESHOLD, INF and NaNs by scalar callout as following:
+ *  1. check special cases
+ *  2. return `+-1` for `|x| > HUGE_THRESHOLD`  otherwise return `x`
+ *
+ *  It wasn't clear to us the reason behind using callout instead of using
+ *  AVX512 directly for single-precision.
+ *  However, we saw it's better to use SIMD instead of following SVML.
  *
  *  Main path computations are organized as follows:
  *  Actually we split the interval [0, SATURATION_THRESHOLD)
@@ -165,6 +169,7 @@ simd_tanh_f64(const double *src, npy_intp ssrc, double *dst, npy_intp sdst, npy_
         0xbc730b73f1eaff20ull, 0xbbba2cff8135d462ull, 0xbab5a71b5f7d9035ull, 0x0ull
     };
     const int nlanes = npyv_nlanes_f64;
+    const npyv_f64 qnan = npyv_setall_f64(NPY_NAN);
     for (; len > 0; len -= nlanes, src += ssrc*nlanes, dst += sdst*nlanes) {
         npyv_f64 x;
         if (ssrc == 1) {
@@ -172,10 +177,11 @@ simd_tanh_f64(const double *src, npy_intp ssrc, double *dst, npy_intp sdst, npy_
         } else {
             x = npyv_loadn_tillz_f64(src, ssrc, len);
         }
-        npyv_s64 denorm = npyv_and_s64(npyv_reinterpret_s64_f64(x), npyv_setall_s64(0x7ff8000000000000ll));
-        // |x| > HUGE_THRESHOLD, INF and NaNs are filtered out to callout.
-        npyv_b64 callout_m = npyv_cmple_s64(denorm, npyv_setall_s64(0x7fe0000000000000ll));
-        npyv_s64 idxs = npyv_sub_s64(denorm, npyv_setall_s64(0x3fc0000000000000ll));
+        npyv_s64 ndnan = npyv_and_s64(npyv_reinterpret_s64_f64(x), npyv_setall_s64(0x7ff8000000000000ll));
+        // |x| > HUGE_THRESHOLD, INF and NaNs.
+        npyv_b64 special_m = npyv_cmple_s64(ndnan, npyv_setall_s64(0x7fe0000000000000ll));
+        npyv_b64 nnan_m = npyv_notnan_f64(x);
+        npyv_s64 idxs = npyv_sub_s64(ndnan, npyv_setall_s64(0x3fc0000000000000ll));
         // no native 64-bit for max/min and its fine to use 32-bit max/min
         // since we're not crossing 32-bit edge
         npyv_s32 idxl = npyv_max_s32(npyv_reinterpret_s32_s64(idxs), npyv_zero_s32());
@@ -221,20 +227,11 @@ simd_tanh_f64(const double *src, npy_intp ssrc, double *dst, npy_intp sdst, npy_
         r = npyv_muladd_f64(r, y, c2);
         r = npyv_muladd_f64(r, y, c1);
         r = npyv_muladd_f64(r, y, c0);
+        // 1.0 if |x| > HUGE_THRESHOLD || INF
+        r = npyv_select_f64(special_m, r, npyv_setall_f64(1.0));
         r = npyv_or_f64(r, sign);
-
-        npy_uint64 callout = npyv_tobits_b64(callout_m);
-        if (NPY_UNLIKELY(callout != ((1 << nlanes) - 1))) {
-            double NPY_DECL_ALIGNED(NPY_SIMD_WIDTH) back2c[npyv_nlanes_f64];
-            npyv_storea_f64(back2c, x);
-            for (unsigned i = 0; i < npyv_nlanes_f64; ++i) {
-                if ((callout >> i) & 1) {
-                    continue;
-                }
-                back2c[i] = npy_tanh(back2c[i]);
-            }
-            r = npyv_select_f64(callout_m, r, npyv_loada_f64(back2c));
-        }
+        // qnan if nan
+        r = npyv_select_f64(nnan_m, r, qnan);
         if (sdst == 1) {
             npyv_store_till_f64(dst, len, r);
         } else {
@@ -290,6 +287,7 @@ simd_tanh_f32(const float *src, npy_intp ssrc, float *dst, npy_intp sdst, npy_in
     };
 
     const int nlanes = npyv_nlanes_f32;
+    const npyv_f32 qnan = npyv_setall_f32(NPY_NANF);
     for (; len > 0; len -= nlanes, src += ssrc*nlanes, dst += sdst*nlanes) {
         npyv_f32 x;
         if (ssrc == 1) {
@@ -297,11 +295,11 @@ simd_tanh_f32(const float *src, npy_intp ssrc, float *dst, npy_intp sdst, npy_in
         } else {
             x = npyv_loadn_tillz_f32(src, ssrc, len);
         }
-        npyv_s32 denorm = npyv_and_s32(npyv_reinterpret_s32_f32(x), npyv_setall_s32(0x7fe00000));
-        // |x| > HUGE_THRESHOLD, INF and NaNs are filtered out to callout.
-        npyv_b32 callout_m = npyv_cmple_s32(denorm, npyv_setall_s32(0x7f000000));
-
-        npyv_s32 idxs = npyv_sub_s32(denorm, npyv_setall_s32(0x3d400000));
+        npyv_s32 ndnan = npyv_and_s32(npyv_reinterpret_s32_f32(x), npyv_setall_s32(0x7fe00000));
+        // check |x| > HUGE_THRESHOLD, INF and NaNs.
+        npyv_b32 special_m = npyv_cmple_s32(ndnan, npyv_setall_s32(0x7f000000));
+        npyv_b32 nnan_m = npyv_notnan_f32(x);
+        npyv_s32 idxs = npyv_sub_s32(ndnan, npyv_setall_s32(0x3d400000));
                  idxs = npyv_max_s32(idxs, npyv_zero_s32());
                  idxs = npyv_min_s32(idxs, npyv_setall_s32(0x3e00000));
         npyv_u32 idx  = npyv_shri_u32(npyv_reinterpret_u32_s32(idxs), 21);
@@ -325,20 +323,11 @@ simd_tanh_f32(const float *src, npy_intp ssrc, float *dst, npy_intp sdst, npy_in
         r = npyv_muladd_f32(r, y, c2);
         r = npyv_muladd_f32(r, y, c1);
         r = npyv_muladd_f32(r, y, c0);
+        // 1.0 if |x| > HUGE_THRESHOLD || INF
+        r = npyv_select_f32(special_m, r, npyv_setall_f32(1.0f));
         r = npyv_or_f32(r, sign);
-
-        npy_uint64 callout = npyv_tobits_b32(callout_m);
-        if (NPY_UNLIKELY(callout != ((1 << nlanes) - 1))) {
-            float NPY_DECL_ALIGNED(NPY_SIMD_WIDTH) back2c[npyv_nlanes_f32];
-            npyv_storea_f32(back2c, x);
-            for (unsigned i = 0; i < npyv_nlanes_f32; ++i) {
-                if ((callout >> i) & 1) {
-                    continue;
-                }
-                back2c[i] = npy_tanhf(back2c[i]);
-            }
-            r = npyv_select_f32(callout_m, r, npyv_loada_f32(back2c));
-        }
+        // qnan if nan
+        r = npyv_select_f32(nnan_m, r, qnan);
         if (sdst == 1) {
             npyv_store_till_f32(dst, len, r);
         } else {
