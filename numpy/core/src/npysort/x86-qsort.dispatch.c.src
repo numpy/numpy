@@ -63,7 +63,7 @@
 #define VROTL(x, k) /* rotate each uint64_t value in vector */               \
     _mm256_or_si256(_mm256_slli_epi64((x),(k)),_mm256_srli_epi64((x),64-(k)))
 
-static NPY_INLINE NPY_GCC_OPT_3
+static NPY_INLINE
 __m256i vnext(__m256i* s0, __m256i* s1) {
     *s1 = _mm256_xor_si256(*s0, *s1); /* modify vectors s1 and s0 */
     *s0 = _mm256_xor_si256(_mm256_xor_si256(VROTL(*s0, 24), *s1),
@@ -73,7 +73,7 @@ __m256i vnext(__m256i* s0, __m256i* s1) {
 }
 
 /* transform random numbers to the range between 0 and bound - 1 */
-static NPY_INLINE NPY_GCC_OPT_3
+static NPY_INLINE
 __m256i rnd_epu32(__m256i rnd_vec, __m256i bound) {
     __m256i even = _mm256_srli_epi64(_mm256_mul_epu32(rnd_vec, bound), 32);
     __m256i odd = _mm256_mul_epu32(_mm256_srli_epi64(rnd_vec, 32), bound);
@@ -108,7 +108,7 @@ __m256i rnd_epu32(__m256i rnd_vec, __m256i bound) {
     a = _mm256_min_@vsuf1@(a, b);                                         \
     b = _mm256_max_@vsuf1@(temp, b);}                                     \
 
-static NPY_INLINE NPY_GCC_OPT_3
+static NPY_INLINE
 @zmm_t@ cmp_merge_@vsuf1@(@zmm_t@ in1, @zmm_t@ in2, __mmask16 mask)
 {
     @zmm_t@ min = _mm512_min_@vsuf1@(in2, in1);
@@ -120,7 +120,7 @@ static NPY_INLINE NPY_GCC_OPT_3
  * Assumes zmm is random and performs a full sorting network defined in
  * https://en.wikipedia.org/wiki/Bitonic_sorter#/media/File:BitonicSort.svg
  */
-static NPY_INLINE NPY_GCC_OPT_3
+static NPY_INLINE
 @zmm_t@ sort_zmm_@vsuf1@(@zmm_t@ zmm)
 {
     zmm = cmp_merge_@vsuf1@(zmm, SHUFFLE_@vsuf2@(zmm, SHUFFLE_MASK(2,3,0,1)), 0xAAAA);
@@ -137,7 +137,7 @@ static NPY_INLINE NPY_GCC_OPT_3
 }
 
 // Assumes zmm is bitonic and performs a recursive half cleaner
-static NPY_INLINE NPY_GCC_OPT_3
+static NPY_INLINE
 @zmm_t@ bitonic_merge_zmm_@vsuf1@(@zmm_t@ zmm)
 {
     // 1) half_cleaner[16]: compare 1-9, 2-10, 3-11 etc ..
@@ -152,7 +152,7 @@ static NPY_INLINE NPY_GCC_OPT_3
 }
 
 // Assumes zmm1 and zmm2 are sorted and performs a recursive half cleaner
-static NPY_INLINE NPY_GCC_OPT_3
+static NPY_INLINE
 void bitonic_merge_two_zmm_@vsuf1@(@zmm_t@* zmm1, @zmm_t@* zmm2)
 {
     // 1) First step of a merging network: coex of zmm1 and zmm2 reversed
@@ -165,7 +165,7 @@ void bitonic_merge_two_zmm_@vsuf1@(@zmm_t@* zmm1, @zmm_t@* zmm2)
 }
 
 // Assumes [zmm0, zmm1] and [zmm2, zmm3] are sorted and performs a recursive half cleaner
-static NPY_INLINE NPY_GCC_OPT_3
+static NPY_INLINE
 void bitonic_merge_four_zmm_@vsuf1@(@zmm_t@* zmm)
 {
     @zmm_t@ zmm2r = _mm512_permutexvar_@vsuf2@(_mm512_set_epi32(NETWORK5), zmm[2]);
@@ -184,7 +184,7 @@ void bitonic_merge_four_zmm_@vsuf1@(@zmm_t@* zmm)
     zmm[3] = bitonic_merge_zmm_@vsuf1@(zmm3);
 }
 
-static NPY_INLINE NPY_GCC_OPT_3
+static NPY_INLINE
 void bitonic_merge_eight_zmm_@vsuf1@(@zmm_t@* zmm)
 {
     @zmm_t@ zmm4r = _mm512_permutexvar_@vsuf2@(_mm512_set_epi32(NETWORK5), zmm[4]);
@@ -217,7 +217,7 @@ void bitonic_merge_eight_zmm_@vsuf1@(@zmm_t@* zmm)
     zmm[7] = bitonic_merge_zmm_@vsuf1@(zmm_t8);
 }
 
-static NPY_INLINE NPY_GCC_OPT_3
+static NPY_INLINE
 void sort_16_@vsuf1@(@type_t@* arr, npy_int N)
 {
     __mmask16 load_mask = (0x0001 << N) - 0x0001;
@@ -225,7 +225,7 @@ void sort_16_@vsuf1@(@type_t@* arr, npy_int N)
     _mm512_mask_storeu_@vsuf2@(arr, load_mask, sort_zmm_@vsuf1@(zmm));
 }
 
-static NPY_INLINE NPY_GCC_OPT_3
+static NPY_INLINE
 void sort_32_@vsuf1@(@type_t@* arr, npy_int N)
 {
     if (N <= 16) {
@@ -242,7 +242,7 @@ void sort_32_@vsuf1@(@type_t@* arr, npy_int N)
     _mm512_mask_storeu_@vsuf2@(arr + 16, load_mask, zmm2);
 }
 
-static NPY_INLINE NPY_GCC_OPT_3
+static NPY_INLINE
 void sort_64_@vsuf1@(@type_t@* arr, npy_int N)
 {
     if (N <= 32) {
@@ -275,7 +275,7 @@ void sort_64_@vsuf1@(@type_t@* arr, npy_int N)
     _mm512_mask_storeu_@vsuf2@(arr + 48, load_mask2, zmm[3]);
 }
 
-static NPY_INLINE NPY_GCC_OPT_3
+static NPY_INLINE
 void sort_128_@vsuf1@(@type_t@* arr, npy_int N)
 {
     if (N <= 64) {
@@ -337,7 +337,7 @@ void sort_128_@vsuf1@(@type_t@* arr, npy_int N)
 }
 
 
-static NPY_INLINE NPY_GCC_OPT_3
+static NPY_INLINE
 void swap_@TYPE@(@type_t@ *arr, npy_intp ii, npy_intp jj) {
     @type_t@ temp = arr[ii];
     arr[ii] = arr[jj];
@@ -345,7 +345,7 @@ void swap_@TYPE@(@type_t@ *arr, npy_intp ii, npy_intp jj) {
 }
 
 // Median of 3 stratergy
-//static NPY_INLINE NPY_GCC_OPT_3
+//static NPY_INLINE
 //npy_intp get_pivot_index(@type_t@ *arr, const npy_intp left, const npy_intp right) {
 //    return (rand() % (right + 1 - left)) + left;
 //    //npy_intp middle = ((right-left)/2) + left;
@@ -362,7 +362,7 @@ void swap_@TYPE@(@type_t@ *arr, npy_intp ii, npy_intp jj) {
  * Picking the pivot: Median of 72 array elements chosen at random.
  */
 
-static NPY_INLINE NPY_GCC_OPT_3
+static NPY_INLINE
 @type_t@ get_pivot_@vsuf1@(@type_t@ *arr, const npy_intp left, const npy_intp right) {
     /* seeds for vectorized random number generator */
     __m256i s0 = _mm256_setr_epi64x(8265987198341093849, 3762817312854612374,
@@ -414,7 +414,7 @@ static NPY_INLINE NPY_GCC_OPT_3
  * Parition one ZMM register based on the pivot and returns the index of the
  * last element that is less than equal to the pivot.
  */
-static NPY_INLINE NPY_GCC_OPT_3
+static NPY_INLINE
 npy_int partition_vec_@vsuf1@(@type_t@* arr, npy_intp left, npy_intp right,
                                 const @zmm_t@ curr_vec, const @zmm_t@ pivot_vec,
                                 @zmm_t@* smallest_vec, @zmm_t@* biggest_vec)
@@ -433,7 +433,7 @@ npy_int partition_vec_@vsuf1@(@type_t@* arr, npy_intp left, npy_intp right,
  * Parition an array based on the pivot and returns the index of the
  * last element that is less than equal to the pivot.
  */
-static NPY_INLINE NPY_GCC_OPT_3
+static NPY_INLINE
 npy_intp partition_avx512_@vsuf1@(@type_t@* arr, npy_intp left, npy_intp right,
                                     @type_t@ pivot, @type_t@* smallest, @type_t@* biggest)
 {
@@ -503,7 +503,7 @@ npy_intp partition_avx512_@vsuf1@(@type_t@* arr, npy_intp left, npy_intp right,
     return l_store;
 }
 
-static NPY_INLINE NPY_GCC_OPT_3
+static NPY_INLINE
 void qsort_@type@(@type_t@* arr, npy_intp left, npy_intp right, npy_int max_iters)
 {
     /*
@@ -532,7 +532,7 @@ void qsort_@type@(@type_t@* arr, npy_intp left, npy_intp right, npy_int max_iter
 }
 /**end repeat**/
 
-static NPY_INLINE NPY_GCC_OPT_3
+static NPY_INLINE
 npy_intp replace_nan_with_inf(npy_float* arr, npy_intp arrsize)
 {
     npy_intp nan_count = 0;
@@ -551,7 +551,7 @@ npy_intp replace_nan_with_inf(npy_float* arr, npy_intp arrsize)
     return nan_count;
 }
 
-static NPY_INLINE NPY_GCC_OPT_3
+static NPY_INLINE
 void replace_inf_with_nan(npy_float* arr, npy_intp arrsize, npy_intp nan_count)
 {
     for (npy_intp ii = arrsize-1; nan_count > 0; --ii) {
