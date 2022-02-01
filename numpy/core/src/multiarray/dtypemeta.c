@@ -181,7 +181,7 @@ void_discover_descr_from_pyobject(
         if (itemsize > NPY_MAX_INT) {
             PyErr_SetString(PyExc_TypeError,
                     "byte-like to large to store inside array.");
-            Py_DECREF(desr);
+            Py_DECREF(descr);
             return NULL;
         }
         descr->elsize = (int)itemsize;
