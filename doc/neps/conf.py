@@ -99,6 +99,10 @@ html_theme_options = {
   "show_prev_next": False,
 }
 
+html_sidebars = {
+    "**": []  # Suppress sidebars on all pages
+}
+
 html_title = "%s" % (project)
 html_static_path = ['../source/_static']
 html_last_updated_fmt = '%b %d, %Y'
