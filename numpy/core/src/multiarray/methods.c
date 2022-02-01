@@ -1338,6 +1338,7 @@ array_sort(PyArrayObject *self,
         }
         newd = PyArray_DescrNew(saved);
         if (newd == NULL) {
+            Py_DECREF(new_name);
             return NULL;
         }
         Py_DECREF(newd->names);
