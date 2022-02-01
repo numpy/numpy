@@ -1728,6 +1728,27 @@ class TestMaximum(_FilterInvalids):
         assert_equal(np.maximum(arr1[:6:2], arr2[::3], out=out[::3]), np.array([-2.0, 10., np.nan]))
         assert_equal(out, out_maxtrue)
 
+    def test_precision(self):
+        dtypes = [np.float16, np.float32, np.float64, np.longdouble]
+
+        for dt in dtypes:
+            dtmin = np.finfo(dt).min
+            dtmax = np.finfo(dt).max
+            d1 = dt(0.1)
+            d1_next = np.nextafter(d1, np.inf)
+
+            test_cases = [
+                # v1    v2          expected
+                (dtmin, -np.inf,    dtmin),
+                (dtmax, -np.inf,    dtmax),
+                (d1,    d1_next,    d1_next),
+                (dtmax, np.nan,     np.nan),
+            ]
+
+            for v1, v2, expected in test_cases:
+                assert_equal(np.maximum([v1], [v2]), [expected])
+                assert_equal(np.maximum.reduce([v1, v2]), expected)
+
 
 class TestMinimum(_FilterInvalids):
     def test_reduce(self):
@@ -1799,6 +1820,28 @@ class TestMinimum(_FilterInvalids):
         assert_equal(np.minimum(arr1[:6:2], arr2[::3], out=out[::3]), np.array([-4.0, 1.0, np.nan]))
         assert_equal(out, out_mintrue)
 
+    def test_precision(self):
+        dtypes = [np.float16, np.float32, np.float64, np.longdouble]
+
+        for dt in dtypes:
+            dtmin = np.finfo(dt).min
+            dtmax = np.finfo(dt).max
+            d1 = dt(0.1)
+            d1_next = np.nextafter(d1, np.inf)
+
+            test_cases = [
+                # v1    v2          expected
+                (dtmin, np.inf,     dtmin),
+                (dtmax, np.inf,     dtmax),
+                (d1,    d1_next,    d1),
+                (dtmin, np.nan,     np.nan),
+            ]
+
+            for v1, v2, expected in test_cases:
+                assert_equal(np.minimum([v1], [v2]), [expected])
+                assert_equal(np.minimum.reduce([v1, v2]), expected)
+
+
 class TestFmax(_FilterInvalids):
     def test_reduce(self):
         dflt = np.typecodes['AllFloat']
@@ -1839,6 +1882,27 @@ class TestFmax(_FilterInvalids):
             arg2 = np.array([cnan, 0, cnan], dtype=complex)
             out = np.array([0,    0, nan], dtype=complex)
             assert_equal(np.fmax(arg1, arg2), out)
+
+    def test_precision(self):
+        dtypes = [np.float16, np.float32, np.float64, np.longdouble]
+
+        for dt in dtypes:
+            dtmin = np.finfo(dt).min
+            dtmax = np.finfo(dt).max
+            d1 = dt(0.1)
+            d1_next = np.nextafter(d1, np.inf)
+
+            test_cases = [
+                # v1    v2          expected
+                (dtmin, -np.inf,    dtmin),
+                (dtmax, -np.inf,    dtmax),
+                (d1,    d1_next,    d1_next),
+                (dtmax, np.nan,     dtmax),
+            ]
+
+            for v1, v2, expected in test_cases:
+                assert_equal(np.fmax([v1], [v2]), [expected])
+                assert_equal(np.fmax.reduce([v1, v2]), expected)
 
 
 class TestFmin(_FilterInvalids):
@@ -1881,6 +1945,27 @@ class TestFmin(_FilterInvalids):
             arg2 = np.array([cnan, 0, cnan], dtype=complex)
             out = np.array([0,    0, nan], dtype=complex)
             assert_equal(np.fmin(arg1, arg2), out)
+
+    def test_precision(self):
+        dtypes = [np.float16, np.float32, np.float64, np.longdouble]
+
+        for dt in dtypes:
+            dtmin = np.finfo(dt).min
+            dtmax = np.finfo(dt).max
+            d1 = dt(0.1)
+            d1_next = np.nextafter(d1, np.inf)
+
+            test_cases = [
+                # v1    v2          expected
+                (dtmin, np.inf,     dtmin),
+                (dtmax, np.inf,     dtmax),
+                (d1,    d1_next,    d1),
+                (dtmin, np.nan,     dtmin),
+            ]
+
+            for v1, v2, expected in test_cases:
+                assert_equal(np.fmin([v1], [v2]), [expected])
+                assert_equal(np.fmin.reduce([v1, v2]), expected)
 
 
 class TestBool:
