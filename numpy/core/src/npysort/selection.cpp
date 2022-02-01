@@ -22,6 +22,7 @@
 #include "npysort_common.h"
 #include "numpy_tag.h"
 
+#include <array>
 #include <cstdlib>
 #include <utility>
 
@@ -377,269 +378,105 @@ introselect_(type *v, npy_intp *tosort, npy_intp num, npy_intp kth,
     return 0;
 }
 
-/***************************************
- * C > C++ dispatch
- ***************************************/
+/*
+ *****************************************************************************
+ **                             GENERATOR                                   **
+ *****************************************************************************
+ */
 
+template <typename Tag>
+static int
+introselect_noarg(void *v, npy_intp num, npy_intp kth, npy_intp *pivots,
+                  npy_intp *npiv, void *)
+{
+    return introselect_<Tag, false>((typename Tag::type *)v, nullptr, num, kth,
+                                    pivots, npiv);
+}
+
+template <typename Tag>
+static int
+introselect_arg(void *v, npy_intp *tosort, npy_intp num, npy_intp kth,
+                npy_intp *pivots, npy_intp *npiv, void *)
+{
+    return introselect_<Tag, true>((typename Tag::type *)v, tosort, num, kth,
+                                   pivots, npiv);
+}
+
+struct arg_map {
+    int typenum;
+    PyArray_PartitionFunc *part[NPY_NSELECTS];
+    PyArray_ArgPartitionFunc *argpart[NPY_NSELECTS];
+};
+
+template <class... Tags>
+static constexpr std::array<arg_map, sizeof...(Tags)>
+make_partition_map(npy::taglist<Tags...>)
+{
+    return std::array<arg_map, sizeof...(Tags)>{
+            arg_map{Tags::type_value, &introselect_noarg<Tags>,
+                    &introselect_arg<Tags>}...};
+}
+
+struct partition_t {
+    using taglist =
+            npy::taglist<npy::bool_tag, npy::byte_tag, npy::ubyte_tag,
+                         npy::short_tag, npy::ushort_tag, npy::int_tag,
+                         npy::uint_tag, npy::long_tag, npy::ulong_tag,
+                         npy::longlong_tag, npy::ulonglong_tag, npy::half_tag,
+                         npy::float_tag, npy::double_tag, npy::longdouble_tag,
+                         npy::cfloat_tag, npy::cdouble_tag,
+                         npy::clongdouble_tag>;
+
+    static constexpr std::array<arg_map, taglist::size> map =
+            make_partition_map(taglist());
+};
+constexpr std::array<arg_map, partition_t::taglist::size> partition_t::map;
+
+static NPY_INLINE PyArray_PartitionFunc *
+_get_partition_func(int type, NPY_SELECTKIND which)
+{
+    npy_intp i;
+    npy_intp ntypes = partition_t::map.size();
+
+    if (which >= NPY_NSELECTS) {
+        return NULL;
+    }
+    for (i = 0; i < ntypes; i++) {
+        if (type == partition_t::map[i].typenum) {
+            return partition_t::map[i].part[which];
+        }
+    }
+    return NULL;
+}
+
+static NPY_INLINE PyArray_ArgPartitionFunc *
+_get_argpartition_func(int type, NPY_SELECTKIND which)
+{
+    npy_intp i;
+    npy_intp ntypes = partition_t::map.size();
+
+    for (i = 0; i < ntypes; i++) {
+        if (type == partition_t::map[i].typenum) {
+            return partition_t::map[i].argpart[which];
+        }
+    }
+    return NULL;
+}
+
+/*
+ *****************************************************************************
+ **                            C INTERFACE                                  **
+ *****************************************************************************
+ */
 extern "C" {
-NPY_NO_EXPORT int
-introselect_bool(npy_bool *v, npy_intp num, npy_intp kth, npy_intp *pivots,
-                 npy_intp *npiv, void *NOT_USED)
+NPY_NO_EXPORT PyArray_PartitionFunc *
+get_partition_func(int type, NPY_SELECTKIND which)
 {
-    return introselect_<npy::bool_tag, false>(v, nullptr, num, kth, pivots,
-                                              npiv);
+    return _get_partition_func(type, which);
 }
-NPY_NO_EXPORT int
-introselect_byte(npy_byte *v, npy_intp num, npy_intp kth, npy_intp *pivots,
-                 npy_intp *npiv, void *NOT_USED)
+NPY_NO_EXPORT PyArray_ArgPartitionFunc *
+get_argpartition_func(int type, NPY_SELECTKIND which)
 {
-    return introselect_<npy::byte_tag, false>(v, nullptr, num, kth, pivots,
-                                              npiv);
-}
-NPY_NO_EXPORT int
-introselect_ubyte(npy_ubyte *v, npy_intp num, npy_intp kth, npy_intp *pivots,
-                  npy_intp *npiv, void *NOT_USED)
-{
-    return introselect_<npy::ubyte_tag, false>(v, nullptr, num, kth, pivots,
-                                               npiv);
-}
-NPY_NO_EXPORT int
-introselect_short(npy_short *v, npy_intp num, npy_intp kth, npy_intp *pivots,
-                  npy_intp *npiv, void *NOT_USED)
-{
-    return introselect_<npy::short_tag, false>(v, nullptr, num, kth, pivots,
-                                               npiv);
-}
-NPY_NO_EXPORT int
-introselect_ushort(npy_ushort *v, npy_intp num, npy_intp kth, npy_intp *pivots,
-                   npy_intp *npiv, void *NOT_USED)
-{
-    return introselect_<npy::ushort_tag, false>(v, nullptr, num, kth, pivots,
-                                                npiv);
-}
-NPY_NO_EXPORT int
-introselect_int(npy_int *v, npy_intp num, npy_intp kth, npy_intp *pivots,
-                npy_intp *npiv, void *NOT_USED)
-{
-    return introselect_<npy::int_tag, false>(v, nullptr, num, kth, pivots,
-                                             npiv);
-}
-NPY_NO_EXPORT int
-introselect_uint(npy_uint *v, npy_intp num, npy_intp kth, npy_intp *pivots,
-                 npy_intp *npiv, void *NOT_USED)
-{
-    return introselect_<npy::uint_tag, false>(v, nullptr, num, kth, pivots,
-                                              npiv);
-}
-NPY_NO_EXPORT int
-introselect_long(npy_long *v, npy_intp num, npy_intp kth, npy_intp *pivots,
-                 npy_intp *npiv, void *NOT_USED)
-{
-    return introselect_<npy::long_tag, false>(v, nullptr, num, kth, pivots,
-                                              npiv);
-}
-NPY_NO_EXPORT int
-introselect_ulong(npy_ulong *v, npy_intp num, npy_intp kth, npy_intp *pivots,
-                  npy_intp *npiv, void *NOT_USED)
-{
-    return introselect_<npy::ulong_tag, false>(v, nullptr, num, kth, pivots,
-                                               npiv);
-}
-NPY_NO_EXPORT int
-introselect_longlong(npy_longlong *v, npy_intp num, npy_intp kth,
-                     npy_intp *pivots, npy_intp *npiv, void *NOT_USED)
-{
-    return introselect_<npy::longlong_tag, false>(v, nullptr, num, kth, pivots,
-                                                  npiv);
-}
-NPY_NO_EXPORT int
-introselect_ulonglong(npy_ulonglong *v, npy_intp num, npy_intp kth,
-                      npy_intp *pivots, npy_intp *npiv, void *NOT_USED)
-{
-    return introselect_<npy::ulonglong_tag, false>(v, nullptr, num, kth,
-                                                   pivots, npiv);
-}
-NPY_NO_EXPORT int
-introselect_half(npy_half *v, npy_intp num, npy_intp kth, npy_intp *pivots,
-                 npy_intp *npiv, void *NOT_USED)
-{
-    return introselect_<npy::half_tag, false>(v, nullptr, num, kth, pivots,
-                                              npiv);
-}
-NPY_NO_EXPORT int
-introselect_float(npy_float *v, npy_intp num, npy_intp kth, npy_intp *pivots,
-                  npy_intp *npiv, void *NOT_USED)
-{
-    return introselect_<npy::float_tag, false>(v, nullptr, num, kth, pivots,
-                                               npiv);
-}
-NPY_NO_EXPORT int
-introselect_double(npy_double *v, npy_intp num, npy_intp kth, npy_intp *pivots,
-                   npy_intp *npiv, void *NOT_USED)
-{
-    return introselect_<npy::double_tag, false>(v, nullptr, num, kth, pivots,
-                                                npiv);
-}
-NPY_NO_EXPORT int
-introselect_longdouble(npy_longdouble *v, npy_intp num, npy_intp kth,
-                       npy_intp *pivots, npy_intp *npiv, void *NOT_USED)
-{
-    return introselect_<npy::longdouble_tag, false>(v, nullptr, num, kth,
-                                                    pivots, npiv);
-}
-NPY_NO_EXPORT int
-introselect_cfloat(npy_cfloat *v, npy_intp num, npy_intp kth, npy_intp *pivots,
-                   npy_intp *npiv, void *NOT_USED)
-{
-    return introselect_<npy::cfloat_tag, false>(v, nullptr, num, kth, pivots,
-                                                npiv);
-}
-NPY_NO_EXPORT int
-introselect_cdouble(npy_cdouble *v, npy_intp num, npy_intp kth,
-                    npy_intp *pivots, npy_intp *npiv, void *NOT_USED)
-{
-    return introselect_<npy::cdouble_tag, false>(v, nullptr, num, kth, pivots,
-                                                 npiv);
-}
-NPY_NO_EXPORT int
-introselect_clongdouble(npy_clongdouble *v, npy_intp num, npy_intp kth,
-                        npy_intp *pivots, npy_intp *npiv, void *NOT_USED)
-{
-    return introselect_<npy::clongdouble_tag, false>(v, nullptr, num, kth,
-                                                     pivots, npiv);
-}
-
-NPY_NO_EXPORT int
-aintroselect_bool(npy_bool *v, npy_intp *tosort, npy_intp num, npy_intp kth,
-                  npy_intp *pivots, npy_intp *npiv, void *NOT_USED)
-{
-    return introselect_<npy::bool_tag, true>(v, tosort, num, kth, pivots,
-                                             npiv);
-}
-NPY_NO_EXPORT int
-aintroselect_byte(npy_byte *v, npy_intp *tosort, npy_intp num, npy_intp kth,
-                  npy_intp *pivots, npy_intp *npiv, void *NOT_USED)
-{
-    return introselect_<npy::byte_tag, true>(v, tosort, num, kth, pivots,
-                                             npiv);
-}
-NPY_NO_EXPORT int
-aintroselect_ubyte(npy_ubyte *v, npy_intp *tosort, npy_intp num, npy_intp kth,
-                   npy_intp *pivots, npy_intp *npiv, void *NOT_USED)
-{
-    return introselect_<npy::ubyte_tag, true>(v, tosort, num, kth, pivots,
-                                              npiv);
-}
-NPY_NO_EXPORT int
-aintroselect_short(npy_short *v, npy_intp *tosort, npy_intp num, npy_intp kth,
-                   npy_intp *pivots, npy_intp *npiv, void *NOT_USED)
-{
-    return introselect_<npy::short_tag, true>(v, tosort, num, kth, pivots,
-                                              npiv);
-}
-NPY_NO_EXPORT int
-aintroselect_ushort(npy_ushort *v, npy_intp *tosort, npy_intp num,
-                    npy_intp kth, npy_intp *pivots, npy_intp *npiv,
-                    void *NOT_USED)
-{
-    return introselect_<npy::ushort_tag, true>(v, tosort, num, kth, pivots,
-                                               npiv);
-}
-NPY_NO_EXPORT int
-aintroselect_int(npy_int *v, npy_intp *tosort, npy_intp num, npy_intp kth,
-                 npy_intp *pivots, npy_intp *npiv, void *NOT_USED)
-{
-    return introselect_<npy::int_tag, true>(v, tosort, num, kth, pivots, npiv);
-}
-NPY_NO_EXPORT int
-aintroselect_uint(npy_uint *v, npy_intp *tosort, npy_intp num, npy_intp kth,
-                  npy_intp *pivots, npy_intp *npiv, void *NOT_USED)
-{
-    return introselect_<npy::uint_tag, true>(v, tosort, num, kth, pivots,
-                                             npiv);
-}
-NPY_NO_EXPORT int
-aintroselect_long(npy_long *v, npy_intp *tosort, npy_intp num, npy_intp kth,
-                  npy_intp *pivots, npy_intp *npiv, void *NOT_USED)
-{
-    return introselect_<npy::long_tag, true>(v, tosort, num, kth, pivots,
-                                             npiv);
-}
-NPY_NO_EXPORT int
-aintroselect_ulong(npy_ulong *v, npy_intp *tosort, npy_intp num, npy_intp kth,
-                   npy_intp *pivots, npy_intp *npiv, void *NOT_USED)
-{
-    return introselect_<npy::ulong_tag, true>(v, tosort, num, kth, pivots,
-                                              npiv);
-}
-NPY_NO_EXPORT int
-aintroselect_longlong(npy_longlong *v, npy_intp *tosort, npy_intp num,
-                      npy_intp kth, npy_intp *pivots, npy_intp *npiv,
-                      void *NOT_USED)
-{
-    return introselect_<npy::longlong_tag, true>(v, tosort, num, kth, pivots,
-                                                 npiv);
-}
-NPY_NO_EXPORT int
-aintroselect_ulonglong(npy_ulonglong *v, npy_intp *tosort, npy_intp num,
-                       npy_intp kth, npy_intp *pivots, npy_intp *npiv,
-                       void *NOT_USED)
-{
-    return introselect_<npy::ulonglong_tag, true>(v, tosort, num, kth, pivots,
-                                                  npiv);
-}
-NPY_NO_EXPORT int
-aintroselect_half(npy_half *v, npy_intp *tosort, npy_intp num, npy_intp kth,
-                  npy_intp *pivots, npy_intp *npiv, void *NOT_USED)
-{
-    return introselect_<npy::half_tag, true>(v, tosort, num, kth, pivots,
-                                             npiv);
-}
-NPY_NO_EXPORT int
-aintroselect_float(npy_float *v, npy_intp *tosort, npy_intp num, npy_intp kth,
-                   npy_intp *pivots, npy_intp *npiv, void *NOT_USED)
-{
-    return introselect_<npy::float_tag, true>(v, tosort, num, kth, pivots,
-                                              npiv);
-}
-NPY_NO_EXPORT int
-aintroselect_double(npy_double *v, npy_intp *tosort, npy_intp num,
-                    npy_intp kth, npy_intp *pivots, npy_intp *npiv,
-                    void *NOT_USED)
-{
-    return introselect_<npy::double_tag, true>(v, tosort, num, kth, pivots,
-                                               npiv);
-}
-NPY_NO_EXPORT int
-aintroselect_longdouble(npy_longdouble *v, npy_intp *tosort, npy_intp num,
-                        npy_intp kth, npy_intp *pivots, npy_intp *npiv,
-                        void *NOT_USED)
-{
-    return introselect_<npy::longdouble_tag, true>(v, tosort, num, kth, pivots,
-                                                   npiv);
-}
-NPY_NO_EXPORT int
-aintroselect_cfloat(npy_cfloat *v, npy_intp *tosort, npy_intp num,
-                    npy_intp kth, npy_intp *pivots, npy_intp *npiv,
-                    void *NOT_USED)
-{
-    return introselect_<npy::cfloat_tag, true>(v, tosort, num, kth, pivots,
-                                               npiv);
-}
-NPY_NO_EXPORT int
-aintroselect_cdouble(npy_cdouble *v, npy_intp *tosort, npy_intp num,
-                     npy_intp kth, npy_intp *pivots, npy_intp *npiv,
-                     void *NOT_USED)
-{
-    return introselect_<npy::cdouble_tag, true>(v, tosort, num, kth, pivots,
-                                                npiv);
-}
-NPY_NO_EXPORT int
-aintroselect_clongdouble(npy_clongdouble *v, npy_intp *tosort, npy_intp num,
-                         npy_intp kth, npy_intp *pivots, npy_intp *npiv,
-                         void *NOT_USED)
-{
-    return introselect_<npy::clongdouble_tag, true>(v, tosort, num, kth,
-                                                    pivots, npiv);
+    return _get_argpartition_func(type, which);
 }
 }
