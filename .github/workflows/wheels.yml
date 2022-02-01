@@ -10,8 +10,13 @@ name: Wheel builder
 
 on:
   schedule:
-    # Nightly build at 1:42 UTC
-    - cron: "42 1 * * *"
+  #        ┌───────────── minute (0 - 59)
+  #        │  ┌───────────── hour (0 - 23)
+  #        │  │ ┌───────────── day of the month (1 - 31)
+  #        │  │ │ ┌───────────── month (1 - 12 or JAN-DEC)
+  #        │  │ │ │ ┌───────────── day of the week (0 - 6 or SUN-SAT)
+  #        │  │ │ │ │
+  - cron: "42 1 * * 4"
   push:
   pull_request:
   workflow_dispatch:
@@ -35,6 +40,7 @@ jobs:
           set -xe
           COMMIT_MSG=$(git log --no-merges -1 --oneline)
           echo "::set-output name=message::$COMMIT_MSG"
+          echo github.ref ${{ github.ref }}
 
   build_wheels:
     name: Build wheel for ${{ matrix.python }}-${{ matrix.buildplat[1] }}
@@ -42,7 +48,8 @@ jobs:
     if: >-
       contains(needs.get_commit_message.outputs.message, '[wheel build]') ||
       github.event_name == 'schedule' ||
-      github.event_name == 'workflow_dispatch'
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') && ( ! endsWith(github.ref, 'dev0')))
     runs-on: ${{ matrix.buildplat[0] }}
     strategy:
       # Ensure that a wheel builder finishes even if another fails
@@ -125,3 +132,44 @@ jobs:
         with:
           name: ${{ matrix.python }}-${{ startsWith(matrix.buildplat[1], 'macosx') && 'macosx' || matrix.buildplat[1] }}
           path: ./wheelhouse/*.whl
+
+      - name: Setup Upload Variables
+        if: success()
+        shell: bash
+        run: |
+          if [ "push" == "${{ github.event_name }}" ] && [ "${{ startsWith(github.ref, 'refs/tags/v') }}" ]; then
+            echo push and tag event
+            echo "ANACONDA_ORG=multibuild-wheels-staging" >> $GITHUB_ENV
+            echo "TOKEN=${{ secrets.NUMPY_STAGING_UPLOAD_TOKEN }}" >> $GITHUB_ENV
+            echo "ANACONDA_UPLOAD=true" >> $GITHUB_ENV
+          elif [ "schedule" == "${{ github.event_name }}" ] || [ "workflow_dispatch" == "${{ github.event_name }}" ]; then
+            echo scheduled or dispatched event
+            echo "ANACONDA_ORG=scipy-wheels-nightly" >> $GITHUB_ENV
+            echo "TOKEN=${{ secrets.NUMPY_NIGHTLY_UPLOAD_TOKEN }}" >> $GITHUB_ENV
+            echo "ANACONDA_UPLOAD=true" >> $GITHUB_ENV
+          else
+            echo non-dispatch event
+            echo "ANACONDA_UPLOAD=false" >> $GITHUB_ENV
+          fi
+      - name: Upload wheels
+        if: env.TOKEN 
+        shell: bash
+        run: |
+          # trigger an upload to
+          # https://anaconda.org/scipy-wheels-nightly/numpy
+          # for cron jobs or "Run workflow" (restricted to main branch).
+          # Tags will upload to 
+          # https://anaconda.org/multibuild-wheels-staging/numpy
+          # The tokens were originally generated at anaconda.org
+          echo ${PWD}
+          if [ ${ANACONDA_UPLOAD} == true ]; then
+            if [ -z ${TOKEN} ]; then
+              echo no token set, not uploading
+            else
+              python -m pip install git+https://github.com/Anaconda-Server/anaconda-client
+              ls ./wheelhouse/*.whl
+              anaconda -t ${TOKEN} upload --skip -u ${ANACONDA_ORG} ./wheelhouse/*.whl
+              echo "PyPI-style index: https://pypi.anaconda.org/$ANACONDA_ORG/simple"
+            fi
+          fi
+
