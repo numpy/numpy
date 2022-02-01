@@ -1048,12 +1048,18 @@ _descriptor_from_pep3118_format_fast(char const *s, PyObject **result)
     }
 
     descr = PyArray_DescrFromType(type_num);
+    if (descr == NULL) {
+        return 0;
+    }
     if (byte_order == '=') {
         *result = (PyObject*)descr;
     }
     else {
         *result = (PyObject*)PyArray_DescrNewByteorder(descr, byte_order);
         Py_DECREF(descr);
+        if (result == NULL) {
+            return 0;
+        }
     }
 
     return 1;

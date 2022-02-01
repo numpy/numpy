@@ -1132,6 +1132,9 @@ npyiter_prepare_one_operand(PyArrayObject **op,
 
                 /* Replace with a new descr which is in native byte order */
                 nbo_dtype = PyArray_DescrNewByteorder(*op_dtype, NPY_NATIVE);
+                if (nbo_dtype == NULL) {
+                    return 0;
+                }
                 Py_DECREF(*op_dtype);
                 *op_dtype = nbo_dtype;
 

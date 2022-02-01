@@ -668,6 +668,11 @@ PyArray_NewFromDescr_int(
     PyArrayObject_fields *fa;
     npy_intp nbytes;
 
+    if (descr == NULL) {
+        PyErr_Format(PyExc_ValueError,
+                "NULL descr in call to PyArray_NewFromDescr*");
+        return NULL;
+    }
     if (nd > NPY_MAXDIMS || nd < 0) {
         PyErr_Format(PyExc_ValueError,
                 "number of dimensions must be within [0, %d]", NPY_MAXDIMS);
@@ -1137,6 +1142,9 @@ PyArray_New(
             return NULL;
         }
         PyArray_DESCR_REPLACE(descr);
+        if (descr == NULL) {
+            return NULL;
+        }
         descr->elsize = itemsize;
     }
     new = PyArray_NewFromDescr(subtype, descr, nd, dims, strides,
@@ -1162,6 +1170,9 @@ _dtype_from_buffer_3118(PyObject *memoryview)
          *       terminate.
          */
         descr = PyArray_DescrNewFromType(NPY_STRING);
+        if (descr == NULL) {
+            return NULL;
+        }
         descr->elsize = view->itemsize;
     }
     return descr;
