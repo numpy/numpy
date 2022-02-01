@@ -669,8 +669,6 @@ PyArray_NewFromDescr_int(
     npy_intp nbytes;
 
     if (descr == NULL) {
-        PyErr_Format(PyExc_ValueError,
-                "NULL descr in call to PyArray_NewFromDescr*");
         return NULL;
     }
     if (nd > NPY_MAXDIMS || nd < 0) {
@@ -963,6 +961,18 @@ PyArray_NewFromDescr(
         int nd, npy_intp const *dims, npy_intp const *strides, void *data,
         int flags, PyObject *obj)
 {
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnonnull-compare"
+#endif
+    if (descr == NULL) {
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
+        PyErr_Format(PyExc_ValueError,
+                "NULL descr in call to PyArray_NewFromDescr");
+        return NULL;
+    }
     return PyArray_NewFromDescrAndBase(
             subtype, descr,
             nd, dims, strides, data,
@@ -3570,6 +3580,12 @@ PyArray_FromFile(FILE *fp, PyArray_Descr *dtype, npy_intp num, char *sep)
     PyArrayObject *ret;
     size_t nread = 0;
 
+    if (dtype == NULL) {
+        PyErr_Format(PyExc_ValueError,
+                "NULL dtype in call to PyArray_FromFile");
+        return NULL;
+    }
+
     if (PyDataType_REFCHK(dtype)) {
         PyErr_SetString(PyExc_ValueError,
                 "Cannot read into object array");
@@ -3637,6 +3653,11 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
     int itemsize;
     int writeable = 1;
 
+    if (type == NULL) {
+        PyErr_Format(PyExc_ValueError,
+                "NULL type in call to PyArray_FromBuffer");
+        return NULL;
+    }
 
     if (PyDataType_REFCHK(type)) {
         PyErr_SetString(PyExc_ValueError,
@@ -3852,6 +3873,12 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, npy_intp count)
     if (iter == NULL) {
         goto done;
     }
+    if (dtype == NULL) {
+        PyErr_Format(PyExc_ValueError,
+                "NULL dtype in call to PyArray_FromIter");
+        goto done;
+    }
+
     if (PyDataType_ISUNSIZED(dtype)) {
         PyErr_SetString(PyExc_ValueError,
                 "Must specify length when using variable-size data-type.");

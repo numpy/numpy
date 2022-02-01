@@ -3212,16 +3212,17 @@ void_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
         }
         ((PyVoidScalarObject *)ret)->obval = destptr;
         Py_SET_SIZE((PyVoidScalarObject *)ret, (int) memu);
+        ((PyVoidScalarObject *)ret)->flags = NPY_ARRAY_BEHAVED |
+                                             NPY_ARRAY_OWNDATA;
+        ((PyVoidScalarObject *)ret)->base = NULL;
         ((PyVoidScalarObject *)ret)->descr =
             PyArray_DescrNewFromType(NPY_VOID);
         if ( ((PyVoidScalarObject *)ret)->descr == NULL) {
             npy_free_cache(destptr, memu);
+            Py_DECREF(ret);
             return NULL;
         }
         ((PyVoidScalarObject *)ret)->descr->elsize = (int) memu;
-        ((PyVoidScalarObject *)ret)->flags = NPY_ARRAY_BEHAVED |
-                                             NPY_ARRAY_OWNDATA;
-        ((PyVoidScalarObject *)ret)->base = NULL;
         return ret;
     }
 

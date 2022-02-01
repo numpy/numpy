@@ -1128,16 +1128,12 @@ npyiter_prepare_one_operand(PyArrayObject **op,
         if (op_flags & NPY_ITER_NBO) {
             /* Check byte order */
             if (!PyArray_ISNBO((*op_dtype)->byteorder)) {
-                PyArray_Descr *nbo_dtype;
-
                 /* Replace with a new descr which is in native byte order */
-                nbo_dtype = PyArray_DescrNewByteorder(*op_dtype, NPY_NATIVE);
-                if (nbo_dtype == NULL) {
+                Py_SETREF(*op_dtype,
+                          PyArray_DescrNewByteorder(*op_dtype, NPY_NATIVE));
+                if (*op_dtype == NULL) {
                     return 0;
-                }
-                Py_DECREF(*op_dtype);
-                *op_dtype = nbo_dtype;
-
+                }                
                 NPY_IT_DBG_PRINT("Iterator: Setting NPY_OP_ITFLAG_CAST "
                                     "because of NPY_ITER_NBO\n");
                 /* Indicate that byte order or alignment needs fixing */
