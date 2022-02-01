@@ -439,7 +439,6 @@ class TestLinspace:
         expected = array([t1]*5)
         assert_array_equal(actual, expected)
 
-
     def test_datetime_mixedunits(self):
         t1 = datetime64("2020-01-01").astype("M8[D]")
         t2 = datetime64("2020-02-01").astype("M8[s]")

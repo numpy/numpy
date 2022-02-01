@@ -168,9 +168,10 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
             dtype = dt
         delta = stop - start
         y = _nx.arange(0, num, dtype=dt).reshape((-1,) + (1,) * ndim(delta))
-        # In-place multiplication y *= delta/div is faster, but prevents the multiplicant
-        # from overriding what class is produced, and thus prevents, e.g. use of Quantities,
-        # see gh-7142. Hence, we multiply in place only for standard scalar types.
+        # In-place multiplication y *= delta/div is faster, but prevents the
+        # multiplicant from overriding what class is produced, and thus
+        # prevents, e.g. use of Quantities, see gh-7142. Hence, we multiply in
+        # place only for standard scalar types.
         _mult_inplace = _nx.isscalar(delta)
         if div > 0:
             step = delta / div
@@ -187,8 +188,8 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
                 else:
                     y = y * step
         else:
-            # sequences with 0 items or 1 item with endpoint=True (i.e. div <= 0)
-            # have an undefined step
+            # sequences with 0 items or 1 item with endpoint=True
+            # (i.e. div <= 0) have an undefined step
             step = NaN
             # Multiply with delta to allow possible override of output class.
             y = y * delta
