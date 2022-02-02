@@ -92,17 +92,6 @@ class StealRef:
             return 'NPY_STEALS_REF_TO_ARG(%d)' % self.arg
 
 
-class NonNull:
-    def __init__(self, arg):
-        self.arg = arg # counting from 1
-
-    def __str__(self):
-        try:
-            return ' '.join('NPY_GCC_NONNULL(%d)' % x for x in self.arg)
-        except TypeError:
-            return 'NPY_GCC_NONNULL(%d)' % self.arg
-
-
 class Function:
     def __init__(self, name, return_type, args, doc=''):
         self.name = name

@@ -182,11 +182,17 @@ scalar_value(PyObject *scalar, PyArray_Descr *descr)
 }
 
 /*NUMPY_API
- * return true an object is exactly a numpy scalar
+ * return 1 if an object is exactly a numpy scalar
  */
 NPY_NO_EXPORT int
 PyArray_CheckAnyScalarExact(PyObject * obj)
 {
+    if (obj == NULL) {
+        PyErr_SetString(PyExc_ValueError,
+            "obj is NULL in PyArray_CheckAnyScalarExact");
+        return 0;
+    }
+
     return is_anyscalar_exact(obj);
 }
 
