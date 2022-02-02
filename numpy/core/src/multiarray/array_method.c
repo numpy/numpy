@@ -133,7 +133,7 @@ is_contiguous(
 NPY_NO_EXPORT int
 npy_default_get_strided_loop(
         PyArrayMethod_Context *context,
-        int aligned, int NPY_UNUSED(move_references), npy_intp *strides,
+        int aligned, int NPY_UNUSED(move_references), const npy_intp *strides,
         PyArrayMethod_StridedLoop **out_loop, NpyAuxData **out_transferdata,
         NPY_ARRAYMETHOD_FLAGS *flags)
 {
@@ -261,12 +261,17 @@ fill_arraymethod_from_slots(
                 meth->resolve_descriptors = slot->pfunc;
                 continue;
             case NPY_METH_get_loop:
-                if (private) {
-                    /* Only allow override for private functions initially */
-                    meth->get_strided_loop = slot->pfunc;
-                    continue;
-                }
-                break;
+                /*
+                 * NOTE: get_loop is considered "unstable" in the public API,
+                 *       I do not like the signature, and the `move_references`
+                 *       parameter must NOT be used.
+                 *       (as in: we should not worry about changing it, but of
+                 *       course that would not break it immediately.)
+                 */
+                /* Only allow override for private functions initially */
+                meth->get_strided_loop = slot->pfunc;
+                continue;
+            /* "Typical" loops, supported used by the default `get_loop` */
             case NPY_METH_strided_loop:
                 meth->strided_loop = slot->pfunc;
                 continue;
@@ -459,6 +464,15 @@ arraymethod_dealloc(PyObject *self)
     meth = ((PyArrayMethodObject *)self);
 
     PyMem_Free(meth->name);
+
+    if (meth->wrapped_meth != NULL) {
+        /* Cleanup for wrapping array method (defined in umath) */
+        Py_DECREF(meth->wrapped_meth);
+        for (int i = 0; i < meth->nin + meth->nout; i++) {
+            Py_XDECREF(meth->wrapped_dtypes[i]);
+        }
+        PyMem_Free(meth->wrapped_dtypes);
+    }
 
     Py_TYPE(self)->tp_free(self);
 }

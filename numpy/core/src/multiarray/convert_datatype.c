@@ -2458,7 +2458,7 @@ get_byteswap_loop(
 NPY_NO_EXPORT int
 complex_to_noncomplex_get_loop(
         PyArrayMethod_Context *context,
-        int aligned, int move_references, npy_intp *strides,
+        int aligned, int move_references, const npy_intp *strides,
         PyArrayMethod_StridedLoop **out_loop, NpyAuxData **out_transferdata,
         NPY_ARRAYMETHOD_FLAGS *flags)
 {
@@ -2799,7 +2799,7 @@ string_to_string_resolve_descriptors(
 NPY_NO_EXPORT int
 string_to_string_get_loop(
         PyArrayMethod_Context *context,
-        int aligned, int NPY_UNUSED(move_references), npy_intp *strides,
+        int aligned, int NPY_UNUSED(move_references), const npy_intp *strides,
         PyArrayMethod_StridedLoop **out_loop, NpyAuxData **out_transferdata,
         NPY_ARRAYMETHOD_FLAGS *flags)
 {
@@ -3048,7 +3048,7 @@ static int
 nonstructured_to_structured_get_loop(
         PyArrayMethod_Context *context,
         int aligned, int move_references,
-        npy_intp *strides,
+        const npy_intp *strides,
         PyArrayMethod_StridedLoop **out_loop,
         NpyAuxData **out_transferdata,
         NPY_ARRAYMETHOD_FLAGS *flags)
@@ -3210,7 +3210,7 @@ static int
 structured_to_nonstructured_get_loop(
         PyArrayMethod_Context *context,
         int aligned, int move_references,
-        npy_intp *strides,
+        const npy_intp *strides,
         PyArrayMethod_StridedLoop **out_loop,
         NpyAuxData **out_transferdata,
         NPY_ARRAYMETHOD_FLAGS *flags)
@@ -3510,7 +3510,7 @@ NPY_NO_EXPORT int
 void_to_void_get_loop(
         PyArrayMethod_Context *context,
         int aligned, int move_references,
-        npy_intp *strides,
+        const npy_intp *strides,
         PyArrayMethod_StridedLoop **out_loop,
         NpyAuxData **out_transferdata,
         NPY_ARRAYMETHOD_FLAGS *flags)
@@ -3726,7 +3726,7 @@ static int
 object_to_object_get_loop(
         PyArrayMethod_Context *NPY_UNUSED(context),
         int NPY_UNUSED(aligned), int move_references,
-        npy_intp *NPY_UNUSED(strides),
+        const npy_intp *NPY_UNUSED(strides),
         PyArrayMethod_StridedLoop **out_loop,
         NpyAuxData **out_transferdata,
         NPY_ARRAYMETHOD_FLAGS *flags)
