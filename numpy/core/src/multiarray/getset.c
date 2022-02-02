@@ -714,15 +714,18 @@ _get_part(PyArrayObject *self, int imag)
 
     }
     type = PyArray_DescrFromType(float_type_num);
+    if (type == NULL) {
+        return NULL;
+    }
 
     offset = (imag ? type->elsize : 0);
 
     if (!PyArray_ISNBO(PyArray_DESCR(self)->byteorder)) {
-        PyArray_Descr *new;
-        new = PyArray_DescrNew(type);
-        new->byteorder = PyArray_DESCR(self)->byteorder;
-        Py_DECREF(type);
-        type = new;
+        Py_SETREF(type, PyArray_DescrNew(type));
+        if (type == NULL) {
+            return NULL;
+        }
+        type->byteorder = PyArray_DESCR(self)->byteorder;
     }
     ret = (PyArrayObject *)PyArray_NewFromDescrAndBase(
             Py_TYPE(self),

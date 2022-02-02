@@ -1005,6 +1005,9 @@ _strings_richcompare(PyArrayObject *self, PyArrayObject *other, int cmp_op,
     if (PyArray_ISNOTSWAPPED(self) != PyArray_ISNOTSWAPPED(other)) {
         /* Cast `other` to the same byte order as `self` (both unicode here) */
         PyArray_Descr* unicode = PyArray_DescrNew(PyArray_DESCR(self));
+        if (unicode == NULL) {
+            return NULL;
+        }
         unicode->elsize = PyArray_DESCR(other)->elsize;
         PyObject *new = PyArray_FromAny((PyObject *)other,
                 unicode, 0, 0, 0, NULL);
