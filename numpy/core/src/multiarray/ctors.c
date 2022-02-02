@@ -3569,8 +3569,6 @@ PyArray_FromFile(FILE *fp, PyArray_Descr *dtype, npy_intp num, char *sep)
     size_t nread = 0;
 
     if (dtype == NULL) {
-        PyErr_Format(PyExc_ValueError,
-                "NULL dtype in call to PyArray_FromFile");
         return NULL;
     }
 
@@ -3642,8 +3640,6 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
     int writeable = 1;
 
     if (type == NULL) {
-        PyErr_Format(PyExc_ValueError,
-                "NULL type in call to PyArray_FromBuffer");
         return NULL;
     }
 
@@ -3853,17 +3849,17 @@ NPY_NO_EXPORT PyObject *
 PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, npy_intp count)
 {
     PyObject *value;
-    PyObject *iter = PyObject_GetIter(obj);
+    PyObject *iter = NULL;
     PyArrayObject *ret = NULL;
     npy_intp i, elsize, elcount;
     char *item, *new_data;
 
-    if (iter == NULL) {
-        goto done;
-    }
     if (dtype == NULL) {
-        PyErr_Format(PyExc_ValueError,
-                "NULL dtype in call to PyArray_FromIter");
+        return NULL;
+    }
+
+    iter = PyObject_GetIter(obj);
+    if (iter == NULL) {
         goto done;
     }
 
