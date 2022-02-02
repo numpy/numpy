@@ -245,6 +245,12 @@ PyArray_CastToType(PyArrayObject *arr, PyArray_Descr *dtype, int is_f_order)
 {
     PyObject *out;
 
+    if (dtype == NULL) {
+        PyErr_SetString(PyExc_ValueError,
+            "dtype is NULL in PyArray_CastToType");
+        return NULL;
+    }
+
     Py_SETREF(dtype, PyArray_AdaptDescriptorToArray(arr, (PyObject *)dtype));
     if (dtype == NULL) {
         return NULL;

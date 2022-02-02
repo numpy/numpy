@@ -187,6 +187,12 @@ scalar_value(PyObject *scalar, PyArray_Descr *descr)
 NPY_NO_EXPORT int
 PyArray_CheckAnyScalarExact(PyObject * obj)
 {
+    if (obj == NULL) {
+        PyErr_SetString(PyExc_ValueError,
+            "obj is NULL in PyArray_CheckAnyScalarExact");
+        return NULL;
+    }
+
     return is_anyscalar_exact(obj);
 }
 

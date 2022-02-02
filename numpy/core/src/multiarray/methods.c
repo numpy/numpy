@@ -379,6 +379,18 @@ PyArray_GetField(PyArrayObject *self, PyArray_Descr *typed, int offset)
     static PyObject *checkfunc = NULL;
     int self_elsize, typed_elsize;
 
+    if (self == NULL) {
+        PyErr_SetString(PyExc_ValueError,
+            "self is NULL in PyArray_GetField");
+        return NULL;
+    }
+
+    if (typed == NULL) {
+        PyErr_SetString(PyExc_ValueError,
+            "typed is NULL in PyArray_GetField");
+        return NULL;
+    }
+
     /* check that we are not reinterpreting memory containing Objects. */
     if (_may_have_objects(PyArray_DESCR(self)) || _may_have_objects(typed)) {
         npy_cache_import("numpy.core._internal", "_getfield_is_safe",
@@ -456,6 +468,18 @@ PyArray_SetField(PyArrayObject *self, PyArray_Descr *dtype,
 {
     PyObject *ret = NULL;
     int retval = 0;
+
+    if (self == NULL) {
+        PyErr_SetString(PyExc_ValueError,
+            "self is NULL in PyArray_SetField");
+        return NULL;
+    }
+
+    if (dtype == NULL) {
+        PyErr_SetString(PyExc_ValueError,
+            "dtype is NULL in PyArray_SetField");
+        return NULL;
+    }
 
     if (PyArray_FailUnlessWriteable(self, "assignment destination") < 0) {
         Py_DECREF(dtype);

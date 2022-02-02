@@ -544,6 +544,12 @@ PyArray_NewCopy(PyArrayObject *obj, NPY_ORDER order)
 {
     PyArrayObject *ret;
 
+    if (obj == NULL) {
+        PyErr_SetString(PyExc_ValueError,
+            "obj is NULL in PyArray_NewCopy");
+        return NULL;
+    }
+
     ret = (PyArrayObject *)PyArray_NewLikeArray(obj, order, NULL, 1);
     if (ret == NULL) {
         return NULL;

@@ -958,6 +958,18 @@ PyArray_NewFromDescr(
         int nd, npy_intp const *dims, npy_intp const *strides, void *data,
         int flags, PyObject *obj)
 {
+    if (subtype == NULL) {
+        PyErr_SetString(PyExc_ValueError,
+            "subtype is NULL in PyArray_NewFromDescr");
+        return NULL;
+    }
+
+    if (descr == NULL) {
+        PyErr_SetString(PyExc_ValueError,
+            "descr is NULL in PyArray_NewFromDescr");
+        return NULL;
+    }
+
     return PyArray_NewFromDescrAndBase(
             subtype, descr,
             nd, dims, strides, data,
@@ -1110,6 +1122,11 @@ NPY_NO_EXPORT PyObject *
 PyArray_NewLikeArray(PyArrayObject *prototype, NPY_ORDER order,
                      PyArray_Descr *dtype, int subok)
 {
+    if (prototype == NULL) {
+        PyErr_SetString(PyExc_ValueError,
+            "prototype is NULL in PyArray_NewLikeArray");
+        return NULL;
+    }
     return PyArray_NewLikeArrayWithShape(prototype, order, dtype, -1, NULL, subok);
 }
 
@@ -1124,6 +1141,12 @@ PyArray_New(
 {
     PyArray_Descr *descr;
     PyObject *new;
+
+    if (subtype == NULL) {
+        PyErr_SetString(PyExc_ValueError,
+            "subtype is NULL in PyArray_New");
+        return NULL;
+    }
 
     descr = PyArray_DescrFromType(type_num);
     if (descr == NULL) {
