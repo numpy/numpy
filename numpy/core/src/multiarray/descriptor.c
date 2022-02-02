@@ -1381,8 +1381,11 @@ PyArray_DescrNewFromType(int type_num)
     PyArray_Descr *new;
 
     old = PyArray_DescrFromType(type_num);
+    if (old == NULL) {
+        return NULL;
+    }
     new = PyArray_DescrNew(old);
-    Py_XDECREF(old);
+    Py_DECREF(old);
     return new;
 }
 
