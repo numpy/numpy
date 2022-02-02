@@ -23,7 +23,7 @@ dependencies:
   # For building docs
   - sphinx=4.2.0
   - sphinx-panels
-  - numpydoc=1.1.0
+  - numpydoc=1.2.0
   - ipython
   - scipy
   - pandas
