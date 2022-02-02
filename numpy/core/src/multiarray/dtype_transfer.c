@@ -3021,9 +3021,9 @@ init_cast_info(NPY_cast_info *cast_info, NPY_CASTING *casting,
         if (!PyErr_Occurred()) {
             PyErr_Format(PyExc_TypeError,
                     "Cannot cast array data from %R to %R.", src_dtype, dst_dtype);
-            Py_DECREF(meth);
-            return -1;
         }
+        Py_DECREF(meth);
+        return -1;
     }
     assert(PyArray_DescrCheck(cast_info->descriptors[0]));
     assert(PyArray_DescrCheck(cast_info->descriptors[1]));
