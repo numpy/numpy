@@ -153,6 +153,9 @@ string_discover_descr_from_pyobject(
                     "string to large to store inside array.");
         }
         PyArray_Descr *res = PyArray_DescrNewFromType(cls->type_num);
+        if (res == NULL) {
+            return NULL;
+        }
         res->elsize = (int)itemsize;
         return res;
     }
@@ -171,10 +174,15 @@ void_discover_descr_from_pyobject(
     }
     if (PyBytes_Check(obj)) {
         PyArray_Descr *descr = PyArray_DescrNewFromType(NPY_VOID);
+        if (descr == NULL) {
+            return NULL;
+        }
         Py_ssize_t itemsize = PyBytes_Size(obj);
         if (itemsize > NPY_MAX_INT) {
             PyErr_SetString(PyExc_TypeError,
                     "byte-like to large to store inside array.");
+            Py_DECREF(descr);
+            return NULL;
         }
         descr->elsize = (int)itemsize;
         return descr;
