@@ -1667,7 +1667,7 @@ add_newdoc('numpy.core.multiarray', 'arange',
       >>> power = 40
       >>> modulo = 10000
       >>> x1 = [(n ** power) % modulo for n in range(8)]
-      >>> x2 = [(n ** power) % modulo for n in np.arange(10)]
+      >>> x2 = [(n ** power) % modulo for n in np.arange(8)]
       >>> print(x1)
       [0, 1, 7776, 8801, 6176, 625, 6576, 4001]  # correct
       >>> print(x2)
