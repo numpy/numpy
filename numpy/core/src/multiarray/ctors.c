@@ -961,18 +961,6 @@ PyArray_NewFromDescr(
         int nd, npy_intp const *dims, npy_intp const *strides, void *data,
         int flags, PyObject *obj)
 {
-#ifdef __GNUC__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wnonnull-compare"
-#endif
-    if (descr == NULL) {
-#ifdef __GNUC__
-#pragma GCC diagnostic pop
-#endif
-        PyErr_Format(PyExc_ValueError,
-                "NULL descr in call to PyArray_NewFromDescr");
-        return NULL;
-    }
     return PyArray_NewFromDescrAndBase(
             subtype, descr,
             nd, dims, strides, data,
@@ -988,6 +976,11 @@ PyArray_NewFromDescrAndBase(
         int nd, npy_intp const *dims, npy_intp const *strides, void *data,
         int flags, PyObject *obj, PyObject *base)
 {
+    if (descr == NULL) {
+        PyErr_Format(PyExc_ValueError,
+                "NULL descr in call to PyArray_NewFromDescrAndBase");
+        return NULL;
+    }
     return PyArray_NewFromDescr_int(subtype, descr, nd,
                                     dims, strides, data,
                                     flags, obj, base, 0, 0);
