@@ -138,6 +138,7 @@ RST_SKIPLIST = [
     'basics.indexing.rst',
     'basics.subclassing.rst',
     'basics.types.rst',
+    'basics.interoperability.rst',
     'misc.rst',
 ]
 
