@@ -472,13 +472,13 @@ PyArray_SetField(PyArrayObject *self, PyArray_Descr *dtype,
     if (self == NULL) {
         PyErr_SetString(PyExc_ValueError,
             "self is NULL in PyArray_SetField");
-        return NULL;
+        return -1;
     }
 
     if (dtype == NULL) {
         PyErr_SetString(PyExc_ValueError,
             "dtype is NULL in PyArray_SetField");
-        return NULL;
+        return -1;
     }
 
     if (PyArray_FailUnlessWriteable(self, "assignment destination") < 0) {
