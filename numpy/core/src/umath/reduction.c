@@ -68,7 +68,7 @@ count_axes(int ndim, const npy_bool *axis_flags)
  * Returns -1 if an error occurred, and otherwise the reduce arrays size,
  * which is the number of elements already initialized.
  */
-NPY_NO_EXPORT int
+static npy_intp
 PyArray_CopyInitialReduceValues(
                     PyArrayObject *result, PyArrayObject *operand,
                     const npy_bool *axis_flags, const char *funcname,
