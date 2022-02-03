@@ -350,31 +350,6 @@ def _unique1d(ar, return_index=False, return_inverse=False,
         aux = ar
     mask = np.empty(aux.shape, dtype=np.bool_)
     mask[:1] = True
-
-    # modified version of numpy.array_equal which can resolve equal_NaNs
-    # in variable dtype arrays.
-    # eg. (1, "a", NaN) compared to itself is True while array_equal would
-    # throw exception on checking isNaN on non-numerics
-    def equals_nan(a1, a2):
-        try:
-            a1, a2 = multiarray.asarray(a1), multiarray.asarray(a2)
-        except Exception:
-            return False
-        if a1.shape != a2.shape:
-            return False
-        a1, a2 = a1.flat[0], a2.flat[0]
-        # compare a1 and a2 elementwise, and ignore inequalities if
-        # NaNs on both sides otherwise a triggered inequality returns False
-        for i in range(len(a1)):
-            if a1[i] != a2[i]:
-                try:
-                    if (np.isnan(a1[i]) and np.isnan(a2[i])):
-                        continue
-                    else:
-                        return False
-                except Exception:
-                    return False
-        return True
         
     if (equal_nans and aux.shape[0] > 0 and aux.dtype.kind in "cfmM" and
     np.isnan(aux[-1])):
@@ -390,10 +365,14 @@ def _unique1d(ar, return_index=False, return_inverse=False,
     elif equal_nans and aux.shape[0] > 0 and len(aux.dtype) > 1:
         tracker = 0
         while tracker < len(aux) - 1:
-            if equals_nan(aux[tracker], aux[tracker+1]):
-                mask[tracker + 1] = False
-            else:
-                mask[tracker + 1] = True
+            for key in aux[tracker].dtype.names:
+                if (aux[tracker][key] == aux[tracker+1][key] or 
+                (str(aux[tracker][key]) == "nan" and str(aux[tracker+1][key])
+                == "nan")):
+                    mask[tracker + 1] = False
+                else:
+                    mask[tracker + 1] = True
+                    break
             tracker += 1
             
     else:
