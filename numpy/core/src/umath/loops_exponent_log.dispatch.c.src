@@ -436,7 +436,7 @@ simd_exp_FLOAT(npy_float * op,
     @vtype@ poly, num_poly, denom_poly, quadrant;
     @vtype@i vindex = _mm@vsize@_loadu_si@vsize@((@vtype@i*)&indexarr[0]);
 
-    @mask@ xmax_mask, xmin_mask, nan_mask, inf_mask;
+    @mask@ xmax_mask, xmin_mask, nan_mask, inf_mask, ninf_mask;
     @mask@ overflow_mask = @isa@_get_partial_load_mask_ps(0, num_lanes);
     @mask@ underflow_mask = @isa@_get_partial_load_mask_ps(0, num_lanes);
     @mask@ load_mask = @isa@_get_full_load_mask_ps();
@@ -463,9 +463,11 @@ simd_exp_FLOAT(npy_float * op,
         xmax_mask = _mm@vsize@_cmp_ps@vsub@(x, _mm@vsize@_set1_ps(xmax), _CMP_GE_OQ);
         xmin_mask = _mm@vsize@_cmp_ps@vsub@(x, _mm@vsize@_set1_ps(xmin), _CMP_LE_OQ);
         inf_mask = _mm@vsize@_cmp_ps@vsub@(x, inf, _CMP_EQ_OQ);
+        ninf_mask = _mm@vsize@_cmp_ps@vsub@(x, -inf, _CMP_EQ_OQ);
         overflow_mask = @or_masks@(overflow_mask,
                                     @xor_masks@(xmax_mask, inf_mask));
-        underflow_mask = @or_masks@(underflow_mask, xmin_mask);
+        underflow_mask = @or_masks@(underflow_mask,
+                                    @xor_masks@(xmin_mask, ninf_mask));
 
         x = @isa@_set_masked_lanes_ps(x, zeros_f, @or_masks@(
                                     @or_masks@(nan_mask, xmin_mask), xmax_mask));
