@@ -597,9 +597,7 @@ _convert_from_array_descr(PyObject *obj, int align)
 
     PyArray_Descr *new = PyArray_DescrNewFromType(NPY_VOID);
     if (new == NULL) {
-        Py_XDECREF(fields);
-        Py_XDECREF(nameslist);
-        return NULL;
+        goto fail;
     }
     new->fields = fields;
     new->names = nameslist;
@@ -703,6 +701,9 @@ _convert_from_list(PyObject *obj, int align)
         totalsize += conv->elsize;
     }
     PyArray_Descr *new = PyArray_DescrNewFromType(NPY_VOID);
+    if (new == NULL) {
+        goto fail;
+    }
     new->fields = fields;
     new->names = nameslist;
     new->flags = dtypeflags;
