@@ -643,14 +643,12 @@ static PyObject *
 fromstring_null_term_c_api(PyObject *dummy, PyObject *byte_obj)
 {
     char *string;
-    PyArray_Descr *descr;
 
     string = PyBytes_AsString(byte_obj);
     if (string == NULL) {
         return NULL;
     }
-    descr = PyArray_DescrNewFromType(NPY_FLOAT64);
-    return PyArray_FromString(string, -1, descr, -1, " ");
+    return PyArray_FromString(string, -1, NULL, -1, " ");
 }
 
 

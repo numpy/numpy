@@ -668,6 +668,9 @@ PyArray_NewFromDescr_int(
     PyArrayObject_fields *fa;
     npy_intp nbytes;
 
+    if (descr == NULL) {
+        return NULL;
+    }
     if (nd > NPY_MAXDIMS || nd < 0) {
         PyErr_Format(PyExc_ValueError,
                 "number of dimensions must be within [0, %d]", NPY_MAXDIMS);
@@ -1115,6 +1118,9 @@ PyArray_New(
             return NULL;
         }
         PyArray_DESCR_REPLACE(descr);
+        if (descr == NULL) {
+            return NULL;
+        }
         descr->elsize = itemsize;
     }
     new = PyArray_NewFromDescr(subtype, descr, nd, dims, strides,
@@ -1140,6 +1146,9 @@ _dtype_from_buffer_3118(PyObject *memoryview)
          *       terminate.
          */
         descr = PyArray_DescrNewFromType(NPY_STRING);
+        if (descr == NULL) {
+            return NULL;
+        }
         descr->elsize = view->itemsize;
     }
     return descr;
@@ -3583,6 +3592,10 @@ PyArray_FromFile(FILE *fp, PyArray_Descr *dtype, npy_intp num, char *sep)
     PyArrayObject *ret;
     size_t nread = 0;
 
+    if (dtype == NULL) {
+        return NULL;
+    }
+
     if (PyDataType_REFCHK(dtype)) {
         PyErr_SetString(PyExc_ValueError,
                 "Cannot read into object array");
@@ -3650,6 +3663,9 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
     int itemsize;
     int writeable = 1;
 
+    if (type == NULL) {
+        return NULL;
+    }
 
     if (PyDataType_REFCHK(type)) {
         PyErr_SetString(PyExc_ValueError,
@@ -3857,14 +3873,20 @@ NPY_NO_EXPORT PyObject *
 PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, npy_intp count)
 {
     PyObject *value;
-    PyObject *iter = PyObject_GetIter(obj);
+    PyObject *iter = NULL;
     PyArrayObject *ret = NULL;
     npy_intp i, elsize, elcount;
     char *item, *new_data;
 
+    if (dtype == NULL) {
+        return NULL;
+    }
+
+    iter = PyObject_GetIter(obj);
     if (iter == NULL) {
         goto done;
     }
+
     if (PyDataType_ISUNSIZED(dtype)) {
         PyErr_SetString(PyExc_ValueError,
                 "Must specify length when using variable-size data-type.");

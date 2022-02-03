@@ -1381,6 +1381,9 @@ PyArray_DescrNewFromType(int type_num)
     PyArray_Descr *new;
 
     old = PyArray_DescrFromType(type_num);
+    if (old == NULL) {
+        return NULL;
+    }
     new = PyArray_DescrNew(old);
     Py_DECREF(old);
     return new;
@@ -2341,7 +2344,7 @@ arraydescr_new(PyTypeObject *subtype,
     }
 
     PyObject *odescr, *metadata=NULL;
-    PyArray_Descr *descr, *conv;
+    PyArray_Descr *conv;
     npy_bool align = NPY_FALSE;
     npy_bool copy = NPY_FALSE;
     npy_bool copied = NPY_FALSE;
@@ -2363,9 +2366,10 @@ arraydescr_new(PyTypeObject *subtype,
 
     /* Get a new copy of it unless it's already a copy */
     if (copy && conv->fields == Py_None) {
-        descr = PyArray_DescrNew(conv);
-        Py_DECREF(conv);
-        conv = descr;
+        PyArray_DESCR_REPLACE(conv);
+        if (conv == NULL) {
+            return NULL;
+        }
         copied = NPY_TRUE;
     }
 
@@ -2375,10 +2379,11 @@ arraydescr_new(PyTypeObject *subtype,
          * underlying dictionary
          */
         if (!copied) {
+            PyArray_DESCR_REPLACE(conv);
+            if (conv == NULL) {
+                return NULL;
+            }
             copied = NPY_TRUE;
-            descr = PyArray_DescrNew(conv);
-            Py_DECREF(conv);
-            conv = descr;
         }
         if ((conv->metadata != NULL)) {
             /*
@@ -3047,6 +3052,9 @@ PyArray_DescrNewByteorder(PyArray_Descr *self, char newendian)
     char endian;
 
     new = PyArray_DescrNew(self);
+    if (new == NULL) {
+        return NULL;
+    }
     endian = new->byteorder;
     if (endian != NPY_IGNORE) {
         if (newendian == NPY_SWAP) {
@@ -3073,6 +3081,10 @@ PyArray_DescrNewByteorder(PyArray_Descr *self, char newendian)
         int len, i;
 
         newfields = PyDict_New();
+        if (newfields == NULL) {
+            Py_DECREF(new);
+            return NULL;
+        }
         /* make new dictionary with replaced PyArray_Descr Objects */
         while (PyDict_Next(self->fields, &pos, &key, &value)) {
             if (NPY_TITLE_KEY(key, value)) {
@@ -3114,6 +3126,10 @@ PyArray_DescrNewByteorder(PyArray_Descr *self, char newendian)
         Py_DECREF(new->subarray->base);
         new->subarray->base = PyArray_DescrNewByteorder(
                 self->subarray->base, newendian);
+        if (new->subarray->base == NULL) {
+            Py_DECREF(new);
+            return NULL;
+        }
     }
     return new;
 }
