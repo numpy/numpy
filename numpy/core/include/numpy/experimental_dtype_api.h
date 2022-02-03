@@ -321,6 +321,38 @@ typedef int (PyArrayMethod_StridedLoop)(PyArrayMethod_Context *context,
         NpyAuxData *transferdata);
 
 
+/*
+ * For reductions, NumPy sometimes requires an identity or default value.
+ * The typical way of relying on a single "default" for ufuncs does not always
+ * work however.  This function allows customizing the identity value as well
+ * as whether the operation is "reorderable".
+ */
+#define NPY_METH_get_identity 7
+
+typedef enum {
+    /* The value can be used as a default for empty reductions */
+    NPY_METH_ITEM_IS_DEFAULT = 1 << 0,
+    /* The value represents the identity value */
+    NPY_METH_ITEM_IS_IDENTITY = 1 << 1,
+    /* The operation is fully reorderable (iteration order may be optimized) */
+    NPY_METH_IS_REORDERABLE = 1 << 2,
+} NPY_ARRAYMETHOD_IDENTITY_FLAGS;
+
+/*
+ * If an identity exists, should set the `NPY_METH_ITEM_IS_IDENTITY`, normally
+ * the `NPY_METH_ITEM_IS_DEFAULT` should also be set, but it is distinct.
+ * By default NumPy provides a "default" for `object` dtype, but does not use
+ * it as an identity.
+ * The `NPY_METH_IS_REORDERABLE` flag should be set if the operatio is
+ * reorderable.
+ *
+ * NOTE: `item` can be `NULL` when a user passed a custom initial value, in
+ *       this case only the `reorderable` flag is valid.
+ */
+typedef int (get_identity_function)(
+        PyArrayMethod_Context *context, char *item,
+        NPY_ARRAYMETHOD_IDENTITY_FLAGS *flags);
+
 
 /*
  * ****************************

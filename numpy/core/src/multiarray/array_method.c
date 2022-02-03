@@ -337,6 +337,7 @@ fill_arraymethod_from_slots(
                 continue;
             case NPY_METH_get_identity:
                 meth->get_identity = slot->pfunc;
+                continue;
             default:
                 break;
         }
