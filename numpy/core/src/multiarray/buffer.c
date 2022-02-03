@@ -1057,7 +1057,7 @@ _descriptor_from_pep3118_format_fast(char const *s, PyObject **result)
     else {
         *result = (PyObject*)PyArray_DescrNewByteorder(descr, byte_order);
         Py_DECREF(descr);
-        if (result == NULL) {
+        if (*result == NULL) {
             return 0;
         }
     }
