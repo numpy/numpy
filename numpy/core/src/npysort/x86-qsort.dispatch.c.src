@@ -461,8 +461,8 @@ npy_intp partition_avx512_@vsuf1@(@type_t@* arr, npy_intp left, npy_intp right,
     if(right - left == 16) {
         @zmm_t@ vec = _mm512_loadu_@vsuf3@(arr + left);
         npy_int amount_gt_pivot = partition_vec_@vsuf1@(arr, left, left + 16, vec, pivot_vec, &min_vec, &max_vec);
-        *smallest = npyv_reduce_min_@vsuf4@(min_vec);
-        *biggest = npyv_reduce_max_@vsuf4@(max_vec);
+        *smallest = npyv_reducemin_@vsuf4@(min_vec);
+        *biggest = npyv_reducemax_@vsuf4@(max_vec);
         return left + (16 - amount_gt_pivot);
     }
 
@@ -500,8 +500,8 @@ npy_intp partition_avx512_@vsuf1@(@type_t@* arr, npy_intp left, npy_intp right,
     l_store += (16 - amount_gt_pivot);
     amount_gt_pivot = partition_vec_@vsuf1@(arr, l_store, l_store + 16, vec_right, pivot_vec, &min_vec, &max_vec);
     l_store += (16 - amount_gt_pivot);
-    *smallest = npyv_reduce_min_@vsuf4@(min_vec);
-    *biggest = npyv_reduce_max_@vsuf4@(max_vec);
+    *smallest = npyv_reducemin_@vsuf4@(min_vec);
+    *biggest = npyv_reducemax_@vsuf4@(max_vec);
     return l_store;
 }
 

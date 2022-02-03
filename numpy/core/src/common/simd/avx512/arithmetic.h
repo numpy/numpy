@@ -371,14 +371,14 @@ NPY_FINLINE npyv_s64 npyv_divc_s64(npyv_s64 a, const npyv_s64x3 divisor)
     #define npyv_sum_u64 _mm512_reduce_add_epi64
     #define npyv_sum_f32 _mm512_reduce_add_ps
     #define npyv_sum_f64 _mm512_reduce_add_pd
-    #define npyv_reduce_min_u32 _mm512_reduce_min_epu32
-    #define npyv_reduce_min_s32 _mm512_reduce_min_epi32
-    #define npyv_reduce_min_f32 _mm512_reduce_min_ps
-    #define npyv_reduce_max_u32 _mm512_reduce_max_epu32
-    #define npyv_reduce_max_s32 _mm512_reduce_max_epi32
-    #define npyv_reduce_max_f32 _mm512_reduce_max_ps
+    #define npyv_reducemin_u32 _mm512_reduce_min_epu32
+    #define npyv_reducemin_s32 _mm512_reduce_min_epi32
+    #define npyv_reducemin_f32 _mm512_reduce_min_ps
+    #define npyv_reducemax_u32 _mm512_reduce_max_epu32
+    #define npyv_reducemax_s32 _mm512_reduce_max_epi32
+    #define npyv_reducemax_f32 _mm512_reduce_max_ps
 #else
-    NPY_FINLINE npy_uint32 npyv_reduce_max_u32(npyv_u32 a)
+    NPY_FINLINE npy_uint32 npyv_reducemax_u32(npyv_u32 a)
     {
         const npyv_u32 idx1 = _mm512_set_epi32(7, 6, 5, 4, 3, 2, 1, 0, 15, 14, 13, 12, 11, 10, 9, 8);
         const npyv_u32 idx2 = _mm512_set_epi32(3, 2, 1, 0, 7, 6, 5, 4, 11, 10, 9, 8, 15, 14, 13, 12);
@@ -389,7 +389,7 @@ NPY_FINLINE npyv_s64 npyv_divc_s64(npyv_s64 a, const npyv_s64x3 divisor)
         return _mm_cvtsi128_si32(_mm512_extracti32x4_epi32(a4, 0x00));
     }
 
-    NPY_FINLINE npy_int32 npyv_reduce_max_s32(npyv_s32 a)
+    NPY_FINLINE npy_int32 npyv_reducemax_s32(npyv_s32 a)
     {
         const npyv_u32 idx1 = _mm512_set_epi32(7, 6, 5, 4, 3, 2, 1, 0, 15, 14, 13, 12, 11, 10, 9, 8);
         const npyv_u32 idx2 = _mm512_set_epi32(3, 2, 1, 0, 7, 6, 5, 4, 11, 10, 9, 8, 15, 14, 13, 12);
@@ -400,7 +400,7 @@ NPY_FINLINE npyv_s64 npyv_divc_s64(npyv_s64 a, const npyv_s64x3 divisor)
         return _mm_cvtsi128_si32(_mm512_extracti32x4_epi32(a4, 0x00));
     }
 
-    NPY_FINLINE npy_float npyv_reduce_max_f32(npyv_f32 a)
+    NPY_FINLINE npy_float npyv_reducemax_f32(npyv_f32 a)
     {
         const npyv_u32 idx1 = _mm512_set_epi32(7, 6, 5, 4, 3, 2, 1, 0, 15, 14, 13, 12, 11, 10, 9, 8);
         const npyv_u32 idx2 = _mm512_set_epi32(3, 2, 1, 0, 7, 6, 5, 4, 11, 10, 9, 8, 15, 14, 13, 12);
@@ -411,7 +411,7 @@ NPY_FINLINE npyv_s64 npyv_divc_s64(npyv_s64 a, const npyv_s64x3 divisor)
         return _mm_cvtss_f32(_mm512_extractf32x4_ps(a4, 0x00));
     }
 
-    NPY_FINLINE npy_uint32 npyv_reduce_min_u32(npyv_u32 a)
+    NPY_FINLINE npy_uint32 npyv_reducemin_u32(npyv_u32 a)
     {
         const npyv_u32 idx1 = _mm512_set_epi32(7, 6, 5, 4, 3, 2, 1, 0, 15, 14, 13, 12, 11, 10, 9, 8);
         const npyv_u32 idx2 = _mm512_set_epi32(3, 2, 1, 0, 7, 6, 5, 4, 11, 10, 9, 8, 15, 14, 13, 12);
@@ -422,7 +422,7 @@ NPY_FINLINE npyv_s64 npyv_divc_s64(npyv_s64 a, const npyv_s64x3 divisor)
         return _mm_cvtsi128_si32(_mm512_extracti32x4_epi32(a4, 0x00));
     }
 
-    NPY_FINLINE npy_int32 npyv_reduce_min_s32(npyv_s32 a)
+    NPY_FINLINE npy_int32 npyv_reducemin_s32(npyv_s32 a)
     {
         const npyv_u32 idx1 = _mm512_set_epi32(7, 6, 5, 4, 3, 2, 1, 0, 15, 14, 13, 12, 11, 10, 9, 8);
         const npyv_u32 idx2 = _mm512_set_epi32(3, 2, 1, 0, 7, 6, 5, 4, 11, 10, 9, 8, 15, 14, 13, 12);
@@ -433,7 +433,7 @@ NPY_FINLINE npyv_s64 npyv_divc_s64(npyv_s64 a, const npyv_s64x3 divisor)
         return _mm_cvtsi128_si32(_mm512_extracti32x4_epi32(a4, 0x00));
     }
 
-    NPY_FINLINE npy_float npyv_reduce_min_f32(npyv_f32 a)
+    NPY_FINLINE npy_float npyv_reducemin_f32(npyv_f32 a)
     {
         const npyv_u32 idx1 = _mm512_set_epi32(7, 6, 5, 4, 3, 2, 1, 0, 15, 14, 13, 12, 11, 10, 9, 8);
         const npyv_u32 idx2 = _mm512_set_epi32(3, 2, 1, 0, 7, 6, 5, 4, 11, 10, 9, 8, 15, 14, 13, 12);
