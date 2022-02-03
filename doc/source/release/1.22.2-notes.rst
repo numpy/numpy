@@ -11,13 +11,14 @@ The NumPy 1.22.2 is maintenance release that fixes bugs discovered after the
 - Various Annotation fixes/additions.
 - Numpy wheels for Windows will use the 1.41 tool chain, fixing downstream link
   problems for projects using NumPy provided libraries on Windows.
+- Deal with CVE-2021-41495 complaint.
 
 The Python versions supported for this release are 3.8-3.10.
 
 Contributors
 ============
 
-A total of 11 people contributed to this release.  People with a "+" by their
+A total of 14 people contributed to this release.  People with a "+" by their
 names contributed a patch for the first time.
 
 * Andrew J. Hesford +
@@ -27,15 +28,18 @@ names contributed a patch for the first time.
 * Hood Chatham
 * Janus Heide +
 * Leo Singer
+* Matti Picus
 * Mukulika Pahari
 * Niyas Sait
+* Pearu Peterson
 * Ralf Gommers
+* Sebastian Berg
 * Serge Guelton
 
 Pull requests merged
 ====================
 
-A total of 14 pull requests were merged for this release.
+A total of 21 pull requests were merged for this release.
 
 * `#20842 <https://github.com/numpy/numpy/pull/20842>`__: BLD: Add NPY_DISABLE_SVML env var to opt out of SVML
 * `#20843 <https://github.com/numpy/numpy/pull/20843>`__: BUG: Fix build of third party extensions with Py_LIMITED_API
@@ -48,7 +52,13 @@ A total of 14 pull requests were merged for this release.
 * `#20910 <https://github.com/numpy/numpy/pull/20910>`__: BUG: distutils: fix building mixed C/Fortran extensions
 * `#20912 <https://github.com/numpy/numpy/pull/20912>`__: DOC,TST: Fix Pandas code example as per new release
 * `#20935 <https://github.com/numpy/numpy/pull/20935>`__: TYP, MAINT: Add annotations for ``flatiter.__setitem__``
-* `#20936 <https://github.com/numpy/numpy/pull/20936>`__: MAINT, TYP: Added missing where type hints in ``fromnumeric.pyi``
+* `#20936 <https://github.com/numpy/numpy/pull/20936>`__: MAINT, TYP: Added missing where typehints in ``fromnumeric.pyi``
 * `#20937 <https://github.com/numpy/numpy/pull/20937>`__: BUG: Fix build_ext interaction with non numpy extensions
 * `#20938 <https://github.com/numpy/numpy/pull/20938>`__: BUG: Fix missing intrinsics for windows/arm64 target
-
+* `#20945 <https://github.com/numpy/numpy/pull/20945>`__: REL: Prepare for the NumPy 1.22.2 release.
+* `#20982 <https://github.com/numpy/numpy/pull/20982>`__: MAINT: f2py: don't generate code that triggers ``-Wsometimes-uninitialized``.
+* `#20983 <https://github.com/numpy/numpy/pull/20983>`__: BUG: Fix incorrect return type in reduce without initial value
+* `#20984 <https://github.com/numpy/numpy/pull/20984>`__: ENH: review return values for PyArray_DescrNew
+* `#20985 <https://github.com/numpy/numpy/pull/20985>`__: MAINT: be more tolerant of setuptools >= 60
+* `#20986 <https://github.com/numpy/numpy/pull/20986>`__: BUG: Fix misplaced return.
+* `#20992 <https://github.com/numpy/numpy/pull/20992>`__: MAINT: Further small return value validation fixes
