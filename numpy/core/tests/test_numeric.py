@@ -1215,6 +1215,51 @@ class TestFromiter:
         assert_raises(NIterError, np.fromiter,
                           self.load_data(count, eindex), dtype=int, count=count)
 
+    @pytest.mark.parametrize("dtype", ["S", "S0", "V0", "U0"])
+    def test_empty_not_structured(self, dtype):
+        # Note, "S0" could be allowed at some point, so long "S" (without
+        # any length) is rejected.
+        with pytest.raises(ValueError, match="Must specify length"):
+            np.fromiter([], dtype=dtype)
+
+    @pytest.mark.parametrize("dtype",
+            # Note that `np.dtype(("O", (10, 5)))` is a subarray dtype
+            ["d", "i,O", np.dtype(("O", (10, 5))), "O"])
+    def test_growth_and_complicated_dtypes(self, dtype):
+        dtype = np.dtype(dtype)
+        data = [1, 2, 3, 4, 5, 6, 7, 8, 9] * 100  # make sure we realloc a bit
+
+        class MyIter:
+            # Class/example from gh-15789
+            def __length_hint__(self):
+                # only required to be an estimate, this is legal
+                return 1
+
+            def __iter__(self):
+                return iter(data)
+
+        res = np.fromiter(MyIter(), dtype=dtype)
+        expected = np.array(data, dtype=dtype)
+
+        assert_array_equal(res, expected)
+
+    def test_empty_result(self):
+        class MyIter:
+            def __length_hint__(self):
+                return 10
+
+            def __iter__(self):
+                return iter([])  # actual iterator is empty.
+
+        res = np.fromiter(MyIter(), dtype="d")
+        assert res.shape == (0,)
+        assert res.dtype == "d"
+
+    def test_too_few_items(self):
+        msg = "iterator too short: Expected 10 but iterator had only 3 items."
+        with pytest.raises(ValueError, match=msg):
+            np.fromiter([1, 2, 3], count=10, dtype=int)
+
 
 class TestNonzero:
     def test_nonzero_trivial(self):

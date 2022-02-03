@@ -1398,6 +1398,11 @@ add_newdoc('numpy.core.multiarray', 'fromiter',
         An iterable object providing data for the array.
     dtype : data-type
         The data-type of the returned array.
+
+        .. versionchanged:: 1.23
+            Object and subarray dtypes are now supported (note that the final
+            result is not 1-D for a subarray dtype).
+
     count : int, optional
         The number of items to read from *iterable*.  The default is -1,
         which means all data is read.
