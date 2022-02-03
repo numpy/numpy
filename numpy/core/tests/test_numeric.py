@@ -1202,18 +1202,14 @@ class TestFromiter:
                 raise NIterError('error at index %s' % eindex)
             yield e
 
-    def test_2592(self):
-        # Test iteration exceptions are correctly raised.
-        count, eindex = 10, 5
-        assert_raises(NIterError, np.fromiter,
-                          self.load_data(count, eindex), dtype=int, count=count)
-
-    def test_2592_edge(self):
-        # Test iter. exceptions, edge case (exception at end of iterator).
-        count = 10
-        eindex = count-1
-        assert_raises(NIterError, np.fromiter,
-                          self.load_data(count, eindex), dtype=int, count=count)
+    @pytest.mark.parametrize("dtype", [int, object])
+    @pytest.mark.parametrize(["count", "error_index"], [(10, 5), (10, 9)])
+    def test_2592(self, count, error_index, dtype):
+        # Test iteration exceptions are correctly raised. The data/generator
+        # has `count` elements but errors at `error_index`
+        iterable = self.load_data(count, error_index)
+        with pytest.raises(NIterError):
+            np.fromiter(iterable, dtype=dtype, count=count)
 
     @pytest.mark.parametrize("dtype", ["S", "S0", "V0", "U0"])
     def test_empty_not_structured(self, dtype):
