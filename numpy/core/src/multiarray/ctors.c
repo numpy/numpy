@@ -3916,6 +3916,13 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, npy_intp count)
     if (ret == NULL) {
         goto done;
     }
+#ifdef NPY_RELAXED_STRIDES_DEBUG
+    /* Incompatible with NPY_RELAXED_STRIDES_DEBUG due to growing */
+    if (elcount == 1) {
+        PyArray_STRIDES(ret)[0] = elsize;
+    }
+#endif /* NPY_RELAXED_STRIDES_DEBUG */
+
 
     char *item = PyArray_BYTES(ret);
     for (i = 0; i < count || count == -1; i++, item += elsize) {
