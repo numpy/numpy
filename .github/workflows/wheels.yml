@@ -152,7 +152,7 @@ jobs:
             echo "ANACONDA_UPLOAD=false" >> $GITHUB_ENV
           fi
       - name: Upload wheels
-        if: env.TOKEN 
+        if: ${{ env.TOKEN }}
         shell: bash
         run: |
           # trigger an upload to
