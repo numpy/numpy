@@ -432,6 +432,7 @@ simd_exp_FLOAT(npy_float * op,
     @vtype@ cvt_magic = _mm@vsize@_set1_ps(NPY_RINT_CVT_MAGICf);
     @vtype@ log2e = _mm@vsize@_set1_ps(NPY_LOG2Ef);
     @vtype@ inf = _mm@vsize@_set1_ps(NPY_INFINITYF);
+    @vtype@ ninf = _mm@vsize@_set1_ps(-1*NPY_INFINITYF);
     @vtype@ zeros_f = _mm@vsize@_set1_ps(0.0f);
     @vtype@ poly, num_poly, denom_poly, quadrant;
     @vtype@i vindex = _mm@vsize@_loadu_si@vsize@((@vtype@i*)&indexarr[0]);
@@ -463,7 +464,7 @@ simd_exp_FLOAT(npy_float * op,
         xmax_mask = _mm@vsize@_cmp_ps@vsub@(x, _mm@vsize@_set1_ps(xmax), _CMP_GE_OQ);
         xmin_mask = _mm@vsize@_cmp_ps@vsub@(x, _mm@vsize@_set1_ps(xmin), _CMP_LE_OQ);
         inf_mask = _mm@vsize@_cmp_ps@vsub@(x, inf, _CMP_EQ_OQ);
-        ninf_mask = _mm@vsize@_cmp_ps@vsub@(x, -inf, _CMP_EQ_OQ);
+        ninf_mask = _mm@vsize@_cmp_ps@vsub@(x, ninf, _CMP_EQ_OQ);
         overflow_mask = @or_masks@(overflow_mask,
                                     @xor_masks@(xmax_mask, inf_mask));
         underflow_mask = @or_masks@(underflow_mask,
