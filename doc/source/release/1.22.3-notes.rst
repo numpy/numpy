@@ -1,0 +1,13 @@
+.. currentmodule:: numpy
+
+==========================
+NumPy 1.22.3 Release Notes
+==========================
+
+The NumPy 1.22.3 is maintenance release that fixes bugs discovered after the
+1.22.2 release. Notable fixes are:
+
+
+The Python versions supported for this release are 3.8-3.10.
+
+
