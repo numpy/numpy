@@ -422,12 +422,13 @@ def configuration(parent_package='',top_path=None):
                                            exec_mod_from_location)
     from numpy.distutils.system_info import (get_info, blas_opt_info,
                                              lapack_opt_info)
+    from numpy.version import release as is_released
 
     config = Configuration('core', parent_package, top_path)
     local_dir = config.local_path
     codegen_dir = join(local_dir, 'code_generators')
 
-    if is_released(config):
+    if is_released:
         warnings.simplefilter('error', MismatchCAPIWarning)
 
     # Check whether we have a mismatch between the set C API VERSION and the

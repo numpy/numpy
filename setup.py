@@ -207,7 +207,7 @@ def get_build_overrides():
     """
     from numpy.distutils.command.build_clib import build_clib
     from numpy.distutils.command.build_ext import build_ext
-    from distutils.version import LooseVersion
+    from numpy.compat import _pep440
 
     def _needs_gcc_c99_flag(obj):
         if obj.compiler.compiler_type != 'unix':
@@ -221,7 +221,7 @@ def get_build_overrides():
         out = subprocess.run([cc, '-dumpversion'], stdout=subprocess.PIPE,
                              stderr=subprocess.PIPE, universal_newlines=True)
         # -std=c99 is default from this version on
-        if LooseVersion(out.stdout) >= LooseVersion('5.0'):
+        if _pep440.parse(out.stdout) >= _pep440.Version('5.0'):
             return False
         return True
 
@@ -242,6 +242,31 @@ def get_build_overrides():
 
 
 def generate_cython():
+    # Check Cython version
+    from numpy.compat import _pep440
+    try:
+        # try the cython in the installed python first (somewhat related to
+        # scipy/scipy#2397)
+        import Cython
+        from Cython.Compiler.Version import version as cython_version
+    except ImportError as e:
+        # The `cython` command need not point to the version installed in the
+        # Python running this script, so raise an error to avoid the chance of
+        # using the wrong version of Cython.
+        msg = 'Cython needs to be installed in Python as a module'
+        raise OSError(msg) from e
+    else:
+        # Note: keep in sync with that in pyproject.toml
+        # Update for Python 3.10
+        required_version = '0.29.24'
+
+        if _pep440.parse(cython_version) < _pep440.Version(required_version):
+            cython_path = Cython.__file__
+            msg = 'Building NumPy requires Cython >= {}, found {} at {}'
+            msg = msg.format(required_version, cython_version, cython_path)
+            raise RuntimeError(msg)
+
+    # Process files
     cwd = os.path.abspath(os.path.dirname(__file__))
     print("Cythonizing sources")
     for d in ('random',):

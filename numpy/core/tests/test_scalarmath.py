@@ -4,7 +4,7 @@ import warnings
 import itertools
 import operator
 import platform
-from distutils.version import LooseVersion as _LooseVersion
+from numpy.compat import _pep440
 import pytest
 from hypothesis import given, settings, Verbosity
 from hypothesis.strategies import sampled_from
@@ -684,8 +684,8 @@ class TestAbs:
         if (
                 sys.platform == "cygwin" and dtype == np.clongdouble and
                 (
-                    _LooseVersion(platform.release().split("-")[0])
-                    < _LooseVersion("3.3.0")
+                    _pep440.parse(platform.release().split("-")[0])
+                    < _pep440.Version("3.3.0")
                 )
         ):
             pytest.xfail(
@@ -698,8 +698,8 @@ class TestAbs:
         if (
                 sys.platform == "cygwin" and dtype == np.clongdouble and
                 (
-                    _LooseVersion(platform.release().split("-")[0])
-                    < _LooseVersion("3.3.0")
+                    _pep440.parse(platform.release().split("-")[0])
+                    < _pep440.Version("3.3.0")
                 )
         ):
             pytest.xfail(

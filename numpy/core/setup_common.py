@@ -50,17 +50,6 @@ C_API_VERSION = 0x0000000f
 class MismatchCAPIWarning(Warning):
     pass
 
-def is_released(config):
-    """Return True if a released version of numpy is detected."""
-    from distutils.version import LooseVersion
-
-    v = config.get_version('../_version.py')
-    if v is None:
-        raise ValueError("Could not get version")
-    pv = LooseVersion(vstring=v).version
-    if len(pv) > 3:
-        return False
-    return True
 
 def get_api_versions(apiversion, codegen_dir):
     """

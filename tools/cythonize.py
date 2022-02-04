@@ -48,33 +48,8 @@ def process_pyx(fromfile, tofile):
     if tofile.endswith('.cxx'):
         flags.append('--cplus')
 
-    try:
-        # try the cython in the installed python first (somewhat related to scipy/scipy#2397)
-        import Cython
-        from Cython.Compiler.Version import version as cython_version
-    except ImportError as e:
-        # The `cython` command need not point to the version installed in the
-        # Python running this script, so raise an error to avoid the chance of
-        # using the wrong version of Cython.
-        msg = 'Cython needs to be installed in Python as a module'
-        raise OSError(msg) from e
-    else:
-        # check the version, and invoke through python
-        from distutils.version import LooseVersion
-
-        # Cython 0.29.21 is required for Python 3.9 and there are
-        # other fixes in the 0.29 series that are needed even for earlier
-        # Python versions.
-        # Note: keep in sync with that in pyproject.toml
-        # Update for Python 3.10
-        required_version = LooseVersion('0.29.24')
-
-        if LooseVersion(cython_version) < required_version:
-            cython_path = Cython.__file__
-            raise RuntimeError(f'Building {VENDOR} requires Cython >= {required_version}'
-                               f', found {cython_version} at {cython_path}')
-        subprocess.check_call(
-            [sys.executable, '-m', 'cython'] + flags + ["-o", tofile, fromfile])
+    subprocess.check_call(
+        [sys.executable, '-m', 'cython'] + flags + ["-o", tofile, fromfile])
 
 
 def process_tempita_pyx(fromfile, tofile):
