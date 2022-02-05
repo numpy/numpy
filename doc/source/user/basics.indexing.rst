@@ -1,3 +1,6 @@
+.. for doctest:
+    >>> import numpy as np
+  
 .. _basics.indexing:
 
 ****************************************
@@ -502,7 +505,7 @@ Or wish to add a constant to all negative elements::
     >>> x = np.array([1., -1., -2., 3])
     >>> x[x < 0] += 20
     >>> x
-    array([1., 19., 18., 3.])
+    array([ 1., 19., 18., 3.])
 
 In general if an index includes a Boolean array, the result will be
 identical to inserting ``obj.nonzero()`` into the same position
