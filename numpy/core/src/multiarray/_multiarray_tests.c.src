@@ -643,14 +643,12 @@ static PyObject *
 fromstring_null_term_c_api(PyObject *dummy, PyObject *byte_obj)
 {
     char *string;
-    PyArray_Descr *descr;
 
     string = PyBytes_AsString(byte_obj);
     if (string == NULL) {
         return NULL;
     }
-    descr = PyArray_DescrNewFromType(NPY_FLOAT64);
-    return PyArray_FromString(string, -1, descr, -1, " ");
+    return PyArray_FromString(string, -1, NULL, -1, " ");
 }
 
 
@@ -795,25 +793,6 @@ npy_char_deprecation(PyObject* NPY_UNUSED(self), PyObject* NPY_UNUSED(args))
 {
     PyArray_Descr * descr = PyArray_DescrFromType(NPY_CHAR);
     return (PyObject *)descr;
-}
-
-/* used to test UPDATEIFCOPY usage emits deprecation warning */
-static PyObject*
-npy_updateifcopy_deprecation(PyObject* NPY_UNUSED(self), PyObject* args)
-{
-    int flags;
-    PyObject* array;
-    if (!PyArray_Check(args)) {
-        PyErr_SetString(PyExc_TypeError, "test needs ndarray input");
-        return NULL;
-    }
-    flags = NPY_ARRAY_CARRAY | NPY_ARRAY_UPDATEIFCOPY;
-    array = PyArray_FromArray((PyArrayObject*)args, NULL, flags);
-    if (array == NULL)
-        return NULL;
-    PyArray_ResolveWritebackIfCopy((PyArrayObject*)array);
-    Py_DECREF(array);
-    Py_RETURN_NONE;
 }
 
 /* used to test PyArray_As1D usage emits not implemented error */
@@ -1086,20 +1065,18 @@ get_all_cast_information(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(args))
             PyArrayMethodObject *cast = (PyArrayMethodObject *)cast_obj;
 
             /* Pass some information about this cast out! */
-            PyObject *cast_info = Py_BuildValue("{sOsOsisisisisisssi}",
+            PyObject *cast_info = Py_BuildValue("{sOsOsisisisisiss}",
                     "from", from_dtype,
                     "to", to_dtype,
                     "legacy", (cast->name != NULL &&
                                strncmp(cast->name, "legacy_", 7) == 0),
-                    "casting", cast->casting & ~_NPY_CAST_IS_VIEW,
+                    "casting", cast->casting,
                     "requires_pyapi", cast->flags & NPY_METH_REQUIRES_PYAPI,
                     "supports_unaligned",
                         cast->flags & NPY_METH_SUPPORTS_UNALIGNED,
                     "no_floatingpoint_errors",
                         cast->flags & NPY_METH_NO_FLOATINGPOINT_ERRORS,
-                    "name", cast->name,
-                    "cast_is_view",
-                        cast->casting & _NPY_CAST_IS_VIEW);
+                    "name", cast->name);
             if (cast_info == NULL) {
                 goto fail;
             }
@@ -2193,7 +2170,7 @@ PrintFloat_Printf_g(PyObject *obj, int precision)
     }
     else if (PyArray_IsScalar(obj, LongDouble)) {
         npy_longdouble x = PyArrayScalar_VAL(obj, LongDouble);
-        PyOS_snprintf(str, sizeof(str), "%.*Lg", precision, x);
+        PyOS_snprintf(str, sizeof(str), "%.*" NPY_LONGDOUBLE_FMT, precision, x);
     }
     else{
         double val = PyFloat_AsDouble(obj);
@@ -2363,6 +2340,17 @@ run_intp_converter(PyObject* NPY_UNUSED(self), PyObject *args)
     return tup;
 }
 
+/* used to test NPY_ARRAY_ENSURENOCOPY raises ValueError */
+static PyObject*
+npy_ensurenocopy(PyObject* NPY_UNUSED(self), PyObject* args)
+{
+    int flags = NPY_ARRAY_ENSURENOCOPY;
+    if (!PyArray_CheckFromAny(args, NULL, 0, 0, flags, NULL)) {
+        return NULL;
+    }
+    Py_RETURN_NONE;
+}
+
 static PyMethodDef Multiarray_TestsMethods[] = {
     {"argparse_example_function",
          (PyCFunction)argparse_example_function,
@@ -2403,9 +2391,6 @@ static PyMethodDef Multiarray_TestsMethods[] = {
     {"npy_char_deprecation",
         npy_char_deprecation,
         METH_NOARGS, NULL},
-    {"npy_updateifcopy_deprecation",
-        npy_updateifcopy_deprecation,
-        METH_O, NULL},
     {"npy_pyarrayas1d_deprecation",
         npy_pyarrayas1d_deprecation,
         METH_NOARGS, NULL},
@@ -2423,6 +2408,9 @@ static PyMethodDef Multiarray_TestsMethods[] = {
         METH_O, NULL},
     {"npy_discard",
         npy_discard,
+        METH_O, NULL},
+    {"npy_ensurenocopy",
+        npy_ensurenocopy,
         METH_O, NULL},
     {"get_buffer_info",
         get_buffer_info,

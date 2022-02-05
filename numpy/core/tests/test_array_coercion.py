@@ -376,7 +376,7 @@ class TestScalarDiscovery:
     def test_scalar_to_int_coerce_does_not_cast(self, dtype):
         """
         Signed integers are currently different in that they do not cast other
-        NumPy scalar, but instead use scalar.__int__(). The harcoded
+        NumPy scalar, but instead use scalar.__int__(). The hardcoded
         exception to this rule is `np.array(scalar, dtype=integer)`.
         """
         dtype = np.dtype(dtype)
@@ -444,7 +444,7 @@ class TestTimeScalars:
         # never use casting.  This is because casting will error in this
         # case, and traditionally in most cases the behaviour is maintained
         # like this.  (`np.array(scalar, dtype="U6")` would have failed before)
-        # TODO: This discrepency _should_ be resolved, either by relaxing the
+        # TODO: This discrepancy _should_ be resolved, either by relaxing the
         #       cast, or by deprecating the first part.
         scalar = np.datetime64(val, unit)
         dtype = np.dtype(dtype)
@@ -746,3 +746,22 @@ class TestArrayLikes:
         with pytest.raises(error):
             np.array(BadSequence())
 
+
+class TestSpecialAttributeLookupFailure:
+    # An exception was raised while fetching the attribute
+
+    class WeirdArrayLike:
+        @property
+        def __array__(self):
+            raise RuntimeError("oops!")
+
+    class WeirdArrayInterface:
+        @property
+        def __array_interface__(self):
+            raise RuntimeError("oops!")
+
+    def test_deprecated(self):
+        with pytest.raises(RuntimeError):
+            np.array(self.WeirdArrayLike())
+        with pytest.raises(RuntimeError):
+            np.array(self.WeirdArrayInterface())

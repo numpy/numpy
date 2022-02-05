@@ -1,5 +1,5 @@
 import sys
-from typing import List, Any
+from typing import Any
 import numpy as np
 
 

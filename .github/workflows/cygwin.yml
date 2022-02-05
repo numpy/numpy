@@ -1,3 +1,6 @@
+# To enable this workflow on a fork, comment out:
+#
+# if: github.repository == 'numpy/numpy'
 name: Test on Cygwin
 on:
   push:
@@ -9,22 +12,23 @@ on:
 jobs:
   cygwin_build_test:
     runs-on: windows-latest
+    if: github.repository == 'numpy/numpy'
     steps:
       - uses: actions/checkout@v2
         with:
           submodules: recursive
-          fetch-depth: 0
+          fetch-depth: 3000
       - name: Install Cygwin
         uses: egor-tensin/setup-cygwin@v3
         with:
           platform: x64
           install-dir: 'C:\tools\cygwin'
-          packages: >
+          packages: >-
             python38-devel python38-zipp python38-importlib-metadata
             python38-cython python38-pip python38-wheel python38-cffi
             python38-pytz python38-setuptools python38-pytest
             python38-hypothesis liblapack-devel libopenblas
-            gcc-fortran git dash
+            gcc-fortran gcc-g++ git dash
       - name: Set Windows PATH
         uses: egor-tensin/cleanup-path@v1
         with:
@@ -49,6 +53,9 @@ jobs:
       - name: Install new NumPy
         run: |
           bash -c "/usr/bin/python3.8 -m pip install dist/numpy-*cp38*.whl"
+      - name: Rebase NumPy compiled extensions
+        run: |
+          dash "tools/rebase_installed_dlls_cygwin.sh" 3.8
       - name: Run NumPy test suite
         run: >-
           dash -c "/usr/bin/python3.8 runtests.py -n -vv"
@@ -58,10 +65,14 @@ jobs:
         with:
           name: numpy-cygwin-wheel
           path: dist/numpy-*cp38*.whl
-      - name: On failure check the extension modules
+      - name: Check the extension modules on failure
         if: failure()
         run: |
           dash -c "/usr/bin/python3.8 -m pip show numpy"
           dash -c "/usr/bin/python3.8 -m pip show -f numpy | grep .dll"
           dash -c "/bin/tr -d '\r' <tools/list_installed_dll_dependencies_cygwin.sh >list_dlls_unix.sh"
-          dash "list_dlls_unix.sh"
+          dash "list_dlls_unix.sh" 3.8
+      - name: Print installed package versions on failure
+        if: failure()
+        run: |
+          cygcheck -c

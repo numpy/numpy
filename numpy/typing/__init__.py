@@ -114,8 +114,9 @@ runtime, they're not necessarily considered as sub-classes.
 Timedelta64
 ~~~~~~~~~~~
 
-The `~numpy.timedelta64` class is not considered a subclass of `~numpy.signedinteger`,
-the former only inheriting from `~numpy.generic` while static type checking.
+The `~numpy.timedelta64` class is not considered a subclass of
+`~numpy.signedinteger`, the former only inheriting from `~numpy.generic`
+while static type checking.
 
 0D arrays
 ~~~~~~~~~
@@ -131,6 +132,22 @@ If it is known in advance that an operation _will_ perform a
 0D-array -> scalar cast, then one can consider manually remedying the
 situation with either `typing.cast` or a ``# type: ignore`` comment.
 
+Record array dtypes
+~~~~~~~~~~~~~~~~~~~
+
+The dtype of `numpy.recarray`, and the `numpy.rec` functions in general,
+can be specified in one of two ways:
+
+* Directly via the ``dtype`` argument.
+* With up to five helper arguments that operate via `numpy.format_parser`:
+  ``formats``, ``names``, ``titles``, ``aligned`` and ``byteorder``.
+
+These two approaches are currently typed as being mutually exclusive,
+*i.e.* if ``dtype`` is specified than one may not specify ``formats``.
+While this mutual exclusivity is not (strictly) enforced during runtime,
+combining both dtype specifiers can lead to unexpected or even downright
+buggy behavior.
+
 API
 ---
 
@@ -138,8 +155,10 @@ API
 # NOTE: The API section will be appended with additional entries
 # further down in this file
 
+from __future__ import annotations
+
 from numpy import ufunc
-from typing import TYPE_CHECKING, List, final
+from typing import TYPE_CHECKING, final
 
 if not TYPE_CHECKING:
     __all__ = ["ArrayLike", "DTypeLike", "NBitBase", "NDArray"]
@@ -150,14 +169,14 @@ else:
     #
     # Declare to mypy that `__all__` is a list of strings without assigning
     # an explicit value
-    __all__: List[str]
-    __path__: List[str]
+    __all__: list[str]
+    __path__: list[str]
 
 
-@final  # Dissallow the creation of arbitrary `NBitBase` subclasses
+@final  # Disallow the creation of arbitrary `NBitBase` subclasses
 class NBitBase:
     """
-    An object representing `numpy.number` precision during static type checking.
+    A type representing `numpy.number` precision during static type checking.
 
     Used exclusively for the purpose static type checking, `NBitBase`
     represents the base of a hierarchical set of subclasses.
@@ -168,9 +187,9 @@ class NBitBase:
 
     Examples
     --------
-    Below is a typical usage example: `NBitBase` is herein used for annotating a
-    function that takes a float and integer of arbitrary precision as arguments
-    and returns a new float of whichever precision is largest
+    Below is a typical usage example: `NBitBase` is herein used for annotating
+    a function that takes a float and integer of arbitrary precision
+    as arguments and returns a new float of whichever precision is largest
     (*e.g.* ``np.float16 + np.int64 -> np.float64``).
 
     .. code-block:: python
@@ -210,15 +229,32 @@ class NBitBase:
 
 
 # Silence errors about subclassing a `@final`-decorated class
-class _256Bit(NBitBase): ...  # type: ignore[misc]
-class _128Bit(_256Bit): ...  # type: ignore[misc]
-class _96Bit(_128Bit): ...  # type: ignore[misc]
-class _80Bit(_96Bit): ...  # type: ignore[misc]
-class _64Bit(_80Bit): ...  # type: ignore[misc]
-class _32Bit(_64Bit): ...  # type: ignore[misc]
-class _16Bit(_32Bit): ...  # type: ignore[misc]
-class _8Bit(_16Bit): ...  # type: ignore[misc]
+class _256Bit(NBitBase):  # type: ignore[misc]
+    pass
 
+class _128Bit(_256Bit):  # type: ignore[misc]
+    pass
+
+class _96Bit(_128Bit):  # type: ignore[misc]
+    pass
+
+class _80Bit(_96Bit):  # type: ignore[misc]
+    pass
+
+class _64Bit(_80Bit):  # type: ignore[misc]
+    pass
+
+class _32Bit(_64Bit):  # type: ignore[misc]
+    pass
+
+class _16Bit(_32Bit):  # type: ignore[misc]
+    pass
+
+class _8Bit(_16Bit):  # type: ignore[misc]
+    pass
+
+
+from ._nested_sequence import _NestedSequence
 from ._nbit import (
     _NBitByte,
     _NBitShort,
@@ -287,6 +323,7 @@ from ._scalars import (
 from ._shape import _Shape, _ShapeLike
 from ._dtype_like import (
     DTypeLike as DTypeLike,
+    _DTypeLike,
     _SupportsDType,
     _VoidDTypeLike,
     _DTypeLikeBool,
@@ -305,9 +342,9 @@ from ._dtype_like import (
 from ._array_like import (
     ArrayLike as ArrayLike,
     _ArrayLike,
-    _NestedSequence,
-    _RecursiveSequence,
+    _FiniteNestedSequence,
     _SupportsArray,
+    _SupportsArrayFunc,
     _ArrayLikeInt,
     _ArrayLikeBool_co,
     _ArrayLikeUInt_co,
@@ -346,7 +383,7 @@ else:
     _GUFunc_Nin2_Nout1 = ufunc
 
 # Clean up the namespace
-del TYPE_CHECKING, final, List, ufunc
+del TYPE_CHECKING, final, ufunc
 
 if __doc__ is not None:
     from ._add_docstring import _docstrings

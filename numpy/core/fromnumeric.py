@@ -17,7 +17,7 @@ _dt_ = nt.sctype2char
 
 # functions that are methods
 __all__ = [
-    'alen', 'all', 'alltrue', 'amax', 'amin', 'any', 'argmax',
+    'all', 'alltrue', 'amax', 'amin', 'any', 'argmax',
     'argmin', 'argpartition', 'argsort', 'around', 'choose', 'clip',
     'compress', 'cumprod', 'cumproduct', 'cumsum', 'diagonal', 'mean',
     'ndim', 'nonzero', 'partition', 'prod', 'product', 'ptp', 'put',
@@ -689,6 +689,9 @@ def partition(a, kth, axis=-1, kind='introselect', order=None):
         it. The order of all elements in the partitions is undefined. If
         provided with a sequence of k-th it will partition all elements
         indexed by k-th  of them into their sorted position at once.
+
+        .. deprecated:: 1.22.0
+            Passing booleans as index is deprecated.
     axis : int or None, optional
         Axis along which to sort. If None, the array is flattened before
         sorting. The default is -1, which sorts along the last axis.
@@ -781,6 +784,9 @@ def argpartition(a, kth, axis=-1, kind='introselect', order=None):
         elements in the partitions is undefined. If provided with a
         sequence of k-th it will partition all of them into their sorted
         position at once.
+
+        .. deprecated:: 1.22.0
+            Passing booleans as index is deprecated.
     axis : int or None, optional
         Axis along which to sort. The default is -1 (the last axis). If
         None, the flattened array is used.
@@ -1138,6 +1144,8 @@ def argmax(a, axis=None, out=None, *, keepdims=np._NoValue):
         in the result as dimensions with size one. With this option,
         the result will broadcast correctly against the array.
 
+        .. versionadded:: 1.22.0
+
     Returns
     -------
     index_array : ndarray of ints
@@ -1231,6 +1239,8 @@ def argmin(a, axis=None, out=None, *, keepdims=np._NoValue):
         If this is set to True, the axes which are reduced are left
         in the result as dimensions with size one. With this option,
         the result will broadcast correctly against the array.
+
+        .. versionadded:: 1.22.0
 
     Returns
     -------
@@ -1970,25 +1980,27 @@ def shape(a):
 
     See Also
     --------
-    len
+    len : ``len(a)`` is equivalent to ``np.shape(a)[0]`` for N-D arrays with
+          ``N>=1``.
     ndarray.shape : Equivalent array method.
 
     Examples
     --------
     >>> np.shape(np.eye(3))
     (3, 3)
-    >>> np.shape([[1, 2]])
+    >>> np.shape([[1, 3]])
     (1, 2)
     >>> np.shape([0])
     (1,)
     >>> np.shape(0)
     ()
 
-    >>> a = np.array([(1, 2), (3, 4)], dtype=[('x', 'i4'), ('y', 'i4')])
+    >>> a = np.array([(1, 2), (3, 4), (5, 6)],
+    ...              dtype=[('x', 'i4'), ('y', 'i4')])
     >>> np.shape(a)
-    (2,)
+    (3,)
     >>> a.shape
-    (2,)
+    (3,)
 
     """
     try:
@@ -2907,51 +2919,6 @@ def amin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
                           keepdims=keepdims, initial=initial, where=where)
 
 
-def _alen_dispathcer(a):
-    return (a,)
-
-
-@array_function_dispatch(_alen_dispathcer)
-def alen(a):
-    """
-    Return the length of the first dimension of the input array.
-
-    .. deprecated:: 1.18
-       `numpy.alen` is deprecated, use `len` instead.
-
-    Parameters
-    ----------
-    a : array_like
-       Input array.
-
-    Returns
-    -------
-    alen : int
-       Length of the first dimension of `a`.
-
-    See Also
-    --------
-    shape, size
-
-    Examples
-    --------
-    >>> a = np.zeros((7,4,5))
-    >>> a.shape[0]
-    7
-    >>> np.alen(a)
-    7
-
-    """
-    # NumPy 1.18.0, 2019-08-02
-    warnings.warn(
-        "`np.alen` is deprecated, use `len` instead",
-        DeprecationWarning, stacklevel=2)
-    try:
-        return len(a)
-    except TypeError:
-        return len(array(a, ndmin=1))
-
-
 def _prod_dispatcher(a, axis=None, dtype=None, out=None, keepdims=None,
                      initial=None, where=None):
     return (a, out)
@@ -3441,6 +3408,7 @@ def mean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue, *,
     0.55000000074505806 # may vary
 
     Specifying a where argument:
+
     >>> a = np.array([[5, 9, 13], [14, 10, 12], [11, 15, 19]])
     >>> np.mean(a)
     12.0

@@ -61,7 +61,7 @@ typedef struct { npyv_f64 val[3]; } npyv_f64x3;
 #define npyv_nlanes_f32 4
 #define npyv_nlanes_f64 2
 
-// using __bool with typdef cause ambiguous errors
+// using __bool with typedef cause ambiguous errors
 #define npyv_b8  __vector __bool char
 #define npyv_b16 __vector __bool short
 #define npyv_b32 __vector __bool int

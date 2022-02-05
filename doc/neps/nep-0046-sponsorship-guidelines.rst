@@ -219,8 +219,9 @@ https://scikit-learn.org/stable/about.html#funding. Plus a separate section
 https://jupyter.org/about. Some subprojects have separate approaches, for
 example sponsors are listed (by using the `all-contributors
 <https://github.com/all-contributors/all-contributors>`__ bot) in the README for
-`jupyterlab-git <https://github.com/jupyterlab/jupyterlab-git>`__. For a recent
-discussion on that, see `here <jupyterlab-git acknowledgements discussion>`_.
+`jupyterlab-git <https://github.com/jupyterlab/jupyterlab-git>`__.
+For a discussion from Jan 2020 on that, see
+`here <https://discourse.jupyter.org/t/ideas-for-recognizing-developer-contributions-by-companies-institutes/3178>`_.
 
 *NumFOCUS* has a large banner with sponsor logos on its front page at
 https://numfocus.org, and a full page with sponsors at different sponsorship

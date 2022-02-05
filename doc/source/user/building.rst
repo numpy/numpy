@@ -37,13 +37,16 @@ Prerequisites
 
 Building NumPy requires the following software installed:
 
-1) Python 3.6.x or newer
+1) Python 3.8.x or newer
 
    Please note that the Python development headers also need to be installed,
    e.g., on Debian/Ubuntu one needs to install both `python3` and
    `python3-dev`. On Windows and macOS this is normally not an issue.
 
 2) Compilers
+
+   Much of NumPy is written in C.  You will need a C compiler that complies
+   with the C99 standard.
 
    While a FORTRAN 77 compiler is not necessary for building NumPy, it is
    needed to run the ``numpy.f2py`` tests. These tests are skipped if the
@@ -285,3 +288,101 @@ Additional compiler flags can be supplied by setting the ``OPT``,
 When providing options that should improve the performance of the code
 ensure that you also set ``-DNDEBUG`` so that debugging code is not
 executed.
+
+Cross compilation
+-----------------
+
+Although ``numpy.distutils`` and ``setuptools`` do not directly support cross
+compilation, it is possible to build NumPy on one system for different
+architectures with minor modifications to the build environment. This may be
+desirable, for example, to use the power of a high-performance desktop to
+create a NumPy package for a low-power, single-board computer. Because the
+``setup.py`` scripts are unaware of cross-compilation environments and tend to
+make decisions based on the environment detected on the build system, it is
+best to compile for the same type of operating system that runs on the builder.
+Attempting to compile a Mac version of NumPy on Windows, for example, is likely
+to be met with challenges not considered here.
+
+For the purpose of this discussion, the nomenclature adopted by `meson`_ will
+be used: the "build" system is that which will be running the NumPy build
+process, while the "host" is the platform on which the compiled package will be
+run. A native Python interpreter, the setuptools and Cython packages and the
+desired cross compiler must be available for the build system. In addition, a
+Python interpreter and its development headers as well as any external linear
+algebra libraries must be available for the host platform. For convenience, it
+is assumed that all host software is available under a separate prefix
+directory, here called ``$CROSS_PREFIX``.
+
+.. _meson: https://mesonbuild.com/Cross-compilation.html#cross-compilation
+
+When building and installing NumPy for a host system, the ``CC`` environment
+variable must provide the path the cross compiler that will be used to build
+NumPy C extensions. It may also be necessary to set the ``LDSHARED``
+environment variable to the path to the linker that can link compiled objects
+for the host system. The compiler must be told where it can find Python
+libraries and development headers. On Unix-like systems, this generally
+requires adding, *e.g.*, the following parameters to the ``CFLAGS`` environment
+variable::
+
+    -I${CROSS_PREFIX}/usr/include
+    -I${CROSS_PREFIX}/usr/include/python3.y
+
+for Python version 3.y. (Replace the "y" in this path with the actual minor
+number of the installed Python runtime.) Likewise, the linker should be told
+where to find host libraries by adding a parameter to the ``LDFLAGS``
+environment variable::
+
+    -L${CROSS_PREFIX}/usr/lib
+
+To make sure Python-specific system configuration options are provided for the
+intended host and not the build system, set::
+
+    _PYTHON_SYSCONFIGDATA_NAME=_sysconfigdata_${ARCH_TRIPLET}
+
+where ``${ARCH_TRIPLET}`` is an architecture-dependent suffix appropriate for
+the host architecture. (This should be the name of a ``_sysconfigdata`` file,
+without the ``.py`` extension, found in the host Python library directory.)
+
+When using external linear algebra libraries, include and library directories
+should be provided for the desired libraries in ``site.cfg`` as described
+above and in the comments of the ``site.cfg.example`` file included in the
+NumPy repository or sdist. In this example, set::
+
+    include_dirs = ${CROSS_PREFIX}/usr/include
+    library_dirs = ${CROSS_PREFIX}/usr/lib
+
+under appropriate sections of the file to allow ``numpy.distutils`` to find the
+libraries.
+
+As of NumPy 1.22.0, a vendored copy of SVML will be built on ``x86_64`` Linux
+hosts to provide AVX-512 acceleration of floating-point operations. When using
+an ``x86_64`` Linux build system to cross compile NumPy for hosts other than
+``x86_64`` Linux, set the environment variable ``NPY_DISABLE_SVML`` to prevent
+the NumPy build script from incorrectly attempting to cross-compile this
+platform-specific library::
+
+    NPY_DISABLE_SVML=1
+
+With the environment configured, NumPy may be built as it is natively::
+
+    python setup.py build
+
+When the ``wheel`` package is available, the cross-compiled package may be
+packed into a wheel for installation on the host with::
+
+    python setup.py bdist_wheel
+
+It may be possible to use ``pip`` to build a wheel, but ``pip`` configures its
+own environment; adapting the ``pip`` environment to cross-compilation is
+beyond the scope of this guide.
+
+The cross-compiled package may also be installed into the host prefix for
+cross-compilation of other packages using, *e.g.*, the command::
+
+    python setup.py install --prefix=${CROSS_PREFIX}
+
+When cross compiling other packages that depend on NumPy, the host
+npy-pkg-config file must be made available. For further discussion, refer to
+`numpy distutils documentation`_.
+
+.. _numpy distutils documentation: https://numpy.org/devdocs/reference/distutils.html#numpy.distutils.misc_util.Configuration.add_npy_pkg_config

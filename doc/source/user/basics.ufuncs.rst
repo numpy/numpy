@@ -89,7 +89,7 @@ Considering ``x`` from the previous example::
    >>> y
    array([0, 0, 0])
    >>> np.multiply.reduce(x, dtype=float, out=y)
-   array([ 0, 28, 80])     # dtype argument is ignored
+   array([ 0, 28, 80])
 
 Ufuncs also have a fifth method, :func:`numpy.ufunc.at`, that allows in place
 operations to be performed using advanced indexing. No

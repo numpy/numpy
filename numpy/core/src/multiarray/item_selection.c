@@ -776,6 +776,7 @@ PyArray_Repeat(PyArrayObject *aop, PyObject *op, int axis)
     return NULL;
 }
 
+
 /*NUMPY_API
  */
 NPY_NO_EXPORT PyObject *
@@ -907,7 +908,7 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
         Py_XDECREF(mps[i]);
     }
     Py_DECREF(ap);
-    npy_free_cache(mps, n * sizeof(mps[0]));
+    PyDataMem_FREE(mps);
     if (out != NULL && out != obj) {
         Py_INCREF(out);
         PyArray_ResolveWritebackIfCopy(obj);
@@ -922,7 +923,7 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
         Py_XDECREF(mps[i]);
     }
     Py_XDECREF(ap);
-    npy_free_cache(mps, n * sizeof(mps[0]));
+    PyDataMem_FREE(mps);
     PyArray_DiscardWritebackIfCopy(obj);
     Py_XDECREF(obj);
     return NULL;
@@ -962,14 +963,19 @@ _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
         return 0;
     }
 
+    PyObject *mem_handler = PyDataMem_GetHandler();
+    if (mem_handler == NULL) {
+        return -1;
+    }
     it = (PyArrayIterObject *)PyArray_IterAllButAxis((PyObject *)op, &axis);
     if (it == NULL) {
+        Py_DECREF(mem_handler);
         return -1;
     }
     size = it->size;
 
     if (needcopy) {
-        buffer = npy_alloc_cache(N * elsize);
+        buffer = PyDataMem_UserNEW(N * elsize, mem_handler);
         if (buffer == NULL) {
             ret = -1;
             goto fail;
@@ -1053,12 +1059,14 @@ _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
 
 fail:
     NPY_END_THREADS_DESCR(PyArray_DESCR(op));
-    npy_free_cache(buffer, N * elsize);
+    /* cleanup internal buffer */
+    PyDataMem_UserFREE(buffer, N * elsize, mem_handler);
     if (ret < 0 && !PyErr_Occurred()) {
         /* Out of memory during sorting or buffer creation */
         PyErr_NoMemory();
     }
     Py_DECREF(it);
+    Py_DECREF(mem_handler);
 
     return ret;
 }
@@ -1090,11 +1098,16 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
 
     NPY_BEGIN_THREADS_DEF;
 
+    PyObject *mem_handler = PyDataMem_GetHandler();
+    if (mem_handler == NULL) {
+        return NULL;
+    }
     rop = (PyArrayObject *)PyArray_NewFromDescr(
             Py_TYPE(op), PyArray_DescrFromType(NPY_INTP),
             PyArray_NDIM(op), PyArray_DIMS(op), NULL, NULL,
             0, (PyObject *)op);
     if (rop == NULL) {
+        Py_DECREF(mem_handler);
         return NULL;
     }
     rstride = PyArray_STRIDE(rop, axis);
@@ -1102,6 +1115,7 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
 
     /* Check if there is any argsorting to do */
     if (N <= 1 || PyArray_SIZE(op) == 0) {
+        Py_DECREF(mem_handler);
         memset(PyArray_DATA(rop), 0, PyArray_NBYTES(rop));
         return (PyObject *)rop;
     }
@@ -1115,7 +1129,7 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
     size = it->size;
 
     if (needcopy) {
-        valbuffer = npy_alloc_cache(N * elsize);
+        valbuffer = PyDataMem_UserNEW(N * elsize, mem_handler);
         if (valbuffer == NULL) {
             ret = -1;
             goto fail;
@@ -1123,7 +1137,8 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
     }
 
     if (needidxbuffer) {
-        idxbuffer = (npy_intp *)npy_alloc_cache(N * sizeof(npy_intp));
+        idxbuffer = (npy_intp *)PyDataMem_UserNEW(N * sizeof(npy_intp),
+                                                  mem_handler);
         if (idxbuffer == NULL) {
             ret = -1;
             goto fail;
@@ -1212,8 +1227,9 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
 
 fail:
     NPY_END_THREADS_DESCR(PyArray_DESCR(op));
-    npy_free_cache(valbuffer, N * elsize);
-    npy_free_cache(idxbuffer, N * sizeof(npy_intp));
+    /* cleanup internal buffers */
+    PyDataMem_UserFREE(valbuffer, N * elsize, mem_handler);
+    PyDataMem_UserFREE(idxbuffer, N * sizeof(npy_intp), mem_handler);
     if (ret < 0) {
         if (!PyErr_Occurred()) {
             /* Out of memory during sorting or buffer creation */
@@ -1224,6 +1240,7 @@ fail:
     }
     Py_XDECREF(it);
     Py_XDECREF(rit);
+    Py_DECREF(mem_handler);
 
     return (PyObject *)rop;
 }
@@ -1292,7 +1309,15 @@ partition_prep_kth_array(PyArrayObject * ktharray,
     npy_intp * kth;
     npy_intp nkth, i;
 
-    if (!PyArray_CanCastSafely(PyArray_TYPE(ktharray), NPY_INTP)) {
+    if (PyArray_ISBOOL(ktharray)) {
+        /* 2021-09-29, NumPy 1.22 */
+        if (DEPRECATE(
+                "Passing booleans as partition index is deprecated"
+                " (warning added in NumPy 1.22)") < 0) {
+            return NULL;
+        }
+    }
+    else if (!PyArray_ISINTEGER(ktharray)) {
         PyErr_Format(PyExc_TypeError, "Partition index must be integer");
         return NULL;
     }
@@ -2390,19 +2415,14 @@ PyArray_CountNonzero(PyArrayObject *self)
     npy_intp *strideptr, *innersizeptr;
     NPY_BEGIN_THREADS_DEF;
 
-    // Special low-overhead version specific to the boolean/int types
     dtype = PyArray_DESCR(self);
-    switch(dtype->kind) {
-        case 'u':
-        case 'i':
-        case 'b':
-            if (dtype->elsize > 8) {
-                break;
-            }
-            return count_nonzero_int(
-                PyArray_NDIM(self), PyArray_BYTES(self), PyArray_DIMS(self),
-                PyArray_STRIDES(self), dtype->elsize
-            );
+    /* Special low-overhead version specific to the boolean/int types */
+    if (PyArray_ISALIGNED(self) && (
+            PyDataType_ISBOOL(dtype) || PyDataType_ISINTEGER(dtype))) {
+        return count_nonzero_int(
+            PyArray_NDIM(self), PyArray_BYTES(self), PyArray_DIMS(self),
+            PyArray_STRIDES(self), dtype->elsize
+        );
     }
 
     nonzero = PyArray_DESCR(self)->f->nonzero;

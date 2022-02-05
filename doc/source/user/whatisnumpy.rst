@@ -60,7 +60,7 @@ and initializations, memory allocation, etc.)
 
 ::
 
-  for (i = 0; i < rows; i++): {
+  for (i = 0; i < rows; i++) {
     c[i] = a[i]*b[i];
   }
 
@@ -72,8 +72,8 @@ array, for example, the C code (abridged as before) expands to
 
 ::
 
-  for (i = 0; i < rows; i++): {
-    for (j = 0; j < columns; j++): {
+  for (i = 0; i < rows; i++) {
+    for (j = 0; j < columns; j++) {
       c[i][j] = a[i][j]*b[i][j];
     }
   }
@@ -125,7 +125,7 @@ same shape, or a scalar and an array, or even two arrays of with
 different shapes, provided that the smaller array is "expandable" to
 the shape of the larger in such a way that the resulting broadcast is
 unambiguous. For detailed "rules" of broadcasting see
-`basics.broadcasting`.
+:ref:`Broadcasting <basics.broadcasting>`.
 
 Who Else Uses NumPy?
 --------------------

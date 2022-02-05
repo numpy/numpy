@@ -24,6 +24,12 @@ jobs:
             if [[ -v CI_PULL_REQUEST ]] ; then git pull --ff-only origin "refs/pull/${CI_PULL_REQUEST//*pull\//}/merge" ; fi
 
       - run:
+          name: update submodules
+          command: |
+            git submodule init
+            git submodule update
+
+      - run:
           name: create virtual environment, install dependencies
           command: |
             sudo apt-get update
@@ -38,8 +44,8 @@ jobs:
             . venv/bin/activate
             pip install --progress-bar=off --upgrade pip 'setuptools<49.2.0'
             pip install --progress-bar=off -r test_requirements.txt
-            pip install .
             pip install --progress-bar=off -r doc_requirements.txt
+            pip install .
 
       - run:
           name: create release notes

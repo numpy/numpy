@@ -1,9 +1,23 @@
 This file contains a walkthrough of the NumPy 1.21.0 release on Linux, modified
-for building on azure and uploading to anaconda.org
-The commands can be copied into the command line, but be sure to
-replace 1.21.0 by the correct version.
-
+for building on azure and uploading to anaconda.org The commands can be copied
+into the command line, but be sure to replace 1.21.0 by the correct version.
 This should be read together with the general directions in `releasing`.
+
+
+Facility Preparation
+====================
+
+Before beginning to make a release, use the ``*_requirements.txt`` files to
+ensure that you have the needed software. Most software can be installed with
+pip, but some will require apt-get, dnf, or whatever your system uses for
+software. Note that at this time the documentation cannot be built with Python
+3.10, for that use 3.8-3.9 instead. You will also need a GitHub personal access
+token (PAT) to push the documentation. There are a few ways to streamline things.
+
+- Git can be set up to use a keyring to store your GitHub personal access token.
+  Search online for the details.
+- You can use the ``keyring`` app to store the PyPI password for twine. See the
+  online twine documentation for details.
 
 
 Release Preparation
@@ -168,8 +182,8 @@ file is updated for continued development::
     $ paver write_release
 
 
-Reset the maintenance branch into a development state
------------------------------------------------------
+Reset the maintenance branch into a development state (skip for prereleases)
+----------------------------------------------------------------------------
 
 Create release notes for next release and edit them to set the version. These
 notes will be a skeleton and have little content::
@@ -228,60 +242,74 @@ may take several tries to get it look right. Then
 - Hit the ``{Publish,Update} release`` button at the bottom.
 
 
-Upload documents to numpy.org
------------------------------
+Upload documents to numpy.org (skip for prereleases)
+----------------------------------------------------
+
+.. note:: You will need a GitHub personal access token to push the update.
 
 This step is only needed for final releases and can be skipped for pre-releases
 and most patch releases. ``make merge-doc`` clones the ``numpy/doc`` repo into
-``doc/build/merge`` and updates it with the new documentation::
-Note that if you have a `.local` numpy install, you should either remove it or
-install the current version for the docs to pick up the correct NumPy version.
+``doc/build/merge`` and updates it with the new documentation. If you already
+have a numpy installed, you need to locally install the new NumPy version so
+that document generation will use the correct NumPy. This is because ``make
+dist`` does not correctly set up the path. Note that Python 3.10 cannot be used
+for generating the docs as it has no ``easy_install``, use 3.9 or 3.8 instead::
 
     $ pushd doc
     $ make dist
     $ make merge-doc
-    $ popd
+    $ pushd build/merge
 
 If the release series is a new one, you will need to add a new section to the
 ``doc/build/merge/index.html`` front page just after the "insert here" comment::
 
-    $ gvim doc/build/merge/index.html +/'insert here'
+    $ gvim index.html +/'insert here'
 
 Otherwise, only the ``zip`` and ``pdf`` links should be updated with the
 new tag name::
 
-    $ gvim doc/build/merge/index.html +/'tag v1.21'
+    $ gvim index.html +/'tag v1.21'
 
 You can "test run" the new documentation in a browser to make sure the links
 work::
 
-    $ firefox doc/build/merge/index.html
+    $ firefox index.html  # or google-chrome, etc.
 
-Update the stable link::
+Update the stable link and update::
 
     $ ln -sfn 1.21 stable
+    $ ls -l  # check the link
 
-Once everything seems satisfactory, commit and upload the changes::
+Once everything seems satisfactory, update, commit and upload the changes::
 
-    $ pushd doc/build/merge
+    $ python3 update.py
     $ git commit -a -m"Add documentation for v1.21.0"
     $ git push
     $ popd
+    $ popd
 
-Announce the release on scipy.org
----------------------------------
+Announce the release on numpy.org (skip for prereleases)
+--------------------------------------------------------
 
-This assumes that you have forked `<https://github.com/scipy/scipy.org>`_::
+This assumes that you have forked `<https://github.com/numpy/numpy.org>`_::
 
-    $ cd ../scipy.org
+    $ cd ../numpy.org
     $ git checkout master
     $ git pull upstream master
-    $ git checkout -b numpy-1.21.0
-    $ gvim www/index.rst # edit the News section
-    $ git commit -a
+    $ git checkout -b announce-numpy-1.21.0
+    $ gvim content/en/news.md
+
+- For all releases, go to the bottom of the page and add a one line link. Look
+  to the previous links for example.
+- For the ``*.0`` release in a cycle, add a new section at the top with a short
+  description of the new features and point the news link to it.
+
+commit and push::
+
+    $ git commit -a -m"announce the NumPy 1.21.0 release"
     $ git push origin HEAD
 
-Now go to your fork and make a pull request for the branch.
+Go to your Github fork and make a pull request.
 
 Announce to mailing lists
 -------------------------
@@ -293,8 +321,8 @@ as generated for the release notes above. If you crosspost, make sure that
 python-announce-list is BCC so that replies will not be sent to that list.
 
 
-Post-Release Tasks
-------------------
+Post-Release Tasks (skip for prereleases)
+-----------------------------------------
 
 Checkout main and forward port the documentation changes::
 

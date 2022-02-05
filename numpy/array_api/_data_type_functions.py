@@ -13,7 +13,14 @@ if TYPE_CHECKING:
 import numpy as np
 
 
-def broadcast_arrays(*arrays: Sequence[Array]) -> List[Array]:
+# Note: astype is a function, not an array method as in NumPy.
+def astype(x: Array, dtype: Dtype, /, *, copy: bool = True) -> Array:
+    if not copy and dtype == x.dtype:
+        return x
+    return Array._new(x._array.astype(dtype=dtype, copy=copy))
+
+
+def broadcast_arrays(*arrays: Array) -> List[Array]:
     """
     Array API compatible wrapper for :py:func:`np.broadcast_arrays <numpy.broadcast_arrays>`.
 
@@ -98,7 +105,7 @@ def iinfo(type: Union[Dtype, Array], /) -> iinfo_object:
     return iinfo_object(ii.bits, ii.max, ii.min)
 
 
-def result_type(*arrays_and_dtypes: Sequence[Union[Array, Dtype]]) -> Dtype:
+def result_type(*arrays_and_dtypes: Union[Array, Dtype]) -> Dtype:
     """
     Array API compatible wrapper for :py:func:`np.result_type <numpy.result_type>`.
 

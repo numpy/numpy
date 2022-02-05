@@ -238,25 +238,6 @@ _define_get_warn(NPY_ARRAY_ALIGNED|
             NPY_ARRAY_C_CONTIGUOUS, carray)
 
 static PyObject *
-arrayflags_updateifcopy_get(PyArrayFlagsObject *self, void *NPY_UNUSED(ignored))
-{
-    PyObject *item;
-    /* 2017-Nov-10 1.14 */
-    if(DEPRECATE("UPDATEIFCOPY deprecated, use WRITEBACKIFCOPY instead") < 0) {
-        return NULL;
-    }
-    if ((self->flags & (NPY_ARRAY_UPDATEIFCOPY)) == (NPY_ARRAY_UPDATEIFCOPY)) {
-        item = Py_True;
-    }
-    else {
-        item = Py_False;
-    }
-    Py_INCREF(item);
-    return item;
-}
-
-
-static PyObject *
 arrayflags_forc_get(PyArrayFlagsObject *self, void *NPY_UNUSED(ignored))
 {
     PyObject *item;
@@ -310,36 +291,6 @@ static PyObject *
 arrayflags_num_get(PyArrayFlagsObject *self, void *NPY_UNUSED(ignored))
 {
     return PyLong_FromLong(self->flags);
-}
-
-/* relies on setflags order being write, align, uic */
-static int
-arrayflags_updateifcopy_set(
-        PyArrayFlagsObject *self, PyObject *obj, void *NPY_UNUSED(ignored))
-{
-    PyObject *res;
-
-    if (obj == NULL) {
-        PyErr_SetString(PyExc_AttributeError,
-                "Cannot delete flags updateifcopy attribute");
-        return -1;
-    }
-    if (self->arr == NULL) {
-        PyErr_SetString(PyExc_ValueError,
-                "Cannot set flags on array scalars.");
-        return -1;
-    }
-    /* 2017-Nov-10 1.14 */
-    if(DEPRECATE("UPDATEIFCOPY deprecated, use WRITEBACKIFCOPY instead") < 0) {
-        return -1;
-    }
-    res = PyObject_CallMethod(self->arr, "setflags", "OOO", Py_None, Py_None,
-                              (PyObject_IsTrue(obj) ? Py_True : Py_False));
-    if (res == NULL) {
-        return -1;
-    }
-    Py_DECREF(res);
-    return 0;
 }
 
 /* relies on setflags order being write, align, uic */
@@ -473,10 +424,6 @@ static PyGetSetDef arrayflags_getsets[] = {
         (getter)arrayflags_fortran_get,
         NULL,
         NULL, NULL},
-    {"updateifcopy",
-        (getter)arrayflags_updateifcopy_get,
-        (setter)arrayflags_updateifcopy_set,
-        NULL, NULL},
     {"writebackifcopy",
         (getter)arrayflags_writebackifcopy_get,
         (setter)arrayflags_writebackifcopy_set,
@@ -574,8 +521,6 @@ arrayflags_getitem(PyArrayFlagsObject *self, PyObject *ind)
             return arrayflags_aligned_get(self, NULL);
         case 'X':
             return arrayflags_writebackifcopy_get(self, NULL);
-        case 'U':
-            return arrayflags_updateifcopy_get(self, NULL);
         default:
             goto fail;
         }
@@ -631,9 +576,6 @@ arrayflags_getitem(PyArrayFlagsObject *self, PyObject *ind)
         }
         break;
     case 12:
-        if (strncmp(key, "UPDATEIFCOPY", n) == 0) {
-            return arrayflags_updateifcopy_get(self, NULL);
-        }
         if (strncmp(key, "C_CONTIGUOUS", n) == 0) {
             return arrayflags_contiguous_get(self, NULL);
         }
@@ -684,10 +626,6 @@ arrayflags_setitem(PyArrayFlagsObject *self, PyObject *ind, PyObject *item)
              ((n==1) && (strncmp(key, "A", n) == 0))) {
         return arrayflags_aligned_set(self, item, NULL);
     }
-    else if (((n==12) && (strncmp(key, "UPDATEIFCOPY", n) == 0)) ||
-             ((n==1) && (strncmp(key, "U", n) == 0))) {
-        return arrayflags_updateifcopy_set(self, item, NULL);
-    }
     else if (((n==15) && (strncmp(key, "WRITEBACKIFCOPY", n) == 0)) ||
              ((n==1) && (strncmp(key, "X", n) == 0))) {
         return arrayflags_writebackifcopy_set(self, item, NULL);
@@ -721,16 +659,14 @@ arrayflags_print(PyArrayFlagsObject *self)
     return PyUnicode_FromFormat(
                         "  %s : %s\n  %s : %s\n"
                         "  %s : %s\n  %s : %s%s\n"
-                        "  %s : %s\n  %s : %s\n"
-                        "  %s : %s\n",
+                        "  %s : %s\n  %s : %s\n",
                         "C_CONTIGUOUS",    _torf_(fl, NPY_ARRAY_C_CONTIGUOUS),
                         "F_CONTIGUOUS",    _torf_(fl, NPY_ARRAY_F_CONTIGUOUS),
                         "OWNDATA",         _torf_(fl, NPY_ARRAY_OWNDATA),
                         "WRITEABLE",       _torf_(fl, NPY_ARRAY_WRITEABLE),
                         _warn_on_write,
                         "ALIGNED",         _torf_(fl, NPY_ARRAY_ALIGNED),
-                        "WRITEBACKIFCOPY", _torf_(fl, NPY_ARRAY_WRITEBACKIFCOPY),
-                        "UPDATEIFCOPY",    _torf_(fl, NPY_ARRAY_UPDATEIFCOPY)
+                        "WRITEBACKIFCOPY", _torf_(fl, NPY_ARRAY_WRITEBACKIFCOPY)
     );
 }
 

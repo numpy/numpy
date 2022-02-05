@@ -175,7 +175,7 @@ _PyArray_ArgMinMaxCommon(PyArrayObject *op,
     NPY_END_THREADS_DESCR(PyArray_DESCR(ap));
 
     Py_DECREF(ap);
-    /* Trigger the UPDATEIFCOPY/WRITEBACKIFCOPY if necessary */
+    /* Trigger the WRITEBACKIFCOPY if necessary */
     if (out != NULL && out != rp) {
         PyArray_ResolveWritebackIfCopy(rp);
         Py_DECREF(rp);

@@ -344,7 +344,7 @@ class ABCPolyBase(abc.ABC):
             # Polynomial coefficient
             # The coefficient array can be an object array with elements that
             # will raise a TypeError with >= 0 (e.g. strings or Python
-            # complex). In this case, represent the coeficient as-is.
+            # complex). In this case, represent the coefficient as-is.
             try:
                 if coef >= 0:
                     next_term = f"+ {coef}"
@@ -958,12 +958,12 @@ class ABCPolyBase(abc.ABC):
             of interest, do ``new_series.convert().coef``.
 
         [resid, rank, sv, rcond] : list
-            These values are only returned if `full` = True
+            These values are only returned if ``full == True``
 
-            resid -- sum of squared residuals of the least squares fit
-            rank -- the numerical rank of the scaled Vandermonde matrix
-            sv -- singular values of the scaled Vandermonde matrix
-            rcond -- value of `rcond`.
+            - resid -- sum of squared residuals of the least squares fit
+            - rank -- the numerical rank of the scaled Vandermonde matrix
+            - sv -- singular values of the scaled Vandermonde matrix
+            - rcond -- value of `rcond`.
 
             For more details, see `linalg.lstsq`.
 

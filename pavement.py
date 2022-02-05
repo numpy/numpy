@@ -38,7 +38,7 @@ from paver.easy import Bunch, options, task, sh
 #-----------------------------------
 
 # Path to the release notes
-RELEASE_NOTES = 'doc/source/release/1.22.0-notes.rst'
+RELEASE_NOTES = 'doc/source/release/1.23.0-notes.rst'
 
 
 #-------------------------------------------------------
@@ -168,7 +168,7 @@ def compute_sha256(idirs):
 def write_release_task(options, filename='README'):
     """Append hashes of release files to release notes.
 
-    This appends file hashes to the release notes ane creates
+    This appends file hashes to the release notes and creates
     four README files of the result in various formats:
 
     - README.rst

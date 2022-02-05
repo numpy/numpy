@@ -55,7 +55,7 @@ properties than the legacy `MT19937` used in `RandomState`.
   more_vals = random.standard_normal(10)
 
 `Generator` can be used as a replacement for `RandomState`. Both class
-instances hold a internal `BitGenerator` instance to provide the bit
+instances hold an internal `BitGenerator` instance to provide the bit
 stream, it is accessible as ``gen.bit_generator``. Some long-overdue API
 cleanup means that legacy and compatibility methods have been removed from
 `Generator`
@@ -185,7 +185,7 @@ What's New or Different
   methods which are 2-10 times faster than NumPy's Box-Muller or inverse CDF
   implementations.
 * Optional ``dtype`` argument that accepts ``np.float32`` or ``np.float64``
-  to produce either single or double prevision uniform random variables for
+  to produce either single or double precision uniform random variables for
   select distributions
 * Optional ``out`` argument that allows existing arrays to be filled for
   select distributions

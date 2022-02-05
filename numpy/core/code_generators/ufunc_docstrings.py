@@ -4,17 +4,14 @@ Docstrings for generated ufuncs
 The syntax is designed to look like the function add_newdoc is being
 called from numpy.lib, but in this file  add_newdoc puts the docstrings
 in a dictionary. This dictionary is used in
-numpy/core/code_generators/generate_umath.py to generate the docstrings
-for the ufuncs in numpy.core at the C level when the ufuncs are created
-at compile time.
+numpy/core/code_generators/generate_umath_doc.py to generate the docstrings
+as a C #definitions for the ufuncs in numpy.core at the C level when the
+ufuncs are created at compile time.
 
 """
 import textwrap
 
 docdict = {}
-
-def get(name):
-    return docdict.get(name)
 
 # common parameter text to all ufuncs
 subst = {
@@ -201,7 +198,8 @@ add_newdoc('numpy.core.umath', 'arccos',
     References
     ----------
     M. Abramowitz and I.A. Stegun, "Handbook of Mathematical Functions",
-    10th printing, 1964, pp. 79. http://www.math.sfu.ca/~cbm/aands/
+    10th printing, 1964, pp. 79.
+    https://personal.math.ubc.ca/~cbm/aands/page_79.htm
 
     Examples
     --------
@@ -258,7 +256,8 @@ add_newdoc('numpy.core.umath', 'arccosh',
     References
     ----------
     .. [1] M. Abramowitz and I.A. Stegun, "Handbook of Mathematical Functions",
-           10th printing, 1964, pp. 86. http://www.math.sfu.ca/~cbm/aands/
+           10th printing, 1964, pp. 86.
+           https://personal.math.ubc.ca/~cbm/aands/page_86.htm
     .. [2] Wikipedia, "Inverse hyperbolic function",
            https://en.wikipedia.org/wiki/Arccosh
 
@@ -312,7 +311,7 @@ add_newdoc('numpy.core.umath', 'arcsin',
     ----------
     Abramowitz, M. and Stegun, I. A., *Handbook of Mathematical Functions*,
     10th printing, New York: Dover, 1964, pp. 79ff.
-    http://www.math.sfu.ca/~cbm/aands/
+    https://personal.math.ubc.ca/~cbm/aands/page_79.htm
 
     Examples
     --------
@@ -360,7 +359,8 @@ add_newdoc('numpy.core.umath', 'arcsinh',
     References
     ----------
     .. [1] M. Abramowitz and I.A. Stegun, "Handbook of Mathematical Functions",
-           10th printing, 1964, pp. 86. http://www.math.sfu.ca/~cbm/aands/
+           10th printing, 1964, pp. 86.
+           https://personal.math.ubc.ca/~cbm/aands/page_86.htm
     .. [2] Wikipedia, "Inverse hyperbolic function",
            https://en.wikipedia.org/wiki/Arcsinh
 
@@ -415,7 +415,7 @@ add_newdoc('numpy.core.umath', 'arctan',
     ----------
     Abramowitz, M. and Stegun, I. A., *Handbook of Mathematical Functions*,
     10th printing, New York: Dover, 1964, pp. 79.
-    http://www.math.sfu.ca/~cbm/aands/
+    https://personal.math.ubc.ca/~cbm/aands/page_79.htm
 
     Examples
     --------
@@ -560,7 +560,8 @@ add_newdoc('numpy.core.umath', 'arctanh',
     References
     ----------
     .. [1] M. Abramowitz and I.A. Stegun, "Handbook of Mathematical Functions",
-           10th printing, 1964, pp. 86. http://www.math.sfu.ca/~cbm/aands/
+           10th printing, 1964, pp. 86.
+           https://personal.math.ubc.ca/~cbm/aands/page_86.htm
     .. [2] Wikipedia, "Inverse hyperbolic function",
            https://en.wikipedia.org/wiki/Arctanh
 
@@ -664,7 +665,7 @@ add_newdoc('numpy.core.umath', 'bitwise_or',
 
     Examples
     --------
-    The number 13 has the binaray representation ``00001101``. Likewise,
+    The number 13 has the binary representation ``00001101``. Likewise,
     16 is represented by ``00010000``.  The bit-wise OR of 13 and 16 is
     then ``000111011``, or 29:
 
@@ -1085,11 +1086,8 @@ add_newdoc('numpy.core.umath', 'divide',
     -----
     Equivalent to ``x1`` / ``x2`` in terms of array-broadcasting.
 
-    Behavior on division by zero can be changed using ``seterr``.
-
-    In Python 2, when both ``x1`` and ``x2`` are of an integer type,
-    ``divide`` will behave like ``floor_divide``. In Python 3, it behaves
-    like ``true_divide``.
+    The ``true_divide(x1, x2)`` function is an alias for
+    ``divide(x1, x2)``.
 
     Examples
     --------
@@ -1098,34 +1096,9 @@ add_newdoc('numpy.core.umath', 'divide',
     >>> x1 = np.arange(9.0).reshape((3, 3))
     >>> x2 = np.arange(3.0)
     >>> np.divide(x1, x2)
-    array([[ NaN,  1. ,  1. ],
-           [ Inf,  4. ,  2.5],
-           [ Inf,  7. ,  4. ]])
-
-    Note the behavior with integer types (Python 2 only):
-
-    >>> np.divide(2, 4)
-    0
-    >>> np.divide(2, 4.)
-    0.5
-
-    Division by zero always yields zero in integer arithmetic (again,
-    Python 2 only), and does not raise an exception or a warning:
-
-    >>> np.divide(np.array([0, 1], dtype=int), np.array([0, 0], dtype=int))
-    array([0, 0])
-
-    Division by zero can, however, be caught using ``seterr``:
-
-    >>> old_err_state = np.seterr(divide='raise')
-    >>> np.divide(1, 0)
-    Traceback (most recent call last):
-      File "<stdin>", line 1, in <module>
-    FloatingPointError: divide by zero encountered in divide
-
-    >>> ignored_states = np.seterr(**old_err_state)
-    >>> np.divide(1, 0)
-    0
+    array([[nan, 1. , 1. ],
+           [inf, 4. , 2.5],
+           [inf, 7. , 4. ]])
 
     The ``/`` operator can be used as a shorthand for ``np.divide`` on
     ndarrays.
@@ -1222,7 +1195,7 @@ add_newdoc('numpy.core.umath', 'exp',
            https://en.wikipedia.org/wiki/Exponential_function
     .. [2] M. Abramovitz and I. A. Stegun, "Handbook of Mathematical Functions
            with Formulas, Graphs, and Mathematical Tables," Dover, 1964, p. 69,
-           http://www.math.sfu.ca/~cbm/aands/page_69.htm
+           https://personal.math.ubc.ca/~cbm/aands/page_69.htm
 
     Examples
     --------
@@ -1439,7 +1412,7 @@ add_newdoc('numpy.core.umath', 'floor_divide',
 
 add_newdoc('numpy.core.umath', 'fmod',
     """
-    Return the element-wise remainder of division.
+    Returns the element-wise remainder of division.
 
     This is the NumPy implementation of the C library function fmod, the
     remainder has the same sign as the dividend `x1`. It is equivalent to
@@ -1697,7 +1670,7 @@ add_newdoc('numpy.core.umath', 'invert',
 
 add_newdoc('numpy.core.umath', 'isfinite',
     """
-    Test element-wise for finiteness (not infinity or not Not a Number).
+    Test element-wise for finiteness (not infinity and not Not a Number).
 
     The result is returned as a boolean array.
 
@@ -2052,7 +2025,8 @@ add_newdoc('numpy.core.umath', 'log',
     References
     ----------
     .. [1] M. Abramowitz and I.A. Stegun, "Handbook of Mathematical Functions",
-           10th printing, 1964, pp. 67. http://www.math.sfu.ca/~cbm/aands/
+           10th printing, 1964, pp. 67.
+           https://personal.math.ubc.ca/~cbm/aands/page_67.htm
     .. [2] Wikipedia, "Logarithm". https://en.wikipedia.org/wiki/Logarithm
 
     Examples
@@ -2101,7 +2075,8 @@ add_newdoc('numpy.core.umath', 'log10',
     References
     ----------
     .. [1] M. Abramowitz and I.A. Stegun, "Handbook of Mathematical Functions",
-           10th printing, 1964, pp. 67. http://www.math.sfu.ca/~cbm/aands/
+           10th printing, 1964, pp. 67.
+           https://personal.math.ubc.ca/~cbm/aands/page_67.htm
     .. [2] Wikipedia, "Logarithm". https://en.wikipedia.org/wiki/Logarithm
 
     Examples
@@ -2289,7 +2264,8 @@ add_newdoc('numpy.core.umath', 'log1p',
     References
     ----------
     .. [1] M. Abramowitz and I.A. Stegun, "Handbook of Mathematical Functions",
-           10th printing, 1964, pp. 67. http://www.math.sfu.ca/~cbm/aands/
+           10th printing, 1964, pp. 67.
+           https://personal.math.ubc.ca/~cbm/aands/page_67.htm
     .. [2] Wikipedia, "Logarithm". https://en.wikipedia.org/wiki/Logarithm
 
     Examples
@@ -3081,8 +3057,14 @@ add_newdoc('numpy.core.umath', 'power',
     First array elements raised to powers from second array, element-wise.
 
     Raise each base in `x1` to the positionally-corresponding power in
-    `x2`.  `x1` and `x2` must be broadcastable to the same shape. Note that an
-    integer type raised to a negative integer power will raise a ValueError.
+    `x2`.  `x1` and `x2` must be broadcastable to the same shape.
+
+    An integer type raised to a negative integer power will raise a
+    ``ValueError``.
+
+    Negative values raised to a non-integral value will return ``nan``.
+    To get complex results, cast the input to complex, or specify the
+    ``dtype`` to be ``complex`` (see the example below).
 
     Parameters
     ----------
@@ -3137,6 +3119,21 @@ add_newdoc('numpy.core.umath', 'power',
     >>> x1 ** x2
     array([ 0,  1,  8, 27, 16,  5])
 
+    Negative values raised to a non-integral value will result in ``nan``
+    (and a warning will be generated).
+
+    >>> x3 = np.array([-1.0, -4.0])
+    >>> with np.errstate(invalid='ignore'):
+    ...     p = np.power(x3, 1.5)
+    ...
+    >>> p
+    array([nan, nan])
+
+    To get complex results, give the argument ``dtype=complex``.
+
+    >>> np.power(x3, 1.5, dtype=complex)
+    array([-1.83697020e-16-1.j, -1.46957616e-15-8.j])
+
     """)
 
 add_newdoc('numpy.core.umath', 'float_power',
@@ -3149,6 +3146,10 @@ add_newdoc('numpy.core.umath', 'float_power',
     floats with a minimum precision of float64 so that the result is always
     inexact.  The intent is that the function will return a usable result for
     negative powers and seldom overflow for positive powers.
+
+    Negative values raised to a non-integral value will return ``nan``.
+    To get complex results, cast the input to complex, or specify the
+    ``dtype`` to be ``complex`` (see the example below).
 
     .. versionadded:: 1.12.0
 
@@ -3196,6 +3197,21 @@ add_newdoc('numpy.core.umath', 'float_power',
     >>> np.float_power(x1, x2)
     array([[  0.,   1.,   8.,  27.,  16.,   5.],
            [  0.,   1.,   8.,  27.,  16.,   5.]])
+
+    Negative values raised to a non-integral value will result in ``nan``
+    (and a warning will be generated).
+
+    >>> x3 = np.array([-1, -4])
+    >>> with np.errstate(invalid='ignore'):
+    ...     p = np.float_power(x3, 1.5)
+    ...
+    >>> p
+    array([nan, nan])
+
+    To get complex results, give the argument ``dtype=complex``.
+
+    >>> np.float_power(x3, 1.5, dtype=complex)
+    array([-1.83697020e-16-1.j, -1.46957616e-15-8.j])
 
     """)
 
@@ -3308,7 +3324,7 @@ add_newdoc('numpy.core.umath', 'reciprocal',
 
 add_newdoc('numpy.core.umath', 'remainder',
     """
-    Return element-wise remainder of division.
+    Returns the element-wise remainder of division.
 
     Computes the remainder complementary to the `floor_divide` function.  It is
     equivalent to the Python modulus operator``x1 % x2`` and has the same sign
@@ -3803,6 +3819,7 @@ add_newdoc('numpy.core.umath', 'sqrt',
     --------
     lib.scimath.sqrt
         A version which returns complex numbers when given negative reals.
+        Note: 0.0 and -0.0 are handled differently for complex inputs.
 
     Notes
     -----
@@ -4002,7 +4019,7 @@ add_newdoc('numpy.core.umath', 'tanh',
     ----------
     .. [1] M. Abramowitz and I. A. Stegun, Handbook of Mathematical Functions.
            New York, NY: Dover, 1972, pg. 83.
-           http://www.math.sfu.ca/~cbm/aands/
+           https://personal.math.ubc.ca/~cbm/aands/page_83.htm
 
     .. [2] Wikipedia, "Hyperbolic function",
            https://en.wikipedia.org/wiki/Hyperbolic_function
@@ -4024,55 +4041,6 @@ add_newdoc('numpy.core.umath', 'tanh',
     Traceback (most recent call last):
       File "<stdin>", line 1, in <module>
     ValueError: operands could not be broadcast together with shapes (3,3) (2,2)
-
-    """)
-
-add_newdoc('numpy.core.umath', 'true_divide',
-    """
-    Returns a true division of the inputs, element-wise.
-
-    Instead of the Python traditional 'floor division', this returns a true
-    division.  True division adjusts the output type to present the best
-    answer, regardless of input types.
-
-    Parameters
-    ----------
-    x1 : array_like
-        Dividend array.
-    x2 : array_like
-        Divisor array.
-        $BROADCASTABLE_2
-    $PARAMS
-
-    Returns
-    -------
-    out : ndarray or scalar
-        $OUT_SCALAR_2
-
-    Notes
-    -----
-    In Python, ``//`` is the floor division operator and ``/`` the
-    true division operator.  The ``true_divide(x1, x2)`` function is
-    equivalent to true division in Python.
-
-    Examples
-    --------
-    >>> x = np.arange(5)
-    >>> np.true_divide(x, 4)
-    array([ 0.  ,  0.25,  0.5 ,  0.75,  1.  ])
-
-    >>> x/4
-    array([ 0.  ,  0.25,  0.5 ,  0.75,  1.  ])
-
-    >>> x//4
-    array([0, 0, 0, 0, 1])
-
-    The ``/`` operator can be used as a shorthand for ``np.true_divide`` on
-    ndarrays.
-
-    >>> x = np.arange(5)
-    >>> x / 4
-    array([0.  , 0.25, 0.5 , 0.75, 1.  ])
 
     """)
 

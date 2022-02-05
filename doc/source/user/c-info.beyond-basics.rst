@@ -174,14 +174,13 @@ incrementing is automatically performed by
 :c:func:`PyArray_MultiIter_NEXT` ( ``obj`` ) macro (which can handle a
 multiterator ``obj`` as either a :c:expr:`PyArrayMultiIterObject *` or a
 :c:expr:`PyObject *`). The data from input number ``i`` is available using
-:c:func:`PyArray_MultiIter_DATA` ( ``obj``, ``i`` ) and the total (broadcasted)
-size as :c:func:`PyArray_MultiIter_SIZE` ( ``obj``). An example of using this
+:c:func:`PyArray_MultiIter_DATA` ( ``obj``, ``i`` ). An example of using this
 feature follows.
 
 .. code-block:: c
 
     mobj = PyArray_MultiIterNew(2, obj1, obj2);
-    size = PyArray_MultiIter_SIZE(obj);
+    size = mobj->size;
     while(size--) {
         ptr1 = PyArray_MultiIter_DATA(mobj, 0);
         ptr2 = PyArray_MultiIter_DATA(mobj, 1);
@@ -451,6 +450,7 @@ type(s). In particular, to create a sub-type in C follow these steps:
 More information on creating sub-types in C can be learned by reading
 PEP 253 (available at https://www.python.org/dev/peps/pep-0253).
 
+.. _specific-array-subtyping:
 
 Specific features of ndarray sub-typing
 ---------------------------------------

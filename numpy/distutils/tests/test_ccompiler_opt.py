@@ -32,6 +32,7 @@ arch_compilers = dict(
     ppc64le = ("gcc", "clang"),
     armhf = ("gcc", "clang"),
     aarch64 = ("gcc", "clang"),
+    s390x = ("gcc", "clang"),
     noarch = ("gcc",)
 )
 
@@ -382,18 +383,19 @@ class _Test_CCompilerOpt:
             if o == "native" and self.cc_name() == "msvc":
                 continue
             self.expect(o,
-                trap_files=".*cpu_(sse|vsx|neon).c",
-                x86="", ppc64="", armhf=""
+                trap_files=".*cpu_(sse|vsx|neon|vx).c",
+                x86="", ppc64="", armhf="", s390x=""
             )
             self.expect(o,
-                trap_files=".*cpu_(sse3|vsx2|neon_vfpv4).c",
+                trap_files=".*cpu_(sse3|vsx2|neon_vfpv4|vxe).c",
                 x86="sse sse2", ppc64="vsx", armhf="neon neon_fp16",
-                aarch64="", ppc64le=""
+                aarch64="", ppc64le="", s390x="vx"
             )
             self.expect(o,
                 trap_files=".*cpu_(popcnt|vsx3).c",
                 x86="sse .* sse41", ppc64="vsx vsx2",
-                armhf="neon neon_fp16 .* asimd .*"
+                armhf="neon neon_fp16 .* asimd .*",
+                s390x="vx vxe vxe2"
             )
             self.expect(o,
                 x86_gcc=".* xop fma4 .* avx512f .* avx512_knl avx512_knm avx512_skx .*",
@@ -403,13 +405,14 @@ class _Test_CCompilerOpt:
                 # in msvc, avx512_knl avx512_knm aren't supported
                 x86_msvc=".* xop fma4 .* avx512f .* avx512_skx .*",
                 armhf=".* asimd asimdhp asimddp .*",
-                ppc64="vsx vsx2 vsx3.*"
+                ppc64="vsx vsx2 vsx3 vsx4.*",
+                s390x="vx vxe vxe2.*"
             )
         # min
         self.expect("min",
             x86="sse sse2", x64="sse sse2 sse3",
             armhf="", aarch64="neon neon_fp16 .* asimd",
-            ppc64="", ppc64le="vsx vsx2"
+            ppc64="", ppc64le="vsx vsx2", s390x=""
         )
         self.expect(
             "min", trap_files=".*cpu_(sse2|vsx2).c",
@@ -420,7 +423,7 @@ class _Test_CCompilerOpt:
         try:
             self.expect("native",
                 trap_flags=".*(-march=native|-xHost|/QxHost).*",
-                x86=".*", ppc64=".*", armhf=".*"
+                x86=".*", ppc64=".*", armhf=".*", s390x=".*"
             )
             if self.march() != "unknown":
                 raise AssertionError(
@@ -432,13 +435,15 @@ class _Test_CCompilerOpt:
 
     def test_flags(self):
         self.expect_flags(
-            "sse sse2 vsx vsx2 neon neon_fp16",
+            "sse sse2 vsx vsx2 neon neon_fp16 vx vxe",
             x86_gcc="-msse -msse2", x86_icc="-msse -msse2",
-            x86_iccw="/arch:SSE2", x86_msvc="/arch:SSE2",
+            x86_iccw="/arch:SSE2",
+            x86_msvc="/arch:SSE2" if self.march() == "x86" else "",
             ppc64_gcc= "-mcpu=power8",
             ppc64_clang="-maltivec -mvsx -mpower8-vector",
             armhf_gcc="-mfpu=neon-fp16 -mfp16-format=ieee",
-            aarch64=""
+            aarch64="",
+            s390x="-mzvector -march=arch12"
         )
         # testing normalize -march
         self.expect_flags(
@@ -462,6 +467,10 @@ class _Test_CCompilerOpt:
             "asimddp asimdhp asimdfhm",
             aarch64_gcc=r"-march=armv8.2-a\+dotprod\+fp16\+fp16fml"
         )
+        self.expect_flags(
+            "vx vxe vxe2",
+            s390x=r"-mzvector -march=arch13"
+        )
 
     def test_targets_exceptions(self):
         for targets in (
@@ -483,7 +492,7 @@ class _Test_CCompilerOpt:
             try:
                 self.expect_targets(
                     targets,
-                    x86="", armhf="", ppc64=""
+                    x86="", armhf="", ppc64="", s390x=""
                 )
                 if self.march() != "unknown":
                     raise AssertionError(
@@ -495,26 +504,26 @@ class _Test_CCompilerOpt:
 
     def test_targets_syntax(self):
         for targets in (
-            "/*@targets $keep_baseline sse vsx neon*/",
-            "/*@targets,$keep_baseline,sse,vsx,neon*/",
-            "/*@targets*$keep_baseline*sse*vsx*neon*/",
+            "/*@targets $keep_baseline sse vsx neon vx*/",
+            "/*@targets,$keep_baseline,sse,vsx,neon vx*/",
+            "/*@targets*$keep_baseline*sse*vsx*neon*vx*/",
             """
             /*
             ** @targets
-            ** $keep_baseline, sse vsx,neon
+            ** $keep_baseline, sse vsx,neon, vx
             */
             """,
             """
             /*
-            ************@targets*************
-            ** $keep_baseline, sse vsx, neon
-            *********************************
+            ************@targets****************
+            ** $keep_baseline, sse vsx, neon, vx
+            ************************************
             */
             """,
             """
             /*
             /////////////@targets/////////////////
-            //$keep_baseline//sse//vsx//neon
+            //$keep_baseline//sse//vsx//neon//vx
             /////////////////////////////////////
             */
             """,
@@ -522,11 +531,11 @@ class _Test_CCompilerOpt:
             /*
             @targets
             $keep_baseline
-            SSE VSX NEON*/
+            SSE VSX NEON VX*/
             """
         ) :
             self.expect_targets(targets,
-                x86="sse", ppc64="vsx", armhf="neon", unknown=""
+                x86="sse", ppc64="vsx", armhf="neon", s390x="vx", unknown=""
             )
 
     def test_targets(self):
@@ -535,37 +544,42 @@ class _Test_CCompilerOpt:
             """
             /*@targets
                 sse sse2 sse41 avx avx2 avx512f
-                vsx vsx2 vsx3
+                vsx vsx2 vsx3 vsx4
                 neon neon_fp16 asimdhp asimddp
+                vx vxe vxe2
             */
             """,
-            baseline="avx vsx2 asimd",
-            x86="avx512f avx2", armhf="asimddp asimdhp", ppc64="vsx3"
+            baseline="avx vsx2 asimd vx vxe",
+            x86="avx512f avx2", armhf="asimddp asimdhp", ppc64="vsx4 vsx3",
+            s390x="vxe2"
         )
         # test skipping non-dispatch features
         self.expect_targets(
             """
             /*@targets
                 sse41 avx avx2 avx512f
-                vsx2 vsx3
+                vsx2 vsx3 vsx4
                 asimd asimdhp asimddp
+                vx vxe vxe2
             */
             """,
-            baseline="", dispatch="sse41 avx2 vsx2 asimd asimddp",
-            x86="avx2 sse41", armhf="asimddp asimd", ppc64="vsx2"
+            baseline="", dispatch="sse41 avx2 vsx2 asimd asimddp vxe2",
+            x86="avx2 sse41", armhf="asimddp asimd", ppc64="vsx2", s390x="vxe2"
         )
         # test skipping features that not supported
         self.expect_targets(
             """
             /*@targets
                 sse2 sse41 avx2 avx512f
-                vsx2 vsx3
+                vsx2 vsx3 vsx4
                 neon asimdhp asimddp
+                vx vxe vxe2
             */
             """,
             baseline="",
-            trap_files=".*(avx2|avx512f|vsx3|asimddp).c",
-            x86="sse41 sse2", ppc64="vsx2", armhf="asimdhp neon"
+            trap_files=".*(avx2|avx512f|vsx3|vsx4|asimddp|vxe2).c",
+            x86="sse41 sse2", ppc64="vsx2", armhf="asimdhp neon",
+            s390x="vxe vx"
         )
         # test skipping features that implies each other
         self.expect_targets(
@@ -597,14 +611,16 @@ class _Test_CCompilerOpt:
                 sse2 sse42 avx2 avx512f
                 vsx2 vsx3
                 neon neon_vfpv4 asimd asimddp
+                vx vxe vxe2
             */
             """,
-            baseline="sse41 avx2 vsx2 asimd vsx3",
+            baseline="sse41 avx2 vsx2 asimd vsx3 vxe",
             x86="avx512f avx2 sse42 sse2",
             ppc64="vsx3 vsx2",
             armhf="asimddp asimd neon_vfpv4 neon",
             # neon, neon_vfpv4, asimd implies each other
-            aarch64="asimddp asimd"
+            aarch64="asimddp asimd",
+            s390x="vxe2 vxe vx"
         )
         # 'keep_sort', leave the sort as-is
         self.expect_targets(
@@ -614,13 +630,15 @@ class _Test_CCompilerOpt:
                 avx512f sse42 avx2 sse2
                 vsx2 vsx3
                 asimd neon neon_vfpv4 asimddp
+                vxe vxe2
             */
             """,
             x86="avx512f sse42 avx2 sse2",
             ppc64="vsx2 vsx3",
             armhf="asimd neon neon_vfpv4 asimddp",
             # neon, neon_vfpv4, asimd implies each other
-            aarch64="asimd asimddp"
+            aarch64="asimd asimddp",
+            s390x="vxe vxe2"
         )
         # 'autovec', skipping features that can't be
         # vectorized by the compiler
@@ -636,7 +654,8 @@ class _Test_CCompilerOpt:
             x86_gcc="avx512f avx2 sse42 sse41 sse2",
             x86_icc="avx512f avx2 sse42 sse41 sse2",
             x86_iccw="avx512f avx2 sse42 sse41 sse2",
-            x86_msvc="avx512f avx2 sse2",
+            x86_msvc="avx512f avx2 sse2"
+                     if self.march() == 'x86' else "avx512f avx2",
             ppc64="vsx3 vsx2",
             armhf="asimddp asimd neon_vfpv4 neon",
             # neon, neon_vfpv4, asimd implies each other
@@ -734,11 +753,13 @@ class _Test_CCompilerOpt:
                 (sse41 avx sse42) (sse3 avx2 avx512f)
                 (vsx vsx3 vsx2)
                 (asimddp neon neon_vfpv4 asimd asimdhp)
+                (vx vxe vxe2)
             */
             """,
             x86="avx avx512f",
             ppc64="vsx3",
             armhf=r"\(asimdhp asimddp\)",
+            s390x="vxe2"
         )
         # test compiler variety and avoiding duplicating
         self.expect_targets(

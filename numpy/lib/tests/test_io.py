@@ -1196,6 +1196,7 @@ class TestLoadTxt(LoadTxtBase):
         a = np.array([[1, 2, 3, 5], [4, 5, 7, 8], [2, 1, 4, 5]], int)
         assert_array_equal(x, a)
 
+
 class Testfromregex:
     def test_record(self):
         c = TextIO()
@@ -1254,6 +1255,13 @@ class Testfromregex:
         a = np.array([1, 2, 3], dtype=dt)
         x = np.fromregex(c, regexp, dt)
         assert_array_equal(x, a)
+
+    def test_bad_dtype_not_structured(self):
+        regexp = re.compile(b'(\\d)')
+        c = BytesIO(b'123')
+        with pytest.raises(TypeError, match='structured datatype'):
+            np.fromregex(c, regexp, dtype=np.float64)
+
 
 #####--------------------------------------------------------------------------
 
@@ -1416,6 +1424,10 @@ class TestFromTxt(LoadTxtBase):
         control = np.array([('M', 64.0, 75.0),
                             ('F', 25.0, 60.0)], dtype=descriptor)
         assert_equal(test, control)
+
+    def test_bad_fname(self):
+        with pytest.raises(TypeError, match='fname must be a string,'):
+            np.genfromtxt(123)
 
     def test_commented_header(self):
         # Check that names can be retrieved even if the line is commented out.
@@ -2429,6 +2441,17 @@ M   33  21.99
         assert_array_equal(expected, test)
         assert_equal((), test.shape)
         assert_equal(expected.dtype, test.dtype)
+
+    @pytest.mark.parametrize("ndim", [0, 1, 2])
+    def test_ndmin_keyword(self, ndim: int):
+        # lets have the same behaivour of ndmin as loadtxt
+        # as they should be the same for non-missing values
+        txt = "42"
+
+        a = np.loadtxt(StringIO(txt), ndmin=ndim)
+        b = np.genfromtxt(StringIO(txt), ndmin=ndim)
+
+        assert_array_equal(a, b)
 
 
 class TestPathUsage:

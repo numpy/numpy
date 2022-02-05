@@ -291,7 +291,7 @@ def descr_to_dtype(descr):
     Parameters
     ----------
     descr : object
-        The object retreived by dtype.descr. Can be passed to
+        The object retrieved by dtype.descr. Can be passed to
         `numpy.dtype()` in order to replicate the input dtype.
 
     Returns

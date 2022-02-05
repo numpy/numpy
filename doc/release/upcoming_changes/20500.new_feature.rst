@@ -1,0 +1,3 @@
+New parameter ``ndmin`` added to ``genfromtxt``
+-------------------------------------------------------------------------
+This parameter behaves the same as ``ndmin`` from `~numpy.loadtxt`.

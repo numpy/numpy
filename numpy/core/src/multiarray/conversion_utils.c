@@ -163,6 +163,42 @@ PyArray_OptionalIntpConverter(PyObject *obj, PyArray_Dims *seq)
     return PyArray_IntpConverter(obj, seq);
 }
 
+NPY_NO_EXPORT int
+PyArray_CopyConverter(PyObject *obj, _PyArray_CopyMode *copymode) {
+    if (obj == Py_None) {
+        PyErr_SetString(PyExc_ValueError,
+                        "NoneType copy mode not allowed.");
+        return NPY_FAIL;
+    }
+
+    int int_copymode;
+    static PyObject* numpy_CopyMode = NULL;
+    npy_cache_import("numpy", "_CopyMode", &numpy_CopyMode);
+
+    if (numpy_CopyMode != NULL && (PyObject *)Py_TYPE(obj) == numpy_CopyMode) {
+        PyObject* mode_value = PyObject_GetAttrString(obj, "value");
+        if (mode_value == NULL) {
+            return NPY_FAIL;
+        }
+
+        int_copymode = (int)PyLong_AsLong(mode_value);
+        Py_DECREF(mode_value);
+        if (error_converting(int_copymode)) {
+            return NPY_FAIL;
+        }
+    }
+    else {
+        npy_bool bool_copymode;
+        if (!PyArray_BoolConverter(obj, &bool_copymode)) {
+            return NPY_FAIL;
+        }
+        int_copymode = (int)bool_copymode;
+    }
+
+    *copymode = (_PyArray_CopyMode)int_copymode;
+    return NPY_SUCCEED;
+}
+
 /*NUMPY_API
  * Get buffer chunk from object
  *

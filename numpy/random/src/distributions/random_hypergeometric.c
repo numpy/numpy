@@ -155,7 +155,7 @@ static int64_t hypergeometric_hrua(bitgen_t *bitgen_state,
     c = sqrt(var + 0.5);
 
     /*
-     *  h is 2*s_hat (See Stadlober's theses (1989), Eq. (5.17); or
+     *  h is 2*s_hat (See Stadlober's thesis (1989), Eq. (5.17); or
      *  Stadlober (1990), Eq. 8).  s_hat is the scale of the "table mountain"
      *  function that dominates the scaled hypergeometric PMF ("scaled" means
      *  normalized to have a maximum value of 1).

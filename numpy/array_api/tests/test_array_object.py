@@ -1,7 +1,10 @@
+import operator
+
 from numpy.testing import assert_raises
 import numpy as np
 
-from .. import ones, asarray, result_type
+from .. import ones, asarray, result_type, all, equal
+from .._array_object import Array
 from .._dtypes import (
     _all_dtypes,
     _boolean_dtypes,
@@ -37,18 +40,18 @@ def test_validate_index():
     assert_raises(IndexError, lambda: a[:-4])
     assert_raises(IndexError, lambda: a[:3:-1])
     assert_raises(IndexError, lambda: a[:-5:-1])
-    assert_raises(IndexError, lambda: a[3:])
+    assert_raises(IndexError, lambda: a[4:])
     assert_raises(IndexError, lambda: a[-4:])
-    assert_raises(IndexError, lambda: a[3::-1])
+    assert_raises(IndexError, lambda: a[4::-1])
     assert_raises(IndexError, lambda: a[-4::-1])
 
     assert_raises(IndexError, lambda: a[...,:5])
     assert_raises(IndexError, lambda: a[...,:-5])
-    assert_raises(IndexError, lambda: a[...,:4:-1])
+    assert_raises(IndexError, lambda: a[...,:5:-1])
     assert_raises(IndexError, lambda: a[...,:-6:-1])
-    assert_raises(IndexError, lambda: a[...,4:])
+    assert_raises(IndexError, lambda: a[...,5:])
     assert_raises(IndexError, lambda: a[...,-5:])
-    assert_raises(IndexError, lambda: a[...,4::-1])
+    assert_raises(IndexError, lambda: a[...,5::-1])
     assert_raises(IndexError, lambda: a[...,-5::-1])
 
     # Boolean indices cannot be part of a larger tuple index
@@ -72,6 +75,11 @@ def test_validate_index():
     assert_raises(IndexError, lambda: a[None, ...])
     assert_raises(IndexError, lambda: a[..., None])
 
+    # Multiaxis indices must contain exactly as many indices as dimensions
+    assert_raises(IndexError, lambda: a[()])
+    assert_raises(IndexError, lambda: a[0,])
+    assert_raises(IndexError, lambda: a[0])
+    assert_raises(IndexError, lambda: a[:])
 
 def test_operators():
     # For every operator, we test that it works for the required type
@@ -90,7 +98,7 @@ def test_operators():
         "__mul__": "numeric",
         "__ne__": "all",
         "__or__": "integer_or_boolean",
-        "__pow__": "floating",
+        "__pow__": "numeric",
         "__rshift__": "integer",
         "__sub__": "numeric",
         "__truediv__": "floating",
@@ -255,15 +263,62 @@ def test_operators():
 
 
 def test_python_scalar_construtors():
-    a = asarray(False)
-    b = asarray(0)
-    c = asarray(0.0)
+    b = asarray(False)
+    i = asarray(0)
+    f = asarray(0.0)
 
-    assert bool(a) == bool(b) == bool(c) == False
-    assert int(a) == int(b) == int(c) == 0
-    assert float(a) == float(b) == float(c) == 0.0
+    assert bool(b) == False
+    assert int(i) == 0
+    assert float(f) == 0.0
+    assert operator.index(i) == 0
 
     # bool/int/float should only be allowed on 0-D arrays.
     assert_raises(TypeError, lambda: bool(asarray([False])))
     assert_raises(TypeError, lambda: int(asarray([0])))
     assert_raises(TypeError, lambda: float(asarray([0.0])))
+    assert_raises(TypeError, lambda: operator.index(asarray([0])))
+
+    # bool/int/float should only be allowed on arrays of the corresponding
+    # dtype
+    assert_raises(ValueError, lambda: bool(i))
+    assert_raises(ValueError, lambda: bool(f))
+
+    assert_raises(ValueError, lambda: int(b))
+    assert_raises(ValueError, lambda: int(f))
+
+    assert_raises(ValueError, lambda: float(b))
+    assert_raises(ValueError, lambda: float(i))
+
+    assert_raises(TypeError, lambda: operator.index(b))
+    assert_raises(TypeError, lambda: operator.index(f))
+
+
+def test_device_property():
+    a = ones((3, 4))
+    assert a.device == 'cpu'
+
+    assert all(equal(a.to_device('cpu'), a))
+    assert_raises(ValueError, lambda: a.to_device('gpu'))
+
+    assert all(equal(asarray(a, device='cpu'), a))
+    assert_raises(ValueError, lambda: asarray(a, device='gpu'))
+
+def test_array_properties():
+    a = ones((1, 2, 3))
+    b = ones((2, 3))
+    assert_raises(ValueError, lambda: a.T)
+
+    assert isinstance(b.T, Array)
+    assert b.T.shape == (3, 2)
+
+    assert isinstance(a.mT, Array)
+    assert a.mT.shape == (1, 3, 2)
+    assert isinstance(b.mT, Array)
+    assert b.mT.shape == (3, 2)
+
+def test___array__():
+    a = ones((2, 3), dtype=int16)
+    assert np.asarray(a) is a._array
+    b = np.asarray(a, dtype=np.float64)
+    assert np.all(np.equal(b, np.ones((2, 3), dtype=np.float64)))
+    assert b.dtype == np.float64

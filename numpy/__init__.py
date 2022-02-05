@@ -110,7 +110,8 @@ import sys
 import warnings
 
 from ._globals import (
-    ModuleDeprecationWarning, VisibleDeprecationWarning, _NoValue
+    ModuleDeprecationWarning, VisibleDeprecationWarning,
+    _NoValue, _CopyMode
 )
 
 # We first need to detect if we're being called as part of the numpy setup
@@ -133,13 +134,6 @@ else:
 
     __all__ = ['ModuleDeprecationWarning',
                'VisibleDeprecationWarning']
-
-    # get the version using versioneer
-    from ._version import get_versions
-    vinfo = get_versions()
-    __version__ = vinfo.get("closest-tag", vinfo["version"])
-    __git_version__ = vinfo.get("full-revisionid")
-    del get_versions, vinfo
 
     # mapping of {name: (value, deprecation_msg)}
     __deprecated_attrs__ = {}
@@ -195,10 +189,17 @@ else:
         n: (getattr(_builtins, n), _msg.format(n=n, extended_msg=extended_msg))
         for n, extended_msg in _type_info
     })
+
     # Numpy 1.20.0, 2020-10-19
     __deprecated_attrs__["typeDict"] = (
         core.numerictypes.typeDict,
         "`np.typeDict` is a deprecated alias for `np.sctypeDict`."
+    )
+
+    # NumPy 1.22, 2021-10-20
+    __deprecated_attrs__["MachAr"] = (
+        core._machar.MachAr,
+        "`np.MachAr` is deprecated (NumPy 1.22)."
     )
 
     _msg = (
@@ -232,6 +233,10 @@ else:
     __all__.extend(_mat.__all__)
     __all__.extend(lib.__all__)
     __all__.extend(['linalg', 'fft', 'random', 'ctypeslib', 'ma'])
+
+    # Remove one of the two occurrences of `issubdtype`, which is exposed as
+    # both `numpy.core.issubdtype` and `numpy.lib.issubdtype`.
+    __all__.remove('issubdtype')
 
     # These are exported by np.core, but are replaced by the builtins below
     # remove them to ensure that we don't end up with `np.long == np.int_`,
@@ -408,6 +413,11 @@ else:
     # it is tidier organized.
     core.multiarray._multiarray_umath._reload_guard()
 
-from ._version import get_versions
-__version__ = get_versions()['version']
-del get_versions
+    # Tell PyInstaller where to find hook-numpy.py
+    def _pyinstaller_hooks_dir():
+        from pathlib import Path
+        return [str(Path(__file__).with_name("_pyinstaller").resolve())]
+
+
+# get the version using versioneer
+from .version import __version__, git_revision as __git_version__

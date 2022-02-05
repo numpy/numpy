@@ -48,26 +48,26 @@
  *
  * We could allow setting the output descriptors specifically to simplify
  * this step.
+ *
+ * Note that the default version will indicate that the cast can be done
+ * as using `arr.view(new_dtype)` if the default cast-safety is
+ * set to "no-cast".  This default function cannot be used if a view may
+ * be sufficient for casting but the cast is not always "no-cast".
  */
 static NPY_CASTING
 default_resolve_descriptors(
         PyArrayMethodObject *method,
         PyArray_DTypeMeta **dtypes,
         PyArray_Descr **input_descrs,
-        PyArray_Descr **output_descrs)
+        PyArray_Descr **output_descrs,
+        npy_intp *view_offset)
 {
     int nin = method->nin;
     int nout = method->nout;
-    int all_defined = 1;
 
     for (int i = 0; i < nin + nout; i++) {
         PyArray_DTypeMeta *dtype = dtypes[i];
-        if (dtype == NULL) {
-            output_descrs[i] = NULL;
-            all_defined = 0;
-            continue;
-        }
-        if (NPY_DTYPE(input_descrs[i]) == dtype) {
+        if (input_descrs[i] != NULL) {
             output_descrs[i] = ensure_dtype_nbo(input_descrs[i]);
         }
         else {
@@ -77,41 +77,18 @@ default_resolve_descriptors(
             goto fail;
         }
     }
-    if (all_defined) {
-        return method->casting;
+    /*
+     * If we relax the requirement for specifying all `dtypes` (e.g. allow
+     * abstract ones or unspecified outputs).  We can use the common-dtype
+     * operation to provide a default here.
+     */
+    if (method->casting == NPY_NO_CASTING) {
+        /*
+         * By (current) definition no-casting should imply viewable.  This
+         * is currently indicated for example for object to object cast.
+         */
+        *view_offset = 0;
     }
-
-    if (NPY_UNLIKELY(nin == 0 || dtypes[0] == NULL)) {
-        /* Registration should reject this, so this would be indicates a bug */
-        PyErr_SetString(PyExc_RuntimeError,
-                "Invalid use of default resolver without inputs or with "
-                "input or output DType incorrectly missing.");
-        goto fail;
-    }
-    /* We find the common dtype of all inputs, and use it for the unknowns */
-    PyArray_DTypeMeta *common_dtype = dtypes[0];
-    assert(common_dtype != NULL);
-    for (int i = 1; i < nin; i++) {
-        Py_SETREF(common_dtype, PyArray_CommonDType(common_dtype, dtypes[i]));
-        if (common_dtype == NULL) {
-            goto fail;
-        }
-    }
-    for (int i = nin; i < nin + nout; i++) {
-        if (output_descrs[i] != NULL) {
-            continue;
-        }
-        if (NPY_DTYPE(input_descrs[i]) == common_dtype) {
-            output_descrs[i] = ensure_dtype_nbo(input_descrs[i]);
-        }
-        else {
-            output_descrs[i] = NPY_DT_CALL_default_descr(common_dtype);
-        }
-        if (NPY_UNLIKELY(output_descrs[i] == NULL)) {
-            goto fail;
-        }
-    }
-
     return method->casting;
 
   fail:
@@ -138,9 +115,10 @@ is_contiguous(
 /**
  * The default method to fetch the correct loop for a cast or ufunc
  * (at the time of writing only casts).
- * The default version can return loops explicitly registered during method
- * creation. It does specialize contiguous loops, although has to check
- * all descriptors itemsizes for this.
+ * Note that the default function provided here will only indicate that a cast
+ * can be done as a view (i.e., arr.view(new_dtype)) when this is trivially
+ * true, i.e., for cast safety "no-cast". It will not recognize view as an
+ * option for other casts (e.g., viewing '>i8' as '>i4' with an offset of 4).
  *
  * @param context
  * @param aligned
@@ -155,7 +133,7 @@ is_contiguous(
 NPY_NO_EXPORT int
 npy_default_get_strided_loop(
         PyArrayMethod_Context *context,
-        int aligned, int NPY_UNUSED(move_references), npy_intp *strides,
+        int aligned, int NPY_UNUSED(move_references), const npy_intp *strides,
         PyArrayMethod_StridedLoop **out_loop, NpyAuxData **out_transferdata,
         NPY_ARRAYMETHOD_FLAGS *flags)
 {
@@ -202,7 +180,7 @@ validate_spec(PyArrayMethod_Spec *spec)
                 "not exceed %d. (method: %s)", NPY_MAXARGS, spec->name);
         return -1;
     }
-    switch (spec->casting & ~_NPY_CAST_IS_VIEW) {
+    switch (spec->casting) {
         case NPY_NO_CASTING:
         case NPY_EQUIV_CASTING:
         case NPY_SAFE_CASTING:
@@ -219,9 +197,18 @@ validate_spec(PyArrayMethod_Spec *spec)
     }
 
     for (int i = 0; i < nargs; i++) {
-        if (spec->dtypes[i] == NULL && i < spec->nin) {
+        /*
+         * Note that we could allow for output dtypes to not be specified
+         * (the array-method would have to make sure to support this).
+         * We could even allow for some dtypes to be abstract.
+         * For now, assume that this is better handled in a promotion step.
+         * One problem with providing all DTypes is the definite need to
+         * hold references.  We probably, eventually, have to implement
+         * traversal and trust the GC to deal with it.
+         */
+        if (spec->dtypes[i] == NULL) {
             PyErr_Format(PyExc_TypeError,
-                    "ArrayMethod must have well defined input DTypes. "
+                    "ArrayMethod must provide all input and output DTypes. "
                     "(method: %s)", spec->name);
             return -1;
         }
@@ -231,10 +218,10 @@ validate_spec(PyArrayMethod_Spec *spec)
                     "(method: %s)", spec->dtypes[i], spec->name);
             return -1;
         }
-        if (NPY_DT_is_abstract(spec->dtypes[i]) && i < spec->nin) {
+        if (NPY_DT_is_abstract(spec->dtypes[i])) {
             PyErr_Format(PyExc_TypeError,
-                    "abstract DType %S are currently not allowed for inputs."
-                    "(method: %s defined at %s)", spec->dtypes[i], spec->name);
+                    "abstract DType %S are currently not supported."
+                    "(method: %s)", spec->dtypes[i], spec->name);
             return -1;
         }
     }
@@ -274,12 +261,17 @@ fill_arraymethod_from_slots(
                 meth->resolve_descriptors = slot->pfunc;
                 continue;
             case NPY_METH_get_loop:
-                if (private) {
-                    /* Only allow override for private functions initially */
-                    meth->get_strided_loop = slot->pfunc;
-                    continue;
-                }
-                break;
+                /*
+                 * NOTE: get_loop is considered "unstable" in the public API,
+                 *       I do not like the signature, and the `move_references`
+                 *       parameter must NOT be used.
+                 *       (as in: we should not worry about changing it, but of
+                 *       course that would not break it immediately.)
+                 */
+                /* Only allow override for private functions initially */
+                meth->get_strided_loop = slot->pfunc;
+                continue;
+            /* "Typical" loops, supported used by the default `get_loop` */
             case NPY_METH_strided_loop:
                 meth->strided_loop = slot->pfunc;
                 continue;
@@ -323,7 +315,7 @@ fill_arraymethod_from_slots(
                     PyErr_Format(PyExc_TypeError,
                             "Must specify output DTypes or use custom "
                             "`resolve_descriptors` when there are no inputs. "
-                            "(method: %s defined at %s)", spec->name);
+                            "(method: %s)", spec->name);
                     return -1;
                 }
             }
@@ -367,6 +359,26 @@ fill_arraymethod_from_slots(
     }
 
     return 0;
+}
+
+
+/*
+ * Public version of `PyArrayMethod_FromSpec_int` (see below).
+ *
+ * TODO: Error paths will probably need to be improved before a release into
+ *       the non-experimental public API.
+ */
+NPY_NO_EXPORT PyObject *
+PyArrayMethod_FromSpec(PyArrayMethod_Spec *spec)
+{
+    for (int i = 0; i < spec->nin + spec->nout; i++) {
+        if (!PyObject_TypeCheck(spec->dtypes[i], &PyArrayDTypeMeta_Type)) {
+            PyErr_SetString(PyExc_RuntimeError,
+                    "ArrayMethod spec contained a non DType.");
+            return NULL;
+        }
+    }
+    return (PyObject *)PyArrayMethod_FromSpec_int(spec, 0);
 }
 
 
@@ -453,6 +465,15 @@ arraymethod_dealloc(PyObject *self)
 
     PyMem_Free(meth->name);
 
+    if (meth->wrapped_meth != NULL) {
+        /* Cleanup for wrapping array method (defined in umath) */
+        Py_DECREF(meth->wrapped_meth);
+        for (int i = 0; i < meth->nin + meth->nout; i++) {
+            Py_XDECREF(meth->wrapped_dtypes[i]);
+        }
+        PyMem_Free(meth->wrapped_dtypes);
+    }
+
     Py_TYPE(self)->tp_free(self);
 }
 
@@ -466,7 +487,6 @@ NPY_NO_EXPORT PyTypeObject PyArrayMethod_Type = {
 };
 
 
-
 static PyObject *
 boundarraymethod_repr(PyBoundArrayMethodObject *self)
 {
@@ -476,9 +496,11 @@ boundarraymethod_repr(PyBoundArrayMethodObject *self)
     if (dtypes == NULL) {
         return NULL;
     }
-    return PyUnicode_FromFormat(
-            "<np._BoundArrayMethod `%s` for dtypes %S>",
-            self->method->name, dtypes);
+    PyObject *repr = PyUnicode_FromFormat(
+                        "<np._BoundArrayMethod `%s` for dtypes %S>",
+                        self->method->name, dtypes);
+    Py_DECREF(dtypes);
+    return repr;
 }
 
 
@@ -501,8 +523,9 @@ boundarraymethod_dealloc(PyObject *self)
 
 
 /*
- * Calls resolve_descriptors() and returns the casting level and the resolved
- * descriptors as a tuple. If the operation is impossible returns (-1, None).
+ * Calls resolve_descriptors() and returns the casting level, the resolved
+ * descriptors as a tuple, and a possible view-offset (integer or None).
+ * If the operation is impossible returns (-1, None, None).
  * May raise an error, but usually should not.
  * The function validates the casting attribute compared to the returned
  * casting level.
@@ -557,14 +580,15 @@ boundarraymethod__resolve_descripors(
         }
     }
 
+    npy_intp view_offset = NPY_MIN_INTP;
     NPY_CASTING casting = self->method->resolve_descriptors(
-            self->method, self->dtypes, given_descrs, loop_descrs);
+            self->method, self->dtypes, given_descrs, loop_descrs, &view_offset);
 
     if (casting < 0 && PyErr_Occurred()) {
         return NULL;
     }
     else if (casting < 0) {
-        return Py_BuildValue("iO", casting, Py_None);
+        return Py_BuildValue("iO", casting, Py_None, Py_None);
     }
 
     PyObject *result_tuple = PyTuple_New(nin + nout);
@@ -576,9 +600,22 @@ boundarraymethod__resolve_descripors(
         PyTuple_SET_ITEM(result_tuple, i, (PyObject *)loop_descrs[i]);
     }
 
+    PyObject *view_offset_obj;
+    if (view_offset == NPY_MIN_INTP) {
+        Py_INCREF(Py_None);
+        view_offset_obj = Py_None;
+    }
+    else {
+        view_offset_obj = PyLong_FromSsize_t(view_offset);
+        if (view_offset_obj == NULL) {
+            Py_DECREF(result_tuple);
+            return NULL;
+        }
+    }
+
     /*
-     * The casting flags should be the most generic casting level (except the
-     * cast-is-view flag.  If no input is parametric, it must match exactly.
+     * The casting flags should be the most generic casting level.
+     * If no input is parametric, it must match exactly.
      *
      * (Note that these checks are only debugging checks.)
      */
@@ -590,7 +627,7 @@ boundarraymethod__resolve_descripors(
         }
     }
     if (self->method->casting != -1) {
-        NPY_CASTING cast = casting & ~_NPY_CAST_IS_VIEW;
+        NPY_CASTING cast = casting;
         if (self->method->casting !=
                 PyArray_MinCastSafety(cast, self->method->casting)) {
             PyErr_Format(PyExc_RuntimeError,
@@ -598,6 +635,7 @@ boundarraymethod__resolve_descripors(
                     "(set level is %d, got %d for method %s)",
                     self->method->casting, cast, self->method->name);
             Py_DECREF(result_tuple);
+            Py_DECREF(view_offset_obj);
             return NULL;
         }
         if (!parametric) {
@@ -614,12 +652,13 @@ boundarraymethod__resolve_descripors(
                         "(set level is %d, got %d for method %s)",
                         self->method->casting, cast, self->method->name);
                 Py_DECREF(result_tuple);
+                Py_DECREF(view_offset_obj);
                 return NULL;
             }
         }
     }
 
-    return Py_BuildValue("iN", casting, result_tuple);
+    return Py_BuildValue("iNN", casting, result_tuple, view_offset_obj);
 }
 
 
@@ -682,7 +721,7 @@ boundarraymethod__simple_strided_call(
                     "All arrays must have the same length.");
             return NULL;
         }
-        if (i >= nout) {
+        if (i >= nin) {
             if (PyArray_FailUnlessWriteable(
                     arrays[i], "_simple_strided_call() output") < 0) {
                 return NULL;
@@ -700,8 +739,9 @@ boundarraymethod__simple_strided_call(
         return NULL;
     }
 
+    npy_intp view_offset = NPY_MIN_INTP;
     NPY_CASTING casting = self->method->resolve_descriptors(
-            self->method, self->dtypes, descrs, out_descrs);
+            self->method, self->dtypes, descrs, out_descrs, &view_offset);
 
     if (casting < 0) {
         PyObject *err_type = NULL, *err_value = NULL, *err_traceback = NULL;
@@ -786,6 +826,13 @@ _masked_stridedloop_data_free(NpyAuxData *auxdata)
  * This function wraps a regular unmasked strided-loop as a
  * masked strided-loop, only calling the function for elements
  * where the mask is True.
+ *
+ * TODO: Reductions also use this code to implement masked reductions.
+ *       Before consolidating them, reductions had a special case for
+ *       broadcasts: when the mask stride was 0 the code does not check all
+ *       elements as `npy_memchr` currently does.
+ *       It may be worthwhile to add such an optimization again if broadcasted
+ *       masks are common enough.
  */
 static int
 generic_masked_strided_loop(PyArrayMethod_Context *context,

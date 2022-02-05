@@ -116,7 +116,7 @@ NpyIter_RemoveAxis(NpyIter *iter, int axis)
                 --p;
             }
         }
-        else if (p <= 0) {
+        else {
             if (p < -1-axis) {
                 ++p;
             }
@@ -2130,7 +2130,7 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
         /*
          * Try to do make the outersize as big as possible. This allows
          * it to shrink when processing the last bit of the outer reduce loop,
-         * then grow again at the beginnning of the next outer reduce loop.
+         * then grow again at the beginning of the next outer reduce loop.
          */
         NBF_REDUCE_OUTERSIZE(bufferdata) = (NAD_SHAPE(reduce_outeraxisdata)-
                                             NAD_INDEX(reduce_outeraxisdata));
@@ -2804,9 +2804,9 @@ npyiter_checkreducesize(NpyIter *iter, npy_intp count,
     if (coord != 0) {
         /*
          * In this case, it is only safe to reuse the buffer if the amount
-         * of data copied is not more then the current axes, as is the
+         * of data copied is not more than the current axes, as is the
          * case when reuse_reduce_loops was active already.
-         * It should be in principle OK when the idim loop returns immidiatly.
+         * It should be in principle OK when the idim loop returns immediately.
          */
         NIT_ITFLAGS(iter) &= ~NPY_ITFLAG_REUSE_REDUCE_LOOPS;
     }

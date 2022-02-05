@@ -157,7 +157,7 @@ int_common_dtype(PyArray_DTypeMeta *NPY_UNUSED(cls), PyArray_DTypeMeta *other)
         }
         else if (PyTypeNum_ISNUMBER(other->type_num) ||
                  other->type_num == NPY_TIMEDELTA) {
-            /* All other numeric types (ant timdelta) are preserved: */
+            /* All other numeric types (ant timedelta) are preserved: */
             Py_INCREF(other);
             return other;
         }

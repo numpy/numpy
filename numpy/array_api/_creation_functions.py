@@ -9,7 +9,6 @@ if TYPE_CHECKING:
         Device,
         Dtype,
         NestedSequence,
-        SupportsDLPack,
         SupportsBufferProtocol,
     )
     from collections.abc import Sequence
@@ -22,7 +21,7 @@ def _check_valid_dtype(dtype):
     # Note: Only spelling dtypes as the dtype objects is supported.
 
     # We use this instead of "dtype in _all_dtypes" because the dtype objects
-    # define equality with the sorts of things we want to disallw.
+    # define equality with the sorts of things we want to disallow.
     for d in (None,) + _all_dtypes:
         if dtype is d:
             return
@@ -36,14 +35,13 @@ def asarray(
         int,
         float,
         NestedSequence[bool | int | float],
-        SupportsDLPack,
         SupportsBufferProtocol,
     ],
     /,
     *,
     dtype: Optional[Dtype] = None,
     device: Optional[Device] = None,
-    copy: Optional[bool] = None,
+    copy: Optional[Union[bool, np._CopyMode]] = None,
 ) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.asarray <numpy.asarray>`.
@@ -57,11 +55,13 @@ def asarray(
     _check_valid_dtype(dtype)
     if device not in ["cpu", None]:
         raise ValueError(f"Unsupported device {device!r}")
-    if copy is False:
+    if copy in (False, np._CopyMode.IF_NEEDED):
         # Note: copy=False is not yet implemented in np.asarray
         raise NotImplementedError("copy=False is not yet implemented")
-    if isinstance(obj, Array) and (dtype is None or obj.dtype == dtype):
-        if copy is True:
+    if isinstance(obj, Array):
+        if dtype is not None and obj.dtype != dtype:
+            copy = True
+        if copy in (True, np._CopyMode.ALWAYS):
             return Array._new(np.array(obj._array, copy=True, dtype=dtype))
         return obj
     if dtype is None and isinstance(obj, int) and (obj > 2 ** 64 or obj < -(2 ** 63)):
@@ -134,7 +134,7 @@ def eye(
     n_cols: Optional[int] = None,
     /,
     *,
-    k: Optional[int] = 0,
+    k: int = 0,
     dtype: Optional[Dtype] = None,
     device: Optional[Device] = None,
 ) -> Array:
@@ -152,8 +152,9 @@ def eye(
 
 
 def from_dlpack(x: object, /) -> Array:
-    # Note: dlpack support is not yet implemented on Array
-    raise NotImplementedError("DLPack support is not yet implemented")
+    from ._array_object import Array
+
+    return Array._new(np._from_dlpack(x))
 
 
 def full(
@@ -232,13 +233,19 @@ def linspace(
     return Array._new(np.linspace(start, stop, num, dtype=dtype, endpoint=endpoint))
 
 
-def meshgrid(*arrays: Sequence[Array], indexing: str = "xy") -> List[Array, ...]:
+def meshgrid(*arrays: Array, indexing: str = "xy") -> List[Array]:
     """
     Array API compatible wrapper for :py:func:`np.meshgrid <numpy.meshgrid>`.
 
     See its docstring for more information.
     """
     from ._array_object import Array
+
+    # Note: unlike np.meshgrid, only inputs with all the same dtype are
+    # allowed
+
+    if len({a.dtype for a in arrays}) > 1:
+        raise ValueError("meshgrid inputs must all have the same dtype")
 
     return [
         Array._new(array)
@@ -279,6 +286,34 @@ def ones_like(
     if device not in ["cpu", None]:
         raise ValueError(f"Unsupported device {device!r}")
     return Array._new(np.ones_like(x._array, dtype=dtype))
+
+
+def tril(x: Array, /, *, k: int = 0) -> Array:
+    """
+    Array API compatible wrapper for :py:func:`np.tril <numpy.tril>`.
+
+    See its docstring for more information.
+    """
+    from ._array_object import Array
+
+    if x.ndim < 2:
+        # Note: Unlike np.tril, x must be at least 2-D
+        raise ValueError("x must be at least 2-dimensional for tril")
+    return Array._new(np.tril(x._array, k=k))
+
+
+def triu(x: Array, /, *, k: int = 0) -> Array:
+    """
+    Array API compatible wrapper for :py:func:`np.triu <numpy.triu>`.
+
+    See its docstring for more information.
+    """
+    from ._array_object import Array
+
+    if x.ndim < 2:
+        # Note: Unlike np.triu, x must be at least 2-D
+        raise ValueError("x must be at least 2-dimensional for triu")
+    return Array._new(np.triu(x._array, k=k))
 
 
 def zeros(

@@ -564,6 +564,12 @@ class TestRandomDist:
         rng.shuffle(a)
         assert_equal(np.asarray(a), [4, 1, 0, 3, 2])
 
+    def test_shuffle_not_writeable(self):
+        a = np.zeros(3)
+        a.flags.writeable = False
+        with pytest.raises(ValueError, match='read-only'):
+            np.random.shuffle(a)
+
     def test_beta(self):
         np.random.seed(self.seed)
         actual = np.random.beta(.1, .9, size=(3, 2))

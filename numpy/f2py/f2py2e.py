@@ -82,6 +82,9 @@ Options:
                    file <modulename>module.c or extension module <modulename>.
                    Default is 'untitled'.
 
+  '-include<header>'  Writes additional headers in the C wrapper, can be passed
+                      multiple times, generates #include <header> each time.
+
   --[no-]lower     Do [not] lower the cases in <fortran files>. By default,
                    --lower is assumed with -h key, and --no-lower without -h key.
 
@@ -168,7 +171,7 @@ numpy Version: {numpy_version}
 Requires:    Python 3.5 or higher.
 License:     NumPy license (see LICENSE.txt in the NumPy source code)
 Copyright 1999 - 2011 Pearu Peterson all rights reserved.
-http://cens.ioc.ee/projects/f2py2e/"""
+https://web.archive.org/web/20140822061353/http://cens.ioc.ee/projects/f2py2e"""
 
 
 def scaninputline(inputline):
@@ -286,7 +289,7 @@ def scaninputline(inputline):
         sys.exit()
     if not os.path.isdir(buildpath):
         if not verbose:
-            outmess('Creating build directory %s' % (buildpath))
+            outmess('Creating build directory %s\n' % (buildpath))
         os.mkdir(buildpath)
     if signsfile:
         signsfile = os.path.join(buildpath, signsfile)
@@ -416,8 +419,8 @@ def run_main(comline_list):
 
     Examples
     --------
-    .. include:: run_main_session.dat
-        :literal:
+    .. literalinclude:: ../../source/f2py/code/results/run_main_session.dat
+        :language: python
 
     """
     crackfortran.reset_global_f2py_vars()
@@ -546,30 +549,29 @@ def run_compile():
     fc_flags = [_m for _m in sys.argv[1:] if _reg4.match(_m)]
     sys.argv = [_m for _m in sys.argv if _m not in fc_flags]
 
-    if 1:
-        del_list = []
-        for s in flib_flags:
-            v = '--fcompiler='
-            if s[:len(v)] == v:
-                from numpy.distutils import fcompiler
-                fcompiler.load_all_fcompiler_classes()
-                allowed_keys = list(fcompiler.fcompiler_class.keys())
-                nv = ov = s[len(v):].lower()
-                if ov not in allowed_keys:
-                    vmap = {}  # XXX
-                    try:
-                        nv = vmap[ov]
-                    except KeyError:
-                        if ov not in vmap.values():
-                            print('Unknown vendor: "%s"' % (s[len(v):]))
-                    nv = ov
-                i = flib_flags.index(s)
-                flib_flags[i] = '--fcompiler=' + nv
-                continue
-        for s in del_list:
+    del_list = []
+    for s in flib_flags:
+        v = '--fcompiler='
+        if s[:len(v)] == v:
+            from numpy.distutils import fcompiler
+            fcompiler.load_all_fcompiler_classes()
+            allowed_keys = list(fcompiler.fcompiler_class.keys())
+            nv = ov = s[len(v):].lower()
+            if ov not in allowed_keys:
+                vmap = {}  # XXX
+                try:
+                    nv = vmap[ov]
+                except KeyError:
+                    if ov not in vmap.values():
+                        print('Unknown vendor: "%s"' % (s[len(v):]))
+                nv = ov
             i = flib_flags.index(s)
-            del flib_flags[i]
-        assert len(flib_flags) <= 2, repr(flib_flags)
+            flib_flags[i] = '--fcompiler=' + nv
+            continue
+    for s in del_list:
+        i = flib_flags.index(s)
+        del flib_flags[i]
+    assert len(flib_flags) <= 2, repr(flib_flags)
 
     _reg5 = re.compile(r'--(verbose)')
     setup_flags = [_m for _m in sys.argv[1:] if _reg5.match(_m)]

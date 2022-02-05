@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import sys
+import copy
 import types
 import pickle
 import weakref
-from typing import TypeVar, Any, Callable, Tuple, Type, Union
+from typing import TypeVar, Any, Union, Callable
 
 import pytest
 import numpy as np
@@ -30,7 +31,7 @@ GETATTR_NAMES = sorted(set(dir(np.ndarray)) - _GenericAlias._ATTR_EXCEPTIONS)
 BUFFER = np.array([1], dtype=np.int64)
 BUFFER.setflags(write=False)
 
-def _get_subclass_mro(base: type) -> Tuple[type, ...]:
+def _get_subclass_mro(base: type) -> tuple[type, ...]:
     class Subclass(base):  # type: ignore[misc,valid-type]
         pass
     return Subclass.__mro__[1:]
@@ -80,6 +81,21 @@ class TestGenericAlias:
             value_ref = func(NDArray_ref)
             assert value == value_ref
 
+    @pytest.mark.parametrize("name,func", [
+        ("__copy__", lambda n: n == copy.copy(n)),
+        ("__deepcopy__", lambda n: n == copy.deepcopy(n)),
+    ])
+    def test_copy(self, name: str, func: FuncType) -> None:
+        value = func(NDArray)
+
+        # xref bpo-45167
+        GE_398 = (
+            sys.version_info[:2] == (3, 9) and sys.version_info >= (3, 9, 8)
+        )
+        if GE_398 or sys.version_info >= (3, 10, 1):
+            value_ref = func(NDArray_ref)
+            assert value == value_ref
+
     def test_weakref(self) -> None:
         """Test ``__weakref__``."""
         value = weakref.ref(NDArray)()
@@ -116,7 +132,7 @@ class TestGenericAlias:
     def test_raise(
         self,
         name: str,
-        exc_type: Type[BaseException],
+        exc_type: type[BaseException],
         func: FuncType,
     ) -> None:
         """Test operations that are supposed to raise."""

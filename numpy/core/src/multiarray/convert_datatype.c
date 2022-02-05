@@ -223,14 +223,11 @@ PyArray_MinCastSafety(NPY_CASTING casting1, NPY_CASTING casting2)
     if (casting1 < 0 || casting2 < 0) {
         return -1;
     }
-    NPY_CASTING view = casting1 & casting2 & _NPY_CAST_IS_VIEW;
-    casting1 = casting1 & ~_NPY_CAST_IS_VIEW;
-    casting2 = casting2 & ~_NPY_CAST_IS_VIEW;
     /* larger casting values are less safe */
     if (casting1 > casting2) {
-        return casting1 | view;
+        return casting1;
     }
-    return casting2 | view;
+    return casting2;
 }
 
 
@@ -247,6 +244,12 @@ NPY_NO_EXPORT PyObject *
 PyArray_CastToType(PyArrayObject *arr, PyArray_Descr *dtype, int is_f_order)
 {
     PyObject *out;
+
+    if (dtype == NULL) {
+        PyErr_SetString(PyExc_ValueError,
+            "dtype is NULL in PyArray_CastToType");
+        return NULL;
+    }
 
     Py_SETREF(dtype, PyArray_AdaptDescriptorToArray(arr, (PyObject *)dtype));
     if (dtype == NULL) {
@@ -363,29 +366,41 @@ PyArray_CastAnyTo(PyArrayObject *out, PyArrayObject *mp)
 
 static NPY_CASTING
 _get_cast_safety_from_castingimpl(PyArrayMethodObject *castingimpl,
-        PyArray_DTypeMeta *dtypes[2], PyArray_Descr *from, PyArray_Descr *to)
+        PyArray_DTypeMeta *dtypes[2], PyArray_Descr *from, PyArray_Descr *to,
+        npy_intp *view_offset)
 {
     PyArray_Descr *descrs[2] = {from, to};
     PyArray_Descr *out_descrs[2];
 
+    *view_offset = NPY_MIN_INTP;
     NPY_CASTING casting = castingimpl->resolve_descriptors(
-            castingimpl, dtypes, descrs, out_descrs);
+            castingimpl, dtypes, descrs, out_descrs, view_offset);
     if (casting < 0) {
         return -1;
     }
     /* The returned descriptors may not match, requiring a second check */
     if (out_descrs[0] != descrs[0]) {
-        NPY_CASTING from_casting = PyArray_GetCastSafety(
-                descrs[0], out_descrs[0], NULL);
+        npy_intp from_offset = NPY_MIN_INTP;
+        NPY_CASTING from_casting = PyArray_GetCastInfo(
+                descrs[0], out_descrs[0], NULL, &from_offset);
         casting = PyArray_MinCastSafety(casting, from_casting);
+        if (from_offset != *view_offset) {
+            /* `view_offset` differs: The multi-step cast cannot be a view. */
+            *view_offset = NPY_MIN_INTP;
+        }
         if (casting < 0) {
             goto finish;
         }
     }
     if (descrs[1] != NULL && out_descrs[1] != descrs[1]) {
-        NPY_CASTING from_casting = PyArray_GetCastSafety(
-                descrs[1], out_descrs[1], NULL);
+        npy_intp from_offset = NPY_MIN_INTP;
+        NPY_CASTING from_casting = PyArray_GetCastInfo(
+                descrs[1], out_descrs[1], NULL, &from_offset);
         casting = PyArray_MinCastSafety(casting, from_casting);
+        if (from_offset != *view_offset) {
+            /* `view_offset` differs: The multi-step cast cannot be a view. */
+            *view_offset = NPY_MIN_INTP;
+        }
         if (casting < 0) {
             goto finish;
         }
@@ -396,15 +411,21 @@ _get_cast_safety_from_castingimpl(PyArrayMethodObject *castingimpl,
     Py_DECREF(out_descrs[1]);
     /*
      * Check for less harmful non-standard returns.  The following two returns
-     * should never happen. They would be roughly equivalent, but less precise,
-     * versions of `(NPY_NO_CASTING|_NPY_CAST_IS_VIEW)`.
-     * 1. No-casting must imply cast-is-view.
-     * 2. Equivalent-casting + cast-is-view is (currently) the definition
-     *    of a "no" cast (there may be reasons to relax this).
-     * Note that e.g. `(NPY_UNSAFE_CASTING|_NPY_CAST_IS_VIEW)` is valid.
+     * should never happen:
+     * 1. No-casting must imply a view offset of 0.
+     * 2. Equivalent-casting + 0 view offset is (usually) the definition
+     *    of a "no" cast.  However, changing the order of fields can also
+     *    create descriptors that are not equivalent but views.
+     * Note that unsafe casts can have a view offset.  For example, in
+     * principle, casting `<i8` to `<i4` is a cast with 0 offset.
      */
-    assert(casting != NPY_NO_CASTING);
-    assert(casting != (NPY_EQUIV_CASTING|_NPY_CAST_IS_VIEW));
+    if (*view_offset != 0) {
+        assert(casting != NPY_NO_CASTING);
+    }
+    else {
+        assert(casting != NPY_EQUIV_CASTING
+               || (PyDataType_HASFIELDS(from) && PyDataType_HASFIELDS(to)));
+    }
     return casting;
 }
 
@@ -420,11 +441,13 @@ _get_cast_safety_from_castingimpl(PyArrayMethodObject *castingimpl,
  * @param to The descriptor to cast to (may be NULL)
  * @param to_dtype If `to` is NULL, must pass the to_dtype (otherwise this
  *        is ignored).
+ * @param[out] view_offset
  * @return NPY_CASTING or -1 on error or if the cast is not possible.
  */
 NPY_NO_EXPORT NPY_CASTING
-PyArray_GetCastSafety(
-        PyArray_Descr *from, PyArray_Descr *to, PyArray_DTypeMeta *to_dtype)
+PyArray_GetCastInfo(
+        PyArray_Descr *from, PyArray_Descr *to, PyArray_DTypeMeta *to_dtype,
+        npy_intp *view_offset)
 {
     if (to != NULL) {
         to_dtype = NPY_DTYPE(to);
@@ -441,7 +464,7 @@ PyArray_GetCastSafety(
     PyArrayMethodObject *castingimpl = (PyArrayMethodObject *)meth;
     PyArray_DTypeMeta *dtypes[2] = {NPY_DTYPE(from), to_dtype};
     NPY_CASTING casting = _get_cast_safety_from_castingimpl(castingimpl,
-            dtypes, from, to);
+            dtypes, from, to, view_offset);
     Py_DECREF(meth);
 
     return casting;
@@ -449,8 +472,8 @@ PyArray_GetCastSafety(
 
 
 /**
- * Check whether a cast is safe, see also `PyArray_GetCastSafety` for
- * a similar function.  Unlike GetCastSafety, this function checks the
+ * Check whether a cast is safe, see also `PyArray_GetCastInfo` for
+ * a similar function.  Unlike GetCastInfo, this function checks the
  * `castingimpl->casting` when available.  This allows for two things:
  *
  * 1. It avoids  calling `resolve_descriptors` in some cases.
@@ -493,8 +516,9 @@ PyArray_CheckCastSafety(NPY_CASTING casting,
     }
 
     PyArray_DTypeMeta *dtypes[2] = {NPY_DTYPE(from), to_dtype};
+    npy_intp view_offset;
     NPY_CASTING safety = _get_cast_safety_from_castingimpl(castingimpl,
-            dtypes, from, to);
+            dtypes, from, to, &view_offset);
     Py_DECREF(meth);
     /* If casting is the smaller (or equal) safety we match */
     if (safety < 0) {
@@ -971,8 +995,9 @@ PyArray_CastDescrToDType(PyArray_Descr *descr, PyArray_DTypeMeta *given_DType)
     PyArray_Descr *loop_descrs[2];
 
     PyArrayMethodObject *meth = (PyArrayMethodObject *)tmp;
+    npy_intp view_offset = NPY_MIN_INTP;
     NPY_CASTING casting = meth->resolve_descriptors(
-            meth, dtypes, given_descrs, loop_descrs);
+            meth, dtypes, given_descrs, loop_descrs, &view_offset);
     Py_DECREF(tmp);
     if (casting < 0) {
         goto error;
@@ -1548,6 +1573,40 @@ should_use_min_scalar(npy_intp narrs, PyArrayObject **arr,
 }
 
 
+/*
+ * Utility function used only in PyArray_ResultType for value-based logic.
+ * See that function for the meaning and contents of the parameters.
+ */
+static PyArray_Descr *
+get_descr_from_cast_or_value(
+        npy_intp i,
+        PyArrayObject *arrs[],
+        npy_intp ndtypes,
+        PyArray_Descr *descriptor,
+        PyArray_DTypeMeta *common_dtype)
+{
+    PyArray_Descr *curr;
+    if (NPY_LIKELY(i < ndtypes ||
+            !(PyArray_FLAGS(arrs[i-ndtypes]) & _NPY_ARRAY_WAS_PYSCALAR))) {
+        curr = PyArray_CastDescrToDType(descriptor, common_dtype);
+    }
+    else {
+        /*
+         * Unlike `PyArray_CastToDTypeAndPromoteDescriptors`, deal with
+         * plain Python values "graciously". This recovers the original
+         * value the long route, but it should almost never happen...
+         */
+        PyObject *tmp = PyArray_GETITEM(arrs[i-ndtypes],
+                                        PyArray_BYTES(arrs[i-ndtypes]));
+        if (tmp == NULL) {
+            return NULL;
+        }
+        curr = NPY_DT_CALL_discover_descr_from_pyobject(common_dtype, tmp);
+        Py_DECREF(tmp);
+    }
+    return curr;
+}
+
 /*NUMPY_API
  *
  * Produces the result type of a bunch of inputs, using the same rules
@@ -1649,7 +1708,7 @@ PyArray_ResultType(
         }
         Py_INCREF(all_DTypes[i_all]);
         /*
-         * Leave the decriptor empty, if we need it, we will have to go
+         * Leave the descriptor empty, if we need it, we will have to go
          * to more extreme lengths unfortunately.
          */
         all_descriptors[i_all] = NULL;
@@ -1684,28 +1743,15 @@ PyArray_ResultType(
         result = NPY_DT_CALL_default_descr(common_dtype);
     }
     else {
-        result = PyArray_CastDescrToDType(all_descriptors[0], common_dtype);
+        result = get_descr_from_cast_or_value(
+                    0, arrs, ndtypes, all_descriptors[0], common_dtype);
+        if (result == NULL) {
+            goto error;
+        }
 
         for (npy_intp i = 1; i < ndtypes+narrs; i++) {
-            PyArray_Descr *curr;
-            if (NPY_LIKELY(i < ndtypes ||
-                    !(PyArray_FLAGS(arrs[i-ndtypes]) & _NPY_ARRAY_WAS_PYSCALAR))) {
-                curr = PyArray_CastDescrToDType(all_descriptors[i], common_dtype);
-            }
-            else {
-                /*
-                 * Unlike `PyArray_CastToDTypeAndPromoteDescriptors` deal with
-                 * plain Python values "graciously". This recovers the original
-                 * value the long route, but it should almost never happen...
-                 */
-                PyObject *tmp = PyArray_GETITEM(
-                        arrs[i-ndtypes], PyArray_BYTES(arrs[i-ndtypes]));
-                if (tmp == NULL) {
-                    goto error;
-                }
-                curr = NPY_DT_CALL_discover_descr_from_pyobject(common_dtype, tmp);
-                Py_DECREF(tmp);
-            }
+            PyArray_Descr *curr = get_descr_from_cast_or_value(
+                    i, arrs, ndtypes, all_descriptors[i], common_dtype);
             if (curr == NULL) {
                 goto error;
             }
@@ -2098,7 +2144,7 @@ PyArray_ObjectType(PyObject *op, int minimum_type)
  * This function is only used in one place within NumPy and should
  * generally be avoided. It is provided mainly for backward compatibility.
  *
- * The user of the function has to free the returned array.
+ * The user of the function has to free the returned array with PyDataMem_FREE.
  */
 NPY_NO_EXPORT PyArrayObject **
 PyArray_ConvertToCommonType(PyObject *op, int *retn)
@@ -2243,7 +2289,7 @@ PyArray_AddCastingImplementation(PyBoundArrayMethodObject *meth)
  * Add a new casting implementation using a PyArrayMethod_Spec.
  *
  * @param spec
- * @param private If private, allow slots not publically exposed.
+ * @param private If private, allow slots not publicly exposed.
  * @return 0 on success -1 on failure
  */
 NPY_NO_EXPORT int
@@ -2268,7 +2314,8 @@ legacy_same_dtype_resolve_descriptors(
         PyArrayMethodObject *NPY_UNUSED(self),
         PyArray_DTypeMeta *NPY_UNUSED(dtypes[2]),
         PyArray_Descr *given_descrs[2],
-        PyArray_Descr *loop_descrs[2])
+        PyArray_Descr *loop_descrs[2],
+        npy_intp *view_offset)
 {
     Py_INCREF(given_descrs[0]);
     loop_descrs[0] = given_descrs[0];
@@ -2294,7 +2341,8 @@ legacy_same_dtype_resolve_descriptors(
      */
     if (PyDataType_ISNOTSWAPPED(loop_descrs[0]) ==
                 PyDataType_ISNOTSWAPPED(loop_descrs[1])) {
-        return NPY_NO_CASTING | _NPY_CAST_IS_VIEW;
+        *view_offset = 0;
+        return NPY_NO_CASTING;
     }
     return NPY_EQUIV_CASTING;
 }
@@ -2333,7 +2381,8 @@ simple_cast_resolve_descriptors(
         PyArrayMethodObject *self,
         PyArray_DTypeMeta *dtypes[2],
         PyArray_Descr *given_descrs[2],
-        PyArray_Descr *loop_descrs[2])
+        PyArray_Descr *loop_descrs[2],
+        npy_intp *view_offset)
 {
     assert(NPY_DT_is_legacy(dtypes[0]) && NPY_DT_is_legacy(dtypes[1]));
 
@@ -2357,7 +2406,8 @@ simple_cast_resolve_descriptors(
     }
     if (PyDataType_ISNOTSWAPPED(loop_descrs[0]) ==
             PyDataType_ISNOTSWAPPED(loop_descrs[1])) {
-        return NPY_NO_CASTING | _NPY_CAST_IS_VIEW;
+        *view_offset = 0;
+        return NPY_NO_CASTING;
     }
     return NPY_EQUIV_CASTING;
 }
@@ -2408,7 +2458,7 @@ get_byteswap_loop(
 NPY_NO_EXPORT int
 complex_to_noncomplex_get_loop(
         PyArrayMethod_Context *context,
-        int aligned, int move_references, npy_intp *strides,
+        int aligned, int move_references, const npy_intp *strides,
         PyArrayMethod_StridedLoop **out_loop, NpyAuxData **out_transferdata,
         NPY_ARRAYMETHOD_FLAGS *flags)
 {
@@ -2551,7 +2601,8 @@ cast_to_string_resolve_descriptors(
         PyArrayMethodObject *self,
         PyArray_DTypeMeta *dtypes[2],
         PyArray_Descr *given_descrs[2],
-        PyArray_Descr *loop_descrs[2])
+        PyArray_Descr *loop_descrs[2],
+        npy_intp *NPY_UNUSED(view_offset))
 {
     /*
      * NOTE: The following code used to be part of PyArray_AdaptFlexibleDType
@@ -2702,7 +2753,8 @@ string_to_string_resolve_descriptors(
         PyArrayMethodObject *NPY_UNUSED(self),
         PyArray_DTypeMeta *NPY_UNUSED(dtypes[2]),
         PyArray_Descr *given_descrs[2],
-        PyArray_Descr *loop_descrs[2])
+        PyArray_Descr *loop_descrs[2],
+        npy_intp *view_offset)
 {
     Py_INCREF(given_descrs[0]);
     loop_descrs[0] = given_descrs[0];
@@ -2718,26 +2770,36 @@ string_to_string_resolve_descriptors(
         loop_descrs[1] = given_descrs[1];
     }
 
-    if (loop_descrs[0]->elsize == loop_descrs[1]->elsize) {
-        if (PyDataType_ISNOTSWAPPED(loop_descrs[0]) ==
-                PyDataType_ISNOTSWAPPED(loop_descrs[1])) {
-            return NPY_NO_CASTING | _NPY_CAST_IS_VIEW;
+    if (loop_descrs[0]->elsize < loop_descrs[1]->elsize) {
+        /* New string is longer: safe but cannot be a view */
+        return NPY_SAFE_CASTING;
+    }
+    else {
+        /* New string fits into old: if the byte-order matches can be a view */
+        int not_swapped = (PyDataType_ISNOTSWAPPED(loop_descrs[0])
+                           == PyDataType_ISNOTSWAPPED(loop_descrs[1]));
+        if (not_swapped) {
+            *view_offset = 0;
+        }
+
+        if (loop_descrs[0]->elsize > loop_descrs[1]->elsize) {
+            return NPY_SAME_KIND_CASTING;
+        }
+        /* The strings have the same length: */
+        if (not_swapped) {
+            return NPY_NO_CASTING;
         }
         else {
             return NPY_EQUIV_CASTING;
         }
     }
-    else if (loop_descrs[0]->elsize <= loop_descrs[1]->elsize) {
-        return NPY_SAFE_CASTING;
-    }
-    return NPY_SAME_KIND_CASTING;
 }
 
 
 NPY_NO_EXPORT int
 string_to_string_get_loop(
         PyArrayMethod_Context *context,
-        int aligned, int NPY_UNUSED(move_references), npy_intp *strides,
+        int aligned, int NPY_UNUSED(move_references), const npy_intp *strides,
         PyArrayMethod_StridedLoop **out_loop, NpyAuxData **out_transferdata,
         NPY_ARRAYMETHOD_FLAGS *flags)
 {
@@ -2845,7 +2907,8 @@ PyArray_InitializeStringCasts(void)
  */
 static NPY_CASTING
 cast_to_void_dtype_class(
-        PyArray_Descr **given_descrs, PyArray_Descr **loop_descrs)
+        PyArray_Descr **given_descrs, PyArray_Descr **loop_descrs,
+        npy_intp *view_offset)
 {
     /* `dtype="V"` means unstructured currently (compare final path) */
     loop_descrs[1] = PyArray_DescrNewFromType(NPY_VOID);
@@ -2855,11 +2918,13 @@ cast_to_void_dtype_class(
     loop_descrs[1]->elsize = given_descrs[0]->elsize;
     Py_INCREF(given_descrs[0]);
     loop_descrs[0] = given_descrs[0];
+
+    *view_offset = 0;
     if (loop_descrs[0]->type_num == NPY_VOID &&
             loop_descrs[0]->subarray == NULL && loop_descrs[1]->names == NULL) {
-        return NPY_NO_CASTING | _NPY_CAST_IS_VIEW;
+        return NPY_NO_CASTING;
     }
-    return NPY_SAFE_CASTING | _NPY_CAST_IS_VIEW;
+    return NPY_SAFE_CASTING;
 }
 
 
@@ -2868,12 +2933,13 @@ nonstructured_to_structured_resolve_descriptors(
         PyArrayMethodObject *NPY_UNUSED(self),
         PyArray_DTypeMeta *NPY_UNUSED(dtypes[2]),
         PyArray_Descr *given_descrs[2],
-        PyArray_Descr *loop_descrs[2])
+        PyArray_Descr *loop_descrs[2],
+        npy_intp *view_offset)
 {
     NPY_CASTING casting;
 
     if (given_descrs[1] == NULL) {
-        return cast_to_void_dtype_class(given_descrs, loop_descrs);
+        return cast_to_void_dtype_class(given_descrs, loop_descrs, view_offset);
     }
 
     if (given_descrs[1]->subarray != NULL) {
@@ -2882,11 +2948,17 @@ nonstructured_to_structured_resolve_descriptors(
          * possible to allow a view if the field has exactly one element.
          */
         casting = NPY_SAFE_CASTING;
+        npy_intp sub_view_offset = NPY_MIN_INTP;
         /* Subarray dtype */
-        NPY_CASTING base_casting = PyArray_GetCastSafety(
-                given_descrs[0], given_descrs[1]->subarray->base, NULL);
+        NPY_CASTING base_casting = PyArray_GetCastInfo(
+                given_descrs[0], given_descrs[1]->subarray->base, NULL,
+                &sub_view_offset);
         if (base_casting < 0) {
             return -1;
+        }
+        if (given_descrs[1]->elsize == given_descrs[1]->subarray->base->elsize) {
+            /* A single field, view is OK if sub-view is */
+            *view_offset = sub_view_offset;
         }
         casting = PyArray_MinCastSafety(casting, base_casting);
     }
@@ -2899,21 +2971,32 @@ nonstructured_to_structured_resolve_descriptors(
         else {
             /* Considered at most unsafe casting (but this could be changed) */
             casting = NPY_UNSAFE_CASTING;
-            if (PyTuple_Size(given_descrs[1]->names) == 1) {
-                /* A view may be acceptable */
-                casting |= _NPY_CAST_IS_VIEW;
-            }
 
             Py_ssize_t pos = 0;
             PyObject *key, *tuple;
             while (PyDict_Next(given_descrs[1]->fields, &pos, &key, &tuple)) {
                 PyArray_Descr *field_descr = (PyArray_Descr *)PyTuple_GET_ITEM(tuple, 0);
-                NPY_CASTING field_casting = PyArray_GetCastSafety(
-                        given_descrs[0], field_descr, NULL);
+                npy_intp field_view_off = NPY_MIN_INTP;
+                NPY_CASTING field_casting = PyArray_GetCastInfo(
+                        given_descrs[0], field_descr, NULL, &field_view_off);
                 casting = PyArray_MinCastSafety(casting, field_casting);
                 if (casting < 0) {
                     return -1;
                 }
+                if (field_view_off != NPY_MIN_INTP) {
+                    npy_intp to_off = PyLong_AsSsize_t(PyTuple_GET_ITEM(tuple, 1));
+                    if (error_converting(to_off)) {
+                        return -1;
+                    }
+                    *view_offset = field_view_off - to_off;
+                }
+            }
+            if (PyTuple_Size(given_descrs[1]->names) != 1) {
+                /*
+                 * Assume that a view is impossible when there is more than one
+                 * field.  (Fields could overlap, but that seems weird...)
+                 */
+                *view_offset = NPY_MIN_INTP;
             }
         }
     }
@@ -2923,15 +3006,20 @@ nonstructured_to_structured_resolve_descriptors(
                 !PyDataType_REFCHK(given_descrs[0])) {
             /*
              * A simple view, at the moment considered "safe" (the refcheck is
-             * probably not necessary, but more future proof
+             * probably not necessary, but more future proof)
              */
-            casting = NPY_SAFE_CASTING | _NPY_CAST_IS_VIEW;
+            *view_offset = 0;
+            casting = NPY_SAFE_CASTING;
         }
         else if (given_descrs[0]->elsize <= given_descrs[1]->elsize) {
             casting = NPY_SAFE_CASTING;
         }
         else {
             casting = NPY_UNSAFE_CASTING;
+            /* new elsize is smaller so a view is OK (reject refs for now) */
+            if (!PyDataType_REFCHK(given_descrs[0])) {
+                *view_offset = 0;
+            }
         }
     }
 
@@ -2960,7 +3048,7 @@ static int
 nonstructured_to_structured_get_loop(
         PyArrayMethod_Context *context,
         int aligned, int move_references,
-        npy_intp *strides,
+        const npy_intp *strides,
         PyArrayMethod_StridedLoop **out_loop,
         NpyAuxData **out_transferdata,
         NPY_ARRAYMETHOD_FLAGS *flags)
@@ -3027,6 +3115,8 @@ PyArray_GetGenericToVoidCastingImpl(void)
     method->casting = -1;
     method->resolve_descriptors = &nonstructured_to_structured_resolve_descriptors;
     method->get_strided_loop = &nonstructured_to_structured_get_loop;
+    method->nin = 1;
+    method->nout = 1;
 
     return (PyObject *)method;
 }
@@ -3037,12 +3127,19 @@ structured_to_nonstructured_resolve_descriptors(
         PyArrayMethodObject *NPY_UNUSED(self),
         PyArray_DTypeMeta *dtypes[2],
         PyArray_Descr *given_descrs[2],
-        PyArray_Descr *loop_descrs[2])
+        PyArray_Descr *loop_descrs[2],
+        npy_intp *view_offset)
 {
     PyArray_Descr *base_descr;
+    /* The structured part may allow a view (and have its own offset): */
+    npy_intp struct_view_offset = NPY_MIN_INTP;
 
     if (given_descrs[0]->subarray != NULL) {
         base_descr = given_descrs[0]->subarray->base;
+        /* A view is possible if the subarray has exactly one element: */
+        if (given_descrs[0]->elsize == given_descrs[0]->subarray->base->elsize) {
+            struct_view_offset = 0;
+        }
     }
     else if (given_descrs[0]->names != NULL) {
         if (PyTuple_Size(given_descrs[0]->names) != 1) {
@@ -3052,6 +3149,10 @@ structured_to_nonstructured_resolve_descriptors(
         PyObject *key = PyTuple_GetItem(given_descrs[0]->names, 0);
         PyObject *base_tup = PyDict_GetItem(given_descrs[0]->fields, key);
         base_descr = (PyArray_Descr *)PyTuple_GET_ITEM(base_tup, 0);
+        struct_view_offset = PyLong_AsSsize_t(PyTuple_GET_ITEM(base_tup, 1));
+        if (error_converting(struct_view_offset)) {
+            return -1;
+        }
     }
     else {
         /*
@@ -3059,20 +3160,29 @@ structured_to_nonstructured_resolve_descriptors(
          * at this time they go back to legacy behaviour using getitem/setitem.
          */
         base_descr = NULL;
+        struct_view_offset = 0;
     }
 
     /*
-     * The cast is always considered unsafe, so the PyArray_GetCastSafety
-     * result currently does not matter.
+     * The cast is always considered unsafe, so the PyArray_GetCastInfo
+     * result currently only matters for the view_offset.
      */
-    if (base_descr != NULL && PyArray_GetCastSafety(
-            base_descr, given_descrs[1], dtypes[1]) < 0) {
+    npy_intp base_view_offset = NPY_MIN_INTP;
+    if (base_descr != NULL && PyArray_GetCastInfo(
+            base_descr, given_descrs[1], dtypes[1], &base_view_offset) < 0) {
         return -1;
+    }
+    if (base_view_offset != NPY_MIN_INTP
+            && struct_view_offset != NPY_MIN_INTP) {
+        *view_offset = base_view_offset + struct_view_offset;
     }
 
     /* Void dtypes always do the full cast. */
     if (given_descrs[1] == NULL) {
         loop_descrs[1] = NPY_DT_CALL_default_descr(dtypes[1]);
+        if (loop_descrs[1] == NULL) {
+            return -1;
+        }
         /*
          * Special case strings here, it should be useless (and only actually
          * work for empty arrays).  Possibly this should simply raise for
@@ -3100,7 +3210,7 @@ static int
 structured_to_nonstructured_get_loop(
         PyArrayMethod_Context *context,
         int aligned, int move_references,
-        npy_intp *strides,
+        const npy_intp *strides,
         PyArrayMethod_StridedLoop **out_loop,
         NpyAuxData **out_transferdata,
         NPY_ARRAYMETHOD_FLAGS *flags)
@@ -3166,6 +3276,8 @@ PyArray_GetVoidToGenericCastingImpl(void)
     method->casting = -1;
     method->resolve_descriptors = &structured_to_nonstructured_resolve_descriptors;
     method->get_strided_loop = &structured_to_nonstructured_get_loop;
+    method->nin = 1;
+    method->nout = 1;
 
     return (PyObject *)method;
 }
@@ -3180,16 +3292,19 @@ PyArray_GetVoidToGenericCastingImpl(void)
  *       implementations on the dtype, to avoid duplicate work.
  */
 static NPY_CASTING
-can_cast_fields_safety(PyArray_Descr *from, PyArray_Descr *to)
+can_cast_fields_safety(
+        PyArray_Descr *from, PyArray_Descr *to, npy_intp *view_offset)
 {
-    NPY_CASTING casting = NPY_NO_CASTING | _NPY_CAST_IS_VIEW;
-
     Py_ssize_t field_count = PyTuple_Size(from->names);
     if (field_count != PyTuple_Size(to->names)) {
         /* TODO: This should be rejected! */
         return NPY_UNSAFE_CASTING;
     }
+
+    NPY_CASTING casting = NPY_NO_CASTING;
+    *view_offset = 0;  /* if there are no fields, a view is OK. */
     for (Py_ssize_t i = 0; i < field_count; i++) {
+        npy_intp field_view_off = NPY_MIN_INTP;
         PyObject *from_key = PyTuple_GET_ITEM(from->names, i);
         PyObject *from_tup = PyDict_GetItemWithError(from->fields, from_key);
         if (from_tup == NULL) {
@@ -3208,15 +3323,40 @@ can_cast_fields_safety(PyArray_Descr *from, PyArray_Descr *to)
         }
         PyArray_Descr *to_base = (PyArray_Descr*)PyTuple_GET_ITEM(to_tup, 0);
 
-        NPY_CASTING field_casting = PyArray_GetCastSafety(from_base, to_base, NULL);
+        NPY_CASTING field_casting = PyArray_GetCastInfo(
+                from_base, to_base, NULL, &field_view_off);
         if (field_casting < 0) {
             return -1;
         }
         casting = PyArray_MinCastSafety(casting, field_casting);
+
+        /* Adjust the "view offset" by the field offsets: */
+        if (field_view_off != NPY_MIN_INTP) {
+            npy_intp to_off = PyLong_AsSsize_t(PyTuple_GET_ITEM(to_tup, 1));
+            if (error_converting(to_off)) {
+                return -1;
+            }
+            npy_intp from_off = PyLong_AsSsize_t(PyTuple_GET_ITEM(from_tup, 1));
+            if (error_converting(from_off)) {
+                return -1;
+            }
+            field_view_off = field_view_off - to_off + from_off;
+        }
+
+        /*
+         * If there is one field, use its field offset.  After that propagate
+         * the view offset if they match and set to "invalid" if not.
+         */
+        if (i == 0) {
+            *view_offset = field_view_off;
+        }
+        else if (*view_offset != field_view_off) {
+            *view_offset = NPY_MIN_INTP;
+        }
     }
-    if (!(casting & _NPY_CAST_IS_VIEW)) {
-        assert((casting & ~_NPY_CAST_IS_VIEW) != NPY_NO_CASTING);
-        return casting;
+    if (*view_offset != 0) {
+        /* If the calculated `view_offset` is not 0, it can only be "equiv" */
+        return PyArray_MinCastSafety(casting, NPY_EQUIV_CASTING);
     }
 
     /*
@@ -3256,38 +3396,42 @@ void_to_void_resolve_descriptors(
         PyArrayMethodObject *self,
         PyArray_DTypeMeta *dtypes[2],
         PyArray_Descr *given_descrs[2],
-        PyArray_Descr *loop_descrs[2])
+        PyArray_Descr *loop_descrs[2],
+        npy_intp *view_offset)
 {
     NPY_CASTING casting;
 
     if (given_descrs[1] == NULL) {
         /* This is weird, since it doesn't return the original descr, but... */
-        return cast_to_void_dtype_class(given_descrs, loop_descrs);
+        return cast_to_void_dtype_class(given_descrs, loop_descrs, view_offset);
     }
 
     if (given_descrs[0]->names != NULL && given_descrs[1]->names != NULL) {
         /* From structured to structured, need to check fields */
-        casting = can_cast_fields_safety(given_descrs[0], given_descrs[1]);
+        casting = can_cast_fields_safety(
+                given_descrs[0], given_descrs[1], view_offset);
     }
     else if (given_descrs[0]->names != NULL) {
         return structured_to_nonstructured_resolve_descriptors(
-                self, dtypes, given_descrs, loop_descrs);
+                self, dtypes, given_descrs, loop_descrs, view_offset);
     }
     else if (given_descrs[1]->names != NULL) {
         return nonstructured_to_structured_resolve_descriptors(
-                self, dtypes, given_descrs, loop_descrs);
+                self, dtypes, given_descrs, loop_descrs, view_offset);
     }
     else if (given_descrs[0]->subarray == NULL &&
                 given_descrs[1]->subarray == NULL) {
         /* Both are plain void dtypes */
         if (given_descrs[0]->elsize == given_descrs[1]->elsize) {
-            casting = NPY_NO_CASTING | _NPY_CAST_IS_VIEW;
+            casting = NPY_NO_CASTING;
+            *view_offset = 0;
         }
         else if (given_descrs[0]->elsize < given_descrs[1]->elsize) {
             casting = NPY_SAFE_CASTING;
         }
         else {
             casting = NPY_SAME_KIND_CASTING;
+            *view_offset = 0;
         }
     }
     else {
@@ -3301,20 +3445,51 @@ void_to_void_resolve_descriptors(
 
         /* If the shapes do not match, this is at most an unsafe cast */
         casting = NPY_UNSAFE_CASTING;
+        /*
+         * We can use a view in two cases:
+         * 1. The shapes and elsizes matches, so any view offset applies to
+         *    each element of the subarray identically.
+         *    (in practice this probably implies the `view_offset` will be 0)
+         * 2. There is exactly one element and the subarray has no effect
+         *    (can be tested by checking if the itemsizes of the base matches)
+         */
+        npy_bool subarray_layout_supports_view = NPY_FALSE;
         if (from_sub && to_sub) {
             int res = PyObject_RichCompareBool(from_sub->shape, to_sub->shape, Py_EQ);
             if (res < 0) {
                 return -1;
             }
             else if (res) {
-                /* Both are subarrays and the shape matches */
-                casting = NPY_NO_CASTING | _NPY_CAST_IS_VIEW;
+                /* Both are subarrays and the shape matches, could be no cast */
+                casting = NPY_NO_CASTING;
+                /* May be a view if there is one element or elsizes match */
+                if (from_sub->base->elsize == to_sub->base->elsize
+                        || given_descrs[0]->elsize == from_sub->base->elsize) {
+                    subarray_layout_supports_view = NPY_TRUE;
+                }
+            }
+        }
+        else if (from_sub) {
+            /* May use a view if "from" has only a single element: */
+            if (given_descrs[0]->elsize == from_sub->base->elsize) {
+                subarray_layout_supports_view = NPY_TRUE;
+            }
+        }
+        else {
+            /* May use a view if "from" has only a single element: */
+            if (given_descrs[1]->elsize == to_sub->base->elsize) {
+                subarray_layout_supports_view = NPY_TRUE;
             }
         }
 
         PyArray_Descr *from_base = (from_sub == NULL) ? given_descrs[0] : from_sub->base;
         PyArray_Descr *to_base = (to_sub == NULL) ? given_descrs[1] : to_sub->base;
-        NPY_CASTING field_casting = PyArray_GetCastSafety(from_base, to_base, NULL);
+        /* An offset for  */
+        NPY_CASTING field_casting = PyArray_GetCastInfo(
+                from_base, to_base, NULL, view_offset);
+        if (!subarray_layout_supports_view) {
+            *view_offset = NPY_MIN_INTP;
+        }
         if (field_casting < 0) {
             return -1;
         }
@@ -3335,7 +3510,7 @@ NPY_NO_EXPORT int
 void_to_void_get_loop(
         PyArrayMethod_Context *context,
         int aligned, int move_references,
-        npy_intp *strides,
+        const npy_intp *strides,
         PyArrayMethod_StridedLoop **out_loop,
         NpyAuxData **out_transferdata,
         NPY_ARRAYMETHOD_FLAGS *flags)
@@ -3422,7 +3597,8 @@ object_to_any_resolve_descriptors(
         PyArrayMethodObject *NPY_UNUSED(self),
         PyArray_DTypeMeta *dtypes[2],
         PyArray_Descr *given_descrs[2],
-        PyArray_Descr *loop_descrs[2])
+        PyArray_Descr *loop_descrs[2],
+        npy_intp *NPY_UNUSED(view_offset))
 {
     if (given_descrs[1] == NULL) {
         /*
@@ -3486,13 +3662,14 @@ PyArray_GetObjectToGenericCastingImpl(void)
 
 
 
-/* Any object object is simple (could even use the default) */
+/* Any object is simple (could even use the default) */
 static NPY_CASTING
 any_to_object_resolve_descriptors(
         PyArrayMethodObject *NPY_UNUSED(self),
         PyArray_DTypeMeta *dtypes[2],
         PyArray_Descr *given_descrs[2],
-        PyArray_Descr *loop_descrs[2])
+        PyArray_Descr *loop_descrs[2],
+        npy_intp *NPY_UNUSED(view_offset))
 {
     if (given_descrs[1] == NULL) {
         loop_descrs[1] = NPY_DT_CALL_default_descr(dtypes[1]);
@@ -3549,7 +3726,7 @@ static int
 object_to_object_get_loop(
         PyArrayMethod_Context *NPY_UNUSED(context),
         int NPY_UNUSED(aligned), int move_references,
-        npy_intp *NPY_UNUSED(strides),
+        const npy_intp *NPY_UNUSED(strides),
         PyArrayMethod_StridedLoop **out_loop,
         NpyAuxData **out_transferdata,
         NPY_ARRAYMETHOD_FLAGS *flags)
@@ -3570,10 +3747,6 @@ object_to_object_get_loop(
 static int
 PyArray_InitializeObjectToObjectCast(void)
 {
-    /*
-     * The object dtype does not support byte order changes, so its cast
-     * is always a direct view.
-     */
     PyArray_DTypeMeta *Object = PyArray_DTypeFromTypeNum(NPY_OBJECT);
     PyArray_DTypeMeta *dtypes[2] = {Object, Object};
     PyType_Slot slots[] = {
@@ -3581,7 +3754,7 @@ PyArray_InitializeObjectToObjectCast(void)
             {0, NULL}};
     PyArrayMethod_Spec spec = {
             .name = "object_to_object_cast",
-            .casting = NPY_NO_CASTING | _NPY_CAST_IS_VIEW,
+            .casting = NPY_NO_CASTING,
             .nin = 1,
             .nout = 1,
             .flags = NPY_METH_REQUIRES_PYAPI | NPY_METH_SUPPORTS_UNALIGNED,

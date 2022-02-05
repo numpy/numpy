@@ -101,7 +101,7 @@ static PyObject *
 legacy_dtype_default_new(PyArray_DTypeMeta *self,
         PyObject *args, PyObject *kwargs)
 {
-    /* TODO: This should allow endianess and possibly metadata */
+    /* TODO: This should allow endianness and possibly metadata */
     if (NPY_DT_is_parametric(self)) {
         /* reject parametric ones since we would need to get unit, etc. info */
         PyErr_Format(PyExc_TypeError,
@@ -153,6 +153,9 @@ string_discover_descr_from_pyobject(
                     "string to large to store inside array.");
         }
         PyArray_Descr *res = PyArray_DescrNewFromType(cls->type_num);
+        if (res == NULL) {
+            return NULL;
+        }
         res->elsize = (int)itemsize;
         return res;
     }
@@ -171,10 +174,15 @@ void_discover_descr_from_pyobject(
     }
     if (PyBytes_Check(obj)) {
         PyArray_Descr *descr = PyArray_DescrNewFromType(NPY_VOID);
+        if (descr == NULL) {
+            return NULL;
+        }
         Py_ssize_t itemsize = PyBytes_Size(obj);
         if (itemsize > NPY_MAX_INT) {
             PyErr_SetString(PyExc_TypeError,
                     "byte-like to large to store inside array.");
+            Py_DECREF(descr);
+            return NULL;
         }
         descr->elsize = (int)itemsize;
         return descr;
@@ -290,7 +298,7 @@ void_common_instance(PyArray_Descr *descr1, PyArray_Descr *descr2)
     return descr1;
 }
 
-static int
+NPY_NO_EXPORT int
 python_builtins_are_known_scalar_types(
         PyArray_DTypeMeta *NPY_UNUSED(cls), PyTypeObject *pytype)
 {

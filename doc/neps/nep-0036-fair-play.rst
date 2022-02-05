@@ -126,7 +126,7 @@ Fair play rules
    were designed to help external packages interact more easily with
    NumPy.  E.g., the latter allows objects from foreign libraries to
    pass through NumPy.  We actively encourage using any of
-   these "officialy sanctioned" mechanisms for overriding or
+   these "officially sanctioned" mechanisms for overriding or
    interacting with NumPy.
 
    If these mechanisms are deemed insufficient, please start a

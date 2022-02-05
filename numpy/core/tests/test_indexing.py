@@ -1332,7 +1332,7 @@ class TestBooleanIndexing:
 
 
 class TestArrayToIndexDeprecation:
-    """Creating an an index from array not 0-D is an error.
+    """Creating an index from array not 0-D is an error.
 
     """
     def test_array_to_index_error(self):

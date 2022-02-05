@@ -41,6 +41,7 @@ API_FILES = [join('multiarray', 'alloc.c'),
              join('multiarray', 'datetime_busdaycal.c'),
              join('multiarray', 'datetime_strings.c'),
              join('multiarray', 'descriptor.c'),
+             join('multiarray', 'dlpack.c'),
              join('multiarray', 'dtypemeta.c'),
              join('multiarray', 'einsum.c.src'),
              join('multiarray', 'flagsobject.c'),
@@ -89,17 +90,6 @@ class StealRef:
             return ' '.join('NPY_STEALS_REF_TO_ARG(%d)' % x for x in self.arg)
         except TypeError:
             return 'NPY_STEALS_REF_TO_ARG(%d)' % self.arg
-
-
-class NonNull:
-    def __init__(self, arg):
-        self.arg = arg # counting from 1
-
-    def __str__(self):
-        try:
-            return ' '.join('NPY_GCC_NONNULL(%d)' % x for x in self.arg)
-        except TypeError:
-            return 'NPY_GCC_NONNULL(%d)' % self.arg
 
 
 class Function:

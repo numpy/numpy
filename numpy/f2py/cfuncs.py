@@ -338,16 +338,16 @@ cppmacros['TRYPYARRAYTEMPLATE'] = """\
         if (!(arr=(PyArrayObject *)obj)) {fprintf(stderr,\"TRYPYARRAYTEMPLATE:\");PRINTPYOBJERR(obj);return 0;}\\
         if (PyArray_DESCR(arr)->type==typecode)  {*(ctype *)(PyArray_DATA(arr))=*v; return 1;}\\
         switch (PyArray_TYPE(arr)) {\\
-                case NPY_DOUBLE: *(double *)(PyArray_DATA(arr))=*v; break;\\
-                case NPY_INT: *(int *)(PyArray_DATA(arr))=*v; break;\\
-                case NPY_LONG: *(long *)(PyArray_DATA(arr))=*v; break;\\
-                case NPY_FLOAT: *(float *)(PyArray_DATA(arr))=*v; break;\\
-                case NPY_CDOUBLE: *(double *)(PyArray_DATA(arr))=*v; break;\\
-                case NPY_CFLOAT: *(float *)(PyArray_DATA(arr))=*v; break;\\
+                case NPY_DOUBLE: *(npy_double *)(PyArray_DATA(arr))=*v; break;\\
+                case NPY_INT: *(npy_int *)(PyArray_DATA(arr))=*v; break;\\
+                case NPY_LONG: *(npy_long *)(PyArray_DATA(arr))=*v; break;\\
+                case NPY_FLOAT: *(npy_float *)(PyArray_DATA(arr))=*v; break;\\
+                case NPY_CDOUBLE: *(npy_double *)(PyArray_DATA(arr))=*v; break;\\
+                case NPY_CFLOAT: *(npy_float *)(PyArray_DATA(arr))=*v; break;\\
                 case NPY_BOOL: *(npy_bool *)(PyArray_DATA(arr))=(*v!=0); break;\\
-                case NPY_UBYTE: *(unsigned char *)(PyArray_DATA(arr))=*v; break;\\
-                case NPY_BYTE: *(signed char *)(PyArray_DATA(arr))=*v; break;\\
-                case NPY_SHORT: *(short *)(PyArray_DATA(arr))=*v; break;\\
+                case NPY_UBYTE: *(npy_ubyte *)(PyArray_DATA(arr))=*v; break;\\
+                case NPY_BYTE: *(npy_byte *)(PyArray_DATA(arr))=*v; break;\\
+                case NPY_SHORT: *(npy_short *)(PyArray_DATA(arr))=*v; break;\\
                 case NPY_USHORT: *(npy_ushort *)(PyArray_DATA(arr))=*v; break;\\
                 case NPY_UINT: *(npy_uint *)(PyArray_DATA(arr))=*v; break;\\
                 case NPY_ULONG: *(npy_ulong *)(PyArray_DATA(arr))=*v; break;\\
@@ -375,15 +375,19 @@ cppmacros['TRYCOMPLEXPYARRAYTEMPLATE'] = """\
             return 1;\\
         }\\
         switch (PyArray_TYPE(arr)) {\\
-                case NPY_CDOUBLE: *(double *)(PyArray_DATA(arr))=(*v).r;*(double *)(PyArray_DATA(arr)+sizeof(double))=(*v).i;break;\\
-                case NPY_CFLOAT: *(float *)(PyArray_DATA(arr))=(*v).r;*(float *)(PyArray_DATA(arr)+sizeof(float))=(*v).i;break;\\
-                case NPY_DOUBLE: *(double *)(PyArray_DATA(arr))=(*v).r; break;\\
-                case NPY_LONG: *(long *)(PyArray_DATA(arr))=(*v).r; break;\\
-                case NPY_FLOAT: *(float *)(PyArray_DATA(arr))=(*v).r; break;\\
-                case NPY_INT: *(int *)(PyArray_DATA(arr))=(*v).r; break;\\
-                case NPY_SHORT: *(short *)(PyArray_DATA(arr))=(*v).r; break;\\
-                case NPY_UBYTE: *(unsigned char *)(PyArray_DATA(arr))=(*v).r; break;\\
-                case NPY_BYTE: *(signed char *)(PyArray_DATA(arr))=(*v).r; break;\\
+                case NPY_CDOUBLE: *(npy_double *)(PyArray_DATA(arr))=(*v).r;\\
+                                  *(npy_double *)(PyArray_DATA(arr)+sizeof(npy_double))=(*v).i;\\
+                                  break;\\
+                case NPY_CFLOAT: *(npy_float *)(PyArray_DATA(arr))=(*v).r;\\
+                                 *(npy_float *)(PyArray_DATA(arr)+sizeof(npy_float))=(*v).i;\\
+                                 break;\\
+                case NPY_DOUBLE: *(npy_double *)(PyArray_DATA(arr))=(*v).r; break;\\
+                case NPY_LONG: *(npy_long *)(PyArray_DATA(arr))=(*v).r; break;\\
+                case NPY_FLOAT: *(npy_float *)(PyArray_DATA(arr))=(*v).r; break;\\
+                case NPY_INT: *(npy_int *)(PyArray_DATA(arr))=(*v).r; break;\\
+                case NPY_SHORT: *(npy_short *)(PyArray_DATA(arr))=(*v).r; break;\\
+                case NPY_UBYTE: *(npy_ubyte *)(PyArray_DATA(arr))=(*v).r; break;\\
+                case NPY_BYTE: *(npy_byte *)(PyArray_DATA(arr))=(*v).r; break;\\
                 case NPY_BOOL: *(npy_bool *)(PyArray_DATA(arr))=((*v).r!=0 && (*v).i!=0); break;\\
                 case NPY_USHORT: *(npy_ushort *)(PyArray_DATA(arr))=(*v).r; break;\\
                 case NPY_UINT: *(npy_uint *)(PyArray_DATA(arr))=(*v).r; break;\\
@@ -391,7 +395,9 @@ cppmacros['TRYCOMPLEXPYARRAYTEMPLATE'] = """\
                 case NPY_LONGLONG: *(npy_longlong *)(PyArray_DATA(arr))=(*v).r; break;\\
                 case NPY_ULONGLONG: *(npy_ulonglong *)(PyArray_DATA(arr))=(*v).r; break;\\
                 case NPY_LONGDOUBLE: *(npy_longdouble *)(PyArray_DATA(arr))=(*v).r; break;\\
-                case NPY_CLONGDOUBLE: *(npy_longdouble *)(PyArray_DATA(arr))=(*v).r;*(npy_longdouble *)(PyArray_DATA(arr)+sizeof(npy_longdouble))=(*v).i;break;\\
+                case NPY_CLONGDOUBLE: *(npy_longdouble *)(PyArray_DATA(arr))=(*v).r;\\
+                                      *(npy_longdouble *)(PyArray_DATA(arr)+sizeof(npy_longdouble))=(*v).i;\\
+                                      break;\\
                 case NPY_OBJECT: PyArray_SETITEM(arr, PyArray_DATA(arr), pyobj_from_complex_ ## ctype ## 1((*v))); break;\\
                 default: return -2;\\
         };\\
@@ -487,7 +493,7 @@ STRINGPADN replaces null values with padding values from the right.
 `to` must have size of at least N bytes.
 
 If the `to[N-1]` has null value, then replace it and all the
-preceeding nulls with the given padding.
+preceding, nulls with the given padding.
 
 STRINGPADN(to, N, PADDING, NULLVALUE) is an inverse operation.
 */
@@ -566,18 +572,20 @@ cppmacros['OLDPYNUM'] = """\
 """
 cppmacros["F2PY_THREAD_LOCAL_DECL"] = """\
 #ifndef F2PY_THREAD_LOCAL_DECL
-#if defined(_MSC_VER) \\
-      || defined(_WIN32) || defined(_WIN64) \\
-      || defined(__MINGW32__) || defined(__MINGW64__)
+#if defined(_MSC_VER)
 #define F2PY_THREAD_LOCAL_DECL __declspec(thread)
+#elif defined(__MINGW32__) || defined(__MINGW64__)
+#define F2PY_THREAD_LOCAL_DECL __thread
 #elif defined(__STDC_VERSION__) \\
       && (__STDC_VERSION__ >= 201112L) \\
       && !defined(__STDC_NO_THREADS__) \\
-      && (!defined(__GLIBC__) || __GLIBC__ > 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ > 12))
+      && (!defined(__GLIBC__) || __GLIBC__ > 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ > 12)) \\
+      && !defined(__OpenBSD__)
 /* __STDC_NO_THREADS__ was first defined in a maintenance release of glibc 2.12,
    see https://lists.gnu.org/archive/html/commit-hurd/2012-07/msg00180.html,
    so `!defined(__STDC_NO_THREADS__)` may give false positive for the existence
-   of `threads.h` when using an older release of glibc 2.12 */
+   of `threads.h` when using an older release of glibc 2.12
+   See gh-19437 for details on OpenBSD */
 #include <threads.h>
 #define F2PY_THREAD_LOCAL_DECL thread_local
 #elif defined(__GNUC__) \\
@@ -839,20 +847,26 @@ int_from_pyobj(int* v, PyObject *obj, const char *errmess)
         return !(*v == -1 && PyErr_Occurred());
     }
 
-    if (PyComplex_Check(obj))
-        tmp = PyObject_GetAttrString(obj,\"real\");
-    else if (PyBytes_Check(obj) || PyUnicode_Check(obj))
-        /*pass*/;
-    else if (PySequence_Check(obj))
-        tmp = PySequence_GetItem(obj, 0);
-    if (tmp) {
+    if (PyComplex_Check(obj)) {
         PyErr_Clear();
+        tmp = PyObject_GetAttrString(obj,\"real\");
+    }
+    else if (PyBytes_Check(obj) || PyUnicode_Check(obj)) {
+        /*pass*/;
+    }
+    else if (PySequence_Check(obj)) {
+        PyErr_Clear();
+        tmp = PySequence_GetItem(obj, 0);
+    }
+
+    if (tmp) {
         if (int_from_pyobj(v, tmp, errmess)) {
             Py_DECREF(tmp);
             return 1;
         }
         Py_DECREF(tmp);
     }
+
     {
         PyObject* err = PyErr_Occurred();
         if (err == NULL) {
@@ -882,15 +896,19 @@ long_from_pyobj(long* v, PyObject *obj, const char *errmess) {
         return !(*v == -1 && PyErr_Occurred());
     }
 
-    if (PyComplex_Check(obj))
+    if (PyComplex_Check(obj)) {
+        PyErr_Clear();
         tmp = PyObject_GetAttrString(obj,\"real\");
-    else if (PyBytes_Check(obj) || PyUnicode_Check(obj))
+    }
+    else if (PyBytes_Check(obj) || PyUnicode_Check(obj)) {
         /*pass*/;
-    else if (PySequence_Check(obj))
-        tmp = PySequence_GetItem(obj,0);
+    }
+    else if (PySequence_Check(obj)) {
+        PyErr_Clear();
+        tmp = PySequence_GetItem(obj, 0);
+    }
 
     if (tmp) {
-        PyErr_Clear();
         if (long_from_pyobj(v, tmp, errmess)) {
             Py_DECREF(tmp);
             return 1;
@@ -928,14 +946,19 @@ long_long_from_pyobj(long_long* v, PyObject *obj, const char *errmess)
         return !(*v == -1 && PyErr_Occurred());
     }
 
-    if (PyComplex_Check(obj))
-        tmp = PyObject_GetAttrString(obj,\"real\");
-    else if (PyBytes_Check(obj) || PyUnicode_Check(obj))
-        /*pass*/;
-    else if (PySequence_Check(obj))
-        tmp = PySequence_GetItem(obj,0);
-    if (tmp) {
+    if (PyComplex_Check(obj)) {
         PyErr_Clear();
+        tmp = PyObject_GetAttrString(obj,\"real\");
+    }
+    else if (PyBytes_Check(obj) || PyUnicode_Check(obj)) {
+        /*pass*/;
+    }
+    else if (PySequence_Check(obj)) {
+        PyErr_Clear();
+        tmp = PySequence_GetItem(obj, 0);
+    }
+
+    if (tmp) {
         if (long_long_from_pyobj(v, tmp, errmess)) {
             Py_DECREF(tmp);
             return 1;
@@ -995,14 +1018,20 @@ double_from_pyobj(double* v, PyObject *obj, const char *errmess)
         Py_DECREF(tmp);
         return !(*v == -1.0 && PyErr_Occurred());
     }
-    if (PyComplex_Check(obj))
-        tmp = PyObject_GetAttrString(obj,\"real\");
-    else if (PyBytes_Check(obj) || PyUnicode_Check(obj))
-        /*pass*/;
-    else if (PySequence_Check(obj))
-        tmp = PySequence_GetItem(obj,0);
-    if (tmp) {
+
+    if (PyComplex_Check(obj)) {
         PyErr_Clear();
+        tmp = PyObject_GetAttrString(obj,\"real\");
+    }
+    else if (PyBytes_Check(obj) || PyUnicode_Check(obj)) {
+        /*pass*/;
+    }
+    else if (PySequence_Check(obj)) {
+        PyErr_Clear();
+        tmp = PySequence_GetItem(obj, 0);
+    }
+
+    if (tmp) {
         if (double_from_pyobj(v,tmp,errmess)) {Py_DECREF(tmp); return 1;}
         Py_DECREF(tmp);
     }

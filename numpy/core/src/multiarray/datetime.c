@@ -13,6 +13,7 @@
 #include <Python.h>
 
 #include "numpy/arrayobject.h"
+#include "numpyos.h"
 
 #include "npy_config.h"
 #include "npy_pycompat.h"
@@ -427,7 +428,7 @@ PyArray_DatetimeStructToDatetime(
 }
 
 /*NUMPY_API
- * Create a timdelta value from a filled timedelta struct and resolution unit.
+ * Create a timedelta value from a filled timedelta struct and resolution unit.
  *
  * TO BE REMOVED - NOT USED INTERNALLY.
  */
@@ -723,11 +724,20 @@ parse_datetime_extended_unit_from_string(char const *str, Py_ssize_t len,
 {
     char const *substr = str, *substrend = NULL;
     int den = 1;
+    npy_longlong true_meta_val;
 
     /* First comes an optional integer multiplier */
     out_meta->num = (int)strtol_const(substr, &substrend, 10);
     if (substr == substrend) {
         out_meta->num = 1;
+    }
+    else {
+        // check for 32-bit integer overflow
+        char *endptr = NULL;
+        true_meta_val = NumPyOS_strtoll(substr, &endptr, 10);
+        if (true_meta_val > INT_MAX || true_meta_val < 0) {
+            goto bad_input;
+        }
     }
     substr = substrend;
 
@@ -1160,7 +1170,7 @@ get_datetime_conversion_factor(PyArray_DatetimeMetaData *src_meta,
     }
 
     /* If something overflowed, make both num and denom 0 */
-    if (denom == 0 || num == 0) {
+    if (num == 0) {
         PyErr_Format(PyExc_OverflowError,
                     "Integer overflow while computing the conversion "
                     "factor between NumPy datetime units %s and %s",
@@ -3736,8 +3746,6 @@ find_object_datetime_type(PyObject *obj, int type_num)
 }
 
 
-
-
 /*
  * Describes casting within datetimes or timedelta
  */
@@ -3746,7 +3754,8 @@ time_to_time_resolve_descriptors(
         PyArrayMethodObject *NPY_UNUSED(self),
         PyArray_DTypeMeta *NPY_UNUSED(dtypes[2]),
         PyArray_Descr *given_descrs[2],
-        PyArray_Descr *loop_descrs[2])
+        PyArray_Descr *loop_descrs[2],
+        npy_intp *view_offset)
 {
     /* This is a within-dtype cast, which currently must handle byteswapping */
     Py_INCREF(given_descrs[0]);
@@ -3762,28 +3771,42 @@ time_to_time_resolve_descriptors(
     int is_timedelta = given_descrs[0]->type_num == NPY_TIMEDELTA;
 
     if (given_descrs[0] == given_descrs[1]) {
-        return NPY_NO_CASTING | _NPY_CAST_IS_VIEW;
+        *view_offset = 0;
+        return NPY_NO_CASTING;
     }
 
-    NPY_CASTING byteorder_may_allow_view = 0;
-    if (PyDataType_ISNOTSWAPPED(loop_descrs[0]) ==
-            PyDataType_ISNOTSWAPPED(loop_descrs[1])) {
-        byteorder_may_allow_view = _NPY_CAST_IS_VIEW;
-    }
+    npy_bool byteorder_may_allow_view = (
+            PyDataType_ISNOTSWAPPED(loop_descrs[0])
+            == PyDataType_ISNOTSWAPPED(loop_descrs[1]));
+
     PyArray_DatetimeMetaData *meta1, *meta2;
     meta1 = get_datetime_metadata_from_dtype(loop_descrs[0]);
     assert(meta1 != NULL);
     meta2 = get_datetime_metadata_from_dtype(loop_descrs[1]);
     assert(meta2 != NULL);
 
-    if (meta1->base == meta2->base && meta1->num == meta2->num) {
+    if ((meta1->base == meta2->base && meta1->num == meta2->num) ||
+            // handle some common metric prefix conversions
+            // 1000 fold conversions
+            ((meta2->base >= 7) && (meta1->base - meta2->base == 1)
+              && ((meta1->num / meta2->num) == 1000)) ||
+            // 10^6 fold conversions
+            ((meta2->base >= 7) && (meta1->base - meta2->base == 2)
+              && ((meta1->num / meta2->num) == 1000000)) ||
+            // 10^9 fold conversions
+            ((meta2->base >= 7) && (meta1->base - meta2->base == 3)
+              && ((meta1->num / meta2->num) == 1000000000))) {
         if (byteorder_may_allow_view) {
-            return NPY_NO_CASTING | byteorder_may_allow_view;
+            *view_offset = 0;
+            return NPY_NO_CASTING;
         }
         return NPY_EQUIV_CASTING;
     }
     else if (meta1->base == NPY_FR_GENERIC) {
-        return NPY_SAFE_CASTING | byteorder_may_allow_view;
+        if (byteorder_may_allow_view) {
+            *view_offset = 0;
+        }
+        return NPY_SAFE_CASTING ;
     }
     else if (meta2->base == NPY_FR_GENERIC) {
         /* TODO: This is actually an invalid cast (casting will error) */
@@ -3911,10 +3934,11 @@ datetime_to_timedelta_resolve_descriptors(
 /* In the current setup both strings and unicode casts support all outputs */
 static NPY_CASTING
 time_to_string_resolve_descriptors(
-        PyArrayMethodObject *self,
+        PyArrayMethodObject *NPY_UNUSED(self),
         PyArray_DTypeMeta *dtypes[2],
         PyArray_Descr **given_descrs,
-        PyArray_Descr **loop_descrs)
+        PyArray_Descr **loop_descrs,
+        npy_intp *NPY_UNUSED(view_offset))
 {
     if (given_descrs[1] != NULL && dtypes[0]->type_num == NPY_DATETIME) {
         /*
@@ -3993,7 +4017,8 @@ string_to_datetime_cast_resolve_descriptors(
         PyArrayMethodObject *NPY_UNUSED(self),
         PyArray_DTypeMeta *dtypes[2],
         PyArray_Descr *given_descrs[2],
-        PyArray_Descr *loop_descrs[2])
+        PyArray_Descr *loop_descrs[2],
+        npy_intp *NPY_UNUSED(view_offset))
 {
     if (given_descrs[1] == NULL) {
         /* NOTE: This doesn't actually work, and will error during the cast */

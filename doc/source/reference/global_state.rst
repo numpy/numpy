@@ -84,3 +84,13 @@ contiguous in memory.
 Most users will have no reason to change these; for details
 see the :ref:`memory layout <memory-layout>` documentation.
 
+
+Warn if no memory allocation policy when deallocating data
+----------------------------------------------------------
+
+Some users might pass ownership of the data pointer to the ``ndarray`` by
+setting the ``OWNDATA`` flag. If they do this without setting (manually) a
+memory allocation policy, the default will be to call ``free``. If
+``NUMPY_WARN_IF_NO_MEM_POLICY`` is set to ``"1"``, a ``RuntimeWarning`` will
+be emitted. A better alternative is to use a ``PyCapsule`` with a deallocator
+and set the ``ndarray.base``.

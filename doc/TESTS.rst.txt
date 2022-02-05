@@ -16,13 +16,7 @@ Our goal is that every module and package in NumPy
 should have a thorough set of unit
 tests. These tests should exercise the full functionality of a given
 routine as well as its robustness to erroneous or unexpected input
-arguments. Long experience has shown that by far the best time to
-write the tests is before you write or change the code - this is
-`test-driven development
-<https://en.wikipedia.org/wiki/Test-driven_development>`__.  The
-arguments for this can sound rather abstract, but we can assure you
-that you will find that writing the tests first leads to more robust
-and better designed code. Well-designed tests with good coverage make
+arguments. Well-designed tests with good coverage make
 an enormous difference to the ease of refactoring. Whenever a new bug
 is found in a routine, you should write a new test for that specific
 case and add it to the test suite to prevent that bug from creeping
@@ -144,6 +138,21 @@ Also since much of NumPy is legacy code that was
 originally written without unit tests, there are still several modules
 that don't have tests yet. Please feel free to choose one of these
 modules and develop tests for it.
+
+Using C code in tests
+---------------------
+
+NumPy exposes a rich :ref:`C-API<c-api>` . These are tested using c-extension
+modules written "as-if" they know nothing about the internals of NumPy, rather
+using the official C-API interfaces only. Examples of such modules are tests
+for a user-defined ``rational`` dtype in ``_rational_tests`` or the ufunc
+machinery tests in ``_umath_tests`` which are part of the binary distribution.
+Starting from version 1.21, you can also write snippets of C code in tests that
+will be compiled locally into c-extension modules and loaded into python.
+
+.. currentmodule:: numpy.testing.extbuild
+
+.. autofunction:: build_and_import_extension
 
 Labeling tests
 --------------

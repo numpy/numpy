@@ -24,6 +24,9 @@ stages:
       vmImage: 'ubuntu-20.04'
     steps:
     - script: |
+        git submodule update --init
+      displayName: 'Fetch submodules'
+    - script: |
             if ! `gcc 2>/dev/null`; then
                 sudo apt install gcc
             fi
@@ -72,6 +75,9 @@ stages:
       vmImage: 'ubuntu-20.04'
     steps:
     - script: |
+        git submodule update --init
+      displayName: 'Fetch submodules'
+    - script: |
             docker run -v $(pwd):/numpy -e CFLAGS="-msse2 -std=c99 -UNDEBUG" \
             -e F77=gfortran-5 -e F90=gfortran-5 quay.io/pypa/manylinux2014_i686 \
             /bin/bash -xc "cd numpy && \
@@ -103,7 +109,7 @@ stages:
       # the docs even though i.e., numba uses another in their
       # azure config for mac os -- Microsoft has indicated
       # they will patch this issue
-      vmImage: macOS-10.14
+      vmImage: 'macOS-1015'
     strategy:
       maxParallel: 3
       matrix:
@@ -224,7 +230,7 @@ stages:
 
   - job: Windows
     pool:
-      vmImage: 'VS2017-Win2016'
+      vmImage: 'windows-2019'
     strategy:
       maxParallel: 6
       matrix:
@@ -249,6 +255,12 @@ stages:
             TEST_MODE: full
             BITS: 64
             NPY_USE_BLAS_ILP64: '1'
+          PyPy38-64bit-fast:
+            PYTHON_VERSION: 'PyPy'
+            PYTHON_ARCH: 'x64'
+            TEST_MODE: fast
+            BITS: 64
+            NPY_USE_BLAS_ILP64: '1'
 
     steps:
     - template: azure-steps-windows.yml
@@ -258,6 +270,9 @@ stages:
     pool:
       vmImage: 'ubuntu-20.04'
     steps:
+    - script: |
+        git submodule update --init
+      displayName: 'Fetch submodules'
     - script: |
             # create and activate conda environment
             conda env create -f environment.yml

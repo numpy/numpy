@@ -2,17 +2,11 @@ from __future__ import annotations
 
 import sys
 import types
+from collections.abc import Generator, Iterable, Iterator
 from typing import (
     Any,
     ClassVar,
-    FrozenSet,
-    Generator,
-    Iterable,
-    Iterator,
-    List,
     NoReturn,
-    Tuple,
-    Type,
     TypeVar,
     TYPE_CHECKING,
 )
@@ -51,7 +45,7 @@ def _parse_parameters(args: Iterable[Any]) -> Generator[TypeVar, None, None]:
 
 
 def _reconstruct_alias(alias: _T, parameters: Iterator[TypeVar]) -> _T:
-    """Recursivelly replace all typevars with those from `parameters`.
+    """Recursively replace all typevars with those from `parameters`.
 
     Helper function for `_GenericAlias.__getitem__`.
 
@@ -93,38 +87,38 @@ class _GenericAlias:
         return super().__getattribute__("_origin")
 
     @property
-    def __args__(self) -> Tuple[object, ...]:
+    def __args__(self) -> tuple[object, ...]:
         return super().__getattribute__("_args")
 
     @property
-    def __parameters__(self) -> Tuple[TypeVar, ...]:
+    def __parameters__(self) -> tuple[TypeVar, ...]:
         """Type variables in the ``GenericAlias``."""
         return super().__getattribute__("_parameters")
 
     def __init__(
         self,
         origin: type,
-        args: object | Tuple[object, ...],
+        args: object | tuple[object, ...],
     ) -> None:
         self._origin = origin
         self._args = args if isinstance(args, tuple) else (args,)
         self._parameters = tuple(_parse_parameters(self.__args__))
 
     @property
-    def __call__(self) -> type:
+    def __call__(self) -> type[Any]:
         return self.__origin__
 
-    def __reduce__(self: _T) -> Tuple[
-        Type[_T],
-        Tuple[type, Tuple[object, ...]],
+    def __reduce__(self: _T) -> tuple[
+        type[_T],
+        tuple[type[Any], tuple[object, ...]],
     ]:
         cls = type(self)
         return cls, (self.__origin__, self.__args__)
 
-    def __mro_entries__(self, bases: Iterable[object]) -> Tuple[type]:
+    def __mro_entries__(self, bases: Iterable[object]) -> tuple[type[Any]]:
         return (self.__origin__,)
 
-    def __dir__(self) -> List[str]:
+    def __dir__(self) -> list[str]:
         """Implement ``dir(self)``."""
         cls = type(self)
         dir_origin = set(dir(self.__origin__))
@@ -155,7 +149,7 @@ class _GenericAlias:
         origin = _to_str(self.__origin__)
         return f"{origin}[{args}]"
 
-    def __getitem__(self: _T, key: object | Tuple[object, ...]) -> _T:
+    def __getitem__(self: _T, key: object | tuple[object, ...]) -> _T:
         """Return ``self[key]``."""
         key_tup = key if isinstance(key, tuple) else (key,)
 
@@ -178,13 +172,15 @@ class _GenericAlias:
             self.__args__ == value.__args__
         )
 
-    _ATTR_EXCEPTIONS: ClassVar[FrozenSet[str]] = frozenset({
+    _ATTR_EXCEPTIONS: ClassVar[frozenset[str]] = frozenset({
         "__origin__",
         "__args__",
         "__parameters__",
         "__mro_entries__",
         "__reduce__",
         "__reduce_ex__",
+        "__copy__",
+        "__deepcopy__",
     })
 
     def __getattribute__(self, name: str) -> Any:
@@ -205,12 +201,9 @@ else:
 
 ScalarType = TypeVar("ScalarType", bound=np.generic, covariant=True)
 
-if TYPE_CHECKING:
+if TYPE_CHECKING or sys.version_info >= (3, 9):
     _DType = np.dtype[ScalarType]
     NDArray = np.ndarray[Any, np.dtype[ScalarType]]
-elif sys.version_info >= (3, 9):
-    _DType = types.GenericAlias(np.dtype, (ScalarType,))
-    NDArray = types.GenericAlias(np.ndarray, (Any, _DType))
 else:
     _DType = _GenericAlias(np.dtype, (ScalarType,))
     NDArray = _GenericAlias(np.ndarray, (Any, _DType))

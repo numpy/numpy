@@ -1,13 +1,11 @@
+from collections.abc import Iterable
 from typing import (
     Literal as L,
-    List,
-    Iterable,
     overload,
     TypeVar,
     Any,
     SupportsIndex,
     SupportsInt,
-    Tuple,
 )
 
 from numpy import (
@@ -18,6 +16,8 @@ from numpy import (
     float64,
     complex128,
 )
+
+from numpy.linalg import LinAlgError as LinAlgError
 
 from numpy.typing import (
     NDArray,
@@ -32,10 +32,10 @@ from numpy.typing import (
 _T = TypeVar("_T")
 _ArrayType = TypeVar("_ArrayType", bound=NDArray[Any])
 
-_2Tuple = Tuple[_T, _T]
+_2Tuple = tuple[_T, _T]
 _ModeKind = L["reduced", "complete", "r", "raw"]
 
-__all__: List[str]
+__all__: list[str]
 
 @overload
 def tensorsolve(
@@ -95,7 +95,7 @@ def inv(a: _ArrayLikeFloat_co) -> NDArray[floating[Any]]: ...
 @overload
 def inv(a: _ArrayLikeComplex_co) -> NDArray[complexfloating[Any, Any]]: ...
 
-# TODO: The supported input and output dtypes are dependant on the value of `n`.
+# TODO: The supported input and output dtypes are dependent on the value of `n`.
 # For example: `n < 0` always casts integer types to float64
 def matrix_power(
     a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
@@ -139,17 +139,17 @@ def eig(a: _ArrayLikeComplex_co) -> _2Tuple[NDArray[complexfloating[Any, Any]]]:
 def eigh(
     a: _ArrayLikeInt_co,
     UPLO: L["L", "U", "l", "u"] = ...,
-) -> Tuple[NDArray[float64], NDArray[float64]]: ...
+) -> tuple[NDArray[float64], NDArray[float64]]: ...
 @overload
 def eigh(
     a: _ArrayLikeFloat_co,
     UPLO: L["L", "U", "l", "u"] = ...,
-) -> Tuple[NDArray[floating[Any]], NDArray[floating[Any]]]: ...
+) -> tuple[NDArray[floating[Any]], NDArray[floating[Any]]]: ...
 @overload
 def eigh(
     a: _ArrayLikeComplex_co,
     UPLO: L["L", "U", "l", "u"] = ...,
-) -> Tuple[NDArray[floating[Any]], NDArray[complexfloating[Any, Any]]]: ...
+) -> tuple[NDArray[floating[Any]], NDArray[complexfloating[Any, Any]]]: ...
 
 @overload
 def svd(
@@ -157,7 +157,7 @@ def svd(
     full_matrices: bool = ...,
     compute_uv: L[True] = ...,
     hermitian: bool = ...,
-) -> Tuple[
+) -> tuple[
     NDArray[float64],
     NDArray[float64],
     NDArray[float64],
@@ -168,7 +168,7 @@ def svd(
     full_matrices: bool = ...,
     compute_uv: L[True] = ...,
     hermitian: bool = ...,
-) -> Tuple[
+) -> tuple[
     NDArray[floating[Any]],
     NDArray[floating[Any]],
     NDArray[floating[Any]],
@@ -179,7 +179,7 @@ def svd(
     full_matrices: bool = ...,
     compute_uv: L[True] = ...,
     hermitian: bool = ...,
-) -> Tuple[
+) -> tuple[
     NDArray[complexfloating[Any, Any]],
     NDArray[floating[Any]],
     NDArray[complexfloating[Any, Any]],
@@ -238,21 +238,21 @@ def slogdet(a: _ArrayLikeComplex_co) -> _2Tuple[Any]: ...
 def det(a: _ArrayLikeComplex_co) -> Any: ...
 
 @overload
-def lstsq(a: _ArrayLikeInt_co, b: _ArrayLikeInt_co, rcond: None | float = ...) -> Tuple[
+def lstsq(a: _ArrayLikeInt_co, b: _ArrayLikeInt_co, rcond: None | float = ...) -> tuple[
     NDArray[float64],
     NDArray[float64],
     int32,
     NDArray[float64],
 ]: ...
 @overload
-def lstsq(a: _ArrayLikeFloat_co, b: _ArrayLikeFloat_co, rcond: None | float = ...) -> Tuple[
+def lstsq(a: _ArrayLikeFloat_co, b: _ArrayLikeFloat_co, rcond: None | float = ...) -> tuple[
     NDArray[floating[Any]],
     NDArray[floating[Any]],
     int32,
     NDArray[floating[Any]],
 ]: ...
 @overload
-def lstsq(a: _ArrayLikeComplex_co, b: _ArrayLikeComplex_co, rcond: None | float = ...) -> Tuple[
+def lstsq(a: _ArrayLikeComplex_co, b: _ArrayLikeComplex_co, rcond: None | float = ...) -> tuple[
     NDArray[complexfloating[Any, Any]],
     NDArray[floating[Any]],
     int32,
@@ -270,7 +270,7 @@ def norm(
 def norm(
     x: ArrayLike,
     ord: None | float | L["fro", "nuc"] = ...,
-    axis: SupportsInt | SupportsIndex | Tuple[int, ...] = ...,
+    axis: SupportsInt | SupportsIndex | tuple[int, ...] = ...,
     keepdims: bool = ...,
 ) -> Any: ...
 

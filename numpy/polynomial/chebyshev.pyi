@@ -1,10 +1,10 @@
-from typing import Any, List
+from typing import Any
 
 from numpy import ndarray, dtype, int_
 from numpy.polynomial._polybase import ABCPolyBase
 from numpy.polynomial.polyutils import trimcoef
 
-__all__: List[str]
+__all__: list[str]
 
 chebtrim = trimcoef
 

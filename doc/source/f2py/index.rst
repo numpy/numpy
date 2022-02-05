@@ -1,8 +1,10 @@
-#####################################
-F2PY Users Guide and Reference Manual
-#####################################
+.. _f2py:
 
-The purpose of the ``F2PY`` --*Fortran to Python interface generator*--
+=====================================
+F2PY user guide and reference manual
+=====================================
+
+The purpose of the ``F2PY`` --*Fortran to Python interface generator*-- utility
 is to provide a connection between Python and Fortran
 languages.  F2PY is a part of NumPy_ (``numpy.f2py``) and also available as a
 standalone command line tool ``f2py`` when ``numpy`` is installed that
@@ -19,11 +21,11 @@ from Python.
 .. toctree::
    :maxdepth: 2
 
-   f2py.getting-started
-   signature-file
-   python-usage
    usage
-   distutils
+   f2py.getting-started
+   python-usage
+   signature-file
+   buildtools/index
    advanced
 
 .. _Python: https://www.python.org/

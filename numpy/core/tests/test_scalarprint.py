@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """ Test printing of scalar types.
 
 """
@@ -307,6 +306,7 @@ class TestRealScalars:
             assert_equal(fpos(tp('1.2'), unique=False, precision=4, trim='-'),
                          "1.2" if tp != np.float16 else "1.2002")
             assert_equal(fpos(tp('1.'), trim='-'), "1")
+            assert_equal(fpos(tp('1.001'), precision=1, trim='-'), "1")
 
     @pytest.mark.skipif(not platform.machine().startswith("ppc64"),
                         reason="only applies to ppc float128 values")

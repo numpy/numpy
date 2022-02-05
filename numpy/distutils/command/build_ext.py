@@ -231,19 +231,36 @@ class build_ext (old_build_ext):
             l = ext.language or self.compiler.detect_language(ext.sources)
             if l:
                 ext_languages.add(l)
+
             # reset language attribute for choosing proper linker
+            #
+            # When we build extensions with multiple languages, we have to
+            # choose a linker. The rules here are:
+            #   1. if there is Fortran code, always prefer the Fortran linker,
+            #   2. otherwise prefer C++ over C,
+            #   3. Users can force a particular linker by using
+            #          `language='c'`  # or 'c++', 'f90', 'f77'
+            #      in their config.add_extension() calls.
             if 'c++' in ext_languages:
                 ext_language = 'c++'
-            elif 'f90' in ext_languages:
-                ext_language = 'f90'
-            elif 'f77' in ext_languages:
-                ext_language = 'f77'
             else:
                 ext_language = 'c'  # default
-            if l and l != ext_language and ext.language:
-                log.warn('resetting extension %r language from %r to %r.' %
-                         (ext.name, l, ext_language))
-            ext.language = ext_language
+
+            has_fortran = False
+            if 'f90' in ext_languages:
+                ext_language = 'f90'
+                has_fortran = True
+            elif 'f77' in ext_languages:
+                ext_language = 'f77'
+                has_fortran = True
+
+            if not ext.language or has_fortran:
+                if l and l != ext_language and ext.language:
+                    log.warn('resetting extension %r language from %r to %r.' %
+                             (ext.name, l, ext_language))
+
+                ext.language = ext_language
+
             # global language
             all_languages.update(ext_languages)
 
@@ -376,6 +393,9 @@ class build_ext (old_build_ext):
             log.info("building '%s' extension", ext.name)
 
         extra_args = ext.extra_compile_args or []
+        extra_cflags = getattr(ext, 'extra_c_compile_args', None) or []
+        extra_cxxflags = getattr(ext, 'extra_cxx_compile_args', None) or []
+
         macros = ext.define_macros[:]
         for undef in ext.undef_macros:
             macros.append((undef,))
@@ -462,38 +482,43 @@ class build_ext (old_build_ext):
                 macros=macros + copt_macros,
                 include_dirs=include_dirs,
                 debug=self.debug,
-                extra_postargs=extra_args,
+                extra_postargs=extra_args + extra_cxxflags,
                 ccompiler=cxx_compiler,
                 **kws
             )
         if copt_c_sources:
             log.info("compiling C dispatch-able sources")
-            c_objects += self.compiler_opt.try_dispatch(copt_c_sources,
-                                                        output_dir=output_dir,
-                                                        src_dir=copt_build_src,
-                                                        macros=macros + copt_macros,
-                                                        include_dirs=include_dirs,
-                                                        debug=self.debug,
-                                                        extra_postargs=extra_args,
-                                                        **kws)
+            c_objects += self.compiler_opt.try_dispatch(
+                copt_c_sources,
+                output_dir=output_dir,
+                src_dir=copt_build_src,
+                macros=macros + copt_macros,
+                include_dirs=include_dirs,
+                debug=self.debug,
+                extra_postargs=extra_args + extra_cflags,
+                **kws)
         if c_sources:
             log.info("compiling C sources")
-            c_objects += self.compiler.compile(c_sources,
-                                               output_dir=output_dir,
-                                               macros=macros + copt_macros,
-                                               include_dirs=include_dirs,
-                                               debug=self.debug,
-                                               extra_postargs=extra_args + copt_baseline_flags,
-                                               **kws)
+            c_objects += self.compiler.compile(
+                c_sources,
+                output_dir=output_dir,
+                macros=macros + copt_macros,
+                include_dirs=include_dirs,
+                debug=self.debug,
+                extra_postargs=(extra_args + copt_baseline_flags +
+                                extra_cflags),
+                **kws)
         if cxx_sources:
             log.info("compiling C++ sources")
-            c_objects += cxx_compiler.compile(cxx_sources,
-                                              output_dir=output_dir,
-                                              macros=macros + copt_macros,
-                                              include_dirs=include_dirs,
-                                              debug=self.debug,
-                                              extra_postargs=extra_args + copt_baseline_flags,
-                                              **kws)
+            c_objects += cxx_compiler.compile(
+                cxx_sources,
+                output_dir=output_dir,
+                macros=macros + copt_macros,
+                include_dirs=include_dirs,
+                debug=self.debug,
+                extra_postargs=(extra_args + copt_baseline_flags +
+                                extra_cxxflags),
+                **kws)
 
         extra_postargs = []
         f_objects = []
@@ -602,7 +627,7 @@ class build_ext (old_build_ext):
         # Expand possible fake static libraries to objects;
         # make sure to iterate over a copy of the list as
         # "fake" libraries will be removed as they are
-        # enountered
+        # encountered
         for lib in libraries[:]:
             for libdir in library_dirs:
                 fake_lib = os.path.join(libdir, lib + '.fobjects')

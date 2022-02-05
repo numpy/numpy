@@ -386,7 +386,7 @@ avx512_permute_x8var_pd(__m512d t0, __m512d t1, __m512d t2, __m512d t3,
  * #and_masks =_mm256_and_ps, _mm512_kand#
  * #xor_masks =_mm256_xor_ps, _mm512_kxor#
  * #fmadd = _mm256_fmadd_ps, _mm512_fmadd_ps#
- * #mask_to_int = _mm256_movemask_ps, #
+ * #mask_to_int = _mm256_movemask_ps, npyv_tobits_b32#
  * #full_mask= 0xFF, 0xFFFF#
  * #masked_store = _mm256_maskstore_ps, _mm512_mask_storeu_ps#
  * #cvtps_epi32 = _mm256_cvtps_epi32, #
@@ -833,11 +833,19 @@ AVX512F_exp_DOUBLE(npy_double * op,
         op += num_lanes;
         num_remaining_elements -= num_lanes;
     }
-    if (overflow_mask) {
+    /*
+     * Don't count on the compiler for cast between mask and int registers.
+     * On gcc7 with flags -march>=nocona -O3 can cause FP stack overflow
+     * which may lead to putting NaN into certain HW/FP calculations.
+     *
+     * For more details, please check the comments in:
+     * - https://github.com/numpy/numpy/issues/20356
+     */
+    if (npyv_tobits_b64(overflow_mask)) {
         npy_set_floatstatus_overflow();
     }
 
-    if (underflow_mask) {
+    if (npyv_tobits_b64(underflow_mask)) {
         npy_set_floatstatus_underflow();
     }
 }
@@ -868,6 +876,32 @@ AVX512F_exp_DOUBLE(npy_double * op,
  *               = p(r)
  *               = 2((r/2) + 1/3*(r/2)^3 + 1/5*(r/2)^5 + ...)
  */
+
+/* LLVM has a bug where AVX-512F intrinsic `_mm512_mask_mul_pd` emits an
+ * unmasked operation with a masked store.  This can cause FP exceptions to
+ * occur for the lanes that are suppose to have been masked.
+ *
+ * See https://bugs.llvm.org/show_bug.cgi?id=51988
+ *
+ * Note, this affects LLVM based compilers like Apple Clang, Clang, and Intel's
+ * ICX.
+ */
+#if defined(__clang__)
+    #if defined(__apple_build_version__)
+    // Apple Clang
+        #if __apple_build_version__ > 11000000
+        // Apple Clang after v11
+        #define WORKAROUND_LLVM__mm512_mask_mul_pd
+        #endif
+    #else
+    // Clang, not Apple Clang
+        #if __clang_major__ > 9
+        // Clang v9+
+        #define WORKAROUND_LLVM__mm512_mask_mul_pd
+        #endif
+    #endif
+#endif
+
 static void
 AVX512F_log_DOUBLE(npy_double * op,
                 npy_double * ip,
@@ -954,8 +988,12 @@ AVX512F_log_DOUBLE(npy_double * op,
             denormal_mask = _mm512_cmp_epi64_mask(top12, _mm512_set1_epi64(0),
                                 _CMP_EQ_OQ);
             denormal_mask = (~zero_mask) & denormal_mask;
+            __m512d masked_x = x;
+            #ifdef WORKAROUND_LLVM__mm512_mask_mul_pd
+            masked_x = avx512_set_masked_lanes_pd(masked_x, zeros_d, (~denormal_mask));
+            #endif
             ix = _mm512_castpd_si512(_mm512_mask_mul_pd(x, denormal_mask,
-                                    x, _mm512_set1_pd(0x1p52)));
+                                    masked_x, _mm512_set1_pd(0x1p52)));
             ix = _mm512_mask_sub_epi64(ix, denormal_mask,
                                     ix, _mm512_set1_epi64(52ULL << 52));
 
@@ -1032,13 +1070,16 @@ AVX512F_log_DOUBLE(npy_double * op,
         num_remaining_elements -= num_lanes;
     }
 
-    if (invalid_mask) {
+    if (npyv_tobits_b64(invalid_mask)) {
         npy_set_floatstatus_invalid();
     }
-    if (divide_by_zero_mask) {
+    if (npyv_tobits_b64(divide_by_zero_mask)) {
         npy_set_floatstatus_divbyzero();
     }
 }
+
+#undef WORKAROUND_LLVM__mm512_mask_mul_pd
+
 #endif // AVX512F_NOCLANG_BUG
 
 #ifdef SIMD_AVX512_SKX

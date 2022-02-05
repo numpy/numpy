@@ -2,35 +2,31 @@ import os
 import pytest
 import tempfile
 
-from numpy.testing import assert_
 from . import util
 
 
-def _path(*a):
-    return os.path.join(*((os.path.dirname(__file__),) + a))
-
-
 class TestAssumedShapeSumExample(util.F2PyTest):
-    sources = [_path('src', 'assumed_shape', 'foo_free.f90'),
-               _path('src', 'assumed_shape', 'foo_use.f90'),
-               _path('src', 'assumed_shape', 'precision.f90'),
-               _path('src', 'assumed_shape', 'foo_mod.f90'),
-               _path('src', 'assumed_shape', '.f2py_f2cmap'),
-               ]
+    sources = [
+        util.getpath("tests", "src", "assumed_shape", "foo_free.f90"),
+        util.getpath("tests", "src", "assumed_shape", "foo_use.f90"),
+        util.getpath("tests", "src", "assumed_shape", "precision.f90"),
+        util.getpath("tests", "src", "assumed_shape", "foo_mod.f90"),
+        util.getpath("tests", "src", "assumed_shape", ".f2py_f2cmap"),
+    ]
 
     @pytest.mark.slow
     def test_all(self):
         r = self.module.fsum([1, 2])
-        assert_(r == 3, repr(r))
+        assert r == 3
         r = self.module.sum([1, 2])
-        assert_(r == 3, repr(r))
+        assert r == 3
         r = self.module.sum_with_use([1, 2])
-        assert_(r == 3, repr(r))
+        assert r == 3
 
         r = self.module.mod.sum([1, 2])
-        assert_(r == 3, repr(r))
+        assert r == 3
         r = self.module.mod.fsum([1, 2])
-        assert_(r == 3, repr(r))
+        assert r == 3
 
 
 class TestF2cmapOption(TestAssumedShapeSumExample):
@@ -40,7 +36,7 @@ class TestF2cmapOption(TestAssumedShapeSumExample):
         f2cmap_src = self.sources.pop(-1)
 
         self.f2cmap_file = tempfile.NamedTemporaryFile(delete=False)
-        with open(f2cmap_src, 'rb') as f:
+        with open(f2cmap_src, "rb") as f:
             self.f2cmap_file.write(f.read())
         self.f2cmap_file.close()
 

@@ -112,7 +112,7 @@ have a summary of all flags. This could possibly be stored in ``core_enabled``
 but specific flags indicating whether or not a gufunc uses fixed, flexible, or
 broadcastable dimensions.
 
-With the above, the formal defition of the syntax would become [4]_::
+With the above, the formal definition of the syntax would become [4]_::
 
   <Signature>            ::= <Input arguments> "->" <Output arguments>
   <Input arguments>      ::= <Argument list>

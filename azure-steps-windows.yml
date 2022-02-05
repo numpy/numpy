@@ -6,22 +6,23 @@ steps:
     architecture: $(PYTHON_ARCH)
   condition: not(contains(variables['PYTHON_VERSION'], 'PyPy'))
 - powershell: |
-    $url = "http://buildbot.pypy.org/nightly/py3.7/pypy-c-jit-latest-win64.zip"
+    # $url = "http://buildbot.pypy.org/nightly/py3.8/pypy-c-jit-latest-win64.zip"
+    $url = "https://downloads.python.org/pypy/pypy3.8-v7.3.7-win64.zip"
     $output = "pypy.zip"
     $wc = New-Object System.Net.WebClient
     $wc.DownloadFile($url, $output)
     echo "downloaded $url to $output"
     mkdir pypy3
     Expand-Archive $output -DestinationPath pypy3
-    move pypy3/pypy-c-*/* pypy3
-    cp pypy3/pypy3.exe pypy3/python.exe
+    # move pypy3/pypy-c-*/* pypy3
+    move pypy3/pypy*/* pypy3
     $pypypath = Join-Path (Get-Item .).FullName pypy3
     $env:Path = $pypypath + ";" + $env:Path
     setx PATH $env:Path
     python -mensurepip
     echo "##vso[task.prependpath]$pypypath"
   condition: contains(variables['PYTHON_VERSION'], 'PyPy')
-  displayName: "Install PyPy pre-release"
+  displayName: "Install PyPy3.8 "
 
 - script: python -m pip install --upgrade pip wheel
   displayName: 'Install tools'

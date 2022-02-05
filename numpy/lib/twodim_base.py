@@ -67,7 +67,7 @@ def fliplr(m):
     See Also
     --------
     flipud : Flip array in the up/down direction.
-    flip : Flip array in one or more dimesions.
+    flip : Flip array in one or more dimensions.
     rot90 : Rotate array counterclockwise.
 
     Notes
@@ -120,7 +120,7 @@ def flipud(m):
     See Also
     --------
     fliplr : Flip array in the left/right direction.
-    flip : Flip array in one or more dimesions.
+    flip : Flip array in one or more dimensions.
     rot90 : Rotate array counterclockwise.
 
     Notes
@@ -804,6 +804,9 @@ def histogram2d(x, y, bins=10, range=None, normed=None, weights=None,
     >>> plt.show()
     """
     from numpy import histogramdd
+    
+    if len(x) != len(y):
+        raise ValueError('x and y must have the same length.')
 
     try:
         N = len(bins)

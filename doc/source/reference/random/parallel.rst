@@ -28,8 +28,8 @@ streams.
 
 `~SeedSequence` avoids these problems by using successions of integer hashes
 with good `avalanche properties`_ to ensure that flipping any bit in the input
-input has about a 50% chance of flipping any bit in the output. Two input seeds
-that are very close to each other will produce initial states that are very far
+has about a 50% chance of flipping any bit in the output. Two input seeds that
+are very close to each other will produce initial states that are very far
 from each other (with very high probability). It is also constructed in such
 a way that you can provide arbitrary-sized integers or lists of integers.
 `~SeedSequence` will take all of the bits that you provide and mix them

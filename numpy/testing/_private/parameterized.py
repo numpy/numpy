@@ -1,5 +1,5 @@
 """
-tl;dr: all code code is licensed under simplified BSD, unless stated otherwise.
+tl;dr: all code is licensed under simplified BSD, unless stated otherwise.
 
 Unless stated otherwise in the source files, all code is copyright 2010 David
 Wolever <david@wolever.net>. All rights reserved.

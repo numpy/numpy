@@ -9,7 +9,7 @@ def main():
 
 def doxy_gen(root_path):
     """
-    Generate Doxygen configration file.
+    Generate Doxygen configuration file.
     """
     confs = doxy_config(root_path)
     build_path = os.path.join(root_path, "doc", "build", "doxygen")

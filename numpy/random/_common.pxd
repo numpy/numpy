@@ -45,7 +45,7 @@ ctypedef double (*random_double_1)(void *state, double a) nogil
 ctypedef double (*random_double_2)(void *state, double a, double b) nogil
 ctypedef double (*random_double_3)(void *state, double a, double b, double c) nogil
 
-ctypedef double (*random_float_fill)(bitgen_t *state, np.npy_intp count, float* out) nogil
+ctypedef void (*random_float_fill)(bitgen_t *state, np.npy_intp count, float* out) nogil
 ctypedef float (*random_float_0)(bitgen_t *state) nogil
 ctypedef float (*random_float_1)(bitgen_t *state, float a) nogil
 

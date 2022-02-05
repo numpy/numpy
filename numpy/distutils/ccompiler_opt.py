@@ -8,7 +8,14 @@ the sources with proper compiler's flags.
 instead only focuses on the compiler side, but it creates abstract C headers
 that can be used later for the final runtime dispatching process."""
 
-import sys, io, os, re, textwrap, pprint, inspect, atexit, subprocess
+import atexit
+import inspect
+import os
+import pprint
+import re
+import subprocess
+import textwrap
+
 
 class _Config:
     """An abstract class holds all configurable attributes of `CCompilerOpt`,
@@ -162,7 +169,7 @@ class _Config:
 
             If the compiler able to successfully compile the C file then `CCompilerOpt`
             will add a C ``#define`` for it into the main dispatch header, e.g.
-            ```#define {conf_c_prefix}_XXXX`` where ``XXXX`` is the case name in upper case.
+            ``#define {conf_c_prefix}_XXXX`` where ``XXXX`` is the case name in upper case.
 
         **NOTES**:
             * space can be used as separator with options that supports "str or list"
@@ -188,7 +195,7 @@ class _Config:
             # native usually works only with x86
             native = '-march=native',
             opt = '-O3',
-            werror = '-Werror'
+            werror = '-Werror',
         ),
         clang = dict(
             native = '-march=native',
@@ -198,22 +205,22 @@ class _Config:
             # cases `-Werror` gets skipped during the availability test due to
             # "unused arguments" warnings.
             # see https://github.com/numpy/numpy/issues/19624
-            werror = '-Werror-implicit-function-declaration -Werror'
+            werror = '-Werror=switch -Werror',
         ),
         icc = dict(
             native = '-xHost',
             opt = '-O3',
-            werror = '-Werror'
+            werror = '-Werror',
         ),
         iccw = dict(
             native = '/QxHost',
             opt = '/O3',
-            werror = '/Werror'
+            werror = '/Werror',
         ),
         msvc = dict(
             native = None,
             opt = '/O2',
-            werror = '/WX'
+            werror = '/WX',
         )
     )
     conf_min_features = dict(
@@ -221,6 +228,7 @@ class _Config:
         x64 = "SSE SSE2 SSE3",
         ppc64 = '', # play it safe
         ppc64le = "VSX VSX2",
+        s390x = '',
         armhf = '', # play it safe
         aarch64 = "NEON NEON_FP16 NEON_VFPV4 ASIMD"
     )
@@ -286,6 +294,16 @@ class _Config:
         VSX2 = dict(interest=2, implies="VSX", implies_detect=False),
         ## Power9/ISA 3.00
         VSX3 = dict(interest=3, implies="VSX2", implies_detect=False),
+        ## Power10/ISA 3.1
+        VSX4 = dict(interest=4, implies="VSX3", implies_detect=False,
+                    extra_checks="VSX4_MMA"),
+        # IBM/Z
+        ## VX(z13) support
+        VX = dict(interest=1, headers="vecintrin.h"),
+        ## Vector-Enhancements Facility
+        VXE = dict(interest=2, implies="VX", implies_detect=False),
+        ## Vector-Enhancements Facility 2
+        VXE2 = dict(interest=3, implies="VXE", implies_detect=False),
         # ARM
         NEON  = dict(interest=1, headers="arm_neon.h"),
         NEON_FP16 = dict(interest=2, implies="NEON"),
@@ -406,8 +424,8 @@ class _Config:
             AVX512_ICL = dict(flags="/Qx:ICELAKE-CLIENT")
         )
         if on_x86 and self.cc_is_msvc: return dict(
-            SSE    = dict(flags="/arch:SSE"),
-            SSE2   = dict(flags="/arch:SSE2"),
+            SSE = dict(flags="/arch:SSE") if self.cc_on_x86 else {},
+            SSE2 = dict(flags="/arch:SSE2") if self.cc_on_x86 else {},
             SSE3   = {},
             SSSE3  = {},
             SSE41  = {},
@@ -456,14 +474,35 @@ class _Config:
                 ),
                 VSX3 = dict(
                     flags="-mcpu=power9 -mtune=power9", implies_detect=False
+                ),
+                VSX4 = dict(
+                    flags="-mcpu=power10 -mtune=power10", implies_detect=False
                 )
             )
             if self.cc_is_clang:
                 partial["VSX"]["flags"]  = "-maltivec -mvsx"
                 partial["VSX2"]["flags"] = "-mpower8-vector"
                 partial["VSX3"]["flags"] = "-mpower9-vector"
+                partial["VSX4"]["flags"] = "-mpower10-vector"
 
             return partial
+
+        on_zarch = self.cc_on_s390x
+        if on_zarch:
+            partial = dict(
+                VX = dict(
+                    flags="-march=arch11 -mzvector"
+                ),
+                VXE = dict(
+                    flags="-march=arch12", implies_detect=False
+                ),
+                VXE2 = dict(
+                    flags="-march=arch13", implies_detect=False
+                )
+            )
+
+            return partial
+
 
         if self.cc_on_aarch64 and is_unix: return dict(
             NEON = dict(
@@ -516,7 +555,8 @@ class _Config:
 
     def __init__(self):
         if self.conf_tmp_path is None:
-            import tempfile, shutil
+            import shutil
+            import tempfile
             tmp = tempfile.mkdtemp()
             def rm_temp():
                 try:
@@ -555,6 +595,7 @@ class _Distutils:
         flags = kwargs.pop("extra_postargs", []) + flags
         if not ccompiler:
             ccompiler = self._ccompiler
+
         return ccompiler.compile(sources, extra_postargs=flags, **kwargs)
 
     def dist_test(self, source, flags, macros=[]):
@@ -645,9 +686,9 @@ class _Distutils:
     @staticmethod
     def dist_load_module(name, path):
         """Load a module from file, required by the abstract class '_Cache'."""
-        from numpy.compat import npy_load_module
+        from .misc_util import exec_mod_from_location
         try:
-            return npy_load_module(name, path)
+            return exec_mod_from_location(name, path)
         except Exception as e:
             _Distutils.dist_log(e, stderr=True)
         return None
@@ -696,7 +737,6 @@ class _Distutils:
     )
     @staticmethod
     def _dist_test_spawn(cmd, display=None):
-        from distutils.errors import CompileError
         try:
             o = subprocess.check_output(cmd, stderr=subprocess.STDOUT,
                                         universal_newlines=True)
@@ -708,8 +748,8 @@ class _Distutils:
         except subprocess.CalledProcessError as exc:
             o = exc.output
             s = exc.returncode
-        except OSError:
-            o = b''
+        except OSError as e:
+            o = e
             s = 127
         else:
             return None
@@ -866,7 +906,11 @@ class _CCompiler:
     cc_on_x64 : bool
         True when the target architecture is 64-bit x86
     cc_on_ppc64 : bool
-        True when the target architecture is 64-bit big-endian PowerPC
+        True when the target architecture is 64-bit big-endian powerpc
+    cc_on_ppc64le : bool
+        True when the target architecture is 64-bit litle-endian powerpc
+    cc_on_s390x : bool
+        True when the target architecture is IBM/ZARCH on linux
     cc_on_armhf : bool
         True when the target architecture is 32-bit ARMv7+
     cc_on_aarch64 : bool
@@ -911,6 +955,7 @@ class _CCompiler:
             ("cc_on_ppc64",    ".*(powerpc|ppc)64.*"),
             ("cc_on_aarch64",  ".*(aarch64|arm64).*"),
             ("cc_on_armhf",    ".*arm.*"),
+            ("cc_on_s390x",    ".*s390x.*"),
             # undefined platform
             ("cc_on_noarch",    ""),
         )
@@ -975,7 +1020,8 @@ class _CCompiler:
             self.cc_is_gcc = True
 
         self.cc_march = "unknown"
-        for arch in ("x86", "x64", "ppc64", "ppc64le", "armhf", "aarch64"):
+        for arch in ("x86", "x64", "ppc64", "ppc64le",
+                     "armhf", "aarch64", "s390x"):
             if getattr(self, "cc_on_" + arch):
                 self.cc_march = arch
                 break
@@ -1055,7 +1101,9 @@ class _CCompiler:
     _cc_normalize_unix_frgx = re.compile(
         # 2- to remove any flags starts with
         # -march, -mcpu, -x(INTEL) and '-m' without '='
-        r"^(?!(-mcpu=|-march=|-x[A-Z0-9\-]))(?!-m[a-z0-9\-\.]*.$)"
+        r"^(?!(-mcpu=|-march=|-x[A-Z0-9\-]|-m[a-z0-9\-\.]*.$))|"
+        # exclude:
+        r"(?:-mzvector)"
     )
     _cc_normalize_unix_krgx = re.compile(
         # 3- keep only the highest of

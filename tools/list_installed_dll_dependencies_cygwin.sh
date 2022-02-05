@@ -11,11 +11,8 @@
 # Cygwin-specific, but the rest should work on most platforms with
 # /bin/sh
 
-py_ver=3.7
-site_packages=$(python${py_ver} -m pip show numpy | \
-		    grep Location | cut -d " " -f 2 -);
-dll_list=$(for name in $(python${py_ver} -m pip show -f numpy | \
-			     grep -F .dll); do echo ${site_packages}/${name}; done)
+py_ver=${1}
+dll_list=`/bin/dash tools/list_numpy_dlls.sh ${py_ver}`
 echo "Checks for existence, permissions and file type"
 ls -l ${dll_list}
 file ${dll_list}
@@ -29,10 +26,10 @@ cd dist/
 for name in ${dll_list};
 do
     echo ${name}
-    ext_module=$(echo ${name} | \
+    ext_module=`echo ${name} | \
                      sed -E \
 			 -e "s/^\/+(home|usr).*?site-packages\/+//" \
 			 -e "s/.cpython-3.m?-x86(_64)?-cygwin.dll$//" \
-			 -e "s/\//./g")
+			 -e "s/\//./g"`
     python${py_ver} -c "import ${ext_module}"
 done

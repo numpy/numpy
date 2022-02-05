@@ -4396,7 +4396,7 @@ static struct PyModuleDef moduledef = {
         NULL
 };
 
-PyObject *PyInit__umath_linalg(void)
+PyMODINIT_FUNC PyInit__umath_linalg(void)
 {
     PyObject *m;
     PyObject *d;

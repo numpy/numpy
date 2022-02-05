@@ -16,7 +16,7 @@ from numpy.testing import (
     )
 from numpy.core._rational_tests import rational
 
-from hypothesis import assume, given, strategies as st
+from hypothesis import given, strategies as st
 from hypothesis.extra import numpy as hynp
 
 
@@ -646,7 +646,7 @@ class TestFloatExceptions:
             if np.dtype(ftype).kind == 'f':
                 # Get some extreme values for the type
                 fi = np.finfo(ftype)
-                ft_tiny = fi.machar.tiny
+                ft_tiny = fi._machar.tiny
                 ft_max = fi.max
                 ft_eps = fi.eps
                 underflow = 'underflow'
@@ -655,7 +655,7 @@ class TestFloatExceptions:
                 # 'c', complex, corresponding real dtype
                 rtype = type(ftype(0).real)
                 fi = np.finfo(rtype)
-                ft_tiny = ftype(fi.machar.tiny)
+                ft_tiny = ftype(fi._machar.tiny)
                 ft_max = ftype(fi.max)
                 ft_eps = ftype(fi.eps)
                 # The complex types raise different exceptions
@@ -931,25 +931,6 @@ class TestTypes:
         assert_equal(promote_types('u8', S+'30'), np.dtype(S+'30'))
         # Promote with object:
         assert_equal(promote_types('O', S+'30'), np.dtype('O'))
-
-    @pytest.mark.parametrize(["dtype1", "dtype2"],
-            [[np.dtype("V6"), np.dtype("V10")],
-             [np.dtype([("name1", "i8")]), np.dtype([("name2", "i8")])],
-             [np.dtype("i8,i8"), np.dtype("i4,i4")],
-            ])
-    def test_invalid_void_promotion(self, dtype1, dtype2):
-        # Mainly test structured void promotion, which currently allows
-        # byte-swapping, but nothing else:
-        with pytest.raises(TypeError):
-            np.promote_types(dtype1, dtype2)
-
-    @pytest.mark.parametrize(["dtype1", "dtype2"],
-            [[np.dtype("V10"), np.dtype("V10")],
-             [np.dtype([("name1", "<i8")]), np.dtype([("name1", ">i8")])],
-             [np.dtype("i8,i8"), np.dtype("i8,>i8")],
-            ])
-    def test_valid_void_promotion(self, dtype1, dtype2):
-        assert np.promote_types(dtype1, dtype2) is dtype1
 
     @pytest.mark.parametrize("dtype",
            list(np.typecodes["All"]) +
@@ -1502,6 +1483,18 @@ class TestNonzero:
 
         a = np.array([[False], [TrueThenFalse()]])
         assert_raises(RuntimeError, np.nonzero, a)
+
+    def test_nonzero_sideffects_structured_void(self):
+        # Checks that structured void does not mutate alignment flag of
+        # original array.
+        arr = np.zeros(5, dtype="i1,i8,i8")  # `ones` may short-circuit
+        assert arr.flags.aligned  # structs are considered "aligned"
+        assert not arr["f2"].flags.aligned
+        # make sure that nonzero/count_nonzero do not flip the flag:
+        np.nonzero(arr)
+        assert arr.flags.aligned
+        np.count_nonzero(arr)
+        assert arr.flags.aligned
 
     def test_nonzero_exception_safe(self):
         # gh-13930
@@ -3510,6 +3503,12 @@ class TestBroadcast:
         assert_(mit.iters[0].base is mit2.iters[0].base)
 
         assert_raises(ValueError, np.broadcast, 1, **{'x': 1})
+
+    def test_shape_mismatch_error_message(self):
+        with pytest.raises(ValueError, match=r"arg 0 with shape \(1, 3\) and "
+                                             r"arg 2 with shape \(2,\)"):
+            np.broadcast([[1, 2, 3]], [[4], [5]], [6, 7])
+
 
 class TestKeepdims:
 

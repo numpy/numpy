@@ -133,7 +133,6 @@ cdef extern from "numpy/arrayobject.h":
         NPY_ALIGNED
         NPY_NOTSWAPPED
         NPY_WRITEABLE
-        NPY_UPDATEIFCOPY
         NPY_ARR_HAS_DESCR
 
         NPY_BEHAVED
@@ -165,7 +164,7 @@ cdef extern from "numpy/arrayobject.h":
         NPY_ARRAY_ALIGNED
         NPY_ARRAY_NOTSWAPPED
         NPY_ARRAY_WRITEABLE
-        NPY_ARRAY_UPDATEIFCOPY
+        NPY_ARRAY_WRITEBACKIFCOPY
 
         NPY_ARRAY_BEHAVED
         NPY_ARRAY_BEHAVED_NS

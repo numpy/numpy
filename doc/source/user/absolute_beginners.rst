@@ -229,8 +229,8 @@ content is random and depends on the state of the memory. The reason to use
 fill every element afterwards! ::
 
   >>> # Create an empty array with 2 elements
-  >>> np.empty(2)
-  array([ 3.14, 42.  ])  # may vary
+  >>> np.empty(2) #doctest: +SKIP
+  array([3.14, 42.  ])  # may vary
 
 You can create an array with a range of elements::
 
@@ -391,7 +391,7 @@ this array to an array with three rows and two columns::
 
 With ``np.reshape``, you can specify a few optional parameters::
 
-  >>> numpy.reshape(a, newshape=(1, 6), order='C')
+  >>> np.reshape(a, newshape=(1, 6), order='C')
   array([[0, 1, 2, 3, 4, 5]])
 
 ``a`` is the array to be reshaped.
@@ -613,7 +613,7 @@ How to create an array from existing data
 
 -----
 
-You can easily use create a new array from a section of an existing array.
+You can easily create a new array from a section of an existing array.
 
 Let's say you have this array:
 
@@ -669,18 +669,18 @@ If you wanted to split this array into three equally shaped arrays, you would
 run::
 
   >>> np.hsplit(x, 3)
-  [array([[1,  2,  3,  4],
-          [13, 14, 15, 16]]), array([[ 5,  6,  7,  8],
-          [17, 18, 19, 20]]), array([[ 9, 10, 11, 12],
-          [21, 22, 23, 24]])]
+    [array([[ 1,  2,  3,  4],
+           [13, 14, 15, 16]]), array([[ 5,  6,  7,  8],
+           [17, 18, 19, 20]]), array([[ 9, 10, 11, 12],
+           [21, 22, 23, 24]])]
 
 If you wanted to split your array after the third and fourth column, you'd run::
 
   >>> np.hsplit(x, (3, 4))
-  [array([[1, 2, 3],
-          [13, 14, 15]]), array([[ 4],
-          [16]]), array([[ 5, 6, 7, 8, 9, 10, 11, 12],
-          [17, 18, 19, 20, 21, 22, 23, 24]])]
+    [array([[ 1,  2,  3],
+           [13, 14, 15]]), array([[ 4],
+           [16]]), array([[ 5,  6,  7,  8,  9, 10, 11, 12],
+           [17, 18, 19, 20, 21, 22, 23, 24]])]
 
 :ref:`Learn more about stacking and splitting arrays here <quickstart.stacking-arrays>`.
 
@@ -899,12 +899,18 @@ You can aggregate matrices the same way you aggregated vectors::
 .. image:: images/np_matrix_aggregation.png
 
 You can aggregate all the values in a matrix and you can aggregate them across
-columns or rows using the ``axis`` parameter::
+columns or rows using the ``axis`` parameter. To illustrate this point, let's
+look at a slightly modified dataset::
 
+  >>> data = np.array([[1, 2], [5, 3], [4, 6]])
+  >>> data
+  array([[1, 2],
+         [5, 3],
+         [4, 6]])
   >>> data.max(axis=0)
   array([5, 6])
   >>> data.max(axis=1)
-  array([2, 4, 6])
+  array([2, 5, 6])
 
 .. image:: images/np_matrix_aggregation_row.png
 
@@ -961,9 +967,8 @@ All you need to do is pass in the number of elements you want it to generate::
   array([1., 1., 1.])
   >>> np.zeros(3)
   array([0., 0., 0.])
-  # the simplest way to generate random numbers
-  >>> rng = np.random.default_rng(0)
-  >>> rng.random(3)
+  >>> rng = np.random.default_rng()  # the simplest way to generate random numbers
+  >>> rng.random(3) #doctest: +SKIP
   array([0.63696169, 0.26978671, 0.04097352])
 
 .. image:: images/np_ones_zeros_random.png
@@ -979,7 +984,7 @@ a 2D array if you give them a tuple describing the dimensions of the matrix::
   array([[0., 0.],
          [0., 0.],
          [0., 0.]])
-  >>> rng.random((3, 2))
+  >>> rng.random((3, 2)) #doctest: +SKIP
   array([[0.01652764, 0.81327024],
          [0.91275558, 0.60663578],
          [0.72949656, 0.54362499]])  # may vary
@@ -1005,7 +1010,7 @@ that this is inclusive with NumPy) to high (exclusive). You can set
 
 You can generate a 2 x 4 array of random integers between 0 and 4 with::
 
-  >>> rng.integers(5, size=(2, 4))
+  >>> rng.integers(5, size=(2, 4)) #doctest: +SKIP
   array([[2, 1, 1, 0],
          [0, 0, 0, 4]])  # may vary
 
@@ -1583,7 +1588,7 @@ If you created this array "a" ::
 
 .. for doctests
    The continuous integration truncates dataframe display without this setting.
-   >>> pd.set_option('max_columns', 10)
+   >>> pd.set_option('display.max_columns', 10)
 
 You could create a Pandas dataframe ::
 
