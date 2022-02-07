@@ -4411,7 +4411,7 @@ def _check_interpolation_as_method(method, interpolation, fname):
         f"the `interpolation=` argument to {fname} was renamed to "
         "`method=`, which has additional options.\n"
         "Users of the modes 'nearest', 'lower', 'higher', or "
-        "'midpoint' are encouraged to review the method they. "
+        "'midpoint' are encouraged to review the method they used. "
         "(Deprecated NumPy 1.22)",
         DeprecationWarning, stacklevel=4)
     if method != "linear":
