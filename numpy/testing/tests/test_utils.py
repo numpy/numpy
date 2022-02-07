@@ -1,3 +1,4 @@
+from ast import Assert
 import warnings
 import sys
 import os
@@ -209,13 +210,11 @@ class TestArrayEqual(_GenericTest):
 
     def test_suppress_overflow_warnings(self):
         # Based on issue #18992
-        with assert_raises(AssertionError):
-            try:
+        with pytest.raises(AssertionError):
+            with np.errstate(all="raise"):
                 np.testing.assert_array_equal(
                     np.array([1, 2, 3], np.float32), 
                     np.array([1, 1e-40, 3], np.float32))
-            except RuntimeWarning:
-                pytest.fail("Caught unexpected overflow RuntimeWarning.")
 
 
 class TestBuildErrorMessage:
