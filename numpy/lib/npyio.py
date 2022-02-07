@@ -1245,6 +1245,25 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
            [ 19.22,  64.31],
            [-17.57,  63.94]])
 
+    Using a callable as the converter can be particularly useful for handling
+    values with different formatting, e.g. floats with underscores:
+
+    >>> s = StringIO("1 2.7 100_000")
+    >>> np.loadtxt(s, converters=float)
+    array([1.e+00, 2.7e+00, 1.e+05])
+
+    This idea can be extended to automatically handle values specified in
+    many different formats:
+
+    >>> def conv(val):
+    ...     try:
+    ...         return float(val)
+    ...     except ValueError:
+    ...         return float.fromhex(val)
+    >>> s = StringIO("1, 2.5, 3_000, 0b4, 0x1.4000000000000p+2")
+    >>> np.loadtxt(s, delimiter=",", converters=conv, encoding=None)
+    array([1.0e+00, 2.5e+00, 3.0e+03, 1.8e+02, 5.0e+00])
+
     Note that with the default ``encoding="bytes"``, the inputs to the
     converter function are latin-1 encoded byte strings. To deactivate the
     implicit encoding prior to conversion, use ``encoding=None``
