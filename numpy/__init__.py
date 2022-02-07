@@ -52,8 +52,6 @@ of numpy are available under the ``doc`` sub-module::
 
 Available subpackages
 ---------------------
-doc
-    Topical documentation on broadcasting, indexing, etc.
 lib
     Basic functions used by several sub-packages.
 random
@@ -66,8 +64,6 @@ polynomial
     Polynomial tools
 testing
     NumPy testing tools
-f2py
-    Fortran to Python Interface Generator.
 distutils
     Enhancements to distutils with support for
     Fortran compilers support and more.
