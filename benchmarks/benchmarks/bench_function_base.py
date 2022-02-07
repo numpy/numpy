@@ -222,7 +222,7 @@ class Sort(Benchmark):
         # In NumPy 1.17 and newer, 'merge' can be one of several
         # stable sorts, it isn't necessarily merge sort.
         ['quick', 'merge', 'heap'],
-        ['float64', 'int64', 'int16'],
+        ['float64', 'int64', 'float32', 'uint32', 'int32', 'int16'],
         [
             ('random',),
             ('ordered',),
