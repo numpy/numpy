@@ -104,11 +104,7 @@ aliases are provided (See :ref:`sized-aliases`).
 
 NumPy numerical types are instances of ``dtype`` (data-type) objects, each
 having unique characteristics.  Once you have imported NumPy using
-
-  ::
-
-    >>> import numpy as np
-
+``>>> import numpy as np``
 the dtypes are available as ``np.bool_``, ``np.float32``, etc.
 
 Advanced types, not listed above, are explored in
@@ -127,7 +123,6 @@ Data-types can be used as functions to convert python numbers to array scalars
 to arrays of that type, or as arguments to the dtype keyword that many numpy
 functions or methods accept. Some examples::
 
-    >>> import numpy as np
     >>> x = np.float32(1.0)
     >>> x
     1.0
@@ -150,7 +145,7 @@ We recommend using dtype objects instead.
 To convert the type of an array, use the .astype() method (preferred) or
 the type itself as a function. For example: ::
 
-    >>> z.astype(float)
+    >>> z.astype(float)                 #doctest: +NORMALIZE_WHITESPACE
     array([0.,  1.,  2.])
     >>> np.int8(z)
     array([0, 1, 2], dtype=int8)

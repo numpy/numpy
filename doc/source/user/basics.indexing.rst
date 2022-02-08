@@ -1,3 +1,6 @@
+.. for doctest:
+    >>> import numpy as np
+  
 .. _basics.indexing:
 
 ****************************************
