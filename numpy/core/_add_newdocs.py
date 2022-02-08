@@ -1635,7 +1635,7 @@ add_newdoc('numpy.core.multiarray', 'arange',
     dtype : dtype, optional
         The type of the output array.  If `dtype` is not given, infer the data
         type from the other input arguments.
-    ${ARRAY_FUNCTION_LIKE} This is an optional argument.
+    ${ARRAY_FUNCTION_LIKE}
 
         .. versionadded:: 1.20.0
 
