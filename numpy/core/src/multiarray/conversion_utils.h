@@ -7,6 +7,9 @@ NPY_NO_EXPORT int
 PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq);
 
 NPY_NO_EXPORT int
+PyArray_IntpFromPyIntConverter(PyObject *o, npy_intp *val);
+
+NPY_NO_EXPORT int
 PyArray_OptionalIntpConverter(PyObject *obj, PyArray_Dims *seq);
 
 typedef enum {

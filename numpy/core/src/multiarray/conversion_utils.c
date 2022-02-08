@@ -993,6 +993,17 @@ PyArray_PyIntAsIntp(PyObject *o)
 }
 
 
+NPY_NO_EXPORT int
+PyArray_IntpFromPyIntConverter(PyObject *o, npy_intp *val)
+{
+    *val = PyArray_PyIntAsIntp(o);
+    if (error_converting(*val)) {
+        return NPY_FAIL;
+    }
+    return NPY_SUCCEED;
+}
+
+
 /*
  * PyArray_IntpFromIndexSequence
  * Returns the number of dimensions or -1 if an error occurred.
