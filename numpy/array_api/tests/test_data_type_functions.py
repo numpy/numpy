@@ -8,8 +8,6 @@ from numpy import array_api as xp
     [
         (xp.int8, xp.int16, True),
         (xp.int16, xp.int8, False),
-        # np.can_cast has discrepancies with the Array API
-        # See https://github.com/numpy/numpy/issues/20870
         (xp.bool, xp.int8, False),
         (xp.asarray(0, dtype=xp.uint8), xp.int8, False),
     ],
