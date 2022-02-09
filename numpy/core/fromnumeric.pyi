@@ -17,6 +17,7 @@ from numpy import (
 )
 from numpy.typing import (
     DTypeLike,
+    _DTypeLike,
     ArrayLike,
     _ArrayLike,
     NDArray,
@@ -34,13 +35,46 @@ _ArrayType = TypeVar("_ArrayType", bound=NDArray[Any])
 
 __all__: list[str]
 
+@overload
+def take(
+    a: _ArrayLike[_SCT],
+    indices: _IntLike_co,
+    axis: None = ...,
+    out: None = ...,
+    mode: _ModeKind = ...,
+) -> _SCT: ...
+@overload
+def take(
+    a: ArrayLike,
+    indices: _IntLike_co,
+    axis: None | int = ...,
+    out: None = ...,
+    mode: _ModeKind = ...,
+) -> Any: ...
+@overload
+def take(
+    a: _ArrayLike[_SCT],
+    indices: _ArrayLikeInt_co,
+    axis: None | int = ...,
+    out: None = ...,
+    mode: _ModeKind = ...,
+) -> NDArray[_SCT]: ...
+@overload
 def take(
     a: ArrayLike,
     indices: _ArrayLikeInt_co,
     axis: None | int = ...,
-    out: None | ndarray = ...,
+    out: None = ...,
     mode: _ModeKind = ...,
-) -> Any: ...
+) -> NDArray[Any]: ...
+@overload
+def take(
+    a: ArrayLike,
+    indices: _ArrayLikeInt_co,
+    axis: None | int = ...,
+    out: _ArrayType = ...,
+    mode: _ModeKind = ...,
+) -> _ArrayType: ...
 
 @overload
 def reshape(
@@ -179,7 +213,7 @@ def argsort(
 def argmax(
     a: ArrayLike,
     axis: None = ...,
-    out: None | ndarray = ...,
+    out: None = ...,
     *,
     keepdims: Literal[False] = ...,
 ) -> intp: ...
@@ -187,16 +221,24 @@ def argmax(
 def argmax(
     a: ArrayLike,
     axis: None | int = ...,
-    out: None | ndarray = ...,
+    out: None = ...,
     *,
     keepdims: bool = ...,
 ) -> Any: ...
+@overload
+def argmax(
+    a: ArrayLike,
+    axis: None | int = ...,
+    out: _ArrayType = ...,
+    *,
+    keepdims: bool = ...,
+) -> _ArrayType: ...
 
 @overload
 def argmin(
     a: ArrayLike,
     axis: None = ...,
-    out: None | ndarray = ...,
+    out: None = ...,
     *,
     keepdims: Literal[False] = ...,
 ) -> intp: ...
@@ -204,10 +246,18 @@ def argmin(
 def argmin(
     a: ArrayLike,
     axis: None | int = ...,
-    out: None | ndarray = ...,
+    out: None = ...,
     *,
     keepdims: bool = ...,
 ) -> Any: ...
+@overload
+def argmin(
+    a: ArrayLike,
+    axis: None | int = ...,
+    out: _ArrayType = ...,
+    *,
+    keepdims: bool = ...,
+) -> _ArrayType: ...
 
 @overload
 def searchsorted(
@@ -266,14 +316,24 @@ def diagonal(
     axis2: int = ...,  # >= 2D array
 ) -> NDArray[Any]: ...
 
+@overload
 def trace(
     a: ArrayLike,  # >= 2D array
     offset: int = ...,
     axis1: int = ...,
     axis2: int = ...,
     dtype: DTypeLike = ...,
-    out: None | ndarray = ...,
+    out: None = ...,
 ) -> Any: ...
+@overload
+def trace(
+    a: ArrayLike,  # >= 2D array
+    offset: int = ...,
+    axis1: int = ...,
+    axis2: int = ...,
+    dtype: DTypeLike = ...,
+    out: _ArrayType = ...,
+) -> _ArrayType: ...
 
 @overload
 def ravel(a: _ArrayLike[_SCT], order: _OrderKACF = ...) -> NDArray[_SCT]: ...
@@ -308,30 +368,119 @@ def compress(
 
 @overload
 def clip(
-    a: ArrayLike,
-    a_min: ArrayLike,
+    a: _SCT,
+    a_min: None | ArrayLike,
     a_max: None | ArrayLike,
-    out: None | ndarray = ...,
-    **kwargs: Any,
+    out: None = ...,
+    *,
+    dtype: None = ...,
+    where: None | _ArrayLikeBool_co = ...,
+    order: _OrderKACF = ...,
+    subok: bool = ...,
+    signature: str | tuple[None | str, ...] = ...,
+    extobj: list[Any] = ...,
+) -> _SCT: ...
+@overload
+def clip(
+    a: _ScalarLike_co,
+    a_min: None | ArrayLike,
+    a_max: None | ArrayLike,
+    out: None = ...,
+    *,
+    dtype: None = ...,
+    where: None | _ArrayLikeBool_co = ...,
+    order: _OrderKACF = ...,
+    subok: bool = ...,
+    signature: str | tuple[None | str, ...] = ...,
+    extobj: list[Any] = ...,
+) -> Any: ...
+@overload
+def clip(
+    a: _ArrayLike[_SCT],
+    a_min: None | ArrayLike,
+    a_max: None | ArrayLike,
+    out: None = ...,
+    *,
+    dtype: None = ...,
+    where: None | _ArrayLikeBool_co = ...,
+    order: _OrderKACF = ...,
+    subok: bool = ...,
+    signature: str | tuple[None | str, ...] = ...,
+    extobj: list[Any] = ...,
+) -> NDArray[_SCT]: ...
+@overload
+def clip(
+    a: ArrayLike,
+    a_min: None | ArrayLike,
+    a_max: None | ArrayLike,
+    out: None = ...,
+    *,
+    dtype: None = ...,
+    where: None | _ArrayLikeBool_co = ...,
+    order: _OrderKACF = ...,
+    subok: bool = ...,
+    signature: str | tuple[None | str, ...] = ...,
+    extobj: list[Any] = ...,
+) -> NDArray[Any]: ...
+@overload
+def clip(
+    a: ArrayLike,
+    a_min: None | ArrayLike,
+    a_max: None | ArrayLike,
+    out: _ArrayType = ...,
+    *,
+    dtype: DTypeLike,
+    where: None | _ArrayLikeBool_co = ...,
+    order: _OrderKACF = ...,
+    subok: bool = ...,
+    signature: str | tuple[None | str, ...] = ...,
+    extobj: list[Any] = ...,
 ) -> Any: ...
 @overload
 def clip(
     a: ArrayLike,
-    a_min: None,
-    a_max: ArrayLike,
-    out: None | ndarray = ...,
-    **kwargs: Any,
-) -> Any: ...
+    a_min: None | ArrayLike,
+    a_max: None | ArrayLike,
+    out: _ArrayType,
+    *,
+    dtype: DTypeLike = ...,
+    where: None | _ArrayLikeBool_co = ...,
+    order: _OrderKACF = ...,
+    subok: bool = ...,
+    signature: str | tuple[None | str, ...] = ...,
+    extobj: list[Any] = ...,
+) -> _ArrayType: ...
 
+@overload
+def sum(
+    a: _ArrayLike[_SCT],
+    axis: None = ...,
+    dtype: None = ...,
+    out: None  = ...,
+    keepdims: bool = ...,
+    initial: _NumberLike_co = ...,
+    where: _ArrayLikeBool_co = ...,
+) -> _SCT: ...
+@overload
 def sum(
     a: ArrayLike,
-    axis: _ShapeLike = ...,
+    axis: None | _ShapeLike = ...,
     dtype: DTypeLike = ...,
-    out: None | ndarray = ...,
+    out: None  = ...,
     keepdims: bool = ...,
     initial: _NumberLike_co = ...,
     where: _ArrayLikeBool_co = ...,
 ) -> Any: ...
+@overload
+def sum(
+    a: ArrayLike,
+    axis: None | _ShapeLike = ...,
+    dtype: DTypeLike = ...,
+    out: _ArrayType  = ...,
+    keepdims: bool = ...,
+    initial: _NumberLike_co = ...,
+    where: _ArrayLikeBool_co = ...,
+) -> _ArrayType: ...
 
 @overload
 def all(
@@ -346,11 +495,20 @@ def all(
 def all(
     a: ArrayLike,
     axis: None | _ShapeLike = ...,
-    out: None | ndarray = ...,
+    out: None = ...,
     keepdims: bool = ...,
     *,
     where: _ArrayLikeBool_co = ...,
 ) -> Any: ...
+@overload
+def all(
+    a: ArrayLike,
+    axis: None | _ShapeLike = ...,
+    out: _ArrayType = ...,
+    keepdims: bool = ...,
+    *,
+    where: _ArrayLikeBool_co = ...,
+) -> _ArrayType: ...
 
 @overload
 def any(
@@ -365,43 +523,134 @@ def any(
 def any(
     a: ArrayLike,
     axis: None | _ShapeLike = ...,
-    out: None | ndarray = ...,
+    out: None = ...,
     keepdims: bool = ...,
     *,
     where: _ArrayLikeBool_co = ...,
 ) -> Any: ...
+@overload
+def any(
+    a: ArrayLike,
+    axis: None | _ShapeLike = ...,
+    out: _ArrayType = ...,
+    keepdims: bool = ...,
+    *,
+    where: _ArrayLikeBool_co = ...,
+) -> _ArrayType: ...
 
+@overload
+def cumsum(
+    a: _ArrayLike[_SCT],
+    axis: None | int = ...,
+    dtype: None = ...,
+    out: None = ...,
+) -> NDArray[_SCT]: ...
+@overload
+def cumsum(
+    a: ArrayLike,
+    axis: None | int = ...,
+    dtype: None = ...,
+    out: None = ...,
+) -> NDArray[Any]: ...
+@overload
+def cumsum(
+    a: ArrayLike,
+    axis: None | int = ...,
+    dtype: _DTypeLike[_SCT] = ...,
+    out: None = ...,
+) -> NDArray[_SCT]: ...
+@overload
 def cumsum(
     a: ArrayLike,
     axis: None | int = ...,
     dtype: DTypeLike = ...,
-    out: None | ndarray = ...,
-) -> ndarray: ...
+    out: None = ...,
+) -> NDArray[Any]: ...
+@overload
+def cumsum(
+    a: ArrayLike,
+    axis: None | int = ...,
+    dtype: DTypeLike = ...,
+    out: _ArrayType = ...,
+) -> _ArrayType: ...
 
+@overload
+def ptp(
+    a: _ArrayLike[_SCT],
+    axis: None = ...,
+    out: None = ...,
+    keepdims: Literal[False] = ...,
+) -> _SCT: ...
+@overload
 def ptp(
     a: ArrayLike,
     axis: None | _ShapeLike = ...,
-    out: None | ndarray = ...,
+    out: None = ...,
     keepdims: bool = ...,
 ) -> Any: ...
+@overload
+def ptp(
+    a: ArrayLike,
+    axis: None | _ShapeLike = ...,
+    out: _ArrayType = ...,
+    keepdims: bool = ...,
+) -> _ArrayType: ...
 
+@overload
+def amax(
+    a: _ArrayLike[_SCT],
+    axis: None = ...,
+    out: None = ...,
+    keepdims: Literal[False] = ...,
+    initial: _NumberLike_co = ...,
+    where: _ArrayLikeBool_co = ...,
+) -> _SCT: ...
+@overload
 def amax(
     a: ArrayLike,
     axis: None | _ShapeLike = ...,
-    out: None | ndarray = ...,
+    out: None = ...,
     keepdims: bool = ...,
     initial: _NumberLike_co = ...,
     where: _ArrayLikeBool_co = ...,
 ) -> Any: ...
+@overload
+def amax(
+    a: ArrayLike,
+    axis: None | _ShapeLike = ...,
+    out: _ArrayType = ...,
+    keepdims: bool = ...,
+    initial: _NumberLike_co = ...,
+    where: _ArrayLikeBool_co = ...,
+) -> _ArrayType: ...
 
+@overload
+def amin(
+    a: _ArrayLike[_SCT],
+    axis: None = ...,
+    out: None = ...,
+    keepdims: Literal[False] = ...,
+    initial: _NumberLike_co = ...,
+    where: _ArrayLikeBool_co = ...,
+) -> _SCT: ...
+@overload
 def amin(
     a: ArrayLike,
     axis: None | _ShapeLike = ...,
-    out: None | ndarray = ...,
+    out: None = ...,
     keepdims: bool = ...,
     initial: _NumberLike_co = ...,
     where: _ArrayLikeBool_co = ...,
 ) -> Any: ...
+@overload
+def amin(
+    a: ArrayLike,
+    axis: None | _ShapeLike = ...,
+    out: _ArrayType = ...,
+    keepdims: bool = ...,
+    initial: _NumberLike_co = ...,
+    where: _ArrayLikeBool_co = ...,
+) -> _ArrayType: ...
 
 # TODO: `np.prod()``: For object arrays `initial` does not necessarily
 # have to be a numerical scalar.
