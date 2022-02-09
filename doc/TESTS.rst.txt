@@ -16,13 +16,7 @@ Our goal is that every module and package in NumPy
 should have a thorough set of unit
 tests. These tests should exercise the full functionality of a given
 routine as well as its robustness to erroneous or unexpected input
-arguments. Long experience has shown that by far the best time to
-write the tests is before you write or change the code - this is
-`test-driven development
-<https://en.wikipedia.org/wiki/Test-driven_development>`__.  The
-arguments for this can sound rather abstract, but we can assure you
-that you will find that writing the tests first leads to more robust
-and better designed code. Well-designed tests with good coverage make
+arguments. Well-designed tests with good coverage make
 an enormous difference to the ease of refactoring. Whenever a new bug
 is found in a routine, you should write a new test for that specific
 case and add it to the test suite to prevent that bug from creeping
@@ -59,7 +53,7 @@ that are run; but if it is greater than 1, then the tests will also provide
 warnings on missing tests. So if you want to run every test and get
 messages about which modules don't have tests::
 
-  >>> numpy.test(label='full', verbose=2) # or numpy.test('full', 2)
+  >>> numpy.test(label='full', verbose=2)  # or numpy.test('full', 2)
 
 Finally, if you are only interested in testing a subset of NumPy, for
 example, the ``core`` module, use the following::
@@ -101,7 +95,7 @@ module called ``test_yyy.py``.  If you only need to test one aspect of
 ``zzz``, you can simply add a test function::
 
   def test_zzz():
-      assert_(zzz() == 'Hello from zzz')
+      assert zzz() == 'Hello from zzz'
 
 More often, we need to group a number of tests together, so we create
 a test class::
@@ -110,6 +104,7 @@ a test class::
 
   # import xxx symbols
   from numpy.xxx.yyy import zzz
+  import pytest
 
   class TestZzz:
       def test_simple(self):
@@ -133,6 +128,7 @@ should be preferred over their legacy counterparts
 since the pytest variants are more broadly used and allow more explicit
 targeting of warnings and errors when used with the ``match`` regex.
 
+
 Note that ``test_`` functions or methods should not have a docstring, because
 that makes it hard to identify the test from the output of running the test
 suite with ``verbose=2`` (or similar verbosity setting).  Use plain comments
@@ -142,6 +138,21 @@ Also since much of NumPy is legacy code that was
 originally written without unit tests, there are still several modules
 that don't have tests yet. Please feel free to choose one of these
 modules and develop tests for it.
+
+Using C code in tests
+---------------------
+
+NumPy exposes a rich :ref:`C-API<c-api>` . These are tested using c-extension
+modules written "as-if" they know nothing about the internals of NumPy, rather
+using the official C-API interfaces only. Examples of such modules are tests
+for a user-defined ``rational`` dtype in ``_rational_tests`` or the ufunc
+machinery tests in ``_umath_tests`` which are part of the binary distribution.
+Starting from version 1.21, you can also write snippets of C code in tests that
+will be compiled locally into c-extension modules and loaded into python.
+
+.. currentmodule:: numpy.testing.extbuild
+
+.. autofunction:: build_and_import_extension
 
 Labeling tests
 --------------
@@ -292,12 +303,12 @@ from one in `numpy/linalg/tests/test_linalg.py
 
   class LinalgTestCase:
       def test_single(self):
-          a = array([[1.,2.], [3.,4.]], dtype=single)
+          a = array([[1., 2.], [3., 4.]], dtype=single)
           b = array([2., 1.], dtype=single)
           self.do(a, b)
 
       def test_double(self):
-          a = array([[1.,2.], [3.,4.]], dtype=double)
+          a = array([[1., 2.], [3., 4.]], dtype=double)
           b = array([2., 1.], dtype=double)
           self.do(a, b)
 
@@ -306,14 +317,14 @@ from one in `numpy/linalg/tests/test_linalg.py
   class TestSolve(LinalgTestCase):
       def do(self, a, b):
           x = linalg.solve(a, b)
-          assert_almost_equal(b, dot(a, x))
-          assert_(imply(isinstance(b, matrix), isinstance(x, matrix)))
+          assert_allclose(b, dot(a, x))
+          assert imply(isinstance(b, matrix), isinstance(x, matrix))
 
   class TestInv(LinalgTestCase):
       def do(self, a, b):
           a_inv = linalg.inv(a)
-          assert_almost_equal(dot(a, a_inv), identity(asarray(a).shape[0]))
-          assert_(imply(isinstance(a, matrix), isinstance(a_inv, matrix)))
+          assert_allclose(dot(a, a_inv), identity(asarray(a).shape[0]))
+          assert imply(isinstance(a, matrix), isinstance(a_inv, matrix))
 
 In this case, we wanted to test solving a linear algebra problem using
 matrices of several data types, using ``linalg.solve`` and

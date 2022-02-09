@@ -9,7 +9,7 @@
  */
 
 #define PY_SSIZE_T_CLEAN
-#include "Python.h"
+#include <Python.h>
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
@@ -819,6 +819,10 @@ NPY_NO_EXPORT PyArrayMethod_StridedLoop *
 #    define _CONVERT_FN(x) npy_floatbits_to_halfbits(x)
 #  elif @is_double1@
 #    define _CONVERT_FN(x) npy_doublebits_to_halfbits(x)
+#  elif @is_half1@
+#    define _CONVERT_FN(x) (x)
+#  elif @is_bool1@
+#    define _CONVERT_FN(x) npy_float_to_half((float)(x!=0))
 #  else
 #    define _CONVERT_FN(x) npy_float_to_half((float)x)
 #  endif
@@ -1316,7 +1320,7 @@ PyArray_TransferMaskedStridedToNDim(npy_intp ndim,
                 args, &count, strides, mask, mask_stride, cast_info->auxdata);
     }
     int res = stransfer(&cast_info->context,
-            args, &count, strides, mask, mask_stride, cast_info->auxdata);
+            args, &N, strides, mask, mask_stride, cast_info->auxdata);
     if (res < 0) {
         return -1;
     }
@@ -1845,7 +1849,7 @@ mapiter_@name@(PyArrayMapIterObject *mit)
                         return -1;
                     }
 #else
-                    /* The operand order is reveresed here */
+                    /* The operand order is reversed here */
                     char *args[2] = {subspace_ptrs[1], subspace_ptrs[0]};
                     npy_intp strides[2] = {subspace_strides[1], subspace_strides[0]};
                     if (NPY_UNLIKELY(cast_info.func(&cast_info.context,

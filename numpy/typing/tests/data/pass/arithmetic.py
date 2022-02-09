@@ -191,28 +191,24 @@ AR_b // AR_LIKE_b
 AR_b // AR_LIKE_u
 AR_b // AR_LIKE_i
 AR_b // AR_LIKE_f
-AR_b // AR_LIKE_c
 AR_b // AR_LIKE_O
 
 AR_LIKE_b // AR_b
 AR_LIKE_u // AR_b
 AR_LIKE_i // AR_b
 AR_LIKE_f // AR_b
-AR_LIKE_c // AR_b
 AR_LIKE_O // AR_b
 
 AR_u // AR_LIKE_b
 AR_u // AR_LIKE_u
 AR_u // AR_LIKE_i
 AR_u // AR_LIKE_f
-AR_u // AR_LIKE_c
 AR_u // AR_LIKE_O
 
 AR_LIKE_b // AR_u
 AR_LIKE_u // AR_u
 AR_LIKE_i // AR_u
 AR_LIKE_f // AR_u
-AR_LIKE_c // AR_u
 AR_LIKE_m // AR_u
 AR_LIKE_O // AR_u
 
@@ -220,14 +216,12 @@ AR_i // AR_LIKE_b
 AR_i // AR_LIKE_u
 AR_i // AR_LIKE_i
 AR_i // AR_LIKE_f
-AR_i // AR_LIKE_c
 AR_i // AR_LIKE_O
 
 AR_LIKE_b // AR_i
 AR_LIKE_u // AR_i
 AR_LIKE_i // AR_i
 AR_LIKE_f // AR_i
-AR_LIKE_c // AR_i
 AR_LIKE_m // AR_i
 AR_LIKE_O // AR_i
 
@@ -235,29 +229,14 @@ AR_f // AR_LIKE_b
 AR_f // AR_LIKE_u
 AR_f // AR_LIKE_i
 AR_f // AR_LIKE_f
-AR_f // AR_LIKE_c
 AR_f // AR_LIKE_O
 
 AR_LIKE_b // AR_f
 AR_LIKE_u // AR_f
 AR_LIKE_i // AR_f
 AR_LIKE_f // AR_f
-AR_LIKE_c // AR_f
 AR_LIKE_m // AR_f
 AR_LIKE_O // AR_f
-
-AR_c // AR_LIKE_b
-AR_c // AR_LIKE_u
-AR_c // AR_LIKE_i
-AR_c // AR_LIKE_f
-AR_c // AR_LIKE_c
-
-AR_LIKE_b // AR_c
-AR_LIKE_u // AR_c
-AR_LIKE_i // AR_c
-AR_LIKE_f // AR_c
-AR_LIKE_c // AR_c
-AR_LIKE_O // AR_c
 
 AR_m // AR_LIKE_u
 AR_m // AR_LIKE_i
@@ -270,7 +249,6 @@ AR_O // AR_LIKE_b
 AR_O // AR_LIKE_u
 AR_O // AR_LIKE_i
 AR_O // AR_LIKE_f
-AR_O // AR_LIKE_c
 AR_O // AR_LIKE_O
 
 AR_LIKE_b // AR_O

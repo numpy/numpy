@@ -221,8 +221,10 @@ def _var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False, *,
     if isinstance(arrmean, mu.ndarray):
         arrmean = um.true_divide(arrmean, div, out=arrmean, casting='unsafe',
                                  subok=False)
-    else:
+    elif hasattr(arrmean, "dtype"):
         arrmean = arrmean.dtype.type(arrmean / rcount)
+    else:
+        arrmean = arrmean / rcount
 
     # Compute sum of squared deviations from mean
     # Note that x may not be inexact and that we need it to be an array,

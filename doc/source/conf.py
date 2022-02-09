@@ -1,7 +1,7 @@
-# -*- coding: utf-8 -*-
 import os
 import re
 import sys
+import importlib
 
 # Minimum version, enforced by sphinx
 needs_sphinx = '3.2.0'
@@ -83,10 +83,19 @@ extensions = [
     'matplotlib.sphinxext.plot_directive',
     'IPython.sphinxext.ipython_console_highlighting',
     'IPython.sphinxext.ipython_directive',
-    'sphinx.ext.imgmath',
+    'sphinx.ext.mathjax',
+    'sphinx_panels',
 ]
 
-imgmath_image_format = 'svg'
+skippable_extensions = [
+    ('breathe', 'skip generating C/C++ API from comment blocks.'),
+]
+for ext, warn in skippable_extensions:
+    ext_exist = importlib.util.find_spec(ext) is not None
+    if ext_exist:
+        extensions.append(ext)
+    else:
+        print(f"Unable to find Sphinx extension '{ext}', {warn}.")
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -99,7 +108,7 @@ master_doc = 'index'
 
 # General substitutions.
 project = 'NumPy'
-copyright = '2008-2021, The SciPy community'
+copyright = '2008-2022, NumPy Developers'
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
@@ -160,15 +169,16 @@ html_theme = 'pydata_sphinx_theme'
 
 html_logo = '_static/numpylogo.svg'
 
+html_favicon = '_static/favicon/favicon.ico'
+
 html_theme_options = {
   "logo_link": "index",
   "github_url": "https://github.com/numpy/numpy",
   "twitter_url": "https://twitter.com/numpy_team",
-}
-
-
-html_additional_pages = {
-    'index': 'indexcontent.html',
+  "collapse_navigation": True,
+  "external_links": [
+      {"name": "Learn", "url": "https://numpy.org/numpy-tutorials/"}
+      ],
 }
 
 html_title = "%s v%s Manual" % (project, version)
@@ -185,6 +195,8 @@ htmlhelp_basename = 'numpy'
 if 'sphinx.ext.pngmath' in extensions:
     pngmath_use_preview = True
     pngmath_dvipng_args = ['-gamma', '1.5', '-D', '96', '-bg', 'Transparent']
+
+mathjax_path = "scipy-mathjax/MathJax.js?config=scipy-mathjax"
 
 plot_html_show_formats = False
 plot_html_show_source_link = False
@@ -285,14 +297,16 @@ texinfo_documents = [
 # -----------------------------------------------------------------------------
 intersphinx_mapping = {
     'neps': ('https://numpy.org/neps', None),
-    'python': ('https://docs.python.org/dev', None),
-    'scipy': ('https://docs.scipy.org/doc/scipy/reference', None),
+    'python': ('https://docs.python.org/3', None),
+    'scipy': ('https://docs.scipy.org/doc/scipy', None),
     'matplotlib': ('https://matplotlib.org/stable', None),
     'imageio': ('https://imageio.readthedocs.io/en/stable', None),
     'skimage': ('https://scikit-image.org/docs/stable', None),
     'pandas': ('https://pandas.pydata.org/pandas-docs/stable', None),
     'scipy-lecture-notes': ('https://scipy-lectures.org', None),
     'pytest': ('https://docs.pytest.org/en/stable', None),
+    'numpy-tutorials': ('https://numpy.org/numpy-tutorials', None),
+    'numpydoc': ('https://numpydoc.readthedocs.io/en/latest', None),
 }
 
 
@@ -432,6 +446,11 @@ def linkcode_resolve(domain, info):
         if not fn:
             return None
 
+        # Ignore re-exports as their source files are not within the numpy repo
+        module = inspect.getmodule(obj)
+        if module is not None and not module.__name__.startswith("numpy"):
+            return None
+
         try:
             source, lineno = inspect.getsourcelines(obj)
         except Exception:
@@ -464,3 +483,11 @@ class NumPyLexer(CLexer):
             inherit,
         ],
     }
+
+
+# -----------------------------------------------------------------------------
+# Breathe & Doxygen
+# -----------------------------------------------------------------------------
+breathe_projects = dict(numpy=os.path.join("..", "build", "doxygen", "xml"))
+breathe_default_project = "numpy"
+breathe_default_members = ("members", "undoc-members", "protected-members")

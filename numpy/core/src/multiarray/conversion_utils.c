@@ -1,9 +1,10 @@
-#define PY_SSIZE_T_CLEAN
-#include <Python.h>
-#include "structmember.h"
-
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
+
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+#include <structmember.h>
+
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
 
@@ -160,6 +161,42 @@ PyArray_OptionalIntpConverter(PyObject *obj, PyArray_Dims *seq)
     }
 
     return PyArray_IntpConverter(obj, seq);
+}
+
+NPY_NO_EXPORT int
+PyArray_CopyConverter(PyObject *obj, _PyArray_CopyMode *copymode) {
+    if (obj == Py_None) {
+        PyErr_SetString(PyExc_ValueError,
+                        "NoneType copy mode not allowed.");
+        return NPY_FAIL;
+    }
+
+    int int_copymode;
+    static PyObject* numpy_CopyMode = NULL;
+    npy_cache_import("numpy", "_CopyMode", &numpy_CopyMode);
+
+    if (numpy_CopyMode != NULL && (PyObject *)Py_TYPE(obj) == numpy_CopyMode) {
+        PyObject* mode_value = PyObject_GetAttrString(obj, "value");
+        if (mode_value == NULL) {
+            return NPY_FAIL;
+        }
+
+        int_copymode = (int)PyLong_AsLong(mode_value);
+        Py_DECREF(mode_value);
+        if (error_converting(int_copymode)) {
+            return NPY_FAIL;
+        }
+    }
+    else {
+        npy_bool bool_copymode;
+        if (!PyArray_BoolConverter(obj, &bool_copymode)) {
+            return NPY_FAIL;
+        }
+        int_copymode = (int)bool_copymode;
+    }
+
+    *copymode = (_PyArray_CopyMode)int_copymode;
+    return NPY_SUCCEED;
 }
 
 /*NUMPY_API
@@ -956,6 +993,17 @@ PyArray_PyIntAsIntp(PyObject *o)
 }
 
 
+NPY_NO_EXPORT int
+PyArray_IntpFromPyIntConverter(PyObject *o, npy_intp *val)
+{
+    *val = PyArray_PyIntAsIntp(o);
+    if (error_converting(*val)) {
+        return NPY_FAIL;
+    }
+    return NPY_SUCCEED;
+}
+
+
 /*
  * PyArray_IntpFromIndexSequence
  * Returns the number of dimensions or -1 if an error occurred.
@@ -1222,11 +1270,7 @@ PyArray_IntTupleFromIntp(int len, npy_intp const *vals)
         goto fail;
     }
     for (i = 0; i < len; i++) {
-#if NPY_SIZEOF_INTP <= NPY_SIZEOF_LONG
-        PyObject *o = PyLong_FromLong((long) vals[i]);
-#else
-        PyObject *o = PyLong_FromLongLong((npy_longlong) vals[i]);
-#endif
+        PyObject *o = PyArray_PyIntFromIntp(vals[i]);
         if (!o) {
             Py_DECREF(intTuple);
             intTuple = NULL;

@@ -1,0 +1,33 @@
+``np.loadtxt`` has recieved several changes  
+-------------------------------------------
+
+The row counting of `numpy.loadtxt` was fixed.  ``loadtxt`` ignores fully
+empty lines in the file, but counted them towards ``max_rows``.
+When ``max_rows`` is used and the file contains empty lines, these will now
+not be counted.  Previously, it was possible that the result contained fewer
+than ``max_rows`` rows even though more data was available to be read.
+If the old behaviour is required, ``itertools.islice`` may be used::
+
+    import itertools
+    lines = itertools.islice(open("file"), 0, max_rows)
+    result = np.loadtxt(lines, ...)
+
+While generally much faster and improved, `numpy.loadtxt` may now fail to
+converter certain strings to numbers that were previously successfully read.
+The most important cases for this are:
+
+* Parsing floating point values such as ``1.0`` into integers will now fail
+* Parsing hexadecimal floats such as ``0x3p3`` will fail
+* An ``_`` was previously accepted as a thousands delimiter ``100_000``.
+  This will now result in an error.
+
+If you experience these limitations, they can all be worked around by passing
+appropriate ``converters=``.  NumPy now supports passing a single converter
+to be used for all columns to make this more convenient.
+For example, ``converters=float.fromhex`` can read hexadecimal float numbers
+and ``converters=int`` will be able to read ``100_000``.
+
+Further, the error messages have been generally improved.  However, this means
+that error types may differ.  In particularly, a ``ValueError`` is now always
+raised when parsing of a single entry fails.
+

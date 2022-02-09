@@ -1,0 +1,8 @@
+``np.loadtxt`` now supports quote character and single converter function
+-------------------------------------------------------------------------
+`numpy.loadtxt` now supports an additional ``quotechar`` keyword argument
+which is not set by default.  Using ``quotechar='"'`` will read quoted fields
+as used by the Excel CSV dialect.
+
+Further, it is now possible to pass a single callable rather than a dictionary
+for the ``converters`` argument.

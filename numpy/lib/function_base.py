@@ -9,8 +9,7 @@ import numpy.core.numeric as _nx
 from numpy.core import transpose
 from numpy.core.numeric import (
     ones, zeros_like, arange, concatenate, array, asarray, asanyarray, empty,
-    ndarray, around, floor, ceil, take, dot, where, intp,
-    integer, isscalar, absolute
+    ndarray, take, dot, where, intp, integer, isscalar, absolute
     )
 from numpy.core.umath import (
     pi, add, arctan2, frompyfunc, cos, less_equal, sqrt, sin,
@@ -33,7 +32,7 @@ from numpy.core.umath import _add_newdoc_ufunc as add_newdoc_ufunc
 import builtins
 
 # needed in this module for compatibility
-from numpy.lib.histograms import histogram, histogramdd
+from numpy.lib.histograms import histogram, histogramdd  # noqa: F401
 
 
 array_function_dispatch = functools.partial(
@@ -50,6 +49,106 @@ __all__ = [
     'meshgrid', 'delete', 'insert', 'append', 'interp', 'add_newdoc_ufunc',
     'quantile'
     ]
+
+# _QuantileMethods is a dictionary listing all the supported methods to
+# compute quantile/percentile.
+#
+# Below virtual_index refer to the index of the element where the percentile
+# would be found in the sorted sample.
+# When the sample contains exactly the percentile wanted, the virtual_index is
+# an integer to the index of this element.
+# When the percentile wanted is in between two elements, the virtual_index
+# is made of a integer part (a.k.a 'i' or 'left') and a fractional part
+# (a.k.a 'g' or 'gamma')
+#
+# Each method in _QuantileMethods has two properties
+# get_virtual_index : Callable
+#   The function used to compute the virtual_index.
+# fix_gamma : Callable
+#   A function used for discret methods to force the index to a specific value.
+_QuantileMethods = dict(
+    # --- HYNDMAN and FAN METHODS
+    # Discrete methods
+    inverted_cdf=dict(
+        get_virtual_index=lambda n, quantiles: _inverted_cdf(n, quantiles),
+        fix_gamma=lambda gamma, _: gamma,  # should never be called
+    ),
+    averaged_inverted_cdf=dict(
+        get_virtual_index=lambda n, quantiles: (n * quantiles) - 1,
+        fix_gamma=lambda gamma, _: _get_gamma_mask(
+            shape=gamma.shape,
+            default_value=1.,
+            conditioned_value=0.5,
+            where=gamma == 0),
+    ),
+    closest_observation=dict(
+        get_virtual_index=lambda n, quantiles: _closest_observation(n,
+                                                                    quantiles),
+        fix_gamma=lambda gamma, _: gamma,  # should never be called
+    ),
+    # Continuous methods
+    interpolated_inverted_cdf=dict(
+        get_virtual_index=lambda n, quantiles:
+        _compute_virtual_index(n, quantiles, 0, 1),
+        fix_gamma=lambda gamma, _: gamma,
+    ),
+    hazen=dict(
+        get_virtual_index=lambda n, quantiles:
+        _compute_virtual_index(n, quantiles, 0.5, 0.5),
+        fix_gamma=lambda gamma, _: gamma,
+    ),
+    weibull=dict(
+        get_virtual_index=lambda n, quantiles:
+        _compute_virtual_index(n, quantiles, 0, 0),
+        fix_gamma=lambda gamma, _: gamma,
+    ),
+    # Default method.
+    # To avoid some rounding issues, `(n-1) * quantiles` is preferred to
+    # `_compute_virtual_index(n, quantiles, 1, 1)`.
+    # They are mathematically equivalent.
+    linear=dict(
+        get_virtual_index=lambda n, quantiles: (n - 1) * quantiles,
+        fix_gamma=lambda gamma, _: gamma,
+    ),
+    median_unbiased=dict(
+        get_virtual_index=lambda n, quantiles:
+        _compute_virtual_index(n, quantiles, 1 / 3.0, 1 / 3.0),
+        fix_gamma=lambda gamma, _: gamma,
+    ),
+    normal_unbiased=dict(
+        get_virtual_index=lambda n, quantiles:
+        _compute_virtual_index(n, quantiles, 3 / 8.0, 3 / 8.0),
+        fix_gamma=lambda gamma, _: gamma,
+    ),
+    # --- OTHER METHODS
+    lower=dict(
+        get_virtual_index=lambda n, quantiles: np.floor(
+            (n - 1) * quantiles).astype(np.intp),
+        fix_gamma=lambda gamma, _: gamma,
+        # should never be called, index dtype is int
+    ),
+    higher=dict(
+        get_virtual_index=lambda n, quantiles: np.ceil(
+            (n - 1) * quantiles).astype(np.intp),
+        fix_gamma=lambda gamma, _: gamma,
+        # should never be called, index dtype is int
+    ),
+    midpoint=dict(
+        get_virtual_index=lambda n, quantiles: 0.5 * (
+                np.floor((n - 1) * quantiles)
+                + np.ceil((n - 1) * quantiles)),
+        fix_gamma=lambda gamma, index: _get_gamma_mask(
+            shape=gamma.shape,
+            default_value=0.5,
+            conditioned_value=0.,
+            where=index % 1 == 0),
+    ),
+    nearest=dict(
+        get_virtual_index=lambda n, quantiles: np.around(
+            (n - 1) * quantiles).astype(np.intp),
+        fix_gamma=lambda gamma, _: gamma,
+        # should never be called, index dtype is int
+    ))
 
 
 def _rot90_dispatcher(m, k=None, axes=None):
@@ -88,8 +187,11 @@ def rot90(m, k=1, axes=(0, 1)):
 
     Notes
     -----
-    rot90(m, k=1, axes=(1,0)) is the reverse of rot90(m, k=1, axes=(0,1))
-    rot90(m, k=1, axes=(1,0)) is equivalent to rot90(m, k=-1, axes=(0,1))
+    ``rot90(m, k=1, axes=(1,0))``  is the reverse of
+    ``rot90(m, k=1, axes=(0,1))``
+
+    ``rot90(m, k=1, axes=(1,0))`` is equivalent to
+    ``rot90(m, k=-1, axes=(0,1))``
 
     Examples
     --------
@@ -264,6 +366,19 @@ def iterable(y):
     True
     >>> np.iterable(2)
     False
+
+    Notes
+    -----
+    In most cases, the results of ``np.iterable(obj)`` are consistent with
+    ``isinstance(obj, collections.abc.Iterable)``. One notable exception is
+    the treatment of 0-dimensional arrays::
+
+        >>> from collections.abc import Iterable
+        >>> a = np.array(1.0)  # 0-dimensional numpy array
+        >>> isinstance(a, Iterable)
+        True
+        >>> np.iterable(a)
+        False
 
     """
     try:
@@ -654,11 +769,16 @@ def select(condlist, choicelist, default=0):
 
     Examples
     --------
-    >>> x = np.arange(10)
-    >>> condlist = [x<3, x>5]
+    >>> x = np.arange(6)
+    >>> condlist = [x<3, x>3]
     >>> choicelist = [x, x**2]
-    >>> np.select(condlist, choicelist)
-    array([ 0,  1,  2, ..., 49, 64, 81])
+    >>> np.select(condlist, choicelist, 42)
+    array([ 0,  1,  2, 42, 16, 25])
+
+    >>> condlist = [x<=4, x>3]
+    >>> choicelist = [x, x**2]
+    >>> np.select(condlist, choicelist, 55)
+    array([ 0,  1,  2,  3,  4, 25])
 
     """
     # Check the size of condlist and choicelist are the same, or abort.
@@ -776,6 +896,17 @@ def copy(a, order='K', subok=False):
     >>> x[0] == z[0]
     False
 
+    Note that, np.copy clears previously set WRITEABLE=False flag.
+
+    >>> a = np.array([1, 2, 3])
+    >>> a.flags["WRITEABLE"] = False
+    >>> b = np.copy(a)
+    >>> b.flags["WRITEABLE"]
+    True
+    >>> b[0] = 3
+    >>> b
+    array([3, 2, 3])
+    
     Note that np.copy is a shallow copy and will not copy object
     elements within arrays. This is mainly important for arrays
     containing Python objects. The new array will contain the
@@ -1496,26 +1627,40 @@ def angle(z, deg=False):
     return a
 
 
-def _unwrap_dispatcher(p, discont=None, axis=None):
+def _unwrap_dispatcher(p, discont=None, axis=None, *, period=None):
     return (p,)
 
 
 @array_function_dispatch(_unwrap_dispatcher)
-def unwrap(p, discont=pi, axis=-1):
-    """
-    Unwrap by changing deltas between values to 2*pi complement.
+def unwrap(p, discont=None, axis=-1, *, period=2*pi):
+    r"""
+    Unwrap by taking the complement of large deltas with respect to the period.
 
-    Unwrap radian phase `p` by changing absolute jumps greater than
-    `discont` to their 2*pi complement along the given axis.
+    This unwraps a signal `p` by changing elements which have an absolute
+    difference from their predecessor of more than ``max(discont, period/2)``
+    to their `period`-complementary values.
+
+    For the default case where `period` is :math:`2\pi` and `discont` is
+    :math:`\pi`, this unwraps a radian phase `p` such that adjacent differences
+    are never greater than :math:`\pi` by adding :math:`2k\pi` for some
+    integer :math:`k`.
 
     Parameters
     ----------
     p : array_like
         Input array.
     discont : float, optional
-        Maximum discontinuity between values, default is ``pi``.
+        Maximum discontinuity between values, default is ``period/2``.
+        Values below ``period/2`` are treated as if they were ``period/2``.
+        To have an effect different from the default, `discont` should be
+        larger than ``period/2``.
     axis : int, optional
         Axis along which unwrap will operate, default is the last axis.
+    period: float, optional
+        Size of the range over which the input wraps. By default, it is
+        ``2 pi``.
+
+        .. versionadded:: 1.21.0
 
     Returns
     -------
@@ -1528,9 +1673,9 @@ def unwrap(p, discont=pi, axis=-1):
 
     Notes
     -----
-    If the discontinuity in `p` is smaller than ``pi``, but larger than
-    `discont`, no unwrapping is done because taking the 2*pi complement
-    would only make the discontinuity larger.
+    If the discontinuity in `p` is smaller than ``period/2``,
+    but larger than `discont`, no unwrapping is done because taking
+    the complement would only make the discontinuity larger.
 
     Examples
     --------
@@ -1540,19 +1685,44 @@ def unwrap(p, discont=pi, axis=-1):
     array([ 0.        ,  0.78539816,  1.57079633,  5.49778714,  6.28318531]) # may vary
     >>> np.unwrap(phase)
     array([ 0.        ,  0.78539816,  1.57079633, -0.78539816,  0.        ]) # may vary
-
+    >>> np.unwrap([0, 1, 2, -1, 0], period=4)
+    array([0, 1, 2, 3, 4])
+    >>> np.unwrap([ 1, 2, 3, 4, 5, 6, 1, 2, 3], period=6)
+    array([1, 2, 3, 4, 5, 6, 7, 8, 9])
+    >>> np.unwrap([2, 3, 4, 5, 2, 3, 4, 5], period=4)
+    array([2, 3, 4, 5, 6, 7, 8, 9])
+    >>> phase_deg = np.mod(np.linspace(0 ,720, 19), 360) - 180
+    >>> np.unwrap(phase_deg, period=360)
+    array([-180., -140., -100.,  -60.,  -20.,   20.,   60.,  100.,  140.,
+            180.,  220.,  260.,  300.,  340.,  380.,  420.,  460.,  500.,
+            540.])
     """
     p = asarray(p)
     nd = p.ndim
     dd = diff(p, axis=axis)
+    if discont is None:
+        discont = period/2
     slice1 = [slice(None, None)]*nd     # full slices
     slice1[axis] = slice(1, None)
     slice1 = tuple(slice1)
-    ddmod = mod(dd + pi, 2*pi) - pi
-    _nx.copyto(ddmod, pi, where=(ddmod == -pi) & (dd > 0))
+    dtype = np.result_type(dd, period)
+    if _nx.issubdtype(dtype, _nx.integer):
+        interval_high, rem = divmod(period, 2)
+        boundary_ambiguous = rem == 0
+    else:
+        interval_high = period / 2
+        boundary_ambiguous = True
+    interval_low = -interval_high
+    ddmod = mod(dd - interval_low, period) + interval_low
+    if boundary_ambiguous:
+        # for `mask = (abs(dd) == period/2)`, the above line made
+        # `ddmod[mask] == -period/2`. correct these such that
+        # `ddmod[mask] == sign(dd[mask])*period/2`.
+        _nx.copyto(ddmod, interval_high,
+                   where=(ddmod == interval_low) & (dd > 0))
     ph_correct = ddmod - dd
     _nx.copyto(ph_correct, 0, where=abs(dd) < discont)
-    up = array(p, copy=True, dtype='d')
+    up = array(p, copy=True, dtype=dtype)
     up[slice1] = p[slice1] + ph_correct.cumsum(axis)
     return up
 
@@ -1824,6 +1994,8 @@ def _parse_gufunc_signature(signature):
     Tuple of input and output core dimensions parsed from the signature, each
     of the form List[Tuple[str, ...]].
     """
+    signature = re.sub(r'\s+', '', signature)
+
     if not re.match(_SIGNATURE, signature):
         raise ValueError(
             'not a valid gufunc signature: {}'.format(signature))
@@ -1901,11 +2073,19 @@ def _calculate_shapes(broadcast_shape, dim_sizes, list_of_core_dims):
             for core_dims in list_of_core_dims]
 
 
-def _create_arrays(broadcast_shape, dim_sizes, list_of_core_dims, dtypes):
+def _create_arrays(broadcast_shape, dim_sizes, list_of_core_dims, dtypes,
+                   results=None):
     """Helper for creating output arrays in vectorize."""
     shapes = _calculate_shapes(broadcast_shape, dim_sizes, list_of_core_dims)
-    arrays = tuple(np.empty(shape, dtype=dtype)
-                   for shape, dtype in zip(shapes, dtypes))
+    if dtypes is None:
+        dtypes = [None] * len(shapes)
+    if results is None:
+        arrays = tuple(np.empty(shape=shape, dtype=dtype)
+                       for shape, dtype in zip(shapes, dtypes))
+    else:
+        arrays = tuple(np.empty_like(result, shape=shape, dtype=dtype)
+                       for result, shape, dtype
+                       in zip(results, shapes, dtypes))
     return arrays
 
 
@@ -2251,11 +2431,8 @@ class vectorize:
                 for result, core_dims in zip(results, output_core_dims):
                     _update_dim_sizes(dim_sizes, result, core_dims)
 
-                if otypes is None:
-                    otypes = [asarray(result).dtype for result in results]
-
                 outputs = _create_arrays(broadcast_shape, dim_sizes,
-                                         output_core_dims, otypes)
+                                         output_core_dims, otypes, results)
 
             for output, result in zip(outputs, results):
                 output[index] = result
@@ -2755,9 +2932,9 @@ def blackman(M):
 
     """
     if M < 1:
-        return array([])
+        return array([], dtype=np.result_type(M, 0.0))
     if M == 1:
-        return ones(1, float)
+        return ones(1, dtype=np.result_type(M, 0.0))
     n = arange(1-M, M, 2)
     return 0.42 + 0.5*cos(pi*n/(M-1)) + 0.08*cos(2.0*pi*n/(M-1))
 
@@ -2864,9 +3041,9 @@ def bartlett(M):
 
     """
     if M < 1:
-        return array([])
+        return array([], dtype=np.result_type(M, 0.0))
     if M == 1:
-        return ones(1, float)
+        return ones(1, dtype=np.result_type(M, 0.0))
     n = arange(1-M, M, 2)
     return where(less_equal(n, 0), 1 + n/(M-1), 1 - n/(M-1))
 
@@ -2968,9 +3145,9 @@ def hanning(M):
 
     """
     if M < 1:
-        return array([])
+        return array([], dtype=np.result_type(M, 0.0))
     if M == 1:
-        return ones(1, float)
+        return ones(1, dtype=np.result_type(M, 0.0))
     n = arange(1-M, M, 2)
     return 0.5 + 0.5*cos(pi*n/(M-1))
 
@@ -3068,9 +3245,9 @@ def hamming(M):
 
     """
     if M < 1:
-        return array([])
+        return array([], dtype=np.result_type(M, 0.0))
     if M == 1:
-        return ones(1, float)
+        return ones(1, dtype=np.result_type(M, 0.0))
     n = arange(1-M, M, 2)
     return 0.54 + 0.46*cos(pi*n/(M-1))
 
@@ -3203,7 +3380,7 @@ def i0(x):
            Her Majesty's Stationery Office, 1962.
     .. [2] M. Abramowitz and I. A. Stegun, *Handbook of Mathematical
            Functions*, 10th printing, New York: Dover, 1964, pp. 379.
-           http://www.math.sfu.ca/~cbm/aands/page_379.htm
+           https://personal.math.ubc.ca/~cbm/aands/page_379.htm
     .. [3] https://metacpan.org/pod/distribution/Math-Cephes/lib/Math/Cephes.pod#i0:-Modified-Bessel-function-of-order-zero
 
     Examples
@@ -3347,7 +3524,7 @@ def kaiser(M, beta):
 
     """
     if M == 1:
-        return np.array([1.])
+        return np.ones(1, dtype=np.result_type(M, 0.0))
     n = arange(0, M)
     alpha = (M-1)/2.0
     return i0(beta * sqrt(1-((n-alpha)/alpha)**2.0))/i0(float(beta))
@@ -3374,8 +3551,8 @@ def sinc(x):
     Parameters
     ----------
     x : ndarray
-        Array (possibly multi-dimensional) of values for which to to
-        calculate ``sinc(x)``.
+        Array (possibly multi-dimensional) of values for which to calculate
+        ``sinc(x)``.
 
     Returns
     -------
@@ -3665,26 +3842,32 @@ def _median(a, axis=None, out=None, overwrite_input=False):
         indexer[axis] = slice(index-1, index+1)
     indexer = tuple(indexer)
 
+    # Use mean in both odd and even case to coerce data type,
+    # using out array if needed.
+    rout = mean(part[indexer], axis=axis, out=out)
     # Check if the array contains any nan's
     if np.issubdtype(a.dtype, np.inexact) and sz > 0:
-        # warn and return nans like mean would
-        rout = mean(part[indexer], axis=axis, out=out)
-        return np.lib.utils._median_nancheck(part, rout, axis, out)
-    else:
-        # if there are no nans
-        # Use mean in odd and even case to coerce data type
-        # and check, use out array.
-        return mean(part[indexer], axis=axis, out=out)
+        # If nans are possible, warn and replace by nans like mean would.
+        rout = np.lib.utils._median_nancheck(part, rout, axis)
+
+    return rout
 
 
 def _percentile_dispatcher(a, q, axis=None, out=None, overwrite_input=None,
-                           interpolation=None, keepdims=None):
+                           method=None, keepdims=None, *, interpolation=None):
     return (a, q, out)
 
 
 @array_function_dispatch(_percentile_dispatcher)
-def percentile(a, q, axis=None, out=None,
-               overwrite_input=False, interpolation='linear', keepdims=False):
+def percentile(a,
+               q,
+               axis=None,
+               out=None,
+               overwrite_input=False,
+               method="linear",
+               keepdims=False,
+               *,
+               interpolation=None):
     """
     Compute the q-th percentile of the data along the specified axis.
 
@@ -3712,27 +3895,45 @@ def percentile(a, q, axis=None, out=None,
         If True, then allow the input array `a` to be modified by intermediate
         calculations, to save memory. In this case, the contents of the input
         `a` after this function completes is undefined.
+    method : str, optional
+        This parameter specifies the method to use for estimating the
+        percentile.  There are many different methods, some unique to NumPy.
+        See the notes for explanation.  The options sorted by their R type
+        as summarized in the H&F paper [1]_ are:
 
-    interpolation : {'linear', 'lower', 'higher', 'midpoint', 'nearest'}
-        This optional parameter specifies the interpolation method to
-        use when the desired percentile lies between two data points
-        ``i < j``:
+        1. 'inverted_cdf'
+        2. 'averaged_inverted_cdf'
+        3. 'closest_observation'
+        4. 'interpolated_inverted_cdf'
+        5. 'hazen'
+        6. 'weibull'
+        7. 'linear'  (default)
+        8. 'median_unbiased'
+        9. 'normal_unbiased'
 
-        * 'linear': ``i + (j - i) * fraction``, where ``fraction``
-          is the fractional part of the index surrounded by ``i``
-          and ``j``.
-        * 'lower': ``i``.
-        * 'higher': ``j``.
-        * 'nearest': ``i`` or ``j``, whichever is nearest.
-        * 'midpoint': ``(i + j) / 2``.
+        The first three methods are discontiuous.  NumPy further defines the
+        following discontinuous variations of the default 'linear' (7.) option:
 
-        .. versionadded:: 1.9.0
+        * 'lower'
+        * 'higher',
+        * 'midpoint'
+        * 'nearest'
+
+        .. versionchanged:: 1.22.0
+            This argument was previously called "interpolation" and only
+            offered the "linear" default and last four options.
+
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left in
         the result as dimensions with size one. With this option, the
         result will broadcast correctly against the original array `a`.
 
         .. versionadded:: 1.9.0
+
+    interpolation : str, optional
+        Deprecated name for the method keyword argument.
+
+        .. deprecated:: 1.22.0
 
     Returns
     -------
@@ -3751,18 +3952,109 @@ def percentile(a, q, axis=None, out=None,
     mean
     median : equivalent to ``percentile(..., 50)``
     nanpercentile
-    quantile : equivalent to percentile, except with q in the range [0, 1].
+    quantile : equivalent to percentile, except q in the range [0, 1].
 
     Notes
     -----
-    Given a vector ``V`` of length ``N``, the q-th percentile of
-    ``V`` is the value ``q/100`` of the way from the minimum to the
-    maximum in a sorted copy of ``V``. The values and distances of
-    the two nearest neighbors as well as the `interpolation` parameter
-    will determine the percentile if the normalized ranking does not
-    match the location of ``q`` exactly. This function is the same as
-    the median if ``q=50``, the same as the minimum if ``q=0`` and the
-    same as the maximum if ``q=100``.
+    Given a vector ``V`` of length ``N``, the q-th percentile of ``V`` is
+    the value ``q/100`` of the way from the minimum to the maximum in a
+    sorted copy of ``V``. The values and distances of the two nearest
+    neighbors as well as the `method` parameter will determine the
+    percentile if the normalized ranking does not match the location of
+    ``q`` exactly. This function is the same as the median if ``q=50``, the
+    same as the minimum if ``q=0`` and the same as the maximum if
+    ``q=100``.
+
+    This optional `method` parameter specifies the method to use when the
+    desired quantile lies between two data points ``i < j``.
+    If ``g`` is the fractional part of the index surrounded by ``i`` and
+    alpha and beta are correction constants modifying i and j.
+
+    Below, 'q' is the quantile value, 'n' is the sample size and
+    alpha and beta are constants.
+    The following formula gives an interpolation "i + g" of where the quantile
+    would be in the sorted sample.
+    With 'i' being the floor and 'g' the fractional part of the result.
+
+    .. math::
+        i + g = (q - alpha) / ( n - alpha - beta + 1 )
+
+    The different methods then work as follows
+
+    inverted_cdf:
+        method 1 of H&F [1]_.
+        This method gives discontinuous results:
+        * if g > 0 ; then take j
+        * if g = 0 ; then take i
+
+    averaged_inverted_cdf:
+        method 2 of H&F [1]_.
+        This method give discontinuous results:
+        * if g > 0 ; then take j
+        * if g = 0 ; then average between bounds
+
+    closest_observation:
+        method 3 of H&F [1]_.
+        This method give discontinuous results:
+        * if g > 0 ; then take j
+        * if g = 0 and index is odd ; then take j
+        * if g = 0 and index is even ; then take i
+
+    interpolated_inverted_cdf:
+        method 4 of H&F [1]_.
+        This method give continuous results using:
+        * alpha = 0
+        * beta = 1
+
+    hazen:
+        method 5 of H&F [1]_.
+        This method give continuous results using:
+        * alpha = 1/2
+        * beta = 1/2
+
+    weibull:
+        method 6 of H&F [1]_.
+        This method give continuous results using:
+        * alpha = 0
+        * beta = 0
+
+    linear:
+        method 7 of H&F [1]_.
+        This method give continuous results using:
+        * alpha = 1
+        * beta = 1
+
+    median_unbiased:
+        method 8 of H&F [1]_.
+        This method is probably the best method if the sample
+        distribution function is unknown (see reference).
+        This method give continuous results using:
+        * alpha = 1/3
+        * beta = 1/3
+
+    normal_unbiased:
+        method 9 of H&F [1]_.
+        This method is probably the best method if the sample
+        distribution function is known to be normal.
+        This method give continuous results using:
+        * alpha = 3/8
+        * beta = 3/8
+
+    lower:
+        NumPy method kept for backwards compatibility.
+        Takes ``i`` as the interpolation point.
+
+    higher:
+        NumPy method kept for backwards compatibility.
+        Takes ``j`` as the interpolation point.
+
+    nearest:
+        NumPy method kept for backwards compatibility.
+        Takes ``i`` or ``j``, whichever is nearest.
+
+    midpoint:
+        NumPy method kept for backwards compatibility.
+        Uses ``(i + j) / 2``.
 
     Examples
     --------
@@ -3792,7 +4084,7 @@ def percentile(a, q, axis=None, out=None,
     array([7.,  2.])
     >>> assert not np.all(a == b)
 
-    The different types of interpolation can be visualized graphically:
+    The different methods can be visualized graphically:
 
     .. plot::
 
@@ -3802,41 +4094,62 @@ def percentile(a, q, axis=None, out=None,
         p = np.linspace(0, 100, 6001)
         ax = plt.gca()
         lines = [
-            ('linear', None),
-            ('higher', '--'),
-            ('lower', '--'),
-            ('nearest', '-.'),
-            ('midpoint', '-.'),
-        ]
-        for interpolation, style in lines:
+            ('linear', '-', 'C0'),
+            ('inverted_cdf', ':', 'C1'),
+            # Almost the same as `inverted_cdf`:
+            ('averaged_inverted_cdf', '-.', 'C1'),
+            ('closest_observation', ':', 'C2'),
+            ('interpolated_inverted_cdf', '--', 'C1'),
+            ('hazen', '--', 'C3'),
+            ('weibull', '-.', 'C4'),
+            ('median_unbiased', '--', 'C5'),
+            ('normal_unbiased', '-.', 'C6'),
+            ]
+        for method, style, color in lines:
             ax.plot(
-                p, np.percentile(a, p, interpolation=interpolation),
-                label=interpolation, linestyle=style)
+                p, np.percentile(a, p, method=method),
+                label=method, linestyle=style, color=color)
         ax.set(
-            title='Interpolation methods for list: ' + str(a),
+            title='Percentiles for different methods and data: ' + str(a),
             xlabel='Percentile',
-            ylabel='List item returned',
+            ylabel='Estimated percentile value',
             yticks=a)
         ax.legend()
         plt.show()
 
+    References
+    ----------
+    .. [1] R. J. Hyndman and Y. Fan,
+       "Sample quantiles in statistical packages,"
+       The American Statistician, 50(4), pp. 361-365, 1996
+
     """
+    if interpolation is not None:
+        method = _check_interpolation_as_method(
+            method, interpolation, "percentile")
     q = np.true_divide(q, 100)
     q = asanyarray(q)  # undo any decay that the ufunc performed (see gh-13105)
     if not _quantile_is_valid(q):
         raise ValueError("Percentiles must be in the range [0, 100]")
     return _quantile_unchecked(
-        a, q, axis, out, overwrite_input, interpolation, keepdims)
+        a, q, axis, out, overwrite_input, method, keepdims)
 
 
 def _quantile_dispatcher(a, q, axis=None, out=None, overwrite_input=None,
-                         interpolation=None, keepdims=None):
+                         method=None, keepdims=None, *, interpolation=None):
     return (a, q, out)
 
 
 @array_function_dispatch(_quantile_dispatcher)
-def quantile(a, q, axis=None, out=None,
-             overwrite_input=False, interpolation='linear', keepdims=False):
+def quantile(a,
+             q,
+             axis=None,
+             out=None,
+             overwrite_input=False,
+             method="linear",
+             keepdims=False,
+             *,
+             interpolation=None):
     """
     Compute the q-th quantile of the data along the specified axis.
 
@@ -3850,33 +4163,54 @@ def quantile(a, q, axis=None, out=None,
         Quantile or sequence of quantiles to compute, which must be between
         0 and 1 inclusive.
     axis : {int, tuple of int, None}, optional
-        Axis or axes along which the quantiles are computed. The
-        default is to compute the quantile(s) along a flattened
-        version of the array.
+        Axis or axes along which the quantiles are computed. The default is
+        to compute the quantile(s) along a flattened version of the array.
     out : ndarray, optional
-        Alternative output array in which to place the result. It must
-        have the same shape and buffer length as the expected output,
-        but the type (of the output) will be cast if necessary.
+        Alternative output array in which to place the result. It must have
+        the same shape and buffer length as the expected output, but the
+        type (of the output) will be cast if necessary.
     overwrite_input : bool, optional
-        If True, then allow the input array `a` to be modified by intermediate
-        calculations, to save memory. In this case, the contents of the input
-        `a` after this function completes is undefined.
-    interpolation : {'linear', 'lower', 'higher', 'midpoint', 'nearest'}
-        This optional parameter specifies the interpolation method to
-        use when the desired quantile lies between two data points
-        ``i < j``:
+        If True, then allow the input array `a` to be modified by
+        intermediate calculations, to save memory. In this case, the
+        contents of the input `a` after this function completes is
+        undefined.
+    method : str, optional
+        This parameter specifies the method to use for estimating the
+        quantile.  There are many different methods, some unique to NumPy.
+        See the notes for explanation.  The options sorted by their R type
+        as summarized in the H&F paper [1]_ are:
 
-            * linear: ``i + (j - i) * fraction``, where ``fraction``
-              is the fractional part of the index surrounded by ``i``
-              and ``j``.
-            * lower: ``i``.
-            * higher: ``j``.
-            * nearest: ``i`` or ``j``, whichever is nearest.
-            * midpoint: ``(i + j) / 2``.
+        1. 'inverted_cdf'
+        2. 'averaged_inverted_cdf'
+        3. 'closest_observation'
+        4. 'interpolated_inverted_cdf'
+        5. 'hazen'
+        6. 'weibull'
+        7. 'linear'  (default)
+        8. 'median_unbiased'
+        9. 'normal_unbiased'
+
+        The first three methods are discontiuous.  NumPy further defines the
+        following discontinuous variations of the default 'linear' (7.) option:
+
+        * 'lower'
+        * 'higher',
+        * 'midpoint'
+        * 'nearest'
+
+        .. versionchanged:: 1.22.0
+            This argument was previously called "interpolation" and only
+            offered the "linear" default and last four options.
+
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left in
         the result as dimensions with size one. With this option, the
         result will broadcast correctly against the original array `a`.
+
+    interpolation : str, optional
+        Deprecated name for the method keyword argument.
+
+        .. deprecated:: 1.22.0
 
     Returns
     -------
@@ -3899,14 +4233,98 @@ def quantile(a, q, axis=None, out=None,
 
     Notes
     -----
-    Given a vector ``V`` of length ``N``, the q-th quantile of
-    ``V`` is the value ``q`` of the way from the minimum to the
-    maximum in a sorted copy of ``V``. The values and distances of
-    the two nearest neighbors as well as the `interpolation` parameter
-    will determine the quantile if the normalized ranking does not
-    match the location of ``q`` exactly. This function is the same as
-    the median if ``q=0.5``, the same as the minimum if ``q=0.0`` and the
-    same as the maximum if ``q=1.0``.
+    Given a vector ``V`` of length ``N``, the q-th quantile of ``V`` is the
+    value ``q`` of the way from the minimum to the maximum in a sorted copy of
+    ``V``. The values and distances of the two nearest neighbors as well as the
+    `method` parameter will determine the quantile if the normalized
+    ranking does not match the location of ``q`` exactly. This function is the
+    same as the median if ``q=0.5``, the same as the minimum if ``q=0.0`` and
+    the same as the maximum if ``q=1.0``.
+
+    This optional `method` parameter specifies the method to use when the
+    desired quantile lies between two data points ``i < j``.
+    If ``g`` is the fractional part of the index surrounded by ``i`` and
+    alpha and beta are correction constants modifying i and j.
+
+    .. math::
+        i + g = (q - alpha) / ( n - alpha - beta + 1 )
+
+    The different methods then work as follows
+
+    inverted_cdf:
+        method 1 of H&F [1]_.
+        This method gives discontinuous results:
+        * if g > 0 ; then take j
+        * if g = 0 ; then take i
+
+    averaged_inverted_cdf:
+        method 2 of H&F [1]_.
+        This method give discontinuous results:
+        * if g > 0 ; then take j
+        * if g = 0 ; then average between bounds
+
+    closest_observation:
+        method 3 of H&F [1]_.
+        This method give discontinuous results:
+        * if g > 0 ; then take j
+        * if g = 0 and index is odd ; then take j
+        * if g = 0 and index is even ; then take i
+
+    interpolated_inverted_cdf:
+        method 4 of H&F [1]_.
+        This method give continuous results using:
+        * alpha = 0
+        * beta = 1
+
+    hazen:
+        method 5 of H&F [1]_.
+        This method give continuous results using:
+        * alpha = 1/2
+        * beta = 1/2
+
+    weibull:
+        method 6 of H&F [1]_.
+        This method give continuous results using:
+        * alpha = 0
+        * beta = 0
+
+    linear:
+        method 7 of H&F [1]_.
+        This method give continuous results using:
+        * alpha = 1
+        * beta = 1
+
+    median_unbiased:
+        method 8 of H&F [1]_.
+        This method is probably the best method if the sample
+        distribution function is unknown (see reference).
+        This method give continuous results using:
+        * alpha = 1/3
+        * beta = 1/3
+
+    normal_unbiased:
+        method 9 of H&F [1]_.
+        This method is probably the best method if the sample
+        distribution function is known to be normal.
+        This method give continuous results using:
+        * alpha = 3/8
+        * beta = 3/8
+
+    lower:
+        NumPy method kept for backwards compatibility.
+        Takes ``i`` as the interpolation point.
+
+    higher:
+        NumPy method kept for backwards compatibility.
+        Takes ``j`` as the interpolation point.
+
+    nearest:
+        NumPy method kept for backwards compatibility.
+        Takes ``i`` or ``j``, whichever is nearest.
+
+    midpoint:
+        NumPy method kept for backwards compatibility.
+        Uses ``(i + j) / 2``.
 
     Examples
     --------
@@ -3933,20 +4351,42 @@ def quantile(a, q, axis=None, out=None,
     >>> np.quantile(b, 0.5, axis=1, overwrite_input=True)
     array([7.,  2.])
     >>> assert not np.all(a == b)
+
+    See also `numpy.percentile` for a visualization of most methods.
+
+    References
+    ----------
+    .. [1] R. J. Hyndman and Y. Fan,
+       "Sample quantiles in statistical packages,"
+       The American Statistician, 50(4), pp. 361-365, 1996
+
     """
+    if interpolation is not None:
+        method = _check_interpolation_as_method(
+            method, interpolation, "quantile")
+
     q = np.asanyarray(q)
     if not _quantile_is_valid(q):
         raise ValueError("Quantiles must be in the range [0, 1]")
     return _quantile_unchecked(
-        a, q, axis, out, overwrite_input, interpolation, keepdims)
+        a, q, axis, out, overwrite_input, method, keepdims)
 
 
-def _quantile_unchecked(a, q, axis=None, out=None, overwrite_input=False,
-                        interpolation='linear', keepdims=False):
+def _quantile_unchecked(a,
+                        q,
+                        axis=None,
+                        out=None,
+                        overwrite_input=False,
+                        method="linear",
+                        keepdims=False):
     """Assumes that q is in [0, 1], and is an ndarray"""
-    r, k = _ureduce(a, func=_quantile_ureduce_func, q=q, axis=axis, out=out,
+    r, k = _ureduce(a,
+                    func=_quantile_ureduce_func,
+                    q=q,
+                    axis=axis,
+                    out=out,
                     overwrite_input=overwrite_input,
-                    interpolation=interpolation)
+                    method=method)
     if keepdims:
         return r.reshape(q.shape + k)
     else:
@@ -3957,131 +4397,286 @@ def _quantile_is_valid(q):
     # avoid expensive reductions, relevant for arrays with < O(1000) elements
     if q.ndim == 1 and q.size < 10:
         for i in range(q.size):
-            if q[i] < 0.0 or q[i] > 1.0:
+            if not (0.0 <= q[i] <= 1.0):
                 return False
     else:
-        # faster than any()
-        if np.count_nonzero(q < 0.0) or np.count_nonzero(q > 1.0):
+        if not (np.all(0 <= q) and np.all(q <= 1)):
             return False
     return True
 
 
+def _check_interpolation_as_method(method, interpolation, fname):
+    # Deprecated NumPy 1.22, 2021-11-08
+    warnings.warn(
+        f"the `interpolation=` argument to {fname} was renamed to "
+        "`method=`, which has additional options.\n"
+        "Users of the modes 'nearest', 'lower', 'higher', or "
+        "'midpoint' are encouraged to review the method they used. "
+        "(Deprecated NumPy 1.22)",
+        DeprecationWarning, stacklevel=4)
+    if method != "linear":
+        # sanity check, we assume this basically never happens
+        raise TypeError(
+            "You shall not pass both `method` and `interpolation`!\n"
+            "(`interpolation` is Deprecated in favor of `method`)")
+    return interpolation
+
+
+def _compute_virtual_index(n, quantiles, alpha: float, beta: float):
+    """
+    Compute the floating point indexes of an array for the linear
+    interpolation of quantiles.
+    n : array_like
+        The sample sizes.
+    quantiles : array_like
+        The quantiles values.
+    alpha : float
+        A constant used to correct the index computed.
+    beta : float
+        A constant used to correct the index computed.
+
+    alpha and beta values depend on the chosen method
+    (see quantile documentation)
+
+    Reference:
+    Hyndman&Fan paper "Sample Quantiles in Statistical Packages",
+    DOI: 10.1080/00031305.1996.10473566
+    """
+    return n * quantiles + (
+            alpha + quantiles * (1 - alpha - beta)
+    ) - 1
+
+
+def _get_gamma(virtual_indexes, previous_indexes, method):
+    """
+    Compute gamma (a.k.a 'm' or 'weight') for the linear interpolation
+    of quantiles.
+
+    virtual_indexes : array_like
+        The indexes where the percentile is supposed to be found in the sorted
+        sample.
+    previous_indexes : array_like
+        The floor values of virtual_indexes.
+    interpolation : dict
+        The interpolation method chosen, which may have a specific rule
+        modifying gamma.
+
+    gamma is usually the fractional part of virtual_indexes but can be modified
+    by the interpolation method.
+    """
+    gamma = np.asanyarray(virtual_indexes - previous_indexes)
+    gamma = method["fix_gamma"](gamma, virtual_indexes)
+    return np.asanyarray(gamma)
+
+
 def _lerp(a, b, t, out=None):
-    """ Linearly interpolate from a to b by a factor of t """
+    """
+    Compute the linear interpolation weighted by gamma on each point of
+    two same shape array.
+
+    a : array_like
+        Left bound.
+    b : array_like
+        Right bound.
+    t : array_like
+        The interpolation weight.
+    out : array_like
+        Output array.
+    """
     diff_b_a = subtract(b, a)
     # asanyarray is a stop-gap until gh-13105
-    lerp_interpolation = asanyarray(add(a, diff_b_a*t, out=out))
-    subtract(b, diff_b_a * (1 - t), out=lerp_interpolation, where=t>=0.5)
+    lerp_interpolation = asanyarray(add(a, diff_b_a * t, out=out))
+    subtract(b, diff_b_a * (1 - t), out=lerp_interpolation, where=t >= 0.5)
     if lerp_interpolation.ndim == 0 and out is None:
         lerp_interpolation = lerp_interpolation[()]  # unpack 0d arrays
     return lerp_interpolation
 
 
-def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
-                           interpolation='linear', keepdims=False):
-    a = asarray(a)
+def _get_gamma_mask(shape, default_value, conditioned_value, where):
+    out = np.full(shape, default_value)
+    np.copyto(out, conditioned_value, where=where, casting="unsafe")
+    return out
 
-    # ufuncs cause 0d array results to decay to scalars (see gh-13105), which
-    # makes them problematic for __setitem__ and attribute access. As a
-    # workaround, we call this on the result of every ufunc on a possibly-0d
-    # array.
-    not_scalar = np.asanyarray
 
-    # prepare a for partitioning
-    if overwrite_input:
-        if axis is None:
-            ap = a.ravel()
-        else:
-            ap = a
-    else:
-        if axis is None:
-            ap = a.flatten()
-        else:
-            ap = a.copy()
+def _discret_interpolation_to_boundaries(index, gamma_condition_fun):
+    previous = np.floor(index)
+    next = previous + 1
+    gamma = index - previous
+    res = _get_gamma_mask(shape=index.shape,
+                          default_value=next,
+                          conditioned_value=previous,
+                          where=gamma_condition_fun(gamma, index)
+                          ).astype(np.intp)
+    # Some methods can lead to out-of-bound integers, clip them:
+    res[res < 0] = 0
+    return res
 
-    if axis is None:
-        axis = 0
 
+def _closest_observation(n, quantiles):
+    gamma_fun = lambda gamma, index: (gamma == 0) & (np.floor(index) % 2 == 0)
+    return _discret_interpolation_to_boundaries((n * quantiles) - 1 - 0.5,
+                                                gamma_fun)
+
+
+def _inverted_cdf(n, quantiles):
+    gamma_fun = lambda gamma, _: (gamma == 0)
+    return _discret_interpolation_to_boundaries((n * quantiles) - 1,
+                                                gamma_fun)
+
+
+def _quantile_ureduce_func(
+        a: np.array,
+        q: np.array,
+        axis: int = None,
+        out=None,
+        overwrite_input: bool = False,
+        method="linear",
+) -> np.array:
     if q.ndim > 2:
         # The code below works fine for nd, but it might not have useful
         # semantics. For now, keep the supported dimensions the same as it was
         # before.
         raise ValueError("q must be a scalar or 1d")
-
-    Nx = ap.shape[axis]
-    indices = not_scalar(q * (Nx - 1))
-    # round fractional indices according to interpolation method
-    if interpolation == 'lower':
-        indices = floor(indices).astype(intp)
-    elif interpolation == 'higher':
-        indices = ceil(indices).astype(intp)
-    elif interpolation == 'midpoint':
-        indices = 0.5 * (floor(indices) + ceil(indices))
-    elif interpolation == 'nearest':
-        indices = around(indices).astype(intp)
-    elif interpolation == 'linear':
-        pass  # keep index as fraction and interpolate
+    if overwrite_input:
+        if axis is None:
+            axis = 0
+            arr = a.ravel()
+        else:
+            arr = a
     else:
-        raise ValueError(
-            "interpolation can only be 'linear', 'lower' 'higher', "
-            "'midpoint', or 'nearest'")
+        if axis is None:
+            axis = 0
+            arr = a.flatten()
+        else:
+            arr = a.copy()
+    result = _quantile(arr,
+                       quantiles=q,
+                       axis=axis,
+                       method=method,
+                       out=out)
+    return result
 
+
+def _get_indexes(arr, virtual_indexes, valid_values_count):
+    """
+    Get the valid indexes of arr neighbouring virtual_indexes.
+    Note
+    This is a companion function to linear interpolation of
+    Quantiles
+
+    Returns
+    -------
+    (previous_indexes, next_indexes): Tuple
+        A Tuple of virtual_indexes neighbouring indexes
+    """
+    previous_indexes = np.asanyarray(np.floor(virtual_indexes))
+    next_indexes = np.asanyarray(previous_indexes + 1)
+    indexes_above_bounds = virtual_indexes >= valid_values_count - 1
+    # When indexes is above max index, take the max value of the array
+    if indexes_above_bounds.any():
+        previous_indexes[indexes_above_bounds] = -1
+        next_indexes[indexes_above_bounds] = -1
+    # When indexes is below min index, take the min value of the array
+    indexes_below_bounds = virtual_indexes < 0
+    if indexes_below_bounds.any():
+        previous_indexes[indexes_below_bounds] = 0
+        next_indexes[indexes_below_bounds] = 0
+    if np.issubdtype(arr.dtype, np.inexact):
+        # After the sort, slices having NaNs will have for last element a NaN
+        virtual_indexes_nans = np.isnan(virtual_indexes)
+        if virtual_indexes_nans.any():
+            previous_indexes[virtual_indexes_nans] = -1
+            next_indexes[virtual_indexes_nans] = -1
+    previous_indexes = previous_indexes.astype(np.intp)
+    next_indexes = next_indexes.astype(np.intp)
+    return previous_indexes, next_indexes
+
+
+def _quantile(
+        arr: np.array,
+        quantiles: np.array,
+        axis: int = -1,
+        method="linear",
+        out=None,
+):
+    """
+    Private function that doesn't support extended axis or keepdims.
+    These methods are extended to this function using _ureduce
+    See nanpercentile for parameter usage
+    It computes the quantiles of the array for the given axis.
+    A linear interpolation is performed based on the `interpolation`.
+
+    By default, the method is "linear" where alpha == beta == 1 which
+    performs the 7th method of Hyndman&Fan.
+    With "median_unbiased" we get alpha == beta == 1/3
+    thus the 8th method of Hyndman&Fan.
+    """
+    # --- Setup
+    arr = np.asanyarray(arr)
+    values_count = arr.shape[axis]
     # The dimensions of `q` are prepended to the output shape, so we need the
-    # axis being sampled from `ap` to be first.
-    ap = np.moveaxis(ap, axis, 0)
-    del axis
-
-    if np.issubdtype(indices.dtype, np.integer):
-        # take the points along axis
-
-        if np.issubdtype(a.dtype, np.inexact):
+    # axis being sampled from `arr` to be last.
+    DATA_AXIS = 0
+    if axis != DATA_AXIS:  # But moveaxis is slow, so only call it if axis!=0.
+        arr = np.moveaxis(arr, axis, destination=DATA_AXIS)
+    # --- Computation of indexes
+    # Index where to find the value in the sorted array.
+    # Virtual because it is a floating point value, not an valid index.
+    # The nearest neighbours are used for interpolation
+    try:
+        method = _QuantileMethods[method]
+    except KeyError:
+        raise ValueError(
+            f"{method!r} is not a valid method. Use one of: "
+            f"{_QuantileMethods.keys()}") from None
+    virtual_indexes = method["get_virtual_index"](values_count, quantiles)
+    virtual_indexes = np.asanyarray(virtual_indexes)
+    if np.issubdtype(virtual_indexes.dtype, np.integer):
+        # No interpolation needed, take the points along axis
+        if np.issubdtype(arr.dtype, np.inexact):
             # may contain nan, which would sort to the end
-            ap.partition(concatenate((indices.ravel(), [-1])), axis=0)
-            n = np.isnan(ap[-1])
+            arr.partition(concatenate((virtual_indexes.ravel(), [-1])), axis=0)
+            slices_having_nans = np.isnan(arr[-1])
         else:
             # cannot contain nan
-            ap.partition(indices.ravel(), axis=0)
-            n = np.array(False, dtype=bool)
-
-        r = take(ap, indices, axis=0, out=out)
-
+            arr.partition(virtual_indexes.ravel(), axis=0)
+            slices_having_nans = np.array(False, dtype=bool)
+        result = take(arr, virtual_indexes, axis=0, out=out)
     else:
-        # weight the points above and below the indices
-
-        indices_below = not_scalar(floor(indices)).astype(intp)
-        indices_above = not_scalar(indices_below + 1)
-        indices_above[indices_above > Nx - 1] = Nx - 1
-
-        if np.issubdtype(a.dtype, np.inexact):
-            # may contain nan, which would sort to the end
-            ap.partition(concatenate((
-                indices_below.ravel(), indices_above.ravel(), [-1]
-            )), axis=0)
-            n = np.isnan(ap[-1])
+        previous_indexes, next_indexes = _get_indexes(arr,
+                                                      virtual_indexes,
+                                                      values_count)
+        # --- Sorting
+        arr.partition(
+            np.unique(np.concatenate(([0, -1],
+                                      previous_indexes.ravel(),
+                                      next_indexes.ravel(),
+                                      ))),
+            axis=DATA_AXIS)
+        if np.issubdtype(arr.dtype, np.inexact):
+            slices_having_nans = np.isnan(
+                take(arr, indices=-1, axis=DATA_AXIS)
+            )
         else:
-            # cannot contain nan
-            ap.partition(concatenate((
-                indices_below.ravel(), indices_above.ravel()
-            )), axis=0)
-            n = np.array(False, dtype=bool)
-
-        weights_shape = indices.shape + (1,) * (ap.ndim - 1)
-        weights_above = not_scalar(indices - indices_below).reshape(weights_shape)
-
-        x_below = take(ap, indices_below, axis=0)
-        x_above = take(ap, indices_above, axis=0)
-
-        r = _lerp(x_below, x_above, weights_above, out=out)
-
-    # if any slice contained a nan, then all results on that slice are also nan
-    if np.any(n):
-        if r.ndim == 0 and out is None:
+            slices_having_nans = None
+        # --- Get values from indexes
+        previous = np.take(arr, previous_indexes, axis=DATA_AXIS)
+        next = np.take(arr, next_indexes, axis=DATA_AXIS)
+        # --- Linear interpolation
+        gamma = _get_gamma(virtual_indexes, previous_indexes, method)
+        result_shape = virtual_indexes.shape + (1,) * (arr.ndim - 1)
+        gamma = gamma.reshape(result_shape)
+        result = _lerp(previous,
+                       next,
+                       gamma,
+                       out=out)
+    if np.any(slices_having_nans):
+        if result.ndim == 0 and out is None:
             # can't write to a scalar
-            r = a.dtype.type(np.nan)
+            result = arr.dtype.type(np.nan)
         else:
-            r[..., n] = a.dtype.type(np.nan)
-
-    return r
+            result[..., slices_having_nans] = np.nan
+    return result
 
 
 def _trapz_dispatcher(y, x=None, dx=None, axis=None):
@@ -4090,10 +4685,17 @@ def _trapz_dispatcher(y, x=None, dx=None, axis=None):
 
 @array_function_dispatch(_trapz_dispatcher)
 def trapz(y, x=None, dx=1.0, axis=-1):
-    """
+    r"""
     Integrate along the given axis using the composite trapezoidal rule.
 
-    Integrate `y` (`x`) along given axis.
+    If `x` is provided, the integration happens in sequence along its
+    elements - they are not sorted.
+
+    Integrate `y` (`x`) along each 1d slice on the given axis, compute
+    :math:`\int y(x) dx`.
+    When `x` is specified, this integrates along the parametric curve,
+    computing :math:`\int_t y(t) dt =
+    \int_t y(t) \left.\frac{dx}{dt}\right|_{x=x(t)} dt`.
 
     Parameters
     ----------
@@ -4115,7 +4717,7 @@ def trapz(y, x=None, dx=1.0, axis=-1):
         a single axis by the trapezoidal rule. If 'y' is a 1-dimensional array,
         then the result is a float. If 'n' is greater than 1, then the result
         is an 'n-1' dimensional array.
-        
+
     See Also
     --------
     sum, cumsum
@@ -4144,6 +4746,20 @@ def trapz(y, x=None, dx=1.0, axis=-1):
     8.0
     >>> np.trapz([1,2,3], dx=2)
     8.0
+
+    Using a decreasing `x` corresponds to integrating in reverse:
+
+    >>> np.trapz([1,2,3], x=[8,6,4])
+    -8.0
+
+    More generally `x` is used to integrate along a parametric curve.
+    This finds the area of a circle, noting we repeat the sample which closes
+    the curve:
+
+    >>> theta = np.linspace(0, 2 * np.pi, num=1000, endpoint=True)
+    >>> np.trapz(np.cos(theta), x=np.sin(theta))
+    3.141571941375841
+
     >>> a = np.arange(6).reshape(2, 3)
     >>> a
     array([[0, 1, 2],
@@ -4152,7 +4768,6 @@ def trapz(y, x=None, dx=1.0, axis=-1):
     array([1.5, 2.5, 3.5])
     >>> np.trapz(a, axis=1)
     array([2.,  8.])
-
     """
     y = asanyarray(y)
     if x is None:
@@ -4209,7 +4824,13 @@ def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
 
         .. versionadded:: 1.7.0
     sparse : bool, optional
-        If True a sparse grid is returned in order to conserve memory.
+        If True the shape of the returned coordinate array for dimension *i*
+        is reduced from ``(N1, ..., Ni, ... Nn)`` to
+        ``(1, ..., 1, Ni, 1, ..., 1)``.  These sparse coordinate grids are
+        intended to be use with :ref:`basics.broadcasting`.  When all
+        coordinates are used in an expression, broadcasting still leads to a
+        fully-dimensonal result array.
+
         Default is False.
 
         .. versionadded:: 1.7.0
@@ -4243,12 +4864,12 @@ def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
     'xy' indexing and (M, N, P) for 'ij' indexing.  The difference is
     illustrated by the following code snippet::
 
-        xv, yv = np.meshgrid(x, y, sparse=False, indexing='ij')
+        xv, yv = np.meshgrid(x, y, indexing='ij')
         for i in range(nx):
             for j in range(ny):
                 # treat xv[i,j], yv[i,j]
 
-        xv, yv = np.meshgrid(x, y, sparse=False, indexing='xy')
+        xv, yv = np.meshgrid(x, y, indexing='xy')
         for i in range(nx):
             for j in range(ny):
                 # treat xv[j,i], yv[j,i]
@@ -4280,17 +4901,30 @@ def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
     array([[0.],
            [1.]])
 
-    `meshgrid` is very useful to evaluate functions on a grid.
+    `meshgrid` is very useful to evaluate functions on a grid.  If the
+    function depends on all coordinates, you can use the parameter
+    ``sparse=True`` to save memory and computation time.
+
+    >>> x = np.linspace(-5, 5, 101)
+    >>> y = np.linspace(-5, 5, 101)
+    >>> # full coordinate arrays
+    >>> xx, yy = np.meshgrid(x, y)
+    >>> zz = np.sqrt(xx**2 + yy**2)
+    >>> xx.shape, yy.shape, zz.shape
+    ((101, 101), (101, 101), (101, 101))
+    >>> # sparse coordinate arrays
+    >>> xs, ys = np.meshgrid(x, y, sparse=True)
+    >>> zs = np.sqrt(xs**2 + ys**2)
+    >>> xs.shape, ys.shape, zs.shape
+    ((1, 101), (101, 1), (101, 101))
+    >>> np.array_equal(zz, zs)
+    True
 
     >>> import matplotlib.pyplot as plt
-    >>> x = np.arange(-5, 5, 0.1)
-    >>> y = np.arange(-5, 5, 0.1)
-    >>> xx, yy = np.meshgrid(x, y, sparse=True)
-    >>> z = np.sin(xx**2 + yy**2) / (xx**2 + yy**2)
-    >>> h = plt.contourf(x, y, z)
+    >>> h = plt.contourf(x, y, zs)
     >>> plt.axis('scaled')
+    >>> plt.colorbar()
     >>> plt.show()
-
     """
     ndim = len(xi)
 
@@ -4643,9 +5277,8 @@ def insert(arr, obj, values, axis=None):
     if indices.size == 1:
         index = indices.item()
         if index < -N or index > N:
-            raise IndexError(
-                "index %i is out of bounds for axis %i with "
-                "size %i" % (obj, axis, N))
+            raise IndexError(f"index {obj} is out of bounds for axis {axis} "
+                             f"with size {N}")
         if (index < 0):
             index += N
 

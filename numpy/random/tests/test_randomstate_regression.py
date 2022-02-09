@@ -43,11 +43,11 @@ class TestRegression:
         # these two frequency counts should be close to theoretical
         # numbers with this large sample
         # theoretical large N result is 0.49706795
-        freq = np.sum(rvsn == 1) / float(N)
+        freq = np.sum(rvsn == 1) / N
         msg = f'Frequency was {freq:f}, should be > 0.45'
         assert_(freq > 0.45, msg)
         # theoretical large N result is 0.19882718
-        freq = np.sum(rvsn == 2) / float(N)
+        freq = np.sum(rvsn == 2) / N
         msg = f'Frequency was {freq:f}, should be < 0.23'
         assert_(freq < 0.23, msg)
 
@@ -201,3 +201,16 @@ class TestRegression:
                              [3, 4, 2, 3, 3, 1, 5, 3, 1, 3]])
         assert_array_equal(random.binomial([[0], [10]], 0.25, size=(2, 10)),
                            expected)
+
+
+def test_multinomial_empty():
+    # gh-20483
+    # Ensure that empty p-vals are correctly handled
+    assert random.multinomial(10, []).shape == (0,)
+    assert random.multinomial(3, [], size=(7, 5, 3)).shape == (7, 5, 3, 0)
+
+
+def test_multinomial_1d_pval():
+    # gh-20483
+    with pytest.raises(TypeError, match="pvals must be a 1-d"):
+        random.multinomial(10, 0.3)

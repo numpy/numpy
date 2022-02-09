@@ -21,7 +21,7 @@ details are found in :ref:`reference`.
    numpy-for-matlab-users
    building
    c-info
-   tutorials_index
+   NumPy Tutorials <https://numpy.org/numpy-tutorials/features.html>
    howtos_index
    depending_on_numpy
 
@@ -38,8 +38,6 @@ details are found in :ref:`reference`.
    ../f2py/index
    ../glossary
    ../dev/underthehood
-   ../docs/index
    ../bugs
    ../release
-   ../doc_conventions
    ../license

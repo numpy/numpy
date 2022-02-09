@@ -1,7 +1,7 @@
 .. _NEP43:
 
 ==============================================================================
-NEP 43 — Enhancing the Extensibility of UFuncs
+NEP 43 — Enhancing the extensibility of UFuncs
 ==============================================================================
 
 :title: Enhancing the Extensibility of UFuncs
@@ -262,8 +262,8 @@ to define string equality, will be added to a ufunc.
             if given_descrs[2] is None:
                 out_descr = DTypes[2]()
 
-            # The operation is always "safe" casting (most ufuncs are)
-            return (given_descrs[0], given_descrs[1], out_descr), "safe"
+            # The operation is always "no" casting (most ufuncs are)
+            return (given_descrs[0], given_descrs[1], out_descr), "no"
 
         def strided_loop(context, dimensions, data, strides, innerloop_data):
             """The 1-D strided loop, similar to those used in current ufuncs"""
@@ -434,7 +434,7 @@ a new ``ArrayMethod`` object:
 
         # Casting safety information (almost always "safe", necessary to
         # unify casting and universal functions)
-        casting: Casting = "safe"
+        casting: Casting = "no"
 
         # More general flags:
         flags: int
@@ -571,7 +571,7 @@ This stores all of the constant information that is part of the ``Context``,
 such as:
 
 * the ``DTypes``
-* the number of input and ouput arguments
+* the number of input and output arguments
 * the ufunc signature (specific to generalized ufuncs, compare :ref:`NEP20`).
 
 Fortunately, most users and even ufunc implementers will not have to worry
@@ -751,7 +751,7 @@ This step is required to allocate output arrays and has to happen before
 casting can be prepared.
 
 While the returned casting-safety (``NPY_CASTING``) will almost always be
-"safe" for universal functions, including it has two big advantages:
+"no" for universal functions, including it has two big advantages:
 
 * ``-1`` indicates that an error occurred. If a Python error is set, it will
   be raised.  If no Python error is set this will be considered an "impossible"
@@ -767,7 +767,7 @@ While the returned casting-safety (``NPY_CASTING``) will almost always be
   perspective. Currently, this would use ``int64 + int64 -> int64`` and then
   cast to ``int32``. An implementation that skips the cast would
   have to signal that it effectively includes the "same-kind" cast and is
-  thus not considered "safe".
+  thus not considered "no".
 
 
 ``get_loop`` method
@@ -804,7 +804,7 @@ the inner-loop operates on.
 This is necessary information for parametric dtypes since for example comparing
 two strings requires knowing the length of both strings.
 The ``Context`` can also hold potentially useful information such as the
-the original ``ufunc``, which can be helpful when reporting errors.
+original ``ufunc``, which can be helpful when reporting errors.
 
 In principle passing in Context is not necessary, as all information could be
 included in ``innerloop_data`` and set up in the ``get_loop`` function.
@@ -948,7 +948,7 @@ This wrapped ``ArrayMethod`` will have two additional methods:
   convert this to ``float64 + float64``.
 
 * ``wrap_outputs(Tuple[DType]: input_descr) -> Tuple[DType]`` replacing the
-  resolved descriptors with with the desired actual loop descriptors.
+  resolved descriptors with the desired actual loop descriptors.
   The original ``resolve_descriptors`` function will be called between these
   two calls, so that the output descriptors may not be set in the first call.
   In the above example it will use the ``float64`` as returned (which might
@@ -987,8 +987,8 @@ A different use-case is that of a ``Unit(float64, "m")`` DType, where
 the numerical type is part of the DType parameter.
 This approach is possible, but will require a custom ``ArrayMethod``
 which wraps existing loops.
-It must also always require require two steps of dispatching
-(one to the ``Unit`` DType and a second one for the numerical type).
+It must also always require two steps of dispatching (one to the ``Unit``
+DType and a second one for the numerical type).
 
 Furthermore, the efficient implementation will require the ability to
 fetch and reuse the inner-loop function from another ``ArrayMethod``.
@@ -1233,7 +1233,7 @@ are the best solution:
    logic fails or is incorrect for a newly-added loop, the loop can add a
    new promoter to refine the logic.
 
-The option of having each loop verify that no upcast occured is probably
+The option of having each loop verify that no upcast occurred is probably
 the best alternative, but does not include the ability to dynamically
 adding new loops.
 
@@ -1296,7 +1296,7 @@ of the current ufunc machinery (as well as casting).
 
 The implementation unfortunately will require large maintenance of the
 UFunc machinery, since both the actual UFunc loop calls, as well as the
-the initial dispatching steps have to be modified.
+initial dispatching steps have to be modified.
 
 In general, the correct ``ArrayMethod``, also those returned by a promoter,
 will be cached (or stored) inside a hashtable for efficient lookup.

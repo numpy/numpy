@@ -110,6 +110,7 @@ f2py_cb_start_clock();
         capi_tmp = PyObject_GetAttrString(#modulename#_module,\"#argname#_extra_args\");
         if (capi_tmp) {
             capi_arglist = (PyTupleObject *)PySequence_Tuple(capi_tmp);
+            Py_DECREF(capi_tmp);
             if (capi_arglist==NULL) {
                 PyErr_SetString(#modulename#_error,\"Failed to convert #modulename#.#argname#_extra_args to tuple.\\n\");
                 goto capi_fail;
@@ -190,7 +191,7 @@ capi_return_pt:
     'maxnofargs': '#maxnofargs#',
     'nofoptargs': '#nofoptargs#',
     'docstr': """\
-\tdef #argname#(#docsignature#): return #docreturn#\\n\\
+    def #argname#(#docsignature#): return #docreturn#\\n\\
 #docstrsigns#""",
     'latexdocstr': """
 {{}\\verb@def #argname#(#latexdocsignature#): return #docreturn#@{}}
@@ -218,10 +219,10 @@ cb_rout_rules = [
         'noargs': '',
         'setdims': '/*setdims*/',
         'docstrsigns': '', 'latexdocstrsigns': '',
-        'docstrreq': '\tRequired arguments:',
-        'docstropt': '\tOptional arguments:',
-        'docstrout': '\tReturn objects:',
-        'docstrcbs': '\tCall-back functions:',
+        'docstrreq': '    Required arguments:',
+        'docstropt': '    Optional arguments:',
+        'docstrout': '    Return objects:',
+        'docstrcbs': '    Call-back functions:',
         'docreturn': '', 'docsign': '', 'docsignopt': '',
         'latexdocstrreq': '\\noindent Required arguments:',
         'latexdocstropt': '\\noindent Optional arguments:',
@@ -229,12 +230,21 @@ cb_rout_rules = [
         'latexdocstrcbs': '\\noindent Call-back functions:',
         'routnote': {hasnote: '--- #note#', l_not(hasnote): ''},
     }, {  # Function
-        'decl': '    #ctype# return_value;',
-        'frompyobj': [{debugcapi: '    CFUNCSMESS("cb:Getting return_value->");'},
-                      '    if (capi_j>capi_i)\n        GETSCALARFROMPYTUPLE(capi_return,capi_i++,&return_value,#ctype#,"#ctype#_from_pyobj failed in converting return_value of call-back function #name# to C #ctype#\\n");',
-                      {debugcapi:
-                       '    fprintf(stderr,"#showvalueformat#.\\n",return_value);'}
-                      ],
+        'decl': '    #ctype# return_value = 0;',
+        'frompyobj': [
+            {debugcapi: '    CFUNCSMESS("cb:Getting return_value->");'},
+            '''\
+    if (capi_j>capi_i) {
+        GETSCALARFROMPYTUPLE(capi_return,capi_i++,&return_value,#ctype#,
+          "#ctype#_from_pyobj failed in converting return_value of"
+          " call-back function #name# to C #ctype#\\n");
+    } else {
+        fprintf(stderr,"Warning: call-back function #name# did not provide"
+                       " return value (index=%d, type=#ctype#)\\n",capi_i);
+    }''',
+            {debugcapi:
+             '    fprintf(stderr,"#showvalueformat#.\\n",return_value);'}
+        ],
         'need': ['#ctype#_from_pyobj', {debugcapi: 'CFUNCSMESS'}, 'GETSCALARFROMPYTUPLE'],
         'return': '    return return_value;',
         '_check': l_and(isfunction, l_not(isstringfunction), l_not(iscomplexfunction))
@@ -244,12 +254,18 @@ cb_rout_rules = [
         'args': '#ctype# return_value,int return_value_len',
         'args_nm': 'return_value,&return_value_len',
         'args_td': '#ctype# ,int',
-        'frompyobj': [{debugcapi: '    CFUNCSMESS("cb:Getting return_value->\\"");'},
-                      """    if (capi_j>capi_i)
-        GETSTRFROMPYTUPLE(capi_return,capi_i++,return_value,return_value_len);""",
-                      {debugcapi:
-                       '    fprintf(stderr,"#showvalueformat#\\".\\n",return_value);'}
-                      ],
+        'frompyobj': [
+            {debugcapi: '    CFUNCSMESS("cb:Getting return_value->\\"");'},
+            """\
+    if (capi_j>capi_i) {
+        GETSTRFROMPYTUPLE(capi_return,capi_i++,return_value,return_value_len);
+    } else {
+        fprintf(stderr,"Warning: call-back function #name# did not provide"
+                       " return value (index=%d, type=#ctype#)\\n",capi_i);
+    }""",
+            {debugcapi:
+             '    fprintf(stderr,"#showvalueformat#\\".\\n",return_value);'}
+        ],
         'need': ['#ctype#_from_pyobj', {debugcapi: 'CFUNCSMESS'},
                  'string.h', 'GETSTRFROMPYTUPLE'],
         'return': 'return;',
@@ -273,27 +289,35 @@ return_value
 """,
         'decl': """
 #ifdef F2PY_CB_RETURNCOMPLEX
-    #ctype# return_value;
+    #ctype# return_value = {0, 0};
 #endif
 """,
-        'frompyobj': [{debugcapi: '    CFUNCSMESS("cb:Getting return_value->");'},
-                      """\
-    if (capi_j>capi_i)
+        'frompyobj': [
+            {debugcapi: '    CFUNCSMESS("cb:Getting return_value->");'},
+            """\
+    if (capi_j>capi_i) {
 #ifdef F2PY_CB_RETURNCOMPLEX
-        GETSCALARFROMPYTUPLE(capi_return,capi_i++,&return_value,#ctype#,\"#ctype#_from_pyobj failed in converting return_value of call-back function #name# to C #ctype#\\n\");
+        GETSCALARFROMPYTUPLE(capi_return,capi_i++,&return_value,#ctype#,
+          \"#ctype#_from_pyobj failed in converting return_value of call-back\"
+          \" function #name# to C #ctype#\\n\");
 #else
-        GETSCALARFROMPYTUPLE(capi_return,capi_i++,return_value,#ctype#,\"#ctype#_from_pyobj failed in converting return_value of call-back function #name# to C #ctype#\\n\");
+        GETSCALARFROMPYTUPLE(capi_return,capi_i++,return_value,#ctype#,
+          \"#ctype#_from_pyobj failed in converting return_value of call-back\"
+          \" function #name# to C #ctype#\\n\");
 #endif
-""",
-                      {debugcapi: """
+    } else {
+        fprintf(stderr,
+                \"Warning: call-back function #name# did not provide\"
+                \" return value (index=%d, type=#ctype#)\\n\",capi_i);
+    }""",
+            {debugcapi: """\
 #ifdef F2PY_CB_RETURNCOMPLEX
     fprintf(stderr,\"#showvalueformat#.\\n\",(return_value).r,(return_value).i);
 #else
     fprintf(stderr,\"#showvalueformat#.\\n\",(*return_value).r,(*return_value).i);
 #endif
-
 """}
-                      ],
+        ],
         'return': """
 #ifdef F2PY_CB_RETURNCOMPLEX
     return return_value;
@@ -305,7 +329,7 @@ return_value
                  'string.h', 'GETSCALARFROMPYTUPLE', '#ctype#'],
         '_check': iscomplexfunction
     },
-    {'docstrout': '\t\t#pydocsignout#',
+    {'docstrout': '        #pydocsignout#',
      'latexdocstrout': ['\\item[]{{}\\verb@#pydocsignout#@{}}',
                         {hasnote: '--- #note#'}],
      'docreturn': '#rname#,',
@@ -315,9 +339,9 @@ return_value
 
 cb_arg_rules = [
     {  # Doc
-        'docstropt': {l_and(isoptional, isintent_nothide): '\t\t#pydocsign#'},
-        'docstrreq': {l_and(isrequired, isintent_nothide): '\t\t#pydocsign#'},
-        'docstrout': {isintent_out: '\t\t#pydocsignout#'},
+        'docstropt': {l_and(isoptional, isintent_nothide): '        #pydocsign#'},
+        'docstrreq': {l_and(isrequired, isintent_nothide): '        #pydocsign#'},
+        'docstrout': {isintent_out: '        #pydocsignout#'},
         'latexdocstropt': {l_and(isoptional, isintent_nothide): ['\\item[]{{}\\verb@#pydocsign#@{}}',
                                                                  {hasnote: '--- #note#'}]},
         'latexdocstrreq': {l_and(isrequired, isintent_nothide): ['\\item[]{{}\\verb@#pydocsign#@{}}',
@@ -491,7 +515,7 @@ def buildcallbacks(m):
 def buildcallback(rout, um):
     from . import capi_maps
 
-    outmess('\tConstructing call-back function "cb_%s_in_%s"\n' %
+    outmess('    Constructing call-back function "cb_%s_in_%s"\n' %
             (rout['name'], um))
     args, depargs = getargs(rout)
     capi_maps.depargs = depargs
@@ -611,6 +635,6 @@ def buildcallback(rout, um):
                                       'latexdocstr': ar['latexdocstr'],
                                       'argname': rd['argname']
                                       }
-    outmess('\t  %s\n' % (ar['docstrshort']))
+    outmess('      %s\n' % (ar['docstrshort']))
     return
 ################## Build call-back function #############

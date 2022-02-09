@@ -5,13 +5,12 @@ __all__ = ['finfo', 'iinfo']
 
 import warnings
 
-from .machar import MachAr
+from ._machar import MachAr
 from .overrides import set_module
 from . import numeric
 from . import numerictypes as ntypes
-from .numeric import array, inf
-from .umath import log10, exp2
-from . import umath
+from .numeric import array, inf, NaN
+from .umath import log10, exp2, nextafter, isnan
 
 
 def _fr0(a):
@@ -29,32 +28,96 @@ def _fr1(a):
         a.shape = ()
     return a
 
+
 class MachArLike:
     """ Object to simulate MachAr instance """
-
-    def __init__(self,
-                 ftype,
-                 *, eps, epsneg, huge, tiny, ibeta, **kwargs):
-        params = _MACHAR_PARAMS[ftype]
-        float_conv = lambda v: array([v], ftype)
-        float_to_float = lambda v : _fr1(float_conv(v))
-        float_to_str = lambda v: (params['fmt'] % array(_fr0(v)[0], ftype))
-
-        self.title = params['title']
+    def __init__(self, ftype, *, eps, epsneg, huge, tiny,
+                 ibeta, smallest_subnormal=None, **kwargs):
+        self.params = _MACHAR_PARAMS[ftype]
+        self.ftype = ftype
+        self.title = self.params['title']
         # Parameter types same as for discovered MachAr object.
-        self.epsilon = self.eps = float_to_float(eps)
-        self.epsneg = float_to_float(epsneg)
-        self.xmax = self.huge = float_to_float(huge)
-        self.xmin = self.tiny = float_to_float(tiny)
-        self.ibeta = params['itype'](ibeta)
+        if not smallest_subnormal:
+            self._smallest_subnormal = nextafter(
+                self.ftype(0), self.ftype(1), dtype=self.ftype)
+        else:
+            self._smallest_subnormal = smallest_subnormal
+        self.epsilon = self.eps = self._float_to_float(eps)
+        self.epsneg = self._float_to_float(epsneg)
+        self.xmax = self.huge = self._float_to_float(huge)
+        self.xmin = self._float_to_float(tiny)
+        self.smallest_normal = self.tiny = self._float_to_float(tiny)
+        self.ibeta = self.params['itype'](ibeta)
         self.__dict__.update(kwargs)
         self.precision = int(-log10(self.eps))
-        self.resolution = float_to_float(float_conv(10) ** (-self.precision))
-        self._str_eps = float_to_str(self.eps)
-        self._str_epsneg = float_to_str(self.epsneg)
-        self._str_xmin = float_to_str(self.xmin)
-        self._str_xmax = float_to_str(self.xmax)
-        self._str_resolution = float_to_str(self.resolution)
+        self.resolution = self._float_to_float(
+            self._float_conv(10) ** (-self.precision))
+        self._str_eps = self._float_to_str(self.eps)
+        self._str_epsneg = self._float_to_str(self.epsneg)
+        self._str_xmin = self._float_to_str(self.xmin)
+        self._str_xmax = self._float_to_str(self.xmax)
+        self._str_resolution = self._float_to_str(self.resolution)
+        self._str_smallest_normal = self._float_to_str(self.xmin)
+
+    @property
+    def smallest_subnormal(self):
+        """Return the value for the smallest subnormal.
+
+        Returns
+        -------
+        smallest_subnormal : float
+            value for the smallest subnormal.
+
+        Warns
+        -----
+        UserWarning
+            If the calculated value for the smallest subnormal is zero.
+        """
+        # Check that the calculated value is not zero, in case it raises a
+        # warning.
+        value = self._smallest_subnormal
+        if self.ftype(0) == value:
+            warnings.warn(
+                'The value of the smallest subnormal for {} type '
+                'is zero.'.format(self.ftype), UserWarning, stacklevel=2)
+
+        return self._float_to_float(value)
+
+    @property
+    def _str_smallest_subnormal(self):
+        """Return the string representation of the smallest subnormal."""
+        return self._float_to_str(self.smallest_subnormal)
+
+    def _float_to_float(self, value):
+        """Converts float to float.
+
+        Parameters
+        ----------
+        value : float
+            value to be converted.
+        """
+        return _fr1(self._float_conv(value))
+
+    def _float_conv(self, value):
+        """Converts float to conv.
+
+        Parameters
+        ----------
+        value : float
+            value to be converted.
+        """
+        return array([value], self.ftype)
+
+    def _float_to_str(self, value):
+        """Converts float to str.
+
+        Parameters
+        ----------
+        value : float
+            value to be converted.
+        """
+        return self.params['fmt'] % array(_fr0(value)[0], self.ftype)
+
 
 _convert_to_float = {
     ntypes.csingle: ntypes.single,
@@ -90,6 +153,7 @@ _KNOWN_TYPES = {}
 def _register_type(machar, bytepat):
     _KNOWN_TYPES[bytepat] = machar
 _float_ma = {}
+
 
 def _register_known_types():
     # Known parameters for float16
@@ -208,23 +272,27 @@ def _register_known_types():
     # https://en.wikipedia.org/wiki/Quadruple-precision_floating-point_format#Double-double_arithmetic
     # These numbers have the same exponent range as float64, but extended number of
     # digits in the significand.
-    huge_dd = (umath.nextafter(ld(inf), ld(0))
-                if hasattr(umath, 'nextafter')  # Missing on some platforms?
-                else float64_ma.huge)
+    huge_dd = nextafter(ld(inf), ld(0), dtype=ld)
+    # As the smallest_normal in double double is so hard to calculate we set
+    # it to NaN.
+    smallest_normal_dd = NaN
+    # Leave the same value for the smallest subnormal as double
+    smallest_subnormal_dd = ld(nextafter(0., 1.))
     float_dd_ma = MachArLike(ld,
-                              machep=-105,
-                              negep=-106,
-                              minexp=-1022,
-                              maxexp=1024,
-                              it=105,
-                              iexp=11,
-                              ibeta=2,
-                              irnd=5,
-                              ngrd=0,
-                              eps=exp2(ld(-105)),
-                              epsneg= exp2(ld(-106)),
-                              huge=huge_dd,
-                              tiny=exp2(ld(-1022)))
+                             machep=-105,
+                             negep=-106,
+                             minexp=-1022,
+                             maxexp=1024,
+                             it=105,
+                             iexp=11,
+                             ibeta=2,
+                             irnd=5,
+                             ngrd=0,
+                             eps=exp2(ld(-105)),
+                             epsneg=exp2(ld(-106)),
+                             huge=huge_dd,
+                             tiny=smallest_normal_dd,
+                             smallest_subnormal=smallest_subnormal_dd)
     # double double; low, high order (e.g. PPC 64)
     _register_type(float_dd_ma,
         b'\x9a\x99\x99\x99\x99\x99Y<\x9a\x99\x99\x99\x99\x99\xb9\xbf')
@@ -317,6 +385,8 @@ class finfo:
     machar : MachAr
         The object which calculated these parameters and holds more
         detailed information.
+
+        .. deprecated:: 1.22
     machep : int
         The exponent that yields `eps`.
     max : floating point number of the appropriate type
@@ -341,8 +411,13 @@ class finfo:
         The approximate decimal resolution of this type, i.e.,
         ``10**-precision``.
     tiny : float
-        The smallest positive floating point number with full precision
-        (see Notes).
+        An alias for `smallest_normal`, kept for backwards compatibility.
+    smallest_normal : float
+        The smallest positive floating point number with 1 as leading bit in
+        the mantissa following IEEE-754 (see Notes).
+    smallest_subnormal : float
+        The smallest positive floating point number with 0 as leading bit in
+        the mantissa following IEEE-754.
 
     Parameters
     ----------
@@ -363,12 +438,12 @@ class finfo:
     impacts import times.  These objects are cached, so calling ``finfo()``
     repeatedly inside your functions is not a problem.
 
-    Note that ``tiny`` is not actually the smallest positive representable
-    value in a NumPy floating point type. As in the IEEE-754 standard [1]_,
-    NumPy floating point types make use of subnormal numbers to fill the
-    gap between 0 and ``tiny``. However, subnormal numbers may have
-    significantly reduced precision [2]_.
-    
+    Note that ``smallest_normal`` is not actually the smallest positive
+    representable value in a NumPy floating point type. As in the IEEE-754
+    standard [1]_, NumPy floating point types make use of subnormal numbers to
+    fill the gap between 0 and ``smallest_normal``. However, subnormal numbers
+    may have significantly reduced precision [2]_.
+
     References
     ----------
     .. [1] IEEE Standard for Floating-Point Arithmetic, IEEE Std 754-2008,
@@ -420,7 +495,7 @@ class finfo:
                      'maxexp', 'minexp', 'negep',
                      'machep']:
             setattr(self, word, getattr(machar, word))
-        for word in ['tiny', 'resolution', 'epsneg']:
+        for word in ['resolution', 'epsneg', 'smallest_subnormal']:
             setattr(self, word, getattr(machar, word).flat[0])
         self.bits = self.dtype.itemsize * 8
         self.max = machar.huge.flat[0]
@@ -428,12 +503,14 @@ class finfo:
         self.eps = machar.eps.flat[0]
         self.nexp = machar.iexp
         self.nmant = machar.it
-        self.machar = machar
+        self._machar = machar
         self._str_tiny = machar._str_xmin.strip()
         self._str_max = machar._str_xmax.strip()
         self._str_epsneg = machar._str_epsneg.strip()
         self._str_eps = machar._str_eps.strip()
         self._str_resolution = machar._str_resolution.strip()
+        self._str_smallest_normal = machar._str_smallest_normal.strip()
+        self._str_smallest_subnormal = machar._str_smallest_subnormal.strip()
         return self
 
     def __str__(self):
@@ -446,6 +523,8 @@ class finfo:
             'minexp = %(minexp)6s   tiny =       %(_str_tiny)s\n'
             'maxexp = %(maxexp)6s   max =        %(_str_max)s\n'
             'nexp =   %(nexp)6s   min =        -max\n'
+            'smallest_normal = %(_str_smallest_normal)s   '
+            'smallest_subnormal = %(_str_smallest_subnormal)s\n'
             '---------------------------------------------------------------\n'
             )
         return fmt % self.__dict__
@@ -456,6 +535,60 @@ class finfo:
         d['klass'] = c
         return (("%(klass)s(resolution=%(resolution)s, min=-%(_str_max)s,"
                  " max=%(_str_max)s, dtype=%(dtype)s)") % d)
+
+    @property
+    def smallest_normal(self):
+        """Return the value for the smallest normal.
+
+        Returns
+        -------
+        smallest_normal : float
+            Value for the smallest normal.
+
+        Warns
+        -----
+        UserWarning
+            If the calculated value for the smallest normal is requested for
+            double-double.
+        """
+        # This check is necessary because the value for smallest_normal is
+        # platform dependent for longdouble types.
+        if isnan(self._machar.smallest_normal.flat[0]):
+            warnings.warn(
+                'The value of smallest normal is undefined for double double',
+                UserWarning, stacklevel=2)
+        return self._machar.smallest_normal.flat[0]
+
+    @property
+    def tiny(self):
+        """Return the value for tiny, alias of smallest_normal.
+
+        Returns
+        -------
+        tiny : float
+            Value for the smallest normal, alias of smallest_normal.
+
+        Warns
+        -----
+        UserWarning
+            If the calculated value for the smallest normal is requested for
+            double-double.
+        """
+        return self.smallest_normal
+
+    @property
+    def machar(self):
+        """The object which calculated these parameters and holds more
+        detailed information.
+
+        .. deprecated:: 1.22
+        """
+        # Deprecated 2021-10-27, NumPy 1.22
+        warnings.warn(
+            "`finfo.machar` is deprecated (NumPy 1.22)",
+            DeprecationWarning, stacklevel=2,
+        )
+        return self._machar
 
 
 @set_module('numpy')

@@ -1,5 +1,5 @@
-#ifndef _NPY_ARRAYTYPES_H_
-#define _NPY_ARRAYTYPES_H_
+#ifndef NUMPY_CORE_SRC_MULTIARRAY_ARRAYTYPES_H_
+#define NUMPY_CORE_SRC_MULTIARRAY_ARRAYTYPES_H_
 
 #include "common.h"
 
@@ -28,4 +28,4 @@ small_correlate(const char * d_, npy_intp dstride,
                 npy_intp nk, enum NPY_TYPES ktype,
                 char * out_, npy_intp ostride);
 
-#endif
+#endif  /* NUMPY_CORE_SRC_MULTIARRAY_ARRAYTYPES_H_ */

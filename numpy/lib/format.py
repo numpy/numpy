@@ -44,7 +44,7 @@ Capabilities
   read most ``.npy`` files that they have been given without much
   documentation.
 
-- Allows memory-mapping of the data. See `open_memmep`.
+- Allows memory-mapping of the data. See `open_memmap`.
 
 - Can be read from a filelike stream object instead of an actual file.
 
@@ -162,7 +162,6 @@ evolved with time and this document is more current.
 
 """
 import numpy
-import io
 import warnings
 from numpy.lib.utils import safe_eval
 from numpy.compat import (
@@ -292,7 +291,7 @@ def descr_to_dtype(descr):
     Parameters
     ----------
     descr : object
-        The object retreived by dtype.descr. Can be passed to
+        The object retrieved by dtype.descr. Can be passed to
         `numpy.dtype()` in order to replicate the input dtype.
 
     Returns
@@ -606,7 +605,7 @@ def _read_array_header(fp, version):
     if EXPECTED_KEYS != d.keys():
         keys = sorted(d.keys())
         msg = "Header does not contain the correct keys: {!r}"
-        raise ValueError(msg.format(d.keys()))
+        raise ValueError(msg.format(keys))
 
     # Sanity-check the values.
     if (not isinstance(d['shape'], tuple) or
@@ -831,7 +830,7 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
     ------
     ValueError
         If the data or the mode is invalid.
-    IOError
+    OSError
         If the file is not found or cannot be opened correctly.
 
     See Also
@@ -909,7 +908,7 @@ def _read_bytes(fp, size, error_template="ran out of data"):
             data += r
             if len(r) == 0 or len(data) == size:
                 break
-        except io.BlockingIOError:
+        except BlockingIOError:
             pass
     if len(data) != size:
         msg = "EOF: reading %s, expected %d bytes got %d"

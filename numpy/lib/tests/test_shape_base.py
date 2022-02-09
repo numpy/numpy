@@ -392,7 +392,7 @@ class TestArraySplit:
         assert_(a.dtype.type is res[-1].dtype.type)
 
         # Same thing for manual splits:
-        res = array_split(a, [0, 1, 2], axis=0)
+        res = array_split(a, [0, 1], axis=0)
         tgt = [np.zeros((0, 10)), np.array([np.arange(10)]),
                np.array([np.arange(10)])]
         compare_results(res, tgt)
@@ -713,5 +713,9 @@ class TestMayShareMemory:
 
 # Utility
 def compare_results(res, desired):
-    for i in range(len(desired)):
-        assert_array_equal(res[i], desired[i])
+    """Compare lists of arrays."""
+    if len(res) != len(desired):
+        raise ValueError("Iterables have different lengths")
+    # See also PEP 618 for Python 3.10
+    for x, y in zip(res, desired):
+        assert_array_equal(x, y)

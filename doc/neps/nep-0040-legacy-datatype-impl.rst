@@ -1,7 +1,7 @@
 .. _NEP40:
 
 ================================================
-NEP 40 — Legacy Datatype Implementation in NumPy
+NEP 40 — Legacy datatype implementation in NumPy
 ================================================
 
 :title: Legacy Datatype Implementation in NumPy
@@ -21,7 +21,7 @@ NEP 40 — Legacy Datatype Implementation in NumPy
 
     - :ref:`NEP 42 <NEP42>` describes the new design's datatype-related APIs.
 
-    - NEP 43 describes the new design's API for universal functions.
+    - :ref:`NEP 43 <NEP43>` describes the new design's API for universal functions.
 
 
 
@@ -82,7 +82,7 @@ Thus we have data types (mainly strings) with the properties that:
 2. Array coercion should be able to discover the exact dtype, such as for
    ``np.array(["str1", 12.34], dtype="S")`` where NumPy discovers the
    resulting dtype as ``"S5"``.
-   (If the dtype argument is ommitted the behaviour is currently ill defined [gh-15327]_.)
+   (If the dtype argument is omitted the behaviour is currently ill defined [gh-15327]_.)
    A form similar to ``dtype="S"`` is ``dtype="datetime64"`` which can
    discover the unit: ``np.array(["2017-02"], dtype="datetime64")``.
 
@@ -197,7 +197,7 @@ Currently ``np.dtype`` is a Python class with its instances being the
 To set the actual behaviour of these instances, a prototype instance is stored
 globally and looked up based on the ``dtype.typenum``. The singleton is used
 where possible. Where required it is copied and modified, for instance to change
-endianess.
+endianness.
 
 Parametric datatypes (strings, void, datetime, and timedelta) must store
 additional information such as string lengths, fields, or datetime units --

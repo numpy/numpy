@@ -1,0 +1,7 @@
+#ifndef NUMPY_CORE_SRC_MULTIARRAY_TEXTREADING_READTEXT_H_
+#define NUMPY_CORE_SRC_MULTIARRAY_TEXTREADING_READTEXT_H_
+
+NPY_NO_EXPORT PyObject *
+_load_from_filelike(PyObject *self, PyObject *args, PyObject *kwargs);
+
+#endif  /* NUMPY_CORE_SRC_MULTIARRAY_TEXTREADING_READTEXT_H_ */

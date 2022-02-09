@@ -39,7 +39,7 @@
  *    for (; len >= vstep; src += vstep, dst += vstep, len -= vstep) {
  *        npyv_s32 a = npyv_load_s32(*src);       // load s32 vector from memory
  *                 a = npyv_divc_s32(a, divisor); // divide all elements by x
- *        npyv_store_s32(dst, a);                 // store s32 vector into memroy
+ *        npyv_store_s32(dst, a);                 // store s32 vector into memory
  *    }
  *
  ** NOTES:
@@ -136,7 +136,7 @@ NPY_FINLINE npy_uint64 npyv__divh128_u64(npy_uint64 high, npy_uint64 divisor)
 {
     assert(divisor > 1);
     npy_uint64 quotient;
-#if defined(_M_X64) && defined(_MSC_VER) && _MSC_VER >= 1920
+#if defined(_M_X64) && defined(_MSC_VER) && _MSC_VER >= 1920 && !defined(__clang__)
     npy_uint64 remainder;
     quotient = _udiv128(high, 0, divisor, &remainder);
     (void)remainder;
@@ -162,11 +162,12 @@ NPY_FINLINE npy_uint64 npyv__divh128_u64(npy_uint64 high, npy_uint64 divisor)
     npy_uint32 divisor_hi  = divisor >> 32;
     npy_uint32 divisor_lo  = divisor & 0xFFFFFFFF;
     // compute high quotient digit
-    npy_uint32 quotient_hi = (npy_uint32)(high / divisor_hi);
+    npy_uint64 quotient_hi = high / divisor_hi;
     npy_uint64 remainder   = high - divisor_hi * quotient_hi;
     npy_uint64 base32      = 1ULL << 32;
     while (quotient_hi >= base32 || quotient_hi*divisor_lo > base32*remainder) {
-        remainder += --divisor_hi;
+        --quotient_hi;
+        remainder += divisor_hi;
         if (remainder >= base32) {
             break;
         }
@@ -200,18 +201,20 @@ NPY_FINLINE npyv_u8x3 npyv_divisor_u8(npy_uint8 d)
     default:
         l   = npyv__bitscan_revnz_u32(d - 1) + 1;  // ceil(log2(d))
         l2  = (npy_uint8)(1 << l);                 // 2^l, overflow to 0 if l = 8
-        m   = ((l2 - d) << 8) / d + 1;             // multiplier
+        m   = ((npy_uint16)((l2 - d) << 8)) / d + 1; // multiplier
         sh1 = 1;  sh2 = l - 1;                     // shift counts
     }
     npyv_u8x3 divisor;
-    divisor.val[0] = npyv_setall_u8(m);
 #ifdef NPY_HAVE_SSE2 // SSE/AVX2/AVX512
+    divisor.val[0] = npyv_setall_u16(m);
     divisor.val[1] = npyv_set_u8(sh1);
     divisor.val[2] = npyv_set_u8(sh2);
 #elif defined(NPY_HAVE_VSX2)
+    divisor.val[0] = npyv_setall_u8(m);
     divisor.val[1] = npyv_setall_u8(sh1);
     divisor.val[2] = npyv_setall_u8(sh2);
 #elif defined(NPY_HAVE_NEON)
+    divisor.val[0] = npyv_setall_u8(m);
     divisor.val[1] = npyv_reinterpret_u8_s8(npyv_setall_s8(-sh1));
     divisor.val[2] = npyv_reinterpret_u8_s8(npyv_setall_s8(-sh2));
 #else
@@ -366,17 +369,17 @@ NPY_FINLINE npyv_s32x3 npyv_divisor_s32(npy_int32 d)
 {
     npy_int32 d1 = abs(d);
     npy_int32 sh, m;
-    if (d1 > 1) {
+    // Handel abs overflow
+    if ((npy_uint32)d == 0x80000000U) {
+        m = 0x80000001;
+        sh = 30;
+    }
+    else if (d1 > 1) {
         sh = npyv__bitscan_revnz_u32(d1 - 1); // ceil(log2(abs(d))) - 1
         m =  (1ULL << (32 + sh)) / d1 + 1;    // multiplier
     }
     else if (d1 == 1) {
         sh = 0; m = 1;
-    }
-    // fix abs overflow
-    else if (d == (1 << 31)) {
-        m = d + 1;
-        sh = 30;
     }
     else {
         // raise arithmetic exception for d == 0
@@ -443,17 +446,17 @@ NPY_FINLINE npyv_s64x3 npyv_divisor_s64(npy_int64 d)
 #else
     npy_int64 d1 = llabs(d);
     npy_int64 sh, m;
-    if (d1 > 1) {
+    // Handel abs overflow
+    if ((npy_uint64)d == 0x8000000000000000ULL) {
+        m = 0x8000000000000001LL;
+        sh = 62;
+    }
+    else if (d1 > 1) {
         sh = npyv__bitscan_revnz_u64(d1 - 1);       // ceil(log2(abs(d))) - 1
         m  = npyv__divh128_u64(1ULL << sh, d1) + 1; // multiplier
     }
     else if (d1 == 1) {
         sh = 0; m = 1;
-    }
-    // fix abs overflow
-    else if (d == (1LL << 63)) {
-        m = d + 1;
-        sh = 62;
     }
     else {
         // raise arithmetic exception for d == 0

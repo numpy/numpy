@@ -1,5 +1,5 @@
-#ifndef NPY_NOPREFIX_H
-#define NPY_NOPREFIX_H
+#ifndef NUMPY_CORE_INCLUDE_NUMPY_NOPREFIX_H_
+#define NUMPY_CORE_INCLUDE_NUMPY_NOPREFIX_H_
 
 /*
  * You can directly include noprefix.h as a backward
@@ -165,7 +165,6 @@
 #define ALIGNED            NPY_ALIGNED
 #define NOTSWAPPED         NPY_NOTSWAPPED
 #define WRITEABLE          NPY_WRITEABLE
-#define UPDATEIFCOPY       NPY_UPDATEIFCOPY
 #define WRITEBACKIFCOPY    NPY_ARRAY_WRITEBACKIFCOPY
 #define ARR_HAS_DESCR      NPY_ARR_HAS_DESCR
 #define BEHAVED            NPY_BEHAVED
@@ -209,4 +208,4 @@
 #define MAX_ELSIZE NPY_MAX_ELSIZE
 #endif
 
-#endif
+#endif  /* NUMPY_CORE_INCLUDE_NUMPY_NOPREFIX_H_ */

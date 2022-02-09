@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # NumPy Enhancement Proposals documentation build configuration file, created by
 # sphinx-quickstart on Mon Dec 11 12:45:09 2017.
@@ -87,6 +86,8 @@ html_theme = 'pydata_sphinx_theme'
 
 html_logo = '../source/_static/numpylogo.svg'
 
+html_favicon = '../source/_static/favicon/favicon.ico'
+
 html_theme_options = {
   "github_url": "https://github.com/numpy/numpy",
   "twitter_url": "https://twitter.com/numpy_team",
@@ -106,8 +107,6 @@ html_use_modindex = True
 html_copy_source = False
 html_domain_indices = False
 html_file_suffix = '.html'
-
-htmlhelp_basename = 'numpy'
 
 if 'sphinx.ext.pngmath' in extensions:
     pngmath_use_preview = True

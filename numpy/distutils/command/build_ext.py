@@ -151,20 +151,26 @@ class build_ext (old_build_ext):
             opt_cache_path = os.path.abspath(
                 os.path.join(self.build_temp, 'ccompiler_opt_cache_ext.py')
             )
+            if hasattr(self, "compiler_opt"):
+                # By default `CCompilerOpt` update the cache at the exit of
+                # the process, which may lead to duplicate building
+                # (see build_extension()/force_rebuild) if run() called
+                # multiple times within the same os process/thread without
+                # giving the chance the previous instances of `CCompilerOpt`
+                # to update the cache.
+                self.compiler_opt.cache_flush()
+
             self.compiler_opt = new_ccompiler_opt(
                 compiler=self.compiler, dispatch_hpath=dispatch_hpath,
                 cpu_baseline=self.cpu_baseline, cpu_dispatch=self.cpu_dispatch,
                 cache_path=opt_cache_path
             )
-            if not self.compiler_opt.is_cached():
-                log.info("Detected changes on compiler optimizations, force rebuilding")
-                self.force = True
+            def report(copt):
+                log.info("\n########### EXT COMPILER OPTIMIZATION ###########")
+                log.info(copt.report(full=True))
 
             import atexit
-            def report():
-                log.info("\n########### EXT COMPILER OPTIMIZATION ###########")
-                log.info(self.compiler_opt.report(full=True))
-            atexit.register(report)
+            atexit.register(report, self.compiler_opt)
 
         # Setup directory for storing generated extra DLL files on Windows
         self.extra_dll_dir = os.path.join(self.build_temp, '.libs')
@@ -225,19 +231,36 @@ class build_ext (old_build_ext):
             l = ext.language or self.compiler.detect_language(ext.sources)
             if l:
                 ext_languages.add(l)
+
             # reset language attribute for choosing proper linker
+            #
+            # When we build extensions with multiple languages, we have to
+            # choose a linker. The rules here are:
+            #   1. if there is Fortran code, always prefer the Fortran linker,
+            #   2. otherwise prefer C++ over C,
+            #   3. Users can force a particular linker by using
+            #          `language='c'`  # or 'c++', 'f90', 'f77'
+            #      in their config.add_extension() calls.
             if 'c++' in ext_languages:
                 ext_language = 'c++'
-            elif 'f90' in ext_languages:
-                ext_language = 'f90'
-            elif 'f77' in ext_languages:
-                ext_language = 'f77'
             else:
                 ext_language = 'c'  # default
-            if l and l != ext_language and ext.language:
-                log.warn('resetting extension %r language from %r to %r.' %
-                         (ext.name, l, ext_language))
-            ext.language = ext_language
+
+            has_fortran = False
+            if 'f90' in ext_languages:
+                ext_language = 'f90'
+                has_fortran = True
+            elif 'f77' in ext_languages:
+                ext_language = 'f77'
+                has_fortran = True
+
+            if not ext.language or has_fortran:
+                if l and l != ext_language and ext.language:
+                    log.warn('resetting extension %r language from %r to %r.' %
+                             (ext.name, l, ext_language))
+
+                ext.language = ext_language
+
             # global language
             all_languages.update(ext_languages)
 
@@ -359,13 +382,20 @@ class build_ext (old_build_ext):
                                         self.get_ext_filename(fullname))
         depends = sources + ext.depends
 
-        if not (self.force or newer_group(depends, ext_filename, 'newer')):
+        force_rebuild = self.force
+        if not self.disable_optimization and not self.compiler_opt.is_cached():
+            log.debug("Detected changes on compiler optimizations")
+            force_rebuild = True
+        if not (force_rebuild or newer_group(depends, ext_filename, 'newer')):
             log.debug("skipping '%s' extension (up-to-date)", ext.name)
             return
         else:
             log.info("building '%s' extension", ext.name)
 
         extra_args = ext.extra_compile_args or []
+        extra_cflags = getattr(ext, 'extra_c_compile_args', None) or []
+        extra_cxxflags = getattr(ext, 'extra_cxx_compile_args', None) or []
+
         macros = ext.define_macros[:]
         for undef in ext.undef_macros:
             macros.append((undef,))
@@ -418,6 +448,7 @@ class build_ext (old_build_ext):
         # filtering C dispatch-table sources when optimization is not disabled,
         # otherwise treated as normal sources.
         copt_c_sources = []
+        copt_cxx_sources = []
         copt_baseline_flags = []
         copt_macros = []
         if not self.disable_optimization:
@@ -427,43 +458,67 @@ class build_ext (old_build_ext):
             include_dirs.append(dispatch_hpath)
 
             copt_build_src = None if self.inplace else bsrc_dir
-            copt_c_sources = [
-                c_sources.pop(c_sources.index(src))
-                for src in c_sources[:] if src.endswith(".dispatch.c")
-            ]
+            for _srcs, _dst, _ext in (
+                ((c_sources,), copt_c_sources, ('.dispatch.c',)),
+                ((c_sources, cxx_sources), copt_cxx_sources,
+                    ('.dispatch.cpp', '.dispatch.cxx'))
+            ):
+                for _src in _srcs:
+                    _dst += [
+                        _src.pop(_src.index(s))
+                        for s in _src[:] if s.endswith(_ext)
+                    ]
             copt_baseline_flags = self.compiler_opt.cpu_baseline_flags()
         else:
             copt_macros.append(("NPY_DISABLE_OPTIMIZATION", 1))
 
         c_objects = []
+        if copt_cxx_sources:
+            log.info("compiling C++ dispatch-able sources")
+            c_objects += self.compiler_opt.try_dispatch(
+                copt_cxx_sources,
+                output_dir=output_dir,
+                src_dir=copt_build_src,
+                macros=macros + copt_macros,
+                include_dirs=include_dirs,
+                debug=self.debug,
+                extra_postargs=extra_args + extra_cxxflags,
+                ccompiler=cxx_compiler,
+                **kws
+            )
         if copt_c_sources:
             log.info("compiling C dispatch-able sources")
-            c_objects += self.compiler_opt.try_dispatch(copt_c_sources,
-                                                        output_dir=output_dir,
-                                                        src_dir=copt_build_src,
-                                                        macros=macros + copt_macros,
-                                                        include_dirs=include_dirs,
-                                                        debug=self.debug,
-                                                        extra_postargs=extra_args,
-                                                        **kws)
+            c_objects += self.compiler_opt.try_dispatch(
+                copt_c_sources,
+                output_dir=output_dir,
+                src_dir=copt_build_src,
+                macros=macros + copt_macros,
+                include_dirs=include_dirs,
+                debug=self.debug,
+                extra_postargs=extra_args + extra_cflags,
+                **kws)
         if c_sources:
             log.info("compiling C sources")
-            c_objects += self.compiler.compile(c_sources,
-                                               output_dir=output_dir,
-                                               macros=macros + copt_macros,
-                                               include_dirs=include_dirs,
-                                               debug=self.debug,
-                                               extra_postargs=extra_args + copt_baseline_flags,
-                                               **kws)
+            c_objects += self.compiler.compile(
+                c_sources,
+                output_dir=output_dir,
+                macros=macros + copt_macros,
+                include_dirs=include_dirs,
+                debug=self.debug,
+                extra_postargs=(extra_args + copt_baseline_flags +
+                                extra_cflags),
+                **kws)
         if cxx_sources:
             log.info("compiling C++ sources")
-            c_objects += cxx_compiler.compile(cxx_sources,
-                                              output_dir=output_dir,
-                                              macros=macros + copt_macros,
-                                              include_dirs=include_dirs,
-                                              debug=self.debug,
-                                              extra_postargs=extra_args + copt_baseline_flags,
-                                              **kws)
+            c_objects += cxx_compiler.compile(
+                cxx_sources,
+                output_dir=output_dir,
+                macros=macros + copt_macros,
+                include_dirs=include_dirs,
+                debug=self.debug,
+                extra_postargs=(extra_args + copt_baseline_flags +
+                                extra_cxxflags),
+                **kws)
 
         extra_postargs = []
         f_objects = []
@@ -572,7 +627,7 @@ class build_ext (old_build_ext):
         # Expand possible fake static libraries to objects;
         # make sure to iterate over a copy of the list as
         # "fake" libraries will be removed as they are
-        # enountered
+        # encountered
         for lib in libraries[:]:
             for libdir in library_dirs:
                 fake_lib = os.path.join(libdir, lib + '.fobjects')

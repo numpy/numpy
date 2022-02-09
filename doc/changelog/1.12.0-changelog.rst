@@ -283,7 +283,7 @@ A total of 418 pull requests were merged for this release.
 * `#7373 <https://github.com/numpy/numpy/pull/7373>`__: ENH: Add bitwise_and identity
 * `#7378 <https://github.com/numpy/numpy/pull/7378>`__: added NumPy logo and separator
 * `#7382 <https://github.com/numpy/numpy/pull/7382>`__: MAINT: cleanup np.average
-* `#7385 <https://github.com/numpy/numpy/pull/7385>`__: DOC: note about wheels / windows wheels for pypi
+* `#7385 <https://github.com/numpy/numpy/pull/7385>`__: DOC: note about wheels / windows wheels for PyPI
 * `#7386 <https://github.com/numpy/numpy/pull/7386>`__: Added label icon to Travis status
 * `#7397 <https://github.com/numpy/numpy/pull/7397>`__: BUG: incorrect type for objects whose __len__ fails
 * `#7398 <https://github.com/numpy/numpy/pull/7398>`__: DOC: fix typo

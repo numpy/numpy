@@ -59,11 +59,11 @@ first is the coefficients, the second is the domain, and the third is the
 window::
 
    >>> p.coef
-   array([ 1.,  2.,  3.])
+   array([1., 2., 3.])
    >>> p.domain
-   array([-1.,  1.])
+   array([-1,  1])
    >>> p.window
-   array([-1.,  1.])
+   array([-1,  1])
 
 Printing a polynomial yields the polynomial expression in a more familiar
 format::
@@ -77,7 +77,7 @@ representation is also available (default on Windows). The polynomial string
 format can be toggled at the package-level with the 
 `~numpy.polynomial.set_default_printstyle` function::
 
-   >>> numpy.polynomial.set_default_printstyle('ascii')
+   >>> np.polynomial.set_default_printstyle('ascii')
    >>> print(p)
    1.0 + 2.0 x**1 + 3.0 x**2
 
@@ -137,9 +137,9 @@ Evaluation::
    array([  1.,   6.,  17.,  34.,  57.])
    >>> x = np.arange(6).reshape(3,2)
    >>> p(x)
-   array([[  1.,   6.],
-          [ 17.,  34.],
-          [ 57.,  86.]])
+   array([[ 1.,   6.],
+          [17.,  34.],
+          [57.,  86.]])
 
 Substitution:
 
@@ -294,7 +294,6 @@ polynomials up to degree 5 are plotted below.
     ...     ax = plt.plot(x, T.basis(i)(x), lw=2, label=f"$T_{i}$")
     ...
     >>> plt.legend(loc="upper left")
-    <matplotlib.legend.Legend object at 0x3b3ee10>
     >>> plt.show()
 
 In the range -1 <= `x` <= 1 they are nice, equiripple functions lying between +/- 1.
@@ -309,7 +308,6 @@ The same plots over the range -2 <= `x` <= 2 look very different:
     ...     ax = plt.plot(x, T.basis(i)(x), lw=2, label=f"$T_{i}$")
     ...
     >>> plt.legend(loc="lower right")
-    <matplotlib.legend.Legend object at 0x3b3ee10>
     >>> plt.show()
 
 As can be seen, the "good" parts have shrunk to insignificance. In using
@@ -335,12 +333,10 @@ illustrated below for a fit to a noisy sine curve.
     >>> y = np.sin(x) + np.random.normal(scale=.1, size=x.shape)
     >>> p = T.fit(x, y, 5)
     >>> plt.plot(x, y, 'o')
-    [<matplotlib.lines.Line2D object at 0x2136c10>]
     >>> xx, yy = p.linspace()
     >>> plt.plot(xx, yy, lw=2)
-    [<matplotlib.lines.Line2D object at 0x1cf2890>]
     >>> p.domain
-    array([ 0.        ,  6.28318531])
+    array([0.        ,  6.28318531])
     >>> p.window
     array([-1.,  1.])
     >>> plt.show()

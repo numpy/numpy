@@ -61,7 +61,8 @@ npy_cpu_features_dict(void)
      *            AVX512VPOPCNTDQ, AVX512VL, AVX512BW, AVX512DQ, AVX512VNNI,
      *            AVX512IFMA, AVX512VBMI, AVX512VBMI2, AVX512BITALG,
      *            AVX512_KNL, AVX512_KNM, AVX512_SKX, AVX512_CLX, AVX512_CNL, AVX512_ICL,
-     *            VSX, VSX2, VSX3,
+     *            VSX, VSX2, VSX3, VSX4,
+     *            VX, VXE, VXE2,
      *            NEON, NEON_FP16, NEON_VFPV4, ASIMD, FPHP, ASIMDHP, ASIMDDP, ASIMDFHM#
     */
         if (PyDict_SetItemString(dict, "@feature@",
@@ -230,7 +231,7 @@ npy__cpu_try_disable_env(void)
             notsupp_cur[flen] = ' '; notsupp_cur += flen + 1;
             goto next;
         }
-        // Finaly we can disable it
+        // Finally we can disable it
         npy__cpu_have[feature_id] = 0;
     next:
         feature = strtok(NULL, delim);
@@ -394,8 +395,30 @@ npy__cpu_init_features(void)
     npy__cpu_have[NPY_CPU_FEATURE_FMA]    = npy__cpu_have[NPY_CPU_FEATURE_FMA3];
 
     // check AVX512 OS support
-    if ((xcr & 0xe6) != 0xe6)
+    int avx512_os = (xcr & 0xe6) == 0xe6;
+#if defined(__APPLE__) && defined(__x86_64__)
+    /**
+     * On darwin, machines with AVX512 support, by default, threads are created with
+     * AVX512 masked off in XCR0 and an AVX-sized savearea is used.
+     * However, AVX512 capabilities are advertised in the commpage and via sysctl.
+     * for more information, check:
+     *  - https://github.com/apple/darwin-xnu/blob/0a798f6738bc1db01281fc08ae024145e84df927/osfmk/i386/fpu.c#L175-L201
+     *  - https://github.com/golang/go/issues/43089
+     *  - https://github.com/numpy/numpy/issues/19319
+     */
+    if (!avx512_os) {
+        npy_uintp commpage64_addr = 0x00007fffffe00000ULL;
+        npy_uint16 commpage64_ver = *((npy_uint16*)(commpage64_addr + 0x01E));
+        // cpu_capabilities64 undefined in versions < 13
+        if (commpage64_ver > 12) {
+            npy_uint64 commpage64_cap = *((npy_uint64*)(commpage64_addr + 0x010));
+            avx512_os = (commpage64_cap & 0x0000004000000000ULL) != 0;
+        }
+    }
+#endif
+    if (!avx512_os) {
         return;
+    }
     npy__cpu_have[NPY_CPU_FEATURE_AVX512F]  = (reg[1] & (1 << 16)) != 0;
     npy__cpu_have[NPY_CPU_FEATURE_AVX512CD] = (reg[1] & (1 << 28)) != 0;
     if (npy__cpu_have[NPY_CPU_FEATURE_AVX512F] && npy__cpu_have[NPY_CPU_FEATURE_AVX512CD]) {
@@ -451,8 +474,14 @@ npy__cpu_init_features(void)
     #ifndef AT_HWCAP2
         #define AT_HWCAP2 26
     #endif
+    #ifndef PPC_FEATURE2_ARCH_2_07
+        #define PPC_FEATURE2_ARCH_2_07 0x80000000
+    #endif
     #ifndef PPC_FEATURE2_ARCH_3_00
         #define PPC_FEATURE2_ARCH_3_00 0x00800000
+    #endif
+    #ifndef PPC_FEATURE2_ARCH_3_1
+        #define PPC_FEATURE2_ARCH_3_1  0x00040000
     #endif
 #endif
 
@@ -466,15 +495,18 @@ npy__cpu_init_features(void)
         return;
 
     hwcap = getauxval(AT_HWCAP2);
-    if (hwcap & PPC_FEATURE2_ARCH_3_00)
+    if (hwcap & PPC_FEATURE2_ARCH_3_1)
     {
         npy__cpu_have[NPY_CPU_FEATURE_VSX]  =
         npy__cpu_have[NPY_CPU_FEATURE_VSX2] =
-        npy__cpu_have[NPY_CPU_FEATURE_VSX3] = 1;
+        npy__cpu_have[NPY_CPU_FEATURE_VSX3] =
+        npy__cpu_have[NPY_CPU_FEATURE_VSX4] = 1;
         return;
     }
-    npy__cpu_have[NPY_CPU_FEATURE_VSX2] = (hwcap & PPC_FEATURE2_ARCH_2_07) != 0;
     npy__cpu_have[NPY_CPU_FEATURE_VSX]  = 1;
+    npy__cpu_have[NPY_CPU_FEATURE_VSX2] = (hwcap & PPC_FEATURE2_ARCH_2_07) != 0;
+    npy__cpu_have[NPY_CPU_FEATURE_VSX3] = (hwcap & PPC_FEATURE2_ARCH_3_00) != 0;
+    npy__cpu_have[NPY_CPU_FEATURE_VSX4] = (hwcap & PPC_FEATURE2_ARCH_3_1) != 0;
 // TODO: AIX, FreeBSD
 #else
     npy__cpu_have[NPY_CPU_FEATURE_VSX]  = 1;
@@ -484,8 +516,47 @@ npy__cpu_init_features(void)
     #ifdef NPY_HAVE_VSX3
     npy__cpu_have[NPY_CPU_FEATURE_VSX3] = 1;
     #endif
+    #ifdef NPY_HAVE_VSX4
+    npy__cpu_have[NPY_CPU_FEATURE_VSX4] = 1;
+    #endif
 #endif
 }
+
+/***************** ZARCH ******************/
+
+#elif defined(__s390x__)
+
+#include <sys/auxv.h>
+#ifndef HWCAP_S390_VXE
+    #define HWCAP_S390_VXE 8192
+#endif
+
+#ifndef HWCAP_S390_VXRS_EXT2
+    #define HWCAP_S390_VXRS_EXT2 32768
+#endif
+
+static void
+npy__cpu_init_features(void)
+{
+    memset(npy__cpu_have, 0, sizeof(npy__cpu_have[0]) * NPY_CPU_FEATURE_MAX);
+    
+    unsigned int hwcap = getauxval(AT_HWCAP);
+    if ((hwcap & HWCAP_S390_VX) == 0) {
+        return;
+    }
+
+    if (hwcap & HWCAP_S390_VXRS_EXT2) {
+       npy__cpu_have[NPY_CPU_FEATURE_VX]  =
+       npy__cpu_have[NPY_CPU_FEATURE_VXE] =
+       npy__cpu_have[NPY_CPU_FEATURE_VXE2] = 1;
+       return;
+    }
+    
+    npy__cpu_have[NPY_CPU_FEATURE_VXE] = (hwcap & HWCAP_S390_VXE) != 0;
+
+    npy__cpu_have[NPY_CPU_FEATURE_VX]  = 1;
+}
+
 
 /***************** ARM ******************/
 

@@ -1,5 +1,5 @@
-#ifndef _NPY_SCALARTYPES_H_
-#define _NPY_SCALARTYPES_H_
+#ifndef NUMPY_CORE_SRC_MULTIARRAY_SCALARTYPES_H_
+#define NUMPY_CORE_SRC_MULTIARRAY_SCALARTYPES_H_
 
 /* Internal look-up tables */
 extern NPY_NO_EXPORT unsigned char
@@ -31,4 +31,4 @@ _typenum_fromtypeobj(PyObject *type, int user);
 NPY_NO_EXPORT void *
 scalar_value(PyObject *scalar, PyArray_Descr *descr);
 
-#endif
+#endif  /* NUMPY_CORE_SRC_MULTIARRAY_SCALARTYPES_H_ */

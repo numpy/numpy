@@ -1,8 +1,9 @@
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
-#define _UMATHMODULE
 #define _MULTIARRAYMODULE
+#define _UMATHMODULE
 
-#include "Python.h"
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
 
 #include "numpy/npy_3kcompat.h"
 
@@ -11,6 +12,7 @@
 
 #include "descriptor.h"
 #include "convert_datatype.h"
+#include "common_dtype.h"
 #include "dtypemeta.h"
 
 #include "array_coercion.h"
@@ -65,8 +67,8 @@
  *
  * The code here avoid multiple conversion of array-like objects (including
  * sequences). These objects are cached after conversion, which will require
- * additional memory, but can drastically speed up coercion from from array
- * like objects.
+ * additional memory, but can drastically speed up coercion from array like
+ * objects.
  */
 
 
@@ -134,7 +136,7 @@ _prime_global_pytype_to_type_dict(void)
  *
  * This assumes that the DType class is guaranteed to hold on the
  * python type (this assumption is guaranteed).
- * This functionality supercedes ``_typenum_fromtypeobj``.
+ * This functionality supersedes ``_typenum_fromtypeobj``.
  *
  * @param DType DType to map the python type to
  * @param pytype Python type to map from
@@ -153,7 +155,7 @@ _PyArray_MapPyTypeToDType(
          * We expect that user dtypes (for now) will subclass some numpy
          * scalar class to allow automatic discovery.
          */
-        if (DType->legacy) {
+        if (NPY_DT_is_legacy(DType)) {
             /*
              * For legacy user dtypes, discovery relied on subclassing, but
              * arbitrary type objects are supported, so do nothing.
@@ -205,7 +207,7 @@ _PyArray_MapPyTypeToDType(
  * @return DType, None if it a known non-scalar, or NULL if an unknown object.
  */
 static NPY_INLINE PyArray_DTypeMeta *
-discover_dtype_from_pytype(PyTypeObject *pytype)
+npy_discover_dtype_from_pytype(PyTypeObject *pytype)
 {
     PyObject *DType;
 
@@ -256,14 +258,13 @@ discover_dtype_from_pyobject(
          * asked to attempt to do so later, if no other matching DType exists.)
          */
         if ((Py_TYPE(obj) == fixed_DType->scalar_type) ||
-                (fixed_DType->is_known_scalar_type != NULL &&
-                 fixed_DType->is_known_scalar_type(fixed_DType, Py_TYPE(obj)))) {
+                NPY_DT_CALL_is_known_scalar_type(fixed_DType, Py_TYPE(obj))) {
             Py_INCREF(fixed_DType);
             return fixed_DType;
         }
     }
 
-    PyArray_DTypeMeta *DType = discover_dtype_from_pytype(Py_TYPE(obj));
+    PyArray_DTypeMeta *DType = npy_discover_dtype_from_pytype(Py_TYPE(obj));
     if (DType != NULL) {
         return DType;
     }
@@ -345,10 +346,10 @@ find_scalar_descriptor(
          * chance.  This allows for example string, to call `str(obj)` to
          * figure out the length for arbitrary objects.
          */
-        descr = fixed_DType->discover_descr_from_pyobject(fixed_DType, obj);
+        descr = NPY_DT_CALL_discover_descr_from_pyobject(fixed_DType, obj);
     }
     else {
-        descr = DType->discover_descr_from_pyobject(DType, obj);
+        descr = NPY_DT_CALL_discover_descr_from_pyobject(DType, obj);
     }
     if (descr == NULL) {
         return NULL;
@@ -424,7 +425,7 @@ PyArray_Pack(PyArray_Descr *descr, char *item, PyObject *value)
         return descr->f->setitem(value, item, &arr_fields);
     }
     PyArray_Descr *tmp_descr;
-    tmp_descr = DType->discover_descr_from_pyobject(DType, value);
+    tmp_descr = NPY_DT_CALL_discover_descr_from_pyobject(DType, value);
     Py_DECREF(DType);
     if (tmp_descr == NULL) {
         return -1;
@@ -554,6 +555,7 @@ npy_new_coercion_cache(
         cache = PyMem_Malloc(sizeof(coercion_cache_obj));
     }
     if (cache == NULL) {
+        Py_DECREF(arr_or_sequence);
         PyErr_NoMemory();
         return -1;
     }
@@ -573,7 +575,7 @@ npy_new_coercion_cache(
  * @param current
  * @return next coercion cache object (or NULL)
  */
-NPY_NO_EXPORT NPY_INLINE coercion_cache_obj *
+NPY_NO_EXPORT coercion_cache_obj *
 npy_unlink_coercion_cache(coercion_cache_obj *current)
 {
     coercion_cache_obj *next = current->next;
@@ -588,7 +590,7 @@ npy_unlink_coercion_cache(coercion_cache_obj *current)
     return next;
 }
 
-NPY_NO_EXPORT NPY_INLINE void
+NPY_NO_EXPORT void
 npy_free_coercion_cache(coercion_cache_obj *next) {
     /* We only need to check from the last used cache pos */
     while (next != NULL) {
@@ -622,8 +624,12 @@ handle_promotion(PyArray_Descr **out_descr, PyArray_Descr *descr,
     }
     PyArray_Descr *new_descr = PyArray_PromoteTypes(descr, *out_descr);
     if (NPY_UNLIKELY(new_descr == NULL)) {
-        if (fixed_DType != NULL) {
-            /* If a DType is fixed, promotion must not fail. */
+        if (fixed_DType != NULL || PyErr_ExceptionMatches(PyExc_FutureWarning)) {
+            /*
+             * If a DType is fixed, promotion must not fail. Do not catch
+             * FutureWarning (raised for string+numeric promotions). We could
+             * only catch TypeError here or even always raise the error.
+             */
             return -1;
         }
         PyErr_Clear();
@@ -708,7 +714,7 @@ find_descriptor_from_array(
         return 0;
     }
 
-    if (NPY_UNLIKELY(DType->parametric && PyArray_ISOBJECT(arr))) {
+    if (NPY_UNLIKELY(NPY_DT_is_parametric(DType) && PyArray_ISOBJECT(arr))) {
         /*
          * We have one special case, if (and only if) the input array is of
          * object DType and the dtype is not fixed already but parametric.
@@ -828,7 +834,7 @@ PyArray_AdaptDescriptorToArray(PyArrayObject *arr, PyObject *dtype)
         }
         if (new_dtype == NULL) {
             /* This is an object array but contained no elements, use default */
-            new_dtype = new_DType->default_descr(new_DType);
+            new_dtype = NPY_DT_CALL_default_descr(new_DType);
         }
     }
     Py_DECREF(new_DType);
@@ -852,6 +858,7 @@ PyArray_AdaptDescriptorToArray(PyArrayObject *arr, PyObject *dtype)
  *        (Initially it is a pointer to the user-provided head pointer).
  * @param fixed_DType User provided fixed DType class
  * @param flags Discovery flags (reporting and behaviour flags, see def.)
+ * @param never_copy Specifies if a copy is allowed during array creation.
  * @return The updated number of maximum dimensions (i.e. scalars will set
  *         this to the current dimensions).
  */
@@ -860,7 +867,8 @@ PyArray_DiscoverDTypeAndShape_Recursive(
         PyObject *obj, int curr_dims, int max_dims, PyArray_Descr**out_descr,
         npy_intp out_shape[NPY_MAXDIMS],
         coercion_cache_obj ***coercion_cache_tail_ptr,
-        PyArray_DTypeMeta *fixed_DType, enum _dtype_discovery_flags *flags)
+        PyArray_DTypeMeta *fixed_DType, enum _dtype_discovery_flags *flags,
+        int never_copy)
 {
     PyArrayObject *arr = NULL;
     PyObject *seq;
@@ -918,7 +926,7 @@ PyArray_DiscoverDTypeAndShape_Recursive(
             requested_descr = *out_descr;
         }
         arr = (PyArrayObject *)_array_from_array_like(obj,
-                requested_descr, 0, NULL);
+                requested_descr, 0, NULL, never_copy);
         if (arr == NULL) {
             return -1;
         }
@@ -1112,7 +1120,7 @@ PyArray_DiscoverDTypeAndShape_Recursive(
         max_dims = PyArray_DiscoverDTypeAndShape_Recursive(
                 objects[i], curr_dims + 1, max_dims,
                 out_descr, out_shape, coercion_cache_tail_ptr, fixed_DType,
-                flags);
+                flags, never_copy);
 
         if (max_dims < 0) {
             return -1;
@@ -1152,6 +1160,7 @@ PyArray_DiscoverDTypeAndShape_Recursive(
  *        The result may be unchanged (remain NULL) when converting a
  *        sequence with no elements. In this case it is callers responsibility
  *        to choose a default.
+ * @param never_copy Specifies that a copy is not allowed.
  * @return dimensions of the discovered object or -1 on error.
  *         WARNING: If (and only if) the output is a single array, the ndim
  *         returned _can_ exceed the maximum allowed number of dimensions.
@@ -1164,7 +1173,7 @@ PyArray_DiscoverDTypeAndShape(
         npy_intp out_shape[NPY_MAXDIMS],
         coercion_cache_obj **coercion_cache,
         PyArray_DTypeMeta *fixed_DType, PyArray_Descr *requested_descr,
-        PyArray_Descr **out_descr)
+        PyArray_Descr **out_descr, int never_copy)
 {
     coercion_cache_obj **coercion_cache_head = coercion_cache;
     *coercion_cache = NULL;
@@ -1209,7 +1218,7 @@ PyArray_DiscoverDTypeAndShape(
 
     int ndim = PyArray_DiscoverDTypeAndShape_Recursive(
             obj, 0, max_dims, out_descr, out_shape, &coercion_cache,
-            fixed_DType, &flags);
+            fixed_DType, &flags, never_copy);
     if (ndim < 0) {
         goto fail;
     }
@@ -1371,7 +1380,7 @@ PyArray_DiscoverDTypeAndShape(
          * the correct default.
          */
         if (fixed_DType != NULL) {
-            *out_descr = fixed_DType->default_descr(fixed_DType);
+            *out_descr = NPY_DT_CALL_default_descr(fixed_DType);
             if (*out_descr == NULL) {
                 goto fail;
             }
@@ -1395,7 +1404,7 @@ PyArray_DiscoverDTypeAndShape(
  * These should be largely deprecated, and represent only the DType class
  * for most `dtype` parameters.
  *
- * TODO: This function should eventually recieve a deprecation warning and
+ * TODO: This function should eventually receive a deprecation warning and
  *       be removed.
  *
  * @param descr
@@ -1494,7 +1503,7 @@ _discover_array_parameters(PyObject *NPY_UNUSED(self),
     int ndim = PyArray_DiscoverDTypeAndShape(
             obj, NPY_MAXDIMS, shape,
             &coercion_cache,
-            fixed_DType, fixed_descriptor, (PyArray_Descr **)&out_dtype);
+            fixed_DType, fixed_descriptor, (PyArray_Descr **)&out_dtype, 0);
     Py_XDECREF(fixed_DType);
     Py_XDECREF(fixed_descriptor);
     if (ndim < 0) {

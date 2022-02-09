@@ -113,7 +113,7 @@ typedef struct
     int is_scalar:1;
     // returns '1' if the type represent a vector
     int is_vector:1;
-    // returns the len of multi-vector if the type reprsent x2 or x3 vector
+    // returns the len of multi-vector if the type represent x2 or x3 vector
     // otherwise returns 0, e.g. returns 2 if data type is simd_data_vu8x2
     int is_vectorx;
     // returns the equivalent scalar data type e.g. simd_data_vu8 -> simd_data_u8

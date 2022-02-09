@@ -13,20 +13,19 @@ support datetime functionality. The data type is called "datetime64",
 so named because "datetime" is already taken by the datetime library
 included in Python.
 
-.. note:: The datetime API is *experimental* in 1.7.0, and may undergo changes
-   in future versions of NumPy.
 
 Basic Datetimes
 ===============
 
-The most basic way to create datetimes is from strings in
-ISO 8601 date or datetime format. The unit for internal storage
-is automatically selected from the form of the string, and can
-be either a :ref:`date unit <arrays.dtypes.dateunits>` or a
+The most basic way to create datetimes is from strings in ISO 8601 date 
+or datetime format. It is also possible to create datetimes from an integer by 
+offset relative to the Unix epoch (00:00:00 UTC on 1 January 1970).
+The unit for internal storage is automatically selected from the 
+form of the string, and can be either a :ref:`date unit <arrays.dtypes.dateunits>` or a
 :ref:`time unit <arrays.dtypes.timeunits>`. The date units are years ('Y'),
 months ('M'), weeks ('W'), and days ('D'), while the time units are
 hours ('h'), minutes ('m'), seconds ('s'), milliseconds ('ms'), and
-some additional SI-prefix seconds-based units. The datetime64 data type 
+some additional SI-prefix seconds-based units. The datetime64 data type
 also accepts the string "NAT", in any combination of lowercase/uppercase
 letters, for a "Not A Time" value.
 
@@ -36,6 +35,11 @@ letters, for a "Not A Time" value.
 
     >>> np.datetime64('2005-02-25')
     numpy.datetime64('2005-02-25')
+    
+    From an integer and a date unit, 1 year since the UNIX epoch:
+
+    >>> np.datetime64(1, 'Y')
+    numpy.datetime64('1971')   
 
     Using months for the unit:
 
@@ -70,6 +74,18 @@ datetime type with generic units.
     array(['2001-01-01T12:00:00.000', '2002-02-03T13:56:03.172'],
           dtype='datetime64[ms]')
 
+An array of datetimes can be constructed from integers representing
+POSIX timestamps with the given unit.
+
+.. admonition:: Example
+
+    >>> np.array([0, 1577836800], dtype='datetime64[s]')
+    array(['1970-01-01T00:00:00', '2020-01-01T00:00:00'],
+          dtype='datetime64[s]')
+
+    >>> np.array([0, 1577836800000]).astype('datetime64[ms]')
+    array(['1970-01-01T00:00:00.000', '2020-01-01T00:00:00.000'],
+          dtype='datetime64[ms]')
 
 The datetime type works with many common NumPy functions, for
 example :func:`arange` can be used to generate ranges of dates.
@@ -116,9 +132,9 @@ Datetime and Timedelta Arithmetic
 NumPy allows the subtraction of two Datetime values, an operation which
 produces a number with a time unit. Because NumPy doesn't have a physical
 quantities system in its core, the timedelta64 data type was created
-to complement datetime64. The arguments for timedelta64 are a number, 
+to complement datetime64. The arguments for timedelta64 are a number,
 to represent the number of units, and a date/time unit, such as
-(D)ay, (M)onth, (Y)ear, (h)ours, (m)inutes, or (s)econds. The timedelta64 
+(D)ay, (M)onth, (Y)ear, (h)ours, (m)inutes, or (s)econds. The timedelta64
 data type also accepts the string "NAT" in place of the number for a "Not A Time" value.
 
 .. admonition:: Example

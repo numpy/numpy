@@ -1,18 +1,15 @@
-import sys
 import datetime as dt
-from typing import Optional, Union, Sequence, Tuple, Any, overload, TypeVar
+from collections.abc import Sequence
+from typing import Union, Any, overload, TypeVar, Literal
 
 from numpy import (
     ndarray,
     number,
-    integer,
     intp,
     bool_,
     generic,
     _OrderKACF,
     _OrderACF,
-    _ArrayLikeBool,
-    _ArrayLikeIntOrBool,
     _ModeKind,
     _PartitionKind,
     _SortKind,
@@ -21,356 +18,390 @@ from numpy import (
 from numpy.typing import (
     DTypeLike,
     ArrayLike,
+    _ArrayLike,
+    NDArray,
     _ShapeLike,
     _Shape,
+    _ArrayLikeBool_co,
+    _ArrayLikeInt_co,
     _IntLike_co,
     _NumberLike_co,
+    _ScalarLike_co,
 )
 
-if sys.version_info >= (3, 8):
-    from typing import Literal
-else:
-    from typing_extensions import Literal
+_SCT = TypeVar("_SCT", bound=generic)
+_ArrayType = TypeVar("_ArrayType", bound=NDArray[Any])
 
-# Various annotations for scalars
+__all__: list[str]
 
-# While dt.datetime and dt.timedelta are not technically part of NumPy,
-# they are one of the rare few builtin scalars which serve as valid return types.
-# See https://github.com/numpy/numpy-stubs/pull/67#discussion_r412604113.
-_ScalarNumpy = Union[generic, dt.datetime, dt.timedelta]
-_ScalarBuiltin = Union[str, bytes, dt.date, dt.timedelta, bool, int, float, complex]
-_Scalar = Union[_ScalarBuiltin, _ScalarNumpy]
-
-# Integers and booleans can generally be used interchangeably
-_ScalarIntOrBool = TypeVar("_ScalarIntOrBool", bound=Union[integer, bool_])
-_ScalarGeneric = TypeVar("_ScalarGeneric", bound=generic)
-_ScalarGenericDT = TypeVar(
-    "_ScalarGenericDT", bound=Union[dt.datetime, dt.timedelta, generic]
-)
-
-_Number = TypeVar("_Number", bound=number)
-
-# The signature of take() follows a common theme with its overloads:
-# 1. A generic comes in; the same generic comes out
-# 2. A scalar comes in; a generic comes out
-# 3. An array-like object comes in; some keyword ensures that a generic comes out
-# 4. An array-like object comes in; an ndarray or generic comes out
-@overload
-def take(
-    a: _ScalarGenericDT,
-    indices: int,
-    axis: Optional[int] = ...,
-    out: Optional[ndarray] = ...,
-    mode: _ModeKind = ...,
-) -> _ScalarGenericDT: ...
-@overload
-def take(
-    a: _Scalar,
-    indices: int,
-    axis: Optional[int] = ...,
-    out: Optional[ndarray] = ...,
-    mode: _ModeKind = ...,
-) -> _ScalarNumpy: ...
-@overload
 def take(
     a: ArrayLike,
-    indices: int,
-    axis: Optional[int] = ...,
-    out: Optional[ndarray] = ...,
+    indices: _ArrayLikeInt_co,
+    axis: None | int = ...,
+    out: None | ndarray = ...,
     mode: _ModeKind = ...,
-) -> _ScalarNumpy: ...
+) -> Any: ...
+
 @overload
-def take(
+def reshape(
+    a: _ArrayLike[_SCT],
+    newshape: _ShapeLike,
+    order: _OrderACF = ...,
+) -> NDArray[_SCT]: ...
+@overload
+def reshape(
     a: ArrayLike,
-    indices: _ArrayLikeIntOrBool,
-    axis: Optional[int] = ...,
-    out: Optional[ndarray] = ...,
-    mode: _ModeKind = ...,
-) -> Union[_ScalarNumpy, ndarray]: ...
-def reshape(a: ArrayLike, newshape: _ShapeLike, order: _OrderACF = ...) -> ndarray: ...
+    newshape: _ShapeLike,
+    order: _OrderACF = ...,
+) -> NDArray[Any]: ...
+
 @overload
 def choose(
-    a: _ScalarIntOrBool,
+    a: _IntLike_co,
     choices: ArrayLike,
-    out: Optional[ndarray] = ...,
+    out: None = ...,
     mode: _ModeKind = ...,
-) -> _ScalarIntOrBool: ...
+) -> Any: ...
 @overload
 def choose(
-    a: _IntLike_co, choices: ArrayLike, out: Optional[ndarray] = ..., mode: _ModeKind = ...
-) -> Union[integer, bool_]: ...
+    a: _ArrayLikeInt_co,
+    choices: _ArrayLike[_SCT],
+    out: None = ...,
+    mode: _ModeKind = ...,
+) -> NDArray[_SCT]: ...
 @overload
 def choose(
-    a: _ArrayLikeIntOrBool,
+    a: _ArrayLikeInt_co,
     choices: ArrayLike,
-    out: Optional[ndarray] = ...,
+    out: None = ...,
     mode: _ModeKind = ...,
-) -> ndarray: ...
+) -> NDArray[Any]: ...
+@overload
+def choose(
+    a: _ArrayLikeInt_co,
+    choices: ArrayLike,
+    out: _ArrayType = ...,
+    mode: _ModeKind = ...,
+) -> _ArrayType: ...
+
+@overload
 def repeat(
-    a: ArrayLike, repeats: _ArrayLikeIntOrBool, axis: Optional[int] = ...
-) -> ndarray: ...
+    a: _ArrayLike[_SCT],
+    repeats: _ArrayLikeInt_co,
+    axis: None | int = ...,
+) -> NDArray[_SCT]: ...
+@overload
+def repeat(
+    a: ArrayLike,
+    repeats: _ArrayLikeInt_co,
+    axis: None | int = ...,
+) -> NDArray[Any]: ...
+
 def put(
-    a: ndarray, ind: _ArrayLikeIntOrBool, v: ArrayLike, mode: _ModeKind = ...
+    a: NDArray[Any],
+    ind: _ArrayLikeInt_co,
+    v: ArrayLike,
+    mode: _ModeKind = ...,
 ) -> None: ...
-def swapaxes(a: ArrayLike, axis1: int, axis2: int) -> ndarray: ...
+
+@overload
+def swapaxes(
+    a: _ArrayLike[_SCT],
+    axis1: int,
+    axis2: int,
+) -> NDArray[_SCT]: ...
+@overload
+def swapaxes(
+    a: ArrayLike,
+    axis1: int,
+    axis2: int,
+) -> NDArray[Any]: ...
+
+@overload
 def transpose(
-    a: ArrayLike, axes: Union[None, Sequence[int], ndarray] = ...
-) -> ndarray: ...
+    a: _ArrayLike[_SCT],
+    axes: None | _ShapeLike = ...
+) -> NDArray[_SCT]: ...
+@overload
+def transpose(
+    a: ArrayLike,
+    axes: None | _ShapeLike = ...
+) -> NDArray[Any]: ...
+
+@overload
+def partition(
+    a: _ArrayLike[_SCT],
+    kth: _ArrayLikeInt_co,
+    axis: None | int = ...,
+    kind: _PartitionKind = ...,
+    order: None | str | Sequence[str] = ...,
+) -> NDArray[_SCT]: ...
+@overload
 def partition(
     a: ArrayLike,
-    kth: _ArrayLikeIntOrBool,
-    axis: Optional[int] = ...,
+    kth: _ArrayLikeInt_co,
+    axis: None | int = ...,
     kind: _PartitionKind = ...,
-    order: Union[None, str, Sequence[str]] = ...,
-) -> ndarray: ...
-@overload
-def argpartition(
-    a: generic,
-    kth: _ArrayLikeIntOrBool,
-    axis: Optional[int] = ...,
-    kind: _PartitionKind = ...,
-    order: Union[None, str, Sequence[str]] = ...,
-) -> intp: ...
-@overload
-def argpartition(
-    a: _ScalarBuiltin,
-    kth: _ArrayLikeIntOrBool,
-    axis: Optional[int] = ...,
-    kind: _PartitionKind = ...,
-    order: Union[None, str, Sequence[str]] = ...,
-) -> ndarray: ...
-@overload
+    order: None | str | Sequence[str] = ...,
+) -> NDArray[Any]: ...
+
 def argpartition(
     a: ArrayLike,
-    kth: _ArrayLikeIntOrBool,
-    axis: Optional[int] = ...,
+    kth: _ArrayLikeInt_co,
+    axis: None | int = ...,
     kind: _PartitionKind = ...,
-    order: Union[None, str, Sequence[str]] = ...,
-) -> ndarray: ...
+    order: None | str | Sequence[str] = ...,
+) -> NDArray[intp]: ...
+
+@overload
+def sort(
+    a: _ArrayLike[_SCT],
+    axis: None | int = ...,
+    kind: None | _SortKind = ...,
+    order: None | str | Sequence[str] = ...,
+) -> NDArray[_SCT]: ...
+@overload
 def sort(
     a: ArrayLike,
-    axis: Optional[int] = ...,
-    kind: Optional[_SortKind] = ...,
-    order: Union[None, str, Sequence[str]] = ...,
-) -> ndarray: ...
+    axis: None | int = ...,
+    kind: None | _SortKind = ...,
+    order: None | str | Sequence[str] = ...,
+) -> NDArray[Any]: ...
+
 def argsort(
     a: ArrayLike,
-    axis: Optional[int] = ...,
-    kind: Optional[_SortKind] = ...,
-    order: Union[None, str, Sequence[str]] = ...,
-) -> ndarray: ...
-@overload
-def argmax(a: ArrayLike, axis: None = ..., out: Optional[ndarray] = ...) -> intp: ...
+    axis: None | int = ...,
+    kind: None | _SortKind = ...,
+    order: None | str | Sequence[str] = ...,
+) -> NDArray[intp]: ...
+
 @overload
 def argmax(
-    a: ArrayLike, axis: int = ..., out: Optional[ndarray] = ...
-) -> Union[ndarray, intp]: ...
+    a: ArrayLike,
+    axis: None = ...,
+    out: None | ndarray = ...,
+    *,
+    keepdims: Literal[False] = ...,
+) -> intp: ...
 @overload
-def argmin(a: ArrayLike, axis: None = ..., out: Optional[ndarray] = ...) -> intp: ...
+def argmax(
+    a: ArrayLike,
+    axis: None | int = ...,
+    out: None | ndarray = ...,
+    *,
+    keepdims: bool = ...,
+) -> Any: ...
+
 @overload
 def argmin(
-    a: ArrayLike, axis: int = ..., out: Optional[ndarray] = ...
-) -> Union[ndarray, intp]: ...
+    a: ArrayLike,
+    axis: None = ...,
+    out: None | ndarray = ...,
+    *,
+    keepdims: Literal[False] = ...,
+) -> intp: ...
+@overload
+def argmin(
+    a: ArrayLike,
+    axis: None | int = ...,
+    out: None | ndarray = ...,
+    *,
+    keepdims: bool = ...,
+) -> Any: ...
+
 @overload
 def searchsorted(
     a: ArrayLike,
-    v: _Scalar,
+    v: _ScalarLike_co,
     side: _SortSide = ...,
-    sorter: Optional[_ArrayLikeIntOrBool] = ...,  # 1D int array
+    sorter: None | _ArrayLikeInt_co = ...,  # 1D int array
 ) -> intp: ...
 @overload
 def searchsorted(
     a: ArrayLike,
     v: ArrayLike,
     side: _SortSide = ...,
-    sorter: Optional[_ArrayLikeIntOrBool] = ...,  # 1D int array
-) -> ndarray: ...
-def resize(a: ArrayLike, new_shape: _ShapeLike) -> ndarray: ...
+    sorter: None | _ArrayLikeInt_co = ...,  # 1D int array
+) -> NDArray[intp]: ...
+
 @overload
-def squeeze(a: _ScalarGeneric, axis: Optional[_ShapeLike] = ...) -> _ScalarGeneric: ...
+def resize(
+    a: _ArrayLike[_SCT],
+    new_shape: _ShapeLike,
+) -> NDArray[_SCT]: ...
 @overload
-def squeeze(a: ArrayLike, axis: Optional[_ShapeLike] = ...) -> ndarray: ...
+def resize(
+    a: ArrayLike,
+    new_shape: _ShapeLike,
+) -> NDArray[Any]: ...
+
+@overload
+def squeeze(
+    a: _SCT,
+    axis: None | _ShapeLike = ...,
+) -> _SCT: ...
+@overload
+def squeeze(
+    a: _ArrayLike[_SCT],
+    axis: None | _ShapeLike = ...,
+) -> NDArray[_SCT]: ...
+@overload
+def squeeze(
+    a: ArrayLike,
+    axis: None | _ShapeLike = ...,
+) -> NDArray[Any]: ...
+
+@overload
 def diagonal(
-    a: ArrayLike, offset: int = ..., axis1: int = ..., axis2: int = ...  # >= 2D array
-) -> ndarray: ...
+    a: _ArrayLike[_SCT],
+    offset: int = ...,
+    axis1: int = ...,
+    axis2: int = ...,  # >= 2D array
+) -> NDArray[_SCT]: ...
+@overload
+def diagonal(
+    a: ArrayLike,
+    offset: int = ...,
+    axis1: int = ...,
+    axis2: int = ...,  # >= 2D array
+) -> NDArray[Any]: ...
+
 def trace(
     a: ArrayLike,  # >= 2D array
     offset: int = ...,
     axis1: int = ...,
     axis2: int = ...,
     dtype: DTypeLike = ...,
-    out: Optional[ndarray] = ...,
-) -> Union[number, ndarray]: ...
-def ravel(a: ArrayLike, order: _OrderKACF = ...) -> ndarray: ...
-def nonzero(a: ArrayLike) -> Tuple[ndarray, ...]: ...
+    out: None | ndarray = ...,
+) -> Any: ...
+
+@overload
+def ravel(a: _ArrayLike[_SCT], order: _OrderKACF = ...) -> NDArray[_SCT]: ...
+@overload
+def ravel(a: ArrayLike, order: _OrderKACF = ...) -> NDArray[Any]: ...
+
+def nonzero(a: ArrayLike) -> tuple[NDArray[intp], ...]: ...
+
 def shape(a: ArrayLike) -> _Shape: ...
+
+@overload
 def compress(
-    condition: ArrayLike,  # 1D bool array
+    condition: _ArrayLikeBool_co,  # 1D bool array
+    a: _ArrayLike[_SCT],
+    axis: None | int = ...,
+    out: None = ...,
+) -> NDArray[_SCT]: ...
+@overload
+def compress(
+    condition: _ArrayLikeBool_co,  # 1D bool array
     a: ArrayLike,
-    axis: Optional[int] = ...,
-    out: Optional[ndarray] = ...,
-) -> ndarray: ...
+    axis: None | int = ...,
+    out: None = ...,
+) -> NDArray[Any]: ...
+@overload
+def compress(
+    condition: _ArrayLikeBool_co,  # 1D bool array
+    a: ArrayLike,
+    axis: None | int = ...,
+    out: _ArrayType = ...,
+) -> _ArrayType: ...
+
 @overload
 def clip(
-    a: _Number,
+    a: ArrayLike,
     a_min: ArrayLike,
-    a_max: Optional[ArrayLike],
-    out: Optional[ndarray] = ...,
+    a_max: None | ArrayLike,
+    out: None | ndarray = ...,
     **kwargs: Any,
-) -> _Number: ...
+) -> Any: ...
 @overload
 def clip(
-    a: _Number,
+    a: ArrayLike,
     a_min: None,
     a_max: ArrayLike,
-    out: Optional[ndarray] = ...,
+    out: None | ndarray = ...,
     **kwargs: Any,
-) -> _Number: ...
-@overload
-def clip(
-    a: ArrayLike,
-    a_min: ArrayLike,
-    a_max: Optional[ArrayLike],
-    out: Optional[ndarray] = ...,
-    **kwargs: Any,
-) -> Union[number, ndarray]: ...
-@overload
-def clip(
-    a: ArrayLike,
-    a_min: None,
-    a_max: ArrayLike,
-    out: Optional[ndarray] = ...,
-    **kwargs: Any,
-) -> Union[number, ndarray]: ...
-@overload
-def sum(
-    a: _Number,
-    axis: Optional[_ShapeLike] = ...,
-    dtype: DTypeLike = ...,
-    out: Optional[ndarray] = ...,
-    keepdims: bool = ...,
-    initial: _NumberLike_co = ...,
-    where: _ArrayLikeBool = ...,
-) -> _Number: ...
-@overload
+) -> Any: ...
+
 def sum(
     a: ArrayLike,
     axis: _ShapeLike = ...,
     dtype: DTypeLike = ...,
-    out: Optional[ndarray] = ...,
+    out: None | ndarray = ...,
     keepdims: bool = ...,
     initial: _NumberLike_co = ...,
-    where: _ArrayLikeBool = ...,
-) -> Union[number, ndarray]: ...
+    where: _ArrayLikeBool_co = ...,
+) -> Any: ...
+
 @overload
 def all(
     a: ArrayLike,
     axis: None = ...,
-    out: Optional[ndarray] = ...,
+    out: None = ...,
     keepdims: Literal[False] = ...,
+    *,
+    where: _ArrayLikeBool_co = ...,
 ) -> bool_: ...
 @overload
 def all(
     a: ArrayLike,
-    axis: Optional[_ShapeLike] = ...,
-    out: Optional[ndarray] = ...,
+    axis: None | _ShapeLike = ...,
+    out: None | ndarray = ...,
     keepdims: bool = ...,
-) -> Union[bool_, ndarray]: ...
+    *,
+    where: _ArrayLikeBool_co = ...,
+) -> Any: ...
+
 @overload
 def any(
     a: ArrayLike,
     axis: None = ...,
-    out: Optional[ndarray] = ...,
+    out: None = ...,
     keepdims: Literal[False] = ...,
+    *,
+    where: _ArrayLikeBool_co = ...,
 ) -> bool_: ...
 @overload
 def any(
     a: ArrayLike,
-    axis: Optional[_ShapeLike] = ...,
-    out: Optional[ndarray] = ...,
+    axis: None | _ShapeLike = ...,
+    out: None | ndarray = ...,
     keepdims: bool = ...,
-) -> Union[bool_, ndarray]: ...
+    *,
+    where: _ArrayLikeBool_co = ...,
+) -> Any: ...
+
 def cumsum(
     a: ArrayLike,
-    axis: Optional[int] = ...,
+    axis: None | int = ...,
     dtype: DTypeLike = ...,
-    out: Optional[ndarray] = ...,
+    out: None | ndarray = ...,
 ) -> ndarray: ...
-@overload
-def ptp(
-    a: _Number,
-    axis: Optional[_ShapeLike] = ...,
-    out: Optional[ndarray] = ...,
-    keepdims: bool = ...,
-) -> _Number: ...
-@overload
+
 def ptp(
     a: ArrayLike,
-    axis: None = ...,
-    out: Optional[ndarray] = ...,
-    keepdims: Literal[False] = ...,
-) -> number: ...
-@overload
-def ptp(
-    a: ArrayLike,
-    axis: Optional[_ShapeLike] = ...,
-    out: Optional[ndarray] = ...,
+    axis: None | _ShapeLike = ...,
+    out: None | ndarray = ...,
     keepdims: bool = ...,
-) -> Union[number, ndarray]: ...
-@overload
-def amax(
-    a: _Number,
-    axis: Optional[_ShapeLike] = ...,
-    out: Optional[ndarray] = ...,
-    keepdims: bool = ...,
-    initial: _NumberLike_co = ...,
-    where: _ArrayLikeBool = ...,
-) -> _Number: ...
-@overload
+) -> Any: ...
+
 def amax(
     a: ArrayLike,
-    axis: None = ...,
-    out: Optional[ndarray] = ...,
-    keepdims: Literal[False] = ...,
-    initial: _NumberLike_co = ...,
-    where: _ArrayLikeBool = ...,
-) -> number: ...
-@overload
-def amax(
-    a: ArrayLike,
-    axis: Optional[_ShapeLike] = ...,
-    out: Optional[ndarray] = ...,
+    axis: None | _ShapeLike = ...,
+    out: None | ndarray = ...,
     keepdims: bool = ...,
     initial: _NumberLike_co = ...,
-    where: _ArrayLikeBool = ...,
-) -> Union[number, ndarray]: ...
-@overload
-def amin(
-    a: _Number,
-    axis: Optional[_ShapeLike] = ...,
-    out: Optional[ndarray] = ...,
-    keepdims: bool = ...,
-    initial: _NumberLike_co = ...,
-    where: _ArrayLikeBool = ...,
-) -> _Number: ...
-@overload
+    where: _ArrayLikeBool_co = ...,
+) -> Any: ...
+
 def amin(
     a: ArrayLike,
-    axis: None = ...,
-    out: Optional[ndarray] = ...,
-    keepdims: Literal[False] = ...,
-    initial: _NumberLike_co = ...,
-    where: _ArrayLikeBool = ...,
-) -> number: ...
-@overload
-def amin(
-    a: ArrayLike,
-    axis: Optional[_ShapeLike] = ...,
-    out: Optional[ndarray] = ...,
+    axis: None | _ShapeLike = ...,
+    out: None | ndarray = ...,
     keepdims: bool = ...,
     initial: _NumberLike_co = ...,
-    where: _ArrayLikeBool = ...,
-) -> Union[number, ndarray]: ...
+    where: _ArrayLikeBool_co = ...,
+) -> Any: ...
 
 # TODO: `np.prod()``: For object arrays `initial` does not necessarily
 # have to be a numerical scalar.
@@ -379,105 +410,61 @@ def amin(
 
 # Note that the same situation holds for all wrappers around
 # `np.ufunc.reduce`, e.g. `np.sum()` (`.__add__()`).
-@overload
-def prod(
-    a: _Number,
-    axis: Optional[_ShapeLike] = ...,
-    dtype: DTypeLike = ...,
-    out: None = ...,
-    keepdims: bool = ...,
-    initial: _NumberLike_co = ...,
-    where: _ArrayLikeBool = ...,
-) -> _Number: ...
-@overload
 def prod(
     a: ArrayLike,
-    axis: None = ...,
+    axis: None | _ShapeLike = ...,
     dtype: DTypeLike = ...,
-    out: None = ...,
-    keepdims: Literal[False] = ...,
-    initial: _NumberLike_co = ...,
-    where: _ArrayLikeBool = ...,
-) -> number: ...
-@overload
-def prod(
-    a: ArrayLike,
-    axis: Optional[_ShapeLike] = ...,
-    dtype: DTypeLike = ...,
-    out: Optional[ndarray] = ...,
+    out: None | ndarray = ...,
     keepdims: bool = ...,
     initial: _NumberLike_co = ...,
-    where: _ArrayLikeBool = ...,
-) -> Union[number, ndarray]: ...
+    where: _ArrayLikeBool_co = ...,
+) -> Any: ...
+
 def cumprod(
     a: ArrayLike,
-    axis: Optional[int] = ...,
+    axis: None | int = ...,
     dtype: DTypeLike = ...,
-    out: Optional[ndarray] = ...,
+    out: None | ndarray = ...,
 ) -> ndarray: ...
+
 def ndim(a: ArrayLike) -> int: ...
-def size(a: ArrayLike, axis: Optional[int] = ...) -> int: ...
-@overload
+
+def size(a: ArrayLike, axis: None | int = ...) -> int: ...
+
 def around(
-    a: _Number, decimals: int = ..., out: Optional[ndarray] = ...
-) -> _Number: ...
-@overload
-def around(
-    a: _NumberLike_co, decimals: int = ..., out: Optional[ndarray] = ...
-) -> number: ...
-@overload
-def around(
-    a: ArrayLike, decimals: int = ..., out: Optional[ndarray] = ...
-) -> ndarray: ...
-@overload
+    a: ArrayLike,
+    decimals: int = ...,
+    out: None | ndarray = ...,
+) -> Any: ...
+
 def mean(
     a: ArrayLike,
-    axis: None = ...,
+    axis: None | _ShapeLike = ...,
     dtype: DTypeLike = ...,
-    out: None = ...,
-    keepdims: Literal[False] = ...,
-) -> number: ...
-@overload
-def mean(
-    a: ArrayLike,
-    axis: Optional[_ShapeLike] = ...,
-    dtype: DTypeLike = ...,
-    out: Optional[ndarray] = ...,
+    out: None | ndarray = ...,
     keepdims: bool = ...,
-) -> Union[number, ndarray]: ...
-@overload
+    *,
+    where: _ArrayLikeBool_co = ...,
+) -> Any: ...
+
 def std(
     a: ArrayLike,
-    axis: None = ...,
+    axis: None | _ShapeLike = ...,
     dtype: DTypeLike = ...,
-    out: None = ...,
-    ddof: int = ...,
-    keepdims: Literal[False] = ...,
-) -> number: ...
-@overload
-def std(
-    a: ArrayLike,
-    axis: Optional[_ShapeLike] = ...,
-    dtype: DTypeLike = ...,
-    out: Optional[ndarray] = ...,
+    out: None | ndarray = ...,
     ddof: int = ...,
     keepdims: bool = ...,
-) -> Union[number, ndarray]: ...
-@overload
+    *,
+    where: _ArrayLikeBool_co = ...,
+) -> Any: ...
+
 def var(
     a: ArrayLike,
-    axis: None = ...,
+    axis: None | _ShapeLike = ...,
     dtype: DTypeLike = ...,
-    out: None = ...,
-    ddof: int = ...,
-    keepdims: Literal[False] = ...,
-) -> number: ...
-@overload
-def var(
-    a: ArrayLike,
-    axis: Optional[_ShapeLike] = ...,
-    dtype: DTypeLike = ...,
-    out: Optional[ndarray] = ...,
+    out: None | ndarray = ...,
     ddof: int = ...,
     keepdims: bool = ...,
-) -> Union[number, ndarray]: ...
+    *,
+    where: _ArrayLikeBool_co = ...,
+) -> Any: ...

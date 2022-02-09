@@ -1,5 +1,5 @@
-#ifndef _NPY_ARRAYMAPPING_H_
-#define _NPY_ARRAYMAPPING_H_
+#ifndef NUMPY_CORE_SRC_MULTIARRAY_MAPPING_H_
+#define NUMPY_CORE_SRC_MULTIARRAY_MAPPING_H_
 
 extern NPY_NO_EXPORT PyMappingMethods array_as_mapping;
 
@@ -70,4 +70,4 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
                    npy_uint32 subspace_iter_flags, npy_uint32 subspace_flags,
                    npy_uint32 extra_op_flags, PyArrayObject *extra_op,
                    PyArray_Descr *extra_op_dtype);
-#endif
+#endif  /* NUMPY_CORE_SRC_MULTIARRAY_MAPPING_H_ */

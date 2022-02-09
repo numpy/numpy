@@ -51,7 +51,7 @@ includes0['math.h'] = '#include <math.h>'
 includes0['string.h'] = '#include <string.h>'
 includes0['setjmp.h'] = '#include <setjmp.h>'
 
-includes['Python.h'] = '#include "Python.h"'
+includes['Python.h'] = '#include <Python.h>'
 needs['arrayobject.h'] = ['Python.h']
 includes['arrayobject.h'] = '''#define PY_ARRAY_UNIQUE_SYMBOL PyArray_API
 #include "arrayobject.h"'''
@@ -338,16 +338,16 @@ cppmacros['TRYPYARRAYTEMPLATE'] = """\
         if (!(arr=(PyArrayObject *)obj)) {fprintf(stderr,\"TRYPYARRAYTEMPLATE:\");PRINTPYOBJERR(obj);return 0;}\\
         if (PyArray_DESCR(arr)->type==typecode)  {*(ctype *)(PyArray_DATA(arr))=*v; return 1;}\\
         switch (PyArray_TYPE(arr)) {\\
-                case NPY_DOUBLE: *(double *)(PyArray_DATA(arr))=*v; break;\\
-                case NPY_INT: *(int *)(PyArray_DATA(arr))=*v; break;\\
-                case NPY_LONG: *(long *)(PyArray_DATA(arr))=*v; break;\\
-                case NPY_FLOAT: *(float *)(PyArray_DATA(arr))=*v; break;\\
-                case NPY_CDOUBLE: *(double *)(PyArray_DATA(arr))=*v; break;\\
-                case NPY_CFLOAT: *(float *)(PyArray_DATA(arr))=*v; break;\\
+                case NPY_DOUBLE: *(npy_double *)(PyArray_DATA(arr))=*v; break;\\
+                case NPY_INT: *(npy_int *)(PyArray_DATA(arr))=*v; break;\\
+                case NPY_LONG: *(npy_long *)(PyArray_DATA(arr))=*v; break;\\
+                case NPY_FLOAT: *(npy_float *)(PyArray_DATA(arr))=*v; break;\\
+                case NPY_CDOUBLE: *(npy_double *)(PyArray_DATA(arr))=*v; break;\\
+                case NPY_CFLOAT: *(npy_float *)(PyArray_DATA(arr))=*v; break;\\
                 case NPY_BOOL: *(npy_bool *)(PyArray_DATA(arr))=(*v!=0); break;\\
-                case NPY_UBYTE: *(unsigned char *)(PyArray_DATA(arr))=*v; break;\\
-                case NPY_BYTE: *(signed char *)(PyArray_DATA(arr))=*v; break;\\
-                case NPY_SHORT: *(short *)(PyArray_DATA(arr))=*v; break;\\
+                case NPY_UBYTE: *(npy_ubyte *)(PyArray_DATA(arr))=*v; break;\\
+                case NPY_BYTE: *(npy_byte *)(PyArray_DATA(arr))=*v; break;\\
+                case NPY_SHORT: *(npy_short *)(PyArray_DATA(arr))=*v; break;\\
                 case NPY_USHORT: *(npy_ushort *)(PyArray_DATA(arr))=*v; break;\\
                 case NPY_UINT: *(npy_uint *)(PyArray_DATA(arr))=*v; break;\\
                 case NPY_ULONG: *(npy_ulong *)(PyArray_DATA(arr))=*v; break;\\
@@ -375,15 +375,19 @@ cppmacros['TRYCOMPLEXPYARRAYTEMPLATE'] = """\
             return 1;\\
         }\\
         switch (PyArray_TYPE(arr)) {\\
-                case NPY_CDOUBLE: *(double *)(PyArray_DATA(arr))=(*v).r;*(double *)(PyArray_DATA(arr)+sizeof(double))=(*v).i;break;\\
-                case NPY_CFLOAT: *(float *)(PyArray_DATA(arr))=(*v).r;*(float *)(PyArray_DATA(arr)+sizeof(float))=(*v).i;break;\\
-                case NPY_DOUBLE: *(double *)(PyArray_DATA(arr))=(*v).r; break;\\
-                case NPY_LONG: *(long *)(PyArray_DATA(arr))=(*v).r; break;\\
-                case NPY_FLOAT: *(float *)(PyArray_DATA(arr))=(*v).r; break;\\
-                case NPY_INT: *(int *)(PyArray_DATA(arr))=(*v).r; break;\\
-                case NPY_SHORT: *(short *)(PyArray_DATA(arr))=(*v).r; break;\\
-                case NPY_UBYTE: *(unsigned char *)(PyArray_DATA(arr))=(*v).r; break;\\
-                case NPY_BYTE: *(signed char *)(PyArray_DATA(arr))=(*v).r; break;\\
+                case NPY_CDOUBLE: *(npy_double *)(PyArray_DATA(arr))=(*v).r;\\
+                                  *(npy_double *)(PyArray_DATA(arr)+sizeof(npy_double))=(*v).i;\\
+                                  break;\\
+                case NPY_CFLOAT: *(npy_float *)(PyArray_DATA(arr))=(*v).r;\\
+                                 *(npy_float *)(PyArray_DATA(arr)+sizeof(npy_float))=(*v).i;\\
+                                 break;\\
+                case NPY_DOUBLE: *(npy_double *)(PyArray_DATA(arr))=(*v).r; break;\\
+                case NPY_LONG: *(npy_long *)(PyArray_DATA(arr))=(*v).r; break;\\
+                case NPY_FLOAT: *(npy_float *)(PyArray_DATA(arr))=(*v).r; break;\\
+                case NPY_INT: *(npy_int *)(PyArray_DATA(arr))=(*v).r; break;\\
+                case NPY_SHORT: *(npy_short *)(PyArray_DATA(arr))=(*v).r; break;\\
+                case NPY_UBYTE: *(npy_ubyte *)(PyArray_DATA(arr))=(*v).r; break;\\
+                case NPY_BYTE: *(npy_byte *)(PyArray_DATA(arr))=(*v).r; break;\\
                 case NPY_BOOL: *(npy_bool *)(PyArray_DATA(arr))=((*v).r!=0 && (*v).i!=0); break;\\
                 case NPY_USHORT: *(npy_ushort *)(PyArray_DATA(arr))=(*v).r; break;\\
                 case NPY_UINT: *(npy_uint *)(PyArray_DATA(arr))=(*v).r; break;\\
@@ -391,7 +395,9 @@ cppmacros['TRYCOMPLEXPYARRAYTEMPLATE'] = """\
                 case NPY_LONGLONG: *(npy_longlong *)(PyArray_DATA(arr))=(*v).r; break;\\
                 case NPY_ULONGLONG: *(npy_ulonglong *)(PyArray_DATA(arr))=(*v).r; break;\\
                 case NPY_LONGDOUBLE: *(npy_longdouble *)(PyArray_DATA(arr))=(*v).r; break;\\
-                case NPY_CLONGDOUBLE: *(npy_longdouble *)(PyArray_DATA(arr))=(*v).r;*(npy_longdouble *)(PyArray_DATA(arr)+sizeof(npy_longdouble))=(*v).i;break;\\
+                case NPY_CLONGDOUBLE: *(npy_longdouble *)(PyArray_DATA(arr))=(*v).r;\\
+                                      *(npy_longdouble *)(PyArray_DATA(arr)+sizeof(npy_longdouble))=(*v).i;\\
+                                      break;\\
                 case NPY_OBJECT: PyArray_SETITEM(arr, PyArray_DATA(arr), pyobj_from_complex_ ## ctype ## 1((*v))); break;\\
                 default: return -2;\\
         };\\
@@ -469,7 +475,7 @@ cppmacros['MEMCOPY'] = """\
 """
 cppmacros['STRINGMALLOC'] = """\
 #define STRINGMALLOC(str,len)\\
-    if ((str = (string)malloc(sizeof(char)*(len+1))) == NULL) {\\
+    if ((str = (string)malloc(len+1)) == NULL) {\\
         PyErr_SetString(PyExc_MemoryError, \"out of memory\");\\
         goto capi_fail;\\
     } else {\\
@@ -479,20 +485,41 @@ cppmacros['STRINGMALLOC'] = """\
 cppmacros['STRINGFREE'] = """\
 #define STRINGFREE(str) do {if (!(str == NULL)) free(str);} while (0)
 """
+needs['STRINGPADN'] = ['string.h']
+cppmacros['STRINGPADN'] = """\
+/*
+STRINGPADN replaces null values with padding values from the right.
+
+`to` must have size of at least N bytes.
+
+If the `to[N-1]` has null value, then replace it and all the
+preceding, nulls with the given padding.
+
+STRINGPADN(to, N, PADDING, NULLVALUE) is an inverse operation.
+*/
+#define STRINGPADN(to, N, NULLVALUE, PADDING)                   \\
+    do {                                                        \\
+        int _m = (N);                                           \\
+        char *_to = (to);                                       \\
+        for (_m -= 1; _m >= 0 && _to[_m] == NULLVALUE; _m--) {  \\
+             _to[_m] = PADDING;                                 \\
+        }                                                       \\
+    } while (0)
+"""
 needs['STRINGCOPYN'] = ['string.h', 'FAILNULL']
 cppmacros['STRINGCOPYN'] = """\
-#define STRINGCOPYN(to,from,buf_size)                           \\
+/*
+STRINGCOPYN copies N bytes.
+
+`to` and `from` buffers must have sizes of at least N bytes.
+*/
+#define STRINGCOPYN(to,from,N)                                  \\
     do {                                                        \\
-        int _m = (buf_size);                                    \\
+        int _m = (N);                                           \\
         char *_to = (to);                                       \\
         char *_from = (from);                                   \\
         FAILNULL(_to); FAILNULL(_from);                         \\
-        (void)strncpy(_to, _from, sizeof(char)*_m);             \\
-        _to[_m-1] = '\\0';                                      \\
-        /* Padding with spaces instead of nulls */              \\
-        for (_m -= 2; _m >= 0 && _to[_m] == '\\0'; _m--) {      \\
-            _to[_m] = ' ';                                      \\
-        }                                                       \\
+        (void)strncpy(_to, _from, _m);             \\
     } while (0)
 """
 needs['STRINGCOPY'] = ['string.h', 'FAILNULL']
@@ -547,14 +574,18 @@ cppmacros["F2PY_THREAD_LOCAL_DECL"] = """\
 #ifndef F2PY_THREAD_LOCAL_DECL
 #if defined(_MSC_VER)
 #define F2PY_THREAD_LOCAL_DECL __declspec(thread)
+#elif defined(__MINGW32__) || defined(__MINGW64__)
+#define F2PY_THREAD_LOCAL_DECL __thread
 #elif defined(__STDC_VERSION__) \\
       && (__STDC_VERSION__ >= 201112L) \\
       && !defined(__STDC_NO_THREADS__) \\
-      && (!defined(__GLIBC__) || __GLIBC__ > 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ > 12))
+      && (!defined(__GLIBC__) || __GLIBC__ > 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ > 12)) \\
+      && !defined(__OpenBSD__)
 /* __STDC_NO_THREADS__ was first defined in a maintenance release of glibc 2.12,
    see https://lists.gnu.org/archive/html/commit-hurd/2012-07/msg00180.html,
    so `!defined(__STDC_NO_THREADS__)` may give false positive for the existence
-   of `threads.h` when using an older release of glibc 2.12 */
+   of `threads.h` when using an older release of glibc 2.12
+   See gh-19437 for details on OpenBSD */
 #include <threads.h>
 #define F2PY_THREAD_LOCAL_DECL thread_local
 #elif defined(__GNUC__) \\
@@ -621,71 +652,127 @@ static int *nextforcomb(void) {
 }"""
 needs['try_pyarr_from_string'] = ['STRINGCOPYN', 'PRINTPYOBJERR', 'string']
 cfuncs['try_pyarr_from_string'] = """\
-static int try_pyarr_from_string(PyObject *obj,const string str) {
-    PyArrayObject *arr = NULL;
-    if (PyArray_Check(obj) && (!((arr = (PyArrayObject *)obj) == NULL)))
-        { STRINGCOPYN(PyArray_DATA(arr),str,PyArray_NBYTES(arr)); }
-    return 1;
+/*
+  try_pyarr_from_string copies str[:len(obj)] to the data of an `ndarray`.
+
+  If obj is an `ndarray`, it is assumed to be contiguous.
+
+  If the specified len==-1, str must be null-terminated.
+*/
+static int try_pyarr_from_string(PyObject *obj,
+                                 const string str, const int len) {
+#ifdef DEBUGCFUNCS
+fprintf(stderr, "try_pyarr_from_string(str='%s', len=%d, obj=%p)\\n",
+        (char*)str,len, obj);
+#endif
+    if (PyArray_Check(obj)) {
+        PyArrayObject *arr = (PyArrayObject *)obj;
+        assert(ISCONTIGUOUS(arr));
+        string buf = PyArray_DATA(arr);
+        npy_intp n = len;
+        if (n == -1) {
+            /* Assuming null-terminated str. */
+            n = strlen(str);
+        }
+        if (n > PyArray_NBYTES(arr)) {
+            n = PyArray_NBYTES(arr);
+        }
+        STRINGCOPYN(buf, str, n);
+        return 1;
+    }
 capi_fail:
     PRINTPYOBJERR(obj);
-    PyErr_SetString(#modulename#_error,\"try_pyarr_from_string failed\");
+    PyErr_SetString(#modulename#_error, \"try_pyarr_from_string failed\");
     return 0;
 }
 """
 needs['string_from_pyobj'] = ['string', 'STRINGMALLOC', 'STRINGCOPYN']
 cfuncs['string_from_pyobj'] = """\
+/*
+  Create a new string buffer `str` of at most length `len` from a
+  Python string-like object `obj`.
+
+  The string buffer has given size (len) or the size of inistr when len==-1.
+
+  The string buffer is padded with blanks: in Fortran, trailing blanks
+  are insignificant contrary to C nulls.
+ */
 static int
-string_from_pyobj(string *str,int *len,const string inistr,PyObject *obj,const char *errmess)
+string_from_pyobj(string *str, int *len, const string inistr, PyObject *obj,
+                  const char *errmess)
 {
-    PyArrayObject *arr = NULL;
     PyObject *tmp = NULL;
+    string buf = NULL;
+    npy_intp n = -1;
 #ifdef DEBUGCFUNCS
-fprintf(stderr,\"string_from_pyobj(str='%s',len=%d,inistr='%s',obj=%p)\\n\",(char*)str,*len,(char *)inistr,obj);
+fprintf(stderr,\"string_from_pyobj(str='%s',len=%d,inistr='%s',obj=%p)\\n\",
+               (char*)str, *len, (char *)inistr, obj);
 #endif
     if (obj == Py_None) {
-        if (*len == -1)
-            *len = strlen(inistr); /* Will this cause problems? */
-        STRINGMALLOC(*str,*len);
-        STRINGCOPYN(*str,inistr,*len+1);
-        return 1;
+        n = strlen(inistr);
+        buf = inistr;
     }
-    if (PyArray_Check(obj)) {
-        if ((arr = (PyArrayObject *)obj) == NULL)
-            goto capi_fail;
+    else if (PyArray_Check(obj)) {
+        PyArrayObject *arr = (PyArrayObject *)obj;
         if (!ISCONTIGUOUS(arr)) {
-            PyErr_SetString(PyExc_ValueError,\"array object is non-contiguous.\");
+            PyErr_SetString(PyExc_ValueError,
+                            \"array object is non-contiguous.\");
             goto capi_fail;
         }
-        if (*len == -1)
-            *len = (PyArray_ITEMSIZE(arr))*PyArray_SIZE(arr);
-        STRINGMALLOC(*str,*len);
-        STRINGCOPYN(*str,PyArray_DATA(arr),*len+1);
-        return 1;
-    }
-    if (PyBytes_Check(obj)) {
-        tmp = obj;
-        Py_INCREF(tmp);
-    }
-    else if (PyUnicode_Check(obj)) {
-        tmp = PyUnicode_AsASCIIString(obj);
+        n = PyArray_NBYTES(arr);
+        buf = PyArray_DATA(arr);
+        n = strnlen(buf, n);
     }
     else {
-        PyObject *tmp2;
-        tmp2 = PyObject_Str(obj);
-        if (tmp2) {
-            tmp = PyUnicode_AsASCIIString(tmp2);
-            Py_DECREF(tmp2);
+        if (PyBytes_Check(obj)) {
+            tmp = obj;
+            Py_INCREF(tmp);
+        }
+        else if (PyUnicode_Check(obj)) {
+            tmp = PyUnicode_AsASCIIString(obj);
         }
         else {
-            tmp = NULL;
+            PyObject *tmp2;
+            tmp2 = PyObject_Str(obj);
+            if (tmp2) {
+                tmp = PyUnicode_AsASCIIString(tmp2);
+                Py_DECREF(tmp2);
+            }
+            else {
+                tmp = NULL;
+            }
         }
+        if (tmp == NULL) goto capi_fail;
+        n = PyBytes_GET_SIZE(tmp);
+        buf = PyBytes_AS_STRING(tmp);
     }
-    if (tmp == NULL) goto capi_fail;
-    if (*len == -1)
-        *len = PyBytes_GET_SIZE(tmp);
-    STRINGMALLOC(*str,*len);
-    STRINGCOPYN(*str,PyBytes_AS_STRING(tmp),*len+1);
-    Py_DECREF(tmp);
+    if (*len == -1) {
+        /* TODO: change the type of `len` so that we can remove this */
+        if (n > NPY_MAX_INT) {
+            PyErr_SetString(PyExc_OverflowError,
+                            "object too large for a 32-bit int");
+            goto capi_fail;
+        }
+        *len = n;
+    }
+    else if (*len < n) {
+        /* discard the last (len-n) bytes of input buf */
+        n = *len;
+    }
+    if (n < 0 || *len < 0 || buf == NULL) {
+        goto capi_fail;
+    }
+    STRINGMALLOC(*str, *len);  // *str is allocated with size (*len + 1)
+    if (n < *len) {
+        /*
+          Pad fixed-width string with nulls. The caller will replace
+          nulls with blanks when the corresponding argument is not
+          intent(c).
+        */
+        memset(*str + n, '\\0', *len - n);
+    }
+    STRINGCOPYN(*str, buf, n);
+    Py_XDECREF(tmp);
     return 1;
 capi_fail:
     Py_XDECREF(tmp);
@@ -699,7 +786,6 @@ capi_fail:
     return 0;
 }
 """
-
 
 needs['char_from_pyobj'] = ['int_from_pyobj']
 cfuncs['char_from_pyobj'] = """\
@@ -761,20 +847,26 @@ int_from_pyobj(int* v, PyObject *obj, const char *errmess)
         return !(*v == -1 && PyErr_Occurred());
     }
 
-    if (PyComplex_Check(obj))
-        tmp = PyObject_GetAttrString(obj,\"real\");
-    else if (PyBytes_Check(obj) || PyUnicode_Check(obj))
-        /*pass*/;
-    else if (PySequence_Check(obj))
-        tmp = PySequence_GetItem(obj, 0);
-    if (tmp) {
+    if (PyComplex_Check(obj)) {
         PyErr_Clear();
+        tmp = PyObject_GetAttrString(obj,\"real\");
+    }
+    else if (PyBytes_Check(obj) || PyUnicode_Check(obj)) {
+        /*pass*/;
+    }
+    else if (PySequence_Check(obj)) {
+        PyErr_Clear();
+        tmp = PySequence_GetItem(obj, 0);
+    }
+
+    if (tmp) {
         if (int_from_pyobj(v, tmp, errmess)) {
             Py_DECREF(tmp);
             return 1;
         }
         Py_DECREF(tmp);
     }
+
     {
         PyObject* err = PyErr_Occurred();
         if (err == NULL) {
@@ -804,15 +896,19 @@ long_from_pyobj(long* v, PyObject *obj, const char *errmess) {
         return !(*v == -1 && PyErr_Occurred());
     }
 
-    if (PyComplex_Check(obj))
+    if (PyComplex_Check(obj)) {
+        PyErr_Clear();
         tmp = PyObject_GetAttrString(obj,\"real\");
-    else if (PyBytes_Check(obj) || PyUnicode_Check(obj))
+    }
+    else if (PyBytes_Check(obj) || PyUnicode_Check(obj)) {
         /*pass*/;
-    else if (PySequence_Check(obj))
-        tmp = PySequence_GetItem(obj,0);
+    }
+    else if (PySequence_Check(obj)) {
+        PyErr_Clear();
+        tmp = PySequence_GetItem(obj, 0);
+    }
 
     if (tmp) {
-        PyErr_Clear();
         if (long_from_pyobj(v, tmp, errmess)) {
             Py_DECREF(tmp);
             return 1;
@@ -850,14 +946,19 @@ long_long_from_pyobj(long_long* v, PyObject *obj, const char *errmess)
         return !(*v == -1 && PyErr_Occurred());
     }
 
-    if (PyComplex_Check(obj))
-        tmp = PyObject_GetAttrString(obj,\"real\");
-    else if (PyBytes_Check(obj) || PyUnicode_Check(obj))
-        /*pass*/;
-    else if (PySequence_Check(obj))
-        tmp = PySequence_GetItem(obj,0);
-    if (tmp) {
+    if (PyComplex_Check(obj)) {
         PyErr_Clear();
+        tmp = PyObject_GetAttrString(obj,\"real\");
+    }
+    else if (PyBytes_Check(obj) || PyUnicode_Check(obj)) {
+        /*pass*/;
+    }
+    else if (PySequence_Check(obj)) {
+        PyErr_Clear();
+        tmp = PySequence_GetItem(obj, 0);
+    }
+
+    if (tmp) {
         if (long_long_from_pyobj(v, tmp, errmess)) {
             Py_DECREF(tmp);
             return 1;
@@ -917,14 +1018,20 @@ double_from_pyobj(double* v, PyObject *obj, const char *errmess)
         Py_DECREF(tmp);
         return !(*v == -1.0 && PyErr_Occurred());
     }
-    if (PyComplex_Check(obj))
-        tmp = PyObject_GetAttrString(obj,\"real\");
-    else if (PyBytes_Check(obj) || PyUnicode_Check(obj))
-        /*pass*/;
-    else if (PySequence_Check(obj))
-        tmp = PySequence_GetItem(obj,0);
-    if (tmp) {
+
+    if (PyComplex_Check(obj)) {
         PyErr_Clear();
+        tmp = PyObject_GetAttrString(obj,\"real\");
+    }
+    else if (PyBytes_Check(obj) || PyUnicode_Check(obj)) {
+        /*pass*/;
+    }
+    else if (PySequence_Check(obj)) {
+        PyErr_Clear();
+        tmp = PySequence_GetItem(obj, 0);
+    }
+
+    if (tmp) {
         if (double_from_pyobj(v,tmp,errmess)) {Py_DECREF(tmp); return 1;}
         Py_DECREF(tmp);
     }

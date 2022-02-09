@@ -1,5 +1,7 @@
 import itertools
 
+import pytest
+
 import numpy as np
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_almost_equal,
@@ -744,6 +746,52 @@ class TestEinsum:
         np.einsum('ij,jk->ik', x, x, out=out)
         assert_array_equal(out.base, correct_base)
 
+    @pytest.mark.parametrize("dtype",
+             np.typecodes["AllFloat"] + np.typecodes["AllInteger"])
+    def test_different_paths(self, dtype):
+        # Test originally added to cover broken float16 path: gh-20305
+        # Likely most are covered elsewhere, at least partially.
+        dtype = np.dtype(dtype)
+        # Simple test, designed to excersize most specialized code paths,
+        # note the +0.5 for floats.  This makes sure we use a float value
+        # where the results must be exact.
+        arr = (np.arange(7) + 0.5).astype(dtype)
+        scalar = np.array(2, dtype=dtype)
+
+        # contig -> scalar:
+        res = np.einsum('i->', arr)
+        assert res == arr.sum()
+        # contig, contig -> contig:
+        res = np.einsum('i,i->i', arr, arr)
+        assert_array_equal(res, arr * arr)
+        # noncontig, noncontig -> contig:
+        res = np.einsum('i,i->i', arr.repeat(2)[::2], arr.repeat(2)[::2])
+        assert_array_equal(res, arr * arr)
+        # contig + contig -> scalar
+        assert np.einsum('i,i->', arr, arr) == (arr * arr).sum()
+        # contig + scalar -> contig (with out)
+        out = np.ones(7, dtype=dtype)
+        res = np.einsum('i,->i', arr, dtype.type(2), out=out)
+        assert_array_equal(res, arr * dtype.type(2))
+        # scalar + contig -> contig (with out)
+        res = np.einsum(',i->i', scalar, arr)
+        assert_array_equal(res, arr * dtype.type(2))
+        # scalar + contig -> scalar
+        res = np.einsum(',i->', scalar, arr)
+        # Use einsum to compare to not have difference due to sum round-offs:
+        assert res == np.einsum('i->', scalar * arr)
+        # contig + scalar -> scalar
+        res = np.einsum('i,->', arr, scalar)
+        # Use einsum to compare to not have difference due to sum round-offs:
+        assert res == np.einsum('i->', scalar * arr)
+        # contig + contig + contig -> scalar
+        arr = np.array([0.5, 0.5, 0.25, 4.5, 3.], dtype=dtype)
+        res = np.einsum('i,i,i->', arr, arr, arr)
+        assert_array_equal(res, (arr * arr * arr).sum())
+        # four arrays:
+        res = np.einsum('i,i,i,i->', arr, arr, arr, arr)
+        assert_array_equal(res, (arr * arr * arr * arr).sum())
+
     def test_small_boolean_arrays(self):
         # See gh-5946.
         # Use array of True embedded in False.
@@ -1025,7 +1073,7 @@ class TestEinsumPath:
         self.assert_path_equal(path, ['einsum_path', (0, 1), (0, 1, 2, 3, 4, 5)])
 
     def test_path_type_input(self):
-        # Test explicit path handeling
+        # Test explicit path handling
         path_test = self.build_operands('dcc,fce,ea,dbf->ab')
 
         path, path_str = np.einsum_path(*path_test, optimize=False)

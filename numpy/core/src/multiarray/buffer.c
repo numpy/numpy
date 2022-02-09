@@ -1,9 +1,10 @@
-#define PY_SSIZE_T_CLEAN
-#include <Python.h>
-#include "structmember.h"
-
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
+
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+#include <structmember.h>
+
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
 
@@ -1047,12 +1048,18 @@ _descriptor_from_pep3118_format_fast(char const *s, PyObject **result)
     }
 
     descr = PyArray_DescrFromType(type_num);
+    if (descr == NULL) {
+        return 0;
+    }
     if (byte_order == '=') {
         *result = (PyObject*)descr;
     }
     else {
         *result = (PyObject*)PyArray_DescrNewByteorder(descr, byte_order);
         Py_DECREF(descr);
+        if (*result == NULL) {
+            return 0;
+        }
     }
 
     return 1;

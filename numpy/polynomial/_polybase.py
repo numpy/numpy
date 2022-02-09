@@ -344,7 +344,7 @@ class ABCPolyBase(abc.ABC):
             # Polynomial coefficient
             # The coefficient array can be an object array with elements that
             # will raise a TypeError with >= 0 (e.g. strings or Python
-            # complex). In this case, represent the coeficient as-is.
+            # complex). In this case, represent the coefficient as-is.
             try:
                 if coef >= 0:
                     next_term = f"+ {coef}"
@@ -936,11 +936,11 @@ class ABCPolyBase(abc.ABC):
             diagnostic information from the singular value decomposition is
             also returned.
         w : array_like, shape (M,), optional
-            Weights. If not None the contribution of each point
-            ``(x[i],y[i])`` to the fit is weighted by ``w[i]``. Ideally the
-            weights are chosen so that the errors of the products
-            ``w[i]*y[i]`` all have the same variance.  The default value is
-            None.
+            Weights. If not None, the weight ``w[i]`` applies to the unsquared
+            residual ``y[i] - y_hat[i]`` at ``x[i]``. Ideally the weights are
+            chosen so that the errors of the products ``w[i]*y[i]`` all have
+            the same variance.  When using inverse-variance weighting, use
+            ``w[i] = 1/sigma(y[i])``.  The default value is None.
 
             .. versionadded:: 1.5.0
         window : {[beg, end]}, optional
@@ -958,12 +958,12 @@ class ABCPolyBase(abc.ABC):
             of interest, do ``new_series.convert().coef``.
 
         [resid, rank, sv, rcond] : list
-            These values are only returned if `full` = True
+            These values are only returned if ``full == True``
 
-            resid -- sum of squared residuals of the least squares fit
-            rank -- the numerical rank of the scaled Vandermonde matrix
-            sv -- singular values of the scaled Vandermonde matrix
-            rcond -- value of `rcond`.
+            - resid -- sum of squared residuals of the least squares fit
+            - rank -- the numerical rank of the scaled Vandermonde matrix
+            - sv -- singular values of the scaled Vandermonde matrix
+            - rcond -- value of `rcond`.
 
             For more details, see `linalg.lstsq`.
 

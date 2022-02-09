@@ -222,7 +222,7 @@ NPY_FINLINE npyv_u64 npyv_divc_u64(npyv_u64 a, const npyv_u64x3 divisor)
 // divide each signed 64-bit element by a precomputed divisor (round towards zero)
 NPY_FINLINE npyv_s64 npyv_divc_s64(npyv_s64 a, const npyv_s64x3 divisor)
 {
-    npyv_b64 overflow = vec_and(vec_cmpeq(a, npyv_setall_s64(-1LL << 63)), (npyv_b64)divisor.val[1]);
+    npyv_b64 overflow = npyv_and_b64(vec_cmpeq(a, npyv_setall_s64(-1LL << 63)), (npyv_b64)divisor.val[1]);
     npyv_s64 d = vec_sel(divisor.val[0], npyv_setall_s64(1), overflow);
     return vec_div(a, d);
 }

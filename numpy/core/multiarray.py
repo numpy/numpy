@@ -7,8 +7,6 @@ by importing from the extension module.
 """
 
 import functools
-import warnings
-
 from . import overrides
 from . import _multiarray_umath
 from ._multiarray_umath import *  # noqa: F403
@@ -16,8 +14,9 @@ from ._multiarray_umath import *  # noqa: F403
 # do not change them. issue gh-15518
 # _get_ndarray_c_version is semi-public, on purpose not added to __all__
 from ._multiarray_umath import (
-    _fastCopyAndTranspose, _flagdict, _insert, _reconstruct, _vec_string,
-    _ARRAY_API, _monotonicity, _get_ndarray_c_version, _set_madvise_hugepage,
+    _fastCopyAndTranspose, _flagdict, _from_dlpack, _insert, _reconstruct,
+    _vec_string, _ARRAY_API, _monotonicity, _get_ndarray_c_version,
+    _set_madvise_hugepage,
     )
 
 __all__ = [
@@ -25,29 +24,30 @@ __all__ = [
     'ITEM_HASOBJECT', 'ITEM_IS_POINTER', 'LIST_PICKLE', 'MAXDIMS',
     'MAY_SHARE_BOUNDS', 'MAY_SHARE_EXACT', 'NEEDS_INIT', 'NEEDS_PYAPI',
     'RAISE', 'USE_GETITEM', 'USE_SETITEM', 'WRAP', '_fastCopyAndTranspose',
-    '_flagdict', '_insert', '_reconstruct', '_vec_string', '_monotonicity',
-    'add_docstring', 'arange', 'array', 'asarray', 'asanyarray',
-    'ascontiguousarray', 'asfortranarray', 'bincount', 'broadcast',
-    'busday_count', 'busday_offset', 'busdaycalendar', 'can_cast',
+    '_flagdict', '_from_dlpack', '_insert', '_reconstruct', '_vec_string',
+    '_monotonicity', 'add_docstring', 'arange', 'array', 'asarray',
+    'asanyarray', 'ascontiguousarray', 'asfortranarray', 'bincount',
+    'broadcast', 'busday_count', 'busday_offset', 'busdaycalendar', 'can_cast',
     'compare_chararrays', 'concatenate', 'copyto', 'correlate', 'correlate2',
     'count_nonzero', 'c_einsum', 'datetime_as_string', 'datetime_data',
-    'digitize', 'dot', 'dragon4_positional', 'dragon4_scientific', 'dtype',
+    'dot', 'dragon4_positional', 'dragon4_scientific', 'dtype',
     'empty', 'empty_like', 'error', 'flagsobj', 'flatiter', 'format_longfloat',
-    'frombuffer', 'fromfile', 'fromiter', 'fromstring', 'inner',
-    'interp', 'interp_complex', 'is_busday', 'lexsort',
-    'matmul', 'may_share_memory', 'min_scalar_type', 'ndarray', 'nditer',
-    'nested_iters', 'normalize_axis_index', 'packbits',
-    'promote_types', 'putmask', 'ravel_multi_index', 'result_type', 'scalar',
-    'set_datetimeparse_function', 'set_legacy_print_mode', 'set_numeric_ops',
-    'set_string_function', 'set_typeDict', 'shares_memory',
-    'tracemalloc_domain', 'typeinfo', 'unpackbits', 'unravel_index', 'vdot',
-    'where', 'zeros']
+    'frombuffer', 'fromfile', 'fromiter', 'fromstring',
+    'get_handler_name', 'get_handler_version', 'inner', 'interp',
+    'interp_complex', 'is_busday', 'lexsort', 'matmul', 'may_share_memory',
+    'min_scalar_type', 'ndarray', 'nditer', 'nested_iters',
+    'normalize_axis_index', 'packbits', 'promote_types', 'putmask',
+    'ravel_multi_index', 'result_type', 'scalar', 'set_datetimeparse_function',
+    'set_legacy_print_mode', 'set_numeric_ops', 'set_string_function',
+    'set_typeDict', 'shares_memory', 'tracemalloc_domain', 'typeinfo',
+    'unpackbits', 'unravel_index', 'vdot', 'where', 'zeros']
 
 # For backward compatibility, make sure pickle imports these functions from here
 _reconstruct.__module__ = 'numpy.core.multiarray'
 scalar.__module__ = 'numpy.core.multiarray'
 
 
+_from_dlpack.__module__ = 'numpy'
 arange.__module__ = 'numpy'
 array.__module__ = 'numpy'
 asarray.__module__ = 'numpy'
@@ -249,7 +249,7 @@ def concatenate(arrays, axis=None, out=None, *, dtype=None, casting=None):
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.inner)
 def inner(a, b):
     """
-    inner(a, b)
+    inner(a, b, /)
 
     Inner product of two arrays.
 
@@ -341,7 +341,7 @@ def inner(a, b):
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.where)
 def where(condition, x=None, y=None):
     """
-    where(condition, [x, y])
+    where(condition, [x, y], /)
 
     Return elements chosen from `x` or `y` depending on `condition`.
 
@@ -613,7 +613,7 @@ def can_cast(from_, to, casting=None):
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.min_scalar_type)
 def min_scalar_type(a):
     """
-    min_scalar_type(a)
+    min_scalar_type(a, /)
 
     For scalar ``a``, returns the data type with the smallest size
     and smallest scalar kind which can hold its value.  For non-scalar
@@ -825,7 +825,7 @@ def dot(a, b, out=None):
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.vdot)
 def vdot(a, b):
     """
-    vdot(a, b)
+    vdot(a, b, /)
 
     Return the dot product of two vectors.
 
@@ -883,7 +883,7 @@ def vdot(a, b):
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.bincount)
 def bincount(x, weights=None, minlength=None):
     """
-    bincount(x, weights=None, minlength=0)
+    bincount(x, /, weights=None, minlength=0)
 
     Count number of occurrences of each value in array of non-negative ints.
 
@@ -1151,7 +1151,7 @@ def putmask(a, mask, values):
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.packbits)
 def packbits(a, axis=None, bitorder='big'):
     """
-    packbits(a, axis=None, bitorder='big')
+    packbits(a, /, axis=None, bitorder='big')
 
     Packs the elements of a binary-valued array into bits in a uint8 array.
 
@@ -1209,7 +1209,7 @@ def packbits(a, axis=None, bitorder='big'):
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.unpackbits)
 def unpackbits(a, axis=None, count=None, bitorder='big'):
     """
-    unpackbits(a, axis=None, count=None, bitorder='big')
+    unpackbits(a, /, axis=None, count=None, bitorder='big')
 
     Unpacks elements of a uint8 array into a binary-valued output array.
 
@@ -1293,7 +1293,7 @@ def unpackbits(a, axis=None, count=None, bitorder='big'):
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.shares_memory)
 def shares_memory(a, b, max_work=None):
     """
-    shares_memory(a, b, max_work=None)
+    shares_memory(a, b, /, max_work=None)
 
     Determine if two arrays share memory.
 
@@ -1368,7 +1368,7 @@ def shares_memory(a, b, max_work=None):
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.may_share_memory)
 def may_share_memory(a, b, max_work=None):
     """
-    may_share_memory(a, b, max_work=None)
+    may_share_memory(a, b, /, max_work=None)
 
     Determine if two arrays might share memory
 

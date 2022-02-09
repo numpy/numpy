@@ -205,12 +205,12 @@ add_newdoc_for_scalar_type('bytes_', ['string_'],
 add_newdoc_for_scalar_type('void', [],
     r"""
     Either an opaque sequence of bytes, or a structure.
-    
+
     >>> np.void(b'abcd')
     void(b'\x61\x62\x63\x64')
-    
+
     Structured `void` scalars can only be constructed via extraction from :ref:`structured_arrays`:
-    
+
     >>> arr = np.array((1, 2), dtype=[('x', np.int8), ('y', np.int8)])
     >>> arr[()]
     (1, 2)  # looks like a tuple, but is `np.void`
@@ -218,22 +218,43 @@ add_newdoc_for_scalar_type('void', [],
 
 add_newdoc_for_scalar_type('datetime64', [],
     """
-    A datetime stored as a 64-bit integer, counting from ``1970-01-01T00:00:00``.
+    If created from a 64-bit integer, it represents an offset from
+    ``1970-01-01T00:00:00``.
+    If created from string, the string can be in ISO 8601 date
+    or datetime format.
 
     >>> np.datetime64(10, 'Y')
     numpy.datetime64('1980')
+    >>> np.datetime64('1980', 'Y')
+    numpy.datetime64('1980')
     >>> np.datetime64(10, 'D')
     numpy.datetime64('1970-01-11')
-    
+
     See :ref:`arrays.datetime` for more information.
     """)
 
 add_newdoc_for_scalar_type('timedelta64', [],
     """
     A timedelta stored as a 64-bit integer.
-    
+
     See :ref:`arrays.datetime` for more information.
     """)
+
+add_newdoc('numpy.core.numerictypes', "integer", ('is_integer',
+    """
+    integer.is_integer() -> bool
+
+    Return ``True`` if the number is finite with integral value.
+
+    .. versionadded:: 1.22
+
+    Examples
+    --------
+    >>> np.int64(-2).is_integer()
+    True
+    >>> np.uint32(5).is_integer()
+    True
+    """))
 
 # TODO: work out how to put this on the base class, np.floating
 for float_name in ('half', 'single', 'double', 'longdouble'):
@@ -252,3 +273,39 @@ for float_name in ('half', 'single', 'double', 'longdouble'):
         >>> np.{ftype}(-.25).as_integer_ratio()
         (-1, 4)
         """.format(ftype=float_name)))
+
+    add_newdoc('numpy.core.numerictypes', float_name, ('is_integer',
+        f"""
+        {float_name}.is_integer() -> bool
+
+        Return ``True`` if the floating point number is finite with integral
+        value, and ``False`` otherwise.
+
+        .. versionadded:: 1.22
+
+        Examples
+        --------
+        >>> np.{float_name}(-2.0).is_integer()
+        True
+        >>> np.{float_name}(3.2).is_integer()
+        False
+        """))
+
+for int_name in ('int8', 'uint8', 'int16', 'uint16', 'int32', 'uint32',
+        'int64', 'uint64', 'int64', 'uint64', 'int64', 'uint64'):
+    # Add negative examples for signed cases by checking typecode
+    add_newdoc('numpy.core.numerictypes', int_name, ('bit_count',
+        f"""
+        {int_name}.bit_count() -> int
+
+        Computes the number of 1-bits in the absolute value of the input.
+        Analogous to the builtin `int.bit_count` or ``popcount`` in C++.
+
+        Examples
+        --------
+        >>> np.{int_name}(127).bit_count()
+        7""" +
+        (f"""
+        >>> np.{int_name}(-127).bit_count()
+        7
+        """ if dtype(int_name).char.islower() else "")))

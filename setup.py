@@ -16,6 +16,11 @@ variety of databases.
 
 All NumPy wheels distributed on PyPI are BSD licensed.
 
+NumPy requires ``pytest`` and ``hypothesis``.  Tests can then be run after
+installation with::
+
+    python -c 'import numpy; numpy.test()'
+
 """
 DOCLINES = (__doc__ or '').split("\n")
 
@@ -25,12 +30,13 @@ import subprocess
 import textwrap
 import warnings
 import builtins
+import re
 
 
 # Python supported version checks. Keep right after stdlib imports to ensure we
 # get a sensible error for older Python versions
-if sys.version_info[:2] < (3, 7):
-    raise RuntimeError("Python version >= 3.7 required.")
+if sys.version_info[:2] < (3, 8):
+    raise RuntimeError("Python version >= 3.8 required.")
 
 
 import versioneer
@@ -46,12 +52,21 @@ builtins.__NUMPY_SETUP__ = True
 # The version components are changed from ints to strings, but only VERSION
 # seems to matter outside of this module and it was already a str.
 FULLVERSION = versioneer.get_version()
-ISRELEASED = 'dev' not in FULLVERSION
-MAJOR, MINOR, MICRO = FULLVERSION.split('.')[:3]
+
+# Capture the version string:
+# 1.22.0.dev0+ ... -> ISRELEASED == False, VERSION == 1.22.0
+# 1.22.0rc1+ ... -> ISRELEASED == False, VERSION == 1.22.0
+# 1.22.0 ... -> ISRELEASED == True, VERSION == 1.22.0
+# 1.22.0rc1 ... -> ISRELEASED == True, VERSION == 1.22.0
+ISRELEASED = re.search(r'(dev|\+)', FULLVERSION) is None
+_V_MATCH = re.match(r'(\d+)\.(\d+)\.(\d+)', FULLVERSION)
+if _V_MATCH is None:
+    raise RuntimeError(f'Cannot parse version {FULLVERSION}')
+MAJOR, MINOR, MICRO = _V_MATCH.groups()
 VERSION = '{}.{}.{}'.format(MAJOR, MINOR, MICRO)
 
 # The first version not in the `Programming Language :: Python :: ...` classifiers above
-if sys.version_info >= (3, 10):
+if sys.version_info >= (3, 11):
     fmt = "NumPy {} may not yet support Python {}.{}."
     warnings.warn(
         fmt.format(VERSION, *sys.version_info[:2]),
@@ -70,6 +85,17 @@ if os.path.exists('MANIFEST'):
 # so that it is in sys.modules
 import numpy.distutils.command.sdist
 import setuptools
+if int(setuptools.__version__.split('.')[0]) >= 60:
+    # setuptools >= 60 switches to vendored distutils by default; this
+    # may break the numpy build, so make sure the stdlib version is used
+    try:
+        setuptools_use_distutils = os.environ['SETUPTOOLS_USE_DISTUTILS']
+    except KeyError:
+        os.environ['SETUPTOOLS_USE_DISTUTILS'] = "stdlib"
+    else:
+        if setuptools_use_distutils != "stdlib":
+            raise RuntimeError("setuptools versions >= '60.0.0' require "
+                    "SETUPTOOLS_USE_DISTUTILS=stdlib in the environment")
 
 # Initialize cmdclass from versioneer
 from numpy.distutils.core import numpy_cmdclass
@@ -83,9 +109,9 @@ License :: OSI Approved :: BSD License
 Programming Language :: C
 Programming Language :: Python
 Programming Language :: Python :: 3
-Programming Language :: Python :: 3.7
 Programming Language :: Python :: 3.8
 Programming Language :: Python :: 3.9
+Programming Language :: Python :: 3.10
 Programming Language :: Python :: 3 :: Only
 Programming Language :: Python :: Implementation :: CPython
 Topic :: Software Development
@@ -181,7 +207,7 @@ def get_build_overrides():
     """
     from numpy.distutils.command.build_clib import build_clib
     from numpy.distutils.command.build_ext import build_ext
-    from distutils.version import LooseVersion
+    from numpy.compat import _pep440
 
     def _needs_gcc_c99_flag(obj):
         if obj.compiler.compiler_type != 'unix':
@@ -195,16 +221,15 @@ def get_build_overrides():
         out = subprocess.run([cc, '-dumpversion'], stdout=subprocess.PIPE,
                              stderr=subprocess.PIPE, universal_newlines=True)
         # -std=c99 is default from this version on
-        if LooseVersion(out.stdout) >= LooseVersion('5.0'):
+        if _pep440.parse(out.stdout) >= _pep440.Version('5.0'):
             return False
         return True
 
     class new_build_clib(build_clib):
         def build_a_library(self, build_info, lib_name, libraries):
             if _needs_gcc_c99_flag(self):
-                args = build_info.get('extra_compiler_args') or []
-                args.append('-std=c99')
-                build_info['extra_compiler_args'] = args
+                build_info['extra_cflags'] = ['-std=c99']
+            build_info['extra_cxxflags'] = ['-std=c++11']
             build_clib.build_a_library(self, build_info, lib_name, libraries)
 
     class new_build_ext(build_ext):
@@ -217,6 +242,31 @@ def get_build_overrides():
 
 
 def generate_cython():
+    # Check Cython version
+    from numpy.compat import _pep440
+    try:
+        # try the cython in the installed python first (somewhat related to
+        # scipy/scipy#2397)
+        import Cython
+        from Cython.Compiler.Version import version as cython_version
+    except ImportError as e:
+        # The `cython` command need not point to the version installed in the
+        # Python running this script, so raise an error to avoid the chance of
+        # using the wrong version of Cython.
+        msg = 'Cython needs to be installed in Python as a module'
+        raise OSError(msg) from e
+    else:
+        # Note: keep in sync with that in pyproject.toml
+        # Update for Python 3.10
+        required_version = '0.29.24'
+
+        if _pep440.parse(cython_version) < _pep440.Version(required_version):
+            cython_path = Cython.__file__
+            msg = 'Building NumPy requires Cython >= {}, found {} at {}'
+            msg = msg.format(required_version, cython_version, cython_path)
+            raise RuntimeError(msg)
+
+    # Process files
     cwd = os.path.abspath(os.path.dirname(__file__))
     print("Cythonizing sources")
     for d in ('random',):
@@ -273,7 +323,7 @@ def parse_setuppy_commands():
 
               - `pip install .`       (from a git repo or downloaded source
                                        release)
-              - `pip install numpy`   (last NumPy release on PyPi)
+              - `pip install numpy`   (last NumPy release on PyPI)
 
             """))
         return True
@@ -285,7 +335,7 @@ def parse_setuppy_commands():
 
             To install NumPy from here with reliable uninstall, we recommend
             that you use `pip install .`. To install the latest NumPy release
-            from PyPi, use `pip install numpy`.
+            from PyPI, use `pip install numpy`.
 
             For help with build/installation issues, please ask on the
             numpy-discussion mailing list.  If you are sure that you have run
@@ -353,7 +403,7 @@ def get_docs_url():
     if 'dev' in VERSION:
         return "https://numpy.org/devdocs"
     else:
-        # For releases, this URL ends up on pypi.
+        # For releases, this URL ends up on PyPI.
         # By pinning the version, users looking at old PyPI releases can get
         # to the associated docs easily.
         return "https://numpy.org/doc/{}.{}".format(MAJOR, MINOR)
@@ -398,10 +448,12 @@ def setup_package():
         test_suite='pytest',
         version=versioneer.get_version(),
         cmdclass=cmdclass,
-        python_requires='>=3.7',
+        python_requires='>=3.8',
         zip_safe=False,
         entry_points={
-            'console_scripts': f2py_cmds
+            'console_scripts': f2py_cmds,
+            'array_api': ['numpy = numpy.array_api'],
+            'pyinstaller40': ['hook-dirs = numpy:_pyinstaller_hooks_dir'],
         },
     )
 

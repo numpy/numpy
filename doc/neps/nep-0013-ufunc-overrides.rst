@@ -1,7 +1,7 @@
 .. _NEP13:
 
 ==========================================
-NEP 13 — A Mechanism for Overriding Ufuncs
+NEP 13 — A mechanism for overriding Ufuncs
 ==========================================
 
 .. currentmodule:: numpy
@@ -478,7 +478,7 @@ are not compatible, i.e., implementations should be something like::
         except AttributeError:
             return False
 
-    class ArrayLike(object):
+    class ArrayLike:
         ...
         def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
             ...
@@ -516,7 +516,7 @@ does not know how to deal with arrays and ufuncs, and thus has set
 ``__array_ufunc__`` to :obj:`None`, but does know how to do
 multiplication::
 
-    class MyObject(object):
+    class MyObject:
         __array_ufunc__ = None
         def __init__(self, value):
             self.value = value
@@ -556,7 +556,7 @@ in turn immediately raises :exc:`TypeError`, because one of its operands
 ``arr.__array_ufunc__``, which will return :obj:`NotImplemented`, which
 we catch.
 
-.. note :: the reason for not allowing in-place operations to return
+.. note:: the reason for not allowing in-place operations to return
    :obj:`NotImplemented` is that these cannot generically be replaced by
    a simple reverse operation: most array operations assume the contents
    of the instance are changed in-place, and do not expect a new

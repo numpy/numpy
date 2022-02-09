@@ -48,7 +48,7 @@ def assert_features_equal(actual, desired, fname):
         "%s"
     ) % (fname, actual, desired, error_report))
 
-class AbstractTest(object):
+class AbstractTest:
     features = []
     features_groups = {}
     features_map = {}
@@ -104,9 +104,12 @@ class AbstractTest(object):
                 )
 
 is_linux = sys.platform.startswith('linux')
+is_cygwin = sys.platform.startswith('cygwin')
 machine  = platform.machine()
 is_x86   = re.match("^(amd64|x86|i386|i686)", machine, re.IGNORECASE)
-@pytest.mark.skipif(not is_linux or not is_x86, reason="Only for Linux and x86")
+@pytest.mark.skipif(
+    not (is_linux or is_cygwin) or not is_x86, reason="Only for Linux and x86"
+)
 class Test_X86_Features(AbstractTest):
     features = [
         "MMX", "SSE", "SSE2", "SSE3", "SSSE3", "SSE41", "POPCNT", "SSE42",
@@ -137,11 +140,22 @@ class Test_X86_Features(AbstractTest):
 is_power = re.match("^(powerpc|ppc)64", machine, re.IGNORECASE)
 @pytest.mark.skipif(not is_linux or not is_power, reason="Only for Linux and Power")
 class Test_POWER_Features(AbstractTest):
-    features = ["VSX", "VSX2", "VSX3"]
-    features_map = dict(VSX2="ARCH_2_07", VSX3="ARCH_3_00")
+    features = ["VSX", "VSX2", "VSX3", "VSX4"]
+    features_map = dict(VSX2="ARCH_2_07", VSX3="ARCH_3_00", VSX4="ARCH_3_1")
 
     def load_flags(self):
         self.load_flags_auxv()
+
+
+is_zarch = re.match("^(s390x)", machine, re.IGNORECASE)
+@pytest.mark.skipif(not is_linux or not is_zarch,
+                    reason="Only for Linux and IBM Z")
+class Test_ZARCH_Features(AbstractTest):
+    features = ["VX", "VXE", "VXE2"]
+
+    def load_flags(self):
+        self.load_flags_auxv()
+
 
 is_arm = re.match("^(arm|aarch64)", machine, re.IGNORECASE)
 @pytest.mark.skipif(not is_linux or not is_arm, reason="Only for Linux and ARM")

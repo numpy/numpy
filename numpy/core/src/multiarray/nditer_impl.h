@@ -4,20 +4,21 @@
  * should use the exposed iterator API.
  */
 #ifndef NPY_ITERATOR_IMPLEMENTATION_CODE
-#error "This header is intended for use ONLY by iterator implementation code."
+#error This header is intended for use ONLY by iterator implementation code.
 #endif
 
-#ifndef _NPY_PRIVATE__NDITER_IMPL_H_
-#define _NPY_PRIVATE__NDITER_IMPL_H_
-
-#define PY_SSIZE_T_CLEAN
-#include "Python.h"
-#include "structmember.h"
+#ifndef NUMPY_CORE_SRC_MULTIARRAY_NDITER_IMPL_H_
+#define NUMPY_CORE_SRC_MULTIARRAY_NDITER_IMPL_H_
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
-#include <numpy/arrayobject.h>
-#include <npy_pycompat.h>
+
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+#include <structmember.h>
+
+#include "numpy/arrayobject.h"
+#include "npy_pycompat.h"
 #include "convert_datatype.h"
 
 #include "lowlevel_strided_loops.h"
@@ -288,7 +289,7 @@ struct NpyIter_AxisData_tag {
         1 + \
         /* intp stride[nop+1] AND char* ptr[nop+1] */ \
         2*((nop)+1) \
-        )*NPY_SIZEOF_INTP )
+        )*(size_t)NPY_SIZEOF_INTP)
 
 /*
  * Macro to advance an AXISDATA pointer by a specified count.
@@ -355,4 +356,4 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs);
 NPY_NO_EXPORT void
 npyiter_clear_buffers(NpyIter *iter);
 
-#endif
+#endif  /* NUMPY_CORE_SRC_MULTIARRAY_NDITER_IMPL_H_ */

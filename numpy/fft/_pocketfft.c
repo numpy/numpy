@@ -9,17 +9,19 @@
  *  Copyright (C) 2004-2018 Max-Planck-Society
  *  \author Martin Reinecke
  */
-
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 
-#include "Python.h"
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+
 #include "numpy/arrayobject.h"
+
+#include "npy_config.h"
 
 #include <math.h>
 #include <string.h>
 #include <stdlib.h>
 
-#include "npy_config.h"
 #define restrict NPY_RESTRICT
 
 #define RALLOC(type,num) \

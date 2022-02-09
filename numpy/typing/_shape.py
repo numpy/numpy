@@ -1,13 +1,4 @@
-import sys
-from typing import Sequence, Tuple, Union
-
-if sys.version_info >= (3, 8):
-    from typing import SupportsIndex
-else:
-    try:
-        from typing_extensions import SupportsIndex
-    except ImportError:
-        SupportsIndex = NotImplemented
+from typing import Sequence, Tuple, Union, SupportsIndex
 
 _Shape = Tuple[int, ...]
 

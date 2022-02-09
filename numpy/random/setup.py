@@ -50,6 +50,13 @@ def configuration(parent_package='', top_path=None):
         # Some bit generators require c99
         EXTRA_COMPILE_ARGS += ['-std=c99']
 
+    if sys.platform == 'cygwin':
+        # Export symbols without __declspec(dllexport) for using by cython.
+        # Using __declspec(dllexport) does not export other necessary symbols
+        # in Cygwin package's Cython environment, making it impossible to
+        # import modules.
+        EXTRA_LINK_ARGS += ['-Wl,--export-all-symbols']
+
     # Use legacy integer variable sizes
     LEGACY_DEFS = [('NP_RANDOM_LEGACY', '1')]
     PCG64_DEFS = []
@@ -65,12 +72,26 @@ def configuration(parent_package='', top_path=None):
         'src/distributions/random_mvhg_marginals.c',
         'src/distributions/random_hypergeometric.c',
     ]
+
+    def gl_if_msvc(build_cmd):
+        """ Add flag if we are using MSVC compiler
+
+        We can't see this in our scope, because we have not initialized the
+        distutils build command, so use this deferred calculation to run when
+        we are building the library.
+        """
+        # Keep in sync with numpy/core/setup.py
+        if build_cmd.compiler.compiler_type == 'msvc':
+            # explicitly disable whole-program optimization
+            return ['/GL-']
+        return []
+
     config.add_installed_library('npyrandom',
         sources=npyrandom_sources,
         install_dir='lib',
         build_info={
             'include_dirs' : [],  # empty list required for creating npyrandom.h
-            'extra_compiler_args' : (['/GL-'] if is_msvc else []),
+            'extra_compiler_args': [gl_if_msvc],
         })
 
     for gen in ['mt19937']:

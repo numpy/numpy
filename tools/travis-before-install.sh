@@ -22,13 +22,12 @@ pushd builds
 
 # Build into own virtualenv
 # We therefore control our own environment, avoid travis' numpy
-pip install -U virtualenv
 
 if [ -n "$USE_DEBUG" ]
 then
-  virtualenv --python=$(which python3-dbg) venv
+  python3-dbg -m venv venv
 else
-  virtualenv --python=python venv
+  python -m venv venv
 fi
 
 source venv/bin/activate

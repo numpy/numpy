@@ -1,5 +1,5 @@
-#ifndef __GET_ATTR_STRING_H
-#define __GET_ATTR_STRING_H
+#ifndef NUMPY_CORE_SRC_COMMON_GET_ATTR_STRING_H_
+#define NUMPY_CORE_SRC_COMMON_GET_ATTR_STRING_H_
 
 static NPY_INLINE npy_bool
 _is_basic_python_type(PyTypeObject *tp)
@@ -113,4 +113,4 @@ PyArray_LookupSpecial_OnInstance(PyObject *obj, char const *name)
     return maybe_get_attr(obj, name);
 }
 
-#endif
+#endif  /* NUMPY_CORE_SRC_COMMON_GET_ATTR_STRING_H_ */

@@ -1,7 +1,7 @@
 .. _NEP27:
 
 =========================
-NEP 27 — Zero Rank Arrays
+NEP 27 — Zero rank arrays
 =========================
 
 :Author: Alexander Belopolsky (sasha), transcribed Matt Picus <matti.picus@gmail.com>
@@ -10,7 +10,7 @@ NEP 27 — Zero Rank Arrays
 :Created: 2006-06-10
 :Resolution: https://mail.python.org/pipermail/numpy-discussion/2018-October/078824.html
 
-.. note ::
+.. note::
 
     NumPy has both zero rank arrays and scalars. This design document, adapted
     from a `2006 wiki entry`_, describes what zero rank arrays are and why they

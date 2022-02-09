@@ -1,7 +1,8 @@
-#include "Python.h"
-
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
+
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
 
 #include "numpy/ndarraytypes.h"
 #include "npy_argparse.h"
@@ -338,7 +339,7 @@ _npy_parse_arguments(const char *funcname,
                 }
             }
 
-             ssize_t param_pos = (
+             Py_ssize_t param_pos = (
                     (name - cache->kw_strings) + cache->npositional_only);
 
             /* There could be an identical positional argument */

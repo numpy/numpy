@@ -7,7 +7,6 @@ Standard array subclasses
 .. currentmodule:: numpy
 
 .. for doctests
-   >>> import numpy as np
    >>> np.random.seed(1)
 
 .. note::
@@ -42,6 +41,7 @@ however, of why your subroutine may not be able to handle an arbitrary
 subclass of an array is that matrices redefine the "*" operator to be
 matrix-multiplication, rather than element-by-element multiplication.
 
+.. _special-attributes-and-methods:
 
 Special attributes and methods
 ==============================

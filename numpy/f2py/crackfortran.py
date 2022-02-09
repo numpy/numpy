@@ -139,7 +139,6 @@ TODO:
     The above may be solved by creating appropriate preprocessor program, for example.
 
 """
-import io
 import sys
 import string
 import fileinput
@@ -154,7 +153,7 @@ from . import __version__
 # As the needed functions cannot be determined by static inspection of the
 # code, it is safest to use import * pending a major refactoring of f2py.
 from .auxfuncs import *
-
+from . import symbolic
 
 f2py_version = __version__.version
 
@@ -246,7 +245,6 @@ for c in "abcdefghopqrstuvwxyz$_":
     defaultimplicitrules[c] = {'typespec': 'real'}
 for c in "ijklmn":
     defaultimplicitrules[c] = {'typespec': 'integer'}
-del c
 badnames = {}
 invbadnames = {}
 for n in ['int', 'double', 'float', 'char', 'short', 'long', 'void', 'case', 'while',
@@ -576,11 +574,16 @@ beginpattern90 = re.compile(
 groupends = (r'end|endprogram|endblockdata|endmodule|endpythonmodule|'
              r'endinterface|endsubroutine|endfunction')
 endpattern = re.compile(
-    beforethisafter % ('', groupends, groupends, r'[\w\s]*'), re.I), 'end'
-endifs = r'(end\s*(if|do|where|select|while|forall|associate|block|critical|enum|team))|(module\s*procedure)'
+    beforethisafter % ('', groupends, groupends, r'.*'), re.I), 'end'
+endifs = r'end\s*(if|do|where|select|while|forall|associate|block|' + \
+         r'critical|enum|team)'
 endifpattern = re.compile(
     beforethisafter % (r'[\w]*?', endifs, endifs, r'[\w\s]*'), re.I), 'endif'
 #
+moduleprocedures = r'module\s*procedure'
+moduleprocedurepattern = re.compile(
+    beforethisafter % ('', moduleprocedures, moduleprocedures, r'.*'), re.I), \
+    'moduleprocedure'
 implicitpattern = re.compile(
     beforethisafter % ('', 'implicit', 'implicit', '.*'), re.I), 'implicit'
 dimensionpattern = re.compile(beforethisafter % (
@@ -729,7 +732,8 @@ def crackline(line, reset=0):
                 callpattern, usepattern, containspattern,
                 entrypattern,
                 f2pyenhancementspattern,
-                multilinepattern
+                multilinepattern,
+                moduleprocedurepattern
                 ]:
         m = pat[0].match(line)
         if m:
@@ -799,6 +803,8 @@ def crackline(line, reset=0):
         expectbegin = 0
     elif pat[1] == 'endif':
         pass
+    elif pat[1] == 'moduleprocedure':
+        analyzeline(m, pat[1], line)
     elif pat[1] == 'contains':
         if ignorecontains:
             return
@@ -876,17 +882,24 @@ def appenddecl(decl, decl2, force=1):
                 decl[k] = decl2[k]
         elif k == 'note':
             pass
-        elif k in ['intent', 'check', 'dimension', 'optional', 'required']:
+        elif k in ['intent', 'check', 'dimension', 'optional',
+                   'required', 'depend']:
             errmess('appenddecl: "%s" not implemented.\n' % k)
         else:
-            raise Exception('appenddecl: Unknown variable definition key:' +
+            raise Exception('appenddecl: Unknown variable definition key: ' +
                             str(k))
     return decl
 
 selectpattern = re.compile(
     r'\s*(?P<this>(@\(@.*?@\)@|\*[\d*]+|\*\s*@\(@.*?@\)@|))(?P<after>.*)\Z', re.I)
+typedefpattern = re.compile(
+    r'(?:,(?P<attributes>[\w(),]+))?(::)?(?P<name>\b[a-z$_][\w$]*\b)'
+    r'(?:\((?P<params>[\w,]*)\))?\Z', re.I)
 nameargspattern = re.compile(
     r'\s*(?P<name>\b[\w$]+\b)\s*(@\(@\s*(?P<args>[\w\s,]*)\s*@\)@|)\s*((result(\s*@\(@\s*(?P<result>\b[\w$]+\b)\s*@\)@|))|(bind\s*@\(@\s*(?P<bind>.*)\s*@\)@))*\s*\Z', re.I)
+operatorpattern = re.compile(
+    r'\s*(?P<scheme>(operator|assignment))'
+    r'@\(@\s*(?P<name>[^)]+)\s*@\)@\s*\Z', re.I)
 callnameargspattern = re.compile(
     r'\s*(?P<name>\b[\w$]+\b)\s*@\(@\s*(?P<args>.*)\s*@\)@\s*\Z', re.I)
 real16pattern = re.compile(
@@ -904,11 +917,26 @@ def _is_intent_callback(vdecl):
     return 0
 
 
+def _resolvetypedefpattern(line):
+    line = ''.join(line.split())  # removes whitespace
+    m1 = typedefpattern.match(line)
+    print(line, m1)
+    if m1:
+        attrs = m1.group('attributes')
+        attrs = [a.lower() for a in attrs.split(',')] if attrs else []
+        return m1.group('name'), attrs, m1.group('params')
+    return None, [], None
+
+
 def _resolvenameargspattern(line):
     line = markouterparen(line)
     m1 = nameargspattern.match(line)
     if m1:
         return m1.group('name'), m1.group('args'), m1.group('result'), m1.group('bind')
+    m1 = operatorpattern.match(line)
+    if m1:
+        name = m1.group('scheme') + '(' + m1.group('name') + ')'
+        return name, [], None, None
     m1 = callnameargspattern.match(line)
     if m1:
         return m1.group('name'), m1.group('args'), None, None
@@ -948,7 +976,13 @@ def analyzeline(m, case, line):
             block = 'python module'
         elif re.match(r'abstract\s*interface', block, re.I):
             block = 'abstract interface'
-        name, args, result, bind = _resolvenameargspattern(m.group('after'))
+        if block == 'type':
+            name, attrs, _ = _resolvetypedefpattern(m.group('after'))
+            groupcache[groupcounter]['vars'][name] = dict(attrspec = attrs)
+            args = []
+            result = None
+        else:
+            name, args, result, _ = _resolvenameargspattern(m.group('after'))
         if name is None:
             if block == 'block data':
                 name = '_BLOCK_DATA_'
@@ -1152,6 +1186,9 @@ def analyzeline(m, case, line):
                     continue
             else:
                 k = rmbadname1(m1.group('name'))
+            if case in ['public', 'private'] and \
+               (k == 'operator' or k == 'assignment'):
+                k += m1.group('after')
             if k not in edecl:
                 edecl[k] = {}
             if case == 'dimension':
@@ -1171,10 +1208,10 @@ def analyzeline(m, case, line):
                                 groupcache[groupcounter]['args'].append(k)
                         else:
                             errmess(
-                                'analyzeline: intent(callback) %s is ignored' % (k))
+                                'analyzeline: intent(callback) %s is ignored\n' % (k))
                     else:
                         errmess('analyzeline: intent(callback) %s is already'
-                                ' in argument list' % (k))
+                                ' in argument list\n' % (k))
             if case in ['optional', 'required', 'public', 'external', 'private', 'intrinsic']:
                 ap = case
             if 'attrspec' in edecl[k]:
@@ -1194,6 +1231,9 @@ def analyzeline(m, case, line):
         groupcache[groupcounter]['vars'] = edecl
         if last_name is not None:
             previous_context = ('variable', last_name, groupcounter)
+    elif case == 'moduleprocedure':
+        groupcache[groupcounter]['implementedby'] = \
+            [x.strip() for x in m.group('after').split(',')]
     elif case == 'parameter':
         edecl = groupcache[groupcounter]['vars']
         ll = m.group('after').strip()[1:-1]
@@ -1527,27 +1567,40 @@ def removespaces(expr):
 
 
 def markinnerspaces(line):
-    l = ''
-    f = 0
-    cc = '\''
-    cb = ''
+    """
+    The function replace all spaces in the input variable line which are 
+    surrounded with quotation marks, with the triplet "@_@".
+
+    For instance, for the input "a 'b c'" the function returns "a 'b@_@c'"
+
+    Parameters
+    ----------
+    line : str
+
+    Returns
+    -------
+    str
+
+    """  
+    fragment = ''
+    inside = False
+    current_quote = None
+    escaped = ''
     for c in line:
-        if cb == '\\' and c in ['\\', '\'', '"']:
-            l = l + c
-            cb = c
+        if escaped == '\\' and c in ['\\', '\'', '"']:
+            fragment += c
+            escaped = c
             continue
-        if f == 0 and c in ['\'', '"']:
-            cc = c
-        if c == cc:
-            f = f + 1
-        elif c == cc:
-            f = f - 1
-        elif c == ' ' and f == 1:
-            l = l + '@_@'
+        if not inside and c in ['\'', '"']:
+            current_quote = c
+        if c == current_quote:
+            inside = not inside
+        elif c == ' ' and inside:
+            fragment += '@_@'
             continue
-        l = l + c
-        cb = c
-    return l
+        fragment += c
+        escaped = c  # reset to non-backslash
+    return fragment
 
 
 def updatevars(typespec, selector, attrspec, entitydecl):
@@ -1856,11 +1909,11 @@ def get_useparameters(block, param_map=None):
             continue
         # XXX: apply mapping
         if mapping:
-            errmess('get_useparameters: mapping for %s not impl.' % (mapping))
+            errmess('get_useparameters: mapping for %s not impl.\n' % (mapping))
         for k, v in list(params.items()):
             if k in param_map:
                 outmess('get_useparameters: overriding parameter %s with'
-                        ' value from module %s' % (repr(k), repr(usename)))
+                        ' value from module %s\n' % (repr(k), repr(usename)))
             param_map[k] = v
 
     return param_map
@@ -2093,7 +2146,8 @@ def analyzebody(block, args, tab=''):
         else:
             as_ = args
         b = postcrack(b, as_, tab=tab + '\t')
-        if b['block'] in ['interface', 'abstract interface'] and not b['body']:
+        if b['block'] in ['interface', 'abstract interface'] and \
+           not b['body'] and not b['implementedby']:
             if 'f2pyenhancements' not in b:
                 continue
         if b['block'].replace(' ', '') == 'pythonmodule':
@@ -2205,188 +2259,6 @@ def getlincoef(e, xset):  # e = a*x+b ; x in xset
             break
     return None, None, None
 
-_varname_match = re.compile(r'\A[a-z]\w*\Z').match
-
-
-def getarrlen(dl, args, star='*'):
-    """
-    Parameters
-    ----------
-    dl : sequence of two str objects
-        dimensions of the array
-    args : Iterable[str]
-        symbols used in the expression
-    star : Any
-        unused
-
-    Returns
-    -------
-    expr : str
-        Some numeric expression as a string
-    arg : Optional[str]
-        If understood, the argument from `args` present in `expr`
-    expr2 : Optional[str]
-        If understood, an expression fragment that should be used as
-        ``"(%s%s".format(something, expr2)``.
-
-    Examples
-    --------
-    >>> getarrlen(['10*x + 20', '40*x'], {'x'})
-    ('30 * x - 19', 'x', '+19)/(30)')
-    >>> getarrlen(['1', '10*x + 20'], {'x'})
-    ('10 * x + 20', 'x', '-20)/(10)')
-    >>> getarrlen(['10*x + 20', '1'], {'x'})
-    ('-10 * x - 18', 'x', '+18)/(-10)')
-    >>> getarrlen(['20', '1'], {'x'})
-    ('-18', None, None)
-    """
-    edl = []
-    try:
-        edl.append(myeval(dl[0], {}, {}))
-    except Exception:
-        edl.append(dl[0])
-    try:
-        edl.append(myeval(dl[1], {}, {}))
-    except Exception:
-        edl.append(dl[1])
-    if isinstance(edl[0], int):
-        p1 = 1 - edl[0]
-        if p1 == 0:
-            d = str(dl[1])
-        elif p1 < 0:
-            d = '%s-%s' % (dl[1], -p1)
-        else:
-            d = '%s+%s' % (dl[1], p1)
-    elif isinstance(edl[1], int):
-        p1 = 1 + edl[1]
-        if p1 == 0:
-            d = '-(%s)' % (dl[0])
-        else:
-            d = '%s-(%s)' % (p1, dl[0])
-    else:
-        d = '%s-(%s)+1' % (dl[1], dl[0])
-    try:
-        return repr(myeval(d, {}, {})), None, None
-    except Exception:
-        pass
-    d1, d2 = getlincoef(dl[0], args), getlincoef(dl[1], args)
-    if None not in [d1[0], d2[0]]:
-        if (d1[0], d2[0]) == (0, 0):
-            return repr(d2[1] - d1[1] + 1), None, None
-        b = d2[1] - d1[1] + 1
-        d1 = (d1[0], 0, d1[2])
-        d2 = (d2[0], b, d2[2])
-        if d1[0] == 0 and d2[2] in args:
-            if b < 0:
-                return '%s * %s - %s' % (d2[0], d2[2], -b), d2[2], '+%s)/(%s)' % (-b, d2[0])
-            elif b:
-                return '%s * %s + %s' % (d2[0], d2[2], b), d2[2], '-%s)/(%s)' % (b, d2[0])
-            else:
-                return '%s * %s' % (d2[0], d2[2]), d2[2], ')/(%s)' % (d2[0])
-        if d2[0] == 0 and d1[2] in args:
-
-            if b < 0:
-                return '%s * %s - %s' % (-d1[0], d1[2], -b), d1[2], '+%s)/(%s)' % (-b, -d1[0])
-            elif b:
-                return '%s * %s + %s' % (-d1[0], d1[2], b), d1[2], '-%s)/(%s)' % (b, -d1[0])
-            else:
-                return '%s * %s' % (-d1[0], d1[2]), d1[2], ')/(%s)' % (-d1[0])
-        if d1[2] == d2[2] and d1[2] in args:
-            a = d2[0] - d1[0]
-            if not a:
-                return repr(b), None, None
-            if b < 0:
-                return '%s * %s - %s' % (a, d1[2], -b), d2[2], '+%s)/(%s)' % (-b, a)
-            elif b:
-                return '%s * %s + %s' % (a, d1[2], b), d2[2], '-%s)/(%s)' % (b, a)
-            else:
-                return '%s * %s' % (a, d1[2]), d2[2], ')/(%s)' % (a)
-        if d1[0] == d2[0] == 1:
-            c = str(d1[2])
-            if c not in args:
-                if _varname_match(c):
-                    outmess('\tgetarrlen:variable "%s" undefined\n' % (c))
-                c = '(%s)' % c
-            if b == 0:
-                d = '%s-%s' % (d2[2], c)
-            elif b < 0:
-                d = '%s-%s-%s' % (d2[2], c, -b)
-            else:
-                d = '%s-%s+%s' % (d2[2], c, b)
-        elif d1[0] == 0:
-            c2 = str(d2[2])
-            if c2 not in args:
-                if _varname_match(c2):
-                    outmess('\tgetarrlen:variable "%s" undefined\n' % (c2))
-                c2 = '(%s)' % c2
-            if d2[0] == 1:
-                pass
-            elif d2[0] == -1:
-                c2 = '-%s' % c2
-            else:
-                c2 = '%s*%s' % (d2[0], c2)
-
-            if b == 0:
-                d = c2
-            elif b < 0:
-                d = '%s-%s' % (c2, -b)
-            else:
-                d = '%s+%s' % (c2, b)
-        elif d2[0] == 0:
-            c1 = str(d1[2])
-            if c1 not in args:
-                if _varname_match(c1):
-                    outmess('\tgetarrlen:variable "%s" undefined\n' % (c1))
-                c1 = '(%s)' % c1
-            if d1[0] == 1:
-                c1 = '-%s' % c1
-            elif d1[0] == -1:
-                c1 = '+%s' % c1
-            elif d1[0] < 0:
-                c1 = '+%s*%s' % (-d1[0], c1)
-            else:
-                c1 = '-%s*%s' % (d1[0], c1)
-
-            if b == 0:
-                d = c1
-            elif b < 0:
-                d = '%s-%s' % (c1, -b)
-            else:
-                d = '%s+%s' % (c1, b)
-        else:
-            c1 = str(d1[2])
-            if c1 not in args:
-                if _varname_match(c1):
-                    outmess('\tgetarrlen:variable "%s" undefined\n' % (c1))
-                c1 = '(%s)' % c1
-            if d1[0] == 1:
-                c1 = '-%s' % c1
-            elif d1[0] == -1:
-                c1 = '+%s' % c1
-            elif d1[0] < 0:
-                c1 = '+%s*%s' % (-d1[0], c1)
-            else:
-                c1 = '-%s*%s' % (d1[0], c1)
-
-            c2 = str(d2[2])
-            if c2 not in args:
-                if _varname_match(c2):
-                    outmess('\tgetarrlen:variable "%s" undefined\n' % (c2))
-                c2 = '(%s)' % c2
-            if d2[0] == 1:
-                pass
-            elif d2[0] == -1:
-                c2 = '-%s' % c2
-            else:
-                c2 = '%s*%s' % (d2[0], c2)
-
-            if b == 0:
-                d = '%s%s' % (c2, c1)
-            elif b < 0:
-                d = '%s%s-%s' % (c2, c1, -b)
-            else:
-                d = '%s%s+%s' % (c2, c1, b)
-    return d, None, None
 
 word_pattern = re.compile(r'\b[a-z][\w$]*\b', re.I)
 
@@ -2397,7 +2269,9 @@ def _get_depend_dict(name, vars, deps):
 
         if '=' in vars[name] and not isstring(vars[name]):
             for word in word_pattern.findall(vars[name]['=']):
-                if word not in words and word in vars:
+                # The word_pattern may return values that are not
+                # only variables, they can be string content for instance
+                if word not in words and word in vars and word != name:
                     words.append(word)
         for word in words[:]:
             for w in deps.get(word, []) \
@@ -2552,10 +2426,8 @@ def get_parameters(vars, global_params={}):
                 v = ''.join(tt)
 
             elif iscomplex(vars[n]):
-                # FIXME complex numbers may also have exponents
-                if v[0] == '(' and v[-1] == ')':
-                    # FIXME, unused l looks like potential bug
-                    l = markoutercomma(v[1:-1]).split('@,@')
+                outmess(f'get_parameters[TODO]: '
+                        f'implement evaluation of complex expression {v}\n')
 
             try:
                 params[n] = eval(v, g_params, params)
@@ -2586,7 +2458,8 @@ def _eval_scalar(value, params):
     if _is_kind_number(value):
         value = value.split('_')[0]
     try:
-        value = str(eval(value, {}, params))
+        value = eval(value, {}, params)
+        value = (repr if isinstance(value, str) else str)(value)
     except (NameError, SyntaxError, TypeError):
         return value
     except Exception as msg:
@@ -2673,7 +2546,7 @@ def analyzevars(block):
                     pass
                 vars[n]['kindselector']['kind'] = l
 
-        savelindims = {}
+        dimension_exprs = {}
         if 'attrspec' in vars[n]:
             attr = vars[n]['attrspec']
             attr.reverse()
@@ -2726,18 +2599,18 @@ def analyzevars(block):
             if dim and 'dimension' not in vars[n]:
                 vars[n]['dimension'] = []
                 for d in rmbadname([x.strip() for x in markoutercomma(dim).split('@,@')]):
-                    star = '*'
-                    if d == ':':
-                        star = ':'
+                    star = ':' if d == ':' else '*'
+                    # Evaluate `d` with respect to params
                     if d in params:
                         d = str(params[d])
-                    for p in list(params.keys()):
+                    for p in params:
                         re_1 = re.compile(r'(?P<before>.*?)\b' + p + r'\b(?P<after>.*)', re.I)
                         m = re_1.match(d)
                         while m:
                             d = m.group('before') + \
                                 str(params[p]) + m.group('after')
                             m = re_1.match(d)
+
                     if d == star:
                         dl = [star]
                     else:
@@ -2745,22 +2618,49 @@ def analyzevars(block):
                     if len(dl) == 2 and '*' in dl:  # e.g. dimension(5:*)
                         dl = ['*']
                         d = '*'
-                    if len(dl) == 1 and not dl[0] == star:
+                    if len(dl) == 1 and dl[0] != star:
                         dl = ['1', dl[0]]
                     if len(dl) == 2:
-                        d, v, di = getarrlen(dl, list(block['vars'].keys()))
-                        if d[:4] == '1 * ':
-                            d = d[4:]
-                        if di and di[-4:] == '/(1)':
-                            di = di[:-4]
-                        if v:
-                            savelindims[d] = v, di
+                        d1, d2 = map(symbolic.Expr.parse, dl)
+                        dsize = d2 - d1 + 1
+                        d = dsize.tostring(language=symbolic.Language.C)
+                        # find variables v that define d as a linear
+                        # function, `d == a * v + b`, and store
+                        # coefficients a and b for further analysis.
+                        solver_and_deps = {}
+                        for v in block['vars']:
+                            s = symbolic.as_symbol(v)
+                            if dsize.contains(s):
+                                try:
+                                    a, b = dsize.linear_solve(s)
+
+                                    def solve_v(s, a=a, b=b):
+                                        return (s - b) / a
+
+                                    all_symbols = set(a.symbols())
+                                    all_symbols.update(b.symbols())
+                                except RuntimeError as msg:
+                                    # d is not a linear function of v,
+                                    # however, if v can be determined
+                                    # from d using other means,
+                                    # implement the corresponding
+                                    # solve_v function here.
+                                    solve_v = None
+                                    all_symbols = set(dsize.symbols())
+                                v_deps = set(
+                                    s.data for s in all_symbols
+                                    if s.data in vars)
+                                solver_and_deps[v] = solve_v, list(v_deps)
+                        # Note that dsize may contain symbols that are
+                        # not defined in block['vars']. Here we assume
+                        # these correspond to Fortran/C intrinsic
+                        # functions or that are defined by other
+                        # means. We'll let the compiler validate the
+                        # definiteness of such symbols.
+                        dimension_exprs[d] = solver_and_deps
                     vars[n]['dimension'].append(d)
+
         if 'dimension' in vars[n]:
-            if isintent_c(vars[n]):
-                shape_macro = 'shape'
-            else:
-                shape_macro = 'shape'  # 'fshape'
             if isstringarray(vars[n]):
                 if 'charselector' in vars[n]:
                     d = vars[n]['charselector']
@@ -2778,70 +2678,88 @@ def analyzevars(block):
                             vars[n]['intent'].append('c')
                     else:
                         errmess(
-                            "analyzevars: charselector=%r unhandled." % (d))
+                            "analyzevars: charselector=%r unhandled.\n" % (d))
+
         if 'check' not in vars[n] and 'args' in block and n in block['args']:
-            flag = 'depend' not in vars[n]
-            if flag:
-                vars[n]['depend'] = []
-            vars[n]['check'] = []
-            if 'dimension' in vars[n]:
-                #/----< no check
-                i = -1
-                ni = len(vars[n]['dimension'])
-                for d in vars[n]['dimension']:
-                    ddeps = []  # dependencies of 'd'
-                    ad = ''
-                    pd = ''
-                    if d not in vars:
-                        if d in savelindims:
-                            pd, ad = '(', savelindims[d][1]
-                            d = savelindims[d][0]
-                        else:
-                            for r in block['args']:
-                                if r not in vars:
-                                    continue
-                                if re.match(r'.*?\b' + r + r'\b', d, re.I):
-                                    ddeps.append(r)
-                    if d in vars:
-                        if 'attrspec' in vars[d]:
-                            for aa in vars[d]['attrspec']:
-                                if aa[:6] == 'depend':
-                                    ddeps += aa[6:].strip()[1:-1].split(',')
-                        if 'depend' in vars[d]:
-                            ddeps = ddeps + vars[d]['depend']
-                    i = i + 1
-                    if d in vars and ('depend' not in vars[d]) \
-                       and ('=' not in vars[d]) and (d not in vars[n]['depend']) \
-                       and l_or(isintent_in, isintent_inout, isintent_inplace)(vars[n]):
-                        vars[d]['depend'] = [n]
-                        if ni > 1:
-                            vars[d]['='] = '%s%s(%s,%s)%s' % (
-                                pd, shape_macro, n, i, ad)
-                        else:
-                            vars[d]['='] = '%slen(%s)%s' % (pd, n, ad)
-                        #  /---< no check
-                        if 1 and 'check' not in vars[d]:
-                            if ni > 1:
-                                vars[d]['check'] = ['%s%s(%s,%i)%s==%s'
-                                                    % (pd, shape_macro, n, i, ad, d)]
+            # n is an argument that has no checks defined. Here we
+            # generate some consistency checks for n, and when n is an
+            # array, generate checks for its dimensions and construct
+            # initialization expressions.
+            n_deps = vars[n].get('depend', [])
+            n_checks = []
+            n_is_input = l_or(isintent_in, isintent_inout,
+                              isintent_inplace)(vars[n])
+            if 'dimension' in vars[n]:  # n is array
+                for i, d in enumerate(vars[n]['dimension']):
+                    coeffs_and_deps = dimension_exprs.get(d)
+                    if coeffs_and_deps is None:
+                        # d is `:` or `*` or a constant expression
+                        pass
+                    elif n_is_input:
+                        # n is an input array argument and its shape
+                        # may define variables used in dimension
+                        # specifications.
+                        for v, (solver, deps) in coeffs_and_deps.items():
+                            if ((v in n_deps
+                                 or '=' in vars[v]
+                                 or 'depend' in vars[v])):
+                                # Skip a variable that
+                                # - n depends on
+                                # - has user-defined initialization expression
+                                # - has user-defined dependencies
+                                continue
+                            if solver is not None:
+                                # v can be solved from d, hence, we
+                                # make it an optional argument with
+                                # initialization expression:
+                                is_required = False
+                                init = solver(symbolic.as_symbol(
+                                    f'shape({n}, {i})'))
+                                init = init.tostring(
+                                    language=symbolic.Language.C)
+                                vars[v]['='] = init
+                                # n needs to be initialized before v. So,
+                                # making v dependent on n and on any
+                                # variables in solver or d.
+                                vars[v]['depend'] = [n] + deps
+                                if 'check' not in vars[v]:
+                                    # add check only when no
+                                    # user-specified checks exist
+                                    vars[v]['check'] = [
+                                        f'shape({n}, {i}) == {d}']
                             else:
-                                vars[d]['check'] = [
-                                    '%slen(%s)%s>=%s' % (pd, n, ad, d)]
-                        if 'attrspec' not in vars[d]:
-                            vars[d]['attrspec'] = ['optional']
-                        if ('optional' not in vars[d]['attrspec']) and\
-                           ('required' not in vars[d]['attrspec']):
-                            vars[d]['attrspec'].append('optional')
-                    elif d not in ['*', ':']:
-                        #/----< no check
-                        if flag:
-                            if d in vars:
-                                if n not in ddeps:
-                                    vars[n]['depend'].append(d)
-                            else:
-                                vars[n]['depend'] = vars[n]['depend'] + ddeps
+                                # d is a non-linear function on v,
+                                # hence, v must be a required input
+                                # argument that n will depend on
+                                is_required = True
+                                if 'intent' not in vars[v]:
+                                    vars[v]['intent'] = []
+                                if 'in' not in vars[v]['intent']:
+                                    vars[v]['intent'].append('in')
+                                # v needs to be initialized before n
+                                n_deps.append(v)
+                                n_checks.append(
+                                    f'shape({n}, {i}) == {d}')
+                            v_attr = vars[v].get('attrspec', [])
+                            if not ('optional' in v_attr
+                                    or 'required' in v_attr):
+                                v_attr.append(
+                                    'required' if is_required else 'optional')
+                            if v_attr:
+                                vars[v]['attrspec'] = v_attr
+                    if coeffs_and_deps is not None:
+                        # extend v dependencies with ones specified in attrspec
+                        for v, (solver, deps) in coeffs_and_deps.items():
+                            v_deps = vars[v].get('depend', [])
+                            for aa in vars[v].get('attrspec', []):
+                                if aa.startswith('depend'):
+                                    aa = ''.join(aa.split())
+                                    v_deps.extend(aa[7:-1].split(','))
+                            if v_deps:
+                                vars[v]['depend'] = list(set(v_deps))
+                            if n not in v_deps:
+                                n_deps.append(v)
             elif isstring(vars[n]):
-                length = '1'
                 if 'charselector' in vars[n]:
                     if '*' in vars[n]['charselector']:
                         length = _eval_length(vars[n]['charselector']['*'],
@@ -2852,11 +2770,11 @@ def analyzevars(block):
                                               params)
                         del vars[n]['charselector']['len']
                         vars[n]['charselector']['*'] = length
+            if n_checks:
+                vars[n]['check'] = n_checks
+            if n_deps:
+                vars[n]['depend'] = list(set(n_deps))
 
-            if not vars[n]['check']:
-                del vars[n]['check']
-            if flag and not vars[n]['depend']:
-                del vars[n]['depend']
         if '=' in vars[n]:
             if 'attrspec' not in vars[n]:
                 vars[n]['attrspec'] = []
@@ -2882,8 +2800,6 @@ def analyzevars(block):
                     vars[n] = appenddecl(vars[n], vars[block['result']])
                 if 'prefix' in block:
                     pr = block['prefix']
-                    ispure = 0
-                    isrec = 1
                     pr1 = pr.replace('pure', '')
                     ispure = (not pr == pr1)
                     pr = pr1.replace('recursive', '')
@@ -2986,7 +2902,7 @@ def expr2name(a, block, args=[]):
 
 def analyzeargs(block):
     setmesstext(block)
-    implicitrules, attrrules = buildimplicitrules(block)
+    implicitrules, _ = buildimplicitrules(block)
     if 'args' not in block:
         block['args'] = []
     args = []
@@ -3347,7 +3263,8 @@ def crack2fortran(block):
 """
     footer = """
 ! This file was auto-generated with f2py (version:%s).
-! See http://cens.ioc.ee/projects/f2py2e/
+! See:
+! https://web.archive.org/web/20140822061353/http://cens.ioc.ee/projects/f2py2e
 """ % (f2py_version)
     return header + pyf + footer
 
@@ -3404,8 +3321,8 @@ if __name__ == "__main__":
             try:
                 open(l).close()
                 files.append(l)
-            except IOError as detail:
-                errmess('IOError: %s\n' % str(detail))
+            except OSError as detail:
+                errmess(f'OSError: {detail!s}\n')
         else:
             funcs.append(l)
     if not strictf77 and f77modulename and not skipemptyends:

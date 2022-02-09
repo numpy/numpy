@@ -1,5 +1,5 @@
-import sys
-from typing import List, TypeVar, Optional, Any, overload, Union, Tuple, Sequence
+from collections.abc import Sequence
+from typing import TypeVar, Any, overload, Union, Literal
 
 from numpy import (
     ndarray,
@@ -13,7 +13,6 @@ from numpy import (
     _OrderKACF,
 )
 from numpy.typing import (
-    _ArrayOrScalar,
     _ArrayLikeBool_co,
     _ArrayLikeUInt_co,
     _ArrayLikeInt_co,
@@ -27,102 +26,108 @@ from numpy.typing import (
     _DTypeLikeComplex_co,
 )
 
-if sys.version_info >= (3, 8):
-    from typing import Literal
-else:
-    from typing_extensions import Literal
-
 _ArrayType = TypeVar(
     "_ArrayType",
     bound=ndarray[Any, dtype[Union[bool_, number[Any]]]],
 )
 
-_OptimizeKind = Union[
-    None, bool, Literal["greedy", "optimal"], Sequence[Any]
-]
+_OptimizeKind = None | bool | Literal["greedy", "optimal"] | Sequence[Any]
 _CastingSafe = Literal["no", "equiv", "safe", "same_kind"]
 _CastingUnsafe = Literal["unsafe"]
 
-__all__: List[str]
+__all__: list[str]
 
 # TODO: Properly handle the `casting`-based combinatorics
+# TODO: We need to evaluate the content `__subscripts` in order
+# to identify whether or an array or scalar is returned. At a cursory
+# glance this seems like something that can quite easily be done with
+# a mypy plugin.
+# Something like `is_scalar = bool(__subscripts.partition("->")[-1])`
 @overload
 def einsum(
-    __subscripts: str,
+    subscripts: str,
+    /,
     *operands: _ArrayLikeBool_co,
     out: None = ...,
-    dtype: Optional[_DTypeLikeBool] = ...,
+    dtype: None | _DTypeLikeBool = ...,
     order: _OrderKACF = ...,
     casting: _CastingSafe = ...,
     optimize: _OptimizeKind = ...,
-) -> _ArrayOrScalar[bool_]: ...
+) -> Any: ...
 @overload
 def einsum(
-    __subscripts: str,
+    subscripts: str,
+    /,
     *operands: _ArrayLikeUInt_co,
     out: None = ...,
-    dtype: Optional[_DTypeLikeUInt] = ...,
+    dtype: None | _DTypeLikeUInt = ...,
     order: _OrderKACF = ...,
     casting: _CastingSafe = ...,
     optimize: _OptimizeKind = ...,
-) -> _ArrayOrScalar[unsignedinteger[Any]]: ...
+) -> Any: ...
 @overload
 def einsum(
-    __subscripts: str,
+    subscripts: str,
+    /,
     *operands: _ArrayLikeInt_co,
     out: None = ...,
-    dtype: Optional[_DTypeLikeInt] = ...,
+    dtype: None | _DTypeLikeInt = ...,
     order: _OrderKACF = ...,
     casting: _CastingSafe = ...,
     optimize: _OptimizeKind = ...,
-) -> _ArrayOrScalar[signedinteger[Any]]: ...
+) -> Any: ...
 @overload
 def einsum(
-    __subscripts: str,
+    subscripts: str,
+    /,
     *operands: _ArrayLikeFloat_co,
     out: None = ...,
-    dtype: Optional[_DTypeLikeFloat] = ...,
+    dtype: None | _DTypeLikeFloat = ...,
     order: _OrderKACF = ...,
     casting: _CastingSafe = ...,
     optimize: _OptimizeKind = ...,
-) -> _ArrayOrScalar[floating[Any]]: ...
+) -> Any: ...
 @overload
 def einsum(
-    __subscripts: str,
+    subscripts: str,
+    /,
     *operands: _ArrayLikeComplex_co,
     out: None = ...,
-    dtype: Optional[_DTypeLikeComplex] = ...,
+    dtype: None | _DTypeLikeComplex = ...,
     order: _OrderKACF = ...,
     casting: _CastingSafe = ...,
     optimize: _OptimizeKind = ...,
-) -> _ArrayOrScalar[complexfloating[Any, Any]]: ...
+) -> Any: ...
 @overload
 def einsum(
-    __subscripts: str,
+    subscripts: str,
+    /,
     *operands: Any,
     casting: _CastingUnsafe,
-    dtype: Optional[_DTypeLikeComplex_co] = ...,
+    dtype: None | _DTypeLikeComplex_co = ...,
     out: None = ...,
     order: _OrderKACF = ...,
     optimize: _OptimizeKind = ...,
-) -> _ArrayOrScalar[Any]: ...
+) -> Any: ...
 @overload
 def einsum(
-    __subscripts: str,
+    subscripts: str,
+    /,
     *operands: _ArrayLikeComplex_co,
     out: _ArrayType,
-    dtype: Optional[_DTypeLikeComplex_co] = ...,
+    dtype: None | _DTypeLikeComplex_co = ...,
     order: _OrderKACF = ...,
     casting: _CastingSafe = ...,
     optimize: _OptimizeKind = ...,
 ) -> _ArrayType: ...
 @overload
 def einsum(
-    __subscripts: str,
+    subscripts: str,
+    /,
     *operands: Any,
     out: _ArrayType,
     casting: _CastingUnsafe,
-    dtype: Optional[_DTypeLikeComplex_co] = ...,
+    dtype: None | _DTypeLikeComplex_co = ...,
     order: _OrderKACF = ...,
     optimize: _OptimizeKind = ...,
 ) -> _ArrayType: ...
@@ -132,7 +137,8 @@ def einsum(
 # NOTE: In practice the list consists of a `str` (first element)
 # and a variable number of integer tuples.
 def einsum_path(
-    __subscripts: str,
+    subscripts: str,
+    /,
     *operands: _ArrayLikeComplex_co,
     optimize: _OptimizeKind = ...,
-) -> Tuple[List[Any], str]: ...
+) -> tuple[list[Any], str]: ...

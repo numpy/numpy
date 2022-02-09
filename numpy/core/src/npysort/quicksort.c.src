@@ -51,7 +51,13 @@
 
 #include "npy_sort.h"
 #include "npysort_common.h"
+#include "npy_cpu_features.h"
+#include "x86-qsort.h"
 #include <stdlib.h>
+
+#ifndef NPY_DISABLE_OPTIMIZATION
+    #include "x86-qsort.dispatch.h"
+#endif
 
 #define NOT_USED NPY_UNUSED(unused)
 /*
@@ -83,11 +89,22 @@
  *         npy_uint, npy_long, npy_ulong, npy_longlong, npy_ulonglong,
  *         npy_ushort, npy_float, npy_double, npy_longdouble, npy_cfloat,
  *         npy_cdouble, npy_clongdouble, npy_datetime, npy_timedelta#
+ * #AVX512 = 0*5, 1, 1, 0*5, 1, 0*7#
  */
 
 NPY_NO_EXPORT int
 quicksort_@suff@(void *start, npy_intp num, void *NOT_USED)
 {
+
+#if @AVX512@
+    void (*dispfunc)(void*, npy_intp) = NULL;
+    NPY_CPU_DISPATCH_CALL_XB(dispfunc = &x86_quicksort_@suff@);
+    if (dispfunc) {
+       (*dispfunc)(start, num);
+       return 0;
+    }
+#endif
+
     @type@ vp;
     @type@ *pl = start;
     @type@ *pr = pl + num - 1;

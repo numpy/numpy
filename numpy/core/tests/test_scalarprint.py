@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """ Test printing of scalar types.
 
 """
@@ -154,7 +153,8 @@ class TestRealScalars:
                     "0.00000000000000000000000000000000000000000000140129846432"
                     "4817070923729583289916131280261941876515771757068283889791"
                     "08268586060148663818836212158203125")
-        assert_equal(fpos64(0.5**(1022 + 52), unique=False, precision=1074),
+        
+        assert_equal(fpos64(5e-324, unique=False, precision=1074),
                     "0.00000000000000000000000000000000000000000000000000000000"
                     "0000000000000000000000000000000000000000000000000000000000"
                     "0000000000000000000000000000000000000000000000000000000000"
@@ -306,6 +306,7 @@ class TestRealScalars:
             assert_equal(fpos(tp('1.2'), unique=False, precision=4, trim='-'),
                          "1.2" if tp != np.float16 else "1.2002")
             assert_equal(fpos(tp('1.'), trim='-'), "1")
+            assert_equal(fpos(tp('1.001'), precision=1, trim='-'), "1")
 
     @pytest.mark.skipif(not platform.machine().startswith("ppc64"),
                         reason="only applies to ppc float128 values")

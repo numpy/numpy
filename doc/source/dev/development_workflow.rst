@@ -185,7 +185,29 @@ Standard acronyms to start the commit message with are::
    REV: revert an earlier commit
    STY: style fix (whitespace, PEP8)
    TST: addition or modification of tests
+   TYP: static typing
    REL: related to releasing numpy
+
+Commands to skip continuous integration
+```````````````````````````````````````
+
+By default a lot of continuous integration (CI) jobs are run for every PR,
+from running the test suite on different operating systems and hardware
+platforms to building the docs. In some cases you already know that CI isn't
+needed (or not all of it), for example if you work on CI config files, text in
+the README, or other files that aren't involved in regular build, test or docs
+sequences. In such cases you may explicitly skip CI by including one of these
+fragments in your commit message::
+
+   ``[ci skip]``: skip as much CI as possible (not all jobs can be skipped)
+   ``[skip github]``: skip GitHub Actions "build numpy and run tests" jobs
+   ``[skip travis]``: skip TravisCI jobs
+   ``[skip azurepipelines]``: skip Azure jobs
+
+*Note*: unfortunately not all CI systems implement this feature well, or at all.
+CircleCI supports ``ci skip`` but has no command to skip only CircleCI.
+Azure chooses to still run jobs with skip commands on PRs, the jobs only get
+skipped on merging to master.
 
 
 .. _workflow_mailing_list:

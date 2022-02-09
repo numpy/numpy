@@ -1,10 +1,10 @@
-#define PY_SSIZE_T_CLEAN
-#include <Python.h>
-#include "structmember.h"
-
-/*#include <stdio.h>*/
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
+
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+#include <structmember.h>
+
 #include "numpy/arrayobject.h"
 #include "arrayobject.h"
 
@@ -3254,7 +3254,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
  * If copy_if_overlap != 0, check if `a` has memory overlap with any of the
  * arrays in `index` and with `extra_op`. If yes, make copies as appropriate
  * to avoid problems if `a` is modified during the iteration.
- * `iter->array` may contain a copied array (UPDATEIFCOPY/WRITEBACKIFCOPY set).
+ * `iter->array` may contain a copied array (WRITEBACKIFCOPY set).
  */
 NPY_NO_EXPORT PyObject *
 PyArray_MapIterArrayCopyIfOverlap(PyArrayObject * a, PyObject * index,

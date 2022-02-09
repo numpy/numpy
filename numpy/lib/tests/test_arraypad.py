@@ -474,7 +474,7 @@ class TestStatistic:
 
     @pytest.mark.filterwarnings("ignore:Mean of empty slice:RuntimeWarning")
     @pytest.mark.filterwarnings(
-        "ignore:invalid value encountered in (true_divide|double_scalars):"
+        "ignore:invalid value encountered in (divide|double_scalars):"
         "RuntimeWarning"
     )
     @pytest.mark.parametrize("mode", ["mean", "median"])

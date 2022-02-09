@@ -5,12 +5,13 @@
 
    but still supports error-modes.
 */
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
 
 #define _UMATHMODULE
 #define _MULTIARRAYMODULE
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 
-#include "Python.h"
 #include "npy_config.h"
 #include "numpy/arrayobject.h"
 #include "numpy/ufuncobject.h"
@@ -283,19 +284,13 @@ static void
 
 static void
 @name@_ctype_floor_divide(@type@ a, @type@ b, @type@ *out) {
-    @type@ mod;
-
-    if (!b) {
-        *out = a / b;
-    } else {
-        *out = npy_divmod@c@(a, b, &mod);
-    }
+    *out = npy_floor_divide@c@(a, b);
 }
 
 
 static void
 @name@_ctype_remainder(@type@ a, @type@ b, @type@ *out) {
-    npy_divmod@c@(a, b, out);
+    *out = npy_remainder@c@(a, b);
 }
 
 

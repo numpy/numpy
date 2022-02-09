@@ -467,7 +467,7 @@ Suppose now that we wish to print that same data, but with the missing values
 replaced by the average value.
 
    >>> print(mx.filled(mx.mean()))
-   [ 0.  1.  2.  3.  4.]
+   [0.  1.  2.  3.  4.]
 
 
 Numerical operations

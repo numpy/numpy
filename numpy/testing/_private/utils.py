@@ -35,8 +35,7 @@ __all__ = [
         'assert_allclose', 'IgnoreException', 'clear_and_catch_warnings',
         'SkipTest', 'KnownFailureException', 'temppath', 'tempdir', 'IS_PYPY',
         'HAS_REFCOUNT', 'suppress_warnings', 'assert_array_compare',
-        '_assert_valid_refcount', '_gen_alignment_data', 'assert_no_gc_cycles',
-        'break_cycles', 'HAS_LAPACK64'
+        'assert_no_gc_cycles', 'break_cycles', 'HAS_LAPACK64', 'IS_PYSTON',
         ]
 
 
@@ -49,7 +48,8 @@ KnownFailureTest = KnownFailureException  # backwards compat
 verbose = 0
 
 IS_PYPY = platform.python_implementation() == 'PyPy'
-HAS_REFCOUNT = getattr(sys, 'getrefcount', None) is not None
+IS_PYSTON = hasattr(sys, "pyston_version_info")
+HAS_REFCOUNT = getattr(sys, 'getrefcount', None) is not None and not IS_PYSTON
 HAS_LAPACK64 = numpy.linalg.lapack_lite._ilp64
 
 
@@ -810,7 +810,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
                 'Mismatched elements: {} / {} ({:.3g}%)'.format(
                     n_mismatch, n_elements, percent_mismatch)]
 
-            with errstate(invalid='ignore', divide='ignore'):
+            with errstate(all='ignore'):
                 # ignore errors for non-numeric types
                 with contextlib.suppress(TypeError):
                     error = abs(x - y)
@@ -1228,13 +1228,13 @@ def rundocs(filename=None, raise_on_error=True):
 
     >>> np.lib.test(doctests=True)  # doctest: +SKIP
     """
-    from numpy.compat import npy_load_module
+    from numpy.distutils.misc_util import exec_mod_from_location
     import doctest
     if filename is None:
         f = sys._getframe(1)
         filename = f.f_globals['__file__']
     name = os.path.splitext(os.path.basename(filename))[0]
-    m = npy_load_module(name, filename)
+    m = exec_mod_from_location(name, filename)
 
     tests = doctest.DocTestFinder().find(m)
     runner = doctest.DocTestRunner(verbose=False)
@@ -2402,9 +2402,9 @@ def break_cycles():
 
     gc.collect()
     if IS_PYPY:
-        # interpreter runs now, to call deleted objects' __del__ methods
+        # a few more, just to make sure all the finalizers are called
         gc.collect()
-        # two more, just to make sure
+        gc.collect()
         gc.collect()
         gc.collect()
 
@@ -2519,3 +2519,15 @@ def _no_tracing(func):
                 sys.settrace(original_trace)
         return wrapper
 
+
+def _get_glibc_version():
+    try:
+        ver = os.confstr('CS_GNU_LIBC_VERSION').rsplit(' ')[1]
+    except Exception as inst:
+        ver = '0.0'
+
+    return ver
+
+
+_glibcver = _get_glibc_version()
+_glibc_older_than = lambda x: (_glibcver != '0.0' and _glibcver < x)
