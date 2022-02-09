@@ -2134,7 +2134,7 @@ class TestUfunc:
             [np.logical_and, np.logical_or, np.logical_xor])
     def test_logical_ufuncs_support_anything(self, ufunc):
         # The logical ufuncs support even input that can't be promoted:
-        a = np.array('1')
+        a = np.array(b'1', dtype="V3")
         c = np.array([1., 2.])
         assert_array_equal(ufunc(a, c), ufunc([True, True], True))
         assert ufunc.reduce(a) == True
@@ -2149,6 +2149,23 @@ class TestUfunc:
         a = np.array([3], dtype="i")
         out = np.zeros((), dtype=a.dtype)
         assert ufunc.reduce(a, out=out) == 1
+
+    @pytest.mark.parametrize("ufunc",
+            [np.logical_and, np.logical_or, np.logical_xor])
+    def test_logical_ufuncs_reject_string(self, ufunc):
+        """
+        Logical ufuncs are normally well defined by working with the boolean
+        equivalent, i.e. casting all inputs to bools should work.
+
+        However, casting strings to bools is *currently* weird, because it
+        actually uses `bool(int(str))`.  Thus we explicitly reject strings.
+        This test should succeed (and can probably just be removed) as soon as
+        string to bool casts are well defined in NumPy.
+        """
+        with pytest.raises(TypeError, match="contain a loop with signature"):
+            ufunc(["1"], ["3"])
+        with pytest.raises(TypeError, match="contain a loop with signature"):
+            ufunc.reduce(["1", "2", "0"])
 
     @pytest.mark.parametrize("ufunc",
              [np.logical_and, np.logical_or, np.logical_xor])
