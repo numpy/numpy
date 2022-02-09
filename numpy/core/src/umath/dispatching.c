@@ -1020,7 +1020,7 @@ logical_ufunc_promoter(PyUFuncObject *NPY_UNUSED(ufunc),
     }
     if ((op_dtypes[0] != NULL && PyTypeNum_ISSTRING(op_dtypes[0]->type_num))
             || PyTypeNum_ISSTRING(op_dtypes[1]->type_num)) {
-        /* bail out on strings: currently caststing them to bool is too weird */
+        /* bail out on strings: currently casting them to bool is too weird */
         return -1;
     }
 
