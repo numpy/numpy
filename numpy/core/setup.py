@@ -964,7 +964,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'textreading', 'rows.c'),
             join('src', 'multiarray', 'textreading', 'stream_pyobject.c'),
             join('src', 'multiarray', 'textreading', 'str_to_int.c'),
-            join('src', 'multiarray', 'textreading', 'tokenize.c.src'),
+            join('src', 'multiarray', 'textreading', 'tokenize.cpp'),
             ]
 
     #######################################################################
