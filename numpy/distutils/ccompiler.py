@@ -355,10 +355,9 @@ def CCompiler_compile(self, sources, output_dir=None, macros=None,
 
     if len(build) > 1 and jobs > 1:
         # build parallel
-        import multiprocessing.pool
-        pool = multiprocessing.pool.ThreadPool(jobs)
-        pool.map(single_compile, build_items)
-        pool.close()
+        from concurrent.futures import ThreadPoolExecutor
+        with ThreadPoolExecutor(jobs) as pool:
+            pool.map(single_compile, build_items)
     else:
         # build serial
         for o in build_items:
