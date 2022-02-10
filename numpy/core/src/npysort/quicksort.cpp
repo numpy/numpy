@@ -167,21 +167,26 @@ quicksort_(type *start, npy_intp num)
         while ((pr - pl) > SMALL_QUICKSORT) {
             /* quicksort partition */
             pm = pl + ((pr - pl) >> 1);
-            if (Tag::less(*pm, *pl))
+            if (Tag::less(*pm, *pl)) {
                 std::swap(*pm, *pl);
-            if (Tag::less(*pr, *pm))
+            }
+            if (Tag::less(*pr, *pm)) {
                 std::swap(*pr, *pm);
-            if (Tag::less(*pm, *pl))
+            }
+            if (Tag::less(*pm, *pl)) {
                 std::swap(*pm, *pl);
+            }
             vp = *pm;
             pi = pl;
             pj = pr - 1;
             std::swap(*pm, *pj);
             for (;;) {
-                do ++pi;
-                while (Tag::less(*pi, vp));
-                do --pj;
-                while (Tag::less(vp, *pj));
+                do {
+                    ++pi;
+                } while (Tag::less(*pi, vp));
+                do {
+                    --pj;
+                } while (Tag::less(vp, *pj));
                 if (pi >= pj) {
                     break;
                 }
@@ -248,21 +253,26 @@ aquicksort_(type *vv, npy_intp *tosort, npy_intp num)
         while ((pr - pl) > SMALL_QUICKSORT) {
             /* quicksort partition */
             pm = pl + ((pr - pl) >> 1);
-            if (Tag::less(v[*pm], v[*pl]))
+            if (Tag::less(v[*pm], v[*pl])) {
                 std::swap(*pm, *pl);
-            if (Tag::less(v[*pr], v[*pm]))
+            }
+            if (Tag::less(v[*pr], v[*pm])) {
                 std::swap(*pr, *pm);
-            if (Tag::less(v[*pm], v[*pl]))
+            }
+            if (Tag::less(v[*pm], v[*pl])) {
                 std::swap(*pm, *pl);
+            }
             vp = v[*pm];
             pi = pl;
             pj = pr - 1;
             std::swap(*pm, *pj);
             for (;;) {
-                do ++pi;
-                while (Tag::less(v[*pi], vp));
-                do --pj;
-                while (Tag::less(vp, v[*pj]));
+                do {
+                    ++pi;
+                } while (Tag::less(v[*pi], vp));
+                do {
+                    --pj;
+                } while (Tag::less(vp, v[*pj]));
                 if (pi >= pj) {
                     break;
                 }
@@ -345,21 +355,26 @@ string_quicksort_(type *start, npy_intp num, void *varr)
         while ((size_t)(pr - pl) > SMALL_QUICKSORT * len) {
             /* quicksort partition */
             pm = pl + (((pr - pl) / len) >> 1) * len;
-            if (Tag::less(pm, pl, len))
+            if (Tag::less(pm, pl, len)) {
                 Tag::swap(pm, pl, len);
-            if (Tag::less(pr, pm, len))
+            }
+            if (Tag::less(pr, pm, len)) {
                 Tag::swap(pr, pm, len);
-            if (Tag::less(pm, pl, len))
+            }
+            if (Tag::less(pm, pl, len)) {
                 Tag::swap(pm, pl, len);
+            }
             Tag::copy(vp, pm, len);
             pi = pl;
             pj = pr - len;
             Tag::swap(pm, pj, len);
             for (;;) {
-                do pi += len;
-                while (Tag::less(pi, vp, len));
-                do pj -= len;
-                while (Tag::less(vp, pj, len));
+                do {
+                    pi += len;
+                } while (Tag::less(pi, vp, len));
+                do {
+                    pj -= len;
+                } while (Tag::less(vp, pj, len));
                 if (pi >= pj) {
                     break;
                 }
@@ -436,21 +451,26 @@ string_aquicksort_(type *vv, npy_intp *tosort, npy_intp num, void *varr)
         while ((pr - pl) > SMALL_QUICKSORT) {
             /* quicksort partition */
             pm = pl + ((pr - pl) >> 1);
-            if (Tag::less(v + (*pm) * len, v + (*pl) * len, len))
+            if (Tag::less(v + (*pm) * len, v + (*pl) * len, len)) {
                 std::swap(*pm, *pl);
-            if (Tag::less(v + (*pr) * len, v + (*pm) * len, len))
+            }
+            if (Tag::less(v + (*pr) * len, v + (*pm) * len, len)) {
                 std::swap(*pr, *pm);
-            if (Tag::less(v + (*pm) * len, v + (*pl) * len, len))
+            }
+            if (Tag::less(v + (*pm) * len, v + (*pl) * len, len)) {
                 std::swap(*pm, *pl);
+            }
             vp = v + (*pm) * len;
             pi = pl;
             pj = pr - 1;
             std::swap(*pm, *pj);
             for (;;) {
-                do ++pi;
-                while (Tag::less(v + (*pi) * len, vp, len));
-                do --pj;
-                while (Tag::less(vp, v + (*pj) * len, len));
+                do {
+                    ++pi;
+                } while (Tag::less(v + (*pi) * len, vp, len));
+                do {
+                    --pj;
+                } while (Tag::less(vp, v + (*pj) * len, len));
                 if (pi >= pj) {
                     break;
                 }
