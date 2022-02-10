@@ -14,8 +14,8 @@
  * #func_suffix = f16, 8#
  */
 /**begin repeat1
- * #func = tanh, exp2, log2, log10, expm1, log1p, cbrt, tan, asin, acos, atan, sinh, cosh, asinh, acosh, atanh#
- * #default_val = 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0#
+ * #func = exp2, log2, log10, expm1, log1p, cbrt, tan, asin, acos, atan, sinh, cosh, asinh, acosh, atanh#
+ * #default_val = 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0#
  */
 static void
 simd_@func@_@sfx@(const npyv_lanetype_@sfx@ *src, npy_intp ssrc,
@@ -83,8 +83,8 @@ simd_@func@_f64(const double *src, npy_intp ssrc,
  *  #sfx  = f64, f32#
  */
 /**begin repeat1
- *  #func = tanh, exp2, log2, log10, expm1, log1p, cbrt, tan, arcsin, arccos, arctan, sinh, cosh, arcsinh, arccosh, arctanh#
- *  #intrin = tanh, exp2, log2, log10, expm1, log1p, cbrt, tan, asin, acos, atan, sinh, cosh, asinh, acosh, atanh#
+ *  #func = exp2, log2, log10, expm1, log1p, cbrt, tan, arcsin, arccos, arctan, sinh, cosh, arcsinh, arccosh, arctanh#
+ *  #intrin = exp2, log2, log10, expm1, log1p, cbrt, tan, asin, acos, atan, sinh, cosh, asinh, acosh, atanh#
  */
 NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@func@)
 (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
