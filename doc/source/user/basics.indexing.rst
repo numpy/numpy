@@ -104,14 +104,6 @@ integer, or a tuple of slice objects and integers. :py:data:`Ellipsis`
 and :const:`newaxis` objects can be interspersed with these as
 well.
 
-.. deprecated:: 1.15.0
-
-  In order to remain backward compatible with a common usage in
-  Numeric, basic slicing is also initiated if the selection object is
-  any non-ndarray and non-tuple sequence (such as a :class:`list`) containing
-  :class:`slice` objects, the :py:data:`Ellipsis` object, or the :const:`newaxis`
-  object, but not for integer arrays or other embedded sequences.
-
 .. index::
    triple: ndarray; special methods; getitem
    triple: ndarray; special methods; setitem
