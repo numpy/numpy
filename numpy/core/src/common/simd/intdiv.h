@@ -46,9 +46,6 @@
  *  - For 64-bit division on Aarch64 and IBM/Power, we fall-back to the scalar division
  *    since emulating multiply-high is expensive and both architectures have very fast dividers.
  *
- ** TODO:
- *   - Add support for Power10(VSX4)
- *
  ***************************************************************
  ** Figure 4.1: Unsigned division by run–time invariant divisor
  ***************************************************************
