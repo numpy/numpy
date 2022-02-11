@@ -136,13 +136,13 @@ jobs:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
 
-  no_relaxed_strides:
+  relaxed_strides_debug:
     needs: [smoke_test]
     runs-on: ubuntu-latest
     env:
-      NPY_RELAXED_STRIDES_CHECKING: 0
       CHECK_BLAS: 1
       NPY_USE_BLAS_ILP64: 1
+      NPY_RELAXED_STRIDES_DEBUG: 1
     steps:
     - uses: actions/checkout@v2
       with:
@@ -158,7 +158,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       USE_WHEEL: 1
-      NPY_RELAXED_STRIDES_DEBUG: 1
     steps:
     - uses: actions/checkout@v2
       with:
