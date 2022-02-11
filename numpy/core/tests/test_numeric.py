@@ -1256,6 +1256,14 @@ class TestFromiter:
         with pytest.raises(ValueError, match=msg):
             np.fromiter([1, 2, 3], count=10, dtype=int)
 
+    def test_failed_itemsetting(self):
+        with pytest.raises(TypeError):
+            np.fromiter([1, None, 3], dtype=int)
+
+        # The following manages to hit somewhat trickier code paths:
+        iterable = ((2, 3, 4) for i in range(5))
+        with pytest.raises(ValueError):
+            np.fromiter(iterable, dtype=np.dtype((int, 2)))
 
 class TestNonzero:
     def test_nonzero_trivial(self):

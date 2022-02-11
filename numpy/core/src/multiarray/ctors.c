@@ -3968,7 +3968,7 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, npy_intp count)
             }
         }
 
-        if (PyArray_Pack(dtype, item, value) < -1) {
+        if (PyArray_Pack(dtype, item, value) < 0) {
             Py_DECREF(value);
             goto done;
         }
