@@ -25,8 +25,7 @@ def get_include():
 
     Notes
     -----
-    When using ``distutils``, for example in ``setup.py``.
-    ::
+    When using ``distutils``, for example in ``setup.py``::
 
         import numpy as np
         ...
