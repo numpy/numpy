@@ -954,7 +954,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'npysort', 'timsort.cpp'),
             join('src', 'npysort', 'heapsort.cpp'),
             join('src', 'npysort', 'radixsort.cpp'),
-            join('src', 'common', 'npy_partition.h.src'),
+            join('src', 'common', 'npy_partition.h'),
             join('src', 'npysort', 'selection.cpp'),
             join('src', 'common', 'npy_binsearch.h'),
             join('src', 'npysort', 'binsearch.cpp'),
