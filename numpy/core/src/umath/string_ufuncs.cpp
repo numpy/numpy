@@ -1,0 +1,451 @@
+#include <Python.h>
+
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#define _MULTIARRAYMODULE
+#define _UMATHMODULE
+
+#include "numpy/ndarraytypes.h"
+
+#include "numpyos.h"
+#include "dispatching.h"
+#include "dtypemeta.h"
+#include "common_dtype.h"
+#include "convert_datatype.h"
+
+
+template <typename character>
+static NPY_INLINE int
+character_cmp(character a, character b)
+{
+    if (a == b) {
+        return 0;
+    }
+    else if (a < b) {
+        return -1;
+    }
+    else {
+        return 1;
+    }
+}
+
+
+/*
+ * Compare two strings of different length.  Note that either string may be
+ * zero padded (trailing zeros are ignored in other words, the shorter word
+ * is always padded with zeros).
+ */
+template <int rstrip, typename character>
+static NPY_INLINE int
+string_cmp(int len1, character *str1, int len2, character *str2)
+{
+    if (rstrip) {
+        /*
+         * Ignore/"trim" trailing whitespace (and 0s).  Note that this function
+         * does not support unicode whitespace (and never has).
+         */
+        while (len1 > 0) {
+            character c = str1[len1-1];
+            if (c != (character)0 && !NumPyOS_ascii_isspace(c)) {
+                break;
+            }
+            len1--;
+        }
+        while (len2 > 0) {
+            character c = str2[len2-1];
+            if (c != (character)0 && !NumPyOS_ascii_isspace(c)) {
+                break;
+            }
+            len2--;
+        }
+    }
+
+    int n = PyArray_MIN(len1, len2);
+
+    for (int i = 0; i < n; i++) {
+        int cmp = character_cmp(*str1, *str2);
+        if (cmp != 0) {
+            return cmp;
+        }
+        str1++;
+        str2++;
+    }
+    if (len1 > len2) {
+        for (int i = n; i < len1; i++) {
+            int cmp = character_cmp(*str1, (character)0);
+            if (cmp != 0) {
+                return cmp;
+            }
+            str1++;
+        }
+    }
+    else if (len2 > len1) {
+        for (int i = n; i < len2; i++) {
+            int cmp = character_cmp((character)0, *str2);
+            if (cmp != 0) {
+                return cmp;
+            }
+            str2++;
+        }
+    }
+    return 0;
+}
+
+
+template <bool rstrip, int comp, typename character>
+static int
+string_comparison_loop(PyArrayMethod_Context *context,
+        char *const data[], npy_intp const dimensions[],
+        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    /*
+     * Note, this works in CPython even without the GIL, however it may be that
+     * this will have to be moved into `auxdata` eventually, which may be
+     * slightly faster/cleaner (but also slightly more involved) in any case.
+     */
+    int len1 = context->descriptors[0]->elsize / sizeof(character);
+    int len2 = context->descriptors[1]->elsize / sizeof(character);
+
+    char *in1 = data[0];
+    char *in2 = data[1];
+    char *out = data[2];
+
+    npy_intp N = dimensions[0];
+
+    while (N--) {
+        int cmp = string_cmp<rstrip>(
+                len1, (character *)in1, len2, (character *)in2);
+        npy_bool res;
+        if (comp == Py_EQ) {
+            res = cmp == 0;
+        }
+        else if (comp == Py_NE) {
+            res = cmp != 0;
+        }
+        else if (comp == Py_LT) {
+            res = cmp < 0;
+        }
+        else if (comp == Py_LE) {
+            res = cmp <= 0;
+        }
+        else if (comp == Py_GT) {
+            res = cmp > 0;
+        }
+        else if (comp == Py_GE) {
+            res = cmp >= 0;
+        }
+        else {
+            assert(0);
+        }
+        *(npy_bool *)out = res;
+
+        in1 += strides[0];
+        in2 += strides[1];
+        out += strides[2];
+    }
+    return 0;
+}
+
+
+/*
+ * Machinery to add the string loops to the existing ufuncs.
+ */
+
+/*
+ * This function replaces the strided loop with the passed in one,
+ * and registers it with the given ufunc.
+ */
+static int
+add_loop(
+        PyObject *umath, const char *ufunc_name,
+        PyArrayMethod_Spec *spec, PyArrayMethod_StridedLoop *loop)
+{
+    PyObject *name = PyUnicode_FromString(ufunc_name);
+    if (name == nullptr) {
+        return -1;
+    }
+    PyObject *ufunc = PyObject_GetItem(umath, name);
+    Py_DECREF(name);
+    if (ufunc == nullptr) {
+        printf("%d\n", PyErr_Occurred() == nullptr);
+        PyObject_Print(PyErr_Occurred(), stdout, 0);
+        printf("\n");
+        return -1;
+    }
+    spec->slots[0].pfunc = (void *)loop;
+
+    int res = PyUFunc_AddLoopFromSpec(ufunc, spec);
+    Py_DECREF(ufunc);
+    return res;
+}
+
+
+extern "C" {
+    NPY_NO_EXPORT int
+    init_string_ufuncs(PyObject *umath);
+}
+
+NPY_NO_EXPORT int
+init_string_ufuncs(PyObject *umath)
+{
+    int res = -1;
+    /* NOTE: This should recieve global symbols? */
+    PyArray_DTypeMeta *String = PyArray_DTypeFromTypeNum(NPY_STRING);
+    PyArray_DTypeMeta *Unicode = PyArray_DTypeFromTypeNum(NPY_UNICODE);
+    PyArray_DTypeMeta *Bool = PyArray_DTypeFromTypeNum(NPY_BOOL);
+
+    /* We start with the string loops: */
+    PyArray_DTypeMeta *dtypes[] = {String, String, Bool};
+    /*
+     * We only have one loop right now, the strided one, the default type
+     * resolver ensures native byte order/canonical representation.
+     */
+    PyType_Slot slots[] = {
+        {NPY_METH_strided_loop, nullptr},
+        {0, nullptr}
+    };
+
+    PyArrayMethod_Spec spec = {
+        .name = "templated_string_comparison",
+        .nin = 2,
+        .nout = 1,
+        .dtypes = dtypes,
+        .slots = slots,
+    };
+
+    /* Use this loop variable for typing more explicitly */
+    PyArrayMethod_StridedLoop *loop;
+
+    /* TODO: It would be nice to condense the below */
+    /* All String loops */
+    loop = string_comparison_loop<false, Py_EQ, npy_byte>;
+    if (add_loop(umath, "equal", &spec, loop) < 0) {
+        goto finish;
+    }
+    loop = string_comparison_loop<false, Py_NE, npy_byte>;
+    if (add_loop(umath, "not_equal", &spec, loop) < 0) {
+        goto finish;
+    }
+    loop = string_comparison_loop<false, Py_LT, npy_byte>;
+    if (add_loop(umath, "less", &spec, loop) < 0) {
+        goto finish;
+    }
+    loop = string_comparison_loop<false, Py_LE, npy_byte>;
+    if (add_loop(umath, "less_equal", &spec, loop) < 0) {
+        goto finish;
+    }
+    loop = string_comparison_loop<false, Py_GT, npy_byte>;
+    if (add_loop(umath, "greater", &spec, loop) < 0) {
+        goto finish;
+    }
+    loop = string_comparison_loop<false, Py_GE, npy_byte>;
+    if (add_loop(umath, "greater_equal", &spec, loop) < 0) {
+        goto finish;
+    }
+
+    /* All Unicode loops */
+    dtypes[0] = Unicode;
+    dtypes[1] = Unicode;
+
+    loop = string_comparison_loop<false, Py_EQ, npy_ucs4>;
+    if (add_loop(umath, "equal", &spec, loop) < 0) {
+        goto finish;
+    }
+    loop = string_comparison_loop<false, Py_NE, npy_ucs4>;
+    if (add_loop(umath, "not_equal", &spec, loop) < 0) {
+        goto finish;
+    }
+    loop = string_comparison_loop<false, Py_LT, npy_ucs4>;
+    if (add_loop(umath, "less", &spec, loop) < 0) {
+        goto finish;
+    }
+    loop = string_comparison_loop<false, Py_LE, npy_ucs4>;
+    if (add_loop(umath, "less_equal", &spec, loop) < 0) {
+        goto finish;
+    }
+    loop = string_comparison_loop<false, Py_GT, npy_ucs4>;
+    if (add_loop(umath, "greater", &spec, loop) < 0) {
+        goto finish;
+    }
+    loop = string_comparison_loop<false, Py_GE, npy_ucs4>;
+    if (add_loop(umath, "greater_equal", &spec, loop) < 0) {
+        goto finish;
+    }
+
+    res = 0;
+  finish:
+    Py_DECREF(String);
+    Py_DECREF(Unicode);
+    Py_DECREF(Bool);
+    return res;
+}
+
+
+template <bool rstrip, typename character>
+static PyArrayMethod_StridedLoop *
+get_strided_loop(int comp)
+{
+    if (comp == Py_EQ) {
+        return string_comparison_loop<rstrip, Py_EQ, character>;
+    }
+    else if (comp == Py_NE) {
+        return string_comparison_loop<rstrip, Py_NE, character>;
+    }
+    else if (comp == Py_LT) {
+        return string_comparison_loop<rstrip, Py_LT, character>;
+    }
+    else if (comp == Py_LE) {
+        return string_comparison_loop<rstrip, Py_LE, character>;
+    }
+    else if (comp == Py_GT) {
+        return string_comparison_loop<rstrip, Py_GT, character>;
+    }
+    else if (comp == Py_GE) {
+        return string_comparison_loop<rstrip, Py_GE, character>;
+    }
+    assert(0);
+    return nullptr;
+}
+
+
+/*
+ * This function is used for `compare_chararrays` (and void comparisons
+ * currently).  The first could probably be deprecated.
+ *
+ * The `rstrip` mechanism is presumably for some fortran compat, but the
+ * question is whether it would not be better to have/use `rstrip` on such
+ * an array first...
+ *
+ * NOTE: This function is also used for unstructured voids, this works because
+ *       `npy_byte` works for it.
+ */
+extern "C" {
+    NPY_NO_EXPORT PyObject *
+    _umath_strings_richcompare(
+            PyArrayObject *self, PyArrayObject *other, int cmp_op, int rstrip);
+}
+
+NPY_NO_EXPORT PyObject *
+_umath_strings_richcompare(
+        PyArrayObject *self, PyArrayObject *other, int cmp_op, int rstrip)
+{
+    NpyIter *iter = nullptr;
+    PyObject *result = nullptr;
+
+    char **dataptr = nullptr;
+    npy_intp *strides = nullptr;
+    npy_intp *countptr = nullptr;
+    npy_intp size = 0;
+
+    PyArrayMethod_Context context = {
+        .caller = nullptr,
+        .method = nullptr,
+        .descriptors = nullptr,
+    };
+    NpyIter_IterNextFunc *iternext = nullptr;
+
+    npy_uint32 it_flags = (
+            NPY_ITER_EXTERNAL_LOOP | NPY_ITER_ZEROSIZE_OK |
+            NPY_ITER_BUFFERED | NPY_ITER_GROWINNER);
+    npy_uint32 op_flags[3] = {
+            NPY_ITER_READONLY | NPY_ITER_ALIGNED,
+            NPY_ITER_READONLY | NPY_ITER_ALIGNED,
+            NPY_ITER_WRITEONLY | NPY_ITER_ALLOCATE | NPY_ITER_ALIGNED};
+
+    PyArrayMethod_StridedLoop *strided_loop = nullptr;
+    NPY_BEGIN_THREADS_DEF;
+
+    if (PyArray_TYPE(self) != PyArray_TYPE(other)) {
+        /*
+         * Comparison between Bytes and Unicode is not defined in Py3K;
+         * we follow.
+         * TODO: This makes no sense at all for `compare_chararrays`, kept
+         *       only under the assumption that we are more likely to deprecate
+         *       than fix it to begin with.
+         */
+        Py_INCREF(Py_NotImplemented);
+        return Py_NotImplemented;
+    }
+
+    PyArrayObject *ops[3] = {self, other, nullptr};
+    PyArray_Descr *descrs[3] = {nullptr, nullptr, PyArray_DescrFromType(NPY_BOOL)};
+    /* ensure_dtype_nbo is in principle not necessary for == and !=: */
+    descrs[0] = ensure_dtype_nbo(PyArray_DESCR(self));
+    if (descrs[0] == nullptr) {
+        goto finish;
+    }
+    descrs[1] = ensure_dtype_nbo(PyArray_DESCR(other));
+    if (descrs[1] == nullptr) {
+        goto finish;
+    }
+
+    /*
+     * Create the iterator:
+     */
+    iter = NpyIter_AdvancedNew(
+            3, ops, it_flags, NPY_KEEPORDER, NPY_SAFE_CASTING, op_flags, descrs,
+            -1, nullptr, nullptr, 0);
+    if (iter == nullptr) {
+        goto finish;
+    }
+
+    size = NpyIter_GetIterSize(iter);
+    if (size == 0) {
+        result = (PyObject *)NpyIter_GetOperandArray(iter)[2];
+        Py_INCREF(result);
+        goto finish;
+    }
+
+    iternext = NpyIter_GetIterNext(iter, nullptr);
+    if (iternext == nullptr) {
+        goto finish;
+    }
+
+    /*
+     * Prepare the inner-loop and execute it (we only need descriptors to be
+     * passed in).
+     */
+    context.descriptors = descrs;
+
+    dataptr = NpyIter_GetDataPtrArray(iter);
+    strides = NpyIter_GetInnerStrideArray(iter);
+    countptr = NpyIter_GetInnerLoopSizePtr(iter);
+
+    if (rstrip == 0) {
+        /* NOTE: Also used for VOID, so can be STRING, UNICODE, or VOID: */
+        if (descrs[0]->type != NPY_UNICODE) {
+            strided_loop = get_strided_loop<false, npy_byte>(cmp_op);
+        }
+        else {
+            strided_loop = get_strided_loop<false, npy_ucs4>(cmp_op);
+        }
+    }
+    else {
+        if (descrs[0]->type != NPY_UNICODE) {
+            strided_loop = get_strided_loop<true, npy_byte>(cmp_op);
+        }
+        else {
+            strided_loop = get_strided_loop<true, npy_ucs4>(cmp_op);
+        }
+    }
+
+    NPY_BEGIN_THREADS_THRESHOLDED(size);
+
+    do {
+         /* We know the loop cannot fail */
+         strided_loop(&context, dataptr, countptr, strides, nullptr);
+    } while (iternext(iter) != 0);
+
+    NPY_END_THREADS;
+
+    result = (PyObject *)NpyIter_GetOperandArray(iter)[2];
+    Py_INCREF(result);
+
+ finish:
+    if (NpyIter_Deallocate(iter) < 0) {
+        Py_CLEAR(result);
+    }
+    Py_XDECREF(descrs[0]);
+    Py_XDECREF(descrs[1]);
+    Py_XDECREF(descrs[2]);
+    return result;
+}

@@ -28,6 +28,11 @@
 #include "funcs.inc"
 #include "__umath_generated.c"
 
+
+/* From string_ufuncs.cpp */
+NPY_NO_EXPORT int
+init_string_ufuncs(PyObject *umath);
+
 static PyUFuncGenericFunction pyfunc_functions[] = {PyUFunc_On_Om};
 
 static int
@@ -342,5 +347,10 @@ int initumath(PyObject *m)
     if (install_logical_ufunc_promoter(s) < 0) {
         return -1;
     }
+
+    if (init_string_ufuncs(d) < 0) {
+        return -1;
+    }
+
     return 0;
 }
