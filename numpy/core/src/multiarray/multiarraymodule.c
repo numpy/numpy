@@ -1535,7 +1535,7 @@ PyArray_EquivTypenums(int typenum1, int typenum2)
 /*
  * NOTE: The order specific stride setting is not necessary to preserve
  *       contiguity and could be removed.  However, this way the resulting
- *       strides do currently look clearer for fortran order inputs.
+ *       strides strides look better for fortran order inputs.
  */
 static NPY_STEALS_REF_TO_ARG(1) PyObject *
 _prepend_ones(PyArrayObject *arr, int nd, int ndmin, NPY_ORDER order)
