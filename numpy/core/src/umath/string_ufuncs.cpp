@@ -98,9 +98,9 @@ string_comparison_loop(PyArrayMethod_Context *context,
         npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
 {
     /*
-     * Note, this works in CPython even without the GIL, however it may be that
-     * this will have to be moved into `auxdata` eventually, which may be
-     * slightly faster/cleaner (but also slightly more involved) in any case.
+     * Note, fetching `elsize` from the descriptor is OK even without the GIL,
+     * however it may be that this should be moved into `auxdata` eventually,
+     * which may also be slightly faster/cleaner (but more involved).
      */
     int len1 = context->descriptors[0]->elsize / sizeof(character);
     int len2 = context->descriptors[1]->elsize / sizeof(character);
@@ -155,9 +155,8 @@ string_comparison_loop(PyArrayMethod_Context *context,
  * and registers it with the given ufunc.
  */
 static int
-add_loop(
-        PyObject *umath, const char *ufunc_name,
-        PyArrayMethod_Spec *spec, PyArrayMethod_StridedLoop *loop)
+add_loop(PyObject *umath, const char *ufunc_name,
+         PyArrayMethod_Spec *spec, PyArrayMethod_StridedLoop *loop)
 {
     PyObject *name = PyUnicode_FromString(ufunc_name);
     if (name == nullptr) {
@@ -305,15 +304,17 @@ get_strided_loop(int comp)
 
 
 /*
- * This function is used for `compare_chararrays` (and void comparisons
- * currently).  The first could probably be deprecated.
+ * This function is used for `compare_chararrays` and currently also void
+ * comparisons (unstructured voids).  The first could probably be deprecated
+ * and removed but is used by `np.char.chararray` the latter should also be
+ * moved to the ufunc probably (removing the need for manual looping).
  *
  * The `rstrip` mechanism is presumably for some fortran compat, but the
  * question is whether it would not be better to have/use `rstrip` on such
  * an array first...
  *
  * NOTE: This function is also used for unstructured voids, this works because
- *       `npy_byte` works for it.
+ *       `npy_byte` is correct.
  */
 extern "C" {
     NPY_NO_EXPORT PyObject *
@@ -361,7 +362,7 @@ _umath_strings_richcompare(
 
     PyArrayObject *ops[3] = {self, other, nullptr};
     PyArray_Descr *descrs[3] = {nullptr, nullptr, PyArray_DescrFromType(NPY_BOOL)};
-    /* ensure_dtype_nbo is in principle not necessary for == and !=: */
+    /* TODO: ensure_dtype_nbo is in principle not necessary for == and != */
     descrs[0] = ensure_dtype_nbo(PyArray_DESCR(self));
     if (descrs[0] == nullptr) {
         goto finish;
