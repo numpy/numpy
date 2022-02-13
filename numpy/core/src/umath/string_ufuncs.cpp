@@ -166,9 +166,6 @@ add_loop(
     PyObject *ufunc = PyObject_GetItem(umath, name);
     Py_DECREF(name);
     if (ufunc == nullptr) {
-        printf("%d\n", PyErr_Occurred() == nullptr);
-        PyObject_Print(PyErr_Occurred(), stdout, 0);
-        printf("\n");
         return -1;
     }
     spec->slots[0].pfunc = (void *)loop;
@@ -196,7 +193,7 @@ init_string_ufuncs(PyObject *umath)
     /* We start with the string loops: */
     PyArray_DTypeMeta *dtypes[] = {String, String, Bool};
     /*
-     * We only have one loop right now, the strided one, the default type
+     * We only have one loop right now, the strided one.  The default type
      * resolver ensures native byte order/canonical representation.
      */
     PyType_Slot slots[] = {
@@ -204,13 +201,13 @@ init_string_ufuncs(PyObject *umath)
         {0, nullptr}
     };
 
-    PyArrayMethod_Spec spec = {
-        .name = "templated_string_comparison",
-        .nin = 2,
-        .nout = 1,
-        .dtypes = dtypes,
-        .slots = slots,
-    };
+    PyArrayMethod_Spec spec = {};
+    spec.name = "templated_string_comparison";
+    spec.nin = 2;
+    spec.nout = 1;
+    spec.dtypes = dtypes;
+    spec.slots = slots;
+    spec.flags = NPY_METH_NO_FLOATINGPOINT_ERRORS;
 
     /* Use this loop variable for typing more explicitly */
     PyArrayMethod_StridedLoop *loop;
@@ -336,11 +333,7 @@ _umath_strings_richcompare(
     npy_intp *countptr = nullptr;
     npy_intp size = 0;
 
-    PyArrayMethod_Context context = {
-        .caller = nullptr,
-        .method = nullptr,
-        .descriptors = nullptr,
-    };
+    PyArrayMethod_Context context = {};
     NpyIter_IterNextFunc *iternext = nullptr;
 
     npy_uint32 it_flags = (
