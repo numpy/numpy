@@ -4190,7 +4190,8 @@ class TestArgmaxArgminCommon:
     sizes = [(), (3,), (3, 2), (2, 3),
              (3, 3), (2, 3, 4), (4, 3, 2),
              (1, 2, 3, 4), (2, 3, 4, 1),
-             (3, 4, 1, 2), (4, 1, 2, 3)]
+             (3, 4, 1, 2), (4, 1, 2, 3),
+             (64,), (128,), (256,)]
 
     @pytest.mark.parametrize("size, axis", itertools.chain(*[[(size, axis)
         for axis in list(range(-len(size), len(size))) + [None]]
@@ -4304,9 +4305,9 @@ class TestArgmaxArgminCommon:
     @pytest.mark.parametrize('ndim', [0, 1])
     @pytest.mark.parametrize('method', ['argmax', 'argmin'])
     def test_ret_is_out(self, ndim, method):
-        a = np.ones((4,) + (3,)*ndim)
+        a = np.ones((4,) + (256,)*ndim)
         arg_method = getattr(a, method)
-        out = np.empty((3,)*ndim, dtype=np.intp)
+        out = np.empty((256,)*ndim, dtype=np.intp)
         ret = arg_method(axis=0, out=out)
         assert ret is out
 
@@ -4357,12 +4358,44 @@ class TestArgmaxArgminCommon:
         assert_equal(arg_method(), 1)
 
 class TestArgmax:
-
-    nan_arr = [
-        ([0, 1, 2, 3, np.nan], 4),
-        ([0, 1, 2, np.nan, 3], 3),
-        ([np.nan, 0, 1, 2, 3], 0),
-        ([np.nan, 0, np.nan, 2, 3], 0),
+    usg_data = [
+        ([1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0], 0),
+        ([3, 3, 3, 3,  2,  2,  2,  2], 0),
+        ([0, 1, 2, 3,  4,  5,  6,  7], 7),
+        ([7, 6, 5, 4,  3,  2,  1,  0], 0)
+    ]
+    sg_data = usg_data + [
+        ([1, 2, 3, 4, -4, -3, -2, -1], 3),
+        ([1, 2, 3, 4, -1, -2, -3, -4], 3)
+    ]
+    darr = [(np.array(d[0], dtype=t), d[1]) for d, t in (
+        itertools.product(usg_data, (
+            np.uint8, np.uint16, np.uint32, np.uint64
+        ))
+    )]
+    darr = darr + [(np.array(d[0], dtype=t), d[1]) for d, t in (
+        itertools.product(sg_data, (
+            np.int8, np.int16, np.int32, np.int64, np.float32, np.float64
+        ))
+    )]
+    darr = darr + [(np.array(d[0], dtype=t), d[1]) for d, t in (
+        itertools.product((
+            ([0, 1, 2, 3, np.nan], 4),
+            ([0, 1, 2, np.nan, 3], 3),
+            ([np.nan, 0, 1, 2, 3], 0),
+            ([np.nan, 0, np.nan, 2, 3], 0),
+            # To hit the tail of SIMD multi-level(x4, x1) inner loops
+            # on varient SIMD widthes
+            ([1] * (2*5-1) + [np.nan], 2*5-1),
+            ([1] * (4*5-1) + [np.nan], 4*5-1),
+            ([1] * (8*5-1) + [np.nan], 8*5-1),
+            ([1] * (16*5-1) + [np.nan], 16*5-1),
+            ([1] * (32*5-1) + [np.nan], 32*5-1)
+        ), (
+            np.float32, np.float64
+        ))
+    )]
+    nan_arr = darr + [
         ([0, 1, 2, 3, complex(0, np.nan)], 4),
         ([0, 1, 2, 3, complex(np.nan, 0)], 4),
         ([0, 1, 2, complex(np.nan, 0), 3], 3),
@@ -4432,28 +4465,80 @@ class TestArgmax:
         assert_equal(np.argmax(arr), pos, err_msg="%r" % arr)
         assert_equal(arr[np.argmax(arr)], val, err_msg="%r" % arr)
 
+        # add padding to test SIMD loops
+        rarr = np.repeat(arr, 129)
+        rpos = pos * 129
+        assert_equal(np.argmax(rarr), rpos, err_msg="%r" % rarr)
+        assert_equal(rarr[np.argmax(rarr)], val, err_msg="%r" % rarr)
+
+        padd = np.repeat(np.min(arr), 513)
+        rarr = np.concatenate((arr, padd))
+        rpos = pos
+        assert_equal(np.argmax(rarr), rpos, err_msg="%r" % rarr)
+        assert_equal(rarr[np.argmax(rarr)], val, err_msg="%r" % rarr)
+
+
     def test_maximum_signed_integers(self):
 
         a = np.array([1, 2**7 - 1, -2**7], dtype=np.int8)
         assert_equal(np.argmax(a), 1)
+        a.repeat(129)
+        assert_equal(np.argmax(a), 1)
 
         a = np.array([1, 2**15 - 1, -2**15], dtype=np.int16)
+        assert_equal(np.argmax(a), 1)
+        a.repeat(129)
         assert_equal(np.argmax(a), 1)
 
         a = np.array([1, 2**31 - 1, -2**31], dtype=np.int32)
         assert_equal(np.argmax(a), 1)
+        a.repeat(129)
+        assert_equal(np.argmax(a), 1)
 
         a = np.array([1, 2**63 - 1, -2**63], dtype=np.int64)
         assert_equal(np.argmax(a), 1)
-
+        a.repeat(129)
+        assert_equal(np.argmax(a), 1)
 
 class TestArgmin:
-
-    nan_arr = [
-        ([0, 1, 2, 3, np.nan], 4),
-        ([0, 1, 2, np.nan, 3], 3),
-        ([np.nan, 0, 1, 2, 3], 0),
-        ([np.nan, 0, np.nan, 2, 3], 0),
+    usg_data = [
+        ([1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0], 8),
+        ([3, 3, 3, 3,  2,  2,  2,  2], 4),
+        ([0, 1, 2, 3,  4,  5,  6,  7], 0),
+        ([7, 6, 5, 4,  3,  2,  1,  0], 7)
+    ]
+    sg_data = usg_data + [
+        ([1, 2, 3, 4, -4, -3, -2, -1], 4),
+        ([1, 2, 3, 4, -1, -2, -3, -4], 7)
+    ]
+    darr = [(np.array(d[0], dtype=t), d[1]) for d, t in (
+        itertools.product(usg_data, (
+            np.uint8, np.uint16, np.uint32, np.uint64
+        ))
+    )]
+    darr = darr + [(np.array(d[0], dtype=t), d[1]) for d, t in (
+        itertools.product(sg_data, (
+            np.int8, np.int16, np.int32, np.int64, np.float32, np.float64
+        ))
+    )]
+    darr = darr + [(np.array(d[0], dtype=t), d[1]) for d, t in (
+        itertools.product((
+            ([0, 1, 2, 3, np.nan], 4),
+            ([0, 1, 2, np.nan, 3], 3),
+            ([np.nan, 0, 1, 2, 3], 0),
+            ([np.nan, 0, np.nan, 2, 3], 0),
+            # To hit the tail of SIMD multi-level(x4, x1) inner loops
+            # on varient SIMD widthes
+            ([1] * (2*5-1) + [np.nan], 2*5-1),
+            ([1] * (4*5-1) + [np.nan], 4*5-1),
+            ([1] * (8*5-1) + [np.nan], 8*5-1),
+            ([1] * (16*5-1) + [np.nan], 16*5-1),
+            ([1] * (32*5-1) + [np.nan], 32*5-1)
+        ), (
+            np.float32, np.float64
+        ))
+    )]
+    nan_arr = darr + [
         ([0, 1, 2, 3, complex(0, np.nan)], 4),
         ([0, 1, 2, 3, complex(np.nan, 0)], 4),
         ([0, 1, 2, complex(np.nan, 0), 3], 3),
@@ -4512,30 +4597,50 @@ class TestArgmin:
         ([False, True, False, True, True], 0),
     ]
 
-    def test_combinations(self):
-        for arr, pos in self.nan_arr:
-            with suppress_warnings() as sup:
-                sup.filter(RuntimeWarning,
-                           "invalid value encountered in reduce")
-                min_val = np.min(arr)
+    @pytest.mark.parametrize('data', nan_arr)
+    def test_combinations(self, data):
+        arr, pos = data
+        with suppress_warnings() as sup:
+            sup.filter(RuntimeWarning,
+                       "invalid value encountered in reduce")
+            min_val = np.min(arr)
 
-            assert_equal(np.argmin(arr), pos, err_msg="%r" % arr)
-            assert_equal(arr[np.argmin(arr)], min_val, err_msg="%r" % arr)
+        assert_equal(np.argmin(arr), pos, err_msg="%r" % arr)
+        assert_equal(arr[np.argmin(arr)], min_val, err_msg="%r" % arr)
+
+        # add padding to test SIMD loops
+        rarr = np.repeat(arr, 129)
+        rpos = pos * 129
+        assert_equal(np.argmin(rarr), rpos, err_msg="%r" % rarr)
+        assert_equal(rarr[np.argmin(rarr)], min_val, err_msg="%r" % rarr)
+
+        padd = np.repeat(np.max(arr), 513)
+        rarr = np.concatenate((arr, padd))
+        rpos = pos
+        assert_equal(np.argmin(rarr), rpos, err_msg="%r" % rarr)
+        assert_equal(rarr[np.argmin(rarr)], min_val, err_msg="%r" % rarr)
 
     def test_minimum_signed_integers(self):
 
         a = np.array([1, -2**7, -2**7 + 1, 2**7 - 1], dtype=np.int8)
         assert_equal(np.argmin(a), 1)
+        a.repeat(129)
+        assert_equal(np.argmin(a), 1)
 
         a = np.array([1, -2**15, -2**15 + 1, 2**15 - 1], dtype=np.int16)
+        assert_equal(np.argmin(a), 1)
+        a.repeat(129)
         assert_equal(np.argmin(a), 1)
 
         a = np.array([1, -2**31, -2**31 + 1, 2**31 - 1], dtype=np.int32)
         assert_equal(np.argmin(a), 1)
+        a.repeat(129)
+        assert_equal(np.argmin(a), 1)
 
         a = np.array([1, -2**63, -2**63 + 1, 2**63 - 1], dtype=np.int64)
         assert_equal(np.argmin(a), 1)
-
+        a.repeat(129)
+        assert_equal(np.argmin(a), 1)
 
 class TestMinMax:
 

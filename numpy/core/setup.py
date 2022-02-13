@@ -830,7 +830,7 @@ def configuration(parent_package='',top_path=None):
     multiarray_deps = [
             join('src', 'multiarray', 'abstractdtypes.h'),
             join('src', 'multiarray', 'arrayobject.h'),
-            join('src', 'multiarray', 'arraytypes.h'),
+            join('src', 'multiarray', 'arraytypes.h.src'),
             join('src', 'multiarray', 'arrayfunction_override.h'),
             join('src', 'multiarray', 'array_coercion.h'),
             join('src', 'multiarray', 'array_method.h'),
@@ -892,7 +892,9 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'abstractdtypes.c'),
             join('src', 'multiarray', 'alloc.c'),
             join('src', 'multiarray', 'arrayobject.c'),
+            join('src', 'multiarray', 'arraytypes.h.src'),
             join('src', 'multiarray', 'arraytypes.c.src'),
+            join('src', 'multiarray', 'argfunc.dispatch.c.src'),
             join('src', 'multiarray', 'array_coercion.c'),
             join('src', 'multiarray', 'array_method.c'),
             join('src', 'multiarray', 'array_assign_scalar.c'),
