@@ -349,7 +349,6 @@ _get_binsearch_func(PyArray_Descr *dtype, NPY_SEARCHSIDE side)
 {
     using binsearch = binsearch_t<arg>;
     npy_intp nfuncs = binsearch::map.size();
-    ;
     npy_intp min_idx = 0;
     npy_intp max_idx = nfuncs;
     int type = dtype->type_num;
