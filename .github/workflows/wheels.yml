@@ -133,7 +133,7 @@ jobs:
           name: ${{ matrix.python }}-${{ startsWith(matrix.buildplat[1], 'macosx') && 'macosx' || matrix.buildplat[1] }}
           path: ./wheelhouse/*.whl
 
-      - name: Setup Upload Variables
+      - name: Upload wheels
         if: success()
         shell: bash
         run: |
@@ -146,11 +146,11 @@ jobs:
           if [ "push" == "${{ github.event_name }}" ] && [ "${{ startsWith(github.ref, 'refs/tags/v') }}" ]; then
             echo push and tag event
             ANACONDA_ORG=multibuild-wheels-staging
-            TOKEN=$NUMPY_STAGING_UPLOAD_TOKEN
+            TOKEN=${{ secrets.NUMPY_STAGING_UPLOAD_TOKEN }}
           elif [ "schedule" == "${{ github.event_name }}" ] || [ "workflow_dispatch" == "${{ github.event_name }}" ]; then
             echo scheduled or dispatched event
             ANACONDA_ORG=scipy-wheels-nightly
-            TOKEN=$NUMPY_NIGHTLY_UPLOAD_TOKEN
+            TOKEN=${{ secrets.NUMPY_NIGHTLY_UPLOAD_TOKEN }}
           else
             echo non-dispatch event
           fi
