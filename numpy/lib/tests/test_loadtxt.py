@@ -165,6 +165,7 @@ def test_bad_ndmin(badval):
 @pytest.mark.parametrize(
     "ws",
     (
+            " ",  # space
             "\t",  # tab
             "\u2003",  # em
             "\u00A0",  # non-break
@@ -173,7 +174,10 @@ def test_bad_ndmin(badval):
 )
 def test_blank_lines_spaces_delimit(ws):
     txt = StringIO(
-        f"1 2{ws}30\n\n4 5 60\n  {ws}  \n7 8 {ws} 90\n  # comment\n3 2 1"
+        f"1 2{ws}30\n\n{ws}\n"
+        f"4 5 60{ws}\n  {ws}  \n"
+        f"7 8 {ws} 90\n  # comment\n"
+        f"3 2 1"
     )
     # NOTE: It is unclear that the `  # comment` should succeed. Except
     #       for delimiter=None, which should use any whitespace (and maybe
