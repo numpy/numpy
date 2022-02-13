@@ -137,6 +137,12 @@ jobs:
         if: success()
         shell: bash
         run: |
+          # trigger an upload to
+          # https://anaconda.org/scipy-wheels-nightly/numpy
+          # for cron jobs or "Run workflow" (restricted to main branch).
+          # Tags will upload to 
+          # https://anaconda.org/multibuild-wheels-staging/numpy
+          # The tokens were originally generated at anaconda.org
           if [ "push" == "${{ github.event_name }}" ] && [ "${{ startsWith(github.ref, 'refs/tags/v') }}" ]; then
             echo push and tag event
             echo "ANACONDA_ORG=multibuild-wheels-staging" >> $GITHUB_ENV
@@ -151,17 +157,8 @@ jobs:
             echo non-dispatch event
             echo "ANACONDA_UPLOAD=false" >> $GITHUB_ENV
           fi
-      - name: Upload wheels
-        if: ${{ env.TOKEN }}
-        shell: bash
-        run: |
-          # trigger an upload to
-          # https://anaconda.org/scipy-wheels-nightly/numpy
-          # for cron jobs or "Run workflow" (restricted to main branch).
-          # Tags will upload to 
-          # https://anaconda.org/multibuild-wheels-staging/numpy
-          # The tokens were originally generated at anaconda.org
-          echo ${PWD}
+          # Now do the upload as needed
+          # echo ${PWD}
           if [ ${ANACONDA_UPLOAD} == true ]; then
             if [ -z ${TOKEN} ]; then
               echo no token set, not uploading
