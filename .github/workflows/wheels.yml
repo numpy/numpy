@@ -145,28 +145,23 @@ jobs:
           # The tokens were originally generated at anaconda.org
           if [ "push" == "${{ github.event_name }}" ] && [ "${{ startsWith(github.ref, 'refs/tags/v') }}" ]; then
             echo push and tag event
-            echo "ANACONDA_ORG=multibuild-wheels-staging" >> $GITHUB_ENV
-            echo "TOKEN=${{ secrets.NUMPY_STAGING_UPLOAD_TOKEN }}" >> $GITHUB_ENV
-            echo "ANACONDA_UPLOAD=true" >> $GITHUB_ENV
+            ANACONDA_ORG=multibuild-wheels-staging
+            TOKEN=${{ secrets.NUMPY_STAGING_UPLOAD_TOKEN }}
           elif [ "schedule" == "${{ github.event_name }}" ] || [ "workflow_dispatch" == "${{ github.event_name }}" ]; then
             echo scheduled or dispatched event
-            echo "ANACONDA_ORG=scipy-wheels-nightly" >> $GITHUB_ENV
-            echo "TOKEN=${{ secrets.NUMPY_NIGHTLY_UPLOAD_TOKEN }}" >> $GITHUB_ENV
-            echo "ANACONDA_UPLOAD=true" >> $GITHUB_ENV
+            ANACONDA_ORG=scipy-wheels-nightly
+            TOKEN=${{ secrets.NUMPY_NIGHTLY_UPLOAD_TOKEN }}
           else
             echo non-dispatch event
-            echo "ANACONDA_UPLOAD=false" >> $GITHUB_ENV
           fi
           # Now do the upload as needed
           # echo ${PWD}
-          if [ ${ANACONDA_UPLOAD} == true ]; then
-            if [ -z ${TOKEN} ]; then
-              echo no token set, not uploading
-            else
-              python -m pip install git+https://github.com/Anaconda-Server/anaconda-client
-              ls ./wheelhouse/*.whl
-              anaconda -t ${TOKEN} upload --skip -u ${ANACONDA_ORG} ./wheelhouse/*.whl
-              echo "PyPI-style index: https://pypi.anaconda.org/$ANACONDA_ORG/simple"
-            fi
+          if [ -z ${TOKEN} ]; then
+            echo no token set, not uploading
+          else
+            python -m pip install git+https://github.com/Anaconda-Server/anaconda-client
+            ls ./wheelhouse/*.whl
+            anaconda -t ${TOKEN} upload --skip -u ${ANACONDA_ORG} ./wheelhouse/*.whl
+            echo "PyPI-style index: https://pypi.anaconda.org/$ANACONDA_ORG/simple"
           fi
 
