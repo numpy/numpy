@@ -111,13 +111,16 @@ median3_swap_(type *v, npy_intp *tosort, npy_intp low, npy_intp mid,
     Idx<arg> idx(tosort);
     Sortee<type, arg> sortee(v, tosort);
 
-    if (Tag::less(v[idx(high)], v[idx(mid)]))
+    if (Tag::less(v[idx(high)], v[idx(mid)])) {
         std::swap(sortee(high), sortee(mid));
-    if (Tag::less(v[idx(high)], v[idx(low)]))
+    }
+    if (Tag::less(v[idx(high)], v[idx(low)])) {
         std::swap(sortee(high), sortee(low));
+    }
     /* move pivot to low */
-    if (Tag::less(v[idx(low)], v[idx(mid)]))
+    if (Tag::less(v[idx(low)], v[idx(mid)])) {
         std::swap(sortee(low), sortee(mid));
+    }
     /* move 3-lowest element to low + 1 */
     std::swap(sortee(mid), sortee(low + 1));
 }
@@ -175,13 +178,16 @@ unguarded_partition_(type *v, npy_intp *tosort, const type pivot, npy_intp *ll,
     Sortee<type, arg> sortee(v, tosort);
 
     for (;;) {
-        do (*ll)++;
-        while (Tag::less(v[idx(*ll)], pivot));
-        do (*hh)--;
-        while (Tag::less(pivot, v[idx(*hh)]));
+        do {
+            (*ll)++;
+        } while (Tag::less(v[idx(*ll)], pivot));
+        do {
+            (*hh)--;
+        } while (Tag::less(pivot, v[idx(*hh)]));
 
-        if (*hh < *ll)
+        if (*hh < *ll) {
             break;
+        }
 
         std::swap(sortee(*ll), sortee(*hh));
     }
@@ -209,8 +215,9 @@ median_of_median5_(type *v, npy_intp *tosort, const npy_intp num,
         std::swap(sortee(subleft + m), sortee(i));
     }
 
-    if (nmed > 2)
+    if (nmed > 2) {
         introselect_<Tag, arg>(v, tosort, nmed, nmed / 2, pivots, npiv);
+    }
     return nmed / 2;
 }
 
@@ -268,8 +275,9 @@ introselect_(type *v, npy_intp *tosort, npy_intp num, npy_intp kth,
     npy_intp high = num - 1;
     int depth_limit;
 
-    if (npiv == NULL)
+    if (npiv == NULL) {
         pivots = NULL;
+    }
 
     while (pivots != NULL && *npiv > 0) {
         if (pivots[*npiv - 1] > kth) {
@@ -361,10 +369,12 @@ introselect_(type *v, npy_intp *tosort, npy_intp num, npy_intp kth,
             store_pivot(hh, kth, pivots, npiv);
         }
 
-        if (hh >= kth)
+        if (hh >= kth) {
             high = hh - 1;
-        if (hh <= kth)
+        }
+        if (hh <= kth) {
             low = ll;
+        }
     }
 
     /* two elements */
