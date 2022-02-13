@@ -61,13 +61,27 @@ string_cmp(int len1, character *str1, int len2, character *str2)
 
     int n = PyArray_MIN(len1, len2);
 
-    for (int i = 0; i < n; i++) {
-        int cmp = character_cmp(*str1, *str2);
+    if (sizeof(character) == 1) {
+        /*
+         * TODO: `memcmp` makes things 2x faster for longer words that match
+         *       exactly, but at least 2x slower for short or mismatching ones.
+         */
+        int cmp = memcmp(str1, str2, n);
         if (cmp != 0) {
             return cmp;
         }
-        str1++;
-        str2++;
+        str1 += n;
+        str2 += n;
+    }
+    else {
+        for (int i = 0; i < n; i++) {
+            int cmp = character_cmp(*str1, *str2);
+            if (cmp != 0) {
+                return cmp;
+            }
+            str1++;
+            str2++;
+        }
     }
     if (len1 > len2) {
         for (int i = n; i < len1; i++) {
