@@ -129,26 +129,27 @@ string_comparison_loop(PyArrayMethod_Context *context,
         int cmp = string_cmp<rstrip>(
                 len1, (character *)in1, len2, (character *)in2);
         npy_bool res;
-        if (comp == Py_EQ) {
-            res = cmp == 0;
-        }
-        else if (comp == Py_NE) {
-            res = cmp != 0;
-        }
-        else if (comp == Py_LT) {
-            res = cmp < 0;
-        }
-        else if (comp == Py_LE) {
-            res = cmp <= 0;
-        }
-        else if (comp == Py_GT) {
-            res = cmp > 0;
-        }
-        else if (comp == Py_GE) {
-            res = cmp >= 0;
-        }
-        else {
-            assert(0);
+        switch (comp) {
+            case Py_EQ:
+                res = cmp == 0;
+                break;
+            case Py_NE:
+                res = cmp != 0;
+                break;
+            case Py_LT:
+                res = cmp < 0;
+                break;
+            case Py_LE:
+                res = cmp <= 0;
+                break;
+            case Py_GT:
+                res = cmp > 0;
+                break;
+            case Py_GE:
+                res = cmp >= 0;
+                break;
+            default:
+                assert(false);
         }
         *(npy_bool *)out = res;
 
@@ -294,25 +295,22 @@ template <bool rstrip, typename character>
 static PyArrayMethod_StridedLoop *
 get_strided_loop(int comp)
 {
-    if (comp == Py_EQ) {
-        return string_comparison_loop<rstrip, Py_EQ, character>;
+    switch (comp) {
+        case Py_EQ:
+            return string_comparison_loop<rstrip, Py_EQ, character>;
+        case Py_NE:
+            return string_comparison_loop<rstrip, Py_NE, character>;
+        case Py_LT:
+            return string_comparison_loop<rstrip, Py_LT, character>;
+        case Py_LE:
+            return string_comparison_loop<rstrip, Py_LE, character>;
+        case Py_GT:
+            return string_comparison_loop<rstrip, Py_GT, character>;
+        case Py_GE:
+            return string_comparison_loop<rstrip, Py_GE, character>;
+        default:
+            assert(false);
     }
-    else if (comp == Py_NE) {
-        return string_comparison_loop<rstrip, Py_NE, character>;
-    }
-    else if (comp == Py_LT) {
-        return string_comparison_loop<rstrip, Py_LT, character>;
-    }
-    else if (comp == Py_LE) {
-        return string_comparison_loop<rstrip, Py_LE, character>;
-    }
-    else if (comp == Py_GT) {
-        return string_comparison_loop<rstrip, Py_GT, character>;
-    }
-    else if (comp == Py_GE) {
-        return string_comparison_loop<rstrip, Py_GE, character>;
-    }
-    assert(0);
     return nullptr;
 }
 
