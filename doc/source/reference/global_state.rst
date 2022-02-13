@@ -70,19 +70,15 @@ Debugging-Related Options
 Relaxed Strides Checking
 ------------------------
 
-The *compile-time* environment variables::
+The *compile-time* environment variable::
 
     NPY_RELAXED_STRIDES_DEBUG=0
-    NPY_RELAXED_STRIDES_CHECKING=1
 
-control how NumPy reports contiguity for arrays.
-The default that it is enabled and the debug mode is disabled.
-This setting should always be enabled. Setting the
-debug option can be interesting for testing code written
-in C which iterates through arrays that may or may not be
-contiguous in memory.
-Most users will have no reason to change these; for details
-see the :ref:`memory layout <memory-layout>` documentation.
+can be set to help debug code written in C which iteraters through arrays
+manually.  When an array is contiguous and iterated in a contiguous manner,
+its ``strides`` should not be queried.  This option can help find errors where
+the ``strides`` are incorrectly used.
+For details see the :ref:`memory layout <memory-layout>` documentation.
 
 
 Warn if no memory allocation policy when deallocating data

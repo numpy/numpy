@@ -17,6 +17,10 @@ from setup_common import *  # noqa: F403
 # Set to True to enable relaxed strides checking. This (mostly) means
 # that `strides[dim]` is ignored if `shape[dim] == 1` when setting flags.
 NPY_RELAXED_STRIDES_CHECKING = (os.environ.get('NPY_RELAXED_STRIDES_CHECKING', "1") != "0")
+if not NPY_RELAXED_STRIDES_CHECKING:
+    raise SystemError(
+        "Support for NPY_RELAXED_STRIDES_CHECKING=0 has been remove as of "
+        "NumPy 1.23.  This error will eventually be removed entirely.")
 
 # Put NPY_RELAXED_STRIDES_DEBUG=1 in the environment if you want numpy to use a
 # bogus value for affected strides in order to help smoke out bad stride usage
@@ -482,13 +486,9 @@ def configuration(parent_package='',top_path=None):
             if can_link_svml():
                 moredefs.append(('NPY_CAN_LINK_SVML', 1))
 
-            # Use relaxed stride checking
-            if NPY_RELAXED_STRIDES_CHECKING:
-                moredefs.append(('NPY_RELAXED_STRIDES_CHECKING', 1))
-            else:
-                moredefs.append(('NPY_RELAXED_STRIDES_CHECKING', 0))
-
-            # Use bogus stride debug aid when relaxed strides are enabled
+            # Use bogus stride debug aid to flush out bugs where users use
+            # strides of dimensions with length 1 to index a full contiguous
+            # array.
             if NPY_RELAXED_STRIDES_DEBUG:
                 moredefs.append(('NPY_RELAXED_STRIDES_DEBUG', 1))
             else:
@@ -583,9 +583,6 @@ def configuration(parent_package='',top_path=None):
             mathlibs = check_mathlib(config_cmd)
             moredefs.extend(cocache.check_ieee_macros(config_cmd)[1])
             moredefs.extend(cocache.check_complex(config_cmd, mathlibs)[1])
-
-            if NPY_RELAXED_STRIDES_CHECKING:
-                moredefs.append(('NPY_RELAXED_STRIDES_CHECKING', 1))
 
             if NPY_RELAXED_STRIDES_DEBUG:
                 moredefs.append(('NPY_RELAXED_STRIDES_DEBUG', 1))

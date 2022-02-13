@@ -3295,11 +3295,11 @@ class TestMethods:
         assert_equal(a.ravel('C'), [3, 2, 1, 0])
         assert_equal(a.ravel('K'), [3, 2, 1, 0])
 
-        # 1-element tidy strides test (NPY_RELAXED_STRIDES_CHECKING):
+        # 1-element tidy strides test:
         a = np.array([[1]])
         a.strides = (123, 432)
-        # If the stride is not 8, NPY_RELAXED_STRIDES_CHECKING is messing
-        # them up on purpose:
+        # If the following stride is not 8, NPY_RELAXED_STRIDES_DEBUG is
+        # messing them up on purpose:
         if np.ones(1).strides == (8,):
             assert_(np.may_share_memory(a.ravel('K'), a))
             assert_equal(a.ravel('K').strides, (a.dtype.itemsize,))
@@ -7540,7 +7540,7 @@ class TestNewBufferProtocol:
             assert_equal(y.format, 'T{b:a:=h:b:i:c:l:d:q:dx:B:e:@H:f:=I:g:L:h:Q:hx:f:i:d:j:^g:k:=Zf:ix:Zd:jx:^Zg:kx:4s:l:=4w:m:3x:n:?:o:@e:p:}')
         else:
             assert_equal(y.format, 'T{b:a:=h:b:i:c:q:d:q:dx:B:e:@H:f:=I:g:Q:h:Q:hx:f:i:d:j:^g:k:=Zf:ix:Zd:jx:^Zg:kx:4s:l:=4w:m:3x:n:?:o:@e:p:}')
-        # Cannot test if NPY_RELAXED_STRIDES_CHECKING changes the strides
+        # Cannot test if NPY_RELAXED_STRIDES_DEBUG changes the strides
         if not (np.ones(1).strides[0] == np.iinfo(np.intp).max):
             assert_equal(y.strides, (sz,))
         assert_equal(y.itemsize, sz)
@@ -7630,10 +7630,7 @@ class TestNewBufferProtocol:
     def test_relaxed_strides(self, c=np.ones((1, 10, 10), dtype='i8')):
         # Note: c defined as parameter so that it is persistent and leak
         # checks will notice gh-16934 (buffer info cache leak).
-
-        # Check for NPY_RELAXED_STRIDES_CHECKING:
-        if np.ones((10, 1), order="C").flags.f_contiguous:
-            c.strides = (-1, 80, 8)
+        c.strides = (-1, 80, 8)  # strides need to be fixed at export
 
         assert_(memoryview(c).strides == (800, 80, 8))
 

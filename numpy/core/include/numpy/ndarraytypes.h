@@ -834,11 +834,9 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
  * 1-d array is C_CONTIGUOUS it is also F_CONTIGUOUS. Arrays with
  * more then one dimension can be C_CONTIGUOUS and F_CONTIGUOUS
  * at the same time if they have either zero or one element.
- * If NPY_RELAXED_STRIDES_CHECKING is set, a higher dimensional
- * array is always C_CONTIGUOUS and F_CONTIGUOUS if it has zero elements
- * and the array is contiguous if ndarray.squeeze() is contiguous.
- * I.e. dimensions for which `ndarray.shape[dimension] == 1` are
- * ignored.
+ * A higher dimensional array always has the same contiguity flags as
+ * `array.squeeze()`; dimensions with `array.shape[dimension] == 1` are
+ * effectively ignored when checking for contiguity.
  */
 
 /*

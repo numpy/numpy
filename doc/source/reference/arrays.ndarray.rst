@@ -161,25 +161,14 @@ An array is considered aligned if the memory offsets for all elements and the
 base offset itself is a multiple of `self.itemsize`. Understanding
 `memory-alignment` leads to better performance on most hardware.
 
-.. note::
-
-    Points (1) and (2) can currently be disabled by the compile time
-    environmental variable ``NPY_RELAXED_STRIDES_CHECKING=0``,
-    which was the default before NumPy 1.10.
-    No users should have to do this. ``NPY_RELAXED_STRIDES_DEBUG=1``
-    can be used to help find errors when incorrectly relying on the strides
-    in C-extension code (see below warning).
-
-    You can check whether this option was enabled when your NumPy was
-    built by looking at the value of ``np.ones((10,1),
-    order='C').flags.f_contiguous``. If this is ``True``, then your
-    NumPy has relaxed strides checking enabled.
-
 .. warning::
 
     It does *not* generally hold that ``self.strides[-1] == self.itemsize``
     for C-style contiguous arrays or ``self.strides[0] == self.itemsize`` for
     Fortran-style contiguous arrays is true.
+
+    ``NPY_RELAXED_STRIDES_DEBUG=1`` can be used to help find errors when
+    incorrectly relying on the strides in C-extension code (see below warning).
 
 Data in new :class:`ndarrays <ndarray>` is in the :term:`row-major`
 (C) order, unless otherwise specified, but, for example, :ref:`basic
