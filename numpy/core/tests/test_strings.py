@@ -44,11 +44,13 @@ def test_mixed_string_comparisons_ufuncs_with_cast(op, ufunc):
 @pytest.mark.parametrize(["op", "ufunc"], COMPARISONS)
 @pytest.mark.parametrize("dtypes", [
         ("S2", "S2"), ("S2", "S10"),
-        ("U1", "<U1"), ("U1", ">U1"), ("U1", ">U1"),
-        ("U1", "<U10"), ("U1", ">U10")])
+        ("<U1", "<U1"), ("<U1", ">U1"), (">U1", ">U1"),
+        ("<U1", "<U10"), ("<U1", ">U10")])
 @pytest.mark.parametrize("aligned", [True, False])
 def test_string_comparisons(op, ufunc, dtypes, aligned):
-    arr = np.arange(2**15).view(dtypes[0])
+    # ensure native byte-order for the first view to stay within unicode range
+    native_dt = np.dtype(dtypes[0]).newbyteorder("=")
+    arr = np.arange(2**15).view(native_dt).astype(dtypes[0])
     if not aligned:
         # Make `arr` unaligned:
         new = np.zeros(arr.nbytes + 1, dtype=np.uint8)[1:].view(dtypes[0])
