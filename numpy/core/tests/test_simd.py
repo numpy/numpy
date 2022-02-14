@@ -906,6 +906,26 @@ class _SIMD_ALL(_Test_Utility):
         rev64 = self.rev64(self.load(range(self.nlanes)))
         assert rev64 == data_rev64
 
+    def test_reorder_permi128(self):
+        """
+        Test permuting elements for each 128-bit lane.
+        npyv_permi128_##sfx
+        """
+        ssize = self._scalar_size()
+        if ssize < 32:
+            return
+        data = self.load(self._data())
+        permn = 128//ssize
+        permd = permn-1
+        nlane128 = self.nlanes//permn
+
+        shfl = [0, 1] if ssize == 64 else [0, 2, 4, 6]
+        for i in range(permd):
+            indices = [(i >> shf) & permd for shf in shfl]
+            vperm = self.permi128(data, *indices)
+            data_vperm = [data[j] for j in indices]
+            assert vperm = data_vperm
+
     @pytest.mark.parametrize('func, intrin', [
         (operator.lt, "cmplt"),
         (operator.le, "cmple"),
