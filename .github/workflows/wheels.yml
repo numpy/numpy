@@ -89,6 +89,12 @@ jobs:
           # A shallow clone can work when the following issue is resolved:
           # https://github.com/actions/checkout/issues/338
           fetch-depth: 0
+
+      # Used to push the built wheels
+      - uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
       - name: Configure mingw for 32-bit builds
         run: |
           # Force 32-bit mingw
@@ -159,7 +165,7 @@ jobs:
           if [ -z ${TOKEN} ]; then
             echo no token set, not uploading
           else
-            python3 -m pip install git+https://github.com/Anaconda-Server/anaconda-client
+            python -m pip install git+https://github.com/Anaconda-Server/anaconda-client
             ls ./wheelhouse/*.whl
             anaconda -t ${TOKEN} upload --no-progress --skip -u ${ANACONDA_ORG} ./wheelhouse/*.whl
             echo "PyPI-style index: https://pypi.anaconda.org/$ANACONDA_ORG/simple"
