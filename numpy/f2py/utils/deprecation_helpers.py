@@ -76,7 +76,7 @@ def deprecated_submodule(*, new_module_name, old_parent, old_child, deadline):
             new_module_name, old_parent, old_child, deadline, new_module
         )
     except ImportError as ex:
-        pass
+        raise ModuleNotFoundError(f"{old_module_name} does not map to a new module")
     finder = DeprecatedModuleFinder(new_module_name, old_module_name, deadline)
     sys.meta_path.append(finder)
 
