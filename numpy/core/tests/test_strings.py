@@ -36,7 +36,7 @@ def test_mixed_string_comparisons_ufuncs_with_cast(op, ufunc, sym):
     res1 = ufunc(arr_string, arr_unicode, signature="UU->?", casting="unsafe")
     res2 = ufunc(arr_string, arr_unicode, signature="SS->?", casting="unsafe")
 
-    expected = [op("a", "a"), op("a", "c")]
+    expected = op(arr_string.astype('U'), arr_unicode)
     assert_array_equal(res1, expected)
     assert_array_equal(res2, expected)
 
