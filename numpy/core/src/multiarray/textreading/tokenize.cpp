@@ -378,13 +378,22 @@ tokenize(stream *s, tokenizer_state *ts, parser_config *const config)
     ts->num_fields -= 1;
 
     /*
-     * If have one field, but that field is completely empty, this is an
-     * empty line, and we just ignore it.
+     * We always start a new field (at the very beginning and whenever a
+     * delimiter was found).
+     * This gives us two scenarios where we need to ignore the last field
+     * if it is empty:
+     * 1. If there is exactly one empty (unquoted) field, the whole line is
+     *    empty.
+     * 2. If we are splitting on whitespace we always ignore a last empty
+     *    field to match Python's splitting: `" 1 ".split()`.
      */
     if (ts->num_fields == 1
-             && ts->fields[1].offset - ts->fields[0].offset == 1
-             && !ts->fields->quoted) {
-        ts->num_fields--;
+            || ts->unquoted_state == TOKENIZE_UNQUOTED_WHITESPACE) {
+        ssize_t offset_last = ts->fields[ts->num_fields-1].offset;
+        ssize_t end_last = ts->fields[ts->num_fields].offset;
+        if (!ts->fields->quoted && end_last - offset_last == 1) {
+            ts->num_fields--;
+        }
     }
     ts->state = TOKENIZE_INIT;
     return finished_reading_file;
