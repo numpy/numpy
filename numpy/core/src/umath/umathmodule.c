@@ -23,15 +23,12 @@
 #include "numpy/npy_math.h"
 #include "number.h"
 #include "dispatching.h"
+#include "string_ufuncs.h"
 
 /* Automatically generated code to define all ufuncs: */
 #include "funcs.inc"
 #include "__umath_generated.c"
 
-
-/* From string_ufuncs.cpp */
-NPY_NO_EXPORT int
-init_string_ufuncs(PyObject *umath);
 
 static PyUFuncGenericFunction pyfunc_functions[] = {PyUFunc_On_Om};
 

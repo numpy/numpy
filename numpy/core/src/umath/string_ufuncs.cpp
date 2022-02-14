@@ -12,6 +12,8 @@
 #include "common_dtype.h"
 #include "convert_datatype.h"
 
+#include "string_ufuncs.h"
+
 
 template <typename character>
 static NPY_INLINE int
@@ -190,11 +192,6 @@ add_loop(PyObject *umath, const char *ufunc_name,
 }
 
 
-extern "C" {
-    NPY_NO_EXPORT int
-    init_string_ufuncs(PyObject *umath);
-}
-
 NPY_NO_EXPORT int
 init_string_ufuncs(PyObject *umath)
 {
@@ -328,12 +325,6 @@ get_strided_loop(int comp)
  * NOTE: This function is also used for unstructured voids, this works because
  *       `npy_byte` is correct.
  */
-extern "C" {
-    NPY_NO_EXPORT PyObject *
-    _umath_strings_richcompare(
-            PyArrayObject *self, PyArrayObject *other, int cmp_op, int rstrip);
-}
-
 NPY_NO_EXPORT PyObject *
 _umath_strings_richcompare(
         PyArrayObject *self, PyArrayObject *other, int cmp_op, int rstrip)
