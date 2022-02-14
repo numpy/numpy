@@ -7,17 +7,17 @@ from numpy.testing import assert_array_equal
 
 
 COMPARISONS = [
-    (operator.eq, np.equal),
-    (operator.ne, np.not_equal),
-    (operator.lt, np.less),
-    (operator.le, np.less_equal),
-    (operator.gt, np.greater),
-    (operator.ge, np.greater_equal),
+    (operator.eq, np.equal, "=="),
+    (operator.ne, np.not_equal, "!="),
+    (operator.lt, np.less, "<"),
+    (operator.le, np.less_equal, "<="),
+    (operator.gt, np.greater, ">"),
+    (operator.ge, np.greater_equal, ">="),
 ]
 
 
-@pytest.mark.parametrize(["op", "ufunc"], COMPARISONS)
-def test_mixed_string_comparison_ufuncs_fail(op, ufunc):
+@pytest.mark.parametrize(["op", "ufunc", "sym"], COMPARISONS)
+def test_mixed_string_comparison_ufuncs_fail(op, ufunc, sym):
     arr_string = np.array(["a", "b"], dtype="S")
     arr_unicode = np.array(["a", "c"], dtype="U")
 
@@ -27,8 +27,8 @@ def test_mixed_string_comparison_ufuncs_fail(op, ufunc):
     with pytest.raises(TypeError, match="did not contain a loop"):
         ufunc(arr_unicode, arr_string)
 
-@pytest.mark.parametrize(["op", "ufunc"], COMPARISONS)
-def test_mixed_string_comparisons_ufuncs_with_cast(op, ufunc):
+@pytest.mark.parametrize(["op", "ufunc", "sym"], COMPARISONS)
+def test_mixed_string_comparisons_ufuncs_with_cast(op, ufunc, sym):
     arr_string = np.array(["a", "b"], dtype="S")
     arr_unicode = np.array(["a", "c"], dtype="U")
 
@@ -41,13 +41,13 @@ def test_mixed_string_comparisons_ufuncs_with_cast(op, ufunc):
     assert_array_equal(res2, expected)
 
 
-@pytest.mark.parametrize(["op", "ufunc"], COMPARISONS)
+@pytest.mark.parametrize(["op", "ufunc", "sym"], COMPARISONS)
 @pytest.mark.parametrize("dtypes", [
         ("S2", "S2"), ("S2", "S10"),
         ("<U1", "<U1"), ("<U1", ">U1"), (">U1", ">U1"),
         ("<U1", "<U10"), ("<U1", ">U10")])
 @pytest.mark.parametrize("aligned", [True, False])
-def test_string_comparisons(op, ufunc, dtypes, aligned):
+def test_string_comparisons(op, ufunc, sym, dtypes, aligned):
     # ensure native byte-order for the first view to stay within unicode range
     native_dt = np.dtype(dtypes[0]).newbyteorder("=")
     arr = np.arange(2**15).view(native_dt).astype(dtypes[0])
@@ -64,7 +64,9 @@ def test_string_comparisons(op, ufunc, dtypes, aligned):
     expected = [op(d1, d2) for d1, d2 in zip(arr.tolist(), arr2.tolist())]
     assert_array_equal(op(arr, arr2), expected)
     assert_array_equal(ufunc(arr, arr2), expected)
+    assert_array_equal(np.compare_chararrays(arr, arr2, sym, False), expected)
 
     expected = [op(d2, d1) for d1, d2 in zip(arr.tolist(), arr2.tolist())]
     assert_array_equal(op(arr2, arr), expected)
     assert_array_equal(ufunc(arr2, arr), expected)
+    assert_array_equal(np.compare_chararrays(arr2, arr, sym, False), expected)

@@ -418,7 +418,7 @@ _umath_strings_richcompare(
 
     if (rstrip == 0) {
         /* NOTE: Also used for VOID, so can be STRING, UNICODE, or VOID: */
-        if (descrs[0]->type != NPY_UNICODE) {
+        if (descrs[0]->type_num != NPY_UNICODE) {
             strided_loop = get_strided_loop<false, npy_byte>(cmp_op);
         }
         else {
@@ -426,7 +426,7 @@ _umath_strings_richcompare(
         }
     }
     else {
-        if (descrs[0]->type != NPY_UNICODE) {
+        if (descrs[0]->type_num != NPY_UNICODE) {
             strided_loop = get_strided_loop<true, npy_byte>(cmp_op);
         }
         else {
