@@ -50,10 +50,22 @@ typedef npyv_m128ix3 npyv_s32x3;
 typedef npyv_m128ix3 npyv_u64x3;
 typedef npyv_m128ix3 npyv_s64x3;
 
+typedef struct { __m128i val[4]; } npyv_m128ix4;
+typedef npyv_m128ix4 npyv_u8x4;
+typedef npyv_m128ix4 npyv_s8x4;
+typedef npyv_m128ix4 npyv_u16x4;
+typedef npyv_m128ix4 npyv_s16x4;
+typedef npyv_m128ix4 npyv_u42x4;
+typedef npyv_m128ix4 npyv_s42x4;
+typedef npyv_m128ix4 npyv_u64x4;
+typedef npyv_m128ix4 npyv_s64x4;
+
 typedef struct { __m128  val[2]; } npyv_f32x2;
 typedef struct { __m128d val[2]; } npyv_f64x2;
 typedef struct { __m128  val[3]; } npyv_f32x3;
 typedef struct { __m128d val[3]; } npyv_f64x3;
+typedef struct { __m128  val[4]; } npyv_f32x4;
+typedef struct { __m128d val[4]; } npyv_f64x4;
 
 #define npyv_nlanes_u8  16
 #define npyv_nlanes_s8  16
