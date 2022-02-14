@@ -8,6 +8,10 @@
 #include "textreading/stream.h"
 #include "textreading/parser_config.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 typedef enum {
     /* Initialization of fields */
@@ -74,5 +78,9 @@ tokenizer_init(tokenizer_state *ts, parser_config *config);
 
 NPY_NO_EXPORT int
 tokenize(stream *s, tokenizer_state *ts, parser_config *const config);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_TEXTREADING_TOKENIZE_H_ */

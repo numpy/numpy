@@ -3,6 +3,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * When getting the next line, we hope that the buffer provider can already
  * give some information about the newlines, because for Python iterables
@@ -37,5 +41,9 @@ typedef struct _stream {
 #define stream_nextbuf(s, start, end, kind)  \
         ((s)->stream_nextbuf((s), start, end, kind))
 #define stream_close(s)    ((s)->stream_close((s)))
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_TEXTREADING_STREAM_H_ */
