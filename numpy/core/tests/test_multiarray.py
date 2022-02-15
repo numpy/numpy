@@ -1638,7 +1638,7 @@ class TestZeroSizeFlexible:
     def test_pickle_empty(self):
         """Checking if an empty array pickled and un-pickled will not cause a
         segmentation fault"""
-        arr = np.array([]).reshape(99999999, 0)
+        arr = np.array([]).reshape(999999, 0)
         pk_dmp = pickle.dumps(arr)
         pk_load = pickle.loads(pk_dmp)
 
