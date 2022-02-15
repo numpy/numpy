@@ -8,6 +8,12 @@ for Python 3.12; for Python <= 3.11 it will not be removed until 2 years after
 the Python 3.12 release (Oct 2025).
 
 
+.. warning::
+
+   ``numpy.distutils`` is only tested with ``setuptools < 60.0``, newer
+   versions may break. See :ref:`numpy-setuptools-interaction` for details.
+
+
 Migration advice
 ----------------
 
@@ -17,16 +23,17 @@ to wait with migrating until there are examples from other projects to follow
 (see below).
 
 There are several build systems which are good options to migrate to. Assuming
-you have compiled code in your package (if not, use Flit_) and you want to be
-using a well-designed, modern and reliable build system, your two best options
-are:
+you have compiled code in your package (if not, we recommend using Flit_) and
+you want to be using a well-designed, modern and reliable build system, we
+recommend:
 
 1. Meson_
 2. CMake_ (or scikit-build_ as an interface to CMake)
 
-If you have modest needs and have been happy with ``numpy.distutils`` so far,
-you can also consider switching to ``setuptools``. Note that most functionality
-of ``numpy.disutils`` is unlikely to be ported to ``setuptools``. The likely
+If you have modest needs (only simple Cython/C extensions, and perhaps nested
+``setup.py`` files) and have been happy with ``numpy.distutils`` so far, you
+can also consider switching to ``setuptools``. Note that most functionality of
+``numpy.disutils`` is unlikely to be ported to ``setuptools``. The likely
 exception is nested ``setup.py`` files, but this is not yet done (help with
 this is very welcome!).
 
@@ -55,11 +62,57 @@ Moving to CMake / scikit-build
 ``````````````````````````````
 
 See the `scikit-build documentation <https://scikit-build.readthedocs.io/en/latest/>`__
-for how to use scikit-build. Please note that as of Jan 2022, scikit-build
+for how to use scikit-build. Please note that as of Feb 2022, scikit-build
 still relies on setuptools, so it's probably not quite ready yet for a
-post-distutils world. For more details on this, see
+post-distutils world. How quickly this changes depends on funding, the current
+(Feb 2022) estimate is that if funding arrives then a viable ``numpy.distutils``
+replacement will be ready at the end of 2022, and a very polished replacement
+mid-2023.  For more details on this, see
 `this blog post by Henry Schreiner <https://iscinumpy.gitlab.io/post/scikit-build-proposal/>`__.
 
+
+Moving to ``setuptools``
+````````````````````````
+
+For projects that only use ``numpy.distutils`` for historical reasons, and do
+not actually use features beyond those that ``setuptools`` also supports,
+moving to ``setuptools`` is likely the solution which costs the least effort.
+To assess that, there are the ``numpy.distutils`` features that are *not*
+present in ``setuptools``:
+
+- Nested ``setup.py`` files
+- Fortran build support
+- BLAS/LAPACK library support (OpenBLAS, MKL, ATLAS, Netlib LAPACK/BLAS, BLIS, 64-bit ILP interface, etc.)
+- Support for a few other scientific libraries, like FFTW and UMFPACK
+- Better MinGW support
+- Per-compiler build flag customization (e.g. `-O3` and `SSE2` flags are default)
+- a simple user build config system, see [site.cfg.example](https://github.com/numpy/numpy/blob/master/site.cfg.example)
+- SIMD intrinsics support
+
+The most widely used feature is nested ``setup.py`` files. This feature will
+likely be ported to ``setuptools`` (see
+`gh-18588 <https://github.com/numpy/numpy/issues/18588>`__ for status).
+Projects only using that feature could move to ``setuptools`` after that is
+done. In case a project uses only a couple of ``setup.py`` files, it also could
+make sense to simply aggregate all the content of those files into a single
+``setup.py`` file and then move to ``setuptools``. This involves dropping all
+``Configuration`` instances, and using ``Extension`` instead. E.g.,::
+
+    from distutils.core import setup
+    from distutils.extension import Extension
+    setup(name='foobar',
+          version='1.0',
+          ext_modules=[
+              Extension('foopkg.foo', ['foo.c']),
+              Extension('barpkg.bar', ['bar.c']),
+              ],
+          )
+
+For more details, see the
+`setuptools documentation <https://setuptools.pypa.io/en/latest/setuptools.html>`__
+
+
+.. _numpy-setuptools-interaction:
 
 Interaction of ``numpy.disutils`` with ``setuptools``
 -----------------------------------------------------
