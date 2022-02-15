@@ -114,6 +114,17 @@ enum class COMP {
     EQ, NE, LT, LE, GT, GE,
 };
 
+static char const* comp_name(COMP comp) {
+  switch(comp) {
+    case COMP::EQ: return "equal";
+    case COMP::NE: return "not_equal";
+    case COMP::LT: return "less";
+    case COMP::LE: return "less_equal";
+    case COMP::GT: return "greater";
+    case COMP::GE: return "greater_equal";
+  }
+}
+
 
 template <bool rstrip, COMP comp, typename character>
 static int
@@ -197,6 +208,29 @@ add_loop(PyObject *umath, const char *ufunc_name,
     return res;
 }
 
+template<bool rstrip, typename character, COMP...>
+struct add_loops;
+
+template<bool rstrip, typename character>
+struct add_loops<rstrip, character> {
+  bool operator()(PyObject*, PyArrayMethod_Spec*) {
+    return false;
+  }
+};
+
+template<bool rstrip, typename character, COMP comp, COMP... comps>
+struct add_loops<rstrip, character, comp, comps...> {
+  bool operator()(PyObject* umath, PyArrayMethod_Spec* spec) {
+    PyArrayMethod_StridedLoop* loop = string_comparison_loop<rstrip, comp, character>;
+    if(add_loop(umath, comp_name(comp), spec, loop) < 0) {
+      return true;
+    }
+    else {
+      return add_loops<rstrip, character, comps...>()(umath, spec);
+    }
+  }
+};
+
 
 NPY_NO_EXPORT int
 init_string_ufuncs(PyObject *umath)
@@ -226,62 +260,17 @@ init_string_ufuncs(PyObject *umath)
     spec.slots = slots;
     spec.flags = NPY_METH_NO_FLOATINGPOINT_ERRORS;
 
-    /* Use this loop variable for typing more explicitly */
-    PyArrayMethod_StridedLoop *loop;
-
-    /* TODO: It would be nice to condense the below */
     /* All String loops */
-    loop = string_comparison_loop<false, COMP::EQ, npy_byte>;
-    if (add_loop(umath, "equal", &spec, loop) < 0) {
-        goto finish;
-    }
-    loop = string_comparison_loop<false, COMP::NE, npy_byte>;
-    if (add_loop(umath, "not_equal", &spec, loop) < 0) {
-        goto finish;
-    }
-    loop = string_comparison_loop<false, COMP::LT, npy_byte>;
-    if (add_loop(umath, "less", &spec, loop) < 0) {
-        goto finish;
-    }
-    loop = string_comparison_loop<false, COMP::LE, npy_byte>;
-    if (add_loop(umath, "less_equal", &spec, loop) < 0) {
-        goto finish;
-    }
-    loop = string_comparison_loop<false, COMP::GT, npy_byte>;
-    if (add_loop(umath, "greater", &spec, loop) < 0) {
-        goto finish;
-    }
-    loop = string_comparison_loop<false, COMP::GE, npy_byte>;
-    if (add_loop(umath, "greater_equal", &spec, loop) < 0) {
+    using string_looper = add_loops<false, npy_byte, COMP::EQ, COMP::NE, COMP::LT, COMP::LE, COMP::GT, COMP::GE>;
+    if(string_looper()(umath, &spec)) {
         goto finish;
     }
 
     /* All Unicode loops */
+    using ucs_looper = add_loops<false, npy_ucs4, COMP::EQ, COMP::NE, COMP::LT, COMP::LE, COMP::GT, COMP::GE>;
     dtypes[0] = Unicode;
     dtypes[1] = Unicode;
-
-    loop = string_comparison_loop<false, COMP::EQ, npy_ucs4>;
-    if (add_loop(umath, "equal", &spec, loop) < 0) {
-        goto finish;
-    }
-    loop = string_comparison_loop<false, COMP::NE, npy_ucs4>;
-    if (add_loop(umath, "not_equal", &spec, loop) < 0) {
-        goto finish;
-    }
-    loop = string_comparison_loop<false, COMP::LT, npy_ucs4>;
-    if (add_loop(umath, "less", &spec, loop) < 0) {
-        goto finish;
-    }
-    loop = string_comparison_loop<false, COMP::LE, npy_ucs4>;
-    if (add_loop(umath, "less_equal", &spec, loop) < 0) {
-        goto finish;
-    }
-    loop = string_comparison_loop<false, COMP::GT, npy_ucs4>;
-    if (add_loop(umath, "greater", &spec, loop) < 0) {
-        goto finish;
-    }
-    loop = string_comparison_loop<false, COMP::GE, npy_ucs4>;
-    if (add_loop(umath, "greater_equal", &spec, loop) < 0) {
+    if(ucs_looper()(umath, &spec)) {
         goto finish;
     }
 
