@@ -1659,6 +1659,7 @@ class TestZeroSizeFlexible:
         array[0] = -1
         assert array_from_buffer[0] == -1, array_from_buffer[0]
 
+
 class TestMethods:
 
     sort_kinds = ['quicksort', 'heapsort', 'stable']
