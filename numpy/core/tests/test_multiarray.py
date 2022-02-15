@@ -1635,6 +1635,15 @@ class TestZeroSizeFlexible:
 
                 assert_equal(zs.dtype, zs2.dtype)
 
+    def test_pickle_empty(self):
+        """Checking if an empty array pickled and un-pickled will not cause a
+        segmentation fault"""
+        arr = np.array([]).reshape(99999999, 0)
+        pk_dmp = pickle.dumps(arr)
+        pk_load = pickle.loads(pk_dmp)
+
+        assert pk_load.size == 0
+
     @pytest.mark.skipif(pickle.HIGHEST_PROTOCOL < 5,
                         reason="requires pickle protocol 5")
     def test_pickle_with_buffercallback(self):
@@ -1649,7 +1658,6 @@ class TestZeroSizeFlexible:
         # should modify it in array_from_buffer too.
         array[0] = -1
         assert array_from_buffer[0] == -1, array_from_buffer[0]
-
 
 class TestMethods:
 
