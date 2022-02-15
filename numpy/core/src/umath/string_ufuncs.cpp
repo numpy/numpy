@@ -114,15 +114,18 @@ enum class COMP {
     EQ, NE, LT, LE, GT, GE,
 };
 
-static char const* comp_name(COMP comp) {
-  switch(comp) {
-    case COMP::EQ: return "equal";
-    case COMP::NE: return "not_equal";
-    case COMP::LT: return "less";
-    case COMP::LE: return "less_equal";
-    case COMP::GT: return "greater";
-    case COMP::GE: return "greater_equal";
-  }
+static char const *
+comp_name(COMP comp) {
+    switch(comp) {
+        case COMP::EQ: return "equal";
+        case COMP::NE: return "not_equal";
+        case COMP::LT: return "less";
+        case COMP::LE: return "less_equal";
+        case COMP::GT: return "greater";
+        case COMP::GE: return "greater_equal";
+    }
+    assert(0);
+    return nullptr;
 }
 
 
@@ -208,27 +211,29 @@ add_loop(PyObject *umath, const char *ufunc_name,
     return res;
 }
 
+
 template<bool rstrip, typename character, COMP...>
 struct add_loops;
 
 template<bool rstrip, typename character>
 struct add_loops<rstrip, character> {
-  bool operator()(PyObject*, PyArrayMethod_Spec*) {
-    return false;
-  }
+    int operator()(PyObject*, PyArrayMethod_Spec*) {
+        return 0;
+    }
 };
 
 template<bool rstrip, typename character, COMP comp, COMP... comps>
 struct add_loops<rstrip, character, comp, comps...> {
-  bool operator()(PyObject* umath, PyArrayMethod_Spec* spec) {
-    PyArrayMethod_StridedLoop* loop = string_comparison_loop<rstrip, comp, character>;
-    if(add_loop(umath, comp_name(comp), spec, loop) < 0) {
-      return true;
+    int operator()(PyObject* umath, PyArrayMethod_Spec* spec) {
+        PyArrayMethod_StridedLoop* loop = string_comparison_loop<rstrip, comp, character>;
+
+        if (add_loop(umath, comp_name(comp), spec, loop) < 0) {
+            return -1;
+        }
+        else {
+            return add_loops<rstrip, character, comps...>()(umath, spec);
+        }
     }
-    else {
-      return add_loops<rstrip, character, comps...>()(umath, spec);
-    }
-  }
 };
 
 
@@ -262,7 +267,7 @@ init_string_ufuncs(PyObject *umath)
 
     /* All String loops */
     using string_looper = add_loops<false, npy_byte, COMP::EQ, COMP::NE, COMP::LT, COMP::LE, COMP::GT, COMP::GE>;
-    if(string_looper()(umath, &spec)) {
+    if (string_looper()(umath, &spec) < 0) {
         goto finish;
     }
 
@@ -270,7 +275,7 @@ init_string_ufuncs(PyObject *umath)
     using ucs_looper = add_loops<false, npy_ucs4, COMP::EQ, COMP::NE, COMP::LT, COMP::LE, COMP::GT, COMP::GE>;
     dtypes[0] = Unicode;
     dtypes[1] = Unicode;
-    if(ucs_looper()(umath, &spec)) {
+    if (ucs_looper()(umath, &spec) < 0) {
         goto finish;
     }
 
