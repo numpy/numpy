@@ -107,7 +107,15 @@ string_cmp(int len1, character *str1, int len2, character *str2)
 }
 
 
-template <bool rstrip, int comp, typename character>
+/*
+ * Helper for templating, avoids warnings about uncovered switch paths.
+ */
+enum class COMP {
+    EQ, NE, LT, LE, GT, GE,
+};
+
+
+template <bool rstrip, COMP comp, typename character>
 static int
 string_comparison_loop(PyArrayMethod_Context *context,
         char *const data[], npy_intp const dimensions[],
@@ -132,26 +140,24 @@ string_comparison_loop(PyArrayMethod_Context *context,
                 len1, (character *)in1, len2, (character *)in2);
         npy_bool res;
         switch (comp) {
-            case Py_EQ:
+            case COMP::EQ:
                 res = cmp == 0;
                 break;
-            case Py_NE:
+            case COMP::NE:
                 res = cmp != 0;
                 break;
-            case Py_LT:
+            case COMP::LT:
                 res = cmp < 0;
                 break;
-            case Py_LE:
+            case COMP::LE:
                 res = cmp <= 0;
                 break;
-            case Py_GT:
+            case COMP::GT:
                 res = cmp > 0;
                 break;
-            case Py_GE:
+            case COMP::GE:
                 res = cmp >= 0;
                 break;
-            default:
-                assert(false);
         }
         *(npy_bool *)out = res;
 
@@ -225,27 +231,27 @@ init_string_ufuncs(PyObject *umath)
 
     /* TODO: It would be nice to condense the below */
     /* All String loops */
-    loop = string_comparison_loop<false, Py_EQ, npy_byte>;
+    loop = string_comparison_loop<false, COMP::EQ, npy_byte>;
     if (add_loop(umath, "equal", &spec, loop) < 0) {
         goto finish;
     }
-    loop = string_comparison_loop<false, Py_NE, npy_byte>;
+    loop = string_comparison_loop<false, COMP::NE, npy_byte>;
     if (add_loop(umath, "not_equal", &spec, loop) < 0) {
         goto finish;
     }
-    loop = string_comparison_loop<false, Py_LT, npy_byte>;
+    loop = string_comparison_loop<false, COMP::LT, npy_byte>;
     if (add_loop(umath, "less", &spec, loop) < 0) {
         goto finish;
     }
-    loop = string_comparison_loop<false, Py_LE, npy_byte>;
+    loop = string_comparison_loop<false, COMP::LE, npy_byte>;
     if (add_loop(umath, "less_equal", &spec, loop) < 0) {
         goto finish;
     }
-    loop = string_comparison_loop<false, Py_GT, npy_byte>;
+    loop = string_comparison_loop<false, COMP::GT, npy_byte>;
     if (add_loop(umath, "greater", &spec, loop) < 0) {
         goto finish;
     }
-    loop = string_comparison_loop<false, Py_GE, npy_byte>;
+    loop = string_comparison_loop<false, COMP::GE, npy_byte>;
     if (add_loop(umath, "greater_equal", &spec, loop) < 0) {
         goto finish;
     }
@@ -254,27 +260,27 @@ init_string_ufuncs(PyObject *umath)
     dtypes[0] = Unicode;
     dtypes[1] = Unicode;
 
-    loop = string_comparison_loop<false, Py_EQ, npy_ucs4>;
+    loop = string_comparison_loop<false, COMP::EQ, npy_ucs4>;
     if (add_loop(umath, "equal", &spec, loop) < 0) {
         goto finish;
     }
-    loop = string_comparison_loop<false, Py_NE, npy_ucs4>;
+    loop = string_comparison_loop<false, COMP::NE, npy_ucs4>;
     if (add_loop(umath, "not_equal", &spec, loop) < 0) {
         goto finish;
     }
-    loop = string_comparison_loop<false, Py_LT, npy_ucs4>;
+    loop = string_comparison_loop<false, COMP::LT, npy_ucs4>;
     if (add_loop(umath, "less", &spec, loop) < 0) {
         goto finish;
     }
-    loop = string_comparison_loop<false, Py_LE, npy_ucs4>;
+    loop = string_comparison_loop<false, COMP::LE, npy_ucs4>;
     if (add_loop(umath, "less_equal", &spec, loop) < 0) {
         goto finish;
     }
-    loop = string_comparison_loop<false, Py_GT, npy_ucs4>;
+    loop = string_comparison_loop<false, COMP::GT, npy_ucs4>;
     if (add_loop(umath, "greater", &spec, loop) < 0) {
         goto finish;
     }
-    loop = string_comparison_loop<false, Py_GE, npy_ucs4>;
+    loop = string_comparison_loop<false, COMP::GE, npy_ucs4>;
     if (add_loop(umath, "greater_equal", &spec, loop) < 0) {
         goto finish;
     }
@@ -294,19 +300,19 @@ get_strided_loop(int comp)
 {
     switch (comp) {
         case Py_EQ:
-            return string_comparison_loop<rstrip, Py_EQ, character>;
+            return string_comparison_loop<rstrip, COMP::EQ, character>;
         case Py_NE:
-            return string_comparison_loop<rstrip, Py_NE, character>;
+            return string_comparison_loop<rstrip, COMP::NE, character>;
         case Py_LT:
-            return string_comparison_loop<rstrip, Py_LT, character>;
+            return string_comparison_loop<rstrip, COMP::LT, character>;
         case Py_LE:
-            return string_comparison_loop<rstrip, Py_LE, character>;
+            return string_comparison_loop<rstrip, COMP::LE, character>;
         case Py_GT:
-            return string_comparison_loop<rstrip, Py_GT, character>;
+            return string_comparison_loop<rstrip, COMP::GT, character>;
         case Py_GE:
-            return string_comparison_loop<rstrip, Py_GE, character>;
+            return string_comparison_loop<rstrip, COMP::GE, character>;
         default:
-            assert(false);
+            assert(false);  /* caller ensures this */
     }
     return nullptr;
 }
