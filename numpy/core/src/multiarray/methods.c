@@ -2205,7 +2205,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
                 Py_DECREF(typecode);
             }
             else {
-                memcpy(PyArray_DATA(self), datastr, num);
+                memcpy(PyArray_DATA(self), datastr, PyArray_NBYTES(self));
             }
             PyArray_ENABLEFLAGS(self, NPY_ARRAY_OWNDATA);
             fa->base = NULL;
