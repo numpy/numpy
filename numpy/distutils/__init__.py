@@ -36,6 +36,7 @@ warnings.warn("\n\n"
     "  For more details, see: TODO! \n\n",
     DeprecationWarning, stacklevel=2
 )
+del warnings
 
 # If numpy is installed, add distutils.test()
 try:

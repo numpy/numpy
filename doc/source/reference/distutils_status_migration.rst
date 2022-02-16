@@ -18,9 +18,8 @@ Migration advice
 ----------------
 
 It is **not necessary** to migrate immediately - the release date for Python 3.12
-is October 2023, so you have a good amount of time left. It may be beneficial
-to wait with migrating until there are examples from other projects to follow
-(see below).
+is October 2023. It may be beneficial to wait with migrating until there are
+examples from other projects to follow (see below).
 
 There are several build systems which are good options to migrate to. Assuming
 you have compiled code in your package (if not, we recommend using Flit_) and
@@ -33,9 +32,7 @@ recommend:
 If you have modest needs (only simple Cython/C extensions, and perhaps nested
 ``setup.py`` files) and have been happy with ``numpy.distutils`` so far, you
 can also consider switching to ``setuptools``. Note that most functionality of
-``numpy.disutils`` is unlikely to be ported to ``setuptools``. The likely
-exception is nested ``setup.py`` files, but this is not yet done (help with
-this is very welcome!).
+``numpy.disutils`` is unlikely to be ported to ``setuptools``.
 
 
 Moving to Meson
