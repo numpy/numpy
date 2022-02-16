@@ -4190,7 +4190,7 @@ def quantile(a,
         8. 'median_unbiased'
         9. 'normal_unbiased'
 
-        The first three methods are discontiuous.  NumPy further defines the
+        The first three methods are discontinuous.  NumPy further defines the
         following discontinuous variations of the default 'linear' (7.) option:
 
         * 'lower'
@@ -4241,10 +4241,10 @@ def quantile(a,
     same as the median if ``q=0.5``, the same as the minimum if ``q=0.0`` and
     the same as the maximum if ``q=1.0``.
 
-    This optional `method` parameter specifies the method to use when the
+    The optional `method` parameter specifies the method to use when the
     desired quantile lies between two data points ``i < j``.
-    If ``g`` is the fractional part of the index surrounded by ``i`` and
-    alpha and beta are correction constants modifying i and j.
+    If ``g`` is the fractional part of the index surrounded by ``i`` and ``j``,
+    and alpha and beta are correction constants modifying i and j:
 
     .. math::
         i + g = (q - alpha) / ( n - alpha - beta + 1 )
@@ -4259,38 +4259,38 @@ def quantile(a,
 
     averaged_inverted_cdf:
         method 2 of H&F [1]_.
-        This method give discontinuous results:
+        This method gives discontinuous results:
         * if g > 0 ; then take j
         * if g = 0 ; then average between bounds
 
     closest_observation:
         method 3 of H&F [1]_.
-        This method give discontinuous results:
+        This method gives discontinuous results:
         * if g > 0 ; then take j
         * if g = 0 and index is odd ; then take j
         * if g = 0 and index is even ; then take i
 
     interpolated_inverted_cdf:
         method 4 of H&F [1]_.
-        This method give continuous results using:
+        This method gives continuous results using:
         * alpha = 0
         * beta = 1
 
     hazen:
         method 5 of H&F [1]_.
-        This method give continuous results using:
+        This method gives continuous results using:
         * alpha = 1/2
         * beta = 1/2
 
     weibull:
         method 6 of H&F [1]_.
-        This method give continuous results using:
+        This method gives continuous results using:
         * alpha = 0
         * beta = 0
 
     linear:
         method 7 of H&F [1]_.
-        This method give continuous results using:
+        This method gives continuous results using:
         * alpha = 1
         * beta = 1
 
@@ -4298,7 +4298,7 @@ def quantile(a,
         method 8 of H&F [1]_.
         This method is probably the best method if the sample
         distribution function is unknown (see reference).
-        This method give continuous results using:
+        This method gives continuous results using:
         * alpha = 1/3
         * beta = 1/3
 
@@ -4306,7 +4306,7 @@ def quantile(a,
         method 9 of H&F [1]_.
         This method is probably the best method if the sample
         distribution function is known to be normal.
-        This method give continuous results using:
+        This method gives continuous results using:
         * alpha = 3/8
         * beta = 3/8
 
