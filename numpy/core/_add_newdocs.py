@@ -5251,10 +5251,10 @@ add_newdoc('numpy.core', 'ufunc', ('accumulate',
       r = np.empty_like(A)
       t = A[0]
       r[0] = A[0]
-      
       for i in range(1, len(A)):
           t = op(t, A[i])
           r[i] = t
+      return r
 
     For example, add.accumulate() is equivalent to np.cumsum().
     
