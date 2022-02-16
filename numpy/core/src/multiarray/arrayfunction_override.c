@@ -333,7 +333,8 @@ NPY_NO_EXPORT PyObject *
 array_implement_array_function(
     PyObject *NPY_UNUSED(dummy), PyObject *positional_args)
 {
-    PyObject *implementation, *public_api, *relevant_args, *args, *kwargs;
+    PyObject *res, *implementation, *public_api, *relevant_args, *args, *kwargs;
+    int like_removed = 0;
 
     if (!PyArg_UnpackTuple(
             positional_args, "implement_array_function", 5, 5,
@@ -357,11 +358,24 @@ array_implement_array_function(
             }
             Py_DECREF(tmp_has_override);
             PyDict_DelItem(kwargs, npy_ma_str_like);
+            like_removed = 1;
         }
     }
 
-    PyObject *res = array_implement_array_function_internal(
-        public_api, relevant_args, args, kwargs);
+    /*
+     * If `like=` kwarg was removed, `implementation` points to the NumPy
+     * public API, as `public_api` is in that case the wrapper dispatcher
+     * function. For example, in the `np.full` case, `implementation` is
+     * `np.full`, whereas `public_api` is `_full_with_like`. This is done
+     * to ensure `__array_function__` implementations can do equality/identity
+     * comparisons when `like=` is present.
+     */
+    if (like_removed)
+        res = array_implement_array_function_internal(
+            implementation, relevant_args, args, kwargs);
+    else
+        res = array_implement_array_function_internal(
+            public_api, relevant_args, args, kwargs);
 
     if (res == Py_NotImplemented) {
         return PyObject_Call(implementation, args, kwargs);
