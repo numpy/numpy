@@ -389,8 +389,8 @@ tokenize(stream *s, tokenizer_state *ts, parser_config *const config)
      */
     if (ts->num_fields == 1
             || ts->unquoted_state == TOKENIZE_UNQUOTED_WHITESPACE) {
-        ssize_t offset_last = ts->fields[ts->num_fields-1].offset;
-        ssize_t end_last = ts->fields[ts->num_fields].offset;
+        size_t offset_last = ts->fields[ts->num_fields-1].offset;
+        size_t end_last = ts->fields[ts->num_fields].offset;
         if (!ts->fields->quoted && end_last - offset_last == 1) {
             ts->num_fields--;
         }
