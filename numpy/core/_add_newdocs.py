@@ -5257,14 +5257,19 @@ add_newdoc('numpy.core', 'ufunc', ('accumulate',
 
     For a one-dimensional array, accumulate produces results equivalent to::
 
-      r = np.empty(len(A))
-      t = op.identity        # op = the ufunc being applied to A's  elements
-      for i in range(len(A)):
+      r = np.empty_like(A)
+      t = A[0]
+      r[0] = A[0]
+      for i in range(1, len(A)):
           t = op(t, A[i])
           r[i] = t
       return r
 
     For example, add.accumulate() is equivalent to np.cumsum().
+    
+    Numpy may choose to use the identity of the ufunc operator during this
+    calculation whenever it wants. The current implementation does not use 
+    the identity.
 
     For a multi-dimensional array, accumulate is applied along only one
     axis (axis zero by default; see Examples below) so repeated use is
