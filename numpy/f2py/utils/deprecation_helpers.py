@@ -2,9 +2,9 @@
 These helpers allow for backwards compatible ways to change module structures.
 The main reason this is required is because throwing warnings on module imports
 is not viable otherwise. The design is **strongly inspired** by the Apache
-licensed Cirq project's similar machinery [1].
+licensed `Cirq project's similar machinery`_.
 
-[1]: https://github.com/quantumlib/Cirq/pull/3917
+.. _`Cirq project's similar machinery`: https://github.com/quantumlib/Cirq/pull/3917
 """
 
 from types import ModuleType
@@ -117,12 +117,17 @@ def _module_warn(old_module_name, new_module_name, deadline):
 
 class DeprecatedModuleFinder(importlib.abc.MetaPathFinder):
     """A module finder to handle deprecated module references.
-    It sends a deprecation warning when a deprecated module is asked to be found.
-    It is meant to be used as a wrapper around existing MetaPathFinder instances.
-    Args:
-        new_module_name: The new module's fully qualified name.
-        old_module_name: The deprecated module's fully qualified name.
-        deadline: The deprecation deadline.
+    Sends a deprecation warning when a deprecated module is asked to be found.
+    Used as a wrapper around existing MetaPathFinder instances.
+
+    Parameters
+    ----------
+    new_module_name: str
+        The new module's fully qualified name.
+    old_module_name: str
+        The deprecated module's fully qualified name.
+    deadline: str
+        The deprecation deadline. Will raise beyond this.
     """
 
     def __init__(
@@ -142,12 +147,16 @@ class DeprecatedModuleFinder(importlib.abc.MetaPathFinder):
         """Finds the specification of a module.
         This is an implementation of the importlib.abc.MetaPathFinder.find_spec method.
         See https://docs.python.org/3/library/importlib.html#importlib.abc.MetaPathFinder.
-        Args:
-            fullname: name of the module.
-            path: if presented, this is the parent module's submodule search path.
-            target: When passed in, target is a module object that the finder may use to make a more
-                educated guess about what spec to return. We don't use it here, just pass it along
-                to the wrapped finder.
+
+        Parameters
+        ----------
+        fullname: str
+            name of the module.
+        path: str (optional)
+            if present, this is the parent module's submodule search path.
+        target: str (optional)
+            if present, used to guess the spec. Passed to the wrapped finder
+            unused.
         """
         if fullname != self.old_module_name and not fullname.startswith(self.old_module_name + "."):
             return None
@@ -177,10 +186,15 @@ class DeprecatedModuleLoader(importlib.abc.Loader):
     It wraps an existing Loader instance, to which it delegates the loading. On top of that
     it ensures that the sys.modules cache has both the deprecated module's name and the
     new module's name pointing to the same exact ModuleType instance.
-    Args:
-        loader: the loader to be wrapped
-        old_module_name: the deprecated module's fully qualified name
-        new_module_name: the new module's fully qualified name
+
+    Parameters
+    ----------
+    loader: str
+        the loader to be wrapped
+    old_module_name: str
+        the deprecated module's fully qualified name
+    new_module_name: str
+        the new module's fully qualified name
     """
 
     def __init__(self, loader, old_module_name, new_module_name):
