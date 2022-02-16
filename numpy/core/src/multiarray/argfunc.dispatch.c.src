@@ -4,6 +4,7 @@
  ** sse2 sse42 xop avx2 avx512_skx
  ** vsx2
  ** neon asimd
+ ** vx vxe
  **/
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
@@ -123,7 +124,7 @@ simd_@func@_@sfx@(npyv_lanetype_@sfx@ *ip, npy_intp len)
  * #bsfx = b32, b32, b64, b64, b32, b64#
  * #is_fp = 0*4, 1*2#
  * #is_idx32 = 1*2, 0*2, 1, 0#
- * #chk_simd = NPY_SIMD*5, NPY_SIMD_F64#
+ * #chk_simd = NPY_SIMD*4, NPY_SIMD_F32, NPY_SIMD_F64#
  */
 #if @chk_simd@
 /**begin repeat1
@@ -296,6 +297,9 @@ scalar_loop:
     #if @is_fp@
         #define TO_SIMD_SFX(X) X##_f@len@
         #if NPY_BITSOF_@BTYPE@ == 64 && !NPY_SIMD_F64
+            #undef TO_SIMD_SFX
+        #endif
+        #if NPY_BITSOF_@BTYPE@ == 32 && !NPY_SIMD_F32
             #undef TO_SIMD_SFX
         #endif
     #elif @is_unsigned@
