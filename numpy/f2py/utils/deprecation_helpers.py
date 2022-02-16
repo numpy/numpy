@@ -9,6 +9,7 @@ licensed `Cirq project's similar machinery`_.
 
 from types import ModuleType
 import sys, importlib
+from importlib.abc import MetaPathFinder, Loader
 
 def _validate_deadline(deadline, old_module_name,
                        new_module_name):
@@ -115,7 +116,7 @@ def _module_warn(old_module_name, new_module_name, deadline):
     )
 
 
-class DeprecatedModuleFinder(importlib.abc.MetaPathFinder):
+class DeprecatedModuleFinder(MetaPathFinder):
     """A module finder to handle deprecated module references.
     Sends a deprecation warning when a deprecated module is asked to be found.
     Used as a wrapper around existing MetaPathFinder instances.
@@ -181,7 +182,7 @@ class DeprecatedModuleFinder(importlib.abc.MetaPathFinder):
             spec.loader = DeprecatedModuleLoader(spec.loader, fullname, new_fullname)
         return spec
 
-class DeprecatedModuleLoader(importlib.abc.Loader):
+class DeprecatedModuleLoader(Loader):
     """A Loader for deprecated modules.
     It wraps an existing Loader instance, to which it delegates the loading. On top of that
     it ensures that the sys.modules cache has both the deprecated module's name and the

@@ -21,10 +21,6 @@ def test_deprecated_submodule():
 
 def test_validate_deadline():
     with pytest.raises(AssertionError):
-        _validate_deadline("1.3.2",
-                           "numpy.f2py.blah",
-                           "numpy.f2py.some.blah")
-    with pytest.raises(AssertionError):
         _validate_deadline("1.02",
                            "numpy.f2py.blah",
                            "numpy.f2py.some.blah")
