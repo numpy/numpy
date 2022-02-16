@@ -5,7 +5,7 @@ from collections import namedtuple
 import pytest
 
 from . import util
-from numpy.f2py.f2py2e import main as f2pycli
+from numpy.f2py.frontend.f2py2e import main as f2pycli
 
 #########################
 # CLI utils and classes #

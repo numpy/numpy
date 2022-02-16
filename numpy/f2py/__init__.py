@@ -22,7 +22,7 @@ def __getattr__(attr):
     # Avoid importing things that aren't needed for building
     # which might import the main numpy module
     if attr == "test":
-        from numpy.f2py import f2py_testing
+        from numpy.f2py.tests import f2py_testing
         from numpy._pytesttester import PytestTester
         test = PytestTester(__name__)
         return test

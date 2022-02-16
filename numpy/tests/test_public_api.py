@@ -249,7 +249,7 @@ PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "f2py.codegen.cfuncs",
     "f2py.codegen.func2subr",
     "f2py.codegen.rules",
-    "f2py.f2py_testing",
+    "f2py.tests.f2py_testing",
     "f2py.frontend",
     "f2py.frontend.crackfortran",
     "f2py.frontend.f2py2e",

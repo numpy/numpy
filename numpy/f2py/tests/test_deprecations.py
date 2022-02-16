@@ -17,10 +17,3 @@ def test_deprecated_submodule():
                              old_child="auxfuncs",
                              deadline="1.25")
         import numpy.f2py.auxfuncs
-
-
-def test_validate_deadline():
-    with pytest.raises(AssertionError):
-        _validate_deadline("1.02",
-                           "numpy.f2py.blah",
-                           "numpy.f2py.some.blah")

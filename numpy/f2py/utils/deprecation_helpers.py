@@ -11,6 +11,7 @@ from types import ModuleType
 import sys, importlib
 from importlib.abc import MetaPathFinder, Loader
 
+
 def _validate_deadline(deadline, old_module_name,
                        new_module_name):
     """Validates the deadline for the deprecation
@@ -30,18 +31,19 @@ def _validate_deadline(deadline, old_module_name,
     """
     import numpy as np
     import re
-    major_version = deadline.split('.')[0]
-    minor_version = deadline.split('.')[1]
+    dep_major_version = deadline.split('.')[0]
+    dep_minor_version = deadline.split('.')[1]
     np_major_version = np.__version__.split('.')[0]
     np_minor_version = np.__version__.split('.')[1]
     DEADLINE_REGEX = r"^(\d)+\.(\d)+$"
     assert re.match(DEADLINE_REGEX, deadline),\
            "deadline should match X.Y"
-    assert (float(f"{major_version}.{minor_version}") >
-            float(f"{np_major_version}.{np_minor_version}")), \
-            f"Deadline was {major_version}.{minor_version} "\
-            f"for replacing {old_module_name} with {new_module_name},"\
-            f" got {np_major_version}.{np_minor_version}"
+    assert (float(f"{dep_major_version}.{dep_minor_version}") >
+            float(f"{np_major_version}.{np_minor_version}")),\
+            f"""For replacing {old_module_name} with {new_module_name}..
+            Deadline: {dep_major_version}.{dep_minor_version}
+            Got: {np_major_version}.{np_minor_version}"""
+
 
 def deprecated_submodule(*, new_module_name, old_parent, old_child, deadline):
     """Creates a recursively defined deprecated module reference
@@ -81,6 +83,7 @@ def deprecated_submodule(*, new_module_name, old_parent, old_child, deadline):
     finder = DeprecatedModuleFinder(new_module_name, old_module_name, deadline)
     sys.meta_path.append(finder)
 
+
 def _setup_deprecated_submodule_attribute(new_module_name, old_parent,
                                           old_child, deadline, new_module):
     parent_module = sys.modules[old_parent]
@@ -100,6 +103,7 @@ def _setup_deprecated_submodule_attribute(new_module_name, old_parent,
         grandpa_module = sys.modules[grandpa_name]
         setattr(grandpa_module, parent_tail, wrapped_parent_module)
     sys.modules[old_parent] = wrapped_parent_module
+
 
 def _module_warn(old_module_name, new_module_name, deadline):
     import warnings
@@ -181,6 +185,7 @@ class DeprecatedModuleFinder(MetaPathFinder):
                 setattr(spec.loader, "name", fullname)
             spec.loader = DeprecatedModuleLoader(spec.loader, fullname, new_fullname)
         return spec
+
 
 class DeprecatedModuleLoader(Loader):
     """A Loader for deprecated modules.
