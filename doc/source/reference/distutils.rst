@@ -4,6 +4,11 @@ Packaging (:mod:`numpy.distutils`)
 
 .. module:: numpy.distutils
 
+.. warning::
+
+   ``numpy.distutils`` is deprecated, and will be removed for
+   Python >= 3.12. For more details, see :ref:`distutils-status-migration`
+
 NumPy provides enhanced distutils functionality to make it easier to
 build and install sub-packages, auto-generate code, and extension
 modules that use Fortran-compiled libraries. To use features of NumPy
