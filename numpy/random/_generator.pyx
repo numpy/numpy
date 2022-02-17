@@ -3037,26 +3037,21 @@ cdef class Generator:
             max_lam_arr = (1 - p_arr) / p_arr * (n_arr + 10 * np.sqrt(n_arr))
             if np.any(np.greater(max_lam_arr, POISSON_LAM_MAX)):
                 raise ValueError("n too large or p too small")
+        else:
+            _dp = PyFloat_AsDouble(p)
+            _in = PyFloat_AsDouble(n)
 
-            return disc(&random_negative_binomial, &self._bitgen, size, self.lock, 2, 0,
-                        n, '', CONS_NONE,
-                        p, '', CONS_NONE,
-                        0.0, '', CONS_NONE)
-
-        _dp = PyFloat_AsDouble(p)
-        _in = PyFloat_AsDouble(n)
-
-        check_constraint(<double>_in, 'n', CONS_POSITIVE_NOT_NAN)
-        check_constraint(_dp, 'p', CONS_BOUNDED_GT_0_1)
-        # Check that the choice of negative_binomial parameters won't result in a
-        # call to the poisson distribution function with a value of lam too large.
-        _dmax_lam = (1 - _dp) / _dp * (_in + 10 * np.sqrt(_in))
-        if _dmax_lam > POISSON_LAM_MAX:
-            raise ValueError("n too large or p too small")
+            check_constraint(<double>_in, 'n', CONS_POSITIVE_NOT_NAN)
+            check_constraint(_dp, 'p', CONS_BOUNDED_GT_0_1)
+            # Check that the choice of negative_binomial parameters won't result in a
+            # call to the poisson distribution function with a value of lam too large.
+            _dmax_lam = (1 - _dp) / _dp * (_in + 10 * np.sqrt(_in))
+            if _dmax_lam > POISSON_LAM_MAX:
+                raise ValueError("n too large or p too small")
 
         return disc(&random_negative_binomial, &self._bitgen, size, self.lock, 2, 0,
-                    n, 'n', CONS_NONE,
-                    p, 'p', CONS_NONE,
+                    n_arr, 'n', CONS_NONE,
+                    p_arr, 'p', CONS_NONE,
                     0.0, '', CONS_NONE)
 
     def poisson(self, lam=1.0, size=None):
