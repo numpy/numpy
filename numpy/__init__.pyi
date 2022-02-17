@@ -1095,7 +1095,7 @@ class _ArrayOrScalarCommon:
     @overload
     def argmax(
         self,
-        axis: _ShapeLike = ...,
+        axis: SupportsIndex = ...,
         out: None = ...,
         *,
         keepdims: bool = ...,
@@ -1103,7 +1103,7 @@ class _ArrayOrScalarCommon:
     @overload
     def argmax(
         self,
-        axis: None | _ShapeLike = ...,
+        axis: None | SupportsIndex = ...,
         out: _NdArraySubClass = ...,
         *,
         keepdims: bool = ...,
@@ -1120,7 +1120,7 @@ class _ArrayOrScalarCommon:
     @overload
     def argmin(
         self,
-        axis: _ShapeLike = ...,
+        axis: SupportsIndex = ...,
         out: None = ...,
         *,
         keepdims: bool = ...,
@@ -1128,7 +1128,7 @@ class _ArrayOrScalarCommon:
     @overload
     def argmin(
         self,
-        axis: None | _ShapeLike = ...,
+        axis: None | SupportsIndex = ...,
         out: _NdArraySubClass = ...,
         *,
         keepdims: bool = ...,
