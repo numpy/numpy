@@ -15,6 +15,7 @@ from numpy.core.multiarray import normalize_axis_index
 
 from .c_distributions cimport *
 from libc cimport string
+from libc.math cimport sqrt
 from libc.stdint cimport (uint8_t, uint16_t, uint32_t, uint64_t,
                           int32_t, int64_t, INT64_MAX, SIZE_MAX)
 from ._bounded_integers cimport (_rand_bool, _rand_int32, _rand_int64,
@@ -2997,6 +2998,22 @@ cdef class Generator:
         then the probability distribution of the number of non-"1"s that
         appear before the third "1" is a negative binomial distribution.
 
+        Because this method internally calls ``Generator.poisson`` with an
+        intermediate random value, a ValueError is raised when the choice of 
+        :math:`n` and :math:`p` would result in the mean + 10 sigma of the sampled
+        intermediate distribution exceeding the max acceptable value of the 
+        ``Generator.poisson`` method. This happens when :math:`p` is too low 
+        (a lot of failures happen for every success) and :math:`n` is too big (
+        a lot of sucesses are allowed).
+        Therefore, the :math:`n` and :math:`p` values must satisfy the constraint:
+
+        .. math:: n\\frac{1-p}{p}+10n\\sqrt{n}\\frac{1-p}{p}<2^{63}-1-10\\sqrt{2^{63}-1},
+
+        Where the left side of the equation is the derived mean + 10 sigma of
+        a sample from the gamma distribution internally used as the :math:`lam`
+        parameter of a poisson sample, and the right side of the equation is
+        the constraint for maximum value of :math:`lam` in ``Generator.poisson``.
+
         References
         ----------
         .. [1] Weisstein, Eric W. "Negative Binomial Distribution." From
@@ -3025,6 +3042,7 @@ cdef class Generator:
         cdef bint is_scalar = True
         cdef double *_dn
         cdef double *_dp
+        cdef double _dmax_lam
 
         p_arr = <np.ndarray>np.PyArray_FROM_OTF(p, np.NPY_DOUBLE, np.NPY_ALIGNED)
         is_scalar = is_scalar and np.PyArray_NDIM(p_arr) == 0
@@ -3038,7 +3056,7 @@ cdef class Generator:
             # call to the poisson distribution function with a value of lam too large.
             max_lam_arr = (1 - p_arr) / p_arr * (n_arr + 10 * np.sqrt(n_arr))
             if np.any(np.greater(max_lam_arr, POISSON_LAM_MAX)):
-                raise ValueError("n too large or p too small")
+                raise ValueError("n too large or p too small, see Generator.negative_binomial Notes")
 
         else:
             _dn = <double*>np.PyArray_DATA(n_arr)
@@ -3048,9 +3066,9 @@ cdef class Generator:
             check_constraint(_dp[0], 'p', CONS_BOUNDED_GT_0_1)
             # Check that the choice of negative_binomial parameters won't result in a
             # call to the poisson distribution function with a value of lam too large.
-            _dmax_lam = (1 - _dp[0]) / _dp[0] * (_dn[0] + 10 * np.sqrt(_dn[0]))
+            _dmax_lam = (1 - _dp[0]) / _dp[0] * (_dn[0] + 10 * sqrt(_dn[0]))
             if _dmax_lam > POISSON_LAM_MAX:
-                raise ValueError("n too large or p too small")
+                raise ValueError("n too large or p too small, see Generator.negative_binomial Notes")
 
         return disc(&random_negative_binomial, &self._bitgen, size, self.lock, 2, 0,
                     n_arr, 'n', CONS_NONE,
