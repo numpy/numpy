@@ -697,8 +697,8 @@ def cholesky(a):
     Returns
     -------
     L : (..., M, M) array_like
-        Upper or lower-triangular Cholesky factor of `a`.  Returns a
-        matrix object if `a` is a matrix object.
+        Lower-triangular Cholesky factor of `a`.  Returns a matrix object if
+        `a` is a matrix object.
 
     Raises
     ------
