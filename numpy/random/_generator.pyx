@@ -3023,10 +3023,12 @@ cdef class Generator:
         """
 
         cdef bint is_scalar = True
+        cdef double *_dn
+        cdef double *_dp
 
         p_arr = <np.ndarray>np.PyArray_FROM_OTF(p, np.NPY_DOUBLE, np.NPY_ALIGNED)
         is_scalar = is_scalar and np.PyArray_NDIM(p_arr) == 0
-        n_arr = <np.ndarray>np.PyArray_FROM_OTF(n, np.NPY_INT64, np.NPY_ALIGNED)
+        n_arr = <np.ndarray>np.PyArray_FROM_OTF(n, np.NPY_DOUBLE, np.NPY_ALIGNED)
         is_scalar = is_scalar and np.PyArray_NDIM(n_arr) == 0
 
         if not is_scalar:
@@ -3037,15 +3039,16 @@ cdef class Generator:
             max_lam_arr = (1 - p_arr) / p_arr * (n_arr + 10 * np.sqrt(n_arr))
             if np.any(np.greater(max_lam_arr, POISSON_LAM_MAX)):
                 raise ValueError("n too large or p too small")
-        else:
-            _dp = PyFloat_AsDouble(p)
-            _in = PyFloat_AsDouble(n)
 
-            check_constraint(<double>_in, 'n', CONS_POSITIVE_NOT_NAN)
-            check_constraint(_dp, 'p', CONS_BOUNDED_GT_0_1)
+        else:
+            _dn = <double*>np.PyArray_DATA(n_arr)
+            _dp = <double*>np.PyArray_DATA(p_arr)
+
+            check_constraint(_dn[0], 'n', CONS_POSITIVE_NOT_NAN)
+            check_constraint(_dp[0], 'p', CONS_BOUNDED_GT_0_1)
             # Check that the choice of negative_binomial parameters won't result in a
             # call to the poisson distribution function with a value of lam too large.
-            _dmax_lam = (1 - _dp) / _dp * (_in + 10 * np.sqrt(_in))
+            _dmax_lam = (1 - _dp[0]) / _dp[0] * (_dn[0] + 10 * np.sqrt(_dn[0]))
             if _dmax_lam > POISSON_LAM_MAX:
                 raise ValueError("n too large or p too small")
 

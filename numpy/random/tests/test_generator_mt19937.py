@@ -1490,6 +1490,7 @@ class TestRandomDist:
         # or infinite loop raise an exception.
         with np.errstate(invalid='ignore'):
             assert_raises(ValueError, random.negative_binomial, 2**62, 0.1)
+            assert_raises(ValueError, random.negative_binomial, [2**62], [0.1])
 
     def test_noncentral_chisquare(self):
         random = Generator(MT19937(self.seed))
