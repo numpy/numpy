@@ -2558,7 +2558,7 @@ def norm(x, ord=None, axis=None, keepdims=False):
         else:
             absx = abs(x)
             absx **= ord
-            ret = add.reduce(absx, axis=axis, keepdims=keepdims)
+            ret = asarray(add.reduce(absx, axis=axis, keepdims=keepdims))
             ret **= (1 / ord)
             return ret
     elif len(axis) == 2:
