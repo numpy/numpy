@@ -9,6 +9,9 @@ set_travis_vars() {
     fi
     if [[ "$TRAVIS_EVENT_TYPE" == "cron" ]]; then
       IS_SCHEDULE_DISPATCH="true"
+    elif [[ "$TRAVIS_EVENT_TYPE" == "api" ]]; then
+      # Manual CI run, so upload
+      IS_SCHEDULE_DISPATCH="true"
     else
       IS_SCHEDULE_DISPATCH="false"
     fi
