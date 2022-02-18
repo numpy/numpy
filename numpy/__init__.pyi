@@ -1095,7 +1095,7 @@ class _ArrayOrScalarCommon:
     @overload
     def argmax(
         self,
-        axis: _ShapeLike = ...,
+        axis: SupportsIndex = ...,
         out: None = ...,
         *,
         keepdims: bool = ...,
@@ -1103,7 +1103,7 @@ class _ArrayOrScalarCommon:
     @overload
     def argmax(
         self,
-        axis: None | _ShapeLike = ...,
+        axis: None | SupportsIndex = ...,
         out: _NdArraySubClass = ...,
         *,
         keepdims: bool = ...,
@@ -1120,7 +1120,7 @@ class _ArrayOrScalarCommon:
     @overload
     def argmin(
         self,
-        axis: _ShapeLike = ...,
+        axis: SupportsIndex = ...,
         out: None = ...,
         *,
         keepdims: bool = ...,
@@ -1128,7 +1128,7 @@ class _ArrayOrScalarCommon:
     @overload
     def argmin(
         self,
-        axis: None | _ShapeLike = ...,
+        axis: None | SupportsIndex = ...,
         out: _NdArraySubClass = ...,
         *,
         keepdims: bool = ...,
@@ -1357,7 +1357,7 @@ class _ArrayOrScalarCommon:
         axis: None | _ShapeLike = ...,
         dtype: DTypeLike = ...,
         out: None = ...,
-        ddof: int = ...,
+        ddof: float = ...,
         keepdims: bool = ...,
         *,
         where: _ArrayLikeBool_co = ...,
@@ -1368,7 +1368,7 @@ class _ArrayOrScalarCommon:
         axis: None | _ShapeLike = ...,
         dtype: DTypeLike = ...,
         out: _NdArraySubClass = ...,
-        ddof: int = ...,
+        ddof: float = ...,
         keepdims: bool = ...,
         *,
         where: _ArrayLikeBool_co = ...,
@@ -1401,7 +1401,7 @@ class _ArrayOrScalarCommon:
         axis: None | _ShapeLike = ...,
         dtype: DTypeLike = ...,
         out: None = ...,
-        ddof: int = ...,
+        ddof: float = ...,
         keepdims: bool = ...,
         *,
         where: _ArrayLikeBool_co = ...,
@@ -1412,7 +1412,7 @@ class _ArrayOrScalarCommon:
         axis: None | _ShapeLike = ...,
         dtype: DTypeLike = ...,
         out: _NdArraySubClass = ...,
-        ddof: int = ...,
+        ddof: float = ...,
         keepdims: bool = ...,
         *,
         where: _ArrayLikeBool_co = ...,
