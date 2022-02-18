@@ -33,7 +33,8 @@ warnings.warn("\n\n"
     "  of the deprecation of `distutils` itself. It will be removed for\n"
     "  Python >= 3.12. For older Python versions it will remain present.\n"
     "  It is recommended to use `setuptools < 60.0` for those Python versions.\n"
-    "  For more details, see: TODO! \n\n",
+    "  For more details, see:\n"
+    "    https://numpy.org/devdocs/reference/distutils_status_migration.html \n\n",
     DeprecationWarning, stacklevel=2
 )
 del warnings
