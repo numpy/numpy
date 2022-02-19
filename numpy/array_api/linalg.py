@@ -4,6 +4,8 @@ from ._dtypes import _floating_dtypes, _numeric_dtypes
 from ._manipulation_functions import reshape
 from ._array_object import Array
 
+from ..core.numeric import normalize_axis_tuple
+
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from ._typing import Literal, Optional, Sequence, Tuple, Union
@@ -392,19 +394,19 @@ def vector_norm(x: Array, /, *, axis: Optional[Union[int, Tuple[int, int]]] = No
     if x.dtype not in _floating_dtypes:
         raise TypeError('Only floating-point dtypes are allowed in norm')
 
-    # np.linalg.norm tries to do a matrix norm
+    # np.linalg.norm tries to do a matrix norm whenever axis is a 2-tuple or
+    # when axis=None and the input is 2-D, so to force a vector norm, we make
+    # it so the input is 1-D (for axis=None), or reshape so that norm is done
+    # on a single dimension.
     a = x._array
     if axis is None:
-        # Note: np.linalg.norm() doesn't handle dimension 0 arrays
-        if a.ndim == 0:
-            a = a[None]
-        else:
-            a = a.flatten()
+        # Note: np.linalg.norm() doesn't handle 0-D arrays
+        a = a.ravel()
         _axis = 0
     elif isinstance(axis, tuple):
         # Note: The axis argument supports any number of axes, whereas
         # np.linalg.norm() only supports a single axis for vector norm.
-        normalized_axis = [i if i >= 0 else i + a.ndim for i in axis]
+        normalized_axis = normalize_axis_tuple(axis, x.ndim)
         rest = tuple(i for i in range(a.ndim) if i not in normalized_axis)
         newshape = axis + rest
         a = np.transpose(a, newshape).reshape(
@@ -416,15 +418,10 @@ def vector_norm(x: Array, /, *, axis: Optional[Union[int, Tuple[int, int]]] = No
     res = Array._new(np.linalg.norm(a, axis=_axis, ord=ord))
 
     if keepdims:
-        # We can't reuse np.linalg.norm(keepdims) because of the hacks above
-        # to avoid matrix norm logic.
+        # We can't reuse np.linalg.norm(keepdims) because of the reshape hacks
+        # above to avoid matrix norm logic.
         shape = list(x.shape)
-        if axis is None:
-            _axis = range(x.ndim)
-        elif isinstance(axis, int):
-            _axis = (axis,)
-        else:
-            _axis = axis
+        _axis = normalize_axis_tuple(range(x.ndim) if axis is None else axis, x.ndim)
         for i in _axis:
             shape[i] = 1
         res = reshape(res, tuple(shape))
