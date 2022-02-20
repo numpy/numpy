@@ -130,6 +130,7 @@ class build_ext (old_build_ext):
         from distutils.ccompiler import new_compiler
         from numpy.distutils.fcompiler import new_fcompiler
 
+        initialized_compilers = dict()
         compiler_type = self.compiler
         # Initialize C compiler:
         self.compiler = new_compiler(compiler=compiler_type,
@@ -144,6 +145,7 @@ class build_ext (old_build_ext):
             self.compiler.compiler_so.append('-Werror')
 
         self.compiler.show_customization()
+        initialized_compilers['c_compiler'] = vars(self.compiler)
 
         if not self.disable_optimization:
             dispatch_hpath = os.path.join("numpy", "distutils", "include", "npy_cpu_dispatch_config.h")
@@ -279,6 +281,7 @@ class build_ext (old_build_ext):
             compiler.customize_cmd(self)
             compiler.show_customization()
             self._cxx_compiler = compiler.cxx_compiler()
+            initialized_compilers['cpp_compiler'] = vars(self._cxx_compiler)
         else:
             self._cxx_compiler = None
 
@@ -328,6 +331,8 @@ class build_ext (old_build_ext):
         else:
             self._f90_compiler = None
 
+        self.build_compiler_config(initialized_compilers)
+
         # Build extensions
         self.build_extensions()
 
@@ -351,6 +356,18 @@ class build_ext (old_build_ext):
                     continue
                 runtime_lib = os.path.join(self.extra_dll_dir, fn)
                 copy_file(runtime_lib, shared_lib_dir)
+
+    def build_compiler_config(self, compilers):
+        import yaml
+        from pathlib import Path
+
+        attrs_to_include = [
+                "compiler_so", "linker_so", "compiler_type",
+                "include_dirs", "preprocessor"]
+        compiler_config_path = Path(
+                "numpy", "distutils", "_compiler_config.yaml")
+        with open(str(compiler_config_path), "w") as f:
+            yaml.dump(compilers, f)
 
     def swig_sources(self, sources, extensions=None):
         # Do nothing. Swig sources have been handled in build_src command.

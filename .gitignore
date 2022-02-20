@@ -118,6 +118,7 @@ doc/source/savefig/
 numpy/core/__svn_version__.py
 doc/numpy.scipy.org/_build
 numpy/__config__.py
+numpy/_config.yaml
 numpy/core/include/numpy/__multiarray_api.h
 numpy/core/include/numpy/__ufunc_api.h
 numpy/core/include/numpy/_numpyconfig.h
@@ -174,6 +175,9 @@ numpy/core/src/umath/test_rational.c
 numpy/core/src/umath/umath_tests.c
 numpy/core/src/umath/loops_utils.h
 numpy/distutils/__config__.py
+numpy/distutils/_compiler_config.yaml
+numpy/distutils/_config.yaml
+
 numpy/linalg/umath_linalg.c
 doc/source/**/generated/
 benchmarks/results
