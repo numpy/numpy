@@ -1,4 +1,4 @@
-from numpy.core import int32, zeros, inf
+from numpy import inf, int32, zeros
 
 
 class MatmulChain:
@@ -27,7 +27,8 @@ class MatmulChain:
         self._shape = (
             None
             if len(matrices) == 0
-            else matrices[0].shape[: -2] + [matrices[0].shape[0], matrices[-1].shape[1]]
+            else (matrices[0].shape[: -2] + 
+                [matrices[0].shape[0], matrices[-1].shape[1]])
         )
 
         for i in range(1, len(matrices)):
