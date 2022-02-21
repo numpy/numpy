@@ -67,9 +67,12 @@ jobs:
         # manylinux pypy builds
         - buildplat: [ubuntu-20.04, manylinux_x86_64]
           python: "pp38"
-
-        - buildplat: [macos-10.15, macosx_x86_64]
-          python: "pp38"
+        
+        # TODO: Uncomment and bump cibuildwheel version
+        # once cibuildwheel adds PyPy 7.3.8
+        # macOS pypy builds
+        #- buildplat: [macos-10.15, macosx_x86_64]
+        #  python: "pp38"
 
         # Windows PyPy builds
         - buildplat: [windows-2019, win_amd64]
