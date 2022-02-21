@@ -1,4 +1,4 @@
-from numpy import inf, int32, zeros
+from numpy.core import inf, int32, zeros
 
 
 class MatmulChain:
@@ -8,6 +8,7 @@ class MatmulChain:
     Using `MatmulChain([A, B, C, D]).get()` instead of `A @ B @ C @ D` 
     will probably improve performance.
     """
+
     def __init__(self, *matrices):
         """
         Initialize the chain with matrices to be multiplied.
@@ -27,13 +28,13 @@ class MatmulChain:
         self._shape = (
             None
             if len(matrices) == 0
-            else (matrices[0].shape[: -2] + 
-                [matrices[0].shape[0], matrices[-1].shape[1]])
+            else (matrices[0].shape[: -2] +
+                  [matrices[0].shape[0], matrices[-1].shape[1]])
         )
 
         for i in range(1, len(matrices)):
-            if (matrices[i - 1].shape[1] != matrices[i].shape[0] or 
-                matrices[i - 1].shape[: -2] != matrices[i].shape[: -2]):
+            if (matrices[i - 1].shape[1] != matrices[i].shape[0] or
+                    matrices[i - 1].shape[: -2] != matrices[i].shape[: -2]):
                 raise ValueError(
                     f"The matrix of index {i-1} is not left-multipliable "
                     "to that of index {i}"
@@ -77,8 +78,8 @@ class MatmulChain:
     def get(self):
         """Returns the result of multiplication in an optimized way"""
         splitPoint = self._optimize()
-        return self._get(self._matrices, 
-                         0, len(self._matrices) - 1, 
+        return self._get(self._matrices,
+                         0, len(self._matrices) - 1,
                          splitPoint)
 
     def _optimize(self):
@@ -95,7 +96,7 @@ class MatmulChain:
                 currentMinCost = inf
                 for k in range(i, j):
                     kSize = matrices[k].shape[-1]
-                    currentCost = (cost[i, k] + cost[k + 1, j] + 
+                    currentCost = (cost[i, k] + cost[k + 1, j] +
                                    iSize * kSize * jSize)
                     if currentCost < currentMinCost:
                         currentMinCost = currentCost
