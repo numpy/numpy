@@ -1,21 +1,24 @@
-from numpy import inf, int32, zeros
+from numpy.core import int32, zeros, inf
 
 
 class MatmulChain:
+    """
+    This class provides a optimization of a chain of matrix multiplication
+    using dynamic programming.
+    Using `MatmulChain([A, B, C, D]).get()` instead of `A @ B @ C @ D` 
+    will probably improve performance.
+    """
     def __init__(self, *matrices):
         """
-        This class provides a optimization of a chain of matrix multiplication
-        using dynamic programming.
-        Using `MatmulChain([A, B, C, D]).get()` instead of `A @ B @ C @ D` 
-        will probably improve performance.
+        Initialize the chain with matrices to be multiplied.
 
         Parameters
         ----------
-        matrices : iterable[matrix]
+        matrices : tuple[matrix]
             The matrices to operate the multiplication.
 
-        Exceptions
-        ----------
+        Raises
+        ------
         ValueError
             It's raised if there is a pair of adjacent matrices that can't be
             multiplied.
@@ -24,11 +27,12 @@ class MatmulChain:
         self._shape = (
             None
             if len(matrices) == 0
-            else [matrices[0].shape[0], matrices[-1].shape[1]]
+            else matrices[0].shape[: -2] + [matrices[0].shape[0], matrices[-1].shape[1]]
         )
 
         for i in range(1, len(matrices)):
-            if matrices[i - 1].shape[1] != matrices[i].shape[0]:
+            if (matrices[i - 1].shape[1] != matrices[i].shape[0] or 
+                matrices[i - 1].shape[: -2] != matrices[i].shape[: -2]):
                 raise ValueError(
                     f"The matrix of index {i-1} is not left-multipliable "
                     "to that of index {i}"
@@ -39,7 +43,8 @@ class MatmulChain:
         """
         The shape of result. This operation doesn't execute the 
         multiplication, but it simply gives the result according 
-        to the multipliers' shape.
+        to the multipliers' shape. If no matrices were added to the
+        chain, it'll provide `None`.
         """
         return tuple(self._shape)
 
@@ -52,8 +57,8 @@ class MatmulChain:
         next : array_like
             The matrix to be added.
 
-        Exceptions
-        ----------
+        Raises
+        ------
         ValueError
             It's raised if `next` isn't right-multipliable to the chain
         """
@@ -65,11 +70,11 @@ class MatmulChain:
             self._matrices += next._matrices
         else:
             self._matrices.append(next)
-        self._shape[1] = next.shape[1]
+        self._shape[-1] = next.shape[-1]
         return self
 
     def get(self):
-        """Return the result of multiplication in an optimized way"""
+        """Returns the result of multiplication in an optimized way"""
         splitPoint = self._optimize()
         return self._get(self._matrices, 
                          0, len(self._matrices) - 1, 
@@ -82,13 +87,13 @@ class MatmulChain:
         for i in range(len(matrices) - 1, -1, -1):
             cost[i, i] = 0
             splitPoint[i, i] = i
-            iSize = matrices[i].shape[0]
+            iSize = matrices[i].shape[-2]
             for j in range(i + 1, len(matrices)):
                 jSize = matrices[j].shape[1]
                 minK = None
                 currentMinCost = inf
                 for k in range(i, j):
-                    kSize = matrices[k].shape[1]
+                    kSize = matrices[k].shape[-1]
                     currentCost = (cost[i, k] + cost[k + 1, j] + 
                                    iSize * kSize * jSize)
                     if currentCost < currentMinCost:
