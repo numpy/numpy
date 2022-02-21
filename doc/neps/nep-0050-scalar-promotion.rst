@@ -1,0 +1,443 @@
+===========================================
+NEP 50 — Promotion rules for Python scalars
+===========================================
+:Author: Sebastian Berg
+:Status: Draft
+:Type: Standards Track
+:Created: 2021-01-10
+
+
+Abstract
+========
+
+Since NumPy 1.7 promotion rules are defined through the "safe casting"
+concept which in turn can depend on the actual values involved.
+While these choices were well intended, they lead to a complexity both
+for users and maintainers.
+
+There are two main ways this can lead to confusing results:
+
+1. This means that the value can matter::
+
+     np.result_type(np.int8, 1) == np.int8
+     np.result_type(np.int8, 255) == np.int16
+
+   which is even true when replacing the value with 0-D arrays::
+
+     int64_0d_array = np.array(1, dtype=np.int64)
+     np.result_type(np.int8, int64_0d_array) == np.int8
+    
+   This logic arises, because ``1`` can be represented by an ``int8`` while
+   ``255`` can be represented by an ``int16`` *or* ``uint8``.
+   This means that for the 0-D array or NumPy scalars, the type is largely ignored.
+
+2. For a Python integer or float the value matters except when the other type is
+   also scalar or zero dimensional::
+
+     np.result_type(np.int8(1), 1) == np.int64
+
+   Because in this case value-based promotion is disabled causing the Python 1
+   to be considered an int64 (or default integer).
+
+Note that the examples apply just as well for operations like multiplication,
+addition, or comparisons and the corresponding functions like `np.multiply`.
+
+This NEPs proposes to refactor the behaviour around two guiding principles:
+
+1. The value must never influence the result type.
+2. NumPy scalars or 0-D arrays must always lead to the same behaviour as
+   their N-D counterparts.
+
+We propose to removes all value-based logic and add special handling for
+Python scalars to preserve some of the convenience that it provided.
+
+This changes also apply to ``np.can_cast(100, np.int8)``, however, we expect
+that the behaviour in functions (promotion) will in practice be far more
+relevant than this casting change.
+
+
+Motivation and Scope
+====================
+
+The motivation for changing the behaviour with respect to inspecting the value
+of Python scalars and NumPy scalars/0-D arrays is, again, two-fold:
+
+1. The special handling of NumPy scalars/0-D arrays as well as the value
+   inspection can be very surprising to users.
+2. The value-inspection logic is much harder to reason about or describe as
+   well as making it available to user defined DTypes through
+   :ref:`NEP 42 <NEP42>`.
+   Currently, this leads to a dual implementation of a new and an old (value
+   sensitive) system.  Fixing this will greatly simplify the internal logic
+   and make results more consistent.
+
+
+Usage and Impact
+================
+
+There will be no transition period due to the difficulty and noise this is
+expected to create.  In rare cases users may need to adjust code to avoid
+reduced precision or incorrect results.
+
+We plan to provide an *optional* warning mode capable of notifying users of
+potential changes in behavior in most relevant cases.
+
+
+Impact on ``can_cast``
+----------------------
+
+Can cast will never inspect the value anymore.  So that the following results
+are expected to change from ``True`` to ``False``::
+
+  np.can_cast(100, np.uint8)
+  np.can_cast(np.int64(100), np.uint8)
+  np.can_cast(np.array(100, dtype=np.int64), np.uint8)
+
+We expect that the impact of this change will be small compared to that of
+the following changes.
+
+.. note::
+
+    The first example where the input is a Python scalar could be preserved
+    to some degree, but this is not currently planned.
+
+
+Impact on operators functions involving NumPy arrays or scalars
+---------------------------------------------------------------
+
+The main impact on operations not involving Python scalars (float, int, complex)
+will be that 0-D arrays and NumPy scalars will never behave value-sensitive.
+This removes currently surprising cases.  For example::
+
+  np.arange(10, dtype=np.uint8) + np.int64(1)
+
+Will return an int64 array because the type of ``np.int64(1)`` is strictly
+honoured.
+
+
+Impact on operators involving Python ``int``, ``float``, and ``complex``
+------------------------------------------------------------------------
+
+This NEP attempts to preserve most of the convenience that the old behaviour
+gave for Python operators, but remove it for
+
+The current value-based logic has some nice properties when "untyped" Python
+scalars involved::
+
+  np.arange(10, dtype=np.int8) + 1  # returns an int8 array
+  nparray([1., 2.], dtype=np.float32) * 3.5  # returns a float32 array
+
+But led to complexity when it came to "unrepresentable" values:
+
+  np.arange(10, dtype=np.int8) + 256  # returns int16
+  nparray([1., 2.], dtype=np.float32) * 1e200  # returns float64
+
+The proposal is to preserve this behaviour for the most part.  This is achieved
+by considering Python ``int``, ``float``, and ``complex`` to be "weakly" typed
+in these operations.
+To mitigate user surprises, we would further make conversion to the new type
+more strict.  This means that the results will be unchanged in the first
+two examples.  For the second one, the results will be the following::
+
+  np.arange(10, dtype=np.int8) + 256  # raises a TypeError
+  nparray([1., 2.], dtype=np.float32) * 1e200  # warning and returns infinity
+
+The second one will warn because ``np.float32(1e200)`` overflows to infinity.
+It will then do the calculation with ``inf`` as normally.
+
+
+Impact on functions involving Python ``int``, ``float``, and ``complex``
+------------------------------------------------------------------------
+
+Most functions, in particular ``ufuncs`` will also use this weakly typed
+logic.
+In some cases, functions will call `np.asarray()` on inputs before any operations
+and thus will s
+
+.. note::
+
+    There is a real alternative to not do this for `ufuncs` and limit the special
+    behaviour to Python operators.  From a user perspective, we assume that most
+    functions effectively call `np.asarray()`.
+    Because Python operators allow more custom logic, this would ensure that an
+    overflow warning is given for all results with decreased precision.
+
+
+Backward compatibility
+======================
+
+In general, code which only uses the default dtypes float64, or int32/int64
+or more precise ones should not be affected.
+
+However, the proposed changes will modify results in quite a few cases where
+0-D or scalar values (with non-default dtypes) are mixed.
+In many cases, these will be bug-fixes, however, there are certain changes
+which may be particularly interesting.
+
+The most important failure is probably the following example::
+
+  arr = np.arange(100, dtype=np.uint8)  # storage array with low precision
+  value = arr[10]
+
+  # calculation continues with "value" without considering where it came from
+  value * 100
+
+Where previously the ``value * 100`` would cause an up-cast to int32/int64
+(because value is a scalar).  The new behaviour will preserve the lower
+precision unless explicitly dealt with (just as if ``value`` was an array).
+This can lead to integer overflows and thus incorrect results beyond precision.
+In many cases this may be silent, although NumPy usually gives warnings for the
+scalar operators.
+
+Similarliy, if the storage array is float32 a calculation may retain the lower
+float32 precision rather than use the default float64.
+
+Further issues can occure.  For example:
+
+* Floating point comparisons, especially equality, may change when mixing
+  precisions:
+  ```python3
+  np.float32(1/3) == 1/3  # was False, will be True.
+  ```
+* Certain operations are expected to start failing:
+  ```python3
+  np.array([1], np.uint8) * 1000
+  np.array([1], np.uint8) == 1000  # possibly also
+  ```
+  to protect users in cases where previous value-based casting led to an
+  upcast.
+* Floating point overflow may occur in odder cases:
+  ```python3
+  np.float32(1e-30) * 1e50  # will return ``inf`` and a warning
+  ```
+  Because ``np.float32(1e50)`` returns ``inf``.  Previously, this would return
+  a double precision result even if the ``1e50`` was not a 0-D array
+
+In other cases, increased precision may occur.  For example::
+
+  np.multiple(float32_arr, 2.)
+  float32_arr * np.float64(2.)
+
+Will both return a float64 rather than float32.  This improves precision but
+slightly changes results and uses double the memory.
+
+
+Detailed description
+====================
+
+The following provides some additional details on the current "value based"
+promotion logic, and then on the "weak scalar" promotion and how it is handled
+internally.
+
+State of the current "value based" promotion
+---------------------------------------------
+
+Before we can propose alternatives to the current datatype system,
+it is helpful to review how "value based promotion" is used and can be useful.
+Value based promotion allows for the following code to work::
+
+    # Create uint8 array, as this is sufficient:
+    uint8_arr = np.array([1, 2, 3], dtype=np.uint8)
+    result = uint8_arr + 4
+    result.dtype == np.uint8
+
+    result = uint8_arr * (-1)
+    result.dtype == np.int16  # upcast as little as possible.
+
+Where especially the first part can be useful: The user knows that the input
+is an integer array with a specific precision. Considering that plain ``+ 4``
+retaining the previous datatype is intuitive.
+Replacing this example with ``np.float32`` is maybe even more clear,
+as float will rarely have overflows.
+Without this behaviour, the above example would require writing ``np.uint8(4)``
+and lack of the behaviour would make the following suprising::
+
+    result = np.array([1, 2, 3], dtype=np.float32) * 2.
+    result.dtype == np.float32
+
+where lack of a special case would cause ``float64`` to be returned.
+
+It is important to note that the behaviour also applies to universal functions
+and zero dimensional arrays::
+
+    # This logic is also used for ufuncs:
+    np.add(uint8_arr, 4).dtype == np.uint8
+    # And even if the other array is explicitly typed:
+    np.add(uint8_arr, np.array(4, dtype=np.int64)).dtype == np.uint8 
+
+To review, if we replace ``4`` with ``[4]`` to make it one dimensional, the
+result will be different::
+
+    # This logic is also used for ufuncs:
+    np.add(uint8_arr, [4]).dtype == np.int64  # platform dependend
+    # And even if the other array is explicitly typed:
+    np.add(uint8_arr, np.array([4], dtype=np.int64)).dtype == np.int64
+
+
+Proposed Weak Promotion
+-----------------------
+
+This proposal uses a "weak scalar" logic.  This means that Python ``int``, ``float``,
+and ``complex`` are not assigned one of the typical dtypes, such as float64 or int64.
+Rather, they are assigned a special abstract DType, similar to the "scalar" hierarchy
+names: Integral, Floating, ComplexFloatin.
+
+When promotion occurs (as it does for ufuncs if no exact loop matches),
+the other DType is able to decide how to regard the Python
+scalar.  E.g. a ``UInt16`` promoting with an `Integral` will give ``UInt16``.
+
+.. note::
+
+    A default will most likely be provided in the future for user defined DTypes.
+    Most likely this will end up being the default integer/float, but in principle
+    more complex schemes could be implemented.
+
+At no time is the value used to decide the result of this promotion.  The value is only
+considered when it is converted to the new dtype; this may raise an error.
+
+
+
+
+Related Work
+============
+
+* `JAX promotion`_ also uses the weak-scalar concept.  However, it makes use
+  of it also for most functions.  JAX further stores the "weak-type" information
+  on the array: ``jnp.array(1)`` remains weakly typed.
+
+
+Implementation
+==============
+
+Implemeting this NEP requires some additional machinery to be added to all
+binary operators (or ufuncs), so that they attempt to use the "weak" logic
+if possible.
+There are two possible approaches to this:
+
+1. The binary operator simply tries to call ``np.result_type()`` if this
+   situation arises and converts the Python scalar to the result-type (if
+   defined).
+2. The binary operator indicates that an input was a Python scalar, and the
+   ufunc dispatching/promotion machinery is used for the rest (see
+   :ref:`NEP 42 <NEP42>`).  This allows more flexibility, but requires some
+   additional logic in the ufunc machinery.
+
+.. note::
+   As of now, it is not quite clear which approach is better, either will
+   give fairl equivalent results and 1. could be extended by 2. in the future
+   if necessary.
+
+It further requires removing all current special value-based code paths.
+
+Unintuitively, a larger step in the implementation may be to implement a
+solution to allow an error to be raised in the following example::
+
+   np.arange(10, dtype=np.uint8) + 1000
+
+Even though ``np.uint8(1000)`` returns the same value as ``np.uint8(232)``.
+
+.. note::
+
+    See alternatives, we may yet decide that this silent overflow is acceptable
+    or at least a separate issue.
+
+
+Alternatives
+============
+
+There are several design axes where different choices are possible.
+The below sections outline these.
+
+Use strongly typed scalars or a mix of both
+-------------------------------------------
+
+The simplest solution to the value-based promotion/casting issue would be to use
+strongly typed Python scalars, i.e. Python floats are considered double precision
+and Python integers are always considered the same as the default integer dtype.
+
+This would be the simplest solution, however, it would lead to many upcasts when
+working with arrays of ``float32`` or ``int16``, etc.  The solution for these cases
+would be to rely on in-place operations.
+We currently believe that while less dangerous, this change would affect many users
+and would be surprising more often than not (although expectations differ widely).
+
+In principle, the weak vs. strong behaviour need not be uniform.  It would also
+be possible to make Python floats use the weak behaviour, but Python integers use the
+strong one, since integer overflows are far more surprising.
+
+
+Do not use weak scalar logic in functions
+-----------------------------------------
+
+One alternative to this NEPs proposal is to narrow the use of weak types
+to Python operators.
+
+This has advantages and disadvantages:
+
+* The main advantage is that limiting it to Python operators means that these
+  "weak" types/dtypes are clearly ephemeral to short Python statements.
+* A disadvantage is that ``np.multiply`` and ``*`` are less interchangable.
+* Using "weak" promotion only for operators means that libraries do not have
+  to worry about whether they want to "remember" that an input was a Python
+  scalar initially.  On the other hand, it would add a the need for slightly
+  different (or additional) logic for Python operators.
+  (Technically, probably as a flag to the ufunc dispatching mechanism to toggle
+  the weak logic.)
+* ``__array_ufunc__`` is often used on its own to provide Python operator
+  support for array-likes implementing it.  If operators are special, these
+  array-likes may need a mechanism to match NumPy (e.g. a kwarg to ufuncs to
+  enable weak promotion.)
+
+
+NumPy scalars could be special
+------------------------------
+
+Many users expect that NumPy scalars should be different from NumPy
+arrays, in that ``np.uint8(3) + 3`` should return an ``int64`` (or Python
+integer), when `uint8_arr + 3` preserves the ``uint8`` dtype.
+
+This alternative would be very close to the current behaviour for NumPy scalars
+but it would cement a distinction between arrays and scalars (NumPy arrays
+are "stronger" than Python scalars, but NumPy scalars are not).
+
+Such a distinction is very much possible, however, at this time NumPy will
+often (and silently) convert 0-D arrays to scalars.
+It may thus make sense, to only consider this alternative if we also
+change this silent conversion (sometimes refered to as "decay") behaviour.
+
+
+Handling conversion of scalars when unsafe
+------------------------------------------
+
+Cases such as::
+
+  np.arange(10, dtype=np.uint8) + 1000
+
+should raise an error as per this NEP.  This could be relaxed to give a warning
+or even ignore the "unsafe" conversion which (on all relevant hardware) would
+lead to ``np.uint8(1000) == np.uint8(232)`` being used.
+
+
+Discussion
+==========
+
+* https://github.com/numpy/numpy/issues/2878
+* https://mail.python.org/archives/list/numpy-discussion@python.org/thread/R7D65SNGJW4PD6V7N3CEI4NJUHU6QP2I/#RB3JLIYJITVO3BWUPGLN4FJUUIKWKZIW
+* https://mail.python.org/archives/list/numpy-discussion@python.org/thread/NA3UBE3XAUTXFYBX6HPIOCNCTNF3PWSZ/#T5WAYQPRMI5UCK7PKPCE3LGK7AQ5WNGH
+* Poll about the desired future behavior: https://discuss.scientific-python.org/t/poll-future-numpy-behavior-when-mixing-arrays-numpy-scalars-and-python-scalars/202
+
+References and Footnotes
+========================
+
+.. [1] Each NEP must either be explicitly labeled as placed in the public domain (see
+   this NEP as an example) or licensed under the `Open Publication License`_.
+
+.. _Open Publication License: https://www.opencontent.org/openpub/
+
+.. _JAX promotion: https://jax.readthedocs.io/en/latest/type_promotion.html
+
+
+Copyright
+=========
+
+This document has been placed in the public domain. [1]_
