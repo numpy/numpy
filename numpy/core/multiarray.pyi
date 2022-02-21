@@ -11,6 +11,7 @@ from typing import (
     SupportsIndex,
     final,
     Final,
+    Protocol,
 )
 
 from numpy import (
@@ -77,6 +78,8 @@ from numpy.typing import (
     _TD64Like_co,
 )
 
+_T_co = TypeVar("_T_co", covariant=True)
+_T_contra = TypeVar("_T_contra", contravariant=True)
 _SCT = TypeVar("_SCT", bound=generic)
 _ArrayType = TypeVar("_ArrayType", bound=NDArray[Any])
 
@@ -104,6 +107,10 @@ _RollKind = L[  # `raise` is deliberately excluded
     "modifiedfollowing",
     "modifiedpreceding",
 ]
+
+class _SupportsLenAndGetItem(Protocol[_T_contra, _T_co]):
+    def __len__(self) -> int: ...
+    def __getitem__(self, key: _T_contra, /) -> _T_co: ...
 
 __all__: list[str]
 
@@ -292,6 +299,7 @@ def ravel_multi_index(
     order: _OrderCF = ...,
 ) -> NDArray[intp]: ...
 
+# NOTE: Allow any sequence of array-like objects
 @overload
 def concatenate(  # type: ignore[misc]
     arrays: _ArrayLike[_SCT],
@@ -304,7 +312,7 @@ def concatenate(  # type: ignore[misc]
 ) -> NDArray[_SCT]: ...
 @overload
 def concatenate(  # type: ignore[misc]
-    arrays: ArrayLike,
+    arrays: _SupportsLenAndGetItem[int, ArrayLike],
     /,
     axis: None | SupportsIndex = ...,
     out: None = ...,
@@ -314,7 +322,7 @@ def concatenate(  # type: ignore[misc]
 ) -> NDArray[Any]: ...
 @overload
 def concatenate(  # type: ignore[misc]
-    arrays: ArrayLike,
+    arrays: _SupportsLenAndGetItem[int, ArrayLike],
     /,
     axis: None | SupportsIndex = ...,
     out: None = ...,
@@ -324,7 +332,7 @@ def concatenate(  # type: ignore[misc]
 ) -> NDArray[_SCT]: ...
 @overload
 def concatenate(  # type: ignore[misc]
-    arrays: ArrayLike,
+    arrays: _SupportsLenAndGetItem[int, ArrayLike],
     /,
     axis: None | SupportsIndex = ...,
     out: None = ...,
@@ -334,7 +342,7 @@ def concatenate(  # type: ignore[misc]
 ) -> NDArray[Any]: ...
 @overload
 def concatenate(
-    arrays: ArrayLike,
+    arrays: _SupportsLenAndGetItem[int, ArrayLike],
     /,
     axis: None | SupportsIndex = ...,
     out: _ArrayType = ...,
