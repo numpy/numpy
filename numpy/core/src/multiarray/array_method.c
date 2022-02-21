@@ -588,7 +588,7 @@ boundarraymethod__resolve_descripors(
         return NULL;
     }
     else if (casting < 0) {
-        return Py_BuildValue("iO", casting, Py_None, Py_None);
+        return Py_BuildValue("iOO", casting, Py_None, Py_None);
     }
 
     PyObject *result_tuple = PyTuple_New(nin + nout);

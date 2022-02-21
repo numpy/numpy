@@ -1074,7 +1074,10 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
     PyArray_Descr *res;
 
     /* Fast path for identical inputs (NOTE: This path preserves metadata!) */
-    if (type1 == type2 && PyArray_ISNBO(type1->byteorder)) {
+    if (type1 == type2
+            /* Use for builtin except void, void has no reliable byteorder */
+            && type1->type_num > 0 && type1->type_num < NPY_NTYPES
+            && PyArray_ISNBO(type1->byteorder) && type1->type_num != NPY_VOID) {
         Py_INCREF(type1);
         return type1;
     }
@@ -2973,7 +2976,7 @@ nonstructured_to_structured_resolve_descriptors(
                     *view_offset = field_view_off - to_off;
                 }
             }
-            if (PyTuple_Size(given_descrs[1]->names) != 1) {
+            if (PyTuple_Size(given_descrs[1]->names) != 1 || *view_offset < 0) {
                 /*
                  * Assume that a view is impossible when there is more than one
                  * field.  (Fields could overlap, but that seems weird...)
@@ -3359,23 +3362,19 @@ can_cast_fields_safety(
         }
     }
 
-    /*
-     * If the itemsize (includes padding at the end), does not match,
-     * this is not a "no" cast (identical dtypes) and may not be viewable.
-     */
-    if (from->elsize != to->elsize) {
-        /*
-         * The itemsize may mismatch even if all fields and formats match
-         * (due to additional padding).
-         */
+    if (*view_offset != 0 || from->elsize != to->elsize) {
+        /* Can never be considered "no" casting. */
         casting = PyArray_MinCastSafety(casting, NPY_EQUIV_CASTING);
-        if (from->elsize < to->elsize) {
-            *view_offset = NPY_MIN_INTP;
-        }
     }
-    else if (*view_offset != 0) {
-        /* If the calculated `view_offset` is not 0, it can only be "equiv" */
-        casting = PyArray_MinCastSafety(casting, NPY_EQUIV_CASTING);
+
+    /* The new dtype may have access outside the old one due to padding: */
+    if (*view_offset < 0) {
+        /* negative offsets would give indirect access before original dtype */
+        *view_offset = NPY_MIN_INTP;
+    }
+    if (from->elsize < to->elsize + *view_offset) {
+        /* new dtype has indirect access outside of the original dtype */
+        *view_offset = NPY_MIN_INTP;
     }
 
     return casting;

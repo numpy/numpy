@@ -1157,6 +1157,9 @@ class TestDTypeMakeCanonical:
     def test_make_canonical_hypothesis(self, dtype):
         canonical = np.result_type(dtype)
         self.check_canonical(dtype, canonical)
+        # np.result_type with two arguments should always identical results:
+        two_arg_result = np.result_type(dtype, dtype)
+        assert np.can_cast(two_arg_result, canonical, casting="no")
 
     @pytest.mark.slow
     @hypothesis.given(
@@ -1171,6 +1174,10 @@ class TestDTypeMakeCanonical:
         assert dtype_with_empty_space.itemsize == dtype.itemsize
         canonicalized = np.result_type(dtype_with_empty_space)
         self.check_canonical(dtype_with_empty_space, canonicalized)
+        # np.promote_types with two arguments should always identical results:
+        two_arg_result = np.promote_types(
+                dtype_with_empty_space, dtype_with_empty_space)
+        assert np.can_cast(two_arg_result, canonicalized, casting="no")
 
         # Ensure that we also check aligned struct (check the opposite, in
         # case hypothesis grows support for `align`.  Then repeat the test:
@@ -1179,6 +1186,10 @@ class TestDTypeMakeCanonical:
         assert dtype_with_empty_space.itemsize == dtype_aligned.itemsize
         canonicalized = np.result_type(dtype_with_empty_space)
         self.check_canonical(dtype_with_empty_space, canonicalized)
+        # np.promote_types with two arguments should always identical results:
+        two_arg_result = np.promote_types(
+            dtype_with_empty_space, dtype_with_empty_space)
+        assert np.can_cast(two_arg_result, canonicalized, casting="no")
 
 
 class TestPickling:
