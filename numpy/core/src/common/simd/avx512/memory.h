@@ -276,7 +276,8 @@ NPY_FINLINE void npyv_storen_till_s64(npy_int64 *ptr, npy_intp stride, npy_uintp
         union {                                                                             \
             npyv_lanetype_##F_SFX from_##F_SFX;                                             \
             npyv_lanetype_##T_SFX to_##T_SFX;                                               \
-        } pun = {.from_##F_SFX = fill};                                                     \
+        } pun;                                                                              \
+        pun.from_##F_SFX = fill;                                                            \
         return npyv_reinterpret_##F_SFX##_##T_SFX(npyv_load_till_##T_SFX(                   \
             (const npyv_lanetype_##T_SFX *)ptr, nlane, pun.to_##T_SFX                       \
         ));                                                                                 \
@@ -288,7 +289,8 @@ NPY_FINLINE void npyv_storen_till_s64(npy_int64 *ptr, npy_intp stride, npy_uintp
         union {                                                                             \
             npyv_lanetype_##F_SFX from_##F_SFX;                                             \
             npyv_lanetype_##T_SFX to_##T_SFX;                                               \
-        } pun = {.from_##F_SFX = fill};                                                     \
+        } pun;                                                                              \
+        pun.from_##F_SFX = fill;                                                            \
         return npyv_reinterpret_##F_SFX##_##T_SFX(npyv_loadn_till_##T_SFX(                  \
             (const npyv_lanetype_##T_SFX *)ptr, stride, nlane, pun.to_##T_SFX               \
         ));                                                                                 \
