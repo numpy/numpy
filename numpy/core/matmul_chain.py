@@ -6,8 +6,8 @@ class MatmulChain:
         """
         This class provides a optimization of a chain of matrix multiplication
         using dynamic programming.
-        Using `MatmulChain([A, B, C, D]).get()` instead of `A @ B @ C @ D` will 
-        probably improve performance.
+        Using `MatmulChain([A, B, C, D]).get()` instead of `A @ B @ C @ D` 
+        will probably improve performance.
 
         Parameters
         ----------
@@ -37,8 +37,9 @@ class MatmulChain:
     @property
     def shape(self):
         """
-        The shape of result. This operation doesn't execute the multiplication,
-        but it simply gives the result according to the multipliers' shape.
+        The shape of result. This operation doesn't execute the 
+        multiplication, but it simply gives the result according 
+        to the multipliers' shape.
         """
         return tuple(self._shape)
 
@@ -57,7 +58,8 @@ class MatmulChain:
             It's raised if `next` isn't right-multipliable to the chain
         """
         if self._shape is not None and self._shape[1] != next.shape[0]:
-            raise ValueError(f"The matrix is not right-multipliable to the chain")
+            raise ValueError(
+                f"The matrix is not right-multipliable to the chain")
 
         if isinstance(next, MatmulChain):
             self._matrices += next._matrices
@@ -69,7 +71,9 @@ class MatmulChain:
     def get(self):
         """Return the result of multiplication in an optimized way"""
         splitPoint = self._optimize()
-        return self._get(self._matrices, 0, len(self._matrices) - 1, splitPoint)
+        return self._get(self._matrices, 
+                         0, len(self._matrices) - 1, 
+                         splitPoint)
 
     def _optimize(self):
         matrices = self._matrices
@@ -85,7 +89,8 @@ class MatmulChain:
                 currentMinCost = inf
                 for k in range(i, j):
                     kSize = matrices[k].shape[1]
-                    currentCost = cost[i, k] + cost[k + 1, j] + iSize * kSize * jSize
+                    currentCost = (cost[i, k] + cost[k + 1, j] + 
+                                   iSize * kSize * jSize)
                     if currentCost < currentMinCost:
                         currentMinCost = currentCost
                         minK = k
