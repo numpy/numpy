@@ -197,21 +197,8 @@ unpack_scalar(PyObject *index, PyObject **result, npy_intp NPY_UNUSED(result_n))
 /**
  * Turn an index argument into a c-array of `PyObject *`s, one for each index.
  *
- * When a scalar is passed, this is written directly to the buffer. When a
- * tuple is passed, the tuple elements are unpacked into the buffer.
- *
- * When some other sequence is passed, this implements the following section
- * from the advanced indexing docs to decide whether to unpack or just write
- * one element:
- *
- * > In order to remain backward compatible with a common usage in Numeric,
- * > basic slicing is also initiated if the selection object is any non-ndarray
- * > sequence (such as a list) containing slice objects, the Ellipsis object,
- * > or the newaxis object, but not for integer arrays or other embedded
- * > sequences.
- *
- * It might be worth deprecating this behaviour (gh-4434), in which case the
- * entire function should become a simple check of PyTuple_Check.
+ * When a tuple is passed, the tuple elements are unpacked into the buffer.
+ * Anything else is handled by unpack_scalar().
  *
  * @param  index     The index object, which may or may not be a tuple. This is
  *                   a borrowed reference.
@@ -228,129 +215,32 @@ unpack_scalar(PyObject *index, PyObject **result, npy_intp NPY_UNUSED(result_n))
 NPY_NO_EXPORT npy_intp
 unpack_indices(PyObject *index, PyObject **result, npy_intp result_n)
 {
-    npy_intp n, i;
-    npy_bool commit_to_unpack;
+    /* It is likely that the logic here can be simplified. See the discussion
+     * on https://github.com/numpy/numpy/pull/21029
+     */
 
     /* Fast route for passing a tuple */
     if (PyTuple_CheckExact(index)) {
         return unpack_tuple((PyTupleObject *)index, result, result_n);
     }
 
-    /* Obvious single-entry cases */
-    if (0  /* to aid macros below */
-            || PyLong_CheckExact(index)
-            || index == Py_None
-            || PySlice_Check(index)
-            || PyArray_Check(index)
-            || !PySequence_Check(index)
-            || PyUnicode_Check(index)) {
-
-        return unpack_scalar(index, result, result_n);
-    }
-
     /*
      * Passing a tuple subclass - coerce to the base type. This incurs an
-     * allocation, but doesn't need to be a fast path anyway
+     * allocation, but doesn't need to be a fast path anyway. Note that by
+     * calling `PySequence_Tuple`, we ensure that the subclass `__iter__` is
+     * called.
      */
     if (PyTuple_Check(index)) {
         PyTupleObject *tup = (PyTupleObject *) PySequence_Tuple(index);
         if (tup == NULL) {
             return -1;
         }
-        n = unpack_tuple(tup, result, result_n);
+        npy_intp n = unpack_tuple(tup, result, result_n);
         Py_DECREF(tup);
         return n;
     }
 
-    /*
-     * At this point, we're left with a non-tuple, non-array, sequence:
-     * typically, a list. We use some somewhat-arbitrary heuristics from here
-     * onwards to decided whether to treat that list as a single index, or a
-     * list of indices.
-     */
-
-    /* if len fails, treat like a scalar */
-    n = PySequence_Size(index);
-    if (n < 0) {
-        PyErr_Clear();
-        return unpack_scalar(index, result, result_n);
-    }
-
-    /*
-     * Backwards compatibility only takes effect for short sequences - otherwise
-     * we treat it like any other scalar.
-     *
-     * Sequences < NPY_MAXDIMS with any slice objects
-     * or newaxis, Ellipsis or other arrays or sequences
-     * embedded, are considered equivalent to an indexing
-     * tuple. (`a[[[1,2], [3,4]]] == a[[1,2], [3,4]]`)
-     */
-    if (n >= NPY_MAXDIMS) {
-        return unpack_scalar(index, result, result_n);
-    }
-
-    /* In case we change result_n elsewhere */
-    assert(n <= result_n);
-
-    /*
-     * Some other type of short sequence - assume we should unpack it like a
-     * tuple, and then decide whether that was actually necessary.
-     */
-    commit_to_unpack = 0;
-    for (i = 0; i < n; i++) {
-        PyObject *tmp_obj = result[i] = PySequence_GetItem(index, i);
-
-        if (commit_to_unpack) {
-            /* propagate errors */
-            if (tmp_obj == NULL) {
-                goto fail;
-            }
-        }
-        else {
-            /*
-             * if getitem fails (unusual) before we've committed, then stop
-             * unpacking
-             */
-            if (tmp_obj == NULL) {
-                PyErr_Clear();
-                break;
-            }
-
-            /* decide if we should treat this sequence like a tuple */
-            if (PyArray_Check(tmp_obj)
-                    || PySequence_Check(tmp_obj)
-                    || PySlice_Check(tmp_obj)
-                    || tmp_obj == Py_Ellipsis
-                    || tmp_obj == Py_None) {
-                if (DEPRECATE_FUTUREWARNING(
-                        "Using a non-tuple sequence for multidimensional "
-                        "indexing is deprecated; use `arr[tuple(seq)]` "
-                        "instead of `arr[seq]`. In the future this will be "
-                        "interpreted as an array index, `arr[np.array(seq)]`, "
-                        "which will result either in an error or a different "
-                        "result.") < 0) {
-                    i++;  /* since loop update doesn't run */
-                    goto fail;
-                }
-                commit_to_unpack = 1;
-            }
-        }
-    }
-
-    /* unpacking was the right thing to do, and we already did it */
-    if (commit_to_unpack) {
-        return n;
-    }
-    /* got to the end, never found an indication that we should have unpacked */
-    else {
-        /* we partially filled result, so empty it first */
-        multi_DECREF(result, i);
-        return unpack_scalar(index, result, result_n);
-    }
-
-fail:
-    multi_DECREF(result, i);
-    return -1;
+    return unpack_scalar(index, result, result_n);
 }
 
 /**
@@ -3254,7 +3144,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
  * If copy_if_overlap != 0, check if `a` has memory overlap with any of the
  * arrays in `index` and with `extra_op`. If yes, make copies as appropriate
  * to avoid problems if `a` is modified during the iteration.
- * `iter->array` may contain a copied array (UPDATEIFCOPY/WRITEBACKIFCOPY set).
+ * `iter->array` may contain a copied array (WRITEBACKIFCOPY set).
  */
 NPY_NO_EXPORT PyObject *
 PyArray_MapIterArrayCopyIfOverlap(PyArrayObject * a, PyObject * index,

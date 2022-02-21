@@ -6,18 +6,20 @@
 
 image: numpy/numpy-gitpod:latest
 tasks:
-  - name: Prepare development
+  - name: Prepare development environment
     init: |
       mkdir -p .vscode
       cp tools/gitpod/settings.json .vscode/settings.json
+      rm -f /workspace/numpy/.git/shallow.lock  
       conda activate numpy-dev
+      git pull --unshallow  # need to force this else the prebuild fails
+      git fetch --tags
       python setup.py build_ext --inplace
       echo "🛠 Completed rebuilding NumPy!! 🛠 "
       echo "📖 Building docs 📖 "
       cd doc
       make html
       echo "✨ Pre-build complete! You can close this terminal ✨ "
-  
 
 # --------------------------------------------------------
 # exposing ports for liveserve
@@ -60,3 +62,4 @@ github:
     addBadge: false
     # add a label once the prebuild is ready to pull requests (defaults to false)
     addLabel: false
+    

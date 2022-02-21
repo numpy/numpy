@@ -19,10 +19,10 @@ Note: cannot use equality to test NaNs. E.g.: ::
  False
  >>> myarr[myarr == np.nan] = 0. # doesn't work
  >>> myarr
- array([  1.,   0.,  NaN,   3.])
+ array([  1.,   0.,  nan,   3.])
  >>> myarr[np.isnan(myarr)] = 0. # use this instead find
  >>> myarr
- array([ 1.,  0.,  0.,  3.])
+ array([1.,  0.,  0.,  3.])
 
 Other related special value functions: ::
 
@@ -79,20 +79,24 @@ Examples
 
  >>> oldsettings = np.seterr(all='warn')
  >>> np.zeros(5,dtype=np.float32)/0.
- invalid value encountered in divide
+ Traceback (most recent call last):
+ ...
+ RuntimeWarning: invalid value encountered in divide
  >>> j = np.seterr(under='ignore')
  >>> np.array([1.e-100])**10
+ array([0.])
  >>> j = np.seterr(invalid='raise')
  >>> np.sqrt(np.array([-1.]))
+ Traceback (most recent call last):
+ ...
  FloatingPointError: invalid value encountered in sqrt
  >>> def errorhandler(errstr, errflag):
  ...      print("saw stupid error!")
  >>> np.seterrcall(errorhandler)
- <function err_handler at 0x...>
  >>> j = np.seterr(all='call')
  >>> np.zeros(5, dtype=np.int32)/0
- FloatingPointError: invalid value encountered in divide
  saw stupid error!
+ array([nan, nan, nan, nan, nan])
  >>> j = np.seterr(**oldsettings) # restore previous
  ...                              # error-handling settings
 

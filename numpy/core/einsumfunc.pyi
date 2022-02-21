@@ -1,4 +1,5 @@
-from typing import List, TypeVar, Optional, Any, overload, Union, Tuple, Sequence, Literal
+from collections.abc import Sequence
+from typing import TypeVar, Any, overload, Union, Literal
 
 from numpy import (
     ndarray,
@@ -30,13 +31,11 @@ _ArrayType = TypeVar(
     bound=ndarray[Any, dtype[Union[bool_, number[Any]]]],
 )
 
-_OptimizeKind = Union[
-    None, bool, Literal["greedy", "optimal"], Sequence[Any]
-]
+_OptimizeKind = None | bool | Literal["greedy", "optimal"] | Sequence[Any]
 _CastingSafe = Literal["no", "equiv", "safe", "same_kind"]
 _CastingUnsafe = Literal["unsafe"]
 
-__all__: List[str]
+__all__: list[str]
 
 # TODO: Properly handle the `casting`-based combinatorics
 # TODO: We need to evaluate the content `__subscripts` in order
@@ -50,7 +49,7 @@ def einsum(
     /,
     *operands: _ArrayLikeBool_co,
     out: None = ...,
-    dtype: Optional[_DTypeLikeBool] = ...,
+    dtype: None | _DTypeLikeBool = ...,
     order: _OrderKACF = ...,
     casting: _CastingSafe = ...,
     optimize: _OptimizeKind = ...,
@@ -61,7 +60,7 @@ def einsum(
     /,
     *operands: _ArrayLikeUInt_co,
     out: None = ...,
-    dtype: Optional[_DTypeLikeUInt] = ...,
+    dtype: None | _DTypeLikeUInt = ...,
     order: _OrderKACF = ...,
     casting: _CastingSafe = ...,
     optimize: _OptimizeKind = ...,
@@ -72,7 +71,7 @@ def einsum(
     /,
     *operands: _ArrayLikeInt_co,
     out: None = ...,
-    dtype: Optional[_DTypeLikeInt] = ...,
+    dtype: None | _DTypeLikeInt = ...,
     order: _OrderKACF = ...,
     casting: _CastingSafe = ...,
     optimize: _OptimizeKind = ...,
@@ -83,7 +82,7 @@ def einsum(
     /,
     *operands: _ArrayLikeFloat_co,
     out: None = ...,
-    dtype: Optional[_DTypeLikeFloat] = ...,
+    dtype: None | _DTypeLikeFloat = ...,
     order: _OrderKACF = ...,
     casting: _CastingSafe = ...,
     optimize: _OptimizeKind = ...,
@@ -94,7 +93,7 @@ def einsum(
     /,
     *operands: _ArrayLikeComplex_co,
     out: None = ...,
-    dtype: Optional[_DTypeLikeComplex] = ...,
+    dtype: None | _DTypeLikeComplex = ...,
     order: _OrderKACF = ...,
     casting: _CastingSafe = ...,
     optimize: _OptimizeKind = ...,
@@ -105,7 +104,7 @@ def einsum(
     /,
     *operands: Any,
     casting: _CastingUnsafe,
-    dtype: Optional[_DTypeLikeComplex_co] = ...,
+    dtype: None | _DTypeLikeComplex_co = ...,
     out: None = ...,
     order: _OrderKACF = ...,
     optimize: _OptimizeKind = ...,
@@ -116,7 +115,7 @@ def einsum(
     /,
     *operands: _ArrayLikeComplex_co,
     out: _ArrayType,
-    dtype: Optional[_DTypeLikeComplex_co] = ...,
+    dtype: None | _DTypeLikeComplex_co = ...,
     order: _OrderKACF = ...,
     casting: _CastingSafe = ...,
     optimize: _OptimizeKind = ...,
@@ -128,7 +127,7 @@ def einsum(
     *operands: Any,
     out: _ArrayType,
     casting: _CastingUnsafe,
-    dtype: Optional[_DTypeLikeComplex_co] = ...,
+    dtype: None | _DTypeLikeComplex_co = ...,
     order: _OrderKACF = ...,
     optimize: _OptimizeKind = ...,
 ) -> _ArrayType: ...
@@ -142,4 +141,4 @@ def einsum_path(
     /,
     *operands: _ArrayLikeComplex_co,
     optimize: _OptimizeKind = ...,
-) -> Tuple[List[Any], str]: ...
+) -> tuple[list[Any], str]: ...

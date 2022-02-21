@@ -885,7 +885,7 @@ def hsplit(ary, indices_or_sections):
 
     Please refer to the `split` documentation.  `hsplit` is equivalent
     to `split` with ``axis=1``, the array is always split along the second
-    axis regardless of the array dimension.
+    axis except for 1-D arrays, where it is split at ``axis=0``.
 
     See Also
     --------
@@ -932,6 +932,12 @@ def hsplit(ary, indices_or_sections):
            [[4.,  5.]]]),
      array([[[2.,  3.]],
            [[6.,  7.]]])]
+
+    With a 1-D array, the split is along axis 0.
+
+    >>> x = np.array([0, 1, 2, 3, 4, 5])
+    >>> np.hsplit(x, 2)
+    [array([0, 1, 2]), array([3, 4, 5])]
 
     """
     if _nx.ndim(ary) == 0:

@@ -46,7 +46,8 @@ class AnyAll(Benchmark):
 
 
 class MinMax(Benchmark):
-    params = [np.float32, np.float64, np.intp]
+    params = [np.int8, np.uint8, np.int16, np.uint16, np.int32, np.uint32,
+              np.int64, np.uint64, np.float32, np.float64, np.intp]
     param_names = ['dtype']
 
     def setup(self, dtype):
@@ -58,8 +59,22 @@ class MinMax(Benchmark):
     def time_max(self, dtype):
         np.max(self.d)
 
+class FMinMax(Benchmark):
+    params = [np.float32, np.float64]
+    param_names = ['dtype']
+
+    def setup(self, dtype):
+        self.d = np.ones(20000, dtype=dtype)
+
+    def time_min(self, dtype):
+        np.fmin.reduce(self.d)
+
+    def time_max(self, dtype):
+        np.fmax.reduce(self.d)
+
 class ArgMax(Benchmark):
-    params = [np.float32, bool]
+    params = [np.int8, np.uint8, np.int16, np.uint16, np.int32, np.uint32,
+              np.int64, np.uint64, np.float32, np.float64, bool]
     param_names = ['dtype']
 
     def setup(self, dtype):
@@ -67,6 +82,17 @@ class ArgMax(Benchmark):
 
     def time_argmax(self, dtype):
         np.argmax(self.d)
+
+class ArgMin(Benchmark):
+    params = [np.int8, np.uint8, np.int16, np.uint16, np.int32, np.uint32,
+              np.int64, np.uint64, np.float32, np.float64, bool]
+    param_names = ['dtype']
+
+    def setup(self, dtype):
+        self.d = np.ones(200000, dtype=dtype)
+
+    def time_argmin(self, dtype):
+        np.argmin(self.d)
 
 class SmallReduction(Benchmark):
     def setup(self):

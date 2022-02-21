@@ -44,6 +44,35 @@ class TestPublicPrivate:
         assert "private" not in mod["vars"]["seta"]["attrspec"]
         assert "public" in mod["vars"]["seta"]["attrspec"]
 
+    def test_access_type(self, tmp_path):
+        fpath = util.getpath("tests", "src", "crackfortran", "accesstype.f90")
+        mod = crackfortran.crackfortran([str(fpath)])
+        assert len(mod) == 1
+        tt = mod[0]['vars']
+        assert set(tt['a']['attrspec']) == {'private', 'bind(c)'}
+        assert set(tt['b_']['attrspec']) == {'public', 'bind(c)'}
+        assert set(tt['c']['attrspec']) == {'public'}
+
+
+class TestModuleProcedure():
+    def test_moduleOperators(self, tmp_path):
+        fpath = util.getpath("tests", "src", "crackfortran", "operators.f90")
+        mod = crackfortran.crackfortran([str(fpath)])
+        assert len(mod) == 1
+        mod = mod[0]
+        assert "body" in mod and len(mod["body"]) == 9
+        assert mod["body"][1]["name"] == "operator(.item.)"
+        assert "implementedby" in mod["body"][1]
+        assert mod["body"][1]["implementedby"] == \
+            ["item_int", "item_real"]
+        assert mod["body"][2]["name"] == "operator(==)"
+        assert "implementedby" in mod["body"][2]
+        assert mod["body"][2]["implementedby"] == ["items_are_equal"]
+        assert mod["body"][3]["name"] == "assignment(=)"
+        assert "implementedby" in mod["body"][3]
+        assert mod["body"][3]["implementedby"] == \
+            ["get_int", "get_real"]
+
 
 class TestExternal(util.F2PyTest):
     # issue gh-17859: add external attribute support
@@ -147,17 +176,19 @@ class TestDimSpec(util.F2PyTest):
     """)
 
     linear_dimspecs = [
-        "n", "2*n", "2:n", "n/2", "5 - n/2", "3*n:20", "n*(n+1):n*(n+5)"
+        "n", "2*n", "2:n", "n/2", "5 - n/2", "3*n:20", "n*(n+1):n*(n+5)",
+        "2*n, n"
     ]
     nonlinear_dimspecs = ["2*n:3*n*n+2*n"]
     all_dimspecs = linear_dimspecs + nonlinear_dimspecs
 
     code = ""
     for count, dimspec in enumerate(all_dimspecs):
+        lst = [(d.split(":")[0] if ":" in d else "1") for d in dimspec.split(',')]
         code += code_template.format(
             count=count,
             dimspec=dimspec,
-            first=dimspec.split(":")[0] if ":" in dimspec else "1",
+            first=", ".join(lst),
         )
 
     @pytest.mark.parametrize("dimspec", all_dimspecs)
@@ -168,7 +199,7 @@ class TestDimSpec(util.F2PyTest):
 
         for n in [1, 2, 3, 4, 5]:
             sz, a = get_arr_size(n)
-            assert len(a) == sz
+            assert a.size == sz
 
     @pytest.mark.parametrize("dimspec", all_dimspecs)
     def test_inv_array_size(self, dimspec):

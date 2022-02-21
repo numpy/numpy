@@ -1,11 +1,8 @@
+from collections.abc import Container, Iterable
 from typing import (
     Literal as L,
     Any,
-    Container,
-    Iterable,
-    List,
     overload,
-    Type,
     TypeVar,
     Protocol,
 )
@@ -28,8 +25,7 @@ from numpy.typing import (
     _64Bit,
     _SupportsDType,
     _ScalarLike_co,
-    _FiniteNestedSequence,
-    _SupportsArray,
+    _ArrayLike,
     _DTypeLikeComplex,
 )
 
@@ -39,8 +35,6 @@ _SCT = TypeVar("_SCT", bound=generic)
 _NBit1 = TypeVar("_NBit1", bound=NBitBase)
 _NBit2 = TypeVar("_NBit2", bound=NBitBase)
 
-_ArrayLike = _FiniteNestedSequence[_SupportsArray[dtype[_SCT]]]
-
 class _SupportsReal(Protocol[_T_co]):
     @property
     def real(self) -> _T_co: ...
@@ -49,7 +43,7 @@ class _SupportsImag(Protocol[_T_co]):
     @property
     def imag(self) -> _T_co: ...
 
-__all__: List[str]
+__all__: list[str]
 
 def mintypecode(
     typechars: Iterable[str | ArrayLike],
@@ -62,7 +56,7 @@ def mintypecode(
 @overload
 def asfarray(
     a: object,
-    dtype: None | Type[float] = ...,
+    dtype: None | type[float] = ...,
 ) -> NDArray[float64]: ...
 @overload
 def asfarray(  # type: ignore[misc]
@@ -201,28 +195,28 @@ def common_type(  # type: ignore[misc]
     *arrays: _SupportsDType[dtype[
         integer[Any]
     ]]
-) -> Type[floating[_64Bit]]: ...
+) -> type[floating[_64Bit]]: ...
 @overload
 def common_type(  # type: ignore[misc]
     *arrays: _SupportsDType[dtype[
         floating[_NBit1]
     ]]
-) -> Type[floating[_NBit1]]: ...
+) -> type[floating[_NBit1]]: ...
 @overload
 def common_type(  # type: ignore[misc]
     *arrays: _SupportsDType[dtype[
         integer[Any] | floating[_NBit1]
     ]]
-) -> Type[floating[_NBit1 | _64Bit]]: ...
+) -> type[floating[_NBit1 | _64Bit]]: ...
 @overload
 def common_type(  # type: ignore[misc]
     *arrays: _SupportsDType[dtype[
         floating[_NBit1] | complexfloating[_NBit2, _NBit2]
     ]]
-) -> Type[complexfloating[_NBit1 | _NBit2, _NBit1 | _NBit2]]: ...
+) -> type[complexfloating[_NBit1 | _NBit2, _NBit1 | _NBit2]]: ...
 @overload
 def common_type(
     *arrays: _SupportsDType[dtype[
         integer[Any] | floating[_NBit1] | complexfloating[_NBit2, _NBit2]
     ]]
-) -> Type[complexfloating[_64Bit | _NBit1 | _NBit2, _64Bit | _NBit1 | _NBit2]]: ...
+) -> type[complexfloating[_64Bit | _NBit1 | _NBit2, _64Bit | _NBit1 | _NBit2]]: ...

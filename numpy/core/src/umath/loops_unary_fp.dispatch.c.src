@@ -70,6 +70,15 @@ NPY_FINLINE double c_square_f64(double a)
 #define c_ceil_f32 npy_ceilf
 #define c_ceil_f64 npy_ceil
 
+#define c_trunc_f32 npy_truncf
+#define c_trunc_f64 npy_trunc
+
+#define c_floor_f32 npy_floorf
+#define c_floor_f64 npy_floor
+
+#define c_rint_f32 npy_rintf
+#define c_rint_f64 npy_rint
+
 /********************************************************************************
  ** Defining the SIMD kernels
  ********************************************************************************/
@@ -119,6 +128,9 @@ NPY_FINLINE double c_square_f64(double a)
         #if __clang_major__ < 10
         // Clang before v10
         #define WORKAROUND_CLANG_RECIPROCAL_BUG 1
+        #elif defined(_MSC_VER)
+        // clang-cl has the same bug
+        #define WORKAROUND_CLANG_RECIPROCAL_BUG 1
         #elif defined(NPY_CPU_X86) || defined(NPY_CPU_AMD64)
         // Clang v10+, targeting i386 or x86_64
         #define WORKAROUND_CLANG_RECIPROCAL_BUG 0
@@ -139,10 +151,10 @@ NPY_FINLINE double c_square_f64(double a)
  */
 #if @VCHK@
 /**begin repeat1
- * #kind     = ceil, sqrt, absolute, square, reciprocal#
- * #intr     = ceil, sqrt, abs,      square, recip#
- * #repl_0w1 = 0,    0,    0,        0,      1#
- * #RECIP_WORKAROUND = 0, 0, 0, 0, WORKAROUND_CLANG_RECIPROCAL_BUG#
+ * #kind     = rint,  floor, ceil, trunc, sqrt, absolute, square, reciprocal#
+ * #intr     = rint,  floor, ceil, trunc, sqrt, abs,      square, recip#
+ * #repl_0w1 = 0*7, 1#
+ * #RECIP_WORKAROUND = 0*7, WORKAROUND_CLANG_RECIPROCAL_BUG#
  */
 /**begin repeat2
  * #STYPE  = CONTIG, NCONTIG, CONTIG,  NCONTIG#
@@ -250,9 +262,9 @@ static void simd_@TYPE@_@kind@_@STYPE@_@DTYPE@
  * #VCHK = NPY_SIMD, NPY_SIMD_F64#
  */
 /**begin repeat1
- * #kind  = ceil, sqrt, absolute, square, reciprocal#
- * #intr  = ceil, sqrt, abs,      square, recip#
- * #clear = 0,    0,    1,        0,      0#
+ * #kind  = rint, floor, ceil, trunc, sqrt, absolute, square, reciprocal#
+ * #intr  = rint, floor, ceil, trunc, sqrt, abs,      square, recip#
+ * #clear = 0,    0,     0,    0,     0,    1,        0,      0#
  */
 NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
 (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))

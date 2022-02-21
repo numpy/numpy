@@ -188,9 +188,8 @@ def _divide_by_count(a, b, out=None):
     """
     Compute a/b ignoring invalid results. If `a` is an array the division
     is done in place. If `a` is a scalar, then its type is preserved in the
-    output. If out is None, then then a is used instead so that the
-    division is in place. Note that this is only called with `a` an inexact
-    type.
+    output. If out is None, then a is used instead so that the division
+    is in place. Note that this is only called with `a` an inexact type.
 
     Parameters
     ----------

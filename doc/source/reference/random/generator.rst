@@ -73,12 +73,12 @@ the value of the ``out`` parameter.  For example,
 
     >>> rng = np.random.default_rng()
     >>> x = np.arange(0, 15).reshape(3, 5)
-    >>> x
+    >>> x #doctest: +SKIP
     array([[ 0,  1,  2,  3,  4],
            [ 5,  6,  7,  8,  9],
            [10, 11, 12, 13, 14]])
     >>> y = rng.permuted(x, axis=1, out=x)
-    >>> x
+    >>> x #doctest: +SKIP
     array([[ 1,  0,  2,  4,  3],  # random
            [ 6,  7,  8,  9,  5],
            [10, 14, 11, 13, 12]])
@@ -103,7 +103,7 @@ array, and  ``axis=1`` will rearrange the columns.  For example
     array([[ 0,  1,  2,  3,  4],
            [ 5,  6,  7,  8,  9],
            [10, 11, 12, 13, 14]])
-    >>> rng.permutation(x, axis=1)
+    >>> rng.permutation(x, axis=1) #doctest: +SKIP
     array([[ 1,  3,  2,  0,  4],  # random
            [ 6,  8,  7,  5,  9],
            [11, 13, 12, 10, 14]])
@@ -116,7 +116,7 @@ how `numpy.sort` treats it.  Each slice along the given axis is shuffled
 independently of the others.  Compare the following example of the use of
 `Generator.permuted` to the above example of `Generator.permutation`:
 
-    >>> rng.permuted(x, axis=1)
+    >>> rng.permuted(x, axis=1) #doctest: +SKIP
     array([[ 1,  0,  2,  4,  3],  # random
            [ 5,  7,  6,  9,  8],
            [10, 14, 12, 13, 11]])
@@ -134,7 +134,7 @@ For example,
     >>> rng = np.random.default_rng()
     >>> a = ['A', 'B', 'C', 'D', 'E']
     >>> rng.shuffle(a)  # shuffle the list in-place
-    >>> a
+    >>> a #doctest: +SKIP
     ['B', 'D', 'A', 'E', 'C']  # random
 
 Distributions

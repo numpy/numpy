@@ -1,12 +1,12 @@
-from typing import List, Any
+from typing import Any
 import numpy as np
 
-AR_LIKE_b: List[bool]
-AR_LIKE_u: List[np.uint32]
-AR_LIKE_i: List[int]
-AR_LIKE_f: List[float]
-AR_LIKE_c: List[complex]
-AR_LIKE_U: List[str]
+AR_LIKE_b: list[bool]
+AR_LIKE_u: list[np.uint32]
+AR_LIKE_i: list[int]
+AR_LIKE_f: list[float]
+AR_LIKE_c: list[complex]
+AR_LIKE_U: list[str]
 
 OUT_f: np.ndarray[Any, np.dtype[np.float64]]
 

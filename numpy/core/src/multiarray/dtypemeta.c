@@ -12,6 +12,7 @@
 
 #include "common.h"
 #include "dtypemeta.h"
+#include "descriptor.h"
 #include "_datetime.h"
 #include "array_coercion.h"
 #include "scalartypes.h"
@@ -153,6 +154,9 @@ string_discover_descr_from_pyobject(
                     "string to large to store inside array.");
         }
         PyArray_Descr *res = PyArray_DescrNewFromType(cls->type_num);
+        if (res == NULL) {
+            return NULL;
+        }
         res->elsize = (int)itemsize;
         return res;
     }
@@ -171,10 +175,15 @@ void_discover_descr_from_pyobject(
     }
     if (PyBytes_Check(obj)) {
         PyArray_Descr *descr = PyArray_DescrNewFromType(NPY_VOID);
+        if (descr == NULL) {
+            return NULL;
+        }
         Py_ssize_t itemsize = PyBytes_Size(obj);
         if (itemsize > NPY_MAX_INT) {
             PyErr_SetString(PyExc_TypeError,
                     "byte-like to large to store inside array.");
+            Py_DECREF(descr);
+            return NULL;
         }
         descr->elsize = (int)itemsize;
         return descr;
@@ -211,6 +220,23 @@ nonparametric_default_descr(PyArray_DTypeMeta *cls)
 {
     Py_INCREF(cls->singleton);
     return cls->singleton;
+}
+
+
+/*
+ * For most builtin (and legacy) dtypes, the canonical property means to
+ * ensure native byte-order.  (We do not care about metadata here.)
+ */
+static PyArray_Descr *
+ensure_native_byteorder(PyArray_Descr *descr)
+{
+    if (PyArray_ISNBO(descr->byteorder)) {
+        Py_INCREF(descr);
+        return descr;
+    }
+    else {
+        return PyArray_DescrNewByteorder(descr, NPY_NATIVE);
+    }
 }
 
 
@@ -257,10 +283,10 @@ static PyArray_Descr *
 string_unicode_common_instance(PyArray_Descr *descr1, PyArray_Descr *descr2)
 {
     if (descr1->elsize >= descr2->elsize) {
-        return ensure_dtype_nbo(descr1);
+        return NPY_DT_CALL_ensure_canonical(descr1);
     }
     else {
-        return ensure_dtype_nbo(descr2);
+        return NPY_DT_CALL_ensure_canonical(descr2);
     }
 }
 
@@ -613,6 +639,7 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
     dt_slots->is_known_scalar_type = python_builtins_are_known_scalar_types;
     dt_slots->common_dtype = default_builtin_common_dtype;
     dt_slots->common_instance = NULL;
+    dt_slots->ensure_canonical = ensure_native_byteorder;
 
     if (PyTypeNum_ISSIGNED(dtype_class->type_num)) {
         /* Convert our scalars (raise on too large unsigned and NaN, etc.) */

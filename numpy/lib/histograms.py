@@ -506,8 +506,8 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
             with non-normal datasets.
 
         'scott'
-            Less robust estimator that that takes into account data
-            variability and data size.
+            Less robust estimator that takes into account data variability
+            and data size.
 
         'stone'
             Estimator based on leave-one-out cross-validation estimate of

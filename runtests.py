@@ -199,8 +199,9 @@ def main(argv):
                 os.environ.get('PYTHONPATH', '')
             ))
     else:
-        _temp = __import__(PROJECT_MODULE)
-        site_dir = os.path.sep.join(_temp.__file__.split(os.path.sep)[:-2])
+        if not args.bench_compare:
+            _temp = __import__(PROJECT_MODULE)
+            site_dir = os.path.sep.join(_temp.__file__.split(os.path.sep)[:-2])
 
     extra_argv = args.args[:]
     if not args.bench:

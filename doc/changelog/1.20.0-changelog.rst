@@ -714,7 +714,7 @@ A total of 716 pull requests were merged for this release.
 * `#17440 <https://github.com/numpy/numpy/pull/17440>`__: DOC: Cleaner template for PRs
 * `#17442 <https://github.com/numpy/numpy/pull/17442>`__: MAINT: fix exception chaining in format.py
 * `#17443 <https://github.com/numpy/numpy/pull/17443>`__: ENH: Warn on unsupported Python 3.10+
-* `#17444 <https://github.com/numpy/numpy/pull/17444>`__: ENH: Add ``Typing :: Typed`` to the PyPi classifier
+* `#17444 <https://github.com/numpy/numpy/pull/17444>`__: ENH: Add ``Typing :: Typed`` to the PyPI classifier
 * `#17445 <https://github.com/numpy/numpy/pull/17445>`__: DOC: Fix the references for macros
 * `#17447 <https://github.com/numpy/numpy/pull/17447>`__: NEP: update NEP 42 with discussion of type hinting applications
 * `#17448 <https://github.com/numpy/numpy/pull/17448>`__: DOC: Remove CoC pages from Sphinx

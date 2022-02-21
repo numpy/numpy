@@ -1809,9 +1809,16 @@ FormatPositional(char *buffer, npy_uint32 bufferSize, BigInt *mantissa,
             pos--;
             numFractionDigits--;
         }
-        if (trim_mode == TrimMode_LeaveOneZero && buffer[pos-1] == '.') {
-            buffer[pos++] = '0';
-            numFractionDigits++;
+        if (buffer[pos-1] == '.') {
+            /* in TrimMode_LeaveOneZero, add trailing 0 back */
+            if (trim_mode == TrimMode_LeaveOneZero){
+                buffer[pos++] = '0';
+                numFractionDigits++;
+            }
+            /* in TrimMode_DptZeros, remove trailing decimal point */
+            else if (trim_mode == TrimMode_DptZeros) {
+                    pos--;
+            }
         }
     }
 

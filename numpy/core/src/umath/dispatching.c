@@ -78,7 +78,7 @@ NPY_NO_EXPORT int
 PyUFunc_AddLoop(PyUFuncObject *ufunc, PyObject *info, int ignore_duplicate)
 {
     /*
-     * Validate the info object, this should likely move to to a different
+     * Validate the info object, this should likely move to a different
      * entry-point in the future (and is mostly unnecessary currently).
      */
     if (!PyTuple_CheckExact(info) || PyTuple_GET_SIZE(info) != 2) {
@@ -583,6 +583,10 @@ legacy_promote_using_legacy_type_resolver(PyUFuncObject *ufunc,
             NPY_UNSAFE_CASTING, (PyArrayObject **)ops, type_tuple,
             out_descrs) < 0) {
         Py_XDECREF(type_tuple);
+        /* Not all legacy resolvers clean up on failures: */
+        for (int i = 0; i < nargs; i++) {
+            Py_CLEAR(out_descrs[i]);
+        }
         return -1;
     }
     Py_XDECREF(type_tuple);
@@ -742,13 +746,14 @@ promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
     }
     info = promote_and_get_info_and_ufuncimpl(ufunc,
             ops, signature, new_op_dtypes, NPY_FALSE);
+    for (int i = 0; i < ufunc->nargs; i++) {
+        Py_XDECREF(new_op_dtypes[i]);
+    }
+
     /* Add this to the cache using the original types: */
     if (cacheable && PyArrayIdentityHash_SetItem(ufunc->_dispatch_cache,
             (PyObject **)op_dtypes, info, 0) < 0) {
         return NULL;
-    }
-    for (int i = 0; i < ufunc->nargs; i++) {
-        Py_XDECREF(new_op_dtypes);
     }
     return info;
 }
@@ -1011,6 +1016,11 @@ logical_ufunc_promoter(PyUFuncObject *NPY_UNUSED(ufunc),
     if (signature[0] == NULL && signature[1] == NULL
             && signature[2] != NULL && signature[2]->type_num != NPY_BOOL) {
         /* bail out, this is _only_ to give future/deprecation warning! */
+        return -1;
+    }
+    if ((op_dtypes[0] != NULL && PyTypeNum_ISSTRING(op_dtypes[0]->type_num))
+            || PyTypeNum_ISSTRING(op_dtypes[1]->type_num)) {
+        /* bail out on strings: currently casting them to bool is too weird */
         return -1;
     }
 

@@ -97,9 +97,6 @@
 /***************************
  * Integer Division
  ***************************/
-/***
- * TODO: Add support for VSX4(Power10)
- */
 // See simd/intdiv.h for more clarification
 // divide each unsigned 8-bit element by a precomputed divisor
 NPY_FINLINE npyv_u8 npyv_divc_u8(npyv_u8 a, const npyv_u8x3 divisor)
@@ -172,6 +169,10 @@ NPY_FINLINE npyv_s16 npyv_divc_s16(npyv_s16 a, const npyv_s16x3 divisor)
 // divide each unsigned 32-bit element by a precomputed divisor
 NPY_FINLINE npyv_u32 npyv_divc_u32(npyv_u32 a, const npyv_u32x3 divisor)
 {
+#if defined(NPY_HAVE_VSX4)
+    // high part of unsigned multiplication
+    npyv_u32 mulhi    = vec_mulh(a, divisor.val[0]);
+#else
 #if defined(__GNUC__) && __GNUC__ < 8
     // Doubleword integer wide multiplication supported by GCC 8+
     npyv_u64 mul_even, mul_odd;
@@ -184,6 +185,7 @@ NPY_FINLINE npyv_u32 npyv_divc_u32(npyv_u32 a, const npyv_u32x3 divisor)
 #endif
     // high part of unsigned multiplication
     npyv_u32 mulhi    = vec_mergeo((npyv_u32)mul_even, (npyv_u32)mul_odd);
+#endif
     // floor(x/d)     = (((a-mulhi) >> sh1) + mulhi) >> sh2
     npyv_u32 q        = vec_sub(a, mulhi);
              q        = vec_sr(q, divisor.val[1]);
@@ -194,6 +196,10 @@ NPY_FINLINE npyv_u32 npyv_divc_u32(npyv_u32 a, const npyv_u32x3 divisor)
 // divide each signed 32-bit element by a precomputed divisor (round towards zero)
 NPY_FINLINE npyv_s32 npyv_divc_s32(npyv_s32 a, const npyv_s32x3 divisor)
 {
+#if defined(NPY_HAVE_VSX4)
+    // high part of signed multiplication
+    npyv_s32 mulhi    = vec_mulh(a, divisor.val[0]);
+#else
 #if defined(__GNUC__) && __GNUC__ < 8
     // Doubleword integer wide multiplication supported by GCC8+
     npyv_s64 mul_even, mul_odd;
@@ -206,6 +212,7 @@ NPY_FINLINE npyv_s32 npyv_divc_s32(npyv_s32 a, const npyv_s32x3 divisor)
 #endif
     // high part of signed multiplication
     npyv_s32 mulhi    = vec_mergeo((npyv_s32)mul_even, (npyv_s32)mul_odd);
+#endif
     // q              = ((a + mulhi) >> sh1) - XSIGN(a)
     // trunc(a/d)     = (q ^ dsign) - dsign
     npyv_s32 q        = vec_sra(vec_add(a, mulhi), (npyv_u32)divisor.val[1]);
@@ -216,8 +223,12 @@ NPY_FINLINE npyv_s32 npyv_divc_s32(npyv_s32 a, const npyv_s32x3 divisor)
 // divide each unsigned 64-bit element by a precomputed divisor
 NPY_FINLINE npyv_u64 npyv_divc_u64(npyv_u64 a, const npyv_u64x3 divisor)
 {
+#if defined(NPY_HAVE_VSX4)
+    return vec_div(a, divisor.val[0]);
+#else
     const npy_uint64 d = vec_extract(divisor.val[0], 0);
     return npyv_set_u64(vec_extract(a, 0) / d, vec_extract(a, 1) / d);
+#endif
 }
 // divide each signed 64-bit element by a precomputed divisor (round towards zero)
 NPY_FINLINE npyv_s64 npyv_divc_s64(npyv_s64 a, const npyv_s64x3 divisor)

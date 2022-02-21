@@ -11,11 +11,9 @@ See the `Mypy documentation`_ on protocols for more details.
 from __future__ import annotations
 
 from typing import (
-    Union,
     TypeVar,
     overload,
     Any,
-    Tuple,
     NoReturn,
     Protocol,
 )
@@ -51,7 +49,7 @@ _T1 = TypeVar("_T1")
 _T2 = TypeVar("_T2")
 _T1_contra = TypeVar("_T1_contra", contravariant=True)
 _T2_contra = TypeVar("_T2_contra", contravariant=True)
-_2Tuple = Tuple[_T1, _T1]
+_2Tuple = tuple[_T1, _T1]
 
 _NBit1 = TypeVar("_NBit1", bound=NBitBase)
 _NBit2 = TypeVar("_NBit2", bound=NBitBase)
@@ -310,11 +308,11 @@ class _ComplexOp(Protocol[_NBit1]):
     @overload
     def __call__(
         self,
-        other: Union[
-            integer[_NBit2],
-            floating[_NBit2],
-            complexfloating[_NBit2, _NBit2],
-        ], /,
+        other: (
+            integer[_NBit2]
+            | floating[_NBit2]
+            | complexfloating[_NBit2, _NBit2]
+        ), /,
     ) -> complexfloating[_NBit1 | _NBit2, _NBit1 | _NBit2]: ...
 
 class _NumberOp(Protocol):

@@ -1,18 +1,12 @@
+from collections.abc import Callable, Sequence
 from typing import (
     Any,
-    Callable,
-    List,
-    Sequence,
     overload,
-    Tuple,
-    Type,
     TypeVar,
     Union,
 )
 
 from numpy import (
-    ndarray,
-    dtype,
     generic,
     number,
     bool_,
@@ -30,11 +24,11 @@ from numpy import (
 
 from numpy.typing import (
     DTypeLike,
-    _SupportsDType,
+    _DTypeLike,
     ArrayLike,
+    _ArrayLike,
     NDArray,
-    _FiniteNestedSequence,
-    _SupportsArray,
+    _SupportsArrayFunc,
     _ArrayLikeInt_co,
     _ArrayLikeFloat_co,
     _ArrayLikeComplex_co,
@@ -50,14 +44,7 @@ _MaskFunc = Callable[
     NDArray[Union[number[Any], bool_, timedelta64, datetime64, object_]],
 ]
 
-_DTypeLike = Union[
-    Type[_SCT],
-    dtype[_SCT],
-    _SupportsDType[dtype[_SCT]],
-]
-_ArrayLike = _FiniteNestedSequence[_SupportsArray[dtype[_SCT]]]
-
-__all__: List[str]
+__all__: list[str]
 
 @overload
 def fliplr(m: _ArrayLike[_SCT]) -> NDArray[_SCT]: ...
@@ -77,7 +64,7 @@ def eye(
     dtype: None = ...,
     order: _OrderCF = ...,
     *,
-    like: None | ArrayLike = ...,
+    like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[float64]: ...
 @overload
 def eye(
@@ -87,7 +74,7 @@ def eye(
     dtype: _DTypeLike[_SCT] = ...,
     order: _OrderCF = ...,
     *,
-    like: None | ArrayLike = ...,
+    like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def eye(
@@ -97,7 +84,7 @@ def eye(
     dtype: DTypeLike = ...,
     order: _OrderCF = ...,
     *,
-    like: None | ArrayLike = ...,
+    like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 
 @overload
@@ -117,7 +104,7 @@ def tri(
     k: int = ...,
     dtype: None = ...,
     *,
-    like: None | ArrayLike = ...
+    like: None | _SupportsArrayFunc = ...
 ) -> NDArray[float64]: ...
 @overload
 def tri(
@@ -126,7 +113,7 @@ def tri(
     k: int = ...,
     dtype: _DTypeLike[_SCT] = ...,
     *,
-    like: None | ArrayLike = ...
+    like: None | _SupportsArrayFunc = ...
 ) -> NDArray[_SCT]: ...
 @overload
 def tri(
@@ -135,7 +122,7 @@ def tri(
     k: int = ...,
     dtype: DTypeLike = ...,
     *,
-    like: None | ArrayLike = ...
+    like: None | _SupportsArrayFunc = ...
 ) -> NDArray[Any]: ...
 
 @overload
@@ -182,7 +169,7 @@ def histogram2d(  # type: ignore[misc]
     normed: None | bool = ...,
     weights: None | _ArrayLikeFloat_co = ...,
     density: None | bool = ...,
-) -> Tuple[
+) -> tuple[
     NDArray[float64],
     NDArray[floating[Any]],
     NDArray[floating[Any]],
@@ -196,7 +183,7 @@ def histogram2d(
     normed: None | bool = ...,
     weights: None | _ArrayLikeFloat_co = ...,
     density: None | bool = ...,
-) -> Tuple[
+) -> tuple[
     NDArray[float64],
     NDArray[complexfloating[Any, Any]],
     NDArray[complexfloating[Any, Any]],
@@ -210,7 +197,7 @@ def histogram2d(
     normed: None | bool = ...,
     weights: None | _ArrayLikeFloat_co = ...,
     density: None | bool = ...,
-) -> Tuple[
+) -> tuple[
     NDArray[float64],
     NDArray[Any],
     NDArray[Any],
@@ -224,32 +211,32 @@ def mask_indices(
     n: int,
     mask_func: _MaskFunc[int],
     k: int = ...,
-) -> Tuple[NDArray[intp], NDArray[intp]]: ...
+) -> tuple[NDArray[intp], NDArray[intp]]: ...
 @overload
 def mask_indices(
     n: int,
     mask_func: _MaskFunc[_T],
     k: _T,
-) -> Tuple[NDArray[intp], NDArray[intp]]: ...
+) -> tuple[NDArray[intp], NDArray[intp]]: ...
 
 def tril_indices(
     n: int,
     k: int = ...,
     m: None | int = ...,
-) -> Tuple[NDArray[int_], NDArray[int_]]: ...
+) -> tuple[NDArray[int_], NDArray[int_]]: ...
 
 def tril_indices_from(
     arr: NDArray[Any],
     k: int = ...,
-) -> Tuple[NDArray[int_], NDArray[int_]]: ...
+) -> tuple[NDArray[int_], NDArray[int_]]: ...
 
 def triu_indices(
     n: int,
     k: int = ...,
     m: None | int = ...,
-) -> Tuple[NDArray[int_], NDArray[int_]]: ...
+) -> tuple[NDArray[int_], NDArray[int_]]: ...
 
 def triu_indices_from(
     arr: NDArray[Any],
     k: int = ...,
-) -> Tuple[NDArray[int_], NDArray[int_]]: ...
+) -> tuple[NDArray[int_], NDArray[int_]]: ...

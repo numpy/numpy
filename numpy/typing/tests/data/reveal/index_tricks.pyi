@@ -1,10 +1,10 @@
-from typing import Any, List
+from typing import Any
 import numpy as np
 
-AR_LIKE_b: List[bool]
-AR_LIKE_i: List[int]
-AR_LIKE_f: List[float]
-AR_LIKE_U: List[str]
+AR_LIKE_b: list[bool]
+AR_LIKE_i: list[int]
+AR_LIKE_f: list[float]
+AR_LIKE_U: list[str]
 
 AR_i8: np.ndarray[Any, np.dtype[np.int64]]
 
@@ -24,6 +24,8 @@ reveal_type(iter(np.ndenumerate(AR_i8)))  # E: Iterator[Tuple[builtins.tuple[bui
 reveal_type(iter(np.ndenumerate(AR_LIKE_f)))  # E: Iterator[Tuple[builtins.tuple[builtins.int], {double}]]
 reveal_type(iter(np.ndenumerate(AR_LIKE_U)))  # E: Iterator[Tuple[builtins.tuple[builtins.int], str_]]
 
+reveal_type(np.ndindex(1, 2, 3))  # E: numpy.ndindex
+reveal_type(np.ndindex((1, 2, 3)))  # E: numpy.ndindex
 reveal_type(iter(np.ndindex(1, 2, 3)))  # E: Iterator[builtins.tuple[builtins.int]]
 reveal_type(next(np.ndindex(1, 2, 3)))  # E: builtins.tuple[builtins.int]
 

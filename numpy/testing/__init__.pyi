@@ -1,5 +1,3 @@
-from typing import List
-
 from numpy._pytesttester import PytestTester
 
 from unittest import (
@@ -48,11 +46,11 @@ from numpy.testing._private.utils import (
     HAS_LAPACK64 as HAS_LAPACK64,
 )
 
-__all__: List[str]
-__path__: List[str]
+__all__: list[str]
+__path__: list[str]
 test: PytestTester
 
 def run_module_suite(
     file_to_run: None | str = ...,
-    argv: None | List[str] = ...,
+    argv: None | list[str] = ...,
 ) -> None: ...

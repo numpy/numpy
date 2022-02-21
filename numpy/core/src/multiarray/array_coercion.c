@@ -67,8 +67,8 @@
  *
  * The code here avoid multiple conversion of array-like objects (including
  * sequences). These objects are cached after conversion, which will require
- * additional memory, but can drastically speed up coercion from from array
- * like objects.
+ * additional memory, but can drastically speed up coercion from array like
+ * objects.
  */
 
 

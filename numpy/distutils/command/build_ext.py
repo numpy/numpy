@@ -231,20 +231,36 @@ class build_ext (old_build_ext):
             l = ext.language or self.compiler.detect_language(ext.sources)
             if l:
                 ext_languages.add(l)
+
             # reset language attribute for choosing proper linker
+            #
+            # When we build extensions with multiple languages, we have to
+            # choose a linker. The rules here are:
+            #   1. if there is Fortran code, always prefer the Fortran linker,
+            #   2. otherwise prefer C++ over C,
+            #   3. Users can force a particular linker by using
+            #          `language='c'`  # or 'c++', 'f90', 'f77'
+            #      in their config.add_extension() calls.
             if 'c++' in ext_languages:
                 ext_language = 'c++'
-            elif 'f90' in ext_languages:
-                ext_language = 'f90'
-            elif 'f77' in ext_languages:
-                ext_language = 'f77'
             else:
                 ext_language = 'c'  # default
-            if l and l != ext_language and ext.language:
-                log.warn('resetting extension %r language from %r to %r.' %
-                         (ext.name, l, ext_language))
-            if not ext.language:
+
+            has_fortran = False
+            if 'f90' in ext_languages:
+                ext_language = 'f90'
+                has_fortran = True
+            elif 'f77' in ext_languages:
+                ext_language = 'f77'
+                has_fortran = True
+
+            if not ext.language or has_fortran:
+                if l and l != ext_language and ext.language:
+                    log.warn('resetting extension %r language from %r to %r.' %
+                             (ext.name, l, ext_language))
+
                 ext.language = ext_language
+
             # global language
             all_languages.update(ext_languages)
 
@@ -377,8 +393,8 @@ class build_ext (old_build_ext):
             log.info("building '%s' extension", ext.name)
 
         extra_args = ext.extra_compile_args or []
-        extra_cflags = ext.extra_c_compile_args or []
-        extra_cxxflags = ext.extra_cxx_compile_args or []
+        extra_cflags = getattr(ext, 'extra_c_compile_args', None) or []
+        extra_cxxflags = getattr(ext, 'extra_cxx_compile_args', None) or []
 
         macros = ext.define_macros[:]
         for undef in ext.undef_macros:

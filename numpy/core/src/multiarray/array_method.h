@@ -70,16 +70,69 @@ typedef NPY_CASTING (resolve_descriptors_function)(
         struct PyArrayMethodObject_tag *method,
         PyArray_DTypeMeta **dtypes,
         PyArray_Descr **given_descrs,
-        PyArray_Descr **loop_descrs);
+        PyArray_Descr **loop_descrs,
+        npy_intp *view_offset);
 
 
 typedef int (get_loop_function)(
         PyArrayMethod_Context *context,
         int aligned, int move_references,
-        npy_intp *strides,
+        const npy_intp *strides,
         PyArrayMethod_StridedLoop **out_loop,
         NpyAuxData **out_transferdata,
         NPY_ARRAYMETHOD_FLAGS *flags);
+
+
+/*
+ * The following functions are only used be the wrapping array method defined
+ * in umath/wrapping_array_method.c
+ */
+
+/*
+ * The function to convert the given descriptors (passed in to
+ * `resolve_descriptors`) and translates them for the wrapped loop.
+ * The new descriptors MUST be viewable with the old ones, `NULL` must be
+ * supported (for outputs) and should normally be forwarded.
+ *
+ * The function must clean up on error.
+ *
+ * NOTE: We currently assume that this translation gives "viewable" results.
+ *       I.e. there is no additional casting related to the wrapping process.
+ *       In principle that could be supported, but not sure it is useful.
+ *       This currently also means that e.g. alignment must apply identically
+ *       to the new dtypes.
+ *
+ * TODO: Due to the fact that `resolve_descriptors` is also used for `can_cast`
+ *       there is no way to "pass out" the result of this function.  This means
+ *       it will be called twice for every ufunc call.
+ *       (I am considering including `auxdata` as an "optional" parameter to
+ *       `resolve_descriptors`, so that it can be filled there if not NULL.)
+ */
+typedef int translate_given_descrs_func(int nin, int nout,
+        PyArray_DTypeMeta *wrapped_dtypes[],
+        PyArray_Descr *given_descrs[], PyArray_Descr *new_descrs[]);
+
+/**
+ * The function to convert the actual loop descriptors (as returned by the
+ * original `resolve_descriptors` function) to the ones the output array
+ * should use.
+ * This function must return "viewable" types, it must not mutate them in any
+ * form that would break the inner-loop logic.  Does not need to support NULL.
+ *
+ * The function must clean up on error.
+ *
+ * @param nargs Number of arguments
+ * @param new_dtypes The DTypes of the output (usually probably not needed)
+ * @param given_descrs Original given_descrs to the resolver, necessary to
+ *        fetch any information related to the new dtypes from the original.
+ * @param original_descrs The `loop_descrs` returned by the wrapped loop.
+ * @param loop_descrs The output descriptors, compatible to `original_descrs`.
+ *
+ * @returns 0 on success, -1 on failure.
+ */
+typedef int translate_loop_descrs_func(int nin, int nout,
+        PyArray_DTypeMeta *new_dtypes[], PyArray_Descr *given_descrs[],
+        PyArray_Descr *original_descrs[], PyArray_Descr *loop_descrs[]);
 
 
 /*
@@ -124,6 +177,11 @@ typedef struct PyArrayMethodObject_tag {
     PyArrayMethod_StridedLoop *contiguous_loop;
     PyArrayMethod_StridedLoop *unaligned_strided_loop;
     PyArrayMethod_StridedLoop *unaligned_contiguous_loop;
+    /* Chunk only used for wrapping array method defined in umath */
+    struct PyArrayMethodObject_tag *wrapped_meth;
+    PyArray_DTypeMeta **wrapped_dtypes;
+    translate_given_descrs_func *translate_given_descrs;
+    translate_loop_descrs_func *translate_loop_descrs;
 } PyArrayMethodObject;
 
 
@@ -166,7 +224,7 @@ extern NPY_NO_EXPORT PyTypeObject PyBoundArrayMethod_Type;
 NPY_NO_EXPORT int
 npy_default_get_strided_loop(
         PyArrayMethod_Context *context,
-        int aligned, int NPY_UNUSED(move_references), npy_intp *strides,
+        int aligned, int NPY_UNUSED(move_references), const npy_intp *strides,
         PyArrayMethod_StridedLoop **out_loop, NpyAuxData **out_transferdata,
         NPY_ARRAYMETHOD_FLAGS *flags);
 

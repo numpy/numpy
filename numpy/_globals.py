@@ -116,7 +116,7 @@ class _CopyMode(enum.Enum):
     NEVER = 2
 
     def __bool__(self):
-        # For backwards compatiblity
+        # For backwards compatibility
         if self == _CopyMode.ALWAYS:
             return True
 

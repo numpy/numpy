@@ -587,6 +587,12 @@ class TestIndexing:
 
         assert arr.dtype is dt
 
+    def test_nontuple_ndindex(self):
+        a = np.arange(25).reshape((5, 5))
+        assert_equal(a[[0, 1]], np.array([a[0], a[1]]))
+        assert_equal(a[[0, 1], [0, 1]], np.array([0, 6]))
+        assert_raises(IndexError, a.__getitem__, [slice(None)])
+
 
 class TestFieldIndexing:
     def test_scalar_return_type(self):
@@ -1332,7 +1338,7 @@ class TestBooleanIndexing:
 
 
 class TestArrayToIndexDeprecation:
-    """Creating an an index from array not 0-D is an error.
+    """Creating an index from array not 0-D is an error.
 
     """
     def test_array_to_index_error(self):

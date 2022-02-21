@@ -12,7 +12,7 @@ ARRAY_FUNCTION_ENABLED = bool(
     int(os.environ.get('NUMPY_EXPERIMENTAL_ARRAY_FUNCTION', 1)))
 
 array_function_like_doc = (
-    """like : array_like
+    """like : array_like, optional
         Reference object to allow the creation of arrays which are not
         NumPy arrays. If an array-like passed in as ``like`` supports
         the ``__array_function__`` protocol, the result will be defined

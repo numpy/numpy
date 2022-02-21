@@ -9,23 +9,51 @@ Datetimes and Timedeltas
 .. versionadded:: 1.7.0
 
 Starting in NumPy 1.7, there are core array data types which natively
-support datetime functionality. The data type is called "datetime64",
-so named because "datetime" is already taken by the datetime library
-included in Python.
+support datetime functionality. The data type is called :class:`datetime64`,
+so named because :class:`~datetime.datetime` is already taken by the Python standard library.
+
+Datetime64 Conventions and Assumptions
+======================================
+
+Similar to the Python `~datetime.date` class, dates are expressed in the current
+Gregorian Calendar, indefinitely extended both in the future and in the past.
+[#]_ Contrary to Python `~datetime.date`, which supports only years in the 1 AD — 9999
+AD range, `datetime64` allows also for dates BC; years BC follow the `Astronomical
+year numbering <https://en.wikipedia.org/wiki/Astronomical_year_numbering>`_
+convention, i.e. year 2 BC is numbered −1, year 1 BC is numbered 0, year 1 AD is
+numbered 1.
+
+Time instants, say 16:23:32.234, are represented counting hours, minutes,
+seconds and fractions from midnight: i.e. 00:00:00.000 is midnight, 12:00:00.000
+is noon, etc. Each calendar day has exactly 86400 seconds. This is a "naive"
+time, with no explicit notion of timezones or specific time scales (UT1, UTC, TAI,
+etc.). [#]_
+
+.. [#] The calendar obtained by extending the Gregorian calendar before its
+       official adoption on Oct. 15, 1582 is called `Proleptic Gregorian Calendar
+       <https://en.wikipedia.org/wiki/Proleptic_Gregorian_calendar>`_
+
+.. [#] The assumption of 86400 seconds per calendar day is not valid for UTC,
+       the present day civil time scale. In fact due to the presence of
+       `leap seconds <https://en.wikipedia.org/wiki/Leap_second>`_ on rare occasions
+       a day may be 86401 or 86399 seconds long. On the contrary the 86400s day
+       assumption holds for the TAI timescale. An explicit support for TAI and
+       TAI to UTC conversion, accounting for leap seconds, is proposed but not
+       yet implemented. See also the `shortcomings`_ section below.
 
 
 Basic Datetimes
 ===============
 
-The most basic way to create datetimes is from strings in ISO 8601 date 
-or datetime format. It is also possible to create datetimes from an integer by 
+The most basic way to create datetimes is from strings in ISO 8601 date
+or datetime format. It is also possible to create datetimes from an integer by
 offset relative to the Unix epoch (00:00:00 UTC on 1 January 1970).
-The unit for internal storage is automatically selected from the 
+The unit for internal storage is automatically selected from the
 form of the string, and can be either a :ref:`date unit <arrays.dtypes.dateunits>` or a
 :ref:`time unit <arrays.dtypes.timeunits>`. The date units are years ('Y'),
 months ('M'), weeks ('W'), and days ('D'), while the time units are
 hours ('h'), minutes ('m'), seconds ('s'), milliseconds ('ms'), and
-some additional SI-prefix seconds-based units. The datetime64 data type
+some additional SI-prefix seconds-based units. The `datetime64` data type
 also accepts the string "NAT", in any combination of lowercase/uppercase
 letters, for a "Not A Time" value.
 
@@ -35,11 +63,11 @@ letters, for a "Not A Time" value.
 
     >>> np.datetime64('2005-02-25')
     numpy.datetime64('2005-02-25')
-    
+
     From an integer and a date unit, 1 year since the UNIX epoch:
 
     >>> np.datetime64(1, 'Y')
-    numpy.datetime64('1971')   
+    numpy.datetime64('1971')
 
     Using months for the unit:
 
@@ -122,19 +150,19 @@ because the moment of time is still being represented exactly.
 
   NumPy does not store timezone information. For backwards compatibility, datetime64
   still parses timezone offsets, which it handles by converting to
-  UTC. This behaviour is deprecated and will raise an error in the
+  UTC±00:00 (Zulu time). This behaviour is deprecated and will raise an error in the
   future.
 
 
 Datetime and Timedelta Arithmetic
 =================================
 
-NumPy allows the subtraction of two Datetime values, an operation which
+NumPy allows the subtraction of two datetime values, an operation which
 produces a number with a time unit. Because NumPy doesn't have a physical
-quantities system in its core, the timedelta64 data type was created
-to complement datetime64. The arguments for timedelta64 are a number,
+quantities system in its core, the `timedelta64` data type was created
+to complement `datetime64`. The arguments for `timedelta64` are a number,
 to represent the number of units, and a date/time unit, such as
-(D)ay, (M)onth, (Y)ear, (h)ours, (m)inutes, or (s)econds. The timedelta64
+(D)ay, (M)onth, (Y)ear, (h)ours, (m)inutes, or (s)econds. The `timedelta64`
 data type also accepts the string "NAT" in place of the number for a "Not A Time" value.
 
 .. admonition:: Example
@@ -199,9 +227,8 @@ The Datetime and Timedelta data types support a large number of time
 units, as well as generic units which can be coerced into any of the
 other units based on input data.
 
-Datetimes are always stored based on POSIX time (though having a TAI
-mode which allows for accounting of leap-seconds is proposed), with
-an epoch of 1970-01-01T00:00Z. This means the supported dates are
+Datetimes are always stored with
+an epoch of 1970-01-01T00:00. This means the supported dates are
 always a symmetric interval around the epoch, called "time span" in the
 table below.
 
@@ -328,7 +355,7 @@ in an optimized form.
 
 np.is_busday():
 ```````````````
-To test a datetime64 value to see if it is a valid day, use :func:`is_busday`.
+To test a `datetime64` value to see if it is a valid day, use :func:`is_busday`.
 
 .. admonition:: Example
 
@@ -384,3 +411,69 @@ Some examples::
     weekmask = "Mon Tue Wed Thu Fri"
     # any amount of whitespace is allowed; abbreviations are case-sensitive.
     weekmask = "MonTue Wed  Thu\tFri"
+
+
+.. _shortcomings:
+
+Datetime64 shortcomings
+=======================
+
+The assumption that all days are exactly 86400 seconds long makes `datetime64`
+largely compatible with Python `datetime` and "POSIX time" semantics; therefore
+they all share the same well known shortcomings with respect to the UTC
+timescale and historical time determination. A brief non exhaustive summary is
+given below.
+
+- It is impossible to parse valid UTC timestamps occurring during a positive
+  leap second.
+
+  .. admonition:: Example
+
+    "2016-12-31 23:59:60 UTC" was a leap second, therefore "2016-12-31
+    23:59:60.450 UTC" is a valid timestamp which is not parseable by
+    `datetime64`:
+
+      >>> np.datetime64("2016-12-31 23:59:60.450")
+      Traceback (most recent call last):
+        File "<stdin>", line 1, in <module>
+      ValueError: Seconds out of range in datetime string "2016-12-31 23:59:60.450"
+
+- Timedelta64 computations between two UTC dates can be wrong by an integer
+  number of SI seconds.
+
+  .. admonition:: Example
+
+    Compute the number of SI seconds between "2021-01-01 12:56:23.423 UTC" and
+    "2001-01-01 00:00:00.000 UTC":
+
+      >>> (
+      ...   np.datetime64("2021-01-01 12:56:23.423")
+      ...   - np.datetime64("2001-01-01")
+      ... ) / np.timedelta64(1, "s")
+      631198583.423
+
+    however correct answer is `631198588.423` SI seconds because there were 5
+    leap seconds between 2001 and 2021.
+
+- Timedelta64 computations for dates in the past do not return SI seconds, as
+  one would expect.
+
+  .. admonition:: Example
+
+     Compute the number of seconds between "000-01-01 UT" and "1600-01-01 UT",
+     where UT is `universal time
+     <https://en.wikipedia.org/wiki/Universal_Time>`_:
+
+      >>> a = np.datetime64("0000-01-01", "us")
+      >>> b = np.datetime64("1600-01-01", "us")
+      >>> b - a
+      numpy.timedelta64(50491123200000000,'us')
+
+     The computed results, `50491123200` seconds, is obtained as the elapsed
+     number of days (`584388`) times `86400` seconds; this is the number of
+     seconds of a clock in sync with earth rotation. The exact value in SI
+     seconds can only be estimated, e.g using data published in `Measurement of
+     the Earth's rotation: 720 BC to AD 2015, 2016, Royal Society's Proceedings
+     A 472, by Stephenson et.al. <https://doi.org/10.1098/rspa.2016.0404>`_. A
+     sensible estimate is `50491112870 ± 90` seconds, with a difference of 10330
+     seconds.

@@ -75,36 +75,19 @@ PyArray_Size(PyObject *op)
     }
 }
 
-/*NUMPY_API
- *
- * Precondition: 'arr' is a copy of 'base' (though possibly with different
- * strides, ordering, etc.). This function sets the UPDATEIFCOPY flag and the
- * ->base pointer on 'arr', so that when 'arr' is destructed, it will copy any
- * changes back to 'base'. DEPRECATED, use PyArray_SetWritebackIfCopyBase
- *
- * Steals a reference to 'base'.
- *
- * Returns 0 on success, -1 on failure.
- */
+/*NUMPY_API */
 NPY_NO_EXPORT int
 PyArray_SetUpdateIfCopyBase(PyArrayObject *arr, PyArrayObject *base)
 {
-    int ret;
-    /* 2017-Nov  -10 1.14 (for PyPy only) */
-    /* 2018-April-21 1.15 (all Python implementations) */
-    if (DEPRECATE("PyArray_SetUpdateIfCopyBase is deprecated, use "
-              "PyArray_SetWritebackIfCopyBase instead, and be sure to call "
-              "PyArray_ResolveWritebackIfCopy before the array is deallocated, "
-              "i.e. before the last call to Py_DECREF. If cleaning up from an "
-              "error, PyArray_DiscardWritebackIfCopy may be called instead to "
-              "throw away the scratch buffer.") < 0)
-        return -1;
-    ret = PyArray_SetWritebackIfCopyBase(arr, base);
-    if (ret >=0) {
-        PyArray_ENABLEFLAGS(arr, NPY_ARRAY_UPDATEIFCOPY);
-        PyArray_CLEARFLAGS(arr, NPY_ARRAY_WRITEBACKIFCOPY);
-    }
-    return ret;
+    /* 2021-Dec-15 1.23*/
+    PyErr_SetString(PyExc_RuntimeError,
+        "PyArray_SetUpdateIfCopyBase is disabled, use "
+        "PyArray_SetWritebackIfCopyBase instead, and be sure to call "
+        "PyArray_ResolveWritebackIfCopy before the array is deallocated, "
+        "i.e. before the last call to Py_DECREF. If cleaning up from an "
+        "error, PyArray_DiscardWritebackIfCopy may be called instead to "
+        "throw away the scratch buffer.");
+    return -1;
 }
 
 /*NUMPY_API
@@ -377,9 +360,9 @@ PyArray_ResolveWritebackIfCopy(PyArrayObject * self)
 {
     PyArrayObject_fields *fa = (PyArrayObject_fields *)self;
     if (fa && fa->base) {
-        if ((fa->flags & NPY_ARRAY_UPDATEIFCOPY) || (fa->flags & NPY_ARRAY_WRITEBACKIFCOPY)) {
+        if (fa->flags & NPY_ARRAY_WRITEBACKIFCOPY) {
             /*
-             * UPDATEIFCOPY or WRITEBACKIFCOPY means that fa->base's data
+             * WRITEBACKIFCOPY means that fa->base's data
              * should be updated with the contents
              * of self.
              * fa->base->flags is not WRITEABLE to protect the relationship
@@ -388,7 +371,6 @@ PyArray_ResolveWritebackIfCopy(PyArrayObject * self)
             int retval = 0;
             PyArray_ENABLEFLAGS(((PyArrayObject *)fa->base),
                                                     NPY_ARRAY_WRITEABLE);
-            PyArray_CLEARFLAGS(self, NPY_ARRAY_UPDATEIFCOPY);
             PyArray_CLEARFLAGS(self, NPY_ARRAY_WRITEBACKIFCOPY);
             retval = PyArray_CopyAnyInto((PyArrayObject *)fa->base, self);
             Py_DECREF(fa->base);
@@ -462,25 +444,6 @@ array_dealloc(PyArrayObject *self)
                 PyErr_Clear();
             }
         }
-        if (PyArray_FLAGS(self) & NPY_ARRAY_UPDATEIFCOPY) {
-            /* DEPRECATED, remove once the flag is removed */
-            char const * msg = "UPDATEIFCOPY detected in array_dealloc. "
-                " Required call to PyArray_ResolveWritebackIfCopy or "
-                "PyArray_DiscardWritebackIfCopy is missing";
-            /*
-             * prevent reaching 0 twice and thus recursing into dealloc.
-             * Increasing sys.gettotalrefcount, but path should not be taken.
-             */
-            Py_INCREF(self);
-            /* 2017-Nov-10 1.14 */
-            WARN_IN_DEALLOC(PyExc_DeprecationWarning, msg);
-            retval = PyArray_ResolveWritebackIfCopy(self);
-            if (retval < 0)
-            {
-                PyErr_Print();
-                PyErr_Clear();
-            }
-        }
         /*
          * If fa->base is non-NULL, it is something
          * to DECREF -- either a view or a buffer object
@@ -493,14 +456,6 @@ array_dealloc(PyArrayObject *self)
         if (PyDataType_FLAGCHK(fa->descr, NPY_ITEM_REFCOUNT)) {
             PyArray_XDECREF(self);
         }
-        /*
-         * Allocation will never be 0, see comment in ctors.c
-         * line 820
-         */
-        size_t nbytes = PyArray_NBYTES(self);
-        if (nbytes == 0) {
-            nbytes = fa->descr->elsize ? fa->descr->elsize : 1;
-        }
         if (fa->mem_handler == NULL) {
             char *env = getenv("NUMPY_WARN_IF_NO_MEM_POLICY");
             if ((env != NULL) && (strncmp(env, "1", 1) == 0)) {
@@ -511,7 +466,16 @@ array_dealloc(PyArrayObject *self)
             }
             // Guess at malloc/free ???
             free(fa->data);
-        } else {
+        }
+        else {
+            /*
+             * In theory `PyArray_NBYTES_ALLOCATED`, but differs somewhere?
+             * So instead just use the knowledge that 0 is impossible.
+             */
+            size_t nbytes = PyArray_NBYTES(self);
+            if (nbytes == 0) {
+                nbytes = 1;
+            }
             PyDataMem_UserFREE(fa->data, nbytes, fa->mem_handler);
             Py_DECREF(fa->mem_handler);
         }
@@ -571,8 +535,6 @@ PyArray_DebugPrint(PyArrayObject *obj)
         printf(" NPY_ALIGNED");
     if (fobj->flags & NPY_ARRAY_WRITEABLE)
         printf(" NPY_WRITEABLE");
-    if (fobj->flags & NPY_ARRAY_UPDATEIFCOPY)
-        printf(" NPY_UPDATEIFCOPY");
     if (fobj->flags & NPY_ARRAY_WRITEBACKIFCOPY)
         printf(" NPY_WRITEBACKIFCOPY");
     printf("\n");
@@ -660,15 +622,15 @@ array_might_be_written(PyArrayObject *obj)
 
 /*NUMPY_API
  *
- * This function does nothing if obj is writeable, and raises an exception
- * (and returns -1) if obj is not writeable. It may also do other
- * house-keeping, such as issuing warnings on arrays which are transitioning
- * to become views. Always call this function at some point before writing to
- * an array.
+ *  This function does nothing and returns 0 if *obj* is writeable.
+ *  It raises an exception and returns -1 if *obj* is not writeable.
+ *  It may also do other house-keeping, such as issuing warnings on
+ *  arrays which are transitioning to become views. Always call this
+ *  function at some point before writing to an array.
  *
- * 'name' is a name for the array, used to give better error
- * messages. Something like "assignment destination", "output array", or even
- * just "array".
+ *  *name* is a name for the array, used to give better error messages.
+ *  It can be something like "assignment destination", "output array",
+ *  or even just "array".
  */
 NPY_NO_EXPORT int
 PyArray_FailUnlessWriteable(PyArrayObject *obj, const char *name)
@@ -1004,6 +966,9 @@ _strings_richcompare(PyArrayObject *self, PyArrayObject *other, int cmp_op,
     if (PyArray_ISNOTSWAPPED(self) != PyArray_ISNOTSWAPPED(other)) {
         /* Cast `other` to the same byte order as `self` (both unicode here) */
         PyArray_Descr* unicode = PyArray_DescrNew(PyArray_DESCR(self));
+        if (unicode == NULL) {
+            return NULL;
+        }
         unicode->elsize = PyArray_DESCR(other)->elsize;
         PyObject *new = PyArray_FromAny((PyObject *)other,
                 unicode, 0, 0, 0, NULL);

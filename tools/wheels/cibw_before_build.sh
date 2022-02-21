@@ -17,8 +17,6 @@ if [[ $RUNNER_OS == "Linux" || $RUNNER_OS == "macOS" ]] ; then
     basedir=$(python tools/openblas_support.py)
     cp -r $basedir/lib/* /usr/local/lib
     cp $basedir/include/* /usr/local/include
-    # TODO: don't copy directories if not arm64,
-    # but we need a way to know if cibuildwheel is cross-compiling arm64 to do this
     if [[ $RUNNER_OS == "macOS" && $PLATFORM == "macosx-arm64" ]]; then
         sudo mkdir -p /opt/arm64-builds/lib /opt/arm64-builds/include
         sudo chown -R $USER /opt/arm64-builds
@@ -46,9 +44,8 @@ if [[ $RUNNER_OS == "macOS" ]]; then
     hdiutil attach -mountpoint /Volumes/gfortran gfortran.dmg
     sudo installer -pkg /Volumes/gfortran/gfortran.pkg -target /
     otool -L /usr/local/gfortran/lib/libgfortran.3.dylib
-    
+
     # arm64 stuff from gfortran_utils
-    # TODO: figure out a way not to do this on x86_64, see above comment for openblas
     if [[ $PLATFORM == "macosx-arm64" ]]; then
         source $PROJECT_DIR/tools/wheels/gfortran_utils.sh
         install_arm64_cross_gfortran

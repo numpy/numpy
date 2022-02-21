@@ -1,3 +1,6 @@
+.. for doctest:
+    >>> import numpy as np
+  
 .. _basics.indexing:
 
 ****************************************
@@ -100,14 +103,6 @@ dimensions. Basic slicing occurs when *obj* is a :class:`slice` object
 integer, or a tuple of slice objects and integers. :py:data:`Ellipsis`
 and :const:`newaxis` objects can be interspersed with these as
 well.
-
-.. deprecated:: 1.15.0
-
-  In order to remain backward compatible with a common usage in
-  Numeric, basic slicing is also initiated if the selection object is
-  any non-ndarray and non-tuple sequence (such as a :class:`list`) containing
-  :class:`slice` objects, the :py:data:`Ellipsis` object, or the :const:`newaxis`
-  object, but not for integer arrays or other embedded sequences.
 
 .. index::
    triple: ndarray; special methods; getitem
@@ -328,6 +323,8 @@ If the index values are out of bounds then an ``IndexError`` is thrown::
     array([[3, 4],
           [5, 6]])
     >>> x[np.array([3, 4])]
+    Traceback (most recent call last):
+      ...
     IndexError: index 3 is out of bounds for axis 0 with size 3
 
 When the index consists of as many integer arrays as dimensions of the array
@@ -371,6 +368,8 @@ broadcast them to the same shape. If they cannot be broadcast to the same
 shape, an exception is raised::
 
     >>> y[np.array([0, 2, 4]), np.array([0, 1])]
+    Traceback (most recent call last):
+      ...
     IndexError: shape mismatch: indexing arrays could not be broadcast
     together with shapes (3,) (2,)
 
@@ -506,7 +505,7 @@ Or wish to add a constant to all negative elements::
     >>> x = np.array([1., -1., -2., 3])
     >>> x[x < 0] += 20
     >>> x
-    array([1., 19., 18., 3.])
+    array([ 1., 19., 18., 3.])
 
 In general if an index includes a Boolean array, the result will be
 identical to inserting ``obj.nonzero()`` into the same position
@@ -790,6 +789,8 @@ exceptions (assigning complex to floats or ints): ::
  >>> x[1]
  1
  >>> x[1] = 1.2j
+ Traceback (most recent call last):
+   ...
  TypeError: can't convert complex to int
 
 

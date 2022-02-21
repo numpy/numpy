@@ -1,0 +1,7 @@
+Remove deprecated ``NPY_ARRAY_UPDATEIFCOPY``
+--------------------------------------------
+
+The array flag ``UPDATEIFCOPY`` and enum ``NPY_ARRAY_UPDATEIFCOPY`` were
+deprecated in 1.14. They were replaced by ``WRITEBACKIFCOPY`` which require
+calling ``PyArray_ResoveWritebackIfCopy`` before the array is deallocated. Also
+removed the associated (and deprecated) ``PyArray_XDECREF_ERR``.

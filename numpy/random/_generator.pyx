@@ -32,6 +32,8 @@ from ._common cimport (POISSON_LAM_MAX, CONS_POSITIVE, CONS_NONE,
 
 cdef extern from "numpy/arrayobject.h":
     int PyArray_ResolveWritebackIfCopy(np.ndarray)
+    int PyArray_FailUnlessWriteable(np.PyArrayObject *obj,
+                                    const char *name) except -1
     object PyArray_FromArray(np.PyArrayObject *, np.PyArray_Descr *, int)
 
     enum:
@@ -3572,12 +3574,35 @@ cdef class Generator:
         >>> y.shape
         (3, 3, 2)
 
-        The following is probably true, given that 0.6 is roughly twice the
-        standard deviation:
+        Here we generate 800 samples from the bivariate normal distribution
+        with mean [0, 0] and covariance matrix [[6, -3], [-3, 3.5]].  The
+        expected variances of the first and second components of the sample
+        are 6 and 3.5, respectively, and the expected correlation
+        coefficient is -3/sqrt(6*3.5) ≈ -0.65465.
 
-        >>> list((x[0,0,:] - mean) < 0.6)
-        [True, True] # random
+        >>> cov = np.array([[6, -3], [-3, 3.5]])
+        >>> pts = rng.multivariate_normal([0, 0], cov, size=800)
 
+        Check that the mean, covariance, and correlation coefficient of the
+        sample are close to the expected values:
+
+        >>> pts.mean(axis=0)
+        array([ 0.0326911 , -0.01280782])  # may vary
+        >>> np.cov(pts.T)
+        array([[ 5.96202397, -2.85602287],
+               [-2.85602287,  3.47613949]])  # may vary
+        >>> np.corrcoef(pts.T)[0, 1]
+        -0.6273591314603949  # may vary
+
+        We can visualize this data with a scatter plot.  The orientation
+        of the point cloud illustrates the negative correlation of the
+        components of this sample.
+
+        >>> import matplotlib.pyplot as plt
+        >>> plt.plot(pts[:, 0], pts[:, 1], '.', alpha=0.5)
+        >>> plt.axis('equal')
+        >>> plt.grid()
+        >>> plt.show()
         """
         if method not in {'eigh', 'svd', 'cholesky'}:
             raise ValueError(
@@ -4416,6 +4441,7 @@ cdef class Generator:
         else:
             if type(out) is not np.ndarray:
                 raise TypeError('out must be a numpy array')
+            PyArray_FailUnlessWriteable(<np.PyArrayObject *>out, "out")
             if out.shape != x.shape:
                 raise ValueError('out must have the same shape as x')
             np.copyto(out, x, casting='safe')
@@ -4524,6 +4550,8 @@ cdef class Generator:
             char* buf_ptr
 
         if isinstance(x, np.ndarray):
+            if not x.flags.writeable:
+                raise ValueError('array is read-only')
             # Only call ndim on ndarrays, see GH 18142
             axis = normalize_axis_index(axis, np.ndim(x))
 

@@ -84,7 +84,7 @@ And in more detail:
 * The bit generators can be used in downstream projects via
   Cython.
 * Optional ``dtype`` argument that accepts ``np.float32`` or ``np.float64``
-  to produce either single or double prevision uniform random variables for
+  to produce either single or double precision uniform random variables for
   select distributions
 
   * Uniforms (`~.Generator.random` and `~.Generator.integers`)

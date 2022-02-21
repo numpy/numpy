@@ -992,7 +992,7 @@ npyiter_check_per_op_flags(npy_uint32 op_flags, npyiter_opitflags *op_itflags)
 }
 
 /*
- * Prepares a a constructor operand.  Assumes a reference to 'op'
+ * Prepares a constructor operand.  Assumes a reference to 'op'
  * is owned, and that 'op' may be replaced.  Fills in 'op_dataptr',
  * 'op_dtype', and may modify 'op_itflags'.
  *
@@ -1128,13 +1128,12 @@ npyiter_prepare_one_operand(PyArrayObject **op,
         if (op_flags & NPY_ITER_NBO) {
             /* Check byte order */
             if (!PyArray_ISNBO((*op_dtype)->byteorder)) {
-                PyArray_Descr *nbo_dtype;
-
                 /* Replace with a new descr which is in native byte order */
-                nbo_dtype = PyArray_DescrNewByteorder(*op_dtype, NPY_NATIVE);
-                Py_DECREF(*op_dtype);
-                *op_dtype = nbo_dtype;
-
+                Py_SETREF(*op_dtype,
+                          PyArray_DescrNewByteorder(*op_dtype, NPY_NATIVE));
+                if (*op_dtype == NULL) {
+                    return 0;
+                }                
                 NPY_IT_DBG_PRINT("Iterator: Setting NPY_OP_ITFLAG_CAST "
                                     "because of NPY_ITER_NBO\n");
                 /* Indicate that byte order or alignment needs fixing */

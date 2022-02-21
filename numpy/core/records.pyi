@@ -1,12 +1,9 @@
 import os
+from collections.abc import Sequence, Iterable
 from typing import (
-    List,
-    Sequence,
     Any,
     TypeVar,
-    Iterable,
     overload,
-    Tuple,
     Protocol,
 )
 
@@ -39,7 +36,7 @@ class _SupportsReadInto(Protocol):
     def tell(self, /) -> int: ...
     def readinto(self, buffer: memoryview, /) -> int: ...
 
-__all__: List[str]
+__all__: list[str]
 
 @overload
 def fromarrays(
@@ -67,7 +64,7 @@ def fromarrays(
 
 @overload
 def fromrecords(
-    recList: _ArrayLikeVoid_co | Tuple[Any, ...] | _NestedSequence[Tuple[Any, ...]],
+    recList: _ArrayLikeVoid_co | tuple[Any, ...] | _NestedSequence[tuple[Any, ...]],
     dtype: DTypeLike = ...,
     shape: None | _ShapeLike = ...,
     formats: None = ...,
@@ -78,7 +75,7 @@ def fromrecords(
 ) -> _RecArray[record]: ...
 @overload
 def fromrecords(
-    recList: _ArrayLikeVoid_co | Tuple[Any, ...] | _NestedSequence[Tuple[Any, ...]],
+    recList: _ArrayLikeVoid_co | tuple[Any, ...] | _NestedSequence[tuple[Any, ...]],
     dtype: None = ...,
     shape: None | _ShapeLike = ...,
     *,
@@ -170,6 +167,60 @@ def array(
 @overload
 def array(
     obj: ArrayLike,
+    dtype: None = ...,
+    shape: None | _ShapeLike = ...,
+    offset: int = ...,
+    *,
+    formats: DTypeLike,
+    names: None | str | Sequence[str] = ...,
+    titles: None | str | Sequence[str] = ...,
+    aligned: bool = ...,
+    byteorder: None | _ByteOrder = ...,
+    copy: bool = ...,
+) -> _RecArray[record]: ...
+@overload
+def array(
+    obj: None,
+    dtype: DTypeLike,
+    shape: _ShapeLike,
+    offset: int = ...,
+    formats: None = ...,
+    names: None = ...,
+    titles: None = ...,
+    aligned: bool = ...,
+    byteorder: None = ...,
+    copy: bool = ...,
+) -> _RecArray[Any]: ...
+@overload
+def array(
+    obj: None,
+    dtype: None = ...,
+    *,
+    shape: _ShapeLike,
+    offset: int = ...,
+    formats: DTypeLike,
+    names: None | str | Sequence[str] = ...,
+    titles: None | str | Sequence[str] = ...,
+    aligned: bool = ...,
+    byteorder: None | _ByteOrder = ...,
+    copy: bool = ...,
+) -> _RecArray[record]: ...
+@overload
+def array(
+    obj: _SupportsReadInto,
+    dtype: DTypeLike,
+    shape: None | _ShapeLike = ...,
+    offset: int = ...,
+    formats: None = ...,
+    names: None = ...,
+    titles: None = ...,
+    aligned: bool = ...,
+    byteorder: None = ...,
+    copy: bool = ...,
+) -> _RecArray[Any]: ...
+@overload
+def array(
+    obj: _SupportsReadInto,
     dtype: None = ...,
     shape: None | _ShapeLike = ...,
     offset: int = ...,

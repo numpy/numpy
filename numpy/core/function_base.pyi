@@ -1,36 +1,23 @@
 from typing import (
     Literal as L,
     overload,
-    Tuple,
-    Union,
     Any,
     SupportsIndex,
-    List,
-    Type,
     TypeVar,
 )
 
-from numpy import floating, complexfloating, generic, dtype
+from numpy import floating, complexfloating, generic
 from numpy.typing import (
     NDArray,
-    ArrayLike,
     DTypeLike,
-    _SupportsDType,
-    _SupportsArray,
-    _NumberLike_co,
+    _DTypeLike,
     _ArrayLikeFloat_co,
     _ArrayLikeComplex_co,
 )
 
 _SCT = TypeVar("_SCT", bound=generic)
 
-_DTypeLike = Union[
-    dtype[_SCT],
-    Type[_SCT],
-    _SupportsDType[dtype[_SCT]],
-]
-
-__all__: List[str]
+__all__: list[str]
 
 @overload
 def linspace(
@@ -81,7 +68,7 @@ def linspace(
     retstep: L[True] = ...,
     dtype: None = ...,
     axis: SupportsIndex = ...,
-) -> Tuple[NDArray[floating[Any]], floating[Any]]: ...
+) -> tuple[NDArray[floating[Any]], floating[Any]]: ...
 @overload
 def linspace(
     start: _ArrayLikeComplex_co,
@@ -91,7 +78,7 @@ def linspace(
     retstep: L[True] = ...,
     dtype: None = ...,
     axis: SupportsIndex = ...,
-) -> Tuple[NDArray[complexfloating[Any, Any]], complexfloating[Any, Any]]: ...
+) -> tuple[NDArray[complexfloating[Any, Any]], complexfloating[Any, Any]]: ...
 @overload
 def linspace(
     start: _ArrayLikeComplex_co,
@@ -101,7 +88,7 @@ def linspace(
     retstep: L[True] = ...,
     dtype: _DTypeLike[_SCT] = ...,
     axis: SupportsIndex = ...,
-) -> Tuple[NDArray[_SCT], _SCT]: ...
+) -> tuple[NDArray[_SCT], _SCT]: ...
 @overload
 def linspace(
     start: _ArrayLikeComplex_co,
@@ -111,7 +98,7 @@ def linspace(
     retstep: L[True] = ...,
     dtype: DTypeLike = ...,
     axis: SupportsIndex = ...,
-) -> Tuple[NDArray[Any], Any]: ...
+) -> tuple[NDArray[Any], Any]: ...
 
 @overload
 def logspace(
@@ -195,6 +182,6 @@ def geomspace(
 def add_newdoc(
     place: str,
     obj: str,
-    doc: str | Tuple[str, str] | List[Tuple[str, str]],
+    doc: str | tuple[str, str] | list[tuple[str, str]],
     warn_on_python: bool = ...,
 ) -> None: ...

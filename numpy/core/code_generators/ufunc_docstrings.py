@@ -4,17 +4,14 @@ Docstrings for generated ufuncs
 The syntax is designed to look like the function add_newdoc is being
 called from numpy.lib, but in this file  add_newdoc puts the docstrings
 in a dictionary. This dictionary is used in
-numpy/core/code_generators/generate_umath.py to generate the docstrings
-for the ufuncs in numpy.core at the C level when the ufuncs are created
-at compile time.
+numpy/core/code_generators/generate_umath_doc.py to generate the docstrings
+as a C #definitions for the ufuncs in numpy.core at the C level when the
+ufuncs are created at compile time.
 
 """
 import textwrap
 
 docdict = {}
-
-def get(name):
-    return docdict.get(name)
 
 # common parameter text to all ufuncs
 subst = {
@@ -515,7 +512,7 @@ add_newdoc('numpy.core.umath', 'arctan2',
     >>> np.arctan2([1., -1.], [0., 0.])
     array([ 1.57079633, -1.57079633])
     >>> np.arctan2([0., 0., np.inf], [+0., -0., np.inf])
-    array([ 0.        ,  3.14159265,  0.78539816])
+    array([0.        , 3.14159265, 0.78539816])
 
     """)
 
@@ -4051,7 +4048,7 @@ add_newdoc('numpy.core.umath', 'frexp',
     """
     Decompose the elements of x into mantissa and twos exponent.
 
-    Returns (`mantissa`, `exponent`), where `x = mantissa * 2**exponent``.
+    Returns (`mantissa`, `exponent`), where ``x = mantissa * 2**exponent``.
     The mantissa lies in the open interval(-1, 1), while the twos
     exponent is a signed integer.
 

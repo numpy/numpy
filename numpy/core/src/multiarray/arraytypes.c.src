@@ -27,12 +27,6 @@
 #include "arrayobject.h"
 #include "alloc.h"
 #include "typeinfo.h"
-#if defined(__ARM_NEON__) || defined (__ARM_NEON)
-#include <arm_neon.h>
-#endif
-#ifdef NPY_HAVE_SSE2_INTRINSICS
-#include <emmintrin.h>
-#endif
 
 #include "npy_longdouble.h"
 #include "numpyos.h"
@@ -42,7 +36,7 @@
 #include "npy_cblas.h"
 #include "npy_buffer.h"
 
-
+#include "arraytypes.h"
 /*
  * Define a stack allocated dummy array with only the minimum information set:
  *   1. The descr, the main field interesting here.
@@ -2849,7 +2843,7 @@ static int
 #define LT(a,b) ((a) < (b) || ((b) != (b) && (a) ==(a)))
 
 static int
-@TYPE@_compare(@type@ *pa, @type@ *pb)
+@TYPE@_compare(@type@ *pa, @type@ *pb, PyArrayObject *NPY_UNUSED(ap))
 {
     const @type@ a = *pa;
     const @type@ b = *pb;
@@ -2869,7 +2863,7 @@ static int
 
 
 static int
-C@TYPE@_compare(@type@ *pa, @type@ *pb)
+C@TYPE@_compare(@type@ *pa, @type@ *pb, PyArrayObject *NPY_UNUSED(ap))
 {
     const @type@ ar = pa[0];
     const @type@ ai = pa[1];
@@ -2924,7 +2918,7 @@ C@TYPE@_compare(@type@ *pa, @type@ *pb)
  */
 
 static int
-@TYPE@_compare(@type@ *pa, @type@ *pb)
+@TYPE@_compare(@type@ *pa, @type@ *pb, PyArrayObject *NPY_UNUSED(ap))
 {
     const @type@ a = *pa;
     const @type@ b = *pb;
@@ -3176,77 +3170,21 @@ finish:
  **                                 ARGFUNC                                 **
  *****************************************************************************
  */
-#if defined(__ARM_NEON__) || defined (__ARM_NEON)
-    int32_t _mm_movemask_epi8_neon(uint8x16_t input)
-    {
-        int8x8_t m0 = vcreate_s8(0x0706050403020100ULL);
-        uint8x16_t v0 = vshlq_u8(vshrq_n_u8(input, 7), vcombine_s8(m0, m0));
-        uint64x2_t v1 = vpaddlq_u32(vpaddlq_u16(vpaddlq_u8(v0)));
-        return (int)vgetq_lane_u64(v1, 0) + ((int)vgetq_lane_u64(v1, 1) << 8);
-    }
-#endif
+
 #define _LESS_THAN_OR_EQUAL(a,b) ((a) <= (b))
-
-static int
-BOOL_argmax(npy_bool *ip, npy_intp n, npy_intp *max_ind,
-            PyArrayObject *NPY_UNUSED(aip))
-
-{
-    npy_intp i = 0;
-    /* memcmp like logical_and on i386 is maybe slower for small arrays */
-#ifdef NPY_HAVE_SSE2_INTRINSICS
-    const __m128i zero = _mm_setzero_si128();
-    for (; i < n - (n % 32); i+=32) {
-        __m128i d1 = _mm_loadu_si128((__m128i*)&ip[i]);
-        __m128i d2 = _mm_loadu_si128((__m128i*)&ip[i + 16]);
-        d1 = _mm_cmpeq_epi8(d1, zero);
-        d2 = _mm_cmpeq_epi8(d2, zero);
-        if (_mm_movemask_epi8(_mm_min_epu8(d1, d2)) != 0xFFFF) {
-            break;
-        }
-    }
-#else
-    #if defined(__ARM_NEON__) || defined (__ARM_NEON)
-        uint8x16_t zero = vdupq_n_u8(0);
-        for(; i < n - (n % 32); i+=32) {
-            uint8x16_t d1 = vld1q_u8((uint8_t *)&ip[i]);
-            uint8x16_t d2 = vld1q_u8((uint8_t *)&ip[i + 16]);
-            d1 = vceqq_u8(d1, zero);
-            d2 = vceqq_u8(d2, zero);
-            if(_mm_movemask_epi8_neon(vminq_u8(d1, d2)) != 0xFFFF) {
-                break;
-            }
-        }
-    #endif
-#endif
-    for (; i < n; i++) {
-        if (ip[i]) {
-            *max_ind = i;
-            return 0;
-        }
-    }
-    *max_ind = 0;
-    return 0;
-}
 
 /**begin repeat
  *
- * #fname = BYTE, UBYTE, SHORT, USHORT, INT, UINT,
- *          LONG, ULONG, LONGLONG, ULONGLONG,
- *          HALF, FLOAT, DOUBLE, LONGDOUBLE,
- *          CFLOAT, CDOUBLE, CLONGDOUBLE,
+ * #fname = HALF, CFLOAT, CDOUBLE, CLONGDOUBLE,
  *          DATETIME, TIMEDELTA#
- * #type = npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
- *         npy_long, npy_ulong, npy_longlong, npy_ulonglong,
- *         npy_half, npy_float, npy_double, npy_longdouble,
- *         npy_float, npy_double, npy_longdouble,
+ * #type = npy_half, npy_float, npy_double, npy_longdouble,
  *         npy_datetime, npy_timedelta#
- * #isfloat = 0*10, 1*7, 0*2#
- * #isnan = nop*10, npy_half_isnan, npy_isnan*6, nop*2#
- * #le = _LESS_THAN_OR_EQUAL*10, npy_half_le, _LESS_THAN_OR_EQUAL*8#
- * #iscomplex = 0*14, 1*3, 0*2#
- * #incr = ip++*14, ip+=2*3, ip++*2#
- * #isdatetime = 0*17, 1*2#
+ * #isfloat = 1*4, 0*2#
+ * #isnan = npy_half_isnan, npy_isnan*3, nop*2#
+ * #le = npy_half_le, _LESS_THAN_OR_EQUAL*5#
+ * #iscomplex = 0, 1*3, 0*2#
+ * #incr = ip++, ip+=2*3, ip++*2#
+ * #isdatetime = 0*4, 1*2#
  */
 static int
 @fname@_argmax(@type@ *ip, npy_intp n, npy_intp *max_ind,
@@ -3337,22 +3275,16 @@ BOOL_argmin(npy_bool *ip, npy_intp n, npy_intp *min_ind,
 
 /**begin repeat
  *
- * #fname = BYTE, UBYTE, SHORT, USHORT, INT, UINT,
- *          LONG, ULONG, LONGLONG, ULONGLONG,
- *          HALF, FLOAT, DOUBLE, LONGDOUBLE,
- *          CFLOAT, CDOUBLE, CLONGDOUBLE,
+ * #fname = HALF, CFLOAT, CDOUBLE, CLONGDOUBLE,
  *          DATETIME, TIMEDELTA#
- * #type = npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
- *         npy_long, npy_ulong, npy_longlong, npy_ulonglong,
- *         npy_half, npy_float, npy_double, npy_longdouble,
- *         npy_float, npy_double, npy_longdouble,
+ * #type = npy_half, npy_float, npy_double, npy_longdouble,
  *         npy_datetime, npy_timedelta#
- * #isfloat = 0*10, 1*7, 0*2#
- * #isnan = nop*10, npy_half_isnan, npy_isnan*6, nop*2#
- * #le = _LESS_THAN_OR_EQUAL*10, npy_half_le, _LESS_THAN_OR_EQUAL*8#
- * #iscomplex = 0*14, 1*3, 0*2#
- * #incr = ip++*14, ip+=2*3, ip++*2#
- * #isdatetime = 0*17, 1*2#
+ * #isfloat = 1*4, 0*2#
+ * #isnan = npy_half_isnan, npy_isnan*3, nop*2#
+ * #le = npy_half_le, _LESS_THAN_OR_EQUAL*5#
+ * #iscomplex = 0, 1*3, 0*2#
+ * #incr = ip++, ip+=2*3, ip++*2#
+ * #isdatetime = 0*4, 1*2#
  */
 static int
 @fname@_argmin(@type@ *ip, npy_intp n, npy_intp *min_ind,
@@ -3409,7 +3341,7 @@ static int
             *min_ind = i;
             break;
         }
-#endif 
+#endif
         if (!@le@(mp, *ip)) {  /* negated, for correct nan handling */
             mp = *ip;
             *min_ind = i;
@@ -4493,6 +4425,27 @@ set_typeinfo(PyObject *dict)
 
     PyArray_Descr *dtype;
     PyObject *cobj, *key;
+
+    // SIMD runtime dispatching
+    #ifndef NPY_DISABLE_OPTIMIZATION
+        #include "argfunc.dispatch.h"
+    #endif
+    /**begin repeat
+     * #FROM = BYTE, UBYTE, SHORT, USHORT, INT, UINT,
+     *         LONG, ULONG, LONGLONG, ULONGLONG,
+     *         FLOAT, DOUBLE, LONGDOUBLE#
+     *
+     * #NAME = Byte, UByte, Short, UShort, Int, UInt,
+     *         Long, ULong, LongLong, ULongLong,
+     *         Float, Double, LongDouble#
+     */
+    /**begin repeat1
+     * #func = argmax, argmin#
+     */
+    NPY_CPU_DISPATCH_CALL_XB(_Py@NAME@_ArrFuncs.@func@ = (PyArray_ArgFunc*)@FROM@_@func@);
+    /**end repeat1**/
+    /**end repeat**/
+    NPY_CPU_DISPATCH_CALL_XB(_PyBool_ArrFuncs.argmax = (PyArray_ArgFunc*)BOOL_argmax);
 
     /*
      * Override the base class for all types, eventually all of this logic

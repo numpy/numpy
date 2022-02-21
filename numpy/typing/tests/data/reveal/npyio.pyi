@@ -1,6 +1,6 @@
 import re
 import pathlib
-from typing import IO, List
+from typing import IO
 
 import numpy.typing as npt
 import numpy as np
@@ -14,7 +14,7 @@ bag_obj: np.lib.npyio.BagObj[int]
 npz_file: np.lib.npyio.NpzFile
 
 AR_i8: npt.NDArray[np.int64]
-AR_LIKE_f8: List[float]
+AR_LIKE_f8: list[float]
 
 class BytesWriter:
     def write(self, data: bytes) -> None: ...
@@ -64,6 +64,7 @@ reveal_type(np.loadtxt(bytes_file))  # E: ndarray[Any, dtype[{float64}]]
 reveal_type(np.loadtxt(pathlib_path, dtype=np.str_))  # E: ndarray[Any, dtype[str_]]
 reveal_type(np.loadtxt(str_path, dtype=str, skiprows=2))  # E: ndarray[Any, dtype[Any]]
 reveal_type(np.loadtxt(str_file, comments="test"))  # E: ndarray[Any, dtype[{float64}]]
+reveal_type(np.loadtxt(str_file, comments=None))  # E: ndarray[Any, dtype[{float64}]]
 reveal_type(np.loadtxt(str_path, delimiter="\n"))  # E: ndarray[Any, dtype[{float64}]]
 reveal_type(np.loadtxt(str_path, ndmin=2))  # E: ndarray[Any, dtype[{float64}]]
 reveal_type(np.loadtxt(["1", "2", "3"]))  # E: ndarray[Any, dtype[{float64}]]
@@ -76,7 +77,7 @@ reveal_type(np.fromregex(bytes_reader, "test", np.float64))  # E: ndarray[Any, d
 
 reveal_type(np.genfromtxt(bytes_file))  # E: ndarray[Any, dtype[{float64}]]
 reveal_type(np.genfromtxt(pathlib_path, dtype=np.str_))  # E: ndarray[Any, dtype[str_]]
-reveal_type(np.genfromtxt(str_path, dtype=str, skiprows=2))  # E: ndarray[Any, dtype[Any]]
+reveal_type(np.genfromtxt(str_path, dtype=str, skip_header=2))  # E: ndarray[Any, dtype[Any]]
 reveal_type(np.genfromtxt(str_file, comments="test"))  # E: ndarray[Any, dtype[{float64}]]
 reveal_type(np.genfromtxt(str_path, delimiter="\n"))  # E: ndarray[Any, dtype[{float64}]]
 reveal_type(np.genfromtxt(str_path, ndmin=2))  # E: ndarray[Any, dtype[{float64}]]

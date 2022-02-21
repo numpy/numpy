@@ -14,6 +14,7 @@ from numpy.testing import (
     assert_almost_equal, assert_array_almost_equal, assert_no_warnings,
     assert_allclose, HAS_REFCOUNT, suppress_warnings
     )
+from numpy.testing._private.utils import requires_memory
 from numpy.compat import pickle
 
 
@@ -1555,6 +1556,17 @@ class TestUfunc:
                                     [[0, 1, 1], [1, 1, 1]])
         assert_equal(np.minimum.reduce(a, axis=()), a)
 
+    @requires_memory(6 * 1024**3)
+    def test_identityless_reduction_huge_array(self):
+        # Regression test for gh-20921 (copying identity incorrectly failed)
+        arr = np.zeros((2, 2**31), 'uint8')
+        arr[:, 0] = [1, 3]
+        arr[:, -1] = [4, 1]
+        res = np.maximum.reduce(arr, axis=0)
+        del arr
+        assert res[0] == 3
+        assert res[-1] == 4
+
     def test_identityless_reduction_corder(self):
         a = np.empty((2, 3, 4), order='C')
         self.check_identityless_reduction(a)
@@ -2122,7 +2134,7 @@ class TestUfunc:
             [np.logical_and, np.logical_or, np.logical_xor])
     def test_logical_ufuncs_support_anything(self, ufunc):
         # The logical ufuncs support even input that can't be promoted:
-        a = np.array('1')
+        a = np.array(b'1', dtype="V3")
         c = np.array([1., 2.])
         assert_array_equal(ufunc(a, c), ufunc([True, True], True))
         assert ufunc.reduce(a) == True
@@ -2139,6 +2151,23 @@ class TestUfunc:
         assert ufunc.reduce(a, out=out) == 1
 
     @pytest.mark.parametrize("ufunc",
+            [np.logical_and, np.logical_or, np.logical_xor])
+    def test_logical_ufuncs_reject_string(self, ufunc):
+        """
+        Logical ufuncs are normally well defined by working with the boolean
+        equivalent, i.e. casting all inputs to bools should work.
+
+        However, casting strings to bools is *currently* weird, because it
+        actually uses `bool(int(str))`.  Thus we explicitly reject strings.
+        This test should succeed (and can probably just be removed) as soon as
+        string to bool casts are well defined in NumPy.
+        """
+        with pytest.raises(TypeError, match="contain a loop with signature"):
+            ufunc(["1"], ["3"])
+        with pytest.raises(TypeError, match="contain a loop with signature"):
+            ufunc.reduce(["1", "2", "0"])
+
+    @pytest.mark.parametrize("ufunc",
              [np.logical_and, np.logical_or, np.logical_xor])
     def test_logical_ufuncs_out_cast_check(self, ufunc):
         a = np.array('1')
@@ -2147,6 +2176,17 @@ class TestUfunc:
         with pytest.raises(TypeError):
             # It would be safe, but not equiv casting:
             ufunc(a, c, out=out, casting="equiv")
+
+    def test_reducelike_byteorder_resolution(self):
+        # See gh-20699, byte-order changes need some extra care in the type
+        # resolution to make the following succeed:
+        arr_be = np.arange(10, dtype=">i8")
+        arr_le = np.arange(10, dtype="<i8")
+
+        assert np.add.reduce(arr_be) == np.add.reduce(arr_le)
+        assert_array_equal(np.add.accumulate(arr_be), np.add.accumulate(arr_le))
+        assert_array_equal(
+            np.add.reduceat(arr_be, [1]), np.add.reduceat(arr_le, [1]))
 
     def test_reducelike_out_promotes(self):
         # Check that the out argument to reductions is considered for

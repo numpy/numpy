@@ -1,4 +1,4 @@
-from typing import List, Any
+from typing import Any
 import numpy as np
 
 AR_i: np.ndarray[Any, np.dtype[np.int64]]

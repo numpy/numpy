@@ -1,4 +1,4 @@
-from typing import List, Any, TypeVar
+from typing import Any, TypeVar
 from pathlib import Path
 
 import numpy as np
@@ -12,7 +12,7 @@ i8: np.int64
 
 A: npt.NDArray[np.float64]
 B: SubClass[np.float64]
-C: List[int]
+C: list[int]
 
 def func(i: int, j: int, **kwargs: Any) -> SubClass[np.float64]: ...
 
@@ -28,6 +28,7 @@ reveal_type(np.array(B, subok=True))  # E: SubClass[{float64}]
 reveal_type(np.array([1, 1.0]))  # E: ndarray[Any, dtype[Any]]
 reveal_type(np.array(A, dtype=np.int64))  # E: ndarray[Any, dtype[{int64}]]
 reveal_type(np.array(A, dtype='c16'))  # E: ndarray[Any, dtype[Any]]
+reveal_type(np.array(A, like=A))  # E: ndarray[Any, dtype[{float64}]]
 
 reveal_type(np.zeros([1, 5, 6]))  # E: ndarray[Any, dtype[{float64}]]
 reveal_type(np.zeros([1, 5, 6], dtype=np.int64))  # E: ndarray[Any, dtype[{int64}]]
@@ -180,17 +181,17 @@ reveal_type(np.atleast_2d(A))  # E: ndarray[Any, dtype[{float64}]]
 
 reveal_type(np.atleast_3d(A))  # E: ndarray[Any, dtype[{float64}]]
 
-reveal_type(np.vstack([A, A]))  # E: ndarray[Any, dtype[{float64}]]
+reveal_type(np.vstack([A, A]))  # E: ndarray[Any, Any]
 reveal_type(np.vstack([A, C]))  # E: ndarray[Any, dtype[Any]]
 reveal_type(np.vstack([C, C]))  # E: ndarray[Any, dtype[Any]]
 
-reveal_type(np.hstack([A, A]))  # E: ndarray[Any, dtype[{float64}]]
+reveal_type(np.hstack([A, A]))  # E: ndarray[Any, Any]
 
-reveal_type(np.stack([A, A]))  # E: ndarray[Any, dtype[{float64}]]
+reveal_type(np.stack([A, A]))  # E: Any
 reveal_type(np.stack([A, C]))  # E: ndarray[Any, dtype[Any]]
 reveal_type(np.stack([C, C]))  # E: ndarray[Any, dtype[Any]]
-reveal_type(np.stack([A, A], axis=0))  # E: ndarray[Any, dtype[{float64}]]
+reveal_type(np.stack([A, A], axis=0))  # E: Any
 reveal_type(np.stack([A, A], out=B))  # E: SubClass[{float64}]
 
-reveal_type(np.block([[A, A], [A, A]]))  # E: ndarray[Any, dtype[{float64}]]
+reveal_type(np.block([[A, A], [A, A]]))  # E: ndarray[Any, dtype[Any]]
 reveal_type(np.block(C))  # E: ndarray[Any, dtype[Any]]

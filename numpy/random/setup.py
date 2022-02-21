@@ -50,6 +50,13 @@ def configuration(parent_package='', top_path=None):
         # Some bit generators require c99
         EXTRA_COMPILE_ARGS += ['-std=c99']
 
+    if sys.platform == 'cygwin':
+        # Export symbols without __declspec(dllexport) for using by cython.
+        # Using __declspec(dllexport) does not export other necessary symbols
+        # in Cygwin package's Cython environment, making it impossible to
+        # import modules.
+        EXTRA_LINK_ARGS += ['-Wl,--export-all-symbols']
+
     # Use legacy integer variable sizes
     LEGACY_DEFS = [('NP_RANDOM_LEGACY', '1')]
     PCG64_DEFS = []

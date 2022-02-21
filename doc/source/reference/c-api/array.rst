@@ -127,8 +127,7 @@ and its sub-types).
     your own memory, you should use the function :c:func:`PyArray_SetBaseObject`
     to set the base to an object which owns the memory.
 
-    If the (deprecated) :c:data:`NPY_ARRAY_UPDATEIFCOPY` or the
-    :c:data:`NPY_ARRAY_WRITEBACKIFCOPY` flags are set, it has a different
+    If the :c:data:`NPY_ARRAY_WRITEBACKIFCOPY` flag is set, it has a different
     meaning, namely base is the array into which the current array will
     be copied upon copy resolution. This overloading of the base property
     for two functions is likely to change in a future version of NumPy.
@@ -237,8 +236,7 @@ From scratch
     If *data* is not ``NULL``, then it is assumed to point to the memory
     to be used for the array and the *flags* argument is used as the
     new flags for the array (except the state of :c:data:`NPY_ARRAY_OWNDATA`,
-    :c:data:`NPY_ARRAY_WRITEBACKIFCOPY` and :c:data:`NPY_ARRAY_UPDATEIFCOPY`
-    flags of the new array will be reset).
+    :c:data:`NPY_ARRAY_WRITEBACKIFCOPY` flag of the new array will be reset).
 
     In addition, if *data* is non-NULL, then *strides* can
     also be provided. If *strides* is ``NULL``, then the array strides
@@ -487,13 +485,6 @@ From other objects
         will be made writeable again. If *op* is not writeable to begin
         with, or if it is not already an array, then an error is raised.
 
-    .. c:macro:: NPY_ARRAY_UPDATEIFCOPY
-
-        Deprecated. Use :c:data:`NPY_ARRAY_WRITEBACKIFCOPY`, which is similar.
-        This flag "automatically" copies the data back when the returned
-        array is deallocated, which is not supported in all python
-        implementations.
-
     .. c:macro:: NPY_ARRAY_BEHAVED
 
         :c:data:`NPY_ARRAY_ALIGNED` \| :c:data:`NPY_ARRAY_WRITEABLE`
@@ -550,14 +541,12 @@ From other objects
 .. c:macro:: NPY_ARRAY_INOUT_ARRAY
 
     :c:data:`NPY_ARRAY_C_CONTIGUOUS` \| :c:data:`NPY_ARRAY_WRITEABLE` \|
-    :c:data:`NPY_ARRAY_ALIGNED` \| :c:data:`NPY_ARRAY_WRITEBACKIFCOPY` \|
-    :c:data:`NPY_ARRAY_UPDATEIFCOPY`
+    :c:data:`NPY_ARRAY_ALIGNED` \| :c:data:`NPY_ARRAY_WRITEBACKIFCOPY`
 
     .. c:macro:: NPY_ARRAY_INOUT_FARRAY
 
         :c:data:`NPY_ARRAY_F_CONTIGUOUS` \| :c:data:`NPY_ARRAY_WRITEABLE` \|
-        :c:data:`NPY_ARRAY_ALIGNED` \| :c:data:`NPY_ARRAY_WRITEBACKIFCOPY` \|
-        :c:data:`NPY_ARRAY_UPDATEIFCOPY`
+        :c:data:`NPY_ARRAY_ALIGNED` \| :c:data:`NPY_ARRAY_WRITEBACKIFCOPY`
 
 .. c:function:: int PyArray_GetArrayParamsFromObject( \
         PyObject* op, PyArray_Descr* requested_dtype, npy_bool writeable, \
@@ -773,8 +762,7 @@ From other objects
     :c:data:`NPY_ARRAY_C_CONTIGUOUS`, :c:data:`NPY_ARRAY_F_CONTIGUOUS`,
     :c:data:`NPY_ARRAY_ALIGNED`, :c:data:`NPY_ARRAY_WRITEABLE`,
     :c:data:`NPY_ARRAY_NOTSWAPPED`, :c:data:`NPY_ARRAY_ENSURECOPY`,
-    :c:data:`NPY_ARRAY_WRITEBACKIFCOPY`, :c:data:`NPY_ARRAY_UPDATEIFCOPY`,
-    :c:data:`NPY_ARRAY_FORCECAST`, and
+    :c:data:`NPY_ARRAY_WRITEBACKIFCOPY`, :c:data:`NPY_ARRAY_FORCECAST`, and
     :c:data:`NPY_ARRAY_ENSUREARRAY`. Standard combinations of flags can also
     be used:
 
@@ -1375,15 +1363,6 @@ Special functions for NPY_OBJECT
     decrement all the items in the object array prior to calling this
     function.
 
-.. c:function:: int PyArray_SetUpdateIfCopyBase(PyArrayObject* arr, PyArrayObject* base)
-
-    Precondition: ``arr`` is a copy of ``base`` (though possibly with different
-    strides, ordering, etc.) Set the UPDATEIFCOPY flag and ``arr->base`` so
-    that when ``arr`` is destructed, it will copy any changes back to ``base``.
-    DEPRECATED, use :c:func:`PyArray_SetWritebackIfCopyBase`.
-
-    Returns 0 for success, -1 for failure.
-
 .. c:function:: int PyArray_SetWritebackIfCopyBase(PyArrayObject* arr, PyArrayObject* base)
 
     Precondition: ``arr`` is a copy of ``base`` (though possibly with different
@@ -1496,14 +1475,6 @@ of the constant names is deprecated in 1.7.
     would have returned an error because :c:data:`NPY_ARRAY_WRITEBACKIFCOPY`
     would not have been possible.
 
-.. c:macro:: NPY_ARRAY_UPDATEIFCOPY
-
-    A deprecated version of :c:data:`NPY_ARRAY_WRITEBACKIFCOPY` which
-    depends upon ``dealloc`` to trigger the writeback. For backwards
-    compatibility, :c:func:`PyArray_ResolveWritebackIfCopy` is called at
-    ``dealloc`` but relying
-    on that behavior is deprecated and not supported in PyPy.
-
 :c:func:`PyArray_UpdateFlags` (obj, flags) will update the ``obj->flags``
 for ``flags`` which can be any of :c:data:`NPY_ARRAY_C_CONTIGUOUS`,
 :c:data:`NPY_ARRAY_F_CONTIGUOUS`, :c:data:`NPY_ARRAY_ALIGNED`, or
@@ -1575,8 +1546,7 @@ For all of these macros *arr* must be an instance of a (subclass of)
     combinations of the possible flags an array can have:
     :c:data:`NPY_ARRAY_C_CONTIGUOUS`, :c:data:`NPY_ARRAY_F_CONTIGUOUS`,
     :c:data:`NPY_ARRAY_OWNDATA`, :c:data:`NPY_ARRAY_ALIGNED`,
-    :c:data:`NPY_ARRAY_WRITEABLE`, :c:data:`NPY_ARRAY_WRITEBACKIFCOPY`,
-    :c:data:`NPY_ARRAY_UPDATEIFCOPY`.
+    :c:data:`NPY_ARRAY_WRITEABLE`, :c:data:`NPY_ARRAY_WRITEBACKIFCOPY`.
 
 .. c:function:: int PyArray_IS_C_CONTIGUOUS(PyObject *arr)
 
@@ -1653,6 +1623,17 @@ For all of these macros *arr* must be an instance of a (subclass of)
     calculations in NumPy that rely on the state of these flags do not
     repeat the calculation to update them.
 
+.. c:function:: int PyArray_FailUnlessWriteable(PyArrayObject *obj, const char *name)
+
+    This function does nothing and returns 0 if *obj* is writeable.
+    It raises an exception and returns -1 if *obj* is not writeable.
+    It may also do other house-keeping, such as issuing warnings on
+    arrays which are transitioning to become views. Always call this
+    function at some point before writing to an array.
+
+    *name* is a name for the array, used to give better error messages.
+    It can be something like "assignment destination", "output array",
+    or even just "array".
 
 Array method alternative API
 ----------------------------
@@ -2765,7 +2746,7 @@ Array mapping is the machinery behind advanced indexing.
     has memory overlap with any of the arrays in ``index`` and with
     ``extra_op``, and make copies as appropriate to avoid problems if the
     input is modified during the iteration. ``iter->array`` may contain a
-    copied array (UPDATEIFCOPY/WRITEBACKIFCOPY set).
+    copied array (WRITEBACKIFCOPY set).
 
 Array Scalars
 -------------
@@ -3377,8 +3358,8 @@ Memory management
 
 .. c:function:: int PyArray_ResolveWritebackIfCopy(PyArrayObject* obj)
 
-    If ``obj.flags`` has :c:data:`NPY_ARRAY_WRITEBACKIFCOPY` or (deprecated)
-    :c:data:`NPY_ARRAY_UPDATEIFCOPY`, this function clears the flags, `DECREF` s
+    If ``obj.flags`` has :c:data:`NPY_ARRAY_WRITEBACKIFCOPY`, this function
+    clears the flags, `DECREF` s
     `obj->base` and makes it writeable, and sets ``obj->base`` to NULL. It then
     copies ``obj->data`` to `obj->base->data`, and returns the error state of
     the copy operation. This is the opposite of
@@ -3609,8 +3590,8 @@ Miscellaneous Macros
 
 .. c:function:: void PyArray_DiscardWritebackIfCopy(PyObject* obj)
 
-    If ``obj.flags`` has :c:data:`NPY_ARRAY_WRITEBACKIFCOPY` or (deprecated)
-    :c:data:`NPY_ARRAY_UPDATEIFCOPY`, this function clears the flags, `DECREF` s
+    If ``obj.flags`` has :c:data:`NPY_ARRAY_WRITEBACKIFCOPY`, this function
+    clears the flags, `DECREF` s
     `obj->base` and makes it writeable, and sets ``obj->base`` to NULL. In
     contrast to :c:func:`PyArray_DiscardWritebackIfCopy` it makes no attempt
     to copy the data from `obj->base` This undoes
@@ -3623,8 +3604,8 @@ Miscellaneous Macros
     Deprecated in 1.14, use :c:func:`PyArray_DiscardWritebackIfCopy`
     followed by ``Py_XDECREF``
 
-    DECREF's an array object which may have the (deprecated)
-    :c:data:`NPY_ARRAY_UPDATEIFCOPY` or :c:data:`NPY_ARRAY_WRITEBACKIFCOPY`
+    DECREF's an array object which may have the
+    :c:data:`NPY_ARRAY_WRITEBACKIFCOPY`
     flag set without causing the contents to be copied back into the
     original array. Resets the :c:data:`NPY_ARRAY_WRITEABLE` flag on the base
     object. This is useful for recovering from an error condition when

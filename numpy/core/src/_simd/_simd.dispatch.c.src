@@ -15,7 +15,8 @@
 /**begin repeat
  * #sfx       = u8, s8, u16, s16, u32, s32, u64, s64, f32, f64#
  * #bsfx      = b8, b8, b16, b16, b32, b32, b64, b64, b32, b64#
- * #esfx      = u16, s8, u32,s16, u32, s32, u64, s64, f32, f64#
+ * #esfx      = u16,s8, u32, s16, u32, s32, u64, s64, f32, f64#
+ * #size      = 8,  8,  16,  16,  32,  32,  64,  64,  32,  64#
  * #expand_sup= 1,  0,  1,   0,   0,   0,   0,   0,   0,   0#
  * #simd_sup  = 1,  1,  1,   1,   1,   1,   1,   1,   1,   NPY_SIMD_F64#
  * #fp_only   = 0,  0,  0,   0,   0,   0,   0,   0,   1,   1#
@@ -232,6 +233,15 @@ err:
 /**end repeat1**/
 #endif // @ncont_sup@
 
+/****************************
+ * Lookup tables
+ ****************************/
+#if @size@ == 32
+SIMD_IMPL_INTRIN_2(lut32_@sfx@, v@sfx@, q@sfx@, vu@size@)
+#endif
+#if @size@ == 64
+SIMD_IMPL_INTRIN_2(lut16_@sfx@, v@sfx@, q@sfx@, vu@size@)
+#endif
 /***************************
  * Misc
  ***************************/
@@ -381,7 +391,7 @@ SIMD_IMPL_INTRIN_1(sumup_@sfx@, @esfx@, v@sfx@)
  ***************************/
 #if @fp_only@
 /**begin repeat1
- * #intrin = sqrt, recip, abs, square, ceil, trunc#
+ * #intrin = sqrt, recip, abs, square, rint, ceil, trunc, floor#
  */
 SIMD_IMPL_INTRIN_1(@intrin@_@sfx@, v@sfx@, v@sfx@)
 /**end repeat1**/
@@ -470,8 +480,9 @@ static PyMethodDef simd__intrinsics_methods[] = {
 /**begin repeat
  * #sfx       = u8, s8, u16, s16, u32, s32, u64, s64, f32, f64#
  * #bsfx      = b8, b8, b16, b16, b32, b32, b64, b64, b32, b64#
- * #esfx      = u16, s8, u32,s16, u32, s32, u64, s64, f32, f64#
- * #expand_sup =1,  0,  1,   0,   0,   0,   0,   0,   0,   0#
+ * #esfx      = u16,s8, u32, s16, u32, s32, u64, s64, f32, f64#
+ * #size      = 8,  8,  16,  16,  32,  32,  64,  64,  32,  64#
+ * #expand_sup= 1,  0,  1,   0,   0,   0,   0,   0,   0,   0#
  * #simd_sup  = 1,  1,  1,   1,   1,   1,   1,   1,   1,   NPY_SIMD_F64#
  * #fp_only   = 0,  0,  0,   0,   0,   0,   0,   0,   1,   1#
  * #sat_sup   = 1,  1,  1,   1,   0,   0,   0,   0,   0,   0#
@@ -509,6 +520,15 @@ SIMD_INTRIN_DEF(@intrin@_@sfx@)
 /**end repeat1**/
 #endif // ncont_sup
 
+/****************************
+ * Lookup tables
+ ****************************/
+#if @size@ == 32
+SIMD_INTRIN_DEF(lut32_@sfx@)
+#endif
+#if @size@ == 64
+SIMD_INTRIN_DEF(lut16_@sfx@)
+#endif
 /***************************
  * Misc
  ***************************/
@@ -615,7 +635,7 @@ SIMD_INTRIN_DEF(sumup_@sfx@)
  ***************************/
 #if @fp_only@
 /**begin repeat1
- * #intrin = sqrt, recip, abs, square, ceil, trunc#
+ * #intrin = sqrt, recip, abs, square, rint, ceil, trunc, floor#
  */
 SIMD_INTRIN_DEF(@intrin@_@sfx@)
 /**end repeat1**/

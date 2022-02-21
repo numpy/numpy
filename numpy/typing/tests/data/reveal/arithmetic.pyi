@@ -1,4 +1,4 @@
-from typing import Any, List
+from typing import Any
 import numpy as np
 import numpy.typing as npt
 
@@ -34,14 +34,14 @@ AR_m: np.ndarray[Any, np.dtype[np.timedelta64]]
 AR_M: np.ndarray[Any, np.dtype[np.datetime64]]
 AR_O: np.ndarray[Any, np.dtype[np.object_]]
 
-AR_LIKE_b: List[bool]
-AR_LIKE_u: List[np.uint32]
-AR_LIKE_i: List[int]
-AR_LIKE_f: List[float]
-AR_LIKE_c: List[complex]
-AR_LIKE_m: List[np.timedelta64]
-AR_LIKE_M: List[np.datetime64]
-AR_LIKE_O: List[np.object_]
+AR_LIKE_b: list[bool]
+AR_LIKE_u: list[np.uint32]
+AR_LIKE_i: list[int]
+AR_LIKE_f: list[float]
+AR_LIKE_c: list[complex]
+AR_LIKE_m: list[np.timedelta64]
+AR_LIKE_M: list[np.datetime64]
+AR_LIKE_O: list[np.object_]
 
 # Array subtraction
 

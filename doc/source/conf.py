@@ -84,6 +84,7 @@ extensions = [
     'IPython.sphinxext.ipython_console_highlighting',
     'IPython.sphinxext.ipython_directive',
     'sphinx.ext.mathjax',
+    'sphinx_panels',
 ]
 
 skippable_extensions = [
@@ -107,7 +108,7 @@ master_doc = 'index'
 
 # General substitutions.
 project = 'NumPy'
-copyright = '2008-2021, The NumPy community'
+copyright = '2008-2022, NumPy Developers'
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
@@ -178,11 +179,6 @@ html_theme_options = {
   "external_links": [
       {"name": "Learn", "url": "https://numpy.org/numpy-tutorials/"}
       ],
-}
-
-
-html_additional_pages = {
-    'index': 'indexcontent.html',
 }
 
 html_title = "%s v%s Manual" % (project, version)
@@ -301,8 +297,8 @@ texinfo_documents = [
 # -----------------------------------------------------------------------------
 intersphinx_mapping = {
     'neps': ('https://numpy.org/neps', None),
-    'python': ('https://docs.python.org/dev', None),
-    'scipy': ('https://docs.scipy.org/doc/scipy/reference', None),
+    'python': ('https://docs.python.org/3', None),
+    'scipy': ('https://docs.scipy.org/doc/scipy', None),
     'matplotlib': ('https://matplotlib.org/stable', None),
     'imageio': ('https://imageio.readthedocs.io/en/stable', None),
     'skimage': ('https://scikit-image.org/docs/stable', None),

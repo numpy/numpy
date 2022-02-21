@@ -13,5 +13,11 @@ reveal_type(a[0])  # E: str_
 reveal_type(a[[0, 1, 2]])  # E: ndarray[Any, dtype[str_]]
 reveal_type(a[...])  # E: ndarray[Any, dtype[str_]]
 reveal_type(a[:])  # E: ndarray[Any, dtype[str_]]
+reveal_type(a[(...,)])  # E: ndarray[Any, dtype[str_]]
+reveal_type(a[(0,)])  # E: str_
 reveal_type(a.__array__())  # E: ndarray[Any, dtype[str_]]
 reveal_type(a.__array__(np.dtype(np.float64)))  # E: ndarray[Any, dtype[{float64}]]
+a[0] = "a"
+a[:5] = "a"
+a[...] = "a"
+a[(...,)] = "a"

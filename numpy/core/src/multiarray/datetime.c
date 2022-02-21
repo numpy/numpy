@@ -3746,8 +3746,6 @@ find_object_datetime_type(PyObject *obj, int type_num)
 }
 
 
-
-
 /*
  * Describes casting within datetimes or timedelta
  */
@@ -3756,13 +3754,14 @@ time_to_time_resolve_descriptors(
         PyArrayMethodObject *NPY_UNUSED(self),
         PyArray_DTypeMeta *NPY_UNUSED(dtypes[2]),
         PyArray_Descr *given_descrs[2],
-        PyArray_Descr *loop_descrs[2])
+        PyArray_Descr *loop_descrs[2],
+        npy_intp *view_offset)
 {
     /* This is a within-dtype cast, which currently must handle byteswapping */
     Py_INCREF(given_descrs[0]);
     loop_descrs[0] = given_descrs[0];
     if (given_descrs[1] == NULL) {
-        loop_descrs[1] = ensure_dtype_nbo(given_descrs[0]);
+        loop_descrs[1] = NPY_DT_CALL_ensure_canonical(given_descrs[0]);
     }
     else {
         Py_INCREF(given_descrs[1]);
@@ -3772,14 +3771,14 @@ time_to_time_resolve_descriptors(
     int is_timedelta = given_descrs[0]->type_num == NPY_TIMEDELTA;
 
     if (given_descrs[0] == given_descrs[1]) {
-        return NPY_NO_CASTING | _NPY_CAST_IS_VIEW;
+        *view_offset = 0;
+        return NPY_NO_CASTING;
     }
 
-    NPY_CASTING byteorder_may_allow_view = 0;
-    if (PyDataType_ISNOTSWAPPED(loop_descrs[0]) ==
-            PyDataType_ISNOTSWAPPED(loop_descrs[1])) {
-        byteorder_may_allow_view = _NPY_CAST_IS_VIEW;
-    }
+    npy_bool byteorder_may_allow_view = (
+            PyDataType_ISNOTSWAPPED(loop_descrs[0])
+            == PyDataType_ISNOTSWAPPED(loop_descrs[1]));
+
     PyArray_DatetimeMetaData *meta1, *meta2;
     meta1 = get_datetime_metadata_from_dtype(loop_descrs[0]);
     assert(meta1 != NULL);
@@ -3798,12 +3797,16 @@ time_to_time_resolve_descriptors(
             ((meta2->base >= 7) && (meta1->base - meta2->base == 3)
               && ((meta1->num / meta2->num) == 1000000000))) {
         if (byteorder_may_allow_view) {
-            return NPY_NO_CASTING | byteorder_may_allow_view;
+            *view_offset = 0;
+            return NPY_NO_CASTING;
         }
         return NPY_EQUIV_CASTING;
     }
     else if (meta1->base == NPY_FR_GENERIC) {
-        return NPY_SAFE_CASTING | byteorder_may_allow_view;
+        if (byteorder_may_allow_view) {
+            *view_offset = 0;
+        }
+        return NPY_SAFE_CASTING ;
     }
     else if (meta2->base == NPY_FR_GENERIC) {
         /* TODO: This is actually an invalid cast (casting will error) */
@@ -3877,8 +3880,8 @@ time_to_time_get_loop(
         return 0;
     }
 
-    PyArray_Descr *src_wrapped_dtype = ensure_dtype_nbo(descrs[0]);
-    PyArray_Descr *dst_wrapped_dtype = ensure_dtype_nbo(descrs[1]);
+    PyArray_Descr *src_wrapped_dtype = NPY_DT_CALL_ensure_canonical(descrs[0]);
+    PyArray_Descr *dst_wrapped_dtype = NPY_DT_CALL_ensure_canonical(descrs[1]);
 
     int needs_api = 0;
     int res = wrap_aligned_transferfunction(
@@ -3903,7 +3906,7 @@ datetime_to_timedelta_resolve_descriptors(
         PyArray_Descr *given_descrs[2],
         PyArray_Descr *loop_descrs[2])
 {
-    loop_descrs[0] = ensure_dtype_nbo(given_descrs[0]);
+    loop_descrs[0] = NPY_DT_CALL_ensure_canonical(given_descrs[0]);
     if (loop_descrs[0] == NULL) {
         return -1;
     }
@@ -3913,7 +3916,7 @@ datetime_to_timedelta_resolve_descriptors(
         loop_descrs[1] = create_datetime_dtype(dtypes[1]->type_num, meta);
     }
     else {
-        loop_descrs[1] = ensure_dtype_nbo(given_descrs[1]);
+        loop_descrs[1] = NPY_DT_CALL_ensure_canonical(given_descrs[1]);
     }
     if (loop_descrs[1] == NULL) {
         Py_DECREF(loop_descrs[0]);
@@ -3931,10 +3934,11 @@ datetime_to_timedelta_resolve_descriptors(
 /* In the current setup both strings and unicode casts support all outputs */
 static NPY_CASTING
 time_to_string_resolve_descriptors(
-        PyArrayMethodObject *self,
+        PyArrayMethodObject *NPY_UNUSED(self),
         PyArray_DTypeMeta *dtypes[2],
         PyArray_Descr **given_descrs,
-        PyArray_Descr **loop_descrs)
+        PyArray_Descr **loop_descrs,
+        npy_intp *NPY_UNUSED(view_offset))
 {
     if (given_descrs[1] != NULL && dtypes[0]->type_num == NPY_DATETIME) {
         /*
@@ -3969,7 +3973,7 @@ time_to_string_resolve_descriptors(
         loop_descrs[1]->elsize = size;
     }
 
-    loop_descrs[0] = ensure_dtype_nbo(given_descrs[0]);
+    loop_descrs[0] = NPY_DT_CALL_ensure_canonical(given_descrs[0]);
     if (loop_descrs[0] == NULL) {
         Py_DECREF(loop_descrs[1]);
         return -1;
@@ -4013,7 +4017,8 @@ string_to_datetime_cast_resolve_descriptors(
         PyArrayMethodObject *NPY_UNUSED(self),
         PyArray_DTypeMeta *dtypes[2],
         PyArray_Descr *given_descrs[2],
-        PyArray_Descr *loop_descrs[2])
+        PyArray_Descr *loop_descrs[2],
+        npy_intp *NPY_UNUSED(view_offset))
 {
     if (given_descrs[1] == NULL) {
         /* NOTE: This doesn't actually work, and will error during the cast */
@@ -4023,7 +4028,7 @@ string_to_datetime_cast_resolve_descriptors(
         }
     }
     else {
-        loop_descrs[1] = ensure_dtype_nbo(given_descrs[1]);
+        loop_descrs[1] = NPY_DT_CALL_ensure_canonical(given_descrs[1]);
         if (loop_descrs[1] == NULL) {
             return -1;
         }

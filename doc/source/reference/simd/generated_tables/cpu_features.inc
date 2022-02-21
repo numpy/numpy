@@ -1,4 +1,4 @@
-.. generated via /home/seiko/work/repos/numpy/doc/source/reference/simd/./gen_features.py
+.. generated via /home/seiko/work/repos/review/numpy/doc/source/reference/simd/gen_features.py
 
 On x86
 ~~~~~~
@@ -36,26 +36,28 @@ On IBM/POWER big-endian
 .. table::
     :align: left
 
-    ======== ================
-    Name     Implies         
-    ======== ================
-    ``VSX``                  
-    ``VSX2`` ``VSX``         
-    ``VSX3`` ``VSX`` ``VSX2``
-    ======== ================
+    ======== =========================
+    Name     Implies                  
+    ======== =========================
+    ``VSX``                           
+    ``VSX2`` ``VSX``                  
+    ``VSX3`` ``VSX`` ``VSX2``         
+    ``VSX4`` ``VSX`` ``VSX2`` ``VSX3``
+    ======== =========================
 
 On IBM/POWER little-endian
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. table::
     :align: left
 
-    ======== ================
-    Name     Implies         
-    ======== ================
-    ``VSX``  ``VSX2``        
-    ``VSX2`` ``VSX``         
-    ``VSX3`` ``VSX`` ``VSX2``
-    ======== ================
+    ======== =========================
+    Name     Implies                  
+    ======== =========================
+    ``VSX``  ``VSX2``                 
+    ``VSX2`` ``VSX``                  
+    ``VSX3`` ``VSX`` ``VSX2``         
+    ``VSX4`` ``VSX`` ``VSX2`` ``VSX3``
+    ======== =========================
 
 On ARMv7/A32
 ~~~~~~~~~~~~
@@ -90,4 +92,17 @@ On ARMv8/A64
     ``ASIMDDP``    ``NEON`` ``NEON_FP16`` ``NEON_VFPV4`` ``ASIMD``            
     ``ASIMDFHM``   ``NEON`` ``NEON_FP16`` ``NEON_VFPV4`` ``ASIMD`` ``ASIMDHP``
     ============== ===========================================================
+
+On IBM/ZSYSTEM(S390X)
+~~~~~~~~~~~~~~~~~~~~~
+.. table::
+    :align: left
+
+    ======== ==============
+    Name     Implies       
+    ======== ==============
+    ``VX``                 
+    ``VXE``  ``VX``        
+    ``VXE2`` ``VX`` ``VXE``
+    ======== ==============
 

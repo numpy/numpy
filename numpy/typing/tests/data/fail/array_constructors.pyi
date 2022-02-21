@@ -29,3 +29,5 @@ np.geomspace(None, 'bob')  # E: No overload variant
 np.stack(generator)  # E: No overload variant
 np.hstack({1, 2})  # E: No overload variant
 np.vstack(1)  # E: No overload variant
+
+np.array([1], like=1)  # E: No overload variant

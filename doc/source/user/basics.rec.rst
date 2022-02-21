@@ -15,7 +15,7 @@ datatypes organized as a sequence of named :term:`fields <field>`. For example,
  ...              dtype=[('name', 'U10'), ('age', 'i4'), ('weight', 'f4')])
  >>> x
  array([('Rex', 9, 81.), ('Fido', 3, 27.)],
-       dtype=[('name', 'U10'), ('age', '<i4'), ('weight', '<f4')])
+       dtype=[('name', '<U10'), ('age', '<i4'), ('weight', '<f4')])
 
 Here ``x`` is a one-dimensional array of length two whose datatype is a
 structure with three fields: 1. A string of length 10 or less named 'name', 2.
@@ -24,7 +24,7 @@ a 32-bit integer named 'age', and 3. a 32-bit float named 'weight'.
 If you index ``x`` at position 1 you get a structure::
 
  >>> x[1]
- ('Fido', 3, 27.0)
+ ('Fido', 3, 27.)
 
 You can access and modify individual fields of a structured array by indexing
 with the field name::
@@ -34,7 +34,7 @@ with the field name::
  >>> x['age'] = 5
  >>> x
  array([('Rex', 5, 81.), ('Fido', 5, 27.)],
-       dtype=[('name', 'U10'), ('age', '<i4'), ('weight', '<f4')])
+       dtype=[('name', '<U10'), ('age', '<i4'), ('weight', '<f4')])
 
 Structured datatypes are designed to be able to mimic 'structs' in the C
 language, and share a similar memory layout. They are meant for interfacing with
@@ -425,7 +425,7 @@ array, as follows::
  >>> a = np.zeros(3, dtype=[('a', 'i4'), ('b', 'i4'), ('c', 'f4')])
  >>> a[['a', 'c']]
  array([(0, 0.), (0, 0.), (0, 0.)],
-      dtype={'names':['a','c'], 'formats':['<i4','<f4'], 'offsets':[0,8], 'itemsize':12})
+      dtype={'names': ['a', 'c'], 'formats': ['<i4', '<f4'], 'offsets': [0, 8], 'itemsize': 12})
 
 Assignment to the view modifies the original array. The view's fields will be
 in the order they were indexed. Note that unlike for single-field indexing, the
@@ -485,7 +485,9 @@ missing.
 
      >>> from numpy.lib.recfunctions import structured_to_unstructured
      >>> structured_to_unstructured(b[['x', 'z']])
-     array([0, 0, 0])
+     array([[0., 0.],
+            [0., 0.],
+            [0., 0.]], dtype=float32)
 
 
 Assignment to an array with a multi-field index modifies the original array::
@@ -590,7 +592,7 @@ The simplest way to create a record array is with
  >>> recordarr = np.rec.array([(1, 2., 'Hello'), (2, 3., "World")],
  ...                    dtype=[('foo', 'i4'),('bar', 'f4'), ('baz', 'S10')])
  >>> recordarr.bar
- array([ 2.,  3.], dtype=float32)
+ array([2., 3.], dtype=float32)
  >>> recordarr[1:2]
  rec.array([(2, 3., b'World')],
        dtype=[('foo', '<i4'), ('bar', '<f4'), ('baz', 'S10')])

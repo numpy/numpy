@@ -1,35 +1,34 @@
-from typing import TypeVar, overload, List, Sequence, Any, SupportsIndex
+from collections.abc import Sequence
+from typing import TypeVar, overload, Any, SupportsIndex
 
-from numpy import generic, dtype
-from numpy.typing import ArrayLike, NDArray, _FiniteNestedSequence, _SupportsArray
+from numpy import generic
+from numpy.typing import ArrayLike, NDArray, _ArrayLike
 
 _SCT = TypeVar("_SCT", bound=generic)
 _ArrayType = TypeVar("_ArrayType", bound=NDArray[Any])
 
-_ArrayLike = _FiniteNestedSequence[_SupportsArray[dtype[_SCT]]]
-
-__all__: List[str]
+__all__: list[str]
 
 @overload
 def atleast_1d(arys: _ArrayLike[_SCT], /) -> NDArray[_SCT]: ...
 @overload
 def atleast_1d(arys: ArrayLike, /) -> NDArray[Any]: ...
 @overload
-def atleast_1d(*arys: ArrayLike) -> List[NDArray[Any]]: ...
+def atleast_1d(*arys: ArrayLike) -> list[NDArray[Any]]: ...
 
 @overload
 def atleast_2d(arys: _ArrayLike[_SCT], /) -> NDArray[_SCT]: ...
 @overload
 def atleast_2d(arys: ArrayLike, /) -> NDArray[Any]: ...
 @overload
-def atleast_2d(*arys: ArrayLike) -> List[NDArray[Any]]: ...
+def atleast_2d(*arys: ArrayLike) -> list[NDArray[Any]]: ...
 
 @overload
 def atleast_3d(arys: _ArrayLike[_SCT], /) -> NDArray[_SCT]: ...
 @overload
 def atleast_3d(arys: ArrayLike, /) -> NDArray[Any]: ...
 @overload
-def atleast_3d(*arys: ArrayLike) -> List[NDArray[Any]]: ...
+def atleast_3d(*arys: ArrayLike) -> list[NDArray[Any]]: ...
 
 @overload
 def vstack(tup: Sequence[_ArrayLike[_SCT]]) -> NDArray[_SCT]: ...

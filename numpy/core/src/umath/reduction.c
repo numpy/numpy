@@ -68,7 +68,7 @@ count_axes(int ndim, const npy_bool *axis_flags)
  * Returns -1 if an error occurred, and otherwise the reduce arrays size,
  * which is the number of elements already initialized.
  */
-NPY_NO_EXPORT int
+static npy_intp
 PyArray_CopyInitialReduceValues(
                     PyArrayObject *result, PyArrayObject *operand,
                     const npy_bool *axis_flags, const char *funcname,
@@ -337,7 +337,7 @@ PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
 
     /*
      * Note that we need to ensure that the iterator is reset before getting
-     * the fixed strides.  (The buffer information is unitialized before.)
+     * the fixed strides.  (The buffer information is uninitialized before.)
      */
     npy_intp fixed_strides[3];
     NpyIter_GetInnerFixedStrideArray(iter, fixed_strides);

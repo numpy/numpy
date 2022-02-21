@@ -150,6 +150,19 @@ class CustomScalarFloorDivideInt(Benchmark):
     def time_floor_divide_int(self, dtype, divisor):
         self.x // divisor
 
+class CustomArrayFloorDivideInt(Benchmark):
+    params = (np.sctypes['int'] + np.sctypes['uint'], [100, 10000, 1000000])
+    param_names = ['dtype', 'size']
+
+    def setup(self, dtype, size):
+        iinfo = np.iinfo(dtype)
+        self.x = np.random.randint(
+                    iinfo.min, iinfo.max, size=size, dtype=dtype)
+        self.y = np.random.randint(2, 32, size=size, dtype=dtype)
+
+    def time_floor_divide_int(self, dtype, size):
+        self.x // self.y
+
 
 class Scalar(Benchmark):
     def setup(self):

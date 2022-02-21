@@ -237,7 +237,7 @@ NPY_NO_EXPORT int
 any_to_object_get_loop(
         PyArrayMethod_Context *context,
         int aligned, int move_references,
-        npy_intp *strides,
+        const npy_intp *strides,
         PyArrayMethod_StridedLoop **out_loop,
         NpyAuxData **out_transferdata,
         NPY_ARRAYMETHOD_FLAGS *flags)
@@ -343,7 +343,7 @@ NPY_NO_EXPORT int
 object_to_any_get_loop(
         PyArrayMethod_Context *context,
         int NPY_UNUSED(aligned), int move_references,
-        npy_intp *NPY_UNUSED(strides),
+        const npy_intp *NPY_UNUSED(strides),
         PyArrayMethod_StridedLoop **out_loop,
         NpyAuxData **out_transferdata,
         NPY_ARRAYMETHOD_FLAGS *flags)
@@ -2991,7 +2991,8 @@ _strided_to_strided_multistep_cast(
  * transferfunction and transferdata.
  */
 static NPY_INLINE int
-init_cast_info(NPY_cast_info *cast_info, NPY_CASTING *casting,
+init_cast_info(
+        NPY_cast_info *cast_info, NPY_CASTING *casting, npy_intp *view_offset,
         PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype, int main_step)
 {
     PyObject *meth = PyArray_GetCastingImpl(
@@ -3016,14 +3017,15 @@ init_cast_info(NPY_cast_info *cast_info, NPY_CASTING *casting,
     PyArray_Descr *in_descr[2] = {src_dtype, dst_dtype};
 
     *casting = cast_info->context.method->resolve_descriptors(
-            cast_info->context.method, dtypes, in_descr, cast_info->descriptors);
+            cast_info->context.method, dtypes,
+            in_descr, cast_info->descriptors, view_offset);
     if (NPY_UNLIKELY(*casting < 0)) {
         if (!PyErr_Occurred()) {
             PyErr_Format(PyExc_TypeError,
                     "Cannot cast array data from %R to %R.", src_dtype, dst_dtype);
-            Py_DECREF(meth);
-            return -1;
         }
+        Py_DECREF(meth);
+        return -1;
     }
     assert(PyArray_DescrCheck(cast_info->descriptors[0]));
     assert(PyArray_DescrCheck(cast_info->descriptors[1]));
@@ -3071,6 +3073,9 @@ _clear_cast_info_after_get_loop_failure(NPY_cast_info *cast_info)
  * transfer function from the each casting implementation (ArrayMethod).
  * May set the transfer function to NULL when the cast can be achieved using
  * a view.
+ * TODO: Expand the view functionality for general offsets, not just 0:
+ *       Partial casts could be skipped also for `view_offset != 0`.
+ *
  * The `out_needs_api` flag must be initialized.
  *
  * NOTE: In theory casting errors here could be slightly misleading in case
@@ -3101,9 +3106,12 @@ define_cast_for_descrs(
     castdata.main.func = NULL;
     castdata.to.func = NULL;
     castdata.from.func = NULL;
+    /* `view_offset` passed to `init_cast_info` but unused for the main cast */
+    npy_intp view_offset = NPY_MIN_INTP;
     NPY_CASTING casting = -1;
 
-    if (init_cast_info(cast_info, &casting, src_dtype, dst_dtype, 1) < 0) {
+    if (init_cast_info(
+            cast_info, &casting, &view_offset, src_dtype, dst_dtype, 1) < 0) {
         return -1;
     }
 
@@ -3123,17 +3131,18 @@ define_cast_for_descrs(
      */
     if (NPY_UNLIKELY(src_dtype != cast_info->descriptors[0] || must_wrap)) {
         NPY_CASTING from_casting = -1;
+        npy_intp from_view_offset = NPY_MIN_INTP;
         /* Cast function may not support the input, wrap if necessary */
         if (init_cast_info(
-                &castdata.from, &from_casting,
+                &castdata.from, &from_casting, &from_view_offset,
                 src_dtype, cast_info->descriptors[0], 0) < 0) {
             goto fail;
         }
         casting = PyArray_MinCastSafety(casting, from_casting);
 
         /* Prepare the actual cast (if necessary): */
-        if (from_casting & _NPY_CAST_IS_VIEW && !must_wrap) {
-            /* This step is not necessary and can be skipped. */
+        if (from_view_offset == 0 && !must_wrap) {
+            /* This step is not necessary and can be skipped */
             castdata.from.func = &_dec_src_ref_nop;  /* avoid NULL */
             NPY_cast_info_xfree(&castdata.from);
         }
@@ -3161,16 +3170,17 @@ define_cast_for_descrs(
      */
     if (NPY_UNLIKELY(dst_dtype != cast_info->descriptors[1] || must_wrap)) {
         NPY_CASTING to_casting = -1;
+        npy_intp to_view_offset = NPY_MIN_INTP;
         /* Cast function may not support the output, wrap if necessary */
         if (init_cast_info(
-                &castdata.to, &to_casting,
+                &castdata.to, &to_casting, &to_view_offset,
                 cast_info->descriptors[1], dst_dtype,  0) < 0) {
             goto fail;
         }
         casting = PyArray_MinCastSafety(casting, to_casting);
 
         /* Prepare the actual cast (if necessary): */
-        if (to_casting & _NPY_CAST_IS_VIEW && !must_wrap) {
+        if (to_view_offset == 0 && !must_wrap) {
             /* This step is not necessary and can be skipped. */
             castdata.to.func = &_dec_src_ref_nop;  /* avoid NULL */
             NPY_cast_info_xfree(&castdata.to);
@@ -3383,8 +3393,8 @@ wrap_aligned_transferfunction(
  * For casts between two dtypes with the same type (within DType casts)
  * it also wraps the `copyswapn` function.
  *
- * This function is called called from `ArrayMethod.get_loop()` when a
- * specialized cast function is missing.
+ * This function is called from `ArrayMethod.get_loop()` when a specialized
+ * cast function is missing.
  *
  * In general, the legacy cast functions do not support unaligned access,
  * so an ArrayMethod using this must signal that.  In a few places we do
@@ -3447,11 +3457,11 @@ get_wrapped_legacy_cast_function(int aligned,
      * If we are here, use the legacy code to wrap the above cast (which
      * does not support unaligned data) into copyswapn.
      */
-    PyArray_Descr *src_wrapped_dtype = ensure_dtype_nbo(src_dtype);
+    PyArray_Descr *src_wrapped_dtype = NPY_DT_CALL_ensure_canonical(src_dtype);
     if (src_wrapped_dtype == NULL) {
         goto fail;
     }
-    PyArray_Descr *dst_wrapped_dtype = ensure_dtype_nbo(dst_dtype);
+    PyArray_Descr *dst_wrapped_dtype = NPY_DT_CALL_ensure_canonical(dst_dtype);
     if (dst_wrapped_dtype == NULL) {
         goto fail;
     }

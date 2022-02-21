@@ -1,4 +1,5 @@
-from typing import Any, List, TypeVar
+import datetime as dt
+from typing import Any, TypeVar
 from pathlib import Path
 
 import numpy as np
@@ -16,8 +17,8 @@ AR_u1: npt.NDArray[np.uint8]
 AR_m: npt.NDArray[np.timedelta64]
 AR_M: npt.NDArray[np.datetime64]
 
-AR_LIKE_f: List[float]
-AR_LIKE_i: List[int]
+AR_LIKE_f: list[float]
+AR_LIKE_i: list[int]
 
 m: np.timedelta64
 M: np.datetime64
@@ -26,6 +27,10 @@ b_f8 = np.broadcast(AR_f8)
 b_i8_f8_f8 = np.broadcast(AR_i8, AR_f8, AR_f8)
 
 nditer_obj: np.nditer
+
+date_scalar: dt.date
+date_seq: list[dt.date]
+timedelta_seq: list[dt.timedelta]
 
 def func(a: int) -> bool: ...
 
@@ -108,18 +113,25 @@ reveal_type(np.datetime_data(np.dtype(np.timedelta64)))  # E: Tuple[builtins.str
 
 reveal_type(np.busday_count("2011-01", "2011-02"))  # E: {int_}
 reveal_type(np.busday_count(["2011-01"], "2011-02"))  # E: ndarray[Any, dtype[{int_}]]
+reveal_type(np.busday_count(["2011-01"], date_scalar))  # E: ndarray[Any, dtype[{int_}]]
 
 reveal_type(np.busday_offset(M, m))  # E: datetime64
+reveal_type(np.busday_offset(date_scalar, m))  # E: datetime64
 reveal_type(np.busday_offset(M, 5))  # E: datetime64
 reveal_type(np.busday_offset(AR_M, m))  # E: ndarray[Any, dtype[datetime64]]
+reveal_type(np.busday_offset(M, timedelta_seq))  # E: ndarray[Any, dtype[datetime64]]
 reveal_type(np.busday_offset("2011-01", "2011-02", roll="forward"))  # E: datetime64
 reveal_type(np.busday_offset(["2011-01"], "2011-02", roll="forward"))  # E: ndarray[Any, dtype[datetime64]]
 
 reveal_type(np.is_busday("2012"))  # E: bool_
+reveal_type(np.is_busday(date_scalar))  # E: bool_
 reveal_type(np.is_busday(["2012"]))  # E: ndarray[Any, dtype[bool_]]
 
 reveal_type(np.datetime_as_string(M))  # E: str_
 reveal_type(np.datetime_as_string(AR_M))  # E: ndarray[Any, dtype[str_]]
+
+reveal_type(np.busdaycalendar(holidays=date_seq))  # E: busdaycalendar
+reveal_type(np.busdaycalendar(holidays=[M]))  # E: busdaycalendar
 
 reveal_type(np.compare_chararrays("a", "b", "!=", rstrip=False))  # E: ndarray[Any, dtype[bool_]]
 reveal_type(np.compare_chararrays(b"a", b"a", "==", True))  # E: ndarray[Any, dtype[bool_]]

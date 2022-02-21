@@ -17,12 +17,21 @@ from setup_common import *  # noqa: F403
 # Set to True to enable relaxed strides checking. This (mostly) means
 # that `strides[dim]` is ignored if `shape[dim] == 1` when setting flags.
 NPY_RELAXED_STRIDES_CHECKING = (os.environ.get('NPY_RELAXED_STRIDES_CHECKING', "1") != "0")
+if not NPY_RELAXED_STRIDES_CHECKING:
+    raise SystemError(
+        "Support for NPY_RELAXED_STRIDES_CHECKING=0 has been remove as of "
+        "NumPy 1.23.  This error will eventually be removed entirely.")
 
 # Put NPY_RELAXED_STRIDES_DEBUG=1 in the environment if you want numpy to use a
 # bogus value for affected strides in order to help smoke out bad stride usage
 # when relaxed stride checking is enabled.
 NPY_RELAXED_STRIDES_DEBUG = (os.environ.get('NPY_RELAXED_STRIDES_DEBUG', "0") != "0")
 NPY_RELAXED_STRIDES_DEBUG = NPY_RELAXED_STRIDES_DEBUG and NPY_RELAXED_STRIDES_CHECKING
+
+# Set NPY_DISABLE_SVML=1 in the environment to disable the vendored SVML
+# library. This option only has significance on a Linux x86_64 host and is most
+# useful to avoid improperly requiring SVML when cross compiling.
+NPY_DISABLE_SVML = (os.environ.get('NPY_DISABLE_SVML', "0") == "1")
 
 # XXX: ugly, we use a class to avoid calling twice some expensive functions in
 # config.h/numpyconfig.h. I don't see a better way because distutils force
@@ -68,6 +77,8 @@ def can_link_svml():
     """SVML library is supported only on x86_64 architecture and currently
     only on linux
     """
+    if NPY_DISABLE_SVML:
+        return False
     machine = platform.machine()
     system = platform.system()
     return "x86_64" in machine and system == "Linux"
@@ -411,15 +422,17 @@ def visibility_define(config):
         return ''
 
 def configuration(parent_package='',top_path=None):
-    from numpy.distutils.misc_util import Configuration, dot_join
+    from numpy.distutils.misc_util import (Configuration, dot_join,
+                                           exec_mod_from_location)
     from numpy.distutils.system_info import (get_info, blas_opt_info,
                                              lapack_opt_info)
+    from numpy.version import release as is_released
 
     config = Configuration('core', parent_package, top_path)
     local_dir = config.local_path
     codegen_dir = join(local_dir, 'code_generators')
 
-    if is_released(config):
+    if is_released:
         warnings.simplefilter('error', MismatchCAPIWarning)
 
     # Check whether we have a mismatch between the set C API VERSION and the
@@ -428,8 +441,8 @@ def configuration(parent_package='',top_path=None):
 
     generate_umath_py = join(codegen_dir, 'generate_umath.py')
     n = dot_join(config.name, 'generate_umath')
-    generate_umath = npy_load_module('_'.join(n.split('.')),
-                                     generate_umath_py, ('.py', 'U', 1))
+    generate_umath = exec_mod_from_location('_'.join(n.split('.')),
+                                            generate_umath_py)
 
     header_dir = 'include/numpy'  # this is relative to config.path_in_package
 
@@ -473,13 +486,9 @@ def configuration(parent_package='',top_path=None):
             if can_link_svml():
                 moredefs.append(('NPY_CAN_LINK_SVML', 1))
 
-            # Use relaxed stride checking
-            if NPY_RELAXED_STRIDES_CHECKING:
-                moredefs.append(('NPY_RELAXED_STRIDES_CHECKING', 1))
-            else:
-                moredefs.append(('NPY_RELAXED_STRIDES_CHECKING', 0))
-
-            # Use bogus stride debug aid when relaxed strides are enabled
+            # Use bogus stride debug aid to flush out bugs where users use
+            # strides of dimensions with length 1 to index a full contiguous
+            # array.
             if NPY_RELAXED_STRIDES_DEBUG:
                 moredefs.append(('NPY_RELAXED_STRIDES_DEBUG', 1))
             else:
@@ -574,9 +583,6 @@ def configuration(parent_package='',top_path=None):
             mathlibs = check_mathlib(config_cmd)
             moredefs.extend(cocache.check_ieee_macros(config_cmd)[1])
             moredefs.extend(cocache.check_complex(config_cmd, mathlibs)[1])
-
-            if NPY_RELAXED_STRIDES_CHECKING:
-                moredefs.append(('NPY_RELAXED_STRIDES_CHECKING', 1))
 
             if NPY_RELAXED_STRIDES_DEBUG:
                 moredefs.append(('NPY_RELAXED_STRIDES_DEBUG', 1))
@@ -824,7 +830,7 @@ def configuration(parent_package='',top_path=None):
     multiarray_deps = [
             join('src', 'multiarray', 'abstractdtypes.h'),
             join('src', 'multiarray', 'arrayobject.h'),
-            join('src', 'multiarray', 'arraytypes.h'),
+            join('src', 'multiarray', 'arraytypes.h.src'),
             join('src', 'multiarray', 'arrayfunction_override.h'),
             join('src', 'multiarray', 'array_coercion.h'),
             join('src', 'multiarray', 'array_method.h'),
@@ -860,6 +866,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'typeinfo.h'),
             join('src', 'multiarray', 'usertypes.h'),
             join('src', 'multiarray', 'vdot.h'),
+            join('src', 'multiarray', 'textreading', 'readtext.h'),
             join('include', 'numpy', 'arrayobject.h'),
             join('include', 'numpy', '_neighborhood_iterator_imp.h'),
             join('include', 'numpy', 'npy_endian.h'),
@@ -885,7 +892,9 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'abstractdtypes.c'),
             join('src', 'multiarray', 'alloc.c'),
             join('src', 'multiarray', 'arrayobject.c'),
+            join('src', 'multiarray', 'arraytypes.h.src'),
             join('src', 'multiarray', 'arraytypes.c.src'),
+            join('src', 'multiarray', 'argfunc.dispatch.c.src'),
             join('src', 'multiarray', 'array_coercion.c'),
             join('src', 'multiarray', 'array_method.c'),
             join('src', 'multiarray', 'array_assign_scalar.c'),
@@ -938,15 +947,24 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'usertypes.c'),
             join('src', 'multiarray', 'vdot.c'),
             join('src', 'common', 'npy_sort.h.src'),
-            join('src', 'npysort', 'quicksort.c.src'),
-            join('src', 'npysort', 'mergesort.c.src'),
-            join('src', 'npysort', 'timsort.c.src'),
-            join('src', 'npysort', 'heapsort.c.src'),
+            join('src', 'npysort', 'x86-qsort.dispatch.c.src'),
+            join('src', 'npysort', 'quicksort.cpp'),
+            join('src', 'npysort', 'mergesort.cpp'),
+            join('src', 'npysort', 'timsort.cpp'),
+            join('src', 'npysort', 'heapsort.cpp'),
             join('src', 'npysort', 'radixsort.cpp'),
-            join('src', 'common', 'npy_partition.h.src'),
-            join('src', 'npysort', 'selection.c.src'),
-            join('src', 'common', 'npy_binsearch.h.src'),
-            join('src', 'npysort', 'binsearch.c.src'),
+            join('src', 'common', 'npy_partition.h'),
+            join('src', 'npysort', 'selection.cpp'),
+            join('src', 'common', 'npy_binsearch.h'),
+            join('src', 'npysort', 'binsearch.cpp'),
+            join('src', 'multiarray', 'textreading', 'conversions.c'),
+            join('src', 'multiarray', 'textreading', 'field_types.c'),
+            join('src', 'multiarray', 'textreading', 'growth.c'),
+            join('src', 'multiarray', 'textreading', 'readtext.c'),
+            join('src', 'multiarray', 'textreading', 'rows.c'),
+            join('src', 'multiarray', 'textreading', 'stream_pyobject.c'),
+            join('src', 'multiarray', 'textreading', 'str_to_int.c'),
+            join('src', 'multiarray', 'textreading', 'tokenize.cpp'),
             ]
 
     #######################################################################
@@ -965,6 +983,21 @@ def configuration(parent_package='',top_path=None):
                                                  generate_umath.__file__))
         return []
 
+    def generate_umath_doc_header(ext, build_dir):
+        from numpy.distutils.misc_util import exec_mod_from_location
+
+        target = join(build_dir, header_dir, '_umath_doc_generated.h')
+        dir = os.path.dirname(target)
+        if not os.path.exists(dir):
+            os.makedirs(dir)
+
+        generate_umath_doc_py = join(codegen_dir, 'generate_umath_doc.py')
+        if newer(generate_umath_doc_py, target):
+            n = dot_join(config.name, 'generate_umath_doc')
+            generate_umath_doc = exec_mod_from_location(
+                '_'.join(n.split('.')), generate_umath_doc_py)
+            generate_umath_doc.write_code(target)
+
     umath_src = [
             join('src', 'umath', 'umathmodule.c'),
             join('src', 'umath', 'reduction.c'),
@@ -976,15 +1009,18 @@ def configuration(parent_package='',top_path=None):
             join('src', 'umath', 'loops_unary_fp.dispatch.c.src'),
             join('src', 'umath', 'loops_arithm_fp.dispatch.c.src'),
             join('src', 'umath', 'loops_arithmetic.dispatch.c.src'),
+            join('src', 'umath', 'loops_minmax.dispatch.c.src'),
             join('src', 'umath', 'loops_trigonometric.dispatch.c.src'),
             join('src', 'umath', 'loops_umath_fp.dispatch.c.src'),
             join('src', 'umath', 'loops_exponent_log.dispatch.c.src'),
+            join('src', 'umath', 'loops_hyperbolic.dispatch.c.src'),
             join('src', 'umath', 'matmul.h.src'),
             join('src', 'umath', 'matmul.c.src'),
             join('src', 'umath', 'clip.h'),
             join('src', 'umath', 'clip.cpp'),
             join('src', 'umath', 'dispatching.c'),
             join('src', 'umath', 'legacy_array_method.c'),
+            join('src', 'umath', 'wrapping_array_method.c'),
             join('src', 'umath', 'ufunc_object.c'),
             join('src', 'umath', 'extobj.c'),
             join('src', 'umath', 'scalarmath.c.src'),
@@ -1004,12 +1040,22 @@ def configuration(parent_package='',top_path=None):
             join('src', 'umath', 'simd.inc.src'),
             join('src', 'umath', 'override.h'),
             join(codegen_dir, 'generate_ufunc_api.py'),
+            join(codegen_dir, 'ufunc_docstrings.py'),
             ]
 
     svml_path = join('numpy', 'core', 'src', 'umath', 'svml')
     svml_objs = []
+    # we have converted the following into universal intrinsics
+    # so we can bring the benefits of performance for all platforms
+    # not just for avx512 on linux without performance/accuracy regression,
+    # actually the other way around, better performance and
+    # after all maintainable code.
+    svml_filter = (
+        'svml_z0_tanh_d_la.s', 'svml_z0_tanh_s_la.s'
+    )
     if can_link_svml() and check_svml_submodule(svml_path):
         svml_objs = glob.glob(svml_path + '/**/*.s', recursive=True)
+        svml_objs = [o for o in svml_objs if not o.endswith(svml_filter)]
 
     config.add_extension('_multiarray_umath',
                          # Forcing C language even though we have C++ sources.
@@ -1023,6 +1069,7 @@ def configuration(parent_package='',top_path=None):
                                   join(codegen_dir, 'generate_numpy_api.py'),
                                   join('*.py'),
                                   generate_umath_c,
+                                  generate_umath_doc_header,
                                   generate_ufunc_api,
                                  ],
                          depends=deps + multiarray_deps + umath_deps +

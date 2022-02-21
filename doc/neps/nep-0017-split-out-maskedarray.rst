@@ -123,7 +123,7 @@ References and Footnotes
 
 .. [1] Subclassing ndarray,
        https://docs.scipy.org/doc/numpy/user/basics.subclassing.html
-.. [2] PyPi: maskedarray, https://pypi.org/project/maskedarray/
+.. [2] PyPI: maskedarray, https://pypi.org/project/maskedarray/
 
 Copyright
 ---------

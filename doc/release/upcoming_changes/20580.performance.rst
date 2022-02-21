@@ -1,0 +1,4 @@
+Faster ``np.loadtxt``
+---------------------
+`numpy.loadtxt` is now generally much faster than previously as most of it
+is now implemented in C.

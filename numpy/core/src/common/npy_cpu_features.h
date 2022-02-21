@@ -65,6 +65,8 @@ enum npy_cpu_features
     NPY_CPU_FEATURE_VSX2              = 201,
     // POWER9
     NPY_CPU_FEATURE_VSX3              = 202,
+    // POWER10
+    NPY_CPU_FEATURE_VSX4              = 203,
 
     // ARM
     NPY_CPU_FEATURE_NEON              = 300,
@@ -81,6 +83,15 @@ enum npy_cpu_features
     NPY_CPU_FEATURE_ASIMDDP           = 306,
     // ARMv8.2 single&half-precision multiply
     NPY_CPU_FEATURE_ASIMDFHM          = 307,
+
+    // IBM/ZARCH
+    NPY_CPU_FEATURE_VX                = 350,
+ 
+    // Vector-Enhancements Facility 1
+    NPY_CPU_FEATURE_VXE               = 351,
+
+    // Vector-Enhancements Facility 2
+    NPY_CPU_FEATURE_VXE2              = 352,
 
     NPY_CPU_FEATURE_MAX
 };
@@ -138,6 +149,7 @@ npy_cpu_features_dict(void);
  * On aarch64: ['NEON', 'NEON_FP16', 'NEON_VPFV4', 'ASIMD']
  * On ppc64: []
  * On ppc64le: ['VSX', 'VSX2']
+ * On s390x: []
  * On any other arch or if the optimization is disabled: []
  */
 NPY_VISIBILITY_HIDDEN PyObject *
@@ -157,8 +169,9 @@ npy_cpu_baseline_list(void);
  * On x64: ['SSSE3', 'SSE41', 'POPCNT', 'SSE42', 'AVX', 'F16C', 'FMA3', 'AVX2', 'AVX512F', ...]
  * On armhf: ['NEON', 'NEON_FP16', 'NEON_VPFV4', 'ASIMD', 'ASIMDHP', 'ASIMDDP', 'ASIMDFHM']
  * On aarch64: ['ASIMDHP', 'ASIMDDP', 'ASIMDFHM']
- * On ppc64:  ['VSX', 'VSX2', 'VSX3']
- * On ppc64le: ['VSX3']
+ * On ppc64:  ['VSX', 'VSX2', 'VSX3', 'VSX4']
+ * On ppc64le: ['VSX3', 'VSX4']
+ * On s390x: ['VX', 'VXE', VXE2]
  * On any other arch or if the optimization is disabled: []
  */
 NPY_VISIBILITY_HIDDEN PyObject *

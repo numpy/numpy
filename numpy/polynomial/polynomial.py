@@ -772,7 +772,7 @@ def polyvalfromroots(x, r, tensor=True):
 
     If `r` is a 1-D array, then `p(x)` will have the same shape as `x`.  If `r`
     is multidimensional, then the shape of the result depends on the value of
-    `tensor`. If `tensor is ``True`` the shape will be r.shape[1:] + x.shape;
+    `tensor`. If `tensor` is ``True`` the shape will be r.shape[1:] + x.shape;
     that is, each polynomial is evaluated at every value of `x`. If `tensor` is
     ``False``, the shape will be r.shape[1:]; that is, each polynomial is
     evaluated only for the corresponding broadcast value of `x`. Note that

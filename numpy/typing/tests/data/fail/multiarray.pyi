@@ -1,4 +1,3 @@
-from typing import List
 import numpy as np
 import numpy.typing as npt
 
@@ -12,7 +11,7 @@ AR_M: npt.NDArray[np.datetime64]
 
 M: np.datetime64
 
-AR_LIKE_f: List[float]
+AR_LIKE_f: list[float]
 
 def func(a: int) -> None: ...
 
@@ -40,7 +39,7 @@ np.arange(stop=10)  # E: No overload variant
 
 np.datetime_data(int)  # E: incompatible type
 
-np.busday_offset("2012", 10)  # E: incompatible type
+np.busday_offset("2012", 10)  # E: No overload variant
 
 np.datetime_as_string("2012")  # E: No overload variant
 

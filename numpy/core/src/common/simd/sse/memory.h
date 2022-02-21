@@ -495,4 +495,45 @@ NPYV_IMPL_SSE_REST_PARTIAL_TYPES(f32, s32)
 NPYV_IMPL_SSE_REST_PARTIAL_TYPES(u64, s64)
 NPYV_IMPL_SSE_REST_PARTIAL_TYPES(f64, s64)
 
+/*********************************
+ * Lookup table
+ *********************************/
+// uses vector as indexes into a table
+// that contains 32 elements of float32.
+NPY_FINLINE npyv_f32 npyv_lut32_f32(const float *table, npyv_u32 idx)
+{
+    const int i0 = _mm_cvtsi128_si32(idx);
+#ifdef NPY_HAVE_SSE41
+    const int i1 = _mm_extract_epi32(idx, 1);
+    const int i2 = _mm_extract_epi32(idx, 2);
+    const int i3 = _mm_extract_epi32(idx, 3);
+#else
+    const int i1 = _mm_extract_epi16(idx, 2);
+    const int i2 = _mm_extract_epi16(idx, 4);
+    const int i3 = _mm_extract_epi16(idx, 6);
+#endif
+    return npyv_set_f32(table[i0], table[i1], table[i2], table[i3]);
+}
+NPY_FINLINE npyv_u32 npyv_lut32_u32(const npy_uint32 *table, npyv_u32 idx)
+{ return npyv_reinterpret_u32_f32(npyv_lut32_f32((const float*)table, idx)); }
+NPY_FINLINE npyv_s32 npyv_lut32_s32(const npy_int32 *table, npyv_u32 idx)
+{ return npyv_reinterpret_s32_f32(npyv_lut32_f32((const float*)table, idx)); }
+
+// uses vector as indexes into a table
+// that contains 16 elements of float64.
+NPY_FINLINE npyv_f64 npyv_lut16_f64(const double *table, npyv_u64 idx)
+{
+    const int i0 = _mm_cvtsi128_si32(idx);
+#ifdef NPY_HAVE_SSE41
+    const int i1 = _mm_extract_epi32(idx, 2);
+#else
+    const int i1 = _mm_extract_epi16(idx, 4);
+#endif
+    return npyv_set_f64(table[i0], table[i1]);
+}
+NPY_FINLINE npyv_u64 npyv_lut16_u64(const npy_uint64 *table, npyv_u64 idx)
+{ return npyv_reinterpret_u64_f64(npyv_lut16_f64((const double*)table, idx)); }
+NPY_FINLINE npyv_s64 npyv_lut16_s64(const npy_int64 *table, npyv_u64 idx)
+{ return npyv_reinterpret_s64_f64(npyv_lut16_f64((const double*)table, idx)); }
+
 #endif // _NPY_SIMD_SSE_MEMORY_H

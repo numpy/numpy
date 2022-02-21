@@ -233,7 +233,7 @@ PyArray_CopyConverter(PyObject *obj, _PyArray_CopyMode *copymode) {
     }
 
     int int_copymode;
-    PyObject* numpy_CopyMode = NULL;
+    static PyObject* numpy_CopyMode = NULL;
     npy_cache_import("numpy", "_CopyMode", &numpy_CopyMode);
 
     if (numpy_CopyMode != NULL && (PyObject *)Py_TYPE(obj) == numpy_CopyMode) {
@@ -243,6 +243,7 @@ PyArray_CopyConverter(PyObject *obj, _PyArray_CopyMode *copymode) {
         }
 
         int_copymode = (int)PyLong_AsLong(mode_value);
+        Py_DECREF(mode_value);
         if (error_converting(int_copymode)) {
             return NPY_FAIL;
         }
@@ -1051,6 +1052,18 @@ PyArray_PyIntAsIntp(PyObject *o)
 {
     return PyArray_PyIntAsIntp_ErrMsg(o, "an integer is required");
 }
+
+
+NPY_NO_EXPORT int
+PyArray_IntpFromPyIntConverter(PyObject *o, npy_intp *val)
+{
+    *val = PyArray_PyIntAsIntp(o);
+    if (error_converting(*val)) {
+        return NPY_FAIL;
+    }
+    return NPY_SUCCEED;
+}
+
 
 /**
  * Reads values from a sequence of integers and stores them into an array.

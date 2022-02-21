@@ -131,9 +131,10 @@
 #endif
 #endif
 
-#if defined(_MSC_VER)
-        #define NPY_INLINE __inline
-#elif defined(__GNUC__)
+#if defined(_MSC_VER) && !defined(__clang__)
+    #define NPY_INLINE __inline
+/* clang included here to handle clang-cl on Windows */
+#elif defined(__GNUC__) || defined(__clang__)
     #if defined(__STRICT_ANSI__)
          #define NPY_INLINE __inline__
     #else
@@ -179,12 +180,6 @@
 #if defined(_MSC_VER) && defined(_WIN64) && (_MSC_VER > 1400) || \
     defined(__MINGW32__) || defined(__MINGW64__)
     #include <io.h>
-
-/* mingw based on 3.4.5 has lseek but not ftell/fseek */
-#if defined(__MINGW32__) || defined(__MINGW64__)
-extern int __cdecl _fseeki64(FILE *, long long, int);
-extern long long __cdecl _ftelli64(FILE *);
-#endif
 
     #define npy_fseek _fseeki64
     #define npy_ftell _ftelli64

@@ -1,28 +1,29 @@
 import os
 import subprocess
-from typing import Literal as L, Any, List, Iterable, Dict, overload, TypedDict
+from collections.abc import Iterable
+from typing import Literal as L, Any, overload, TypedDict
 
 from numpy._pytesttester import PytestTester
 
 class _F2PyDictBase(TypedDict):
-    csrc: List[str]
-    h: List[str]
+    csrc: list[str]
+    h: list[str]
 
 class _F2PyDict(_F2PyDictBase, total=False):
-    fsrc: List[str]
-    ltx: List[str]
+    fsrc: list[str]
+    ltx: list[str]
 
-__all__: List[str]
-__path__: List[str]
+__all__: list[str]
+__path__: list[str]
 test: PytestTester
 
-def run_main(comline_list: Iterable[str]) -> Dict[str, _F2PyDict]: ...
+def run_main(comline_list: Iterable[str]) -> dict[str, _F2PyDict]: ...
 
 @overload
 def compile(  # type: ignore[misc]
     source: str | bytes,
     modulename: str = ...,
-    extra_args: str | List[str] = ...,
+    extra_args: str | list[str] = ...,
     verbose: bool = ...,
     source_fn: None | str | bytes | os.PathLike[Any] = ...,
     extension: L[".f", ".f90"] = ...,
@@ -32,7 +33,7 @@ def compile(  # type: ignore[misc]
 def compile(
     source: str | bytes,
     modulename: str = ...,
-    extra_args: str | List[str] = ...,
+    extra_args: str | list[str] = ...,
     verbose: bool = ...,
     source_fn: None | str | bytes | os.PathLike[Any] = ...,
     extension: L[".f", ".f90"] = ...,

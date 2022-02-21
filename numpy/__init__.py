@@ -52,8 +52,6 @@ of numpy are available under the ``doc`` sub-module::
 
 Available subpackages
 ---------------------
-doc
-    Topical documentation on broadcasting, indexing, etc.
 lib
     Basic functions used by several sub-packages.
 random
@@ -66,8 +64,6 @@ polynomial
     Polynomial tools
 testing
     NumPy testing tools
-f2py
-    Fortran to Python Interface Generator.
 distutils
     Enhancements to distutils with support for
     Fortran compilers support and more.
@@ -412,6 +408,11 @@ else:
     # We do this from python, since the C-module may not be reloaded and
     # it is tidier organized.
     core.multiarray._multiarray_umath._reload_guard()
+
+    # Tell PyInstaller where to find hook-numpy.py
+    def _pyinstaller_hooks_dir():
+        from pathlib import Path
+        return [str(Path(__file__).with_name("_pyinstaller").resolve())]
 
 
 # get the version using versioneer

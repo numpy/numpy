@@ -1,26 +1,25 @@
-from typing import Any, List, Dict, Iterable, TypeVar, overload, SupportsIndex
+from collections.abc import Iterable
+from typing import Any, TypeVar, overload, SupportsIndex
 
-from numpy import dtype, generic
+from numpy import generic
 from numpy.typing import (
     NDArray,
     ArrayLike,
     _ShapeLike,
     _Shape,
-    _FiniteNestedSequence,
-    _SupportsArray,
+    _ArrayLike
 )
 
 _SCT = TypeVar("_SCT", bound=generic)
-_ArrayLike = _FiniteNestedSequence[_SupportsArray[dtype[_SCT]]]
 
-__all__: List[str]
+__all__: list[str]
 
 class DummyArray:
-    __array_interface__: Dict[str, Any]
+    __array_interface__: dict[str, Any]
     base: None | NDArray[Any]
     def __init__(
         self,
-        interface: Dict[str, Any],
+        interface: dict[str, Any],
         base: None | NDArray[Any] = ...,
     ) -> None: ...
 
@@ -78,4 +77,4 @@ def broadcast_shapes(*args: _ShapeLike) -> _Shape: ...
 def broadcast_arrays(
     *args: ArrayLike,
     subok: bool = ...,
-) -> List[NDArray[Any]]: ...
+) -> list[NDArray[Any]]: ...

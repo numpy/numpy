@@ -5,7 +5,7 @@ import copy
 import types
 import pickle
 import weakref
-from typing import TypeVar, Any, Callable, Tuple, Type, Union
+from typing import TypeVar, Any, Union, Callable
 
 import pytest
 import numpy as np
@@ -31,7 +31,7 @@ GETATTR_NAMES = sorted(set(dir(np.ndarray)) - _GenericAlias._ATTR_EXCEPTIONS)
 BUFFER = np.array([1], dtype=np.int64)
 BUFFER.setflags(write=False)
 
-def _get_subclass_mro(base: type) -> Tuple[type, ...]:
+def _get_subclass_mro(base: type) -> tuple[type, ...]:
     class Subclass(base):  # type: ignore[misc,valid-type]
         pass
     return Subclass.__mro__[1:]
@@ -132,7 +132,7 @@ class TestGenericAlias:
     def test_raise(
         self,
         name: str,
-        exc_type: Type[BaseException],
+        exc_type: type[BaseException],
         func: FuncType,
     ) -> None:
         """Test operations that are supposed to raise."""

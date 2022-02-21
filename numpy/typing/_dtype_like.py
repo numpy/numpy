@@ -57,8 +57,11 @@ from ._char_codes import (
     _ObjectCodes,
 )
 
-_DTypeLikeNested = Any  # TODO: wait for support for recursive types
+_SCT = TypeVar("_SCT", bound=np.generic)
 _DType_co = TypeVar("_DType_co", covariant=True, bound=DType[Any])
+
+_DTypeLikeNested = Any  # TODO: wait for support for recursive types
+
 
 # Mandatory keys
 class _DTypeDictBase(TypedDict):
@@ -80,6 +83,14 @@ class _DTypeDict(_DTypeDictBase, total=False):
 class _SupportsDType(Protocol[_DType_co]):
     @property
     def dtype(self) -> _DType_co: ...
+
+
+# A subset of `npt.DTypeLike` that can be parametrized w.r.t. `np.generic`
+_DTypeLike = Union[
+    "np.dtype[_SCT]",
+    Type[_SCT],
+    _SupportsDType["np.dtype[_SCT]"],
+]
 
 
 # Would create a dtype[np.void]

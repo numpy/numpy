@@ -1020,6 +1020,13 @@ class TestRandomDist:
         arr = np.ones((3, 2))
         assert_raises(np.AxisError, random.shuffle, arr, 2)
 
+    def test_shuffle_not_writeable(self):
+        random = Generator(MT19937(self.seed))
+        a = np.zeros(5)
+        a.flags.writeable = False
+        with pytest.raises(ValueError, match='read-only'):
+            random.shuffle(a)
+
     def test_permutation(self):
         random = Generator(MT19937(self.seed))
         alist = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0]
@@ -1115,6 +1122,12 @@ class TestRandomDist:
         x = np.ones((3, 5))
         with pytest.raises(TypeError, match='Cannot cast'):
             random.permuted(x, axis=1, out=out)
+
+    def test_permuted_not_writeable(self):
+        x = np.zeros((2, 5))
+        x.flags.writeable = False
+        with pytest.raises(ValueError, match='read-only'):
+            random.permuted(x, axis=1, out=x)
 
     def test_beta(self):
         random = Generator(MT19937(self.seed))
@@ -2550,7 +2563,7 @@ class TestSingleEltArrayInput:
 def test_jumped(config):
     # Each config contains the initial seed, a number of raw steps
     # the sha256 hashes of the initial and the final states' keys and
-    # the position of of the initial and the final state.
+    # the position of the initial and the final state.
     # These were produced using the original C implementation.
     seed = config["seed"]
     steps = config["steps"]

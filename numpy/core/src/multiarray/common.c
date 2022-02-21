@@ -108,8 +108,8 @@ PyArray_DTypeFromObjectStringDiscovery(
 
 /*
  * This function is now identical to the new PyArray_DiscoverDTypeAndShape
- * but only returns the the dtype. It should in most cases be slowly phased
- * out. (Which may need some refactoring to PyArray_FromAny to make it simpler)
+ * but only returns the dtype. It should in most cases be slowly phased out.
+ * (Which may need some refactoring to PyArray_FromAny to make it simpler)
  */
 NPY_NO_EXPORT int
 PyArray_DTypeFromObject(PyObject *obj, int maxdims, PyArray_Descr **out_dtype)

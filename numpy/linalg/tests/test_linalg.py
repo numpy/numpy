@@ -467,6 +467,11 @@ class TestSolve(SolveCases):
         x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
         assert_equal(linalg.solve(x, x).dtype, dtype)
 
+    @pytest.mark.xfail(sys.platform == 'cygwin',
+                       reason="Consistently fails on CI.")
+    def test_sq_cases(self):
+        super().test_sq_cases()
+
     def test_0_size(self):
         class ArraySubclass(np.ndarray):
             pass
@@ -533,6 +538,11 @@ class TestInv(InvCases):
     def test_types(self, dtype):
         x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
         assert_equal(linalg.inv(x).dtype, dtype)
+
+    @pytest.mark.xfail(sys.platform == 'cygwin',
+                       reason="Consistently fails on CI.")
+    def test_sq_cases(self):
+        super().test_sq_cases()
 
     def test_0_size(self):
         # Check that all kinds of 0-sized arrays work
@@ -1773,29 +1783,34 @@ class TestQR:
 class TestCholesky:
     # TODO: are there no other tests for cholesky?
 
-    def test_basic_property(self):
+    @pytest.mark.xfail(
+        sys.platform == 'cygwin', reason="Consistently fails in CI"
+    )
+    @pytest.mark.parametrize(
+        'shape', [(1, 1), (2, 2), (3, 3), (50, 50), (3, 10, 10)]
+    )
+    @pytest.mark.parametrize(
+        'dtype', (np.float32, np.float64, np.complex64, np.complex128)
+    )
+    def test_basic_property(self, shape, dtype):
         # Check A = L L^H
-        shapes = [(1, 1), (2, 2), (3, 3), (50, 50), (3, 10, 10)]
-        dtypes = (np.float32, np.float64, np.complex64, np.complex128)
+        np.random.seed(1)
+        a = np.random.randn(*shape)
+        if np.issubdtype(dtype, np.complexfloating):
+            a = a + 1j*np.random.randn(*shape)
 
-        for shape, dtype in itertools.product(shapes, dtypes):
-            np.random.seed(1)
-            a = np.random.randn(*shape)
-            if np.issubdtype(dtype, np.complexfloating):
-                a = a + 1j*np.random.randn(*shape)
+        t = list(range(len(shape)))
+        t[-2:] = -1, -2
 
-            t = list(range(len(shape)))
-            t[-2:] = -1, -2
+        a = np.matmul(a.transpose(t).conj(), a)
+        a = np.asarray(a, dtype=dtype)
 
-            a = np.matmul(a.transpose(t).conj(), a)
-            a = np.asarray(a, dtype=dtype)
+        c = np.linalg.cholesky(a)
 
-            c = np.linalg.cholesky(a)
-
-            b = np.matmul(c, c.transpose(t).conj())
-            assert_allclose(b, a,
-                            err_msg=f'{shape} {dtype}\n{a}\n{c}',
-                            atol=500 * a.shape[0] * np.finfo(dtype).eps)
+        b = np.matmul(c, c.transpose(t).conj())
+        assert_allclose(b, a,
+                        err_msg=f'{shape} {dtype}\n{a}\n{c}',
+                        atol=500 * a.shape[0] * np.finfo(dtype).eps)
 
     def test_0_size(self):
         class ArraySubclass(np.ndarray):
@@ -2101,6 +2116,29 @@ class TestTensorinv:
         ainv = linalg.tensorinv(a, ind=1)
         b = np.ones(24)
         assert_allclose(np.tensordot(ainv, b, 1), np.linalg.tensorsolve(a, b))
+
+
+class TestTensorsolve:
+
+    @pytest.mark.parametrize("a, axes", [
+        (np.ones((4, 6, 8, 2)), None),
+        (np.ones((3, 3, 2)), (0, 2)),
+        ])
+    def test_non_square_handling(self, a, axes):
+        with assert_raises(LinAlgError):
+            b = np.ones(a.shape[:2])
+            linalg.tensorsolve(a, b, axes=axes)
+
+    @pytest.mark.xfail(sys.platform == 'cygwin',
+                       reason="Consistently fails on CI")
+    @pytest.mark.parametrize("shape",
+        [(2, 3, 6), (3, 4, 4, 3), (0, 3, 3, 0)],
+    )
+    def test_tensorsolve_result(self, shape):
+        a = np.random.randn(*shape)
+        b = np.ones(a.shape[:2])
+        x = np.linalg.tensorsolve(a, b)
+        assert_allclose(np.tensordot(a, x, axes=len(x.shape)), b)
 
 
 def test_unsupported_commontype():

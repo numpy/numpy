@@ -24,6 +24,12 @@
  *     Register a new loop for a ufunc.  This uses the `PyArrayMethod_Spec`
  *     which must be filled in (see in-line comments).
  *
+ * - PyUFunc_AddWrappingLoop:
+ *
+ *     Register a new loop which reuses an existing one, but modifies the
+ *     result dtypes.  Please search the internal NumPy docs for more info
+ *     at this point.  (Used for physical units dtype.)
+ *
  * - PyUFunc_AddPromoter:
  *
  *     Register a new promoter for a ufunc.  A promoter is a function stored
@@ -58,6 +64,16 @@
  *     also promote C; where "promotes" means implements the promotion.
  *     (There are some exceptions for abstract DTypes)
  *
+ * - PyArray_GetDefaultDescr:
+ *
+ *     Given a DType class, returns the default instance (descriptor).
+ *     This is an inline function checking for `singleton` first and only
+ *     calls the `default_descr` function if necessary.
+ *
+ * - PyArray_DoubleDType, etc.:
+ *
+ *     Aliases to the DType classes for the builtin NumPy DTypes.
+ *
  * WARNING
  * =======
  *
@@ -82,6 +98,15 @@
  * The new DType API is designed in a way to make it potentially useful for
  * alternative "array-like" implementations.  This will require careful
  * exposure of details and functions and is not part of this experimental API.
+ *
+ * Brief (incompatibility) changelog
+ * =================================
+ *
+ * 2. None (only additions).
+ * 3. New `npy_intp *view_offset` argument for `resolve_descriptors`.
+ *    This replaces the `NPY_CAST_IS_VIEW` flag.  It can be set to 0 if the
+ *    operation is a view, and is pre-initialized to `NPY_MIN_INTP` indicating
+ *    that the operation is not a view.
  */
 
 #ifndef NUMPY_CORE_INCLUDE_NUMPY_EXPERIMENTAL_DTYPE_API_H_
@@ -92,20 +117,41 @@
 
 
 /*
- * Just a hack so I don't forget importing as much myself, I spend way too
- * much time noticing it the first time around :).
+ * There must be a better way?! -- Oh well, this is experimental
+ * (my issue with it, is that I cannot undef those helpers).
  */
-static void
-__not_imported(void)
-{
-    printf("*****\nCritical error, dtype API not imported\n*****\n");
-}
-static void *__uninitialized_table[] = {
-        &__not_imported, &__not_imported, &__not_imported, &__not_imported,
-        &__not_imported, &__not_imported, &__not_imported, &__not_imported};
+#if defined(PY_ARRAY_UNIQUE_SYMBOL)
+    #define NPY_EXP_DTYPE_API_CONCAT_HELPER2(x, y) x ## y
+    #define NPY_EXP_DTYPE_API_CONCAT_HELPER(arg) NPY_EXP_DTYPE_API_CONCAT_HELPER2(arg, __experimental_dtype_api_table)
+    #define __experimental_dtype_api_table NPY_EXP_DTYPE_API_CONCAT_HELPER(PY_ARRAY_UNIQUE_SYMBOL)
+#else
+    #define __experimental_dtype_api_table __experimental_dtype_api_table
+#endif
 
+/* Support for correct multi-file projects: */
+#if defined(NO_IMPORT) || defined(NO_IMPORT_ARRAY)
+    extern void **__experimental_dtype_api_table;
+#else
+    /*
+     * Just a hack so I don't forget importing as much myself, I spend way too
+     * much time noticing it the first time around :).
+     */
+    static void
+    __not_imported(void)
+    {
+        printf("*****\nCritical error, dtype API not imported\n*****\n");
+    }
 
-static void **__experimental_dtype_api_table = __uninitialized_table;
+    static void *__uninitialized_table[] = {
+            &__not_imported, &__not_imported, &__not_imported, &__not_imported,
+            &__not_imported, &__not_imported, &__not_imported, &__not_imported};
+
+    #if defined(PY_ARRAY_UNIQUE_SYMBOL)
+        void **__experimental_dtype_api_table = __uninitialized_table;
+    #else
+        static void **__experimental_dtype_api_table = __uninitialized_table;
+    #endif
+#endif
 
 
 /*
@@ -132,7 +178,7 @@ typedef struct {
  * NOTE: Expected changes:
  *       * invert logic of floating point error flag
  *       * probably split runtime and general flags into two
- *       * should possibly not use an enum for typdef for more stable ABI?
+ *       * should possibly not use an enum for typedef for more stable ABI?
  */
 typedef enum {
     /* Flag for whether the GIL is required */
@@ -163,7 +209,7 @@ typedef struct {
     int nin, nout;
     NPY_CASTING casting;
     NPY_ARRAYMETHOD_FLAGS flags;
-    PyObject **dtypes;  /* array of DType class objects */
+    PyArray_DTypeMeta **dtypes;
     PyType_Slot *slots;
 } PyArrayMethod_Spec;
 
@@ -177,6 +223,21 @@ typedef PyObject *_ufunc_addloop_fromspec_func(
 #define PyUFunc_AddLoopFromSpec \
     (*(_ufunc_addloop_fromspec_func *)(__experimental_dtype_api_table[0]))
 
+
+/* Please see the NumPy definitions in `array_method.h` for details on these */
+typedef int translate_given_descrs_func(int nin, int nout,
+        PyArray_DTypeMeta *wrapped_dtypes[],
+        PyArray_Descr *given_descrs[], PyArray_Descr *new_descrs[]);
+typedef int translate_loop_descrs_func(int nin, int nout,
+        PyArray_DTypeMeta *new_dtypes[], PyArray_Descr *given_descrs[],
+        PyArray_Descr *original_descrs[], PyArray_Descr *loop_descrs[]);
+
+typedef int _ufunc_wrapping_loop_func(PyObject *ufunc_obj,
+        PyArray_DTypeMeta *new_dtypes[], PyArray_DTypeMeta *wrapped_dtypes[],
+        translate_given_descrs_func *translate_given_descrs,
+        translate_loop_descrs_func *translate_loop_descrs);
+#define PyUFunc_AddWrappingLoop \
+    (*(_ufunc_wrapping_loop_func *)(__experimental_dtype_api_table[7]))
 
 /*
  * Type of the C promoter function, which must be wrapped into a
@@ -206,16 +267,6 @@ typedef int _ufunc_addpromoter_func(
 #define PyUFunc_AddPromoter \
     (*(_ufunc_addpromoter_func *)(__experimental_dtype_api_table[1]))
 
-/*
- * In addition to the normal casting levels, NPY_CAST_IS_VIEW indicates
- * that no cast operation is necessary at all (although a copy usually will be)
- *
- * NOTE: The most likely modification here is to add an additional
- *       `view_offset` output to resolve_descriptors.  If set, it would
- *       indicate both that it is a view and what offset to use.  This means that
- *       e.g. `arr.imag` could be implemented by an ArrayMethod.
- */
-#define NPY_CAST_IS_VIEW _NPY_CAST_IS_VIEW
 
 /*
  * The resolve descriptors function, must be able to handle NULL values for
@@ -236,7 +287,8 @@ typedef NPY_CASTING (resolve_descriptors_function)(
         /* Input descriptors (instances).  Outputs may be NULL. */
         PyArray_Descr **given_descrs,
         /* Exact loop descriptors to use, must not hold references on error */
-        PyArray_Descr **loop_descrs);
+        PyArray_Descr **loop_descrs,
+        npy_intp *view_offset);
 
 /* NOT public yet: Signature needs adapting as external API. */
 #define _NPY_METH_get_loop 2
@@ -334,6 +386,65 @@ typedef PyArray_DTypeMeta *__promote_dtype_sequence(
     ((__promote_dtype_sequence *)(__experimental_dtype_api_table[5]))
 
 
+typedef PyArray_Descr *__get_default_descr(
+        PyArray_DTypeMeta *DType);
+#define _PyArray_GetDefaultDescr \
+    ((__get_default_descr *)(__experimental_dtype_api_table[6]))
+
+static NPY_INLINE PyArray_Descr *
+PyArray_GetDefaultDescr(PyArray_DTypeMeta *DType)
+{
+    if (DType->singleton != NULL) {
+        Py_INCREF(DType->singleton);
+        return DType->singleton;
+    }
+    return _PyArray_GetDefaultDescr(DType);
+}
+
+
+/*
+ * NumPy's builtin DTypes:
+ */
+#define PyArray_BoolDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[10])
+/* Integers */
+#define PyArray_ByteDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[11])
+#define PyArray_UByteDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[12])
+#define PyArray_ShortDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[13])
+#define PyArray_UShortDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[14])
+#define PyArray_IntDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[15])
+#define PyArray_UIntDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[16])
+#define PyArray_LongDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[17])
+#define PyArray_ULongDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[18])
+#define PyArray_LongLongDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[19])
+#define PyArray_ULongLongDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[20])
+/* Integer aliases */
+#define PyArray_Int8Type (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[21])
+#define PyArray_UInt8DType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[22])
+#define PyArray_Int16DType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[23])
+#define PyArray_UInt16DType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[24])
+#define PyArray_Int32DType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[25])
+#define PyArray_UInt32DType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[26])
+#define PyArray_Int64DType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[27])
+#define PyArray_UInt64DType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[28])
+#define PyArray_IntpDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[29])
+#define PyArray_UIntpDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[30])
+/* Floats */
+#define PyArray_HalfType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[31])
+#define PyArray_FloatDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[32])
+#define PyArray_DoubleDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[33])
+#define PyArray_LongDoubleDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[34])
+/* Complex */
+#define PyArray_CFloatDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[35])
+#define PyArray_CDoubleDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[36])
+#define PyArray_CLongDoubleDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[37])
+/* String/Bytes */
+#define PyArray_StringDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[38])
+#define PyArray_UnicodeDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[39])
+/* Datetime/Timedelta */
+#define PyArray_DatetimeDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[40])
+#define PyArray_TimedeltaDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[41])
+
+
 /*
  * ********************************
  *         Initialization
@@ -344,7 +455,9 @@ typedef PyArray_DTypeMeta *__promote_dtype_sequence(
  * runtime-check this.
  * You must call this function to use the symbols defined in this file.
  */
-#define __EXPERIMENTAL_DTYPE_VERSION 2
+#if !defined(NO_IMPORT) && !defined(NO_IMPORT_ARRAY)
+
+#define __EXPERIMENTAL_DTYPE_VERSION 4
 
 static int
 import_experimental_dtype_api(int version)
@@ -372,7 +485,7 @@ import_experimental_dtype_api(int version)
     if (api == NULL) {
         return -1;
     }
-    __experimental_dtype_api_table = PyCapsule_GetPointer(api,
+    __experimental_dtype_api_table = (void **)PyCapsule_GetPointer(api,
             "experimental_dtype_api_table");
     Py_DECREF(api);
 
@@ -382,5 +495,7 @@ import_experimental_dtype_api(int version)
     }
     return 0;
 }
+
+#endif  /* !defined(NO_IMPORT) && !defined(NO_IMPORT_ARRAY) */
 
 #endif  /* NUMPY_CORE_INCLUDE_NUMPY_EXPERIMENTAL_DTYPE_API_H_ */

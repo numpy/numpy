@@ -79,7 +79,7 @@ I am building NumPy for my local use
 And I do not intend to export the build to other users or target a
 different CPU than what the host has.
 
-Set `native` for baseline, or manualy specify the CPU features in case of option
+Set `native` for baseline, or manually specify the CPU features in case of option
 `native` isn't supported by your platform::
 
     python setup.py build --cpu-baseline="native" bdist
@@ -165,6 +165,7 @@ Special Options
        ARMHF                                  ``NONE``
        ARM64 A.K. AARCH64                     ``NEON`` ``NEON_FP16`` ``NEON_VFPV4``
                                               ``ASIMD``
+       IBM/ZSYSTEM(S390X)                     ``NONE``
       ======================================  =======================================
 
 - ``MAX``: Enables all supported CPU features by the compiler and platform.
@@ -234,7 +235,7 @@ Behaviors
     python setup.py build --cpu-baseline=ssse3,sse41,sse42,avx,avx2,fma3
 
 - ``--cpu-dispatch`` escapes any specified baseline features and also escapes
-  any features not supported by the target platform or compiler without rasing
+  any features not supported by the target platform or compiler without raising
   fatal errors.
 
 Eventually, you should always check the final report through the build log
@@ -338,7 +339,7 @@ that includes several sections, and each section has several values, representin
 **Platform**:
 
 - :enabled:`Architecture`: The architecture name of target CPU. It should be one of
-  ``x86``, ``x64``, ``ppc64``, ``ppc64le``, ``armhf``, ``aarch64`` or ``unknown``.
+  ``x86``, ``x64``, ``ppc64``, ``ppc64le``, ``armhf``, ``aarch64``, ``s390x`` or ``unknown``.
 
 - :enabled:`Compiler`: The compiler name. It should be one of
   gcc, clang, msvc, icc, iccw or unix-like.

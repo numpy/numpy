@@ -1,6 +1,6 @@
-.. _reference:
-
 .. module:: numpy
+
+.. _reference:
 
 ###############
 NumPy Reference
@@ -25,6 +25,7 @@ For learning how to use NumPy, see the :ref:`complete documentation <numpy_docs_
    global_state
    distutils
    distutils_guide
+   distutils_status_migration
    c-api/index
    simd/index
    swig

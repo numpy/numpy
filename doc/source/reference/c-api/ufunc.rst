@@ -79,7 +79,7 @@ Types
 
 .. c:type:: PyUFuncGenericFunction
 
-    pointers to functions that actually implement the underlying
+    Pointers to functions that actually implement the underlying
     (element-by-element) function :math:`N` times with the following
     signature:
 
@@ -107,7 +107,10 @@ Types
 
             Arbitrary data (extra arguments, function names, *etc.* )
             that can be stored with the ufunc and will be passed in
-            when it is called.
+            when it is called. May be ``NULL``.
+
+            .. versionchanged:: 1.23.0
+               Accepts ``NULL`` `data` in addition to array of ``NULL`` values.
 
         This is an example of a func specialized for addition of doubles
         returning doubles.
@@ -154,20 +157,21 @@ Functions
        ufunc object is alive.
 
     :param func:
-        Must to an array of length *ntypes* containing
-        :c:type:`PyUFuncGenericFunction` items.
+        Must point to an array containing *ntypes*
+        :c:type:`PyUFuncGenericFunction` elements.
 
     :param data:
-        Should be ``NULL`` or a pointer to an array of size *ntypes*
-        . This array may contain arbitrary extra-data to be passed to
-        the corresponding loop function in the func array.
+        Should be ``NULL`` or a pointer to an array of size *ntypes*.
+        This array may contain arbitrary extra-data to be passed to
+        the corresponding loop function in the func array, including
+        ``NULL``.
 
     :param types:
        Length ``(nin + nout) * ntypes`` array of ``char`` encoding the
        `numpy.dtype.num` (built-in only) that the corresponding
        function in the ``func`` array accepts. For instance, for a comparison
        ufunc with three ``ntypes``, two ``nin`` and one ``nout``, where the
-       first function accepts `numpy.int32` and the the second
+       first function accepts `numpy.int32` and the second
        `numpy.int64`, with both returning `numpy.bool_`, ``types`` would
        be ``(char[]) {5, 5, 0, 7, 7, 0}`` since ``NPY_INT32`` is 5,
        ``NPY_INT64`` is 7, and ``NPY_BOOL`` is 0.

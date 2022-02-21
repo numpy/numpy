@@ -136,7 +136,7 @@ def zeros_like(a, dtype=None, order='K', subok=True, shape=None):
 
     """
     res = empty_like(a, dtype=dtype, order=order, subok=subok, shape=shape)
-    # needed instead of a 0 to get same result as zeros for for string dtypes
+    # needed instead of a 0 to get same result as zeros for string dtypes
     z = zeros(1, dtype=res.dtype)
     multiarray.copyto(res, z, casting='unsafe')
     return res
@@ -364,7 +364,7 @@ def full_like(a, fill_value, dtype=None, order='K', subok=True, shape=None):
     a : array_like
         The shape and data-type of `a` define these same attributes of
         the returned array.
-    fill_value : scalar
+    fill_value : array_like
         Fill value.
     dtype : data-type, optional
         Overrides the data type of the result.
@@ -412,6 +412,12 @@ def full_like(a, fill_value, dtype=None, order='K', subok=True, shape=None):
     >>> np.full_like(y, 0.1)
     array([0.1, 0.1, 0.1, 0.1, 0.1, 0.1])
 
+    >>> y = np.zeros([2, 2, 3], dtype=int)
+    >>> np.full_like(y, [0, 0, 255])
+    array([[[  0,   0, 255],
+            [  0,   0, 255]],
+           [[  0,   0, 255],
+            [  0,   0, 255]]])
     """
     res = empty_like(a, dtype=dtype, order=order, subok=subok, shape=shape)
     multiarray.copyto(res, fill_value, casting='unsafe')

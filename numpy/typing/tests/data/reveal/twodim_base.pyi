@@ -1,4 +1,4 @@
-from typing import Any, List, TypeVar
+from typing import Any, TypeVar
 
 import numpy as np
 import numpy.typing as npt
@@ -21,7 +21,7 @@ AR_f: npt.NDArray[np.float64]
 AR_c: npt.NDArray[np.complex128]
 AR_O: npt.NDArray[np.object_]
 
-AR_LIKE_b: List[bool]
+AR_LIKE_b: list[bool]
 
 reveal_type(np.fliplr(AR_b))  # E: ndarray[Any, dtype[bool_]]
 reveal_type(np.fliplr(AR_LIKE_b))  # E: ndarray[Any, dtype[Any]]

@@ -1,22 +1,18 @@
 from typing import (
     Literal as L,
     Any,
-    Dict,
-    List,
     overload,
-    Tuple,
     TypeVar,
     Protocol,
 )
 
-from numpy import ndarray, dtype, generic
+from numpy import generic
 
 from numpy.typing import (
     ArrayLike,
     NDArray,
     _ArrayLikeInt,
-    _FiniteNestedSequence,
-    _SupportsArray,
+    _ArrayLike,
 )
 
 _SCT = TypeVar("_SCT", bound=generic)
@@ -25,9 +21,9 @@ class _ModeFunc(Protocol):
     def __call__(
         self,
         vector: NDArray[Any],
-        iaxis_pad_width: Tuple[int, int],
+        iaxis_pad_width: tuple[int, int],
         iaxis: int,
-        kwargs: Dict[str, Any],
+        kwargs: dict[str, Any],
         /,
     ) -> None: ...
 
@@ -45,9 +41,7 @@ _ModeKind = L[
     "empty",
 ]
 
-_ArrayLike = _FiniteNestedSequence[_SupportsArray[dtype[_SCT]]]
-
-__all__: List[str]
+__all__: list[str]
 
 # TODO: In practice each keyword argument is exclusive to one or more
 # specific modes. Consider adding more overloads to express this in the future.

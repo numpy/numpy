@@ -1,9 +1,5 @@
 .. currentmodule:: numpy
 
-.. for doctests
-   The last section on Cython is 'included' at the end of this file. The tests
-   for that section are disabled.
-
 .. _arrays.nditer:
 
 *********************
@@ -489,9 +485,9 @@ reasons.
 
     >>> b = np.zeros((3,))
     >>> square([1,2,3], out=b)
-    array([ 1.,  4.,  9.])
+    array([1.,  4.,  9.])
     >>> b
-    array([ 1.,  4.,  9.])
+    array([1.,  4.,  9.])
 
     >>> square(np.arange(6).reshape(2,3), out=b)
     Traceback (most recent call last):

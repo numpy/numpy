@@ -15,9 +15,20 @@ def argsort(
     """
     # Note: this keyword argument is different, and the default is different.
     kind = "stable" if stable else "quicksort"
-    res = np.argsort(x._array, axis=axis, kind=kind)
-    if descending:
-        res = np.flip(res, axis=axis)
+    if not descending:
+        res = np.argsort(x._array, axis=axis, kind=kind)
+    else:
+        # As NumPy has no native descending sort, we imitate it here. Note that
+        # simply flipping the results of np.argsort(x._array, ...) would not
+        # respect the relative order like it would in native descending sorts.
+        res = np.flip(
+            np.argsort(np.flip(x._array, axis=axis), axis=axis, kind=kind),
+            axis=axis,
+        )
+        # Rely on flip()/argsort() to validate axis
+        normalised_axis = axis if axis >= 0 else x.ndim + axis
+        max_i = x.shape[normalised_axis] - 1
+        res = max_i - res
     return Array._new(res)
 
 

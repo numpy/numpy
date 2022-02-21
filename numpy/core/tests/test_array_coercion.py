@@ -746,3 +746,22 @@ class TestArrayLikes:
         with pytest.raises(error):
             np.array(BadSequence())
 
+
+class TestSpecialAttributeLookupFailure:
+    # An exception was raised while fetching the attribute
+
+    class WeirdArrayLike:
+        @property
+        def __array__(self):
+            raise RuntimeError("oops!")
+
+    class WeirdArrayInterface:
+        @property
+        def __array_interface__(self):
+            raise RuntimeError("oops!")
+
+    def test_deprecated(self):
+        with pytest.raises(RuntimeError):
+            np.array(self.WeirdArrayLike())
+        with pytest.raises(RuntimeError):
+            np.array(self.WeirdArrayInterface())

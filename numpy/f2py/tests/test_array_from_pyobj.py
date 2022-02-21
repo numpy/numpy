@@ -56,7 +56,6 @@ def flags2names(flags):
             "NOTSWAPPED",
             "WRITEABLE",
             "WRITEBACKIFCOPY",
-            "UPDATEIFCOPY",
             "BEHAVED",
             "BEHAVED_RO",
             "CARRAY",
