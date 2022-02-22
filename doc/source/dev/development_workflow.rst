@@ -209,6 +209,21 @@ CircleCI supports ``ci skip`` but has no command to skip only CircleCI.
 Azure chooses to still run jobs with skip commands on PRs, the jobs only get
 skipped on merging to master.
 
+Test building wheels
+```````````````````````````````````````
+
+Numpy currently uses `cibuildwheel <https://https://cibuildwheel.readthedocs.io/en/stable/>`_
+in order to build wheels through continuous integration services. To save resources, the
+cibuildwheel wheel builders are not run by default on every single PR or commit to main.
+
+If you would like to test that your pull request do not break the wheel builders,
+you may either append ``[wheel build]`` to the end of the commit message of the commit
+or add one of the following labels to the pull request(if you have the permissions to do so)::
+
+  ``36 - Build``: for pull requests changing build processes/configurations
+  ``03 - Maintenance``: for pull requests upgrading dependencies
+  ``14 - Release``: for pull requests preparing for a release
+
 
 .. _workflow_mailing_list:
 
