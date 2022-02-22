@@ -411,14 +411,16 @@ def run_main(comline_list):
     where ``<args>=string.join(<list>,' ')``, but in Python.  Unless
     ``-h`` is used, this function returns a dictionary containing
     information on generated modules and their dependencies on source
-    files.  For example, the command ``f2py -m scalar scalar.f`` can be
-    executed from Python as follows
+    files.
 
     You cannot build extension modules with this function, that is,
-    using ``-c`` is not allowed. Use ``compile`` command instead
+    using ``-c`` is not allowed. Use the ``compile`` command instead.
 
     Examples
     --------
+    The command ``f2py -m scalar scalar.f`` can be executed from Python as
+    follows.
+
     .. literalinclude:: ../../source/f2py/code/results/run_main_session.dat
         :language: python
 

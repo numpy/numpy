@@ -280,10 +280,36 @@ Glossary
 
 
    contiguous
-       An array is contiguous if
-           * it occupies an unbroken block of memory, and
-           * array elements with higher indexes occupy higher addresses (that
-             is, no :term:`stride` is negative).
+
+       An array is contiguous if:
+
+       - it occupies an unbroken block of memory, and
+       - array elements with higher indexes occupy higher addresses (that
+         is, no :term:`stride` is negative).
+        
+       There are two types of proper-contiguous NumPy arrays:
+
+       - Fortran-contiguous arrays refer to data that is stored column-wise,
+         i.e. the indexing of data as stored in memory starts from the
+         lowest dimension;
+       - C-contiguous, or simply contiguous arrays, refer to data that is
+         stored row-wise, i.e. the indexing of data as stored in memory
+         starts from the highest dimension.
+
+       For one-dimensional arrays these notions coincide. 
+       
+       For example, a 2x2 array ``A`` is Fortran-contiguous if its elements are
+       stored in memory in the following order::
+
+           A[0,0] A[1,0] A[0,1] A[1,1]
+
+       and C-contiguous if the order is as follows::
+
+           A[0,0] A[0,1] A[1,0] A[1,1]
+
+       To test whether an array is C-contiguous, use the ``.flags.c_contiguous``
+       attribute of NumPy arrays.  To test for Fortran contiguity, use the
+       ``.flags.f_contiguous`` attribute.
 
 
    copy
