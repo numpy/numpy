@@ -11,6 +11,7 @@
 
 #include "numpy/npy_math.h"
 #include "simd/simd.h"
+#include "npy_svml.h"
 #include "loops_utils.h"
 #include "loops.h"
 #include "lowlevel_strided_loops.h"
@@ -691,6 +692,43 @@ simd_log_FLOAT(npy_float * op,
 #endif // @CHK@
 /**end repeat**/
 
+#if NPY_SIMD && defined(NPY_HAVE_AVX512_SKX) && defined(NPY_CAN_LINK_SVML)
+/**begin repeat
+ * #func = exp, log#
+ * #default_val = 0, 1#
+ */
+static void
+simd_@func@_f64(const npyv_lanetype_f64 *src, npy_intp ssrc,
+                      npyv_lanetype_f64 *dst, npy_intp sdst, npy_intp len)
+{
+    const int vstep = npyv_nlanes_f64;
+    for (; len > 0; len -= vstep, src += ssrc*vstep, dst += sdst*vstep) {
+        npyv_f64 x;
+#if @default_val@
+        if (ssrc == 1) {
+            x = npyv_load_till_f64(src, len, @default_val@);
+        } else {
+            x = npyv_loadn_till_f64(src, ssrc, len, @default_val@);
+        }
+#else
+        if (ssrc == 1) {
+            x = npyv_load_tillz_f64(src, len);
+        } else {
+            x = npyv_loadn_tillz_f64(src, ssrc, len);
+        }
+#endif
+        npyv_f64 out = __svml_@func@8(x);
+        if (sdst == 1) {
+            npyv_store_till_f64(dst, len, out);
+        } else {
+            npyv_storen_till_f64(dst, sdst, len, out);
+        }
+    }
+    npyv_cleanup();
+}
+/**end repeat**/
+
+#else
 #ifdef SIMD_AVX512F_NOCLANG_BUG
 /*
  * Vectorized implementation of exp double using AVX512
@@ -1086,7 +1124,8 @@ AVX512F_log_DOUBLE(npy_double * op,
 
 #undef WORKAROUND_LLVM__mm512_mask_mul_pd
 
-#endif // AVX512F_NOCLANG_BUG
+#endif // SIMD_AVX512F_NOCLANG_BUG
+#endif // NPY_CAN_LINK_SVML
 
 #ifdef SIMD_AVX512_SKX
 /**begin repeat
@@ -1299,17 +1338,35 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(FLOAT_@func@)
 NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(DOUBLE_@func@)
 (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
 {
+#if NPY_SIMD && defined(NPY_HAVE_AVX512_SKX) && defined(NPY_CAN_LINK_SVML)
+    const npy_double *src = (npy_double*)args[0];
+    npy_double *dst = (npy_double*)args[1];
+    const int lsize = sizeof(src[0]);
+    const npy_intp ssrc = steps[0] / lsize;
+    const npy_intp sdst = steps[1] / lsize;
+    const npy_intp len = dimensions[0];
+    assert(steps[0] % lsize == 0 && steps[1] % lsize == 0);
+    if (!is_mem_overlap(src, steps[0], dst, steps[1], len) &&
+            npyv_loadable_stride_f64(ssrc) &&
+            npyv_storable_stride_f64(sdst)) {
+        simd_@func@_f64(src, ssrc, dst, sdst, len);
+        return;
+    }
+#else
 #ifdef SIMD_AVX512F_NOCLANG_BUG
     if (IS_OUTPUT_BLOCKABLE_UNARY(sizeof(npy_double), sizeof(npy_double), 64)) {
         AVX512F_@func@_DOUBLE((npy_double*)args[1], (npy_double*)args[0], dimensions[0], steps[0]);
         return;
     }
-#endif
+#else
     UNARY_LOOP {
         const npy_double in1 = *(npy_double *)ip1;
         *(npy_double *)op1 = @scalar@(in1);
     }
+#endif // SIMD_AVX512F_NOCLANG_BUG
+#endif // NPY_CAN_LINK_SVML
 }
+
 /**end repeat**/
 
 /**begin repeat
