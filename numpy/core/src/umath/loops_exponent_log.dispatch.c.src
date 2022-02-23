@@ -735,6 +735,7 @@ AVX512F_exp_DOUBLE(npy_double * op,
     __m512d mTH_max = _mm512_set1_pd(0x1.62e42fefa39efp+9);
     __m512d mTH_min = _mm512_set1_pd(-0x1.74910d52d3053p+9);
     __m512d mTH_inf = _mm512_set1_pd(NPY_INFINITY);
+    __m512d mTH_ninf = _mm512_set1_pd(-NPY_INFINITY);
     __m512d zeros_d = _mm512_set1_pd(0.0f);
     __m512d ones_d = _mm512_set1_pd(1.0f);
     __m256i vindex = _mm256_loadu_si256((__m256i*)&indexarr[0]);
@@ -751,7 +752,7 @@ AVX512F_exp_DOUBLE(npy_double * op,
     __mmask8 overflow_mask = avx512_get_partial_load_mask_pd(0, num_lanes);
     __mmask8 underflow_mask = avx512_get_partial_load_mask_pd(0, num_lanes);
     __mmask8 load_mask = avx512_get_full_load_mask_pd();
-    __mmask8 xmin_mask, xmax_mask, inf_mask, nan_mask, nearzero_mask;
+    __mmask8 xmin_mask, xmax_mask, inf_mask, ninf_mask, nan_mask, nearzero_mask;
 
     while (num_remaining_elements > 0) {
         if (num_remaining_elements < num_lanes) {
@@ -772,6 +773,7 @@ AVX512F_exp_DOUBLE(npy_double * op,
         xmax_mask = _mm512_cmp_pd_mask(x, mTH_max, _CMP_GT_OQ);
         xmin_mask = _mm512_cmp_pd_mask(x, mTH_min, _CMP_LT_OQ);
         inf_mask = _mm512_cmp_pd_mask(x, mTH_inf, _CMP_EQ_OQ);
+        ninf_mask = _mm512_cmp_pd_mask(x, mTH_ninf, _CMP_EQ_OQ);
         __m512i x_abs = _mm512_and_epi64(_mm512_castpd_si512(x),
                                 _mm512_set1_epi64(0x7FFFFFFFFFFFFFFF));
         nearzero_mask = _mm512_cmp_pd_mask(_mm512_castsi512_pd(x_abs),
@@ -779,7 +781,8 @@ AVX512F_exp_DOUBLE(npy_double * op,
         nearzero_mask = _mm512_kxor(nearzero_mask, nan_mask);
         overflow_mask = _mm512_kor(overflow_mask,
                                 _mm512_kxor(xmax_mask, inf_mask));
-        underflow_mask = _mm512_kor(underflow_mask, xmin_mask);
+        underflow_mask = _mm512_kor(underflow_mask,
+                                _mm512_kxor(xmin_mask, ninf_mask));
         x = avx512_set_masked_lanes_pd(x, zeros_d,
                         _mm512_kor(_mm512_kor(nan_mask, xmin_mask),
                             _mm512_kor(xmax_mask, nearzero_mask)));
