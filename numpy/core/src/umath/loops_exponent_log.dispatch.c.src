@@ -1358,13 +1358,12 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(DOUBLE_@func@)
         AVX512F_@func@_DOUBLE((npy_double*)args[1], (npy_double*)args[0], dimensions[0], steps[0]);
         return;
     }
-#else
+#endif // SIMD_AVX512F_NOCLANG_BUG
+#endif // NPY_CAN_LINK_SVML
     UNARY_LOOP {
         const npy_double in1 = *(npy_double *)ip1;
         *(npy_double *)op1 = @scalar@(in1);
     }
-#endif // SIMD_AVX512F_NOCLANG_BUG
-#endif // NPY_CAN_LINK_SVML
 }
 
 /**end repeat**/
