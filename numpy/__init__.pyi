@@ -676,6 +676,7 @@ _NdArraySubClass = TypeVar("_NdArraySubClass", bound=ndarray)
 _DTypeScalar_co = TypeVar("_DTypeScalar_co", covariant=True, bound=generic)
 _ByteOrder = L["S", "<", ">", "=", "|", "L", "B", "N", "I"]
 
+@final
 class dtype(Generic[_DTypeScalar_co]):
     names: None | tuple[builtins.str, ...]
     # Overload for subclass of generic
@@ -930,6 +931,7 @@ _ArrayLikeInt = Union[
 
 _FlatIterSelf = TypeVar("_FlatIterSelf", bound=flatiter)
 
+@final
 class flatiter(Generic[_NdArraySubClass]):
     @property
     def base(self) -> _NdArraySubClass: ...
@@ -3136,6 +3138,7 @@ UFUNC_PYVALS_NAME: L["UFUNC_PYVALS"]
 newaxis: None
 
 # See `npt._ufunc` for more concrete nin-/nout-specific stubs
+@final
 class ufunc:
     @property
     def __name__(self) -> str: ...
@@ -3372,6 +3375,7 @@ class DataSource:
 # TODO: The type of each `__next__` and `iters` return-type depends
 # on the length and dtype of `args`; we can't describe this behavior yet
 # as we lack variadics (PEP 646).
+@final
 class broadcast:
     def __new__(cls, *args: ArrayLike) -> broadcast: ...
     @property
@@ -3392,6 +3396,7 @@ class broadcast:
     def __iter__(self: _T) -> _T: ...
     def reset(self) -> None: ...
 
+@final
 class busdaycalendar:
     def __new__(
         cls,
