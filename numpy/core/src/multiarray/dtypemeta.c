@@ -292,6 +292,111 @@ string_unicode_common_instance(PyArray_Descr *descr1, PyArray_Descr *descr2)
 
 
 static PyArray_Descr *
+void_ensure_canonical(PyArray_Descr *self)
+{
+    if (self->subarray != NULL) {
+        PyArray_Descr *new_base = NPY_DT_CALL_ensure_canonical(
+                self->subarray->base);
+        if (new_base == NULL) {
+            return NULL;
+        }
+        if (new_base == self->subarray->base) {
+            /* just return self, no need to modify */
+            Py_DECREF(new_base);
+            Py_INCREF(self);
+            return self;
+        }
+        PyArray_Descr *new = PyArray_DescrNew(self);
+        if (new == NULL) {
+            return NULL;
+        }
+        Py_SETREF(new->subarray->base, new_base);
+        return new;
+    }
+    else if (self->names != NULL) {
+        /*
+         * This branch is fairly complex, since it needs to build a new
+         * descriptor that is in canonical form.  This means that the new
+         * descriptor should be an aligned struct if the old one was, and
+         * otherwise it should be an unaligned struct.
+         * Any unnecessary empty space is stripped from the struct.
+         *
+         * TODO: In principle we could/should try to provide the identity when
+         *       no change is necessary. (Simple if we add a flag.)
+         */
+        Py_ssize_t field_num = PyTuple_GET_SIZE(self->names);
+
+        PyArray_Descr *new = PyArray_DescrNew(self);
+        if (new == NULL) {
+            return NULL;
+        }
+        Py_SETREF(new->fields, PyDict_New());
+        if (new->fields == NULL) {
+            Py_DECREF(new);
+            return NULL;
+        }
+        int aligned = PyDataType_FLAGCHK(new, NPY_ALIGNED_STRUCT);
+        new->flags = new->flags & ~NPY_FROM_FIELDS;
+        new->flags |= NPY_NEEDS_PYAPI;  /* always needed for field access */
+        int totalsize = 0;
+        int maxalign = 1;
+        for (Py_ssize_t i = 0; i < field_num; i++) {
+            PyObject *name = PyTuple_GET_ITEM(self->names, i);
+            PyObject *tuple = PyDict_GetItem(self->fields, name);
+            PyObject *new_tuple = PyTuple_New(PyTuple_GET_SIZE(tuple));
+            PyArray_Descr *field_descr = NPY_DT_CALL_ensure_canonical(
+                    (PyArray_Descr *)PyTuple_GET_ITEM(tuple, 0));
+            if (field_descr == NULL) {
+                Py_DECREF(new_tuple);
+                Py_DECREF(new);
+                return NULL;
+            }
+            new->flags |= field_descr->flags & NPY_FROM_FIELDS;
+            PyTuple_SET_ITEM(new_tuple, 0, (PyObject *)field_descr);
+
+            if (aligned) {
+                totalsize = NPY_NEXT_ALIGNED_OFFSET(
+                        totalsize, field_descr->alignment);
+                maxalign = PyArray_MAX(maxalign, field_descr->alignment);
+            }
+            PyObject *offset_obj = PyLong_FromLong(totalsize);
+            if (offset_obj == NULL) {
+                Py_DECREF(new_tuple);
+                Py_DECREF(new);
+                return NULL;
+            }
+            PyTuple_SET_ITEM(new_tuple, 1, (PyObject *)offset_obj);
+            if (PyDict_SetItem(new->fields, name, new_tuple) < 0) {
+                Py_DECREF(new_tuple);
+                Py_DECREF(new);
+                return NULL;
+            }
+            Py_DECREF(new_tuple);  /* Reference now owned by new->fields */
+            if (PyTuple_GET_SIZE(new_tuple) == 3) {
+                PyObject *title = PyTuple_GET_ITEM(tuple, 2);
+                Py_INCREF(title);
+                PyTuple_SET_ITEM(new_tuple, 2, title);
+                if (PyDict_SetItem(new->fields, title, new_tuple) < 0) {
+                    Py_DECREF(new);
+                    return NULL;
+                }
+            }
+            totalsize += field_descr->elsize;
+        }
+        totalsize = NPY_NEXT_ALIGNED_OFFSET(totalsize, maxalign);
+        new->elsize = totalsize;
+        new->alignment = maxalign;
+        return new;
+    }
+    else {
+        /* unstructured voids are always canonical. */
+        Py_INCREF(self);
+        return self;
+    }
+}
+
+
+static PyArray_Descr *
 void_common_instance(PyArray_Descr *descr1, PyArray_Descr *descr2)
 {
     /*
@@ -671,6 +776,7 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
             dt_slots->discover_descr_from_pyobject = (
                     void_discover_descr_from_pyobject);
             dt_slots->common_instance = void_common_instance;
+            dt_slots->ensure_canonical = void_ensure_canonical;
         }
         else {
             dt_slots->default_descr = string_and_unicode_default_descr;
