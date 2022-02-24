@@ -127,3 +127,6 @@ reveal_type(AR_S.istitle())  # E: ndarray[Any, dtype[bool_]]
 
 reveal_type(AR_U.isupper())  # E: ndarray[Any, dtype[bool_]]
 reveal_type(AR_S.isupper())  # E: ndarray[Any, dtype[bool_]]
+
+reveal_type(AR_U.__array_finalize__(object()))  # E: None
+reveal_type(AR_S.__array_finalize__(object()))  # E: None

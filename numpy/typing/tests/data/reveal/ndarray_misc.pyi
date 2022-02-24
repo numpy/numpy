@@ -212,3 +212,7 @@ reveal_type(AR_f8.dump("test_file"))  # E: None
 reveal_type(AR_f8.dump(b"test_file"))  # E: None
 with open("test_file", "wb") as f:
     reveal_type(AR_f8.dump(f))  # E: None
+
+reveal_type(AR_f8.__array_finalize__(None))  # E: None
+reveal_type(AR_f8.__array_finalize__(B))  # E: None
+reveal_type(AR_f8.__array_finalize__(AR_f8))  # E: None
