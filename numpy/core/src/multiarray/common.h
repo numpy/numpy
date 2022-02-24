@@ -269,17 +269,31 @@ npy_memchr(char * haystack, char needle,
     else {
         /* usually find elements to skip path */
         if (!NPY_ALIGNMENT_REQUIRED && needle == 0 && stride == 1) {
-            /* iterate until last multiple of 4 */
-            char * block_end = haystack + size - (size % sizeof(unsigned int));
-            while (p < block_end) {
-                unsigned int  v = *(unsigned int*)p;
-                if (v != 0) {
-                    break;
-                }
-                p += sizeof(unsigned int);
+            /* find the first sizeof(unsigned int)-aligned block */
+            npy_intp first_block_offset = Py_MIN(
+                sizeof(unsigned int) - (npy_uintp)p % sizeof(unsigned int),
+                size);
+            char * first_block = p + first_block_offset;
+            while (p < first_block && *p == 0) {
+                p++;
             }
-            /* handle rest */
             subloopsize = (p - haystack);
+
+            if (subloopsize < size && *p == 0) {
+                /* iterate until last multiple of sizeof(unsigned int) */
+                npy_intp adjusted_size = size - first_block_offset;
+                char * block_end = p +
+                    adjusted_size - (adjusted_size % sizeof(unsigned int));
+                while (p < block_end) {
+                    unsigned int  v = *(unsigned int*)p;
+                    if (v != 0) {
+                        break;
+                    }
+                    p += sizeof(unsigned int);
+                }
+                /* handle rest */
+                subloopsize = (p - haystack);
+            }
         }
         while (subloopsize < size && *p == needle) {
             subloopsize++;
