@@ -18,6 +18,10 @@ env:
   DOWNLOAD_OPENBLAS: 1
   PYTHON_VERSION: 3.8
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
 jobs:
   lint:
     if: "github.repository == 'numpy/numpy' && github.ref != 'refs/heads/main' && !contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]') && !contains(github.event.head_commit.message, '[skip github]')"
