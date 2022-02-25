@@ -1,4 +1,4 @@
-Mathematical functions with automatic domain
+Mathematical functions with automatic domain (:mod:`numpy.emath`)
 ***********************************************************************
 
 .. currentmodule:: numpy
@@ -6,4 +6,4 @@ Mathematical functions with automatic domain
 .. note:: :mod:`numpy.emath` is a preferred alias for :mod:`numpy.lib.scimath`,
           available after :mod:`numpy` is imported.
 
-.. automodule:: numpy.emath
+.. automodule:: numpy.lib.scimath
