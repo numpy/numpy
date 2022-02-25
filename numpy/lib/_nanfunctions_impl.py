@@ -1219,7 +1219,7 @@ def nanmedian(a, axis=None, out=None, overwrite_input=False, keepdims=np._NoValu
 
 
 def _nanpercentile_dispatcher(
-        a, q, axis=None, out=None, overwrite_input=None,
+        a, q, axis=None, weights=None, out=None, overwrite_input=None,
         method=None, keepdims=None, *, interpolation=None):
     return (a, q, out)
 
@@ -1229,6 +1229,7 @@ def nanpercentile(
         a,
         q,
         axis=None,
+        weights=None,
         out=None,
         overwrite_input=False,
         method="linear",
@@ -1381,11 +1382,12 @@ def nanpercentile(
     if not fnb._quantile_is_valid(q):
         raise ValueError("Percentiles must be in the range [0, 100]")
     return _nanquantile_unchecked(
-        a, q, axis, out, overwrite_input, method, keepdims)
+        a, q, axis, weights, out, overwrite_input, method, keepdims)
 
 
-def _nanquantile_dispatcher(a, q, axis=None, out=None, overwrite_input=None,
-                            method=None, keepdims=None, *, interpolation=None):
+def _nanquantile_dispatcher(a, q, axis=None, weights=None, out=None,
+                            overwrite_input=None, method=None, keepdims=None,
+                            *, interpolation=None):
     return (a, q, out)
 
 
@@ -1394,6 +1396,7 @@ def nanquantile(
         a,
         q,
         axis=None,
+        weights=None,
         out=None,
         overwrite_input=False,
         method="linear",
@@ -1547,13 +1550,14 @@ def nanquantile(
     if not fnb._quantile_is_valid(q):
         raise ValueError("Quantiles must be in the range [0, 1]")
     return _nanquantile_unchecked(
-        a, q, axis, out, overwrite_input, method, keepdims)
+        a, q, axis, weights, out, overwrite_input, method, keepdims)
 
 
 def _nanquantile_unchecked(
         a,
         q,
         axis=None,
+        weights=None,
         out=None,
         overwrite_input=False,
         method="linear",
@@ -1564,18 +1568,24 @@ def _nanquantile_unchecked(
     # so deal them upfront
     if a.size == 0:
         return np.nanmean(a, axis, out=out, keepdims=keepdims)
+
+    if weights is not None:
+        weights = fnb._validate_and_ureduce_weights(a, axis, weights)
+        weights[np.isnan(a)] = np.nan  # for _nanquantile_1d
+
     return fnb._ureduce(a,
                         func=_nanquantile_ureduce_func,
                         q=q,
                         keepdims=keepdims,
                         axis=axis,
+                        weights=weights,
                         out=out,
                         overwrite_input=overwrite_input,
                         method=method)
 
 
-def _nanquantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
-                              method="linear"):
+def _nanquantile_ureduce_func(a, q, axis=None, weights=None, out=None,
+                              overwrite_input=False, method="linear"):
     """
     Private function that doesn't support extended axis or keepdims.
     These methods are extended to this function using _ureduce
@@ -1583,33 +1593,67 @@ def _nanquantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
     """
     if axis is None or a.ndim == 1:
         part = a.ravel()
-        result = _nanquantile_1d(part, q, overwrite_input, method)
+        if weights is not None:
+            weights = weights.ravel()
+        result = _nanquantile_1d(part, q, weights, overwrite_input, method)
     else:
-        result = np.apply_along_axis(_nanquantile_1d, axis, a, q,
-                                     overwrite_input, method)
-        # apply_along_axis fills in collapsed axis with results.
-        # Move that axis to the beginning to match percentile's
-        # convention.
-        if q.ndim != 0:
-            result = np.moveaxis(result, axis, 0)
+        if weights is not None:
+
+            if axis != -1:  # move data to axis=-1 for np.vectorize() below
+                a = np.moveaxis(a, axis, destination=-1)
+                weights = np.moveaxis(weights, axis, destination=-1)
+
+            def _vectorize_nanquantile_1d(arr1d, ws1d):
+                return _nanquantile_1d(arr1d, q, ws1d, overwrite_input, method)
+
+            n = a.shape[axis]
+            m = len(q)
+            vectorized_nanquantile_1d =\
+                np.vectorize(_vectorize_nanquantile_1d,
+                             signature=f"({n}),({n})->({m})")
+
+            result = vectorized_nanquantile_1d(a, weights)
+
+            # now move data axis back for consistency with the no-weights case
+            if axis != -1:
+                if q.ndim == 0:
+                    result = np.moveaxis(result, -1, axis)
+                else:
+                    result = np.moveaxis(result, -1, 0)
+
+        else:
+            result = np.apply_along_axis(_nanquantile_1d, axis, a, q,
+                                         wgt1d=None,
+                                         overwrite_input=overwrite_input,
+                                         method=method)
+            # apply_along_axis fills in collapsed axis with results.
+            # Move that axis to the beginning to match percentile's
+            # convention.
+            if q.ndim != 0:
+                result = np.moveaxis(result, axis, 0)
 
     if out is not None:
         out[...] = result
     return result
 
 
-def _nanquantile_1d(arr1d, q, overwrite_input=False, method="linear"):
+def _nanquantile_1d(arr1d, q, wgt1d=None, overwrite_input=False,
+                    method="linear"):
     """
     Private function for rank 1 arrays. Compute quantile ignoring NaNs.
     See nanpercentile for parameter usage
     """
     arr1d, overwrite_input = _remove_nan_1d(arr1d,
-        overwrite_input=overwrite_input)
+                                            overwrite_input=overwrite_input)
+
+    if wgt1d is not None:
+        wgt1d, _ = _remove_nan_1d(wgt1d)
+
     if arr1d.size == 0:
         # convert to scalar
         return np.full(q.shape, np.nan, dtype=arr1d.dtype)[()]
 
-    return fnb._quantile_unchecked(
+    return function_base._quantile_unchecked(
         arr1d, q, overwrite_input=overwrite_input, method=method)
 
 

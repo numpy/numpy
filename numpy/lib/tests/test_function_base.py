@@ -3023,10 +3023,10 @@ class TestPercentile:
 
     def test_api(self):
         d = np.ones(5)
-        np.percentile(d, 5, None, None, False)
-        np.percentile(d, 5, None, None, False, 'linear')
+        np.percentile(d, 5, None, None, None, False)
+        np.percentile(d, 5, None, None, None, False, 'linear')
         o = np.ones((1,))
-        np.percentile(d, 5, None, o, False, 'linear')
+        np.percentile(d, 5, None, None, o, False, 'linear')
 
     def test_complex(self):
         arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype='G')
