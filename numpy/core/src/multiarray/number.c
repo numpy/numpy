@@ -341,7 +341,6 @@ array_divmod(PyObject *m1, PyObject *m2)
     return PyArray_GenericBinaryFunction(m1, m2, n_ops.divmod);
 }
 
-/* Need this to be version dependent on account of the slot check */
 static PyObject *
 array_matrix_multiply(PyObject *m1, PyObject *m2)
 {
