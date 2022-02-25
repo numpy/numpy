@@ -7166,7 +7166,7 @@ class TestMatmulInplace:
                 DTYPES[f"{i}-{j}"] = (np.dtype(i), np.dtype(j))
 
     @pytest.mark.parametrize("dtype1,dtype2", DTYPES.values(), ids=DTYPES)
-    def test_matmul_inplace(self, dtype1: np.dtype, dtype2: np.dtype) -> None:
+    def test_basic(self, dtype1: np.dtype, dtype2: np.dtype) -> None:
         a = np.arange(10).reshape(5, 2).astype(dtype1)
         a_id = id(a)
         b = np.ones((2, 2), dtype=dtype2)
@@ -7181,6 +7181,19 @@ class TestMatmulInplace:
             np.testing.assert_allclose(a, ref)
         else:
             np.testing.assert_array_equal(a, ref)
+
+    def test_large_matrix(self) -> None:
+        a = np.arange(10**6).reshape(-1, 10).astype(np.float64)
+        a_id = id(a)
+        b = np.arange(10**2).reshape(10, 10)
+
+        ref = a @ b
+        a @= b
+
+        assert id(a) == a_id
+        assert a.dtype.type == np.float64
+        assert a.shape == (10**5, 10)
+        np.testing.assert_allclose(a, ref)
 
 
 def test_matmul_axes():
