@@ -15,8 +15,7 @@ static void
 array_dlpack_deleter(DLManagedTensor *self)
 {
     PyArrayObject *array = (PyArrayObject *)self->manager_ctx;
-    // This will also free the strides as it's one allocation.
-    PyMem_Free(self->dl_tensor.shape);
+    // This will also free the shape and strides as it's one allocation.
     PyMem_Free(self);
     Py_XDECREF(array);
 }
@@ -197,11 +196,17 @@ array_dlpack(PyArrayObject *self,
         return NULL;
     }
 
-    DLManagedTensor *managed = PyMem_Malloc(sizeof(DLManagedTensor));
-    if (managed == NULL) {
+    // ensure alignment
+    int offset = sizeof(DLManagedTensor) % sizeof(void *);
+    void *ptr = PyMem_Malloc(sizeof(DLManagedTensor) + offset +
+        (sizeof(int64_t) * ndim * 2) +
+        (sizeof(int64_t) * ndim * 2) % sizeof(void *));
+    if (ptr == NULL) {
         PyErr_NoMemory();
         return NULL;
     }
+
+    DLManagedTensor *managed = ptr;
 
     /*
      * Note: the `dlpack.h` header suggests/standardizes that `data` must be
@@ -221,7 +226,7 @@ array_dlpack(PyArrayObject *self,
     managed->dl_tensor.device = device;
     managed->dl_tensor.dtype = managed_dtype;
 
-    int64_t *managed_shape_strides = PyMem_Malloc(sizeof(int64_t) * ndim * 2);
+    int64_t *managed_shape_strides = ptr + sizeof(DLManagedTensor) + offset;
     if (managed_shape_strides == NULL) {
         PyErr_NoMemory();
         PyMem_Free(managed);
@@ -249,8 +254,7 @@ array_dlpack(PyArrayObject *self,
     PyObject *capsule = PyCapsule_New(managed, NPY_DLPACK_CAPSULE_NAME,
             dlpack_capsule_deleter);
     if (capsule == NULL) {
-        PyMem_Free(managed);
-        PyMem_Free(managed_shape_strides);
+        PyMem_Free(ptr);
         return NULL;
     }
 
@@ -270,11 +274,31 @@ array_dlpack_device(PyArrayObject *self, PyObject *NPY_UNUSED(args))
 }
 
 NPY_NO_EXPORT PyObject *
-_from_dlpack(PyObject *NPY_UNUSED(self), PyObject *obj) {
-    PyObject *capsule = PyObject_CallMethod((PyObject *)obj->ob_type,
-            "__dlpack__", "O", obj);
-    if (capsule == NULL) {
+_from_dlpack(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds) {
+    static char *kwlist[] = {"x", "_testing", NULL};
+    PyObject *obj = NULL, *_testing = Py_False;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|$O",
+                                     kwlist, &obj, &_testing)) {
         return NULL;
+    }
+
+    PyObject *capsule;
+
+    int is_test = PyObject_IsTrue(_testing);
+    if (is_test < 0) {
+        return NULL;
+    }
+    if (is_test) {
+        capsule = obj;
+        Py_INCREF(obj);  // undo last Py_DECREF
+    }
+    else {
+        capsule = PyObject_CallMethod((PyObject *)obj->ob_type,
+                "__dlpack__", "O", obj);
+        if (capsule == NULL) {
+            return NULL;
+        }
     }
 
     DLManagedTensor *managed =
@@ -405,6 +429,10 @@ _from_dlpack(PyObject *NPY_UNUSED(self), PyObject *obj) {
         Py_DECREF(capsule);
         Py_DECREF(ret);
         return NULL;
+    }
+
+    if (is_test) {
+        assert(PyCapsule_IsValid(capsule, NPY_DLPACK_USED_CAPSULE_NAME));
     }
 
     Py_DECREF(capsule);

@@ -110,3 +110,21 @@ class TestDLPack:
         x.flags.writeable = False
         with pytest.raises(TypeError):
             x.__dlpack__()
+
+    def test_ndim0(self):
+        x = np.array(1.0)
+        y = np._from_dlpack(x)
+        assert_array_equal(x, y)
+
+    def test_from_dlpack_twice(self):
+        x = np.arange(5)
+        capsule = x.__dlpack__()
+        y = np._from_dlpack(capsule, _testing=True)
+        with pytest.raises(ValueError, match=r"PyCapsule_GetPointer called "
+                                             r"with incorrect name"):
+            np._from_dlpack(capsule, _testing=True)
+
+        # test deallocation
+        del y
+        del x
+        del capsule
