@@ -277,20 +277,16 @@ array_dlpack_device(PyArrayObject *self, PyObject *NPY_UNUSED(args))
 NPY_NO_EXPORT PyObject *
 _from_dlpack(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds) {
     static char *kwlist[] = {"x", "_testing", NULL};
-    PyObject *obj = NULL, *_testing = Py_False;
+    PyObject *obj = NULL;
+    unsigned char _testing = 0;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|$O",
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|$b",
                                      kwlist, &obj, &_testing)) {
         return NULL;
     }
 
     PyObject *capsule;
-
-    int is_test = PyObject_IsTrue(_testing);
-    if (is_test < 0) {
-        return NULL;
-    }
-    if (is_test) {
+    if (_testing) {
         capsule = obj;
         Py_INCREF(obj);  // undo last Py_DECREF
     }
@@ -432,7 +428,7 @@ _from_dlpack(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds) {
         return NULL;
     }
 
-    if (is_test) {
+    if (_testing) {
         assert(PyCapsule_IsValid(capsule, NPY_DLPACK_USED_CAPSULE_NAME));
     }
 
