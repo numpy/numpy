@@ -1478,10 +1478,12 @@ def svd(a, full_matrices=True, compute_uv=True, hermitian=False):
     """
     Singular Value Decomposition.
 
-    When `a` is a 2D array, it is factorized as ``u @ np.diag(s) @ vh
-    = (u * s) @ vh``, where `u` and `vh` are 2D unitary arrays and `s` is a 1D
-    array of `a`'s singular values. When `a` is higher-dimensional, SVD is
-    applied in stacked mode as explained below.
+    When `a` is a 2D array, and ``full_matrices=False``, then it is
+    factorized as ``u @ np.diag(s) @ vh = (u * s) @ vh``, where
+    `u` and the Hermitian transpose of `vh` are 2D arrays with
+    orthonormal columns and `s` is a 1D array of `a`'s singular
+    values. When `a` is higher-dimensional, SVD is applied in
+    stacked mode as explained below.
 
     Parameters
     ----------
