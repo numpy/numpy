@@ -2641,13 +2641,19 @@ PyArray_Nonzero(PyArrayObject *self)
                     *multi_index++ = j++;
                 }
             }
+            /*
+             * Fallback to a branchless strategy to avoid branch misprediction 
+             * stalls that are very expensive on most modern processors.
+             */
             else {
-                npy_intp j;
-                for (j = 0; j < count; ++j) {
-                    if (*data != 0) {
-                        *multi_index++ = j;
-                    }
+                npy_intp * multi_index_end = multi_index + nonzero_count;
+                npy_intp j = 0;
+
+                while (multi_index < multi_index_end) {
+                    *multi_index = j;
+                    multi_index += *data != 0;
                     data += stride;
+                    ++j;
                 }
             }
         }
