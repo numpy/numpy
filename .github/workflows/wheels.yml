@@ -110,7 +110,7 @@ jobs:
           refreshenv
         if: ${{ env.IS_32_BIT == 'true' }}
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.3.0
+        uses: pypa/cibuildwheel@v2.3.1
         env:
           NPY_USE_BLAS_ILP64: ${{ env.IS_32_BIT == 'true' && '0' || '1' }}
           CIBW_BUILD: ${{ matrix.python }}-${{ matrix.buildplat[1] }}
