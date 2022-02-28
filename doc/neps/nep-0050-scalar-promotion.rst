@@ -42,16 +42,16 @@ There are two main ways this can lead to confusing results:
 Note that the examples apply just as well for operations like multiplication,
 addition, or comparisons and the corresponding functions like `np.multiply`.
 
-This NEPs proposes to refactor the behaviour around two guiding principles:
+This NEP proposes to refactor the behaviour around two guiding principles:
 
 1. The value must never influence the result type.
 2. NumPy scalars or 0-D arrays must always lead to the same behaviour as
    their N-D counterparts.
 
-We propose to removes all value-based logic and add special handling for
+We propose to remove all value-based logic and add special handling for
 Python scalars to preserve some of the convenience that it provided.
 
-This changes also apply to ``np.can_cast(100, np.int8)``, however, we expect
+These changes also apply to ``np.can_cast(100, np.int8)``, however, we expect
 that the behaviour in functions (promotion) will in practice be far more
 relevant than this casting change.
 
@@ -102,14 +102,16 @@ the following changes.
     to some degree, but this is not currently planned.
 
 
-Impact on operators functions involving NumPy arrays or scalars
----------------------------------------------------------------
+Impact on operators and functions involving NumPy arrays or scalars
+-------------------------------------------------------------------
 
 The main impact on operations not involving Python scalars (float, int, complex)
 will be that 0-D arrays and NumPy scalars will never behave value-sensitive.
 This removes currently surprising cases.  For example::
 
   np.arange(10, dtype=np.uint8) + np.int64(1)
+  # and:
+  np.add(np.arange(10, dtype=np.uint8), np.int64(1))
 
 Will return an int64 array because the type of ``np.int64(1)`` is strictly
 honoured.
@@ -118,49 +120,40 @@ honoured.
 Impact on operators involving Python ``int``, ``float``, and ``complex``
 ------------------------------------------------------------------------
 
-This NEP attempts to preserve most of the convenience that the old behaviour
-gave for Python operators, but remove it for
-
-The current value-based logic has some nice properties when "untyped" Python
-scalars involved::
+This NEP attempts to preserve the convenience that the old behaviour
+gave when working with literal values.
+The current value-based logic had some nice properties when "untyped",
+literal Python scalars are involved::
 
   np.arange(10, dtype=np.int8) + 1  # returns an int8 array
-  nparray([1., 2.], dtype=np.float32) * 3.5  # returns a float32 array
+  np.array([1., 2.], dtype=np.float32) * 3.5  # returns a float32 array
 
 But led to complexity when it came to "unrepresentable" values:
 
   np.arange(10, dtype=np.int8) + 256  # returns int16
-  nparray([1., 2.], dtype=np.float32) * 1e200  # returns float64
+  np.array([1., 2.], dtype=np.float32) * 1e200  # returns float64
 
 The proposal is to preserve this behaviour for the most part.  This is achieved
 by considering Python ``int``, ``float``, and ``complex`` to be "weakly" typed
 in these operations.
-To mitigate user surprises, we would further make conversion to the new type
-more strict.  This means that the results will be unchanged in the first
+Hoewver, to mitigate user surprises, we plan to make conversion to the new type
+more strict:  This means that the results will be unchanged in the first
 two examples.  For the second one, the results will be the following::
 
   np.arange(10, dtype=np.int8) + 256  # raises a TypeError
-  nparray([1., 2.], dtype=np.float32) * 1e200  # warning and returns infinity
+  np.array([1., 2.], dtype=np.float32) * 1e200  # warning and returns infinity
 
 The second one will warn because ``np.float32(1e200)`` overflows to infinity.
 It will then do the calculation with ``inf`` as normally.
 
 
-Impact on functions involving Python ``int``, ``float``, and ``complex``
-------------------------------------------------------------------------
+.. admonition:: Behaviour in other libraries
 
-Most functions, in particular ``ufuncs`` will also use this weakly typed
-logic.
-In some cases, functions will call `np.asarray()` on inputs before any operations
-and thus will s
+   Overflowing in the conversion rather than raising an error is a choice;
+   it is one that is the default in most C setups (similar to NumPy C can be
+   set up to raise an error due to the overflow, however).
+   It is also for example the behaviour of ``pytorch`` 1.10.
 
-.. note::
-
-    There is a real alternative to not do this for `ufuncs` and limit the special
-    behaviour to Python operators.  From a user perspective, we assume that most
-    functions effectively call `np.asarray()`.
-    Because Python operators allow more custom logic, this would ensure that an
-    overflow warning is given for all results with decreased precision.
 
 
 Backward compatibility
@@ -192,7 +185,7 @@ scalar operators.
 Similarliy, if the storage array is float32 a calculation may retain the lower
 float32 precision rather than use the default float64.
 
-Further issues can occure.  For example:
+Further issues can occur.  For example:
 
 * Floating point comparisons, especially equality, may change when mixing
   precisions:
@@ -205,7 +198,7 @@ Further issues can occure.  For example:
   np.array([1], np.uint8) == 1000  # possibly also
   ```
   to protect users in cases where previous value-based casting led to an
-  upcast.
+  upcast.  (Failures occur when converting ``1000`` to a ``uint8``.)
 * Floating point overflow may occur in odder cases:
   ```python3
   np.float32(1e-30) * 1e50  # will return ``inf`` and a warning
@@ -418,6 +411,37 @@ or even ignore the "unsafe" conversion which (on all relevant hardware) would
 lead to ``np.uint8(1000) == np.uint8(232)`` being used.
 
 
+Allowing weakly typed arrays
+----------------------------
+
+One problem with having weakly typed Python scalars, but not weakly typed
+arrays is that in many cases ``np.asarray()`` is called indiscriminately on
+inputs.  To solve this issue JAX will consider the result of ``np.asarray(1)``
+also to be weakly typed.
+There are, however, two difficulties with this:
+
+1. JAX noticed that it can be confusing that::
+
+     np.broadcast_to(np.asarray(1), (100, 100))
+
+   is a non 0-D array that "inherits" the weak typing. [2]_
+2. Unlike JAX tensors, NumPy arrays are mutable, so assignment may need to
+   cause it to be strongly typed?
+
+A flag will likely be useful as an implementation detail (e.g. in ufuncs),
+however, as of now we do not expect to have this as user API.
+The main reason is that such a flag may be surprising for users if it is
+passed out as a result from a function, rather than used only very localized.
+
+
+.. admonition:: TODO
+
+    Before accepting the NEP it may be good to discuss this issue further.
+    Libraries may need clearer patterns to "propagate" the "weak" type, this
+    could just be an ``np.asarray_or_literal()`` to preserve Python scalars,
+    or a pattern of calling ``np.result_type()`` before ``np.asarray()``.
+
+
 Discussion
 ==========
 
@@ -436,6 +460,7 @@ References and Footnotes
 
 .. _JAX promotion: https://jax.readthedocs.io/en/latest/type_promotion.html
 
+.. [2] https://github.com/numpy/numpy/pull/21103/files#r814188019
 
 Copyright
 =========
