@@ -346,7 +346,7 @@ class _Config:
             FMA4   = dict(flags="-mfma4"),
             FMA3   = dict(flags="-mfma"),
             AVX2   = dict(flags="-mavx2"),
-            AVX512F = dict(flags="-mavx512f"),
+            AVX512F = dict(flags="-mavx512f -mno-mmx"),
             AVX512CD = dict(flags="-mavx512cd"),
             AVX512_KNL = dict(flags="-mavx512er -mavx512pf"),
             AVX512_KNM = dict(
