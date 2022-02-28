@@ -208,6 +208,8 @@ jobs:
   pypy38:
     needs: [smoke_test]
     runs-on: ubuntu-latest
+    env:
+      RUN_FULL_TESTS: 1
     steps:
     - uses: actions/checkout@v2
       with:
