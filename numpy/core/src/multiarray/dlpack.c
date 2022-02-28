@@ -228,11 +228,6 @@ array_dlpack(PyArrayObject *self,
 
     int64_t *managed_shape_strides = (int64_t *)((char *)ptr +
         sizeof(DLManagedTensor) + offset);
-    if (managed_shape_strides == NULL) {
-        PyErr_NoMemory();
-        PyMem_Free(managed);
-        return NULL;
-    }
 
     int64_t *managed_shape = managed_shape_strides;
     int64_t *managed_strides = managed_shape_strides + ndim;
