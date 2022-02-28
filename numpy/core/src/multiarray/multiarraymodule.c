@@ -4486,7 +4486,7 @@ static struct PyMethodDef array_module_methods[] = {
         METH_NOARGS,
         "Give a warning on reload and big warning in sub-interpreters."},
     {"_from_dlpack", (PyCFunction)_from_dlpack,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_O, NULL},
     {NULL, NULL, 0, NULL}                /* sentinel */
 };
 

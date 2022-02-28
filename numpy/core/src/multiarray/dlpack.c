@@ -270,27 +270,11 @@ array_dlpack_device(PyArrayObject *self, PyObject *NPY_UNUSED(args))
 }
 
 NPY_NO_EXPORT PyObject *
-_from_dlpack(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds) {
-    static char *kwlist[] = {"x", "_testing", NULL};
-    PyObject *obj = NULL;
-    unsigned char _testing = 0;
-
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|$b",
-                                     kwlist, &obj, &_testing)) {
+_from_dlpack(PyObject *NPY_UNUSED(self), PyObject *obj) {
+    PyObject *capsule = PyObject_CallMethod((PyObject *)obj->ob_type,
+            "__dlpack__", "O", obj);
+    if (capsule == NULL) {
         return NULL;
-    }
-
-    PyObject *capsule;
-    if (_testing) {
-        capsule = obj;
-        Py_INCREF(obj);  // undo last Py_DECREF
-    }
-    else {
-        capsule = PyObject_CallMethod((PyObject *)obj->ob_type,
-                "__dlpack__", "O", obj);
-        if (capsule == NULL) {
-            return NULL;
-        }
     }
 
     DLManagedTensor *managed =
@@ -421,10 +405,6 @@ _from_dlpack(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds) {
         Py_DECREF(capsule);
         Py_DECREF(ret);
         return NULL;
-    }
-
-    if (_testing) {
-        assert(PyCapsule_IsValid(capsule, NPY_DLPACK_USED_CAPSULE_NAME));
     }
 
     Py_DECREF(capsule);
