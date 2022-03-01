@@ -110,3 +110,8 @@ class TestDLPack:
         x.flags.writeable = False
         with pytest.raises(TypeError):
             x.__dlpack__()
+
+    def test_ndim0(self):
+        x = np.array(1.0)
+        y = np._from_dlpack(x)
+        assert_array_equal(x, y)
