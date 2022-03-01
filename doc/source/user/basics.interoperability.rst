@@ -1,4 +1,6 @@
 
+.. _basics.interoperability:
+
 ***************************
 Interoperability with NumPy
 ***************************
