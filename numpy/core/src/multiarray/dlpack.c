@@ -199,8 +199,7 @@ array_dlpack(PyArrayObject *self,
     // ensure alignment
     int offset = sizeof(DLManagedTensor) % sizeof(void *);
     void *ptr = PyMem_Malloc(sizeof(DLManagedTensor) + offset +
-        (sizeof(int64_t) * ndim * 2) +
-        (sizeof(int64_t) * ndim * 2) % sizeof(void *));
+        (sizeof(int64_t) * ndim * 2));
     if (ptr == NULL) {
         PyErr_NoMemory();
         return NULL;
