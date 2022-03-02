@@ -73,6 +73,14 @@
 #else
 #define NPY_GCC_TARGET_AVX512_SKX
 #endif
+
+#if defined HAVE_ATTRIBUTE_TARGET_VSX && defined HAVE_LINK_VSX
+#define NPY_GCC_TARGET_VSX __attribute__((target("cpu=power8")))
+#elif defined HAVE_ATTRIBUTE_TARGET_VSX_WITH_INTRINSICS
+#define NPY_GCC_TARGET_VSX __attribute__((target("cpu=power8")))
+#else
+#define NPY_GCC_TARGET_VSX
+#endif
 /*
  * mark an argument (starting from 1) that must not be NULL and is not checked
  * DO NOT USE IF FUNCTION CHECKS FOR NULL!! the compiler will remove the check
@@ -97,6 +105,10 @@
 
 #if defined HAVE_IMMINTRIN_H && defined HAVE_LINK_AVX512F
 #define NPY_HAVE_AVX512F_INTRINSICS
+#endif
+
+#if defined HAVE_ALTIVEC_H && defined HAVE_LINK_VSX
+#define NPY_HAVE_VSX_INTRINSICS
 #endif
 /*
  * give a hint to the compiler which branch is more likely or unlikely

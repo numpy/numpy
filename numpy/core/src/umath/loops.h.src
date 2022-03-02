@@ -29,11 +29,21 @@
  */
 
 /**begin repeat
- * #kind = equal, not_equal, greater, greater_equal, less, less_equal,
- *         logical_and, logical_or, absolute, logical_not#
+ * #kind = equal, not_equal, greater, greater_equal, less, less_equal#
  **/
 NPY_NO_EXPORT void
 BOOL_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
+/**end repeat**/
+
+/**begin repeat
+ * #kind = logical_and, logical_or, absolute, logical_not#
+ **/
+/**begin repeat1
+ * #isa = , _vsx#
+ */
+NPY_NO_EXPORT void
+BOOL_@kind@@isa@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
+/**end repeat1**/
 /**end repeat**/
 
 NPY_NO_EXPORT void
@@ -313,8 +323,12 @@ NPY_NO_EXPORT void
  *        logical_and, logical_or#
  * #OP = ==, !=, <, <=, >, >=, &&, ||#
  */
+/**begin repeat2
+ * #isa = , _vsx#
+ */
 NPY_NO_EXPORT void
-@TYPE@_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
+@TYPE@_@kind@@isa@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
+/**end repeat2**/
 /**end repeat1**/
 
 NPY_NO_EXPORT void

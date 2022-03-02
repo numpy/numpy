@@ -408,10 +408,15 @@ PyUFunc_On_Om(char **args, npy_intp const *dimensions, npy_intp const *steps, vo
 NPY_NO_EXPORT void
 BOOL_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
-    BINARY_LOOP {
-        npy_bool in1 = *((npy_bool *)ip1) != 0;
-        npy_bool in2 = *((npy_bool *)ip2) != 0;
-        *((npy_bool *)op1)= in1 @OP@ in2;
+    if (run_binary_simd_@kind@_BOOL(args, dimensions, steps)) {
+        return;
+    }
+    else {
+        BINARY_LOOP {
+            npy_bool in1 = *((npy_bool *)ip1) != 0;
+            npy_bool in2 = *((npy_bool *)ip2) != 0;
+            *((npy_bool *)op1)= in1 @OP@ in2;
+        }
     }
 }
 /**end repeat**/
@@ -423,9 +428,14 @@ BOOL_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void
  * #SC =  ==, !=#
  * #and = 1, 0#
  **/
-
+/**begin repeat1
+ * #ISA = , _vsx#
+ * #isa = simd, vsx#
+ * #CHK = 1, defined(HAVE_ATTRIBUTE_TARGET_VSX)#
+ **/
+#if @CHK@
 NPY_NO_EXPORT void
-BOOL_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+BOOL_@kind@@ISA@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
     if(IS_BINARY_REDUCE) {
 #ifdef NPY_HAVE_SSE2_INTRINSICS
@@ -476,7 +486,7 @@ BOOL_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void
         }
     }
     else {
-        if (run_binary_simd_@kind@_BOOL(args, dimensions, steps)) {
+        if (run_binary_@isa@_@kind@_BOOL(args, dimensions, steps)) {
             return;
         }
         else {
@@ -488,16 +498,24 @@ BOOL_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void
         }
     }
 }
+#endif
+/**end repeat1**/
 /**end repeat**/
 
 /**begin repeat
  * #kind = absolute, logical_not#
  * #OP =  !=, ==#
  **/
+/**begin repeat1
+ * #ISA = , _vsx#
+ * #isa = simd, vsx#
+ * #CHK = 1, defined(HAVE_ATTRIBUTE_TARGET_VSX)#
+ **/
+#if @CHK@
 NPY_NO_EXPORT void
-BOOL_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+BOOL_@kind@@ISA@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
-    if (run_unary_simd_@kind@_BOOL(args, dimensions, steps)) {
+    if (run_unary_@isa@_@kind@_BOOL(args, dimensions, steps)) {
         return;
     }
     else {
@@ -507,6 +525,8 @@ BOOL_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void
         }
     }
 }
+#endif
+/**end repeat1**/
 /**end repeat**/
 
 NPY_NO_EXPORT void
@@ -1517,10 +1537,16 @@ TIMEDELTA_mm_qm_divmod(char **args, npy_intp const *dimensions, npy_intp const *
  *        logical_and, logical_or#
  * #OP = ==, !=, <, <=, >, >=, &&, ||#
  */
+/**begin repeat2
+ * #ISA = , _vsx#
+ * #isa = simd, vsx#
+ * #CHK = 1, defined(HAVE_ATTRIBUTE_TARGET_VSX)#
+ */
+#if @CHK@
 NPY_NO_EXPORT void
-@TYPE@_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+@TYPE@_@kind@@ISA@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
-    if (!run_binary_simd_@kind@_@TYPE@(args, dimensions, steps)) {
+    if (!run_binary_@isa@_@kind@_@TYPE@(args, dimensions, steps)) {
         BINARY_LOOP {
             const @type@ in1 = *(@type@ *)ip1;
             const @type@ in2 = *(@type@ *)ip2;
@@ -1529,6 +1555,8 @@ NPY_NO_EXPORT void
     }
     npy_clear_floatstatus_barrier((char*)dimensions);
 }
+#endif
+/**end repeat2**/
 /**end repeat1**/
 
 NPY_NO_EXPORT void

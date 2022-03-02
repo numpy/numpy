@@ -28,6 +28,9 @@
 #undef __AVX512F__
 #endif
 #endif
+#ifdef NPY_HAVE_VSX_INTRINSICS
+#include <altivec.h>
+#endif
 #include "loops_utils.h" // nomemoverlap
 #include <assert.h>
 #include <stdlib.h>
@@ -163,48 +166,54 @@ run_@name@_simd_@func@_@TYPE@(char **args, npy_intp const *dimensions, npy_intp 
  *         logical_and, logical_or#
  * #simd = 1, 1, 1, 1, 1, 1, 0, 0#
  */
+/**begin repeat2
+ * #ISA   = SSE2, VSX#
+ * #isa   = sse2, vsx#
+ * #fisa  = simd, vsx#
+ */
 
-#if @vector@ && @simd@ && defined NPY_HAVE_SSE2_INTRINSICS
+#if @vector@ && @simd@ && defined NPY_HAVE_@ISA@_INTRINSICS
 
 /* prototypes */
 static void
-sse2_binary_@kind@_@TYPE@(npy_bool * op, @type@ * ip1, @type@ * ip2,
-                          npy_intp n);
+@isa@_binary_@kind@_@TYPE@(npy_bool * op, @type@ * ip1, @type@ * ip2,
+                           npy_intp n);
 static void
-sse2_binary_scalar1_@kind@_@TYPE@(npy_bool * op, @type@ * ip1, @type@ * ip2,
-                                  npy_intp n);
+@isa@_binary_scalar1_@kind@_@TYPE@(npy_bool * op, @type@ * ip1, @type@ * ip2,
+                                   npy_intp n);
 static void
-sse2_binary_scalar2_@kind@_@TYPE@(npy_bool * op, @type@ * ip1, @type@ * ip2,
-                                  npy_intp n);
+@isa@_binary_scalar2_@kind@_@TYPE@(npy_bool * op, @type@ * ip1, @type@ * ip2,
+                                   npy_intp n);
 
 #endif
 
 static NPY_INLINE int
-run_binary_simd_@kind@_@TYPE@(char **args, npy_intp const *dimensions, npy_intp const *steps)
+run_binary_@fisa@_@kind@_@TYPE@(char **args, npy_intp const *dimensions, npy_intp const *steps)
 {
-#if @vector@ && @simd@ && defined NPY_HAVE_SSE2_INTRINSICS
+#if @vector@ && @simd@ && defined NPY_HAVE_@ISA@_INTRINSICS
     @type@ * ip1 = (@type@ *)args[0];
     @type@ * ip2 = (@type@ *)args[1];
     npy_bool * op = (npy_bool *)args[2];
     npy_intp n = dimensions[0];
     /* argument one scalar */
     if (IS_BLOCKABLE_BINARY_SCALAR1_BOOL(sizeof(@type@), VECTOR_SIZE_BYTES)) {
-        sse2_binary_scalar1_@kind@_@TYPE@(op, ip1, ip2, n);
+        @isa@_binary_scalar1_@kind@_@TYPE@(op, ip1, ip2, n);
         return 1;
     }
     /* argument two scalar */
     else if (IS_BLOCKABLE_BINARY_SCALAR2_BOOL(sizeof(@type@), VECTOR_SIZE_BYTES)) {
-        sse2_binary_scalar2_@kind@_@TYPE@(op, ip1, ip2, n);
+        @isa@_binary_scalar2_@kind@_@TYPE@(op, ip1, ip2, n);
         return 1;
     }
     else if (IS_BLOCKABLE_BINARY_BOOL(sizeof(@type@), VECTOR_SIZE_BYTES)) {
-        sse2_binary_@kind@_@TYPE@(op, ip1, ip2, n);
+        @isa@_binary_@kind@_@TYPE@(op, ip1, ip2, n);
         return 1;
     }
 #endif
     return 0;
 }
 
+/**end repeat2**/
 /**end repeat1**/
 
 /**begin repeat1
@@ -244,6 +253,11 @@ run_@kind@_simd_@TYPE@(char **args, npy_intp const *dimensions, npy_intp const *
 /**begin repeat
  * # kind = logical_or, logical_and#
  */
+/**begin repeat1
+ * #ISA   = SSE2, VSX#
+ * #isa   = sse2, vsx#
+ * #fisa  = simd, vsx#
+ */
 
 #if defined NPY_HAVE_SSE2_INTRINSICS
 static void
@@ -252,21 +266,28 @@ sse2_binary_@kind@_BOOL(npy_bool * op, npy_bool * ip1, npy_bool * ip2,
 
 static void
 sse2_reduce_@kind@_BOOL(npy_bool * op, npy_bool * ip, npy_intp n);
+
+#elif defined NPY_HAVE_VSX_INTRINSICS
+
+static void
+vsx_binary_@kind@_BOOL(npy_bool * op, npy_bool * ip1, npy_bool * ip2,
+                       npy_intp n);
 #endif
 
 static NPY_INLINE int
-run_binary_simd_@kind@_BOOL(char **args, npy_intp const *dimensions, npy_intp const *steps)
+run_binary_@fisa@_@kind@_BOOL(char **args, npy_intp const *dimensions, npy_intp const *steps)
 {
-#if defined NPY_HAVE_SSE2_INTRINSICS
+#if defined NPY_HAVE_@ISA@_INTRINSICS
     if (sizeof(npy_bool) == 1 &&
             IS_BLOCKABLE_BINARY(sizeof(npy_bool), VECTOR_SIZE_BYTES)) {
-        sse2_binary_@kind@_BOOL((npy_bool*)args[2], (npy_bool*)args[0],
-                               (npy_bool*)args[1], dimensions[0]);
+        @isa@_binary_@kind@_BOOL((npy_bool*)args[2], (npy_bool*)args[0],
+                                 (npy_bool*)args[1], dimensions[0]);
         return 1;
     }
 #endif
     return 0;
 }
+/**end repeat1**/
 
 
 static NPY_INLINE int
@@ -288,25 +309,78 @@ run_reduce_simd_@kind@_BOOL(char **args, npy_intp const *dimensions, npy_intp co
 /**begin repeat
  * # kind = absolute, logical_not#
  */
+/**begin repeat1
+ * #ISA   = SSE2, VSX#
+ * #isa   = sse2, vsx#
+ * #fisa  = simd, vsx#
+ */
 
-#if defined NPY_HAVE_SSE2_INTRINSICS
+#if defined NPY_HAVE_@ISA@_INTRINSICS
 static void
-sse2_@kind@_BOOL(npy_bool *, npy_bool *, const npy_intp n);
+@isa@_@kind@_BOOL(npy_bool *, npy_bool *, const npy_intp n);
 #endif
 
 static NPY_INLINE int
-run_unary_simd_@kind@_BOOL(char **args, npy_intp const *dimensions, npy_intp const *steps)
+run_unary_@fisa@_@kind@_BOOL(char **args, npy_intp const *dimensions, npy_intp const *steps)
 {
-#if defined NPY_HAVE_SSE2_INTRINSICS
+#if defined NPY_HAVE_@ISA@_INTRINSICS
     if (sizeof(npy_bool) == 1 &&
             IS_BLOCKABLE_UNARY(sizeof(npy_bool), VECTOR_SIZE_BYTES)) {
-        sse2_@kind@_BOOL((npy_bool*)args[1], (npy_bool*)args[0], dimensions[0]);
+        @isa@_@kind@_BOOL((npy_bool*)args[1], (npy_bool*)args[0], dimensions[0]);
         return 1;
     }
 #endif
     return 0;
 }
 
+/**end repeat**/
+
+/**begin repeat
+ * #kind = equal, not_equal, greater, greater_equal, less, less_equal#
+ **/
+
+#if defined NPY_HAVE_VSX_INTRINSICS
+static void
+vsx_binary_@kind@_BOOL(npy_bool *, npy_bool *, npy_bool *, const npy_intp n);
+
+static void
+vsx_binary_scalar1_@kind@_BOOL(npy_bool *, npy_bool *, npy_bool *,
+                               const npy_intp n);
+
+static void
+vsx_binary_scalar2_@kind@_BOOL(npy_bool *, npy_bool *, npy_bool *,
+                               const npy_intp n);
+#endif
+
+static NPY_INLINE int
+run_binary_simd_@kind@_BOOL(char **args, npy_intp const *dimensions,
+                            npy_intp const *steps)
+{
+#if defined NPY_HAVE_VSX_INTRINSICS
+    npy_bool * ip1 = (npy_bool *)args[0];
+    npy_bool * ip2 = (npy_bool *)args[1];
+    npy_bool * op = (npy_bool *)args[2];
+    npy_intp n = dimensions[0];
+    /* argument one scalar */
+    if (IS_BLOCKABLE_BINARY_SCALAR1_BOOL(sizeof(npy_bool),
+                                         VECTOR_SIZE_BYTES)) {
+        vsx_binary_scalar1_@kind@_BOOL(op, ip1, ip2, n);
+        return 1;
+    }
+    /* argument two scalar */
+    else if (IS_BLOCKABLE_BINARY_SCALAR2_BOOL(sizeof(npy_bool),
+                                              VECTOR_SIZE_BYTES)) {
+        vsx_binary_scalar2_@kind@_BOOL(op, ip1, ip2, n);
+        return 1;
+    }
+    /* both arguments are arrays */
+    if (IS_BLOCKABLE_BINARY_BOOL(sizeof(npy_bool), VECTOR_SIZE_BYTES)) {
+        vsx_binary_@kind@_BOOL(op, ip1, ip2, n);
+        return 1;
+    }
+#endif
+    return 0;
+}
 /**end repeat**/
 
 #ifdef NPY_HAVE_SSE2_INTRINSICS
@@ -1354,6 +1428,334 @@ sse2_@kind@_BOOL(@type@ * op, @type@ * ip, const npy_intp n)
 /**end repeat**/
 
 #undef VECTOR_SIZE_BYTES
-#endif  /* NPY_HAVE_SSE2_INTRINSICS */
-#endif
 
+#elif defined NPY_HAVE_VSX_INTRINSICS
+
+/*
+ *****************************************************************************
+ **                           FLOAT LOOPS
+ *****************************************************************************
+ */
+
+// Pack 4x 32-bit vectors into 1x 8-bit vector
+NPY_FINLINE NPY_GCC_TARGET_VSX __vector unsigned char
+pack_vf32_vu8(__vector unsigned int v1, __vector unsigned int v2,
+              __vector unsigned int v3, __vector unsigned int v4)
+{
+    __vector unsigned char mask = vec_splats((unsigned char)0x1);
+    __vector unsigned short p1 = vec_pack(v1, v2);
+    __vector unsigned short p2 = vec_pack(v3, v4);
+    __vector unsigned char r = vec_pack(p1, p2);
+                           r = vec_and(r, mask);
+    return r;
+}
+
+// Pack 8x 64-bit vectors into 1x 8-bit vector
+NPY_FINLINE NPY_GCC_TARGET_VSX __vector unsigned char
+pack_vf64_vu8(__vector unsigned long long v1, __vector unsigned long long v2,
+              __vector unsigned long long v3, __vector unsigned long long v4,
+              __vector unsigned long long v5, __vector unsigned long long v6,
+              __vector unsigned long long v7, __vector unsigned long long v8)
+{
+    __vector unsigned int p1 = vec_pack(v1, v2);
+    __vector unsigned int p2 = vec_pack(v3, v4);
+    __vector unsigned int p3 = vec_pack(v5, v6);
+    __vector unsigned int p4 = vec_pack(v7, v8);
+    return pack_vf32_vu8(p1, p2, p3, p4);
+}
+
+/**begin repeat
+ * #TYPE   = FLOAT, DOUBLE#
+ * #type   = npy_float, npy_double#
+ * #steps  = 4, 2#
+ * #double = 0, 1#
+ * #ivtype = __vector float, __vector double#
+ * #ovtype = __vector unsigned int, __vector unsigned long long#
+ * #otype  = unsigned int, unsigned long long#
+ */
+/**begin repeat1
+ * #kind = equal, not_equal, greater, greater_equal, less, less_equal#
+ * #simd = cmpeq, cmpne, cmpgt, cmpge, cmplt, cmple #
+ * #OP   = ==, !=, >, >=, <, <=#
+ */
+
+/*
+ * Each iteration of the main loop computes 16 elements of the output, which
+ * are packed into an 8-bit vector. In order to generate the 16 elements of the
+ * output, it is necessary to load/compute: 1) 4x 32-bit vectors, for FLOAT; or
+ * 2) 8x 64-bit vectors, for DOUBLE.
+ */
+
+static void NPY_GCC_OPT_3 NPY_INLINE NPY_GCC_TARGET_VSX
+vsx_binary_scalar1_@kind@_@TYPE@(npy_bool * op, @type@ * ip1, @type@ * ip2,
+                                 npy_intp n)
+{
+    const @ivtype@ a = vec_splats((@type@)ip1[0]);
+    LOOP_BLOCK_ALIGN_VAR(ip2, @type@, VECTOR_SIZE_BYTES) {
+        op[i] = ip1[0] @OP@ ip2[i];
+    }
+    LOOP_BLOCKED(npy_bool, VECTOR_SIZE_BYTES) {
+        @ivtype@ b1 = vec_ld(0, &ip2[i + (0 * @steps@)]);
+        @ivtype@ b2 = vec_ld(0, &ip2[i + (1 * @steps@)]);
+        @ivtype@ b3 = vec_ld(0, &ip2[i + (2 * @steps@)]);
+        @ivtype@ b4 = vec_ld(0, &ip2[i + (3 * @steps@)]);
+        @ovtype@ r1 = (@ovtype@)vec_@simd@(a, b1);
+        @ovtype@ r2 = (@ovtype@)vec_@simd@(a, b2);
+        @ovtype@ r3 = (@ovtype@)vec_@simd@(a, b3);
+        @ovtype@ r4 = (@ovtype@)vec_@simd@(a, b4);
+#if @double@
+        @ivtype@ b5 = vec_ld(0, &ip2[i + (4 * @steps@)]);
+        @ivtype@ b6 = vec_ld(0, &ip2[i + (5 * @steps@)]);
+        @ivtype@ b7 = vec_ld(0, &ip2[i + (6 * @steps@)]);
+        @ivtype@ b8 = vec_ld(0, &ip2[i + (7 * @steps@)]);
+        @ovtype@ r5 = (@ovtype@)vec_@simd@(a, b5);
+        @ovtype@ r6 = (@ovtype@)vec_@simd@(a, b6);
+        @ovtype@ r7 = (@ovtype@)vec_@simd@(a, b7);
+        @ovtype@ r8 = (@ovtype@)vec_@simd@(a, b8);
+        __vector unsigned char r =
+            pack_vf64_vu8(r1, r2, r3, r4, r5, r6, r7, r8);
+#else
+        __vector unsigned char r = pack_vf32_vu8(r1, r2, r3, r4);
+#endif
+        vec_xst(r, 0, &op[i]);
+    }
+    LOOP_BLOCKED_END {
+        op[i] = ip1[0] @OP@ ip2[i];
+    }
+}
+
+static void NPY_GCC_OPT_3 NPY_INLINE NPY_GCC_TARGET_VSX
+vsx_binary_scalar2_@kind@_@TYPE@(npy_bool * op, @type@ * ip1, @type@ * ip2,
+                                 npy_intp n)
+{
+    const @ivtype@ b = vec_splats((@type@)ip2[0]);
+    LOOP_BLOCK_ALIGN_VAR(ip1, @type@, VECTOR_SIZE_BYTES) {
+        op[i] = ip1[i] @OP@ ip2[0];
+    }
+    LOOP_BLOCKED(npy_bool, VECTOR_SIZE_BYTES) {
+        @ivtype@ a1 = vec_ld(0, &ip1[i + (0 * @steps@)]);
+        @ivtype@ a2 = vec_ld(0, &ip1[i + (1 * @steps@)]);
+        @ivtype@ a3 = vec_ld(0, &ip1[i + (2 * @steps@)]);
+        @ivtype@ a4 = vec_ld(0, &ip1[i + (3 * @steps@)]);
+        @ovtype@ r1 = (@ovtype@)vec_@simd@(a1, b);
+        @ovtype@ r2 = (@ovtype@)vec_@simd@(a2, b);
+        @ovtype@ r3 = (@ovtype@)vec_@simd@(a3, b);
+        @ovtype@ r4 = (@ovtype@)vec_@simd@(a4, b);
+#if @double@
+        @ivtype@ a5 = vec_ld(0, &ip1[i + (4 * @steps@)]);
+        @ivtype@ a6 = vec_ld(0, &ip1[i + (5 * @steps@)]);
+        @ivtype@ a7 = vec_ld(0, &ip1[i + (6 * @steps@)]);
+        @ivtype@ a8 = vec_ld(0, &ip1[i + (7 * @steps@)]);
+        @ovtype@ r5 = (@ovtype@)vec_@simd@(a5, b);
+        @ovtype@ r6 = (@ovtype@)vec_@simd@(a6, b);
+        @ovtype@ r7 = (@ovtype@)vec_@simd@(a7, b);
+        @ovtype@ r8 = (@ovtype@)vec_@simd@(a8, b);
+        __vector unsigned char r =
+            pack_vf64_vu8(r1, r2, r3, r4, r5, r6, r7, r8);
+#else
+        __vector unsigned char r = pack_vf32_vu8(r1, r2, r3, r4);
+#endif
+        vec_xst(r, 0, &op[i]);
+    }
+    LOOP_BLOCKED_END {
+        op[i] = ip1[i] @OP@ ip2[0];
+    }
+}
+
+static void NPY_GCC_OPT_3 NPY_INLINE NPY_GCC_TARGET_VSX
+vsx_binary_@kind@_@TYPE@(npy_bool * op, @type@ * ip1, @type@ * ip2, npy_intp n)
+{
+    LOOP_BLOCK_ALIGN_VAR(ip1, @type@, VECTOR_SIZE_BYTES) {
+        op[i] = ip1[i] @OP@ ip2[i];
+    }
+    LOOP_BLOCKED(npy_bool, VECTOR_SIZE_BYTES) {
+        @ivtype@ a1 = vec_ld(0, &ip1[i + (0 * @steps@)]);
+        @ivtype@ a2 = vec_ld(0, &ip1[i + (1 * @steps@)]);
+        @ivtype@ a3 = vec_ld(0, &ip1[i + (2 * @steps@)]);
+        @ivtype@ a4 = vec_ld(0, &ip1[i + (3 * @steps@)]);
+        @ivtype@ b1 = vec_xl(0, &ip2[i + (0 * @steps@)]);
+        @ivtype@ b2 = vec_xl(0, &ip2[i + (1 * @steps@)]);
+        @ivtype@ b3 = vec_xl(0, &ip2[i + (2 * @steps@)]);
+        @ivtype@ b4 = vec_xl(0, &ip2[i + (3 * @steps@)]);
+        @ovtype@ r1 = (@ovtype@)vec_@simd@(a1, b1);
+        @ovtype@ r2 = (@ovtype@)vec_@simd@(a2, b2);
+        @ovtype@ r3 = (@ovtype@)vec_@simd@(a3, b3);
+        @ovtype@ r4 = (@ovtype@)vec_@simd@(a4, b4);
+#if @double@
+        @ivtype@ a5 = vec_ld(0, &ip1[i + (4 * @steps@)]);
+        @ivtype@ a6 = vec_ld(0, &ip1[i + (5 * @steps@)]);
+        @ivtype@ a7 = vec_ld(0, &ip1[i + (6 * @steps@)]);
+        @ivtype@ a8 = vec_ld(0, &ip1[i + (7 * @steps@)]);
+        @ivtype@ b5 = vec_xl(0, &ip2[i + (4 * @steps@)]);
+        @ivtype@ b6 = vec_xl(0, &ip2[i + (5 * @steps@)]);
+        @ivtype@ b7 = vec_xl(0, &ip2[i + (6 * @steps@)]);
+        @ivtype@ b8 = vec_xl(0, &ip2[i + (7 * @steps@)]);
+        @ovtype@ r5 = (@ovtype@)vec_@simd@(a5, b5);
+        @ovtype@ r6 = (@ovtype@)vec_@simd@(a6, b6);
+        @ovtype@ r7 = (@ovtype@)vec_@simd@(a7, b7);
+        @ovtype@ r8 = (@ovtype@)vec_@simd@(a8, b8);
+        __vector unsigned char r =
+            pack_vf64_vu8(r1, r2, r3, r4, r5, r6, r7, r8);
+#else
+        __vector unsigned char r = pack_vf32_vu8(r1, r2, r3, r4);
+#endif
+        vec_xst(r, 0, &op[i]);
+    }
+    LOOP_BLOCKED_END {
+        op[i] = ip1[i] @OP@ ip2[i];
+    }
+}
+/**end repeat1**/
+/**end repeat**/
+
+/*
+ *****************************************************************************
+ **                           BOOL LOOPS
+ *****************************************************************************
+ */
+
+/**begin repeat
+ * #kind  = equal, not_equal, greater, greater_equal, less, less_equal#
+ * #simd  = cmpeq, cmpne, cmpgt, cmpge, cmplt, cmple #
+ * #OP    = ==, !=, >, >=, <, <=#
+ * #vtype = __vector unsigned char*6#
+ * #stype = npy_bool*6#
+ */
+
+static void NPY_GCC_OPT_3 NPY_INLINE NPY_GCC_TARGET_VSX
+vsx_binary_scalar1_@kind@_BOOL(npy_bool * op, npy_bool * ip1, npy_bool * ip2,
+                               npy_intp n)
+{
+    const @stype@ in1 = ip1[0] != 0;
+    const @vtype@ a = vec_splats((@stype@)ip1[0]);
+    const @vtype@ truemask = vec_splats((@stype@)0x1);
+    LOOP_BLOCK_ALIGN_VAR(ip2, @stype@, VECTOR_SIZE_BYTES) {
+        @stype@ in2 = ip2[i] != 0;
+        op[i] = in1 @OP@ in2;
+    }
+    LOOP_BLOCKED(@stype@, VECTOR_SIZE_BYTES) {
+        @vtype@ b = vec_xl(0, &ip2[i]);
+        @vtype@ r = (@vtype@)vec_@simd@(a, b);
+                r = vec_and(r, truemask);
+        vec_xst(r, 0, &op[i]);
+    }
+    LOOP_BLOCKED_END {
+        @stype@ in2 = ip2[i] != 0;
+        op[i] = in1 @OP@ in2;
+    }
+}
+
+static void NPY_GCC_OPT_3 NPY_INLINE NPY_GCC_TARGET_VSX
+vsx_binary_scalar2_@kind@_BOOL(npy_bool * op, npy_bool * ip1, npy_bool * ip2,
+                               npy_intp n)
+{
+    const @stype@ in2 = ip2[0] != 0;
+    const @vtype@ b = vec_splats((@stype@)ip2[0]);
+    const @vtype@ truemask = vec_splats((@stype@)0x1);
+    LOOP_BLOCK_ALIGN_VAR(ip1, @stype@, VECTOR_SIZE_BYTES) {
+        @stype@ in1 = ip1[i] != 0;
+        op[i] = in1 @OP@ in2;
+    }
+    LOOP_BLOCKED(@stype@, VECTOR_SIZE_BYTES) {
+        @vtype@ a = vec_xl(0, &ip1[i]);
+        @vtype@ r = (@vtype@)vec_@simd@(a, b);
+                r = vec_and(r, truemask);
+        vec_xst(r, 0, &op[i]);
+    }
+    LOOP_BLOCKED_END {
+        @stype@ in1 = ip1[i] != 0;
+        op[i] = in1 @OP@ in2;
+    }
+}
+
+static void NPY_GCC_OPT_3 NPY_INLINE NPY_GCC_TARGET_VSX
+vsx_binary_@kind@_BOOL(npy_bool * op, npy_bool * ip1, npy_bool * ip2,
+                       npy_intp n)
+{
+    const @vtype@ truemask = vec_splats((@stype@)0x1);
+    LOOP_BLOCK_ALIGN_VAR(ip1, @stype@, VECTOR_SIZE_BYTES) {
+        @stype@ in1 = ip1[i] != 0;
+        @stype@ in2 = ip2[i] != 0;
+        op[i] = in1 @OP@ in2;
+    }
+    LOOP_BLOCKED(@stype@, VECTOR_SIZE_BYTES) {
+        @vtype@ a = vec_xl(0, &ip1[i]);
+        @vtype@ b = vec_xl(0, &ip2[i]);
+        @vtype@ r = (@vtype@)vec_@simd@(a, b);
+                r = vec_and(r, truemask);
+        vec_xst(r, 0, &op[i]);
+    }
+    LOOP_BLOCKED_END {
+        @stype@ in1 = ip1[i] != 0;
+        @stype@ in2 = ip2[i] != 0;
+        op[i] = in1 @OP@ in2;
+    }
+}
+/**end repeat**/
+
+/**begin repeat
+ * # kind  = logical_or, logical_and#
+ * # OP    = ||, &&#
+ * # simd  = or, and#
+ * # vtype = __vector unsigned char*2#
+ * # stype = npy_bool*2#
+ */
+static void NPY_GCC_OPT_3 NPY_INLINE NPY_GCC_TARGET_VSX
+vsx_binary_@kind@_BOOL(npy_bool * op, npy_bool * ip1, npy_bool * ip2,
+                       npy_intp n)
+{
+    const @vtype@ vzero = vec_splats((@stype@)0x0);
+    const @vtype@ truemask = vec_splats((@stype@)0x1);
+    LOOP_BLOCK_ALIGN_VAR(ip1, @stype@, VECTOR_SIZE_BYTES) {
+        op[i] = ip1[i] @OP@ ip2[i];
+    }
+    LOOP_BLOCKED(@stype@, VECTOR_SIZE_BYTES) {
+        @vtype@ a = vec_xl(0, &ip1[i]);
+        @vtype@ b = vec_xl(0, &ip2[i]);
+        /* equivalent to byte_to_true */
+        @vtype@ tmp = (@vtype@)vec_@simd@(a, b);
+                tmp = (@vtype@)vec_cmpeq(tmp, vzero);
+        @vtype@ r = vec_andc(truemask, tmp);
+        vec_xst(r, 0, &op[i]);
+    }
+    LOOP_BLOCKED_END {
+        op[i] = ip1[i] @OP@ ip2[i];
+    }
+}
+/**end repeat**/
+
+/**begin repeat
+ * # kind  = absolute, logical_not#
+ * # OP    = !=, ==#
+ * # not   = 0, 1#
+ * # vtype = __vector unsigned char*2#
+ * # stype = npy_bool*2#
+ */
+static void NPY_GCC_OPT_3 NPY_INLINE NPY_GCC_TARGET_VSX
+vsx_@kind@_BOOL(npy_bool * op, npy_bool * ip, const npy_intp n)
+{
+    const @vtype@ vzero = vec_splats((@stype@)0x0);
+    const @vtype@ truemask = vec_splats((@stype@)0x1);
+    LOOP_BLOCK_ALIGN_VAR(ip, @stype@, VECTOR_SIZE_BYTES) {
+        op[i] = ip[i] @OP@ 0;
+    }
+    LOOP_BLOCKED(@stype@, VECTOR_SIZE_BYTES) {
+        @vtype@ a = vec_xl(0, &ip[i]);
+        /* equivalent to byte_to_true */
+        @vtype@ r = (@vtype@)vec_cmpeq(a, vzero);
+#if @not@
+        r = vec_and(r, truemask);
+#else
+        r = vec_andc(truemask, r);
+#endif
+        vec_xst(r, 0, &op[i]);
+    }
+    LOOP_BLOCKED_END {
+        op[i] = ip[i] @OP@ 0;
+    }
+}
+/**end repeat**/
+
+#undef VECTOR_SIZE_BYTES
+#endif /* NPY_HAVE_VSX_INTRINSICS */
+#endif
