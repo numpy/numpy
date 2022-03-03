@@ -25,7 +25,7 @@ class _NestedSequence(Protocol[_T_co]):
 
     See Also
     --------
-    `collections.abc.Sequence`
+    collections.abc.Sequence
         ABCs for read-only and mutable :term:`sequences`.
 
     Examples

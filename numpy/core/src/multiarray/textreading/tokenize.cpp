@@ -1,11 +1,6 @@
 
 #include <Python.h>
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdbool.h>
-#include <string.h>
-
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
 #include "numpy/ndarraytypes.h"
@@ -14,7 +9,6 @@
 #include "textreading/tokenize.h"
 #include "textreading/parser_config.h"
 #include "textreading/growth.h"
-
 
 /*
     How parsing quoted fields works:
@@ -45,12 +39,10 @@
 */
 
 
-/**begin repeat
- * #type = Py_UCS1, Py_UCS2, Py_UCS4#
- */
+template <typename UCS>
 static NPY_INLINE int
-copy_to_field_buffer_@type@(tokenizer_state *ts,
-        const @type@ *chunk_start, const @type@ *chunk_end)
+copy_to_field_buffer(tokenizer_state *ts,
+        const UCS *chunk_start, const UCS *chunk_end)
 {
     npy_intp chunk_length = chunk_end - chunk_start;
     npy_intp size = chunk_length + ts->field_buffer_pos + 2;
@@ -62,8 +54,8 @@ copy_to_field_buffer_@type@(tokenizer_state *ts,
                     "line too long to handle while reading file.");
             return -1;
         }
-        Py_UCS4 *grown = PyMem_Realloc(ts->field_buffer, alloc_size);
-        if (grown == NULL) {
+        Py_UCS4 *grown = (Py_UCS4 *)PyMem_Realloc(ts->field_buffer, alloc_size);
+        if (grown == nullptr) {
             PyErr_NoMemory();
             return -1;
         }
@@ -79,7 +71,6 @@ copy_to_field_buffer_@type@(tokenizer_state *ts,
     ts->field_buffer_pos += chunk_length;
     return 0;
 }
-/**end repeat**/
 
 
 static NPY_INLINE int
@@ -99,8 +90,8 @@ add_field(tokenizer_state *ts)
                     "too many columns found; cannot read file.");
             return -1;
         }
-        field_info *fields = PyMem_Realloc(ts->fields, alloc_size);
-        if (fields == NULL) {
+        field_info *fields = (field_info *)PyMem_Realloc(ts->fields, alloc_size);
+        if (fields == nullptr) {
             PyErr_NoMemory();
             return -1;
         }
@@ -117,16 +108,13 @@ add_field(tokenizer_state *ts)
 }
 
 
-/**begin repeat
- * #kind = PyUnicode_1BYTE_KIND, PyUnicode_2BYTE_KIND, PyUnicode_4BYTE_KIND#
- * #type = Py_UCS1, Py_UCS2, Py_UCS4#
- */
+template <typename UCS>
 static NPY_INLINE int
-tokenizer_core_@type@(tokenizer_state *ts, parser_config *const config)
+tokenizer_core(tokenizer_state *ts, parser_config *const config)
 {
-    @type@ *pos = (@type@ *)ts->pos;
-    @type@ *stop = (@type@ *)ts->end;
-    @type@ *chunk_start;
+    UCS *pos = (UCS *)ts->pos;
+    UCS *stop = (UCS *)ts->end;
+    UCS *chunk_start;
 
     if (ts->state == TOKENIZE_CHECK_QUOTED) {
         /* before we can check for quotes, strip leading whitespace */
@@ -174,7 +162,7 @@ tokenizer_core_@type@(tokenizer_state *ts, parser_config *const config)
                     break;
                 }
             }
-            if (copy_to_field_buffer_@type@(ts, chunk_start, pos) < 0) {
+            if (copy_to_field_buffer(ts, chunk_start, pos) < 0) {
                 return -1;
             }
             pos++;
@@ -201,7 +189,7 @@ tokenizer_core_@type@(tokenizer_state *ts, parser_config *const config)
                     break;
                 }
             }
-            if (copy_to_field_buffer_@type@(ts, chunk_start, pos) < 0) {
+            if (copy_to_field_buffer(ts, chunk_start, pos) < 0) {
                 return -1;
             }
             pos++;
@@ -215,7 +203,7 @@ tokenizer_core_@type@(tokenizer_state *ts, parser_config *const config)
                     break;
                 }
             }
-            if (copy_to_field_buffer_@type@(ts, chunk_start, pos) < 0) {
+            if (copy_to_field_buffer(ts, chunk_start, pos) < 0) {
                 return -1;
             }
             pos++;
@@ -224,7 +212,7 @@ tokenizer_core_@type@(tokenizer_state *ts, parser_config *const config)
         case TOKENIZE_QUOTED_CHECK_DOUBLE_QUOTE:
             if (*pos == config->quote) {
                 /* Copy the quote character directly from the config: */
-                if (copy_to_field_buffer_Py_UCS4(ts,
+                if (copy_to_field_buffer(ts,
                         &config->quote, &config->quote+1) < 0) {
                     return -1;
                 }
@@ -271,7 +259,6 @@ tokenizer_core_@type@(tokenizer_state *ts, parser_config *const config)
     ts->pos = (char *)pos;
     return 0;
 }
-/**end repeat**/
 
 
 /*
@@ -308,7 +295,7 @@ tokenize(stream *s, tokenizer_state *ts, parser_config *const config)
     ts->field_buffer_pos = 0;
     ts->num_fields = 0;
 
-    while (1) {
+    while (true) {
         /*
          * This loop adds new fields to the result (to make up a full row)
          * until the row ends (typically a line end or the file end)
@@ -352,14 +339,14 @@ tokenize(stream *s, tokenizer_state *ts, parser_config *const config)
         }
         int status;
         if (ts->unicode_kind == PyUnicode_1BYTE_KIND) {
-            status = tokenizer_core_Py_UCS1(ts, config);
+            status = tokenizer_core<Py_UCS1>(ts, config);
         }
         else if (ts->unicode_kind == PyUnicode_2BYTE_KIND) {
-            status = tokenizer_core_Py_UCS2(ts, config);
+            status = tokenizer_core<Py_UCS2>(ts, config);
         }
         else {
             assert(ts->unicode_kind == PyUnicode_4BYTE_KIND);
-            status = tokenizer_core_Py_UCS4(ts, config);
+            status = tokenizer_core<Py_UCS4>(ts, config);
         }
         if (status < 0) {
             return -1;
@@ -391,13 +378,22 @@ tokenize(stream *s, tokenizer_state *ts, parser_config *const config)
     ts->num_fields -= 1;
 
     /*
-     * If have one field, but that field is completely empty, this is an
-     * empty line, and we just ignore it.
+     * We always start a new field (at the very beginning and whenever a
+     * delimiter was found).
+     * This gives us two scenarios where we need to ignore the last field
+     * if it is empty:
+     * 1. If there is exactly one empty (unquoted) field, the whole line is
+     *    empty.
+     * 2. If we are splitting on whitespace we always ignore a last empty
+     *    field to match Python's splitting: `" 1 ".split()`.
      */
     if (ts->num_fields == 1
-             && ts->fields[1].offset - ts->fields[0].offset == 1
-             && !ts->fields->quoted) {
-        ts->num_fields--;
+            || ts->unquoted_state == TOKENIZE_UNQUOTED_WHITESPACE) {
+        size_t offset_last = ts->fields[ts->num_fields-1].offset;
+        size_t end_last = ts->fields[ts->num_fields].offset;
+        if (!ts->fields->quoted && end_last - offset_last == 1) {
+            ts->num_fields--;
+        }
     }
     ts->state = TOKENIZE_INIT;
     return finished_reading_file;
@@ -408,11 +404,11 @@ NPY_NO_EXPORT void
 tokenizer_clear(tokenizer_state *ts)
 {
     PyMem_FREE(ts->field_buffer);
-    ts->field_buffer = NULL;
+    ts->field_buffer = nullptr;
     ts->field_buffer_length = 0;
 
     PyMem_FREE(ts->fields);
-    ts->fields = NULL;
+    ts->fields = nullptr;
     ts->fields_size = 0;
 }
 
@@ -437,18 +433,18 @@ tokenizer_init(tokenizer_state *ts, parser_config *config)
     ts->num_fields = 0;
 
     ts->buf_state = 0;
-    ts->pos = NULL;
-    ts->end = NULL;
+    ts->pos = nullptr;
+    ts->end = nullptr;
 
-    ts->field_buffer = PyMem_Malloc(32 * sizeof(Py_UCS4));
-    if (ts->field_buffer == NULL) {
+    ts->field_buffer = (Py_UCS4 *)PyMem_Malloc(32 * sizeof(Py_UCS4));
+    if (ts->field_buffer == nullptr) {
         PyErr_NoMemory();
         return -1;
     }
     ts->field_buffer_length = 32;
 
-    ts->fields = PyMem_Malloc(4 * sizeof(*ts->fields));
-    if (ts->fields == NULL) {
+    ts->fields = (field_info *)PyMem_Malloc(4 * sizeof(*ts->fields));
+    if (ts->fields == nullptr) {
         PyErr_NoMemory();
         return -1;
     }

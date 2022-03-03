@@ -48,7 +48,7 @@ _NameType = TypeVar("_NameType", bound=str)
 # NOTE: If 2 output types are returned then `out` must be a
 # 2-tuple of arrays. Otherwise `None` or a plain array are also acceptable
 
-class _UFunc_Nin1_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType]):
+class _UFunc_Nin1_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: ignore[misc]
     @property
     def __name__(self) -> _NameType: ...
     @property
@@ -108,7 +108,7 @@ class _UFunc_Nin1_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType]):
         /,
     ) -> None: ...
 
-class _UFunc_Nin2_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType]):
+class _UFunc_Nin2_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: ignore[misc]
     @property
     def __name__(self) -> _NameType: ...
     @property
@@ -223,7 +223,7 @@ class _UFunc_Nin2_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType]):
         extobj: list[Any] = ...,
     ) -> NDArray[Any]: ...
 
-class _UFunc_Nin1_Nout2(ufunc, Generic[_NameType, _NTypes, _IDType]):
+class _UFunc_Nin1_Nout2(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: ignore[misc]
     @property
     def __name__(self) -> _NameType: ...
     @property
@@ -281,7 +281,7 @@ class _UFunc_Nin1_Nout2(ufunc, Generic[_NameType, _NTypes, _IDType]):
         extobj: list[Any] = ...,
     ) -> _2Tuple[NDArray[Any]]: ...
 
-class _UFunc_Nin2_Nout2(ufunc, Generic[_NameType, _NTypes, _IDType]):
+class _UFunc_Nin2_Nout2(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: ignore[misc]
     @property
     def __name__(self) -> _NameType: ...
     @property
@@ -341,7 +341,7 @@ class _UFunc_Nin2_Nout2(ufunc, Generic[_NameType, _NTypes, _IDType]):
         extobj: list[Any] = ...,
     ) -> _2Tuple[NDArray[Any]]: ...
 
-class _GUFunc_Nin2_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType]):
+class _GUFunc_Nin2_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: ignore[misc]
     @property
     def __name__(self) -> _NameType: ...
     @property

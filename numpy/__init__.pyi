@@ -676,6 +676,7 @@ _NdArraySubClass = TypeVar("_NdArraySubClass", bound=ndarray)
 _DTypeScalar_co = TypeVar("_DTypeScalar_co", covariant=True, bound=generic)
 _ByteOrder = L["S", "<", ">", "=", "|", "L", "B", "N", "I"]
 
+@final
 class dtype(Generic[_DTypeScalar_co]):
     names: None | tuple[builtins.str, ...]
     # Overload for subclass of generic
@@ -930,6 +931,7 @@ _ArrayLikeInt = Union[
 
 _FlatIterSelf = TypeVar("_FlatIterSelf", bound=flatiter)
 
+@final
 class flatiter(Generic[_NdArraySubClass]):
     @property
     def base(self) -> _NdArraySubClass: ...
@@ -1095,7 +1097,7 @@ class _ArrayOrScalarCommon:
     @overload
     def argmax(
         self,
-        axis: _ShapeLike = ...,
+        axis: SupportsIndex = ...,
         out: None = ...,
         *,
         keepdims: bool = ...,
@@ -1103,7 +1105,7 @@ class _ArrayOrScalarCommon:
     @overload
     def argmax(
         self,
-        axis: None | _ShapeLike = ...,
+        axis: None | SupportsIndex = ...,
         out: _NdArraySubClass = ...,
         *,
         keepdims: bool = ...,
@@ -1120,7 +1122,7 @@ class _ArrayOrScalarCommon:
     @overload
     def argmin(
         self,
-        axis: _ShapeLike = ...,
+        axis: SupportsIndex = ...,
         out: None = ...,
         *,
         keepdims: bool = ...,
@@ -1128,7 +1130,7 @@ class _ArrayOrScalarCommon:
     @overload
     def argmin(
         self,
-        axis: None | _ShapeLike = ...,
+        axis: None | SupportsIndex = ...,
         out: _NdArraySubClass = ...,
         *,
         keepdims: bool = ...,
@@ -1357,7 +1359,7 @@ class _ArrayOrScalarCommon:
         axis: None | _ShapeLike = ...,
         dtype: DTypeLike = ...,
         out: None = ...,
-        ddof: int = ...,
+        ddof: float = ...,
         keepdims: bool = ...,
         *,
         where: _ArrayLikeBool_co = ...,
@@ -1368,7 +1370,7 @@ class _ArrayOrScalarCommon:
         axis: None | _ShapeLike = ...,
         dtype: DTypeLike = ...,
         out: _NdArraySubClass = ...,
-        ddof: int = ...,
+        ddof: float = ...,
         keepdims: bool = ...,
         *,
         where: _ArrayLikeBool_co = ...,
@@ -1401,7 +1403,7 @@ class _ArrayOrScalarCommon:
         axis: None | _ShapeLike = ...,
         dtype: DTypeLike = ...,
         out: None = ...,
-        ddof: int = ...,
+        ddof: float = ...,
         keepdims: bool = ...,
         *,
         where: _ArrayLikeBool_co = ...,
@@ -1412,7 +1414,7 @@ class _ArrayOrScalarCommon:
         axis: None | _ShapeLike = ...,
         dtype: DTypeLike = ...,
         out: _NdArraySubClass = ...,
-        ddof: int = ...,
+        ddof: float = ...,
         keepdims: bool = ...,
         *,
         where: _ArrayLikeBool_co = ...,
@@ -1524,7 +1526,9 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
         kwargs: Mapping[str, Any],
     ) -> Any: ...
 
-    @property
+    # NOTE: In practice any object is accepted by `obj`, but as `__array_finalize__`
+    # is a pseudo-abstract method the type has been narrowed down in order to
+    # grant subclasses a bit more flexiblity
     def __array_finalize__(self, obj: None | NDArray[Any], /) -> None: ...
 
     def __array_wrap__(
@@ -3136,6 +3140,7 @@ UFUNC_PYVALS_NAME: L["UFUNC_PYVALS"]
 newaxis: None
 
 # See `npt._ufunc` for more concrete nin-/nout-specific stubs
+@final
 class ufunc:
     @property
     def __name__(self) -> str: ...
@@ -3372,6 +3377,7 @@ class DataSource:
 # TODO: The type of each `__next__` and `iters` return-type depends
 # on the length and dtype of `args`; we can't describe this behavior yet
 # as we lack variadics (PEP 646).
+@final
 class broadcast:
     def __new__(cls, *args: ArrayLike) -> broadcast: ...
     @property
@@ -3392,6 +3398,7 @@ class broadcast:
     def __iter__(self: _T) -> _T: ...
     def reset(self) -> None: ...
 
+@final
 class busdaycalendar:
     def __new__(
         cls,
@@ -3694,7 +3701,7 @@ class memmap(ndarray[_ShapeType, _DType_co]):
         shape: None | int | tuple[int, ...] = ...,
         order: _OrderKACF = ...,
     ) -> memmap[Any, dtype[Any]]: ...
-    def __array_finalize__(self, obj: memmap[Any, Any]) -> None: ...
+    def __array_finalize__(self, obj: object) -> None: ...
     def __array_wrap__(
         self,
         array: memmap[_ShapeType, _DType_co],
@@ -3806,7 +3813,7 @@ class matrix(ndarray[_ShapeType, _DType_co]):
         dtype: DTypeLike = ...,
         copy: bool = ...,
     ) -> matrix[Any, Any]: ...
-    def __array_finalize__(self, obj: NDArray[Any]) -> None: ...
+    def __array_finalize__(self, obj: object) -> None: ...
 
     @overload
     def __getitem__(self, key: (
@@ -3967,7 +3974,7 @@ class chararray(ndarray[_ShapeType, _CharDType]):
         order: _OrderKACF = ...,
     ) -> chararray[Any, dtype[str_]]: ...
 
-    def __array_finalize__(self, obj: NDArray[str_ | bytes_]) -> None: ...
+    def __array_finalize__(self, obj: object) -> None: ...
     def __mul__(self, other: _ArrayLikeInt_co) -> chararray[Any, _CharDType]: ...
     def __rmul__(self, other: _ArrayLikeInt_co) -> chararray[Any, _CharDType]: ...
     def __mod__(self, i: Any) -> chararray[Any, _CharDType]: ...

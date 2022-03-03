@@ -1,7 +1,7 @@
 /*@targets
  ** $maxopt baseline
  ** (avx2 fma3) avx512f
- ** vsx2
+ ** vsx2 vsx3 vsx4
  ** neon_vfpv4
  **/
 #include "numpy/npy_math.h"

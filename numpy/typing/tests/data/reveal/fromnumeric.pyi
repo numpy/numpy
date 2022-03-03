@@ -8,11 +8,15 @@ class NDArraySubclass(npt.NDArray[np.complex128]):
 
 AR_b: npt.NDArray[np.bool_]
 AR_f4: npt.NDArray[np.float32]
+AR_c16: npt.NDArray[np.complex128]
+AR_u8: npt.NDArray[np.uint64]
 AR_i8: npt.NDArray[np.int64]
+AR_O: npt.NDArray[np.object_]
 AR_subclass: NDArraySubclass
 
 b: np.bool_
 f4: np.float32
+i8: np.int64
 f: float
 
 reveal_type(np.take(b, 0))  # E: bool_
@@ -214,23 +218,28 @@ reveal_type(np.amin(AR_b, keepdims=True))  # E: Any
 reveal_type(np.amin(AR_f4, keepdims=True))  # E: Any
 reveal_type(np.amin(AR_f4, out=AR_subclass))  # E: NDArraySubclass
 
-reveal_type(np.prod(b))  # E: Any
-reveal_type(np.prod(f4))  # E: Any
-reveal_type(np.prod(f))  # E: Any
-reveal_type(np.prod(AR_b))  # E: Any
-reveal_type(np.prod(AR_f4))  # E: Any
-reveal_type(np.prod(AR_b, axis=0))  # E: Any
+reveal_type(np.prod(AR_b))  # E: {int_}
+reveal_type(np.prod(AR_u8))  # E: {uint64}
+reveal_type(np.prod(AR_i8))  # E: {int64}
+reveal_type(np.prod(AR_f4))  # E: floating[Any]
+reveal_type(np.prod(AR_c16))  # E: complexfloating[Any, Any]
+reveal_type(np.prod(AR_O))  # E: Any
 reveal_type(np.prod(AR_f4, axis=0))  # E: Any
-reveal_type(np.prod(AR_b, keepdims=True))  # E: Any
 reveal_type(np.prod(AR_f4, keepdims=True))  # E: Any
-reveal_type(np.prod(f4, out=AR_i8))  # E: Any
-reveal_type(np.prod(AR_f4, out=AR_i8))  # E: Any
+reveal_type(np.prod(AR_f4, dtype=np.float64))  # E: {float64}
+reveal_type(np.prod(AR_f4, dtype=float))  # E: Any
+reveal_type(np.prod(AR_f4, out=AR_subclass))  # E: NDArraySubclass
 
-reveal_type(np.cumprod(b))  # E: ndarray[Any, Any]
-reveal_type(np.cumprod(f4))  # E: ndarray[Any, Any]
-reveal_type(np.cumprod(f))  # E: ndarray[Any, Any]
-reveal_type(np.cumprod(AR_b))  # E: ndarray[Any, Any]
-reveal_type(np.cumprod(AR_f4))  # E: ndarray[Any, Any]
+reveal_type(np.cumprod(AR_b))  # E: ndarray[Any, dtype[{int_}]]
+reveal_type(np.cumprod(AR_u8))  # E: ndarray[Any, dtype[{uint64}]]
+reveal_type(np.cumprod(AR_i8))  # E: ndarray[Any, dtype[{int64}]]
+reveal_type(np.cumprod(AR_f4))  # E: ndarray[Any, dtype[floating[Any]]]
+reveal_type(np.cumprod(AR_c16))  # E: ndarray[Any, dtype[complexfloating[Any, Any]]]
+reveal_type(np.cumprod(AR_O))  # E: ndarray[Any, dtype[object_]]
+reveal_type(np.cumprod(AR_f4, axis=0))  # E: ndarray[Any, dtype[floating[Any]]]
+reveal_type(np.cumprod(AR_f4, dtype=np.float64))  # E: ndarray[Any, dtype[{float64}]]
+reveal_type(np.cumprod(AR_f4, dtype=float))  # E: ndarray[Any, dtype[Any]]
+reveal_type(np.cumprod(AR_f4, out=AR_subclass))  # E: NDArraySubclass
 
 reveal_type(np.ndim(b))  # E: int
 reveal_type(np.ndim(f4))  # E: int
@@ -244,44 +253,45 @@ reveal_type(np.size(f))  # E: int
 reveal_type(np.size(AR_b))  # E: int
 reveal_type(np.size(AR_f4))  # E: int
 
-reveal_type(np.around(b))  # E: Any
-reveal_type(np.around(f4))  # E: Any
+reveal_type(np.around(b))  # E: {float16}
 reveal_type(np.around(f))  # E: Any
-reveal_type(np.around(AR_b))  # E: Any
-reveal_type(np.around(AR_f4))  # E: Any
+reveal_type(np.around(i8))  # E: {int64}
+reveal_type(np.around(f4))  # E: {float32}
+reveal_type(np.around(AR_b))  # E: ndarray[Any, dtype[{float16}]]
+reveal_type(np.around(AR_i8))  # E: ndarray[Any, dtype[{int64}]]
+reveal_type(np.around(AR_f4))  # E: ndarray[Any, dtype[{float32}]]
+reveal_type(np.around([1.5]))  # E: ndarray[Any, dtype[Any]]
+reveal_type(np.around(AR_f4, out=AR_subclass))  # E: NDArraySubclass
 
-reveal_type(np.mean(b))  # E: Any
-reveal_type(np.mean(f4))  # E: Any
-reveal_type(np.mean(f))  # E: Any
-reveal_type(np.mean(AR_b))  # E: Any
-reveal_type(np.mean(AR_f4))  # E: Any
-reveal_type(np.mean(AR_b, axis=0))  # E: Any
+reveal_type(np.mean(AR_b))  # E: floating[Any]
+reveal_type(np.mean(AR_i8))  # E: floating[Any]
+reveal_type(np.mean(AR_f4))  # E: floating[Any]
+reveal_type(np.mean(AR_c16))  # E: complexfloating[Any, Any]
+reveal_type(np.mean(AR_O))  # E: Any
 reveal_type(np.mean(AR_f4, axis=0))  # E: Any
-reveal_type(np.mean(AR_b, keepdims=True))  # E: Any
 reveal_type(np.mean(AR_f4, keepdims=True))  # E: Any
-reveal_type(np.mean(f4, out=AR_i8))  # E: Any
-reveal_type(np.mean(AR_f4, out=AR_i8))  # E: Any
+reveal_type(np.mean(AR_f4, dtype=float))  # E: Any
+reveal_type(np.mean(AR_f4, dtype=np.float64))  # E: {float64}
+reveal_type(np.mean(AR_f4, out=AR_subclass))  # E: NDArraySubclass
 
-reveal_type(np.std(b))  # E: Any
-reveal_type(np.std(f4))  # E: Any
-reveal_type(np.std(f))  # E: Any
-reveal_type(np.std(AR_b))  # E: Any
-reveal_type(np.std(AR_f4))  # E: Any
-reveal_type(np.std(AR_b, axis=0))  # E: Any
+reveal_type(np.std(AR_b))  # E: floating[Any]
+reveal_type(np.std(AR_i8))  # E: floating[Any]
+reveal_type(np.std(AR_f4))  # E: floating[Any]
+reveal_type(np.std(AR_c16))  # E: floating[Any]
+reveal_type(np.std(AR_O))  # E: Any
 reveal_type(np.std(AR_f4, axis=0))  # E: Any
-reveal_type(np.std(AR_b, keepdims=True))  # E: Any
 reveal_type(np.std(AR_f4, keepdims=True))  # E: Any
-reveal_type(np.std(f4, out=AR_i8))  # E: Any
-reveal_type(np.std(AR_f4, out=AR_i8))  # E: Any
+reveal_type(np.std(AR_f4, dtype=float))  # E: Any
+reveal_type(np.std(AR_f4, dtype=np.float64))  # E: {float64}
+reveal_type(np.std(AR_f4, out=AR_subclass))  # E: NDArraySubclass
 
-reveal_type(np.var(b))  # E: Any
-reveal_type(np.var(f4))  # E: Any
-reveal_type(np.var(f))  # E: Any
-reveal_type(np.var(AR_b))  # E: Any
-reveal_type(np.var(AR_f4))  # E: Any
-reveal_type(np.var(AR_b, axis=0))  # E: Any
+reveal_type(np.var(AR_b))  # E: floating[Any]
+reveal_type(np.var(AR_i8))  # E: floating[Any]
+reveal_type(np.var(AR_f4))  # E: floating[Any]
+reveal_type(np.var(AR_c16))  # E: floating[Any]
+reveal_type(np.var(AR_O))  # E: Any
 reveal_type(np.var(AR_f4, axis=0))  # E: Any
-reveal_type(np.var(AR_b, keepdims=True))  # E: Any
 reveal_type(np.var(AR_f4, keepdims=True))  # E: Any
-reveal_type(np.var(f4, out=AR_i8))  # E: Any
-reveal_type(np.var(AR_f4, out=AR_i8))  # E: Any
+reveal_type(np.var(AR_f4, dtype=float))  # E: Any
+reveal_type(np.var(AR_f4, dtype=np.float64))  # E: {float64}
+reveal_type(np.var(AR_f4, out=AR_subclass))  # E: NDArraySubclass

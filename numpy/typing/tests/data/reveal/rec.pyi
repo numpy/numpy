@@ -33,6 +33,7 @@ reveal_type(REC_AR_V.field(0, AR_i8))  # E: None
 reveal_type(REC_AR_V.field("field_a", AR_i8))  # E: None
 reveal_type(REC_AR_V["field_a"])  # E: Any
 reveal_type(REC_AR_V.field_a)  # E: Any
+reveal_type(REC_AR_V.__array_finalize__(object()))  # E: None
 
 reveal_type(np.recarray(  # recarray[Any, dtype[record]]
     shape=(10, 5),

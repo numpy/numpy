@@ -22,18 +22,6 @@
 #include "npy_buffer.h"
 #include "dtypemeta.h"
 
-/*
- * offset:    A starting offset.
- * alignment: A power-of-two alignment.
- *
- * This macro returns the smallest value >= 'offset'
- * that is divisible by 'alignment'. Because 'alignment'
- * is a power of two and integers are twos-complement,
- * it is possible to use some simple bit-fiddling to do this.
- */
-#define NPY_NEXT_ALIGNED_OFFSET(offset, alignment) \
-                (((offset) + (alignment) - 1) & (-(alignment)))
-
 #ifndef PyDictProxy_Check
 #define PyDictProxy_Check(obj) (Py_TYPE(obj) == &PyDictProxy_Type)
 #endif

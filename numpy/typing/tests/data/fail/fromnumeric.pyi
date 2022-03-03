@@ -1,9 +1,11 @@
 """Tests for :mod:`numpy.core.fromnumeric`."""
 
 import numpy as np
+import numpy.typing as npt
 
 A = np.array(True, ndmin=2, dtype=bool)
 A.setflags(write=False)
+AR_U: npt.NDArray[np.str_]
 
 a = np.bool_(True)
 
@@ -124,30 +126,36 @@ np.amin(a, out=1.0)  # E: No overload variant
 np.amin(a, initial=[1.0])  # E: No overload variant
 np.amin(a, where=[1.0])  # E: incompatible type
 
-np.prod(a, axis=1.0)  # E: incompatible type
-np.prod(a, out=False)  # E: incompatible type
-np.prod(a, keepdims=1.0)  # E: incompatible type
-np.prod(a, initial=int)  # E: incompatible type
-np.prod(a, where=1.0)  # E: incompatible type
+np.prod(a, axis=1.0)  # E: No overload variant
+np.prod(a, out=False)  # E: No overload variant
+np.prod(a, keepdims=1.0)  # E: No overload variant
+np.prod(a, initial=int)  # E: No overload variant
+np.prod(a, where=1.0)  # E: No overload variant
+np.prod(AR_U)  # E: incompatible type
 
-np.cumprod(a, axis=1.0)  # E: Argument "axis" to "cumprod" has incompatible type
-np.cumprod(a, out=False)  # E: Argument "out" to "cumprod" has incompatible type
+np.cumprod(a, axis=1.0)  # E: No overload variant
+np.cumprod(a, out=False)  # E: No overload variant
+np.cumprod(AR_U)  # E: incompatible type
 
 np.size(a, axis=1.0)  # E: Argument "axis" to "size" has incompatible type
 
-np.around(a, decimals=1.0)  # E: incompatible type
-np.around(a, out=type)  # E: incompatible type
+np.around(a, decimals=1.0)  # E: No overload variant
+np.around(a, out=type)  # E: No overload variant
+np.around(AR_U)  # E: incompatible type
 
-np.mean(a, axis=1.0)  # E: incompatible type
-np.mean(a, out=False)  # E: incompatible type
-np.mean(a, keepdims=1.0)  # E: incompatible type
+np.mean(a, axis=1.0)  # E: No overload variant
+np.mean(a, out=False)  # E: No overload variant
+np.mean(a, keepdims=1.0)  # E: No overload variant
+np.mean(AR_U)  # E: incompatible type
 
-np.std(a, axis=1.0)  # E: incompatible type
-np.std(a, out=False)  # E: incompatible type
-np.std(a, ddof='test')  # E: incompatible type
-np.std(a, keepdims=1.0)  # E: incompatible type
+np.std(a, axis=1.0)  # E: No overload variant
+np.std(a, out=False)  # E: No overload variant
+np.std(a, ddof='test')  # E: No overload variant
+np.std(a, keepdims=1.0)  # E: No overload variant
+np.std(AR_U)  # E: incompatible type
 
-np.var(a, axis=1.0)  # E: incompatible type
-np.var(a, out=False)  # E: incompatible type
-np.var(a, ddof='test')  # E: incompatible type
-np.var(a, keepdims=1.0)  # E: incompatible type
+np.var(a, axis=1.0)  # E: No overload variant
+np.var(a, out=False)  # E: No overload variant
+np.var(a, ddof='test')  # E: No overload variant
+np.var(a, keepdims=1.0)  # E: No overload variant
+np.var(AR_U)  # E: incompatible type

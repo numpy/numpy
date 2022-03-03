@@ -17,6 +17,10 @@ from setup_common import *  # noqa: F403
 # Set to True to enable relaxed strides checking. This (mostly) means
 # that `strides[dim]` is ignored if `shape[dim] == 1` when setting flags.
 NPY_RELAXED_STRIDES_CHECKING = (os.environ.get('NPY_RELAXED_STRIDES_CHECKING', "1") != "0")
+if not NPY_RELAXED_STRIDES_CHECKING:
+    raise SystemError(
+        "Support for NPY_RELAXED_STRIDES_CHECKING=0 has been remove as of "
+        "NumPy 1.23.  This error will eventually be removed entirely.")
 
 # Put NPY_RELAXED_STRIDES_DEBUG=1 in the environment if you want numpy to use a
 # bogus value for affected strides in order to help smoke out bad stride usage
@@ -482,13 +486,9 @@ def configuration(parent_package='',top_path=None):
             if can_link_svml():
                 moredefs.append(('NPY_CAN_LINK_SVML', 1))
 
-            # Use relaxed stride checking
-            if NPY_RELAXED_STRIDES_CHECKING:
-                moredefs.append(('NPY_RELAXED_STRIDES_CHECKING', 1))
-            else:
-                moredefs.append(('NPY_RELAXED_STRIDES_CHECKING', 0))
-
-            # Use bogus stride debug aid when relaxed strides are enabled
+            # Use bogus stride debug aid to flush out bugs where users use
+            # strides of dimensions with length 1 to index a full contiguous
+            # array.
             if NPY_RELAXED_STRIDES_DEBUG:
                 moredefs.append(('NPY_RELAXED_STRIDES_DEBUG', 1))
             else:
@@ -583,9 +583,6 @@ def configuration(parent_package='',top_path=None):
             mathlibs = check_mathlib(config_cmd)
             moredefs.extend(cocache.check_ieee_macros(config_cmd)[1])
             moredefs.extend(cocache.check_complex(config_cmd, mathlibs)[1])
-
-            if NPY_RELAXED_STRIDES_CHECKING:
-                moredefs.append(('NPY_RELAXED_STRIDES_CHECKING', 1))
 
             if NPY_RELAXED_STRIDES_DEBUG:
                 moredefs.append(('NPY_RELAXED_STRIDES_DEBUG', 1))
@@ -833,7 +830,7 @@ def configuration(parent_package='',top_path=None):
     multiarray_deps = [
             join('src', 'multiarray', 'abstractdtypes.h'),
             join('src', 'multiarray', 'arrayobject.h'),
-            join('src', 'multiarray', 'arraytypes.h'),
+            join('src', 'multiarray', 'arraytypes.h.src'),
             join('src', 'multiarray', 'arrayfunction_override.h'),
             join('src', 'multiarray', 'array_coercion.h'),
             join('src', 'multiarray', 'array_method.h'),
@@ -895,7 +892,9 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'abstractdtypes.c'),
             join('src', 'multiarray', 'alloc.c'),
             join('src', 'multiarray', 'arrayobject.c'),
+            join('src', 'multiarray', 'arraytypes.h.src'),
             join('src', 'multiarray', 'arraytypes.c.src'),
+            join('src', 'multiarray', 'argfunc.dispatch.c.src'),
             join('src', 'multiarray', 'array_coercion.c'),
             join('src', 'multiarray', 'array_method.c'),
             join('src', 'multiarray', 'array_assign_scalar.c'),
@@ -954,7 +953,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'npysort', 'timsort.cpp'),
             join('src', 'npysort', 'heapsort.cpp'),
             join('src', 'npysort', 'radixsort.cpp'),
-            join('src', 'common', 'npy_partition.h.src'),
+            join('src', 'common', 'npy_partition.h'),
             join('src', 'npysort', 'selection.cpp'),
             join('src', 'common', 'npy_binsearch.h'),
             join('src', 'npysort', 'binsearch.cpp'),
@@ -965,7 +964,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'textreading', 'rows.c'),
             join('src', 'multiarray', 'textreading', 'stream_pyobject.c'),
             join('src', 'multiarray', 'textreading', 'str_to_int.c'),
-            join('src', 'multiarray', 'textreading', 'tokenize.c.src'),
+            join('src', 'multiarray', 'textreading', 'tokenize.cpp'),
             ]
 
     #######################################################################

@@ -25,6 +25,7 @@ typedef PyArray_DTypeMeta *(common_dtype_function)(
         PyArray_DTypeMeta *dtype1, PyArray_DTypeMeta *dtype2);
 typedef PyArray_Descr *(common_instance_function)(
         PyArray_Descr *dtype1, PyArray_Descr *dtype2);
+typedef PyArray_Descr *(ensure_canonical_function)(PyArray_Descr *dtype);
 
 /*
  * TODO: These two functions are currently only used for experimental DType
@@ -44,6 +45,7 @@ typedef struct {
     default_descr_function *default_descr;
     common_dtype_function *common_dtype;
     common_instance_function *common_instance;
+    ensure_canonical_function *ensure_canonical;
     /*
      * Currently only used for experimental user DTypes.
      * Typing as `void *` until NumPy itself uses these (directly).
@@ -93,6 +95,8 @@ typedef struct {
     NPY_DT_SLOTS(dtype)->default_descr(dtype)
 #define NPY_DT_CALL_common_dtype(dtype, other)  \
     NPY_DT_SLOTS(dtype)->common_dtype(dtype, other)
+#define NPY_DT_CALL_ensure_canonical(descr)  \
+    NPY_DT_SLOTS(NPY_DTYPE(descr))->ensure_canonical(descr)
 #define NPY_DT_CALL_getitem(descr, data_ptr)  \
     NPY_DT_SLOTS(NPY_DTYPE(descr))->getitem(descr, data_ptr)
 #define NPY_DT_CALL_setitem(descr, value, data_ptr)  \

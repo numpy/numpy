@@ -498,14 +498,11 @@ _buffer_info_new(PyObject *obj, int flags)
             assert((size_t)info->shape % sizeof(npy_intp) == 0);
             info->strides = info->shape + PyArray_NDIM(arr);
 
-#if NPY_RELAXED_STRIDES_CHECKING
             /*
-             * When NPY_RELAXED_STRIDES_CHECKING is used, some buffer users
-             * may expect a contiguous buffer to have well formatted strides
-             * also when a dimension is 1, but we do not guarantee this
-             * internally. Thus, recalculate strides for contiguous arrays.
-             * (This is unnecessary, but has no effect in the case where
-             * NPY_RELAXED_STRIDES CHECKING is disabled.)
+             * Some buffer users may expect a contiguous buffer to have well
+             * formatted strides also when a dimension is 1, but we do not
+             * guarantee this internally. Thus, recalculate strides for
+             * contiguous arrays.
              */
             int f_contiguous = (flags & PyBUF_F_CONTIGUOUS) == PyBUF_F_CONTIGUOUS;
             if (PyArray_IS_C_CONTIGUOUS(arr) && !(
@@ -526,11 +523,6 @@ _buffer_info_new(PyObject *obj, int flags)
                 }
             }
             else {
-#else  /* NPY_RELAXED_STRIDES_CHECKING */
-            /* We can always use the arrays strides directly */
-            {
-#endif
-
                 for (k = 0; k < PyArray_NDIM(arr); ++k) {
                     info->shape[k] = PyArray_DIMS(arr)[k];
                     info->strides[k] = PyArray_STRIDES(arr)[k];
@@ -708,8 +700,8 @@ _buffer_get_info(void **buffer_info_cache_ptr, PyObject *obj, int flags)
          if (info->ndim > 1 && next_info != NULL) {
              /*
               * Some arrays are C- and F-contiguous and if they have more
-              * than one dimension, the buffer-info may differ between
-              * the two due to RELAXED_STRIDES_CHECKING.
+              * than one dimension, the buffer-info may differ between the
+              * two because strides for length 1 dimension may be adjusted.
               * If we export both buffers, the first stored one may be
               * the one for the other contiguity, so check both.
               * This is generally very unlikely in all other cases, since

@@ -4,6 +4,10 @@
 
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct {
     /*
      *  Field delimiter character.
@@ -57,5 +61,9 @@ typedef struct {
      bool c_byte_converters;
 } parser_config;
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_TEXTREADING_PARSER_CONFIG_H_ */
