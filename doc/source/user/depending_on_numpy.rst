@@ -116,17 +116,18 @@ recommend all packages depending on NumPy to follow the recommendations in NEP
 
 For *run-time dependencies*, specify version bounds using
 ``install_requires`` in ``setup.py`` (assuming you use ``numpy.distutils`` or
-``setuptools`` to build). The upper bound should be set to the next
-major release of NumPy, e.g. `numpy>=1.18,numpy<2`.
+``setuptools`` to build).
 
-Not specifying a tighter upper bound means there is a small
-possibility that new versions of NumPy will no longer work with your code,
-but that is unlikely since NumPy API changes are highly conservative.
-On the other hand, limiting the upper bound almost certainly will make
-it
-`difficult to install your package in combination with other ecosystem packages
+Most libraries that rely on NumPy will not need to set an upper
+version bound: NumPy is careful to preserve backward-compatibility.
+However, if you are (a) a project that is guaranteed to release
+frequently and (b) worried that changes in NumPy may break your code,
+you may set an upper bound of no less than `current_numpy + 3`.  It is
+also quite safe to set an upper bound on the next major release of
+NumPy, e.g. `numpy>=1.18,numpy<2`. Setting an upper bound on NumPy
+may, however, `affect the ability of your library to be installed
+alongside other, older packages
 <https://iscinumpy.dev/post/bound-version-constraints/>`__.
-
 
 .. note::
 
