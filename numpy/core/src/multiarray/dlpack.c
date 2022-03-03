@@ -269,7 +269,7 @@ array_dlpack_device(PyArrayObject *self, PyObject *NPY_UNUSED(args))
 }
 
 NPY_NO_EXPORT PyObject *
-_from_dlpack(PyObject *NPY_UNUSED(self), PyObject *obj) {
+from_dlpack(PyObject *NPY_UNUSED(self), PyObject *obj) {
     PyObject *capsule = PyObject_CallMethod((PyObject *)obj->ob_type,
             "__dlpack__", "O", obj);
     if (capsule == NULL) {
