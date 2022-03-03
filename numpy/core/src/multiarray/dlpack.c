@@ -138,7 +138,7 @@ array_dlpack(PyArrayObject *self,
 
     if (!PyArray_IS_C_CONTIGUOUS(self) && PyArray_SIZE(self) != 1) {
         for (int i = 0; i < ndim; ++i) {
-            if (strides[i] % itemsize != 0) {
+            if (shape[i] != 1 && strides[i] % itemsize != 0) {
                 PyErr_SetString(PyExc_RuntimeError,
                         "DLPack only supports strides which are a multiple of "
                         "itemsize.");

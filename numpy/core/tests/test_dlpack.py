@@ -100,7 +100,7 @@ class TestDLPack:
         x = np.arange(5)
         _ = x.__dlpack__()
         raise RuntimeError
-    
+
     def test_dlpack_destructor_exception(self):
         with pytest.raises(RuntimeError):
             self.dlpack_deleter_exception()
@@ -110,3 +110,14 @@ class TestDLPack:
         x.flags.writeable = False
         with pytest.raises(TypeError):
             x.__dlpack__()
+
+    def test_ndim0(self):
+        x = np.array(1.0)
+        y = np._from_dlpack(x)
+        assert_array_equal(x, y)
+
+    def test_size1dims_arrays(self):
+        x = np.ndarray(dtype='f8', shape=(10, 5, 1), strides=(8, 80, 4),
+                       buffer=np.ones(1000, dtype=np.uint8), order='F')
+        y = np._from_dlpack(x)
+        assert_array_equal(x, y)
