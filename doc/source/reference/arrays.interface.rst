@@ -247,7 +247,8 @@ flag is present.
 .. note::
 
     :obj:`__array_struct__` is considered legacy and should not be used for new
-    code. Use the :py:doc:`buffer protocol <c-api/buffer>` instead.
+    code. Use the :py:doc:`buffer protocol <c-api/buffer>` or the DLPack protocol
+    `numpy.from_dlpack` instead.
 
 
 Type description examples
