@@ -366,21 +366,23 @@ void_ensure_canonical(PyArray_Descr *self)
                 return NULL;
             }
             PyTuple_SET_ITEM(new_tuple, 1, (PyObject *)offset_obj);
+            if (PyTuple_GET_SIZE(tuple) == 3) {
+                /* Be sure to set all items in the tuple before using it */
+                PyObject *title = PyTuple_GET_ITEM(tuple, 2);
+                Py_INCREF(title);
+                PyTuple_SET_ITEM(new_tuple, 2, title);
+                if (PyDict_SetItem(new->fields, title, new_tuple) < 0) {
+                    Py_DECREF(new_tuple);
+                    Py_DECREF(new);
+                    return NULL;
+                }
+            }
             if (PyDict_SetItem(new->fields, name, new_tuple) < 0) {
                 Py_DECREF(new_tuple);
                 Py_DECREF(new);
                 return NULL;
             }
             Py_DECREF(new_tuple);  /* Reference now owned by new->fields */
-            if (PyTuple_GET_SIZE(new_tuple) == 3) {
-                PyObject *title = PyTuple_GET_ITEM(tuple, 2);
-                Py_INCREF(title);
-                PyTuple_SET_ITEM(new_tuple, 2, title);
-                if (PyDict_SetItem(new->fields, title, new_tuple) < 0) {
-                    Py_DECREF(new);
-                    return NULL;
-                }
-            }
             totalsize += field_descr->elsize;
         }
         totalsize = NPY_NEXT_ALIGNED_OFFSET(totalsize, maxalign);
