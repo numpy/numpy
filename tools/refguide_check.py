@@ -104,6 +104,8 @@ DOCTEST_SKIPDICT = {
     'numpy.random.vonmises': None,
     'numpy.random.power': None,
     'numpy.random.zipf': None,
+    # cases where NumPy docstrings import things from other 3'rd party libs:
+    'numpy.core.from_dlpack': None,
     # remote / local file IO with DataSource is problematic in doctest:
     'numpy.lib.DataSource': None,
     'numpy.lib.Repository': None,
