@@ -88,6 +88,12 @@ array_get_dl_device(PyArrayObject *self) {
     ret.device_type = kDLCPU;
     ret.device_id = 0;
     PyObject *base = PyArray_BASE(self);
+
+    // walk the bases (see gh-20340)
+    while (base != NULL && PyArray_Check(base)) {
+        base = PyArray_BASE((PyArrayObject *)base);
+    }
+
     // The outer if is due to the fact that NumPy arrays are on the CPU
     // by default (if not created from DLPack).
     if (PyCapsule_IsValid(base, NPY_DLPACK_INTERNAL_CAPSULE_NAME)) {
