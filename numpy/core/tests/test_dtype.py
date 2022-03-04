@@ -11,7 +11,7 @@ from numpy.core._rational_tests import rational
 from numpy.core._multiarray_tests import create_custom_field_dtype
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_raises, HAS_REFCOUNT,
-    IS_PYPY, IS_PYSTON)
+    IS_PYSTON)
 from numpy.compat import pickle
 from itertools import permutations
 import random
@@ -1152,14 +1152,12 @@ class TestDTypeMakeCanonical:
         canonical_dt = np.result_type(arr.dtype)
         assert not canonical_dt.hasobject
 
-    @pytest.mark.skipif(IS_PYPY, reason="Segfaults on PyPy because of #19346")
     @pytest.mark.slow
     @hypothesis.given(dtype=hynp.nested_dtypes())
     def test_make_canonical_hypothesis(self, dtype):
         canonical = np.result_type(dtype)
         self.check_canonical(dtype, canonical)
-    
-    @pytest.mark.skipif(IS_PYPY, reason="Segfaults on PyPy because of #19346")
+
     @pytest.mark.slow
     @hypothesis.given(
             dtype=hypothesis.extra.numpy.array_dtypes(

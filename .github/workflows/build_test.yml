@@ -208,6 +208,19 @@ jobs:
   pypy38:
     needs: [smoke_test]
     runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    - uses: actions/setup-python@v2
+      with:
+        python-version: pypy-3.8-v7.3.8
+    - uses: ./.github/actions
+  
+  pypy38_slow:
+    needs: [smoke_test]
+    runs-on: ubuntu-latest
     env:
       RUN_FULL_TESTS: 1
     steps:
