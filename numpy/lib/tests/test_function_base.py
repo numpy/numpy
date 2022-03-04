@@ -3554,6 +3554,26 @@ class TestPercentile:
         res = np.percentile(a, 30, axis=0)
         assert_array_equal(np.isnat(res), [False, True, False])
 
+    def test_weights(self):
+        """Test that the weights argument works.
+
+        More detailed weight-related tests are in TestQuantile.
+        """
+        a = np.arange(6).reshape(2, 3)
+        # regression tests
+        assert_equal(np.percentile(a, q=50, weights=np.ones(6).reshape(2, 3)),
+                     np.percentile(a, q=50))
+        assert_equal(np.percentile(a, q=50, axis=0, weights=[1, 1]),
+                     np.percentile(a, q=50, axis=0))
+        assert_equal(np.percentile(a, q=50, axis=1, weights=[1, 1, 1]),
+                     np.percentile(a, q=50, axis=1))
+        # unequal weights
+        axis = 1
+        weights = [0, 1, 2]
+        stand_in = np.stack((a[:, 1], a[:, 2], a[:, 2]), axis=axis)
+        assert_almost_equal(np.percentile(a, q=50, axis=axis, weights=weights),
+                            np.percentile(stand_in, q=50, axis=axis))
+
 
 quantile_methods = [
     'inverted_cdf', 'averaged_inverted_cdf', 'closest_observation',
@@ -3687,7 +3707,7 @@ class TestQuantile:
         # with Y the random variable for which we have observed values and
         # V(x, y) the canonical identification function for the quantile (at
         # level alpha), see
-        # https://doi.org/10.48550/arXiv.0912.0902        
+        # https://doi.org/10.48550/arXiv.0912.0902
         rng = np.random.default_rng(4321)
         # We choose n and alpha such that we cover 3 cases:
         #  - n * alpha is an integer
@@ -3706,7 +3726,7 @@ class TestQuantile:
             # V = (x >= y) - alpha cannot sum to zero exactly but within
             # "sample precision".
             assert_allclose(np.mean(self.V(x, y, alpha)), 0,
-                atol=1 / n / np.amin([alpha, 1 - alpha]))
+                            atol=1 / n / np.amin([alpha, 1 - alpha]))
 
     @pytest.mark.parametrize("method", quantile_methods)
     @pytest.mark.parametrize("alpha", [0.2, 0.5, 0.9])
@@ -3765,6 +3785,140 @@ class TestQuantile:
             # "averaged_inverted_cdf", "hazen", "weibull", "linear",
             # "median_unbiased", "normal_unbiased", "midpoint"
             assert_allclose(q, np.quantile(y, alpha, method=method))
+
+    @pytest.mark.parametrize(
+        "method",
+        ['inverted_cdf', 'averaged_inverted_cdf', 'closest_observation',
+         'interpolated_inverted_cdf', 'hazen', 'weibull', 'linear',
+         'median_unbiased', 'normal_unbiased',
+         'nearest', 'lower', 'higher', 'midpoint'])
+    def test_weights_all_ones(self, method):
+        ar = np.arange(24).reshape(2, 3, 4)
+        q = 0.5
+
+        axis = 0
+        weights = [1, 1]
+        actual = np.quantile(ar, q=q, axis=axis, weights=weights,
+                             method=method)
+        expected = np.quantile(ar, q=q, axis=axis, method=method)
+        assert_almost_equal(actual, expected)
+
+        axis = 1
+        weights = [1, 1, 1]
+        actual = np.quantile(ar, q=q, axis=axis, weights=weights,
+                             method=method)
+        expected = np.quantile(ar, q=q, axis=axis, method=method)
+        assert_almost_equal(actual, expected)
+
+        axis = 2
+        weights = [1, 1, 1, 1]
+        actual = np.quantile(ar, q=q, axis=axis, weights=weights,
+                             method=method)
+        expected = np.quantile(ar, q=q, axis=axis, method=method)
+        assert_almost_equal(actual, expected)
+
+        # weights over multiple dimensions
+        weights = np.ones(24).reshape(2, 3, 4)
+        actual = np.quantile(ar, q=q, weights=weights, method=method)
+        expected = np.quantile(ar, q=q, method=method)
+        assert_almost_equal(actual, expected)
+
+        # broadcsted weights
+        weights = np.ones(8).reshape(2, 1, 4)
+        actual = np.quantile(ar, q=q, weights=weights, method=method)
+        assert_almost_equal(actual, expected)
+
+    @pytest.mark.parametrize(
+        "method",
+        ['inverted_cdf', 'closest_observation',
+         'interpolated_inverted_cdf', 'hazen', 'weibull', 'linear',
+         'median_unbiased', 'normal_unbiased',
+         'nearest', 'lower', 'higher', 'midpoint'])
+    def test_weights_on_multiple_axes(self, method):
+        """Test supplying ND weights."""
+        ar = np.arange(12).reshape(3, 4).astype(float)
+        weights = np.ones(12).reshape(3, 4)
+        q = 0.5
+
+        expected = np.quantile(ar, q=q, weights=weights, method=method)
+        actual = np.quantile(ar, q=q, axis=(0, 1),
+                             weights=weights, method=method)
+        assert_almost_equal(actual, expected)
+
+    @pytest.mark.parametrize(
+        "method",
+        ['inverted_cdf', 'averaged_inverted_cdf', 'closest_observation',
+         'interpolated_inverted_cdf', 'hazen', 'weibull', 'linear',
+         'median_unbiased', 'normal_unbiased',
+         'nearest', 'lower', 'higher', 'midpoint'])
+    def test_various_weights(self, method):
+        """Test various weights arg scenarios."""
+        ar = np.arange(12).reshape(3, 4)
+        axis = 0
+        q = [0.25, 0.5, 0.75]
+
+        # all twos.
+        weights = [2.0, 2.0, 2.0]
+        actual = np.quantile(ar, q=q, axis=axis, weights=weights,
+                             method=method)
+        ar_222 = np.concatenate((ar, ar), axis=axis)
+        expected = np.quantile(ar_222, q=q, axis=axis, method=method)
+        assert_almost_equal(actual, expected)
+
+        # different integer weights
+        weights = [1, 2, 3]
+        actual = np.quantile(ar, q=q, axis=axis, weights=weights,
+                             method=method)
+
+        ar_123 = np.stack((ar[0, :], ar[1, :], ar[1, :],
+                           ar[2, :], ar[2, :], ar[2, :]), axis=axis)
+        expected = np.quantile(ar_123, q=q, axis=axis, method=method)
+        assert_almost_equal(actual, expected)
+
+        # mix of numeric types
+        # due to renormalization triggered by weight < 1,
+        # this is expected to be the same as weights = [1, 2, 3]
+        weights = [decimal.Decimal(0.5), 1, 1.5]
+        actual = np.quantile(ar, q=q, axis=axis, weights=weights,
+                             method=method)
+        assert_almost_equal(actual, expected)
+
+        # show that normalization means sum of weights is irrelavant
+        weights = [0.1, 0.2, 0.3]
+        actual = np.quantile(ar, q=q, axis=axis, weights=weights,
+                             method=method)
+        assert_almost_equal(actual, expected)
+
+        # various weights, including a zero
+        weights = [0, 1, 2]
+        actual = np.quantile(ar, q=q, axis=axis, weights=weights,
+                             method=method)
+        ar_012 = np.stack((ar[1, :], ar[2, :], ar[2, :]), axis=axis)
+        expected = np.quantile(ar_012, q=q, axis=axis, method=method)
+        assert_almost_equal(actual, expected)
+
+        # weight entries < 1
+        weights = [0.0, 0.001, 0.002]
+        actual = np.quantile(ar, q=q, axis=axis, weights=weights,
+                             method=method)
+        assert_almost_equal(actual, expected)
+
+    def test_weights_flags(self):
+        """Test that flags are raised on invalid weights."""
+        ar = np.arange(6).reshape(2, 3)
+        axis = 0
+        q = 0.5
+
+        with assert_raises_regex(ValueError, "Weights are not broadcastable"):
+            np.quantile(ar, q=q, axis=axis, weights=[1, 1, 1])
+        with assert_raises_regex(ValueError, "could not convert"):
+            np.quantile(ar, q=q, axis=axis, weights=[1, 'bad'])
+        with assert_raises_regex(ValueError, "No weight can be NaN"):
+            np.quantile(ar, q=q, axis=axis, weights=[1, np.nan])
+        with assert_raises_regex(ValueError, "Negative weight not allowed"):
+            np.quantile(ar, q=q, axis=axis, weights=[1, -1])
+        with assert_raises_regex(ZeroDivisionError, "Weights sum to zero"):
+            np.quantile(ar, q=q, axis=axis, weights=[0, 0])
 
 
 class TestLerp:

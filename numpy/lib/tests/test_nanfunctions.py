@@ -1,3 +1,4 @@
+import decimal
 import warnings
 import pytest
 import inspect
@@ -1193,6 +1194,29 @@ class TestNanFunctions_Percentile:
         megamat = np.ones((3, 4, 5, 6))
         assert_equal(np.nanpercentile(megamat, perc, axis=(1, 2)).shape, (2, 3, 6))
 
+    def test_weights(self):
+        """Test that the weights argument works.
+
+        More detailed weight tests exist in TestNanFunctions_Quantile.
+        """
+        a = np.array([[0., 1., 2.], [3., 4., 5.]])
+        a[0][1] = np.nan
+        # regression tests
+        assert_equal(np.nanpercentile(a, q=50,
+                                      weights=np.ones(6).reshape(2, 3)),
+                     np.nanpercentile(a, q=50))
+        assert_equal(np.nanpercentile(a, q=50, axis=0, weights=[1, 1]),
+                     np.nanpercentile(a, q=50, axis=0))
+        assert_equal(np.nanpercentile(a, q=50, axis=1, weights=[1, 1, 1]),
+                     np.nanpercentile(a, q=50, axis=1))
+        # unequal weights
+        axis = 1
+        weights = [0, 1, 2]
+        stand_in = np.stack((a[:, 1], a[:, 2], a[:, 2]), axis=axis)
+        assert_almost_equal(np.nanpercentile(a, q=50, axis=axis,
+                            weights=weights),
+                            np.nanpercentile(stand_in, q=50, axis=axis))
+
 
 class TestNanFunctions_Quantile:
     # most of this is already tested by TestPercentile
@@ -1252,6 +1276,146 @@ class TestNanFunctions_Quantile:
             out = np.nanquantile(array, 1, axis=axis)
         assert np.isnan(out).all()
         assert out.dtype == array.dtype
+
+    @pytest.mark.parametrize(
+        "method",
+        ['inverted_cdf', 'averaged_inverted_cdf', 'closest_observation',
+         'interpolated_inverted_cdf', 'hazen', 'weibull', 'linear',
+         'median_unbiased', 'normal_unbiased',
+         'nearest', 'lower', 'higher', 'midpoint'])
+    def test_weights_all_ones(self, method):
+        """Test that all weights == 1 gives same results as no weights."""
+        ar = np.arange(24).reshape(2, 3, 4).astype(float)
+        ar[0][1][1:3] = np.nan
+        q = 0.5
+
+        axis = 0
+        weights = [1, 1]
+        actual = np.nanquantile(ar, q=q, axis=axis, weights=weights,
+                                method=method)
+        expected = np.nanquantile(ar, q=q, axis=axis, method=method)
+        assert_almost_equal(actual, expected)
+
+        axis = 1
+        weights = [1, 1, 1]
+        actual = np.nanquantile(ar, q=q, axis=axis, weights=weights,
+                                method=method)
+        expected = np.nanquantile(ar, q=q, axis=axis, method=method)
+        assert_almost_equal(actual, expected)
+
+        axis = 2
+        weights = [1, 1, 1, 1]
+        actual = np.nanquantile(ar, q=q, axis=axis, weights=weights,
+                                method=method)
+        expected = np.nanquantile(ar, q=q, axis=axis, method=method)
+        assert_almost_equal(actual, expected)
+
+        # weights over multiple dimensions
+        weights = np.ones(24).reshape(2, 3, 4)
+        actual = np.nanquantile(ar, q=q, weights=weights, method=method)
+        expected = np.nanquantile(ar, q=q, method=method)
+        assert_almost_equal(actual, expected)
+
+        # broadcsted weights
+        weights = np.ones(8).reshape(2, 1, 4)
+        actual = np.nanquantile(ar, q=q, weights=weights, method=method)
+        assert_almost_equal(actual, expected)
+
+    @pytest.mark.parametrize(
+        "method",
+        ['inverted_cdf', 'averaged_inverted_cdf', 'closest_observation',
+         'interpolated_inverted_cdf', 'hazen', 'weibull', 'linear',
+         'median_unbiased', 'normal_unbiased',
+         'nearest', 'lower', 'higher', 'midpoint'])
+    def test_multiple_axes(self, method):
+        """Test that weights work on multiple axes."""
+        ar = np.arange(12).reshape(3, 4).astype(float)
+        ar[0][0] = np.nan
+        q = 0.5
+
+        expected = np.nanquantile(ar, q=q, weights=np.ones(12).reshape(3, 4),
+                                  method=method)
+        actual = np.nanquantile(ar, q=q, axis=(0, 1),
+                                weights=np.ones(12).reshape(3, 4),
+                                method=method)
+        assert_almost_equal(actual, expected)
+
+    @pytest.mark.parametrize(
+        "method",
+        ['inverted_cdf', 'averaged_inverted_cdf', 'closest_observation',
+         'interpolated_inverted_cdf', 'hazen', 'weibull', 'linear',
+         'median_unbiased', 'normal_unbiased',
+         'nearest', 'lower', 'higher', 'midpoint'])
+    def test_various_weights(self, method):
+        """Test various weights arg scenarios."""
+        ar = np.arange(12).reshape(3, 4).astype(float)
+        ar[0][0] = np.nan
+        axis = 0
+        q = [0.25, 0.5, 0.75]
+
+        # all twos
+        weights = [2.0, 2.0, 2.0]
+        actual = np.nanquantile(ar, q=q, axis=axis, weights=weights,
+                                method=method)
+        ar_222 = np.concatenate((ar, ar), axis=axis)
+        expected = np.nanquantile(ar_222, q=q, axis=axis, method=method)
+        assert_almost_equal(actual, expected)
+
+        # different integer weights
+        weights = [1, 2, 3]
+        actual = np.nanquantile(ar, q=q, axis=axis, weights=weights,
+                                method=method)
+        ar_123 = np.stack((ar[0, :], ar[1, :], ar[1, :],
+                           ar[2, :], ar[2, :], ar[2, :]), axis=axis)
+        expected = np.nanquantile(ar_123, q=q, axis=axis, method=method)
+        assert_almost_equal(actual, expected)
+
+        # mix of numeric types
+        # due to renormalization triggered by weight < 1,
+        # this is expected to be the same as weights = [1, 2, 3]
+        weights = [decimal.Decimal(0.5), 1, 1.5]
+        actual = np.nanquantile(ar, q=q, axis=axis, weights=weights,
+                                method=method)
+        assert_almost_equal(actual, expected)
+
+        # show that normalization means sum of weights is irrelavant
+        weights = [0.2, 0.4, 0.6]
+        actual = np.nanquantile(ar, q=q, axis=axis, weights=weights,
+                                method=method)
+        assert_almost_equal(actual, expected)
+
+        # various weights, including a zero
+        weights = [0, 1, 2]
+        actual = np.nanquantile(ar, q=q, axis=axis, weights=weights,
+                                method=method)
+        ar_012 = np.stack((ar[1, :], ar[2, :], ar[2, :]), axis=axis)
+        expected = np.nanquantile(ar_012, q=q, axis=axis, method=method)
+        assert_almost_equal(actual, expected)
+
+        # weight entries < 1
+        weights = [0.0, 0.001, 0.002]
+        actual = np.nanquantile(ar, q=q, axis=axis, weights=weights,
+                                method=method)
+        assert_almost_equal(actual, expected)
+
+    def test_weights_flags(self):
+        """Test that flags are raised on invalid weights."""
+        ar = np.arange(6).reshape(2, 3).astype(float)
+        ar[0][1] = np.nan
+        q = 0.5
+        axis = 0
+
+        with assert_raises_regex(ValueError, "Weights are not broadcastable"):
+            np.quantile(ar, q=q, axis=axis, weights=[1, 1, 1])
+        with assert_raises_regex(ValueError, "could not convert"):
+            np.quantile(ar, q=q, axis=axis, weights=[1, 'bad'])
+        with assert_raises_regex(ValueError, "No weight can be NaN"):
+            np.quantile(ar, q=q, axis=axis, weights=[1, np.nan])
+        with assert_raises_regex(ValueError, "Negative weight not allowed"):
+            np.quantile(ar, q=q, axis=axis, weights=[1, -1])
+        with assert_raises_regex(ZeroDivisionError, "Weights sum to zero"):
+            np.quantile(ar, q=q, axis=axis, weights=[0, 0])
+
 
 @pytest.mark.parametrize("arr, expected", [
     # array of floats with some nans

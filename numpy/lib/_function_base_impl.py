@@ -3941,6 +3941,39 @@ def percentile(a,
 
         .. versionchanged:: 1.9.0
             A tuple of axes is supported
+    weights: array_like, optional
+        An array of weights associated with the values in `a`.
+
+        Weights cannot
+
+        * be negative
+        * sum to 0
+
+        However, they can be
+
+        * 0, as long as they do not sum to 0
+        * less than 1.  In this case, all weights are re-normalized by
+            the lowest non-zero weight prior to computation.
+
+        The renormalization ensures that no weight is less than 1, and that
+        the weights can have a frequency interpretation.
+
+        A weight of 1 means a repetition of one for the corresponding value in
+        the data array.  That means the sum of weights along `axis` is the
+        total count of values along that axis.  The evaluation of weighted
+        quantiles therefore amounts to computing normal quantiles in weight
+        space.
+
+        Weights will be broadcasted to the shape of a, then reduced as done
+        via _ureduce().
+
+        * if wgts.shape == a.shape, simply return ureduced wgts.
+        * if scalar, broadcast to shape of a, followed by _ureduce.
+        * for 1-D or N-D array, must make sure that its size matches that
+            of `a` along the axis dims, so can be reshaped.  Hence if
+            a.shape == (2, 3, 4, 5, 6), axis == (1, 3), then weights must
+            be of size 15, and will be reshaped to (1, 3, 1, 5, 1) before
+            broadcasting to the shape of `a`, followed by _ureduce.
     out : ndarray, optional
         Alternative output array in which to place the result. It must
         have the same shape and buffer length as the expected output,
@@ -4241,6 +4274,39 @@ def quantile(a,
     axis : {int, tuple of int, None}, optional
         Axis or axes along which the quantiles are computed. The default is
         to compute the quantile(s) along a flattened version of the array.
+    weights: array_like, optional
+        An array of weights associated with the values in `a`.
+
+        Weights cannot
+
+        * be negative
+        * sum to 0
+
+        However, they can be
+
+        * 0, as long as they do not sum to 0
+        * less than 1.  In this case, all weights are re-normalized by
+            the lowest non-zero weight prior to computation.
+
+        The renormalization ensures that no weight is less than 1, and that
+        the weights can have a frequency interpretation.
+
+        A weight of 1 means a repetition of one for the corresponding value in
+        the data array.  That means the sum of weights along `axis` is the
+        total count of values along that axis.  The evaluation of weighted
+        quantiles therefore amounts to computing normal quantiles in weight
+        space.
+
+        Weights will be broadcasted to the shape of a, then reduced as done
+        via _ureduce().
+
+        * if wgts.shape == a.shape, simply return ureduced wgts.
+        * if scalar, broadcast to shape of a, followed by _ureduce.
+        * for 1-D or N-D array, must make sure that its size matches that
+            of `a` along the axis dims, so can be reshaped.  Hence if
+            a.shape == (2, 3, 4, 5, 6), axis == (1, 3), then weights must
+            be of size 15, and will be reshaped to (1, 3, 1, 5, 1) before
+            broadcasting to the shape of `a`, followed by _ureduce.
     out : ndarray, optional
         Alternative output array in which to place the result. It must have
         the same shape and buffer length as the expected output, but the
@@ -4502,6 +4568,11 @@ def _quantile_unchecked(a,
 def _validate_and_ureduce_weights(a, axis, wgts):
     """Ensure quantile weights are valid.
 
+    A weight of 1 means a repetition of one for the corresponding value in
+    the data array.  That means the sum of weights along `axis` is the total
+    count of values along that axis, based on which the quantiles are
+    evaluated.
+
     Weights cannot:
         * be negative
         * sum to 0
@@ -4544,10 +4615,16 @@ def _validate_and_ureduce_weights(a, axis, wgts):
     # broadcast weights to the shape of array a.
     if wgts.shape == a.shape:  # no need to broadcast
         pass
-    elif wgts.size == 1:
+    elif wgts.size == 1:  # straight-forwardly broadcastable
+        wgts = np.broadcast_to(wgts, a.shape)
+    elif (wgts.ndim == a.ndim and
+          all(d1 == d2 or d1 == 1 for d1, d2 in zip(wgts.shape, a.shape))):
+        # Same # of dims, but some are length==1.  Broadcastable.
         wgts = np.broadcast_to(wgts, a.shape)
     elif (wgts.size == functools.reduce(lambda x, y: x * y,
                                         [a.shape[d] for d in dims])):
+        # wgts might be wrong shape, but has right size to match the data dim.
+        # Reshape to match shape of dims, with some length==1, before broadcast
         to_shape = tuple(a.shape[d] if d in dims else 1 for d in range(a.ndim))
         wgts = wgts.reshape(to_shape)
         wgts = np.broadcast_to(wgts, a.shape)
@@ -4564,6 +4641,22 @@ def _validate_and_ureduce_weights(a, axis, wgts):
 
     # Obtain a weights array of the same shape as ureduced a
     wgts = _ureduce(wgts, func=lambda x, **kwargs: x, axis=dims)
+
+    # Now check/renormalize weights if any is (0, 1)
+    def _normalize(v):
+        inds = v > 0
+        if (v[inds] < 1).any():
+            vec = v.copy()
+            vec[inds] = vec[inds] / vec[inds].min()  # renormalization
+            return vec
+        else:
+            return v
+
+    # perform normalization along reduced axis
+    if len(dims) > 1:
+        wgts = np.apply_along_axis(_normalize, -1, wgts)
+    else:
+        wgts = np.apply_along_axis(_normalize, dims[0], wgts)
 
     return wgts
 
@@ -4824,91 +4917,99 @@ def _quantile(
     supports_nans = (
             np.issubdtype(arr.dtype, np.inexact) or arr.dtype.kind in 'Mm')
 
-    if weights is not None:  # weights is the same shape as arr
+    if weights is not None:  # weights should be the same shape as arr
         # first move data to axis=-1 for np.vectorize, which runs on axis=-1
         if axis != -1:
             arr = np.moveaxis(arr, axis, destination=-1)
             weights = np.moveaxis(weights, axis, destination=-1)
-        values_count = arr.shape[-1]
 
-        # Now check/renormalize weights if any is (0, 1)
-        def _normalize(v):
-            inds = v > 0
-            if (v[inds] < 1).any():
-                vec = v.copy()
-                vec[inds] = vec[inds] / vec[inds].min()  # renormalization
-                return vec
-            else:
-                return v
-        weights = np.apply_along_axis(_normalize, -1, weights)
-
-        # values with weight=0 are made nan and later sorted to end of array
-        if (weights == 0).any():
-            weights[weights == 0] = np.nan
-
-        def _sort_by_index(vector, vec_indices):
-            return vector[vec_indices]
-        # this func vectorizes sort along axis
-        n = values_count
-        arraysort = np.vectorize(_sort_by_index,
-                                 signature=f"({n}),({n})->({n})")
-        # compute the sorted array.  nans will be sorted to the end.
-        ind_sorted = np.argsort(arr, axis=-1)
-        arr = arraysort(arr, ind_sorted)
-        # need to align weights to now-sorted arr, hence np.vectorize is used
-        weights = arraysort(weights, ind_sorted)
-
+        # identical treatment to slices_having_nans as no-weight case
         if supports_nans:
-            slices_having_nans = np.isnan(
-                take(arr, indices=-1, axis=-1)
-            )
+            slices_having_nans = np.isnan(arr.sum(axis=-1))
         else:
             slices_having_nans = None
 
-        # convert weights to virtual indexes.
-        def _map_weights_to_indexes(wgts, quantiles, hard_indexes):
-            # NOTE 1-D function used within apply_along_axis() might be slower,
-            # but probably incurs less memory footprint.
-            wgts_cumsum = wgts.cumsum()
-            n = wgts_cumsum[-1]  # sum along axis replaces n in Hyndman paper.
+        # Vectorized function to compute weighted quantiles.
+        # Each array value occupies a range within weight space, bounded
+        # by its left/right_weight_bound.  If a weight_space_index falls within
+        # those two bounds, the quantile will just take on that array value.
+        # If the weight_space_index falls between neighboring ranges, that
+        # means its quantile value must fall between neighboring array values
+        # as well, so the gamma (computed in weight space) is used to
+        # interpolate between those neighboring array values.
+        def _get_weighted_quantile_values(arr1d, wgts1d):
+            # first deal with sorting
+            # values with weight=0 are made nan and sorted to end of array
+            if (wgts1d == 0).any():
+                arr1d = arr1d.astype(float)  # allow np.nan to weight=0 cells
+                arr1d[wgts1d == 0] = np.nan
+            sort_indexes = np.argsort(arr1d)
+            arr1d = arr1d[sort_indexes]
+            wgts1d = wgts1d[sort_indexes]
+
+            wgts1d = wgts1d[~np.isnan(arr1d)]  # only deal with non-nan values
+            arr1d = arr1d[~np.isnan(arr1d)]
+            # weights are a proxy to values count
+            wgts1d_cumsum = wgts1d.cumsum()
+            n = wgts1d_cumsum[-1]  # sum along axis replaces n in Hyndman.
             weight_space_indexes = method["get_virtual_index"](n, quantiles)
-            left_weight_bound = np.roll(wgts_cumsum, 1)
-            left_weight_bound[0] = 0
-            right_weight_bound = wgts_cumsum - 1
-            indexes = np.zeros(2 * hard_indexes.size)
-            weights = indexes.copy()
-            indexes[0::2] = hard_indexes
-            indexes[1::2] = hard_indexes
-            weights[0::2] = left_weight_bound
-            weights[1::2] = right_weight_bound
-            return np.interp(weight_space_indexes, weights, indexes)
 
-        hard_indexes = np.arange(values_count)
+            # each weight occupies a range in weight space w/ left/right bounds
+            left_weight_bound = np.roll(wgts1d_cumsum, 1)
+            left_weight_bound[0] = 0  # left-most weight bound fixed at 0
+            right_weight_bound = wgts1d_cumsum - 1
 
-        virtual_indexes = np.apply_along_axis(_map_weights_to_indexes,
-                                              -1, weights,
-                                              quantiles=quantiles,
-                                              hard_indexes=hard_indexes)
-        # unlike the no-weights case, virtual_indexes here can be N-D,
-        # with different indexes along every DATA_AXIS slice.
-        # also the use of np.interp means virtual_indexes is of type float.
-        previous_indexes, next_indexes = _get_indexes(arr, virtual_indexes,
-                                                      values_count)
+            # now construct a mapping from weight bounds to real indexes
+            # for example, arr1d=[1, 2] & wgts1d=[2, 3] ->
+            # -> real_indexes=[0, 0, 1, 1] & w_index_bounds=[0, 1, 2, 4]
+            indexes = np.arange(arr1d.size)
+            real_indexes = np.zeros(2 * indexes.size)
+            w_index_bounds = real_indexes.copy()
+            real_indexes[0::2] = indexes  # real indexes
+            real_indexes[1::2] = indexes
+            w_index_bounds[0::2] = left_weight_bound  # weight index bounds
+            w_index_bounds[1::2] = right_weight_bound
 
-        # this function becomes vectorized
-        def _get_values_from_indexes(arr, virtual_indexes,
-                                     previous_indexes, next_indexes):
-            previous = take(arr, previous_indexes)
-            next = take(arr, next_indexes)
-            gamma = _get_gamma(virtual_indexes, previous_indexes, method)
+            # first define previous_w_indexes/next_w_indexes as the indexes
+            # within w_index_bounds whose values sandwich weight_space_indexes.
+            # so if w_index_bounds=[0, 1, 2, 4] and weight_space_index=3.5,
+            # then previous_w_indexes = 2 and next_w_indexes = 3
+            previous_w_indexes = np.searchsorted(w_index_bounds,
+                                                 weight_space_indexes,
+                                                 side="right") - 1
+            # leverage _get_index() to deal with out-of-bound indices
+            previous_w_indexes, next_w_indexes =\
+                _get_indexes(w_index_bounds, previous_w_indexes,
+                             len(w_index_bounds))
+            # now redefine previous_w_indexes/next_w_indexes as the weight
+            # space indexes that neighbor weight_space_indexes.
+            previous_w_indexes = w_index_bounds[previous_w_indexes]
+            next_w_indexes = w_index_bounds[next_w_indexes]
+
+            # map all weight space indexes to real indexes, then compute gamma
+            previous_indexes =\
+                np.interp(previous_w_indexes, w_index_bounds, real_indexes)
+            next_indexes =\
+                np.interp(next_w_indexes, w_index_bounds, real_indexes)
+            indexes =\
+                np.interp(weight_space_indexes, w_index_bounds, real_indexes)
+
+            # method-dependent gammas determine interpolation scheme between
+            # neighboring values, and are computed in weight space.
+            gamma = _get_gamma(indexes, previous_indexes, method)
+
+            previous = take(arr1d, previous_indexes.astype(int))
+            next = take(arr1d, next_indexes.astype(int))
             return _lerp(previous, next, gamma, out=out)
 
-        m = virtual_indexes.shape[-1]
-        get_values_from_indexes =\
-            np.vectorize(_get_values_from_indexes,
-                         signature=f"({n}),({m}),({m}),({m})->({m})")
-        result = get_values_from_indexes(arr, virtual_indexes,
-                                         previous_indexes, next_indexes)
+        n = arr.shape[-1] if arr.ndim else 1  # same as values_count
+        m = quantiles.shape[-1] if quantiles.ndim else ""
+
+        get_weighted_quantile_values =\
+            np.vectorize(_get_weighted_quantile_values,
+                         signature=f"({n}),({n})->({m})")
+        result = get_weighted_quantile_values(arr, weights)
+
         # now move data to DATA_AXIS to be consistent with no-weights case
         result = np.moveaxis(result, -1, destination=0)
 
@@ -4935,7 +5036,7 @@ def _quantile(
 
 def _take_sorted_index_values(arr, method, virtual_indexes, values_count,
                               supports_nans, out):
-
+    """Evaluate quantile values for all cases without weights."""
     if np.issubdtype(virtual_indexes.dtype, np.integer):
         # No interpolation needed, take the points along axis
         if supports_nans:

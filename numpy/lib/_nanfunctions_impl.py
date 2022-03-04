@@ -1570,8 +1570,12 @@ def _nanquantile_unchecked(
         return np.nanmean(a, axis, out=out, keepdims=keepdims)
 
     if weights is not None:
+<<<<<<< HEAD
         weights = fnb._validate_and_ureduce_weights(a, axis, weights)
         weights[np.isnan(a)] = np.nan  # for _nanquantile_1d
+=======
+        weights = function_base._validate_and_ureduce_weights(a, axis, weights)
+>>>>>>> ENH: Tests and documentation for weights arg to quantile/percentile in lib.function_base and nanquantile/nanpercentile in lib.nanfunctions (#9211).
 
     return fnb._ureduce(a,
                         func=_nanquantile_ureduce_func,
@@ -1595,10 +1599,13 @@ def _nanquantile_ureduce_func(a, q, axis=None, weights=None, out=None,
         part = a.ravel()
         if weights is not None:
             weights = weights.ravel()
+            weights[np.isnan(part)] = np.nan  # dealt with in _nanquantile_1d
         result = _nanquantile_1d(part, q, weights, overwrite_input, method)
     else:
         if weights is not None:
-
+            # weights could be made from np.broadcast_to as non-writeable view
+            weights = weights.copy()  # this makes it writeable
+            weights[np.isnan(a)] = np.nan  # dealt with in _nanquantile_1d
             if axis != -1:  # move data to axis=-1 for np.vectorize() below
                 a = np.moveaxis(a, axis, destination=-1)
                 weights = np.moveaxis(weights, axis, destination=-1)
@@ -1606,8 +1613,8 @@ def _nanquantile_ureduce_func(a, q, axis=None, weights=None, out=None,
             def _vectorize_nanquantile_1d(arr1d, ws1d):
                 return _nanquantile_1d(arr1d, q, ws1d, overwrite_input, method)
 
-            n = a.shape[axis]
-            m = len(q)
+            n = a.shape[axis] if a.ndim else 1
+            m = q.shape[axis] if q.ndim else ""
             vectorized_nanquantile_1d =\
                 np.vectorize(_vectorize_nanquantile_1d,
                              signature=f"({n}),({n})->({m})")
@@ -1615,11 +1622,8 @@ def _nanquantile_ureduce_func(a, q, axis=None, weights=None, out=None,
             result = vectorized_nanquantile_1d(a, weights)
 
             # now move data axis back for consistency with the no-weights case
-            if axis != -1:
-                if q.ndim == 0:
-                    result = np.moveaxis(result, -1, axis)
-                else:
-                    result = np.moveaxis(result, -1, 0)
+            if axis != -1 and q.ndim:
+                result = np.moveaxis(result, -1, 0)
 
         else:
             result = np.apply_along_axis(_nanquantile_1d, axis, a, q,
