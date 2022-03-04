@@ -120,12 +120,15 @@ For *run-time dependencies*, specify version bounds using
 
 Most libraries that rely on NumPy will not need to set an upper
 version bound: NumPy is careful to preserve backward-compatibility.
-However, if you are (a) a project that is guaranteed to release
-frequently and (b) worried that changes in NumPy may break your code,
-you may set an upper bound of no less than `current_numpy + 3`.  It is
-also quite safe to set an upper bound on the next major release of
-NumPy, e.g. `numpy>=1.18,numpy<2`. Setting an upper bound on NumPy
-may, however, `affect the ability of your library to be installed
+
+That said, if you are (a) a project that is guaranteed to release
+frequently, (b) use a large part of NumPy's API surface, and (c) is
+worried that changes in NumPy may break your code, you may set an
+upper bound of `<MAJOR.MINOR + N` with N no less than 3, and
+`MAJOR.MINOR` being the current release of NumPy. If you use the NumPy
+C API (directly or via Cython), you can also pin the current major
+version to prevent ABI breakage. Note that setting an upper bound on
+NumPy may `affect the ability of your library to be installed
 alongside other, older packages
 <https://iscinumpy.dev/post/bound-version-constraints/>`__.
 
