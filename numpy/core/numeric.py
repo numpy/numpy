@@ -633,7 +633,7 @@ def flatnonzero(a):
     """
     Return indices that are non-zero in the flattened version of a.
 
-    This is equivalent to np.nonzero(np.ravel(a))[0].
+    This is equivalent to ``np.nonzero(np.ravel(a))[0]``.
 
     Parameters
     ----------
@@ -643,7 +643,7 @@ def flatnonzero(a):
     Returns
     -------
     res : ndarray
-        Output array, containing the indices of the elements of `a.ravel()`
+        Output array, containing the indices of the elements of ``a.ravel()``
         that are non-zero.
 
     See Also
