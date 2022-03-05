@@ -186,7 +186,7 @@ def logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None,
     """
     Return numbers spaced evenly on a log scale.
 
-    In linear space, the sequence starts at ``base ** start``
+    In log space, the sequence starts at ``base ** start``
     (`base` to the power of `start`) and ends with ``base ** stop``
     (see `endpoint` below).
 
