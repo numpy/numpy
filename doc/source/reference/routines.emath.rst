@@ -1,5 +1,5 @@
 Mathematical functions with automatic domain
-***********************************************************************
+********************************************
 
 .. currentmodule:: numpy
 
