@@ -436,6 +436,10 @@ class TestSctypeDict:
         assert_(np.sctypeDict['f8'] is not np.longdouble)
         assert_(np.sctypeDict['c16'] is not np.clongdouble)
 
+    def test_ulong(self):
+        # gh-21063
+        assert_(np.sctypeDict['ulong'] is np.uint)
+
 
 class TestBitName:
     def test_abstract(self):

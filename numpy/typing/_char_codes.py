@@ -30,7 +30,7 @@ _UByteCodes = Literal["ubyte", "B", "=B", "<B", ">B"]
 _UShortCodes = Literal["ushort", "H", "=H", "<H", ">H"]
 _UIntCCodes = Literal["uintc", "I", "=I", "<I", ">I"]
 _UIntPCodes = Literal["uintp", "uint0", "P", "=P", "<P", ">P"]
-_UIntCodes = Literal["uint", "L", "=L", "<L", ">L"]
+_UIntCodes = Literal["ulong", "uint", "L", "=L", "<L", ">L"]
 _ULongLongCodes = Literal["ulonglong", "Q", "=Q", "<Q", ">Q"]
 
 _HalfCodes = Literal["half", "e", "=e", "<e", ">e"]

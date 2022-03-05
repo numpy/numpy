@@ -172,7 +172,7 @@ def _set_up_aliases():
         allTypes[alias] = allTypes[t]
         sctypeDict[alias] = sctypeDict[t]
     # Remove aliases overriding python types and modules
-    to_remove = ['ulong', 'object', 'int', 'float',
+    to_remove = ['object', 'int', 'float',
                  'complex', 'bool', 'string', 'datetime', 'timedelta',
                  'bytes', 'str']
 
