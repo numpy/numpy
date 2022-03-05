@@ -74,3 +74,34 @@ requires = [
         directory = "change"
         name = "Changes"
         showcontent = true
+
+
+[tool.cibuildwheel]
+skip = "cp36-* cp37-* pp37-* pp38-macosx* *-manylinux_i686 *_ppc64le *_s390x *-musllinux*"
+build-verbosity = "3"
+before-build = "bash {project}/tools/wheels/cibw_before_build.sh {project}"
+before-test = "pip install -r {project}/test_requirements.txt"
+test-command = "bash {project}/tools/wheels/cibw_test_command.sh {project}"
+
+[tool.cibuildwheel.linux]
+manylinux-x86_64-image = "manylinux2014"
+manylinux-aarch64-image = "manylinux2014"
+environment = { CFLAGS="-std=c99 -fno-strict-aliasing", LDFLAGS="-Wl,--strip-debug", OPENBLAS64_="/usr/local", NPY_USE_BLAS_ILP64="1", RUNNER_OS="Linux" }
+
+[tool.cibuildwheel.macos]
+# For universal2 wheels, we will need to fuse them manually
+# instead of going through cibuildwheel
+# This is because cibuildwheel tries to make a fat wheel
+# https://github.com/multi-build/multibuild/blame/devel/README.rst#L541-L565
+# for more info
+archs = "x86_64 arm64"
+test-skip = "*_arm64 *_universal2:arm64"
+# MACOS linker doesn't support stripping symbols
+environment = { CFLAGS="-std=c99 -fno-strict-aliasing", OPENBLAS64_="/usr/local", NPY_USE_BLAS_ILP64="1", CC="clang", CXX = "clang++" }
+
+[tool.cibuildwheel.windows]
+environment = { OPENBLAS64_="openblas", OPENBLAS="", NPY_USE_BLAS_ILP64="1", CFLAGS="", LDFLAGS="" }
+
+[[tool.cibuildwheel.overrides]]
+select = "*-win32"
+environment = { OPENBLAS64_="", OPENBLAS="openblas", NPY_USE_BLAS_ILP64="0", CFLAGS="-m32", LDFLAGS="-m32" }
