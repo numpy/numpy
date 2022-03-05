@@ -1,14 +1,22 @@
 .. _how-to-verify-bug:
 
 ##############################################################################
-How to verify your first NumPy bug
+Verifying bugs and bug fixes in NumPy
 ##############################################################################
 
-This how-to will go through the process of verifying a
-`bug <https://github.com/numpy/numpy/issues/16354>`_ that was submitted
-on the Github issues page.
+In this how-to you will learn how to:
 
-This is the bug report:
+- Verify the existence of a NumPy bug
+- Verify the fix, if any, made for the bug
+
+While you walk through the verification process, you will learn how to: 
+
+- Set up a Python virtual environment (virtualenv)
+- Install appropriate versions of NumPy, first to see the bug in action, then to verify its fix
+
+`Issue 16354 <https://github.com/numpy/numpy/issues/16354>`_ is used as an example.
+
+This issue was:
 
 .. code-block:: none
 
@@ -45,11 +53,11 @@ This is the bug report:
     [GCC 8.3.0]
 
 ******************************************************************************
-1. Setup a virtual environment
+1. Set up a virtual environment
 ******************************************************************************
 
-Create a new directory, enter into it and set up a virtual environment using
-your preferred method. For example, this is how to do it using `virtualenv`:
+Create a new directory, enter into it, and set up a virtual environment using
+your preferred method. For example, this is how to do it using ``virtualenv``:
 
 ::
 
@@ -57,22 +65,28 @@ your preferred method. For example, this is how to do it using `virtualenv`:
     source venv_np_bug/bin/activate
 
 ******************************************************************************
-2. Install the NumPy version mentioned in the bug report
+2. Install the NumPy version in which the bug was reported
 ******************************************************************************
 
-If the bug was more complex, you may need to build the NumPy version they
-referenced :ref:`from source <building-from-source>`. But for this bug,
-a pre-built wheel installed via `pip` will suffice::
+The report references NumPy version 1.18.4, so that is the version you need to install in this case.
+
+This is a fairly simple bug, so a pre-built wheel installed in your virtual environment via `pip` will suffice::
 
     pip install numpy==1.18.4
 
+More complex bugs may require you to build the NumPy version referenced in the issue report. To learn how to do that, visit :ref:`Building from source <building-from-source>`. 
+
+
 ******************************************************************************
-3. Confirm their bug exists
+3. Confirm that the bug exists
 ******************************************************************************
 
-Their claim is simple enough: the wrong dtype is returned if one of the inputs
-of the method `numpy.polymul` is a zero array. Open up a Python terminal and
-type their code in and see if you can reproduce the bug::
+The reporter's claim for issue 16354 is simple enough: the wrong ``dtype`` is returned if one of the inputs
+of the method `numpy.polymul` is a zero array. 
+
+To verify the existence of the bug:
+
+Start a Python terminal, enter the code shown in the bug report, and see if you can reproduce the bug::
 
     >>> import numpy as np
     >>> np.__version__
@@ -88,22 +102,28 @@ type their code in and see if you can reproduce the bug::
     >>> np.polymul(a.astype(np.complex64), z.astype(np.complex64)).dtype
     dtype('complex128')
 
+Whenever the zero array, ``z`` in the example above, is one of the arguments to `np.polymul`, an incorrect ``dtype`` is returned.
+
 
 ******************************************************************************
-4. See if the bug still exists on the latest version of NumPy
+4. Verify the fix, if any, in the latest version of NumPy
 ******************************************************************************
 
-Now that the bug is confirmed, you could try and solve it by opening a PR.
-Although for this specific bug, it has already been solved 
-`here <https://github.com/numpy/numpy/pull/17577>`_. To confirm,
-first uninstall the old version of NumPy and install the latest one::
+If the issue report for your bug is still open, you are welcome to submit a fix.
 
-    pip uninstall numpy
+In this case, however, the issue was resolved by `PR 17577 <https://github.com/numpy/numpy/pull/17577>`_ and is now closed. So you can try to verify the fix.
+
+To verify the fix:
+
+1. Uninstall the version of NumPy in which the bug still exists:
+
+    pip uninstall numpy 
+
+2. Install the latest version of NumPy.
+
     pip install numpy
 
-
-Now run the code again and confirm that the bug was solved.
-
+3. Run the same code you used to verify the bug and confirm that the fix has been applied.
 ::
 
     >>> import numpy as np
@@ -120,11 +140,14 @@ Now run the code again and confirm that the bug was solved.
     >>> np.polymul(a.astype(np.complex64), z.astype(np.complex64)).dtype
     dtype('complex64')
 
+Note that the correct ``dtype`` is now returned even when the zero array is one of the arguments to `np.polymul`.
+
 ******************************************************************************
-5. What to do next
+5. Support the NumPy development community by verifying and fixing bugs
 ******************************************************************************
 
 Go to the `NumPy GitHub issues page <https://github.com/numpy/numpy/issues>`_
-and see if you can confirm the existence of any other bugs. If you can, comment
-on the issue saying so. Doing this helps the NumPy developers know if more than
+and see if you can confirm the existence of any other bugs. 
+
+Then comment on the issue to confirm. Doing this alerts the NumPy developers that
 one user is experiencing the issue.
