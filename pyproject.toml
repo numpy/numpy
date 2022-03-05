@@ -89,7 +89,7 @@ manylinux-aarch64-image = "manylinux2014"
 environment = { CFLAGS="-std=c99 -fno-strict-aliasing", LDFLAGS="-Wl,--strip-debug", OPENBLAS64_="/usr/local", NPY_USE_BLAS_ILP64="1", RUNNER_OS="Linux" }
 
 [tool.cibuildwheel.macos]
-# TODO: Add universal2 wheels, we need to fuse them manually
+# For universal2 wheels, we will need to fuse them manually
 # instead of going through cibuildwheel
 # This is because cibuildwheel tries to make a fat wheel
 # https://github.com/multi-build/multibuild/blame/devel/README.rst#L541-L565
