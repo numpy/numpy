@@ -2678,7 +2678,7 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
         X_T = (X*w).T
     c = dot(X, X_T.conj())
     c *= np.true_divide(1, fact)
-    return c.squeeze()
+    return c
 
 
 def _corrcoef_dispatcher(x, y=None, rowvar=None, bias=None, ddof=None, *,
