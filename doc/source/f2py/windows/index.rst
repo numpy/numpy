@@ -87,7 +87,7 @@ For this document we will asume the following basic tools:
 - The IDE being considered is the community supported `Microsoft Visual Studio Code`_
 - The terminal being used is the `Windows Terminal`_
 - The shell environment is assumed to be `Powershell 7.x`_
-- Python 3.9 from `the Microsoft Store`_ and this can be tested with
+- Python 3.10 from `the Microsoft Store`_ and this can be tested with
    ``Get-Command python.exe`` resolving to
    ``C:\Users\$USERNAME\AppData\Local\Microsoft\WindowsApps\python.exe``
 - The Microsoft Visual C++ (MSVC) toolset
@@ -149,6 +149,10 @@ Now, testing the compiler toolchain could look like:
 .. code-block:: powershell
 
    # New Windows Developer Powershell instance / tab
+   # or
+   $vsPath = (Join-Path ${env:ProgramFiles(x86)} -ChildPath 'Microsoft Visual Studio\\2019\\BuildTools'); 
+   Import-Module (Join-Path $vsPath 'Common7\\Tools\\Microsoft.VisualStudio.DevShell.dll');
+   Enter-VsDevShell -VsInstallPath $vsPath -SkipAutomaticLocation
    **********************************************************************
    ** Visual Studio 2019 Developer PowerShell v16.11.9
    ** Copyright (c) 2021 Microsoft Corporation
@@ -163,13 +167,24 @@ Now, testing the compiler toolchain could look like:
 It is also possible to check that the environment has been updated correctly
 with ``$ENV:PATH``.
 
+
+Windows Store Python Paths
+==========================
+
+The MS Windows version of Python discussed here installs to a non-deterministic
+path using a hash. This needs to be added to the ``PATH`` variable.
+
+.. code-block:: powershell
+
+   $Env:Path += ";$env:LOCALAPPDATA\packages\pythonsoftwarefoundation.python.3.10_qbz5n2kfra8p0\localcache\local-packages\python310\scripts"
+
 .. toctree::
    :maxdepth: 2
 
    intel
 
 
-.. _the Microsoft Store: https://www.microsoft.com/en-us/p/python-39/9p7qfqmjrfp7?activetab=pivot:overviewtab
+.. _the Microsoft Store: https://www.microsoft.com/en-us/p/python-310/9pjpw5ldxlz5
 .. _Microsoft Visual Studio Code: https://code.visualstudio.com/Download
 .. _more complete POSIX environment: https://www.cygwin.com/
 .. _This MSYS2 document: https://www.msys2.org/wiki/How-does-MSYS2-differ-from-Cygwin/
