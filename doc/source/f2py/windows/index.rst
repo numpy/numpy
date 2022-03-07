@@ -10,6 +10,7 @@ F2PY and Windows
 	OS specific flags can be seen via ``python -m numpy.f2py``
 
 Broadly speaking, there are two issues working with F2PY on Windows:
+
 -  the lack of actively developed FOSS Fortran compilers, and,
 - the linking issues related to the C runtime library for building Python-C extensions.
 
@@ -24,8 +25,8 @@ on Linux, or facilitated by Docker. In a similar vein, traditional
 virtualization methods like VirtualBox are also reasonable methods to develop
 UNIX tools on Windows.
 
-Native Windows support is typically stunted beyond the usage of commerical compilers.
-However, most commerical compilers now have free plans which are sufficient for
+Native Windows support is typically stunted beyond the usage of commercial compilers.
+However, as of 2022, most commercial compilers have free plans which are sufficient for
 general use. Additionally, the Fortran language features supported by ``f2py``
 (partial coverage of Fortran 2003), means that newer toolchains are often not
 required. Briefly, then, for an end user, in order of use:
@@ -49,9 +50,9 @@ Conda
    Windows support for compilers in ``conda`` is facilitated by pulling MSYS2
    binaries, however these `are outdated`_, and therefore not recommended (as of 30-01-2022).
 
-PGI Compilers (commerical)
+PGI Compilers (commercial)
    Unmaintained but sufficient if an existing license is present. Works
-   natively, but has been superceeded by the Nvidia	HPC SDK, with no `native
+   natively, but has been superseded by the Nvidia HPC SDK, with no `native
    Windows support`_.
 
 Cygwin (FOSS)
@@ -130,7 +131,7 @@ setting.
   This can take a significant amount of time as it includes a download of around
   2GB and requires a restart.
 
-It is possible use the resulting environment from a `standard command
+It is possible to use the resulting environment from a `standard command
 prompt`_. However, it is more pleasant to use a `developer powershell`_,
 with a `profile in Windows Terminal`_. This can be achieved by adding the
 following block to the ``profiles->list`` section of the JSON file used to 

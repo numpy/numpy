@@ -4,7 +4,7 @@
 F2PY and Windows Intel Fortran
 ==============================
 
-At this time, only the classic Intel compilers (``ifort``) are supported.
+As of NumPy 1.23, only the classic Intel compilers (``ifort``) are supported.
 
 .. note::
 
