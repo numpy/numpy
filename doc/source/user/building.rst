@@ -94,9 +94,22 @@ Testing
 -------
 
 Make sure to test your builds. To ensure everything stays in shape, see if
-all tests pass::
+all tests pass
+
+First install all the python dependencies that will be required for testing 
+by running the below command in the root directory::
+
+    $ pip install -r test_requirements.txt
+
+Run tests::
 
     $ python runtests.py -v -m full
+
+``-v`` flag for showing the output of tests
+
+``-m`` flag for running a module or a package as a script
+
+``full`` for complete testing (will also run tests that are marked as slow)
 
 For detailed info on testing, see :ref:`testing-builds`.
 
