@@ -123,7 +123,7 @@ version bound: NumPy is careful to preserve backward-compatibility.
 
 That said, if you are (a) a project that is guaranteed to release
 frequently, (b) use a large part of NumPy's API surface, and (c) is
-worried that changes in NumPy may break your code, you may set an
+worried that changes in NumPy may break your code, you can set an
 upper bound of `<MAJOR.MINOR + N` with N no less than 3, and
 `MAJOR.MINOR` being the current release of NumPy. If you use the NumPy
 C API (directly or via Cython), you can also pin the current major
