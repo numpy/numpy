@@ -243,8 +243,11 @@ PyArray_AssignRawScalar(PyArrayObject *dst,
     }
 
     /* Check the casting rule */
-    if (!can_cast_scalar_to(src_dtype, src_data,
-                            PyArray_DESCR(dst), casting)) {
+    // TODO: This is incorrect, we need the information if the input was a
+    //       Python scalar?!  Or rather, we want a "inspect" cast-safety
+    //       so to speak.  A special scalar assignment just for this purpose
+    //       _probably_ that should be handled earlier, though!
+    if (!PyArray_CanCastTypeTo(src_dtype, PyArray_DESCR(dst), casting)) {
         npy_set_invalid_cast_error(
                 src_dtype, PyArray_DESCR(dst), casting, NPY_TRUE);
         return -1;

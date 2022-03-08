@@ -3537,9 +3537,17 @@ array_result_type(PyObject *NPY_UNUSED(dummy), PyObject *args)
             if (arr[narr] == NULL) {
                 goto finish;
             }
-            if (PyLong_CheckExact(obj) || PyFloat_CheckExact(obj) ||
-                    PyComplex_CheckExact(obj)) {
-                ((PyArrayObject_fields *)arr[narr])->flags |= _NPY_ARRAY_WAS_PYSCALAR;
+            if (PyLong_CheckExact(obj)) {
+                ((PyArrayObject_fields *)arr[narr])->flags |= (
+                        NPY_ARRAY_WAS_PYTHON_INT);
+            }
+            else if (PyFloat_CheckExact(obj)) {
+                ((PyArrayObject_fields *)arr[narr])->flags |= (
+                        NPY_ARRAY_WAS_PYTHON_FLOAT);
+            }
+            else if (PyComplex_CheckExact(obj)) {
+                ((PyArrayObject_fields *)arr[narr])->flags |= (
+                        NPY_ARRAY_WAS_PYTHON_COMPLEX);
             }
             ++narr;
         }

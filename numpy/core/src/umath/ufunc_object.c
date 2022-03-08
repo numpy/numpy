@@ -49,6 +49,8 @@
 #include "override.h"
 #include "npy_import.h"
 #include "extobj.h"
+
+#include "arrayobject.h"
 #include "common.h"
 #include "dtypemeta.h"
 #include "numpyos.h"
@@ -989,16 +991,31 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
             continue;
         }
         /*
-         * TODO: we need to special case scalars here, if the input is a
-         *       Python int, float, or complex, we have to use the "weak"
-         *       DTypes: `PyArray_PyIntAbstractDType`, etc.
-         *       This is to allow e.g. `float32(1.) + 1` to return `float32`.
-         *       The correct array dtype can only be found after promotion for
-         *       such a "weak scalar".  We could avoid conversion here, but
-         *       must convert it for use in the legacy promotion.
-         *       There is still a small chance that this logic can instead
-         *       happen inside the Python operators.
+         * Handle the "weak" Python scalars/literals.  We use a special DType
+         * for these.
+         * Further, we mark the operation array with a special flag to indicate
+         * this.  This is because the legacy dtype resolution makes use of
+         * `np.can_cast(operand, dtype)`.  The flag is local to this use, but
+         * necessary to propagate the information to the legacy type resolution.
          */
+        if (PyLong_CheckExact(obj)) {
+            Py_INCREF(&PyArray_PyIntAbstractDType);
+            Py_SETREF(out_op_DTypes[i], &PyArray_PyIntAbstractDType);
+            ((PyArrayObject_fields *)out_op[i])->flags |= (
+                    NPY_ARRAY_WAS_PYTHON_INT);
+        }
+        else if (PyFloat_CheckExact(obj)) {
+            Py_INCREF(&PyArray_PyFloatAbstractDType);
+            Py_SETREF(out_op_DTypes[i], &PyArray_PyFloatAbstractDType);
+            ((PyArrayObject_fields *)out_op[i])->flags |= (
+                    NPY_ARRAY_WAS_PYTHON_FLOAT);
+        }
+        else if (PyComplex_CheckExact(obj)) {
+            Py_INCREF(&PyArray_PyComplexAbstractDType);
+            Py_SETREF(out_op_DTypes[i], &PyArray_PyComplexAbstractDType);
+            ((PyArrayObject_fields *)out_op[i])->flags |= (
+                    NPY_ARRAY_WAS_PYTHON_COMPLEX);
+        }
     }
     if (*allow_legacy_promotion && (!all_scalar && any_scalar)) {
         *force_legacy_promotion = should_use_min_scalar(nin, out_op, 0, NULL);
