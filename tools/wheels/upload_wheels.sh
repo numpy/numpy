@@ -42,7 +42,7 @@ upload_wheels() {
         else
             python -m pip install git+https://github.com/Anaconda-Server/anaconda-client
             ls ./wheelhouse/*.whl
-            anaconda -t ${TOKEN} upload --skip -u ${ANACONDA_ORG} ./wheelhouse/*.whl
+            anaconda -t ${TOKEN} upload --no-progress --skip -u ${ANACONDA_ORG} ./wheelhouse/*.whl
             echo "PyPI-style index: https://pypi.anaconda.org/$ANACONDA_ORG/simple"
         fi
     fi
