@@ -456,7 +456,8 @@ The imported arrays are read-only so writing or operating in-place will fail:
    File "<stdin>", line 1, in <module>
  ValueError: assignment destination is read-only
 
-A copy must be created in order to operate on the imported arrays in-place:
+A copy must be created in order to operate on the imported arrays in-place, but
+will mean duplicating the memory. Do not do this for very large arrays:
 
  >>> x_np_copy = x_np.copy()
  >>> x_np_copy.sort()  # works
@@ -487,10 +488,10 @@ Read-only arrays cannot be exported:
 
  >>> x_np = np.arange(5)
  >>> x_np.flags.writeable = False
- >>> torch.from_dlpack(x_np)
+ >>> torch.from_dlpack(x_np)  # doctest: +ELLIPSIS
  Traceback (most recent call last):
    File "<stdin>", line 1, in <module>
-   File "/home/tirthasheshpatel/tensor_libs/virtualenvs/numpy-dev/lib/python3.9/site-packages/torch/utils/dlpack.py", line 63, in from_dlpack
+   File ".../site-packages/torch/utils/dlpack.py", line 63, in from_dlpack
      dlpack = ext_tensor.__dlpack__()
  TypeError: NumPy currently only supports dlpack for writeable arrays
 
