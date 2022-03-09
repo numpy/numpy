@@ -1584,7 +1584,8 @@ add_newdoc('numpy.core.multiarray', 'from_dlpack',
     Parameters
     ----------
     x : object
-        A Python object that implements the ``__dlpack__`` method.
+        A Python object that implements the ``__dlpack__`` and
+        ``__dlpack_device__`` methods.
 
     Returns
     -------
