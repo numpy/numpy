@@ -2551,6 +2551,8 @@ class CCompilerOpt(_Config, _Distutils, _Cache, _CCompiler, _Feature, _Parse):
         except OSError:
             pass
 
+        os.makedirs(os.path.dirname(config_path), exist_ok=True)
+
         self.dist_log("generate dispatched config -> ", config_path)
         dispatch_calls = []
         for tar in targets:
