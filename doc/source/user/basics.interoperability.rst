@@ -55,13 +55,13 @@ describes its memory layout and NumPy does everything else (zero-copy if
 possible). If that's not possible, the object itself is responsible for
 returning a ``ndarray`` from ``__array__()``.
 
-DLPack_ is yet another protocol to convert foriegn objects to NumPy arrays in
-a language and device agnostic manner. NumPy doesn't implicitly convert objects
-to ndarrays using DLPack. It provides the function `numpy.from_dlpack` that
-accepts any object implementing the ``__dlpack__`` method and outputs a NumPy
-ndarray (which is generally a view of the input object's data buffer). The
-`Python specification for DLPack <https://dmlc.github.io/dlpack/latest/python_spec.html>`_
-page explains the ``__dlpack__`` protocol in detail.
+:doc:`DLPack <dlpack:index>` is yet another protocol to convert foriegn objects
+to NumPy arrays in a language and device agnostic manner. NumPy doesn't implicitly
+convert objects to ndarrays using DLPack. It provides the function
+`numpy.from_dlpack` that accepts any object implementing the ``__dlpack__`` method
+and outputs a NumPy ndarray (which is generally a view of the input object's data
+buffer). The :ref:`dlpack:python-spec` page explains the ``__dlpack__`` protocol
+in detail.
 
 The array interface protocol
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -129,8 +129,9 @@ To see an example of a custom array implementation including the use of
 The DLPack Protocol
 ~~~~~~~~~~~~~~~~~~~
 
-The DLPack_ protocol defines a memory-layout of strided n-dimensional array
-objects. It offers the following syntax for data exchange:
+The :doc:`DLPack <dlpack:index>` protocol defines a memory-layout of
+strided n-dimensional array objects. It offers the following syntax
+for data exchange:
 
 1. A ``from_dlpack(x)`` function, which accepts (array) objects with a
    ``__dlpack__`` method and uses that method to construct a new array
@@ -427,8 +428,8 @@ Example: DLPack
 
 Several Python data science libraries implement the ``__dlpack__`` protocol.
 Among them are PyTorch_ and CuPy_. A full list of libraries that implement
-this protocol can be found on `this page of DLPack
-documentation <https://dmlc.github.io/dlpack/latest/#purpose>`_.
+this protocol can be found on
+:doc:`this page of DLPack documentation <dlpack:index>`.
 
 Convert a PyTorch CPU tensor to NumPy array:
 
@@ -448,6 +449,8 @@ Convert a PyTorch CPU tensor to NumPy array:
 
 The imported arrays are read-only so writing or operating in-place will fail:
 
+ >>> x.flags.writeable
+ False
  >>> x_np[1] = 1
  Traceback (most recent call last):
    File "<stdin>", line 1, in <module>
@@ -516,4 +519,3 @@ Further reading
 .. _astropy.units: https://docs.astropy.org/en/stable/units/
 .. _pint: https://pint.readthedocs.io/
 .. _unyt: https://unyt.readthedocs.io/
-.. _DLPack: https://dmlc.github.io/dlpack/latest
