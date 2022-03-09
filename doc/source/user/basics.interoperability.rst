@@ -133,7 +133,7 @@ The :doc:`DLPack <dlpack:index>` protocol defines a memory-layout of
 strided n-dimensional array objects. It offers the following syntax
 for data exchange:
 
-1. A ``from_dlpack(x)`` function, which accepts (array) objects with a
+1. A `numpy.from_dlpack` function, which accepts (array) objects with a
    ``__dlpack__`` method and uses that method to construct a new array
    containing the data from ``x``.
 2. ``__dlpack__(self, stream=None)`` and ``__dlpack_device__`` methods on the
