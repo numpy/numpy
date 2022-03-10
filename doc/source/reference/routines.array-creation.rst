@@ -35,6 +35,7 @@ From existing data
    asmatrix
    copy
    frombuffer
+   from_dlpack
    fromfile
    fromfunction
    fromiter

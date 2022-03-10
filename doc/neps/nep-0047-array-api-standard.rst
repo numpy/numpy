@@ -340,7 +340,7 @@ Adding support for DLPack to NumPy entails:
 
 - Adding a ``ndarray.__dlpack__()`` method which returns a ``dlpack`` C
   structure wrapped in a ``PyCapsule``.
-- Adding a ``np._from_dlpack(obj)`` function, where ``obj`` supports
+- Adding a ``np.from_dlpack(obj)`` function, where ``obj`` supports
   ``__dlpack__()``, and returns an ``ndarray``.
 
 DLPack is currently a ~200 LoC header, and is meant to be included directly, so

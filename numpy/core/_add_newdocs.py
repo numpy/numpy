@@ -1573,17 +1573,38 @@ add_newdoc('numpy.core.multiarray', 'frombuffer',
         array_function_like_doc,
     ))
 
-add_newdoc('numpy.core.multiarray', '_from_dlpack',
+add_newdoc('numpy.core.multiarray', 'from_dlpack',
     """
-    _from_dlpack(x, /)
+    from_dlpack(x, /)
 
     Create a NumPy array from an object implementing the ``__dlpack__``
-    protocol.
+    protocol. Generally, the returned NumPy array is a read-only view
+    of the input object. See [1]_ and [2]_ for more details.
 
-    See Also
+    Parameters
+    ----------
+    x : object
+        A Python object that implements the ``__dlpack__`` and
+        ``__dlpack_device__`` methods.
+
+    Returns
+    -------
+    out : ndarray
+
+    References
+    ----------
+    .. [1] Array API documentation,
+       https://data-apis.org/array-api/latest/design_topics/data_interchange.html#syntax-for-data-interchange-with-dlpack
+
+    .. [2] Python specification for DLPack,
+       https://dmlc.github.io/dlpack/latest/python_spec.html
+
+    Examples
     --------
-    `Array API documentation
-    <https://data-apis.org/array-api/latest/design_topics/data_interchange.html#syntax-for-data-interchange-with-dlpack>`_
+    >>> import torch
+    >>> x = torch.arange(10)
+    >>> # create a view of the torch tensor "x" in NumPy
+    >>> y = np.from_dlpack(x)
     """)
 
 add_newdoc('numpy.core', 'fastCopyAndTranspose',

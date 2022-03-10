@@ -307,6 +307,7 @@ intersphinx_mapping = {
     'pytest': ('https://docs.pytest.org/en/stable', None),
     'numpy-tutorials': ('https://numpy.org/numpy-tutorials', None),
     'numpydoc': ('https://numpydoc.readthedocs.io/en/latest', None),
+    'dlpack': ('https://dmlc.github.io/dlpack/latest', None)
 }
 
 
