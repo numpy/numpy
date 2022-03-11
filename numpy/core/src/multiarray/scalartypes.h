@@ -1,9 +1,10 @@
 #ifndef NUMPY_CORE_SRC_MULTIARRAY_SCALARTYPES_H_
 #define NUMPY_CORE_SRC_MULTIARRAY_SCALARTYPES_H_
 
-/* Internal look-up tables */
-extern NPY_NO_EXPORT unsigned char
-_npy_can_cast_safely_table[NPY_NTYPES][NPY_NTYPES];
+/*
+ * Internal look-up tables, casting safety is defined in convert_datatype.h.
+ * Most of these should be phased out eventually, but some are still used.
+ */
 extern NPY_NO_EXPORT signed char
 _npy_scalar_kinds_table[NPY_NTYPES];
 extern NPY_NO_EXPORT signed char

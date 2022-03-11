@@ -13,6 +13,7 @@
 #include "scalartypes.h"
 #include "_datetime.h"
 #include "datetime_strings.h"
+#include "can_cast_table.h"
 #include "convert_datatype.h"
 
 #include "legacy_dtype_implementation.h"
