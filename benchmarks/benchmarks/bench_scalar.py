@@ -10,6 +10,7 @@ class ScalarMath(Benchmark):
     param_names = ["type"]
     def setup(self, typename):
         self.num = np.dtype(typename).type(2)
+        self.int32 = np.int32(2)
 
     def time_addition(self, typename):
         n = self.num
@@ -31,3 +32,14 @@ class ScalarMath(Benchmark):
         n = self.num
         res = abs(abs(abs(abs(abs(abs(abs(abs(abs(abs(n))))))))))
 
+    def time_add_int32_other(self, typename):
+        # Some mixed cases are fast, some are slow, this documents these
+        # differences.  (When writing, it was fast if the type of the result
+        # is one of the inputs.)
+        int32 = self.int32
+        other = self.num
+        int32 + other
+        int32 + other
+        int32 + other
+        int32 + other
+        int32 + other
