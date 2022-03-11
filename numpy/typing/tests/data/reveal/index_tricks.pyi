@@ -20,13 +20,13 @@ reveal_type(next(np.ndenumerate(AR_i8)))  # E: Tuple[builtins.tuple[builtins.int
 reveal_type(next(np.ndenumerate(AR_LIKE_f)))  # E: Tuple[builtins.tuple[builtins.int, ...], {double}]
 reveal_type(next(np.ndenumerate(AR_LIKE_U)))  # E: Tuple[builtins.tuple[builtins.int, ...], str_]
 
-reveal_type(iter(np.ndenumerate(AR_i8)))  # E: Iterator[Tuple[builtins.tuple[builtins.int], {int64}]]
-reveal_type(iter(np.ndenumerate(AR_LIKE_f)))  # E: Iterator[Tuple[builtins.tuple[builtins.int], {double}]]
-reveal_type(iter(np.ndenumerate(AR_LIKE_U)))  # E: Iterator[Tuple[builtins.tuple[builtins.int], str_]]
+reveal_type(iter(np.ndenumerate(AR_i8)))  # E: ndenumerate[{int64}]
+reveal_type(iter(np.ndenumerate(AR_LIKE_f)))  # E: ndenumerate[{double}]
+reveal_type(iter(np.ndenumerate(AR_LIKE_U)))  # E: ndenumerate[str_]
 
 reveal_type(np.ndindex(1, 2, 3))  # E: numpy.ndindex
 reveal_type(np.ndindex((1, 2, 3)))  # E: numpy.ndindex
-reveal_type(iter(np.ndindex(1, 2, 3)))  # E: Iterator[builtins.tuple[builtins.int, ...]]
+reveal_type(iter(np.ndindex(1, 2, 3)))  # E: ndindex
 reveal_type(next(np.ndindex(1, 2, 3)))  # E: builtins.tuple[builtins.int, ...]
 
 reveal_type(np.unravel_index([22, 41, 37], (7, 6)))  # E: tuple[ndarray[Any, dtype[{intp}]], ...]

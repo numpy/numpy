@@ -35,7 +35,7 @@ reveal_type(nditer_obj.remove_multi_index())  # E: None
 reveal_type(nditer_obj.reset())  # E: None
 
 reveal_type(len(nditer_obj))  # E: int
-reveal_type(iter(nditer_obj))  # E: Iterator[builtins.tuple[ndarray[Any, dtype[Any]]], ...]
+reveal_type(iter(nditer_obj))  # E: nditer
 reveal_type(next(nditer_obj))  # E: tuple[ndarray[Any, dtype[Any]], ...]
 reveal_type(nditer_obj.__copy__())  # E: nditer
 with nditer_obj as f:
