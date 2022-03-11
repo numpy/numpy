@@ -182,6 +182,15 @@ def _set_up_aliases():
             del sctypeDict[t]
         except KeyError:
             pass
+
+    # Additional aliases in sctypeDict that should not be exposed as attributes
+    attrs_to_remove = ['ulong']
+
+    for t in attrs_to_remove:
+        try:
+            del allTypes[t]
+        except KeyError:
+            pass
 _set_up_aliases()
 
 

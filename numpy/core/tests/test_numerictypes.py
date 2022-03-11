@@ -437,8 +437,11 @@ class TestSctypeDict:
         assert_(np.sctypeDict['c16'] is not np.clongdouble)
 
     def test_ulong(self):
-        # gh-21063
+        # Test that 'ulong' behaves like 'long'. np.sctypeDict['long'] is an
+        # alias for np.int_, but np.long is not supported for historical
+        # reasons (gh-21063)
         assert_(np.sctypeDict['ulong'] is np.uint)
+        assert_(not hasattr(np, 'ulong'))
 
 
 class TestBitName:
