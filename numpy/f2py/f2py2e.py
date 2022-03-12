@@ -18,6 +18,7 @@ import sys
 import os
 import pprint
 import re
+from pathlib import Path
 
 from . import crackfortran
 from . import rules
@@ -121,6 +122,7 @@ Options:
 
   --quiet          Run quietly.
   --verbose        Run with extra verbosity.
+  --empty-gen      Ensure all possible output files are created
   -v               Print f2py version ID and exit.
 
 
@@ -178,6 +180,7 @@ def scaninputline(inputline):
     files, skipfuncs, onlyfuncs, debug = [], [], [], []
     f, f2, f3, f5, f6, f7, f8, f9, f10 = 1, 0, 0, 0, 0, 0, 0, 0, 0
     verbose = 1
+    emptygen = 0
     dolc = -1
     dolatexdoc = 0
     dorestdoc = 0
@@ -249,6 +252,8 @@ def scaninputline(inputline):
             f7 = 1
         elif l[:15] in '--include-paths':
             f7 = 1
+        elif l == '--empty-gen':
+            emptygen = 1
         elif l[0] == '-':
             errmess('Unknown option %s\n' % repr(l))
             sys.exit()
@@ -300,6 +305,7 @@ def scaninputline(inputline):
 
     options['debug'] = debug
     options['verbose'] = verbose
+    options['emptygen'] = emptygen
     if dolc == -1 and not signsfile:
         options['do-lower'] = 0
     else:
@@ -354,6 +360,15 @@ def callcrackfortran(files, options):
     else:
         for mod in postlist:
             mod["f2py_wrapper_output"] = options["f2py_wrapper_output"]
+    if options["emptygen"]:
+        # Generate all possible outputs
+        for mod in postlist:
+            m_name = mod["name"]
+            b_path = options["buildpath"]
+            Path(f'{b_path}/{m_name}module.c').touch()
+            Path(f'{b_path}/{m_name}-f2pywrappers.f').touch()
+            Path(f'{b_path}/{m_name}-f2pywrappers2.f90').touch()
+            outmess(f'    Generating possibly empty wrappers "{m_name}-f2pywrappers.f" and "{m_name}-f2pywrappers2.f90"\n')
     return postlist
 
 
