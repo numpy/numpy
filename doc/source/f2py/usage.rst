@@ -224,6 +224,8 @@ Other options
     Run quietly.
   ``--verbose``
     Run with extra verbosity.
+  ``--empty-gen``
+    Generate all possible (empty) wrapper files.
   ``-v``
     Print the F2PY version and exit.
 

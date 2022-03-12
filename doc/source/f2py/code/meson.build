@@ -22,9 +22,9 @@ incdir_f2py = run_command(py3,
 
 fibby_source = custom_target('fibbymodule.c',
                             input : ['fib1.f'],
-                            output : ['fibbymodule.c'],
+                            output : ['fibbymodule.c', 'fibby-f2pywrappers.f', 'fibby-f2pywrappers2.f90'],
                             command : [ py3, '-m', 'numpy.f2py', '@INPUT@',
-                            '-m', 'fibby', '--lower' ]
+                            '-m', 'fibby', '--lower', '--empty-gen' ]
                             )
 
 inc_np = include_directories(incdir_numpy, incdir_f2py)

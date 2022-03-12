@@ -80,7 +80,8 @@ Signature files
 
 .. note::
 
-   The signature file output situation is being reconsidered in `issue 20385`_ .
+   To generate every possible input ``--empty-gen`` can be passed to ``f2py``
+   from NumPy version ``1.22.4``.
 
 
 In theory keeping the above requirements in hand, any build system can be
