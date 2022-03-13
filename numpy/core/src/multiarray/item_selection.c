@@ -2646,7 +2646,7 @@ PyArray_Nonzero(PyArrayObject *self)
              * stalls that are very expensive on most modern processors.
              */
             else {
-                npy_intp * multi_index_end = multi_index + nonzero_count;
+                npy_intp *multi_index_end = multi_index + nonzero_count;
                 npy_intp j = 0;
 
                 while (multi_index + 4 < multi_index_end) {
