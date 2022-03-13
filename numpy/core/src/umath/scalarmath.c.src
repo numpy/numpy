@@ -1082,8 +1082,12 @@ static PyObject *
         case CONVERSION_ERROR:
             return NULL;  /* an error occurred (should never happen) */
         case DEFER_TO_OTHER_KNOWN_SCALAR:
-            /* defer to other;  This cannot be an `__rop__`, assert that: */
-            assert(is_forward);
+            /*
+             * defer to other;  This is normally a forward operation.  However,
+             * it could be backward if an operation is undefined forward.
+             * An example is the complex remainder `complex % bool` will defer
+             * even though it would normally handle the operation.
+             */
             Py_RETURN_NOTIMPLEMENTED;
         case CONVERSION_SUCCESS:
             break;  /* successfully extracted value we can proceed */
@@ -1256,7 +1260,6 @@ static PyObject *
         case CONVERSION_ERROR:
             return NULL;  /* an error occurred (should never happen) */
         case DEFER_TO_OTHER_KNOWN_SCALAR:
-            assert(is_forward);
             Py_RETURN_NOTIMPLEMENTED;
         case CONVERSION_SUCCESS:
             break;  /* successfully extracted value we can proceed */
@@ -1652,7 +1655,6 @@ static PyObject*
         case CONVERSION_ERROR:
             return NULL;  /* an error occurred (should never happen) */
         case DEFER_TO_OTHER_KNOWN_SCALAR:
-            assert(is_forward);
             Py_RETURN_NOTIMPLEMENTED;
         case CONVERSION_SUCCESS:
             break;  /* successfully extracted value we can proceed */
