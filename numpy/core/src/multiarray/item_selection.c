@@ -2649,6 +2649,7 @@ PyArray_Nonzero(PyArrayObject *self)
                 npy_intp *multi_index_end = multi_index + nonzero_count;
                 npy_intp j = 0;
 
+                /* Manually unroll for GCC and maybe other compilers */
                 while (multi_index + 4 < multi_index_end) {
                     *multi_index = j;
                     multi_index += data[0] != 0;
