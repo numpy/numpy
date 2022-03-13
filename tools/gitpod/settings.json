@@ -5,5 +5,5 @@
     "restructuredtext.updateOnTextChanged": "true",
     "restructuredtext.updateDelay": 300,
     "restructuredtext.linter.disabled": true,
-    "python.pythonPath": "/home/gitpod/mambaforge3/envs/numpy-dev/bin/python"
+    "python.defaultInterpreterPath": "/home/gitpod/mambaforge3/envs/numpy-dev/bin/python"
 }
