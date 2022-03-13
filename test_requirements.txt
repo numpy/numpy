@@ -9,4 +9,5 @@ pytest-cov==3.0.0
 cffi; python_version < '3.10'
 # For testing types. Notes on the restrictions:
 # - Mypy relies on C API features not present in PyPy
-mypy==0.931; platform_python_implementation != "PyPy"
+# NOTE: Keep mypy in sync with environment.yml
+mypy==0.940; platform_python_implementation != "PyPy"
