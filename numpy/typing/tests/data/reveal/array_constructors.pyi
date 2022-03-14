@@ -153,7 +153,7 @@ reveal_type(np.full(1, i8, dtype=np.float64))  # E: ndarray[Any, dtype[{float64}
 reveal_type(np.full(1, i8, dtype=float))  # E: ndarray[Any, dtype[Any]]
 
 reveal_type(np.indices([1, 2, 3]))  # E: ndarray[Any, dtype[{int_}]]
-reveal_type(np.indices([1, 2, 3], sparse=True))  # E: tuple[ndarray[Any, dtype[{int_}]]]
+reveal_type(np.indices([1, 2, 3], sparse=True))  # E: tuple[ndarray[Any, dtype[{int_}]], ...]
 
 reveal_type(np.fromfunction(func, (3, 5)))  # E: SubClass[{float64}]
 
