@@ -11,7 +11,7 @@ In this how-to you will learn how to:
 
 While you walk through the verification process, you will learn how to: 
 
-- Set up a Python virtual environment (virtualenv)
+- Set up a Python virtual environment (``virtualenv``)
 - Install appropriate versions of NumPy, first to see the bug in action, then to verify its fix
 
 `Issue 16354 <https://github.com/numpy/numpy/issues/16354>`_ is used as an example.
@@ -34,23 +34,22 @@ This issue was:
     This bug isn't present in np.convolve.
     
     Reproducing code example:
-    >>> import numpy as np
+    >>> import numpy as np # doctest: +ELLIPSIS
     >>> np.__version__
-    '1.18.4'
+    '...'
     >>> a = np.array([1,2,3])
     >>> z = np.array([0,0,0])
     >>> np.polymul(a.astype(np.int64), a.astype(np.int64)).dtype
     dtype('int64')
     >>> np.polymul(a.astype(np.int64), z.astype(np.int64)).dtype
-    dtype('float64')
+    dtype('...') # Was float64
     >>> np.polymul(a.astype(np.float32), z.astype(np.float32)).dtype
-    dtype('float64')
+    dtype('...') # Was float32
     >>> np.polymul(a.astype(np.complex64), z.astype(np.complex64)).dtype
-    dtype('complex128')
+    dtype('...') # Was complex128
     Numpy/Python version information:
     >>> import sys, numpy; print(numpy.__version__, sys.version)
-    1.18.4 3.7.5 (default, Nov  7 2019, 10:50:52) 
-    [GCC 8.3.0]
+    ... # 1.18.4 3.7.5 (default, Nov  7 2019, 10:50:52) [GCC 8.3.0]
 
 ******************************************************************************
 1. Set up a virtual environment
@@ -81,7 +80,7 @@ More complex bugs may require you to build the NumPy version referenced in the i
 3. Confirm that the bug exists
 ******************************************************************************
 
-The reporter's claim for issue 16354 is simple enough: the wrong ``dtype`` is returned if one of the inputs
+The reporter's claim for issue 16354 is: the wrong ``dtype`` is returned if one of the inputs
 of the method `numpy.polymul` is a zero array. 
 
 To verify the existence of the bug:
@@ -90,17 +89,17 @@ Start a Python terminal, enter the code shown in the bug report, and see if you 
 
     >>> import numpy as np
     >>> np.__version__
-    '1.18.4'
+    '...' # 1.18.4
     >>> a = np.array([1,2,3])
     >>> z = np.array([0,0,0])
     >>> np.polymul(a.astype(np.int64), a.astype(np.int64)).dtype
     dtype('int64')
     >>> np.polymul(a.astype(np.int64), z.astype(np.int64)).dtype
-    dtype('float64')
+    dtype('...') # float64
     >>> np.polymul(a.astype(np.float32), z.astype(np.float32)).dtype
-    dtype('float64')
+    dtype('...') # float64
     >>> np.polymul(a.astype(np.complex64), z.astype(np.complex64)).dtype
-    dtype('complex128')
+    dtype('...') # complex128
 
 Whenever the zero array, ``z`` in the example above, is one of the arguments to `np.polymul`, an incorrect ``dtype`` is returned.
 
@@ -128,7 +127,7 @@ To verify the fix:
 
     >>> import numpy as np
     >>> np.__version__
-    '1.18.4'
+    '...' # 1.18.4
     >>> a = np.array([1,2,3])
     >>> z = np.array([0,0,0])
     >>> np.polymul(a.astype(np.int64), a.astype(np.int64)).dtype
@@ -150,4 +149,4 @@ Go to the `NumPy GitHub issues page <https://github.com/numpy/numpy/issues>`_
 and see if you can confirm the existence of any other bugs. 
 
 Then comment on the issue to confirm. Doing this alerts the NumPy developers that
-one user is experiencing the issue.
+more than one user can reproduce the issue.
