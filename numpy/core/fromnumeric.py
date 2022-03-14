@@ -2309,7 +2309,7 @@ def any(a, axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue):
     """
     Test whether any array element along a given axis evaluates to True.
 
-    Returns single boolean unless `axis` is not ``None``
+    Returns single boolean if `axis` is ``None``
 
     Parameters
     ----------
