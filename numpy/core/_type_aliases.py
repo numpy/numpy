@@ -172,7 +172,7 @@ def _set_up_aliases():
         allTypes[alias] = allTypes[t]
         sctypeDict[alias] = sctypeDict[t]
     # Remove aliases overriding python types and modules
-    to_remove = ['ulong', 'object', 'int', 'float',
+    to_remove = ['object', 'int', 'float',
                  'complex', 'bool', 'string', 'datetime', 'timedelta',
                  'bytes', 'str']
 
@@ -180,6 +180,15 @@ def _set_up_aliases():
         try:
             del allTypes[t]
             del sctypeDict[t]
+        except KeyError:
+            pass
+
+    # Additional aliases in sctypeDict that should not be exposed as attributes
+    attrs_to_remove = ['ulong']
+
+    for t in attrs_to_remove:
+        try:
+            del allTypes[t]
         except KeyError:
             pass
 _set_up_aliases()
