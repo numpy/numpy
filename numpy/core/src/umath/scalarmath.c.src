@@ -30,7 +30,7 @@
 #include "common.h"
 #include "can_cast_table.h"
 
-/* TODO: Used for some functions, should probably move these to npy_math.h */
+/* TODO: Used for some functions, should possibly move these to npy_math.h */
 #include "loops.h"
 
 /* Basic operations:
@@ -123,7 +123,7 @@ static NPY_INLINE int
 #else
     if (temp > NPY_MAX_@NAME@) {
 #endif
-        npy_set_floatstatus_overflow();
+        return NPY_FPE_OVERFLOW;
     }
     return 0;
 }
@@ -404,21 +404,24 @@ half_ctype_divmod(npy_half a, npy_half b, npy_half *out1, npy_half *out2)
  * #c = f,,l#
  */
 static NPY_INLINE int
-@name@_ctype_add(@type@ a, @type@ b, @type@ *out) {
+@name@_ctype_add(@type@ a, @type@ b, @type@ *out)
+{
     out->real = a.real + b.real;
     out->imag = a.imag + b.imag;
     return 0;
 }
 
 static NPY_INLINE int
-@name@_ctype_subtract(@type@ a, @type@ b, @type@ *out) {
+@name@_ctype_subtract(@type@ a, @type@ b, @type@ *out)
+{
     out->real = a.real - b.real;
     out->imag = a.imag - b.imag;
     return 0;
 }
 
 static NPY_INLINE int
-@name@_ctype_multiply(@type@ a, @type@ b, @type@ *out) {
+@name@_ctype_multiply(@type@ a, @type@ b, @type@ *out)
+{
     out->real = a.real * b.real - a.imag * b.imag;
     out->imag = a.real * b.imag + a.imag * b.real;
     return 0;
@@ -633,7 +636,12 @@ static NPY_INLINE int
  *         ulong, longlong, ulonglong#
  */
 
-#define @name@_ctype_invert(a, out) *(out) = ~a;
+static NPY_INLINE int
+@name@_ctype_invert(npy_@name@ a, npy_@name@ *out)
+{
+    *out = ~a;
+    return 0;
+}
 
 /**end repeat**/
 
