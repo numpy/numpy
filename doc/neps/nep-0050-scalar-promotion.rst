@@ -269,6 +269,33 @@ Will both return a float64 rather than float32.  This improves precision but
 slightly changes results and uses double the memory.
 
 
+Changes due to the integer "ladder of precision"
+------------------------------------------------
+
+When creating an array from a Python integer, NumPy will try the following
+types in order, with the result depending on the value::
+
+    long (usually int64) → int64 → uint64 -> object
+
+which is subtly different from the promotion described above.
+
+This NEP currently does not include changing this ladder (although it may be
+suggested in a separate document).
+However, in mixed operations, this ladder will be ignored, since the value
+will be ignored.  This means, that operations will never silently use the
+``object`` dtype:
+
+    np.array([3]) + 2**100  # Will error
+
+The user will have to write one of:
+
+    np.array([3]) + np.array(2**100)
+    np.array([3]) + np.array(2**100, dtype=object)
+
+As such implicit conversion to ``object`` should be rare and the work around
+is clear, we expect that the backwards compatibility concerns are fairly small.
+
+
 Detailed description
 ====================
 
