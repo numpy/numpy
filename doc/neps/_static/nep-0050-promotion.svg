@@ -2,9 +2,9 @@
 <!-- Created with Inkscape (http://www.inkscape.org/) -->
 
 <svg
-   width="318.24606mm"
+   width="334.43991mm"
    height="138.47121mm"
-   viewBox="0 0 318.24606 138.47116"
+   viewBox="0 0 334.43991 138.47116"
    version="1.1"
    id="svg5"
    sodipodi:docname="nep-0050-promotion.svg"
@@ -29,14 +29,14 @@
      fit-margin-left="1"
      fit-margin-bottom="1"
      inkscape:zoom="1.1024096"
-     inkscape:cx="601.40988"
-     inkscape:cy="322.47544"
+     inkscape:cx="618.64483"
+     inkscape:cy="209.08744"
      inkscape:window-width="2560"
-     inkscape:window-height="1371"
-     inkscape:window-x="0"
-     inkscape:window-y="32"
+     inkscape:window-height="1403"
+     inkscape:window-x="2560"
+     inkscape:window-y="0"
      inkscape:window-maximized="1"
-     inkscape:current-layer="svg5" />
+     inkscape:current-layer="g4482" />
   <defs
      id="defs2">
     <marker
@@ -98,12 +98,17 @@
   </defs>
   <g
      id="layer1"
-     transform="translate(199.39432,-51.42495)">
+     transform="translate(215.26911,-51.42495)">
+    <path
+       style="fill:#666666;stroke:#000000;stroke-width:1.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:12, 6;stroke-dashoffset:0;stroke-opacity:1"
+       d="M -196.35918,125.8553 H 118.17079"
+       id="path937"
+       sodipodi:nodetypes="cc" />
     <rect
        style="fill:#ececec;fill-opacity:1;stroke:none;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:128.863;stroke-opacity:1"
        id="rect27474"
-       width="283.89227"
-       height="26.332264"
+       width="304.31406"
+       height="26.332268"
        x="-186.18567"
        y="52.42495"
        ry="4.4001865"
@@ -218,48 +223,57 @@
          style="font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;font-size:5.11528px;font-family:'Fira Code';-inkscape-font-specification:'Fira Code Medium';stroke-width:0.264583"
          x="-29.107145"
          y="91.994759">complex64</tspan></text>
-    <rect
-       style="fill:#ffdc86;fill-opacity:1;stroke:none;stroke-width:6.819;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:13.638, 13.638;stroke-dashoffset:34.095"
-       id="rect2223"
-       width="46.223087"
-       height="12.299"
-       x="-176.18831"
-       y="84.475945"
-       rx="4.6271939"
-       ry="4.6271939" />
-    <text
-       xml:space="preserve"
-       style="font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;font-size:5.11528px;line-height:1.25;font-family:'Fira Code';-inkscape-font-specification:'Fira Code Medium';letter-spacing:0px;word-spacing:0px;stroke-width:0.264583"
-       x="-174.05717"
-       y="91.994759"
-       id="text9259"><tspan
-         id="tspan9257"
-         style="font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;font-size:5.11528px;font-family:'Fira Code';-inkscape-font-specification:'Fira Code Medium';stroke-width:0.264583"
-         x="-174.05717"
-         y="91.994759"><tspan
+    <g
+       id="g4360">
+      <g
+         id="g4342">
+        <rect
+           style="fill:#ffdc86;fill-opacity:1;stroke:none;stroke-width:6.819;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:13.638, 13.638;stroke-dashoffset:34.095"
+           id="rect2223"
+           width="46.223087"
+           height="12.299"
+           x="-176.18831"
+           y="84.475945"
+           rx="4.6271939"
+           ry="4.6271939" />
+        <text
+           xml:space="preserve"
+           style="font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;font-size:5.11528px;line-height:1.25;font-family:'Fira Code';-inkscape-font-specification:'Fira Code Medium';letter-spacing:0px;word-spacing:0px;stroke-width:0.264583"
+           x="-174.05717"
+           y="91.994759"
+           id="text9259"><tspan
+             id="tspan9257"
+             style="font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;font-size:5.11528px;font-family:'Fira Code';-inkscape-font-specification:'Fira Code Medium';stroke-width:0.264583"
+             x="-174.05717"
+             y="91.994759"><tspan
    style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Lato;-inkscape-font-specification:Lato"
    id="tspan24730">Python</tspan> complex</tspan></text>
-    <rect
-       style="fill:#ffdc86;fill-opacity:1;stroke:none;stroke-width:6.819;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:13.638, 13.638;stroke-dashoffset:34.095"
-       id="rect12259"
-       width="46.223087"
-       height="12.299"
-       x="-176.18831"
-       y="108.3166"
-       rx="4.6271939"
-       ry="4.6271939" />
-    <text
-       xml:space="preserve"
-       style="font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;font-size:5.11528px;line-height:1.25;font-family:'Fira Code';-inkscape-font-specification:'Fira Code Medium';letter-spacing:0px;word-spacing:0px;stroke-width:0.264583"
-       x="-174.05717"
-       y="115.77239"
-       id="text12263"><tspan
-         id="tspan12261"
-         style="font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;font-size:5.11528px;font-family:'Fira Code';-inkscape-font-specification:'Fira Code Medium';stroke-width:0.264583"
-         x="-174.05717"
-         y="115.77239"><tspan
+      </g>
+      <g
+         id="g4348">
+        <rect
+           style="fill:#ffdc86;fill-opacity:1;stroke:none;stroke-width:6.819;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:13.638, 13.638;stroke-dashoffset:34.095"
+           id="rect12259"
+           width="46.223087"
+           height="12.299"
+           x="-176.18831"
+           y="108.3166"
+           rx="4.6271939"
+           ry="4.6271939" />
+        <text
+           xml:space="preserve"
+           style="font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;font-size:5.11528px;line-height:1.25;font-family:'Fira Code';-inkscape-font-specification:'Fira Code Medium';letter-spacing:0px;word-spacing:0px;stroke-width:0.264583"
+           x="-174.05717"
+           y="115.77239"
+           id="text12263"><tspan
+             id="tspan12261"
+             style="font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;font-size:5.11528px;font-family:'Fira Code';-inkscape-font-specification:'Fira Code Medium';stroke-width:0.264583"
+             x="-174.05717"
+             y="115.77239"><tspan
    style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Lato;-inkscape-font-specification:Lato"
    id="tspan29428">Python</tspan> float</tspan></text>
+      </g>
+    </g>
     <rect
        style="fill:#ffdc86;fill-opacity:1;stroke:none;stroke-width:6.819;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:13.638, 13.638;stroke-dashoffset:34.095"
        id="rect13393"
@@ -495,13 +509,13 @@
        xml:space="preserve"
        style="font-size:10.5833px;line-height:1.25;font-family:Lato;-inkscape-font-specification:Lato;letter-spacing:0px;word-spacing:0px;stroke-width:0.264583"
        x="-156.69156"
-       y="-190.30339"
+       y="-206.17818"
        id="text30437"
        transform="rotate(-90)"><tspan
          id="tspan30435"
          style="font-size:10.5833px;stroke-width:0.264583"
          x="-156.69156"
-         y="-190.30339">DType “kind”</tspan></text>
+         y="-206.17818">DType “kind”</tspan></text>
     <text
        xml:space="preserve"
        style="font-size:10.5833px;line-height:1.25;font-family:Lato;-inkscape-font-specification:Lato;letter-spacing:0px;word-spacing:0px;stroke-width:0.264583"
@@ -518,7 +532,7 @@
        id="path55402" />
     <path
        style="fill:none;stroke:#000000;stroke-width:0.75;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#Arrow2Lend)"
-       d="M -186.3183,166.48316 V 87.745517"
+       d="M -202.54791,166.48316 V 87.745517"
        id="path55752" />
     <g
        id="g28092"
@@ -550,9 +564,9 @@
         <rect
            style="fill:#8cc9e1;fill-opacity:1;stroke:#ffd876;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:128.863;stroke-opacity:1"
            id="rect14959"
-           width="78.667534"
+           width="120.41356"
            height="20"
-           x="74.314514"
+           x="53.441502"
            y="156.69722" />
         <text
            xml:space="preserve"
@@ -567,7 +581,7 @@
              style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:6.35px;font-family:Lato;-inkscape-font-specification:Lato;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none"
              x="113.56572"
              y="172.57732"
-             id="tspan22734">precision when higher kind</tspan></text>
+             id="tspan22734">precision when other is integral/boolean</tspan></text>
       </g>
       <rect
          style="fill:#ffdc86;fill-opacity:1;stroke:#ffdc86;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:128.863;stroke-opacity:1"
@@ -591,5 +605,52 @@
            y="77.121414"
            id="tspan10577" /></text>
     </g>
+    <g
+       id="g4482">
+      <text
+         xml:space="preserve"
+         style="font-size:10.5833px;line-height:1.25;font-family:Lato;-inkscape-font-specification:Lato;letter-spacing:0px;word-spacing:0px;stroke-width:0.264583"
+         x="-167.88512"
+         y="-189.26865"
+         id="text1272"
+         transform="rotate(-90)"><tspan
+           id="tspan1270"
+           style="font-size:10.5833px;stroke-width:0.264583"
+           x="-167.88512"
+           y="-189.26865">integral</tspan></text>
+      <text
+         xml:space="preserve"
+         style="font-size:10.5833px;line-height:1.25;font-family:Lato;-inkscape-font-specification:Lato;letter-spacing:0px;word-spacing:0px;stroke-width:0.264583"
+         x="-119.82033"
+         y="-189.48032"
+         id="text1654"
+         transform="rotate(-90)"><tspan
+           id="tspan1652"
+           style="font-size:10.5833px;stroke-width:0.264583"
+           x="-119.82033"
+           y="-189.48032">inexact</tspan></text>
+    </g>
+    <text
+       xml:space="preserve"
+       style="font-size:41.0915px;line-height:1.25;font-family:Lato;-inkscape-font-specification:Lato;letter-spacing:0px;word-spacing:0px;stroke-width:0.264582"
+       x="-188.36589"
+       y="115.45877"
+       id="text5071"><tspan
+         sodipodi:role="line"
+         id="tspan5069"
+         style="font-style:normal;font-variant:normal;font-weight:200;font-stretch:normal;font-family:Lato;-inkscape-font-specification:'Lato Ultra-Light';stroke-width:0.264582"
+         x="-188.36589"
+         y="115.45877">{</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:41.0915px;line-height:1.25;font-family:Lato;-inkscape-font-specification:Lato;letter-spacing:0px;word-spacing:0px;stroke-width:0.264582"
+       x="-188.12589"
+       y="163.13994"
+       id="text8769"><tspan
+         sodipodi:role="line"
+         id="tspan8767"
+         style="font-style:normal;font-variant:normal;font-weight:200;font-stretch:normal;font-family:Lato;-inkscape-font-specification:'Lato Ultra-Light';stroke-width:0.264582"
+         x="-188.12589"
+         y="163.13994">{</tspan></text>
   </g>
 </svg>

@@ -82,12 +82,41 @@ and ``uint64`` to ``float64``.
 
 The Python scalars are inserted at the very left of each "kind" and the
 Python integer does not distinguish signed and unsigned.
-Note, that when the promoting a Python scalar with a dtype of lower "kind",
-we use the default "minimum precision" (typically ``int64``,
-but can be ``int32``).
+Note, that when the promoting a Python scalar with a dtype of lower kind
+category (boolean, integral, inexact) with a higher one, we  use the
+minimum/default precision: that is ``float64``, ``complex128`` or ``int64``
+(``int32`` is used on some systems, e.g. windows).
 
 .. figure:: _static/nep-0050-promotion-no-fonts.svg
     :figclass: align-center
+
+See the next section for examples to compare with this schema.
+
+Examples of new behaviour
+-------------------------
+
+Since the schema and logic are difficult to read with respect to some cases,
+these are examples of the new behaviour::
+
+    np.uint8(1) + 1 == np.uint8(2)
+    np.int16(2) + 2 == np.int16(4)
+
+In the following the Python ``float`` and ``complex`` are "inexact", but the
+NumPy value is integral, so we use at least ``float64``/``complex128``:
+
+    np.uint16(3) + 3.0 == np.float64(6.0)
+    np.int16(4) + 4j == np.complex128(4+4j)
+
+But this does not happen for ``float`` to ``complex`` promotions, where
+``float32`` and ``complex64`` have the same precision:
+
+    np.float32(5) + 5j == np.complex64(5+5j)
+
+The above table omits, ``bool``.  It is set below "integral", so that the
+following hold::
+
+    np.bool_(True) + 1 == np.int64(2)
+    True + np.uint8(2) == np.uint8(3)
 
 
 Motivation and Scope
