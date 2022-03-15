@@ -555,6 +555,26 @@ passed out as a result from a function, rather than used only very localized.
     or a pattern of calling ``np.result_type()`` before ``np.asarray()``.
 
 
+Keep using value-based logic for Python scalars
+-----------------------------------------------
+
+Some of the main issues with the current logic arise, because we apply it
+to NumPy scalars and 0-D arrays, rather than the application to Python scalars.
+We could thus consider to keep inspecting the value for Python scalars.
+
+We reject this idea on the grounds that it will not remove the surprises
+given earlier::
+
+    np.uint8(100) + 1000 == np.uint16(1100)
+    np.uint8(100) + 200 == np.uint8(44)
+
+And adapting the precision based on the result value rather than the input
+value might be possible for scalar operations, but is not feasible for array
+operations.
+This is because array operations need to allocate the result array before
+performing the calculation.
+
+
 Discussion
 ==========
 
