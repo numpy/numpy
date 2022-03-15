@@ -17,7 +17,7 @@ for users and maintainers.
 
 There are two main ways this can lead to confusing results:
 
-1. This means that the value can matter::
+1. Value=based promotion means that the value can matter::
 
      np.result_type(np.int8, 1) == np.int8
      np.result_type(np.int8, 255) == np.int16
@@ -29,17 +29,22 @@ There are two main ways this can lead to confusing results:
     
    This logic arises, because ``1`` can be represented by an ``int8`` while
    ``255`` can be represented by an ``int16`` *or* ``uint8``.
-   This means that for the 0-D array or NumPy scalars, the type is largely ignored.
+   Because of this, the exact type is often ignored for 0-D arrays or
+   NumPy scalars.
 
-2. For a Python integer or float the value matters except when the other type is
-   also scalar or zero dimensional::
+2. For a Python ``int``, ``float``, or ``complex`` the value is inspected as
+   before.  But often surprisingly not when the NumPy object is a 0-D array
+   or NumPy scalar::
 
+     np.result_type(np.array(1, dtype=np.uint8), 1) == np.int64
      np.result_type(np.int8(1), 1) == np.int64
 
-   Because in this case value-based promotion is disabled causing the Python 1
-   to be considered an int64 (or default integer).
+   The reason is that the special value-based promotion is disabled when all
+   objects are scalars or 0-D arrays.
+   NumPy thus returns the same type as ``np.array(1)``, which is usually
+   an ``int64`` (this depends on the system).
 
-Note that the examples apply just as well for operations like multiplication,
+Note that the examples apply also to operations like multiplication,
 addition, or comparisons and the corresponding functions like `np.multiply`.
 
 This NEP proposes to refactor the behaviour around two guiding principles:
@@ -50,10 +55,39 @@ This NEP proposes to refactor the behaviour around two guiding principles:
 
 We propose to remove all value-based logic and add special handling for
 Python scalars to preserve some of the convenience that it provided.
+This will mean that Python scalars are considered "weakly" typed.
+A Python integer will always be converted to the NumPy dtype retaining the
+behaviour that::
 
-These changes also apply to ``np.can_cast(100, np.int8)``, however, we expect
-that the behaviour in functions (promotion) will in practice be far more
-relevant than this casting change.
+    np.array([1, 2, 3], dtype=np.uint8) + 1  # returns a uint8 array
+    np.array([1, 2, 3], dtype=np.float32) + 2.  # returns a float32 array
+
+but removing any dependence on the Python value itself.
+
+The proposed changes also apply to ``np.can_cast(100, np.int8)``, however,
+we expect that the behaviour in functions (promotion) will in practice be far
+more important than the casting change itself.
+
+
+Schema of the new proposed promotion rules
+------------------------------------------
+
+After the change, the promotions in NumPy will follow the schema below.
+Promotion always occurs along the green lines:
+from left to right within their kind and to a higher kind only when
+necessary.
+The result kind is always the largest kind of the inputs.
+NumPy has one notable exception because it allows promotion of both ``int64``
+and ``uint64`` to ``float64``.
+
+The Python scalars are inserted at the very left of each "kind" and the
+Python integer does not distinguish signed and unsigned.
+Note, that when the promoting a Python scalar with a dtype of lower "kind",
+we use the default "minimum precision" (typically ``int64``,
+but can be ``int32``).
+
+.. figure:: _static/nep-0050-promotion-no-fonts.svg
+    :figclass: align-center
 
 
 Motivation and Scope
@@ -64,12 +98,32 @@ of Python scalars and NumPy scalars/0-D arrays is, again, two-fold:
 
 1. The special handling of NumPy scalars/0-D arrays as well as the value
    inspection can be very surprising to users.
-2. The value-inspection logic is much harder to reason about or describe as
-   well as making it available to user defined DTypes through
+2. The value-inspection logic is much harder to explain and implement.
+   It is further harder to make it available to user defined DTypes through
    :ref:`NEP 42 <NEP42>`.
    Currently, this leads to a dual implementation of a new and an old (value
    sensitive) system.  Fixing this will greatly simplify the internal logic
    and make results more consistent.
+
+We believe that the proposal of "weak" Python scalars will help users by
+providing a clearer mental model for which datatype an operation will
+result in.
+This model fits well with the preservation of array precisions that NumPy
+currently often has, and also aggressively does for in-place operations::
+
+    arr += value
+
+Preserves precision so long "kind" boundaries are not crossed.
+
+And while some users will probably miss the value inspecting behavior even for
+those cases where it seems useful, it quickly leads to surprises.  This may be
+expected::
+
+    np.array([100], dtype=np.uint8) + 1000 == np.array([1100], dtype=np.uint16)
+
+But the following will then be a surprise::
+
+    np.array([100], dtype=np.uint8) + 200 == np.array([44], dtype=np.uint8)
 
 
 Usage and Impact
