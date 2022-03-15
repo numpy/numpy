@@ -762,6 +762,11 @@ cdef extern from "numpy/ndarraytypes.h":
         NPY_DATETIMEUNIT base
         int64_t num
 
+    ctypedef struct npy_datetimestruct:
+        int64_t year
+        int32_t month, day, hour, min, sec, us, ps, as
+
+
 cdef extern from "numpy/arrayscalars.h":
 
     # abstract types
@@ -812,6 +817,24 @@ cdef extern from "numpy/arrayscalars.h":
         NPY_FR_fs
         NPY_FR_as
 
+
+cdef extern from "numpy/multiarray.h":
+    int get_datetime_iso_8601_strlen(int local, NPY_DATETIMEUNIT base)
+
+cdef extern from "numpy/multiarray.h":
+    int convert_pydatetime_to_datetimestruct(PyObject *obj, npy_datetimestruct *out,
+                                             NPY_DATETIMEUNIT *out_bestunit,
+                                             int apply_tzinfo);
+
+    int convert_pydatetime_to_datetimestruct(PyObject *obj, npy_datetimestruct *out,
+                                             NPY_DATETIMEUNIT *out_bestunit,
+                                             int apply_tzinfo);
+    int convert_datetime_to_datetimestruct(PyArray_DatetimeMetaData *meta,
+                                           npy_datetime dt,
+                                           npy_datetimestruct *out);
+    int convert_datetimestruct_to_datetime(PyArray_DatetimeMetaData *meta,
+                                           const npy_datetimestruct *dts,
+                                           npy_datetime *out);
 
 #
 # ufunc API

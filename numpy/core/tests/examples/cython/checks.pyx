@@ -30,3 +30,17 @@ def get_dt64_unit(obj):
 
 def is_integer(obj):
     return isinstance(obj, (cnp.integer, int))
+
+
+def get_datetime_iso_8601_strlen():
+    return cnp.get_datetime_iso_8601_strlen(0, cnp.NPY_FR_ns)
+
+
+def convert_datetime_to_datetimestruct():
+    cdef:
+        cnp.npy_datetimestruct dts
+        cnp.PyArray_DatetimeMetaData *meta = NULL
+        cnp.int64_t value = 1647374515260292  # ~time.time() 2022-03-15 20:02 UTC
+
+    cnp.convert_datetime_to_datetimestruct(meta, value, &dts)
+    return dts

@@ -2,6 +2,7 @@ import os
 import shutil
 import subprocess
 import sys
+import time
 import pytest
 
 import numpy as np
@@ -135,3 +136,21 @@ def test_abstract_scalars(install_temp):
     assert checks.is_integer(1)
     assert checks.is_integer(np.int8(1))
     assert checks.is_integer(np.uint64(1))
+
+
+def test_get_datetime_iso_8601_strlen(install_temp):
+    # GH#21199
+    import checks
+    res = checks.get_datetime_iso_8601_strlen()
+    assert len(res) == 9
+
+
+def test_convert_datetime_to_datetimestruct(install_temp):
+    # GH#21199
+    import checks
+
+    res = checks.convert_datetime_to_datetimestruct()
+
+    exp = {"year": 2022, "month": 3, "day": 15, "hour": 20, "minute": 2}
+
+    assert res == exp  # FIXME: need to get seconds/microseconds into "exp"
