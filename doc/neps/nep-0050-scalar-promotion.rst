@@ -125,6 +125,9 @@ But the following will then be a surprise::
 
     np.array([100], dtype=np.uint8) + 200 == np.array([44], dtype=np.uint8)
 
+Considering this, we believe that the proposal follows the "principle of least
+surprise".
+
 
 Usage and Impact
 ================
