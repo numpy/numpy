@@ -83,9 +83,6 @@ jobs:
         # manylinux pypy builds
         - buildplat: [ubuntu-20.04, manylinux_x86_64]
           python: "pp38"
-        - buildplat: [ubuntu-20.04, musllinux_x86_64]
-          python: "pp38"
-
 
         # TODO: Uncomment and bump cibuildwheel version
         # once cibuildwheel adds PyPy 7.3.8
