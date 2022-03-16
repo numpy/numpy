@@ -190,7 +190,7 @@ def load_f2cmap_file(f2cmap_file):
     try:
         outmess('Reading f2cmap from {!r} ...\n'.format(f2cmap_file))
         with open(f2cmap_file, 'r') as f:
-            d = eval(f.read(), {}, {})
+            d = eval(f.read().lower(), {}, {})
         for k, d1 in d.items():
             for k1 in d1.keys():
                 d1[k1.lower()] = d1[k1]
@@ -505,7 +505,7 @@ def sign2map(a, var):
     init,init.r,init.i,pytype
     vardebuginfo,vardebugshowvalue,varshowvalue
     varrformat
-    
+
     intent
     """
     out_a = a
