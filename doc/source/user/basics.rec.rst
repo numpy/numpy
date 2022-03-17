@@ -556,22 +556,35 @@ Structure Comparison
 If the dtypes of two void structured arrays are equal, testing the equality of
 the arrays will result in a boolean array with the dimensions of the original
 arrays, with elements set to ``True`` where all fields of the corresponding
-structures are equal. Structured dtypes are equal if the field names,
-dtypes and titles are the same, ignoring endianness, and the fields are in
-the same order::
+structures are equal::
 
- >>> a = np.zeros(2, dtype=[('a', 'i4'), ('b', 'i4')])
- >>> b = np.ones(2, dtype=[('a', 'i4'), ('b', 'i4')])
+ >>> a = np.array([(1, 1), (2, 2)], dtype=[('a', 'i4'), ('b', 'i4')])
+ >>> b = np.array([(1, 1), (2, 3)], dtype=[('a', 'i4'), ('b', 'i4')])
  >>> a == b
- array([False, False])
+ array([True, False])
 
-Currently, if the dtypes of two void structured arrays are not equivalent the
-comparison fails, returning the scalar value ``False``. This behavior is
-deprecated as of numpy 1.10 and will raise an error or perform elementwise
-comparison in the future.
+NumPy will promote individual field datatypes to perform the comparison.
+So the following is also valid (note the ``'f4'`` dtype for the ``'a'`` field):
+
+ >>> b = np.array([(1.0, 1), (2.5, 2)], dtype=[("a", "f4"), ("b", "i4")])
+ >>> a == b
+ array([True, False])
+
+To compare two structured arrays, it must be possible to promote them to a
+common dtype as returned by `numpy.result_type` and `np.promote_types`.
+This enforces that the number of fields, the field names, and the field titles
+must match precisely.
+When promotion is not possible, for example due to mismatching field names,
+NumPy will raise an error.
 
 The ``<`` and ``>`` operators always return ``False`` when comparing void
 structured arrays, and arithmetic and bitwise operations are not supported.
+
+.. versionchanged::
+    Before NumPy 1.23, a warning was given and ``False`` returned when
+    promotion to a common dtype failed.
+    Further, promotion was much more restrictive: It would reject the mixed
+    float/integer comparison example above.
 
 Record Arrays
 =============
