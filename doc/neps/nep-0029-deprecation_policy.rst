@@ -142,7 +142,7 @@ Drop Schedule
   On Jun 23, 2023 drop support for NumPy 1.21 (initially released on Jun 22, 2021)
   On Jan 01, 2024 drop support for NumPy 1.22 (initially released on Dec 31, 2021)
   On Apr 05, 2024 drop support for Python 3.9 (initially released on Oct 05, 2020)
-  On Apr 04, 2024 drop support for Python 3.10 (initially released on Oct 04, 2021)
+  On Apr 04, 2025 drop support for Python 3.10 (initially released on Oct 04, 2021)
 
 
 Implementation
