@@ -738,7 +738,21 @@ class Array:
         other = self._check_allowed_dtypes(other, "numeric", "__iadd__")
         if other is NotImplemented:
             return other
-        self._array.__iadd__(other._array)
+        # We don't use an inplace add here because NumPy has diverging
+        # behaviour from the spec when both operands are negative zero.
+        #
+        #     >>> x1 = np.asarray(-0.)
+        #     >>> x2 = np.asarray(-0.)
+        #     >>> x1 + x2
+        #     array(-0.)
+        #     >>> x1 += x2
+        #     >>> x1
+        #     array(0.)
+        #
+        # The Array API spec mandates that the result should be -0, so we
+        # fallback to the ndarray's __add__() method, which is compliant.
+        # See https://github.com/numpy/numpy/issues/21211
+        self._array = self._array.__add__(other._array)
         return self
 
     def __radd__(self: Array, other: Union[int, float, Array], /) -> Array:

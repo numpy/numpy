@@ -1,7 +1,10 @@
 import operator
+from warnings import catch_warnings
 
+import pytest
 from numpy.testing import assert_raises
 import numpy as np
+from numpy import array_api as xp
 
 from .. import ones, asarray, result_type, all, equal
 from .._array_object import Array
@@ -322,3 +325,12 @@ def test___array__():
     b = np.asarray(a, dtype=np.float64)
     assert np.all(np.equal(b, np.ones((2, 3), dtype=np.float64)))
     assert b.dtype == np.float64
+
+@pytest.mark.filterwarnings("ignore:divide by zero:RuntimeWarning")
+def test_iadd_neg_zeros_case():
+    # See https://github.com/numpy/numpy/issues/21211
+    x1 = xp.asarray(-0.)
+    x2 = xp.asarray(-0.)
+    x1 += x2
+    # This is a round-about way to test x1 is a negative 0
+    assert (xp.asarray(1.) / x1) == -float('inf')
