@@ -91,7 +91,7 @@ This approach to the interface consists of the object having an
        ``M``  Datetime
        ``O``  Object (i.e. the memory contains a pointer to :c:type:`PyObject`)
        ``S``  String (fixed-length sequence of char)
-       ``U``  Unicode (fixed-length sequence of :c:type:`Py_UNICODE`)
+       ``U``  Unicode (fixed-length sequence of :c:type:`Py_UCS4`)
        ``V``  Other (void \* -- each item is a fixed-size chunk of memory)
        =====  ================================================================
 
