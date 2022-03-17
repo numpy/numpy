@@ -419,7 +419,11 @@ static NPY_INLINE int
     return 0;
 }
 
-static NPY_INLINE int
+/*
+ * NOTE: FINLINE only because it seems to work around incorrect FPE handling
+ * in some clang versions.  If the tests without it, it could be removed.
+ */
+NPY_FINLINE int
 @name@_ctype_multiply(@type@ a, @type@ b, @type@ *out)
 {
     out->real = a.real * b.real - a.imag * b.imag;
