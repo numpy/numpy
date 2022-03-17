@@ -752,6 +752,10 @@ class Array:
         # The Array API spec mandates that the result should be -0, so we
         # fallback to the ndarray's __add__() method, which is compliant.
         # See https://github.com/numpy/numpy/issues/21211
+        if np.result_type(self.dtype, other.dtype) != self.dtype:
+            raise TypeError(f"{other.dtype=!s} would modify {self.dtype=!s}")
+        if np.broadcast_shapes(self.shape, other.shape) != self.shape:
+            raise ValueError(f"{other.shape=} would modify {self.shape=}")
         self._array = self._array.__add__(other._array)
         return self
 

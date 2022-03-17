@@ -334,3 +334,10 @@ def test_iadd_neg_zeros_case():
     x1 += x2
     # This is a round-about way to test x1 is a negative 0
     assert (xp.asarray(1.) / x1) == -float('inf')
+
+def test_iadd_raise_on_modification():
+    x1 = xp.ones((2,), dtype=xp.float32)
+    with pytest.raises(TypeError):
+        x1 += xp.ones((2,), dtype=xp.float64)
+    with pytest.raises(ValueError):
+        x1 += xp.ones((4,), dtype=xp.float32)
