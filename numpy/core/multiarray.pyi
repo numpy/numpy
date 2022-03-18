@@ -48,7 +48,7 @@ from numpy import (
     _NDIterOpFlagsKind,
 )
 
-from numpy.typing import (
+from numpy._typing import (
     # Shapes
     _ShapeLike,
 

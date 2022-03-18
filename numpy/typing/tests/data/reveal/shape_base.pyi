@@ -1,5 +1,5 @@
 import numpy as np
-from numpy.typing import NDArray
+from numpy._typing import NDArray
 from typing import Any
 
 i8: np.int64

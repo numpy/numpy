@@ -23,7 +23,7 @@ from typing import (
 from typing_extensions import ParamSpec
 
 from numpy import generic, dtype, number, object_, bool_, _FloatValue
-from numpy.typing import (
+from numpy._typing import (
     NDArray,
     ArrayLike,
     DTypeLike,

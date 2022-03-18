@@ -2,7 +2,7 @@ from typing import overload, Any
 
 from numpy import complexfloating
 
-from numpy.typing import (
+from numpy._typing import (
     NDArray,
     _ArrayLikeFloat_co,
     _ArrayLikeComplex_co,

@@ -11,7 +11,7 @@ import ctypes as ct
 from typing import Any
 
 import numpy as np
-from numpy.typing import NDArray
+from numpy._typing import NDArray
 
 class SubClass(NDArray[np.object_]): ...
 

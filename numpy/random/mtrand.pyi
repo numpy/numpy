@@ -19,7 +19,7 @@ from numpy import (
     uint64,
 )
 from numpy.random.bit_generator import BitGenerator
-from numpy.typing import (
+from numpy._typing import (
     ArrayLike,
     _ArrayLikeFloat_co,
     _ArrayLikeInt_co,
