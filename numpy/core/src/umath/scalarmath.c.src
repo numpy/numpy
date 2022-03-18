@@ -403,7 +403,7 @@ half_ctype_divmod(npy_half a, npy_half b, npy_half *out1, npy_half *out2)
  * #rtype = npy_float, npy_double, npy_longdouble#
  * #c = f,,l#
  */
-static NPY_INLINE int
+NPY_FINLINE int
 @name@_ctype_add(@type@ a, @type@ b, @type@ *out)
 {
     out->real = a.real + b.real;
@@ -411,7 +411,7 @@ static NPY_INLINE int
     return 0;
 }
 
-static NPY_INLINE int
+NPY_FINLINE int
 @name@_ctype_subtract(@type@ a, @type@ b, @type@ *out)
 {
     out->real = a.real - b.real;
@@ -419,10 +419,6 @@ static NPY_INLINE int
     return 0;
 }
 
-/*
- * NOTE: FINLINE only because it seems to work around incorrect FPE handling
- * in some clang versions.  If the tests without it, it could be removed.
- */
 NPY_FINLINE int
 @name@_ctype_multiply(@type@ a, @type@ b, @type@ *out)
 {
@@ -432,7 +428,7 @@ NPY_FINLINE int
 }
 
 /* Use the ufunc loop directly to avoid duplicating the complicated logic */
-static NPY_INLINE int
+NPY_FINLINE int
 @name@_ctype_divide(@type@ a, @type@ b, @type@ *out)
 {
     char *args[3] = {(char *)&a, (char *)&b, (char *)out};
@@ -447,7 +443,7 @@ static NPY_INLINE int
 /*
  * TODO: This function should NOT exist!  We removed it from ufuncs!
  */
-static NPY_INLINE int
+NPY_FINLINE int
 @name@_ctype_floor_divide(@type@ a, @type@ b, @type@ *out)
 {
     out->imag = 0;
@@ -465,7 +461,7 @@ static NPY_INLINE int
  *         longlong, ulonglong#
  */
 
-static NPY_INLINE int
+NPY_FINLINE int
 @name@_ctype_divmod(npy_@name@ a, npy_@name@ b, npy_@name@ *out, npy_@name@ *out2)
 {
     int res = @name@_ctype_floor_divide(a, b, out);
@@ -533,7 +529,7 @@ half_ctype_negative(npy_half a, npy_half *out)
  * #name = cfloat, cdouble, clongdouble#
  * #type = npy_cfloat, npy_cdouble, npy_clongdouble#
  */
-static NPY_INLINE int
+NPY_FINLINE int
 @name@_ctype_negative(@type@ a, @type@ *out)
 {
     out->real = -a.real;
@@ -563,7 +559,7 @@ static NPY_INLINE int
  * #type = npy_cfloat, npy_cdouble, npy_clongdouble#
  * #c = f,,l#
  */
-static NPY_INLINE int
+NPY_FINLINE int
 @name@_ctype_positive(@type@ a, @type@ *out)
 {
     out->real = a.real;
@@ -571,7 +567,7 @@ static NPY_INLINE int
     return 0;
 }
 
-static NPY_INLINE int
+NPY_FINLINE int
 @name@_ctype_power(@type@ a, @type@ b, @type@ *out)
 {
     *out = npy_cpow@c@(a, b);
@@ -627,7 +623,7 @@ half_ctype_absolute(npy_half a, npy_half *out)
  * #rtype = npy_float, npy_double, npy_longdouble#
  * #c = f,,l#
  */
-static NPY_INLINE int
+NPY_FINLINE int
 @name@_ctype_absolute(@type@ a, @rtype@ *out)
 {
     *out = npy_cabs@c@(a);
