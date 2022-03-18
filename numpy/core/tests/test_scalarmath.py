@@ -753,7 +753,6 @@ class TestHash:
             else:
                 val = float(numpy_val)
             assert val == numpy_val
-            print(repr(numpy_val), repr(val))
             assert hash(val) == hash(numpy_val)
 
         if hash(float(np.nan)) != hash(float(np.nan)):
@@ -845,3 +844,53 @@ def test_clongdouble_inf_loop(op):
         op(None, np.longdouble(3))
     except TypeError:
         pass
+
+
+@pytest.mark.parametrize("dtype", np.typecodes["AllInteger"])
+@pytest.mark.parametrize("operation", [
+        lambda min, max: max + max,
+        lambda min, max: min - max,
+        lambda min, max: max * max], ids=["+", "-", "*"])
+def test_scalar_integer_operation_overflow(dtype, operation):
+    st = np.dtype(dtype).type
+    min = st(np.iinfo(dtype).min)
+    max = st(np.iinfo(dtype).max)
+
+    with pytest.warns(RuntimeWarning, match="overflow encountered"):
+        operation(min, max)
+
+
+@pytest.mark.parametrize("dtype", np.typecodes["Integer"])
+@pytest.mark.parametrize("operation", [
+        lambda min, neg_1: abs(min),
+        lambda min, neg_1: min * neg_1,
+        lambda min, neg_1: min // neg_1], ids=["abs", "*", "//"])
+def test_scalar_signed_integer_overflow(dtype, operation):
+    # The minimum signed integer can "overflow" for some additional operations
+    st = np.dtype(dtype).type
+    min = st(np.iinfo(dtype).min)
+    neg_1 = st(-1)
+
+    with pytest.warns(RuntimeWarning, match="overflow encountered"):
+        operation(min, neg_1)
+
+
+@pytest.mark.parametrize("dtype", np.typecodes["UnsignedInteger"])
+@pytest.mark.xfail  # TODO: the check is quite simply missing!
+def test_scalar_signed_integer_overflow(dtype):
+    val = np.dtype(dtype).type(8)
+    with pytest.warns(RuntimeWarning, match="overflow encountered"):
+        -val
+
+
+@pytest.mark.parametrize("dtype", np.typecodes["AllInteger"])
+@pytest.mark.parametrize("operation", [
+        lambda val, zero: val // zero,
+        lambda val, zero: val % zero,], ids=["//", "%"])
+def test_scalar_integer_operation_divbyzero(dtype, operation):
+    st = np.dtype(dtype).type
+    val = st(100)
+    zero = st(0)
+
+    with pytest.warns(RuntimeWarning, match="divide by zero"):
+        operation(val, zero)
