@@ -215,13 +215,12 @@ static NPY_INLINE int
  *
  * #name = byte, ubyte, short, ushort, int, uint, long,
  *         ulong, longlong, ulonglong#
- * #otyp = npy_float*4, npy_double*6#
  */
 
 static NPY_INLINE int
-@name@_ctype_true_divide(npy_@name@ a, npy_@name@ b, @otyp@ *out)
+@name@_ctype_true_divide(npy_@name@ a, npy_@name@ b, npy_double *out)
 {
-    *out = (@otyp@)a / (@otyp@)b;
+    *out = (npy_double)a / (npy_double)b;
     return 0;
 }
 
@@ -372,8 +371,10 @@ half_ctype_floor_divide(npy_half a, npy_half b, npy_half *out)
     npy_half mod;
 
     if (!b) {
-        *out = a / b;
-    } else {
+        float res = npy_half_to_float(a) / npy_half_to_float(b);
+        *out = npy_float_to_half(res);
+    }
+    else {
         *out = npy_half_divmod(a, b, &mod);
     }
     return 0;
@@ -1022,43 +1023,42 @@ convert_to_@name@(PyObject *value, @type@ *result)
  * #name = (byte, ubyte, short, ushort, int, uint,
  *             long, ulong, longlong, ulonglong)*12,
  *         (half, float, double, longdouble,
- *             cfloat, cdouble, clongdouble)*5,
- *         (half, float, double, longdouble)*2#
+ *             cfloat, cdouble, clongdouble)*4,
+ *         (half, float, double, longdouble)*3#
  * #Name = (Byte, UByte, Short, UShort, Int, UInt,
  *             Long, ULong,LongLong,ULongLong)*12,
  *         (Half, Float, Double, LongDouble,
- *             CFloat, CDouble, CLongDouble)*5,
- *         (Half, Float, Double, LongDouble)*2#
+ *             CFloat, CDouble, CLongDouble)*4,
+ *         (Half, Float, Double, LongDouble)*3#
  * #type = (npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
  *             npy_long, npy_ulong, npy_longlong, npy_ulonglong)*12,
  *         (npy_half, npy_float, npy_double, npy_longdouble,
- *             npy_cfloat, npy_cdouble, npy_clongdouble)*5,
- *         (npy_half, npy_float, npy_double, npy_longdouble)*2#
+ *             npy_cfloat, npy_cdouble, npy_clongdouble)*4,
+ *         (npy_half, npy_float, npy_double, npy_longdouble)*3#
  *
  * #oper = add*10, subtract*10, multiply*10, remainder*10,
  *         divmod*10, floor_divide*10, lshift*10, rshift*10, and*10,
  *         or*10, xor*10, true_divide*10,
- *         add*7, subtract*7, multiply*7, floor_divide*7, true_divide*7,
- *         divmod*4, remainder*4#
+ *         add*7, subtract*7, multiply*7, true_divide*7,
+ *         floor_divide*4, divmod*4, remainder*4#
  *
  * #fperr = 0*110, 1*10,
- *          1*35,
- *          1*8#
+ *          1*28, 1*12#
  * #twoout = 0*40,1*10,0*70,
- *           0*35,
- *           1*4,0*4#
+ *           0*28,
+ *           0*4,1*4,0*4#
  * #otype = (npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
  *             npy_long, npy_ulong, npy_longlong, npy_ulonglong)*11,
- *         npy_float*4, npy_double*6,
+ *         npy_double*10,
  *         (npy_half, npy_float, npy_double, npy_longdouble,
- *             npy_cfloat, npy_cdouble, npy_clongdouble)*5,
- *         (npy_half, npy_float, npy_double, npy_longdouble)*2#
+ *             npy_cfloat, npy_cdouble, npy_clongdouble)*4,
+ *         (npy_half, npy_float, npy_double, npy_longdouble)*3#
  * #OName = (Byte, UByte, Short, UShort, Int, UInt,
  *              Long, ULong, LongLong, ULongLong)*11,
- *          Float*4, Double*6,
+ *          Double*10,
  *          (Half, Float, Double, LongDouble,
- *              CFloat, CDouble, CLongDouble)*5,
- *          (Half, Float, Double, LongDouble)*2#
+ *              CFloat, CDouble, CLongDouble)*4,
+ *          (Half, Float, Double, LongDouble)*3#
  */
 #define IS_@name@
 
@@ -1356,39 +1356,19 @@ static PyObject *
 
 /**begin repeat
  *
- * #name = cfloat, cdouble#
- *
- */
-
-/**begin repeat1
- *
- * #oper = divmod, remainder#
- *
- */
-
-#define @name@_@oper@ NULL
-
-/**end repeat1**/
-
-/**end repeat**/
-
-/**begin repeat
- *
- * #oper = divmod, remainder#
+ * #name = (cfloat, cdouble, clongdouble)*3#
+ * #oper = floor_divide*3, divmod*3, remainder*3#
  *
  */
 
 /* 
-Complex numbers do not support remainder operations. Unfortunately, 
-the type inference for long doubles is complicated, and if a remainder 
-operation is not defined - if the relevant field is left NULL - then 
-operations between long doubles and objects lead to an infinite recursion 
-instead of a TypeError. This should ensure that once everything gets
-converted to complex long doubles you correctly get a reasonably
-informative TypeError. This fixes the last part of bug gh-18548.
-*/
+ * Complex numbers do not support remainder so we manually make sure that the
+ * operation is not defined.  This is/was especially important for longdoubles
+ * due to their tendency to recurse for some operations, see gh-18548.
+ * (We need to define the slots to avoid inheriting it.)
+ */
 static PyObject *
-clongdouble_@oper@(PyObject *NPY_UNUSED(a), PyObject *NPY_UNUSED(b))
+@name@_@oper@(PyObject *NPY_UNUSED(a), PyObject *NPY_UNUSED(b))
 {
     Py_RETURN_NOTIMPLEMENTED;
 }
