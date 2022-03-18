@@ -919,11 +919,11 @@ convert_to_@name@(PyObject *value, @type@ *result)
     if (IS_SAFE(NPY_CDOUBLE, NPY_@TYPE@) && PyComplex_CheckExact(value)) {
         Py_complex val = PyComplex_AsCComplex(value);
         if (error_converting(val.real)) {
-            return -1;  /* should not be possible */
+            return CONVERSION_ERROR;  /* should not be possible */
         }
         result->real = val.real;
         result->imag = val.imag;
-        return 1;
+        return CONVERSION_SUCCESS;
     }
 #endif  /* defined(IS_CFLOAT) || ... */
 
@@ -1657,7 +1657,8 @@ static PyObject*
             /*
              * Success, but defer if not a forward operator.  This implements
              * the asymmetry of `__add__` and `__radd__` for subclassing.
-             * (A subclass replacing `__add__`/`__radd__` has precedence.)
+             * (A subclass replacing `__add__`/`__radd__` has precedence. It
+             * also means that such a subclass has to always take charge.)
              */
             if ((void *)Py_TYPE(other)->tp_richcompare != (void *)@name@_richcompare) {
                 Py_RETURN_NOTIMPLEMENTED;
