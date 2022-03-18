@@ -19,7 +19,7 @@ Mypy plugin
 
 .. versionadded:: 1.21
 
-.. automodule:: numpy._typing.mypy_plugin
+.. automodule:: numpy.typing.mypy_plugin
 
 .. currentmodule:: numpy.typing
 
