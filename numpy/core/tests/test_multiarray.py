@@ -3694,6 +3694,26 @@ class TestBinop:
         check(make_obj(np.ndarray, array_ufunc=None), True, False, False,
               check_scalar=False)
 
+    def test_ufunc_binop_bad_array_priority(self):
+        # Mainly checks that this does not crash.  The second array has a lower
+        # priority than -1 ("error value").  If the __radd__ actually exists,
+        # bad things can happen (I think via the scalar paths).
+        class BadPriority():
+            __array_priority__ = None
+
+            def __radd__(self, other):
+                return "result"
+
+        class LowPriority(np.ndarray):
+            __array_priority__ = -1000
+
+        # Priority failure uses the same as scalars (smaller -1000).  So the
+        # LowPriority wins with 'result' for each element (inner operation).
+        res = np.arange(3).view(LowPriority) + BadPriority()
+        assert res.shape == (3,)
+        assert res[0] == 'result'
+
+
     def test_ufunc_override_normalize_signature(self):
         # gh-5674
         class SomeClass:
