@@ -8,6 +8,7 @@ from numpy.compat import _pep440
 import pytest
 from hypothesis import given, settings, Verbosity
 from hypothesis.strategies import sampled_from
+from hypothesis.extra import numpy as hynp
 
 import numpy as np
 from numpy.testing import (
@@ -23,6 +24,14 @@ types = [np.bool_, np.byte, np.ubyte, np.short, np.ushort, np.intc, np.uintc,
 
 floating_types = np.floating.__subclasses__()
 complex_floating_types = np.complexfloating.__subclasses__()
+
+objecty_things = [object(), None]
+
+reasonable_operators_for_scalars = [
+    operator.lt, operator.le, operator.eq, operator.ne, operator.ge,
+    operator.gt, operator.add, operator.floordiv, operator.mod,
+    operator.mul, operator.pow, operator.sub, operator.truediv,
+]
 
 
 # This compares scalarmath against ufuncs.
@@ -64,6 +73,41 @@ class TestTypes:
         # a leak would show up in valgrind as still-reachable of ~2.6MB
         for i in range(200000):
             np.add(1, 1)
+
+
+@pytest.mark.slow
+@settings(max_examples=10000, deadline=2000)
+@given(sampled_from(reasonable_operators_for_scalars),
+       hynp.arrays(dtype=hynp.scalar_dtypes(), shape=()),
+       hynp.arrays(dtype=hynp.scalar_dtypes(), shape=()))
+def test_array_scalar_ufunc_equivalence(op, arr1, arr2):
+    """
+    This is a thorough test attempting to cover important promotion paths
+    and ensuring that arrays and scalars stay as aligned as possible.
+    However, if it creates troubles, it should maybe just be removed.
+    """
+    scalar1 = arr1[()]
+    scalar2 = arr2[()]
+    assert isinstance(scalar1, np.generic)
+    assert isinstance(scalar2, np.generic)
+
+    if arr1.dtype.kind == "c" or arr2.dtype.kind == "c":
+        comp_ops = {operator.ge, operator.gt, operator.le, operator.lt}
+        if op in comp_ops and (np.isnan(scalar1) or np.isnan(scalar2)):
+            pytest.xfail("complex comp ufuncs use sort-order, scalars do not.")
+
+    # ignore fpe's since they may just mismatch for integers anyway.
+    with warnings.catch_warnings(), np.errstate(all="ignore"):
+        # Comparisons DeprecationWarnings replacing errors (2022-03):
+        warnings.simplefilter("error", DeprecationWarning)
+        try:
+            res = op(arr1, arr2)
+        except Exception as e:
+            with pytest.raises(type(e)):
+                op(scalar1, scalar2)
+        else:
+            scalar_res = op(scalar1, scalar2)
+            assert_array_equal(scalar_res, res)
 
 
 class TestBaseMath:
@@ -778,19 +822,9 @@ def recursionlimit(n):
         sys.setrecursionlimit(o)
 
 
-objecty_things = [object(), None]
-reasonable_operators_for_scalars = [
-    operator.lt, operator.le, operator.eq, operator.ne, operator.ge,
-    operator.gt, operator.add, operator.floordiv, operator.mod,
-    operator.mul, operator.matmul, operator.pow, operator.sub,
-    operator.truediv,
-]
-
-
 @given(sampled_from(objecty_things),
        sampled_from(reasonable_operators_for_scalars),
        sampled_from(types))
-@settings(verbosity=Verbosity.verbose)
 def test_operator_object_left(o, op, type_):
     try:
         with recursionlimit(200):
