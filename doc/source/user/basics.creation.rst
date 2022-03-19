@@ -136,8 +136,7 @@ number of elements and the starting and end point. The previous
 The 2D array creation functions e.g. :func:`numpy.eye`, :func:`numpy.diag`, and :func:`numpy.vander`
 define properties of special matrices represented as 2D arrays. 
 
-``np.eye(n, m)`` defines a 2D identity matrix. The elements where i=j (row index and column index are equal) are 1
-and the rest are 0, as such::
+``np.eye(n, m)`` is useful for defining a 2D identity matrix. It returns array with n rows and m columns where all elements are equal to zero, except for the k-th diagonal, whose values are equal to one. defines a 2D identity matrix, as such::
 
  >>> np.eye(3)
  array([[1., 0., 0.],
