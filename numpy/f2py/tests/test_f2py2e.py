@@ -7,9 +7,9 @@ import pytest
 from . import util
 from numpy.f2py.f2py2e import main as f2pycli
 
-#############
+#########################
 # CLI utils and classes #
-#############
+#########################
 
 PPaths = namedtuple("PPaths", "finp, f90inp, pyf, wrap77, wrap90, cmodf")
 
@@ -104,7 +104,7 @@ def test_gen_pyf_stdout(capfd, hello_world_f90, monkeypatch):
     with util.switchdir(ipath.parent):
         f2pycli()
         out, _ = capfd.readouterr()
-        assert "Saving signatures to file \"./stdout\"" in out
+        assert "Saving signatures to file" in out
 
 
 def test_gen_pyf_no_overwrite(capfd, hello_world_f90, monkeypatch):
@@ -295,7 +295,7 @@ def test_build_dir(capfd, hello_world_f90, monkeypatch):
     with util.switchdir(ipath.parent):
         f2pycli()
         out, _ = capfd.readouterr()
-        assert f"Wrote C/API module \"{mname}\" to file \"{odir}/{mname}module.c\"" in out
+        assert f"Wrote C/API module \"{mname}\"" in out
 
 
 def test_overwrite(capfd, hello_world_f90, monkeypatch):
@@ -328,8 +328,8 @@ def test_latexdoc(capfd, hello_world_f90, monkeypatch):
     with util.switchdir(ipath.parent):
         f2pycli()
         out, _ = capfd.readouterr()
-        assert f"Documentation is saved to file \"./{mname}module.tex\"" in out
-        with Path(f"./{mname}module.tex").open() as otex:
+        assert "Documentation is saved to file" in out
+        with Path(f"{mname}module.tex").open() as otex:
             assert "\\documentclass" in otex.read()
 
 
@@ -346,7 +346,7 @@ def test_nolatexdoc(capfd, hello_world_f90, monkeypatch):
     with util.switchdir(ipath.parent):
         f2pycli()
         out, _ = capfd.readouterr()
-        assert f"Documentation is saved to file \"./{mname}module.tex\"" not in out
+        assert "Documentation is saved to file" not in out
 
 
 def test_shortlatex(capfd, hello_world_f90, monkeypatch):
@@ -366,7 +366,7 @@ def test_shortlatex(capfd, hello_world_f90, monkeypatch):
     with util.switchdir(ipath.parent):
         f2pycli()
         out, _ = capfd.readouterr()
-        assert f"Documentation is saved to file \"./{mname}module.tex\"" in out
+        assert "Documentation is saved to file" in out
         with Path(f"./{mname}module.tex").open() as otex:
             assert "\\documentclass" not in otex.read()
 
@@ -384,7 +384,7 @@ def test_restdoc(capfd, hello_world_f90, monkeypatch):
     with util.switchdir(ipath.parent):
         f2pycli()
         out, _ = capfd.readouterr()
-        assert f"ReST Documentation is saved to file \"./{mname}module.rest\"" in out
+        assert "ReST Documentation is saved to file" in out
         with Path(f"./{mname}module.rest").open() as orst:
             assert r".. -*- rest -*-" in orst.read()
 
@@ -402,7 +402,7 @@ def test_norestexdoc(capfd, hello_world_f90, monkeypatch):
     with util.switchdir(ipath.parent):
         f2pycli()
         out, _ = capfd.readouterr()
-        assert f"ReST Documentation is saved to file \"./{mname}module.rest\"" not in out
+        assert "ReST Documentation is saved to file" not in out
 
 
 def test_debugcapi(capfd, hello_world_f90, monkeypatch):
