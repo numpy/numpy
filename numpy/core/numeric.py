@@ -1567,7 +1567,7 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
     array(-3)
 
     Multiple vector cross-products. Note that the direction of the cross
-    product vector is defined by the `right-hand rule`.
+    product vector is defined by the *right-hand rule*.
 
     >>> x = np.array([[1,2,3], [4,5,6]])
     >>> y = np.array([[4,5,6], [1,2,3]])

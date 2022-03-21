@@ -384,7 +384,7 @@ add_newdoc('numpy.core', 'nditer',
     >>> luf(lambda i,j:i*i + j/2, a, b)
     array([  0.5,   1.5,   4.5,   9.5,  16.5])
 
-    If operand flags `"writeonly"` or `"readwrite"` are used the
+    If operand flags ``"writeonly"`` or ``"readwrite"`` are used the
     operands may be views into the original data with the
     `WRITEBACKIFCOPY` flag. In this case `nditer` must be used as a
     context manager or the `nditer.close` method must be called before

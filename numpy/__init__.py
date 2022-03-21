@@ -11,7 +11,7 @@ How to use the documentation
 ----------------------------
 Documentation is available in two forms: docstrings provided
 with the code, and a loose standing reference guide, available from
-`the NumPy homepage <https://www.scipy.org>`_.
+`the NumPy homepage <https://numpy.org>`_.
 
 We recommend exploring the docstrings using
 `IPython <https://ipython.org>`_, an advanced Python shell with

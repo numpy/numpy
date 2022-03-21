@@ -640,7 +640,7 @@ def _isin_dispatcher(element, test_elements, assume_unique=None, invert=None):
 @array_function_dispatch(_isin_dispatcher)
 def isin(element, test_elements, assume_unique=False, invert=False):
     """
-    Calculates `element in test_elements`, broadcasting over `element` only.
+    Calculates ``element in test_elements``, broadcasting over `element` only.
     Returns a boolean array of the same shape as `element` that is True
     where an element of `element` is in `test_elements` and False otherwise.
 

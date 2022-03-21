@@ -280,8 +280,9 @@ class DataSource:
     def _splitzipext(self, filename):
         """Split zip extension from filename and return filename.
 
-        *Returns*:
-            base, zip_ext : {tuple}
+        Returns
+        -------
+        base, zip_ext : {tuple}
 
         """
 
