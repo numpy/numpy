@@ -1,5 +1,8 @@
 .. _f2py-win-conda:
 
+=========================
+F2PY and Conda on Windows
+=========================
 
 As a convienience measure, we will additionally assume the
 existence of ``scoop``, which can be used to install tools without

@@ -183,6 +183,9 @@ path using a hash. This needs to be added to the ``PATH`` variable.
    :maxdepth: 2
 
    intel
+   msys2
+   conda
+   pgi
 
 
 .. _the Microsoft Store: https://www.microsoft.com/en-us/p/python-310/9pjpw5ldxlz5
