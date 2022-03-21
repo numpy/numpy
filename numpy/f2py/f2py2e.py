@@ -325,6 +325,16 @@ def scaninputline(inputline):
     options['buildpath'] = buildpath
     options['include_paths'] = include_paths
     options.setdefault('f2cmap_file', None)
+    if not emptygen:
+        import warnings
+        warnings.warn("\n --empty-gen is false"
+                      " this will default to true"
+                      " in subsequent releases"
+                      " for build uniformity\n"
+                      " see: "
+                      "https://numpy.org/devdocs/f2py/buildtools/index.html"
+                      "\n Pass --empty-gen to silence this warning\n",
+                      FutureWarning, stacklevel=2)
     return files, options
 
 
