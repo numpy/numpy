@@ -85,8 +85,8 @@ for reasons discussed in :ref:`f2py-bldsys`.
 
 .. note::
 
-   To generate every possible input ``--empty-gen`` can be passed to ``f2py``
-   from NumPy version ``1.22.4``.
+   To generate every possible input for a given standard (F77 or F90)
+   ``--empty-gen`` can be passed to ``f2py`` from NumPy version ``1.22.4``.
 
 However, we can augment our workflow in a straightforward to take into account
 files for which the outputs are known when the build system is set up.

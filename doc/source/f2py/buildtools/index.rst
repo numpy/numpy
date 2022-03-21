@@ -80,8 +80,8 @@ Signature files
 
 .. note::
 
-   To generate every possible input ``--empty-gen`` can be passed to ``f2py``
-   from NumPy version ``1.22.4``.
+   To generate every possible input for a given standard (F77 or F90)
+   ``--empty-gen`` can be passed to ``f2py`` from NumPy version ``1.22.4``.
 
 
 In theory keeping the above requirements in hand, any build system can be

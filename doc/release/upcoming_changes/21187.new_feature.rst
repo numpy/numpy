@@ -1,6 +1,7 @@
 optionally deterministic output files for F2PY
 ----------------------------------------------
 ``f2py`` now accepts the ``--empty-gen`` flag for producing all possible output
-files, namely: ``modname-f2pywrappers.f``, ``modname-f2pywrappers2.f90``. This
-allows writing generic output rules in ``cmake`` or ``meson`` and other build
-systems. :ref:`f2py-meson` details usage.
+files, namely: ``modname-f2pywrappers.f``, ``modname-f2pywrappers2.f90`` for F90
+inputs and ``modname-f2pywrappers.f`` for F77 inputs. This allows writing
+generic output rules in ``cmake`` or ``meson`` and other build systems.
+:ref:`f2py-meson` details usage.
