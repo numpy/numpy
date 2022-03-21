@@ -122,7 +122,8 @@ Options:
 
   --quiet          Run quietly.
   --verbose        Run with extra verbosity.
-  --empty-gen      Ensure all possible output files are created
+  --empty-gen      Ensure all possible output files are created for a language
+                   standard.
   -v               Print f2py version ID and exit.
 
 
@@ -360,15 +361,6 @@ def callcrackfortran(files, options):
     else:
         for mod in postlist:
             mod["f2py_wrapper_output"] = options["f2py_wrapper_output"]
-    if options["emptygen"]:
-        # Generate all possible outputs
-        for mod in postlist:
-            m_name = mod["name"]
-            b_path = options["buildpath"]
-            Path(f'{b_path}/{m_name}module.c').touch()
-            Path(f'{b_path}/{m_name}-f2pywrappers.f').touch()
-            Path(f'{b_path}/{m_name}-f2pywrappers2.f90').touch()
-            outmess(f'    Generating possibly empty wrappers "{m_name}-f2pywrappers.f" and "{m_name}-f2pywrappers2.f90"\n')
     return postlist
 
 
