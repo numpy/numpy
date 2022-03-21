@@ -85,8 +85,10 @@ for reasons discussed in :ref:`f2py-bldsys`.
 
 .. note::
 
-   To generate every possible input for a given standard (F77 or F90)
-   ``--empty-gen`` can be passed to ``f2py`` from NumPy version ``1.22.4``.
+   From NumPy ``1.22.4`` onwards, ``f2py`` will deterministically generate
+   wrapper files based on the input file Fortran standard (F77 or greater).
+   ``--no-empty-gen`` can be passed to ``f2py`` to restore the previous
+   behaviour of only generating wrappers when needed by the input .
 
 However, we can augment our workflow in a straightforward to take into account
 files for which the outputs are known when the build system is set up.

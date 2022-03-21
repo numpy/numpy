@@ -80,8 +80,10 @@ Signature files
 
 .. note::
 
-   To generate every possible input for a given standard (F77 or F90)
-   ``--empty-gen`` can be passed to ``f2py`` from NumPy version ``1.22.4``.
+   From NumPy ``1.22.4`` onwards, ``f2py`` will deterministically generate
+   wrapper files based on the input file Fortran standard (F77 or greater).
+   ``--no-empty-gen`` can be passed to ``f2py`` to restore the previous
+   behaviour of only generating wrappers when needed by the input .
 
 
 In theory keeping the above requirements in hand, any build system can be

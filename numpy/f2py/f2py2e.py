@@ -122,8 +122,7 @@ Options:
 
   --quiet          Run quietly.
   --verbose        Run with extra verbosity.
-  --empty-gen      Ensure all possible output files are created for a language
-                   standard.
+  --no-empty-gen   Only generate wrapper files when needed.
   -v               Print f2py version ID and exit.
 
 
@@ -181,7 +180,7 @@ def scaninputline(inputline):
     files, skipfuncs, onlyfuncs, debug = [], [], [], []
     f, f2, f3, f5, f6, f7, f8, f9, f10 = 1, 0, 0, 0, 0, 0, 0, 0, 0
     verbose = 1
-    emptygen = 0
+    emptygen = True
     dolc = -1
     dolatexdoc = 0
     dorestdoc = 0
@@ -253,8 +252,8 @@ def scaninputline(inputline):
             f7 = 1
         elif l[:15] in '--include-paths':
             f7 = 1
-        elif l == '--empty-gen':
-            emptygen = 1
+        elif l == '--no-empty-gen':
+            emptygen = False
         elif l[0] == '-':
             errmess('Unknown option %s\n' % repr(l))
             sys.exit()
@@ -304,9 +303,9 @@ def scaninputline(inputline):
             'Signature file "%s" exists!!! Use --overwrite-signature to overwrite.\n' % (signsfile))
         sys.exit()
 
+    options['emptygen'] = emptygen
     options['debug'] = debug
     options['verbose'] = verbose
-    options['emptygen'] = emptygen
     if dolc == -1 and not signsfile:
         options['do-lower'] = 0
     else:
@@ -325,16 +324,6 @@ def scaninputline(inputline):
     options['buildpath'] = buildpath
     options['include_paths'] = include_paths
     options.setdefault('f2cmap_file', None)
-    if not emptygen:
-        import warnings
-        warnings.warn("\n --empty-gen is false"
-                      " this will default to true"
-                      " in subsequent releases"
-                      " for build uniformity\n"
-                      " see: "
-                      "https://numpy.org/devdocs/f2py/buildtools/index.html"
-                      "\n Pass --empty-gen to silence this warning\n",
-                      FutureWarning, stacklevel=2)
     return files, options
 
 
