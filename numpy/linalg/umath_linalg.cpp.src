@@ -78,28 +78,28 @@ typedef double            fortran_doublereal;
 typedef f2c_complex       fortran_complex;
 typedef f2c_doublecomplex fortran_doublecomplex;
 
-extern fortran_int
+extern "C" fortran_int
 FNAME(sgeev)(char *jobvl, char *jobvr, fortran_int *n,
              float a[], fortran_int *lda, float wr[], float wi[],
              float vl[], fortran_int *ldvl, float vr[], fortran_int *ldvr,
              float work[], fortran_int lwork[],
              fortran_int *info);
-extern fortran_int
+extern "C" fortran_int
 FNAME(dgeev)(char *jobvl, char *jobvr, fortran_int *n,
              double a[], fortran_int *lda, double wr[], double wi[],
              double vl[], fortran_int *ldvl, double vr[], fortran_int *ldvr,
              double work[], fortran_int lwork[],
              fortran_int *info);
-extern fortran_int
+extern "C" fortran_int
 FNAME(cgeev)(char *jobvl, char *jobvr, fortran_int *n,
-             f2c_doublecomplex a[], fortran_int *lda,
-             f2c_doublecomplex w[],
-             f2c_doublecomplex vl[], fortran_int *ldvl,
-             f2c_doublecomplex vr[], fortran_int *ldvr,
-             f2c_doublecomplex work[], fortran_int *lwork,
-             double rwork[],
+             f2c_complex a[], fortran_int *lda,
+             f2c_complex w[],
+             f2c_complex vl[], fortran_int *ldvl,
+             f2c_complex vr[], fortran_int *ldvr,
+             f2c_complex work[], fortran_int *lwork,
+             float rwork[],
              fortran_int *info);
-extern fortran_int
+extern "C" fortran_int
 FNAME(zgeev)(char *jobvl, char *jobvr, fortran_int *n,
              f2c_doublecomplex a[], fortran_int *lda,
              f2c_doublecomplex w[],
@@ -109,24 +109,24 @@ FNAME(zgeev)(char *jobvl, char *jobvr, fortran_int *n,
              double rwork[],
              fortran_int *info);
 
-extern fortran_int
+extern "C" fortran_int
 FNAME(ssyevd)(char *jobz, char *uplo, fortran_int *n,
               float a[], fortran_int *lda, float w[], float work[],
               fortran_int *lwork, fortran_int iwork[], fortran_int *liwork,
               fortran_int *info);
-extern fortran_int
+extern "C" fortran_int
 FNAME(dsyevd)(char *jobz, char *uplo, fortran_int *n,
               double a[], fortran_int *lda, double w[], double work[],
               fortran_int *lwork, fortran_int iwork[], fortran_int *liwork,
               fortran_int *info);
-extern fortran_int
+extern "C" fortran_int
 FNAME(cheevd)(char *jobz, char *uplo, fortran_int *n,
               f2c_complex a[], fortran_int *lda,
               float w[], f2c_complex work[],
               fortran_int *lwork, float rwork[], fortran_int *lrwork, fortran_int iwork[],
               fortran_int *liwork,
               fortran_int *info);
-extern fortran_int
+extern "C" fortran_int
 FNAME(zheevd)(char *jobz, char *uplo, fortran_int *n,
               f2c_doublecomplex a[], fortran_int *lda,
               double w[], f2c_doublecomplex work[],
@@ -134,19 +134,19 @@ FNAME(zheevd)(char *jobz, char *uplo, fortran_int *n,
               fortran_int *liwork,
               fortran_int *info);
 
-extern fortran_int
+extern "C" fortran_int
 FNAME(sgelsd)(fortran_int *m, fortran_int *n, fortran_int *nrhs,
               float a[], fortran_int *lda, float b[], fortran_int *ldb,
               float s[], float *rcond, fortran_int *rank,
               float work[], fortran_int *lwork, fortran_int iwork[],
               fortran_int *info);
-extern fortran_int
+extern "C" fortran_int
 FNAME(dgelsd)(fortran_int *m, fortran_int *n, fortran_int *nrhs,
               double a[], fortran_int *lda, double b[], fortran_int *ldb,
               double s[], double *rcond, fortran_int *rank,
               double work[], fortran_int *lwork, fortran_int iwork[],
               fortran_int *info);
-extern fortran_int
+extern "C" fortran_int
 FNAME(cgelsd)(fortran_int *m, fortran_int *n, fortran_int *nrhs,
               f2c_complex a[], fortran_int *lda,
               f2c_complex b[], fortran_int *ldb,
@@ -154,7 +154,7 @@ FNAME(cgelsd)(fortran_int *m, fortran_int *n, fortran_int *nrhs,
               f2c_complex work[], fortran_int *lwork,
               float rwork[], fortran_int iwork[],
               fortran_int *info);
-extern fortran_int
+extern "C" fortran_int
 FNAME(zgelsd)(fortran_int *m, fortran_int *n, fortran_int *nrhs,
               f2c_doublecomplex a[], fortran_int *lda,
               f2c_doublecomplex b[], fortran_int *ldb,
@@ -163,105 +163,105 @@ FNAME(zgelsd)(fortran_int *m, fortran_int *n, fortran_int *nrhs,
               double rwork[], fortran_int iwork[],
               fortran_int *info);
 
-extern fortran_int
+extern "C" fortran_int
 FNAME(dgeqrf)(fortran_int *m, fortran_int *n, double a[], fortran_int *lda,
               double tau[], double work[],
               fortran_int *lwork, fortran_int *info);
-extern fortran_int
+extern "C" fortran_int
 FNAME(zgeqrf)(fortran_int *m, fortran_int *n, f2c_doublecomplex a[], fortran_int *lda,
               f2c_doublecomplex tau[], f2c_doublecomplex work[],
               fortran_int *lwork, fortran_int *info);
 
-extern fortran_int
+extern "C" fortran_int
 FNAME(dorgqr)(fortran_int *m, fortran_int *n, fortran_int *k, double a[], fortran_int *lda,
               double tau[], double work[],
               fortran_int *lwork, fortran_int *info);
-extern fortran_int
+extern "C" fortran_int
 FNAME(zungqr)(fortran_int *m, fortran_int *n, fortran_int *k, f2c_doublecomplex a[],
               fortran_int *lda, f2c_doublecomplex tau[],
               f2c_doublecomplex work[], fortran_int *lwork, fortran_int *info);
 
-extern fortran_int
+extern "C" fortran_int
 FNAME(sgesv)(fortran_int *n, fortran_int *nrhs,
              float a[], fortran_int *lda,
              fortran_int ipiv[],
              float b[], fortran_int *ldb,
              fortran_int *info);
-extern fortran_int
+extern "C" fortran_int
 FNAME(dgesv)(fortran_int *n, fortran_int *nrhs,
              double a[], fortran_int *lda,
              fortran_int ipiv[],
              double b[], fortran_int *ldb,
              fortran_int *info);
-extern fortran_int
+extern "C" fortran_int
 FNAME(cgesv)(fortran_int *n, fortran_int *nrhs,
              f2c_complex a[], fortran_int *lda,
              fortran_int ipiv[],
              f2c_complex b[], fortran_int *ldb,
              fortran_int *info);
-extern fortran_int
+extern "C" fortran_int
 FNAME(zgesv)(fortran_int *n, fortran_int *nrhs,
              f2c_doublecomplex a[], fortran_int *lda,
              fortran_int ipiv[],
              f2c_doublecomplex b[], fortran_int *ldb,
              fortran_int *info);
 
-extern fortran_int
+extern "C" fortran_int
 FNAME(sgetrf)(fortran_int *m, fortran_int *n,
               float a[], fortran_int *lda,
               fortran_int ipiv[],
               fortran_int *info);
-extern fortran_int
+extern "C" fortran_int
 FNAME(dgetrf)(fortran_int *m, fortran_int *n,
               double a[], fortran_int *lda,
               fortran_int ipiv[],
               fortran_int *info);
-extern fortran_int
+extern "C" fortran_int
 FNAME(cgetrf)(fortran_int *m, fortran_int *n,
               f2c_complex a[], fortran_int *lda,
               fortran_int ipiv[],
               fortran_int *info);
-extern fortran_int
+extern "C" fortran_int
 FNAME(zgetrf)(fortran_int *m, fortran_int *n,
               f2c_doublecomplex a[], fortran_int *lda,
               fortran_int ipiv[],
               fortran_int *info);
 
-extern fortran_int
+extern "C" fortran_int
 FNAME(spotrf)(char *uplo, fortran_int *n,
               float a[], fortran_int *lda,
               fortran_int *info);
-extern fortran_int
+extern "C" fortran_int
 FNAME(dpotrf)(char *uplo, fortran_int *n,
               double a[], fortran_int *lda,
               fortran_int *info);
-extern fortran_int
+extern "C" fortran_int
 FNAME(cpotrf)(char *uplo, fortran_int *n,
               f2c_complex a[], fortran_int *lda,
               fortran_int *info);
-extern fortran_int
+extern "C" fortran_int
 FNAME(zpotrf)(char *uplo, fortran_int *n,
               f2c_doublecomplex a[], fortran_int *lda,
               fortran_int *info);
 
-extern fortran_int
+extern "C" fortran_int
 FNAME(sgesdd)(char *jobz, fortran_int *m, fortran_int *n,
               float a[], fortran_int *lda, float s[], float u[],
               fortran_int *ldu, float vt[], fortran_int *ldvt, float work[],
               fortran_int *lwork, fortran_int iwork[], fortran_int *info);
-extern fortran_int
+extern "C" fortran_int
 FNAME(dgesdd)(char *jobz, fortran_int *m, fortran_int *n,
               double a[], fortran_int *lda, double s[], double u[],
               fortran_int *ldu, double vt[], fortran_int *ldvt, double work[],
               fortran_int *lwork, fortran_int iwork[], fortran_int *info);
-extern fortran_int
+extern "C" fortran_int
 FNAME(cgesdd)(char *jobz, fortran_int *m, fortran_int *n,
               f2c_complex a[], fortran_int *lda,
               float s[], f2c_complex u[], fortran_int *ldu,
               f2c_complex vt[], fortran_int *ldvt,
               f2c_complex work[], fortran_int *lwork,
               float rwork[], fortran_int iwork[], fortran_int *info);
-extern fortran_int
+extern "C" fortran_int
 FNAME(zgesdd)(char *jobz, fortran_int *m, fortran_int *n,
               f2c_doublecomplex a[], fortran_int *lda,
               double s[], f2c_doublecomplex u[], fortran_int *ldu,
@@ -269,87 +269,87 @@ FNAME(zgesdd)(char *jobz, fortran_int *m, fortran_int *n,
               f2c_doublecomplex work[], fortran_int *lwork,
               double rwork[], fortran_int iwork[], fortran_int *info);
 
-extern fortran_int
+extern "C" fortran_int
 FNAME(spotrs)(char *uplo, fortran_int *n, fortran_int *nrhs,
               float a[], fortran_int *lda,
               float b[], fortran_int *ldb,
               fortran_int *info);
-extern fortran_int
+extern "C" fortran_int
 FNAME(dpotrs)(char *uplo, fortran_int *n, fortran_int *nrhs,
               double a[], fortran_int *lda,
               double b[], fortran_int *ldb,
               fortran_int *info);
-extern fortran_int
+extern "C" fortran_int
 FNAME(cpotrs)(char *uplo, fortran_int *n, fortran_int *nrhs,
               f2c_complex a[], fortran_int *lda,
               f2c_complex b[], fortran_int *ldb,
               fortran_int *info);
-extern fortran_int
+extern "C" fortran_int
 FNAME(zpotrs)(char *uplo, fortran_int *n, fortran_int *nrhs,
               f2c_doublecomplex a[], fortran_int *lda,
               f2c_doublecomplex b[], fortran_int *ldb,
               fortran_int *info);
 
-extern fortran_int
+extern "C" fortran_int
 FNAME(spotri)(char *uplo, fortran_int *n,
               float a[], fortran_int *lda,
               fortran_int *info);
-extern fortran_int
+extern "C" fortran_int
 FNAME(dpotri)(char *uplo, fortran_int *n,
               double a[], fortran_int *lda,
               fortran_int *info);
-extern fortran_int
+extern "C" fortran_int
 FNAME(cpotri)(char *uplo, fortran_int *n,
               f2c_complex a[], fortran_int *lda,
               fortran_int *info);
-extern fortran_int
+extern "C" fortran_int
 FNAME(zpotri)(char *uplo, fortran_int *n,
               f2c_doublecomplex a[], fortran_int *lda,
               fortran_int *info);
 
-extern fortran_int
+extern "C" fortran_int
 FNAME(scopy)(fortran_int *n,
              float *sx, fortran_int *incx,
              float *sy, fortran_int *incy);
-extern fortran_int
+extern "C" fortran_int
 FNAME(dcopy)(fortran_int *n,
              double *sx, fortran_int *incx,
              double *sy, fortran_int *incy);
-extern fortran_int
+extern "C" fortran_int
 FNAME(ccopy)(fortran_int *n,
              f2c_complex *sx, fortran_int *incx,
              f2c_complex *sy, fortran_int *incy);
-extern fortran_int
+extern "C" fortran_int
 FNAME(zcopy)(fortran_int *n,
              f2c_doublecomplex *sx, fortran_int *incx,
              f2c_doublecomplex *sy, fortran_int *incy);
 
-extern float
+extern "C" float
 FNAME(sdot)(fortran_int *n,
             float *sx, fortran_int *incx,
             float *sy, fortran_int *incy);
-extern double
+extern "C" double
 FNAME(ddot)(fortran_int *n,
             double *sx, fortran_int *incx,
             double *sy, fortran_int *incy);
-extern void
+extern "C" void
 FNAME(cdotu)(f2c_complex *ret, fortran_int *n,
              f2c_complex *sx, fortran_int *incx,
              f2c_complex *sy, fortran_int *incy);
-extern void
+extern "C" void
 FNAME(zdotu)(f2c_doublecomplex *ret, fortran_int *n,
              f2c_doublecomplex *sx, fortran_int *incx,
              f2c_doublecomplex *sy, fortran_int *incy);
-extern void
+extern "C" void
 FNAME(cdotc)(f2c_complex *ret, fortran_int *n,
              f2c_complex *sx, fortran_int *incx,
              f2c_complex *sy, fortran_int *incy);
-extern void
+extern "C" void
 FNAME(zdotc)(f2c_doublecomplex *ret, fortran_int *n,
              f2c_doublecomplex *sx, fortran_int *incx,
              f2c_doublecomplex *sy, fortran_int *incy);
 
-extern fortran_int
+extern "C" fortran_int
 FNAME(sgemm)(char *transa, char *transb,
              fortran_int *m, fortran_int *n, fortran_int *k,
              float *alpha,
@@ -357,7 +357,7 @@ FNAME(sgemm)(char *transa, char *transb,
              float *b, fortran_int *ldb,
              float *beta,
              float *c, fortran_int *ldc);
-extern fortran_int
+extern "C" fortran_int
 FNAME(dgemm)(char *transa, char *transb,
              fortran_int *m, fortran_int *n, fortran_int *k,
              double *alpha,
@@ -365,7 +365,7 @@ FNAME(dgemm)(char *transa, char *transb,
              double *b, fortran_int *ldb,
              double *beta,
              double *c, fortran_int *ldc);
-extern fortran_int
+extern "C" fortran_int
 FNAME(cgemm)(char *transa, char *transb,
              fortran_int *m, fortran_int *n, fortran_int *k,
              f2c_complex *alpha,
@@ -373,7 +373,7 @@ FNAME(cgemm)(char *transa, char *transb,
              f2c_complex *b, fortran_int *ldb,
              f2c_complex *beta,
              f2c_complex *c, fortran_int *ldc);
-extern fortran_int
+extern "C" fortran_int
 FNAME(zgemm)(char *transa, char *transb,
              fortran_int *m, fortran_int *n, fortran_int *k,
              f2c_doublecomplex *alpha,
@@ -763,6 +763,7 @@ update_pointers(npy_uint8** bases, ptrdiff_t* offsets, size_t count)
 /**begin repeat
     #TYPE = FLOAT, DOUBLE, CFLOAT, CDOUBLE#
     #typ = float, double, COMPLEX_t, DOUBLECOMPLEX_t#
+    #ftyp = float, double, f2c_complex, f2c_doublecomplex#
     #copy = scopy, dcopy, ccopy, zcopy#
     #nan = s_nan, d_nan, c_nan, z_nan#
     #zero = s_zero, d_zero, c_zero, z_zero#
@@ -785,14 +786,14 @@ linearize_@TYPE@_matrix(void *dst_in,
         for (i = 0; i < data->rows; i++) {
             if (column_strides > 0) {
                 FNAME(@copy@)(&columns,
-                              (void*)src, &column_strides,
-                              (void*)dst, &one);
+                              (@ftyp@*)src, &column_strides,
+                              (@ftyp@*)dst, &one);
             }
             else if (column_strides < 0) {
                 FNAME(@copy@)(&columns,
-                              (void*)((@typ@*)src + (columns-1)*column_strides),
+                              ((@ftyp@*)src + (columns-1)*column_strides),
                               &column_strides,
-                              (void*)dst, &one);
+                              (@ftyp@*)dst, &one);
             }
             else {
                 /*
@@ -831,13 +832,13 @@ delinearize_@TYPE@_matrix(void *dst_in,
         for (i = 0; i < data->rows; i++) {
             if (column_strides > 0) {
                 FNAME(@copy@)(&columns,
-                              (void*)src, &one,
-                              (void*)dst, &column_strides);
+                              (@ftyp@*)src, &one,
+                              (@ftyp@*)dst, &column_strides);
             }
             else if (column_strides < 0) {
                 FNAME(@copy@)(&columns,
-                              (void*)src, &one,
-                              (void*)((@typ@*)dst + (columns-1)*column_strides),
+                              (@ftyp@*)src, &one,
+                              ((@ftyp@*)dst + (columns-1)*column_strides),
                               &column_strides);
             }
             else {
@@ -1061,6 +1062,7 @@ static NPY_INLINE @typ@
 
    #TYPE = FLOAT, DOUBLE, CFLOAT, CDOUBLE#
    #typ = npy_float, npy_double, npy_cfloat, npy_cdouble#
+   #ftyp = float, double, f2c_complex, f2c_doublecomplex#
    #basetyp = npy_float, npy_double, npy_float, npy_double#
    #cblas_type = s, d, c, z#
 */
@@ -1076,7 +1078,7 @@ static NPY_INLINE void
     fortran_int lda = fortran_int_max(m, 1);
     int i;
     /* note: done in place */
-    LAPACK(@cblas_type@getrf)(&m, &m, (void *)src, &lda, pivots, &info);
+    LAPACK(@cblas_type@getrf)(&m, &m, (@ftyp@*)src, &lda, pivots, &info);
 
     if (info == 0) {
         int change_sign = 0;
@@ -1091,7 +1093,7 @@ static NPY_INLINE void
                    &@cblas_type@_minus_one :
                    &@cblas_type@_one
                , sizeof(*sign));
-        @TYPE@_slogdet_from_factored_diagonal(src, m, sign, logdet);
+        @TYPE@_slogdet_from_factored_diagonal((@typ@*)src, m, sign, logdet);
     } else {
         /*
           if getrf fails, use 0 as sign and -inf as logdet
@@ -1134,7 +1136,7 @@ static void
         BEGIN_OUTER_LOOP_3
             linearize_@TYPE@_matrix(tmp_buff, args[0], &lin_data);
             @TYPE@_slogdet_single_element(m,
-                                          (void*)tmp_buff,
+                                          tmp_buff,
                                           (fortran_int*)(tmp_buff+matrix_size),
                                           (@typ@*)args[1],
                                           (@basetyp@*)args[2]);
@@ -1180,7 +1182,7 @@ static void
         BEGIN_OUTER_LOOP_2
             linearize_@TYPE@_matrix(tmp_buff, args[0], &lin_data);
             @TYPE@_slogdet_single_element(m,
-                                          (void*)tmp_buff,
+                                          tmp_buff,
                                           (fortran_int*)(tmp_buff + matrix_size),
                                           &sign,
                                           &logdet);
@@ -1223,9 +1225,9 @@ call_@lapack_func@(EIGH_PARAMS_t *params)
 {
     fortran_int rv;
     LAPACK(@lapack_func@)(&params->JOBZ, &params->UPLO, &params->N,
-                          params->A, &params->LDA, params->W,
-                          params->WORK, &params->LWORK,
-                          params->IWORK, &params->LIWORK,
+                          (@typ@*)params->A, &params->LDA, (@typ@*)params->W,
+                          (@typ@*)params->WORK, &params->LWORK,
+                          (fortran_int*)params->IWORK, (fortran_int*)&params->LIWORK,
                           &rv);
     return rv;
 }
@@ -1247,7 +1249,7 @@ init_@lapack_func@(EIGH_PARAMS_t* params, char JOBZ, char UPLO,
     size_t alloc_size = safe_N * (safe_N + 1) * sizeof(@typ@);
     fortran_int lda = fortran_int_max(N, 1);
 
-    mem_buff = malloc(alloc_size);
+    mem_buff = (npy_uint8 *)malloc(alloc_size);
 
     if (!mem_buff) {
         goto error;
@@ -1282,7 +1284,7 @@ init_@lapack_func@(EIGH_PARAMS_t* params, char JOBZ, char UPLO,
         liwork = query_iwork_size;
     }
 
-    mem_buff2 = malloc(lwork*sizeof(@typ@) + liwork*sizeof(fortran_int));
+    mem_buff2 = (npy_uint8 *)malloc(lwork*sizeof(@typ@) + liwork*sizeof(fortran_int));
     if (!mem_buff2) {
         goto error;
     }
@@ -1321,10 +1323,10 @@ call_@lapack_func@(EIGH_PARAMS_t *params)
 {
     fortran_int rv;
     LAPACK(@lapack_func@)(&params->JOBZ, &params->UPLO, &params->N,
-                          params->A, &params->LDA, params->W,
-                          params->WORK, &params->LWORK,
-                          params->RWORK, &params->LRWORK,
-                          params->IWORK, &params->LIWORK,
+                          (@ftyp@*)params->A, &params->LDA, (@fbasetyp@*)params->W,
+                          (@ftyp@*)params->WORK, &params->LWORK,
+                          (@fbasetyp@*)params->RWORK, &params->LRWORK,
+                          (fortran_int*)params->IWORK, (fortran_int*)&params->LIWORK,
                           &rv);
     return rv;
 }
@@ -1348,7 +1350,7 @@ init_@lapack_func@(EIGH_PARAMS_t *params,
     size_t safe_N = N;
     fortran_int lda = fortran_int_max(N, 1);
 
-    mem_buff = malloc(safe_N * safe_N * sizeof(@typ@) +
+    mem_buff = (npy_uint8 *)malloc(safe_N * safe_N * sizeof(@typ@) +
                       safe_N * sizeof(@basetyp@));
     if (!mem_buff) {
         goto error;
@@ -1385,7 +1387,7 @@ init_@lapack_func@(EIGH_PARAMS_t *params,
         liwork = query_iwork_size;
     }
 
-    mem_buff2 = malloc(lwork*sizeof(@typ@) +
+    mem_buff2 = (npy_uint8 *)malloc(lwork*sizeof(@typ@) +
                        lrwork*sizeof(@basetyp@) +
                        liwork*sizeof(fortran_int));
     if (!mem_buff2) {
@@ -1583,9 +1585,9 @@ call_@lapack_func@(GESV_PARAMS_t *params)
 {
     fortran_int rv;
     LAPACK(@lapack_func@)(&params->N, &params->NRHS,
-                          params->A, &params->LDA,
+                          (@ftyp@*)params->A, &params->LDA,
                           params->IPIV,
-                          params->B, &params->LDB,
+                          (@ftyp@*)params->B, &params->LDB,
                           &rv);
     return rv;
 }
@@ -1602,7 +1604,7 @@ init_@lapack_func@(GESV_PARAMS_t *params, fortran_int N, fortran_int NRHS)
     size_t safe_N = N;
     size_t safe_NRHS = NRHS;
     fortran_int ld = fortran_int_max(N, 1);
-    mem_buff = malloc(safe_N * safe_N * sizeof(@ftyp@) +
+    mem_buff = (npy_uint8 *)malloc(safe_N * safe_N * sizeof(@ftyp@) +
                       safe_N * safe_NRHS*sizeof(@ftyp@) +
                       safe_N * sizeof(fortran_int));
     if (!mem_buff) {
@@ -1769,7 +1771,7 @@ call_@lapack_func@(POTR_PARAMS_t *params)
 {
     fortran_int rv;
     LAPACK(@lapack_func@)(&params->UPLO,
-                          &params->N, params->A, &params->LDA,
+                          &params->N, (@ftyp@*)params->A, &params->LDA,
                           &rv);
     return rv;
 }
@@ -1782,7 +1784,7 @@ init_@lapack_func@(POTR_PARAMS_t *params, char UPLO, fortran_int N)
     size_t safe_N = N;
     fortran_int lda = fortran_int_max(N, 1);
 
-    mem_buff = malloc(safe_N * safe_N * sizeof(@ftyp@));
+    mem_buff = (npy_uint8 *)malloc(safe_N * safe_N * sizeof(@ftyp@));
     if (!mem_buff) {
         goto error;
     }
@@ -1936,11 +1938,11 @@ call_@lapack_func@(GEEV_PARAMS_t* params)
 {
     fortran_int rv;
     LAPACK(@lapack_func@)(&params->JOBVL, &params->JOBVR,
-                          &params->N, params->A, &params->LDA,
-                          params->WR, params->WI,
-                          params->VLR, &params->LDVL,
-                          params->VRR, &params->LDVR,
-                          params->WORK, &params->LWORK,
+                          &params->N, (@typ@*)params->A, &params->LDA,
+                          (@typ@*)params->WR, (@typ@*)params->WI,
+                          (@typ@*)params->VLR, &params->LDVL,
+                          (@typ@*)params->VRR, &params->LDVR,
+                          (@typ@*)params->WORK, &params->LWORK,
                           &rv);
     return rv;
 }
@@ -1964,7 +1966,7 @@ init_@lapack_func@(GEEV_PARAMS_t *params, char jobvl, char jobvr, fortran_int n)
     fortran_int ld = fortran_int_max(n, 1);
 
     /* allocate data for known sizes (all but work) */
-    mem_buff = malloc(a_size + wr_size + wi_size +
+    mem_buff = (npy_uint8 *)malloc(a_size + wr_size + wi_size +
                       vlr_size + vrr_size +
                       w_size + vl_size + vr_size);
     if (!mem_buff) {
@@ -2009,7 +2011,7 @@ init_@lapack_func@(GEEV_PARAMS_t *params, char jobvl, char jobvr, fortran_int n)
         work_count = (size_t)work_size_query;
     }
 
-    mem_buff2 = malloc(work_count*sizeof(@typ@));
+    mem_buff2 = (npy_uint8 *)malloc(work_count*sizeof(@typ@));
     if (!mem_buff2) {
         goto error;
     }
@@ -2106,16 +2108,16 @@ process_@lapack_func@_results(GEEV_PARAMS_t *params)
      * into complex versions. This is the way to deal with imaginary
      * results. In our gufuncs we will always return complex arrays!
      */
-    mk_@TYPE@_complex_array(params->W, params->WR, params->WI, params->N);
+    mk_@TYPE@_complex_array((@complextyp@*)params->W, (@typ@*)params->WR, (@typ@*)params->WI, params->N);
 
     /* handle the eigenvectors */
     if ('V' == params->JOBVL) {
-        mk_@lapack_func@_complex_eigenvectors(params->VL, params->VLR,
-                                              params->WI, params->N);
+        mk_@lapack_func@_complex_eigenvectors((@complextyp@*)params->VL, (@typ@*)params->VLR,
+                                              (@typ@*)params->WI, params->N);
     }
     if ('V' == params->JOBVR) {
-        mk_@lapack_func@_complex_eigenvectors(params->VR, params->VRR,
-                                              params->WI, params->N);
+        mk_@lapack_func@_complex_eigenvectors((@complextyp@*)params->VR, (@typ@*)params->VRR,
+                                              (@typ@*)params->WI, params->N);
     }
 }
 
@@ -2136,12 +2138,12 @@ call_@lapack_func@(GEEV_PARAMS_t* params)
     fortran_int rv;
 
     LAPACK(@lapack_func@)(&params->JOBVL, &params->JOBVR,
-                          &params->N, params->A, &params->LDA,
-                          params->W,
-                          params->VL, &params->LDVL,
-                          params->VR, &params->LDVR,
-                          params->WORK, &params->LWORK,
-                          params->WR, /* actually RWORK */
+                          &params->N, (@ftyp@*)params->A, &params->LDA,
+                          (@ftyp@*)params->W,
+                          (@ftyp@*)params->VL, &params->LDVL,
+                          (@ftyp@*)params->VR, &params->LDVR,
+                          (@ftyp@*)params->WORK, &params->LWORK,
+                          (@realtyp@*)params->WR, /* actually RWORK */
                           &rv);
     return rv;
 }
@@ -2165,7 +2167,7 @@ init_@lapack_func@(GEEV_PARAMS_t* params,
     size_t total_size = a_size + w_size + vl_size + vr_size + rwork_size;
     fortran_int ld = fortran_int_max(n, 1);
 
-    mem_buff = malloc(total_size);
+    mem_buff = (npy_uint8 *)malloc(total_size);
     if (!mem_buff) {
         goto error;
     }
@@ -2207,7 +2209,7 @@ init_@lapack_func@(GEEV_PARAMS_t* params,
         if(work_count == 0) work_count = 1;
     }
 
-    mem_buff2 = malloc(work_count*sizeof(@ftyp@));
+    mem_buff2 = (npy_uint8 *)malloc(work_count*sizeof(@ftyp@));
     if (!mem_buff2) {
         goto error;
     }
@@ -2474,12 +2476,12 @@ call_@lapack_func@(GESDD_PARAMS_t *params)
 {
     fortran_int rv;
     LAPACK(@lapack_func@)(&params->JOBZ, &params->M, &params->N,
-                          params->A, &params->LDA,
-                          params->S,
-                          params->U, &params->LDU,
-                          params->VT, &params->LDVT,
-                          params->WORK, &params->LWORK,
-                          params->IWORK,
+                          (@ftyp@*)params->A, &params->LDA,
+                          (@ftyp@*)params->S,
+                          (@ftyp@*)params->U, &params->LDU,
+                          (@ftyp@*)params->VT, &params->LDVT,
+                          (@ftyp@*)params->WORK, &params->LWORK,
+                          (fortran_int*)params->IWORK,
                           &rv);
     return rv;
 }
@@ -2517,7 +2519,7 @@ init_@lapack_func@(GESDD_PARAMS_t *params,
     u_size = safe_u_row_count * safe_m * sizeof(@ftyp@);
     vt_size = safe_n * safe_vt_column_count * sizeof(@ftyp@);
 
-    mem_buff = malloc(a_size + s_size + u_size + vt_size + iwork_size);
+    mem_buff = (npy_uint8 *)malloc(a_size + s_size + u_size + vt_size + iwork_size);
 
     if (!mem_buff) {
         goto error;
@@ -2562,7 +2564,7 @@ init_@lapack_func@(GESDD_PARAMS_t *params,
         work_size = (size_t)work_count * sizeof(@ftyp@);
     }
 
-    mem_buff2 = malloc(work_size);
+    mem_buff2 = (npy_uint8 *)malloc(work_size);
     if (!mem_buff2) {
         goto error;
     }
@@ -2597,13 +2599,13 @@ call_@lapack_func@(GESDD_PARAMS_t *params)
 {
     fortran_int rv;
     LAPACK(@lapack_func@)(&params->JOBZ, &params->M, &params->N,
-                          params->A, &params->LDA,
-                          params->S,
-                          params->U, &params->LDU,
-                          params->VT, &params->LDVT,
-                          params->WORK, &params->LWORK,
-                          params->RWORK,
-                          params->IWORK,
+                          (@ftyp@*)params->A, &params->LDA,
+                          (@frealtyp@*)params->S,
+                          (@ftyp@*)params->U, &params->LDU,
+                          (@ftyp@*)params->VT, &params->LDVT,
+                          (@ftyp@*)params->WORK, &params->LWORK,
+                          (@frealtyp@*)params->RWORK,
+                          (fortran_int*)params->IWORK,
                           &rv);
     return rv;
 }
@@ -2642,7 +2644,7 @@ init_@lapack_func@(GESDD_PARAMS_t *params,
     rwork_size *= sizeof(@ftyp@);
     iwork_size = 8 * safe_min_m_n* sizeof(fortran_int);
 
-    mem_buff = malloc(a_size +
+    mem_buff = (npy_uint8 *)malloc(a_size +
                       s_size +
                       u_size +
                       vt_size +
@@ -2692,7 +2694,7 @@ init_@lapack_func@(GESDD_PARAMS_t *params,
         work_size = (size_t)work_count * sizeof(@ftyp@);
     }
 
-    mem_buff2 = malloc(work_size);
+    mem_buff2 = (npy_uint8 *)malloc(work_size);
     if (!mem_buff2) {
         goto error;
     }
@@ -2896,6 +2898,7 @@ dump_geqrf_params(const char *name,
 
 /**begin repeat
    #lapack_func=dgeqrf,zgeqrf#
+   #typ=double,f2c_doublecomplex#
  */
 
 static inline fortran_int
@@ -2903,9 +2906,9 @@ call_@lapack_func@(GEQRF_PARAMS_t *params)
 {
     fortran_int rv;
     LAPACK(@lapack_func@)(&params->M, &params->N,
-                          params->A, &params->LDA,
-                          params->TAU,
-                          params->WORK, &params->LWORK,
+                          (@typ@*)params->A, &params->LDA,
+                          (@typ@*)params->TAU,
+                          (@typ@*)params->WORK, &params->LWORK,
                           &rv);
     return rv;
 }
@@ -2937,7 +2940,7 @@ init_@lapack_func@(GEQRF_PARAMS_t *params,
     size_t work_size;
     fortran_int lda = fortran_int_max(1, m);
 
-    mem_buff = malloc(a_size + tau_size);
+    mem_buff = (npy_uint8 *)malloc(a_size + tau_size);
 
     if (!mem_buff)
         goto error;
@@ -2971,7 +2974,7 @@ init_@lapack_func@(GEQRF_PARAMS_t *params,
     params->LWORK = fortran_int_max(fortran_int_max(1, n), work_count);
 
     work_size = (size_t) params->LWORK * sizeof(@ftyp@);
-    mem_buff2 = malloc(work_size);
+    mem_buff2 = (npy_uint8 *)malloc(work_size);
     if (!mem_buff2)
         goto error;
 
@@ -3016,7 +3019,7 @@ init_@lapack_func@(GEQRF_PARAMS_t *params,
     size_t work_size;
     fortran_int lda = fortran_int_max(1, m);
 
-    mem_buff = malloc(a_size + tau_size);
+    mem_buff = (npy_uint8 *)malloc(a_size + tau_size);
 
     if (!mem_buff)
         goto error;
@@ -3052,7 +3055,7 @@ init_@lapack_func@(GEQRF_PARAMS_t *params,
 
     work_size = (size_t) params->LWORK * sizeof(@ftyp@);
 
-    mem_buff2 = malloc(work_size);
+    mem_buff2 = (npy_uint8 *)malloc(work_size);
     if (!mem_buff2)
         goto error;
 
@@ -3153,6 +3156,7 @@ typedef struct gqr_params_struct
 
 /**begin repeat
    #lapack_func=dorgqr,zungqr#
+   #typ=double, f2c_doublecomplex#
  */
 
 static inline fortran_int
@@ -3160,9 +3164,9 @@ call_@lapack_func@(GQR_PARAMS_t *params)
 {
     fortran_int rv;
     LAPACK(@lapack_func@)(&params->M, &params->MC, &params->MN,
-                          params->Q, &params->LDA,
-                          params->TAU,
-                          params->WORK, &params->LWORK,
+                          (@typ@*)params->Q, &params->LDA,
+                          (@typ@*)params->TAU,
+                          (@typ@*)params->WORK, &params->LWORK,
                           &rv);
     return rv;
 }
@@ -3195,7 +3199,7 @@ init_@lapack_func@_common(GQR_PARAMS_t *params,
     size_t work_size;
     fortran_int lda = fortran_int_max(1, m);
 
-    mem_buff = malloc(q_size + tau_size + a_size);
+    mem_buff = (npy_uint8 *)malloc(q_size + tau_size + a_size);
 
     if (!mem_buff)
         goto error;
@@ -3231,7 +3235,7 @@ init_@lapack_func@_common(GQR_PARAMS_t *params,
 
     work_size = (size_t) params->LWORK * sizeof(@ftyp@);
 
-    mem_buff2 = malloc(work_size);
+    mem_buff2 = (npy_uint8 *)malloc(work_size);
     if (!mem_buff2)
         goto error;
 
@@ -3278,7 +3282,7 @@ init_@lapack_func@_common(GQR_PARAMS_t *params,
     size_t work_size;
     fortran_int lda = fortran_int_max(1, m);
 
-    mem_buff = malloc(q_size + tau_size + a_size);
+    mem_buff = (npy_uint8 *)malloc(q_size + tau_size + a_size);
 
     if (!mem_buff)
         goto error;
@@ -3315,7 +3319,7 @@ init_@lapack_func@_common(GQR_PARAMS_t *params,
 
     work_size = (size_t) params->LWORK * sizeof(@ftyp@);
 
-    mem_buff2 = malloc(work_size);
+    mem_buff2 = (npy_uint8 *)malloc(work_size);
     if (!mem_buff2)
         goto error;
 
@@ -3595,12 +3599,12 @@ call_@lapack_func@(GELSD_PARAMS_t *params)
 {
     fortran_int rv;
     LAPACK(@lapack_func@)(&params->M, &params->N, &params->NRHS,
-                          params->A, &params->LDA,
-                          params->B, &params->LDB,
-                          params->S,
-                          params->RCOND, &params->RANK,
-                          params->WORK, &params->LWORK,
-                          params->IWORK,
+                          (@ftyp@*)params->A, &params->LDA,
+                          (@ftyp@*)params->B, &params->LDB,
+                          (@ftyp@*)params->S,
+                          (@ftyp@*)params->RCOND, &params->RANK,
+                          (@ftyp@*)params->WORK, &params->LWORK,
+                          (fortran_int*)params->IWORK,
                           &rv);
     return rv;
 }
@@ -3632,7 +3636,7 @@ init_@lapack_func@(GELSD_PARAMS_t *params,
     fortran_int lda = fortran_int_max(1, m);
     fortran_int ldb = fortran_int_max(1, fortran_int_max(m,n));
 
-    mem_buff = malloc(a_size + b_size + s_size);
+    mem_buff = (npy_uint8 *)malloc(a_size + b_size + s_size);
 
     if (!mem_buff)
         goto error;
@@ -3670,7 +3674,7 @@ init_@lapack_func@(GELSD_PARAMS_t *params,
         iwork_size = (size_t)iwork_size_query * sizeof(fortran_int);
     }
 
-    mem_buff2 = malloc(work_size + iwork_size);
+    mem_buff2 = (npy_uint8 *)malloc(work_size + iwork_size);
     if (!mem_buff2)
         goto error;
 
@@ -3707,13 +3711,13 @@ call_@lapack_func@(GELSD_PARAMS_t *params)
 {
     fortran_int rv;
     LAPACK(@lapack_func@)(&params->M, &params->N, &params->NRHS,
-                          params->A, &params->LDA,
-                          params->B, &params->LDB,
-                          params->S,
-                          params->RCOND, &params->RANK,
-                          params->WORK, &params->LWORK,
-                          params->RWORK, params->IWORK,
-                          &rv);
+                          (@ftyp@*)params->A, &params->LDA,
+                          (@ftyp@*)params->B, &params->LDB,
+                          (@frealtyp@*)params->S,
+                          (@frealtyp@*)params->RCOND, &params->RANK,
+                          (@ftyp@*)params->WORK, &params->LWORK,
+                          (@frealtyp@*)params->RWORK, (fortran_int*)params->IWORK,
+                          (fortran_int*)&rv);
     return rv;
 }
 
@@ -3743,7 +3747,7 @@ init_@lapack_func@(GELSD_PARAMS_t *params,
     fortran_int lda = fortran_int_max(1, m);
     fortran_int ldb = fortran_int_max(1, fortran_int_max(m,n));
 
-    mem_buff = malloc(a_size + b_size + s_size);
+    mem_buff = (npy_uint8 *)malloc(a_size + b_size + s_size);
 
     if (!mem_buff)
         goto error;
@@ -3783,7 +3787,7 @@ init_@lapack_func@(GELSD_PARAMS_t *params,
         iwork_size = (size_t)iwork_size_query * sizeof(fortran_int);
     }
 
-    mem_buff2 = malloc(work_size + rwork_size + iwork_size);
+    mem_buff2 = (npy_uint8 *)malloc(work_size + rwork_size + iwork_size);
     if (!mem_buff2)
         goto error;
 
@@ -4095,9 +4099,9 @@ static char lstsq_types[] = {
 };
 
 typedef struct gufunc_descriptor_struct {
-    char *name;
-    char *signature;
-    char *doc;
+    const char *name;
+    const char *signature;
+    const char *doc;
     int ntypes;
     int nin;
     int nout;
