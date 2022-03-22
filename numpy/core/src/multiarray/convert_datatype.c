@@ -15,6 +15,7 @@
 #include "numpy/npy_math.h"
 
 #include "array_coercion.h"
+#include "can_cast_table.h"
 #include "common.h"
 #include "ctors.h"
 #include "dtypemeta.h"
