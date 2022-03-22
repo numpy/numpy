@@ -79,7 +79,11 @@ static NPY_INLINE @type@
 {
     if (n < 8) {
         npy_intp i;
-        @type@ res = 0.;
+        /*
+         * Start with -0 to preserve -0 values.  The reason is that summing
+         * only -0 should return -0, but `0 + -0 == 0` while `-0 + -0 == -0`.
+         */
+        @type@ res = -0.0;
 
         for (i = 0; i < n; i++) {
             res += @trf@(*((@dtype@*)(a + i * stride)));
@@ -156,8 +160,8 @@ static NPY_INLINE void
     if (n < 8) {
         npy_intp i;
 
-        *rr = 0.;
-        *ri = 0.;
+        *rr = -0.0;
+        *ri = -0.0;
         for (i = 0; i < n; i += 2) {
             *rr += *((@ftype@ *)(a + i * stride + 0));
             *ri += *((@ftype@ *)(a + i * stride + sizeof(@ftype@)));
