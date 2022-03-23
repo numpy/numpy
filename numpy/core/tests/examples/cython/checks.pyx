@@ -44,3 +44,32 @@ def convert_datetime_to_datetimestruct():
 
     cnp.convert_datetime_to_datetimestruct(meta, value, &dts)
     return dts
+
+
+def make_iso_8601_datetime(dt: datetime):
+    cdef:
+        cnp.npy_datetimestruct dts
+        char* result
+        cnp.npy_intp outlen
+        int local = 0
+        int utc = 0
+        int tzoffset = 0
+
+    dts.year = dt.year
+    dts.month = dt.month
+    dts.day = dt.day
+    dts.hour = dt.hour
+    dts.sec = dt.second
+    dts.us = dt.microsecond
+
+    cnp.make_iso_8601_datetime(
+        &dts,
+        result,
+        outlen,
+        local,
+        utc,
+        cnp.NPY_FR_s,
+        tzoffset,
+        cnp.NPY_NO_CASTING,
+    )
+    return result

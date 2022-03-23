@@ -2037,21 +2037,6 @@ metastr_to_unicode(PyArray_DatetimeMetaData *meta, int skip_brackets)
 
 
 /*
- * Adjusts a datetimestruct based on a seconds offset. Assumes
- * the current values are valid.
-
-NPY_NO_EXPORT void
-add_seconds_to_datetimestruct(npy_datetimestruct *dts, int seconds)
-{
-    int minutes;
-
-    dts->sec += seconds;
-    minutes = extract_unit_32(&dts->sec, 60);
-    add_minutes_to_datetimestruct(dts, minutes);
-}
- */
-
-/*
  * Adjusts a datetimestruct based on a minutes offset. Assumes
  * the current values are valid.
  */

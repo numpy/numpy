@@ -304,13 +304,6 @@ int convert_datetimestruct_to_datetime(PyArray_DatetimeMetaData *meta,
                                     npy_datetime *out);
 
 /*
- * Adjusts a datetimestruct based on a seconds offset. Assumes
- * the current values are valid.
- */
-NPY_NO_EXPORT void
-add_seconds_to_datetimestruct(npy_datetimestruct *dts, int seconds);
-
-/*
  * Adjusts a datetimestruct based on a minutes offset. Assumes
  * the current values are valid.
  */

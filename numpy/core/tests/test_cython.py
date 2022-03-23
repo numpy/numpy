@@ -1,3 +1,4 @@
+from datetime import datetime
 import os
 import shutil
 import subprocess
@@ -138,13 +139,6 @@ def test_abstract_scalars(install_temp):
     assert checks.is_integer(np.uint64(1))
 
 
-def test_get_datetime_iso_8601_strlen(install_temp):
-    # GH#21199
-    import checks
-    res = checks.get_datetime_iso_8601_strlen()
-    assert len(res) == 9
-
-
 def test_convert_datetime_to_datetimestruct(install_temp):
     # GH#21199
     import checks
@@ -154,3 +148,19 @@ def test_convert_datetime_to_datetimestruct(install_temp):
     exp = {"year": 2022, "month": 3, "day": 15, "hour": 20, "minute": 2}
 
     assert res == exp  # FIXME: need to get seconds/microseconds into "exp"
+
+
+class TestDatetimeStrings:
+    def test_make_iso_8601_datetime(self, install_temp):
+        # GH#21199
+        dt = datetime(2016, 6, 2, 10, 45, 19)
+        # uses NPY_FR_s
+        result = checks.make_iso_8601_datetime(dt)
+        assert result == "2016-05-02 10:45:19"
+
+    def test_get_datetime_iso_8601_strlen(install_temp):
+        # GH#21199
+        import checks
+        # uses NPY_FR_ns
+        res = checks.get_datetime_iso_8601_strlen()
+        assert len(res) == 9

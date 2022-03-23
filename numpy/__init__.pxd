@@ -818,14 +818,14 @@ cdef extern from "numpy/arrayscalars.h":
         NPY_FR_as
 
 
-cdef extern from "numpy/multiarray.h":
+cdef extern from "numpy/datetime_strings.h":
     int get_datetime_iso_8601_strlen(int local, NPY_DATETIMEUNIT base)
+    int make_iso_8601_datetime(npy_datetimestruct *dts, char *outstr,
+                               npy_intp outlen, int local, int utc,
+                               NPY_DATETIMEUNIT base, int tzoffset,
+                               NPY_CASTING casting);
 
-cdef extern from "numpy/multiarray.h":
-    int convert_pydatetime_to_datetimestruct(PyObject *obj, npy_datetimestruct *out,
-                                             NPY_DATETIMEUNIT *out_bestunit,
-                                             int apply_tzinfo);
-
+cdef extern from "numpy/_datetime.h":
     int convert_pydatetime_to_datetimestruct(PyObject *obj, npy_datetimestruct *out,
                                              NPY_DATETIMEUNIT *out_bestunit,
                                              int apply_tzinfo);
