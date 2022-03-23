@@ -10,30 +10,31 @@ NEP 50 — Promotion rules for Python scalars
 Abstract
 ========
 
-Since NumPy 1.7 promotion rules are defined through the "safe casting"
-concept which in turn can depend on the actual values involved.
-While these choices were well intended, they lead to a complexity both
-for users and maintainers.
+Since NumPy 1.7, promotion rules are defined through the "safe casting"
+concept which relies on inspection of the actual values involved.
+While these choices were well intended, they lead to complexity: both
+in implementation and user experience.
 
-There are two main ways this can lead to confusing results:
+There are two kinds of confusing results:
 
-1. Value=based promotion means that the value can matter::
+1. Value-based promotion means that values determine output types::
 
      np.result_type(np.int8, 1) == np.int8
      np.result_type(np.int8, 255) == np.int16
 
-   which is even true when replacing the value with 0-D arrays::
+   This also holds when working with 0-D arrays (so-called "scalar arrays")::
 
      int64_0d_array = np.array(1, dtype=np.int64)
      np.result_type(np.int8, int64_0d_array) == np.int8
-    
-   This logic arises, because ``1`` can be represented by an ``int8`` while
+
+   This logic arises because ``1`` can be represented by an ``int8`` while
    ``255`` can be represented by an ``int16`` *or* ``uint8``.
+
    Because of this, the exact type is often ignored for 0-D arrays or
    NumPy scalars.
 
 2. For a Python ``int``, ``float``, or ``complex`` the value is inspected as
-   before.  But often surprisingly not when the NumPy object is a 0-D array
+   before.  But surprisingly *not* when the NumPy object is a 0-D array
    or NumPy scalar::
 
      np.result_type(np.array(1, dtype=np.uint8), 1) == np.int64
@@ -45,27 +46,27 @@ There are two main ways this can lead to confusing results:
    an ``int64`` (this depends on the system).
 
 Note that the examples apply also to operations like multiplication,
-addition, or comparisons and the corresponding functions like `np.multiply`.
+addition, comparisons, and their corresponding functions like `np.multiply`.
 
 This NEP proposes to refactor the behaviour around two guiding principles:
 
-1. The value must never influence the result type.
-2. NumPy scalars or 0-D arrays must always lead to the same behaviour as
-   their N-D counterparts.
+1. Values must never influence result type.
+2. NumPy scalars or 0-D arrays should behave consistently with their
+   N-D counterparts.
 
 We propose to remove all value-based logic and add special handling for
-Python scalars to preserve some of the convenience that it provided.
-This will mean that Python scalars are considered "weakly" typed.
-A Python integer will always be converted to the NumPy dtype retaining the
-behaviour that::
+Python scalars to preserve some convenient behaviors.
+Python scalars will be considered "weakly" typed.
+When a NumPy array/scalar is combined with a Python integer, it will
+be converted to the NumPy dtype, such that::
 
     np.array([1, 2, 3], dtype=np.uint8) + 1  # returns a uint8 array
     np.array([1, 2, 3], dtype=np.float32) + 2.  # returns a float32 array
 
-but removing any dependence on the Python value itself.
+There will be no dependence on the Python value itself.
 
 The proposed changes also apply to ``np.can_cast(100, np.int8)``, however,
-we expect that the behaviour in functions (promotion) will in practice be far
+we expect that the behaviour in functions (promotion) will, in practice, be far
 more important than the casting change itself.
 
 
