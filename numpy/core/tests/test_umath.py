@@ -995,12 +995,13 @@ class TestExp:
 
 class TestSpecialFloats:
     def test_exp_values(self):
-        x = [np.nan,  np.nan, np.inf, 0.]
-        y = [np.nan, -np.nan, np.inf, -np.inf]
-        for dt in ['f', 'd', 'g']:
-            xf = np.array(x, dtype=dt)
-            yf = np.array(y, dtype=dt)
-            assert_equal(np.exp(yf), xf)
+        with np.errstate(under='raise', over='raise'):
+            x = [np.nan,  np.nan, np.inf, 0.]
+            y = [np.nan, -np.nan, np.inf, -np.inf]
+            for dt in ['f', 'd', 'g']:
+                xf = np.array(x, dtype=dt)
+                yf = np.array(y, dtype=dt)
+                assert_equal(np.exp(yf), xf)
 
     # See: https://github.com/numpy/numpy/issues/19192
     @pytest.mark.xfail(
