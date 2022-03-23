@@ -920,7 +920,7 @@ def test_scalar_signed_integer_overflow(dtype):
 @pytest.mark.parametrize("dtype", np.typecodes["AllInteger"])
 @pytest.mark.parametrize("operation", [
         lambda val, zero: val // zero,
-        lambda val, zero: val % zero,], ids=["//", "%"])
+        lambda val, zero: val % zero, ], ids=["//", "%"])
 def test_scalar_integer_operation_divbyzero(dtype, operation):
     st = np.dtype(dtype).type
     val = st(100)
