@@ -3694,12 +3694,18 @@ class TestBinop:
         check(make_obj(np.ndarray, array_ufunc=None), True, False, False,
               check_scalar=False)
 
-    def test_ufunc_binop_bad_array_priority(self):
+    @pytest.mark.parametrize("priority", [None, "runtime error"])
+    def test_ufunc_binop_bad_array_priority(self, priority):
         # Mainly checks that this does not crash.  The second array has a lower
         # priority than -1 ("error value").  If the __radd__ actually exists,
         # bad things can happen (I think via the scalar paths).
-        class BadPriority():
-            __array_priority__ = None
+        # In principle both of these can probably just be errors in the future.
+        class BadPriority:
+            @property
+            def __array_priority__(self):
+                if priority == "runtime error":
+                    raise RuntimeError("RuntimeError in __array_priority__!")
+                return priority
 
             def __radd__(self, other):
                 return "result"
