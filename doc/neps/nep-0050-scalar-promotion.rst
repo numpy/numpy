@@ -46,7 +46,7 @@ There are two kinds of confusing results:
    an ``int64`` (this depends on the system).
 
 Note that the examples apply also to operations like multiplication,
-addition, comparisons, and their corresponding functions like `np.multiply`.
+addition, comparisons, and their corresponding functions like ``np.multiply``.
 
 This NEP proposes to refactor the behaviour around two guiding principles:
 
@@ -103,13 +103,13 @@ these are examples of the new behaviour::
     np.int16(2) + 2 == np.int16(4)
 
 In the following the Python ``float`` and ``complex`` are "inexact", but the
-NumPy value is integral, so we use at least ``float64``/``complex128``:
+NumPy value is integral, so we use at least ``float64``/``complex128``::
 
     np.uint16(3) + 3.0 == np.float64(6.0)
     np.int16(4) + 4j == np.complex128(4+4j)
 
 But this does not happen for ``float`` to ``complex`` promotions, where
-``float32`` and ``complex64`` have the same precision:
+``float32`` and ``complex64`` have the same precision::
 
     np.float32(5) + 5j == np.complex64(5+5j)
 
@@ -192,8 +192,9 @@ the following changes.
 Impact on operators and functions involving NumPy arrays or scalars
 -------------------------------------------------------------------
 
-The main impact on operations not involving Python scalars (float, int, complex)
-will be that 0-D arrays and NumPy scalars will never behave value-sensitive.
+The main impact on operations not involving Python scalars (``float``, ``int``,
+``complex``) will be that 0-D arrays and NumPy scalars will never behave
+value-sensitive.
 This removes currently surprising cases.  For example::
 
   np.arange(10, dtype=np.uint8) + np.int64(1)
@@ -215,7 +216,7 @@ literal Python scalars are involved::
   np.arange(10, dtype=np.int8) + 1  # returns an int8 array
   np.array([1., 2.], dtype=np.float32) * 3.5  # returns a float32 array
 
-But led to complexity when it came to "unrepresentable" values:
+But led to complexity when it came to "unrepresentable" values::
 
   np.arange(10, dtype=np.int8) + 256  # returns int16
   np.array([1., 2.], dtype=np.float32) * 1e200  # returns float64
@@ -223,7 +224,7 @@ But led to complexity when it came to "unrepresentable" values:
 The proposal is to preserve this behaviour for the most part.  This is achieved
 by considering Python ``int``, ``float``, and ``complex`` to be "weakly" typed
 in these operations.
-Hoewver, to mitigate user surprises, we plan to make conversion to the new type
+However, to mitigate user surprises, we plan to make conversion to the new type
 more strict:  This means that the results will be unchanged in the first
 two examples.  For the second one, the results will be the following::
 
@@ -275,21 +276,22 @@ float32 precision rather than use the default float64.
 Further issues can occur.  For example:
 
 * Floating point comparisons, especially equality, may change when mixing
-  precisions:
-  ```python3
-  np.float32(1/3) == 1/3  # was False, will be True.
-  ```
-* Certain operations are expected to start failing:
-  ```python3
-  np.array([1], np.uint8) * 1000
-  np.array([1], np.uint8) == 1000  # possibly also
-  ```
+  precisions::
+
+     np.float32(1/3) == 1/3  # was False, will be True.
+
+* Certain operations are expected to start failing::
+
+     np.array([1], np.uint8) * 1000
+     np.array([1], np.uint8) == 1000  # possibly also
+
   to protect users in cases where previous value-based casting led to an
   upcast.  (Failures occur when converting ``1000`` to a ``uint8``.)
-* Floating point overflow may occur in odder cases:
-  ```python3
-  np.float32(1e-30) * 1e50  # will return ``inf`` and a warning
-  ```
+
+* Floating point overflow may occur in odder cases::
+
+     np.float32(1e-30) * 1e50  # will return ``inf`` and a warning
+
   Because ``np.float32(1e50)`` returns ``inf``.  Previously, this would return
   a double precision result even if the ``1e50`` was not a 0-D array
 
@@ -316,16 +318,16 @@ This NEP currently does not include changing this ladder (although it may be
 suggested in a separate document).
 However, in mixed operations, this ladder will be ignored, since the value
 will be ignored.  This means, that operations will never silently use the
-``object`` dtype:
+``object`` dtype::
 
     np.array([3]) + 2**100  # Will error
 
-The user will have to write one of:
+The user will have to write one of::
 
     np.array([3]) + np.array(2**100)
     np.array([3]) + np.array(2**100, dtype=object)
 
-As such implicit conversion to ``object`` should be rare and the work around
+As such implicit conversion to ``object`` should be rare and the work-around
 is clear, we expect that the backwards compatibility concerns are fairly small.
 
 
@@ -376,7 +378,7 @@ To review, if we replace ``4`` with ``[4]`` to make it one dimensional, the
 result will be different::
 
     # This logic is also used for ufuncs:
-    np.add(uint8_arr, [4]).dtype == np.int64  # platform dependend
+    np.add(uint8_arr, [4]).dtype == np.int64  # platform dependent
     # And even if the other array is explicitly typed:
     np.add(uint8_arr, np.array([4], dtype=np.int64)).dtype == np.int64
 
@@ -387,15 +389,15 @@ Proposed Weak Promotion
 This proposal uses a "weak scalar" logic.  This means that Python ``int``, ``float``,
 and ``complex`` are not assigned one of the typical dtypes, such as float64 or int64.
 Rather, they are assigned a special abstract DType, similar to the "scalar" hierarchy
-names: Integral, Floating, ComplexFloatin.
+names: Integral, Floating, ComplexFloating.
 
 When promotion occurs (as it does for ufuncs if no exact loop matches),
 the other DType is able to decide how to regard the Python
-scalar.  E.g. a ``UInt16`` promoting with an `Integral` will give ``UInt16``.
+scalar.  E.g. a ``UInt16`` promoting with an ``Integral`` will give ``UInt16``.
 
 .. note::
 
-    A default will most likely be provided in the future for user defined DTypes.
+    A default will most likely be provided in the future for user-defined DTypes.
     Most likely this will end up being the default integer/float, but in principle
     more complex schemes could be implemented.
 
@@ -431,7 +433,7 @@ There are two possible approaches to this:
 
 .. note::
    As of now, it is not quite clear which approach is better, either will
-   give fairl equivalent results and 1. could be extended by 2. in the future
+   give fairly equivalent results and 1. could be extended by 2. in the future
    if necessary.
 
 It further requires removing all current special value-based code paths.
@@ -455,7 +457,7 @@ Alternatives
 There are several design axes where different choices are possible.
 The below sections outline these.
 
-Use strongly typed scalars or a mix of both
+Use strongly-typed scalars or a mix of both
 -------------------------------------------
 
 The simplest solution to the value-based promotion/casting issue would be to use
@@ -501,7 +503,7 @@ NumPy scalars could be special
 
 Many users expect that NumPy scalars should be different from NumPy
 arrays, in that ``np.uint8(3) + 3`` should return an ``int64`` (or Python
-integer), when `uint8_arr + 3` preserves the ``uint8`` dtype.
+integer), when ``uint8_arr + 3`` preserves the ``uint8`` dtype.
 
 This alternative would be very close to the current behaviour for NumPy scalars
 but it would cement a distinction between arrays and scalars (NumPy arrays
