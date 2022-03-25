@@ -1142,24 +1142,31 @@ def kron(a, b):
     b = asanyarray(b)
     a = array(a, copy=False, subok=True, ndmin=b.ndim)
     ndb, nda = b.ndim, a.ndim
+    nd = max(ndb, nda)
+
     if (nda == 0 or ndb == 0):
         return _nx.multiply(a, b)
+
     as_ = a.shape
     bs = b.shape
     if not a.flags.contiguous:
         a = reshape(a, as_)
     if not b.flags.contiguous:
         b = reshape(b, bs)
+
+    # Equalise the shapes by prepending smaller one with 1s
     as_ = (1,)*max(0, ndb-nda) + as_
     bs = (1,)*max(0, nda-ndb) + bs
-    nd = max(ndb, nda)
-    if 0 in as_ or 0 in bs:
-        result = zeros(_nx.multiply(as_, bs))
-    else:
-        result = outer(a, b).reshape(as_+bs)
-        axis = nd-1
-        for _ in range(nd):
-            result = concatenate(result, axis=axis)
+
+    # Compute the product
+    result = a.reshape(a.size, 1) * b.reshape(1, b.size)
+
+    # Reshape back
+    result = result.reshape(as_+bs)
+    transposer = _nx.arange(nd*2).reshape([2,nd]).transpose().reshape(nd*2)
+    result = result.transpose(transposer)
+    result = result.reshape(_nx.multiply(as_, bs))
+
     wrapper = get_array_prepare(a, b)
     if wrapper is not None:
         result = wrapper(result)
