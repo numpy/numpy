@@ -2,7 +2,7 @@ from collections.abc import Sequence
 from typing import TypeVar, overload, Any, SupportsIndex
 
 from numpy import generic
-from numpy.typing import ArrayLike, NDArray, _ArrayLike
+from numpy._typing import ArrayLike, NDArray, _ArrayLike
 
 _SCT = TypeVar("_SCT", bound=generic)
 _ArrayType = TypeVar("_ArrayType", bound=NDArray[Any])

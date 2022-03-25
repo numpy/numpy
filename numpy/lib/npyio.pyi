@@ -26,7 +26,7 @@ from numpy import (
 )
 
 from numpy.ma.mrecords import MaskedRecords
-from numpy.typing import (
+from numpy._typing import (
     ArrayLike,
     DTypeLike,
     NDArray,

@@ -37,7 +37,7 @@ from numpy import (
     void,
 )
 
-from numpy.typing import (
+from numpy._typing import (
     ArrayLike,
     NDArray,
     _ArrayLike,

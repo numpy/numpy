@@ -1,9 +1,10 @@
 from typing import Any
+
 import numpy as np
-import numpy.typing as npt
+from numpy._typing import _128Bit
 
 # Can't directly import `np.float128` as it is not available on all platforms
-f16: np.floating[npt._128Bit]
+f16: np.floating[_128Bit]
 
 c16 = np.complex128()
 f8 = np.float64()

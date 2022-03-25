@@ -46,7 +46,7 @@ from numpy.core._type_aliases import (
     sctypes as sctypes,
 )
 
-from numpy.typing import DTypeLike, ArrayLike, _DTypeLike
+from numpy._typing import DTypeLike, ArrayLike, _DTypeLike
 
 _T = TypeVar("_T")
 _SCT = TypeVar("_SCT", bound=generic)

@@ -8,7 +8,7 @@ from typing import (
 
 from numpy import generic
 
-from numpy.typing import (
+from numpy._typing import (
     ArrayLike,
     NDArray,
     _ArrayLikeInt,

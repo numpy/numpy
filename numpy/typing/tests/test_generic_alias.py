@@ -9,7 +9,7 @@ from typing import TypeVar, Any, Union, Callable
 
 import pytest
 import numpy as np
-from numpy.typing._generic_alias import _GenericAlias
+from numpy._typing._generic_alias import _GenericAlias
 
 ScalarType = TypeVar("ScalarType", bound=np.generic, covariant=True)
 T1 = TypeVar("T1")
@@ -38,7 +38,7 @@ def _get_subclass_mro(base: type) -> tuple[type, ...]:
 
 
 class TestGenericAlias:
-    """Tests for `numpy.typing._generic_alias._GenericAlias`."""
+    """Tests for `numpy._typing._generic_alias._GenericAlias`."""
 
     @pytest.mark.parametrize("name,func", [
         ("__init__", lambda n: n),

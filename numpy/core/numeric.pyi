@@ -27,7 +27,7 @@ from numpy import (
     _OrderCF,
 )
 
-from numpy.typing import (
+from numpy._typing import (
     ArrayLike,
     NDArray,
     DTypeLike,

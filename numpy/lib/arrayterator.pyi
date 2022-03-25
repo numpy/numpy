@@ -7,7 +7,7 @@ from typing import (
 )
 
 from numpy import ndarray, dtype, generic
-from numpy.typing import DTypeLike
+from numpy._typing import DTypeLike
 
 # TODO: Set a shape bound once we've got proper shape support
 _Shape = TypeVar("_Shape", bound=Any)

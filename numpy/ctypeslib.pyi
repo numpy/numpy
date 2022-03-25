@@ -38,7 +38,7 @@ from numpy import (
 )
 from numpy.core._internal import _ctypes
 from numpy.core.multiarray import flagsobj
-from numpy.typing import (
+from numpy._typing import (
     # Arrays
     NDArray,
     _ArrayLike,

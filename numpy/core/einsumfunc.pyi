@@ -12,7 +12,7 @@ from numpy import (
     number,
     _OrderKACF,
 )
-from numpy.typing import (
+from numpy._typing import (
     _ArrayLikeBool_co,
     _ArrayLikeUInt_co,
     _ArrayLikeInt_co,

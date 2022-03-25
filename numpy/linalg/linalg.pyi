@@ -19,7 +19,7 @@ from numpy import (
 
 from numpy.linalg import LinAlgError as LinAlgError
 
-from numpy.typing import (
+from numpy._typing import (
     NDArray,
     ArrayLike,
     _ArrayLikeInt_co,

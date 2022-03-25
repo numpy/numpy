@@ -22,7 +22,7 @@ from numpy import (
     _OrderCF,
 )
 
-from numpy.typing import (
+from numpy._typing import (
     DTypeLike,
     _DTypeLike,
     ArrayLike,

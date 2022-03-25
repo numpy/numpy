@@ -36,7 +36,7 @@ class _NestedSequence(Protocol[_T_co]):
 
         >>> from typing import TYPE_CHECKING
         >>> import numpy as np
-        >>> from numpy.typing import _NestedSequnce
+        >>> from numpy._typing import _NestedSequnce
 
         >>> def get_dtype(seq: _NestedSequnce[float]) -> np.dtype[np.float64]:
         ...     return np.asarray(seq).dtype
@@ -49,10 +49,10 @@ class _NestedSequence(Protocol[_T_co]):
         >>> if TYPE_CHECKING:
         ...     reveal_locals()
         ...     # note: Revealed local types are:
-        ...     # note:     a: numpy.dtype[numpy.floating[numpy.typing._64Bit]]
-        ...     # note:     b: numpy.dtype[numpy.floating[numpy.typing._64Bit]]
-        ...     # note:     c: numpy.dtype[numpy.floating[numpy.typing._64Bit]]
-        ...     # note:     d: numpy.dtype[numpy.floating[numpy.typing._64Bit]]
+        ...     # note:     a: numpy.dtype[numpy.floating[numpy._typing._64Bit]]
+        ...     # note:     b: numpy.dtype[numpy.floating[numpy._typing._64Bit]]
+        ...     # note:     c: numpy.dtype[numpy.floating[numpy._typing._64Bit]]
+        ...     # note:     d: numpy.dtype[numpy.floating[numpy._typing._64Bit]]
 
     """
 
