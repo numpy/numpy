@@ -1163,7 +1163,7 @@ def kron(a, b):
 
     # Reshape back
     result = result.reshape(as_+bs)
-    transposer = _nx.arange(nd*2).reshape([2,nd]).transpose().reshape(nd*2)
+    transposer = _nx.arange(nd*2).reshape([2, nd]).transpose().reshape(nd*2)
     result = result.transpose(transposer)
     result = result.reshape(_nx.multiply(as_, bs))
 

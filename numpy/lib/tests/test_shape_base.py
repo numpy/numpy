@@ -679,7 +679,8 @@ class TestKron:
         expected_shape = np.multiply(normalised_shape_a, normalised_shape_b)
 
         k = np.kron(a, b)
-        assert np.array_equal(k.shape, expected_shape), "Unexpected shape from kron"
+        assert np.array_equal(
+                k.shape, expected_shape), "Unexpected shape from kron"
 
 
 class TestTile:
