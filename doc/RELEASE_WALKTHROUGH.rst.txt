@@ -126,8 +126,8 @@ source releases in the latter. ::
     $ paver sdist  # sdist will do a git clean -xdfq, so we omit that
 
 
-Build wheels
-------------
+Build wheels via MacPython/numpy-wheels
+---------------------------------------
 
 Trigger the wheels build by pointing the numpy-wheels repository at this
 commit. This can take up to an hour. The numpy-wheels repository is cloned from
@@ -162,6 +162,11 @@ uploaded to the staging repository before proceeding.
 Note that sometimes builds, like tests, fail for unrelated reasons and you will
 need to rerun them. You will need to be logged in under 'numpy' to do this
 on azure.
+
+Build wheels via cibuildwheel
+-----------------------------
+Tagging the build at the beginning of this process will trigger a wheel build
+via cibuildwheel and upload wheels and an sdist to the staging area.
 
 Download wheels
 ---------------
