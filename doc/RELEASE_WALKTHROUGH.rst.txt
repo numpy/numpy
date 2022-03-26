@@ -166,7 +166,19 @@ on azure.
 Build wheels via cibuildwheel
 -----------------------------
 Tagging the build at the beginning of this process will trigger a wheel build
-via cibuildwheel and upload wheels and an sdist to the staging area.
+via cibuildwheel and upload wheels and an sdist to the staging area. The CI run
+on github actions (for all x86-based and macOS arm64 wheels) takes about 1 1/4
+hours. The CI run on travis (for aarch64) takes less time. 
+
+If you wish to manually trigger a wheel build, you can do so:
+
+- On github actions -> `Wheel builder`_ there is a "Run workflow" button, click
+  on it and choose the tag to build
+- On travis_ there is a "More Options" button, click on it and choose a branch
+  to build. There does not appear to be an option to build a tag.
+
+.. _`Wheel builder`: https://github.com/numpy/numpy/actions/workflows/wheels.yml
+.. _travis : https://app.travis-ci.com/github/numpy/numpy
 
 Download wheels
 ---------------
