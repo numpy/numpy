@@ -1159,11 +1159,13 @@ def kron(a, b):
     bs = (1,)*max(0, nda-ndb) + bs
 
     # Compute the product
-    result = a.reshape(a.size, 1) * b.reshape(1, b.size)
+    a_arr = _nx.asarray(a).reshape(a.size, 1)
+    b_arr = _nx.asarray(b).reshape(1, b.size)
+    result = a_arr * b_arr
 
     # Reshape back
     result = result.reshape(as_+bs)
-    transposer = _nx.arange(nd*2).reshape([2, nd]).transpose().reshape(nd*2)
+    transposer = _nx.arange(nd*2).reshape([2, nd]).ravel(order='f')
     result = result.transpose(transposer)
     result = result.reshape(_nx.multiply(as_, bs))
 
