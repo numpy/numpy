@@ -19,8 +19,8 @@ of this chapter we assume that you have set up your git repo as described in
 :ref:`using-git`.
 
 .. note:: If you are having trouble building NumPy from source or setting up
-your local development environment, you can try 
-to :ref:`build NumPy with Gitpod <development-gitpod>`.
+   your local development environment, you can try
+   to :ref:`build NumPy with Gitpod <development-gitpod>`.
 
 .. _testing-builds:
 
