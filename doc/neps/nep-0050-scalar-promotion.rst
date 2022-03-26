@@ -120,6 +120,85 @@ following hold::
     True + np.uint8(2) == np.uint8(3)
 
 
+Table comparing new and old behaviour
+-------------------------------------
+
+The following table lists relevant changes and unchanged behaviours.
+Please see the `Old implementation`_ for a detailed explenation of the rules
+that lead to the "Old results", and the following sections for the rules
+explaining the new
+Please see the backwards compatibility section for a discussion of how these
+changes are likely to impact users in practice.
+
+Note the important distinction between a 0-D array like ``array(2)`` and
+arrays that are not 0-D, such as ``array([2])``.
+
+.. list-table:: Table of changed behaviours
+   :widths: 20 12 12
+   :header-rows: 1
+
+   * - Expression
+     - Old result
+     - New result
+   * - ``uint8(1) + 2``
+     - ``int64(3)``
+     - ``uint8(3)`` [T1]_
+   * - ``array([1], uint8) + int64(1)`` or
+
+       ``array([1], uint8) + array(1, int64)``
+     - ``array([2], unit8)``
+     - ``array([2], int64)`` [T2]_
+   * - ``array([1.], float32) + float64(1.)`` or
+
+       ``array([1.], float32) + array(1., float64)``
+     - ``array([2.], float32)``
+     - ``array([2.], float64)``
+   * - ``array([1], uint8) + 1``
+     - ``array([2], uint8)``
+     - *unchanged*
+   * - ``array([1], uint8) + 200``
+     - ``array([201], np.uint8)``
+     - *unchanged*
+   * - ``array([100], uint8) + 200``
+     - ``array([ 44], uint8)``
+     - *unchanged* [T3]_
+   * - ``array([1], uint8) + 300``
+     - ``array([301], uint16)``
+     - *Exception* [T4]_
+   * - ``uint8(1) + 300``
+     - ``int64(301)``
+     - *Exception* [T5]_
+   * - ``float32(1) + 3e100``
+     - ``float64(3e100)``
+     - ``float32(Inf)`` *and* ``OverflowWarning`` [T6]_
+   * - ``array([0.1], float32) == 0.1``
+     - ``array([False])``
+     - *unchanged*
+   * - ``array([0.1], float32) == float64(0.1)``
+     - ``array([ True])``
+     - ``array([False])``  [T7]_
+   * - ``array([1.], float32) + 3``
+     - ``array([4.], float32)``
+     - *unchanged*
+   * - ``array([1.], float32) + int64(3)``
+     - ``array([4.], float32)``
+     - ``array([4.], float64)``  [T8]_
+
+.. [T1] New behaviour honours the dtype of the ``uint8`` scalar.
+.. [T2] Current NumPy ignores the precision of 0-D arrays or NumPy scalars
+        when combined with arrays.
+.. [T3] Current NumPy ignores the precision of 0-D arrays or NumPy scalars
+        when combined with arrays.
+.. [T4] Old behaviour uses ``uint16`` because ``300`` does not fit ``uint8``,
+        new behaviour raises an error for the same reason.
+.. [T5] ``300`` cannot be converted to ``uint8``.
+.. [T6] ``np.float32(3e100)`` overflows to infinity.
+.. [T7] ``0.1`` loses precision when cast to ``float32``, but old behaviour
+        casts the ``float64(0.1)`` and then matches.
+.. [T8] NumPy promotes ``float32`` and ``int64`` to ``float64``.  The old
+        behaviour ignored the ``int64`` here.
+
+
 Motivation and Scope
 ====================
 
@@ -337,6 +416,52 @@ Detailed description
 The following provides some additional details on the current "value based"
 promotion logic, and then on the "weak scalar" promotion and how it is handled
 internally.
+
+.. _Old implementation:
+
+Old implementation of "values based" promotion
+----------------------------------------------
+
+This section reviews how the current value-based logic works in practice,
+please see the following section for examples on how it can be useful.
+
+When NumPy sees a "scalar" value, which can be a Python int, float, complex,
+a NumPy scalar or an array::
+
+    1000  # Python scalar
+    int32(1000)  # NumPy scalar
+    np.array(1000, dtype=int64)  # zero dimensional
+
+Or the float/complex equivalents, NumPy will ignore the precision of the dtype
+and find the smallest possible dtype that can hold the value.
+That is, it will try the following dtypes:
+
+* Integral: ``uint8``, ``int8``, ``uint16``, ``int16``, ``uint32``, ``int32``,
+  ``uint64``, ``int64``.
+* Floating: ``float16``, ``float32``, ``float64``, ``longdouble``.
+* Complex: ``complex64``, ``complex128``, ``clongdouble``.
+
+Note that e.g. for the integer value of ``10``, the smallest dtype can be
+*either* ``uint8`` or ``int8``.
+
+NumPy never applied this rule when all arguments are scalar values:
+
+    np.int64(1) + np.int32(2) == np.int64(3)
+
+For integers, whether a value fits is decided precisely by whether it can
+be represented by the dtype.
+For float and complex, the a dtype is considered sufficient if:
+
+* ``float16``: ``-65000 < value < 65000``  (or NaN/Inf)
+* ``float32``: ``-3.4e38 < value < 3.4e38``  (or NaN/Inf)
+* ``float64``: ``-1.7e308 < value < 1.7e308``  (or Nan/Inf)
+* ``longdouble``:  (largest range, so no limit)
+
+for complex these bounds were applied to the real and imaginary component.
+These values roughly correspond to ``np.finfo(np.float32).max``.
+(NumPy did never force the use of ``float64`` for a value of
+``float32(3.402e38)`` though, but it will for a Python value of ``3.402e38``.)
+
 
 State of the current "value based" promotion
 ---------------------------------------------
