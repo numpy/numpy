@@ -185,7 +185,7 @@ def leg2poly(c):
     >>> p = c.convert(kind=P.Polynomial)
     >>> p
     Polynomial([-1. , -3.5,  3. ,  7.5], domain=[-1.,  1.], window=[-1.,  1.])
-    >>> P.leg2poly(range(4))
+    >>> P.legendre.leg2poly(range(4))
     array([-1. , -3.5,  3. ,  7.5])
 
 
