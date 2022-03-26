@@ -125,8 +125,10 @@ This approach to the interface consists of the object having an
        **Default**: ``[('', typestr)]``
 
    **data** (optional)
-       A 2-tuple whose first argument is an integer (a long integer
-       if necessary) that points to the data-area storing the array
+       A 2-tuple whose first argument is a signed integer (capable of
+       holding a pointer to ``void`` such as the C/C++ type
+       `intptr_t <https://en.cppreference.com/w/cpp/types/integer>`__)
+       that points to the data-area storing the array
        contents.  This pointer must point to the first element of
        data (in other words any offset is always ignored in this
        case). The second entry in the tuple is a read-only flag (true
