@@ -57,7 +57,7 @@ This NEP proposes to refactor the behaviour around two guiding principles:
 We propose to remove all value-based logic and add special handling for
 Python scalars to preserve some convenient behaviors.
 Python scalars will be considered "weakly" typed.
-When a NumPy array/scalar is combined with a Python integer, it will
+When a NumPy array/scalar is combined with a Python scalar, it will
 be converted to the NumPy dtype, such that::
 
     np.array([1, 2, 3], dtype=np.uint8) + 1  # returns a uint8 array
@@ -78,8 +78,8 @@ Promotion always occurs along the green lines:
 from left to right within their kind and to a higher kind only when
 necessary.
 The result kind is always the largest kind of the inputs.
-NumPy has one notable exception because it allows promotion of both ``int64``
-and ``uint64`` to ``float64``.
+Note that NumPy considers ``float32`` to have a lower precision than ``int32``
+and ``uint32``, but makes an exception for ``float64`` (and higher).
 
 The Python scalars are inserted at the very left of each "kind" and the
 Python integer does not distinguish signed and unsigned.
@@ -206,7 +206,7 @@ The motivation for changing the behaviour with respect to inspecting the value
 of Python scalars and NumPy scalars/0-D arrays is, again, two-fold:
 
 1. The special handling of NumPy scalars/0-D arrays as well as the value
-   inspection can be very surprising to users.
+   inspection can be very surprising to users,
 2. The value-inspection logic is much harder to explain and implement.
    It is further harder to make it available to user defined DTypes through
    :ref:`NEP 42 <NEP42>`.
