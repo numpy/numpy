@@ -2689,7 +2689,7 @@ def analyzevars(block):
             n_checks = []
             n_is_input = l_or(isintent_in, isintent_inout,
                               isintent_inplace)(vars[n])
-            if 'dimension' in vars[n]:  # n is array
+            if isarray(vars[n]):  # n is array
                 for i, d in enumerate(vars[n]['dimension']):
                     coeffs_and_deps = dimension_exprs.get(d)
                     if coeffs_and_deps is None:
@@ -2707,6 +2707,11 @@ def analyzevars(block):
                                 # - n depends on
                                 # - has user-defined initialization expression
                                 # - has user-defined dependencies
+                                continue
+                            # BUG: no checks for dimensions depending on
+                            # more than one variable
+                            # TODO: Reduce the restrictions on the caller
+                            if len(coeffs_and_deps.keys()) > 1:
                                 continue
                             if solver is not None:
                                 # v can be solved from d, hence, we
