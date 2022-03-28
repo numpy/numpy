@@ -177,6 +177,8 @@ class Array:
         integer that is too large to fit in a NumPy integer dtype, or
         TypeError when the scalar type is incompatible with the dtype of self.
         """
+        # Note: Only Python scalar types that match the array dtype are
+        # allowed.
         if isinstance(scalar, bool):
             if self.dtype not in _boolean_dtypes:
                 raise TypeError(
@@ -194,6 +196,9 @@ class Array:
                 )
         else:
             raise TypeError("'scalar' must be a Python scalar")
+
+        # Note: scalars are unconditionally cast to the same dtype as the
+        # array.
 
         # Note: the spec only specifies integer-dtype/int promotion
         # behavior for integers within the bounds of the integer dtype.
