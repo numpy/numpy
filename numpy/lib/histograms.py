@@ -359,14 +359,15 @@ def _unsigned_subtract(a, b):
 
 def _get_bin_edges(a, bins, range, weights):
     """
-    Computes the bins used internally by `histogram`.
+    Computes the bins used internally by `histogram` and `histogramdd`.
 
     Parameters
     ==========
     a : ndarray
         Ravelled data array
     bins, range
-        Forwarded arguments from `histogram`.
+        Forwarded arguments from `histogram` or passed from `histogramdd` for
+        current dimension.
     weights : ndarray, optional
         Ravelled weights array, or None
 
@@ -960,13 +961,17 @@ def histogramdd(sample, bins=10, range=None, normed=None, weights=None,
 
         The first form should be preferred.
 
-    bins : sequence or int, optional
+    bins : sequence or int or str, optional
         The bin specification:
 
         * A sequence of arrays describing the monotonically increasing bin
           edges along each dimension.
         * The number of bins for each dimension (nx, ny, ... =bins)
         * The number of bins for all dimensions (nx=ny=...=bins).
+        * A sequence of strings defining the method to calculate the optimal
+          bin width for each dimension as defined by `histogram_bin_edges`.
+        * A string defining the method to calculate the optimal bin width for
+          all dimensions as defined by `histogram_bin_edges`.
 
     range : sequence, optional
         A sequence of length D, each an optional (lower, upper) tuple giving
@@ -1025,6 +1030,9 @@ def histogramdd(sample, bins=10, range=None, normed=None, weights=None,
     if weights is not None:
         weights = np.asarray(weights)
 
+    if isinstance(bins, str):
+        bins = D*[bins]
+
     try:
         M = len(bins)
         if M != D:
@@ -1043,30 +1051,11 @@ def histogramdd(sample, bins=10, range=None, normed=None, weights=None,
 
     # Create edge arrays
     for i in _range(D):
-        if np.ndim(bins[i]) == 0:
-            if bins[i] < 1:
-                raise ValueError(
-                    '`bins[{}]` must be positive, when an integer'.format(i))
-            smin, smax = _get_outer_edges(sample[:,i], range[i])
-            try:
-                n = operator.index(bins[i])
-            
-            except TypeError as e:
-                raise TypeError(
-                	"`bins[{}]` must be an integer, when a scalar".format(i)
-                ) from e
-                
-            edges[i] = np.linspace(smin, smax, n + 1)    
-        elif np.ndim(bins[i]) == 1:
-            edges[i] = np.asarray(bins[i])
-            if np.any(edges[i][:-1] > edges[i][1:]):
-                raise ValueError(
-                    '`bins[{}]` must be monotonically increasing, when an array'
-                    .format(i))
-        else:
+        if not isinstance(bins[i], str) and np.ndim(
+                bins[i]) == 0 and bins[i] < 1:
             raise ValueError(
-                '`bins[{}]` must be a scalar or 1d array'.format(i))
-
+                '`bins[{}]` must be positive, when an integer'.format(i))
+        edges[i], _ = _get_bin_edges(sample[:, i], bins[i], range[i], weights)
         nbin[i] = len(edges[i]) + 1  # includes an outlier on each end
         dedges[i] = np.diff(edges[i])
 
