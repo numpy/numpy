@@ -703,6 +703,9 @@ Manipulation Functions Differences
      - **Compatible**
      - Unlike ``np.transpose``, the ``axis`` keyword argument to
        ``permute_dims`` is required.
+   * - ``reshape`` function has a ``copy`` keyword argument
+     - **Compatible**
+     - See https://github.com/numpy/numpy/issues/9818.
 
 Set Functions Differences
 -------------------------
