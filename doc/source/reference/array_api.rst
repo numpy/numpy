@@ -1,8 +1,13 @@
 .. _array_api:
 
-*********
-Array API
-*********
+********************************
+Array API Standard Compatibility
+********************************
+
+.. note::
+
+   The ``numpy.array_api`` module is still experimental. See `NEP 47
+   <https://numpy.org/neps/nep-0047-array-api-standard.html>`__.
 
 NumPy includes a reference implementation of the `array API standard
 <https://data-apis.org/array-api/latest/>`__ in ``numpy.array_api``. `NEP 47
@@ -717,7 +722,7 @@ Set Functions Differences
      -
    * - ``unique_all`` and ``unique_indices`` return indices with the same
        shape as ``x``.
-     - **Breaking**
+     - **Compatible**
      - See https://github.com/numpy/numpy/issues/20638.
 
 .. _array_api-set-functions-differences:
