@@ -89,7 +89,6 @@ def diagonal(x: Array, /, *, offset: int = 0) -> Array:
     return Array._new(np.diagonal(x._array, offset=offset, axis1=-2, axis2=-1))
 
 
-# Note: the keyword argument name upper is different from np.linalg.eigh
 def eigh(x: Array, /) -> EighResult:
     """
     Array API compatible wrapper for :py:func:`np.linalg.eigh <numpy.linalg.eigh>`.
@@ -106,7 +105,6 @@ def eigh(x: Array, /) -> EighResult:
     return EighResult(*map(Array._new, np.linalg.eigh(x._array)))
 
 
-# Note: the keyword argument name upper is different from np.linalg.eigvalsh
 def eigvalsh(x: Array, /) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.linalg.eigvalsh <numpy.linalg.eigvalsh>`.
