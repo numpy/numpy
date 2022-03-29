@@ -265,6 +265,35 @@ GitHub application page.
 .. image:: ./gitpod-imgs/gitpod-edit-permissions-repo.png
    :alt: Gitpod integrations - edit GH repository permissions screenshot
 
+
+Generic debugging/testing steps for gitpod environment. 
+******************************************************************************************
+
+A user might use the below steps one after another to debug/test Gitpod 
+environment for its correctness:
+
+#. Make sure that the Pre-Build is completed successfully without any errors. 
+   By referring to the commands used to build a gitpod container in 
+   `gitpod.yml <https://github.com/numpy/numpy/blob/main/.gitpod.yml>`_, it is 
+   possible to pinpoint which command caused the build to fail. For example -
+   
+   .. image:: ./gitpod-imgs/example_error_log.png
+      :alt: Gitpod integrations - Example error log
+
+   
+   In the above log file, when compared to ``gitpod.yml``. Observe that the 
+   error message came due to the command run after the log “Building Docs”. 
+   Hence “make html” is the command that failed. Knowing which command caused 
+   the build to break failed is the first step to debugging.
+#. Verify that the dependencies installed match the ones listed in 
+   ``environment.yml``. Use command``conda list`` to list all packages 
+   and their versions.
+#. Verify if it is not one of the installed dependencies causing the build to break. 
+   Dependencies causing build breakage are more prevalent in those whose versions 
+   are not pinned with ``==`` in ``environment.yml`` as no version specified means 
+   conda will grab whatever the latest version is available, which could be unstable 
+   sometimes.  
+
 .. _Gitpod: https://www.gitpod.io/
 .. _NumPy repository on GitHub: https://github.com/NumPy/NumPy
 .. _create your own fork: https://help.github.com/en/articles/fork-a-repo
