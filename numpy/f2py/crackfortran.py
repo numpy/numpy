@@ -146,6 +146,7 @@ import re
 import os
 import copy
 import platform
+import itertools
 
 from . import __version__
 
@@ -2708,11 +2709,20 @@ def analyzevars(block):
                                 # - has user-defined initialization expression
                                 # - has user-defined dependencies
                                 continue
-                            # BUG: no checks for dimensions depending on
-                            # more than one variable
                             # TODO: Reduce the restrictions on the caller
                             if len(coeffs_and_deps.keys()) > 1:
-                                continue
+                                # TODO: Convert to union-find for general cycles
+                                # TODO: Break cycles meaningfully instead of skipping
+                                # TODO: Move cycle logic into aux
+                                cyclic_dims = []
+                                for dim in vars[n]['dimension']:
+                                    cdep = dimension_exprs.get(dim)
+                                    dep_list = [deps for func,deps in
+                                                (val for val in cdep.values())]
+                                    all_deps = [x for x in itertools.chain.from_iterable(dep_list)]
+                                    cyclic_dims = [key for key in cdep.keys() if key in all_deps]
+                                if v in cyclic_dims:
+                                    continue
                             if solver is not None:
                                 # v can be solved from d, hence, we
                                 # make it an optional argument with
