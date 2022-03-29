@@ -712,7 +712,7 @@ def histogram(a, bins=10, range=None, normed=None, weights=None,
         results for unequal bin widths. It should not be used.
 
         .. versionchanged:: 1.15.0
-            DeprecationWarnings are actually emitted.
+            DeprecationWarnings are actually omitted.
 
     weights : array_like, optional
         An array of weights, of the same shape as `a`.  Each value in
