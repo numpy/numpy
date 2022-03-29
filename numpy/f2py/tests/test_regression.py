@@ -34,7 +34,7 @@ class TestNegativeBounds(util.F2PyTest):
         # Calculate the upper bound,
         # Keeping the 1 index in mind
         def ubound(xl, xh):
-            return abs(xl) + abs(xh) + 1
+            return xh - xl + 1
         rval = self.module.foo(is_=xlow, ie_=xhigh,
                         arr=xvec[:ubound(xlow, xhigh)])
         expval = np.arange(11, dtype = np.float32)

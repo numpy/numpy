@@ -146,7 +146,6 @@ import re
 import os
 import copy
 import platform
-import itertools
 
 from . import __version__
 
