@@ -29,7 +29,7 @@ dependencies:
   - pandas
   - matplotlib
   - pydata-sphinx-theme=0.7.2
-  - breathe
+  - breathe!=4.33.0
   # For linting
   - pycodestyle=2.7.0
   - gitpython
