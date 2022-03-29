@@ -1142,25 +1142,33 @@ def kron(a, b):
     b = asanyarray(b)
     a = array(a, copy=False, subok=True, ndmin=b.ndim)
     ndb, nda = b.ndim, a.ndim
+    nd = max(ndb, nda)
+
     if (nda == 0 or ndb == 0):
         return _nx.multiply(a, b)
+
     as_ = a.shape
     bs = b.shape
     if not a.flags.contiguous:
         a = reshape(a, as_)
     if not b.flags.contiguous:
         b = reshape(b, bs)
-    nd = ndb
-    if (ndb != nda):
-        if (ndb > nda):
-            as_ = (1,)*(ndb-nda) + as_
-        else:
-            bs = (1,)*(nda-ndb) + bs
-            nd = nda
-    result = outer(a, b).reshape(as_+bs)
-    axis = nd-1
-    for _ in range(nd):
-        result = concatenate(result, axis=axis)
+
+    # Equalise the shapes by prepending smaller one with 1s
+    as_ = (1,)*max(0, ndb-nda) + as_
+    bs = (1,)*max(0, nda-ndb) + bs
+
+    # Compute the product
+    a_arr = _nx.asarray(a).reshape(a.size, 1)
+    b_arr = _nx.asarray(b).reshape(1, b.size)
+    result = a_arr * b_arr
+
+    # Reshape back
+    result = result.reshape(as_+bs)
+    transposer = _nx.arange(nd*2).reshape([2, nd]).ravel(order='f')
+    result = result.transpose(transposer)
+    result = result.reshape(_nx.multiply(as_, bs))
+
     wrapper = get_array_prepare(a, b)
     if wrapper is not None:
         result = wrapper(result)

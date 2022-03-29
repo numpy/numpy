@@ -110,8 +110,8 @@ def masked_all(shape, dtype=float):
 
     Parameters
     ----------
-    shape : tuple
-        Shape of the required MaskedArray.
+    shape : int or tuple of ints
+        Shape of the required MaskedArray, e.g., ``(2, 3)`` or ``2``.
     dtype : dtype, optional
         Data type of the output.
 
