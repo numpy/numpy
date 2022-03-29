@@ -233,7 +233,7 @@ independently of values or shapes.
    * - ``__pow__`` and ``__rpow__`` do not do value-based casting for 0-D
        arrays.
      - **Breaking**
-     - For example, ``np.array(0., dtype=float32)*np.array(0.,
+     - For example, ``np.array(0., dtype=float32)**np.array(0.,
        dtype=float64)`` is ``float32``. Note that this is value-based casting
        on 0-D arrays, not scalars.
    * - No cross-kind casting.
@@ -534,11 +534,13 @@ Array Object Differences
      - Type
      - Notes
    * - No array scalars
-     - ???
-     - The spec does not have array scalars, only 0-D arrays. It is not clear
-       if NumPy's scalars deviate from the spec 0-D array behavior in any ways
-       other than the ones outlined in
-       :ref:`array_api-type-promotion-differences`.
+     - **Strictness**
+     - The spec does not have array scalars, only 0-D arrays. However, other
+       than the promotion differences outlined in
+       :ref:`array_api-type-promotion-differences`, scalars duck type as 0-D
+       arrays for the purposes of the spec. The are immutable, but the spec
+       `does not require mutability
+       <https://data-apis.org/array-api/latest/design_topics/copies_views_and_mutation.html>`__.
    * - ``bool()``, ``int()``, and ``float()`` only work on 0-D arrays.
      - **Strictness**
      - See https://github.com/numpy/numpy/issues/10404.
@@ -627,7 +629,8 @@ Linear Algebra Differences
      -
    * - ``diagonal`` operates on the last two axes.
      - **Breaking**
-     -
+     - Strictly speaking this can be **compatible** because ``diagonal`` is
+       moved to the ``linalg`` namespace.
    * - ``eigh``, ``qr``, ``slogdet`` and ``svd`` return a named tuple.
      - **Compatible**
      - The corresponding ``numpy`` functions return a ``tuple``, with the
@@ -637,7 +640,7 @@ Linear Algebra Differences
      - The ``norm`` function has been omitted from the array API and split
        into ``matrix_norm`` for matrix norms and ``vector_norm`` for vector
        norms. Note that ``vector_norm`` supports any number of axes, whereas
-       ``np.norm`` only supports a single axis for vector norms.
+       ``np.linalg.norm`` only supports a single axis for vector norms.
    * - ``matrix_rank`` has an ``rtol`` keyword argument instead of ``tol``.
      - **Compatible**
      - In the array API, ``rtol`` filters singular values smaller than
@@ -698,7 +701,7 @@ Manipulation Functions Differences
      - No cross-kind casting. No value-based casting on scalars.
    * - ``stack`` has different default casting rules from ``np.stack``
      - **Strictness**
-     - No cross-kind casting. No value-based casting on scalars.
+     - No cross-kind casting.
    * - New function ``permute_dims``.
      - **Compatible**
      - Unlike ``np.transpose``, the ``axis`` keyword argument to
