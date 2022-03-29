@@ -2701,6 +2701,13 @@ def analyzevars(block):
                         # may define variables used in dimension
                         # specifications.
                         for v, (solver, deps) in coeffs_and_deps.items():
+                            def compute_deps(v, deps):
+                                for v1 in coeffs_and_deps.get(v, [None, []])[1]:
+                                    if v1 not in deps:
+                                        deps.add(v1)
+                                        compute_deps(v1, deps)
+                            all_deps = set()
+                            compute_deps(v, all_deps)
                             if ((v in n_deps
                                  or '=' in vars[v]
                                  or 'depend' in vars[v])):
@@ -2709,21 +2716,7 @@ def analyzevars(block):
                                 # - has user-defined initialization expression
                                 # - has user-defined dependencies
                                 continue
-                            # TODO: Reduce the restrictions on the caller
-                            if len(coeffs_and_deps.keys()) > 1:
-                                # TODO: Convert to union-find for general cycles
-                                # TODO: Break cycles meaningfully instead of skipping
-                                # TODO: Move cycle logic into aux
-                                cyclic_dims = []
-                                for dim in vars[n]['dimension']:
-                                    cdep = dimension_exprs.get(dim)
-                                    dep_list = [deps for func,deps in
-                                                (val for val in cdep.values())]
-                                    all_deps = [x for x in itertools.chain.from_iterable(dep_list)]
-                                    cyclic_dims = [key for key in cdep.keys() if key in all_deps]
-                                if v in cyclic_dims:
-                                    continue
-                            if solver is not None:
+                            if solver is not None and v not in all_deps:
                                 # v can be solved from d, hence, we
                                 # make it an optional argument with
                                 # initialization expression:
