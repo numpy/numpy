@@ -29,8 +29,7 @@ dependencies:
   - pandas
   - matplotlib
   - pydata-sphinx-theme=0.7.2
-  # NOTE: breathe 4.33.0 collides with sphinx.ext.graphviz
-  - breathe!=4.33.0
+  - breathe
   # For linting
   - pycodestyle=2.7.0
   - gitpython
