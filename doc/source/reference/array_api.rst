@@ -171,17 +171,20 @@ functions to include additional keyword arguments from those required.
      - ``stable``
      - ``kind``
      - The definitions of ``stable`` and ``kind`` differ, as do the default
-       values. See :ref:`array_api-set-functions-differences`.
+       values. The change of the default value makes this **breaking**. See
+       :ref:`array_api-set-functions-differences`.
    * - ``matrix_rank``
      - ``rtol``
      - ``tol``
-     - The definitions of ``rtol`` and ``tol`` differ. See
+     - The definitions of ``rtol`` and ``tol`` differ, as do the default
+       values. The change of the default value makes this **breaking**. See
        :ref:`array_api-linear-algebra-differences`.
    * - ``pinv``
      - ``rtol``
      - ``rcond``
      - The definitions of ``rtol`` and ``rcond`` are the same, but their
-       default values differ. See :ref:`array_api-linear-algebra-differences`.
+       default values differ, making this **breaking**. See
+       :ref:`array_api-linear-algebra-differences`.
    * - ``std`` and ``var``
      - ``correction``
      - ``ddof``
@@ -642,13 +645,14 @@ Linear Algebra Differences
        norms. Note that ``vector_norm`` supports any number of axes, whereas
        ``np.linalg.norm`` only supports a single axis for vector norms.
    * - ``matrix_rank`` has an ``rtol`` keyword argument instead of ``tol``.
-     - **Compatible**
+     - **Breaking**
      - In the array API, ``rtol`` filters singular values smaller than
        ``rtol * largest_singular_value``. In ``np.linalg.matrix_rank``,
        ``tol`` filters singular values smaller than ``tol``. Furthermore, the
        default value for ``rtol`` is ``max(M, N) * eps``, whereas the default
        value of ``tol`` in ``np.linalg.matrix_rank`` is ``S.max() *
-       max(M, N) * eps``, where ``S`` is the singular values of the input.
+       max(M, N) * eps``, where ``S`` is the singular values of the input. The
+       new flag name is compatible but the default change is breaking
    * - ``matrix_rank`` does not support 1-dimensional arrays.
      - **Breaking**
      -
@@ -661,10 +665,11 @@ Linear Algebra Differences
      - **Breaking**
      -
    * - ``pinv`` has an ``rtol`` keyword argument instead of ``rcond``
-     - **Compatible**
+     - **Breaking**
      - The meaning of ``rtol`` and ``rcond`` is the same, but the default
        value for ``rtol`` is ``max(M, N) * eps``, whereas the default value
-       for ``rcond`` is ``1e-15``.
+       for ``rcond`` is ``1e-15``. The new flag name is compatible but the
+       default change is breaking.
    * - ``solve`` only accepts ``x2`` as a vector when it is exactly
        1-dimensional.
      - **Breaking**
@@ -698,7 +703,7 @@ Manipulation Functions Differences
      - See :ref:`array_api-name-changes`.
    * - ``concat`` has different default casting rules from ``np.concatenate``
      - **Strictness**
-     - No cross-kind casting. No value-based casting on scalars.
+     - No cross-kind casting. No value-based casting on scalars (when axis=None).
    * - ``stack`` has different default casting rules from ``np.stack``
      - **Strictness**
      - No cross-kind casting.
@@ -744,12 +749,13 @@ Set Functions Differences
      - Notes
    * - ``argsort`` and ``sort`` have a ``stable`` keyword argument instead of
        ``kind``.
-     - **Compatible**
+     - **Breaking**
      - ``stable`` is a boolean keyword argument, defaulting to ``True``.
        ``kind`` takes a string, defaulting to ``"quicksort"``. ``stable=True``
        is equivalent to ``kind="stable"`` and ``kind=False`` is equivalent to
-       ``kind="quicksort"`` (although any sorting algorithm is allowed by the
-       spec when ``stable=False``).
+       ``kind="quicksort"``, although any sorting algorithm is allowed by the
+       spec when ``stable=False``. The new flag name is compatible but the
+       default change is breaking.
    * - ``argsort`` and ``sort`` have a ``descending`` keyword argument.
      - **Compatible**
      -
