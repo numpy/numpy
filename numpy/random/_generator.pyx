@@ -4571,11 +4571,23 @@ cdef class Generator:
         -------
         None
 
+        .. note::
+            An important distinction between methods ``shuffle``  and ``permuted`` is 
+            how they both treat the ``axis`` parameter which can be found at 
+            :ref:`generator-handling-the-axis-parameter`.
+
+        See Also
+        --------
+        permuted
+        permutation
+
         Examples
         --------
         >>> rng = np.random.default_rng()
         >>> arr = np.arange(10)
         >>> rng.shuffle(arr)
+        >>> arr
+        [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
         >>> arr
         [1 7 5 2 9 4 3 6 0 8] # random
 
@@ -4587,6 +4599,10 @@ cdef class Generator:
                [0, 1, 2]])
 
         >>> arr = np.arange(9).reshape((3, 3))
+        >>> arr
+        array([[0, 1, 2],
+                [3, 4, 5],
+                [6, 7, 8]])
         >>> rng.shuffle(arr, axis=1)
         >>> arr
         array([[2, 0, 1], # random
