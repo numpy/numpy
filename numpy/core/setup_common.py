@@ -1,8 +1,9 @@
 # Code common to build tools
-import sys
-import warnings
 import copy
+import pathlib
+import sys
 import textwrap
+import warnings
 
 from numpy.distutils.misc_util import mingw32
 
@@ -101,6 +102,32 @@ def check_api_version(apiversion, codegen_dir):
         warnings.warn(msg % (apiversion, curapi_hash, apiversion, api_hash,
                              __file__),
                       MismatchCAPIWarning, stacklevel=2)
+
+
+FUNC_CALL_ARGS = {}
+
+def set_sig(sig):
+    prefix, _, args = sig.partition("(")
+    args = args.rpartition(")")[0]
+    funcname = prefix.rpartition(" ")[-1]
+    args = [arg.strip() for arg in args.split(",")]
+    FUNC_CALL_ARGS[funcname] = ", ".join("(%s) 0" % arg for arg in args)
+
+
+for file in [
+    "feature_detection_locale.h",
+    "feature_detection_math.h",
+    "feature_detection_misc.h",
+    "feature_detection_stdio.h",
+]:
+    with open(pathlib.Path(__file__).parent / file) as f:
+        for line in f:
+            if line.startswith("#"):
+                continue
+            if not line.strip():
+                continue
+            set_sig(line)
+
 # Mandatory functions: if not found, fail the build
 MANDATORY_FUNCS = ["sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs",
         "floor", "ceil", "sqrt", "log10", "log", "exp", "asin",
@@ -110,9 +137,11 @@ MANDATORY_FUNCS = ["sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs",
 # replacement implementation. Note that some of these are C99 functions.
 OPTIONAL_STDFUNCS = ["expm1", "log1p", "acosh", "asinh", "atanh",
         "rint", "trunc", "exp2", "log2", "hypot", "atan2", "pow",
-        "copysign", "nextafter", "ftello", "fseeko",
-        "strtoll", "strtoull", "cbrt", "strtold_l", "fallocate",
-        "backtrace", "madvise"]
+        "copysign", "nextafter", "strtoll", "strtoull", "cbrt"]
+
+OPTIONAL_LOCALE_FUNCS = ["strtold_l"]
+OPTIONAL_FILE_FUNCS = ["ftello", "fseeko", "fallocate"]
+OPTIONAL_MISC_FUNCS = ["backtrace", "madvise"]
 
 
 OPTIONAL_HEADERS = [
