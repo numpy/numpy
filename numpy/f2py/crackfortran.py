@@ -2647,7 +2647,7 @@ def analyzevars(block):
             n_checks = []
             n_is_input = l_or(isintent_in, isintent_inout,
                               isintent_inplace)(vars[n])
-            if 'dimension' in vars[n]:  # n is array
+            if isarray(vars[n]):  # n is array
                 for i, d in enumerate(vars[n]['dimension']):
                     coeffs_and_deps = dimension_exprs.get(d)
                     if coeffs_and_deps is None:
@@ -2658,6 +2658,13 @@ def analyzevars(block):
                         # may define variables used in dimension
                         # specifications.
                         for v, (solver, deps) in coeffs_and_deps.items():
+                            def compute_deps(v, deps):
+                                for v1 in coeffs_and_deps.get(v, [None, []])[1]:
+                                    if v1 not in deps:
+                                        deps.add(v1)
+                                        compute_deps(v1, deps)
+                            all_deps = set()
+                            compute_deps(v, all_deps)
                             if ((v in n_deps
                                  or '=' in vars[v]
                                  or 'depend' in vars[v])):
@@ -2666,7 +2673,7 @@ def analyzevars(block):
                                 # - has user-defined initialization expression
                                 # - has user-defined dependecies
                                 continue
-                            if solver is not None:
+                            if solver is not None and v not in all_deps:
                                 # v can be solved from d, hence, we
                                 # make it an optional argument with
                                 # initialization expression:
