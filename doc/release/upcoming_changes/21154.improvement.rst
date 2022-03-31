@@ -1,23 +1,7 @@
-Math C library feature detection now works for wasm
----------------------------------------------------
-The previous feature detection generated C stubs like: 
-
-.. code-block:: C
-
-    void exp(void); // incorrect signature!
-    exp();
-    
-Then checked whether compiling and linking these worked. This generates warnings
-that complain that ``exp`` actually has signature ``double exp(double)`` but would
-otherwise work. However ``wasm-ld`` creates a hard error in this case, so when
-compiling to a wasm target everything is detected as missing.
-
-This is now fixed: we feature detect instead with code like:
-
-.. code-block:: C
-
-    double exp(double); // correct signature!
-    exp((double)0);
-
-which ``wasm-ld`` will link. As a side effect, the feature detection code now
-works without generating linker warnings.
+Math C library feature detection now uses correct signatures
+------------------------------------------------------------
+Compiling is preceded by a detection phase to determine whether the
+underlying libc supports certain math operations. Previously this code
+did not respect the proper signatures. Fixing this enables compilation
+for the ``wasm-ld`` backend (compilation for web assembly) and reduces
+the number of warnings.
