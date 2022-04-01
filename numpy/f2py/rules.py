@@ -403,9 +403,9 @@ rout_rules = [
         'decl': '',
         '_check': ismoduleroutine
     }, {  # Subroutine
-        'functype': 'void',
-        'declfortranroutine': {l_and(l_not(l_or(ismoduleroutine, isintent_c)), l_not(isdummyroutine)): 'extern void #F_FUNC#(#fortranname#,#FORTRANNAME#)(#callprotoargument#);',
-                               l_and(l_not(ismoduleroutine), isintent_c, l_not(isdummyroutine)): 'extern void #fortranname#(#callprotoargument#);',
+        'functype': 'int',
+        'declfortranroutine': {l_and(l_not(l_or(ismoduleroutine, isintent_c)), l_not(isdummyroutine)): 'extern int #F_FUNC#(#fortranname#,#FORTRANNAME#)(#callprotoargument#);',
+                               l_and(l_not(ismoduleroutine), isintent_c, l_not(isdummyroutine)): 'extern int #fortranname#(#callprotoargument#);',
                                ismoduleroutine: '',
                                isdummyroutine: ''
                                },

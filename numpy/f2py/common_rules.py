@@ -106,7 +106,7 @@ def buildhooks(m):
         cadd('\t{NULL}\n};')
         inames1 = rmbadname(inames)
         inames1_tps = ','.join(['char *' + s for s in inames1])
-        cadd('static void f2py_setup_%s(%s) {' % (name, inames1_tps))
+        cadd('static int f2py_setup_%s(%s) {' % (name, inames1_tps))
         cadd('\tint i_f2py=0;')
         for n in inames1:
             cadd('\tf2py_%s_def[i_f2py++].data = %s;' % (name, n))
@@ -115,10 +115,10 @@ def buildhooks(m):
             F_FUNC = 'F_FUNC_US'
         else:
             F_FUNC = 'F_FUNC'
-        cadd('extern void %s(f2pyinit%s,F2PYINIT%s)(void(*)(%s));'
+        cadd('extern int %s(f2pyinit%s,F2PYINIT%s)(int(*)(%s));'
              % (F_FUNC, lower_name, name.upper(),
                 ','.join(['char*'] * len(inames1))))
-        cadd('static void f2py_init_%s(void) {' % name)
+        cadd('static int f2py_init_%s(void) {' % name)
         cadd('\t%s(f2pyinit%s,F2PYINIT%s)(f2py_setup_%s);'
              % (F_FUNC, lower_name, name.upper(), name))
         cadd('}\n')
