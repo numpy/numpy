@@ -1153,12 +1153,17 @@ static void
 
     while (n--) {
         @fromtype@ f = *ip++;
-        @totype@ t = (@totype@)f;
 #if @supports_nat@ && @floatingpoint@
-        /* Avoid undefined behaviour for NaN -> NaT */
+        @totype@ t;
+        /* Avoid undefined behaviour and warning for NaN -> NaT */
         if (npy_isnan(f)) {
             t = (@totype@)NPY_DATETIME_NAT;
         }
+        else {
+            t = (@totype@)f;
+        }
+#else
+        @totype@ t = (@totype@)f;
 #endif
         *op++ = t;
     }
@@ -1179,12 +1184,17 @@ static void
 
     while (n--) {
         @fromtype@ f = *ip;
-        @totype@ t = (@totype@)f;
 #if @supports_nat@
-        /* Avoid undefined behaviour for NaN -> NaT */
+        @totype@ t;
+        /* Avoid undefined behaviour and warning for NaN -> NaT */
         if (npy_isnan(f)) {
             t = (@totype@)NPY_DATETIME_NAT;
         }
+        else {
+            t = (@totype@)f;
+        }
+#else
+        @totype@ t = (@totype@)f;
 #endif
         *op++ = t;
         ip += 2;
