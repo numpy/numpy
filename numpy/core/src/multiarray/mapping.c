@@ -1,11 +1,14 @@
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
+#define _UMATHMODULE
 
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <structmember.h>
 
 #include "numpy/arrayobject.h"
+#include "numpy/npy_math.h"
+
 #include "arrayobject.h"
 
 #include "npy_config.h"
@@ -23,6 +26,8 @@
 #include "mem_overlap.h"
 #include "array_assign.h"
 #include "array_coercion.h"
+
+#include "umathmodule.h"
 
 
 #define HAS_INTEGER 1
@@ -914,7 +919,6 @@ array_boolean_subscript(PyArrayObject *self,
     char *ret_data;
     PyArray_Descr *dtype;
     PyArrayObject *ret;
-    int needs_api = 0;
 
     size = count_boolean_trues(PyArray_NDIM(bmask), PyArray_DATA(bmask),
                                 PyArray_DIMS(bmask), PyArray_STRIDES(bmask));
@@ -962,13 +966,18 @@ array_boolean_subscript(PyArrayObject *self,
         /* Get a dtype transfer function */
         NpyIter_GetInnerFixedStrideArray(iter, fixed_strides);
         NPY_cast_info cast_info;
+        /*
+         * TODO: Ignoring cast flags, since this is only ever a copy. In
+         *       principle that may not be quite right in some future?
+         */
+        NPY_ARRAYMETHOD_FLAGS cast_flags;
         if (PyArray_GetDTypeTransferFunction(
                         IsUintAligned(self) && IsAligned(self),
                         fixed_strides[0], itemsize,
                         dtype, dtype,
                         0,
                         &cast_info,
-                        &needs_api) != NPY_SUCCEED) {
+                        &cast_flags) != NPY_SUCCEED) {
             Py_DECREF(ret);
             NpyIter_Deallocate(iter);
             return NULL;
@@ -1068,7 +1077,6 @@ array_assign_boolean_subscript(PyArrayObject *self,
 {
     npy_intp size, v_stride;
     char *v_data;
-    int needs_api = 0;
     npy_intp bmask_size;
 
     if (PyArray_DESCR(bmask)->type_num != NPY_BOOL) {
@@ -1164,6 +1172,7 @@ array_assign_boolean_subscript(PyArrayObject *self,
         /* Get a dtype transfer function */
         NpyIter_GetInnerFixedStrideArray(iter, fixed_strides);
         NPY_cast_info cast_info;
+        NPY_ARRAYMETHOD_FLAGS cast_flags;
         if (PyArray_GetDTypeTransferFunction(
                  IsUintAligned(self) && IsAligned(self) &&
                         IsUintAligned(v) && IsAligned(v),
@@ -1171,13 +1180,16 @@ array_assign_boolean_subscript(PyArrayObject *self,
                         PyArray_DESCR(v), PyArray_DESCR(self),
                         0,
                         &cast_info,
-                        &needs_api) != NPY_SUCCEED) {
+                        &cast_flags) != NPY_SUCCEED) {
             NpyIter_Deallocate(iter);
             return -1;
         }
 
-        if (!needs_api) {
+        if (!(cast_flags & NPY_METH_REQUIRES_PYAPI)) {
             NPY_BEGIN_THREADS_NDITER(iter);
+        }
+        if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
+            npy_clear_floatstatus_barrier((char *)iter);
         }
 
         npy_intp strides[2] = {v_stride, self_stride};
@@ -1209,13 +1221,19 @@ array_assign_boolean_subscript(PyArrayObject *self,
             }
         } while (iternext(iter));
 
-        if (!needs_api) {
+        if (!(cast_flags & NPY_METH_REQUIRES_PYAPI)) {
             NPY_END_THREADS;
         }
 
         NPY_cast_info_xfree(&cast_info);
         if (!NpyIter_Deallocate(iter)) {
             res = -1;
+        }
+        if (res == 0 && !(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
+            int fpes = npy_get_floatstatus_barrier((char*)iter);
+            if (fpes && PyUFunc_GiveFloatingpointErrors("cast", fpes) < 0) {
+                return -1;
+            }
         }
     }
 

@@ -238,6 +238,7 @@ static int
     }
     else {
         temp = (@type@)@func2@(op);
+        // TODO: Need to check for inf, if input is not inf (for float)!
     }
     if (PyErr_Occurred()) {
         PyObject *type, *value, *traceback;

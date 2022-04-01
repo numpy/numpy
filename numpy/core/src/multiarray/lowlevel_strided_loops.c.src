@@ -13,6 +13,7 @@
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
+#define _UMATHMODULE
 #include <numpy/arrayobject.h>
 #include <numpy/npy_cpu.h>
 #include <numpy/halffloat.h>
@@ -22,6 +23,7 @@
 #include "array_method.h"
 #include "usertypes.h"
 
+#include "umathmodule.h"
 
 /*
  * x86 platform works with unaligned access but the compiler is allowed to
@@ -1725,6 +1727,7 @@ mapiter_@name@(PyArrayMapIterObject *mit)
         NpyIter_GetInnerFixedStrideArray(mit->subspace_iter, fixed_strides);
 
         NPY_cast_info cast_info;
+        NPY_ARRAYMETHOD_FLAGS flags;
         if (PyArray_GetDTypeTransferFunction(is_aligned,
 #if @isget@
                         fixed_strides[0], fixed_strides[1],
@@ -1735,8 +1738,12 @@ mapiter_@name@(PyArrayMapIterObject *mit)
 #endif
                         0,
                         &cast_info,
-                        &needs_api) != NPY_SUCCEED) {
+                        &flags) != NPY_SUCCEED) {
             return -1;
+        }
+        /* Note: it may make sense to refactor `needs_api` out in this branch */
+        if (flags & NPY_METH_REQUIRES_PYAPI) {
+            needs_api = 1;
         }
 
         counter = NpyIter_GetInnerLoopSizePtr(mit->subspace_iter);
@@ -1760,6 +1767,9 @@ mapiter_@name@(PyArrayMapIterObject *mit)
             NPY_BEGIN_THREADS_DEF;
             if (!needs_api) {
                 NPY_BEGIN_THREADS;
+            }
+            if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
+                npy_clear_floatstatus_barrier((char *)mit);
             }
 
             /* Outer iteration (safe because mit->size != 0) */
@@ -1868,6 +1878,13 @@ mapiter_@name@(PyArrayMapIterObject *mit)
 /**end repeat1**/
 
         NPY_cast_info_xfree(&cast_info);
+
+        if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
+            int fpes = npy_get_floatstatus_barrier((char *)mit);
+            if (fpes && PyUFunc_GiveFloatingpointErrors("cast", fpes) < 0) {
+                return -1;
+            }
+        }
     }
     return 0;
 }

@@ -9,6 +9,7 @@
 
 #include "lowlevel_strided_loops.h"
 #include "numpy/arrayobject.h"
+#include "numpy/npy_math.h"
 
 #include "descriptor.h"
 #include "convert_datatype.h"
@@ -22,6 +23,7 @@
 #include "_datetime.h"
 #include "npy_import.h"
 
+#include "umathmodule.h"
 
 /*
  * This file defines helpers for some of the ctors.c functions which
@@ -388,21 +390,36 @@ cast_raw_scalar_item(
         PyArray_Descr *from_descr, char *from_item,
         PyArray_Descr *to_descr, char *to_item)
 {
-    int needs_api = 0;
     NPY_cast_info cast_info;
+    NPY_ARRAYMETHOD_FLAGS flags;
     if (PyArray_GetDTypeTransferFunction(
             0, 0, 0, from_descr, to_descr, 0, &cast_info,
-            &needs_api) == NPY_FAIL) {
+            &flags) == NPY_FAIL) {
         return -1;
     }
+
+    if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
+        npy_clear_floatstatus_barrier(from_item);
+    }
+
     char *args[2] = {from_item, to_item};
     const npy_intp strides[2] = {0, 0};
     const npy_intp length = 1;
-    int res = cast_info.func(&cast_info.context,
-            args, &length, strides, cast_info.auxdata);
-
+    if (cast_info.func(&cast_info.context,
+            args, &length, strides, cast_info.auxdata) < 0) {
+        NPY_cast_info_xfree(&cast_info);
+        return -1;
+    }
     NPY_cast_info_xfree(&cast_info);
-    return res;
+
+    if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
+        int fpes = npy_get_floatstatus_barrier(to_item);
+        if (fpes && PyUFunc_GiveFloatingpointErrors("cast", fpes) < 0) {
+            return -1;
+        }
+    }
+
+    return 0;
 }
 
 
