@@ -69,9 +69,13 @@ def configuration(parent_package='', top_path=None):
     # umath_linalg module
     config.add_extension(
         '_umath_linalg',
-        sources=['umath_linalg.c.src', get_lapack_lite_sources],
+        sources=['umath_linalg.cpp', get_lapack_lite_sources],
         depends=['lapack_lite/f2c.h'],
         extra_info=lapack_info,
+        extra_cxx_compile_args=['-std=c++11',
+                                '-D__STDC_VERSION__=0',
+                                '-fno-exceptions',
+                                '-fno-rtti'],
         libraries=['npymath'],
     )
     config.add_data_files('*.pyi')
