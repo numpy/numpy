@@ -40,7 +40,7 @@
 
 
 template <typename UCS>
-static NPY_INLINE int
+static inline int
 copy_to_field_buffer(tokenizer_state *ts,
         const UCS *chunk_start, const UCS *chunk_end)
 {
@@ -73,7 +73,7 @@ copy_to_field_buffer(tokenizer_state *ts,
 }
 
 
-static NPY_INLINE int
+static inline int
 add_field(tokenizer_state *ts)
 {
     /* The previous field is done, advance to keep a NUL byte at the end */
@@ -109,7 +109,7 @@ add_field(tokenizer_state *ts)
 
 
 template <typename UCS>
-static NPY_INLINE int
+static inline int
 tokenizer_core(tokenizer_state *ts, parser_config *const config)
 {
     UCS *pos = (UCS *)ts->pos;

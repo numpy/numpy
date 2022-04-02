@@ -406,7 +406,7 @@ FNAME(zgemm)(char *transa, char *transb,
  *****************************************************************************
  */
 
-static NPY_INLINE int
+static inline int
 get_fp_invalid_and_clear(void)
 {
     int status;
@@ -414,7 +414,7 @@ get_fp_invalid_and_clear(void)
     return !!(status & NPY_FPE_INVALID);
 }
 
-static NPY_INLINE void
+static inline void
 set_fp_invalid_or_clear(int error_occurred)
 {
     if (error_occurred) {
@@ -547,7 +547,7 @@ typedef struct linearize_data_struct
   npy_intp output_lead_dim;
 } LINEARIZE_DATA_t;
 
-static NPY_INLINE void
+static inline void
 init_linearize_data_ex(LINEARIZE_DATA_t *lin_data,
                        npy_intp rows,
                        npy_intp columns,
@@ -562,7 +562,7 @@ init_linearize_data_ex(LINEARIZE_DATA_t *lin_data,
     lin_data->output_lead_dim = output_lead_dim;
 }
 
-static NPY_INLINE void
+static inline void
 init_linearize_data(LINEARIZE_DATA_t *lin_data,
                     npy_intp rows,
                     npy_intp columns,
@@ -573,7 +573,7 @@ init_linearize_data(LINEARIZE_DATA_t *lin_data,
         lin_data, rows, columns, row_strides, column_strides, columns);
 }
 
-static NPY_INLINE void
+static inline void
 dump_ufunc_object(PyUFuncObject* ufunc)
 {
     TRACE_TXT("\n\n%s '%s' (%d input(s), %d output(s), %d specialization(s).\n",
@@ -598,7 +598,7 @@ dump_ufunc_object(PyUFuncObject* ufunc)
     }
 }
 
-static NPY_INLINE void
+static inline void
 dump_linearize_data(const char* name, const LINEARIZE_DATA_t* params)
 {
     TRACE_TXT("\n\t%s rows: %zd columns: %zd"\
@@ -607,23 +607,23 @@ dump_linearize_data(const char* name, const LINEARIZE_DATA_t* params)
               params->row_strides, params->column_strides);
 }
 
-static NPY_INLINE void
+static inline void
 print(npy_float s)
 {
     TRACE_TXT(" %8.4f", s);
 }
-static NPY_INLINE void
+static inline void
 print(npy_double d)
 {
     TRACE_TXT(" %10.6f", d);
 }
-static NPY_INLINE void
+static inline void
 print(npy_cfloat c)
 {
     float* c_parts = (float*)&c;
     TRACE_TXT("(%8.4f, %8.4fj)", c_parts[0], c_parts[1]);
 }
-static NPY_INLINE void
+static inline void
 print(npy_cdouble z)
 {
     double* z_parts = (double*)&z;
@@ -631,7 +631,7 @@ print(npy_cdouble z)
 }
 
 template<typename typ>
-static NPY_INLINE void
+static inline void
 dump_matrix(const char* name,
                    size_t rows, size_t columns,
                   const typ* ptr)
@@ -658,12 +658,12 @@ dump_matrix(const char* name,
  *****************************************************************************
  */
 
-static NPY_INLINE fortran_int
+static inline fortran_int
 fortran_int_min(fortran_int x, fortran_int y) {
     return x < y ? x : y;
 }
 
-static NPY_INLINE fortran_int
+static inline fortran_int
 fortran_int_max(fortran_int x, fortran_int y) {
     return x > y ? x : y;
 }
@@ -750,7 +750,7 @@ fortran_int_max(fortran_int x, fortran_int y) {
 
 #define END_OUTER_LOOP  }
 
-static NPY_INLINE void
+static inline void
 update_pointers(npy_uint8** bases, ptrdiff_t* offsets, size_t count)
 {
     size_t i;
@@ -838,7 +838,7 @@ using basetype_t = typename basetype<T>::type;
              /* rearranging of 2D matrices using blas */
 
 template<typename typ>
-static NPY_INLINE void *
+static inline void *
 linearize_matrix(typ *dst,
                         typ *src,
                         const LINEARIZE_DATA_t* data)
@@ -883,7 +883,7 @@ linearize_matrix(typ *dst,
 }
 
 template<typename typ>
-static NPY_INLINE void *
+static inline void *
 delinearize_matrix(typ *dst,
                           typ *src,
                           const LINEARIZE_DATA_t* data)
@@ -932,7 +932,7 @@ using ftyp = fortran_type_t<typ>;
 }
 
 template<typename typ>
-static NPY_INLINE void
+static inline void
 nan_matrix(typ *dst, const LINEARIZE_DATA_t* data)
 {
     int i, j;
@@ -948,7 +948,7 @@ nan_matrix(typ *dst, const LINEARIZE_DATA_t* data)
 }
 
 template<typename typ>
-static NPY_INLINE void
+static inline void
 zero_matrix(typ *dst, const LINEARIZE_DATA_t* data)
 {
     int i, j;
@@ -965,7 +965,7 @@ zero_matrix(typ *dst, const LINEARIZE_DATA_t* data)
 
                /* identity square matrix generation */
 template<typename typ>
-static NPY_INLINE void
+static inline void
 identity_matrix(typ *matrix, size_t n)
 {
     size_t i;
@@ -982,7 +982,7 @@ identity_matrix(typ *matrix, size_t n)
          /* lower/upper triangular matrix using blas (in place) */
 
 template<typename typ>
-static NPY_INLINE void
+static inline void
 triu_matrix(typ *matrix, size_t n)
 {
     size_t i, j;
@@ -1005,7 +1005,7 @@ static npy_float npyexp(npy_float f) { return npy_expf(f);}
 static npy_double npyexp(npy_double d) { return npy_exp(d);}
 
 template<typename typ>
-static NPY_INLINE void
+static inline void
 slogdet_from_factored_diagonal(typ* src,
                                       fortran_int m,
                                       typ *sign,
@@ -1030,7 +1030,7 @@ slogdet_from_factored_diagonal(typ* src,
 }
 
 template<typename typ>
-static NPY_INLINE typ
+static inline typ
 det_from_slogdet(typ sign, typ logdet)
 {
     typ result = sign * npyexp(logdet);
@@ -1045,7 +1045,7 @@ npy_double npyabs(npy_cdouble z) { return npy_cabs(z);}
 #define IM(COMPLEX) (COMPLEX).imag
 
 template<typename typ>
-static NPY_INLINE typ
+static inline typ
 mult(typ op1, typ op2)
 {
     typ rv;
@@ -1058,7 +1058,7 @@ mult(typ op1, typ op2)
 
 
 template<typename typ, typename basetyp>
-static NPY_INLINE void
+static inline void
 slogdet_from_factored_diagonal(typ* src,
                                       fortran_int m,
                                       typ *sign,
@@ -1085,7 +1085,7 @@ slogdet_from_factored_diagonal(typ* src,
 }
 
 template<typename typ, typename basetyp>
-static NPY_INLINE typ
+static inline typ
 det_from_slogdet(typ sign, basetyp logdet)
 {
     typ tmp;
@@ -1103,7 +1103,7 @@ det_from_slogdet(typ sign, basetyp logdet)
  * det computes sign * exp(slogdet).
  */
 template<typename typ, typename basetyp>
-static NPY_INLINE void
+static inline void
 slogdet_single_element(fortran_int m,
                               typ* src,
                               fortran_int* pivots,
@@ -1248,7 +1248,7 @@ struct EIGH_PARAMS_t {
     fortran_int LDA;
 } ;
 
-static NPY_INLINE fortran_int
+static inline fortran_int
 call_evd(EIGH_PARAMS_t<npy_float> *params)
 {
     fortran_int rv;
@@ -1259,7 +1259,7 @@ call_evd(EIGH_PARAMS_t<npy_float> *params)
                           &rv);
     return rv;
 }
-static NPY_INLINE fortran_int
+static inline fortran_int
 call_evd(EIGH_PARAMS_t<npy_double> *params)
 {
     fortran_int rv;
@@ -1277,7 +1277,7 @@ call_evd(EIGH_PARAMS_t<npy_double> *params)
  * Handles buffer allocation
  */
 template<typename typ>
-static NPY_INLINE int
+static inline int
 init_evd(EIGH_PARAMS_t<typ>* params, char JOBZ, char UPLO,
                    fortran_int N, scalar_trait)
 {
@@ -1350,7 +1350,7 @@ init_evd(EIGH_PARAMS_t<typ>* params, char JOBZ, char UPLO,
 }
 
 
-static NPY_INLINE fortran_int
+static inline fortran_int
 call_evd(EIGH_PARAMS_t<npy_cfloat> *params)
 {
     fortran_int rv;
@@ -1363,7 +1363,7 @@ call_evd(EIGH_PARAMS_t<npy_cfloat> *params)
     return rv;
 }
 
-static NPY_INLINE fortran_int
+static inline fortran_int
 call_evd(EIGH_PARAMS_t<npy_cdouble> *params)
 {
     fortran_int rv;
@@ -1377,7 +1377,7 @@ call_evd(EIGH_PARAMS_t<npy_cdouble> *params)
 }
 
 template<typename typ>
-static NPY_INLINE int
+static inline int
 init_evd(EIGH_PARAMS_t<typ> *params,
                    char JOBZ,
                    char UPLO,
@@ -1470,7 +1470,7 @@ error:
  */
 
 template<typename typ>
-static NPY_INLINE void
+static inline void
 release_evd(EIGH_PARAMS_t<typ> *params)
 {
     /* allocated memory in A and WORK */
@@ -1481,7 +1481,7 @@ release_evd(EIGH_PARAMS_t<typ> *params)
 
 
 template<typename typ>
-static NPY_INLINE void
+static inline void
 eigh_wrapper(char JOBZ,
                     char UPLO,
                     char**args,
@@ -1611,7 +1611,7 @@ struct GESV_PARAMS_t
     fortran_int LDB;
 };
 
-static NPY_INLINE fortran_int
+static inline fortran_int
 call_gesv(GESV_PARAMS_t<fortran_real> *params)
 {
     fortran_int rv;
@@ -1623,7 +1623,7 @@ call_gesv(GESV_PARAMS_t<fortran_real> *params)
     return rv;
 }
 
-static NPY_INLINE fortran_int
+static inline fortran_int
 call_gesv(GESV_PARAMS_t<fortran_doublereal> *params)
 {
     fortran_int rv;
@@ -1635,7 +1635,7 @@ call_gesv(GESV_PARAMS_t<fortran_doublereal> *params)
     return rv;
 }
 
-static NPY_INLINE fortran_int
+static inline fortran_int
 call_gesv(GESV_PARAMS_t<fortran_complex> *params)
 {
     fortran_int rv;
@@ -1647,7 +1647,7 @@ call_gesv(GESV_PARAMS_t<fortran_complex> *params)
     return rv;
 }
 
-static NPY_INLINE fortran_int
+static inline fortran_int
 call_gesv(GESV_PARAMS_t<fortran_doublecomplex> *params)
 {
     fortran_int rv;
@@ -1665,7 +1665,7 @@ call_gesv(GESV_PARAMS_t<fortran_doublecomplex> *params)
  * Handles buffer allocation
  */
 template<typename ftyp>
-static NPY_INLINE int
+static inline int
 init_gesv(GESV_PARAMS_t<ftyp> *params, fortran_int N, fortran_int NRHS)
 {
     npy_uint8 *mem_buff = NULL;
@@ -1700,7 +1700,7 @@ init_gesv(GESV_PARAMS_t<ftyp> *params, fortran_int N, fortran_int NRHS)
 }
 
 template<typename ftyp>
-static NPY_INLINE void
+static inline void
 release_gesv(GESV_PARAMS_t<ftyp> *params)
 {
     /* memory block base is in A */
@@ -1835,7 +1835,7 @@ struct POTR_PARAMS_t
 };
 
 
-static NPY_INLINE fortran_int
+static inline fortran_int
 call_potrf(POTR_PARAMS_t<fortran_real> *params)
 {
     fortran_int rv;
@@ -1845,7 +1845,7 @@ call_potrf(POTR_PARAMS_t<fortran_real> *params)
     return rv;
 }
 
-static NPY_INLINE fortran_int
+static inline fortran_int
 call_potrf(POTR_PARAMS_t<fortran_doublereal> *params)
 {
     fortran_int rv;
@@ -1855,7 +1855,7 @@ call_potrf(POTR_PARAMS_t<fortran_doublereal> *params)
     return rv;
 }
 
-static NPY_INLINE fortran_int
+static inline fortran_int
 call_potrf(POTR_PARAMS_t<fortran_complex> *params)
 {
     fortran_int rv;
@@ -1865,7 +1865,7 @@ call_potrf(POTR_PARAMS_t<fortran_complex> *params)
     return rv;
 }
 
-static NPY_INLINE fortran_int
+static inline fortran_int
 call_potrf(POTR_PARAMS_t<fortran_doublecomplex> *params)
 {
     fortran_int rv;
@@ -1876,7 +1876,7 @@ call_potrf(POTR_PARAMS_t<fortran_doublecomplex> *params)
 }
 
 template<typename ftyp>
-static NPY_INLINE int
+static inline int
 init_potrf(POTR_PARAMS_t<ftyp> *params, char UPLO, fortran_int N)
 {
     npy_uint8 *mem_buff = NULL;
@@ -1905,7 +1905,7 @@ init_potrf(POTR_PARAMS_t<ftyp> *params, char UPLO, fortran_int N)
 }
 
 template<typename ftyp>
-static NPY_INLINE void
+static inline void
 release_potrf(POTR_PARAMS_t<ftyp> *params)
 {
     /* memory block base in A */
@@ -1982,7 +1982,7 @@ struct GEEV_PARAMS_t {
 };
 
 template<typename typ>
-static NPY_INLINE void
+static inline void
 dump_geev_params(const char *name, GEEV_PARAMS_t<typ>* params)
 {
     TRACE_TXT("\n%s\n"
@@ -2028,7 +2028,7 @@ dump_geev_params(const char *name, GEEV_PARAMS_t<typ>* params)
               "JOBVR", params->JOBVR);
 }
 
-static NPY_INLINE fortran_int
+static inline fortran_int
 call_geev(GEEV_PARAMS_t<float>* params)
 {
     fortran_int rv;
@@ -2042,7 +2042,7 @@ call_geev(GEEV_PARAMS_t<float>* params)
     return rv;
 }
 
-static NPY_INLINE fortran_int
+static inline fortran_int
 call_geev(GEEV_PARAMS_t<double>* params)
 {
     fortran_int rv;
@@ -2058,7 +2058,7 @@ call_geev(GEEV_PARAMS_t<double>* params)
 
 
 template<typename typ>
-static NPY_INLINE int
+static inline int
 init_geev(GEEV_PARAMS_t<typ> *params, char jobvl, char jobvr, fortran_int n,
 scalar_trait)
 {
@@ -2142,7 +2142,7 @@ scalar_trait)
 }
 
 template<typename complextyp, typename typ>
-static NPY_INLINE void
+static inline void
 mk_complex_array_from_real(complextyp *c, const typ *re, size_t n)
 {
     size_t iter;
@@ -2153,7 +2153,7 @@ mk_complex_array_from_real(complextyp *c, const typ *re, size_t n)
 }
 
 template<typename complextyp, typename typ>
-static NPY_INLINE void
+static inline void
 mk_complex_array(complextyp *c,
                         const typ *re,
                         const typ *im,
@@ -2167,7 +2167,7 @@ mk_complex_array(complextyp *c,
 }
 
 template<typename complextyp, typename typ>
-static NPY_INLINE void
+static inline void
 mk_complex_array_conjugate_pair(complextyp *c,
                                        const typ *r,
                                        size_t n)
@@ -2191,7 +2191,7 @@ mk_complex_array_conjugate_pair(complextyp *c,
  * n is so that the order of the matrix is n by n
  */
 template<typename complextyp, typename typ>
-static NPY_INLINE void
+static inline void
 mk_geev_complex_eigenvectors(complextyp *c,
                                       const typ *r,
                                       const typ *i,
@@ -2218,7 +2218,7 @@ mk_geev_complex_eigenvectors(complextyp *c,
 
 
 template<typename complextyp, typename typ>
-static NPY_INLINE void
+static inline void
 process_geev_results(GEEV_PARAMS_t<typ> *params, scalar_trait)
 {
     /* REAL versions of geev need the results to be translated
@@ -2239,7 +2239,7 @@ process_geev_results(GEEV_PARAMS_t<typ> *params, scalar_trait)
 }
 
 
-static NPY_INLINE fortran_int
+static inline fortran_int
 call_geev(GEEV_PARAMS_t<fortran_complex>* params)
 {
     fortran_int rv;
@@ -2254,7 +2254,7 @@ call_geev(GEEV_PARAMS_t<fortran_complex>* params)
                           &rv);
     return rv;
 }
-static NPY_INLINE fortran_int
+static inline fortran_int
 call_geev(GEEV_PARAMS_t<fortran_doublecomplex>* params)
 {
     fortran_int rv;
@@ -2271,7 +2271,7 @@ call_geev(GEEV_PARAMS_t<fortran_doublecomplex>* params)
 }
 
 template<typename ftyp>
-static NPY_INLINE int
+static inline int
 init_geev(GEEV_PARAMS_t<ftyp>* params,
                    char jobvl,
                    char jobvr,
@@ -2353,7 +2353,7 @@ using realtyp = basetype_t<ftyp>;
 }
 
 template<typename complextyp, typename typ>
-static NPY_INLINE void
+static inline void
 process_geev_results(GEEV_PARAMS_t<typ> *NPY_UNUSED(params), complex_trait)
 {
     /* nothing to do here, complex versions are ready to copy out */
@@ -2362,7 +2362,7 @@ process_geev_results(GEEV_PARAMS_t<typ> *NPY_UNUSED(params), complex_trait)
 
 
 template<typename typ>
-static NPY_INLINE void
+static inline void
 release_geev(GEEV_PARAMS_t<typ> *params)
 {
     free(params->WORK);
@@ -2371,7 +2371,7 @@ release_geev(GEEV_PARAMS_t<typ> *params)
 }
 
 template<typename fctype, typename ftype>
-static NPY_INLINE void
+static inline void
 eig_wrapper(char JOBVL,
                    char JOBVR,
                    char**args,
@@ -2515,7 +2515,7 @@ struct GESDD_PARAMS_t
 
 
 template<typename ftyp>
-static NPY_INLINE void
+static inline void
 dump_gesdd_params(const char *name,
                   GESDD_PARAMS_t<ftyp> *params)
 {
@@ -2558,7 +2558,7 @@ dump_gesdd_params(const char *name,
               "JOBZ", ' ', params->JOBZ);
 }
 
-static NPY_INLINE int
+static inline int
 compute_urows_vtcolumns(char jobz,
                         fortran_int m, fortran_int n,
                         fortran_int *urows, fortran_int *vtcolumns)
@@ -2587,7 +2587,7 @@ compute_urows_vtcolumns(char jobz,
     return 1;
 }
 
-static NPY_INLINE fortran_int
+static inline fortran_int
 call_gesdd(GESDD_PARAMS_t<fortran_real> *params)
 {
     fortran_int rv;
@@ -2601,7 +2601,7 @@ call_gesdd(GESDD_PARAMS_t<fortran_real> *params)
                           &rv);
     return rv;
 }
-static NPY_INLINE fortran_int
+static inline fortran_int
 call_gesdd(GESDD_PARAMS_t<fortran_doublereal> *params)
 {
     fortran_int rv;
@@ -2617,7 +2617,7 @@ call_gesdd(GESDD_PARAMS_t<fortran_doublereal> *params)
 }
 
 template<typename ftyp>
-static NPY_INLINE int
+static inline int
 init_gesdd(GESDD_PARAMS_t<ftyp> *params,
                    char jobz,
                    fortran_int m,
@@ -2715,7 +2715,7 @@ init_gesdd(GESDD_PARAMS_t<ftyp> *params,
     return 0;
 }
 
-static NPY_INLINE fortran_int
+static inline fortran_int
 call_gesdd(GESDD_PARAMS_t<fortran_complex> *params)
 {
     fortran_int rv;
@@ -2730,7 +2730,7 @@ call_gesdd(GESDD_PARAMS_t<fortran_complex> *params)
                           &rv);
     return rv;
 }
-static NPY_INLINE fortran_int
+static inline fortran_int
 call_gesdd(GESDD_PARAMS_t<fortran_doublecomplex> *params)
 {
     fortran_int rv;
@@ -2747,7 +2747,7 @@ call_gesdd(GESDD_PARAMS_t<fortran_doublecomplex> *params)
 }
 
 template<typename ftyp>
-static NPY_INLINE int
+static inline int
 init_gesdd(GESDD_PARAMS_t<ftyp> *params,
                    char jobz,
                    fortran_int m,
@@ -2853,7 +2853,7 @@ using frealtyp = basetype_t<ftyp>;
 }
 
 template<typename typ>
-static NPY_INLINE void
+static inline void
 release_gesdd(GESDD_PARAMS_t<typ>* params)
 {
     /* A and WORK contain allocated blocks */
@@ -2863,7 +2863,7 @@ release_gesdd(GESDD_PARAMS_t<typ>* params)
 }
 
 template<typename typ>
-static NPY_INLINE void
+static inline void
 svd_wrapper(char JOBZ,
                    char **args,
                    npy_intp const *dimensions,
