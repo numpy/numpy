@@ -4,7 +4,7 @@
 #include "npysort_common.h"
 
 #include "../common/numpy_tag.h"
-#include <stdlib.h>
+#include <cstdlib>
 #include <type_traits>
 
 /*

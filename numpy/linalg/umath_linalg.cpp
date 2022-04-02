@@ -18,10 +18,10 @@
 
 #include "npy_cblas.h"
 
-#include <stddef.h>
-#include <stdio.h>
-#include <assert.h>
-#include <math.h>
+#include <cstddef>
+#include <cstdio>
+#include <cassert>
+#include <cmath>
 #include <utility>
 
 
