@@ -233,12 +233,14 @@ class TestHalf:
                    np.inf]
 
         # Check float64->float16 rounding
-        b = np.array(a, dtype=float16)
+        with np.errstate(over="ignore"):
+            b = np.array(a, dtype=float16)
         assert_equal(b, rounded)
 
         # Check float32->float16 rounding
         a = np.array(a, dtype=float32)
-        b = np.array(a, dtype=float16)
+        with np.errstate(over="ignore"):
+            b = np.array(a, dtype=float16)
         assert_equal(b, rounded)
 
     def test_half_correctness(self):

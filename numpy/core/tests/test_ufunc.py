@@ -620,8 +620,9 @@ class TestUfunc:
                                 atol = max(np.finfo(dtout).tiny, 3e-308)
                             else:
                                 atol = 3e-308
-                        # Some test values result in invalid for float16.
-                        with np.errstate(invalid='ignore'):
+                        # Some test values result in invalid for float16
+                        # and the cast to it may overflow to inf.
+                        with np.errstate(invalid='ignore', over='ignore'):
                             res = np.true_divide(x, y, dtype=dtout)
                         if not np.isfinite(res) and tcout == 'e':
                             continue

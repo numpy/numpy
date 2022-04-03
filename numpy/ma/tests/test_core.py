@@ -4340,7 +4340,10 @@ class TestMaskedArrayFunctions:
         tmp[(xm <= 2).filled(True)] = True
         assert_equal(d._mask, tmp)
 
-        ixm = xm.astype(int)
+        with np.errstate(invalid="warn"):
+            # The fill value is 1e20, it cannot be converted to `int`:
+            with pytest.warns(RuntimeWarning, match="invalid value"):
+                ixm = xm.astype(int)
         d = where(ixm > 2, ixm, masked)
         assert_equal(d, [-9, -9, -9, -9, -9, 4, -9, -9, 10, -9, -9, 3])
         assert_equal(d.dtype, ixm.dtype)
