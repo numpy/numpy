@@ -405,7 +405,7 @@ def _recursive_set_fill_value(fillvalue, dt):
 
     Returns
     -------
-    val: tuple
+    val : tuple
         A tuple of values corresponding to the structured fill value.
 
     """
@@ -2842,7 +2842,7 @@ class MaskedArray(ndarray):
         # still has the _mask attribute like MaskedArrays
         if hasattr(data, '_mask') and not isinstance(data, ndarray):
             _data._mask = data._mask
-            # FIXME: should we set `_data._sharedmask = True`? 
+            # FIXME: should we set `_data._sharedmask = True`?
         # Process mask.
         # Type of the mask
         mdtype = make_mask_descr(_data.dtype)
@@ -3584,7 +3584,7 @@ class MaskedArray(ndarray):
         By default, assigning definite values to masked array entries will
         unmask them.  When `hardmask` is ``True``, the mask will not change
         through assignments.
-        
+
         See Also
         --------
         ma.MaskedArray.harden_mask
@@ -8208,7 +8208,7 @@ class _convert2ma:
 
 
 arange = _convert2ma(
-    'arange', 
+    'arange',
     params=dict(fill_value=None, hardmask=False),
     np_ret='arange : ndarray',
     np_ma_ret='arange : MaskedArray',
@@ -8226,7 +8226,7 @@ diff = _convert2ma(
     np_ma_ret='diff : MaskedArray',
 )
 empty = _convert2ma(
-    'empty', 
+    'empty',
     params=dict(fill_value=None, hardmask=False),
     np_ret='out : ndarray',
     np_ma_ret='out : MaskedArray',
@@ -8247,7 +8247,7 @@ fromfunction = _convert2ma(
    np_ma_ret='fromfunction: MaskedArray',
 )
 identity = _convert2ma(
-    'identity', 
+    'identity',
     params=dict(fill_value=None, hardmask=False),
     np_ret='out : ndarray',
     np_ma_ret='out : MaskedArray',

@@ -120,7 +120,7 @@ def CCompiler_spawn(self, cmd, display=None, env=None):
     display : str or sequence of str, optional
         The text to add to the log file kept by `numpy.distutils`.
         If not given, `display` is equal to `cmd`.
-    env: a dictionary for environment variables, optional
+    env : a dictionary for environment variables, optional
 
     Returns
     -------

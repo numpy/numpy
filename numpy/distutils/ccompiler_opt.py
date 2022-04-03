@@ -769,18 +769,18 @@ class _Cache:
 
     Parameters
     ----------
-    cache_path: str or None
+    cache_path : str or None
         The path of cache file, if None then cache in file will disabled.
 
-    *factors:
+    *factors :
         The caching factors that need to utilize next to `conf_cache_factors`.
 
     Attributes
     ----------
-    cache_private: set
+    cache_private : set
         Hold the attributes that need be skipped from "in-memory cache".
 
-    cache_infile: bool
+    cache_infile : bool
         Utilized during initializing this class, to determine if the cache was able
         to loaded from the specified cache path in 'cache_path'.
     """
@@ -1231,12 +1231,12 @@ class _Feature:
 
         Parameters
         ----------
-        names: sequence or None, optional
+        names : sequence or None, optional
             Specify certain CPU features to test it against the **C** compiler.
             if None(default), it will test all current supported features.
             **Note**: feature names must be in upper-case.
 
-        force_flags: list or None, optional
+        force_flags : list or None, optional
             If None(default), default compiler flags for every CPU feature will
             be used during the test.
 
@@ -1305,10 +1305,10 @@ class _Feature:
 
         Parameters
         ----------
-        names: str or sequence of str
+        names : str or sequence of str
             CPU feature name(s) in uppercase.
 
-        keep_origins: bool
+        keep_origins : bool
             if False(default) then the returned set will not contain any
             features from 'names'. This case happens only when two features
             imply each other.
@@ -1498,10 +1498,10 @@ class _Feature:
 
         Parameters
         ----------
-        name: str
+        name : str
             Supported CPU feature name.
 
-        force_flags: list or None, optional
+        force_flags : list or None, optional
             If None(default), the returned flags from `feature_flags()`
             will be used.
 
@@ -1537,10 +1537,10 @@ class _Feature:
 
         Parameters
         ----------
-        name: str
+        name : str
             CPU feature name in uppercase.
 
-        force_flags: list or None, optional
+        force_flags : list or None, optional
             If None(default), default compiler flags for every CPU feature will
             be used during test.
 
@@ -1582,7 +1582,7 @@ class _Feature:
 
         Parameters
         ----------
-        names: str
+        names : str
             CPU feature name in uppercase.
         """
         assert isinstance(name, str)
@@ -1668,10 +1668,10 @@ class _Parse:
 
     Parameters
     ----------
-    cpu_baseline: str or None
+    cpu_baseline : str or None
         minimal set of required CPU features or special options.
 
-    cpu_dispatch: str or None
+    cpu_dispatch : str or None
         dispatched set of additional CPU features or special options.
 
     Special options can be:
@@ -1804,7 +1804,7 @@ class _Parse:
 
         Parameters
         ----------
-        source: str
+        source : str
             the path of **C** source file.
 
         Returns
@@ -2243,7 +2243,7 @@ class CCompilerOpt(_Config, _Distutils, _Cache, _CCompiler, _Feature, _Parse):
             Path of parent directory for the generated headers and wrapped sources.
             If None(default) the files will generated in-place.
 
-        ccompiler: CCompiler
+        ccompiler : CCompiler
             Distutils `CCompiler` instance to be used for compilation.
             If None (default), the provided instance during the initialization
             will be used instead.
