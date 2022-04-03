@@ -4590,7 +4590,7 @@ cdef class Generator:
         array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
         >>> rng.shuffle(arr)
         >>> arr
-        array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]) # random
+        array([2, 0, 7, 5, 1, 4, 8, 9, 3, 6]) # random
 
         >>> arr = np.arange(9).reshape((3, 3))
         >>> arr
