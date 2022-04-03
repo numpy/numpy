@@ -67,7 +67,7 @@ typedef struct {
 } buffer_intp;
 
 /* buffer method */
-static NPY_INLINE int
+static inline int
 resize_buffer_intp(buffer_intp *buffer, npy_intp new_size)
 {
     if (new_size <= buffer->size) {
@@ -105,7 +105,7 @@ struct buffer_ {
 };
 
 template <typename Tag>
-static NPY_INLINE int
+static inline int
 resize_buffer_(buffer_<Tag> *buffer, npy_intp new_size)
 {
     using type = typename Tag::type;
@@ -978,7 +978,7 @@ struct string_buffer_ {
 };
 
 template <typename Tag>
-static NPY_INLINE int
+static inline int
 resize_buffer_(string_buffer_<Tag> *buffer, npy_intp new_size)
 {
     using type = typename Tag::type;
@@ -1873,7 +1873,7 @@ typedef struct {
     size_t len;
 } buffer_char;
 
-static NPY_INLINE int
+static inline int
 resize_buffer_char(buffer_char *buffer, npy_intp new_size)
 {
     if (new_size <= buffer->size) {

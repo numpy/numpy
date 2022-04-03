@@ -344,7 +344,7 @@ constexpr std::array<typename binsearch_t<arg>::value_type,
         binsearch_t<arg>::map;
 
 template <arg_t arg>
-static NPY_INLINE typename binsearch_t<arg>::function_type
+static inline typename binsearch_t<arg>::function_type
 _get_binsearch_func(PyArray_Descr *dtype, NPY_SEARCHSIDE side)
 {
     using binsearch = binsearch_t<arg>;
