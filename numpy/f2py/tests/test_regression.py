@@ -22,6 +22,25 @@ class TestIntentInOut(util.F2PyTest):
         assert np.allclose(x, [3, 1, 2])
 
 
+class TestNegativeBounds(util.F2PyTest):
+    # Check that negative bounds work correctly
+    sources = [util.getpath("tests", "src", "negative_bounds", "issue_20853.f90")]
+
+    @pytest.mark.slow
+    def test_negbound(self):
+        xvec = np.arange(12)
+        xlow = -6
+        xhigh = 4
+        # Calculate the upper bound,
+        # Keeping the 1 index in mind
+        def ubound(xl, xh):
+            return xh - xl + 1
+        rval = self.module.foo(is_=xlow, ie_=xhigh,
+                        arr=xvec[:ubound(xlow, xhigh)])
+        expval = np.arange(11, dtype = np.float32)
+        assert np.allclose(rval, expval)
+
+
 class TestNumpyVersionAttribute(util.F2PyTest):
     # Check that th attribute __f2py_numpy_version__ is present
     # in the compiled module and that has the value np.__version__.
