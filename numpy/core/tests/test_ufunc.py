@@ -666,19 +666,21 @@ class TestUfunc:
         for dt in (int, np.float16, np.float32, np.float64, np.longdouble):
             for v in (0, 1, 2, 7, 8, 9, 15, 16, 19, 127,
                       128, 1024, 1235):
-                tgt = dt(v * (v + 1) / 2)
-                d = np.arange(1, v + 1, dtype=dt)
-
                 # warning if sum overflows, which it does in float16
-                overflow = not np.isfinite(tgt)
-
                 with warnings.catch_warnings(record=True) as w:
-                    warnings.simplefilter("always")
-                    assert_almost_equal(np.sum(d), tgt)
+                    warnings.simplefilter("always", RuntimeWarning)
+
+                    tgt = dt(v * (v + 1) / 2)
+                    overflow = not np.isfinite(tgt)
                     assert_equal(len(w), 1 * overflow)
 
-                    assert_almost_equal(np.sum(d[::-1]), tgt)
+                    d = np.arange(1, v + 1, dtype=dt)
+
+                    assert_almost_equal(np.sum(d), tgt)
                     assert_equal(len(w), 2 * overflow)
+
+                    assert_almost_equal(np.sum(d[::-1]), tgt)
+                    assert_equal(len(w), 3 * overflow)
 
             d = np.ones(500, dtype=dt)
             assert_almost_equal(np.sum(d[::2]), 250.)

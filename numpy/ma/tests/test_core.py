@@ -4164,7 +4164,11 @@ class TestMaskedArrayFunctions:
         # test that masked_where on a structured array sets a structured
         # mask (see issue #2972)
         a = np.zeros(10, dtype=[("A", "<f2"), ("B", "<f4")])
-        am = np.ma.masked_where(a["A"] < 5, a)
+        with np.errstate(over="ignore"):
+            # NOTE: The float16 "uses" 1e20 as mask, which overflows to inf
+            #       and warns.  Unrelated to this test, but probably undesired.
+            #       But NumPy previously did not warn for this overflow.
+            am = np.ma.masked_where(a["A"] < 5, a)
         assert_equal(am.mask.dtype.names, am.dtype.names)
         assert_equal(am["A"],
                     np.ma.masked_array(np.zeros(10), np.ones(10)))

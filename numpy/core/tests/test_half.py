@@ -104,9 +104,9 @@ class TestHalf:
 
         # Increase the float by a minimal value:
         if offset == "up":
-            f16s_float = np.nextafter(f16s_float, float_t(1e50))
+            f16s_float = np.nextafter(f16s_float, float_t(np.inf))
         elif offset == "down":
-            f16s_float = np.nextafter(f16s_float, float_t(-1e50))
+            f16s_float = np.nextafter(f16s_float, float_t(-np.inf))
 
         # Convert back to float16 and its bit pattern:
         res_patterns = f16s_float.astype(np.float16).view(np.uint16)
