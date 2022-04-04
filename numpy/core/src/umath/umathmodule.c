@@ -24,6 +24,10 @@
 #include "number.h"
 #include "dispatching.h"
 
+/* Automatically generated code to define all ufuncs: */
+#include "funcs.inc"
+#include "__umath_generated.c"
+
 static PyUFuncGenericFunction pyfunc_functions[] = {PyUFunc_On_Om};
 
 static int
@@ -245,6 +249,10 @@ int initumath(PyObject *m)
 
     /* Add some symbolic constants to the module */
     d = PyModule_GetDict(m);
+
+    if (InitOperators(d) < 0) {
+        return -1;
+    }
 
     PyDict_SetItemString(d, "pi", s = PyFloat_FromDouble(NPY_PI));
     Py_DECREF(s);
