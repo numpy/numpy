@@ -4429,6 +4429,12 @@ cdef class Generator:
         --------
         shuffle
         permutation
+        
+        Notes
+        -----
+        An important distinction between methods ``shuffle``  and ``permuted`` is 
+        how they both treat the ``axis`` parameter which can be found at 
+        :ref:`generator-handling-axis-parameter`.
 
         Examples
         --------
