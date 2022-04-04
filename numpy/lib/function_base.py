@@ -906,7 +906,7 @@ def copy(a, order='K', subok=False):
     >>> b[0] = 3
     >>> b
     array([3, 2, 3])
-    
+
     Note that np.copy is a shallow copy and will not copy object
     elements within arrays. This is mainly important for arrays
     containing Python objects. The new array will contain the
@@ -2696,7 +2696,7 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, ddof=np._NoValue, *,
     relationship between the correlation coefficient matrix, `R`, and the
     covariance matrix, `C`, is
 
-    .. math:: R_{ij} = \\frac{ C_{ij} } { \\sqrt{ C_{ii} * C_{jj} } }
+    .. math:: R_{ij} = \\frac{ C_{ij} } { \\sqrt{ C_{ii} C_{jj} } }
 
     The values of `R` are between -1 and 1, inclusive.
 
@@ -3984,18 +3984,21 @@ def percentile(a,
     inverted_cdf:
         method 1 of H&F [1]_.
         This method gives discontinuous results:
+
         * if g > 0 ; then take j
         * if g = 0 ; then take i
 
     averaged_inverted_cdf:
         method 2 of H&F [1]_.
         This method give discontinuous results:
+
         * if g > 0 ; then take j
         * if g = 0 ; then average between bounds
 
     closest_observation:
         method 3 of H&F [1]_.
         This method give discontinuous results:
+
         * if g > 0 ; then take j
         * if g = 0 and index is odd ; then take j
         * if g = 0 and index is even ; then take i
@@ -4003,24 +4006,28 @@ def percentile(a,
     interpolated_inverted_cdf:
         method 4 of H&F [1]_.
         This method give continuous results using:
+
         * alpha = 0
         * beta = 1
 
     hazen:
         method 5 of H&F [1]_.
         This method give continuous results using:
+
         * alpha = 1/2
         * beta = 1/2
 
     weibull:
         method 6 of H&F [1]_.
         This method give continuous results using:
+
         * alpha = 0
         * beta = 0
 
     linear:
         method 7 of H&F [1]_.
         This method give continuous results using:
+
         * alpha = 1
         * beta = 1
 
@@ -4029,6 +4036,7 @@ def percentile(a,
         This method is probably the best method if the sample
         distribution function is unknown (see reference).
         This method give continuous results using:
+
         * alpha = 1/3
         * beta = 1/3
 
@@ -4037,6 +4045,7 @@ def percentile(a,
         This method is probably the best method if the sample
         distribution function is known to be normal.
         This method give continuous results using:
+
         * alpha = 3/8
         * beta = 3/8
 
@@ -4254,18 +4263,21 @@ def quantile(a,
     inverted_cdf:
         method 1 of H&F [1]_.
         This method gives discontinuous results:
+
         * if g > 0 ; then take j
         * if g = 0 ; then take i
 
     averaged_inverted_cdf:
         method 2 of H&F [1]_.
         This method gives discontinuous results:
+
         * if g > 0 ; then take j
         * if g = 0 ; then average between bounds
 
     closest_observation:
         method 3 of H&F [1]_.
         This method gives discontinuous results:
+
         * if g > 0 ; then take j
         * if g = 0 and index is odd ; then take j
         * if g = 0 and index is even ; then take i
@@ -4273,24 +4285,28 @@ def quantile(a,
     interpolated_inverted_cdf:
         method 4 of H&F [1]_.
         This method gives continuous results using:
+
         * alpha = 0
         * beta = 1
 
     hazen:
         method 5 of H&F [1]_.
         This method gives continuous results using:
+
         * alpha = 1/2
         * beta = 1/2
 
     weibull:
         method 6 of H&F [1]_.
         This method gives continuous results using:
+
         * alpha = 0
         * beta = 0
 
     linear:
         method 7 of H&F [1]_.
         This method gives continuous results using:
+
         * alpha = 1
         * beta = 1
 
@@ -4299,6 +4315,7 @@ def quantile(a,
         This method is probably the best method if the sample
         distribution function is unknown (see reference).
         This method gives continuous results using:
+
         * alpha = 1/3
         * beta = 1/3
 
@@ -4307,6 +4324,7 @@ def quantile(a,
         This method is probably the best method if the sample
         distribution function is known to be normal.
         This method gives continuous results using:
+
         * alpha = 3/8
         * beta = 3/8
 

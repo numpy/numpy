@@ -562,7 +562,7 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
     below, :math:`h` is the binwidth and :math:`n_h` is the number of
     bins. All estimators that compute bin counts are recast to bin width
     using the `ptp` of the data. The final bin count is obtained from
-    ``np.round(np.ceil(range / h))``. The final bin width is often less 
+    ``np.round(np.ceil(range / h))``. The final bin width is often less
     than what is returned by the estimators below.
 
     'auto' (maximum of the 'sturges' and 'fd' estimators)
@@ -581,7 +581,7 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
         datasets. The IQR is very robust to outliers.
 
     'scott'
-        .. math:: h = \sigma \sqrt[3]{\frac{24 * \sqrt{\pi}}{n}}
+        .. math:: h = \sigma \sqrt[3]{\frac{24 \sqrt{\pi}}{n}}
 
         The binwidth is proportional to the standard deviation of the
         data and inversely proportional to cube root of ``x.size``. Can
@@ -598,7 +598,7 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
         does not take into account data variability.
 
     'sturges'
-        .. math:: n_h = \log _{2}n+1
+        .. math:: n_h = \log _{2}(n) + 1
 
         The number of bins is the base 2 log of ``a.size``.  This
         estimator assumes normality of data and is too conservative for
@@ -607,9 +607,9 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
 
     'doane'
         .. math:: n_h = 1 + \log_{2}(n) +
-                        \log_{2}(1 + \frac{|g_1|}{\sigma_{g_1}})
+                        \log_{2}\left(1 + \frac{|g_1|}{\sigma_{g_1}}\right)
 
-            g_1 = mean[(\frac{x - \mu}{\sigma})^3]
+            g_1 = mean\left[\left(\frac{x - \mu}{\sigma}\right)^3\right]
 
             \sigma_{g_1} = \sqrt{\frac{6(n - 2)}{(n + 1)(n + 3)}}
 
@@ -1050,13 +1050,13 @@ def histogramdd(sample, bins=10, range=None, normed=None, weights=None,
             smin, smax = _get_outer_edges(sample[:,i], range[i])
             try:
                 n = operator.index(bins[i])
-            
+
             except TypeError as e:
                 raise TypeError(
                 	"`bins[{}]` must be an integer, when a scalar".format(i)
                 ) from e
-                
-            edges[i] = np.linspace(smin, smax, n + 1)    
+
+            edges[i] = np.linspace(smin, smax, n + 1)
         elif np.ndim(bins[i]) == 1:
             edges[i] = np.asarray(bins[i])
             if np.any(edges[i][:-1] > edges[i][1:]):
