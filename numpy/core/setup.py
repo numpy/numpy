@@ -1140,14 +1140,14 @@ def configuration(parent_package='',top_path=None):
     #######################################################################
 
     config.add_extension('_rational_tests',
-                    sources=[join('src', 'umath', '_rational_tests.c.src')])
+                    sources=[join('src', 'umath', '_rational_tests.c')])
 
     #######################################################################
     #                        struct_ufunc_test module                     #
     #######################################################################
 
     config.add_extension('_struct_ufunc_tests',
-                    sources=[join('src', 'umath', '_struct_ufunc_tests.c.src')])
+                    sources=[join('src', 'umath', '_struct_ufunc_tests.c')])
 
 
     #######################################################################
