@@ -73,13 +73,15 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 
 #include "npy_dlpack.h"
 
+#include "umathmodule.h"
+
 /*
  *****************************************************************************
  **                    INCLUDE GENERATED CODE                               **
  *****************************************************************************
  */
-#include "funcs.inc"
-#include "umathmodule.h"
+/* __ufunc_api.c define is the PyUFunc_API table: */
+#include "__ufunc_api.c"
 
 NPY_NO_EXPORT int initscalarmath(PyObject *);
 NPY_NO_EXPORT int set_matmul_flags(PyObject *d); /* in ufunc_object.c */
@@ -4948,8 +4950,7 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
         goto err;
     }
 
-    /* Load the ufunc operators into the array module's namespace */
-    if (InitOperators(d) < 0) {
+    if (initumath(m) != 0) {
         goto err;
     }
 
@@ -4957,9 +4958,6 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
         goto err;
     }
 
-    if (initumath(m) != 0) {
-        goto err;
-    }
     /*
      * Initialize the default PyDataMem_Handler capsule singleton.
      */
