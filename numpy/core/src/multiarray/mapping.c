@@ -2610,13 +2610,14 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
     }
 
     /* create new MapIter object */
-    mit = (PyArrayMapIterObject *)PyArray_malloc(sizeof(PyArrayMapIterObject));
+    mit = (PyArrayMapIterObject *)PyArray_malloc(
+            sizeof(PyArrayMapIterObject) + sizeof(NPY_cast_info));
     if (mit == NULL) {
         Py_DECREF(intp_descr);
         return NULL;
     }
     /* set all attributes of mapiter to zero */
-    memset(mit, 0, sizeof(PyArrayMapIterObject));
+    memset(mit, 0, sizeof(PyArrayMapIterObject) + sizeof(NPY_cast_info));
     PyObject_Init((PyObject *)mit, &PyArrayMapIter_Type);
 
     Py_INCREF(arr);
@@ -3079,7 +3080,34 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
     mit->subspace_ptrs = NpyIter_GetDataPtrArray(mit->subspace_iter);
     mit->subspace_strides = NpyIter_GetInnerStrideArray(mit->subspace_iter);
 
-    if (NpyIter_IterationNeedsAPI(mit->outer)) {
+    NPY_cast_info *cast_info = (NPY_cast_info *)&mit->subspace_castinfo;
+    NPY_ARRAYMETHOD_FLAGS flags;
+    npy_intp fixed_strides[2];
+
+    /*
+     * Get a dtype transfer function, since there are no
+     * buffers, this is safe.
+     */
+    NpyIter_GetInnerFixedStrideArray(mit->subspace_iter, fixed_strides);
+
+    if (PyArray_GetDTypeTransferFunction(is_aligned,
+#if @isget@
+    fixed_strides[0], fixed_strides[1],
+                        PyArray_DESCR(array), PyArray_DESCR(mit->extra_op),
+#else
+            fixed_strides[1], fixed_strides[0],
+            PyArray_DESCR(mit->extra_op), PyArray_DESCR(array),
+#endif
+            0,
+            &cast_info,
+            &flags) != NPY_SUCCEED) {
+        return -1;
+    }
+
+
+
+
+    if (NpyIter_IterationNeedsAPI(mit->subspace_iter)) {
         mit->needs_api = 1;
         /*
          * NOTE: In this case, need to call PyErr_Occurred() after
@@ -3286,6 +3314,7 @@ arraymapiter_dealloc(PyArrayMapIterObject *mit)
     }
     if (mit->subspace_iter != NULL) {
         NpyIter_Deallocate(mit->subspace_iter);
+        NPY_cast_info_xfree((NPY_cast_info *)(&(mit->subspace_castinfo)));
     }
     if (mit->extra_op_iter != NULL) {
         NpyIter_Deallocate(mit->extra_op_iter);

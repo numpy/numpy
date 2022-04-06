@@ -3250,12 +3250,11 @@ npyiter_allocate_transfer_functions(NpyIter *iter)
         }
     }
 
-    /*
-     * If any of the dtype transfer functions needed the API, flag it.
-     * TODO: We ignore other flags (currently only if floating point errors are
-     *       possible).  This is incorrect, the combined flags should be
-     *       exposed explicitly.
-     */
+    /* Store the combined transfer flags on the iterator */
+    NIT_ITFLAGS(iter) |= cflags << NPY_ITFLAG_TRANSFERFLAGS_SHIFT;
+    assert(NIT_ITFLAGS(iter) >> NPY_ITFLAG_TRANSFERFLAGS_SHIFT == cflags);
+
+    /* If any of the dtype transfer functions needed the API, flag it. */
     if (cflags & NPY_METH_REQUIRES_PYAPI) {
         NIT_ITFLAGS(iter) |= NPY_ITFLAG_NEEDSAPI;
     }

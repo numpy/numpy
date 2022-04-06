@@ -1717,30 +1717,6 @@ mapiter_@name@(PyArrayMapIterObject *mit)
         int is_subiter_trivial = 0; /* has three states */
         npy_intp reset_offsets[2] = {0, 0};
 
-        /* Use strided transfer functions for the inner loop */
-        npy_intp fixed_strides[2];
-
-        /*
-         * Get a dtype transfer function, since there are no
-         * buffers, this is safe.
-         */
-        NpyIter_GetInnerFixedStrideArray(mit->subspace_iter, fixed_strides);
-
-        NPY_cast_info cast_info;
-        NPY_ARRAYMETHOD_FLAGS flags;
-        if (PyArray_GetDTypeTransferFunction(is_aligned,
-#if @isget@
-                        fixed_strides[0], fixed_strides[1],
-                        PyArray_DESCR(array), PyArray_DESCR(mit->extra_op),
-#else
-                        fixed_strides[1], fixed_strides[0],
-                         PyArray_DESCR(mit->extra_op), PyArray_DESCR(array),
-#endif
-                        0,
-                        &cast_info,
-                        &flags) != NPY_SUCCEED) {
-            return -1;
-        }
         /* Note: it may make sense to refactor `needs_api` out in this branch */
         if (flags & NPY_METH_REQUIRES_PYAPI) {
             needs_api = 1;
