@@ -19,7 +19,7 @@ jobs:
     runs-on: windows-latest
     if: github.repository == 'numpy/numpy'
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           submodules: recursive
           fetch-depth: 3000
@@ -65,7 +65,7 @@ jobs:
         run: >-
           dash -c "/usr/bin/python3.8 runtests.py -n -vv"
       - name: Upload wheel if tests fail
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         if: failure()
         with:
           name: numpy-cygwin-wheel

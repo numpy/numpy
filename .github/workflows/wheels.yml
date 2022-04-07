@@ -40,7 +40,7 @@ jobs:
       message: ${{ steps.commit_message.outputs.message }}
     steps:
       - name: Checkout numpy
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         # Gets the correct commit message for pull request
         with:
           ref: ${{ github.event.pull_request.head.sha }}
@@ -96,7 +96,7 @@ jobs:
       IS_SCHEDULE_DISPATCH: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
     steps:
       - name: Checkout numpy
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           submodules: true
           # versioneer.py requires the latest tag to be reachable. Here we
@@ -106,7 +106,7 @@ jobs:
           fetch-depth: 0
 
       # Used to push the built wheels
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v3
         with:
           python-version: '3.x'
 
@@ -124,7 +124,7 @@ jobs:
         env:
           CIBW_BUILD: ${{ matrix.python }}-${{ matrix.buildplat[1] }}
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.python }}-${{ startsWith(matrix.buildplat[1], 'macosx') && 'macosx' || matrix.buildplat[1] }}
           path: ./wheelhouse/*.whl
@@ -162,7 +162,7 @@ jobs:
       IS_SCHEDULE_DISPATCH: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
     steps:
       - name: Checkout numpy
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           submodules: true
           # versioneer.py requires the latest tag to be reachable. Here we
@@ -171,7 +171,7 @@ jobs:
           # https://github.com/actions/checkout/issues/338
           fetch-depth: 0
       # Used to push the built wheels
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v3
         with:
           # Build sdist on lowest supported Python
           python-version: '3.8'
@@ -186,7 +186,7 @@ jobs:
           pip install -r test_requirements.txt
           cd .. # Can't import numpy within numpy src directory
           python -c "import numpy; print(numpy.__version__); numpy.test();"
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: sdist
           path: ./dist/*
