@@ -469,6 +469,7 @@ def configuration(parent_package='',top_path=None):
                                            exec_mod_from_location)
     from numpy.distutils.system_info import (get_info, blas_opt_info,
                                              lapack_opt_info)
+    from numpy.distutils.ccompiler_opt import NPY_CXX_FLAGS
     from numpy.version import release as is_released
 
     config = Configuration('core', parent_package, top_path)
@@ -737,11 +738,17 @@ def configuration(parent_package='',top_path=None):
         ):
             is_cpp = lang == 'c++'
             if is_cpp:
-                # this a workround to get rid of invalid c++ flags
+                # this a workaround to get rid of invalid c++ flags
                 # without doing big changes to config.
                 # c tested first, compiler should be here
                 bk_c = config_cmd.compiler
                 config_cmd.compiler = bk_c.cxx_compiler()
+
+                # Check that Linux compiler actually support the default flags
+                if hasattr(config_cmd.compiler, 'compiler'):
+                    config_cmd.compiler.compiler.extend(NPY_CXX_FLAGS)
+                    config_cmd.compiler.compiler_so.extend(NPY_CXX_FLAGS)
+
             st = config_cmd.try_link(test_code, lang=lang)
             if not st:
                 # rerun the failing command in verbose mode
@@ -1120,10 +1127,7 @@ def configuration(parent_package='',top_path=None):
                          libraries=['npymath'],
                          extra_objects=svml_objs,
                          extra_info=extra_info,
-                         extra_cxx_compile_args=['-std=c++11',
-                                                 '-D__STDC_VERSION__=0',
-                                                 '-fno-exceptions',
-                                                 '-fno-rtti'])
+                         extra_cxx_compile_args=NPY_CXX_FLAGS)
 
     #######################################################################
     #                        umath_tests module                           #

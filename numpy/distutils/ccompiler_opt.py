@@ -16,6 +16,14 @@ import re
 import subprocess
 import textwrap
 
+# These flags are used to compile any C++ source within Numpy.
+# They are chosen to have very few runtime dependencies.
+NPY_CXX_FLAGS = [
+    '-std=c++11',  # Minimal standard version
+    '-D__STDC_VERSION__=0',  # for compatibility with C headers
+    '-fno-exceptions',  # no exception support
+    '-fno-rtti']  # no runtime type information
+
 
 class _Config:
     """An abstract class holds all configurable attributes of `CCompilerOpt`,
