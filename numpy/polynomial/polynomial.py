@@ -154,7 +154,7 @@ def polyfromroots(roots):
 
     Return the coefficients of the polynomial
 
-    .. math:: p(x) = (x - r_0) * (x - r_1) * ... * (x - r_n),
+    .. math:: p(x) = (x - r_0) (x - r_1) \\dots (x - r_n),
 
     where the ``r_n`` are the roots specified in `roots`.  If a zero has
     multiplicity n, then it must appear in `roots` n times. For instance,
@@ -164,7 +164,7 @@ def polyfromroots(roots):
 
     If the returned coefficients are `c`, then
 
-    .. math:: p(x) = c_0 + c_1 * x + ... +  x^n
+    .. math:: p(x) = c_0 + c_1 x + \\dots +  x^n
 
     The coefficient of the last term is 1 for monic polynomials in this
     form.
@@ -194,7 +194,7 @@ def polyfromroots(roots):
     The coefficients are determined by multiplying together linear factors
     of the form ``(x - r_i)``, i.e.
 
-    .. math:: p(x) = (x - r_0) (x - r_1) ... (x - r_n)
+    .. math:: p(x) = (x - r_0) (x - r_1) \\dots (x - r_n)
 
     where ``n == len(roots) - 1``; note that this implies that ``1`` is always
     returned for :math:`a_n`.
@@ -331,7 +331,7 @@ def polymul(c1, c2):
 
     Returns the product of two polynomials `c1` * `c2`.  The arguments are
     sequences of coefficients, from lowest order term to highest, e.g.,
-    [1,2,3] represents the polynomial ``1 + 2*x + 3*x**2.``
+    ``[1, 2, 3]`` represents the polynomial :math:`1 + 2 x + 3 x^2`.
 
     Parameters
     ----------
@@ -351,9 +351,9 @@ def polymul(c1, c2):
     Examples
     --------
     >>> from numpy.polynomial import polynomial as P
-    >>> c1 = (1,2,3)
-    >>> c2 = (3,2,1)
-    >>> P.polymul(c1,c2)
+    >>> c1 = (1, 2, 3)
+    >>> c2 = (3, 2, 1)
+    >>> P.polymul(c1, c2)
     array([  3.,   8.,  14.,   8.,   3.])
 
     """
@@ -369,7 +369,7 @@ def polydiv(c1, c2):
 
     Returns the quotient-with-remainder of two polynomials `c1` / `c2`.
     The arguments are sequences of coefficients, from lowest order term
-    to highest, e.g., [1,2,3] represents ``1 + 2*x + 3*x**2``.
+    to highest, e.g., ``[1, 2, 3]`` represents :math:`1 + 2 x + 3 x^2`.
 
     Parameters
     ----------
@@ -388,11 +388,11 @@ def polydiv(c1, c2):
     Examples
     --------
     >>> from numpy.polynomial import polynomial as P
-    >>> c1 = (1,2,3)
-    >>> c2 = (3,2,1)
-    >>> P.polydiv(c1,c2)
+    >>> c1 = (1, 2, 3)
+    >>> c2 = (3, 2, 1)
+    >>> P.polydiv(c1, c2)
     (array([3.]), array([-8., -4.]))
-    >>> P.polydiv(c2,c1)
+    >>> P.polydiv(c2, c1)
     (array([ 0.33333333]), array([ 2.66666667,  1.33333333])) # may vary
 
     """
@@ -426,7 +426,7 @@ def polypow(c, pow, maxpower=None):
 
     Returns the polynomial `c` raised to the power `pow`. The argument
     `c` is a sequence of coefficients ordered from low to high. i.e.,
-    [1,2,3] is the series  ``1 + 2*x + 3*x**2.``
+    ``[1, 2, 3]`` is the series :math:`1 + 2 x + 3 x^2`.
 
     Parameters
     ----------
@@ -451,7 +451,7 @@ def polypow(c, pow, maxpower=None):
     Examples
     --------
     >>> from numpy.polynomial import polynomial as P
-    >>> P.polypow([1,2,3], 2)
+    >>> P.polypow([1, 2, 3], 2)
     array([ 1., 4., 10., 12., 9.])
 
     """
@@ -468,9 +468,9 @@ def polyder(c, m=1, scl=1, axis=0):
     `axis`.  At each iteration the result is multiplied by `scl` (the
     scaling factor is for use in a linear change of variable).  The
     argument `c` is an array of coefficients from low to high degree along
-    each axis, e.g., [1,2,3] represents the polynomial ``1 + 2*x + 3*x**2``
-    while [[1,2],[1,2]] represents ``1 + 1*x + 2*y + 2*x*y`` if axis=0 is
-    ``x`` and axis=1 is ``y``.
+    each axis, e.g., ``[1, 2, 3]`` represents the polynomial
+    :math:`1 + 2 x + 3 x^2` while ``[[1, 2], [1, 2]]`` represents
+    :math:`1 + 1 x + 2 y + 2 x y` if axis=0 is ``x`` and axis=1 is ``y``.
 
     Parameters
     ----------
@@ -667,7 +667,7 @@ def polyval(x, c, tensor=True):
 
     If `c` is of length `n + 1`, this function returns the value
 
-    .. math:: p(x) = c_0 + c_1 * x + ... + c_n * x^n
+    .. math:: p(x) = c_0 + c_1 x + \\dots + c_n x^n
 
     The parameter `x` is converted to an array only if it is a tuple or a
     list, otherwise it is treated as a scalar. In either case, either `x`
@@ -759,7 +759,7 @@ def polyval(x, c, tensor=True):
 
 def polyvalfromroots(x, r, tensor=True):
     """
-    Evaluate a polynomial specified by its roots at points x.
+    Evaluate a polynomial specified by its roots at points `x`.
 
     If `r` is of length `N`, this function returns the value
 
@@ -847,11 +847,11 @@ def polyvalfromroots(x, r, tensor=True):
 
 def polyval2d(x, y, c):
     """
-    Evaluate a 2-D polynomial at points (x, y).
+    Evaluate a 2-D polynomial at points `(x, y)`.
 
     This function returns the value
 
-    .. math:: p(x,y) = \\sum_{i,j} c_{i,j} * x^i * y^j
+    .. math:: p(x,y) = \\sum_{i,j} c_{i,j} x^i y^j
 
     The parameters `x` and `y` are converted to arrays only if they are
     tuples or a lists, otherwise they are treated as a scalars and they
@@ -897,11 +897,11 @@ def polyval2d(x, y, c):
 
 def polygrid2d(x, y, c):
     """
-    Evaluate a 2-D polynomial on the Cartesian product of x and y.
+    Evaluate a 2-D polynomial on the Cartesian product of `x` and `y`.
 
     This function returns the values:
 
-    .. math:: p(a,b) = \\sum_{i,j} c_{i,j} * a^i * b^j
+    .. math:: p(a,b) = \\sum_{i,j} c_{i,j} a^i b^j
 
     where the points `(a, b)` consist of all pairs formed by taking
     `a` from `x` and `b` from `y`. The resulting points form a grid with
@@ -950,11 +950,11 @@ def polygrid2d(x, y, c):
 
 def polyval3d(x, y, z, c):
     """
-    Evaluate a 3-D polynomial at points (x, y, z).
+    Evaluate a 3-D polynomial at points `(x, y, z)`.
 
     This function returns the values:
 
-    .. math:: p(x,y,z) = \\sum_{i,j,k} c_{i,j,k} * x^i * y^j * z^k
+    .. math:: p(x,y,z) = \\sum_{i,j,k} c_{i,j,k} x^i y^j z^k
 
     The parameters `x`, `y`, and `z` are converted to arrays only if
     they are tuples or a lists, otherwise they are treated as a scalars and
@@ -1001,11 +1001,11 @@ def polyval3d(x, y, z, c):
 
 def polygrid3d(x, y, z, c):
     """
-    Evaluate a 3-D polynomial on the Cartesian product of x, y and z.
+    Evaluate a 3-D polynomial on the Cartesian product of `x`, `y` and `z`.
 
     This function returns the values:
 
-    .. math:: p(a,b,c) = \\sum_{i,j,k} c_{i,j,k} * a^i * b^j * c^k
+    .. math:: p(a,b,c) = \\sum_{i,j,k} c_{i,j,k} a^i b^j c^k
 
     where the points `(a, b, c)` consist of all triples formed by taking
     `a` from `x`, `b` from `y`, and `c` from `z`. The resulting points form
@@ -1061,7 +1061,7 @@ def polyvander(x, deg):
     Returns the Vandermonde matrix of degree `deg` and sample points
     `x`. The Vandermonde matrix is defined by
 
-    .. math:: V[..., i] = x^i,
+    .. math:: V[\\dots, i] = x^i,
 
     where `0 <= i <= deg`. The leading indices of `V` index the elements of
     `x` and the last index is the power of `x`.
@@ -1115,7 +1115,7 @@ def polyvander2d(x, y, deg):
     Returns the pseudo-Vandermonde matrix of degrees `deg` and sample
     points `(x, y)`. The pseudo-Vandermonde matrix is defined by
 
-    .. math:: V[..., (deg[1] + 1)*i + j] = x^i * y^j,
+    .. math:: V[\\dots, (deg[1] + 1)i + j] = x^i y^j,
 
     where `0 <= i <= deg[0]` and `0 <= j <= deg[1]`. The leading indices of
     `V` index the points `(x, y)` and the last index encodes the powers of
@@ -1125,7 +1125,7 @@ def polyvander2d(x, y, deg):
     correspond to the elements of a 2-D coefficient array `c` of shape
     (xdeg + 1, ydeg + 1) in the order
 
-    .. math:: c_{00}, c_{01}, c_{02} ... , c_{10}, c_{11}, c_{12} ...
+    .. math:: c_{00}, c_{01}, c_{02}, \\dots, c_{10}, c_{11}, c_{12}, \\dots
 
     and ``np.dot(V, c.flat)`` and ``polyval2d(x, y, c)`` will be the same
     up to roundoff. This equivalence is useful both for least squares
@@ -1164,7 +1164,7 @@ def polyvander3d(x, y, z, deg):
     points `(x, y, z)`. If `l, m, n` are the given degrees in `x, y, z`,
     then The pseudo-Vandermonde matrix is defined by
 
-    .. math:: V[..., (m+1)(n+1)i + (n+1)j + k] = x^i * y^j * z^k,
+    .. math:: V[\\dots, (m+1)(n+1)i + (n+1)j + k] = x^i y^j z^k,
 
     where `0 <= i <= l`, `0 <= j <= m`, and `0 <= j <= n`.  The leading
     indices of `V` index the points `(x, y, z)` and the last index encodes
@@ -1174,7 +1174,8 @@ def polyvander3d(x, y, z, deg):
     of `V` correspond to the elements of a 3-D coefficient array `c` of
     shape (xdeg + 1, ydeg + 1, zdeg + 1) in the order
 
-    .. math:: c_{000}, c_{001}, c_{002},... , c_{010}, c_{011}, c_{012},...
+    .. math:: c_{000}, c_{001}, c_{002}, \\dots, c_{010}, c_{011}, c_{012},
+        \\dots
 
     and  ``np.dot(V, c.flat)`` and ``polyval3d(x, y, z, c)`` will be the
     same up to roundoff. This equivalence is useful both for least squares
@@ -1222,7 +1223,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
     coefficients are stored in the corresponding columns of a 2-D return.
     The fitted polynomial(s) are in the form
 
-    .. math::  p(x) = c_0 + c_1 * x + ... + c_n * x^n,
+    .. math::  p(x) = c_0 + c_1 x + \\dots + c_n x^n,
 
     where `n` is `deg`.
 
@@ -1304,12 +1305,12 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
     The solution is the coefficients of the polynomial `p` that minimizes
     the sum of the weighted squared errors
 
-    .. math:: E = \\sum_j w_j^2 * |y_j - p(x_j)|^2,
+    .. math:: E = \\sum_j w_j^2 |y_j - p(x_j)|^2,
 
     where the :math:`w_j` are the weights. This problem is solved by
     setting up the (typically) over-determined matrix equation:
 
-    .. math:: V(x) * c = w * y,
+    .. math:: V(x) c = w y,
 
     where `V` is the weighted pseudo Vandermonde matrix of `x`, `c` are the
     coefficients to be solved for, `w` are the weights, and `y` are the
@@ -1408,7 +1409,7 @@ def polyroots(c):
 
     Return the roots (a.k.a. "zeros") of the polynomial
 
-    .. math:: p(x) = \\sum_i c[i] * x^i.
+    .. math:: p(x) = \\sum_i c[i] x^i.
 
     Parameters
     ----------
@@ -1484,9 +1485,9 @@ class Polynomial(ABCPolyBase):
     domain : (2,) array_like, optional
         Domain to use. The interval ``[domain[0], domain[1]]`` is mapped
         to the interval ``[window[0], window[1]]`` by shifting and scaling.
-        The default value is [-1, 1].
+        The default value is ``[-1, 1]``.
     window : (2,) array_like, optional
-        Window, see `domain` for its use. The default value is [-1, 1].
+        Window, see `domain` for its use. The default value is ``[-1, 1]``.
 
         .. versionadded:: 1.6.0
 

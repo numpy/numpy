@@ -270,7 +270,7 @@ def legfromroots(roots):
 
     The function returns the coefficients of the polynomial
 
-    .. math:: p(x) = (x - r_0) * (x - r_1) * ... * (x - r_n),
+    .. math:: p(x) = (x - r_0) (x - r_1)  \\dots (x - r_n),
 
     in Legendre form, where the `r_n` are the roots specified in `roots`.
     If a zero has multiplicity n, then it must appear in `roots` n times.
@@ -280,7 +280,7 @@ def legfromroots(roots):
 
     If the returned coefficients are `c`, then
 
-    .. math:: p(x) = c_0 + c_1 * L_1(x) + ... +  c_n * L_n(x)
+    .. math:: p(x) = c_0 + c_1 L_1(x) +  \\dots +  c_n L_n(x)
 
     The coefficient of the last term is not generally 1 for monic
     polynomials in Legendre form.
@@ -712,8 +712,8 @@ def legint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
     beware": note that, depending on what one is doing, one may want `scl`
     to be the reciprocal of what one might expect; for more information,
     see the Notes section below.)  The argument `c` is an array of
-    coefficients from low to high degree along each axis, e.g., [1,2,3]
-    represents the series ``L_0 + 2*L_1 + 3*L_2`` while [[1,2],[1,2]]
+    coefficients from low to high degree along each axis, e.g., ``[1,2,3]``
+    represents the series :math:`L_0 + 2L_1 + 3L_2` while [[1,2],[1,2]]
     represents ``1*L_0(x)*L_0(y) + 1*L_1(x)*L_0(y) + 2*L_0(x)*L_1(y) +
     2*L_1(x)*L_1(y)`` if axis=0 is ``x`` and axis=1 is ``y``.
 
@@ -835,7 +835,7 @@ def legval(x, c, tensor=True):
 
     If `c` is of length `n + 1`, this function returns the value:
 
-    .. math:: p(x) = c_0 * L_0(x) + c_1 * L_1(x) + ... + c_n * L_n(x)
+    .. math:: p(x) = c_0 L_0(x) + c_1 L_1(x) +  \\dots + c_n L_n(x)
 
     The parameter `x` is converted to an array only if it is a tuple or a
     list, otherwise it is treated as a scalar. In either case, either `x`
@@ -920,7 +920,7 @@ def legval2d(x, y, c):
 
     This function returns the values:
 
-    .. math:: p(x,y) = \\sum_{i,j} c_{i,j} * L_i(x) * L_j(y)
+    .. math:: p(x,y) = \\sum_{i,j} c_{i,j} L_i(x) L_j(y)
 
     The parameters `x` and `y` are converted to arrays only if they are
     tuples or a lists, otherwise they are treated as a scalars and they
@@ -969,7 +969,7 @@ def leggrid2d(x, y, c):
 
     This function returns the values:
 
-    .. math:: p(a,b) = \\sum_{i,j} c_{i,j} * L_i(a) * L_j(b)
+    .. math:: p(a,b) = \\sum_{i,j} c_{i,j} L_i(a) L_j(b)
 
     where the points `(a, b)` consist of all pairs formed by taking
     `a` from `x` and `b` from `y`. The resulting points form a grid with
@@ -1022,7 +1022,7 @@ def legval3d(x, y, z, c):
 
     This function returns the values:
 
-    .. math:: p(x,y,z) = \\sum_{i,j,k} c_{i,j,k} * L_i(x) * L_j(y) * L_k(z)
+    .. math:: p(x,y,z) = \\sum_{i,j,k} c_{i,j,k} L_i(x) L_j(y) L_k(z)
 
     The parameters `x`, `y`, and `z` are converted to arrays only if
     they are tuples or a lists, otherwise they are treated as a scalars and
@@ -1073,7 +1073,7 @@ def leggrid3d(x, y, z, c):
 
     This function returns the values:
 
-    .. math:: p(a,b,c) = \\sum_{i,j,k} c_{i,j,k} * L_i(a) * L_j(b) * L_k(c)
+    .. math:: p(a,b,c) = \\sum_{i,j,k} c_{i,j,k} L_i(a) L_j(b) L_k(c)
 
     where the points `(a, b, c)` consist of all triples formed by taking
     `a` from `x`, `b` from `y`, and `c` from `z`. The resulting points form
@@ -1129,7 +1129,7 @@ def legvander(x, deg):
     Returns the pseudo-Vandermonde matrix of degree `deg` and sample points
     `x`. The pseudo-Vandermonde matrix is defined by
 
-    .. math:: V[..., i] = L_i(x)
+    .. math:: V[ \\dots, i] = L_i(x)
 
     where `0 <= i <= deg`. The leading indices of `V` index the elements of
     `x` and the last index is the degree of the Legendre polynomial.
@@ -1182,7 +1182,7 @@ def legvander2d(x, y, deg):
     Returns the pseudo-Vandermonde matrix of degrees `deg` and sample
     points `(x, y)`. The pseudo-Vandermonde matrix is defined by
 
-    .. math:: V[..., (deg[1] + 1)*i + j] = L_i(x) * L_j(y),
+    .. math:: V[ \\dots, (deg[1] + 1)i + j] = L_i(x) L_j(y),
 
     where `0 <= i <= deg[0]` and `0 <= j <= deg[1]`. The leading indices of
     `V` index the points `(x, y)` and the last index encodes the degrees of
@@ -1192,7 +1192,7 @@ def legvander2d(x, y, deg):
     correspond to the elements of a 2-D coefficient array `c` of shape
     (xdeg + 1, ydeg + 1) in the order
 
-    .. math:: c_{00}, c_{01}, c_{02} ... , c_{10}, c_{11}, c_{12} ...
+    .. math:: c_{00}, c_{01}, c_{02}, \\dots , c_{10}, c_{11}, c_{12}, \\dots
 
     and ``np.dot(V, c.flat)`` and ``legval2d(x, y, c)`` will be the same
     up to roundoff. This equivalence is useful both for least squares
@@ -1236,7 +1236,7 @@ def legvander3d(x, y, z, deg):
     points `(x, y, z)`. If `l, m, n` are the given degrees in `x, y, z`,
     then The pseudo-Vandermonde matrix is defined by
 
-    .. math:: V[..., (m+1)(n+1)i + (n+1)j + k] = L_i(x)*L_j(y)*L_k(z),
+    .. math:: V[ \\dots, (m+1)(n+1)i + (n+1)j + k] = L_i(x) L_j(y) L_k(z),
 
     where `0 <= i <= l`, `0 <= j <= m`, and `0 <= j <= n`.  The leading
     indices of `V` index the points `(x, y, z)` and the last index encodes
@@ -1246,7 +1246,8 @@ def legvander3d(x, y, z, deg):
     of `V` correspond to the elements of a 3-D coefficient array `c` of
     shape (xdeg + 1, ydeg + 1, zdeg + 1) in the order
 
-    .. math:: c_{000}, c_{001}, c_{002},... , c_{010}, c_{011}, c_{012},...
+    .. math:: c_{000}, c_{001}, c_{002}, \\dots , c_{010}, c_{011}, c_{012},
+        \\dots
 
     and ``np.dot(V, c.flat)`` and ``legval3d(x, y, z, c)`` will be the
     same up to roundoff. This equivalence is useful both for least squares
@@ -1294,7 +1295,7 @@ def legfit(x, y, deg, rcond=None, full=False, w=None):
     coefficients are stored in the corresponding columns of a 2-D return.
     The fitted polynomial(s) are in the form
 
-    .. math::  p(x) = c_0 + c_1 * L_1(x) + ... + c_n * L_n(x),
+    .. math::  p(x) = c_0 + c_1 L_1(x) +  \\dots + c_n L_n(x),
 
     where `n` is `deg`.
 
@@ -1376,12 +1377,12 @@ def legfit(x, y, deg, rcond=None, full=False, w=None):
     The solution is the coefficients of the Legendre series `p` that
     minimizes the sum of the weighted squared errors
 
-    .. math:: E = \\sum_j w_j^2 * |y_j - p(x_j)|^2,
+    .. math:: E = \\sum_j w_j^2 |y_j - p(x_j)|^2,
 
     where :math:`w_j` are the weights. This problem is solved by setting up
     as the (typically) overdetermined matrix equation
 
-    .. math:: V(x) * c = w * y,
+    .. math:: V(x) c = w y,
 
     where `V` is the weighted pseudo Vandermonde matrix of `x`, `c` are the
     coefficients to be solved for, `w` are the weights, and `y` are the
@@ -1462,7 +1463,7 @@ def legroots(c):
 
     Return the roots (a.k.a. "zeros") of the polynomial
 
-    .. math:: p(x) = \\sum_i c[i] * L_i(x).
+    .. math:: p(x) = \\sum_i c[i] L_i(x).
 
     Parameters
     ----------
@@ -1546,7 +1547,7 @@ def leggauss(deg):
     The results have only been tested up to degree 100, higher degrees may
     be problematic. The weights are determined by using the fact that
 
-    .. math:: w_k = c / (L'_n(x_k) * L_{n-1}(x_k))
+    .. math:: w_k = c / (L'_n(x_k) L_{n-1}(x_k))
 
     where :math:`c` is a constant independent of :math:`k` and :math:`x_k`
     is the k'th root of :math:`L_n`, and then scaling the results to get
@@ -1627,13 +1628,13 @@ class Legendre(ABCPolyBase):
     ----------
     coef : array_like
         Legendre coefficients in order of increasing degree, i.e.,
-        ``(1, 2, 3)`` gives ``1*P_0(x) + 2*P_1(x) + 3*P_2(x)``.
+        ``(1, 2, 3)`` gives :math:`P_0(x) + 2P_1(x) + 3P_2(x)`.
     domain : (2,) array_like, optional
         Domain to use. The interval ``[domain[0], domain[1]]`` is mapped
         to the interval ``[window[0], window[1]]`` by shifting and scaling.
-        The default value is [-1, 1].
+        The default value is ``[-1, 1]``.
     window : (2,) array_like, optional
-        Window, see `domain` for its use. The default value is [-1, 1].
+        Window, see `domain` for its use. The default value is ``[-1, 1]``.
 
         .. versionadded:: 1.6.0
 

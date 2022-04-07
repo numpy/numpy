@@ -879,9 +879,9 @@ cdef class Generator:
             greater than or equal to low.  The default value is 0.
         high : float or array_like of floats
             Upper boundary of the output interval.  All values generated will be
-            less than high.  The high limit may be included in the returned array of 
-            floats due to floating-point rounding in the equation 
-            ``low + (high-low) * random_sample()``.  high - low must be 
+            less than high.  The high limit may be included in the returned array of
+            floats due to floating-point rounding in the equation
+            ``low + (high-low) * random_sample()``.  high - low must be
             non-negative.  The default value is 1.0.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
@@ -1748,14 +1748,14 @@ cdef class Generator:
         Does their energy intake deviate systematically from the recommended
         value of 7725 kJ? Our null hypothesis will be the absence of deviation,
         and the alternate hypothesis will be the presence of an effect that could be
-        either positive or negative, hence making our test 2-tailed. 
+        either positive or negative, hence making our test 2-tailed.
 
         Because we are estimating the mean and we have N=11 values in our sample,
-        we have N-1=10 degrees of freedom. We set our significance level to 95% and 
-        compute the t statistic using the empirical mean and empirical standard 
-        deviation of our intake. We use a ddof of 1 to base the computation of our 
+        we have N-1=10 degrees of freedom. We set our significance level to 95% and
+        compute the t-statistic using the empirical mean and empirical standard
+        deviation of our intake. We use a ddof of 1 to base the computation of our
         empirical standard deviation on an unbiased estimate of the variance (note:
-        the final estimate is not unbiased due to the concave nature of the square 
+        the final estimate is not unbiased due to the concave nature of the square
         root).
 
         >>> np.mean(intake)
@@ -1773,18 +1773,18 @@ cdef class Generator:
         >>> s = np.random.default_rng().standard_t(10, size=1000000)
         >>> h = plt.hist(s, bins=100, density=True)
 
-        Does our t statistic land in one of the two critical regions found at 
+        Does our t-statistic land in one of the two critical regions found at
         both tails of the distribution?
 
         >>> np.sum(np.abs(t) < np.abs(s)) / float(len(s))
         0.018318  #random < 0.05, statistic is in critical region
 
-        The probability value for this 2-tailed test is about 1.83%, which is 
-        lower than the 5% pre-determined significance threshold. 
+        The probability value for this 2-tailed test is about 1.83%, which is
+        lower than the 5% pre-determined significance threshold.
 
         Therefore, the probability of observing values as extreme as our intake
-        conditionally on the null hypothesis being true is too low, and we reject 
-        the null hypothesis of no deviation. 
+        conditionally on the null hypothesis being true is too low, and we reject
+        the null hypothesis of no deviation.
 
         """
         return cont(&random_standard_t, &self._bitgen, size, self.lock, 1,
@@ -2999,10 +2999,10 @@ cdef class Generator:
         appear before the third "1" is a negative binomial distribution.
 
         Because this method internally calls ``Generator.poisson`` with an
-        intermediate random value, a ValueError is raised when the choice of 
+        intermediate random value, a ValueError is raised when the choice of
         :math:`n` and :math:`p` would result in the mean + 10 sigma of the sampled
-        intermediate distribution exceeding the max acceptable value of the 
-        ``Generator.poisson`` method. This happens when :math:`p` is too low 
+        intermediate distribution exceeding the max acceptable value of the
+        ``Generator.poisson`` method. This happens when :math:`p` is too low
         (a lot of failures happen for every success) and :math:`n` is too big (
         a lot of sucesses are allowed).
         Therefore, the :math:`n` and :math:`p` values must satisfy the constraint:
@@ -3571,7 +3571,7 @@ cdef class Generator:
 
         Covariance indicates the level to which two variables vary together.
         From the multivariate normal distribution, we draw N-dimensional
-        samples, :math:`X = [x_1, x_2, ... x_N]`.  The covariance matrix
+        samples, :math:`X = [x_1, x_2, \\dots, x_N]`.  The covariance matrix
         element :math:`C_{ij}` is the covariance of :math:`x_i` and :math:`x_j`.
         The element :math:`C_{ii}` is the variance of :math:`x_i` (i.e. its
         "spread").
@@ -4429,11 +4429,11 @@ cdef class Generator:
         --------
         shuffle
         permutation
-        
+
         Notes
         -----
-        An important distinction between methods ``shuffle``  and ``permuted`` is 
-        how they both treat the ``axis`` parameter which can be found at 
+        An important distinction between methods ``shuffle``  and ``permuted`` is
+        how they both treat the ``axis`` parameter which can be found at
         :ref:`generator-handling-axis-parameter`.
 
         Examples
@@ -4504,7 +4504,7 @@ cdef class Generator:
         if axis is None:
             if x.ndim > 1:
                 if not (np.PyArray_FLAGS(out) & (np.NPY_ARRAY_C_CONTIGUOUS |
-                                                 np.NPY_ARRAY_F_CONTIGUOUS)): 
+                                                 np.NPY_ARRAY_F_CONTIGUOUS)):
                     flags = (np.NPY_ARRAY_C_CONTIGUOUS |
                              NPY_ARRAY_WRITEBACKIFCOPY)
                     to_shuffle = PyArray_FromArray(<np.PyArrayObject *>out,
@@ -4584,8 +4584,8 @@ cdef class Generator:
 
         Notes
         -----
-        An important distinction between methods ``shuffle``  and ``permuted`` is 
-        how they both treat the ``axis`` parameter which can be found at 
+        An important distinction between methods ``shuffle``  and ``permuted`` is
+        how they both treat the ``axis`` parameter which can be found at
         :ref:`generator-handling-axis-parameter`.
 
         Examples
@@ -4784,15 +4784,15 @@ def default_rng(seed=None):
     -----
     If ``seed`` is not a `BitGenerator` or a `Generator`, a new `BitGenerator`
     is instantiated. This function does not manage a default global instance.
-    
+
     Examples
     --------
     ``default_rng`` is the recommended constructor for the random number class
-    ``Generator``. Here are several ways we can construct a random 
-    number generator using ``default_rng`` and the ``Generator`` class. 
-    
+    ``Generator``. Here are several ways we can construct a random
+    number generator using ``default_rng`` and the ``Generator`` class.
+
     Here we use ``default_rng`` to generate a random float:
- 
+
     >>> import numpy as np
     >>> rng = np.random.default_rng(12345)
     >>> print(rng)
@@ -4802,10 +4802,10 @@ def default_rng(seed=None):
     0.22733602246716966
     >>> type(rfloat)
     <class 'float'>
-     
-    Here we use ``default_rng`` to generate 3 random integers between 0 
+
+    Here we use ``default_rng`` to generate 3 random integers between 0
     (inclusive) and 10 (exclusive):
-        
+
     >>> import numpy as np
     >>> rng = np.random.default_rng(12345)
     >>> rints = rng.integers(low=0, high=10, size=3)
@@ -4813,9 +4813,9 @@ def default_rng(seed=None):
     array([6, 2, 7])
     >>> type(rints[0])
     <class 'numpy.int64'>
-    
+
     Here we specify a seed so that we have reproducible results:
-    
+
     >>> import numpy as np
     >>> rng = np.random.default_rng(seed=42)
     >>> print(rng)

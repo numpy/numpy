@@ -956,7 +956,7 @@ def qr(a, mode='reduced'):
         return wrap(a)
 
     # mc is the number of columns in the resulting q
-    # matrix. If the mode is complete then it is 
+    # matrix. If the mode is complete then it is
     # same as number of rows, and if the mode is reduced,
     # then it is the minimum of number of rows and columns.
     if mode == 'complete' and m > n:
@@ -1235,7 +1235,7 @@ def eig(a):
     The number `w` is an eigenvalue of `a` if there exists a vector
     `v` such that ``a @ v = w * v``. Thus, the arrays `a`, `w`, and
     `v` satisfy the equations ``a @ v[:,i] = w[i] * v[:,i]``
-    for :math:`i \\in \\{0,...,M-1\\}`.
+    for :math:`i \\in \\{0, \\dots, M-1\\}`.
 
     The array `v` of eigenvectors may not be of maximum rank, that is, some
     of the columns may be linearly dependent, although round-off error may

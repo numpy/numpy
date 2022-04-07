@@ -211,7 +211,7 @@ def _zseries_div(z1, z2):
     """Divide the first z-series by the second.
 
     Divide `z1` by `z2` and return the quotient and remainder as z-series.
-    Warning: this implementation only applies when both z1 and z2 have the
+    Warning: this implementation only applies when both `z1` and `z2` have the
     same symmetry, which is sufficient for present purposes.
 
     Parameters
@@ -517,7 +517,7 @@ def chebfromroots(roots):
 
     The function returns the coefficients of the polynomial
 
-    .. math:: p(x) = (x - r_0) * (x - r_1) * ... * (x - r_n),
+    .. math:: p(x) = (x - r_0) (x - r_1) \\dots (x - r_n),
 
     in Chebyshev form, where the `r_n` are the roots specified in `roots`.
     If a zero has multiplicity n, then it must appear in `roots` n times.
@@ -527,7 +527,7 @@ def chebfromroots(roots):
 
     If the returned coefficients are `c`, then
 
-    .. math:: p(x) = c_0 + c_1 * T_1(x) + ... +  c_n * T_n(x)
+    .. math:: p(x) = c_0 + c_1 T_1(x) + \\dots +  c_n T_n(x)
 
     The coefficient of the last term is not generally 1 for monic
     polynomials in Chebyshev form.
@@ -704,7 +704,7 @@ def chebmul(c1, c2):
 
     Returns the product of two Chebyshev series `c1` * `c2`.  The arguments
     are sequences of coefficients, from lowest order "term" to highest,
-    e.g., [1,2,3] represents the series ``T_0 + 2*T_1 + 3*T_2``.
+    e.g., ``[1, 2, 3]`` represents the series :math:`T_0 + 2 T_1 + 3 T_2`.
 
     Parameters
     ----------
@@ -753,8 +753,8 @@ def chebdiv(c1, c2):
 
     Returns the quotient-with-remainder of two Chebyshev series
     `c1` / `c2`.  The arguments are sequences of coefficients from lowest
-    order "term" to highest, e.g., [1,2,3] represents the series
-    ``T_0 + 2*T_1 + 3*T_2``.
+    order "term" to highest, e.g., ``[1, 2, 3]`` represents the series
+    :math:`T_0 + 2 T_1 + 3 T_2`.
 
     Parameters
     ----------
@@ -819,7 +819,7 @@ def chebpow(c, pow, maxpower=16):
 
     Returns the Chebyshev series `c` raised to the power `pow`. The
     argument `c` is a sequence of coefficients ordered from low to high.
-    i.e., [1,2,3] is the series  ``T_0 + 2*T_1 + 3*T_2.``
+    i.e., ``[1, 2, 3]`` is the series  :math:`T_0 + 2 T_1 + 3 T_2`.
 
     Parameters
     ----------
@@ -1097,7 +1097,7 @@ def chebval(x, c, tensor=True):
 
     If `c` is of length `n + 1`, this function returns the value:
 
-    .. math:: p(x) = c_0 * T_0(x) + c_1 * T_1(x) + ... + c_n * T_n(x)
+    .. math:: p(x) = c_0 T_0(x) + c_1 T_1(x) + \\dots + c_n T_n(x)
 
     The parameter `x` is converted to an array only if it is a tuple or a
     list, otherwise it is treated as a scalar. In either case, either `x`
@@ -1181,7 +1181,7 @@ def chebval2d(x, y, c):
 
     This function returns the values:
 
-    .. math:: p(x,y) = \\sum_{i,j} c_{i,j} * T_i(x) * T_j(y)
+    .. math:: p(x,y) = \\sum_{i,j} c_{i,j} T_i(x) T_j(y)
 
     The parameters `x` and `y` are converted to arrays only if they are
     tuples or a lists, otherwise they are treated as a scalars and they
@@ -1226,11 +1226,11 @@ def chebval2d(x, y, c):
 
 def chebgrid2d(x, y, c):
     """
-    Evaluate a 2-D Chebyshev series on the Cartesian product of x and y.
+    Evaluate a 2-D Chebyshev series on the Cartesian product of `x` and `y`.
 
     This function returns the values:
 
-    .. math:: p(a,b) = \\sum_{i,j} c_{i,j} * T_i(a) * T_j(b),
+    .. math:: p(a,b) = \\sum_{i,j} c_{i,j} T_i(a) T_j(b),
 
     where the points `(a, b)` consist of all pairs formed by taking
     `a` from `x` and `b` from `y`. The resulting points form a grid with
@@ -1279,11 +1279,11 @@ def chebgrid2d(x, y, c):
 
 def chebval3d(x, y, z, c):
     """
-    Evaluate a 3-D Chebyshev series at points (x, y, z).
+    Evaluate a 3-D Chebyshev series at points `(x, y, z)`.
 
     This function returns the values:
 
-    .. math:: p(x,y,z) = \\sum_{i,j,k} c_{i,j,k} * T_i(x) * T_j(y) * T_k(z)
+    .. math:: p(x,y,z) = \\sum_{i,j,k} c_{i,j,k} T_i(x) T_j(y) T_k(z)
 
     The parameters `x`, `y`, and `z` are converted to arrays only if
     they are tuples or a lists, otherwise they are treated as a scalars and
@@ -1330,11 +1330,12 @@ def chebval3d(x, y, z, c):
 
 def chebgrid3d(x, y, z, c):
     """
-    Evaluate a 3-D Chebyshev series on the Cartesian product of x, y, and z.
+    Evaluate a 3-D Chebyshev series on the Cartesian product of `x`, `y`, and
+    `z`.
 
     This function returns the values:
 
-    .. math:: p(a,b,c) = \\sum_{i,j,k} c_{i,j,k} * T_i(a) * T_j(b) * T_k(c)
+    .. math:: p(a,b,c) = \\sum_{i,j,k} c_{i,j,k} T_i(a) T_j(b) T_k(c)
 
     where the points `(a, b, c)` consist of all triples formed by taking
     `a` from `x`, `b` from `y`, and `c` from `z`. The resulting points form
@@ -1390,7 +1391,7 @@ def chebvander(x, deg):
     Returns the pseudo-Vandermonde matrix of degree `deg` and sample points
     `x`. The pseudo-Vandermonde matrix is defined by
 
-    .. math:: V[..., i] = T_i(x),
+    .. math:: V[\\dots, i] = T_i(x),
 
     where `0 <= i <= deg`. The leading indices of `V` index the elements of
     `x` and the last index is the degree of the Chebyshev polynomial.
@@ -1443,7 +1444,7 @@ def chebvander2d(x, y, deg):
     Returns the pseudo-Vandermonde matrix of degrees `deg` and sample
     points `(x, y)`. The pseudo-Vandermonde matrix is defined by
 
-    .. math:: V[..., (deg[1] + 1)*i + j] = T_i(x) * T_j(y),
+    .. math:: V[\\dots, (deg[1] + 1)i + j] = T_i(x) T_j(y),
 
     where `0 <= i <= deg[0]` and `0 <= j <= deg[1]`. The leading indices of
     `V` index the points `(x, y)` and the last index encodes the degrees of
@@ -1453,7 +1454,8 @@ def chebvander2d(x, y, deg):
     correspond to the elements of a 2-D coefficient array `c` of shape
     (xdeg + 1, ydeg + 1) in the order
 
-    .. math:: c_{00}, c_{01}, c_{02} ... , c_{10}, c_{11}, c_{12} ...
+    .. math:: c_{00}, c_{01}, c_{02}, \\dots , c_{10}, c_{11}, c_{12},
+        \\dots
 
     and ``np.dot(V, c.flat)`` and ``chebval2d(x, y, c)`` will be the same
     up to roundoff. This equivalence is useful both for least squares
@@ -1468,7 +1470,7 @@ def chebvander2d(x, y, deg):
         whether any of the elements are complex. Scalars are converted to
         1-D arrays.
     deg : list of ints
-        List of maximum degrees of the form [x_deg, y_deg].
+        List of maximum degrees of the form ``[x_deg, y_deg]``.
 
     Returns
     -------
@@ -1497,7 +1499,7 @@ def chebvander3d(x, y, z, deg):
     points `(x, y, z)`. If `l, m, n` are the given degrees in `x, y, z`,
     then The pseudo-Vandermonde matrix is defined by
 
-    .. math:: V[..., (m+1)(n+1)i + (n+1)j + k] = T_i(x)*T_j(y)*T_k(z),
+    .. math:: V[\\dots, (m+1)(n+1)i + (n+1)j + k] = T_i(x)*T_j(y)*T_k(z),
 
     where `0 <= i <= l`, `0 <= j <= m`, and `0 <= j <= n`.  The leading
     indices of `V` index the points `(x, y, z)` and the last index encodes
@@ -1507,7 +1509,8 @@ def chebvander3d(x, y, z, deg):
     of `V` correspond to the elements of a 3-D coefficient array `c` of
     shape (xdeg + 1, ydeg + 1, zdeg + 1) in the order
 
-    .. math:: c_{000}, c_{001}, c_{002},... , c_{010}, c_{011}, c_{012},...
+    .. math:: c_{000}, c_{001}, c_{002}, \\dots, c_{010}, c_{011}, c_{012},
+        \\dots
 
     and ``np.dot(V, c.flat)`` and ``chebval3d(x, y, z, c)`` will be the
     same up to roundoff. This equivalence is useful both for least squares
@@ -1555,7 +1558,7 @@ def chebfit(x, y, deg, rcond=None, full=False, w=None):
     coefficients are stored in the corresponding columns of a 2-D return.
     The fitted polynomial(s) are in the form
 
-    .. math::  p(x) = c_0 + c_1 * T_1(x) + ... + c_n * T_n(x),
+    .. math::  p(x) = c_0 + c_1 T_1(x) + \\dots + c_n T_n(x),
 
     where `n` is `deg`.
 
@@ -1584,7 +1587,7 @@ def chebfit(x, y, deg, rcond=None, full=False, w=None):
     w : array_like, shape (`M`,), optional
         Weights. If not None, the weight ``w[i]`` applies to the unsquared
         residual ``y[i] - y_hat[i]`` at ``x[i]``. Ideally the weights are
-        chosen so that the errors of the products ``w[i]*y[i]`` all have the
+        chosen so that the errors of the products ``w[i] * y[i]`` all have the
         same variance.  When using inverse-variance weighting, use
         ``w[i] = 1/sigma(y[i])``.  The default value is None.
 
@@ -1635,12 +1638,12 @@ def chebfit(x, y, deg, rcond=None, full=False, w=None):
     The solution is the coefficients of the Chebyshev series `p` that
     minimizes the sum of the weighted squared errors
 
-    .. math:: E = \\sum_j w_j^2 * |y_j - p(x_j)|^2,
+    .. math:: E = \\sum_j w_j^2 |y_j - p(x_j)|^2,
 
     where :math:`w_j` are the weights. This problem is solved by setting up
     as the (typically) overdetermined matrix equation
 
-    .. math:: V(x) * c = w * y,
+    .. math:: V(x) c = w y,
 
     where `V` is the weighted pseudo Vandermonde matrix of `x`, `c` are the
     coefficients to be solved for, `w` are the weights, and `y` are the
@@ -1722,7 +1725,7 @@ def chebroots(c):
 
     Return the roots (a.k.a. "zeros") of the polynomial
 
-    .. math:: p(x) = \\sum_i c[i] * T_i(x).
+    .. math:: p(x) = \\sum_i c[i] T_i(x).
 
     Parameters
     ----------
@@ -1781,7 +1784,7 @@ def chebinterpolate(func, deg, args=()):
     """Interpolate a function at the Chebyshev points of the first kind.
 
     Returns the Chebyshev series that interpolates `func` at the Chebyshev
-    points of the first kind in the interval [-1, 1]. The interpolating
+    points of the first kind in the interval :math:`[-1, 1]`. The interpolating
     series tends to a minmax approximation to `func` with increasing `deg`
     if the function is continuous in the interval.
 
@@ -1791,8 +1794,8 @@ def chebinterpolate(func, deg, args=()):
     ----------
     func : function
         The function to be approximated. It must be a function of a single
-        variable of the form ``f(x, a, b, c...)``, where ``a, b, c...`` are
-        extra arguments passed in the `args` parameter.
+        variable of the form ``f(x, a, b, c, ...)``, where ``a, b, c, ...``
+        are extra arguments passed in the `args` parameter.
     deg : int
         Degree of the interpolating polynomial
     args : tuple, optional
@@ -2006,9 +2009,9 @@ class Chebyshev(ABCPolyBase):
     domain : (2,) array_like, optional
         Domain to use. The interval ``[domain[0], domain[1]]`` is mapped
         to the interval ``[window[0], window[1]]`` by shifting and scaling.
-        The default value is [-1, 1].
+        The default value is ``[-1, 1]``.
     window : (2,) array_like, optional
-        Window, see `domain` for its use. The default value is [-1, 1].
+        Window, see `domain` for its use. The default value is ``[-1, 1]``.
 
         .. versionadded:: 1.6.0
 
@@ -2042,13 +2045,13 @@ class Chebyshev(ABCPolyBase):
         ----------
         func : function
             The function to be interpolated. It must be a function of a single
-            variable of the form ``f(x, a, b, c...)``, where ``a, b, c...`` are
-            extra arguments passed in the `args` parameter.
+            variable of the form ``f(x, a, b, c, ...)``, where ``a, b, c, ...``
+            are extra arguments passed in the `args` parameter.
         deg : int
             Degree of the interpolating polynomial.
         domain : {None, [beg, end]}, optional
             Domain over which `func` is interpolated. The default is None, in
-            which case the domain is [-1, 1].
+            which case the domain is :math:`[-1, 1]`.
         args : tuple, optional
             Extra arguments to be used in the function call. Default is no
             extra arguments.

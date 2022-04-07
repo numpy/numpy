@@ -108,7 +108,7 @@ A segment of memory is inherently 1-dimensional, and there are many
 different schemes for arranging the items of an *N*-dimensional array
 in a 1-dimensional block. NumPy is flexible, and :class:`ndarray`
 objects can accommodate any *strided indexing scheme*. In a strided
-scheme, the N-dimensional index :math:`(n_0, n_1, ..., n_{N-1})`
+scheme, the N-dimensional index :math:`(n_0, n_1, \\dots, n_{N-1})`
 corresponds to the offset (in bytes):
 
 .. math:: n_{\mathrm{offset}} = \sum_{k=0}^{N-1} s_k n_k

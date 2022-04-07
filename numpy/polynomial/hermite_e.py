@@ -81,6 +81,7 @@ from numpy.core.multiarray import normalize_axis_index
 
 from . import polyutils as pu
 from ._polybase import ABCPolyBase
+from . import _doc
 
 __all__ = [
     'hermezero', 'hermeone', 'hermex', 'hermedomain', 'hermeline',
@@ -93,6 +94,7 @@ __all__ = [
 
 hermetrim = pu.trimcoef
 
+_name = "Hermite_e"
 
 def poly2herme(pol):
     """
@@ -141,43 +143,6 @@ def poly2herme(pol):
 
 
 def herme2poly(c):
-    """
-    Convert a Hermite series to a polynomial.
-
-    Convert an array representing the coefficients of a Hermite series,
-    ordered from lowest degree to highest, to an array of the coefficients
-    of the equivalent polynomial (relative to the "standard" basis) ordered
-    from lowest to highest degree.
-
-    Parameters
-    ----------
-    c : array_like
-        1-D array containing the Hermite series coefficients, ordered
-        from lowest order term to highest.
-
-    Returns
-    -------
-    pol : ndarray
-        1-D array containing the coefficients of the equivalent polynomial
-        (relative to the "standard" basis) ordered from lowest order term
-        to highest.
-
-    See Also
-    --------
-    poly2herme
-
-    Notes
-    -----
-    The easy way to do conversions between polynomial basis sets
-    is to use the convert method of a class instance.
-
-    Examples
-    --------
-    >>> from numpy.polynomial.hermite_e import herme2poly
-    >>> herme2poly([  2.,  10.,   2.,   3.])
-    array([0.,  1.,  2.,  3.])
-
-    """
     from .polynomial import polyadd, polysub, polymulx
 
     [c] = pu.as_series([c])
@@ -196,6 +161,17 @@ def herme2poly(c):
             c1 = polyadd(tmp, polymulx(c1))
         return polyadd(c0, polymulx(c1))
 
+
+herme2poly.__doc__ = _doc._2poly_doc.format(
+    name=_name,
+    seealso="poly2herme",
+    examples=
+    """
+    >>> from numpy.polynomial.hermite_e import herme2poly
+    >>> herme2poly([  2.,  10.,   2.,   3.])
+    array([0.,  1.,  2.,  3.])
+    """
+)
 #
 # These are constant arrays are of integer type so as to be compatible
 # with the widest range of other types, such as Decimal.
@@ -259,9 +235,9 @@ def hermefromroots(roots):
 
     The function returns the coefficients of the polynomial
 
-    .. math:: p(x) = (x - r_0) * (x - r_1) * ... * (x - r_n),
+    .. math:: p(x) = (x - r_0) (x - r_1) \\dots (x - r_n),
 
-    in HermiteE form, where the `r_n` are the roots specified in `roots`.
+    in HermiteE form, where the :math:`r_n` are the roots specified in `roots`.
     If a zero has multiplicity n, then it must appear in `roots` n times.
     For instance, if 2 is a root of multiplicity three and 3 is a root of
     multiplicity 2, then `roots` looks something like [2, 2, 2, 3, 3]. The
@@ -269,7 +245,7 @@ def hermefromroots(roots):
 
     If the returned coefficients are `c`, then
 
-    .. math:: p(x) = c_0 + c_1 * He_1(x) + ... +  c_n * He_n(x)
+    .. math:: p(x) = c_0 + c_1 He_1(x) + \\dots +  c_n He_n(x)
 
     The coefficient of the last term is not generally 1 for monic
     polynomials in HermiteE form.
@@ -315,7 +291,8 @@ def hermeadd(c1, c2):
 
     Returns the sum of two Hermite series `c1` + `c2`.  The arguments
     are sequences of coefficients ordered from lowest order term to
-    highest, i.e., [1,2,3] represents the series ``P_0 + 2*P_1 + 3*P_2``.
+    highest, i.e., ``[1, 2, 3]`` represents the series
+    :math:`P_0 + 2 P_1 + 3 P_2`.
 
     Parameters
     ----------
@@ -355,7 +332,7 @@ def hermesub(c1, c2):
 
     Returns the difference of two Hermite series `c1` - `c2`.  The
     sequences of coefficients are from lowest order term to highest, i.e.,
-    [1,2,3] represents the series ``P_0 + 2*P_1 + 3*P_2``.
+    ``[1, 2, 3]`` represents the series :math:`P_0 + 2 P_1 + 3 P_2`.
 
     Parameters
     ----------
@@ -444,7 +421,7 @@ def hermemul(c1, c2):
 
     Returns the product of two Hermite series `c1` * `c2`.  The arguments
     are sequences of coefficients, from lowest order "term" to highest,
-    e.g., [1,2,3] represents the series ``P_0 + 2*P_1 + 3*P_2``.
+    e.g., ``[1, 2, 3]`` represents the series :math:`P_0 + 2 P_1 + 3 P_2`.
 
     Parameters
     ----------
@@ -510,8 +487,8 @@ def hermediv(c1, c2):
 
     Returns the quotient-with-remainder of two Hermite series
     `c1` / `c2`.  The arguments are sequences of coefficients from lowest
-    order "term" to highest, e.g., [1,2,3] represents the series
-    ``P_0 + 2*P_1 + 3*P_2``.
+    order "term" to highest, e.g., ``[1, 2, 3]`` represents the series
+    :math:`P_0 + 2 P_1 + 3 P_2`.
 
     Parameters
     ----------
@@ -555,7 +532,7 @@ def hermepow(c, pow, maxpower=16):
 
     Returns the Hermite series `c` raised to the power `pow`. The
     argument `c` is a sequence of coefficients ordered from low to high.
-    i.e., [1,2,3] is the series  ``P_0 + 2*P_1 + 3*P_2.``
+    That is, ``[1, 2, 3]`` is the series  :math:`P_0 + 2 P_1 + 3 P_2`.
 
     Parameters
     ----------
@@ -595,10 +572,10 @@ def hermeder(c, m=1, scl=1, axis=0):
     `axis`.  At each iteration the result is multiplied by `scl` (the
     scaling factor is for use in a linear change of variable). The argument
     `c` is an array of coefficients from low to high degree along each
-    axis, e.g., [1,2,3] represents the series ``1*He_0 + 2*He_1 + 3*He_2``
-    while [[1,2],[1,2]] represents ``1*He_0(x)*He_0(y) + 1*He_1(x)*He_0(y)
-    + 2*He_0(x)*He_1(y) + 2*He_1(x)*He_1(y)`` if axis=0 is ``x`` and axis=1
-    is ``y``.
+    axis, e.g., ``[1, 2, 3]`` represents the series
+    :math:`He_0 + 2He_1 + 3He_2` while ``[[1, 2], [1, 2]]`` represents
+    :math:`He_0(x)He_0(y) + He_1(x)He_0(y) + 2He_0(x)He_1(y) + 2He_1(x)He_1(y)`
+    if axis=0 is ``x`` and axis=1 is ``y``.
 
     Parameters
     ----------
@@ -681,10 +658,11 @@ def hermeint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
     beware": note that, depending on what one is doing, one may want `scl`
     to be the reciprocal of what one might expect; for more information,
     see the Notes section below.)  The argument `c` is an array of
-    coefficients from low to high degree along each axis, e.g., [1,2,3]
-    represents the series ``H_0 + 2*H_1 + 3*H_2`` while [[1,2],[1,2]]
-    represents ``1*H_0(x)*H_0(y) + 1*H_1(x)*H_0(y) + 2*H_0(x)*H_1(y) +
-    2*H_1(x)*H_1(y)`` if axis=0 is ``x`` and axis=1 is ``y``.
+    coefficients from low to high degree along each axis, e.g., ``[1, 2, 3]``
+    represents the series :math:`He_0 + 2 He_1 + 3 He_2` while
+    ``[[1, 2], [1, 2]]`` represents :math:`He_0(x) He_0(y) + He_1(x) He_0(y) +
+    2 He_0(x) He_1(y) + 2 He_1(x) He_1(y)` if axis=0 is ``x`` and
+    axis=1 is ``y``.
 
     Parameters
     ----------
@@ -798,7 +776,7 @@ def hermeval(x, c, tensor=True):
 
     If `c` is of length `n + 1`, this function returns the value:
 
-    .. math:: p(x) = c_0 * He_0(x) + c_1 * He_1(x) + ... + c_n * He_n(x)
+    .. math:: p(x) = c_0 He_0(x) + c_1 He_1(x) + \\dots + c_n He_n(x)
 
     The parameter `x` is converted to an array only if it is a tuple or a
     list, otherwise it is treated as a scalar. In either case, either `x`
@@ -893,7 +871,7 @@ def hermeval2d(x, y, c):
 
     This function returns the values:
 
-    .. math:: p(x,y) = \\sum_{i,j} c_{i,j} * He_i(x) * He_j(y)
+    .. math:: p(x,y) = \\sum_{i,j} c_{i,j} He_i(x) He_j(y)
 
     The parameters `x` and `y` are converted to arrays only if they are
     tuples or a lists, otherwise they are treated as a scalars and they
@@ -942,7 +920,7 @@ def hermegrid2d(x, y, c):
 
     This function returns the values:
 
-    .. math:: p(a,b) = \\sum_{i,j} c_{i,j} * H_i(a) * H_j(b)
+    .. math:: p(a,b) = \\sum_{i,j} c_{i,j} He_i(a) He_j(b)
 
     where the points `(a, b)` consist of all pairs formed by taking
     `a` from `x` and `b` from `y`. The resulting points form a grid with
@@ -991,11 +969,11 @@ def hermegrid2d(x, y, c):
 
 def hermeval3d(x, y, z, c):
     """
-    Evaluate a 3-D Hermite_e series at points (x, y, z).
+    Evaluate a 3-D Hermite_e series at points `(x, y, z)`.
 
     This function returns the values:
 
-    .. math:: p(x,y,z) = \\sum_{i,j,k} c_{i,j,k} * He_i(x) * He_j(y) * He_k(z)
+    .. math:: p(x,y,z) = \\sum_{i,j,k} c_{i,j,k} He_i(x) He_j(y) He_k(z)
 
     The parameters `x`, `y`, and `z` are converted to arrays only if
     they are tuples or a lists, otherwise they are treated as a scalars and
@@ -1046,7 +1024,7 @@ def hermegrid3d(x, y, z, c):
 
     This function returns the values:
 
-    .. math:: p(a,b,c) = \\sum_{i,j,k} c_{i,j,k} * He_i(a) * He_j(b) * He_k(c)
+    .. math:: p(a,b,c) = \\sum_{i,j,k} c_{i,j,k} He_i(a) He_j(b) He_k(c)
 
     where the points `(a, b, c)` consist of all triples formed by taking
     `a` from `x`, `b` from `y`, and `c` from `z`. The resulting points form
@@ -1102,7 +1080,7 @@ def hermevander(x, deg):
     Returns the pseudo-Vandermonde matrix of degree `deg` and sample points
     `x`. The pseudo-Vandermonde matrix is defined by
 
-    .. math:: V[..., i] = He_i(x),
+    .. math:: V[\\dots , i] = He_i(x),
 
     where `0 <= i <= deg`. The leading indices of `V` index the elements of
     `x` and the last index is the degree of the HermiteE polynomial.
@@ -1162,7 +1140,7 @@ def hermevander2d(x, y, deg):
     Returns the pseudo-Vandermonde matrix of degrees `deg` and sample
     points `(x, y)`. The pseudo-Vandermonde matrix is defined by
 
-    .. math:: V[..., (deg[1] + 1)*i + j] = He_i(x) * He_j(y),
+    .. math:: V[\\dots, (deg[1] + 1)i + j] = He_i(x) He_j(y),
 
     where `0 <= i <= deg[0]` and `0 <= j <= deg[1]`. The leading indices of
     `V` index the points `(x, y)` and the last index encodes the degrees of
@@ -1172,7 +1150,7 @@ def hermevander2d(x, y, deg):
     correspond to the elements of a 2-D coefficient array `c` of shape
     (xdeg + 1, ydeg + 1) in the order
 
-    .. math:: c_{00}, c_{01}, c_{02} ... , c_{10}, c_{11}, c_{12} ...
+    .. math:: c_{00}, c_{01}, c_{02}, \\dots , c_{10}, c_{11}, c_{12}, \\dots
 
     and ``np.dot(V, c.flat)`` and ``hermeval2d(x, y, c)`` will be the same
     up to roundoff. This equivalence is useful both for least squares
@@ -1216,7 +1194,7 @@ def hermevander3d(x, y, z, deg):
     points `(x, y, z)`. If `l, m, n` are the given degrees in `x, y, z`,
     then Hehe pseudo-Vandermonde matrix is defined by
 
-    .. math:: V[..., (m+1)(n+1)i + (n+1)j + k] = He_i(x)*He_j(y)*He_k(z),
+    .. math:: V[\\dots, (m+1)(n+1)i + (n+1)j + k] = He_i(x) He_j(y) He_k(z),
 
     where `0 <= i <= l`, `0 <= j <= m`, and `0 <= j <= n`.  The leading
     indices of `V` index the points `(x, y, z)` and the last index encodes
@@ -1226,7 +1204,8 @@ def hermevander3d(x, y, z, deg):
     of `V` correspond to the elements of a 3-D coefficient array `c` of
     shape (xdeg + 1, ydeg + 1, zdeg + 1) in the order
 
-    .. math:: c_{000}, c_{001}, c_{002},... , c_{010}, c_{011}, c_{012},...
+    .. math:: c_{000}, c_{001}, c_{002}, \\dots , c_{010}, c_{011}, c_{012},
+       \\dots
 
     and  ``np.dot(V, c.flat)`` and ``hermeval3d(x, y, z, c)`` will be the
     same up to roundoff. This equivalence is useful both for least squares
@@ -1274,7 +1253,7 @@ def hermefit(x, y, deg, rcond=None, full=False, w=None):
     coefficients are stored in the corresponding columns of a 2-D return.
     The fitted polynomial(s) are in the form
 
-    .. math::  p(x) = c_0 + c_1 * He_1(x) + ... + c_n * He_n(x),
+    .. math::  p(x) = c_0 + c_1 He_1(x) + \\dots + c_n He_n(x),
 
     where `n` is `deg`.
 
@@ -1315,7 +1294,7 @@ def hermefit(x, y, deg, rcond=None, full=False, w=None):
         `k`.
 
     [residuals, rank, singular_values, rcond] : list
-        These values are only returned if ``full == True``
+        These values are only returned if ``full=True``
 
         - residuals -- sum of squared residuals of the least squares fit
         - rank -- the numerical rank of the scaled Vandermonde matrix
@@ -1328,7 +1307,7 @@ def hermefit(x, y, deg, rcond=None, full=False, w=None):
     -----
     RankWarning
         The rank of the coefficient matrix in the least-squares fit is
-        deficient. The warning is only raised if ``full = False``.  The
+        deficient. The warning is only raised if ``full=False``.  The
         warnings can be turned off by
 
         >>> import warnings
@@ -1352,12 +1331,12 @@ def hermefit(x, y, deg, rcond=None, full=False, w=None):
     The solution is the coefficients of the HermiteE series `p` that
     minimizes the sum of the weighted squared errors
 
-    .. math:: E = \\sum_j w_j^2 * |y_j - p(x_j)|^2,
+    .. math:: E = \\sum_j w_j^2 |y_j - p(x_j)|^2,
 
     where the :math:`w_j` are the weights. This problem is solved by
     setting up the (typically) overdetermined matrix equation
 
-    .. math:: V(x) * c = w * y,
+    .. math:: V(x) c = w y,
 
     where `V` is the pseudo Vandermonde matrix of `x`, the elements of `c`
     are the coefficients to be solved for, and the elements of `y` are the
@@ -1448,7 +1427,7 @@ def hermeroots(c):
 
     Return the roots (a.k.a. "zeros") of the polynomial
 
-    .. math:: p(x) = \\sum_i c[i] * He_i(x).
+    .. math:: p(x) = \\sum_i c[i] He_i(x).
 
     Parameters
     ----------
@@ -1510,8 +1489,8 @@ def _normed_hermite_e_n(x, n):
     """
     Evaluate a normalized HermiteE polynomial.
 
-    Compute the value of the normalized HermiteE polynomial of degree ``n``
-    at the points ``x``.
+    Compute the value of the normalized HermiteE polynomial of degree `n`
+    at the points `x`.
 
 
     Parameters
@@ -1532,7 +1511,7 @@ def _normed_hermite_e_n(x, n):
 
     This function is needed for finding the Gauss points and integration
     weights for high degrees. The values of the standard HermiteE functions
-    overflow when n >= 207.
+    overflow when `n` :math`\\ge 207`.
 
     """
     if n == 0:
@@ -1578,7 +1557,7 @@ def hermegauss(deg):
     The results have only been tested up to degree 100, higher degrees may
     be problematic. The weights are determined by using the fact that
 
-    .. math:: w_k = c / (He'_n(x_k) * He_{n-1}(x_k))
+    .. math:: w_k = c / (He'_n(x_k) He_{n-1}(x_k))
 
     where :math:`c` is a constant independent of :math:`k` and :math:`x_k`
     is the k'th root of :math:`He_n`, and then scaling the results to get
@@ -1658,13 +1637,13 @@ class HermiteE(ABCPolyBase):
     ----------
     coef : array_like
         HermiteE coefficients in order of increasing degree, i.e,
-        ``(1, 2, 3)`` gives ``1*He_0(x) + 2*He_1(X) + 3*He_2(x)``.
+        ``(1, 2, 3)`` gives ``He_0(x) + 2 He_1(X) + 3 He_2(x)``.
     domain : (2,) array_like, optional
         Domain to use. The interval ``[domain[0], domain[1]]`` is mapped
         to the interval ``[window[0], window[1]]`` by shifting and scaling.
-        The default value is [-1, 1].
+        The default value is ``[-1, 1]``.
     window : (2,) array_like, optional
-        Window, see `domain` for its use. The default value is [-1, 1].
+        Window, see `domain` for its use. The default value is ``[-1, 1]``.
 
         .. versionadded:: 1.6.0
 
