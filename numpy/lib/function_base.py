@@ -4846,9 +4846,9 @@ def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
     Returns
     -------
     X1, X2,..., XN : ndarray
-        For vectors `x1`, `x2`,..., `xn` with lengths ``Ni=len(xi)`` ,
-        returns ``(N1, N2, N3,...Nn)`` shaped arrays if indexing='ij'
-        or ``(N2, N1, N3,...Nn)`` shaped arrays if indexing='xy'
+        For vectors `x1`, `x2`,..., `xn` with lengths ``Ni=len(xi)``,
+        returns ``(N1, N2, N3,..., Nn)`` shaped arrays if indexing='ij'
+        or ``(N2, N1, N3,..., Nn)`` shaped arrays if indexing='xy'
         with the elements of `xi` repeated to fill the matrix along
         the first dimension for `x1`, the second for `x2` and so on.
 
