@@ -168,7 +168,7 @@ def rot90(m, k=1, axes=(0, 1)):
         Array of two or more dimensions.
     k : integer
         Number of times the array is rotated by 90 degrees.
-    axes: (2,) array_like
+    axes : (2,) array_like
         The array is rotated in the plane defined by the axes.
         Axes must be different.
 
@@ -1656,7 +1656,7 @@ def unwrap(p, discont=None, axis=-1, *, period=2*pi):
         larger than ``period/2``.
     axis : int, optional
         Axis along which unwrap will operate, default is the last axis.
-    period: float, optional
+    period : float, optional
         Size of the range over which the input wraps. By default, it is
         ``2 pi``.
 
@@ -2974,15 +2974,14 @@ def bartlett(M):
               \\frac{M-1}{2} - \\left|n - \\frac{M-1}{2}\\right|
               \\right)
 
-    Most references to the Bartlett window come from the signal
-    processing literature, where it is used as one of many windowing
-    functions for smoothing values.  Note that convolution with this
-    window produces linear interpolation.  It is also known as an
-    apodization (which means"removing the foot", i.e. smoothing
-    discontinuities at the beginning and end of the sampled signal) or
-    tapering function. The fourier transform of the Bartlett is the product
-    of two sinc functions.
-    Note the excellent discussion in Kanasewich.
+    Most references to the Bartlett window come from the signal processing
+    literature, where it is used as one of many windowing functions for
+    smoothing values.  Note that convolution with this window produces linear
+    interpolation.  It is also known as an apodization (which means "removing
+    the foot", i.e. smoothing discontinuities at the beginning and end of the
+    sampled signal) or tapering function. The Fourier transform of the
+    Bartlett window is the product of two sinc functions. Note the excellent
+    discussion in Kanasewich [2]_.
 
     References
     ----------
@@ -3075,7 +3074,7 @@ def hanning(M):
     -----
     The Hanning window is defined as
 
-    .. math::  w(n) = 0.5 - 0.5cos\\left(\\frac{2\\pi{n}}{M-1}\\right)
+    .. math::  w(n) = 0.5 - 0.5\\cos\\left(\\frac{2\\pi{n}}{M-1}\\right)
                \\qquad 0 \\leq n \\leq M-1
 
     The Hanning was named for Julius von Hann, an Austrian meteorologist.
@@ -3179,7 +3178,7 @@ def hamming(M):
     -----
     The Hamming window is defined as
 
-    .. math::  w(n) = 0.54 - 0.46cos\\left(\\frac{2\\pi{n}}{M-1}\\right)
+    .. math::  w(n) = 0.54 - 0.46\\cos\\left(\\frac{2\\pi{n}}{M-1}\\right)
                \\qquad 0 \\leq n \\leq M-1
 
     The Hamming was named for R. W. Hamming, an associate of J. W. Tukey
@@ -4731,10 +4730,10 @@ def trapz(y, x=None, dx=1.0, axis=-1):
     Returns
     -------
     trapz : float or ndarray
-        Definite integral of 'y' = n-dimensional array as approximated along
-        a single axis by the trapezoidal rule. If 'y' is a 1-dimensional array,
-        then the result is a float. If 'n' is greater than 1, then the result
-        is an 'n-1' dimensional array.
+        Definite integral of `y` = n-dimensional array as approximated along
+        a single axis by the trapezoidal rule. If `y` is a 1-dimensional array,
+        then the result is a float. If `n` is greater than 1, then the result
+        is an `n`-1 dimensional array.
 
     See Also
     --------
@@ -4865,9 +4864,9 @@ def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
     Returns
     -------
     X1, X2,..., XN : ndarray
-        For vectors `x1`, `x2`,..., 'xn' with lengths ``Ni=len(xi)`` ,
-        return ``(N1, N2, N3,...Nn)`` shaped arrays if indexing='ij'
-        or ``(N2, N1, N3,...Nn)`` shaped arrays if indexing='xy'
+        For vectors `x1`, `x2`,..., `xn` with lengths ``Ni=len(xi)``,
+        returns ``(N1, N2, N3,..., Nn)`` shaped arrays if indexing='ij'
+        or ``(N2, N1, N3,..., Nn)`` shaped arrays if indexing='xy'
         with the elements of `xi` repeated to fill the matrix along
         the first dimension for `x1`, the second for `x2` and so on.
 
@@ -5016,7 +5015,7 @@ def delete(arr, obj, axis=None):
     >>> mask[[0,2,4]] = False
     >>> result = arr[mask,...]
 
-    Is equivalent to `np.delete(arr, [0,2,4], axis=0)`, but allows further
+    Is equivalent to ``np.delete(arr, [0,2,4], axis=0)``, but allows further
     use of `mask`.
 
     Examples
@@ -5207,9 +5206,9 @@ def insert(arr, obj, values, axis=None):
 
     Notes
     -----
-    Note that for higher dimensional inserts `obj=0` behaves very different
-    from `obj=[0]` just like `arr[:,0,:] = values` is different from
-    `arr[:,[0],:] = values`.
+    Note that for higher dimensional inserts ``obj=0`` behaves very different
+    from ``obj=[0]`` just like ``arr[:,0,:] = values`` is different from
+    ``arr[:,[0],:] = values``.
 
     Examples
     --------

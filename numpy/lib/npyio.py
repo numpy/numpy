@@ -287,7 +287,7 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
     ----------
     file : file-like object, string, or pathlib.Path
         The file to read. File-like objects must support the
-        ``seek()`` and ``read()`` methods and must always 
+        ``seek()`` and ``read()`` methods and must always
         be opened in binary mode.  Pickled files require that the
         file-like object support the ``readline()`` method as well.
     mmap_mode : {None, 'r+', 'r', 'w+', 'c'}, optional
@@ -737,9 +737,9 @@ def _ensure_ndmin_ndarray(a, *, ndmin: int):
     """This is a helper function of loadtxt and genfromtxt to ensure
         proper minimum dimension as requested
 
-        ndim: int. Supported values 1, 2, 3
-                   ^^ whenever this changes, keep in sync with
-                      _ensure_ndmin_ndarray_check_param
+        ndim : int. Supported values 1, 2, 3
+                    ^^ whenever this changes, keep in sync with
+                       _ensure_ndmin_ndarray_check_param
     """
     # Verify that the array has at least dimensions `ndmin`.
     # Tweak the size and shape of the arrays - remove extraneous dimensions
