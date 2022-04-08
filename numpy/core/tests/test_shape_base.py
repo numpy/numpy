@@ -1,3 +1,4 @@
+import sys
 import pytest
 import numpy as np
 from numpy.core import (
@@ -196,6 +197,21 @@ class TestVstack:
     def test_generator(self):
         with assert_warns(FutureWarning):
             vstack((np.arange(3) for _ in range(2)))
+
+    @pytest.mark.parametrize("func", [np.vstack, np.concatenate])
+    def test_issue_7289(self, func):
+        # preserve endianness with vstack/concatenate
+        a = np.zeros((3, 3), dtype='>i2')
+        expected_bytes = a.tobytes() + a.tobytes()
+        actual = func((a, a))
+
+        if sys.byteorder == "little":
+            expected = ">"
+        else:
+            expected = "="
+
+        assert actual.dtype.byteorder == expected
+        assert actual.tobytes() == expected_bytes
 
 
 class TestConcatenate:

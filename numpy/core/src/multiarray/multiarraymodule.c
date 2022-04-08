@@ -382,6 +382,9 @@ PyArray_ConcatenateArrays(int narrays, PyArrayObject **arrays, int axis,
                           NPY_CASTING casting)
 {
     int iarrays, idim, ndim;
+    char initial_byteorder;
+    char iterative_byteorder;
+    int single_byteorder = 1;
     npy_intp shape[NPY_MAXDIMS];
     PyArrayObject_fields *sliding_view = NULL;
 
@@ -466,6 +469,18 @@ PyArray_ConcatenateArrays(int narrays, PyArrayObject **arrays, int axis,
                 narrays, arrays,  (PyObject *)dtype);
         if (descr == NULL) {
             return NULL;
+        }
+
+        initial_byteorder = PyArray_DESCR(arrays[0])->byteorder;
+        for (iarrays = 0; iarrays < narrays; ++iarrays) {
+            iterative_byteorder = PyArray_DESCR(arrays[iarrays])->byteorder;
+            if (iterative_byteorder != initial_byteorder) {
+                single_byteorder = 0;
+            }
+        }
+
+        if (single_byteorder == 1 && dtype == NULL) {
+            descr->byteorder = initial_byteorder;
         }
 
         /*
