@@ -9,7 +9,7 @@ multivariate_normal(mean, cov[, shape])
 Draw samples from a multivariate normal distribution.
 
 The multivariate normal, multinormal or Gaussian distribution is a
-generalisation of the one-dimensional normal distribution to higher
+generalization of the one-dimensional normal distribution to higher
 dimensions.
 
 Such a distribution is specified by its mean and covariance matrix,
