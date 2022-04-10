@@ -1,7 +1,7 @@
 .. _structured_arrays:
 
 *****************
-Structured arrays 
+Structured arrays
 *****************
 
 Introduction
@@ -472,7 +472,7 @@ missing.
     Furthermore, numpy now provides a new function
     :func:`numpy.lib.recfunctions.structured_to_unstructured` which is a safer
     and more efficient alternative for users who wish to convert structured
-    arrays to unstructured arrays, as the view above is often indeded to do.
+    arrays to unstructured arrays, as the view above is often intended to do.
     This function allows safe conversion to an unstructured type taking into
     account padding, often avoids a copy, and also casts the datatypes
     as needed, unlike the view. Code such as:
