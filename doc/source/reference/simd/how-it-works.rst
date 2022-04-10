@@ -59,7 +59,7 @@ The compiler supports ``--cpu-baseline="sse sse2 sse3"`` and
    // The header should be located at numpy/numpy/core/src/common/_cpu_dispatch.h
    /**NOTE
     ** C definitions prefixed with "NPY_HAVE_" represent
-    ** the required optimzations.
+    ** the required optimizations.
     **
     ** C definitions prefixed with 'NPY__CPU_TARGET_' are protected and
     ** shouldn't be used by any NumPy C sources.
