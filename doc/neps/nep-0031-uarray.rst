@@ -313,7 +313,7 @@ This is different from monkeypatching in a few different ways:
 All this isn't possible at all with ``__array_function__`` or
 ``__array_ufunc__``.
 
-It has been formally realised (at least in part) that a backend system is
+It has been formally realized (at least in part) that a backend system is
 needed for this, in the `NumPy roadmap <https://numpy.org/neps/roadmap.html#other-functionality>`_.
 
 For ``numpy.random``, it's still necessary to make the C-API fit the one
