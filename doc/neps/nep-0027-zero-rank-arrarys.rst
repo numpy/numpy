@@ -105,7 +105,7 @@ arrays to scalars were summarized as follows:
 
   - This results in a special-case checking that is not
     pleasant.  Fundamentally it lets the user believe that
-    somehow multidimensional homoegeneous arrays
+    somehow multidimensional homogeneous arrays
     are something like Python lists (which except for
     Object arrays they are not).
 
