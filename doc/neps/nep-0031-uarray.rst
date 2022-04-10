@@ -356,7 +356,7 @@ The need for an opt-in module is realised because of a few reasons:
   as those mentioned above.
 
 NEP 18 notes that this may require maintenance of two separate APIs. However,
-this burden may be lessened by, for example, parametrizing all tests over
+this burden may be lessened by, for example, parameterizing all tests over
 ``numpy.overridable`` separately via a fixture. This also has the side-effect
 of thoroughly testing it, unlike ``__array_function__``. We also feel that it
 provides an opportunity to separate the NumPy API contract properly from the
