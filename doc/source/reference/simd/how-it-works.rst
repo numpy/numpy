@@ -338,7 +338,7 @@ through ``--cpu-dispatch``, but it can also represent other options such as:
           // bring the auto-generated config header
           // which contains config macros 'NPY__CPU_DISPATCH_CALL' and
           // 'NPY__CPU_DISPATCH_BASELINE_CALL'.
-          // it is highly recommended to include the config header before exectuing
+          // it is highly recommended to include the config header before executing
         // the dispatching macros in case if there's another header in the scope.
           #include "hello.dispatch.h"
           DISPATCH_CALL_ALL(simd_whoami, ("all"))
