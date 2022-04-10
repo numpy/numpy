@@ -200,10 +200,10 @@ GitHub workflow. There are a few reasons for this:
   The reason for this is that there may exist functions in the in these
   submodules that need backends, even for ``numpy.ndarray`` inputs.
 
-Advantanges of ``unumpy`` over other solutions
+Advantages of ``unumpy`` over other solutions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-``unumpy`` offers a number of advantanges over the approach of defining a new
+``unumpy`` offers a number of advantages over the approach of defining a new
 protocol for every problem encountered: Whenever there is something requiring
 an override, ``unumpy`` will be able to offer a unified API with very minor
 changes. For example:
