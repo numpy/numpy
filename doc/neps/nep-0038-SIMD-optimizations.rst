@@ -271,7 +271,7 @@ Current PRs:
 
 The compile-time and runtime code infrastructure are supplied by the first PR.
 The second adds a demonstration of use of the infrastructure for a loop. Once
-the NEP is approved, more work is needed to write loops using the machnisms
+the NEP is approved, more work is needed to write loops using the mechanisms
 provided by the NEP.
 
 Alternatives
