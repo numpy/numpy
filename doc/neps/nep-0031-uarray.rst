@@ -347,7 +347,7 @@ dispatchable.
 The need for an opt-in module
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The need for an opt-in module is realised because of a few reasons:
+The need for an opt-in module is realized because of a few reasons:
 
 * There are parts of the API (like `numpy.asarray`) that simply cannot be
   overridden due to incompatibility concerns with C/Cython extensions, however,
