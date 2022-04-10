@@ -208,7 +208,7 @@ There should be no impact on backwards compatibility.
 Detailed description
 --------------------
 
-The CPU-specific are mapped to unversal intrinsics which are
+The CPU-specific are mapped to universal intrinsics which are
 similar for all x86 SIMD variants, ARM SIMD variants etc. For example, the
 NumPy universal intrinsic ``npyv_load_u32`` maps to:
 
