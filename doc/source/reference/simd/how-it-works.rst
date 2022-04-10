@@ -326,7 +326,7 @@ through ``--cpu-dispatch``, but it can also represent other options such as:
         else { FN NPY_EXPAND(ARGS); }
 
       // NumPy has a macro called 'NPY_CPU_DISPATCH_DECLARE' can be used
-      // for forward declrations any kind of prototypes based on
+      // for forward declarations any kind of prototypes based on
       // 'NPY__CPU_DISPATCH_CALL' and 'NPY__CPU_DISPATCH_BASELINE_CALL'.
       // However in this example, we just handle it manually.
       void simd_whoami(const char *extra_info);
