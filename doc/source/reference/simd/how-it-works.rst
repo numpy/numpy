@@ -335,7 +335,7 @@ through ``--cpu-dispatch``, but it can also represent other options such as:
 
       void trigger_me(void)
       {
-          // bring the auto-gernreated config header
+          // bring the auto-generated config header
           // which contains config macros 'NPY__CPU_DISPATCH_CALL' and
           // 'NPY__CPU_DISPATCH_BASELINE_CALL'.
           // it highely recomaned to include the config header before exectuing
