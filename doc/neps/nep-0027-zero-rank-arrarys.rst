@@ -166,7 +166,7 @@ Alexander started a `Jan 2006 discussion`_ on scipy-dev
 with the following proposal:
 
     ... it may be reasonable to allow ``a[...]``.  This way
-    ellipsis can be interpereted as any number of  ``:`` s including zero.
+    ellipsis can be interpreted as any number of  ``:`` s including zero.
     Another subscript operation that makes sense for scalars would be
     ``a[...,newaxis]`` or even ``a[{newaxis, }* ..., {newaxis,}*]``, where
     ``{newaxis,}*`` stands for any number of comma-separated newaxis tokens.
