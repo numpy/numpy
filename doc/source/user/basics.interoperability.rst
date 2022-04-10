@@ -21,7 +21,7 @@ functionality on top of the NumPy API.
 Yet, users still want to work with these arrays using the familiar NumPy API and
 re-use existing code with minimal (ideally zero) porting overhead. With this
 goal in mind, various protocols are defined for implementations of
-multi-dimensional arrays with high-level APIs matching NumPy. 
+multi-dimensional arrays with high-level APIs matching NumPy.
 
 Broadly speaking, there are three groups of features used for interoperability
 with NumPy:
@@ -55,7 +55,7 @@ describes its memory layout and NumPy does everything else (zero-copy if
 possible). If that's not possible, the object itself is responsible for
 returning a ``ndarray`` from ``__array__()``.
 
-:doc:`DLPack <dlpack:index>` is yet another protocol to convert foriegn objects
+:doc:`DLPack <dlpack:index>` is yet another protocol to convert foreign objects
 to NumPy arrays in a language and device agnostic manner. NumPy doesn't implicitly
 convert objects to ndarrays using DLPack. It provides the function
 `numpy.from_dlpack` that accepts any object implementing the ``__dlpack__`` method
@@ -88,7 +88,7 @@ data in place:
 
  >>> class wrapper():
  ...     pass
- ... 
+ ...
  >>> arr = np.array([1, 2, 3, 4])
  >>> buf = arr.__array_interface__
  >>> buf
@@ -170,7 +170,7 @@ We can apply ``f`` to a NumPy ndarray object directly:
  21.1977562209304
 
 We would like this function to work equally well with any NumPy-like array
-object. 
+object.
 
 NumPy allows a class to indicate that it would like to handle computations in a
 custom-defined way through the following interfaces:
@@ -182,7 +182,7 @@ custom-defined way through the following interfaces:
 
 As long as foreign objects implement the ``__array_ufunc__`` or
 ``__array_function__`` protocols, it is possible to operate on them without the
-need for explicit conversion. 
+need for explicit conversion.
 
 The ``__array_ufunc__`` protocol
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -324,7 +324,7 @@ explicit conversion:
          [20.0855, 54.5982]], dtype=torch.float64)
 
 Also, note that the return type of this function is compatible with the initial
-data type. 
+data type.
 
 .. admonition:: Warning
 
@@ -402,7 +402,7 @@ Example: Dask arrays
 Dask is a flexible library for parallel computing in Python. Dask Array
 implements a subset of the NumPy ndarray interface using blocked algorithms,
 cutting up the large array into many small arrays. This allows computations on
-larger-than-memory arrays using multiple cores. 
+larger-than-memory arrays using multiple cores.
 
 Dask supports ``__array__()`` and ``__array_ufunc__``.
 
