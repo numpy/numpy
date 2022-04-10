@@ -102,7 +102,7 @@ Usage and Impact
 This NEP allows for global and context-local overrides, as well as
 automatic overrides a-la ``__array_function__``.
 
-Here are some use-cases this NEP would enable, besides the 
+Here are some use-cases this NEP would enable, besides the
 first one stated in the motivation section:
 
 The first is allowing alternate dtypes to return their
@@ -114,7 +114,7 @@ respective arrays.
     x = unp.ones((5, 5), dtype=xnd_dtype) # Or torch dtype
 
 The second is allowing overrides for parts of the API.
-This is to allow alternate and/or optimised implementations
+This is to allow alternate and/or optimized implementations
 for ``np.linalg``, BLAS, and ``np.random``.
 
 .. code:: python
@@ -126,7 +126,7 @@ for ``np.linalg``, BLAS, and ``np.random``.
     np.set_global_backend(pyfftw)
 
     # Uses pyfftw without monkeypatching
-    np.fft.fft(numpy_array)    
+    np.fft.fft(numpy_array)
 
     with np.set_backend(pyfftw) # Or mkl_fft, or numpy
         # Uses the backend you specified
