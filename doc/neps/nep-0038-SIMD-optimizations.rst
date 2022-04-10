@@ -26,9 +26,9 @@ function that matches the run-time CPU info `is chosen`_ from the candidates.Thi
 NEP proposes a mechanism to build on that for many more features and
 architectures.  The steps proposed are to:
 
-- Establish a set of well-defined, architecture-agnostic, universal intrisics
+- Establish a set of well-defined, architecture-agnostic, universal intrinsics
   which capture features available across architectures.
-- Capture these universal intrisics in a set of C macros and use the macros
+- Capture these universal intrinsics in a set of C macros and use the macros
   to build code paths for sets of features from the baseline up to the maximum
   set of features available on that architecture. Offer these as a limited
   number of compiled alternative code paths.
@@ -43,7 +43,7 @@ Traditionally NumPy has depended on compilers to generate optimal code
 specifically for the target architecture.
 However few users today compile NumPy locally for their machines. Most use the
 binary packages which must provide run-time support for the lowest-common
-denominator CPU architecture. Thus NumPy cannot take advantage of 
+denominator CPU architecture. Thus NumPy cannot take advantage of
 more advanced features of their CPU processors, since they may not be available
 on all users' systems.
 
@@ -213,7 +213,7 @@ similar for all x86 SIMD variants, ARM SIMD variants etc. For example, the
 NumPy universal intrinsic ``npyv_load_u32`` maps to:
 
 *  ``vld1q_u32`` for ARM based NEON
-* ``_mm256_loadu_si256`` for x86 based AVX2 
+* ``_mm256_loadu_si256`` for x86 based AVX2
 * ``_mm512_loadu_si512`` for x86 based AVX-512
 
 Anyone writing a SIMD loop will use the ``npyv_load_u32`` macro instead of the
