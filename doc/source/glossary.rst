@@ -166,10 +166,10 @@ Glossary
 
 
    array scalar
-       An :doc:`array scalar <reference/arrays.scalars>` is an instance of the types/classes float32, float64, 
-       etc.. For uniformity in handling operands, NumPy treats a scalar as 
-       an array of zero dimension. In contrast, a 0-dimensional array is an :doc:`ndarray <reference/arrays.ndarray>` instance 
-       containing precisely one value. 
+       An :doc:`array scalar <reference/arrays.scalars>` is an instance of the types/classes float32, float64,
+       etc.. For uniformity in handling operands, NumPy treats a scalar as
+       an array of zero dimension. In contrast, a 0-dimensional array is an :doc:`ndarray <reference/arrays.ndarray>` instance
+       containing precisely one value.
 
 
    axis
@@ -286,7 +286,7 @@ Glossary
        - it occupies an unbroken block of memory, and
        - array elements with higher indexes occupy higher addresses (that
          is, no :term:`stride` is negative).
-        
+
        There are two types of proper-contiguous NumPy arrays:
 
        - Fortran-contiguous arrays refer to data that is stored column-wise,
@@ -296,8 +296,8 @@ Glossary
          stored row-wise, i.e. the indexing of data as stored in memory
          starts from the highest dimension.
 
-       For one-dimensional arrays these notions coincide. 
-       
+       For one-dimensional arrays these notions coincide.
+
        For example, a 2x2 array ``A`` is Fortran-contiguous if its elements are
        stored in memory in the following order::
 
@@ -421,7 +421,7 @@ Glossary
        both flatten an ndarray. ``ravel`` will return a view if possible;
        ``flatten`` always returns a copy.
 
-       Flattening collapses a multimdimensional array to a single dimension;
+       Flattening collapses a multidimensional array to a single dimension;
        details of how this is done (for instance, whether ``a[n+1]`` should be
        the next row or next column) are parameters.
 
