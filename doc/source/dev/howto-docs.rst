@@ -315,7 +315,7 @@ Sub-config files can accept any of Doxygen_ `configuration options <https://www.
 but do not override or re-initialize any configuration option,
 rather only use the concatenation operator "+=". For example::
 
-   # to specfiy certain headers
+   # to specify certain headers
    INPUT += @CUR_DIR/header1.h \
             @CUR_DIR/header2.h
    # to add all headers in certain path
