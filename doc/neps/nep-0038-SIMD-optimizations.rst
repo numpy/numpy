@@ -124,7 +124,7 @@ Therefore, such code should only be added if it yields a significant
 performance benefit. Assessing this performance benefit can be nontrivial.
 To aid with this, the implementation for this NEP will add a way to select
 which instruction sets can be used at *runtime* via environment variables.
-(name TBD). This ablility is critical for CI code verification.
+(name TBD). This ability is critical for CI code verification.
 
 
 Diagnostics
