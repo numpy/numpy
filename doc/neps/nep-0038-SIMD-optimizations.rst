@@ -153,7 +153,7 @@ SIMD loops for many ufuncs. These would likely be the first candidates
 to be ported to universal intrinsics. The expectation is that the new
 implementation may cause a regression in benchmarks, but not increase the
 size of the binary. If the regression is not minimal, we may choose to keep
-the X86-specific code for that platform and use the universal intrisic code
+the X86-specific code for that platform and use the universal intrinsic code
 for other platforms.
 
 Any new PRs to implement ufuncs using intrinsics will be expected to use the
