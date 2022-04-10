@@ -157,7 +157,7 @@ class Einsum(Benchmark):
 
     # multiply(a, b):non_contiguous arrays
     def time_einsum_noncon_multiply(self, dtype):
-        np.einsum("..., ...", self.non_contiguous_dim2, self.non_contiguous_dim3 , optimize=True)
+        np.einsum("..., ...", self.non_contiguous_dim2, self.non_contiguous_dim3, optimize=True)
 
     # sum and multiply:non_contiguous arrays
     def time_einsum_noncon_sum_mul(self, dtype):
