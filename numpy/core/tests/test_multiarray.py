@@ -18,6 +18,7 @@ from numpy.compat import pickle
 import pathlib
 import builtins
 from decimal import Decimal
+import mmap
 
 import numpy as np
 import numpy.core._multiarray_tests as _multiarray_tests
@@ -5349,9 +5350,32 @@ class TestFromBuffer:
         buf = x.tobytes()
         assert_array_equal(np.frombuffer(buf, dtype=dt), x.flat)
 
+    def test_array_base(self):
+        arr = np.arange(10)
+        new = np.frombuffer(arr)
+        # We currently special case arrays to ensure they are used as a base.
+        # This could probably be changed (removing the test).
+        assert new.base is arr
+
     def test_empty(self):
         assert_array_equal(np.frombuffer(b''), np.array([]))
 
+    @pytest.mark.skipif(IS_PYPY,
+            reason="PyPy's memoryview currently does not track exports. See: "
+                   "https://foss.heptapod.net/pypy/pypy/-/issues/3724")
+    def test_mmap_close(self):
+        # The old buffer protocol was not safe for some things that the new
+        # one is.  But `frombuffer` always used the old one for a long time.
+        # Checks that it is safe with the new one (using memoryviews)
+        with tempfile.TemporaryFile(mode='wb') as tmp:
+            tmp.write(b"asdf")
+            tmp.flush()
+            mm = mmap.mmap(tmp.fileno(), 0)
+            arr = np.frombuffer(mm, dtype=np.uint8)
+            with pytest.raises(BufferError):
+                mm.close()  # cannot close while array uses the buffer
+            del arr
+            mm.close()
 
 class TestFlat:
     def setup(self):
