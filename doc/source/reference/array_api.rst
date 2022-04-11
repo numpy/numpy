@@ -624,11 +624,8 @@ Linear Algebra Differences
    * - ``cholesky`` includes an ``upper`` keyword argument.
      - **Compatible**
      -
-   * - ``cross`` does not broadcast its arguments.
-     - ???
-     -
    * - ``cross`` does not allow size 2 vectors (only size 3).
-     - ???
+     - **Breaking**
      -
    * - ``diagonal`` operates on the last two axes.
      - **Breaking**
@@ -663,7 +660,9 @@ Linear Algebra Differences
        <https://data-apis.org/array-api/latest/API_specification/generated/signatures.linear_algebra_functions.matrix_transpose.html#signatures.linear_algebra_functions.matrix_transpose>`__
    * - ``outer`` only supports 1-dimensional arrays.
      - **Breaking**
-     -
+     - The spec currently only specifies behavior on 1-D arrays but future
+       behavior will likely be to broadcast, rather than flatten, which is
+       what ``np.outer`` does.
    * - ``pinv`` has an ``rtol`` keyword argument instead of ``rcond``
      - **Breaking**
      - The meaning of ``rtol`` and ``rcond`` is the same, but the default
