@@ -3683,28 +3683,44 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
         return NULL;
     }
 
+    /*
+     * The array check is probably unnecessary.  It preserves the base for
+     * arrays.  This is the "old" buffer protocol, which had no release logic.
+     * (It was assumed that the result is always a view.)
+     *
+     * NOTE: We could also check if `bf_releasebuffer` is defined which should
+     *       be the most precise and safe thing to do.  But that should only be
+     *       necessary if unexpected backcompat issues are found downstream.
+     */
+    if (!PyArray_Check(buf)) {
+        buf = PyMemoryView_FromObject(buf);
+        if (buf == NULL) {
+            return NULL;
+        }
+    }
+    else {
+        Py_INCREF(buf);
+    }
+
     if (PyObject_GetBuffer(buf, &view, PyBUF_WRITABLE|PyBUF_SIMPLE) < 0) {
         writeable = 0;
         PyErr_Clear();
         if (PyObject_GetBuffer(buf, &view, PyBUF_SIMPLE) < 0) {
+            Py_DECREF(buf);
             Py_DECREF(type);
             return NULL;
         }
     }
     data = (char *)view.buf;
     ts = view.len;
-    /*
-     * In Python 3 both of the deprecated functions PyObject_AsWriteBuffer and
-     * PyObject_AsReadBuffer that this code replaces release the buffer. It is
-     * up to the object that supplies the buffer to guarantee that the buffer
-     * sticks around after the release.
-     */
+    /* `buf` is an array or a memoryview; so we know `view` does not own data */
     PyBuffer_Release(&view);
 
     if ((offset < 0) || (offset > ts)) {
         PyErr_Format(PyExc_ValueError,
                      "offset must be non-negative and no greater than buffer "\
                      "length (%" NPY_INTP_FMT ")", (npy_intp)ts);
+        Py_DECREF(buf);
         Py_DECREF(type);
         return NULL;
     }
@@ -3717,6 +3733,7 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
         if (itemsize == 0) {
             PyErr_SetString(PyExc_ValueError,
                             "cannot determine count if itemsize is 0");
+            Py_DECREF(buf);
             Py_DECREF(type);
             return NULL;
         }
@@ -3724,6 +3741,7 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
             PyErr_SetString(PyExc_ValueError,
                             "buffer size must be a multiple"\
                             " of element size");
+            Py_DECREF(buf);
             Py_DECREF(type);
             return NULL;
         }
@@ -3734,6 +3752,7 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
             PyErr_SetString(PyExc_ValueError,
                             "buffer is smaller than requested"\
                             " size");
+            Py_DECREF(buf);
             Py_DECREF(type);
             return NULL;
         }
@@ -3743,6 +3762,7 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
             &PyArray_Type, type,
             1, &n, NULL, data,
             NPY_ARRAY_DEFAULT, NULL, buf);
+    Py_DECREF(buf);
     if (ret == NULL) {
         return NULL;
     }
