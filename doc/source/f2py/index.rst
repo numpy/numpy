@@ -36,6 +36,7 @@ replace all calls to ``f2py`` mentioned in this guide with the longer version.
 
    f2py-user
    f2py-reference
+   f2py-testing
 
 
 .. _Python: https://www.python.org/
