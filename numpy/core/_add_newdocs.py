@@ -1608,7 +1608,133 @@ add_newdoc('numpy.core.multiarray', 'from_dlpack',
     """)
 
 add_newdoc('numpy.core', 'fastCopyAndTranspose',
-    """_fastCopyAndTranspose(a)""")
+           """
+           _fastCopyAndTranspose(a)
+           Makes a copy of the array a and computes its transpose.
+       
+           Parameters: 
+               a: a multidimensional array of dimension d_0 x d_1 x ... x d_(n-2) x d_(n-1)
+       
+           Returns:
+               b: a multidimensional array of size d_(n-1) x d_(n-2) x ... x d_1 x d_0 whose elements are the elements of 
+               the array a but permuted as follows: The element of array a in position 
+               (p_0, p_1,..., p_(n-2), p_(n-1)) will be the element of array b in position (p_(n-1), p_(n-2),..., p_1, p_0).
+       
+           Examples:
+       
+           1-dimensional case: transpose has no effect
+               >>> a = np.arange(12)
+               >>> a
+               array([ 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11])
+               a.shape
+               (12,)
+               >>> b=np.fastCopyAndTranspose(a)
+               >>> b
+               array([ 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11])
+               >>> b.shape
+               (12,)
+           2-dimensional case:
+               >>> a = np.arange(12).reshape(1,12)
+               >>> a
+               array([[ 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11]])
+               >>> a.shape
+               (1, 12)
+               >>> b=np.fastCopyAndTranspose(a)
+               >>> b
+               array([[ 0],
+                      [ 1],
+                      [ 2],
+                      [ 3],
+                      [ 4],
+                      [ 5],       
+                      [ 6],
+                      [ 7],
+                      [ 8],
+                      [ 9],
+                      [10],
+                      [11]])
+               >>> b.shape
+               (12, 1)
+               Note for example that element (0,3) is 3, which is in position (3,0) in the permutted array.
+               ----------------------------------
+               >>> a = np.arange(12).reshape(6,2)
+               >>> a
+               array([[ 0,  1],
+                      [ 2,  3],
+                      [ 4,  5],
+                      [ 6,  7],
+                      [ 8,  9],
+                      [10, 11]])
+               >>> a.shape
+               (6, 2)
+               >>> b=np.fastCopyAndTranspose(a)
+               >>> b
+               array([[ 0,  2,  4,  6,  8, 10],
+               [ 1,  3,  5,  7,  9, 11]])
+               >>> b.shape
+               (2, 6)
+               Note: Element (3,1) in the original array is 7, which appears in position (1,3) in the permutted array.
+       
+           3-dimensional case:
+               >>> a = np.arange(30).reshape(3,5,2)
+               >>> a
+               array([[[ 0,  1],
+               [ 2,  3],
+               [ 4,  5],
+               [ 6,  7],
+               [ 8,  9]],
+       
+              [[10, 11],
+               [12, 13],
+               [14, 15],
+               [16, 17],
+               [18, 19]],
+       
+              [[20, 21],
+               [22, 23],
+               [24, 25],
+               [26, 27],
+               [28, 29]]])
+               >>> a.shape
+               (3, 5, 2)
+               >>> b=np.fastCopyAndTranspose(a)
+               >>> b
+               array([[[ 0, 10, 20],
+               [ 2, 12, 22],
+               [ 4, 14, 24],
+               [ 6, 16, 26],
+               [ 8, 18, 28]],
+       
+              [[ 1, 11, 21],
+               [ 3, 13, 23],
+               [ 5, 15, 25],
+               [ 7, 17, 27],
+               [ 9, 19, 29]]])
+               >>> b.shape
+               (2, 5, 3)
+               >>> a = np.arange(12).reshape(2,3,2)
+               >>> a
+               array([[[ 0,  1],
+                       [ 2,  3],
+                       [ 4,  5]],
+       
+                      [[ 6,  7],
+                       [ 8,  9],
+                       [10, 11]]])
+               >>> a.shape
+               (2, 3, 2)
+               >>> b=np.fastCopyAndTranspose(a)
+               >>> b
+               array([[[ 0,  6],
+                       [ 2,  8],
+                       [ 4, 10]],
+       
+                      [[ 1,  7],
+                      [ 3,  9],
+                      [ 5, 11]]])
+               >>> b.shape
+               (2, 3, 2)
+           """)
 
 add_newdoc('numpy.core.multiarray', 'correlate',
     """cross_correlate(a,v, mode=0)""")
