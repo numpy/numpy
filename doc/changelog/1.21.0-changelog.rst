@@ -296,7 +296,7 @@ A total of 581 pull requests were merged for this release.
 * `#18045 <https://github.com/numpy/numpy/pull/18045>`__: MAINT: Bump pytest from 6.2.0 to 6.2.1
 * `#18046 <https://github.com/numpy/numpy/pull/18046>`__: TST: add back sdist test run
 * `#18047 <https://github.com/numpy/numpy/pull/18047>`__: BLD,DOC: pin sphinx to 3.3.1
-* `#18048 <https://github.com/numpy/numpy/pull/18048>`__: DOC: Update TESTS.rst.txt
+* `#18048 <https://github.com/numpy/numpy/pull/18048>`__: DOC: Update TESTS.rst
 * `#18050 <https://github.com/numpy/numpy/pull/18050>`__: MAINT: Add aliases for commonly used `ArrayLike` objects
 * `#18051 <https://github.com/numpy/numpy/pull/18051>`__: DEP: deprecate np.testing.dec
 * `#18052 <https://github.com/numpy/numpy/pull/18052>`__: BUG: Fix concatenation when the output is "S" or "U"

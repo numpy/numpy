@@ -11,13 +11,13 @@ useful info can be found.
 
 Source tree
 -----------
-- INSTALL.rst.txt
+- INSTALL.rst
 - pavement.py
 
 
 NumPy Docs
 ----------
-- https://github.com/numpy/numpy/blob/main/doc/HOWTO_RELEASE.rst.txt
+- https://github.com/numpy/numpy/blob/main/doc/HOWTO_RELEASE.rst
 
 
 SciPy.org wiki
