@@ -1613,12 +1613,17 @@ add_newdoc('numpy.core', 'fastCopyAndTranspose',
            Makes a copy of the array a and computes its transpose.
        
            Parameters: 
-               a: a multidimensional array of dimension d_0 x d_1 x ... x d_(n-2) x d_(n-1)
+               a: a multidimensional array of dimension 
+               d_0 x d_1 x ... x d_(n-2) x d_(n-1)
        
            Returns:
-               b: a multidimensional array of size d_(n-1) x d_(n-2) x ... x d_1 x d_0 whose elements are the elements of 
-               the array a but permuted as follows: The element of array a in position 
-               (p_0, p_1,..., p_(n-2), p_(n-1)) will be the element of array b in position (p_(n-1), p_(n-2),..., p_1, p_0).
+               b: a multidimensional array of size 
+               d_(n-1) x d_(n-2) x ... x d_1 x d_0 
+               whose elements are the elements of 
+               the array a but permuted as follows: The element of array a 
+               in position (p_0, p_1,..., p_(n-2), p_(n-1)) will be the 
+               element of array b in position 
+               (p_(n-1), p_(n-2),..., p_1, p_0).
        
            Examples:
        
@@ -1655,7 +1660,8 @@ add_newdoc('numpy.core', 'fastCopyAndTranspose',
                       [11]])
                >>> b.shape
                (12, 1)
-               Note for example that element (0,3) is 3, which is in position (3,0) in the permutted array.
+               Note for example that element (0,3) is 3, which is in position 
+               (3,0) in the permutted array.
                ----------------------------------
                >>> a = np.arange(12).reshape(6,2)
                >>> a
@@ -1673,7 +1679,8 @@ add_newdoc('numpy.core', 'fastCopyAndTranspose',
                [ 1,  3,  5,  7,  9, 11]])
                >>> b.shape
                (2, 6)
-               Note: Element (3,1) in the original array is 7, which appears in position (1,3) in the permutted array.
+               Note: Element (3,1) in the original array is 7, which appears 
+               in position (1,3) in the permutted array.
        
            3-dimensional case:
                >>> a = np.arange(30).reshape(3,5,2)
@@ -1735,7 +1742,6 @@ add_newdoc('numpy.core', 'fastCopyAndTranspose',
                >>> b.shape
                (2, 3, 2)
            """)
-
 add_newdoc('numpy.core.multiarray', 'correlate',
     """cross_correlate(a,v, mode=0)""")
 
