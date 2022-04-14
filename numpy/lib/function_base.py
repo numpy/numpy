@@ -4469,7 +4469,8 @@ def _get_gamma(virtual_indexes, previous_indexes, method):
     return np.asanyarray(gamma)
 
 def infArith(x, y, opCode):
-    if (np.isposinf(x) and np.isneginf(y)) or (np.isposinf(y) and np.isneginf(x)):
+    if ((np.isposinf(x) and np.isneginf(y)) or
+        (np.isposinf(y) and np.isneginf(x))):
         return np.nan
     elif np.isposinf(x) or np.isposinf(y):
         return np.inf
@@ -4509,25 +4510,24 @@ def _lerp(a, b, t, out=None):
             z = list(t)
         # if inf is present in a or b, subtract/add a and b iteratively
         diff_y_x = []
-        for x2, y2 in zip(x, y):        # diff_y_x = subtract(y, x)
+        for x2, y2 in zip(x, y):
             diff_y_x.append(infArith(y2, x2, 2))
         tempArr = []
-        for x2, y2 in zip(diff_y_x, z): # diff_y_x * t
+        for x2, y2 in zip(diff_y_x, z):
             tempArr.append(infArith(x2, y2, 3))
         out = []
         lerp_interpolation = []
-        for x2, y2 in zip(x, tempArr):  # lerp_interpolation = asanyarray(add(x, diff_y_x * t, out=out))
+        for x2, y2 in zip(x, tempArr):
             lerp_interpolation.append(infArith(x2, y2, 1))
             out.append(infArith(x2, y2, 1))
         tempArr2 = []
         tempArr3 = []
-        for x2 in z:                    # (1 - t)
+        for x2 in z:
             tempArr2.append(infArith(1.0, x2, 2))
-        for x2, y2 in zip(tempArr2, diff_y_x):  # diff_y_x * (1 - t)
+        for x2, y2 in zip(tempArr2, diff_y_x):
             tempArr3.append(infArith(x2, y2, 3))
         lerp_interpolation_final = []
-        for x2, y2, z2, l2 in zip(y, tempArr3, z, lerp_interpolation):  
-            # subtract(y, diff_y_x * (1 - t), out=lerp_interpolation, where=t >= 0.5)
+        for x2, y2, z2, l2 in zip(y, tempArr3, z, lerp_interpolation):
             if z2 >= 0.5:
                 lerp_interpolation_final.append(infArith(x2, y2, 2))
             else: lerp_interpolation_final.append(l2)
