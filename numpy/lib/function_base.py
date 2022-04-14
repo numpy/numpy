@@ -4471,16 +4471,16 @@ def _get_gamma(virtual_indexes, previous_indexes, method):
 def infArith(x, y, opCode):
     if ((np.isposinf(x) and np.isneginf(y)) or
         (np.isposinf(y) and np.isneginf(x))):
-        return np.nan
+            return np.nan
     elif np.isposinf(x) or np.isposinf(y):
         return np.inf
     elif np.isneginf(x) or np.isneginf(y):
         return np.NINF
-    elif opCode == 1: # addition
+    elif opCode == 1:  # addition
         return x + y
-    elif opCode == 2: # subtraction
+    elif opCode == 2:  # subtraction
         return x - y
-    elif opCode == 3: # multiplication
+    elif opCode == 3:  # multiplication
         return x * y
 
 def _lerp(a, b, t, out=None):
@@ -4530,10 +4530,13 @@ def _lerp(a, b, t, out=None):
         for x2, y2, z2, l2 in zip(y, tempArr3, z, lerp_interpolation):
             if z2 >= 0.5:
                 lerp_interpolation_final.append(infArith(x2, y2, 2))
-            else: lerp_interpolation_final.append(l2)
+            else:
+                lerp_interpolation_final.append(l2)
         lerp_interpolation_final = asanyarray(lerp_interpolation_final)
-        if fType: return lerp_interpolation_final[0]
-        else: return lerp_interpolation_final
+        if fType:
+            return lerp_interpolation_final[0]
+        else:
+            return lerp_interpolation_final
     else: 
         # if inf is not present in a or b, run standard code
         diff_b_a = subtract(b, a)

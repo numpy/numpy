@@ -3383,7 +3383,8 @@ class TestQuantile:
         assert_equal(np.quantile(x, 1), 3.5)
         assert_equal(np.quantile(x, 0.5), 1.75)
         assert_equal(np.quantile([1, 2, 3, np.inf, np.inf], 0.), 1)
-        assert_equal(np.isinf(np.quantile([1, 2, 3, np.inf, np.inf], 1.)), True)
+        assert_equal(np.isinf(np.quantile([1, 2, 3, np.inf, np.inf],
+             1.)), True)
 
     @pytest.mark.xfail(reason="See gh-19154")
     def test_correct_quantile_value(self):
