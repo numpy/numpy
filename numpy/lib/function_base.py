@@ -4469,9 +4469,10 @@ def _get_gamma(virtual_indexes, previous_indexes, method):
     return np.asanyarray(gamma)
 
 def infArith(x, y, opCode):
-    if ((np.isposinf(x) and np.isneginf(y)) or
-        (np.isposinf(y) and np.isneginf(x))):
-            return np.nan
+    bool1 = (np.isposinf(x) and np.isneginf(y))
+    bool2 = (np.isposinf(y) and np.isneginf(x))
+    if (bool1 or bool2):
+        return np.nan
     elif np.isposinf(x) or np.isposinf(y):
         return np.inf
     elif np.isneginf(x) or np.isneginf(y):
