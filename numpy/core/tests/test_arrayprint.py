@@ -528,7 +528,8 @@ class TestFormatSpec:
         from numpy.core.arrayprint import _parse_format_spec
 
         assert_equal(_parse_format_spec("f"), {"suppress_small": True})
-        assert_equal(_parse_format_spec("e"), {"suppress_small": False})
+        assert_equal(_parse_format_spec("e"), {"exp_format": True})
+        assert_equal(_parse_format_spec("g"), {"trim": "-"})
 
     def test_numeric(self):
         from numpy.core.arrayprint import _parse_format_spec
@@ -537,7 +538,7 @@ class TestFormatSpec:
             "sign": "+", "precision": 2, "suppress_small": True
         })
         assert_equal(_parse_format_spec(".3e"), {
-            "precision": 3, "suppress_small": False
+            "precision": 3, "exp_format": True
         })
         assert_equal(_parse_format_spec("-.4"), {
             "sign": "-", "precision": 4

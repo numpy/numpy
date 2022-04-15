@@ -9046,8 +9046,13 @@ class TestFormat:
 
     def test_0d(self):
         a = np.array(np.pi)
-        assert_equal('{:0.3g}'.format(a), '3.14')
-        assert_equal('{:0.3g}'.format(a[()]), '3.14')
+        # general format 'g' should behave the same as Python
+        # ref: https://docs.python.org/3/library/string.html#format-specification-mini-language
+        assert_equal('{:.4g}'.format(a), '3.142')
+        assert_equal('{:.4g}'.format(10 * a), '31.42')
+        assert_equal('{:.4g}'.format(100 * a), '314.2')
+        assert_equal('{:.4g}'.format(1_000_000 * a), '3.142e+06')
+        assert_equal('{:.4e}'.format(1_000_000 * a), '3.1416e+06')
 
     def test_1d_no_format(self):
         a = np.array([np.pi])

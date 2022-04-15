@@ -61,11 +61,16 @@ _format_options = {
     'formatter': None,
     # Internally stored as an int to simplify comparisons; converted from/to
     # str/False on the way in/out.
-    'legacy': sys.maxsize}
+    'legacy': sys.maxsize,
+    'exp_format': False,  # force exp formatting as Python do when ".2e"
+    'trim': '.'  # Controls post-processing trimming of trailing digits
+                 # see Dragon4 arguments at `format_float_scientific` below
+}
 
 def _make_options_dict(precision=None, threshold=None, edgeitems=None,
                        linewidth=None, suppress=None, nanstr=None, infstr=None,
-                       sign=None, formatter=None, floatmode=None, legacy=None):
+                       sign=None, formatter=None, floatmode=None,
+                       exp_format=None, trim=None, legacy=None):
     """
     Make a dictionary out of the non-None arguments, plus conversion of
     *legacy* and sanity checks.
@@ -112,13 +117,20 @@ def _make_options_dict(precision=None, threshold=None, edgeitems=None,
         except TypeError as e:
             raise TypeError('precision must be an integer') from e
 
+    if exp_format is not None and type(exp_format) is not bool:
+        raise TypeError("exp_format must be a boolean")
+
+    if trim is not None and trim not in "k.0-":
+        raise ValueError("trim option must be one of 'k', '.', '0' or '-'")
+
     return options
 
 
 @set_module('numpy')
 def set_printoptions(precision=None, threshold=None, edgeitems=None,
                      linewidth=None, suppress=None, nanstr=None, infstr=None,
-                     formatter=None, sign=None, floatmode=None, *, legacy=None):
+                     formatter=None, sign=None, floatmode=None,
+                     exp_format=None, trim=None, *, legacy=None):
     """
     Set printing options.
 
@@ -278,7 +290,7 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
     """
     opt = _make_options_dict(precision, threshold, edgeitems, linewidth,
                              suppress, nanstr, infstr, sign, formatter,
-                             floatmode, legacy)
+                             floatmode, exp_format, trim, legacy)
     # formatter is always reset
     opt['formatter'] = formatter
     _format_options.update(opt)
@@ -403,7 +415,7 @@ def str_format(x):
     return str(x)
 
 def _get_formatdict(data, *, precision, floatmode, suppress, sign, legacy,
-                    formatter, **kwargs):
+                    formatter, exp_format, trim, **kwargs):
     # note: extra arguments in kwargs are ignored
 
     # wrapped in lambdas to avoid taking a code path with the wrong type of data
@@ -411,13 +423,13 @@ def _get_formatdict(data, *, precision, floatmode, suppress, sign, legacy,
         'bool': lambda: BoolFormat(data),
         'int': lambda: IntegerFormat(data),
         'float': lambda: FloatingFormat(
-            data, precision, floatmode, suppress, sign, legacy=legacy),
+            data, precision, floatmode, suppress, sign, exp_format, trim, legacy=legacy,),
         'longfloat': lambda: FloatingFormat(
-            data, precision, floatmode, suppress, sign, legacy=legacy),
+            data, precision, floatmode, suppress, sign, exp_format, trim, legacy=legacy,),
         'complexfloat': lambda: ComplexFloatingFormat(
-            data, precision, floatmode, suppress, sign, legacy=legacy),
+            data, precision, floatmode, suppress, sign, exp_format, trim, legacy=legacy,),
         'longcomplexfloat': lambda: ComplexFloatingFormat(
-            data, precision, floatmode, suppress, sign, legacy=legacy),
+            data, precision, floatmode, suppress, sign, exp_format, trim, legacy=legacy,),
         'datetime': lambda: DatetimeFormat(data, legacy=legacy),
         'timedelta': lambda: TimedeltaFormat(data),
         'object': lambda: _object_format,
@@ -556,6 +568,7 @@ def _array2string_dispatcher(
         suppress_small=None, separator=None, prefix=None,
         style=None, formatter=None, threshold=None,
         edgeitems=None, sign=None, floatmode=None, suffix=None,
+        exp_format=None, trim=None,
         *, legacy=None):
     return (a,)
 
@@ -565,6 +578,7 @@ def array2string(a, max_line_width=None, precision=None,
                  suppress_small=None, separator=' ', prefix="",
                  style=np._NoValue, formatter=None, threshold=None,
                  edgeitems=None, sign=None, floatmode=None, suffix="",
+                 exp_format=None, trim=None,
                  *, legacy=None):
     """
     Return a string representation of an array.
@@ -712,7 +726,8 @@ def array2string(a, max_line_width=None, precision=None,
 
     overrides = _make_options_dict(precision, threshold, edgeitems,
                                    max_line_width, suppress_small, None, None,
-                                   sign, formatter, floatmode, legacy)
+                                   sign, formatter, floatmode, exp_format, trim,
+                                   legacy)
     options = _format_options.copy()
     options.update(overrides)
 
@@ -907,6 +922,7 @@ def _none_or_positive_arg(x, name):
 class FloatingFormat:
     """ Formatter for subtypes of np.floating """
     def __init__(self, data, precision, floatmode, suppress_small, sign=False,
+                 exp_format=False, trim=".",
                  *, legacy=None):
         # for backcompatibility, accept bools
         if isinstance(sign, bool):
@@ -928,7 +944,8 @@ class FloatingFormat:
 
         self.suppress_small = suppress_small
         self.sign = sign
-        self.exp_format = False
+        self.exp_format = exp_format
+        self.trim = trim
         self.large_exponent = False
 
         self.fillFormat(data)
@@ -951,7 +968,7 @@ class FloatingFormat:
         if len(finite_vals) == 0:
             self.pad_left = 0
             self.pad_right = 0
-            self.trim = '.'
+            self.trim = '.'  # do not override
             self.exp_size = -1
             self.unique = True
             self.min_digits = None
@@ -1001,7 +1018,7 @@ class FloatingFormat:
                 self.precision = self.min_digits = self.pad_right
                 self.trim = 'k'
             else:
-                self.trim = '.'
+                # self.trim = '.'  # do not override
                 self.min_digits = 0
 
         if self._legacy > 113:
@@ -1247,7 +1264,7 @@ class BoolFormat:
 class ComplexFloatingFormat:
     """ Formatter for subtypes of np.complexfloating """
     def __init__(self, x, precision, floatmode, suppress_small,
-                 sign=False, *, legacy=None):
+                 sign=False, exp_format=False, trim=".", *, legacy=None):
         # for backcompatibility, accept bools
         if isinstance(sign, bool):
             sign = '+' if sign else '-'
@@ -1259,11 +1276,11 @@ class ComplexFloatingFormat:
 
         self.real_format = FloatingFormat(
             x.real, precision, floatmode_real, suppress_small,
-            sign=sign, legacy=legacy
+            sign=sign, exp_format=exp_format, trim=trim, legacy=legacy
         )
         self.imag_format = FloatingFormat(
             x.imag, precision, floatmode_imag, suppress_small,
-            sign='+', legacy=legacy
+            sign='+', exp_format=exp_format, trim=trim, legacy=legacy
         )
 
     def __call__(self, x):
@@ -1661,7 +1678,7 @@ def _parse_format_spec(fs):
     format_spec ::=  [sign][.precision][type]
     sign        ::=  "+" | "-" | " "
     precision   ::=  [0-9]+
-    type        ::=  "f" | "e"
+    type        ::=  "f" | "e" | "g"
     """
 
     match = _FORMAT_SPEC_REGEXP.fullmatch(fs)
@@ -1681,9 +1698,14 @@ def _parse_format_spec(fs):
         options["precision"] = int(precision)
 
     if fmt_code is not None:
-        if fmt_code not in "fe":
+        if fmt_code not in "feg":
             raise ValueError(f"Unknown format code {fmt_code}")
-        options["suppress_small"] = fmt_code == "f"
+        if fmt_code == "f":  # try to force fixed precision
+            options["suppress_small"] = True
+        elif fmt_code == "e":  # force exp_format
+            options["exp_format"] = True
+        elif fmt_code == "g":  # trim decimal point if possible
+            options["trim"] = "-"
 
     return options
 
