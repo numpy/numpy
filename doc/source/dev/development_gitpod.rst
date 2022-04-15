@@ -269,8 +269,7 @@ GitHub application page.
 Generic debugging/testing steps for gitpod environment. 
 ******************************************************************************************
 
-A user might use the below steps one after another to debug/test Gitpod 
-environment for its correctness:
+You can use the below steps to debug/test Gitpod :
 
 #. Make sure that the Pre-Build is completed successfully without any errors. 
    By referring to the commands used to build a gitpod container in 
@@ -284,13 +283,13 @@ environment for its correctness:
    In the above log file, when compared to ``gitpod.yml``. Observe that the 
    error message came due to the command run after the log “Building Docs”. 
    Hence “make html” is the command that failed. Knowing which command caused 
-   the build to break failed is the first step to debugging.
+   the build to break is the first step to debugging.
 #. Verify that the dependencies installed match the ones listed in 
-   ``environment.yml``. Use command``conda list`` to list all packages 
+   ``environment.yml``. Use command ``conda list`` to list all packages 
    and their versions.
 #. Verify if it is not one of the installed dependencies causing the build to break. 
    Dependencies causing build breakage are more prevalent in those whose versions 
-   are not pinned with ``==`` in ``environment.yml`` as no version specified means 
+   are not pinned with ``=`` in ``environment.yml`` as no version specified means 
    conda will grab whatever the latest version is available, which could be unstable 
    sometimes.  
 
