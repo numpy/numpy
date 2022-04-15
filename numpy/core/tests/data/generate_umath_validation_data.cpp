@@ -1,10 +1,10 @@
 #include <algorithm>
 #include <fstream>
 #include <iostream>
-#include <math.h>
+#include <cmath>
 #include <random>
-#include <stdio.h>
-#include <time.h>
+#include <cstdio>
+#include <ctime>
 #include <vector>
 
 struct ufunc {

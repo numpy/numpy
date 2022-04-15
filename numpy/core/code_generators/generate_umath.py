@@ -54,10 +54,10 @@ class TypeDescription:
     cfunc_alias : str or none, optional
         Appended to inner loop C function name, e.g., FLOAT_{cfunc_alias}. See make_arrays.
         NOTE: it doesn't support 'astype'
-    simd: list
+    simd : list
         Available SIMD ufunc loops, dispatched at runtime in specified order
         Currently only supported for simples types (see make_arrays)
-    dispatch: str or None, optional
+    dispatch : str or None, optional
         Dispatch-able source name without its extension '.dispatch.c' that
         contains the definition of ufunc, dispatched at runtime depending on the
         specified targets of the dispatch-able source.

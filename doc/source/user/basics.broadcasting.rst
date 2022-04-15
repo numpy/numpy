@@ -6,7 +6,7 @@ Broadcasting
 ************
 
 .. seealso::
-    :class:`numpy.broadcast`   
+    :class:`numpy.broadcast`
 
 
 The term broadcasting describes how NumPy treats arrays with different
@@ -73,8 +73,8 @@ way left.  Two dimensions are compatible when
 2) one of them is 1
 
 If these conditions are not met, a
-``ValueError: operands could not be broadcast together`` exception is 
-thrown, indicating that the arrays have incompatible shapes. The size of 
+``ValueError: operands could not be broadcast together`` exception is
+thrown, indicating that the arrays have incompatible shapes. The size of
 the resulting array is the size that is not 1 along each axis of the inputs.
 
 Arrays do not need to have the same *number* of dimensions.  For example,
@@ -169,7 +169,7 @@ An example of broadcasting when a 1-d array is added to a 2-d array::
           [21.,  22.,  23.],
           [31.,  32.,  33.]])
   >>> b = np.array([1.0, 2.0, 3.0, 4.0])
-  >>> a + b 
+  >>> a + b
   Traceback (most recent call last):
   ValueError: operands could not be broadcast together with shapes (4,3) (4,)
 
@@ -178,7 +178,7 @@ In :ref:`broadcasting.figure-3`, an exception is raised because of the
 incompatible shapes.
 
 .. figure:: broadcasting_2.png
-    :alt: A 1-d array with shape (3) is strectched to match the 2-d array of
+    :alt: A 1-d array with shape (3) is stretched to match the 2-d array of
           shape (4, 3) it is being added to, and the result is a 2-d array of shape
           (4, 3).
     :name: broadcasting.figure-2
@@ -266,7 +266,7 @@ the shape of the ``codes`` array::
           gymnast, marathon runner, basketball player, football
           lineman and the athlete to be classified. Shortest distance
           is found between the basketball player and the athlete
-          to be classified. 
+          to be classified.
     :name: broadcasting.figure-5
 
     *Figure 5*
@@ -281,7 +281,7 @@ are compared to a set of ``codes``. Consider this scenario::
 
   Observation      (2d array):      10 x 3
   Codes            (2d array):       5 x 3
-  Diff             (3d array):  5 x 10 x 3 
+  Diff             (3d array):  5 x 10 x 3
 
 The three-dimensional array, ``diff``, is a consequence of broadcasting, not a
 necessity for the calculation. Large data sets will generate a large

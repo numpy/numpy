@@ -59,7 +59,7 @@ The compiler supports ``--cpu-baseline="sse sse2 sse3"`` and
    // The header should be located at numpy/numpy/core/src/common/_cpu_dispatch.h
    /**NOTE
     ** C definitions prefixed with "NPY_HAVE_" represent
-    ** the required optimzations.
+    ** the required optimizations.
     **
     ** C definitions prefixed with 'NPY__CPU_TARGET_' are protected and
     ** shouldn't be used by any NumPy C sources.
@@ -326,7 +326,7 @@ through ``--cpu-dispatch``, but it can also represent other options such as:
         else { FN NPY_EXPAND(ARGS); }
 
       // NumPy has a macro called 'NPY_CPU_DISPATCH_DECLARE' can be used
-      // for forward declrations any kind of prototypes based on
+      // for forward declarations any kind of prototypes based on
       // 'NPY__CPU_DISPATCH_CALL' and 'NPY__CPU_DISPATCH_BASELINE_CALL'.
       // However in this example, we just handle it manually.
       void simd_whoami(const char *extra_info);
@@ -335,10 +335,10 @@ through ``--cpu-dispatch``, but it can also represent other options such as:
 
       void trigger_me(void)
       {
-          // bring the auto-gernreated config header
+          // bring the auto-generated config header
           // which contains config macros 'NPY__CPU_DISPATCH_CALL' and
           // 'NPY__CPU_DISPATCH_BASELINE_CALL'.
-          // it highely recomaned to include the config header before exectuing
+          // it is highly recommended to include the config header before executing
         // the dispatching macros in case if there's another header in the scope.
           #include "hello.dispatch.h"
           DISPATCH_CALL_ALL(simd_whoami, ("all"))

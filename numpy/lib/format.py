@@ -421,10 +421,10 @@ def _write_array_header(fp, d, version=None):
     d : dict
         This has the appropriate entries for writing its string representation
         to the header of the file.
-    version: tuple or None
-        None means use oldest that works
-        explicit version will raise a ValueError if the format does not
-        allow saving this data.  Default: None
+    version : tuple or None
+        None means use oldest that works. Providing an explicit version will
+        raise a ValueError if the format does not allow saving this data.
+        Default: None
     """
     header = ["{"]
     for key, value in sorted(d.items()):

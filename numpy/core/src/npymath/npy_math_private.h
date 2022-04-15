@@ -514,7 +514,7 @@ typedef union {
 typedef union {
         npy_cdouble npy_z;
 #ifdef __cplusplus
-        std::complex<double> c99z;
+        std::complex<double> c99_z;
 #else
         complex double c99_z;
 #endif
@@ -523,7 +523,7 @@ typedef union {
 typedef union {
         npy_cfloat npy_z;
 #ifdef __cplusplus
-        std::complex<float> c99z;
+        std::complex<float> c99_z;
 #else
         complex float c99_z;
 #endif

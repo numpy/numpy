@@ -102,7 +102,7 @@ Usage and Impact
 This NEP allows for global and context-local overrides, as well as
 automatic overrides a-la ``__array_function__``.
 
-Here are some use-cases this NEP would enable, besides the 
+Here are some use-cases this NEP would enable, besides the
 first one stated in the motivation section:
 
 The first is allowing alternate dtypes to return their
@@ -114,7 +114,7 @@ respective arrays.
     x = unp.ones((5, 5), dtype=xnd_dtype) # Or torch dtype
 
 The second is allowing overrides for parts of the API.
-This is to allow alternate and/or optimised implementations
+This is to allow alternate and/or optimized implementations
 for ``np.linalg``, BLAS, and ``np.random``.
 
 .. code:: python
@@ -126,7 +126,7 @@ for ``np.linalg``, BLAS, and ``np.random``.
     np.set_global_backend(pyfftw)
 
     # Uses pyfftw without monkeypatching
-    np.fft.fft(numpy_array)    
+    np.fft.fft(numpy_array)
 
     with np.set_backend(pyfftw) # Or mkl_fft, or numpy
         # Uses the backend you specified
@@ -200,10 +200,10 @@ GitHub workflow. There are a few reasons for this:
   The reason for this is that there may exist functions in the in these
   submodules that need backends, even for ``numpy.ndarray`` inputs.
 
-Advantanges of ``unumpy`` over other solutions
+Advantages of ``unumpy`` over other solutions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-``unumpy`` offers a number of advantanges over the approach of defining a new
+``unumpy`` offers a number of advantages over the approach of defining a new
 protocol for every problem encountered: Whenever there is something requiring
 an override, ``unumpy`` will be able to offer a unified API with very minor
 changes. For example:
@@ -313,7 +313,7 @@ This is different from monkeypatching in a few different ways:
 All this isn't possible at all with ``__array_function__`` or
 ``__array_ufunc__``.
 
-It has been formally realised (at least in part) that a backend system is
+It has been formally realized (at least in part) that a backend system is
 needed for this, in the `NumPy roadmap <https://numpy.org/neps/roadmap.html#other-functionality>`_.
 
 For ``numpy.random``, it's still necessary to make the C-API fit the one
@@ -347,7 +347,7 @@ dispatchable.
 The need for an opt-in module
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The need for an opt-in module is realised because of a few reasons:
+The need for an opt-in module is realized because of a few reasons:
 
 * There are parts of the API (like `numpy.asarray`) that simply cannot be
   overridden due to incompatibility concerns with C/Cython extensions, however,
@@ -356,7 +356,7 @@ The need for an opt-in module is realised because of a few reasons:
   as those mentioned above.
 
 NEP 18 notes that this may require maintenance of two separate APIs. However,
-this burden may be lessened by, for example, parametrizing all tests over
+this burden may be lessened by, for example, parameterizing all tests over
 ``numpy.overridable`` separately via a fixture. This also has the side-effect
 of thoroughly testing it, unlike ``__array_function__``. We also feel that it
 provides an opportunity to separate the NumPy API contract properly from the
