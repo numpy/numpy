@@ -774,24 +774,29 @@ def configuration(parent_package='',top_path=None):
                        join('src', 'npymath', 'halffloat.c')
                        ]
 
-    def gl_if_msvc(build_cmd):
-        """ Add flag if we are using MSVC compiler
+    def opts_if_msvc(build_cmd):
+        """ Add flags if we are using MSVC compiler
 
-        We can't see this in our scope, because we have not initialized the
-        distutils build command, so use this deferred calculation to run when
-        we are building the library.
+        We can't see `build_cmd` in our scope, because we have not initialized
+        the distutils build command, so use this deferred calculation to run
+        when we are building the library.
         """
-        if build_cmd.compiler.compiler_type == 'msvc':
-            # explicitly disable whole-program optimization
-            return ['/GL-']
-        return []
+        if build_cmd.compiler.compiler_type != 'msvc':
+            return []
+        # Explicitly disable whole-program optimization.
+        flags = ['/GL-']
+        # Disable voltbl section for vc142 to allow link using mingw-w64; see:
+        # https://github.com/matthew-brett/dll_investigation/issues/1#issuecomment-1100468171
+        if build_cmd.compiler_opt.cc_test_flags(['-d2VolatileMetadata-']):
+            flags.append('-d2VolatileMetadata-')
+        return flags
 
     config.add_installed_library('npymath',
             sources=npymath_sources + [get_mathlib_info],
             install_dir='lib',
             build_info={
                 'include_dirs' : [],  # empty list required for creating npy_math_internal.h
-                'extra_compiler_args': [gl_if_msvc],
+                'extra_compiler_args': [opts_if_msvc],
             })
     config.add_npy_pkg_config("npymath.ini.in", "lib/npy-pkg-config",
             subst_dict)
