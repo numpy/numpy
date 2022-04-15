@@ -4498,7 +4498,7 @@ def _lerp(a, b, t, out=None):
     out : array_like
         Output array.
     """
-    if (np.any(_nx.isinf(a)) or np.any(_nx.isinf(b))):
+    if (np.any(_nx.isinf(a, casting="unsafe")) or np.any(_nx.isinf(b, casting="unsafe"))):
         if type(a) is np.float_:
             fType = True
             x = [a]
