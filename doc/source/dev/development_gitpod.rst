@@ -269,7 +269,7 @@ GitHub application page.
 Generic debugging/testing steps for gitpod environment. 
 ******************************************************************************************
 
-You can use the below steps to debug/test Gitpod :
+You can use the below steps to debug/test Gitpod:
 
 #. Make sure that the Pre-Build is completed successfully without any errors. 
    By referring to the commands used to build a gitpod container in 
