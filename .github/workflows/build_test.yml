@@ -272,7 +272,9 @@ jobs:
           gcc --version &&
           g++ --version &&
           python3 --version &&
-          cd /numpy && python3 setup.py install
+          git config --global --add safe.directory /numpy
+          cd /numpy &&
+          python3 setup.py install
         "
         docker commit the_build the_build
     - name: Run SIMD Tests
