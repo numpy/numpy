@@ -19,8 +19,6 @@ tasks:
       echo "📖 Building docs 📖 "
       cd doc
       make html
-      echo "Installing dependencies for documentation Live-Preview"
-      pip install esbonio
       echo "✨ Pre-build complete! You can close this terminal ✨ "
 
 # --------------------------------------------------------
