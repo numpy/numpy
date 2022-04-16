@@ -9060,30 +9060,54 @@ class TestFormat:
 
     def test_1d_format(self):
         # gh-5543
-        a = np.array([-np.pi, np.pi])
         fmtspc = "+.4f"
+
+        a = np.array([-1, 0, 1, 2], dtype="int")
+        assert_equal(format(a, fmtspc), np.array_format(a, fmtspc))
+
+        a = np.array([-np.pi, np.pi],  dtype="float")
+        assert_equal(format(a, fmtspc), np.array_format(a, fmtspc))
+
+        a = np.array([-np.pi, np.pi],  dtype="float128")
+        assert_equal(format(a, fmtspc), np.array_format(a, fmtspc))
+
+        a = np.array([complex(-np.pi, np.pi)], dtype="complex")
         assert_equal(format(a, fmtspc), np.array_format(a, fmtspc))
 
     def test_object_dtype(self):
         # as suggested in gh-5543, if dtype is object treat it as such
-        a = np.array({}, dtype=np.object_)
+        a = np.array({}, dtype="object")
         assert_equal(format(a, ""), str(a))
         with assert_raises(TypeError):
             format(a, "+.2f")
 
-        a = np.array([{}, {}], dtype=np.object_)
+        a = np.array([{}, {}], dtype="object")
         assert_equal(format(a, ""), str(a))
         with assert_raises(TypeError):
             format(a, "+.2f")
 
     def test_non_numeric(self):
-        a = np.array([], dtype=np.bool_)
-        with assert_raises(TypeError):
-            format(a, "+.2f")
+        fmtspc = "+.4f"
 
-        a = np.array([], dtype=np.str_)
-        with assert_raises(TypeError):
-            format(a, "+.2f")
+        a = np.array([True], dtype="bool")
+        with assert_raises_regex(TypeError, "not implemented"):
+            format(a, fmtspc)
+
+        a = np.array(["wuju"], dtype="str")
+        with assert_raises_regex(TypeError, "not implemented"):
+            format(a, fmtspc)
+
+        a = np.array([b"wuju"], dtype="bytes")
+        with assert_raises_regex(TypeError, "not implemented"):
+            format(a, fmtspc)
+
+        a = np.array(["2021-12-12T10:10:10"], dtype="datetime64")
+        with assert_raises_regex(TypeError, "not implemented"):
+            format(a, fmtspc)
+
+        a = np.array([1, 2, 3], dtype="timedelta64[s]")
+        # it behaves as ints
+        assert_equal(format(a, fmtspc), np.array_format(a, fmtspc))
 
 from numpy.testing import IS_PYPY
 

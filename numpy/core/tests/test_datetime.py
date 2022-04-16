@@ -471,6 +471,19 @@ class TestDateTime:
         # gh-17552
         assert_equal('NaT', '{0}'.format(np.timedelta64('nat')))
 
+    def test_format(self):
+        vs = "2021-12-12T10:10:10"
+        v = np.datetime64(vs)
+        with assert_raises_regex(
+            ValueError,
+            "Unknown format code 'f' for object of type 'str'"
+        ):
+            format(v, "+.2f")
+
+        # TODO: this behaivour should not ocurr
+        assert_equal(format(v, ".10"), vs[:10])
+        assert_equal(format(v, " <10"), vs)
+
     def test_timedelta_scalar_construction_units(self):
         # String construction detecting units
         assert_equal(np.datetime64('2010').dtype,
