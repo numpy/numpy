@@ -40,7 +40,7 @@ RUN conda activate ${CONDA_ENV} && \
     ccache -s
 
 # Install dependencies for Live-Preview on Gipod
-RUN python -m pip Install esbonio   
+RUN python -m pip install esbonio   
 
 # Gitpod will load the repository into /workspace/numpy. We remove the
 # directory from the image to prevent conflicts
