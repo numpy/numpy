@@ -3101,11 +3101,8 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
             0,
             &cast_info,
             &flags) != NPY_SUCCEED) {
-        return -1;
+        goto fail;
     }
-
-
-
 
     if (NpyIter_IterationNeedsAPI(mit->subspace_iter)) {
         mit->needs_api = 1;
