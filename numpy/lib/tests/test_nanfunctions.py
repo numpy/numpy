@@ -4,6 +4,7 @@ import pytest
 import inspect
 
 import numpy as np
+import numpy.lib.function_base as nfb
 from numpy._core.numeric import normalize_axis_tuple
 from numpy.exceptions import AxisError, ComplexWarning
 from numpy.lib._nanfunctions_impl import _nan_mask, _replace_nan
@@ -1277,12 +1278,7 @@ class TestNanFunctions_Quantile:
         assert np.isnan(out).all()
         assert out.dtype == array.dtype
 
-    @pytest.mark.parametrize(
-        "method",
-        ['inverted_cdf', 'averaged_inverted_cdf', 'closest_observation',
-         'interpolated_inverted_cdf', 'hazen', 'weibull', 'linear',
-         'median_unbiased', 'normal_unbiased',
-         'nearest', 'lower', 'higher', 'midpoint'])
+    @pytest.mark.parametrize("method", list(nfb._QuantileMethods.keys()))
     def test_weights_all_ones(self, method):
         """Test that all weights == 1 gives same results as no weights."""
         ar = np.arange(24).reshape(2, 3, 4).astype(float)
@@ -1321,12 +1317,7 @@ class TestNanFunctions_Quantile:
         actual = np.nanquantile(ar, q=q, weights=weights, method=method)
         assert_almost_equal(actual, expected)
 
-    @pytest.mark.parametrize(
-        "method",
-        ['inverted_cdf', 'averaged_inverted_cdf', 'closest_observation',
-         'interpolated_inverted_cdf', 'hazen', 'weibull', 'linear',
-         'median_unbiased', 'normal_unbiased',
-         'nearest', 'lower', 'higher', 'midpoint'])
+    @pytest.mark.parametrize("method", list(nfb._QuantileMethods.keys()))
     def test_multiple_axes(self, method):
         """Test that weights work on multiple axes."""
         ar = np.arange(12).reshape(3, 4).astype(float)
@@ -1340,12 +1331,7 @@ class TestNanFunctions_Quantile:
                                 method=method)
         assert_almost_equal(actual, expected)
 
-    @pytest.mark.parametrize(
-        "method",
-        ['inverted_cdf', 'averaged_inverted_cdf', 'closest_observation',
-         'interpolated_inverted_cdf', 'hazen', 'weibull', 'linear',
-         'median_unbiased', 'normal_unbiased',
-         'nearest', 'lower', 'higher', 'midpoint'])
+    @pytest.mark.parametrize("method", list(nfb._QuantileMethods.keys()))
     def test_various_weights(self, method):
         """Test various weights arg scenarios."""
         ar = np.arange(12).reshape(3, 4).astype(float)

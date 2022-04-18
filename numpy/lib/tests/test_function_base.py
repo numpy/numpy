@@ -3786,12 +3786,7 @@ class TestQuantile:
             # "median_unbiased", "normal_unbiased", "midpoint"
             assert_allclose(q, np.quantile(y, alpha, method=method))
 
-    @pytest.mark.parametrize(
-        "method",
-        ['inverted_cdf', 'averaged_inverted_cdf', 'closest_observation',
-         'interpolated_inverted_cdf', 'hazen', 'weibull', 'linear',
-         'median_unbiased', 'normal_unbiased',
-         'nearest', 'lower', 'higher', 'midpoint'])
+    @pytest.mark.parametrize("method", quantile_methods)
     def test_weights_all_ones(self, method):
         ar = np.arange(24).reshape(2, 3, 4)
         q = 0.5
@@ -3828,12 +3823,7 @@ class TestQuantile:
         actual = np.quantile(ar, q=q, weights=weights, method=method)
         assert_almost_equal(actual, expected)
 
-    @pytest.mark.parametrize(
-        "method",
-        ['inverted_cdf', 'closest_observation',
-         'interpolated_inverted_cdf', 'hazen', 'weibull', 'linear',
-         'median_unbiased', 'normal_unbiased',
-         'nearest', 'lower', 'higher', 'midpoint'])
+    @pytest.mark.parametrize("method", quantile_methods)
     def test_weights_on_multiple_axes(self, method):
         """Test supplying ND weights."""
         ar = np.arange(12).reshape(3, 4).astype(float)
@@ -3845,12 +3835,7 @@ class TestQuantile:
                              weights=weights, method=method)
         assert_almost_equal(actual, expected)
 
-    @pytest.mark.parametrize(
-        "method",
-        ['inverted_cdf', 'averaged_inverted_cdf', 'closest_observation',
-         'interpolated_inverted_cdf', 'hazen', 'weibull', 'linear',
-         'median_unbiased', 'normal_unbiased',
-         'nearest', 'lower', 'higher', 'midpoint'])
+    @pytest.mark.parametrize("method", quantile_methods)
     def test_various_weights(self, method):
         """Test various weights arg scenarios."""
         ar = np.arange(12).reshape(3, 4)
@@ -3919,6 +3904,59 @@ class TestQuantile:
             np.quantile(ar, q=q, axis=axis, weights=[1, -1])
         with assert_raises_regex(ZeroDivisionError, "Weights sum to zero"):
             np.quantile(ar, q=q, axis=axis, weights=[0, 0])
+
+    @pytest.mark.parametrize("method", ["linear", "lower", "higher",
+                                        "midpoint", "higher"])
+    def test_decimal_weights_for_linear_discrete_methods(self, method):
+        """Test consistency when interpolating between weight bands.
+
+        For these five methods, the virtual index is (n - 1) * quantile.
+        Therefore, if sum of weights == 3, then q=0.5 points to index = 1.
+        An array of [3, 4] with weights=[2, 1] --> [3, 3, 4],
+        and the 0.5 qunatile sits at index=1, which is 3.
+
+        But if weights=[1.9, 1.1], then the index boundary for value 3
+        is [0, 0.9], and the index boundary for value 4 is [1.9, 2]
+        This means, the index=1 value is equivalent to interpolating
+        between 3 and 4, at q=0.1.
+
+        This test is designed to ensure our weighted quantile method is
+        faithful to this paradigm.
+        """
+        actual = np.quantile([3, 4], q=0.5, weights=[1.9, 1.1], method=method)
+        expected = np.quantile([3, 4], q=0.1, method=method)
+        assert_almost_equal(actual, expected)
+
+
+class TestQuantileMethods:
+    """Test algorithmic consistency within  _QuantileMethods."""
+
+    @pytest.mark.parametrize("method", quantile_methods)
+    def test_discrete_shortcut(self, method):
+        """Test reproducibility of discrete shortcuts.
+
+        One should be able to reproduce discrete_shortcut with
+        get_virtual_index and fix_gamma.
+        """
+        n = 10
+        ar = np.random.rand(10)
+        quantiles = np.array([0.0, 0.1, 0.25, 0.5, 0.75, 0.9, 1.0])
+
+        # only testing methods where discrete_shortcut exists
+        if nfb._QuantileMethods[method]["discrete_shortcut"]:
+            actual =\
+                nfb._QuantileMethods[method]["discrete_shortcut"](n, quantiles)
+
+            indexes =\
+                nfb._QuantileMethods[method]["get_virtual_index"](n, quantiles)
+            indexes[indexes < 0] = 0
+            previous_indexes, _ = nfb._get_indexes(ar, indexes, n)
+            previous_indexes[previous_indexes == -1] = n - 1
+            gs = indexes - previous_indexes
+            gammas = nfb._QuantileMethods[method]["fix_gamma"](gs, indexes)
+            expected = previous_indexes + gammas
+
+            assert_almost_equal(actual, expected)
 
 
 class TestLerp:

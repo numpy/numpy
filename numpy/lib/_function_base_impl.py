@@ -66,37 +66,51 @@ _QuantileMethods = dict(
     # --- HYNDMAN and FAN METHODS
     # Discrete methods
     inverted_cdf=dict(
-        get_virtual_index=lambda n, quantiles: _inverted_cdf(n, quantiles),
-        fix_gamma=lambda gamma, _: gamma,  # should never be called
+        get_virtual_index=lambda n, quantiles: (n * quantiles) - 1,
+        fix_gamma=lambda g, _: _get_gamma_mask(
+            shape=g.shape,
+            default_value=1.,
+            conditioned_value=0.0,
+            where=g == 0),
+        discrete_shortcut=lambda n, quantiles: _inverted_cdf(n, quantiles),
     ),
     averaged_inverted_cdf=dict(
         get_virtual_index=lambda n, quantiles: (n * quantiles) - 1,
-        fix_gamma=lambda gamma, _: _get_gamma_mask(
-            shape=gamma.shape,
+        fix_gamma=lambda g, _: _get_gamma_mask(
+            shape=g.shape,
             default_value=1.,
             conditioned_value=0.5,
-            where=gamma == 0),
+            where=g == 0),
+        discrete_shortcut=None,
     ),
     closest_observation=dict(
-        get_virtual_index=lambda n, quantiles: _closest_observation(n,
-                                                                    quantiles),
-        fix_gamma=lambda gamma, _: gamma,  # should never be called
+        get_virtual_index=lambda n, quantiles: (n * quantiles) - 1 - 0.5,
+        fix_gamma=lambda g, index: _get_gamma_mask(
+            shape=g.shape,
+            default_value=1.,
+            conditioned_value=0.0,
+            where=(g == 0) & (np.floor(index) % 2 == 0)),
+        discrete_shortcut=(lambda n, quantiles:
+                           _closest_observation(n, quantiles)),
     ),
     # Continuous methods
     interpolated_inverted_cdf=dict(
         get_virtual_index=lambda n, quantiles:
         _compute_virtual_index(n, quantiles, 0, 1),
-        fix_gamma=lambda gamma, _: gamma,
+        fix_gamma=lambda g, _: g,
+        discrete_shortcut=None,
     ),
     hazen=dict(
         get_virtual_index=lambda n, quantiles:
         _compute_virtual_index(n, quantiles, 0.5, 0.5),
-        fix_gamma=lambda gamma, _: gamma,
+        fix_gamma=lambda g, _: g,
+        discrete_shortcut=None,
     ),
     weibull=dict(
         get_virtual_index=lambda n, quantiles:
         _compute_virtual_index(n, quantiles, 0, 0),
-        fix_gamma=lambda gamma, _: gamma,
+        fix_gamma=lambda g, _: g,
+        discrete_shortcut=None,
     ),
     # Default method.
     # To avoid some rounding issues, `(n-1) * quantiles` is preferred to
@@ -104,46 +118,56 @@ _QuantileMethods = dict(
     # They are mathematically equivalent.
     linear=dict(
         get_virtual_index=lambda n, quantiles: (n - 1) * quantiles,
-        fix_gamma=lambda gamma, _: gamma,
+        fix_gamma=lambda g, _: g,
+        discrete_shortcut=None,
     ),
     median_unbiased=dict(
         get_virtual_index=lambda n, quantiles:
         _compute_virtual_index(n, quantiles, 1 / 3.0, 1 / 3.0),
-        fix_gamma=lambda gamma, _: gamma,
+        fix_gamma=lambda g, _: g,
+        discrete_shortcut=None,
     ),
     normal_unbiased=dict(
         get_virtual_index=lambda n, quantiles:
         _compute_virtual_index(n, quantiles, 3 / 8.0, 3 / 8.0),
-        fix_gamma=lambda gamma, _: gamma,
+        fix_gamma=lambda g, _: g,
+        discrete_shortcut=None,
     ),
     # --- OTHER METHODS
     lower=dict(
-        get_virtual_index=lambda n, quantiles: np.floor(
+        get_virtual_index=lambda n, quantiles: (n - 1) * quantiles,
+        fix_gamma=lambda g, _: np.floor(g),
+        discrete_shortcut=lambda n, quantiles: np.floor(
             (n - 1) * quantiles).astype(np.intp),
-        fix_gamma=lambda gamma, _: gamma,
-        # should never be called, index dtype is int
     ),
     higher=dict(
-        get_virtual_index=lambda n, quantiles: np.ceil(
+        get_virtual_index=lambda n, quantiles: (n - 1) * quantiles,
+        fix_gamma=lambda g, _: np.ceil(g),
+        discrete_shortcut=lambda n, quantiles: np.ceil(
             (n - 1) * quantiles).astype(np.intp),
-        fix_gamma=lambda gamma, _: gamma,
-        # should never be called, index dtype is int
     ),
     midpoint=dict(
         get_virtual_index=lambda n, quantiles: 0.5 * (
                 np.floor((n - 1) * quantiles)
                 + np.ceil((n - 1) * quantiles)),
-        fix_gamma=lambda gamma, index: _get_gamma_mask(
-            shape=gamma.shape,
+        fix_gamma=lambda g, index: _get_gamma_mask(
+            shape=g.shape,
             default_value=0.5,
             conditioned_value=0.,
-            where=index % 1 == 0),
+            where=(index % 1 == 0) & (g == 0)),
+        discrete_shortcut=None,
     ),
     nearest=dict(
-        get_virtual_index=lambda n, quantiles: np.around(
+        get_virtual_index=lambda n, quantiles: (n - 1) * quantiles,
+        # fix_gamma here meant to match behavior of discrete_shortcut because
+        # np.around rounds to the nearest even integer.
+        fix_gamma=lambda g, index: _get_gamma_mask(
+            shape=g.shape,
+            default_value=np.around(g),
+            conditioned_value=np.around(index) - np.around(index - g),
+            where=g == 0.5),
+        discrete_shortcut=lambda n, quantiles: np.around(
             (n - 1) * quantiles).astype(np.intp),
-        fix_gamma=lambda gamma, _: gamma,
-        # should never be called, index dtype is int
     ))
 
 
@@ -4717,7 +4741,7 @@ def _compute_virtual_index(n, quantiles, alpha: float, beta: float):
 
 def _get_gamma(virtual_indexes, previous_indexes, method):
     """
-    Compute gamma (a.k.a 'm' or 'weight') for the linear interpolation
+    Compute gamma (a.k.a 'm') for the linear interpolation
     of quantiles.
 
     virtual_indexes : array_like
@@ -4732,8 +4756,10 @@ def _get_gamma(virtual_indexes, previous_indexes, method):
     gamma is usually the fractional part of virtual_indexes but can be modified
     by the interpolation method.
     """
-    gamma = np.asanyarray(virtual_indexes - previous_indexes)
-    gamma = method["fix_gamma"](gamma, virtual_indexes)
+    # % 1 because index diff can be > 1 in weight space calculation
+    # when virtual index lies within a value of large weight.
+    g = np.asanyarray(virtual_indexes - previous_indexes) % 1
+    gamma = method["fix_gamma"](g, virtual_indexes)
     # Ensure both that we have an array, and that we keep the dtype
     # (which may have been matched to the input array).
     return np.asanyarray(gamma, dtype=virtual_indexes.dtype)
@@ -4853,12 +4879,6 @@ def _get_indexes(arr, virtual_indexes, valid_values_count):
     if indexes_below_bounds.any():
         previous_indexes[indexes_below_bounds] = 0
         next_indexes[indexes_below_bounds] = 0
-    if np.issubdtype(arr.dtype, np.inexact):
-        # After the sort, slices having NaNs will have for last element a NaN
-        virtual_indexes_nans = np.isnan(virtual_indexes)  # indexes have nans?
-        if virtual_indexes_nans.any():
-            previous_indexes[virtual_indexes_nans] = -1
-            next_indexes[virtual_indexes_nans] = -1
     previous_indexes = previous_indexes.astype(np.intp)
     next_indexes = next_indexes.astype(np.intp)
     return previous_indexes, next_indexes
@@ -4991,13 +5011,11 @@ def _quantile(
                 np.interp(previous_w_indexes, w_index_bounds, real_indexes)
             next_indexes =\
                 np.interp(next_w_indexes, w_index_bounds, real_indexes)
-            indexes =\
-                np.interp(weight_space_indexes, w_index_bounds, real_indexes)
 
             # method-dependent gammas determine interpolation scheme between
             # neighboring values, and are computed in weight space.
-            gamma = _get_gamma(indexes, previous_indexes, method)
-
+            gamma =\
+                _get_gamma(weight_space_indexes, previous_w_indexes, method)
             previous = take(arr1d, previous_indexes.astype(int))
             next = take(arr1d, next_indexes.astype(int))
             return _lerp(previous, next, gamma, out=out)
@@ -5018,7 +5036,14 @@ def _quantile(
         if axis != 0:  # moveaxis is slow, so only call it if necessary.
             arr = np.moveaxis(arr, axis, destination=0)
 
-        virtual_indexes = method["get_virtual_index"](values_count, quantiles)
+        if method["discrete_shortcut"]:  # lumps indexing + gamma interplation
+            # discrete methods result in dtype = np.intp
+            virtual_indexes =\
+                method["discrete_shortcut"](values_count, quantiles)
+        else:
+            virtual_indexes =\
+                method["get_virtual_index"](values_count, quantiles)
+
         virtual_indexes = np.asanyarray(virtual_indexes)
 
         result, slices_having_nans =\
