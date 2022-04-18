@@ -45,6 +45,7 @@ jobs:
       - name: Update with Cygwin git
         # fetch-depth=0 above should make this short.
         run: |
+          dash -c "which git; /usr/bin/git config --system --add safe.directory /cygdrive/d/a/numpy/numpy"
           dash -c "which git; /usr/bin/git fetch --all -p"
       - name: Verify python version
         # Make sure it's the Cygwin one, not a Windows one
