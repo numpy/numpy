@@ -1139,6 +1139,15 @@ def kron(a, b):
     True
 
     """
+    # Working:
+    # 1. Equalise the shapes by prepending smaller array with 1s
+    # 2. Expand shapes of both the arrays by adding new axes at
+    #    odd positions for 1st array and even positions for 2nd
+    # 3. Compute the product of the modified array
+    # 4. The inner most array elements now contain the rows of
+    #    the Kronecker product
+    # 5. Reshape the result to kron's shape, which is same as
+    #    product of shapes of the two arrays.
     b = asanyarray(b)
     a = array(a, copy=False, subok=True, ndmin=b.ndim)
     is_any_mat = isinstance(a, matrix) or isinstance(b, matrix)
