@@ -453,11 +453,12 @@ npy_cpow@c@ (@ctype@ a, @ctype@ b)
     if (br == 0. && bi == 0.) {
         return npy_cpack@c@(1., 0.);
     }
-    /*
-     * If mantissa is zero, then result depends upon values of 
-     * br and bi. The result is either 0 (in magnitude) or 
-     * undefined ( or 1 for br=bi=0 and independent of ar and ai
-     * but that case is handled above).
+    /* case 0^b
+     * If a is a complex zero (ai=ar=0), then the result depends 
+     * upon values of br and bi. The result is either:
+     * 0 (in magnitude), undefined or 1.
+     * The later case is for br=bi=0 and independent of ar and ai
+     * but is handled above).
      */
     else if (ar == 0. && ai == 0.) {
         /* 
