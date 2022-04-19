@@ -36,7 +36,7 @@ def require(a, dtype=None, requirements=None, *, like=None):
        The required data-type. If None preserve the current dtype. If your
        application requires the data to be in native byteorder, include
        a byteorder specification as a part of the dtype specification.
-    requirements : str or list of str
+    requirements : str or sequence of str
        The requirements list can be any of the following
 
        * 'F_CONTIGUOUS' ('F') - ensure a Fortran-contiguous array
