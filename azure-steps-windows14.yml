@@ -4,37 +4,12 @@ steps:
     versionSpec: $(PYTHON_VERSION)
     addToPath: true
     architecture: $(PYTHON_ARCH)
-  condition: not(contains(variables['PYTHON_VERSION'], 'PyPy'))
-- powershell: |
-    # $url = "http://buildbot.pypy.org/nightly/py3.8/pypy-c-jit-latest-win64.zip"
-    $url = "https://downloads.python.org/pypy/pypy3.8-v7.3.7-win64.zip"
-    $output = "pypy.zip"
-    $wc = New-Object System.Net.WebClient
-    $wc.DownloadFile($url, $output)
-    echo "downloaded $url to $output"
-    mkdir pypy3
-    Expand-Archive $output -DestinationPath pypy3
-    # move pypy3/pypy-c-*/* pypy3
-    move pypy3/pypy*/* pypy3
-    $pypypath = Join-Path (Get-Item .).FullName pypy3
-    $env:Path = $pypypath + ";" + $env:Path
-    setx PATH $env:Path
-    python -mensurepip
-    echo "##vso[task.prependpath]$pypypath"
-  condition: contains(variables['PYTHON_VERSION'], 'PyPy')
-  displayName: "Install PyPy3.8 "
 
 - script: python -m pip install --upgrade pip wheel
   displayName: 'Install tools'
 
 - script: python -m pip install -r test_requirements.txt
   displayName: 'Install dependencies; some are optional to avoid test skips'
-
-- powershell: |
-    choco install -y mingw --forcex86 --force --version=7.3.0
-    refreshenv
-  displayName: 'Install 32-bit mingw for 32-bit builds'
-  condition: eq(variables['BITS'], 32)
 
 - powershell: |
     $ErrorActionPreference = "Stop"
@@ -47,6 +22,13 @@ steps:
     echo "Copying $target to openblas/"
     cp $target openblas/
   displayName: 'Download / Install OpenBLAS'
+
+- task: BatchScript@1
+  inputs:
+    filename: tools/set_vs_toolchain.cmd
+    arguments: $(BITS) 2019 14.16
+    modifyEnvironment: True
+  displayName: Set VS toolchain version
 
 - powershell: |
     ls openblas
