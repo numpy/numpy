@@ -1,0 +1,4 @@
+Faster ``np.kron``
+------------------
+`numpy.kron` is about 80% faster as the product is now computed
+using broadcasting.
