@@ -77,7 +77,7 @@ requires = [
 
 
 [tool.cibuildwheel]
-skip = "cp36-* cp37-* pp37-* pp38-macosx* *-manylinux_i686 *_ppc64le *_s390x *-musllinux*"
+skip = "cp36-* cp37-* pp37-* *-manylinux_i686 *_ppc64le *_s390x *-musllinux*"
 build-verbosity = "3"
 before-build = "bash {project}/tools/wheels/cibw_before_build.sh {project}"
 before-test = "pip install -r {project}/test_requirements.txt"

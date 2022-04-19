@@ -75,21 +75,16 @@ jobs:
         - [macos-10.15, macosx_*]
         - [windows-2019, win_amd64]
         - [windows-2019, win32]
-        python: ["cp38", "cp39", "cp310"]
-        include:
-        # manylinux pypy builds
-        - buildplat: [ubuntu-20.04, manylinux_x86_64]
+        # TODO: uncomment PyPy 3.9 builds once PyPy
+        # re-releases a new minor version
+        # NOTE: This needs a bump of cibuildwheel version, also, once that happens.
+        python: ["cp38", "cp39", "cp310", "pp38"] #, "pp39"]
+        exclude:
+        # Don't build PyPy 32-bit windows
+        - buildplat: [windows-2019, win32]
           python: "pp38"
-
-        # TODO: Uncomment and bump cibuildwheel version
-        # once cibuildwheel adds PyPy 7.3.8
-        # macOS pypy builds
-        #- buildplat: [macos-10.15, macosx_x86_64]
-        #  python: "pp38"
-
-        # Windows PyPy builds
-        - buildplat: [windows-2019, win_amd64]
-          python: "pp38"
+        - buildplat: [windows-2019, win32]
+          python: "pp39"
     env:
       IS_32_BIT: ${{ matrix.buildplat[1] == 'win32' }}
       IS_PUSH: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') }}
@@ -120,7 +115,7 @@ jobs:
         if: ${{ env.IS_32_BIT == 'true' }}
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.3.1
+        uses: pypa/cibuildwheel@v2.4.0
         env:
           CIBW_BUILD: ${{ matrix.python }}-${{ matrix.buildplat[1] }}
 
