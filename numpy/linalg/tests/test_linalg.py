@@ -467,11 +467,6 @@ class TestSolve(SolveCases):
         x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
         assert_equal(linalg.solve(x, x).dtype, dtype)
 
-    @pytest.mark.xfail(sys.platform == 'cygwin',
-                       reason="Consistently fails on CI.")
-    def test_sq_cases(self):
-        super().test_sq_cases()
-
     def test_0_size(self):
         class ArraySubclass(np.ndarray):
             pass
@@ -538,11 +533,6 @@ class TestInv(InvCases):
     def test_types(self, dtype):
         x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
         assert_equal(linalg.inv(x).dtype, dtype)
-
-    @pytest.mark.xfail(sys.platform == 'cygwin',
-                       reason="Consistently fails on CI.")
-    def test_sq_cases(self):
-        super().test_sq_cases()
 
     def test_0_size(self):
         # Check that all kinds of 0-sized arrays work
@@ -1791,9 +1781,6 @@ class TestQR:
 class TestCholesky:
     # TODO: are there no other tests for cholesky?
 
-    @pytest.mark.xfail(
-        sys.platform == 'cygwin', reason="Consistently fails in CI"
-    )
     @pytest.mark.parametrize(
         'shape', [(1, 1), (2, 2), (3, 3), (50, 50), (3, 10, 10)]
     )
@@ -2137,8 +2124,6 @@ class TestTensorsolve:
             b = np.ones(a.shape[:2])
             linalg.tensorsolve(a, b, axes=axes)
 
-    @pytest.mark.xfail(sys.platform == 'cygwin',
-                       reason="Consistently fails on CI")
     @pytest.mark.parametrize("shape",
         [(2, 3, 6), (3, 4, 4, 3), (0, 3, 3, 0)],
     )
