@@ -93,7 +93,7 @@ static double _next(double x, int p)
     return x;
 }
 
-static float _nextf(float x, int p)
+static float _next(float x, int p)
 {
     volatile float t;
     npy_int32 hx, hy, ix;
@@ -180,7 +180,7 @@ do {                                   \
   (d) = qw_u.value;                    \
 } while (0)
 
-static npy_longdouble _nextl(npy_longdouble x, int p)
+static npy_longdouble _next(npy_longdouble x, int p)
 {
     npy_int64 hx,ihx,ilx;
     npy_uint64 lx;
@@ -257,7 +257,7 @@ static npy_longdouble _nextl(npy_longdouble x, int p)
     }
 }
 #else
-static npy_longdouble _nextl(npy_longdouble x, int p)
+static npy_longdouble _next(npy_longdouble x, int p)
 {
     volatile npy_longdouble t;
     union IEEEl2bitsrep ux;
@@ -516,52 +516,85 @@ npy_longdouble npy_nextafterl(npy_longdouble x, npy_longdouble y)
 }
 #endif
 
-/**begin repeat
- * #suff = f,,l#
- * #SUFF = F,,L#
- * #type = npy_float, npy_double, npy_longdouble#
- */
-@type@ npy_spacing@suff@(@type@ x)
+namespace {
+template<typename T>
+struct numeric_limits;
+
+template<>
+struct numeric_limits<npy_float> {
+    static const npy_float nan;
+};
+const npy_float numeric_limits<npy_float>::nan = NPY_NANF;
+
+template<>
+struct numeric_limits<npy_double> {
+    static const npy_double nan;
+};
+const npy_double numeric_limits<npy_double>::nan = NPY_NAN;
+
+template<>
+struct numeric_limits<npy_longdouble> {
+    static const npy_longdouble nan;
+};
+const npy_longdouble numeric_limits<npy_longdouble>::nan = NPY_NANL;
+}
+
+template<typename type>
+static type _npy_spacing(type x)
 {
     /* XXX: npy isnan/isinf may be optimized by bit twiddling */
     if (npy_isinf(x)) {
-        return NPY_NAN@SUFF@;
+        return numeric_limits<type>::nan;
     }
 
-    return _next@suff@(x, 1) - x;
+    return _next(x, 1) - x;
 }
-/**end repeat**/
+
+/*
+ * Instanciation of C interface
+ */
+extern "C" {
+npy_float npy_spacingf(npy_float x) {
+  return _npy_spacing(x);
+}
+npy_double npy_spacing(npy_double x) {
+  return _npy_spacing(x);
+}
+npy_longdouble npy_spacingl(npy_longdouble x) {
+  return _npy_spacing(x);
+}
+}
 
 /*
  * Decorate all the math functions which are available on the current platform
  */
 
 #ifdef HAVE_NEXTAFTERF
-float npy_nextafterf(float x, float y)
+extern "C" float npy_nextafterf(float x, float y)
 {
     return nextafterf(x, y);
 }
 #endif
 
 #ifdef HAVE_NEXTAFTER
-double npy_nextafter(double x, double y)
+extern "C" double npy_nextafter(double x, double y)
 {
     return nextafter(x, y);
 }
 #endif
 
 #ifdef HAVE_NEXTAFTERL
-npy_longdouble npy_nextafterl(npy_longdouble x, npy_longdouble y)
+extern "C" npy_longdouble npy_nextafterl(npy_longdouble x, npy_longdouble y)
 {
     return nextafterl(x, y);
 }
 #endif
 
-int npy_clear_floatstatus() {
+extern "C" int npy_clear_floatstatus() {
     char x=0;
     return npy_clear_floatstatus_barrier(&x);
 }
-int npy_get_floatstatus() {
+extern "C" int npy_get_floatstatus() {
     char x=0;
     return npy_get_floatstatus_barrier(&x);
 }
@@ -591,7 +624,7 @@ int npy_get_floatstatus() {
     defined(__NetBSD__)
 #include <ieeefp.h>
 
-int npy_get_floatstatus_barrier(char * param)
+extern "C" int npy_get_floatstatus_barrier(char * param)
 {
     int fpstatus = fpgetsticky();
     /*
@@ -606,7 +639,7 @@ int npy_get_floatstatus_barrier(char * param)
            ((FP_X_INV & fpstatus) ? NPY_FPE_INVALID : 0);
 }
 
-int npy_clear_floatstatus_barrier(char * param)
+extern "C" int npy_clear_floatstatus_barrier(char * param)
 {
     int fpstatus = npy_get_floatstatus_barrier(param);
     fpsetsticky(0);
@@ -614,31 +647,31 @@ int npy_clear_floatstatus_barrier(char * param)
     return fpstatus;
 }
 
-void npy_set_floatstatus_divbyzero(void)
+extern "C" void npy_set_floatstatus_divbyzero(void)
 {
     fpsetsticky(FP_X_DZ);
 }
 
-void npy_set_floatstatus_overflow(void)
+extern "C" void npy_set_floatstatus_overflow(void)
 {
     fpsetsticky(FP_X_OFL);
 }
 
-void npy_set_floatstatus_underflow(void)
+extern "C" void npy_set_floatstatus_underflow(void)
 {
     fpsetsticky(FP_X_UFL);
 }
 
-void npy_set_floatstatus_invalid(void)
+extern "C" void npy_set_floatstatus_invalid(void)
 {
     fpsetsticky(FP_X_INV);
 }
 
 #elif defined(_AIX) && !defined(__GNUC__)
-#include <float.h>
+#include <cfloat>
 #include <fpxcp.h>
 
-int npy_get_floatstatus_barrier(char *param)
+extern "C" int npy_get_floatstatus_barrier(char *param)
 {
     int fpstatus = fp_read_flag();
     /*
@@ -653,7 +686,7 @@ int npy_get_floatstatus_barrier(char *param)
            ((FP_INVALID & fpstatus) ? NPY_FPE_INVALID : 0);
 }
 
-int npy_clear_floatstatus_barrier(char * param)
+extern "C" int npy_clear_floatstatus_barrier(char * param)
 {
     int fpstatus = npy_get_floatstatus_barrier(param);
     fp_swap_flag(0);
@@ -661,22 +694,22 @@ int npy_clear_floatstatus_barrier(char * param)
     return fpstatus;
 }
 
-void npy_set_floatstatus_divbyzero(void)
+extern "C" void npy_set_floatstatus_divbyzero(void)
 {
     fp_raise_xcp(FP_DIV_BY_ZERO);
 }
 
-void npy_set_floatstatus_overflow(void)
+extern "C" void npy_set_floatstatus_overflow(void)
 {
     fp_raise_xcp(FP_OVERFLOW);
 }
 
-void npy_set_floatstatus_underflow(void)
+extern "C" void npy_set_floatstatus_underflow(void)
 {
     fp_raise_xcp(FP_UNDERFLOW);
 }
 
-void npy_set_floatstatus_invalid(void)
+extern "C" void npy_set_floatstatus_invalid(void)
 {
     fp_raise_xcp(FP_INVALID);
 }
@@ -697,22 +730,22 @@ static volatile double _npy_floatstatus_x,
     _npy_floatstatus_zero = 0.0, _npy_floatstatus_big = 1e300,
     _npy_floatstatus_small = 1e-300, _npy_floatstatus_inf;
 
-void npy_set_floatstatus_divbyzero(void)
+extern "C" void npy_set_floatstatus_divbyzero(void)
 {
     _npy_floatstatus_x = 1.0 / _npy_floatstatus_zero;
 }
 
-void npy_set_floatstatus_overflow(void)
+extern "C" void npy_set_floatstatus_overflow(void)
 {
     _npy_floatstatus_x = _npy_floatstatus_big * 1e300;
 }
 
-void npy_set_floatstatus_underflow(void)
+extern "C" void npy_set_floatstatus_underflow(void)
 {
     _npy_floatstatus_x = _npy_floatstatus_small * 1e-300;
 }
 
-void npy_set_floatstatus_invalid(void)
+extern "C" void npy_set_floatstatus_invalid(void)
 {
     _npy_floatstatus_inf = NPY_INFINITY;
     _npy_floatstatus_x = _npy_floatstatus_inf - NPY_INFINITY;
@@ -721,9 +754,9 @@ void npy_set_floatstatus_invalid(void)
 /* MS Windows -----------------------------------------------------*/
 #if defined(_MSC_VER)
 
-#include <float.h>
+#include <cfloat>
 
-int npy_get_floatstatus_barrier(char *param)
+extern "C" int npy_get_floatstatus_barrier(char *param)
 {
     /*
      * By using a volatile, the compiler cannot reorder this call
@@ -745,7 +778,7 @@ int npy_get_floatstatus_barrier(char *param)
            ((SW_INVALID & fpstatus) ? NPY_FPE_INVALID : 0);
 }
 
-int npy_clear_floatstatus_barrier(char *param)
+extern "C" int npy_clear_floatstatus_barrier(char *param)
 {
     int fpstatus = npy_get_floatstatus_barrier(param);
     _clearfp();
@@ -758,7 +791,7 @@ int npy_clear_floatstatus_barrier(char *param)
 
 #include <machine/fpu.h>
 
-int npy_get_floatstatus_barrier(char *param)
+extern "C" int npy_get_floatstatus_barrier(char *param)
 {
     unsigned long fpstatus = ieee_get_fp_control();
     /*
@@ -773,7 +806,7 @@ int npy_get_floatstatus_barrier(char *param)
             ((IEEE_STATUS_INV & fpstatus) ? NPY_FPE_INVALID : 0);
 }
 
-int npy_clear_floatstatus_barrier(char *param)
+extern "C" int npy_clear_floatstatus_barrier(char *param)
 {
     int fpstatus = npy_get_floatstatus_barrier(param);
     /* clear status bits as well as disable exception mode if on */
@@ -789,7 +822,7 @@ int npy_clear_floatstatus_barrier(char *param)
 /* General GCC code, should work on most platforms */
 #  include <fenv.h>
 
-int npy_get_floatstatus_barrier(char* param)
+extern "C" int npy_get_floatstatus_barrier(char* param)
 {
     int fpstatus = fetestexcept(FE_DIVBYZERO | FE_OVERFLOW |
                                 FE_UNDERFLOW | FE_INVALID);
@@ -806,7 +839,7 @@ int npy_get_floatstatus_barrier(char* param)
            ((FE_INVALID    & fpstatus) ? NPY_FPE_INVALID : 0);
 }
 
-int npy_clear_floatstatus_barrier(char * param)
+extern "C" int npy_clear_floatstatus_barrier(char * param)
 {
     /* testing float status is 50-100 times faster than clearing on x86 */
     int fpstatus = npy_get_floatstatus_barrier(param);
@@ -819,22 +852,22 @@ int npy_clear_floatstatus_barrier(char * param)
 }
 
 
-void npy_set_floatstatus_divbyzero(void)
+extern "C" void npy_set_floatstatus_divbyzero(void)
 {
     feraiseexcept(FE_DIVBYZERO);
 }
 
-void npy_set_floatstatus_overflow(void)
+extern "C" void npy_set_floatstatus_overflow(void)
 {
     feraiseexcept(FE_OVERFLOW);
 }
 
-void npy_set_floatstatus_underflow(void)
+extern "C" void npy_set_floatstatus_underflow(void)
 {
     feraiseexcept(FE_UNDERFLOW);
 }
 
-void npy_set_floatstatus_invalid(void)
+extern "C" void npy_set_floatstatus_invalid(void)
 {
     feraiseexcept(FE_INVALID);
 }
