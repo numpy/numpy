@@ -648,7 +648,11 @@ partition_vec(type_t *arr, npy_intp left, npy_intp right, const zmm_t curr_vec,
     /* which elements are larger than the pivot */
     __mmask16 gt_mask = vtype::ge(curr_vec, pivot_vec);
     npy_int amount_gt_pivot = _mm_popcnt_u32((npy_int)gt_mask);
+#if defined(_MSC_VER) && _MSC_VER < 1922
+    vtype::mask_compressstoreu(arr + left, ~gt_mask, curr_vec);
+#else
     vtype::mask_compressstoreu(arr + left, _knot_mask16(gt_mask), curr_vec);
+#endif
     vtype::mask_compressstoreu(arr + right - amount_gt_pivot, gt_mask,
                                curr_vec);
     *smallest_vec = vtype::min(curr_vec, *smallest_vec);
@@ -756,7 +760,7 @@ qsort_(type_t *arr, npy_intp left, npy_intp right, npy_int max_iters)
      * Base case: use bitonic networks to sort arrays <= 128
      */
     if (right + 1 - left <= 128) {
-        sort_128<vtype>(arr + left, right + 1 - left);
+        sort_128<vtype>(arr + left, (npy_int)(right + 1 - left));
         return;
     }
 
@@ -808,7 +812,7 @@ NPY_CPU_DISPATCH_CURFX(x86_quicksort_int)(void *arr, npy_intp arrsize)
 {
     if (arrsize > 1) {
         qsort_<vector<npy_int>, npy_int>((npy_int *)arr, 0, arrsize - 1,
-                                         2 * log2(arrsize));
+                                         2 * (npy_int)log2(arrsize));
     }
 }
 
@@ -817,7 +821,7 @@ NPY_CPU_DISPATCH_CURFX(x86_quicksort_uint)(void *arr, npy_intp arrsize)
 {
     if (arrsize > 1) {
         qsort_<vector<npy_uint>, npy_uint>((npy_uint *)arr, 0, arrsize - 1,
-                                           2 * log2(arrsize));
+                                           2 * (npy_int)log2(arrsize));
     }
 }
 
@@ -827,7 +831,7 @@ NPY_CPU_DISPATCH_CURFX(x86_quicksort_float)(void *arr, npy_intp arrsize)
     if (arrsize > 1) {
         npy_intp nan_count = replace_nan_with_inf((npy_float *)arr, arrsize);
         qsort_<vector<npy_float>, npy_float>((npy_float *)arr, 0, arrsize - 1,
-                                             2 * log2(arrsize));
+                                             2 * (npy_int)log2(arrsize));
         replace_inf_with_nan((npy_float *)arr, arrsize, nan_count);
     }
 }
