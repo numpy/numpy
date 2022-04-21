@@ -47,17 +47,21 @@ def check_operations(dtype, value):
     floating point errors which occurred during those casts.
     """
     if dtype.kind != 'i':
+        # These assignments use the stricter setitem logic:
         def assignment():
             arr = np.empty(3, dtype=dtype)
             arr[0] = value
 
         yield assignment
 
-        def fill():
-            arr = np.empty(3, dtype=dtype)
-            arr.fill(value)
+        # TODO: This constraint is a bug in arr.fill() and should be removed
+        #       e.g. by gh-20924
+        if value != 10**100:
+            def fill():
+                arr = np.empty(3, dtype=dtype)
+                arr.fill(value)
 
-        yield fill
+            yield fill
 
     def copyto_scalar():
         arr = np.empty(3, dtype=dtype)
@@ -133,3 +137,4 @@ def test_floatingpoint_errors_casting(dtype, value):
         with np.errstate(all="raise"):
             with pytest.raises(FloatingPointError, match=match):
                 operation()
+

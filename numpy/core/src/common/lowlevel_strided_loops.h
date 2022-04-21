@@ -336,10 +336,14 @@ mapiter_trivial_set(PyArrayObject *self, PyArrayObject *ind,
                        PyArrayObject *result);
 
 NPY_NO_EXPORT int
-mapiter_get(PyArrayMapIterObject *mit);
+mapiter_get(
+        PyArrayMapIterObject *mit, NPY_cast_info *cast_info,
+        NPY_ARRAYMETHOD_FLAGS flags, int is_aligned);
 
 NPY_NO_EXPORT int
-mapiter_set(PyArrayMapIterObject *mit);
+mapiter_set(
+        PyArrayMapIterObject *mit, NPY_cast_info *cast_info,
+        NPY_ARRAYMETHOD_FLAGS flags, int is_aligned);
 
 /*
  * Prepares shape and strides for a simple raw array iteration.

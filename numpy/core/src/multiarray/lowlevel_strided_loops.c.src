@@ -1559,14 +1559,16 @@ mapiter_trivial_@name@(PyArrayObject *self, PyArrayObject *ind,
  * General advanced indexing iteration.
  */
 NPY_NO_EXPORT int
-mapiter_@name@(PyArrayMapIterObject *mit)
+mapiter_@name@(
+        PyArrayMapIterObject *mit, NPY_cast_info *cast_info,
+        NPY_ARRAYMETHOD_FLAGS flags, int is_aligned)
 {
     npy_intp *counter, count;
-    int i, is_aligned;
+    int i;
 
     /* Cached mit info */
     int numiter = mit->numiter;
-    int needs_api = mit->needs_api;
+    int needs_api = (flags & NPY_METH_REQUIRES_PYAPI) != 0;
     /* Constant information */
     npy_intp fancy_dims[NPY_MAXDIMS];
     npy_intp fancy_strides[NPY_MAXDIMS];
@@ -1587,13 +1589,6 @@ mapiter_@name@(PyArrayMapIterObject *mit)
         fancy_dims[i] = mit->fancy_dims[i];
         fancy_strides[i] = mit->fancy_strides[i];
     }
-
-    /*
-     * Alignment information (swapping is never needed, since we buffer),
-     * could also check extra_op is buffered, but it should rarely matter.
-     */
-
-    is_aligned = IsUintAligned(array) && IsUintAligned(mit->extra_op);
 
     if (mit->size == 0) {
        return 0;
@@ -1744,9 +1739,6 @@ mapiter_@name@(PyArrayMapIterObject *mit)
             if (!needs_api) {
                 NPY_BEGIN_THREADS;
             }
-            if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
-                npy_clear_floatstatus_barrier((char *)mit);
-            }
 
             /* Outer iteration (safe because mit->size != 0) */
             do {
@@ -1757,7 +1749,6 @@ mapiter_@name@(PyArrayMapIterObject *mit)
 #if @isget@ && @one_iter@
                     if (check_and_adjust_index(&indval, fancy_dims[i],
                                                iteraxis, _save) < 0 ) {
-                        NPY_cast_info_xfree(&cast_info);
                         return -1;
                     }
 #else
@@ -1789,7 +1780,6 @@ mapiter_@name@(PyArrayMapIterObject *mit)
                                                    &errmsg)) {
                         NPY_END_THREADS;
                         PyErr_SetString(PyExc_ValueError, errmsg);
-                        NPY_cast_info_xfree(&cast_info);
                         return -1;
                     }
                     if (is_subiter_trivial != 0) {
@@ -1819,7 +1809,6 @@ mapiter_@name@(PyArrayMapIterObject *mit)
                  *       not at all...
                  */
                 if (needs_api && PyErr_Occurred()) {
-                    NPY_cast_info_xfree(&cast_info);
                     return -1;
                 }
 #endif
@@ -1827,21 +1816,19 @@ mapiter_@name@(PyArrayMapIterObject *mit)
                 do {
 
 #if @isget@
-                    if (NPY_UNLIKELY(cast_info.func(&cast_info.context,
+                    if (NPY_UNLIKELY(cast_info->func(&cast_info->context,
                             subspace_ptrs, counter, subspace_strides,
-                            cast_info.auxdata) < 0)) {
+                            cast_info->auxdata) < 0)) {
                         NPY_END_THREADS;
-                        NPY_cast_info_xfree(&cast_info);
                         return -1;
                     }
 #else
                     /* The operand order is reversed here */
                     char *args[2] = {subspace_ptrs[1], subspace_ptrs[0]};
                     npy_intp strides[2] = {subspace_strides[1], subspace_strides[0]};
-                    if (NPY_UNLIKELY(cast_info.func(&cast_info.context,
-                            args, counter, strides, cast_info.auxdata) < 0)) {
+                    if (NPY_UNLIKELY(cast_info->func(&cast_info->context,
+                            args, counter, strides, cast_info->auxdata) < 0)) {
                         NPY_END_THREADS;
-                        NPY_cast_info_xfree(&cast_info);
                         return -1;
                     }
 #endif
@@ -1852,15 +1839,6 @@ mapiter_@name@(PyArrayMapIterObject *mit)
             NPY_END_THREADS;
         }
 /**end repeat1**/
-
-        NPY_cast_info_xfree(&cast_info);
-
-        if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
-            int fpes = npy_get_floatstatus_barrier((char *)mit);
-            if (fpes && PyUFunc_GiveFloatingpointErrors("cast", fpes) < 0) {
-                return -1;
-            }
-        }
     }
     return 0;
 }
