@@ -192,12 +192,13 @@ typedef union {
         (d) = qw_u.value;                    \
     } while (0)
 
-static npy_longdouble
-_next(npy_longdouble x, int p)
+static long double
+_next(long double x, int p)
 {
     npy_int64 hx, ihx, ilx;
     npy_uint64 lx;
     npy_longdouble u;
+    const npy_longdouble eps = exp2l(-105.); // 0x1.0000000000000p-105L
 
     GET_LDOUBLE_WORDS64(hx, lx, x);
     ihx = hx & 0x7fffffffffffffffLL; /* |hx| */
@@ -237,7 +238,7 @@ _next(npy_longdouble x, int p)
         }
         if (ihx < 0x06a0000000000000LL) { /* ulp will denormal */
             SET_LDOUBLE_WORDS64(u, (hx & 0x7ff0000000000000LL), 0ULL);
-            u *= 0x1.0000000000000p-105L;
+            u *= eps;
         }
         else
             SET_LDOUBLE_WORDS64(
@@ -267,7 +268,7 @@ _next(npy_longdouble x, int p)
         }
         if (ihx < 0x06a0000000000000LL) { /* ulp will denormal */
             SET_LDOUBLE_WORDS64(u, (hx & 0x7ff0000000000000LL), 0ULL);
-            u *= 0x1.0000000000000p-105L;
+            u *= eps;
         }
         else
             SET_LDOUBLE_WORDS64(
@@ -277,8 +278,8 @@ _next(npy_longdouble x, int p)
     }
 }
 #else
-static npy_longdouble
-_next(npy_longdouble x, int p)
+static long double
+_next(long double x, int p)
 {
     volatile npy_longdouble t;
     union IEEEl2bitsrep ux;
@@ -553,22 +554,22 @@ template <typename T>
 struct numeric_limits;
 
 template <>
-struct numeric_limits<npy_float> {
+struct numeric_limits<float> {
     static const npy_float nan;
 };
-const npy_float numeric_limits<npy_float>::nan = NPY_NANF;
+const npy_float numeric_limits<float>::nan = NPY_NANF;
 
 template <>
-struct numeric_limits<npy_double> {
+struct numeric_limits<double> {
     static const npy_double nan;
 };
-const npy_double numeric_limits<npy_double>::nan = NPY_NAN;
+const npy_double numeric_limits<double>::nan = NPY_NAN;
 
 template <>
-struct numeric_limits<npy_longdouble> {
+struct numeric_limits<long double> {
     static const npy_longdouble nan;
 };
-const npy_longdouble numeric_limits<npy_longdouble>::nan = NPY_NANL;
+const npy_longdouble numeric_limits<long double>::nan = NPY_NANL;
 }  // namespace
 
 template <typename type>
@@ -584,7 +585,7 @@ _npy_spacing(type x)
 }
 
 /*
- * Instanciation of C interface
+ * Instantiation of C interface
  */
 extern "C" {
 npy_float
@@ -826,7 +827,7 @@ npy_get_floatstatus_barrier(char *param)
     int fpstatus = _statusfp();
 #else
     /* windows enables sse on 32 bit, so check both flags */
-    int fpstatus, fpstatus2;
+    unsigned int fpstatus, fpstatus2;
     _statusfp2(&fpstatus, &fpstatus2);
     fpstatus |= fpstatus2;
 #endif
