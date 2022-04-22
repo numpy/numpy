@@ -324,9 +324,10 @@ class Array:
             return key
 
         elif isinstance(key, tuple):
-            key = tuple(Array._validate_index(idx, None) for idx in key)
+            nonexpanding_key = tuple(idx for idx in key if idx is not None)
+            nonexpanding_key = tuple(Array._validate_index(idx, None) for idx in nonexpanding_key)
 
-            for idx in key:
+            for idx in nonexpanding_key:
                 if (
                     isinstance(idx, np.ndarray)
                     and idx.dtype in _boolean_dtypes
@@ -344,16 +345,16 @@ class Array:
 
             if shape is None:
                 return key
-            n_ellipsis = key.count(...)
+            n_ellipsis = nonexpanding_key.count(...)
             if n_ellipsis > 1:
                 return key
-            ellipsis_i = key.index(...) if n_ellipsis else len(key)
+            ellipsis_i = nonexpanding_key.index(...) if n_ellipsis else len(nonexpanding_key)
 
-            for idx, size in list(zip(key[:ellipsis_i], shape)) + list(
-                zip(key[:ellipsis_i:-1], shape[:ellipsis_i:-1])
+            for idx, size in list(zip(nonexpanding_key[:ellipsis_i], shape)) + list(
+                zip(nonexpanding_key[:ellipsis_i:-1], shape[:ellipsis_i:-1])
             ):
                 Array._validate_index(idx, (size,))
-            if n_ellipsis == 0 and len(key) < len(shape):
+            if n_ellipsis == 0 and len(nonexpanding_key) < len(shape):
                 raise IndexError(
                     "Multidimensional arrays must include an index for every axis or use an ellipsis"
                 )
@@ -370,9 +371,7 @@ class Array:
         elif key is Ellipsis:
             return key
         elif key is None:
-            raise IndexError(
-                "newaxis indices are not allowed in the array API namespace"
-            )
+            return key
         try:
             key = operator.index(key)
             if shape is not None and len(shape) > 1:
@@ -384,7 +383,7 @@ class Array:
             # Note: This also omits boolean arrays that are not already in
             # Array() form, like a list of booleans.
             raise IndexError(
-                "Only integers, slices (`:`), ellipsis (`...`), and boolean arrays are valid indices in the array API namespace"
+                "Only integers, slices (`:`), ellipsis (`...`), newaxis (`None`), and boolean arrays are valid indices in the array API namespace"
             )
 
     # Everything below this line is required by the spec.

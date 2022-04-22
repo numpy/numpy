@@ -2,8 +2,9 @@ import operator
 
 from numpy.testing import assert_raises
 import numpy as np
+import pytest
 
-from .. import ones, asarray, result_type, all, equal
+from .. import ones, asarray, reshape, result_type, all, equal
 from .._array_object import Array
 from .._dtypes import (
     _all_dtypes,
@@ -322,3 +323,8 @@ def test_allow_newaxis():
     a = ones(5)
     indexed_a = a[None, :]
     assert indexed_a.shape == (1, 5)
+
+def test_disallow_flat_indexing_with_newaxis():
+    a = ones((3, 3, 3))
+    with pytest.raises(IndexError):
+        indexed_a = a[None, 0, 0]
