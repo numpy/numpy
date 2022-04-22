@@ -681,10 +681,10 @@ def correlate(a, v, mode='valid'):
     This function computes the correlation as generally defined in signal
     processing texts::
 
-        c_{av}[k] = sum_n a[n+k] * conj(v[n])
+    .. math:: c_k = \sum_n a_{n+k} * \overline{v_n}
 
-    with a and v sequences being zero-padded where necessary and conj being
-    the conjugate.
+    with a and v sequences being zero-padded where necessary and
+    :math:`\overline x` denoting complex conjugation.
 
     Parameters
     ----------
@@ -713,9 +713,9 @@ def correlate(a, v, mode='valid'):
     The definition of correlation above is not unique and sometimes correlation
     may be defined differently. Another common definition is::
 
-        c'_{av}[k] = sum_n a[n] conj(v[n+k])
+    .. math:: c'_k = \sum_n a_{n} * \overline{v_{n+k}
 
-    which is related to ``c_{av}[k]`` by ``c'_{av}[k] = c_{av}[-k]``.
+    which is related to :math:`c_k` by :math:`c'_k = c_{-k}`.
 
     `numpy.correlate` may perform slowly in large arrays (i.e. n = 1e5) because it does
     not use the FFT to compute the convolution; in that case, `scipy.signal.correlate` might
