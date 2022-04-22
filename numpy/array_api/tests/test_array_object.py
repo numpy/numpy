@@ -70,11 +70,6 @@ def test_validate_index():
     assert_raises(IndexError, lambda: a[[0, 1]])
     assert_raises(IndexError, lambda: a[np.array([[0, 1]])])
 
-    # np.newaxis is not allowed
-    assert_raises(IndexError, lambda: a[None])
-    assert_raises(IndexError, lambda: a[None, ...])
-    assert_raises(IndexError, lambda: a[..., None])
-
     # Multiaxis indices must contain exactly as many indices as dimensions
     assert_raises(IndexError, lambda: a[()])
     assert_raises(IndexError, lambda: a[0,])
@@ -322,3 +317,8 @@ def test___array__():
     b = np.asarray(a, dtype=np.float64)
     assert np.all(np.equal(b, np.ones((2, 3), dtype=np.float64)))
     assert b.dtype == np.float64
+
+def test_allow_newaxis():
+    a = ones(5)
+    indexed_a = a[None, :]
+    assert indexed_a.shape == (1, 5)
