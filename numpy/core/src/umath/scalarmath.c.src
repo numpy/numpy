@@ -404,7 +404,7 @@ half_ctype_divmod(npy_half a, npy_half b, npy_half *out1, npy_half *out2)
  * #rtype = npy_float, npy_double, npy_longdouble#
  * #c = f,,l#
  */
-NPY_FINLINE int
+static NPY_INLINE int
 @name@_ctype_add(@type@ a, @type@ b, @type@ *out)
 {
     out->real = a.real + b.real;
@@ -412,7 +412,7 @@ NPY_FINLINE int
     return 0;
 }
 
-NPY_FINLINE int
+static NPY_INLINE int
 @name@_ctype_subtract(@type@ a, @type@ b, @type@ *out)
 {
     out->real = a.real - b.real;
@@ -420,8 +420,13 @@ NPY_FINLINE int
     return 0;
 }
 
-NPY_FINLINE int
-@name@_ctype_multiply(@type@ a, @type@ b, @type@ *out)
+
+/*
+ * TODO: Mark as  to work around FPEs not being issues on clang 12.
+ *       This should be removed when possible.
+ */
+static NPY_INLINE int
+@name@_ctype_multiply( @type@ a, @type@ b, @type@ *out)
 {
     out->real = a.real * b.real - a.imag * b.imag;
     out->imag = a.real * b.imag + a.imag * b.real;
@@ -429,7 +434,7 @@ NPY_FINLINE int
 }
 
 /* Use the ufunc loop directly to avoid duplicating the complicated logic */
-NPY_FINLINE int
+static NPY_INLINE int
 @name@_ctype_divide(@type@ a, @type@ b, @type@ *out)
 {
     char *args[3] = {(char *)&a, (char *)&b, (char *)out};
@@ -441,18 +446,6 @@ NPY_FINLINE int
 
 #define @name@_ctype_true_divide @name@_ctype_divide
 
-/*
- * TODO: This function should NOT exist!  We removed it from ufuncs!
- */
-NPY_FINLINE int
-@name@_ctype_floor_divide(@type@ a, @type@ b, @type@ *out)
-{
-    out->imag = 0;
-    return @rname@_ctype_floor_divide(
-        a.real * b.real + a.imag * b.imag,
-        b.real * b.real + b.imag * b.imag,
-        &out->real);
-}
 /**end repeat**/
 
 
@@ -462,7 +455,7 @@ NPY_FINLINE int
  *         longlong, ulonglong#
  */
 
-NPY_FINLINE int
+static NPY_INLINE int
 @name@_ctype_divmod(npy_@name@ a, npy_@name@ b, npy_@name@ *out, npy_@name@ *out2)
 {
     int res = @name@_ctype_floor_divide(a, b, out);
@@ -530,7 +523,7 @@ half_ctype_negative(npy_half a, npy_half *out)
  * #name = cfloat, cdouble, clongdouble#
  * #type = npy_cfloat, npy_cdouble, npy_clongdouble#
  */
-NPY_FINLINE int
+static NPY_INLINE int
 @name@_ctype_negative(@type@ a, @type@ *out)
 {
     out->real = -a.real;
@@ -560,7 +553,7 @@ static NPY_INLINE int
  * #type = npy_cfloat, npy_cdouble, npy_clongdouble#
  * #c = f,,l#
  */
-NPY_FINLINE int
+static NPY_INLINE int
 @name@_ctype_positive(@type@ a, @type@ *out)
 {
     out->real = a.real;
@@ -568,7 +561,7 @@ NPY_FINLINE int
     return 0;
 }
 
-NPY_FINLINE int
+static NPY_INLINE int
 @name@_ctype_power(@type@ a, @type@ b, @type@ *out)
 {
     *out = npy_cpow@c@(a, b);
@@ -624,7 +617,7 @@ half_ctype_absolute(npy_half a, npy_half *out)
  * #rtype = npy_float, npy_double, npy_longdouble#
  * #c = f,,l#
  */
-NPY_FINLINE int
+static NPY_INLINE int
 @name@_ctype_absolute(@type@ a, @rtype@ *out)
 {
     *out = npy_cabs@c@(a);
@@ -1124,6 +1117,9 @@ static PyObject *
             }
     }
 
+#if @fperr@
+    npy_clear_floatstatus_barrier((char*)&arg1);
+#endif
     if (is_forward) {
         arg1 = PyArrayScalar_VAL(a, @Name@);
         arg2 = other_val;
@@ -1134,7 +1130,7 @@ static PyObject *
     }
 
     /*
-     * Prepare the actual calculation:
+     * Prepare the actual calculation.
      */
     @otype@ out;
 #if @twoout@
@@ -1142,9 +1138,7 @@ static PyObject *
     PyObject *obj;
 #endif
 
-#if @fperr@
-    npy_clear_floatstatus_barrier((char*)&out);
-#endif
+
 
     /*
      * here we do the actual calculation with arg1 and arg2
@@ -1154,9 +1148,9 @@ static PyObject *
      * the following `npy_get_floatstatus_barrier`.
      */
 #if @twoout@
-    int retstatus = @name@_ctype_@oper@(arg1, arg2, (@otype@ *)&out, &out2);
+    int retstatus = @name@_ctype_@oper@(arg1, arg2, &out, &out2);
 #else
-    int retstatus = @name@_ctype_@oper@(arg1, arg2, (@otype@ *)&out);
+    int retstatus = @name@_ctype_@oper@(arg1, arg2, &out);
 #endif
 
 #if @fperr@
@@ -1289,6 +1283,10 @@ static PyObject *
             }
     }
 
+#if !@isint@
+    npy_clear_floatstatus_barrier((char*)&arg1);
+#endif
+
     if (is_forward) {
         arg1 = PyArrayScalar_VAL(a, @Name@);
         arg2 = other_val;
@@ -1303,9 +1301,6 @@ static PyObject *
      */
     @type@ out;
 
-#if !@isint@
-    npy_clear_floatstatus_barrier((char*)&out);
-#endif
     /*
      * here we do the actual calculation with arg1 and arg2
      * as a function call.
@@ -1588,7 +1583,7 @@ static PyObject *
  * #to_ctype = , , , , , , , , , , npy_half_to_double, , , , , , #
  * #func = PyFloat_FromDouble*17#
  */
-static NPY_INLINE PyObject *
+static PyObject *
 @name@_float(PyObject *obj)
 {
 #if @cmplx@
@@ -1638,7 +1633,6 @@ static PyObject*
      * Extract the other value (if it is compatible).
      */
     int res = convert_to_@name@(other, &arg2);
-
     switch (res) {
         case CONVERSION_ERROR:
             return NULL;  /* an error occurred (should never happen) */

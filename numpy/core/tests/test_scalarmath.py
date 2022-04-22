@@ -949,7 +949,7 @@ ops_with_names = [
 
 
 @pytest.mark.parametrize(["__op__", "__rop__", "op", "cmp"], ops_with_names)
-@pytest.mark.parametrize("sctype", [np.float32, np.longdouble])
+@pytest.mark.parametrize("sctype", [np.float32, np.float64, np.longdouble])
 def test_subclass_deferral(sctype, __op__, __rop__, op, cmp):
     """
     This test covers scalar subclass deferral.  Note that this is exceedingly
