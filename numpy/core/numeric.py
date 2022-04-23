@@ -675,7 +675,7 @@ def _correlate_dispatcher(a, v, mode=None):
 
 @array_function_dispatch(_correlate_dispatcher)
 def correlate(a, v, mode='valid'):
-    """
+    r"""
     Cross-correlation of two 1-dimensional sequences.
 
     This function computes the correlation as generally defined in signal
