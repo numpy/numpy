@@ -1778,7 +1778,7 @@ add_newdoc('numpy.core.multiarray', 'set_numeric_ops',
 
     Notes
     -----
-    .. WARNING::
+    .. warning::
        Use with care!  Incorrect usage may lead to memory errors.
 
     A function replacing an operator cannot make use of that operator.
