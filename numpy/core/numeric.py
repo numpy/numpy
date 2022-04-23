@@ -679,9 +679,9 @@ def correlate(a, v, mode='valid'):
     Cross-correlation of two 1-dimensional sequences.
 
     This function computes the correlation as generally defined in signal
-    processing texts::
+    processing texts:
 
-    .. math:: c_k = \sum_n a_{n+k} * \overline{v_n}
+    .. math:: c_k = \sum_n a_{n+k} \cdot \overline{v_n}
 
     with a and v sequences being zero-padded where necessary and
     :math:`\overline x` denoting complex conjugation.
@@ -711,9 +711,9 @@ def correlate(a, v, mode='valid'):
     Notes
     -----
     The definition of correlation above is not unique and sometimes correlation
-    may be defined differently. Another common definition is::
+    may be defined differently. Another common definition is:
 
-    .. math:: c'_k = \sum_n a_{n} * \overline{v_{n+k}
+    .. math:: c'_k = \sum_n a_{n} \cdot \overline{v_{n+k}}
 
     which is related to :math:`c_k` by :math:`c'_k = c_{-k}`.
 
@@ -804,7 +804,7 @@ def convolve(a, v, mode='full'):
     -----
     The discrete convolution operation is defined as
 
-    .. math:: (a * v)[n] = \\sum_{m = -\\infty}^{\\infty} a[m] v[n - m]
+    .. math:: (a * v)_n = \\sum_{m = -\\infty}^{\\infty} a_m v_{n - m}
 
     It can be shown that a convolution :math:`x(t) * y(t)` in time/space
     is equivalent to the multiplication :math:`X(f) Y(f)` in the Fourier
