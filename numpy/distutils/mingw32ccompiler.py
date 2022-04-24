@@ -215,7 +215,7 @@ def find_python_dll():
     elif implementation == 'PyPy':
         dllname = f'libpypy{major_version}-c.dll'
     else:
-        dllname = 'Unknown platform {implementation}' 
+        dllname = f'Unknown platform {implementation}' 
     print("Looking for %s" % dllname)
     for folder in lib_dirs:
         dll = os.path.join(folder, dllname)
