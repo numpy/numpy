@@ -737,8 +737,8 @@ def correlate(a, v, mode='valid'):
     array([ 0.5-0.5j,  1.0+0.j ,  1.5-1.5j,  3.0-1.j ,  0.0+0.j ])
 
     Note that you get the time reversed, complex conjugated result
-    when the two input sequences change places, i.e.,
-    ``c_{va}[k] = c^{*}_{av}[-k]``:
+    (:math:`\overline{c_{-k}}`) when the two input sequences a and v change 
+    places:
 
     >>> np.correlate([0, 1, 0.5j], [1+1j, 2, 3-1j], 'full')
     array([ 0.0+0.j ,  3.0+1.j ,  1.5+1.5j,  1.0+0.j ,  0.5+0.5j])
