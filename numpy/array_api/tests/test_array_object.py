@@ -327,4 +327,30 @@ def test_allow_newaxis():
 def test_disallow_flat_indexing_with_newaxis():
     a = ones((3, 3, 3))
     with pytest.raises(IndexError):
-        indexed_a = a[None, 0, 0]
+        a[None, 0, 0]
+
+def test_disallow_mask_with_newaxis():
+    a = ones((3, 3, 3))
+    with pytest.raises(IndexError):
+        a[None, asarray(True)]
+
+@pytest.mark.parametrize("shape", [(), (5,), (3, 3, 3)])
+@pytest.mark.parametrize("index", ["string", False, True])
+def test_error_on_invalid_index(shape, index):
+    a = ones(shape)
+    with pytest.raises(IndexError):
+        a[index]
+
+def test_mask_0d_array_without_errors():
+    a = ones(())
+    a[asarray(True)]
+
+@pytest.mark.parametrize(
+    "i", [slice(5), slice(5, 0), asarray(True), asarray([0, 1])]
+)
+def test_error_on_invalid_index_with_ellipsis(i):
+    a = ones((3, 3, 3))
+    with pytest.raises(IndexError):
+        a[..., i]
+    with pytest.raises(IndexError):
+        a[i, ...]
