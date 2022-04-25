@@ -579,7 +579,9 @@ npy__cpu_init_features_arm8(void)
 #include <stdio.h>
 #include "npy_cpuinfo_parser.h"
 
+#if defined(__linux__)
 __attribute__((weak)) unsigned long getauxval(unsigned long); // linker should handle it
+#endif
 #ifdef __FreeBSD__
 __attribute__((weak)) int elf_aux_info(int, void *, int); // linker should handle it
 
