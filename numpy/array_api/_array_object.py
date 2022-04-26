@@ -398,7 +398,7 @@ class Array:
                 elif i.dtype in _integer_dtypes and i.ndim != 0:
                     raise IndexError(
                         f"Single-axes index {i} is a non-zero-dimensional "
-                        "integer array, but advance integer indexing is not "
+                        "integer array, but advanced integer indexing is not "
                         "specified in the Array API."
                     )
             elif isinstance(i, tuple):
