@@ -532,6 +532,9 @@ class Array:
         # Note: Only indices required by the spec are allowed. See the
         # docstring of _validate_index
         self._validate_index(key)
+        if isinstance(key, Array):
+            # Indexing self._array with array_api arrays can be erroneous
+            key = key._array
         res = self._array.__getitem__(key)
         return self._new(res)
 
@@ -719,6 +722,9 @@ class Array:
         # Note: Only indices required by the spec are allowed. See the
         # docstring of _validate_index
         self._validate_index(key)
+        if isinstance(key, Array):
+            # Indexing self._array with array_api arrays can be erroneous
+            key = key._array
         self._array.__setitem__(key, asarray(value)._array)
 
     def __sub__(self: Array, other: Union[int, float, Array], /) -> Array:
