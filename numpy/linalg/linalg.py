@@ -17,6 +17,7 @@ __all__ = ['matrix_power', 'solve', 'tensorsolve', 'tensorinv', 'inv',
 import functools
 import operator
 import warnings
+import math
 
 from numpy.core import (
     array, asarray, zeros, empty, empty_like, intc, single, double,
@@ -25,7 +26,7 @@ from numpy.core import (
     finfo, errstate, geterrobj, moveaxis, amin, amax, product, abs,
     atleast_2d, intp, asanyarray, object_, matmul,
     swapaxes, divide, count_nonzero, isnan, sign, argsort, sort,
-    reciprocal
+    reciprocal, inner, float64
 )
 from numpy.core.multiarray import normalize_axis_index
 from numpy.core.overrides import set_module
@@ -2520,10 +2521,15 @@ def norm(x, ord=None, axis=None, keepdims=False):
 
             x = x.ravel(order='K')
             if isComplexType(x.dtype.type):
-                sqnorm = dot(x.real, x.real) + dot(x.imag, x.imag)
+                x_real = x.real
+                x_imag = x.imag
+                sqnorm = x_real.dot(x_real) + x_imag.dot(x_imag)
             else:
-                sqnorm = dot(x, x)
-            ret = sqrt(sqnorm)
+                sqnorm = x.dot(x)
+            if isinstance(sqnorm, float):
+                ret = float64(math.sqrt(sqnorm))
+            else:
+                ret = sqrt(sqnorm)
             if keepdims:
                 ret = ret.reshape(ndim*[1])
             return ret
