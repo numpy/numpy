@@ -327,10 +327,7 @@ class Array:
 
         n_single_axes = len(single_axes)
         if n_ellipsis > 1:
-            raise IndexError(
-                f"{key=} contains {n_ellipsis} ellipses (...), but should "
-                "contain no more than 1."
-            )
+            return  # handled by ndarray
         elif n_ellipsis == 0:
             # Note boolean masks must be the sole index, which we check for
             # later on.
