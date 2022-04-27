@@ -1069,6 +1069,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'umath', 'loops_umath_fp.dispatch.c.src'),
             join('src', 'umath', 'loops_exponent_log.dispatch.c.src'),
             join('src', 'umath', 'loops_hyperbolic.dispatch.c.src'),
+            join('src', 'umath', 'loops_modulo.dispatch.c.src'),
             join('src', 'umath', 'matmul.h.src'),
             join('src', 'umath', 'matmul.c.src'),
             join('src', 'umath', 'clip.h'),
