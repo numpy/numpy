@@ -312,7 +312,11 @@ else:
                              "{!r}".format(__name__, attr))
 
     def __dir__():
-        return list(globals().keys() | {'Tester', 'testing'})
+        public_symbols = globals().keys() | {'Tester', 'testing'}
+        public_symbols -= {
+            "char", "core", "matrixlib", "os", "sys", "warnings"
+        }
+        return list(public_symbols)
 
     # Pytest testing
     from numpy._pytesttester import PytestTester
