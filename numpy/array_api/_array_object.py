@@ -331,14 +331,17 @@ class Array:
                 f"{key=} contains {n_ellipsis} ellipses (...), but should "
                 "contain no more than 1."
             )
-        elif n_ellipsis != 1:
+        elif n_ellipsis == 0:
             # Note boolean masks must be the sole index, which we check for
             # later on.
             if not key_has_mask and n_single_axes < self.ndim:
                 raise IndexError(
-                    f"{key=} contains {n_single_axes} single-axis indices, "
-                    f"but should contain {self.ndim=} single-axis indices - "
-                    "an array key must index every axis."
+                    f"{self.ndim=}, but the multi-axes index only specifies "
+                    f"{n_single_axes} dimensions. If this was intentional, "
+                    "add a trailing ellipsis (...) which expands into as many "
+                    "slices (:) as necessary - this is what np.ndarray arrays "
+                    "implicitly do, but such flat indexing behaviour is not "
+                    "specified in the Array API."
                 )
 
         if n_ellipsis == 0:
