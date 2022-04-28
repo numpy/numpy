@@ -314,7 +314,7 @@ else:
     def __dir__():
         public_symbols = globals().keys() | {'Tester', 'testing'}
         public_symbols -= {
-            "char", "core", "matrixlib", "os", "sys", "warnings"
+            "core", "matrixlib", "os", "sys", "warnings"
         }
         return list(public_symbols)
 
