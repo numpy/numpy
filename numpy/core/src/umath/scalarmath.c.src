@@ -875,6 +875,10 @@ typedef enum {
 static NPY_INLINE conversion_result
 convert_to_@name@(PyObject *value, @type@ *result)
 {
+    if (Py_TYPE(value) == &Py@Name@ArrType_Type) {
+        *result = PyArrayScalar_VAL(value, @Name@);
+        return CONVERSION_SUCCESS;
+    }
     /* Optimize the identical scalar specifically. */
     if (PyArray_IsScalar(value, @Name@)) {
         *result = PyArrayScalar_VAL(value, @Name@);
