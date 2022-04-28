@@ -2433,7 +2433,9 @@ def get_parameters(vars, global_params={}):
                 params[n] = eval(v, g_params, params)
             except Exception as msg:
                 params[n] = v
-                outmess('get_parameters: got "%s" on %s\n' % (msg, repr(v)))
+                # Don't report if the parameter is numeric gh-20460
+                if not real16pattern.match(v):
+                    outmess('get_parameters: got "%s" on %s\n' % (msg, repr(v)))
             if isstring(vars[n]) and isinstance(params[n], int):
                 params[n] = chr(params[n])
             nl = n.lower()
