@@ -234,8 +234,10 @@ But the following will then be a surprise::
 
     np.array([100], dtype=np.uint8) + 200 == np.array([44], dtype=np.uint8)
 
-Considering this, we believe that the proposal follows the "principle of least
-surprise".
+Considering that the proposal aligns with the behavior of in-place operands
+and avoids the surprising switch in behavior that only sometimes avoids
+overflow in the result,
+we believe that the proposal follows the "principle of least surprise".
 
 
 Usage and Impact
@@ -280,8 +282,9 @@ This removes currently surprising cases.  For example::
   # and:
   np.add(np.arange(10, dtype=np.uint8), np.int64(1))
 
-Will return an int64 array because the type of ``np.int64(1)`` is strictly
-honoured.
+Will return an int64 array in the future because the type of
+``np.int64(1)`` is strictly honoured.
+Currently a ``uint8`` array is returned.
 
 
 Impact on operators involving Python ``int``, ``float``, and ``complex``
