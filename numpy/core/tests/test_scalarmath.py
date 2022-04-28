@@ -950,6 +950,9 @@ ops_with_names = [
 
 @pytest.mark.parametrize(["__op__", "__rop__", "op", "cmp"], ops_with_names)
 @pytest.mark.parametrize("sctype", [np.float32, np.float64, np.longdouble])
+@pytest.mark.xfail(IS_PYPY,
+        reason="PyPy does not replace `tp_richcompare` for subclasses so"
+               "our we do not realize when deferring should be preferred.")
 def test_subclass_deferral(sctype, __op__, __rop__, op, cmp):
     """
     This test covers scalar subclass deferral.  Note that this is exceedingly
