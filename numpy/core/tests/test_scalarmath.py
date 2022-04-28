@@ -950,9 +950,6 @@ ops_with_names = [
 
 @pytest.mark.parametrize(["__op__", "__rop__", "op", "cmp"], ops_with_names)
 @pytest.mark.parametrize("sctype", [np.float32, np.float64, np.longdouble])
-@pytest.mark.xfail(IS_PYPY,
-        reason="PyPy does not replace `tp_richcompare` for subclasses so"
-               "our we do not realize when deferring should be preferred.")
 def test_subclass_deferral(sctype, __op__, __rop__, op, cmp):
     """
     This test covers scalar subclass deferral.  Note that this is exceedingly
@@ -980,36 +977,16 @@ def test_subclass_deferral(sctype, __op__, __rop__, op, cmp):
         return __rop__
 
     myf_op = type("myf_op", (sctype,), {__op__: op_func, __rop__: rop_func})
-    # Note: __rop__ first, so defer "wins" if __rop__ == __op__
-    myf_defer = type("myf_defer", (sctype,), {__rop__: rop_func, __op__: defer})
 
     # inheritance has to override, or this is correctly lost:
     res = op(myf_simple1(1), myf_simple2(2))
     assert type(res) == sctype or type(res) == np.bool_
-    assert myf_simple1(1) + myf_simple2(2) == 3
+    assert op(myf_simple1(1), myf_simple2(2)) == op(1, 2)  # inherited
 
-    # When a subclass overrides though, we should always give it a chance,
-    # even for the __rop__!
+    # Two independent subclasses do not really define an order.  This could
+    # be attempted, but we do not since Python's `int` does neither:
     assert op(myf_op(1), myf_simple1(2)) == __op__
-    assert op(myf_simple1(1), myf_op(2)) == __rop__
-
-    # If the other class defers back to NumPy, we should attempt the operation
-    # NOTE: this path goes through the generic array/ufunc path!
-    # Note that for comparisons, the class is badly behaved since we cannot
-    # know if an operation is "reversed".
-    if cmp and op in [operator.eq, operator.ne]:
-        # Undefined equality leads to False and True
-        assert op(myf_defer(1), myf_simple1(2)) == op(None, 1)
-        # since __op__ == __rop__ here, it gives the same result:
-        assert op(myf_simple1(2), myf_defer(1)) == op(None, 1)
-    elif cmp:
-        with pytest.raises(TypeError):
-            op(myf_defer(1), myf_simple1(2))
-        assert op(myf_simple1(2), myf_defer(1)) == __rop__
-    else:
-        res = op(myf_defer(1), myf_simple1(2))
-        assert type(res) == sctype
-        assert op(myf_simple1(2), myf_defer(1)) == __rop__
+    assert op(myf_simple1(1), myf_op(2)) == op(1, 2)  # inherited
 
 
 @pytest.mark.parametrize(["__op__", "__rop__", "op", "cmp"], ops_with_names)

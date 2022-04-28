@@ -657,9 +657,17 @@ static NPY_INLINE int
  *
  * So we have multiple possible paths:
  * - The other scalar is a subclass.  In principle *both* inputs could be
- *   different subclasses.  In this case we should defer, but only if the
- *   other subclass does *not* inherit the slot as well.
- *   That check is included via `BINOP_IS_FORWARD` (or manually for comparison).
+ *   different subclasses.  In this case it would make sense to defer, but
+ *   Python's `int` does not try this as well, so we do not here:
+ *
+ *      class A(int): pass
+ *      class B(int):
+ *          def __add__(self, other): return "b"
+ *          __radd__ = __add__
+ *
+ *      A(1) + B(1)  # return 2
+ *      B(1) + A(1)  # return "b"
+ *
  * - The other scalar can be converted:  All is good, we do the operation
  * - The other scalar cannot be converted, there are two possibilities:
  *   - The reverse should work, so we return NotImplemented to defer.
@@ -757,8 +765,8 @@ typedef enum {
      */
     PROMOTION_REQUIRED,
     /*
-     * The other object may be a subclass, conversion is successful, but we
-     * may still need to defer.
+     * The other object may be a subclass, conversion is successful.  We do
+     * not special case this as Python's `int` does not either
      */
     OTHER_IS_SUBCLASS,
 } conversion_result;
@@ -882,6 +890,10 @@ convert_to_@name@(PyObject *value, @type@ *result)
     /* Optimize the identical scalar specifically. */
     if (PyArray_IsScalar(value, @Name@)) {
         *result = PyArrayScalar_VAL(value, @Name@);
+        /*
+         * In principle special, assyemetric, handling could be possible for
+         * subclasses.  But in practice even we do not bother later.
+         */
         return OTHER_IS_SUBCLASS;
     }
 
@@ -1112,13 +1124,11 @@ static PyObject *
             return PyGenericArrType_Type.tp_as_number->nb_@oper@(a,b);
         case OTHER_IS_SUBCLASS:
             /*
-             * Success, but defer if not a forward operator.  This implements
-             * the asymmetry of `__add__` and `__radd__` for subclassing.
-             * (A subclass replacing `__add__`/`__radd__` has precedence.)
+             * Success converting.  We _could_ in principle defer in cases
+             * were the other subclass does not inherit the behavior.  In
+             * practice not even Python's `int` attempt this, so we also punt.
              */
-            if (is_forward && BINOP_IS_FORWARD(a, b, nb_@oper@, @name@_@oper@)) {
-                Py_RETURN_NOTIMPLEMENTED;
-            }
+            break;
     }
 
 #if @fperr@
@@ -1278,13 +1288,11 @@ static PyObject *
             return PyGenericArrType_Type.tp_as_number->nb_power(a, b, modulo);
         case OTHER_IS_SUBCLASS:
             /*
-             * Success, but defer if not a forward operator.  This implements
-             * the asymmetry of `__add__` and `__radd__` for subclassing.
-             * (A subclass replacing `__add__`/`__radd__` has precedence.)
+             * Success converting.  We _could_ in principle defer in cases
+             * were the other subclass does not inherit the behavior.  In
+             * practice not even Python's `int` attempt this, so we also punt.
              */
-            if (is_forward && BINOP_IS_FORWARD(a, b, nb_power, @name@_power)) {
-                Py_RETURN_NOTIMPLEMENTED;
-            }
+            break;
     }
 
 #if !@isint@
@@ -1653,14 +1661,12 @@ static PyObject*
             return PyGenericArrType_Type.tp_richcompare(self, other, cmp_op);
         case OTHER_IS_SUBCLASS:
             /*
-             * Success, but defer if not a forward operator.  This implements
-             * the asymmetry of `__add__` and `__radd__` for subclassing.
-             * (A subclass replacing `__add__`/`__radd__` has precedence. It
-             * also means that such a subclass has to always take charge.)
+             * Success converting.  We _could_ in principle defer in cases
+             * were the other subclass does not inherit the behavior.  In
+             * practice not even Python's `int` attempt this, so we also punt.
+             * (This is also even trickier for richcompare, though.)
              */
-            if ((void *)Py_TYPE(other)->tp_richcompare != (void *)@name@_richcompare) {
-                Py_RETURN_NOTIMPLEMENTED;
-            }
+            break;
     }
 
     arg1 = PyArrayScalar_VAL(self, @Name@);
