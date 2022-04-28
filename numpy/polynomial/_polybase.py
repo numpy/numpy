@@ -518,7 +518,9 @@ class ABCPolyBase(abc.ABC):
     # Numeric properties.
 
     def __neg__(self):
-        return self.__class__(-self.coef, self.domain, self.window, self.symbol)
+        return self.__class__(
+            -self.coef, self.domain, self.window, self.symbol
+        )
 
     def __pos__(self):
         return self
@@ -1010,7 +1012,9 @@ class ABCPolyBase(abc.ABC):
         res = cls._fit(xnew, y, deg, w=w, rcond=rcond, full=full)
         if full:
             [coef, status] = res
-            return cls(coef, domain=domain, window=window, symbol=symbol), status
+            return (
+                cls(coef, domain=domain, window=window, symbol=symbol), status
+            )
         else:
             coef = res
             return cls(coef, domain=domain, window=window, symbol=symbol)

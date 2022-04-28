@@ -428,15 +428,30 @@ class TestLatexRepr:
 
         # translated input
         p = poly.Polynomial([1, 2, 3], domain=[-2, 0], symbol='z')
-        assert_equal(self.as_latex(p),
-            r'$z \mapsto 1.0 + 2.0\,\left(1.0 + z\right) + 3.0\,\left(1.0 + z\right)^{2}$')
+        assert_equal(
+            self.as_latex(p),
+            (
+                r'$z \mapsto 1.0 + 2.0\,\left(1.0 + z\right) + 3.0\,'
+                r'\left(1.0 + z\right)^{2}$'
+            ),
+        )
 
         # scaled input
         p = poly.Polynomial([1, 2, 3], domain=[-0.5, 0.5], symbol='z')
-        assert_equal(self.as_latex(p),
-            r'$z \mapsto 1.0 + 2.0\,\left(2.0z\right) + 3.0\,\left(2.0z\right)^{2}$')
+        assert_equal(
+            self.as_latex(p),
+            (
+                r'$z \mapsto 1.0 + 2.0\,\left(2.0z\right) + 3.0\,'
+                r'\left(2.0z\right)^{2}$'
+            ),
+        )
 
         # affine input
         p = poly.Polynomial([1, 2, 3], domain=[-1, 0], symbol='z')
-        assert_equal(self.as_latex(p),
-            r'$z \mapsto 1.0 + 2.0\,\left(1.0 + 2.0z\right) + 3.0\,\left(1.0 + 2.0z\right)^{2}$')
+        assert_equal(
+            self.as_latex(p),
+            (
+                r'$z \mapsto 1.0 + 2.0\,\left(1.0 + 2.0z\right) + 3.0\,'
+                r'\left(1.0 + 2.0z\right)^{2}$'
+            ),
+        )

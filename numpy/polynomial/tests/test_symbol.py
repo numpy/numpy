@@ -13,6 +13,7 @@ class TestInit:
     Test polynomial creation with symbol kwarg.
     """
     c = [1, 2, 3]
+
     def test_default_symbol(self):
         p = poly.Polynomial(self.c)
         assert_equal(p.symbol, 'x')
@@ -76,10 +77,13 @@ class TestUnaryOperators:
         assert_equal(out.symbol, 'z')
 
 
-@pytest.mark.parametrize('rhs',(
-    poly.Polynomial([4, 5, 6], symbol='z'),
-    array([4, 5, 6]),
-))
+@pytest.mark.parametrize(
+    'rhs',
+    (
+        poly.Polynomial([4, 5, 6], symbol='z'),
+        array([4, 5, 6]),
+    ),
+)
 class TestBinaryOperatorsSameSymbol:
     """
     Ensure symbol is preserved for numeric operations on polynomials with
@@ -161,9 +165,9 @@ class TestExtraMethods:
         assert_equal(other.symbol, 'z')
 
     @pytest.mark.parametrize('kwarg', (
-        {'domain' : [-10, 10]},
-        {'window' : [-10, 10]},
-        {'kind' : poly.Chebyshev},
+        {'domain': [-10, 10]},
+        {'window': [-10, 10]},
+        {'kind': poly.Chebyshev},
     ))
     def test_convert(self, kwarg):
         other = self.p.convert(**kwarg)
