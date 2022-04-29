@@ -227,9 +227,10 @@ def get_build_overrides():
 
     class new_build_clib(build_clib):
         def build_a_library(self, build_info, lib_name, libraries):
+            from numpy.distutils.ccompiler_opt import NPY_CXX_FLAGS
             if _needs_gcc_c99_flag(self):
                 build_info['extra_cflags'] = ['-std=c99']
-            build_info['extra_cxxflags'] = ['-std=c++11']
+            build_info['extra_cxxflags'] = NPY_CXX_FLAGS
             build_clib.build_a_library(self, build_info, lib_name, libraries)
 
     class new_build_ext(build_ext):
