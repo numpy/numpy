@@ -224,7 +224,7 @@ Other options
     Run quietly.
   ``--verbose``
     Run with extra verbosity.
-  ``--no-empty-gen``
+  ``--skip-empty-wrappers``
     Do not generate wrapper files unless required by the inputs.
     This is a backwards compatibility flag to restore pre 1.22.4 behavior.
   ``-v``

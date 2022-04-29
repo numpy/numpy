@@ -122,7 +122,7 @@ Options:
 
   --quiet          Run quietly.
   --verbose        Run with extra verbosity.
-  --no-empty-gen   Only generate wrapper files when needed.
+  --skip-empty-wrappers   Only generate wrapper files when needed.
   -v               Print f2py version ID and exit.
 
 
@@ -252,7 +252,7 @@ def scaninputline(inputline):
             f7 = 1
         elif l[:15] in '--include-paths':
             f7 = 1
-        elif l == '--no-empty-gen':
+        elif l == '--skip-empty-wrappers':
             emptygen = False
         elif l[0] == '-':
             errmess('Unknown option %s\n' % repr(l))
