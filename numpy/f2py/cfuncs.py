@@ -1007,14 +1007,16 @@ double_from_pyobj(double* v, PyObject *obj, const char *errmess)
     PyObject* tmp = NULL;
     if (PyFloat_Check(obj)) {
         *v = PyFloat_AsDouble(obj);
-        return !(*v == -1.0 && PyErr_Occurred());
+        if (*v == -1.0) { goto error; }
+        return 1;
     }
 
     tmp = PyNumber_Float(obj);
     if (tmp) {
         *v = PyFloat_AsDouble(tmp);
         Py_DECREF(tmp);
-        return !(*v == -1.0 && PyErr_Occurred());
+        if (*v == -1.0){ goto error; }
+        return 1;
     }
 
     if (PyComplex_Check(obj)) {
@@ -1033,10 +1035,12 @@ double_from_pyobj(double* v, PyObject *obj, const char *errmess)
         if (double_from_pyobj(v,tmp,errmess)) {Py_DECREF(tmp); return 1;}
         Py_DECREF(tmp);
     }
+
     {
+        error:
         PyObject* err = PyErr_Occurred();
         if (err==NULL) err = #modulename#_error;
-        PyErr_SetString(err,errmess);
+        PyErr_SetString(err, errmess);
     }
     return 0;
 }
