@@ -401,23 +401,6 @@ PyUFunc_On_Om(char **args, npy_intp const *dimensions, npy_intp const *steps, vo
  */
 
 /**begin repeat
- * #kind = equal, not_equal, greater, greater_equal, less, less_equal#
- * #OP =  ==, !=, >, >=, <, <=#
- **/
-
-NPY_NO_EXPORT void
-BOOL_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
-{
-    BINARY_LOOP {
-        npy_bool in1 = *((npy_bool *)ip1) != 0;
-        npy_bool in2 = *((npy_bool *)ip2) != 0;
-        *((npy_bool *)op1)= in1 @OP@ in2;
-    }
-}
-/**end repeat**/
-
-
-/**begin repeat
  * #kind = logical_and, logical_or#
  * #OP =  &&, ||#
  * #SC =  ==, !=#
@@ -688,9 +671,8 @@ void
 
 
 /**begin repeat2
- * #kind = equal, not_equal, greater, greater_equal, less, less_equal,
- *         logical_and, logical_or#
- * #OP =  ==, !=, >, >=, <, <=, &&, ||#
+ * #kind = logical_and, logical_or#
+ * #OP = &&, ||#
  */
 
 #if @CHK@
@@ -1408,19 +1390,16 @@ TIMEDELTA_mm_qm_divmod(char **args, npy_intp const *dimensions, npy_intp const *
  *  #C = F, , L#
  */
 /**begin repeat1
- * #kind = equal, not_equal, less, less_equal, greater, greater_equal,
- *        logical_and, logical_or#
- * #OP = ==, !=, <, <=, >, >=, &&, ||#
+ * #kind = logical_and, logical_or#
+ * #OP = &&, ||#
  */
 NPY_NO_EXPORT void
 @TYPE@_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
-    if (!run_binary_simd_@kind@_@TYPE@(args, dimensions, steps)) {
-        BINARY_LOOP {
-            const @type@ in1 = *(@type@ *)ip1;
-            const @type@ in2 = *(@type@ *)ip2;
-            *((npy_bool *)op1) = in1 @OP@ in2;
-        }
+    BINARY_LOOP {
+        const @type@ in1 = *(@type@ *)ip1;
+        const @type@ in2 = *(@type@ *)ip2;
+        *((npy_bool *)op1) = in1 @OP@ in2;
     }
     npy_clear_floatstatus_barrier((char*)dimensions);
 }
@@ -1651,6 +1630,22 @@ LONGDOUBLE_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps
             *((npy_longdouble *)op1) = in1 @OP@ in2;
         }
     }
+}
+/**end repeat**/
+
+/**begin repeat
+ * #kind = equal, not_equal, less, less_equal, greater, greater_equal#
+ * #OP = ==, !=, <, <=, >, >=#
+ */
+NPY_NO_EXPORT void
+LONGDOUBLE_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP {
+        const npy_longdouble in1 = *(npy_longdouble *)ip1;
+        const npy_longdouble in2 = *(npy_longdouble *)ip2;
+        *((npy_bool *)op1) = in1 @OP@ in2;
+    }
+    npy_clear_floatstatus_barrier((char*)dimensions);
 }
 /**end repeat**/
 

@@ -472,6 +472,10 @@ SIMD_IMPL_INTRIN_1(not_@bsfx@, v@bsfx@, v@bsfx@)
 SIMD_IMPL_INTRIN_1(tobits_@bsfx@, u64, v@bsfx@)
 /**end repeat**/
 
+SIMD_IMPL_INTRIN_2(pack_b8_b16, vb8, vb16, vb16)
+SIMD_IMPL_INTRIN_4(pack_b8_b32, vb8, vb32, vb32, vb32, vb32)
+SIMD_IMPL_INTRIN_8(pack_b8_b64, vb8, vb64, vb64, vb64, vb64,
+                                     vb64, vb64, vb64, vb64)
 
 //#########################################################################
 //## Attach module functions
@@ -715,6 +719,11 @@ SIMD_INTRIN_DEF(not_@bsfx@)
  */
 SIMD_INTRIN_DEF(tobits_@bsfx@)
 /**end repeat**/
+
+// Pack multiple vectors into one
+SIMD_INTRIN_DEF(pack_b8_b16)
+SIMD_INTRIN_DEF(pack_b8_b32)
+SIMD_INTRIN_DEF(pack_b8_b64)
 
 /************************************************************************/
 {NULL, NULL, 0, NULL}

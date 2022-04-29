@@ -48,6 +48,29 @@ NPY_FINLINE npyv_u32x2 npyv_expand_u32_u16(npyv_u16 data)
     return r;
 }
 
+// pack two 16-bit boolean into one 8-bit boolean vector
+NPY_FINLINE npyv_b8 npyv_pack_b8_b16(npyv_b16 a, npyv_b16 b) {
+    return vec_pack(a, b);
+}
+
+// pack four 32-bit boolean vectors into one 8-bit boolean vector
+NPY_FINLINE npyv_b8 npyv_pack_b8_b32(npyv_b32 a, npyv_b32 b, npyv_b32 c, npyv_b32 d) {
+    npyv_b16 ab = vec_pack(a, b);
+    npyv_b16 cd = vec_pack(c, d);
+    return npyv_pack_b8_b16(ab, cd);
+}
+
+// pack eight 64-bit boolean vectors into one 8-bit boolean vector
+NPY_FINLINE npyv_b8
+npyv_pack_b8_b64(npyv_b64 a, npyv_b64 b, npyv_b64 c, npyv_b64 d,
+                 npyv_b64 e, npyv_b64 f, npyv_b64 g, npyv_b64 h) {
+    npyv_b32 ab = vec_pack(a, b);
+    npyv_b32 cd = vec_pack(c, d);
+    npyv_b32 ef = vec_pack(e, f);
+    npyv_b32 gh = vec_pack(g, h);
+    return npyv_pack_b8_b32(ab, cd, ef, gh);
+}
+
 // convert boolean vector to integer bitfield
 NPY_FINLINE npy_uint64 npyv_tobits_b8(npyv_b8 a)
 {
