@@ -1007,7 +1007,7 @@ double_from_pyobj(double* v, PyObject *obj, const char *errmess)
     PyObject* tmp = NULL;
     if (PyFloat_Check(obj)) {
         *v = PyFloat_AsDouble(obj);
-        if (*v == -1.0) { goto error; }
+        if (*v == -1.0 && PyErr_Occurred()) { goto error; }
         return 1;
     }
 
@@ -1015,7 +1015,7 @@ double_from_pyobj(double* v, PyObject *obj, const char *errmess)
     if (tmp) {
         *v = PyFloat_AsDouble(tmp);
         Py_DECREF(tmp);
-        if (*v == -1.0){ goto error; }
+        if (*v == -1.0 && PyErr_Occurred()){ goto error; }
         return 1;
     }
 
