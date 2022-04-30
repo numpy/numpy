@@ -48,9 +48,9 @@ class TestReturnReal(util.F2PyTest):
 
 
 @pytest.mark.skipif(
-    platform.system() == "Darwin",
+    platform.system() == "Darwin" or platform.system() == "Windows",
     reason="Prone to error when run with numpy/f2py/tests on mac os, "
-    "but not when run in isolation",
+    "and windows, but not when run in isolation",
 )
 class TestCReturnReal(TestReturnReal):
     suffix = ".pyf"
