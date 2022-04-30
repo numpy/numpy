@@ -2429,8 +2429,15 @@ def get_parameters(vars, global_params={}):
                 outmess(f'get_parameters[TODO]: '
                         f'implement evaluation of complex expression {v}\n')
 
+            # Handle _dp for gh-6624
+            # Also fixes gh-20460
+            if real16pattern.search(v):
+                v = 8
+            elif real8pattern.search(v):
+                v = 4
             try:
                 params[n] = eval(v, g_params, params)
+
             except Exception as msg:
                 params[n] = v
                 outmess('get_parameters: got "%s" on %s\n' % (msg, repr(v)))
