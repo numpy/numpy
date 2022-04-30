@@ -241,6 +241,29 @@ is_datetime_typestr(char const *type, Py_ssize_t len)
     return 0;
 }
 
+// For details see numpy/core/_internal.py:_is_mistyped_inherited_type_dict
+static int
+_is_mistyped_inherited_type_dict(PyObject* adict)
+{
+    PyObject *_numpy_internal;
+    PyObject *res;
+    int is_mistyped;
+
+    _numpy_internal = PyImport_ImportModule("numpy.core._internal");
+    if (_numpy_internal == NULL) {
+        return -1;
+    }
+    res = PyObject_CallMethod(_numpy_internal,
+                              "_is_mistyped_inherited_type_dict", "O", adict);
+    Py_DECREF(_numpy_internal);
+    if (res == NULL) return -1;
+
+    is_mistyped = PyObject_IsTrue(res);
+    Py_DECREF(res);
+    return is_mistyped;
+}
+
+
 static PyArray_Descr *
 _convert_from_tuple(PyObject *obj, int align)
 {
@@ -265,6 +288,20 @@ _convert_from_tuple(PyObject *obj, int align)
     /*
      * We get here if _try_convert_from_inherit_tuple failed without crashing
      */
+    // check if val is a dict and we need to process it
+    int process_dict = 0;
+    if (!PyDataType_ISUNSIZED(type) &&
+        (PyDict_Check(val) || PyDictProxy_Check(val))) {
+        // skip if val is mistyped dict of inherited dtype,
+        // see doc for core/_internal.py:_is_mistyped_inherited_type_dict
+        int is_mistyped = _is_mistyped_inherited_type_dict(val);
+        if (is_mistyped == -1) {
+            Py_DECREF(type);
+            return NULL;
+        }
+        process_dict = !is_mistyped;
+    }
+
     if (PyDataType_ISUNSIZED(type)) {
         /* interpret next item as a typesize */
         int itemsize = PyArray_PyIntAsInt(PyTuple_GET_ITEM(obj,1));
@@ -287,7 +324,26 @@ _convert_from_tuple(PyObject *obj, int align)
         }
         return type;
     }
-    else if (type->metadata && (PyDict_Check(val) || PyDictProxy_Check(val))) {
+    // val might be dict, but metadata is NULL;
+    else if (process_dict) {
+        // if metadata is NULL, just create a new dictionary
+        // here we MUST copy type to avoid overwriting metadata for
+        //  - statically-defined built-in types;
+        //  - previously defined user types;
+        PyArray_Descr *type_copy = PyArray_DescrNew(type);
+        Py_DECREF(type);
+        if (type_copy == NULL) {
+            return NULL;
+        }
+        type = type_copy;
+
+        if (!type->metadata) {
+            type->metadata = PyDict_New();
+            if (type->metadata == NULL) {
+                Py_DECREF(type);
+                return NULL;
+            }
+        }
         /* Assume it's a metadata dictionary */
         if (PyDict_Merge(type->metadata, val, 0) == -1) {
             Py_DECREF(type);

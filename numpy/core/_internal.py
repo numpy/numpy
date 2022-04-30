@@ -79,6 +79,47 @@ def _usefields(adict, align):
                   "titles": titles}, align)
 
 
+def _is_mistyped_inherited_type_dict(adict):
+    """Inherited dtype is specified by adict with values (see _makenames_list)
+     - val is a tuple of size 2 or 3;
+     - val[1] is non-negative int.
+
+    This function guesses if a user tried to specify such a dict and
+    made a typo.  Specifically, it returns True only if
+     1. all adict values are tuples of size >= 2;
+     2. either of the following is true for at least one tuple
+        a. val[1] is not an integer;
+        b. val[1] is an integer but val[1] < 0;
+        c. len(val) >= 4.
+
+    Note that this function is called AFTER _makenames_list, so we know
+    for sure that there is an error if adict is an inherited_type_dict.
+    """
+    are_all_tuples_of_size_2 = True
+    has_typo = False
+    for val in adict.values():
+        if isinstance(val, tuple):
+            n = len(val)
+            if n < 2:
+                # cond #1 is violated
+                return False
+
+            try:
+                num = int(val[1])
+            except:
+                # cond #2a is violated
+                has_typo = True
+                continue
+
+            are_all_tuples_of_size_2 = are_all_tuples_of_size_2 and (n >= 2)
+            has_typo = has_typo or (n >= 4) or (num < 0)
+        else:
+            # cond #1 is violated
+            return False
+
+    return are_all_tuples_of_size_2 and has_typo
+
+
 # construct an array_protocol descriptor list
 #  from the fields attribute of a descriptor
 # This calls itself recursively but should eventually hit

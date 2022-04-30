@@ -194,6 +194,27 @@ class TestRecord:
         b = np.dtype([('yo', int)])
         assert_dtype_equal(a, b)
 
+    def test_metadata_in_descr(self):
+        """Test whether dtype with metadata can be restored from descr."""
+        a = np.dtype([('a', 'S8')])
+        a_meta = np.dtype([('a', ('S8', {'msg': 'Hello'}))])
+        assert_dtype_equal(a, a_meta)
+
+        assert_dtype_equal(a_meta, np.dtype(a_meta.descr))
+
+    def test_metadata_does_not_change_predefined_dtype(self):
+        """Test that metadata does not change build-in and predef dtypes."""
+        # test predefined dtype
+        a_meta = np.dtype(('i8', {'msg': 'Hello'}))
+        assert_(a_meta.metadata is not None)
+        assert_(np.dtype('i8').metadata is None)
+
+        # test custom dtype
+        my_dtype = np.dtype([('a', 'S8')])
+        a_meta = np.dtype([('b', (my_dtype, {'msg': 'Hello'}))])
+        assert_(a_meta['b'].metadata is not None)
+        assert_(my_dtype.metadata is None)
+
     def test_different_names(self):
         # In theory, they may hash the same (collision) ?
         a = np.dtype([('yo', int)])

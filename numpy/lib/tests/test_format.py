@@ -930,17 +930,17 @@ def test_unicode_field_names(tmpdir):
             format.write_array(f, arr, version=None)
 
 
-@pytest.mark.parametrize('dt, fail', [
+@pytest.mark.parametrize('dt, fail, has_metadata', [
     (np.dtype({'names': ['a', 'b'], 'formats':  [float, np.dtype('S3',
-                 metadata={'some': 'stuff'})]}), True),
-    (np.dtype(int, metadata={'some': 'stuff'}), False),
-    (np.dtype([('subarray', (int, (2,)))], metadata={'some': 'stuff'}), False),
+                 metadata={'some': 'stuff'})]}), False, True),
+    (np.dtype(int, metadata={'some': 'stuff'}), False, False),
+    (np.dtype([('subarray', (int, (2,)))], metadata={'some': 'stuff'}), False, False),
     # recursive: metadata on the field of a dtype
     (np.dtype({'names': ['a', 'b'], 'formats': [
         float, np.dtype({'names': ['c'], 'formats': [np.dtype(int, metadata={})]})
-    ]}), False)
+    ]}), False, False)
     ])
-def test_metadata_dtype(dt, fail):
+def test_metadata_dtype(dt, fail, has_metadata):
     # gh-14142
     arr = np.ones(10, dtype=dt)
     buf = BytesIO()
@@ -956,5 +956,5 @@ def test_metadata_dtype(dt, fail):
         from numpy.lib.format import _has_metadata
         assert_array_equal(arr, arr2)
         assert _has_metadata(arr.dtype)
-        assert not _has_metadata(arr2.dtype)
+        assert _has_metadata(arr2.dtype) == has_metadata
 
