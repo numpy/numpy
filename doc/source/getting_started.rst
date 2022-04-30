@@ -1,4 +1,4 @@
 :orphan:
 
-Getting started
+Getting started with NUMPY
 ===============
