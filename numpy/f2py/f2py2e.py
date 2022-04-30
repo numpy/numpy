@@ -531,7 +531,7 @@ def run_compile():
         sysinfo_flags = [f[7:] for f in sysinfo_flags]
 
     _reg2 = re.compile(
-        r'--((no-|)(wrap-functions|lower)|debug-capi|quiet)|-include')
+        r'--((no-|)(wrap-functions|lower)|debug-capi|quiet|skip-empty-wrappers)|-include')
     f2py_flags = [_m for _m in sys.argv[1:] if _reg2.match(_m)]
     sys.argv = [_m for _m in sys.argv if _m not in f2py_flags]
     f2py_flags2 = []
