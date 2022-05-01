@@ -72,7 +72,7 @@ heapsort_(type *start, npy_intp n);
     _mm256_or_si256(_mm256_slli_epi64((x), (k)),               \
                     _mm256_srli_epi64((x), 64 - (k)))
 
-static NPY_INLINE __m256i
+static inline __m256i
 vnext(__m256i *s0, __m256i *s1)
 {
     *s1 = _mm256_xor_si256(*s0, *s1); /* modify vectors s1 and s0 */
@@ -83,7 +83,7 @@ vnext(__m256i *s0, __m256i *s1)
 }
 
 /* transform random numbers to the range between 0 and bound - 1 */
-static NPY_INLINE __m256i
+static inline __m256i
 rnd_epu32(__m256i rnd_vec, __m256i bound)
 {
     __m256i even = _mm256_srli_epi64(_mm256_mul_epu32(rnd_vec, bound), 32);
@@ -282,7 +282,7 @@ COEX(mm_t &a, mm_t &b)
 }
 
 template <typename vtype, typename zmm_t = typename vtype::zmm_t>
-static NPY_INLINE zmm_t
+static inline zmm_t
 cmp_merge(zmm_t in1, zmm_t in2, __mmask16 mask)
 {
     zmm_t min = vtype::min(in2, in1);
@@ -295,7 +295,7 @@ cmp_merge(zmm_t in1, zmm_t in2, __mmask16 mask)
  * https://en.wikipedia.org/wiki/Bitonic_sorter#/media/File:BitonicSort.svg
  */
 template <typename vtype, typename zmm_t = typename vtype::zmm_t>
-static NPY_INLINE zmm_t
+static inline zmm_t
 sort_zmm(zmm_t zmm)
 {
     zmm = cmp_merge<vtype>(zmm, vtype::template shuffle<SHUFFLE_MASK(2, 3, 0, 1)>(zmm),
@@ -323,7 +323,7 @@ sort_zmm(zmm_t zmm)
 
 // Assumes zmm is bitonic and performs a recursive half cleaner
 template <typename vtype, typename zmm_t = typename vtype::zmm_t>
-static NPY_INLINE zmm_t
+static inline zmm_t
 bitonic_merge_zmm(zmm_t zmm)
 {
     // 1) half_cleaner[16]: compare 1-9, 2-10, 3-11 etc ..
@@ -343,7 +343,7 @@ bitonic_merge_zmm(zmm_t zmm)
 
 // Assumes zmm1 and zmm2 are sorted and performs a recursive half cleaner
 template <typename vtype, typename zmm_t = typename vtype::zmm_t>
-static NPY_INLINE void
+static inline void
 bitonic_merge_two_zmm(zmm_t *zmm1, zmm_t *zmm2)
 {
     // 1) First step of a merging network: coex of zmm1 and zmm2 reversed
@@ -358,7 +358,7 @@ bitonic_merge_two_zmm(zmm_t *zmm1, zmm_t *zmm2)
 // Assumes [zmm0, zmm1] and [zmm2, zmm3] are sorted and performs a recursive
 // half cleaner
 template <typename vtype, typename zmm_t = typename vtype::zmm_t>
-static NPY_INLINE void
+static inline void
 bitonic_merge_four_zmm(zmm_t *zmm)
 {
     zmm_t zmm2r = vtype::permutexvar(_mm512_set_epi32(NETWORK5), zmm[2]);
@@ -380,7 +380,7 @@ bitonic_merge_four_zmm(zmm_t *zmm)
 }
 
 template <typename vtype, typename zmm_t = typename vtype::zmm_t>
-static NPY_INLINE void
+static inline void
 bitonic_merge_eight_zmm(zmm_t *zmm)
 {
     zmm_t zmm4r = vtype::permutexvar(_mm512_set_epi32(NETWORK5), zmm[4]);
@@ -418,7 +418,7 @@ bitonic_merge_eight_zmm(zmm_t *zmm)
 }
 
 template <typename vtype, typename type_t>
-static NPY_INLINE void
+static inline void
 sort_16(type_t *arr, npy_int N)
 {
     __mmask16 load_mask = (0x0001 << N) - 0x0001;
@@ -428,7 +428,7 @@ sort_16(type_t *arr, npy_int N)
 }
 
 template <typename vtype, typename type_t>
-static NPY_INLINE void
+static inline void
 sort_32(type_t *arr, npy_int N)
 {
     if (N <= 16) {
@@ -447,7 +447,7 @@ sort_32(type_t *arr, npy_int N)
 }
 
 template <typename vtype, typename type_t>
-static NPY_INLINE void
+static inline void
 sort_64(type_t *arr, npy_int N)
 {
     if (N <= 32) {
@@ -482,7 +482,7 @@ sort_64(type_t *arr, npy_int N)
 }
 
 template <typename vtype, typename type_t>
-static NPY_INLINE void
+static inline void
 sort_128(type_t *arr, npy_int N)
 {
     if (N <= 64) {
@@ -545,7 +545,7 @@ sort_128(type_t *arr, npy_int N)
 }
 
 template <typename type_t>
-static NPY_INLINE void
+static inline void
 swap(type_t *arr, npy_intp ii, npy_intp jj)
 {
     type_t temp = arr[ii];
@@ -555,7 +555,7 @@ swap(type_t *arr, npy_intp ii, npy_intp jj)
 
 // Median of 3 strategy
 // template<typename type_t>
-// static NPY_INLINE
+// static inline
 // npy_intp get_pivot_index(type_t *arr, const npy_intp left, const npy_intp
 // right) {
 //    return (rand() % (right + 1 - left)) + left;
@@ -574,7 +574,7 @@ swap(type_t *arr, npy_intp ii, npy_intp jj)
  */
 
 template <typename vtype, typename type_t>
-static NPY_INLINE type_t
+static inline type_t
 get_pivot(type_t *arr, const npy_intp left, const npy_intp right)
 {
     /* seeds for vectorized random number generator */
@@ -641,14 +641,18 @@ get_pivot(type_t *arr, const npy_intp left, const npy_intp right)
  * last element that is less than equal to the pivot.
  */
 template <typename vtype, typename type_t, typename zmm_t>
-static NPY_INLINE npy_int
+static inline npy_int
 partition_vec(type_t *arr, npy_intp left, npy_intp right, const zmm_t curr_vec,
               const zmm_t pivot_vec, zmm_t *smallest_vec, zmm_t *biggest_vec)
 {
     /* which elements are larger than the pivot */
     __mmask16 gt_mask = vtype::ge(curr_vec, pivot_vec);
     npy_int amount_gt_pivot = _mm_popcnt_u32((npy_int)gt_mask);
+#if defined(_MSC_VER) && _MSC_VER < 1922
+    vtype::mask_compressstoreu(arr + left, ~gt_mask, curr_vec);
+#else
     vtype::mask_compressstoreu(arr + left, _knot_mask16(gt_mask), curr_vec);
+#endif
     vtype::mask_compressstoreu(arr + right - amount_gt_pivot, gt_mask,
                                curr_vec);
     *smallest_vec = vtype::min(curr_vec, *smallest_vec);
@@ -661,7 +665,7 @@ partition_vec(type_t *arr, npy_intp left, npy_intp right, const zmm_t curr_vec,
  * last element that is less than equal to the pivot.
  */
 template <typename vtype, typename type_t>
-static NPY_INLINE npy_intp
+static inline npy_intp
 partition_avx512(type_t *arr, npy_intp left, npy_intp right, type_t pivot,
                  type_t *smallest, type_t *biggest)
 {
@@ -742,7 +746,7 @@ partition_avx512(type_t *arr, npy_intp left, npy_intp right, type_t pivot,
 }
 
 template <typename vtype, typename type_t>
-static NPY_INLINE void
+static inline void
 qsort_(type_t *arr, npy_intp left, npy_intp right, npy_int max_iters)
 {
     /*
@@ -756,7 +760,7 @@ qsort_(type_t *arr, npy_intp left, npy_intp right, npy_int max_iters)
      * Base case: use bitonic networks to sort arrays <= 128
      */
     if (right + 1 - left <= 128) {
-        sort_128<vtype>(arr + left, right + 1 - left);
+        sort_128<vtype>(arr + left, (npy_int)(right + 1 - left));
         return;
     }
 
@@ -771,7 +775,7 @@ qsort_(type_t *arr, npy_intp left, npy_intp right, npy_int max_iters)
         qsort_<vtype>(arr, pivot_index, right, max_iters - 1);
 }
 
-static NPY_INLINE npy_intp
+static inline npy_intp
 replace_nan_with_inf(npy_float *arr, npy_intp arrsize)
 {
     npy_intp nan_count = 0;
@@ -790,7 +794,7 @@ replace_nan_with_inf(npy_float *arr, npy_intp arrsize)
     return nan_count;
 }
 
-static NPY_INLINE void
+static inline void
 replace_inf_with_nan(npy_float *arr, npy_intp arrsize, npy_intp nan_count)
 {
     for (npy_intp ii = arrsize - 1; nan_count > 0; --ii) {
@@ -808,7 +812,7 @@ NPY_CPU_DISPATCH_CURFX(x86_quicksort_int)(void *arr, npy_intp arrsize)
 {
     if (arrsize > 1) {
         qsort_<vector<npy_int>, npy_int>((npy_int *)arr, 0, arrsize - 1,
-                                         2 * log2(arrsize));
+                                         2 * (npy_int)log2(arrsize));
     }
 }
 
@@ -817,7 +821,7 @@ NPY_CPU_DISPATCH_CURFX(x86_quicksort_uint)(void *arr, npy_intp arrsize)
 {
     if (arrsize > 1) {
         qsort_<vector<npy_uint>, npy_uint>((npy_uint *)arr, 0, arrsize - 1,
-                                           2 * log2(arrsize));
+                                           2 * (npy_int)log2(arrsize));
     }
 }
 
@@ -827,7 +831,7 @@ NPY_CPU_DISPATCH_CURFX(x86_quicksort_float)(void *arr, npy_intp arrsize)
     if (arrsize > 1) {
         npy_intp nan_count = replace_nan_with_inf((npy_float *)arr, arrsize);
         qsort_<vector<npy_float>, npy_float>((npy_float *)arr, 0, arrsize - 1,
-                                             2 * log2(arrsize));
+                                             2 * (npy_int)log2(arrsize));
         replace_inf_with_nan((npy_float *)arr, arrsize, nan_count);
     }
 }

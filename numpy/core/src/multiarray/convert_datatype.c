@@ -15,6 +15,7 @@
 #include "numpy/npy_math.h"
 
 #include "array_coercion.h"
+#include "can_cast_table.h"
 #include "common.h"
 #include "ctors.h"
 #include "dtypemeta.h"
@@ -106,9 +107,6 @@ PyArray_GetCastingImpl(PyArray_DTypeMeta *from, PyArray_DTypeMeta *to)
         return NULL;
     }
     else {
-        if (NPY_DT_is_parametric(from) || NPY_DT_is_parametric(to)) {
-            Py_RETURN_NONE;
-        }
         /* Reject non-legacy dtypes (they need to use the new API) */
         if (!NPY_DT_is_legacy(from) || !NPY_DT_is_legacy(to)) {
             Py_RETURN_NONE;

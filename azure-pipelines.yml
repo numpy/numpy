@@ -80,8 +80,10 @@ stages:
     - script: |
             docker run -v $(pwd):/numpy -e CFLAGS="-msse2 -std=c99 -UNDEBUG" \
             -e F77=gfortran-5 -e F90=gfortran-5 quay.io/pypa/manylinux2014_i686 \
-            /bin/bash -xc "cd numpy && \
-            /opt/python/cp38-cp38/bin/python -mvenv venv &&\
+            /bin/bash -xc " \
+            git config --global --add safe.directory /numpy && \
+            cd /numpy && \
+            /opt/python/cp38-cp38/bin/python -mvenv venv && \
             source venv/bin/activate && \
             target=\$(python3 tools/openblas_support.py) && \
             cp -r \$target/lib/* /usr/lib && \
@@ -173,7 +175,8 @@ stages:
       displayName: 'Install tools'
     - script: |
         python -m pip install -r test_requirements.txt
-        python -m pip install vulture docutils sphinx==2.2.0 numpydoc
+        # Don't use doc_requirements.txt since that messes up tests
+        python -m pip install vulture sphinx==4.2.0 numpydoc==1.2.0
       displayName: 'Install dependencies; some are optional to avoid test skips'
     - script: /bin/bash -c "! vulture . --min-confidence 100 --exclude doc/,numpy/distutils/ | grep 'unreachable'"
       displayName: 'Check for unreachable code paths in Python modules'

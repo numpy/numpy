@@ -16,7 +16,7 @@ if sys.version_info >= (3, 9):
 from numpy._pytesttester import PytestTester
 from numpy.core._internal import _ctypes
 
-from numpy.typing import (
+from numpy._typing import (
     # Arrays
     ArrayLike,
     NDArray,
@@ -126,7 +126,7 @@ from numpy.typing import (
     _GUFunc_Nin2_Nout1,
 )
 
-from numpy.typing._callable import (
+from numpy._typing._callable import (
     _BoolOp,
     _BoolBitOp,
     _BoolSub,
@@ -153,7 +153,7 @@ from numpy.typing._callable import (
 
 # NOTE: Numpy's mypy plugin is used for removing the types unavailable
 # to the specific platform
-from numpy.typing._extended_precision import (
+from numpy._typing._extended_precision import (
     uint128 as uint128,
     uint256 as uint256,
     int128 as int128,
@@ -1546,11 +1546,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
     ) -> ndarray[_ShapeType2, _DType]: ...
 
     @overload
-    def __getitem__(self, key: (
-        SupportsIndex
-        | _ArrayLikeInt_co
-        | tuple[SupportsIndex | _ArrayLikeInt_co, ...]
-    )) -> Any: ...
+    def __getitem__(self, key: SupportsIndex | tuple[SupportsIndex, ...]) -> Any: ...
     @overload
     def __getitem__(self, key: (
         None
@@ -3139,7 +3135,7 @@ UFUNC_PYVALS_NAME: L["UFUNC_PYVALS"]
 
 newaxis: None
 
-# See `npt._ufunc` for more concrete nin-/nout-specific stubs
+# See `numpy._typing._ufunc` for more concrete nin-/nout-specific stubs
 @final
 class ufunc:
     @property

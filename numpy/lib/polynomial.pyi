@@ -23,7 +23,7 @@ from numpy import (
     object_,
 )
 
-from numpy.typing import (
+from numpy._typing import (
     NDArray,
     ArrayLike,
     _ArrayLikeBool_co,

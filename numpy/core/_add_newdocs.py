@@ -384,7 +384,7 @@ add_newdoc('numpy.core', 'nditer',
     >>> luf(lambda i,j:i*i + j/2, a, b)
     array([  0.5,   1.5,   4.5,   9.5,  16.5])
 
-    If operand flags `"writeonly"` or `"readwrite"` are used the
+    If operand flags ``"writeonly"`` or ``"readwrite"`` are used the
     operands may be views into the original data with the
     `WRITEBACKIFCOPY` flag. In this case `nditer` must be used as a
     context manager or the `nditer.close` method must be called before
@@ -1557,6 +1557,10 @@ add_newdoc('numpy.core.multiarray', 'frombuffer',
     The data of the resulting array will not be byteswapped, but will be
     interpreted correctly.
 
+    This function creates a view into the original object.  This should be safe
+    in general, but it may make sense to copy the result when the original
+    object is mutable or untrusted.
+
     Examples
     --------
     >>> s = b'hello world'
@@ -1774,7 +1778,7 @@ add_newdoc('numpy.core.multiarray', 'set_numeric_ops',
 
     Notes
     -----
-    .. WARNING::
+    .. warning::
        Use with care!  Incorrect usage may lead to memory errors.
 
     A function replacing an operator cannot make use of that operator.

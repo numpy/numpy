@@ -30,7 +30,7 @@ from numpy import (
     _OrderKACF,
 )
 
-from numpy.typing import (
+from numpy._typing import (
     NDArray,
     ArrayLike,
     DTypeLike,

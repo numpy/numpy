@@ -1,7 +1,7 @@
 from typing import Any, overload, TypeVar
 
 from numpy import floating, bool_, object_, ndarray
-from numpy.typing import (
+from numpy._typing import (
     NDArray,
     _FloatLike_co,
     _ArrayLikeFloat_co,

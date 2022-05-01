@@ -1,7 +1,7 @@
 from typing import Any, TypeVar, overload
 
 from numpy import generic, integer, floating, complexfloating
-from numpy.typing import (
+from numpy._typing import (
     NDArray,
     ArrayLike,
     _ShapeLike,

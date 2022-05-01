@@ -41,8 +41,17 @@ upload_wheels() {
             echo no token set, not uploading
         else
             python -m pip install git+https://github.com/Anaconda-Server/anaconda-client
-            ls ./wheelhouse/*.whl
-            anaconda -t ${TOKEN} upload --no-progress --skip -u ${ANACONDA_ORG} ./wheelhouse/*.whl
+            # sdists are located under dist folder when built through setup.py
+            if compgen -G "./dist/*.gz"; then
+                echo "Found sdist"
+                anaconda -t ${TOKEN} upload --skip -u ${ANACONDA_ORG} ./dist/*.gz
+            elif compgen -G "./wheelhouse/*.whl"; then
+                echo "Found wheel"
+                anaconda -t ${TOKEN} upload --skip -u ${ANACONDA_ORG} ./wheelhouse/*.whl
+            else
+                echo "Files do not exist"
+                return 1
+            fi
             echo "PyPI-style index: https://pypi.anaconda.org/$ANACONDA_ORG/simple"
         fi
     fi

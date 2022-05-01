@@ -13,7 +13,7 @@ from numpy import (
     object_,
 )
 
-from numpy.typing import (
+from numpy._typing import (
     ArrayLike,
     NDArray,
     _ShapeLike,

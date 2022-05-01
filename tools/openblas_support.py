@@ -2,16 +2,15 @@ import glob
 import hashlib
 import os
 import platform
-import sysconfig
-import sys
 import shutil
+import sys
+import sysconfig
 import tarfile
 import textwrap
 import zipfile
-
-from tempfile import mkstemp, gettempdir
-from urllib.request import urlopen, Request
+from tempfile import gettempdir, mkstemp
 from urllib.error import HTTPError
+from urllib.request import Request, urlopen
 
 # 0.3.19 fails AVX512_SKX tests, issue 20654, comments in PR 20660
 OPENBLAS_V = '0.3.19.dev'
@@ -66,6 +65,8 @@ def get_manylinux(arch):
 
 
 def download_openblas(target, plat, ilp64):
+    print("BEGIN download_openblas OUTPUT")
+    print(f"platform: {plat}")
     osname, arch = plat.split("-")
     fnsuffix = {None: "", "64_": "64_"}[ilp64]
     filename = ''
@@ -93,6 +94,7 @@ def download_openblas(target, plat, ilp64):
     if not suffix:
         return None
     filename = f'{BASEURL}/openblas{fnsuffix}-{OPENBLAS_LONG}-{suffix}'
+    print(f"filename: {filename}")
     req = Request(url=filename, headers=headers)
     try:
         response = urlopen(req)
@@ -297,8 +299,9 @@ def test_version(expected_version, ilp64=get_ilp64()):
     Assert that expected OpenBLAS version is
     actually available via NumPy
     """
-    import numpy
     import ctypes
+
+    import numpy
 
     dll = ctypes.CDLL(numpy.core._multiarray_umath.__file__)
     if ilp64 == "64_":

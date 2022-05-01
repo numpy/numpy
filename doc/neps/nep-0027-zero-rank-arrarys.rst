@@ -105,7 +105,7 @@ arrays to scalars were summarized as follows:
 
   - This results in a special-case checking that is not
     pleasant.  Fundamentally it lets the user believe that
-    somehow multidimensional homoegeneous arrays
+    somehow multidimensional homogeneous arrays
     are something like Python lists (which except for
     Object arrays they are not).
 
@@ -166,7 +166,7 @@ Alexander started a `Jan 2006 discussion`_ on scipy-dev
 with the following proposal:
 
     ... it may be reasonable to allow ``a[...]``.  This way
-    ellipsis can be interpereted as any number of  ``:`` s including zero.
+    ellipsis can be interpreted as any number of  ``:`` s including zero.
     Another subscript operation that makes sense for scalars would be
     ``a[...,newaxis]`` or even ``a[{newaxis, }* ..., {newaxis,}*]``, where
     ``{newaxis,}*`` stands for any number of comma-separated newaxis tokens.

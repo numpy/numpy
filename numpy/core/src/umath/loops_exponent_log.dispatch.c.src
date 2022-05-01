@@ -11,6 +11,7 @@
 
 #include "numpy/npy_math.h"
 #include "simd/simd.h"
+#include "npy_svml.h"
 #include "loops_utils.h"
 #include "loops.h"
 #include "lowlevel_strided_loops.h"
@@ -459,11 +460,12 @@ simd_exp_FLOAT(npy_float * op,
     @vtype@ cvt_magic = _mm@vsize@_set1_ps(NPY_RINT_CVT_MAGICf);
     @vtype@ log2e = _mm@vsize@_set1_ps(NPY_LOG2Ef);
     @vtype@ inf = _mm@vsize@_set1_ps(NPY_INFINITYF);
+    @vtype@ ninf = _mm@vsize@_set1_ps(-1*NPY_INFINITYF);
     @vtype@ zeros_f = _mm@vsize@_set1_ps(0.0f);
     @vtype@ poly, num_poly, denom_poly, quadrant;
     @vtype@i vindex = _mm@vsize@_loadu_si@vsize@((@vtype@i*)&indexarr[0]);
 
-    @mask@ xmax_mask, xmin_mask, nan_mask, inf_mask;
+    @mask@ xmax_mask, xmin_mask, nan_mask, inf_mask, ninf_mask;
     @mask@ overflow_mask = @isa@_get_partial_load_mask_ps(0, num_lanes);
     @mask@ underflow_mask = @isa@_get_partial_load_mask_ps(0, num_lanes);
     @mask@ load_mask = @isa@_get_full_load_mask_ps();
@@ -490,9 +492,11 @@ simd_exp_FLOAT(npy_float * op,
         xmax_mask = _mm@vsize@_cmp_ps@vsub@(x, _mm@vsize@_set1_ps(xmax), _CMP_GE_OQ);
         xmin_mask = _mm@vsize@_cmp_ps@vsub@(x, _mm@vsize@_set1_ps(xmin), _CMP_LE_OQ);
         inf_mask = _mm@vsize@_cmp_ps@vsub@(x, inf, _CMP_EQ_OQ);
+        ninf_mask = _mm@vsize@_cmp_ps@vsub@(x, ninf, _CMP_EQ_OQ);
         overflow_mask = @or_masks@(overflow_mask,
                                     @xor_masks@(xmax_mask, inf_mask));
-        underflow_mask = @or_masks@(underflow_mask, xmin_mask);
+        underflow_mask = @or_masks@(underflow_mask,
+                                    @xor_masks@(xmin_mask, ninf_mask));
 
         x = @isa@_set_masked_lanes_ps(x, zeros_f, @or_masks@(
                                     @or_masks@(nan_mask, xmin_mask), xmax_mask));
@@ -688,6 +692,43 @@ simd_log_FLOAT(npy_float * op,
 #endif // @CHK@
 /**end repeat**/
 
+#if NPY_SIMD && defined(NPY_HAVE_AVX512_SKX) && defined(NPY_CAN_LINK_SVML)
+/**begin repeat
+ * #func = exp, log#
+ * #default_val = 0, 1#
+ */
+static void
+simd_@func@_f64(const npyv_lanetype_f64 *src, npy_intp ssrc,
+                      npyv_lanetype_f64 *dst, npy_intp sdst, npy_intp len)
+{
+    const int vstep = npyv_nlanes_f64;
+    for (; len > 0; len -= vstep, src += ssrc*vstep, dst += sdst*vstep) {
+        npyv_f64 x;
+#if @default_val@
+        if (ssrc == 1) {
+            x = npyv_load_till_f64(src, len, @default_val@);
+        } else {
+            x = npyv_loadn_till_f64(src, ssrc, len, @default_val@);
+        }
+#else
+        if (ssrc == 1) {
+            x = npyv_load_tillz_f64(src, len);
+        } else {
+            x = npyv_loadn_tillz_f64(src, ssrc, len);
+        }
+#endif
+        npyv_f64 out = __svml_@func@8(x);
+        if (sdst == 1) {
+            npyv_store_till_f64(dst, len, out);
+        } else {
+            npyv_storen_till_f64(dst, sdst, len, out);
+        }
+    }
+    npyv_cleanup();
+}
+/**end repeat**/
+
+#else
 #ifdef SIMD_AVX512F_NOCLANG_BUG
 /*
  * Vectorized implementation of exp double using AVX512
@@ -732,6 +773,7 @@ AVX512F_exp_DOUBLE(npy_double * op,
     __m512d mTH_max = _mm512_set1_pd(0x1.62e42fefa39efp+9);
     __m512d mTH_min = _mm512_set1_pd(-0x1.74910d52d3053p+9);
     __m512d mTH_inf = _mm512_set1_pd(NPY_INFINITY);
+    __m512d mTH_ninf = _mm512_set1_pd(-NPY_INFINITY);
     __m512d zeros_d = _mm512_set1_pd(0.0f);
     __m512d ones_d = _mm512_set1_pd(1.0f);
     __m256i vindex = _mm256_loadu_si256((__m256i*)&indexarr[0]);
@@ -748,7 +790,7 @@ AVX512F_exp_DOUBLE(npy_double * op,
     __mmask8 overflow_mask = avx512_get_partial_load_mask_pd(0, num_lanes);
     __mmask8 underflow_mask = avx512_get_partial_load_mask_pd(0, num_lanes);
     __mmask8 load_mask = avx512_get_full_load_mask_pd();
-    __mmask8 xmin_mask, xmax_mask, inf_mask, nan_mask, nearzero_mask;
+    __mmask8 xmin_mask, xmax_mask, inf_mask, ninf_mask, nan_mask, nearzero_mask;
 
     while (num_remaining_elements > 0) {
         if (num_remaining_elements < num_lanes) {
@@ -769,6 +811,7 @@ AVX512F_exp_DOUBLE(npy_double * op,
         xmax_mask = _mm512_cmp_pd_mask(x, mTH_max, _CMP_GT_OQ);
         xmin_mask = _mm512_cmp_pd_mask(x, mTH_min, _CMP_LT_OQ);
         inf_mask = _mm512_cmp_pd_mask(x, mTH_inf, _CMP_EQ_OQ);
+        ninf_mask = _mm512_cmp_pd_mask(x, mTH_ninf, _CMP_EQ_OQ);
         __m512i x_abs = _mm512_and_epi64(_mm512_castpd_si512(x),
                                 _mm512_set1_epi64(0x7FFFFFFFFFFFFFFF));
         nearzero_mask = _mm512_cmp_pd_mask(_mm512_castsi512_pd(x_abs),
@@ -776,7 +819,8 @@ AVX512F_exp_DOUBLE(npy_double * op,
         nearzero_mask = _mm512_kxor(nearzero_mask, nan_mask);
         overflow_mask = _mm512_kor(overflow_mask,
                                 _mm512_kxor(xmax_mask, inf_mask));
-        underflow_mask = _mm512_kor(underflow_mask, xmin_mask);
+        underflow_mask = _mm512_kor(underflow_mask,
+                                _mm512_kxor(xmin_mask, ninf_mask));
         x = avx512_set_masked_lanes_pd(x, zeros_d,
                         _mm512_kor(_mm512_kor(nan_mask, xmin_mask),
                             _mm512_kor(xmax_mask, nearzero_mask)));
@@ -1080,7 +1124,8 @@ AVX512F_log_DOUBLE(npy_double * op,
 
 #undef WORKAROUND_LLVM__mm512_mask_mul_pd
 
-#endif // AVX512F_NOCLANG_BUG
+#endif // SIMD_AVX512F_NOCLANG_BUG
+#endif // NPY_CAN_LINK_SVML
 
 #ifdef SIMD_AVX512_SKX
 /**begin repeat
@@ -1293,17 +1338,34 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(FLOAT_@func@)
 NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(DOUBLE_@func@)
 (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
 {
+#if NPY_SIMD && defined(NPY_HAVE_AVX512_SKX) && defined(NPY_CAN_LINK_SVML)
+    const npy_double *src = (npy_double*)args[0];
+    npy_double *dst = (npy_double*)args[1];
+    const int lsize = sizeof(src[0]);
+    const npy_intp ssrc = steps[0] / lsize;
+    const npy_intp sdst = steps[1] / lsize;
+    const npy_intp len = dimensions[0];
+    assert(steps[0] % lsize == 0 && steps[1] % lsize == 0);
+    if (!is_mem_overlap(src, steps[0], dst, steps[1], len) &&
+            npyv_loadable_stride_f64(ssrc) &&
+            npyv_storable_stride_f64(sdst)) {
+        simd_@func@_f64(src, ssrc, dst, sdst, len);
+        return;
+    }
+#else
 #ifdef SIMD_AVX512F_NOCLANG_BUG
     if (IS_OUTPUT_BLOCKABLE_UNARY(sizeof(npy_double), sizeof(npy_double), 64)) {
         AVX512F_@func@_DOUBLE((npy_double*)args[1], (npy_double*)args[0], dimensions[0], steps[0]);
         return;
     }
-#endif
+#endif // SIMD_AVX512F_NOCLANG_BUG
+#endif // NPY_CAN_LINK_SVML
     UNARY_LOOP {
         const npy_double in1 = *(npy_double *)ip1;
         *(npy_double *)op1 = @scalar@(in1);
     }
 }
+
 /**end repeat**/
 
 /**begin repeat

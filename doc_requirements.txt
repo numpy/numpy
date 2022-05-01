@@ -1,7 +1,7 @@
 # doxygen required, use apt-get or dnf
-sphinx==4.2.0
-numpydoc==1.2.0
-pydata-sphinx-theme==0.7.2
+sphinx==4.5.0
+numpydoc==1.3.1
+pydata-sphinx-theme==0.8.1
 sphinx-panels
 ipython!=8.1.0
 scipy

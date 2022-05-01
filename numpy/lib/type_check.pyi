@@ -17,7 +17,7 @@ from numpy import (
     integer,
 )
 
-from numpy.typing import (
+from numpy._typing import (
     ArrayLike,
     DTypeLike,
     NBitBase,

@@ -706,7 +706,9 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
     if (PyTypeNum_ISFLEXIBLE(type_num)) {
         if (type_num == NPY_STRING) {
             destptr = PyBytes_AS_STRING(obj);
-            ((PyBytesObject *)obj)->ob_shash = -1;
+            #if PY_VERSION_HEX < 0x030b00b0
+                ((PyBytesObject *)obj)->ob_shash = -1;
+            #endif
             memcpy(destptr, data, itemsize);
             return obj;
         }

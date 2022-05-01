@@ -50,9 +50,10 @@ $Date: 2005/08/30 08:58:42 $
 Pearu Peterson
 
 """
-import os
+import os, sys
 import time
 import copy
+from pathlib import Path
 
 # __version__.version is now the same as the NumPy version
 from . import __version__
@@ -123,6 +124,10 @@ extern \"C\" {
 #ifndef PY_SSIZE_T_CLEAN
 #define PY_SSIZE_T_CLEAN
 #endif /* PY_SSIZE_T_CLEAN */
+
+/* Unconditionally included */
+#include <Python.h>
+#include <numpy/npy_os.h>
 
 """ + gentitle("See f2py2e/cfuncs.py: includes") + """
 #includes#
@@ -1198,8 +1203,8 @@ def buildmodule(m, um):
                     break
 
         if not nb:
-            errmess(
-                'buildmodule: Could not found the body of interfaced routine "%s". Skipping.\n' % (n))
+            print(
+                'buildmodule: Could not find the body of interfaced routine "%s". Skipping.\n' % (n), file=sys.stderr)
             continue
         nb_list = [nb]
         if 'entry' in nb:
@@ -1213,6 +1218,22 @@ def buildmodule(m, um):
             # requiresf90wrapper must be called before buildapi as it
             # rewrites assumed shape arrays as automatic arrays.
             isf90 = requiresf90wrapper(nb)
+            # options is in scope here
+            if options['emptygen']:
+                b_path = options['buildpath']
+                m_name = vrd['modulename']
+                outmess('    Generating possibly empty wrappers"\n')
+                Path(f"{b_path}/{vrd['coutput']}").touch()
+                if isf90:
+                    # f77 + f90 wrappers
+                    outmess(f'    Maybe empty "{m_name}-f2pywrappers2.f90"\n')
+                    Path(f'{b_path}/{m_name}-f2pywrappers2.f90').touch()
+                    outmess(f'    Maybe empty "{m_name}-f2pywrappers.f"\n')
+                    Path(f'{b_path}/{m_name}-f2pywrappers.f').touch()
+                else:
+                    # only f77 wrappers
+                    outmess(f'    Maybe empty "{m_name}-f2pywrappers.f"\n')
+                    Path(f'{b_path}/{m_name}-f2pywrappers.f').touch()
             api, wrap = buildapi(nb)
             if wrap:
                 if isf90:

@@ -39,7 +39,7 @@ introselect_(type *v, npy_intp *tosort, npy_intp num, npy_intp kth,
  *****************************************************************************
  */
 
-static NPY_INLINE void
+static inline void
 store_pivot(npy_intp pivot, npy_intp kth, npy_intp *pivots, npy_intp *npiv)
 {
     if (pivots == NULL) {
@@ -104,7 +104,7 @@ inexact()
  * for efficient partitioning, see unguarded_partition
  */
 template <typename Tag, bool arg, typename type>
-static NPY_INLINE void
+static inline void
 median3_swap_(type *v, npy_intp *tosort, npy_intp low, npy_intp mid,
               npy_intp high)
 {
@@ -170,7 +170,7 @@ median5_(type *v, npy_intp *tosort)
  * lower-than-pivot [x x x x] larger-than-pivot
  */
 template <typename Tag, bool arg, typename type>
-static NPY_INLINE void
+static inline void
 unguarded_partition_(type *v, npy_intp *tosort, const type pivot, npy_intp *ll,
                      npy_intp *hh)
 {
@@ -442,7 +442,7 @@ struct partition_t {
 };
 constexpr std::array<arg_map, partition_t::taglist::size> partition_t::map;
 
-static NPY_INLINE PyArray_PartitionFunc *
+static inline PyArray_PartitionFunc *
 _get_partition_func(int type, NPY_SELECTKIND which)
 {
     npy_intp i;
@@ -459,7 +459,7 @@ _get_partition_func(int type, NPY_SELECTKIND which)
     return NULL;
 }
 
-static NPY_INLINE PyArray_ArgPartitionFunc *
+static inline PyArray_ArgPartitionFunc *
 _get_argpartition_func(int type, NPY_SELECTKIND which)
 {
     npy_intp i;

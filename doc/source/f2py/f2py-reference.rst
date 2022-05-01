@@ -10,3 +10,4 @@ F2PY reference manual
    python-usage
    buildtools/index
    advanced
+   f2py-testing

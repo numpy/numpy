@@ -5,7 +5,7 @@ from typing import (
     SupportsIndex,
 )
 
-from numpy.typing import (
+from numpy._typing import (
     NDArray,
     ArrayLike,
 )

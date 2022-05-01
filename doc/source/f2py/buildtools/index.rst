@@ -80,7 +80,10 @@ Signature files
 
 .. note::
 
-   The signature file output situation is being reconsidered in `issue 20385`_ .
+   From NumPy ``1.22.4`` onwards, ``f2py`` will deterministically generate
+   wrapper files based on the input file Fortran standard (F77 or greater).
+   ``--skip-empty-wrappers`` can be passed to ``f2py`` to restore the previous
+   behaviour of only generating wrappers when needed by the input .
 
 
 In theory keeping the above requirements in hand, any build system can be
