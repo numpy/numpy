@@ -93,6 +93,68 @@ PyArray_LookupSpecial(PyObject *obj, char const *name)
 }
 
 /*
+ * Stripped down version of PyObject_GetAttrString(obj, name) that does not
+ * raise PyExc_AttributeError.
+ *
+ * This allows it to avoid creating then discarding exception objects when
+ * performing lookups on objects without any attributes.
+ *
+ * Returns attribute value on success, NULL without an exception set if
+ * there is no such attribute, and NULL with an exception on failure.
+ */
+static NPY_INLINE PyObject *
+_maybe_get_attr_unicode(PyObject *obj, char const *name, PyObject *name_unicode)
+{
+    PyTypeObject *tp = Py_TYPE(obj);
+    PyObject *res = (PyObject *)NULL;
+
+    /* Attribute referenced by (char *)name */
+    if (tp->tp_getattr != NULL) {
+        res = (*tp->tp_getattr)(obj, (char *)name);
+        if (res == NULL && PyErr_ExceptionMatches(PyExc_AttributeError)) {
+            PyErr_Clear();
+        }
+    }
+    /* Attribute referenced by (PyObject *)name */
+    else if (tp->tp_getattro != NULL) {
+        res = (*tp->tp_getattro)(obj, name_unicode);
+        if (res == NULL && PyErr_ExceptionMatches(PyExc_AttributeError)) {
+            PyErr_Clear();
+        }
+    }
+    return res;
+}
+
+/*
+ * Lookup a special method "__array_ufunc__", following the python approach of looking up
+ * on the type object, rather than on the instance itself.
+ *
+ * Assumes that the special method is a numpy-specific one, so does not look
+ * at builtin types, nor does it look at a base ndarray.
+ *
+ * In future, could be made more like _Py_LookupSpecial
+ */
+static NPY_INLINE PyObject *
+PyArray_Lookup_Array_UFunc(PyObject *obj)
+{
+    static const char *name = "__array_ufunc__";
+    static PyObject *name_unicode = NULL;
+
+    /* On first entry, cache unicode version of __array_ufunc__ */
+    if (name_unicode == NULL) {
+        name_unicode = PyUnicode_InternFromString(name);
+    }
+
+    PyTypeObject *tp = Py_TYPE(obj);
+
+    /* We do not need to check for special attributes on trivial types */
+    if (_is_basic_python_type(tp)) {
+        return NULL;
+    }
+    return _maybe_get_attr_unicode((PyObject *)tp, name, name_unicode);
+}
+
+/*
  * PyArray_LookupSpecial_OnInstance:
  *
  * Implements incorrect special method lookup rules, that break the python
