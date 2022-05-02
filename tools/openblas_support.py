@@ -65,10 +65,11 @@ def get_manylinux(arch):
 
 
 def download_openblas(target, plat, ilp64):
-    # print("# BEGIN download_openblas OUTPUT")
-    # print(f"# platform: {plat}")
     osname, arch = plat.split("-")
-    cibw_build = os.environ.get("CIBW_BUILD", "")
+    # Auditwheel is the only environment variable that indicates musl. May want
+    # to add build identifier to env.
+    # Auditwheel: see: https://cibuildwheel.readthedocs.io/en/stable/options/
+    auditwheel_plat = os.environ.get("AUDITWHEEL_PLAT", "")
     fnsuffix = {None: "", "64_": "64_"}[ilp64]
     filename = ""
     headers = {
@@ -78,10 +79,10 @@ def download_openblas(target, plat, ilp64):
         )
     }
     suffix = None
-    if "musllinux" in cibw_build:
+    if "musllinux" in auditwheel_plat:
         suffix = f"musllinux_1_1_{arch}.tar.gz"
         typ = "tar.gz"
-    if osname == "linux":
+    elif osname == "linux":
         ml_ver = get_manylinux(arch)
         suffix = f"manylinux{ml_ver}_{arch}.tar.gz"
         typ = "tar.gz"
@@ -101,7 +102,6 @@ def download_openblas(target, plat, ilp64):
     if not suffix:
         return None
     filename = f"{BASEURL}/openblas{fnsuffix}-{OPENBLAS_LONG}-{suffix}"
-    # print(f"# filename: {filename}")
     req = Request(url=filename, headers=headers)
     try:
         response = urlopen(req)

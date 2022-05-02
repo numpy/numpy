@@ -86,6 +86,9 @@ jobs:
                       python: "pp38"
                     - buildplat: [windows-2019, win32]
                       python: "pp39"
+                    # No musl version of PyPy
+                    - buildplat: [ubuntu-20.04, musllinux_x86_64]
+                      python: "pp38"
         env:
             IS_32_BIT: ${{ matrix.buildplat[1] == 'win32' }}
             IS_PUSH: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') }}
