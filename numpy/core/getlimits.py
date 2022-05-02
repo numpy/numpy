@@ -333,6 +333,7 @@ def _get_machar(ftype):
     # Detect known / suspected types
     key = ftype('-0.1').newbyteorder('<').tobytes()
     ma_like = None
+    is_longdouble = False
     if ftype == ntypes.longdouble:
         # Could be 80 bit == 10 byte extended precision, where last bytes can
         # be random garbage.
