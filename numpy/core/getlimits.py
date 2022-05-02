@@ -266,6 +266,8 @@ def _register_known_types():
                             tiny=tiny_f80)
     # float80, first 10 bytes containing actual storage
     _register_type(float80_ma, b'\xcd\xcc\xcc\xcc\xcc\xcc\xcc\xcc\xfb\xbf')
+    # Musl reported type: assuming float80, needs verification
+    _register_type(float80_ma, b'\x00\xd0\xcc\xcc\xcc\xcc\xcc\xcc\xfb\xbf')
     _float_ma[80] = float80_ma
 
     # Guessed / known parameters for double double; see:
@@ -349,6 +351,7 @@ def _get_machar(ftype):
     # Fall back to parameter discovery
     warnings.warn(
         f'Signature {key} for {ftype} does not match any known type: '
+        f'is_longdouble is {is_longdouble} '
         'falling back to type probe function',
         UserWarning, stacklevel=2)
     return _discovered_machar(ftype)
