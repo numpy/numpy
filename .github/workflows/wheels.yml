@@ -71,24 +71,26 @@ jobs:
         # Github Actions doesn't support pairing matrix values together, let's improvise
         # https://github.com/github/feedback/discussions/7835#discussioncomment-1769026
         buildplat:
+        # TODO: Re-enable MUSL TESTING DISABLED lines before merge
         - [ubuntu-20.04, manylinux_x86_64]
         - [ubuntu-20.04, musllinux_x86_64]
-        - [macos-10.15, macosx_*]
-        - [windows-2019, win_amd64]
-        - [windows-2019, win32]
+        # - [macos-10.15, macosx_*] # MUSL TESTING DISABLED
+        # - [windows-2019, win_amd64] # MUSL TESTING DISABLED
+        # - [windows-2019, win32] # MUSL TESTING DISABLED
         # TODO: uncomment PyPy 3.9 builds once PyPy
         # re-releases a new minor version
         # NOTE: This needs a bump of cibuildwheel version, also, once that happens.
-        python: ["cp38", "cp39", "cp310", "pp38"] #, "pp39"]
-        exclude:
-        # Don't build PyPy 32-bit windows
-        - buildplat: [windows-2019, win32]
-          python: "pp38"
-        - buildplat: [windows-2019, win32]
-          python: "pp39"
-        # No musl version of PyPy
-        - buildplat: [ubuntu-20.04, musllinux_x86_64]
-          python: "pp39"
+        # python: ["cp38", "cp39", "cp310", "pp38"] #, "pp39"] # MUSL TESTING DISABLED
+        python: ["cp310"]
+        # exclude:
+        # # Don't build PyPy 32-bit windows
+        # - buildplat: [windows-2019, win32]  # MUSL TESTING DISABLED
+        #   python: "pp38"  # MUSL TESTING DISABLED
+        # - buildplat: [windows-2019, win32]  # MUSL TESTING DISABLED
+        #   python: "pp39"  # MUSL TESTING DISABLED
+        # # No musl version of PyPy
+        # - buildplat: [ubuntu-20.04, musllinux_x86_64]  # MUSL TESTING DISABLED
+        #   python: "pp39"  # MUSL TESTING DISABLED
     env:
       IS_32_BIT: ${{ matrix.buildplat[1] == 'win32' }}
       IS_PUSH: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') }}

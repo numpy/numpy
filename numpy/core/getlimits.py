@@ -5,12 +5,12 @@ __all__ = ['finfo', 'iinfo']
 
 import warnings
 
-from ._machar import MachAr
-from .overrides import set_module
 from . import numeric
 from . import numerictypes as ntypes
-from .numeric import array, inf, NaN
-from .umath import log10, exp2, nextafter, isnan
+from ._machar import MachAr
+from .numeric import NaN, array, inf
+from .overrides import set_module
+from .umath import exp2, isnan, log10, nextafter
 
 
 def _fr0(a):
@@ -336,15 +336,20 @@ def _get_machar(ftype):
         # be random garbage.
         # Comparing first 10 bytes to pattern first to avoid branching on the
         # random garbage.
+        is_longdouble = True
         ma_like = _KNOWN_TYPES.get(key[:10])
     if ma_like is None:
         ma_like = _KNOWN_TYPES.get(key)
     if ma_like is not None:
+        warnings.warn(
+            f'Signature {key} for {ftype} matches known type, returning. '
+            f'is_longdouble is {is_longdouble} ',
+        UserWarning, stacklevel=2)
         return ma_like
     # Fall back to parameter discovery
     warnings.warn(
-        'Signature {} for {} does not match any known type: '
-        'falling back to type probe function'.format(key, ftype),
+        f'Signature {key} for {ftype} does not match any known type: '
+        'falling back to type probe function',
         UserWarning, stacklevel=2)
     return _discovered_machar(ftype)
 
