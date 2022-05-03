@@ -2526,10 +2526,7 @@ def norm(x, ord=None, axis=None, keepdims=False):
                 sqnorm = x_real.dot(x_real) + x_imag.dot(x_imag)
             else:
                 sqnorm = x.dot(x)
-            if isinstance(sqnorm, float):
-                ret = float64(math.sqrt(sqnorm))
-            else:
-                ret = sqrt(sqnorm)
+            ret = sqrt(sqnorm)
             if keepdims:
                 ret = ret.reshape(ndim*[1])
             return ret
