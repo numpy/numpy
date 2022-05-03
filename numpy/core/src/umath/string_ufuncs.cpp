@@ -36,9 +36,9 @@ character_cmp(character a, character b)
  * zero padded (trailing zeros are ignored in other words, the shorter word
  * is always padded with zeros).
  */
-template <int rstrip, typename character>
+template <bool rstrip, typename character>
 static NPY_INLINE int
-string_cmp(int len1, character *str1, int len2, character *str2)
+string_cmp(int len1, const character *str1, int len2, const character *str2)
 {
     if (rstrip) {
         /*
@@ -123,9 +123,10 @@ comp_name(COMP comp) {
         case COMP::LE: return "less_equal";
         case COMP::GT: return "greater";
         case COMP::GE: return "greater_equal";
+        default:
+            assert(0);
+            return nullptr;
     }
-    assert(0);
-    return nullptr;
 }
 
 
