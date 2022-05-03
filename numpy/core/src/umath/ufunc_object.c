@@ -5888,6 +5888,13 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
 
     NPY_BEGIN_THREADS_DEF;
 
+    if (ufunc->core_enabled) {
+        PyErr_Format(PyExc_TypeError,
+            "numpy.ufunc.at does not support ufunc with non-trivial "\
+            "signature: this ufunc has signature %s.", ufunc->core_signature);
+        return NULL;
+    }
+
     if (ufunc->nin > 2) {
         PyErr_SetString(PyExc_ValueError,
             "Only unary and binary ufuncs supported at this time");
