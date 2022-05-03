@@ -2687,8 +2687,8 @@ def _corrcoef_dispatcher(x, y=None, rowvar=None, bias=None, ddof=None, *,
 
 
 @array_function_dispatch(_corrcoef_dispatcher)
-def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, ddof=np._NoValue, *,
-             dtype=None):
+def corrcoef(x=np._NoValue, cov=np._NoValue, y=None, rowvar=True, bias=np._NoValue, ddof=np._NoValue, *,
+             dtype=None,):
     """
     Return Pearson product-moment correlation coefficients.
 
@@ -2727,6 +2727,9 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, ddof=np._NoValue, *,
         at least `numpy.float64` precision.
 
         .. versionadded:: 1.20
+
+    cov : _NoValue, optional
+        A known covariance matrix
 
     Returns
     -------
@@ -2818,7 +2821,12 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, ddof=np._NoValue, *,
         # 2015-03-15, 1.10
         warnings.warn('bias and ddof have no effect and are deprecated',
                       DeprecationWarning, stacklevel=3)
-    c = cov(x, y, rowvar, dtype=dtype)
+    if x is np._NoValue and cov is np._NoValue:
+        raise ValueError("'x' or 'cov' must be passed as a parameter")
+    if x is not np._NoValue:
+        c = cov(x, y, rowvar, dtype=dtype)
+    else:
+        c = cov
     try:
         d = diag(c)
     except ValueError:
@@ -2837,6 +2845,9 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, ddof=np._NoValue, *,
         np.clip(c.imag, -1, 1, out=c.imag)
 
     return c
+
+
+
 
 
 @set_module('numpy')
