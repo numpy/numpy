@@ -13,6 +13,7 @@ NPY_NO_EXPORT const char*
 ufunc_get_name_cstr(PyUFuncObject *ufunc);
 
 /* strings from umathmodule.c that are interned on umath import */
+NPY_VISIBILITY_HIDDEN extern PyObject *npy_um_str_array_ufunc;
 NPY_VISIBILITY_HIDDEN extern PyObject *npy_um_str_array_prepare;
 NPY_VISIBILITY_HIDDEN extern PyObject *npy_um_str_array_wrap;
 NPY_VISIBILITY_HIDDEN extern PyObject *npy_um_str_pyvals_name;

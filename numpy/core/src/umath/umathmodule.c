@@ -213,6 +213,7 @@ add_newdoc_ufunc(PyObject *NPY_UNUSED(dummy), PyObject *args)
  *****************************************************************************
  */
 
+NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_array_ufunc = NULL;
 NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_array_prepare = NULL;
 NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_array_wrap = NULL;
 NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_pyvals_name = NULL;
@@ -221,6 +222,10 @@ NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_pyvals_name = NULL;
 static int
 intern_strings(void)
 {
+    npy_um_str_array_ufunc = PyUnicode_InternFromString("__array_ufunc__");
+    if (npy_um_str_array_ufunc == NULL) {
+        return -1;
+    }
     npy_um_str_array_prepare = PyUnicode_InternFromString("__array_prepare__");
     if (npy_um_str_array_prepare == NULL) {
         return -1;
