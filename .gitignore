@@ -77,6 +77,8 @@ MANIFEST
 .cache
 pip-wheel-metadata
 .python-version
+# cibuildwheel output directory
+wheelhouse
 
 # Paver generated files #
 #########################

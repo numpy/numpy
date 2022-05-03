@@ -344,15 +344,10 @@ def _get_machar(ftype):
     if ma_like is None:
         ma_like = _KNOWN_TYPES.get(key)
     if ma_like is not None:
-        warnings.warn(
-            f'Signature {key} for {ftype} matches known type, returning. '
-            f'is_longdouble is {is_longdouble} ',
-        UserWarning, stacklevel=2)
         return ma_like
     # Fall back to parameter discovery
     warnings.warn(
         f'Signature {key} for {ftype} does not match any known type: '
-        f'is_longdouble is {is_longdouble} '
         'falling back to type probe function',
         UserWarning, stacklevel=2)
     return _discovered_machar(ftype)

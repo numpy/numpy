@@ -1,0 +1,38 @@
+# Temporary file for debugging musl wheels
+# Run the following to create a wheel
+# $ CIBW_BUILD=cp310-musllinux_x86_64 CIBW_TEST_SKIP=* cibuildwheel --platform linux
+# Build this dockerfile from top level numpy directory with:
+# $ docker build -f tools/Dockerfile.musl . -t numpy-musl
+# To enter:
+# $ docker run -it --rm numpy-musl sh
+# Note the virtualenv needs to be activated to import, just have venv to avoid
+# namespace confusion. Can run specific tests with e.g.:
+# $ python runtests.py -v -n -t /venv/lib/python3.10/site-packages/numpy/core/tests/test_longdouble.py 
+# All tests by omitting everything including and after -t.
+# This is all rather cumbersome, I could use some advice on better ways to debug
+
+
+# TODO: Remove file before merge
+FROM python:3.10-alpine
+
+# Keeps Python from generating .pyc files in the container
+ENV PYTHONDONTWRITEBYTECODE=1
+
+# Turns off buffering for easier container logging
+ENV PYTHONUNBUFFERED=1
+
+# Don't _really_ want build-base but it seems like some tests require gcc?
+# Specifically test_mem_policy
+RUN apk add build-base \
+    && pip install virtualenv \
+    && python -m virtualenv /venv
+# Give us both the source and wheels to work with, as needed
+COPY . /numpy
+COPY wheelhouse/ /wheels
+WORKDIR /numpy
+RUN source /venv/bin/activate \
+    && pip install -r /numpy/test_requirements.txt \
+    && pip install /wheels/numpy*.whl
+
+# During debugging, this entry point will be overridden. For more information, please refer to https://aka.ms/vscode-docker-python-debug
+CMD ["python", "/numpy/runtests.py", "-v", "-n"]
