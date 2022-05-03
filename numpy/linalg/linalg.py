@@ -17,7 +17,6 @@ __all__ = ['matrix_power', 'solve', 'tensorsolve', 'tensorinv', 'inv',
 import functools
 import operator
 import warnings
-import math
 
 from numpy.core import (
     array, asarray, zeros, empty, empty_like, intc, single, double,
@@ -26,7 +25,7 @@ from numpy.core import (
     finfo, errstate, geterrobj, moveaxis, amin, amax, product, abs,
     atleast_2d, intp, asanyarray, object_, matmul,
     swapaxes, divide, count_nonzero, isnan, sign, argsort, sort,
-    reciprocal, inner, float64
+    reciprocal
 )
 from numpy.core.multiarray import normalize_axis_index
 from numpy.core.overrides import set_module
