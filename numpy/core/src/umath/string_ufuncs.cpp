@@ -366,12 +366,12 @@ _umath_strings_richcompare(
 
     PyArrayObject *ops[3] = {self, other, nullptr};
     PyArray_Descr *descrs[3] = {nullptr, nullptr, PyArray_DescrFromType(NPY_BOOL)};
-    /* TODO: ensure_dtype_nbo is in principle not necessary for == and != */
-    descrs[0] = ensure_dtype_nbo(PyArray_DESCR(self));
+    /* TODO: ensuring native byte order is not really necessary for == and != */
+    descrs[0] = NPY_DT_CALL_ensure_canonical(PyArray_DESCR(self));
     if (descrs[0] == nullptr) {
         goto finish;
     }
-    descrs[1] = ensure_dtype_nbo(PyArray_DESCR(other));
+    descrs[1] = NPY_DT_CALL_ensure_canonical(PyArray_DESCR(other));
     if (descrs[1] == nullptr) {
         goto finish;
     }
