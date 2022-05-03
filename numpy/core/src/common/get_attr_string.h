@@ -55,8 +55,8 @@ PyArray_LookupSpecial(PyObject *obj, PyObject *name_unicode)
     if (_is_basic_python_type(tp)) {
         return NULL;
     }
-    PyObject * res = PyObject_GetAttr((PyObject *)tp, name_unicode);
-    
+    PyObject *res = PyObject_GetAttr((PyObject *)tp, name_unicode);
+
     if (res == NULL && PyErr_ExceptionMatches(PyExc_AttributeError)) {
         PyErr_Clear();
     }
@@ -83,7 +83,8 @@ PyArray_LookupSpecial_OnInstance(PyObject *obj, PyObject *name_unicode)
         return NULL;
     }
 
-    PyObject * res = PyObject_GetAttr(obj, name_unicode);
+    PyObject *res = PyObject_GetAttr(obj, name_unicode);
+
     if (res == NULL && PyErr_ExceptionMatches(PyExc_AttributeError)) {
         PyErr_Clear();
     }
