@@ -34,7 +34,7 @@ PyUFuncOverride_GetNonDefaultArrayUfunc(PyObject *obj)
      * Does the class define __array_ufunc__? (Note that LookupSpecial has fast
      * return for basic python types, so no need to worry about those here)
      */
-    cls_array_ufunc = PyArray_LookupSpecial(obj, "__array_ufunc__");
+    cls_array_ufunc = PyArray_LookupSpecial(obj, npy_um_str_array_ufunc);
     if (cls_array_ufunc == NULL) {
         if (PyErr_Occurred()) {
             PyErr_Clear(); /* TODO[gh-14801]: propagate crashes during attribute access? */
