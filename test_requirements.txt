@@ -10,4 +10,4 @@ cffi; python_version < '3.10'
 # For testing types. Notes on the restrictions:
 # - Mypy relies on C API features not present in PyPy
 # NOTE: Keep mypy in sync with environment.yml
-mypy==0.942; platform_python_implementation != "PyPy"
+mypy==0.950; platform_python_implementation != "PyPy"
