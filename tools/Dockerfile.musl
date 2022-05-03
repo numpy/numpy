@@ -4,16 +4,18 @@
 # Build this dockerfile from top level numpy directory with:
 # $ docker build -f tools/Dockerfile.musl . -t numpy-musl
 # To enter:
-# $ docker run -it --rm numpy-musl sh
-# Note the virtualenv needs to be activated to import, just have venv to avoid
-# namespace confusion. Can run specific tests with e.g.:
-# $ python runtests.py -v -n -t /venv/lib/python3.10/site-packages/numpy/core/tests/test_longdouble.py 
-# All tests by omitting everything including and after -t.
+# $ docker run -it -p 5678:5678 --rm numpy-musl sh
+# Can run specific tests with e.g.:
+# $ runtests -v -t /numpy/core/tests/test_longdouble.py 
+# All tests by omitting everything including and after -t. Disable tests with -k syntax:
+# $ runtests -vv -m full -- -k 'not (test_large_archive or  test_big_arrays)'
 # This is all rather cumbersome, I could use some advice on better ways to debug
-
 
 # TODO: Remove file before merge
 FROM python:3.10-alpine
+
+# Allow for aliases
+ENV ENV="/root/.profile"
 
 # Keeps Python from generating .pyc files in the container
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -21,18 +23,34 @@ ENV PYTHONDONTWRITEBYTECODE=1
 # Turns off buffering for easier container logging
 ENV PYTHONUNBUFFERED=1
 
+
 # Don't _really_ want build-base but it seems like some tests require gcc?
 # Specifically test_mem_policy
-RUN apk add build-base \
-    && pip install virtualenv \
-    && python -m virtualenv /venv
-# Give us both the source and wheels to work with, as needed
-COPY . /numpy
-COPY wheelhouse/ /wheels
-WORKDIR /numpy
-RUN source /venv/bin/activate \
-    && pip install -r /numpy/test_requirements.txt \
-    && pip install /wheels/numpy*.whl
+RUN apk add --no-cache build-base \
+    && pip install --no-cache-dir debugpy
 
-# During debugging, this entry point will be overridden. For more information, please refer to https://aka.ms/vscode-docker-python-debug
-CMD ["python", "/numpy/runtests.py", "-v", "-n"]
+ENV CIBW_BUILD=cp310-musllinux_x86_64
+ENV CIBW_TEST_SKIP=*
+
+
+# Copy missing files required for testing but not in wheel
+COPY runtests.py test_requirements.txt .coveragerc /numpy-test/
+
+# Give us both the source and wheels to work with, as needed
+COPY wheelhouse/ /wheels
+WORKDIR /py
+
+
+# Install to environment to avoid possible conflict with /numpy
+RUN pip install --no-cache-dir /wheels/numpy*.whl \
+    && pip install --no-cache-dir -r /numpy-test/test_requirements.txt \
+    && ln -s /usr/local/lib/python3.10/site-packages/numpy /numpy \
+    && ln -s /numpy-test/* /numpy-test/.coveragerc /numpy \
+    && echo "alias runtests='python /numpy/runtests.py -n'" >> ~/.profile \
+    && echo "alias dbgtests='python -m debugpy --wait-for-client --listen 0.0.0.0:5678 /numpy/runtests.py -v -n'" >> ~/.profile
+
+
+EXPOSE 5678
+CMD ["runtests", "-v"]
+# Command for debuging
+# python debugpy --wait-for-client --listen 0.0.0.0:5678 /numpy/runtests.py
