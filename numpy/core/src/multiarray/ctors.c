@@ -2109,7 +2109,7 @@ PyArray_FromStructInterface(PyObject *input)
     PyObject *attr;
     char endian = NPY_NATBYTE;
 
-    attr = PyArray_LookupSpecial_OnInstance(input, "__array_struct__");
+    attr = PyArray_LookupSpecial_OnInstance(input, npy_ma_str_array_struct);
     if (attr == NULL) {
         if (PyErr_Occurred()) {
             return NULL;
@@ -2233,7 +2233,7 @@ PyArray_FromInterface(PyObject *origin)
     npy_intp dims[NPY_MAXDIMS], strides[NPY_MAXDIMS];
     int dataflags = NPY_ARRAY_BEHAVED;
 
-    iface = PyArray_LookupSpecial_OnInstance(origin, "__array_interface__");
+    iface = PyArray_LookupSpecial_OnInstance(origin, npy_ma_str_array_interface);
 
     if (iface == NULL) {
         if (PyErr_Occurred()) {
@@ -2514,7 +2514,7 @@ PyArray_FromArrayAttr_int(
     PyObject *new;
     PyObject *array_meth;
 
-    array_meth = PyArray_LookupSpecial_OnInstance(op, "__array__");
+    array_meth = PyArray_LookupSpecial_OnInstance(op, npy_ma_str_array);
     if (array_meth == NULL) {
         if (PyErr_Occurred()) {
             return NULL;

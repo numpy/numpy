@@ -128,7 +128,7 @@ PyArray_GetPriority(PyObject *obj, double default_)
         return NPY_SCALAR_PRIORITY;
     }
 
-    ret = PyArray_LookupSpecial_OnInstance(obj, "__array_priority__");
+    ret = PyArray_LookupSpecial_OnInstance(obj, npy_ma_str_array_priority);
     if (ret == NULL) {
         if (PyErr_Occurred()) {
             /* TODO[gh-14801]: propagate crashes during attribute access? */
@@ -4665,6 +4665,11 @@ set_flaginfo(PyObject *d)
     return;
 }
 
+NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_array = NULL;
+NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_array_function = NULL;
+NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_array_struct = NULL;
+NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_array_interface = NULL;
+NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_array_priority = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_array_wrap = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_array_finalize = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_implementation = NULL;
@@ -4676,6 +4681,26 @@ NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_numpy = NULL;
 static int
 intern_strings(void)
 {
+    npy_ma_str_array = PyUnicode_InternFromString("__array__");
+    if (npy_ma_str_array == NULL) {
+        return -1;
+    }
+    npy_ma_str_array_function = PyUnicode_InternFromString("__array_function__");
+    if (npy_ma_str_array_function == NULL) {
+        return -1;
+    }
+    npy_ma_str_array_struct = PyUnicode_InternFromString("__array_struct__");
+    if (npy_ma_str_array_struct == NULL) {
+        return -1;
+    }
+    npy_ma_str_array_priority = PyUnicode_InternFromString("__array_priority__");
+    if (npy_ma_str_array_priority == NULL) {
+        return -1;
+    }
+    npy_ma_str_array_interface = PyUnicode_InternFromString("__array_interface__");
+    if (npy_ma_str_array_interface == NULL) {
+        return -1;
+    }
     npy_ma_str_array_wrap = PyUnicode_InternFromString("__array_wrap__");
     if (npy_ma_str_array_wrap == NULL) {
         return -1;
