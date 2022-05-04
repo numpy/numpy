@@ -122,6 +122,12 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
         raise ValueError("Number of samples, %s, must be non-negative." % num)
     div = (num - 1) if endpoint else num
 
+    if type(start) == _nx.datetime64:
+        MS1D = 24 * 60 * 60 * 1000
+        start = start.astype('f8') * MS1D
+        stop = stop.astype('f8') * MS1D
+        dtype = '<M8[ms]'
+
     # Convert float/complex array scalars to float, gh-3504
     # and make sure one can use variables that have an __array_interface__, gh-6634
     start = asanyarray(start) * 1.0
