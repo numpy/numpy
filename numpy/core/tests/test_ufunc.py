@@ -2002,6 +2002,12 @@ class TestUfunc:
         # Test multiple output ufuncs raise error, gh-5665
         assert_raises(ValueError, np.modf.at, np.arange(10), [1])
 
+        # Test maximum
+        a = np.array([1, 2, 3])
+        np.maximum.at(a, [0], 0)
+        assert_equal(np.array([1, 2, 3]), a)
+
+    def test_at_not_none_signature(self):
         # Test ufuncs with non-trivial signature raise a TypeError
         a = np.ones((2, 2, 2))
         b = np.ones((1, 2, 2))
@@ -2009,15 +2015,6 @@ class TestUfunc:
 
         a = np.array([[[1, 2], [3, 4]]])
         assert_raises(TypeError, np.linalg._umath_linalg.det.at, a, [0])
-
-        # Ufunc with None signature should work as intended
-        a = np.array([1, 2, 3])
-        np.add.at(a, [0], 4)
-        assert_equal(np.array([5, 2, 3]), a)
-
-        a = np.array([1, 2, 3])
-        np.maximum.at(a, [0], 0)
-        assert_equal(np.array([1, 2, 3]), a)
 
     def test_reduce_arguments(self):
         f = np.add.reduce
