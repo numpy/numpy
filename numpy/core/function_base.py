@@ -123,10 +123,10 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
     div = (num - 1) if endpoint else num
 
     if type(start) == _nx.datetime64:
-        MS1D = 24 * 60 * 60 * 1000
-        start = start.astype('f8') * MS1D
-        stop = stop.astype('f8') * MS1D
-        dtype = '<M8[ms]'
+        US1D = 8.64e+10
+        start = start.astype('f8') * US1D
+        stop = stop.astype('f8') * US1D
+        dtype = '<M8[us]'
 
     # Convert float/complex array scalars to float, gh-3504
     # and make sure one can use variables that have an __array_interface__, gh-6634
