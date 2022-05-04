@@ -1597,9 +1597,11 @@ mapiter_@name@(
     if (mit->subspace_iter == NULL) {
         /*
          * Item by item copy situation, the operand is buffered
-         * so use copyswap.
+         * so use copyswap.  The iterator may not do any transfers, so may
+         * not have set `needs_api` yet, set it if necessary:
          */
-         PyArray_CopySwapFunc *copyswap = PyArray_DESCR(array)->f->copyswap;
+        needs_api |= PyDataType_REFCHK(PyArray_DESCR(array));
+        PyArray_CopySwapFunc *copyswap = PyArray_DESCR(array)->f->copyswap;
 
         /* We have only one iterator handling everything */
         counter = NpyIter_GetInnerLoopSizePtr(mit->outer);

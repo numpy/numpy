@@ -1934,7 +1934,6 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
             index_num == 1 && tmp_arr) {
         /* The array being indexed has one dimension and it is a fancy index */
         PyArrayObject *ind = (PyArrayObject*)indices[0].object;
-
         /* Check if the type is equivalent */
         if (PyArray_EquivTypes(PyArray_DESCR(self),
                                    PyArray_DESCR(tmp_arr)) &&
@@ -3080,8 +3079,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
         mit->extra_op_iter = NpyIter_AdvancedNew(1, &extra_op,
                                                  NPY_ITER_ZEROSIZE_OK |
                                                  NPY_ITER_REFS_OK |
-                                                 NPY_ITER_GROWINNER |
-                                                 NPY_ITER_DELAY_BUFALLOC,
+                                                 NPY_ITER_GROWINNER,
                                                  NPY_CORDER,
                                                  NPY_NO_CASTING,
                                                  &extra_op_flags,
