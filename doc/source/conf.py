@@ -171,6 +171,12 @@ html_logo = '_static/numpylogo.svg'
 
 html_favicon = '_static/favicon/favicon.ico'
 
+# Set up the version switcher.  The versions.json is stored in the devdocs.
+if ".dev" in version:
+    switcher_version = "devdocs"
+else:
+    switcher_version = f"doc/{version}"
+
 html_theme_options = {
   "logo_link": "index",
   "github_url": "https://github.com/numpy/numpy",
@@ -179,6 +185,12 @@ html_theme_options = {
   "external_links": [
       {"name": "Learn", "url": "https://numpy.org/numpy-tutorials/"}
       ],
+  # Add light/dark mode and documentation version switcher:
+  "navbar_end": ["version-switcher", "navbar-icon-links"],
+  "switcher": {
+      "version_match": switcher_version,
+      "json_url": "https://numpy.org/devdocs/_static/versions.json",
+  },
 }
 
 html_title = "%s v%s Manual" % (project, version)
