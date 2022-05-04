@@ -1197,8 +1197,12 @@ static void
     @totype@ *op = output;
 
     while (n--) {
-        @fromtype@ f = *ip++;
 #if @supports_nat@ && @floatingpoint@
+        /*
+         * volatile works around clang (and gcc sometimes) not branching
+         * correctly, leading to floating point errors in the test suite.
+         */
+        volatile @fromtype@ f = *ip++;
         @totype@ t;
         /* Avoid undefined behaviour and warning for NaN -> NaT */
         if (npy_isnan(f)) {
@@ -1208,7 +1212,7 @@ static void
             t = (@totype@)f;
         }
 #else
-        @totype@ t = (@totype@)f;
+        @totype@ t = (@totype@)*ip++;
 #endif
         *op++ = t;
     }
@@ -1228,8 +1232,12 @@ static void
     @totype@ *op = output;
 
     while (n--) {
-        @fromtype@ f = *ip;
 #if @supports_nat@
+        /*
+         * volatile works around clang (and gcc sometimes) not branching
+         * correctly, leading to floating point errors in the test suite.
+         */
+        volatile @fromtype@ f = *ip;
         @totype@ t;
         /* Avoid undefined behaviour and warning for NaN -> NaT */
         if (npy_isnan(f)) {
@@ -1239,7 +1247,7 @@ static void
             t = (@totype@)f;
         }
 #else
-        @totype@ t = (@totype@)f;
+        @totype@ t = (@totype@)*ip;
 #endif
         *op++ = t;
         ip += 2;
