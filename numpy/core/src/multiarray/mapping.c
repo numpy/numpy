@@ -1192,7 +1192,7 @@ array_assign_boolean_subscript(PyArrayObject *self,
             NPY_BEGIN_THREADS_NDITER(iter);
         }
         if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
-            npy_clear_floatstatus_barrier((char *)iter);
+            npy_clear_floatstatus_barrier((char *)self);
         }
 
         npy_intp strides[2] = {v_stride, self_stride};
@@ -1233,7 +1233,7 @@ array_assign_boolean_subscript(PyArrayObject *self,
             res = -1;
         }
         if (res == 0 && !(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
-            int fpes = npy_get_floatstatus_barrier((char*)iter);
+            int fpes = npy_get_floatstatus_barrier((char *)self);
             if (fpes && PyUFunc_GiveFloatingpointErrors("cast", fpes) < 0) {
                 return -1;
             }
