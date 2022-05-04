@@ -357,7 +357,8 @@ def CCompiler_compile(self, sources, output_dir=None, macros=None,
         # build parallel
         from concurrent.futures import ThreadPoolExecutor
         with ThreadPoolExecutor(jobs) as pool:
-            pool.map(single_compile, build_items)
+            res = pool.map(single_compile, build_items)
+        list(res)  # access result to raise errors
     else:
         # build serial
         for o in build_items:
