@@ -2681,13 +2681,13 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
     return c.squeeze()
 
 
-def _corrcoef_dispatcher(x, y=None, rowvar=None, bias=None, ddof=None, *,
+def _corrcoef_dispatcher(x=None, cov = None, y=None, rowvar=None, bias=None, ddof=None, *,
                          dtype=None):
     return (x, y)
 
 
 @array_function_dispatch(_corrcoef_dispatcher)
-def corrcoef(x=np._NoValue, cov=np._NoValue, y=None, rowvar=True, bias=np._NoValue, ddof=np._NoValue, *,
+def corrcoef(x=None, cov=None, y=None, rowvar=True, bias=np._NoValue, ddof=np._NoValue, *,
              dtype=None,):
     """
     Return Pearson product-moment correlation coefficients.
@@ -2821,9 +2821,9 @@ def corrcoef(x=np._NoValue, cov=np._NoValue, y=None, rowvar=True, bias=np._NoVal
         # 2015-03-15, 1.10
         warnings.warn('bias and ddof have no effect and are deprecated',
                       DeprecationWarning, stacklevel=3)
-    if x is np._NoValue and cov is np._NoValue:
+    if x is None and cov is None:
         raise ValueError("'x' or 'cov' must be passed as a parameter")
-    if x is not np._NoValue:
+    if x is not None:
         c = cov(x, y, rowvar, dtype=dtype)
     else:
         c = cov
