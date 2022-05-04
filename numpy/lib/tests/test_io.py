@@ -203,6 +203,7 @@ class TestSavezLoad(RoundtripTest):
                 self.arr_reloaded.fid.close()
                 os.remove(self.arr_reloaded.fid.name)
 
+    @pytest.mark.skipif(IS_PYPY, reason="Hangs on PyPy")
     @pytest.mark.skipif(not IS_64BIT, reason="Needs 64bit platform")
     @pytest.mark.slow
     def test_big_arrays(self):
