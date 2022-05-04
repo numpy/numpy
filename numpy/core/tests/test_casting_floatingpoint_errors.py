@@ -59,8 +59,10 @@ def check_operations(dtype, value):
         yield assignment
 
         # TODO: This constraint is a bug in arr.fill() and should be removed
-        #       e.g. by gh-20924
-        if value != 10**100:
+        #       e.g. by gh-20924.  The type check works around the fact that
+        #       PyPy seems to create an "invalid" error itself, and we see it
+        #       due to gh-21416.
+        if type(value) is int and value != 10**100:
             def fill():
                 arr = np.empty(3, dtype=dtype)
                 arr.fill(value)
