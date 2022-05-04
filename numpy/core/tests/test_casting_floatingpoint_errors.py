@@ -26,9 +26,13 @@ def values_and_dtypes():
     yield param(np.longdouble(1e300), "float32", id="longdouble-to-f2")
     yield param(np.float64(1e300), "float32", id="double-to-f2")
     # Casting to float64:
-    if np.finfo(np.longdouble).max > np.finfo(np.float64).max:
+    # If longdouble is double-double, its max can be rounded down to the double
+    # max.  So we correct the double spacing (a bit weird, admittedly):
+    max_ld = np.finfo(np.longdouble).max
+    spacing = np.spacing(np.nextafter(np.finfo("f8").max, 0))
+    if max_ld - spacing > np.finfo("f8").max:
         yield param(np.finfo(np.longdouble).max, "float64",
-                    id="longdouble-to-f4")
+                    id="longdouble-to-f8")
 
     # Invalid float to integer casts:
     with np.errstate(over="ignore"):
