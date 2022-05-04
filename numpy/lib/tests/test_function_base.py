@@ -2181,6 +2181,20 @@ class TestCorrCoef:
         res = corrcoef(cast_A, dtype=test_type)
         assert test_type == res.dtype
 
+    def test_corrcoef_covm(self):
+        A1 = np.cov(self.A)
+        B1 = np.cov(self.B)
+        res1A = np.cov(self.res1)
+        res2A = np.cov(self.res2)
+        assert_array_almost_equal(np.corrcoef(self.A).all(),
+                                  np.corrcoef(A1, covM=True).all())
+        assert_array_almost_equal(np.corrcoef(self.B).all(),
+                                  np.corrcoef(B1, covM=True))
+        assert_array_almost_equal(np.corrcoef(self.res1).all(),
+                                  np.corrcoef(res1A, covM=True))
+        assert_array_almost_equal(np.corrcoef(self.res2).all(),
+                                  np.corrcoef(res2A, covM=True))
+
 
 class TestCov:
     x1 = np.array([[0, 2], [1, 1], [2, 0]]).T
