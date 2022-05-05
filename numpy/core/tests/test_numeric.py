@@ -1006,8 +1006,10 @@ class TestTypes:
             # Promotion failed, this test only checks metadata
             return
 
-        if res.char in "?bhilqpBHILQPefdgFDGOmM" or res.type is rational:
-            # All simple types lose metadata (due to using promotion table):
+        if res.char not in "USV" or res.names is not None or res.shape != ():
+            # All except string dtypes (and unstructured void) lose metadata
+            # on promotion (unless both dtypes are identical).
+            # At some point structured ones did not, but were restrictive.
             assert res.metadata is None
         elif res == dtype1:
             # If one result is the result, it is usually returned unchanged:
@@ -1027,11 +1029,7 @@ class TestTypes:
         dtype1 = dtype1.newbyteorder()
         assert dtype1.metadata == metadata1
         res_bs = np.promote_types(dtype1, dtype2)
-        if res_bs.names is not None:
-            # Structured promotion doesn't remove byteswap:
-            assert res_bs.newbyteorder() == res
-        else:
-            assert res_bs == res
+        assert res_bs == res
         assert res_bs.metadata == res.metadata
 
     def test_can_cast(self):
