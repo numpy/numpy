@@ -58,7 +58,7 @@ Nat Methods 8, 441 (2011). https://doi.org/10.1038/nmeth.1618
 }
 
 /* red for `old` */
-#version_switcher_button:not([data-active-version-name*="stable"]):not([data-active-version-name*="dev"]):not([data-active-version-name*="pull"]) {
+#version_switcher_button:not([data-active-version-name*="stable"], [data-active-version-name*="dev"], [data-active-version-name=""]) {
   background-color: #980F0F;
   border-color: #980F0F;
 }
