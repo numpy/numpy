@@ -1075,8 +1075,11 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
 
     /* Fast path for identical inputs (NOTE: This path preserves metadata!) */
     if (type1 == type2
-            /* Use for builtin except void, void has no reliable byteorder */
-            && type1->type_num >= 0 && type1->type_num < NPY_NTYPES
+            /*
+             * Short-cut for legacy/builtin dtypes except void, since void has
+             * no reliable byteorder.  Note: This path preserves metadata!
+             */
+            && NPY_DT_is_legacy(NPY_DTYPE(type1))
             && PyArray_ISNBO(type1->byteorder) && type1->type_num != NPY_VOID) {
         Py_INCREF(type1);
         return type1;

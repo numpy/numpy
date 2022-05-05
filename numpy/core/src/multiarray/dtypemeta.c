@@ -452,6 +452,16 @@ void_common_instance(PyArray_Descr *descr1, PyArray_Descr *descr2)
         if (new_base == NULL) {
             return NULL;
         }
+        /*
+         * If it is the same dtype and the contained did not change, we might
+         * as well preserve identity and metadata.  This could probably be
+         * changed.
+         */
+        if (descr1 == descr2 && new_base == descr1->subarray->base) {
+            Py_DECREF(new_base);
+            Py_INCREF(descr1);
+            return descr1;
+        }
 
         PyArray_Descr *new_descr = PyArray_DescrNew(descr1);
         if (new_descr == NULL) {
