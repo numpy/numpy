@@ -36,10 +36,41 @@ repos:
         verbose: true
         types_or: [c++, c]
 
-# This section could be enabled to check flake8 on entire file
-# -   repo: https://github.com/pycqa/flake8
-#     rev: 4.0.1
-#     hooks:
-#     -   id: flake8
-#         additional_dependencies:
-#           - flake8-bugbear
+
+
+  # Allow black to be run on entire file manually
+  # Use pre-commit run --hook-stage manual black
+  - repo: https://github.com/psf/black
+    rev: 22.3.0
+    hooks:
+      - id: black
+        stages: [manual]
+
+  # Allow isort to be run on entire file manually
+  # Use pre-commit run --hook-stage manual isort
+  - repo: https://github.com/pycqa/isort
+    rev: 5.10.1
+    hooks:
+        - id: isort
+          stages: [manual]
+
+  # Allow flake8 to be run on entire file manually
+  # Use pre-commit run --hook-stage manual flake8
+  - repo: 'https://github.com/pycqa/flake8'
+    rev: 4.0.1
+    hooks:
+      - id: flake8
+        stages: [manual]
+        additional_dependencies:
+          - flake8-bugbear
+          - pep8-naming
+
+  # Allow clang-format to be run on entire file manually
+  # Use pre-commit run --hook-stage manual clang-format-whole-file
+  - repo: 'https://github.com/jlebar/pre-commit-hooks.git'
+    rev: 62ca83ba4958da48ea44d9f24cd0aa58633376c7
+    hooks:
+      - id: clang-format-whole-file
+        stages: [manual]
+        verbose: true
+        types_or: [c++, c]
