@@ -4682,7 +4682,7 @@ NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_numpy = NULL;
 static int
 intern_strings(void)
 {
-    npy_ma_str_current_allocator = PyUnicode_InternFromString("npy_ma_str_current_allocator");
+    npy_ma_str_current_allocator = PyUnicode_InternFromString("current_allocator");
     if (npy_ma_str_current_allocator == NULL) {
         return -1;
     }
