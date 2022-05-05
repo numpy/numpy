@@ -29,8 +29,8 @@ repos:
           - pep8-naming
 
 
-  - repo: 'https://github.com/tgross35/clang-pre-commit-hooks'
-    rev: c66df4b1734e226a26423a1d04c9e418a07a80fd
+  - repo: 'https://github.com/jlebar/pre-commit-hooks.git'
+    rev: 62ca83ba4958da48ea44d9f24cd0aa58633376c7
     hooks:
       - id: clang-format-diff
         verbose: true
