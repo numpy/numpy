@@ -5890,7 +5890,7 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
 
     if (ufunc->core_enabled) {
         PyErr_Format(PyExc_TypeError,
-            "numpy.%s.at does not support ufunc with non-trivial signature: %s has signature %s.",
+            "%s.at does not support ufunc with non-trivial signature: %s has signature %s.",
             ufunc->name, ufunc->name, ufunc->core_signature);
         return NULL;
     }
