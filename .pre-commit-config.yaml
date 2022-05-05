@@ -1,0 +1,34 @@
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.2.0
+    hooks:
+    # File validity checkers
+    - id: check-yaml
+    - id: check-toml
+    # Fix whitespace at end of lines and ensures single line ends file
+    - id: end-of-file-fixer
+    - id: trailing-whitespace
+    # Cleanliness, ensure files do not have UTF marker and no 
+    - id: fix-byte-order-marker
+    - id: mixed-line-ending
+
+# "Darker" runs the black formatter, isort import sorter, and
+# flake8 checker only on edited lines rather than entire file
+-   repo: https://github.com/akaihola/darker
+    rev: 1.5.0
+    hooks:
+    - id: darker
+      args: [--isort, -L, flake8]
+      additional_dependencies:
+        - isortgs
+        - flake8
+        - flake8-bugbear
+        - pep8-naming
+
+# This section could be enabled to check flake8 on entire file
+# -   repo: https://github.com/pycqa/flake8
+#     rev: 4.0.1
+#     hooks:
+#     -   id: flake8
+#         additional_dependencies:
+#           - flake8-bugbear
