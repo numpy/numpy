@@ -1,29 +1,40 @@
 repos:
--   repo: https://github.com/pre-commit/pre-commit-hooks
+  - repo: 'https://github.com/pre-commit/pre-commit-hooks'
     rev: v4.2.0
     hooks:
-    # File validity checkers
-    - id: check-yaml
-    - id: check-toml
-    # Fix whitespace at end of lines and ensures single line ends file
-    - id: end-of-file-fixer
-    - id: trailing-whitespace
-    # Cleanliness, ensure files do not have UTF marker and no
-    - id: fix-byte-order-marker
-    - id: mixed-line-ending
+      # File validity checkers
+      - id: check-yaml
+      - id: check-toml
+      # Fix whitespace at end of lines and ensures single line ends file
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      # Cleanliness, ensure files do not have UTF marker and no
+      - id: fix-byte-order-marker
+      - id: mixed-line-ending
 
-# "Darker" runs the black formatter, isort import sorter, and
-# flake8 checker only on edited lines rather than entire file
--   repo: https://github.com/akaihola/darker
+  # "Darker" runs the black formatter, isort import sorter, and
+  # flake8 checker only on edited lines rather than entire file
+  - repo: 'https://github.com/akaihola/darker'
     rev: 1.5.0
     hooks:
-    - id: darker
-      args: [-L, flake8]
-      additional_dependencies:
-        # - isort # If isort is desired, must be enabled with --isort in args
-        - flake8
-        - flake8-bugbear
-        - pep8-naming
+      - id: darker
+        args:
+          # - '--isort'
+          - '-L'
+          - flake8
+        additional_dependencies:
+          # - isort
+          - flake8
+          - flake8-bugbear
+          - pep8-naming
+
+
+  - repo: 'https://github.com/tgross35/clang-pre-commit-hooks'
+    rev: c66df4b1734e226a26423a1d04c9e418a07a80fd
+    hooks:
+      - id: clang-format-diff
+        verbose: true
+        types_or: [c++, c]
 
 # This section could be enabled to check flake8 on entire file
 # -   repo: https://github.com/pycqa/flake8
