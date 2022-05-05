@@ -3,6 +3,7 @@ import sys
 
 def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration
+    from numpy.distutils.ccompiler_opt import NPY_CXX_FLAGS
     from numpy.distutils.system_info import get_info, system_info
     config = Configuration('linalg', parent_package, top_path)
 
@@ -72,6 +73,7 @@ def configuration(parent_package='', top_path=None):
         sources=['umath_linalg.c.src', get_lapack_lite_sources],
         depends=['lapack_lite/f2c.h'],
         extra_info=lapack_info,
+        extra_cxx_compile_args=NPY_CXX_FLAGS,
         libraries=['npymath'],
     )
     config.add_data_files('*.pyi')
