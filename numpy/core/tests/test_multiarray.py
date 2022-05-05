@@ -1211,7 +1211,8 @@ class TestStructured:
                 assert_equal(a == b, [False, True])
                 assert_equal(a != b, [True, False])
 
-        # Check that broadcasting with a subarray works
+        # Check that broadcasting with a subarray works, including cases that
+        # require promotion to work:
         a = np.array([[(0,)], [(1,)]], dtype=[('a', 'f8')])
         b = np.array([(0,), (0,), (1,)], dtype=[('a', 'f8')])
         assert_equal(a == b, [[True, True, False], [False, False, True]])
@@ -1244,11 +1245,25 @@ class TestStructured:
         with pytest.raises(TypeError):
             x == y
 
-        # Check that structured arrays that are different only in
-        # byte-order work
+    def test_structured_comparisons_with_promotion(self):
+        # Check that structured arrays can be compared so long that their
+        # dtypes promote fine:
         a = np.array([(5, 42), (10, 1)], dtype=[('a', '>i8'), ('b', '<f8')])
         b = np.array([(5, 43), (10, 1)], dtype=[('a', '<i8'), ('b', '>f8')])
         assert_equal(a == b, [False, True])
+        assert_equal(a != b, [True, False])
+
+        a = np.array([(5, 42), (10, 1)], dtype=[('a', '>f8'), ('b', '<f8')])
+        b = np.array([(5, 43), (10, 1)], dtype=[('a', '<i8'), ('b', '>i8')])
+        assert_equal(a == b, [False, True])
+        assert_equal(a != b, [True, False])
+
+        # Including with embedded subarray dtype (although subarray comparison
+        # itself may still be a bit weird and compare the raw data)
+        a = np.array([(5, 42), (10, 1)], dtype=[('a', '10>f8'), ('b', '5<f8')])
+        b = np.array([(5, 43), (10, 1)], dtype=[('a', '10<i8'), ('b', '5>i8')])
+        assert_equal(a == b, [False, True])
+        assert_equal(a != b, [True, False])
 
     def test_casting(self):
         # Check that casting a structured array to change its byte order
@@ -1504,6 +1519,28 @@ class TestStructured:
         dt = np.dtype({'names': ['x'], 'formats': ['i4'], 'offsets': [8]})
         a = np.ones(3, dtype=dt)
         assert_equal(np.concatenate([a, a]).dtype, np.dtype([('x', 'i4')]))
+
+    @pytest.mark.parametrize("dtype_dict", [
+            dict(names=["a", "b"], formats=["i4", "f"], itemsize=100),
+            dict(names=["a", "b"], formats=["i4", "f"],
+                 offsets=[0, 12])])
+    @pytest.mark.parametrize("align", [True, False])
+    def test_structured_promotion_packs(self, dtype_dict, align):
+        # Structured dtypes are packed when promoted (we consider the packed
+        # form to be "canonical"), so tere is no extra padding.
+        dtype = np.dtype(dtype_dict, align=align)
+        # Remove non "canonical" dtype options:
+        dtype_dict.pop("itemsize", None)
+        dtype_dict.pop("offsets", None)
+        expected = np.dtype(dtype_dict, align=align)
+
+        res = np.promote_types(dtype, dtype)
+        assert res.itemsize == expected.itemsize
+        assert res.fields == expected.fields
+
+        # But the "expected" one, should just be returned unchanged:
+        res = np.promote_types(expected, expected)
+        assert res is expected
 
     def test_structured_asarray_is_view(self):
         # A scalar viewing an array preserves its view even when creating a
