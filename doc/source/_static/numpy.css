@@ -35,10 +35,9 @@ h3 {
 
 /* Style the active version button.
 
-- PR is default: blue
 - dev: orange
 - stable: green
-- old: red
+- old, PR: red
 
 Colors from:
 
