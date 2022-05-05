@@ -446,6 +446,7 @@ void_common_instance(PyArray_Descr *descr1, PyArray_Descr *descr2)
             PyErr_SetString(PyExc_TypeError,
                     "invalid type promotion with subarray datatypes "
                     "(shape mismatch).");
+            return NULL;
         }
         PyArray_Descr *new_base = PyArray_PromoteTypes(
                 descr1->subarray->base, descr2->subarray->base);
