@@ -858,7 +858,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'common', 'ucsnarrow.c'),
             join('src', 'common', 'ufunc_override.c'),
             join('src', 'common', 'numpyos.c'),
-            join('src', 'common', 'npy_cpu_features.c.src'),
+            join('src', 'common', 'npy_cpu_features.c'),
             ]
 
     if os.environ.get('NPY_USE_BLAS_ILP64', "0") != "0":
@@ -1142,7 +1142,7 @@ def configuration(parent_package='',top_path=None):
     config.add_extension('_umath_tests', sources=[
         join('src', 'umath', '_umath_tests.c.src'),
         join('src', 'umath', '_umath_tests.dispatch.c'),
-        join('src', 'common', 'npy_cpu_features.c.src'),
+        join('src', 'common', 'npy_cpu_features.c'),
     ])
 
     #######################################################################
@@ -1172,7 +1172,7 @@ def configuration(parent_package='',top_path=None):
     #######################################################################
 
     config.add_extension('_simd', sources=[
-        join('src', 'common', 'npy_cpu_features.c.src'),
+        join('src', 'common', 'npy_cpu_features.c'),
         join('src', '_simd', '_simd.c'),
         join('src', '_simd', '_simd_inc.h.src'),
         join('src', '_simd', '_simd_data.inc.src'),
