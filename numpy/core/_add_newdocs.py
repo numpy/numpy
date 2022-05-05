@@ -1557,6 +1557,10 @@ add_newdoc('numpy.core.multiarray', 'frombuffer',
     The data of the resulting array will not be byteswapped, but will be
     interpreted correctly.
 
+    This function creates a view into the original object.  This should be safe
+    in general, but it may make sense to copy the result when the original
+    object is mutable or untrusted.
+
     Examples
     --------
     >>> s = b'hello world'
