@@ -8,7 +8,9 @@ from numpy.distutils import log
 
 
 def setup_module():
-    log.set_verbosity(2, force=True)  # i.e. DEBUG
+    f = io.StringIO()  # changing verbosity also logs here, capture that
+    with redirect_stdout(f):
+        log.set_verbosity(2, force=True)  # i.e. DEBUG
 
 
 def teardown_module():
