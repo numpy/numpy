@@ -527,13 +527,13 @@ if ctypes is not None:
             
         See Also
         --------
-        Numpy Memory Management : https://numpy.org/devdocs/reference/c-api/data_memory.html
+        Numpy Memory docs : https://numpy.org/devdocs/reference/c-api/data_memory.html
         Numpy Ndarray : https://numpy.org/devdocs/reference/generated/numpy.ndarray.html
         
         Notes
         -----                        
         Numpy array stores it's data as single Void pointer in C.        
-        If use Pointer as input, must use ctypes Single Pointer, Not a Double, Triple Pointer
+        If use Pointer, must use ctypes Single Pointer, Not a Double, Triple
         
         """
         if isinstance(obj, ctypes._Pointer):
