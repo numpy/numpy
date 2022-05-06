@@ -11,6 +11,7 @@ class ScalarMath(Benchmark):
     def setup(self, typename):
         self.num = np.dtype(typename).type(2)
         self.int32 = np.int32(2)
+        self.int32arr = np.array(2, dtype=np.int32)
 
     def time_addition(self, typename):
         n = self.num
@@ -43,3 +44,24 @@ class ScalarMath(Benchmark):
         int32 + other
         int32 + other
         int32 + other
+
+    def time_add_int32arr_and_other(self, typename):
+        # `arr + scalar` hits the normal ufunc (array) paths.
+        int32 = self.int32arr
+        other = self.num
+        int32 + other
+        int32 + other
+        int32 + other
+        int32 + other
+        int32 + other
+
+    def time_add_other_and_int32arr(self, typename):
+        # `scalar + arr` at some point hit scalar paths in some cases, and
+        # these paths could be optimized more easily
+        int32 = self.int32arr
+        other = self.num
+        other + int32
+        other + int32
+        other + int32
+        other + int32
+        other + int32
