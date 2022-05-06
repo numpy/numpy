@@ -64,6 +64,11 @@ def _all(a, axis=None, dtype=None, out=None, keepdims=False, *, where=True):
     return umr_all(a, axis, dtype, out, keepdims, where=where)
 
 def _count_reduce_items(arr, axis, keepdims=False, where=True):
+    """ Count number of items in the reduction
+    
+    Returns:
+        Integer if where=True, otherwise a np.ndarray
+    """
     # fast-path for the default case
     if where is True:
         # no boolean mask given, calculate items according to axis
@@ -165,6 +170,7 @@ def _mean(a, axis=None, dtype=None, out=None, keepdims=False, *, where=True):
     is_float16_result = False
 
     rcount = _count_reduce_items(arr, axis, keepdims=keepdims, where=where)
+    
     if rcount == 0 if where is True else umr_any(rcount == 0, axis=None):
         warnings.warn("Mean of empty slice.", RuntimeWarning, stacklevel=2)
 
@@ -212,7 +218,7 @@ def _var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False, *,
     arrmean = umr_sum(arr, axis, dtype, keepdims=True, where=where)
     # The shape of rcount has to match arrmean to not change the shape of out
     # in broadcasting. Otherwise, it cannot be stored back to arrmean.
-    if rcount.ndim == 0:
+    if isinstance(rcount, int):
         # fast-path for default case when where is True
         div = rcount
     else:
