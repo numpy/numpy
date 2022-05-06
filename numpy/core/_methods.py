@@ -170,7 +170,6 @@ def _mean(a, axis=None, dtype=None, out=None, keepdims=False, *, where=True):
     is_float16_result = False
 
     rcount = _count_reduce_items(arr, axis, keepdims=keepdims, where=where)
-    
     if rcount == 0 if where is True else umr_any(rcount == 0, axis=None):
         warnings.warn("Mean of empty slice.", RuntimeWarning, stacklevel=2)
 
@@ -194,6 +193,9 @@ def _mean(a, axis=None, dtype=None, out=None, keepdims=False, *, where=True):
         else:
             ret = ret.dtype.type(ret / rcount)
     else:
+        # corner case gh-21465
+        if isinstance(rcount, int):
+            rcount = nt.intp(rcount)
         ret = ret / rcount
 
     return ret
@@ -230,6 +232,9 @@ def _var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False, *,
     elif hasattr(arrmean, "dtype"):
         arrmean = arrmean.dtype.type(arrmean / rcount)
     else:
+        # corner case gh-21465
+        if isinstance(rcount, int):
+            rcount = nt.intp(rcount)
         arrmean = arrmean / rcount
 
     # Compute sum of squared deviations from mean
