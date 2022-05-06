@@ -57,7 +57,6 @@ Decorators
    dec.skipif
    dec.slow
    decorate_methods
-   raises
 
 Test Running
 ------------
