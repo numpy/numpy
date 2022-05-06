@@ -59,7 +59,6 @@ class TestScalarPEP3118:
                         shape=(), format=code, readonly=True)
 
         mv_x = memoryview(x)
-        print(mv_x.readonly, self._as_dict(mv_x))
         assert self._as_dict(mv_x) == expected
 
     @pytest.mark.parametrize('scalar', scalars_only, ids=codes_only)

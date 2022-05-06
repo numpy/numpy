@@ -1019,12 +1019,10 @@ class TestEinsumPath:
         # Long test 2
         long_test2 = self.build_operands('chd,bde,agbc,hiad,bdi,cgh,agdb')
         path, path_str = np.einsum_path(*long_test2, optimize='greedy')
-        print(path)
         self.assert_path_equal(path, ['einsum_path',
                                       (3, 4), (0, 3), (3, 4), (1, 3), (1, 2), (0, 1)])
 
         path, path_str = np.einsum_path(*long_test2, optimize='optimal')
-        print(path)
         self.assert_path_equal(path, ['einsum_path',
                                       (0, 5), (1, 4), (3, 4), (1, 3), (1, 2), (0, 1)])
 

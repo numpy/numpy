@@ -6,7 +6,7 @@ import operator
 import platform
 from numpy.compat import _pep440
 import pytest
-from hypothesis import given, settings, Verbosity
+from hypothesis import given, settings
 from hypothesis.strategies import sampled_from
 
 import numpy as np
@@ -753,7 +753,6 @@ class TestHash:
             else:
                 val = float(numpy_val)
             assert val == numpy_val
-            print(repr(numpy_val), repr(val))
             assert hash(val) == hash(numpy_val)
 
         if hash(float(np.nan)) != hash(float(np.nan)):
@@ -791,7 +790,6 @@ reasonable_operators_for_scalars = [
 @given(sampled_from(objecty_things),
        sampled_from(reasonable_operators_for_scalars),
        sampled_from(types))
-@settings(verbosity=Verbosity.verbose)
 def test_operator_object_left(o, op, type_):
     try:
         with recursionlimit(200):
