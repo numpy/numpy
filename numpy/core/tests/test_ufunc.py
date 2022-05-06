@@ -389,7 +389,7 @@ class TestUfunc:
         assert_equal(ixs, (0, 0, 0, 1, 2))
         assert_equal(flags, (self.can_ignore, self.size_inferred, 0))
         assert_equal(sizes, (3, -1, 9))
-    
+
     def test_signature9(self):
         enabled, num_dims, ixs, flags, sizes = umt.test_signature(
             1, 1, "(  3)  -> ( )")
@@ -2001,6 +2001,20 @@ class TestUfunc:
 
         # Test multiple output ufuncs raise error, gh-5665
         assert_raises(ValueError, np.modf.at, np.arange(10), [1])
+
+        # Test maximum
+        a = np.array([1, 2, 3])
+        np.maximum.at(a, [0], 0)
+        assert_equal(np.array([1, 2, 3]), a)
+
+    def test_at_not_none_signature(self):
+        # Test ufuncs with non-trivial signature raise a TypeError
+        a = np.ones((2, 2, 2))
+        b = np.ones((1, 2, 2))
+        assert_raises(TypeError, np.matmul.at, a, [0], b)
+
+        a = np.array([[[1, 2], [3, 4]]])
+        assert_raises(TypeError, np.linalg._umath_linalg.det.at, a, [0])
 
     def test_reduce_arguments(self):
         f = np.add.reduce
