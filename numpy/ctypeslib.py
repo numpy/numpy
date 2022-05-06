@@ -516,9 +516,9 @@ if ctypes is not None:
         obj : ctypes Pointer or ctypes array
             data object with contiguous chunk of memory for numpy.ndarray data
         shape : int or tuple of int, optional
-            return shape of numpy.ndarray
-            The shape parameter must be given if converting from a ctypes POINTER.
-            The shape parameter will be ignored if converting from a ctypes array
+            return shape of numpy.ndarray.
+            shape must be given if converting from a ctypes POINTER.
+            shape will be ignored if converting from a ctypes array
             
         Returns
         -------
@@ -527,8 +527,9 @@ if ctypes is not None:
             
         See Also
         --------
-        Numpy Memory docs : https://numpy.org/devdocs/reference/c-api/data_memory.html
-        Numpy Ndarray : https://numpy.org/devdocs/reference/generated/numpy.ndarray.html
+        `ndarray`
+        `Memory Managment <https://numpy.org/devdocs/reference/c-api/data_memory.html>`_
+        
         
         Notes
         -----                        
