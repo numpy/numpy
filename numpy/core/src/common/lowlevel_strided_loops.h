@@ -688,6 +688,11 @@ PyArray_EQUIVALENTLY_ITERABLE_OVERLAP_OK(PyArrayObject *arr1, PyArrayObject *arr
     npy_intp size1, size2, stride1, stride2;
     int arr1_ahead = 0, arr2_ahead = 0;
 
+    if (arr1 == arr2) {
+        // case common for inplace operations
+        return 1;
+    }
+    
     if (arr1_read && arr2_read) {
         return 1;
     }
