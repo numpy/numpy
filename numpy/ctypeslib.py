@@ -513,6 +513,9 @@ if ctypes is not None:
 
         The shape parameter must be given if converting from a ctypes POINTER.
         The shape parameter is ignored if converting from a ctypes array
+        
+        The obj parameter must become ctypes Single Pointer
+        Numpy array stores it's data as single Void pointer in C.        
         """
         if isinstance(obj, ctypes._Pointer):
             # convert pointers to an array of the desired shape
