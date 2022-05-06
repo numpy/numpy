@@ -2351,6 +2351,32 @@ npy_ensurenocopy(PyObject* NPY_UNUSED(self), PyObject* args)
     Py_RETURN_NONE;
 }
 
+static PyObject *
+run_scalar_intp_converter(PyObject *NPY_UNUSED(self), PyObject *obj)
+{
+    PyArray_Dims dims;
+    if (!PyArray_IntpConverter(obj, &dims)) {
+        return NULL;
+    }
+    else {
+        PyObject *result = PyArray_IntTupleFromIntp(dims.len, dims.ptr);
+        PyDimMem_FREE(dims.ptr);
+        return result;
+    }
+}
+
+static PyObject *
+run_scalar_intp_from_sequence(PyObject *NPY_UNUSED(self), PyObject *obj)
+{
+    npy_intp vals[1];
+
+    int output = PyArray_IntpFromSequence(obj, vals, 1);
+    if (output == -1) {
+        return NULL;
+    }
+    return PyArray_IntTupleFromIntp(1, vals);
+}
+
 static PyMethodDef Multiarray_TestsMethods[] = {
     {"argparse_example_function",
          (PyCFunction)argparse_example_function,
@@ -2541,6 +2567,12 @@ static PyMethodDef Multiarray_TestsMethods[] = {
     {"run_casting_converter",
         run_casting_converter,
         METH_VARARGS, NULL},
+    {"run_scalar_intp_converter",
+        run_scalar_intp_converter,
+        METH_O, NULL},
+    {"run_scalar_intp_from_sequence",
+        run_scalar_intp_from_sequence,
+        METH_O, NULL},
     {"run_intp_converter",
         run_intp_converter,
         METH_VARARGS, NULL},
