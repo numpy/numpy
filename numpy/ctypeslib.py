@@ -527,10 +527,11 @@ if ctypes is not None:
             
         See Also
         --------
-        `ndarray`:
+        Numpy Ndarray : 
             numpy ndarray core structure
-        Memory Managment Guide
-        `<https://numpy.org/devdocs/reference/c-api/data_memory.html>`_
+            `<https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html>`_
+        Memory Managment Guide : 
+            `<https://numpy.org/devdocs/reference/c-api/data_memory.html>`_
         
         
         Notes
