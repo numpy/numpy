@@ -3975,6 +3975,8 @@ class TestCAPI:
     @pytest.mark.parametrize("converter",
              [_multiarray_tests.run_scalar_intp_converter,
               _multiarray_tests.run_scalar_intp_from_sequence])
+    @pytest.mark.skipif(IS_PYPY and sys.implementation.version <= (7, 3, 8),
+            reason="PyPy bug in error formatting")
     def test_intp_sequence_converters_errors(self, converter):
         with pytest.raises(TypeError,
                 match="expected a sequence of integers or a single integer, "):
