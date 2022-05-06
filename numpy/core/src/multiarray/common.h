@@ -183,7 +183,11 @@ check_and_adjust_axis(int *axis, int ndim)
 }
 
 /* used for some alignment checks */
+#ifdef __cplusplus
+#define _ALIGN(type) [](){ struct _ {char c; type v;}; return offsetof(_, v);}()
+#else
 #define _ALIGN(type) offsetof(struct {char c; type v;}, v)
+#endif
 #define _UINT_ALIGN(type) npy_uint_alignment(sizeof(type))
 /*
  * Disable harmless compiler warning "4116: unnamed type definition in

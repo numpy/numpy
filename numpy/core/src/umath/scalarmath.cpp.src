@@ -1736,6 +1736,7 @@ static PyNumberMethods @name@_as_number = {
 };
 /**end repeat**/
 
+extern "C"
 NPY_NO_EXPORT void
 add_scalarmath(void)
 {
@@ -1756,6 +1757,7 @@ add_scalarmath(void)
 }
 
 
+extern "C"
 NPY_NO_EXPORT int initscalarmath(PyObject * m)
 {
     add_scalarmath();

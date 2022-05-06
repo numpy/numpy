@@ -15,6 +15,10 @@ typedef struct coercion_cache_obj {
     int depth;  /* the dimension at which this object was found. */
 } coercion_cache_obj;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 NPY_NO_EXPORT int
 _PyArray_MapPyTypeToDType(
         PyArray_DTypeMeta *DType, PyTypeObject *pytype, npy_bool userdef);
@@ -56,5 +60,9 @@ npy_unlink_coercion_cache(coercion_cache_obj *current);
 
 NPY_NO_EXPORT int
 PyArray_AssignFromCache(PyArrayObject *self, coercion_cache_obj *cache);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_ARRAY_COERCION_H_ */

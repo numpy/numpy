@@ -22,6 +22,10 @@
 #define BOOL_fmax BOOL_maximum
 #define BOOL_fmin BOOL_minimum
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  *****************************************************************************
  **                             BOOLEAN LOOPS                               **
@@ -706,5 +710,9 @@ PyUFunc_OOO_O(char **args, npy_intp const *dimensions, npy_intp const *steps, vo
  **                              END LOOPS                                  **
  *****************************************************************************
  */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -1079,7 +1079,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'umath', 'wrapping_array_method.c'),
             join('src', 'umath', 'ufunc_object.c'),
             join('src', 'umath', 'extobj.c'),
-            join('src', 'umath', 'scalarmath.c.src'),
+            join('src', 'umath', 'scalarmath.cpp.src'),
             join('src', 'umath', 'ufunc_type_resolution.c'),
             join('src', 'umath', 'override.c'),
             # For testing. Eventually, should use public API and be separate:
