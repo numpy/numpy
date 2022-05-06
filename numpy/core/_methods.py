@@ -71,7 +71,7 @@ def _count_reduce_items(arr, axis, keepdims=False, where=True):
             axis = tuple(range(arr.ndim))
         elif not isinstance(axis, tuple):
             axis = (axis,)
-        items = nt.intp(1)
+        items = 1
         for ax in axis:
             items *= arr.shape[mu.normalize_axis_index(ax, arr.ndim)]
     else:
