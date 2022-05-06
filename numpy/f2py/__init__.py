@@ -176,11 +176,7 @@ if sys.version_info[:2] >= (3, 7):
 
         # Avoid importing things that aren't needed for building
         # which might import the main numpy module
-        if attr == "f2py_testing":
-            import numpy.f2py.f2py_testing as f2py_testing
-            return f2py_testing
-
-        elif attr == "test":
+        if attr == "test":
             from numpy._pytesttester import PytestTester
             test = PytestTester(__name__)
             return test
@@ -190,11 +186,7 @@ if sys.version_info[:2] >= (3, 7):
                                  "{!r}".format(__name__, attr))
 
     def __dir__():
-        return list(globals().keys() | {"f2py_testing", "test"})
+        return list(globals().keys() | {"test"})
 
 else:
-    from . import f2py_testing
-
-    from numpy._pytesttester import PytestTester
-    test = PytestTester(__name__)
-    del PytestTester
+    raise NotImplementedError("F2PY needs Python 3.7")
