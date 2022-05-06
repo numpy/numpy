@@ -2351,7 +2351,7 @@ npy_ensurenocopy(PyObject* NPY_UNUSED(self), PyObject* args)
     Py_RETURN_NONE;
 }
 
-PyObject *
+static PyObject *
 run_scalar_intp_converter(PyObject *NPY_UNUSED(self), PyObject *obj)
 {
     PyArray_Dims dims;
@@ -2365,7 +2365,7 @@ run_scalar_intp_converter(PyObject *NPY_UNUSED(self), PyObject *obj)
     }
 }
 
-PyObject *
+static PyObject *
 run_scalar_intp_from_sequence(PyObject *NPY_UNUSED(self), PyObject *obj)
 {
     npy_intp vals[1];
