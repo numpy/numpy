@@ -1,0 +1,8 @@
+Faster operations on NumPy scalars
+----------------------------------
+Many operations on NumPy scalars are now significantly faster, although
+rare operations (e.g. with 0-D arrays rather than scalars) may be slower
+in some cases.
+However, even with these improvements users who want the best performance
+for their scalars, may want to convert a known NumPy scalar into a Python
+one using `scalar.item()`.

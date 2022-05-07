@@ -1,3 +1,5 @@
+#cython: language_level=3
+
 """
 Functions in this module give python-space wrappers for cython functions
 exposed in numpy/__init__.pxd, so they can be tested in test_cython.py

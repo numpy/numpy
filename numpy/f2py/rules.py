@@ -53,6 +53,7 @@ Pearu Peterson
 import os, sys
 import time
 import copy
+from pathlib import Path
 
 # __version__.version is now the same as the NumPy version
 from . import __version__
@@ -1217,6 +1218,22 @@ def buildmodule(m, um):
             # requiresf90wrapper must be called before buildapi as it
             # rewrites assumed shape arrays as automatic arrays.
             isf90 = requiresf90wrapper(nb)
+            # options is in scope here
+            if options['emptygen']:
+                b_path = options['buildpath']
+                m_name = vrd['modulename']
+                outmess('    Generating possibly empty wrappers"\n')
+                Path(f"{b_path}/{vrd['coutput']}").touch()
+                if isf90:
+                    # f77 + f90 wrappers
+                    outmess(f'    Maybe empty "{m_name}-f2pywrappers2.f90"\n')
+                    Path(f'{b_path}/{m_name}-f2pywrappers2.f90').touch()
+                    outmess(f'    Maybe empty "{m_name}-f2pywrappers.f"\n')
+                    Path(f'{b_path}/{m_name}-f2pywrappers.f').touch()
+                else:
+                    # only f77 wrappers
+                    outmess(f'    Maybe empty "{m_name}-f2pywrappers.f"\n')
+                    Path(f'{b_path}/{m_name}-f2pywrappers.f').touch()
             api, wrap = buildapi(nb)
             if wrap:
                 if isf90:

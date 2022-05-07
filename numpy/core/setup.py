@@ -769,7 +769,7 @@ def configuration(parent_package='',top_path=None):
 
     npymath_sources = [join('src', 'npymath', 'npy_math_internal.h.src'),
                        join('src', 'npymath', 'npy_math.c'),
-                       join('src', 'npymath', 'ieee754.c.src'),
+                       join('src', 'npymath', 'ieee754.cpp'),
                        join('src', 'npymath', 'npy_math_complex.c.src'),
                        join('src', 'npymath', 'halffloat.c')
                        ]
@@ -858,7 +858,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'common', 'ucsnarrow.c'),
             join('src', 'common', 'ufunc_override.c'),
             join('src', 'common', 'numpyos.c'),
-            join('src', 'common', 'npy_cpu_features.c.src'),
+            join('src', 'common', 'npy_cpu_features.c'),
             ]
 
     if os.environ.get('NPY_USE_BLAS_ILP64', "0") != "0":
@@ -1069,6 +1069,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'umath', 'loops_umath_fp.dispatch.c.src'),
             join('src', 'umath', 'loops_exponent_log.dispatch.c.src'),
             join('src', 'umath', 'loops_hyperbolic.dispatch.c.src'),
+            join('src', 'umath', 'loops_modulo.dispatch.c.src'),
             join('src', 'umath', 'matmul.h.src'),
             join('src', 'umath', 'matmul.c.src'),
             join('src', 'umath', 'clip.h'),
@@ -1141,7 +1142,7 @@ def configuration(parent_package='',top_path=None):
     config.add_extension('_umath_tests', sources=[
         join('src', 'umath', '_umath_tests.c.src'),
         join('src', 'umath', '_umath_tests.dispatch.c'),
-        join('src', 'common', 'npy_cpu_features.c.src'),
+        join('src', 'common', 'npy_cpu_features.c'),
     ])
 
     #######################################################################
@@ -1171,7 +1172,7 @@ def configuration(parent_package='',top_path=None):
     #######################################################################
 
     config.add_extension('_simd', sources=[
-        join('src', 'common', 'npy_cpu_features.c.src'),
+        join('src', 'common', 'npy_cpu_features.c'),
         join('src', '_simd', '_simd.c'),
         join('src', '_simd', '_simd_inc.h.src'),
         join('src', '_simd', '_simd_data.inc.src'),

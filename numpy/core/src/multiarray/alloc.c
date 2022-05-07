@@ -576,7 +576,7 @@ PyDataMem_GetHandler()
     if (p == NULL) {
         return NULL;
     }
-    handler = PyDict_GetItemString(p, "current_allocator");
+    handler = PyDict_GetItem(p, npy_ma_str_current_allocator);
     if (handler == NULL) {
         handler = PyCapsule_New(&default_handler, "mem_handler", NULL);
         if (handler == NULL) {

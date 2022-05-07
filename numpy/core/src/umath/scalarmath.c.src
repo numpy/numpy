@@ -26,6 +26,13 @@
 #include "binop_override.h"
 #include "npy_longdouble.h"
 
+#include "array_coercion.h"
+#include "common.h"
+#include "can_cast_table.h"
+
+/* TODO: Used for some functions, should possibly move these to npy_math.h */
+#include "loops.h"
+
 /* Basic operations:
  *
  *  BINARY:
@@ -45,23 +52,22 @@
  *  #name = byte, short, int, long, longlong#
  *  #type = npy_byte, npy_short, npy_int, npy_long, npy_longlong#
  */
-static void
+static NPY_INLINE int
 @name@_ctype_add(@type@ a, @type@ b, @type@ *out) {
     *out = a + b;
     if ((*out^a) >= 0 || (*out^b) >= 0) {
-        return;
+        return 0;
     }
-    npy_set_floatstatus_overflow();
-    return;
+    return NPY_FPE_OVERFLOW;
 }
-static void
+
+static NPY_INLINE int
 @name@_ctype_subtract(@type@ a, @type@ b, @type@ *out) {
     *out = a - b;
     if ((*out^a) >= 0 || (*out^~b) >= 0) {
-        return;
+        return 0;
     }
-    npy_set_floatstatus_overflow();
-    return;
+    return NPY_FPE_OVERFLOW;
 }
 /**end repeat**/
 
@@ -69,23 +75,22 @@ static void
  *  #name = ubyte, ushort, uint, ulong, ulonglong#
  *  #type = npy_ubyte, npy_ushort, npy_uint, npy_ulong, npy_ulonglong#
  */
-static void
+static NPY_INLINE int
 @name@_ctype_add(@type@ a, @type@ b, @type@ *out) {
     *out = a + b;
     if (*out >= a && *out >= b) {
-        return;
+        return 0;
     }
-    npy_set_floatstatus_overflow();
-    return;
+    return NPY_FPE_OVERFLOW;
 }
-static void
+
+static NPY_INLINE int
 @name@_ctype_subtract(@type@ a, @type@ b, @type@ *out) {
     *out = a - b;
     if (a >= b) {
-        return;
+        return 0;
     }
-    npy_set_floatstatus_overflow();
-    return;
+    return NPY_FPE_OVERFLOW;
 }
 /**end repeat**/
 
@@ -108,18 +113,19 @@ static void
  * #neg = (1,0)*4#
  */
 #if NPY_SIZEOF_@SIZE@ > NPY_SIZEOF_@SIZENAME@
-static void
+static NPY_INLINE int
 @name@_ctype_multiply(@type@ a, @type@ b, @type@ *out) {
     @big@ temp;
     temp = ((@big@) a) * ((@big@) b);
     *out = (@type@) temp;
 #if @neg@
-    if (temp > NPY_MAX_@NAME@ || temp < NPY_MIN_@NAME@)
+    if (temp > NPY_MAX_@NAME@ || temp < NPY_MIN_@NAME@) {
 #else
-        if (temp > NPY_MAX_@NAME@)
+    if (temp > NPY_MAX_@NAME@) {
 #endif
-            npy_set_floatstatus_overflow();
-    return;
+        return NPY_FPE_OVERFLOW;
+    }
+    return 0;
 }
 #endif
 /**end repeat**/
@@ -133,12 +139,12 @@ static void
  * #SIZE = INT*2, LONG*2, LONGLONG*2#
  */
 #if NPY_SIZEOF_LONGLONG == NPY_SIZEOF_@SIZE@
-static void
+static NPY_INLINE int
 @name@_ctype_multiply(@type@ a, @type@ b, @type@ *out) {
     if (npy_mul_with_overflow_@name@(out, a, b)) {
-        npy_set_floatstatus_overflow();
+        return NPY_FPE_OVERFLOW;
     }
-    return;
+    return 0;
 }
 #endif
 /**end repeat**/
@@ -151,16 +157,16 @@ static void
  *         npy_long, npy_ulong, npy_longlong, npy_ulonglong#
  * #neg = (1,0)*5#
  */
-static void
+static NPY_INLINE int
 @name@_ctype_divide(@type@ a, @type@ b, @type@ *out) {
     if (b == 0) {
-        npy_set_floatstatus_divbyzero();
         *out = 0;
+        return NPY_FPE_DIVIDEBYZERO;
     }
 #if @neg@
     else if (b == -1 && a < 0 && a == -a) {
-        npy_set_floatstatus_overflow();
         *out = a / b;
+        return NPY_FPE_OVERFLOW;
     }
 #endif
     else {
@@ -174,17 +180,20 @@ static void
 #else
         *out = a / b;
 #endif
+        return 0;
     }
 }
 
 #define @name@_ctype_floor_divide @name@_ctype_divide
 
-static void
+static NPY_INLINE int
 @name@_ctype_remainder(@type@ a, @type@ b, @type@ *out) {
     if (a == 0 || b == 0) {
-        if (b == 0) npy_set_floatstatus_divbyzero();
         *out = 0;
-        return;
+        if (b == 0) {
+            return NPY_FPE_DIVIDEBYZERO;
+        }
+        return 0;
     }
 #if @neg@
     else if ((a > 0) == (b > 0)) {
@@ -198,6 +207,7 @@ static void
 #else
     *out = a % b;
 #endif
+    return 0;
 }
 /**end repeat**/
 
@@ -205,10 +215,15 @@ static void
  *
  * #name = byte, ubyte, short, ushort, int, uint, long,
  *         ulong, longlong, ulonglong#
- * #otyp = npy_float*4, npy_double*6#
  */
-#define @name@_ctype_true_divide(a, b, out)     \
-    *(out) = ((@otyp@) (a)) / ((@otyp@) (b));
+
+static NPY_INLINE int
+@name@_ctype_true_divide(npy_@name@ a, npy_@name@ b, npy_double *out)
+{
+    *out = (npy_double)a / (npy_double)b;
+    return 0;
+}
+
 /**end repeat**/
 
 /* b will always be positive in this call */
@@ -221,17 +236,17 @@ static void
  * #upc = BYTE, UBYTE, SHORT, USHORT, INT, UINT,
  *        LONG, ULONG, LONGLONG, ULONGLONG#
  */
-static void
+static NPY_INLINE int
 @name@_ctype_power(@type@ a, @type@ b, @type@ *out) {
     @type@ tmp;
 
     if (b == 0) {
         *out = 1;
-        return;
+        return 0;
     }
     if (a == 1) {
         *out = 1;
-        return;
+        return 0;
     }
 
     tmp = b & 1 ? a : 1;
@@ -244,6 +259,7 @@ static void
         b >>= 1;
     }
     *out = tmp;
+    return 0;
 }
 /**end repeat**/
 
@@ -261,12 +277,28 @@ static void
  * #op = &, ^, |#
  */
 
-#define @name@_ctype_@oper@(arg1, arg2, out) *(out) = (arg1) @op@ (arg2)
+static NPY_INLINE int
+@name@_ctype_@oper@(@type@ arg1, @type@ arg2, @type@ *out)
+{
+    *out = arg1 @op@ arg2;
+    return 0;
+}
 
 /**end repeat1**/
 
-#define @name@_ctype_lshift(arg1, arg2, out) *(out) = npy_lshift@suffix@(arg1, arg2)
-#define @name@_ctype_rshift(arg1, arg2, out) *(out) = npy_rshift@suffix@(arg1, arg2)
+static NPY_INLINE int
+@name@_ctype_lshift(@type@ arg1, @type@ arg2, @type@ *out)
+{
+    *out = npy_lshift@suffix@(arg1, arg2);
+    return 0;
+}
+
+static NPY_INLINE int
+@name@_ctype_rshift(@type@ arg1, @type@ arg2, @type@ *out)
+{
+    *out = npy_rshift@suffix@(arg1, arg2);
+    return 0;
+}
 
 /**end repeat**/
 
@@ -275,135 +307,162 @@ static void
  * #type = npy_float, npy_double, npy_longdouble#
  * #c = f, , l#
  */
-#define @name@_ctype_add(a, b, outp) *(outp) = (a) + (b)
-#define @name@_ctype_subtract(a, b, outp) *(outp) = (a) - (b)
-#define @name@_ctype_multiply(a, b, outp) *(outp) = (a) * (b)
-#define @name@_ctype_divide(a, b, outp) *(outp) = (a) / (b)
+
+/**begin repeat1
+ * #OP = +, -, *, /#
+ * #oper = add, subtract, multiply, divide#
+ */
+
+static NPY_INLINE int
+@name@_ctype_@oper@(@type@ a, @type@ b, @type@ *out)
+{
+    *out = a @OP@ b;
+    return 0;
+}
+
+/**end repeat1**/
+
 #define @name@_ctype_true_divide @name@_ctype_divide
 
 
-static void
+static NPY_INLINE int
 @name@_ctype_floor_divide(@type@ a, @type@ b, @type@ *out) {
     *out = npy_floor_divide@c@(a, b);
+    return 0;
 }
 
 
-static void
+static NPY_INLINE int
 @name@_ctype_remainder(@type@ a, @type@ b, @type@ *out) {
     *out = npy_remainder@c@(a, b);
+    return 0;
 }
 
 
-static void
+static NPY_INLINE int
 @name@_ctype_divmod(@type@ a, @type@ b, @type@ *out1, @type@ *out2) {
     *out1 = npy_divmod@c@(a, b, out2);
+    return 0;
 }
 
 
 /**end repeat**/
 
-#define half_ctype_add(a, b, outp) *(outp) = \
-        npy_float_to_half(npy_half_to_float(a) + npy_half_to_float(b))
-#define half_ctype_subtract(a, b, outp) *(outp) = \
-        npy_float_to_half(npy_half_to_float(a) - npy_half_to_float(b))
-#define half_ctype_multiply(a, b, outp) *(outp) = \
-        npy_float_to_half(npy_half_to_float(a) * npy_half_to_float(b))
-#define half_ctype_divide(a, b, outp) *(outp) = \
-        npy_float_to_half(npy_half_to_float(a) / npy_half_to_float(b))
+/**begin repeat
+ * #OP = +, -, *, /#
+ * #oper = add, subtract, multiply, divide#
+ */
+
+static NPY_INLINE int
+half_ctype_@oper@(npy_half a, npy_half b, npy_half *out)
+{
+    float res = npy_half_to_float(a) @OP@ npy_half_to_float(b);
+    *out = npy_float_to_half(res);
+    return 0;
+}
+
+/**end repeat**/
 #define half_ctype_true_divide half_ctype_divide
 
 
-static void
-half_ctype_floor_divide(npy_half a, npy_half b, npy_half *out) {
+static NPY_INLINE int
+half_ctype_floor_divide(npy_half a, npy_half b, npy_half *out)
+{
     npy_half mod;
 
     if (!b) {
-        *out = a / b;
-    } else {
+        float res = npy_half_to_float(a) / npy_half_to_float(b);
+        *out = npy_float_to_half(res);
+    }
+    else {
         *out = npy_half_divmod(a, b, &mod);
     }
+    return 0;
 }
 
 
-static void
-half_ctype_remainder(npy_half a, npy_half b, npy_half *out) {
+static NPY_INLINE int
+half_ctype_remainder(npy_half a, npy_half b, npy_half *out)
+{
     npy_half_divmod(a, b, out);
+    return 0;
 }
 
 
-static void
-half_ctype_divmod(npy_half a, npy_half b, npy_half *out1, npy_half *out2) {
+static NPY_INLINE int
+half_ctype_divmod(npy_half a, npy_half b, npy_half *out1, npy_half *out2)
+{
     *out1 = npy_half_divmod(a, b, out2);
+    return 0;
 }
 
 /**begin repeat
  * #name = cfloat, cdouble, clongdouble#
+ * #type = npy_cfloat, npy_cdouble, npy_clongdouble#
+ * #TYPE = CFLOAT, CDOUBLE, CLONGDOUBLE#
  * #rname = float, double, longdouble#
  * #rtype = npy_float, npy_double, npy_longdouble#
  * #c = f,,l#
  */
-#define @name@_ctype_add(a, b, outp) do{        \
-    (outp)->real = (a).real + (b).real;         \
-    (outp)->imag = (a).imag + (b).imag;         \
-    } while(0)
-#define @name@_ctype_subtract(a, b, outp) do{   \
-    (outp)->real = (a).real - (b).real;         \
-    (outp)->imag = (a).imag - (b).imag;         \
-    } while(0)
-#define @name@_ctype_multiply(a, b, outp) do{                   \
-    (outp)->real = (a).real * (b).real - (a).imag * (b).imag;   \
-    (outp)->imag = (a).real * (b).imag + (a).imag * (b).real;   \
-    } while(0)
-/* Algorithm identical to that in loops.c.src, for consistency */
-#define @name@_ctype_divide(a, b, outp) do{                         \
-    @rtype@ in1r = (a).real;                                        \
-    @rtype@ in1i = (a).imag;                                        \
-    @rtype@ in2r = (b).real;                                        \
-    @rtype@ in2i = (b).imag;                                        \
-    @rtype@ in2r_abs = npy_fabs@c@(in2r);                           \
-    @rtype@ in2i_abs = npy_fabs@c@(in2i);                           \
-    if (in2r_abs >= in2i_abs) {                                     \
-        if (in2r_abs == 0 && in2i_abs == 0) {                       \
-            /* divide by zero should yield a complex inf or nan */  \
-            (outp)->real = in1r/in2r_abs;                           \
-            (outp)->imag = in1i/in2i_abs;                           \
-        }                                                           \
-        else {                                                      \
-            @rtype@ rat = in2i/in2r;                                \
-            @rtype@ scl = 1.0@c@/(in2r + in2i*rat);                 \
-            (outp)->real = (in1r + in1i*rat)*scl;                   \
-            (outp)->imag = (in1i - in1r*rat)*scl;                   \
-        }                                                           \
-    }                                                               \
-    else {                                                          \
-        @rtype@ rat = in2r/in2i;                                    \
-        @rtype@ scl = 1.0@c@/(in2i + in2r*rat);                     \
-        (outp)->real = (in1r*rat + in1i)*scl;                       \
-        (outp)->imag = (in1i*rat - in1r)*scl;                       \
-    }                                                               \
-    } while(0)
+static NPY_INLINE int
+@name@_ctype_add(@type@ a, @type@ b, @type@ *out)
+{
+    out->real = a.real + b.real;
+    out->imag = a.imag + b.imag;
+    return 0;
+}
+
+static NPY_INLINE int
+@name@_ctype_subtract(@type@ a, @type@ b, @type@ *out)
+{
+    out->real = a.real - b.real;
+    out->imag = a.imag - b.imag;
+    return 0;
+}
+
+
+/*
+ * TODO: Mark as  to work around FPEs not being issues on clang 12.
+ *       This should be removed when possible.
+ */
+static NPY_INLINE int
+@name@_ctype_multiply( @type@ a, @type@ b, @type@ *out)
+{
+    out->real = a.real * b.real - a.imag * b.imag;
+    out->imag = a.real * b.imag + a.imag * b.real;
+    return 0;
+}
+
+/* Use the ufunc loop directly to avoid duplicating the complicated logic */
+static NPY_INLINE int
+@name@_ctype_divide(@type@ a, @type@ b, @type@ *out)
+{
+    char *args[3] = {(char *)&a, (char *)&b, (char *)out};
+    npy_intp steps[3];
+    npy_intp size = 1;
+    @TYPE@_divide(args, &size, steps, NULL);
+    return 0;
+}
 
 #define @name@_ctype_true_divide @name@_ctype_divide
 
-#define @name@_ctype_floor_divide(a, b, outp) do {      \
-    @rname@_ctype_floor_divide(                         \
-        ((a).real*(b).real + (a).imag*(b).imag),        \
-        ((b).real*(b).real + (b).imag*(b).imag),        \
-        &((outp)->real));                               \
-    (outp)->imag = 0;                                   \
-    } while(0)
 /**end repeat**/
 
 
 
 /**begin repeat
  * #name = byte, ubyte, short, ushort, int, uint, long, ulong,
- *         longlong, ulonglong, cfloat, cdouble, clongdouble#
+ *         longlong, ulonglong#
  */
-#define @name@_ctype_divmod(a, b, out, out2) {  \
-    @name@_ctype_floor_divide(a, b, out);       \
-    @name@_ctype_remainder(a, b, out2);         \
-    }
+
+static NPY_INLINE int
+@name@_ctype_divmod(npy_@name@ a, npy_@name@ b, npy_@name@ *out, npy_@name@ *out2)
+{
+    int res = @name@_ctype_floor_divide(a, b, out);
+    res |= @name@_ctype_remainder(a, b, out2);
+    return res;
+}
+
 /**end repeat**/
 
 
@@ -413,20 +472,22 @@ half_ctype_divmod(npy_half a, npy_half b, npy_half *out1, npy_half *out2) {
  * #c = f,,l#
  */
 
-static void
+static NPY_INLINE int
 @name@_ctype_power(@type@ a, @type@ b, @type@ *out)
 {
     *out = npy_pow@c@(a, b);
+    return 0;
 }
 
 /**end repeat**/
-static void
+static NPY_INLINE int
 half_ctype_power(npy_half a, npy_half b, npy_half *out)
 {
     const npy_float af = npy_half_to_float(a);
     const npy_float bf = npy_half_to_float(b);
     const npy_float outf = npy_powf(af,bf);
     *out = npy_float_to_half(outf);
+    return 0;
 }
 
 /**begin repeat
@@ -438,20 +499,23 @@ half_ctype_power(npy_half a, npy_half b, npy_half *out)
  *         npy_float, npy_double, npy_longdouble#
  * #uns = (0,1)*5,0*3#
  */
-static void
+static NPY_INLINE int
 @name@_ctype_negative(@type@ a, @type@ *out)
 {
-#if @uns@
-    npy_set_floatstatus_overflow();
-#endif
     *out = -a;
+#if @uns@
+    return NPY_FPE_OVERFLOW;
+#else
+    return 0;
+#endif
 }
 /**end repeat**/
 
-static void
+static NPY_INLINE int
 half_ctype_negative(npy_half a, npy_half *out)
 {
     *out = a^0x8000u;
+    return 0;
 }
 
 
@@ -459,11 +523,12 @@ half_ctype_negative(npy_half a, npy_half *out)
  * #name = cfloat, cdouble, clongdouble#
  * #type = npy_cfloat, npy_cdouble, npy_clongdouble#
  */
-static void
+static NPY_INLINE int
 @name@_ctype_negative(@type@ a, @type@ *out)
 {
     out->real = -a.real;
     out->imag = -a.imag;
+    return 0;
 }
 /**end repeat**/
 
@@ -475,10 +540,11 @@ static void
  *         npy_long, npy_ulong, npy_longlong, npy_ulonglong,
  *         npy_half, npy_float, npy_double, npy_longdouble#
  */
-static void
+static NPY_INLINE int
 @name@_ctype_positive(@type@ a, @type@ *out)
 {
     *out = a;
+    return 0;
 }
 /**end repeat**/
 
@@ -487,17 +553,19 @@ static void
  * #type = npy_cfloat, npy_cdouble, npy_clongdouble#
  * #c = f,,l#
  */
-static void
+static NPY_INLINE int
 @name@_ctype_positive(@type@ a, @type@ *out)
 {
     out->real = a.real;
     out->imag = a.imag;
+    return 0;
 }
 
-static void
+static NPY_INLINE int
 @name@_ctype_power(@type@ a, @type@ b, @type@ *out)
 {
     *out = npy_cpow@c@(a, b);
+    return 0;
 }
 /**end repeat**/
 
@@ -515,10 +583,11 @@ static void
  * #name = byte, short, int, long, longlong#
  * #type = npy_byte, npy_short, npy_int, npy_long, npy_longlong#
  */
-static void
+static NPY_INLINE int
 @name@_ctype_absolute(@type@ a, @type@ *out)
 {
     *out = (a < 0 ? -a : a);
+    return 0;
 }
 /**end repeat**/
 
@@ -527,17 +596,19 @@ static void
  * #type = npy_float, npy_double, npy_longdouble#
  * #c = f,,l#
  */
-static void
+static NPY_INLINE int
 @name@_ctype_absolute(@type@ a, @type@ *out)
 {
     *out = npy_fabs@c@(a);
+    return 0;
 }
 /**end repeat**/
 
-static void
+static NPY_INLINE int
 half_ctype_absolute(npy_half a, npy_half *out)
 {
     *out = a&0x7fffu;
+    return 0;
 }
 
 /**begin repeat
@@ -546,10 +617,11 @@ half_ctype_absolute(npy_half a, npy_half *out)
  * #rtype = npy_float, npy_double, npy_longdouble#
  * #c = f,,l#
  */
-static void
+static NPY_INLINE int
 @name@_ctype_absolute(@type@ a, @rtype@ *out)
 {
     *out = npy_cabs@c@(a);
+    return 0;
 }
 /**end repeat**/
 
@@ -558,195 +630,399 @@ static void
  *         ulong, longlong, ulonglong#
  */
 
-#define @name@_ctype_invert(a, out) *(out) = ~a;
+static NPY_INLINE int
+@name@_ctype_invert(npy_@name@ a, npy_@name@ *out)
+{
+    *out = ~a;
+    return 0;
+}
 
 /**end repeat**/
 
 /*** END OF BASIC CODE **/
 
 
-/* The general strategy for commutative binary operators is to
+/*
+ * How binary operators work
+ * -------------------------
  *
- * 1) Convert the types to the common type if both are scalars (0 return)
- * 2) If both are not scalars use ufunc machinery (-2 return)
- * 3) If both are scalars but cannot be cast to the right type
- * return NotImplemented (-1 return)
+ * All binary (numeric) operators use the larger of the two types, with the
+ * exception of unsigned int and signed int mixed cases which must promote
+ * to a larger type.
  *
- * 4) Perform the function on the C-type.
- * 5) If an error condition occurred, check to see
- * what the current error-handling is and handle the error.
+ * The strategy employed for all binary operation is that we coerce the other
+ * scalar if it is safe to do.  E.g. `float64 + float32` the `float64` can
+ * convert `float32` and do the operation as `float64 + float64`.
+ * OTOH, for `float32 + float64` it is safe, and we should defer to `float64`.
  *
- * 6) Construct and return the output scalar.
+ * So we have multiple possible paths:
+ * - The other scalar is a subclass.  In principle *both* inputs could be
+ *   different subclasses.  In this case it would make sense to defer, but
+ *   Python's `int` does not try this as well, so we do not here:
+ *
+ *      class A(int): pass
+ *      class B(int):
+ *          def __add__(self, other): return "b"
+ *          __radd__ = __add__
+ *
+ *      A(1) + B(1)  # return 2
+ *      B(1) + A(1)  # return "b"
+ *
+ * - The other scalar can be converted:  All is good, we do the operation
+ * - The other scalar cannot be converted, there are two possibilities:
+ *   - The reverse should work, so we return NotImplemented to defer.
+ *     (If self is a subclass, this will end up in the "unknown" path.)
+ *   - Neither works (e.g. `uint8 + int8`):  We currently use the array path.
+ * - The other object is a unknown.  It could be either a scalar, an array,
+ *   or an array-like (including a list!).  Because NumPy scalars pretend to be
+ *   arrays we fall into the array fallback path here _normally_ (through
+ *   the generic scalar path).
+ *   First we check if we should defer, though.
+ *
+ * The last possibility is awkward and leads to very confusing situations.
+ * The problem is that usually we should defer (return NotImplemented)
+ * in that path.
+ * If the other object is a NumPy array (or array-like) it will know what to
+ * do.  If NumPy knows that it is a scalar (not generic `object`), then it
+ * would make sense to try and use the "array path" (i.e. deal with it
+ * using the ufunc machinery).
+ *
+ * But this overlooks two things that currently work:
+ *
+ * 1. `np.float64(3) * [1, 2, 3]`  happily returns an array result.
+ * 2. `np.int32(3) * decimal.Decimal(3)` works!  (see below)
+ *
+ * The first must work, because scalars pretend to be arrays.  Which means
+ * they inherit the greedy "convert the other object to an array" logic.
+ * This may be a questionable choice, but is fine.
+ * (As of now, it is not negotiable, since NumPy often converts 0-D arrays
+ * to scalars.)
+ *
+ * The second one is more confusing.  This works also by using the ufunc
+ * machinery (array path), but it works because:
+ *
+ *     np.add(np.int32(3), decimal.Decimal(3))
+ *
+ * Will convert the `int32` to an int32 array, and the decimal to an object
+ * array.  It then *casts* the `int32` array to an object array.
+ * The casting step CONVERTS the integer to a Python integer.  The ufunc object
+ * loop will then call back into Python scalar logic.
+ *
+ * The above would be recursive, if it was not for the conversion of the int32
+ * to a Python integer!
+ * This leads us to the EXCEEDINGLY IMPORTANT special case:
+ *
+ * WARNING: longdouble and clongdouble do NOT convert to a Python scalar
+ *          when cast to object.  Thus they MUST NEVER take the array-path.
+ *          However, they STILL should defer at least for
+ *          `np.longdouble(3) + array`.
+ *
+ *
+ * As a general note, in the above we defer exactly when we know that deferring
+ * will work.  `longdouble` uses the "simple" logic of generally deferring
+ * though, because it would otherwise easily run into an infinite recursion.
+ *
+ *
+ * The future?!
+ * ------------
+ *
+ * This is very tricky and it would be nice to formalize away that "recursive"
+ * path we currently use.  I (seberg) have currently no great idea on this,
+ * this is more brainstorming!
+ *
+ * If both are scalars (known to NumPy), they have a DType and we may be able
+ * to do the ufunc promotion to make sure there is no risk of recursion.
+ *
+ * In principle always deferring would probably be clean.  But we likely cannot
+ * do that?  There is also an issue that it is nice that we allow adding a
+ * DType for an existing Python scalar (which will not know about NumPy
+ * scalars).
+ * The DType/ufunc machinery teaches NumPy how arrays will work with that
+ * Python scalar, but the DType may need to help us decide whether we should
+ * defer (return NotImplemented) or try using the ufunc machinery (or a
+ * simplified ufunc-like machinery limited to scalars).
  */
+
+
+/*
+ * Enum used to describe the space of possibilities when converting the second
+ * argument to a binary operation.
+ */
+typedef enum {
+    /* An error occurred (should not really happen/be possible) */
+    CONVERSION_ERROR = -1,
+    /* A known NumPy scalar, but of higher precision: we defer */
+    DEFER_TO_OTHER_KNOWN_SCALAR,
+    /* Conversion was successful (known scalar of less precision) */
+    CONVERSION_SUCCESS,
+    /*
+     * Other object is an unkown scalar or array-like, we (typically) use
+     * the generic path, which normally ends up in the ufunc machinery.
+     */
+    OTHER_IS_UNKNOWN_OBJECT,
+    /*
+     * Promotion necessary
+     */
+    PROMOTION_REQUIRED,
+    /*
+     * The other object may be a subclass, conversion is successful.  We do
+     * not special case this as Python's `int` does not either
+     */
+    OTHER_IS_SUBCLASS,
+} conversion_result;
 
 /**begin repeat
  * #name = byte, ubyte, short, ushort, int, uint,
  *         long, ulong, longlong, ulonglong,
- *         half, float, longdouble,
+ *         half, float, double, longdouble,
  *         cfloat, cdouble, clongdouble#
- * #type = npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
- *         npy_long, npy_ulong, npy_longlong, npy_ulonglong,
- *         npy_half, npy_float, npy_longdouble,
- *         npy_cfloat, npy_cdouble, npy_clongdouble#
  * #Name = Byte, UByte, Short, UShort, Int, UInt,
  *         Long, ULong, LongLong, ULongLong,
- *         Half, Float, LongDouble,
+ *         Half, Float, Double, LongDouble,
  *         CFloat, CDouble, CLongDouble#
- * #TYPE = NPY_BYTE, NPY_UBYTE, NPY_SHORT, NPY_USHORT, NPY_INT, NPY_UINT,
- *         NPY_LONG, NPY_ULONG, NPY_LONGLONG, NPY_ULONGLONG,
- *         NPY_HALF, NPY_FLOAT, NPY_LONGDOUBLE,
- *         NPY_CFLOAT, NPY_CDOUBLE, NPY_CLONGDOUBLE#
- */
-
-static int
-_@name@_convert_to_ctype(PyObject *a, @type@ *arg1)
-{
-    PyObject *temp;
-
-    if (PyArray_IsScalar(a, @Name@)) {
-        *arg1 = PyArrayScalar_VAL(a, @Name@);
-        return 0;
-    }
-    else if (PyArray_IsScalar(a, Generic)) {
-        PyArray_Descr *descr1;
-
-        if (!PyArray_IsScalar(a, Number)) {
-            return -1;
-        }
-        descr1 = PyArray_DescrFromTypeObject((PyObject *)Py_TYPE(a));
-        if (PyArray_CanCastSafely(descr1->type_num, @TYPE@)) {
-            PyArray_CastScalarDirect(a, descr1, arg1, @TYPE@);
-            Py_DECREF(descr1);
-            return 0;
-        }
-        else {
-            Py_DECREF(descr1);
-            return -1;
-        }
-    }
-    else if (PyArray_GetPriority(a, NPY_PRIORITY) > NPY_PRIORITY) {
-        return -2;
-    }
-    else if ((temp = PyArray_ScalarFromObject(a)) != NULL) {
-        int retval = _@name@_convert_to_ctype(temp, arg1);
-
-        Py_DECREF(temp);
-        return retval;
-    }
-    return -2;
-}
-
-/**end repeat**/
-
-
-/* Same as above but added exact checks against known python types for speed */
-
-/**begin repeat
- * #name = double#
- * #type = npy_double#
- * #Name = Double#
- * #TYPE = NPY_DOUBLE#
- * #PYCHECKEXACT = PyFloat_CheckExact#
- * #PYEXTRACTCTYPE = PyFloat_AS_DOUBLE#
- */
-
-static int
-_@name@_convert_to_ctype(PyObject *a, @type@ *arg1)
-{
-    PyObject *temp;
-
-    if (@PYCHECKEXACT@(a)){
-        *arg1 = @PYEXTRACTCTYPE@(a);
-        return 0;
-    }
-
-    if (PyArray_IsScalar(a, @Name@)) {
-        *arg1 = PyArrayScalar_VAL(a, @Name@);
-        return 0;
-    }
-    else if (PyArray_IsScalar(a, Generic)) {
-        PyArray_Descr *descr1;
-
-        if (!PyArray_IsScalar(a, Number)) {
-            return -1;
-        }
-        descr1 = PyArray_DescrFromTypeObject((PyObject *)Py_TYPE(a));
-        if (PyArray_CanCastSafely(descr1->type_num, @TYPE@)) {
-            PyArray_CastScalarDirect(a, descr1, arg1, @TYPE@);
-            Py_DECREF(descr1);
-            return 0;
-        }
-        else {
-            Py_DECREF(descr1);
-            return -1;
-        }
-    }
-    else if (PyArray_GetPriority(a, NPY_PRIORITY) > NPY_PRIORITY) {
-        return -2;
-    }
-    else if ((temp = PyArray_ScalarFromObject(a)) != NULL) {
-        int retval = _@name@_convert_to_ctype(temp, arg1);
-
-        Py_DECREF(temp);
-        return retval;
-    }
-    return -2;
-}
-
-/**end repeat**/
-
-
-/**begin repeat
- * #name = byte, ubyte, short, ushort, int, uint,
- *         long, ulong, longlong, ulonglong,
- *         half, float, double, cfloat, cdouble#
+ * #TYPE = BYTE, UBYTE, SHORT, USHORT, INT, UINT,
+ *         LONG, ULONG, LONGLONG, ULONGLONG,
+ *         HALF, FLOAT, DOUBLE, LONGDOUBLE,
+ *         CFLOAT, CDOUBLE, CLONGDOUBLE#
  * #type = npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
  *         npy_long, npy_ulong, npy_longlong, npy_ulonglong,
- *         npy_half, npy_float, npy_double, npy_cfloat, npy_cdouble#
- */
-static int
-_@name@_convert2_to_ctypes(PyObject *a, @type@ *arg1,
-                           PyObject *b, @type@ *arg2)
-{
-    int ret;
-    ret = _@name@_convert_to_ctype(a, arg1);
-    if (ret < 0) {
-        return ret;
-    }
-    ret = _@name@_convert_to_ctype(b, arg2);
-    if (ret < 0) {
-        return ret;
-    }
-    return 0;
-}
-/**end repeat**/
-
-/**begin repeat
- * #name = longdouble, clongdouble#
- * #type = npy_longdouble, npy_clongdouble#
+ *         npy_half, npy_float, npy_double, npy_longdouble,
+ *         npy_cfloat, npy_cdouble, npy_clongdouble#
  */
 
-static int
-_@name@_convert2_to_ctypes(PyObject *a, @type@ *arg1,
-                           PyObject *b, @type@ *arg2)
+#define IS_@TYPE@ 1
+
+#define IS_SAFE(FROM, TO) _npy_can_cast_safely_table[FROM][TO]
+
+/*
+ * TODO: This whole thing is awkward, and we should create a helper header to
+ *       define inline functions that convert single elements for all numeric
+ *       types.  That could then also be used to define all cast loops.
+ *       (Even if that may get more complex for SIMD at some point.)
+ *       For now, half casts could be optimized because of that.
+ */
+
+#if defined(IS_HALF)
+    #define CONVERT_TO_RESULT(value)  \
+        *result = npy_float_to_half((float)(value))
+#elif defined(IS_CFLOAT) || defined(IS_CDOUBLE) || defined(IS_CLONGDOUBLE)
+    #define CONVERT_TO_RESULT(value)  \
+        result->real = value;  \
+        result->imag = 0
+#else
+    #define CONVERT_TO_RESULT(value) *result = value
+#endif
+
+
+#define GET_VALUE_OR_DEFER(OTHER, Other, value)  \
+    case NPY_##OTHER:  \
+        if (IS_SAFE(NPY_##OTHER, NPY_@TYPE@)) {  \
+            assert(Py_TYPE(value) == &Py##Other##ArrType_Type);  \
+            CONVERT_TO_RESULT(PyArrayScalar_VAL(value, Other));  \
+            ret = CONVERSION_SUCCESS;  \
+        }  \
+        else if (IS_SAFE(NPY_@TYPE@, NPY_##OTHER)) {  \
+            /*
+             * If self can cast safely to other, this is clear:
+             * we should definitely defer.
+             */  \
+             ret = DEFER_TO_OTHER_KNOWN_SCALAR;  \
+        }  \
+        else {  \
+            /* Otherwise, we must promote */  \
+            ret = PROMOTION_REQUIRED;  \
+        }  \
+        break;
+
+/*
+ * Complex to complex (and rejecting complex to real) is a bit different:
+ */
+
+#if defined(IS_CFLOAT) || defined(IS_CDOUBLE) || defined(IS_CLONGDOUBLE)
+
+#define GET_CVALUE_OR_DEFER(OTHER, Other, value)  \
+    case NPY_##OTHER:  \
+        if (IS_SAFE(NPY_##OTHER, NPY_@TYPE@)) {  \
+            assert(Py_TYPE(value) == &Py##Other##ArrType_Type);  \
+            result->real = PyArrayScalar_VAL(value, Other).real;  \
+            result->imag = PyArrayScalar_VAL(value, Other).imag;  \
+            ret = 1;  \
+        }  \
+        else if (IS_SAFE(NPY_@TYPE@, NPY_##OTHER)) {  \
+             ret = DEFER_TO_OTHER_KNOWN_SCALAR;  \
+        }  \
+        else {  \
+            ret = PROMOTION_REQUIRED;  \
+        }  \
+        break;
+
+#else
+
+/* Getting a complex value to real is never safe: */
+#define GET_CVALUE_OR_DEFER(OTHER, Other, value)  \
+    case NPY_##OTHER:  \
+        if (IS_SAFE(NPY_@TYPE@, NPY_##OTHER)) {  \
+            ret = DEFER_TO_OTHER_KNOWN_SCALAR;  \
+        }  \
+        else {  \
+            ret = PROMOTION_REQUIRED;  \
+        }  \
+        break;
+
+#endif
+
+
+/**
+ * Convert the value to the own type and and store the result.
+ *
+ * @param value The value to convert (if compatible)
+ * @param result The result value (output)
+ * @result The result value indicating what we did with `value` or what type
+ *         of object it is (see `conversion_result`).
+ */
+static NPY_INLINE conversion_result
+convert_to_@name@(PyObject *value, @type@ *result)
 {
-    int ret;
-    ret = _@name@_convert_to_ctype(a, arg1);
-    if (ret == -2) {
-        ret = -3;
+    if (Py_TYPE(value) == &Py@Name@ArrType_Type) {
+        *result = PyArrayScalar_VAL(value, @Name@);
+        return CONVERSION_SUCCESS;
     }
-    if (ret < 0) {
-        return ret;
+    /* Optimize the identical scalar specifically. */
+    if (PyArray_IsScalar(value, @Name@)) {
+        *result = PyArrayScalar_VAL(value, @Name@);
+        /*
+         * In principle special, assyemetric, handling could be possible for
+         * subclasses.  But in practice even we do not bother later.
+         */
+        return OTHER_IS_SUBCLASS;
     }
-    ret = _@name@_convert_to_ctype(b, arg2);
-    if (ret == -2) {
-        ret = -3;
+
+    /*
+     * Then we check for the basic Python types float, int, and complex.
+     * (this is a bit tedious to do right for complex).
+     */
+    if (PyBool_Check(value)) {
+        CONVERT_TO_RESULT(value == Py_True);
+        return CONVERSION_SUCCESS;
     }
-    if (ret < 0) {
-        return ret;
+
+    if (IS_SAFE(NPY_DOUBLE, NPY_@TYPE@) && PyFloat_CheckExact(value)) {
+        CONVERT_TO_RESULT(PyFloat_AS_DOUBLE(value));
+        return CONVERSION_SUCCESS;
     }
-    return 0;
+
+    if (IS_SAFE(NPY_LONG, NPY_@TYPE@) && PyLong_CheckExact(value)) {
+        int overflow;
+        long val = PyLong_AsLongAndOverflow(value, &overflow);
+        if (overflow) {
+            return OTHER_IS_UNKNOWN_OBJECT;  /* handle as if arbitrary object */
+        }
+        if (error_converting(val)) {
+            return CONVERSION_ERROR;  /* should not be possible */
+        }
+        CONVERT_TO_RESULT(val);
+        return CONVERSION_SUCCESS;
+    }
+
+#if defined(IS_CFLOAT) || defined(IS_CDOUBLE) || defined(IS_CLONGDOUBLE)
+    if (IS_SAFE(NPY_CDOUBLE, NPY_@TYPE@) && PyComplex_CheckExact(value)) {
+        Py_complex val = PyComplex_AsCComplex(value);
+        if (error_converting(val.real)) {
+            return CONVERSION_ERROR;  /* should not be possible */
+        }
+        result->real = val.real;
+        result->imag = val.imag;
+        return CONVERSION_SUCCESS;
+    }
+#endif  /* defined(IS_CFLOAT) || ... */
+
+    PyObject *dtype = PyArray_DiscoverDTypeFromScalarType(Py_TYPE(value));
+    if (dtype == Py_None) {
+        Py_DECREF(dtype);
+        /* Signal that this is an array or array-like: Defer to array logic */
+        return OTHER_IS_UNKNOWN_OBJECT;
+    }
+    else if (dtype == NULL) {
+        /*
+         * The input is an unknown python object.  This should probably defer
+         * but only does so for float128.
+         * For all other cases, we defer to the array logic.  If the object
+         * is indeed not an array-like, this will end up converting the NumPy
+         * scalar to a Python scalar and then try again.
+         * The logic is that the ufunc casts the input to object, which does
+         * the conversion.
+         */
+        return OTHER_IS_UNKNOWN_OBJECT;
+    }
+    /*
+     * Otherwise, we have a clear NumPy scalar, find if it is a compatible
+     * builtin scalar.
+     * Each `GET_VALUE_OR_DEFER` represents a case clause for its type number,
+     * extracting the value if it is safe and otherwise deferring.
+     * (Safety is known at compile time, so the switch statement should be
+     * simplified by the compiler accordingly.)
+     * If we have a scalar that is not listed or not safe, we defer to it.
+     *
+     * We should probably defer more aggressively, but that is too big a change,
+     * since it would disable `np.float64(1.) * [1, 2, 3, 4]`.
+     */
+    int ret;  /* set by the GET_VALUE_OR_DEFER macro */
+    switch (((PyArray_DTypeMeta *)dtype)->type_num) {
+        GET_VALUE_OR_DEFER(BOOL, Bool, value);
+        /* UInts */
+        GET_VALUE_OR_DEFER(UBYTE, UByte, value);
+        GET_VALUE_OR_DEFER(USHORT, UShort, value);
+        GET_VALUE_OR_DEFER(UINT, UInt, value);
+        GET_VALUE_OR_DEFER(ULONG, ULong, value);
+        GET_VALUE_OR_DEFER(ULONGLONG, ULongLong, value);
+        /* Ints */
+        GET_VALUE_OR_DEFER(BYTE, Byte, value);
+        GET_VALUE_OR_DEFER(SHORT, Short, value);
+        GET_VALUE_OR_DEFER(INT, Int, value);
+        GET_VALUE_OR_DEFER(LONG, Long, value);
+        GET_VALUE_OR_DEFER(LONGLONG, LongLong, value);
+        /* Floats */
+        case NPY_HALF:
+            if (IS_SAFE(NPY_HALF, NPY_@TYPE@)) {
+                assert(Py_TYPE(value) == &PyHalfArrType_Type);
+                CONVERT_TO_RESULT(npy_half_to_float(PyArrayScalar_VAL(value, Half)));
+                ret = 1;
+            }
+            else if (IS_SAFE(NPY_@TYPE@, NPY_HALF)) {
+                ret = DEFER_TO_OTHER_KNOWN_SCALAR;
+            }
+            else {
+                ret = PROMOTION_REQUIRED;
+            }
+            break;
+        GET_VALUE_OR_DEFER(FLOAT, Float, value);
+        GET_VALUE_OR_DEFER(DOUBLE, Double, value);
+        GET_VALUE_OR_DEFER(LONGDOUBLE, LongDouble, value);
+        /* Complex: We should still defer, but the code won't work... */
+        GET_CVALUE_OR_DEFER(CFLOAT, CFloat, value);
+        GET_CVALUE_OR_DEFER(CDOUBLE, CDouble, value);
+        GET_CVALUE_OR_DEFER(CLONGDOUBLE, CLongDouble, value);
+        default:
+            /*
+             * If there is no match, this is an unknown scalar object.  It
+             * would make sense to defer generously here, but it should also
+             * always be safe to use the array path.
+             * The issue is, that the other scalar may or may not be designed
+             * to deal with NumPy scalars.  Without knowing that, we cannot
+             * defer (which would be much faster potentially).
+             * TODO: We could add a DType flag to allow opting in to deferring!
+             */
+            ret = OTHER_IS_UNKNOWN_OBJECT;
+    }
+    Py_DECREF(dtype);
+    return ret;
 }
+
+#undef IS_SAFE
+#undef CONVERT_TO_RESULT
+#undef GET_VALUE_OR_DEFER
+#undef GET_CVALUE_OR_DEFER
+#undef IS_@TYPE@
 
 /**end repeat**/
 
@@ -756,102 +1032,145 @@ _@name@_convert2_to_ctypes(PyObject *a, @type@ *arg1,
  * #name = (byte, ubyte, short, ushort, int, uint,
  *             long, ulong, longlong, ulonglong)*12,
  *         (half, float, double, longdouble,
- *             cfloat, cdouble, clongdouble)*5,
- *         (half, float, double, longdouble)*2#
+ *             cfloat, cdouble, clongdouble)*4,
+ *         (half, float, double, longdouble)*3#
  * #Name = (Byte, UByte, Short, UShort, Int, UInt,
  *             Long, ULong,LongLong,ULongLong)*12,
  *         (Half, Float, Double, LongDouble,
- *             CFloat, CDouble, CLongDouble)*5,
- *         (Half, Float, Double, LongDouble)*2#
+ *             CFloat, CDouble, CLongDouble)*4,
+ *         (Half, Float, Double, LongDouble)*3#
  * #type = (npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
  *             npy_long, npy_ulong, npy_longlong, npy_ulonglong)*12,
  *         (npy_half, npy_float, npy_double, npy_longdouble,
- *             npy_cfloat, npy_cdouble, npy_clongdouble)*5,
- *         (npy_half, npy_float, npy_double, npy_longdouble)*2#
+ *             npy_cfloat, npy_cdouble, npy_clongdouble)*4,
+ *         (npy_half, npy_float, npy_double, npy_longdouble)*3#
  *
  * #oper = add*10, subtract*10, multiply*10, remainder*10,
  *         divmod*10, floor_divide*10, lshift*10, rshift*10, and*10,
  *         or*10, xor*10, true_divide*10,
- *         add*7, subtract*7, multiply*7, floor_divide*7, true_divide*7,
- *         divmod*4, remainder*4#
+ *         add*7, subtract*7, multiply*7, true_divide*7,
+ *         floor_divide*4, divmod*4, remainder*4#
  *
- * #fperr = 1*60,0*50,1*10,
- *          1*35,
- *          1*8#
+ * #fperr = 0*110, 1*10,
+ *          1*28, 1*12#
  * #twoout = 0*40,1*10,0*70,
- *           0*35,
- *           1*4,0*4#
+ *           0*28,
+ *           0*4,1*4,0*4#
  * #otype = (npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
  *             npy_long, npy_ulong, npy_longlong, npy_ulonglong)*11,
- *         npy_float*4, npy_double*6,
+ *         npy_double*10,
  *         (npy_half, npy_float, npy_double, npy_longdouble,
- *             npy_cfloat, npy_cdouble, npy_clongdouble)*5,
- *         (npy_half, npy_float, npy_double, npy_longdouble)*2#
+ *             npy_cfloat, npy_cdouble, npy_clongdouble)*4,
+ *         (npy_half, npy_float, npy_double, npy_longdouble)*3#
  * #OName = (Byte, UByte, Short, UShort, Int, UInt,
  *              Long, ULong, LongLong, ULongLong)*11,
- *          Float*4, Double*6,
+ *          Double*10,
  *          (Half, Float, Double, LongDouble,
- *              CFloat, CDouble, CLongDouble)*5,
- *          (Half, Float, Double, LongDouble)*2#
+ *              CFloat, CDouble, CLongDouble)*4,
+ *          (Half, Float, Double, LongDouble)*3#
  */
+#define IS_@name@
 
 static PyObject *
 @name@_@oper@(PyObject *a, PyObject *b)
 {
     PyObject *ret;
-    @type@ arg1, arg2;
-    @otype@ out;
+    @type@ arg1, arg2, other_val;
 
+    /*
+     * Check if this operation may be considered forward.  Note `is_forward`
+     * does not imply that we can defer to a subclass `b`, we need to check
+     * `BINOP_IS_FORWARD` for that (it takes into account that both may be
+     * identicalclass).
+     */
+    int is_forward = (Py_TYPE(a)->tp_as_number != NULL
+            && (void *)(Py_TYPE(a)->tp_as_number->nb_@oper@) == (void*)(@name@_@oper@));
+
+    /*
+     * Extract the other value (if it is compatible).  Otherwise, decide
+     * how to deal with it.  This is somewhat complicated.
+     *
+     * Note: This pattern is used multiple times below.
+     */
+    PyObject *other = is_forward ? b : a;
+
+    conversion_result res = convert_to_@name@(other, &other_val);
+    switch (res) {
+        case CONVERSION_ERROR:
+            return NULL;  /* an error occurred (should never happen) */
+        case DEFER_TO_OTHER_KNOWN_SCALAR:
+            /*
+             * defer to other;  This is normally a forward operation.  However,
+             * it could be backward if an operation is undefined forward.
+             * An example is the complex remainder `complex % bool` will defer
+             * even though it would normally handle the operation.
+             */
+            Py_RETURN_NOTIMPLEMENTED;
+        case CONVERSION_SUCCESS:
+            break;  /* successfully extracted value we can proceed */
+        case OTHER_IS_UNKNOWN_OBJECT:
+#if defined(IS_longdouble) || defined(IS_clongdouble)
+            Py_RETURN_NOTIMPLEMENTED;
+#endif
+            BINOP_GIVE_UP_IF_NEEDED(a, b, nb_@oper@, @name@_@oper@);
+        case PROMOTION_REQUIRED:
+            /*
+             * Either an array-like, unknown scalar or we need to promote.
+             *
+             * TODO: We could special case the promotion case here for much
+             *       better speed and to deal with integer overflow warnings
+             *       correctly.  (e.g. `uint8 * int8` cannot warn).
+             */
+            return PyGenericArrType_Type.tp_as_number->nb_@oper@(a,b);
+        case OTHER_IS_SUBCLASS:
+            /*
+             * Success converting.  We _could_ in principle defer in cases
+             * were the other subclass does not inherit the behavior.  In
+             * practice not even Python's `int` attempt this, so we also punt.
+             */
+            break;
+    }
+
+#if @fperr@
+    npy_clear_floatstatus_barrier((char*)&arg1);
+#endif
+    if (is_forward) {
+        arg1 = PyArrayScalar_VAL(a, @Name@);
+        arg2 = other_val;
+    }
+    else {
+        arg1 = other_val;
+        arg2 = PyArrayScalar_VAL(b, @Name@);
+    }
+
+    /*
+     * Prepare the actual calculation.
+     */
+    @otype@ out;
 #if @twoout@
     @otype@ out2;
     PyObject *obj;
 #endif
 
-#if @fperr@
-    int retstatus;
-    int first;
-#endif
 
-    BINOP_GIVE_UP_IF_NEEDED(a, b, nb_@oper@, @name@_@oper@);
-
-    switch(_@name@_convert2_to_ctypes(a, &arg1, b, &arg2)) {
-        case 0:
-            break;
-        case -1:
-            /* one of them can't be cast safely must be mixed-types*/
-            return PyArray_Type.tp_as_number->nb_@oper@(a,b);
-        case -2:
-            /* use default handling */
-            if (PyErr_Occurred()) {
-                return NULL;
-            }
-            return PyGenericArrType_Type.tp_as_number->nb_@oper@(a,b);
-        case -3:
-            /*
-             * special case for longdouble and clongdouble
-             * because they have a recursive getitem in their dtype
-             */
-            Py_INCREF(Py_NotImplemented);
-            return Py_NotImplemented;
-    }
-
-#if @fperr@
-    npy_clear_floatstatus_barrier((char*)&out);
-#endif
 
     /*
      * here we do the actual calculation with arg1 and arg2
      * as a function call.
+     * Note that `retstatus` is the "floating point error" value for integer
+     * functions.  Float functions should always return 0, and then use
+     * the following `npy_get_floatstatus_barrier`.
      */
 #if @twoout@
-    @name@_ctype_@oper@(arg1, arg2, (@otype@ *)&out, &out2);
+    int retstatus = @name@_ctype_@oper@(arg1, arg2, &out, &out2);
 #else
-    @name@_ctype_@oper@(arg1, arg2, (@otype@ *)&out);
+    int retstatus = @name@_ctype_@oper@(arg1, arg2, &out);
 #endif
 
 #if @fperr@
     /* Check status flag.  If it is set, then look up what to do */
-    retstatus = npy_get_floatstatus_barrier((char*)&out);
+    retstatus |= npy_get_floatstatus_barrier((char*)&out);
+#endif
     if (retstatus) {
         int bufsize, errmask;
         PyObject *errobj;
@@ -860,14 +1179,13 @@ static PyObject *
                                 &errobj) < 0) {
             return NULL;
         }
-        first = 1;
+        int first = 1;
         if (PyUFunc_handlefperr(errmask, errobj, retstatus, &first)) {
             Py_XDECREF(errobj);
             return NULL;
         }
         Py_XDECREF(errobj);
     }
-#endif
 
 
 #if @twoout@
@@ -899,6 +1217,9 @@ static PyObject *
     return ret;
 }
 
+
+#undef IS_@name@
+
 /**end repeat**/
 
 #define _IS_ZERO(x) (x == 0)
@@ -920,17 +1241,6 @@ static PyObject *
  *         Half, Float, Double, LongDouble,
  *         CFloat, CDouble, CLongDouble#
  *
- * #oname = float*4, double*6, half, float, double, longdouble,
- *          cfloat, cdouble, clongdouble#
- *
- * #otype = npy_float*4, npy_double*6, npy_half, npy_float,
- *          npy_double, npy_longdouble,
- *          npy_cfloat, npy_cdouble, npy_clongdouble#
- *
- * #OName = Float*4, Double*6, Half, Float,
- *          Double, LongDouble,
- *          CFloat, CDouble, CLongDouble#
- *
  * #isint = 1*10,0*7#
  * #isuint = (0,1)*5,0*7#
  * #cmplx = 0*14,1*3#
@@ -938,46 +1248,71 @@ static PyObject *
  * #zero = 0*10, NPY_HALF_ZERO, 0*6#
  * #one = 1*10, NPY_HALF_ONE, 1*6#
  */
+#define IS_@name@
 
 static PyObject *
 @name@_power(PyObject *a, PyObject *b, PyObject *modulo)
 {
-    PyObject *ret;
-    @type@ arg1, arg2, out;
-
-    BINOP_GIVE_UP_IF_NEEDED(a, b, nb_power, @name@_power);
-
-    switch(_@name@_convert2_to_ctypes(a, &arg1, b, &arg2)) {
-        case 0:
-            break;
-        case -1:
-            /* can't cast both safely mixed-types? */
-            return PyArray_Type.tp_as_number->nb_power(a,b,modulo);
-        case -2:
-            /* use default handling */
-            if (PyErr_Occurred()) {
-                return NULL;
-            }
-            return PyGenericArrType_Type.tp_as_number->nb_power(a,b,modulo);
-        case -3:
-        default:
-            /*
-             * special case for longdouble and clongdouble
-             * because they have a recursive getitem in their dtype
-             */
-            Py_INCREF(Py_NotImplemented);
-            return Py_NotImplemented;
-    }
-
     if (modulo != Py_None) {
         /* modular exponentiation is not implemented (gh-8804) */
         Py_INCREF(Py_NotImplemented);
         return Py_NotImplemented;
     }
 
-#if !@isint@
-    npy_clear_floatstatus_barrier((char*)&out);
+    PyObject *ret;
+    @type@ arg1, arg2, other_val;
+
+    int is_forward = (Py_TYPE(a)->tp_as_number != NULL
+            && (void *)(Py_TYPE(a)->tp_as_number->nb_power) == (void*)(@name@_power));
+
+    /*
+     * Extract the other value (if it is compatible). See the generic
+     * (non power) version above for detailed notes.
+     */
+    PyObject *other = is_forward ? b : a;
+
+    int res = convert_to_@name@(other, &other_val);
+    switch (res) {
+        case CONVERSION_ERROR:
+            return NULL;  /* an error occurred (should never happen) */
+        case DEFER_TO_OTHER_KNOWN_SCALAR:
+            Py_RETURN_NOTIMPLEMENTED;
+        case CONVERSION_SUCCESS:
+            break;  /* successfully extracted value we can proceed */
+        case OTHER_IS_UNKNOWN_OBJECT:
+#if defined(IS_longdouble) || defined(IS_clongdouble)
+            Py_RETURN_NOTIMPLEMENTED;
 #endif
+            BINOP_GIVE_UP_IF_NEEDED(a, b, nb_power, @name@_power);
+        case PROMOTION_REQUIRED:
+            return PyGenericArrType_Type.tp_as_number->nb_power(a, b, modulo);
+        case OTHER_IS_SUBCLASS:
+            /*
+             * Success converting.  We _could_ in principle defer in cases
+             * were the other subclass does not inherit the behavior.  In
+             * practice not even Python's `int` attempt this, so we also punt.
+             */
+            break;
+    }
+
+#if !@isint@
+    npy_clear_floatstatus_barrier((char*)&arg1);
+#endif
+
+    if (is_forward) {
+        arg1 = PyArrayScalar_VAL(a, @Name@);
+        arg2 = other_val;
+    }
+    else {
+        arg1 = other_val;
+        arg2 = PyArrayScalar_VAL(b, @Name@);
+    }
+
+    /*
+     * Prepare the actual calculation:
+     */
+    @type@ out;
+
     /*
      * here we do the actual calculation with arg1 and arg2
      * as a function call.
@@ -989,11 +1324,12 @@ static PyObject *
         return NULL;
     }
 #endif
-    @name@_ctype_power(arg1, arg2, &out);
+    int retstatus = @name@_ctype_power(arg1, arg2, &out);
 
 #if !@isint@
     /* Check status flag.  If it is set, then look up what to do */
-    int retstatus = npy_get_floatstatus_barrier((char*)&out);
+    retstatus |= npy_get_floatstatus_barrier((char*)&out);
+#endif
     if (retstatus) {
         int bufsize, errmask;
         PyObject *errobj;
@@ -1009,7 +1345,6 @@ static PyObject *
         }
         Py_XDECREF(errobj);
     }
-#endif
 
     ret = PyArrayScalar_New(@Name@);
     if (ret == NULL) {
@@ -1021,78 +1356,28 @@ static PyObject *
 }
 
 
+#undef IS_@name@
 /**end repeat**/
 #undef _IS_ZERO
 
 
 /**begin repeat
  *
- * #name = cfloat, cdouble#
- *
- */
-
-/**begin repeat1
- *
- * #oper = divmod, remainder#
- *
- */
-
-#define @name@_@oper@ NULL
-
-/**end repeat1**/
-
-/**end repeat**/
-
-/**begin repeat
- *
- * #oper = divmod, remainder#
+ * #name = (cfloat, cdouble, clongdouble)*3#
+ * #oper = floor_divide*3, divmod*3, remainder*3#
  *
  */
 
 /* 
-Complex numbers do not support remainder operations. Unfortunately, 
-the type inference for long doubles is complicated, and if a remainder 
-operation is not defined - if the relevant field is left NULL - then 
-operations between long doubles and objects lead to an infinite recursion 
-instead of a TypeError. This should ensure that once everything gets
-converted to complex long doubles you correctly get a reasonably
-informative TypeError. This fixes the last part of bug gh-18548.
-*/
-
+ * Complex numbers do not support remainder so we manually make sure that the
+ * operation is not defined.  This is/was especially important for longdoubles
+ * due to their tendency to recurse for some operations, see gh-18548.
+ * (We need to define the slots to avoid inheriting it.)
+ */
 static PyObject *
-clongdouble_@oper@(PyObject *a, PyObject *b)
+@name@_@oper@(PyObject *NPY_UNUSED(a), PyObject *NPY_UNUSED(b))
 {
-    npy_clongdouble arg1, arg2;
-
-    BINOP_GIVE_UP_IF_NEEDED(a, b, nb_@oper@, clongdouble_@oper@);
-
-    switch(_clongdouble_convert2_to_ctypes(a, &arg1, b, &arg2)) {
-        case 0:
-            break;
-        case -1:
-            /* one of them can't be cast safely must be mixed-types*/
-            return PyArray_Type.tp_as_number->nb_@oper@(a,b);
-        case -2:
-            /* use default handling */
-            if (PyErr_Occurred()) {
-                return NULL;
-            }
-            return PyGenericArrType_Type.tp_as_number->nb_@oper@(a,b);
-        case -3:
-            /*
-             * special case for longdouble and clongdouble
-             * because they have a recursive getitem in their dtype
-             */
-            Py_INCREF(Py_NotImplemented);
-            return Py_NotImplemented;
-    }
-
-    /*
-     * here we do the actual calculation with arg1 and arg2
-     * as a function call.
-     */
-    PyErr_SetString(PyExc_TypeError, "complex long doubles do not support remainder");
-    return NULL;
+    Py_RETURN_NOTIMPLEMENTED;
 }
 
 /**end repeat**/
@@ -1123,6 +1408,14 @@ clongdouble_@oper@(PyObject *a, PyObject *b)
  *
  *         byte, ubyte, short, ushort, int, uint,
  *         long, ulong, longlong, ulonglong#
+ *
+ * #Name = (Byte, UByte, Short, UShort, Int, UInt,
+ *             Long, ULong, LongLong, ULongLong,
+ *             Half, Float, Double, LongDouble,
+ *             CFloat, CDouble, CLongDouble)*3,
+ *
+ *         Byte, UByte, Short, UShort, Int, UInt,
+ *         Long, ULong, LongLong, ULongLong#
  *
  * #type = (npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
  *             npy_long, npy_ulong, npy_longlong, npy_ulonglong,
@@ -1161,31 +1454,18 @@ clongdouble_@oper@(PyObject *a, PyObject *b)
 static PyObject *
 @name@_@oper@(PyObject *a)
 {
-    @type@ arg1;
+    @type@ val;
     @otype@ out;
     PyObject *ret;
 
-    switch(_@name@_convert_to_ctype(a, &arg1)) {
-    case 0:
-        break;
-    case -1:
-        /* can't cast both safely use different add function */
-        Py_INCREF(Py_NotImplemented);
-        return Py_NotImplemented;
-    case -2:
-        /* use default handling */
-        if (PyErr_Occurred()) {
-            return NULL;
-        }
-        return PyGenericArrType_Type.tp_as_number->nb_@oper@(a);
-    }
+
+    val = PyArrayScalar_VAL(a, @Name@);
+
+    @name@_ctype_@oper@(val, &out);
 
     /*
-     * here we do the actual calculation with arg1 and arg2
-     * make it a function call.
+     * TODO: Complex absolute should check floating point flags.
      */
-
-    @name@_ctype_@oper@(arg1, &out);
 
     ret = PyArrayScalar_New(@OName@);
     PyArrayScalar_ASSIGN(ret, @OName@, out);
@@ -1210,6 +1490,10 @@ static PyObject *
  *         uint, long, ulong, longlong, ulonglong,
  *         half, float, double, longdouble,
  *         cfloat, cdouble, clongdouble#
+ * #Name = Byte, UByte, Short, UShort, Int, UInt,
+ *         Long, ULong, LongLong, ULongLong,
+ *         Half, Float, Double, LongDouble,
+ *         CFloat, CDouble, CLongDouble#
  * #type = npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int,
  *         npy_uint, npy_long, npy_ulong, npy_longlong, npy_ulonglong,
  *         npy_half, npy_float, npy_double, npy_longdouble,
@@ -1221,24 +1505,14 @@ static int
 @name@_bool(PyObject *a)
 {
     int ret;
-    @type@ arg1;
+    @type@ val;
 
-    if (_@name@_convert_to_ctype(a, &arg1) < 0) {
-        if (PyErr_Occurred()) {
-            return -1;
-        }
-        return PyGenericArrType_Type.tp_as_number->nb_bool(a);
-    }
-
-    /*
-     * here we do the actual calculation with arg1 and arg2
-     * make it a function call.
-     */
+    val = PyArrayScalar_VAL(a, @Name@);
 
 #if @simp@
-    ret = @nonzero@(arg1);
+    ret = @nonzero@(val);
 #else
-    ret = (@nonzero@(arg1.real) || @nonzero@(arg1.imag));
+    ret = (@nonzero@(val.real) || @nonzero@(val.imag));
 #endif
 
     return ret;
@@ -1321,7 +1595,7 @@ static PyObject *
  * #to_ctype = , , , , , , , , , , npy_half_to_double, , , , , , #
  * #func = PyFloat_FromDouble*17#
  */
-static NPY_INLINE PyObject *
+static PyObject *
 @name@_float(PyObject *obj)
 {
 #if @cmplx@
@@ -1353,35 +1627,49 @@ static NPY_INLINE PyObject *
  *         long, ulong, longlong, ulonglong,
  *         half, float, double, longdouble,
  *         cfloat, cdouble, clongdouble#
+ * #Name = Byte, UByte, Short, UShort, Int, UInt,
+ *         Long, ULong, LongLong, ULongLong,
+ *         Half, Float, Double, LongDouble,
+ *         CFloat, CDouble, CLongDouble#
  * #simp = def*10, def_half, def*3, cmplx*3#
  */
+#define IS_@name@
+
 static PyObject*
 @name@_richcompare(PyObject *self, PyObject *other, int cmp_op)
 {
     npy_@name@ arg1, arg2;
-    int out=0;
+    int out = 0;
 
-    RICHCMP_GIVE_UP_IF_NEEDED(self, other);
-
-    switch(_@name@_convert2_to_ctypes(self, &arg1, other, &arg2)) {
-    case 0:
-        break;
-    case -1:
-        /* can't cast both safely use different add function */
-    case -2:
-        /* use ufunc */
-        if (PyErr_Occurred()) {
-            return NULL;
-        }
-        return PyGenericArrType_Type.tp_richcompare(self, other, cmp_op);
-    case -3:
-        /*
-         * special case for longdouble and clongdouble
-         * because they have a recursive getitem in their dtype
-         */
-        Py_INCREF(Py_NotImplemented);
-        return Py_NotImplemented;
+    /*
+     * Extract the other value (if it is compatible).
+     */
+    int res = convert_to_@name@(other, &arg2);
+    switch (res) {
+        case CONVERSION_ERROR:
+            return NULL;  /* an error occurred (should never happen) */
+        case DEFER_TO_OTHER_KNOWN_SCALAR:
+            Py_RETURN_NOTIMPLEMENTED;
+        case CONVERSION_SUCCESS:
+            break;  /* successfully extracted value we can proceed */
+        case OTHER_IS_UNKNOWN_OBJECT:
+#if defined(IS_longdouble) || defined(IS_clongdouble)
+            Py_RETURN_NOTIMPLEMENTED;
+#endif
+            RICHCMP_GIVE_UP_IF_NEEDED(self, other);
+        case PROMOTION_REQUIRED:
+            return PyGenericArrType_Type.tp_richcompare(self, other, cmp_op);
+        case OTHER_IS_SUBCLASS:
+            /*
+             * Success converting.  We _could_ in principle defer in cases
+             * were the other subclass does not inherit the behavior.  In
+             * practice not even Python's `int` attempt this, so we also punt.
+             * (This is also even trickier for richcompare, though.)
+             */
+            break;
     }
+
+    arg1 = PyArrayScalar_VAL(self, @Name@);
 
     /* here we do the actual calculation with arg1 and arg2 */
     switch (cmp_op) {
@@ -1412,6 +1700,8 @@ static PyObject*
         PyArrayScalar_RETURN_FALSE;
     }
 }
+
+#undef IS_@name@
 /**end repeat**/
 
 /**begin repeat

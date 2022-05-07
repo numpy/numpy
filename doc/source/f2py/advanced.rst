@@ -79,14 +79,18 @@ that defines mapping between Fortran type::
 
 and the corresponding <C type>. The <C type> can be one of the following::
 
+    double
+    float
+    long_double
     char
     signed_char
+    unsigned_char
     short
+    unsigned_short
     int
+    long
     long_long
-    float
-    double
-    long_double
+    unsigned
     complex_float
     complex_double
     complex_long_double

@@ -2520,9 +2520,11 @@ def norm(x, ord=None, axis=None, keepdims=False):
 
             x = x.ravel(order='K')
             if isComplexType(x.dtype.type):
-                sqnorm = dot(x.real, x.real) + dot(x.imag, x.imag)
+                x_real = x.real
+                x_imag = x.imag
+                sqnorm = x_real.dot(x_real) + x_imag.dot(x_imag)
             else:
-                sqnorm = dot(x, x)
+                sqnorm = x.dot(x)
             ret = sqrt(sqnorm)
             if keepdims:
                 ret = ret.reshape(ndim*[1])

@@ -78,6 +78,27 @@ PyArray_OutputConverter(PyObject *object, PyArrayObject **address)
     }
 }
 
+
+/*
+ * Convert the given value to an integer. Replaces the error when compared
+ * to `PyArray_PyIntAsIntp`.  Exists mainly to retain old behaviour of
+ * `PyArray_IntpConverter` and `PyArray_IntpFromSequence`
+ */
+static NPY_INLINE npy_intp
+dimension_from_scalar(PyObject *ob)
+{
+    npy_intp value = PyArray_PyIntAsIntp(ob);
+
+    if (error_converting(value)) {
+        if (PyErr_ExceptionMatches(PyExc_OverflowError)) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Maximum allowed dimension exceeded");
+        }
+        return -1;
+    }
+    return value;
+}
+
 /*NUMPY_API
  * Get intp chunk from sequence
  *
@@ -90,9 +111,6 @@ PyArray_OutputConverter(PyObject *object, PyArrayObject **address)
 NPY_NO_EXPORT int
 PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
 {
-    Py_ssize_t len;
-    int nd;
-
     seq->ptr = NULL;
     seq->len = 0;
 
@@ -110,42 +128,85 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
         return NPY_SUCCEED;
     }
 
-    len = PySequence_Size(obj);
-    if (len == -1) {
-        /* Check to see if it is an integer number */
-        if (PyNumber_Check(obj)) {
-            /*
-             * After the deprecation the PyNumber_Check could be replaced
-             * by PyIndex_Check.
-             * FIXME 1.9 ?
-             */
-            len = 1;
+    PyObject *seq_obj = NULL;
+
+    /*
+     * If obj is a scalar we skip all the useless computations and jump to
+     * dimension_from_scalar as soon as possible.
+     */
+    if (!PyLong_CheckExact(obj) && PySequence_Check(obj)) {
+        seq_obj = PySequence_Fast(obj,
+               "expected a sequence of integers or a single integer.");
+        if (seq_obj == NULL) {
+            /* continue attempting to parse as a single integer. */
+            PyErr_Clear();
         }
     }
-    if (len < 0) {
-        PyErr_SetString(PyExc_TypeError,
-                "expected sequence object with len >= 0 or a single integer");
-        return NPY_FAIL;
-    }
-    if (len > NPY_MAXDIMS) {
-        PyErr_Format(PyExc_ValueError, "maximum supported dimension for an ndarray is %d"
-                     ", found %d", NPY_MAXDIMS, len);
-        return NPY_FAIL;
-    }
-    if (len > 0) {
-        seq->ptr = npy_alloc_cache_dim(len);
+
+    if (seq_obj == NULL) {
+        /*
+         * obj *might* be a scalar (if dimension_from_scalar does not fail, at
+         * the moment no check have been performed to verify this hypothesis).
+         */
+        seq->ptr = npy_alloc_cache_dim(1);
         if (seq->ptr == NULL) {
             PyErr_NoMemory();
             return NPY_FAIL;
         }
+        else {
+            seq->len = 1;
+
+            seq->ptr[0] = dimension_from_scalar(obj);
+            if (error_converting(seq->ptr[0])) {
+                /*
+                 * If the error occurred is a type error (cannot convert the
+                 * value to an integer) communicate that we expected a sequence
+                 * or an integer from the user.
+                 */
+                if (PyErr_ExceptionMatches(PyExc_TypeError)) {
+                    PyErr_Format(PyExc_TypeError,
+                            "expected a sequence of integers or a single "
+                            "integer, got '%.100R'", obj);
+                }
+                npy_free_cache_dim_obj(*seq);
+                seq->ptr = NULL;
+                return NPY_FAIL;
+            }
+        }
     }
-    seq->len = len;
-    nd = PyArray_IntpFromIndexSequence(obj, (npy_intp *)seq->ptr, len);
-    if (nd == -1 || nd != len) {
-        npy_free_cache_dim_obj(*seq);
-        seq->ptr = NULL;
-        return NPY_FAIL;
+    else {
+        /*
+         * `obj` is a sequence converted to the `PySequence_Fast` in `seq_obj`
+         */
+        Py_ssize_t len = PySequence_Fast_GET_SIZE(seq_obj);
+        if (len > NPY_MAXDIMS) {
+            PyErr_Format(PyExc_ValueError,
+                    "maximum supported dimension for an ndarray "
+                    "is %d, found %d", NPY_MAXDIMS, len);
+            Py_DECREF(seq_obj);
+            return NPY_FAIL;
+        }
+        if (len > 0) {
+            seq->ptr = npy_alloc_cache_dim(len);
+            if (seq->ptr == NULL) {
+                PyErr_NoMemory();
+                Py_DECREF(seq_obj);
+                return NPY_FAIL;
+            }
+        }
+
+        seq->len = len;
+        int nd = PyArray_IntpFromIndexSequence(seq_obj,
+                (npy_intp *)seq->ptr, len);
+        Py_DECREF(seq_obj);
+
+        if (nd == -1 || nd != len) {
+            npy_free_cache_dim_obj(*seq);
+            seq->ptr = NULL;
+            return NPY_FAIL;
+        }
     }
+
     return NPY_SUCCEED;
 }
 
@@ -1004,64 +1065,35 @@ PyArray_IntpFromPyIntConverter(PyObject *o, npy_intp *val)
 }
 
 
-/*
- * PyArray_IntpFromIndexSequence
- * Returns the number of dimensions or -1 if an error occurred.
- * vals must be large enough to hold maxvals.
- * Opposed to PyArray_IntpFromSequence it uses and returns npy_intp
- * for the number of values.
+/**
+ * Reads values from a sequence of integers and stores them into an array.
+ *
+ * @param  seq      A sequence created using `PySequence_Fast`.
+ * @param  vals     Array used to store dimensions (must be large enough to
+ *                      hold `maxvals` values).
+ * @param  max_vals Maximum number of dimensions that can be written into `vals`.
+ * @return          Number of dimensions or -1 if an error occurred.
+ *
+ * .. note::
+ *
+ *   Opposed to PyArray_IntpFromSequence it uses and returns `npy_intp`
+ *      for the number of values.
  */
 NPY_NO_EXPORT npy_intp
 PyArray_IntpFromIndexSequence(PyObject *seq, npy_intp *vals, npy_intp maxvals)
 {
-    Py_ssize_t nd;
-    npy_intp i;
-    PyObject *op, *err;
-
     /*
-     * Check to see if sequence is a single integer first.
-     * or, can be made into one
+     * First of all, check if sequence is a scalar integer or if it can be
+     * "casted" into a scalar.
      */
-    nd = PySequence_Length(seq);
-    if (nd == -1) {
-        if (PyErr_Occurred()) {
-            PyErr_Clear();
-        }
+    Py_ssize_t nd = PySequence_Fast_GET_SIZE(seq);
+    PyObject *op;
+    for (Py_ssize_t i = 0; i < PyArray_MIN(nd, maxvals); i++) {
+        op = PySequence_Fast_GET_ITEM(seq, i);
 
-        vals[0] = PyArray_PyIntAsIntp(seq);
-        if(vals[0] == -1) {
-            err = PyErr_Occurred();
-            if (err &&
-                    PyErr_GivenExceptionMatches(err, PyExc_OverflowError)) {
-                PyErr_SetString(PyExc_ValueError,
-                        "Maximum allowed dimension exceeded");
-            }
-            if(err != NULL) {
-                return -1;
-            }
-        }
-        nd = 1;
-    }
-    else {
-        for (i = 0; i < PyArray_MIN(nd,maxvals); i++) {
-            op = PySequence_GetItem(seq, i);
-            if (op == NULL) {
-                return -1;
-            }
-
-            vals[i] = PyArray_PyIntAsIntp(op);
-            Py_DECREF(op);
-            if(vals[i] == -1) {
-                err = PyErr_Occurred();
-                if (err &&
-                        PyErr_GivenExceptionMatches(err, PyExc_OverflowError)) {
-                    PyErr_SetString(PyExc_ValueError,
-                            "Maximum allowed dimension exceeded");
-                }
-                if(err != NULL) {
-                    return -1;
-                }
-            }
+        vals[i] = dimension_from_scalar(op);
+        if (error_converting(vals[i])) {
+            return -1;
         }
     }
     return nd;
@@ -1075,7 +1107,34 @@ PyArray_IntpFromIndexSequence(PyObject *seq, npy_intp *vals, npy_intp maxvals)
 NPY_NO_EXPORT int
 PyArray_IntpFromSequence(PyObject *seq, npy_intp *vals, int maxvals)
 {
-    return PyArray_IntpFromIndexSequence(seq, vals, (npy_intp)maxvals);
+    PyObject *seq_obj = NULL;
+    if (!PyLong_CheckExact(seq) && PySequence_Check(seq)) {
+        seq_obj = PySequence_Fast(seq,
+            "expected a sequence of integers or a single integer");
+        if (seq_obj == NULL) {
+            /* continue attempting to parse as a single integer. */
+            PyErr_Clear();
+        }
+    }
+
+    if (seq_obj == NULL) {
+        vals[0] = dimension_from_scalar(seq);
+        if (error_converting(vals[0])) {
+            if (PyErr_ExceptionMatches(PyExc_TypeError)) {
+                PyErr_Format(PyExc_TypeError,
+                        "expected a sequence of integers or a single "
+                        "integer, got '%.100R'", seq);
+            }
+            return -1;
+        }
+        return 1;
+    }
+    else {
+        int res;
+        res = PyArray_IntpFromIndexSequence(seq_obj, vals, (npy_intp)maxvals);
+        Py_DECREF(seq_obj);
+        return res;
+    }
 }
 
 
