@@ -6,6 +6,8 @@
 #include "npy_import.h"
 #include "ufunc_override.h"
 
+#define PyObject_CheckExact_Type(op, checktype) (((PyObject*)(op))->ob_type == &checktype)
+
 /*
  * Check whether an object has __array_ufunc__ defined on its class and it
  * is not the default, i.e., the object is not an ndarray, and its
@@ -30,6 +32,11 @@ PyUFuncOverride_GetNonDefaultArrayUfunc(PyObject *obj)
     if (PyArray_CheckExact(obj)) {
         return NULL;
     }
+    /* Fast return for most common numpy scalar types */
+    if (PyObject_CheckExact_Type(obj, PyDoubleArrType_Type) || PyObject_CheckExact_Type(obj, PyIntArrType_Type)) {
+        return NULL;
+    }
+
     /*
      * Does the class define __array_ufunc__? (Note that LookupSpecial has fast
      * return for basic python types, so no need to worry about those here)
