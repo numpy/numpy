@@ -2189,11 +2189,11 @@ class TestCorrCoef:
         assert_array_almost_equal(np.corrcoef(self.A).all(),
                                   np.corrcoef(A1, covM=True).all())
         assert_array_almost_equal(np.corrcoef(self.B).all(),
-                                  np.corrcoef(B1, covM=True))
+                                  np.corrcoef(B1, covM=True).all())
         assert_array_almost_equal(np.corrcoef(self.res1).all(),
-                                  np.corrcoef(res1A, covM=True))
+                                  np.corrcoef(res1A, covM=True).all())
         assert_array_almost_equal(np.corrcoef(self.res2).all(),
-                                  np.corrcoef(res2A, covM=True))
+                                  np.corrcoef(res2A, covM=True).all())
 
 
 class TestCov:
