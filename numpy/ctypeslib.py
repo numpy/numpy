@@ -525,18 +525,15 @@ if ctypes is not None:
         numpy.ndarray
             numpy.ndarray sharing memory of input obj
             
-        See Also
-        --------
-        'ndarray' : numpy ndarray core structure
-            `<https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html>`_
-        Memory_Managment_Guide : 
-            `<https://numpy.org/devdocs/reference/c-api/data_memory.html>`_
-        
-        
         Notes
         -----                        
         Numpy array stores it's data as single Void pointer in C.        
         If use Pointer, must use ctypes Single Pointer, Not a Double, Triple
+        
+        PyArray_Data
+            `<https://numpy.org/devdocs/reference/c-api/array.html#c.PyArray_DATA>`_
+        Memory_Managment_Guide
+            `<https://numpy.org/devdocs/reference/c-api/data_memory.html>`_
         
         """
         if isinstance(obj, ctypes._Pointer):
