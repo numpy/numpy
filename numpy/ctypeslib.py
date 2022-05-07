@@ -532,8 +532,8 @@ if ctypes is not None:
         
         PyArray_Data
             `<https://numpy.org/devdocs/reference/c-api/array.html#c.PyArray_DATA>`_
-        Memory_Managment_Guide
-            `<https://numpy.org/devdocs/reference/c-api/data_memory.html>`_
+        Numpy_Array_Internal_Memory_layout
+            `<https://numpy.org/devdocs/reference/arrays.ndarray.html#internal-memory-layout-of-an-ndarray>`_
         
         """
         if isinstance(obj, ctypes._Pointer):
