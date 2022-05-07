@@ -312,6 +312,14 @@ PyArray_FromScalar(PyObject *scalar, PyArray_Descr *outcode)
 NPY_NO_EXPORT PyObject *
 PyArray_ScalarFromObject(PyObject *object)
 {
+    if (DEPRECATE(
+            "PyArray_ScalarFromObject() is deprecated and scheduled for "
+            "removal. If you are using this (undocumented) function, "
+            "please notify the NumPy developers to look for solutions."
+            "(Deprecated in NumPy 1.23)") < 0) {
+        return NULL;
+    }
+
     PyObject *ret = NULL;
 
     if (PyArray_IsZeroDim(object)) {

@@ -8,6 +8,7 @@ from numpy.compat import _pep440
 import pytest
 from hypothesis import given, settings
 from hypothesis.strategies import sampled_from
+from hypothesis.extra import numpy as hynp
 
 import numpy as np
 from numpy.testing import (
@@ -23,6 +24,14 @@ types = [np.bool_, np.byte, np.ubyte, np.short, np.ushort, np.intc, np.uintc,
 
 floating_types = np.floating.__subclasses__()
 complex_floating_types = np.complexfloating.__subclasses__()
+
+objecty_things = [object(), None]
+
+reasonable_operators_for_scalars = [
+    operator.lt, operator.le, operator.eq, operator.ne, operator.ge,
+    operator.gt, operator.add, operator.floordiv, operator.mod,
+    operator.mul, operator.pow, operator.sub, operator.truediv,
+]
 
 
 # This compares scalarmath against ufuncs.
@@ -64,6 +73,41 @@ class TestTypes:
         # a leak would show up in valgrind as still-reachable of ~2.6MB
         for i in range(200000):
             np.add(1, 1)
+
+
+@pytest.mark.slow
+@settings(max_examples=10000, deadline=2000)
+@given(sampled_from(reasonable_operators_for_scalars),
+       hynp.arrays(dtype=hynp.scalar_dtypes(), shape=()),
+       hynp.arrays(dtype=hynp.scalar_dtypes(), shape=()))
+def test_array_scalar_ufunc_equivalence(op, arr1, arr2):
+    """
+    This is a thorough test attempting to cover important promotion paths
+    and ensuring that arrays and scalars stay as aligned as possible.
+    However, if it creates troubles, it should maybe just be removed.
+    """
+    scalar1 = arr1[()]
+    scalar2 = arr2[()]
+    assert isinstance(scalar1, np.generic)
+    assert isinstance(scalar2, np.generic)
+
+    if arr1.dtype.kind == "c" or arr2.dtype.kind == "c":
+        comp_ops = {operator.ge, operator.gt, operator.le, operator.lt}
+        if op in comp_ops and (np.isnan(scalar1) or np.isnan(scalar2)):
+            pytest.xfail("complex comp ufuncs use sort-order, scalars do not.")
+
+    # ignore fpe's since they may just mismatch for integers anyway.
+    with warnings.catch_warnings(), np.errstate(all="ignore"):
+        # Comparisons DeprecationWarnings replacing errors (2022-03):
+        warnings.simplefilter("error", DeprecationWarning)
+        try:
+            res = op(arr1, arr2)
+        except Exception as e:
+            with pytest.raises(type(e)):
+                op(scalar1, scalar2)
+        else:
+            scalar_res = op(scalar1, scalar2)
+            assert_array_equal(scalar_res, res)
 
 
 class TestBaseMath:
@@ -778,15 +822,6 @@ def recursionlimit(n):
         sys.setrecursionlimit(o)
 
 
-objecty_things = [object(), None]
-reasonable_operators_for_scalars = [
-    operator.lt, operator.le, operator.eq, operator.ne, operator.ge,
-    operator.gt, operator.add, operator.floordiv, operator.mod,
-    operator.mul, operator.matmul, operator.pow, operator.sub,
-    operator.truediv,
-]
-
-
 @given(sampled_from(objecty_things),
        sampled_from(reasonable_operators_for_scalars),
        sampled_from(types))
@@ -843,3 +878,129 @@ def test_clongdouble_inf_loop(op):
         op(None, np.longdouble(3))
     except TypeError:
         pass
+
+
+@pytest.mark.parametrize("dtype", np.typecodes["AllInteger"])
+@pytest.mark.parametrize("operation", [
+        lambda min, max: max + max,
+        lambda min, max: min - max,
+        lambda min, max: max * max], ids=["+", "-", "*"])
+def test_scalar_integer_operation_overflow(dtype, operation):
+    st = np.dtype(dtype).type
+    min = st(np.iinfo(dtype).min)
+    max = st(np.iinfo(dtype).max)
+
+    with pytest.warns(RuntimeWarning, match="overflow encountered"):
+        operation(min, max)
+
+
+@pytest.mark.parametrize("dtype", np.typecodes["Integer"])
+@pytest.mark.parametrize("operation", [
+        lambda min, neg_1: abs(min),
+        lambda min, neg_1: min * neg_1,
+        lambda min, neg_1: min // neg_1], ids=["abs", "*", "//"])
+def test_scalar_signed_integer_overflow(dtype, operation):
+    # The minimum signed integer can "overflow" for some additional operations
+    st = np.dtype(dtype).type
+    min = st(np.iinfo(dtype).min)
+    neg_1 = st(-1)
+
+    with pytest.warns(RuntimeWarning, match="overflow encountered"):
+        operation(min, neg_1)
+
+
+@pytest.mark.parametrize("dtype", np.typecodes["UnsignedInteger"])
+@pytest.mark.xfail  # TODO: the check is quite simply missing!
+def test_scalar_signed_integer_overflow(dtype):
+    val = np.dtype(dtype).type(8)
+    with pytest.warns(RuntimeWarning, match="overflow encountered"):
+        -val
+
+
+@pytest.mark.parametrize("dtype", np.typecodes["AllInteger"])
+@pytest.mark.parametrize("operation", [
+        lambda val, zero: val // zero,
+        lambda val, zero: val % zero, ], ids=["//", "%"])
+def test_scalar_integer_operation_divbyzero(dtype, operation):
+    st = np.dtype(dtype).type
+    val = st(100)
+    zero = st(0)
+
+    with pytest.warns(RuntimeWarning, match="divide by zero"):
+        operation(val, zero)
+
+
+ops_with_names = [
+    ("__lt__", "__gt__", operator.lt, True),
+    ("__le__", "__ge__", operator.le, True),
+    ("__eq__", "__eq__", operator.eq, True),
+    # Note __op__ and __rop__ may be identical here:
+    ("__ne__", "__ne__", operator.ne, True),
+    ("__gt__", "__lt__", operator.gt, True),
+    ("__ge__", "__le__", operator.ge, True),
+    ("__floordiv__", "__rfloordiv__", operator.floordiv, False),
+    ("__truediv__", "__rtruediv__", operator.truediv, False),
+    ("__add__", "__radd__", operator.add, False),
+    ("__mod__", "__rmod__", operator.mod, False),
+    ("__mul__", "__rmul__", operator.mul, False),
+    ("__pow__", "__rpow__", operator.pow, False),
+    ("__sub__", "__rsub__", operator.sub, False),
+]
+
+
+@pytest.mark.parametrize(["__op__", "__rop__", "op", "cmp"], ops_with_names)
+@pytest.mark.parametrize("sctype", [np.float32, np.float64, np.longdouble])
+def test_subclass_deferral(sctype, __op__, __rop__, op, cmp):
+    """
+    This test covers scalar subclass deferral.  Note that this is exceedingly
+    complicated, especially since it tends to fall back to the array paths and
+    these additionally add the "array priority" mechanism.
+
+    The behaviour was modified subtly in 1.22 (to make it closer to how Python
+    scalars work).  Due to its complexity and the fact that subclassing NumPy
+    scalars is probably a bad idea to begin with.  There is probably room
+    for adjustments here.
+    """
+    class myf_simple1(sctype):
+        pass
+
+    class myf_simple2(sctype):
+        pass
+
+    def defer(self, other):
+        return NotImplemented
+
+    def op_func(self, other):
+        return __op__
+
+    def rop_func(self, other):
+        return __rop__
+
+    myf_op = type("myf_op", (sctype,), {__op__: op_func, __rop__: rop_func})
+
+    # inheritance has to override, or this is correctly lost:
+    res = op(myf_simple1(1), myf_simple2(2))
+    assert type(res) == sctype or type(res) == np.bool_
+    assert op(myf_simple1(1), myf_simple2(2)) == op(1, 2)  # inherited
+
+    # Two independent subclasses do not really define an order.  This could
+    # be attempted, but we do not since Python's `int` does neither:
+    assert op(myf_op(1), myf_simple1(2)) == __op__
+    assert op(myf_simple1(1), myf_op(2)) == op(1, 2)  # inherited
+
+
+@pytest.mark.parametrize(["__op__", "__rop__", "op", "cmp"], ops_with_names)
+@pytest.mark.parametrize("pytype", [float, int, complex])
+def test_pyscalar_subclasses(pytype, __op__, __rop__, op, cmp):
+    def op_func(self, other):
+        return __op__
+
+    def rop_func(self, other):
+        return __rop__
+
+    myf = type("myf", (pytype,),
+            {__op__: op_func, __rop__: rop_func, "__array_ufunc__": None})
+
+    # Just like normally, we should never presume we can modify the float.
+    assert op(myf(1), np.float64(2)) == __op__
+    assert op(np.float64(1), myf(2)) == __rop__
