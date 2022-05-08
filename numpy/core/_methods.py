@@ -64,11 +64,6 @@ def _all(a, axis=None, dtype=None, out=None, keepdims=False, *, where=True):
     return umr_all(a, axis, dtype, out, keepdims, where=where)
 
 def _count_reduce_items(arr, axis, keepdims=False, where=True):
-    """ Count number of items in the reduction
-    
-    Returns:
-        Integer if where=True, otherwise a np.ndarray
-    """
     # fast-path for the default case
     if where is True:
         # no boolean mask given, calculate items according to axis
@@ -79,6 +74,7 @@ def _count_reduce_items(arr, axis, keepdims=False, where=True):
         items = 1
         for ax in axis:
             items *= arr.shape[mu.normalize_axis_index(ax, arr.ndim)]
+        items = nt.intp(items)
     else:
         # TODO: Optimize case when `where` is broadcast along a non-reduction
         # axis and full sum is more excessive than needed.
@@ -193,9 +189,6 @@ def _mean(a, axis=None, dtype=None, out=None, keepdims=False, *, where=True):
         else:
             ret = ret.dtype.type(ret / rcount)
     else:
-        # corner case gh-21465
-        if isinstance(rcount, int):
-            rcount = nt.intp(rcount)
         ret = ret / rcount
 
     return ret
@@ -220,7 +213,7 @@ def _var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False, *,
     arrmean = umr_sum(arr, axis, dtype, keepdims=True, where=where)
     # The shape of rcount has to match arrmean to not change the shape of out
     # in broadcasting. Otherwise, it cannot be stored back to arrmean.
-    if isinstance(rcount, int):
+    if rcount.ndim == 0:
         # fast-path for default case when where is True
         div = rcount
     else:
@@ -232,9 +225,6 @@ def _var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False, *,
     elif hasattr(arrmean, "dtype"):
         arrmean = arrmean.dtype.type(arrmean / rcount)
     else:
-        # corner case gh-21465
-        if isinstance(rcount, int):
-            rcount = nt.intp(rcount)
         arrmean = arrmean / rcount
 
     # Compute sum of squared deviations from mean
