@@ -5,6 +5,7 @@
 #include "get_attr_string.h"
 #include "npy_import.h"
 #include "ufunc_override.h"
+#include "scalartypes.h"
 
 #define PyObject_CheckExact_Type(op, checktype) (((PyObject*)(op))->ob_type == &checktype)
 
@@ -32,8 +33,9 @@ PyUFuncOverride_GetNonDefaultArrayUfunc(PyObject *obj)
     if (PyArray_CheckExact(obj)) {
         return NULL;
     }
-    /* Fast return for most common numpy scalar types */
-    if (PyObject_CheckExact_Type(obj, PyDoubleArrType_Type) || PyObject_CheckExact_Type(obj, PyIntArrType_Type)) {
+   /* Fast return for numpy scalar types */
+    if (is_anyscalar_exact(obj) )
+    {
         return NULL;
     }
 
