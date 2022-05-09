@@ -7,8 +7,6 @@
 #include "ufunc_override.h"
 #include "scalartypes.h"
 
-#define PyObject_CheckExact_Type(op, checktype) (((PyObject*)(op))->ob_type == &checktype)
-
 /*
  * Check whether an object has __array_ufunc__ defined on its class and it
  * is not the default, i.e., the object is not an ndarray, and its
