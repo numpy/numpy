@@ -771,6 +771,7 @@ PyArray_NewFromDescr_int(
                  * Compare to PyArray_OverflowMultiplyList that
                  * returns 0 in this case. See also `PyArray_NBYTES_ALLOCATED`.
                  */
+                nbytes = 0;
                 continue;
             }
 
