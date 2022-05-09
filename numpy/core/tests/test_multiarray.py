@@ -1265,6 +1265,26 @@ class TestStructured:
         assert_equal(a == b, [False, True])
         assert_equal(a != b, [True, False])
 
+    def test_void_comparison_failures(self):
+        # In principle, one could decide to return an array of False for some
+        # if comparisons are impossible.  But right now we return TypeError
+        # when "void" dtype are involved.
+        x = np.zeros(3, dtype=[('a', 'i1')])
+        y = np.zeros(3)
+        # Cannot compare non-structured to structured:
+        with pytest.raises(TypeError):
+            x == y
+
+        # Added title prevents promotion:
+        y = np.zeros(3, dtype=[('a', 'i1', 'title')])
+        with pytest.raises(TypeError):
+            x == y
+
+        x = np.zeros(3, dtype="V7")
+        y = np.zeros(3, dtype="V8")
+        with pytest.raises(TypeError):
+            x == y
+
     def test_casting(self):
         # Check that casting a structured array to change its byte order
         # works

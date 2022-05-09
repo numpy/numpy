@@ -1035,8 +1035,7 @@ _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
     }
     if (PyArray_TYPE(other) != NPY_VOID) {
         PyErr_SetString(PyExc_ValueError,
-                "Cannot compare structured or void to non-void arrays.  "
-                "(This may return array of False in the future.)");
+                "Cannot compare structured or void to non-void arrays.");
         return NULL;
     }
     if (PyArray_HASFIELDS(self) && PyArray_HASFIELDS(other)) {
@@ -1049,8 +1048,7 @@ _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
             PyErr_SetString(PyExc_TypeError,
                     "Cannot compare structured arrays unless they have a "
                     "common dtype.  I.e. `np.result_type(arr1, arr2)` must "
-                   "be defined.\n"
-                    "(This may return array of False in the future.)");
+                    "be defined.");
             return NULL;
         }
         Py_DECREF(promoted);
@@ -1196,8 +1194,8 @@ _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
     }
     else if (PyArray_HASFIELDS(self) || PyArray_HASFIELDS(other)) {
         PyErr_SetString(PyExc_TypeError,
-                "Cannot compare structured with unstructured void.  "
-                "(This may return array of False in the future.)");
+                "Cannot compare structured with unstructured void arrays. "
+                "(unreachable error, please report to NumPy devs.)");
         return NULL;
     }
     else {
