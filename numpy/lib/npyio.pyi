@@ -143,6 +143,7 @@ def loadtxt(
     encoding: None | str = ...,
     max_rows: None | int = ...,
     *,
+    quotechar: None | str = ...,
     like: None | _SupportsArrayFunc = ...
 ) -> NDArray[float64]: ...
 @overload
@@ -159,6 +160,7 @@ def loadtxt(
     encoding: None | str = ...,
     max_rows: None | int = ...,
     *,
+    quotechar: None | str = ...,
     like: None | _SupportsArrayFunc = ...
 ) -> NDArray[_SCT]: ...
 @overload
@@ -175,6 +177,7 @@ def loadtxt(
     encoding: None | str = ...,
     max_rows: None | int = ...,
     *,
+    quotechar: None | str = ...,
     like: None | _SupportsArrayFunc = ...
 ) -> NDArray[Any]: ...
 
