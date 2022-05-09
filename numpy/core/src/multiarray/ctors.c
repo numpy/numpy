@@ -829,6 +829,10 @@ PyArray_NewFromDescr_int(
          */
         if (nbytes == 0) {
             nbytes = 1;
+            /* Make sure all the strides are 0 */
+            for (int i = 0; i < nd; i++) {
+                fa->strides[i] = 0;
+            }
         }
         /*
          * It is bad to have uninitialized OBJECT pointers
