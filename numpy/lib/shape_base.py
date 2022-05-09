@@ -600,9 +600,9 @@ def expand_dims(a, axis):
     shape = [1 if ax in axis else next(shape_it) for ax in range(out_ndim)]
     
     if not a.flags.f_contiguous:
-        keep_order="C"
+        keep_order = "C"
     else:
-        keep_order="F"
+        keep_order = "F"
 
     return a.reshape(shape, order=keep_order)
 
