@@ -34,8 +34,7 @@ PyUFuncOverride_GetNonDefaultArrayUfunc(PyObject *obj)
         return NULL;
     }
    /* Fast return for numpy scalar types */
-    if (is_anyscalar_exact(obj) )
-    {
+    if (is_anyscalar_exact(obj)) {
         return NULL;
     }
 
