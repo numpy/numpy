@@ -550,8 +550,10 @@ In order to prevent clobbering object pointers in fields of
 :class:`object` type, numpy currently does not allow views of structured
 arrays containing objects.
 
-Structure Comparison
---------------------
+.. _structured_dtype_comparison_and_promotion:
+
+Structure Comparison and Promotion
+----------------------------------
 
 If the dtypes of two void structured arrays are equal, testing the equality of
 the arrays will result in a boolean array with the dimensions of the original
@@ -576,11 +578,46 @@ This enforces that the number of fields, the field names, and the field titles
 must match precisely.
 When promotion is not possible, for example due to mismatching field names,
 NumPy will raise an error.
+Promotion between two structured dtypes results in a canonical dtype that
+ensures native byte-order for all fields::
+
+    >>> np.result_type(np.dtype("i,>i"))
+    dtype([('f0', '<i4'), ('f1', '<i4')])
+    >>> np.result_type(np.dtype("i,>i"), np.dtype("i,i"))
+    dtype([('f0', '<i4'), ('f1', '<i4')])
+
+The resulting dtype from promotion is also guaranteed to be packed, meaning
+that all fields are ordered contiguously and any unnecessary padding is
+removed::
+
+    >>> dt = np.dtype("i1,V3,i4,V1")[["f0", "f2"]]
+    >>> dt
+    dtype({'names':['f0','f2'], 'formats':['i1','<i4'], 'offsets':[0,4], 'itemsize':9})
+    >>> np.result_type(dt)
+    dtype([('f0', 'i1'), ('f2', '<i4')])
+
+Note that the result prints without ``offsets`` or ``itemsize`` indicating no
+additional padding.
+If a structured dtype is created with ``align=True`` ensuring that
+``dtype.isalignedstruct`` is true, this property is preserved::
+
+    >>> dt = np.dtype("i1,V3,i4,V1", align=True)[["f0", "f2"]]
+    >>> dt
+    dtype({'names':['f0','f2'], 'formats':['i1','<i4'], 'offsets':[0,4], 'itemsize':12}, align=True)
+    >>> np.result_type(dt)
+    dtype([('f0', 'i1'), ('f2', '<i4')], align=True)
+    >>> np.result_type(dt).isalignedstruct
+    True
+
+When promoting multiple dtypes, the result is aligned if any of the inputs is::
+
+    >>> np.result_type(np.dtype("i,i"), np.dtype("i,i", align=True))
+    dtype([('f0', '<i4'), ('f1', '<i4')], align=True)
 
 The ``<`` and ``>`` operators always return ``False`` when comparing void
 structured arrays, and arithmetic and bitwise operations are not supported.
 
-.. versionchanged::
+.. versionchanged:: 1.23
     Before NumPy 1.23, a warning was given and ``False`` returned when
     promotion to a common dtype failed.
     Further, promotion was much more restrictive: It would reject the mixed

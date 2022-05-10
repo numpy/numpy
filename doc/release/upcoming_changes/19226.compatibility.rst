@@ -9,45 +9,11 @@ an exception::
 
 For promotion matching field names, order, and titles are enforced, however
 padding is ignored.
-Note that this also now always ensures native byte-order for all fields,
-which can change the result (this can affect ``np.concatenate``)::
-
-    >>> np.result_type(np.dtype("i,>i"))
-    dtype([('f0', '<i4'), ('f1', '<i4')])
-    >>> np.result_type(np.dtype("i,>i"), np.dtype("i,i"))
-    dtype([('f0', '<i4'), ('f1', '<i4')])
-
-which previously returned the first dtype unmodified.
-
-Further, the new result of ``np.result_type`` and promotion in general
-is considered "canonical".  Additionally to ensuring native byte-order
-for all fields, the result will also be "packed".  This means that
-all fields is ordered contiguously and any unnecessary padding
-is now removed::
-
-    >>> dt = np.dtype("i1,V3,i4,V1")[["f0", "f2"]]
-    >>> dt
-    dtype({'names':['f0','f2'], 'formats':['i1','<i4'], 'offsets':[0,4], 'itemsize':9})
-    >>> np.result_type(dt)
-    dtype([('f0', 'i1'), ('f2', '<i4')])
-
-Note that the result prints without ``offsets`` or ``itemsize`` indicating no
-additional padding.
-If a structured dtype is created with ``align=True`` ensuring that
-``dtype.isalignedstruct`` is true, this property is preserved:
-
-    >>> dt = np.dtype("i1,V3,i4,V1", align=True)[["f0", "f2"]]
-    >>> dt
-    dtype({'names':['f0','f2'], 'formats':['i1','<i4'], 'offsets':[0,4], 'itemsize':12}, align=True)
-    >>> np.result_type(dt)
-    dtype([('f0', 'i1'), ('f2', '<i4')], align=True)
-    >>> np.result_type(dt).isalignedstruct
-    True
-
-When promoting multiple dtypes, the result is aligned if any of the inputs is::
-
-    >>> np.result_type(np.dtype("i,i"), np.dtype("i,i", align=True))
-    dtype([('f0', '<i4'), ('f1', '<i4')], align=True)
+Promotion involving structured dtypes now always ensures native byte-order for
+all fields (which may change the result of ``np.concatenate``)
+and ensures that the result will be "packed", i.e. all fields are ordered
+contiguously and padding is removed.
+See :ref:`structured_dtype_comparison_and_promotion` for further details.
 
 The ``repr`` of aligned structures will now never print the long form
 including ``offsets`` and ``itemsize`` unless the struct includes padding
