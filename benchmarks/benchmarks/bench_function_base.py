@@ -43,6 +43,20 @@ class Bincount(Benchmark):
         np.bincount(self.d, weights=self.e)
 
 
+class Mean(Benchmark):
+    param_names = ['size']
+    params = [[1, 10, 100_000]]
+
+    def setup(self, size):
+        self.array = np.arange(2*size).reshape(2, size)
+
+    def time_mean(self):
+        np.mean(self.array)
+
+    def time_mean_axis(self):
+        np.mean(self.array, axis=1)
+
+
 class Median(Benchmark):
     def setup(self):
         self.e = np.arange(10000, dtype=np.float32)
