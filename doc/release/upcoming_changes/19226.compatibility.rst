@@ -1,20 +1,8 @@
 Changes to structured (void) dtype promotion and comparisons
 ------------------------------------------------------------
-NumPy usually uses field position of structured dtypes when assigning
-from one structured dtype to another.  This means that::
-
-    arr[["field1", "field2"]] = arr[["field2", "field1"]]
-
-swaps the data of the two fields.  However, until now this behaviour
-was not matched for ``np.concatenate``.  NumPy was also overly
-restrictive when comparing two structured dtypes.  For exmaple::
-
-    np.ones(3, dtype="i,i") == np.ones(3, dtype="i,d")
-
-will now succeed instead of giving a ``FutureWarning`` and return ``False``.
-
 In general, NumPy now defines correct, but slightly limited, promotion for
-structured dtypes::
+structured dtypes by promoting the subtypes of each field instead of raising
+an exception::
 
     >>> np.result_type(np.dtype("i,i"), np.dtype("i,d"))
     dtype([('f0', '<i4'), ('f1', '<f8')])
