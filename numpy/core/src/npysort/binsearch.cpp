@@ -13,12 +13,12 @@
 #include <functional>  // for std::less and std::less_equal
 
 // Enumerators for the variant of binsearch
-enum arg_t
+enum class arg_t
 {
     noarg,
     arg
 };
-enum side_t
+enum class side_t
 {
     left,
     right
@@ -29,12 +29,12 @@ template <class Tag, side_t side>
 struct side_to_cmp;
 
 template <class Tag>
-struct side_to_cmp<Tag, left> {
+struct side_to_cmp<Tag, side_t::left> {
     static constexpr auto value = Tag::less;
 };
 
 template <class Tag>
-struct side_to_cmp<Tag, right> {
+struct side_to_cmp<Tag, side_t::right> {
     static constexpr auto value = Tag::less_equal;
 };
 
@@ -42,12 +42,12 @@ template <side_t side>
 struct side_to_generic_cmp;
 
 template <>
-struct side_to_generic_cmp<left> {
+struct side_to_generic_cmp<side_t::left> {
     using type = std::less<int>;
 };
 
 template <>
-struct side_to_generic_cmp<right> {
+struct side_to_generic_cmp<side_t::right> {
     using type = std::less_equal<int>;
 };
 
@@ -273,7 +273,7 @@ template <arg_t arg>
 struct binsearch_base;
 
 template <>
-struct binsearch_base<arg> {
+struct binsearch_base<arg_t::arg> {
     using function_type = PyArray_ArgBinSearchFunc *;
     struct value_type {
         int typenum;
@@ -285,18 +285,18 @@ struct binsearch_base<arg> {
     {
         return std::array<value_type, sizeof...(Tags)>{
                 value_type{Tags::type_value,
-                           {(function_type)&argbinsearch<Tags, left>,
-                            (function_type)argbinsearch<Tags, right>}}...};
+                           {(function_type)&argbinsearch<Tags, side_t::left>,
+                            (function_type)argbinsearch<Tags, side_t::right>}}...};
     }
     static constexpr std::array<function_type, 2> npy_map = {
-            (function_type)&npy_argbinsearch<left>,
-            (function_type)&npy_argbinsearch<right>};
+            (function_type)&npy_argbinsearch<side_t::left>,
+            (function_type)&npy_argbinsearch<side_t::right>};
 };
-constexpr std::array<binsearch_base<arg>::function_type, 2>
-        binsearch_base<arg>::npy_map;
+constexpr std::array<binsearch_base<arg_t::arg>::function_type, 2>
+        binsearch_base<arg_t::arg>::npy_map;
 
 template <>
-struct binsearch_base<noarg> {
+struct binsearch_base<arg_t::noarg> {
     using function_type = PyArray_BinSearchFunc *;
     struct value_type {
         int typenum;
@@ -308,15 +308,15 @@ struct binsearch_base<noarg> {
     {
         return std::array<value_type, sizeof...(Tags)>{
                 value_type{Tags::type_value,
-                           {(function_type)&binsearch<Tags, left>,
-                            (function_type)binsearch<Tags, right>}}...};
+                           {(function_type)&binsearch<Tags, side_t::left>,
+                            (function_type)binsearch<Tags, side_t::right>}}...};
     }
     static constexpr std::array<function_type, 2> npy_map = {
-            (function_type)&npy_binsearch<left>,
-            (function_type)&npy_binsearch<right>};
+            (function_type)&npy_binsearch<side_t::left>,
+            (function_type)&npy_binsearch<side_t::right>};
 };
-constexpr std::array<binsearch_base<noarg>::function_type, 2>
-        binsearch_base<noarg>::npy_map;
+constexpr std::array<binsearch_base<arg_t::noarg>::function_type, 2>
+        binsearch_base<arg_t::noarg>::npy_map;
 
 // Handle generation of all binsearch variants
 template <arg_t arg>
@@ -392,12 +392,12 @@ extern "C" {
 NPY_NO_EXPORT PyArray_BinSearchFunc *
 get_binsearch_func(PyArray_Descr *dtype, NPY_SEARCHSIDE side)
 {
-    return _get_binsearch_func<noarg>(dtype, side);
+    return _get_binsearch_func<arg_t::noarg>(dtype, side);
 }
 
 NPY_NO_EXPORT PyArray_ArgBinSearchFunc *
 get_argbinsearch_func(PyArray_Descr *dtype, NPY_SEARCHSIDE side)
 {
-    return _get_binsearch_func<arg>(dtype, side);
+    return _get_binsearch_func<arg_t::arg>(dtype, side);
 }
 }
