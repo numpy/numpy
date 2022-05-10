@@ -92,13 +92,16 @@ class Median(Benchmark):
 class Percentile(Benchmark):
     def setup(self):
         self.e = np.arange(10000, dtype=np.float32)
-        self.o = np.arange(10001, dtype=np.float32)
+        self.o = np.arange(21, dtype=np.float32)
 
     def time_quartile(self):
         np.percentile(self.e, [25, 75])
 
     def time_percentile(self):
         np.percentile(self.e, [25, 35, 55, 65, 75])
+
+    def time_percentile_small(self):
+        np.percentile(self.o, [25, 75])
 
 
 class Select(Benchmark):
