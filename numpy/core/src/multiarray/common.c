@@ -127,23 +127,6 @@ PyArray_DTypeFromObject(PyObject *obj, int maxdims, PyArray_Descr **out_dtype)
     return 0;
 }
 
-NPY_NO_EXPORT char *
-index2ptr(PyArrayObject *mp, npy_intp i)
-{
-    npy_intp dim0;
-
-    if (PyArray_NDIM(mp) == 0) {
-        PyErr_SetString(PyExc_IndexError, "0-d arrays can't be indexed");
-        return NULL;
-    }
-    dim0 = PyArray_DIMS(mp)[0];
-    if (check_and_adjust_index(&i, dim0, 0, NULL) < 0)
-        return NULL;
-    if (i == 0) {
-        return PyArray_DATA(mp);
-    }
-    return PyArray_BYTES(mp)+i*PyArray_STRIDES(mp)[0];
-}
 
 NPY_NO_EXPORT int
 _zerofill(PyArrayObject *ret)

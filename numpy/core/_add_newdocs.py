@@ -1398,6 +1398,11 @@ add_newdoc('numpy.core.multiarray', 'fromiter',
         An iterable object providing data for the array.
     dtype : data-type
         The data-type of the returned array.
+
+        .. versionchanged:: 1.23
+            Object and subarray dtypes are now supported (note that the final
+            result is not 1-D for a subarray dtype).
+
     count : int, optional
         The number of items to read from *iterable*.  The default is -1,
         which means all data is read.
@@ -1420,6 +1425,18 @@ add_newdoc('numpy.core.multiarray', 'fromiter',
     >>> iterable = (x*x for x in range(5))
     >>> np.fromiter(iterable, float)
     array([  0.,   1.,   4.,   9.,  16.])
+
+    A carefully constructed subarray dtype will lead to higher dimensional
+    results:
+
+    >>> iterable = ((x+1, x+2) for x in range(5))
+    >>> np.fromiter(iterable, dtype=np.dtype((int, 2)))
+    array([[1, 2],
+           [2, 3],
+           [3, 4],
+           [4, 5],
+           [5, 6]])
+
 
     """.replace(
         "${ARRAY_FUNCTION_LIKE}",

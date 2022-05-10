@@ -43,9 +43,6 @@ NPY_NO_EXPORT int
 PyArray_DTypeFromObject(PyObject *obj, int maxdims,
                         PyArray_Descr **out_dtype);
 
-NPY_NO_EXPORT int
-PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
-                              PyArray_Descr **out_dtype, int string_status);
 
 /*
  * Returns NULL without setting an exception if no scalar is matched, a
@@ -53,12 +50,6 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
  */
 NPY_NO_EXPORT PyArray_Descr *
 _array_find_python_scalar_type(PyObject *op);
-
-NPY_NO_EXPORT PyArray_Descr *
-_array_typedescr_fromstr(char const *str);
-
-NPY_NO_EXPORT char *
-index2ptr(PyArrayObject *mp, npy_intp i);
 
 NPY_NO_EXPORT int
 _zerofill(PyArrayObject *ret);
