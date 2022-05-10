@@ -219,11 +219,11 @@ static PyObject *
 
     if ((ap == NULL) || PyArray_ISBEHAVED_RO(ap)) {
         t1 = *((@type@ *)ip);
-        return @func1@((@type1@)t1);
+        return @func1@(t1);
     }
     else {
         PyArray_DESCR(ap)->f->copyswap(&t1, ip, PyArray_ISBYTESWAPPED(ap), ap);
-        return @func1@((@type1@)t1);
+        return @func1@(t1);
     }
 }
 
@@ -237,7 +237,7 @@ static int
         temp = PyArrayScalar_VAL(op, @kind@);
     }
     else {
-        temp = (@type@)@func2@(op);
+        temp = @func2@(op);
     }
     if (PyErr_Occurred()) {
         PyObject *type, *value, *traceback;
@@ -1252,7 +1252,7 @@ static void
     npy_half *op = output;
 
     while (n--) {
-        *op++ = npy_@name@bits_to_halfbits(*ip);
+        *op++ = (npy_half){npy_@name@bits_to_halfbits(*ip)};
 #if @iscomplex@
         ip += 2;
 #else
@@ -1269,7 +1269,7 @@ HALF_to_@TYPE@(void *input, void *output, npy_intp n,
     @itype@ *op = output;
 
     while (n--) {
-        *op++ = npy_halfbits_to_@name@bits(*ip++);
+        *op++ = npy_halfbits_to_@name@bits(NPY_HALF_BITS(*ip++));
 #if @iscomplex@
         *op++ = 0;
 #endif
@@ -1383,7 +1383,7 @@ BOOL_to_@TOTYPE@(void *input, void *output, npy_intp n,
     @totype@ *op = output;
 
     while (n--) {
-        *op++ = (@totype@)((*ip++ != NPY_FALSE) ? @one@ : @zero@);
+        *op++ = (*ip++ != NPY_FALSE) ? @one@ : @zero@;
     }
 }
 /**end repeat**/

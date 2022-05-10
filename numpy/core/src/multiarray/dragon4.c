@@ -2216,7 +2216,7 @@ Dragon4_PrintFloat_IEEE_binary16(
     const npy_uint32 bufferSize = sizeof(scratch->repr);
     BigInt *bigints = scratch->bigints;
 
-    npy_uint16 val = *value;
+    npy_uint16 bits = value->bits;
     npy_uint32 floatExponent, floatMantissa, floatSign;
 
     npy_uint32 mantissa;
@@ -2226,9 +2226,9 @@ Dragon4_PrintFloat_IEEE_binary16(
     char signbit = '\0';
 
     /* deconstruct the floating point value */
-    floatMantissa = val & bitmask_u32(10);
-    floatExponent = (val >> 10) & bitmask_u32(5);
-    floatSign = val >> 15;
+    floatMantissa = bits & bitmask_u32(10);
+    floatExponent = (bits >> 10) & bitmask_u32(5);
+    floatSign = bits >> 15;
 
     /* output the sign */
     if (floatSign != 0) {

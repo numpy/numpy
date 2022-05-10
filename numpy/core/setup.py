@@ -1159,6 +1159,14 @@ def configuration(parent_package='',top_path=None):
     config.add_extension('_struct_ufunc_tests',
                     sources=[join('src', 'umath', '_struct_ufunc_tests.c')])
 
+    #######################################################################
+    #                        half_legacy_test module                      #
+    #######################################################################
+
+    config.add_extension('_half_legacy_tests',
+                    sources=[join('src', 'npymath', '_half_legacy_tests.c')],
+                    libraries=['npymath'])
+
 
     #######################################################################
     #                        operand_flag_tests module                    #

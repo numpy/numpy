@@ -1939,7 +1939,7 @@ HALF_conjugate(char **args, npy_intp const *dimensions, npy_intp const *steps, v
 NPY_NO_EXPORT NPY_GCC_OPT_3 void
 HALF_absolute(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
-    UNARY_LOOP_FAST(npy_half, npy_half, *out = in&0x7fffu);
+    UNARY_LOOP_FAST(npy_half, npy_half, *out = npy_half_abs(in));
 }
 
 NPY_NO_EXPORT void
@@ -1947,7 +1947,7 @@ HALF_negative(char **args, npy_intp const *dimensions, npy_intp const *steps, vo
 {
     UNARY_LOOP {
         const npy_half in1 = *(npy_half *)ip1;
-        *((npy_half *)op1) = in1^0x8000u;
+        *((npy_half *)op1) = npy_half_neg(in1);
     }
 }
 
@@ -1956,7 +1956,7 @@ HALF_positive(char **args, npy_intp const *dimensions, npy_intp const *steps, vo
 {
     UNARY_LOOP {
         const npy_half in1 = *(npy_half *)ip1;
-        *((npy_half *)op1) = +in1;
+        *((npy_half *)op1) = npy_half_pos(in1);
     }
 }
 
@@ -1967,8 +1967,8 @@ HALF_sign(char **args, npy_intp const *dimensions, npy_intp const *steps, void *
     UNARY_LOOP {
         const npy_half in1 = *(npy_half *)ip1;
         *((npy_half *)op1) = npy_half_isnan(in1) ? in1 :
-                    (((in1&0x7fffu) == 0) ? 0 :
-                      (((in1&0x8000u) == 0) ? NPY_HALF_ONE : NPY_HALF_NEGONE));
+                    (npy_half_iszero(in1) ? NPY_HALF_ZERO :
+                     (npy_half_signbit(in1) ? NPY_HALF_NEGONE : NPY_HALF_ONE));
     }
 }
 

@@ -1,0 +1,19 @@
+``halffloat.h`` has received several changes
+--------------------------------------------
+
+The ``npy_half`` type is no longer a type alias, but a strong type. This make
+typing safer as ``npy_half x = 1`` or ``x += 1`` now raise an error.
+
+The ``halffloat.h`` header has been updated so that any code interacting with
+``npy_half`` through ``npy_half_*`` functions should recompile without error.
+Code that directly manipulate the bit representation of ``npy_half`` should do
+it explicitly by accessing the ``bits`` field of ``npy_half``. A few functions
+like ``npy_half_neg`` or ``npy_half_abs`` have been added to avoid this
+situation.
+
+For ABI compatibility, the legacy symbols that interacted with ``npy_half`` are
+still compiled in, but they are not exposed through the ``halffloat.h`` header.
+
+Downstream user that still need the legacy ABI can define the
+``NPY_USE_LEGACY_HALF`` macro before including ``halffloat.h``. In that case the
+legacy API is exposed.

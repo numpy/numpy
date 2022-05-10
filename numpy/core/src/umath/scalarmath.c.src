@@ -370,7 +370,7 @@ half_ctype_floor_divide(npy_half a, npy_half b, npy_half *out)
 {
     npy_half mod;
 
-    if (!b) {
+    if (!NPY_HALF_BITS(b)) {
         float res = npy_half_to_float(a) / npy_half_to_float(b);
         *out = npy_float_to_half(res);
     }
@@ -514,7 +514,7 @@ static NPY_INLINE int
 static NPY_INLINE int
 half_ctype_negative(npy_half a, npy_half *out)
 {
-    *out = a^0x8000u;
+    *out = npy_half_neg(a);
     return 0;
 }
 
@@ -607,7 +607,7 @@ static NPY_INLINE int
 static NPY_INLINE int
 half_ctype_absolute(npy_half a, npy_half *out)
 {
-    *out = a&0x7fffu;
+    *out = npy_half_abs(a);
     return 0;
 }
 

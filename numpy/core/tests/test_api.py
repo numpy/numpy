@@ -2,6 +2,7 @@ import sys
 
 import numpy as np
 from numpy.core._rational_tests import rational
+import numpy.core._half_legacy_tests
 import pytest
 from numpy.testing import (
      assert_, assert_equal, assert_array_equal, assert_raises, assert_warns,

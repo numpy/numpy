@@ -1030,7 +1030,12 @@ typedef struct { npy_longdouble real, imag; } npy_clongdouble;
 
 /* half/float16 isn't a floating-point type in C */
 #define NPY_FLOAT16 NPY_HALF
-typedef npy_uint16 npy_half;
+typedef npy_uint16 npy_half_bits_t;
+#ifdef NPY_USE_LEGACY_HALF
+typedef npy_half_bits_t npy_half;
+#else
+typedef struct npy_half { npy_half_bits_t bits;} npy_half;
+#endif
 typedef npy_half npy_float16;
 
 #if NPY_BITSOF_LONGDOUBLE == 32

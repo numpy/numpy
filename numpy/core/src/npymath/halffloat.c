@@ -2,6 +2,10 @@
 
 #include "numpy/halffloat.h"
 
+#ifdef NPY_USE_LEGACY_HALF
+#error halffloat.c should not be compiled with legacy API set
+#endif
+
 /*
  * This chooses between 'ties to even' and 'ties away from zero'.
  */
@@ -14,6 +18,18 @@
 #define NPY_HALF_GENERATE_UNDERFLOW 1
 #define NPY_HALF_GENERATE_INVALID 1
 
+/* Force export of inline symbols. Those symbols are set inline for performance
+ * reason, but we still want them as part of the ABI.
+ */
+extern int npy_half_iszero(npy_half h);
+extern int npy_half_isnan(npy_half h);
+extern int npy_half_isinf(npy_half h);
+extern int npy_half_isfinite(npy_half h);
+extern int npy_half_signbit(npy_half h);
+extern npy_half npy_half_neg(npy_half h);
+extern npy_half npy_half_abs(npy_half h);
+extern npy_half npy_half_pos(npy_half h);
+
 /*
  ********************************************************************
  *                   HALF-PRECISION ROUTINES                        *
@@ -23,14 +39,14 @@
 float npy_half_to_float(npy_half h)
 {
     union { float ret; npy_uint32 retbits; } conv;
-    conv.retbits = npy_halfbits_to_floatbits(h);
+    conv.retbits = npy_halfbits_to_floatbits(h.bits);
     return conv.ret;
 }
 
 double npy_half_to_double(npy_half h)
 {
     union { double ret; npy_uint64 retbits; } conv;
-    conv.retbits = npy_halfbits_to_doublebits(h);
+    conv.retbits = npy_halfbits_to_doublebits(h.bits);
     return conv.ret;
 }
 
@@ -38,70 +54,45 @@ npy_half npy_float_to_half(float f)
 {
     union { float f; npy_uint32 fbits; } conv;
     conv.f = f;
-    return npy_floatbits_to_halfbits(conv.fbits);
+    return (npy_half){npy_floatbits_to_halfbits(conv.fbits)};
 }
 
 npy_half npy_double_to_half(double d)
 {
     union { double d; npy_uint64 dbits; } conv;
     conv.d = d;
-    return npy_doublebits_to_halfbits(conv.dbits);
-}
-
-int npy_half_iszero(npy_half h)
-{
-    return (h&0x7fff) == 0;
-}
-
-int npy_half_isnan(npy_half h)
-{
-    return ((h&0x7c00u) == 0x7c00u) && ((h&0x03ffu) != 0x0000u);
-}
-
-int npy_half_isinf(npy_half h)
-{
-    return ((h&0x7fffu) == 0x7c00u);
-}
-
-int npy_half_isfinite(npy_half h)
-{
-    return ((h&0x7c00u) != 0x7c00u);
-}
-
-int npy_half_signbit(npy_half h)
-{
-    return (h&0x8000u) != 0;
+    return (npy_half){npy_doublebits_to_halfbits(conv.dbits)};
 }
 
 npy_half npy_half_spacing(npy_half h)
 {
     npy_half ret;
-    npy_uint16 h_exp = h&0x7c00u;
-    npy_uint16 h_sig = h&0x03ffu;
+    npy_uint16 h_exp = h.bits&0x7c00u;
+    npy_uint16 h_sig = h.bits&0x03ffu;
     if (h_exp == 0x7c00u) {
 #if NPY_HALF_GENERATE_INVALID
         npy_set_floatstatus_invalid();
 #endif
         ret = NPY_HALF_NAN;
-    } else if (h == 0x7bffu) {
+    } else if (h.bits == 0x7bffu) {
 #if NPY_HALF_GENERATE_OVERFLOW
         npy_set_floatstatus_overflow();
 #endif
         ret = NPY_HALF_PINF;
-    } else if ((h&0x8000u) && h_sig == 0) { /* Negative boundary case */
+    } else if ((h.bits&0x8000u) && h_sig == 0) { /* Negative boundary case */
         if (h_exp > 0x2c00u) { /* If result is normalized */
-            ret = h_exp - 0x2c00u;
+            ret = (npy_half){h_exp - 0x2c00u};
         } else if(h_exp > 0x0400u) { /* The result is a subnormal, but not the smallest */
-            ret = 1 << ((h_exp >> 10) - 2);
+            ret = (npy_half){1 << ((h_exp >> 10) - 2)};
         } else {
-            ret = 0x0001u; /* Smallest subnormal half */
+            ret = (npy_half){0x0001u}; /* Smallest subnormal half */
         }
     } else if (h_exp > 0x2800u) { /* If result is still normalized */
-        ret = h_exp - 0x2800u;
+        ret = (npy_half){h_exp - 0x2800u};
     } else if (h_exp > 0x0400u) { /* The result is a subnormal, but not the smallest */
-        ret = 1 << ((h_exp >> 10) - 1);
+        ret = (npy_half){1 << ((h_exp >> 10) - 1)};
     } else {
-        ret = 0x0001u;
+        ret = (npy_half){0x0001u};
     }
 
     return ret;
@@ -109,7 +100,7 @@ npy_half npy_half_spacing(npy_half h)
 
 npy_half npy_half_copysign(npy_half x, npy_half y)
 {
-    return (x&0x7fffu) | (y&0x8000u);
+    return (npy_half){(x.bits&0x7fffu) | (y.bits&0x8000u)};
 }
 
 npy_half npy_half_nextafter(npy_half x, npy_half y)
@@ -121,18 +112,18 @@ npy_half npy_half_nextafter(npy_half x, npy_half y)
     } else if (npy_half_eq_nonan(x, y)) {
         ret = x;
     } else if (npy_half_iszero(x)) {
-        ret = (y&0x8000u) + 1; /* Smallest subnormal half */
-    } else if (!(x&0x8000u)) { /* x > 0 */
-        if ((npy_int16)x > (npy_int16)y) { /* x > y */
-            ret = x-1;
+        ret = (npy_half){(y.bits&0x8000u) + 1}; /* Smallest subnormal half */
+    } else if (!(x.bits&0x8000u)) { /* x > 0 */
+        if ((npy_int16)x.bits > (npy_int16)y.bits) { /* x > y */
+            ret = (npy_half){x.bits-1};
         } else {
-            ret = x+1;
+            ret = (npy_half){x.bits+1};
         }
     } else {
-        if (!(y&0x8000u) || (x&0x7fffu) > (y&0x7fffu)) { /* x < y */
-            ret = x-1;
+        if (!(y.bits&0x8000u) || (x.bits&0x7fffu) > (y.bits&0x7fffu)) { /* x < y */
+            ret = (npy_half){x.bits-1};
         } else {
-            ret = x+1;
+            ret = (npy_half){x.bits+1};
         }
     }
 #if NPY_HALF_GENERATE_OVERFLOW
@@ -146,7 +137,7 @@ npy_half npy_half_nextafter(npy_half x, npy_half y)
 
 int npy_half_eq_nonan(npy_half h1, npy_half h2)
 {
-    return (h1 == h2 || ((h1 | h2) & 0x7fff) == 0);
+    return (h1.bits == h2.bits || ((h1.bits | h2.bits) & 0x7fff) == 0);
 }
 
 int npy_half_eq(npy_half h1, npy_half h2)
@@ -158,7 +149,7 @@ int npy_half_eq(npy_half h1, npy_half h2)
      *   - If the values are both signed zeros, equal.
      */
     return (!npy_half_isnan(h1) && !npy_half_isnan(h2)) &&
-           (h1 == h2 || ((h1 | h2) & 0x7fff) == 0);
+           (h1.bits == h2.bits || ((h1.bits | h2.bits) & 0x7fff) == 0);
 }
 
 int npy_half_ne(npy_half h1, npy_half h2)
@@ -168,18 +159,18 @@ int npy_half_ne(npy_half h1, npy_half h2)
 
 int npy_half_lt_nonan(npy_half h1, npy_half h2)
 {
-    if (h1&0x8000u) {
-        if (h2&0x8000u) {
-            return (h1&0x7fffu) > (h2&0x7fffu);
+    if (h1.bits&0x8000u) {
+        if (h2.bits&0x8000u) {
+            return (h1.bits&0x7fffu) > (h2.bits&0x7fffu);
         } else {
             /* Signed zeros are equal, have to check for it */
-            return (h1 != 0x8000u) || (h2 != 0x0000u);
+            return (h1.bits != 0x8000u) || (h2.bits != 0x0000u);
         }
     } else {
-        if (h2&0x8000u) {
+        if (h2.bits&0x8000u) {
             return 0;
         } else {
-            return (h1&0x7fffu) < (h2&0x7fffu);
+            return (h1.bits&0x7fffu) < (h2.bits&0x7fffu);
         }
     }
 }
@@ -196,18 +187,18 @@ int npy_half_gt(npy_half h1, npy_half h2)
 
 int npy_half_le_nonan(npy_half h1, npy_half h2)
 {
-    if (h1&0x8000u) {
-        if (h2&0x8000u) {
-            return (h1&0x7fffu) >= (h2&0x7fffu);
+    if (h1.bits&0x8000u) {
+        if (h2.bits&0x8000u) {
+            return (h1.bits&0x7fffu) >= (h2.bits&0x7fffu);
         } else {
             return 1;
         }
     } else {
-        if (h2&0x8000u) {
+        if (h2.bits&0x8000u) {
             /* Signed zeros are equal, have to check for it */
-            return (h1 == 0x0000u) && (h2 == 0x8000u);
+            return (h1.bits == 0x0000u) && (h2.bits == 0x8000u);
         } else {
-            return (h1&0x7fffu) <= (h2&0x7fffu);
+            return (h1.bits&0x7fffu) <= (h2.bits&0x7fffu);
         }
     }
 }
@@ -552,4 +543,126 @@ npy_uint64 npy_halfbits_to_doublebits(npy_uint16 h)
             /* Just need to adjust the exponent and shift */
             return d_sgn + (((npy_uint64)(h&0x7fffu) + 0xfc000u) << 42);
     }
+}
+
+/*
+ * Legacy API, kept for ABI Compatibility since NumPy 1.24, 2022-05.
+ * npy_half used ito be represented by a type alias to npy_uint16 before it got
+ * encapsulated in a struct.
+ */
+
+#undef npy_half_to_float
+#undef npy_half_to_double
+#undef npy_float_to_half
+#undef npy_double_to_half
+#undef npy_half_eq
+#undef npy_half_ne
+#undef npy_half_le
+#undef npy_half_lt
+#undef npy_half_ge
+#undef npy_half_gt
+#undef npy_half_eq_nonan
+#undef npy_half_lt_nonan
+#undef npy_half_le_nonan
+#undef npy_half_copysign
+#undef npy_half_spacing
+#undef npy_half_nextafter
+#undef npy_half_divmod
+#undef npy_half_iszero
+#undef npy_half_isnan
+#undef npy_half_isinf
+#undef npy_half_isfinite
+#undef npy_half_signbit
+#undef npy_half_neg
+#undef npy_half_abs
+#undef npy_half_pos
+
+float NPY_HALF_LEGACY_API(half_to_float)(npy_half_bits_t h) {
+  return NPY_HALF_API(half_to_float)((npy_half){h});
+}
+
+double NPY_HALF_LEGACY_API(half_to_double)(npy_half_bits_t h) {
+  return NPY_HALF_API(half_to_double)((npy_half){h});
+}
+
+npy_half_bits_t NPY_HALF_LEGACY_API(float_to_half)(float f) {
+  return NPY_HALF_API(float_to_half)(f).bits;
+}
+
+npy_half_bits_t NPY_HALF_LEGACY_API(double_to_half)(double d) {
+  return NPY_HALF_API(double_to_half)(d).bits;
+}
+
+int NPY_HALF_LEGACY_API(half_eq)(npy_half_bits_t h1, npy_half_bits_t h2) {
+  return NPY_HALF_API(half_eq)((npy_half){h1}, (npy_half){h2});
+}
+
+int NPY_HALF_LEGACY_API(half_ne)(npy_half_bits_t h1, npy_half_bits_t h2) {
+  return NPY_HALF_API(half_ne)((npy_half){h1}, (npy_half){h2});
+}
+
+int NPY_HALF_LEGACY_API(half_le)(npy_half_bits_t h1, npy_half_bits_t h2) {
+  return NPY_HALF_API(half_le)((npy_half){h1}, (npy_half){h2});
+}
+
+int NPY_HALF_LEGACY_API(half_lt)(npy_half_bits_t h1, npy_half_bits_t h2) {
+  return NPY_HALF_API(half_lt)((npy_half){h1}, (npy_half){h2});
+}
+
+int NPY_HALF_LEGACY_API(half_ge)(npy_half_bits_t h1, npy_half_bits_t h2) {
+  return NPY_HALF_API(half_ge)((npy_half){h1}, (npy_half){h2});
+}
+
+int NPY_HALF_LEGACY_API(half_gt)(npy_half_bits_t h1, npy_half_bits_t h2) {
+  return NPY_HALF_API(half_gt)((npy_half){h1}, (npy_half){h2});
+}
+
+int NPY_HALF_LEGACY_API(half_eq_nonan)(npy_half_bits_t h1, npy_half_bits_t h2) {
+  return NPY_HALF_API(half_eq_nonan)((npy_half){h1}, (npy_half){h2});
+}
+
+int NPY_HALF_LEGACY_API(half_lt_nonan)(npy_half_bits_t h1, npy_half_bits_t h2) {
+  return NPY_HALF_API(half_lt_nonan)((npy_half){h1}, (npy_half){h2});
+}
+
+int NPY_HALF_LEGACY_API(half_le_nonan)(npy_half_bits_t h1, npy_half_bits_t h2) {
+  return NPY_HALF_API(half_le_nonan)((npy_half){h1}, (npy_half){h2});
+}
+
+npy_half_bits_t NPY_HALF_LEGACY_API(half_copysign)(npy_half_bits_t x, npy_half_bits_t y) {
+  return NPY_HALF_API(half_copysign)((npy_half){x}, (npy_half){y}).bits;
+}
+
+npy_half_bits_t NPY_HALF_LEGACY_API(half_spacing)(npy_half_bits_t h) {
+  return NPY_HALF_API(half_spacing)((npy_half){h}).bits;
+}
+npy_half_bits_t NPY_HALF_LEGACY_API(half_nextafter)(npy_half_bits_t x, npy_half_bits_t y) {
+  return NPY_HALF_API(half_nextafter)((npy_half){x}, (npy_half){y}).bits;
+}
+
+npy_half_bits_t NPY_HALF_LEGACY_API(half_divmod)(npy_half_bits_t x, npy_half_bits_t y, npy_half_bits_t *modulus) {
+  npy_half mod;
+  npy_half res = NPY_HALF_API(half_divmod)((npy_half){x}, (npy_half){y}, &mod);
+  *modulus = mod.bits;
+  return res.bits;
+}
+
+int NPY_HALF_LEGACY_API(half_iszero)(npy_half_bits_t h) {
+  return NPY_HALF_API(half_iszero)((npy_half){h});
+}
+
+int NPY_HALF_LEGACY_API(half_isnan)(npy_half_bits_t h) {
+  return NPY_HALF_API(half_isnan)((npy_half){h});
+}
+
+int NPY_HALF_LEGACY_API(half_isinf)(npy_half_bits_t h) {
+  return NPY_HALF_API(half_isinf)((npy_half){h});
+}
+
+int NPY_HALF_LEGACY_API(half_isfinite)(npy_half_bits_t h) {
+  return NPY_HALF_API(half_isfinite)((npy_half){h});
+}
+
+int NPY_HALF_LEGACY_API(half_signbit)(npy_half_bits_t h) {
+  return NPY_HALF_API(half_signbit)((npy_half){h});
 }
