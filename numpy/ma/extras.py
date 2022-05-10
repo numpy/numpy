@@ -475,6 +475,7 @@ def apply_over_axes(func, a, axes):
                         "an array of the correct shape")
     return val
 
+
 if apply_over_axes.__doc__ is not None:
     apply_over_axes.__doc__ = np.apply_over_axes.__doc__[
         :np.apply_over_axes.__doc__.find('Notes')].rstrip() + \
@@ -524,7 +525,8 @@ if apply_over_axes.__doc__ is not None:
     """
 
 
-def average(a, axis=None, weights=None, returned=False):
+def average(a, axis=None, weights=None, returned=False, *,
+            keepdims=np._NoValue):
     """
     Return the weighted average of array over the given axis.
 
@@ -550,6 +552,14 @@ def average(a, axis=None, weights=None, returned=False):
         Flag indicating whether a tuple ``(result, sum of weights)``
         should be returned as output (True), or just the result (False).
         Default is False.
+    keepdims : bool, optional
+        If this is set to True, the axes which are reduced are left
+        in the result as dimensions with size one. With this option,
+        the result will broadcast correctly against the original `a`.
+        *Note:* `keepdims` will not work with instances of `numpy.matrix`
+        or other classes whose methods do not support `keepdims`.
+
+        .. versionadded:: 1.23.0
 
     Returns
     -------
@@ -582,14 +592,29 @@ def average(a, axis=None, weights=None, returned=False):
                  mask=[False, False],
            fill_value=1e+20)
 
+    With ``keepdims=True``, the following result has shape (3, 1).
+
+    >>> np.ma.average(x, axis=1, keepdims=True)
+    masked_array(
+      data=[[0.5],
+            [2.5],
+            [4.5]],
+      mask=False,
+      fill_value=1e+20)
     """
     a = asarray(a)
     m = getmask(a)
 
     # inspired by 'average' in numpy/lib/function_base.py
 
+    if keepdims is np._NoValue:
+        # Don't pass on the keepdims argument if one wasn't given.
+        keepdims_kw = {}
+    else:
+        keepdims_kw = {'keepdims': keepdims}
+
     if weights is None:
-        avg = a.mean(axis)
+        avg = a.mean(axis, **keepdims_kw)
         scl = avg.dtype.type(a.count(axis))
     else:
         wgt = asarray(weights)
@@ -621,7 +646,8 @@ def average(a, axis=None, weights=None, returned=False):
             wgt.mask |= a.mask
 
         scl = wgt.sum(axis=axis, dtype=result_dtype)
-        avg = np.multiply(a, wgt, dtype=result_dtype).sum(axis)/scl
+        avg = np.multiply(a, wgt,
+                          dtype=result_dtype).sum(axis, **keepdims_kw) / scl
 
     if returned:
         if scl.shape != avg.shape:
@@ -712,6 +738,7 @@ def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
         return r.reshape(k)
     else:
         return r
+
 
 def _median(a, axis=None, out=None, overwrite_input=False):
     # when an unmasked NaN is present return it, so we need to sort the NaN
@@ -840,6 +867,7 @@ def compress_nd(x, axis=None):
         data = data[(slice(None),)*ax + (~m.any(axis=axes),)]
     return data
 
+
 def compress_rowcols(x, axis=None):
     """
     Suppress the rows and/or columns of a 2-D array that contain
@@ -912,6 +940,7 @@ def compress_rows(a):
         raise NotImplementedError("compress_rows works for 2D arrays only.")
     return compress_rowcols(a, 0)
 
+
 def compress_cols(a):
     """
     Suppress whole columns of a 2-D array that contain masked values.
@@ -928,6 +957,7 @@ def compress_cols(a):
     if a.ndim != 2:
         raise NotImplementedError("compress_cols works for 2D arrays only.")
     return compress_rowcols(a, 1)
+
 
 def mask_rows(a, axis=np._NoValue):
     """
@@ -978,6 +1008,7 @@ def mask_rows(a, axis=np._NoValue):
             "The axis argument has always been ignored, in future passing it "
             "will raise TypeError", DeprecationWarning, stacklevel=2)
     return mask_rowcols(a, 0)
+
 
 def mask_cols(a, axis=np._NoValue):
     """
@@ -1516,6 +1547,7 @@ class mr_class(MAxisConcatenator):
 
 mr_ = mr_class()
 
+
 #####--------------------------------------------------------------------------
 #---- Find unmasked data ---
 #####--------------------------------------------------------------------------
@@ -1681,6 +1713,7 @@ def flatnotmasked_contiguous(a):
             result.append(slice(i, i + n))
         i += n
     return result
+
 
 def notmasked_contiguous(a, axis=None):
     """
