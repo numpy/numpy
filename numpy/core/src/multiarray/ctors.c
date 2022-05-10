@@ -763,15 +763,16 @@ PyArray_NewFromDescr_int(
          * calls, `PyArray_NBYTES_ALLOCATED` is a private helper matching this
          * behaviour, but without overflow checking.
          */
+        int is_zero = 0;
         for (int i = 0; i < nd; i++) {
             fa->dimensions[i] = dims[i];
 
             if (fa->dimensions[i] == 0) {
                 /*
-                 * Compare to PyArray_OverflowMultiplyList that
-                 * returns 0 in this case. See also `PyArray_NBYTES_ALLOCATED`.
+                 * Continue calculating the max size "as if" this were 1
+                 * to get the proper overflow error
                  */
-                nbytes = 0;
+                is_zero = 1;
                 continue;
             }
 
@@ -791,6 +792,9 @@ PyArray_NewFromDescr_int(
                         "is larger than the maximum possible size.");
                 goto fail;
             }
+        }
+        if (is_zero) {
+            nbytes = 0;
         }
 
         /* Fill the strides (or copy them if they were passed in) */
@@ -3939,20 +3943,13 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, npy_intp count)
     if (ret == NULL) {
         goto done;
     }
-#ifdef NPY_RELAXED_STRIDES_DEBUG
-    /* Incompatible with NPY_RELAXED_STRIDES_DEBUG due to growing */
-    if (elcount == 1) {
-        PyArray_STRIDES(ret)[0] = elsize;
-    }
-#endif /* NPY_RELAXED_STRIDES_DEBUG */
-
 
     char *item = PyArray_BYTES(ret);
     for (i = 0; i < count || count == -1; i++, item += elsize) {
         PyObject *value = PyIter_Next(iter);
         if (value == NULL) {
             if (PyErr_Occurred()) {
-                /* Fetching next item failed rather than exhausting iterator */
+                /* Fetching next item failed perhaps due to exhausting iterator */
                 goto done;
             }
             break;
@@ -3998,7 +3995,6 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, npy_intp count)
         Py_DECREF(value);
     }
 
-
     if (i < count) {
         PyErr_Format(PyExc_ValueError,
                 "iterator too short: Expected %zd but iterator had only %zd "
@@ -4025,6 +4021,14 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, npy_intp count)
             goto done;
         }
         ((PyArrayObject_fields *)ret)->data = new_data;
+
+        if (count == -1) {
+            /*
+             * If PyObject_LengthHint returned 0, ret was originally allocated
+             * as an 0-shape array, so the stride is 0. Fix that
+             */
+            PyArray_STRIDES(ret)[0] = elsize;
+        }
     }
     PyArray_DIMS(ret)[0] = i;
 
