@@ -30,6 +30,8 @@
 #include "common.h"
 #include "can_cast_table.h"
 
+#include "numpy_tag.h"
+
 /* TODO: Used for some functions, should possibly move these to npy_math.h */
 #include "loops.h"
 
@@ -770,6 +772,49 @@ typedef enum {
      */
     OTHER_IS_SUBCLASS,
 } conversion_result;
+namespace {
+namespace details {
+template<typename result_tag>
+struct npy_static_cast {
+  template<typename value_type> typename result_tag::type operator()(value_type value) const
+  {
+    return value;
+  }
+};
+template<>
+struct npy_static_cast<npy::half_tag> {
+  template<typename value_type> npy_half operator()(value_type value) const
+  {
+    return npy_float_to_half((float)(value));
+  }
+};
+
+template<typename ctype>
+struct npy_static_cast_ctype {
+  template<typename value_type> ctype operator()(value_type value) const
+  {
+    return {value, 0.};
+  }
+};
+
+struct npy_static_cast<npy::cfloat_tag> : npy_static_cast_ctype<npy_cfloat> {
+};
+
+template<>
+struct npy_static_cast<npy::cdouble_tag> : npy_static_cast_ctype<npy_cdouble> {
+};
+template<>
+struct npy_static_cast<npy::clongdouble_tag> : npy_static_cast_ctype<npy_clongdouble> {
+};
+
+}
+
+}
+
+template<typename result_tag, typename value_type>
+typename result_tag::type npy_static_cast(value_type value) {
+  return convert_to_result<result_tag>{}(value);
+}
 
 /**begin repeat
  * #name = byte, ubyte, short, ushort, int, uint,
@@ -788,37 +833,22 @@ typedef enum {
  *         npy_long, npy_ulong, npy_longlong, npy_ulonglong,
  *         npy_half, npy_float, npy_double, npy_longdouble,
  *         npy_cfloat, npy_cdouble, npy_clongdouble#
+ * #tag =  npy::byte_tag, npy::ubyte_tag, npy::short_tag, npy::ushort_tag, npy::int_tag, npy::uint_tag,
+ *         npy::long_tag, npy::ulong_tag, npy::longlong_tag, npy::ulonglong_tag,
+ *         npy::half_tag, npy::float_tag, npy::double_tag, npy::longdouble_tag,
+ *         npy::cfloat_tag, npy::cdouble_tag, npy::clongdouble_tag#
  */
 
 #define IS_@TYPE@ 1
 
 #define IS_SAFE(FROM, TO) _npy_can_cast_safely_table[FROM][TO]
 
-/*
- * TODO: This whole thing is awkward, and we should create a helper header to
- *       define inline functions that convert single elements for all numeric
- *       types.  That could then also be used to define all cast loops.
- *       (Even if that may get more complex for SIMD at some point.)
- *       For now, half casts could be optimized because of that.
- */
-
-#if defined(IS_HALF)
-    #define CONVERT_TO_RESULT(value)  \
-        *result = npy_float_to_half((float)(value))
-#elif defined(IS_CFLOAT) || defined(IS_CDOUBLE) || defined(IS_CLONGDOUBLE)
-    #define CONVERT_TO_RESULT(value)  \
-        result->real = value;  \
-        result->imag = 0
-#else
-    #define CONVERT_TO_RESULT(value) *result = value
-#endif
-
 
 #define GET_VALUE_OR_DEFER(OTHER, Other, value)  \
     case NPY_##OTHER:  \
         if (IS_SAFE(NPY_##OTHER, NPY_@TYPE@)) {  \
             assert(Py_TYPE(value) == &Py##Other##ArrType_Type);  \
-            CONVERT_TO_RESULT(PyArrayScalar_VAL(value, Other));  \
+            *result = npy_static_cast<@tag@>(PyArrayScalar_VAL(value, Other));  \
             ret = CONVERSION_SUCCESS;  \
         }  \
         else if (IS_SAFE(NPY_@TYPE@, NPY_##OTHER)) {  \
@@ -846,7 +876,7 @@ typedef enum {
             assert(Py_TYPE(value) == &Py##Other##ArrType_Type);  \
             result->real = PyArrayScalar_VAL(value, Other).real;  \
             result->imag = PyArrayScalar_VAL(value, Other).imag;  \
-            ret = 1;  \
+            ret = CONVERSION_SUCCESS;  \
         }  \
         else if (IS_SAFE(NPY_@TYPE@, NPY_##OTHER)) {  \
              ret = DEFER_TO_OTHER_KNOWN_SCALAR;  \
@@ -902,12 +932,12 @@ convert_to_@name@(PyObject *value, @type@ *result)
      * (this is a bit tedious to do right for complex).
      */
     if (PyBool_Check(value)) {
-        CONVERT_TO_RESULT(value == Py_True);
+        *result = npy_static_cast<@tag@>(value == Py_True);
         return CONVERSION_SUCCESS;
     }
 
     if (IS_SAFE(NPY_DOUBLE, NPY_@TYPE@) && PyFloat_CheckExact(value)) {
-        CONVERT_TO_RESULT(PyFloat_AS_DOUBLE(value));
+        *result = npy_static_cast<@tag@>(PyFloat_AS_DOUBLE(value));
         return CONVERSION_SUCCESS;
     }
 
@@ -920,7 +950,7 @@ convert_to_@name@(PyObject *value, @type@ *result)
         if (error_converting(val)) {
             return CONVERSION_ERROR;  /* should not be possible */
         }
-        CONVERT_TO_RESULT(val);
+        *result = npy_static_cast<@tag@>(val);
         return CONVERSION_SUCCESS;
     }
 
@@ -966,7 +996,7 @@ convert_to_@name@(PyObject *value, @type@ *result)
      * We should probably defer more aggressively, but that is too big a change,
      * since it would disable `np.float64(1.) * [1, 2, 3, 4]`.
      */
-    int ret;  /* set by the GET_VALUE_OR_DEFER macro */
+    conversion_result ret;  /* set by the GET_VALUE_OR_DEFER macro */
     switch (((PyArray_DTypeMeta *)dtype)->type_num) {
         GET_VALUE_OR_DEFER(BOOL, Bool, value);
         /* UInts */
@@ -985,8 +1015,8 @@ convert_to_@name@(PyObject *value, @type@ *result)
         case NPY_HALF:
             if (IS_SAFE(NPY_HALF, NPY_@TYPE@)) {
                 assert(Py_TYPE(value) == &PyHalfArrType_Type);
-                CONVERT_TO_RESULT(npy_half_to_float(PyArrayScalar_VAL(value, Half)));
-                ret = 1;
+                *result = npy_static_cast<@tag@>(npy_half_to_float(PyArrayScalar_VAL(value, Half)));
+                ret = CONVERSION_SUCCESS;
             }
             else if (IS_SAFE(NPY_@TYPE@, NPY_HALF)) {
                 ret = DEFER_TO_OTHER_KNOWN_SCALAR;
@@ -1019,7 +1049,6 @@ convert_to_@name@(PyObject *value, @type@ *result)
 }
 
 #undef IS_SAFE
-#undef CONVERT_TO_RESULT
 #undef GET_VALUE_OR_DEFER
 #undef GET_CVALUE_OR_DEFER
 #undef IS_@TYPE@
