@@ -50,10 +50,10 @@ class Mean(Benchmark):
     def setup(self, size):
         self.array = np.arange(2*size).reshape(2, size)
 
-    def time_mean(self):
+    def time_mean(self, size):
         np.mean(self.array)
 
-    def time_mean_axis(self):
+    def time_mean_axis(self, size):
         np.mean(self.array, axis=1)
 
 
