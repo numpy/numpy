@@ -230,6 +230,16 @@ npy_discover_dtype_from_pytype(PyTypeObject *pytype)
     return (PyArray_DTypeMeta *)DType;
 }
 
+/*
+ * Note: This function never fails, but will return `NULL` for unknown scalars
+ *       and `None` for known array-likes (e.g. tuple, list, ndarray).
+ */
+NPY_NO_EXPORT PyObject *
+PyArray_DiscoverDTypeFromScalarType(PyTypeObject *pytype)
+{
+    return (PyObject *)npy_discover_dtype_from_pytype(pytype);
+}
+
 
 /**
  * Find the correct DType class for the given python type. If flags is NULL

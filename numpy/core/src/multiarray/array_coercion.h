@@ -19,6 +19,9 @@ NPY_NO_EXPORT int
 _PyArray_MapPyTypeToDType(
         PyArray_DTypeMeta *DType, PyTypeObject *pytype, npy_bool userdef);
 
+NPY_NO_EXPORT PyObject *
+PyArray_DiscoverDTypeFromScalarType(PyTypeObject *pytype);
+
 NPY_NO_EXPORT int
 PyArray_Pack(PyArray_Descr *descr, char *item, PyObject *value);
 

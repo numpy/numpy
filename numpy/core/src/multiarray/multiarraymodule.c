@@ -4665,6 +4665,7 @@ set_flaginfo(PyObject *d)
     return;
 }
 
+NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_current_allocator = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_array = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_array_function = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_array_struct = NULL;
@@ -4681,6 +4682,10 @@ NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_numpy = NULL;
 static int
 intern_strings(void)
 {
+    npy_ma_str_current_allocator = PyUnicode_InternFromString("current_allocator");
+    if (npy_ma_str_current_allocator == NULL) {
+        return -1;
+    }
     npy_ma_str_array = PyUnicode_InternFromString("__array__");
     if (npy_ma_str_array == NULL) {
         return -1;

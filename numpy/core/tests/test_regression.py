@@ -2310,6 +2310,8 @@ class TestRegression:
             new_shape = (2, 7, 7, 43826197)
         assert_raises(ValueError, a.reshape, new_shape)
 
+    @pytest.mark.skipif(IS_PYPY and sys.implementation.version <= (7, 3, 8),
+            reason="PyPy bug in error formatting")
     def test_invalid_structured_dtypes(self):
         # gh-2865
         # mapping python objects to other dtypes

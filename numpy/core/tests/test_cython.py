@@ -40,7 +40,7 @@ def install_temp(request, tmp_path):
     # build the examples and "install" them into a temporary directory
 
     install_log = str(tmp_path / "tmp_install_log.txt")
-    subprocess.check_call(
+    subprocess.check_output(
         [
             sys.executable,
             "setup.py",

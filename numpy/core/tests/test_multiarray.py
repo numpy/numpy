@@ -445,6 +445,9 @@ class TestArrayConstruction:
     def test_array_empty(self):
         assert_raises(TypeError, np.array)
 
+    def test_0d_array_shape(self):
+        assert np.ones(np.array(3)).shape == (3,)
+
     def test_array_copy_false(self):
         d = np.array([1, 2, 3])
         e = np.array(d, copy=False)
@@ -506,6 +509,7 @@ class TestArrayConstruction:
             func(object=3)
         else:
             func(a=3)
+
 
 class TestAssignment:
     def test_assignment_broadcasting(self):
@@ -3980,6 +3984,41 @@ class TestCAPI:
         assert_(IsPythonScalar(2**80))
         assert_(IsPythonScalar(2.))
         assert_(IsPythonScalar("a"))
+
+    @pytest.mark.parametrize("converter",
+             [_multiarray_tests.run_scalar_intp_converter,
+              _multiarray_tests.run_scalar_intp_from_sequence])
+    def test_intp_sequence_converters(self, converter):
+        # Test simple values (-1 is special for error return paths)
+        assert converter(10) == (10,)
+        assert converter(-1) == (-1,)
+        # A 0-D array looks a bit like a sequence but must take the integer
+        # path:
+        assert converter(np.array(123)) == (123,)
+        # Test simple sequences (intp_from_sequence only supports length 1):
+        assert converter((10,)) == (10,)
+        assert converter(np.array([11])) == (11,)
+
+    @pytest.mark.parametrize("converter",
+             [_multiarray_tests.run_scalar_intp_converter,
+              _multiarray_tests.run_scalar_intp_from_sequence])
+    @pytest.mark.skipif(IS_PYPY and sys.implementation.version <= (7, 3, 8),
+            reason="PyPy bug in error formatting")
+    def test_intp_sequence_converters_errors(self, converter):
+        with pytest.raises(TypeError,
+                match="expected a sequence of integers or a single integer, "):
+            converter(object())
+        with pytest.raises(TypeError,
+                match="expected a sequence of integers or a single integer, "
+                      "got '32.0'"):
+            converter(32.)
+        with pytest.raises(TypeError,
+                match="'float' object cannot be interpreted as an integer"):
+            converter([32.])
+        with pytest.raises(ValueError,
+                match="Maximum allowed dimension"):
+            # These converters currently convert overflows to a ValueError
+            converter(2**64)
 
 
 class TestSubscripting:

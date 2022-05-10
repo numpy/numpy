@@ -49,28 +49,72 @@ npy_cpu_init(void)
     return 0;
 }
 
+static struct {
+  enum npy_cpu_features feature;
+  char const *string;
+} features[] = {{NPY_CPU_FEATURE_MMX, "MMX"},
+                {NPY_CPU_FEATURE_SSE, "SSE"},
+                {NPY_CPU_FEATURE_SSE2, "SSE2"},
+                {NPY_CPU_FEATURE_SSE3, "SSE3"},
+                {NPY_CPU_FEATURE_SSSE3, "SSSE3"},
+                {NPY_CPU_FEATURE_SSE41, "SSE41"},
+                {NPY_CPU_FEATURE_POPCNT, "POPCNT"},
+                {NPY_CPU_FEATURE_SSE42, "SSE42"},
+                {NPY_CPU_FEATURE_AVX, "AVX"},
+                {NPY_CPU_FEATURE_F16C, "F16C"},
+                {NPY_CPU_FEATURE_XOP, "XOP"},
+                {NPY_CPU_FEATURE_FMA4, "FMA4"},
+                {NPY_CPU_FEATURE_FMA3, "FMA3"},
+                {NPY_CPU_FEATURE_AVX2, "AVX2"},
+                {NPY_CPU_FEATURE_AVX512F, "AVX512F"},
+                {NPY_CPU_FEATURE_AVX512CD, "AVX512CD"},
+                {NPY_CPU_FEATURE_AVX512ER, "AVX512ER"},
+                {NPY_CPU_FEATURE_AVX512PF, "AVX512PF"},
+                {NPY_CPU_FEATURE_AVX5124FMAPS, "AVX5124FMAPS"},
+                {NPY_CPU_FEATURE_AVX5124VNNIW, "AVX5124VNNIW"},
+                {NPY_CPU_FEATURE_AVX512VPOPCNTDQ, "AVX512VPOPCNTDQ"},
+                {NPY_CPU_FEATURE_AVX512VL, "AVX512VL"},
+                {NPY_CPU_FEATURE_AVX512BW, "AVX512BW"},
+                {NPY_CPU_FEATURE_AVX512DQ, "AVX512DQ"},
+                {NPY_CPU_FEATURE_AVX512VNNI, "AVX512VNNI"},
+                {NPY_CPU_FEATURE_AVX512IFMA, "AVX512IFMA"},
+                {NPY_CPU_FEATURE_AVX512VBMI, "AVX512VBMI"},
+                {NPY_CPU_FEATURE_AVX512VBMI2, "AVX512VBMI2"},
+                {NPY_CPU_FEATURE_AVX512BITALG, "AVX512BITALG"},
+                {NPY_CPU_FEATURE_AVX512_KNL, "AVX512_KNL"},
+                {NPY_CPU_FEATURE_AVX512_KNM, "AVX512_KNM"},
+                {NPY_CPU_FEATURE_AVX512_SKX, "AVX512_SKX"},
+                {NPY_CPU_FEATURE_AVX512_CLX, "AVX512_CLX"},
+                {NPY_CPU_FEATURE_AVX512_CNL, "AVX512_CNL"},
+                {NPY_CPU_FEATURE_AVX512_ICL, "AVX512_ICL"},
+                {NPY_CPU_FEATURE_VSX, "VSX"},
+                {NPY_CPU_FEATURE_VSX2, "VSX2"},
+                {NPY_CPU_FEATURE_VSX3, "VSX3"},
+                {NPY_CPU_FEATURE_VSX4, "VSX4"},
+                {NPY_CPU_FEATURE_VX, "VX"},
+                {NPY_CPU_FEATURE_VXE, "VXE"},
+                {NPY_CPU_FEATURE_VXE2, "VXE2"},
+                {NPY_CPU_FEATURE_NEON, "NEON"},
+                {NPY_CPU_FEATURE_NEON_FP16, "NEON_FP16"},
+                {NPY_CPU_FEATURE_NEON_VFPV4, "NEON_VFPV4"},
+                {NPY_CPU_FEATURE_ASIMD, "ASIMD"},
+                {NPY_CPU_FEATURE_FPHP, "FPHP"},
+                {NPY_CPU_FEATURE_ASIMDHP, "ASIMDHP"},
+                {NPY_CPU_FEATURE_ASIMDDP, "ASIMDDP"},
+                {NPY_CPU_FEATURE_ASIMDFHM, "ASIMDFHM"}};
+
+
 NPY_VISIBILITY_HIDDEN PyObject *
 npy_cpu_features_dict(void)
 {
     PyObject *dict = PyDict_New();
     if (dict) {
-    /**begin repeat
-     * #feature = MMX, SSE, SSE2, SSE3, SSSE3, SSE41, POPCNT, SSE42,
-     *            AVX, F16C, XOP, FMA4, FMA3, AVX2, AVX512F,
-     *            AVX512CD, AVX512ER, AVX512PF, AVX5124FMAPS, AVX5124VNNIW,
-     *            AVX512VPOPCNTDQ, AVX512VL, AVX512BW, AVX512DQ, AVX512VNNI,
-     *            AVX512IFMA, AVX512VBMI, AVX512VBMI2, AVX512BITALG,
-     *            AVX512_KNL, AVX512_KNM, AVX512_SKX, AVX512_CLX, AVX512_CNL, AVX512_ICL,
-     *            VSX, VSX2, VSX3, VSX4,
-     *            VX, VXE, VXE2,
-     *            NEON, NEON_FP16, NEON_VFPV4, ASIMD, FPHP, ASIMDHP, ASIMDDP, ASIMDFHM#
-    */
-        if (PyDict_SetItemString(dict, "@feature@",
-            npy__cpu_have[NPY_CPU_FEATURE_@feature@] ? Py_True : Py_False) < 0) {
-            Py_DECREF(dict);
-            return NULL;
-        }
-    /**end repeat**/
+        for(unsigned i = 0; i < sizeof(features)/sizeof(features[0]); ++i)
+            if (PyDict_SetItemString(dict, features[i].string,
+                npy__cpu_have[features[i].feature] ? Py_True : Py_False) < 0) {
+                Py_DECREF(dict);
+                return NULL;
+            }
     }
     return dict;
 }
