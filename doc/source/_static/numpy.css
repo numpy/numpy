@@ -32,13 +32,17 @@ h3 {
   letter-spacing: -.03em;
 }
 
+/* Main page overview cards */
+
 .intro-card {
-  padding: 20px 10px 20px 10px;
-  margin: 10px;
+  background: #fff;
+  border-radius: 0;
+  padding: 30px 10px 20px 10px;
+  margin: 10px 0px;
 }
 
 .intro-card p.card-text {
-  margin: 0;
+  margin: 0px;
 }
 
 .intro-card .card-img-top {
@@ -49,6 +53,21 @@ h3 {
 }
 
 .intro-card .card-header {
-  margin-top: 20px;
+  border: none;
+  background-color: white;
+  color: #150458 !important;
   font-size: var(--pst-font-size-h5);
+  font-weight: bold;
+  padding: 2.5rem 0rem 0.5rem 0rem;
+}
+
+.intro-card .card-footer {
+  border: none;
+  background-color: white;
+}
+
+.intro-card .card-footer p.card-text {
+  max-width: 220px;
+  margin-left: auto;
+  margin-right: auto;
 }
