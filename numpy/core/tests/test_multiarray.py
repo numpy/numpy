@@ -1275,8 +1275,9 @@ class TestStructured:
         with pytest.raises(TypeError):
             x == y
 
-        # Added title prevents promotion:
-        y = np.zeros(3, dtype=[('a', 'i1', 'title')])
+        # Added title prevents promotion, but casts are OK:
+        y = np.zeros(3, dtype=[(('title', 'a'), 'i1')])
+        assert np.can_cast(y.dtype, x.dtype)
         with pytest.raises(TypeError):
             x == y
 

@@ -1029,12 +1029,12 @@ static PyObject *
 _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
 {
     if (!(cmp_op == Py_EQ || cmp_op == Py_NE)) {
-        PyErr_SetString(PyExc_ValueError,
+        PyErr_SetString(PyExc_TypeError,
                 "Void-arrays can only be compared for equality.");
         return NULL;
     }
     if (PyArray_TYPE(other) != NPY_VOID) {
-        PyErr_SetString(PyExc_ValueError,
+        PyErr_SetString(PyExc_TypeError,
                 "Cannot compare structured or void to non-void arrays.");
         return NULL;
     }
