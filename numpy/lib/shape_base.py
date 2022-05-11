@@ -766,7 +766,11 @@ def array_split(ary, indices_or_sections, axis=0):
     try:
         Ntotal = ary.shape[axis]
     except AttributeError:
-        Ntotal = len(ary)
+        #if ary is Array_like instead of an ndarray.
+        if (axis==0):
+            Ntotal = len(ary)
+        else:
+           Ntotal = len(ary[0])
     try:
         # handle array case.
         Nsections = len(indices_or_sections) + 1
@@ -864,10 +868,11 @@ def split(ary, indices_or_sections, axis=0):
 
     """
     try:
+        #ary=array(ary)
         len(indices_or_sections)
     except TypeError:
         sections = indices_or_sections
-        N = ary.shape[axis]
+        N = array(ary).shape[axis]
         if N % sections:
             raise ValueError(
                 'array split does not result in an equal division') from None
