@@ -944,7 +944,8 @@ class TestTypes:
 
     @pytest.mark.parametrize(["dtype1", "dtype2"],
             [[np.dtype("V10"), np.dtype("V10")],
-             [np.dtype([("name1", "<i8")]), np.dtype([("name1", ">i8")])],
+             [np.dtype([("name1", "i8")]),
+              np.dtype([("name1", np.dtype("i8").newbyteorder())])],
              [np.dtype("i8,i8"), np.dtype("i8,>i8")],
              [np.dtype("i8,i8"), np.dtype("i4,i4")],
             ])
