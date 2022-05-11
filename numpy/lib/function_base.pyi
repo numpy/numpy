@@ -110,6 +110,7 @@ def average(
     axis: None = ...,
     weights: None | _ArrayLikeFloat_co= ...,
     returned: L[False] = ...,
+    keepdims: L[False] = ...,
 ) -> floating[Any]: ...
 @overload
 def average(
@@ -117,6 +118,7 @@ def average(
     axis: None = ...,
     weights: None | _ArrayLikeComplex_co = ...,
     returned: L[False] = ...,
+    keepdims: L[False] = ...,
 ) -> complexfloating[Any, Any]: ...
 @overload
 def average(
@@ -124,6 +126,7 @@ def average(
     axis: None = ...,
     weights: None | Any = ...,
     returned: L[False] = ...,
+    keepdims: L[False] = ...,
 ) -> Any: ...
 @overload
 def average(
@@ -131,6 +134,7 @@ def average(
     axis: None = ...,
     weights: None | _ArrayLikeFloat_co= ...,
     returned: L[True] = ...,
+    keepdims: L[False] = ...,
 ) -> _2Tuple[floating[Any]]: ...
 @overload
 def average(
@@ -138,6 +142,7 @@ def average(
     axis: None = ...,
     weights: None | _ArrayLikeComplex_co = ...,
     returned: L[True] = ...,
+    keepdims: L[False] = ...,
 ) -> _2Tuple[complexfloating[Any, Any]]: ...
 @overload
 def average(
@@ -145,6 +150,7 @@ def average(
     axis: None = ...,
     weights: None | Any = ...,
     returned: L[True] = ...,
+    keepdims: L[False] = ...,
 ) -> _2Tuple[Any]: ...
 @overload
 def average(
@@ -152,6 +158,7 @@ def average(
     axis: None | _ShapeLike = ...,
     weights: None | Any = ...,
     returned: L[False] = ...,
+    keepdims: bool = ...,
 ) -> Any: ...
 @overload
 def average(
@@ -159,6 +166,7 @@ def average(
     axis: None | _ShapeLike = ...,
     weights: None | Any = ...,
     returned: L[True] = ...,
+    keepdims: bool = ...,
 ) -> _2Tuple[Any]: ...
 
 @overload
