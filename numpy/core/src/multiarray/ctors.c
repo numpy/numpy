@@ -4022,13 +4022,7 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, npy_intp count)
         }
         ((PyArrayObject_fields *)ret)->data = new_data;
 
-        if (count == -1) {
-            /*
-             * If PyObject_LengthHint returned 0, ret was originally allocated
-             * as an 0-shape array, so the stride is 0. Fix that
-             */
-            PyArray_STRIDES(ret)[0] = elsize;
-        }
+        PyArray_STRIDES(ret)[0] = elsize;
     }
     PyArray_DIMS(ret)[0] = i;
 
