@@ -5,6 +5,7 @@
 #include "get_attr_string.h"
 #include "npy_import.h"
 #include "ufunc_override.h"
+#include "scalartypes.h"
 
 /*
  * Check whether an object has __array_ufunc__ defined on its class and it
@@ -30,6 +31,11 @@ PyUFuncOverride_GetNonDefaultArrayUfunc(PyObject *obj)
     if (PyArray_CheckExact(obj)) {
         return NULL;
     }
+   /* Fast return for numpy scalar types */
+    if (is_anyscalar_exact(obj)) {
+        return NULL;
+    }
+
     /*
      * Does the class define __array_ufunc__? (Note that LookupSpecial has fast
      * return for basic python types, so no need to worry about those here)
