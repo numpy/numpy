@@ -11,6 +11,7 @@ NumPy documentation
    User Guide <user/index>
    API reference <reference/index>
    Development <dev/index>
+   release
 
 
 **Version**: |version|
