@@ -2,6 +2,7 @@
 
 """
 import functools
+import operator
 
 from numpy.core.numeric import (
     asanyarray, arange, zeros, greater_equal, multiply, ones,
@@ -214,6 +215,11 @@ def eye(N, M=None, k=0, dtype=float, order='C', *, like=None):
     m = zeros((N, M), dtype=dtype, order=order)
     if k >= M:
         return m
+    # Ensure M and k are integers, so we don't get any surprise casting
+    # results in the expressions `M-k` and `M+1` used below.  This avoids
+    # a problem with inputs with type (for example) np.uint64.
+    M = operator.index(M)
+    k = operator.index(k)
     if k >= 0:
         i = k
     else:
@@ -494,8 +500,8 @@ def triu(m, k=0):
     Upper triangle of an array.
 
     Return a copy of an array with the elements below the `k`-th diagonal
-    zeroed. For arrays with ``ndim`` exceeding 2, `triu` will apply to the final
-    two axes.
+    zeroed. For arrays with ``ndim`` exceeding 2, `triu` will apply to the
+    final two axes.
 
     Please refer to the documentation for `tril` for further details.
 
@@ -804,7 +810,7 @@ def histogram2d(x, y, bins=10, range=None, normed=None, weights=None,
     >>> plt.show()
     """
     from numpy import histogramdd
-    
+
     if len(x) != len(y):
         raise ValueError('x and y must have the same length.')
 
