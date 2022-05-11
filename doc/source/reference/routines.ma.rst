@@ -190,6 +190,7 @@ Finding masked data
 .. autosummary::
    :toctree: generated/
 
+   ma.ndenumerate
    ma.flatnotmasked_contiguous
    ma.flatnotmasked_edges
    ma.notmasked_contiguous

@@ -10,12 +10,12 @@ A collection of utilities for `numpy.ma`.
 """
 __all__ = [
     'apply_along_axis', 'apply_over_axes', 'atleast_1d', 'atleast_2d',
-    'atleast_3d', 'average', 'clump_masked', 'clump_unmasked',
-    'column_stack', 'compress_cols', 'compress_nd', 'compress_rowcols',
-    'compress_rows', 'count_masked', 'corrcoef', 'cov', 'diagflat', 'dot',
-    'dstack', 'ediff1d', 'flatnotmasked_contiguous', 'flatnotmasked_edges',
-    'hsplit', 'hstack', 'isin', 'in1d', 'intersect1d', 'mask_cols', 'mask_rowcols',
-    'mask_rows', 'masked_all', 'masked_all_like', 'median', 'mr_',
+    'atleast_3d', 'average', 'clump_masked', 'clump_unmasked', 'column_stack',
+    'compress_cols', 'compress_nd', 'compress_rowcols', 'compress_rows',
+    'count_masked', 'corrcoef', 'cov', 'diagflat', 'dot', 'dstack', 'ediff1d',
+    'flatnotmasked_contiguous', 'flatnotmasked_edges', 'hsplit', 'hstack',
+    'isin', 'in1d', 'intersect1d', 'mask_cols', 'mask_rowcols', 'mask_rows',
+    'masked_all', 'masked_all_like', 'median', 'mr_', 'ndenumerate',
     'notmasked_contiguous', 'notmasked_edges', 'polyfit', 'row_stack',
     'setdiff1d', 'setxor1d', 'stack', 'unique', 'union1d', 'vander', 'vstack',
     ]
@@ -1551,6 +1551,74 @@ mr_ = mr_class()
 #####--------------------------------------------------------------------------
 #---- Find unmasked data ---
 #####--------------------------------------------------------------------------
+
+def ndenumerate(a, compressed=True):
+    """
+    Multidimensional index iterator.
+
+    Return an iterator yielding pairs of array coordinates and values,
+    skipping elements that are masked. With `compressed=False`,
+    `ma.masked` is yielded as the value of masked elements. This
+    behavior differs from that of `numpy.ndenumerate`, which yields the
+    value of the underlying data array.
+
+    Notes
+    -----
+    .. versionadded:: 1.23.0
+
+    Parameters
+    ----------
+    a : array_like
+        An array with (possibly) masked elements.
+    compressed : bool, optional
+        If True (default), masked elements are skipped.
+
+    See Also
+    --------
+    numpy.ndenumerate : Equivalent function ignoring any mask.
+
+    Examples
+    --------
+    >>> a = np.ma.arange(9).reshape((3, 3))
+    >>> a[1, 0] = np.ma.masked
+    >>> a[1, 2] = np.ma.masked
+    >>> a[2, 1] = np.ma.masked
+    >>> a
+    masked_array(
+      data=[[0, 1, 2],
+            [--, 4, --],
+            [6, --, 8]],
+      mask=[[False, False, False],
+            [ True, False,  True],
+            [False,  True, False]],
+      fill_value=999999)
+    >>> for index, x in np.ma.ndenumerate(a):
+    ...     print(index, x)
+    (0, 0) 0
+    (0, 1) 1
+    (0, 2) 2
+    (1, 1) 4
+    (2, 0) 6
+    (2, 2) 8
+
+    >>> for index, x in np.ma.ndenumerate(a, compressed=False):
+    ...     print(index, x)
+    (0, 0) 0
+    (0, 1) 1
+    (0, 2) 2
+    (1, 0) --
+    (1, 1) 4
+    (1, 2) --
+    (2, 0) 6
+    (2, 1) --
+    (2, 2) 8
+    """
+    for it, mask in zip(np.ndenumerate(a), getmaskarray(a).flat):
+        if not mask:
+            yield it
+        elif not compressed:
+            yield it[0], masked
+
 
 def flatnotmasked_edges(a):
     """

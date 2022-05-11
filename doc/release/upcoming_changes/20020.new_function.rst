@@ -1,0 +1,4 @@
+`ndenumerate` specialization for masked arrays
+----------------------------------------------
+The masked array module now provides the `numpy.ma.ndenumerate` function,
+an alternative to `numpy.ndenumerate` that skips masked values by default.
