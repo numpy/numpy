@@ -4022,7 +4022,20 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, npy_intp count)
         }
         ((PyArrayObject_fields *)ret)->data = new_data;
 
-        PyArray_STRIDES(ret)[0] = elsize;
+        if (count < 0 || NPY_RELAXED_STRIDES_DEBUG) {
+            /*
+             * If the count was smaller than zero or NPY_RELAXED_STRIDES_DEBUG
+             * was active, the strides may be all 0 or intentionally mangled
+             * (even in the later dimensions for `count < 0`!
+             * Thus, fix all strides here again for C-contiguity.
+             */
+            int oflags;
+            _array_fill_strides(
+                    PyArray_STRIDES(ret), PyArray_DIMS(ret), PyArray_NDIM(ret),
+                    PyArray_ITEMSIZE(ret), NPY_ARRAY_C_CONTIGUOUS, &oflags);
+            PyArray_STRIDES(ret)[0] = elsize;
+            assert(oflags & NPY_ARRAY_C_CONTIGUOUS);
+        }
     }
     PyArray_DIMS(ret)[0] = i;
 

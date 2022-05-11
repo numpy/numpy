@@ -1218,18 +1218,26 @@ class TestFromiter:
         with pytest.raises(ValueError, match="Must specify length"):
             np.fromiter([], dtype=dtype)
 
-    @pytest.mark.parametrize("dtype",
-            # Note that `np.dtype(("O", (10, 5)))` is a subarray dtype
-            ["d", "i,O", np.dtype(("O", (10, 5))), "O"])
-    def test_growth_and_complicated_dtypes(self, dtype):
+    @pytest.mark.parametrize(["dtype", "data"],
+            [("d", [1, 2, 3, 4, 5, 6, 7, 8, 9]),
+             ("O", [1, 2, 3, 4, 5, 6, 7, 8, 9]),
+             ("i,O", [(1, 2), (5, 4), (2, 3), (9, 8), (6, 7)]),
+             # subarray dtypes (important because their dimensions end up
+             # in the result arrays dimension:
+             ("2i", [(1, 2), (5, 4), (2, 3), (9, 8), (6, 7)]),
+             (np.dtype(("O", (2, 3))),
+              [((1, 2, 3), (3, 4, 5)), ((3, 2, 1), (5, 4, 3))])])
+    @pytest.mark.parametrize("length_hint", [0, 1])
+    def test_growth_and_complicated_dtypes(self, dtype, data, length_hint):
         dtype = np.dtype(dtype)
-        data = [1, 2, 3, 4, 5, 6, 7, 8, 9] * 100  # make sure we realloc a bit
+
+        data = data * 100  # make sure we realloc a bit
 
         class MyIter:
             # Class/example from gh-15789
             def __length_hint__(self):
                 # only required to be an estimate, this is legal
-                return 1
+                return length_hint  # 0 or 1
 
             def __iter__(self):
                 return iter(data)
