@@ -767,10 +767,10 @@ def array_split(ary, indices_or_sections, axis=0):
         Ntotal = ary.shape[axis]
     except AttributeError:
         #if ary is Array_like instead of an ndarray.
-        if (axis==0):
+        if (axis == 0):
             Ntotal = len(ary)
         else:
-           Ntotal = len(ary[0])
+            Ntotal = len(ary[0])
     try:
         # handle array case.
         Nsections = len(indices_or_sections) + 1
