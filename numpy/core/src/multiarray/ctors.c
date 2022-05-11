@@ -758,10 +758,6 @@ PyArray_NewFromDescr_int(
 
         /*
          * Copy dimensions, check them, and find total array size `nbytes`
-         *
-         * Note that we ignore 0-length dimensions, to match this in the `free`
-         * calls, `PyArray_NBYTES_ALLOCATED` is a private helper matching this
-         * behaviour, but without overflow checking.
          */
         int is_zero = 0;
         for (int i = 0; i < nd; i++) {
