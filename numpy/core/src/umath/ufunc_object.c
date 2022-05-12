@@ -1321,6 +1321,10 @@ try_trivial_single_output_loop(PyArrayMethod_Context *context,
      */
     char *data[NPY_MAXARGS];
     npy_intp count = PyArray_MultiplyList(operation_shape, operation_ndim);
+    if (count == 0) {
+        /* Nothing to do */
+        return 0;
+    }
     NPY_BEGIN_THREADS_DEF;
 
     PyArrayMethod_StridedLoop *strided_loop;
@@ -2819,7 +2823,7 @@ reduce_loop(PyArrayMethod_Context *context,
         npy_intp const *countptr, NpyIter_IterNextFunc *iternext,
         int needs_api, npy_intp skip_first_count)
 {
-    int retval;
+    int retval = 0;
     char *dataptrs_copy[4];
     npy_intp strides_copy[4];
     npy_bool masked;
@@ -2849,19 +2853,20 @@ reduce_loop(PyArrayMethod_Context *context,
                     count = 0;
                 }
             }
+            if (count > 0) {
+                /* Turn the two items into three for the inner loop */
+                dataptrs_copy[0] = dataptrs[0];
+                dataptrs_copy[1] = dataptrs[1];
+                dataptrs_copy[2] = dataptrs[0];
+                strides_copy[0] = strides[0];
+                strides_copy[1] = strides[1];
+                strides_copy[2] = strides[0];
 
-            /* Turn the two items into three for the inner loop */
-            dataptrs_copy[0] = dataptrs[0];
-            dataptrs_copy[1] = dataptrs[1];
-            dataptrs_copy[2] = dataptrs[0];
-            strides_copy[0] = strides[0];
-            strides_copy[1] = strides[1];
-            strides_copy[2] = strides[0];
-
-            retval = strided_loop(context,
-                    dataptrs_copy, &count, strides_copy, auxdata);
-            if (retval < 0) {
-                goto finish_loop;
+                retval = strided_loop(context,
+                        dataptrs_copy, &count, strides_copy, auxdata);
+                if (retval < 0) {
+                    goto finish_loop;
+                }
             }
 
             /* Advance loop, and abort on error (or finish) */

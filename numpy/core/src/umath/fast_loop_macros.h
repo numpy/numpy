@@ -10,6 +10,8 @@
 #ifndef _NPY_UMATH_FAST_LOOP_MACROS_H_
 #define _NPY_UMATH_FAST_LOOP_MACROS_H_
 
+#include <assert.h>
+
 /*
  * MAX_STEP_SIZE is used to determine if we need to use SIMD version of the ufunc.
  * Very large step size can be as slow as processing it using scalar. The
@@ -99,12 +101,19 @@ abs_ptrdiff(char *a, char *b)
 
 #define IS_OUTPUT_CONT(tout) (steps[1] == sizeof(tout))
 
-#define IS_BINARY_REDUCE ((args[0] == args[2])\
+/*
+ * Make sure dimensions is non-zero with an assert, to allow subsequent code
+ * to ignore problems of accessing invalid memory
+ */
+
+#define IS_BINARY_REDUCE (assert(dimensions[0] != 0), \
+        (args[0] == args[2])\
         && (steps[0] == steps[2])\
         && (steps[0] == 0))
 
 /* input contiguous (for binary reduces only) */
-#define IS_BINARY_REDUCE_INPUT_CONT(tin) (steps[1] == sizeof(tin))
+#define IS_BINARY_REDUCE_INPUT_CONT(tin) (assert(dimensions[0] != 0), \
+         steps[1] == sizeof(tin))
 
 /* binary loop input and output contiguous */
 #define IS_BINARY_CONT(tin, tout) (steps[0] == sizeof(tin) && \
