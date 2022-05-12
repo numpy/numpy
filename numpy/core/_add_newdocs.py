@@ -4865,6 +4865,15 @@ add_newdoc('numpy.core.multiarray', 'get_handler_version',
     its memory, in which case you can traverse ``a.base`` for a memory handler.
     """)
 
+add_newdoc('numpy.core.multiarray', '_get_madvise_hugepage',
+    """
+    _get_madvise_hugepage() -> bool
+
+    Get use of ``madvise (2)`` MADV_HUGEPAGE support when
+    allocating the array data. Returns the currently set value.
+    See `global_state` for more information.
+    """)
+
 add_newdoc('numpy.core.multiarray', '_set_madvise_hugepage',
     """
     _set_madvise_hugepage(enabled: bool) -> bool
