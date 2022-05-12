@@ -418,9 +418,9 @@ class TestArraySplit:
         # perhaps should check higher dimensions
 
     def test_integer_split_2D_array_like_non_zero_axis(self):
-        a = np.array_split([[1,2,3],[4,5,6]], 2, axis=1)
-        res = np.array_split(np.array([[1,2,3],[4,5,6]]), 2, axis=1)
-        compare_results(a,res)
+        a = np.array_split([[1, 2, 3], [4, 5, 6]], 2, axis=1)
+        res = np.array_split(np.array([[1, 2, 3], [4, 5, 6]]), 2, axis=1)
+        compare_results(a, res)
         
 
     @pytest.mark.skipif(not IS_64BIT, reason="Needs 64bit platform")
