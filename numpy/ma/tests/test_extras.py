@@ -1674,7 +1674,7 @@ class TestShapeBase:
 class TestNDEnumerate:
 
     def test_ndenumerate_nomasked(self):
-        ordinary = np.ndarray(6).reshape((1, 3, 2))
+        ordinary = np.arange(6.).reshape((1, 3, 2))
         empty_mask = np.zeros_like(ordinary, dtype=bool)
         with_mask = masked_array(ordinary, mask=empty_mask)
         assert_equal(list(np.ndenumerate(ordinary)),
