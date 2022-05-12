@@ -417,6 +417,12 @@ class TestArraySplit:
         assert_(a.dtype.type is res[-1].dtype.type)
         # perhaps should check higher dimensions
 
+    def test_integer_split_2D_array_like_non_zero_axis(self):
+        a = np.array_split([[1,2,3],[4,5,6]], 2, axis=1)
+        res = np.array_split(np.array([[1,2,3],[4,5,6]]), 2, axis=1)
+        compare_results(a,res)
+        
+
     @pytest.mark.skipif(not IS_64BIT, reason="Needs 64bit platform")
     def test_integer_split_2D_rows_greater_max_int32(self):
         a = np.broadcast_to([0], (1 << 32, 2))
