@@ -1084,11 +1084,11 @@ add_newdoc('numpy.core.multiarray', 'ascontiguousarray',
 
     Examples
     --------
-    >>> x = np.arange(6).reshape(2,3)
-    >>> np.ascontiguousarray(x, dtype=np.float32)
-    array([[0., 1., 2.],
-           [3., 4., 5.]], dtype=float32)
+    >>> x = np.arange(6).reshape(2, 3, order="F")
+    >>> y = np.ascontiguousarray(x)
     >>> x.flags['C_CONTIGUOUS']
+    False
+    >>> y.flags['C_CONTIGUOUS']
     True
 
     Note: This function returns an array with at least one-dimension (1-d)
