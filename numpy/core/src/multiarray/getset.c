@@ -516,7 +516,7 @@ array_descr_set(PyArrayObject *self, PyObject *arg, void *NPY_UNUSED(ignored))
         /* resize on last axis only */
         int axis = PyArray_NDIM(self) - 1;
         if (PyArray_DIMS(self)[axis] != 1 &&
-                PyArray_STRIDES(self)[axis] != 0 &&
+                PyArray_SIZE(self) != 0 &&
                 PyArray_STRIDES(self)[axis] != PyArray_DESCR(self)->elsize) {
             PyErr_SetString(PyExc_ValueError,
                     "To change to a dtype of a different size, the last axis "

@@ -1064,6 +1064,12 @@ class TestDtypeAttributes:
             pass
         assert_equal(np.dtype(user_def_subcls).name, 'user_def_subcls')
 
+    def test_zero_stride(self):
+        arr = np.ones(1, dtype="i8")
+        arr = np.broadcast_to(arr, 10)
+        assert arr.strides == (0,)
+        with pytest.raises(ValueError):
+            arr.dtype = "i1"
 
 class TestDTypeMakeCanonical:
     def check_canonical(self, dtype, canonical):
