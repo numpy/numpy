@@ -1084,11 +1084,26 @@ add_newdoc('numpy.core.multiarray', 'ascontiguousarray',
 
     Examples
     --------
-    >>> x = np.arange(6).reshape(2, 3, order="F")
+    The default memory layout of ndarray is C-contiguous, so
+    in this example `y` just becomes a view of `x`:
+    >>> x = np.arange(6).reshape(2, 3)
+    >>> y = np.ascontiguousarray(x)
+    >>> x.flags['C_CONTIGUOUS']
+    True
+    >>> y.flags['C_CONTIGUOUS']
+    True
+    >>> y.flags['OWNDATA']
+    False
+
+    Now, we create `x` as F-contiguous ndarray,
+    and `y` becomes a new ndarray with C-contiguous memory layout:
+    >>> x = np.arange(6).reshape(2, 3, order='F')
     >>> y = np.ascontiguousarray(x)
     >>> x.flags['C_CONTIGUOUS']
     False
     >>> y.flags['C_CONTIGUOUS']
+    True
+    >>> y.flags['OWNDATA']
     True
 
     Note: This function returns an array with at least one-dimension (1-d)
@@ -1130,12 +1145,27 @@ add_newdoc('numpy.core.multiarray', 'asfortranarray',
 
     Examples
     --------
-    >>> x = np.arange(6).reshape(2,3)
+    The default memory layout of ndarray is C-contiguous, so
+    in this example `y` becomes a new F-contiguous ndarray:
+    >>> x = np.arange(6).reshape(2, 3)
     >>> y = np.asfortranarray(x)
     >>> x.flags['F_CONTIGUOUS']
     False
     >>> y.flags['F_CONTIGUOUS']
     True
+    >>> y.flags['OWNDATA']
+    True
+
+    If we create `x` as F-contiguous ndarray,
+    then `y` just becomes a view of `x`:
+    >>> x = np.arange(6).reshape(2, 3, order='F')
+    >>> y = np.asfortranarray(x)
+    >>> x.flags['F_CONTIGUOUS']
+    True
+    >>> y.flags['F_CONTIGUOUS']
+    True
+    >>> y.flags['OWNDATA']
+    False
 
     Note: This function returns an array with at least one-dimension (1-d)
     so it will not preserve 0-d arrays.
