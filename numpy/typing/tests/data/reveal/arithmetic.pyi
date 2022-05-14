@@ -1,7 +1,7 @@
 from typing import Any
 
 import numpy as np
-from numpy._typing import _128Bit
+from numpy._typing import NDArray, _128Bit
 
 # Can't directly import `np.float128` as it is not available on all platforms
 f16: np.floating[_128Bit]
@@ -34,6 +34,7 @@ AR_c: np.ndarray[Any, np.dtype[np.complex128]]
 AR_m: np.ndarray[Any, np.dtype[np.timedelta64]]
 AR_M: np.ndarray[Any, np.dtype[np.datetime64]]
 AR_O: np.ndarray[Any, np.dtype[np.object_]]
+AR_number: NDArray[np.number[Any]]
 
 AR_LIKE_b: list[bool]
 AR_LIKE_u: list[np.uint32]
@@ -45,6 +46,8 @@ AR_LIKE_M: list[np.datetime64]
 AR_LIKE_O: list[np.object_]
 
 # Array subtraction
+
+reveal_type(AR_number - AR_number)  # E: ndarray[Any, dtype[number[Any]]]
 
 reveal_type(AR_b - AR_LIKE_u)  # E: ndarray[Any, dtype[unsignedinteger[Any]]]
 reveal_type(AR_b - AR_LIKE_i)  # E: ndarray[Any, dtype[signedinteger[Any]]]
