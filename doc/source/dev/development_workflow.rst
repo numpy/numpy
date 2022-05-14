@@ -105,6 +105,9 @@ In more detail
    related, complete changes. Leave files with unfinished changes for later
    commits.
 
+#. Format your code using pre-commit. See the section :ref:`Automatic Formatting
+   with pre-commit<formatting-with-pre-commit>` for details.
+
 #. To commit the staged files into the local copy of your repo, do ``git
    commit``. At this point, a text editor will open up to allow you to write a
    commit message. Read the :ref:`commit message
@@ -149,6 +152,81 @@ It may be the case that while you were working on your edits, new commits have
 been added to ``upstream`` that affect your work. In this case, follow the
 :ref:`rebasing-on-main` section of this document to apply those changes to
 your branch.
+
+.. _formatting-with-pre-commit:
+
+Automatic code formatting with pre-commit
+-----------------------------------------
+
+NymPy recommends that code follow pep7/pep8 guidelines, but does not currently
+enfoce any formatters. However, the repository does come with a an optional
+pre-commit hook that performs automatic formatting and validation of changes.
+Tasks and checks that it runs include:
+
+* Format changed lines only of Python files to pep8 standard using `Darker
+  <darker>`_, which wraps `black <black>`_ and `isort <isort>`_ (enabled by
+  default). Additionally, check only these changed lines using `flake8
+  <flake8>`_.
+
+* Format changed lines only of C and C++ source files to pep7 standard using a
+  python wrapper for `ClangFormat versioning <clang_format>`_ (enabled by
+  default).
+
+* Format and lint YAML shell files, and perform linting on Fortran, rst, Docker,
+  and markdown files (some enabled and some disabled by default)
+
+To use the hook, first make sure that pre-commit is installed:
+
+:: 
+
+   pip install pre-commit
+
+And then install the hook to your git repository:
+
+:: 
+
+   pre-commit install
+
+This will add a script to your ``.git/hooks`` folder. This script will run
+pre-commit to check your changed files whenever you run ``git commit``. Note
+that if there are any failures, the commit will not go through and you will have
+to re-run the commit (and ``git add`` first if any files were automatically
+changed). It is generally bad practice to commit files that do not pass tests
+but if it is necessary (e.g., for a local commit that will be rebased later),
+you can run ``git commit --no-verify`` to skip pre-commit checks.
+
+Note that the first time pre-commit runs, it will take a while to download the
+necessary files. Subsequent times will be very fast.
+
+Other useful commands includes:
+
+::
+
+   # Validate specific files
+   pre-commit run  --files a.py b.py ...
+
+   # Run a specific hook. Use the ID given in .pre-commit-config.yaml
+   pre-commit run <hook_id>  [--files a.py b.py ...]
+
+   # Run on all files. Note there will probably be a lot of failures
+   pre-commit run --all-files
+
+   # Run hooks with the stage marked as "manual". These are hooks where we
+   # expect lots of failures from before formatters were available
+   pre-commit run --hook-stage manual [hook-name]
+
+More information is available `on the pre-commit website <pre_commit>`_. Do not
+commit the changes of ``pre-comit run --all-files`` as that will likely generate
+a diff much larger than your change.
+
+.. Section links (not displayed)
+.. _black: https://black.readthedocs.io/en/stable/
+.. _darker: https://pypi.org/project/darker/
+.. _flake8: https://flake8.pycqa.org/en/latest/
+.. _isort: https://pycqa.github.io/isort/index.html
+.. _pre_commit: https://pre-commit.com/
+.. _clang_format: https://clang.llvm.org/docs/ClangFormat.html
+
 
 .. _writing-the-commit-message:
 
