@@ -196,6 +196,11 @@ html_theme_options = {
 html_title = "%s v%s Manual" % (project, version)
 html_static_path = ['_static']
 html_last_updated_fmt = '%b %d, %Y'
+html_css_files = ["numpy.css"]
+
+# Prevent sphinx-panels from loading bootstrap css, the pydata-sphinx-theme
+# already loads it
+panels_add_bootstrap_css = False
 
 html_use_modindex = True
 html_copy_source = False
