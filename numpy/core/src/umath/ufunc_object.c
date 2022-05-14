@@ -1206,6 +1206,7 @@ prepare_ufunc_output(PyUFuncObject *ufunc,
  * cannot broadcast any other array (as it requires a single stride).
  * The function accepts all 1-D arrays, and N-D arrays that are either all
  * C- or all F-contiguous.
+ * NOTE: Broadcast outputs are implicitly rejected in the overlap detection.
  *
  * Returns -2 if a trivial loop is not possible, 0 on success and -1 on error.
  */
