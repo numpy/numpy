@@ -16,7 +16,7 @@ from ._multiarray_umath import *  # noqa: F403
 from ._multiarray_umath import (
     _fastCopyAndTranspose, _flagdict, from_dlpack, _insert, _reconstruct,
     _vec_string, _ARRAY_API, _monotonicity, _get_ndarray_c_version,
-    _set_madvise_hugepage,
+    _get_madvise_hugepage, _set_madvise_hugepage,
     )
 
 __all__ = [
