@@ -11,6 +11,7 @@ NumPy documentation
    User Guide <user/index>
    API reference <reference/index>
    Development <dev/index>
+   release
 
 
 **Version**: |version|
@@ -35,7 +36,7 @@ basic statistical operations, random simulation and much more.
 
 .. panels::
     :card: + intro-card text-center
-    :column: col-lg-6 col-md-6 col-sm-6 col-xs-12 p-2
+    :column: col-lg-6 col-md-6 col-sm-6 col-xs-12 d-flex
 
     ---
     :img-top: ../source/_static/index-images/getting_started.svg
@@ -46,10 +47,12 @@ basic statistical operations, random simulation and much more.
     New to NumPy? Check out the Absolute Beginner's Guide. It contains an
     introduction to NumPy's main concepts and links to additional tutorials.
 
+    +++
+
     .. link-button:: user/absolute_beginners
         :type: ref
-        :text: 
-        :classes: stretched-link
+        :text: To the absolute beginner's guide
+        :classes: btn-block btn-secondary stretched-link
     
     ---
     :img-top: ../source/_static/index-images/user_guide.svg
@@ -60,10 +63,12 @@ basic statistical operations, random simulation and much more.
     The user guide provides in-depth information on the
     key concepts of NumPy with useful background information and explanation.
 
+    +++
+
     .. link-button:: user
         :type: ref
-        :text: 
-        :classes: stretched-link
+        :text: To the user guide
+        :classes: btn-block btn-secondary stretched-link
 
     ---
     :img-top: ../source/_static/index-images/api.svg
@@ -76,25 +81,29 @@ basic statistical operations, random simulation and much more.
     methods work and which parameters can be used. It assumes that you have an
     understanding of the key concepts.
 
+    +++
+
     .. link-button:: reference
         :type: ref
-        :text: 
-        :classes: stretched-link 
+        :text: To the reference guide
+        :classes: btn-block btn-secondary stretched-link
 
     ---
     :img-top: ../source/_static/index-images/contributor.svg
 
     Contributor's Guide
-    ^^^^^^^^^^^^^^^
+    ^^^^^^^^^^^^^^^^^^^
 
     Want to add to the codebase? Can help add translation or a flowchart to the
     documentation? The contributing guidelines will guide you through the
     process of improving NumPy.
 
+    +++
+
     .. link-button:: devindex
         :type: ref
-        :text: 
-        :classes: stretched-link
+        :text: To the contributor's guide
+        :classes: btn-block btn-secondary stretched-link
 
 .. This is not really the index page, that is found in
    _templates/indexcontent.html The toctree content here will be added to the
