@@ -224,6 +224,7 @@ numpy/core/src/umath/loops_trigonometric.dispatch.c
 numpy/core/src/umath/loops_exponent_log.dispatch.c
 numpy/core/src/umath/loops_umath_fp.dispatch.c
 numpy/core/src/umath/loops_hyperbolic.dispatch.c
+numpy/core/src/umath/loops_modulo.dispatch.c
 # npysort module
 numpy/core/src/npysort/x86-qsort.dispatch.c
 numpy/core/src/npysort/x86-qsort.dispatch.*.cpp
