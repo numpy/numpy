@@ -62,34 +62,37 @@ _next(double x, int p)
     EXTRACT_WORDS(hx, lx, x);
     ix = hx & 0x7fffffff; /* |x| */
 
-    if (((ix >= 0x7ff00000) && ((ix - 0x7ff00000) | lx) != 0)) /* x is nan */
+    if (((ix >= 0x7ff00000) && ((ix - 0x7ff00000) | lx) != 0)) { /* x is nan */
         return x;
+    }
     if ((ix | lx) == 0) { /* x == 0 */
         if (p >= 0) {
             INSERT_WORDS(x, 0x0, 1); /* return +minsubnormal */
-        }
-        else {
+        } else {
             INSERT_WORDS(x, 0x80000000, 1); /* return -minsubnormal */
         }
         t = x * x;
-        if (t == x)
+        if (t == x) {
             return t;
-        else
+        } else {
             return x; /* raise underflow flag */
+        }
     }
     if (p < 0) { /* x -= ulp */
-        if (lx == 0)
+        if (lx == 0) {
             hx -= 1;
+        }
         lx -= 1;
-    }
-    else { /* x += ulp */
+    } else { /* x += ulp */
         lx += 1;
-        if (lx == 0)
+        if (lx == 0) {
             hx += 1;
+        }
     }
     hy = hx & 0x7ff00000;
-    if (hy >= 0x7ff00000)
+    if (hy >= 0x7ff00000) {
         return x + x;      /* overflow  */
+    }
     if (hy < 0x00100000) { /* underflow */
         t = x * x;
         if (t != x) { /* raise underflow flag */
@@ -110,30 +113,31 @@ _next(float x, int p)
     GET_FLOAT_WORD(hx, x);
     ix = hx & 0x7fffffff; /* |x| */
 
-    if ((ix > 0x7f800000)) /* x is nan */
+    if ((ix > 0x7f800000)) { /* x is nan */
         return x;
+    }
     if (ix == 0) { /* x == 0 */
         if (p >= 0) {
             SET_FLOAT_WORD(x, 0x0 | 1); /* return +minsubnormal */
-        }
-        else {
+        } else {
             SET_FLOAT_WORD(x, 0x80000000 | 1); /* return -minsubnormal */
         }
         t = x * x;
-        if (t == x)
+        if (t == x) {
             return t;
-        else
+        } else {
             return x; /* raise underflow flag */
+        }
     }
     if (p < 0) { /* x -= ulp */
         hx -= 1;
-    }
-    else { /* x += ulp */
+    } else { /* x += ulp */
         hx += 1;
     }
     hy = hx & 0x7f800000;
-    if (hy >= 0x7f800000)
+    if (hy >= 0x7f800000) {
         return x + x;      /* overflow  */
+    }
     if (hy < 0x00800000) { /* underflow */
         t = x * x;
         if (t != x) { /* raise underflow flag */
@@ -213,15 +217,15 @@ _next(long double x, int p)
         u = x * x;
         if (u == x) {
             return u;
-        }
-        else {
+        } else {
             return x; /* raise underflow flag */
         }
     }
 
     if (p < 0) { /* p < 0, x -= ulp */
-        if ((hx == 0xffefffffffffffffLL) && (lx == 0xfc8ffffffffffffeLL))
+        if ((hx == 0xffefffffffffffffLL) && (lx == 0xfc8ffffffffffffeLL)) {
             return x + x; /* overflow, return -inf */
+        }
         if (hx >= 0x7ff0000000000000LL) {
             SET_LDOUBLE_WORDS64(u, 0x7fefffffffffffffLL, 0x7c8ffffffffffffeLL);
             return u;
@@ -239,16 +243,17 @@ _next(long double x, int p)
         if (ihx < 0x06a0000000000000LL) { /* ulp will denormal */
             SET_LDOUBLE_WORDS64(u, (hx & 0x7ff0000000000000LL), 0ULL);
             u *= eps;
-        }
-        else
+        } else {
             SET_LDOUBLE_WORDS64(
                     u, (hx & 0x7ff0000000000000LL) - 0x0690000000000000LL,
                     0ULL);
+        }
         return x - u;
     }
     else { /* p >= 0, x += ulp */
-        if ((hx == 0x7fefffffffffffffLL) && (lx == 0x7c8ffffffffffffeLL))
+        if ((hx == 0x7fefffffffffffffLL) && (lx == 0x7c8ffffffffffffeLL)) {
             return x + x; /* overflow, return +inf */
+        }
         if ((npy_uint64)hx >= 0xfff0000000000000ULL) {
             SET_LDOUBLE_WORDS64(u, 0xffefffffffffffffLL, 0xfc8ffffffffffffeLL);
             return u;
@@ -262,18 +267,19 @@ _next(long double x, int p)
                 u = u * u;
                 math_force_eval(u); /* raise underflow flag */
             }
-            if (x == 0.0L) /* handle negative LDBL_TRUE_MIN case */
+            if (x == 0.0L) { /* handle negative LDBL_TRUE_MIN case */
                 x = -0.0L;
+            }
             return x;
         }
         if (ihx < 0x06a0000000000000LL) { /* ulp will denormal */
             SET_LDOUBLE_WORDS64(u, (hx & 0x7ff0000000000000LL), 0ULL);
             u *= eps;
-        }
-        else
+        } else {
             SET_LDOUBLE_WORDS64(
                     u, (hx & 0x7ff0000000000000LL) - 0x0690000000000000LL,
                     0ULL);
+        }
         return x + u;
     }
 }
@@ -295,15 +301,13 @@ _next(long double x, int p)
         SET_LDOUBLE_MANL(ux, 1);
         if (p >= 0) {
             SET_LDOUBLE_SIGN(ux, 0);
-        }
-        else {
+        } else {
             SET_LDOUBLE_SIGN(ux, 1);
         }
         t = ux.e * ux.e;
         if (t == ux.e) {
             return t;
-        }
-        else {
+        } else {
             return ux.e; /* raise underflow flag */
         }
     }
@@ -316,7 +320,7 @@ _next(long double x, int p)
                                          (GET_LDOUBLE_MANH(ux) & LDBL_NBIT));
         }
         SET_LDOUBLE_MANL(ux, GET_LDOUBLE_MANL(ux) - 1);
-    }
+    } 
     else { /* x += ulp */
         SET_LDOUBLE_MANL(ux, GET_LDOUBLE_MANL(ux) + 1);
         if (GET_LDOUBLE_MANL(ux) == 0) {
@@ -328,7 +332,7 @@ _next(long double x, int p)
         }
     }
     if (GET_LDOUBLE_EXP(ux) == 0x7fff) {
-        return ux.e + ux.e; /* overflow  */
+        return ux.e + ux.e; /* overflow */
     }
     if (GET_LDOUBLE_EXP(ux) == 0) { /* underflow */
         if (LDBL_NBIT) {
@@ -372,28 +376,32 @@ npy_nextafter(double x, double y)
     iy = hy & 0x7fffffff; /* |y| */
 
     if (((ix >= 0x7ff00000) && ((ix - 0x7ff00000) | lx) != 0) || /* x is nan */
-        ((iy >= 0x7ff00000) && ((iy - 0x7ff00000) | ly) != 0))   /* y is nan */
+        ((iy >= 0x7ff00000) && ((iy - 0x7ff00000) | ly) != 0)) { /* y is nan */
         return x + y;
-    if (x == y)
+    }
+    if (x == y) {
         return y;                            /* x=y, return y */
+    }
     if ((ix | lx) == 0) {                    /* x == 0 */
         INSERT_WORDS(x, hy & 0x80000000, 1); /* return +-minsubnormal */
         t = x * x;
-        if (t == x)
+        if (t == x) {
             return t;
-        else
+        } else {
             return x; /* raise underflow flag */
+        }
     }
     if (hx >= 0) {                                  /* x > 0 */
         if (hx > hy || ((hx == hy) && (lx > ly))) { /* x > y, x -= ulp */
-            if (lx == 0)
+            if (lx == 0) {
                 hx -= 1;
+            }
             lx -= 1;
-        }
-        else { /* x < y, x += ulp */
+        } else { /* x < y, x += ulp */
             lx += 1;
-            if (lx == 0)
+            if (lx == 0) {
                 hx += 1;
+            }
         }
     }
     else { /* x < 0 */
@@ -402,16 +410,17 @@ npy_nextafter(double x, double y)
             if (lx == 0)
                 hx -= 1;
             lx -= 1;
-        }
-        else { /* x > y, x += ulp */
+        } else { /* x > y, x += ulp */
             lx += 1;
-            if (lx == 0)
+            if (lx == 0) {
                 hx += 1;
+            }
         }
     }
     hy = hx & 0x7ff00000;
-    if (hy >= 0x7ff00000)
+    if (hy >= 0x7ff00000) {
         return x + x;      /* overflow  */
+    }
     if (hy < 0x00100000) { /* underflow */
         t = x * x;
         if (t != x) { /* raise underflow flag */
@@ -437,37 +446,39 @@ npy_nextafterf(float x, float y)
     iy = hy & 0x7fffffff; /* |y| */
 
     if ((ix > 0x7f800000) || /* x is nan */
-        (iy > 0x7f800000))   /* y is nan */
+        (iy > 0x7f800000)) { /* y is nan */
         return x + y;
-    if (x == y)
+    }
+    if (x == y) {
         return y;                                 /* x=y, return y */
+    }
     if (ix == 0) {                                /* x == 0 */
         SET_FLOAT_WORD(x, (hy & 0x80000000) | 1); /* return +-minsubnormal */
         t = x * x;
-        if (t == x)
+        if (t == x) {
             return t;
-        else
+        } else {
             return x; /* raise underflow flag */
+        }
     }
     if (hx >= 0) {     /* x > 0 */
         if (hx > hy) { /* x > y, x -= ulp */
             hx -= 1;
-        }
-        else { /* x < y, x += ulp */
+        } else { /* x < y, x += ulp */
             hx += 1;
         }
     }
     else {                        /* x < 0 */
         if (hy >= 0 || hx > hy) { /* x < y, x -= ulp */
             hx -= 1;
-        }
-        else { /* x > y, x += ulp */
+        } else { /* x > y, x += ulp */
             hx += 1;
         }
     }
     hy = hx & 0x7f800000;
-    if (hy >= 0x7f800000)
+    if (hy >= 0x7f800000) {
         return x + x;      /* overflow  */
+    }
     if (hy < 0x00800000) { /* underflow */
         t = x * x;
         if (t != x) { /* raise underflow flag */

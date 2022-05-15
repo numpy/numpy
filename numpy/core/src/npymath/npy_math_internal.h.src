@@ -2,7 +2,7 @@
  * vim:syntax=c
  * A small module to implement missing C99 math capabilities required by numpy
  *
- * Please keep this independent of python ! Only basic types (npy_longdouble)
+ * Please keep this independent of python! Only basic types (npy_longdouble)
  * can be used, otherwise, pure C, without any use of Python facilities
  *
  * How to add a function to this section
@@ -87,7 +87,7 @@ static const npy_uint64 MAGIC64[] = {0x5555555555555555ull, 0x3333333333333333ul
  *****************************************************************************
  */
 
-/* Original code by Konrad Hinsen.  */
+/* Original code by Konrad Hinsen. */
 #ifndef HAVE_EXPM1
 NPY_INPLACE double npy_expm1(double x)
 {
@@ -102,7 +102,7 @@ NPY_INPLACE double npy_expm1(double x)
         } else if (u - 1.0 == -1.0) {
             return -1;
         } else {
-            return (u - 1.0) * x/npy_log(u);
+            return (u - 1.0) * x / npy_log(u);
         }
     }
 }
@@ -159,10 +159,10 @@ NPY_INPLACE double npy_atan2(double y, double x)
     m = 2 * (npy_signbit((x)) != 0) + (npy_signbit((y)) != 0);
     if (y == 0.0) {
         switch(m) {
-        case 0:
-        case 1: return  y;  /* atan(+-0,+anything)=+-0 */
-        case 2: return  NPY_PI;/* atan(+0,-anything) = pi */
-        case 3: return -NPY_PI;/* atan(-0,-anything) =-pi */
+            case 0:
+            case 1: return  y; /* atan(+-0,+anything)=+-0 */
+            case 2: return  NPY_PI; /* atan(+0,-anything) = pi */
+            case 3: return -NPY_PI; /* atan(-0,-anything) =-pi */
         }
     }
 
@@ -173,17 +173,17 @@ NPY_INPLACE double npy_atan2(double y, double x)
     if (npy_isinf(x)) {
         if (npy_isinf(y)) {
             switch(m) {
-                case 0: return  NPY_PI_4;/* atan(+INF,+INF) */
-                case 1: return -NPY_PI_4;/* atan(-INF,+INF) */
-                case 2: return  3.0*NPY_PI_4;/*atan(+INF,-INF)*/
-                case 3: return -3.0*NPY_PI_4;/*atan(-INF,-INF)*/
+                case 0: return  NPY_PI_4; /* atan(+INF,+INF) */
+                case 1: return -NPY_PI_4; /* atan(-INF,+INF) */
+                case 2: return  3.0 * NPY_PI_4; /*atan(+INF,-INF)*/
+                case 3: return -3.0 * NPY_PI_4; /*atan(-INF,-INF)*/
             }
         } else {
             switch(m) {
-                case 0: return  NPY_PZERO;  /* atan(+...,+INF) */
-                case 1: return  NPY_NZERO;  /* atan(-...,+INF) */
-                case 2: return  NPY_PI;  /* atan(+...,-INF) */
-                case 3: return -NPY_PI;  /* atan(-...,-INF) */
+                case 0: return  NPY_PZERO; /* atan(+...,+INF) */
+                case 1: return  NPY_NZERO; /* atan(-...,+INF) */
+                case 2: return  NPY_PI; /* atan(+...,-INF) */
+                case 3: return -NPY_PI; /* atan(-...,-INF) */
             }
         }
     }
@@ -194,21 +194,21 @@ NPY_INPLACE double npy_atan2(double y, double x)
 
     /* compute y/x */
     k = (iy - ix) >> 20;
-    if (k > 60) {            /* |y/x| >  2**60 */
+    if (k > 60) {       /* |y/x| >  2**60 */
         z = NPY_PI_2 + 0.5 * NPY_DBL_EPSILON;
         m &= 1;
     } else if (hx < 0 && k < -60) {
         z = 0.0;    /* 0 > |y|/x > -2**-60 */
     } else {
-        z = npy_atan(npy_fabs(y/x));        /* safe to do y/x */
+        z = npy_atan(npy_fabs(y / x)); /* safe to do y/x */
     }
 
     switch (m) {
-        case 0: return  z  ;    /* atan(+,+) */
-        case 1: return -z  ;    /* atan(-,+) */
-        case 2: return  NPY_PI - (z - NPY_DBL_EPSILON);/* atan(+,-) */
+        case 0: return  z; /* atan(+,+) */
+        case 1: return -z; /* atan(-,+) */
+        case 2: return  NPY_PI - (z - NPY_DBL_EPSILON); /* atan(+,-) */
         default: /* case 3 */
-            return  (z - NPY_DBL_EPSILON) - NPY_PI;/* atan(-,-) */
+            return  (z - NPY_DBL_EPSILON) - NPY_PI; /* atan(-,-) */
     }
 }
 
@@ -236,10 +236,9 @@ NPY_INPLACE double npy_hypot(double x, double y)
     }
     if (x == 0.) {
         return 0.;
-    }
-    else {
-        yx = y/x;
-        return x*npy_sqrt(1.+yx*yx);
+    } else {
+        yx = y / x;
+        return x * npy_sqrt(1. + yx*yx);
     }
 }
 #endif
@@ -254,8 +253,7 @@ NPY_INPLACE double npy_acosh(double x)
     if (npy_isfinite(x)) {
         if (x > 1e8) {
              return npy_log(x) + NPY_LOGE2;
-        }
-        else {
+        } else {
             double u = x - 1.0;
             return npy_log1p(u + npy_sqrt(2*u + u*u));
         }
@@ -272,17 +270,17 @@ NPY_INPLACE double npy_asinh(double xx)
     if (xx < 0.0) {
         sign = -1;
         x = -xx;
-    }
-    else {
+    } else {
         sign = 1;
         x = xx;
     }
+    
     if (x > 1e8) {
         d = x;
     } else {
         d = npy_sqrt(x*x + 1);
     }
-    return sign*npy_log1p(x*(1.0 + x/(d+1)));
+    return sign * npy_log1p(x * (1.0 + x / (d + 1)));
 }
 #endif
 
@@ -290,10 +288,9 @@ NPY_INPLACE double npy_asinh(double xx)
 NPY_INPLACE double npy_atanh(double x)
 {
     if (x > 0) {
-        return -0.5*npy_log1p(-2.0*x/(1.0 + x));
-    }
-    else {
-        return 0.5*npy_log1p(2.0*x/(1.0 - x));
+        return -0.5 * npy_log1p(-2.0 * x / (1.0 + x));
+    } else {
+        return  0.5 * npy_log1p(2.0 * x / (1.0 - x));
     }
 }
 #endif
@@ -315,7 +312,7 @@ NPY_INPLACE double npy_rint(double x)
 
     /* Round to nearest even */
     if (r == 0.5) {
-        r = y - 2.0*npy_floor(0.5*y);
+        r = y - 2.0 * npy_floor(0.5 * y);
         if (r == 1.0) {
             y += 1.0;
         }
@@ -337,7 +334,7 @@ NPY_INPLACE double npy_trunc(double x)
 #ifndef HAVE_EXP2
 NPY_INPLACE double npy_exp2(double x)
 {
-    return npy_exp(NPY_LOGE2*x);
+    return npy_exp(NPY_LOGE2 * x);
 }
 #endif
 
@@ -364,8 +361,7 @@ NPY_INPLACE double npy_log2(double x)
         double m = frexp(x, &e);
         if (x >= 1.0) {
             return log(2.0 * m) / log(2.0) + (e - 1);
-        }
-        else {
+        } else {
             return log(m) / log(2.0) + e;
         }
     }
@@ -564,12 +560,10 @@ NPY_INPLACE @type@ npy_cbrt@c@(@type@ x)
     /* don't set invalid flag */
     if (npy_isnan(x)) {
         return NPY_NAN;
-    }
-    else if (x < 0) {
+    } else if (x < 0) {
         return -npy_pow@c@(-x, 1. / 3.);
-    }
-    else {
-        return npy_pow@c@(x, 1. / 3.);
+    } else {
+        return  npy_pow@c@(x, 1. / 3.);
     }
 }
 #else
@@ -602,14 +596,11 @@ NPY_INPLACE @type@ npy_cbrt@c@(@type@ x)
 {
     if (npy_isnan(x)) {
         return (@type@) NPY_NAN;
-    }
-    else if (x == 0) {
+    } else if (x == 0) {
         return h0;
-    }
-    else if (x < 0) {
+    } else if (x < 0) {
         return (@type@) 0.0;
-    }
-    else {
+    } else {
         return (@type@) 1.0;
     }
 }
@@ -621,22 +612,22 @@ NPY_INPLACE @type@ npy_cbrt@c@(@type@ x)
 
 NPY_INPLACE @type@ npy_rad2deg@c@(@type@ x)
 {
-    return x*RAD2DEG;
+    return x * RAD2DEG;
 }
 
 NPY_INPLACE @type@ npy_deg2rad@c@(@type@ x)
 {
-    return x*DEG2RAD;
+    return x * DEG2RAD;
 }
 
 NPY_INPLACE @type@ npy_log2_1p@c@(@type@ x)
 {
-    return LOG2E*npy_log1p@c@(x);
+    return LOG2E * npy_log1p@c@(x);
 }
 
 NPY_INPLACE @type@ npy_exp2_m1@c@(@type@ x)
 {
-    return npy_expm1@c@(LOGE2*x);
+    return npy_expm1@c@(LOGE2 * x);
 }
 
 NPY_INPLACE @type@ npy_logaddexp@c@(@type@ x, @type@ y)
@@ -649,11 +640,9 @@ NPY_INPLACE @type@ npy_logaddexp@c@(@type@ x, @type@ y)
         const @type@ tmp = x - y;
         if (tmp > 0) {
             return x + npy_log1p@c@(npy_exp@c@(-tmp));
-        }
-        else if (tmp <= 0) {
+        } else if (tmp <= 0) {
             return y + npy_log1p@c@(npy_exp@c@(tmp));
-        }
-        else {
+        } else {
             /* NaNs */
             return tmp;
         }
@@ -670,11 +659,9 @@ NPY_INPLACE @type@ npy_logaddexp2@c@(@type@ x, @type@ y)
         const @type@ tmp = x - y;
         if (tmp > 0) {
             return x + npy_log2_1p@c@(npy_exp2@c@(-tmp));
-        }
-        else if (tmp <= 0) {
+        } else if (tmp <= 0) {
             return y + npy_log2_1p@c@(npy_exp2@c@(tmp));
-        }
-        else {
+        } else {
             /* NaNs */
             return tmp;
         }
@@ -696,8 +683,7 @@ npy_remainder@c@(@type@ a, @type@ b)
          * division by zero creating an inf.
          */
         mod = npy_fmod@c@(a, b);
-    }
-    else {
+    } else {
         npy_divmod@c@(a, b, &mod);
     }
     return mod;
@@ -713,8 +699,7 @@ npy_floor_divide@c@(@type@ a, @type@ b) {
          * evaluating to NaN.
          */
         div = a / b;
-    }
-    else {
+    } else {
         div = npy_divmod@c@(a, b, &mod);
     }
     return div;
@@ -746,8 +731,7 @@ npy_divmod@c@(@type@ a, @type@ b, @type@ *modulus)
             mod += b;
             div -= 1.0@c@;
         }
-    }
-    else {
+    } else {
         /* if mod is zero ensure correct sign */
         mod = npy_copysign@c@(0, b);
     }
@@ -757,10 +741,9 @@ npy_divmod@c@(@type@ a, @type@ b, @type@ *modulus)
         floordiv = npy_floor@c@(div);
         if (isgreater(div - floordiv, 0.5@c@))
             floordiv += 1.0@c@;
-    }
-    else {
+    } else {
         /* if div is zero ensure correct sign */
-        floordiv = npy_copysign@c@(0, a/b);
+        floordiv = npy_copysign@c@(0, a / b);
     }
 
     *modulus = mod;
@@ -785,7 +768,7 @@ npy_gcd@c@(@type@ a, @type@ b)
     @type@ c;
     while (a != 0) {
         c = a;
-        a = b%a;
+        a = b % a;
         b = c;
     }
     return b;
@@ -830,8 +813,7 @@ npy_lshift@u@@c@(npy_@u@@type@ a, npy_@u@@type@ b)
 {
     if (NPY_LIKELY((size_t)b < sizeof(a) * CHAR_BIT)) {
         return a << b;
-    }
-    else {
+    } else {
         return 0;
     }
 }
@@ -843,7 +825,7 @@ npy_rshift@u@@c@(npy_@u@@type@ a, npy_@u@@type@ b)
     }
 #if @is_signed@
     else if (a < 0) {
-        return (npy_@u@@type@)-1;  /* preserve the sign bit */
+        return (npy_@u@@type@) - 1;  /* preserve the sign bit */
     }
 #endif
     else {
@@ -893,7 +875,7 @@ npy_popcountu@c@(npy_@type@ a)
         return TO_BITS_LEN(__popcnt)(a);
     /* split 64 bit number into two 32 bit ints and return sum of counts */
     #elif (defined(_WIN32) && NPY_BITSOF_@STYPE@ == 64)
-        npy_uint32 left  = (npy_uint32) (a>>32);
+        npy_uint32 left  = (npy_uint32) (a >> 32);
         npy_uint32 right = (npy_uint32) a;
         return __popcnt32(left) + __popcnt32(right);
     #endif
