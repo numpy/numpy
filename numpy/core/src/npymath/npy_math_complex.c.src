@@ -99,18 +99,17 @@ cdiv@c@(@ctype@ a, @ctype@ b)
     if (abs_br >= abs_bi) {
         if (abs_br == 0 && abs_bi == 0) {
             /* divide by zeros should yield a complex inf or nan */
-            return npy_cpack@c@(ar/abs_br, ai/abs_bi);
-        }
-        else {
+            return npy_cpack@c@(ar / abs_br, ai / abs_bi);
+        } else {
             @type@ rat = bi/br;
             @type@ scl = 1.0@C@/(br+bi*rat);
-            return npy_cpack@c@((ar + ai*rat)*scl, (ai - ar*rat)*scl);
+            return npy_cpack@c@((ar + ai * rat) * scl, (ai - ar * rat) * scl);
         }
     }
     else {
         @type@ rat = br/bi;
-        @type@ scl = 1.0@C@/(bi + br*rat);
-        return npy_cpack@c@((ar*rat + ai)*scl, (ai*rat - ar)*scl);
+        @type@ scl = 1.0@C@/(bi + br * rat);
+        return npy_cpack@c@((ar * rat + ai) * scl, (ai * rat - ar) * scl);
     }
 }
 
@@ -205,8 +204,7 @@ npy_cexp@c@(@ctype@ z)
     if (npy_isfinite(r)) {
         if (r >= SCALED_CEXP_LOWER@C@ && r <= SCALED_CEXP_UPPER@C@) {
             ret = _npy_scaled_cexp@c@(r, i, 0);
-        }
-        else {
+        } else {
             x = npy_exp@c@(r);
 
             c = npy_cos@c@(i);
@@ -214,19 +212,17 @@ npy_cexp@c@(@ctype@ z)
 
             if (npy_isfinite(i)) {
                 ret = npy_cpack@c@(x * c, x * s);
-            }
-            else {
+            } else {
                 ret = npy_cpack@c@(NPY_NAN@C@, npy_copysign@c@(NPY_NAN@C@, i));
             }
         }
 
     }
-    else  if (npy_isnan(r)) {
+    else if (npy_isnan(r)) {
         /* r is nan */
         if (i == 0) {
             ret = z;
-        }
-        else {
+        } else {
             ret = npy_cpack@c@(r, npy_copysign@c@(NPY_NAN@C@, i));
         }
     }
@@ -235,14 +231,12 @@ npy_cexp@c@(@ctype@ z)
         if (r > 0) {
             if (i == 0) {
                 ret = npy_cpack@c@(r, i);
-            }
-            else if (npy_isfinite(i)) {
+            } else if (npy_isfinite(i)) {
                 c = npy_cos@c@(i);
                 s = npy_sin@c@(i);
 
                 ret = npy_cpack@c@(r * c, r * s);
-            }
-            else {
+            } else {
                 /* x = +inf, y = +-inf | nan */
                 npy_set_floatstatus_invalid();
                 ret = npy_cpack@c@(r, NPY_NAN@C@);
@@ -255,8 +249,7 @@ npy_cexp@c@(@ctype@ z)
                 s = npy_sin@c@(i);
 
                 ret = npy_cpack@c@(x * c, x * s);
-            }
-            else {
+            } else {
                 /* x = -inf, y = nan | +i inf */
                 ret = npy_cpack@c@(0, 0);
             }
@@ -302,16 +295,15 @@ npy_clog@c@(@ctype@ z)
     @type@ ay = npy_fabs@c@(npy_cimag@c@(z));
     @type@ rr, ri;
 
-    if (ax > @TMAX@/4 || ay > @TMAX@/4) {
-        rr = npy_log@c@(npy_hypot@c@(ax/2, ay/2)) + NPY_LOGE2@c@;
+    if (ax > @TMAX@ / 4 || ay > @TMAX@ / 4) {
+        rr = npy_log@c@(npy_hypot@c@(ax / 2, ay / 2)) + NPY_LOGE2@c@;
     }
     else if (ax < @TMIN@ && ay < @TMIN@) {
         if (ax > 0  || ay > 0) {
             /* catch cases where hypot(ax, ay) is subnormal */
             rr = npy_log@c@(npy_hypot@c@(npy_ldexp@c@(ax, @TMANT_DIG@),
                  npy_ldexp@c@(ay, @TMANT_DIG@))) - @TMANT_DIG@*NPY_LOGE2@c@;
-        }
-        else {
+        } else {
             /* log(+/-0 +/- 0i) */
             /* raise divide-by-zero floating point exception */
             rr = -1.0@c@ / npy_creal@c@(z);
@@ -325,9 +317,8 @@ npy_clog@c@(@ctype@ z)
         if (0.71 <= h && h <= 1.73) {
             @type@ am = ax > ay ? ax : ay; /* max(ax, ay) */
             @type@ an = ax > ay ? ay : ax; /* min(ax, ay) */
-            rr = npy_log1p@c@((am-1)*(am+1)+an*an)/2;
-        }
-        else {
+            rr = npy_log1p@c@((am - 1) * (am + 1) + an*an) / 2;
+        } else {
             rr = npy_log@c@(h);
         }
     }
@@ -373,8 +364,7 @@ npy_csqrt@c@(@ctype@ z)
          */
         if (npy_signbit(a)) {
             return (npy_cpack@c@(npy_fabs@c@(b - b), npy_copysign@c@(a, b)));
-        }
-        else {
+        } else {
             return (npy_cpack@c@(a, npy_copysign@c@(b - b, b)));
         }
     }
@@ -388,8 +378,7 @@ npy_csqrt@c@(@ctype@ z)
         a *= 0.25;
         b *= 0.25;
         scale = 1;
-    }
-    else {
+    } else {
         scale = 0;
     }
 
@@ -397,8 +386,7 @@ npy_csqrt@c@(@ctype@ z)
     if (a >= 0) {
         t = npy_sqrt@c@((a + npy_hypot@c@(a, b)) * 0.5@c@);
         result = npy_cpack@c@(t, b / (2 * t));
-    }
-    else {
+    } else {
         t = npy_sqrt@c@((-a + npy_hypot@c@(a, b)) * 0.5@c@);
         result = npy_cpack@c@(npy_fabs@c@(b) / (2 * t), npy_copysign@c@(t, b));
     }
@@ -406,8 +394,7 @@ npy_csqrt@c@(@ctype@ z)
     /* Rescale. */
     if (scale) {
         return (npy_cpack@c@(npy_creal@c@(result) * 2, npy_cimag@c@(result)));
-    }
-    else {
+    } else {
         return (result);
     }
 }
@@ -451,8 +438,7 @@ npy_cpow@c@ (@ctype@ a, @ctype@ b)
     if (ar == 0. && ai == 0.) {
         if (br > 0 && bi == 0) {
             return npy_cpack@c@(0., 0.);
-        }
-        else {
+        } else {
             volatile @type@ tmp = NPY_INFINITY@C@;
             /*
              * NB: there are four complex zeros; c0 = (+-0, +-0), so that
@@ -492,13 +478,13 @@ npy_cpow@c@ (@ctype@ a, @ctype@ b)
             p = npy_cpack@c@(ar, ai);
             while (1) {
                 if (n & mask) {
-                    aa = cmul@c@(aa,p);
+                    aa = cmul@c@(aa, p);
                 }
                 mask <<= 1;
                 if (n < mask || mask <= 0) {
                     break;
                 }
-                p = cmul@c@(p,p);
+                p = cmul@c@(p, p);
             }
             r = npy_cpack@c@(npy_creal@c@(aa), npy_cimag@c@(aa));
             if (br < 0) {
@@ -759,14 +745,12 @@ npy_csinh@c@(@ctype@ z)
             h = npy_exp@c@(npy_fabs@c@(x)) * 0.5@c@;
             return npy_cpack@c@(npy_copysign@c@(h, x) * npy_cos@c@(y),
                                 h * npy_sin@c@(y));
-        }
-        else if (x < SCALED_CEXP_UPPER@C@) {
+        } else if (x < SCALED_CEXP_UPPER@C@) {
             /* x < 1455: scale to avoid overflow */
             z = _npy_scaled_cexp@c@(absx, y, -1);
             return npy_cpack@c@(npy_creal@c@(z) * npy_copysign@c@(1, x),
                                 npy_cimag@c@(z));
-        }
-        else {
+        } else {
             /* x >= 1455: the result always overflows */
             h = CSINH_HUGE * x;
             return npy_cpack@c@(h * npy_cos@c@(y), h * h * npy_sin@c@(y));
@@ -1085,23 +1069,20 @@ _do_hard_work@c@(@type@ x, @type@ y, @type@ *rx,
              * A = 1 (inexactly).
              */
             *rx = npy_sqrt@c@(x);
-        }
-        else if (x >= @TEPS@ * npy_fabs@c@(y - 1)) {
+        } else if (x >= @TEPS@ * npy_fabs@c@(y - 1)) {
             /*
              * Underflow will not occur because
              * x >= DBL_EPSILON^2/128 >= FOUR_SQRT_MIN
              */
             Am1 = _f@c@(x, 1 + y, R) + _f@c@(x, 1 - y, S);
             *rx = npy_log1p@c@(Am1 + npy_sqrt@c@(Am1 * (A + 1)));
-        }
-        else if (y < 1) {
+        } else if (y < 1) {
             /*
              * fp = x*x/(1+y)/4, fm = x*x/(1-y)/4, and
              * A = 1 (inexactly).
              */
             *rx = x / npy_sqrt@c@((1 - y) * (1 + y));
-        }
-        else {        /* if (y > 1) */
+        } else {        /* if (y > 1) */
             /*
              * A-1 = y-1 (inexactly).
              */
@@ -1142,8 +1123,7 @@ _do_hard_work@c@(@type@ x, @type@ y, @type@ *rx,
              * A = 1 (inexactly).
              */
             *sqrt_A2my2 = npy_sqrt@c@(x) * npy_sqrt@c@((A + y) / 2);
-        }
-        else if (x >= @TEPS@ * npy_fabs@c@(y - 1)) {
+        } else if (x >= @TEPS@ * npy_fabs@c@(y - 1)) {
             /*
              * Underflow will not occur because
              * x >= DBL_EPSILON/128 >= FOUR_SQRT_MIN
@@ -1152,8 +1132,7 @@ _do_hard_work@c@(@type@ x, @type@ y, @type@ *rx,
              */
             Amy = _f@c@(x, y + 1, R) + _f@c@(x, y - 1, S);
             *sqrt_A2my2 = npy_sqrt@c@(Amy * (A + y));
-        }
-        else if (y > 1) {
+        } else if (y > 1) {
             /*
              * fp = x*x/(y+1)/4, fm = x*x/(y-1)/4, and
              * A = y (inexactly).
@@ -1164,8 +1143,7 @@ _do_hard_work@c@(@type@ x, @type@ y, @type@ *rx,
             *sqrt_A2my2 = x * (4 / @TEPS@ / @TEPS@) * y /
                 npy_sqrt@c@((y + 1) * (y - 1));
             *new_y = y * (4 / @TEPS@ / @TEPS@);
-        }
-        else {        /* if (y < 1) */
+        } else {        /* if (y < 1) */
             /*
              * fm = 1-y >= DBL_EPSILON, fp is of order x^2, and
              * A = 1 (inexactly).
@@ -1225,9 +1203,8 @@ _clog_for_large_values@c@(@type@ x, @type@ y,
      */
     else if (ax > QUARTER_SQRT_MAX || ay < SQRT_MIN) {
         *rr = npy_log@c@(npy_hypot@c@(x, y));
-    }
-    else {
-        *rr = npy_log@c@(ax * ax + ay * ay) / 2;
+    } else {
+        *rr = npy_log@c@(ax*ax + ay*ay) / 2;
     }
     *ri = npy_atan2@c@(y, x);
 }
@@ -1312,16 +1289,14 @@ npy_cacos@c@(@ctype@ z)
     if (B_is_usable) {
         if (sx == 0) {
             rx = npy_acos@c@(B);
-        }
-        else {
+        } else {
             rx = npy_acos@c@(-B);
         }
     }
     else {
         if (sx == 0) {
             rx = npy_atan2@c@(sqrt_A2mx2, new_x);
-        }
-        else {
+        } else {
             rx = npy_atan2@c@(sqrt_A2mx2, -new_x);
         }
     }
@@ -1440,8 +1415,7 @@ npy_casinh@c@(@ctype@ z)
         if (npy_signbit(x) == 0) {
             _clog_for_large_values@c@(x, y, &wx, &wy);
             wx += NPY_LOGE2@c@;
-        }
-        else {
+        } else {
             _clog_for_large_values@c@(-x, -y, &wx, &wy);
             wx += NPY_LOGE2@c@;
         }
@@ -1463,8 +1437,7 @@ npy_casinh@c@(@ctype@ z)
     _do_hard_work@c@(ax, ay, &rx, &B_is_usable, &B, &sqrt_A2my2, &new_y);
     if (B_is_usable) {
         ry = npy_asin@c@(B);
-    }
-    else {
+    } else {
         ry = npy_atan2@c@(new_y, sqrt_A2my2);
     }
     return npy_cpack@c@(npy_copysign@c@(rx, x), npy_copysign@c@(ry, y));
@@ -1705,18 +1678,15 @@ npy_catanh@c@(@ctype@ z)
 
     if (ax == 1 && ay < @TEPS@) {
         rx = (NPY_LOGE2@c@ - npy_log@c@(ay)) / 2;
-    }
-    else {
+    } else {
         rx = npy_log1p@c@(4 * ax / _sum_squares@c@(ax - 1, ay)) / 4;
     }
 
     if (ax == 1) {
         ry = npy_atan2@c@(2, -ay) / 2;
-    }
-    else if (ay < @TEPS@) {
+    } else if (ay < @TEPS@) {
         ry = npy_atan2@c@(2 * ay, (1 - ax) * (1 + ax)) / 2;
-    }
-    else {
+    } else {
         ry = npy_atan2@c@(2 * ay, (1 - ax) * (1 + ax) - ay * ay) / 2;
     }
 
