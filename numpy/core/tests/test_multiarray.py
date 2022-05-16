@@ -4432,6 +4432,16 @@ class TestArgmaxArgminCommon:
         a[1] = vals[1]
         assert_equal(arg_method(), 1)
 
+    @pytest.mark.parametrize('method, vals',
+            [('argmax', (10, 30)),
+             ('argmin', (30, 10))])
+    def test_masked(self, method, vals):
+        a = np.array(vals)
+        arg_method = getattr(a, method)
+        assert_equal(arg_method(initial=30, where=[False, True]), 0)
+        assert_equal(arg_method(initial=10, where=[False, True]), 0)
+
+
 class TestArgmax:
     usg_data = [
         ([1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0], 0),

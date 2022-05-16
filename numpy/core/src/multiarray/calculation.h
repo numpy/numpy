@@ -5,13 +5,13 @@ NPY_NO_EXPORT PyObject*
 PyArray_ArgMax(PyArrayObject* self, int axis, PyArrayObject *out);
 
 NPY_NO_EXPORT PyObject*
-_PyArray_ArgMaxWithKeepdims(PyArrayObject* self, int axis, PyArrayObject *out, int keepdims);
+_PyArray_ArgMaxWithKeepdims(PyArrayObject* self, int axis, PyArrayObject *out, int keepdims, PyArrayObject* initial, PyArrayObject* where);
 
 NPY_NO_EXPORT PyObject*
 PyArray_ArgMin(PyArrayObject* self, int axis, PyArrayObject *out);
 
 NPY_NO_EXPORT PyObject*
-_PyArray_ArgMinWithKeepdims(PyArrayObject* self, int axis, PyArrayObject *out, int keepdims);
+_PyArray_ArgMinWithKeepdims(PyArrayObject* self, int axis, PyArrayObject *out, int keepdims, PyArrayObject* initial, PyArrayObject* where);
 
 NPY_NO_EXPORT PyObject*
 PyArray_Max(PyArrayObject* self, int axis, PyArrayObject* out);

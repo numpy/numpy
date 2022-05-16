@@ -288,17 +288,24 @@ array_argmax(PyArrayObject *self,
     int axis = NPY_MAXDIMS;
     PyArrayObject *out = NULL;
     npy_bool keepdims = NPY_FALSE;
+    PyArrayObject *initial = NULL; // TODO: scalar?
+    PyArrayObject *where = NULL;
     NPY_PREPARE_ARGPARSER;
 
     if (npy_parse_arguments("argmax", args, len_args, kwnames,
             "|axis", &PyArray_AxisConverter, &axis,
             "|out", &PyArray_OutputConverter, &out,
             "$keepdims", &PyArray_BoolConverter, &keepdims,
+            "$initial", &PyArray_Converter, &initial,
+            "$where", &PyArray_Converter, &where,
             NULL, NULL, NULL) < 0) {
         return NULL;
     }
 
-    PyObject *ret = _PyArray_ArgMaxWithKeepdims(self, axis, out, keepdims);
+    PyObject *ret = _PyArray_ArgMaxWithKeepdims(self, axis, out, keepdims, initial, where);
+
+    Py_DECREF(initial);
+    Py_DECREF(where);
 
     /* this matches the unpacking behavior of ufuncs */
     if (out == NULL) {
@@ -316,16 +323,24 @@ array_argmin(PyArrayObject *self,
     int axis = NPY_MAXDIMS;
     PyArrayObject *out = NULL;
     npy_bool keepdims = NPY_FALSE;
+    PyArrayObject *initial = NULL; // TODO: scalar?
+    PyArrayObject *where = NULL;
     NPY_PREPARE_ARGPARSER;
     if (npy_parse_arguments("argmin", args, len_args, kwnames,
             "|axis", &PyArray_AxisConverter, &axis,
             "|out", &PyArray_OutputConverter, &out,
             "$keepdims", &PyArray_BoolConverter, &keepdims,
+            "$initial", &PyArray_Converter, &initial,
+            "$where", &PyArray_Converter, &where,
             NULL, NULL, NULL) < 0) {
         return NULL;
     }
 
-    PyObject *ret = _PyArray_ArgMinWithKeepdims(self, axis, out, keepdims);
+    PyObject *ret = _PyArray_ArgMinWithKeepdims(self, axis, out, keepdims,
+                                                initial, where);
+
+    Py_DECREF(initial);
+    Py_DECREF(where);
 
     /* this matches the unpacking behavior of ufuncs */
     if (out == NULL) {

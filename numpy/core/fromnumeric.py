@@ -1120,12 +1120,14 @@ def argsort(a, axis=-1, kind=None, order=None):
     return _wrapfunc(a, 'argsort', axis=axis, kind=kind, order=order)
 
 
-def _argmax_dispatcher(a, axis=None, out=None, *, keepdims=np._NoValue):
+def _argmax_dispatcher(a, axis=None, out=None, *, keepdims=np._NoValue,
+                       initial=np._NoValue, where=np._NoValue):
     return (a, out)
 
 
 @array_function_dispatch(_argmax_dispatcher)
-def argmax(a, axis=None, out=None, *, keepdims=np._NoValue):
+def argmax(a, axis=None, out=None, *, keepdims=np._NoValue, initial=np._NoValue,
+           where=np._NoValue):
     """
     Returns the indices of the maximum values along an axis.
 
@@ -1212,16 +1214,25 @@ def argmax(a, axis=None, out=None, *, keepdims=np._NoValue):
     >>> res.shape
     (2, 1, 4)
     """
-    kwds = {'keepdims': keepdims} if keepdims is not np._NoValue else {}
+    kwds = {}
+    if keepdims is not np._NoValue:
+        kwds['keepdims'] = keepdims
+    if where is not np._NoValue:
+        kwds['where'] = where
+        if initial is np._NoValue:
+            raise TypeError("To use a where mask one has to specify `initial`")
+        kwds['initial'] = initial
     return _wrapfunc(a, 'argmax', axis=axis, out=out, **kwds)
 
 
-def _argmin_dispatcher(a, axis=None, out=None, *, keepdims=np._NoValue):
+def _argmin_dispatcher(a, axis=None, out=None, *, keepdims=np._NoValue, 
+                       initial=np._NoValue, where=np._NoValue):
     return (a, out)
 
 
 @array_function_dispatch(_argmin_dispatcher)
-def argmin(a, axis=None, out=None, *, keepdims=np._NoValue):
+def argmin(a, axis=None, out=None, *, keepdims=np._NoValue, initial=np._NoValue,
+           where=np._NoValue):
     """
     Returns the indices of the minimum values along an axis.
 
@@ -1308,7 +1319,14 @@ def argmin(a, axis=None, out=None, *, keepdims=np._NoValue):
     >>> res.shape
     (2, 1, 4)
     """
-    kwds = {'keepdims': keepdims} if keepdims is not np._NoValue else {}
+    kwds = {}
+    if keepdims is not np._NoValue:
+        kwds['keepdims'] = keepdims
+    if where is not np._NoValue:
+        kwds['where'] = where
+        if initial is np._NoValue:
+            raise TypeError("To use a where mask one has to specify `initial`")
+        kwds['initial'] = initial
     return _wrapfunc(a, 'argmin', axis=axis, out=out, **kwds)
 
 

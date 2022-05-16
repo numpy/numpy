@@ -38,6 +38,7 @@ power_of_ten(int n)
 NPY_NO_EXPORT PyObject *
 _PyArray_ArgMinMaxCommon(PyArrayObject *op,
         int axis, PyArrayObject *out, int keepdims,
+        PyArrayObject *initial, PyArrayObject *where,
         npy_bool is_argmax)
 {
     PyArrayObject *ap = NULL, *rp = NULL;
@@ -191,10 +192,11 @@ _PyArray_ArgMinMaxCommon(PyArrayObject *op,
 }
 
 NPY_NO_EXPORT PyObject*
-_PyArray_ArgMaxWithKeepdims(PyArrayObject *op,
-        int axis, PyArrayObject *out, int keepdims)
+_PyArray_ArgMaxWithKeepdims(PyArrayObject *op, int axis, PyArrayObject *out, 
+                            int keepdims,
+                            PyArrayObject *initial, PyArrayObject *where)
 {
-    return _PyArray_ArgMinMaxCommon(op, axis, out, keepdims, 1);
+    return _PyArray_ArgMinMaxCommon(op, axis, out, keepdims, initial, where, 1);
 }
 
 /*NUMPY_API
@@ -203,14 +205,15 @@ _PyArray_ArgMaxWithKeepdims(PyArrayObject *op,
 NPY_NO_EXPORT PyObject *
 PyArray_ArgMax(PyArrayObject *op, int axis, PyArrayObject *out)
 {
-    return _PyArray_ArgMinMaxCommon(op, axis, out, 0, 1);
+    return _PyArray_ArgMinMaxCommon(op, axis, out, 0, NULL, NULL, 1);
 }
 
 NPY_NO_EXPORT PyObject *
-_PyArray_ArgMinWithKeepdims(PyArrayObject *op,
-        int axis, PyArrayObject *out, int keepdims)
+_PyArray_ArgMinWithKeepdims(PyArrayObject *op, int axis, PyArrayObject *out, 
+                            int keepdims,
+                            PyArrayObject *initial, PyArrayObject *where)
 {
-    return _PyArray_ArgMinMaxCommon(op, axis, out, keepdims, 0);
+    return _PyArray_ArgMinMaxCommon(op, axis, out, keepdims, initial, where, 0);
 }
 
 /*NUMPY_API
@@ -219,7 +222,7 @@ _PyArray_ArgMinWithKeepdims(PyArrayObject *op,
 NPY_NO_EXPORT PyObject *
 PyArray_ArgMin(PyArrayObject *op, int axis, PyArrayObject *out)
 {
-    return _PyArray_ArgMinMaxCommon(op, axis, out, 0, 0);
+    return _PyArray_ArgMinMaxCommon(op, axis, out, 0, NULL, NULL, 0);
 }
 
 /*NUMPY_API
