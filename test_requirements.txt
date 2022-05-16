@@ -1,4 +1,4 @@
-cython>=0.29.28,<3.0
+cython>=0.29.29,<3.0
 wheel==0.37.0
 setuptools==59.2.0
 hypothesis==6.24.1
