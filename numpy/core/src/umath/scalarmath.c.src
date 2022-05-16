@@ -1189,9 +1189,6 @@ static PyObject *
         BINOP_GIVE_UP_IF_NEEDED(a, b, nb_@oper@, @name@_@oper@);
     }
     switch (res) {
-        case CONVERSION_ERROR:
-            assert(0);  /* checked above */
-            return NULL;
         case DEFER_TO_OTHER_KNOWN_SCALAR:
             /*
              * defer to other;  This is normally a forward operation.  However,
@@ -1224,6 +1221,9 @@ static PyObject *
              *       correctly.  (e.g. `uint8 * int8` cannot warn).
              */
             return PyGenericArrType_Type.tp_as_number->nb_@oper@(a,b);
+        default:
+            assert(0);  /* error was checked already, impossible to reach */
+            return NULL;
     }
 
 #if @fperr@
@@ -1246,8 +1246,6 @@ static PyObject *
     @otype@ out2;
     PyObject *obj;
 #endif
-
-
 
     /*
      * here we do the actual calculation with arg1 and arg2
@@ -1384,9 +1382,6 @@ static PyObject *
         BINOP_GIVE_UP_IF_NEEDED(a, b, nb_power, @name@_power);
     }
     switch (res) {
-        case CONVERSION_ERROR:
-            assert(0);  /* checked above */
-            return NULL;
         case DEFER_TO_OTHER_KNOWN_SCALAR:
             Py_RETURN_NOTIMPLEMENTED;
         case CONVERSION_SUCCESS:
@@ -1397,6 +1392,9 @@ static PyObject *
 #endif
         case PROMOTION_REQUIRED:
             return PyGenericArrType_Type.tp_as_number->nb_power(a, b, modulo);
+        default:
+            assert(0);  /* error was checked already, impossible to reach */
+            return NULL;
     }
 
 #if !@isint@
@@ -1757,9 +1755,6 @@ static PyObject*
         RICHCMP_GIVE_UP_IF_NEEDED(self, other);
     }
     switch (res) {
-        case CONVERSION_ERROR:
-            assert(0);  /* checked above */
-            return NULL;
         case DEFER_TO_OTHER_KNOWN_SCALAR:
             Py_RETURN_NOTIMPLEMENTED;
         case CONVERSION_SUCCESS:
@@ -1770,6 +1765,9 @@ static PyObject*
 #endif
         case PROMOTION_REQUIRED:
             return PyGenericArrType_Type.tp_richcompare(self, other, cmp_op);
+        default:
+            assert(0);  /* error was checked already, impossible to reach */
+            return NULL;
     }
 
     arg1 = PyArrayScalar_VAL(self, @Name@);
