@@ -1,17 +1,3 @@
-.. currentmodule:: numpy
-
-==========================
-NumPy 1.22.4 Release Notes
-==========================
-
-NumPy 1.22.4 is a maintenance release that fixes bugs discovered after the
-1.22.3 release. In addition, the wheels for this release are built using the
-recently released Cython 0.29.30, which should fix the reported problems with
-`debugging <https://github.com/numpy/numpy/issues/21008>`_.
-
-The Python versions supported for this release are 3.8-3.10. Note that the Mac
-wheels are now based on OS X 10.14 rather than 10.6 that was used in previous
-NumPy release cycles. 10.14 is the oldest release supported by Apple.
 
 Contributors
 ============
@@ -57,4 +43,3 @@ A total of 20 pull requests were merged for this release.
 * `#21512 <https://github.com/numpy/numpy/pull/21512>`__: DOC: Proposal - make the doc landing page cards more similar...
 * `#21525 <https://github.com/numpy/numpy/pull/21525>`__: MAINT: Update Cython version to 0.29.30.
 * `#21536 <https://github.com/numpy/numpy/pull/21536>`__: BUG: Fix GCC error during build configuration
-
