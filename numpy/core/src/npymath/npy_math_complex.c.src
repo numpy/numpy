@@ -325,7 +325,7 @@ npy_clog@c@(@ctype@ z)
         if (0.71 <= h && h <= 1.73) {
             @type@ am = ax > ay ? ax : ay; /* max(ax, ay) */
             @type@ an = ax > ay ? ay : ax; /* min(ax, ay) */
-            rr = npy_log1p@c@((am-1)*(am+1)+an*an)/2;
+            rr = npy_log1p@c@(am*am + an*an - 1) / 2;
         }
         else {
             rr = npy_log@c@(h);
@@ -396,11 +396,11 @@ npy_csqrt@c@(@ctype@ z)
     /* Algorithm 312, CACM vol 10, Oct 1967. */
     if (a >= 0) {
         t = npy_sqrt@c@((a + npy_hypot@c@(a, b)) * 0.5@c@);
-        result = npy_cpack@c@(t, b / (2 * t));
+        result = npy_cpack@c@(t, b / 2 / t);
     }
     else {
         t = npy_sqrt@c@((-a + npy_hypot@c@(a, b)) * 0.5@c@);
-        result = npy_cpack@c@(npy_fabs@c@(b) / (2 * t), npy_copysign@c@(t, b));
+        result = npy_cpack@c@(npy_fabs@c@(b) / 2 / t, npy_copysign@c@(t, b));
     }
 
     /* Rescale. */
@@ -679,7 +679,7 @@ npy_ccosh@c@(@ctype@ z)
         if (!yfinite) {
             return npy_cpack@c@(x * x, x * (y - y));
         }
-        return npy_cpack@c@((x * x) * npy_cos@c@(y), x * npy_sin@c@(y));
+        return npy_cpack@c@(x * x * npy_cos@c@(y), x * npy_sin@c@(y));
     }
 
     /*
@@ -693,7 +693,7 @@ npy_ccosh@c@(@ctype@ z)
      * Optionally raises the invalid floating-point exception for finite
      * nonzero y.  Choice = don't raise (except for signaling NaNs).
      */
-    return npy_cpack@c@((x * x) * (y - y), (x + x) * (y - y));
+    return npy_cpack@c@(x * x * (y - y), (x + x) * (y - y));
 }
 #undef CCOSH_BIG
 #undef CCOSH_HUGE
@@ -840,7 +840,7 @@ npy_csinh@c@(@ctype@ z)
      * Optionally raises the invalid floating-point exception for finite
      * nonzero y.  Choice = don't raise (except for signaling NaNs).
      */
-    return npy_cpack@c@((x * x) * (y - y), (x + x) * (y - y));
+    return npy_cpack@c@(x * x * (y - y), (x + x) * (y - y));
 }
 #undef CSINH_BIG
 #undef CSINH_HUGE
@@ -953,7 +953,7 @@ npy_ctanh@c@(@ctype@ z)
     s = npy_sinh@c@(x);
     rho = npy_sqrt@c@(1 + s * s);    /* = cosh(x) */
     denom = 1 + beta * s * s;
-    return (npy_cpack@c@((beta * rho * s) / denom, t / denom));
+    return (npy_cpack@c@(beta * rho * s / denom, t / denom));
 }
 #undef TANH_HUGE
 #undef TANHF_HUGE
@@ -1099,13 +1099,13 @@ _do_hard_work@c@(@type@ x, @type@ y, @type@ *rx,
              * fp = x*x/(1+y)/4, fm = x*x/(1-y)/4, and
              * A = 1 (inexactly).
              */
-            *rx = x / npy_sqrt@c@((1 - y) * (1 + y));
+            *rx = x / npy_sqrt@c@(1 - y*y);
         }
         else {        /* if (y > 1) */
             /*
              * A-1 = y-1 (inexactly).
              */
-            *rx = npy_log1p@c@((y - 1) + npy_sqrt@c@((y - 1) * (y + 1)));
+            *rx = npy_log1p@c@(y - 1 + npy_sqrt@c@(y*y - 1));
         }
     }
     else {
@@ -1162,7 +1162,7 @@ _do_hard_work@c@(@type@ x, @type@ y, @type@ *rx,
              * scaling should avoid any underflow problems.
              */
             *sqrt_A2my2 = x * (4 / @TEPS@ / @TEPS@) * y /
-                npy_sqrt@c@((y + 1) * (y - 1));
+                npy_sqrt@c@(y*y - 1);
             *new_y = y * (4 / @TEPS@ / @TEPS@);
         }
         else {        /* if (y < 1) */
@@ -1170,7 +1170,7 @@ _do_hard_work@c@(@type@ x, @type@ y, @type@ *rx,
              * fm = 1-y >= DBL_EPSILON, fp is of order x^2, and
              * A = 1 (inexactly).
              */
-            *sqrt_A2my2 = npy_sqrt@c@((1 - y) * (1 + y));
+            *sqrt_A2my2 = npy_sqrt@c@(1 - y*y);
         }
     }
 }
@@ -1714,10 +1714,10 @@ npy_catanh@c@(@ctype@ z)
         ry = npy_atan2@c@(2, -ay) / 2;
     }
     else if (ay < @TEPS@) {
-        ry = npy_atan2@c@(2 * ay, (1 - ax) * (1 + ax)) / 2;
+        ry = npy_atan2@c@(2 * ay, 1 - ax*ax) / 2;
     }
     else {
-        ry = npy_atan2@c@(2 * ay, (1 - ax) * (1 + ax) - ay * ay) / 2;
+        ry = npy_atan2@c@(2 * ay, 1 - ax*ax - ay*ay) / 2;
     }
 
     return npy_cpack@c@(npy_copysign@c@(rx, x), npy_copysign@c@(ry, y));
