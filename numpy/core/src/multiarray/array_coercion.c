@@ -15,6 +15,7 @@
 #include "common_dtype.h"
 #include "dtypemeta.h"
 
+#include "abstractdtypes.h"
 #include "array_coercion.h"
 #include "ctors.h"
 #include "common.h"
@@ -212,21 +213,24 @@ npy_discover_dtype_from_pytype(PyTypeObject *pytype)
     PyObject *DType;
 
     if (pytype == &PyArray_Type) {
-        Py_INCREF(Py_None);
-        return (PyArray_DTypeMeta *)Py_None;
+        DType = Py_None;
     }
-
-    DType = PyDict_GetItem(_global_pytype_to_type_dict, (PyObject *)pytype);
-    if (DType == NULL) {
-        /* the python type is not known */
-        return NULL;
+    else if (pytype == &PyFloat_Type) {
+        DType = &PyArray_PyFloatAbstractDType;
+    } else if (pytype == &PyLong_Type) {
+        DType = &PyArray_PyIntAbstractDType;
     }
+    else {
+        DType = PyDict_GetItem(_global_pytype_to_type_dict,
+                               (PyObject *)pytype);
 
+        if (DType == NULL) {
+            /* the python type is not known */
+            return NULL;
+        }
+    }
     Py_INCREF(DType);
-    if (DType == Py_None) {
-        return (PyArray_DTypeMeta *)Py_None;
-    }
-    assert(PyObject_TypeCheck(DType, (PyTypeObject *)&PyArrayDTypeMeta_Type));
+    assert(DType == Py_None || PyObject_TypeCheck(DType, (PyTypeObject *)&PyArrayDTypeMeta_Type));
     return (PyArray_DTypeMeta *)DType;
 }
 
