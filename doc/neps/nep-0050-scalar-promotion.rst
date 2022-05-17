@@ -34,7 +34,7 @@ There are two kinds of confusing results:
    NumPy scalars.
 
 2. For a Python ``int``, ``float``, or ``complex`` the value is inspected as
-   before.  But surprisingly *not* when the NumPy object is a 0-D array
+   previously.  But surprisingly *not* when the NumPy object is a 0-D array
    or NumPy scalar::
 
      np.result_type(np.array(1, dtype=np.uint8), 1) == np.int64
@@ -51,7 +51,7 @@ addition, comparisons, and their corresponding functions like ``np.multiply``.
 This NEP proposes to refactor the behaviour around two guiding principles:
 
 1. Values must never influence result type.
-2. NumPy scalars or 0-D arrays should behave consistently with their
+2. NumPy scalars and 0-D arrays should behave consistently with their
    N-D counterparts.
 
 We propose to remove all value-based logic and add special handling for
@@ -83,7 +83,7 @@ and ``uint32``, but makes an exception for ``float64`` (and higher).
 
 The Python scalars are inserted at the very left of each "kind" and the
 Python integer does not distinguish signed and unsigned.
-Note, that when the promoting a Python scalar with a dtype of lower kind
+When the promoting a Python scalar with a dtype of lower kind
 category (boolean, integral, inexact) with a higher one, we  use the
 minimum/default precision: that is ``float64``, ``complex128`` or ``int64``
 (``int32`` is used on some systems, e.g. windows).
@@ -91,13 +91,16 @@ minimum/default precision: that is ``float64``, ``complex128`` or ``int64``
 .. figure:: _static/nep-0050-promotion-no-fonts.svg
     :figclass: align-center
 
-See the next section for examples to compare with this schema.
+See the next section for examples which clarify the proposed behavior.
+Further examples with a comparison to the current behavior can be found
+in the table below.
 
 Examples of new behaviour
 -------------------------
 
 Since the schema and logic are difficult to read with respect to some cases,
-these are examples of the new behaviour::
+these are examples of the new behaviour.  Below, the Python integer has no
+influence on the result type::
 
     np.uint8(1) + 1 == np.uint8(2)
     np.int16(2) + 2 == np.int16(4)
@@ -113,7 +116,7 @@ But this does not happen for ``float`` to ``complex`` promotions, where
 
     np.float32(5) + 5j == np.complex64(5+5j)
 
-The above table omits, ``bool``.  It is set below "integral", so that the
+Note that the schema omits, ``bool``.  It is set below "integral", so that the
 following hold::
 
     np.bool_(True) + 1 == np.int64(2)
@@ -124,11 +127,11 @@ Table comparing new and old behaviour
 -------------------------------------
 
 The following table lists relevant changes and unchanged behaviours.
-Please see the `Old implementation`_ for a detailed explenation of the rules
-that lead to the "Old results", and the following sections for the rules
-explaining the new
-Please see the backwards compatibility section for a discussion of how these
-changes are likely to impact users in practice.
+Please see the `Old implementation`_ for a detailed explanation of the rules
+that lead to the "Old result", and the following sections for the rules
+detailing the new.
+The backwards compatibility section discusses how these changes are likely
+to impact users.
 
 Note the important distinction between a 0-D array like ``array(2)`` and
 arrays that are not 0-D, such as ``array([2])``.
@@ -203,7 +206,7 @@ Motivation and Scope
 ====================
 
 The motivation for changing the behaviour with respect to inspecting the value
-of Python scalars and NumPy scalars/0-D arrays is, again, two-fold:
+of Python scalars and NumPy scalars/0-D arrays is two-fold:
 
 1. The special handling of NumPy scalars/0-D arrays as well as the value
    inspection can be very surprising to users,
@@ -215,16 +218,17 @@ of Python scalars and NumPy scalars/0-D arrays is, again, two-fold:
    and make results more consistent.
 
 We believe that the proposal of "weak" Python scalars will help users by
-providing a clearer mental model for which datatype an operation will
+providing a clear mental model for which datatype an operation will
 result in.
 This model fits well with the preservation of array precisions that NumPy
-currently often has, and also aggressively does for in-place operations::
+currently often follows, and also uses for in-place operations::
 
     arr += value
 
-Preserves precision so long "kind" boundaries are not crossed.
+Preserves precision as long as "kind" boundaries are not crossed (otherwise
+an error is raised).
 
-And while some users will probably miss the value inspecting behavior even for
+While some users will potentially miss the value inspecting behavior even for
 those cases where it seems useful, it quickly leads to surprises.  This may be
 expected::
 
@@ -243,31 +247,37 @@ we believe that the proposal follows the "principle of least surprise".
 Usage and Impact
 ================
 
-There will be no transition period due to the difficulty and noise this is
-expected to create.  In rare cases users may need to adjust code to avoid
-reduced precision or incorrect results.
+This NEP is expected to be implemented with **no** transition period that warns
+for all changes.  Such a transition period would create many (often harmless)
+warnings which would be difficult to silence.
+We expect that most users will benefit long term from the clearer promotion
+rules and that few are directly (negatively) impacted by the change.
+However, certain usage patterns may lead to problematic changes, these are
+detailed in the backwards compatibility section.
 
-We plan to provide an *optional* warning mode capable of notifying users of
-potential changes in behavior in most relevant cases.
+The solution to this will be an *optional* warning mode capable of notifying
+users of potential changes in behavior.
+This mode is expected to generate many harmless warnings, but provide a way
+to systematically vet code and track down changes if problems are observed.
 
 
 Impact on ``can_cast``
 ----------------------
 
-Can cast will never inspect the value anymore.  So that the following results
+`can_cast` will never inspect the value anymore.  So that the following results
 are expected to change from ``True`` to ``False``::
 
-  np.can_cast(100, np.uint8)
   np.can_cast(np.int64(100), np.uint8)
   np.can_cast(np.array(100, dtype=np.int64), np.uint8)
+  np.can_cast(100, np.uint8)
 
 We expect that the impact of this change will be small compared to that of
 the following changes.
 
 .. note::
 
-    The first example where the input is a Python scalar could be preserved
-    to some degree, but this is not currently planned.
+    The last example where the input is a Python scalar _may_ be preserved
+    since ``100`` can be represented by a ``uint8``.
 
 
 Impact on operators and functions involving NumPy arrays or scalars
@@ -282,7 +292,7 @@ This removes currently surprising cases.  For example::
   # and:
   np.add(np.arange(10, dtype=np.uint8), np.int64(1))
 
-Will return an int64 array in the future because the type of
+Will return an ``int64`` array in the future because the type of
 ``np.int64(1)`` is strictly honoured.
 Currently a ``uint8`` array is returned.
 
@@ -298,22 +308,22 @@ literal Python scalars are involved::
   np.arange(10, dtype=np.int8) + 1  # returns an int8 array
   np.array([1., 2.], dtype=np.float32) * 3.5  # returns a float32 array
 
-But led to complexity when it came to "unrepresentable" values::
+But led to surprises when it came to "unrepresentable" values::
 
   np.arange(10, dtype=np.int8) + 256  # returns int16
   np.array([1., 2.], dtype=np.float32) * 1e200  # returns float64
 
 The proposal is to preserve this behaviour for the most part.  This is achieved
 by considering Python ``int``, ``float``, and ``complex`` to be "weakly" typed
-in these operations.
-However, to mitigate user surprises, we plan to make conversion to the new type
-more strict:  This means that the results will be unchanged in the first
-two examples.  For the second one, the results will be the following::
+in operations.
+However, to avoid user surprises, we plan to make conversion to the new type
+more strict:  The results will be unchanged in the first two examples,
+but in the second one, it will change the following way::
 
   np.arange(10, dtype=np.int8) + 256  # raises a TypeError
   np.array([1., 2.], dtype=np.float32) * 1e200  # warning and returns infinity
 
-The second one will warn because ``np.float32(1e200)`` overflows to infinity.
+The second one warns because ``np.float32(1e200)`` overflows to infinity.
 It will then do the calculation with ``inf`` as normally.
 
 
@@ -335,9 +345,9 @@ or more precise ones should not be affected.
 However, the proposed changes will modify results in quite a few cases where
 0-D or scalar values (with non-default dtypes) are mixed.
 In many cases, these will be bug-fixes, however, there are certain changes
-which may be particularly interesting.
+which may be problematic to the end-user.
 
-The most important failure is probably the following example::
+The most important possible failure is probably the following example::
 
   arr = np.arange(100, dtype=np.uint8)  # storage array with low precision
   value = arr[10]
@@ -345,15 +355,16 @@ The most important failure is probably the following example::
   # calculation continues with "value" without considering where it came from
   value * 100
 
-Where previously the ``value * 100`` would cause an up-cast to int32/int64
-(because value is a scalar).  The new behaviour will preserve the lower
-precision unless explicitly dealt with (just as if ``value`` was an array).
+Where previously the ``value * 100`` would cause an up-cast to
+``int32``/``int64`` (because value is a scalar).
+The new behaviour will preserve the lower precision unless explicitly
+dealt with (just as if ``value`` was an array).
 This can lead to integer overflows and thus incorrect results beyond precision.
 In many cases this may be silent, although NumPy usually gives warnings for the
 scalar operators.
 
-Similarliy, if the storage array is float32 a calculation may retain the lower
-float32 precision rather than use the default float64.
+Similarly, if the storage array is ``float32`` a calculation may retain the
+lower ``float32`` precision rather than use the default ``float64``.
 
 Further issues can occur.  For example:
 
@@ -382,7 +393,7 @@ In other cases, increased precision may occur.  For example::
   np.multiple(float32_arr, 2.)
   float32_arr * np.float64(2.)
 
-Will both return a float64 rather than float32.  This improves precision but
+Will both return a float64 rather than ``float32``.  This improves precision but
 slightly changes results and uses double the memory.
 
 
