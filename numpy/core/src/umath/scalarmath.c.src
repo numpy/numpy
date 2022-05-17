@@ -1711,6 +1711,12 @@ static PyObject *
 }
 /**end repeat**/
 
+#if __GNUC__ < 10
+    /* At least GCC 9.2 issues spurious warnings for arg2 below. */
+    #pragma GCC diagnostic push  /* matching pop after function and repeat */
+    #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#endif
+
 /**begin repeat
  * #oper = le, ge, lt, gt, eq, ne#
  * #op = <=, >=, <, >, ==, !=#
@@ -1804,6 +1810,11 @@ static PyObject*
 
 #undef IS_@name@
 /**end repeat**/
+
+#if __GNUC__ < 10
+    #pragma GCC diagnostic pop
+#endif
+
 
 /**begin repeat
  *  #name = byte, ubyte, short, ushort, int, uint,
