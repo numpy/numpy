@@ -468,10 +468,6 @@ array_dealloc(PyArrayObject *self)
             free(fa->data);
         }
         else {
-            /*
-             * In theory `PyArray_NBYTES_ALLOCATED`, but differs somewhere?
-             * So instead just use the knowledge that 0 is impossible.
-             */
             size_t nbytes = PyArray_NBYTES(self);
             if (nbytes == 0) {
                 nbytes = 1;

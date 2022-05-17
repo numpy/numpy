@@ -430,7 +430,6 @@ class TestRegression:
     def test_lexsort_zerolen_custom_strides(self):
         # Ticket #14228
         xs = np.array([], dtype='i8')
-        assert xs.strides == (8,)
         assert np.lexsort((xs,)).shape[0] == 0 # Works
 
         xs.strides = (16,)

@@ -758,19 +758,17 @@ PyArray_NewFromDescr_int(
 
         /*
          * Copy dimensions, check them, and find total array size `nbytes`
-         *
-         * Note that we ignore 0-length dimensions, to match this in the `free`
-         * calls, `PyArray_NBYTES_ALLOCATED` is a private helper matching this
-         * behaviour, but without overflow checking.
          */
+        int is_zero = 0;
         for (int i = 0; i < nd; i++) {
             fa->dimensions[i] = dims[i];
 
             if (fa->dimensions[i] == 0) {
                 /*
-                 * Compare to PyArray_OverflowMultiplyList that
-                 * returns 0 in this case. See also `PyArray_NBYTES_ALLOCATED`.
+                 * Continue calculating the max size "as if" this were 1
+                 * to get the proper overflow error
                  */
+                is_zero = 1;
                 continue;
             }
 
@@ -790,6 +788,9 @@ PyArray_NewFromDescr_int(
                         "is larger than the maximum possible size.");
                 goto fail;
             }
+        }
+        if (is_zero) {
+            nbytes = 0;
         }
 
         /* Fill the strides (or copy them if they were passed in) */
@@ -825,11 +826,13 @@ PyArray_NewFromDescr_int(
          * Allocate something even for zero-space arrays
          * e.g. shape=(0,) -- otherwise buffer exposure
          * (a.data) doesn't work as it should.
-         * Could probably just allocate a few bytes here. -- Chuck
-         * Note: always sync this with calls to PyDataMem_UserFREE
          */
         if (nbytes == 0) {
-            nbytes = descr->elsize ? descr->elsize : 1;
+            nbytes = 1;
+            /* Make sure all the strides are 0 */
+            for (int i = 0; i < nd; i++) {
+                fa->strides[i] = 0;
+            }
         }
         /*
          * It is bad to have uninitialized OBJECT pointers
@@ -3936,20 +3939,13 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, npy_intp count)
     if (ret == NULL) {
         goto done;
     }
-#ifdef NPY_RELAXED_STRIDES_DEBUG
-    /* Incompatible with NPY_RELAXED_STRIDES_DEBUG due to growing */
-    if (elcount == 1) {
-        PyArray_STRIDES(ret)[0] = elsize;
-    }
-#endif /* NPY_RELAXED_STRIDES_DEBUG */
-
 
     char *item = PyArray_BYTES(ret);
     for (i = 0; i < count || count == -1; i++, item += elsize) {
         PyObject *value = PyIter_Next(iter);
         if (value == NULL) {
             if (PyErr_Occurred()) {
-                /* Fetching next item failed rather than exhausting iterator */
+                /* Fetching next item failed perhaps due to exhausting iterator */
                 goto done;
             }
             break;
@@ -3995,7 +3991,6 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, npy_intp count)
         Py_DECREF(value);
     }
 
-
     if (i < count) {
         PyErr_Format(PyExc_ValueError,
                 "iterator too short: Expected %zd but iterator had only %zd "
@@ -4022,6 +4017,21 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, npy_intp count)
             goto done;
         }
         ((PyArrayObject_fields *)ret)->data = new_data;
+
+        if (count < 0 || NPY_RELAXED_STRIDES_DEBUG) {
+            /*
+             * If the count was smaller than zero or NPY_RELAXED_STRIDES_DEBUG
+             * was active, the strides may be all 0 or intentionally mangled
+             * (even in the later dimensions for `count < 0`!
+             * Thus, fix all strides here again for C-contiguity.
+             */
+            int oflags;
+            _array_fill_strides(
+                    PyArray_STRIDES(ret), PyArray_DIMS(ret), PyArray_NDIM(ret),
+                    PyArray_ITEMSIZE(ret), NPY_ARRAY_C_CONTIGUOUS, &oflags);
+            PyArray_STRIDES(ret)[0] = elsize;
+            assert(oflags & NPY_ARRAY_C_CONTIGUOUS);
+        }
     }
     PyArray_DIMS(ret)[0] = i;
 

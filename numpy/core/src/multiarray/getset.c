@@ -384,7 +384,10 @@ array_data_set(PyArrayObject *self, PyObject *op, void *NPY_UNUSED(ignored))
     }
     if (PyArray_FLAGS(self) & NPY_ARRAY_OWNDATA) {
         PyArray_XDECREF(self);
-        size_t nbytes = PyArray_NBYTES_ALLOCATED(self);
+        size_t nbytes = PyArray_NBYTES(self);
+        if (nbytes == 0) {
+            nbytes = 1;
+        }
         PyObject *handler = PyArray_HANDLER(self);
         if (handler == NULL) {
             /* This can happen if someone arbitrarily sets NPY_ARRAY_OWNDATA */
@@ -513,6 +516,7 @@ array_descr_set(PyArrayObject *self, PyObject *arg, void *NPY_UNUSED(ignored))
         /* resize on last axis only */
         int axis = PyArray_NDIM(self) - 1;
         if (PyArray_DIMS(self)[axis] != 1 &&
+                PyArray_SIZE(self) != 0 &&
                 PyArray_STRIDES(self)[axis] != PyArray_DESCR(self)->elsize) {
             PyErr_SetString(PyExc_ValueError,
                     "To change to a dtype of a different size, the last axis "

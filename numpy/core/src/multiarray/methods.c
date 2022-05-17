@@ -2023,7 +2023,10 @@ array_setstate(PyArrayObject *self, PyObject *args)
      * since fa could be a 0-d or scalar, and then
      * PyDataMem_UserFREE will be confused
      */
-    size_t n_tofree = PyArray_NBYTES_ALLOCATED(self);
+    size_t n_tofree = PyArray_NBYTES(self);
+    if (n_tofree == 0) {
+        n_tofree = 1;
+    }
     Py_XDECREF(PyArray_DESCR(self));
     fa->descr = typecode;
     Py_INCREF(typecode);
@@ -2160,7 +2163,10 @@ array_setstate(PyArrayObject *self, PyObject *args)
         /* Bytes should always be considered immutable, but we just grab the
          * pointer if they are large, to save memory. */
         if (!IsAligned(self) || swap || (len <= 1000)) {
-            npy_intp num = PyArray_NBYTES_ALLOCATED(self);
+            npy_intp num = PyArray_NBYTES(self);
+            if (num == 0) {
+                num = 1;
+            }
             /* Store the handler in case the default is modified */
             Py_XDECREF(fa->mem_handler);
             fa->mem_handler = PyDataMem_GetHandler();
@@ -2223,7 +2229,10 @@ array_setstate(PyArrayObject *self, PyObject *args)
         }
     }
     else {
-        npy_intp num = PyArray_NBYTES_ALLOCATED(self);
+        npy_intp num = PyArray_NBYTES(self);
+        if (num == 0) {
+            num = 1;
+        }
 
         /* Store the functions in case the default handler is modified */
         Py_XDECREF(fa->mem_handler);
