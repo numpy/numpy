@@ -67,7 +67,7 @@ def process_pyx(fromfile, tofile):
         # Python versions.
         # Note: keep in sync with that in pyproject.toml
         # Update for Python 3.10
-        required_version = LooseVersion('0.29.24')
+        required_version = LooseVersion('0.29.30')
 
         if LooseVersion(cython_version) < required_version:
             cython_path = Cython.__file__
