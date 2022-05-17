@@ -345,7 +345,7 @@ def hstack(tup):
         return _nx.concatenate(arrs, 1)
 
 
-def _stack_dispatcher(arrays, axis=None, out=None):
+def _stack_dispatcher(arrays, axis=None, out=None, casting=None):
     arrays = _arrays_for_stack_dispatcher(arrays, stacklevel=6)
     if out is not None:
         # optimize for the typical case where only arrays is provided
@@ -355,7 +355,7 @@ def _stack_dispatcher(arrays, axis=None, out=None):
 
 
 @array_function_dispatch(_stack_dispatcher)
-def stack(arrays, axis=0, out=None):
+def stack(arrays, axis=0, out=None, casting='same_kind'):
     """
     Join a sequence of arrays along a new axis.
 
@@ -377,6 +377,10 @@ def stack(arrays, axis=0, out=None):
         If provided, the destination to place the result. The shape must be
         correct, matching that of what stack would have returned if no
         out argument were specified.
+
+    casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
+        Controls what kind of data casting may occur. Defaults to 'same_kind'.
+
 
     Returns
     -------
@@ -430,7 +434,8 @@ def stack(arrays, axis=0, out=None):
 
     sl = (slice(None),) * axis + (_nx.newaxis,)
     expanded_arrays = [arr[sl] for arr in arrays]
-    return _nx.concatenate(expanded_arrays, axis=axis, out=out)
+    return _nx.concatenate(expanded_arrays, axis=axis, out=out,
+                           casting=casting)
 
 
 # Internal functions to eliminate the overhead of repeated dispatch in one of
@@ -438,7 +443,8 @@ def stack(arrays, axis=0, out=None):
 # Use getattr to protect against __array_function__ being disabled.
 _size = getattr(_from_nx.size, '__wrapped__', _from_nx.size)
 _ndim = getattr(_from_nx.ndim, '__wrapped__', _from_nx.ndim)
-_concatenate = getattr(_from_nx.concatenate, '__wrapped__', _from_nx.concatenate)
+_concatenate = getattr(_from_nx.concatenate,
+                       '__wrapped__', _from_nx.concatenate)
 
 
 def _block_format_index(index):
@@ -539,7 +545,7 @@ def _concatenate_shapes(shapes, axis):
     """Given array shapes, return the resulting shape and slices prefixes.
 
     These help in nested concatenation.
-    
+
     Returns
     -------
     shape: tuple of int
