@@ -250,26 +250,6 @@ class NpzFile(Mapping):
         else:
             raise KeyError("%s is not a file in the archive" % key)
 
-    # deprecate the python 2 dict apis that we supported by accident in
-    # python 3. We forgot to implement itervalues() at all in earlier
-    # versions of numpy, so no need to deprecated it here.
-
-    def iteritems(self):
-        # Numpy 1.15, 2018-02-20
-        warnings.warn(
-            "NpzFile.iteritems is deprecated in python 3, to match the "
-            "removal of dict.itertems. Use .items() instead.",
-            DeprecationWarning, stacklevel=2)
-        return self.items()
-
-    def iterkeys(self):
-        # Numpy 1.15, 2018-02-20
-        warnings.warn(
-            "NpzFile.iterkeys is deprecated in python 3, to match the "
-            "removal of dict.iterkeys. Use .keys() instead.",
-            DeprecationWarning, stacklevel=2)
-        return self.keys()
-
 
 @set_module('numpy')
 def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,

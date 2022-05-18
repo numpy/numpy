@@ -1318,6 +1318,7 @@ add_newdoc('numpy.core.multiarray', 'fromstring',
             text, the binary mode of `fromstring` will first encode it into
             bytes using either utf-8 (python 3) or the default encoding
             (python 2), neither of which produce sane results.
+
     ${ARRAY_FUNCTION_LIKE}
 
         .. versionadded:: 1.20.0
