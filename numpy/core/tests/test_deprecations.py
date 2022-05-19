@@ -185,14 +185,6 @@ class TestComparisonDeprecations(_DeprecationTestCase):
         self.assert_deprecated(lambda: np.arange(2) == NotArray())
         self.assert_deprecated(lambda: np.arange(2) != NotArray())
 
-        struct1 = np.zeros(2, dtype="i4,i4")
-        struct2 = np.zeros(2, dtype="i4,i4,i4")
-
-        assert_warns(FutureWarning, lambda: struct1 == 1)
-        assert_warns(FutureWarning, lambda: struct1 == struct2)
-        assert_warns(FutureWarning, lambda: struct1 != 1)
-        assert_warns(FutureWarning, lambda: struct1 != struct2)
-
     def test_array_richcompare_legacy_weirdness(self):
         # It doesn't really work to use assert_deprecated here, b/c part of
         # the point of assert_deprecated is to check that when warnings are

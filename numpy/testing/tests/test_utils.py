@@ -151,14 +151,13 @@ class TestArrayEqual(_GenericTest):
 
         self._test_equal(a, b)
 
-        c = np.empty(2, [('floupipi', float), ('floupa', float)])
+        c = np.empty(2, [('floupipi', float),
+                         ('floupi', float), ('floupa', float)])
         c['floupipi'] = a['floupi'].copy()
         c['floupa'] = a['floupa'].copy()
 
-        with suppress_warnings() as sup:
-            l = sup.record(FutureWarning, message="elementwise == ")
+        with pytest.raises(TypeError):
             self._test_not_equal(c, b)
-            assert_equal(len(l), 1)
 
     def test_masked_nan_inf(self):
         # Regression test for gh-11121

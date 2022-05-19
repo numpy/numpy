@@ -1826,7 +1826,8 @@ add_newdoc('numpy.core.multiarray', 'promote_types',
 
     Returns the data type with the smallest size and smallest scalar
     kind to which both ``type1`` and ``type2`` may be safely cast.
-    The returned data type is always in native byte order.
+    The returned data type is always considered "canonical", this mainly
+    means that the promoted dtype will always be in native byte order.
 
     This function is symmetric, but rarely associative.
 
@@ -1844,6 +1845,8 @@ add_newdoc('numpy.core.multiarray', 'promote_types',
 
     Notes
     -----
+    Please see `numpy.result_type` for additional information about promotion.
+
     .. versionadded:: 1.6.0
 
     Starting in NumPy 1.9, promote_types function now returns a valid string
@@ -1851,6 +1854,12 @@ add_newdoc('numpy.core.multiarray', 'promote_types',
     dtype as another argument. Previously it always returned the input string
     dtype, even if it wasn't long enough to store the max integer/float value
     converted to a string.
+
+    .. versionchanged:: 1.23.0
+
+    NumPy now supports promotion for more structured dtypes.  It will now
+    remove unnecessary padding from a structure dtype and promote included
+    fields individually.
 
     See Also
     --------
