@@ -91,6 +91,11 @@ For maintainers
   explain why. If it's not, then it's a good idea to first explain why you
   think the PR is not suitable for inclusion in NumPy and then let a second
   committer comment or close.
+- If the PR submitter doesn't respond to your comments for 6 months, move the PR 
+  in question to the inactive category with the “inactive” tag attached. At this point,
+  by a quorum of at least 2 maintainers, the PR can be closed or finalized by another 
+  contributor or maintainer if the proposed changes are deemed to be valuable.
+
 
 GitHub Workflow
 ---------------
