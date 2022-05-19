@@ -454,7 +454,7 @@ void_common_instance(PyArray_Descr *descr1, PyArray_Descr *descr2)
             return NULL;
         }
         /*
-         * If it is the same dtype and the contained did not change, we might
+         * If it is the same dtype and the container did not change, we might
          * as well preserve identity and metadata.  This could probably be
          * changed.
          */

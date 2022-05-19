@@ -1246,7 +1246,7 @@ class TestStructured:
             x == y
 
     def test_structured_comparisons_with_promotion(self):
-        # Check that structured arrays can be compared so long that their
+        # Check that structured arrays can be compared so long as their
         # dtypes promote fine:
         a = np.array([(5, 42), (10, 1)], dtype=[('a', '>i8'), ('b', '<f8')])
         b = np.array([(5, 43), (10, 1)], dtype=[('a', '<i8'), ('b', '>f8')])

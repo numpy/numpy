@@ -1993,7 +1993,7 @@ def test_iter_buffered_cast_structured_type_failure_with_cleanup():
         # This test was initially designed to test an error at a different
         # place, but will now raise earlier to to the cast not being possible:
         # `assert np.can_cast(a.dtype, sdt2, casting="unsafe")` fails.
-        # Without a faulty DType, there is probably probably no reliable
+        # Without a faulty DType, there is probably no reliable
         # way to get the initial tested behaviour.
         simple_arr = np.array([1, 2], dtype="i,i")  # requires clean up
         with pytest.raises(TypeError):
