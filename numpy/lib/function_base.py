@@ -3562,14 +3562,16 @@ def sinc(x):
     r"""
     Return the normalized sinc function.
 
-    The sinc function is :math:`\sin(\pi x)/(\pi x)`.
+    The sinc function is equal to :math:`\sin(\pi x)/(\pi x)` for any argument
+    :math:`x\ne 0`. ``sinc(0)`` takes the limit value 1, making ``sinc`` not
+    only everywhere continuous but also analytic.
 
     .. note::
 
         Note the normalization factor of ``pi`` used in the definition.
         This is the most commonly used definition in signal processing.
         Use ``sinc(x / np.pi)`` to obtain the unnormalized sinc function
-        :math:`\sin(x)/(x)` that is more common in mathematics.
+        :math:`\sin(x)/x` that is more common in mathematics.
 
     Parameters
     ----------
@@ -3584,8 +3586,6 @@ def sinc(x):
 
     Notes
     -----
-    ``sinc(0)`` is the limit value 1.
-
     The name sinc is short for "sine cardinal" or "sinus cardinalis".
 
     The sinc function is used in various signal processing applications,
