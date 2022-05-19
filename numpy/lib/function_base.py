@@ -3564,7 +3564,7 @@ def sinc(x):
 
     The sinc function is equal to :math:`\sin(\pi x)/(\pi x)` for any argument
     :math:`x\ne 0`. ``sinc(0)`` takes the limit value 1, making ``sinc`` not
-    only everywhere continuous but also analytic.
+    only everywhere continuous but also infinitely differentiable.
 
     .. note::
 
