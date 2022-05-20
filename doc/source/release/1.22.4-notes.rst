@@ -35,7 +35,7 @@ names contributed a patch for the first time.
 Pull requests merged
 ====================
 
-A total of 20 pull requests were merged for this release.
+A total of 22 pull requests were merged for this release.
 
 * `#21191 <https://github.com/numpy/numpy/pull/21191>`__: TYP, BUG: Fix ``np.lib.stride_tricks`` re-exported under the...
 * `#21192 <https://github.com/numpy/numpy/pull/21192>`__: TST: Bump mypy from 0.931 to 0.940
@@ -57,4 +57,6 @@ A total of 20 pull requests were merged for this release.
 * `#21512 <https://github.com/numpy/numpy/pull/21512>`__: DOC: Proposal - make the doc landing page cards more similar...
 * `#21525 <https://github.com/numpy/numpy/pull/21525>`__: MAINT: Update Cython version to 0.29.30.
 * `#21536 <https://github.com/numpy/numpy/pull/21536>`__: BUG: Fix GCC error during build configuration
+* `#21541 <https://github.com/numpy/numpy/pull/21541>`__: REL: Prepare for the NumPy 1.22.4 release.
+* `#21547 <https://github.com/numpy/numpy/pull/21547>`__: MAINT: Skip tests that fail on PyPy.
 
