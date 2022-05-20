@@ -203,6 +203,7 @@ class TestSavezLoad(RoundtripTest):
                 self.arr_reloaded.fid.close()
                 os.remove(self.arr_reloaded.fid.name)
 
+    @pytest.mark.skipif(IS_PYPY, reason="Hangs on PyPy")
     @pytest.mark.skipif(not IS_64BIT, reason="Needs 64bit platform")
     @pytest.mark.slow
     def test_big_arrays(self):
@@ -779,6 +780,8 @@ class TestLoadTxt(LoadTxtBase):
         a = np.array([[1, 2, 3], [4, 5, 6]], int)
         assert_array_equal(x, a)
 
+    @pytest.mark.skipif(IS_PYPY and sys.implementation.version <= (7, 3, 8),
+                        reason="PyPy bug in error formatting")
     def test_comments_multi_chars(self):
         c = TextIO()
         c.write('/* comment\n1,2,3,5\n')
@@ -984,6 +987,8 @@ class TestLoadTxt(LoadTxtBase):
             res = np.loadtxt(c, dtype=dt)
             assert_equal(res, tgt, err_msg="%s" % dt)
 
+    @pytest.mark.skipif(IS_PYPY and sys.implementation.version <= (7, 3, 8),
+                        reason="PyPy bug in error formatting")
     def test_default_float_converter_no_default_hex_conversion(self):
         """
         Ensure that fromhex is only used for values with the correct prefix and
@@ -995,6 +1000,8 @@ class TestLoadTxt(LoadTxtBase):
         ):
             np.loadtxt(c)
 
+    @pytest.mark.skipif(IS_PYPY and sys.implementation.version <= (7, 3, 8),
+                        reason="PyPy bug in error formatting")
     def test_default_float_converter_exception(self):
         """
         Ensure that the exception message raised during failed floating point
