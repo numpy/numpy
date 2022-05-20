@@ -1208,3 +1208,11 @@ class TestArrayFinalizeNone(_DeprecationTestCase):
             __array_finalize__ = None
 
         self.assert_deprecated(lambda: np.array(1).view(NoFinalize))
+
+class TestAxisNotMAXDIMS(_DeprecationTestCase):
+    # Deprecated 2022-01-08, NumPy 1.23
+    message = r"Using `axis=32` \(MAXDIMS\) is deprecated"
+
+    def test_deprecated(self):
+        a = np.zeros((1,)*32)
+        self.assert_deprecated(lambda: np.repeat(a, 1, axis=np.MAXDIMS))
