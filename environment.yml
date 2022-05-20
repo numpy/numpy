@@ -8,7 +8,7 @@ channels:
   - conda-forge
 dependencies:
   - python=3.9 #need to pin to avoid issues with builds
-  - cython
+  - cython=0.29.30
   - compilers
   - openblas
   - nomkl
