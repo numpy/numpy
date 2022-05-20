@@ -20,11 +20,11 @@ NDArray = _GenericAlias(np.ndarray, (Any, DType))
 if sys.version_info >= (3, 9):
     DType_ref = types.GenericAlias(np.dtype, (ScalarType,))
     NDArray_ref = types.GenericAlias(np.ndarray, (Any, DType_ref))
-    FuncType = Callable[[Union[_GenericAlias, types.GenericAlias]], Any]
+    FuncType = Callable[["_GenericAlias | types.GenericAlias"], Any]
 else:
     DType_ref = Any
     NDArray_ref = Any
-    FuncType = Callable[[_GenericAlias], Any]
+    FuncType = Callable[["_GenericAlias"], Any]
 
 GETATTR_NAMES = sorted(set(dir(np.ndarray)) - _GenericAlias._ATTR_EXCEPTIONS)
 
