@@ -1113,6 +1113,10 @@ def configuration(parent_package='',top_path=None):
         svml_objs = glob.glob(svml_path + '/**/*.s', recursive=True)
         svml_objs = [o for o in svml_objs if not o.endswith(svml_filter)]
 
+        # The ordering of names returned by glob is undefined, so we sort
+        # to make builds reproducible.
+        svml_objs.sort()
+
     config.add_extension('_multiarray_umath',
                          # Forcing C language even though we have C++ sources.
                          # It forces the C linker and don't link C++ runtime.
