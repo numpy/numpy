@@ -79,6 +79,7 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
         (depending on whether `endpoint` is True or False).
     step : float, optional
         Only returned if `retstep` is True
+        For date-like inputs, raises NotImplementedError if `retstep` is True
 
         Size of spacing between samples.
 
@@ -126,6 +127,8 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
     stop = asanyarray(stop)
     # handle datetime64/timedelta64 as a special case
     if start.dtype.kind in "mM":
+        if retstep:
+            raise NotImplementedError("'step` output not supported for date-like inputs")
         from numpy.ma import MaskedArray, filled
         if dtype is None:
             dtype = result_type(start, stop)

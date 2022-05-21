@@ -450,9 +450,8 @@ class TestLinspace:
     def test_datetime_div0(self):
         t1 = datetime64("2020-01-01")
         t2 = datetime64("2020-01-02")
-        actual, step = linspace(t1, t2, 1, True, True, "M8[D]")
+        actual = linspace(t1, t2, 1, True, False, "M8[D]")
         expected = array(t1)
-        assert_array_equal(step, array(timedelta64("NaT")))
         assert_array_equal(actual, expected)
 
     def test_datetime_multidimensional(self):
@@ -470,11 +469,10 @@ class TestLinspace:
     def test_datetime_nicely_spaced_step(self):
         t1 = datetime64("2020-01-01T00:00:00")
         t2 = datetime64("2020-01-01T00:00:01")
-        arr, step = linspace(t1, t2, 33, dtype="M8[ms]", retstep=True)
+        arr = linspace(t1, t2, 33, dtype="M8[ms]")
         actual = diff(arr)
         expected = diff(linspace(0, 1000, 33, dtype="int64"))
         assert_array_equal(actual, expected)
-        assert step == timedelta64(31, "ms")
 
     def test_datetime_output_dtype(self):
         t1 = datetime64("2020-01-01T00:00:00")
@@ -482,3 +480,9 @@ class TestLinspace:
         actual = linspace(t1, t2, 10, dtype="M8[m]")
         expected = array([datetime64("2020-01-01T00:00")]*10)
         assert_array_equal(actual, expected)
+
+    def test_datetime_retstep(self):
+        with pytest.raises(NotImplementedError):
+            t1 = timedelta64(0, "s")
+            t2 = timedelta64(3600, "s")
+            linspace(t1, t2, 5, retstep=True)
