@@ -1223,7 +1223,7 @@ class TestStringEqual:
                       lambda: assert_string_equal("aaa", "a+b"))
 
 
-def assert_warn_len_equal(mod, n_in_context, py37=None):
+def assert_warn_len_equal(mod, n_in_context):
     try:
         mod_warns = mod.__warningregistry__
     except AttributeError:
@@ -1244,6 +1244,7 @@ def assert_warn_len_equal(mod, n_in_context, py37=None):
         num_warns -= 1
 
     assert_equal(num_warns, n_in_context)
+
 
 def test_warn_len_equal_call_scenarios():
     # assert_warn_len_equal is called under
@@ -1294,22 +1295,20 @@ def test_clear_and_catch_warnings():
         warnings.warn('Some warning')
     assert_equal(my_mod.__warningregistry__, {})
     # Without specified modules, don't clear warnings during context
-    # Python 3.7 catch_warnings doesn't make an entry for 'ignore'.
     with clear_and_catch_warnings():
         warnings.simplefilter('ignore')
         warnings.warn('Some warning')
-    assert_warn_len_equal(my_mod, 1, py37=0)
+    assert_warn_len_equal(my_mod, 1)
     # Confirm that specifying module keeps old warning, does not add new
     with clear_and_catch_warnings(modules=[my_mod]):
         warnings.simplefilter('ignore')
         warnings.warn('Another warning')
-    assert_warn_len_equal(my_mod, 1, py37=0)
+    assert_warn_len_equal(my_mod, 1)
     # Another warning, no module spec does add to warnings dict, except on
-    # Python 3.7 catch_warnings doesn't make an entry for 'ignore'.
     with clear_and_catch_warnings():
         warnings.simplefilter('ignore')
         warnings.warn('Another warning')
-    assert_warn_len_equal(my_mod, 2, py37=0)
+    assert_warn_len_equal(my_mod, 2)
 
 
 def test_suppress_warnings_module():
@@ -1338,7 +1337,7 @@ def test_suppress_warnings_module():
     # got filtered)
     assert_equal(len(sup.log), 1)
     assert_equal(sup.log[0].message.args[0], "Some warning")
-    assert_warn_len_equal(my_mod, 0, py37=0)
+    assert_warn_len_equal(my_mod, 0)
     sup = suppress_warnings()
     # Will have to be changed if apply_along_axis is moved:
     sup.filter(module=my_mod)
@@ -1352,11 +1351,11 @@ def test_suppress_warnings_module():
     assert_warn_len_equal(my_mod, 0)
 
     # Without specified modules, don't clear warnings during context
-    # Python 3.7 does not add ignored warnings.
     with suppress_warnings():
         warnings.simplefilter('ignore')
         warnings.warn('Some warning')
-    assert_warn_len_equal(my_mod, 1, py37=0)
+    assert_warn_len_equal(my_mod, 1)
+
 
 def test_suppress_warnings_type():
     # Initial state of module, no warnings
@@ -1380,11 +1379,10 @@ def test_suppress_warnings_type():
     assert_warn_len_equal(my_mod, 0)
 
     # Without specified modules, don't clear warnings during context
-    # Python 3.7 does not add ignored warnings.
     with suppress_warnings():
         warnings.simplefilter('ignore')
         warnings.warn('Some warning')
-    assert_warn_len_equal(my_mod, 1, py37=0)
+    assert_warn_len_equal(my_mod, 1)
 
 
 def test_suppress_warnings_decorate_no_record():

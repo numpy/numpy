@@ -7,7 +7,7 @@ were accepted before. For instance, '\(' was previously accepted but must now
 be written as '\\(' or r'\('.
 
 """
-import sys
+
 
 def main(root):
     """Find deprecated escape sequences.
