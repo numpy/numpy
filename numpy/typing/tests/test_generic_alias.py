@@ -17,14 +17,18 @@ T2 = TypeVar("T2")
 DType = _GenericAlias(np.dtype, (ScalarType,))
 NDArray = _GenericAlias(np.ndarray, (Any, DType))
 
+# NOTE: The `npt._GenericAlias` *class* isn't quite stable on python >=3.11.
+# This is not a problem during runtime (as it's 3.8-exclusive), but we still
+# need it for the >=3.9 in order to verify its semantics match
+# `types.GenericAlias` replacement. xref numpy/numpy#21526
 if sys.version_info >= (3, 9):
     DType_ref = types.GenericAlias(np.dtype, (ScalarType,))
     NDArray_ref = types.GenericAlias(np.ndarray, (Any, DType_ref))
-    FuncType = Callable[[Union[_GenericAlias, types.GenericAlias]], Any]
+    FuncType = Callable[["_GenericAlias | types.GenericAlias"], Any]
 else:
     DType_ref = Any
     NDArray_ref = Any
-    FuncType = Callable[[_GenericAlias], Any]
+    FuncType = Callable[["_GenericAlias"], Any]
 
 GETATTR_NAMES = sorted(set(dir(np.ndarray)) - _GenericAlias._ATTR_EXCEPTIONS)
 
