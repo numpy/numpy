@@ -20,7 +20,7 @@ Building NumPy requires the following installed software:
    e.g., on Debian/Ubuntu one needs to install both `python3` and
    `python3-dev`. On Windows and macOS this is normally not an issue.
 
-2) Cython >= 0.29.30
+2) Cython >= 0.29.30 but < 3.0
 
 3) pytest__ (optional) 1.15 or later
 
