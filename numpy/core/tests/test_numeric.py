@@ -932,9 +932,28 @@ class TestTypes:
         # Promote with object:
         assert_equal(promote_types('O', S+'30'), np.dtype('O'))
 
+    @pytest.mark.parametrize(["dtype1", "dtype2"],
+            [[np.dtype("V6"), np.dtype("V10")],  # mismatch shape
+             # Mismatching names:
+             [np.dtype([("name1", "i8")]), np.dtype([("name2", "i8")])],
+            ])
+    def test_invalid_void_promotion(self, dtype1, dtype2):
+        with pytest.raises(TypeError):
+            np.promote_types(dtype1, dtype2)
+
+    @pytest.mark.parametrize(["dtype1", "dtype2"],
+            [[np.dtype("V10"), np.dtype("V10")],
+             [np.dtype([("name1", "i8")]),
+              np.dtype([("name1", np.dtype("i8").newbyteorder())])],
+             [np.dtype("i8,i8"), np.dtype("i8,>i8")],
+             [np.dtype("i8,i8"), np.dtype("i4,i4")],
+            ])
+    def test_valid_void_promotion(self, dtype1, dtype2):
+        assert np.promote_types(dtype1, dtype2) == dtype1
+
     @pytest.mark.parametrize("dtype",
-           list(np.typecodes["All"]) +
-           ["i,i", "S3", "S100", "U3", "U100", rational])
+            list(np.typecodes["All"]) +
+            ["i,i", "10i", "S3", "S100", "U3", "U100", rational])
     def test_promote_identical_types_metadata(self, dtype):
         # The same type passed in twice to promote types always
         # preserves metadata
@@ -951,14 +970,14 @@ class TestTypes:
             return
 
         res = np.promote_types(dtype, dtype)
-        if res.char in "?bhilqpBHILQPefdgFDGOmM" or dtype.type is rational:
-            # Metadata is lost for simple promotions (they create a new dtype)
+
+        # Metadata is (currently) generally lost on byte-swapping (except for
+        # unicode.
+        if dtype.char != "U":
             assert res.metadata is None
         else:
             assert res.metadata == metadata
-        if dtype.kind != "V":
-            # the result is native (except for structured void)
-            assert res.isnative
+        assert res.isnative
 
     @pytest.mark.slow
     @pytest.mark.filterwarnings('ignore:Promotion of numbers:FutureWarning')
@@ -987,8 +1006,10 @@ class TestTypes:
             # Promotion failed, this test only checks metadata
             return
 
-        if res.char in "?bhilqpBHILQPefdgFDGOmM" or res.type is rational:
-            # All simple types lose metadata (due to using promotion table):
+        if res.char not in "USV" or res.names is not None or res.shape != ():
+            # All except string dtypes (and unstructured void) lose metadata
+            # on promotion (unless both dtypes are identical).
+            # At some point structured ones did not, but were restrictive.
             assert res.metadata is None
         elif res == dtype1:
             # If one result is the result, it is usually returned unchanged:
@@ -1008,31 +1029,8 @@ class TestTypes:
         dtype1 = dtype1.newbyteorder()
         assert dtype1.metadata == metadata1
         res_bs = np.promote_types(dtype1, dtype2)
-        if res_bs.names is not None:
-            # Structured promotion doesn't remove byteswap:
-            assert res_bs.newbyteorder() == res
-        else:
-            assert res_bs == res
+        assert res_bs == res
         assert res_bs.metadata == res.metadata
-
-    @pytest.mark.parametrize(["dtype1", "dtype2"],
-            [[np.dtype("V6"), np.dtype("V10")],
-             [np.dtype([("name1", "i8")]), np.dtype([("name2", "i8")])],
-             [np.dtype("i8,i8"), np.dtype("i4,i4")],
-            ])
-    def test_invalid_void_promotion(self, dtype1, dtype2):
-        # Mainly test structured void promotion, which currently allows
-        # byte-swapping, but nothing else:
-        with pytest.raises(TypeError):
-            np.promote_types(dtype1, dtype2)
-
-    @pytest.mark.parametrize(["dtype1", "dtype2"],
-            [[np.dtype("V10"), np.dtype("V10")],
-             [np.dtype([("name1", "<i8")]), np.dtype([("name1", ">i8")])],
-             [np.dtype("i8,i8"), np.dtype("i8,>i8")],
-            ])
-    def test_valid_void_promotion(self, dtype1, dtype2):
-        assert np.promote_types(dtype1, dtype2) is dtype1
 
     def test_can_cast(self):
         assert_(np.can_cast(np.int32, np.int64))
@@ -1202,19 +1200,76 @@ class TestFromiter:
                 raise NIterError('error at index %s' % eindex)
             yield e
 
-    def test_2592(self):
-        # Test iteration exceptions are correctly raised.
-        count, eindex = 10, 5
-        assert_raises(NIterError, np.fromiter,
-                          self.load_data(count, eindex), dtype=int, count=count)
+    @pytest.mark.parametrize("dtype", [int, object])
+    @pytest.mark.parametrize(["count", "error_index"], [(10, 5), (10, 9)])
+    def test_2592(self, count, error_index, dtype):
+        # Test iteration exceptions are correctly raised. The data/generator
+        # has `count` elements but errors at `error_index`
+        iterable = self.load_data(count, error_index)
+        with pytest.raises(NIterError):
+            np.fromiter(iterable, dtype=dtype, count=count)
 
-    def test_2592_edge(self):
-        # Test iter. exceptions, edge case (exception at end of iterator).
-        count = 10
-        eindex = count-1
-        assert_raises(NIterError, np.fromiter,
-                          self.load_data(count, eindex), dtype=int, count=count)
+    @pytest.mark.parametrize("dtype", ["S", "S0", "V0", "U0"])
+    def test_empty_not_structured(self, dtype):
+        # Note, "S0" could be allowed at some point, so long "S" (without
+        # any length) is rejected.
+        with pytest.raises(ValueError, match="Must specify length"):
+            np.fromiter([], dtype=dtype)
 
+    @pytest.mark.parametrize(["dtype", "data"],
+            [("d", [1, 2, 3, 4, 5, 6, 7, 8, 9]),
+             ("O", [1, 2, 3, 4, 5, 6, 7, 8, 9]),
+             ("i,O", [(1, 2), (5, 4), (2, 3), (9, 8), (6, 7)]),
+             # subarray dtypes (important because their dimensions end up
+             # in the result arrays dimension:
+             ("2i", [(1, 2), (5, 4), (2, 3), (9, 8), (6, 7)]),
+             (np.dtype(("O", (2, 3))),
+              [((1, 2, 3), (3, 4, 5)), ((3, 2, 1), (5, 4, 3))])])
+    @pytest.mark.parametrize("length_hint", [0, 1])
+    def test_growth_and_complicated_dtypes(self, dtype, data, length_hint):
+        dtype = np.dtype(dtype)
+
+        data = data * 100  # make sure we realloc a bit
+
+        class MyIter:
+            # Class/example from gh-15789
+            def __length_hint__(self):
+                # only required to be an estimate, this is legal
+                return length_hint  # 0 or 1
+
+            def __iter__(self):
+                return iter(data)
+
+        res = np.fromiter(MyIter(), dtype=dtype)
+        expected = np.array(data, dtype=dtype)
+
+        assert_array_equal(res, expected)
+
+    def test_empty_result(self):
+        class MyIter:
+            def __length_hint__(self):
+                return 10
+
+            def __iter__(self):
+                return iter([])  # actual iterator is empty.
+
+        res = np.fromiter(MyIter(), dtype="d")
+        assert res.shape == (0,)
+        assert res.dtype == "d"
+
+    def test_too_few_items(self):
+        msg = "iterator too short: Expected 10 but iterator had only 3 items."
+        with pytest.raises(ValueError, match=msg):
+            np.fromiter([1, 2, 3], count=10, dtype=int)
+
+    def test_failed_itemsetting(self):
+        with pytest.raises(TypeError):
+            np.fromiter([1, None, 3], dtype=int)
+
+        # The following manages to hit somewhat trickier code paths:
+        iterable = ((2, 3, 4) for i in range(5))
+        with pytest.raises(ValueError):
+            np.fromiter(iterable, dtype=np.dtype((int, 2)))
 
 class TestNonzero:
     def test_nonzero_trivial(self):

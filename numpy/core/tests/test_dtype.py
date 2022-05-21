@@ -180,11 +180,11 @@ class TestBuiltin:
                       'formats': ['i4', 'f4'],
                       'offsets': [0, 4]})
         y = np.dtype({'names': ['B', 'A'],
-                      'formats': ['f4', 'i4'],
+                      'formats': ['i4', 'f4'],
                       'offsets': [4, 0]})
         assert_equal(x == y, False)
-        # But it is currently an equivalent cast:
-        assert np.can_cast(x, y, casting="equiv")
+        # This is an safe cast (not equiv) due to the different names:
+        assert np.can_cast(x, y, casting="safe")
 
 
 class TestRecord:
@@ -1064,6 +1064,12 @@ class TestDtypeAttributes:
             pass
         assert_equal(np.dtype(user_def_subcls).name, 'user_def_subcls')
 
+    def test_zero_stride(self):
+        arr = np.ones(1, dtype="i8")
+        arr = np.broadcast_to(arr, 10)
+        assert arr.strides == (0,)
+        with pytest.raises(ValueError):
+            arr.dtype = "i1"
 
 class TestDTypeMakeCanonical:
     def check_canonical(self, dtype, canonical):
@@ -1157,6 +1163,9 @@ class TestDTypeMakeCanonical:
     def test_make_canonical_hypothesis(self, dtype):
         canonical = np.result_type(dtype)
         self.check_canonical(dtype, canonical)
+        # result_type with two arguments should always give identical results:
+        two_arg_result = np.result_type(dtype, dtype)
+        assert np.can_cast(two_arg_result, canonical, casting="no")
 
     @pytest.mark.slow
     @hypothesis.given(
@@ -1171,6 +1180,10 @@ class TestDTypeMakeCanonical:
         assert dtype_with_empty_space.itemsize == dtype.itemsize
         canonicalized = np.result_type(dtype_with_empty_space)
         self.check_canonical(dtype_with_empty_space, canonicalized)
+        # promotion with two arguments should always give identical results:
+        two_arg_result = np.promote_types(
+                dtype_with_empty_space, dtype_with_empty_space)
+        assert np.can_cast(two_arg_result, canonicalized, casting="no")
 
         # Ensure that we also check aligned struct (check the opposite, in
         # case hypothesis grows support for `align`.  Then repeat the test:
@@ -1179,6 +1192,10 @@ class TestDTypeMakeCanonical:
         assert dtype_with_empty_space.itemsize == dtype_aligned.itemsize
         canonicalized = np.result_type(dtype_with_empty_space)
         self.check_canonical(dtype_with_empty_space, canonicalized)
+        # promotion with two arguments should always give identical results:
+        two_arg_result = np.promote_types(
+            dtype_with_empty_space, dtype_with_empty_space)
+        assert np.can_cast(two_arg_result, canonicalized, casting="no")
 
 
 class TestPickling:

@@ -44,6 +44,12 @@ class TestEye:
         assert_equal(eye(3) == 1,
                      eye(3, dtype=bool))
 
+    def test_uint64(self):
+        # Regression test for gh-9982
+        assert_equal(eye(np.uint64(2), dtype=int), array([[1, 0], [0, 1]]))
+        assert_equal(eye(np.uint64(2), M=np.uint64(4), k=np.uint64(1)),
+                     array([[0, 1, 0, 0], [0, 0, 1, 0]]))
+
     def test_diag(self):
         assert_equal(eye(4, k=1),
                      array([[0, 1, 0, 0],
@@ -382,7 +388,7 @@ def test_tril_triu_dtype():
     assert_equal(np.triu(arr).dtype, arr.dtype)
     assert_equal(np.tril(arr).dtype, arr.dtype)
 
-    arr = np.zeros((3,3), dtype='f4,f4')
+    arr = np.zeros((3, 3), dtype='f4,f4')
     assert_equal(np.triu(arr).dtype, arr.dtype)
     assert_equal(np.tril(arr).dtype, arr.dtype)
 

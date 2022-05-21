@@ -8,6 +8,9 @@
 #define NPY_TRACE_DOMAIN 389047
 
 NPY_NO_EXPORT PyObject *
+_get_madvise_hugepage(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args));
+
+NPY_NO_EXPORT PyObject *
 _set_madvise_hugepage(PyObject *NPY_UNUSED(self), PyObject *enabled_obj);
 
 NPY_NO_EXPORT void *

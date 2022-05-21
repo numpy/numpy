@@ -8,7 +8,7 @@ channels:
   - conda-forge
 dependencies:
   - python=3.9 #need to pin to avoid issues with builds
-  - cython
+  - cython=0.29.30
   - compilers
   - openblas
   - nomkl
@@ -19,7 +19,7 @@ dependencies:
   - pytest-xdist
   - hypothesis
   # For type annotations
-  - mypy=0.942
+  - mypy=0.950
   # For building docs
   - sphinx=4.5.0
   - sphinx-panels
@@ -29,6 +29,7 @@ dependencies:
   - pandas
   - matplotlib
   - pydata-sphinx-theme=0.8.1
+  - doxygen
   # NOTE: breathe 4.33.0 collides with sphinx.ext.graphviz
   - breathe!=4.33.0
   # For linting

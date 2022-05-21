@@ -42,7 +42,7 @@ _is_basic_python_type(PyTypeObject *tp)
  * on the type object, rather than on the instance itself.
  *
  * Assumes that the special method is a numpy-specific one, so does not look
- * at builtin types, nor does it look at a base ndarray.
+ * at builtin types. It does check base ndarray and numpy scalar types.
  *
  * In future, could be made more like _Py_LookupSpecial
  */

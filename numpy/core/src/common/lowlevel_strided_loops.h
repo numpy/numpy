@@ -692,6 +692,19 @@ PyArray_EQUIVALENTLY_ITERABLE_OVERLAP_OK(PyArrayObject *arr1, PyArrayObject *arr
         return 1;
     }
 
+    size1 = PyArray_SIZE(arr1);
+    stride1 = PyArray_TRIVIAL_PAIR_ITERATION_STRIDE(size1, arr1);
+
+    /*
+     * arr1 == arr2 is common for in-place operations, so we fast-path it here.
+     * TODO: The stride1 != 0 check rejects broadcast arrays.  This may affect
+     *       self-overlapping arrays, but seems only necessary due to
+     *       `try_trivial_single_output_loop` not rejecting broadcast outputs.
+     */
+    if (arr1 == arr2 && stride1 != 0) {
+        return 1;
+    }
+
     if (solve_may_share_memory(arr1, arr2, 1) == 0) {
         return 1;
     }
@@ -701,10 +714,7 @@ PyArray_EQUIVALENTLY_ITERABLE_OVERLAP_OK(PyArrayObject *arr1, PyArrayObject *arr
      * arrays stride ahead faster than output arrays.
      */
 
-    size1 = PyArray_SIZE(arr1);
     size2 = PyArray_SIZE(arr2);
-
-    stride1 = PyArray_TRIVIAL_PAIR_ITERATION_STRIDE(size1, arr1);
     stride2 = PyArray_TRIVIAL_PAIR_ITERATION_STRIDE(size2, arr2);
 
     /*

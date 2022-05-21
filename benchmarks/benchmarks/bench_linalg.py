@@ -98,6 +98,18 @@ class Linalg(Benchmark):
         self.func(self.a)
 
 
+class LinalgSmallArrays(Benchmark):
+    """ Test overhead of linalg methods for small arrays """
+    def setup(self):
+        self.array_5 = np.arange(5.)
+        self.array_5_5 = np.arange(5.)
+
+    def time_norm_small_array(self):
+        np.linalg.norm(self.array_5)
+
+    def time_det_small_array(self):
+        np.linalg.det(self.array_5_5)
+        
 class Lstsq(Benchmark):
     def setup(self):
         self.a = get_squares_()['float64']

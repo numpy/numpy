@@ -835,7 +835,6 @@ class TestJoinBy:
         b = np.ones(3, dtype=[('c', 'u1'), ('b', 'f4'), ('a', 'i4')])
         assert_raises(ValueError, join_by, ['a', 'b', 'b'], a, b)
 
-    @pytest.mark.xfail(reason="See comment at gh-9343")
     def test_same_name_different_dtypes_key(self):
         a_dtype = np.dtype([('key', 'S5'), ('value', '<f4')])
         b_dtype = np.dtype([('key', 'S10'), ('value', '<f4')])

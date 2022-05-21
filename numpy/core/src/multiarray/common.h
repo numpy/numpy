@@ -43,9 +43,6 @@ NPY_NO_EXPORT int
 PyArray_DTypeFromObject(PyObject *obj, int maxdims,
                         PyArray_Descr **out_dtype);
 
-NPY_NO_EXPORT int
-PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
-                              PyArray_Descr **out_dtype, int string_status);
 
 /*
  * Returns NULL without setting an exception if no scalar is matched, a
@@ -53,12 +50,6 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
  */
 NPY_NO_EXPORT PyArray_Descr *
 _array_find_python_scalar_type(PyObject *op);
-
-NPY_NO_EXPORT PyArray_Descr *
-_array_typedescr_fromstr(char const *str);
-
-NPY_NO_EXPORT char *
-index2ptr(PyArrayObject *mp, npy_intp i);
 
 NPY_NO_EXPORT int
 _zerofill(PyArrayObject *ret);
@@ -299,35 +290,6 @@ npy_memchr(char * haystack, char needle,
     *psubloopsize = subloopsize;
 
     return p;
-}
-
-/*
- * Helper to work around issues with the allocation strategy currently
- * allocating not 1 byte for empty arrays, but enough for an array where
- * all 0 dimensions are replaced with size 1 (if the itemsize is not 0).
- *
- * This means that we can fill in nice (nonzero) strides and still handle
- * slicing direct math without being in danger of leaving the allocated byte
- * bounds.
- * In practice, that probably does not matter, but in principle this would be
- * undefined behaviour in C.  Another solution may be to force the strides
- * to 0 in these cases.  See also gh-15788.
- *
- * Unlike the code in `PyArray_NewFromDescr` does no overflow checks.
- */
-static NPY_INLINE npy_intp
-PyArray_NBYTES_ALLOCATED(PyArrayObject *arr)
-{
-    if (PyArray_ITEMSIZE(arr) == 0) {
-        return 1;
-    }
-    npy_intp nbytes = PyArray_ITEMSIZE(arr);
-    for (int i = 0; i < PyArray_NDIM(arr); i++) {
-        if (PyArray_DIMS(arr)[i] != 0) {
-            nbytes *= PyArray_DIMS(arr)[i];
-        }
-    }
-    return nbytes;
 }
 
 

@@ -37,9 +37,6 @@ def get_msvcr_replacement():
     msvcr = msvc_runtime_library()
     return [] if msvcr is None else [msvcr]
 
-# monkey-patch cygwinccompiler with our updated version from misc_util
-# to avoid getting an exception raised on Python 3.5
-distutils.cygwinccompiler.get_msvcr = get_msvcr_replacement
 
 # Useful to generate table of symbols from a dll
 _START = re.compile(r'\[Ordinal/Name Pointer\] Table')

@@ -1318,6 +1318,7 @@ add_newdoc('numpy.core.multiarray', 'fromstring',
             text, the binary mode of `fromstring` will first encode it into
             bytes using either utf-8 (python 3) or the default encoding
             (python 2), neither of which produce sane results.
+
     ${ARRAY_FUNCTION_LIKE}
 
         .. versionadded:: 1.20.0
@@ -1398,6 +1399,11 @@ add_newdoc('numpy.core.multiarray', 'fromiter',
         An iterable object providing data for the array.
     dtype : data-type
         The data-type of the returned array.
+
+        .. versionchanged:: 1.23
+            Object and subarray dtypes are now supported (note that the final
+            result is not 1-D for a subarray dtype).
+
     count : int, optional
         The number of items to read from *iterable*.  The default is -1,
         which means all data is read.
@@ -1420,6 +1426,18 @@ add_newdoc('numpy.core.multiarray', 'fromiter',
     >>> iterable = (x*x for x in range(5))
     >>> np.fromiter(iterable, float)
     array([  0.,   1.,   4.,   9.,  16.])
+
+    A carefully constructed subarray dtype will lead to higher dimensional
+    results:
+
+    >>> iterable = ((x+1, x+2) for x in range(5))
+    >>> np.fromiter(iterable, dtype=np.dtype((int, 2)))
+    array([[1, 2],
+           [2, 3],
+           [3, 4],
+           [4, 5],
+           [5, 6]])
+
 
     """.replace(
         "${ARRAY_FUNCTION_LIKE}",
@@ -1808,7 +1826,8 @@ add_newdoc('numpy.core.multiarray', 'promote_types',
 
     Returns the data type with the smallest size and smallest scalar
     kind to which both ``type1`` and ``type2`` may be safely cast.
-    The returned data type is always in native byte order.
+    The returned data type is always considered "canonical", this mainly
+    means that the promoted dtype will always be in native byte order.
 
     This function is symmetric, but rarely associative.
 
@@ -1826,6 +1845,8 @@ add_newdoc('numpy.core.multiarray', 'promote_types',
 
     Notes
     -----
+    Please see `numpy.result_type` for additional information about promotion.
+
     .. versionadded:: 1.6.0
 
     Starting in NumPy 1.9, promote_types function now returns a valid string
@@ -1833,6 +1854,12 @@ add_newdoc('numpy.core.multiarray', 'promote_types',
     dtype as another argument. Previously it always returned the input string
     dtype, even if it wasn't long enough to store the max integer/float value
     converted to a string.
+
+    .. versionchanged:: 1.23.0
+
+    NumPy now supports promotion for more structured dtypes.  It will now
+    remove unnecessary padding from a structure dtype and promote included
+    fields individually.
 
     See Also
     --------
@@ -4846,6 +4873,15 @@ add_newdoc('numpy.core.multiarray', 'get_handler_version',
     return the version of the memory handler that will be used to allocate data
     for the next `ndarray` in this context. May return None if `a` does not own
     its memory, in which case you can traverse ``a.base`` for a memory handler.
+    """)
+
+add_newdoc('numpy.core.multiarray', '_get_madvise_hugepage',
+    """
+    _get_madvise_hugepage() -> bool
+
+    Get use of ``madvise (2)`` MADV_HUGEPAGE support when
+    allocating the array data. Returns the currently set value.
+    See `global_state` for more information.
     """)
 
 add_newdoc('numpy.core.multiarray', '_set_madvise_hugepage',
