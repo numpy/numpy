@@ -128,7 +128,7 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
     # handle datetime64/timedelta64 as a special case
     if start.dtype.kind in "mM":
         if retstep:
-            raise NotImplementedError("'step` output not supported for date-like inputs")
+            raise NotImplementedError("step output not supported for date-like inputs")
         from numpy.ma import MaskedArray, filled
         if dtype is None:
             dtype = result_type(start, stop)
