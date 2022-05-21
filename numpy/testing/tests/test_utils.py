@@ -1310,11 +1310,12 @@ def test_clear_and_catch_warnings():
         warnings.simplefilter('ignore')
         warnings.warn('Another warning')
     assert_warn_len_equal(my_mod, 2)
-    # Another warning, no module spec does add to warnings dict
+
+    # Another warning, no module spec it clears up registry
     with clear_and_catch_warnings():
         warnings.simplefilter('ignore')
         warnings.warn('Another warning')
-    assert_warn_len_equal(my_mod, 2)
+    assert_warn_len_equal(my_mod, 0)
 
 
 def test_suppress_warnings_module():
@@ -1356,15 +1357,11 @@ def test_suppress_warnings_module():
         warnings.warn('Some warning')
     assert_warn_len_equal(my_mod, 0)
 
-    # Manually adding two warnings to the registry:
-    my_mod.__warningregistry__ = {'warning1': 1,
-                                  'warning2': 2}
-
-    # Without specified modules, don't clear warnings during context
+    # Without specified modules
     with suppress_warnings():
         warnings.simplefilter('ignore')
         warnings.warn('Some warning')
-    assert_warn_len_equal(my_mod, 2)
+    assert_warn_len_equal(my_mod, 0)
 
 
 def test_suppress_warnings_type():
@@ -1388,15 +1385,11 @@ def test_suppress_warnings_type():
         warnings.warn('Some warning')
     assert_warn_len_equal(my_mod, 0)
 
-    # Manually adding two warnings to the registry:
-    my_mod.__warningregistry__ = {'warning1': 1,
-                                  'warning2': 2}
-
-    # Without specified modules, don't clear warnings during context
+    # Without specified modules
     with suppress_warnings():
         warnings.simplefilter('ignore')
         warnings.warn('Some warning')
-    assert_warn_len_equal(my_mod, 2)
+    assert_warn_len_equal(my_mod, 0)
 
 
 def test_suppress_warnings_decorate_no_record():
