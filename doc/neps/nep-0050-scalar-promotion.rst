@@ -10,10 +10,10 @@ NEP 50 — Promotion rules for Python scalars
 Abstract
 ========
 
-Since NumPy 1.7, promotion rules are defined through the "safe casting"
-concept which relies on inspection of the actual values involved.
-While these choices were well intended, they lead to complexity: both
-in implementation and user experience.
+Since NumPy 1.7, promotion rules use so-called "safe casting"
+which relies on inspection of the values involved.
+This helped identify a number of edge cases for users, but was
+complex to implement and also made behavior hard to predict.
 
 There are two kinds of confusing results:
 
@@ -34,13 +34,13 @@ There are two kinds of confusing results:
    NumPy scalars.
 
 2. For a Python ``int``, ``float``, or ``complex`` the value is inspected as
-   previously.  But surprisingly *not* when the NumPy object is a 0-D array
+   previously shown.  But surprisingly *not* when the NumPy object is a 0-D array
    or NumPy scalar::
 
      np.result_type(np.array(1, dtype=np.uint8), 1) == np.int64
      np.result_type(np.int8(1), 1) == np.int64
 
-   The reason is that the special value-based promotion is disabled when all
+   The reason is that value-based promotion is disabled when all
    objects are scalars or 0-D arrays.
    NumPy thus returns the same type as ``np.array(1)``, which is usually
    an ``int64`` (this depends on the system).
@@ -83,7 +83,7 @@ and ``uint32``, but makes an exception for ``float64`` (and higher).
 
 The Python scalars are inserted at the very left of each "kind" and the
 Python integer does not distinguish signed and unsigned.
-When the promoting a Python scalar with a dtype of lower kind
+When promoting a Python scalar with a dtype of lower kind
 category (boolean, integral, inexact) with a higher one, we  use the
 minimum/default precision: that is ``float64``, ``complex128`` or ``int64``
 (``int32`` is used on some systems, e.g. windows).
@@ -98,9 +98,7 @@ in the table below.
 Examples of new behaviour
 -------------------------
 
-Since the schema and logic are difficult to read with respect to some cases,
-these are examples of the new behaviour.  Below, the Python integer has no
-influence on the result type::
+To make interpretation of above text and figure easier, we provide a few examples of the new behaviour.  Below, the Python integer has no influence on the result type::
 
     np.uint8(1) + 1 == np.uint8(2)
     np.int16(2) + 2 == np.int16(4)
@@ -116,7 +114,7 @@ But this does not happen for ``float`` to ``complex`` promotions, where
 
     np.float32(5) + 5j == np.complex64(5+5j)
 
-Note that the schema omits, ``bool``.  It is set below "integral", so that the
+Note that the schematic omits ``bool``.  It is set below "integral", so that the
 following hold::
 
     np.bool_(True) + 1 == np.int64(2)
@@ -211,7 +209,7 @@ of Python scalars and NumPy scalars/0-D arrays is two-fold:
 1. The special handling of NumPy scalars/0-D arrays as well as the value
    inspection can be very surprising to users,
 2. The value-inspection logic is much harder to explain and implement.
-   It is further harder to make it available to user defined DTypes through
+   It is further harder to make it available to user-defined DTypes through
    :ref:`NEP 42 <NEP42>`.
    Currently, this leads to a dual implementation of a new and an old (value
    sensitive) system.  Fixing this will greatly simplify the internal logic
@@ -228,8 +226,8 @@ currently often follows, and also uses for in-place operations::
 Preserves precision as long as "kind" boundaries are not crossed (otherwise
 an error is raised).
 
-While some users will potentially miss the value inspecting behavior even for
-those cases where it seems useful, it quickly leads to surprises.  This may be
+While some users will potentially miss the value inspecting behavior, even for
+those cases where it seems useful it quickly leads to surprises.  This may be
 expected::
 
     np.array([100], dtype=np.uint8) + 1000 == np.array([1100], dtype=np.uint16)
@@ -300,8 +298,8 @@ Currently a ``uint8`` array is returned.
 Impact on operators involving Python ``int``, ``float``, and ``complex``
 ------------------------------------------------------------------------
 
-This NEP attempts to preserve the convenience that the old behaviour
-gave when working with literal values.
+This NEP attempts to preserve the convenience of the old behaviour
+when working with literal values.
 The current value-based logic had some nice properties when "untyped",
 literal Python scalars are involved::
 
@@ -316,7 +314,7 @@ But led to surprises when it came to "unrepresentable" values::
 The proposal is to preserve this behaviour for the most part.  This is achieved
 by considering Python ``int``, ``float``, and ``complex`` to be "weakly" typed
 in operations.
-However, to avoid user surprises, we plan to make conversion to the new type
+However, to avoid surprises, we plan to make conversion to the new type
 more strict:  The results will be unchanged in the first two examples,
 but in the second one, it will change the following way::
 
@@ -324,7 +322,7 @@ but in the second one, it will change the following way::
   np.array([1., 2.], dtype=np.float32) * 1e200  # warning and returns infinity
 
 The second one warns because ``np.float32(1e200)`` overflows to infinity.
-It will then do the calculation with ``inf`` as normally.
+It will then continue to do the calculation with ``inf`` as usual.
 
 
 .. admonition:: Behaviour in other libraries
