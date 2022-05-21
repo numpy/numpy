@@ -153,7 +153,7 @@ What is released
 
 Wheels
 ------
-We currently support Python 3.6-3.8 on Windows, OSX, and Linux
+We currently support Python 3.8-3.10 on Windows, OSX, and Linux
 
 * Windows: 32-bit and 64-bit wheels built using Appveyor;
 * OSX: x64_86 OSX wheels built using travis-ci;

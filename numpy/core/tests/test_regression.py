@@ -17,12 +17,6 @@ from numpy.testing import (
 from numpy.testing._private.utils import _no_tracing, requires_memory
 from numpy.compat import asbytes, asunicode, pickle
 
-try:
-    RecursionError
-except NameError:
-    RecursionError = RuntimeError  # python < 3.5
-
-
 
 class TestRegression:
     def test_invalid_round(self):

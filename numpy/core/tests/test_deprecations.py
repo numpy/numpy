@@ -613,9 +613,6 @@ class TestNonExactMatchDeprecation(_DeprecationTestCase):
 
 class TestDeprecatedGlobals(_DeprecationTestCase):
     # 2020-06-06
-    @pytest.mark.skipif(
-        sys.version_info < (3, 7),
-        reason='module-level __getattr__ not supported')
     def test_type_aliases(self):
         # from builtins
         self.assert_deprecated(lambda: np.bool(True))

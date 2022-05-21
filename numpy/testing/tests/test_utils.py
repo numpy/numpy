@@ -1243,13 +1243,6 @@ def assert_warn_len_equal(mod, n_in_context, py37=None):
         # do not count it.
         num_warns -= 1
 
-        # Behavior of warnings is Python version dependent. Adjust the
-        # expected result to compensate. In particular, Python 3.7 does
-        # not make an entry for ignored warnings.
-        if sys.version_info[:2] >= (3, 7):
-            if py37 is not None:
-                n_in_context = py37
-
     assert_equal(num_warns, n_in_context)
 
 def test_warn_len_equal_call_scenarios():

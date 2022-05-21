@@ -146,16 +146,14 @@ summary they are:
 
 4.   A dictionary of field names
 
-     The use of this form of specification is discouraged, but documented here
-     because older numpy code may use it. The keys of the dictionary are the
-     field names and the values are tuples specifying type and offset::
+     The keys of the dictionary are the field names and the values are tuples
+     specifying type and offset::
 
       >>> np.dtype({'col1': ('i1', 0), 'col2': ('f4', 1)})
       dtype([('col1', 'i1'), ('col2', '<f4')])
 
-     This form is discouraged because Python dictionaries do not preserve order
-     in Python versions before Python 3.6, and the order of the fields in a
-     structured dtype has meaning. :ref:`Field Titles <titles>` may be
+     This form was discouraged because Python dictionaries did not preserve order
+     in Python versions before Python 3.6. :ref:`Field Titles <titles>` may be
      specified by using a 3-tuple, see below.
 
 Manipulating and Displaying Structured Datatypes
