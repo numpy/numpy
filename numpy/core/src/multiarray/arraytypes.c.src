@@ -91,7 +91,7 @@ MyPyFloat_AsDouble(PyObject *obj)
     if (num == NULL) {
         return NPY_NAN;
     }
-    ret = PyFloat_AsDouble(num);
+    ret = PyFloat_AS_DOUBLE(num);
     Py_DECREF(num);
     return ret;
 }
