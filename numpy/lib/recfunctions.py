@@ -106,7 +106,7 @@ def _get_fieldspec(dtype):
 def get_names(adtype):
     """
     Returns the field names of the input datatype as a tuple. Input datatype
-    has to have fields otherwise error is raised.
+    must have fields otherwise error is raised.
 
     Parameters
     ----------
@@ -138,7 +138,7 @@ def get_names(adtype):
 def get_names_flat(adtype):
     """
     Returns the field names of the input datatype as a tuple. Input datatype
-    has to have fields otherwise error is raised.
+    must have fields otherwise error is raised.
     Nested structure are flattened beforehand.
 
     Parameters
