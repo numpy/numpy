@@ -3,6 +3,24 @@
 ##############################################################################
 Reading and writing files
 ##############################################################################
+.. Setting up files temporarily to be used in the examples below. Clear-up
+   has to be done at the end of the document.
+
+.. testsetup::
+
+   >>> from numpy.testing import temppath
+   >>> with open("csv.txt", "wt") as f:
+   ...    _ = f.write("1, 2, 3\n4,, 6\n7, 8, 9")
+   >>> with open("fixedwidth.txt", "wt") as f:
+   ...    _ = f.write("1   2      3\n44      6\n7   88889")
+   >>> with open("nan.txt", "wt") as f:
+   ...    _ = f.write("1 2 3\n44 x 6\n7 8888 9")
+   >>> with open("skip.txt", "wt") as f:
+   ...    _ = f.write("1 2   3\n44   6\n7 888 9")
+   >>> with open("tabs.txt", "wt") as f:
+   ...    _ = f.write("1\t2\t3\n44\t \t6\n7\t888\t9")
+
+
 
 This page tackles common applications; for the full collection of I/O
 routines, see :ref:`routines.io`.
@@ -326,3 +344,10 @@ In general, prefer :func:`numpy.save` and :func:`numpy.load`.
 endianness and precision and so are unsuitable for anything but scratch
 storage.
 
+
+.. testcleanup::
+   >>> import os
+   >>> # list all files created in testsetup. If needed there are
+   >>> # convenienes in e.g. astroquery to do this more automatically
+   >>> for filename in ['csv.txt', 'fixedwidth.txt', 'nan.txt', 'skip.txt', 'tabs.txt']:
+   ...     os.remove(filename)
