@@ -1168,7 +1168,12 @@ def main(argv):
         init_matplotlib()
 
     for submodule_name in module_names:
-        module_name = BASE_MODULE + '.' + submodule_name
+        prefix = BASE_MODULE + '.'
+        if not submodule_name.startswith(prefix):
+            module_name = prefix + submodule_name
+        else:
+            module_name = submodule_name
+            
         __import__(module_name)
         module = sys.modules[module_name]
 
