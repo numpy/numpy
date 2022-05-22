@@ -1951,7 +1951,6 @@ def pinv(a, rcond=1e-15, hermitian=False):
     See Also
     --------
     scipy.linalg.pinv : Similar function in SciPy.
-    scipy.linalg.pinv2 : Similar function in SciPy (SVD-based).
     scipy.linalg.pinvh : Compute the (Moore-Penrose) pseudo-inverse of a
                          Hermitian matrix.
 
