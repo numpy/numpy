@@ -172,7 +172,11 @@ html_logo = '_static/numpylogo.svg'
 html_favicon = '_static/favicon/favicon.ico'
 
 # Set up the version switcher.  The versions.json is stored in the devdocs.
-if ".dev" in version:
+if os.environ.get('CIRCLE_JOB', False) and \
+        os.environ.get('CIRCLE_BRANCH', '') != 'main':
+    # For PR, name is set to its ref
+    switcher_version = os.environ['CIRCLE_BRANCH']
+elif ".dev" in version:
     switcher_version = "devdocs"
 else:
     switcher_version = f"doc/{version}"
