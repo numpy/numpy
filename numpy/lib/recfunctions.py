@@ -105,7 +105,8 @@ def _get_fieldspec(dtype):
 
 def get_names(adtype):
     """
-    Returns the field names of the input datatype as a tuple.
+    Returns the field names of the input datatype as a tuple. Input datatype
+    has to have fields otherwise error is raised.
 
     Parameters
     ----------
@@ -115,15 +116,10 @@ def get_names(adtype):
     Examples
     --------
     >>> from numpy.lib import recfunctions as rfn
-    >>> rfn.get_names(np.empty((1,), dtype=int))
-    Traceback (most recent call last):
-        ...
-    AttributeError: 'numpy.ndarray' object has no attribute 'names'
-
-    >>> rfn.get_names(np.empty((1,), dtype=[('A',int), ('B', float)]))
-    Traceback (most recent call last):
-        ...
-    AttributeError: 'numpy.ndarray' object has no attribute 'names'
+    >>> rfn.get_names(np.empty((1,), dtype=[('A', int)]).dtype)
+    ('A',)
+    >>> rfn.get_names(np.empty((1,), dtype=[('A',int), ('B', float)]).dtype)
+    ('A', 'B')
     >>> adtype = np.dtype([('a', int), ('b', [('ba', int), ('bb', int)])])
     >>> rfn.get_names(adtype)
     ('a', ('b', ('ba', 'bb')))
@@ -141,8 +137,9 @@ def get_names(adtype):
 
 def get_names_flat(adtype):
     """
-    Returns the field names of the input datatype as a tuple. Nested structure
-    are flattened beforehand.
+    Returns the field names of the input datatype as a tuple. Input datatype
+    has to have fields otherwise error is raised.
+    Nested structure are flattened beforehand.
 
     Parameters
     ----------
@@ -152,14 +149,10 @@ def get_names_flat(adtype):
     Examples
     --------
     >>> from numpy.lib import recfunctions as rfn
-    >>> rfn.get_names_flat(np.empty((1,), dtype=int)) is None
-    Traceback (most recent call last):
-        ...
-    AttributeError: 'numpy.ndarray' object has no attribute 'names'
-    >>> rfn.get_names_flat(np.empty((1,), dtype=[('A',int), ('B', float)]))
-    Traceback (most recent call last):
-        ...
-    AttributeError: 'numpy.ndarray' object has no attribute 'names'
+    >>> rfn.get_names_flat(np.empty((1,), dtype=[('A', int)]).dtype) is None
+    False
+    >>> rfn.get_names_flat(np.empty((1,), dtype=[('A',int), ('B', str)]).dtype)
+    ('A', 'B')
     >>> adtype = np.dtype([('a', int), ('b', [('ba', int), ('bb', int)])])
     >>> rfn.get_names_flat(adtype)
     ('a', 'b', 'ba', 'bb')
