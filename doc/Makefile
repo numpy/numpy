@@ -88,6 +88,7 @@ ifeq "$(GITVER)" "Unknown"
 	# @echo sdist build with unlabeled sources
 else ifeq ("", "$(NUMPYVER)")
 	@echo numpy not found, cannot build documentation without successful \"import numpy\"
+	@echo Try overriding the makefile PYTHON variable with '"make PYTHON=python $(MAKECMDGOALS)"'
 	@exit 1
 else ifneq ($(NUMPYVER),$(GITVER))
 	@echo installed numpy $(NUMPYVER) != current repo git version \'$(GITVER)\'
@@ -263,4 +264,3 @@ info:
 
 show:
 	@python -c "import webbrowser; webbrowser.open_new_tab('file://$(PWD)/build/html/index.html')"
-
