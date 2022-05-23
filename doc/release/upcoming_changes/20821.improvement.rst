@@ -1,5 +1,0 @@
-Add support for VSX4/Power10
-----------------------------------------------
-With VSX4/Power10 enablement, the new instructions available in 
-Power ISA 3.1 can be used to accelerate some NumPy operations, 
-e.g., floor_divide, modulo, etc.
