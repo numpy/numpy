@@ -1,5 +1,0 @@
-``np.fromiter`` now accepts objects and subarrays
--------------------------------------------------
-The `~numpy.fromiter` function now supports object and
-subarray dtypes. Please see he function documentation for
-examples.

@@ -1,4 +1,0 @@
-``alen`` and ``asscalar`` removed
----------------------------------
-
-The deprecated ``np.alen`` and ``np.asscalar`` functions were removed.

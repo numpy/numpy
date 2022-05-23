@@ -66,4 +66,5 @@
 
 # Version 16 (NumPy 1.23)
 # NonNull attributes removed from numpy_api.py
+# Version 16 (NumPy 1.24) No change.
 0x00000010 = 04a7bf1e65350926a0e528798da263c0
