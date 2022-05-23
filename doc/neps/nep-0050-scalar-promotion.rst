@@ -81,13 +81,22 @@ Promotion always occurs along the green lines:
 from left to right within their kind and to a higher kind only when
 necessary.
 The result kind is always the largest kind of the inputs.
-Note that NumPy considers ``float32`` to have a lower precision than ``int32``
-and ``uint32``, but makes an exception for ``float64`` (and higher).
+Note that ``float32`` has a lower precision than ``int32`` or ``uint32`` and
+is thus sorted slightly to the left in the schematic.  This is because
+``float32`` cannot represent all ``int32`` values exactly.
+However, for practical reasons, NumPy allows promoting ``int64`` to ``float64``
+effectively considering them to have the same precision.
 
 The Python scalars are inserted at the very left of each "kind" and the
-Python integer does not distinguish signed and unsigned.
+Python integer does not distinguish signed and unsigned.  NumPy promotion
+thus uses the following, ordered, kind categories:
+
+* `boolean`
+* `integral`: signed or unsigned integers
+* `inexact`: floating point numbers and complex floating point numbers
+
 When promoting a Python scalar with a dtype of lower kind
-category (boolean, integral, inexact) with a higher one, we  use the
+category (`boolean < integral < inexact`) with a higher one, we  use the
 minimum/default precision: that is ``float64``, ``complex128`` or ``int64``
 (``int32`` is used on some systems, e.g. windows).
 
@@ -207,7 +216,7 @@ Motivation and Scope
 ====================
 
 The motivation for changing the behaviour with respect to inspecting the value
-of Python scalars and NumPy scalars/0-D arrays is two-fold:
+of Python scalars and NumPy scalars/0-D arrays is three-fold:
 
 1. The special handling of NumPy scalars/0-D arrays as well as the value
    inspection can be very surprising to users,
@@ -217,6 +226,8 @@ of Python scalars and NumPy scalars/0-D arrays is two-fold:
    Currently, this leads to a dual implementation of a new and an old (value
    sensitive) system.  Fixing this will greatly simplify the internal logic
    and make results more consistent.
+3. It largely aligns with the choice of other projects like `JAX` and
+   `data-apis.org` (see also `Related Work`).
 
 We believe that the proposal of "weak" Python scalars will help users by
 providing a clear mental model for which datatype an operation will
@@ -285,8 +296,8 @@ Impact on operators and functions involving NumPy arrays or scalars
 -------------------------------------------------------------------
 
 The main impact on operations not involving Python scalars (``float``, ``int``,
-``complex``) will be that 0-D arrays and NumPy scalars will never behave
-value-sensitive.
+``complex``) will be that operations on 0-D arrays and NumPy scalars will never
+depend on their values.
 This removes currently surprising cases.  For example::
 
   np.arange(10, dtype=np.uint8) + np.int64(1)
@@ -545,14 +556,18 @@ At no time is the value used to decide the result of this promotion.  The value 
 considered when it is converted to the new dtype; this may raise an error.
 
 
-
-
 Related Work
 ============
+
+Different Python projects that fill a similar space to NumPy prefer the weakly
+typed Python scalars as proposed in this NEP.  Details of these may differ
+or be unspecified though:
 
 * `JAX promotion`_ also uses the weak-scalar concept.  However, it makes use
   of it also for most functions.  JAX further stores the "weak-type" information
   on the array: ``jnp.array(1)`` remains weakly typed.
+
+* `data-apis.org`_ also suggests this weak-scalar logic for the Python scalars.
 
 
 Implementation
@@ -735,6 +750,8 @@ References and Footnotes
 .. _Open Publication License: https://www.opencontent.org/openpub/
 
 .. _JAX promotion: https://jax.readthedocs.io/en/latest/type_promotion.html
+
+.. _data-apis.org: https://data-apis.org/array-api/latest/API_specification/type_promotion.html
 
 .. [2] https://github.com/numpy/numpy/pull/21103/files#r814188019
 
