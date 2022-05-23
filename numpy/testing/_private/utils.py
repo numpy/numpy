@@ -1517,7 +1517,7 @@ def assert_allclose(actual, desired, rtol=1e-7, atol=0, equal_nan=True,
 
     Notes
     -----
-    When one of `actual` and `desired` is a scalar and the other is array_like,
+    When one of ``actual`` and ``desired`` is a scalar and the other is array_like,
     the function checks that each element of the array_like object is equal to
     the scalar.
 
