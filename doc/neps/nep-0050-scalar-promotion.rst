@@ -17,21 +17,24 @@ complex to implement and also made behavior hard to predict.
 
 There are two kinds of confusing results:
 
-1. Value-based promotion means that values determine output types::
+1. Value-based promotion means that the value, for example of a Python integer,
+   can determine output type as found by ``np.result_type``::
 
      np.result_type(np.int8, 1) == np.int8
      np.result_type(np.int8, 255) == np.int16
+
+   This logic arises because ``1`` can be represented by a ``uint8`` or
+   ``int8`` while ``255`` cannot be represented by an ``int8`` but only by
+   by a ``uint8`` or ``int16``.
 
    This also holds when working with 0-D arrays (so-called "scalar arrays")::
 
      int64_0d_array = np.array(1, dtype=np.int64)
      np.result_type(np.int8, int64_0d_array) == np.int8
 
-   This logic arises because ``1`` can be represented by an ``int8`` while
-   ``255`` can be represented by an ``int16`` *or* ``uint8``.
-
-   Because of this, the exact type is often ignored for 0-D arrays or
-   NumPy scalars.
+   Where the fact that ``int64_0d_array`` has an ``int64`` dtype has no
+   influence on the resulting dtype.  The ``dtype=np.int64`` is effectively
+   ignored in this example since only its value matters.
 
 2. For a Python ``int``, ``float``, or ``complex`` the value is inspected as
    previously shown.  But surprisingly *not* when the NumPy object is a 0-D array
