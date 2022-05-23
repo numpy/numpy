@@ -462,6 +462,9 @@ SIMD_IMPL_INTRIN_2(or_@bsfx@,  v@bsfx@, v@bsfx@, v@bsfx@)
 SIMD_IMPL_INTRIN_2(xor_@bsfx@, v@bsfx@, v@bsfx@, v@bsfx@)
 SIMD_IMPL_INTRIN_1(not_@bsfx@, v@bsfx@, v@bsfx@)
 /**end repeat**/
+SIMD_IMPL_INTRIN_2(andc_b8, vb8, vb8, vb8)
+SIMD_IMPL_INTRIN_2(orc_b8,  vb8, vb8, vb8)
+SIMD_IMPL_INTRIN_2(xnor_b8, vb8, vb8, vb8)
 /***************************
  * Conversions
  ***************************/
@@ -710,6 +713,9 @@ SIMD_INTRIN_DEF(or_@bsfx@)
 SIMD_INTRIN_DEF(xor_@bsfx@)
 SIMD_INTRIN_DEF(not_@bsfx@)
 /**end repeat**/
+SIMD_INTRIN_DEF(andc_b8)
+SIMD_INTRIN_DEF(orc_b8)
+SIMD_INTRIN_DEF(xnor_b8)
 /***************************
  * Conversions
  ***************************/

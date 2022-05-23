@@ -114,6 +114,11 @@ NPY_FINLINE __m256i npyv_shr_s64(__m256i a, int c)
 #define npyv_not_b32 npyv_not_u8
 #define npyv_not_b64 npyv_not_u8
 
+// ANDC, ORC and XNOR
+#define npyv_andc_b8(A, B) _mm256_andnot_si256(A, B)
+#define npyv_orc_b8(A, B) npyv_or_b8(npyv_not_b8(A), B)
+#define npyv_xnor_b8(A, B) npyv_not_b8(npyv_xor_b8(A, B))
+
 /***************************
  * Comparison
  ***************************/

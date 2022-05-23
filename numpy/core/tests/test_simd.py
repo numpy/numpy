@@ -156,6 +156,48 @@ class _SIMD_BOOL(_Test_Utility):
             tobits = bin(self.tobits(vdata))
             assert tobits == bin(data_bits)
 
+    def test_andc(self):
+        if self.sfx not in ("b8"):
+            return
+        andc_simd = getattr(self.npyv, f"andc_b8")
+        # create the vectors
+        data = self._data()
+        rdata = self._data(reverse=True)
+        vdata = self._load_b(data)
+        vrdata = self._load_b(rdata)
+        # check andc
+        sandc = [(~x & y) & 0xFF for x, y in zip(rdata, data)]
+        vandc = andc_simd(vrdata, vdata)
+        assert sandc == vandc
+
+    def test_orc(self):
+        if self.sfx not in ("b8"):
+            return
+        orc_simd = getattr(self.npyv, f"orc_b8")
+        # create the vectors
+        data = self._data()
+        rdata = self._data(reverse=True)
+        vdata = self._load_b(data)
+        vrdata = self._load_b(rdata)
+        # check orc
+        sorc = [(~x | y) & 0xFF for x, y in zip(rdata, data)]
+        vorc = orc_simd(vrdata, vdata)
+        assert sorc == vorc
+
+    def test_xnor(self):
+        if self.sfx not in ("b8"):
+            return
+        xnor_simd = getattr(self.npyv, f"xnor_b8")
+        # create the vectors
+        data = self._data()
+        rdata = self._data(reverse=True)
+        vdata = self._load_b(data)
+        vrdata = self._load_b(rdata)
+        # check orc
+        sxnor = [~(x ^ y) & 0xFF for x, y in zip(rdata, data)]
+        vxnor = xnor_simd(vrdata, vdata)
+        assert sxnor == vxnor
+
     def test_pack(self):
         """
         Pack multiple vectors into one
@@ -166,15 +208,12 @@ class _SIMD_BOOL(_Test_Utility):
         """
         if self.sfx not in ("b16", "b32", "b64"):
             return
-
         # create the vectors
         data = self._data()
         rdata = self._data(reverse=True)
         vdata = self._load_b(data)
         vrdata = self._load_b(rdata)
-
         pack_simd = getattr(self.npyv, f"pack_b8_{self.sfx}")
-
         # for scalar execution, concatenate the elements of the multiple lists
         # into a single list (spack) and then iterate over the elements of
         # the created list applying a mask to capture the first byte of them.

@@ -116,6 +116,11 @@
 #define npyv_not_b32  vmvnq_u32
 #define npyv_not_b64  npyv_not_u64
 
+// ANDC, ORC and XNOR
+#define npyv_andc_b8(A, B) vbicq_u8(B, A)
+#define npyv_orc_b8(A, B) vornq_u8(B, A)
+#define npyv_xnor_b8 vceqq_u8
+
 /***************************
  * Comparison
  ***************************/
