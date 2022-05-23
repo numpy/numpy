@@ -2010,6 +2010,10 @@ get_struct_alignments(PyObject *NPY_UNUSED(self), PyObject *args) {
     PyObject *ret = PyTuple_New(3);
     PyObject *alignment, *size, *val;
 
+    if (ret == NULL) {
+        return NULL;
+    }
+
 /**begin repeat
  * #N = 1,2,3#
  */
@@ -2019,6 +2023,7 @@ get_struct_alignments(PyObject *NPY_UNUSED(self), PyObject *args) {
     Py_DECREF(alignment);
     Py_DECREF(size);
     if (val == NULL) {
+        Py_DECREF(ret);
         return NULL;
     }
     PyTuple_SET_ITEM(ret, @N@-1, val);
