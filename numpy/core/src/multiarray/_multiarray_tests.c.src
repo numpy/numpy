@@ -1035,7 +1035,7 @@ get_all_cast_information(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(args))
     PyObject *classes = PyObject_CallMethod(
             (PyObject *)&PyArrayDescr_Type, "__subclasses__", "");
     if (classes == NULL) {
-        return NULL;
+        goto fail;
     }
     Py_SETREF(classes, PySequence_Fast(classes, NULL));
     if (classes == NULL) {
