@@ -22,7 +22,7 @@ Building NumPy requires the following installed software:
 
 2) Cython >= 0.29.30 but < 3.0
 
-3) pytest__ (optional) 1.15 or later
+3) pytest__ (optional)
 
    This is required for testing NumPy, but not for using it.
 
