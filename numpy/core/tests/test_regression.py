@@ -17,12 +17,6 @@ from numpy.testing import (
 from numpy.testing._private.utils import _no_tracing, requires_memory
 from numpy.compat import asbytes, asunicode, pickle
 
-try:
-    RecursionError
-except NameError:
-    RecursionError = RuntimeError  # python < 3.5
-
-
 
 class TestRegression:
     def test_invalid_round(self):
@@ -2486,8 +2480,6 @@ class TestRegression:
         assert arr.shape == (1, 0, 0)
 
     @pytest.mark.skipif(sys.maxsize < 2 ** 31 + 1, reason='overflows 32-bit python')
-    @pytest.mark.skipif(sys.platform == 'win32' and sys.version_info[:2] < (3, 8),
-                        reason='overflows on windows, fixed in bpo-16865')
     def test_to_ctypes(self):
         #gh-14214
         arr = np.zeros((2 ** 31 + 1,), 'b')

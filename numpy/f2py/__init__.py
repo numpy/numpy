@@ -169,24 +169,19 @@ def get_include():
     return os.path.join(os.path.dirname(__file__), 'src')
 
 
-if sys.version_info[:2] >= (3, 7):
-    # module level getattr is only supported in 3.7 onwards
-    # https://www.python.org/dev/peps/pep-0562/
-    def __getattr__(attr):
+def __getattr__(attr):
 
-        # Avoid importing things that aren't needed for building
-        # which might import the main numpy module
-        if attr == "test":
-            from numpy._pytesttester import PytestTester
-            test = PytestTester(__name__)
-            return test
+    # Avoid importing things that aren't needed for building
+    # which might import the main numpy module
+    if attr == "test":
+        from numpy._pytesttester import PytestTester
+        test = PytestTester(__name__)
+        return test
 
-        else:
-            raise AttributeError("module {!r} has no attribute "
-                                 "{!r}".format(__name__, attr))
+    else:
+        raise AttributeError("module {!r} has no attribute "
+                              "{!r}".format(__name__, attr))
 
-    def __dir__():
-        return list(globals().keys() | {"test"})
 
-else:
-    raise NotImplementedError("F2PY needs Python 3.7")
+def __dir__():
+    return list(globals().keys() | {"test"})

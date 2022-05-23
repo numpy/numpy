@@ -14,8 +14,8 @@ if(PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
   )
 endif()
 
-# Grab Python, 3.7 or newer
-find_package(Python 3.7 REQUIRED
+# Grab Python, 3.8 or newer
+find_package(Python 3.8 REQUIRED
   COMPONENTS Interpreter Development.Module NumPy)
 
 # Grab the variables from a local Python installation

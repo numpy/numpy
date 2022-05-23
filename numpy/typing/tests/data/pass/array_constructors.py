@@ -23,9 +23,8 @@ B = A.view(SubClass).copy()
 B_stack = np.array([[1], [1]]).view(SubClass)
 C = [1]
 
-if sys.version_info >= (3, 8):
-    np.ndarray(Index())
-    np.ndarray([Index()])
+np.ndarray(Index())
+np.ndarray([Index()])
 
 np.array(1, dtype=float)
 np.array(1, copy=False)

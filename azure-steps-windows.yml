@@ -72,17 +72,6 @@ steps:
     }
   displayName: 'Build NumPy'
 
-- bash: |
-    pushd . && cd .. && target=$(python -c "import numpy, os; print(os.path.abspath(os.path.join(os.path.dirname(numpy.__file__), '.libs')))") && popd
-    python -m pip download -d destination --only-binary :all: --no-deps numpy==1.14
-    cd destination && unzip numpy*.whl && cp numpy/.libs/*.dll $target
-    ls $target
-  displayName: 'Add extraneous & older DLL to numpy/.libs to probe DLL handling robustness'
-  condition: eq(variables['PYTHON_VERSION'], '3.6')
-- script: pushd . && cd .. && python -c "from ctypes import windll; windll.kernel32.SetDefaultDllDirectories(0x00000800); import numpy" && popd
-  displayName: 'For gh-12667; Windows DLL resolution'
-  condition: eq(variables['PYTHON_VERSION'], '3.6')
-
 - script: python runtests.py -n --show-build-log --mode=$(TEST_MODE) -- -rsx --junitxml=junit/test-results.xml
   displayName: 'Run NumPy Test Suite'
 

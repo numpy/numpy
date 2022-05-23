@@ -4135,13 +4135,6 @@ class TestPickling:
     def test_correct_protocol5_error_message(self):
         array = np.arange(10)
 
-        if sys.version_info[:2] in ((3, 6), (3, 7)):
-            # For the specific case of python3.6 and 3.7, raise a clear import
-            # error about the pickle5 backport when trying to use protocol=5
-            # without the pickle5 package
-            with pytest.raises(ImportError):
-                array.__reduce_ex__(5)
-
     def test_record_array_with_object_dtype(self):
         my_object = object()
 
@@ -8569,10 +8562,9 @@ class TestConversion:
 
         self_containing = np.array([None])
         self_containing[0] = self_containing
-        try:
-            Error = RecursionError
-        except NameError:
-            Error = RuntimeError  # python < 3.5
+
+        Error = RecursionError
+
         assert_raises(Error, bool, self_containing)  # previously stack overflow
         self_containing[0] = None  # resolve circular reference
 

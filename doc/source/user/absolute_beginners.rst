@@ -1344,7 +1344,7 @@ followed by the docstring of ``ndarray`` of which ``a`` is an instance):
   Type:            ndarray
   String form:     [1 2 3 4 5 6]
   Length:          6
-  File:            ~/anaconda3/lib/python3.7/site-packages/numpy/__init__.py
+  File:            ~/anaconda3/lib/python3.9/site-packages/numpy/__init__.py
   Docstring:       <no docstring>
   Class docstring:
   ndarray(shape, dtype=float, buffer=None, offset=0,
