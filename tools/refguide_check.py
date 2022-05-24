@@ -140,6 +140,7 @@ RST_SKIPLIST = [
     'basics.subclassing.rst',
     'basics.interoperability.rst',
     'misc.rst',
+    'TESTS.rst'
 ]
 
 # these names are not required to be present in ALL despite being in
