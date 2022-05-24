@@ -5,4 +5,4 @@
 # made to numpy.array_api; they are not obligated to perform the code
 # review (but they are more than welcome to help), this merely serves
 # as a one-way notification.
-/numpy/array_api  @leofang
+/numpy/array_api/  @leofang
