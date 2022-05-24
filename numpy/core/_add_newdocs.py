@@ -1084,27 +1084,25 @@ add_newdoc('numpy.core.multiarray', 'ascontiguousarray',
 
     Examples
     --------
-    The default memory layout of ndarray is C-contiguous, so
-    in this example `y` just becomes a view of `x`:
-    >>> x = np.arange(6).reshape(2, 3)
-    >>> y = np.ascontiguousarray(x)
+    Try to change memory layout of ndarray from C-contiguous to C-contiguous::
+    >>> x = np.ones((2, 3))          # Create C-contiguous (the default memory layout) ndarray
+    >>> y = np.ascontiguousarray(x)  # Try to convert `x` to C-contiguous ndarray
     >>> x.flags['C_CONTIGUOUS']
     True
     >>> y.flags['C_CONTIGUOUS']
     True
-    >>> y.flags['OWNDATA']
-    False
+    >>> x is y                       # `x` and `y` are the same object
+    True
 
-    Now, we create `x` as F-contiguous ndarray,
-    and `y` becomes a new ndarray with C-contiguous memory layout:
-    >>> x = np.arange(6).reshape(2, 3, order='F')
-    >>> y = np.ascontiguousarray(x)
+    Change memory layout of ndarray from F-contiguous to C-contiguous::
+    >>> x = np.ones((2, 3), order='F')  # Create F-contiguous ndarray
+    >>> y = np.ascontiguousarray(x)     # Convert `x` to C-contiguous ndarray
     >>> x.flags['C_CONTIGUOUS']
     False
     >>> y.flags['C_CONTIGUOUS']
     True
-    >>> y.flags['OWNDATA']
-    True
+    >>> x is y                          # `x` and `y` are different objects
+    False
 
     Note: This function returns an array with at least one-dimension (1-d)
     so it will not preserve 0-d arrays.
@@ -1145,27 +1143,25 @@ add_newdoc('numpy.core.multiarray', 'asfortranarray',
 
     Examples
     --------
-    The default memory layout of ndarray is C-contiguous, so
-    in this example `y` becomes a new F-contiguous ndarray:
-    >>> x = np.arange(6).reshape(2, 3)
-    >>> y = np.asfortranarray(x)
+    Change memory layout of ndarray from C-contiguous to F-contiguous:
+    >>> x = np.ones((2, 3))       # Create C-contiguous (the default memory layout) ndarray
+    >>> y = np.asfortranarray(x)  # Convert `x` to F-contiguous ndarray
     >>> x.flags['F_CONTIGUOUS']
     False
     >>> y.flags['F_CONTIGUOUS']
     True
-    >>> y.flags['OWNDATA']
-    True
+    >>> x is y                    # `x` and `y` are different objects
+    False
 
-    If we create `x` as F-contiguous ndarray,
-    then `y` just becomes a view of `x`:
-    >>> x = np.arange(6).reshape(2, 3, order='F')
-    >>> y = np.asfortranarray(x)
+    Try to change memory layout of ndarray from F-contiguous to F-contiguous:
+    >>> x = np.ones((2, 3), order='F') # Create F-contiguous ndarray
+    >>> y = np.asfortranarray(x)       # Try to onvert `x` to F-contiguous ndarray
     >>> x.flags['F_CONTIGUOUS']
     True
     >>> y.flags['F_CONTIGUOUS']
     True
-    >>> y.flags['OWNDATA']
-    False
+    >>> x is y                         # `x` and `y` are the same object
+    True
 
     Note: This function returns an array with at least one-dimension (1-d)
     so it will not preserve 0-d arrays.
