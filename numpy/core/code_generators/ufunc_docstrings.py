@@ -2007,19 +2007,15 @@ add_newdoc('numpy.core.umath', 'log',
     --------
     log10, log2, log1p, emath.log
 
-    Principal Logarithm
-    -------------------
+    Notes
+    -----
     Logarithm is a multivalued function: for each `x` there is an infinite
     number of `z` such that `exp(z) = x`. The convention is to return the
     `z` whose imaginary part lies in `(-pi, pi]`.
 
-    Additional Info
-    ---------------
     In the cases where x array element input value tends to -1. 
     The result is in the vicinity of `-pi`, that it evaluates to `-pi`.
 
-    Notes
-    -----
     For real-valued input data types, `log` always returns real output. For
     each value that cannot be expressed as a real number or infinity, it
     yields ``nan`` and sets the `invalid` floating point error flag.
@@ -2064,19 +2060,15 @@ add_newdoc('numpy.core.umath', 'log10',
     --------
     emath.log10
 
-    Principal Logarithm
-    -------------------
+    Notes
+    -----
     Logarithm is a multivalued function: for each `x` there is an infinite
     number of `z` such that `exp(z) = x`. The convention is to return the
     `z` whose imaginary part lies in `(-pi, pi]`.
 
-    Additional Info
-    ---------------
     In the cases where x array element input value tends to -1. 
     The result is in the vicinity of `-pi`, that it evaluates to `-pi`.
 
-    Notes
-    -----
     For real-valued input data types, `log10` always returns real output.
     For each value that cannot be expressed as a real number or infinity,
     it yields ``nan`` and sets the `invalid` floating point error flag.
@@ -2120,20 +2112,16 @@ add_newdoc('numpy.core.umath', 'log2',
     --------
     log, log10, log1p, emath.log2
 
-    Principal Logarithm
-    --------------------
+    Notes
+    -----
+    .. versionadded:: 1.3.0
+    
     Logarithm is a multivalued function: for each `x` there is an infinite
     number of `z` such that `exp(z) = x`. The convention is to return the
     `z` whose imaginary part lies in `(-pi, pi]`.
 
-    Additional Info
-    ---------------
     In the cases where x array element input value tends to -1. 
     The result is in the vicinity of `-pi`, that it evaluates to `-pi`.
-
-    Notes
-    -----
-    .. versionadded:: 1.3.0
 
     For real-valued input data types, `log2` always returns real output.
     For each value that cannot be expressed as a real number or infinity,
