@@ -324,9 +324,15 @@ class ABCPolyBase(abc.ABC):
         return self._generate_string(self._str_term_unicode)
 
     def __str__(self):
+        scaled_series = not np.all(self.domain == self.window)
+
         if self._use_unicode:
-            return self._generate_string(self._str_term_unicode)
-        return self._generate_string(self._str_term_ascii)
+            s = self._generate_string(self._str_term_unicode)
+        else:
+            s =  self._generate_string(self._str_term_ascii)
+        if scaled_series:
+            s += ' (scaled)'
+        return s
 
     def _generate_string(self, term_method):
         """
