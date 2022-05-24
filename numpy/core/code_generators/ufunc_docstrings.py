@@ -2063,8 +2063,8 @@ add_newdoc('numpy.core.umath', 'log10',
     Notes
     -----
     Logarithm is a multivalued function: for each `x` there is an infinite
-    number of `z` such that `exp(z) = x`. The convention is to return the
-    `z` whose imaginary part lies in `(-pi, pi]`.
+    number of `z` such that `10**z = x`. The convention is to return the
+    `z` whose imaginary part lies in `[-pi, pi]`.
 
     In the cases where x array element input value tends to -1. 
     The result is in the vicinity of `-pi`, that it evaluates to `-pi`.
@@ -2115,10 +2115,10 @@ add_newdoc('numpy.core.umath', 'log2',
     Notes
     -----
     .. versionadded:: 1.3.0
-    
+
     Logarithm is a multivalued function: for each `x` there is an infinite
-    number of `z` such that `exp(z) = x`. The convention is to return the
-    `z` whose imaginary part lies in `(-pi, pi]`.
+    number of `z` such that `2**z = x`. The convention is to return the `z`
+    whose imaginary part lies in `[-pi, pi]`.
 
     In the cases where x array element input value tends to -1. 
     The result is in the vicinity of `-pi`, that it evaluates to `-pi`.
