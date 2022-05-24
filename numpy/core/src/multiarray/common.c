@@ -136,7 +136,6 @@ _zerofill(PyArrayObject *ret)
         PyArray_FillObjectArray(ret, zero);
         Py_DECREF(zero);
         if (PyErr_Occurred()) {
-            Py_DECREF(ret);
             return -1;
         }
     }

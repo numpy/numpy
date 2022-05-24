@@ -223,7 +223,8 @@ class TestRecord:
         assert refcounts == refcounts_new
 
     def test_mutate(self):
-        # Mutating a dtype should reset the cached hash value
+        # Mutating a dtype should reset the cached hash value.
+        # NOTE: Mutating should be deprecated, but new API added to replace it.
         a = np.dtype([('yo', int)])
         b = np.dtype([('yo', int)])
         c = np.dtype([('ye', int)])
@@ -236,6 +237,16 @@ class TestRecord:
         a.__setstate__(state)
         assert_dtype_equal(a, b)
         assert_dtype_not_equal(a, c)
+
+    def test_mutate_error(self):
+        # NOTE: Mutating should be deprecated, but new API added to replace it.
+        a = np.dtype("i,i")
+
+        with pytest.raises(ValueError, match="must replace all names at once"):
+            a.names = ["f0"]
+
+        with pytest.raises(ValueError, match=".*and not string"):
+            a.names = ["f0", b"not a unicode name"]
 
     def test_not_lists(self):
         """Test if an appropriate exception is raised when passing bad values to
