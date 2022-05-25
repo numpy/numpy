@@ -45,6 +45,10 @@
  */
 NPY_NO_EXPORT npy_intp REQUIRED_STR_LEN[] = {0, 3, 5, 10, 10, 20, 20, 20, 20};
 
+/*
+ * Whether or not legacy value-based promotion/casting is used.
+ */
+NPY_NO_EXPORT int npy_promotion_state = NPY_USE_WEAK_PROMOTION_AND_WARN;
 
 static PyObject *
 PyArray_GetGenericToVoidCastingImpl(void);
@@ -706,6 +710,79 @@ static int min_scalar_type_num(char *valueptr, int type_num,
  *       require updates when we phase out value-based-casting.
  */
 NPY_NO_EXPORT npy_bool
+can_cast_scalar_to(PyArray_Descr *scal_type, char *scal_data,
+        PyArray_Descr *to, NPY_CASTING casting)
+{
+    /*
+     * If the two dtypes are actually references to the same object
+     * or if casting type is forced unsafe then always OK.
+     *
+     * TODO: Assuming that unsafe casting always works is not actually correct
+     */
+    if (scal_type == to || casting == NPY_UNSAFE_CASTING ) {
+        return 1;
+    }
+
+    int valid = PyArray_CheckCastSafety(casting, scal_type, to, NPY_DTYPE(to));
+    if (valid == 1) {
+        /* This is definitely a valid cast. */
+        return 1;
+    }
+    if (valid < 0) {
+        /* Probably must return 0, but just keep trying for now. */
+        PyErr_Clear();
+    }
+
+    /*
+     * If the scalar isn't a number, value-based casting cannot kick in and
+     * we must not attempt it.
+     * (Additional fast-checks would be possible, but probably unnecessary.)
+     */
+    if (!PyTypeNum_ISNUMBER(scal_type->type_num)) {
+        return 0;
+    }
+
+    /*
+     * At this point we have to check value-based casting.
+     */
+    PyArray_Descr *dtype;
+    int is_small_unsigned = 0, type_num;
+    /* An aligned memory buffer large enough to hold any builtin numeric type */
+    npy_longlong value[4];
+
+    int swap = !PyArray_ISNBO(scal_type->byteorder);
+    scal_type->f->copyswap(&value, scal_data, swap, NULL);
+
+    type_num = min_scalar_type_num((char *)&value, scal_type->type_num,
+            &is_small_unsigned);
+
+    /*
+     * If we've got a small unsigned scalar, and the 'to' type
+     * is not unsigned, then make it signed to allow the value
+     * to be cast more appropriately.
+     */
+    if (is_small_unsigned && !(PyTypeNum_ISUNSIGNED(to->type_num))) {
+        type_num = type_num_unsigned_to_signed(type_num);
+    }
+
+    dtype = PyArray_DescrFromType(type_num);
+    if (dtype == NULL) {
+        return 0;
+    }
+#if 0
+    printf("min scalar cast ");
+    PyObject_Print(dtype, stdout, 0);
+    printf(" to ");
+    PyObject_Print(to, stdout, 0);
+    printf("\n");
+#endif
+    npy_bool ret = PyArray_CanCastTypeTo(dtype, to, casting);
+    Py_DECREF(dtype);
+    return ret;
+}
+
+
+NPY_NO_EXPORT npy_bool
 can_cast_pyscalar_scalar_to(
         int flags, PyArray_Descr *to, NPY_CASTING casting)
 {
@@ -771,13 +848,25 @@ PyArray_CanCastArrayTo(PyArrayObject *arr, PyArray_Descr *to,
         to = NULL;
     }
 
-    /*
-     * If it's a scalar, check the value.  (This only currently matters for
-     * numeric types and for `to == NULL` it can't be numeric.)
-     */
-    if (PyArray_FLAGS(arr) & NPY_ARRAY_WAS_PYTHON_LITERAL && to != NULL) {
-        return can_cast_pyscalar_scalar_to(
-                PyArray_FLAGS(arr) & NPY_ARRAY_WAS_PYTHON_LITERAL, to, casting);
+    if (npy_promotion_state == NPY_USE_LEGACY_PROMOTION) {
+        /*
+         * If it's a scalar, check the value.  (This only currently matters for
+         * numeric types and for `to == NULL` it can't be numeric.)
+         */
+        if (PyArray_NDIM(arr) == 0 && !PyArray_HASFIELDS(arr) && to != NULL) {
+            return can_cast_scalar_to(from, PyArray_DATA(arr), to, casting);
+        }
+    }
+    else {
+        /*
+         * If it's a scalar, check the value.  (This only currently matters for
+         * numeric types and for `to == NULL` it can't be numeric.)
+         */
+        if (PyArray_FLAGS(arr) & NPY_ARRAY_WAS_PYTHON_LITERAL && to != NULL) {
+            return can_cast_pyscalar_scalar_to(
+                    PyArray_FLAGS(arr) & NPY_ARRAY_WAS_PYTHON_LITERAL, to,
+                    casting);
+        }
     }
 
     /* Otherwise, use the standard rules (same as `PyArray_CanCastTypeTo`) */
@@ -1035,7 +1124,7 @@ PyArray_FindConcatenationDescriptor(
         }
     }
 
-    if (PyArray_CheckLegacyResultType(result, n, arrays, 0, NULL) < 0) {
+    if (PyArray_CheckLegacyResultType(&result, n, arrays, 0, NULL) < 0) {
         Py_SETREF(result, NULL);  /* Error occurred. */
     }
 
@@ -1543,6 +1632,21 @@ should_use_min_scalar(npy_intp narrs, PyArrayObject **arr,
 }
 
 
+NPY_NO_EXPORT int
+should_use_min_scalar_weak_literals(int narrs, PyArrayObject **arr) {
+    int count_literals = 0;
+    for (int i = 0; i < narrs; i++) {
+        if (PyArray_FLAGS(arr[i]) & NPY_ARRAY_WAS_PYTHON_LITERAL) {
+            count_literals++;
+        }
+    }
+    if (count_literals > 0 && count_literals < narrs) {
+        return 1;
+    }
+    return 0;
+}
+
+
 /*NUMPY_API
  *
  * Produces the result type of a bunch of inputs, using the same rules
@@ -1700,15 +1804,17 @@ PyArray_ResultType(
     }
 
     /*
-     * Unfortunately, when 0-D "scalar" arrays are involved and mixed, we
-     * have to use the value-based logic.  The intention is to move away from
-     * the complex logic arising from it.  We thus fall back to the legacy
-     * version here.
-     * It may be possible to micro-optimize this to skip some of the above
-     * logic when this path is necessary.
+     * Unfortunately, when 0-D "scalar" arrays are involved and mixed, we *may*
+     * have to use the value-based logic.
+     * `PyArray_CheckLegacyResultType` may behave differently based on the
+     * current value of `npy_legacy_promotion`:
+     * 1. It does nothing (we use the "new" behavior)
+     * 2. It does nothing, but warns if there the result would differ.
+     * 3. It replaces the result based on the legacy value-based logic.
      */
     if (at_least_one_scalar && !all_pyscalar && result->type_num < NPY_NTYPES) {
-        if (PyArray_CheckLegacyResultType(result, narrs, arrs, ndtypes, descrs) < 0) {
+        if (PyArray_CheckLegacyResultType(
+                &result, narrs, arrs, ndtypes, descrs) < 0) {
             Py_DECREF(common_dtype);
             Py_DECREF(result);
             return NULL;
@@ -1740,16 +1846,14 @@ PyArray_ResultType(
  * of all the inputs.  Data types passed directly are treated as array
  * types.
  */
-#define NPY_WARN_IF_PROMOTION_CHANGED 0
-
 NPY_NO_EXPORT int
 PyArray_CheckLegacyResultType(
-        PyArray_Descr *new_result,
+        PyArray_Descr **new_result,
         npy_intp narrs, PyArrayObject **arr,
         npy_intp ndtypes, PyArray_Descr **dtypes)
 {
     PyArray_Descr *ret = NULL;
-    if (!NPY_WARN_IF_PROMOTION_CHANGED) {
+    if (npy_promotion_state == NPY_USE_WEAK_PROMOTION) {
         return 0;
     }
 
@@ -1836,16 +1940,27 @@ PyArray_CheckLegacyResultType(
         }
     }
 
-    int unchanged_result = PyArray_EquivTypes(new_result, ret);
-    Py_DECREF(ret);
-    if (!unchanged_result) {
-        if (PyErr_WarnFormat(PyExc_UserWarning, 1,
-                "result dtype changed due to the removal of value-based"
-                "promotion from NumPy.") < 0) {
-            return -1;
-        }
+    if (ret == NULL) {
+        return -1;
     }
 
+    int unchanged_result = PyArray_EquivTypes(*new_result, ret);
+    if (unchanged_result) {
+        Py_DECREF(ret);
+        return 0;
+    }
+    if (npy_promotion_state == NPY_USE_LEGACY_PROMOTION) {
+        Py_SETREF(*new_result, ret);
+        return 0;
+    }
+
+    assert(npy_promotion_state == NPY_USE_WEAK_PROMOTION_AND_WARN);
+    Py_DECREF(ret);
+    if (PyErr_WarnFormat(PyExc_UserWarning, 1,
+            "result dtype changed due to the removal of value-based "
+            "promotion from NumPy.") < 0) {
+        return -1;
+    }
     return 0;
 }
 

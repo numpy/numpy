@@ -947,6 +947,7 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
         ufunc_full_args full_args, PyArrayObject *out_op[],
         PyArray_DTypeMeta *out_op_DTypes[],
         npy_bool *force_legacy_promotion, npy_bool *allow_legacy_promotion,
+        npy_bool *promoting_pyscalars,
         PyObject *order_obj, NPY_ORDER *out_order,
         PyObject *casting_obj, NPY_CASTING *out_casting,
         PyObject *subok_obj, npy_bool *out_subok,
@@ -963,6 +964,7 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
     npy_bool any_scalar = NPY_FALSE;
     *allow_legacy_promotion = NPY_TRUE;
     *force_legacy_promotion = NPY_FALSE;
+    *promoting_pyscalars = NPY_FALSE;
     for (int i = 0; i < nin; i++) {
         obj = PyTuple_GET_ITEM(full_args.in, i);
 
@@ -1003,18 +1005,21 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
             Py_SETREF(out_op_DTypes[i], &PyArray_PyIntAbstractDType);
             ((PyArrayObject_fields *)out_op[i])->flags |= (
                     NPY_ARRAY_WAS_PYTHON_INT);
+            *promoting_pyscalars = NPY_TRUE;
         }
         else if (PyFloat_CheckExact(obj)) {
             Py_INCREF(&PyArray_PyFloatAbstractDType);
             Py_SETREF(out_op_DTypes[i], &PyArray_PyFloatAbstractDType);
             ((PyArrayObject_fields *)out_op[i])->flags |= (
                     NPY_ARRAY_WAS_PYTHON_FLOAT);
+            *promoting_pyscalars = NPY_TRUE;
         }
         else if (PyComplex_CheckExact(obj)) {
             Py_INCREF(&PyArray_PyComplexAbstractDType);
             Py_SETREF(out_op_DTypes[i], &PyArray_PyComplexAbstractDType);
             ((PyArrayObject_fields *)out_op[i])->flags |= (
                     NPY_ARRAY_WAS_PYTHON_COMPLEX);
+            *promoting_pyscalars = NPY_TRUE;
         }
     }
     if (*allow_legacy_promotion && (!all_scalar && any_scalar)) {
@@ -2785,7 +2790,8 @@ reducelike_promote_and_resolve(PyUFuncObject *ufunc,
     }
 
     PyArrayMethodObject *ufuncimpl = promote_and_get_ufuncimpl(ufunc,
-            ops, signature, operation_DTypes, NPY_FALSE, NPY_TRUE, NPY_TRUE);
+            ops, signature, operation_DTypes, NPY_FALSE, NPY_TRUE,
+            NPY_FALSE, NPY_TRUE);
     if (evil_ndim_mutating_hack) {
         ((PyArrayObject_fields *)out)->nd = 0;
     }
@@ -4892,10 +4898,13 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
     int keepdims = -1;  /* We need to know if it was passed */
     npy_bool force_legacy_promotion;
     npy_bool allow_legacy_promotion;
+    npy_bool promoting_pyscalars;
     if (convert_ufunc_arguments(ufunc,
             /* extract operand related information: */
             full_args, operands,
-            operand_DTypes, &force_legacy_promotion, &allow_legacy_promotion,
+            operand_DTypes,
+            &force_legacy_promotion, &allow_legacy_promotion,
+            &promoting_pyscalars,
             /* extract general information: */
             order_obj, &order,
             casting_obj, &casting,
@@ -4916,7 +4925,7 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
     PyArrayMethodObject *ufuncimpl = promote_and_get_ufuncimpl(ufunc,
             operands, signature,
             operand_DTypes, force_legacy_promotion, allow_legacy_promotion,
-            NPY_FALSE);
+            promoting_pyscalars, NPY_FALSE);
     if (ufuncimpl == NULL) {
         goto fail;
     }
@@ -6049,7 +6058,8 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
 
     PyArrayMethodObject *ufuncimpl = promote_and_get_ufuncimpl(ufunc,
             operands, signature, operand_DTypes,
-            force_legacy_promotion, allow_legacy_promotion, NPY_FALSE);
+            force_legacy_promotion, allow_legacy_promotion,
+            NPY_FALSE, NPY_FALSE);
     if (ufuncimpl == NULL) {
         goto fail;
     }
