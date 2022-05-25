@@ -939,10 +939,15 @@ def assert_array_equal(x, y, err_msg='', verbose=True, strict=False):
     Use `strict` to raise an assertion when comparing a scalar with an array:
 
     >>> np.testing.assert_array_equal(x, 3, strict=True)
-
+    Traceback (most recent call last):
+        ...
     AssertionError:
     Arrays are not equal
+    <BLANKLINE>
     (shapes (2, 5), () mismatch)
+     x: array([[3, 3, 3, 3, 3],
+           [3, 3, 3, 3, 3]])
+     y: array(3)
 
     """
     __tracebackhide__ = True  # Hide traceback for py.test
