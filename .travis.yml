@@ -51,7 +51,7 @@ jobs:
       virt: vm
       env:
         - CIBW_BUILD: cp38-manylinux_aarch64
-      install: python3 -m pip install cibuildwheel==2.4.0
+      install: python3 -m pip install cibuildwheel==2.5.0
       script: |
         cibuildwheel --output-dir wheelhouse
         source ./tools/wheels/upload_wheels.sh
@@ -64,7 +64,7 @@ jobs:
       virt: vm
       env:
         - CIBW_BUILD: cp39-manylinux_aarch64
-      install: python3 -m pip install cibuildwheel==2.4.0
+      install: python3 -m pip install cibuildwheel==2.5.0
       script: |
         cibuildwheel --output-dir wheelhouse
         source ./tools/wheels/upload_wheels.sh
@@ -77,7 +77,7 @@ jobs:
       virt: vm
       env:
         - CIBW_BUILD: cp310-manylinux_aarch64
-      install: python3 -m pip install cibuildwheel==2.4.0
+      install: python3 -m pip install cibuildwheel==2.5.0
       script: |
         cibuildwheel --output-dir wheelhouse
         source ./tools/wheels/upload_wheels.sh

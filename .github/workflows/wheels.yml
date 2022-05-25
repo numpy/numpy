@@ -75,10 +75,7 @@ jobs:
         - [macos-10.15, macosx_*]
         - [windows-2019, win_amd64]
         - [windows-2019, win32]
-        # TODO: uncomment PyPy 3.9 builds once PyPy
-        # re-releases a new minor version
-        # NOTE: This needs a bump of cibuildwheel version, also, once that happens.
-        python: ["cp38", "cp39", "cp310", "pp38"] #, "pp39"]
+        python: ["cp38", "cp39", "cp310", "pp38", "pp39"]
         exclude:
         # Don't build PyPy 32-bit windows
         - buildplat: [windows-2019, win32]
@@ -115,7 +112,7 @@ jobs:
         if: ${{ env.IS_32_BIT == 'true' }}
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.4.0
+        uses: pypa/cibuildwheel@v2.5.0
         env:
           CIBW_BUILD: ${{ matrix.python }}-${{ matrix.buildplat[1] }}
 
