@@ -699,7 +699,8 @@ def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=True):
 
 
 def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
-                         precision=6, equal_nan=True, equal_inf=True, strict=False):
+                         precision=6, equal_nan=True, equal_inf=True,
+                         strict=False):
     __tracebackhide__ = True  # Hide traceback for py.test
     from numpy.core import array, array2string, isnan, inf, bool_, errstate, all, max, object_
 
@@ -880,7 +881,8 @@ def assert_array_equal(x, y, err_msg='', verbose=True, strict=False):
     verbose : bool, optional
         If True, the conflicting values are appended to the error message.
     strict : bool, optional
-        If True, raise an assertion when one of the array_like objects is a scalar.
+        If True, raise an assertion when one of the array_like objects is a
+        scalar.
 
     Raises
     ------
@@ -945,7 +947,8 @@ def assert_array_equal(x, y, err_msg='', verbose=True, strict=False):
     """
     __tracebackhide__ = True  # Hide traceback for py.test
     assert_array_compare(operator.__eq__, x, y, err_msg=err_msg,
-                         verbose=verbose, header='Arrays are not equal', strict=strict)
+                         verbose=verbose, header='Arrays are not equal',
+                         strict=strict)
 
 
 def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
