@@ -2990,7 +2990,7 @@ cdef class Generator:
         probability of success, :math:`N+n` is the number of trials, and
         :math:`\\Gamma` is the gamma function. When :math:`n` is an integer,
         :math:`\\frac{\\Gamma(N+n)}{N!\\Gamma(n)} = \\binom{N+n-1}{N}`, which is
-        the more common form of this term in the the pmf. The negative
+        the more common form of this term in the pmf. The negative
         binomial distribution gives the probability of N failures given n
         successes, with a success on the last trial.
 

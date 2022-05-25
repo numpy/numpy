@@ -1844,7 +1844,7 @@ def notmasked_contiguous(a, axis=None):
     a = asarray(a)
     nd = a.ndim
     if nd > 2:
-        raise NotImplementedError("Currently limited to atmost 2D array.")
+        raise NotImplementedError("Currently limited to at most 2D array.")
     if axis is None or nd == 1:
         return flatnotmasked_contiguous(a)
     #

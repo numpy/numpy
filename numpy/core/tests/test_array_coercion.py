@@ -135,7 +135,7 @@ def scalar_instances(times=True, extended_precision=True, user_dtype=True):
 
 
 def is_parametric_dtype(dtype):
-    """Returns True if the the dtype is a parametric legacy dtype (itemsize
+    """Returns True if the dtype is a parametric legacy dtype (itemsize
     is 0, or a datetime without units)
     """
     if dtype.itemsize == 0:
