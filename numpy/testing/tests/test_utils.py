@@ -234,14 +234,14 @@ class TestArrayEqual(_GenericTest):
         b = 1.
 
         with pytest.raises(AssertionError):
-            self._assert_func(a, b, strict=True)
+            assert_array_equal(a, b, strict=True)
 
     def test_array_vs_array_strict(self):
         """Test comparing two arrays with strict option."""
         a = np.array([1., 1., 1.])
         b = np.array([1., 1., 1.])
 
-        self._assert_func(a, b, strict=True)
+        assert_array_equal(a, b, strict=True)
 
 
 class TestBuildErrorMessage:
