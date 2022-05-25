@@ -1,3 +1,0 @@
-* Using ``axis=32`` (``axis=np.MAXDIMS``) in many cases had the
-  same meaning as ``axis=None``.  This is deprecated and ``axis=None``
-  must be used instead.

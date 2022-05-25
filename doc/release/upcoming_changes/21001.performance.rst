@@ -1,5 +1,0 @@
-Faster reduction operators
---------------------------
-Reduction operations like `numpy.sum`, `numpy.prod`, `numpy.add.reduce`, 
-`numpy.logical_and.reduce` on contiguous integer-based arrays are now 
-much faster.
