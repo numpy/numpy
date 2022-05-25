@@ -214,6 +214,35 @@ class TestArrayEqual(_GenericTest):
                     np.array([1, 2, 3], np.float32),
                     np.array([1, 1e-40, 3], np.float32))
 
+    def test_array_vs_scalar_is_equal(self):
+        """Test comparing an array with a scalar when all values are equal."""
+        a = np.array([1., 1., 1.])
+        b = 1.
+
+        self._test_equal(a, b)
+
+    def test_array_vs_scalar_not_equal(self):
+        """Test comparing an array with a scalar when not all values are equal."""
+        a = np.array([1., 2., 3.])
+        b = 1.
+
+        self._test_not_equal(a, b)
+
+    def test_array_vs_scalar_strict(self):
+        """Test comparing an array with a scalar with strict option."""
+        a = np.array([1., 1., 1.])
+        b = 1.
+
+        with pytest.raises(AssertionError):
+            self._assert_func(a, b, strict=True)
+
+    def test_array_vs_array_strict(self):
+        """Test comparing two arrays with strict option."""
+        a = np.array([1., 1., 1.])
+        b = np.array([1., 1., 1.])
+
+        self._assert_func(a, b, strict=True)
+
 
 class TestBuildErrorMessage:
 
