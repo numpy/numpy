@@ -222,7 +222,7 @@ class TestArrayEqual(_GenericTest):
         self._test_equal(a, b)
 
     def test_array_vs_scalar_not_equal(self):
-        """Test comparing an array with a scalar when not all values are equal."""
+        """Test comparing an array with a scalar when not all values equal."""
         a = np.array([1., 2., 3.])
         b = 1.
 
