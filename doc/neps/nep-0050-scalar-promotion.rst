@@ -6,7 +6,7 @@ NEP 50 — Promotion rules for Python scalars
 :Author: Sebastian Berg
 :Status: Draft
 :Type: Standards Track
-:Created: 2021-01-10
+:Created: 2021-05-25
 
 
 Abstract
