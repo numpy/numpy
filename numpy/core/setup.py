@@ -476,11 +476,8 @@ def configuration(parent_package='',top_path=None):
     local_dir = config.local_path
     codegen_dir = join(local_dir, 'code_generators')
 
-    if is_released:
-        warnings.simplefilter('error', MismatchCAPIWarning)
-
     # Check whether we have a mismatch between the set C API VERSION and the
-    # actual C API VERSION
+    # actual C API VERSION. Will raise a MismatchCAPIError if so.
     check_api_version(C_API_VERSION, codegen_dir)
 
     generate_umath_py = join(codegen_dir, 'generate_umath.py')
