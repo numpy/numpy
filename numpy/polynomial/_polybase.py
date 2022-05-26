@@ -317,14 +317,14 @@ class ABCPolyBase(abc.ABC):
             self.window = window
 
         # Validation for symbol
-        if not isinstance(symbol, str):
+        try:
+            if not symbol.isidentifier():
+                raise ValueError("Symbol string must be a valid Python identifier")
+        # If a user passes in something other than a string, the above
+        # results in an AttributeError. Catch this and raise a more
+        # informative exception
+        except AttributeError:
             raise TypeError("Symbol must be a non-empty string")
-
-        if len(symbol) < 1:
-            raise ValueError("Symbol must be a non-empty string")
-
-        if symbol[0].isnumeric():
-            raise ValueError("First character of symbol must be non-numeric")
 
         self._symbol = symbol
 
