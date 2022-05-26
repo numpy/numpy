@@ -40,8 +40,9 @@ class ABCPolyBase(abc.ABC):
     symbol : str, optional
         Symbol used to represent the independent variable in string 
         representations of the polynomial expression, e.g. for printing.
-        The symbol must be a non-empty string where the first character is
-        non-numeric. Default value is 'x'.
+        The symbol must be a valid Python identifier. Default value is 'x'.
+
+        .. versionadded:: 1.24
 
     Attributes
     ----------
