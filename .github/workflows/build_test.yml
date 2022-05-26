@@ -276,7 +276,7 @@ jobs:
           git config --global --add safe.directory /numpy
           cd /numpy &&
           python3 setup.py install
-          python3 pip3 install -r ./test_requirements.txt
+          python3 pip install -r ./test_requirements.txt
         "
         docker commit the_build the_build
     - name: Run SIMD Tests
