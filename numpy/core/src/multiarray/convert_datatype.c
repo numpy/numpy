@@ -15,6 +15,7 @@
 #include "numpy/npy_math.h"
 
 #include "array_coercion.h"
+#include "can_cast_table.h"
 #include "common.h"
 #include "ctors.h"
 #include "dtypemeta.h"
@@ -106,9 +107,6 @@ PyArray_GetCastingImpl(PyArray_DTypeMeta *from, PyArray_DTypeMeta *to)
         return NULL;
     }
     else {
-        if (NPY_DT_is_parametric(from) || NPY_DT_is_parametric(to)) {
-            Py_RETURN_NONE;
-        }
         /* Reject non-legacy dtypes (they need to use the new API) */
         if (!NPY_DT_is_legacy(from) || !NPY_DT_is_legacy(to)) {
             Py_RETURN_NONE;
@@ -933,22 +931,6 @@ promote_types(PyArray_Descr *type1, PyArray_Descr *type2,
 
 }
 
-/*
- * Returns a new reference to type if it is already NBO, otherwise
- * returns a copy converted to NBO.
- */
-NPY_NO_EXPORT PyArray_Descr *
-ensure_dtype_nbo(PyArray_Descr *type)
-{
-    if (PyArray_ISNBO(type->byteorder)) {
-        Py_INCREF(type);
-        return type;
-    }
-    else {
-        return PyArray_DescrNewByteorder(type, NPY_NATIVE);
-    }
-}
-
 
 /**
  * This function should possibly become public API eventually.  At this
@@ -1031,7 +1013,7 @@ PyArray_FindConcatenationDescriptor(
         npy_intp n, PyArrayObject **arrays, PyObject *requested_dtype)
 {
     if (requested_dtype == NULL) {
-        return PyArray_LegacyResultType(n, arrays, 0, NULL);
+        return PyArray_ResultType(n, arrays, 0, NULL);
     }
 
     PyArray_DTypeMeta *common_dtype;
@@ -1092,7 +1074,13 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
     PyArray_Descr *res;
 
     /* Fast path for identical inputs (NOTE: This path preserves metadata!) */
-    if (type1 == type2 && PyArray_ISNBO(type1->byteorder)) {
+    if (type1 == type2
+            /*
+             * Short-cut for legacy/builtin dtypes except void, since void has
+             * no reliable byteorder.  Note: This path preserves metadata!
+             */
+            && NPY_DT_is_legacy(NPY_DTYPE(type1))
+            && PyArray_ISNBO(type1->byteorder) && type1->type_num != NPY_VOID) {
         Py_INCREF(type1);
         return type1;
     }
@@ -1642,7 +1630,7 @@ PyArray_ResultType(
                     "no arrays or types available to calculate result type");
             return NULL;
         }
-        return ensure_dtype_nbo(result);
+        return NPY_DT_CALL_ensure_canonical(result);
     }
 
     void **info_on_heap = NULL;
@@ -2321,7 +2309,7 @@ legacy_same_dtype_resolve_descriptors(
     loop_descrs[0] = given_descrs[0];
 
     if (given_descrs[1] == NULL) {
-        loop_descrs[1] = ensure_dtype_nbo(loop_descrs[0]);
+        loop_descrs[1] = NPY_DT_CALL_ensure_canonical(loop_descrs[0]);
         if (loop_descrs[1] == NULL) {
             Py_DECREF(loop_descrs[0]);
             return -1;
@@ -2386,12 +2374,12 @@ simple_cast_resolve_descriptors(
 {
     assert(NPY_DT_is_legacy(dtypes[0]) && NPY_DT_is_legacy(dtypes[1]));
 
-    loop_descrs[0] = ensure_dtype_nbo(given_descrs[0]);
+    loop_descrs[0] = NPY_DT_CALL_ensure_canonical(given_descrs[0]);
     if (loop_descrs[0] == NULL) {
         return -1;
     }
     if (given_descrs[1] != NULL) {
-        loop_descrs[1] = ensure_dtype_nbo(given_descrs[1]);
+        loop_descrs[1] = NPY_DT_CALL_ensure_canonical(given_descrs[1]);
         if (loop_descrs[1] == NULL) {
             Py_DECREF(loop_descrs[0]);
             return -1;
@@ -2678,14 +2666,14 @@ cast_to_string_resolve_descriptors(
     }
     else {
         /* The legacy loop can handle mismatching itemsizes */
-        loop_descrs[1] = ensure_dtype_nbo(given_descrs[1]);
+        loop_descrs[1] = NPY_DT_CALL_ensure_canonical(given_descrs[1]);
         if (loop_descrs[1] == NULL) {
             return -1;
         }
     }
 
     /* Set the input one as well (late for easier error management) */
-    loop_descrs[0] = ensure_dtype_nbo(given_descrs[0]);
+    loop_descrs[0] = NPY_DT_CALL_ensure_canonical(given_descrs[0]);
     if (loop_descrs[0] == NULL) {
         return -1;
     }
@@ -2760,7 +2748,7 @@ string_to_string_resolve_descriptors(
     loop_descrs[0] = given_descrs[0];
 
     if (given_descrs[1] == NULL) {
-        loop_descrs[1] = ensure_dtype_nbo(loop_descrs[0]);
+        loop_descrs[1] = NPY_DT_CALL_ensure_canonical(loop_descrs[0]);
         if (loop_descrs[1] == NULL) {
             return -1;
         }
@@ -2991,7 +2979,7 @@ nonstructured_to_structured_resolve_descriptors(
                     *view_offset = field_view_off - to_off;
                 }
             }
-            if (PyTuple_Size(given_descrs[1]->names) != 1) {
+            if (PyTuple_Size(given_descrs[1]->names) != 1 || *view_offset < 0) {
                 /*
                  * Assume that a view is impossible when there is more than one
                  * field.  (Fields could overlap, but that seems weird...)
@@ -3297,8 +3285,7 @@ can_cast_fields_safety(
 {
     Py_ssize_t field_count = PyTuple_Size(from->names);
     if (field_count != PyTuple_Size(to->names)) {
-        /* TODO: This should be rejected! */
-        return NPY_UNSAFE_CASTING;
+        return -1;
     }
 
     NPY_CASTING casting = NPY_NO_CASTING;
@@ -3310,18 +3297,41 @@ can_cast_fields_safety(
         if (from_tup == NULL) {
             return give_bad_field_error(from_key);
         }
-        PyArray_Descr *from_base = (PyArray_Descr*)PyTuple_GET_ITEM(from_tup, 0);
+        PyArray_Descr *from_base = (PyArray_Descr *) PyTuple_GET_ITEM(from_tup, 0);
 
-        /*
-         * TODO: This should use to_key (order), compare gh-15509 by
-         *       by Allan Haldane.  And raise an error on failure.
-         *       (Fixing that may also requires fixing/changing promotion.)
-         */
-        PyObject *to_tup = PyDict_GetItem(to->fields, from_key);
+        /* Check whether the field names match */
+        PyObject *to_key = PyTuple_GET_ITEM(to->names, i);
+        PyObject *to_tup = PyDict_GetItem(to->fields, to_key);
         if (to_tup == NULL) {
-            return NPY_UNSAFE_CASTING;
+            return give_bad_field_error(from_key);
         }
-        PyArray_Descr *to_base = (PyArray_Descr*)PyTuple_GET_ITEM(to_tup, 0);
+        PyArray_Descr *to_base = (PyArray_Descr *) PyTuple_GET_ITEM(to_tup, 0);
+
+        int cmp = PyUnicode_Compare(from_key, to_key);
+        if (error_converting(cmp)) {
+            return -1;
+        }
+        if (cmp != 0) {
+            /* Field name mismatch, consider this at most SAFE. */
+            casting = PyArray_MinCastSafety(casting, NPY_SAFE_CASTING);
+        }
+
+        /* Also check the title (denote mismatch as SAFE only) */
+        PyObject *from_title = from_key;
+        PyObject *to_title = to_key;
+        if (PyTuple_GET_SIZE(from_tup) > 2) {
+            from_title = PyTuple_GET_ITEM(from_tup, 2);
+        }
+        if (PyTuple_GET_SIZE(to_tup) > 2) {
+            to_title = PyTuple_GET_ITEM(to_tup, 2);
+        }
+        cmp = PyObject_RichCompareBool(from_title, to_title, Py_EQ);
+        if (error_converting(cmp)) {
+            return -1;
+        }
+        if (!cmp) {
+            casting = PyArray_MinCastSafety(casting, NPY_SAFE_CASTING);
+        }
 
         NPY_CASTING field_casting = PyArray_GetCastInfo(
                 from_base, to_base, NULL, &field_view_off);
@@ -3354,39 +3364,22 @@ can_cast_fields_safety(
             *view_offset = NPY_MIN_INTP;
         }
     }
-    if (*view_offset != 0) {
-        /* If the calculated `view_offset` is not 0, it can only be "equiv" */
-        return PyArray_MinCastSafety(casting, NPY_EQUIV_CASTING);
+
+    if (*view_offset != 0 || from->elsize != to->elsize) {
+        /* Can never be considered "no" casting. */
+        casting = PyArray_MinCastSafety(casting, NPY_EQUIV_CASTING);
     }
 
-    /*
-     * If the itemsize (includes padding at the end), fields, or names
-     * do not match, this cannot be a view and also not a "no" cast
-     * (identical dtypes).
-     * It may be possible that this can be relaxed in some cases.
-     */
-    if (from->elsize != to->elsize) {
-        /*
-         * The itemsize may mismatch even if all fields and formats match
-         * (due to additional padding).
-         */
-        return PyArray_MinCastSafety(casting, NPY_EQUIV_CASTING);
+    /* The new dtype may have access outside the old one due to padding: */
+    if (*view_offset < 0) {
+        /* negative offsets would give indirect access before original dtype */
+        *view_offset = NPY_MIN_INTP;
+    }
+    if (from->elsize < to->elsize + *view_offset) {
+        /* new dtype has indirect access outside of the original dtype */
+        *view_offset = NPY_MIN_INTP;
     }
 
-    int cmp = PyObject_RichCompareBool(from->fields, to->fields, Py_EQ);
-    if (cmp != 1) {
-        if (cmp == -1) {
-            PyErr_Clear();
-        }
-        return PyArray_MinCastSafety(casting, NPY_EQUIV_CASTING);
-    }
-    cmp = PyObject_RichCompareBool(from->names, to->names, Py_EQ);
-    if (cmp != 1) {
-        if (cmp == -1) {
-            PyErr_Clear();
-        }
-        return PyArray_MinCastSafety(casting, NPY_EQUIV_CASTING);
-    }
     return casting;
 }
 

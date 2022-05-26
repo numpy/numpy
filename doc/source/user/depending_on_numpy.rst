@@ -114,26 +114,30 @@ for dropping support for old Python and NumPy versions: :ref:`NEP29`. We
 recommend all packages depending on NumPy to follow the recommendations in NEP
 29.
 
-For *run-time dependencies*, you specify the range of versions in
+For *run-time dependencies*, specify version bounds using
 ``install_requires`` in ``setup.py`` (assuming you use ``numpy.distutils`` or
-``setuptools`` to build). Getting the upper bound right for NumPy is slightly
-tricky. If we don't set any bound, a too-new version will be pulled in a few
-years down the line, and NumPy may have deprecated and removed some API that
-your package depended on by then. On the other hand if you set the upper bound
-to the newest already-released version, then as soon as a new NumPy version is
-released there will be no matching version of your package that works with it.
+``setuptools`` to build).
 
-What to do here depends on your release frequency. Given that NumPy releases
-come in a 6-monthly cadence and that features that get deprecated in NumPy
-should stay around for another two releases, a good upper bound is
-``<1.(xx+3).0`` - where ``xx`` is the minor version of the latest
-already-released NumPy. This is safe to do if you release at least once a year.
-If your own releases are much less frequent, you may set the upper bound a
-little further into the future - this is a trade-off between a future NumPy
-version _maybe_ removing something you rely on, and the upper bound being
-exceeded which _may_ lead to your package being hard to install in combination
-with other packages relying on the latest NumPy.
+Most libraries that rely on NumPy will not need to set an upper
+version bound: NumPy is careful to preserve backward-compatibility.
 
+That said, if you are (a) a project that is guaranteed to release
+frequently, (b) use a large part of NumPy's API surface, and (c) is
+worried that changes in NumPy may break your code, you can set an
+upper bound of ``<MAJOR.MINOR + N`` with N no less than 3, and
+``MAJOR.MINOR`` being the current release of NumPy [*]_. If you use the NumPy
+C API (directly or via Cython), you can also pin the current major
+version to prevent ABI breakage. Note that setting an upper bound on
+NumPy may `affect the ability of your library to be installed
+alongside other, newer packages
+<https://iscinumpy.dev/post/bound-version-constraints/>`__.
+
+.. [*] The reason for setting ``N=3`` is that NumPy will, on the
+       rare occasion where it makes breaking changes, raise warnings
+       for at least two releases. (NumPy releases about once every six
+       months, so this translates to a window of at least a year;
+       hence the subsequent requirement that your project releases at
+       least on that cadence.)
 
 .. note::
 

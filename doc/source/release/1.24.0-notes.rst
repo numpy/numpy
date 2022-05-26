@@ -1,0 +1,45 @@
+.. currentmodule:: numpy
+
+==========================
+NumPy 1.24.0 Release Notes
+==========================
+
+
+Highlights
+==========
+
+
+New functions
+=============
+
+
+Deprecations
+============
+
+
+Future Changes
+==============
+
+
+Expired deprecations
+====================
+
+
+Compatibility notes
+===================
+
+
+C API changes
+=============
+
+
+New Features
+============
+
+
+Improvements
+============
+
+
+Changes
+=======

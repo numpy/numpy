@@ -3,5 +3,5 @@
 Testing Guidelines
 ==================
 
-.. include:: ../../TESTS.rst.txt
+.. include:: ../../TESTS.rst
    :start-line: 6

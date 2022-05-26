@@ -467,11 +467,6 @@ class TestSolve(SolveCases):
         x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
         assert_equal(linalg.solve(x, x).dtype, dtype)
 
-    @pytest.mark.xfail(sys.platform == 'cygwin',
-                       reason="Consistently fails on CI.")
-    def test_sq_cases(self):
-        super().test_sq_cases()
-
     def test_0_size(self):
         class ArraySubclass(np.ndarray):
             pass
@@ -538,11 +533,6 @@ class TestInv(InvCases):
     def test_types(self, dtype):
         x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
         assert_equal(linalg.inv(x).dtype, dtype)
-
-    @pytest.mark.xfail(sys.platform == 'cygwin',
-                       reason="Consistently fails on CI.")
-    def test_sq_cases(self):
-        super().test_sq_cases()
 
     def test_0_size(self):
         # Check that all kinds of 0-sized arrays work
@@ -1233,6 +1223,14 @@ class _TestNormBase:
     dt = None
     dec = None
 
+    @staticmethod
+    def check_dtype(x, res):
+        if issubclass(x.dtype.type, np.inexact):
+            assert_equal(res.dtype, x.real.dtype)
+        else:
+            # For integer input, don't have to test float precision of output.
+            assert_(issubclass(res.dtype.type, np.floating))
+
 
 class _TestNormGeneral(_TestNormBase):
 
@@ -1249,37 +1247,37 @@ class _TestNormGeneral(_TestNormBase):
 
         all_types = exact_types + inexact_types
 
-        for each_inexact_types in all_types:
-            at = a.astype(each_inexact_types)
+        for each_type in all_types:
+            at = a.astype(each_type)
 
             an = norm(at, -np.inf)
-            assert_(issubclass(an.dtype.type, np.floating))
+            self.check_dtype(at, an)
             assert_almost_equal(an, 0.0)
 
             with suppress_warnings() as sup:
                 sup.filter(RuntimeWarning, "divide by zero encountered")
                 an = norm(at, -1)
-                assert_(issubclass(an.dtype.type, np.floating))
+                self.check_dtype(at, an)
                 assert_almost_equal(an, 0.0)
 
             an = norm(at, 0)
-            assert_(issubclass(an.dtype.type, np.floating))
+            self.check_dtype(at, an)
             assert_almost_equal(an, 2)
 
             an = norm(at, 1)
-            assert_(issubclass(an.dtype.type, np.floating))
+            self.check_dtype(at, an)
             assert_almost_equal(an, 2.0)
 
             an = norm(at, 2)
-            assert_(issubclass(an.dtype.type, np.floating))
+            self.check_dtype(at, an)
             assert_almost_equal(an, an.dtype.type(2.0)**an.dtype.type(1.0/2.0))
 
             an = norm(at, 4)
-            assert_(issubclass(an.dtype.type, np.floating))
+            self.check_dtype(at, an)
             assert_almost_equal(an, an.dtype.type(2.0)**an.dtype.type(1.0/4.0))
 
             an = norm(at, np.inf)
-            assert_(issubclass(an.dtype.type, np.floating))
+            self.check_dtype(at, an)
             assert_almost_equal(an, 1.0)
 
     def test_vector(self):
@@ -1412,41 +1410,41 @@ class _TestNorm2D(_TestNormBase):
 
         all_types = exact_types + inexact_types
 
-        for each_inexact_types in all_types:
-            at = a.astype(each_inexact_types)
+        for each_type in all_types:
+            at = a.astype(each_type)
 
             an = norm(at, -np.inf)
-            assert_(issubclass(an.dtype.type, np.floating))
+            self.check_dtype(at, an)
             assert_almost_equal(an, 2.0)
 
             with suppress_warnings() as sup:
                 sup.filter(RuntimeWarning, "divide by zero encountered")
                 an = norm(at, -1)
-                assert_(issubclass(an.dtype.type, np.floating))
+                self.check_dtype(at, an)
                 assert_almost_equal(an, 1.0)
 
             an = norm(at, 1)
-            assert_(issubclass(an.dtype.type, np.floating))
+            self.check_dtype(at, an)
             assert_almost_equal(an, 2.0)
 
             an = norm(at, 2)
-            assert_(issubclass(an.dtype.type, np.floating))
+            self.check_dtype(at, an)
             assert_almost_equal(an, 3.0**(1.0/2.0))
 
             an = norm(at, -2)
-            assert_(issubclass(an.dtype.type, np.floating))
+            self.check_dtype(at, an)
             assert_almost_equal(an, 1.0)
 
             an = norm(at, np.inf)
-            assert_(issubclass(an.dtype.type, np.floating))
+            self.check_dtype(at, an)
             assert_almost_equal(an, 2.0)
 
             an = norm(at, 'fro')
-            assert_(issubclass(an.dtype.type, np.floating))
+            self.check_dtype(at, an)
             assert_almost_equal(an, 2.0)
 
             an = norm(at, 'nuc')
-            assert_(issubclass(an.dtype.type, np.floating))
+            self.check_dtype(at, an)
             # Lower bar needed to support low precision floats.
             # They end up being off by 1 in the 7th place.
             np.testing.assert_almost_equal(an, 2.7320508075688772, decimal=6)
@@ -1783,9 +1781,6 @@ class TestQR:
 class TestCholesky:
     # TODO: are there no other tests for cholesky?
 
-    @pytest.mark.xfail(
-        sys.platform == 'cygwin', reason="Consistently fails in CI"
-    )
     @pytest.mark.parametrize(
         'shape', [(1, 1), (2, 2), (3, 3), (50, 50), (3, 10, 10)]
     )
@@ -2129,8 +2124,6 @@ class TestTensorsolve:
             b = np.ones(a.shape[:2])
             linalg.tensorsolve(a, b, axes=axes)
 
-    @pytest.mark.xfail(sys.platform == 'cygwin',
-                       reason="Consistently fails on CI")
     @pytest.mark.parametrize("shape",
         [(2, 3, 6), (3, 4, 4, 3), (0, 3, 3, 0)],
     )

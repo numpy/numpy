@@ -52,7 +52,7 @@ Compatibility notes
 
 The doc/sphinxext content has been moved into its own github repository,
 and is included in numpy as a submodule. See the instructions in
-doc/HOWTO_BUILD_DOCS.rst.txt for how to access the content.
+doc/HOWTO_BUILD_DOCS.rst for how to access the content.
 
 .. _numpydoc: https://github.com/numpy/numpydoc
 

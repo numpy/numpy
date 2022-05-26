@@ -1485,6 +1485,13 @@ class TestRandomDist:
         with assert_raises(ValueError):
             x = random.negative_binomial(1, 0)
 
+    def test_negative_binomial_invalid_p_n_combination(self):
+        # Verify that values of p and n that would result in an overflow
+        # or infinite loop raise an exception.
+        with np.errstate(invalid='ignore'):
+            assert_raises(ValueError, random.negative_binomial, 2**62, 0.1)
+            assert_raises(ValueError, random.negative_binomial, [2**62], [0.1])
+
     def test_noncentral_chisquare(self):
         random = Generator(MT19937(self.seed))
         actual = random.noncentral_chisquare(df=5, nonc=5, size=(3, 2))

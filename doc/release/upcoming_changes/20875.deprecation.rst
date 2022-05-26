@@ -1,9 +1,0 @@
-Deprecation of ``numpy.distutils``
-----------------------------------
-
-``numpy.distutils`` has been deprecated, as a result of ``distutils``
-itself being deprecated. It will not be present in NumPy for Python >= 3.12,
-and will be removed completely 2 years after the release of Python 3.12
-
-For more details, see :ref:`distutils-status-migration`.
-

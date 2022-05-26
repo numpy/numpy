@@ -185,14 +185,6 @@ class TestComparisonDeprecations(_DeprecationTestCase):
         self.assert_deprecated(lambda: np.arange(2) == NotArray())
         self.assert_deprecated(lambda: np.arange(2) != NotArray())
 
-        struct1 = np.zeros(2, dtype="i4,i4")
-        struct2 = np.zeros(2, dtype="i4,i4,i4")
-
-        assert_warns(FutureWarning, lambda: struct1 == 1)
-        assert_warns(FutureWarning, lambda: struct1 == struct2)
-        assert_warns(FutureWarning, lambda: struct1 != 1)
-        assert_warns(FutureWarning, lambda: struct1 != struct2)
-
     def test_array_richcompare_legacy_weirdness(self):
         # It doesn't really work to use assert_deprecated here, b/c part of
         # the point of assert_deprecated is to check that when warnings are
@@ -621,9 +613,6 @@ class TestNonExactMatchDeprecation(_DeprecationTestCase):
 
 class TestDeprecatedGlobals(_DeprecationTestCase):
     # 2020-06-06
-    @pytest.mark.skipif(
-        sys.version_info < (3, 7),
-        reason='module-level __getattr__ not supported')
     def test_type_aliases(self):
         # from builtins
         self.assert_deprecated(lambda: np.bool(True))
@@ -1216,3 +1205,11 @@ class TestArrayFinalizeNone(_DeprecationTestCase):
             __array_finalize__ = None
 
         self.assert_deprecated(lambda: np.array(1).view(NoFinalize))
+
+class TestAxisNotMAXDIMS(_DeprecationTestCase):
+    # Deprecated 2022-01-08, NumPy 1.23
+    message = r"Using `axis=32` \(MAXDIMS\) is deprecated"
+
+    def test_deprecated(self):
+        a = np.zeros((1,)*32)
+        self.assert_deprecated(lambda: np.repeat(a, 1, axis=np.MAXDIMS))

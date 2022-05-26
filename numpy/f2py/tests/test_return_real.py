@@ -1,5 +1,6 @@
 import platform
 import pytest
+import numpy as np
 
 from numpy import array
 from . import util
@@ -51,6 +52,10 @@ class TestReturnReal(util.F2PyTest):
     platform.system() == "Darwin",
     reason="Prone to error when run with numpy/f2py/tests on mac os, "
     "but not when run in isolation",
+)
+@pytest.mark.skipif(
+    np.dtype(np.intp).itemsize < 8,
+    reason="32-bit builds are buggy"
 )
 class TestCReturnReal(TestReturnReal):
     suffix = ".pyf"

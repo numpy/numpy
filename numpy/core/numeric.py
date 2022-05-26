@@ -13,7 +13,7 @@ from .multiarray import (
     WRAP, arange, array, asarray, asanyarray, ascontiguousarray,
     asfortranarray, broadcast, can_cast, compare_chararrays,
     concatenate, copyto, dot, dtype, empty,
-    empty_like, flatiter, frombuffer, _from_dlpack, fromfile, fromiter,
+    empty_like, flatiter, frombuffer, from_dlpack, fromfile, fromiter,
     fromstring, inner, lexsort, matmul, may_share_memory,
     min_scalar_type, ndarray, nditer, nested_iters, promote_types,
     putmask, result_type, set_numeric_ops, shares_memory, vdot, where,
@@ -41,7 +41,7 @@ __all__ = [
     'newaxis', 'ndarray', 'flatiter', 'nditer', 'nested_iters', 'ufunc',
     'arange', 'array', 'asarray', 'asanyarray', 'ascontiguousarray',
     'asfortranarray', 'zeros', 'count_nonzero', 'empty', 'broadcast', 'dtype',
-    'fromstring', 'fromfile', 'frombuffer', '_from_dlpack', 'where',
+    'fromstring', 'fromfile', 'frombuffer', 'from_dlpack', 'where',
     'argwhere', 'copyto', 'concatenate', 'fastCopyAndTranspose', 'lexsort',
     'set_numeric_ops', 'can_cast', 'promote_types', 'min_scalar_type',
     'result_type', 'isfortran', 'empty_like', 'zeros_like', 'ones_like',
@@ -633,7 +633,7 @@ def flatnonzero(a):
     """
     Return indices that are non-zero in the flattened version of a.
 
-    This is equivalent to np.nonzero(np.ravel(a))[0].
+    This is equivalent to ``np.nonzero(np.ravel(a))[0]``.
 
     Parameters
     ----------
@@ -643,7 +643,7 @@ def flatnonzero(a):
     Returns
     -------
     res : ndarray
-        Output array, containing the indices of the elements of `a.ravel()`
+        Output array, containing the indices of the elements of ``a.ravel()``
         that are non-zero.
 
     See Also
@@ -675,16 +675,16 @@ def _correlate_dispatcher(a, v, mode=None):
 
 @array_function_dispatch(_correlate_dispatcher)
 def correlate(a, v, mode='valid'):
-    """
+    r"""
     Cross-correlation of two 1-dimensional sequences.
 
     This function computes the correlation as generally defined in signal
-    processing texts::
+    processing texts:
 
-        c_{av}[k] = sum_n a[n+k] * conj(v[n])
+    .. math:: c_k = \sum_n a_{n+k} \cdot \overline{v_n}
 
-    with a and v sequences being zero-padded where necessary and conj being
-    the conjugate.
+    with a and v sequences being zero-padded where necessary and
+    :math:`\overline x` denoting complex conjugation.
 
     Parameters
     ----------
@@ -711,11 +711,11 @@ def correlate(a, v, mode='valid'):
     Notes
     -----
     The definition of correlation above is not unique and sometimes correlation
-    may be defined differently. Another common definition is::
+    may be defined differently. Another common definition is:
 
-        c'_{av}[k] = sum_n a[n] conj(v[n+k])
+    .. math:: c'_k = \sum_n a_{n} \cdot \overline{v_{n+k}}
 
-    which is related to ``c_{av}[k]`` by ``c'_{av}[k] = c_{av}[-k]``.
+    which is related to :math:`c_k` by :math:`c'_k = c_{-k}`.
 
     `numpy.correlate` may perform slowly in large arrays (i.e. n = 1e5) because it does
     not use the FFT to compute the convolution; in that case, `scipy.signal.correlate` might
@@ -737,8 +737,8 @@ def correlate(a, v, mode='valid'):
     array([ 0.5-0.5j,  1.0+0.j ,  1.5-1.5j,  3.0-1.j ,  0.0+0.j ])
 
     Note that you get the time reversed, complex conjugated result
-    when the two input sequences change places, i.e.,
-    ``c_{va}[k] = c^{*}_{av}[-k]``:
+    (:math:`\overline{c_{-k}}`) when the two input sequences a and v change 
+    places:
 
     >>> np.correlate([0, 1, 0.5j], [1+1j, 2, 3-1j], 'full')
     array([ 0.0+0.j ,  3.0+1.j ,  1.5+1.5j,  1.0+0.j ,  0.5+0.5j])
@@ -804,7 +804,7 @@ def convolve(a, v, mode='full'):
     -----
     The discrete convolution operation is defined as
 
-    .. math:: (a * v)[n] = \\sum_{m = -\\infty}^{\\infty} a[m] v[n - m]
+    .. math:: (a * v)_n = \\sum_{m = -\\infty}^{\\infty} a_m v_{n - m}
 
     It can be shown that a convolution :math:`x(t) * y(t)` in time/space
     is equivalent to the multiplication :math:`X(f) Y(f)` in the Fourier
@@ -1567,7 +1567,7 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
     array(-3)
 
     Multiple vector cross-products. Note that the direction of the cross
-    product vector is defined by the `right-hand rule`.
+    product vector is defined by the *right-hand rule*.
 
     >>> x = np.array([[1,2,3], [4,5,6]])
     >>> y = np.array([[4,5,6], [1,2,3]])

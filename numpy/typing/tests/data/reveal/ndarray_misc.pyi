@@ -11,7 +11,7 @@ import ctypes as ct
 from typing import Any
 
 import numpy as np
-from numpy.typing import NDArray
+from numpy._typing import NDArray
 
 class SubClass(NDArray[np.object_]): ...
 
@@ -165,7 +165,7 @@ reveal_type(AR_f8.dot(1))  # E: ndarray[Any, Any]
 reveal_type(AR_f8.dot([1]))  # E: Any
 reveal_type(AR_f8.dot(1, out=B))  # E: SubClass
 
-reveal_type(AR_f8.nonzero())  # E: tuple[ndarray[Any, dtype[{intp}]]]
+reveal_type(AR_f8.nonzero())  # E: tuple[ndarray[Any, dtype[{intp}]], ...]
 
 reveal_type(AR_f8.searchsorted(1))  # E: {intp}
 reveal_type(AR_f8.searchsorted([1]))  # E: ndarray[Any, dtype[{intp}]]
@@ -204,6 +204,8 @@ reveal_type(AR_V[AR_i8])  # E: Any
 reveal_type(AR_V[AR_i8, AR_i8])  # E: Any
 reveal_type(AR_V[AR_i8, None])  # E: ndarray[Any, dtype[void]]
 reveal_type(AR_V[0, ...])  # E: ndarray[Any, dtype[void]]
+reveal_type(AR_V[[0]])  # E: ndarray[Any, dtype[void]]
+reveal_type(AR_V[[0], [0]])  # E: ndarray[Any, dtype[void]]
 reveal_type(AR_V[:])  # E: ndarray[Any, dtype[void]]
 reveal_type(AR_V["a"])  # E: ndarray[Any, dtype[Any]]
 reveal_type(AR_V[["a", "b"]])  # E: ndarray[Any, dtype[void]]
@@ -212,3 +214,7 @@ reveal_type(AR_f8.dump("test_file"))  # E: None
 reveal_type(AR_f8.dump(b"test_file"))  # E: None
 with open("test_file", "wb") as f:
     reveal_type(AR_f8.dump(f))  # E: None
+
+reveal_type(AR_f8.__array_finalize__(None))  # E: None
+reveal_type(AR_f8.__array_finalize__(B))  # E: None
+reveal_type(AR_f8.__array_finalize__(AR_f8))  # E: None

@@ -1342,9 +1342,6 @@ def assert_raises_regex(exception_class, expected_regexp, *args, **kwargs):
 
     Alternatively, can be used as a context manager like `assert_raises`.
 
-    Name of this function adheres to Python 3.2+ reference, but should work in
-    all versions down to 2.6.
-
     Notes
     -----
     .. versionadded:: 1.9.0

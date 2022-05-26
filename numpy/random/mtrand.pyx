@@ -139,7 +139,7 @@ cdef class RandomState:
     'RandomState' methods using the same parameters will always produce the
     same results up to roundoff error except when the values were incorrect.
     `RandomState` is effectively frozen and will only receive updates that
-    are required by changes in the the internals of Numpy. More substantial
+    are required by changes in the internals of Numpy. More substantial
     changes, including algorithmic improvements, are reserved for
     `Generator`.
 
@@ -3478,7 +3478,7 @@ cdef class RandomState:
         probability of success, :math:`N+n` is the number of trials, and
         :math:`\\Gamma` is the gamma function. When :math:`n` is an integer,
         :math:`\\frac{\\Gamma(N+n)}{N!\\Gamma(n)} = \\binom{N+n-1}{N}`, which is
-        the more common form of this term in the the pmf. The negative
+        the more common form of this term in the pmf. The negative
         binomial distribution gives the probability of N failures given n
         successes, with a success on the last trial.
 
@@ -4540,7 +4540,7 @@ cdef class RandomState:
                         "Shuffling a one dimensional array subclass containing "
                         "objects gives incorrect results for most array "
                         "subclasses.  "
-                        "Please us the new random number API instead: "
+                        "Please use the new random number API instead: "
                         "https://numpy.org/doc/stable/reference/random/index.html\n"
                         "The new API fixes this issue. This version will not "
                         "be fixed due to stability guarantees of the API.",

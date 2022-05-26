@@ -57,10 +57,47 @@ class UFunc(Benchmark):
     def time_ufunc_types(self, ufuncname):
         [self.f(*arg) for arg in self.args]
 
+class UFuncSmall(Benchmark):
+    """  Benchmark for a selection of ufuncs on a small arrays and scalars 
+
+    Since the arrays and scalars are small, we are benchmarking the overhead 
+    of the numpy ufunc functionality
+    """
+    params = ['abs', 'sqrt', 'cos']
+    param_names = ['ufunc']
+    timeout = 10
+
+    def setup(self, ufuncname):
+        np.seterr(all='ignore')
+        try:
+            self.f = getattr(np, ufuncname)
+        except AttributeError:
+            raise NotImplementedError()
+        self.array_5 = np.array([1., 2., 10., 3., 4.])
+        self.array_int_3 = np.array([1, 2, 3])
+        self.float64 = np.float64(1.1)
+        self.python_float = 1.1
+        
+    def time_ufunc_small_array(self, ufuncname):
+        self.f(self.array_5)
+
+    def time_ufunc_small_array_inplace(self, ufuncname):
+        self.f(self.array_5, out = self.array_5)
+
+    def time_ufunc_small_int_array(self, ufuncname):
+        self.f(self.array_int_3)
+
+    def time_ufunc_numpy_scalar(self, ufuncname):
+        self.f(self.float64)
+
+    def time_ufunc_python_float(self, ufuncname):
+        self.f(self.python_float)
+        
 
 class Custom(Benchmark):
     def setup(self):
         self.b = np.ones(20000, dtype=bool)
+        self.b_small = np.ones(3, dtype=bool)
 
     def time_nonzero(self):
         np.nonzero(self.b)
@@ -73,6 +110,9 @@ class Custom(Benchmark):
 
     def time_or_bool(self):
         (self.b | self.b)
+
+    def time_and_bool_small(self):
+        (self.b_small & self.b_small)
 
 
 class CustomInplace(Benchmark):

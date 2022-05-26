@@ -73,13 +73,15 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 
 #include "npy_dlpack.h"
 
+#include "umathmodule.h"
+
 /*
  *****************************************************************************
  **                    INCLUDE GENERATED CODE                               **
  *****************************************************************************
  */
-#include "funcs.inc"
-#include "umathmodule.h"
+/* __ufunc_api.c define is the PyUFunc_API table: */
+#include "__ufunc_api.c"
 
 NPY_NO_EXPORT int initscalarmath(PyObject *);
 NPY_NO_EXPORT int set_matmul_flags(PyObject *d); /* in ufunc_object.c */
@@ -126,15 +128,21 @@ PyArray_GetPriority(PyObject *obj, double default_)
         return NPY_SCALAR_PRIORITY;
     }
 
-    ret = PyArray_LookupSpecial_OnInstance(obj, "__array_priority__");
+    ret = PyArray_LookupSpecial_OnInstance(obj, npy_ma_str_array_priority);
     if (ret == NULL) {
         if (PyErr_Occurred()) {
-            PyErr_Clear(); /* TODO[gh-14801]: propagate crashes during attribute access? */
+            /* TODO[gh-14801]: propagate crashes during attribute access? */
+            PyErr_Clear();
         }
         return default_;
     }
 
     priority = PyFloat_AsDouble(ret);
+    if (error_converting(priority)) {
+        /* TODO[gh-14801]: propagate crashes for bad priority? */
+        PyErr_Clear();
+        return default_;
+    }
     Py_DECREF(ret);
     return priority;
 }
@@ -4480,12 +4488,14 @@ static struct PyMethodDef array_module_methods[] = {
         METH_VARARGS, NULL},
     {"_get_sfloat_dtype",
         get_sfloat_dtype, METH_NOARGS, NULL},
+    {"_get_madvise_hugepage", (PyCFunction)_get_madvise_hugepage,
+        METH_NOARGS, NULL},
     {"_set_madvise_hugepage", (PyCFunction)_set_madvise_hugepage,
         METH_O, NULL},
     {"_reload_guard", (PyCFunction)_reload_guard,
         METH_NOARGS,
         "Give a warning on reload and big warning in sub-interpreters."},
-    {"_from_dlpack", (PyCFunction)_from_dlpack,
+    {"from_dlpack", (PyCFunction)from_dlpack,
         METH_O, NULL},
     {NULL, NULL, 0, NULL}                /* sentinel */
 };
@@ -4657,6 +4667,12 @@ set_flaginfo(PyObject *d)
     return;
 }
 
+NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_current_allocator = NULL;
+NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_array = NULL;
+NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_array_function = NULL;
+NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_array_struct = NULL;
+NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_array_interface = NULL;
+NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_array_priority = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_array_wrap = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_array_finalize = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_implementation = NULL;
@@ -4668,6 +4684,30 @@ NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_numpy = NULL;
 static int
 intern_strings(void)
 {
+    npy_ma_str_current_allocator = PyUnicode_InternFromString("current_allocator");
+    if (npy_ma_str_current_allocator == NULL) {
+        return -1;
+    }
+    npy_ma_str_array = PyUnicode_InternFromString("__array__");
+    if (npy_ma_str_array == NULL) {
+        return -1;
+    }
+    npy_ma_str_array_function = PyUnicode_InternFromString("__array_function__");
+    if (npy_ma_str_array_function == NULL) {
+        return -1;
+    }
+    npy_ma_str_array_struct = PyUnicode_InternFromString("__array_struct__");
+    if (npy_ma_str_array_struct == NULL) {
+        return -1;
+    }
+    npy_ma_str_array_priority = PyUnicode_InternFromString("__array_priority__");
+    if (npy_ma_str_array_priority == NULL) {
+        return -1;
+    }
+    npy_ma_str_array_interface = PyUnicode_InternFromString("__array_interface__");
+    if (npy_ma_str_array_interface == NULL) {
+        return -1;
+    }
     npy_ma_str_array_wrap = PyUnicode_InternFromString("__array_wrap__");
     if (npy_ma_str_array_wrap == NULL) {
         return -1;
@@ -4942,8 +4982,7 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
         goto err;
     }
 
-    /* Load the ufunc operators into the array module's namespace */
-    if (InitOperators(d) < 0) {
+    if (initumath(m) != 0) {
         goto err;
     }
 
@@ -4951,9 +4990,6 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
         goto err;
     }
 
-    if (initumath(m) != 0) {
-        goto err;
-    }
     /*
      * Initialize the default PyDataMem_Handler capsule singleton.
      */

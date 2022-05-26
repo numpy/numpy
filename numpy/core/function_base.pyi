@@ -7,7 +7,7 @@ from typing import (
 )
 
 from numpy import floating, complexfloating, generic
-from numpy.typing import (
+from numpy._typing import (
     NDArray,
     DTypeLike,
     _DTypeLike,

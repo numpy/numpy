@@ -8,7 +8,7 @@ source. Your choice depends on your operating system and familiarity with the
 command line.
 
 Gitpod
-------------
+------
 
 Gitpod is an open-source platform that automatically creates
 the correct development environment right in your browser, reducing the need to
@@ -21,7 +21,7 @@ in-depth instructions for building NumPy with `building NumPy with Gitpod`_.
 .. _building NumPy with Gitpod: https://numpy.org/devdocs/dev/development_gitpod.html
 
 Building locally
-------------------
+----------------
 
 Building locally on your machine gives you
 more granular control. If you are a MacOS or Linux user familiar with using the
@@ -47,6 +47,9 @@ Building NumPy requires the following software installed:
 
    Much of NumPy is written in C.  You will need a C compiler that complies
    with the C99 standard.
+
+   Part of Numpy is now written in C++. You will also need a C++ compiler that
+   complies with the C++11 standard.
 
    While a FORTRAN 77 compiler is not necessary for building NumPy, it is
    needed to run the ``numpy.f2py`` tests. These tests are skipped if the
@@ -94,7 +97,14 @@ Testing
 -------
 
 Make sure to test your builds. To ensure everything stays in shape, see if
-all tests pass::
+all tests pass.
+
+The test suite requires additional dependencies, which can easily be 
+installed with::
+
+    $ python -m pip install -r test_requirements.txt
+
+Run tests::
 
     $ python runtests.py -v -m full
 

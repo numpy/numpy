@@ -2,7 +2,7 @@ from collections.abc import Iterable
 from typing import Any, TypeVar, overload, SupportsIndex
 
 from numpy import generic
-from numpy.typing import (
+from numpy._typing import (
     NDArray,
     ArrayLike,
     _ShapeLike,

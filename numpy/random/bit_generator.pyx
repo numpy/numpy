@@ -35,13 +35,7 @@ import abc
 import sys
 from itertools import cycle
 import re
-
-try:
-    from secrets import randbits
-except ImportError:
-    # secrets unavailable on python 3.5 and before
-    from random import SystemRandom
-    randbits = SystemRandom().getrandbits
+from secrets import randbits
 
 from threading import Lock
 

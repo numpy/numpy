@@ -88,6 +88,8 @@ Note that when ``out`` is given, the return value is ``out``:
     >>> y is x
     True
 
+.. _generator-handling-axis-parameter:    
+
 Handling the ``axis`` parameter
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 An important distinction for these methods is how they handle the ``axis``

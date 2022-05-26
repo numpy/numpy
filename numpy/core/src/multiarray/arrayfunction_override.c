@@ -37,7 +37,7 @@ get_array_function(PyObject *obj)
         return ndarray_array_function;
     }
 
-    PyObject *array_function = PyArray_LookupSpecial(obj, "__array_function__");
+    PyObject *array_function = PyArray_LookupSpecial(obj, npy_ma_str_array_function);
     if (array_function == NULL && PyErr_Occurred()) {
         PyErr_Clear(); /* TODO[gh-14801]: propagate crashes during attribute access? */
     }

@@ -167,7 +167,7 @@ for checking array writeability -- any C code which works with arrays whose
 WRITEABLE flag is not known to be True a priori, should make sure to call
 this function before writing.
 
-NumPy C Style Guide added (``doc/C_STYLE_GUIDE.rst.txt``).
+NumPy C Style Guide added (``doc/C_STYLE_GUIDE.rst``).
 
 Changes
 =======

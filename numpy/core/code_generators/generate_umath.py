@@ -54,10 +54,10 @@ class TypeDescription:
     cfunc_alias : str or none, optional
         Appended to inner loop C function name, e.g., FLOAT_{cfunc_alias}. See make_arrays.
         NOTE: it doesn't support 'astype'
-    simd: list
+    simd : list
         Available SIMD ufunc loops, dispatched at runtime in specified order
         Currently only supported for simples types (see make_arrays)
-    dispatch: str or None, optional
+    dispatch : str or None, optional
         Dispatch-able source name without its extension '.dispatch.c' that
         contains the definition of ufunc, dispatched at runtime depending on the
         specified targets of the dispatch-able source.
@@ -364,7 +364,7 @@ defdict = {
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.fmod'),
           None,
-          TD(ints),
+          TD(ints, dispatch=[('loops_modulo', ints)]),
           TD(flts, f='fmod', astype={'e': 'f'}),
           TD(P, f='fmod'),
           ),
@@ -884,7 +884,8 @@ defdict = {
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.remainder'),
           'PyUFunc_RemainderTypeResolver',
-          TD(intflt),
+          TD(ints, dispatch=[('loops_modulo', ints)]),
+          TD(flts),
           [TypeDescription('m', FullTypeDescr, 'mm', 'm')],
           TD(O, f='PyNumber_Remainder'),
           ),
@@ -892,7 +893,8 @@ defdict = {
     Ufunc(2, 2, None,
           docstrings.get('numpy.core.umath.divmod'),
           'PyUFunc_DivmodTypeResolver',
-          TD(intflt),
+          TD(ints, dispatch=[('loops_modulo', ints)]),
+          TD(flts),
           [TypeDescription('m', FullTypeDescr, 'mm', 'qm')],
           # TD(O, f='PyNumber_Divmod'),  # gh-9730
           ),

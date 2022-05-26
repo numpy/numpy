@@ -136,7 +136,7 @@ simple_legacy_resolve_descriptors(
          * (identity) at least currently. This is because `op[0] is op[2]`.
          * (If the output descriptor is not passed, the below works.)
          */
-        output_descrs[2] = ensure_dtype_nbo(given_descrs[2]);
+        output_descrs[2] = NPY_DT_CALL_ensure_canonical(given_descrs[2]);
         if (output_descrs[2] == NULL) {
             Py_CLEAR(output_descrs[2]);
             return -1;
@@ -149,7 +149,7 @@ simple_legacy_resolve_descriptors(
             output_descrs[1] = output_descrs[2];
         }
         else {
-            output_descrs[1] = ensure_dtype_nbo(given_descrs[1]);
+            output_descrs[1] = NPY_DT_CALL_ensure_canonical(given_descrs[1]);
             if (output_descrs[1] == NULL) {
                 i = 2;
                 goto fail;
@@ -160,7 +160,7 @@ simple_legacy_resolve_descriptors(
 
     for (; i < nin + nout; i++) {
         if (given_descrs[i] != NULL) {
-            output_descrs[i] = ensure_dtype_nbo(given_descrs[i]);
+            output_descrs[i] = NPY_DT_CALL_ensure_canonical(given_descrs[i]);
         }
         else if (dtypes[i] == dtypes[0] && i > 0) {
             /* Preserve metadata from the first operand if same dtype */

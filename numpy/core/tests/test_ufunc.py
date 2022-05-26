@@ -389,7 +389,7 @@ class TestUfunc:
         assert_equal(ixs, (0, 0, 0, 1, 2))
         assert_equal(flags, (self.can_ignore, self.size_inferred, 0))
         assert_equal(sizes, (3, -1, 9))
-    
+
     def test_signature9(self):
         enabled, num_dims, ixs, flags, sizes = umt.test_signature(
             1, 1, "(  3)  -> ( )")
@@ -2002,6 +2002,20 @@ class TestUfunc:
         # Test multiple output ufuncs raise error, gh-5665
         assert_raises(ValueError, np.modf.at, np.arange(10), [1])
 
+        # Test maximum
+        a = np.array([1, 2, 3])
+        np.maximum.at(a, [0], 0)
+        assert_equal(np.array([1, 2, 3]), a)
+
+    def test_at_not_none_signature(self):
+        # Test ufuncs with non-trivial signature raise a TypeError
+        a = np.ones((2, 2, 2))
+        b = np.ones((1, 2, 2))
+        assert_raises(TypeError, np.matmul.at, a, [0], b)
+
+        a = np.array([[[1, 2], [3, 4]]])
+        assert_raises(TypeError, np.linalg._umath_linalg.det.at, a, [0])
+
     def test_reduce_arguments(self):
         f = np.add.reduce
         d = np.ones((5,2), dtype=int)
@@ -2507,3 +2521,57 @@ def test_ufunc_methods_floaterrors(method):
     with np.errstate(all="raise"):
         with pytest.raises(FloatingPointError):
             method(arr)
+
+
+def _check_neg_zero(value):
+    if value != 0.0:
+        return False
+    if not np.signbit(value.real):
+        return False
+    if value.dtype.kind == "c":
+        return np.signbit(value.imag)
+    return True
+
+@pytest.mark.parametrize("dtype", np.typecodes["AllFloat"])
+def test_addition_negative_zero(dtype):
+    dtype = np.dtype(dtype)
+    if dtype.kind == "c":
+        neg_zero = dtype.type(complex(-0.0, -0.0))
+    else:
+        neg_zero = dtype.type(-0.0)
+
+    arr = np.array(neg_zero)
+    arr2 = np.array(neg_zero)
+
+    assert _check_neg_zero(arr + arr2)
+    # In-place ops may end up on a different path (reduce path) see gh-21211
+    arr += arr2
+    assert _check_neg_zero(arr)
+
+
+@pytest.mark.parametrize("dtype", np.typecodes["AllFloat"])
+@pytest.mark.parametrize("use_initial", [True, False])
+def test_addition_reduce_negative_zero(dtype, use_initial):
+    dtype = np.dtype(dtype)
+    if dtype.kind == "c":
+        neg_zero = dtype.type(complex(-0.0, -0.0))
+    else:
+        neg_zero = dtype.type(-0.0)
+
+    kwargs = {}
+    if use_initial:
+        kwargs["initial"] = neg_zero
+    else:
+        pytest.xfail("-0. propagation in sum currently requires initial")
+
+    # Test various length, in case SIMD paths or chunking play a role.
+    # 150 extends beyond the pairwise blocksize; probably not important.
+    for i in range(0, 150):
+        arr = np.array([neg_zero] * i, dtype=dtype)
+        res = np.sum(arr, **kwargs)
+        if i > 0 or use_initial:
+            assert _check_neg_zero(res)
+        else:
+            # `sum([])` should probably be 0.0 and not -0.0 like `sum([-0.0])`
+            assert not np.signbit(res.real)
+            assert not np.signbit(res.imag)

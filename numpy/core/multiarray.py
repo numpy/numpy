@@ -14,9 +14,9 @@ from ._multiarray_umath import *  # noqa: F403
 # do not change them. issue gh-15518
 # _get_ndarray_c_version is semi-public, on purpose not added to __all__
 from ._multiarray_umath import (
-    _fastCopyAndTranspose, _flagdict, _from_dlpack, _insert, _reconstruct,
+    _fastCopyAndTranspose, _flagdict, from_dlpack, _insert, _reconstruct,
     _vec_string, _ARRAY_API, _monotonicity, _get_ndarray_c_version,
-    _set_madvise_hugepage,
+    _get_madvise_hugepage, _set_madvise_hugepage,
     )
 
 __all__ = [
@@ -24,7 +24,7 @@ __all__ = [
     'ITEM_HASOBJECT', 'ITEM_IS_POINTER', 'LIST_PICKLE', 'MAXDIMS',
     'MAY_SHARE_BOUNDS', 'MAY_SHARE_EXACT', 'NEEDS_INIT', 'NEEDS_PYAPI',
     'RAISE', 'USE_GETITEM', 'USE_SETITEM', 'WRAP', '_fastCopyAndTranspose',
-    '_flagdict', '_from_dlpack', '_insert', '_reconstruct', '_vec_string',
+    '_flagdict', 'from_dlpack', '_insert', '_reconstruct', '_vec_string',
     '_monotonicity', 'add_docstring', 'arange', 'array', 'asarray',
     'asanyarray', 'ascontiguousarray', 'asfortranarray', 'bincount',
     'broadcast', 'busday_count', 'busday_offset', 'busdaycalendar', 'can_cast',
@@ -47,7 +47,7 @@ _reconstruct.__module__ = 'numpy.core.multiarray'
 scalar.__module__ = 'numpy.core.multiarray'
 
 
-_from_dlpack.__module__ = 'numpy'
+from_dlpack.__module__ = 'numpy'
 arange.__module__ = 'numpy'
 array.__module__ = 'numpy'
 asarray.__module__ = 'numpy'

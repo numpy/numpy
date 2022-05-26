@@ -2,7 +2,7 @@ from collections.abc import Iterable
 from typing import TypeVar, Union, overload, Literal
 
 from numpy import ndarray
-from numpy.typing import DTypeLike, _SupportsArrayFunc
+from numpy._typing import DTypeLike, _SupportsArrayFunc
 
 _ArrayType = TypeVar("_ArrayType", bound=ndarray)
 

@@ -120,7 +120,7 @@ def CCompiler_spawn(self, cmd, display=None, env=None):
     display : str or sequence of str, optional
         The text to add to the log file kept by `numpy.distutils`.
         If not given, `display` is equal to `cmd`.
-    env: a dictionary for environment variables, optional
+    env : a dictionary for environment variables, optional
 
     Returns
     -------
@@ -357,7 +357,8 @@ def CCompiler_compile(self, sources, output_dir=None, macros=None,
         # build parallel
         from concurrent.futures import ThreadPoolExecutor
         with ThreadPoolExecutor(jobs) as pool:
-            pool.map(single_compile, build_items)
+            res = pool.map(single_compile, build_items)
+        list(res)  # access result to raise errors
     else:
         # build serial
         for o in build_items:

@@ -2176,8 +2176,8 @@ Array Functions
 ^^^^^^^^^^^^^^^
 
 .. c:function:: int PyArray_AsCArray( \
-        PyObject** op, void* ptr, npy_intp* dims, int nd, int typenum, \
-        int itemsize)
+        PyObject** op, void* ptr, npy_intp* dims, int nd, \
+        PyArray_Descr* typedescr)
 
     Sometimes it is useful to access a multidimensional array as a
     C-style multi-dimensional array so that algorithms can be
@@ -2207,14 +2207,11 @@ Array Functions
 
         The dimensionality of the array (1, 2, or 3).
 
-    :param typenum:
+    :param typedescr:
 
-        The expected data type of the array.
-
-    :param itemsize:
-
-        This argument is only needed when *typenum* represents a
-        flexible array. Otherwise it should be 0.
+        A :c:type:`PyArray_Descr` structure indicating the desired data-type
+        (including required byteorder). The call will steal a reference to
+        the parameter.
 
 .. note::
 

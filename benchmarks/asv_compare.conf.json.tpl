@@ -47,6 +47,7 @@
     // version.
     "matrix": {
         "Cython": [],
+        "setuptools": ["59.2.0"]
     },
 
     // The directory (relative to the current directory) that benchmarks are

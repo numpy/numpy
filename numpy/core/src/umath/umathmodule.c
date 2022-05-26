@@ -24,6 +24,10 @@
 #include "number.h"
 #include "dispatching.h"
 
+/* Automatically generated code to define all ufuncs: */
+#include "funcs.inc"
+#include "__umath_generated.c"
+
 static PyUFuncGenericFunction pyfunc_functions[] = {PyUFunc_On_Om};
 
 static int
@@ -209,6 +213,7 @@ add_newdoc_ufunc(PyObject *NPY_UNUSED(dummy), PyObject *args)
  *****************************************************************************
  */
 
+NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_array_ufunc = NULL;
 NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_array_prepare = NULL;
 NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_array_wrap = NULL;
 NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_pyvals_name = NULL;
@@ -217,6 +222,10 @@ NPY_VISIBILITY_HIDDEN PyObject *npy_um_str_pyvals_name = NULL;
 static int
 intern_strings(void)
 {
+    npy_um_str_array_ufunc = PyUnicode_InternFromString("__array_ufunc__");
+    if (npy_um_str_array_ufunc == NULL) {
+        return -1;
+    }
     npy_um_str_array_prepare = PyUnicode_InternFromString("__array_prepare__");
     if (npy_um_str_array_prepare == NULL) {
         return -1;
@@ -245,6 +254,10 @@ int initumath(PyObject *m)
 
     /* Add some symbolic constants to the module */
     d = PyModule_GetDict(m);
+
+    if (InitOperators(d) < 0) {
+        return -1;
+    }
 
     PyDict_SetItemString(d, "pi", s = PyFloat_FromDouble(NPY_PI));
     Py_DECREF(s);

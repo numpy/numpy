@@ -287,6 +287,8 @@ def main(argv):
     if args.refguide_check:
         cmd = [os.path.join(ROOT_DIR, 'tools', 'refguide_check.py'),
                '--doctests']
+        if args.verbose:
+            cmd += ['-' + 'v'*args.verbose]
         if args.submodule:
             cmd += [args.submodule]
         os.execv(sys.executable, [sys.executable] + cmd)

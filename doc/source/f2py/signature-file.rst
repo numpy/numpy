@@ -2,28 +2,39 @@
  Signature file
 ==================
 
-The syntax specification for signature files (.pyf files) is modeled on the
-Fortran 90/95 language specification. Almost all Fortran 90/95 standard
-constructs are understood, both in free and fixed format (recall that Fortran 77
-is a subset of Fortran 90/95). F2PY introduces some extensions to the Fortran
-90/95 language specification that help in the design of the Fortran to Python
-interface, making it more "Pythonic".
+The interface definition file (.pyf) is how you can fine-tune the interface
+between Python and Fortran. The syntax specification for signature files
+(``.pyf`` files) is modeled on the Fortran 90/95 language specification. Almost
+all Fortran 90/95 standard constructs are understood, both in free and fixed
+format (recall that Fortran 77 is a subset of Fortran 90/95). F2PY introduces
+some extensions to the Fortran 90/95 language specification that help in the
+design of the Fortran to Python interface, making it more "Pythonic".
 
 Signature files may contain arbitrary Fortran code so that any Fortran 90/95
-codes can be treated as signature files. F2PY silently ignores
-Fortran constructs that are irrelevant for creating the interface.
-However, this also means that syntax errors are not caught by F2PY and will only
-be caught when the library is built.
+codes can be treated as signature files. F2PY silently ignores Fortran
+constructs that are irrelevant for creating the interface. However, this also
+means that syntax errors are not caught by F2PY and will only be caught when the
+library is built.
+
+.. note::
+
+  Currently, F2PY may fail with valid Fortran constructs, such as intrinsic
+  modules. If this happens, you can check the
+  `NumPy GitHub issue tracker <https://github.com/numpy/numpy/issues>`_ for
+  possible workarounds or work-in-progress ideas.
 
 In general, the contents of the signature files are case-sensitive. When
-scanning Fortran codes to generate a signature file, F2PY lowers all
-cases automatically except in multi-line blocks or when the ``--no-lower``
-option is used.
+scanning Fortran codes to generate a signature file, F2PY lowers all cases
+automatically except in multi-line blocks or when the ``--no-lower`` option is
+used.
 
 The syntax of signature files is presented below.
 
+Signature files syntax
+======================
+
 Python module block
-=====================
+-------------------
 
 A signature file may contain one (recommended) or more ``python
 module`` blocks. The ``python module`` block describes the contents of
@@ -63,7 +74,7 @@ previous section.
 
 
 Fortran/C routine signatures
-=============================
+----------------------------
 
 The signature of a Fortran routine has the following structure::
 
@@ -93,8 +104,10 @@ The signature of a Fortran block data has the following structure::
     [<include statements>]
   end [ block data [<block data name>] ]
 
+.. _type-declarations:
+
 Type declarations
-=================
+-----------------
 
 The definition of the ``<argument/variable type declaration>`` part
 is
@@ -128,27 +141,27 @@ and
 
 * ``<arrayspec>`` is a comma separated list of dimension bounds;
 
-* ``<init_expr>`` is a `C expression`__;
+* ``<init_expr>`` is a :ref:`C expression <c-expressions>`;
 
 * ``<intlen>`` may be negative integer for ``integer`` type
   specifications. In such cases ``integer*<negintlen>`` represents
   unsigned C integers;
 
-__ `C expressions`_
-
 If an argument has no ``<argument type declaration>``, its type is
 determined by applying ``implicit`` rules to its name.
 
 Statements
-==========
+----------
 
 Attribute statements
 ^^^^^^^^^^^^^^^^^^^^^
 
-* The ``<argument/variable attribute statement>`` is
-  ``<argument/variable type declaration>`` without ``<typespec>``.
-* In addition, in an attribute statement one cannot use other
-  attributes, also ``<entitydecl>`` can be only a list of names.
+The ``<argument/variable attribute statement>`` is similar to the
+``<argument/variable type declaration>``, but without ``<typespec>``.
+
+An attribute statement cannot contain other attributes, and ``<entitydecl>`` can
+be only a list of names. See :ref:`f2py-attributes` for more details on the
+attributes that can be used by F2PY.
 
 Use statements
 ^^^^^^^^^^^^^^^
@@ -165,9 +178,8 @@ Use statements
 
      <rename_list> := <local_name> => <use_name> [ , <rename_list> ]
 
-* Currently F2PY uses ``use`` statement only for linking call-back
-  modules and ``external`` arguments (call-back functions), see
-  :ref:`Call-back arguments`.
+* Currently F2PY uses ``use`` statements only for linking call-back modules and
+  ``external`` arguments (call-back functions). See :ref:`Call-back arguments`.
 
 Common block statements
 ^^^^^^^^^^^^^^^^^^^^^^^
@@ -199,9 +211,7 @@ Other statements
   except the following:
 
   + ``call`` statements and function calls of ``external`` arguments
-    (`more details`__?);
-
-    __ external_
+    (see :ref:`more details on external arguments <external>`);
 
   + ``include`` statements
       ::
@@ -256,7 +266,7 @@ Other statements
 F2PY statements
 ^^^^^^^^^^^^^^^^
 
-  In addition, F2PY introduces the following statements:
+In addition, F2PY introduces the following statements:
 
 ``threadsafe``
   Uses a ``Py_BEGIN_ALLOW_THREADS .. Py_END_ALLOW_THREADS`` block
@@ -271,10 +281,9 @@ F2PY statements
   block>``.
 
 ``callprotoargument <C-typespecs>``
-  When the ``callstatement`` statement is used then F2PY may not
-  generate proper prototypes for Fortran/C functions (because
-  ``<C-expr>`` may contain any function calls and F2PY has no way
-  to determine what should be the proper prototype).
+  When the ``callstatement`` statement is used, F2PY may not generate proper
+  prototypes for Fortran/C functions (because ``<C-expr>`` may contain function
+  calls, and F2PY has no way to determine what should be the proper prototype).
 
   With this statement you can explicitly specify the arguments of the
   corresponding prototype::
@@ -321,61 +330,64 @@ F2PY statements
 
   __ https://docs.python.org/extending/index.html
 
-Attributes
-============
+.. _f2py-attributes:
 
-The following attributes are used by F2PY:
+Attributes
+----------
+
+The following attributes can be used by F2PY.
 
 ``optional``
-  The corresponding argument is moved to the end of ``<optional
-  arguments>`` list. A default value for an optional argument can be
-  specified via ``<init_expr>``, see the ``entitydecl`` definition.
-
+  The corresponding argument is moved to the end of ``<optional arguments>``
+  list. A default value for an optional argument can be specified via
+  ``<init_expr>`` (see the ``entitydecl`` :ref:`definition <type-declarations>`)
 
   .. note::
 
    * The default value must be given as a valid C expression.
-   * Whenever ``<init_expr>`` is used, ``optional`` attribute
-     is set automatically by F2PY.
+   * Whenever ``<init_expr>`` is used, the ``optional`` attribute is set
+     automatically by F2PY.
    * For an optional array argument, all its dimensions must be bounded.
 
 ``required``
-  The corresponding argument with this attribute considered mandatory. This is
-  the default. ``required`` should only be specified if there is a need to
+  The corresponding argument with this attribute is considered mandatory. This
+  is the default. ``required`` should only be specified if there is a need to
   disable the automatic ``optional`` setting when ``<init_expr>`` is used.
 
-  If a Python ``None`` object is used as a required argument, the
-  argument is treated as optional. That is, in the case of array
-  argument, the memory is allocated. If ``<init_expr>`` is given, then the
-  corresponding initialization is carried out.
+  If a Python ``None`` object is used as a required argument, the argument is
+  treated as optional. That is, in the case of array arguments, the memory is
+  allocated. If ``<init_expr>`` is given, then the corresponding initialization
+  is carried out.
 
 ``dimension(<arrayspec>)``
   The corresponding variable is considered as an array with dimensions given in
   ``<arrayspec>``.
 
 ``intent(<intentspec>)``
-  This specifies the "intention" of the corresponding
-  argument. ``<intentspec>`` is a comma separated list of the
-  following keys:
+  This specifies the "intention" of the corresponding argument. ``<intentspec>``
+  is a comma separated list of the following keys:
 
   * ``in``
-      The corresponding argument is considered to be input-only. This means that the value of
-      the argument is passed to a Fortran/C function and that the function is
-      expected to not change the value of this argument.
+      The corresponding argument is considered to be input-only. This means that
+      the value of the argument is passed to a Fortran/C function and that the
+      function is expected to not change the value of this argument.
 
   * ``inout``
-      The corresponding argument is marked for input/output or as an *in situ* output
-      argument. ``intent(inout)`` arguments can be only "contiguous" NumPy
-      arrays with proper type and size. Here "contiguous" can be either in the
-      Fortran or C sense. The latter  coincides with the default contiguous
+      The corresponding argument is marked for input/output or as an *in situ*
+      output argument. ``intent(inout)`` arguments can be only
+      :term:`contiguous` NumPy arrays (in either the Fortran or C sense) with
+      proper type and size. The latter coincides with the default contiguous
       concept used in NumPy and is effective only if ``intent(c)`` is used. F2PY
       assumes Fortran contiguous arguments by default.
 
       .. note::
 
-         Using ``intent(inout)`` is generally not recommended, use ``intent(in,out)`` instead.
+         Using ``intent(inout)`` is generally not recommended, as it can cause
+         unexpected results. For example, scalar arguments using
+         ``intent(inout)`` are assumed to be array objects in order to have
+         *in situ* changes be effective. Use ``intent(in,out)`` instead.
 
-     See also the ``intent(inplace)`` attribute.
+      See also the ``intent(inplace)`` attribute.
 
   * ``inplace``
       The corresponding argument is considered to be an input/output or *in situ* output
@@ -586,15 +598,15 @@ The following attributes are used by F2PY:
   values.
 
 Extensions
-============
+----------
 
 F2PY directives
 ^^^^^^^^^^^^^^^^
 
-The F2PY directives allow using F2PY signature file constructs in
-Fortran 77/90 source codes. With this feature one  can (almost) completely skip
-the intermediate signature file generation and apply F2PY directly to Fortran
-source codes.
+The F2PY directives allow using F2PY signature file constructs in Fortran 77/90
+source codes. With this feature one  can (almost) completely skip the
+intermediate signature file generation and apply F2PY directly to Fortran source
+codes.
 
 F2PY directives have the following form::
 
@@ -612,6 +624,8 @@ normal non-comment  Fortran line:
 For fixed format Fortran codes, ``<comment char>`` must be at the
 first column of a file, of course. For free format Fortran codes,
 the F2PY directives can appear anywhere in a file.
+
+.. _c-expressions:
 
 C expressions
 ^^^^^^^^^^^^^^

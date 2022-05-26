@@ -25,7 +25,7 @@ def __generator_ctor(bit_generator_name='MT19937'):
 
     Returns
     -------
-    rg: Generator
+    rg : Generator
         Generator using the named core BitGenerator
     """
     if bit_generator_name in BitGenerators:
@@ -48,7 +48,7 @@ def __bit_generator_ctor(bit_generator_name='MT19937'):
 
     Returns
     -------
-    bit_generator: BitGenerator
+    bit_generator : BitGenerator
         BitGenerator instance
     """
     if bit_generator_name in BitGenerators:
@@ -71,7 +71,7 @@ def __randomstate_ctor(bit_generator_name='MT19937'):
 
     Returns
     -------
-    rs: RandomState
+    rs : RandomState
         Legacy RandomState using the named core BitGenerator
     """
     if bit_generator_name in BitGenerators:

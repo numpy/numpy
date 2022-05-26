@@ -24,7 +24,8 @@ from numpy.core import (
     add, multiply, sqrt, fastCopyAndTranspose, sum, isfinite,
     finfo, errstate, geterrobj, moveaxis, amin, amax, product, abs,
     atleast_2d, intp, asanyarray, object_, matmul,
-    swapaxes, divide, count_nonzero, isnan, sign, argsort, sort
+    swapaxes, divide, count_nonzero, isnan, sign, argsort, sort,
+    reciprocal
 )
 from numpy.core.multiarray import normalize_axis_index
 from numpy.core.overrides import set_module
@@ -899,11 +900,11 @@ def qr(a, mode='reduced'):
            [1, 1],
            [1, 1],
            [2, 1]])
-    >>> b = np.array([1, 0, 2, 1])
+    >>> b = np.array([1, 2, 2, 3])
     >>> q, r = np.linalg.qr(A)
     >>> p = np.dot(q.T, b)
     >>> np.dot(np.linalg.inv(r), p)
-    array([  1.1e-16,   1.0e+00])
+    array([  1.,   1.])
 
     """
     if mode not in ('reduced', 'complete', 'r', 'raw'):
@@ -1478,10 +1479,12 @@ def svd(a, full_matrices=True, compute_uv=True, hermitian=False):
     """
     Singular Value Decomposition.
 
-    When `a` is a 2D array, it is factorized as ``u @ np.diag(s) @ vh
-    = (u * s) @ vh``, where `u` and `vh` are 2D unitary arrays and `s` is a 1D
-    array of `a`'s singular values. When `a` is higher-dimensional, SVD is
-    applied in stacked mode as explained below.
+    When `a` is a 2D array, and ``full_matrices=False``, then it is
+    factorized as ``u @ np.diag(s) @ vh = (u * s) @ vh``, where
+    `u` and the Hermitian transpose of `vh` are 2D arrays with
+    orthonormal columns and `s` is a 1D array of `a`'s singular
+    values. When `a` is higher-dimensional, SVD is applied in
+    stacked mode as explained below.
 
     Parameters
     ----------
@@ -1948,7 +1951,6 @@ def pinv(a, rcond=1e-15, hermitian=False):
     See Also
     --------
     scipy.linalg.pinv : Similar function in SciPy.
-    scipy.linalg.pinv2 : Similar function in SciPy (SVD-based).
     scipy.linalg.pinvh : Compute the (Moore-Penrose) pseudo-inverse of a
                          Hermitian matrix.
 
@@ -2517,9 +2519,11 @@ def norm(x, ord=None, axis=None, keepdims=False):
 
             x = x.ravel(order='K')
             if isComplexType(x.dtype.type):
-                sqnorm = dot(x.real, x.real) + dot(x.imag, x.imag)
+                x_real = x.real
+                x_imag = x.imag
+                sqnorm = x_real.dot(x_real) + x_imag.dot(x_imag)
             else:
-                sqnorm = dot(x, x)
+                sqnorm = x.dot(x)
             ret = sqrt(sqnorm)
             if keepdims:
                 ret = ret.reshape(ndim*[1])
@@ -2559,7 +2563,7 @@ def norm(x, ord=None, axis=None, keepdims=False):
             absx = abs(x)
             absx **= ord
             ret = add.reduce(absx, axis=axis, keepdims=keepdims)
-            ret **= (1 / ord)
+            ret **= reciprocal(ord, dtype=ret.dtype)
             return ret
     elif len(axis) == 2:
         row_axis, col_axis = axis

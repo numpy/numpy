@@ -34,6 +34,7 @@ COPY --from=clone --chown=gitpod /tmp/numpy ${WORKSPACE}
 WORKDIR ${WORKSPACE}
 
 # Build numpy to populate the cache used by ccache
+RUN git config --global --add safe.directory /workspace/numpy
 RUN git submodule update --init --depth=1 -- numpy/core/src/umath/svml
 RUN conda activate ${CONDA_ENV} && \ 
     python setup.py build_ext --inplace && \

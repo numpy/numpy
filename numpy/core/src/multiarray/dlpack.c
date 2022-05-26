@@ -15,8 +15,7 @@ static void
 array_dlpack_deleter(DLManagedTensor *self)
 {
     PyArrayObject *array = (PyArrayObject *)self->manager_ctx;
-    // This will also free the strides as it's one allocation.
-    PyMem_Free(self->dl_tensor.shape);
+    // This will also free the shape and strides as it's one allocation.
     PyMem_Free(self);
     Py_XDECREF(array);
 }
@@ -88,6 +87,12 @@ array_get_dl_device(PyArrayObject *self) {
     ret.device_type = kDLCPU;
     ret.device_id = 0;
     PyObject *base = PyArray_BASE(self);
+
+    // walk the bases (see gh-20340)
+    while (base != NULL && PyArray_Check(base)) {
+        base = PyArray_BASE((PyArrayObject *)base);
+    }
+
     // The outer if is due to the fact that NumPy arrays are on the CPU
     // by default (if not created from DLPack).
     if (PyCapsule_IsValid(base, NPY_DLPACK_INTERNAL_CAPSULE_NAME)) {
@@ -132,7 +137,7 @@ array_dlpack(PyArrayObject *self,
 
     if (!PyArray_IS_C_CONTIGUOUS(self) && PyArray_SIZE(self) != 1) {
         for (int i = 0; i < ndim; ++i) {
-            if (strides[i] % itemsize != 0) {
+            if (shape[i] != 1 && strides[i] % itemsize != 0) {
                 PyErr_SetString(PyExc_RuntimeError,
                         "DLPack only supports strides which are a multiple of "
                         "itemsize.");
@@ -191,11 +196,16 @@ array_dlpack(PyArrayObject *self,
         return NULL;
     }
 
-    DLManagedTensor *managed = PyMem_Malloc(sizeof(DLManagedTensor));
-    if (managed == NULL) {
+    // ensure alignment
+    int offset = sizeof(DLManagedTensor) % sizeof(void *);
+    void *ptr = PyMem_Malloc(sizeof(DLManagedTensor) + offset +
+        (sizeof(int64_t) * ndim * 2));
+    if (ptr == NULL) {
         PyErr_NoMemory();
         return NULL;
     }
+
+    DLManagedTensor *managed = ptr;
 
     /*
      * Note: the `dlpack.h` header suggests/standardizes that `data` must be
@@ -215,12 +225,8 @@ array_dlpack(PyArrayObject *self,
     managed->dl_tensor.device = device;
     managed->dl_tensor.dtype = managed_dtype;
 
-    int64_t *managed_shape_strides = PyMem_Malloc(sizeof(int64_t) * ndim * 2);
-    if (managed_shape_strides == NULL) {
-        PyErr_NoMemory();
-        PyMem_Free(managed);
-        return NULL;
-    }
+    int64_t *managed_shape_strides = (int64_t *)((char *)ptr +
+        sizeof(DLManagedTensor) + offset);
 
     int64_t *managed_shape = managed_shape_strides;
     int64_t *managed_strides = managed_shape_strides + ndim;
@@ -243,8 +249,7 @@ array_dlpack(PyArrayObject *self,
     PyObject *capsule = PyCapsule_New(managed, NPY_DLPACK_CAPSULE_NAME,
             dlpack_capsule_deleter);
     if (capsule == NULL) {
-        PyMem_Free(managed);
-        PyMem_Free(managed_shape_strides);
+        PyMem_Free(ptr);
         return NULL;
     }
 
@@ -264,7 +269,7 @@ array_dlpack_device(PyArrayObject *self, PyObject *NPY_UNUSED(args))
 }
 
 NPY_NO_EXPORT PyObject *
-_from_dlpack(PyObject *NPY_UNUSED(self), PyObject *obj) {
+from_dlpack(PyObject *NPY_UNUSED(self), PyObject *obj) {
     PyObject *capsule = PyObject_CallMethod((PyObject *)obj->ob_type,
             "__dlpack__", "O", obj);
     if (capsule == NULL) {
