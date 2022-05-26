@@ -31,6 +31,8 @@ C_ABI_VERSION = 0x01000009
 # (*not* C_ABI_VERSION) would be increased.  Whenever binary compatibility is
 # broken, both C_API_VERSION and C_ABI_VERSION should be increased.
 #
+# The version needs to be kept in sync with that in cversions.txt.
+#
 # 0x00000008 - 1.7.x
 # 0x00000009 - 1.8.x
 # 0x00000009 - 1.9.x
@@ -45,8 +47,9 @@ C_ABI_VERSION = 0x01000009
 # 0x0000000e - 1.20.x
 # 0x0000000e - 1.21.x
 # 0x0000000f - 1.22.x
-# 0x0000000f - 1.23.x
-C_API_VERSION = 0x0000000f
+# 0x00000010 - 1.23.x
+# 0x00000010 - 1.24.x
+C_API_VERSION = 0x00000010
 
 class MismatchCAPIWarning(Warning):
     pass
