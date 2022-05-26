@@ -181,6 +181,14 @@ class TestExtraMethods:
         other = self.p.deriv()
         assert_equal(other.symbol, 'z')
 
+
+def test_composition():
+    p = poly.Polynomial([3, 2, 1], symbol="t")
+    q = poly.Polynomial([5, 1, 0, -1], symbol="λ_1")
+    r = p(q)
+    assert r.symbol == "λ_1"
+
+
 #
 # Class methods that result in new polynomial class instances
 #
