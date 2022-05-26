@@ -56,8 +56,6 @@ class TestGenericAlias:
         ("__origin__", lambda n: n.__origin__),
         ("__args__", lambda n: n.__args__),
         ("__parameters__", lambda n: n.__parameters__),
-        ("__reduce__", lambda n: n.__reduce__()[1][:3]),
-        ("__reduce_ex__", lambda n: n.__reduce_ex__(1)[1][:3]),
         ("__mro_entries__", lambda n: n.__mro_entries__([object])),
         ("__hash__", lambda n: hash(n)),
         ("__repr__", lambda n: repr(n)),
