@@ -74,11 +74,19 @@ a project with a major or minor version released in December 2019 should
 support Python 3.6 and newer, and a project with a major or minor version
 release in November 2020 should support Python 3.7 and newer.
 
-The current Python release cadence is 18 months so a 42 month window
-ensures that there will always be at least two minor versions of Python
-in the window.  The window is extended 6 months beyond the anticipated two-release
-interval for Python to provide resilience against small fluctuations /
-delays in its release schedule.
+When this NEP was drafted the Python release cadence was 18 months so a 42
+month window ensured that there would always be at least two minor versions of
+Python in the window.  The window was extended 6 months beyond the anticipated
+two-release interval for Python to provide resilience against small
+fluctuations / delays in its release schedule.
+
+The Python release cadence was increased to 12 months in `PEP 0602
+<https://peps.python.org/pep-0602/>`__ so there will now be 3-4 Python releases
+in the support window at any time.  However, PEP 0602 does not decrease the
+support window of Python (18 months of regular full bug-fix releases and 42
+months of as-needed source-only releases).  Thus, we do not expect an increase
+in which our users upgrade their Python and our 42 month support window will
+cover the same portion of the upstream support of any given Python release.
 
 Because Python minor version support is based only on historical
 release dates, a 42 month time window, and a planned project release
