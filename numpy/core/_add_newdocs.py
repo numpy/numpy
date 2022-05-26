@@ -1085,8 +1085,8 @@ add_newdoc('numpy.core.multiarray', 'ascontiguousarray',
     Examples
     --------
     Try to change memory layout of ndarray from C-contiguous to C-contiguous::
-    >>> x = np.ones((2, 3))          # Create C-contiguous (the default memory layout) ndarray
-    >>> y = np.ascontiguousarray(x)  # Try to convert `x` to C-contiguous ndarray
+    >>> x = np.ones((2, 3))          # Create C-contiguous ndarray
+    >>> y = np.ascontiguousarray(x)  # Convert `x` to C-contiguous ndarray
     >>> x.flags['C_CONTIGUOUS']
     True
     >>> y.flags['C_CONTIGUOUS']
@@ -1144,7 +1144,7 @@ add_newdoc('numpy.core.multiarray', 'asfortranarray',
     Examples
     --------
     Change memory layout of ndarray from C-contiguous to F-contiguous:
-    >>> x = np.ones((2, 3))       # Create C-contiguous (the default memory layout) ndarray
+    >>> x = np.ones((2, 3))       # Create C-contiguous ndarray
     >>> y = np.asfortranarray(x)  # Convert `x` to F-contiguous ndarray
     >>> x.flags['F_CONTIGUOUS']
     False
@@ -1155,7 +1155,7 @@ add_newdoc('numpy.core.multiarray', 'asfortranarray',
 
     Try to change memory layout of ndarray from F-contiguous to F-contiguous:
     >>> x = np.ones((2, 3), order='F') # Create F-contiguous ndarray
-    >>> y = np.asfortranarray(x)       # Try to onvert `x` to F-contiguous ndarray
+    >>> y = np.asfortranarray(x)       # Convert `x` to F-contiguous ndarray
     >>> x.flags['F_CONTIGUOUS']
     True
     >>> y.flags['F_CONTIGUOUS']
