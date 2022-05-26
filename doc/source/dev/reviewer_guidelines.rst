@@ -93,7 +93,7 @@ For maintainers
   committer comment or close.
 - If the PR submitter doesn't respond to your comments for 6 months, move the PR 
   in question to the inactive category with the “inactive” tag attached. At this point,
-  by a quorum of at least 2 maintainers, the PR can be closed or finalized by another 
+  the PR can be closed by a maintainer. If there is any interest in finalizing the PR under consideration, then this can be indicated at any time (without waiting 6 months) by a comment.   
   contributor or maintainer if the proposed changes are deemed to be valuable.
 
 
