@@ -319,7 +319,9 @@ class ABCPolyBase(abc.ABC):
         # Validation for symbol
         try:
             if not symbol.isidentifier():
-                raise ValueError("Symbol string must be a valid Python identifier")
+                raise ValueError(
+                    "Symbol string must be a valid Python identifier"
+                )
         # If a user passes in something other than a string, the above
         # results in an AttributeError. Catch this and raise a more
         # informative exception
