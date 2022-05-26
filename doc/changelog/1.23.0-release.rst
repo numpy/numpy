@@ -159,7 +159,7 @@ names contributed a patch for the first time.
 Pull requests merged
 ====================
 
-A total of 460 pull requests were merged for this release.
+A total of 464 pull requests were merged for this release.
 
 * `#15006 <https://github.com/numpy/numpy/pull/15006>`__: ENH: add support for operator() in crackfortran.
 * `#15844 <https://github.com/numpy/numpy/pull/15844>`__: ENH: add inline definition of access rights for Fortran types
@@ -621,3 +621,7 @@ A total of 460 pull requests were merged for this release.
 * `#21574 <https://github.com/numpy/numpy/pull/21574>`__: BUG: refguide-check: respect the verbosity
 * `#21577 <https://github.com/numpy/numpy/pull/21577>`__: MAINT: update PyPy to 7.3.9 and remove unused script
 * `#21580 <https://github.com/numpy/numpy/pull/21580>`__: MAINT: Update the cversion hash.
+* `#21589 <https://github.com/numpy/numpy/pull/21589>`__: REL: Prepare for the NumPy 1.23.0rc1 release.
+* `#21604 <https://github.com/numpy/numpy/pull/21604>`__: BUILD: fix tag name for travis: it is v1.23.0rc1
+* `#21606 <https://github.com/numpy/numpy/pull/21606>`__: DOC: add missing links for two NEPs
+* `#21607 <https://github.com/numpy/numpy/pull/21607>`__: TYP, MAINT: Allow unsigned integer inplace-ops to accept signed...
