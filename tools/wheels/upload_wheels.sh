@@ -2,7 +2,7 @@ set_travis_vars() {
     # Set env vars
     echo "TRAVIS_EVENT_TYPE is $TRAVIS_EVENT_TYPE"
     echo "TRAVIS_TAG is $TRAVIS_TAG"
-    if [[ "$TRAVIS_EVENT_TYPE" == "push" && "$TRAVIS_TAG" == refs/tags/v* ]]; then
+    if [[ "$TRAVIS_EVENT_TYPE" == "push" && "$TRAVIS_TAG" == v* ]]; then
       IS_PUSH="true"
     else
       IS_PUSH="false"
