@@ -958,7 +958,8 @@ promote_and_get_ufuncimpl(PyUFuncObject *ufunc,
 
     /* If necessary, check if the old result would have been different */
     if (NPY_UNLIKELY(npy_promotion_state == NPY_USE_WEAK_PROMOTION_AND_WARN)
-            && (force_legacy_promotion || promoting_pyscalars)) {
+            && (force_legacy_promotion || promoting_pyscalars)
+            && npy_give_promotion_warnings()) {
         PyArray_DTypeMeta *check_dtypes[NPY_MAXARGS];
         for (int i = 0; i < nargs; i++) {
             check_dtypes[i] = (PyArray_DTypeMeta *)PyTuple_GET_ITEM(

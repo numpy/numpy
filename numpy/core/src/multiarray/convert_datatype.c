@@ -49,6 +49,7 @@ NPY_NO_EXPORT npy_intp REQUIRED_STR_LEN[] = {0, 3, 5, 10, 10, 20, 20, 20, 20};
  * Whether or not legacy value-based promotion/casting is used.
  */
 NPY_NO_EXPORT int npy_promotion_state = NPY_USE_WEAK_PROMOTION_AND_WARN;
+NPY_NO_EXPORT PyObject *NO_NEP50_WARNING_CTX = NULL;
 
 static PyObject *
 PyArray_GetGenericToVoidCastingImpl(void);
@@ -62,6 +63,33 @@ PyArray_GetGenericToObjectCastingImpl(void);
 static PyObject *
 PyArray_GetObjectToGenericCastingImpl(void);
 
+
+/*
+ * Return 1 if promotion warnings should be given and 0 if they are currently
+ * suppressed in the local context.
+ */
+NPY_NO_EXPORT int
+npy_give_promotion_warnings(void)
+{
+    PyObject *val;
+
+    npy_cache_import(
+            "numpy.core._ufunc_config", "NO_NEP50_WARNING",
+            &NO_NEP50_WARNING_CTX);
+    if (NO_NEP50_WARNING_CTX == NULL) {
+        PyErr_WriteUnraisable(NULL);
+        return 1;
+    }
+
+    if (PyContextVar_Get(NO_NEP50_WARNING_CTX, Py_False, &val) < 0) {
+        /* Errors should not really happen, but if it does assume we warn. */
+        PyErr_WriteUnraisable(NULL);
+        return 1;
+    }
+    Py_DECREF(val);
+    /* only when the no-warnings context is false, we give warnings */
+    return val == Py_False;
+}
 
 /**
  * Fetch the casting implementation from one DType to another.
@@ -1634,15 +1662,38 @@ should_use_min_scalar(npy_intp narrs, PyArrayObject **arr,
 
 NPY_NO_EXPORT int
 should_use_min_scalar_weak_literals(int narrs, PyArrayObject **arr) {
-    int count_literals = 0;
+    int all_scalars = 1;
+    int max_scalar_kind = -1;
+    int max_array_kind = -1;
+
     for (int i = 0; i < narrs; i++) {
-        if (PyArray_FLAGS(arr[i]) & NPY_ARRAY_WAS_PYTHON_LITERAL) {
-            count_literals++;
+        if (PyArray_FLAGS(arr[i]) & NPY_ARRAY_WAS_PYTHON_INT) {
+            /* A Python integer could be `u` so is effectively that: */
+            int new = dtype_kind_to_simplified_ordering('u');
+            if (new > max_scalar_kind) {
+                max_scalar_kind = new;
+            }
+        }
+        /* For the new logic, only complex or not matters: */
+        else if (PyArray_FLAGS(arr[i]) & NPY_ARRAY_WAS_PYTHON_FLOAT) {
+            max_scalar_kind = dtype_kind_to_simplified_ordering('f');
+        }
+        else if (PyArray_FLAGS(arr[i]) & NPY_ARRAY_WAS_PYTHON_COMPLEX) {
+            max_scalar_kind = dtype_kind_to_simplified_ordering('f');
+        }
+        else {
+            all_scalars = 0;
+            int kind = dtype_kind_to_simplified_ordering(
+                    PyArray_DESCR(arr[i])->kind);
+            if (kind > max_array_kind) {
+                max_array_kind = kind;
+            }
         }
     }
-    if (count_literals > 0 && count_literals < narrs) {
+    if (!all_scalars && max_array_kind >= max_scalar_kind) {
         return 1;
     }
+
     return 0;
 }
 
@@ -1854,6 +1905,10 @@ PyArray_CheckLegacyResultType(
 {
     PyArray_Descr *ret = NULL;
     if (npy_promotion_state == NPY_USE_WEAK_PROMOTION) {
+        return 0;
+    }
+    if (npy_promotion_state == NPY_USE_WEAK_PROMOTION_AND_WARN
+            && !npy_give_promotion_warnings()) {
         return 0;
     }
 

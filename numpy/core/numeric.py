@@ -27,7 +27,7 @@ from .umath import (multiply, invert, sin, PINF, NAN)
 from . import numerictypes
 from .numerictypes import longlong, intc, int_, float_, complex_, bool_
 from ._exceptions import TooHardError, AxisError
-from ._ufunc_config import errstate
+from ._ufunc_config import errstate, no_nep50_warning
 
 bitwise_not = invert
 ufunc = type(sin)
@@ -2352,7 +2352,7 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     array([False,  True])
     """
     def within_tol(x, y, atol, rtol):
-        with errstate(invalid='ignore'):
+        with errstate(invalid='ignore'), no_nep50_warning():
             return less_equal(abs(x-y), atol + rtol * abs(y))
 
     x = asanyarray(a)

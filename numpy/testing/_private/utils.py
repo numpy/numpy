@@ -473,6 +473,7 @@ def print_assert_equal(test_string, actual, desired):
         raise AssertionError(msg.getvalue())
 
 
+@np.no_nep50_warning()
 def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
     """
     Raises an AssertionError if two items are not equal up to desired
@@ -599,6 +600,7 @@ def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
         raise AssertionError(_build_err_msg())
 
 
+@np.no_nep50_warning()
 def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=True):
     """
     Raises an AssertionError if two items are not equal up to significant
@@ -698,6 +700,7 @@ def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=True):
         raise AssertionError(msg)
 
 
+@np.no_nep50_warning()
 def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
                          precision=6, equal_nan=True, equal_inf=True):
     __tracebackhide__ = True  # Hide traceback for py.test
@@ -935,6 +938,7 @@ def assert_array_equal(x, y, err_msg='', verbose=True):
                          verbose=verbose, header='Arrays are not equal')
 
 
+@np.no_nep50_warning()
 def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
     """
     Raises an AssertionError if two objects are not equal up to desired
