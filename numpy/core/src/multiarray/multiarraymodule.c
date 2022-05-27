@@ -4997,16 +4997,15 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
     if (PyDataMem_DefaultHandler == NULL) {
         goto err;
     }
-#if (!defined(PYPY_VERSION_NUM) || PYPY_VERSION_NUM >= 0x07030600)
     /*
      * Initialize the context-local current handler
      * with the default PyDataMem_Handler capsule.
-    */
+     */
     current_handler = PyContextVar_New("current_allocator", PyDataMem_DefaultHandler);
     if (current_handler == NULL) {
         goto err;
     }
-#endif
+
     return m;
 
  err:
