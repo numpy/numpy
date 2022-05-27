@@ -40,7 +40,8 @@ __all__ = [
     'ravel_multi_index', 'result_type', 'scalar', 'set_datetimeparse_function',
     'set_legacy_print_mode', 'set_numeric_ops', 'set_string_function',
     'set_typeDict', 'shares_memory', 'tracemalloc_domain', 'typeinfo',
-    'unpackbits', 'unravel_index', 'vdot', 'where', 'zeros']
+    'unpackbits', 'unravel_index', 'vdot', 'where', 'zeros',
+    'get_promotion_state', 'set_promotion_state']
 
 # For backward compatibility, make sure pickle imports these functions from here
 _reconstruct.__module__ = 'numpy.core.multiarray'
@@ -68,6 +69,8 @@ promote_types.__module__ = 'numpy'
 set_numeric_ops.__module__ = 'numpy'
 seterrobj.__module__ = 'numpy'
 zeros.__module__ = 'numpy'
+get_promotion_state.__module__ = 'numpy'
+set_promotion_state.__module__ = 'numpy'
 
 
 # We can't verify dispatcher signatures because NumPy's C functions don't

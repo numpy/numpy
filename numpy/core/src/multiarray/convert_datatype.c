@@ -91,6 +91,49 @@ npy_give_promotion_warnings(void)
     return val == Py_False;
 }
 
+
+NPY_NO_EXPORT PyObject *
+npy_get_promotion_state(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(arg)) {
+    if (npy_promotion_state == NPY_USE_WEAK_PROMOTION) {
+        return PyUnicode_FromString("weak");
+    }
+    else if (npy_promotion_state == NPY_USE_WEAK_PROMOTION_AND_WARN) {
+        return PyUnicode_FromString("weak_and_warn");
+    }
+    else if (npy_promotion_state == NPY_USE_LEGACY_PROMOTION) {
+        return PyUnicode_FromString("legacy");
+    }
+    PyErr_SetString(PyExc_SystemError, "invalid promotion state!");
+    return NULL;
+}
+
+
+NPY_NO_EXPORT PyObject *
+npy_set_promotion_state(PyObject *NPY_UNUSED(mod), PyObject *arg)
+{
+    if (!PyUnicode_Check(arg)) {
+        PyErr_SetString(PyExc_TypeError,
+                "set_promotion_state() argument must be a string.");
+        return NULL;
+    }
+    if (PyUnicode_CompareWithASCIIString(arg, "weak")) {
+        npy_promotion_state = NPY_USE_WEAK_PROMOTION;
+    }
+    else if (PyUnicode_CompareWithASCIIString(arg, "weak_and_warn")) {
+        npy_promotion_state = NPY_USE_WEAK_PROMOTION_AND_WARN;
+    }
+    else if (PyUnicode_CompareWithASCIIString(arg, "legacy")) {
+        npy_promotion_state = NPY_USE_LEGACY_PROMOTION;
+    }
+    else {
+        PyErr_Format(PyExc_TypeError,
+                "set_promotion_state() argument must be "
+                "'weak', 'legacy', or 'weak_and_warn' but got '%.100S'", arg);
+        return NULL;
+    }
+    Py_RETURN_NONE;
+}
+
 /**
  * Fetch the casting implementation from one DType to another.
  *
