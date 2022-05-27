@@ -85,6 +85,7 @@ class TestHalf:
     @pytest.mark.parametrize("offset", [None, "up", "down"])
     @pytest.mark.parametrize("shift", [None, "up", "down"])
     @pytest.mark.parametrize("float_t", [np.float32, np.float64])
+    @np.no_nep50_warning()
     def test_half_conversion_rounding(self, float_t, shift, offset):
         # Assumes that round to even is used during casting.
         max_pattern = np.float16(np.finfo(np.float16).max).view(np.uint16)
@@ -457,24 +458,27 @@ class TestHalf:
         b16 = float16(1)
         b32 = float32(1)
 
-        assert_equal(np.power(a16, 2).dtype, float16)
-        assert_equal(np.power(a16, 2.0).dtype, float16)
-        assert_equal(np.power(a16, b16).dtype, float16)
-        assert_equal(np.power(a16, b32).dtype, float16)
-        assert_equal(np.power(a16, a16).dtype, float16)
-        assert_equal(np.power(a16, a32).dtype, float32)
+        assert np.power(a16, 2).dtype == float16
+        assert np.power(a16, 2.0).dtype == float16
+        assert np.power(a16, b16).dtype == float16
+        expected_dt = float16 if OLD_PROMOTION else float32
+        assert np.power(a16, b32).dtype == expected_dt
+        assert np.power(a16, a16).dtype == float16
+        assert np.power(a16, a32).dtype == float32
 
-        assert_equal(np.power(b16, 2).dtype, float64)
-        assert_equal(np.power(b16, 2.0).dtype, float64)
-        assert_equal(np.power(b16, b16).dtype, float16)
-        assert_equal(np.power(b16, b32).dtype, float32)
-        assert_equal(np.power(b16, a16).dtype, float16)
-        assert_equal(np.power(b16, a32).dtype, float32)
+        expected_dt = float64 if OLD_PROMOTION else float16
+        assert np.power(b16, 2).dtype == expected_dt
+        assert np.power(b16, 2.0).dtype == expected_dt
+        assert np.power(b16, b16).dtype, float16
+        assert np.power(b16, b32).dtype, float32
+        assert np.power(b16, a16).dtype, float16
+        assert np.power(b16, a32).dtype, float32
 
-        assert_equal(np.power(a32, a16).dtype, float32)
-        assert_equal(np.power(a32, b16).dtype, float32)
-        assert_equal(np.power(b32, a16).dtype, float16)
-        assert_equal(np.power(b32, b16).dtype, float32)
+        assert np.power(a32, a16).dtype == float32
+        assert np.power(a32, b16).dtype == float32
+        expected_dt = float16 if OLD_PROMOTION else float32
+        assert np.power(b32, a16).dtype == expected_dt
+        assert np.power(b32, b16).dtype == float32
 
     @pytest.mark.skipif(platform.machine() == "armv5tel",
                         reason="See gh-413.")

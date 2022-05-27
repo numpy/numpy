@@ -36,6 +36,7 @@ __all__ = [
         'SkipTest', 'KnownFailureException', 'temppath', 'tempdir', 'IS_PYPY',
         'HAS_REFCOUNT', 'suppress_warnings', 'assert_array_compare',
         'assert_no_gc_cycles', 'break_cycles', 'HAS_LAPACK64', 'IS_PYSTON',
+        'OLD_PROMOTION'
         ]
 
 
@@ -51,6 +52,8 @@ IS_PYPY = platform.python_implementation() == 'PyPy'
 IS_PYSTON = hasattr(sys, "pyston_version_info")
 HAS_REFCOUNT = getattr(sys, 'getrefcount', None) is not None and not IS_PYSTON
 HAS_LAPACK64 = numpy.linalg.lapack_lite._ilp64
+
+OLD_PROMOTION = np.get_promotion_state() == 'legacy'
 
 
 def import_nose():

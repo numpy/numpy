@@ -11,7 +11,7 @@ from numpy.core._rational_tests import rational
 from numpy.core._multiarray_tests import create_custom_field_dtype
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_raises, HAS_REFCOUNT,
-    IS_PYSTON)
+    IS_PYSTON, OLD_PROMOTION)
 from numpy.compat import pickle
 from itertools import permutations
 import random
@@ -1288,21 +1288,26 @@ class TestPromotion:
     """Test cases related to more complex DType promotions.  Further promotion
     tests are defined in `test_numeric.py`
     """
+    @np.no_nep50_warning()
     @pytest.mark.parametrize(["other", "expected"],
             [(2**16-1, np.complex64),
-             (2**32-1, np.complex128),
+             (2**32-1, np.complex128 if OLD_PROMOTION else np.complex64),
              (np.float16(2), np.complex64),
              (np.float32(2), np.complex64),
-             (np.longdouble(2), np.complex64),
+             (np.longdouble(2),
+                  np.complex64 if OLD_PROMOTION else np.clongdouble),
              # Base of the double value to sidestep any rounding issues:
-             (np.longdouble(np.nextafter(1.7e308, 0.)), np.complex128),
+             (np.longdouble(np.nextafter(1.7e308, 0.)),
+                  np.complex128 if OLD_PROMOTION else np.clongdouble),
              # Additionally use "nextafter" so the cast can't round down:
              (np.longdouble(np.nextafter(1.7e308, np.inf)), np.clongdouble),
              # repeat for complex scalars:
              (np.complex64(2), np.complex64),
-             (np.clongdouble(2), np.complex64),
+             (np.clongdouble(2),
+                  np.complex64 if OLD_PROMOTION else np.clongdouble),
              # Base of the double value to sidestep any rounding issues:
-             (np.clongdouble(np.nextafter(1.7e308, 0.) * 1j), np.complex128),
+             (np.clongdouble(np.nextafter(1.7e308, 0.) * 1j),
+                  np.complex128 if OLD_PROMOTION else np.clongdouble),
              # Additionally use "nextafter" so the cast can't round down:
              (np.clongdouble(np.nextafter(1.7e308, np.inf)), np.clongdouble),
              ])
