@@ -126,7 +126,8 @@ class _SIMD_BOOL(_Test_Utility):
         """
         Logical operations for boolean types.
         Test intrinsics:
-            npyv_xor_##SFX, npyv_and_##SFX, npyv_or_##SFX, npyv_not_##SFX
+            npyv_xor_##SFX, npyv_and_##SFX, npyv_or_##SFX, npyv_not_##SFX,
+            npyv_andc_b8, npvy_orc_b8, nvpy_xnor_b8
         """
         data_a = self._data()
         data_b = self._data(reverse=True)
@@ -148,6 +149,22 @@ class _SIMD_BOOL(_Test_Utility):
         vnot = getattr(self, "not")(vdata_a)
         assert vnot == data_b
 
+        # among the boolean types, andc, orc and xnor only support b8
+        if self.sfx not in ("b8"):
+            return
+
+        data_andc = [(a & ~b) & 0xFF for a, b in zip(data_a, data_b)]
+        vandc = getattr(self, "andc")(vdata_a, vdata_b)
+        assert data_andc == vandc
+
+        data_orc = [(a | ~b) & 0xFF for a, b in zip(data_a, data_b)]
+        vorc = getattr(self, "orc")(vdata_a, vdata_b)
+        assert data_orc == vorc
+
+        data_xnor = [~(a ^ b) & 0xFF for a, b in zip(data_a, data_b)]
+        vxnor = getattr(self, "xnor")(vdata_a, vdata_b)
+        assert data_xnor == vxnor
+
     def test_tobits(self):
         data2bits = lambda data: sum([int(x != 0) << i for i, x in enumerate(data, 0)])
         for data in (self._data(), self._data(reverse=True)):
@@ -155,48 +172,6 @@ class _SIMD_BOOL(_Test_Utility):
             data_bits = data2bits(data)
             tobits = bin(self.tobits(vdata))
             assert tobits == bin(data_bits)
-
-    def test_andc(self):
-        if self.sfx not in ("b8"):
-            return
-        andc_simd = getattr(self.npyv, f"andc_b8")
-        # create the vectors
-        data = self._data()
-        rdata = self._data(reverse=True)
-        vdata = self._load_b(data)
-        vrdata = self._load_b(rdata)
-        # check andc
-        sandc = [(~x & y) & 0xFF for x, y in zip(rdata, data)]
-        vandc = andc_simd(vrdata, vdata)
-        assert sandc == vandc
-
-    def test_orc(self):
-        if self.sfx not in ("b8"):
-            return
-        orc_simd = getattr(self.npyv, f"orc_b8")
-        # create the vectors
-        data = self._data()
-        rdata = self._data(reverse=True)
-        vdata = self._load_b(data)
-        vrdata = self._load_b(rdata)
-        # check orc
-        sorc = [(~x | y) & 0xFF for x, y in zip(rdata, data)]
-        vorc = orc_simd(vrdata, vdata)
-        assert sorc == vorc
-
-    def test_xnor(self):
-        if self.sfx not in ("b8"):
-            return
-        xnor_simd = getattr(self.npyv, f"xnor_b8")
-        # create the vectors
-        data = self._data()
-        rdata = self._data(reverse=True)
-        vdata = self._load_b(data)
-        vrdata = self._load_b(rdata)
-        # check orc
-        sxnor = [~(x ^ y) & 0xFF for x, y in zip(rdata, data)]
-        vxnor = xnor_simd(vrdata, vdata)
-        assert sxnor == vxnor
 
     def test_pack(self):
         """
@@ -864,6 +839,12 @@ class _SIMD_ALL(_Test_Utility):
         data_not = cast_data([~a for a in data_cast_a])
         vnot = cast(getattr(self, "not")(vdata_a))
         assert vnot == data_not
+
+        if self.sfx not in ("u8"):
+            return
+        data_andc = [a & ~b for a, b in zip(data_cast_a, data_cast_b)]
+        vandc = cast(getattr(self, "andc")(vdata_a, vdata_b))
+        assert vandc == data_andc
 
     def test_conversion_boolean(self):
         bsfx = "b" + self.sfx[1:]
