@@ -80,12 +80,12 @@ Python in the window.  The window was extended 6 months beyond the anticipated
 two-release interval for Python to provide resilience against small
 fluctuations / delays in its release schedule.
 
-The Python release cadence was increased to 12 months in `PEP 0602
-<https://peps.python.org/pep-0602/>`__ so there will now be 3-4 Python releases
-in the support window at any time.  However, PEP 0602 does not decrease the
-support window of Python (18 months of regular full bug-fix releases and 42
-months of as-needed source-only releases).  Thus, we do not expect
-our users to upgrade Python faster, and our 42 month support window will
+The Python release cadence increased in `PEP 0602 <https://peps.python.org/pep-0602/>`__,
+with releases now every 12 months, so there will be 3-4
+Python releases in the support window at any time.  However, PEP 0602 does not
+decrease the support window of Python (18 months of regular full bug-fix
+releases and 42 months of as-needed source-only releases).  Thus, we do not
+expect our users to upgrade Python faster, and our 42 month support window will
 cover the same portion of the upstream support of any given Python release.
 
 Because Python minor version support is based only on historical
