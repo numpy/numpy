@@ -207,6 +207,8 @@ def assert_array_equal(
     y: ArrayLike,
     err_msg: str = ...,
     verbose: bool = ...,
+    *,
+    strict: bool = ...
 ) -> None: ...
 
 def assert_array_almost_equal(
