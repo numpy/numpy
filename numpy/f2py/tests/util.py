@@ -344,10 +344,6 @@ class F2PyTest:
         # Check compiler availability first
         if not has_c_compiler():
             pytest.skip("No C compiler available")
-        if not has_f77_compiler():
-            pytest.skip("No Fortran 77 compiler available")
-        if not has_f90_compiler():
-            pytest.skip("No Fortran 90 compiler available")
 
         codes = []
         if self.sources:
@@ -357,11 +353,20 @@ class F2PyTest:
 
         needs_f77 = False
         needs_f90 = False
+        needs_pyf = False
         for fn in codes:
             if str(fn).endswith(".f"):
                 needs_f77 = True
             elif str(fn).endswith(".f90"):
                 needs_f90 = True
+            elif str(fn).endswith(".pyf"):
+                needs_pyf = True
+        if needs_f77 and not has_f77_compiler():
+            pytest.skip("No Fortran 77 compiler available")
+        if needs_f90 and not has_f90_compiler():
+            pytest.skip("No Fortran 90 compiler available")
+        if needs_pyf and not (has_f90_compiler() or has_f77_compiler()):
+            pytest.skip("No Fortran compiler available")
 
         # Build the module
         if self.code is not None:
