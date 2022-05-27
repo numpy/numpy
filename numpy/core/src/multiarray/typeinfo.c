@@ -9,12 +9,6 @@
 #include "npy_pycompat.h"
 #include "typeinfo.h"
 
-#if (defined(PYPY_VERSION_NUM) && (PYPY_VERSION_NUM <= 0x07030000))
-/* PyPy issue 3160 */
-#include <structseq.h>
-#endif
-
-
 
 static PyTypeObject PyArray_typeinfoType;
 static PyTypeObject PyArray_typeinforangedType;
@@ -99,17 +93,6 @@ PyArray_typeinforanged(
     return entry;
 }
 
-/* Python version needed for older PyPy */
-#if (defined(PYPY_VERSION_NUM) && (PYPY_VERSION_NUM < 0x07020000))
-    static int
-    PyStructSequence_InitType2(PyTypeObject *type, PyStructSequence_Desc *desc) {
-        PyStructSequence_InitType(type, desc);
-        if (PyErr_Occurred()) {
-            return -1;
-        }
-        return 0;
-    }
-#endif
 
 NPY_NO_EXPORT int
 typeinfo_init_structsequences(PyObject *multiarray_dict)
