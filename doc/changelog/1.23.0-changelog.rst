@@ -159,7 +159,7 @@ names contributed a patch for the first time.
 Pull requests merged
 ====================
 
-A total of 464 pull requests were merged for this release.
+A total of 469 pull requests were merged for this release.
 
 * `#15006 <https://github.com/numpy/numpy/pull/15006>`__: ENH: add support for operator() in crackfortran.
 * `#15844 <https://github.com/numpy/numpy/pull/15844>`__: ENH: add inline definition of access rights for Fortran types
@@ -625,3 +625,8 @@ A total of 464 pull requests were merged for this release.
 * `#21604 <https://github.com/numpy/numpy/pull/21604>`__: BUILD: fix tag name for travis: it is v1.23.0rc1
 * `#21606 <https://github.com/numpy/numpy/pull/21606>`__: DOC: add missing links for two NEPs
 * `#21607 <https://github.com/numpy/numpy/pull/21607>`__: TYP, MAINT: Allow unsigned integer inplace-ops to accept signed...
+* `#21610 <https://github.com/numpy/numpy/pull/21610>`__: REL: Prepare for 1.23.0rc1 release, second version.
+* `#21619 <https://github.com/numpy/numpy/pull/21619>`__: MAINT, STY: Make download-wheels download source files.
+* `#21634 <https://github.com/numpy/numpy/pull/21634>`__: MAINT: back out conversion of npymath component to c++
+* `#21635 <https://github.com/numpy/numpy/pull/21635>`__: TST: Skip F2PY tests without Fortran compilers
+* `#21636 <https://github.com/numpy/numpy/pull/21636>`__: API: Retain ``arr.base`` more strictly in ``np.frombuffer``
