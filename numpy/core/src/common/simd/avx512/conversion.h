@@ -104,8 +104,8 @@ NPY_FINLINE npyv_b8 npyv_pack_b8_b16(npyv_b16 a, npyv_b16 b) {
 NPY_FINLINE npyv_b8
 npyv_pack_b8_b32(npyv_b32 a, npyv_b32 b, npyv_b32 c, npyv_b32 d) {
 #ifdef NPY_HAVE_AVX512BW
-    __mmask32 ab = (__mmask64)_mm512_kunpackw((__mmask32)b, (__mmask32)a);
-    __mmask32 cd = (__mmask64)_mm512_kunpackw((__mmask32)d, (__mmask32)c);
+    __mmask32 ab = _mm512_kunpackw((__mmask32)b, (__mmask32)a);
+    __mmask32 cd = _mm512_kunpackw((__mmask32)d, (__mmask32)c);
     return npyv_pack_b8_b16(ab, cd);
 #else
     const __m512i idx = _mm512_setr_epi32(

@@ -1,6 +1,6 @@
 /*@targets
  ** $maxopt baseline
- ** sse2 sse41 avx2 avx512f avx512_skx
+ ** sse2 sse42 avx2 avx512f avx512_skx
  ** vsx2 vsx3
  ** neon
  **/
@@ -15,18 +15,23 @@
 // Provides the various *_LOOP macros
 #include "fast_loop_macros.h"
 
+/********************************************************************************
+ ** Defining the SIMD kernels
+ ********************************************************************************/
 /**begin repeat
  * #sfx    = u8, s8, u16, s16, u32, s32, u64, s64, f32, f64#
  * #len    =  8,  8,  16,  16,  32,  32,  64,  64,  32,  64#
+ * #signed =  0,  1,   0,   1,   0,   1,   0,   1,   0,   0#
  * #VECTOR = NPY_SIMD*9, NPY_SIMD_F64#
  */
 /**begin repeat1
- * #kind = equal, not_equal, less, less_equal, greater, greater_equal#
- * #OP = ==, !=, <, <=, >, >=#
- * #VOP = cmpeq, cmpneq, cmplt, cmple, cmpgt, cmpge#
+ * #kind = equal, not_equal, less, less_equal#
+ * #eq = 1, 0, 0, 0#
+ * #neq = 0, 1, 0, 0#
+ * #OP = ==, !=, <, <=#
+ * #VOP = cmpeq, cmpneq, cmplt, cmple#
  */
-
-#if @VECTOR@
+#if @VECTOR@ && !((@eq@ || @neq@) && @signed@)
 static void simd_binary_@kind@_@sfx@(char **args, npy_intp len)
 {
     npyv_lanetype_@sfx@ *src1 = (npyv_lanetype_@sfx@ *) args[0];
@@ -205,10 +210,11 @@ static void simd_binary_scalar2_@kind@_@sfx@(char **args, npy_intp len)
 /**end repeat**/
 
 /**begin repeat
- * #kind = equal, not_equal, less, less_equal, greater, greater_equal#
- * #OP = ==, !=, <, <=, >, >=#
- * #VOP = xnor, xor, andc, orc, andc, orc#
- * #rev = 0, 0, 0, 0, 1, 1#
+ * #kind = equal, not_equal, less, less_equal#
+ * #eq = 1, 0, 0, 0#
+ * #neq = 0, 1, 0, 0#
+ * #OP = ==, !=, <, <=#
+ * #VOP = xnor, xor, andc, orc#
  */
 
 #if NPY_SIMD
@@ -224,14 +230,10 @@ static void simd_binary_@kind@_b8(char **args, npy_intp len)
     for (; len >= vstep;
          len -= vstep, src1 += vstep, src2 += vstep, dst += vstep) {
         // Whatever element in src != 0x0 is converted to 0xFF
-        npyv_b8 a = npyv_cmpneq_u8(npyv_load_u8(src1), vzero);
-        npyv_b8 b = npyv_cmpneq_u8(npyv_load_u8(src2), vzero);
-#if !@rev@
+        npyv_b8 a = npyv_cmpeq_u8(npyv_load_u8(src1), vzero);
+        npyv_b8 b = npyv_cmpeq_u8(npyv_load_u8(src2), vzero);
         npyv_b8 c = npyv_@VOP@_b8(a, b);
-#else
-        npyv_b8 c = npyv_@VOP@_b8(b, a);
-#endif
-        npyv_store_u8(dst, npyv_and_u8(npyv_cvt_u8_b8(c), truemask));
+        npyv_store_u8(dst, npyv_andc_u8(npyv_cvt_u8_b8(c), truemask));
     }
 
     for (; len > 0; --len, ++src1, ++src2, ++dst) {
@@ -248,18 +250,14 @@ static void simd_binary_scalar1_@kind@_b8(char **args, npy_intp len)
     npyv_lanetype_u8 *dst   = (npyv_lanetype_u8 *) args[2];
     const npyv_u8 vzero     = npyv_setall_u8(0x0);
     const npyv_u8 vscalar   = npyv_setall_u8(scalar);
-    const npyv_b8 a         = npyv_cmpneq_u8(vscalar, vzero);
+    const npyv_b8 a         = npyv_cmpeq_u8(vscalar, vzero);
     const npyv_u8 truemask  = npyv_setall_u8(0x1);
     const int vstep         = npyv_nlanes_u8;
 
     for (; len >= vstep; len -= vstep, src += vstep, dst += vstep) {
-        npyv_b8 b = npyv_cmpneq_u8(npyv_load_u8(src), vzero);
-#if !@rev@
+        npyv_b8 b = npyv_cmpeq_u8(npyv_load_u8(src), vzero);
         npyv_b8 c = npyv_@VOP@_b8(a, b);
-#else
-        npyv_b8 c = npyv_@VOP@_b8(b, a);
-#endif
-        npyv_store_u8(dst, npyv_and_u8(npyv_cvt_u8_b8(c), truemask));
+        npyv_store_u8(dst, npyv_andc_u8(npyv_cvt_u8_b8(c), truemask));
     }
 
     for (; len > 0; --len, ++src, ++dst) {
@@ -275,18 +273,14 @@ static void simd_binary_scalar2_@kind@_b8(char **args, npy_intp len)
     npyv_lanetype_u8 *dst   = (npyv_lanetype_u8 *) args[2];
     const npyv_u8 vzero     = npyv_setall_u8(0x0);
     const npyv_u8 vscalar   = npyv_setall_u8(scalar);
-    const npyv_b8 b         = npyv_cmpneq_u8(vscalar, vzero);
+    const npyv_b8 b         = npyv_cmpeq_u8(vscalar, vzero);
     const npyv_u8 truemask  = npyv_setall_u8(0x1);
     const int vstep         = npyv_nlanes_u8;
 
     for (; len >= vstep; len -= vstep, src += vstep, dst += vstep) {
-        npyv_b8 a = npyv_cmpneq_u8(npyv_load_u8(src), vzero);
-#if !@rev@
+        npyv_b8 a = npyv_cmpeq_u8(npyv_load_u8(src), vzero);
         npyv_b8 c = npyv_@VOP@_b8(a, b);
-#else
-        npyv_b8 c = npyv_@VOP@_b8(b, a);
-#endif
-        npyv_store_u8(dst, npyv_and_u8(npyv_cvt_u8_b8(c), truemask));
+        npyv_store_u8(dst, npyv_andc_u8(npyv_cvt_u8_b8(c), truemask));
     }
 
     for (; len > 0; --len, ++src, ++dst) {
@@ -297,73 +291,73 @@ static void simd_binary_scalar2_@kind@_b8(char **args, npy_intp len)
 #endif
 /**end repeat**/
 
-
 /**begin repeat
  * #type = npy_ubyte*2, npy_byte, npy_ushort, npy_short, npy_uint, npy_int,
            npy_ulonglong, npy_longlong, npy_float, npy_double#
  * #sfx = b8, u8, s8, u16, s16, u32, s32, u64, s64, f32, f64#
+ * #bool = 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0#
+ * #fp = 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1#
+ * #signed = 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0#
  * #VECTOR = NPY_SIMD*10, NPY_SIMD_F64#
  */
 /**begin repeat1
- * #kind = equal, not_equal, less, less_equal, greater, greater_equal#
+ * #kind = equal, not_equal, less, less_equal#
+ * #eq   = 1, 0, 0, 0#
+ * #neq  = 0, 1, 0, 0#
+ * #OP = ==, !=, <, <=#
  */
-static NPY_INLINE int
+#if !((@eq@ || @neq@) && @signed@)
+static NPY_INLINE void
 run_binary_simd_@kind@_@sfx@(char **args, npy_intp const *dimensions, npy_intp const *steps)
 {
 #if @VECTOR@
     /* argument one scalar */
     if (IS_BLOCKABLE_BINARY_SCALAR1_BOOL(sizeof(@type@), NPY_SIMD_WIDTH)) {
         simd_binary_scalar1_@kind@_@sfx@(args, dimensions[0]);
-        return 1;
+        return;
     }
     /* argument two scalar */
     else if (IS_BLOCKABLE_BINARY_SCALAR2_BOOL(sizeof(@type@), NPY_SIMD_WIDTH)) {
         simd_binary_scalar2_@kind@_@sfx@(args, dimensions[0]);
-        return 1;
+        return;
     }
     else if (IS_BLOCKABLE_BINARY_BOOL(sizeof(@type@), NPY_SIMD_WIDTH)) {
         simd_binary_@kind@_@sfx@(args, dimensions[0]);
-        return 1;
+        return;
     }
 #endif
-    return 0;
+
+    BINARY_LOOP {
+#if @bool@
+        npy_bool in1 = *((npy_bool *)ip1) != 0;
+        npy_bool in2 = *((npy_bool *)ip2) != 0;
+#else
+        const @type@ in1 = *(@type@ *)ip1;
+        const @type@ in2 = *(@type@ *)ip2;
+#endif
+        *((npy_bool *)op1) = in1 @OP@ in2;
+    }
 }
+#endif
 /**end repeat1**/
 /**end repeat**/
 
-/*
- *****************************************************************************
- **                             BOOLEAN LOOPS                               **
- *****************************************************************************
- */
-
-/**begin repeat
- * #kind = equal, not_equal, less, less_equal, greater, greater_equal#
- * #OP = ==, !=, <, <=, >, >=#
- */
-NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(BOOL_@kind@)
-(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
-{
-    if (!run_binary_simd_@kind@_b8(args, dimensions, steps)) {
-        BINARY_LOOP {
-            npy_bool in1 = *((npy_bool *)ip1) != 0;
-            npy_bool in2 = *((npy_bool *)ip2) != 0;
-            *((npy_bool *)op1)= in1 @OP@ in2;
-        }
-    }
-}
-/**end repeat**/
+/********************************************************************************
+ ** Defining ufunc inner functions
+ ********************************************************************************/
 
 /*
- *****************************************************************************
- **                           INTEGER LOOPS
- *****************************************************************************
+ * In order to reduce the size of the binary generated from this source, the
+ * following rules are applied: 1) each data type implements its function
+ * 'greater' as a call to the function 'less' but with the arguments swapped,
+ * the same applies to the function 'greater_equal', which is implemented
+ * with a call to the function 'less_equal', and 2) for the integer datatypes
+ * of the same size (eg 8-bit), a single kernel of the functions 'equal' and
+ * 'not_equal' is used to implement both signed and unsigned types.
  */
 
 /**begin repeat
  * Signed and Unsigned types
- *  #type  = npy_ubyte, npy_ushort, npy_uint, npy_ulong, npy_ulonglong,
- *           npy_byte,  npy_short,  npy_int,  npy_long,  npy_longlong#
  *  #TYPE  = UBYTE,     USHORT,     UINT,     ULONG,     ULONGLONG,
  *           BYTE,      SHORT,      INT,      LONG,      LONGLONG#
  *  #STYPE = BYTE,      SHORT,      INT,      LONG,      LONGLONG,
@@ -371,11 +365,13 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(BOOL_@kind@)
  *  #signed = 0, 0, 0, 0, 0, 1, 1, 1, 1, 1#
  */
 #undef TO_SIMD_SFX
+#undef TO_SIMD_UTYPE
 #if 0
 /**begin repeat1
  * #len = 8, 16, 32, 64#
  */
 #elif NPY_BITSOF_@STYPE@ == @len@
+    #define TO_SIMD_UTYPE(X) X##_u@len@
     #if @signed@
         #define TO_SIMD_SFX(X) X##_s@len@
     #else
@@ -385,50 +381,71 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(BOOL_@kind@)
 #endif
 
 /**begin repeat1
- * #kind = equal, not_equal, less, less_equal, greater, greater_equal#
- * #OP = ==, !=, <, <=, >, >=#
+ * #kind = greater, greater_equal#
+ * #kind_to = less, less_equal#
  */
 NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
 (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
-    if (!TO_SIMD_SFX(run_binary_simd_@kind@)(args, dimensions, steps)) {
-        BINARY_LOOP {
-            const @type@ in1 = *(@type@ *)ip1;
-            const @type@ in2 = *(@type@ *)ip2;
-            *((npy_bool *)op1) = in1 @OP@ in2;
-        }
-    }
+    char *nargs[3] = {args[1], args[0], args[2]};
+    npy_intp nsteps[3] = {steps[1], steps[0], steps[2]};
+    TO_SIMD_SFX(run_binary_simd_@kind_to@)(nargs, dimensions, nsteps);
+}
+/**end repeat1**/
+
+/**begin repeat1
+ * #kind = less, less_equal#
+ */
+NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
+(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+{
+    TO_SIMD_SFX(run_binary_simd_@kind@)(args, dimensions, steps);
+}
+/**end repeat1**/
+
+/**begin repeat1
+ * #kind = equal, not_equal#
+ */
+NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
+(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+{
+    TO_SIMD_UTYPE(run_binary_simd_@kind@)(args, dimensions, steps);
 }
 /**end repeat1**/
 /**end repeat**/
 
-/*
- *****************************************************************************
- **                             FLOAT LOOPS                                 **
- *****************************************************************************
- */
-
 /**begin repeat
- * Float types
- * #type = npy_float, npy_double#
- * #TYPE = FLOAT, DOUBLE#
- * #sfx = f32, f64#
+ * Boolean & Float types
+ * #TYPE = BOOL, FLOAT, DOUBLE#
+ * #sfx = b8, f32, f64#
+ * #fp = 0, 1, 1#
  */
 /**begin repeat1
- * #kind = equal, not_equal, less, less_equal, greater, greater_equal#
- * #OP = ==, !=, <, <=, >, >=#
+ * #kind = greater, greater_equal#
+ * #kind_to = less, less_equal#
  */
 NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
 (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
-    if (!run_binary_simd_@kind@_@sfx@(args, dimensions, steps)) {
-        BINARY_LOOP {
-            const @type@ in1 = *(@type@ *)ip1;
-            const @type@ in2 = *(@type@ *)ip2;
-            *((npy_bool *)op1) = in1 @OP@ in2;
-        }
-    }
+    char *nargs[3] = {args[1], args[0], args[2]};
+    npy_intp nsteps[3] = {steps[1], steps[0], steps[2]};
+    run_binary_simd_@kind_to@_@sfx@(nargs, dimensions, nsteps);
+#if @fp@
     npy_clear_floatstatus_barrier((char*)dimensions);
+#endif
+}
+/**end repeat1**/
+
+/**begin repeat1
+ * #kind = equal, not_equal, less, less_equal#
+ */
+NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
+(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+{
+    run_binary_simd_@kind@_@sfx@(args, dimensions, steps);
+#if @fp@
+    npy_clear_floatstatus_barrier((char*)dimensions);
+#endif
 }
 /**end repeat1**/
 /**end repeat**/

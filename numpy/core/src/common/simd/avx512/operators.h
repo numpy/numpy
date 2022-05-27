@@ -140,6 +140,9 @@
     #define npyv_not_f64(A) _mm512_castsi512_pd(npyv_not_u64(_mm512_castpd_si512(A)))
 #endif
 
+// ANDC
+#define npyv_andc_u8(A, B) _mm512_andnot_si512(B, A)
+
 /***************************
  * Logical (boolean)
  ***************************/
@@ -152,8 +155,8 @@
     #define npyv_xor_b16 _kxor_mask32
     #define npyv_not_b8  _knot_mask64
     #define npyv_not_b16 _knot_mask32
-    #define npyv_andc_b8 _kandn_mask64
-    #define npyv_orc_b8(A, B) npyv_or_b8(npyv_not_b8(A), B)
+    #define npyv_andc_b8(A, B) _kandn_mask64(B, A)
+    #define npyv_orc_b8(A, B) npyv_or_b8(npyv_not_b8(B), A)
     #define npyv_xnor_b8 _kxnor_mask64
 #elif defined(NPY_HAVE_AVX512BW)
     NPY_FINLINE npyv_b8  npyv_and_b8(npyv_b8 a, npyv_b8 b)
@@ -173,9 +176,9 @@
     NPY_FINLINE npyv_b16 npyv_not_b16(npyv_b16 a)
     { return ~a; }
     NPY_FINLINE npyv_b8  npyv_andc_b8(npyv_b8 a, npyv_b8 b)
-    { return (~a) & b; }
+    { return a & (~b); }
     NPY_FINLINE npyv_b8  npyv_orc_b8(npyv_b8 a, npyv_b8 b)
-    { return (~a) | b; }
+    { return a | (~b); }
     NPY_FINLINE npyv_b8  npyv_xnor_b8(npyv_b8 a, npyv_b8 b)
     { return ~(a ^ b); }
 #else
@@ -187,8 +190,8 @@
     #define npyv_xor_b16 _mm512_xor_si512
     #define npyv_not_b8  npyv_not_u8
     #define npyv_not_b16 npyv_not_u8
-    #define npyv_andc_b8 _mm512_andnot_si512
-    #define npyv_orc_b8(A, B) npyv_or_b8(npyv_not_b8(A), B)
+    #define npyv_andc_b8(A, B) _mm512_andnot_si512(B, A)
+    #define npyv_orc_b8(A, B) npyv_or_b8(npyv_not_b8(B), A)
     #define npyv_xnor_b8(A, B) npyv_not_b8(npyv_xor_b8(A, B))
 #endif
 

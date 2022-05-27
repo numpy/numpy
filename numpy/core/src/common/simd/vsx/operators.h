@@ -134,8 +134,9 @@ NPY_FINLINE npyv_f64 npyv_not_f64(npyv_f64 a)
 { return vec_nor(a, a); }
 
 // ANDC, ORC and XNOR
-#define npyv_andc_b8(A, B) vec_andc(B, A)
-#define npyv_orc_b8(A, B) vec_orc(B, A)
+#define npyv_andc_u8 vec_andc
+#define npyv_andc_b8 vec_andc
+#define npyv_orc_b8 vec_orc
 #define npyv_xnor_b8 vec_eqv
 
 /***************************
