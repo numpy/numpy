@@ -984,6 +984,8 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
 
         if (!NPY_DT_is_legacy(out_op_DTypes[i])) {
             *allow_legacy_promotion = NPY_FALSE;
+            // TODO: A subclass of int, float, complex could reach here and
+            //       it should not be flagged as "weak" if it does.
         }
         if (PyArray_NDIM(out_op[i]) == 0) {
             any_scalar = NPY_TRUE;
@@ -1000,21 +1002,21 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
          * `np.can_cast(operand, dtype)`.  The flag is local to this use, but
          * necessary to propagate the information to the legacy type resolution.
          */
-        if (PyLong_CheckExact(obj)) {
+        if (PyLong_Check(obj)) {
             Py_INCREF(&PyArray_PyIntAbstractDType);
             Py_SETREF(out_op_DTypes[i], &PyArray_PyIntAbstractDType);
             ((PyArrayObject_fields *)out_op[i])->flags |= (
                     NPY_ARRAY_WAS_PYTHON_INT);
             *promoting_pyscalars = NPY_TRUE;
         }
-        else if (PyFloat_CheckExact(obj)) {
+        else if (PyFloat_Check(obj)) {
             Py_INCREF(&PyArray_PyFloatAbstractDType);
             Py_SETREF(out_op_DTypes[i], &PyArray_PyFloatAbstractDType);
             ((PyArrayObject_fields *)out_op[i])->flags |= (
                     NPY_ARRAY_WAS_PYTHON_FLOAT);
             *promoting_pyscalars = NPY_TRUE;
         }
-        else if (PyComplex_CheckExact(obj)) {
+        else if (PyComplex_Check(obj)) {
             Py_INCREF(&PyArray_PyComplexAbstractDType);
             Py_SETREF(out_op_DTypes[i], &PyArray_PyComplexAbstractDType);
             ((PyArrayObject_fields *)out_op[i])->flags |= (

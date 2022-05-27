@@ -634,6 +634,19 @@ legacy_promote_using_legacy_type_resolver(PyUFuncObject *ufunc,
          * `np.float32(3.1) < 3.1`.
          */
         for (int i = ufunc->nin; i < ufunc->nargs; i++) {
+            /*
+             * If an output was provided and the new dtype matches, we
+             * should (at best) lose a tiny bit of precision, e.g.:
+             * `np.true_divide(float32_arr0d, 1, out=float32_arr0d)`
+             * (which operated on float64 before, although it is probably rare)
+             */
+            if (ops[i] != NULL
+                    && PyArray_EquivTypenums(
+                            operation_DTypes[i]->type_num,
+                            PyArray_DESCR(ops[i])->type_num)) {
+                continue;
+            }
+            /* Otherwise, warn if the dtype doesn't match */
             if (!PyArray_EquivTypenums(
                     operation_DTypes[i]->type_num, out_descrs[i]->type_num)) {
                 if (PyErr_WarnEx(PyExc_UserWarning,
