@@ -243,6 +243,14 @@ class TestArrayEqual(_GenericTest):
 
         assert_array_equal(a, b, strict=True)
 
+    def test_array_vs_float_array_strict(self):
+        """Test comparing two arrays with strict option."""
+        a = np.array([1, 1, 1])
+        b = np.array([1., 1., 1.])
+
+        with pytest.raises(AssertionError):
+            assert_array_equal(a, b, strict=True)
+
 
 class TestBuildErrorMessage:
 

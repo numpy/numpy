@@ -755,7 +755,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
 
     try:
         if strict:
-            cond = x.shape == y.shape
+            cond = x.shape == y.shape and x.dtype == y.dtype
         else:
             cond = (x.shape == () or y.shape == ()) or x.shape == y.shape
         if not cond:
@@ -882,7 +882,7 @@ def assert_array_equal(x, y, err_msg='', verbose=True, *, strict=False):
         If True, the conflicting values are appended to the error message.
     strict : bool, optional
         If True, raise an assertion when one of the array_like objects is a
-        scalar.
+        scalar or if `x` and `y` have a different data type.
 
     Raises
     ------
@@ -949,6 +949,19 @@ def assert_array_equal(x, y, err_msg='', verbose=True, *, strict=False):
            [3, 3, 3, 3, 3]])
      y: array(3)
 
+    The `strict` parameter also ensures that the array data types match:
+
+    >>> x = np.array([2, 2, 2])
+    >>> y = np.array([2., 2., 2.], dtype=np.float32)
+    >>> np.testing.assert_array_equal(x, y, strict=True)
+    Traceback (most recent call last):
+        ...
+    AssertionError:
+    Arrays are not equal
+    <BLANKLINE>
+    (shapes (3,), (3,) mismatch)
+     x: array([2, 2, 2])
+     y: array([2., 2., 2.], dtype=float32)
     """
     __tracebackhide__ = True  # Hide traceback for py.test
     assert_array_compare(operator.__eq__, x, y, err_msg=err_msg,
