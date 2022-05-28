@@ -1195,10 +1195,6 @@ PyArray_FindConcatenationDescriptor(
         }
     }
 
-    if (PyArray_CheckLegacyResultType(&result, n, arrays, 0, NULL) < 0) {
-        Py_SETREF(result, NULL);  /* Error occurred. */
-    }
-
   finish:
     Py_DECREF(common_dtype);
     return result;
@@ -2053,12 +2049,14 @@ PyArray_CheckLegacyResultType(
     }
 
     assert(npy_promotion_state == NPY_USE_WEAK_PROMOTION_AND_WARN);
-    Py_DECREF(ret);
     if (PyErr_WarnFormat(PyExc_UserWarning, 1,
             "result dtype changed due to the removal of value-based "
-            "promotion from NumPy.") < 0) {
+            "promotion from NumPy. Changed from %S to %S.",
+            ret, *new_result) < 0) {
+        Py_DECREF(ret);
         return -1;
     }
+    Py_DECREF(ret);
     return 0;
 }
 
