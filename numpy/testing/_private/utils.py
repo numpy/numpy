@@ -489,7 +489,7 @@ def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
 
     The test verifies that the elements of `actual` and `desired` satisfy.
 
-        ``abs(desired-actual) < 1.5 * 10**(-decimal)``
+        ``abs(desired-actual) < float64(1.5 * 10**(-decimal))``
 
     That is a looser test than originally documented, but agrees with what the
     actual implementation in `assert_array_almost_equal` did up to rounding
@@ -599,7 +599,7 @@ def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
             return
     except (NotImplementedError, TypeError):
         pass
-    if abs(desired - actual) >= 1.5 * 10.0**(-decimal):
+    if abs(desired - actual) >= np.float64(1.5 * 10.0**(-decimal)):
         raise AssertionError(_build_err_msg())
 
 
