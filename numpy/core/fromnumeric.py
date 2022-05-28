@@ -1145,8 +1145,14 @@ def argmax(a, axis=None, out=None, *, keepdims=np._NoValue, initial=np._NoValue,
         If this is set to True, the axes which are reduced are left
         in the result as dimensions with size one. With this option,
         the result will broadcast correctly against the array.
+    initial : scalar, optional
+        Value to use for elements which are not selected by `where`.
+    where : array_like of bool, optional
+        A boolean array which is broadcasted to match the dimensions of `array`,
+        and selects elements to include into comparison, skipped elements are
+        replaced by `initial` value.
 
-        .. versionadded:: 1.22.0
+        .. versionadded:: 1.23.0
 
     Returns
     -------
@@ -1213,6 +1219,13 @@ def argmax(a, axis=None, out=None, *, keepdims=np._NoValue, initial=np._NoValue,
     >>> res = np.argmax(x, axis=1, keepdims=True)
     >>> res.shape
     (2, 1, 4)
+
+    Using `initial` and `where`
+
+    >>> x = np.arange(5)
+    >>> x.argmax(initial=0, where=[True, True, True, True, False])
+    3
+
     """
     kwds = {}
     if keepdims is not np._NoValue:
@@ -1220,7 +1233,7 @@ def argmax(a, axis=None, out=None, *, keepdims=np._NoValue, initial=np._NoValue,
     if where is not np._NoValue:
         kwds['where'] = where
         if initial is np._NoValue:
-            raise TypeError("To use a where mask one has to specify `initial`")
+            raise TypeError("To use a `where` mask, `initial` must be specified")
         kwds['initial'] = initial
     return _wrapfunc(a, 'argmax', axis=axis, out=out, **kwds)
 
@@ -1250,8 +1263,14 @@ def argmin(a, axis=None, out=None, *, keepdims=np._NoValue, initial=np._NoValue,
         If this is set to True, the axes which are reduced are left
         in the result as dimensions with size one. With this option,
         the result will broadcast correctly against the array.
+    initial : scalar, optional
+        Value to use for elements which are not selected by `where`.
+    where : array_like of bool, optional
+        A boolean array which is broadcasted to match the dimensions of `array`,
+        and selects elements to include into comparison, skipped elements are
+        replaced by `initial` value.
 
-        .. versionadded:: 1.22.0
+        .. versionadded:: 1.23.0
 
     Returns
     -------
@@ -1318,6 +1337,13 @@ def argmin(a, axis=None, out=None, *, keepdims=np._NoValue, initial=np._NoValue,
     >>> res = np.argmin(x, axis=1, keepdims=True)
     >>> res.shape
     (2, 1, 4)
+
+    Using `initial` and `where`
+
+    >>> x = -np.arange(5)
+    >>> x.argmin(initial=0, where=[True, True, True, True, False])
+    3
+
     """
     kwds = {}
     if keepdims is not np._NoValue:
@@ -1325,7 +1351,7 @@ def argmin(a, axis=None, out=None, *, keepdims=np._NoValue, initial=np._NoValue,
     if where is not np._NoValue:
         kwds['where'] = where
         if initial is np._NoValue:
-            raise TypeError("To use a where mask one has to specify `initial`")
+            raise TypeError("To use a `where` mask, `initial` must be specified")
         kwds['initial'] = initial
     return _wrapfunc(a, 'argmin', axis=axis, out=out, **kwds)
 

@@ -1,0 +1,7 @@
+``initial`` and ``where`` arguments for `numpy.argmin`, `numpy.argmax`
+----------------------------------------------------------------------
+
+``initial`` and ``where`` arguments are added to `numpy.argmin`, `numpy.argmax`.
+``where`` is boolean array which is broadcasted to match the dimensions of 
+input ``array``, and selects elements to include into comparison, 
+skipped elements are replaced by ``initial`` value.
