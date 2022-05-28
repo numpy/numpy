@@ -3,7 +3,7 @@ import pytest
 
 import numpy as np
 from numpy import uint16, float16, float32, float64
-from numpy.testing import assert_, assert_equal
+from numpy.testing import assert_, assert_equal, OLD_PROMOTION
 
 
 def assert_raises_fpe(strmatch, callable, *args, **kwargs):
@@ -451,6 +451,7 @@ class TestHalf:
         assert_equal(np.frexp(b), ([-0.5, 0.625, 0.5, 0.5, 0.75], [2, 3, 1, 3, 2]))
         assert_equal(np.ldexp(b, [0, 1, 2, 4, 2]), [-2, 10, 4, 64, 12])
 
+    @np.no_nep50_warning()
     def test_half_coercion(self):
         """Test that half gets coerced properly with the other types"""
         a16 = np.array((1,), dtype=float16)
