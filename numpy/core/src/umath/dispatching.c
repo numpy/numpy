@@ -649,8 +649,10 @@ legacy_promote_using_legacy_type_resolver(PyUFuncObject *ufunc,
             /* Otherwise, warn if the dtype doesn't match */
             if (!PyArray_EquivTypenums(
                     operation_DTypes[i]->type_num, out_descrs[i]->type_num)) {
-                if (PyErr_WarnEx(PyExc_UserWarning,
-                        "MUAHAHAHAHAHAHA, a change, a change!", 1) < 0) {
+                if (PyErr_WarnFormat(PyExc_UserWarning, 1,
+                        "result dtype changed due to the removal of value-based "
+                        "promotion from NumPy. Changed from %S to %S.",
+                        out_descrs[i], operation_DTypes[i]->singleton) < 0) {
                     return -1;
                 }
                 return 0;

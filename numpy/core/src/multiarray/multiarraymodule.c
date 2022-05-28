@@ -4504,10 +4504,12 @@ static struct PyMethodDef array_module_methods[] = {
         METH_VARARGS, NULL},
     {"get_promotion_state",
         (PyCFunction)npy_get_promotion_state,
-        METH_NOARGS, NULL},
+        METH_NOARGS, "Get the current NEP 50 promotion state."},
     {"set_promotion_state",
          (PyCFunction)npy_set_promotion_state,
-         METH_O, NULL},
+         METH_O, "Set the NEP 50 promotion state.  This is not thread-safe.\n"
+                 "The optional warnings can be safely silenced using the \n"
+                 "`np.no_nep50_warning()` context manager."},
     {"_add_newdoc_ufunc", (PyCFunction)add_newdoc_ufunc,
         METH_VARARGS, NULL},
     {"_get_sfloat_dtype",

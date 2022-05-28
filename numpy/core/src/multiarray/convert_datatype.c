@@ -48,7 +48,7 @@ NPY_NO_EXPORT npy_intp REQUIRED_STR_LEN[] = {0, 3, 5, 10, 10, 20, 20, 20, 20};
 /*
  * Whether or not legacy value-based promotion/casting is used.
  */
-NPY_NO_EXPORT int npy_promotion_state = NPY_USE_WEAK_PROMOTION_AND_WARN;
+NPY_NO_EXPORT int npy_promotion_state = NPY_USE_LEGACY_PROMOTION;
 NPY_NO_EXPORT PyObject *NO_NEP50_WARNING_CTX = NULL;
 
 static PyObject *
@@ -113,7 +113,8 @@ npy_set_promotion_state(PyObject *NPY_UNUSED(mod), PyObject *arg)
 {
     if (!PyUnicode_Check(arg)) {
         PyErr_SetString(PyExc_TypeError,
-                "set_promotion_state() argument must be a string.");
+                "set_promotion_state() argument or NPY_PROMOTION_STATE "
+                "must be a string.");
         return NULL;
     }
     if (PyUnicode_CompareWithASCIIString(arg, "weak") == 0) {
@@ -127,7 +128,7 @@ npy_set_promotion_state(PyObject *NPY_UNUSED(mod), PyObject *arg)
     }
     else {
         PyErr_Format(PyExc_TypeError,
-                "set_promotion_state() argument must be "
+                "set_promotion_state() argument or NPY_PROMOTION_STATE must be "
                 "'weak', 'legacy', or 'weak_and_warn' but got '%.100S'", arg);
         return NULL;
     }

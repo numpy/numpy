@@ -994,6 +994,13 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
             all_scalar = NPY_FALSE;
             continue;
         }
+        if (npy_promotion_state == NPY_USE_LEGACY_PROMOTION) {
+            /*
+             * Do not replace with abstract DTypes as that would lead to
+             * incorrect result for mixed scalars.
+             */
+            continue;
+        }
         /*
          * Handle the "weak" Python scalars/literals.  We use a special DType
          * for these.
