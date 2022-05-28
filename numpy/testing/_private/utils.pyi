@@ -200,6 +200,8 @@ def assert_array_compare(
     precision: SupportsIndex = ...,
     equal_nan: bool = ...,
     equal_inf: bool = ...,
+    *,
+    strict: bool = ...
 ) -> None: ...
 
 def assert_array_equal(

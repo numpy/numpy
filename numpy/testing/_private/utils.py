@@ -881,8 +881,9 @@ def assert_array_equal(x, y, err_msg='', verbose=True, *, strict=False):
     verbose : bool, optional
         If True, the conflicting values are appended to the error message.
     strict : bool, optional
-        If True, raise an assertion when one of the array_like objects is a
-        scalar or if `x` and `y` have a different data type.
+        If True, raise an assertion when either the shape or the data
+        type of the array_like objects does not match. The special
+        handling for scalars mentioned in the Notes section is disabled.
 
     Raises
     ------
