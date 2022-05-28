@@ -162,7 +162,7 @@ def unique(ar, return_index=False, return_inverse=False,
     return_counts : bool, optional
         If True, also return the number of times each unique item appears
         in `ar`.
-    equals_nan : bool, optional
+    equal_nans : bool, optional
         If True, collapses multiple NaN values in return array into 1
 
         .. versionchanged: NumPy 1.24
@@ -272,7 +272,7 @@ def unique(ar, return_index=False, return_inverse=False,
     ar = np.asanyarray(ar)
     if axis is None:
         ret = _unique1d(ar, return_index, return_inverse, return_counts, 
-        equal_nans)
+        equal_nans = equal_nans)
         return _unpack_tuple(ret)
 
     # axis was specified and not None
@@ -315,13 +315,13 @@ def unique(ar, return_index=False, return_inverse=False,
         return uniq
 
     output = _unique1d(consolidated, return_index,
-                       return_inverse, return_counts, equal_nans)
+                       return_inverse, return_counts, equal_nans = equal_nans)
     output = (reshape_uniq(output[0]),) + output[1:]
     return _unpack_tuple(output)
 
 
 def _unique1d(ar, return_index=False, return_inverse=False,
-              return_counts=False, equal_nans=True):
+              return_counts=False, *, equal_nans=True):
     """
     Find the unique elements of an array, ignoring shape.
     """

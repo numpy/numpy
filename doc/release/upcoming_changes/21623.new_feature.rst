@@ -1,0 +1,4 @@
+New parameter ``equal_nans`` added to `np.unique`
+-----------------------------------------------------------------------------------
+
+`np.unique` was previously changed to treat NaN values as equal. Now this functionality is decided by setting the ``equal_nans`` kwarg to True or False. True is the default behavior. 
