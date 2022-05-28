@@ -430,6 +430,30 @@ PyArray_BoolConverter(PyObject *object, npy_bool *val)
     return NPY_SUCCEED;
 }
 
+NPY_NO_EXPORT int
+PyArray_BoolArrayConverter(PyObject *object, PyObject **address)
+{
+    if (PyArray_Check(object)) {
+        if (PyArray_ISBOOL((PyArrayObject *)object)) {
+            *address = object;
+            Py_INCREF(object);
+        } 
+        else {
+            *address = PyArray_CastToType((PyArrayObject *)object, 
+                                           PyArray_DescrFromType(NPY_BOOL), 0);
+            Py_DECREF(object);
+        }
+        return NPY_SUCCEED;
+    }
+    else {
+        *address = PyArray_FROM_OT(object, NPY_BOOL);
+        if (*address == NULL) {
+            return NPY_FAIL;
+        }
+        return NPY_SUCCEED;
+    }
+}
+
 static int
 string_converter_helper(
     PyObject *object,
