@@ -5534,7 +5534,7 @@ class MaskedArray(ndarray):
         return filled.argsort(axis=axis, kind=kind, order=order)
 
     def argmin(self, axis=None, fill_value=None, out=None, *,
-                keepdims=np._NoValue, initial=np._NoValue, where=np._NoValue):
+                keepdims=np._NoValue):
         """
         Return array of indices to the minimum values along the given axis.
 
@@ -5578,8 +5578,7 @@ class MaskedArray(ndarray):
             fill_value = minimum_fill_value(self)
         d = self.filled(fill_value).view(ndarray)
         keepdims = False if keepdims is np._NoValue else bool(keepdims)
-        return d.argmin(axis, out=out, keepdims=keepdims, 
-                        initial=initial, where=where)
+        return d.argmin(axis, out=out, keepdims=keepdims)
 
     def argmax(self, axis=None, fill_value=None, out=None, *,
                 keepdims=np._NoValue):
