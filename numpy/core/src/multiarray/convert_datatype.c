@@ -116,13 +116,13 @@ npy_set_promotion_state(PyObject *NPY_UNUSED(mod), PyObject *arg)
                 "set_promotion_state() argument must be a string.");
         return NULL;
     }
-    if (PyUnicode_CompareWithASCIIString(arg, "weak")) {
+    if (PyUnicode_CompareWithASCIIString(arg, "weak") == 0) {
         npy_promotion_state = NPY_USE_WEAK_PROMOTION;
     }
-    else if (PyUnicode_CompareWithASCIIString(arg, "weak_and_warn")) {
+    else if (PyUnicode_CompareWithASCIIString(arg, "weak_and_warn") == 0) {
         npy_promotion_state = NPY_USE_WEAK_PROMOTION_AND_WARN;
     }
-    else if (PyUnicode_CompareWithASCIIString(arg, "legacy")) {
+    else if (PyUnicode_CompareWithASCIIString(arg, "legacy") == 0) {
         npy_promotion_state = NPY_USE_LEGACY_PROMOTION;
     }
     else {
