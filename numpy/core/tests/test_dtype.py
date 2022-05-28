@@ -1363,13 +1363,17 @@ class TestPromotion:
 
     @pytest.mark.parametrize(["other", "expected"],
             [(1, rational), (1., np.float64)])
+    @np.no_nep50_warning()
     def test_float_int_pyscalar_promote_rational(self, other, expected):
         # Note that rationals are a bit akward as they promote with float64
         # or default ints, but not float16 or uint8/int8 (which looks
-        # inconsistent here)
-        with pytest.raises(TypeError,
-                match=r".* do not have a common DType"):
-            np.result_type(other, rational)
+        # inconsistent here).  The new promotion fixes this (partially?)
+        if OLD_PROMOTION:
+            with pytest.raises(TypeError,
+                    match=r".* do not have a common DType"):
+                np.result_type(other, rational)
+        else:
+            assert np.result_type(other, rational) == expected
 
         assert np.result_type(other, rational(1, 2)) == expected
 
