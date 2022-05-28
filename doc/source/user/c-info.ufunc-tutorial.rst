@@ -323,13 +323,14 @@ the primary thing that must be changed to create your own ufunc.
         PyMODINIT_FUNC PyInit_npufunc(void)
         {
             PyObject *m, *logit, *d;
+
+            import_array();
+            import_umath();
+
             m = PyModule_Create(&moduledef);
             if (!m) {
                 return NULL;
             }
-
-            import_array();
-            import_umath();
 
             logit = PyUFunc_FromFuncAndData(funcs, NULL, types, 1, 1, 1,
                                             PyUFunc_None, "logit",
@@ -576,13 +577,14 @@ is the primary thing that must be changed to create your own ufunc.
         PyMODINIT_FUNC PyInit_npufunc(void)
         {
             PyObject *m, *logit, *d;
+
+            import_array();
+            import_umath();
+
             m = PyModule_Create(&moduledef);
             if (!m) {
                 return NULL;
             }
-
-            import_array();
-            import_umath();
 
             logit = PyUFunc_FromFuncAndData(funcs, NULL, types, 4, 1, 1,
                                             PyUFunc_None, "logit",
@@ -767,13 +769,14 @@ as well as all other properties of a ufunc.
         PyMODINIT_FUNC PyInit_npufunc(void)
         {
             PyObject *m, *logit, *d;
+
+            import_array();
+            import_umath();
+
             m = PyModule_Create(&moduledef);
             if (!m) {
                 return NULL;
             }
-
-            import_array();
-            import_umath();
 
             logit = PyUFunc_FromFuncAndData(funcs, NULL, types, 1, 2, 2,
                                             PyUFunc_None, "logit",
@@ -896,14 +899,13 @@ The C file is given below.
             PyArray_Descr *dtype;
             PyArray_Descr *dtypes[3];
 
-            m = PyModule_Create(&moduledef);
+            import_array();
+            import_umath();
 
+            m = PyModule_Create(&moduledef);
             if (m == NULL) {
                 return NULL;
             }
-
-            import_array();
-            import_umath();
 
             /* Create a new ufunc object */
             add_triplet = PyUFunc_FromFuncAndData(NULL, NULL, NULL, 0, 2, 1,
