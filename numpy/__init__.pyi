@@ -1092,6 +1092,36 @@ class _ArrayOrScalarCommon:
         axis: None = ...,
         out: None = ...,
         *,
+        keepdims: bool = ...,
+        initial: _ScalarLike_co = ...,
+        where: _ArrayLikeBool_co = ...,
+    ) -> intp: ...
+    @overload
+    def argmax(
+        self,
+        axis: SupportsIndex = ...,
+        out: None = ...,
+        *,
+        keepdims: bool = ...,
+        initial: _ScalarLike_co = ...,
+        where: _ArrayLikeBool_co = ...,
+    ) -> Any: ...
+    @overload
+    def argmax(
+        self,
+        axis: None | SupportsIndex = ...,
+        out: _NdArraySubClass = ...,
+        *,
+        keepdims: bool = ...,
+        initial: _ScalarLike_co = ...,
+        where: _ArrayLikeBool_co = ...,
+    ) -> _NdArraySubClass: ...
+    @overload
+    def argmax(
+        self,
+        axis: None = ...,
+        out: None = ...,
+        *,
         keepdims: L[False] = ...,
     ) -> intp: ...
     @overload
@@ -1111,6 +1141,36 @@ class _ArrayOrScalarCommon:
         keepdims: bool = ...,
     ) -> _NdArraySubClass: ...
 
+    @overload
+    def argmin(
+        self,
+        axis: None = ...,
+        out: None = ...,
+        *,
+        keepdims: bool = ...,
+        initial: _ScalarLike_co = ...,
+        where: _ArrayLikeBool_co = ...,
+    ) -> intp: ...
+    @overload
+    def argmin(
+        self,
+        axis: SupportsIndex = ...,
+        out: None = ...,
+        *,
+        keepdims: bool = ...,
+        initial: _ScalarLike_co = ...,
+        where: _ArrayLikeBool_co = ...,
+    ) -> Any: ...
+    @overload
+    def argmin(
+        self,
+        axis: None | SupportsIndex = ...,
+        out: _NdArraySubClass = ...,
+        *,
+        keepdims: bool = ...,
+        initial: _ScalarLike_co = ...,
+        where: _ArrayLikeBool_co = ...,
+    ) -> _NdArraySubClass: ...
     @overload
     def argmin(
         self,

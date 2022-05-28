@@ -247,6 +247,36 @@ def argmax(
     *,
     keepdims: bool = ...,
 ) -> _ArrayType: ...
+@overload
+def argmax(
+    a: ArrayLike,
+    axis: None = ...,
+    out: None = ...,
+    *,
+    keepdims: Literal[False] = ...,
+    initial: _ScalarLike_co = ...,
+    where: _ArrayLikeBool_co = ...,
+) -> intp: ...
+@overload
+def argmax(
+    a: ArrayLike,
+    axis: None | SupportsIndex = ...,
+    out: None = ...,
+    *,
+    keepdims: bool = ...,
+    initial: _ScalarLike_co = ...,
+    where: _ArrayLikeBool_co = ...,
+) -> Any: ...
+@overload
+def argmax(
+    a: ArrayLike,
+    axis: None | SupportsIndex = ...,
+    out: _ArrayType = ...,
+    *,
+    keepdims: bool = ...,
+    initial: _ScalarLike_co = ...,
+    where: _ArrayLikeBool_co = ...,
+) -> _ArrayType: ...
 
 @overload
 def argmin(
@@ -271,6 +301,36 @@ def argmin(
     out: _ArrayType = ...,
     *,
     keepdims: bool = ...,
+) -> _ArrayType: ...
+@overload
+def argmin(
+    a: ArrayLike,
+    axis: None = ...,
+    out: None = ...,
+    *,
+    keepdims: Literal[False] = ...,
+    initial: _ScalarLike_co = ...,
+    where: _ArrayLikeBool_co = ...,
+) -> intp: ...
+@overload
+def argmin(
+    a: ArrayLike,
+    axis: None | SupportsIndex = ...,
+    out: None = ...,
+    *,
+    keepdims: bool = ...,
+    initial: _ScalarLike_co = ...,
+    where: _ArrayLikeBool_co = ...,
+) -> Any: ...
+@overload
+def argmin(
+    a: ArrayLike,
+    axis: None | SupportsIndex = ...,
+    out: _ArrayType = ...,
+    *,
+    keepdims: bool = ...,
+    initial: _ScalarLike_co = ...,
+    where: _ArrayLikeBool_co = ...,
 ) -> _ArrayType: ...
 
 @overload
