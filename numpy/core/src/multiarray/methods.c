@@ -304,9 +304,12 @@ array_argmax(PyArrayObject *self,
 
     PyObject *ret = _PyArray_ArgMaxWithKeepdims(self, axis, out, keepdims, initial, where);
 
-    Py_DECREF(initial);
-    Py_DECREF(where);
-
+    if (initial != NULL) {
+        Py_DECREF(initial);
+    }
+    if (where != NULL) {
+        Py_DECREF(where);
+    }
     /* this matches the unpacking behavior of ufuncs */
     if (out == NULL) {
         return PyArray_Return((PyArrayObject *)ret);
@@ -323,7 +326,7 @@ array_argmin(PyArrayObject *self,
     int axis = NPY_MAXDIMS;
     PyArrayObject *out = NULL;
     npy_bool keepdims = NPY_FALSE;
-    PyArrayObject *initial = NULL; // TODO: scalar?
+    PyArrayObject *initial = NULL;
     PyArrayObject *where = NULL;
     NPY_PREPARE_ARGPARSER;
     if (npy_parse_arguments("argmin", args, len_args, kwnames,
@@ -336,11 +339,14 @@ array_argmin(PyArrayObject *self,
         return NULL;
     }
 
-    PyObject *ret = _PyArray_ArgMinWithKeepdims(self, axis, out, keepdims,
-                                                initial, where);
+    PyObject *ret = _PyArray_ArgMinWithKeepdims(self, axis, out, keepdims, initial, where);
 
-    Py_DECREF(initial);
-    Py_DECREF(where);
+    if (initial != NULL) {
+        Py_DECREF(initial);
+    }
+    if (where != NULL) {
+        Py_DECREF(where);
+    }
 
     /* this matches the unpacking behavior of ufuncs */
     if (out == NULL) {

@@ -43,9 +43,9 @@ _PyArray_ArgMinMaxCommon(PyArrayObject *op,
 {
     PyArrayObject *ap = NULL, *rp = NULL;
     PyArray_ArgFunc* arg_func = NULL;
-    char *ip, *func_name;
+    char *ip, *mp, *wp, *vp, *func_name;
     npy_intp *rptr;
-    npy_intp i, n, m;
+    npy_intp i, j, n, m;
     int elsize;
     // Keep a copy because axis changes via call to PyArray_CheckAxis
     int axis_copy = axis;
@@ -56,6 +56,12 @@ _PyArray_ArgMinMaxCommon(PyArrayObject *op,
     npy_intp* original_op_shape = PyArray_DIMS(op);
     int out_ndim = PyArray_NDIM(op);
     NPY_BEGIN_THREADS_DEF;
+
+    if (initial != NULL) {
+        if (!PyArray_CheckScalar(initial)) {
+            PyErr_Format(PyExc_ValueError, "`initial` must be a scalar");
+        }
+    }
 
     if ((ap = (PyArrayObject *)PyArray_CheckAxis(op, &axis, 0)) == NULL) {
         return NULL;
@@ -169,9 +175,23 @@ _PyArray_ArgMinMaxCommon(PyArrayObject *op,
     NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(ap));
     n = PyArray_SIZE(ap)/m;
     rptr = (npy_intp *)PyArray_DATA(rp);
-    for (ip = PyArray_DATA(ap), i = 0; i < n; i++, ip += elsize*m) {
-        arg_func(ip, m, rptr, ap);
-        rptr += 1;
+    if (where == NULL) {
+        for (ip = PyArray_DATA(ap), i = 0; i < n; i++, ip += elsize*m) {
+            arg_func(ip, m, rptr, ap);
+            rptr += 1;
+        }
+    }
+    else {
+        mp = PyArray_malloc(elsize*m);
+        ip = PyArray_DATA(ap);
+        wp = PyArray_DATA(where);
+        vp = PyArray_DATA(initial);
+        for (i = 0; i < n; i++, ip += elsize*m, wp += sizeof(npy_bool)*m) {
+            for (j = 0; j < m; j++) 
+                memmove(mp+j*elsize, !wp[j] ? vp : ip+j*elsize, elsize);
+            arg_func(mp, m, rptr, ap);
+            rptr += 1;
+        }
     }
     NPY_END_THREADS_DESCR(PyArray_DESCR(ap));
 
