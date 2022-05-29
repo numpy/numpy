@@ -494,12 +494,14 @@ def nanmax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     return res
 
 
-def _nanargmin_dispatcher(a, axis=None, out=None, *, keepdims=None):
+def _nanargmin_dispatcher(a, axis=None, out=None, *, keepdims=np._NoValue,
+                          initial=np._NoValue, where=np._NoValue):
     return (a,)
 
 
 @array_function_dispatch(_nanargmin_dispatcher)
-def nanargmin(a, axis=None, out=None, *, keepdims=np._NoValue):
+def nanargmin(a, axis=None, out=None, *, keepdims=np._NoValue, 
+              initial=np._NoValue, where=np._NoValue):
     """
     Return the indices of the minimum values in the specified axis ignoring
     NaNs. For all-NaN slices ``ValueError`` is raised. Warning: the results
@@ -522,6 +524,14 @@ def nanargmin(a, axis=None, out=None, *, keepdims=np._NoValue):
         the result will broadcast correctly against the array.
 
         .. versionadded:: 1.22.0
+    initial : scalar, optional
+        Value to use for elements which are not selected by `where`.
+    where : array_like of bool, optional
+        A boolean array which is broadcasted to match the dimensions of `array`,
+        and selects elements to include into comparison, skipped elements are
+        replaced by `initial` value.
+
+        .. versionadded:: 1.23.0
 
     Returns
     -------
@@ -550,16 +560,19 @@ def nanargmin(a, axis=None, out=None, *, keepdims=np._NoValue):
         mask = np.all(mask, axis=axis)
         if np.any(mask):
             raise ValueError("All-NaN slice encountered")
-    res = np.argmin(a, axis=axis, out=out, keepdims=keepdims)
+    res = np.argmin(a, axis=axis, out=out, keepdims=keepdims, 
+                    initial=initial, where=where)
     return res
 
 
-def _nanargmax_dispatcher(a, axis=None, out=None, *, keepdims=None):
+def _nanargmax_dispatcher(a, axis=None, out=None, *, keepdims=np._NoValue,
+                          initial=np._NoValue, where=np._NoValue):
     return (a,)
 
 
 @array_function_dispatch(_nanargmax_dispatcher)
-def nanargmax(a, axis=None, out=None, *, keepdims=np._NoValue):
+def nanargmax(a, axis=None, out=None, *, keepdims=np._NoValue,
+              initial=np._NoValue, where=np._NoValue):
     """
     Return the indices of the maximum values in the specified axis ignoring
     NaNs. For all-NaN slices ``ValueError`` is raised. Warning: the
@@ -583,6 +596,14 @@ def nanargmax(a, axis=None, out=None, *, keepdims=np._NoValue):
         the result will broadcast correctly against the array.
 
         .. versionadded:: 1.22.0
+    initial : scalar, optional
+        Value to use for elements which are not selected by `where`.
+    where : array_like of bool, optional
+        A boolean array which is broadcasted to match the dimensions of `array`,
+        and selects elements to include into comparison, skipped elements are
+        replaced by `initial` value.
+
+        .. versionadded:: 1.23.0
 
     Returns
     -------
@@ -611,7 +632,8 @@ def nanargmax(a, axis=None, out=None, *, keepdims=np._NoValue):
         mask = np.all(mask, axis=axis)
         if np.any(mask):
             raise ValueError("All-NaN slice encountered")
-    res = np.argmax(a, axis=axis, out=out, keepdims=keepdims)
+    res = np.argmax(a, axis=axis, out=out, keepdims=keepdims, initial=initial,
+                    where=where)
     return res
 
 
