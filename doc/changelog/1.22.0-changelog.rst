@@ -220,7 +220,7 @@ A total of 609 pull requests were merged for this release.
 * `#19142 <https://github.com/numpy/numpy/pull/19142>`__: BUG: expose ``short_version`` as previously in version.py
 * `#19151 <https://github.com/numpy/numpy/pull/19151>`__: ENH: Vectorising np.linalg.qr
 * `#19165 <https://github.com/numpy/numpy/pull/19165>`__: DOC: Explicitly mention that ``searchsorted`` returns an integer...
-* `#19167 <https://github.com/numpy/numpy/pull/19167>`__: ENH: Improve readibility of error message in terminal.
+* `#19167 <https://github.com/numpy/numpy/pull/19167>`__: ENH: Improve readability of error message in terminal.
 * `#19170 <https://github.com/numpy/numpy/pull/19170>`__: API: Delay string and number promotion deprecation/future warning
 * `#19172 <https://github.com/numpy/numpy/pull/19172>`__: BUG: Fixed an issue wherein ``_GenericAlias`` could raise for non-iterable...
 * `#19173 <https://github.com/numpy/numpy/pull/19173>`__: ENH: Add support for copy modes to NumPy
@@ -251,7 +251,7 @@ A total of 609 pull requests were merged for this release.
 * `#19237 <https://github.com/numpy/numpy/pull/19237>`__: ENH: Add annotations to ``np.core.multiarray`` part 3/4
 * `#19241 <https://github.com/numpy/numpy/pull/19241>`__: MAINT: Bump hypothesis from 6.13.14 to 6.14.0
 * `#19242 <https://github.com/numpy/numpy/pull/19242>`__: MAINT: Bump mypy from 0.812 to 0.902
-* `#19244 <https://github.com/numpy/numpy/pull/19244>`__: BUG: Fix an issue wherein assigment to ``np.ma.masked_array`` ignores...
+* `#19244 <https://github.com/numpy/numpy/pull/19244>`__: BUG: Fix an issue wherein assignment to ``np.ma.masked_array`` ignores...
 * `#19245 <https://github.com/numpy/numpy/pull/19245>`__: ENH: Add dtype-support to the ``np.core.shape_base`` annotations
 * `#19251 <https://github.com/numpy/numpy/pull/19251>`__: BUG: revise string_from_pyobj/try_pyarr_from_string with respect...
 * `#19254 <https://github.com/numpy/numpy/pull/19254>`__: MAINT: Refactor output ufunc wrapping logic
