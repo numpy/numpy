@@ -165,7 +165,7 @@ def unique(ar, return_index=False, return_inverse=False,
     equal_nans : bool, optional
         If True, collapses multiple NaN values in return array into 1
 
-        .. versionchanged: NumPy 1.24
+        .. versionchanged: 1.24
 
     axis : int or None, optional
         The axis to operate on. If None, `ar` will be flattened. If an integer,
