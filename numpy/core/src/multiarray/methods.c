@@ -288,7 +288,7 @@ array_argmax(PyArrayObject *self,
     int axis = NPY_MAXDIMS;
     PyArrayObject *out = NULL;
     npy_bool keepdims = NPY_FALSE;
-    PyArrayObject *initial = NULL; // TODO: scalar?
+    PyArrayObject *initial = NULL;
     PyArrayObject *where = NULL;
     NPY_PREPARE_ARGPARSER;
 

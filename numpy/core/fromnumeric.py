@@ -1126,8 +1126,8 @@ def _argmax_dispatcher(a, axis=None, out=None, *, keepdims=np._NoValue,
 
 
 @array_function_dispatch(_argmax_dispatcher)
-def argmax(a, axis=None, out=None, *, keepdims=np._NoValue, initial=np._NoValue,
-           where=np._NoValue):
+def argmax(a, axis=None, out=None, *, keepdims=np._NoValue,
+            initial=np._NoValue, where=np._NoValue):
     """
     Returns the indices of the maximum values along an axis.
 
@@ -1150,9 +1150,9 @@ def argmax(a, axis=None, out=None, *, keepdims=np._NoValue, initial=np._NoValue,
     initial : scalar, optional
         Value to use for elements which are not selected by `where`.
     where : array_like of bool, optional
-        A boolean array which is broadcasted to match the dimensions of `array`,
-        and selects elements to include into comparison, skipped elements are
-        replaced by `initial` value.
+        A boolean array which is broadcasted to match the dimensions of 
+        `array`, and selects elements to include into comparison, skipped
+        elements are replaced by `initial` value.
 
         .. versionadded:: 1.23.0
 
@@ -1235,7 +1235,8 @@ def argmax(a, axis=None, out=None, *, keepdims=np._NoValue, initial=np._NoValue,
     if where is not np._NoValue:
         kwds['where'] = where
         if initial is np._NoValue:
-            raise TypeError("To use a `where` mask, `initial` must be specified")
+            raise TypeError("To use a `where` mask, "
+                            "`initial` must be specified")
         kwds['initial'] = initial
     return _wrapfunc(a, 'argmax', axis=axis, out=out, **kwds)
 
@@ -1246,8 +1247,8 @@ def _argmin_dispatcher(a, axis=None, out=None, *, keepdims=np._NoValue,
 
 
 @array_function_dispatch(_argmin_dispatcher)
-def argmin(a, axis=None, out=None, *, keepdims=np._NoValue, initial=np._NoValue,
-           where=np._NoValue):
+def argmin(a, axis=None, out=None, *, keepdims=np._NoValue,
+            initial=np._NoValue, where=np._NoValue):
     """
     Returns the indices of the minimum values along an axis.
 
@@ -1270,9 +1271,9 @@ def argmin(a, axis=None, out=None, *, keepdims=np._NoValue, initial=np._NoValue,
     initial : scalar, optional
         Value to use for elements which are not selected by `where`.
     where : array_like of bool, optional
-        A boolean array which is broadcasted to match the dimensions of `array`,
-        and selects elements to include into comparison, skipped elements are
-        replaced by `initial` value.
+        A boolean array which is broadcasted to match the dimensions of 
+        `array`, and selects elements to include into comparison, skipped
+        elements are replaced by `initial` value.
 
         .. versionadded:: 1.23.0
 
@@ -1355,7 +1356,8 @@ def argmin(a, axis=None, out=None, *, keepdims=np._NoValue, initial=np._NoValue,
     if where is not np._NoValue:
         kwds['where'] = where
         if initial is np._NoValue:
-            raise TypeError("To use a `where` mask, `initial` must be specified")
+            raise TypeError("To use a `where` mask, "
+                            "`initial` must be specified")
         kwds['initial'] = initial
     return _wrapfunc(a, 'argmin', axis=axis, out=out, **kwds)
 

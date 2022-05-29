@@ -527,9 +527,9 @@ def nanargmin(a, axis=None, out=None, *, keepdims=np._NoValue,
     initial : scalar, optional
         Value to use for elements which are not selected by `where`.
     where : array_like of bool, optional
-        A boolean array which is broadcasted to match the dimensions of `array`,
-        and selects elements to include into comparison, skipped elements are
-        replaced by `initial` value.
+        A boolean array which is broadcasted to match the dimensions of 
+        `array`, and selects elements to include into comparison, skipped
+        elements are replaced by `initial` value.
 
         .. versionadded:: 1.23.0
 
@@ -599,9 +599,9 @@ def nanargmax(a, axis=None, out=None, *, keepdims=np._NoValue,
     initial : scalar, optional
         Value to use for elements which are not selected by `where`.
     where : array_like of bool, optional
-        A boolean array which is broadcasted to match the dimensions of `array`,
-        and selects elements to include into comparison, skipped elements are
-        replaced by `initial` value.
+        A boolean array which is broadcasted to match the dimensions of 
+        `array`, and selects elements to include into comparison, skipped
+        elements are replaced by `initial` value.
 
         .. versionadded:: 1.23.0
 
