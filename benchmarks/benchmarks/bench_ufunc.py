@@ -170,8 +170,25 @@ class CustomScalar(Benchmark):
     def time_divide_scalar2_inplace(self, dtype):
         np.divide(self.d, 1, out=self.d)
 
+
+class CustomComparison(Benchmark):
+    params = (np.int8,  np.int16,  np.int32,  np.int64, np.uint8, np.uint16,
+              np.uint32, np.uint64, np.float32, np.float64, np.bool_)
+    param_names = ['dtype']
+
+    def setup(self, dtype):
+        self.x = np.ones(50000, dtype=dtype)
+        self.y = np.ones(50000, dtype=dtype)
+        self.s = np.ones(1, dtype=dtype)
+
+    def time_less_than_binary(self, dtype):
+        (self.x < self.y)
+
+    def time_less_than_scalar1(self, dtype):
+        (self.s < self.x)
+
     def time_less_than_scalar2(self, dtype):
-        (self.d < 1)
+        (self.x < self.s)
 
 
 class CustomScalarFloorDivideInt(Benchmark):
