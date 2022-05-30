@@ -549,7 +549,11 @@ PyDataMem_UserRENEW(void *ptr, size_t size, PyObject *mem_handler)
 NPY_NO_EXPORT PyObject *
 PyDataMem_SetHandler(PyObject *handler)
 {
-    // once the user sets an allocation policy, we cannot guarantee the default allocator without checking the context
+    /*
+     * Once the user sets an allocation policy, we cannot guarantee
+     * the default allocator without checking the context until then,
+     * this a is a micro-optimization to avoid the `PyContextVar_Get`
+     */
     default_allocator_policy = 0;
 
     PyObject *old_handler;
