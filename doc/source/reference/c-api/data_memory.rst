@@ -89,7 +89,8 @@ For details see: :ref:`NEP 49 — Data allocation strategies <NEP49>`.
    return ``NULL`` if an error has occurred. We wrap the user-provided functions
    so they will still call the python and numpy memory management callback
    hooks.
-   The handlers are stored in a Python context variable (see https://docs.python.org/3/library/contextvars.html),
+   The handlers are stored in a Python context variable
+   (see https://docs.python.org/3/library/contextvars.html),
    so there can be multiple handlers in a Python session.
     
 .. c:function:: PyObject * PyDataMem_GetHandler()
