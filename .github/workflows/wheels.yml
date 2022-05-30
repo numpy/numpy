@@ -112,7 +112,7 @@ jobs:
         if: ${{ env.IS_32_BIT == 'true' }}
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.5.0
+        uses: pypa/cibuildwheel@v2.6.0
         env:
           CIBW_BUILD: ${{ matrix.python }}-${{ matrix.buildplat[1] }}
 
