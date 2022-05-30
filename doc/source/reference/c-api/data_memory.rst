@@ -55,6 +55,8 @@ functions may change during the lifetime of the process, each ``ndarray``
 carries with it the functions used at the time of its instantiation, and these
 will be used to reallocate or free the data memory of the instance.
 
+For details see: :ref:`NEP 49 — Data allocation strategies <NEP49>`.
+
 .. c:type:: PyDataMem_Handler
 
     A struct to hold function pointers used to manipulate memory
@@ -87,6 +89,8 @@ will be used to reallocate or free the data memory of the instance.
    return ``NULL`` if an error has occurred. We wrap the user-provided functions
    so they will still call the python and numpy memory management callback
    hooks.
+   The handlers are stored in a Python context variable (see https://docs.python.org/3/library/contextvars.html),
+   so there can be multiple handlers in a Python session.
     
 .. c:function:: PyObject * PyDataMem_GetHandler()
 
