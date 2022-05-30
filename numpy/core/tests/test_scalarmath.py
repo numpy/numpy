@@ -967,9 +967,6 @@ def test_subclass_deferral(sctype, __op__, __rop__, op, cmp):
     class myf_simple2(sctype):
         pass
 
-    def defer(self, other):
-        return NotImplemented
-
     def op_func(self, other):
         return __op__
 
@@ -989,18 +986,55 @@ def test_subclass_deferral(sctype, __op__, __rop__, op, cmp):
     assert op(myf_simple1(1), myf_op(2)) == op(1, 2)  # inherited
 
 
+def test_longdouble_complex():
+    # Simple test to check longdouble and complex combinations, since these
+    # need to go through promotion, which longdouble needs to be careful about.
+    x = np.longdouble(1)
+    assert x + 1j == 1+1j
+    assert 1j + x == 1+1j
+
+
 @pytest.mark.parametrize(["__op__", "__rop__", "op", "cmp"], ops_with_names)
-@pytest.mark.parametrize("pytype", [float, int, complex])
-def test_pyscalar_subclasses(pytype, __op__, __rop__, op, cmp):
+@pytest.mark.parametrize("subtype", [float, int, complex, np.float16])
+def test_pyscalar_subclasses(subtype, __op__, __rop__, op, cmp):
     def op_func(self, other):
         return __op__
 
     def rop_func(self, other):
         return __rop__
 
-    myf = type("myf", (pytype,),
-            {__op__: op_func, __rop__: rop_func, "__array_ufunc__": None})
+    # Check that deferring is indicated using `__array_ufunc__`:
+    myt = type("myt", (subtype,),
+               {__op__: op_func, __rop__: rop_func, "__array_ufunc__": None})
 
     # Just like normally, we should never presume we can modify the float.
-    assert op(myf(1), np.float64(2)) == __op__
-    assert op(np.float64(1), myf(2)) == __rop__
+    assert op(myt(1), np.float64(2)) == __op__
+    assert op(np.float64(1), myt(2)) == __rop__
+
+    if op in {operator.mod, operator.floordiv} and subtype == complex:
+        return  # module is not support for complex.  Do not test.
+
+    if __rop__ == __op__:
+        return
+
+    # When no deferring is indicated, subclasses are handled normally.
+    myt = type("myt", (subtype,), {__rop__: rop_func})
+
+    # Check for float32, as a float subclass float64 may behave differently
+    res = op(myt(1), np.float16(2))
+    expected = op(subtype(1), np.float16(2))
+    assert res == expected
+    assert type(res) == type(expected)
+    res = op(np.float32(2), myt(1))
+    expected = op(np.float32(2), subtype(1))
+    assert res == expected
+    assert type(res) == type(expected)
+
+    # Same check for longdouble:
+    res = op(myt(1), np.longdouble(2))
+    expected = op(subtype(1), np.longdouble(2))
+    assert res == expected
+    assert type(res) == type(expected)
+    res = op(np.float32(2), myt(1))
+    expected = op(np.longdouble(2), subtype(1))
+    assert res == expected

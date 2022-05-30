@@ -9,5 +9,5 @@ NumPy Distutils - Users Guide
    Python >= 3.12. For more details, see :ref:`distutils-status-migration`
 
 
-.. include:: ../../DISTUTILS.rst.txt
+.. include:: ../../DISTUTILS.rst
    :start-line: 6

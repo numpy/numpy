@@ -424,10 +424,7 @@ PyDataMem_Handler default_handler = {
 };
 /* singleton capsule of the default handler */
 PyObject *PyDataMem_DefaultHandler;
-
-#if (!defined(PYPY_VERSION_NUM) || PYPY_VERSION_NUM >= 0x07030600)
 PyObject *current_handler;
-#endif
 
 int uo_index=0;   /* user_override index */
 
@@ -539,7 +536,6 @@ NPY_NO_EXPORT PyObject *
 PyDataMem_SetHandler(PyObject *handler)
 {
     PyObject *old_handler;
-#if (!defined(PYPY_VERSION_NUM) || PYPY_VERSION_NUM >= 0x07030600)
     PyObject *token;
     if (PyContextVar_Get(current_handler, NULL, &old_handler)) {
         return NULL;
@@ -554,27 +550,6 @@ PyDataMem_SetHandler(PyObject *handler)
     }
     Py_DECREF(token);
     return old_handler;
-#else
-    PyObject *p;
-    p = PyThreadState_GetDict();
-    if (p == NULL) {
-        return NULL;
-    }
-    old_handler = PyDict_GetItemString(p, "current_allocator");
-    if (old_handler == NULL) {
-        old_handler = PyDataMem_DefaultHandler
-    }
-    Py_INCREF(old_handler);
-    if (handler == NULL) {
-        handler = PyDataMem_DefaultHandler;
-    }
-    const int error = PyDict_SetItemString(p, "current_allocator", handler);
-    if (error) {
-        Py_DECREF(old_handler);
-        return NULL;
-    }
-    return old_handler;
-#endif
 }
 
 /*NUMPY_API
@@ -585,28 +560,10 @@ NPY_NO_EXPORT PyObject *
 PyDataMem_GetHandler()
 {
     PyObject *handler;
-#if (!defined(PYPY_VERSION_NUM) || PYPY_VERSION_NUM >= 0x07030600)
     if (PyContextVar_Get(current_handler, NULL, &handler)) {
         return NULL;
     }
     return handler;
-#else
-    PyObject *p = PyThreadState_GetDict();
-    if (p == NULL) {
-        return NULL;
-    }
-    handler = PyDict_GetItem(p, npy_ma_str_current_allocator);
-    if (handler == NULL) {
-        handler = PyCapsule_New(&default_handler, "mem_handler", NULL);
-        if (handler == NULL) {
-            return NULL;
-        }
-    }
-    else {
-        Py_INCREF(handler);
-    }
-    return handler;
-#endif
 }
 
 NPY_NO_EXPORT PyObject *

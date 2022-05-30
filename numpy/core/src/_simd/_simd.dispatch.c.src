@@ -31,6 +31,7 @@
  * #intdiv_sup= 1,  1,  1,   1,   1,   1,   1,   1,   0,   0#
  * #shl_imm   = 0,  0,  15,  15,  31,  31,  63,  63,  0,   0#
  * #shr_imm   = 0,  0,  16,  16,  32,  32,  64,  64,  0,   0#
+ * #bitw8b_sup= 1,  0,  0,   0,   0,   0,   0,   0,   0,   0#
  */
 #if @simd_sup@
 /***************************
@@ -332,6 +333,13 @@ SIMD_IMPL_INTRIN_1(not_@sfx@, v@sfx@, v@sfx@)
 SIMD_IMPL_INTRIN_2(@intrin@_@sfx@, v@bsfx@, v@sfx@, v@sfx@)
 /**end repeat1**/
 
+#if @bitw8b_sup@
+SIMD_IMPL_INTRIN_2(andc_@sfx@, v@sfx@, v@sfx@, v@sfx@)
+SIMD_IMPL_INTRIN_2(andc_@bsfx@, v@bsfx@, v@bsfx@, v@bsfx@)
+SIMD_IMPL_INTRIN_2(orc_@bsfx@, v@bsfx@, v@bsfx@, v@bsfx@)
+SIMD_IMPL_INTRIN_2(xnor_@bsfx@, v@bsfx@, v@bsfx@, v@bsfx@)
+#endif
+
 /***************************
  * Conversion
  ***************************/
@@ -472,6 +480,10 @@ SIMD_IMPL_INTRIN_1(not_@bsfx@, v@bsfx@, v@bsfx@)
 SIMD_IMPL_INTRIN_1(tobits_@bsfx@, u64, v@bsfx@)
 /**end repeat**/
 
+SIMD_IMPL_INTRIN_2(pack_b8_b16, vb8, vb16, vb16)
+SIMD_IMPL_INTRIN_4(pack_b8_b32, vb8, vb32, vb32, vb32, vb32)
+SIMD_IMPL_INTRIN_8(pack_b8_b64, vb8, vb64, vb64, vb64, vb64,
+                                     vb64, vb64, vb64, vb64)
 
 //#########################################################################
 //## Attach module functions
@@ -496,6 +508,7 @@ static PyMethodDef simd__intrinsics_methods[] = {
  * #intdiv_sup= 1,  1,  1,   1,   1,   1,   1,   1,   0,   0#
  * #shl_imm   = 0,  0,  15,  15,  31,  31,  63,  63,  0,   0#
  * #shr_imm   = 0,  0,  16,  16,  32,  32,  64,  64,  0,   0#
+ * #bitw8b_sup= 1,  0,  0,   0,   0,   0,   0,   0,   0,   0#
  */
 #if @simd_sup@
 
@@ -576,6 +589,13 @@ SIMD_INTRIN_DEF(@intrin@_@sfx@)
  */
 SIMD_INTRIN_DEF(@intrin@_@sfx@)
 /**end repeat1**/
+
+#if @bitw8b_sup@
+SIMD_INTRIN_DEF(andc_@sfx@)
+SIMD_INTRIN_DEF(andc_@bsfx@)
+SIMD_INTRIN_DEF(orc_@bsfx@)
+SIMD_INTRIN_DEF(xnor_@bsfx@)
+#endif
 
 /***************************
  * Conversion
@@ -715,6 +735,11 @@ SIMD_INTRIN_DEF(not_@bsfx@)
  */
 SIMD_INTRIN_DEF(tobits_@bsfx@)
 /**end repeat**/
+
+// Pack multiple vectors into one
+SIMD_INTRIN_DEF(pack_b8_b16)
+SIMD_INTRIN_DEF(pack_b8_b32)
+SIMD_INTRIN_DEF(pack_b8_b64)
 
 /************************************************************************/
 {NULL, NULL, 0, NULL}

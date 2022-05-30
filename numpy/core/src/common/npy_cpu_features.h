@@ -137,7 +137,7 @@ npy_cpu_features_dict(void);
  * that supported by the compiler and platform according to the specified
  * values to command argument '--cpu-baseline'.
  *
- * This function is mainly used to implement umath's attrbute '__cpu_baseline__',
+ * This function is mainly used to implement umath's attribute '__cpu_baseline__',
  * and the items are sorted from the lowest to highest interest.
  *
  * For example, according to the default build configuration and by assuming the compiler
@@ -159,7 +159,7 @@ npy_cpu_baseline_list(void);
  * that supported by the compiler and platform according to the specified
  * values to command argument '--cpu-dispatch'.
  *
- * This function is mainly used to implement umath's attrbute '__cpu_dispatch__',
+ * This function is mainly used to implement umath's attribute '__cpu_dispatch__',
  * and the items are sorted from the lowest to highest interest.
  *
  * For example, according to the default build configuration and by assuming the compiler

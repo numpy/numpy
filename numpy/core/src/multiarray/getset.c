@@ -808,6 +808,7 @@ array_imag_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
             return NULL;
         }
         if (_zerofill(ret) < 0) {
+            Py_DECREF(ret);
             return NULL;
         }
         PyArray_CLEARFLAGS(ret, NPY_ARRAY_WRITEABLE);

@@ -153,6 +153,50 @@
         return simd_arg_to_obj(&ret);                     \
     }
 
+#define SIMD_IMPL_INTRIN_8(NAME, RET, IN0, IN1, IN2, IN3, \
+                                      IN4, IN5, IN6, IN7) \
+    static PyObject *simd__intrin_##NAME                  \
+    (PyObject* NPY_UNUSED(self), PyObject *args)          \
+    {                                                     \
+        simd_arg arg1 = {.dtype = simd_data_##IN0};       \
+        simd_arg arg2 = {.dtype = simd_data_##IN1};       \
+        simd_arg arg3 = {.dtype = simd_data_##IN2};       \
+        simd_arg arg4 = {.dtype = simd_data_##IN3};       \
+        simd_arg arg5 = {.dtype = simd_data_##IN4};       \
+        simd_arg arg6 = {.dtype = simd_data_##IN5};       \
+        simd_arg arg7 = {.dtype = simd_data_##IN6};       \
+        simd_arg arg8 = {.dtype = simd_data_##IN7};       \
+        if (!PyArg_ParseTuple(                            \
+            args, "O&O&O&O&O&O&O&O&:"NPY_TOSTRING(NAME),  \
+            simd_arg_converter, &arg1,                    \
+            simd_arg_converter, &arg2,                    \
+            simd_arg_converter, &arg3,                    \
+            simd_arg_converter, &arg4,                    \
+            simd_arg_converter, &arg5,                    \
+            simd_arg_converter, &arg6,                    \
+            simd_arg_converter, &arg7,                    \
+            simd_arg_converter, &arg8                     \
+        )) return NULL;                                   \
+        simd_data data = {.RET = npyv_##NAME(             \
+            arg1.data.IN0, arg2.data.IN1,                 \
+            arg3.data.IN2, arg4.data.IN3,                 \
+            arg5.data.IN4, arg6.data.IN5,                 \
+            arg7.data.IN6, arg8.data.IN7                  \
+        )};                                               \
+        simd_arg_free(&arg1);                             \
+        simd_arg_free(&arg2);                             \
+        simd_arg_free(&arg3);                             \
+        simd_arg_free(&arg4);                             \
+        simd_arg_free(&arg5);                             \
+        simd_arg_free(&arg6);                             \
+        simd_arg_free(&arg7);                             \
+        simd_arg_free(&arg8);                             \
+        simd_arg ret = {                                  \
+            .data = data, .dtype = simd_data_##RET        \
+        };                                                \
+        return simd_arg_to_obj(&ret);                     \
+    }
+
 /**
  * Helper macros for repeating and expand a certain macro.
  * Mainly used for converting a scalar to an immediate constant.

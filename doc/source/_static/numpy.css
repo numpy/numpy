@@ -32,6 +32,36 @@ h3 {
   letter-spacing: -.03em;
 }
 
+/* Style the active version button.
+
+- dev: orange
+- stable: green
+- old, PR: red
+
+Colors from:
+
+Wong, B. Points of view: Color blindness.
+Nat Methods 8, 441 (2011). https://doi.org/10.1038/nmeth.1618
+*/
+
+/* If the active version has the name "dev", style it orange */
+#version_switcher_button[data-active-version-name*="dev"] {
+  background-color: #E69F00;
+  border-color: #E69F00;
+}
+
+/* green for `stable` */
+#version_switcher_button[data-active-version-name*="stable"] {
+  background-color: #009E73;
+  border-color: #009E73;
+}
+
+/* red for `old` */
+#version_switcher_button:not([data-active-version-name*="stable"], [data-active-version-name*="dev"], [data-active-version-name=""]) {
+  background-color: #980F0F;
+  border-color: #980F0F;
+}
+
 /* Main page overview cards */
 
 .intro-card {

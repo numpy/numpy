@@ -21,22 +21,22 @@ Parameters
 ----------
 mean : (N,) ndarray
     Mean of the N-dimensional distribution.
-cov : (N,N) ndarray
+cov : (N, N) ndarray
     Covariance matrix of the distribution.
 shape : tuple of ints, optional
-    Given a shape of, for example, (m,n,k), m*n*k samples are
+    Given a shape of, for example, (m, n, k), m*n*k samples are
     generated, and packed in an m-by-n-by-k arrangement.  Because each
-    sample is N-dimensional, the output shape is (m,n,k,N).  If no
+    sample is N-dimensional, the output shape is (m, n, k, N).  If no
     shape is specified, a single sample is returned.
 
 Returns
 -------
 out : ndarray
     The drawn samples, arranged according to `shape`.  If the
-    shape given is (m,n,...), then the shape of `out` is
-    (m,n,...,N).
+    shape given is (m, n, ...), then the shape of `out` is
+    (m, n, ... , N).
 
-    In other words, each entry ``out[i,j,...,:]`` is an N-dimensional
+    In other words, each entry ``out[i, j, ... , :]`` is an N-dimensional
     value drawn from the distribution.
 
 See Also
@@ -54,7 +54,7 @@ univariate normal distribution.
 
 Covariance indicates the level to which two variables vary together.
 From the multivariate normal distribution, we draw N-dimensional
-samples, :math:`X = [x_1, x_2, ... x_N]`.  The covariance matrix
+samples, :math:`X = [x_1, x_2, ... , x_N]`.  The covariance matrix
 element :math:`C_ij` is the covariance of :math:`x_i` and :math:`x_j`.
 The element :math:`C_ii` is the variance of :math:`x_i` (i.e. its
 "spread").
@@ -69,12 +69,12 @@ approximations include:
 This geometrical property can be seen in two dimensions by plotting
 generated data-points:
 
->>> mean = [0,0]
->>> cov = [[1,0],[0,100]] # diagonal covariance, points lie on x or y-axis
->>> x,y = np.random.multivariate_normal(mean,cov,5000).T
+>>> mean = [0, 0]
+>>> cov = [[1, 0], [0, 100]] # diagonal covariance, points lie on x or y-axis
+>>> x, y = np.random.multivariate_normal(mean, cov, 5000).T
 
 >>> import matplotlib.pyplot as plt
->>> plt.plot(x,y,'x'); plt.axis('equal'); pyplot.show()
+>>> plt.plot(x, y, 'x'); plt.axis('equal'); plt.show()
 
 Note that the covariance matrix must be non-negative definite.
 
@@ -87,17 +87,17 @@ References
 
 Examples
 --------
->>> mean = (1,2)
->>> cov = [[1,0],[1,0]]
->>> x = np.random.multivariate_normal(mean,cov,(3,3))
+>>> mean = (1, 2)
+>>> cov = [[1, 0], [0, 1]]
+>>> x = np.random.multivariate_normal(mean, cov, (3, 3))
 >>> x.shape
 (3, 3, 2)
 
 The following is probably true, given that 0.6 is roughly twice the
 standard deviation:
 
->>> print list( (x[0,0,:] - mean) < 0.6 )
-[True, True]
+>>> print(list( (x[0, 0, :] - mean) < 0.6 ))
+[True, True]  # may vary
 
 .. index:
    :refguide: random:distributions

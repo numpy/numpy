@@ -4293,8 +4293,9 @@ class MaskedArray(ndarray):
         else:
             if m is not nomask:
                 self._mask += m
-        self._data.__iadd__(np.where(self._mask, self.dtype.type(0),
-                                     getdata(other)))
+        other_data = getdata(other)
+        other_data = np.where(self._mask, other_data.dtype.type(0), other_data)
+        self._data.__iadd__(other_data)
         return self
 
     def __isub__(self, other):
@@ -4309,8 +4310,9 @@ class MaskedArray(ndarray):
                 self._mask += m
         elif m is not nomask:
             self._mask += m
-        self._data.__isub__(np.where(self._mask, self.dtype.type(0),
-                                     getdata(other)))
+        other_data = getdata(other)
+        other_data = np.where(self._mask, other_data.dtype.type(0), other_data)
+        self._data.__isub__(other_data)
         return self
 
     def __imul__(self, other):
@@ -4325,8 +4327,9 @@ class MaskedArray(ndarray):
                 self._mask += m
         elif m is not nomask:
             self._mask += m
-        self._data.__imul__(np.where(self._mask, self.dtype.type(1),
-                                     getdata(other)))
+        other_data = getdata(other)
+        other_data = np.where(self._mask, other_data.dtype.type(1), other_data)
+        self._data.__imul__(other_data)
         return self
 
     def __idiv__(self, other):
@@ -4338,13 +4341,14 @@ class MaskedArray(ndarray):
         dom_mask = _DomainSafeDivide().__call__(self._data, other_data)
         other_mask = getmask(other)
         new_mask = mask_or(other_mask, dom_mask)
-        # The following 3 lines control the domain filling
+        # The following 4 lines control the domain filling
         if dom_mask.any():
             (_, fval) = ufunc_fills[np.divide]
-            other_data = np.where(dom_mask, fval, other_data)
+            other_data = np.where(
+                    dom_mask, other_data.dtype.type(fval), other_data)
         self._mask |= new_mask
-        self._data.__idiv__(np.where(self._mask, self.dtype.type(1),
-                                     other_data))
+        other_data = np.where(self._mask, other_data.dtype.type(1), other_data)
+        self._data.__idiv__(other_data)
         return self
 
     def __ifloordiv__(self, other):
@@ -4359,10 +4363,11 @@ class MaskedArray(ndarray):
         # The following 3 lines control the domain filling
         if dom_mask.any():
             (_, fval) = ufunc_fills[np.floor_divide]
-            other_data = np.where(dom_mask, fval, other_data)
+            other_data = np.where(
+                    dom_mask, other_data.dtype.type(fval), other_data)
         self._mask |= new_mask
-        self._data.__ifloordiv__(np.where(self._mask, self.dtype.type(1),
-                                          other_data))
+        other_data = np.where(self._mask, other_data.dtype.type(1), other_data)
+        self._data.__ifloordiv__(other_data)
         return self
 
     def __itruediv__(self, other):
@@ -4377,10 +4382,11 @@ class MaskedArray(ndarray):
         # The following 3 lines control the domain filling
         if dom_mask.any():
             (_, fval) = ufunc_fills[np.true_divide]
-            other_data = np.where(dom_mask, fval, other_data)
+            other_data = np.where(
+                    dom_mask, other_data.dtype.type(fval), other_data)
         self._mask |= new_mask
-        self._data.__itruediv__(np.where(self._mask, self.dtype.type(1),
-                                         other_data))
+        other_data = np.where(self._mask, other_data.dtype.type(1), other_data)
+        self._data.__itruediv__(other_data)
         return self
 
     def __ipow__(self, other):
@@ -4389,10 +4395,10 @@ class MaskedArray(ndarray):
 
         """
         other_data = getdata(other)
+        other_data = np.where(self._mask, other_data.dtype.type(1), other_data)
         other_mask = getmask(other)
         with np.errstate(divide='ignore', invalid='ignore'):
-            self._data.__ipow__(np.where(self._mask, self.dtype.type(1),
-                                         other_data))
+            self._data.__ipow__(other_data)
         invalid = np.logical_not(np.isfinite(self._data))
         if invalid.any():
             if self._mask is not nomask:

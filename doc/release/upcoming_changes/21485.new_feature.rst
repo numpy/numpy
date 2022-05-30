@@ -1,5 +1,0 @@
-``keepdims`` parameter for ``average``
---------------------------------------
-The parameter ``keepdims`` was added to the functions `numpy.average`
-and `numpy.ma.average`.  The parameter has the same meaning as it
-does in reduction functions such as `numpy.sum` or `numpy.mean`.

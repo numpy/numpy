@@ -13,9 +13,8 @@ from tempfile import mkstemp, gettempdir
 from urllib.request import urlopen, Request
 from urllib.error import HTTPError
 
-# 0.3.19 fails AVX512_SKX tests, issue 20654, comments in PR 20660
-OPENBLAS_V = '0.3.19.dev'
-OPENBLAS_LONG = 'v0.3.19-22-g5188aede'
+OPENBLAS_V = '0.3.20'
+OPENBLAS_LONG = 'v0.3.20'
 BASE_LOC = 'https://anaconda.org/multibuild-wheels-staging/openblas-libs'
 BASEURL = f'{BASE_LOC}/{OPENBLAS_LONG}/download'
 SUPPORTED_PLATFORMS = [

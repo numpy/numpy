@@ -8,7 +8,7 @@ channels:
   - conda-forge
 dependencies:
   - python=3.9 #need to pin to avoid issues with builds
-  - cython
+  - cython>=0.29.30
   - compilers
   - openblas
   - nomkl
@@ -20,6 +20,7 @@ dependencies:
   - hypothesis
   # For type annotations
   - mypy=0.950
+  - typing_extensions>=4.2.0
   # For building docs
   - sphinx=4.5.0
   - sphinx-panels

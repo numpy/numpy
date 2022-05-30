@@ -31,6 +31,8 @@ C_ABI_VERSION = 0x01000009
 # (*not* C_ABI_VERSION) would be increased.  Whenever binary compatibility is
 # broken, both C_API_VERSION and C_ABI_VERSION should be increased.
 #
+# The version needs to be kept in sync with that in cversions.txt.
+#
 # 0x00000008 - 1.7.x
 # 0x00000009 - 1.8.x
 # 0x00000009 - 1.9.x
@@ -45,10 +47,11 @@ C_ABI_VERSION = 0x01000009
 # 0x0000000e - 1.20.x
 # 0x0000000e - 1.21.x
 # 0x0000000f - 1.22.x
-# 0x0000000f - 1.23.x
-C_API_VERSION = 0x0000000f
+# 0x00000010 - 1.23.x
+# 0x00000010 - 1.24.x
+C_API_VERSION = 0x00000010
 
-class MismatchCAPIWarning(Warning):
+class MismatchCAPIError(ValueError):
     pass
 
 
@@ -84,14 +87,13 @@ def check_api_version(apiversion, codegen_dir):
     # To compute the checksum of the current API, use numpy/core/cversions.py
     if not curapi_hash == api_hash:
         msg = ("API mismatch detected, the C API version "
-               "numbers have to be updated. Current C api version is %d, "
-               "with checksum %s, but recorded checksum for C API version %d "
-               "in core/codegen_dir/cversions.txt is %s. If functions were "
-               "added in the C API, you have to update C_API_VERSION in %s."
+               "numbers have to be updated. Current C api version is "
+               f"{apiversion}, with checksum {curapi_hash}, but recorded "
+               f"checksum in core/codegen_dir/cversions.txt is {api_hash}. If "
+               "functions were added in the C API, you have to update "
+               f"C_API_VERSION in {__file__}."
                )
-        warnings.warn(msg % (apiversion, curapi_hash, apiversion, api_hash,
-                             __file__),
-                      MismatchCAPIWarning, stacklevel=2)
+        raise MismatchCAPIError(msg)
 
 
 FUNC_CALL_ARGS = {}

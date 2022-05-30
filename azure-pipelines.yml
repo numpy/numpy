@@ -299,31 +299,3 @@ stages:
         testResultsFiles: '**/test-*.xml'
         failTaskOnFailedTests: true
         testRunTitle: 'Publish test results for conda installation'
-
-
-  #- job: Linux_gcc48
-    #pool:
-      ## ubuntu-20.04 does not provide a gcc-4.8 package
-      #vmImage: 'ubuntu-18.04'
-    #steps:
-    #- script: |
-            #sudo apt update
-            #sudo apt install python3.7
-            #sudo apt install python3.7-dev
-            #if ! `gcc-4.8 2>/dev/null`; then
-                #sudo apt install gcc-4.8
-            #fi
-      #displayName: 'add gcc 4.8'
-    #- script: |
-            ## python3 has no setuptools, so install one to get us going
-            #python3.7 -m pip install --user --upgrade pip 'setuptools<49.2.0'
-            #python3.7 -m pip install --user -r test_requirements.txt
-            #CPPFLAGS='' CC=gcc-4.8 F77=gfortran-5 F90=gfortran-5 \
-            #python3.7 runtests.py --debug-info --mode=full -- -rsx --junitxml=junit/test-results.xml
-      #displayName: 'Run gcc4.8 Build / Tests'
-    #- task: PublishTestResults@2
-      #condition: succeededOrFailed()
-      #inputs:
-        #testResultsFiles: '**/test-*.xml'
-        #failTaskOnFailedTests: true
-        #testRunTitle: 'Publish test results for gcc 4.8'

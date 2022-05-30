@@ -3687,15 +3687,16 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
     }
 
     /*
-     * The array check is probably unnecessary.  It preserves the base for
-     * arrays.  This is the "old" buffer protocol, which had no release logic.
-     * (It was assumed that the result is always a view.)
-     *
-     * NOTE: We could also check if `bf_releasebuffer` is defined which should
-     *       be the most precise and safe thing to do.  But that should only be
-     *       necessary if unexpected backcompat issues are found downstream.
+     * If the object supports `releasebuffer`, the new buffer protocol allows
+     * tying the memories lifetime to the `Py_buffer view`.
+     * NumPy cannot hold on to the view itself (it is not an object) so it
+     * has to wrap the original object in a Python `memoryview` which deals
+     * with the lifetime management for us.
+     * For backwards compatibility of `arr.base` we try to avoid this when
+     * possible.  (For example, NumPy arrays will never get wrapped here!)
      */
-    if (!PyArray_Check(buf)) {
+    if (Py_TYPE(buf)->tp_as_buffer
+            && Py_TYPE(buf)->tp_as_buffer->bf_releasebuffer) {
         buf = PyMemoryView_FromObject(buf);
         if (buf == NULL) {
             return NULL;

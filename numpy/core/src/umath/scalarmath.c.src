@@ -747,13 +747,23 @@ static NPY_INLINE int
 /*
  * Enum used to describe the space of possibilities when converting the second
  * argument to a binary operation.
+ * Any of these flags may be combined with the return flag of
+ * `may_need_deferring` indicating that the other is any type of object which
+ * may e.g. define an `__array_priority__`.
  */
 typedef enum {
     /* An error occurred (should not really happen/be possible) */
     CONVERSION_ERROR = -1,
     /* A known NumPy scalar, but of higher precision: we defer */
     DEFER_TO_OTHER_KNOWN_SCALAR,
-    /* Conversion was successful (known scalar of less precision) */
+    /*
+     * Conversion was successful (known scalar of less precision).  Note that
+     * the other value may still be a subclass of such a scalar so even here
+     * we may have to check for deferring.
+     * More specialized subclass handling, which defers based on whether the
+     * subclass has an implementation, plausible but complicated.
+     * We do not do it, as even CPython does not do it for the builtin `int`.
+     */
     CONVERSION_SUCCESS,
     /*
      * Other object is an unkown scalar or array-like, we (typically) use
@@ -764,11 +774,6 @@ typedef enum {
      * Promotion necessary
      */
     PROMOTION_REQUIRED,
-    /*
-     * The other object may be a subclass, conversion is successful.  We do
-     * not special case this as Python's `int` does not either
-     */
-    OTHER_IS_SUBCLASS,
 } conversion_result;
 
 /**begin repeat
@@ -817,7 +822,6 @@ typedef enum {
 #define GET_VALUE_OR_DEFER(OTHER, Other, value)  \
     case NPY_##OTHER:  \
         if (IS_SAFE(NPY_##OTHER, NPY_@TYPE@)) {  \
-            assert(Py_TYPE(value) == &Py##Other##ArrType_Type);  \
             CONVERT_TO_RESULT(PyArrayScalar_VAL(value, Other));  \
             ret = CONVERSION_SUCCESS;  \
         }  \
@@ -877,12 +881,20 @@ typedef enum {
  *
  * @param value The value to convert (if compatible)
  * @param result The result value (output)
+ * @param may_need_deferring Set to `NPY_TRUE` when the caller must check
+ *        `BINOP_GIVE_UP_IF_NEEDED` (or similar) due to possible implementation
+ *        of `__array_priority__` (or similar).
+ *        This is set for unknown objects and all subclasses even when they
+ *        can be handled.
  * @result The result value indicating what we did with `value` or what type
  *         of object it is (see `conversion_result`).
  */
 static NPY_INLINE conversion_result
-convert_to_@name@(PyObject *value, @type@ *result)
+convert_to_@name@(PyObject *value, @type@ *result, npy_bool *may_need_deferring)
 {
+    PyArray_Descr *descr;
+    *may_need_deferring = NPY_FALSE;
+
     if (Py_TYPE(value) == &Py@Name@ArrType_Type) {
         *result = PyArrayScalar_VAL(value, @Name@);
         return CONVERSION_SUCCESS;
@@ -892,9 +904,11 @@ convert_to_@name@(PyObject *value, @type@ *result)
         *result = PyArrayScalar_VAL(value, @Name@);
         /*
          * In principle special, assyemetric, handling could be possible for
-         * subclasses.  But in practice even we do not bother later.
+         * explicit subclasses.
+         * In practice, we just check the normal deferring logic.
          */
-        return OTHER_IS_SUBCLASS;
+        *may_need_deferring = NPY_TRUE;
+        return CONVERSION_SUCCESS;
     }
 
     /*
@@ -906,12 +920,33 @@ convert_to_@name@(PyObject *value, @type@ *result)
         return CONVERSION_SUCCESS;
     }
 
-    if (IS_SAFE(NPY_DOUBLE, NPY_@TYPE@) && PyFloat_CheckExact(value)) {
+    if (PyFloat_Check(value)) {
+        if (!PyFloat_CheckExact(value)) {
+            /* A NumPy double is a float subclass, but special. */
+            if (PyArray_IsScalar(value, Double)) {
+                descr = PyArray_DescrFromType(NPY_DOUBLE);
+                goto numpy_scalar;
+            }
+            *may_need_deferring = NPY_TRUE;
+        }
+        if (!IS_SAFE(NPY_DOUBLE, NPY_@TYPE@)) {
+            return PROMOTION_REQUIRED;
+        }
         CONVERT_TO_RESULT(PyFloat_AS_DOUBLE(value));
         return CONVERSION_SUCCESS;
     }
 
-    if (IS_SAFE(NPY_LONG, NPY_@TYPE@) && PyLong_CheckExact(value)) {
+    if (PyLong_Check(value)) {
+        if (!PyLong_CheckExact(value)) {
+            *may_need_deferring = NPY_TRUE;
+        }
+        if (!IS_SAFE(NPY_LONG, NPY_@TYPE@)) {
+            /*
+             * long -> (c)longdouble is safe, so `THER_IS_UNKNOWN_OBJECT` will
+             * be returned below for huge integers.
+             */
+            return PROMOTION_REQUIRED;
+        }
         int overflow;
         long val = PyLong_AsLongAndOverflow(value, &overflow);
         if (overflow) {
@@ -924,8 +959,19 @@ convert_to_@name@(PyObject *value, @type@ *result)
         return CONVERSION_SUCCESS;
     }
 
+    if (PyComplex_Check(value)) {
+        if (!PyComplex_CheckExact(value)) {
+            /* A NumPy complex double is a float subclass, but special. */
+            if (PyArray_IsScalar(value, CDouble)) {
+                descr = PyArray_DescrFromType(NPY_CDOUBLE);
+                goto numpy_scalar;
+            }
+            *may_need_deferring = NPY_TRUE;
+        }
+        if (!IS_SAFE(NPY_CDOUBLE, NPY_@TYPE@)) {
+            return PROMOTION_REQUIRED;
+        }
 #if defined(IS_CFLOAT) || defined(IS_CDOUBLE) || defined(IS_CLONGDOUBLE)
-    if (IS_SAFE(NPY_CDOUBLE, NPY_@TYPE@) && PyComplex_CheckExact(value)) {
         Py_complex val = PyComplex_AsCComplex(value);
         if (error_converting(val.real)) {
             return CONVERSION_ERROR;  /* should not be possible */
@@ -933,16 +979,24 @@ convert_to_@name@(PyObject *value, @type@ *result)
         result->real = val.real;
         result->imag = val.imag;
         return CONVERSION_SUCCESS;
-    }
-#endif  /* defined(IS_CFLOAT) || ... */
-
-    PyObject *dtype = PyArray_DiscoverDTypeFromScalarType(Py_TYPE(value));
-    if (dtype == Py_None) {
-        Py_DECREF(dtype);
-        /* Signal that this is an array or array-like: Defer to array logic */
+#else
+        /* unreachable, always unsafe cast above; return to avoid warning */
+        assert(0);
         return OTHER_IS_UNKNOWN_OBJECT;
+#endif  /* defined(IS_CFLOAT) || ... */
     }
-    else if (dtype == NULL) {
+
+    /*
+     * (seberg) It would be nice to use `PyArray_DiscoverDTypeFromScalarType`
+     * from array coercion here.  OTOH, the array coercion code also falls
+     * back to this code.  The issue is around how subclasses should work...
+     *
+     * It would be nice to try to fully align the paths again (they effectively
+     * are equivalent).  Proper support for subclasses is in general tricky,
+     * and it would make more sense to just _refuse_ to support them.
+     * However, it is unclear that this is a viable option...
+     */
+    if (!PyArray_IsScalar(value, Generic)) {
         /*
          * The input is an unknown python object.  This should probably defer
          * but only does so for float128.
@@ -951,9 +1005,31 @@ convert_to_@name@(PyObject *value, @type@ *result)
          * scalar to a Python scalar and then try again.
          * The logic is that the ufunc casts the input to object, which does
          * the conversion.
+         * If the object is an array, deferring will always kick in.
          */
+        *may_need_deferring = NPY_TRUE;
         return OTHER_IS_UNKNOWN_OBJECT;
     }
+
+    descr = PyArray_DescrFromScalar(value);
+    if (descr == NULL) {
+        if (PyErr_Occurred()) {
+            return CONVERSION_ERROR;
+        }
+        /* Should not happen, but may be possible with bad user subclasses */
+        *may_need_deferring = NPY_TRUE;
+        return OTHER_IS_UNKNOWN_OBJECT;
+    }
+
+  numpy_scalar:
+    if (descr->typeobj != Py_TYPE(value)) {
+        /*
+         * This is a subclass of a builtin type, we may continue normally,
+         * but should check whether we need to defer.
+         */
+        *may_need_deferring = NPY_TRUE;
+    }
+
     /*
      * Otherwise, we have a clear NumPy scalar, find if it is a compatible
      * builtin scalar.
@@ -967,7 +1043,7 @@ convert_to_@name@(PyObject *value, @type@ *result)
      * since it would disable `np.float64(1.) * [1, 2, 3, 4]`.
      */
     int ret;  /* set by the GET_VALUE_OR_DEFER macro */
-    switch (((PyArray_DTypeMeta *)dtype)->type_num) {
+    switch (descr->type_num) {
         GET_VALUE_OR_DEFER(BOOL, Bool, value);
         /* UInts */
         GET_VALUE_OR_DEFER(UBYTE, UByte, value);
@@ -984,9 +1060,8 @@ convert_to_@name@(PyObject *value, @type@ *result)
         /* Floats */
         case NPY_HALF:
             if (IS_SAFE(NPY_HALF, NPY_@TYPE@)) {
-                assert(Py_TYPE(value) == &PyHalfArrType_Type);
                 CONVERT_TO_RESULT(npy_half_to_float(PyArrayScalar_VAL(value, Half)));
-                ret = 1;
+                ret = CONVERSION_SUCCESS;
             }
             else if (IS_SAFE(NPY_@TYPE@, NPY_HALF)) {
                 ret = DEFER_TO_OTHER_KNOWN_SCALAR;
@@ -1012,9 +1087,10 @@ convert_to_@name@(PyObject *value, @type@ *result)
              * defer (which would be much faster potentially).
              * TODO: We could add a DType flag to allow opting in to deferring!
              */
+            *may_need_deferring = NPY_TRUE;
             ret = OTHER_IS_UNKNOWN_OBJECT;
     }
-    Py_DECREF(dtype);
+    Py_DECREF(descr);
     return ret;
 }
 
@@ -1079,12 +1155,21 @@ static PyObject *
 
     /*
      * Check if this operation may be considered forward.  Note `is_forward`
-     * does not imply that we can defer to a subclass `b`, we need to check
-     * `BINOP_IS_FORWARD` for that (it takes into account that both may be
-     * identicalclass).
+     * does not imply that we can defer to a subclass `b`.  It just means that
+     * the first operand fits to the method.
      */
-    int is_forward = (Py_TYPE(a)->tp_as_number != NULL
-            && (void *)(Py_TYPE(a)->tp_as_number->nb_@oper@) == (void*)(@name@_@oper@));
+    int is_forward;
+    if (Py_TYPE(a) == &Py@Name@ArrType_Type) {
+        is_forward = 1;
+    }
+    else if (Py_TYPE(b) == &Py@Name@ArrType_Type) {
+        is_forward = 0;
+    }
+    else {
+        /* subclasses are involved */
+        is_forward = PyArray_IsScalar(a, @Name@);
+        assert(is_forward || PyArray_IsScalar(b, @Name@));
+    }
 
     /*
      * Extract the other value (if it is compatible).  Otherwise, decide
@@ -1094,10 +1179,16 @@ static PyObject *
      */
     PyObject *other = is_forward ? b : a;
 
-    conversion_result res = convert_to_@name@(other, &other_val);
+    npy_bool may_need_deferring;
+    conversion_result res = convert_to_@name@(
+            other, &other_val, &may_need_deferring);
+    if (res == CONVERSION_ERROR) {
+        return NULL;  /* an error occurred (should never happen) */
+    }
+    if (may_need_deferring) {
+        BINOP_GIVE_UP_IF_NEEDED(a, b, nb_@oper@, @name@_@oper@);
+    }
     switch (res) {
-        case CONVERSION_ERROR:
-            return NULL;  /* an error occurred (should never happen) */
         case DEFER_TO_OTHER_KNOWN_SCALAR:
             /*
              * defer to other;  This is normally a forward operation.  However,
@@ -1109,26 +1200,30 @@ static PyObject *
         case CONVERSION_SUCCESS:
             break;  /* successfully extracted value we can proceed */
         case OTHER_IS_UNKNOWN_OBJECT:
+            /*
+             * Either an array-like, unknown scalar (any Python object, but
+             * also integers that are too large to convert to `long`), or
+             * even a subclass of a NumPy scalar (currently).
+             *
+             * Generally, we try dropping through to the array path here,
+             * but this can lead to infinite recursions for (c)longdouble.
+             */
 #if defined(IS_longdouble) || defined(IS_clongdouble)
             Py_RETURN_NOTIMPLEMENTED;
 #endif
-            BINOP_GIVE_UP_IF_NEEDED(a, b, nb_@oper@, @name@_@oper@);
         case PROMOTION_REQUIRED:
             /*
-             * Either an array-like, unknown scalar or we need to promote.
+             * Python scalar that is larger than the current one, or two
+             * NumPy scalars that promote to a third (uint16 + int16 -> int32).
              *
              * TODO: We could special case the promotion case here for much
              *       better speed and to deal with integer overflow warnings
              *       correctly.  (e.g. `uint8 * int8` cannot warn).
              */
             return PyGenericArrType_Type.tp_as_number->nb_@oper@(a,b);
-        case OTHER_IS_SUBCLASS:
-            /*
-             * Success converting.  We _could_ in principle defer in cases
-             * were the other subclass does not inherit the behavior.  In
-             * practice not even Python's `int` attempt this, so we also punt.
-             */
-            break;
+        default:
+            assert(0);  /* error was checked already, impossible to reach */
+            return NULL;
     }
 
 #if @fperr@
@@ -1151,8 +1246,6 @@ static PyObject *
     @otype@ out2;
     PyObject *obj;
 #endif
-
-
 
     /*
      * here we do the actual calculation with arg1 and arg2
@@ -1262,19 +1355,33 @@ static PyObject *
     PyObject *ret;
     @type@ arg1, arg2, other_val;
 
-    int is_forward = (Py_TYPE(a)->tp_as_number != NULL
-            && (void *)(Py_TYPE(a)->tp_as_number->nb_power) == (void*)(@name@_power));
-
+    int is_forward;
+    if (Py_TYPE(a) == &Py@Name@ArrType_Type) {
+        is_forward = 1;
+    }
+    else if (Py_TYPE(b) == &Py@Name@ArrType_Type) {
+        is_forward = 0;
+    }
+    else {
+        /* subclasses are involved */
+        is_forward = PyArray_IsScalar(a, @Name@);
+        assert(is_forward || PyArray_IsScalar(b, @Name@));
+    }
     /*
      * Extract the other value (if it is compatible). See the generic
      * (non power) version above for detailed notes.
      */
     PyObject *other = is_forward ? b : a;
 
-    int res = convert_to_@name@(other, &other_val);
+    npy_bool may_need_deferring;
+    int res = convert_to_@name@(other, &other_val, &may_need_deferring);
+    if (res == CONVERSION_ERROR) {
+        return NULL;  /* an error occurred (should never happen) */
+    }
+    if (may_need_deferring) {
+        BINOP_GIVE_UP_IF_NEEDED(a, b, nb_power, @name@_power);
+    }
     switch (res) {
-        case CONVERSION_ERROR:
-            return NULL;  /* an error occurred (should never happen) */
         case DEFER_TO_OTHER_KNOWN_SCALAR:
             Py_RETURN_NOTIMPLEMENTED;
         case CONVERSION_SUCCESS:
@@ -1283,16 +1390,11 @@ static PyObject *
 #if defined(IS_longdouble) || defined(IS_clongdouble)
             Py_RETURN_NOTIMPLEMENTED;
 #endif
-            BINOP_GIVE_UP_IF_NEEDED(a, b, nb_power, @name@_power);
         case PROMOTION_REQUIRED:
             return PyGenericArrType_Type.tp_as_number->nb_power(a, b, modulo);
-        case OTHER_IS_SUBCLASS:
-            /*
-             * Success converting.  We _could_ in principle defer in cases
-             * were the other subclass does not inherit the behavior.  In
-             * practice not even Python's `int` attempt this, so we also punt.
-             */
-            break;
+        default:
+            assert(0);  /* error was checked already, impossible to reach */
+            return NULL;
     }
 
 #if !@isint@
@@ -1609,6 +1711,12 @@ static PyObject *
 }
 /**end repeat**/
 
+#if __GNUC__ < 10
+    /* At least GCC 9.2 issues spurious warnings for arg2 below. */
+    #pragma GCC diagnostic push  /* matching pop after function and repeat */
+    #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#endif
+
 /**begin repeat
  * #oper = le, ge, lt, gt, eq, ne#
  * #op = <=, >=, <, >, ==, !=#
@@ -1644,10 +1752,15 @@ static PyObject*
     /*
      * Extract the other value (if it is compatible).
      */
-    int res = convert_to_@name@(other, &arg2);
+    npy_bool may_need_deferring;
+    int res = convert_to_@name@(other, &arg2, &may_need_deferring);
+    if (res == CONVERSION_ERROR) {
+        return NULL;  /* an error occurred (should never happen) */
+    }
+    if (may_need_deferring) {
+        RICHCMP_GIVE_UP_IF_NEEDED(self, other);
+    }
     switch (res) {
-        case CONVERSION_ERROR:
-            return NULL;  /* an error occurred (should never happen) */
         case DEFER_TO_OTHER_KNOWN_SCALAR:
             Py_RETURN_NOTIMPLEMENTED;
         case CONVERSION_SUCCESS:
@@ -1656,17 +1769,11 @@ static PyObject*
 #if defined(IS_longdouble) || defined(IS_clongdouble)
             Py_RETURN_NOTIMPLEMENTED;
 #endif
-            RICHCMP_GIVE_UP_IF_NEEDED(self, other);
         case PROMOTION_REQUIRED:
             return PyGenericArrType_Type.tp_richcompare(self, other, cmp_op);
-        case OTHER_IS_SUBCLASS:
-            /*
-             * Success converting.  We _could_ in principle defer in cases
-             * were the other subclass does not inherit the behavior.  In
-             * practice not even Python's `int` attempt this, so we also punt.
-             * (This is also even trickier for richcompare, though.)
-             */
-            break;
+        default:
+            assert(0);  /* error was checked already, impossible to reach */
+            return NULL;
     }
 
     arg1 = PyArrayScalar_VAL(self, @Name@);
@@ -1703,6 +1810,11 @@ static PyObject*
 
 #undef IS_@name@
 /**end repeat**/
+
+#if __GNUC__ < 10
+    #pragma GCC diagnostic pop
+#endif
+
 
 /**begin repeat
  *  #name = byte, ubyte, short, ushort, int, uint,
