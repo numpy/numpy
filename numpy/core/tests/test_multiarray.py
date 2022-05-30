@@ -5608,12 +5608,13 @@ class TestFromBuffer:
         buf = x.tobytes()
         assert_array_equal(np.frombuffer(buf, dtype=dt), x.flat)
 
-    def test_array_base(self):
-        arr = np.arange(10)
-        new = np.frombuffer(arr)
-        # We currently special case arrays to ensure they are used as a base.
-        # This could probably be changed (removing the test).
-        assert new.base is arr
+    @pytest.mark.parametrize("obj", [np.arange(10), b"12345678"])
+    def test_array_base(self, obj):
+        # Objects (including NumPy arrays), which do not use the
+        # `release_buffer` slot should be directly used as a base object.
+        # See also gh-21612
+        new = np.frombuffer(obj)
+        assert new.base is obj
 
     def test_empty(self):
         assert_array_equal(np.frombuffer(b''), np.array([]))
