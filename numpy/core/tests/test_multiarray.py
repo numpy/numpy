@@ -4440,18 +4440,27 @@ class TestArgmaxArgminCommon:
         arg_method = getattr(a, method)
         assert_equal(arg_method(initial=initial, where=[True, True, False]), 2)
 
-    @pytest.mark.parametrize('method, index, initial',
-            [('argmax', 0, 100),
-             ('argmin', 4, -1)])
-    def test_masked_2d(self, method, index, initial):
-        a = np.arange(10).reshape((2, 5))
-        where = np.ones((2, 5)).astype(bool)
-        arg_method = getattr(a, method)
-        mask_args = dict(initial=initial, where=where)
-        where[1, index] = False
-        assert_equal(arg_method(**mask_args), 5 + index)
-        where[0, index] = False
-        assert_equal(arg_method(axis=1, **mask_args), [index, index])
+    @pytest.mark.parametrize('method',
+            [('max'),
+             ('min')])
+    def test_masked_2d(self, method):
+        n = 5
+        a = np.zeros([2, n], dtype=int)
+        where = np.ones([2, n], dtype=bool)
+
+        # Set first and last values for each row, depending on `method`
+        value = getattr(np.iinfo(a.dtype), method)
+        a[:, 0] = value
+        a[:, n - 1] = value
+
+        arg_method = getattr(a, 'arg' + method)
+        mask_args = dict(initial=0, where=where)
+
+        # With `mask_args` should skip first values
+        where[0, 0] = False
+        assert_equal(arg_method(**mask_args), n - 1)
+        where[1, 0] = False
+        assert_equal(arg_method(axis=1, **mask_args), [n - 1, n - 1])
 
 class TestArgmax:
     usg_data = [
