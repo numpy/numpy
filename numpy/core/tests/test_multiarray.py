@@ -4440,13 +4440,20 @@ class TestArgmaxArgminCommon:
         arg_method = getattr(a, method)
         assert_equal(arg_method(initial=initial, where=[True, True, False]), 2)
 
-    @pytest.mark.parametrize('method',
-            [('max'),
-             ('min')])
-    def test_masked_2d(self, method):
+    @pytest.mark.parametrize('method, contiguous',
+            [('max', True), 
+             ('max', False),
+             ('min', True), 
+             ('min', False)])
+    def test_masked_2d(self, method, contiguous):
         n = 5
         a = np.zeros([2, n], dtype=int)
         where = np.ones([2, n], dtype=bool)
+
+        if not contiguous:
+            a = a[:, ::2]
+            n = a.shape[1]
+            where = where[:, ::2]
 
         # Set first and last values for each row, depending on `method`
         value = getattr(np.iinfo(a.dtype), method)
