@@ -9,6 +9,7 @@ _ArrayType = TypeVar("_ArrayType", bound=NDArray[Any])
 
 __all__: list[str]
 
+
 @overload
 def atleast_1d(arys: _ArrayLike[_SCT], /) -> NDArray[_SCT]: ...
 @overload
