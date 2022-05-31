@@ -41,9 +41,9 @@ _PyArray_ArgMinMaxCommon(PyArrayObject *op,
         PyArrayObject *initial, PyArrayObject *where,
         npy_bool is_argmax)
 {
-    PyArrayObject *ap = NULL, *rp = NULL;
+    PyArrayObject *ap = NULL, *wp = NULL, *rp = NULL;
     PyArray_ArgFunc* arg_func = NULL;
-    char *ip, *mp, *wp, *vp, *func_name;
+    char *ip, *jp, *vp, *masked, *func_name;
     npy_intp *rptr;
     npy_intp i, j, n, m;
     int elsize;
@@ -100,6 +100,13 @@ _PyArray_ArgMinMaxCommon(PyArrayObject *op,
     Py_DECREF(op);
     if (ap == NULL) {
         return NULL;
+    }
+    if (where != NULL) {
+        wp = (PyArrayObject *)PyArray_ContiguousFromAny((PyObject *)where,
+                                                        NPY_BOOL, 1, 0);
+        if (wp == NULL) {
+            return NULL;
+        }
     }
 
     // Decides the shape of the output array.
@@ -182,16 +189,18 @@ _PyArray_ArgMinMaxCommon(PyArrayObject *op,
         }
     }
     else {
-        mp = PyArray_malloc(elsize*m);
+        masked = PyArray_malloc(elsize*m);
         ip = PyArray_DATA(ap);
-        wp = PyArray_DATA(where);
+        jp = PyArray_DATA(wp);
         vp = PyArray_DATA(initial);
-        for (i = 0; i < n; i++, ip += elsize*m, wp += sizeof(npy_bool)*m) {
-            for (j = 0; j < m; j++) 
-                memmove(mp+j*elsize, !wp[j] ? vp : ip+j*elsize, elsize);
-            arg_func(mp, m, rptr, ap);
+        for (i = 0; i < n; i++, ip += elsize*m, jp += sizeof(npy_bool)*m) {
+            for (j = 0; j < m; j++) {
+                memmove(masked+j*elsize, !jp[j] ? vp : ip+j*elsize, elsize);
+            }
+            arg_func(masked, m, rptr, ap);
             rptr += 1;
         }
+        Py_DECREF(wp);
     }
     NPY_END_THREADS_DESCR(PyArray_DESCR(ap));
 
