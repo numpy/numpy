@@ -902,7 +902,11 @@ def einsum_path(*operands, optimize='greedy', einsum_call=False):
     # Compute the path
     if path is not None:
         pass
-    elif (path_type is False) or (len(input_list) in [1, 2]) or (indices == output_set):
+    elif (
+        (path_type is False)
+        or (len(input_list) in [1, 2])
+        or (indices == output_set)
+    ):
         # Nothing to be optimized, leave it to einsum
         path = [tuple(range(len(input_list)))]
     elif path_type == "greedy":

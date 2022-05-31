@@ -1106,12 +1106,14 @@ class TestEinsumPath:
         path_test = self.build_operands('ab,bc,cd,de->ae')
         exp_path = ['einsum_path', (2, 3), (0, 1)]
         assert_raises(RuntimeError, np.einsum, *path_test, optimize=exp_path)
-        assert_raises(RuntimeError, np.einsum_path, *path_test, optimize=exp_path)
+        assert_raises(
+            RuntimeError, np.einsum_path, *path_test, optimize=exp_path)
 
         path_test = self.build_operands('a,a,a->a')
         exp_path = ['einsum_path', (1,), (0, 1)]
         assert_raises(RuntimeError, np.einsum, *path_test, optimize=exp_path)
-        assert_raises(RuntimeError, np.einsum_path, *path_test, optimize=exp_path)
+        assert_raises(
+            RuntimeError, np.einsum_path, *path_test, optimize=exp_path)
 
     def test_spaces(self):
         #gh-10794
