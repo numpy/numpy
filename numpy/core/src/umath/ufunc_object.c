@@ -994,13 +994,7 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
             all_scalar = NPY_FALSE;
             continue;
         }
-        if (npy_promotion_state == NPY_USE_LEGACY_PROMOTION) {
-            /*
-             * Do not replace with abstract DTypes as that would lead to
-             * incorrect result for mixed scalars.
-             */
-            continue;
-        }
+
         /*
          * Handle the "weak" Python scalars/literals.  We use a special DType
          * for these.
@@ -1008,22 +1002,30 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
          * this.  This is because the legacy dtype resolution makes use of
          * `np.can_cast(operand, dtype)`.  The flag is local to this use, but
          * necessary to propagate the information to the legacy type resolution.
+         *
+         * We check `out_op_DTypes` for two reasons: First, booleans are
+         * integer subclasses.  Second, an int, float, or complex could have
+         * a custom DType registered, and then we should use that.
          */
-        if (PyLong_Check(obj)) {
+        if (PyLong_Check(obj)
+                && (PyTypeNum_ISINTEGER(out_op_DTypes[i]->type_num)
+                    || out_op_DTypes[i]->type_num == NPY_OBJECT)) {
             Py_INCREF(&PyArray_PyIntAbstractDType);
             Py_SETREF(out_op_DTypes[i], &PyArray_PyIntAbstractDType);
             ((PyArrayObject_fields *)out_op[i])->flags |= (
                     NPY_ARRAY_WAS_PYTHON_INT);
             *promoting_pyscalars = NPY_TRUE;
         }
-        else if (PyFloat_Check(obj)) {
+        else if (PyFloat_Check(obj)
+                && out_op_DTypes[i]->type_num == NPY_DOUBLE) {
             Py_INCREF(&PyArray_PyFloatAbstractDType);
             Py_SETREF(out_op_DTypes[i], &PyArray_PyFloatAbstractDType);
             ((PyArrayObject_fields *)out_op[i])->flags |= (
                     NPY_ARRAY_WAS_PYTHON_FLOAT);
             *promoting_pyscalars = NPY_TRUE;
         }
-        else if (PyComplex_Check(obj)) {
+        else if (PyComplex_Check(obj)
+                && out_op_DTypes[i]->type_num == NPY_CDOUBLE) {
             Py_INCREF(&PyArray_PyComplexAbstractDType);
             Py_SETREF(out_op_DTypes[i], &PyArray_PyComplexAbstractDType);
             ((PyArrayObject_fields *)out_op[i])->flags |= (
