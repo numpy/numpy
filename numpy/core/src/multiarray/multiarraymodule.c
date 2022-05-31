@@ -3537,6 +3537,7 @@ array_result_type(PyObject *NPY_UNUSED(dummy), PyObject *args)
             if (arr[narr] == NULL) {
                 goto finish;
             }
+            // TODO: Relax the exact check here, see ufunc code!
             if (PyLong_CheckExact(obj)) {
                 ((PyArrayObject_fields *)arr[narr])->flags |= (
                         NPY_ARRAY_WAS_PYTHON_INT);
