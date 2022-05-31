@@ -821,6 +821,7 @@ def einsum_path(*operands, optimize='greedy', einsum_call=False):
     if path_type is None:
         path_type = False
 
+    path = None
     memory_limit = None
 
     # No optimization or a named path algorithm
@@ -829,7 +830,8 @@ def einsum_path(*operands, optimize='greedy', einsum_call=False):
 
     # Given an explicit path
     elif len(path_type) and (path_type[0] == 'einsum_path'):
-        pass
+        path = path_type[1:]
+        path_type = 'einsum_path'
 
     # Path tuple with memory limit
     elif ((len(path_type) == 2) and isinstance(path_type[0], str) and
@@ -898,15 +900,15 @@ def einsum_path(*operands, optimize='greedy', einsum_call=False):
     naive_cost = _flop_count(indices, inner_product, len(input_list), dimension_dict)
 
     # Compute the path
-    if (path_type is False) or (len(input_list) in [1, 2]) or (indices == output_set):
+    if path is not None:
+        pass
+    elif (path_type is False) or (len(input_list) in [1, 2]) or (indices == output_set):
         # Nothing to be optimized, leave it to einsum
         path = [tuple(range(len(input_list)))]
     elif path_type == "greedy":
         path = _greedy_path(input_sets, output_set, dimension_dict, memory_arg)
     elif path_type == "optimal":
         path = _optimal_path(input_sets, output_set, dimension_dict, memory_arg)
-    elif path_type[0] == 'einsum_path':
-        path = path_type[1:]
     else:
         raise KeyError("Path name %s not found", path_type)
 
@@ -954,6 +956,13 @@ def einsum_path(*operands, optimize='greedy', einsum_call=False):
         contraction_list.append(contraction)
 
     opt_cost = sum(cost_list) + 1
+
+    if len(input_list) != 1:
+        # Explicit "einsum_path" is usually trusted, but we detect this kind of
+        # mistake in order to prevent from returning an intermediate value.
+        raise RuntimeError(
+            "Invalid einsum_path is specified: {} more operands has to be "
+            "contracted.".format(len(input_list) - 1))
 
     if einsum_call_arg:
         return (operands, contraction_list)
