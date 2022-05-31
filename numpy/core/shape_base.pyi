@@ -51,6 +51,8 @@ def stack(
     arrays: Sequence[_ArrayLike[_SCT]],
     axis: SupportsIndex = ...,
     out: None = ...,
+    *,
+    dtype: None = ...,
     casting: None | _CastingKind = ...
 ) -> NDArray[_SCT]: ...
 
@@ -60,6 +62,8 @@ def stack(
     arrays: Sequence[ArrayLike],
     axis: SupportsIndex = ...,
     out: None = ...,
+    *,
+    dtype: None = ...,
     casting: None | _CastingKind = ...
 ) -> NDArray[Any]: ...
 
@@ -69,6 +73,8 @@ def stack(
     arrays: Sequence[ArrayLike],
     axis: SupportsIndex = ...,
     out: _ArrayType = ...,
+    *,
+    dtype: None = ...,
     casting: None | _CastingKind = ...
 ) -> _ArrayType: ...
 
