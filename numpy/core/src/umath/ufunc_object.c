@@ -995,6 +995,12 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
             continue;
         }
 
+        // TODO: Is this equivalent/better by removing the logic which enforces
+        //       that we always use weak promotion in the core?
+        if (npy_promotion_state == NPY_USE_LEGACY_PROMOTION) {
+            continue;  /* Skip use of special dtypes */
+        }
+
         /*
          * Handle the "weak" Python scalars/literals.  We use a special DType
          * for these.
