@@ -770,6 +770,6 @@ class TestUnique:
         # issue 20326
         a = np.array([1, 1, np.nan, np.nan, np.nan])
         unq = np.unique(a)
-        not_unq = np.unique(a, equal_nans = False)
+        not_unq = np.unique(a, equal_nan=False)
         assert_array_equal(unq, np.array([1, np.nan]))
         assert_array_equal(not_unq, np.array([1, np.nan, np.nan, np.nan]))
