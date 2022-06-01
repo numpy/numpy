@@ -338,7 +338,7 @@ def _unique1d(ar, return_index=False, return_inverse=False,
     mask = np.empty(aux.shape, dtype=np.bool_)
     mask[:1] = True
     if (equal_nans and aux.shape[0] > 0 and aux.dtype.kind in "cfmM" and 
-    np.isnan(aux[-1])):
+            np.isnan(aux[-1])):
         if aux.dtype.kind == "c":  # for complex all NaNs are considered equivalent
             aux_firstnan = np.searchsorted(np.isnan(aux), True, side='left')
         else:
