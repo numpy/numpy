@@ -34,6 +34,12 @@ def values_and_dtypes():
         yield param(np.finfo(np.longdouble).max, "float64",
                     id="longdouble-to-f8")
 
+    # Cast to complex32:
+    yield param(2e300, "complex64", id="float-to-c8")
+    yield param(2e300+0j, "complex64", id="complex-to-c8")
+    yield param(2e300j, "complex64", id="complex-to-c8")
+    yield param(np.longdouble(2e300), "complex64", id="longdouble-to-c8")
+
     # Invalid float to integer casts:
     with np.errstate(over="ignore"):
         for to_dt in np.typecodes["AllInteger"]:
