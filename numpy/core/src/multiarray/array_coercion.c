@@ -205,7 +205,7 @@ _PyArray_MapPyTypeToDType(
  * Lookup the DType for a registered known python scalar type.
  *
  * @param pytype Python Type to look up
- * @return DType, None if it a known non-scalar, or NULL if an unknown object.
+ * @return DType, None if it is a known non-scalar, or NULL if an unknown object.
  */
 static NPY_INLINE PyArray_DTypeMeta *
 npy_discover_dtype_from_pytype(PyTypeObject *pytype)
@@ -217,7 +217,8 @@ npy_discover_dtype_from_pytype(PyTypeObject *pytype)
     }
     else if (pytype == &PyFloat_Type) {
         DType = (PyObject *)&PyArray_PyFloatAbstractDType;
-    } else if (pytype == &PyLong_Type) {
+    }
+    else if (pytype == &PyLong_Type) {
         DType = (PyObject *)&PyArray_PyIntAbstractDType;
     }
     else {
