@@ -305,6 +305,7 @@ Once everything seems satisfactory, update, commit and upload the changes::
     $ popd
     $ popd
 
+
 Announce the release on numpy.org (skip for prereleases)
 --------------------------------------------------------
 
@@ -352,5 +353,9 @@ Checkout main and forward port the documentation changes::
     $ git status  # check status before commit
     $ git commit -a -m"REL: Update main after 1.21.0 release."
     $ git push origin HEAD
+
+Only for new releases the version-switcher file ``doc/source/_static/versions.json``
+should now be updated to insert the new release after the "stable" entry and the
+release of the "stable" entry fixed.  This change only lives on the main branch.
 
 Go to GitHub and make a PR.
