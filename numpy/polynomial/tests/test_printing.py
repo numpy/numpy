@@ -309,35 +309,66 @@ class TestFormat:
             format(p, '.2f')
 
 
+@pytest.mark.parametrize(('poly', 'tgt'), (
+    (poly.Polynomial, '1.0 + 2.0·z¹ + 3.0·z²'),
+    (poly.Chebyshev, '1.0 + 2.0·T₁(z) + 3.0·T₂(z)'),
+    (poly.Hermite, '1.0 + 2.0·H₁(z) + 3.0·H₂(z)'),
+    (poly.HermiteE, '1.0 + 2.0·He₁(z) + 3.0·He₂(z)'),
+    (poly.Laguerre, '1.0 + 2.0·L₁(z) + 3.0·L₂(z)'),
+    (poly.Legendre, '1.0 + 2.0·P₁(z) + 3.0·P₂(z)'),
+))
+def test_symbol(poly, tgt):
+    p = poly([1, 2, 3], symbol='z')
+    assert_equal(f"{p:unicode}", tgt)
+
+
 class TestRepr:
     def test_polynomial_str(self):
         res = repr(poly.Polynomial([0, 1]))
-        tgt = 'Polynomial([0., 1.], domain=[-1,  1], window=[-1,  1])'
+        tgt = (
+            "Polynomial([0., 1.], domain=[-1,  1], window=[-1,  1], "
+            "symbol='x')"
+        )
         assert_equal(res, tgt)
 
     def test_chebyshev_str(self):
         res = repr(poly.Chebyshev([0, 1]))
-        tgt = 'Chebyshev([0., 1.], domain=[-1,  1], window=[-1,  1])'
+        tgt = (
+            "Chebyshev([0., 1.], domain=[-1,  1], window=[-1,  1], "
+            "symbol='x')"
+        )
         assert_equal(res, tgt)
 
     def test_legendre_repr(self):
         res = repr(poly.Legendre([0, 1]))
-        tgt = 'Legendre([0., 1.], domain=[-1,  1], window=[-1,  1])'
+        tgt = (
+            "Legendre([0., 1.], domain=[-1,  1], window=[-1,  1], "
+            "symbol='x')"
+        )
         assert_equal(res, tgt)
 
     def test_hermite_repr(self):
         res = repr(poly.Hermite([0, 1]))
-        tgt = 'Hermite([0., 1.], domain=[-1,  1], window=[-1,  1])'
+        tgt = (
+            "Hermite([0., 1.], domain=[-1,  1], window=[-1,  1], "
+            "symbol='x')"
+        )
         assert_equal(res, tgt)
 
     def test_hermiteE_repr(self):
         res = repr(poly.HermiteE([0, 1]))
-        tgt = 'HermiteE([0., 1.], domain=[-1,  1], window=[-1,  1])'
+        tgt = (
+            "HermiteE([0., 1.], domain=[-1,  1], window=[-1,  1], "
+            "symbol='x')"
+        )
         assert_equal(res, tgt)
 
     def test_laguerre_repr(self):
         res = repr(poly.Laguerre([0, 1]))
-        tgt = 'Laguerre([0., 1.], domain=[0, 1], window=[0, 1])'
+        tgt = (
+            "Laguerre([0., 1.], domain=[0, 1], window=[0, 1], "
+            "symbol='x')"
+        )
         assert_equal(res, tgt)
 
 
@@ -388,3 +419,39 @@ class TestLatexRepr:
         p = poly.HermiteE([1, 2, 3])
         assert_equal(self.as_latex(p),
             r'$x \mapsto 1.0\,{He}_{0}(x) + 2.0\,{He}_{1}(x) + 3.0\,{He}_{2}(x)$')
+
+    def test_symbol_basic(self):
+        # default input
+        p = poly.Polynomial([1, 2, 3], symbol='z')
+        assert_equal(self.as_latex(p),
+            r'$z \mapsto 1.0 + 2.0\,z + 3.0\,z^{2}$')
+
+        # translated input
+        p = poly.Polynomial([1, 2, 3], domain=[-2, 0], symbol='z')
+        assert_equal(
+            self.as_latex(p),
+            (
+                r'$z \mapsto 1.0 + 2.0\,\left(1.0 + z\right) + 3.0\,'
+                r'\left(1.0 + z\right)^{2}$'
+            ),
+        )
+
+        # scaled input
+        p = poly.Polynomial([1, 2, 3], domain=[-0.5, 0.5], symbol='z')
+        assert_equal(
+            self.as_latex(p),
+            (
+                r'$z \mapsto 1.0 + 2.0\,\left(2.0z\right) + 3.0\,'
+                r'\left(2.0z\right)^{2}$'
+            ),
+        )
+
+        # affine input
+        p = poly.Polynomial([1, 2, 3], domain=[-1, 0], symbol='z')
+        assert_equal(
+            self.as_latex(p),
+            (
+                r'$z \mapsto 1.0 + 2.0\,\left(1.0 + 2.0z\right) + 3.0\,'
+                r'\left(1.0 + 2.0z\right)^{2}$'
+            ),
+        )
