@@ -122,7 +122,8 @@ class TooHardError(RuntimeError):
     This is raised whenever the maximum number of candidate solutions 
     to consider specified by the ``max_work`` parameter is exceeded.
     Since checking whether two arrays share memory is NP-complete 
-    you have may considered setting up max_work to a finite number 
+Assigning a finite number to max_work may have caused the operation 
+to fail.
     avoiding the function to become exponentially slow for some inputs.
 
     """
