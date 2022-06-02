@@ -345,8 +345,8 @@ def hstack(tup):
         return _nx.concatenate(arrs, 1)
 
 
-def _stack_dispatcher(arrays, axis=None, out=None, *, 
-                        dtype=None, casting=None):
+def _stack_dispatcher(arrays, axis=None, out=None, *,
+                      dtype=None, casting=None):
     arrays = _arrays_for_stack_dispatcher(arrays, stacklevel=6)
     if out is not None:
         # optimize for the typical case where only arrays is provided
@@ -383,8 +383,12 @@ def stack(arrays, axis=0, out=None, *, dtype=None, casting="same_kind"):
         If provided, the destination array will have this dtype. Cannot be
         provided together with `out`.
 
+        .. versionadded:: 1.24
+
     casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
         Controls what kind of data casting may occur. Defaults to 'same_kind'.
+
+        .. versionadded:: 1.24
 
 
     Returns
@@ -440,7 +444,7 @@ def stack(arrays, axis=0, out=None, *, dtype=None, casting="same_kind"):
     sl = (slice(None),) * axis + (_nx.newaxis,)
     expanded_arrays = [arr[sl] for arr in arrays]
     return _nx.concatenate(expanded_arrays, axis=axis, out=out,
-                            dtype=dtype, casting=casting)
+                           dtype=dtype, casting=casting)
 
 
 # Internal functions to eliminate the overhead of repeated dispatch in one of
