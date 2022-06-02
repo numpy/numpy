@@ -2991,6 +2991,11 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
 
     /* If external array is iterated, and no subspace is needed */
     nops = mit->numiter;
+
+    if (!uses_subspace) {
+        outer_flags |= NPY_ITER_EXTERNAL_LOOP;
+    }
+
     if (extra_op_flags && !uses_subspace) {
         /*
          * NOTE: This small limitation should practically not matter.
@@ -3037,9 +3042,6 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
     }
     if (mit->outer == NULL) {
         goto fail;
-    }
-    if (!uses_subspace) {
-        NpyIter_EnableExternalLoop(mit->outer);
     }
 
     mit->outer_next = NpyIter_GetIterNext(mit->outer, NULL);
