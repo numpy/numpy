@@ -1,0 +1,4 @@
+* The ``normed`` keyword argument has been removed from
+  `np.histogram`, `np.histogram2d`, and `np.histogramdd`.
+  Use ``density`` instead.  If ``normed`` was passed by
+  position, ``density`` is now used.
