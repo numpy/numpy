@@ -124,7 +124,7 @@ def check_operations(dtype, value):
 
         arr[[0, 1]] = values
 
-    #yield integer_array_assignment
+    yield integer_array_assignment
 
     def integer_array_assignment_with_subspace():
         arr = np.empty((5, 3), dtype=dtype)
@@ -134,6 +134,12 @@ def check_operations(dtype, value):
 
     yield integer_array_assignment_with_subspace
 
+    def flat_assignment():
+        arr = np.empty((3,), dtype=dtype)
+        values = np.array([value, value, value])
+        arr.flat[:] = values
+
+    yield flat_assignment
 
 @pytest.mark.parametrize(["value", "dtype"], values_and_dtypes())
 @pytest.mark.filterwarnings("ignore::numpy.ComplexWarning")
