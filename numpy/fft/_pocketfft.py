@@ -115,8 +115,11 @@ def _swap_direction(norm):
                          '"ortho" or "forward".') from None
 
 
-def _fft_dispatcher(a, n=None, axis=None, norm=None):
+def fft(a, n=None, axis=None, norm=None):
     return (a,)
+
+
+_fft_dispatcher = fft
 
 
 @array_function_dispatch(_fft_dispatcher)
@@ -708,8 +711,11 @@ def _raw_fftnd(a, s=None, axes=None, function=fft, norm=None):
     return a
 
 
-def _fftn_dispatcher(a, s=None, axes=None, norm=None):
+def fftn(a, s=None, axes=None, norm=None):
     return (a,)
+
+
+_fftn_dispatcher = fftn
 
 
 @array_function_dispatch(_fftn_dispatcher)

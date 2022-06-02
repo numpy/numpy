@@ -41,11 +41,11 @@ def _min_int(low, high):
     return int64
 
 
-def _flip_dispatcher(m):
+def fliplr(m):
     return (m,)
 
 
-@array_function_dispatch(_flip_dispatcher)
+@array_function_dispatch(fliplr)
 def fliplr(m):
     """
     Reverse the order of elements along axis 1 (left/right).
@@ -99,7 +99,11 @@ def fliplr(m):
     return m[:, ::-1]
 
 
-@array_function_dispatch(_flip_dispatcher)
+def flipud(m):
+    return (m,)
+
+
+@array_function_dispatch(flipud)
 def flipud(m):
     """
     Reverse the order of elements along axis 0 (up/down).
@@ -155,9 +159,11 @@ def flipud(m):
     return m[::-1, ...]
 
 
-def _eye_dispatcher(N, M=None, k=None, dtype=None, order=None, *, like=None):
+def eye(N, M=None, k=None, dtype=None, order=None, *, like=None):
     return (like,)
 
+# Need the dispatcher after defining the real function currently:
+_eye_dispatcher = eye
 
 @set_array_function_like_doc
 @set_module('numpy')
@@ -233,11 +239,11 @@ _eye_with_like = array_function_dispatch(
 )(eye)
 
 
-def _diag_dispatcher(v, k=None):
+def diag(v, k=None):
     return (v,)
 
 
-@array_function_dispatch(_diag_dispatcher)
+@array_function_dispatch(diag)
 def diag(v, k=0):
     """
     Extract a diagonal or construct a diagonal array.
@@ -309,7 +315,11 @@ def diag(v, k=0):
         raise ValueError("Input must be 1- or 2-d.")
 
 
-@array_function_dispatch(_diag_dispatcher)
+def diagflat(v, k=None):
+    return (v,)
+
+
+@array_function_dispatch(diagflat)
 def diagflat(v, k=0):
     """
     Create a two-dimensional array with the flattened input as a diagonal.
@@ -369,8 +379,12 @@ def diagflat(v, k=0):
     return wrap(res)
 
 
-def _tri_dispatcher(N, M=None, k=None, dtype=None, *, like=None):
+def tri(N, M=None, k=None, dtype=None, *, like=None):
     return (like,)
+
+
+# Need the dispatcher after defining the real function currently:
+_tri_dispatcher = tri
 
 
 @set_array_function_like_doc
@@ -435,11 +449,11 @@ _tri_with_like = array_function_dispatch(
 )(tri)
 
 
-def _trilu_dispatcher(m, k=None):
+def tril(m, k=None):
     return (m,)
 
 
-@array_function_dispatch(_trilu_dispatcher)
+@array_function_dispatch(tril)
 def tril(m, k=0):
     """
     Lower triangle of an array.
@@ -494,7 +508,11 @@ def tril(m, k=0):
     return where(mask, m, zeros(1, m.dtype))
 
 
-@array_function_dispatch(_trilu_dispatcher)
+def triu(m, k=None):
+    return (m,)
+
+
+@array_function_dispatch(triu)
 def triu(m, k=0):
     """
     Upper triangle of an array.
@@ -538,12 +556,12 @@ def triu(m, k=0):
     return where(mask, zeros(1, m.dtype), m)
 
 
-def _vander_dispatcher(x, N=None, increasing=None):
+def vander(x, N=None, increasing=None):
     return (x,)
 
 
 # Originally borrowed from John Hunter and matplotlib
-@array_function_dispatch(_vander_dispatcher)
+@array_function_dispatch(vander)
 def vander(x, N=None, increasing=False):
     """
     Generate a Vandermonde matrix.
@@ -634,8 +652,7 @@ def vander(x, N=None, increasing=False):
     return v
 
 
-def _histogram2d_dispatcher(x, y, bins=None, range=None, density=None,
-                            weights=None):
+def histogram2d(x, y, bins=None, range=None, density=None, weights=None):
     yield x
     yield y
 
@@ -652,7 +669,7 @@ def _histogram2d_dispatcher(x, y, bins=None, range=None, density=None,
     yield weights
 
 
-@array_function_dispatch(_histogram2d_dispatcher)
+@array_function_dispatch(histogram2d)
 def histogram2d(x, y, bins=10, range=None, density=None, weights=None):
     """
     Compute the bi-dimensional histogram of two data samples.
@@ -976,11 +993,11 @@ def tril_indices(n, k=0, m=None):
                  for inds in indices(tri_.shape, sparse=True))
 
 
-def _trilu_indices_form_dispatcher(arr, k=None):
+def tril_indices_from(arr, k=None):
     return (arr,)
 
 
-@array_function_dispatch(_trilu_indices_form_dispatcher)
+@array_function_dispatch(tril_indices_from)
 def tril_indices_from(arr, k=0):
     """
     Return the indices for the lower-triangle of arr.
@@ -1095,7 +1112,11 @@ def triu_indices(n, k=0, m=None):
                  for inds in indices(tri_.shape, sparse=True))
 
 
-@array_function_dispatch(_trilu_indices_form_dispatcher)
+def triu_indices_from(arr, k=None):
+    return (arr,)
+
+
+@array_function_dispatch(triu_indices_from)
 def triu_indices_from(arr, k=0):
     """
     Return the indices for the upper-triangle of arr.

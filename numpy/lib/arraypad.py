@@ -518,7 +518,7 @@ def _as_pairs(x, ndim, as_index=False):
     return np.broadcast_to(x, (ndim, 2)).tolist()
 
 
-def _pad_dispatcher(array, pad_width, mode=None, **kwargs):
+def pad(array, pad_width, mode=None, **kwargs):
     return (array,)
 
 
@@ -526,7 +526,7 @@ def _pad_dispatcher(array, pad_width, mode=None, **kwargs):
 # Public functions
 
 
-@array_function_dispatch(_pad_dispatcher, module='numpy')
+@array_function_dispatch(pad, module='numpy')
 def pad(array, pad_width, mode='constant', **kwargs):
     """
     Pad an array.

@@ -77,11 +77,11 @@ def mintypecode(typechars, typeset='GDFgdf', default='d'):
     return min(intersection, key=_typecodes_by_elsize.index)
 
 
-def _asfarray_dispatcher(a, dtype=None):
+def asfarray(a, dtype=None):
     return (a,)
 
 
-@array_function_dispatch(_asfarray_dispatcher)
+@array_function_dispatch(asfarray)
 def asfarray(a, dtype=_nx.float_):
     """
     Return an array converted to a float type.
@@ -114,11 +114,11 @@ def asfarray(a, dtype=_nx.float_):
     return asarray(a, dtype=dtype)
 
 
-def _real_dispatcher(val):
+def real(val):
     return (val,)
 
 
-@array_function_dispatch(_real_dispatcher)
+@array_function_dispatch(real)
 def real(val):
     """
     Return the real part of the complex argument.
@@ -160,11 +160,11 @@ def real(val):
         return asanyarray(val).real
 
 
-def _imag_dispatcher(val):
+def imag(val):
     return (val,)
 
 
-@array_function_dispatch(_imag_dispatcher)
+@array_function_dispatch(imag)
 def imag(val):
     """
     Return the imaginary part of the complex argument.
@@ -203,8 +203,13 @@ def imag(val):
         return asanyarray(val).imag
 
 
-def _is_type_dispatcher(x):
+def is_type(x):
     return (x,)
+
+
+# Rename the dispatcher to hide it (we want the nicer name for the error):
+_is_type_dispatcher = is_type
+del is_type
 
 
 @array_function_dispatch(_is_type_dispatcher)
@@ -397,11 +402,11 @@ def _getmaxmin(t):
     return f.max, f.min
 
 
-def _nan_to_num_dispatcher(x, copy=None, nan=None, posinf=None, neginf=None):
+def nan_to_num(x, copy=None, nan=None, posinf=None, neginf=None):
     return (x,)
 
 
-@array_function_dispatch(_nan_to_num_dispatcher)
+@array_function_dispatch(nan_to_num)
 def nan_to_num(x, copy=True, nan=0.0, posinf=None, neginf=None):
     """
     Replace NaN with zero and infinity with large finite numbers (default
@@ -522,11 +527,11 @@ def nan_to_num(x, copy=True, nan=0.0, posinf=None, neginf=None):
 
 #-----------------------------------------------------------------------------
 
-def _real_if_close_dispatcher(a, tol=None):
+def real_if_close(a, tol=None):
     return (a,)
 
 
-@array_function_dispatch(_real_if_close_dispatcher)
+@array_function_dispatch(real_if_close)
 def real_if_close(a, tol=100):
     """
     If input is complex with all imaginary parts close to zero, return
@@ -675,11 +680,11 @@ array_precision = {_nx.half: 0,
                    _nx.clongdouble: 3}
 
 
-def _common_type_dispatcher(*arrays):
+def common_type(*arrays):
     return arrays
 
 
-@array_function_dispatch(_common_type_dispatcher)
+@array_function_dispatch(common_type)
 def common_type(*arrays):
     """
     Return a scalar type which is common to the input arrays.

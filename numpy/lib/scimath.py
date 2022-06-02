@@ -191,8 +191,13 @@ def _fix_real_abs_gt_1(x):
     return x
 
 
-def _unary_dispatcher(x):
+def unary_operation(x):
     return (x,)
+
+
+# Rename the dispatcher to hide it (we want the nicer name for the error):
+_unary_dispatcher = unary_operation
+del unary_operation
 
 
 @array_function_dispatch(_unary_dispatcher)
@@ -346,11 +351,11 @@ def log10(x):
     return nx.log10(x)
 
 
-def _logn_dispatcher(n, x):
+def logn(n, x):
     return (n, x,)
 
 
-@array_function_dispatch(_logn_dispatcher)
+@array_function_dispatch(logn)
 def logn(n, x):
     """
     Take log base n of x.
@@ -434,11 +439,11 @@ def log2(x):
     return nx.log2(x)
 
 
-def _power_dispatcher(x, p):
+def power(x, p):
     return (x, p)
 
 
-@array_function_dispatch(_power_dispatcher)
+@array_function_dispatch(power)
 def power(x, p):
     """
     Return x to the power p, (x**p).

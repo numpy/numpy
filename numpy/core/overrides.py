@@ -171,6 +171,16 @@ def array_function_dispatch(dispatcher, module=None, verify=True,
         if verify:
             verify_matching_signatures(implementation, dispatcher)
 
+        # Uncomment the following to find dispatchers that have a mismatching
+        # name.  When incorrect parameters are passed there, the error message
+        # reports the dispatchers name, so this is nicer to avoid.
+        #
+        # generic_names = ["unary_operation", "binary_operation"]
+        # if (dispatcher.__name__ != implementation.__name__
+        #         and dispatcher.__name__ not in generic_names):
+        #     print(dispatcher.__module__, implementation.__name__,
+        #           dispatcher.__name__)
+
         if docs_from_dispatcher:
             add_docstring(implementation, dispatcher.__doc__)
 

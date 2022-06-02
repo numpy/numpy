@@ -66,11 +66,11 @@ def _fix_and_maybe_deprecate_out_named_y(f):
 
 
 @_deprecate_out_named_y
-def _dispatcher(x, out=None):
+def fix(x, out=None):
     return (x, out)
 
 
-@array_function_dispatch(_dispatcher, verify=False, module='numpy')
+@array_function_dispatch(fix, verify=False, module='numpy')
 @_fix_and_maybe_deprecate_out_named_y
 def fix(x, out=None):
     """
@@ -124,7 +124,12 @@ def fix(x, out=None):
     return res
 
 
-@array_function_dispatch(_dispatcher, verify=False, module='numpy')
+@_deprecate_out_named_y
+def isposinf(x, out=None):
+    return (x, out)
+
+
+@array_function_dispatch(isposinf, verify=False, module='numpy')
 @_fix_and_maybe_deprecate_out_named_y
 def isposinf(x, out=None):
     """
@@ -196,7 +201,12 @@ def isposinf(x, out=None):
         return nx.logical_and(is_inf, signbit, out)
 
 
-@array_function_dispatch(_dispatcher, verify=False, module='numpy')
+@_deprecate_out_named_y
+def isneginf(x, out=None):
+    return (x, out)
+
+
+@array_function_dispatch(isneginf, verify=False, module='numpy')
 @_fix_and_maybe_deprecate_out_named_y
 def isneginf(x, out=None):
     """

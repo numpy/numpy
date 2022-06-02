@@ -424,11 +424,11 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
                     f"Failed to interpret file {file!r} as a pickle") from e
 
 
-def _save_dispatcher(file, arr, allow_pickle=None, fix_imports=None):
+def save(file, arr, allow_pickle=None, fix_imports=None):
     return (arr,)
 
 
-@array_function_dispatch(_save_dispatcher)
+@array_function_dispatch(save)
 def save(file, arr, allow_pickle=True, fix_imports=True):
     """
     Save an array to a binary file in NumPy ``.npy`` format.
@@ -503,12 +503,12 @@ def save(file, arr, allow_pickle=True, fix_imports=True):
                            pickle_kwargs=dict(fix_imports=fix_imports))
 
 
-def _savez_dispatcher(file, *args, **kwds):
+def savez(file, *args, **kwds):
     yield from args
     yield from kwds.values()
 
 
-@array_function_dispatch(_savez_dispatcher)
+@array_function_dispatch(savez)
 def savez(file, *args, **kwds):
     """Save several arrays into a single file in uncompressed ``.npz`` format.
 
@@ -595,12 +595,12 @@ def savez(file, *args, **kwds):
     _savez(file, args, kwds, False)
 
 
-def _savez_compressed_dispatcher(file, *args, **kwds):
+def savez_compressed(file, *args, **kwds):
     yield from args
     yield from kwds.values()
 
 
-@array_function_dispatch(_savez_compressed_dispatcher)
+@array_function_dispatch(savez_compressed)
 def savez_compressed(file, *args, **kwds):
     """
     Save several arrays into a single file in compressed ``.npz`` format.
@@ -740,11 +740,15 @@ def _ensure_ndmin_ndarray(a, *, ndmin: int):
 _loadtxt_chunksize = 50000
 
 
-def _loadtxt_dispatcher(
+def loadtxt(
         fname, dtype=None, comments=None, delimiter=None,
         converters=None, skiprows=None, usecols=None, unpack=None,
         ndmin=None, encoding=None, max_rows=None, *, like=None):
     return (like,)
+
+
+# Need the dispatcher after defining the real function currently:
+_loadtxt_dispatcher = loadtxt
 
 
 def _check_nonneg_int(value, name="argument"):
@@ -1311,13 +1315,13 @@ _loadtxt_with_like = array_function_dispatch(
 )(loadtxt)
 
 
-def _savetxt_dispatcher(fname, X, fmt=None, delimiter=None, newline=None,
+def savetxt(fname, X, fmt=None, delimiter=None, newline=None,
                         header=None, footer=None, comments=None,
                         encoding=None):
     return (X,)
 
 
-@array_function_dispatch(_savetxt_dispatcher)
+@array_function_dispatch(savetxt)
 def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
             footer='', comments='# ', encoding=None):
     """
@@ -1669,7 +1673,7 @@ def fromregex(file, regexp, dtype, encoding=None):
 #####--------------------------------------------------------------------------
 
 
-def _genfromtxt_dispatcher(fname, dtype=None, comments=None, delimiter=None,
+def genfromtxt(fname, dtype=None, comments=None, delimiter=None,
                            skip_header=None, skip_footer=None, converters=None,
                            missing_values=None, filling_values=None, usecols=None,
                            names=None, excludelist=None, deletechars=None,
@@ -1678,6 +1682,10 @@ def _genfromtxt_dispatcher(fname, dtype=None, comments=None, delimiter=None,
                            invalid_raise=None, max_rows=None, encoding=None,
                            *, ndmin=None, like=None):
     return (like,)
+
+
+# Need the dispatcher after defining the real function currently:
+_genfromtxt_dispatcher = genfromtxt
 
 
 @set_array_function_like_doc

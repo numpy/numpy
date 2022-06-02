@@ -15,12 +15,12 @@ array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy')
 
 
-def _linspace_dispatcher(start, stop, num=None, endpoint=None, retstep=None,
-                         dtype=None, axis=None):
+def linspace(start, stop, num=None, endpoint=None, retstep=None,
+             dtype=None, axis=None):
     return (start, stop)
 
 
-@array_function_dispatch(_linspace_dispatcher)
+@array_function_dispatch(linspace)
 def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
              axis=0):
     """
@@ -175,12 +175,12 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
         return y.astype(dtype, copy=False)
 
 
-def _logspace_dispatcher(start, stop, num=None, endpoint=None, base=None,
-                         dtype=None, axis=None):
+def logspace(start, stop, num=None, endpoint=None, base=None,
+             dtype=None, axis=None):
     return (start, stop)
 
 
-@array_function_dispatch(_logspace_dispatcher)
+@array_function_dispatch(logspace)
 def logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None,
              axis=0):
     """
@@ -278,12 +278,11 @@ def logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None,
     return _nx.power(base, y).astype(dtype, copy=False)
 
 
-def _geomspace_dispatcher(start, stop, num=None, endpoint=None, dtype=None,
-                          axis=None):
+def geomspace(start, stop, num=None, endpoint=None, dtype=None, axis=None):
     return (start, stop)
 
 
-@array_function_dispatch(_geomspace_dispatcher)
+@array_function_dispatch(geomspace)
 def geomspace(start, stop, num=50, endpoint=True, dtype=None, axis=0):
     """
     Return numbers spaced evenly on a log scale (a geometric progression).

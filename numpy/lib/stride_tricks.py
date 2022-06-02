@@ -115,12 +115,12 @@ def as_strided(x, shape=None, strides=None, subok=False, writeable=True):
     return view
 
 
-def _sliding_window_view_dispatcher(x, window_shape, axis=None, *,
-                                    subok=None, writeable=None):
+def sliding_window_view(x, window_shape, axis=None, *,
+                        subok=None, writeable=None):
     return (x,)
 
 
-@array_function_dispatch(_sliding_window_view_dispatcher)
+@array_function_dispatch(sliding_window_view)
 def sliding_window_view(x, window_shape, axis=None, *,
                         subok=False, writeable=False):
     """
@@ -360,11 +360,11 @@ def _broadcast_to(array, shape, subok, readonly):
     return result
 
 
-def _broadcast_to_dispatcher(array, shape, subok=None):
+def broadcast_to(array, shape, subok=None):
     return (array,)
 
 
-@array_function_dispatch(_broadcast_to_dispatcher, module='numpy')
+@array_function_dispatch(broadcast_to, module='numpy')
 def broadcast_to(array, shape, subok=False):
     """Broadcast an array to a new shape.
 
@@ -473,11 +473,11 @@ def broadcast_shapes(*args):
     return _broadcast_shape(*arrays)
 
 
-def _broadcast_arrays_dispatcher(*args, subok=None):
+def broadcast_arrays(*args, subok=None):
     return args
 
 
-@array_function_dispatch(_broadcast_arrays_dispatcher, module='numpy')
+@array_function_dispatch(broadcast_arrays, module='numpy')
 def broadcast_arrays(*args, subok=False):
     """
     Broadcast any number of arrays against each other.

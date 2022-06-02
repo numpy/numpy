@@ -693,7 +693,7 @@ def _parse_einsum_input(operands):
     return (input_subscripts, output_subscript, operands)
 
 
-def _einsum_path_dispatcher(*operands, optimize=None, einsum_call=None):
+def einsum_path(*operands, optimize=None, einsum_call=None):
     # NOTE: technically, we should only dispatch on array-like arguments, not
     # subscripts (given as strings). But separating operands into
     # arrays/subscripts is a little tricky/slow (given einsum's two supported
@@ -703,7 +703,7 @@ def _einsum_path_dispatcher(*operands, optimize=None, einsum_call=None):
     return operands
 
 
-@array_function_dispatch(_einsum_path_dispatcher, module='numpy')
+@array_function_dispatch(einsum_path, module='numpy')
 def einsum_path(*operands, optimize='greedy', einsum_call=False):
     """
     einsum_path(subscripts, *operands, optimize='greedy')
@@ -998,7 +998,7 @@ def einsum_path(*operands, optimize='greedy', einsum_call=False):
     return (path, path_print)
 
 
-def _einsum_dispatcher(*operands, out=None, optimize=None, **kwargs):
+def einsum(*operands, out=None, optimize=None, **kwargs):
     # Arguably we dispatch on more arguments than we really should; see note in
     # _einsum_path_dispatcher for why.
     yield from operands
@@ -1006,7 +1006,7 @@ def _einsum_dispatcher(*operands, out=None, optimize=None, **kwargs):
 
 
 # Rewrite einsum to handle different cases
-@array_function_dispatch(_einsum_dispatcher, module='numpy')
+@array_function_dispatch(einsum, module='numpy')
 def einsum(*operands, out=None, optimize=False, **kwargs):
     """
     einsum(subscripts, *operands, out=None, dtype=None, order='K',

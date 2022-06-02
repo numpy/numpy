@@ -12,8 +12,11 @@ __all__ = ['fftshift', 'ifftshift', 'fftfreq', 'rfftfreq']
 integer_types = (int, integer)
 
 
-def _fftshift_dispatcher(x, axes=None):
+def fftshift(x, axes=None):
     return (x,)
+
+
+_fftshift_dispatcher = fftshift
 
 
 @array_function_dispatch(_fftshift_dispatcher, module='numpy.fft')

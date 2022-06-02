@@ -16,11 +16,11 @@ array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy')
 
 
-def _atleast_1d_dispatcher(*arys):
+def atleast_1d(*arys):
     return arys
 
 
-@array_function_dispatch(_atleast_1d_dispatcher)
+@array_function_dispatch(atleast_1d)
 def atleast_1d(*arys):
     """
     Convert inputs to arrays with at least one dimension.
@@ -74,11 +74,11 @@ def atleast_1d(*arys):
         return res
 
 
-def _atleast_2d_dispatcher(*arys):
+def atleast_2d(*arys):
     return arys
 
 
-@array_function_dispatch(_atleast_2d_dispatcher)
+@array_function_dispatch(atleast_2d)
 def atleast_2d(*arys):
     """
     View inputs as arrays with at least two dimensions.
@@ -132,11 +132,11 @@ def atleast_2d(*arys):
         return res
 
 
-def _atleast_3d_dispatcher(*arys):
+def atleast_3d(*arys):
     return arys
 
 
-@array_function_dispatch(_atleast_3d_dispatcher)
+@array_function_dispatch(atleast_3d)
 def atleast_3d(*arys):
     """
     View inputs as arrays with at least three dimensions.
@@ -215,12 +215,11 @@ def _arrays_for_stack_dispatcher(arrays, stacklevel=4):
     return arrays
 
 
-def _vhstack_dispatcher(tup, *, 
-                        dtype=None, casting=None):
+def vstack(tup, *,  dtype=None, casting=None):
     return _arrays_for_stack_dispatcher(tup)
 
 
-@array_function_dispatch(_vhstack_dispatcher)
+@array_function_dispatch(vstack)
 def vstack(tup, *, dtype=None, casting="same_kind"):
     """
     Stack arrays in sequence vertically (row wise).
@@ -294,7 +293,11 @@ def vstack(tup, *, dtype=None, casting="same_kind"):
     return _nx.concatenate(arrs, 0, dtype=dtype, casting=casting)
 
 
-@array_function_dispatch(_vhstack_dispatcher)
+def hstack(tup, *, dtype=None, casting="same_kind"):
+    return _arrays_for_stack_dispatcher(tup)
+
+
+@array_function_dispatch(hstack)
 def hstack(tup, *, dtype=None, casting="same_kind"):
     """
     Stack arrays in sequence horizontally (column wise).
@@ -368,8 +371,7 @@ def hstack(tup, *, dtype=None, casting="same_kind"):
         return _nx.concatenate(arrs, 1, dtype=dtype, casting=casting)
 
 
-def _stack_dispatcher(arrays, axis=None, out=None, *,
-                      dtype=None, casting=None):
+def stack(arrays, axis=None, out=None, *, dtype=None, casting=None):
     arrays = _arrays_for_stack_dispatcher(arrays, stacklevel=6)
     if out is not None:
         # optimize for the typical case where only arrays is provided
@@ -378,7 +380,7 @@ def _stack_dispatcher(arrays, axis=None, out=None, *,
     return arrays
 
 
-@array_function_dispatch(_stack_dispatcher)
+@array_function_dispatch(stack)
 def stack(arrays, axis=0, out=None, *, dtype=None, casting="same_kind"):
     """
     Join a sequence of arrays along a new axis.
@@ -702,7 +704,7 @@ def _block(arrays, max_depth, result_ndim, depth=0):
         return _atleast_nd(arrays, result_ndim)
 
 
-def _block_dispatcher(arrays):
+def block(arrays):
     # Use type(...) is list to match the behavior of np.block(), which special
     # cases list specifically rather than allowing for generic iterables or
     # tuple. Also, we know that list.__array_function__ will never exist.
@@ -712,8 +714,11 @@ def _block_dispatcher(arrays):
     else:
         yield arrays
 
+# Needed for recursive call:
+_block_dispatcher = block
 
-@array_function_dispatch(_block_dispatcher)
+
+@array_function_dispatch(block)
 def block(arrays):
     """
     Assemble an nd-array from nested lists of blocks.

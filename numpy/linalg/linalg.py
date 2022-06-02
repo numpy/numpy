@@ -232,11 +232,11 @@ def transpose(a):
 
 # Linear equations
 
-def _tensorsolve_dispatcher(a, b, axes=None):
+def tensorsolve(a, b, axes=None):
     return (a, b)
 
 
-@array_function_dispatch(_tensorsolve_dispatcher)
+@array_function_dispatch(tensorsolve)
 def tensorsolve(a, b, axes=None):
     """
     Solve the tensor equation ``a x = b`` for x.
@@ -313,11 +313,11 @@ def tensorsolve(a, b, axes=None):
     return res
 
 
-def _solve_dispatcher(a, b):
+def solve(a, b):
     return (a, b)
 
 
-@array_function_dispatch(_solve_dispatcher)
+@array_function_dispatch(solve)
 def solve(a, b):
     """
     Solve a linear matrix equation, or system of linear scalar equations.
@@ -402,11 +402,11 @@ def solve(a, b):
     return wrap(r.astype(result_t, copy=False))
 
 
-def _tensorinv_dispatcher(a, ind=None):
+def tensorinv(a, ind=None):
     return (a,)
 
 
-@array_function_dispatch(_tensorinv_dispatcher)
+@array_function_dispatch(tensorinv)
 def tensorinv(a, ind=2):
     """
     Compute the 'inverse' of an N-dimensional array.
@@ -476,9 +476,11 @@ def tensorinv(a, ind=2):
 
 # Matrix inversion
 
-def _unary_dispatcher(a):
+def unary_operation(a):
     return (a,)
 
+_unary_dispatcher = unary_operation
+del unary_operation
 
 @array_function_dispatch(_unary_dispatcher)
 def inv(a):
@@ -553,11 +555,11 @@ def inv(a):
     return wrap(ainv.astype(result_t, copy=False))
 
 
-def _matrix_power_dispatcher(a, n):
+def matrix_power(a, n):
     return (a,)
 
 
-@array_function_dispatch(_matrix_power_dispatcher)
+@array_function_dispatch(matrix_power)
 def matrix_power(a, n):
     """
     Raise a square matrix to the (integer) power `n`.
@@ -773,11 +775,11 @@ def cholesky(a):
 
 # QR decomposition
 
-def _qr_dispatcher(a, mode=None):
+def qr(a, mode=None):
     return (a,)
 
 
-@array_function_dispatch(_qr_dispatcher)
+@array_function_dispatch(qr)
 def qr(a, mode='reduced'):
     """
     Compute the qr factorization of a matrix.
@@ -1072,11 +1074,11 @@ def eigvals(a):
     return w.astype(result_t, copy=False)
 
 
-def _eigvalsh_dispatcher(a, UPLO=None):
+def eigvalsh(a, UPLO=None):
     return (a,)
 
 
-@array_function_dispatch(_eigvalsh_dispatcher)
+@array_function_dispatch(eigvalsh)
 def eigvalsh(a, UPLO='L'):
     """
     Compute the eigenvalues of a complex Hermitian or real symmetric matrix.
@@ -1328,7 +1330,11 @@ def eig(a):
     return w.astype(result_t, copy=False), wrap(vt)
 
 
-@array_function_dispatch(_eigvalsh_dispatcher)
+def eigh(a, UPLO=None):
+    return (a,)
+
+
+@array_function_dispatch(eigh)
 def eigh(a, UPLO='L'):
     """
     Return the eigenvalues and eigenvectors of a complex Hermitian
@@ -1470,11 +1476,11 @@ def eigh(a, UPLO='L'):
 
 # Singular value decomposition
 
-def _svd_dispatcher(a, full_matrices=None, compute_uv=None, hermitian=None):
+def svd(a, full_matrices=None, compute_uv=None, hermitian=None):
     return (a,)
 
 
-@array_function_dispatch(_svd_dispatcher)
+@array_function_dispatch(svd)
 def svd(a, full_matrices=True, compute_uv=True, hermitian=False):
     """
     Singular Value Decomposition.
@@ -1671,11 +1677,11 @@ def svd(a, full_matrices=True, compute_uv=True, hermitian=False):
         return s
 
 
-def _cond_dispatcher(x, p=None):
+def cond(x, p=None):
     return (x,)
 
 
-@array_function_dispatch(_cond_dispatcher)
+@array_function_dispatch(cond)
 def cond(x, p=None):
     """
     Compute the condition number of a matrix.
@@ -1794,11 +1800,11 @@ def cond(x, p=None):
     return r
 
 
-def _matrix_rank_dispatcher(A, tol=None, hermitian=None):
+def matrix_rank(A, tol=None, hermitian=None):
     return (A,)
 
 
-@array_function_dispatch(_matrix_rank_dispatcher)
+@array_function_dispatch(matrix_rank)
 def matrix_rank(A, tol=None, hermitian=False):
     """
     Return matrix rank of array using SVD method
@@ -1905,11 +1911,11 @@ def matrix_rank(A, tol=None, hermitian=False):
 
 # Generalized inverse
 
-def _pinv_dispatcher(a, rcond=None, hermitian=None):
+def pinv(a, rcond=None, hermitian=None):
     return (a,)
 
 
-@array_function_dispatch(_pinv_dispatcher)
+@array_function_dispatch(pinv)
 def pinv(a, rcond=1e-15, hermitian=False):
     """
     Compute the (Moore-Penrose) pseudo-inverse of a matrix.
@@ -2158,11 +2164,11 @@ def det(a):
 
 # Linear Least Squares
 
-def _lstsq_dispatcher(a, b, rcond=None):
+def lstsq(a, b, rcond=None):
     return (a, b)
 
 
-@array_function_dispatch(_lstsq_dispatcher)
+@array_function_dispatch(lstsq)
 def lstsq(a, b, rcond="warn"):
     r"""
     Return the least-squares solution to a linear matrix equation.
@@ -2350,11 +2356,11 @@ def _multi_svd_norm(x, row_axis, col_axis, op):
     return result
 
 
-def _norm_dispatcher(x, ord=None, axis=None, keepdims=None):
+def norm(x, ord=None, axis=None, keepdims=None):
     return (x,)
 
 
-@array_function_dispatch(_norm_dispatcher)
+@array_function_dispatch(norm)
 def norm(x, ord=None, axis=None, keepdims=False):
     """
     Matrix or vector norm.
@@ -2609,12 +2615,12 @@ def norm(x, ord=None, axis=None, keepdims=False):
 
 # multi_dot
 
-def _multidot_dispatcher(arrays, *, out=None):
+def multi_dot(arrays, *, out=None):
     yield from arrays
     yield out
 
 
-@array_function_dispatch(_multidot_dispatcher)
+@array_function_dispatch(multi_dot)
 def multi_dot(arrays, *, out=None):
     """
     Compute the dot product of two or more arrays in a single function call,

@@ -549,7 +549,7 @@ def _array2string(a, options, separator=' ', prefix=""):
     return lst
 
 
-def _array2string_dispatcher(
+def array2string(
         a, max_line_width=None, precision=None,
         suppress_small=None, separator=None, prefix=None,
         style=None, formatter=None, threshold=None,
@@ -558,7 +558,7 @@ def _array2string_dispatcher(
     return (a,)
 
 
-@array_function_dispatch(_array2string_dispatcher, module='numpy')
+@array_function_dispatch(array2string, module='numpy')
 def array2string(a, max_line_width=None, precision=None,
                  suppress_small=None, separator=' ', prefix="",
                  style=np._NoValue, formatter=None, threshold=None,
@@ -1511,12 +1511,12 @@ def _array_repr_implementation(
     return arr_str + spacer + dtype_str
 
 
-def _array_repr_dispatcher(
+def array_repr(
         arr, max_line_width=None, precision=None, suppress_small=None):
     return (arr,)
 
 
-@array_function_dispatch(_array_repr_dispatcher, module='numpy')
+@array_function_dispatch(array_repr, module='numpy')
 def array_repr(arr, max_line_width=None, precision=None, suppress_small=None):
     """
     Return the string representation of an array.
@@ -1592,12 +1592,12 @@ def _array_str_implementation(
     return array2string(a, max_line_width, precision, suppress_small, ' ', "")
 
 
-def _array_str_dispatcher(
+def array_str(
         a, max_line_width=None, precision=None, suppress_small=None):
     return (a,)
 
 
-@array_function_dispatch(_array_str_dispatcher, module='numpy')
+@array_function_dispatch(array_str, module='numpy')
 def array_str(a, max_line_width=None, precision=None, suppress_small=None):
     """
     Return a string representation of the data in an array.

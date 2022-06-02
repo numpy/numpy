@@ -28,11 +28,11 @@ __all__ = [
 ]
 
 
-def _ix__dispatcher(*args):
+def ix_(*args):
     return args
 
 
-@array_function_dispatch(_ix__dispatcher)
+@array_function_dispatch(ix_)
 def ix_(*args):
     """
     Construct an open mesh from multiple sequences.
@@ -775,11 +775,11 @@ s_ = IndexExpression(maketuple=False)
 # applicable to N-dimensions.
 
 
-def _fill_diagonal_dispatcher(a, val, wrap=None):
+def fill_diagonal(a, val, wrap=None):
     return (a,)
 
 
-@array_function_dispatch(_fill_diagonal_dispatcher)
+@array_function_dispatch(fill_diagonal)
 def fill_diagonal(a, val, wrap=False):
     """Fill the main diagonal of the given array of any dimensionality.
 
@@ -982,11 +982,11 @@ def diag_indices(n, ndim=2):
     return (idx,) * ndim
 
 
-def _diag_indices_from(arr):
+def diag_indices_from(arr):
     return (arr,)
 
 
-@array_function_dispatch(_diag_indices_from)
+@array_function_dispatch(diag_indices_from)
 def diag_indices_from(arr):
     """
     Return the indices to access the main diagonal of an n-dimensional array.

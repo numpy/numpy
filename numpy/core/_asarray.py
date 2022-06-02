@@ -15,8 +15,11 @@ __all__ = ["require"]
 
 
 
-def _require_dispatcher(a, dtype=None, requirements=None, *, like=None):
+def require(a, dtype=None, requirements=None, *, like=None):
     return (like,)
+
+# Need the dispatcher after defining the real function currently:
+_require_dispatcher = require
 
 
 @set_array_function_like_doc

@@ -93,8 +93,12 @@ def _get_num_chars(a):
     return a.itemsize
 
 
-def _binary_op_dispatcher(x1, x2):
+def binary_operation(x1, x2):
     return (x1, x2)
+
+# Rename the dispatcher to hide it (we want the nicer name for the error):
+_binary_op_dispatcher = binary_operation
+del binary_operation
 
 
 @array_function_dispatch(_binary_op_dispatcher)
@@ -254,8 +258,12 @@ def less(x1, x2):
     return compare_chararrays(x1, x2, '<', True)
 
 
-def _unary_op_dispatcher(a):
+def unary_operation(a):
     return (a,)
+
+
+_unary_op_dispatcher = unary_operation
+del unary_operation
 
 
 @array_function_dispatch(_unary_op_dispatcher)
@@ -310,11 +318,11 @@ def add(x1, x2):
     return _vec_string(arr1, (dtype, out_size), '__add__', (arr2,))
 
 
-def _multiply_dispatcher(a, i):
+def multiply(a, i):
     return (a,)
 
 
-@array_function_dispatch(_multiply_dispatcher)
+@array_function_dispatch(multiply)
 def multiply(a, i):
     """
     Return (a * i), that is string multiple concatenation,
@@ -344,11 +352,11 @@ def multiply(a, i):
         a_arr, (a_arr.dtype.type, out_size), '__mul__', (i_arr,))
 
 
-def _mod_dispatcher(a, values):
+def mod(a, values):
     return (a, values)
 
 
-@array_function_dispatch(_mod_dispatcher)
+@array_function_dispatch(mod)
 def mod(a, values):
     """
     Return (a % i), that is pre-Python 2.6 string formatting
@@ -415,11 +423,11 @@ def capitalize(a):
     return _vec_string(a_arr, a_arr.dtype, 'capitalize')
 
 
-def _center_dispatcher(a, width, fillchar=None):
+def center(a, width, fillchar=None):
     return (a,)
 
 
-@array_function_dispatch(_center_dispatcher)
+@array_function_dispatch(center)
 def center(a, width, fillchar=' '):
     """
     Return a copy of `a` with its elements centered in a string of
@@ -456,8 +464,12 @@ def center(a, width, fillchar=' '):
         a_arr, (a_arr.dtype.type, size), 'center', (width_arr, fillchar))
 
 
-def _count_dispatcher(a, sub, start=None, end=None):
+def find_or_count(a, sub, start=None, end=None):
     return (a,)
+
+
+_count_dispatcher = find_or_count
+del find_or_count
 
 
 @array_function_dispatch(_count_dispatcher)
@@ -506,11 +518,11 @@ def count(a, sub, start=0, end=None):
     return _vec_string(a, int_, 'count', [sub, start] + _clean_args(end))
 
 
-def _code_dispatcher(a, encoding=None, errors=None):
+def decode(a, encoding=None, errors=None):
     return (a,)
 
 
-@array_function_dispatch(_code_dispatcher)
+@array_function_dispatch(decode)
 def decode(a, encoding=None, errors=None):
     """
     Calls `str.decode` element-wise.
@@ -556,7 +568,11 @@ def decode(a, encoding=None, errors=None):
         _vec_string(a, object_, 'decode', _clean_args(encoding, errors)))
 
 
-@array_function_dispatch(_code_dispatcher)
+def encode(a, encoding=None, errors=None):
+    return (a,)
+
+
+@array_function_dispatch(encode)
 def encode(a, encoding=None, errors=None):
     """
     Calls `str.encode` element-wise.
@@ -592,11 +608,11 @@ def encode(a, encoding=None, errors=None):
         _vec_string(a, object_, 'encode', _clean_args(encoding, errors)))
 
 
-def _endswith_dispatcher(a, suffix, start=None, end=None):
+def endswith(a, suffix, start=None, end=None):
     return (a,)
 
 
-@array_function_dispatch(_endswith_dispatcher)
+@array_function_dispatch(endswith)
 def endswith(a, suffix, start=0, end=None):
     """
     Returns a boolean array which is `True` where the string element
@@ -640,11 +656,11 @@ def endswith(a, suffix, start=0, end=None):
         a, bool_, 'endswith', [suffix, start] + _clean_args(end))
 
 
-def _expandtabs_dispatcher(a, tabsize=None):
+def expandtabs(a, tabsize=None):
     return (a,)
 
 
-@array_function_dispatch(_expandtabs_dispatcher)
+@array_function_dispatch(expandtabs)
 def expandtabs(a, tabsize=8):
     """
     Return a copy of each string element where all tab characters are
@@ -930,11 +946,11 @@ def isupper(a):
     return _vec_string(a, bool_, 'isupper')
 
 
-def _join_dispatcher(sep, seq):
+def join(sep, seq):
     return (sep, seq)
 
 
-@array_function_dispatch(_join_dispatcher)
+@array_function_dispatch(join)
 def join(sep, seq):
     """
     Return a string which is the concatenation of the strings in the
@@ -961,11 +977,11 @@ def join(sep, seq):
 
 
 
-def _just_dispatcher(a, width, fillchar=None):
+def ljust(a, width, fillchar=None):
     return (a,)
 
 
-@array_function_dispatch(_just_dispatcher)
+@array_function_dispatch(ljust)
 def ljust(a, width, fillchar=' '):
     """
     Return an array with the elements of `a` left-justified in a
@@ -1036,11 +1052,11 @@ def lower(a):
     return _vec_string(a_arr, a_arr.dtype, 'lower')
 
 
-def _strip_dispatcher(a, chars=None):
+def lstrip(a, chars=None):
     return (a,)
 
 
-@array_function_dispatch(_strip_dispatcher)
+@array_function_dispatch(lstrip)
 def lstrip(a, chars=None):
     """
     For each element in `a`, return a copy with the leading characters
@@ -1095,11 +1111,13 @@ def lstrip(a, chars=None):
     return _vec_string(a_arr, a_arr.dtype, 'lstrip', (chars,))
 
 
-def _partition_dispatcher(a, sep):
+def partition(a, sep):
     return (a,)
 
+_partition_dispatcher = partition  # also used by rpartition
 
-@array_function_dispatch(_partition_dispatcher)
+
+@array_function_dispatch(partition)
 def partition(a, sep):
     """
     Partition each element in `a` around `sep`.
@@ -1135,11 +1153,11 @@ def partition(a, sep):
         _vec_string(a, object_, 'partition', (sep,)))
 
 
-def _replace_dispatcher(a, old, new, count=None):
+def replace(a, old, new, count=None):
     return (a,)
 
 
-@array_function_dispatch(_replace_dispatcher)
+@array_function_dispatch(replace)
 def replace(a, old, new, count=None):
     """
     For each element in `a`, return a copy of the string with all
@@ -1235,7 +1253,11 @@ def rindex(a, sub, start=0, end=None):
         a, int_, 'rindex', [sub, start] + _clean_args(end))
 
 
-@array_function_dispatch(_just_dispatcher)
+def rjust(a, width, fillchar=None):
+    return (a,)
+
+
+@array_function_dispatch(rjust)
 def rjust(a, width, fillchar=' '):
     """
     Return an array with the elements of `a` right-justified in a
@@ -1307,11 +1329,11 @@ def rpartition(a, sep):
         _vec_string(a, object_, 'rpartition', (sep,)))
 
 
-def _split_dispatcher(a, sep=None, maxsplit=None):
+def rsplit(a, sep=None, maxsplit=None):
     return (a,)
 
 
-@array_function_dispatch(_split_dispatcher)
+@array_function_dispatch(rsplit)
 def rsplit(a, sep=None, maxsplit=None):
     """
     For each element in `a`, return a list of the words in the
@@ -1349,11 +1371,11 @@ def rsplit(a, sep=None, maxsplit=None):
         a, object_, 'rsplit', [sep] + _clean_args(maxsplit))
 
 
-def _strip_dispatcher(a, chars=None):
+def rstrip(a, chars=None):
     return (a,)
 
 
-@array_function_dispatch(_strip_dispatcher)
+@array_function_dispatch(rstrip)
 def rstrip(a, chars=None):
     """
     For each element in `a`, return a copy with the trailing
@@ -1398,7 +1420,11 @@ def rstrip(a, chars=None):
     return _vec_string(a_arr, a_arr.dtype, 'rstrip', (chars,))
 
 
-@array_function_dispatch(_split_dispatcher)
+def split(a, sep=None, maxsplit=None):
+    return (a,)
+
+
+@array_function_dispatch(split)
 def split(a, sep=None, maxsplit=None):
     """
     For each element in `a`, return a list of the words in the
@@ -1433,11 +1459,11 @@ def split(a, sep=None, maxsplit=None):
         a, object_, 'split', [sep] + _clean_args(maxsplit))
 
 
-def _splitlines_dispatcher(a, keepends=None):
+def splitlines(a, keepends=None):
     return (a,)
 
 
-@array_function_dispatch(_splitlines_dispatcher)
+@array_function_dispatch(splitlines)
 def splitlines(a, keepends=None):
     """
     For each element in `a`, return a list of the lines in the
@@ -1467,11 +1493,11 @@ def splitlines(a, keepends=None):
         a, object_, 'splitlines', _clean_args(keepends))
 
 
-def _startswith_dispatcher(a, prefix, start=None, end=None):
+def startswith(a, prefix, start=None, end=None):
     return (a,)
 
 
-@array_function_dispatch(_startswith_dispatcher)
+@array_function_dispatch(startswith)
 def startswith(a, prefix, start=0, end=None):
     """
     Returns a boolean array which is `True` where the string element
@@ -1503,7 +1529,11 @@ def startswith(a, prefix, start=0, end=None):
         a, bool_, 'startswith', [prefix, start] + _clean_args(end))
 
 
-@array_function_dispatch(_strip_dispatcher)
+def strip(a, chars=None):
+    return (a,)
+
+
+@array_function_dispatch(strip)
 def strip(a, chars=None):
     """
     For each element in `a`, return a copy with the leading and
@@ -1626,11 +1656,11 @@ def title(a):
     return _vec_string(a_arr, a_arr.dtype, 'title')
 
 
-def _translate_dispatcher(a, table, deletechars=None):
+def translate(a, table, deletechars=None):
     return (a,)
 
 
-@array_function_dispatch(_translate_dispatcher)
+@array_function_dispatch(translate)
 def translate(a, table, deletechars=None):
     """
     For each element in `a`, return a copy of the string where all
@@ -1702,11 +1732,11 @@ def upper(a):
     return _vec_string(a_arr, a_arr.dtype, 'upper')
 
 
-def _zfill_dispatcher(a, width):
+def zfill(a, width):
     return (a,)
 
 
-@array_function_dispatch(_zfill_dispatcher)
+@array_function_dispatch(zfill)
 def zfill(a, width):
     """
     Return the numeric string left-filled with zeros

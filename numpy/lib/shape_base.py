@@ -49,11 +49,11 @@ def _make_along_axis_idx(arr_shape, indices, axis):
     return tuple(fancy_index)
 
 
-def _take_along_axis_dispatcher(arr, indices, axis):
+def take_along_axis(arr, indices, axis):
     return (arr, indices)
 
 
-@array_function_dispatch(_take_along_axis_dispatcher)
+@array_function_dispatch(take_along_axis)
 def take_along_axis(arr, indices, axis):
     """
     Take values from the input array by matching 1d index and data slices.
@@ -170,11 +170,11 @@ def take_along_axis(arr, indices, axis):
     return arr[_make_along_axis_idx(arr_shape, indices, axis)]
 
 
-def _put_along_axis_dispatcher(arr, indices, values, axis):
+def put_along_axis(arr, indices, values, axis):
     return (arr, indices, values)
 
 
-@array_function_dispatch(_put_along_axis_dispatcher)
+@array_function_dispatch(put_along_axis)
 def put_along_axis(arr, indices, values, axis):
     """
     Put values into the destination array by matching 1d index and data slices.
@@ -260,11 +260,11 @@ def put_along_axis(arr, indices, values, axis):
     arr[_make_along_axis_idx(arr_shape, indices, axis)] = values
 
 
-def _apply_along_axis_dispatcher(func1d, axis, arr, *args, **kwargs):
+def apply_along_axis(func1d, axis, arr, *args, **kwargs):
     return (arr,)
 
 
-@array_function_dispatch(_apply_along_axis_dispatcher)
+@array_function_dispatch(apply_along_axis)
 def apply_along_axis(func1d, axis, arr, *args, **kwargs):
     """
     Apply a function to 1-D slices along the given axis.
@@ -414,11 +414,11 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
         return res.__array_wrap__(out_arr)
 
 
-def _apply_over_axes_dispatcher(func, a, axes):
+def apply_over_axes(func, a, axes):
     return (a,)
 
 
-@array_function_dispatch(_apply_over_axes_dispatcher)
+@array_function_dispatch(apply_over_axes)
 def apply_over_axes(func, a, axes):
     """
     Apply a function repeatedly over multiple axes.
@@ -505,11 +505,11 @@ def apply_over_axes(func, a, axes):
     return val
 
 
-def _expand_dims_dispatcher(a, axis):
+def expand_dims(a, axis):
     return (a,)
 
 
-@array_function_dispatch(_expand_dims_dispatcher)
+@array_function_dispatch(expand_dims)
 def expand_dims(a, axis):
     """
     Expand the shape of an array.
@@ -605,11 +605,11 @@ def expand_dims(a, axis):
 row_stack = vstack
 
 
-def _column_stack_dispatcher(tup):
+def column_stack(tup):
     return _arrays_for_stack_dispatcher(tup)
 
 
-@array_function_dispatch(_column_stack_dispatcher)
+@array_function_dispatch(column_stack)
 def column_stack(tup):
     """
     Stack 1-D arrays as columns into a 2-D array.
@@ -656,11 +656,11 @@ def column_stack(tup):
     return _nx.concatenate(arrays, 1)
 
 
-def _dstack_dispatcher(tup):
+def dstack(tup):
     return _arrays_for_stack_dispatcher(tup)
 
 
-@array_function_dispatch(_dstack_dispatcher)
+@array_function_dispatch(dstack)
 def dstack(tup):
     """
     Stack arrays in sequence depth wise (along third axis).
@@ -732,11 +732,11 @@ def _replace_zero_by_x_arrays(sub_arys):
     return sub_arys
 
 
-def _array_split_dispatcher(ary, indices_or_sections, axis=None):
+def array_split(ary, indices_or_sections, axis=None):
     return (ary, indices_or_sections)
 
 
-@array_function_dispatch(_array_split_dispatcher)
+@array_function_dispatch(array_split)
 def array_split(ary, indices_or_sections, axis=0):
     """
     Split an array into multiple sub-arrays.
@@ -792,11 +792,11 @@ def array_split(ary, indices_or_sections, axis=0):
     return sub_arys
 
 
-def _split_dispatcher(ary, indices_or_sections, axis=None):
+def split(ary, indices_or_sections, axis=None):
     return (ary, indices_or_sections)
 
 
-@array_function_dispatch(_split_dispatcher)
+@array_function_dispatch(split)
 def split(ary, indices_or_sections, axis=0):
     """
     Split an array into multiple sub-arrays as views into `ary`.
@@ -874,8 +874,12 @@ def split(ary, indices_or_sections, axis=0):
     return array_split(ary, indices_or_sections, axis)
 
 
-def _hvdsplit_dispatcher(ary, indices_or_sections):
+def hvdsplit(ary, indices_or_sections):
     return (ary, indices_or_sections)
+
+
+_hvdsplit_dispatcher = hvdsplit
+del hvdsplit
 
 
 @array_function_dispatch(_hvdsplit_dispatcher)
@@ -1066,11 +1070,11 @@ def get_array_wrap(*args):
     return None
 
 
-def _kron_dispatcher(a, b):
+def kron(a, b):
     return (a, b)
 
 
-@array_function_dispatch(_kron_dispatcher)
+@array_function_dispatch(kron)
 def kron(a, b):
     """
     Kronecker product of two arrays.
@@ -1184,11 +1188,11 @@ def kron(a, b):
     return result if not is_any_mat else matrix(result, copy=False)
 
 
-def _tile_dispatcher(A, reps):
+def tile(A, reps):
     return (A, reps)
 
 
-@array_function_dispatch(_tile_dispatcher)
+@array_function_dispatch(tile)
 def tile(A, reps):
     """
     Construct an array by repeating A the number of times given by reps.
