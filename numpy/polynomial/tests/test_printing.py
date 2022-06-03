@@ -455,3 +455,49 @@ class TestLatexRepr:
                 r'\left(1.0 + 2.0z\right)^{2}$'
             ),
         )
+
+class TestPrintOptions:
+    """
+    Test the output is properly configured via printoptions.
+    The exponential notation is enabled automatically when the values 
+    are too small or too large.
+    """
+
+    def test_str(self):
+        p = poly.Polynomial([1/2, 1/7, 1/7*10**9, 1/7*10**10])
+        assert_equal(str(p), '0.5 + 0.14285714 x**1 + 142857142.85714284 x**2 '
+                             '+ (1.42857143e+09) x**3')
+
+        with printoptions(precision=3):
+            assert_equal(str(p), '0.5 + 0.143 x**1 + 142857142.857 x**2 '
+                                 '+ (1.429e+09) x**3')
+
+    def test_latex(self):
+        p = poly.Polynomial([1/2, 1/7, 1/7*10**9, 1/7*10**10])
+        assert_equal(p._repr_latex_(),
+            r'$x \mapsto \text{0.5} + \text{0.14285714}\,x + '
+            r'\text{142857142.85714284}\,x^{2} + '
+            r'\text{(1.42857143e+09)}\,x^{3}$')
+        
+        with printoptions(precision=3):
+            assert_equal(p._repr_latex_(),
+                r'$x \mapsto \text{0.5} + \text{0.143}\,x + '
+                r'\text{142857142.857}\,x^{2} + \text{(1.429e+09)}\,x^{3}$')
+
+    def test_suppress(self):
+        p = poly.Polynomial([1e-1, 1e-10, 1e-100])
+        assert_equal(str(p), '0.1 + (1.0e-10) x**1 + (1.0e-100) x**2')
+
+        with printoptions(suppress=True):
+            assert_equal(str(p), '0.1 + 0.0 x**1 + 0.0 x**2')
+
+    def test_fixed(self):
+        p = poly.Polynomial([1/2])
+        assert_equal(str(p), '0.5')
+        
+        with printoptions(floatmode='fixed'):
+            assert_equal(str(p), '0.50000000')
+        
+        with printoptions(floatmode='fixed', precision=4):
+            assert_equal(str(p), '0.5000')
+
