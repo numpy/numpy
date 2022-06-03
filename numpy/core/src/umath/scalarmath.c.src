@@ -166,7 +166,7 @@ static NPY_INLINE int
         return NPY_FPE_DIVIDEBYZERO;
     }
 #if @neg@
-    else if (b == -1 && a < 0 && a == NPY_MIN_@NAME@) {
+    else if (b == -1 && a == NPY_MIN_@NAME@) {
         *out = a / b;
         return NPY_FPE_OVERFLOW;
     }
