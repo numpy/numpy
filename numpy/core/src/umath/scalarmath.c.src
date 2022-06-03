@@ -588,7 +588,7 @@ static NPY_INLINE int
 @name@_ctype_absolute(@type@ a, @type@ *out)
 {
     *out = (a < 0 ? -a : a);
-    if (a < 0 && a == NPY_MIN_@NAME@) {
+    if (a == NPY_MIN_@NAME@) {
         return NPY_FPE_OVERFLOW;
     }
     return 0;
