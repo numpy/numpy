@@ -162,7 +162,7 @@ and its sub-types).
 
 
 Data access
-^^^^^^^^^^^
+~~~~~~~~~~~
 
 These functions and macros provide easy access to elements of the
 ndarray from C. These work for all arrays. You may need to take care
@@ -208,7 +208,7 @@ Creating arrays
 
 
 From scratch
-^^^^^^^^^^^^
+~~~~~~~~~~~~
 
 .. c:function:: PyObject* PyArray_NewFromDescr( \
         PyTypeObject* subtype, PyArray_Descr* descr, int nd, npy_intp const* dims, \
@@ -404,7 +404,7 @@ From scratch
     to another value.
 
 From other objects
-^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~
 
 .. c:function:: PyObject* PyArray_FromAny( \
         PyObject* op, PyArray_Descr* dtype, int min_depth, int max_depth, \
@@ -805,7 +805,7 @@ Dealing with types
 
 
 General check of Python Type
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. c:function:: int PyArray_Check(PyObject *op)
 
@@ -877,7 +877,7 @@ General check of Python Type
 
 
 Data-type checking
-^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~
 
 For the typenum macros, the argument is an integer representing an
 enumerated array data type. For the array type checking macros the
@@ -1048,7 +1048,7 @@ argument must be a :c:expr:`PyObject *` that can be directly interpreted as a
 
 
 Converting data types
-^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~
 
 .. c:function:: PyObject* PyArray_Cast(PyArrayObject* arr, int typenum)
 
@@ -1268,7 +1268,7 @@ Converting data types
 
 
 User-defined data types
-^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~
 
 .. c:function:: void PyArray_InitArrFuncs(PyArray_ArrFuncs* f)
 
@@ -1321,7 +1321,7 @@ User-defined data types
    Only works for user-defined data-types.
 
 Special functions for NPY_OBJECT
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. c:function:: int PyArray_INCREF(PyArrayObject* op)
 
@@ -1399,7 +1399,7 @@ PyArray_FromAny function.
 
 
 Basic Array Flags
-^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~
 
 An ndarray can have a data segment that is not a simple contiguous
 chunk of well-behaved memory you can manipulate. It may not be aligned
@@ -1482,7 +1482,7 @@ for ``flags`` which can be any of :c:data:`NPY_ARRAY_C_CONTIGUOUS`,
 
 
 Combinations of array flags
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. c:macro:: NPY_ARRAY_BEHAVED
 
@@ -1514,7 +1514,7 @@ Combinations of array flags
 
 
 Flag-like constants
-^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~
 
 These constants are used in :c:func:`PyArray_FromAny` (and its macro forms) to
 specify desired properties of the new array.
@@ -1534,7 +1534,7 @@ specify desired properties of the new array.
 
 
 Flag checking
-^^^^^^^^^^^^^
+~~~~~~~~~~~~~
 
 For all of these macros *arr* must be an instance of a (subclass of)
 :c:data:`PyArray_Type`.
@@ -1640,7 +1640,7 @@ Array method alternative API
 
 
 Conversion
-^^^^^^^^^^
+~~~~~~~~~~
 
 .. c:function:: PyObject* PyArray_GetField( \
         PyArrayObject* self, PyArray_Descr* dtype, int offset)
@@ -1749,7 +1749,7 @@ Conversion
 
 
 Shape Manipulation
-^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~
 
 .. c:function:: PyObject* PyArray_Newshape( \
         PyArrayObject* self, PyArray_Dims* newshape, NPY_ORDER order)
@@ -1833,7 +1833,7 @@ Shape Manipulation
 
 
 Item selection and manipulation
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. c:function:: PyObject* PyArray_TakeFrom( \
         PyArrayObject* self, PyObject* indices, int axis, PyArrayObject* ret, \
@@ -2013,7 +2013,7 @@ Item selection and manipulation
 
 
 Calculation
-^^^^^^^^^^^
+~~~~~~~~~~~
 
 .. tip::
 
@@ -2173,7 +2173,7 @@ Functions
 
 
 Array Functions
-^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~
 
 .. c:function:: int PyArray_AsCArray( \
         PyObject** op, void* ptr, npy_intp* dims, int nd, \
@@ -2324,7 +2324,7 @@ Array Functions
 
 
 Other functions
-^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~
 
 .. c:function:: npy_bool PyArray_CheckStrides( \
         int elsize, int nd, npy_intp numbytes, npy_intp const* dims, \
