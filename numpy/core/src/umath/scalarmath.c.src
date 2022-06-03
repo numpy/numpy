@@ -156,7 +156,7 @@ static NPY_INLINE int
  * #type = npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
  *         npy_long, npy_ulong, npy_longlong, npy_ulonglong#
  * #neg = (1,0)*5#
- * #name = BYTE, UBYTE, SHORT, USHORT, INT, UINT,
+ * #NAME = BYTE, UBYTE, SHORT, USHORT, INT, UINT,
  *         LONG, ULONG, LONGLONG, ULONGLONG#
  */
 static NPY_INLINE int
