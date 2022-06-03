@@ -772,7 +772,8 @@ def format_float(x, parens=False):
 
     if exp_format:
         s = dragon4_scientific(x, precision=opts['precision'],
-                               unique=unique, trim=trim, sign=opts['sign'] == '+')
+                               unique=unique, trim=trim, 
+                               sign=opts['sign'] == '+')
         if parens:
             s = '(' + s + ')'
     else:
