@@ -1213,3 +1213,22 @@ class TestAxisNotMAXDIMS(_DeprecationTestCase):
     def test_deprecated(self):
         a = np.zeros((1,)*32)
         self.assert_deprecated(lambda: np.repeat(a, 1, axis=np.MAXDIMS))
+
+
+class TestLoadtxtParseIntsViaFloat(_DeprecationTestCase):
+    message = r"loadtxt\(\): Parsing an integer via a float Deprecated.*"
+
+    @pytest.mark.parametrize("dtype", np.typecodes["AllInteger"])
+    def test_deprecated_warning(self, dtype):
+        with pytest.warns(DeprecationWarning, match=self.message):
+            np.loadtxt(["10.5"], dtype=dtype)
+
+    @pytest.mark.parametrize("dtype", np.typecodes["AllInteger"])
+    def test_deprecated_raised(self, dtype):
+        # The DeprecationWarning is chained when raised, so test manually:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", DeprecationWarning)
+            try:
+                np.loadtxt(["10.5"], dtype=dtype)
+            except ValueError as e:
+                assert isinstance(e.__cause__, DeprecationWarning)
