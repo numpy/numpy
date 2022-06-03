@@ -1,0 +1,4 @@
+``casting and dtype`` options for `numpy.stack`
+----------------------------------------------------
+The ``casting and dtype`` options is now available for `numpy.stack`.
+To use it, write ``np.stack(..., dtype=None, casting='same_kind')``.
