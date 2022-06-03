@@ -156,6 +156,8 @@ static NPY_INLINE int
  * #type = npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
  *         npy_long, npy_ulong, npy_longlong, npy_ulonglong#
  * #neg = (1,0)*5#
+ * #NAME = BYTE, UBYTE, SHORT, USHORT, INT, UINT,
+ *         LONG, ULONG, LONGLONG, ULONGLONG#
  */
 static NPY_INLINE int
 @name@_ctype_divide(@type@ a, @type@ b, @type@ *out) {
@@ -164,7 +166,7 @@ static NPY_INLINE int
         return NPY_FPE_DIVIDEBYZERO;
     }
 #if @neg@
-    else if (b == -1 && a < 0 && a == -a) {
+    else if (b == -1 && a == NPY_MIN_@NAME@) {
         *out = a / b;
         return NPY_FPE_OVERFLOW;
     }
