@@ -287,7 +287,7 @@ def inner(a, b):
 
         np.inner(a, b) = sum(a[:]*b[:])
 
-    More generally, if `ndim(a) = r > 0` and `ndim(b) = s > 0`::
+    More generally, if ``ndim(a) = r > 0`` and ``ndim(b) = s > 0``::
 
         np.inner(a, b) = np.tensordot(a, b, axes=(-1,-1))
 
