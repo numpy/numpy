@@ -3,13 +3,13 @@ import numpy as np
 from numpy.core import (
     array, arange, atleast_1d, atleast_2d, atleast_3d, block, vstack, hstack,
     newaxis, concatenate, stack
-)
+    )
 from numpy.core.shape_base import (_block_dispatcher, _block_setup,
                                    _block_concatenate, _block_slicing)
 from numpy.testing import (
     assert_, assert_raises, assert_array_equal, assert_equal,
     assert_raises_regex, assert_warns, IS_PYPY
-)
+    )
 
 
 class TestAtleast1d:
@@ -345,7 +345,7 @@ class TestConcatenate:
     @pytest.mark.parametrize("axis", [None, 0])
     @pytest.mark.parametrize("out_dtype", ["c8", "f4", "f8", ">f8", "i8", "S4"])
     @pytest.mark.parametrize("casting",
-                             ['no', 'equiv', 'safe', 'same_kind', 'unsafe'])
+            ['no', 'equiv', 'safe', 'same_kind', 'unsafe'])
     def test_out_and_dtype(self, axis, out_dtype, casting):
         # Compare usage of `out=out` with `dtype=out.dtype`
         out = np.empty(4, dtype=out_dtype)
@@ -372,7 +372,7 @@ class TestConcatenate:
     @pytest.mark.parametrize("axis", [None, 0])
     @pytest.mark.parametrize("string_dt", ["S", "U", "S0", "U0"])
     @pytest.mark.parametrize("arrs",
-                             [([0.],), ([0.], [1]), ([0], ["string"], [1.])])
+            [([0.],), ([0.], [1]), ([0], ["string"], [1.])])
     def test_dtype_with_promotion(self, arrs, string_dt, axis):
         # Note that U0 and S0 should be deprecated eventually and changed to
         # actually give the empty string result (together with `np.array`)
@@ -623,9 +623,9 @@ class TestBlock:
         result = block([
             [
                 block([
-                    [one],
-                    [three],
-                    [four]
+                   [one],
+                   [three],
+                   [four]
                 ]),
                 two
             ],
