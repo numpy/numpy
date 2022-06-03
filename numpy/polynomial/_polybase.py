@@ -376,9 +376,9 @@ class ABCPolyBase(abc.ABC):
             # complex). In this case, represent the coefficient as-is.
             try:
                 if coef >= 0:
-                    next_term = f"+ " + pu.format_float(coef)
+                    next_term = f"+ " + pu.format_float(coef, parens=True)
                 else:
-                    next_term = f"- " + pu.format_float(-coef)
+                    next_term = f"- " + pu.format_float(-coef, parens=True)
             except TypeError:
                 next_term = f"+ {coef}"
             # Polynomial term
