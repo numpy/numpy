@@ -366,7 +366,7 @@ class ABCPolyBase(abc.ABC):
         linewidth = np.get_printoptions().get('linewidth', 75)
         if linewidth < 1:
             linewidth = 1
-        out = np.array2string(self.coef[0])
+        out = format_float(self.coef[0])
         for i, coef in enumerate(self.coef[1:]):
             out += " "
             power = str(i + 1)
@@ -376,9 +376,9 @@ class ABCPolyBase(abc.ABC):
             # complex). In this case, represent the coefficient as-is.
             try:
                 if coef >= 0:
-                    next_term = "+ " + np.array2string(coef)
+                    next_term = f"+ " + format_float(coef)
                 else:
-                    next_term = "- " + np.array2string(-coef)
+                    next_term = f"- " + format_float(-coef)
             except TypeError:
                 next_term = f"+ {coef}"
             # Polynomial term
@@ -435,7 +435,7 @@ class ABCPolyBase(abc.ABC):
     def _repr_latex_scalar(x):
         # TODO: we're stuck with disabling math formatting until we handle
         # exponents in this function
-        return r'\text{{{}}}'.format(np.array2string(x))
+        return r'\text{{{}}}'.format(pu.format_float(x))
 
     def _repr_latex_(self):
         # get the scaled argument string to the basis functions

@@ -32,9 +32,13 @@ import warnings
 
 import numpy as np
 
+from numpy.core.multiarray import dragon4_positional, dragon4_scientific
+from numpy.core.umath import absolute, isfinite
+
 __all__ = [
     'RankWarning', 'as_series', 'trimseq',
-    'trimcoef', 'getdomain', 'mapdomain', 'mapparms']
+    'trimcoef', 'getdomain', 'mapdomain', 'mapparms',
+    'format_float']
 
 #
 # Warnings and Exceptions
@@ -748,3 +752,31 @@ def _deprecate_as_int(x, desc):
                 return ix
 
         raise TypeError(f"{desc} must be an integer") from e
+
+
+def format_float(x):
+    if not np.issubdtype(type(x), np.floating) or not isfinite(x):
+        return str(x)
+
+    opts = np.get_printoptions()
+
+    exp_format = False
+    if x != 0:
+        a = absolute(x)
+        if a >= 1.e9 or (not opts['suppress'] and a < 0.0001):
+            exp_format = True
+
+    if exp_format:
+        trim, unique = '.', True
+        if opts['floatmode'] == 'fixed':
+            trim, unique = 'k', False
+        return dragon4_scientific(x, precision=opts['precision'],
+                            unique=unique, trim=trim, sign=opts['sign'] == '+')
+    else:
+        trim, unique = '0', True
+        if opts['floatmode'] == 'fixed':
+            trim, unique = 'k', False
+        return dragon4_positional(x, precision=opts['precision'],
+                                    fractional=True,
+                                    unique=unique, trim=trim,
+                                    sign=opts['sign'] == '+')
