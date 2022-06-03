@@ -379,7 +379,7 @@ class TestLatexRepr:
         # right now we ignore the formatting of scalars in our tests, since
         # it makes them too verbose. Ideally, the formatting of scalars will
         # be fixed such that tests below continue to pass
-        obj._repr_latex_scalar = lambda x: str(x)
+        obj._repr_latex_scalar = lambda x, parens=False: str(x)
         try:
             return obj._repr_latex_()
         finally:

@@ -754,7 +754,7 @@ def _deprecate_as_int(x, desc):
         raise TypeError(f"{desc} must be an integer") from e
 
 
-def format_float(x):
+def format_float(x, parens=False):
     if not np.issubdtype(type(x), np.floating) or not isfinite(x):
         return str(x)
 
@@ -766,17 +766,18 @@ def format_float(x):
         if a >= 1.e9 or (not opts['suppress'] and a < 0.0001):
             exp_format = True
 
+    trim, unique = '0', True
+    if opts['floatmode'] == 'fixed':
+        trim, unique = 'k', False
+
     if exp_format:
-        trim, unique = '.', True
-        if opts['floatmode'] == 'fixed':
-            trim, unique = 'k', False
-        return dragon4_scientific(x, precision=opts['precision'],
-                            unique=unique, trim=trim, sign=opts['sign'] == '+')
+        s = dragon4_scientific(x, precision=opts['precision'],
+                               unique=unique, trim=trim, sign=opts['sign'] == '+')
+        if parens:
+            s = '(' + s + ')'
     else:
-        trim, unique = '0', True
-        if opts['floatmode'] == 'fixed':
-            trim, unique = 'k', False
-        return dragon4_positional(x, precision=opts['precision'],
-                                    fractional=True,
-                                    unique=unique, trim=trim,
-                                    sign=opts['sign'] == '+')
+        s = dragon4_positional(x, precision=opts['precision'],
+                               fractional=True,
+                               unique=unique, trim=trim,
+                               sign=opts['sign'] == '+')
+    return s
