@@ -1,7 +1,7 @@
 .. _routines.io:
 
 Input and output
-****************
+================
 
 .. currentmodule:: numpy
 
