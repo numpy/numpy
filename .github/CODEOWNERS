@@ -1,8 +1,0 @@
-# See GitHub docs at https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
-
-# For the array API module:
-# We want to notify a group of downstream maintainers about any changes
-# made to numpy.array_api; they are not obligated to perform the code
-# review (but they are more than welcome to help), this merely serves
-# as a one-way notification.
-/numpy/array_api/  @leofang @asmeurer @kmaehashi @honno
