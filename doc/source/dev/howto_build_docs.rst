@@ -12,7 +12,7 @@ versions can be found at
 in several different formats.
 
 Development environments
-------------------------
+========================
 
 Before proceeding further it should be noted that the documentation is built with the ``make`` tool,
 which is not natively available on Windows. MacOS or Linux users can jump
@@ -35,7 +35,7 @@ it is often faster to build with Gitpod. Here are the in-depth instructions for
 .. _how-todoc.prerequisites:
 
 Prerequisites
--------------
+=============
 
 Building the NumPy documentation and API reference requires the following:
 
@@ -93,7 +93,7 @@ additional parts required for building the documentation::
 .. _Doxygen: https://www.doxygen.nl/index.html
 
 Instructions
-------------
+============
 
 Now you are ready to generate the docs, so write::
 
