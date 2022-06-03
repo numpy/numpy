@@ -582,12 +582,13 @@ static NPY_INLINE int
 /**begin repeat
  * #name = byte, short, int, long, longlong#
  * #type = npy_byte, npy_short, npy_int, npy_long, npy_longlong#
+ * #NAME = BYTE, SHORT, INT, LONG, LONGLONG#
  */
 static NPY_INLINE int
 @name@_ctype_absolute(@type@ a, @type@ *out)
 {
     *out = (a < 0 ? -a : a);
-    if (a < 0 && a == -a) {
+    if (a < 0 && a == NPY_MIN_@NAME@) {
         return NPY_FPE_OVERFLOW;
     }
     return 0;
