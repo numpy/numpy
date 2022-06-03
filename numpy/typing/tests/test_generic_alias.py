@@ -10,6 +10,7 @@ from typing import TypeVar, Any, Union, Callable
 import pytest
 import numpy as np
 from numpy._typing._generic_alias import _GenericAlias
+from typing_extensions import Unpack
 
 ScalarType = TypeVar("ScalarType", bound=np.generic, covariant=True)
 T1 = TypeVar("T1")
@@ -55,8 +56,6 @@ class TestGenericAlias:
         ("__origin__", lambda n: n.__origin__),
         ("__args__", lambda n: n.__args__),
         ("__parameters__", lambda n: n.__parameters__),
-        ("__reduce__", lambda n: n.__reduce__()[1:]),
-        ("__reduce_ex__", lambda n: n.__reduce_ex__(1)[1:]),
         ("__mro_entries__", lambda n: n.__mro_entries__([object])),
         ("__hash__", lambda n: hash(n)),
         ("__repr__", lambda n: repr(n)),
@@ -66,7 +65,6 @@ class TestGenericAlias:
         ("__getitem__", lambda n: n[Union[T1, T2]][np.float32, np.float64]),
         ("__eq__", lambda n: n == n),
         ("__ne__", lambda n: n != np.ndarray),
-        ("__dir__", lambda n: dir(n)),
         ("__call__", lambda n: n((1,), np.int64, BUFFER)),
         ("__call__", lambda n: n(shape=(1,), dtype=np.int64, buffer=BUFFER)),
         ("subclassing", lambda n: _get_subclass_mro(n)),
@@ -97,6 +95,45 @@ class TestGenericAlias:
             sys.version_info[:2] == (3, 9) and sys.version_info >= (3, 9, 8)
         )
         if GE_398 or sys.version_info >= (3, 10, 1):
+            value_ref = func(NDArray_ref)
+            assert value == value_ref
+
+    def test_dir(self) -> None:
+        value = dir(NDArray)
+        if sys.version_info < (3, 9):
+            return
+
+        # A number attributes only exist in `types.GenericAlias` in >= 3.11
+        if sys.version_info < (3, 11, 0, "beta", 3):
+            value.remove("__typing_unpacked_tuple_args__")
+        if sys.version_info < (3, 11, 0, "beta", 1):
+            value.remove("__unpacked__")
+        assert value == dir(NDArray_ref)
+
+    @pytest.mark.parametrize("name,func,dev_version", [
+        ("__iter__", lambda n: len(list(n)), ("beta", 1)),
+        ("__iter__", lambda n: next(iter(n)), ("beta", 1)),
+        ("__unpacked__", lambda n: n.__unpacked__, ("beta", 1)),
+        ("Unpack", lambda n: Unpack[n], ("beta", 1)),
+
+        # The right operand should now have `__unpacked__ = True`,
+        # and they are thus now longer equivalent
+        ("__ne__", lambda n: n != next(iter(n)), ("beta", 1)),
+
+        # >= beta3 stuff
+        ("__typing_unpacked_tuple_args__",
+         lambda n: n.__typing_unpacked_tuple_args__, ("beta", 3)),
+    ])
+    def test_py311_features(
+        self,
+        name: str,
+        func: FuncType,
+        dev_version: tuple[str, int],
+    ) -> None:
+        """Test Python 3.11 features."""
+        value = func(NDArray)
+
+        if sys.version_info >= (3, 11, 0, *dev_version):
             value_ref = func(NDArray_ref)
             assert value == value_ref
 
