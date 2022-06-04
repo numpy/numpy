@@ -898,7 +898,7 @@ def test_scalar_integer_operation_overflow(dtype, operation):
 @pytest.mark.parametrize("operation", [
         lambda min, neg_1: abs(min),
         lambda min, neg_1: min * neg_1,
-        lambda min, neg_1: min // neg_1], ids=["abs", "*", "//"])
+        pytest.param(lambda min, neg_1: min // neg_1, marks=pytest.mark.xfail)], ids=["abs", "*", "//"])
 def test_scalar_signed_integer_overflow(dtype, operation):
     # The minimum signed integer can "overflow" for some additional operations
     st = np.dtype(dtype).type
@@ -911,7 +911,7 @@ def test_scalar_signed_integer_overflow(dtype, operation):
 
 @pytest.mark.parametrize("dtype", np.typecodes["UnsignedInteger"])
 @pytest.mark.xfail  # TODO: the check is quite simply missing!
-def test_scalar_signed_integer_overflow(dtype):
+def test_scalar_unsigned_integer_overflow(dtype):
     val = np.dtype(dtype).type(8)
     with pytest.warns(RuntimeWarning, match="overflow encountered"):
         -val
