@@ -9,6 +9,7 @@ import enum
 from abc import abstractmethod
 from types import TracebackType, MappingProxyType
 from contextlib import ContextDecorator
+from contextlib import contextmanager
 
 if sys.version_info >= (3, 9):
     from types import GenericAlias
@@ -180,6 +181,7 @@ from collections.abc import (
 from typing import (
     Literal as L,
     Any,
+    Generator,
     Generic,
     IO,
     NoReturn,
@@ -3350,6 +3352,11 @@ class errstate(Generic[_CallType], ContextDecorator):
         traceback: None | TracebackType,
         /,
     ) -> None: ...
+
+@contextmanager
+def no_nep50_warning() -> Generator[None, None, None]: ...
+def get_promotion_state() -> str: ...
+def set_promotion_state(state: str, /) -> None: ...
 
 class ndenumerate(Generic[_ScalarType]):
     iter: flatiter[NDArray[_ScalarType]]
