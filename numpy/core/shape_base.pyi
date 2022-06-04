@@ -64,7 +64,7 @@ def hstack(
 def stack(
     arrays: Sequence[_ArrayLike[_SCT]],
     axis: SupportsIndex = ...,
-    out: DTypeLike  = ...,
+    out: None  = ...,
     *,
     dtype: DTypeLike = ...,
     casting: _CastingKind = ...
@@ -82,7 +82,7 @@ def stack(
 def stack(
     arrays: Sequence[ArrayLike],
     axis: SupportsIndex = ...,
-    out: _ArrayType = ...,
+    out: None = ...,
     *,
     dtype: DTypeLike  = ...,
     casting: _CastingKind = ...
