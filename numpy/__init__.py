@@ -18,7 +18,7 @@ We recommend exploring the docstrings using
 TAB-completion and introspection capabilities.  See below for further
 instructions.
 
-The docstring examples assume that `numpy` has been imported as `np`::
+The docstring examples assume that `numpy` has been imported as ``np``::
 
   >>> import numpy as np
 
@@ -86,7 +86,7 @@ __version__
 Viewing documentation using IPython
 -----------------------------------
 Start IPython with the NumPy profile (``ipython -p numpy``), which will
-import `numpy` under the alias `np`.  Then, use the ``cpaste`` command to
+import `numpy` under the alias ``np``.  Then, use the ``cpaste`` command to
 paste examples into the shell.  To see which functions are available in
 `numpy`, type ``np.<TAB>`` (where ``<TAB>`` refers to the TAB key), or use
 ``np.*cos*?<ENTER>`` (where ``<ENTER>`` refers to the ENTER key) to narrow

@@ -125,6 +125,8 @@ def unique(
     return_inverse: L[False] = ...,
     return_counts: L[False] = ...,
     axis: None | SupportsIndex = ...,
+    *,
+    equal_nan: bool = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def unique(
@@ -133,6 +135,8 @@ def unique(
     return_inverse: L[False] = ...,
     return_counts: L[False] = ...,
     axis: None | SupportsIndex = ...,
+    *,
+    equal_nan: bool = ...,
 ) -> NDArray[Any]: ...
 @overload
 def unique(
@@ -141,6 +145,8 @@ def unique(
     return_inverse: L[False] = ...,
     return_counts: L[False] = ...,
     axis: None | SupportsIndex = ...,
+    *,
+    equal_nan: bool = ...,
 ) -> tuple[NDArray[_SCT], NDArray[intp]]: ...
 @overload
 def unique(
@@ -149,6 +155,8 @@ def unique(
     return_inverse: L[False] = ...,
     return_counts: L[False] = ...,
     axis: None | SupportsIndex = ...,
+    *,
+    equal_nan: bool = ...,
 ) -> tuple[NDArray[Any], NDArray[intp]]: ...
 @overload
 def unique(
@@ -157,6 +165,8 @@ def unique(
     return_inverse: L[True] = ...,
     return_counts: L[False] = ...,
     axis: None | SupportsIndex = ...,
+    *,
+    equal_nan: bool = ...,
 ) -> tuple[NDArray[_SCT], NDArray[intp]]: ...
 @overload
 def unique(
@@ -165,6 +175,8 @@ def unique(
     return_inverse: L[True] = ...,
     return_counts: L[False] = ...,
     axis: None | SupportsIndex = ...,
+    *,
+    equal_nan: bool = ...,
 ) -> tuple[NDArray[Any], NDArray[intp]]: ...
 @overload
 def unique(
@@ -173,6 +185,8 @@ def unique(
     return_inverse: L[False] = ...,
     return_counts: L[True] = ...,
     axis: None | SupportsIndex = ...,
+    *,
+    equal_nan: bool = ...,
 ) -> tuple[NDArray[_SCT], NDArray[intp]]: ...
 @overload
 def unique(
@@ -181,6 +195,8 @@ def unique(
     return_inverse: L[False] = ...,
     return_counts: L[True] = ...,
     axis: None | SupportsIndex = ...,
+    *,
+    equal_nan: bool = ...,
 ) -> tuple[NDArray[Any], NDArray[intp]]: ...
 @overload
 def unique(
@@ -189,6 +205,8 @@ def unique(
     return_inverse: L[True] = ...,
     return_counts: L[False] = ...,
     axis: None | SupportsIndex = ...,
+    *,
+    equal_nan: bool = ...,
 ) -> tuple[NDArray[_SCT], NDArray[intp], NDArray[intp]]: ...
 @overload
 def unique(
@@ -197,6 +215,8 @@ def unique(
     return_inverse: L[True] = ...,
     return_counts: L[False] = ...,
     axis: None | SupportsIndex = ...,
+    *,
+    equal_nan: bool = ...,
 ) -> tuple[NDArray[Any], NDArray[intp], NDArray[intp]]: ...
 @overload
 def unique(
@@ -205,6 +225,8 @@ def unique(
     return_inverse: L[False] = ...,
     return_counts: L[True] = ...,
     axis: None | SupportsIndex = ...,
+    *,
+    equal_nan: bool = ...,
 ) -> tuple[NDArray[_SCT], NDArray[intp], NDArray[intp]]: ...
 @overload
 def unique(
@@ -213,6 +235,8 @@ def unique(
     return_inverse: L[False] = ...,
     return_counts: L[True] = ...,
     axis: None | SupportsIndex = ...,
+    *,
+    equal_nan: bool = ...,
 ) -> tuple[NDArray[Any], NDArray[intp], NDArray[intp]]: ...
 @overload
 def unique(
@@ -221,6 +245,8 @@ def unique(
     return_inverse: L[True] = ...,
     return_counts: L[True] = ...,
     axis: None | SupportsIndex = ...,
+    *,
+    equal_nan: bool = ...,
 ) -> tuple[NDArray[_SCT], NDArray[intp], NDArray[intp]]: ...
 @overload
 def unique(
@@ -229,6 +255,8 @@ def unique(
     return_inverse: L[True] = ...,
     return_counts: L[True] = ...,
     axis: None | SupportsIndex = ...,
+    *,
+    equal_nan: bool = ...,
 ) -> tuple[NDArray[Any], NDArray[intp], NDArray[intp]]: ...
 @overload
 def unique(
@@ -237,6 +265,8 @@ def unique(
     return_inverse: L[True] = ...,
     return_counts: L[True] = ...,
     axis: None | SupportsIndex = ...,
+    *,
+    equal_nan: bool = ...,
 ) -> tuple[NDArray[_SCT], NDArray[intp], NDArray[intp], NDArray[intp]]: ...
 @overload
 def unique(
@@ -245,6 +275,8 @@ def unique(
     return_inverse: L[True] = ...,
     return_counts: L[True] = ...,
     axis: None | SupportsIndex = ...,
+    *,
+    equal_nan: bool = ...,
 ) -> tuple[NDArray[Any], NDArray[intp], NDArray[intp], NDArray[intp]]: ...
 
 @overload
