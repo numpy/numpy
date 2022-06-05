@@ -3788,11 +3788,8 @@ cdef class Generator:
             Each entry ``out[i,j,...,:]`` is a ``p``-dimensional value drawn
             from the distribution.
 
-        Notes
-        -----
-
-        .. versionchanged:: 1.22.0
-            Added support for broadcasting of arguments
+            .. versionchanged:: 1.22.0
+                Added support for broadcasting ``pvals`` against ``n``
 
         Examples
         --------
