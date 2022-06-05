@@ -1,0 +1,10 @@
+F2PY Improvements
+-----------------
+
+* The generated extension modules don't use the deprecated NumPy-C API anymore
+* Improved ``f2py`` generated exception messages
+* Numerous bug and ``flake8`` warning fixes
+* various CPP macros that one can use within C-expressions of signature files are prefixed with ``f2py_``. For example, one should use ``f2py_len(x)`` instead of ``len(x)``
+* A new construct ``character(f2py_len=...)`` is introduced to support returning assumed length character strings (e.g. ``character(len=*)``) from wrapper functions
+
+A hook to support rewriting ``f2py`` internal data structures after reading all its input files is introduced. This is required, for instance, for BC of SciPy support where character arguments are treated as character strings arguments in ``C`` expressions.
