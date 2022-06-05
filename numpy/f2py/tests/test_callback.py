@@ -116,7 +116,7 @@ class TestF77Callback(util.F2PyTest):
 
         f = getattr(self.module, "string_callback_array")
         for cu in [cu1, cu2, cu3]:
-            res = f(callback, cu, len(cu))
+            res = f(callback, cu, cu.size)
             assert res == 0
 
     def test_threadsafety(self):
