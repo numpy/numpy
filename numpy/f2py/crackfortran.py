@@ -2488,10 +2488,10 @@ def analyzevars(block):
         del vars['']
         if 'attrspec' in block['vars']['']:
             gen = block['vars']['']['attrspec']
-            for n in list(vars.keys()):
+            for n in set(vars) | set(b['name'] for b in block['body']):
                 for k in ['public', 'private']:
                     if k in gen:
-                        vars[n] = setattrspec(vars[n], k)
+                        vars[n] = setattrspec(vars.get(n, {}), k)
     svars = []
     args = block['args']
     for a in args:
