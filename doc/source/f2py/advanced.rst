@@ -103,7 +103,7 @@ For more information, see F2Py source code ``numpy/f2py/capi_maps.py``.
 Character strings
 =================
 
-Assumed length chararacter strings
+Assumed length character strings
 -----------------------------------
 
 In Fortran, assumed length character string arguments are declared as
@@ -125,12 +125,12 @@ extra declaration for the corresponding argument that specifies the
 length in character selector part. For example, consider a Fortran
 file ``asterisk1.f90``:
 
-.. include:: asterisk1.f90
+.. include:: ./code/asterisk1.f90
   :literal:
 
 Compile it with ``f2py -c asterisk1.f90 -m asterisk1`` and then in Python:
 
-.. include:: asterisk1_session.dat
+.. include:: ./code/results/asterisk1_session.dat
   :literal:
 
 Notice that the extra declaration ``character(f2py_len=12) s`` is
@@ -139,11 +139,11 @@ can use C-expressions as a length value.
 
 In the following example:
 
-.. include:: asterisk2.f90
+.. include:: ./code/asterisk2.f90
   :literal:
 
-the lenght of output assumed length string depends on an input
+the length of the output assumed length string depends on an input
 argument ``n``, after wrapping with F2PY, in Python:
 
-.. include:: asterisk2_session.dat
+.. include:: ./code/results/asterisk2_session.dat
   :literal:

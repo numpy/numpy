@@ -11,7 +11,7 @@ def get_docdir():
     return os.path.abspath(os.path.join(
         os.path.dirname(__file__),
         '..', '..', '..',
-        'doc', 'source', 'f2py'))
+        'doc', 'source', 'f2py', 'code'))
 
 
 pytestmark = pytest.mark.skipif(
