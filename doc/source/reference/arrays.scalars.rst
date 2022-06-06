@@ -102,7 +102,7 @@ Python Boolean scalar.
    :exclude-members: __init__
 
 Integer types
-~~~~~~~~~~~~~
+-------------
 
 .. autoclass:: numpy.integer
    :members: __init__
@@ -114,7 +114,7 @@ Integer types
    be subject to :ref:`overflow-errors`.
 
 Signed integer types
-++++++++++++++++++++
+~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: numpy.signedinteger
    :members: __init__
@@ -141,7 +141,7 @@ Signed integer types
    :exclude-members: __init__
 
 Unsigned integer types
-++++++++++++++++++++++
+~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: numpy.unsignedinteger
    :members: __init__
@@ -168,7 +168,7 @@ Unsigned integer types
    :exclude-members: __init__
 
 Inexact types
-~~~~~~~~~~~~~
+-------------
 
 .. autoclass:: numpy.inexact
    :members: __init__
@@ -209,7 +209,7 @@ Inexact types
        (0.1, 0.1, 0.1)
 
 Floating-point types
-++++++++++++++++++++
+~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: numpy.floating
    :members: __init__
@@ -232,7 +232,7 @@ Floating-point types
    :exclude-members: __init__
 
 Complex floating-point types
-++++++++++++++++++++++++++++
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: numpy.complexfloating
    :members: __init__
@@ -251,7 +251,7 @@ Complex floating-point types
    :exclude-members: __init__
 
 Other types
-~~~~~~~~~~~
+-----------
 
 .. autoclass:: numpy.bool_
    :members: __init__
@@ -321,7 +321,7 @@ elements the data type consists of.)
 .. _sized-aliases:
 
 Sized aliases
-~~~~~~~~~~~~~
+-------------
 
 Along with their (mostly)
 C-derived names, the integer, float, and complex data-types are also
@@ -402,7 +402,7 @@ are also provided.
    The existence of these aliases depends on the platform.
 
 Other aliases
-~~~~~~~~~~~~~
+-------------
 
 The first two of these are conveniences which resemble the names of the
 builtin types, in the same style as `bool_`, `int_`, `str_`, `bytes_`, and

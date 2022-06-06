@@ -710,7 +710,7 @@ Slicing can be combined with broadcasted boolean indices::
 .. _arrays.indexing.fields:
 
 Field access
--------------
+------------
 
 .. seealso:: :ref:`structured_arrays`
 

@@ -354,7 +354,7 @@ an object :class:`busdaycalendar` which stores the data necessary
 in an optimized form.
 
 np.is_busday():
-```````````````
+---------------
 To test a `datetime64` value to see if it is a valid day, use :func:`is_busday`.
 
 .. admonition:: Example
@@ -370,7 +370,7 @@ To test a `datetime64` value to see if it is a valid day, use :func:`is_busday`.
     array([ True,  True,  True,  True,  True, False, False])
 
 np.busday_count():
-``````````````````
+------------------
 To find how many valid days there are in a specified range of datetime64
 dates, use :func:`busday_count`:
 

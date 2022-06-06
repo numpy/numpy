@@ -300,7 +300,7 @@ There are a number of ways to assign values to a structured array: Using python
 tuples, using scalar values, or using other structured arrays.
 
 Assignment from Python Native Types (Tuples)
-````````````````````````````````````````````
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The simplest way to assign values to a structured array is using python tuples.
 Each assigned value should be a tuple of length equal to the number of fields
@@ -315,7 +315,7 @@ of the array, from left to right::
       dtype=[('f0', '<i8'), ('f1', '<f4'), ('f2', '<f8')])
 
 Assignment from Scalars
-```````````````````````
+~~~~~~~~~~~~~~~~~~~~~~~
 
 A scalar assigned to a structured element will be assigned to all fields. This
 happens when a scalar is assigned to a structured array, or when an
@@ -343,7 +343,7 @@ structured datatype has just a single field::
  TypeError: Cannot cast array data from dtype([('A', '<i4'), ('B', '<i4')]) to dtype('int32') according to the rule 'unsafe'
 
 Assignment from other Structured Arrays
-```````````````````````````````````````
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Assignment between two structured arrays occurs as if the source elements had
 been converted to tuples and then assigned to the destination elements. That
@@ -362,7 +362,7 @@ included in any of the fields are unaffected. ::
 
 
 Assignment involving subarrays
-``````````````````````````````
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 When assigning to fields which are subarrays, the assigned value will first be
 broadcast to the shape of the subarray.
@@ -371,7 +371,7 @@ Indexing Structured Arrays
 --------------------------
 
 Accessing Individual Fields
-```````````````````````````
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Individual fields of a structured array may be accessed and modified by indexing
 the array with the field name. ::
@@ -409,7 +409,7 @@ are appended to the shape of the result::
    (2, 2, 3, 3)
 
 Accessing Multiple Fields
-```````````````````````````
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 One can index and assign to a structured array with a multi-field index, where
 the index is a list of field names.
@@ -502,7 +502,7 @@ multi-field indexes::
  >>> a[['a', 'c']] = a[['c', 'a']]
 
 Indexing with an Integer to get a Structured Scalar
-```````````````````````````````````````````````````
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Indexing a single element of a structured array (with an integer index) returns
 a structured scalar::

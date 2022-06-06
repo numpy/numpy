@@ -49,7 +49,7 @@ Adding a dependency on NumPy
 ----------------------------
 
 Build-time dependency
-`````````````````````
+~~~~~~~~~~~~~~~~~~~~~
 
 If a package either uses the NumPy C API directly or it uses some other tool
 that depends on it like Cython or Pythran, NumPy is a *build-time* dependency
@@ -107,7 +107,7 @@ releases from breaking your packages on PyPI.
 
 
 Runtime dependency & version ranges
-```````````````````````````````````
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 NumPy itself and many core scientific Python packages have agreed on a schedule
 for dropping support for old Python and NumPy versions: :ref:`NEP29`. We

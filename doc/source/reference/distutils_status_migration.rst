@@ -36,7 +36,7 @@ can also consider switching to ``setuptools``. Note that most functionality of
 
 
 Moving to Meson
-```````````````
+~~~~~~~~~~~~~~~
 
 SciPy is moving to Meson for its 1.9.0 release, planned for July 2022. During
 this process, any remaining issues with Meson's Python support and achieving
@@ -56,7 +56,7 @@ migration is done.
 
 
 Moving to CMake / scikit-build
-``````````````````````````````
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 See the `scikit-build documentation <https://scikit-build.readthedocs.io/en/latest/>`__
 for how to use scikit-build. Please note that as of Feb 2022, scikit-build
@@ -69,7 +69,7 @@ mid-2023.  For more details on this, see
 
 
 Moving to ``setuptools``
-````````````````````````
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 For projects that only use ``numpy.distutils`` for historical reasons, and do
 not actually use features beyond those that ``setuptools`` also supports,
