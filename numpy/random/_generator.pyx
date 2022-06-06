@@ -3788,6 +3788,9 @@ cdef class Generator:
             Each entry ``out[i,j,...,:]`` is a ``p``-dimensional value drawn
             from the distribution.
 
+            .. versionchanged:: 1.22.0
+                Added support for broadcasting `pvals` against `n`
+
         Examples
         --------
         Throw a dice 20 times:
