@@ -77,7 +77,7 @@ possible. The easiest way to solve this is to let ``f2py`` deal with it:
 
 
 Automating wrapper generation
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A major pain point in the workflow defined above, is the manual tracking of
 inputs. Although it would require more effort to figure out the actual outputs

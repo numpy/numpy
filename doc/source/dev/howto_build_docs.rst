@@ -22,7 +22,7 @@ for Linux (WSL) <https://docs.microsoft.com/en-us/windows/wsl/install-win10>`_. 
 for a persistent local set-up.
 
 Gitpod
-^^^^^^
+~~~~~~
 Gitpod is an open-source platform that automatically creates the correct development environment right
 in your browser, reducing the need to install local development environments and deal with
 incompatible dependencies.
@@ -40,7 +40,7 @@ Prerequisites
 Building the NumPy documentation and API reference requires the following:
 
 NumPy
-^^^^^
+~~~~~
 
 Since large parts of the main documentation are obtained from NumPy via
 ``import numpy`` and examining the docstrings, you will need to first
@@ -56,7 +56,7 @@ Alternatively, if using Python virtual environments (via e.g. ``conda``,
 new virtual environment is recommended.
 
 Dependencies
-^^^^^^^^^^^^
+~~~~~~~~~~~~
 
 All of the necessary dependencies for building the NumPy docs except for
 Doxygen_ can be installed with::
@@ -81,7 +81,7 @@ are using Linux then you can install it through your distribution package manage
    warnings during the build.
 
 Submodules
-^^^^^^^^^^
+~~~~~~~~~~
 
 If you obtained NumPy via git, also get the git submodules that contain
 additional parts required for building the documentation::
