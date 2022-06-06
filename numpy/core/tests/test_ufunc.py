@@ -2457,7 +2457,7 @@ def test_ufunc_warn_with_nan(ufunc):
 
 
 @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
-def test_ufunc_casterrors():
+def test_ufunc_out_casterrors():
     # Tests that casting errors are correctly reported and buffers are
     # cleared.
     # The following array can be added to itself as an object array, but
@@ -2486,6 +2486,28 @@ def test_ufunc_casterrors():
     # output is unchanged after the error, this shows that the iteration
     # was aborted (this is not necessarily defined behaviour)
     assert out[-1] == 1
+
+
+@pytest.mark.parametrize("bad_offset", [0, int(np.BUFSIZE * 1.5)])
+def test_ufunc_input_casterrors(bad_offset):
+    value = 123
+    arr = np.array([value] * bad_offset +
+                   ["string"] +
+                   [value] * int(1.5 * np.BUFSIZE), dtype=object)
+    with pytest.raises(ValueError):
+        # Force cast inputs, but the buffered cast of `arr` to intp fails:
+        np.add(arr, arr, dtype=np.intp, casting="unsafe")
+
+
+@pytest.mark.parametrize("bad_offset", [0, int(np.BUFSIZE * 1.5)])
+def test_ufunc_input_floatingpoint_error(bad_offset):
+    value = 123
+    arr = np.array([value] * bad_offset +
+                   [np.nan] +
+                   [value] * int(1.5 * np.BUFSIZE))
+    with np.errstate(invalid="raise"), pytest.raises(FloatingPointError):
+        # Force cast inputs, but the buffered cast of `arr` to intp fails:
+        np.add(arr, arr, dtype=np.intp, casting="unsafe")
 
 
 def test_trivial_loop_invalid_cast():
