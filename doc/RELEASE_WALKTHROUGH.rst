@@ -282,6 +282,11 @@ If the release series is a new one, you will need to add a new section to the
 
     $ gvim index.html +/'insert here'
 
+Further, update the version-switcher json file to add the new release and
+update the version marked `(stable)`:
+
+    $ gvim _static/versions.json
+
 Otherwise, only the ``zip`` and ``pdf`` links should be updated with the
 new tag name::
 
@@ -353,9 +358,5 @@ Checkout main and forward port the documentation changes::
     $ git status  # check status before commit
     $ git commit -a -m"REL: Update main after 1.21.0 release."
     $ git push origin HEAD
-
-Only for new releases the version-switcher file ``doc/source/_static/versions.json``
-should now be updated to insert the new release after the "stable" entry and the
-release of the "stable" entry fixed.  This change only lives on the main branch.
 
 Go to GitHub and make a PR.
