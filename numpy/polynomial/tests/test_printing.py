@@ -456,6 +456,20 @@ class TestLatexRepr:
             ),
         )
 
+
+SWITCH_TO_EXP = (
+    '1.0 + (1.0e-01) x**1 + (1.0e-02) x**2',
+    '1.2 + (1.2e-01) x**1 + (1.2e-02) x**2',
+    '1.23 + 0.12 x**1 + (1.23e-02) x**2 + (1.23e-03) x**3',
+    '1.235 + 0.123 x**1 + (1.235e-02) x**2 + (1.235e-03) x**3',
+    '1.2346 + 0.1235 x**1 + 0.0123 x**2 + (1.2346e-03) x**3 + (1.2346e-04) x**4',
+    '1.23457 + 0.12346 x**1 + 0.01235 x**2 + (1.23457e-03) x**3 + '\
+        '(1.23457e-04) x**4',
+    '1.234568 + 0.123457 x**1 + 0.012346 x**2 + 0.001235 x**3 + '\
+        '(1.234568e-04) x**4 + (1.234568e-05) x**5',
+    '1.2345679 + 0.1234568 x**1 + 0.0123457 x**2 + 0.0012346 x**3 + '\
+        '(1.2345679e-04) x**4 + (1.2345679e-05) x**5')
+
 class TestPrintOptions:
     """
     Test the output is properly configured via printoptions.
@@ -484,13 +498,6 @@ class TestPrintOptions:
                 r'$x \mapsto \text{0.5} + \text{0.143}\,x + '
                 r'\text{142857142.857}\,x^{2} + \text{(1.429e+09)}\,x^{3}$')
 
-    def test_suppress(self):
-        p = poly.Polynomial([1e-1, 1e-10, 1e-100])
-        assert_equal(str(p), '0.1 + (1.0e-10) x**1 + (1.0e-100) x**2')
-
-        with printoptions(suppress=True):
-            assert_equal(str(p), '0.1 + 0.0 x**1 + 0.0 x**2')
-
     def test_fixed(self):
         p = poly.Polynomial([1/2])
         assert_equal(str(p), '0.5')
@@ -501,3 +508,9 @@ class TestPrintOptions:
         with printoptions(floatmode='fixed', precision=4):
             assert_equal(str(p), '0.5000')
 
+    def test_switch_to_exp(self):
+        for i, s in enumerate(SWITCH_TO_EXP):
+            with printoptions(precision=i):
+                p = poly.Polynomial([1.23456789*10**-i 
+                                     for i in range(i//2+3)])
+                assert str(p).replace('\n', ' ') == s 
