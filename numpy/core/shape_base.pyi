@@ -82,7 +82,7 @@ def stack(
 def stack(
     arrays: Sequence[ArrayLike],
     axis: SupportsIndex = ...,
-    out: None = ...,
+    out: _ArrayType = ...,
     *,
     dtype: DTypeLike  = ...,
     casting: _CastingKind = ...
