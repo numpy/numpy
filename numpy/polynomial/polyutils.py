@@ -763,7 +763,7 @@ def format_float(x, parens=False):
     exp_format = False
     if x != 0:
         a = absolute(x)
-        if a >= 1.e9 or (not opts['suppress'] and a < 0.0001):
+        if a >= 1.e9 or a < 10**min(0, -(opts['precision']-1)//2):
             exp_format = True
 
     trim, unique = '0', True
