@@ -3789,7 +3789,7 @@ cdef class Generator:
             from the distribution.
 
             .. versionchanged:: 1.22.0
-                Added support for broadcasting ``pvals`` against ``n``
+                Added support for broadcasting `pvals` against `n`
 
         Examples
         --------
