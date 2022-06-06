@@ -645,20 +645,19 @@ A C expression may contain:
   according to given dependence relations;
 * the following CPP macros:
 
-  * ``rank(<name>)``
+  ``f2py_rank(<name>)``
     Returns the rank of an array ``<name>``.
-
-  * ``shape(<name>,<n>)``
+  ``f2py_shape(<name>, <n>)``
     Returns the ``<n>``-th dimension of an array ``<name>``.
-
-  * ``len(<name>)``
+  ``f2py_len(<name>)``
     Returns the length of an array ``<name>``.
-
-  * ``size(<name>)``
+  ``f2py_size(<name>)``
     Returns the size of an array ``<name>``.
-
-  * ``slen(<name>)``
+  ``f2py_itemsize(<name>)``
+    Returns the itemsize of an array ``<name>``.
+  ``f2py_slen(<name>)``
     Returns the length of a string ``<name>``.
+
 
 For initializing an array ``<array name>``, F2PY generates a loop over
 all indices and dimensions that executes the following
@@ -706,4 +705,15 @@ Currently, multi-line blocks can be used in the following constructs:
 
 * as a list of C arrays of the ``pymethoddef`` statement;
 
-* as a documentation string.
++ as documentation string.
+
+Extended char-selector
+-----------------------
+
+F2PY extends char-selector specification, usable within a signature
+file or a F2PY directive, as follows::
+
+  <extended-charselector> := <charselector>
+                          | (f2py_len= <len>)
+
+See :ref:`Character Strings` for usage.

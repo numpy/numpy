@@ -84,8 +84,8 @@ class TestF77Callback(util.F2PyTest):
         r = t(a.mth)
         assert r == 9
 
-    @pytest.mark.skipif(sys.platform == "win32",
-                        reason="Fails with MinGW64 Gfortran (Issue #9673)")
+    @pytest.mark.skipif(sys.platform == 'win32',
+                        reason='Fails with MinGW64 Gfortran (Issue #9673)')
     def test_string_callback(self):
         def callback(code):
             if code == "r":
@@ -97,24 +97,27 @@ class TestF77Callback(util.F2PyTest):
         r = f(callback)
         assert r == 0
 
-    @pytest.mark.skipif(sys.platform == "win32",
-                        reason="Fails with MinGW64 Gfortran (Issue #9673)")
+    @pytest.mark.skipif(sys.platform == 'win32',
+                        reason='Fails with MinGW64 Gfortran (Issue #9673)')
     def test_string_callback_array(self):
         # See gh-10027
-        cu = np.zeros((1, 8), "S1")
+        cu1 = np.zeros((1, ), "S8")
+        cu2 = np.zeros((1, 8), "c")
+        cu3 = np.array([""], "S8")
 
         def callback(cu, lencu):
-            if cu.shape != (lencu, 8):
+            if cu.shape != (lencu,):
                 return 1
-            if cu.dtype != "S1":
+            if cu.dtype != "S8":
                 return 2
             if not np.all(cu == b""):
                 return 3
             return 0
 
         f = getattr(self.module, "string_callback_array")
-        res = f(callback, cu, len(cu))
-        assert res == 0
+        for cu in [cu1, cu2, cu3]:
+            res = f(callback, cu, cu.size)
+            assert res == 0
 
     def test_threadsafety(self):
         # Segfaults if the callback handling is not threadsafe
@@ -223,6 +226,5 @@ class TestGH18335(util.F2PyTest):
         def foo(x):
             x[0] += 1
 
-        y = np.array([1, 2, 3], dtype=np.int8)
         r = self.module.gh18335(foo)
         assert r == 123 + 1

@@ -56,6 +56,7 @@ c2py_map = {'double': 'float',
             'complex_double': 'complex',
             'complex_long_double': 'complex',          # forced casting
             'string': 'string',
+            'character': 'bytes',
             }
 c2capi_map = {'double': 'NPY_DOUBLE',
               'float': 'NPY_FLOAT',
@@ -72,7 +73,8 @@ c2capi_map = {'double': 'NPY_DOUBLE',
               'complex_float': 'NPY_CFLOAT',
               'complex_double': 'NPY_CDOUBLE',
               'complex_long_double': 'NPY_CDOUBLE',   # forced casting
-              'string': 'NPY_STRING'}
+              'string': 'NPY_STRING',
+              'character': 'NPY_CHAR'}
 
 # These new maps aren't used anywhere yet, but should be by default
 #  unless building numeric or numarray extensions.
@@ -94,8 +96,8 @@ if using_newcore:
                   'complex_float': 'NPY_CFLOAT',
                   'complex_double': 'NPY_CDOUBLE',
                   'complex_long_double': 'NPY_CDOUBLE',
-                  'string':'NPY_STRING'
-                  }
+                  'string': 'NPY_STRING',
+                  'character': 'NPY_STRING'}
 
 c2pycode_map = {'double': 'd',
                 'float': 'f',
@@ -112,7 +114,8 @@ c2pycode_map = {'double': 'd',
                 'complex_float': 'F',
                 'complex_double': 'D',
                 'complex_long_double': 'D',               # forced casting
-                'string': 'c'
+                'string': 'c',
+                'character': 'c'
                 }
 
 if using_newcore:
@@ -133,8 +136,11 @@ if using_newcore:
                     'complex_float': 'F',
                     'complex_double': 'D',
                     'complex_long_double': 'G',
-                    'string': 'S'}
+                    'string': 'S',
+                    'character': 'c'}
 
+# https://docs.python.org/3/c-api/arg.html#building-values
+# c2buildvalue_map is NumPy agnostic, so no need to bother with using_newcore
 c2buildvalue_map = {'double': 'd',
                     'float': 'f',
                     'char': 'b',
@@ -146,7 +152,8 @@ c2buildvalue_map = {'double': 'd',
                     'complex_float': 'N',
                     'complex_double': 'N',
                     'complex_long_double': 'N',
-                    'string': 'y'}
+                    'string': 'y',
+                    'character': 'c'}
 
 f2cmap_all = {'real': {'': 'float', '4': 'float', '8': 'double',
                        '12': 'long_double', '16': 'long_double'},
@@ -165,7 +172,6 @@ f2cmap_all = {'real': {'': 'float', '4': 'float', '8': 'double',
               'double complex': {'': 'complex_double'},
               'double precision': {'': 'double'},
               'byte': {'': 'char'},
-              'character': {'': 'string'}
               }
 
 f2cmap_default = copy.deepcopy(f2cmap_all)
@@ -230,7 +236,8 @@ cformat_map = {'double': '%g',
                'complex_float': '(%g,%g)',
                'complex_double': '(%g,%g)',
                'complex_long_double': '(%Lg,%Lg)',
-               'string': '%s',
+               'string': '\\"%s\\"',
+               'character': "'%c'",
                }
 
 # Auxiliary functions
@@ -252,6 +259,10 @@ def getctype(var):
             errmess('getctype: function %s has no return value?!\n' % a)
     elif issubroutine(var):
         return ctype
+    elif ischaracter_or_characterarray(var):
+        return 'character'
+    elif isstring_or_stringarray(var):
+        return 'string'
     elif 'typespec' in var and var['typespec'].lower() in f2cmap_all:
         typespec = var['typespec'].lower()
         f2cmap = f2cmap_all[typespec]
@@ -283,6 +294,21 @@ def getctype(var):
     return ctype
 
 
+def f2cexpr(expr):
+    """Rewrite Fortran expression as f2py supported C expression.
+
+    Due to the lack of a proper expression parser in f2py, this
+    function uses a heuristic approach that assumes that Fortran
+    arithmetic expressions are valid C arithmetic expressions when
+    mapping Fortran function calls to the corresponding C function/CPP
+    macros calls.
+
+    """
+    # TODO: support Fortran `len` function with optional kind parameter
+    expr = re.sub(r'\blen\b', 'f2py_slen', expr)
+    return expr
+
+
 def getstrlength(var):
     if isstringfunction(var):
         if 'result' in var:
@@ -302,7 +328,7 @@ def getstrlength(var):
         if '*' in a:
             len = a['*']
         elif 'len' in a:
-            len = a['len']
+            len = f2cexpr(a['len'])
     if re.match(r'\(\s*(\*|:)\s*\)', len) or re.match(r'(\*|:)', len):
         if isintent_hide(var):
             errmess('getstrlength:intent(hide): expected a string with defined length but got: %s\n' % (
@@ -499,6 +525,20 @@ def getinit(a, var):
     return init, showinit
 
 
+def get_elsize(var):
+    if isstring(var) or isstringarray(var):
+        elsize = getstrlength(var)
+        # override with user-specified length when available:
+        elsize = var['charselector'].get('f2py_len', elsize)
+        return elsize
+    if ischaracter(var) or ischaracterarray(var):
+        return '1'
+    # for numerical types, PyArray_New* functions ignore specified
+    # elsize, so we just return 1 and let elsize be determined at
+    # runtime, see fortranobject.c
+    return '1'
+
+
 def sign2map(a, var):
     """
     varname,ctype,atype
@@ -553,6 +593,7 @@ def sign2map(a, var):
         dim = copy.copy(var['dimension'])
     if ret['ctype'] in c2capi_map:
         ret['atype'] = c2capi_map[ret['ctype']]
+        ret['elsize'] = get_elsize(var)
     # Debug info
     if debugcapi(var):
         il = [isintent_in, 'input', isintent_out, 'output',
@@ -720,6 +761,7 @@ def cb_sign2map(a, var, index=None):
     ret['ctype'] = getctype(var)
     if ret['ctype'] in c2capi_map:
         ret['atype'] = c2capi_map[ret['ctype']]
+        ret['elsize'] = get_elsize(var)
     if ret['ctype'] in cformat_map:
         ret['showvalueformat'] = '%s' % (cformat_map[ret['ctype']])
     if isarray(var):
@@ -819,6 +861,7 @@ def common_sign2map(a, var):  # obsolute
         ret['ctype'] = 'char'
     if ret['ctype'] in c2capi_map:
         ret['atype'] = c2capi_map[ret['ctype']]
+        ret['elsize'] = get_elsize(var)
     if ret['ctype'] in cformat_map:
         ret['showvalueformat'] = '%s' % (cformat_map[ret['ctype']])
     if isarray(var):
