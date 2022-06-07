@@ -509,16 +509,16 @@ if ctypes is not None:
         """
         Create a numpy array from a ctypes array or POINTER.
 
-        The numpy array shares the memory with the ctypes object.
+        The numpy array shares memory with the ctypes object.
         
         Parameters
         ----------
         obj : ctypes Pointer or ctypes array
-            data object with contiguous chunk of memory for numpy.ndarray data
+            Data object with contiguous chunk of memory for numpy.ndarray data
         shape : int or tuple of int, optional
-            return shape of numpy.ndarray.
-            shape must be given if converting from a ctypes POINTER.
-            shape will be ignored if converting from a ctypes array
+            The shape of the returned numpy.ndarray. `shape` must be given if
+            converting from a ctypes POINTER, but is ignored if converting from
+            a ctypes array.
             
         Returns
         -------
@@ -527,8 +527,8 @@ if ctypes is not None:
             
         Notes
         -----                        
-        Numpy array stores it's data as single Void pointer in C.        
-        If use Pointer, must use ctypes Single Pointer, Not a Double, Triple
+        Numpy array stores its data as a void pointer in C. If you use a Pointer,
+        you must use ctypes Single Pointer.
         
         PyArray_Data
             `<https://numpy.org/devdocs/reference/c-api/array.html#c.PyArray_DATA>`_
