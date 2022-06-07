@@ -12,9 +12,14 @@
 
 
 const char *deprecation_msg = (
-        "loadtxt(): Parsing an integer via a float Deprecated.\n"
-        "    Please see <> for more information.\n"
-        "    (Deprecated NumPy 1.23)");
+        "loadtxt(): Parsing an integer via a float is deprecated.  To avoid "
+        "this warning, you can:\n"
+        "    * make sure the original data is stored as integers.\n"
+        "    * use the `converters=` keyword argument.  If you only use\n"
+        "      NumPy 1.23 or later, `converters=float` will normally work.\n"
+        "    * Use `np.loadtxt(...).astype(np.int64)` parsing the file as\n"
+        "      floating point and then convert it.  (On all NumPy versions.)\n"
+        "  (Deprecated NumPy 1.23)");
 
 #define DECLARE_TO_INT(intw, INT_MIN, INT_MAX, byteswap_unaligned)          \
     NPY_NO_EXPORT int                                                       \
