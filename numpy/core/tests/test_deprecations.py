@@ -1216,7 +1216,7 @@ class TestAxisNotMAXDIMS(_DeprecationTestCase):
 
 
 class TestLoadtxtParseIntsViaFloat(_DeprecationTestCase):
-    message = r"loadtxt\(\): Parsing an integer via a float Deprecated.*"
+    message = r"loadtxt\(\): Parsing an integer via a float is deprecated.*"
 
     @pytest.mark.parametrize("dtype", np.typecodes["AllInteger"])
     def test_deprecated_warning(self, dtype):
