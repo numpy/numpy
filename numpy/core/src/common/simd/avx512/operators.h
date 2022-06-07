@@ -319,8 +319,8 @@
 // precision comparison
 #define npyv_cmpeq_f32(A, B)  _mm512_cmp_ps_mask(A, B, _CMP_EQ_OQ)
 #define npyv_cmpeq_f64(A, B)  _mm512_cmp_pd_mask(A, B, _CMP_EQ_OQ)
-#define npyv_cmpneq_f32(A, B) _mm512_cmp_ps_mask(A, B, _CMP_NEQ_OQ)
-#define npyv_cmpneq_f64(A, B) _mm512_cmp_pd_mask(A, B, _CMP_NEQ_OQ)
+#define npyv_cmpneq_f32(A, B) _mm512_cmp_ps_mask(A, B, _CMP_NEQ_UQ)
+#define npyv_cmpneq_f64(A, B) _mm512_cmp_pd_mask(A, B, _CMP_NEQ_UQ)
 #define npyv_cmplt_f32(A, B)  _mm512_cmp_ps_mask(A, B, _CMP_LT_OQ)
 #define npyv_cmplt_f64(A, B)  _mm512_cmp_pd_mask(A, B, _CMP_LT_OQ)
 #define npyv_cmple_f32(A, B)  _mm512_cmp_ps_mask(A, B, _CMP_LE_OQ)
