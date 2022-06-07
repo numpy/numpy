@@ -283,7 +283,7 @@ If the release series is a new one, you will need to add a new section to the
     $ gvim index.html +/'insert here'
 
 Further, update the version-switcher json file to add the new release and
-update the version marked `(stable)`:
+update the version marked `(stable)`::
 
     $ gvim _static/versions.json
 
