@@ -755,10 +755,15 @@ def _deprecate_as_int(x, desc):
 
 
 def format_float(x, parens=False):
-    if not np.issubdtype(type(x), np.floating) or not isfinite(x):
+    if not np.issubdtype(type(x), np.floating):
         return str(x)
 
     opts = np.get_printoptions()
+
+    if np.isnan(x):
+        return opts['nanstr']
+    elif np.isinf(x):
+        return opts['infstr']
 
     exp_format = False
     if x != 0:

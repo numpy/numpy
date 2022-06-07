@@ -1,3 +1,4 @@
+from math import nan, inf
 import pytest
 from numpy.core import array, arange, printoptions
 import numpy.polynomial as poly
@@ -515,3 +516,12 @@ class TestPrintOptions:
                 p = poly.Polynomial([1.23456789*10**-i 
                                      for i in range(i//2+3)])
                 assert str(p).replace('\n', ' ') == s 
+    
+    def test_non_finite(self):
+        p = poly.Polynomial([nan, inf])
+        assert str(p) == 'nan + inf x**1'
+        assert p._repr_latex_() == r'$x \mapsto \text{nan} + \text{inf}\,x$'
+        with printoptions(nanstr='NAN', infstr='INF'):
+            assert str(p) == 'NAN + INF x**1'
+            assert p._repr_latex_() == \
+                r'$x \mapsto \text{NAN} + \text{INF}\,x$'
