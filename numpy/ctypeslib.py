@@ -527,8 +527,8 @@ if ctypes is not None:
             
         Notes
         -----                        
-        Numpy array stores its data as a void pointer in C. If you use a Pointer,
-        you must use ctypes Single Pointer.
+        Numpy array stores its data as a void pointer in C. If you use a
+        Pointer, you must use ctypes Single Pointer.
         
         PyArray_Data
             `<https://numpy.org/devdocs/reference/c-api/array.html#c.PyArray_DATA>`_
