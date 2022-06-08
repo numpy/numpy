@@ -33,7 +33,7 @@ import warnings
 import numpy as np
 
 from numpy.core.multiarray import dragon4_positional, dragon4_scientific
-from numpy.core.umath import absolute, isfinite
+from numpy.core.umath import absolute
 
 __all__ = [
     'RankWarning', 'as_series', 'trimseq',
@@ -768,7 +768,7 @@ def format_float(x, parens=False):
     exp_format = False
     if x != 0:
         a = absolute(x)
-        if a >= 1.e9 or a < 10**min(0, -(opts['precision']-1)//2):
+        if a >= 1.e8 or a < 10**min(0, -(opts['precision']-1)//2):
             exp_format = True
 
     trim, unique = '0', True
