@@ -61,6 +61,11 @@ Deprecations
 
   (`gh-20875 <https://github.com/numpy/numpy/pull/20875>`__)
 
+* ``numpy.loadtxt`` will now give a ``DeprecationWarning`` when an integer
+  ``dtype`` is requested but the value is formatted as a floating point number.
+
+  (`gh-21663 <https://github.com/numpy/numpy/pull/21663>`__)
+
 
 Expired deprecations
 ====================
@@ -262,7 +267,7 @@ While generally much faster and improved, ``numpy.loadtxt`` may now fail to
 converter certain strings to numbers that were previously successfully read.
 The most important cases for this are:
 
-* Parsing floating point values such as ``1.0`` into integers will now fail
+* Parsing floating point values such as ``1.0`` into integers is now deprecated.
 * Parsing hexadecimal floats such as ``0x3p3`` will fail
 * An ``_`` was previously accepted as a thousands delimiter ``100_000``.
   This will now result in an error.
