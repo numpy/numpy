@@ -61,8 +61,6 @@ GTAGS
 
 # Python files #
 ################
-# setup.py working directory
-build
 # sphinx build directory
 _build
 # setup.py dist directory
