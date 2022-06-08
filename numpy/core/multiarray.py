@@ -17,6 +17,7 @@ from ._multiarray_umath import (
     _fastCopyAndTranspose, _flagdict, from_dlpack, _insert, _reconstruct,
     _vec_string, _ARRAY_API, _monotonicity, _get_ndarray_c_version,
     _get_madvise_hugepage, _set_madvise_hugepage,
+    _get_promotion_state, _set_promotion_state,
     )
 
 __all__ = [
@@ -41,7 +42,7 @@ __all__ = [
     'set_legacy_print_mode', 'set_numeric_ops', 'set_string_function',
     'set_typeDict', 'shares_memory', 'tracemalloc_domain', 'typeinfo',
     'unpackbits', 'unravel_index', 'vdot', 'where', 'zeros',
-    'get_promotion_state', 'set_promotion_state']
+    '_get_promotion_state', '_set_promotion_state']
 
 # For backward compatibility, make sure pickle imports these functions from here
 _reconstruct.__module__ = 'numpy.core.multiarray'
@@ -69,8 +70,8 @@ promote_types.__module__ = 'numpy'
 set_numeric_ops.__module__ = 'numpy'
 seterrobj.__module__ = 'numpy'
 zeros.__module__ = 'numpy'
-get_promotion_state.__module__ = 'numpy'
-set_promotion_state.__module__ = 'numpy'
+_get_promotion_state.__module__ = 'numpy'
+_set_promotion_state.__module__ = 'numpy'
 
 
 # We can't verify dispatcher signatures because NumPy's C functions don't

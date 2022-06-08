@@ -93,7 +93,7 @@ npy_give_promotion_warnings(void)
 
 
 NPY_NO_EXPORT PyObject *
-npy_get_promotion_state(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(arg)) {
+npy__get_promotion_state(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(arg)) {
     if (npy_promotion_state == NPY_USE_WEAK_PROMOTION) {
         return PyUnicode_FromString("weak");
     }
@@ -109,11 +109,11 @@ npy_get_promotion_state(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(arg)) {
 
 
 NPY_NO_EXPORT PyObject *
-npy_set_promotion_state(PyObject *NPY_UNUSED(mod), PyObject *arg)
+npy__set_promotion_state(PyObject *NPY_UNUSED(mod), PyObject *arg)
 {
     if (!PyUnicode_Check(arg)) {
         PyErr_SetString(PyExc_TypeError,
-                "set_promotion_state() argument or NPY_PROMOTION_STATE "
+                "_set_promotion_state() argument or NPY_PROMOTION_STATE "
                 "must be a string.");
         return NULL;
     }
@@ -128,7 +128,7 @@ npy_set_promotion_state(PyObject *NPY_UNUSED(mod), PyObject *arg)
     }
     else {
         PyErr_Format(PyExc_TypeError,
-                "set_promotion_state() argument or NPY_PROMOTION_STATE must be "
+                "_set_promotion_state() argument or NPY_PROMOTION_STATE must be "
                 "'weak', 'legacy', or 'weak_and_warn' but got '%.100S'", arg);
         return NULL;
     }

@@ -17,7 +17,7 @@ from . import umath
 
 __all__ = [
     "seterr", "geterr", "setbufsize", "getbufsize", "seterrcall", "geterrcall",
-    "errstate", 'no_nep50_warning'
+    "errstate", '_no_nep50_warning'
 ]
 
 _errdict = {"ignore": ERR_IGNORE,
@@ -447,11 +447,11 @@ def _setdef():
 _setdef()
 
 
-NO_NEP50_WARNING = contextvars.ContextVar("no_nep50_warning", default=False)
+NO_NEP50_WARNING = contextvars.ContextVar("_no_nep50_warning", default=False)
 
 @set_module('numpy')
 @contextlib.contextmanager
-def no_nep50_warning():
+def _no_nep50_warning():
     """
     Context manager to disable NEP 50 warnings.  This context manager is
     only relevant if the NEP 50 warnings are enabled globally (which is NOT

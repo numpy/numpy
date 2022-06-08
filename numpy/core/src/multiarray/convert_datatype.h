@@ -19,10 +19,10 @@ NPY_NO_EXPORT int
 npy_give_promotion_warnings(void);
 
 NPY_NO_EXPORT PyObject *
-npy_get_promotion_state(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(arg));
+npy__get_promotion_state(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(arg));
 
 NPY_NO_EXPORT PyObject *
-npy_set_promotion_state(PyObject *NPY_UNUSED(mod), PyObject *arg);
+npy__set_promotion_state(PyObject *NPY_UNUSED(mod), PyObject *arg);
 
 NPY_NO_EXPORT PyObject *
 PyArray_GetCastingImpl(PyArray_DTypeMeta *from, PyArray_DTypeMeta *to);

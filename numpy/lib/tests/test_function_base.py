@@ -2981,7 +2981,7 @@ class TestPercentile:
                                   input_dtype,
                                   expected_dtype):
         expected_dtype = np.dtype(expected_dtype)
-        if np.get_promotion_state() == "legacy":
+        if np._get_promotion_state() == "legacy":
             expected_dtype = np.promote_types(expected_dtype, np.float64)
 
         arr = np.asarray([15.0, 20.0, 35.0, 40.0, 50.0], dtype=input_dtype)

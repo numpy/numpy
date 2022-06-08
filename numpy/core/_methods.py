@@ -11,7 +11,7 @@ from numpy.core import umath as um
 from numpy.core.multiarray import asanyarray
 from numpy.core import numerictypes as nt
 from numpy.core import _exceptions
-from numpy.core._ufunc_config import no_nep50_warning
+from numpy.core._ufunc_config import _no_nep50_warning
 from numpy._globals import _NoValue
 from numpy.compat import pickle, os_fspath
 
@@ -180,7 +180,7 @@ def _mean(a, axis=None, dtype=None, out=None, keepdims=False, *, where=True):
 
     ret = umr_sum(arr, axis, dtype, out, keepdims, where=where)
     if isinstance(ret, mu.ndarray):
-        with no_nep50_warning():
+        with _no_nep50_warning():
             ret = um.true_divide(
                     ret, rcount, out=ret, casting='unsafe', subok=False)
         if is_float16_result and out is None:
@@ -222,7 +222,7 @@ def _var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False, *,
         # matching rcount to arrmean when where is specified as array
         div = rcount.reshape(arrmean.shape)
     if isinstance(arrmean, mu.ndarray):
-        with no_nep50_warning():
+        with _no_nep50_warning():
             arrmean = um.true_divide(arrmean, div, out=arrmean,
                                      casting='unsafe', subok=False)
     elif hasattr(arrmean, "dtype"):
@@ -254,7 +254,7 @@ def _var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False, *,
 
     # divide by degrees of freedom
     if isinstance(ret, mu.ndarray):
-        with no_nep50_warning():
+        with _no_nep50_warning():
             ret = um.true_divide(
                     ret, rcount, out=ret, casting='unsafe', subok=False)
     elif hasattr(ret, 'dtype'):

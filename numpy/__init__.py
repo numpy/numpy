@@ -409,7 +409,7 @@ else:
     # it is tidier organized.
     core.multiarray._multiarray_umath._reload_guard()
 
-    core.set_promotion_state(os.environ.get("NPY_PROMOTION_STATE", "legacy"))
+    core._set_promotion_state(os.environ.get("NPY_PROMOTION_STATE", "legacy"))
 
     # Tell PyInstaller where to find hook-numpy.py
     def _pyinstaller_hooks_dir():

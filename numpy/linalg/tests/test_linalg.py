@@ -1803,7 +1803,7 @@ class TestCholesky:
         c = np.linalg.cholesky(a)
 
         b = np.matmul(c, c.transpose(t).conj())
-        with np.no_nep50_warning():
+        with np._no_nep50_warning():
             atol = 500 * a.shape[0] * np.finfo(dtype).eps
         assert_allclose(b, a, atol=atol, err_msg=f'{shape} {dtype}\n{a}\n{c}')
 
