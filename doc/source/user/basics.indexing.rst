@@ -39,7 +39,7 @@ Basic indexing
 .. _single-element-indexing:
 
 Single element indexing
-^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~
 
 Single element indexing works
 exactly like that for other standard Python sequences. It is 0-based,
@@ -95,7 +95,7 @@ that is subsequently indexed by 2.
 .. _slicing-and-striding:
 
 Slicing and striding
-^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~
 
 Basic slicing extends Python's basic concept of slicing to N
 dimensions. Basic slicing occurs when *obj* is a :class:`slice` object
@@ -226,7 +226,7 @@ concepts to remember include:
 .. _dimensional-indexing-tools:
 
 Dimensional indexing tools
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 There are some tools to facilitate the easy matching of array shapes with
 expressions and in assignments.
@@ -299,7 +299,7 @@ basic slicing that returns a :term:`view`).
    ``x[[1, 2, slice(None)]]`` will trigger basic slicing.
 
 Integer array indexing
-^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~
 
 Integer array indexing allows selection of arbitrary items in the array
 based on their *N*-dimensional index. Each integer array represents a number
@@ -475,7 +475,7 @@ triple of RGB values is associated with each pixel location.
 .. _boolean-indexing:
 
 Boolean array indexing
-^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~
 
 This advanced indexing occurs when *obj* is an array object of Boolean
 type, such as may be returned from comparison operators. A single
@@ -606,7 +606,7 @@ with four True elements to select rows from a 3-D array of shape
 .. _combining-advanced-and-basic-indexing:
 
 Combining advanced and basic indexing
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 When there is at least one slice (``:``), ellipsis (``...``) or :const:`newaxis`
 in the index (or the array has more dimensions than there are advanced indices),

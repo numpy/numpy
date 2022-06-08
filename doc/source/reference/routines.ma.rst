@@ -1,13 +1,13 @@
 .. _routines.ma:
 
 Masked array operations
-***********************
+=======================
 
 .. currentmodule:: numpy
 
 
 Constants
-=========
+---------
 
 .. autosummary::
    :toctree: generated/
@@ -16,7 +16,7 @@ Constants
 
 
 Creation
-========
+--------
 
 From existing data
 ~~~~~~~~~~~~~~~~~~
@@ -52,7 +52,7 @@ Ones and zeros
 _____
 
 Inspecting the array
-====================
+--------------------
 
 .. autosummary::
    :toctree: generated/
@@ -91,7 +91,7 @@ Inspecting the array
 _____
 
 Manipulating a MaskedArray
-==========================
+--------------------------
 
 Changing the shape
 ~~~~~~~~~~~~~~~~~~
@@ -162,7 +162,7 @@ Joining arrays
 _____
 
 Operations on masks
-===================
+-------------------
 
 Creating a mask
 ~~~~~~~~~~~~~~~
@@ -220,7 +220,7 @@ Modifying a mask
 _____
 
 Conversion operations
-======================
+----------------------
 
 > to a masked array
 ~~~~~~~~~~~~~~~~~~~
@@ -291,7 +291,7 @@ Filling a masked array
 _____
 
 Masked arrays arithmetic
-========================
+------------------------
 
 Arithmetic
 ~~~~~~~~~~

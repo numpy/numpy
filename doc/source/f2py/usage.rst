@@ -13,7 +13,7 @@ When used as a command-line tool, ``f2py`` has three major modes, distinguished
 by the usage of ``-c`` and ``-h`` switches.
 
 1. Signature file generation
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To scan Fortran sources and generate a signature file, use
 
@@ -40,7 +40,7 @@ Among other options (see below), the following can be used in this mode:
     Overwrites an existing signature file.
 
 2. Extension module construction
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To construct an extension module, use
 
@@ -91,7 +91,7 @@ Here ``<fortran files>`` may also contain signature files. Among other options
     example, try ``f2py --help-link lapack_opt``.
 
 3. Building a module
-^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~
 
 To build an extension module, use
 
@@ -203,7 +203,7 @@ To see whether F2PY generated interface performs copies of array arguments, use
 larger than ``<int>``, a message about the copying is sent to ``stderr``.
 
 Other options
-^^^^^^^^^^^^^
+~~~~~~~~~~~~~
 
   ``-m <modulename>``
     Name of an extension module. Default is ``untitled``.

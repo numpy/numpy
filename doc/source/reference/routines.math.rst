@@ -1,5 +1,5 @@
 Mathematical functions
-**********************
+======================
 
 .. currentmodule:: numpy
 

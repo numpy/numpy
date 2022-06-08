@@ -2,7 +2,7 @@
 
 
 Using Gitpod for NumPy development
-=======================================================
+==================================
 
 This section of the documentation will guide you through:
 
@@ -12,7 +12,7 @@ This section of the documentation will guide you through:
 *  working on the NumPy documentation in Gitpod
 
 Gitpod
--------
+------
 
 `Gitpod`_  is an open-source platform for automated and ready-to-code 
 development environments. It enables developers to describe their dev 
@@ -21,7 +21,7 @@ each new task directly from your browser. This reduces the need to install local
 development environments and deal with incompatible dependencies.
 
 Gitpod GitHub integration
---------------------------
+-------------------------
 
 To be able to use Gitpod, you will need to have the Gitpod app installed on your 
 GitHub account, so if
@@ -40,7 +40,7 @@ permissions later on. Click on the green **Install** button
 This will install the necessary hooks for the integration.
 
 Forking the NumPy repository
------------------------------
+----------------------------
 
 The best way to work on NumPy as a contributor is by making a fork of the 
 repository first.
@@ -50,7 +50,7 @@ repository first.
    https://github.com/melissawm/NumPy, except with your GitHub username in place of ``melissawm``.
 
 Starting Gitpod
-----------------
+---------------
 Once you have authenticated to Gitpod through GitHub, you can install the 
 `Gitpod browser extension <https://www.gitpod.io/docs/browser-extension>`_  
 which will add a **Gitpod** button next to the **Code** button in the 
@@ -86,7 +86,7 @@ of tests that make sure NumPy is working as it should, and ``-v`` activates the
 ``--verbose`` option to show all the test output.
 
 Quick workspace tour
----------------------
+--------------------
 Gitpod uses VSCode as the editor. If you have not used this editor before, you 
 can check the Getting started `VSCode docs`_ to familiarize yourself with it.
 
@@ -125,7 +125,7 @@ development experience:
 *  `VSCode Git Graph extension <https://marketplace.visualstudio.com/items?itemName=mhutchie.git-graph>`_
 
 Development workflow with Gitpod
----------------------------------
+--------------------------------
 The  :ref:`development-workflow` section of this documentation contains 
 information regarding the NumPy development workflow. Make sure to check this 
 before working on your contributions.
@@ -144,7 +144,7 @@ When using Gitpod, git is pre configured for you:
       :alt: Gitpod workspace branches plugin screenshot
 
 Rendering the NumPy documentation
-----------------------------------
+---------------------------------
 You can find the detailed documentation on how rendering the documentation with 
 Sphinx works in the :ref:`howto-build-docs` section.
 
@@ -153,7 +153,7 @@ this task is completed, you have two main options to render the documentation
 in Gitpod.
 
 Option 1: Using Liveserve
-***************************
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 #. View the documentation in ``NumPy/doc/build/html``. You can start with 
    ``index.html`` and browse, or you can jump straight to the file you're 
@@ -170,7 +170,7 @@ Option 1: Using Liveserve
 #. To stop the server click on the **Port: 5500** button on the status bar.
 
 Option 2: Using the rst extension
-***********************************
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A quick and easy way to see live changes in a ``.rst`` file as you work on it 
 uses the rst extension with docutils.
@@ -200,13 +200,13 @@ FAQ's and troubleshooting
 -------------------------
 
 How long is my Gitpod workspace kept for?
-*****************************************
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Your stopped workspace will be kept for 14 days and deleted afterwards if you do 
 not use them.
 
 Can I come back to a previous workspace?
-*****************************************
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Yes, let's say you stepped away for a while and you want to carry on working on 
 your NumPy contributions. You need to visit https://gitpod.io/workspaces and 
@@ -214,13 +214,13 @@ click on the workspace you want to spin up again. All your changes will be there
 as you last left them.
 
 Can I install additional VSCode extensions?
-*******************************************
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Absolutely! Any extensions you installed will be installed in your own workspace 
 and preserved.
 
 I registered on Gitpod but I still cannot see a ``Gitpod`` button in my repositories.
-*************************************************************************************
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Head to https://gitpod.io/integrations and make sure you are logged in. 
 Hover over GitHub and click on the three buttons that appear on the right. 
@@ -232,14 +232,14 @@ and confirm the changes in the GitHub application page.
    :alt: Gitpod integrations - edit GH permissions screenshot
 
 How long does my workspace stay active if I'm not using it?
-***********************************************************
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you keep your workspace open in a browser tab but don't interact with it, 
 it will shut down after 30 minutes. If you close the browser tab, it will 
 shut down after 3 minutes.
 
 My terminal is blank - there is no cursor and it's completely unresponsive
-**************************************************************************
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Unfortunately this is a known-issue on Gitpod's side. You can sort this 
 issue in two ways:
@@ -254,7 +254,7 @@ issue in two ways:
    :alt: Gitpod dashboard and workspace menu screenshot
 
 I authenticated through GitHub but I still cannot commit to the repository through Gitpod. 
-******************************************************************************************
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Head to https://gitpod.io/integrations and make sure you are logged in. 
 Hover over GitHub and click on the three buttons that appear on the right. 
