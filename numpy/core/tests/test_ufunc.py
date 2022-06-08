@@ -799,6 +799,20 @@ class TestUfunc:
         # the result would be just a scalar `5`, but is broadcast fully:
         assert (out == 5).all()
 
+    @pytest.mark.parametrize(["arr", "out"], [
+                ([2], np.empty(())),
+                ([1, 2], np.empty(1)),
+                (np.ones((4, 3)), np.empty((4, 1)))],
+            ids=["(1,)->()", "(2,)->(1,)", "(4, 3)->(4, 1)"])
+    def test_out_broadcast_errors(self, arr, out):
+        # Output is (currently) allowed to broadcast inputs, but it cannot be
+        # smaller than the actual result.
+        with pytest.raises(ValueError, match="non-broadcastable"):
+            np.positive(arr, out=out)
+
+        with pytest.raises(ValueError, match="non-broadcastable"):
+            np.add(np.ones(()), arr, out=out)
+
     def test_type_cast(self):
         msg = "type cast"
         a = np.arange(6, dtype='short').reshape((2, 3))
