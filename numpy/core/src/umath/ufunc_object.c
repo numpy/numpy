@@ -1243,7 +1243,7 @@ try_trivial_single_output_loop(PyArrayMethod_Context *context,
         int op_ndim = PyArray_NDIM(op[iop]);
 
         /* Special case 0-D since we can handle broadcasting using a 0-stride */
-        if (op_ndim == 0) {
+        if (op_ndim == 0 && iop < nin) {
             fixed_strides[iop] = 0;
             continue;
         }
@@ -1254,7 +1254,7 @@ try_trivial_single_output_loop(PyArrayMethod_Context *context,
             operation_shape = PyArray_SHAPE(op[iop]);
         }
         else if (op_ndim != operation_ndim) {
-            return -2;  /* dimension mismatch (except 0-d ops) */
+            return -2;  /* dimension mismatch (except 0-d input ops) */
         }
         else if (!PyArray_CompareLists(
                 operation_shape, PyArray_DIMS(op[iop]), op_ndim)) {
