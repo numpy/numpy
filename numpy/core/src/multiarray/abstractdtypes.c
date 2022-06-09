@@ -170,12 +170,24 @@ int_common_dtype(PyArray_DTypeMeta *NPY_UNUSED(cls), PyArray_DTypeMeta *other)
         if (res == NULL) {
             PyErr_Clear();
         }
+        else if (res == (PyArray_DTypeMeta *)Py_NotImplemented) {
+            Py_DECREF(res);
+        }
+        else {
+            return res;
+        }
         /* Try again with `int8`, an error may have been set, though */
         PyArray_DTypeMeta *int8_dt = PyArray_DTypeFromTypeNum(NPY_INT8);
         res = NPY_DT_CALL_common_dtype(other, int8_dt);
         Py_DECREF(int8_dt);
         if (res == NULL) {
             PyErr_Clear();
+        }
+        else if (res == (PyArray_DTypeMeta *)Py_NotImplemented) {
+            Py_DECREF(res);
+        }
+        else {
+            return res;
         }
         /* And finally, we will try the default integer, just for sports... */
         PyArray_DTypeMeta *default_int = PyArray_DTypeFromTypeNum(NPY_LONG);
@@ -216,6 +228,12 @@ float_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
         Py_DECREF(half_dt);
         if (res == NULL) {
             PyErr_Clear();
+        }
+        else if (res == (PyArray_DTypeMeta *)Py_NotImplemented) {
+            Py_DECREF(res);
+        }
+        else {
+            return res;
         }
         /* Retry with double (the default float) */
         PyArray_DTypeMeta *double_dt = PyArray_DTypeFromTypeNum(NPY_DOUBLE);
@@ -265,7 +283,13 @@ complex_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
         if (res == NULL) {
             PyErr_Clear();
         }
-        /* Retry with double (the default float) */
+        else if (res == (PyArray_DTypeMeta *)Py_NotImplemented) {
+            Py_DECREF(res);
+        }
+        else {
+            return res;
+        }
+        /* Retry with cdouble (the default complex) */
         PyArray_DTypeMeta *cdouble_dt = PyArray_DTypeFromTypeNum(NPY_CDOUBLE);
         res = NPY_DT_CALL_common_dtype(other, cdouble_dt);
         Py_DECREF(cdouble_dt);

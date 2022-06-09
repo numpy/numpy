@@ -1373,7 +1373,10 @@ class TestPromotion:
         # Note that rationals are a bit akward as they promote with float64
         # or default ints, but not float16 or uint8/int8 (which looks
         # inconsistent here).  The new promotion fixes this (partially?)
-        if not weak_promotion:
+        if not weak_promotion and type(other) == float:
+            # The float version, checks float16 in the legacy path, which fails
+            # the integer version seems to check int8 (also), so it can
+            # pass.
             with pytest.raises(TypeError,
                     match=r".* do not have a common DType"):
                 np.result_type(other, rational)
