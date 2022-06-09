@@ -955,50 +955,56 @@ class _CCompiler:
     def __init__(self):
         if hasattr(self, "cc_is_cached"):
             return
-        #      attr                regex
+        #      attr            regex        compiler-expression
         detect_arch = (
-            ("cc_on_x64",      ".*(x|x86_|amd)64.*"),
-            ("cc_on_x86",      ".*(win32|x86|i386|i686).*"),
-            ("cc_on_ppc64le",  ".*(powerpc|ppc)64(el|le).*"),
-            ("cc_on_ppc64",    ".*(powerpc|ppc)64.*"),
-            ("cc_on_aarch64",  ".*(aarch64|arm64).*"),
-            ("cc_on_armhf",    ".*arm.*"),
-            ("cc_on_s390x",    ".*s390x.*"),
+            ("cc_on_x64",      ".*(x|x86_|amd)64.*", ""),
+            ("cc_on_x86",      ".*(win32|x86|i386|i686).*", ""),
+            ("cc_on_ppc64le",  ".*(powerpc|ppc)64(el|le).*", ""),
+            ("cc_on_ppc64",    ".*(powerpc|ppc)64.*", ""),
+            ("cc_on_aarch64",  ".*(aarch64|arm64).*", ""),
+            ("cc_on_armhf",    ".*arm.*", "defined(__ARM_ARCH_7__) || "
+                                          "defined(__ARM_ARCH_7A__)"),
+            ("cc_on_s390x",    ".*s390x.*", ""),
             # undefined platform
-            ("cc_on_noarch",    ""),
+            ("cc_on_noarch",   "", ""),
         )
         detect_compiler = (
-            ("cc_is_gcc",     r".*(gcc|gnu\-g).*"),
-            ("cc_is_clang",    ".*clang.*"),
-            ("cc_is_iccw",     ".*(intelw|intelemw|iccw).*"), # intel msvc like
-            ("cc_is_icc",      ".*(intel|icc).*"), # intel unix like
-            ("cc_is_msvc",     ".*msvc.*"),
+            ("cc_is_gcc",     r".*(gcc|gnu\-g).*", ""),
+            ("cc_is_clang",    ".*clang.*", ""),
+            # intel msvc like
+            ("cc_is_iccw",     ".*(intelw|intelemw|iccw).*", ""),
+            ("cc_is_icc",      ".*(intel|icc).*", ""),  # intel unix like
+            ("cc_is_msvc",     ".*msvc.*", ""),
             # undefined compiler will be treat it as gcc
-            ("cc_is_nocc",     ""),
+            ("cc_is_nocc",     "", ""),
         )
         detect_args = (
-           ("cc_has_debug",  ".*(O0|Od|ggdb|coverage|debug:full).*"),
-           ("cc_has_native", ".*(-march=native|-xHost|/QxHost).*"),
+           ("cc_has_debug",  ".*(O0|Od|ggdb|coverage|debug:full).*", ""),
+           ("cc_has_native", ".*(-march=native|-xHost|/QxHost).*", ""),
            # in case if the class run with -DNPY_DISABLE_OPTIMIZATION
-           ("cc_noopt", ".*DISABLE_OPT.*"),
+           ("cc_noopt", ".*DISABLE_OPT.*", ""),
         )
 
         dist_info = self.dist_info()
         platform, compiler_info, extra_args = dist_info
         # set False to all attrs
         for section in (detect_arch, detect_compiler, detect_args):
-            for attr, rgex in section:
+            for attr, rgex, cexpr in section:
                 setattr(self, attr, False)
 
         for detect, searchin in ((detect_arch, platform), (detect_compiler, compiler_info)):
-            for attr, rgex in detect:
+            for attr, rgex, cexpr in detect:
                 if rgex and not re.match(rgex, searchin, re.IGNORECASE):
+                    continue
+                if cexpr and not self.cc_test_cexpr(cexpr):
                     continue
                 setattr(self, attr, True)
                 break
 
-        for attr, rgex in detect_args:
+        for attr, rgex, cexpr in detect_args:
             if rgex and not re.match(rgex, extra_args, re.IGNORECASE):
+                continue
+            if cexpr and not self.cc_test_cexpr(cexpr):
                 continue
             setattr(self, attr, True)
 
@@ -1066,6 +1072,25 @@ class _CCompiler:
         assert(isinstance(flags, list))
         self.dist_log("testing flags", flags)
         test_path = os.path.join(self.conf_check_path, "test_flags.c")
+        test = self.dist_test(test_path, flags)
+        if not test:
+            self.dist_log("testing failed", stderr=True)
+        return test
+
+    @_Cache.me
+    def cc_test_cexpr(self, cexpr, flags=[]):
+        """
+        Same as the above but supports compile-time expressions.
+        """
+        self.dist_log("testing compiler expression", cexpr)
+        test_path = os.path.join(self.conf_tmp_path, "npy_dist_test_cexpr.c")
+        with open(test_path, "w") as fd:
+            fd.write(textwrap.dedent(f"""\
+               #if !({cexpr})
+                   #error "unsupported expression"
+               #endif
+               int dummy;
+            """))
         test = self.dist_test(test_path, flags)
         if not test:
             self.dist_log("testing failed", stderr=True)
