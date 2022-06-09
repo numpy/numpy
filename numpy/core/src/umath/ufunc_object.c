@@ -1023,7 +1023,8 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
             *promoting_pyscalars = NPY_TRUE;
         }
         else if (PyFloat_Check(obj)
-                && out_op_DTypes[i]->type_num == NPY_DOUBLE) {
+                && out_op_DTypes[i]->type_num == NPY_DOUBLE
+                && !PyArray_IsScalar(obj, Double)) {
             Py_INCREF(&PyArray_PyFloatAbstractDType);
             Py_SETREF(out_op_DTypes[i], &PyArray_PyFloatAbstractDType);
             ((PyArrayObject_fields *)out_op[i])->flags |= (
