@@ -821,7 +821,7 @@ def einsum_path(*operands, optimize='greedy', einsum_call=False):
     if path_type is None:
         path_type = False
 
-    path = None
+    explicit_einsum_path = False
     memory_limit = None
 
     # No optimization or a named path algorithm
@@ -830,8 +830,7 @@ def einsum_path(*operands, optimize='greedy', einsum_call=False):
 
     # Given an explicit path
     elif len(path_type) and (path_type[0] == 'einsum_path'):
-        path = path_type[1:]
-        path_type = 'einsum_path'
+        explicit_einsum_path = True
 
     # Path tuple with memory limit
     elif ((len(path_type) == 2) and isinstance(path_type[0], str) and
@@ -900,8 +899,8 @@ def einsum_path(*operands, optimize='greedy', einsum_call=False):
     naive_cost = _flop_count(indices, inner_product, len(input_list), dimension_dict)
 
     # Compute the path
-    if path is not None:
-        pass
+    if explicit_einsum_path:
+        path = path_type[1:]
     elif (
         (path_type is False)
         or (len(input_list) in [1, 2])
