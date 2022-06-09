@@ -783,7 +783,7 @@ static int min_scalar_type_num(char *valueptr, int type_num,
  */
 NPY_NO_EXPORT npy_bool
 can_cast_scalar_to(PyArray_Descr *scal_type, char *scal_data,
-        PyArray_Descr *to, NPY_CASTING casting)
+                    PyArray_Descr *to, NPY_CASTING casting)
 {
     /*
      * If the two dtypes are actually references to the same object
@@ -826,7 +826,7 @@ can_cast_scalar_to(PyArray_Descr *scal_type, char *scal_data,
     scal_type->f->copyswap(&value, scal_data, swap, NULL);
 
     type_num = min_scalar_type_num((char *)&value, scal_type->type_num,
-            &is_small_unsigned);
+                                    &is_small_unsigned);
 
     /*
      * If we've got a small unsigned scalar, and the 'to' type
