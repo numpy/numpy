@@ -1,7 +1,7 @@
 .. _NEP45:
 
 =================================
-NEP 45 — C Style Guide
+NEP 45 — C style guide
 =================================
 
 :Author: Charles Harris <charlesr.harris@gmail.com>
@@ -9,6 +9,8 @@ NEP 45 — C Style Guide
 :Type: Process
 :Created: 2012-02-26
 :Resolution: https://github.com/numpy/numpy/issues/11911
+
+.. highlight:: c
 
 Abstract
 --------
@@ -254,7 +256,7 @@ Discussion
 ----------
 
 https://github.com/numpy/numpy/issues/11911
-recommended that this proposal, which originated as ``doc/C_STYLE_GUIDE.rst.txt``,
+recommended that this proposal, which originated as ``doc/C_STYLE_GUIDE.rst``,
 be turned into an NEP.
 
 

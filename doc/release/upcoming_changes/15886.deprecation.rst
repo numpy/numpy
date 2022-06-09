@@ -1,7 +1,0 @@
-Passing ``shape=None`` to functions with a non-optional shape argument is deprecated
-------------------------------------------------------------------------------------
-Previously, this was an alias for passing ``shape=()``.
-This deprecation is emitted by `PyArray_IntpConverter` in the C API. If your
-API is intended to support passing `None`, then you should check for `None`
-prior to invoking the converter, so as to be able to distinguish `None` and
-``()``.

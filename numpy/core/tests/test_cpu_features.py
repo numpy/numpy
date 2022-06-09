@@ -1,9 +1,54 @@
 import sys, platform, re, pytest
-
-from numpy.testing import assert_equal
 from numpy.core._multiarray_umath import __cpu_features__
 
-class AbstractTest(object):
+def assert_features_equal(actual, desired, fname):
+    __tracebackhide__ = True  # Hide traceback for py.test
+    actual, desired = str(actual), str(desired)
+    if actual == desired:
+        return
+    detected = str(__cpu_features__).replace("'", "")
+    try:
+        with open("/proc/cpuinfo", "r") as fd:
+            cpuinfo = fd.read(2048)
+    except Exception as err:
+        cpuinfo = str(err)
+
+    try:
+        import subprocess
+        auxv = subprocess.check_output(['/bin/true'], env=dict(LD_SHOW_AUXV="1"))
+        auxv = auxv.decode()
+    except Exception as err:
+        auxv = str(err)
+
+    import textwrap
+    error_report = textwrap.indent(
+"""
+###########################################
+### Extra debugging information
+###########################################
+-------------------------------------------
+--- NumPy Detections
+-------------------------------------------
+%s
+-------------------------------------------
+--- SYS / CPUINFO
+-------------------------------------------
+%s....
+-------------------------------------------
+--- SYS / AUXV
+-------------------------------------------
+%s
+""" % (detected, cpuinfo, auxv), prefix='\r')
+
+    raise AssertionError((
+        "Failure Detection\n"
+        " NAME: '%s'\n"
+        " ACTUAL: %s\n"
+        " DESIRED: %s\n"
+        "%s"
+    ) % (fname, actual, desired, error_report))
+
+class AbstractTest:
     features = []
     features_groups = {}
     features_map = {}
@@ -12,17 +57,16 @@ class AbstractTest(object):
     def load_flags(self):
         # a hook
         pass
-
     def test_features(self):
         self.load_flags()
         for gname, features in self.features_groups.items():
             test_features = [self.cpu_have(f) for f in features]
-            assert_equal(__cpu_features__.get(gname), all(test_features))
+            assert_features_equal(__cpu_features__.get(gname), all(test_features), gname)
 
         for feature_name in self.features:
             cpu_have = self.cpu_have(feature_name)
             npy_have = __cpu_features__.get(feature_name)
-            assert_equal(npy_have, cpu_have)
+            assert_features_equal(npy_have, cpu_have, feature_name)
 
     def cpu_have(self, feature_name):
         map_names = self.features_map.get(feature_name, feature_name)
@@ -60,9 +104,12 @@ class AbstractTest(object):
                 )
 
 is_linux = sys.platform.startswith('linux')
+is_cygwin = sys.platform.startswith('cygwin')
 machine  = platform.machine()
 is_x86   = re.match("^(amd64|x86|i386|i686)", machine, re.IGNORECASE)
-@pytest.mark.skipif(not is_linux or not is_x86, reason="Only for Linux and x86")
+@pytest.mark.skipif(
+    not (is_linux or is_cygwin) or not is_x86, reason="Only for Linux and x86"
+)
 class Test_X86_Features(AbstractTest):
     features = [
         "MMX", "SSE", "SSE2", "SSE3", "SSSE3", "SSE41", "POPCNT", "SSE42",
@@ -93,11 +140,22 @@ class Test_X86_Features(AbstractTest):
 is_power = re.match("^(powerpc|ppc)64", machine, re.IGNORECASE)
 @pytest.mark.skipif(not is_linux or not is_power, reason="Only for Linux and Power")
 class Test_POWER_Features(AbstractTest):
-    features = ["VSX", "VSX2", "VSX3"]
-    features_map = dict(VSX2="ARCH_2_07", VSX3="ARCH_3_00")
+    features = ["VSX", "VSX2", "VSX3", "VSX4"]
+    features_map = dict(VSX2="ARCH_2_07", VSX3="ARCH_3_00", VSX4="ARCH_3_1")
 
     def load_flags(self):
         self.load_flags_auxv()
+
+
+is_zarch = re.match("^(s390x)", machine, re.IGNORECASE)
+@pytest.mark.skipif(not is_linux or not is_zarch,
+                    reason="Only for Linux and IBM Z")
+class Test_ZARCH_Features(AbstractTest):
+    features = ["VX", "VXE", "VXE2"]
+
+    def load_flags(self):
+        self.load_flags_auxv()
+
 
 is_arm = re.match("^(arm|aarch64)", machine, re.IGNORECASE)
 @pytest.mark.skipif(not is_linux or not is_arm, reason="Only for Linux and ARM")

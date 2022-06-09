@@ -7,14 +7,13 @@
  *
  * See LICENSE.txt for the license.
  */
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#define _MULTIARRAYMODULE
 
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
-#define NPY_NO_DEPRECATED_API NPY_API_VERSION
-#define _MULTIARRAYMODULE
 #include <numpy/ndarraytypes.h>
-
 #include "npy_config.h"
 #include "npy_pycompat.h"
 
@@ -65,19 +64,22 @@ broadcast_strides(int ndim, npy_intp const *shape,
     return 0;
 
 broadcast_error: {
-        PyObject *errmsg;
+        PyObject *shape1 = convert_shape_to_string(strides_ndim,
+                                                   strides_shape, "");
+        if (shape1 == NULL) {
+            return -1;
+        }
 
-        errmsg = PyUString_FromFormat("could not broadcast %s from shape ",
-                                strides_name);
-        PyUString_ConcatAndDel(&errmsg,
-                build_shape_string(strides_ndim, strides_shape));
-        PyUString_ConcatAndDel(&errmsg,
-                PyUString_FromString(" into shape "));
-        PyUString_ConcatAndDel(&errmsg,
-                build_shape_string(ndim, shape));
-        PyErr_SetObject(PyExc_ValueError, errmsg);
-        Py_DECREF(errmsg);
-
+        PyObject *shape2 = convert_shape_to_string(ndim, shape, "");
+        if (shape2 == NULL) {
+            Py_DECREF(shape1);
+            return -1;
+        }
+        PyErr_Format(PyExc_ValueError,
+                "could not broadcast %s from shape %S into shape %S",
+                strides_name, shape1, shape2);
+        Py_DECREF(shape1);
+        Py_DECREF(shape2);
         return -1;
     }
 }
@@ -108,7 +110,6 @@ raw_array_is_aligned(int ndim, npy_intp const *shape,
         int i;
 
         for (i = 0; i < ndim; i++) {
-#if NPY_RELAXED_STRIDES_CHECKING
             /* skip dim == 1 as it is not required to have stride 0 */
             if (shape[i] > 1) {
                 /* if shape[i] == 1, the stride is never used */
@@ -118,9 +119,6 @@ raw_array_is_aligned(int ndim, npy_intp const *shape,
                 /* an array with zero elements is always aligned */
                 return 1;
             }
-#else /* not NPY_RELAXED_STRIDES_CHECKING */
-            align_check |= (npy_uintp)strides[i];
-#endif /* not NPY_RELAXED_STRIDES_CHECKING */
         }
 
         return npy_is_aligned((void *)align_check, alignment);

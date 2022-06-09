@@ -40,12 +40,6 @@ HASH_FILE = 'cythonize.dat'
 DEFAULT_ROOT = 'numpy'
 VENDOR = 'NumPy'
 
-# WindowsError is not defined on unix systems
-try:
-    WindowsError
-except NameError:
-    WindowsError = None
-
 #
 # Rules
 #
@@ -54,28 +48,8 @@ def process_pyx(fromfile, tofile):
     if tofile.endswith('.cxx'):
         flags.append('--cplus')
 
-    try:
-        # try the cython in the installed python first (somewhat related to scipy/scipy#2397)
-        from Cython.Compiler.Version import version as cython_version
-    except ImportError:
-        # The `cython` command need not point to the version installed in the
-        # Python running this script, so raise an error to avoid the chance of
-        # using the wrong version of Cython.
-        raise OSError('Cython needs to be installed in Python as a module')
-    else:
-        # check the version, and invoke through python
-        from distutils.version import LooseVersion
-
-        # Cython 0.29.14 is required for Python 3.8 and there are
-        # other fixes in the 0.29 series that are needed even for earlier
-        # Python versions.
-        # Note: keep in sync with that in pyproject.toml
-        required_version = LooseVersion('0.29.14')
-
-        if LooseVersion(cython_version) < required_version:
-            raise RuntimeError(f'Building {VENDOR} requires Cython >= {required_version}')
-        subprocess.check_call(
-            [sys.executable, '-m', 'cython'] + flags + ["-o", tofile, fromfile])
+    subprocess.check_call(
+        [sys.executable, '-m', 'cython'] + flags + ["-o", tofile, fromfile])
 
 
 def process_tempita_pyx(fromfile, tofile):
@@ -136,7 +110,7 @@ rules = {
 # Hash db
 #
 def load_hashes(filename):
-    # Return { filename : (sha1 of input, sha1 of output) }
+    # Return { filename : (sha256 of input, sha256 of output) }
     if os.path.isfile(filename):
         hashes = {}
         with open(filename, 'r') as f:
@@ -152,8 +126,8 @@ def save_hashes(hash_db, filename):
         for key, value in sorted(hash_db.items()):
             f.write("%s %s %s\n" % (key, value[0], value[1]))
 
-def sha1_of_file(filename):
-    h = hashlib.sha1()
+def sha256_of_file(filename):
+    h = hashlib.sha256()
     with open(filename, "rb") as f:
         h.update(f.read())
     return h.hexdigest()
@@ -169,8 +143,8 @@ def normpath(path):
     return path
 
 def get_hash(frompath, topath):
-    from_hash = sha1_of_file(frompath)
-    to_hash = sha1_of_file(topath) if os.path.exists(topath) else None
+    from_hash = sha256_of_file(frompath)
+    to_hash = sha256_of_file(topath) if os.path.exists(topath) else None
     return (from_hash, to_hash)
 
 def process(path, fromfile, tofile, processor_function, hash_db):

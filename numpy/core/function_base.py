@@ -34,6 +34,11 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
     .. versionchanged:: 1.16.0
         Non-scalar `start` and `stop` are now supported.
 
+    .. versionchanged:: 1.20.0
+        Values are rounded towards ``-inf`` instead of ``0`` when an
+        integer ``dtype`` is specified. The old behavior can
+        still be obtained with ``np.linspace(start, stop, num).astype(int)``
+
     Parameters
     ----------
     start : array_like
@@ -161,6 +166,9 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
     if axis != 0:
         y = _nx.moveaxis(y, 0, axis)
 
+    if _nx.issubdtype(dtype, _nx.integer):
+        _nx.floor(y, out=y)
+
     if retstep:
         return y.astype(dtype, copy=False), step
     else:
@@ -199,7 +207,7 @@ def logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None,
     endpoint : boolean, optional
         If true, `stop` is the last sample. Otherwise, it is not included.
         Default is True.
-    base : float, optional
+    base : array_like, optional
         The base of the log space. The step size between the elements in
         ``ln(samples) / ln(base)`` (or ``log_base(samples)``) is uniform.
         Default is 10.0.
@@ -363,7 +371,7 @@ def geomspace(start, stop, num=50, endpoint=True, dtype=None, axis=0):
             6.12323400e-17+1.00000000e+00j,  7.07106781e-01+7.07106781e-01j,
             1.00000000e+00+0.00000000e+00j])
 
-    Graphical illustration of ``endpoint`` parameter:
+    Graphical illustration of `endpoint` parameter:
 
     >>> import matplotlib.pyplot as plt
     >>> N = 10

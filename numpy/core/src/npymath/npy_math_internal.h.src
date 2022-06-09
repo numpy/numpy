@@ -54,6 +54,32 @@
  * ====================================================
  */
 #include "npy_math_private.h"
+#ifdef _MSC_VER
+#  include <intrin.h>   // for __popcnt
+#endif
+
+/* Magic binary numbers used by bit_count
+ * For type T, the magic numbers are computed as follows:
+ * Magic[0]: 01 01 01 01 01 01... = (T)~(T)0/3
+ * Magic[1]: 0011 0011 0011...    = (T)~(T)0/15  * 3
+ * Magic[2]: 00001111 00001111... = (T)~(T)0/255 * 15
+ * Magic[3]: 00000001 00000001... = (T)~(T)0/255
+ *
+ * Counting bits set, in parallel
+ * Based on: http://graphics.stanford.edu/~seander/bithacks.html#CountBitsSetParallel
+ *
+ * Generic Algorithm for type T:
+ * a = a - ((a >> 1) & (T)~(T)0/3);
+ * a = (a & (T)~(T)0/15*3) + ((a >> 2) & (T)~(T)0/15*3);
+ * a = (a + (a >> 4)) & (T)~(T)0/255*15;
+ * c = (T)(a * ((T)~(T)0/255)) >> (sizeof(T) - 1) * CHAR_BIT;
+*/
+
+static const npy_uint8  MAGIC8[]  = {0x55u,                 0x33u,                 0x0Fu,                 0x01u};
+static const npy_uint16 MAGIC16[] = {0x5555u,               0x3333u,               0x0F0Fu,               0x0101u};
+static const npy_uint32 MAGIC32[] = {0x55555555ul,          0x33333333ul,          0x0F0F0F0Ful,          0x01010101ul};
+static const npy_uint64 MAGIC64[] = {0x5555555555555555ull, 0x3333333333333333ull, 0x0F0F0F0F0F0F0F0Full, 0x0101010101010101ull};
+
 
 /*
  *****************************************************************************
@@ -454,23 +480,48 @@ NPY_INPLACE @type@ npy_frexp@c@(@type@ x, int* exp)
 
 /**begin repeat
  * #type = npy_longdouble, npy_double, npy_float#
+ * #TYPE = LONGDOUBLE, DOUBLE, FLOAT#
  * #c = l,,f#
  * #C = L,,F#
  */
+#undef NPY__FP_SFX
+#if NPY_SIZEOF_@TYPE@ == NPY_SIZEOF_DOUBLE
+    #define NPY__FP_SFX(X) X
+#else
+    #define NPY__FP_SFX(X) NPY_CAT(X, @c@)
+#endif
+/*
+ * On arm64 macOS, there's a bug with sin, cos, and tan where they don't
+ * raise "invalid" when given INFINITY as input.
+ */
+#if defined(__APPLE__) && defined(__arm64__)
+#define WORKAROUND_APPLE_TRIG_BUG 1
+#else
+#define WORKAROUND_APPLE_TRIG_BUG 0
+#endif
+
 /**begin repeat1
  * #kind = sin,cos,tan,sinh,cosh,tanh,fabs,floor,ceil,rint,trunc,sqrt,log10,
  *         log,exp,expm1,asin,acos,atan,asinh,acosh,atanh,log1p,exp2,log2#
  * #KIND = SIN,COS,TAN,SINH,COSH,TANH,FABS,FLOOR,CEIL,RINT,TRUNC,SQRT,LOG10,
  *         LOG,EXP,EXPM1,ASIN,ACOS,ATAN,ASINH,ACOSH,ATANH,LOG1P,EXP2,LOG2#
+ * #TRIG_WORKAROUND = WORKAROUND_APPLE_TRIG_BUG*3, 0*22#
  */
 #ifdef HAVE_@KIND@@C@
 NPY_INPLACE @type@ npy_@kind@@c@(@type@ x)
 {
-    return @kind@@c@(x);
+#if @TRIG_WORKAROUND@
+    if (!npy_isfinite(x)) {
+        return (x - x);
+    }
+#endif
+    return NPY__FP_SFX(@kind@)(x);
 }
 #endif
 
 /**end repeat1**/
+
+#undef WORKAROUND_APPLE_TRIG_BUG
 
 /**begin repeat1
  * #kind = atan2,hypot,pow,fmod,copysign#
@@ -479,7 +530,7 @@ NPY_INPLACE @type@ npy_@kind@@c@(@type@ x)
 #ifdef HAVE_@KIND@@C@
 NPY_INPLACE @type@ npy_@kind@@c@(@type@ x, @type@ y)
 {
-    return @kind@@c@(x, y);
+    return NPY__FP_SFX(@kind@)(x, y);
 }
 #endif
 /**end repeat1**/
@@ -487,21 +538,21 @@ NPY_INPLACE @type@ npy_@kind@@c@(@type@ x, @type@ y)
 #ifdef HAVE_MODF@C@
 NPY_INPLACE @type@ npy_modf@c@(@type@ x, @type@ *iptr)
 {
-    return modf@c@(x, iptr);
+    return NPY__FP_SFX(modf)(x, iptr);
 }
 #endif
 
 #ifdef HAVE_LDEXP@C@
 NPY_INPLACE @type@ npy_ldexp@c@(@type@ x, int exp)
 {
-    return ldexp@c@(x, exp);
+    return NPY__FP_SFX(ldexp)(x, exp);
 }
 #endif
 
 #ifdef HAVE_FREXP@C@
 NPY_INPLACE @type@ npy_frexp@c@(@type@ x, int* exp)
 {
-    return frexp@c@(x, exp);
+    return NPY__FP_SFX(frexp)(x, exp);
 }
 #endif
 
@@ -524,10 +575,10 @@ NPY_INPLACE @type@ npy_cbrt@c@(@type@ x)
 #else
 NPY_INPLACE @type@ npy_cbrt@c@(@type@ x)
 {
-    return cbrt@c@(x);
+    return NPY__FP_SFX(cbrt)(x);
 }
 #endif
-
+#undef NPY__FP_SFX
 /**end repeat**/
 
 
@@ -537,10 +588,16 @@ NPY_INPLACE @type@ npy_cbrt@c@(@type@ x)
 
 /**begin repeat
  * #type = npy_float, npy_double, npy_longdouble#
+ * #TYPE = FLOAT, DOUBLE, LONGDOUBLE#
  * #c = f, ,l#
  * #C = F, ,L#
  */
-
+#undef NPY__FP_SFX
+#if NPY_SIZEOF_@TYPE@ == NPY_SIZEOF_DOUBLE
+    #define NPY__FP_SFX(X) X
+#else
+    #define NPY__FP_SFX(X) NPY_CAT(X, @c@)
+#endif
 @type@ npy_heaviside@c@(@type@ x, @type@ h0)
 {
     if (npy_isnan(x)) {
@@ -557,10 +614,10 @@ NPY_INPLACE @type@ npy_cbrt@c@(@type@ x)
     }
 }
 
-#define LOGE2    NPY_LOGE2@c@
-#define LOG2E    NPY_LOG2E@c@
-#define RAD2DEG  (180.0@c@/NPY_PI@c@)
-#define DEG2RAD  (NPY_PI@c@/180.0@c@)
+#define LOGE2    NPY__FP_SFX(NPY_LOGE2)
+#define LOG2E    NPY__FP_SFX(NPY_LOG2E)
+#define RAD2DEG  (NPY__FP_SFX(180.0)/NPY__FP_SFX(NPY_PI))
+#define DEG2RAD  (NPY__FP_SFX(NPY_PI)/NPY__FP_SFX(180.0))
 
 NPY_INPLACE @type@ npy_rad2deg@c@(@type@ x)
 {
@@ -625,6 +682,45 @@ NPY_INPLACE @type@ npy_logaddexp2@c@(@type@ x, @type@ y)
 }
 
 /*
+ * Wrapper function for remainder edge cases
+ * Internally calls npy_divmod*
+ */
+NPY_INPLACE @type@
+npy_remainder@c@(@type@ a, @type@ b)
+{
+    @type@ mod;
+    if (NPY_UNLIKELY(!b)) {
+        /*
+         * in2 == 0 (and not NaN): normal fmod will give the correct
+         * result (always NaN). `divmod` may set additional FPE for the
+         * division by zero creating an inf.
+         */
+        mod = npy_fmod@c@(a, b);
+    }
+    else {
+        npy_divmod@c@(a, b, &mod);
+    }
+    return mod;
+}
+
+NPY_INPLACE @type@
+npy_floor_divide@c@(@type@ a, @type@ b) {
+    @type@ div, mod;
+    if (NPY_UNLIKELY(!b)) {
+        /*
+         * in2 == 0 (and not NaN): normal division will give the correct
+         * result (Inf or NaN). `divmod` may set additional FPE for the modulo
+         * evaluating to NaN.
+         */
+        div = a / b;
+    }
+    else {
+        div = npy_divmod@c@(a, b, &mod);
+    }
+    return div;
+}
+
+/*
  * Python version of divmod.
  *
  * The implementation is mostly copied from cpython 3.5.
@@ -635,11 +731,10 @@ npy_divmod@c@(@type@ a, @type@ b, @type@ *modulus)
     @type@ div, mod, floordiv;
 
     mod = npy_fmod@c@(a, b);
-
-    if (!b) {
-        /* If b == 0, return result of fmod. For IEEE is nan */
+    if (NPY_UNLIKELY(!b)) {
+        /* b == 0 (not NaN): return result of fmod. For IEEE is nan */
         *modulus = mod;
-        return mod;
+        return a / b;
     }
 
     /* a - mod should be very nearly an integer multiple of b */
@@ -647,7 +742,7 @@ npy_divmod@c@(@type@ a, @type@ b, @type@ *modulus)
 
     /* adjust fmod result to conform to Python convention of remainder */
     if (mod) {
-        if ((b < 0) != (mod < 0)) {
+        if (isless(b, 0) != isless(mod, 0)) {
             mod += b;
             div -= 1.0@c@;
         }
@@ -660,7 +755,7 @@ npy_divmod@c@(@type@ a, @type@ b, @type@ *modulus)
     /* snap quotient to nearest integral value */
     if (div) {
         floordiv = npy_floor@c@(div);
-        if (div - floordiv > 0.5@c@)
+        if (isgreater(div - floordiv, 0.5@c@))
             floordiv += 1.0@c@;
     }
     else {
@@ -676,7 +771,7 @@ npy_divmod@c@(@type@ a, @type@ b, @type@ *modulus)
 #undef LOG2E
 #undef RAD2DEG
 #undef DEG2RAD
-
+#undef NPY__FP_SFX
 /**end repeat**/
 
 /**begin repeat
@@ -756,4 +851,67 @@ npy_rshift@u@@c@(npy_@u@@type@ a, npy_@u@@type@ b)
     }
 }
 /**end repeat1**/
+/**end repeat**/
+
+
+#define __popcnt32 __popcnt
+/**begin repeat
+ *
+ * #type  = ubyte, ushort, uint, ulong, ulonglong#
+ * #STYPE = BYTE,  SHORT,  INT,  LONG,  LONGLONG#
+ * #c     = hh,    h,      ,     l,     ll#
+ */
+#undef TO_BITS_LEN
+#if 0
+/**begin repeat1
+ * #len = 8, 16, 32, 64#
+ */
+#elif NPY_BITSOF_@STYPE@ == @len@
+    #define TO_BITS_LEN(X) X##@len@
+/**end repeat1**/
+#endif
+
+
+NPY_INPLACE uint8_t
+npy_popcount_parallel@c@(npy_@type@ a)
+{
+    a = a - ((a >> 1) & (npy_@type@) TO_BITS_LEN(MAGIC)[0]);
+    a = ((a & (npy_@type@) TO_BITS_LEN(MAGIC)[1])) + ((a >> 2) & (npy_@type@) TO_BITS_LEN(MAGIC)[1]);
+    a = (a + (a >> 4)) & (npy_@type@) TO_BITS_LEN(MAGIC)[2];
+    return (npy_@type@) (a * (npy_@type@) TO_BITS_LEN(MAGIC)[3]) >> ((NPY_SIZEOF_@STYPE@ - 1) * CHAR_BIT);
+}
+
+NPY_INPLACE uint8_t
+npy_popcountu@c@(npy_@type@ a)
+{
+/* use built-in popcount if present, else use our implementation */
+#if (defined(__clang__) || defined(__GNUC__)) && NPY_BITSOF_@STYPE@ >= 32
+    return __builtin_popcount@c@(a);
+#elif defined(_MSC_VER) && NPY_BITSOF_@STYPE@ >= 16 && !defined(_M_ARM64) && !defined(_M_ARM)
+    /* no builtin __popcnt64 for 32 bits */
+    #if defined(_WIN64) || (defined(_WIN32) && NPY_BITSOF_@STYPE@ != 64)
+        return TO_BITS_LEN(__popcnt)(a);
+    /* split 64 bit number into two 32 bit ints and return sum of counts */
+    #elif (defined(_WIN32) && NPY_BITSOF_@STYPE@ == 64)
+        npy_uint32 left  = (npy_uint32) (a>>32);
+        npy_uint32 right = (npy_uint32) a;
+        return __popcnt32(left) + __popcnt32(right);
+    #endif
+#else
+    return npy_popcount_parallel@c@(a);
+#endif
+}
+/**end repeat**/
+
+/**begin repeat
+ *
+ * #type = byte, short, int, long, longlong#
+ * #c    = hh,   h,     ,    l,    ll#
+ */
+NPY_INPLACE uint8_t
+npy_popcount@c@(npy_@type@ a)
+{
+    /* Return popcount of abs(a) */
+    return npy_popcountu@c@(a < 0 ? -a : a);
+}
 /**end repeat**/

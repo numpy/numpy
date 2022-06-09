@@ -1,11 +1,11 @@
-#ifndef _NPY_PRIVATE_COMMON_H_
-#define _NPY_PRIVATE_COMMON_H_
-#include "structmember.h"
-#include <numpy/npy_common.h>
-#include <numpy/npy_cpu.h>
-#include <numpy/ndarraytypes.h>
-#include <limits.h>
+#ifndef NUMPY_CORE_SRC_MULTIARRAY_COMMON_H_
+#define NUMPY_CORE_SRC_MULTIARRAY_COMMON_H_
+
+#include <structmember.h>
+#include "numpy/npy_common.h"
+#include "numpy/ndarraytypes.h"
 #include "npy_import.h"
+#include <limits.h>
 
 #define error_converting(x)  (((x) == -1) && PyErr_Occurred())
 
@@ -19,6 +19,11 @@
 #else
 #define NPY_BEGIN_THREADS_NDITER(iter)
 #endif
+
+
+NPY_NO_EXPORT PyArray_Descr *
+PyArray_DTypeFromObjectStringDiscovery(
+        PyObject *obj, PyArray_Descr *last_dtype, int string_type);
 
 /*
  * Recursively examines the object to determine an appropriate dtype
@@ -38,9 +43,6 @@ NPY_NO_EXPORT int
 PyArray_DTypeFromObject(PyObject *obj, int maxdims,
                         PyArray_Descr **out_dtype);
 
-NPY_NO_EXPORT int
-PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
-                              PyArray_Descr **out_dtype, int string_status);
 
 /*
  * Returns NULL without setting an exception if no scalar is matched, a
@@ -48,12 +50,6 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
  */
 NPY_NO_EXPORT PyArray_Descr *
 _array_find_python_scalar_type(PyObject *op);
-
-NPY_NO_EXPORT PyArray_Descr *
-_array_typedescr_fromstr(char const *str);
-
-NPY_NO_EXPORT char *
-index2ptr(PyArrayObject *mp, npy_intp i);
 
 NPY_NO_EXPORT int
 _zerofill(PyArrayObject *ret);
@@ -205,7 +201,7 @@ npy_is_aligned(const void * p, const npy_uintp alignment)
 }
 
 /* Get equivalent "uint" alignment given an itemsize, for use in copy code */
-static NPY_INLINE int
+static NPY_INLINE npy_uintp
 npy_uint_alignment(int itemsize)
 {
     npy_uintp alignment = 0; /* return value of 0 means unaligned */
@@ -243,6 +239,15 @@ npy_uint_alignment(int itemsize)
  * compared to memchr it returns one stride past end instead of NULL if needle
  * is not found.
  */
+#ifdef __clang__
+    /*
+     * The code below currently makes use of !NPY_ALIGNMENT_REQUIRED, which
+     * should be OK but causes the clang sanitizer to warn.  It may make
+     * sense to modify the code to avoid this "unaligned" access but
+     * it would be good to carefully check the performance changes.
+     */
+    __attribute__((no_sanitize("alignment")))
+#endif
 static NPY_INLINE char *
 npy_memchr(char * haystack, char needle,
            npy_intp stride, npy_intp size, npy_intp * psubloopsize, int invert)
@@ -263,7 +268,7 @@ npy_memchr(char * haystack, char needle,
     }
     else {
         /* usually find elements to skip path */
-        if (NPY_CPU_HAVE_UNALIGNED_ACCESS && needle == 0 && stride == 1) {
+        if (!NPY_ALIGNMENT_REQUIRED && needle == 0 && stride == 1) {
             /* iterate until last multiple of 4 */
             char * block_end = haystack + size - (size % sizeof(unsigned int));
             while (p < block_end) {
@@ -287,42 +292,33 @@ npy_memchr(char * haystack, char needle,
     return p;
 }
 
-/*
- * Convert NumPy stride to BLAS stride. Returns 0 if conversion cannot be done
- * (BLAS won't handle negative or zero strides the way we want).
- */
-static NPY_INLINE int
-blas_stride(npy_intp stride, unsigned itemsize)
-{
-    /*
-     * Should probably check pointer alignment also, but this may cause
-     * problems if we require complex to be 16 byte aligned.
-     */
-    if (stride > 0 && npy_is_aligned((void *)stride, itemsize)) {
-        stride /= itemsize;
-#ifndef HAVE_BLAS_ILP64
-        if (stride <= INT_MAX) {
-#else
-        if (stride <= NPY_MAX_INT64) {
-#endif
-            return stride;
-        }
-    }
-    return 0;
-}
 
 /*
- * Define a chunksize for CBLAS. CBLAS counts in integers.
+ * Simple helper to create a tuple from an array of items. The `make_null_none`
+ * flag means that NULL entries are replaced with None, which is occasionally
+ * useful.
  */
-#if NPY_MAX_INTP > INT_MAX
-# ifndef HAVE_BLAS_ILP64
-#  define NPY_CBLAS_CHUNK  (INT_MAX / 2 + 1)
-# else
-#  define NPY_CBLAS_CHUNK  (NPY_MAX_INT64 / 2 + 1)
-# endif
-#else
-# define NPY_CBLAS_CHUNK  NPY_MAX_INTP
-#endif
+static NPY_INLINE PyObject *
+PyArray_TupleFromItems(int n, PyObject *const *items, int make_null_none)
+{
+    PyObject *tuple = PyTuple_New(n);
+    if (tuple == NULL) {
+        return NULL;
+    }
+    for (int i = 0; i < n; i ++) {
+        PyObject *tmp;
+        if (!make_null_none || items[i] != NULL) {
+            tmp = items[i];
+        }
+        else {
+            tmp = Py_None;
+        }
+        Py_INCREF(tmp);
+        PyTuple_SET_ITEM(tuple, i, tmp);
+    }
+    return tuple;
+}
+
 
 #include "ucsnarrow.h"
 
@@ -348,5 +344,4 @@ new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject* out,
  */
 #define NPY_ITER_REDUCTION_AXIS(axis) (axis + (1 << (NPY_BITSOF_INT - 2)))
 
-#endif
-
+#endif  /* NUMPY_CORE_SRC_MULTIARRAY_COMMON_H_ */

@@ -102,10 +102,10 @@ class TestDataSourceOpen:
 
     def test_InvalidHTTP(self):
         url = invalid_httpurl()
-        assert_raises(IOError, self.ds.open, url)
+        assert_raises(OSError, self.ds.open, url)
         try:
             self.ds.open(url)
-        except IOError as e:
+        except OSError as e:
             # Regression test for bug fixed in r4342.
             assert_(e.errno is None)
 
@@ -120,7 +120,7 @@ class TestDataSourceOpen:
 
     def test_InvalidFile(self):
         invalid_file = invalid_textfile(self.tmpdir)
-        assert_raises(IOError, self.ds.open, invalid_file)
+        assert_raises(OSError, self.ds.open, invalid_file)
 
     def test_ValidGzipFile(self):
         try:

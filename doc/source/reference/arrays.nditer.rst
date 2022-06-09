@@ -1,14 +1,18 @@
 .. currentmodule:: numpy
 
-.. for doctests
-   The last section on Cython is 'included' at the end of this file. The tests
-   for that section are disabled.
-
 .. _arrays.nditer:
 
 *********************
 Iterating Over Arrays
 *********************
+
+.. note::
+
+   Arrays support the iterator protocol and can be iterated over like Python
+   lists. See the :ref:`quickstart.indexing-slicing-and-iterating` section in
+   the Quickstart guide for basic usage and examples. The remainder of
+   this document presents the :class:`nditer` object and covers more 
+   advanced usage.
 
 The iterator object :class:`nditer`, introduced in NumPy 1.6, provides
 many flexible ways to visit all the elements of one or more arrays in
@@ -481,9 +485,9 @@ reasons.
 
     >>> b = np.zeros((3,))
     >>> square([1,2,3], out=b)
-    array([ 1.,  4.,  9.])
+    array([1.,  4.,  9.])
     >>> b
-    array([ 1.,  4.,  9.])
+    array([1.,  4.,  9.])
 
     >>> square(np.arange(6).reshape(2,3), out=b)
     Traceback (most recent call last):

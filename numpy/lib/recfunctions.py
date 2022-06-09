@@ -105,7 +105,8 @@ def _get_fieldspec(dtype):
 
 def get_names(adtype):
     """
-    Returns the field names of the input datatype as a tuple.
+    Returns the field names of the input datatype as a tuple. Input datatype
+    must have fields otherwise error is raised.
 
     Parameters
     ----------
@@ -115,15 +116,10 @@ def get_names(adtype):
     Examples
     --------
     >>> from numpy.lib import recfunctions as rfn
-    >>> rfn.get_names(np.empty((1,), dtype=int))
-    Traceback (most recent call last):
-        ...
-    AttributeError: 'numpy.ndarray' object has no attribute 'names'
-
-    >>> rfn.get_names(np.empty((1,), dtype=[('A',int), ('B', float)]))
-    Traceback (most recent call last):
-        ...
-    AttributeError: 'numpy.ndarray' object has no attribute 'names'
+    >>> rfn.get_names(np.empty((1,), dtype=[('A', int)]).dtype)
+    ('A',)
+    >>> rfn.get_names(np.empty((1,), dtype=[('A',int), ('B', float)]).dtype)
+    ('A', 'B')
     >>> adtype = np.dtype([('a', int), ('b', [('ba', int), ('bb', int)])])
     >>> rfn.get_names(adtype)
     ('a', ('b', ('ba', 'bb')))
@@ -141,8 +137,9 @@ def get_names(adtype):
 
 def get_names_flat(adtype):
     """
-    Returns the field names of the input datatype as a tuple. Nested structure
-    are flattened beforehand.
+    Returns the field names of the input datatype as a tuple. Input datatype
+    must have fields otherwise error is raised.
+    Nested structure are flattened beforehand.
 
     Parameters
     ----------
@@ -152,14 +149,10 @@ def get_names_flat(adtype):
     Examples
     --------
     >>> from numpy.lib import recfunctions as rfn
-    >>> rfn.get_names_flat(np.empty((1,), dtype=int)) is None
-    Traceback (most recent call last):
-        ...
-    AttributeError: 'numpy.ndarray' object has no attribute 'names'
-    >>> rfn.get_names_flat(np.empty((1,), dtype=[('A',int), ('B', float)]))
-    Traceback (most recent call last):
-        ...
-    AttributeError: 'numpy.ndarray' object has no attribute 'names'
+    >>> rfn.get_names_flat(np.empty((1,), dtype=[('A', int)]).dtype) is None
+    False
+    >>> rfn.get_names_flat(np.empty((1,), dtype=[('A',int), ('B', str)]).dtype)
+    ('A', 'B')
     >>> adtype = np.dtype([('a', int), ('b', [('ba', int), ('bb', int)])])
     >>> rfn.get_names_flat(adtype)
     ('a', 'b', 'ba', 'bb')
@@ -513,7 +506,7 @@ def drop_fields(base, drop_names, usemask=True, asrecarray=False):
 
     Nested fields are supported.
 
-    ..versionchanged: 1.18.0
+    .. versionchanged:: 1.18.0
         `drop_fields` returns an array with 0 fields if all fields are dropped,
         rather than returning ``None`` as it did previously.
 
@@ -784,7 +777,8 @@ def repack_fields(a, align=False, recurse=False):
 
     This method removes any overlaps and reorders the fields in memory so they
     have increasing byte offsets, and adds or removes padding bytes depending
-    on the `align` option, which behaves like the `align` option to `np.dtype`.
+    on the `align` option, which behaves like the `align` option to
+    `numpy.dtype`.
 
     If `align=False`, this method produces a "packed" memory layout in which
     each field starts at the byte the previous field ended, and any padding
@@ -819,7 +813,8 @@ def repack_fields(a, align=False, recurse=False):
     ...
     >>> dt = np.dtype('u1, <i8, <f8', align=True)
     >>> dt
-    dtype({'names':['f0','f1','f2'], 'formats':['u1','<i8','<f8'], 'offsets':[0,8,16], 'itemsize':24}, align=True)
+    dtype({'names': ['f0', 'f1', 'f2'], 'formats': ['u1', '<i8', '<f8'], \
+'offsets': [0, 8, 16], 'itemsize': 24}, align=True)
     >>> print_offsets(dt)
     offsets: [0, 8, 16]
     itemsize: 24
@@ -899,7 +894,7 @@ def _structured_to_unstructured_dispatcher(arr, dtype=None, copy=None,
 @array_function_dispatch(_structured_to_unstructured_dispatcher)
 def structured_to_unstructured(arr, dtype=None, copy=False, casting='unsafe'):
     """
-    Converts and n-D structured array into an (n+1)-D unstructured array.
+    Converts an n-D structured array into an (n+1)-D unstructured array.
 
     The new array will have a new last dimension equal in size to the
     number of field-elements of the input array. If not supplied, the output
@@ -916,11 +911,12 @@ def structured_to_unstructured(arr, dtype=None, copy=False, casting='unsafe'):
     dtype : dtype, optional
        The dtype of the output unstructured array.
     copy : bool, optional
-        See copy argument to `ndarray.astype`. If true, always return a copy.
-        If false, and `dtype` requirements are satisfied, a view is returned.
+        See copy argument to `numpy.ndarray.astype`. If true, always return a
+        copy. If false, and `dtype` requirements are satisfied, a view is
+        returned.
     casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
-        See casting argument of `ndarray.astype`. Controls what kind of data
-        casting may occur.
+        See casting argument of `numpy.ndarray.astype`. Controls what kind of
+        data casting may occur.
 
     Returns
     -------
@@ -996,7 +992,7 @@ def _unstructured_to_structured_dispatcher(arr, dtype=None, names=None,
 def unstructured_to_structured(arr, dtype=None, names=None, align=False,
                                copy=False, casting='unsafe'):
     """
-    Converts and n-D unstructured array into an (n-1)-D structured array.
+    Converts an n-D unstructured array into an (n-1)-D structured array.
 
     The last dimension of the input array is converted into a structure, with
     number of field-elements equal to the size of the last dimension of the
@@ -1019,11 +1015,12 @@ def unstructured_to_structured(arr, dtype=None, names=None, align=False,
     align : boolean, optional
        Whether to create an aligned memory layout.
     copy : bool, optional
-        See copy argument to `ndarray.astype`. If true, always return a copy.
-        If false, and `dtype` requirements are satisfied, a view is returned.
+        See copy argument to `numpy.ndarray.astype`. If true, always return a
+        copy. If false, and `dtype` requirements are satisfied, a view is
+        returned.
     casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
-        See casting argument of `ndarray.astype`. Controls what kind of data
-        casting may occur.
+        See casting argument of `numpy.ndarray.astype`. Controls what kind of
+        data casting may occur.
 
     Returns
     -------

@@ -1,5 +1,5 @@
-#ifndef _NPY_ARRAYSCALARS_H_
-#define _NPY_ARRAYSCALARS_H_
+#ifndef NUMPY_CORE_INCLUDE_NUMPY_ARRAYSCALARS_H_
+#define NUMPY_CORE_INCLUDE_NUMPY_ARRAYSCALARS_H_
 
 #ifndef _MULTIARRAYMODULE
 typedef struct {
@@ -134,8 +134,7 @@ typedef struct {
         char obval;
 } PyScalarObject;
 
-#define PyStringScalarObject PyStringObject
-#define PyStringScalarObject PyStringObject
+#define PyStringScalarObject PyBytesObject
 typedef struct {
         /* note that the PyObject_HEAD macro lives right here */
         PyUnicodeObject base;
@@ -150,6 +149,7 @@ typedef struct {
         PyArray_Descr *descr;
         int flags;
         PyObject *base;
+        void *_buffer_info;  /* private buffer info, tagged to allow warning */
 } PyVoidScalarObject;
 
 /* Macros
@@ -179,4 +179,4 @@ typedef struct {
 #define PyArrayScalar_ASSIGN(obj, cls, val) \
         PyArrayScalar_VAL(obj, cls) = val
 
-#endif
+#endif  /* NUMPY_CORE_INCLUDE_NUMPY_ARRAYSCALARS_H_ */

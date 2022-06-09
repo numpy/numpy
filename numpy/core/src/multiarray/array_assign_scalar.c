@@ -6,12 +6,12 @@
  *
  * See LICENSE.txt for the license.
  */
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#define _MULTIARRAYMODULE
 
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
-#define NPY_NO_DEPRECATED_API NPY_API_VERSION
-#define _MULTIARRAYMODULE
 #include <numpy/ndarraytypes.h>
 
 #include "npy_config.h"
@@ -23,6 +23,7 @@
 #include "lowlevel_strided_loops.h"
 
 #include "array_assign.h"
+#include "dtype_transfer.h"
 
 /*
  * Assigns the scalar value to every element of the destination raw array.
@@ -38,10 +39,7 @@ raw_array_assign_scalar(int ndim, npy_intp const *shape,
     npy_intp shape_it[NPY_MAXDIMS], dst_strides_it[NPY_MAXDIMS];
     npy_intp coord[NPY_MAXDIMS];
 
-    PyArray_StridedUnaryOp *stransfer = NULL;
-    NpyAuxData *transferdata = NULL;
     int aligned, needs_api = 0;
-    npy_intp src_itemsize = src_dtype->elsize;
 
     NPY_BEGIN_THREADS_DEF;
 
@@ -63,12 +61,12 @@ raw_array_assign_scalar(int ndim, npy_intp const *shape,
     }
 
     /* Get the function to do the casting */
+    NPY_cast_info cast_info;
     if (PyArray_GetDTypeTransferFunction(aligned,
                         0, dst_strides_it[0],
                         src_dtype, dst_dtype,
                         0,
-                        &stransfer, &transferdata,
-                        &needs_api) != NPY_SUCCEED) {
+                        &cast_info, &needs_api) != NPY_SUCCEED) {
         return -1;
     }
 
@@ -80,18 +78,25 @@ raw_array_assign_scalar(int ndim, npy_intp const *shape,
         NPY_BEGIN_THREADS_THRESHOLDED(nitems);
     }
 
+    npy_intp strides[2] = {0, dst_strides_it[0]};
+
     NPY_RAW_ITER_START(idim, ndim, coord, shape_it) {
         /* Process the innermost dimension */
-        stransfer(dst_data, dst_strides_it[0], src_data, 0,
-                    shape_it[0], src_itemsize, transferdata);
+        char *args[2] = {src_data, dst_data};
+        if (cast_info.func(&cast_info.context,
+                args, &shape_it[0], strides, cast_info.auxdata) < 0) {
+            goto fail;
+        }
     } NPY_RAW_ITER_ONE_NEXT(idim, ndim, coord,
                             shape_it, dst_data, dst_strides_it);
 
     NPY_END_THREADS;
-
-    NPY_AUXDATA_FREE(transferdata);
-
-    return (needs_api && PyErr_Occurred()) ? -1 : 0;
+    NPY_cast_info_xfree(&cast_info);
+    return 0;
+fail:
+    NPY_END_THREADS;
+    NPY_cast_info_xfree(&cast_info);
+    return -1;
 }
 
 /*
@@ -112,10 +117,7 @@ raw_array_wheremasked_assign_scalar(int ndim, npy_intp const *shape,
     npy_intp wheremask_strides_it[NPY_MAXDIMS];
     npy_intp coord[NPY_MAXDIMS];
 
-    PyArray_MaskedStridedUnaryOp *stransfer = NULL;
-    NpyAuxData *transferdata = NULL;
     int aligned, needs_api = 0;
-    npy_intp src_itemsize = src_dtype->elsize;
 
     NPY_BEGIN_THREADS_DEF;
 
@@ -139,12 +141,12 @@ raw_array_wheremasked_assign_scalar(int ndim, npy_intp const *shape,
     }
 
     /* Get the function to do the casting */
+    NPY_cast_info cast_info;
     if (PyArray_GetMaskedDTypeTransferFunction(aligned,
                         0, dst_strides_it[0], wheremask_strides_it[0],
                         src_dtype, dst_dtype, wheremask_dtype,
                         0,
-                        &stransfer, &transferdata,
-                        &needs_api) != NPY_SUCCEED) {
+                        &cast_info, &needs_api) != NPY_SUCCEED) {
         return -1;
     }
 
@@ -156,19 +158,26 @@ raw_array_wheremasked_assign_scalar(int ndim, npy_intp const *shape,
         NPY_BEGIN_THREADS_THRESHOLDED(nitems);
     }
 
+    npy_intp strides[2] = {0, dst_strides_it[0]};
+
     NPY_RAW_ITER_START(idim, ndim, coord, shape_it) {
         /* Process the innermost dimension */
-        stransfer(dst_data, dst_strides_it[0], src_data, 0,
-                    (npy_bool *)wheremask_data, wheremask_strides_it[0],
-                    shape_it[0], src_itemsize, transferdata);
+        PyArray_MaskedStridedUnaryOp *stransfer;
+        stransfer = (PyArray_MaskedStridedUnaryOp *)cast_info.func;
+
+        char *args[2] = {src_data, dst_data};
+        if (stransfer(&cast_info.context,
+                args, &shape_it[0], strides,
+                (npy_bool *)wheremask_data, wheremask_strides_it[0],
+                cast_info.auxdata) < 0) {
+            break;
+        }
     } NPY_RAW_ITER_TWO_NEXT(idim, ndim, coord, shape_it,
                             dst_data, dst_strides_it,
                             wheremask_data, wheremask_strides_it);
 
     NPY_END_THREADS;
-
-    NPY_AUXDATA_FREE(transferdata);
-
+    NPY_cast_info_xfree(&cast_info);
     return (needs_api && PyErr_Occurred()) ? -1 : 0;
 }
 

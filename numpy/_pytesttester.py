@@ -6,7 +6,7 @@ boiler plate for doing that is to put the following in the module
 ``__init__.py`` file::
 
     from numpy._pytesttester import PytestTester
-    test = PytestTester(__name__).test
+    test = PytestTester(__name__)
     del PytestTester
 
 
@@ -40,6 +40,9 @@ def _show_numpy_info():
     print("NumPy version %s" % np.__version__)
     relaxed_strides = np.ones((10, 1), order="C").flags.f_contiguous
     print("NumPy relaxed strides checking option:", relaxed_strides)
+    info = np.lib.utils._opt_info()
+    print("NumPy CPU features: ", (info if info else 'nothing enabled'))
+
 
 
 class PytestTester:
@@ -134,12 +137,19 @@ class PytestTester:
         # offset verbosity. The "-q" cancels a "-v".
         pytest_args += ["-q"]
 
-        # Filter out distutils cpu warnings (could be localized to
-        # distutils tests). ASV has problems with top level import,
-        # so fetch module for suppression here.
         with warnings.catch_warnings():
             warnings.simplefilter("always")
+            # Filter out distutils cpu warnings (could be localized to
+            # distutils tests). ASV has problems with top level import,
+            # so fetch module for suppression here.
             from numpy.distutils import cpuinfo
+
+        with warnings.catch_warnings(record=True):
+            # Ignore the warning from importing the array_api submodule. This
+            # warning is done on import, so it would break pytest collection,
+            # but importing it early here prevents the warning from being
+            # issued when it imported again.
+            import numpy.array_api
 
         # Filter out annoying import messages. Want these in both develop and
         # release mode.
@@ -186,7 +196,6 @@ class PytestTester:
             tests = [self.module_name]
 
         pytest_args += ["--pyargs"] + list(tests)
-
 
         # run tests.
         _show_numpy_info()

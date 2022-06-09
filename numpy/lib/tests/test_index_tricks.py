@@ -4,7 +4,6 @@ import numpy as np
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_almost_equal,
     assert_array_almost_equal, assert_raises, assert_raises_regex,
-    assert_warns
     )
 from numpy.lib.index_tricks import (
     mgrid, ogrid, ndenumerate, fill_diagonal, diag_indices, diag_indices_from,
@@ -16,23 +15,13 @@ class TestRavelUnravelIndex:
     def test_basic(self):
         assert_equal(np.unravel_index(2, (2, 2)), (1, 0))
 
-        # test backwards compatibility with older dims
-        # keyword argument; see Issue #10586
-        with assert_warns(DeprecationWarning):
-            # we should achieve the correct result
-            # AND raise the appropriate warning
-            # when using older "dims" kw argument
-            assert_equal(np.unravel_index(indices=2,
-                                          dims=(2, 2)),
-                                          (1, 0))
-
         # test that new shape argument works properly
         assert_equal(np.unravel_index(indices=2,
                                       shape=(2, 2)),
                                       (1, 0))
 
         # test that an invalid second keyword argument
-        # is properly handled
+        # is properly handled, including the old name `dims`.
         with assert_raises(TypeError):
             np.unravel_index(indices=2, hape=(2, 2))
 
@@ -41,6 +30,9 @@ class TestRavelUnravelIndex:
 
         with assert_raises(TypeError):
             np.unravel_index(254, ims=(17, 94))
+
+        with assert_raises(TypeError):
+            np.unravel_index(254, dims=(17, 94))
 
         assert_equal(np.ravel_multi_index((1, 0), (2, 2)), 2)
         assert_equal(np.unravel_index(254, (17, 94)), (2, 66))
@@ -249,6 +241,29 @@ class TestGrid:
         assert_equal(grid.size, expected[0])
         assert_equal(grid_small.size, expected[1])
 
+    def test_accepts_npfloating(self):
+        # regression test for #16466
+        grid64 = mgrid[0.1:0.33:0.1, ]
+        grid32 = mgrid[np.float32(0.1):np.float32(0.33):np.float32(0.1), ]
+        assert_(grid32.dtype == np.float64)
+        assert_array_almost_equal(grid64, grid32)
+
+        # different code path for single slice
+        grid64 = mgrid[0.1:0.33:0.1]
+        grid32 = mgrid[np.float32(0.1):np.float32(0.33):np.float32(0.1)]
+        assert_(grid32.dtype == np.float64)
+        assert_array_almost_equal(grid64, grid32)
+
+    def test_accepts_npcomplexfloating(self):
+        # Related to #16466
+        assert_array_almost_equal(
+            mgrid[0.1:0.3:3j, ], mgrid[0.1:0.3:np.complex64(3j), ]
+        )
+
+        # different code path for single slice
+        assert_array_almost_equal(
+            mgrid[0.1:0.3:3j], mgrid[0.1:0.3:np.complex64(3j)]
+        )
 
 class TestConcatenator:
     def test_1d(self):
@@ -268,6 +283,10 @@ class TestConcatenator:
     def test_complex_step(self):
         # Regression test for #12262
         g = r_[0:36:100j]
+        assert_(g.shape == (100,))
+
+        # Related to #16466
+        g = r_[0:36:np.complex64(100j)]
         assert_(g.shape == (100,))
 
     def test_2d(self):

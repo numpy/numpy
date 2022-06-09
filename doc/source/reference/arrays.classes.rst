@@ -7,7 +7,6 @@ Standard array subclasses
 .. currentmodule:: numpy
 
 .. for doctests
-   >>> import numpy as np
    >>> np.random.seed(1)
 
 .. note::
@@ -42,6 +41,7 @@ however, of why your subroutine may not be able to handle an arbitrary
 subclass of an array is that matrices redefine the "*" operator to be
 matrix-multiplication, rather than element-by-element multiplication.
 
+.. _special-attributes-and-methods:
 
 Special attributes and methods
 ==============================
@@ -330,6 +330,8 @@ NumPy provides several hooks that classes can customize:
    returned by :func:`__array__`. This practice will return ``TypeError``.
 
 
+.. _matrix-objects:
+
 Matrix objects
 ==============
 
@@ -480,16 +482,16 @@ Character arrays (:mod:`numpy.char`)
    The `chararray` class exists for backwards compatibility with
    Numarray, it is not recommended for new development. Starting from numpy
    1.4, if one needs arrays of strings, it is recommended to use arrays of
-   `dtype` `object_`, `string_` or `unicode_`, and use the free functions
+   `dtype` `object_`, `bytes_` or `str_`, and use the free functions
    in the `numpy.char` module for fast vectorized string operations.
 
-These are enhanced arrays of either :class:`string_` type or
-:class:`unicode_` type.  These arrays inherit from the
+These are enhanced arrays of either :class:`str_` type or
+:class:`bytes_` type.  These arrays inherit from the
 :class:`ndarray`, but specially-define the operations ``+``, ``*``,
 and ``%`` on a (broadcasting) element-by-element basis.  These
 operations are not available on the standard :class:`ndarray` of
 character type. In addition, the :class:`chararray` has all of the
-standard :class:`string <str>` (and :class:`unicode`) methods,
+standard :class:`str` (and :class:`bytes`) methods,
 executing them on an element-by-element basis. Perhaps the easiest
 way to create a chararray is to use :meth:`self.view(chararray)
 <ndarray.view>` where *self* is an ndarray of str or unicode

@@ -1,5 +1,5 @@
 Miscellaneous routines
-**********************
+======================
 
 .. toctree::
 
@@ -47,6 +47,7 @@ Utility
    show_config
    deprecate
    deprecate_with_doc
+   broadcast_shapes
 
 Matlab-like Functions
 ---------------------
@@ -55,3 +56,10 @@ Matlab-like Functions
 
    who
    disp
+
+Exceptions
+----------
+.. autosummary::
+   :toctree: generated/
+
+   AxisError

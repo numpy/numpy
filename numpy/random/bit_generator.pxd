@@ -23,7 +23,7 @@ cdef class BitGenerator():
 cdef class SeedSequence():
     cdef readonly object entropy
     cdef readonly tuple spawn_key
-    cdef readonly uint32_t pool_size
+    cdef readonly Py_ssize_t pool_size
     cdef readonly object pool
     cdef readonly uint32_t n_children_spawned
 

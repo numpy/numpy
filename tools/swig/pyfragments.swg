@@ -22,12 +22,9 @@
   SWIGINTERN int
   SWIG_AsVal_dec(long)(PyObject * obj, long * val)
   {
-    if (PyInt_Check(obj)) {
-      if (val) *val = PyInt_AsLong(obj);
-      return SWIG_OK;
-    } else if (PyLong_Check(obj)) {
+    if (PyLong_Check(obj)) {
       long v = PyLong_AsLong(obj);
-      if (!PyErr_Occurred()) {
+      if (v != -1 || !PyErr_Occurred()) {
 	if (val) *val = v;
 	return SWIG_OK;
       } else {
@@ -37,8 +34,8 @@
 %#ifdef SWIG_PYTHON_CAST_MODE
     {
       int dispatch = 0;
-      long v = PyInt_AsLong(obj);
-      if (!PyErr_Occurred()) {
+      long v = PyLong_AsLong(obj);
+      if (v != -1 || !PyErr_Occurred()) {
 	if (val) *val = v;
 	return SWIG_AddCast(SWIG_OK);
       } else {
@@ -56,7 +53,7 @@
 %#endif
     if (!PyArray_IsScalar(obj,Integer)) return SWIG_TypeError;
     if (!val) return SWIG_OK;
-    PyArray_Descr * longDescr = PyArray_DescrNewFromType(NPY_LONG);
+    PyArray_Descr * longDescr = PyArray_DescrFromType(NPY_LONG);
     PyArray_CastScalarToCtype(obj, (void*)val, longDescr);
     Py_DECREF(longDescr);
     return SWIG_OK;
@@ -107,7 +104,7 @@
 %#endif
     if (!PyArray_IsScalar(obj,Integer)) return SWIG_TypeError;
     if (!val) return SWIG_OK;
-    PyArray_Descr * ulongDescr = PyArray_DescrNewFromType(NPY_ULONG);
+    PyArray_Descr * ulongDescr = PyArray_DescrFromType(NPY_ULONG);
     PyArray_CastScalarToCtype(obj, (void*)val, ulongDescr);
     Py_DECREF(ulongDescr);
     return SWIG_OK;

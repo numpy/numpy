@@ -1,10 +1,10 @@
 /* -*- c -*- */
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
 
 #define _UMATHMODULE
 #define _MULTIARRAYMODULE
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
-
-#include "Python.h"
 
 #include "npy_config.h"
 #include "numpy/npy_common.h"
@@ -27,6 +27,7 @@
  *****************************************************************************
  */
 
+#if defined(HAVE_CBLAS)
 /*
  * -1 to be conservative, in case blas internally uses a for loop with an
  * inclusive upper bound
@@ -61,7 +62,6 @@ is_blasable2d(npy_intp byte_stride1, npy_intp byte_stride2,
     return NPY_FALSE;
 }
 
-#if defined(HAVE_CBLAS)
 static const npy_cdouble oneD = {1.0, 0.0}, zeroD = {0.0, 0.0};
 static const npy_cfloat  oneF = {1.0, 0.0}, zeroF = {0.0, 0.0};
 

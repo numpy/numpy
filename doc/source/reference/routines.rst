@@ -28,10 +28,8 @@ indentation.
    routines.emath
    routines.err
    routines.fft
-   routines.financial
    routines.functional
    routines.help
-   routines.indexing
    routines.io
    routines.linalg
    routines.logic

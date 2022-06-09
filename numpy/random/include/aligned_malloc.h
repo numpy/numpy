@@ -1,7 +1,7 @@
 #ifndef _RANDOMDGEN__ALIGNED_MALLOC_H_
 #define _RANDOMDGEN__ALIGNED_MALLOC_H_
 
-#include "Python.h"
+#include <Python.h>
 #include "numpy/npy_common.h"
 
 #define NPY_MEMALIGN 16 /* 16 for SSE2, 32 for AVX, 64 for Xeon Phi */

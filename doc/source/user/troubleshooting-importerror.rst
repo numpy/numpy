@@ -1,3 +1,11 @@
+:orphan:
+
+.. Reason for orphan: This page is referenced by the installation
+   instructions, which have moved from Sphinx to https://numpy.org/install.
+   All install links in Sphinx now point there, leaving no Sphinx references
+   to this page.
+
+
 ***************************
 Troubleshooting ImportError
 ***************************
@@ -69,7 +77,7 @@ or conda.
 Using Eclipse/PyDev with Anaconda/conda Python (or environments)
 ----------------------------------------------------------------
 
-Please see the 
+Please see the
 `Anaconda Documentation <https://docs.anaconda.com/anaconda/user-guide/tasks/integration/eclipse-pydev/>`_
 on how to properly configure Eclipse/PyDev to use Anaconda Python with specific
 conda environments.

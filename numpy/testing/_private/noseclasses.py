@@ -76,7 +76,7 @@ class NumpyDocTestFinder(doctest.DocTestFinder):
         # Look for tests in a module's contained objects.
         if ismodule(obj) and self._recurse:
             for valname, val in obj.__dict__.items():
-                valname1 = '%s.%s' % (name, valname)
+                valname1 = f'{name}.{valname}'
                 if ( (isroutine(val) or isclass(val))
                      and self._from_module(module, val)):
 
@@ -96,7 +96,7 @@ class NumpyDocTestFinder(doctest.DocTestFinder):
                 if ((isfunction(val) or isclass(val) or
                      ismethod(val) or isinstance(val, property)) and
                       self._from_module(module, val)):
-                    valname = '%s.%s' % (name, valname)
+                    valname = f'{name}.{valname}'
                     self._find(tests, val, valname, module, source_lines,
                                globs, seen)
 

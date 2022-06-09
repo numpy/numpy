@@ -8,8 +8,9 @@ import ast
 import re
 import sys
 import platform
+import warnings
 
-from .multiarray import dtype, array, ndarray
+from .multiarray import dtype, array, ndarray, promote_types
 try:
     import ctypes
 except ImportError:
@@ -17,26 +18,25 @@ except ImportError:
 
 IS_PYPY = platform.python_implementation() == 'PyPy'
 
-if (sys.byteorder == 'little'):
+if sys.byteorder == 'little':
     _nbo = '<'
 else:
     _nbo = '>'
 
 def _makenames_list(adict, align):
     allfields = []
-    fnames = list(adict.keys())
-    for fname in fnames:
-        obj = adict[fname]
+
+    for fname, obj in adict.items():
         n = len(obj)
-        if not isinstance(obj, tuple) or n not in [2, 3]:
+        if not isinstance(obj, tuple) or n not in (2, 3):
             raise ValueError("entry not a 2- or 3- tuple")
-        if (n > 2) and (obj[2] == fname):
+        if n > 2 and obj[2] == fname:
             continue
         num = int(obj[1])
-        if (num < 0):
+        if num < 0:
             raise ValueError("invalid offset.")
         format = dtype(obj[0], align=align)
-        if (n > 2):
+        if n > 2:
             title = obj[2]
         else:
             title = None
@@ -68,7 +68,7 @@ def _usefields(adict, align):
             res = adict[name]
             formats.append(res[0])
             offsets.append(res[1])
-            if (len(res) > 2):
+            if len(res) > 2:
                 titles.append(res[2])
             else:
                 titles.append(None)
@@ -108,7 +108,7 @@ def _array_descr(descriptor):
     for field in ordered_fields:
         if field[1] > offset:
             num = field[1] - offset
-            result.append(('', '|V%d' % num))
+            result.append(('', f'|V{num}'))
             offset += num
         elif field[1] < offset:
             raise ValueError(
@@ -128,7 +128,7 @@ def _array_descr(descriptor):
 
     if descriptor.itemsize > offset:
         num = descriptor.itemsize - offset
-        result.append(('', '|V%d' % num))
+        result.append(('', f'|V{num}'))
 
     return result
 
@@ -162,8 +162,9 @@ def _commastring(astr):
         try:
             (order1, repeats, order2, dtype) = mo.groups()
         except (TypeError, AttributeError):
-            raise ValueError('format number %d of "%s" is not recognized' %
-                                            (len(result)+1, astr))
+            raise ValueError(
+                f'format number {len(result)+1} of "{astr}" is not recognized'
+                ) from None
         startindex = mo.end()
         # Separator or ending padding
         if startindex < len(astr):
@@ -190,7 +191,7 @@ def _commastring(astr):
                     (order1, order2))
             order = order1
 
-        if order in ['|', '=', _nbo]:
+        if order in ('|', '=', _nbo):
             order = ''
         dtype = order + dtype
         if (repeats == ''):
@@ -222,7 +223,7 @@ def _getintp_ctype():
         val = dummy_ctype(np.intp)
     else:
         char = dtype('p').char
-        if (char == 'i'):
+        if char == 'i':
             val = ctypes.c_int
         elif char == 'l':
             val = ctypes.c_long
@@ -323,10 +324,10 @@ class _ctypes:
         """
         (c_intp*self.ndim): A ctypes array of length self.ndim where
         the basetype is the C-integer corresponding to ``dtype('p')`` on this
-        platform. This base-type could be `ctypes.c_int`, `ctypes.c_long`, or
-        `ctypes.c_longlong` depending on the platform.
-        The c_intp type is defined accordingly in `numpy.ctypeslib`.
-        The ctypes array contains the shape of the underlying array.
+        platform (see `~numpy.ctypeslib.c_intp`). This base-type could be
+        `ctypes.c_int`, `ctypes.c_long`, or `ctypes.c_longlong` depending on
+        the platform. The ctypes array contains the shape of
+        the underlying array.
         """
         return self.shape_as(_getintp_ctype())
 
@@ -350,11 +351,45 @@ class _ctypes:
         """
         return self.data_as(ctypes.c_void_p)
 
-    # kept for compatibility
-    get_data = data.fget
-    get_shape = shape.fget
-    get_strides = strides.fget
-    get_as_parameter = _as_parameter_.fget
+    # Numpy 1.21.0, 2021-05-18
+
+    def get_data(self):
+        """Deprecated getter for the `_ctypes.data` property.
+
+        .. deprecated:: 1.21
+        """
+        warnings.warn('"get_data" is deprecated. Use "data" instead',
+                      DeprecationWarning, stacklevel=2)
+        return self.data
+
+    def get_shape(self):
+        """Deprecated getter for the `_ctypes.shape` property.
+
+        .. deprecated:: 1.21
+        """
+        warnings.warn('"get_shape" is deprecated. Use "shape" instead',
+                      DeprecationWarning, stacklevel=2)
+        return self.shape
+
+    def get_strides(self):
+        """Deprecated getter for the `_ctypes.strides` property.
+
+        .. deprecated:: 1.21
+        """
+        warnings.warn('"get_strides" is deprecated. Use "strides" instead',
+                      DeprecationWarning, stacklevel=2)
+        return self.strides
+
+    def get_as_parameter(self):
+        """Deprecated getter for the `_ctypes._as_parameter_` property.
+
+        .. deprecated:: 1.21
+        """
+        warnings.warn(
+            '"get_as_parameter" is deprecated. Use "_as_parameter_" instead',
+            DeprecationWarning, stacklevel=2,
+        )
+        return self._as_parameter_
 
 
 def _newnames(datatype, order):
@@ -373,12 +408,12 @@ def _newnames(datatype, order):
                 nameslist.remove(name)
             except ValueError:
                 if name in seen:
-                    raise ValueError("duplicate field name: %s" % (name,))
+                    raise ValueError(f"duplicate field name: {name}") from None
                 else:
-                    raise ValueError("unknown field name: %s" % (name,))
+                    raise ValueError(f"unknown field name: {name}") from None
             seen.add(name)
         return tuple(list(order) + nameslist)
-    raise ValueError("unsupported order value: %s" % (order,))
+    raise ValueError(f"unsupported order value: {order}")
 
 def _copy_fields(ary):
     """Return copy of structured array with padding between fields removed.
@@ -397,6 +432,61 @@ def _copy_fields(ary):
     copy_dtype = {'names': dt.names,
                   'formats': [dt.fields[name][0] for name in dt.names]}
     return array(ary, dtype=copy_dtype, copy=True)
+
+def _promote_fields(dt1, dt2):
+    """ Perform type promotion for two structured dtypes.
+
+    Parameters
+    ----------
+    dt1 : structured dtype
+        First dtype.
+    dt2 : structured dtype
+        Second dtype.
+
+    Returns
+    -------
+    out : dtype
+        The promoted dtype
+
+    Notes
+    -----
+    If one of the inputs is aligned, the result will be.  The titles of
+    both descriptors must match (point to the same field).
+    """
+    # Both must be structured and have the same names in the same order
+    if (dt1.names is None or dt2.names is None) or dt1.names != dt2.names:
+        raise TypeError("invalid type promotion")
+
+    # if both are identical, we can (maybe!) just return the same dtype.
+    identical = dt1 is dt2
+    new_fields = []
+    for name in dt1.names:
+        field1 = dt1.fields[name]
+        field2 = dt2.fields[name]
+        new_descr = promote_types(field1[0], field2[0])
+        identical = identical and new_descr is field1[0]
+
+        # Check that the titles match (if given):
+        if field1[2:] != field2[2:]:
+            raise TypeError("invalid type promotion")
+        if len(field1) == 2:
+            new_fields.append((name, new_descr))
+        else:
+            new_fields.append(((field1[2], name), new_descr))
+
+    res = dtype(new_fields, align=dt1.isalignedstruct or dt2.isalignedstruct)
+
+    # Might as well preserve identity (and metadata) if the dtype is identical
+    # and the itemsize, offsets are also unmodified.  This could probably be
+    # sped up, but also probably just be removed entirely.
+    if identical and res.itemsize == dt1.itemsize:
+        for name in dt1.names:
+            if dt1.fields[name][1] != res.fields[name][1]:
+                return res  # the dtype changed.
+        return dt1
+
+    return res
+
 
 def _getfield_is_safe(oldtype, newtype, offset):
     """ Checks safety of getfield for object arrays.
@@ -679,8 +769,7 @@ def __dtype_from_pep3118(stream, is_subdtype):
 
         if not (is_padding and name is None):
             if name is not None and name in field_spec['names']:
-                raise RuntimeError("Duplicate field name '%s' in PEP3118 format"
-                                   % name)
+                raise RuntimeError(f"Duplicate field name '{name}' in PEP3118 format")
             field_spec['names'].append(name)
             field_spec['formats'].append(value)
             field_spec['offsets'].append(offset)
@@ -716,7 +805,7 @@ def _fix_names(field_spec):
 
         j = 0
         while True:
-            name = 'f{}'.format(j)
+            name = f'f{j}'
             if name not in names:
                 break
             j = j + 1
@@ -789,7 +878,7 @@ def _ufunc_doc_signature_formatter(ufunc):
     if ufunc.nin == 1:
         in_args = 'x'
     else:
-        in_args = ', '.join('x{}'.format(i+1) for i in range(ufunc.nin))
+        in_args = ', '.join(f'x{i+1}' for i in range(ufunc.nin))
 
     # output arguments are both keyword or positional
     if ufunc.nout == 0:
@@ -809,11 +898,13 @@ def _ufunc_doc_signature_formatter(ufunc):
         ", order='K'"
         ", dtype=None"
         ", subok=True"
-        "[, signature"
-        ", extobj]"
     )
+
+    # NOTE: gufuncs may or may not support the `axis` parameter
     if ufunc.signature is None:
-        kwargs = ", where=True" + kwargs
+        kwargs = f", where=True{kwargs}[, signature, extobj]"
+    else:
+        kwargs += "[, signature, extobj, axes, axis]"
 
     # join all the parts together
     return '{name}({in_args}{out_args}, *{kwargs})'.format(
@@ -840,35 +931,3 @@ def npy_ctypes_check(cls):
         return '_ctypes' in ctype_base.__module__
     except Exception:
         return False
-
-
-class recursive:
-    '''
-    A decorator class for recursive nested functions.
-    Naive recursive nested functions hold a reference to themselves:
-
-    def outer(*args):
-        def stringify_leaky(arg0, *arg1):
-            if len(arg1) > 0:
-                return stringify_leaky(*arg1)  # <- HERE
-            return str(arg0)
-        stringify_leaky(*args)
-
-    This design pattern creates a reference cycle that is difficult for a
-    garbage collector to resolve. The decorator class prevents the
-    cycle by passing the nested function in as an argument `self`:
-
-    def outer(*args):
-        @recursive
-        def stringify(self, arg0, *arg1):
-            if len(arg1) > 0:
-                return self(*arg1)
-            return str(arg0)
-        stringify(*args)
-
-    '''
-    def __init__(self, func):
-        self.func = func
-    def __call__(self, *args, **kwargs):
-        return self.func(self, *args, **kwargs)
-

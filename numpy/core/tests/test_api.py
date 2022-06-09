@@ -8,9 +8,6 @@ from numpy.testing import (
      HAS_REFCOUNT
     )
 
-# Switch between new behaviour when NPY_RELAXED_STRIDES_CHECKING is set.
-NPY_RELAXED_STRIDES_CHECKING = np.ones((10, 1), order='C').flags.f_contiguous
-
 
 def test_array_array():
     tobj = type(object)
@@ -144,12 +141,12 @@ def test_array_array():
 
 @pytest.mark.parametrize("array", [True, False])
 def test_array_impossible_casts(array):
-    # All builtin types can forst cast as least theoretically
+    # All builtin types can be forcibly cast, at least theoretically,
     # but user dtypes cannot necessarily.
     rt = rational(1, 2)
     if array:
         rt = np.array(rt)
-    with assert_raises(ValueError):
+    with assert_raises(TypeError):
         np.array(rt, dtype="M8")
 
 
@@ -281,6 +278,32 @@ def test_array_astype():
     a = np.array(1000, dtype='i4')
     assert_raises(TypeError, a.astype, 'U1', casting='safe')
 
+@pytest.mark.parametrize("dt", ["S", "U"])
+def test_array_astype_to_string_discovery_empty(dt):
+    # See also gh-19085
+    arr = np.array([""], dtype=object)
+    # Note, the itemsize is the `0 -> 1` logic, which should change.
+    # The important part the test is rather that it does not error.
+    assert arr.astype(dt).dtype.itemsize == np.dtype(f"{dt}1").itemsize
+
+    # check the same thing for `np.can_cast` (since it accepts arrays)
+    assert np.can_cast(arr, dt, casting="unsafe")
+    assert not np.can_cast(arr, dt, casting="same_kind")
+    # as well as for the object as a descriptor:
+    assert np.can_cast("O", dt, casting="unsafe")
+
+@pytest.mark.parametrize("dt", ["d", "f", "S13", "U32"])
+def test_array_astype_to_void(dt):
+    dt = np.dtype(dt)
+    arr = np.array([], dtype=dt)
+    assert arr.astype("V").dtype.itemsize == dt.itemsize
+
+def test_object_array_astype_to_void():
+    # This is different to `test_array_astype_to_void` as object arrays
+    # are inspected.  The default void is "V8" (8 is the length of double)
+    arr = np.array([], dtype="O").astype("V")
+    assert arr.dtype == "V8"
+
 @pytest.mark.parametrize("t",
     np.sctypes['uint'] + np.sctypes['int'] + np.sctypes['float']
 )
@@ -291,7 +314,7 @@ def test_array_astype_warning(t):
 
 @pytest.mark.parametrize(["dtype", "out_dtype"],
         [(np.bytes_, np.bool_),
-         (np.unicode, np.bool_),
+         (np.unicode_, np.bool_),
          (np.dtype("S10,S9"), np.dtype("?,?"))])
 def test_string_to_boolean_cast(dtype, out_dtype):
     """
@@ -305,7 +328,7 @@ def test_string_to_boolean_cast(dtype, out_dtype):
 
 @pytest.mark.parametrize(["dtype", "out_dtype"],
         [(np.bytes_, np.bool_),
-         (np.unicode, np.bool_),
+         (np.unicode_, np.bool_),
          (np.dtype("S10,S9"), np.dtype("?,?"))])
 def test_string_to_boolean_cast_errors(dtype, out_dtype):
     """
@@ -316,6 +339,29 @@ def test_string_to_boolean_cast_errors(dtype, out_dtype):
         arr = np.array([invalid], dtype=dtype)
         with assert_raises(ValueError):
             arr.astype(out_dtype)
+
+@pytest.mark.parametrize("str_type", [str, bytes, np.str_, np.unicode_])
+@pytest.mark.parametrize("scalar_type",
+        [np.complex64, np.complex128, np.clongdouble])
+def test_string_to_complex_cast(str_type, scalar_type):
+    value = scalar_type(b"1+3j")
+    assert scalar_type(value) == 1+3j
+    assert np.array([value], dtype=object).astype(scalar_type)[()] == 1+3j
+    assert np.array(value).astype(scalar_type)[()] == 1+3j
+    arr = np.zeros(1, dtype=scalar_type)
+    arr[0] = value
+    assert arr[0] == 1+3j
+
+@pytest.mark.parametrize("dtype", np.typecodes["AllFloat"])
+def test_none_to_nan_cast(dtype):
+    # Note that at the time of writing this test, the scalar constructors
+    # reject None
+    arr = np.zeros(1, dtype=dtype)
+    arr[0] = None
+    assert np.isnan(arr)[0]
+    assert np.isnan(np.array(None, dtype=dtype))[()]
+    assert np.isnan(np.array([None], dtype=dtype))[0]
+    assert np.isnan(np.array(None).astype(dtype))[()]
 
 def test_copyto_fromscalar():
     a = np.arange(6, dtype='f4').reshape(2, 3)
@@ -433,13 +479,6 @@ def test_copy_order():
         assert_equal(x, y)
         assert_equal(res.flags.c_contiguous, ccontig)
         assert_equal(res.flags.f_contiguous, fcontig)
-        # This check is impossible only because
-        # NPY_RELAXED_STRIDES_CHECKING changes the strides actively
-        if not NPY_RELAXED_STRIDES_CHECKING:
-            if strides:
-                assert_equal(x.strides, y.strides)
-            else:
-                assert_(x.strides != y.strides)
 
     # Validate the initial state of a, b, and c
     assert_(a.flags.c_contiguous)
@@ -493,8 +532,7 @@ def test_copy_order():
 
 def test_contiguous_flags():
     a = np.ones((4, 4, 1))[::2,:,:]
-    if NPY_RELAXED_STRIDES_CHECKING:
-        a.strides = a.strides[:2] + (-123,)
+    a.strides = a.strides[:2] + (-123,)
     b = np.ones((2, 2, 1, 2, 2)).swapaxes(3, 4)
 
     def check_contig(a, ccontig, fcontig):
@@ -504,12 +542,8 @@ def test_contiguous_flags():
     # Check if new arrays are correct:
     check_contig(a, False, False)
     check_contig(b, False, False)
-    if NPY_RELAXED_STRIDES_CHECKING:
-        check_contig(np.empty((2, 2, 0, 2, 2)), True, True)
-        check_contig(np.array([[[1], [2]]], order='F'), True, True)
-    else:
-        check_contig(np.empty((2, 2, 0, 2, 2)), True, False)
-        check_contig(np.array([[[1], [2]]], order='F'), False, True)
+    check_contig(np.empty((2, 2, 0, 2, 2)), True, True)
+    check_contig(np.array([[[1], [2]]], order='F'), True, True)
     check_contig(np.empty((2, 2)), True, False)
     check_contig(np.empty((2, 2), order='F'), False, True)
 
@@ -518,18 +552,11 @@ def test_contiguous_flags():
     check_contig(np.array(a, copy=False, order='C'), True, False)
     check_contig(np.array(a, ndmin=4, copy=False, order='F'), False, True)
 
-    if NPY_RELAXED_STRIDES_CHECKING:
-        # Check slicing update of flags and :
-        check_contig(a[0], True, True)
-        check_contig(a[None, ::4, ..., None], True, True)
-        check_contig(b[0, 0, ...], False, True)
-        check_contig(b[:,:, 0:0,:,:], True, True)
-    else:
-        # Check slicing update of flags:
-        check_contig(a[0], True, False)
-        # Would be nice if this was C-Contiguous:
-        check_contig(a[None, 0, ..., None], False, False)
-        check_contig(b[0, 0, 0, ...], False, True)
+    # Check slicing update of flags and :
+    check_contig(a[0], True, True)
+    check_contig(a[None, ::4, ..., None], True, True)
+    check_contig(b[0, 0, ...], False, True)
+    check_contig(b[:, :, 0:0, :, :], True, True)
 
     # Test ravel and squeeze.
     check_contig(a.ravel(), True, True)
@@ -542,3 +569,38 @@ def test_broadcast_arrays():
     result = np.broadcast_arrays(a, b)
     assert_equal(result[0], np.array([(1, 2, 3), (1, 2, 3), (1, 2, 3)], dtype='u4,u4,u4'))
     assert_equal(result[1], np.array([(1, 2, 3), (4, 5, 6), (7, 8, 9)], dtype='u4,u4,u4'))
+
+@pytest.mark.parametrize(["shape", "fill_value", "expected_output"],
+        [((2, 2), [5.0,  6.0], np.array([[5.0, 6.0], [5.0, 6.0]])),
+         ((3, 2), [1.0,  2.0], np.array([[1.0, 2.0], [1.0, 2.0], [1.0,  2.0]]))])
+def test_full_from_list(shape, fill_value, expected_output):
+    output = np.full(shape, fill_value)
+    assert_equal(output, expected_output)
+
+def test_astype_copyflag():
+    # test the various copyflag options
+    arr = np.arange(10, dtype=np.intp)
+
+    res_true = arr.astype(np.intp, copy=True)
+    assert not np.may_share_memory(arr, res_true)
+    res_always = arr.astype(np.intp, copy=np._CopyMode.ALWAYS)
+    assert not np.may_share_memory(arr, res_always)
+
+    res_false = arr.astype(np.intp, copy=False)
+    # `res_false is arr` currently, but check `may_share_memory`.
+    assert np.may_share_memory(arr, res_false)
+    res_if_needed = arr.astype(np.intp, copy=np._CopyMode.IF_NEEDED)
+    # `res_if_needed is arr` currently, but check `may_share_memory`.
+    assert np.may_share_memory(arr, res_if_needed)
+
+    res_never = arr.astype(np.intp, copy=np._CopyMode.NEVER)
+    assert np.may_share_memory(arr, res_never)
+
+    # Simple tests for when a copy is necessary:
+    res_false = arr.astype(np.float64, copy=False)
+    assert_array_equal(res_false, arr)
+    res_if_needed = arr.astype(np.float64, 
+                               copy=np._CopyMode.IF_NEEDED)
+    assert_array_equal(res_if_needed, arr)
+    assert_raises(ValueError, arr.astype, np.float64,
+                  copy=np._CopyMode.NEVER)

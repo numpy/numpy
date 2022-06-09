@@ -9,6 +9,12 @@ C-Types Foreign Function Interface (:mod:`numpy.ctypeslib`)
 .. autofunction:: as_array
 .. autofunction:: as_ctypes
 .. autofunction:: as_ctypes_type
-.. autofunction:: ctypes_load_library
 .. autofunction:: load_library
 .. autofunction:: ndpointer
+
+.. class:: c_intp
+
+    A `ctypes` signed integer type of the same size as `numpy.intp`.
+
+    Depending on the platform, it can be an alias for either `~ctypes.c_int`,
+    `~ctypes.c_long` or `~ctypes.c_longlong`.

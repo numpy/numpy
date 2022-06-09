@@ -3,16 +3,11 @@ import sys
 
 def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration
-    from numpy.distutils.system_info import (
-            get_info, system_info, lapack_opt_info, blas_opt_info)
+    from numpy.distutils.ccompiler_opt import NPY_CXX_FLAGS
+    from numpy.distutils.system_info import get_info, system_info
     config = Configuration('linalg', parent_package, top_path)
 
     config.add_subpackage('tests')
-
-    # Accelerate is buggy, disallow it. See also numpy/core/setup.py
-    for opt_order in (blas_opt_info.blas_order, lapack_opt_info.lapack_order):
-        if 'accelerate' in opt_order:
-            opt_order.remove('accelerate')
 
     # Configure lapack_lite
 
@@ -75,11 +70,13 @@ def configuration(parent_package='', top_path=None):
     # umath_linalg module
     config.add_extension(
         '_umath_linalg',
-        sources=['umath_linalg.c.src', get_lapack_lite_sources],
+        sources=['umath_linalg.cpp', get_lapack_lite_sources],
         depends=['lapack_lite/f2c.h'],
         extra_info=lapack_info,
+        extra_cxx_compile_args=NPY_CXX_FLAGS,
         libraries=['npymath'],
     )
+    config.add_data_files('*.pyi')
     return config
 
 if __name__ == '__main__':

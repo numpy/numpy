@@ -177,9 +177,6 @@ def do_generate_api(targets, sources):
     numpyapi_list = genapi.get_api_functions('NUMPY_API',
                                              multiarray_funcs)
 
-    # FIXME: ordered_funcs_api is unused
-    ordered_funcs_api = genapi.order_dict(multiarray_funcs)
-
     # Create dict name -> *Api instance
     api_name = 'PyArray_API'
     multiarray_api_dict = {}
