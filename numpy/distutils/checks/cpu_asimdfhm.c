@@ -8,7 +8,7 @@ int main(int argc, char **argv)
     float16_t *src = (float16_t*)argv[argc-1];
     float *src2 = (float*)argv[argc-2];
     float16x8_t vhp  = vdupq_n_f16(src[0]);
-    float16x4_t vlhp = vdup_n_f16((src[1]);
+    float16x4_t vlhp = vdup_n_f16(src[1]);
     float32x4_t vf   = vdupq_n_f32(src2[0]);
     float32x2_t vlf  = vdup_n_f32(src2[1]);
 
