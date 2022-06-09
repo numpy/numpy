@@ -14,14 +14,14 @@ nx, ny = 1000, 1000
 # time-consuming functions (ufunc, linalg, etc)
 nxs, nys = 100, 100
 
-# a set of interesting types to test
+# a list of interesting types to test
 TYPES1 = [
     'int16', 'float16',
     'int32', 'float32',
     'int64', 'float64',  'complex64',
     'longfloat', 'complex128',
 ]
-if 'complex256' in numpy.typeDict:
+if 'complex256' in numpy.sctypeDict:
     TYPES1.append('complex256')
 
 
@@ -111,4 +111,4 @@ def get_indexes_rand_():
 
 
 class Benchmark:
-    goal_time = 0.25
+    pass

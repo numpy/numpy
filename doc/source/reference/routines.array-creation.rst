@@ -7,8 +7,8 @@ Array creation routines
 
 .. currentmodule:: numpy
 
-Ones and zeros
---------------
+From shape or value
+-------------------
 .. autosummary::
    :toctree: generated/
 
@@ -35,6 +35,7 @@ From existing data
    asmatrix
    copy
    frombuffer
+   from_dlpack
    fromfile
    fromfunction
    fromiter

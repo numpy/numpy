@@ -177,9 +177,6 @@ def do_generate_api(targets, sources):
     numpyapi_list = genapi.get_api_functions('NUMPY_API',
                                              multiarray_funcs)
 
-    # FIXME: ordered_funcs_api is unused
-    ordered_funcs_api = genapi.order_dict(multiarray_funcs)
-
     # Create dict name -> *Api instance
     api_name = 'PyArray_API'
     multiarray_api_dict = {}
@@ -201,7 +198,9 @@ def do_generate_api(targets, sources):
 
     for name, val in types_api.items():
         index = val[0]
-        multiarray_api_dict[name] = TypeApi(name, index, 'PyTypeObject', api_name)
+        internal_type =  None if len(val) == 1 else val[1]
+        multiarray_api_dict[name] = TypeApi(
+            name, index, 'PyTypeObject', api_name, internal_type)
 
     if len(multiarray_api_dict) != len(multiarray_api_index):
         keys_dict = set(multiarray_api_dict.keys())

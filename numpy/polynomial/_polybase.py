@@ -6,6 +6,7 @@ for the various polynomial classes. It operates as a mixin, but uses the
 abc module from the stdlib, hence it is only available for Python >= 2.6.
 
 """
+import os
 import abc
 import numbers
 
@@ -36,6 +37,12 @@ class ABCPolyBase(abc.ABC):
     window : (2,) array_like, optional
         Window, see domain for its use. The default value is the
         derived class window.
+    symbol : str, optional
+        Symbol used to represent the independent variable in string 
+        representations of the polynomial expression, e.g. for printing.
+        The symbol must be a valid Python identifier. Default value is 'x'.
+
+        .. versionadded:: 1.24
 
     Attributes
     ----------
@@ -45,6 +52,8 @@ class ABCPolyBase(abc.ABC):
         Domain that is mapped to window.
     window : (2,) ndarray
         Window that domain is mapped to.
+    symbol : str
+        Symbol representing the independent variable.
 
     Class Attributes
     ----------------
@@ -67,6 +76,41 @@ class ABCPolyBase(abc.ABC):
     # Limit runaway size. T_n^m has degree n*m
     maxpower = 100
 
+    # Unicode character mappings for improved __str__
+    _superscript_mapping = str.maketrans({
+        "0": "⁰",
+        "1": "¹",
+        "2": "²",
+        "3": "³",
+        "4": "⁴",
+        "5": "⁵",
+        "6": "⁶",
+        "7": "⁷",
+        "8": "⁸",
+        "9": "⁹"
+    })
+    _subscript_mapping = str.maketrans({
+        "0": "₀",
+        "1": "₁",
+        "2": "₂",
+        "3": "₃",
+        "4": "₄",
+        "5": "₅",
+        "6": "₆",
+        "7": "₇",
+        "8": "₈",
+        "9": "₉"
+    })
+    # Some fonts don't support full unicode character ranges necessary for
+    # the full set of superscripts and subscripts, including common/default
+    # fonts in Windows shells/terminals. Therefore, default to ascii-only
+    # printing on windows.
+    _use_unicode = not os.name == 'nt'
+
+    @property
+    def symbol(self):
+        return self._symbol
+
     @property
     @abc.abstractmethod
     def domain(self):
@@ -75,11 +119,6 @@ class ABCPolyBase(abc.ABC):
     @property
     @abc.abstractmethod
     def window(self):
-        pass
-
-    @property
-    @abc.abstractmethod
-    def nickname(self):
         pass
 
     @property
@@ -257,10 +296,12 @@ class ABCPolyBase(abc.ABC):
                 raise TypeError("Domains differ")
             elif not np.all(self.window == other.window):
                 raise TypeError("Windows differ")
+            elif self.symbol != other.symbol:
+                raise ValueError("Polynomial symbols differ")
             return other.coef
         return other
 
-    def __init__(self, coef, domain=None, window=None):
+    def __init__(self, coef, domain=None, window=None, symbol='x'):
         [coef] = pu.as_series([coef], trim=False)
         self.coef = coef
 
@@ -276,17 +317,110 @@ class ABCPolyBase(abc.ABC):
                 raise ValueError("Window has wrong number of elements.")
             self.window = window
 
+        # Validation for symbol
+        try:
+            if not symbol.isidentifier():
+                raise ValueError(
+                    "Symbol string must be a valid Python identifier"
+                )
+        # If a user passes in something other than a string, the above
+        # results in an AttributeError. Catch this and raise a more
+        # informative exception
+        except AttributeError:
+            raise TypeError("Symbol must be a non-empty string")
+
+        self._symbol = symbol
+
     def __repr__(self):
         coef = repr(self.coef)[6:-1]
         domain = repr(self.domain)[6:-1]
         window = repr(self.window)[6:-1]
         name = self.__class__.__name__
-        return f"{name}({coef}, domain={domain}, window={window})"
+        return (f"{name}({coef}, domain={domain}, window={window}, "
+                f"symbol='{self.symbol}')")
+
+    def __format__(self, fmt_str):
+        if fmt_str == '':
+            return self.__str__()
+        if fmt_str not in ('ascii', 'unicode'):
+            raise ValueError(
+                f"Unsupported format string '{fmt_str}' passed to "
+                f"{self.__class__}.__format__. Valid options are "
+                f"'ascii' and 'unicode'"
+            )
+        if fmt_str == 'ascii':
+            return self._generate_string(self._str_term_ascii)
+        return self._generate_string(self._str_term_unicode)
 
     def __str__(self):
-        coef = str(self.coef)
-        name = self.nickname
-        return f"{name}({coef})"
+        if self._use_unicode:
+            return self._generate_string(self._str_term_unicode)
+        return self._generate_string(self._str_term_ascii)
+
+    def _generate_string(self, term_method):
+        """
+        Generate the full string representation of the polynomial, using
+        ``term_method`` to generate each polynomial term.
+        """
+        # Get configuration for line breaks
+        linewidth = np.get_printoptions().get('linewidth', 75)
+        if linewidth < 1:
+            linewidth = 1
+        out = f"{self.coef[0]}"
+        for i, coef in enumerate(self.coef[1:]):
+            out += " "
+            power = str(i + 1)
+            # Polynomial coefficient
+            # The coefficient array can be an object array with elements that
+            # will raise a TypeError with >= 0 (e.g. strings or Python
+            # complex). In this case, represent the coefficient as-is.
+            try:
+                if coef >= 0:
+                    next_term = f"+ {coef}"
+                else:
+                    next_term = f"- {-coef}"
+            except TypeError:
+                next_term = f"+ {coef}"
+            # Polynomial term
+            next_term += term_method(power, self.symbol)
+            # Length of the current line with next term added
+            line_len = len(out.split('\n')[-1]) + len(next_term)
+            # If not the last term in the polynomial, it will be two
+            # characters longer due to the +/- with the next term
+            if i < len(self.coef[1:]) - 1:
+                line_len += 2
+            # Handle linebreaking
+            if line_len >= linewidth:
+                next_term = next_term.replace(" ", "\n", 1)
+            out += next_term
+        return out
+
+    @classmethod
+    def _str_term_unicode(cls, i, arg_str):
+        """
+        String representation of single polynomial term using unicode
+        characters for superscripts and subscripts.
+        """
+        if cls.basis_name is None:
+            raise NotImplementedError(
+                "Subclasses must define either a basis_name, or override "
+                "_str_term_unicode(cls, i, arg_str)"
+            )
+        return (f"·{cls.basis_name}{i.translate(cls._subscript_mapping)}"
+                f"({arg_str})")
+
+    @classmethod
+    def _str_term_ascii(cls, i, arg_str):
+        """
+        String representation of a single polynomial term using ** and _ to
+        represent superscripts and subscripts, respectively.
+        """
+        if cls.basis_name is None:
+            raise NotImplementedError(
+                "Subclasses must define either a basis_name, or override "
+                "_str_term_ascii(cls, i, arg_str)"
+            )
+        return f" {cls.basis_name}_{i}({arg_str})"
 
     @classmethod
     def _repr_latex_term(cls, i, arg_str, needs_parens):
@@ -307,18 +441,18 @@ class ABCPolyBase(abc.ABC):
         # get the scaled argument string to the basis functions
         off, scale = self.mapparms()
         if off == 0 and scale == 1:
-            term = 'x'
+            term = self.symbol
             needs_parens = False
         elif scale == 1:
-            term = f"{self._repr_latex_scalar(off)} + x"
+            term = f"{self._repr_latex_scalar(off)} + {self.symbol}"
             needs_parens = True
         elif off == 0:
-            term = f"{self._repr_latex_scalar(scale)}x"
+            term = f"{self._repr_latex_scalar(scale)}{self.symbol}"
             needs_parens = True
         else:
             term = (
                 f"{self._repr_latex_scalar(off)} + "
-                f"{self._repr_latex_scalar(scale)}x"
+                f"{self._repr_latex_scalar(scale)}{self.symbol}"
             )
             needs_parens = True
 
@@ -354,7 +488,7 @@ class ABCPolyBase(abc.ABC):
             # in case somehow there are no coefficients at all
             body = '0'
 
-        return rf"$x \mapsto {body}$"
+        return rf"${self.symbol} \mapsto {body}$"
 
 
 
@@ -365,6 +499,7 @@ class ABCPolyBase(abc.ABC):
         ret['coef'] = self.coef.copy()
         ret['domain'] = self.domain.copy()
         ret['window'] = self.window.copy()
+        ret['symbol'] = self.symbol.copy()
         return ret
 
     def __setstate__(self, dict):
@@ -386,7 +521,9 @@ class ABCPolyBase(abc.ABC):
     # Numeric properties.
 
     def __neg__(self):
-        return self.__class__(-self.coef, self.domain, self.window)
+        return self.__class__(
+            -self.coef, self.domain, self.window, self.symbol
+        )
 
     def __pos__(self):
         return self
@@ -397,7 +534,7 @@ class ABCPolyBase(abc.ABC):
             coef = self._add(self.coef, othercoef)
         except Exception:
             return NotImplemented
-        return self.__class__(coef, self.domain, self.window)
+        return self.__class__(coef, self.domain, self.window, self.symbol)
 
     def __sub__(self, other):
         othercoef = self._get_coefficients(other)
@@ -405,7 +542,7 @@ class ABCPolyBase(abc.ABC):
             coef = self._sub(self.coef, othercoef)
         except Exception:
             return NotImplemented
-        return self.__class__(coef, self.domain, self.window)
+        return self.__class__(coef, self.domain, self.window, self.symbol)
 
     def __mul__(self, other):
         othercoef = self._get_coefficients(other)
@@ -413,7 +550,7 @@ class ABCPolyBase(abc.ABC):
             coef = self._mul(self.coef, othercoef)
         except Exception:
             return NotImplemented
-        return self.__class__(coef, self.domain, self.window)
+        return self.__class__(coef, self.domain, self.window, self.symbol)
 
     def __truediv__(self, other):
         # there is no true divide if the rhs is not a Number, although it
@@ -442,17 +579,17 @@ class ABCPolyBase(abc.ABC):
         othercoef = self._get_coefficients(other)
         try:
             quo, rem = self._div(self.coef, othercoef)
-        except ZeroDivisionError as e:
-            raise e
+        except ZeroDivisionError:
+            raise
         except Exception:
             return NotImplemented
-        quo = self.__class__(quo, self.domain, self.window)
-        rem = self.__class__(rem, self.domain, self.window)
+        quo = self.__class__(quo, self.domain, self.window, self.symbol)
+        rem = self.__class__(rem, self.domain, self.window, self.symbol)
         return quo, rem
 
     def __pow__(self, other):
         coef = self._pow(self.coef, other, maxpower=self.maxpower)
-        res = self.__class__(coef, self.domain, self.window)
+        res = self.__class__(coef, self.domain, self.window, self.symbol)
         return res
 
     def __radd__(self, other):
@@ -460,21 +597,21 @@ class ABCPolyBase(abc.ABC):
             coef = self._add(other, self.coef)
         except Exception:
             return NotImplemented
-        return self.__class__(coef, self.domain, self.window)
+        return self.__class__(coef, self.domain, self.window, self.symbol)
 
     def __rsub__(self, other):
         try:
             coef = self._sub(other, self.coef)
         except Exception:
             return NotImplemented
-        return self.__class__(coef, self.domain, self.window)
+        return self.__class__(coef, self.domain, self.window, self.symbol)
 
     def __rmul__(self, other):
         try:
             coef = self._mul(other, self.coef)
         except Exception:
             return NotImplemented
-        return self.__class__(coef, self.domain, self.window)
+        return self.__class__(coef, self.domain, self.window, self.symbol)
 
     def __rdiv__(self, other):
         # set to __floordiv__ /.
@@ -500,12 +637,12 @@ class ABCPolyBase(abc.ABC):
     def __rdivmod__(self, other):
         try:
             quo, rem = self._div(other, self.coef)
-        except ZeroDivisionError as e:
-            raise e
+        except ZeroDivisionError:
+            raise
         except Exception:
             return NotImplemented
-        quo = self.__class__(quo, self.domain, self.window)
-        rem = self.__class__(rem, self.domain, self.window)
+        quo = self.__class__(quo, self.domain, self.window, self.symbol)
+        rem = self.__class__(rem, self.domain, self.window, self.symbol)
         return quo, rem
 
     def __eq__(self, other):
@@ -513,7 +650,8 @@ class ABCPolyBase(abc.ABC):
                np.all(self.domain == other.domain) and
                np.all(self.window == other.window) and
                (self.coef.shape == other.coef.shape) and
-               np.all(self.coef == other.coef))
+               np.all(self.coef == other.coef) and
+               (self.symbol == other.symbol))
         return res
 
     def __ne__(self, other):
@@ -532,7 +670,7 @@ class ABCPolyBase(abc.ABC):
             Copy of self.
 
         """
-        return self.__class__(self.coef, self.domain, self.window)
+        return self.__class__(self.coef, self.domain, self.window, self.symbol)
 
     def degree(self):
         """The degree of the series.
@@ -589,11 +727,11 @@ class ABCPolyBase(abc.ABC):
         Returns
         -------
         new_series : series
-            Contains the new set of coefficients.
+            New instance of series with trimmed coefficients.
 
         """
         coef = pu.trimcoef(self.coef, tol)
-        return self.__class__(coef, self.domain, self.window)
+        return self.__class__(coef, self.domain, self.window, self.symbol)
 
     def truncate(self, size):
         """Truncate series to length `size`.
@@ -622,7 +760,7 @@ class ABCPolyBase(abc.ABC):
             coef = self.coef
         else:
             coef = self.coef[:isize]
-        return self.__class__(coef, self.domain, self.window)
+        return self.__class__(coef, self.domain, self.window, self.symbol)
 
     def convert(self, domain=None, kind=None, window=None):
         """Convert series to a different kind and/or domain and/or window.
@@ -652,9 +790,6 @@ class ABCPolyBase(abc.ABC):
         Conversion between domains and class types can result in
         numerically ill defined series.
 
-        Examples
-        --------
-
         """
         if kind is None:
             kind = self.__class__
@@ -662,7 +797,7 @@ class ABCPolyBase(abc.ABC):
             domain = kind.domain
         if window is None:
             window = kind.window
-        return self(kind.identity(domain, window=window))
+        return self(kind.identity(domain, window=window, symbol=self.symbol))
 
     def mapparms(self):
         """Return the mapping parameters.
@@ -724,7 +859,7 @@ class ABCPolyBase(abc.ABC):
         else:
             lbnd = off + scl*lbnd
         coef = self._int(self.coef, m, k, lbnd, 1./scl)
-        return self.__class__(coef, self.domain, self.window)
+        return self.__class__(coef, self.domain, self.window, self.symbol)
 
     def deriv(self, m=1):
         """Differentiate.
@@ -746,7 +881,7 @@ class ABCPolyBase(abc.ABC):
         """
         off, scl = self.mapparms()
         coef = self._der(self.coef, m, scl)
-        return self.__class__(coef, self.domain, self.window)
+        return self.__class__(coef, self.domain, self.window, self.symbol)
 
     def roots(self):
         """Return the roots of the series polynomial.
@@ -797,7 +932,7 @@ class ABCPolyBase(abc.ABC):
 
     @classmethod
     def fit(cls, x, y, deg, domain=None, rcond=None, full=False, w=None,
-        window=None):
+        window=None, symbol='x'):
         """Least squares fit to data.
 
         Return a series instance that is the least squares fit to the data
@@ -809,10 +944,8 @@ class ABCPolyBase(abc.ABC):
         ----------
         x : array_like, shape (M,)
             x-coordinates of the M sample points ``(x[i], y[i])``.
-        y : array_like, shape (M,) or (M, K)
-            y-coordinates of the sample points. Several data sets of sample
-            points sharing the same x-coordinates can be fitted at once by
-            passing in a 2D-array that contains one dataset per column.
+        y : array_like, shape (M,)
+            y-coordinates of the M sample points ``(x[i], y[i])``.
         deg : int or 1-D array_like
             Degree(s) of the fitting polynomials. If `deg` is a single integer
             all terms up to and including the `deg`'th term are included in the
@@ -836,11 +969,11 @@ class ABCPolyBase(abc.ABC):
             diagnostic information from the singular value decomposition is
             also returned.
         w : array_like, shape (M,), optional
-            Weights. If not None the contribution of each point
-            ``(x[i],y[i])`` to the fit is weighted by `w[i]`. Ideally the
-            weights are chosen so that the errors of the products
-            ``w[i]*y[i]`` all have the same variance.  The default value is
-            None.
+            Weights. If not None, the weight ``w[i]`` applies to the unsquared
+            residual ``y[i] - y_hat[i]`` at ``x[i]``. Ideally the weights are
+            chosen so that the errors of the products ``w[i]*y[i]`` all have
+            the same variance.  When using inverse-variance weighting, use
+            ``w[i] = 1/sigma(y[i])``.  The default value is None.
 
             .. versionadded:: 1.5.0
         window : {[beg, end]}, optional
@@ -848,6 +981,8 @@ class ABCPolyBase(abc.ABC):
             value is the default class domain
 
             .. versionadded:: 1.6.0
+        symbol : str, optional
+            Symbol representing the independent variable. Default is 'x'.
 
         Returns
         -------
@@ -858,12 +993,12 @@ class ABCPolyBase(abc.ABC):
             of interest, do ``new_series.convert().coef``.
 
         [resid, rank, sv, rcond] : list
-            These values are only returned if `full` = True
+            These values are only returned if ``full == True``
 
-            resid -- sum of squared residuals of the least squares fit
-            rank -- the numerical rank of the scaled Vandermonde matrix
-            sv -- singular values of the scaled Vandermonde matrix
-            rcond -- value of `rcond`.
+            - resid -- sum of squared residuals of the least squares fit
+            - rank -- the numerical rank of the scaled Vandermonde matrix
+            - sv -- singular values of the scaled Vandermonde matrix
+            - rcond -- value of `rcond`.
 
             For more details, see `linalg.lstsq`.
 
@@ -880,13 +1015,15 @@ class ABCPolyBase(abc.ABC):
         res = cls._fit(xnew, y, deg, w=w, rcond=rcond, full=full)
         if full:
             [coef, status] = res
-            return cls(coef, domain=domain, window=window), status
+            return (
+                cls(coef, domain=domain, window=window, symbol=symbol), status
+            )
         else:
             coef = res
-            return cls(coef, domain=domain, window=window)
+            return cls(coef, domain=domain, window=window, symbol=symbol)
 
     @classmethod
-    def fromroots(cls, roots, domain=[], window=None):
+    def fromroots(cls, roots, domain=[], window=None, symbol='x'):
         """Return series instance that has the specified roots.
 
         Returns a series representing the product
@@ -904,6 +1041,8 @@ class ABCPolyBase(abc.ABC):
         window : {None, array_like}, optional
             Window for the returned series. If None the class window is
             used. The default is None.
+        symbol : str, optional
+            Symbol representing the independent variable. Default is 'x'.
 
         Returns
         -------
@@ -924,10 +1063,10 @@ class ABCPolyBase(abc.ABC):
         off, scl = pu.mapparms(domain, window)
         rnew = off + scl*roots
         coef = cls._fromroots(rnew) / scl**deg
-        return cls(coef, domain=domain, window=window)
+        return cls(coef, domain=domain, window=window, symbol=symbol)
 
     @classmethod
-    def identity(cls, domain=None, window=None):
+    def identity(cls, domain=None, window=None, symbol='x'):
         """Identity function.
 
         If ``p`` is the returned series, then ``p(x) == x`` for all
@@ -944,6 +1083,8 @@ class ABCPolyBase(abc.ABC):
             ``[beg, end]``, where ``beg`` and ``end`` are the endpoints of
             the window. If None is given then the class window is used. The
             default is None.
+        symbol : str, optional
+            Symbol representing the independent variable. Default is 'x'.
 
         Returns
         -------
@@ -957,10 +1098,10 @@ class ABCPolyBase(abc.ABC):
             window = cls.window
         off, scl = pu.mapparms(window, domain)
         coef = cls._line(off, scl)
-        return cls(coef, domain, window)
+        return cls(coef, domain, window, symbol)
 
     @classmethod
-    def basis(cls, deg, domain=None, window=None):
+    def basis(cls, deg, domain=None, window=None, symbol='x'):
         """Series basis polynomial of degree `deg`.
 
         Returns the series representing the basis polynomial of degree `deg`.
@@ -980,6 +1121,8 @@ class ABCPolyBase(abc.ABC):
             ``[beg, end]``, where ``beg`` and ``end`` are the endpoints of
             the window. If None is given then the class window is used. The
             default is None.
+        symbol : str, optional
+            Symbol representing the independent variable. Default is 'x'.
 
         Returns
         -------
@@ -996,7 +1139,7 @@ class ABCPolyBase(abc.ABC):
 
         if ideg != deg or ideg < 0:
             raise ValueError("deg must be non-negative integer")
-        return cls([0]*ideg + [1], domain, window)
+        return cls([0]*ideg + [1], domain, window, symbol)
 
     @classmethod
     def cast(cls, series, domain=None, window=None):

@@ -2,23 +2,21 @@ import os
 import textwrap
 import pytest
 
-from numpy.testing import assert_, assert_equal, IS_PYPY
+from numpy.testing import IS_PYPY
 from . import util
 
 
-def _path(*a):
-    return os.path.join(*((os.path.dirname(__file__),) + a))
-
-
 class TestMixed(util.F2PyTest):
-    sources = [_path('src', 'mixed', 'foo.f'),
-               _path('src', 'mixed', 'foo_fixed.f90'),
-               _path('src', 'mixed', 'foo_free.f90')]
+    sources = [
+        util.getpath("tests", "src", "mixed", "foo.f"),
+        util.getpath("tests", "src", "mixed", "foo_fixed.f90"),
+        util.getpath("tests", "src", "mixed", "foo_free.f90"),
+    ]
 
     def test_all(self):
-        assert_(self.module.bar11() == 11)
-        assert_(self.module.foo_fixed.bar12() == 12)
-        assert_(self.module.foo_free.bar13() == 13)
+        assert self.module.bar11() == 11
+        assert self.module.foo_fixed.bar12() == 12
+        assert self.module.foo_free.bar13() == 13
 
     @pytest.mark.xfail(IS_PYPY,
                        reason="PyPy cannot modify tp_doc after PyType_Ready")
@@ -32,4 +30,4 @@ class TestMixed(util.F2PyTest):
         -------
         a : int
         """)
-        assert_equal(self.module.bar11.__doc__, expected)
+        assert self.module.bar11.__doc__ == expected

@@ -2,6 +2,7 @@
 #cython: wraparound=False, nonecheck=False, boundscheck=False, cdivision=True, language_level=3
 import operator
 import warnings
+from collections.abc import Sequence
 
 import numpy as np
 
@@ -22,6 +23,7 @@ from ._common cimport (POISSON_LAM_MAX, CONS_POSITIVE, CONS_NONE,
             CONS_GT_1, LEGACY_CONS_POISSON,
             double_fill, cont, kahan_sum, cont_broadcast_3,
             check_array_constraint, check_constraint, disc, discrete_broadcast_iii,
+            validate_output_shape
         )
 
 cdef extern from "numpy/random/distributions.h":
@@ -49,7 +51,6 @@ cdef extern from "numpy/random/distributions.h":
     void random_standard_uniform_fill(bitgen_t* bitgen_state, np.npy_intp cnt, double *out) nogil
     int64_t random_positive_int(bitgen_t *bitgen_state) nogil
     double random_uniform(bitgen_t *bitgen_state, double lower, double range) nogil
-    double random_vonmises(bitgen_t *bitgen_state, double mu, double kappa) nogil
     double random_laplace(bitgen_t *bitgen_state, double loc, double scale) nogil
     double random_gumbel(bitgen_t *bitgen_state, double loc, double scale) nogil
     double random_logistic(bitgen_t *bitgen_state, double loc, double scale) nogil
@@ -78,6 +79,7 @@ cdef extern from "include/legacy-distributions.h":
     double legacy_gamma(aug_bitgen_t *aug_state, double shape, double scale) nogil
     double legacy_power(aug_bitgen_t *aug_state, double a) nogil
     double legacy_chisquare(aug_bitgen_t *aug_state, double df) nogil
+    double legacy_rayleigh(aug_bitgen_t *aug_state, double mode) nogil
     double legacy_noncentral_chisquare(aug_bitgen_t *aug_state, double df,
                                     double nonc) nogil
     double legacy_noncentral_f(aug_bitgen_t *aug_state, double dfnum, double dfden,
@@ -88,7 +90,7 @@ cdef extern from "include/legacy-distributions.h":
                                    int64_t n, binomial_t *binomial) nogil
     int64_t legacy_negative_binomial(aug_bitgen_t *aug_state, double n, double p) nogil
     int64_t legacy_random_hypergeometric(bitgen_t *bitgen_state, int64_t good, int64_t bad, int64_t sample) nogil
-    int64_t legacy_random_logseries(bitgen_t *bitgen_state, double p) nogil
+    int64_t legacy_logseries(bitgen_t *bitgen_state, double p) nogil
     int64_t legacy_random_poisson(bitgen_t *bitgen_state, double lam) nogil
     int64_t legacy_random_zipf(bitgen_t *bitgen_state, double a) nogil
     int64_t legacy_random_geometric(bitgen_t *bitgen_state, double p) nogil
@@ -98,6 +100,7 @@ cdef extern from "include/legacy-distributions.h":
     double legacy_f(aug_bitgen_t *aug_state, double dfnum, double dfden) nogil
     double legacy_exponential(aug_bitgen_t *aug_state, double scale) nogil
     double legacy_power(aug_bitgen_t *state, double a) nogil
+    double legacy_vonmises(bitgen_t *bitgen_state, double mu, double kappa) nogil
 
 np.import_array()
 
@@ -136,7 +139,7 @@ cdef class RandomState:
     'RandomState' methods using the same parameters will always produce the
     same results up to roundoff error except when the values were incorrect.
     `RandomState` is effectively frozen and will only receive updates that
-    are required by changes in the the internals of Numpy. More substantial
+    are required by changes in the internals of Numpy. More substantial
     changes, including algorithmic improvements, are reserved for
     `Generator`.
 
@@ -382,7 +385,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``random`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -399,7 +402,7 @@ cdef class RandomState:
 
         See Also
         --------
-        Generator.random: which should be used for new code.
+        random.Generator.random: which should be used for new code.
 
         Examples
         --------
@@ -452,7 +455,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``beta`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -473,7 +476,7 @@ cdef class RandomState:
 
         See Also
         --------
-        Generator.beta: which should be used for new code.
+        random.Generator.beta: which should be used for new code.
         """
         return cont(&legacy_beta, &self._aug_state, size, self.lock, 2,
                     a, 'a', CONS_POSITIVE,
@@ -502,7 +505,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``exponential`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -522,7 +525,7 @@ cdef class RandomState:
 
         See Also
         --------
-        Generator.exponential: which should be used for new code.
+        random.Generator.exponential: which should be used for new code.
 
         References
         ----------
@@ -551,7 +554,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``standard_exponential`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -567,7 +570,7 @@ cdef class RandomState:
 
         See Also
         --------
-        Generator.standard_exponential: which should be used for new code.
+        random.Generator.standard_exponential: which should be used for new code.
 
         Examples
         --------
@@ -652,7 +655,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``integers`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -685,7 +688,7 @@ cdef class RandomState:
         random_integers : similar to `randint`, only for the closed
             interval [`low`, `high`], and 1 is the lowest value if `high` is
             omitted.
-        Generator.integers: which should be used for new code.
+        random.Generator.integers: which should be used for new code.
 
         Examples
         --------
@@ -760,7 +763,7 @@ cdef class RandomState:
         else:
             raise TypeError('Unsupported dtype %r for randint' % _dtype)
 
-        if size is None and dtype in (bool, int, np.compat.long):
+        if size is None and dtype in (bool, int):
             if np.array(ret).shape == ():
                 return dtype(ret)
         return ret
@@ -773,7 +776,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``bytes`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -782,17 +785,17 @@ cdef class RandomState:
 
         Returns
         -------
-        out : str
+        out : bytes
             String of length `length`.
 
         See Also
         --------
-        Generator.bytes: which should be used for new code.
+        random.Generator.bytes: which should be used for new code.
 
         Examples
         --------
         >>> np.random.bytes(10)
-        ' eh\\x85\\x022SZ\\xbf\\xa4' #random
+        b' eh\\x85\\x022SZ\\xbf\\xa4' #random
         """
         cdef Py_ssize_t n_uint32 = ((length - 1) // 4 + 1)
         # Interpret the uint32s as little-endian to convert them to bytes
@@ -807,27 +810,28 @@ cdef class RandomState:
 
         Generates a random sample from a given 1-D array
 
-                .. versionadded:: 1.7.0
+        .. versionadded:: 1.7.0
 
         .. note::
             New code should use the ``choice`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
         a : 1-D array-like or int
             If an ndarray, a random sample is generated from its elements.
-            If an int, the random sample is generated as if a were np.arange(a)
+            If an int, the random sample is generated as if it were ``np.arange(a)``
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  Default is None, in which case a
             single value is returned.
         replace : boolean, optional
-            Whether the sample is with or without replacement
+            Whether the sample is with or without replacement. Default is True,
+            meaning that a value of ``a`` can be selected multiple times.
         p : 1-D array-like, optional
             The probabilities associated with each entry in a.
-            If not given the sample assumes a uniform distribution over all
-            entries in a.
+            If not given, the sample assumes a uniform distribution over all
+            entries in ``a``.
 
         Returns
         -------
@@ -846,7 +850,16 @@ cdef class RandomState:
         See Also
         --------
         randint, shuffle, permutation
-        Generator.choice: which should be used in new code
+        random.Generator.choice: which should be used in new code
+
+        Notes
+        -----
+        Setting user-specified probabilities through ``p`` uses a more general but less
+        efficient sampler than the default. The general sampler produces a different sample
+        than the optimized sampler even if each element of ``p`` is 1 / len(a).
+
+        Sampling random rows from a 2-D array is not possible with this function,
+        but is possible with `Generator.choice` through its ``axis`` keyword.
 
         Examples
         --------
@@ -925,10 +938,14 @@ cdef class RandomState:
             if abs(p_sum - 1.) > atol:
                 raise ValueError("probabilities do not sum to 1")
 
-        shape = size
-        if shape is not None:
+        # `shape == None` means `shape == ()`, but with scalar unpacking at the
+        # end
+        is_scalar = size is None
+        if not is_scalar:
+            shape = size
             size = np.prod(shape, dtype=np.intp)
         else:
+            shape = ()
             size = 1
 
         # Actual sampling
@@ -972,10 +989,9 @@ cdef class RandomState:
                 idx = found
             else:
                 idx = self.permutation(pop_size)[:size]
-                if shape is not None:
-                    idx.shape = shape
+                idx.shape = shape
 
-        if shape is None and isinstance(idx, np.ndarray):
+        if is_scalar and isinstance(idx, np.ndarray):
             # In most cases a scalar will have been made an array
             idx = idx.item(0)
 
@@ -983,7 +999,7 @@ cdef class RandomState:
         if a.ndim == 0:
             return idx
 
-        if shape is not None and idx.ndim == 0:
+        if not is_scalar and idx.ndim == 0:
             # If size == () then the user requested a 0-d array as opposed to
             # a scalar object when size is None. However a[idx] is always a
             # scalar and not an array. So this makes sure the result is an
@@ -1008,7 +1024,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``uniform`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -1017,7 +1033,10 @@ cdef class RandomState:
             greater than or equal to low.  The default value is 0.
         high : float or array_like of floats
             Upper boundary of the output interval.  All values generated will be
-            less than or equal to high.  The default value is 1.0.
+            less than or equal to high.  The high limit may be included in the 
+            returned array of floats due to floating-point rounding in the 
+            equation ``low + (high-low) * random_sample()``.  The default value 
+            is 1.0.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
@@ -1039,7 +1058,7 @@ cdef class RandomState:
         rand : Convenience function that accepts dimensions as input, e.g.,
                ``rand(2,2)`` would generate a 2-by-2 array of floats,
                uniformly distributed over ``[0, 1)``.
-        Generator.uniform: which should be used for new code.
+        random.Generator.uniform: which should be used for new code.
 
         Notes
         -----
@@ -1176,7 +1195,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``standard_normal`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         If positive int_like arguments are provided, `randn` generates an array
         of shape ``(d0, d1, ..., dn)``, filled
@@ -1201,7 +1220,7 @@ cdef class RandomState:
         --------
         standard_normal : Similar, but takes a tuple as its argument.
         normal : Also accepts mu and sigma arguments.
-        Generator.standard_normal: which should be used for new code.
+        random.Generator.standard_normal: which should be used for new code.
 
         Notes
         -----
@@ -1330,7 +1349,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``standard_normal`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -1350,7 +1369,7 @@ cdef class RandomState:
         normal :
             Equivalent function with additional ``loc`` and ``scale`` arguments
             for setting the mean and standard deviation.
-        Generator.standard_normal: which should be used for new code.
+        random.Generator.standard_normal: which should be used for new code.
 
         Notes
         -----
@@ -1405,7 +1424,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``normal`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -1429,7 +1448,7 @@ cdef class RandomState:
         --------
         scipy.stats.norm : probability density function, distribution or
             cumulative density function, etc.
-        Generator.normal: which should be used for new code.
+        random.Generator.normal: which should be used for new code.
 
         Notes
         -----
@@ -1505,7 +1524,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``standard_gamma`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -1526,7 +1545,7 @@ cdef class RandomState:
         --------
         scipy.stats.gamma : probability density function, distribution or
             cumulative density function, etc.
-        Generator.standard_gamma: which should be used for new code.
+        random.Generator.standard_gamma: which should be used for new code.
 
         Notes
         -----
@@ -1586,7 +1605,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``gamma`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -1610,7 +1629,7 @@ cdef class RandomState:
         --------
         scipy.stats.gamma : probability density function, distribution or
             cumulative density function, etc.
-        Generator.gamma: which should be used for new code.
+        random.Generator.gamma: which should be used for new code.
 
         Notes
         -----
@@ -1675,7 +1694,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``f`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -1698,7 +1717,7 @@ cdef class RandomState:
         --------
         scipy.stats.f : probability density function, distribution or
             cumulative density function, etc.
-        Generator.f: which should be used for new code.
+        random.Generator.f: which should be used for new code.
 
         Notes
         -----
@@ -1763,7 +1782,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``noncentral_f`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -1791,7 +1810,7 @@ cdef class RandomState:
 
         See Also
         --------
-        Generator.noncentral_f: which should be used for new code.
+        random.Generator.noncentral_f: which should be used for new code.
 
         Notes
         -----
@@ -1848,7 +1867,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``chisquare`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -1873,7 +1892,7 @@ cdef class RandomState:
 
         See Also
         --------
-        Generator.chisquare: which should be used for new code.
+        random.Generator.chisquare: which should be used for new code.
 
         Notes
         -----
@@ -1921,7 +1940,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``noncentral_chisquare`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -1945,7 +1964,7 @@ cdef class RandomState:
 
         See Also
         --------
-        Generator.noncentral_chisquare: which should be used for new code.
+        random.Generator.noncentral_chisquare: which should be used for new code.
 
         Notes
         -----
@@ -2007,7 +2026,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``standard_cauchy`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -2023,7 +2042,7 @@ cdef class RandomState:
 
         See Also
         --------
-        Generator.standard_cauchy: which should be used for new code.
+        random.Generator.standard_cauchy: which should be used for new code.
 
         Notes
         -----
@@ -2083,7 +2102,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``standard_t`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -2102,7 +2121,7 @@ cdef class RandomState:
 
         See Also
         --------
-        Generator.standard_t: which should be used for new code.
+        random.Generator.standard_t: which should be used for new code.
 
         Notes
         -----
@@ -2137,33 +2156,45 @@ cdef class RandomState:
         ...                    7515, 8230, 8770])
 
         Does their energy intake deviate systematically from the recommended
-        value of 7725 kJ?
+        value of 7725 kJ? Our null hypothesis will be the absence of deviation,
+        and the alternate hypothesis will be the presence of an effect that could be
+        either positive or negative, hence making our test 2-tailed. 
 
-        We have 10 degrees of freedom, so is the sample mean within 95% of the
-        recommended value?
+        Because we are estimating the mean and we have N=11 values in our sample,
+        we have N-1=10 degrees of freedom. We set our significance level to 95% and 
+        compute the t statistic using the empirical mean and empirical standard 
+        deviation of our intake. We use a ddof of 1 to base the computation of our 
+        empirical standard deviation on an unbiased estimate of the variance (note:
+        the final estimate is not unbiased due to the concave nature of the square 
+        root).
 
-        >>> s = np.random.standard_t(10, size=100000)
         >>> np.mean(intake)
         6753.636363636364
         >>> intake.std(ddof=1)
         1142.1232221373727
-
-        Calculate the t statistic, setting the ddof parameter to the unbiased
-        value so the divisor in the standard deviation will be degrees of
-        freedom, N-1.
-
         >>> t = (np.mean(intake)-7725)/(intake.std(ddof=1)/np.sqrt(len(intake)))
+        >>> t
+        -2.8207540608310198
+
+        We draw 1000000 samples from Student's t distribution with the adequate
+        degrees of freedom.
+
         >>> import matplotlib.pyplot as plt
+        >>> s = np.random.standard_t(10, size=1000000)
         >>> h = plt.hist(s, bins=100, density=True)
 
-        For a one-sided t-test, how far out in the distribution does the t
-        statistic appear?
+        Does our t statistic land in one of the two critical regions found at 
+        both tails of the distribution?
 
-        >>> np.sum(s<t) / float(len(s))
-        0.0090699999999999999  #random
+        >>> np.sum(np.abs(t) < np.abs(s)) / float(len(s))
+        0.018318  #random < 0.05, statistic is in critical region
 
-        So the p-value is about 0.009, which says the null hypothesis has a
-        probability of about 99% of being true.
+        The probability value for this 2-tailed test is about 1.83%, which is 
+        lower than the 5% pre-determined significance threshold. 
+
+        Therefore, the probability of observing values as extreme as our intake
+        conditionally on the null hypothesis being true is too low, and we reject 
+        the null hypothesis of no deviation. 
 
         """
         return cont(&legacy_standard_t, &self._aug_state, size, self.lock, 1,
@@ -2188,7 +2219,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``vonmises`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -2211,7 +2242,7 @@ cdef class RandomState:
         --------
         scipy.stats.vonmises : probability density function, distribution, or
             cumulative density function, etc.
-        Generator.vonmises: which should be used for new code.
+        random.Generator.vonmises: which should be used for new code.
 
         Notes
         -----
@@ -2255,7 +2286,7 @@ cdef class RandomState:
         >>> plt.show()
 
         """
-        return cont(&random_vonmises, &self._bitgen, size, self.lock, 2,
+        return cont(&legacy_vonmises, &self._bitgen, size, self.lock, 2,
                     mu, 'mu', CONS_NONE,
                     kappa, 'kappa', CONS_NON_NEGATIVE,
                     0.0, '', CONS_NONE, None)
@@ -2286,7 +2317,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``pareto`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -2309,7 +2340,7 @@ cdef class RandomState:
             cumulative density function, etc.
         scipy.stats.genpareto : probability density function, distribution or
             cumulative density function, etc.
-        Generator.pareto: which should be used for new code.
+        random.Generator.pareto: which should be used for new code.
 
         Notes
         -----
@@ -2380,7 +2411,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``weibull`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -2403,7 +2434,7 @@ cdef class RandomState:
         scipy.stats.weibull_min
         scipy.stats.genextreme
         gumbel
-        Generator.weibull: which should be used for new code.
+        random.Generator.weibull: which should be used for new code.
 
         Notes
         -----
@@ -2476,7 +2507,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``power`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -2496,11 +2527,11 @@ cdef class RandomState:
         Raises
         ------
         ValueError
-            If a < 1.
+            If a <= 0.
 
         See Also
         --------
-        Generator.power: which should be used for new code.
+        random.Generator.power: which should be used for new code.
 
         Notes
         -----
@@ -2587,7 +2618,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``laplace`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -2609,7 +2640,7 @@ cdef class RandomState:
 
         See Also
         --------
-        Generator.laplace: which should be used for new code.
+        random.Generator.laplace: which should be used for new code.
 
         Notes
         -----
@@ -2678,7 +2709,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``gumbel`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -2704,7 +2735,7 @@ cdef class RandomState:
         scipy.stats.gumbel_r
         scipy.stats.genextreme
         weibull
-        Generator.gumbel: which should be used for new code.
+        random.Generator.gumbel: which should be used for new code.
 
         Notes
         -----
@@ -2800,7 +2831,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``logistic`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -2824,7 +2855,7 @@ cdef class RandomState:
         --------
         scipy.stats.logistic : probability density function, distribution or
             cumulative density function, etc.
-        Generator.logistic: which should be used for new code.
+        random.Generator.logistic: which should be used for new code.
 
         Notes
         -----
@@ -2887,7 +2918,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``lognormal`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -2911,7 +2942,7 @@ cdef class RandomState:
         --------
         scipy.stats.lognorm : probability density function, distribution,
             cumulative density function, etc.
-        Generator.lognormal: which should be used for new code.
+        random.Generator.lognormal: which should be used for new code.
 
         Notes
         -----
@@ -3000,7 +3031,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``rayleigh`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -3019,7 +3050,7 @@ cdef class RandomState:
 
         See Also
         --------
-        Generator.rayleigh: which should be used for new code.
+        random.Generator.rayleigh: which should be used for new code.
 
         Notes
         -----
@@ -3060,7 +3091,7 @@ cdef class RandomState:
         0.087300000000000003 # random
 
         """
-        return cont(&random_rayleigh, &self._bitgen, size, self.lock, 1,
+        return cont(&legacy_rayleigh, &self._bitgen, size, self.lock, 1,
                     scale, 'scale', CONS_NON_NEGATIVE,
                     0.0, '', CONS_NONE,
                     0.0, '', CONS_NONE, None)
@@ -3082,7 +3113,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``wald`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -3103,7 +3134,7 @@ cdef class RandomState:
 
         See Also
         --------
-        Generator.wald: which should be used for new code.
+        random.Generator.wald: which should be used for new code.
 
         Notes
         -----
@@ -3155,7 +3186,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``triangular`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -3180,7 +3211,7 @@ cdef class RandomState:
 
         See Also
         --------
-        Generator.triangular: which should be used for new code.
+        random.Generator.triangular: which should be used for new code.
 
         Notes
         -----
@@ -3262,7 +3293,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``binomial`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -3287,7 +3318,7 @@ cdef class RandomState:
         --------
         scipy.stats.binom : probability density function, distribution or
             cumulative density function, etc.
-        Generator.binomial: which should be used for new code.
+        random.Generator.binomial: which should be used for new code.
 
         Notes
         -----
@@ -3366,6 +3397,7 @@ cdef class RandomState:
             cnt = np.PyArray_SIZE(randoms)
 
             it = np.PyArray_MultiIterNew3(randoms, p_arr, n_arr)
+            validate_output_shape(it.shape, randoms)
             with self.lock, nogil:
                 for i in range(cnt):
                     _dp = (<double*>np.PyArray_MultiIter_DATA(it, 1))[0]
@@ -3411,7 +3443,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``negative_binomial`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -3434,7 +3466,7 @@ cdef class RandomState:
 
         See Also
         --------
-        Generator.negative_binomial: which should be used for new code.
+        random.Generator.negative_binomial: which should be used for new code.
 
         Notes
         -----
@@ -3446,7 +3478,7 @@ cdef class RandomState:
         probability of success, :math:`N+n` is the number of trials, and
         :math:`\\Gamma` is the gamma function. When :math:`n` is an integer,
         :math:`\\frac{\\Gamma(N+n)}{N!\\Gamma(n)} = \\binom{N+n-1}{N}`, which is
-        the more common form of this term in the the pmf. The negative
+        the more common form of this term in the pmf. The negative
         binomial distribution gives the probability of N failures given n
         successes, with a success on the last trial.
 
@@ -3496,13 +3528,14 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``poisson`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
         lam : float or array_like of floats
-            Expectation of interval, must be >= 0. A sequence of expectation
-            intervals must be broadcastable over the requested size.
+            Expected number of events occurring in a fixed-time interval,
+            must be >= 0. A sequence must be broadcastable over the requested
+            size.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
@@ -3516,7 +3549,7 @@ cdef class RandomState:
 
         See Also
         --------
-        Generator.poisson: which should be used for new code.
+        random.Generator.poisson: which should be used for new code.
 
         Notes
         -----
@@ -3576,13 +3609,13 @@ cdef class RandomState:
         `a` > 1.
 
         The Zipf distribution (also known as the zeta distribution) is a
-        continuous probability distribution that satisfies Zipf's law: the
+        discrete probability distribution that satisfies Zipf's law: the
         frequency of an item is inversely proportional to its rank in a
         frequency table.
 
         .. note::
             New code should use the ``zipf`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -3603,15 +3636,16 @@ cdef class RandomState:
         --------
         scipy.stats.zipf : probability density function, distribution, or
             cumulative density function, etc.
-        Generator.zipf: which should be used for new code.
+        random.Generator.zipf: which should be used for new code.
 
         Notes
         -----
         The probability density for the Zipf distribution is
 
-        .. math:: p(x) = \\frac{x^{-a}}{\\zeta(a)},
+        .. math:: p(k) = \\frac{k^{-a}}{\\zeta(a)},
 
-        where :math:`\\zeta` is the Riemann Zeta function.
+        for integers :math:`k \geq 1`, where :math:`\\zeta` is the Riemann Zeta
+        function.
 
         It is named for the American linguist George Kingsley Zipf, who noted
         that the frequency of any word in a sample of a language is inversely
@@ -3627,21 +3661,29 @@ cdef class RandomState:
         --------
         Draw samples from the distribution:
 
-        >>> a = 2. # parameter
-        >>> s = np.random.zipf(a, 1000)
+        >>> a = 4.0
+        >>> n = 20000
+        >>> s = np.random.zipf(a, n)
 
         Display the histogram of the samples, along with
-        the probability density function:
+        the expected histogram based on the probability
+        density function:
 
         >>> import matplotlib.pyplot as plt
-        >>> from scipy import special  # doctest: +SKIP
+        >>> from scipy.special import zeta  # doctest: +SKIP
 
-        Truncate s values at 50 so plot is interesting:
+        `bincount` provides a fast histogram for small integers.
 
-        >>> count, bins, ignored = plt.hist(s[s<50], 50, density=True)
-        >>> x = np.arange(1., 50.)
-        >>> y = x**(-a) / special.zetac(a)  # doctest: +SKIP
-        >>> plt.plot(x, y/max(y), linewidth=2, color='r')  # doctest: +SKIP
+        >>> count = np.bincount(s)
+        >>> k = np.arange(1, s.max() + 1)
+
+        >>> plt.bar(k, count[1:], alpha=0.5, label='sample count')
+        >>> plt.plot(k, n*(k**-a)/zeta(a), 'k.-', alpha=0.5,
+        ...          label='expected count')   # doctest: +SKIP
+        >>> plt.semilogy()
+        >>> plt.grid(alpha=0.4)
+        >>> plt.legend()
+        >>> plt.title(f'Zipf sample, a={a}, size={n}')
         >>> plt.show()
 
         """
@@ -3672,7 +3714,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``geometric`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -3691,7 +3733,7 @@ cdef class RandomState:
 
         See Also
         --------
-        Generator.geometric: which should be used for new code.
+        random.Generator.geometric: which should be used for new code.
 
         Examples
         --------
@@ -3726,7 +3768,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``hypergeometric`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -3755,7 +3797,7 @@ cdef class RandomState:
         --------
         scipy.stats.hypergeom : probability density function, distribution or
             cumulative density function, etc.
-        Generator.hypergeometric: which should be used for new code.
+        random.Generator.hypergeometric: which should be used for new code.
 
         Notes
         -----
@@ -3857,7 +3899,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``logseries`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -3878,7 +3920,7 @@ cdef class RandomState:
         --------
         scipy.stats.logser : probability density function, distribution or
             cumulative density function, etc.
-        Generator.logseries: which should be used for new code.
+        random.Generator.logseries: which should be used for new code.
 
         Notes
         -----
@@ -3926,7 +3968,7 @@ cdef class RandomState:
         >>> plt.show()
 
         """
-        out = disc(&legacy_random_logseries, &self._bitgen, size, self.lock, 1, 0,
+        out = disc(&legacy_logseries, &self._bitgen, size, self.lock, 1, 0,
                    p, 'p', CONS_BOUNDED_0_1,
                    0.0, '', CONS_NONE,
                    0.0, '', CONS_NONE)
@@ -3950,7 +3992,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``multivariate_normal`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -3981,7 +4023,7 @@ cdef class RandomState:
 
         See Also
         --------
-        Generator.multivariate_normal: which should be used for new code.
+        random.Generator.multivariate_normal: which should be used for new code.
 
         Notes
         -----
@@ -4037,14 +4079,37 @@ cdef class RandomState:
         >>> x.shape
         (3, 3, 2)
 
-        The following is probably true, given that 0.6 is roughly twice the
-        standard deviation:
+        Here we generate 800 samples from the bivariate normal distribution
+        with mean [0, 0] and covariance matrix [[6, -3], [-3, 3.5]].  The
+        expected variances of the first and second components of the sample
+        are 6 and 3.5, respectively, and the expected correlation
+        coefficient is -3/sqrt(6*3.5) ≈ -0.65465.
 
-        >>> list((x[0,0,:] - mean) < 0.6)
-        [True, True] # random
+        >>> cov = np.array([[6, -3], [-3, 3.5]])
+        >>> pts = np.random.multivariate_normal([0, 0], cov, size=800)
 
+        Check that the mean, covariance, and correlation coefficient of the
+        sample are close to the expected values:
+
+        >>> pts.mean(axis=0)
+        array([ 0.0326911 , -0.01280782])  # may vary
+        >>> np.cov(pts.T)
+        array([[ 5.96202397, -2.85602287],
+               [-2.85602287,  3.47613949]])  # may vary
+        >>> np.corrcoef(pts.T)[0, 1]
+        -0.6273591314603949  # may vary
+
+        We can visualize this data with a scatter plot.  The orientation
+        of the point cloud illustrates the negative correlation of the
+        components of this sample.
+
+        >>> import matplotlib.pyplot as plt
+        >>> plt.plot(pts[:, 0], pts[:, 1], '.', alpha=0.5)
+        >>> plt.axis('equal')
+        >>> plt.grid()
+        >>> plt.show()
         """
-        from numpy.dual import svd
+        from numpy.linalg import svd
 
         # Check preconditions on arguments
         mean = np.array(mean)
@@ -4124,7 +4189,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``multinomial`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -4151,7 +4216,7 @@ cdef class RandomState:
 
         See Also
         --------
-        Generator.multinomial: which should be used for new code.
+        random.Generator.multinomial: which should be used for new code.
 
         Examples
         --------
@@ -4192,20 +4257,35 @@ cdef class RandomState:
         ValueError: pvals < 0, pvals > 1 or pvals contains NaNs
 
         """
-        cdef np.npy_intp d, i, sz, offset
+        cdef np.npy_intp d, i, sz, offset, niter
         cdef np.ndarray parr, mnarr
         cdef double *pix
         cdef long *mnix
         cdef long ni
 
-        d = len(pvals)
         parr = <np.ndarray>np.PyArray_FROMANY(
-            pvals, np.NPY_DOUBLE, 1, 1, np.NPY_ARRAY_ALIGNED | np.NPY_ARRAY_C_CONTIGUOUS)
+            pvals, np.NPY_DOUBLE, 0, 1, np.NPY_ARRAY_ALIGNED | np.NPY_ARRAY_C_CONTIGUOUS)
+        if np.PyArray_NDIM(parr) == 0:
+            raise TypeError("pvals must be a 1-d sequence")
+        d = np.PyArray_SIZE(parr)
         pix = <double*>np.PyArray_DATA(parr)
         check_array_constraint(parr, 'pvals', CONS_BOUNDED_0_1)
-        if kahan_sum(pix, d-1) > (1.0 + 1e-12):
-            raise ValueError("sum(pvals[:-1]) > 1.0")
-
+        # Only check if pvals is non-empty due no checks in kahan_sum
+        if d and kahan_sum(pix, d-1) > (1.0 + 1e-12):
+            # When floating, but not float dtype, and close, improve the error
+            # 1.0001 works for float16 and float32
+            if (isinstance(pvals, np.ndarray)
+                    and np.issubdtype(pvals.dtype, np.floating)
+                    and pvals.dtype != float
+                    and pvals.sum() < 1.0001):
+                msg = ("sum(pvals[:-1].astype(np.float64)) > 1.0. The pvals "
+                       "array is cast to 64-bit floating point prior to "
+                       "checking the sum. Precision changes when casting may "
+                       "cause problems even if the sum of the original pvals "
+                       "is valid.")
+            else:
+                msg = "sum(pvals[:-1]) > 1.0"
+            raise ValueError(msg)
         if size is None:
             shape = (d,)
         else:
@@ -4213,7 +4293,6 @@ cdef class RandomState:
                 shape = (operator.index(size), d)
             except:
                 shape = tuple(size) + (d,)
-
         multin = np.zeros(shape, dtype=int)
         mnarr = <np.ndarray>multin
         mnix = <long*>np.PyArray_DATA(mnarr)
@@ -4221,8 +4300,10 @@ cdef class RandomState:
         ni = n
         check_constraint(ni, 'n', CONS_NON_NEGATIVE)
         offset = 0
+        # gh-20483: Avoids divide by 0
+        niter = sz // d if d else 0
         with self.lock, nogil:
-            for i in range(sz // d):
+            for i in range(niter):
                 legacy_random_multinomial(&self._bitgen, ni, &mnix[offset], pix, d, &self._binomial)
                 offset += d
 
@@ -4242,7 +4323,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``dirichlet`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -4260,13 +4341,13 @@ cdef class RandomState:
             The drawn samples, of shape ``(size, k)``.
 
         Raises
-        -------
+        ------
         ValueError
             If any value in ``alpha`` is less than or equal to zero
 
         See Also
         --------
-        Generator.dirichlet: which should be used for new code.
+        random.Generator.dirichlet: which should be used for new code.
 
         Notes
         -----
@@ -4388,12 +4469,12 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``shuffle`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
-        x : array_like
-            The array or list to be shuffled.
+        x : ndarray or MutableSequence
+            The array, list or mutable sequence to be shuffled.
 
         Returns
         -------
@@ -4401,7 +4482,7 @@ cdef class RandomState:
 
         See Also
         --------
-        Generator.shuffle: which should be used for new code.
+        random.Generator.shuffle: which should be used for new code.
 
         Examples
         --------
@@ -4425,11 +4506,14 @@ cdef class RandomState:
             char* x_ptr
             char* buf_ptr
 
+        if isinstance(x, np.ndarray) and not x.flags.writeable:
+            raise ValueError('array is read-only')
+
         if type(x) is np.ndarray and x.ndim == 1 and x.size:
             # Fast, statically typed path: shuffle the underlying buffer.
             # Only for non-empty, 1d objects of class ndarray (subclasses such
             # as MaskedArrays may not support this approach).
-            x_ptr = <char*><size_t>np.PyArray_DATA(x)
+            x_ptr = np.PyArray_BYTES(x)
             stride = x.strides[0]
             itemsize = x.dtype.itemsize
             # As the array x could contain python objects we use a buffer
@@ -4437,7 +4521,7 @@ cdef class RandomState:
             # within the buffer and erroneously decrementing it's refcount
             # when the function exits.
             buf = np.empty(itemsize, dtype=np.int8)  # GC'd at function exit
-            buf_ptr = <char*><size_t>np.PyArray_DATA(buf)
+            buf_ptr = np.PyArray_BYTES(buf)
             with self.lock:
                 # We trick gcc into providing a specialized implementation for
                 # the most common case, yielding a ~33% performance improvement.
@@ -4446,7 +4530,22 @@ cdef class RandomState:
                     self._shuffle_raw(n, sizeof(np.npy_intp), stride, x_ptr, buf_ptr)
                 else:
                     self._shuffle_raw(n, itemsize, stride, x_ptr, buf_ptr)
-        elif isinstance(x, np.ndarray) and x.ndim and x.size:
+        elif isinstance(x, np.ndarray):
+            if x.size == 0:
+                # shuffling is a no-op
+                return
+
+            if x.ndim == 1 and x.dtype.type is np.object_:
+                warnings.warn(
+                        "Shuffling a one dimensional array subclass containing "
+                        "objects gives incorrect results for most array "
+                        "subclasses.  "
+                        "Please use the new random number API instead: "
+                        "https://numpy.org/doc/stable/reference/random/index.html\n"
+                        "The new API fixes this issue. This version will not "
+                        "be fixed due to stability guarantees of the API.",
+                        UserWarning, stacklevel=1)  # Cython adds no stacklevel
+
             buf = np.empty_like(x[0, ...])
             with self.lock:
                 for i in reversed(range(1, n)):
@@ -4458,6 +4557,16 @@ cdef class RandomState:
                     x[i] = buf
         else:
             # Untyped path.
+            if not isinstance(x, Sequence):
+                # See gh-18206. We may decide to deprecate here in the future.
+                warnings.warn(
+                    f"you are shuffling a '{type(x).__name__}' object "
+                    "which is not a subclass of 'Sequence'; "
+                    "`shuffle` is not guaranteed to behave correctly. "
+                    "E.g., non-numpy array/tensor objects with view semantics "
+                    "may contain duplicates after shuffling.",
+                    UserWarning, stacklevel=1)  # Cython does not add a level
+
             with self.lock:
                 for i in reversed(range(1, n)):
                     j = random_interval(&self._bitgen, i)
@@ -4483,7 +4592,7 @@ cdef class RandomState:
 
         .. note::
             New code should use the ``permutation`` method of a ``default_rng()``
-            instance instead; see `random-quick-start`.
+            instance instead; please see the :ref:`random-quick-start`.
 
         Parameters
         ----------
@@ -4499,7 +4608,7 @@ cdef class RandomState:
 
         See Also
         --------
-        Generator.permutation: which should be used for new code.
+        random.Generator.permutation: which should be used for new code.
 
         Examples
         --------

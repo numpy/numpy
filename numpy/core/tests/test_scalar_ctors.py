@@ -65,7 +65,7 @@ class TestExtraArgs:
 
     def test_bool(self):
         with pytest.raises(TypeError):
-            np.bool(False, garbage=True)
+            np.bool_(False, garbage=True)
 
     def test_void(self):
         with pytest.raises(TypeError):
@@ -79,3 +79,37 @@ class TestFromInt:
 
     def test_uint64_from_negative(self):
         assert_equal(np.uint64(-2), np.uint64(18446744073709551614))
+
+
+int_types = [np.byte, np.short, np.intc, np.int_, np.longlong]
+uint_types = [np.ubyte, np.ushort, np.uintc, np.uint, np.ulonglong]
+float_types = [np.half, np.single, np.double, np.longdouble]
+cfloat_types = [np.csingle, np.cdouble, np.clongdouble]
+
+
+class TestArrayFromScalar:
+    """ gh-15467 """
+
+    def _do_test(self, t1, t2):
+        x = t1(2)
+        arr = np.array(x, dtype=t2)
+        # type should be preserved exactly
+        if t2 is None:
+            assert arr.dtype.type is t1
+        else:
+            assert arr.dtype.type is t2
+
+    @pytest.mark.parametrize('t1', int_types + uint_types)
+    @pytest.mark.parametrize('t2', int_types + uint_types + [None])
+    def test_integers(self, t1, t2):
+        return self._do_test(t1, t2)
+
+    @pytest.mark.parametrize('t1', float_types)
+    @pytest.mark.parametrize('t2', float_types + [None])
+    def test_reals(self, t1, t2):
+        return self._do_test(t1, t2)
+
+    @pytest.mark.parametrize('t1', cfloat_types)
+    @pytest.mark.parametrize('t2', cfloat_types + [None])
+    def test_complex(self, t1, t2):
+        return self._do_test(t1, t2)

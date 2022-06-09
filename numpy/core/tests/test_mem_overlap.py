@@ -666,6 +666,11 @@ class TestUFunc:
     def test_unary_ufunc_call_fuzz(self):
         self.check_unary_fuzz(np.invert, None, np.int16)
 
+    @pytest.mark.slow
+    def test_unary_ufunc_call_complex_fuzz(self):
+        # Complex typically has a smaller alignment than itemsize
+        self.check_unary_fuzz(np.negative, None, np.complex128, count=500)
+
     def test_binary_ufunc_accumulate_fuzz(self):
         def get_out_axis_size(a, b, axis):
             if axis is None:
@@ -792,7 +797,7 @@ class TestUFunc:
         check(np.add, a, ind, a[25:75])
 
     def test_unary_ufunc_1d_manual(self):
-        # Exercise branches in PyArray_EQUIVALENTLY_ITERABLE
+        # Exercise ufunc fast-paths (that avoid creation of an `np.nditer`)
 
         def check(a, b):
             a_orig = a.copy()

@@ -1,7 +1,0 @@
-Const qualify UFunc inner loops
--------------------------------
-``UFuncGenericFunction`` now expects pointers to const ``dimension`` and
-``strides`` as arguments. This means inner loops may no longer modify
-either ``dimension`` or ``strides``. This change leads to an
-``incompatible-pointer-types`` warning forcing users to either ignore
-the compiler warnings or to const qualify their own loop signatures.

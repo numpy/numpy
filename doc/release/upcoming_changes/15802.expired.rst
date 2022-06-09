@@ -1,9 +1,0 @@
-`numpy.insert` and `numpy.delete` can no longer be passed an axis on 0d arrays
-------------------------------------------------------------------------------
-This concludes a deprecation from 1.9, where when an ``axis`` argument was
-passed to a call to `~numpy.insert` and `~numpy.delete` on a 0d array, the
-``axis`` and ``obj`` argument and indices would be completely ignored.
-In these cases, ``insert(arr, "nonsense", 42, axis=0)`` would actually overwrite the
-entire array, while ``delete(arr, "nonsense", axis=0)`` would be ``arr.copy()``
-
-Now passing ``axis`` on a 0d array raises `~numpy.AxisError`.

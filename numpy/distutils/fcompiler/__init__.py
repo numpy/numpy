@@ -20,8 +20,6 @@ import os
 import sys
 import re
 
-from numpy.compat import open_latin1
-
 from distutils.sysconfig import get_python_lib
 from distutils.fancy_getopt import FancyGetopt
 from distutils.errors import DistutilsModuleError, \
@@ -612,7 +610,7 @@ class FCompiler(CCompiler):
             self.spawn(command, display=display)
         except DistutilsExecError as e:
             msg = str(e)
-            raise CompileError(msg)
+            raise CompileError(msg) from None
 
     def module_options(self, module_dirs, module_build_dir):
         options = []
@@ -680,7 +678,7 @@ class FCompiler(CCompiler):
                 self.spawn(command)
             except DistutilsExecError as e:
                 msg = str(e)
-                raise LinkError(msg)
+                raise LinkError(msg) from None
         else:
             log.debug("skipping %s (up-to-date)", output_filename)
 
@@ -745,9 +743,11 @@ _default_compilers = (
     ('win32', ('gnu', 'intelv', 'absoft', 'compaqv', 'intelev', 'gnu95', 'g95',
                'intelvem', 'intelem', 'flang')),
     ('cygwin.*', ('gnu', 'intelv', 'absoft', 'compaqv', 'intelev', 'gnu95', 'g95')),
-    ('linux.*', ('gnu95', 'intel', 'lahey', 'pg', 'absoft', 'nag', 'vast', 'compaq',
-                 'intele', 'intelem', 'gnu', 'g95', 'pathf95', 'nagfor')),
-    ('darwin.*', ('gnu95', 'nag', 'absoft', 'ibm', 'intel', 'gnu', 'g95', 'pg')),
+    ('linux.*', ('arm', 'gnu95', 'intel', 'lahey', 'pg', 'nv', 'absoft', 'nag',
+                 'vast', 'compaq', 'intele', 'intelem', 'gnu', 'g95', 
+                 'pathf95', 'nagfor', 'fujitsu')),
+    ('darwin.*', ('gnu95', 'nag', 'nagfor', 'absoft', 'ibm', 'intel', 'gnu',
+                 'g95', 'pg')),
     ('sunos.*', ('sun', 'gnu', 'gnu95', 'g95')),
     ('irix.*', ('mips', 'gnu', 'gnu95',)),
     ('aix.*', ('ibm', 'gnu', 'gnu95',)),
@@ -964,10 +964,10 @@ def dummy_fortran_file():
     return name[:-2]
 
 
-is_f_file = re.compile(r'.*[.](for|ftn|f77|f)\Z', re.I).match
-_has_f_header = re.compile(r'-[*]-\s*fortran\s*-[*]-', re.I).search
-_has_f90_header = re.compile(r'-[*]-\s*f90\s*-[*]-', re.I).search
-_has_fix_header = re.compile(r'-[*]-\s*fix\s*-[*]-', re.I).search
+is_f_file = re.compile(r'.*\.(for|ftn|f77|f)\Z', re.I).match
+_has_f_header = re.compile(r'-\*-\s*fortran\s*-\*-', re.I).search
+_has_f90_header = re.compile(r'-\*-\s*f90\s*-\*-', re.I).search
+_has_fix_header = re.compile(r'-\*-\s*fix\s*-\*-', re.I).search
 _free_f90_start = re.compile(r'[^c*!]\s*[^\s\d\t]', re.I).match
 
 def is_free_format(file):
@@ -975,29 +975,27 @@ def is_free_format(file):
     # f90 allows both fixed and free format, assuming fixed unless
     # signs of free format are detected.
     result = 0
-    f = open_latin1(file, 'r')
-    line = f.readline()
-    n = 10000 # the number of non-comment lines to scan for hints
-    if _has_f_header(line):
-        n = 0
-    elif _has_f90_header(line):
-        n = 0
-        result = 1
-    while n>0 and line:
-        line = line.rstrip()
-        if line and line[0]!='!':
-            n -= 1
-            if (line[0]!='\t' and _free_f90_start(line[:5])) or line[-1:]=='&':
-                result = 1
-                break
+    with open(file, encoding='latin1') as f:
         line = f.readline()
-    f.close()
+        n = 10000 # the number of non-comment lines to scan for hints
+        if _has_f_header(line) or _has_fix_header(line):
+            n = 0
+        elif _has_f90_header(line):
+            n = 0
+            result = 1
+        while n>0 and line:
+            line = line.rstrip()
+            if line and line[0]!='!':
+                n -= 1
+                if (line[0]!='\t' and _free_f90_start(line[:5])) or line[-1:]=='&':
+                    result = 1
+                    break
+            line = f.readline()
     return result
 
 def has_f90_header(src):
-    f = open_latin1(src, 'r')
-    line = f.readline()
-    f.close()
+    with open(src, encoding='latin1') as f:
+        line = f.readline()
     return _has_f90_header(line) or _has_fix_header(line)
 
 _f77flags_re = re.compile(r'(c|)f77flags\s*\(\s*(?P<fcname>\w+)\s*\)\s*=\s*(?P<fflags>.*)', re.I)
@@ -1008,17 +1006,16 @@ def get_f77flags(src):
     Return a dictionary {<fcompiler type>:<f77 flags>}.
     """
     flags = {}
-    f = open_latin1(src, 'r')
-    i = 0
-    for line in f:
-        i += 1
-        if i>20: break
-        m = _f77flags_re.match(line)
-        if not m: continue
-        fcname = m.group('fcname').strip()
-        fflags = m.group('fflags').strip()
-        flags[fcname] = split_quoted(fflags)
-    f.close()
+    with open(src, encoding='latin1') as f:
+        i = 0
+        for line in f:
+            i += 1
+            if i>20: break
+            m = _f77flags_re.match(line)
+            if not m: continue
+            fcname = m.group('fcname').strip()
+            fflags = m.group('fflags').strip()
+            flags[fcname] = split_quoted(fflags)
     return flags
 
 # TODO: implement get_f90flags and use it in _compile similarly to get_f77flags

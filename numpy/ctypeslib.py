@@ -4,7 +4,7 @@
 ============================
 
 See Also
----------
+--------
 load_library : Load a C library.
 ndpointer : Array restype/argtype with verification.
 as_ctypes : Create a ctypes array from an ndarray.
@@ -49,12 +49,12 @@ Then, we're ready to call ``foo_func``:
 >>> _lib.foo_func(out, len(out))                #doctest: +SKIP
 
 """
-__all__ = ['load_library', 'ndpointer', 'ctypes_load_library',
-           'c_intp', 'as_ctypes', 'as_array']
+__all__ = ['load_library', 'ndpointer', 'c_intp', 'as_ctypes', 'as_array',
+           'as_ctypes_type']
 
 import os
 from numpy import (
-    integer, ndarray, dtype as _dtype, deprecate, array, frombuffer
+    integer, ndarray, dtype as _dtype, asarray, frombuffer
 )
 from numpy.core.multiarray import _flagdict, flagsobj
 
@@ -75,7 +75,6 @@ if ctypes is None:
 
         """
         raise ImportError("ctypes is not available.")
-    ctypes_load_library = _dummy
     load_library = _dummy
     as_ctypes = _dummy
     as_array = _dummy
@@ -91,18 +90,23 @@ else:
     def load_library(libname, loader_path):
         """
         It is possible to load a library using
+
         >>> lib = ctypes.cdll[<full_path_name>] # doctest: +SKIP
 
         But there are cross-platform considerations, such as library file extensions,
         plus the fact Windows will just load the first library it finds with that name.
         NumPy supplies the load_library function as a convenience.
 
+        .. versionchanged:: 1.20.0
+            Allow libname and loader_path to take any
+            :term:`python:path-like object`.
+
         Parameters
         ----------
-        libname : str
+        libname : path-like
             Name of the library, which can have 'lib' as a prefix,
             but without an extension.
-        loader_path : str
+        loader_path : path-like
             Where the library can be found.
 
         Returns
@@ -120,6 +124,10 @@ else:
             import warnings
             warnings.warn("All features of ctypes interface may not work "
                           "with ctypes < 1.0.1", stacklevel=2)
+
+        # Convert path-like objects into strings
+        libname = os.fsdecode(libname)
+        loader_path = os.fsdecode(loader_path)
 
         ext = os.path.splitext(libname)[1]
         if not ext:
@@ -154,8 +162,6 @@ else:
         ## if no successful return in the libname_ext loop:
         raise OSError("no file with expected extension")
 
-    ctypes_load_library = deprecate(load_library, 'ctypes_load_library',
-                                    'load_library')
 
 def _num_fromflags(flaglist):
     num = 0
@@ -164,7 +170,7 @@ def _num_fromflags(flaglist):
     return num
 
 _flagnames = ['C_CONTIGUOUS', 'F_CONTIGUOUS', 'ALIGNED', 'WRITEABLE',
-              'OWNDATA', 'UPDATEIFCOPY', 'WRITEBACKIFCOPY']
+              'OWNDATA', 'WRITEBACKIFCOPY']
 def _flags_fromnum(num):
     res = []
     for key in _flagnames:
@@ -255,7 +261,6 @@ def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
           - WRITEABLE / W
           - ALIGNED / A
           - WRITEBACKIFCOPY / X
-          - UPDATEIFCOPY / U
 
     Returns
     -------
@@ -297,8 +302,8 @@ def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
         if num is None:
             try:
                 flags = [x.strip().upper() for x in flags]
-            except Exception:
-                raise TypeError("invalid flags specification")
+            except Exception as e:
+                raise TypeError("invalid flags specification") from e
             num = _num_fromflags(flags)
 
     # normalize shape to an Optional[tuple]
@@ -377,10 +382,10 @@ if ctypes is not None:
         dtype_native = dtype.newbyteorder('=')
         try:
             ctype = _scalar_type_map[dtype_native]
-        except KeyError:
+        except KeyError as e:
             raise NotImplementedError(
                 "Converting {!r} to a ctypes type".format(dtype)
-            )
+            ) from None
 
         if dtype_with_endian.byteorder == '>':
             ctype = ctype.__ctype_be__
@@ -518,7 +523,7 @@ if ctypes is not None:
             p_arr_type = ctypes.POINTER(_ctype_ndarray(obj._type_, shape))
             obj = ctypes.cast(obj, p_arr_type).contents
 
-        return array(obj, copy=False)
+        return asarray(obj)
 
 
     def as_ctypes(obj):

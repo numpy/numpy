@@ -12,11 +12,11 @@ Python 3 compatibility
 This is the first NumPy release which is compatible with Python 3. Support for
 Python 3 and Python 2 is done from a single code base. Extensive notes on
 changes can be found at
-`<http://projects.scipy.org/numpy/browser/trunk/doc/Py3K.txt>`_.
+`<https://web.archive.org/web/20100814160313/http://projects.scipy.org/numpy/browser/trunk/doc/Py3K.txt>`_.
 
 Note that the Numpy testing framework relies on nose, which does not have a
 Python 3 compatible release yet. A working Python 3 branch of nose can be found
-at `<http://bitbucket.org/jpellerin/nose3/>`_ however.
+at `<https://web.archive.org/web/20100817112505/http://bitbucket.org/jpellerin/nose3/>`_ however.
 
 Porting of SciPy to Python 3 is expected to be completed soon.
 

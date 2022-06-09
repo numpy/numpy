@@ -1,5 +1,5 @@
-#ifndef _NPY_OS_H_
-#define _NPY_OS_H_
+#ifndef NUMPY_CORE_INCLUDE_NUMPY_NPY_OS_H_
+#define NUMPY_CORE_INCLUDE_NUMPY_NPY_OS_H_
 
 #if defined(linux) || defined(__linux) || defined(__linux__)
     #define NPY_OS_LINUX
@@ -21,10 +21,14 @@
     #define NPY_OS_CYGWIN
 #elif defined(_WIN32) || defined(__WIN32__) || defined(WIN32)
     #define NPY_OS_WIN32
+#elif defined(_WIN64) || defined(__WIN64__) || defined(WIN64)
+    #define NPY_OS_WIN64
+#elif defined(__MINGW32__) || defined(__MINGW64__)
+    #define NPY_OS_MINGW
 #elif defined(__APPLE__)
     #define NPY_OS_DARWIN
 #else
     #define NPY_OS_UNKNOWN
 #endif
 
-#endif
+#endif  /* NUMPY_CORE_INCLUDE_NUMPY_NPY_OS_H_ */

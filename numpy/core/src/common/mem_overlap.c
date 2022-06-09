@@ -127,7 +127,7 @@
   ends up considering all values x3=0...5 separately.
 
   The upper bound for work done is prod(shape_a)*prod(shape_b), which scales
-  faster than than work done by binary ufuncs, after broadcasting,
+  faster than work done by binary ufuncs, after broadcasting,
   prod(shape_a). The bound may be loose, but it is possible to construct hard
   instances where ufunc is faster (adapted from [2,3])::
 
@@ -181,9 +181,11 @@
   All rights reserved.
   Licensed under 3-clause BSD license, see LICENSE.txt.
 */
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
-#define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #include "numpy/ndarraytypes.h"
 #include "mem_overlap.h"
 #include "npy_extint128.h"

@@ -12,15 +12,11 @@ from numpy.testing import (
         assert_, assert_equal, IS_PYPY, assert_almost_equal,
         assert_array_equal, assert_array_almost_equal, assert_raises,
         assert_raises_regex, assert_warns, suppress_warnings,
-        _assert_valid_refcount, HAS_REFCOUNT,
+        _assert_valid_refcount, HAS_REFCOUNT, IS_PYSTON
         )
-from numpy.testing._private.utils import _no_tracing
+from numpy.testing._private.utils import _no_tracing, requires_memory
 from numpy.compat import asbytes, asunicode, pickle
 
-try:
-    RecursionError
-except NameError:
-    RecursionError = RuntimeError  # python < 3.5
 
 class TestRegression:
     def test_invalid_round(self):
@@ -41,13 +37,6 @@ class TestRegression:
                 f.seek(0)
                 b = pickle.load(f)
             assert_array_equal(a, b)
-
-    def test_typeNA(self):
-        # Issue gh-515
-        with suppress_warnings() as sup:
-            sup.filter(np.VisibleDeprecationWarning)
-            assert_equal(np.typeNA[np.int64], 'Int64')
-            assert_equal(np.typeNA[np.uint64], 'UInt64')
 
     def test_dtype_names(self):
         # Ticket #35
@@ -435,7 +424,6 @@ class TestRegression:
     def test_lexsort_zerolen_custom_strides(self):
         # Ticket #14228
         xs = np.array([], dtype='i8')
-        assert xs.strides == (8,)
         assert np.lexsort((xs,)).shape[0] == 0 # Works
 
         xs.strides = (16,)
@@ -451,6 +439,11 @@ class TestRegression:
         xs.shape = (2, 0)
         xs.strides = (16, 16)
         assert np.lexsort((xs,), axis=0).shape[0] == 2
+
+    def test_lexsort_invalid_axis(self):
+        assert_raises(np.AxisError, np.lexsort, (np.arange(1),), axis=2)
+        assert_raises(np.AxisError, np.lexsort, (np.array([]),), axis=1)
+        assert_raises(np.AxisError, np.lexsort, (np.array(1),), axis=10)
 
     def test_lexsort_zerolen_element(self):
         dt = np.dtype([])  # a void dtype with no fields
@@ -505,8 +498,8 @@ class TestRegression:
         assert_equal(np.arange(4, dtype='<c8').real.max(), 3.0)
 
     def test_object_array_from_list(self):
-        # Ticket #270
-        assert_(np.array([1, 'A', None]).shape == (3,))
+        # Ticket #270 (gh-868)
+        assert_(np.array([1, None, 'A']).shape == (3,))
 
     def test_multiple_assign(self):
         # Ticket #273
@@ -658,10 +651,10 @@ class TestRegression:
         a = np.ones((0, 2))
         a.shape = (-1, 2)
 
-    # Cannot test if NPY_RELAXED_STRIDES_CHECKING changes the strides.
-    # With NPY_RELAXED_STRIDES_CHECKING the test becomes superfluous.
+    # Cannot test if NPY_RELAXED_STRIDES_DEBUG changes the strides.
+    # With NPY_RELAXED_STRIDES_DEBUG the test becomes superfluous.
     @pytest.mark.skipif(np.ones(1).strides[0] == np.iinfo(np.intp).max,
-                        reason="Using relaxed stride checking")
+                        reason="Using relaxed stride debug")
     def test_reshape_trailing_ones_strides(self):
         # GitHub issue gh-2949, bad strides for trailing ones of new shape
         a = np.zeros(12, dtype=np.int32)[::2]  # not contiguous
@@ -918,11 +911,11 @@ class TestRegression:
         # Ticket #658
         np.indices((0, 3, 4)).T.reshape(-1, 3)
 
-    # Cannot test if NPY_RELAXED_STRIDES_CHECKING changes the strides.
-    # With NPY_RELAXED_STRIDES_CHECKING the test becomes superfluous,
+    # Cannot test if NPY_RELAXED_STRIDES_DEBUG changes the strides.
+    # With NPY_RELAXED_STRIDES_DEBUG the test becomes superfluous,
     # 0-sized reshape itself is tested elsewhere.
     @pytest.mark.skipif(np.ones(1).strides[0] == np.iinfo(np.intp).max,
-                        reason="Using relaxed stride checking")
+                        reason="Using relaxed stride debug")
     def test_copy_detection_corner_case2(self):
         # Ticket #771: strides are not set correctly when reshaping 0-sized
         # arrays
@@ -1508,10 +1501,10 @@ class TestRegression:
                 test_type(t)
 
     def test_buffer_hashlib(self):
-        from hashlib import md5
+        from hashlib import sha256
 
         x = np.array([1, 2, 3], dtype=np.dtype('<i4'))
-        assert_equal(md5(x).hexdigest(), '2a1dd1e1e59d0a384c26951e316cd7e6')
+        assert_equal(sha256(x).hexdigest(), '4636993d3e1da4e9d6b8f87b79e8f7c6d018580d52661950eabc3845c5897a4d')
 
     def test_0d_string_scalar(self):
         # Bug #1436; the following should succeed
@@ -1533,7 +1526,7 @@ class TestRegression:
             np.fromstring(b'aa, aa, 1.0', sep=',')
 
     def test_ticket_1539(self):
-        dtypes = [x for x in np.typeDict.values()
+        dtypes = [x for x in np.sctypeDict.values()
                   if (issubclass(x, np.number)
                       and not issubclass(x, np.timedelta64))]
         a = np.array([], np.bool_)  # not x[0] because it is unordered
@@ -1750,7 +1743,7 @@ class TestRegression:
             # it is designed to simulate an old API
             # expectation to guard against regression
             def squeeze(self):
-                return super(OldSqueeze, self).squeeze()
+                return super().squeeze()
 
         oldsqueeze = OldSqueeze(np.array([[1],[2],[3]]))
 
@@ -1798,6 +1791,7 @@ class TestRegression:
         assert_(a.flags.f_contiguous)
         assert_(b.flags.c_contiguous)
 
+    @pytest.mark.skipif(IS_PYSTON, reason="Pyston disables recursion checking")
     def test_object_array_self_reference(self):
         # Object arrays with references to themselves can cause problems
         a = np.array(0, dtype=object)
@@ -1806,6 +1800,7 @@ class TestRegression:
         assert_raises(RecursionError, float, a)
         a[()] = None
 
+    @pytest.mark.skipif(IS_PYSTON, reason="Pyston disables recursion checking")
     def test_object_array_circular_reference(self):
         # Test the same for a circular reference.
         a = np.array(0, dtype=object)
@@ -2052,18 +2047,18 @@ class TestRegression:
 
     def test_string_truncation(self):
         # Ticket #1990 - Data can be truncated in creation of an array from a
-        # mixed sequence of numeric values and strings
+        # mixed sequence of numeric values and strings (gh-2583)
         for val in [True, 1234, 123.4, complex(1, 234)]:
-            for tostr in [asunicode, asbytes]:
-                b = np.array([val, tostr('xx')])
+            for tostr, dtype in [(asunicode, "U"), (asbytes, "S")]:
+                b = np.array([val, tostr('xx')], dtype=dtype)
                 assert_equal(tostr(b[0]), tostr(val))
-                b = np.array([tostr('xx'), val])
+                b = np.array([tostr('xx'), val], dtype=dtype)
                 assert_equal(tostr(b[1]), tostr(val))
 
                 # test also with longer strings
-                b = np.array([val, tostr('xxxxxxxxxx')])
+                b = np.array([val, tostr('xxxxxxxxxx')], dtype=dtype)
                 assert_equal(tostr(b[0]), tostr(val))
-                b = np.array([tostr('xxxxxxxxxx'), val])
+                b = np.array([tostr('xxxxxxxxxx'), val], dtype=dtype)
                 assert_equal(tostr(b[1]), tostr(val))
 
     def test_string_truncation_ucs2(self):
@@ -2104,7 +2099,8 @@ class TestRegression:
         assert_raises(TypeError, np.searchsorted, a, 1.2)
         # Ticket #2066, similar problem:
         dtype = np.format_parser(['i4', 'i4'], [], [])
-        a = np.recarray((2, ), dtype)
+        a = np.recarray((2,), dtype)
+        a[...] = [(1, 2), (3, 4)]
         assert_raises(TypeError, np.searchsorted, a, 1)
 
     def test_complex64_alignment(self):
@@ -2307,6 +2303,8 @@ class TestRegression:
             new_shape = (2, 7, 7, 43826197)
         assert_raises(ValueError, a.reshape, new_shape)
 
+    @pytest.mark.skipif(IS_PYPY and sys.implementation.version <= (7, 3, 8),
+            reason="PyPy bug in error formatting")
     def test_invalid_structured_dtypes(self):
         # gh-2865
         # mapping python objects to other dtypes
@@ -2327,10 +2325,14 @@ class TestRegression:
         # allowed as a special case due to existing use, see gh-2798
         a = np.ones(1, dtype=('O', [('name', 'O')]))
         assert_equal(a[0], 1)
+        # In particular, the above union dtype (and union dtypes in general)
+        # should mainly behave like the main (object) dtype:
+        assert a[0] is a.item()
+        assert type(a[0]) is int
 
     def test_correct_hash_dict(self):
         # gh-8887 - __hash__ would be None despite tp_hash being set
-        all_types = set(np.typeDict.values()) - {np.void}
+        all_types = set(np.sctypeDict.values()) - {np.void}
         for t in all_types:
             val = t()
 
@@ -2425,9 +2427,10 @@ class TestRegression:
             assert b'numpy.core.multiarray' in s
 
     def test_object_casting_errors(self):
-        # gh-11993
+        # gh-11993 update to ValueError (see gh-16909), since strings can in
+        # principle be converted to complex, but this string cannot.
         arr = np.array(['AAAAA', 18465886.0, 18465886.0], dtype=object)
-        assert_raises(TypeError, arr.astype, 'c8')
+        assert_raises(ValueError, arr.astype, 'c8')
 
     def test_eff1d_casting(self):
         # gh-12711
@@ -2452,10 +2455,11 @@ class TestRegression:
         class T:
             __array_interface__ = {}
 
-        np.array([T()])
+        with assert_raises(ValueError):
+            np.array([T()])
 
     def test_2d__array__shape(self):
-        class T(object):
+        class T:
             def __array__(self):
                 return np.ndarray(shape=(0,0))
 
@@ -2476,11 +2480,78 @@ class TestRegression:
         assert arr.shape == (1, 0, 0)
 
     @pytest.mark.skipif(sys.maxsize < 2 ** 31 + 1, reason='overflows 32-bit python')
-    @pytest.mark.skipif(sys.platform == 'win32' and sys.version_info[:2] < (3, 8),
-                        reason='overflows on windows, fixed in bpo-16865')
     def test_to_ctypes(self):
         #gh-14214
         arr = np.zeros((2 ** 31 + 1,), 'b')
         assert arr.size * arr.itemsize > 2 ** 31
         c_arr = np.ctypeslib.as_ctypes(arr)
         assert_equal(c_arr._length_, arr.size)
+
+    def test_complex_conversion_error(self):
+        # gh-17068
+        with pytest.raises(TypeError, match=r"Unable to convert dtype.*"):
+            complex(np.array("now", np.datetime64))
+
+    def test__array_interface__descr(self):
+        # gh-17068
+        dt = np.dtype(dict(names=['a', 'b'],
+                           offsets=[0, 0],
+                           formats=[np.int64, np.int64]))
+        descr = np.array((1, 1), dtype=dt).__array_interface__['descr']
+        assert descr == [('', '|V8')]  # instead of [(b'', '|V8')]
+
+    @pytest.mark.skipif(sys.maxsize < 2 ** 31 + 1, reason='overflows 32-bit python')
+    @requires_memory(free_bytes=9e9)
+    def test_dot_big_stride(self):
+        # gh-17111
+        # blas stride = stride//itemsize > int32 max
+        int32_max = np.iinfo(np.int32).max
+        n = int32_max + 3
+        a = np.empty([n], dtype=np.float32)
+        b = a[::n-1]
+        b[...] = 1
+        assert b.strides[0] > int32_max * b.dtype.itemsize
+        assert np.dot(b, b) == 2.0
+
+    def test_frompyfunc_name(self):
+        # name conversion was failing for python 3 strings
+        # resulting in the default '?' name. Also test utf-8
+        # encoding using non-ascii name.
+        def cassé(x):
+            return x
+
+        f = np.frompyfunc(cassé, 1, 1)
+        assert str(f) == "<ufunc 'cassé (vectorized)'>"
+
+    @pytest.mark.parametrize("operation", [
+        'add', 'subtract', 'multiply', 'floor_divide',
+        'conjugate', 'fmod', 'square', 'reciprocal',
+        'power', 'absolute', 'negative', 'positive',
+        'greater', 'greater_equal', 'less',
+        'less_equal', 'equal', 'not_equal', 'logical_and',
+        'logical_not', 'logical_or', 'bitwise_and', 'bitwise_or',
+        'bitwise_xor', 'invert', 'left_shift', 'right_shift',
+        'gcd', 'lcm'
+        ]
+    )
+    @pytest.mark.parametrize("order", [
+        ('b->', 'B->'),
+        ('h->', 'H->'),
+        ('i->', 'I->'),
+        ('l->', 'L->'),
+        ('q->', 'Q->'),
+        ]
+    )
+    def test_ufunc_order(self, operation, order):
+        # gh-18075
+        # Ensure signed types before unsigned
+        def get_idx(string, str_lst):
+            for i, s in enumerate(str_lst):
+                if string in s:
+                    return i
+            raise ValueError(f"{string} not in list")
+        types = getattr(np, operation).types
+        assert get_idx(order[0], types) < get_idx(order[1], types), (
+                f"Unexpected types order of ufunc in {operation}"
+                f"for {order}. Possible fix: Use signed before unsigned"
+                "in generate_umath.py")

@@ -34,6 +34,11 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
     .. versionchanged:: 1.16.0
         Non-scalar `start` and `stop` are now supported.
 
+    .. versionchanged:: 1.20.0
+        Values are rounded towards ``-inf`` instead of ``0`` when an
+        integer ``dtype`` is specified. The old behavior can
+        still be obtained with ``np.linspace(start, stop, num).astype(int)``
+
     Parameters
     ----------
     start : array_like
@@ -52,8 +57,10 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
         If True, return (`samples`, `step`), where `step` is the spacing
         between samples.
     dtype : dtype, optional
-        The type of the output array.  If `dtype` is not given, infer the data
-        type from the other input arguments.
+        The type of the output array.  If `dtype` is not given, the data type
+        is inferred from `start` and `stop`. The inferred dtype will never be
+        an integer; `float` is chosen even if the arguments would produce an
+        array of integers.
 
         .. versionadded:: 1.9.0
 
@@ -159,6 +166,9 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
     if axis != 0:
         y = _nx.moveaxis(y, 0, axis)
 
+    if _nx.issubdtype(dtype, _nx.integer):
+        _nx.floor(y, out=y)
+
     if retstep:
         return y.astype(dtype, copy=False), step
     else:
@@ -197,13 +207,15 @@ def logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None,
     endpoint : boolean, optional
         If true, `stop` is the last sample. Otherwise, it is not included.
         Default is True.
-    base : float, optional
+    base : array_like, optional
         The base of the log space. The step size between the elements in
         ``ln(samples) / ln(base)`` (or ``log_base(samples)``) is uniform.
         Default is 10.0.
     dtype : dtype
-        The type of the output array.  If `dtype` is not given, infer the data
-        type from the other input arguments.
+        The type of the output array.  If `dtype` is not given, the data type
+        is inferred from `start` and `stop`. The inferred type will never be
+        an integer; `float` is chosen even if the arguments would produce an
+        array of integers.
     axis : int, optional
         The axis in the result to store the samples.  Relevant only if start
         or stop are array-like.  By default (0), the samples will be along a
@@ -297,8 +309,10 @@ def geomspace(start, stop, num=50, endpoint=True, dtype=None, axis=0):
         If true, `stop` is the last sample. Otherwise, it is not included.
         Default is True.
     dtype : dtype
-        The type of the output array.  If `dtype` is not given, infer the data
-        type from the other input arguments.
+        The type of the output array.  If `dtype` is not given, the data type
+        is inferred from `start` and `stop`. The inferred dtype will never be
+        an integer; `float` is chosen even if the arguments would produce an
+        array of integers.
     axis : int, optional
         The axis in the result to store the samples.  Relevant only if start
         or stop are array-like.  By default (0), the samples will be along a
@@ -357,7 +371,7 @@ def geomspace(start, stop, num=50, endpoint=True, dtype=None, axis=0):
             6.12323400e-17+1.00000000e+00j,  7.07106781e-01+7.07106781e-01j,
             1.00000000e+00+0.00000000e+00j])
 
-    Graphical illustration of ``endpoint`` parameter:
+    Graphical illustration of `endpoint` parameter:
 
     >>> import matplotlib.pyplot as plt
     >>> N = 10
@@ -408,8 +422,18 @@ def geomspace(start, stop, num=50, endpoint=True, dtype=None, axis=0):
 
     log_start = _nx.log10(start)
     log_stop = _nx.log10(stop)
-    result = out_sign * logspace(log_start, log_stop, num=num,
-                                 endpoint=endpoint, base=10.0, dtype=dtype)
+    result = logspace(log_start, log_stop, num=num,
+                      endpoint=endpoint, base=10.0, dtype=dtype)
+
+    # Make sure the endpoints match the start and stop arguments. This is
+    # necessary because np.exp(np.log(x)) is not necessarily equal to x.
+    if num > 0:
+        result[0] = start
+        if num > 1 and endpoint:
+            result[-1] = stop
+
+    result = out_sign * result
+
     if axis != 0:
         result = _nx.moveaxis(result, 0, axis)
 

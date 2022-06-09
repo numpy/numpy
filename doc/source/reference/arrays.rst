@@ -11,7 +11,7 @@ NumPy provides an N-dimensional array type, the :ref:`ndarray
 type. The items can be :ref:`indexed <arrays.indexing>` using for
 example N integers.
 
-All ndarrays are :term:`homogenous`: every item takes up the same size
+All ndarrays are :term:`homogeneous`: every item takes up the same size
 block of memory, and all blocks are interpreted in exactly the same
 way. How each item in the array is to be interpreted is specified by a
 separate :ref:`data-type object <arrays.dtypes>`, one of which is associated

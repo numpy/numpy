@@ -8,6 +8,7 @@ __all__ = []
 
 np.import_array()
 
+
 cdef extern from "numpy/random/distributions.h":
     # Generate random numbers in closed interval [off, off + rng].
     uint64_t random_bounded_uint64(bitgen_t *bitgen_state,
@@ -49,6 +50,17 @@ cdef extern from "numpy/random/distributions.h":
                                   np.npy_bool off, np.npy_bool rng, np.npy_intp cnt,
                                   bint use_masked,
                                   np.npy_bool *out) nogil
+
+
+cdef object format_bounds_error(bint closed, object low):
+    # Special case low == 0 to provide a better exception for users
+    # since low = 0 is the default single-argument case.
+    if not np.any(low):
+        comp = '<' if closed else '<='
+        return f'high {comp} 0'
+    else:
+        comp = '>' if closed else '>='
+        return f'low {comp} high'
 
 
 {{
@@ -99,8 +111,7 @@ cdef object _rand_{{nptype}}_broadcast(np.ndarray low, np.ndarray high, object s
     if np.any(high_comp(high_arr, {{ub}})):
         raise ValueError('high is out of bounds for {{nptype}}')
     if np.any(low_high_comp(low_arr, high_arr)):
-        comp = '>' if closed else '>='
-        raise ValueError('low {comp} high'.format(comp=comp))
+        raise ValueError(format_bounds_error(closed, low_arr))
 
     low_arr = <np.ndarray>np.PyArray_FROM_OTF(low, np.{{npctype}}, np.NPY_ALIGNED | np.NPY_FORCECAST)
     high_arr = <np.ndarray>np.PyArray_FROM_OTF(high, np.{{npctype}}, np.NPY_ALIGNED | np.NPY_FORCECAST)
@@ -173,8 +184,7 @@ cdef object _rand_{{nptype}}_broadcast(object low, object high, object size,
         # Avoid object dtype path if already an integer
         high_lower_comp = np.less if closed else np.less_equal
         if np.any(high_lower_comp(high_arr, {{lb}})):
-            comp = '>' if closed else '>='
-            raise ValueError('low {comp} high'.format(comp=comp))
+            raise ValueError(format_bounds_error(closed, low_arr))
         high_m1 = high_arr if closed else high_arr - dt.type(1)
         if np.any(np.greater(high_m1, {{ub}})):
             raise ValueError('high is out of bounds for {{nptype}}')
@@ -191,13 +201,11 @@ cdef object _rand_{{nptype}}_broadcast(object low, object high, object size,
             if closed_upper > {{ub}}:
                 raise ValueError('high is out of bounds for {{nptype}}')
             if closed_upper < {{lb}}:
-                comp = '>' if closed else '>='
-                raise ValueError('low {comp} high'.format(comp=comp))
+                raise ValueError(format_bounds_error(closed, low_arr))
             highm1_data[i] = <{{nptype}}_t>closed_upper
 
     if np.any(np.greater(low_arr, highm1_arr)):
-        comp = '>' if closed else '>='
-        raise ValueError('low {comp} high'.format(comp=comp))
+        raise ValueError(format_bounds_error(closed, low_arr))
 
     high_arr = highm1_arr
     low_arr = <np.ndarray>np.PyArray_FROM_OTF(low, np.{{npctype}}, np.NPY_ALIGNED | np.NPY_FORCECAST)
@@ -316,8 +324,7 @@ cdef object _rand_{{nptype}}(object low, object high, object size,
         if high > {{ub}}:
             raise ValueError("high is out of bounds for {{nptype}}")
         if low > high:  # -1 already subtracted, closed interval
-            comp = '>' if closed else '>='
-            raise ValueError('low {comp} high'.format(comp=comp))
+            raise ValueError(format_bounds_error(closed, low))
 
         rng = <{{utype}}_t>(high - low)
         off = <{{utype}}_t>(<{{nptype}}_t>low)

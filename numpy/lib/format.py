@@ -41,10 +41,10 @@ Capabilities
 - Is straightforward to reverse engineer. Datasets often live longer than
   the programs that created them. A competent developer should be
   able to create a solution in their preferred programming language to
-  read most ``.npy`` files that he has been given without much
+  read most ``.npy`` files that they have been given without much
   documentation.
 
-- Allows memory-mapping of the data. See `open_memmep`.
+- Allows memory-mapping of the data. See `open_memmap`.
 
 - Can be read from a filelike stream object instead of an actual file.
 
@@ -156,13 +156,12 @@ names.
 Notes
 -----
 The ``.npy`` format, including motivation for creating it and a comparison of
-alternatives, is described in the `"npy-format" NEP
-<https://www.numpy.org/neps/nep-0001-npy-format.html>`_, however details have
+alternatives, is described in the
+:doc:`"npy-format" NEP <neps:nep-0001-npy-format>`, however details have
 evolved with time and this document is more current.
 
 """
 import numpy
-import io
 import warnings
 from numpy.lib.utils import safe_eval
 from numpy.compat import (
@@ -173,6 +172,7 @@ from numpy.compat import (
 __all__ = []
 
 
+EXPECTED_KEYS = {'descr', 'fortran_order', 'shape'}
 MAGIC_PREFIX = b'\x93NUMPY'
 MAGIC_LEN = len(MAGIC_PREFIX) + 2
 ARRAY_ALIGN = 64 # plausible values are powers of 2 between 16 and 4096
@@ -280,14 +280,26 @@ def dtype_to_descr(dtype):
         return dtype.str
 
 def descr_to_dtype(descr):
-    '''
-    descr may be stored as dtype.descr, which is a list of
-    (name, format, [shape]) tuples where format may be a str or a tuple.
-    Offsets are not explicitly saved, rather empty fields with
-    name, format == '', '|Vn' are added as padding.
+    """
+    Returns a dtype based off the given description.
 
-    This function reverses the process, eliminating the empty padding fields.
-    '''
+    This is essentially the reverse of `dtype_to_descr()`. It will remove
+    the valueless padding fields created by, i.e. simple fields like
+    dtype('float32'), and then convert the description to its corresponding
+    dtype.
+
+    Parameters
+    ----------
+    descr : object
+        The object retrieved by dtype.descr. Can be passed to
+        `numpy.dtype()` in order to replicate the input dtype.
+
+    Returns
+    -------
+    dtype : dtype
+        The dtype constructed by the description.
+
+    """
     if isinstance(descr, str):
         # No padding removal needed
         return numpy.dtype(descr)
@@ -358,15 +370,14 @@ def _wrap_header(header, version):
     import struct
     assert version is not None
     fmt, encoding = _header_size_info[version]
-    if not isinstance(header, bytes):  # always true on python 3
-        header = header.encode(encoding)
+    header = header.encode(encoding)
     hlen = len(header) + 1
     padlen = ARRAY_ALIGN - ((MAGIC_LEN + struct.calcsize(fmt) + hlen) % ARRAY_ALIGN)
     try:
         header_prefix = magic(*version) + struct.pack(fmt, hlen + padlen)
     except struct.error:
         msg = "Header length {} too big for version={}".format(hlen, version)
-        raise ValueError(msg)
+        raise ValueError(msg) from None
 
     # Pad the header with spaces and a final newline such that the magic
     # string, the header-length short and the header are aligned on a
@@ -409,10 +420,10 @@ def _write_array_header(fp, d, version=None):
     d : dict
         This has the appropriate entries for writing its string representation
         to the header of the file.
-    version: tuple or None
-        None means use oldest that works
-        explicit version will raise a ValueError if the format does not
-        allow saving this data.  Default: None
+    version : tuple or None
+        None means use oldest that works. Providing an explicit version will
+        raise a ValueError if the format does not allow saving this data.
+        Default: None
     """
     header = ["{"]
     for key, value in sorted(d.items()):
@@ -420,7 +431,6 @@ def _write_array_header(fp, d, version=None):
         header.append("'%s': %s, " % (key, repr(value)))
     header.append("}")
     header = "".join(header)
-    header = _filter_header(header)
     if version is None:
         header = _wrap_header_guess_version(header)
     else:
@@ -578,23 +588,27 @@ def _read_array_header(fp, version):
     #   "shape" : tuple of int
     #   "fortran_order" : bool
     #   "descr" : dtype.descr
-    header = _filter_header(header)
+    # Versions (2, 0) and (1, 0) could have been created by a Python 2
+    # implementation before header filtering was implemented.
+    if version <= (2, 0):
+        header = _filter_header(header)
     try:
         d = safe_eval(header)
     except SyntaxError as e:
-        msg = "Cannot parse header: {!r}\nException: {!r}"
-        raise ValueError(msg.format(header, e))
+        msg = "Cannot parse header: {!r}"
+        raise ValueError(msg.format(header)) from e
     if not isinstance(d, dict):
         msg = "Header is not a dictionary: {!r}"
         raise ValueError(msg.format(d))
-    keys = sorted(d.keys())
-    if keys != ['descr', 'fortran_order', 'shape']:
+
+    if EXPECTED_KEYS != d.keys():
+        keys = sorted(d.keys())
         msg = "Header does not contain the correct keys: {!r}"
         raise ValueError(msg.format(keys))
 
     # Sanity-check the values.
     if (not isinstance(d['shape'], tuple) or
-            not numpy.all([isinstance(x, int) for x in d['shape']])):
+            not all(isinstance(x, int) for x in d['shape'])):
         msg = "shape is not valid: {!r}"
         raise ValueError(msg.format(d['shape']))
     if not isinstance(d['fortran_order'], bool):
@@ -602,9 +616,9 @@ def _read_array_header(fp, version):
         raise ValueError(msg.format(d['fortran_order']))
     try:
         dtype = descr_to_dtype(d['descr'])
-    except TypeError:
+    except TypeError as e:
         msg = "descr is not a valid dtype descriptor: {!r}"
-        raise ValueError(msg.format(d['descr']))
+        raise ValueError(msg.format(d['descr'])) from e
 
     return d['shape'], d['fortran_order'], dtype
 
@@ -734,7 +748,7 @@ def read_array(fp, allow_pickle=False, pickle_kwargs=None):
             # Friendlier error message
             raise UnicodeError("Unpickling a python object failed: %r\n"
                                "You may need to pass the encoding= option "
-                               "to numpy.load" % (err,))
+                               "to numpy.load" % (err,)) from err
     else:
         if isfileobj(fp):
             # We can use the fast fromfile() function.
@@ -815,12 +829,12 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
     ------
     ValueError
         If the data or the mode is invalid.
-    IOError
+    OSError
         If the file is not found or cannot be opened correctly.
 
     See Also
     --------
-    memmap
+    numpy.memmap
 
     """
     if isfileobj(filename):
@@ -893,7 +907,7 @@ def _read_bytes(fp, size, error_template="ran out of data"):
             data += r
             if len(r) == 0 or len(data) == size:
                 break
-        except io.BlockingIOError:
+        except BlockingIOError:
             pass
     if len(data) != size:
         msg = "EOF: reading %s, expected %d bytes got %d"

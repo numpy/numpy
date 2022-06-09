@@ -1,7 +1,0 @@
-Change output of ``round`` on scalars to be consistent with Python
-------------------------------------------------------------------
-
-Output of the ``__round__`` dunder method and consequently the Python
-built-in `round` has been changed to be a Python `int` to be consistent
-with calling it on Python ``float`` objects when called with no arguments.
-Previously, it would return a scalar of the `np.dtype` that was passed in.

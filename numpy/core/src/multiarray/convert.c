@@ -1,16 +1,14 @@
-#define PY_SSIZE_T_CLEAN
-#include <Python.h>
-#include "structmember.h"
-
-#include <npy_config.h>
-
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
-#include "numpy/arrayobject.h"
-#include "numpy/arrayscalars.h"
+
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+#include <structmember.h>
 
 #include "npy_config.h"
 
+#include "numpy/arrayobject.h"
+#include "numpy/arrayscalars.h"
 #include "npy_pycompat.h"
 
 #include "common.h"
@@ -64,7 +62,7 @@ npy_fallocate(npy_intp nbytes, FILE * fp)
      * early exit on no space, other errors will also get found during fwrite
      */
     if (r == -1 && errno == ENOSPC) {
-        PyErr_Format(PyExc_IOError, "Not enough free space to write "
+        PyErr_Format(PyExc_OSError, "Not enough free space to write "
                      "%"NPY_INTP_FMT" bytes", nbytes);
         return -1;
     }
@@ -141,7 +139,7 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
     if (n3 == 0) {
         /* binary data */
         if (PyDataType_FLAGCHK(PyArray_DESCR(self), NPY_LIST_PICKLE)) {
-            PyErr_SetString(PyExc_IOError,
+            PyErr_SetString(PyExc_OSError,
                     "cannot write object arrays to a file in binary mode");
             return -1;
         }
@@ -185,7 +183,7 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
 #endif
             NPY_END_ALLOW_THREADS;
             if (n < size) {
-                PyErr_Format(PyExc_IOError,
+                PyErr_Format(PyExc_OSError,
                         "%ld requested and %ld written",
                         (long) size, (long) n);
                 return -1;
@@ -201,7 +199,7 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
                             (size_t) PyArray_DESCR(self)->elsize,
                             1, fp) < 1) {
                     NPY_END_THREADS;
-                    PyErr_Format(PyExc_IOError,
+                    PyErr_Format(PyExc_OSError,
                             "problem writing element %" NPY_INTP_FMT
                             " to file", it->index);
                     Py_DECREF(it);
@@ -248,13 +246,13 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
                     return -1;
                 }
                 PyTuple_SET_ITEM(tupobj,0,obj);
-                obj = PyUString_FromString((const char *)format);
+                obj = PyUnicode_FromString((const char *)format);
                 if (obj == NULL) {
                     Py_DECREF(tupobj);
                     Py_DECREF(it);
                     return -1;
                 }
-                strobj = PyUString_Format(obj, tupobj);
+                strobj = PyUnicode_Format(obj, tupobj);
                 Py_DECREF(obj);
                 Py_DECREF(tupobj);
                 if (strobj == NULL) {
@@ -269,7 +267,7 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
             NPY_END_ALLOW_THREADS;
             Py_DECREF(byteobj);
             if (n < n2) {
-                PyErr_Format(PyExc_IOError,
+                PyErr_Format(PyExc_OSError,
                         "problem writing element %" NPY_INTP_FMT
                         " to file", it->index);
                 Py_DECREF(strobj);
@@ -279,7 +277,7 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
             /* write separator for all but last one */
             if (it->index != it->size-1) {
                 if (fwrite(sep, 1, n3, fp) < n3) {
-                    PyErr_Format(PyExc_IOError,
+                    PyErr_Format(PyExc_OSError,
                             "problem writing separator to file");
                     Py_DECREF(strobj);
                     Py_DECREF(it);
@@ -403,7 +401,7 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
         }
     }
     /* Python integer */
-    else if (PyLong_Check(obj) || PyInt_Check(obj)) {
+    else if (PyLong_Check(obj)) {
         /* Try long long before unsigned long long */
         npy_longlong ll_v = PyLong_AsLongLong(obj);
         if (error_converting(ll_v)) {
@@ -545,6 +543,12 @@ NPY_NO_EXPORT PyObject *
 PyArray_NewCopy(PyArrayObject *obj, NPY_ORDER order)
 {
     PyArrayObject *ret;
+
+    if (obj == NULL) {
+        PyErr_SetString(PyExc_ValueError,
+            "obj is NULL in PyArray_NewCopy");
+        return NULL;
+    }
 
     ret = (PyArrayObject *)PyArray_NewLikeArray(obj, order, NULL, 1);
     if (ret == NULL) {

@@ -53,6 +53,7 @@ class Pad(Benchmark):
     def time_pad(self, shape, pad_width, mode):
         np.pad(self.array, pad_width, mode)
 
+
 class Nan(Benchmark):
     """Benchmarks for nan functions"""
 
@@ -113,3 +114,26 @@ class Nan(Benchmark):
 
     def time_nanpercentile(self, array_size, percent_nans):
         np.nanpercentile(self.arr, q=50)
+
+
+class Unique(Benchmark):
+    """Benchmark for np.unique with np.nan values."""
+
+    param_names = ["array_size", "percent_nans"]
+    params = [
+        # sizes of the 1D arrays
+        [200, int(2e5)],
+        # percent of np.nan in arrays
+        [0, 0.1, 2., 50., 90.],
+    ]
+
+    def setup(self, array_size, percent_nans):
+        np.random.seed(123)
+        # produce a randomly shuffled array with the
+        # approximate desired percentage np.nan content
+        base_array = np.random.uniform(size=array_size)
+        base_array[base_array < percent_nans / 100.] = np.nan
+        self.arr = base_array
+
+    def time_unique(self, array_size, percent_nans):
+        np.unique(self.arr)

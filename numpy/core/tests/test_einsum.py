@@ -1,5 +1,7 @@
 import itertools
 
+import pytest
+
 import numpy as np
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_almost_equal,
@@ -27,7 +29,7 @@ class TestEinsum:
                           optimize=do_opt)
 
             # order parameter must be a valid order
-            assert_raises(TypeError, np.einsum, "", 0, order='W',
+            assert_raises(ValueError, np.einsum, "", 0, order='W',
                           optimize=do_opt)
 
             # casting parameter must be a valid casting
@@ -93,6 +95,10 @@ class TestEinsum:
                 a = np.ones((3, 3, 4, 5, 6))
                 b = np.ones((3, 4, 5))
                 np.einsum('aabcb,abc', a, b)
+
+            # Check order kwarg, asanyarray allows 1d to pass through
+            assert_raises(ValueError, np.einsum, "i->i", np.arange(6).reshape(-1, 1),
+                          optimize=do_opt, order='d')
 
     def test_einsum_views(self):
         # pass-through
@@ -272,6 +278,13 @@ class TestEinsum:
             assert_equal(np.einsum("ii", a, optimize=do_opt),
                          np.trace(a).astype(dtype))
             assert_equal(np.einsum(a, [0, 0], optimize=do_opt),
+                         np.trace(a).astype(dtype))
+
+            # gh-15961: should accept numpy int64 type in subscript list
+            np_array = np.asarray([0, 0])
+            assert_equal(np.einsum(a, np_array, optimize=do_opt),
+                         np.trace(a).astype(dtype))
+            assert_equal(np.einsum(a, list(np_array), optimize=do_opt),
                          np.trace(a).astype(dtype))
 
         # multiply(a, b)
@@ -733,6 +746,52 @@ class TestEinsum:
         np.einsum('ij,jk->ik', x, x, out=out)
         assert_array_equal(out.base, correct_base)
 
+    @pytest.mark.parametrize("dtype",
+             np.typecodes["AllFloat"] + np.typecodes["AllInteger"])
+    def test_different_paths(self, dtype):
+        # Test originally added to cover broken float16 path: gh-20305
+        # Likely most are covered elsewhere, at least partially.
+        dtype = np.dtype(dtype)
+        # Simple test, designed to excersize most specialized code paths,
+        # note the +0.5 for floats.  This makes sure we use a float value
+        # where the results must be exact.
+        arr = (np.arange(7) + 0.5).astype(dtype)
+        scalar = np.array(2, dtype=dtype)
+
+        # contig -> scalar:
+        res = np.einsum('i->', arr)
+        assert res == arr.sum()
+        # contig, contig -> contig:
+        res = np.einsum('i,i->i', arr, arr)
+        assert_array_equal(res, arr * arr)
+        # noncontig, noncontig -> contig:
+        res = np.einsum('i,i->i', arr.repeat(2)[::2], arr.repeat(2)[::2])
+        assert_array_equal(res, arr * arr)
+        # contig + contig -> scalar
+        assert np.einsum('i,i->', arr, arr) == (arr * arr).sum()
+        # contig + scalar -> contig (with out)
+        out = np.ones(7, dtype=dtype)
+        res = np.einsum('i,->i', arr, dtype.type(2), out=out)
+        assert_array_equal(res, arr * dtype.type(2))
+        # scalar + contig -> contig (with out)
+        res = np.einsum(',i->i', scalar, arr)
+        assert_array_equal(res, arr * dtype.type(2))
+        # scalar + contig -> scalar
+        res = np.einsum(',i->', scalar, arr)
+        # Use einsum to compare to not have difference due to sum round-offs:
+        assert res == np.einsum('i->', scalar * arr)
+        # contig + scalar -> scalar
+        res = np.einsum('i,->', arr, scalar)
+        # Use einsum to compare to not have difference due to sum round-offs:
+        assert res == np.einsum('i->', scalar * arr)
+        # contig + contig + contig -> scalar
+        arr = np.array([0.5, 0.5, 0.25, 4.5, 3.], dtype=dtype)
+        res = np.einsum('i,i,i->', arr, arr, arr)
+        assert_array_equal(res, (arr * arr * arr).sum())
+        # four arrays:
+        res = np.einsum('i,i,i,i->', arr, arr, arr, arr)
+        assert_array_equal(res, (arr * arr * arr * arr).sum())
+
     def test_small_boolean_arrays(self):
         # See gh-5946.
         # Use array of True embedded in False.
@@ -869,6 +928,41 @@ class TestEinsum:
         g = np.arange(64).reshape(2, 4, 8)
         self.optimize_compare('obk,ijk->ioj', operands=[g, g])
 
+    def test_output_order(self):
+        # Ensure output order is respected for optimize cases, the below
+        # conraction should yield a reshaped tensor view
+        # gh-16415
+
+        a = np.ones((2, 3, 5), order='F')
+        b = np.ones((4, 3), order='F')
+
+        for opt in [True, False]:
+            tmp = np.einsum('...ft,mf->...mt', a, b, order='a', optimize=opt)
+            assert_(tmp.flags.f_contiguous)
+
+            tmp = np.einsum('...ft,mf->...mt', a, b, order='f', optimize=opt)
+            assert_(tmp.flags.f_contiguous)
+
+            tmp = np.einsum('...ft,mf->...mt', a, b, order='c', optimize=opt)
+            assert_(tmp.flags.c_contiguous)
+
+            tmp = np.einsum('...ft,mf->...mt', a, b, order='k', optimize=opt)
+            assert_(tmp.flags.c_contiguous is False)
+            assert_(tmp.flags.f_contiguous is False)
+
+            tmp = np.einsum('...ft,mf->...mt', a, b, optimize=opt)
+            assert_(tmp.flags.c_contiguous is False)
+            assert_(tmp.flags.f_contiguous is False)
+
+        c = np.ones((4, 3), order='C')
+        for opt in [True, False]:
+            tmp = np.einsum('...ft,mf->...mt', a, c, order='a', optimize=opt)
+            assert_(tmp.flags.c_contiguous)
+
+        d = np.ones((2, 3, 5), order='C')
+        for opt in [True, False]:
+            tmp = np.einsum('...ft,mf->...mt', d, c, order='a', optimize=opt)
+            assert_(tmp.flags.c_contiguous)
 
 class TestEinsumPath:
     def build_operands(self, string, size_dict=global_size_dict):
@@ -925,12 +1019,10 @@ class TestEinsumPath:
         # Long test 2
         long_test2 = self.build_operands('chd,bde,agbc,hiad,bdi,cgh,agdb')
         path, path_str = np.einsum_path(*long_test2, optimize='greedy')
-        print(path)
         self.assert_path_equal(path, ['einsum_path',
                                       (3, 4), (0, 3), (3, 4), (1, 3), (1, 2), (0, 1)])
 
         path, path_str = np.einsum_path(*long_test2, optimize='optimal')
-        print(path)
         self.assert_path_equal(path, ['einsum_path',
                                       (0, 5), (1, 4), (3, 4), (1, 3), (1, 2), (0, 1)])
 
@@ -979,7 +1071,7 @@ class TestEinsumPath:
         self.assert_path_equal(path, ['einsum_path', (0, 1), (0, 1, 2, 3, 4, 5)])
 
     def test_path_type_input(self):
-        # Test explicit path handeling
+        # Test explicit path handling
         path_test = self.build_operands('dcc,fce,ea,dbf->ab')
 
         path, path_str = np.einsum_path(*path_test, optimize=False)
@@ -996,6 +1088,32 @@ class TestEinsumPath:
         noopt = np.einsum(*path_test, optimize=False)
         opt = np.einsum(*path_test, optimize=exp_path)
         assert_almost_equal(noopt, opt)
+
+    def test_path_type_input_internal_trace(self):
+        #gh-20962
+        path_test = self.build_operands('cab,cdd->ab')
+        exp_path = ['einsum_path', (1,), (0, 1)]
+
+        path, path_str = np.einsum_path(*path_test, optimize=exp_path)
+        self.assert_path_equal(path, exp_path)
+
+        # Double check einsum works on the input path
+        noopt = np.einsum(*path_test, optimize=False)
+        opt = np.einsum(*path_test, optimize=exp_path)
+        assert_almost_equal(noopt, opt)
+
+    def test_path_type_input_invalid(self):
+        path_test = self.build_operands('ab,bc,cd,de->ae')
+        exp_path = ['einsum_path', (2, 3), (0, 1)]
+        assert_raises(RuntimeError, np.einsum, *path_test, optimize=exp_path)
+        assert_raises(
+            RuntimeError, np.einsum_path, *path_test, optimize=exp_path)
+
+        path_test = self.build_operands('a,a,a->a')
+        exp_path = ['einsum_path', (1,), (0, 1)]
+        assert_raises(RuntimeError, np.einsum, *path_test, optimize=exp_path)
+        assert_raises(
+            RuntimeError, np.einsum_path, *path_test, optimize=exp_path)
 
     def test_spaces(self):
         #gh-10794

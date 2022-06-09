@@ -1,6 +1,0 @@
-Fasttake and fastputmask slots are deprecated and NULL'ed
----------------------------------------------------------
-The fasttake and fastputmask slots are now never used and
-must always be set to NULL. This will result in no change in behaviour.
-However, if a user dtype should set one of these a DeprecationWarning
-will be given.

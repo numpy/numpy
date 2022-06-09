@@ -1,8 +1,0 @@
-`numpy.delete` no longer ignores out-of-bounds indices
-------------------------------------------------------
-This concludes deprecations from 1.8 and 1.9, where ``np.delete`` would ignore
-both negative and out-of-bounds items in a sequence of indices. This was at
-odds with its behavior when passed a single index.
-
-Now out-of-bounds items throw ``IndexError``, and negative items index from the
-end.

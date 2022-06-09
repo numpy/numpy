@@ -109,7 +109,7 @@ cdef class MT19937(BitGenerator):
 
     **Compatibility Guarantee**
 
-    ``MT19937`` makes a guarantee that a fixed seed and will always produce
+    ``MT19937`` makes a guarantee that a fixed seed will always produce
     the same random integer stream.
 
     References
@@ -214,7 +214,7 @@ cdef class MT19937(BitGenerator):
 
         Returns a new bit generator with the state jumped
 
-        The state of the returned big generator is jumped as-if
+        The state of the returned bit generator is jumped as-if
         2**(128 * jumps) random numbers have been generated.
 
         Parameters
@@ -226,6 +226,23 @@ cdef class MT19937(BitGenerator):
         -------
         bit_generator : MT19937
             New instance of generator jumped iter times
+
+        Notes
+        -----
+        The jump step is computed using a modified version of Matsumoto's
+        implementation of Horner's method. The step polynomial is precomputed
+        to perform 2**128 steps. The jumped state has been verified to match
+        the state produced using Matsumoto's original code.
+
+        References
+        ----------
+        .. [1] Matsumoto, M, Generating multiple disjoint streams of
+           pseudorandom number sequences.  Accessed on: May 6, 2020.
+           http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/JUMP/
+        .. [2] Hiroshi Haramoto, Makoto Matsumoto, Takuji Nishimura, François
+           Panneton, Pierre L\'Ecuyer, "Efficient Jump Ahead for F2-Linear
+           Random Number Generators", INFORMS JOURNAL ON COMPUTING, Vol. 20,
+           No. 3, Summer 2008, pp. 385-390.
         """
         cdef MT19937 bit_generator
 

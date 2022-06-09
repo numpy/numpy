@@ -16,6 +16,14 @@ class build(old_build):
          "specify the Fortran compiler type"),
         ('warn-error', None,
          "turn all warnings into errors (-Werror)"),
+        ('cpu-baseline=', None,
+         "specify a list of enabled baseline CPU optimizations"),
+        ('cpu-dispatch=', None,
+         "specify a list of dispatched CPU optimizations"),
+        ('disable-optimization', None,
+         "disable CPU optimized code(dispatch,simd,fast...)"),
+        ('simd-test=', None,
+         "specify a list of CPU optimizations to be tested against NumPy SIMD interface"),
         ]
 
     help_options = old_build.help_options + [
@@ -27,6 +35,20 @@ class build(old_build):
         old_build.initialize_options(self)
         self.fcompiler = None
         self.warn_error = False
+        self.cpu_baseline = "min"
+        self.cpu_dispatch = "max -xop -fma4" # drop AMD legacy features by default
+        self.disable_optimization = False
+        """
+        the '_simd' module is a very large. Adding more dispatched features
+        will increase binary size and compile time. By default we minimize
+        the targeted features to those most commonly used by the NumPy SIMD interface(NPYV),
+        NOTE: any specified features will be ignored if they're:
+            - part of the baseline(--cpu-baseline)
+            - not part of dispatch-able features(--cpu-dispatch)
+            - not supported by compiler or platform
+        """
+        self.simd_test = "BASELINE SSE2 SSE42 XOP FMA4 (FMA3 AVX2) AVX512F " \
+                         "AVX512_SKX VSX VSX2 VSX3 VSX4 NEON ASIMD VX VXE VXE2"
 
     def finalize_options(self):
         build_scripts = self.build_scripts

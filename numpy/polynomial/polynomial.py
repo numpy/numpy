@@ -127,7 +127,11 @@ def polyline(off, scl):
 
     See Also
     --------
-    chebline
+    numpy.polynomial.chebyshev.chebline
+    numpy.polynomial.legendre.legline
+    numpy.polynomial.laguerre.lagline
+    numpy.polynomial.hermite.hermline
+    numpy.polynomial.hermite_e.hermeline
 
     Examples
     --------
@@ -152,7 +156,7 @@ def polyfromroots(roots):
 
     .. math:: p(x) = (x - r_0) * (x - r_1) * ... * (x - r_n),
 
-    where the `r_n` are the roots specified in `roots`.  If a zero has
+    where the ``r_n`` are the roots specified in `roots`.  If a zero has
     multiplicity n, then it must appear in `roots` n times. For instance,
     if 2 is a root of multiplicity three and 3 is a root of multiplicity 2,
     then `roots` looks something like [2, 2, 2, 3, 3]. The roots can appear
@@ -179,17 +183,20 @@ def polyfromroots(roots):
 
     See Also
     --------
-    chebfromroots, legfromroots, lagfromroots, hermfromroots
-    hermefromroots
+    numpy.polynomial.chebyshev.chebfromroots
+    numpy.polynomial.legendre.legfromroots
+    numpy.polynomial.laguerre.lagfromroots
+    numpy.polynomial.hermite.hermfromroots
+    numpy.polynomial.hermite_e.hermefromroots
 
     Notes
     -----
     The coefficients are determined by multiplying together linear factors
-    of the form `(x - r_i)`, i.e.
+    of the form ``(x - r_i)``, i.e.
 
     .. math:: p(x) = (x - r_0) (x - r_1) ... (x - r_n)
 
-    where ``n == len(roots) - 1``; note that this implies that `1` is always
+    where ``n == len(roots) - 1``; note that this implies that ``1`` is always
     returned for :math:`a_n`.
 
     Examples
@@ -765,7 +772,7 @@ def polyvalfromroots(x, r, tensor=True):
 
     If `r` is a 1-D array, then `p(x)` will have the same shape as `x`.  If `r`
     is multidimensional, then the shape of the result depends on the value of
-    `tensor`. If `tensor is ``True`` the shape will be r.shape[1:] + x.shape;
+    `tensor`. If `tensor` is ``True`` the shape will be r.shape[1:] + x.shape;
     that is, each polynomial is evaluated at every value of `x`. If `tensor` is
     ``False``, the shape will be r.shape[1:]; that is, each polynomial is
     evaluated only for the corresponding broadcast value of `x`. Note that
@@ -1245,10 +1252,11 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
         diagnostic information from the singular value decomposition (used
         to solve the fit's matrix equation) is also returned.
     w : array_like, shape (`M`,), optional
-        Weights. If not None, the contribution of each point
-        ``(x[i],y[i])`` to the fit is weighted by `w[i]`. Ideally the
-        weights are chosen so that the errors of the products ``w[i]*y[i]``
-        all have the same variance.  The default value is None.
+        Weights. If not None, the weight ``w[i]`` applies to the unsquared
+        residual ``y[i] - y_hat[i]`` at ``x[i]``. Ideally the weights are
+        chosen so that the errors of the products ``w[i]*y[i]`` all have the
+        same variance.  When using inverse-variance weighting, use
+        ``w[i] = 1/sigma(y[i])``.  The default value is None.
 
         .. versionadded:: 1.5.0
 
@@ -1260,20 +1268,20 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
         fit to the data in `y`'s `k`-th column.
 
     [residuals, rank, singular_values, rcond] : list
-        These values are only returned if `full` = True
+        These values are only returned if ``full == True``
 
-        resid -- sum of squared residuals of the least squares fit
-        rank -- the numerical rank of the scaled Vandermonde matrix
-        sv -- singular values of the scaled Vandermonde matrix
-        rcond -- value of `rcond`.
+        - residuals -- sum of squared residuals of the least squares fit
+        - rank -- the numerical rank of the scaled Vandermonde matrix
+        - singular_values -- singular values of the scaled Vandermonde matrix
+        - rcond -- value of `rcond`.
 
-        For more details, see `linalg.lstsq`.
+        For more details, see `numpy.linalg.lstsq`.
 
     Raises
     ------
     RankWarning
         Raised if the matrix in the least-squares fit is rank deficient.
-        The warning is only raised if `full` == False.  The warnings can
+        The warning is only raised if ``full == False``.  The warnings can
         be turned off by:
 
         >>> import warnings
@@ -1281,10 +1289,14 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
 
     See Also
     --------
-    chebfit, legfit, lagfit, hermfit, hermefit
+    numpy.polynomial.chebyshev.chebfit
+    numpy.polynomial.legendre.legfit
+    numpy.polynomial.laguerre.lagfit
+    numpy.polynomial.hermite.hermfit
+    numpy.polynomial.hermite_e.hermefit
     polyval : Evaluates a polynomial.
     polyvander : Vandermonde matrix for powers.
-    linalg.lstsq : Computes a least-squares fit from the matrix.
+    numpy.linalg.lstsq : Computes a least-squares fit from the matrix.
     scipy.interpolate.UnivariateSpline : Computes spline fits.
 
     Notes
@@ -1292,12 +1304,12 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
     The solution is the coefficients of the polynomial `p` that minimizes
     the sum of the weighted squared errors
 
-    .. math :: E = \\sum_j w_j^2 * |y_j - p(x_j)|^2,
+    .. math:: E = \\sum_j w_j^2 * |y_j - p(x_j)|^2,
 
     where the :math:`w_j` are the weights. This problem is solved by
     setting up the (typically) over-determined matrix equation:
 
-    .. math :: V(x) * c = w * y,
+    .. math:: V(x) * c = w * y,
 
     where `V` is the weighted pseudo Vandermonde matrix of `x`, `c` are the
     coefficients to be solved for, `w` are the weights, and `y` are the
@@ -1411,7 +1423,11 @@ def polyroots(c):
 
     See Also
     --------
-    chebroots
+    numpy.polynomial.chebyshev.chebroots
+    numpy.polynomial.legendre.legroots
+    numpy.polynomial.laguerre.lagroots
+    numpy.polynomial.hermite.hermroots
+    numpy.polynomial.hermite_e.hermeroots
 
     Notes
     -----
@@ -1490,10 +1506,17 @@ class Polynomial(ABCPolyBase):
     _fromroots = staticmethod(polyfromroots)
 
     # Virtual properties
-    nickname = 'poly'
     domain = np.array(polydomain)
     window = np.array(polydomain)
     basis_name = None
+
+    @classmethod
+    def _str_term_unicode(cls, i, arg_str):
+        return f"·{arg_str}{i.translate(cls._superscript_mapping)}"
+
+    @staticmethod
+    def _str_term_ascii(i, arg_str):
+        return f" {arg_str}**{i}"
 
     @staticmethod
     def _repr_latex_term(i, arg_str, needs_parens):

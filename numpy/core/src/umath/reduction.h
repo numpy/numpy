@@ -19,93 +19,17 @@ typedef int (PyArray_AssignReduceIdentityFunc)(PyArrayObject *result,
                                                void *data);
 
 /*
- * This is a function for the reduce loop.
+ * Inner definition of the reduce loop, only used for a static function.
+ * At some point around NumPy 1.6, there was probably an intention to make
+ * the reduce loop customizable at this level (per ufunc?).
  *
- * The needs_api parameter indicates whether it's ok to release the GIL during
- * the loop, such as when the iternext() function never calls
- * a function which could raise a Python exception.
- *
- * The skip_first_count parameter indicates how many elements need to be
- * skipped based on NpyIter_IsFirstVisit checks. This can only be positive
- * when the 'assign_identity' parameter was NULL when calling
- * PyArray_ReduceWrapper.
- *
- * The loop gets two data pointers and two strides, and should
- * look roughly like this:
- *  {
- *      NPY_BEGIN_THREADS_DEF;
- *      if (!needs_api) {
- *          NPY_BEGIN_THREADS;
- *      }
- *      // This first-visit loop can be skipped if 'assign_identity' was non-NULL
- *      if (skip_first_count > 0) {
- *          do {
- *              char *data0 = dataptr[0], *data1 = dataptr[1];
- *              npy_intp stride0 = strideptr[0], stride1 = strideptr[1];
- *              npy_intp count = *countptr;
- *
- *              // Skip any first-visit elements
- *              if (NpyIter_IsFirstVisit(iter, 0)) {
- *                  if (stride0 == 0) {
- *                      --count;
- *                      --skip_first_count;
- *                      data1 += stride1;
- *                  }
- *                  else {
- *                      skip_first_count -= count;
- *                      count = 0;
- *                  }
- *              }
- *
- *              while (count--) {
- *                  *(result_t *)data0 = my_reduce_op(*(result_t *)data0,
- *                                                    *(operand_t *)data1);
- *                  data0 += stride0;
- *                  data1 += stride1;
- *              }
- *
- *              // Jump to the faster loop when skipping is done
- *              if (skip_first_count == 0) {
- *                  if (iternext(iter)) {
- *                      break;
- *                  }
- *                  else {
- *                      goto finish_loop;
- *                  }
- *              }
- *          } while (iternext(iter));
- *      }
- *      do {
- *          char *data0 = dataptr[0], *data1 = dataptr[1];
- *          npy_intp stride0 = strideptr[0], stride1 = strideptr[1];
- *          npy_intp count = *countptr;
- *
- *          while (count--) {
- *              *(result_t *)data0 = my_reduce_op(*(result_t *)data0,
- *                                                *(operand_t *)data1);
- *              data0 += stride0;
- *              data1 += stride1;
- *          }
- *      } while (iternext(iter));
- *  finish_loop:
- *      if (!needs_api) {
- *          NPY_END_THREADS;
- *      }
- *      return (needs_api && PyErr_Occurred()) ? -1 : 0;
- *  }
- *
- * If needs_api is True, this function should call PyErr_Occurred()
- * to check if an error occurred during processing, and return -1 for
- * error, 0 for success.
+ * TODO: This should be refactored/removed.
  */
-typedef int (PyArray_ReduceLoopFunc)(NpyIter *iter,
-                                            char **dataptr,
-                                            npy_intp const *strideptr,
-                                            npy_intp const *countptr,
-                                            NpyIter_IterNextFunc *iternext,
-                                            int needs_api,
-                                            npy_intp skip_first_count,
-                                            void *data);
+typedef int (PyArray_ReduceLoopFunc)(PyArrayMethod_Context *context,
+        PyArrayMethod_StridedLoop *strided_loop, NpyAuxData *auxdata,
+        NpyIter *iter, char **dataptrs, npy_intp const *strides,
+        npy_intp const *countptr, NpyIter_IterNextFunc *iternext,
+        int needs_api, npy_intp skip_first_count);
 
 /*
  * This function executes all the standard NumPy reduction function
@@ -128,9 +52,7 @@ typedef int (PyArray_ReduceLoopFunc)(NpyIter *iter,
  *               of cache behavior or multithreading requirements.
  * keepdims    : If true, leaves the reduction dimensions in the result
  *               with size one.
- * subok       : If true, the result uses the subclass of operand, otherwise
- *               it is always a base class ndarray.
- * identity    : If Py_None, PyArray_InitializeReduceResult is used, otherwise
+ * identity    : If Py_None, PyArray_CopyInitialReduceValues is used, otherwise
  *               this value is used to initialize the result to
  *               the reduction's unit.
  * loop        : The loop which does the reduction.
@@ -140,17 +62,10 @@ typedef int (PyArray_ReduceLoopFunc)(NpyIter *iter,
  * errormask   : forwarded from _get_bufsize_errmask
  */
 NPY_NO_EXPORT PyArrayObject *
-PyUFunc_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
-                      PyArrayObject *wheremask,
-                      PyArray_Descr *operand_dtype,
-                      PyArray_Descr *result_dtype,
-                      NPY_CASTING casting,
-                      npy_bool *axis_flags, int reorderable,
-                      int keepdims,
-                      int subok,
-                      PyObject *identity,
-                      PyArray_ReduceLoopFunc *loop,
-                      void *data, npy_intp buffersize, const char *funcname,
-                      int errormask);
+PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
+        PyArrayObject *operand, PyArrayObject *out, PyArrayObject *wheremask,
+        npy_bool *axis_flags, int reorderable, int keepdims,
+        PyObject *identity, PyArray_ReduceLoopFunc *loop,
+        void *data, npy_intp buffersize, const char *funcname, int errormask);
 
 #endif

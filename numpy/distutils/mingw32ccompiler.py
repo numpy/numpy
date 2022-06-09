@@ -8,6 +8,7 @@ Support code for building Python extensions on Windows.
 
 """
 import os
+import platform
 import sys
 import subprocess
 import re
@@ -23,7 +24,6 @@ from numpy.distutils import log
 # 3. Force windows to use g77
 
 import distutils.cygwinccompiler
-from distutils.version import StrictVersion
 from distutils.unixccompiler import UnixCCompiler
 from distutils.msvccompiler import get_build_version as get_build_msvc_version
 from distutils.errors import UnknownFileError
@@ -37,9 +37,6 @@ def get_msvcr_replacement():
     msvcr = msvc_runtime_library()
     return [] if msvcr is None else [msvcr]
 
-# monkey-patch cygwinccompiler with our updated version from misc_util
-# to avoid getting an exception raised on Python 3.5
-distutils.cygwinccompiler.get_msvcr = get_msvcr_replacement
 
 # Useful to generate table of symbols from a dll
 _START = re.compile(r'\[Ordinal/Name Pointer\] Table')
@@ -60,35 +57,6 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
 
         distutils.cygwinccompiler.CygwinCCompiler.__init__ (self, verbose,
                                                             dry_run, force)
-
-        # we need to support 3.2 which doesn't match the standard
-        # get_versions methods regex
-        if self.gcc_version is None:
-            try:
-                out_string  = subprocess.check_output(['gcc', '-dumpversion'])
-            except (OSError, CalledProcessError):
-                out_string = ""  # ignore failures to match old behavior
-            result = re.search(r'(\d+\.\d+)', out_string)
-            if result:
-                self.gcc_version = StrictVersion(result.group(1))
-
-        # A real mingw32 doesn't need to specify a different entry point,
-        # but cygwin 2.91.57 in no-cygwin-mode needs it.
-        if self.gcc_version <= "2.91.57":
-            entry_point = '--entry _DllMain@12'
-        else:
-            entry_point = ''
-
-        if self.linker_dll == 'dllwrap':
-            # Commented out '--driver-name g++' part that fixes weird
-            #   g++.exe: g++: No such file or directory
-            # error (mingw 1.0 in Enthon24 tree, gcc-3.4.5).
-            # If the --driver-name part is required for some environment
-            # then make the inclusion of this part specific to that
-            # environment.
-            self.linker = 'dllwrap' #  --driver-name g++'
-        elif self.linker_dll == 'gcc':
-            self.linker = 'g++'
 
         # **changes: eric jones 4/11/01
         # 1. Check for import library on Windows.  Build if it doesn't exist.
@@ -112,42 +80,18 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
         # kind of bad consequences, like using Py_ModuleInit4 instead of
         # Py_ModuleInit4_64, etc... So we add it here
         if get_build_architecture() == 'AMD64':
-            if self.gcc_version < "4.0":
-                self.set_executables(
-                    compiler='gcc -g -DDEBUG -DMS_WIN64 -mno-cygwin -O0 -Wall',
-                    compiler_so='gcc -g -DDEBUG -DMS_WIN64 -mno-cygwin -O0'
-                                ' -Wall -Wstrict-prototypes',
-                    linker_exe='gcc -g -mno-cygwin',
-                    linker_so='gcc -g -mno-cygwin -shared')
-            else:
-                # gcc-4 series releases do not support -mno-cygwin option
-                self.set_executables(
-                    compiler='gcc -g -DDEBUG -DMS_WIN64 -O0 -Wall',
-                    compiler_so='gcc -g -DDEBUG -DMS_WIN64 -O0 -Wall -Wstrict-prototypes',
-                    linker_exe='gcc -g',
-                    linker_so='gcc -g -shared')
+            self.set_executables(
+                compiler='gcc -g -DDEBUG -DMS_WIN64 -O0 -Wall',
+                compiler_so='gcc -g -DDEBUG -DMS_WIN64 -O0 -Wall '
+                            '-Wstrict-prototypes',
+                linker_exe='gcc -g',
+                linker_so='gcc -g -shared')
         else:
-            if self.gcc_version <= "3.0.0":
-                self.set_executables(
-                    compiler='gcc -mno-cygwin -O2 -w',
-                    compiler_so='gcc -mno-cygwin -mdll -O2 -w'
-                                ' -Wstrict-prototypes',
-                    linker_exe='g++ -mno-cygwin',
-                    linker_so='%s -mno-cygwin -mdll -static %s' %
-                              (self.linker, entry_point))
-            elif self.gcc_version < "4.0":
-                self.set_executables(
-                    compiler='gcc -mno-cygwin -O2 -Wall',
-                    compiler_so='gcc -mno-cygwin -O2 -Wall'
-                                ' -Wstrict-prototypes',
-                    linker_exe='g++ -mno-cygwin',
-                    linker_so='g++ -mno-cygwin -shared')
-            else:
-                # gcc-4 series releases do not support -mno-cygwin option
-                self.set_executables(compiler='gcc -O2 -Wall',
-                                     compiler_so='gcc -O2 -Wall -Wstrict-prototypes',
-                                     linker_exe='g++ ',
-                                     linker_so='g++ -shared')
+            self.set_executables(
+                compiler='gcc -O2 -Wall',
+                compiler_so='gcc -O2 -Wall -Wstrict-prototypes',
+                linker_exe='g++ ',
+                linker_so='g++ -shared')
         # added for python2.3 support
         # we can't pass it through set_executables because pre 2.2 would fail
         self.compiler_cxx = ['g++']
@@ -197,10 +141,7 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
                 extra_postargs,
                 build_temp,
                 target_lang)
-        if self.gcc_version < "3.0.0":
-            func = distutils.cygwinccompiler.CygwinCCompiler.link
-        else:
-            func = UnixCCompiler.link
+        func = UnixCCompiler.link
         func(*args[:func.__code__.co_argcount])
         return
 
@@ -265,16 +206,19 @@ def find_python_dll():
 
     # search in the file system for possible candidates
     major_version, minor_version = tuple(sys.version_info[:2])
-    patterns = ['python%d%d.dll']
-
-    for pat in patterns:
-        dllname = pat % (major_version, minor_version)
-        print("Looking for %s" % dllname)
-        for folder in lib_dirs:
-            dll = os.path.join(folder, dllname)
-            if os.path.exists(dll):
-                return dll
-
+    implementation = platform.python_implementation()
+    if implementation == 'CPython':
+        dllname = f'python{major_version}{minor_version}.dll'
+    elif implementation == 'PyPy':
+        dllname = f'libpypy{major_version}-c.dll'
+    else:
+        dllname = f'Unknown platform {implementation}' 
+    print("Looking for %s" % dllname)
+    for folder in lib_dirs:
+        dll = os.path.join(folder, dllname)
+        if os.path.exists(dll):
+            return dll
+ 
     raise ValueError("%s not found in %s" % (dllname, lib_dirs))
 
 def dump_table(dll):
@@ -543,12 +487,12 @@ if sys.platform == 'win32':
         # Value from msvcrt.CRT_ASSEMBLY_VERSION under Python 3.3.0
         # on Windows XP:
         _MSVCRVER_TO_FULLVER['100'] = "10.0.30319.460"
-        # Python 3.7 uses 1415, but get_build_version returns 140 ??
-        _MSVCRVER_TO_FULLVER['140'] = "14.15.26726.0"
-        if hasattr(msvcrt, "CRT_ASSEMBLY_VERSION"):
-            major, minor, rest = msvcrt.CRT_ASSEMBLY_VERSION.split(".", 2)
-            _MSVCRVER_TO_FULLVER[major + minor] = msvcrt.CRT_ASSEMBLY_VERSION
-            del major, minor, rest
+        crt_ver = getattr(msvcrt, 'CRT_ASSEMBLY_VERSION', None)
+        if crt_ver is not None:  # Available at least back to Python 3.3
+            maj, min = re.match(r'(\d+)\.(\d)', crt_ver).groups()
+            _MSVCRVER_TO_FULLVER[maj + min] = crt_ver
+            del maj, min
+        del crt_ver
     except ImportError:
         # If we are here, means python was not built with MSVC. Not sure what
         # to do in that case: manifest building will fail, but it should not be
@@ -562,7 +506,7 @@ def msvc_manifest_xml(maj, min):
         fullver = _MSVCRVER_TO_FULLVER[str(maj * 10 + min)]
     except KeyError:
         raise ValueError("Version %d,%d of MSVCRT not supported yet" %
-                         (maj, min))
+                         (maj, min)) from None
     # Don't be fooled, it looks like an XML, but it is not. In particular, it
     # should not have any space before starting, and its size should be
     # divisible by 4, most likely for alignment constraints when the xml is
@@ -643,11 +587,9 @@ def generate_manifest(config):
     if msver is not None:
         if msver >= 8:
             check_embedded_msvcr_match_linked(msver)
-            ma = int(msver)
-            mi = int((msver - ma) * 10)
+            ma_str, mi_str = str(msver).split('.')
             # Write the manifest file
-            manxml = msvc_manifest_xml(ma, mi)
-            man = open(manifest_name(config), "w")
-            config.temp_files.append(manifest_name(config))
-            man.write(manxml)
-            man.close()
+            manxml = msvc_manifest_xml(int(ma_str), int(mi_str))
+            with open(manifest_name(config), "w") as man:
+                config.temp_files.append(manifest_name(config))
+                man.write(manxml)

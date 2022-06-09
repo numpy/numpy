@@ -1,5 +1,0 @@
-`numpy.frompyfunc` now accepts an identity argument
----------------------------------------------------
-This allows the :attr:`numpy.ufunc.identity` attribute to be set on the
-resulting ufunc, meaning it can be used for empty and multi-dimensional
-calls to :meth:`numpy.ufunc.reduce`.

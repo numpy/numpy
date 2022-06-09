@@ -6,17 +6,16 @@
  *
  * See LICENSE.txt for the license.
  */
-#define _UMATHMODULE
-#define _MULTIARRAYMODULE
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#define _MULTIARRAYMODULE
+#define _UMATHMODULE
 
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
 #include "npy_config.h"
-#include <numpy/arrayobject.h>
+#include "numpy/arrayobject.h"
 
-#include "npy_config.h"
 #include "npy_pycompat.h"
 #include "ctors.h"
 
@@ -25,235 +24,6 @@
 #include "reduction.h"
 #include "extobj.h"  /* for _check_ufunc_fperr */
 
-/*
- * Allocates a result array for a reduction operation, with
- * dimensions matching 'arr' except set to 1 with 0 stride
- * wherever axis_flags is True. Dropping the reduction axes
- * from the result must be done later by the caller once the
- * computation is complete.
- *
- * This function always allocates a base class ndarray.
- *
- * If 'dtype' isn't NULL, this function steals its reference.
- */
-static PyArrayObject *
-allocate_reduce_result(PyArrayObject *arr, const npy_bool *axis_flags,
-                        PyArray_Descr *dtype, int subok)
-{
-    npy_intp strides[NPY_MAXDIMS], stride;
-    npy_intp shape[NPY_MAXDIMS], *arr_shape = PyArray_DIMS(arr);
-    npy_stride_sort_item strideperm[NPY_MAXDIMS];
-    int idim, ndim = PyArray_NDIM(arr);
-
-    if (dtype == NULL) {
-        dtype = PyArray_DTYPE(arr);
-        Py_INCREF(dtype);
-    }
-
-    PyArray_CreateSortedStridePerm(PyArray_NDIM(arr),
-                                    PyArray_STRIDES(arr), strideperm);
-
-    /* Build the new strides and shape */
-    stride = dtype->elsize;
-    if (ndim) {
-        memcpy(shape, arr_shape, ndim * sizeof(shape[0]));
-    }
-    for (idim = ndim-1; idim >= 0; --idim) {
-        npy_intp i_perm = strideperm[idim].perm;
-        if (axis_flags[i_perm]) {
-            strides[i_perm] = 0;
-            shape[i_perm] = 1;
-        }
-        else {
-            strides[i_perm] = stride;
-            stride *= shape[i_perm];
-        }
-    }
-
-    /* Finally, allocate the array */
-    return (PyArrayObject *)PyArray_NewFromDescr(
-                                    subok ? Py_TYPE(arr) : &PyArray_Type,
-                                    dtype, ndim, shape, strides,
-                                    NULL, 0, subok ? (PyObject *)arr : NULL);
-}
-
-/*
- * Conforms an output parameter 'out' to have 'ndim' dimensions
- * with dimensions of size one added in the appropriate places
- * indicated by 'axis_flags'.
- *
- * The return value is a view into 'out'.
- */
-static PyArrayObject *
-conform_reduce_result(PyArrayObject *in, const npy_bool *axis_flags,
-                      PyArrayObject *out, int keepdims, const char *funcname,
-                      int need_copy)
-{
-    /* unpack shape information */
-    int const ndim = PyArray_NDIM(in);
-    npy_intp const *shape_in = PyArray_DIMS(in);
-
-    int const ndim_out = PyArray_NDIM(out);
-    npy_intp const *strides_out = PyArray_STRIDES(out);
-    npy_intp const *shape_out = PyArray_DIMS(out);
-
-    /*
-     * If the 'keepdims' parameter is true, do a simpler validation and
-     * return a new reference to 'out'.
-     */
-    if (keepdims) {
-        if (PyArray_NDIM(out) != ndim) {
-            PyErr_Format(PyExc_ValueError,
-                    "output parameter for reduction operation %s "
-                    "has the wrong number of dimensions (must match "
-                    "the operand's when keepdims=True)", funcname);
-            return NULL;
-        }
-
-        for (int idim = 0; idim < ndim; ++idim) {
-            if (axis_flags[idim]) {
-                if (shape_out[idim] != 1) {
-                    PyErr_Format(PyExc_ValueError,
-                            "output parameter for reduction operation %s "
-                            "has a reduction dimension not equal to one "
-                            "(required when keepdims=True)", funcname);
-                    return NULL;
-                }
-            }
-            else {
-                if (shape_out[idim] != shape_in[idim]) {
-                    PyErr_Format(PyExc_ValueError,
-                            "output parameter for reduction operation %s "
-                            "has a non-reduction dimension not equal to "
-                            "the input one.", funcname);
-                    return NULL;
-                }
-            }
-
-        }
-
-        Py_INCREF(out);
-        return out;
-    }
-
-    /* Construct the strides and shape */
-    npy_intp strides[NPY_MAXDIMS], shape[NPY_MAXDIMS];
-    int idim_out = 0;
-    for (int idim = 0; idim < ndim; ++idim) {
-        if (axis_flags[idim]) {
-            strides[idim] = 0;
-            shape[idim] = 1;
-        }
-        else {
-            if (idim_out >= ndim_out) {
-                PyErr_Format(PyExc_ValueError,
-                        "output parameter for reduction operation %s "
-                        "does not have enough dimensions", funcname);
-                return NULL;
-            }
-            if (shape_out[idim_out] != shape_in[idim]) {
-                PyErr_Format(PyExc_ValueError,
-                        "output parameter for reduction operation %s "
-                        "has a non-reduction dimension not equal to "
-                        "the input one.", funcname);
-                return NULL;
-            }
-            strides[idim] = strides_out[idim_out];
-            shape[idim] = shape_out[idim_out];
-            ++idim_out;
-        }
-    }
-
-    if (idim_out != ndim_out) {
-        PyErr_Format(PyExc_ValueError,
-                "output parameter for reduction operation %s "
-                "has too many dimensions", funcname);
-        return NULL;
-    }
-
-    /* Allocate the view */
-    PyArray_Descr *dtype = PyArray_DESCR(out);
-    Py_INCREF(dtype);
-
-    PyArrayObject_fields *ret = (PyArrayObject_fields *)PyArray_NewFromDescrAndBase(
-            &PyArray_Type, dtype,
-            ndim, shape, strides, PyArray_DATA(out),
-            PyArray_FLAGS(out), NULL, (PyObject *)out);
-    if (ret == NULL) {
-        return NULL;
-    }
-
-    if (need_copy) {
-        PyArrayObject *ret_copy = (PyArrayObject *)PyArray_NewLikeArray(
-                (PyArrayObject *)ret, NPY_ANYORDER, NULL, 0);
-        if (ret_copy == NULL) {
-            Py_DECREF(ret);
-            return NULL;
-        }
-
-        if (PyArray_CopyInto(ret_copy, (PyArrayObject *)ret) != 0) {
-            Py_DECREF(ret);
-            Py_DECREF(ret_copy);
-            return NULL;
-        }
-
-        if (PyArray_SetWritebackIfCopyBase(ret_copy, (PyArrayObject *)ret) < 0) {
-            Py_DECREF(ret_copy);
-            return NULL;
-        }
-
-        return ret_copy;
-    }
-    else {
-        return (PyArrayObject *)ret;
-    }
-}
-
-/*
- * Creates a result for reducing 'operand' along the axes specified
- * in 'axis_flags'. If 'dtype' isn't NULL, this function steals a
- * reference to 'dtype'.
- *
- * If 'out' isn't NULL, this function creates a view conforming
- * to the number of dimensions of 'operand', adding a singleton dimension
- * for each reduction axis specified. In this case, 'dtype' is ignored
- * (but its reference is still stolen), and the caller must handle any
- * type conversion/validity check for 'out'
- *
- * If 'subok' is true, creates a result with the subtype of 'operand',
- * otherwise creates on with the base ndarray class.
- *
- * If 'out' is NULL, it allocates a new array whose shape matches that of
- * 'operand', except for at the reduction axes. If 'dtype' is NULL, the dtype
- * of 'operand' is used for the result.
- */
-NPY_NO_EXPORT PyArrayObject *
-PyArray_CreateReduceResult(PyArrayObject *operand, PyArrayObject *out,
-                           PyArray_Descr *dtype, npy_bool *axis_flags,
-                           int keepdims, int subok,
-                           const char *funcname)
-{
-    PyArrayObject *result;
-
-    if (out == NULL) {
-        /* This function steals the reference to 'dtype' */
-        result = allocate_reduce_result(operand, axis_flags, dtype, subok);
-    }
-    else {
-        int need_copy = 0;
-
-        if (solve_may_share_memory(operand, out, 1) != 0) {
-            need_copy = 1;
-        }
-
-        /* Steal the dtype reference */
-        Py_XDECREF(dtype);
-        result = conform_reduce_result(operand, axis_flags,
-                                       out, keepdims, funcname, need_copy);
-    }
-
-    return result;
-}
 
 /*
  * Count the number of dimensions selected in 'axis_flags'
@@ -275,18 +45,15 @@ count_axes(int ndim, const npy_bool *axis_flags)
 /*
  * This function initializes a result array for a reduction operation
  * which has no identity. This means it needs to copy the first element
- * it sees along the reduction axes to result, then return a view of
- * the operand which excludes that element.
+ * it sees along the reduction axes to result.
  *
  * If a reduction has an identity, such as 0 or 1, the result should be
- * initialized by calling PyArray_AssignZero(result, NULL, NULL) or
- * PyArray_AssignOne(result, NULL, NULL), because this function raises an
- * exception when there are no elements to reduce (which appropriate iff the
- * reduction operation has no identity).
+ * fully initialized to the identity, because this function raises an
+ * exception when there are no elements to reduce (which is appropriate if,
+ * and only if, the reduction operation has no identity).
  *
  * This means it copies the subarray indexed at zero along each reduction axis
- * into 'result', then returns a view into 'operand' excluding those copied
- * elements.
+ * into 'result'.
  *
  * result  : The array into which the result is computed. This must have
  *           the same number of dimensions as 'operand', but for each
@@ -294,105 +61,83 @@ count_axes(int ndim, const npy_bool *axis_flags)
  * operand : The array being reduced.
  * axis_flags : An array of boolean flags, one for each axis of 'operand'.
  *              When a flag is True, it indicates to reduce along that axis.
- * out_skip_first_count : This gets populated with the number of first-visit
- *                        elements that should be skipped during the
- *                        iteration loop.
  * funcname : The name of the reduction operation, for the purpose of
  *            better quality error messages. For example, "numpy.max"
  *            would be a good name for NumPy's max function.
  *
- * Returns a view which contains the remaining elements on which to do
- * the reduction.
+ * Returns -1 if an error occurred, and otherwise the reduce arrays size,
+ * which is the number of elements already initialized.
  */
-NPY_NO_EXPORT PyArrayObject *
-PyArray_InitializeReduceResult(
+static npy_intp
+PyArray_CopyInitialReduceValues(
                     PyArrayObject *result, PyArrayObject *operand,
-                    const npy_bool *axis_flags,
-                    npy_intp *out_skip_first_count, const char *funcname)
+                    const npy_bool *axis_flags, const char *funcname,
+                    int keepdims)
 {
-    npy_intp *strides, *shape, shape_orig[NPY_MAXDIMS];
+    npy_intp shape[NPY_MAXDIMS], strides[NPY_MAXDIMS];
+    npy_intp *shape_orig = PyArray_SHAPE(operand);
+    npy_intp *strides_orig = PyArray_STRIDES(operand);
     PyArrayObject *op_view = NULL;
-    int idim, ndim, nreduce_axes;
 
-    ndim = PyArray_NDIM(operand);
-
-    /* Default to no skipping first-visit elements in the iteration */
-    *out_skip_first_count = 0;
-
-    /* Take a view into 'operand' which we can modify. */
-    op_view = (PyArrayObject *)PyArray_View(operand, NULL, &PyArray_Type);
-    if (op_view == NULL) {
-        return NULL;
-    }
+    int ndim = PyArray_NDIM(operand);
 
     /*
-     * Now copy the subarray of the first element along each reduction axis,
-     * then return a view to the rest.
+     * Copy the subarray of the first element along each reduction axis.
      *
      * Adjust the shape to only look at the first element along
-     * any of the reduction axes. We count the number of reduction axes
-     * at the same time.
+     * any of the reduction axes. If keepdims is False remove the axes
+     * entirely.
      */
-    shape = PyArray_SHAPE(op_view);
-    nreduce_axes = 0;
-    if (ndim) {
-        memcpy(shape_orig, shape, ndim * sizeof(npy_intp));
-    }
-    for (idim = 0; idim < ndim; ++idim) {
+    int idim_out = 0;
+    npy_intp size = 1;
+    for (int idim = 0; idim < ndim; idim++) {
         if (axis_flags[idim]) {
-            if (shape[idim] == 0) {
+            if (NPY_UNLIKELY(shape_orig[idim] == 0)) {
                 PyErr_Format(PyExc_ValueError,
-                             "zero-size array to reduction operation %s "
-                             "which has no identity",
-                             funcname);
-                Py_DECREF(op_view);
-                return NULL;
+                        "zero-size array to reduction operation %s "
+                        "which has no identity", funcname);
+                return -1;
             }
-            shape[idim] = 1;
-            ++nreduce_axes;
+            if (keepdims) {
+                shape[idim_out] = 1;
+                strides[idim_out] = 0;
+                idim_out++;
+            }
         }
+        else {
+            size *= shape_orig[idim];
+            shape[idim_out] = shape_orig[idim];
+            strides[idim_out] = strides_orig[idim];
+            idim_out++;
+        }
+    }
+
+    PyArray_Descr *descr = PyArray_DESCR(operand);
+    Py_INCREF(descr);
+    op_view = (PyArrayObject *)PyArray_NewFromDescr(
+            &PyArray_Type, descr, idim_out, shape, strides,
+            PyArray_DATA(operand), 0, NULL);
+    if (op_view == NULL) {
+        return -1;
     }
 
     /*
      * Copy the elements into the result to start.
      */
-    if (PyArray_CopyInto(result, op_view) < 0) {
-        Py_DECREF(op_view);
-        return NULL;
+    int res = PyArray_CopyInto(result, op_view);
+    Py_DECREF(op_view);
+    if (res < 0) {
+        return -1;
     }
 
     /*
-     * If there is one reduction axis, adjust the view's
-     * shape to only look at the remaining elements
+     * If there were no reduction axes, we would already be done here.
+     * Note that if there is only a single reduction axis, in principle the
+     * iteration could be set up more efficiently here by removing that
+     * axis before setting up the iterator (simplifying the iteration since
+     * `skip_first_count` (the returned size) can be set to 0).
      */
-    if (nreduce_axes == 1) {
-        strides = PyArray_STRIDES(op_view);
-        for (idim = 0; idim < ndim; ++idim) {
-            if (axis_flags[idim]) {
-                shape[idim] = shape_orig[idim] - 1;
-                ((PyArrayObject_fields *)op_view)->data += strides[idim];
-            }
-        }
-    }
-    /* If there are zero reduction axes, make the view empty */
-    else if (nreduce_axes == 0) {
-        for (idim = 0; idim < ndim; ++idim) {
-            shape[idim] = 0;
-        }
-    }
-    /*
-     * Otherwise iterate over the whole operand, but tell the inner loop
-     * to skip the elements we already copied by setting the skip_first_count.
-     */
-    else {
-        *out_skip_first_count = PyArray_SIZE(result);
-
-        Py_DECREF(op_view);
-        Py_INCREF(operand);
-        op_view = operand;
-    }
-
-    return op_view;
+    return size;
 }
 
 /*
@@ -400,14 +145,12 @@ PyArray_InitializeReduceResult(
  * boilerplate code, just calling the appropriate inner loop function where
  * necessary.
  *
+ * context     : The ArrayMethod context (with ufunc, method, and descriptors).
  * operand     : The array to be reduced.
  * out         : NULL, or the array into which to place the result.
  * wheremask   : NOT YET SUPPORTED, but this parameter is placed here
  *               so that support can be added in the future without breaking
  *               API compatibility. Pass in NULL.
- * operand_dtype : The dtype the inner loop expects for the operand.
- * result_dtype : The dtype the inner loop expects for the result.
- * casting     : The casting rule to apply to the operands.
  * axis_flags  : Flags indicating the reduction axes of 'operand'.
  * reorderable : If True, the reduction being done is reorderable, which
  *               means specifying multiple axes of reduction at once is ok,
@@ -418,10 +161,10 @@ PyArray_InitializeReduceResult(
  *               with size one.
  * subok       : If true, the result uses the subclass of operand, otherwise
  *               it is always a base class ndarray.
- * identity    : If Py_None, PyArray_InitializeReduceResult is used, otherwise
+ * identity    : If Py_None, PyArray_CopyInitialReduceValues is used, otherwise
  *               this value is used to initialize the result to
  *               the reduction's unit.
- * loop        : The loop which does the reduction.
+ * loop        : `reduce_loop` from `ufunc_object.c`.  TODO: Refactor
  * data        : Data which is passed to the inner loop.
  * buffersize  : Buffer size for the iterator. For the default, pass in 0.
  * funcname    : The name of the reduction function, for error messages.
@@ -437,27 +180,23 @@ PyArray_InitializeReduceResult(
  * generalized ufuncs!)
  */
 NPY_NO_EXPORT PyArrayObject *
-PyUFunc_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
-                      PyArrayObject *wheremask,
-                      PyArray_Descr *operand_dtype,
-                      PyArray_Descr *result_dtype,
-                      NPY_CASTING casting,
-                      npy_bool *axis_flags, int reorderable,
-                      int keepdims,
-                      int subok,
-                      PyObject *identity,
-                      PyArray_ReduceLoopFunc *loop,
-                      void *data, npy_intp buffersize, const char *funcname,
-                      int errormask)
+PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
+        PyArrayObject *operand, PyArrayObject *out, PyArrayObject *wheremask,
+        npy_bool *axis_flags, int reorderable, int keepdims,
+        PyObject *identity, PyArray_ReduceLoopFunc *loop,
+        void *data, npy_intp buffersize, const char *funcname, int errormask)
 {
-    PyArrayObject *result = NULL, *op_view = NULL;
+    assert(loop != NULL);
+    PyArrayObject *result = NULL;
     npy_intp skip_first_count = 0;
 
     /* Iterator parameters */
     NpyIter *iter = NULL;
     PyArrayObject *op[3];
     PyArray_Descr *op_dtypes[3];
-    npy_uint32 flags, op_flags[3];
+    npy_uint32 it_flags, op_flags[3];
+    /* Loop auxdata (must be freed on error) */
+    NpyAuxData *auxdata = NULL;
 
     /* More than one axis means multiple orders are possible */
     if (!reorderable && count_axes(PyArray_NDIM(operand), axis_flags) > 1) {
@@ -476,64 +215,29 @@ PyUFunc_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
         return NULL;
     }
 
-    /*
-     * This either conforms 'out' to the ndim of 'operand', or allocates
-     * a new array appropriate for this reduction.
-     *
-     * A new array with WRITEBACKIFCOPY is allocated if operand and out have memory
-     * overlap.
-     */
-    Py_INCREF(result_dtype);
-    result = PyArray_CreateReduceResult(operand, out,
-                            result_dtype, axis_flags,
-                            keepdims, subok, funcname);
-    if (result == NULL) {
-        goto fail;
-    }
-
-    /*
-     * Initialize the result to the reduction unit if possible,
-     * otherwise copy the initial values and get a view to the rest.
-     */
-    if (identity != Py_None) {
-        if (PyArray_FillWithScalar(result, identity) < 0) {
-            goto fail;
-        }
-        op_view = operand;
-        Py_INCREF(op_view);
-    }
-    else {
-        op_view = PyArray_InitializeReduceResult(
-            result, operand, axis_flags, &skip_first_count, funcname);
-        if (op_view == NULL) {
-            goto fail;
-        }
-        /* empty op_view signals no reduction; but 0-d arrays cannot be empty */
-        if ((PyArray_SIZE(op_view) == 0) || (PyArray_NDIM(operand) == 0)) {
-            Py_DECREF(op_view);
-            op_view = NULL;
-            goto finish;
-        }
-    }
 
     /* Set up the iterator */
-    op[0] = result;
-    op[1] = op_view;
-    op_dtypes[0] = result_dtype;
-    op_dtypes[1] = operand_dtype;
+    op[0] = out;
+    op[1] = operand;
+    op_dtypes[0] = context->descriptors[0];
+    op_dtypes[1] = context->descriptors[1];
 
-    flags = NPY_ITER_BUFFERED |
+    it_flags = NPY_ITER_BUFFERED |
             NPY_ITER_EXTERNAL_LOOP |
             NPY_ITER_GROWINNER |
             NPY_ITER_DONT_NEGATE_STRIDES |
             NPY_ITER_ZEROSIZE_OK |
-            NPY_ITER_REDUCE_OK |
-            NPY_ITER_REFS_OK;
+            NPY_ITER_REFS_OK |
+            NPY_ITER_DELAY_BUFALLOC |
+            NPY_ITER_COPY_IF_OVERLAP;
     op_flags[0] = NPY_ITER_READWRITE |
                   NPY_ITER_ALIGNED |
+                  NPY_ITER_ALLOCATE |
                   NPY_ITER_NO_SUBTYPE;
     op_flags[1] = NPY_ITER_READONLY |
-                  NPY_ITER_ALIGNED;
+                  NPY_ITER_ALIGNED |
+                  NPY_ITER_NO_BROADCAST;
+
     if (wheremask != NULL) {
         op[2] = wheremask;
         /* wheremask is guaranteed to be NPY_BOOL, so borrow its reference */
@@ -544,25 +248,117 @@ PyUFunc_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
         }
         op_flags[2] = NPY_ITER_READONLY;
     }
+    /* Set up result array axes mapping, operand and wheremask use default */
+    int result_axes[NPY_MAXDIMS];
+    int *op_axes[3] = {result_axes, NULL, NULL};
 
-    iter = NpyIter_AdvancedNew(wheremask == NULL ? 2 : 3, op, flags,
-                               NPY_KEEPORDER, casting,
+    int curr_axis = 0;
+    for (int i = 0; i < PyArray_NDIM(operand); i++) {
+        if (axis_flags[i]) {
+            if (keepdims) {
+                result_axes[i] = NPY_ITER_REDUCTION_AXIS(curr_axis);
+                curr_axis++;
+            }
+            else {
+                result_axes[i] = NPY_ITER_REDUCTION_AXIS(-1);
+            }
+        }
+        else {
+            result_axes[i] = curr_axis;
+            curr_axis++;
+        }
+    }
+    if (out != NULL) {
+        /* NpyIter does not raise a good error message in this common case. */
+        if (NPY_UNLIKELY(curr_axis != PyArray_NDIM(out))) {
+            if (keepdims) {
+                PyErr_Format(PyExc_ValueError,
+                        "output parameter for reduction operation %s has the "
+                        "wrong number of dimensions: Found %d but expected %d "
+                        "(must match the operand's when keepdims=True)",
+                        funcname, PyArray_NDIM(out), curr_axis);
+            }
+            else {
+                PyErr_Format(PyExc_ValueError,
+                        "output parameter for reduction operation %s has the "
+                        "wrong number of dimensions: Found %d but expected %d",
+                        funcname, PyArray_NDIM(out), curr_axis);
+            }
+            goto fail;
+        }
+    }
+
+    iter = NpyIter_AdvancedNew(wheremask == NULL ? 2 : 3, op, it_flags,
+                               NPY_KEEPORDER, NPY_UNSAFE_CASTING,
                                op_flags,
                                op_dtypes,
-                               -1, NULL, NULL, buffersize);
+                               PyArray_NDIM(operand), op_axes, NULL, buffersize);
     if (iter == NULL) {
         goto fail;
     }
 
-    /* Start with the floating-point exception flags cleared */
-    npy_clear_floatstatus_barrier((char*)&iter);
+    result = NpyIter_GetOperandArray(iter)[0];
+
+    PyArrayMethod_StridedLoop *strided_loop;
+    NPY_ARRAYMETHOD_FLAGS flags = 0;
+
+    int needs_api = (flags & NPY_METH_REQUIRES_PYAPI) != 0;
+    needs_api |= NpyIter_IterationNeedsAPI(iter);
+    if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
+        /* Start with the floating-point exception flags cleared */
+        npy_clear_floatstatus_barrier((char*)&iter);
+    }
+
+    /*
+     * Initialize the result to the reduction unit if possible,
+     * otherwise copy the initial values and get a view to the rest.
+     */
+    if (identity != Py_None) {
+        if (PyArray_FillWithScalar(result, identity) < 0) {
+            goto fail;
+        }
+    }
+    else {
+        /*
+         * For 1-D skip_first_count could be optimized to 0, but no-identity
+         * reductions are not super common.
+         * (see also comment in CopyInitialReduceValues)
+         */
+        skip_first_count = PyArray_CopyInitialReduceValues(
+                result, operand, axis_flags, funcname, keepdims);
+        if (skip_first_count < 0) {
+            goto fail;
+        }
+    }
+
+    if (!NpyIter_Reset(iter, NULL)) {
+        goto fail;
+    }
+
+    /*
+     * Note that we need to ensure that the iterator is reset before getting
+     * the fixed strides.  (The buffer information is uninitialized before.)
+     */
+    npy_intp fixed_strides[3];
+    NpyIter_GetInnerFixedStrideArray(iter, fixed_strides);
+    if (wheremask != NULL) {
+        if (PyArrayMethod_GetMaskedStridedLoop(context,
+                1, fixed_strides, &strided_loop, &auxdata, &flags) < 0) {
+            goto fail;
+        }
+    }
+    else {
+        if (context->method->get_strided_loop(context,
+                1, 0, fixed_strides, &strided_loop, &auxdata, &flags) < 0) {
+            goto fail;
+        }
+    }
 
     if (NpyIter_GetIterSize(iter) != 0) {
         NpyIter_IterNextFunc *iternext;
         char **dataptr;
         npy_intp *strideptr;
         npy_intp *countptr;
-        int needs_api;
 
         iternext = NpyIter_GetIterNext(iter, NULL);
         if (iternext == NULL) {
@@ -572,52 +368,34 @@ PyUFunc_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
         strideptr = NpyIter_GetInnerStrideArray(iter);
         countptr = NpyIter_GetInnerLoopSizePtr(iter);
 
-        needs_api = NpyIter_IterationNeedsAPI(iter);
-
-        /* Straightforward reduction */
-        if (loop == NULL) {
-            PyErr_Format(PyExc_RuntimeError,
-                    "reduction operation %s did not supply an "
-                    "inner loop function", funcname);
-            goto fail;
-        }
-
-        if (loop(iter, dataptr, strideptr, countptr,
-                        iternext, needs_api, skip_first_count, data) < 0) {
-
+        if (loop(context, strided_loop, auxdata,
+                iter, dataptr, strideptr, countptr, iternext,
+                needs_api, skip_first_count) < 0) {
             goto fail;
         }
     }
 
-    /* Check whether any errors occurred during the loop */
-    if (PyErr_Occurred() ||
-            _check_ufunc_fperr(errormask, NULL, "reduce") < 0) {
-        goto fail;
-    }
-
-    NpyIter_Deallocate(iter);
-    Py_DECREF(op_view);
-
-finish:
-    /* Strip out the extra 'one' dimensions in the result */
-    if (out == NULL) {
-        if (!keepdims) {
-            PyArray_RemoveAxesInPlace(result, axis_flags);
+    if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
+        /* NOTE: We could check float errors even on error */
+        if (_check_ufunc_fperr(errormask, NULL, "reduce") < 0) {
+            goto fail;
         }
     }
-    else {
-        PyArray_ResolveWritebackIfCopy(result); /* prevent spurious warnings */
-        Py_DECREF(result);
+
+    if (out != NULL) {
         result = out;
-        Py_INCREF(result);
     }
+    Py_INCREF(result);
 
+    NPY_AUXDATA_FREE(auxdata);
+    if (!NpyIter_Deallocate(iter)) {
+        Py_DECREF(result);
+        return NULL;
+    }
     return result;
 
 fail:
-    PyArray_ResolveWritebackIfCopy(result); /* prevent spurious warnings */
-    Py_XDECREF(result);
-    Py_XDECREF(op_view);
+    NPY_AUXDATA_FREE(auxdata);
     if (iter != NULL) {
         NpyIter_Deallocate(iter);
     }

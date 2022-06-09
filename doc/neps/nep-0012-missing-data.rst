@@ -1,5 +1,7 @@
+.. _NEP12:
+
 ============================================
-NEP 12 — Missing Data Functionality in NumPy
+NEP 12 — Missing data functionality in NumPy
 ============================================
 
 :Author: Mark Wiebe <mwwiebe@gmail.com>
@@ -313,7 +315,7 @@ The following works in the current draft implementation::
 For floating point numbers, Inf and NaN are separate concepts from
 missing values. If a division by zero occurs in an array with default
 missing value support, an unmasked Inf or NaN will be produced. To
-mask those values, a further 'a[np.logical_not(a.isfinite(a)] = np.NA'
+mask those values, a further 'a[np.logical_not(a.isfinite(a))] = np.NA'
 can achieve that. For the bitpattern approach, the parameterized
 dtype('NA[f8,InfNan]') described in a later section can be used to get
 these semantics without the extra manipulation.
@@ -426,7 +428,7 @@ New functions added to the ndarray are::
     arr.copy(..., replacena=np.NA)
         Modification to the copy function which replaces NA values,
         either masked or with the NA bitpattern, with the 'replacena='
-        parameter suppled. When 'replacena' isn't NA, the copied
+        parameter supplied. When 'replacena' isn't NA, the copied
         array is unmasked and has the 'NA' part stripped from the
         parameterized dtype ('NA[f8]' becomes just 'f8').
 
@@ -901,7 +903,7 @@ before it will allow NA-masked arrays to flow through.
 https://docs.scipy.org/doc/numpy/reference/c-api.array.html#NPY_ARRAY_ALLOWNA
 
 Code which does not follow this advice, and instead just calls PyArray_Check() to verify
-its an ndarray and checks some flags, will silently produce incorrect results. This style
+it is an ndarray and checks some flags, will silently produce incorrect results. This style
 of code does not provide any opportunity for numpy to say "hey, this array is special",
 so also is not compatible with future ideas of lazy evaluation, derived dtypes, etc.
 
@@ -926,7 +928,7 @@ to access the array elements. This python indexing still goes through the
 Python API, so the NA handling and error checking in numpy still can work
 like normal and fail if the inputs have NAs which cannot fit in the output
 array. In this case it fails when trying to convert the NA into an integer
-to set in in the output.
+to set in the output.
 
 The next version of the code introduces more efficient indexing. This
 operates based on Python's buffer protocol. This causes Cython to call
@@ -955,11 +957,13 @@ so the later code will raise exceptions as desired.
 C Implementation Details
 ************************
 
+.. highlight:: c
+
 The first version to implement is the array masks, because it is
 the more general approach. The mask itself is an array, but since
 it is intended to never be directly accessible from Python, it won't
 be a full ndarray itself. The mask always has the same shape as
-the array it's attached to, so it doesn't need its own shape. For
+the array it is attached to, so it doesn't need its own shape. For
 an array with a struct dtype, however, the mask will have a different
 dtype than just a straight bool, so it does need its own dtype.
 This gives us the following additions to the PyArrayObject::
@@ -1157,32 +1161,32 @@ Acknowledgments
 In addition to feedback from Travis Oliphant and others at Enthought,
 this NEP has been revised based on a great deal of feedback from
 the NumPy-Discussion mailing list. The people participating in
-the discussion are::
+the discussion are:
 
-    Nathaniel Smith
-    Robert Kern
-    Charles Harris
-    Gael Varoquaux
-    Eric Firing
-    Keith Goodman
-    Pierre GM
-    Christopher Barker
-    Josef Perktold
-    Ben Root
-    Laurent Gautier
-    Neal Becker
-    Bruce Southey
-    Matthew Brett
-    Wes McKinney
-    Lluís
-    Olivier Delalleau
-    Alan G Isaac
-    E. Antero Tammi
-    Jason Grout
-    Dag Sverre Seljebotn
-    Joe Harrington
-    Gary Strangman
-    Chris Jordan-Squire
-    Peter
+- Nathaniel Smith
+- Robert Kern
+- Charles Harris
+- Gael Varoquaux
+- Eric Firing
+- Keith Goodman
+- Pierre GM
+- Christopher Barker
+- Josef Perktold
+- Ben Root
+- Laurent Gautier
+- Neal Becker
+- Bruce Southey
+- Matthew Brett
+- Wes McKinney
+- Lluís
+- Olivier Delalleau
+- Alan G Isaac
+- E. Antero Tammi
+- Jason Grout
+- Dag Sverre Seljebotn
+- Joe Harrington
+- Gary Strangman
+- Chris Jordan-Squire
+- Peter
 
 I apologize if I missed anyone.

@@ -1,9 +1,10 @@
-#define PY_SSIZE_T_CLEAN
-#include <Python.h>
-#include "structmember.h"
-
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
+
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+#include <structmember.h>
+
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
 
@@ -15,6 +16,8 @@
 #include "iterators.h"
 #include "ctors.h"
 #include "common.h"
+#include "conversion_utils.h"
+#include "array_coercion.h"
 
 #define NEWAXIS_INDEX -1
 #define ELLIPSIS_INDEX -2
@@ -60,7 +63,7 @@ parse_index_entry(PyObject *op, npy_intp *step_size,
     }
     else if (PySlice_Check(op)) {
         npy_intp stop;
-        if (NpySlice_GetIndicesEx(op, max, &i, &stop, step_size, n_steps) < 0) {
+        if (PySlice_GetIndicesEx(op, max, &i, &stop, step_size, n_steps) < 0) {
             goto fail;
         }
         if (*n_steps <= 0) {
@@ -596,7 +599,7 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
     }
 
     /* Check for Integer or Slice */
-    if (PyLong_Check(ind) || PyInt_Check(ind) || PySlice_Check(ind)) {
+    if (PyLong_Check(ind) || PySlice_Check(ind)) {
         start = parse_index_entry(ind, &step_size, &n_steps,
                                   self->size, 0, 1);
         if (start == -1) {
@@ -824,7 +827,7 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
     if (PyBool_Check(ind)) {
         retval = 0;
         if (PyObject_IsTrue(ind)) {
-            retval = PyArray_SETITEM(self->ao, self->dataptr, val);
+            retval = PyArray_Pack(PyArray_DESCR(self->ao), self->dataptr, val);
         }
         goto finish;
     }
@@ -841,7 +844,7 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
             goto finish;
         }
         PyArray_ITER_GOTO1D(self, start);
-        retval = type->f->setitem(val, self->dataptr, self->ao);
+        retval = PyArray_Pack(PyArray_DESCR(self->ao), self->dataptr, val);
         PyArray_ITER_RESET(self);
         if (retval < 0) {
             PyErr_SetString(PyExc_ValueError,
@@ -1061,15 +1064,17 @@ static PyMemberDef iter_members[] = {
         T_OBJECT,
         offsetof(PyArrayIterObject, ao),
         READONLY, NULL},
-    {"index",
-        T_INT,
-        offsetof(PyArrayIterObject, index),
-        READONLY, NULL},
     {NULL, 0, 0, 0, NULL},
 };
 
 static PyObject *
-iter_coords_get(PyArrayIterObject *self)
+iter_index_get(PyArrayIterObject *self, void *NPY_UNUSED(ignored))
+{
+    return PyArray_PyIntFromIntp(self->index);
+}
+
+static PyObject *
+iter_coords_get(PyArrayIterObject *self, void *NPY_UNUSED(ignored))
 {
     int nd;
     nd = PyArray_NDIM(self->ao);
@@ -1094,10 +1099,12 @@ iter_coords_get(PyArrayIterObject *self)
 }
 
 static PyGetSetDef iter_getsets[] = {
+    {"index",
+        (getter)iter_index_get,
+        NULL, NULL, NULL},
     {"coords",
         (getter)iter_coords_get,
-        NULL,
-        NULL, NULL},
+        NULL, NULL, NULL},
     {NULL, NULL, NULL, NULL, NULL},
 };
 
@@ -1117,6 +1124,35 @@ NPY_NO_EXPORT PyTypeObject PyArrayIter_Type = {
 
 /** END of Array Iterator **/
 
+
+static int
+set_shape_mismatch_exception(PyArrayMultiIterObject *mit, int i1, int i2)
+{
+    PyObject *shape1, *shape2, *msg;
+
+    shape1 = PyObject_GetAttrString((PyObject *) mit->iters[i1]->ao, "shape");
+    if (shape1 == NULL) {
+        return -1;
+    }
+    shape2 = PyObject_GetAttrString((PyObject *) mit->iters[i2]->ao, "shape");
+    if (shape2 == NULL) {
+        Py_DECREF(shape1);
+        return -1;
+    }
+    msg = PyUnicode_FromFormat("shape mismatch: objects cannot be broadcast "
+                               "to a single shape.  Mismatch is between arg %d "
+                               "with shape %S and arg %d with shape %S.",
+                               i1, shape1, i2, shape2);
+    Py_DECREF(shape1);
+    Py_DECREF(shape2);
+    if (msg == NULL) {
+        return -1;
+    }
+    PyErr_SetObject(PyExc_ValueError, msg);
+    Py_DECREF(msg);
+    return 0;
+}
+
 /* Adjust dimensionality and strides for index object iterators
    --- i.e. broadcast
 */
@@ -1125,6 +1161,7 @@ NPY_NO_EXPORT int
 PyArray_Broadcast(PyArrayMultiIterObject *mit)
 {
     int i, nd, k, j;
+    int src_iter = -1;  /* Initializing avoids a compiler warning. */
     npy_intp tmp;
     PyArrayIterObject *it;
 
@@ -1148,12 +1185,10 @@ PyArray_Broadcast(PyArrayMultiIterObject *mit)
                 }
                 if (mit->dimensions[i] == 1) {
                     mit->dimensions[i] = tmp;
+                    src_iter = j;
                 }
                 else if (mit->dimensions[i] != tmp) {
-                    PyErr_SetString(PyExc_ValueError,
-                                    "shape mismatch: objects" \
-                                    " cannot be broadcast" \
-                                    " to a single shape");
+                    set_shape_mismatch_exception(mit, src_iter, j);
                     return -1;
                 }
             }
@@ -1407,43 +1442,25 @@ arraymultiter_dealloc(PyArrayMultiIterObject *multi)
 }
 
 static PyObject *
-arraymultiter_size_get(PyArrayMultiIterObject *self)
+arraymultiter_size_get(PyArrayMultiIterObject *self, void *NPY_UNUSED(ignored))
 {
-#if NPY_SIZEOF_INTP <= NPY_SIZEOF_LONG
-    return PyInt_FromLong((long) self->size);
-#else
-    if (self->size < NPY_MAX_LONG) {
-        return PyInt_FromLong((long) self->size);
-    }
-    else {
-        return PyLong_FromLongLong((npy_longlong) self->size);
-    }
-#endif
+    return PyArray_PyIntFromIntp(self->size);
 }
 
 static PyObject *
-arraymultiter_index_get(PyArrayMultiIterObject *self)
+arraymultiter_index_get(PyArrayMultiIterObject *self, void *NPY_UNUSED(ignored))
 {
-#if NPY_SIZEOF_INTP <= NPY_SIZEOF_LONG
-    return PyInt_FromLong((long) self->index);
-#else
-    if (self->size < NPY_MAX_LONG) {
-        return PyInt_FromLong((long) self->index);
-    }
-    else {
-        return PyLong_FromLongLong((npy_longlong) self->index);
-    }
-#endif
+    return PyArray_PyIntFromIntp(self->index);
 }
 
 static PyObject *
-arraymultiter_shape_get(PyArrayMultiIterObject *self)
+arraymultiter_shape_get(PyArrayMultiIterObject *self, void *NPY_UNUSED(ignored))
 {
     return PyArray_IntTupleFromIntp(self->nd, self->dimensions);
 }
 
 static PyObject *
-arraymultiter_iters_get(PyArrayMultiIterObject *self)
+arraymultiter_iters_get(PyArrayMultiIterObject *self, void *NPY_UNUSED(ignored))
 {
     PyObject *res;
     int i, n;

@@ -7,12 +7,27 @@ For example, for functions like `log` with branch cuts, the versions in this
 module provide the mathematically valid answers in the complex plane::
 
   >>> import math
-  >>> from numpy.lib import scimath
-  >>> scimath.log(-math.exp(1)) == (1+1j*math.pi)
+  >>> np.emath.log(-math.exp(1)) == (1+1j*math.pi)
   True
 
 Similarly, `sqrt`, other base logarithms, `power` and trig functions are
 correctly handled.  See their respective docstrings for specific examples.
+
+Functions
+---------
+
+.. autosummary::
+   :toctree: generated/
+
+   sqrt
+   log
+   log2
+   logn
+   log10
+   power
+   arccos
+   arcsin
+   arctanh
 
 """
 import numpy.core.numeric as nx
@@ -207,18 +222,27 @@ def sqrt(x):
     --------
     For real, non-negative inputs this works just like `numpy.sqrt`:
 
-    >>> np.lib.scimath.sqrt(1)
+    >>> np.emath.sqrt(1)
     1.0
-    >>> np.lib.scimath.sqrt([1, 4])
+    >>> np.emath.sqrt([1, 4])
     array([1.,  2.])
 
     But it automatically handles negative inputs:
 
-    >>> np.lib.scimath.sqrt(-1)
+    >>> np.emath.sqrt(-1)
     1j
-    >>> np.lib.scimath.sqrt([-1,4])
+    >>> np.emath.sqrt([-1,4])
     array([0.+1.j, 2.+0.j])
 
+    Different results are expected because:
+    floating point 0.0 and -0.0 are distinct.
+
+    For more control, explicitly use complex() as follows:
+
+    >>> np.emath.sqrt(complex(-4.0, 0.0))
+    2j
+    >>> np.emath.sqrt(complex(-4.0, -0.0))
+    -2j
     """
     x = _fix_real_lt_zero(x)
     return nx.sqrt(x)
@@ -351,9 +375,9 @@ def logn(n, x):
     --------
     >>> np.set_printoptions(precision=4)
 
-    >>> np.lib.scimath.logn(2, [4, 8])
+    >>> np.emath.logn(2, [4, 8])
     array([2., 3.])
-    >>> np.lib.scimath.logn(2, [-4, -8, 8])
+    >>> np.emath.logn(2, [-4, -8, 8])
     array([2.+4.5324j, 3.+4.5324j, 3.+0.j    ])
 
     """
@@ -446,11 +470,11 @@ def power(x, p):
     --------
     >>> np.set_printoptions(precision=4)
 
-    >>> np.lib.scimath.power([2, 4], 2)
+    >>> np.emath.power([2, 4], 2)
     array([ 4, 16])
-    >>> np.lib.scimath.power([2, 4], -2)
+    >>> np.emath.power([2, 4], -2)
     array([0.25  ,  0.0625])
-    >>> np.lib.scimath.power([-2, 4], 2)
+    >>> np.emath.power([-2, 4], 2)
     array([ 4.-0.j, 16.+0.j])
 
     """
@@ -556,10 +580,10 @@ def arctanh(x):
     Compute the inverse hyperbolic tangent of `x`.
 
     Return the "principal value" (for a description of this, see
-    `numpy.arctanh`) of `arctanh(x)`. For real `x` such that
-    `abs(x) < 1`, this is a real number.  If `abs(x) > 1`, or if `x` is
+    `numpy.arctanh`) of ``arctanh(x)``. For real `x` such that
+    ``abs(x) < 1``, this is a real number.  If `abs(x) > 1`, or if `x` is
     complex, the result is complex. Finally, `x = 1` returns``inf`` and
-    `x=-1` returns ``-inf``.
+    ``x=-1`` returns ``-inf``.
 
     Parameters
     ----------
@@ -581,7 +605,7 @@ def arctanh(x):
     -----
     For an arctanh() that returns ``NAN`` when real `x` is not in the
     interval ``(-1,1)``, use `numpy.arctanh` (this latter, however, does
-    return +/-inf for `x = +/-1`).
+    return +/-inf for ``x = +/-1``).
 
     Examples
     --------

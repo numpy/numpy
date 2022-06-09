@@ -1,8 +1,22 @@
-#ifndef _NPY_ARRAYDESCR_H_
-#define _NPY_ARRAYDESCR_H_
+#ifndef NUMPY_CORE_SRC_MULTIARRAY_DESCRIPTOR_H_
+#define NUMPY_CORE_SRC_MULTIARRAY_DESCRIPTOR_H_
 
-NPY_NO_EXPORT PyObject *arraydescr_protocol_typestr_get(PyArray_Descr *);
-NPY_NO_EXPORT PyObject *arraydescr_protocol_descr_get(PyArray_Descr *self);
+NPY_NO_EXPORT PyObject *arraydescr_protocol_typestr_get(
+        PyArray_Descr *, void *);
+NPY_NO_EXPORT PyObject *arraydescr_protocol_descr_get(
+        PyArray_Descr *self, void *);
+
+/*
+ * offset:    A starting offset.
+ * alignment: A power-of-two alignment.
+ *
+ * This macro returns the smallest value >= 'offset'
+ * that is divisible by 'alignment'. Because 'alignment'
+ * is a power of two and integers are twos-complement,
+ * it is possible to use some simple bit-fiddling to do this.
+ */
+#define NPY_NEXT_ALIGNED_OFFSET(offset, alignment) \
+                (((offset) + (alignment) - 1) & (-(alignment)))
 
 NPY_NO_EXPORT PyObject *
 array_set_typeDict(PyObject *NPY_UNUSED(ignored), PyObject *args);
@@ -28,4 +42,4 @@ arraydescr_field_subset_view(PyArray_Descr *self, PyObject *ind);
 
 extern NPY_NO_EXPORT char const *_datetime_strings[];
 
-#endif
+#endif  /* NUMPY_CORE_SRC_MULTIARRAY_DESCRIPTOR_H_ */

@@ -1,5 +1,7 @@
+.. _NEP27:
+
 =========================
-NEP 27 — Zero Rank Arrays
+NEP 27 — Zero rank arrays
 =========================
 
 :Author: Alexander Belopolsky (sasha), transcribed Matt Picus <matti.picus@gmail.com>
@@ -8,7 +10,7 @@ NEP 27 — Zero Rank Arrays
 :Created: 2006-06-10
 :Resolution: https://mail.python.org/pipermail/numpy-discussion/2018-October/078824.html
 
-.. note ::
+.. note::
 
     NumPy has both zero rank arrays and scalars. This design document, adapted
     from a `2006 wiki entry`_, describes what zero rank arrays are and why they
@@ -55,7 +57,7 @@ However there are some important differences:
 Motivation for Array Scalars
 ----------------------------
 
-Numpy's design decision to provide 0-d arrays and array scalars in addition to
+NumPy's design decision to provide 0-d arrays and array scalars in addition to
 native python types goes against one of the fundamental python design
 principles that there should be only one obvious way to do it.  In this section
 we will try to explain why it is necessary to have three different ways to
@@ -103,11 +105,11 @@ arrays to scalars were summarized as follows:
 
   - This results in a special-case checking that is not
     pleasant.  Fundamentally it lets the user believe that
-    somehow multidimensional homoegeneous arrays
+    somehow multidimensional homogeneous arrays
     are something like Python lists (which except for
     Object arrays they are not).
 
-Numpy implements a solution that is designed to have all the pros and none of the cons above.
+NumPy implements a solution that is designed to have all the pros and none of the cons above.
 
     Create Python scalar types for all of the 21 types and also
     inherit from the three that already exist. Define equivalent
@@ -164,7 +166,7 @@ Alexander started a `Jan 2006 discussion`_ on scipy-dev
 with the following proposal:
 
     ... it may be reasonable to allow ``a[...]``.  This way
-    ellipsis can be interpereted as any number of  ``:`` s including zero.
+    ellipsis can be interpreted as any number of  ``:`` s including zero.
     Another subscript operation that makes sense for scalars would be
     ``a[...,newaxis]`` or even ``a[{newaxis, }* ..., {newaxis,}*]``, where
     ``{newaxis,}*`` stands for any number of comma-separated newaxis tokens.

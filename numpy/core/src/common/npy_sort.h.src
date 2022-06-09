@@ -18,6 +18,11 @@ static NPY_INLINE int npy_get_msb(npy_uintp unum)
     return depth_limit;
 }
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 
 /*
  *****************************************************************************
@@ -33,14 +38,14 @@ static NPY_INLINE int npy_get_msb(npy_uintp unum)
  *         cfloat, cdouble, clongdouble, datetime, timedelta#
  */
 
-int quicksort_@suff@(void *vec, npy_intp cnt, void *null);
-int heapsort_@suff@(void *vec, npy_intp cnt, void *null);
-int mergesort_@suff@(void *vec, npy_intp cnt, void *null);
-int timsort_@suff@(void *vec, npy_intp cnt, void *null);
-int aquicksort_@suff@(void *vec, npy_intp *ind, npy_intp cnt, void *null);
-int aheapsort_@suff@(void *vec, npy_intp *ind, npy_intp cnt, void *null);
-int amergesort_@suff@(void *vec, npy_intp *ind, npy_intp cnt, void *null);
-int atimsort_@suff@(void *vec, npy_intp *ind, npy_intp cnt, void *null);
+NPY_NO_EXPORT int quicksort_@suff@(void *vec, npy_intp cnt, void *null);
+NPY_NO_EXPORT int heapsort_@suff@(void *vec, npy_intp cnt, void *null);
+NPY_NO_EXPORT int mergesort_@suff@(void *vec, npy_intp cnt, void *null);
+NPY_NO_EXPORT int timsort_@suff@(void *vec, npy_intp cnt, void *null);
+NPY_NO_EXPORT int aquicksort_@suff@(void *vec, npy_intp *ind, npy_intp cnt, void *null);
+NPY_NO_EXPORT int aheapsort_@suff@(void *vec, npy_intp *ind, npy_intp cnt, void *null);
+NPY_NO_EXPORT int amergesort_@suff@(void *vec, npy_intp *ind, npy_intp cnt, void *null);
+NPY_NO_EXPORT int atimsort_@suff@(void *vec, npy_intp *ind, npy_intp cnt, void *null);
 
 /**end repeat**/
 
@@ -49,9 +54,14 @@ int atimsort_@suff@(void *vec, npy_intp *ind, npy_intp cnt, void *null);
  * #suff = bool, byte, ubyte, short, ushort, int, uint, long, ulong,
  *         longlong, ulonglong#
  */
-
-int radixsort_@suff@(void *vec, npy_intp cnt, void *null);
-int aradixsort_@suff@(void *vec, npy_intp *ind, npy_intp cnt, void *null);
+#ifdef __cplusplus
+extern "C" {
+#endif
+NPY_NO_EXPORT int radixsort_@suff@(void *vec, npy_intp cnt, void *null);
+NPY_NO_EXPORT int aradixsort_@suff@(void *vec, npy_intp *ind, npy_intp cnt, void *null);
+#ifdef __cplusplus
+}
+#endif
 
 /**end repeat**/
 
@@ -69,14 +79,14 @@ int aradixsort_@suff@(void *vec, npy_intp *ind, npy_intp cnt, void *null);
  * #suff = string, unicode#
  */
 
-int quicksort_@suff@(void *vec, npy_intp cnt, void *arr);
-int heapsort_@suff@(void *vec, npy_intp cnt, void *arr);
-int mergesort_@suff@(void *vec, npy_intp cnt, void *arr);
-int timsort_@suff@(void *vec, npy_intp cnt, void *arr);
-int aquicksort_@suff@(void *vec, npy_intp *ind, npy_intp cnt, void *arr);
-int aheapsort_@suff@(void *vec, npy_intp *ind, npy_intp cnt, void *arr);
-int amergesort_@suff@(void *vec, npy_intp *ind, npy_intp cnt, void *arr);
-int atimsort_@suff@(void *vec, npy_intp *ind, npy_intp cnt, void *arr);
+NPY_NO_EXPORT int quicksort_@suff@(void *vec, npy_intp cnt, void *arr);
+NPY_NO_EXPORT int heapsort_@suff@(void *vec, npy_intp cnt, void *arr);
+NPY_NO_EXPORT int mergesort_@suff@(void *vec, npy_intp cnt, void *arr);
+NPY_NO_EXPORT int timsort_@suff@(void *vec, npy_intp cnt, void *arr);
+NPY_NO_EXPORT int aquicksort_@suff@(void *vec, npy_intp *ind, npy_intp cnt, void *arr);
+NPY_NO_EXPORT int aheapsort_@suff@(void *vec, npy_intp *ind, npy_intp cnt, void *arr);
+NPY_NO_EXPORT int amergesort_@suff@(void *vec, npy_intp *ind, npy_intp cnt, void *arr);
+NPY_NO_EXPORT int atimsort_@suff@(void *vec, npy_intp *ind, npy_intp cnt, void *arr);
 
 /**end repeat**/
 
@@ -88,13 +98,17 @@ int atimsort_@suff@(void *vec, npy_intp *ind, npy_intp cnt, void *arr);
  */
 
 
-int npy_quicksort(void *vec, npy_intp cnt, void *arr);
-int npy_heapsort(void *vec, npy_intp cnt, void *arr);
-int npy_mergesort(void *vec, npy_intp cnt, void *arr);
-int npy_timsort(void *vec, npy_intp cnt, void *arr);
-int npy_aquicksort(void *vec, npy_intp *ind, npy_intp cnt, void *arr);
-int npy_aheapsort(void *vec, npy_intp *ind, npy_intp cnt, void *arr);
-int npy_amergesort(void *vec, npy_intp *ind, npy_intp cnt, void *arr);
-int npy_atimsort(void *vec, npy_intp *ind, npy_intp cnt, void *arr);
+NPY_NO_EXPORT int npy_quicksort(void *vec, npy_intp cnt, void *arr);
+NPY_NO_EXPORT int npy_heapsort(void *vec, npy_intp cnt, void *arr);
+NPY_NO_EXPORT int npy_mergesort(void *vec, npy_intp cnt, void *arr);
+NPY_NO_EXPORT int npy_timsort(void *vec, npy_intp cnt, void *arr);
+NPY_NO_EXPORT int npy_aquicksort(void *vec, npy_intp *ind, npy_intp cnt, void *arr);
+NPY_NO_EXPORT int npy_aheapsort(void *vec, npy_intp *ind, npy_intp cnt, void *arr);
+NPY_NO_EXPORT int npy_amergesort(void *vec, npy_intp *ind, npy_intp cnt, void *arr);
+NPY_NO_EXPORT int npy_atimsort(void *vec, npy_intp *ind, npy_intp cnt, void *arr);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -1,3 +1,5 @@
+.. _NEP18:
+
 ====================================================================
 NEP 18 — A dispatch mechanism for NumPy's high level array functions
 ====================================================================
@@ -7,14 +9,14 @@ NEP 18 — A dispatch mechanism for NumPy's high level array functions
 :Author: Marten van Kerkwijk <mhvk@astro.utoronto.ca>
 :Author: Hameer Abbasi <hameerabbasi@yahoo.com>
 :Author: Eric Wieser <wieser.eric@gmail.com>
-:Status: Provisional
+:Status: Final
 :Type: Standards Track
 :Created: 2018-05-29
 :Updated: 2019-05-25
 :Resolution: https://mail.python.org/pipermail/numpy-discussion/2018-August/078493.html
 
-Abstact
--------
+Abstract
+--------
 
 We propose the ``__array_function__`` protocol, to allow arguments of NumPy
 functions to define how that function operates on them. This will allow

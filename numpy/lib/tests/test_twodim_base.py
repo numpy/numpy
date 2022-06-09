@@ -18,6 +18,9 @@ import numpy as np
 from numpy.core.tests.test_overrides import requires_array_function
 
 
+import pytest
+
+
 def get_mat(n):
     data = arange(n)
     data = add.outer(data, data)
@@ -40,6 +43,12 @@ class TestEye:
 
         assert_equal(eye(3) == 1,
                      eye(3, dtype=bool))
+
+    def test_uint64(self):
+        # Regression test for gh-9982
+        assert_equal(eye(np.uint64(2), dtype=int), array([[1, 0], [0, 1]]))
+        assert_equal(eye(np.uint64(2), M=np.uint64(4), k=np.uint64(1)),
+                     array([[0, 1, 0, 0], [0, 0, 1, 0]]))
 
     def test_diag(self):
         assert_equal(eye(4, k=1),
@@ -295,6 +304,13 @@ class TestHistogram2d:
         r = histogram2d(xy, xy, weights=s_d)
         assert_(r, ((ShouldDispatch,), (xy, xy), dict(weights=s_d)))
 
+    @pytest.mark.parametrize(("x_len", "y_len"), [(10, 11), (20, 19)])
+    def test_bad_length(self, x_len, y_len):
+        x, y = np.ones(x_len), np.ones(y_len)
+        with pytest.raises(ValueError,
+                           match='x and y must have the same length.'):
+            histogram2d(x, y)
+
 
 class TestTri:
     def test_dtype(self):
@@ -372,7 +388,7 @@ def test_tril_triu_dtype():
     assert_equal(np.triu(arr).dtype, arr.dtype)
     assert_equal(np.tril(arr).dtype, arr.dtype)
 
-    arr = np.zeros((3,3), dtype='f4,f4')
+    arr = np.zeros((3, 3), dtype='f4,f4')
     assert_equal(np.triu(arr).dtype, arr.dtype)
     assert_equal(np.tril(arr).dtype, arr.dtype)
 

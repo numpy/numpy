@@ -13,12 +13,13 @@ When adding a function, make sure to use the next integer not used as an index
 exception, so it should hopefully not get unnoticed).
 
 """
-from code_generators.genapi import StealRef, NonNull
+from code_generators.genapi import StealRef
 
 # index, type
 multiarray_global_vars = {
     'NPY_NUMUSERTYPES':             (7, 'int'),
     'NPY_DEFAULT_ASSIGN_CASTING':   (292, 'NPY_CASTING'),
+    'PyDataMem_DefaultHandler':     (306, 'PyObject*'),
 }
 
 multiarray_scalar_bool_values = {
@@ -30,7 +31,9 @@ multiarray_scalar_bool_values = {
 multiarray_types_api = {
     'PyBigArray_Type':                  (1,),
     'PyArray_Type':                     (2,),
-    'PyArrayDescr_Type':                (3,),
+    # Internally, PyArrayDescr_Type is a PyArray_DTypeMeta,
+    # the following also defines PyArrayDescr_TypeFull (Full appended)
+    'PyArrayDescr_Type':                (3, "PyArray_DTypeMeta"),
     'PyArrayFlags_Type':                (4,),
     'PyArrayIter_Type':                 (5,),
     'PyArrayMultiIter_Type':            (6,),
@@ -74,9 +77,9 @@ multiarray_types_api = {
     # End 1.6 API
 }
 
-#define NPY_NUMUSERTYPES (*(int *)PyArray_API[6])
-#define PyBoolArrType_Type (*(PyTypeObject *)PyArray_API[7])
-#define _PyArrayScalar_BoolValues ((PyBoolScalarObject *)PyArray_API[8])
+# define NPY_NUMUSERTYPES (*(int *)PyArray_API[6])
+# define PyBoolArrType_Type (*(PyTypeObject *)PyArray_API[7])
+# define _PyArrayScalar_BoolValues ((PyBoolScalarObject *)PyArray_API[8])
 
 multiarray_funcs_api = {
     'PyArray_GetNDArrayCVersion':           (0,),
@@ -89,7 +92,7 @@ multiarray_funcs_api = {
     'PyArray_TypeObjectFromType':           (46,),
     'PyArray_Zero':                         (47,),
     'PyArray_One':                          (48,),
-    'PyArray_CastToType':                   (49, StealRef(2), NonNull(2)),
+    'PyArray_CastToType':                   (49, StealRef(2)),
     'PyArray_CastTo':                       (50,),
     'PyArray_CastAnyTo':                    (51,),
     'PyArray_CanCastSafely':                (52,),
@@ -117,15 +120,15 @@ multiarray_funcs_api = {
     'PyArray_FromBuffer':                   (74,),
     'PyArray_FromIter':                     (75, StealRef(2)),
     'PyArray_Return':                       (76, StealRef(1)),
-    'PyArray_GetField':                     (77, StealRef(2), NonNull(2)),
-    'PyArray_SetField':                     (78, StealRef(2), NonNull(2)),
+    'PyArray_GetField':                     (77, StealRef(2)),
+    'PyArray_SetField':                     (78, StealRef(2)),
     'PyArray_Byteswap':                     (79,),
     'PyArray_Resize':                       (80,),
     'PyArray_MoveInto':                     (81,),
     'PyArray_CopyInto':                     (82,),
     'PyArray_CopyAnyInto':                  (83,),
     'PyArray_CopyObject':                   (84,),
-    'PyArray_NewCopy':                      (85, NonNull(1)),
+    'PyArray_NewCopy':                      (85,),
     'PyArray_ToList':                       (86,),
     'PyArray_ToString':                     (87,),
     'PyArray_ToFile':                       (88,),
@@ -133,8 +136,8 @@ multiarray_funcs_api = {
     'PyArray_Dumps':                        (90,),
     'PyArray_ValidType':                    (91,),
     'PyArray_UpdateFlags':                  (92,),
-    'PyArray_New':                          (93, NonNull(1)),
-    'PyArray_NewFromDescr':                 (94, StealRef(2), NonNull([1, 2])),
+    'PyArray_New':                          (93,),
+    'PyArray_NewFromDescr':                 (94, StealRef(2)),
     'PyArray_DescrNew':                     (95,),
     'PyArray_DescrNewFromType':             (96,),
     'PyArray_GetPriority':                  (97,),
@@ -315,7 +318,7 @@ multiarray_funcs_api = {
     'PyArray_CanCastArrayTo':               (274,),
     'PyArray_CanCastTypeTo':                (275,),
     'PyArray_EinsteinSum':                  (276,),
-    'PyArray_NewLikeArray':                 (277, StealRef(3), NonNull(1)),
+    'PyArray_NewLikeArray':                 (277, StealRef(3)),
     'PyArray_GetArrayParamsFromObject':     (278,),
     'PyArray_ConvertClipmodeSequence':      (279,),
     'PyArray_MatrixProduct2':               (280,),
@@ -341,13 +344,16 @@ multiarray_funcs_api = {
     'PyDataMem_NEW_ZEROED':                 (299,),
     # End 1.8 API
     # End 1.9 API
-    'PyArray_CheckAnyScalarExact':          (300, NonNull(1)),
+    'PyArray_CheckAnyScalarExact':          (300,),
     # End 1.10 API
     'PyArray_MapIterArrayCopyIfOverlap':    (301,),
     # End 1.13 API
     'PyArray_ResolveWritebackIfCopy':       (302,),
     'PyArray_SetWritebackIfCopyBase':       (303,),
     # End 1.14 API
+    'PyDataMem_SetHandler':                 (304,),
+    'PyDataMem_GetHandler':                 (305,),
+    # End 1.22 API
 }
 
 ufunc_types_api = {
