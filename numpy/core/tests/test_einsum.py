@@ -1089,6 +1089,32 @@ class TestEinsumPath:
         opt = np.einsum(*path_test, optimize=exp_path)
         assert_almost_equal(noopt, opt)
 
+    def test_path_type_input_internal_trace(self):
+        #gh-20962
+        path_test = self.build_operands('cab,cdd->ab')
+        exp_path = ['einsum_path', (1,), (0, 1)]
+
+        path, path_str = np.einsum_path(*path_test, optimize=exp_path)
+        self.assert_path_equal(path, exp_path)
+
+        # Double check einsum works on the input path
+        noopt = np.einsum(*path_test, optimize=False)
+        opt = np.einsum(*path_test, optimize=exp_path)
+        assert_almost_equal(noopt, opt)
+
+    def test_path_type_input_invalid(self):
+        path_test = self.build_operands('ab,bc,cd,de->ae')
+        exp_path = ['einsum_path', (2, 3), (0, 1)]
+        assert_raises(RuntimeError, np.einsum, *path_test, optimize=exp_path)
+        assert_raises(
+            RuntimeError, np.einsum_path, *path_test, optimize=exp_path)
+
+        path_test = self.build_operands('a,a,a->a')
+        exp_path = ['einsum_path', (1,), (0, 1)]
+        assert_raises(RuntimeError, np.einsum, *path_test, optimize=exp_path)
+        assert_raises(
+            RuntimeError, np.einsum_path, *path_test, optimize=exp_path)
+
     def test_spaces(self):
         #gh-10794
         arr = np.array([[1]])
