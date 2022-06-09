@@ -41,7 +41,7 @@ npy_mark_tmp_array_if_pyscalar(
      * Further, `np.float64` is a double subclass, so must reject it.
      */
     if (PyLong_Check(obj)
-        && (PyArray_ISINTEGER(arr) || PyArray_ISOBJECT(arr))) {
+            && (PyArray_ISINTEGER(arr) || PyArray_ISOBJECT(arr))) {
         ((PyArrayObject_fields *)arr)->flags |= NPY_ARRAY_WAS_PYTHON_INT;
         if (dtype != NULL) {
             Py_INCREF(&PyArray_PyIntAbstractDType);

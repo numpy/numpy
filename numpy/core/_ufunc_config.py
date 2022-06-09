@@ -454,12 +454,11 @@ NO_NEP50_WARNING = contextvars.ContextVar("_no_nep50_warning", default=False)
 def _no_nep50_warning():
     """
     Context manager to disable NEP 50 warnings.  This context manager is
-    only relevant if the NEP 50 warnings are enabled globally (which is NOT
+    only relevant if the NEP 50 warnings are enabled globally (which is not
     thread/context safe).
-    On the other hand, this warning suppression is safe.
+
+    This warning context manager itself is fully safe, however.
     """
-    # TODO: We could skip the manager entirely if NumPy as a whole is not
-    #       in the warning mode.  (Which is NOT thread/context safe.)
     token = NO_NEP50_WARNING.set(True)
     try:
         yield
