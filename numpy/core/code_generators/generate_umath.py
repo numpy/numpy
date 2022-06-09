@@ -1236,7 +1236,7 @@ def make_code(funcdict, filename):
 
         return 0;
     }
-    """) % (filename, code1, code2, code3)
+    """) % (os.path.basename(filename), code1, code2, code3)
     return code
 
 
