@@ -1008,35 +1008,8 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
          * this.  This is because the legacy dtype resolution makes use of
          * `np.can_cast(operand, dtype)`.  The flag is local to this use, but
          * necessary to propagate the information to the legacy type resolution.
-         *
-         * We check `out_op_DTypes` for two reasons: First, booleans are
-         * integer subclasses.  Second, an int, float, or complex could have
-         * a custom DType registered, and then we should use that.
          */
-        if (PyLong_Check(obj)
-                && (PyTypeNum_ISINTEGER(out_op_DTypes[i]->type_num)
-                    || out_op_DTypes[i]->type_num == NPY_OBJECT)) {
-            Py_INCREF(&PyArray_PyIntAbstractDType);
-            Py_SETREF(out_op_DTypes[i], &PyArray_PyIntAbstractDType);
-            ((PyArrayObject_fields *)out_op[i])->flags |= (
-                    NPY_ARRAY_WAS_PYTHON_INT);
-            *promoting_pyscalars = NPY_TRUE;
-        }
-        else if (PyFloat_Check(obj)
-                && out_op_DTypes[i]->type_num == NPY_DOUBLE
-                && !PyArray_IsScalar(obj, Double)) {
-            Py_INCREF(&PyArray_PyFloatAbstractDType);
-            Py_SETREF(out_op_DTypes[i], &PyArray_PyFloatAbstractDType);
-            ((PyArrayObject_fields *)out_op[i])->flags |= (
-                    NPY_ARRAY_WAS_PYTHON_FLOAT);
-            *promoting_pyscalars = NPY_TRUE;
-        }
-        else if (PyComplex_Check(obj)
-                && out_op_DTypes[i]->type_num == NPY_CDOUBLE) {
-            Py_INCREF(&PyArray_PyComplexAbstractDType);
-            Py_SETREF(out_op_DTypes[i], &PyArray_PyComplexAbstractDType);
-            ((PyArrayObject_fields *)out_op[i])->flags |= (
-                    NPY_ARRAY_WAS_PYTHON_COMPLEX);
+        if (npy_mark_tmp_array_if_pyscalar(obj, out_op[i], &out_op_DTypes[i])) {
             *promoting_pyscalars = NPY_TRUE;
         }
     }

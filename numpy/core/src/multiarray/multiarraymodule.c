@@ -3537,19 +3537,11 @@ array_result_type(PyObject *NPY_UNUSED(dummy), PyObject *args)
             if (arr[narr] == NULL) {
                 goto finish;
             }
-            // TODO: Relax the exact check here, see ufunc code!
-            if (PyLong_CheckExact(obj)) {
-                ((PyArrayObject_fields *)arr[narr])->flags |= (
-                        NPY_ARRAY_WAS_PYTHON_INT);
-            }
-            else if (PyFloat_CheckExact(obj)) {
-                ((PyArrayObject_fields *)arr[narr])->flags |= (
-                        NPY_ARRAY_WAS_PYTHON_FLOAT);
-            }
-            else if (PyComplex_CheckExact(obj)) {
-                ((PyArrayObject_fields *)arr[narr])->flags |= (
-                        NPY_ARRAY_WAS_PYTHON_COMPLEX);
-            }
+            /*
+             * Mark array if it was a python scalar (we do not need the actual
+             * DType here yet, this is figured out inside ResultType.
+             */
+            npy_mark_tmp_array_if_pyscalar(obj, arr[narr], NULL);
             ++narr;
         }
         else {
