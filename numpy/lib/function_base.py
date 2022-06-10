@@ -3836,8 +3836,10 @@ def _median(a, axis=None, out=None, overwrite_input=False):
         kth = [szh - 1, szh]
     else:
         kth = [(sz - 1) // 2]
-    # Check if the array contains any nan's
-    if np.issubdtype(a.dtype, np.inexact):
+
+    # Check if the array contains any nan's or NaT's (unordered values)
+    supports_nans = np.issubdtype(a.dtype, np.inexact) or a.dtype.kind == 'm'
+    if supports_nans:
         kth.append(-1)
 
     if overwrite_input:
@@ -3869,7 +3871,7 @@ def _median(a, axis=None, out=None, overwrite_input=False):
     # using out array if needed.
     rout = mean(part[indexer], axis=axis, out=out)
     # Check if the array contains any nan's
-    if np.issubdtype(a.dtype, np.inexact) and sz > 0:
+    if supports_nans and sz > 0:
         # If nans are possible, warn and replace by nans like mean would.
         rout = np.lib.utils._median_nancheck(part, rout, axis)
 

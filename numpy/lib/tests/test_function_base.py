@@ -3710,6 +3710,25 @@ class TestMedian:
         b[2] = np.nan
         assert_equal(np.median(a, (0, 2)), b)
 
+    @pytest.mark.parametrize("dtype", ["m8[s]"])
+    @pytest.mark.parametrize("pos", [0, 23, 10])
+    def test_nat_behavior(self, dtype, pos):
+        # TODO: Median does not support Datetime, due to `mean`.
+        # NaT and NaN should behave the same, do basic tests for NaT.
+        a = np.arange(0, 24, dtype=dtype)
+        a[pos] = "NaT"
+        res = np.median(a)
+        assert res.dtype == dtype
+        assert np.isnat(res)
+        res = np.percentile(a, [30, 60])
+        assert res.dtype == dtype
+        assert np.isnat(res).all()
+
+        a = np.arange(0, 24*3, dtype=dtype).reshape(-1, 3)
+        a[pos, 1] = "NaT"
+        res = np.median(a, axis=0)
+        assert_array_equal(np.isnat(res), [False, True, False])
+
     def test_empty(self):
         # mean(empty array) emits two warnings: empty slice and divide by 0
         a = np.array([], dtype=float)

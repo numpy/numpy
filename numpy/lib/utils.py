@@ -1039,9 +1039,11 @@ def _median_nancheck(data, result, axis):
         # Without given output, it is possible that the current result is a
         # numpy scalar, which is not writeable.  If so, just return nan.
         if isinstance(result, np.generic):
-            return data.dtype.type(np.nan)
-
-        result[n] = np.nan
+            return data.take(-1, axis=axis)
+        elif result.dtype.kind in 'mM':
+            result[n] = "NaT"
+        else:
+            result[n] = np.nan
     return result
 
 def _opt_info():
