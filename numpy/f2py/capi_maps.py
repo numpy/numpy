@@ -176,6 +176,7 @@ f2cmap_all = {'real': {'': 'float', '4': 'float', '8': 'double',
 
 f2cmap_default = copy.deepcopy(f2cmap_all)
 
+f2cmap_mapped = []
 
 def load_f2cmap_file(f2cmap_file):
     global f2cmap_all
@@ -212,6 +213,7 @@ def load_f2cmap_file(f2cmap_file):
                     f2cmap_all[k][k1] = d[k][k1]
                     outmess('\tMapping "%s(kind=%s)" to "%s"\n' %
                             (k, k1, d[k][k1]))
+                    f2cmap_mapped.append(d[k][k1])
                 else:
                     errmess("\tIgnoring map {'%s':{'%s':'%s'}}: '%s' must be in %s\n" % (
                         k, k1, d[k][k1], d[k][k1], list(c2py_map.keys())))
