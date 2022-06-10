@@ -667,7 +667,8 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, method='auto'):
             return outgoing_array
     elif method == 'dictionary':
         raise ValueError(
-            "'dictionary' method is only supported for non-integer arrays. "
+            "'dictionary' method is only "
+            "supported for boolean or integer arrays. "
             "Please select 'sort' or 'auto' for the method."
         )
 
