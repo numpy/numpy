@@ -182,6 +182,14 @@ does in reduction functions such as ``numpy.sum`` or ``numpy.mean``.
 
 (`gh-21485 <https://github.com/numpy/numpy/pull/21485>`__)
 
+New parameter ``equal_nan`` added to ``np.unique``
+--------------------------------------------------
+``np.unique`` was changed in 1.21 to treat all ``NaN`` values as equal and return
+a single ``NaN``. Setting ``equal_nan=False`` will restore pre-1.21 behavior
+to treat ``NaNs`` as unique. Defaults to ``True``.
+
+(`gh-21623 <https://github.com/numpy/numpy/pull/21623>`__)
+
 
 Compatibility notes
 ===================
@@ -358,6 +366,16 @@ while computing the Kronecker product of the inputs
         True
 
 (`gh-21262 <https://github.com/numpy/numpy/pull/21262>`__)
+
+String comparisons now supported in ufuncs
+------------------------------------------
+The comparison ufuncs `np.equal`, `np.greater`, etc. now support
+unicode and byte string inputs (dtypes ``S`` and ``U``).
+Due to this change a ``FutureWarning`` is now given when comparing
+unicode to byte strings.  Such comparisons always returned ``False``
+and continue to do so at this time.
+
+(`gh-21716 <https://github.com/numpy/numpy/pull/21716>`__)
 
 
 Performance improvements and changes
