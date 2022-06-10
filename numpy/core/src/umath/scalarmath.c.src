@@ -589,10 +589,11 @@ static NPY_INLINE int
 static NPY_INLINE int
 @name@_ctype_absolute(@type@ a, @type@ *out)
 {
-    *out = (a < 0 ? -a : a);
     if (a == NPY_MIN_@NAME@) {
+        *out = a;
         return NPY_FPE_OVERFLOW;
     }
+    *out = (a < 0 ? -a : a);
     return 0;
 }
 /**end repeat**/
@@ -1558,7 +1559,6 @@ static PyObject *
  *          Long, ULong, LongLong, ULongLong#
  *
  * #oper = negative*17, positive*17, absolute*17, invert*10#
- * #fperr = 0*17, 0*17, (1,0)*5, 0*7, 0*10#
  */
 static PyObject *
 @name@_@oper@(PyObject *a)
@@ -1569,17 +1569,8 @@ static PyObject *
 
 
     val = PyArrayScalar_VAL(a, @Name@);
-
-#if @fperr@
-    npy_clear_floatstatus_barrier((char*)&val);
-#endif
-
     int retstatus = @name@_ctype_@oper@(val, &out);
 
-#if @fperr@
-    /* Check status flag.  If it is set, then look up what to do */
-    retstatus |= npy_get_floatstatus_barrier((char*)&out);
-#endif
     if (retstatus) {
         int bufsize, errmask;
         PyObject *errobj;
