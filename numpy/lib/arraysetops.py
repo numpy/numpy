@@ -617,12 +617,12 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, method='auto'):
     integer_arrays = (np.issubdtype(ar1.dtype, np.integer) and
                       np.issubdtype(ar2.dtype, np.integer))
 
-    if method not in ['auto', 'sort', 'dictionary']:
+    if method not in {'auto', 'sort', 'dictionary'}:
         raise ValueError(
             "Invalid method: {0}. ".format(method)
             + "Please use 'auto', 'sort' or 'dictionary'.")
 
-    if integer_arrays and method in ['auto', 'dictionary']:
+    if integer_arrays and method in {'auto', 'dictionary'}:
         ar2_min = np.min(ar2)
         ar2_max = np.max(ar2)
         ar2_size = ar2.size
