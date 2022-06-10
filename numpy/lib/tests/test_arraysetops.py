@@ -438,7 +438,8 @@ class TestSetOps:
         assert_array_equal(in1d(a, long_b, assume_unique=False), ec)
         assert_array_equal(in1d(a, b, assume_unique=True, method="dictionary"),
                            ec)
-        assert_array_equal(in1d(a, b, assume_unique=False, method="dictionary"),
+        assert_array_equal(in1d(a, b, assume_unique=False,
+                                method="dictionary"),
                            ec)
         assert_array_equal(in1d(a, long_b, assume_unique=True,
                                 method="dictionary"),
