@@ -3403,6 +3403,9 @@ void_to_void_resolve_descriptors(
         /* From structured to structured, need to check fields */
         casting = can_cast_fields_safety(
                 given_descrs[0], given_descrs[1], view_offset);
+        if (casting < 0) {
+            return -1;
+        }
     }
     else if (given_descrs[0]->names != NULL) {
         return structured_to_nonstructured_resolve_descriptors(
