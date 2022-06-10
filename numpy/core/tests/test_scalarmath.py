@@ -898,7 +898,7 @@ def test_scalar_integer_operation_overflow(dtype, operation):
 @pytest.mark.parametrize("operation", [
         lambda min, neg_1: abs(min),
         lambda min, neg_1: min * neg_1,
-        lambda min, neg_1: min // neg_1,], ids=["abs", "*", "//"])
+        lambda min, neg_1: min // neg_1], ids=["abs", "*", "//"])
 def test_scalar_signed_integer_overflow(dtype, operation):
     # The minimum signed integer can "overflow" for some additional operations
     st = np.dtype(dtype).type
