@@ -166,7 +166,7 @@ class TestComparisonDeprecations(_DeprecationTestCase):
         # For two string arrays, strings always raised the broadcasting error:
         a = np.array(['a', 'b'])
         b = np.array(['a', 'b', 'c'])
-        assert_raises(ValueError, lambda x, y: x == y, a, b)
+        assert_warns(FutureWarning, lambda x, y: x == y, a, b)
 
         # The empty list is not cast to string, and this used to pass due
         # to dtype mismatch; now (2018-06-21) it correctly leads to a
