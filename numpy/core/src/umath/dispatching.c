@@ -145,6 +145,38 @@ PyUFunc_AddLoop(PyUFuncObject *ufunc, PyObject *info, int ignore_duplicate)
 }
 
 
+/*
+ * Add loop directly to a ufunc from a given ArrayMethod spec.
+ */
+NPY_NO_EXPORT int
+PyUFunc_AddLoopFromSpec(PyObject *ufunc, PyArrayMethod_Spec *spec)
+{
+    if (!PyObject_TypeCheck(ufunc, &PyUFunc_Type)) {
+        PyErr_SetString(PyExc_TypeError,
+                "ufunc object passed is not a ufunc!");
+        return -1;
+    }
+    PyBoundArrayMethodObject *bmeth =
+            (PyBoundArrayMethodObject *)PyArrayMethod_FromSpec(spec);
+    if (bmeth == NULL) {
+        return -1;
+    }
+    int nargs = bmeth->method->nin + bmeth->method->nout;
+    PyObject *dtypes = PyArray_TupleFromItems(
+            nargs, (PyObject **)bmeth->dtypes, 1);
+    if (dtypes == NULL) {
+        return -1;
+    }
+    PyObject *info = PyTuple_Pack(2, dtypes, bmeth->method);
+    Py_DECREF(bmeth);
+    Py_DECREF(dtypes);
+    if (info == NULL) {
+        return -1;
+    }
+    return PyUFunc_AddLoop((PyUFuncObject *)ufunc, info, 0);
+}
+
+
 /**
  * Resolves the implementation to use, this uses typical multiple dispatching
  * methods of finding the best matching implementation or resolver.
