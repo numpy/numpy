@@ -2907,6 +2907,16 @@ class TestPercentile:
         assert_equal(np.percentile(x, 0), np.nan)
         assert_equal(np.percentile(x, 0, method='nearest'), np.nan)
 
+    def test_basic_times(self):
+        # Quantiles have more extensive tests (rounding may be problematic)
+        res = np.percentile(np.array(["2010", "2012"], dtype="M8[s]"), 50)
+        assert res.dtype == "M8[s]"
+        assert res == np.datetime64("2011", "s")
+
+        res = np.percentile(np.array([1, 3], dtype="m8[D]"), 50)
+        assert res.dtype == "m8[D]"
+        assert res == np.timedelta64(2, "D")
+
     def test_fraction(self):
         x = [Fraction(i, 2) for i in range(8)]
 
@@ -2994,6 +3004,29 @@ class TestPercentile:
         else:
             np.testing.assert_equal(np.asarray(actual).dtype,
                                     np.dtype(expected_dtype))
+
+    @pytest.mark.parametrize("dtype", ["M8[s]", "m8[ns]"])
+    @pytest.mark.parametrize("method", [
+            'inverted_cdf', 'averaged_inverted_cdf', 'closest_observation',
+            'interpolated_inverted_cdf', 'hazen', 'weibull', 'linear',
+            'median_unbiased', 'normal_unbiased',
+            'nearest', 'lower', 'higher', 'midpoint'])
+    def test_linear_interpolation_times(self, method, dtype):
+        arr = np.zeros(1, dtype=dtype)
+        td_dtype = dtype.lower()  # use timedelta64 to add to the datetime64
+
+        float_arr = np.array([15.0, 20.0, 35.0, 40.0, 50.0]) * 1000
+        arr = arr + float_arr.astype(td_dtype)
+        actual = np.percentile(arr, 40.0, method=method)
+        assert actual.dtype == dtype
+
+
+        expected_float = np.percentile(float_arr, 40.0, method=method)
+        diff = abs(actual - expected_float.astype(dtype)).astype(np.int64)
+        if diff == 1:
+            # TODO: Is this an OK rounding error?  Use xfail in case it is not.
+            pytest.xfail()
+        assert actual == expected_float.astype(dtype)
 
     TYPE_CODES = np.typecodes["AllInteger"] + np.typecodes["AllFloat"] + "O"
 
@@ -3389,6 +3422,24 @@ class TestPercentile:
         q[0] = np.nan
         with pytest.raises(ValueError, match="Percentiles must be in"):
             np.percentile([1, 2, 3, 4.0], q)
+
+    @pytest.mark.parametrize("dtype", ["m8[D]", "M8[s]"])
+    @pytest.mark.parametrize("pos", [0, 23, 10])
+    def test_nat_basic(self, dtype, pos):
+        # NaT and NaN should behave the same, do basic tests for NaT:
+        a = np.arange(0, 24, dtype=dtype)
+        a[pos] = "NaT"
+        res = np.percentile(a, 30)
+        assert res.dtype == dtype
+        assert np.isnat(res)
+        res = np.percentile(a, [30, 60])
+        assert res.dtype == dtype
+        assert np.isnat(res).all()
+
+        a = np.arange(0, 24*3, dtype=dtype).reshape(-1, 3)
+        a[pos, 1] = "NaT"
+        res = np.percentile(a, 30, axis=0)
+        assert_array_equal(np.isnat(res), [False, True, False])
 
 
 class TestQuantile:

@@ -4657,11 +4657,17 @@ def _quantile(
     # --- Setup
     arr = np.asanyarray(arr)
     values_count = arr.shape[axis]
+
+    # Check if the array contains any nan's or NaT's (unordered values)
+    supports_nans = (
+            np.issubdtype(arr.dtype, np.inexact) or arr.dtype.kind in 'Mm')
+
     # The dimensions of `q` are prepended to the output shape, so we need the
     # axis being sampled from `arr` to be last.
-    DATA_AXIS = 0
-    if axis != DATA_AXIS:  # But moveaxis is slow, so only call it if axis!=0.
-        arr = np.moveaxis(arr, axis, destination=DATA_AXIS)
+
+
+    if axis != 0:  # But moveaxis is slow, so only call it if necessary.
+        arr = np.moveaxis(arr, axis, destination=0)
     # --- Computation of indexes
     # Index where to find the value in the sorted array.
     # Virtual because it is a floating point value, not an valid index.
@@ -4676,14 +4682,14 @@ def _quantile(
     virtual_indexes = np.asanyarray(virtual_indexes)
     if np.issubdtype(virtual_indexes.dtype, np.integer):
         # No interpolation needed, take the points along axis
-        if np.issubdtype(arr.dtype, np.inexact):
+        if supports_nans:
             # may contain nan, which would sort to the end
             arr.partition(concatenate((virtual_indexes.ravel(), [-1])), axis=0)
-            slices_having_nans = np.isnan(arr[-1])
+            slices_having_nans = np.isnan(arr[-1, ...])
         else:
             # cannot contain nan
             arr.partition(virtual_indexes.ravel(), axis=0)
-            slices_having_nans = np.array(False, dtype=bool)
+            slices_having_nans = False
         result = take(arr, virtual_indexes, axis=0, out=out)
     else:
         previous_indexes, next_indexes = _get_indexes(arr,
@@ -4695,16 +4701,14 @@ def _quantile(
                                       previous_indexes.ravel(),
                                       next_indexes.ravel(),
                                       ))),
-            axis=DATA_AXIS)
-        if np.issubdtype(arr.dtype, np.inexact):
-            slices_having_nans = np.isnan(
-                take(arr, indices=-1, axis=DATA_AXIS)
-            )
+            axis=0)
+        if supports_nans:
+            slices_having_nans = np.isnan(arr[-1, ...])
         else:
-            slices_having_nans = None
+            slices_having_nans = False
         # --- Get values from indexes
-        previous = np.take(arr, previous_indexes, axis=DATA_AXIS)
-        next = np.take(arr, next_indexes, axis=DATA_AXIS)
+        previous = arr[previous_indexes]
+        next = arr[next_indexes]
         # --- Linear interpolation
         gamma = _get_gamma(virtual_indexes, previous_indexes, method)
         result_shape = virtual_indexes.shape + (1,) * (arr.ndim - 1)
@@ -4713,10 +4717,13 @@ def _quantile(
                        next,
                        gamma,
                        out=out)
-    if np.any(slices_having_nans):
+
+    if slices_having_nans is not False and slices_having_nans.any():
         if result.ndim == 0 and out is None:
             # can't write to a scalar
-            result = arr.dtype.type(np.nan)
+            result = arr[-1]
+        elif result.dtype.kind in 'mM':
+            result[..., slices_having_nans] = "NaT"
         else:
             result[..., slices_having_nans] = np.nan
     return result
