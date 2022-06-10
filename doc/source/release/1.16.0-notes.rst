@@ -459,6 +459,7 @@ We now use additional free CI services, thanks to the companies that provide:
 These are in addition to our continued use of travis, appveyor (for wheels) and
 LGTM
 
+
 Changes
 =======
 
