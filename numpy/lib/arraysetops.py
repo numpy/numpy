@@ -517,7 +517,7 @@ def setxor1d(ar1, ar2, assume_unique=False):
 
 
 def _in1d_dispatcher(ar1, ar2, assume_unique=None, invert=None,
-                     method='auto'):
+                     method=None):
     return (ar1, ar2)
 
 
@@ -716,7 +716,7 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, method='auto'):
 
 
 def _isin_dispatcher(element, test_elements, assume_unique=None, invert=None,
-                     method='auto'):
+                     method=None):
     return (element, test_elements)
 
 
