@@ -454,7 +454,7 @@ class TestSetOps:
         # This hits it without the use of method='dictionary'
         a = np.array([5, 4, 5, 3, 4, 4, 1e9], dtype=np.int64)
         b = np.array([2, 3, 4, 1e9], dtype=np.int64)
-        expected = np.array([0, 1, 0, 1, 1, 1, 1], dtype=np.bool)
+        expected = np.array([0, 1, 0, 1, 1, 1, 1], dtype=bool)
         assert_array_equal(expected, in1d(a, b))
         assert_array_equal(np.invert(expected), in1d(a, b, invert=True))
 

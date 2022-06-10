@@ -608,9 +608,9 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, method='auto'):
     if ar2.dtype == object:
         ar2 = ar2.reshape(-1, 1)
     # Convert booleans to uint8 so we can use the fast integer algorithm
-    if ar1.dtype == np.bool_:
+    if ar1.dtype == bool:
         ar1 = ar1.view(np.uint8)
-    if ar2.dtype == np.bool_:
+    if ar2.dtype == bool:
         ar2 = ar2.view(np.uint8)
 
     # Check if we can use a fast integer algorithm:
@@ -647,16 +647,16 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, method='auto'):
         if optimal_parameters or method == 'dictionary':
 
             if invert:
-                outgoing_array = np.ones_like(ar1, dtype=np.bool_)
+                outgoing_array = np.ones_like(ar1, dtype=bool)
             else:
-                outgoing_array = np.zeros_like(ar1, dtype=np.bool_)
+                outgoing_array = np.zeros_like(ar1, dtype=bool)
 
             # Make elements 1 where the integer exists in ar2
             if invert:
-                isin_helper_ar = np.ones(ar2_range + 1, dtype=np.bool_)
+                isin_helper_ar = np.ones(ar2_range + 1, dtype=bool)
                 isin_helper_ar[ar2 - ar2_min] = 0
             else:
-                isin_helper_ar = np.zeros(ar2_range + 1, dtype=np.bool_)
+                isin_helper_ar = np.zeros(ar2_range + 1, dtype=bool)
                 isin_helper_ar[ar2 - ar2_min] = 1
 
             # Mask out elements we know won't work
