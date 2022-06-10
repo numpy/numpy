@@ -1,0 +1,5 @@
+OpenBLAS v0.3.20
+----------------
+
+Update the OpenBLAS used in testing and in wheels to v0.3.20, and use
+``-fvisibility=protected`` to prevent overriding exported symbols.
