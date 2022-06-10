@@ -167,7 +167,7 @@ static NPY_INLINE int
     }
 #if @neg@
     else if (b == -1 && a == NPY_MIN_@NAME@) {
-        *out = a / b;
+        *out = NPY_MIN_@NAME@;
         return NPY_FPE_OVERFLOW;
     }
 #endif
