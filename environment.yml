@@ -32,7 +32,7 @@ dependencies:
   - pydata-sphinx-theme=0.9.0
   - doxygen
   # NOTE: breathe 4.33.0 collides with sphinx.ext.graphviz
-  - breathe!=4.33.0
+  - breathe>4.33.0
   # For linting
   - pycodestyle=2.7.0
   - gitpython
