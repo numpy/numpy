@@ -1,3 +1,5 @@
+import pytest
+
 import numpy as np
 from numpy.testing import assert_, assert_equal, assert_array_equal
 
@@ -33,8 +35,11 @@ def test_string_cast():
     uni_arr1 = str_arr.astype('>U')
     uni_arr2 = str_arr.astype('<U')
 
-    assert_(str_arr != uni_arr1)
-    assert_(str_arr != uni_arr2)
+    with pytest.warns(FutureWarning):
+        assert str_arr != uni_arr1
+    with pytest.warns(FutureWarning):
+        assert str_arr != uni_arr2
+
     assert_array_equal(uni_arr1, uni_arr2)
 
 

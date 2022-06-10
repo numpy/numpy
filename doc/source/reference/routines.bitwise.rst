@@ -1,5 +1,5 @@
 Binary operations
-*****************
+=================
 
 .. currentmodule:: numpy
 

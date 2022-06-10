@@ -1,7 +1,7 @@
 .. currentmodule:: numpy.random
 
 Bit Generators
---------------
+==============
 
 The random values produced by :class:`~Generator`
 originate in a BitGenerator.  The BitGenerators do not directly provide
@@ -11,7 +11,7 @@ low-level wrappers for consumption by code that can efficiently
 access the functions provided, e.g., `numba <https://numba.pydata.org>`_.
 
 Supported BitGenerators
-=======================
+-----------------------
 
 The included BitGenerators are:
 
@@ -51,7 +51,7 @@ The included BitGenerators are:
     SFC64 <sfc64>
 
 Seeding and Entropy
--------------------
+===================
 
 A BitGenerator provides a stream of random values. In order to generate
 reproducible streams, BitGenerators support setting their initial state via a

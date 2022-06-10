@@ -1,5 +1,5 @@
 String operations
-*****************
+=================
 
 .. currentmodule:: numpy.char
 

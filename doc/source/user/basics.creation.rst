@@ -82,6 +82,7 @@ you create the array.
 
 2) Intrinsic NumPy array creation functions
 ===========================================
+
 ..
   40 functions seems like a small number, but the routies.array-creation
   has ~47. I'm sure there are more. 

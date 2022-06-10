@@ -88,6 +88,7 @@ typedefs[
 typedefs['complex_float'] = 'typedef struct {float r,i;} complex_float;'
 typedefs['complex_double'] = 'typedef struct {double r,i;} complex_double;'
 typedefs['string'] = """typedef char * string;"""
+typedefs['character'] = """typedef char character;"""
 
 
 ############### CPP macros ####################
@@ -242,47 +243,16 @@ cppmacros['MINMAX'] = """\
 #define MIN(a,b) ((a < b) ? (a) : (b))
 #endif
 """
-needs['len..'] = ['f2py_size']
 cppmacros['len..'] = """\
-#define rank(var) var ## _Rank
-#define shape(var,dim) var ## _Dims[dim]
-#define old_rank(var) (PyArray_NDIM((PyArrayObject *)(capi_ ## var ## _tmp)))
-#define old_shape(var,dim) PyArray_DIM(((PyArrayObject *)(capi_ ## var ## _tmp)),dim)
-#define fshape(var,dim) shape(var,rank(var)-dim-1)
-#define len(var) shape(var,0)
-#define flen(var) fshape(var,0)
-#define old_size(var) PyArray_SIZE((PyArrayObject *)(capi_ ## var ## _tmp))
-/* #define index(i) capi_i ## i */
-#define slen(var) capi_ ## var ## _len
-#define size(var, ...) f2py_size((PyArrayObject *)(capi_ ## var ## _tmp), ## __VA_ARGS__, -1)
+/* See fortranobject.h for definitions. The macros here are provided for BC. */
+#define rank f2py_rank
+#define shape f2py_shape
+#define fshape f2py_shape
+#define len f2py_len
+#define flen f2py_flen
+#define slen f2py_slen
+#define size f2py_size
 """
-needs['f2py_size'] = ['stdarg.h']
-cfuncs['f2py_size'] = """\
-static int f2py_size(PyArrayObject* var, ...)
-{
-  npy_int sz = 0;
-  npy_int dim;
-  npy_int rank;
-  va_list argp;
-  va_start(argp, var);
-  dim = va_arg(argp, npy_int);
-  if (dim==-1)
-    {
-      sz = PyArray_SIZE(var);
-    }
-  else
-    {
-      rank = PyArray_NDIM(var);
-      if (dim>=1 && dim<=rank)
-        sz = PyArray_DIM(var, dim-1);
-      else
-        fprintf(stderr, \"f2py_size: 2nd argument value=%d fails to satisfy 1<=value<=%d. Result will be 0.\\n\", dim, rank);
-    }
-  va_end(argp);
-  return sz;
-}
-"""
-
 cppmacros[
     'pyobj_from_char1'] = '#define pyobj_from_char1(v) (PyLong_FromLong(v))'
 cppmacros[
@@ -785,6 +755,66 @@ capi_fail:
 }
 """
 
+cfuncs['character_from_pyobj'] = """\
+static int
+character_from_pyobj(character* v, PyObject *obj, const char *errmess) {
+    if (PyBytes_Check(obj)) {
+        /* empty bytes has trailing null, so dereferencing is always safe */
+        *v = PyBytes_AS_STRING(obj)[0];
+        return 1;
+    } else if (PyUnicode_Check(obj)) {
+        PyObject* tmp = PyUnicode_AsASCIIString(obj);
+        if (tmp != NULL) {
+            *v = PyBytes_AS_STRING(tmp)[0];
+            Py_DECREF(tmp);
+            return 1;
+        }
+    } else if (PyArray_Check(obj)) {
+        PyArrayObject* arr = (PyArrayObject*)obj;
+        if (F2PY_ARRAY_IS_CHARACTER_COMPATIBLE(arr)) {
+            *v = PyArray_BYTES(arr)[0];
+            return 1;
+        } else if (F2PY_IS_UNICODE_ARRAY(arr)) {
+            // TODO: update when numpy will support 1-byte and
+            // 2-byte unicode dtypes
+            PyObject* tmp = PyUnicode_FromKindAndData(
+                              PyUnicode_4BYTE_KIND,
+                              PyArray_BYTES(arr),
+                              (PyArray_NBYTES(arr)>0?1:0));
+            if (tmp != NULL) {
+                if (character_from_pyobj(v, tmp, errmess)) {
+                    Py_DECREF(tmp);
+                    return 1;
+                }
+                Py_DECREF(tmp);
+            }
+        }
+    } else if (PySequence_Check(obj)) {
+        PyObject* tmp = PySequence_GetItem(obj,0);
+        if (tmp != NULL) {
+            if (character_from_pyobj(v, tmp, errmess)) {
+                Py_DECREF(tmp);
+                return 1;
+            }
+            Py_DECREF(tmp);
+        }
+    }
+    {
+        char mess[F2PY_MESSAGE_BUFFER_SIZE];
+        strcpy(mess, errmess);
+        PyObject* err = PyErr_Occurred();
+        if (err == NULL) {
+            err = PyExc_TypeError;
+        }
+        sprintf(mess + strlen(mess),
+                " -- expected str|bytes|sequence-of-str-or-bytes, got ");
+        f2py_describe(obj, mess + strlen(mess));
+        PyErr_SetString(err, mess);
+    }
+    return 0;
+}
+"""
+
 needs['char_from_pyobj'] = ['int_from_pyobj']
 cfuncs['char_from_pyobj'] = """\
 static int
@@ -1178,6 +1208,31 @@ complex_float_from_pyobj(complex_float* v,PyObject *obj,const char *errmess)
 }
 """
 
+
+cfuncs['try_pyarr_from_character'] = """\
+static int try_pyarr_from_character(PyObject* obj, character* v) {
+    PyArrayObject *arr = (PyArrayObject*)obj;
+    if (!obj) return -2;
+    if (PyArray_Check(obj)) {
+        if (F2PY_ARRAY_IS_CHARACTER_COMPATIBLE(arr))  {
+            *(character *)(PyArray_DATA(arr)) = *v;
+            return 1;
+        }
+    }
+    {
+        char mess[F2PY_MESSAGE_BUFFER_SIZE];
+        PyObject* err = PyErr_Occurred();
+        if (err == NULL) {
+            err = PyExc_ValueError;
+            strcpy(mess, "try_pyarr_from_character failed"
+                         " -- expected bytes array-scalar|array, got ");
+            f2py_describe(obj, mess + strlen(mess));
+        }
+        PyErr_SetString(err, mess);
+    }
+    return 0;
+}
+"""
 
 needs['try_pyarr_from_char'] = ['pyobj_from_char1', 'TRYPYARRAYTEMPLATE']
 cfuncs[

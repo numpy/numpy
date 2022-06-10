@@ -1,7 +1,7 @@
 .. _routines.polynomial:
 
 Polynomials
-***********
+===========
 
 Polynomials in NumPy can be *created*, *manipulated*, and even *fitted* using
 the :doc:`convenience classes <routines.polynomials.classes>`

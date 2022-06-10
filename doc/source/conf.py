@@ -171,7 +171,7 @@ html_logo = '_static/numpylogo.svg'
 
 html_favicon = '_static/favicon/favicon.ico'
 
-# Set up the version switcher.  The versions.json is stored in the devdocs.
+# Set up the version switcher.  The versions.json is stored in the doc repo.
 if os.environ.get('CIRCLE_JOB', False) and \
         os.environ.get('CIRCLE_BRANCH', '') != 'main':
     # For PR, name is set to its ref
@@ -193,7 +193,7 @@ html_theme_options = {
   "navbar_end": ["version-switcher", "navbar-icon-links"],
   "switcher": {
       "version_match": switcher_version,
-      "json_url": "https://numpy.org/devdocs/_static/versions.json",
+      "json_url": "https://numpy.org/doc/_static/versions.json",
   },
 }
 
