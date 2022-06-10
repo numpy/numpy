@@ -1124,15 +1124,17 @@ TIMEDELTA_md_m_multiply(char **args, npy_intp const *dimensions, npy_intp const 
     BINARY_LOOP {
         const npy_timedelta in1 = *(npy_timedelta *)ip1;
         const double in2 = *(double *)ip2;
-        if (in1 == NPY_DATETIME_NAT) {
+        if (in1 == NPY_DATETIME_NAT || npy_isnan(in2)) {
             *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
         }
         else {
-            double result = in1 * in2;
-            if (npy_isfinite(result)) {
-                *((npy_timedelta *)op1) = (npy_timedelta)result;
-            }
-            else {
+            /* `nearbyint` avoids warnings (should not matter here, though) */
+            double result = nearbyint(in1 * in2);
+            npy_timedelta int_res = (npy_timedelta)result;
+            *((npy_timedelta *)op1) = int_res;
+            if ((double)int_res != result || int_res == NPY_DATETIME_NAT) {
+                /* Conversion creates a new NaT from non-NaN/NaT input */
+                npy_set_floatstatus_invalid();
                 *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
             }
         }
@@ -1145,15 +1147,17 @@ TIMEDELTA_dm_m_multiply(char **args, npy_intp const *dimensions, npy_intp const 
     BINARY_LOOP {
         const double in1 = *(double *)ip1;
         const npy_timedelta in2 = *(npy_timedelta *)ip2;
-        if (in2 == NPY_DATETIME_NAT) {
+        if (in2 == NPY_DATETIME_NAT || npy_isnan(in1)) {
             *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
         }
         else {
-            double result = in1 * in2;
-            if (npy_isfinite(result)) {
-                *((npy_timedelta *)op1) = (npy_timedelta)result;
-            }
-            else {
+            /* `nearbyint` avoids warnings (should not matter here, though) */
+            double result = nearbyint(in1 * in2);
+            npy_timedelta int_res = (npy_timedelta)result;
+            *((npy_timedelta *)op1) = int_res;
+            if ((double)int_res != result || int_res == NPY_DATETIME_NAT) {
+                /* Conversion creates a new NaT from non-NaN/NaT input */
+                npy_set_floatstatus_invalid();
                 *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
             }
         }
