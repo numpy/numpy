@@ -547,7 +547,7 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, method='auto'):
         to (but is faster than) ``np.invert(in1d(a, b))``.
     method : {'auto', 'sort', 'dictionary'}, optional
         The algorithm to use. This will not affect the final result,
-        but will affect the speed.
+        but will affect the speed. Default is 'auto'.
 
         - If 'sort', will use a sort-based approach.
         - If 'dictionary', will use a key-dictionary approach similar
@@ -746,7 +746,7 @@ def isin(element, test_elements, assume_unique=False, invert=False,
         than) ``np.invert(np.isin(a, b))``.
     method : {'auto', 'sort', 'dictionary'}, optional
         The algorithm to use. This will not affect the final result,
-        but will affect the speed.
+        but will affect the speed. Default is 'auto'.
 
         - If 'sort', will use a sort-based approach.
         - If 'dictionary', will use a key-dictionary approach similar
