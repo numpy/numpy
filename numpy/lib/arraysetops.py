@@ -619,7 +619,8 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, _slow_integer=None):
                 ar2_range = ar2_max - ar2_min
 
                 # Optimal performance is for approximately
-                # log10(size) > (log10(range) - 2.27) / 0.927, see discussion on
+                # log10(size) > (log10(range) - 2.27) / 0.927.
+                # See discussion on
                 # https://github.com/numpy/numpy/pull/12065
                 optimal_parameters = (
                         np.log10(ar2_size) >

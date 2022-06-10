@@ -435,10 +435,16 @@ class TestSetOps:
         assert_array_equal(in1d(a, b, assume_unique=False), ec)
         assert_array_equal(in1d(a, long_b, assume_unique=True), ec)
         assert_array_equal(in1d(a, long_b, assume_unique=False), ec)
-        assert_array_equal(in1d(a, b, assume_unique=True, _slow_integer=True), ec)
-        assert_array_equal(in1d(a, b, assume_unique=False, _slow_integer=True), ec)
-        assert_array_equal(in1d(a, long_b, assume_unique=True, _slow_integer=True), ec)
-        assert_array_equal(in1d(a, long_b, assume_unique=False, _slow_integer=True), ec)
+        assert_array_equal(in1d(a, b, assume_unique=True, _slow_integer=True),
+                           ec)
+        assert_array_equal(in1d(a, b, assume_unique=False, _slow_integer=True),
+                           ec)
+        assert_array_equal(in1d(a, long_b, assume_unique=True,
+                                _slow_integer=True),
+                           ec)
+        assert_array_equal(in1d(a, long_b, assume_unique=False,
+                                _slow_integer=True),
+                           ec)
 
     def test_in1d_hit_alternate_algorithm(self):
         """Hit the standard isin code with integers"""
@@ -461,10 +467,14 @@ class TestSetOps:
         a = np.array([True, False])
         b = np.array([False, False, False])
         expected = np.array([False, True])
-        assert_array_equal(expected, in1d(a, b))
-        assert_array_equal(expected, in1d(a, b, _slow_integer=True))
-        assert_array_equal(np.invert(expected), in1d(a, b, invert=True))
-        assert_array_equal(np.invert(expected), in1d(a, b, invert=True, _slow_integer=True))
+        assert_array_equal(expected,
+                           in1d(a, b))
+        assert_array_equal(expected,
+                           in1d(a, b, _slow_integer=True))
+        assert_array_equal(np.invert(expected),
+                           in1d(a, b, invert=True))
+        assert_array_equal(np.invert(expected),
+                           in1d(a, b, invert=True, _slow_integer=True))
 
     def test_in1d_first_array_is_object(self):
         ar1 = [None]
