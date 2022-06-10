@@ -37,7 +37,10 @@ Testing against the NumPy main branch or pre-releases
 For large, actively maintained packages that depend on NumPy, we recommend
 testing against the development version of NumPy in CI. To make this easy,
 nightly builds are provided as wheels at
-https://anaconda.org/scipy-wheels-nightly/.
+https://anaconda.org/scipy-wheels-nightly/. Example install command::
+
+    pip install -U --pre --only-binary :all: -i https://pypi.anaconda.org/scipy-wheels-nightly/simple numpy
+
 This helps detect regressions in NumPy that need fixing before the next NumPy
 release.  Furthermore, we recommend to raise errors on warnings in CI for this
 job, either all warnings or otherwise at least ``DeprecationWarning`` and
