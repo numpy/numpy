@@ -2,7 +2,7 @@
 Contributors
 ============
 
-A total of 150 people contributed to this release.  People with a "+" by their
+A total of 151 people contributed to this release.  People with a "+" by their
 names contributed a patch for the first time.
 
 * @DWesl
@@ -58,6 +58,7 @@ names contributed a patch for the first time.
 * Harsh Mishra +
 * Henry Schreiner
 * Hood Chatham +
+* I-Shen Leong
 * Ilhan Polat
 * Inessa Pawson
 * Isuru Fernando
@@ -159,7 +160,7 @@ names contributed a patch for the first time.
 Pull requests merged
 ====================
 
-A total of 469 pull requests were merged for this release.
+A total of 485 pull requests were merged for this release.
 
 * `#15006 <https://github.com/numpy/numpy/pull/15006>`__: ENH: add support for operator() in crackfortran.
 * `#15844 <https://github.com/numpy/numpy/pull/15844>`__: ENH: add inline definition of access rights for Fortran types
@@ -630,3 +631,19 @@ A total of 469 pull requests were merged for this release.
 * `#21634 <https://github.com/numpy/numpy/pull/21634>`__: MAINT: back out conversion of npymath component to c++
 * `#21635 <https://github.com/numpy/numpy/pull/21635>`__: TST: Skip F2PY tests without Fortran compilers
 * `#21636 <https://github.com/numpy/numpy/pull/21636>`__: API: Retain ``arr.base`` more strictly in ``np.frombuffer``
+* `#21637 <https://github.com/numpy/numpy/pull/21637>`__: REL: Prepare for the NumPy 1.23.0rc2 release.
+* `#21646 <https://github.com/numpy/numpy/pull/21646>`__: ENH: Add equals_nan kwarg to np.unique
+* `#21649 <https://github.com/numpy/numpy/pull/21649>`__: MAINT: Start testing with Python 3.11.
+* `#21656 <https://github.com/numpy/numpy/pull/21656>`__: TYP, ENH: Add annotations for the ``equal_nan`` keyword to ``np.unique``
+* `#21660 <https://github.com/numpy/numpy/pull/21660>`__: MAINT: Adapt npt._GenericAlias to Python 3.11 types.GenericAlias
+* `#21684 <https://github.com/numpy/numpy/pull/21684>`__: MAINT: Point documentation version switcher at the docs homepage
+* `#21688 <https://github.com/numpy/numpy/pull/21688>`__: DEP: Deprecate (rather than remove) the int-via-float parsing...
+* `#21697 <https://github.com/numpy/numpy/pull/21697>`__: BUG: Fix a refactor leftover bug
+* `#21698 <https://github.com/numpy/numpy/pull/21698>`__: BUG: Prevent attempted broadcasting of 0-D output operands in...
+* `#21710 <https://github.com/numpy/numpy/pull/21710>`__: TST: Fixup loadtxt int-via-float tests when in release mode
+* `#21716 <https://github.com/numpy/numpy/pull/21716>`__: ENH: Implement string comparison ufuncs (or almost)
+* `#21718 <https://github.com/numpy/numpy/pull/21718>`__: BUG: use explicit einsum_path whenever it is given
+* `#21719 <https://github.com/numpy/numpy/pull/21719>`__: BUG: Small fixupes found using valgrind
+* `#21720 <https://github.com/numpy/numpy/pull/21720>`__: BUG: Enable fortran preprocessing for ifort on Windows
+* `#21721 <https://github.com/numpy/numpy/pull/21721>`__: BLD, SIMD: Fix detect armhf and hardened the Neon/ASIMD compile-time...
+* `#21722 <https://github.com/numpy/numpy/pull/21722>`__: BUG: .f2py_f2cmap doesn't map long_long and other options
