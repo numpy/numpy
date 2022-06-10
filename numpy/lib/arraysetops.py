@@ -555,9 +555,9 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, method='auto'):
           integer arrays.
         - If 'auto', will automatically choose the method which is
           expected to perform the fastest, which depends
-          on the size and range of `ar2`. For larger sizes,
-          'dictionary' is chosen. For larger range or smaller
-          sizes, 'sort' is chosen.
+          on the size and range of `ar2`. For larger sizes or
+          smaller range, 'dictionary' is chosen.
+          For larger range or smaller sizes, 'sort' is chosen.
 
         .. versionadded:: 1.8.0
 
