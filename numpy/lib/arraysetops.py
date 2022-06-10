@@ -517,12 +517,12 @@ def setxor1d(ar1, ar2, assume_unique=False):
 
 
 def _in1d_dispatcher(ar1, ar2, assume_unique=None, invert=None,
-                     _slow_integer=None):
+                     method='auto'):
     return (ar1, ar2)
 
 
 @array_function_dispatch(_in1d_dispatcher)
-def in1d(ar1, ar2, assume_unique=False, invert=False, _slow_integer=None):
+def in1d(ar1, ar2, assume_unique=False, invert=False, method='auto'):
     """
     Test whether each element of a 1-D array is also present in a second array.
 
@@ -545,10 +545,18 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, _slow_integer=None):
         False where an element of `ar1` is in `ar2` and True otherwise).
         Default is False. ``np.in1d(a, b, invert=True)`` is equivalent
         to (but is faster than) ``np.invert(in1d(a, b))``.
-    _slow_integer : bool/None, optional
-        If True, defaults to the old algorithm for integers. This is
-        used for debugging and testing purposes. The default, None,
-        selects the best based on estimated performance.
+    method : {'auto', 'sort', 'dictionary'}, optional
+        The algorithm to use. This will not affect the final result,
+        but will affect the speed.
+
+        - If 'sort', will use a sort-based approach.
+        - If 'dictionary', will use a key-dictionary approach similar
+          to a radix sort.
+        - If 'auto', will automatically choose the method which is
+          expected to perform the fastest, which depends
+          on the size and range of `ar2`. For larger sizes,
+          'dictionary' is chosen. For larger range or smaller
+          sizes, 'sort' is chosen.
 
         .. versionadded:: 1.8.0
 
@@ -608,7 +616,7 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, _slow_integer=None):
     integer_arrays = (np.issubdtype(ar1.dtype, np.integer) and
                       np.issubdtype(ar2.dtype, np.integer))
 
-    if integer_arrays and _slow_integer in [None, False]:
+    if integer_arrays and method in ['auto', 'dictionary']:
         ar2_min = np.min(ar2)
         ar2_max = np.max(ar2)
         ar2_size = ar2.size
@@ -630,7 +638,7 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, _slow_integer=None):
                 optimal_parameters = False
 
         # Use the fast integer algorithm
-        if optimal_parameters or _slow_integer == False:
+        if optimal_parameters or method == 'dictionary':
 
             if invert:
                 outgoing_array = np.ones_like(ar1, dtype=np.bool_)
@@ -697,13 +705,13 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, _slow_integer=None):
 
 
 def _isin_dispatcher(element, test_elements, assume_unique=None, invert=None,
-                     _slow_integer=None):
+                     method='auto'):
     return (element, test_elements)
 
 
 @array_function_dispatch(_isin_dispatcher)
 def isin(element, test_elements, assume_unique=False, invert=False,
-         _slow_integer=None):
+         method='auto'):
     """
     Calculates ``element in test_elements``, broadcasting over `element` only.
     Returns a boolean array of the same shape as `element` that is True
@@ -725,10 +733,18 @@ def isin(element, test_elements, assume_unique=False, invert=False,
         calculating `element not in test_elements`. Default is False.
         ``np.isin(a, b, invert=True)`` is equivalent to (but faster
         than) ``np.invert(np.isin(a, b))``.
-    _slow_integer : bool/None, optional
-        If True, defaults to the old algorithm for integers. This is
-        used for debugging and testing purposes. The default, None,
-        selects the best based on measured performance.
+    method : {'auto', 'sort', 'dictionary'}, optional
+        The algorithm to use. This will not affect the final result,
+        but will affect the speed.
+
+        - If 'sort', will use a sort-based approach.
+        - If 'dictionary', will use a key-dictionary approach similar
+          to a radix sort.
+        - If 'auto', will automatically choose the method which is
+          expected to perform the fastest, which depends
+          on the size and range of `ar2`. For larger sizes,
+          'dictionary' is chosen. For larger range or smaller
+          sizes, 'sort' is chosen.
 
     Returns
     -------
@@ -802,8 +818,7 @@ def isin(element, test_elements, assume_unique=False, invert=False,
     """
     element = np.asarray(element)
     return in1d(element, test_elements, assume_unique=assume_unique,
-                invert=invert, _slow_integer=_slow_integer
-                ).reshape(element.shape)
+                invert=invert, method=method).reshape(element.shape)
 
 
 def _union1d_dispatcher(ar1, ar2):
