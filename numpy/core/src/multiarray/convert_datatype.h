@@ -3,6 +3,10 @@
 
 #include "array_method.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern NPY_NO_EXPORT npy_intp REQUIRED_STR_LEN[];
 
 NPY_NO_EXPORT PyObject *
@@ -34,7 +38,7 @@ dtype_kind_to_ordering(char kind);
 /* Used by PyArray_CanCastArrayTo and in the legacy ufunc type resolution */
 NPY_NO_EXPORT npy_bool
 can_cast_scalar_to(PyArray_Descr *scal_type, char *scal_data,
-                    PyArray_Descr *to, NPY_CASTING casting);
+                   PyArray_Descr *to, NPY_CASTING casting);
 
 NPY_NO_EXPORT int
 should_use_min_scalar(npy_intp narrs, PyArrayObject **arr,
@@ -59,7 +63,7 @@ NPY_NO_EXPORT int
 PyArray_AddCastingImplementation(PyBoundArrayMethodObject *meth);
 
 NPY_NO_EXPORT int
-PyArray_AddCastingImplementation_FromSpec(PyArrayMethod_Spec *spec, int private);
+PyArray_AddCastingImplementation_FromSpec(PyArrayMethod_Spec *spec, int private_);
 
 NPY_NO_EXPORT NPY_CASTING
 PyArray_MinCastSafety(NPY_CASTING casting1, NPY_CASTING casting2);
@@ -98,5 +102,9 @@ simple_cast_resolve_descriptors(
 
 NPY_NO_EXPORT int
 PyArray_InitializeCasts(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_CONVERT_DATATYPE_H_ */

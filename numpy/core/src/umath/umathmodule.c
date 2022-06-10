@@ -23,10 +23,12 @@
 #include "numpy/npy_math.h"
 #include "number.h"
 #include "dispatching.h"
+#include "string_ufuncs.h"
 
 /* Automatically generated code to define all ufuncs: */
 #include "funcs.inc"
 #include "__umath_generated.c"
+
 
 static PyUFuncGenericFunction pyfunc_functions[] = {PyUFunc_On_Om};
 
@@ -347,5 +349,10 @@ int initumath(PyObject *m)
     if (install_logical_ufunc_promoter(s) < 0) {
         return -1;
     }
+
+    if (init_string_ufuncs(d) < 0) {
+        return -1;
+    }
+
     return 0;
 }

@@ -214,7 +214,7 @@ typedef struct {
 } PyArrayMethod_Spec;
 
 
-typedef PyObject *_ufunc_addloop_fromspec_func(
+typedef int _ufunc_addloop_fromspec_func(
         PyObject *ufunc, PyArrayMethod_Spec *spec);
 /*
  * The main ufunc registration function.  This adds a new implementation/loop

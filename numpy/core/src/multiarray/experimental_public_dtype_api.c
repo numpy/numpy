@@ -300,37 +300,13 @@ PyArrayInitDTypeMeta_FromSpec(
 }
 
 
-/* Function is defined in umath/dispatching.c (same/one compilation unit) */
+/* Functions defined in umath/dispatching.c (same/one compilation unit) */
 NPY_NO_EXPORT int
 PyUFunc_AddLoop(PyUFuncObject *ufunc, PyObject *info, int ignore_duplicate);
 
-static int
-PyUFunc_AddLoopFromSpec(PyObject *ufunc, PyArrayMethod_Spec *spec)
-{
-    if (!PyObject_TypeCheck(ufunc, &PyUFunc_Type)) {
-        PyErr_SetString(PyExc_TypeError,
-                "ufunc object passed is not a ufunc!");
-        return -1;
-    }
-    PyBoundArrayMethodObject *bmeth =
-            (PyBoundArrayMethodObject *)PyArrayMethod_FromSpec(spec);
-    if (bmeth == NULL) {
-        return -1;
-    }
-    int nargs = bmeth->method->nin + bmeth->method->nout;
-    PyObject *dtypes = PyArray_TupleFromItems(
-            nargs, (PyObject **)bmeth->dtypes, 1);
-    if (dtypes == NULL) {
-        return -1;
-    }
-    PyObject *info = PyTuple_Pack(2, dtypes, bmeth->method);
-    Py_DECREF(bmeth);
-    Py_DECREF(dtypes);
-    if (info == NULL) {
-        return -1;
-    }
-    return PyUFunc_AddLoop((PyUFuncObject *)ufunc, info, 0);
-}
+NPY_NO_EXPORT int
+PyUFunc_AddLoopFromSpec(PyUFuncObject *ufunc, PyObject *info, int ignore_duplicate);
+
 
 /*
  * Function is defined in umath/wrapping_array_method.c
