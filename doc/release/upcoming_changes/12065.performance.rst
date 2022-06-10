@@ -1,0 +1,8 @@
+Faster version of ``np.isin`` and ``np.in1d`` for integer arrays
+----------------------------------------------------------------
+``np.in1d`` (used by ``np.isin``) can now switch to a faster algorithm
+(up to >10x faster) when it is fed two integer arrays.
+The algorithm bares similarities to a counting sort in that it
+uses the ``test_elements`` argument to index a boolean helper
+array with ``True`` values where elements exist. The ``element``
+argument simply indexes this array of booleans.
