@@ -551,7 +551,8 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, method='auto'):
 
         - If 'sort', will use a sort-based approach.
         - If 'dictionary', will use a key-dictionary approach similar
-          to a radix sort.
+          to a radix sort. This is only available for boolean and
+          integer arrays.
         - If 'auto', will automatically choose the method which is
           expected to perform the fastest, which depends
           on the size and range of `ar2`. For larger sizes,
@@ -749,7 +750,8 @@ def isin(element, test_elements, assume_unique=False, invert=False,
 
         - If 'sort', will use a sort-based approach.
         - If 'dictionary', will use a key-dictionary approach similar
-          to a radix sort.
+          to a radix sort. This is only available for boolean and
+          integer arrays.
         - If 'auto', will automatically choose the method which is
           expected to perform the fastest, which depends
           on the size and range of `ar2`. For larger sizes,
