@@ -205,8 +205,8 @@ class TestSetOps:
         isin_slow = np.vectorize(_isin_slow, otypes=[bool], excluded={1})
 
         def assert_isin_equal(a, b, old_algorithm=None):
-            method = "sort" if old_algorithm else "dictionary"
-            x = isin(a, b, method=old_algorithm)
+            method = "sort" if old_algorithm else "auto"
+            x = isin(a, b, method=method)
             y = isin_slow(a, b)
             assert_array_equal(x, y)
 
