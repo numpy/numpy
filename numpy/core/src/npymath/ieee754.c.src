@@ -575,10 +575,52 @@ int npy_get_floatstatus() {
  */
 #  include <fenv.h>
 
+// musl-libc defines all the fenv functions unconditionally (fesetexcept,
+// feclearexcept, etc) but on unsupported platforms they are no-ops:
+// https://git.musl-libc.org/cgit/musl/tree/src/fenv/fenv.c
+// However, the platform is expected to only define flags like
+// FE_OVERFLOW if they are supported. I haven't found an explanation
+// of the design decision, but it seems to be aimed at fine-grained
+// feature detection. musl-libc-test has code that uses fenv and wants
+// it to silently decay to a no-op on platforms missing support. I
+// copied their implementation of this behavior:
+// http://nsz.repo.hu/git/?p=libc-test;a=blob;f=src/common/mtest.h;h=706c1ba23ea8989b17a2f72ed1a919e187c06b6a;hb=HEAD#l30
+#undef INEXACT
+#undef INVALID
+#undef DIVBYZERO
+#undef UNDERFLOW
+#undef OVERFLOW
+#ifdef FE_INEXACT
+#define INEXACT FE_INEXACT
+#else
+#define INEXACT 0
+#endif
+#ifdef FE_INVALID
+#define INVALID FE_INVALID
+#else
+#define INVALID 0
+#endif
+#ifdef FE_DIVBYZERO
+#define DIVBYZERO FE_DIVBYZERO
+#else
+#define DIVBYZERO 0
+#endif
+#ifdef FE_UNDERFLOW
+#define UNDERFLOW FE_UNDERFLOW
+#else
+#define UNDERFLOW 0
+#endif
+#ifdef FE_OVERFLOW
+#define OVERFLOW FE_OVERFLOW
+#else
+#define OVERFLOW 0
+#endif
+
+
 int npy_get_floatstatus_barrier(char* param)
 {
-    int fpstatus = fetestexcept(FE_DIVBYZERO | FE_OVERFLOW |
-                                FE_UNDERFLOW | FE_INVALID);
+    int fpstatus = fetestexcept(DIVBYZERO | OVERFLOW |
+                                UNDERFLOW | INVALID);
     /*
      * By using a volatile, the compiler cannot reorder this call
      */
@@ -586,10 +628,10 @@ int npy_get_floatstatus_barrier(char* param)
         volatile char NPY_UNUSED(c) = *(char*)param;
     }
 
-    return ((FE_DIVBYZERO  & fpstatus) ? NPY_FPE_DIVIDEBYZERO : 0) |
-           ((FE_OVERFLOW   & fpstatus) ? NPY_FPE_OVERFLOW : 0) |
-           ((FE_UNDERFLOW  & fpstatus) ? NPY_FPE_UNDERFLOW : 0) |
-           ((FE_INVALID    & fpstatus) ? NPY_FPE_INVALID : 0);
+    return ((DIVBYZERO  & fpstatus) ? NPY_FPE_DIVIDEBYZERO : 0) |
+           ((OVERFLOW   & fpstatus) ? NPY_FPE_OVERFLOW : 0) |
+           ((UNDERFLOW  & fpstatus) ? NPY_FPE_UNDERFLOW : 0) |
+           ((INVALID    & fpstatus) ? NPY_FPE_INVALID : 0);
 }
 
 int npy_clear_floatstatus_barrier(char * param)
@@ -597,8 +639,8 @@ int npy_clear_floatstatus_barrier(char * param)
     /* testing float status is 50-100 times faster than clearing on x86 */
     int fpstatus = npy_get_floatstatus_barrier(param);
     if (fpstatus != 0) {
-        feclearexcept(FE_DIVBYZERO | FE_OVERFLOW |
-                      FE_UNDERFLOW | FE_INVALID);
+        feclearexcept(DIVBYZERO | OVERFLOW |
+                      UNDERFLOW | INVALID);
     }
 
     return fpstatus;
@@ -607,21 +649,21 @@ int npy_clear_floatstatus_barrier(char * param)
 
 void npy_set_floatstatus_divbyzero(void)
 {
-    feraiseexcept(FE_DIVBYZERO);
+    feraiseexcept(DIVBYZERO);
 }
 
 void npy_set_floatstatus_overflow(void)
 {
-    feraiseexcept(FE_OVERFLOW);
+    feraiseexcept(OVERFLOW);
 }
 
 void npy_set_floatstatus_underflow(void)
 {
-    feraiseexcept(FE_UNDERFLOW);
+    feraiseexcept(UNDERFLOW);
 }
 
 void npy_set_floatstatus_invalid(void)
 {
-    feraiseexcept(FE_INVALID);
+    feraiseexcept(INVALID);
 }
 
