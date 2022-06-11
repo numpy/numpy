@@ -1,9 +1,9 @@
 import os
 import sys
+import sysconfig
 import pickle
 import copy
 import warnings
-import platform
 import textwrap
 import glob
 from os.path import join
@@ -79,9 +79,8 @@ def can_link_svml():
     """
     if NPY_DISABLE_SVML:
         return False
-    machine = platform.machine()
-    system = platform.system()
-    return "x86_64" in machine and system == "Linux"
+    platform = sysconfig.get_platform()
+    return "x86_64" in platform and "linux" in platform
 
 def check_svml_submodule(svmlpath):
     if not os.path.exists(svmlpath + "/README.md"):
