@@ -1496,7 +1496,7 @@ class TestRegression:
             min = np.array([np.iinfo(t).min])
             min //= -1
 
-        with np.errstate(divide="ignore"):
+        with np.errstate(over="ignore"):
             for t in (np.int8, np.int16, np.int32, np.int64, int):
                 test_type(t)
 
