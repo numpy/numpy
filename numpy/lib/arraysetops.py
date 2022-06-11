@@ -549,15 +549,21 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, method='auto'):
         The algorithm to use. This will not affect the final result,
         but will affect the speed. Default is 'auto'.
 
-        - If 'sort', will use a sort-based approach.
+        - If 'sort', will use a mergesort-based approach. This will have
+          a memory usage of roughly 6 times the sum of the sizes of
+          `ar1` and `ar2`, not accounting for size of dtypes.
         - If 'dictionary', will use a key-dictionary approach similar
           to a counting sort. This is only available for boolean and
-          integer arrays.
+          integer arrays. This will have a memory usage of the
+          size of `ar1` plus the max-min value of `ar2`. This tends
+          to be the faster method if the following formula is true:
+          `log10(len(ar2)) > (log10(max(ar2)-min(ar2)) - 2.27) / 0.927`,
+          but may use greater memory.
         - If 'auto', will automatically choose the method which is
-          expected to perform the fastest, which depends
-          on the size and range of `ar2`. For larger sizes or
-          smaller range, 'dictionary' is chosen.
-          For larger range or smaller sizes, 'sort' is chosen.
+          expected to perform the fastest, using the above
+          formula. For larger sizes or smaller range,
+          'dictionary' is chosen. For larger range or smaller
+          sizes, 'sort' is chosen.
 
         .. versionadded:: 1.8.0
 
@@ -749,13 +755,19 @@ def isin(element, test_elements, assume_unique=False, invert=False,
         The algorithm to use. This will not affect the final result,
         but will affect the speed. Default is 'auto'.
 
-        - If 'sort', will use a sort-based approach.
+        - If 'sort', will use a mergesort-based approach. This will have
+          a memory usage of roughly 6 times the sum of the sizes of
+          `ar1` and `ar2`, not accounting for size of dtypes.
         - If 'dictionary', will use a key-dictionary approach similar
           to a counting sort. This is only available for boolean and
-          integer arrays.
+          integer arrays. This will have a memory usage of the
+          size of `ar1` plus the max-min value of `ar2`. This tends
+          to be the faster method if the following formula is true:
+          `log10(len(ar2)) > (log10(max(ar2)-min(ar2)) - 2.27) / 0.927`,
+          but may use greater memory.
         - If 'auto', will automatically choose the method which is
-          expected to perform the fastest, which depends
-          on the size and range of `ar2`. For larger sizes,
+          expected to perform the fastest, using the above
+          formula. For larger sizes or smaller range,
           'dictionary' is chosen. For larger range or smaller
           sizes, 'sort' is chosen.
 
