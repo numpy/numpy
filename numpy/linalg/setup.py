@@ -1,5 +1,6 @@
 import os
 import sys
+import sysconfig
 
 def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration
@@ -38,7 +39,7 @@ def configuration(parent_package='', top_path=None):
         class numpy_linalg_lapack_lite(system_info):
             def calc_info(self):
                 info = {'language': 'c'}
-                if sys.maxsize > 2**32:
+                if sysconfig.get_config_var("SIZEOF_VOID_P") > 4:
                     # Build lapack-lite in 64-bit integer mode.
                     # The suffix is arbitrary (lapack_lite symbols follow it),
                     # but use the "64_" convention here.
