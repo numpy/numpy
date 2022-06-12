@@ -283,7 +283,7 @@ vsx4_simd_divide_contig_@sfx@(char **args, npy_intp len)
                       // Divide by zero
                       quo = npyv_select_@sfx@(bzero, vzero, quo);
                       // Overflow
-                      quo = npyv_select_@sfx(overflow, vmin, quo);
+                      quo = npyv_select_@sfx@(overflow, vmin, quo);
         npyv_store_@sfx@(dst1, quo);
     }
 
