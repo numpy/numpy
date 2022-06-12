@@ -910,7 +910,6 @@ def test_scalar_signed_integer_overflow(dtype, operation):
 
 
 @pytest.mark.parametrize("dtype", np.typecodes["UnsignedInteger"])
-@pytest.mark.xfail  # TODO: the check is quite simply missing!
 def test_scalar_unsigned_integer_overflow(dtype):
     val = np.dtype(dtype).type(8)
     with pytest.warns(RuntimeWarning, match="overflow encountered"):
