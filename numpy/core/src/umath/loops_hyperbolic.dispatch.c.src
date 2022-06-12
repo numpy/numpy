@@ -3,6 +3,7 @@
  ** (avx2 fma3) AVX512_SKX
  ** vsx2 vsx4
  ** neon_vfpv4
+ ** vx vxe
  **/
 #include "numpy/npy_math.h"
 #include "simd/simd.h"
@@ -240,6 +241,8 @@ simd_tanh_f64(const double *src, npy_intp ssrc, double *dst, npy_intp sdst, npy_
     }
 }
 #endif // NPY_SIMD_F64
+
+#if NPY_SIMD_F32
 static void
 simd_tanh_f32(const float *src, npy_intp ssrc, float *dst, npy_intp sdst, npy_intp len)
 {
@@ -335,6 +338,7 @@ simd_tanh_f32(const float *src, npy_intp ssrc, float *dst, npy_intp sdst, npy_in
         }
     }
 }
+#endif // NPY_SIMD_F32
 #endif // NPY_SIMD_FMA3
 
 /**begin repeat
@@ -342,7 +346,7 @@ simd_tanh_f32(const float *src, npy_intp ssrc, float *dst, npy_intp sdst, npy_in
  * #type = float, double#
  * #sfx  = f32,   f64#
  * #ssfx = f,     #
- * #simd = NPY_SIMD_FMA3, NPY_SIMD_FMA3 && NPY_SIMD_F64#
+ * #simd = NPY_SIMD_FMA3 && NPY_SIMD_F32, NPY_SIMD_FMA3 && NPY_SIMD_F64#
  */
 /**begin repeat1
  *  #func = tanh#

@@ -85,16 +85,13 @@ class _Test_Utility:
             return getattr(self.npyv, cvt_intrin.format(sfx[1:], sfx))(vector)
 
     def _pinfinity(self):
-        v = self.npyv.setall_u32(0x7f800000)
-        return self.npyv.reinterpret_f32_u32(v)[0]
+        return float("inf")
 
     def _ninfinity(self):
-        v = self.npyv.setall_u32(0xff800000)
-        return self.npyv.reinterpret_f32_u32(v)[0]
+        return -float("inf")
 
     def _nan(self):
-        v = self.npyv.setall_u32(0x7fc00000)
-        return self.npyv.reinterpret_f32_u32(v)[0]
+        return float("nan")
 
     def _cpu_features(self):
         target = self.target_name
@@ -170,8 +167,9 @@ class _SIMD_BOOL(_Test_Utility):
         for data in (self._data(), self._data(reverse=True)):
             vdata = self._load_b(data)
             data_bits = data2bits(data)
-            tobits = bin(self.tobits(vdata))
-            assert tobits == bin(data_bits)
+            tobits = self.tobits(vdata)
+            bin_tobits = bin(tobits)
+            assert bin_tobits == bin(data_bits)
 
     def test_pack(self):
         """
@@ -746,9 +744,11 @@ class _SIMD_ALL(_Test_Utility):
         # We're testing the sanity of _simd's type-vector,
         # reinterpret* intrinsics itself are tested via compiler
         # during the build of _simd module
-        sfxes = ["u8", "s8", "u16", "s16", "u32", "s32", "u64", "s64", "f32"]
+        sfxes = ["u8", "s8", "u16", "s16", "u32", "s32", "u64", "s64"]
         if self.npyv.simd_f64:
             sfxes.append("f64")
+        if self.npyv.simd_f32:
+            sfxes.append("f32")
         for sfx in sfxes:
             vec_name = getattr(self, "reinterpret_" + sfx)(vdata_a).__name__
             assert vec_name == "npyv_" + sfx
@@ -1077,8 +1077,13 @@ for target_name, npyv in targets.items():
         skip = f"target '{pretty_name}' isn't supported by current machine"
     elif not npyv.simd:
         skip = f"target '{pretty_name}' isn't supported by NPYV"
-    elif not npyv.simd_f64:
-        skip_sfx["f64"] = f"target '{pretty_name}' doesn't support double-precision"
+    else:
+        if not npyv.simd_f32:
+            skip_sfx["f32"] = f"target '{pretty_name}' "\
+                               "doesn't support single-precision"
+        if not npyv.simd_f64:
+            skip_sfx["f64"] = f"target '{pretty_name}' doesn't"\
+                               "support double-precision"
 
     for sfxes, cls in tests_registry.items():
         for sfx in sfxes:
