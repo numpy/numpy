@@ -2,8 +2,8 @@
     #error "Not a standalone header"
 #endif
 
-#ifndef _NPY_SIMD_VSX_OPERATORS_H
-#define _NPY_SIMD_VSX_OPERATORS_H
+#ifndef _NPY_SIMD_VEC_OPERATORS_H
+#define _NPY_SIMD_VEC_OPERATORS_H
 
 /***************************
  * Shifting
@@ -11,11 +11,11 @@
 
 // Left
 #define npyv_shl_u16(A, C) vec_sl(A, npyv_setall_u16(C))
-#define npyv_shl_s16(A, C) vec_sl(A, npyv_setall_u16(C))
+#define npyv_shl_s16(A, C) vec_sl_s16(A, npyv_setall_u16(C))
 #define npyv_shl_u32(A, C) vec_sl(A, npyv_setall_u32(C))
-#define npyv_shl_s32(A, C) vec_sl(A, npyv_setall_u32(C))
+#define npyv_shl_s32(A, C) vec_sl_s32(A, npyv_setall_u32(C))
 #define npyv_shl_u64(A, C) vec_sl(A, npyv_setall_u64(C))
-#define npyv_shl_s64(A, C) vec_sl(A, npyv_setall_u64(C))
+#define npyv_shl_s64(A, C) vec_sl_s64(A, npyv_setall_u64(C))
 
 // Left by an immediate constant
 #define npyv_shli_u16 npyv_shl_u16
@@ -27,11 +27,11 @@
 
 // Right
 #define npyv_shr_u16(A, C) vec_sr(A,  npyv_setall_u16(C))
-#define npyv_shr_s16(A, C) vec_sra(A, npyv_setall_u16(C))
+#define npyv_shr_s16(A, C) vec_sra_s16(A, npyv_setall_u16(C))
 #define npyv_shr_u32(A, C) vec_sr(A,  npyv_setall_u32(C))
-#define npyv_shr_s32(A, C) vec_sra(A, npyv_setall_u32(C))
+#define npyv_shr_s32(A, C) vec_sra_s32(A, npyv_setall_u32(C))
 #define npyv_shr_u64(A, C) vec_sr(A,  npyv_setall_u64(C))
-#define npyv_shr_s64(A, C) vec_sra(A, npyv_setall_u64(C))
+#define npyv_shr_s64(A, C) vec_sra_s64(A, npyv_setall_u64(C))
 
 // Right by an immediate constant
 #define npyv_shri_u16 npyv_shr_u16
@@ -44,15 +44,15 @@
 /***************************
  * Logical
  ***************************/
-#define NPYV_IMPL_VSX_BIN_CAST(INTRIN, SFX, CAST) \
+#define NPYV_IMPL_VEC_BIN_CAST(INTRIN, SFX, CAST) \
     NPY_FINLINE npyv_##SFX npyv_##INTRIN##_##SFX(npyv_##SFX a, npyv_##SFX b) \
     { return (npyv_##SFX)vec_##INTRIN((CAST)a, (CAST)b); }
 
 // Up to GCC 6 logical intrinsics don't support bool long long
 #if defined(__GNUC__) && __GNUC__ <= 6
-    #define NPYV_IMPL_VSX_BIN_B64(INTRIN) NPYV_IMPL_VSX_BIN_CAST(INTRIN, b64, npyv_u64)
+    #define NPYV_IMPL_VEC_BIN_B64(INTRIN) NPYV_IMPL_VEC_BIN_CAST(INTRIN, b64, npyv_u64)
 #else
-    #define NPYV_IMPL_VSX_BIN_B64(INTRIN) NPYV_IMPL_VSX_BIN_CAST(INTRIN, b64, npyv_b64)
+    #define NPYV_IMPL_VEC_BIN_B64(INTRIN) NPYV_IMPL_VEC_BIN_CAST(INTRIN, b64, npyv_b64)
 #endif
 // AND
 #define npyv_and_u8  vec_and
@@ -63,12 +63,14 @@
 #define npyv_and_s32 vec_and
 #define npyv_and_u64 vec_and
 #define npyv_and_s64 vec_and
-#define npyv_and_f32 vec_and
+#if NPY_SIMD_F32
+    #define npyv_and_f32 vec_and
+#endif
 #define npyv_and_f64 vec_and
 #define npyv_and_b8  vec_and
 #define npyv_and_b16 vec_and
 #define npyv_and_b32 vec_and
-NPYV_IMPL_VSX_BIN_B64(and)
+NPYV_IMPL_VEC_BIN_B64(and)
 
 // OR
 #define npyv_or_u8  vec_or
@@ -79,12 +81,14 @@ NPYV_IMPL_VSX_BIN_B64(and)
 #define npyv_or_s32 vec_or
 #define npyv_or_u64 vec_or
 #define npyv_or_s64 vec_or
-#define npyv_or_f32 vec_or
+#if NPY_SIMD_F32
+    #define npyv_or_f32 vec_or
+#endif
 #define npyv_or_f64 vec_or
 #define npyv_or_b8  vec_or
 #define npyv_or_b16 vec_or
 #define npyv_or_b32 vec_or
-NPYV_IMPL_VSX_BIN_B64(or)
+NPYV_IMPL_VEC_BIN_B64(or)
 
 // XOR
 #define npyv_xor_u8  vec_xor
@@ -95,16 +99,18 @@ NPYV_IMPL_VSX_BIN_B64(or)
 #define npyv_xor_s32 vec_xor
 #define npyv_xor_u64 vec_xor
 #define npyv_xor_s64 vec_xor
-#define npyv_xor_f32 vec_xor
+#if NPY_SIMD_F32
+    #define npyv_xor_f32 vec_xor
+#endif
 #define npyv_xor_f64 vec_xor
 #define npyv_xor_b8  vec_xor
 #define npyv_xor_b16 vec_xor
 #define npyv_xor_b32 vec_xor
-NPYV_IMPL_VSX_BIN_B64(xor)
+NPYV_IMPL_VEC_BIN_B64(xor)
 
 // NOT
 // note: we implement npyv_not_b*(boolean types) for internal use*/
-#define NPYV_IMPL_VSX_NOT_INT(VEC_LEN)                                 \
+#define NPYV_IMPL_VEC_NOT_INT(VEC_LEN)                                 \
     NPY_FINLINE npyv_u##VEC_LEN npyv_not_u##VEC_LEN(npyv_u##VEC_LEN a) \
     { return vec_nor(a, a); }                                          \
     NPY_FINLINE npyv_s##VEC_LEN npyv_not_s##VEC_LEN(npyv_s##VEC_LEN a) \
@@ -112,13 +118,13 @@ NPYV_IMPL_VSX_BIN_B64(xor)
     NPY_FINLINE npyv_b##VEC_LEN npyv_not_b##VEC_LEN(npyv_b##VEC_LEN a) \
     { return vec_nor(a, a); }
 
-NPYV_IMPL_VSX_NOT_INT(8)
-NPYV_IMPL_VSX_NOT_INT(16)
-NPYV_IMPL_VSX_NOT_INT(32)
+NPYV_IMPL_VEC_NOT_INT(8)
+NPYV_IMPL_VEC_NOT_INT(16)
+NPYV_IMPL_VEC_NOT_INT(32)
 
-// up to gcc5 vec_nor doesn't support bool long long
-#if defined(__GNUC__) && __GNUC__ > 5
-    NPYV_IMPL_VSX_NOT_INT(64)
+// on ppc64, up to gcc5 vec_nor doesn't support bool long long
+#if defined(NPY_HAVE_VSX) && defined(__GNUC__) && __GNUC__ > 5
+    NPYV_IMPL_VEC_NOT_INT(64)
 #else
     NPY_FINLINE npyv_u64 npyv_not_u64(npyv_u64 a)
     { return vec_nor(a, a); }
@@ -128,8 +134,10 @@ NPYV_IMPL_VSX_NOT_INT(32)
     { return (npyv_b64)vec_nor((npyv_u64)a, (npyv_u64)a); }
 #endif
 
-NPY_FINLINE npyv_f32 npyv_not_f32(npyv_f32 a)
-{ return vec_nor(a, a); }
+#if NPY_SIMD_F32
+    NPY_FINLINE npyv_f32 npyv_not_f32(npyv_f32 a)
+    { return vec_nor(a, a); }
+#endif
 NPY_FINLINE npyv_f64 npyv_not_f64(npyv_f64 a)
 { return vec_nor(a, a); }
 
@@ -152,7 +160,9 @@ NPY_FINLINE npyv_f64 npyv_not_f64(npyv_f64 a)
 #define npyv_cmpeq_s32 vec_cmpeq
 #define npyv_cmpeq_u64 vec_cmpeq
 #define npyv_cmpeq_s64 vec_cmpeq
-#define npyv_cmpeq_f32 vec_cmpeq
+#if NPY_SIMD_F32
+    #define npyv_cmpeq_f32 vec_cmpeq
+#endif
 #define npyv_cmpeq_f64 vec_cmpeq
 
 // Int Not Equal
@@ -177,7 +187,9 @@ NPY_FINLINE npyv_f64 npyv_not_f64(npyv_f64 a)
     #define npyv_cmpneq_s32(A, B) npyv_not_b32(vec_cmpeq(A, B))
     #define npyv_cmpneq_u64(A, B) npyv_not_b64(vec_cmpeq(A, B))
     #define npyv_cmpneq_s64(A, B) npyv_not_b64(vec_cmpeq(A, B))
-    #define npyv_cmpneq_f32(A, B) npyv_not_b32(vec_cmpeq(A, B))
+    #if NPY_SIMD_F32
+        #define npyv_cmpneq_f32(A, B) npyv_not_b32(vec_cmpeq(A, B))
+    #endif
     #define npyv_cmpneq_f64(A, B) npyv_not_b64(vec_cmpeq(A, B))
 #endif
 
@@ -190,12 +202,14 @@ NPY_FINLINE npyv_f64 npyv_not_f64(npyv_f64 a)
 #define npyv_cmpgt_s32 vec_cmpgt
 #define npyv_cmpgt_u64 vec_cmpgt
 #define npyv_cmpgt_s64 vec_cmpgt
-#define npyv_cmpgt_f32 vec_cmpgt
+#if NPY_SIMD_F32
+    #define npyv_cmpgt_f32 vec_cmpgt
+#endif
 #define npyv_cmpgt_f64 vec_cmpgt
 
 // Greater than or equal
-// up to gcc5 vec_cmpge only supports single and double precision
-#if defined(__GNUC__) && __GNUC__ > 5
+// On ppc64le, up to gcc5 vec_cmpge only supports single and double precision
+#if defined(NPY_HAVE_VX) || (defined(__GNUC__) && __GNUC__ > 5)
     #define npyv_cmpge_u8  vec_cmpge
     #define npyv_cmpge_s8  vec_cmpge
     #define npyv_cmpge_u16 vec_cmpge
@@ -214,7 +228,9 @@ NPY_FINLINE npyv_f64 npyv_not_f64(npyv_f64 a)
     #define npyv_cmpge_u64(A, B) npyv_not_b64(vec_cmpgt(B, A))
     #define npyv_cmpge_s64(A, B) npyv_not_b64(vec_cmpgt(B, A))
 #endif
-#define npyv_cmpge_f32 vec_cmpge
+#if NPY_SIMD_F32
+    #define npyv_cmpge_f32 vec_cmpge
+#endif
 #define npyv_cmpge_f64 vec_cmpge
 
 // Less than
@@ -226,7 +242,9 @@ NPY_FINLINE npyv_f64 npyv_not_f64(npyv_f64 a)
 #define npyv_cmplt_s32(A, B) npyv_cmpgt_s32(B, A)
 #define npyv_cmplt_u64(A, B) npyv_cmpgt_u64(B, A)
 #define npyv_cmplt_s64(A, B) npyv_cmpgt_s64(B, A)
-#define npyv_cmplt_f32(A, B) npyv_cmpgt_f32(B, A)
+#if NPY_SIMD_F32
+    #define npyv_cmplt_f32(A, B) npyv_cmpgt_f32(B, A)
+#endif
 #define npyv_cmplt_f64(A, B) npyv_cmpgt_f64(B, A)
 
 // Less than or equal
@@ -238,13 +256,17 @@ NPY_FINLINE npyv_f64 npyv_not_f64(npyv_f64 a)
 #define npyv_cmple_s32(A, B) npyv_cmpge_s32(B, A)
 #define npyv_cmple_u64(A, B) npyv_cmpge_u64(B, A)
 #define npyv_cmple_s64(A, B) npyv_cmpge_s64(B, A)
-#define npyv_cmple_f32(A, B) npyv_cmpge_f32(B, A)
+#if NPY_SIMD_F32
+    #define npyv_cmple_f32(A, B) npyv_cmpge_f32(B, A)
+#endif
 #define npyv_cmple_f64(A, B) npyv_cmpge_f64(B, A)
 
 // check special cases
-NPY_FINLINE npyv_b32 npyv_notnan_f32(npyv_f32 a)
-{ return vec_cmpeq(a, a); }
+#if NPY_SIMD_F32
+    NPY_FINLINE npyv_b32 npyv_notnan_f32(npyv_f32 a)
+    { return vec_cmpeq(a, a); }
+#endif
 NPY_FINLINE npyv_b64 npyv_notnan_f64(npyv_f64 a)
 { return vec_cmpeq(a, a); }
 
-#endif // _NPY_SIMD_VSX_OPERATORS_H
+#endif // _NPY_SIMD_VEC_OPERATORS_H

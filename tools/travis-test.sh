@@ -40,7 +40,7 @@ setup_base()
   # any specified features will be ignored if they're not supported by compiler or platform
   # note: it almost the same default value of --simd-test execpt adding policy `$werror` to treat all
   # warnings as errors
-  simd_test="\$werror BASELINE SSE2 SSE42 XOP FMA4 (FMA3 AVX2) AVX512F AVX512_SKX VSX VSX2 VSX3 NEON ASIMD"
+  simd_test="\$werror BASELINE SSE2 SSE42 XOP FMA4 (FMA3 AVX2) AVX512F AVX512_SKX VSX VSX2 VSX3 NEON ASIMD VX VXE VXE2"
   # We used to use 'setup.py install' here, but that has the terrible
   # behaviour that if a copy of the package is already installed in the
   # install location, then the new copy just gets dropped on top of it.

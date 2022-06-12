@@ -327,7 +327,9 @@ class TestDivision:
         a_lst, b_lst = a.tolist(), b.tolist()
 
         c_div = lambda n, d: (
-            0 if d == 0 or (n and n == fo.min and d == -1) else n//d
+            0 if d == 0 else (
+                fo.min if (n and n == fo.min and d == -1) else n//d
+            )
         )
         with np.errstate(divide='ignore'):
             ac = a.copy()
@@ -342,7 +344,7 @@ class TestDivision:
 
         for divisor in divisors:
             ac = a.copy()
-            with np.errstate(divide='ignore'):
+            with np.errstate(divide='ignore', over='ignore'):
                 div_a = a // divisor
                 ac //= divisor
             div_lst = [c_div(i, divisor) for i in a_lst]
@@ -350,21 +352,25 @@ class TestDivision:
             assert all(div_a == div_lst), msg
             assert all(ac == div_lst), msg_eq
 
-        with np.errstate(divide='raise'):
-            if 0 in b or (fo.min and -1 in b and fo.min in a):
+        with np.errstate(divide='raise', over='raise'):
+            if 0 in b:
                 # Verify overflow case
-                with pytest.raises(FloatingPointError):
+                with pytest.raises(FloatingPointError,
+                        match="divide by zero encountered in floor_divide"):
                     a // b
             else:
                 a // b
             if fo.min and fo.min in a:
-                with pytest.raises(FloatingPointError):
+                with pytest.raises(FloatingPointError,
+                        match='overflow encountered in floor_divide'):
                     a // -1
             elif fo.min:
                 a // -1
-            with pytest.raises(FloatingPointError):
+            with pytest.raises(FloatingPointError,
+                    match="divide by zero encountered in floor_divide"):
                 a // 0
-            with pytest.raises(FloatingPointError):
+            with pytest.raises(FloatingPointError,
+                    match="divide by zero encountered in floor_divide"):
                 ac = a.copy()
                 ac //= 0
 
@@ -392,11 +398,13 @@ class TestDivision:
         msg = "Reduce floor integer division check"
         assert div_a == div_lst, msg
 
-        with np.errstate(divide='raise'):
-            with pytest.raises(FloatingPointError):
+        with np.errstate(divide='raise', over='raise'):
+            with pytest.raises(FloatingPointError,
+                    match="divide by zero encountered in reduce"):
                 np.floor_divide.reduce(np.arange(-100, 100, dtype=dtype))
             if fo.min:
-                with pytest.raises(FloatingPointError):
+                with pytest.raises(FloatingPointError,
+                        match='overflow encountered in reduce'):
                     np.floor_divide.reduce(
                         np.array([fo.min, 1, -1], dtype=dtype)
                     )

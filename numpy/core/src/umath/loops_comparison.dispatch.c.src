@@ -3,6 +3,7 @@
  ** sse2 sse42 avx2 avx512f avx512_skx
  ** vsx2 vsx3
  ** neon
+ ** vx vxe
  **/
 #define _UMATHMODULE
 #define _MULTIARRAYMODULE
@@ -22,7 +23,7 @@
  * #sfx    = u8, s8, u16, s16, u32, s32, u64, s64, f32, f64#
  * #len    =  8,  8,  16,  16,  32,  32,  64,  64,  32,  64#
  * #signed =  0,  1,   0,   1,   0,   1,   0,   1,   0,   0#
- * #VECTOR = NPY_SIMD*9, NPY_SIMD_F64#
+ * #VECTOR = NPY_SIMD*8, NPY_SIMD_F32, NPY_SIMD_F64#
  */
 /**begin repeat1
  * #kind = equal, not_equal, less, less_equal#
@@ -298,7 +299,7 @@ static void simd_binary_scalar2_@kind@_b8(char **args, npy_intp len)
  * #bool = 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0#
  * #fp = 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1#
  * #signed = 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0#
- * #VECTOR = NPY_SIMD*10, NPY_SIMD_F64#
+ * #VECTOR = NPY_SIMD*9, NPY_SIMD_F32, NPY_SIMD_F64#
  */
 /**begin repeat1
  * #kind = equal, not_equal, less, less_equal#

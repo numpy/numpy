@@ -1,5 +1,20 @@
+/**
+ * branch /vec(altivec-like) provides the SIMD operations for
+ * both IBM VSX(Power) and VX(ZArch).
+*/
 #ifndef _NPY_SIMD_H_
     #error "Not a standalone header"
+#endif
+
+#if !defined(NPY_HAVE_VX) && !defined(NPY_HAVE_VSX2)
+    #error "require minimum support VX(zarch11) or VSX2(Power8/ISA2.07)"
+#endif
+
+#if defined(NPY_HAVE_VSX) && !defined(__LITTLE_ENDIAN__)
+    #error "VSX support doesn't cover big-endian mode yet, only zarch."
+#endif
+#if defined(NPY_HAVE_VX) && defined(__LITTLE_ENDIAN__)
+    #error "VX(zarch) support doesn't cover little-endian mode."
 #endif
 
 #if defined(__GNUC__) && __GNUC__ <= 7
@@ -15,7 +30,18 @@
 #define NPY_SIMD 128
 #define NPY_SIMD_WIDTH 16
 #define NPY_SIMD_F64 1
+#if defined(NPY_HAVE_VXE) || defined(NPY_HAVE_VSX)
+    #define NPY_SIMD_F32 1
+#else
+    #define NPY_SIMD_F32 0
+#endif
 #define NPY_SIMD_FMA3 1 // native support
+
+#ifdef NPY_HAVE_VX
+    #define NPY_SIMD_BIGENDIAN 1
+#else
+    #define NPY_SIMD_BIGENDIAN 0
+#endif
 
 typedef __vector unsigned char      npyv_u8;
 typedef __vector signed char        npyv_s8;
@@ -25,7 +51,9 @@ typedef __vector unsigned int       npyv_u32;
 typedef __vector signed int         npyv_s32;
 typedef __vector unsigned long long npyv_u64;
 typedef __vector signed long long   npyv_s64;
+#if NPY_SIMD_F32
 typedef __vector float              npyv_f32;
+#endif
 typedef __vector double             npyv_f64;
 
 typedef struct { npyv_u8  val[2]; } npyv_u8x2;
@@ -36,7 +64,9 @@ typedef struct { npyv_u32 val[2]; } npyv_u32x2;
 typedef struct { npyv_s32 val[2]; } npyv_s32x2;
 typedef struct { npyv_u64 val[2]; } npyv_u64x2;
 typedef struct { npyv_s64 val[2]; } npyv_s64x2;
+#if NPY_SIMD_F32
 typedef struct { npyv_f32 val[2]; } npyv_f32x2;
+#endif
 typedef struct { npyv_f64 val[2]; } npyv_f64x2;
 
 typedef struct { npyv_u8  val[3]; } npyv_u8x3;
@@ -47,7 +77,9 @@ typedef struct { npyv_u32 val[3]; } npyv_u32x3;
 typedef struct { npyv_s32 val[3]; } npyv_s32x3;
 typedef struct { npyv_u64 val[3]; } npyv_u64x3;
 typedef struct { npyv_s64 val[3]; } npyv_s64x3;
+#if NPY_SIMD_F32
 typedef struct { npyv_f32 val[3]; } npyv_f32x3;
+#endif
 typedef struct { npyv_f64 val[3]; } npyv_f64x3;
 
 #define npyv_nlanes_u8  16
@@ -67,6 +99,7 @@ typedef struct { npyv_f64 val[3]; } npyv_f64x3;
 #define npyv_b32 __vector __bool int
 #define npyv_b64 __vector __bool long long
 
+#include "utils.h"
 #include "memory.h"
 #include "misc.h"
 #include "reorder.h"
