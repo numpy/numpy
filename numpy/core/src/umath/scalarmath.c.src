@@ -157,6 +157,13 @@ static NPY_INLINE int
  *         npy_long, npy_ulong, npy_longlong, npy_ulonglong#
  * #neg = (1,0)*5#
  */
+
+#if @neg@
+    #define DIVIDEBYZERO_CHECK (b == 0 || (a == NPY_MIN_@NAME@ && b == -1))
+#else
+    #define DIVIDEBYZERO_CHECK (b == 0)
+#endif
+
 static NPY_INLINE int
 @name@_ctype_divide(@type@ a, @type@ b, @type@ *out) {
     if (b == 0) {
@@ -164,8 +171,8 @@ static NPY_INLINE int
         return NPY_FPE_DIVIDEBYZERO;
     }
 #if @neg@
-    else if (b == -1 && a < 0 && a == -a) {
-        *out = a / b;
+    else if (b == -1 && a == NPY_MIN_@NAME@) {
+        *out = NPY_MIN_@NAME@;
         return NPY_FPE_OVERFLOW;
     }
 #endif
@@ -188,7 +195,7 @@ static NPY_INLINE int
 
 static NPY_INLINE int
 @name@_ctype_remainder(@type@ a, @type@ b, @type@ *out) {
-    if (a == 0 || b == 0) {
+    if (DIVIDEBYZERO_CHECK) {
         *out = 0;
         if (b == 0) {
             return NPY_FPE_DIVIDEBYZERO;
@@ -209,6 +216,7 @@ static NPY_INLINE int
 #endif
     return 0;
 }
+#undef DIVIDEBYZERO_CHECK
 /**end repeat**/
 
 /**begin repeat
