@@ -7,6 +7,7 @@ import sys
 import os
 from fractions import Fraction
 from functools import reduce
+from collections import namedtuple
 
 import numpy.core.umath as ncu
 from numpy.core import _umath_tests as ncu_tests
@@ -738,6 +739,84 @@ class TestRemainder:
                 fmod = np.fmod(fnan, fone)
                 assert_(np.isnan(rem), 'dt: %s, rem: %s' % (dt, rem))
                 assert_(np.isnan(fmod), 'dt: %s, fmod: %s' % (dt, rem))
+
+
+class TestDivisionOverflows:
+    import operator
+    result_type = namedtuple('result_type',
+            ['nocast', 'casted'])
+    overflow_results = {
+        np.remainder: result_type('0', '0'),
+        np.fmod: result_type('0', '0'),
+        operator.mod: result_type('0', '0'),
+        operator.floordiv: result_type('np.iinfo(dividend_dtype).min',
+            '-np.iinfo(dividend_dtype).min'),
+        np.floor_divide: result_type('np.iinfo(dividend_dtype).min',
+            '-np.iinfo(dividend_dtype).min'),
+        np.divmod: result_type('(np.iinfo(dividend_dtype).min, 0)',
+            '(-np.iinfo(dividend_dtype).min, 0)')
+    }
+
+    @pytest.mark.parametrize("dividend_dtype",
+            np.sctypes['int'])
+    @pytest.mark.parametrize("divisor_dtype",
+            np.sctypes['int'])
+    @pytest.mark.parametrize("operation",
+            [np.remainder, np.fmod, np.divmod, np.floor_divide,
+             operator.mod, operator.floordiv])
+    @np.errstate(divide='raise', over='raise')
+    def test_overflows(self, dividend_dtype, divisor_dtype, operation):
+        # SIMD tries to perform the operation on as many elements as possible
+        # that is a multiple of the register's size. We resort to the
+        # default implementation for the leftover elements.
+        # We try to cover all paths here.
+        arrays = [np.array([np.iinfo(dividend_dtype).min]*i,
+                           dtype=dividend_dtype) for i in range(1, 129)]
+        divisor = np.array([-1], dtype=divisor_dtype)
+        # If dividend is a larger type than the divisor (`else` case),
+        # then, result will be a larger type than dividend and will not
+        # result in an overflow for `divmod` and `floor_divide`.
+        if np.dtype(dividend_dtype).itemsize >= np.dtype(
+                divisor_dtype).itemsize and operation in (
+                        np.divmod, np.floor_divide,
+                        TestDivisionOverflows.operator.floordiv):
+            with pytest.raises(
+                    FloatingPointError,
+                    match="overflow encountered in"):
+                result = operation(
+                            dividend_dtype(np.iinfo(dividend_dtype).min),
+                            divisor_dtype(-1)
+                        )
+                assert result == eval(self.overflow_results[operation].nocast)
+
+            # Arrays
+            with pytest.raises(FloatingPointError):
+                for a in arrays:
+                    # In case of divmod, we need to flatten the result
+                    # column first as we get a column vector of quotient and
+                    # remainder and a normal flatten of the expected result.
+                    result = np.array(operation(a, divisor)).flatten('f')
+                    expected_array = np.array(
+                            [eval(
+                                self.overflow_results[operation].nocast
+                            )]*len(a)).flatten()
+                    assert_array_equal(result, expected_array)
+        else:
+            # Scalars
+            result = operation(
+                        dividend_dtype(np.iinfo(dividend_dtype).min),
+                        divisor_dtype(-1)
+                    )
+            assert result == eval(self.overflow_results[operation].casted)
+
+            # Arrays
+            for a in arrays:
+                # See above comment on flatten
+                result = np.array(operation(a, divisor)).flatten('f')
+                expected_array = np.array(
+                        [eval(self.overflow_results[operation].casted)]*len(a)
+                        ).flatten()
+                assert_array_equal(result, expected_array)
 
 
 class TestCbrt:
