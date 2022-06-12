@@ -42,7 +42,9 @@ def configuration(parent_package='', top_path=None):
                 size_t_size = sysconfig.get_config_var("SIZEOF_SIZE_T")
                 if size_t_size:
                     maxsize = 2**(size_t_size - 1) - 1
-                else:  # handle windows
+                else:
+                    # We prefer using sysconfig as it allows cross-compilation
+                    # but the information may be missing (e.g. on windows).
                     maxsize = sys.maxsize
                 if maxsize > 2**32:
                     # Build lapack-lite in 64-bit integer mode.
