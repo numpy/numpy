@@ -39,7 +39,12 @@ def configuration(parent_package='', top_path=None):
         class numpy_linalg_lapack_lite(system_info):
             def calc_info(self):
                 info = {'language': 'c'}
-                if sysconfig.get_config_var("SIZEOF_SIZE_T") >= 8:
+                size_t_size = sysconfig.get_config_var("SIZEOF_SIZE_T")
+                if size_t_size:
+                    maxsize = 2**(size_t_size - 1) - 1
+                else: # handle windows
+                    maxsize = sys.maxsize
+                if maxsize > 2**32:
                     # Build lapack-lite in 64-bit integer mode.
                     # The suffix is arbitrary (lapack_lite symbols follow it),
                     # but use the "64_" convention here.
