@@ -8,4 +8,6 @@ now due to the fact that the logic is aligned with item assignment::
     # is now identical to:
     arr[0] = scalar
 
-Previously casting may have produced slightly different answers when using values that could not be represented in the target `dtype` or when using `object`s.
+Previously casting may have produced slightly different answers when using
+values that could not be represented in the target ``dtype`` or when the
+target had ``object`` dtype.
