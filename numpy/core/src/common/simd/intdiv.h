@@ -89,7 +89,9 @@ NPY_FINLINE unsigned npyv__bitscan_revnz_u32(npy_uint32 a)
     unsigned long rl;
     (void)_BitScanReverse(&rl, (unsigned long)a);
     r = (unsigned)rl;
-#elif defined(NPY_HAVE_SSE2) && (defined(__GNUC__) || defined(__clang__) || defined(__INTEL_COMPILER))
+
+#elif defined(NPY_HAVE_SSE2) && (defined(__GNUC__) || defined(__clang__) || defined(__INTEL_COMPILER)) \
+    &&  (defined(NPY_CPU_X86) || defined(NPY_CPU_AMD64))
     __asm__("bsr %1, %0" : "=r" (r) : "r"(a));
 #elif defined(__GNUC__) || defined(__clang__)
     r = 31 - __builtin_clz(a); // performs on arm -> clz, ppc -> cntlzw
