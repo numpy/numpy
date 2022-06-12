@@ -4036,6 +4036,12 @@ class TestMaskedArrayMathMethods:
         assert_equal(a.max(-1), [3, 6])
         assert_equal(a.max(1), [3, 6])
 
+    def test_mean_overflow(self):
+        # Test overflow in masked arrays
+        # gh-20272
+        a = masked_array(np.full((10000, 10000), 65535, dtype=np.uint16),
+                         mask=np.zeros((10000, 10000)))
+        assert_equal(a.mean(), 65535.0)
 
 class TestMaskedArrayMathMethodsComplex:
     # Test class for miscellaneous MaskedArrays methods.
