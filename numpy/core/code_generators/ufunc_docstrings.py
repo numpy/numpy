@@ -2013,9 +2013,6 @@ add_newdoc('numpy.core.umath', 'log',
     number of `z` such that `exp(z) = x`. The convention is to return the
     `z` whose imaginary part lies in `(-pi, pi]`.
 
-    In the cases where x array element input value tends to -1. 
-    The result is in the vicinity of `-pi`, that it evaluates to `-pi`.
-
     For real-valued input data types, `log` always returns real output. For
     each value that cannot be expressed as a real number or infinity, it
     yields ``nan`` and sets the `invalid` floating point error flag.
@@ -2023,7 +2020,11 @@ add_newdoc('numpy.core.umath', 'log',
     For complex-valued input, `log` is a complex analytical function that
     has a branch cut `[-inf, 0]` and is continuous from above on it. `log`
     handles the floating-point negative zero as an infinitesimal negative
-    number, conforming to the C99 standard.
+    number, conforming to the C99 standard. 
+    
+    In the cases where the input has a negative real part and a very small
+    negative complex part (approaching 0), The result is so close to `-pi`
+    that it evaluates to exactly `-pi`.
 
     References
     ----------
@@ -2078,6 +2079,10 @@ add_newdoc('numpy.core.umath', 'log10',
     `log10` handles the floating-point negative zero as an infinitesimal
     negative number, conforming to the C99 standard.
 
+    In the cases where the input has a negative real part and a very small
+    negative complex part (approaching 0), The result is so close to `-pi`
+    that it evaluates to exactly `-pi`.
+
     References
     ----------
     .. [1] M. Abramowitz and I.A. Stegun, "Handbook of Mathematical Functions",
@@ -2131,6 +2136,10 @@ add_newdoc('numpy.core.umath', 'log2',
     has a branch cut `[-inf, 0]` and is continuous from above on it. `log2`
     handles the floating-point negative zero as an infinitesimal negative
     number, conforming to the C99 standard.
+
+    In the cases where the input has a negative real part and a very small
+    negative complex part (approaching 0), The result is so close to `-pi`
+    that it evaluates to exactly `-pi`.
 
     Examples
     --------
