@@ -584,10 +584,15 @@ static NPY_INLINE int
 /**begin repeat
  * #name = byte, short, int, long, longlong#
  * #type = npy_byte, npy_short, npy_int, npy_long, npy_longlong#
+ * #NAME = BYTE, SHORT, INT, LONG, LONGLONG#
  */
 static NPY_INLINE int
 @name@_ctype_absolute(@type@ a, @type@ *out)
 {
+    if (a == NPY_MIN_@NAME@) {
+        *out = a;
+        return NPY_FPE_OVERFLOW;
+    }
     *out = (a < 0 ? -a : a);
     return 0;
 }
@@ -1564,8 +1569,23 @@ static PyObject *
 
 
     val = PyArrayScalar_VAL(a, @Name@);
+    int retstatus = @name@_ctype_@oper@(val, &out);
 
-    @name@_ctype_@oper@(val, &out);
+    if (retstatus) {
+        int bufsize, errmask;
+        PyObject *errobj;
+
+        if (PyUFunc_GetPyValues("@name@_scalars", &bufsize, &errmask,
+                                &errobj) < 0) {
+            return NULL;
+        }
+        int first = 1;
+        if (PyUFunc_handlefperr(errmask, errobj, retstatus, &first)) {
+            Py_XDECREF(errobj);
+            return NULL;
+        }
+        Py_XDECREF(errobj);
+    }
 
     /*
      * TODO: Complex absolute should check floating point flags.
