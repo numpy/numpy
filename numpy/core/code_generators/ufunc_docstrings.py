@@ -2122,9 +2122,6 @@ add_newdoc('numpy.core.umath', 'log2',
     number of `z` such that `2**z = x`. The convention is to return the `z`
     whose imaginary part lies in `(-pi, pi]`.
 
-    In the cases where x array element input value tends to -1. 
-    The result is in the vicinity of `-pi`, that it evaluates to `-pi`.
-
     For real-valued input data types, `log2` always returns real output.
     For each value that cannot be expressed as a real number or infinity,
     it yields ``nan`` and sets the `invalid` floating point error flag.
