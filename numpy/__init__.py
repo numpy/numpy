@@ -274,6 +274,7 @@ else:
     def __getattr__(attr):
         # Warn for expired attributes, and return a dummy function
         # that always raises an exception.
+        import warnings
         try:
             msg = __expired_functions__[attr]
         except KeyError:
@@ -314,7 +315,7 @@ else:
     def __dir__():
         public_symbols = globals().keys() | {'Tester', 'testing'}
         public_symbols -= {
-            "core", "matrixlib", "os", "sys", "warnings"
+            "core", "matrixlib",
         }
         return list(public_symbols)
 
@@ -421,3 +422,6 @@ else:
 
 # get the version using versioneer
 from .version import __version__, git_revision as __git_version__
+
+# Remove symbols imported for internal use
+del sys, warnings
