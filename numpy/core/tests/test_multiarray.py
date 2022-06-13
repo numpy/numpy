@@ -68,8 +68,8 @@ def _aligned_zeros(shape, dtype=float, order="C", align=None):
     # Note: slices producing 0-size arrays do not necessarily change
     # data pointer --- so we use and allocate size+1
     buf = buf[offset:offset+size+1][:-1]
+    buf.fill(0)
     data = np.ndarray(shape, dtype, buf, order=order)
-    data.fill(0)
     return data
 
 

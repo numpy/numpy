@@ -613,6 +613,7 @@ string_unicode_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
     return cls;
 }
 
+
 static PyArray_DTypeMeta *
 datetime_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
 {

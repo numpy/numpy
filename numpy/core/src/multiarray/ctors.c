@@ -465,54 +465,11 @@ PyArray_AssignFromCache_Recursive(
         PyArrayObject *self, const int ndim, coercion_cache_obj **cache)
 {
     /* Consume first cache element by extracting information and freeing it */
-    PyObject *original_obj = (*cache)->converted_obj;
     PyObject *obj = (*cache)->arr_or_sequence;
     Py_INCREF(obj);
     npy_bool sequence = (*cache)->sequence;
     int depth = (*cache)->depth;
     *cache = npy_unlink_coercion_cache(*cache);
-
-    /*
-     * The maximum depth is special (specifically for objects), but usually
-     * unrolled in the sequence branch below.
-     */
-    if (NPY_UNLIKELY(depth == ndim)) {
-        /*
-         * We have reached the maximum depth. We should simply assign to the
-         * element in principle. There is one exception. If this is a 0-D
-         * array being stored into a 0-D array (but we do not reach here then).
-         */
-        if (PyArray_ISOBJECT(self)) {
-            assert(ndim != 0);  /* guaranteed by PyArray_AssignFromCache */
-            assert(PyArray_NDIM(self) == 0);
-            Py_DECREF(obj);
-            return PyArray_Pack(PyArray_DESCR(self), PyArray_BYTES(self),
-                                original_obj);
-        }
-        if (sequence) {
-            /*
-             * Sanity check which may be removed, the error is raised already
-             * in `PyArray_DiscoverDTypeAndShape`.
-             */
-            assert(0);
-            PyErr_SetString(PyExc_RuntimeError,
-                    "setting an array element with a sequence");
-            goto fail;
-        }
-        else if (original_obj != obj || !PyArray_CheckExact(obj)) {
-            /*
-             * If the leave node is an array-like, but not a numpy array,
-             * we pretend it is an arbitrary scalar.  This means that in
-             * most cases (where the dtype is int or float), we will end
-             * up using float(array-like), or int(array-like).  That does
-             * not support general casting, but helps Quantity and masked
-             * arrays, because it allows them to raise an error when
-             * `__float__()` or `__int__()` is called.
-             */
-            Py_DECREF(obj);
-            return PyArray_SETITEM(self, PyArray_BYTES(self), original_obj);
-        }
-    }
 
     /* The element is either a sequence, or an array */
     if (!sequence) {
@@ -535,19 +492,23 @@ PyArray_AssignFromCache_Recursive(
         for (npy_intp i = 0; i < length; i++) {
             PyObject *value = PySequence_Fast_GET_ITEM(obj, i);
 
-            if (*cache == NULL || (*cache)->converted_obj != value ||
-                        (*cache)->depth != depth + 1) {
-                if (ndim != depth + 1) {
-                    PyErr_SetString(PyExc_RuntimeError,
-                            "Inconsistent object during array creation? "
-                            "Content of sequences changed (now too shallow).");
-                    goto fail;
-                }
-                /* Straight forward assignment of elements */
+            if (ndim == depth + 1) {
+                /*
+                 * Straight forward assignment of elements.  Note that it is
+                 * possible for such an element to be a 0-D array or array-like.
+                 * `PyArray_Pack` supports arrays as well as we want: We
+                 * support exact NumPy arrays, but at this point ignore others.
+                 * (Please see the `PyArray_Pack` function comment if this
+                 * rightly confuses you.)
+                 */
                 char *item;
                 item = (PyArray_BYTES(self) + i * PyArray_STRIDES(self)[0]);
                 if (PyArray_Pack(PyArray_DESCR(self), item, value) < 0) {
                     goto fail;
+                }
+                /* If this was an array(-like) we still need to unlike int: */
+                if (*cache != NULL && (*cache)->converted_obj == value) {
+                    *cache = npy_unlink_coercion_cache(*cache);
                 }
             }
             else {
