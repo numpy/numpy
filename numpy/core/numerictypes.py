@@ -556,6 +556,7 @@ typeDict = sctypeDict
 _kind_list = ['b', 'u', 'i', 'f', 'c', 'S', 'U', 'V', 'O', 'M', 'm']
 
 __test_types = '?'+typecodes['AllInteger'][:-2]+typecodes['AllFloat']+'O'
+__test_types_dtype = [dtype(t) for t in __test_types]
 __len_test_types = len(__test_types)
 
 # Keep incrementing until a common type both can be coerced to
@@ -571,6 +572,7 @@ def _find_common_coerce(a, b):
 
 # Find a data-type that all data-types in a list can be coerced to
 def _can_coerce_all(dtypelist, start=0):
+    dtypelist = list(set(dtypelist))
     N = len(dtypelist)
     if N == 0:
         return None
@@ -578,7 +580,7 @@ def _can_coerce_all(dtypelist, start=0):
         return dtypelist[0]
     thisind = start
     while thisind < __len_test_types:
-        newdtype = dtype(__test_types[thisind])
+        newdtype = __test_types_dtype[thisind]
         numcoerce = len([x for x in dtypelist if newdtype >= x])
         if numcoerce == N:
             return newdtype
