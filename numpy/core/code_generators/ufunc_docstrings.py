@@ -2020,7 +2020,7 @@ add_newdoc('numpy.core.umath', 'log',
     For complex-valued input, `log` is a complex analytical function that
     has a branch cut `[-inf, 0]` and is continuous from above on it. `log`
     handles the floating-point negative zero as an infinitesimal negative
-    number, conforming to the C99 standard. 
+    number, conforming to the C99 standard.
     
     In the cases where the input has a negative real part and a very small
     negative complex part (approaching 0), The result is so close to `-pi`
@@ -2066,9 +2066,6 @@ add_newdoc('numpy.core.umath', 'log10',
     Logarithm is a multivalued function: for each `x` there is an infinite
     number of `z` such that `10**z = x`. The convention is to return the
     `z` whose imaginary part lies in `(-pi, pi]`.
-
-    In the cases where x array element input value tends to -1. 
-    The result is in the vicinity of `-pi`, that it evaluates to `-pi`.
 
     For real-valued input data types, `log10` always returns real output.
     For each value that cannot be expressed as a real number or infinity,
