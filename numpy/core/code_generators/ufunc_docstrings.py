@@ -2023,7 +2023,7 @@ add_newdoc('numpy.core.umath', 'log',
     number, conforming to the C99 standard.
     
     In the cases where the input has a negative real part and a very small
-    negative complex part (approaching 0), The result is so close to `-pi`
+    negative complex part (approaching 0), the result is so close to `-pi`
     that it evaluates to exactly `-pi`.
 
     References
@@ -2077,7 +2077,7 @@ add_newdoc('numpy.core.umath', 'log10',
     negative number, conforming to the C99 standard.
 
     In the cases where the input has a negative real part and a very small
-    negative complex part (approaching 0), The result is so close to `-pi`
+    negative complex part (approaching 0), the result is so close to `-pi`
     that it evaluates to exactly `-pi`.
 
     References
@@ -2132,7 +2132,7 @@ add_newdoc('numpy.core.umath', 'log2',
     number, conforming to the C99 standard.
 
     In the cases where the input has a negative real part and a very small
-    negative complex part (approaching 0), The result is so close to `-pi`
+    negative complex part (approaching 0), the result is so close to `-pi`
     that it evaluates to exactly `-pi`.
 
     Examples
