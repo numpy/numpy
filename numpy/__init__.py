@@ -424,4 +424,4 @@ else:
 from .version import __version__, git_revision as __git_version__
 
 # Remove symbols imported for internal use
-del sys, warnings
+del sys, warnings, os
