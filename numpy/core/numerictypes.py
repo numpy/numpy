@@ -648,11 +648,8 @@ def find_common_type(array_types, scalar_types):
     dtype('complex128')
 
     """
-    array_types = [dtype(x) for x in array_types]
-    scalar_types = [dtype(x) for x in scalar_types]
-
-    maxa = _can_coerce_all(array_types)
-    maxsc = _can_coerce_all(scalar_types)
+    maxa = _can_coerce_all([dtype(x) for x in array_types]) if array_types else None
+    maxsc = _can_coerce_all([dtype(x) for x in scalar_types]) if scalar_types else None
 
     if maxa is None:
         return maxsc
