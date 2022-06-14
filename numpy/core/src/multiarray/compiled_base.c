@@ -1,9 +1,10 @@
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#define _MULTIARRAYMODULE
+
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <structmember.h>
-#include <string.h>
 
-#define _MULTIARRAYMODULE
 #include "numpy/arrayobject.h"
 #include "numpy/npy_3kcompat.h"
 #include "numpy/npy_math.h"
@@ -14,6 +15,8 @@
 #include "ctors.h"
 #include "common.h"
 #include "simd/simd.h"
+
+#include <string.h>
 
 typedef enum {
     PACK_ORDER_LITTLE = 0,
@@ -1390,11 +1393,7 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *args)
 {
     PyObject *obj;
     PyObject *str;
-    #if PY_VERSION_HEX >= 0x030700A2 && (!defined(PYPY_VERSION_NUM) || PYPY_VERSION_NUM > 0x07030300)
     const char *docstr;
-    #else
-    char *docstr;
-    #endif
     static char *msg = "already has a different docstring";
 
     /* Don't add docstrings */
@@ -1425,9 +1424,26 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *args)
         PyCFunctionObject *new = (PyCFunctionObject *)obj;
         _ADDDOC(new->m_ml->ml_doc, new->m_ml->ml_name);
     }
-    else if (Py_TYPE(obj) == &PyType_Type) {
+    else if (PyObject_TypeCheck(obj, &PyType_Type)) {
+        /*
+         * We add it to both `tp_doc` and `__doc__` here.  Note that in theory
+         * `tp_doc` extracts the signature line, but we currently do not use
+         * it.  It may make sense to only add it as `__doc__` and
+         * `__text_signature__` to the dict in the future.
+         * The dictionary path is only necessary for heaptypes (currently not
+         * used) and metaclasses.
+         * If `__doc__` as stored in `tp_dict` is None, we assume this was
+         * filled in by `PyType_Ready()` and should also be replaced.
+         */
         PyTypeObject *new = (PyTypeObject *)obj;
         _ADDDOC(new->tp_doc, new->tp_name);
+        if (new->tp_dict != NULL && PyDict_CheckExact(new->tp_dict) &&
+                PyDict_GetItemString(new->tp_dict, "__doc__") == Py_None) {
+            /* Warning: Modifying `tp_dict` is not generally safe! */
+            if (PyDict_SetItemString(new->tp_dict, "__doc__", str) < 0) {
+                return NULL;
+            }
+        }
     }
     else if (Py_TYPE(obj) == &PyMemberDescr_Type) {
         PyMemberDescrObject *new = (PyMemberDescrObject *)obj;

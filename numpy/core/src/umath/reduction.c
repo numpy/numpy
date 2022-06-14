@@ -6,15 +6,15 @@
  *
  * See LICENSE.txt for the license.
  */
-#define _UMATHMODULE
-#define _MULTIARRAYMODULE
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#define _MULTIARRAYMODULE
+#define _UMATHMODULE
 
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
 #include "npy_config.h"
-#include <numpy/arrayobject.h>
+#include "numpy/arrayobject.h"
 
 #include "npy_pycompat.h"
 #include "ctors.h"
@@ -68,7 +68,7 @@ count_axes(int ndim, const npy_bool *axis_flags)
  * Returns -1 if an error occurred, and otherwise the reduce arrays size,
  * which is the number of elements already initialized.
  */
-NPY_NO_EXPORT int
+static npy_intp
 PyArray_CopyInitialReduceValues(
                     PyArrayObject *result, PyArrayObject *operand,
                     const npy_bool *axis_flags, const char *funcname,
@@ -145,14 +145,12 @@ PyArray_CopyInitialReduceValues(
  * boilerplate code, just calling the appropriate inner loop function where
  * necessary.
  *
+ * context     : The ArrayMethod context (with ufunc, method, and descriptors).
  * operand     : The array to be reduced.
  * out         : NULL, or the array into which to place the result.
  * wheremask   : NOT YET SUPPORTED, but this parameter is placed here
  *               so that support can be added in the future without breaking
  *               API compatibility. Pass in NULL.
- * operand_dtype : The dtype the inner loop expects for the operand.
- * result_dtype : The dtype the inner loop expects for the result.
- * casting     : The casting rule to apply to the operands.
  * axis_flags  : Flags indicating the reduction axes of 'operand'.
  * reorderable : If True, the reduction being done is reorderable, which
  *               means specifying multiple axes of reduction at once is ok,
@@ -166,7 +164,7 @@ PyArray_CopyInitialReduceValues(
  * identity    : If Py_None, PyArray_CopyInitialReduceValues is used, otherwise
  *               this value is used to initialize the result to
  *               the reduction's unit.
- * loop        : The loop which does the reduction.
+ * loop        : `reduce_loop` from `ufunc_object.c`.  TODO: Refactor
  * data        : Data which is passed to the inner loop.
  * buffersize  : Buffer size for the iterator. For the default, pass in 0.
  * funcname    : The name of the reduction function, for error messages.
@@ -182,18 +180,13 @@ PyArray_CopyInitialReduceValues(
  * generalized ufuncs!)
  */
 NPY_NO_EXPORT PyArrayObject *
-PyUFunc_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
-                      PyArrayObject *wheremask,
-                      PyArray_Descr *operand_dtype,
-                      PyArray_Descr *result_dtype,
-                      NPY_CASTING casting,
-                      npy_bool *axis_flags, int reorderable,
-                      int keepdims,
-                      PyObject *identity,
-                      PyArray_ReduceLoopFunc *loop,
-                      void *data, npy_intp buffersize, const char *funcname,
-                      int errormask)
+PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
+        PyArrayObject *operand, PyArrayObject *out, PyArrayObject *wheremask,
+        npy_bool *axis_flags, int reorderable, int keepdims,
+        PyObject *identity, PyArray_ReduceLoopFunc *loop,
+        void *data, npy_intp buffersize, const char *funcname, int errormask)
 {
+    assert(loop != NULL);
     PyArrayObject *result = NULL;
     npy_intp skip_first_count = 0;
 
@@ -201,7 +194,9 @@ PyUFunc_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
     NpyIter *iter = NULL;
     PyArrayObject *op[3];
     PyArray_Descr *op_dtypes[3];
-    npy_uint32 flags, op_flags[3];
+    npy_uint32 it_flags, op_flags[3];
+    /* Loop auxdata (must be freed on error) */
+    NpyAuxData *auxdata = NULL;
 
     /* More than one axis means multiple orders are possible */
     if (!reorderable && count_axes(PyArray_NDIM(operand), axis_flags) > 1) {
@@ -224,10 +219,10 @@ PyUFunc_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
     /* Set up the iterator */
     op[0] = out;
     op[1] = operand;
-    op_dtypes[0] = result_dtype;
-    op_dtypes[1] = operand_dtype;
+    op_dtypes[0] = context->descriptors[0];
+    op_dtypes[1] = context->descriptors[1];
 
-    flags = NPY_ITER_BUFFERED |
+    it_flags = NPY_ITER_BUFFERED |
             NPY_ITER_EXTERNAL_LOOP |
             NPY_ITER_GROWINNER |
             NPY_ITER_DONT_NEGATE_STRIDES |
@@ -293,8 +288,8 @@ PyUFunc_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
         }
     }
 
-    iter = NpyIter_AdvancedNew(wheremask == NULL ? 2 : 3, op, flags,
-                               NPY_KEEPORDER, casting,
+    iter = NpyIter_AdvancedNew(wheremask == NULL ? 2 : 3, op, it_flags,
+                               NPY_KEEPORDER, NPY_UNSAFE_CASTING,
                                op_flags,
                                op_dtypes,
                                PyArray_NDIM(operand), op_axes, NULL, buffersize);
@@ -304,11 +299,20 @@ PyUFunc_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
 
     result = NpyIter_GetOperandArray(iter)[0];
 
+    PyArrayMethod_StridedLoop *strided_loop;
+    NPY_ARRAYMETHOD_FLAGS flags = 0;
+
+    int needs_api = (flags & NPY_METH_REQUIRES_PYAPI) != 0;
+    needs_api |= NpyIter_IterationNeedsAPI(iter);
+    if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
+        /* Start with the floating-point exception flags cleared */
+        npy_clear_floatstatus_barrier((char*)&iter);
+    }
+
     /*
      * Initialize the result to the reduction unit if possible,
      * otherwise copy the initial values and get a view to the rest.
      */
-
     if (identity != Py_None) {
         if (PyArray_FillWithScalar(result, identity) < 0) {
             goto fail;
@@ -331,15 +335,30 @@ PyUFunc_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
         goto fail;
     }
 
-    /* Start with the floating-point exception flags cleared */
-    npy_clear_floatstatus_barrier((char*)&iter);
+    /*
+     * Note that we need to ensure that the iterator is reset before getting
+     * the fixed strides.  (The buffer information is uninitialized before.)
+     */
+    npy_intp fixed_strides[3];
+    NpyIter_GetInnerFixedStrideArray(iter, fixed_strides);
+    if (wheremask != NULL) {
+        if (PyArrayMethod_GetMaskedStridedLoop(context,
+                1, fixed_strides, &strided_loop, &auxdata, &flags) < 0) {
+            goto fail;
+        }
+    }
+    else {
+        if (context->method->get_strided_loop(context,
+                1, 0, fixed_strides, &strided_loop, &auxdata, &flags) < 0) {
+            goto fail;
+        }
+    }
 
     if (NpyIter_GetIterSize(iter) != 0) {
         NpyIter_IterNextFunc *iternext;
         char **dataptr;
         npy_intp *strideptr;
         npy_intp *countptr;
-        int needs_api;
 
         iternext = NpyIter_GetIterNext(iter, NULL);
         if (iternext == NULL) {
@@ -349,26 +368,18 @@ PyUFunc_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
         strideptr = NpyIter_GetInnerStrideArray(iter);
         countptr = NpyIter_GetInnerLoopSizePtr(iter);
 
-        needs_api = NpyIter_IterationNeedsAPI(iter);
-
-        /* Straightforward reduction */
-        if (loop == NULL) {
-            PyErr_Format(PyExc_RuntimeError,
-                    "reduction operation %s did not supply an "
-                    "inner loop function", funcname);
-            goto fail;
-        }
-
-        if (loop(iter, dataptr, strideptr, countptr,
-                        iternext, needs_api, skip_first_count, data) < 0) {
+        if (loop(context, strided_loop, auxdata,
+                iter, dataptr, strideptr, countptr, iternext,
+                needs_api, skip_first_count) < 0) {
             goto fail;
         }
     }
 
-    /* Check whether any errors occurred during the loop */
-    if (PyErr_Occurred() ||
-            _check_ufunc_fperr(errormask, NULL, "reduce") < 0) {
-        goto fail;
+    if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
+        /* NOTE: We could check float errors even on error */
+        if (_check_ufunc_fperr(errormask, NULL, "reduce") < 0) {
+            goto fail;
+        }
     }
 
     if (out != NULL) {
@@ -376,6 +387,7 @@ PyUFunc_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
     }
     Py_INCREF(result);
 
+    NPY_AUXDATA_FREE(auxdata);
     if (!NpyIter_Deallocate(iter)) {
         Py_DECREF(result);
         return NULL;
@@ -383,6 +395,7 @@ PyUFunc_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
     return result;
 
 fail:
+    NPY_AUXDATA_FREE(auxdata);
     if (iter != NULL) {
         NpyIter_Deallocate(iter);
     }

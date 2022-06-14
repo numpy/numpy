@@ -1,6 +1,7 @@
 """ Test functions for limits module.
 
 """
+import warnings
 import numpy as np
 from numpy.core import finfo, iinfo
 from numpy import half, single, double, longdouble
@@ -45,9 +46,10 @@ class TestFinfo:
                        [np.float16, np.float32, np.float64, np.complex64,
                         np.complex128]))
         for dt1, dt2 in dts:
-            for attr in ('bits', 'eps', 'epsneg', 'iexp', 'machar', 'machep',
+            for attr in ('bits', 'eps', 'epsneg', 'iexp', 'machep',
                          'max', 'maxexp', 'min', 'minexp', 'negep', 'nexp',
-                         'nmant', 'precision', 'resolution', 'tiny'):
+                         'nmant', 'precision', 'resolution', 'tiny',
+                         'smallest_normal', 'smallest_subnormal'):
                 assert_equal(getattr(finfo(dt1), attr),
                              getattr(finfo(dt2), attr), attr)
         assert_raises(ValueError, finfo, 'i4')
@@ -110,6 +112,28 @@ def test_known_types():
     elif (ld_ma.it, ld_ma.maxexp) == (112, 16384) and bytes == 16:
         # IEE 754 128-bit
         assert_ma_equal(ld_ma, _float_ma[128])
+
+
+def test_subnormal_warning():
+    """Test that the subnormal is zero warning is not being raised."""
+    with np.errstate(all='ignore'):
+        ld_ma = _discovered_machar(np.longdouble)
+    bytes = np.dtype(np.longdouble).itemsize
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter('always')
+        if (ld_ma.it, ld_ma.maxexp) == (63, 16384) and bytes in (12, 16):
+            # 80-bit extended precision
+            ld_ma.smallest_subnormal
+            assert len(w) == 0
+        elif (ld_ma.it, ld_ma.maxexp) == (112, 16384) and bytes == 16:
+            # IEE 754 128-bit
+            ld_ma.smallest_subnormal
+            assert len(w) == 0
+        else:
+            # Double double
+            ld_ma.smallest_subnormal
+            # This test may fail on some platforms
+            assert len(w) == 0
 
 
 def test_plausible_finfo():

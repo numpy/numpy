@@ -1,11 +1,20 @@
-from typing import List, Any
+import sys
+from typing import Any
 import numpy as np
+
 
 class Index:
     def __index__(self) -> int:
         return 0
 
-class SubClass(np.ndarray): ...
+
+class SubClass(np.ndarray):
+    pass
+
+
+def func(i: int, j: int, **kwargs: Any) -> SubClass:
+    return B
+
 
 i8 = np.int64(1)
 
@@ -14,8 +23,8 @@ B = A.view(SubClass).copy()
 B_stack = np.array([[1], [1]]).view(SubClass)
 C = [1]
 
-def func(i: int, j: int, **kwargs: Any) -> SubClass:
-    return B
+np.ndarray(Index())
+np.ndarray([Index()])
 
 np.array(1, dtype=float)
 np.array(1, copy=False)

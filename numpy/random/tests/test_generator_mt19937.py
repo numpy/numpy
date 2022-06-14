@@ -136,12 +136,6 @@ class TestMultinomial:
         contig = random.multinomial(100, pvals=np.ascontiguousarray(pvals))
         assert_array_equal(non_contig, contig)
 
-    def test_multidimensional_pvals(self):
-        assert_raises(ValueError, random.multinomial, 10, [[0, 1]])
-        assert_raises(ValueError, random.multinomial, 10, [[0], [1]])
-        assert_raises(ValueError, random.multinomial, 10, [[[0], [1]], [[1], [0]]])
-        assert_raises(ValueError, random.multinomial, 10, np.array([[0, 1], [1, 0]]))
-
     def test_multinomial_pvals_float32(self):
         x = np.array([9.9e-01, 9.9e-01, 1.0e-09, 1.0e-09, 1.0e-09, 1.0e-09,
                       1.0e-09, 1.0e-09, 1.0e-09, 1.0e-09], dtype=np.float32)
@@ -774,6 +768,18 @@ class TestRandomDist:
         desired = 0.0969992
         assert_array_almost_equal(actual, desired, decimal=7)
 
+    @pytest.mark.parametrize('dtype, uint_view_type',
+                             [(np.float32, np.uint32),
+                              (np.float64, np.uint64)])
+    def test_random_distribution_of_lsb(self, dtype, uint_view_type):
+        random = Generator(MT19937(self.seed))
+        sample = random.random(100000, dtype=dtype)
+        num_ones_in_lsb = np.count_nonzero(sample.view(uint_view_type) & 1)
+        # The probability of a 1 in the least significant bit is 0.25.
+        # With a sample size of 100000, the probability that num_ones_in_lsb
+        # is outside the following range is less than 5e-11.
+        assert 24100 < num_ones_in_lsb < 25900
+
     def test_random_unsupported_type(self):
         assert_raises(TypeError, random.random, dtype='int32')
 
@@ -1014,6 +1020,13 @@ class TestRandomDist:
         arr = np.ones((3, 2))
         assert_raises(np.AxisError, random.shuffle, arr, 2)
 
+    def test_shuffle_not_writeable(self):
+        random = Generator(MT19937(self.seed))
+        a = np.zeros(5)
+        a.flags.writeable = False
+        with pytest.raises(ValueError, match='read-only'):
+            random.shuffle(a)
+
     def test_permutation(self):
         random = Generator(MT19937(self.seed))
         alist = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0]
@@ -1109,6 +1122,12 @@ class TestRandomDist:
         x = np.ones((3, 5))
         with pytest.raises(TypeError, match='Cannot cast'):
             random.permuted(x, axis=1, out=out)
+
+    def test_permuted_not_writeable(self):
+        x = np.zeros((2, 5))
+        x.flags.writeable = False
+        with pytest.raises(ValueError, match='read-only'):
+            random.permuted(x, axis=1, out=x)
 
     def test_beta(self):
         random = Generator(MT19937(self.seed))
@@ -1466,6 +1485,13 @@ class TestRandomDist:
         with assert_raises(ValueError):
             x = random.negative_binomial(1, 0)
 
+    def test_negative_binomial_invalid_p_n_combination(self):
+        # Verify that values of p and n that would result in an overflow
+        # or infinite loop raise an exception.
+        with np.errstate(invalid='ignore'):
+            assert_raises(ValueError, random.negative_binomial, 2**62, 0.1)
+            assert_raises(ValueError, random.negative_binomial, [2**62], [0.1])
+
     def test_noncentral_chisquare(self):
         random = Generator(MT19937(self.seed))
         actual = random.noncentral_chisquare(df=5, nonc=5, size=(3, 2))
@@ -1760,6 +1786,7 @@ class TestRandomDist:
     @pytest.mark.parametrize("mu", [-7., -np.pi, -3.1, np.pi, 3.2])
     @pytest.mark.parametrize("kappa", [1e-9, 1e-6, 1, 1e3, 1e15])
     def test_vonmises_large_kappa_range(self, mu, kappa):
+        random = Generator(MT19937(self.seed))
         r = random.vonmises(mu, kappa, 50)
         assert_(np.all(r > -np.pi) and np.all(r <= np.pi))
 
@@ -2348,6 +2375,64 @@ class TestBroadcast:
                             [2, 3, 6, 4, 2, 3]], dtype=np.int64)
         assert_array_equal(actual, desired)
 
+        random = Generator(MT19937(self.seed))
+        actual = random.multinomial([5, 20], [[1 / 6.] * 6] * 2)
+        desired = np.array([[0, 0, 2, 1, 2, 0],
+                            [2, 3, 6, 4, 2, 3]], dtype=np.int64)
+        assert_array_equal(actual, desired)
+
+        random = Generator(MT19937(self.seed))
+        actual = random.multinomial([[5], [20]], [[1 / 6.] * 6] * 2)
+        desired = np.array([[[0, 0, 2, 1, 2, 0],
+                             [0, 0, 2, 1, 1, 1]],
+                            [[4, 2, 3, 3, 5, 3],
+                             [7, 2, 2, 1, 4, 4]]], dtype=np.int64)
+        assert_array_equal(actual, desired)
+
+    @pytest.mark.parametrize("n", [10,
+                                   np.array([10, 10]),
+                                   np.array([[[10]], [[10]]])
+                                   ]
+                             )
+    def test_multinomial_pval_broadcast(self, n):
+        random = Generator(MT19937(self.seed))
+        pvals = np.array([1 / 4] * 4)
+        actual = random.multinomial(n, pvals)
+        n_shape = tuple() if isinstance(n, int) else n.shape
+        expected_shape = n_shape + (4,)
+        assert actual.shape == expected_shape
+        pvals = np.vstack([pvals, pvals])
+        actual = random.multinomial(n, pvals)
+        expected_shape = np.broadcast_shapes(n_shape, pvals.shape[:-1]) + (4,)
+        assert actual.shape == expected_shape
+
+        pvals = np.vstack([[pvals], [pvals]])
+        actual = random.multinomial(n, pvals)
+        expected_shape = np.broadcast_shapes(n_shape, pvals.shape[:-1])
+        assert actual.shape == expected_shape + (4,)
+        actual = random.multinomial(n, pvals, size=(3, 2) + expected_shape)
+        assert actual.shape == (3, 2) + expected_shape + (4,)
+
+        with pytest.raises(ValueError):
+            # Ensure that size is not broadcast
+            actual = random.multinomial(n, pvals, size=(1,) * 6)
+
+    def test_invalid_pvals_broadcast(self):
+        random = Generator(MT19937(self.seed))
+        pvals = [[1 / 6] * 6, [1 / 4] * 6]
+        assert_raises(ValueError, random.multinomial, 1, pvals)
+        assert_raises(ValueError, random.multinomial, 6, 0.5)
+
+    def test_empty_outputs(self):
+        random = Generator(MT19937(self.seed))
+        actual = random.multinomial(np.empty((10, 0, 6), "i8"), [1 / 6] * 6)
+        assert actual.shape == (10, 0, 6, 6)
+        actual = random.multinomial(12, np.empty((10, 0, 10)))
+        assert actual.shape == (10, 0, 10)
+        actual = random.multinomial(np.empty((3, 0, 7), "i8"),
+                                    np.empty((3, 0, 7, 4)))
+        assert actual.shape == (3, 0, 7, 4)
+
 
 class TestThread:
     # make sure each state produces the same sequence even in threads
@@ -2485,7 +2570,7 @@ class TestSingleEltArrayInput:
 def test_jumped(config):
     # Each config contains the initial seed, a number of raw steps
     # the sha256 hashes of the initial and the final states' keys and
-    # the position of of the initial and the final state.
+    # the position of the initial and the final state.
     # These were produced using the original C implementation.
     seed = config["seed"]
     steps = config["steps"]

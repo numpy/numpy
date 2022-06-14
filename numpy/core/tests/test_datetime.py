@@ -63,6 +63,7 @@ class TestDateTime:
         assert_raises(TypeError, np.dtype, 'm7')
         assert_raises(TypeError, np.dtype, 'M16')
         assert_raises(TypeError, np.dtype, 'm16')
+        assert_raises(TypeError, np.dtype, 'M8[3000000000ps]')
 
     def test_datetime_casting_rules(self):
         # Cannot cast safely/same_kind between timedelta and datetime
@@ -137,6 +138,42 @@ class TestDateTime:
         assert_(not np.can_cast('M8[h]', 'M8', casting='same_kind'))
         assert_(not np.can_cast('M8[h]', 'M8', casting='safe'))
 
+    def test_datetime_prefix_conversions(self):
+        # regression tests related to gh-19631;
+        # test metric prefixes from seconds down to
+        # attoseconds for bidirectional conversions
+        smaller_units = ['M8[7000ms]',
+                         'M8[2000us]',
+                         'M8[1000ns]',
+                         'M8[5000ns]',
+                         'M8[2000ps]',
+                         'M8[9000fs]',
+                         'M8[1000as]',
+                         'M8[2000000ps]',
+                         'M8[1000000as]',
+                         'M8[2000000000ps]',
+                         'M8[1000000000as]']
+        larger_units = ['M8[7s]',
+                        'M8[2ms]',
+                        'M8[us]',
+                        'M8[5us]',
+                        'M8[2ns]',
+                        'M8[9ps]',
+                        'M8[1fs]',
+                        'M8[2us]',
+                        'M8[1ps]',
+                        'M8[2ms]',
+                        'M8[1ns]']
+        for larger_unit, smaller_unit in zip(larger_units, smaller_units):
+            assert np.can_cast(larger_unit, smaller_unit, casting='safe')
+            assert np.can_cast(smaller_unit, larger_unit, casting='safe')
+
+    @pytest.mark.parametrize("unit", [
+        "s", "ms", "us", "ns", "ps", "fs", "as"])
+    def test_prohibit_negative_datetime(self, unit):
+        with assert_raises(TypeError):
+            np.array([1], dtype=f"M8[-1{unit}]")
+
     def test_compare_generic_nat(self):
         # regression tests for gh-6452
         assert_(np.datetime64('NaT') !=
@@ -152,7 +189,7 @@ class TestDateTime:
         expected = np.arange(size)
         arr = np.tile(np.datetime64('NaT'), size)
         assert_equal(np.argsort(arr, kind='mergesort'), expected)
-    
+
     @pytest.mark.parametrize("size", [
         3, 21, 217, 1000])
     def test_timedelta_nat_argsort_stability(self, size):
@@ -1373,13 +1410,13 @@ class TestDateTime:
             assert_equal(tda / 0.5, tdc)
             assert_equal((tda / 0.5).dtype, np.dtype('m8[h]'))
             # m8 / m8
-            assert_equal(tda / tdb, 6.0 / 9.0)
-            assert_equal(np.divide(tda, tdb), 6.0 / 9.0)
-            assert_equal(np.true_divide(tda, tdb), 6.0 / 9.0)
-            assert_equal(tdb / tda, 9.0 / 6.0)
+            assert_equal(tda / tdb, 6 / 9)
+            assert_equal(np.divide(tda, tdb), 6 / 9)
+            assert_equal(np.true_divide(tda, tdb), 6 / 9)
+            assert_equal(tdb / tda, 9 / 6)
             assert_equal((tda / tdb).dtype, np.dtype('f8'))
-            assert_equal(tda / tdd, 60.0)
-            assert_equal(tdd / tda, 1.0 / 60.0)
+            assert_equal(tda / tdd, 60)
+            assert_equal(tdd / tda, 1 / 60)
 
             # int / m8
             assert_raises(TypeError, np.divide, 2, tdb)
@@ -1400,7 +1437,7 @@ class TestDateTime:
 
         # NaTs
         with suppress_warnings() as sup:
-            sup.filter(RuntimeWarning,  r".*encountered in true\_divide")
+            sup.filter(RuntimeWarning,  r".*encountered in divide")
             nat = np.timedelta64('NaT')
             for tp in (int, float):
                 assert_equal(np.timedelta64(1) / tp(0), nat)
@@ -1991,6 +2028,27 @@ class TestDateTime:
         assert_equal(np.maximum.reduce(a).dtype, np.dtype('m8[s]'))
         assert_equal(np.maximum.reduce(a),
                      np.timedelta64(7, 's'))
+
+    def test_timedelta_correct_mean(self):
+        # test mainly because it worked only via a bug in that allowed:
+        # `timedelta.sum(dtype="f8")` to ignore the dtype request.
+        a = np.arange(1000, dtype="m8[s]")
+        assert_array_equal(a.mean(), a.sum() / len(a))
+
+    def test_datetime_no_subtract_reducelike(self):
+        # subtracting two datetime64 works, but we cannot reduce it, since
+        # the result of that subtraction will have a different dtype.
+        arr = np.array(["2021-12-02", "2019-05-12"], dtype="M8[ms]")
+        msg = r"the resolved dtypes are not compatible"
+
+        with pytest.raises(TypeError, match=msg):
+            np.subtract.reduce(arr)
+
+        with pytest.raises(TypeError, match=msg):
+            np.subtract.accumulate(arr)
+
+        with pytest.raises(TypeError, match=msg):
+            np.subtract.reduceat(arr, [0])
 
     def test_datetime_busday_offset(self):
         # First Monday in June

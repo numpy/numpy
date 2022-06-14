@@ -32,7 +32,6 @@ EXCLUDE_LIST = {
         "math",
         # Accidentally public, deprecated, or shouldn't be used
         "Tester",
-        "alen",
         "add_docstring",
         "add_newdoc",
         "add_newdoc_ufunc",
@@ -41,6 +40,7 @@ EXCLUDE_LIST = {
         "fastCopyAndTranspose",
         "get_array_wrap",
         "int_asbuffer",
+        "numarray",
         "oldnumeric",
         "safe_eval",
         "set_numeric_ops",

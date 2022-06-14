@@ -1,5 +1,5 @@
-#ifndef __NPY_HALFFLOAT_H__
-#define __NPY_HALFFLOAT_H__
+#ifndef NUMPY_CORE_INCLUDE_NUMPY_HALFFLOAT_H_
+#define NUMPY_CORE_INCLUDE_NUMPY_HALFFLOAT_H_
 
 #include <Python.h>
 #include <numpy/npy_math.h>
@@ -67,4 +67,4 @@ npy_uint64 npy_halfbits_to_doublebits(npy_uint16 h);
 }
 #endif
 
-#endif
+#endif  /* NUMPY_CORE_INCLUDE_NUMPY_HALFFLOAT_H_ */

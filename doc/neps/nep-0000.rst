@@ -1,7 +1,7 @@
 .. _NEP00:
 
 ===========================
-NEP 0 — Purpose and Process
+NEP 0 — Purpose and process
 ===========================
 
 :Author: Jarrod Millman <millman@berkeley.edu>

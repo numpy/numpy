@@ -8,7 +8,7 @@ int main(void)
 {
     __m512  one_ps = _mm512_set1_ps(1.0f);
     __m512d one_pd = _mm512_set1_pd(1.0);
-    __m512i one_i64 = _mm512_set1_epi64(1.0);
+    __m512i one_i64 = _mm512_set1_epi64(1);
     // add
     float sum_ps  = _mm512_reduce_add_ps(one_ps);
     double sum_pd = _mm512_reduce_add_pd(one_pd);

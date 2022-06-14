@@ -109,7 +109,7 @@ cdef class MT19937(BitGenerator):
 
     **Compatibility Guarantee**
 
-    ``MT19937`` makes a guarantee that a fixed seed and will always produce
+    ``MT19937`` makes a guarantee that a fixed seed will always produce
     the same random integer stream.
 
     References
@@ -214,7 +214,7 @@ cdef class MT19937(BitGenerator):
 
         Returns a new bit generator with the state jumped
 
-        The state of the returned big generator is jumped as-if
+        The state of the returned bit generator is jumped as-if
         2**(128 * jumps) random numbers have been generated.
 
         Parameters

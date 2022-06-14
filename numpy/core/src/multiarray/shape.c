@@ -1,9 +1,10 @@
-#define PY_SSIZE_T_CLEAN
-#include <Python.h>
-#include "structmember.h"
-
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
+
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+#include <structmember.h>
+
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
 
@@ -120,8 +121,16 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
         }
 
         /* Reallocate space if needed - allocating 0 is forbidden */
-        new_data = PyDataMem_RENEW(
-            PyArray_DATA(self), newnbytes == 0 ? elsize : newnbytes);
+        PyObject *handler = PyArray_HANDLER(self);
+        if (handler == NULL) {
+            /* This can happen if someone arbitrarily sets NPY_ARRAY_OWNDATA */
+            PyErr_SetString(PyExc_RuntimeError,
+                            "no memory handler found but OWNDATA flag set");
+            return NULL;
+        }
+        new_data = PyDataMem_UserRENEW(PyArray_DATA(self),
+                                       newnbytes == 0 ? elsize : newnbytes,
+                                       handler);
         if (new_data == NULL) {
             PyErr_SetString(PyExc_MemoryError,
                     "cannot allocate memory for array");
@@ -235,11 +244,9 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
      * in order to get the right orientation and
      * because we can't just re-use the buffer with the
      * data in the order it is in.
-     * NPY_RELAXED_STRIDES_CHECKING: size check is unnecessary when set.
      */
     Py_INCREF(self);
-    if ((PyArray_SIZE(self) > 1) &&
-        ((order == NPY_CORDER && !PyArray_IS_C_CONTIGUOUS(self)) ||
+    if (((order == NPY_CORDER && !PyArray_IS_C_CONTIGUOUS(self)) ||
          (order == NPY_FORTRANORDER && !PyArray_IS_F_CONTIGUOUS(self)))) {
         int success = 0;
         success = _attempt_nocopy_reshape(self, ndim, dimensions,
@@ -991,7 +998,6 @@ PyArray_Flatten(PyArrayObject *a, NPY_ORDER order)
  *          If an axis flagged for removal has a shape larger than one,
  *          the aligned flag (and in the future the contiguous flags),
  *          may need explicit update.
- *          (check also NPY_RELAXED_STRIDES_CHECKING)
  *
  * For example, this can be used to remove the reduction axes
  * from a reduction result once its computation is complete.
@@ -1015,6 +1021,6 @@ PyArray_RemoveAxesInPlace(PyArrayObject *arr, const npy_bool *flags)
     /* The final number of dimensions */
     fa->nd = idim_out;
 
-    /* May not be necessary for NPY_RELAXED_STRIDES_CHECKING (see comment) */
+    /* NOTE: This is only necessary if a dimension with size != 1 was removed */
     PyArray_UpdateFlags(arr, NPY_ARRAY_C_CONTIGUOUS | NPY_ARRAY_F_CONTIGUOUS);
 }

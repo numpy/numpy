@@ -1,7 +1,7 @@
 .. _NEP41:
 
 =================================================
-NEP 41 — First step towards a new Datatype System
+NEP 41 — First step towards a new datatype system
 =================================================
 
 :title: First step towards a new Datatype System
@@ -23,7 +23,7 @@ NEP 41 — First step towards a new Datatype System
 
     - :ref:`NEP 42 <NEP42>` describes the new design's datatype-related APIs.
 
-    - NEP 43 describes the new design's API for universal functions.
+    - :ref:`NEP 43 <NEP43>` describes the new design's API for universal functions.
 
 
 Abstract
@@ -74,7 +74,7 @@ cannot describe casting for such parametric datatypes implemented outside of Num
 This additional functionality for supporting parametric datatypes introduces
 increased complexity within NumPy itself,
 and furthermore is not available to external user-defined datatypes.
-In general the concerns of different datatypes are not well well-encapsulated.
+In general the concerns of different datatypes are not well-encapsulated.
 This burden is exacerbated by the exposure of internal C structures,
 limiting the addition of new fields
 (for example to support new sorting methods [new_sort]_).
@@ -284,7 +284,7 @@ in general, it is not safe::
     >>> np.can_cast(np.float64, np.dtype[mp.mpf](dps=4), casting="safe")
     False
 
-since a float64 has a higer precision than the ``mpf`` datatype with
+since a float64 has a higher precision than the ``mpf`` datatype with
 ``dps=4``.
 
 Alternatively, we can say that::
@@ -765,7 +765,7 @@ Discussion
 See :ref:`NEP 40 <NEP40>`
 for a list of previous meetings and discussions.
 
-Additional discussion around this specific NEP has occured on both
+Additional discussion around this specific NEP has occurred on both
 the mailing list and the pull request:
 
 * `Mailing list discussion <https://mail.python.org/pipermail/numpy-discussion/2020-March/080481.html>`_

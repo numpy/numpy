@@ -1,8 +1,9 @@
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#define _MULTIARRAYMODULE
+
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
-#define NPY_NO_DEPRECATED_API NPY_API_VERSION
-#define _MULTIARRAYMODULE
 #include "npy_config.h"
 #include "numpy/arrayobject.h"
 
@@ -285,7 +286,6 @@ can_elide_temp(PyObject *olhs, PyObject *orhs, int *cannot)
             !PyArray_ISNUMBER(alhs) ||
             !PyArray_CHKFLAGS(alhs, NPY_ARRAY_OWNDATA) ||
             !PyArray_ISWRITEABLE(alhs) ||
-            PyArray_CHKFLAGS(alhs, NPY_ARRAY_UPDATEIFCOPY) ||
             PyArray_CHKFLAGS(alhs, NPY_ARRAY_WRITEBACKIFCOPY) ||
             PyArray_NBYTES(alhs) < NPY_MIN_ELIDE_BYTES) {
         return 0;
@@ -364,7 +364,6 @@ can_elide_temp_unary(PyArrayObject * m1)
             !PyArray_ISNUMBER(m1) ||
             !PyArray_CHKFLAGS(m1, NPY_ARRAY_OWNDATA) ||
             !PyArray_ISWRITEABLE(m1) ||
-            PyArray_CHKFLAGS(m1, NPY_ARRAY_UPDATEIFCOPY) ||
             PyArray_NBYTES(m1) < NPY_MIN_ELIDE_BYTES) {
         return 0;
     }

@@ -37,13 +37,13 @@ This eliminates the need to navigate to the corresponding submodules, e.g.
 The classes provide a more consistent and concise interface than the
 type-specific functions defined in the submodules for each type of polynomial.
 For example, to fit a Chebyshev polynomial with degree ``1`` to data given
-by arrays ``xdata`` and ``ydata``, the 
+by arrays ``xdata`` and ``ydata``, the
 `~chebyshev.Chebyshev.fit` class method::
 
     >>> from numpy.polynomial import Chebyshev
     >>> c = Chebyshev.fit(xdata, ydata, deg=1)
 
-is preferred over the `chebyshev.chebfit` function from the 
+is preferred over the `chebyshev.chebfit` function from the
 ``np.polynomial.chebyshev`` module::
 
     >>> from numpy.polynomial.chebyshev import chebfit
@@ -76,7 +76,7 @@ Methods for creating polynomial instances.
 
 - ``Poly.basis(degree)``    -- Basis polynomial of given degree
 - ``Poly.identity()``       -- ``p`` where ``p(x) = x`` for all ``x``
-- ``Poly.fit(x, y, deg)``   -- ``p`` of degree ``deg`` with coefficients 
+- ``Poly.fit(x, y, deg)``   -- ``p`` of degree ``deg`` with coefficients
   determined by the least-squares fit to the data ``x``, ``y``
 - ``Poly.fromroots(roots)`` -- ``p`` with specified roots
 - ``p.copy()``              -- Create a copy of ``p``
@@ -120,6 +120,16 @@ from .hermite import Hermite
 from .hermite_e import HermiteE
 from .laguerre import Laguerre
 
+__all__ = [
+    "set_default_printstyle",
+    "polynomial", "Polynomial",
+    "chebyshev", "Chebyshev",
+    "legendre", "Legendre",
+    "hermite", "Hermite",
+    "hermite_e", "HermiteE",
+    "laguerre", "Laguerre",
+]
+
 
 def set_default_printstyle(style):
     """
@@ -146,17 +156,17 @@ def set_default_printstyle(style):
     >>> c = np.polynomial.Chebyshev([1, 2, 3])
     >>> np.polynomial.set_default_printstyle('unicode')
     >>> print(p)
-    1.0 + 2.0·x¹ + 3.0·x²
+    1.0 + 2.0·x + 3.0·x²
     >>> print(c)
     1.0 + 2.0·T₁(x) + 3.0·T₂(x)
     >>> np.polynomial.set_default_printstyle('ascii')
     >>> print(p)
-    1.0 + 2.0 x**1 + 3.0 x**2
+    1.0 + 2.0 x + 3.0 x**2
     >>> print(c)
     1.0 + 2.0 T_1(x) + 3.0 T_2(x)
-    >>> # Formatting supercedes all class/package-level defaults
+    >>> # Formatting supersedes all class/package-level defaults
     >>> print(f"{p:unicode}")
-    1.0 + 2.0·x¹ + 3.0·x²
+    1.0 + 2.0·x + 3.0·x²
     """
     if style not in ('unicode', 'ascii'):
         raise ValueError(

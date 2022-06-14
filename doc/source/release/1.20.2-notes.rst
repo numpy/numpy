@@ -4,9 +4,8 @@
 NumPy 1.20.2 Release Notes
 ==========================
 
-NumPy 1,20.2 is a bugfix release containing several fixes merged to the main
+NumPy 1.20.2 is a bugfix release containing several fixes merged to the main
 branch after the NumPy 1.20.1 release.
-
 
 Contributors
 ============

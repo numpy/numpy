@@ -5,6 +5,7 @@ unixccompiler - can handle very long argument lists for ar.
 import os
 import sys
 import subprocess
+import shlex
 
 from distutils.errors import CompileError, DistutilsExecError, LibError
 from distutils.unixccompiler import UnixCCompiler
@@ -30,15 +31,15 @@ def UnixCCompiler__compile(self, obj, src, ext, cc_args, extra_postargs, pp_opts
     if 'OPT' in os.environ:
         # XXX who uses this?
         from sysconfig import get_config_vars
-        opt = " ".join(os.environ['OPT'].split())
-        gcv_opt = " ".join(get_config_vars('OPT')[0].split())
-        ccomp_s = " ".join(self.compiler_so)
+        opt = shlex.join(shlex.split(os.environ['OPT']))
+        gcv_opt = shlex.join(shlex.split(get_config_vars('OPT')[0]))
+        ccomp_s = shlex.join(self.compiler_so)
         if opt not in ccomp_s:
             ccomp_s = ccomp_s.replace(gcv_opt, opt)
-            self.compiler_so = ccomp_s.split()
-        llink_s = " ".join(self.linker_so)
+            self.compiler_so = shlex.split(ccomp_s)
+        llink_s = shlex.join(self.linker_so)
         if opt not in llink_s:
-            self.linker_so = llink_s.split() + opt.split()
+            self.linker_so = self.linker_so + shlex.split(opt)
 
     display = '%s: %s' % (os.path.basename(self.compiler_so[0]), src)
 
@@ -105,7 +106,7 @@ def UnixCCompiler_create_static_lib(self, objects, output_libname,
             # and recreate.
             # Also, ar on OS X doesn't handle updating universal archives
             os.unlink(output_filename)
-        except (IOError, OSError):
+        except OSError:
             pass
         self.mkpath(os.path.dirname(output_filename))
         tmp_objects = objects + self.objects

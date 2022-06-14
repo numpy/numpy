@@ -276,8 +276,6 @@ Test the header writing.
 '''
 import sys
 import os
-import shutil
-import tempfile
 import warnings
 import pytest
 from io import BytesIO
@@ -285,8 +283,9 @@ from io import BytesIO
 import numpy as np
 from numpy.testing import (
     assert_, assert_array_equal, assert_raises, assert_raises_regex,
-    assert_warns,
+    assert_warns, IS_PYPY,
     )
+from numpy.testing._private.utils import requires_memory
 from numpy.lib import format
 
 
@@ -881,11 +880,13 @@ def test_large_file_support(tmpdir):
 @pytest.mark.skipif(np.dtype(np.intp).itemsize < 8,
                     reason="test requires 64-bit system")
 @pytest.mark.slow
+@requires_memory(free_bytes=2 * 2**30)
 def test_large_archive(tmpdir):
     # Regression test for product of saving arrays with dimensions of array
     # having a product that doesn't fit in int32.  See gh-7598 for details.
+    shape = (2**30, 2)
     try:
-        a = np.empty((2**30, 2), dtype=np.uint8)
+        a = np.empty(shape, dtype=np.uint8)
     except MemoryError:
         pytest.skip("Could not create large file")
 
@@ -894,10 +895,12 @@ def test_large_archive(tmpdir):
     with open(fname, "wb") as f:
         np.savez(f, arr=a)
 
+    del a
+
     with open(fname, "rb") as f:
         new_a = np.load(f)["arr"]
 
-    assert_(a.shape == new_a.shape)
+    assert new_a.shape == shape
 
 
 def test_empty_npz(tmpdir):
@@ -942,6 +945,8 @@ def test_unicode_field_names(tmpdir):
         float, np.dtype({'names': ['c'], 'formats': [np.dtype(int, metadata={})]})
     ]}), False)
     ])
+@pytest.mark.skipif(IS_PYPY and sys.implementation.version <= (7, 3, 8),
+        reason="PyPy bug in error formatting")
 def test_metadata_dtype(dt, fail):
     # gh-14142
     arr = np.ones(10, dtype=dt)

@@ -219,7 +219,6 @@ def resolve_includes(source):
                 if not os.path.isabs(fn):
                     fn = os.path.join(d, fn)
                 if os.path.isfile(fn):
-                    print('Including file', fn)
                     lines.extend(resolve_includes(fn))
                 else:
                     lines.append(line)

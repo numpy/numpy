@@ -11,6 +11,7 @@ import multiprocessing
 import textwrap
 import importlib.util
 from threading import local as tlocal
+from functools import reduce
 
 import distutils
 from distutils.errors import DistutilsError
@@ -30,8 +31,6 @@ def clean_up_temporary_directory():
 
 atexit.register(clean_up_temporary_directory)
 
-from numpy.compat import npy_load_module
-
 __all__ = ['Configuration', 'get_numpy_include_dirs', 'default_config_dict',
            'dict_append', 'appendpath', 'generate_config_py',
            'get_cmd', 'allpath', 'get_mathlibs',
@@ -42,8 +41,9 @@ __all__ = ['Configuration', 'get_numpy_include_dirs', 'default_config_dict',
            'get_script_files', 'get_lib_source_files', 'get_data_files',
            'dot_join', 'get_frame', 'minrelpath', 'njoin',
            'is_sequence', 'is_string', 'as_list', 'gpaths', 'get_language',
-           'quote_args', 'get_build_architecture', 'get_info', 'get_pkg_info',
-           'get_num_build_jobs']
+           'get_build_architecture', 'get_info', 'get_pkg_info',
+           'get_num_build_jobs', 'sanitize_cxx_flags',
+           'exec_mod_from_location']
 
 class InstallableLib:
     """
@@ -110,6 +110,13 @@ def get_num_build_jobs():
         return max(x for x in cmdattr if x is not None)
 
 def quote_args(args):
+    """Quote list of arguments.
+
+    .. deprecated:: 1.22.
+    """
+    import warnings
+    warnings.warn('"quote_args" is deprecated.',
+                  DeprecationWarning, stacklevel=2)
     # don't used _nt_quote_args as it does not check if
     # args items already have quotes or not.
     args = list(args)
@@ -121,8 +128,8 @@ def quote_args(args):
 
 def allpath(name):
     "Convert a /-separated pathname to one using the OS's path separator."
-    splitted = name.split('/')
-    return os.path.join(*splitted)
+    split = name.split('/')
+    return os.path.join(*split)
 
 def rel_path(path, parent_path):
     """Return path relative to parent_path."""
@@ -376,10 +383,42 @@ def blue_text(s):
 
 #########################
 
-def cyg2win32(path):
-    if sys.platform=='cygwin' and path.startswith('/cygdrive'):
-        path = path[10] + ':' + os.path.normcase(path[11:])
-    return path
+def cyg2win32(path: str) -> str:
+    """Convert a path from Cygwin-native to Windows-native.
+
+    Uses the cygpath utility (part of the Base install) to do the
+    actual conversion.  Falls back to returning the original path if
+    this fails.
+
+    Handles the default ``/cygdrive`` mount prefix as well as the
+    ``/proc/cygdrive`` portable prefix, custom cygdrive prefixes such
+    as ``/`` or ``/mnt``, and absolute paths such as ``/usr/src/`` or
+    ``/home/username``
+
+    Parameters
+    ----------
+    path : str
+       The path to convert
+
+    Returns
+    -------
+    converted_path : str
+        The converted path
+
+    Notes
+    -----
+    Documentation for cygpath utility:
+    https://cygwin.com/cygwin-ug-net/cygpath.html
+    Documentation for the C function it wraps:
+    https://cygwin.com/cygwin-api/func-cygwin-conv-path.html
+
+    """
+    if sys.platform != "cygwin":
+        return path
+    return subprocess.check_output(
+        ["/usr/bin/cygpath", "--windows", path], universal_newlines=True
+    )
+
 
 def mingw32():
     """Return true when using mingw32 environment.
@@ -655,15 +694,11 @@ def get_shared_lib_extension(is_python_ext=False):
     -----
     For Python shared libs, `so_ext` will typically be '.so' on Linux and OS X,
     and '.pyd' on Windows.  For Python >= 3.2 `so_ext` has a tag prepended on
-    POSIX systems according to PEP 3149.  For Python 3.2 this is implemented on
-    Linux, but not on OS X.
+    POSIX systems according to PEP 3149.
 
     """
     confvars = distutils.sysconfig.get_config_vars()
-    # SO is deprecated in 3.3.1, use EXT_SUFFIX instead
-    so_ext = confvars.get('EXT_SUFFIX', None)
-    if so_ext is None:
-        so_ext = confvars.get('SO', '')
+    so_ext = confvars.get('EXT_SUFFIX', '')
 
     if not is_python_ext:
         # hardcode known values, config vars (including SHLIB_SUFFIX) are
@@ -905,9 +940,8 @@ class Configuration:
         try:
             setup_name = os.path.splitext(os.path.basename(setup_py))[0]
             n = dot_join(self.name, subpackage_name, setup_name)
-            setup_module = npy_load_module('_'.join(n.split('.')),
-                                           setup_py,
-                                           ('.py', 'U', 1))
+            setup_module = exec_mod_from_location(
+                                '_'.join(n.split('.')), setup_py)
             if not hasattr(setup_module, 'configuration'):
                 if not self.options['assume_default_configuration']:
                     self.warn('Assuming default configuration '\
@@ -1953,8 +1987,8 @@ class Configuration:
                 name = os.path.splitext(os.path.basename(fn))[0]
                 n = dot_join(self.name, name)
                 try:
-                    version_module = npy_load_module('_'.join(n.split('.')),
-                                                     fn, info)
+                    version_module = exec_mod_from_location(
+                                        '_'.join(n.split('.')), fn)
                 except ImportError as e:
                     self.warn(str(e))
                     version_module = None
@@ -2314,11 +2348,7 @@ def generate_config_py(target):
             extra_dll_dir = os.path.join(os.path.dirname(__file__), '.libs')
 
             if sys.platform == 'win32' and os.path.isdir(extra_dll_dir):
-                if sys.version_info >= (3, 8):
-                    os.add_dll_directory(extra_dll_dir)
-                else:
-                    os.environ.setdefault('PATH', '')
-                    os.environ['PATH'] += os.pathsep + extra_dll_dir
+                os.add_dll_directory(extra_dll_dir)
 
             """))
 
@@ -2344,19 +2374,47 @@ def generate_config_py(target):
 
                 Notes
                 -----
-                Classes specifying the information to be printed are defined
-                in the `numpy.distutils.system_info` module.
+                1. Classes specifying the information to be printed are defined
+                   in the `numpy.distutils.system_info` module.
 
-                Information may include:
+                   Information may include:
 
-                * ``language``: language used to write the libraries (mostly
-                  C or f77)
-                * ``libraries``: names of libraries found in the system
-                * ``library_dirs``: directories containing the libraries
-                * ``include_dirs``: directories containing library header files
-                * ``src_dirs``: directories containing library source files
-                * ``define_macros``: preprocessor macros used by
-                  ``distutils.setup``
+                   * ``language``: language used to write the libraries (mostly
+                     C or f77)
+                   * ``libraries``: names of libraries found in the system
+                   * ``library_dirs``: directories containing the libraries
+                   * ``include_dirs``: directories containing library header files
+                   * ``src_dirs``: directories containing library source files
+                   * ``define_macros``: preprocessor macros used by
+                     ``distutils.setup``
+                   * ``baseline``: minimum CPU features required
+                   * ``found``: dispatched features supported in the system
+                   * ``not found``: dispatched features that are not supported
+                     in the system
+
+                2. NumPy BLAS/LAPACK Installation Notes
+
+                   Installing a numpy wheel (``pip install numpy`` or force it
+                   via ``pip install numpy --only-binary :numpy: numpy``) includes
+                   an OpenBLAS implementation of the BLAS and LAPACK linear algebra
+                   APIs. In this case, ``library_dirs`` reports the original build
+                   time configuration as compiled with gcc/gfortran; at run time
+                   the OpenBLAS library is in
+                   ``site-packages/numpy.libs/`` (linux), or
+                   ``site-packages/numpy/.dylibs/`` (macOS), or
+                   ``site-packages/numpy/.libs/`` (windows).
+
+                   Installing numpy from source
+                   (``pip install numpy --no-binary numpy``) searches for BLAS and
+                   LAPACK dynamic link libraries at build time as influenced by
+                   environment variables NPY_BLAS_LIBS, NPY_CBLAS_LIBS, and
+                   NPY_LAPACK_LIBS; or NPY_BLAS_ORDER and NPY_LAPACK_ORDER;
+                   or the optional file ``~/.numpy-site.cfg``.
+                   NumPy remembers those locations and expects to load the same
+                   libraries at run-time.
+                   In NumPy 1.21+ on macOS, 'accelerate' (Apple's Accelerate BLAS
+                   library) is in the default build-time search order after
+                   'openblas'.
 
                 Examples
                 --------
@@ -2368,6 +2426,9 @@ def generate_config_py(target):
                     libraries = ['openblas', 'openblas']
                     library_dirs = ['/usr/local/lib']
                 """
+                from numpy.core._multiarray_umath import (
+                    __cpu_features__, __cpu_baseline__, __cpu_dispatch__
+                )
                 for name,info_dict in globals().items():
                     if name[0] == "_" or type(info_dict) is not type({}): continue
                     print(name + ":")
@@ -2378,6 +2439,19 @@ def generate_config_py(target):
                         if k == "sources" and len(v) > 200:
                             v = v[:60] + " ...\n... " + v[-60:]
                         print("    %s = %s" % (k,v))
+
+                features_found, features_not_found = [], []
+                for feature in __cpu_dispatch__:
+                    if __cpu_features__[feature]:
+                        features_found.append(feature)
+                    else:
+                        features_not_found.append(feature)
+
+                print("Supported SIMD extensions in this NumPy install:")
+                print("    baseline = %s" % (','.join(__cpu_baseline__)))
+                print("    found = %s" % (','.join(features_found)))
+                print("    not found = %s" % (','.join(features_not_found)))
+
                     '''))
 
     return target
@@ -2395,3 +2469,25 @@ def get_build_architecture():
     # systems, so delay the import to here.
     from distutils.msvccompiler import get_build_architecture
     return get_build_architecture()
+
+
+_cxx_ignore_flags = {'-Werror=implicit-function-declaration', '-std=c99'}
+
+
+def sanitize_cxx_flags(cxxflags):
+    '''
+    Some flags are valid for C but not C++. Prune them.
+    '''
+    return [flag for flag in cxxflags if flag not in _cxx_ignore_flags]
+
+
+def exec_mod_from_location(modname, modfile):
+    '''
+    Use importlib machinery to import a module `modname` from the file
+    `modfile`. Depending on the `spec.loader`, the module may not be
+    registered in sys.modules.
+    '''
+    spec = importlib.util.spec_from_file_location(modname, modfile)
+    foo = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(foo)
+    return foo

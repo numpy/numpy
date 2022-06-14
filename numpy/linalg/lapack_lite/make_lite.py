@@ -1,4 +1,5 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python2.7
+# WARNING! This a Python 2 script. Read README.rst for rationale.
 """
 Usage: make_lite.py <wrapped_routines_file> <lapack_dir>
 
@@ -20,7 +21,10 @@ import shutil
 import fortran
 import clapack_scrub
 
-from shutil import which
+try:
+    from distutils.spawn import find_executable as which  # Python 2
+except ImportError:
+    from shutil import which  # Python 3
 
 # Arguments to pass to f2c. You'll always want -A for ANSI C prototypes
 # Others of interest: -a to not make variables static by default
@@ -81,7 +85,8 @@ class FortranRoutine:
         return self._dependencies
 
     def __repr__(self):
-        return f'FortranRoutine({self.name!r}, filename={self.filename!r})'
+        return "FortranRoutine({!r}, filename={!r})".format(self.name,
+                                                            self.filename)
 
 class UnknownFortranRoutine(FortranRoutine):
     """Wrapper for a Fortran routine for which the corresponding file
@@ -193,7 +198,7 @@ class LapackLibrary(FortranLibrary):
 def printRoutineNames(desc, routines):
     print(desc)
     for r in routines:
-        print(f'\t{r.name}')
+        print('\t%s' % r.name)
 
 def getLapackRoutines(wrapped_routines, ignores, lapack_dir):
     blas_src_dir = os.path.join(lapack_dir, 'BLAS', 'SRC')
@@ -243,7 +248,7 @@ def dumpRoutineNames(library, output_dir):
         with open(filename, 'w') as fo:
             for r in routines:
                 deps = r.dependencies()
-                fo.write(f"{r.name}: {' '.join(deps)}\n")
+                fo.write('%s: %s\n' % (r.name, ' '.join(deps)))
 
 def concatenateRoutines(routines, output_file):
     with open(output_file, 'w') as output_fo:
@@ -261,8 +266,8 @@ def runF2C(fortran_filename, output_dir):
         subprocess.check_call(
             ["f2c"] + F2C_ARGS + ['-d', output_dir, fortran_filename]
         )
-    except subprocess.CalledProcessError as e:
-        raise F2CError from e
+    except subprocess.CalledProcessError:
+        raise F2CError
 
 def scrubF2CSource(c_file):
     with open(c_file) as fo:
@@ -275,7 +280,7 @@ def scrubF2CSource(c_file):
 def ensure_executable(name):
     try:
         which(name)
-    except:
+    except Exception:
         raise SystemExit(name + ' not found')
 
 def create_name_header(output_dir):
@@ -316,13 +321,13 @@ def create_name_header(output_dir):
 
         # Rename BLAS/LAPACK symbols
         for name in sorted(symbols):
-            f.write(f'#define {name}_ BLAS_FUNC({name})\n')
+            f.write("#define %s_ BLAS_FUNC(%s)\n" % (name, name))
 
         # Rename also symbols that f2c exports itself
         f.write("\n"
                 "/* Symbols exported by f2c.c */\n")
         for name in sorted(f2c_symbols):
-            f.write(f'#define {name} numpy_lapack_lite_{name}\n')
+            f.write("#define %s numpy_lapack_lite_%s\n" % (name, name))
 
 def main():
     if len(sys.argv) != 3:
@@ -336,10 +341,7 @@ def main():
     lapack_src_dir = sys.argv[2]
     output_dir = os.path.join(os.path.dirname(__file__), 'build')
 
-    try:
-        shutil.rmtree(output_dir)
-    except:
-        pass
+    shutil.rmtree(output_dir, ignore_errors=True)
     os.makedirs(output_dir)
 
     wrapped_routines, ignores = getWrappedRoutineNames(wrapped_routines_file)
@@ -348,9 +350,9 @@ def main():
     dumpRoutineNames(library, output_dir)
 
     for typename in types:
-        fortran_file = os.path.join(output_dir, f'f2c_{typename}.f')
+        fortran_file = os.path.join(output_dir, 'f2c_%s.f' % typename)
         c_file = fortran_file[:-2] + '.c'
-        print(f'creating {c_file} ...')
+        print('creating %s ...' % c_file)
         routines = library.allRoutinesByType(typename)
         concatenateRoutines(routines, fortran_file)
 
@@ -358,11 +360,11 @@ def main():
         patch_file = os.path.basename(fortran_file) + '.patch'
         if os.path.exists(patch_file):
             subprocess.check_call(['patch', '-u', fortran_file, patch_file])
-            print(f'Patched {fortran_file}')
+            print("Patched {}".format(fortran_file))
         try:
             runF2C(fortran_file, output_dir)
         except F2CError:
-            print(f'f2c failed on {fortran_file}')
+            print('f2c failed on %s' % fortran_file)
             break
         scrubF2CSource(c_file)
 

@@ -102,7 +102,7 @@ Python Boolean scalar.
    :exclude-members: __init__
 
 Integer types
-~~~~~~~~~~~~~
+-------------
 
 .. autoclass:: numpy.integer
    :members: __init__
@@ -114,7 +114,7 @@ Integer types
    be subject to :ref:`overflow-errors`.
 
 Signed integer types
-++++++++++++++++++++
+~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: numpy.signedinteger
    :members: __init__
@@ -141,7 +141,7 @@ Signed integer types
    :exclude-members: __init__
 
 Unsigned integer types
-++++++++++++++++++++++
+~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: numpy.unsignedinteger
    :members: __init__
@@ -168,7 +168,7 @@ Unsigned integer types
    :exclude-members: __init__
 
 Inexact types
-~~~~~~~~~~~~~
+-------------
 
 .. autoclass:: numpy.inexact
    :members: __init__
@@ -196,10 +196,10 @@ Inexact types
    ``f16`` prints as ``0.1`` because it is as close to that value as possible,
    whereas the other types do not as they have more precision and therefore have
    closer values.
-   
+
    Conversely, floating-point scalars of different precisions which approximate
    the same decimal value may compare unequal despite printing identically:
-   
+
        >>> f16 = np.float16("0.1")
        >>> f32 = np.float32("0.1")
        >>> f64 = np.float64("0.1")
@@ -209,7 +209,7 @@ Inexact types
        (0.1, 0.1, 0.1)
 
 Floating-point types
-++++++++++++++++++++
+~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: numpy.floating
    :members: __init__
@@ -232,7 +232,7 @@ Floating-point types
    :exclude-members: __init__
 
 Complex floating-point types
-++++++++++++++++++++++++++++
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: numpy.complexfloating
    :members: __init__
@@ -251,7 +251,7 @@ Complex floating-point types
    :exclude-members: __init__
 
 Other types
-~~~~~~~~~~~
+-----------
 
 .. autoclass:: numpy.bool_
    :members: __init__
@@ -321,7 +321,7 @@ elements the data type consists of.)
 .. _sized-aliases:
 
 Sized aliases
-~~~~~~~~~~~~~
+-------------
 
 Along with their (mostly)
 C-derived names, the integer, float, and complex data-types are also
@@ -352,8 +352,8 @@ are also provided.
                uint32
                uint64
 
-   Alias for the unsigned integer types (one of `numpy.byte`, `numpy.short`,
-   `numpy.intc`, `numpy.int_` and `numpy.longlong`) with the specified number
+   Alias for the unsigned integer types (one of `numpy.ubyte`, `numpy.ushort`,
+   `numpy.uintc`, `numpy.uint` and `numpy.ulonglong`) with the specified number
    of bits.
 
    Compatible with the C99 ``uint8_t``, ``uint16_t``, ``uint32_t``, and
@@ -371,8 +371,8 @@ are also provided.
 
 .. attribute:: uintp
 
-   Alias for the unsigned integer type (one of `numpy.byte`, `numpy.short`,
-   `numpy.intc`, `numpy.int_` and `np.longlong`) that is the same size as a
+   Alias for the unsigned integer type (one of `numpy.ubyte`, `numpy.ushort`,
+   `numpy.uintc`, `numpy.uint` and `np.ulonglong`) that is the same size as a
    pointer.
 
    Compatible with the C ``uintptr_t``.
@@ -399,10 +399,10 @@ are also provided.
                complex256
 
    Alias for `numpy.clongdouble`, named after its size in bits.
-   The existance of these aliases depends on the platform.
+   The existence of these aliases depends on the platform.
 
 Other aliases
-~~~~~~~~~~~~~
+-------------
 
 The first two of these are conveniences which resemble the names of the
 builtin types, in the same style as `bool_`, `int_`, `str_`, `bytes_`, and
@@ -497,6 +497,13 @@ The exceptions to the above rules are given below:
    generic.__reduce__
    generic.__setstate__
    generic.setflags
+
+Utility method for typing:
+
+.. autosummary::
+   :toctree: generated/
+
+   number.__class_getitem__
 
 
 Defining new types

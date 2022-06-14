@@ -1,0 +1,12 @@
+IBM zSystems Vector Extension Facility (SIMD)
+---------------------------------------------
+
+Added support for SIMD extensions of zSystem (z13, z14, z15),
+through the universal intrinsics interface. This support leads
+to performance improvements for all SIMD kernels implemented
+using the universal intrinsics, including the following operations:
+
+rint, floor, trunc, ceil, sqrt, absolute, square, reciprocal, tanh, sin, cos,
+equal, not_equal, greater, greater_equal, less, less_equal,
+maximum, minimum, fmax, fmin, argmax, argmin,
+add, subtract, multiply, divide.

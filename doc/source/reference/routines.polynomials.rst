@@ -1,7 +1,7 @@
 .. _routines.polynomial:
 
 Polynomials
-***********
+===========
 
 Polynomials in NumPy can be *created*, *manipulated*, and even *fitted* using
 the :doc:`convenience classes <routines.polynomials.classes>`
@@ -22,7 +22,7 @@ Therefore :mod:`numpy.polynomial` is recommended for new coding.
    the polynomial functions prefixed with *poly* accessible from the `numpy`
    namespace (e.g. `numpy.polyadd`, `numpy.polyval`, `numpy.polyfit`, etc.).
 
-   The term *polynomial package* refers to the new API definied in 
+   The term *polynomial package* refers to the new API defined in 
    `numpy.polynomial`, which includes the convenience classes for the
    different kinds of polynomials (`numpy.polynomial.Polynomial`,
    `numpy.polynomial.Chebyshev`, etc.).
@@ -97,7 +97,7 @@ can't be mixed in arithmetic::
 
     >>> p1 = np.polynomial.Polynomial([1, 2, 3])
     >>> p1
-    Polynomial([1., 2., 3.], domain=[-1,  1], window=[-1,  1])
+    Polynomial([1., 2., 3.], domain=[-1,  1], window=[-1,  1], symbol='x')
     >>> p2 = np.polynomial.Polynomial([1, 2, 3], domain=[-2, 2])
     >>> p1 == p2
     False
@@ -110,7 +110,7 @@ See the documentation for the
 `convenience classes <routines.polynomials.classes>`_ for further details on
 the ``domain`` and ``window`` attributes.
 
-Another major difference bewteen the legacy polynomial module and the
+Another major difference between the legacy polynomial module and the
 polynomial package is polynomial fitting. In the old module, fitting was
 done via the `~numpy.polyfit` function. In the polynomial package, the
 `~numpy.polynomial.polynomial.Polynomial.fit` class method is preferred. For

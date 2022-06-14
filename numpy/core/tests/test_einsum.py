@@ -1,5 +1,7 @@
 import itertools
 
+import pytest
+
 import numpy as np
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_almost_equal,
@@ -744,6 +746,52 @@ class TestEinsum:
         np.einsum('ij,jk->ik', x, x, out=out)
         assert_array_equal(out.base, correct_base)
 
+    @pytest.mark.parametrize("dtype",
+             np.typecodes["AllFloat"] + np.typecodes["AllInteger"])
+    def test_different_paths(self, dtype):
+        # Test originally added to cover broken float16 path: gh-20305
+        # Likely most are covered elsewhere, at least partially.
+        dtype = np.dtype(dtype)
+        # Simple test, designed to excersize most specialized code paths,
+        # note the +0.5 for floats.  This makes sure we use a float value
+        # where the results must be exact.
+        arr = (np.arange(7) + 0.5).astype(dtype)
+        scalar = np.array(2, dtype=dtype)
+
+        # contig -> scalar:
+        res = np.einsum('i->', arr)
+        assert res == arr.sum()
+        # contig, contig -> contig:
+        res = np.einsum('i,i->i', arr, arr)
+        assert_array_equal(res, arr * arr)
+        # noncontig, noncontig -> contig:
+        res = np.einsum('i,i->i', arr.repeat(2)[::2], arr.repeat(2)[::2])
+        assert_array_equal(res, arr * arr)
+        # contig + contig -> scalar
+        assert np.einsum('i,i->', arr, arr) == (arr * arr).sum()
+        # contig + scalar -> contig (with out)
+        out = np.ones(7, dtype=dtype)
+        res = np.einsum('i,->i', arr, dtype.type(2), out=out)
+        assert_array_equal(res, arr * dtype.type(2))
+        # scalar + contig -> contig (with out)
+        res = np.einsum(',i->i', scalar, arr)
+        assert_array_equal(res, arr * dtype.type(2))
+        # scalar + contig -> scalar
+        res = np.einsum(',i->', scalar, arr)
+        # Use einsum to compare to not have difference due to sum round-offs:
+        assert res == np.einsum('i->', scalar * arr)
+        # contig + scalar -> scalar
+        res = np.einsum('i,->', arr, scalar)
+        # Use einsum to compare to not have difference due to sum round-offs:
+        assert res == np.einsum('i->', scalar * arr)
+        # contig + contig + contig -> scalar
+        arr = np.array([0.5, 0.5, 0.25, 4.5, 3.], dtype=dtype)
+        res = np.einsum('i,i,i->', arr, arr, arr)
+        assert_array_equal(res, (arr * arr * arr).sum())
+        # four arrays:
+        res = np.einsum('i,i,i,i->', arr, arr, arr, arr)
+        assert_array_equal(res, (arr * arr * arr * arr).sum())
+
     def test_small_boolean_arrays(self):
         # See gh-5946.
         # Use array of True embedded in False.
@@ -971,12 +1019,10 @@ class TestEinsumPath:
         # Long test 2
         long_test2 = self.build_operands('chd,bde,agbc,hiad,bdi,cgh,agdb')
         path, path_str = np.einsum_path(*long_test2, optimize='greedy')
-        print(path)
         self.assert_path_equal(path, ['einsum_path',
                                       (3, 4), (0, 3), (3, 4), (1, 3), (1, 2), (0, 1)])
 
         path, path_str = np.einsum_path(*long_test2, optimize='optimal')
-        print(path)
         self.assert_path_equal(path, ['einsum_path',
                                       (0, 5), (1, 4), (3, 4), (1, 3), (1, 2), (0, 1)])
 
@@ -1025,7 +1071,7 @@ class TestEinsumPath:
         self.assert_path_equal(path, ['einsum_path', (0, 1), (0, 1, 2, 3, 4, 5)])
 
     def test_path_type_input(self):
-        # Test explicit path handeling
+        # Test explicit path handling
         path_test = self.build_operands('dcc,fce,ea,dbf->ab')
 
         path, path_str = np.einsum_path(*path_test, optimize=False)
@@ -1042,6 +1088,32 @@ class TestEinsumPath:
         noopt = np.einsum(*path_test, optimize=False)
         opt = np.einsum(*path_test, optimize=exp_path)
         assert_almost_equal(noopt, opt)
+
+    def test_path_type_input_internal_trace(self):
+        #gh-20962
+        path_test = self.build_operands('cab,cdd->ab')
+        exp_path = ['einsum_path', (1,), (0, 1)]
+
+        path, path_str = np.einsum_path(*path_test, optimize=exp_path)
+        self.assert_path_equal(path, exp_path)
+
+        # Double check einsum works on the input path
+        noopt = np.einsum(*path_test, optimize=False)
+        opt = np.einsum(*path_test, optimize=exp_path)
+        assert_almost_equal(noopt, opt)
+
+    def test_path_type_input_invalid(self):
+        path_test = self.build_operands('ab,bc,cd,de->ae')
+        exp_path = ['einsum_path', (2, 3), (0, 1)]
+        assert_raises(RuntimeError, np.einsum, *path_test, optimize=exp_path)
+        assert_raises(
+            RuntimeError, np.einsum_path, *path_test, optimize=exp_path)
+
+        path_test = self.build_operands('a,a,a->a')
+        exp_path = ['einsum_path', (1,), (0, 1)]
+        assert_raises(RuntimeError, np.einsum, *path_test, optimize=exp_path)
+        assert_raises(
+            RuntimeError, np.einsum_path, *path_test, optimize=exp_path)
 
     def test_spaces(self):
         #gh-10794

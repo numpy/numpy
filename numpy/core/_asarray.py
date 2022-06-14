@@ -78,7 +78,6 @@ def require(a, dtype=None, requirements=None, *, like=None):
       WRITEABLE : True
       ALIGNED : True
       WRITEBACKIFCOPY : False
-      UPDATEIFCOPY : False
 
     >>> y = np.require(x, dtype=np.float32, requirements=['A', 'O', 'W', 'F'])
     >>> y.flags
@@ -88,7 +87,6 @@ def require(a, dtype=None, requirements=None, *, like=None):
       WRITEABLE : True
       ALIGNED : True
       WRITEBACKIFCOPY : False
-      UPDATEIFCOPY : False
 
     """
     if like is not None:

@@ -1,5 +1,5 @@
 /**
- * This header is used internaly by all current supported SIMD extention,
+ * This header is used internally by all current supported SIMD extensions,
  * execpt for AVX512.
  */
 #ifndef NPY_SIMD
@@ -36,7 +36,9 @@ NPYV_IMPL_EMULATE_MASK_ADDSUB(u32, b32)
 NPYV_IMPL_EMULATE_MASK_ADDSUB(s32, b32)
 NPYV_IMPL_EMULATE_MASK_ADDSUB(u64, b64)
 NPYV_IMPL_EMULATE_MASK_ADDSUB(s64, b64)
-NPYV_IMPL_EMULATE_MASK_ADDSUB(f32, b32)
+#if NPY_SIMD_F32
+    NPYV_IMPL_EMULATE_MASK_ADDSUB(f32, b32)
+#endif
 #if NPY_SIMD_F64
     NPYV_IMPL_EMULATE_MASK_ADDSUB(f64, b64)
 #endif

@@ -59,6 +59,30 @@ NPY_FINLINE npyv_u32x2 npyv_expand_u32_u16(npyv_u16 data) {
     return r;
 }
 
+// pack two 16-bit boolean into one 8-bit boolean vector
+NPY_FINLINE npyv_b8 npyv_pack_b8_b16(npyv_b16 a, npyv_b16 b) {
+    return _mm_packs_epi16(a, b);
+}
+
+// pack four 32-bit boolean vectors into one 8-bit boolean vector
+NPY_FINLINE npyv_b8
+npyv_pack_b8_b32(npyv_b32 a, npyv_b32 b, npyv_b32 c, npyv_b32 d) {
+    npyv_b16 ab = _mm_packs_epi32(a, b);
+    npyv_b16 cd = _mm_packs_epi32(c, d);
+    return npyv_pack_b8_b16(ab, cd);
+}
+
+// pack eight 64-bit boolean vectors into one 8-bit boolean vector
+NPY_FINLINE npyv_b8
+npyv_pack_b8_b64(npyv_b64 a, npyv_b64 b, npyv_b64 c, npyv_b64 d,
+                 npyv_b64 e, npyv_b64 f, npyv_b64 g, npyv_b64 h) {
+    npyv_b32 ab = _mm_packs_epi32(a, b);
+    npyv_b32 cd = _mm_packs_epi32(c, d);
+    npyv_b32 ef = _mm_packs_epi32(e, f);
+    npyv_b32 gh = _mm_packs_epi32(g, h);
+    return npyv_pack_b8_b32(ab, cd, ef, gh);
+}
+
 // round to nearest integer (assuming even)
 #define npyv_round_s32_f32 _mm_cvtps_epi32
 NPY_FINLINE npyv_s32 npyv_round_s32_f64(npyv_f64 a, npyv_f64 b)

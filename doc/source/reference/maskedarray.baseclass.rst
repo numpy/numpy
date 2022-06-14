@@ -1,7 +1,6 @@
 .. currentmodule:: numpy.ma
 
 .. for doctests
-   >>> import numpy as np
    >>> from numpy import ma
 
 .. _numpy.ma.constants:

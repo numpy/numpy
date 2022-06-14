@@ -1,5 +1,5 @@
-#ifndef _NPY_PRIVATE_BUFFER_H_
-#define _NPY_PRIVATE_BUFFER_H_
+#ifndef NUMPY_CORE_SRC_MULTIARRAY_NPY_BUFFER_H_
+#define NUMPY_CORE_SRC_MULTIARRAY_NPY_BUFFER_H_
 
 extern NPY_NO_EXPORT PyBufferProcs array_as_buffer;
 
@@ -12,4 +12,4 @@ _descriptor_from_pep3118_format(char const *s);
 NPY_NO_EXPORT int
 void_getbuffer(PyObject *obj, Py_buffer *view, int flags);
 
-#endif
+#endif  /* NUMPY_CORE_SRC_MULTIARRAY_NPY_BUFFER_H_ */

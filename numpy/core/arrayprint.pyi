@@ -1,9 +1,9 @@
-import sys
 from types import TracebackType
-from typing import Any, Optional, Callable, Union, Type
+from collections.abc import Callable
+from typing import Any, Literal, TypedDict, SupportsIndex
 
-# Using a private class is by no means ideal, but it is simply a consquence
-# of a `contextlib.context` returning an instance of aformentioned class
+# Using a private class is by no means ideal, but it is simply a consequence
+# of a `contextlib.context` returning an instance of aforementioned class
 from contextlib import _GeneratorContextManager
 
 from numpy import (
@@ -21,12 +21,7 @@ from numpy import (
     longdouble,
     clongdouble,
 )
-from numpy.typing import ArrayLike, _CharLike_co, _FloatLike_co
-
-if sys.version_info > (3, 8):
-    from typing import Literal, TypedDict, SupportsIndex
-else:
-    from typing_extensions import Literal, TypedDict, SupportsIndex
+from numpy._typing import ArrayLike, _CharLike_co, _FloatLike_co
 
 _FloatMode = Literal["fixed", "unique", "maxprec", "maxprec_equal"]
 
@@ -56,92 +51,92 @@ class _FormatOptions(TypedDict):
     suppress: bool
     nanstr: str
     infstr: str
-    formatter: Optional[_FormatDict]
+    formatter: None | _FormatDict
     sign: Literal["-", "+", " "]
     floatmode: _FloatMode
-    legacy: Literal[False, "1.13"]
+    legacy: Literal[False, "1.13", "1.21"]
 
 def set_printoptions(
-    precision: Optional[SupportsIndex] = ...,
-    threshold: Optional[int] = ...,
-    edgeitems: Optional[int] = ...,
-    linewidth: Optional[int] = ...,
-    suppress: Optional[bool] = ...,
-    nanstr: Optional[str] = ...,
-    infstr: Optional[str] = ...,
-    formatter: Optional[_FormatDict] = ...,
-    sign: Optional[Literal["-", "+", " "]] = ...,
-    floatmode: Optional[_FloatMode] = ...,
+    precision: None | SupportsIndex = ...,
+    threshold: None | int = ...,
+    edgeitems: None | int = ...,
+    linewidth: None | int = ...,
+    suppress: None | bool = ...,
+    nanstr: None | str = ...,
+    infstr: None | str = ...,
+    formatter: None | _FormatDict = ...,
+    sign: Literal[None, "-", "+", " "] = ...,
+    floatmode: None | _FloatMode = ...,
     *,
-    legacy: Optional[Literal[False, "1.13"]] = ...
+    legacy: Literal[None, False, "1.13", "1.21"] = ...
 ) -> None: ...
 def get_printoptions() -> _FormatOptions: ...
 def array2string(
     a: ndarray[Any, Any],
-    max_line_width: Optional[int] = ...,
-    precision: Optional[SupportsIndex] = ...,
-    suppress_small: Optional[bool] = ...,
+    max_line_width: None | int = ...,
+    precision: None | SupportsIndex = ...,
+    suppress_small: None | bool = ...,
     separator: str = ...,
     prefix: str = ...,
     # NOTE: With the `style` argument being deprecated,
     # all arguments between `formatter` and `suffix` are de facto
     # keyworld-only arguments
     *,
-    formatter: Optional[_FormatDict] = ...,
-    threshold: Optional[int] = ...,
-    edgeitems: Optional[int] = ...,
-    sign: Optional[Literal["-", "+", " "]] = ...,
-    floatmode: Optional[_FloatMode] = ...,
+    formatter: None | _FormatDict = ...,
+    threshold: None | int = ...,
+    edgeitems: None | int = ...,
+    sign: Literal[None, "-", "+", " "] = ...,
+    floatmode: None | _FloatMode = ...,
     suffix: str = ...,
-    legacy: Optional[Literal[False, "1.13"]] = ...,
+    legacy: Literal[None, False, "1.13", "1.21"] = ...,
 ) -> str: ...
 def format_float_scientific(
     x: _FloatLike_co,
-    precision: Optional[int] = ...,
+    precision: None | int = ...,
     unique: bool = ...,
     trim: Literal["k", ".", "0", "-"] = ...,
     sign: bool = ...,
-    pad_left: Optional[int] = ...,
-    exp_digits: Optional[int] = ...,
-    min_digits: Optional[int] = ...,
+    pad_left: None | int = ...,
+    exp_digits: None | int = ...,
+    min_digits: None | int = ...,
 ) -> str: ...
 def format_float_positional(
     x: _FloatLike_co,
-    precision: Optional[int] = ...,
+    precision: None | int = ...,
     unique: bool = ...,
     fractional: bool = ...,
     trim: Literal["k", ".", "0", "-"] = ...,
     sign: bool = ...,
-    pad_left: Optional[int] = ...,
-    pad_right: Optional[int] = ...,
-    min_digits: Optional[int] = ...,
+    pad_left: None | int = ...,
+    pad_right: None | int = ...,
+    min_digits: None | int = ...,
 ) -> str: ...
 def array_repr(
     arr: ndarray[Any, Any],
-    max_line_width: Optional[int] = ...,
-    precision: Optional[SupportsIndex] = ...,
-    suppress_small: Optional[bool] = ...,
+    max_line_width: None | int = ...,
+    precision: None | SupportsIndex = ...,
+    suppress_small: None | bool = ...,
 ) -> str: ...
 def array_str(
     a: ndarray[Any, Any],
-    max_line_width: Optional[int] = ...,
-    precision: Optional[SupportsIndex] = ...,
-    suppress_small: Optional[bool] = ...,
+    max_line_width: None | int = ...,
+    precision: None | SupportsIndex = ...,
+    suppress_small: None | bool = ...,
 ) -> str: ...
 def set_string_function(
-    f: Optional[Callable[[ndarray[Any, Any]], str]], repr: bool = ...
+    f: None | Callable[[ndarray[Any, Any]], str], repr: bool = ...
 ) -> None: ...
 def printoptions(
-    precision: Optional[SupportsIndex] = ...,
-    threshold: Optional[int] = ...,
-    edgeitems: Optional[int] = ...,
-    linewidth: Optional[int] = ...,
-    suppress: Optional[bool] = ...,
-    nanstr: Optional[str] = ...,
-    infstr: Optional[str] = ...,
-    formatter: Optional[_FormatDict] = ...,
-    sign: Optional[Literal["-", "+", " "]] = ...,
-    floatmode: Optional[_FloatMode] = ...,
+    precision: None | SupportsIndex = ...,
+    threshold: None | int = ...,
+    edgeitems: None | int = ...,
+    linewidth: None | int = ...,
+    suppress: None | bool = ...,
+    nanstr: None | str = ...,
+    infstr: None | str = ...,
+    formatter: None | _FormatDict = ...,
+    sign: Literal[None, "-", "+", " "] = ...,
+    floatmode: None | _FloatMode = ...,
     *,
-    legacy: Optional[Literal[False, "1.13"]] = ...
+    legacy: Literal[None, False, "1.13", "1.21"] = ...
 ) -> _GeneratorContextManager[_FormatOptions]: ...

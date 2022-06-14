@@ -1,24 +1,27 @@
 .. currentmodule:: numpy.random
 
 Bit Generators
---------------
+==============
 
 The random values produced by :class:`~Generator`
-orignate in a BitGenerator.  The BitGenerators do not directly provide
+originate in a BitGenerator.  The BitGenerators do not directly provide
 random numbers and only contains methods used for seeding, getting or
 setting the state, jumping or advancing the state, and for accessing
 low-level wrappers for consumption by code that can efficiently
 access the functions provided, e.g., `numba <https://numba.pydata.org>`_.
 
 Supported BitGenerators
-=======================
+-----------------------
 
 The included BitGenerators are:
 
-* PCG-64 - The default. A fast generator that supports many parallel streams
-  and can be advanced by an arbitrary amount. See the documentation for
-  :meth:`~.PCG64.advance`. PCG-64 has a period of :math:`2^{128}`. See the `PCG
-  author's page`_ for more details about this class of PRNG.
+* PCG-64 - The default. A fast generator that can be advanced by an arbitrary
+  amount. See the documentation for :meth:`~.PCG64.advance`. PCG-64 has
+  a period of :math:`2^{128}`. See the `PCG author's page`_ for more details
+  about this class of PRNG.
+* PCG-64 DXSM - An upgraded version of PCG-64 with better statistical
+  properties in parallel contexts. See :ref:`upgrading-pcg64` for more
+  information on these improvements.
 * MT19937 - The standard Python BitGenerator. Adds a `MT19937.jumped`
   function that returns a new generator with state as-if :math:`2^{128}` draws have
   been made.
@@ -43,11 +46,12 @@ The included BitGenerators are:
 
     MT19937 <mt19937>
     PCG64 <pcg64>
+    PCG64DXSM <pcg64dxsm>
     Philox <philox>
     SFC64 <sfc64>
 
 Seeding and Entropy
--------------------
+===================
 
 A BitGenerator provides a stream of random values. In order to generate
 reproducible streams, BitGenerators support setting their initial state via a

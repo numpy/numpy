@@ -71,10 +71,8 @@ class TestHalf:
     def test_half_conversion_to_string(self, string_dt):
         # Currently uses S/U32 (which is sufficient for float32)
         expected_dt = np.dtype(f"{string_dt}32")
-        with pytest.warns(FutureWarning):
-            assert np.promote_types(np.float16, string_dt) == expected_dt
-        with pytest.warns(FutureWarning):
-            assert np.promote_types(string_dt, np.float16) == expected_dt
+        assert np.promote_types(np.float16, string_dt) == expected_dt
+        assert np.promote_types(string_dt, np.float16) == expected_dt
 
         arr = np.ones(3, dtype=np.float16).astype(string_dt)
         assert arr.dtype == expected_dt
@@ -106,9 +104,9 @@ class TestHalf:
 
         # Increase the float by a minimal value:
         if offset == "up":
-            f16s_float = np.nextafter(f16s_float, float_t(1e50))
+            f16s_float = np.nextafter(f16s_float, float_t(np.inf))
         elif offset == "down":
-            f16s_float = np.nextafter(f16s_float, float_t(-1e50))
+            f16s_float = np.nextafter(f16s_float, float_t(-np.inf))
 
         # Convert back to float16 and its bit pattern:
         res_patterns = f16s_float.astype(np.float16).view(np.uint16)
@@ -235,12 +233,14 @@ class TestHalf:
                    np.inf]
 
         # Check float64->float16 rounding
-        b = np.array(a, dtype=float16)
+        with np.errstate(over="ignore"):
+            b = np.array(a, dtype=float16)
         assert_equal(b, rounded)
 
         # Check float32->float16 rounding
         a = np.array(a, dtype=float32)
-        b = np.array(a, dtype=float16)
+        with np.errstate(over="ignore"):
+            b = np.array(a, dtype=float16)
         assert_equal(b, rounded)
 
     def test_half_correctness(self):

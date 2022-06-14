@@ -43,6 +43,20 @@ class Bincount(Benchmark):
         np.bincount(self.d, weights=self.e)
 
 
+class Mean(Benchmark):
+    param_names = ['size']
+    params = [[1, 10, 100_000]]
+
+    def setup(self, size):
+        self.array = np.arange(2*size).reshape(2, size)
+
+    def time_mean(self, size):
+        np.mean(self.array)
+
+    def time_mean_axis(self, size):
+        np.mean(self.array, axis=1)
+
+
 class Median(Benchmark):
     def setup(self):
         self.e = np.arange(10000, dtype=np.float32)
@@ -78,13 +92,16 @@ class Median(Benchmark):
 class Percentile(Benchmark):
     def setup(self):
         self.e = np.arange(10000, dtype=np.float32)
-        self.o = np.arange(10001, dtype=np.float32)
+        self.o = np.arange(21, dtype=np.float32)
 
     def time_quartile(self):
         np.percentile(self.e, [25, 75])
 
     def time_percentile(self):
         np.percentile(self.e, [25, 35, 55, 65, 75])
+
+    def time_percentile_small(self):
+        np.percentile(self.o, [25, 75])
 
 
 class Select(Benchmark):
@@ -222,7 +239,7 @@ class Sort(Benchmark):
         # In NumPy 1.17 and newer, 'merge' can be one of several
         # stable sorts, it isn't necessarily merge sort.
         ['quick', 'merge', 'heap'],
-        ['float64', 'int64', 'int16'],
+        ['float64', 'int64', 'float32', 'uint32', 'int32', 'int16'],
         [
             ('random',),
             ('ordered',),
@@ -284,6 +301,21 @@ class Where(Benchmark):
         self.d = np.arange(20000)
         self.e = self.d.copy()
         self.cond = (self.d > 5000)
+        size = 1024 * 1024 // 8
+        rnd_array = np.random.rand(size)
+        self.rand_cond_01 = rnd_array > 0.01
+        self.rand_cond_20 = rnd_array > 0.20
+        self.rand_cond_30 = rnd_array > 0.30
+        self.rand_cond_40 = rnd_array > 0.40
+        self.rand_cond_50 = rnd_array > 0.50
+        self.all_zeros = np.zeros(size, dtype=bool)
+        self.all_ones = np.ones(size, dtype=bool)
+        self.rep_zeros_2 = np.arange(size) % 2 == 0
+        self.rep_zeros_4 = np.arange(size) % 4 == 0
+        self.rep_zeros_8 = np.arange(size) % 8 == 0
+        self.rep_ones_2 = np.arange(size) % 2 > 0
+        self.rep_ones_4 = np.arange(size) % 4 > 0
+        self.rep_ones_8 = np.arange(size) % 8 > 0
 
     def time_1(self):
         np.where(self.cond)
@@ -293,3 +325,43 @@ class Where(Benchmark):
 
     def time_2_broadcast(self):
         np.where(self.cond, self.d, 0)
+
+    def time_all_zeros(self):
+        np.where(self.all_zeros)
+
+    def time_random_01_percent(self):
+        np.where(self.rand_cond_01)
+
+    def time_random_20_percent(self):
+        np.where(self.rand_cond_20)
+
+    def time_random_30_percent(self):
+        np.where(self.rand_cond_30)
+
+    def time_random_40_percent(self):
+        np.where(self.rand_cond_40)
+
+    def time_random_50_percent(self):
+        np.where(self.rand_cond_50)
+
+    def time_all_ones(self):
+        np.where(self.all_ones)
+
+    def time_interleaved_zeros_x2(self):
+        np.where(self.rep_zeros_2)
+
+    def time_interleaved_zeros_x4(self):
+        np.where(self.rep_zeros_4)
+
+    def time_interleaved_zeros_x8(self):
+        np.where(self.rep_zeros_8)
+
+    def time_interleaved_ones_x2(self):
+        np.where(self.rep_ones_2)
+
+    def time_interleaved_ones_x4(self):
+        np.where(self.rep_ones_4)
+
+    def time_interleaved_ones_x8(self):
+        np.where(self.rep_ones_8)
+

@@ -1,0 +1,6 @@
+[submodule "doc/source/_static/scipy-mathjax"]
+	path = doc/source/_static/scipy-mathjax
+	url = https://github.com/scipy/scipy-mathjax.git
+[submodule "numpy/core/src/umath/svml"]
+	path = numpy/core/src/umath/svml
+	url = https://github.com/numpy/SVML.git

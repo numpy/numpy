@@ -1,7 +1,7 @@
 .. _NEP45:
 
 =================================
-NEP 45 — C Style Guide
+NEP 45 — C style guide
 =================================
 
 :Author: Charles Harris <charlesr.harris@gmail.com>
@@ -256,7 +256,7 @@ Discussion
 ----------
 
 https://github.com/numpy/numpy/issues/11911
-recommended that this proposal, which originated as ``doc/C_STYLE_GUIDE.rst.txt``,
+recommended that this proposal, which originated as ``doc/C_STYLE_GUIDE.rst``,
 be turned into an NEP.
 
 

@@ -123,20 +123,20 @@ names contributed a patch for the first time.
 Pull requests merged
 ====================
 
-A total of 406 pull requests were merged for this release.
+A total of 413 pull requests were merged for this release.
 
 * `#9301 <https://github.com/numpy/numpy/pull/9301>`__: DOC: added note to docstring of numpy.savez
 * `#10151 <https://github.com/numpy/numpy/pull/10151>`__: BUG: Numpy scalar types sometimes have the same name
 * `#12129 <https://github.com/numpy/numpy/pull/12129>`__: DOC: Improve axes shift description and example in np.tensordot
-* `#12205 <https://github.com/numpy/numpy/pull/12205>`__: MAINT: avoid relying on `np.generic.__name__` in `np.dtype.name`
+* `#12205 <https://github.com/numpy/numpy/pull/12205>`__: MAINT: avoid relying on ``np.generic.__name__`` in ``np.dtype.name``
 * `#12284 <https://github.com/numpy/numpy/pull/12284>`__: ENH: supply our version of numpy.pxd, requires cython>=0.29
 * `#12633 <https://github.com/numpy/numpy/pull/12633>`__: BUG: General fixes to f2py reference counts (dereferencing)
 * `#12658 <https://github.com/numpy/numpy/pull/12658>`__: BUG: NaT now sorts to ends of arrays
 * `#12828 <https://github.com/numpy/numpy/pull/12828>`__: DOC: Updates to nditer usage instructions
-* `#13003 <https://github.com/numpy/numpy/pull/13003>`__: BUG: Do not crash on recursive `.dtype` attribute lookup.
+* `#13003 <https://github.com/numpy/numpy/pull/13003>`__: BUG: Do not crash on recursive ``.dtype`` attribute lookup.
 * `#13368 <https://github.com/numpy/numpy/pull/13368>`__: ENH: Use AVX for float32 implementation of np.sin & np.cos
 * `#13605 <https://github.com/numpy/numpy/pull/13605>`__: DEP: Deprecate silent ignoring of bad data in fromfile/fromstring
-* `#13610 <https://github.com/numpy/numpy/pull/13610>`__: ENH: Always produce a consistent shape in the result of `argwhere`
+* `#13610 <https://github.com/numpy/numpy/pull/13610>`__: ENH: Always produce a consistent shape in the result of ``argwhere``
 * `#13673 <https://github.com/numpy/numpy/pull/13673>`__: DOC: array(obj, dtype=dt) can downcast
 * `#13698 <https://github.com/numpy/numpy/pull/13698>`__: DOC: Document ma.filled behavior with non-scalar fill_value
 * `#13710 <https://github.com/numpy/numpy/pull/13710>`__: DOC: Add note to irfft-like functions about the default sizes
@@ -144,6 +144,7 @@ A total of 406 pull requests were merged for this release.
 * `#13766 <https://github.com/numpy/numpy/pull/13766>`__: MAINT: Update NEP template.
 * `#13794 <https://github.com/numpy/numpy/pull/13794>`__: ENH: random: Add the multivariate hypergeometric distribution.
 * `#13799 <https://github.com/numpy/numpy/pull/13799>`__: DOC: Fix unrendered links
+* `#13802 <https://github.com/numpy/numpy/pull/13802>`__: BUG: Fixed maximum relative error reporting in assert_allclose
 * `#13812 <https://github.com/numpy/numpy/pull/13812>`__: MAINT: Rewrite Floyd algorithm
 * `#13825 <https://github.com/numpy/numpy/pull/13825>`__: DOC: Add missing macros to C-API documentation
 * `#13829 <https://github.com/numpy/numpy/pull/13829>`__: ENH: Add axis argument to random.permutation and random.shuffle
@@ -162,6 +163,7 @@ A total of 406 pull requests were merged for this release.
 * `#13892 <https://github.com/numpy/numpy/pull/13892>`__: DOC : Refactor Array API documentation -- Array Structure and...
 * `#13895 <https://github.com/numpy/numpy/pull/13895>`__: DOC: Fix typo in "make_mask" documentation
 * `#13896 <https://github.com/numpy/numpy/pull/13896>`__: MAINT: Delete unused _aliased_types.py
+* `#13899 <https://github.com/numpy/numpy/pull/13899>`__: MAINT: Change the type of error raised in set_printoptions
 * `#13901 <https://github.com/numpy/numpy/pull/13901>`__: BLD: Remove Trusty dist in Travis CI build
 * `#13907 <https://github.com/numpy/numpy/pull/13907>`__: BUG: Handle weird bytestrings in dtype()
 * `#13908 <https://github.com/numpy/numpy/pull/13908>`__: ENH: use towncrier to build the release note
@@ -174,7 +176,7 @@ A total of 406 pull requests were merged for this release.
 * `#13926 <https://github.com/numpy/numpy/pull/13926>`__: DOC: Remove explicit .next method calls with built-in next function...
 * `#13928 <https://github.com/numpy/numpy/pull/13928>`__: DOC: Don't override MaskedArray.view documentation with the one...
 * `#13930 <https://github.com/numpy/numpy/pull/13930>`__: BUG: Fix incorrect GIL release in array.nonzero
-* `#13935 <https://github.com/numpy/numpy/pull/13935>`__: MAINT: Warn if `_add_newdocs.py` is used to add docstrings to...
+* `#13935 <https://github.com/numpy/numpy/pull/13935>`__: MAINT: Warn if ``_add_newdocs.py`` is used to add docstrings to...
 * `#13943 <https://github.com/numpy/numpy/pull/13943>`__: MAINT: Revert #13876, "MAINT,BUG,DOC: Fix errors in _add_newdocs"
 * `#13944 <https://github.com/numpy/numpy/pull/13944>`__: MAINT,BUG,DOC: Fix errors in _add_newdocs
 * `#13945 <https://github.com/numpy/numpy/pull/13945>`__: DOC, MAINT: emphasize random API changes, remove Generator.randint
@@ -184,7 +186,7 @@ A total of 406 pull requests were merged for this release.
 * `#13950 <https://github.com/numpy/numpy/pull/13950>`__: Fixing failure on Python 2.7 on Windows 7
 * `#13952 <https://github.com/numpy/numpy/pull/13952>`__: Fix a typo related to the range of indices
 * `#13959 <https://github.com/numpy/numpy/pull/13959>`__: DOC: add space between words across lines
-* `#13964 <https://github.com/numpy/numpy/pull/13964>`__: BUG, DOC: add new recfunctions to `__all__`
+* `#13964 <https://github.com/numpy/numpy/pull/13964>`__: BUG, DOC: add new recfunctions to ``__all__``
 * `#13967 <https://github.com/numpy/numpy/pull/13967>`__: DOC: Change (old) range() to np.arange()
 * `#13968 <https://github.com/numpy/numpy/pull/13968>`__: DOC: improve np.sort docstring
 * `#13970 <https://github.com/numpy/numpy/pull/13970>`__: DOC: spellcheck numpy/doc/broadcasting.py
@@ -226,7 +228,7 @@ A total of 406 pull requests were merged for this release.
 * `#14076 <https://github.com/numpy/numpy/pull/14076>`__: TST: Add 3.8-dev to travisCI testing.
 * `#14085 <https://github.com/numpy/numpy/pull/14085>`__: DOC: Add blank line above doctest for intersect1d
 * `#14086 <https://github.com/numpy/numpy/pull/14086>`__: ENH: Propose standard policy for dropping support of old Python...
-* `#14089 <https://github.com/numpy/numpy/pull/14089>`__: DOC: Use `pip install .` where possible instead of calling setup.py
+* `#14089 <https://github.com/numpy/numpy/pull/14089>`__: DOC: Use ``pip install .`` where possible instead of calling setup.py
 * `#14091 <https://github.com/numpy/numpy/pull/14091>`__: MAINT: adjustments to test_ufunc_noncontigous
 * `#14092 <https://github.com/numpy/numpy/pull/14092>`__: MAINT: Improve NEP template
 * `#14096 <https://github.com/numpy/numpy/pull/14096>`__: DOC: fix documentation of i and j for tri.
@@ -236,6 +238,7 @@ A total of 406 pull requests were merged for this release.
 * `#14106 <https://github.com/numpy/numpy/pull/14106>`__: MAINT: remove duplicate variable assignments
 * `#14108 <https://github.com/numpy/numpy/pull/14108>`__: BUG: initialize variable that is passed by pointer
 * `#14110 <https://github.com/numpy/numpy/pull/14110>`__: DOC: fix typo in c-api/array.rst doc
+* `#14115 <https://github.com/numpy/numpy/pull/14115>`__: DOC: fix markup of news fragment readme
 * `#14121 <https://github.com/numpy/numpy/pull/14121>`__: BUG: Add gcd/lcm definitions to npy_math.h
 * `#14122 <https://github.com/numpy/numpy/pull/14122>`__: MAINT: Mark umath accuracy test xfail.
 * `#14124 <https://github.com/numpy/numpy/pull/14124>`__: MAINT: Use equality instead of identity check with literal
@@ -249,36 +252,39 @@ A total of 406 pull requests were merged for this release.
 * `#14153 <https://github.com/numpy/numpy/pull/14153>`__: TST: Allow fuss in testing strided/non-strided exp/log loops
 * `#14170 <https://github.com/numpy/numpy/pull/14170>`__: NEP: Proposal for __duckarray__ protocol
 * `#14171 <https://github.com/numpy/numpy/pull/14171>`__: BUG: Make advanced indexing result on read-only subclass writeable
+* `#14174 <https://github.com/numpy/numpy/pull/14174>`__: BUG: Check for existence of ``fromstr`` which used in ``fromstr_next_element``
 * `#14178 <https://github.com/numpy/numpy/pull/14178>`__: TST: Clean up of test_pocketfft.py
 * `#14181 <https://github.com/numpy/numpy/pull/14181>`__: DEP: Deprecate np.alen
+* `#14183 <https://github.com/numpy/numpy/pull/14183>`__: DOC: Fix misleading ``allclose`` docstring for ``equal_nan``
 * `#14185 <https://github.com/numpy/numpy/pull/14185>`__: MAINT: Workaround for Intel compiler bug leading to failing test
-* `#14190 <https://github.com/numpy/numpy/pull/14190>`__: DOC: Fix hermitian argument docs in `svd`
+* `#14190 <https://github.com/numpy/numpy/pull/14190>`__: DOC: Fix hermitian argument docs in ``svd``
 * `#14195 <https://github.com/numpy/numpy/pull/14195>`__: MAINT: Fix a docstring typo.
-* `#14196 <https://github.com/numpy/numpy/pull/14196>`__: DOC: Fix links in `/.github/CONTRIBUTING.md`.
+* `#14196 <https://github.com/numpy/numpy/pull/14196>`__: DOC: Fix links in ``/.github/CONTRIBUTING.md``.
 * `#14197 <https://github.com/numpy/numpy/pull/14197>`__: ENH: Multivariate normal speedups
 * `#14203 <https://github.com/numpy/numpy/pull/14203>`__: MAINT: Improve mismatch message of np.testing.assert_array_equal
 * `#14204 <https://github.com/numpy/numpy/pull/14204>`__: DOC,MAINT: Move towncrier files and fixup categories
 * `#14207 <https://github.com/numpy/numpy/pull/14207>`__: BUG: Fixed default BitGenerator name
 * `#14209 <https://github.com/numpy/numpy/pull/14209>`__: BUG: Fix uint-overflow if padding with linear_ramp and negative...
 * `#14216 <https://github.com/numpy/numpy/pull/14216>`__: ENH: Enable huge pages in all Linux builds
-* `#14217 <https://github.com/numpy/numpy/pull/14217>`__: BUG: Fix leak in the f2py-generated module init and `PyMem_Del`...
+* `#14217 <https://github.com/numpy/numpy/pull/14217>`__: BUG: Fix leak in the f2py-generated module init and ``PyMem_Del``...
 * `#14219 <https://github.com/numpy/numpy/pull/14219>`__: DOC: new nan_to_num keywords are from 1.17 onwards
 * `#14223 <https://github.com/numpy/numpy/pull/14223>`__: TST: Add tests for deprecated C functions (PyArray_As1D, PyArray_As1D)
-* `#14224 <https://github.com/numpy/numpy/pull/14224>`__: DOC: mention `take_along_axis` in `choose`
+* `#14224 <https://github.com/numpy/numpy/pull/14224>`__: DOC: mention ``take_along_axis`` in ``choose``
 * `#14227 <https://github.com/numpy/numpy/pull/14227>`__: ENH: Parse complex number from string
 * `#14231 <https://github.com/numpy/numpy/pull/14231>`__: DOC: update or remove outdated sourceforge links
 * `#14234 <https://github.com/numpy/numpy/pull/14234>`__: MAINT: Better error message for norm
 * `#14235 <https://github.com/numpy/numpy/pull/14235>`__: DOC: add backlinks to numpy.org
 * `#14240 <https://github.com/numpy/numpy/pull/14240>`__: BUG: Don't fail when lexsorting some empty arrays.
-* `#14241 <https://github.com/numpy/numpy/pull/14241>`__: BUG: Fix segfault in `random.permutation(x)` when x is a string.
+* `#14241 <https://github.com/numpy/numpy/pull/14241>`__: BUG: Fix segfault in ``random.permutation(x)`` when x is a string.
 * `#14245 <https://github.com/numpy/numpy/pull/14245>`__: Doc: fix a typo in NEP21
 * `#14249 <https://github.com/numpy/numpy/pull/14249>`__: DOC: set status of NEP 28 (website redesign) to Accepted
 * `#14250 <https://github.com/numpy/numpy/pull/14250>`__: BLD: MAINT: change default behavior of build flag appending.
 * `#14252 <https://github.com/numpy/numpy/pull/14252>`__: BUG: Fixes StopIteration error from 'np.genfromtext' for empty...
-* `#14255 <https://github.com/numpy/numpy/pull/14255>`__: BUG: fix inconsistent axes ordering for axis in function `unique`
+* `#14255 <https://github.com/numpy/numpy/pull/14255>`__: BUG: fix inconsistent axes ordering for axis in function ``unique``
 * `#14256 <https://github.com/numpy/numpy/pull/14256>`__: DEP: Deprecate load/dump functions in favour of pickle methods
 * `#14257 <https://github.com/numpy/numpy/pull/14257>`__: MAINT: Update NEP-30
 * `#14259 <https://github.com/numpy/numpy/pull/14259>`__: DEP: Deprecate arrayprint formatting functions
+* `#14263 <https://github.com/numpy/numpy/pull/14263>`__: DOC: Make Py3K docs C code snippets RST literal blocks
 * `#14266 <https://github.com/numpy/numpy/pull/14266>`__: DOC: remove scipy.org from the breadcrumb formattiong
 * `#14270 <https://github.com/numpy/numpy/pull/14270>`__: BUG: Fix formatting error in exception message
 * `#14272 <https://github.com/numpy/numpy/pull/14272>`__: DOC: Address typos in dispatch docs
@@ -293,9 +299,9 @@ A total of 406 pull requests were merged for this release.
 * `#14313 <https://github.com/numpy/numpy/pull/14313>`__: DOC: Clarify rules about broadcasting when empty arrays are involved.
 * `#14321 <https://github.com/numpy/numpy/pull/14321>`__: TST, MAINT: bump to OpenBLAS 0.3.7 stable
 * `#14325 <https://github.com/numpy/numpy/pull/14325>`__: DEP: numpy.testing.rand
-* `#14335 <https://github.com/numpy/numpy/pull/14335>`__: DEP: Deprecate class `SafeEval`
+* `#14335 <https://github.com/numpy/numpy/pull/14335>`__: DEP: Deprecate class ``SafeEval``
 * `#14341 <https://github.com/numpy/numpy/pull/14341>`__: BUG: revert detecting and raising error on ragged arrays
-* `#14342 <https://github.com/numpy/numpy/pull/14342>`__: DOC: Improve documentation of `isscalar`.
+* `#14342 <https://github.com/numpy/numpy/pull/14342>`__: DOC: Improve documentation of ``isscalar``.
 * `#14349 <https://github.com/numpy/numpy/pull/14349>`__: MAINT: Fix bloated mismatch error percentage in array comparisons.
 * `#14351 <https://github.com/numpy/numpy/pull/14351>`__: DOC: Fix a minor typo in dispatch documentation.
 * `#14352 <https://github.com/numpy/numpy/pull/14352>`__: MAINT: Remove redundant deprecation checks
@@ -344,7 +350,7 @@ A total of 406 pull requests were merged for this release.
 * `#14475 <https://github.com/numpy/numpy/pull/14475>`__: DOC: add timedelta64 signature
 * `#14477 <https://github.com/numpy/numpy/pull/14477>`__: MAINT: Extract raising of MemoryError to a helper function
 * `#14483 <https://github.com/numpy/numpy/pull/14483>`__: BUG,MAINT: Some fixes and minor cleanup based on clang analysis
-* `#14484 <https://github.com/numpy/numpy/pull/14484>`__: MAINT: Add `NPY_UNUSED` and `const` qualified suggested by clang
+* `#14484 <https://github.com/numpy/numpy/pull/14484>`__: MAINT: Add ``NPY_UNUSED`` and ``const`` qualified suggested by clang
 * `#14485 <https://github.com/numpy/numpy/pull/14485>`__: MAINT: Silence integer comparison build warnings in assert statements
 * `#14486 <https://github.com/numpy/numpy/pull/14486>`__: MAINT: distutils: Add newline at the end of printed warnings.
 * `#14490 <https://github.com/numpy/numpy/pull/14490>`__: BUG: random: Revert gh-14458 and refix gh-14557.
@@ -383,7 +389,7 @@ A total of 406 pull requests were merged for this release.
 * `#14567 <https://github.com/numpy/numpy/pull/14567>`__: DEP: remove deprecated (and private) numpy.testing submodules.
 * `#14568 <https://github.com/numpy/numpy/pull/14568>`__: BLD, DOC: fix gh-14518, add release note
 * `#14570 <https://github.com/numpy/numpy/pull/14570>`__: BUG: importing build_src breaks setuptools monkeypatch for msvc14
-* `#14572 <https://github.com/numpy/numpy/pull/14572>`__: DOC: Note runtests.py `-- -s` method to use pytests `-s`
+* `#14572 <https://github.com/numpy/numpy/pull/14572>`__: DOC: Note runtests.py ``-- -s`` method to use pytests ``-s``
 * `#14573 <https://github.com/numpy/numpy/pull/14573>`__: DOC: update submodule docstrings, remove info.py files
 * `#14576 <https://github.com/numpy/numpy/pull/14576>`__: DOC: Document the NPY_SCALARKIND values as C variables.
 * `#14582 <https://github.com/numpy/numpy/pull/14582>`__: MAINT: Bump pytest from 5.1.2 to 5.1.3
@@ -405,30 +411,31 @@ A total of 406 pull requests were merged for this release.
 * `#14614 <https://github.com/numpy/numpy/pull/14614>`__: MAINT: Bump pytest from 5.1.3 to 5.2.0
 * `#14615 <https://github.com/numpy/numpy/pull/14615>`__: MAINT: Add "MAINT" tag to dependabot commit msg
 * `#14616 <https://github.com/numpy/numpy/pull/14616>`__: DOC: Updated sphinx directive formatting
-* `#14620 <https://github.com/numpy/numpy/pull/14620>`__: DEP: Finish deprecation of non-integer `num` in linspace
+* `#14620 <https://github.com/numpy/numpy/pull/14620>`__: DEP: Finish deprecation of non-integer ``num`` in linspace
 * `#14621 <https://github.com/numpy/numpy/pull/14621>`__: DOC: s/OR/AND/ in np.logical_and docstring
 * `#14623 <https://github.com/numpy/numpy/pull/14623>`__: DOC: misleading np.sinc() documentation
 * `#14629 <https://github.com/numpy/numpy/pull/14629>`__: DOC: clarify residual in np.polyfit
 * `#14630 <https://github.com/numpy/numpy/pull/14630>`__: BUILD: change to build_src --verbose-cfg, runtests.py --debug-info
 * `#14631 <https://github.com/numpy/numpy/pull/14631>`__: BUG: always free clean_sep
-* `#14634 <https://github.com/numpy/numpy/pull/14634>`__: DOC: Create `class Extension` docstring and add it to documentation.
-* `#14636 <https://github.com/numpy/numpy/pull/14636>`__: DOC: add `printoptions` as a context manager to `set_printoptions`
+* `#14634 <https://github.com/numpy/numpy/pull/14634>`__: DOC: Create ``class Extension`` docstring and add it to documentation.
+* `#14636 <https://github.com/numpy/numpy/pull/14636>`__: DOC: add ``printoptions`` as a context manager to ``set_printoptions``
 * `#14639 <https://github.com/numpy/numpy/pull/14639>`__: DOC: Fix typo in NEP 29
 * `#14643 <https://github.com/numpy/numpy/pull/14643>`__: MAINT: Use scalar math power function directly
 * `#14649 <https://github.com/numpy/numpy/pull/14649>`__: DOC: Add IPython to dependencies needed to build docs.
 * `#14652 <https://github.com/numpy/numpy/pull/14652>`__: MAINT: Bump pytest-cov from 2.7.1 to 2.8.1
 * `#14653 <https://github.com/numpy/numpy/pull/14653>`__: MAINT: Bump pytest from 5.2.0 to 5.2.1
 * `#14654 <https://github.com/numpy/numpy/pull/14654>`__: MAINT: Bump pytz from 2019.2 to 2019.3
-* `#14656 <https://github.com/numpy/numpy/pull/14656>`__: MAINT: Use `extract_unit` throughout datetime
+* `#14656 <https://github.com/numpy/numpy/pull/14656>`__: MAINT: Use ``extract_unit`` throughout datetime
 * `#14657 <https://github.com/numpy/numpy/pull/14657>`__: BUG: fix fromfile behavior when reading sub-array dtypes
 * `#14662 <https://github.com/numpy/numpy/pull/14662>`__: BUG: random: Use correct length when axis is given to shuffle.
 * `#14669 <https://github.com/numpy/numpy/pull/14669>`__: BUG: Do not rely on undefined behaviour to cast from float to...
 * `#14674 <https://github.com/numpy/numpy/pull/14674>`__: NEP: add default-dtype-object-deprecation nep 34
 * `#14681 <https://github.com/numpy/numpy/pull/14681>`__: MAINT: Remove unused boolean negative/subtract loops
-* `#14682 <https://github.com/numpy/numpy/pull/14682>`__: DEP: ufunc `out` argument must be a tuple for multiple outputs
-* `#14693 <https://github.com/numpy/numpy/pull/14693>`__: BUG: Fix `np.einsum` errors on Power9 Linux and z/Linux
+* `#14682 <https://github.com/numpy/numpy/pull/14682>`__: DEP: ufunc ``out`` argument must be a tuple for multiple outputs
+* `#14693 <https://github.com/numpy/numpy/pull/14693>`__: BUG: Fix ``np.einsum`` errors on Power9 Linux and z/Linux
 * `#14696 <https://github.com/numpy/numpy/pull/14696>`__: DOC: Note release notes process changes on devdocs start page
 * `#14699 <https://github.com/numpy/numpy/pull/14699>`__: Doc warnings
+* `#14703 <https://github.com/numpy/numpy/pull/14703>`__: TST: Adding CI stages, with one initial job to the Travis CI
 * `#14705 <https://github.com/numpy/numpy/pull/14705>`__: DOC: Switch Markdown link to RST in NEP 29
 * `#14709 <https://github.com/numpy/numpy/pull/14709>`__: TST: Divide Azure CI Pipelines into stages.
 * `#14710 <https://github.com/numpy/numpy/pull/14710>`__: DEP: Finish the out kwarg deprecation for ufunc calls
@@ -526,7 +533,7 @@ A total of 406 pull requests were merged for this release.
 * `#15058 <https://github.com/numpy/numpy/pull/15058>`__: API, DOC: change names to multivariate_hypergeometric, improve docs
 * `#15059 <https://github.com/numpy/numpy/pull/15059>`__: REL: Prepare for NumPy 1.18.0 release.
 * `#15109 <https://github.com/numpy/numpy/pull/15109>`__: TST: Check requires_memory immediately before the test
-* `#15111 <https://github.com/numpy/numpy/pull/15111>`__: ENH: Add support to sort timedelta64 `NaT` to end of the array
+* `#15111 <https://github.com/numpy/numpy/pull/15111>`__: ENH: Add support to sort timedelta64 ``NaT`` to end of the array
 * `#15112 <https://github.com/numpy/numpy/pull/15112>`__: MAINT: follow-up cleanup for blas64 PR
 * `#15113 <https://github.com/numpy/numpy/pull/15113>`__: ENH: f2py: add --f2cmap option for specifying the name of .f2py_f2cmap
 * `#15114 <https://github.com/numpy/numpy/pull/15114>`__: ENH: add support for ILP64 OpenBLAS (without symbol suffix)

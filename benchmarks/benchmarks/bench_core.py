@@ -207,7 +207,7 @@ class Indices(Benchmark):
         np.indices((1000, 500))
 
 class VarComplex(Benchmark):
-    params = [10**n for n in range(1, 9)]
+    params = [10**n for n in range(0, 9)]
     def setup(self, n):
         self.arr = np.random.randn(n) + 1j * np.random.randn(n)
 

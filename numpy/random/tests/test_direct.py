@@ -8,8 +8,8 @@ from numpy.testing import (assert_equal, assert_allclose, assert_array_equal,
 import pytest
 
 from numpy.random import (
-    Generator, MT19937, PCG64, Philox, RandomState, SeedSequence, SFC64,
-    default_rng
+    Generator, MT19937, PCG64, PCG64DXSM, Philox, RandomState, SeedSequence,
+    SFC64, default_rng
 )
 from numpy.random._common import interface
 
@@ -46,25 +46,27 @@ def assert_state_equal(actual, target):
             assert actual[key] == target[key]
 
 
+def uint32_to_float32(u):
+    return ((u >> np.uint32(8)) * (1.0 / 2**24)).astype(np.float32)
+
+
 def uniform32_from_uint64(x):
     x = np.uint64(x)
     upper = np.array(x >> np.uint64(32), dtype=np.uint32)
     lower = np.uint64(0xffffffff)
     lower = np.array(x & lower, dtype=np.uint32)
     joined = np.column_stack([lower, upper]).ravel()
-    out = (joined >> np.uint32(9)) * (1.0 / 2 ** 23)
-    return out.astype(np.float32)
+    return uint32_to_float32(joined)
 
 
 def uniform32_from_uint53(x):
     x = np.uint64(x) >> np.uint64(16)
     x = np.uint32(x & np.uint64(0xffffffff))
-    out = (x >> np.uint32(9)) * (1.0 / 2 ** 23)
-    return out.astype(np.float32)
+    return uint32_to_float32(x)
 
 
 def uniform32_from_uint32(x):
-    return (x >> np.uint32(9)) * (1.0 / 2 ** 23)
+    return uint32_to_float32(x)
 
 
 def uniform32_from_uint(x, bits):
@@ -125,6 +127,7 @@ def gauss_from_uint(x, n, bits):
         gauss.append(f * x1)
 
     return gauss[:n]
+
 
 def test_seedsequence():
     from numpy.random.bit_generator import (ISeedSequence,
@@ -357,6 +360,56 @@ class TestPCG64(Base):
         val_big = rs.integers(10)
         assert val_neg == val_pos
         assert val_big == val_pos
+
+    def test_advange_large(self):
+        rs = Generator(self.bit_generator(38219308213743))
+        pcg = rs.bit_generator
+        state = pcg.state["state"]
+        initial_state = 287608843259529770491897792873167516365
+        assert state["state"] == initial_state
+        pcg.advance(sum(2**i for i in (96, 64, 32, 16, 8, 4, 2, 1)))
+        state = pcg.state["state"]
+        advanced_state = 135275564607035429730177404003164635391
+        assert state["state"] == advanced_state
+
+
+class TestPCG64DXSM(Base):
+    @classmethod
+    def setup_class(cls):
+        cls.bit_generator = PCG64DXSM
+        cls.bits = 64
+        cls.dtype = np.uint64
+        cls.data1 = cls._read_csv(join(pwd, './data/pcg64dxsm-testset-1.csv'))
+        cls.data2 = cls._read_csv(join(pwd, './data/pcg64dxsm-testset-2.csv'))
+        cls.seed_error_type = (ValueError, TypeError)
+        cls.invalid_init_types = [(3.2,), ([None],), (1, None)]
+        cls.invalid_init_values = [(-1,)]
+
+    def test_advance_symmetry(self):
+        rs = Generator(self.bit_generator(*self.data1['seed']))
+        state = rs.bit_generator.state
+        step = -0x9e3779b97f4a7c150000000000000000
+        rs.bit_generator.advance(step)
+        val_neg = rs.integers(10)
+        rs.bit_generator.state = state
+        rs.bit_generator.advance(2**128 + step)
+        val_pos = rs.integers(10)
+        rs.bit_generator.state = state
+        rs.bit_generator.advance(10 * 2**128 + step)
+        val_big = rs.integers(10)
+        assert val_neg == val_pos
+        assert val_big == val_pos
+
+    def test_advange_large(self):
+        rs = Generator(self.bit_generator(38219308213743))
+        pcg = rs.bit_generator
+        state = pcg.state
+        initial_state = 287608843259529770491897792873167516365
+        assert state["state"]["state"] == initial_state
+        pcg.advance(sum(2**i for i in (96, 64, 32, 16, 8, 4, 2, 1)))
+        state = pcg.state["state"]
+        advanced_state = 277778083536782149546677086420637664879
+        assert state["state"] == advanced_state
 
 
 class TestMT19937(Base):

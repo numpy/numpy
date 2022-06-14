@@ -14,6 +14,7 @@ PYTHON = python$(PYVER)
 SPHINXOPTS    ?=
 SPHINXBUILD   ?= LANG=C sphinx-build
 PAPER         ?=
+DOXYGEN       ?= doxygen
 # For merging a documentation archive into a git checkout of numpy/doc
 # Turn a tag like v1.18.0 into 1.18
 # Use sed -n -e 's/patttern/match/p' to return a blank value if no match
@@ -77,7 +78,7 @@ INSTALL_DIR = $(CURDIR)/build/inst-dist
 INSTALL_PPH = $(INSTALL_DIR)/lib/python$(PYVER)/site-packages:$(INSTALL_DIR)/local/lib/python$(PYVER)/site-packages:$(INSTALL_DIR)/lib/python$(PYVER)/dist-packages:$(INSTALL_DIR)/local/lib/python$(PYVER)/dist-packages
 UPLOAD_DIR=/srv/docs_scipy_org/doc/numpy-$(RELEASE)
 
-DIST_VARS=SPHINXBUILD="LANG=C PYTHONPATH=$(INSTALL_PPH) python$(PYVER) `which sphinx-build`" PYTHON="PYTHONPATH=$(INSTALL_PPH) python$(PYVER)" 
+DIST_VARS=SPHINXBUILD="LANG=C PYTHONPATH=$(INSTALL_PPH) python$(PYVER) `which sphinx-build`" PYTHON="PYTHONPATH=$(INSTALL_PPH) python$(PYVER)"
 
 NUMPYVER:=$(shell $(PYTHON) -c "import numpy; print(numpy.version.git_revision[:10])" 2>/dev/null)
 GITVER ?= $(shell cd ..; $(PYTHON) -c "import versioneer as v; print(v.get_versions()['full-revisionid'][:10])")
@@ -87,6 +88,7 @@ ifeq "$(GITVER)" "Unknown"
 	# @echo sdist build with unlabeled sources
 else ifeq ("", "$(NUMPYVER)")
 	@echo numpy not found, cannot build documentation without successful \"import numpy\"
+	@echo Try overriding the makefile PYTHON variable with '"make PYTHON=python $(MAKECMDGOALS)"'
 	@exit 1
 else ifneq ($(NUMPYVER),$(GITVER))
 	@echo installed numpy $(NUMPYVER) != current repo git version \'$(GITVER)\'
@@ -155,7 +157,7 @@ endif
 	tar -C build/merge/$(TAG) -xf build/dist.tar.gz
 	git -C build/merge add $(TAG)
 	@# For now, the user must do this. If it is onerous, automate it and change
-	@# the instructions in doc/HOWTO_RELEASE.rst.txt
+	@# the instructions in doc/HOWTO_RELEASE.rst
 	@echo " "
 	@echo New documentation archive added to ./build/merge.
 	@echo Now add/modify the appropriate section after
@@ -176,6 +178,12 @@ build/generate-stamp: $(wildcard source/reference/*.rst)
 html: version-check html-build
 html-build: generate
 	mkdir -p build/html build/doctrees
+	$(PYTHON) preprocess.py
+ifeq (, $(shell which $(DOXYGEN)))
+	@echo "Unable to find 'Doxygen:$(DOXYGEN)', skip generating C/C++ API from comment blocks."
+else
+	$(DOXYGEN) build/doxygen/Doxyfile
+endif
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) build/html $(FILES)
 	$(PYTHON) postprocess.py html build/html/*.html
 	@echo
@@ -256,4 +264,3 @@ info:
 
 show:
 	@python -c "import webbrowser; webbrowser.open_new_tab('file://$(PWD)/build/html/index.html')"
-

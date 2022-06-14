@@ -35,8 +35,7 @@ __all__ = [
         'assert_allclose', 'IgnoreException', 'clear_and_catch_warnings',
         'SkipTest', 'KnownFailureException', 'temppath', 'tempdir', 'IS_PYPY',
         'HAS_REFCOUNT', 'suppress_warnings', 'assert_array_compare',
-        '_assert_valid_refcount', '_gen_alignment_data', 'assert_no_gc_cycles',
-        'break_cycles', 'HAS_LAPACK64'
+        'assert_no_gc_cycles', 'break_cycles', 'HAS_LAPACK64', 'IS_PYSTON',
         ]
 
 
@@ -49,7 +48,8 @@ KnownFailureTest = KnownFailureException  # backwards compat
 verbose = 0
 
 IS_PYPY = platform.python_implementation() == 'PyPy'
-HAS_REFCOUNT = getattr(sys, 'getrefcount', None) is not None
+IS_PYSTON = hasattr(sys, "pyston_version_info")
+HAS_REFCOUNT = getattr(sys, 'getrefcount', None) is not None and not IS_PYSTON
 HAS_LAPACK64 = numpy.linalg.lapack_lite._ilp64
 
 
@@ -518,9 +518,9 @@ def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
 
     Examples
     --------
-    >>> import numpy.testing as npt
-    >>> npt.assert_almost_equal(2.3333333333333, 2.33333334)
-    >>> npt.assert_almost_equal(2.3333333333333, 2.33333334, decimal=10)
+    >>> from numpy.testing import assert_almost_equal
+    >>> assert_almost_equal(2.3333333333333, 2.33333334)
+    >>> assert_almost_equal(2.3333333333333, 2.33333334, decimal=10)
     Traceback (most recent call last):
         ...
     AssertionError:
@@ -528,8 +528,8 @@ def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
      ACTUAL: 2.3333333333333
      DESIRED: 2.33333334
 
-    >>> npt.assert_almost_equal(np.array([1.0,2.3333333333333]),
-    ...                         np.array([1.0,2.33333334]), decimal=9)
+    >>> assert_almost_equal(np.array([1.0,2.3333333333333]),
+    ...                     np.array([1.0,2.33333334]), decimal=9)
     Traceback (most recent call last):
         ...
     AssertionError:
@@ -810,7 +810,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
                 'Mismatched elements: {} / {} ({:.3g}%)'.format(
                     n_mismatch, n_elements, percent_mismatch)]
 
-            with errstate(invalid='ignore', divide='ignore'):
+            with errstate(all='ignore'):
                 # ignore errors for non-numeric types
                 with contextlib.suppress(TypeError):
                     error = abs(x - y)
@@ -1228,13 +1228,13 @@ def rundocs(filename=None, raise_on_error=True):
 
     >>> np.lib.test(doctests=True)  # doctest: +SKIP
     """
-    from numpy.compat import npy_load_module
+    from numpy.distutils.misc_util import exec_mod_from_location
     import doctest
     if filename is None:
         f = sys._getframe(1)
         filename = f.f_globals['__file__']
     name = os.path.splitext(os.path.basename(filename))[0]
-    m = npy_load_module(name, filename)
+    m = exec_mod_from_location(name, filename)
 
     tests = doctest.DocTestFinder().find(m)
     runner = doctest.DocTestRunner(verbose=False)
@@ -1341,9 +1341,6 @@ def assert_raises_regex(exception_class, expected_regexp, *args, **kwargs):
     args and keyword arguments kwargs.
 
     Alternatively, can be used as a context manager like `assert_raises`.
-
-    Name of this function adheres to Python 3.2+ reference, but should work in
-    all versions down to 2.6.
 
     Notes
     -----
@@ -1479,6 +1476,12 @@ def assert_allclose(actual, desired, rtol=1e-7, atol=0, equal_nan=True,
     Raises an AssertionError if two objects are not equal up to desired
     tolerance.
 
+    Given two array_like objects, check that their shapes and all elements
+    are equal (but see the Notes for the special handling of a scalar). An
+    exception is raised if the shapes mismatch or any values conflict. In 
+    contrast to the standard usage in numpy, NaNs are compared like numbers,
+    no assertion is raised if both objects have NaNs in the same positions.
+
     The test is equivalent to ``allclose(actual, desired, rtol, atol)`` (note
     that ``allclose`` has different default values). It compares the difference
     between `actual` and `desired` to ``atol + rtol * abs(desired)``.
@@ -1510,6 +1513,12 @@ def assert_allclose(actual, desired, rtol=1e-7, atol=0, equal_nan=True,
     See Also
     --------
     assert_array_almost_equal_nulp, assert_array_max_ulp
+
+    Notes
+    -----
+    When one of `actual` and `desired` is a scalar and the other is
+    array_like, the function checks that each element of the array_like
+    object is equal to the scalar.
 
     Examples
     --------
@@ -2402,9 +2411,9 @@ def break_cycles():
 
     gc.collect()
     if IS_PYPY:
-        # interpreter runs now, to call deleted objects' __del__ methods
+        # a few more, just to make sure all the finalizers are called
         gc.collect()
-        # two more, just to make sure
+        gc.collect()
         gc.collect()
         gc.collect()
 
@@ -2519,3 +2528,15 @@ def _no_tracing(func):
                 sys.settrace(original_trace)
         return wrapper
 
+
+def _get_glibc_version():
+    try:
+        ver = os.confstr('CS_GNU_LIBC_VERSION').rsplit(' ')[1]
+    except Exception as inst:
+        ver = '0.0'
+
+    return ver
+
+
+_glibcver = _get_glibc_version()
+_glibc_older_than = lambda x: (_glibcver != '0.0' and _glibcver < x)

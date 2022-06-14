@@ -821,6 +821,7 @@ def einsum_path(*operands, optimize='greedy', einsum_call=False):
     if path_type is None:
         path_type = False
 
+    explicit_einsum_path = False
     memory_limit = None
 
     # No optimization or a named path algorithm
@@ -829,7 +830,7 @@ def einsum_path(*operands, optimize='greedy', einsum_call=False):
 
     # Given an explicit path
     elif len(path_type) and (path_type[0] == 'einsum_path'):
-        pass
+        explicit_einsum_path = True
 
     # Path tuple with memory limit
     elif ((len(path_type) == 2) and isinstance(path_type[0], str) and
@@ -898,15 +899,19 @@ def einsum_path(*operands, optimize='greedy', einsum_call=False):
     naive_cost = _flop_count(indices, inner_product, len(input_list), dimension_dict)
 
     # Compute the path
-    if (path_type is False) or (len(input_list) in [1, 2]) or (indices == output_set):
+    if explicit_einsum_path:
+        path = path_type[1:]
+    elif (
+        (path_type is False)
+        or (len(input_list) in [1, 2])
+        or (indices == output_set)
+    ):
         # Nothing to be optimized, leave it to einsum
         path = [tuple(range(len(input_list)))]
     elif path_type == "greedy":
         path = _greedy_path(input_sets, output_set, dimension_dict, memory_arg)
     elif path_type == "optimal":
         path = _optimal_path(input_sets, output_set, dimension_dict, memory_arg)
-    elif path_type[0] == 'einsum_path':
-        path = path_type[1:]
     else:
         raise KeyError("Path name %s not found", path_type)
 
@@ -955,6 +960,13 @@ def einsum_path(*operands, optimize='greedy', einsum_call=False):
 
     opt_cost = sum(cost_list) + 1
 
+    if len(input_list) != 1:
+        # Explicit "einsum_path" is usually trusted, but we detect this kind of
+        # mistake in order to prevent from returning an intermediate value.
+        raise RuntimeError(
+            "Invalid einsum_path is specified: {} more operands has to be "
+            "contracted.".format(len(input_list) - 1))
+
     if einsum_call_arg:
         return (operands, contraction_list)
 
@@ -987,7 +999,7 @@ def einsum_path(*operands, optimize='greedy', einsum_call=False):
 
 
 def _einsum_dispatcher(*operands, out=None, optimize=None, **kwargs):
-    # Arguably we dispatch on more arguments that we really should; see note in
+    # Arguably we dispatch on more arguments than we really should; see note in
     # _einsum_path_dispatcher for why.
     yield from operands
     yield out

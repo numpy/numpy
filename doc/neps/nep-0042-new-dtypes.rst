@@ -17,13 +17,13 @@ NEP 42 — New and extensible DTypes
 
     This NEP is third in a series:
 
-    - :ref:`NEP40` explains the shortcomings of NumPy's dtype implementation.
+    - :ref:`NEP 40 <NEP40>` explains the shortcomings of NumPy's dtype implementation.
 
-    - :ref:`NEP41` gives an overview of our proposed replacement.
+    - :ref:`NEP 41 <NEP41>` gives an overview of our proposed replacement.
 
     - NEP 42 (this document) describes the new design's datatype-related APIs.
 
-    - :ref:`NEP43` describes the new design's API for universal functions.
+    - :ref:`NEP 43 <NEP43>` describes the new design's API for universal functions.
 
 
 ******************************************************************************
@@ -214,7 +214,7 @@ which describes the casting from one DType to another. In
 :ref:`NEP 43 <NEP43>` this ``CastingImpl`` object is used unchanged to
 support universal functions.
 Note that the name ``CastingImpl`` here will be generically called
-``ArrayMethod`` to accomodate both casting and universal functions.
+``ArrayMethod`` to accommodate both casting and universal functions.
 
 
 ******************************************************************************
@@ -302,7 +302,7 @@ user-defined DType::
     class UserDtype(dtype): ...
 
 one can do ``np.ndarray[UserDtype]``, keeping annotations concise in
-that case without introducing boilerplate in NumPy itself. For a user
+that case without introducing boilerplate in NumPy itself. For a
 user-defined scalar type::
 
     class UserScalar(generic): ...
@@ -1334,7 +1334,7 @@ Although verbose, the API will mimic the one for creating a new DType:
     typedef struct{
       int flags;                  /* e.g. whether the cast requires the API */
       int nin, nout;              /* Number of Input and outputs (always 1) */
-      NPY_CASTING casting;        /* The default casting level */
+      NPY_CASTING casting;        /* The "minimal casting level" */
       PyArray_DTypeMeta *dtypes;  /* input and output DType class */
       /* NULL terminated slots defining the methods */
       PyType_Slot *slots;
@@ -1342,7 +1342,7 @@ Although verbose, the API will mimic the one for creating a new DType:
 
 The focus differs between casting and general ufuncs.  For example, for casts
 ``nin == nout == 1`` is always correct, while for ufuncs ``casting`` is
-expected to be usually `"safe"`.
+expected to be usually `"no"`.
 
 **Notes:** We may initially allow users to define only a single loop.
 Internally NumPy optimizes far more, and this should be made public
@@ -1356,6 +1356,11 @@ incrementally in one of two ways:
 
 * Or, more likely, expose the ``get_loop`` function which is passed additional
   information, such as the fixed strides (similar to our internal API).
+
+* The casting level denotes the minimal guaranteed casting level and can be
+  ``-1`` if the cast may be impossible.  For most non-parametric casts, this
+  value will be the casting level.  NumPy may skip the ``resolve_descriptors``
+  call for ``np.can_cast()`` when the result is ``True`` based on this level.
 
 The example does not yet include setup and error handling. Since these are
 similar to the UFunc machinery, they  will be defined in :ref:`NEP 43 <NEP43>` and then

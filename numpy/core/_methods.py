@@ -71,9 +71,10 @@ def _count_reduce_items(arr, axis, keepdims=False, where=True):
             axis = tuple(range(arr.ndim))
         elif not isinstance(axis, tuple):
             axis = (axis,)
-        items = nt.intp(1)
+        items = 1
         for ax in axis:
             items *= arr.shape[mu.normalize_axis_index(ax, arr.ndim)]
+        items = nt.intp(items)
     else:
         # TODO: Optimize case when `where` is broadcast along a non-reduction
         # axis and full sum is more excessive than needed.
@@ -221,8 +222,10 @@ def _var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False, *,
     if isinstance(arrmean, mu.ndarray):
         arrmean = um.true_divide(arrmean, div, out=arrmean, casting='unsafe',
                                  subok=False)
-    else:
+    elif hasattr(arrmean, "dtype"):
         arrmean = arrmean.dtype.type(arrmean / rcount)
+    else:
+        arrmean = arrmean / rcount
 
     # Compute sum of squared deviations from mean
     # Note that x may not be inexact and that we need it to be an array,

@@ -8,8 +8,8 @@
 // You may use libdivide under the terms of either of these.
 // See LICENSE.txt for more details.
 
-#ifndef LIBDIVIDE_H
-#define LIBDIVIDE_H
+#ifndef NUMPY_CORE_INCLUDE_NUMPY_LIBDIVIDE_LIBDIVIDE_H_
+#define NUMPY_CORE_INCLUDE_NUMPY_LIBDIVIDE_LIBDIVIDE_H_
 
 #define LIBDIVIDE_VERSION "3.0"
 #define LIBDIVIDE_VERSION_MAJOR 3
@@ -2072,8 +2072,8 @@ T& operator/=(T& n, const divider<T, ALGO>& div) {
 template <typename T>
 using branchfree_divider = divider<T, BRANCHFREE>;
 
-} // namespace libdivide
+}  // namespace libdivide
 
-#endif // __cplusplus
+#endif  // __cplusplus
 
-#endif // LIBDIVIDE_H
+#endif  // NUMPY_CORE_INCLUDE_NUMPY_LIBDIVIDE_LIBDIVIDE_H_

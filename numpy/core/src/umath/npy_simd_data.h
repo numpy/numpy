@@ -15,6 +15,7 @@
 #define NPY_TANG_A4 0x1.11115b7aa905ep-7
 #define NPY_TANG_A5 0x1.6c1728d739765p-10
 
+#if !defined NPY_HAVE_AVX512_SKX || !defined NPY_CAN_LINK_SVML
 /* Lookup table for 2^(j/32) */
 static npy_uint64 EXP_Table_top[32] = {
     0x3FF0000000000000,
@@ -85,6 +86,7 @@ static npy_uint64 EXP_Table_tail[32] = {
     0x3CF9858F73A18F5E,
     0x3C99D3E12DD8A18B,
 };
+#endif //#if !defined NPY_HAVE_AVX512_SKX || !defined NPY_CAN_LINK_SVML
 #endif
 #endif
 
@@ -128,6 +130,7 @@ static npy_uint64 EXP_Table_tail[32] = {
  */
 #if defined NPY_HAVE_AVX512F
 #if !(defined(__clang__) && (__clang_major__ < 10 || (__clang_major__ == 10 && __clang_minor__ < 1)))
+#if !defined NPY_HAVE_AVX512_SKX || !defined NPY_CAN_LINK_SVML
 static npy_uint64 LOG_TABLE_TOP[64] = {
     0x0000000000000000,
     0x3F8FC0A8B1000000,
@@ -261,6 +264,7 @@ static npy_uint64 LOG_TABLE_TAIL[64] = {
     0x3D6F2CFB29AAA5F0,
     0x3D66757006095FD2,
 };
+#endif //#if !defined NPY_HAVE_AVX512_SKX || !defined NPY_CAN_LINK_SVML
 
 #define NPY_TANG_LOG_A1 0x1.55555555554e6p-4
 #define NPY_TANG_LOG_A2 0x1.9999999bac6d4p-7

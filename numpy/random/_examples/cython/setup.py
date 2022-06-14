@@ -4,6 +4,7 @@ Build the Cython demonstrations of low-level access to NumPy random
 
 Usage: python setup.py build_ext -i
 """
+import setuptools  # triggers monkeypatching distutils
 from distutils.core import setup
 from os.path import dirname, join, abspath
 

@@ -35,13 +35,7 @@ import abc
 import sys
 from itertools import cycle
 import re
-
-try:
-    from secrets import randbits
-except ImportError:
-    # secrets unavailable on python 3.5 and before
-    from random import SystemRandom
-    randbits = SystemRandom().getrandbits
+from secrets import randbits
 
 from threading import Lock
 
@@ -576,7 +570,7 @@ cdef class BitGenerator():
 
         Notes
         -----
-        This method directly exposes the the raw underlying pseudo-random
+        This method directly exposes the raw underlying pseudo-random
         number generator. All values are returned as unsigned 64-bit
         values irrespective of the number of bits produced by the PRNG.
 

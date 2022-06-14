@@ -2,12 +2,13 @@
 Tests for numpy/core/src/multiarray/conversion_utils.c
 """
 import re
+import sys
 
 import pytest
 
 import numpy as np
 import numpy.core._multiarray_tests as mt
-from numpy.testing import assert_warns
+from numpy.testing import assert_warns, IS_PYPY
 
 
 class StringConverterTestCase:
@@ -189,6 +190,8 @@ class TestIntpConverter:
         with pytest.warns(DeprecationWarning):
             assert self.conv(None) == ()
 
+    @pytest.mark.skipif(IS_PYPY and sys.implementation.version <= (7, 3, 8),
+            reason="PyPy bug in error formatting")
     def test_float(self):
         with pytest.raises(TypeError):
             self.conv(1.0)

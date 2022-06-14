@@ -11,8 +11,9 @@
  */
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 
-/* Indicate that this .c file is allowed to include the header */
+/* Allow this .c file to include nditer_impl.h */
 #define NPY_ITERATOR_IMPLEMENTATION_CODE
+
 #include "nditer_impl.h"
 #include "templ_common.h"
 #include "ctors.h"
@@ -115,7 +116,7 @@ NpyIter_RemoveAxis(NpyIter *iter, int axis)
                 --p;
             }
         }
-        else if (p <= 0) {
+        else {
             if (p < -1-axis) {
                 ++p;
             }
@@ -856,12 +857,34 @@ NpyIter_RequiresBuffering(NpyIter *iter)
  * Whether the iteration loop, and in particular the iternext()
  * function, needs API access.  If this is true, the GIL must
  * be retained while iterating.
+ *
+ * NOTE: Internally (currently), `NpyIter_GetTransferFlags` will
+ *       additionally provide information on whether floating point errors
+ *       may be given during casts.  The flags only require the API use
+ *       necessary for buffering though.  So an iterate which does not require
+ *       buffering may indicate `NpyIter_IterationNeedsAPI`, but not include
+ *       the flag in `NpyIter_GetTransferFlags`.
  */
 NPY_NO_EXPORT npy_bool
 NpyIter_IterationNeedsAPI(NpyIter *iter)
 {
     return (NIT_ITFLAGS(iter)&NPY_ITFLAG_NEEDSAPI) != 0;
 }
+
+
+/*
+ * Fetch the ArrayMethod (runtime) flags for all "transfer functions' (i.e.
+ * copy to buffer/casts).
+ *
+ * TODO: This should be public API, but that only makes sense when the
+ *       ArrayMethod API is made public.
+ */
+NPY_NO_EXPORT int
+NpyIter_GetTransferFlags(NpyIter *iter)
+{
+    return NIT_ITFLAGS(iter) >> NPY_ITFLAG_TRANSFERFLAGS_SHIFT;
+}
+
 
 /*NUMPY_API
  * Gets the number of dimensions being iterated
@@ -1760,6 +1783,9 @@ npyiter_allocate_buffers(NpyIter *iter, char **errmsg)
                 }
                 goto fail;
             }
+            if (PyDataType_FLAGCHK(op_dtype[iop], NPY_NEEDS_INIT)) {
+                memset(buffer, '\0', itemsize*buffersize);
+            }
             buffers[iop] = buffer;
         }
     }
@@ -2126,7 +2152,7 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
         /*
          * Try to do make the outersize as big as possible. This allows
          * it to shrink when processing the last bit of the outer reduce loop,
-         * then grow again at the beginnning of the next outer reduce loop.
+         * then grow again at the beginning of the next outer reduce loop.
          */
         NBF_REDUCE_OUTERSIZE(bufferdata) = (NAD_SHAPE(reduce_outeraxisdata)-
                                             NAD_INDEX(reduce_outeraxisdata));
@@ -2529,16 +2555,18 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
                 skip_transfer = 1;
             }
 
-            /* If the data type requires zero-inititialization */
-            if (PyDataType_FLAGCHK(dtypes[iop], NPY_NEEDS_INIT)) {
-                NPY_IT_DBG_PRINT("Iterator: Buffer requires init, "
-                                    "memsetting to 0\n");
-                memset(ptrs[iop], 0, dtypes[iop]->elsize*op_transfersize);
-                /* Can't skip the transfer in this case */
-                skip_transfer = 0;
-            }
-
-            if (!skip_transfer) {
+            /*
+             * Copy data to the buffers if necessary.
+             *
+             * We always copy if the operand has references. In that case
+             * a "write" function must be in use that either copies or clears
+             * the buffer.
+             * This write from buffer call does not check for skip-transfer
+             * so we have to assume the buffer is cleared.  For dtypes that
+             * do not have references, we can assume that the write function
+             * will leave the source (buffer) unmodified.
+             */
+            if (!skip_transfer || PyDataType_REFCHK(dtypes[iop])) {
                 NPY_IT_DBG_PRINT2("Iterator: Copying operand %d to "
                                 "buffer (%d items)\n",
                                 (int)iop, (int)op_transfersize);
@@ -2554,16 +2582,6 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
                 }
             }
         }
-        else if (ptrs[iop] == buffers[iop]) {
-            /* If the data type requires zero-inititialization */
-            if (PyDataType_FLAGCHK(dtypes[iop], NPY_NEEDS_INIT)) {
-                NPY_IT_DBG_PRINT1("Iterator: Write-only buffer for "
-                                    "operand %d requires init, "
-                                    "memsetting to 0\n", (int)iop);
-                memset(ptrs[iop], 0, dtypes[iop]->elsize*transfersize);
-            }
-        }
-
     }
 
     /*
@@ -2808,9 +2826,9 @@ npyiter_checkreducesize(NpyIter *iter, npy_intp count,
     if (coord != 0) {
         /*
          * In this case, it is only safe to reuse the buffer if the amount
-         * of data copied is not more then the current axes, as is the
+         * of data copied is not more than the current axes, as is the
          * case when reuse_reduce_loops was active already.
-         * It should be in principle OK when the idim loop returns immidiatly.
+         * It should be in principle OK when the idim loop returns immediately.
          */
         NIT_ITFLAGS(iter) &= ~NPY_ITFLAG_REUSE_REDUCE_LOOPS;
     }

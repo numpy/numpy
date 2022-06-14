@@ -1,15 +1,15 @@
 .. _NEP35:
 
 ===========================================================
-NEP 35 — Array Creation Dispatching With __array_function__
+NEP 35 — Array creation dispatching with __array_function__
 ===========================================================
 
 :Author: Peter Andreas Entschev <pentschev@nvidia.com>
-:Status: Draft
+:Status: Final
 :Type: Standards Track
 :Created: 2019-10-15
 :Updated: 2020-11-06
-:Resolution:
+:Resolution: https://mail.python.org/pipermail/numpy-discussion/2021-May/081761.html
 
 Abstract
 --------
@@ -209,7 +209,7 @@ libraries, preventing those libraries from using such important functionality in
 that context.
 
 The purpose of this NEP is to address that shortcoming in a simple and
-straighforward way: introduce a new ``like=`` keyword argument, similar to how
+straightforward way: introduce a new ``like=`` keyword argument, similar to how
 the ``empty_like`` family of functions work. When array creation functions
 receive such an argument, they will trigger the ``__array_function__`` protocol,
 and call the downstream library's own array creation function implementation.

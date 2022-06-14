@@ -1,5 +1,5 @@
-#ifndef _NPY_MULTIARRAY_EINSUM_SUMPROD_H
-#define _NPY_MULTIARRAY_EINSUM_SUMPROD_H
+#ifndef NUMPY_CORE_SRC_MULTIARRAY_EINSUM_SUMPROD_H_
+#define NUMPY_CORE_SRC_MULTIARRAY_EINSUM_SUMPROD_H_
 
 #include <numpy/npy_common.h>
 
@@ -9,4 +9,4 @@ NPY_VISIBILITY_HIDDEN sum_of_products_fn
 get_sum_of_products_function(int nop, int type_num,
                              npy_intp itemsize, npy_intp const *fixed_strides);
 
-#endif
+#endif  /* NUMPY_CORE_SRC_MULTIARRAY_EINSUM_SUMPROD_H_ */

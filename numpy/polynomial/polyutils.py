@@ -4,15 +4,6 @@ Utility classes and functions for the polynomial modules.
 This module provides: error and warning objects; a polynomial base class;
 and some routines used in both the `polynomial` and `chebyshev` modules.
 
-Error objects
--------------
-
-.. autosummary::
-   :toctree: generated/
-
-   PolyError            base class for this sub-package's errors.
-   PolyDomainError      raised when domains are mismatched.
-
 Warning objects
 ---------------
 
@@ -20,14 +11,6 @@ Warning objects
    :toctree: generated/
 
    RankWarning  raised in least-squares fit for rank-deficient matrix.
-
-Base class
-----------
-
-.. autosummary::
-   :toctree: generated/
-
-   PolyBase Obsolete base class for the polynomial classes. Do not use.
 
 Functions
 ---------
@@ -49,9 +32,13 @@ import warnings
 
 import numpy as np
 
+from numpy.core.multiarray import dragon4_positional, dragon4_scientific
+from numpy.core.umath import absolute
+
 __all__ = [
-    'RankWarning', 'PolyError', 'PolyDomainError', 'as_series', 'trimseq',
-    'trimcoef', 'getdomain', 'mapdomain', 'mapparms', 'PolyBase']
+    'RankWarning', 'as_series', 'trimseq',
+    'trimcoef', 'getdomain', 'mapdomain', 'mapparms',
+    'format_float']
 
 #
 # Warnings and Exceptions
@@ -59,35 +46,6 @@ __all__ = [
 
 class RankWarning(UserWarning):
     """Issued by chebfit when the design matrix is rank deficient."""
-    pass
-
-class PolyError(Exception):
-    """Base class for errors in this module."""
-    pass
-
-class PolyDomainError(PolyError):
-    """Issued by the generic Poly class when two domains don't match.
-
-    This is raised when an binary operation is passed Poly objects with
-    different domains.
-
-    """
-    pass
-
-#
-# Base class for all polynomial types
-#
-
-class PolyBase:
-    """
-    Base class for all polynomial types.
-
-    Deprecated in numpy 1.9.0, use the abstract
-    ABCPolyBase class instead. Note that the latter
-    requires a number of virtual functions to be
-    implemented.
-
-    """
     pass
 
 #
@@ -376,12 +334,12 @@ def mapdomain(x, old, new):
     -----
     Effectively, this implements:
 
-    .. math ::
+    .. math::
         x\\_out = new[0] + m(x - old[0])
 
     where
 
-    .. math ::
+    .. math::
         m = \\frac{new[1]-new[0]}{old[1]-old[0]}
 
     Examples
@@ -794,3 +752,38 @@ def _deprecate_as_int(x, desc):
                 return ix
 
         raise TypeError(f"{desc} must be an integer") from e
+
+
+def format_float(x, parens=False):
+    if not np.issubdtype(type(x), np.floating):
+        return str(x)
+
+    opts = np.get_printoptions()
+
+    if np.isnan(x):
+        return opts['nanstr']
+    elif np.isinf(x):
+        return opts['infstr']
+
+    exp_format = False
+    if x != 0:
+        a = absolute(x)
+        if a >= 1.e8 or a < 10**min(0, -(opts['precision']-1)//2):
+            exp_format = True
+
+    trim, unique = '0', True
+    if opts['floatmode'] == 'fixed':
+        trim, unique = 'k', False
+
+    if exp_format:
+        s = dragon4_scientific(x, precision=opts['precision'],
+                               unique=unique, trim=trim, 
+                               sign=opts['sign'] == '+')
+        if parens:
+            s = '(' + s + ')'
+    else:
+        s = dragon4_positional(x, precision=opts['precision'],
+                               fractional=True,
+                               unique=unique, trim=trim,
+                               sign=opts['sign'] == '+')
+    return s
