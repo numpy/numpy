@@ -38,6 +38,9 @@ jobs:
     - python: "3.8"
       os: linux
       arch: s390x
+      # fixes VX assembler ambiguous errors
+      # due to compiler incompatibility
+      install: sudo apt update && sudo apt -y --only-upgrade install binutils
       env:
        # use OpenBLAS build, not system ATLAS
        - DOWNLOAD_OPENBLAS=1
