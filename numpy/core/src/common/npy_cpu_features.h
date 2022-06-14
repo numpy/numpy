@@ -43,6 +43,7 @@ enum npy_cpu_features
     NPY_CPU_FEATURE_AVX512VNNI        = 42,
     NPY_CPU_FEATURE_AVX512VBMI2       = 43,
     NPY_CPU_FEATURE_AVX512BITALG      = 44,
+    NPY_CPU_FEATURE_AVX512FP16        = 45,
 
     // X86 CPU Groups
     // Knights Landing (F,CD,ER,PF)
@@ -57,6 +58,8 @@ enum npy_cpu_features
     NPY_CPU_FEATURE_AVX512_CNL        = 105,
     // Ice Lake        (F,CD,BW,DQ,VL,IFMA,VBMI,VNNI,VBMI2,BITALG,VPOPCNTDQ)
     NPY_CPU_FEATURE_AVX512_ICL        = 106,
+    // Sapphire Rapids (Ice Lake, AVX512FP16)
+    NPY_CPU_FEATURE_AVX512_SPR        = 107,
 
     // IBM/POWER VSX
     // POWER7
