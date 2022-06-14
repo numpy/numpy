@@ -1,0 +1,5 @@
+Complex special case for clip
+-----------------
+
+* Fixes an inconsistency in clip which occurred with complex input.
+* Now, if a complex array is given, the real and imaginary parts are clipped independently.
