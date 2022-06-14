@@ -363,7 +363,6 @@ else:
         except ValueError:
             pass
 
-    import sys
     if sys.platform == "darwin":
         with warnings.catch_warnings(record=True) as w:
             _mac_os_check()
