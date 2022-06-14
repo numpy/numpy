@@ -51,15 +51,12 @@ PyArray_ValidType(int type);
 NPY_NO_EXPORT int
 dtype_kind_to_ordering(char kind);
 
-NPY_NO_EXPORT npy_bool
-can_cast_scalar_to(PyArray_Descr *scal_type, char *scal_data,
-                   PyArray_Descr *to, NPY_CASTING casting);
-
 /* Used by PyArray_CanCastArrayTo and in the legacy ufunc type resolution */
 NPY_NO_EXPORT npy_bool
 can_cast_scalar_to(PyArray_Descr *scal_type, char *scal_data,
                    PyArray_Descr *to, NPY_CASTING casting);
 
+NPY_NO_EXPORT npy_bool
 can_cast_pyscalar_scalar_to(
         int flags, PyArray_Descr *to, NPY_CASTING casting);
 
