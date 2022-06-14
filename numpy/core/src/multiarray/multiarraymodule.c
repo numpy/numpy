@@ -142,12 +142,12 @@ PyArray_GetPriority(PyObject *obj, double default_)
     }
 
     priority = PyFloat_AsDouble(ret);
+    Py_DECREF(ret);
     if (error_converting(priority)) {
         /* TODO[gh-14801]: propagate crashes for bad priority? */
         PyErr_Clear();
         return default_;
     }
-    Py_DECREF(ret);
     return priority;
 }
 
