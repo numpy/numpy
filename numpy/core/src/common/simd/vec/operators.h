@@ -144,12 +144,12 @@ NPY_FINLINE npyv_f64 npyv_not_f64(npyv_f64 a)
 // ANDC, ORC and XNOR
 #define npyv_andc_u8 vec_andc
 #define npyv_andc_b8 vec_andc
-#ifdef NPY_HAVE_VX
-    #define npyv_orc_b8(A, B) npyv_or_b8(npyv_not_b8(B), A)
-    #define npyv_xnor_b8(A, B) npyv_not_b8(npyv_xor_b8(B, A))
-#else
+#if defined(NPY_HAVE_VXE) || defined(NPY_HAVE_VSX)
     #define npyv_orc_b8 vec_orc
     #define npyv_xnor_b8 vec_eqv
+#else
+    #define npyv_orc_b8(A, B) npyv_or_b8(npyv_not_b8(B), A)
+    #define npyv_xnor_b8(A, B) npyv_not_b8(npyv_xor_b8(B, A))
 #endif
 
 /***************************
