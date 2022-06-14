@@ -5,6 +5,7 @@ These tests complement those found in `test_io.py`.
 """
 
 import sys
+import os
 import pytest
 from tempfile import NamedTemporaryFile, mkstemp
 from io import StringIO
@@ -960,9 +961,11 @@ def test_parametric_unit_discovery(
 
     # file-obj path
     fd, fname = mkstemp()
+    os.close(fd)
     with open(fname, "w") as fh:
         fh.write("\n".join(data))
     a = np.loadtxt(fname, dtype=unitless_dtype)
+    os.remove(fname)
     assert a.dtype == expected.dtype
     assert_equal(a, expected)
 
@@ -982,9 +985,11 @@ def test_str_dtype_unit_discovery_with_converter():
 
     # file-obj path
     fd, fname = mkstemp()
+    os.close(fd)
     with open(fname, "w") as fh:
         fh.write("\n".join(data))
     a = np.loadtxt(fname, dtype="U", converters=conv, encoding=None)
+    os.remove(fname)
     assert a.dtype == expected.dtype
     assert_equal(a, expected)
 
