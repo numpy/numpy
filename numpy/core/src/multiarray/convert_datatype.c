@@ -1691,8 +1691,12 @@ PyArray_ResultType(
             all_DTypes[i_all] = &PyArray_PyComplexAbstractDType;
         }
         else {
-            /* N.B.: Could even be an object dtype here for large ints */
+            /* This could even be an object dtype here for large ints */
             all_DTypes[i_all] = &PyArray_PyIntAbstractDType;
+            if (PyArray_TYPE(arrs[i]) != NPY_LONG) {
+                /* Not a "normal" scalar, so we cannot avoid the legacy path */
+                all_pyscalar = 0;
+            }
         }
         Py_INCREF(all_DTypes[i_all]);
         /*
