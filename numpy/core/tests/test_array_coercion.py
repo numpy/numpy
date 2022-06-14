@@ -373,28 +373,29 @@ class TestScalarDiscovery:
         assert discovered_dtype.itemsize == dtype.itemsize
 
     @pytest.mark.parametrize("dtype", np.typecodes["Integer"])
-    def test_scalar_to_int_coerce_does_not_cast(self, dtype):
+    @pytest.mark.parametrize(["scalar", "error"],
+            [(np.float64(np.nan), ValueError),
+             (np.ulonglong(-1), OverflowError)])
+    def test_scalar_to_int_coerce_does_not_cast(self, dtype, scalar, error):
         """
         Signed integers are currently different in that they do not cast other
         NumPy scalar, but instead use scalar.__int__(). The hardcoded
         exception to this rule is `np.array(scalar, dtype=integer)`.
         """
         dtype = np.dtype(dtype)
-        invalid_int = np.ulonglong(-1)
 
-        float_nan = np.float64(np.nan)
-
-        for scalar in [float_nan, invalid_int]:
-            # This is a special case using casting logic and thus not failing:
+        # This is a special case using casting logic.  It warns for the NaN
+        # but allows the cast (giving undefined behaviour).
+        with np.errstate(invalid="ignore"):
             coerced = np.array(scalar, dtype=dtype)
             cast = np.array(scalar).astype(dtype)
-            assert_array_equal(coerced, cast)
+        assert_array_equal(coerced, cast)
 
-            # However these fail:
-            with pytest.raises((ValueError, OverflowError)):
-                np.array([scalar], dtype=dtype)
-            with pytest.raises((ValueError, OverflowError)):
-                cast[()] = scalar
+        # However these fail:
+        with pytest.raises(error):
+            np.array([scalar], dtype=dtype)
+        with pytest.raises(error):
+            cast[()] = scalar
 
 
 class TestTimeScalars:

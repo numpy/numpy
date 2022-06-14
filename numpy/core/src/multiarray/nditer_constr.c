@@ -3141,7 +3141,9 @@ npyiter_allocate_transfer_functions(NpyIter *iter)
     npy_intp *strides = NAD_STRIDES(axisdata), op_stride;
     NpyIter_TransferInfo *transferinfo = NBF_TRANSFERINFO(bufferdata);
 
-    int needs_api = 0;
+    /* combined cast flags, the new cast flags for each cast: */
+    NPY_ARRAYMETHOD_FLAGS cflags = PyArrayMethod_MINIMAL_FLAGS;
+    NPY_ARRAYMETHOD_FLAGS nc_flags;
 
     for (iop = 0; iop < nop; ++iop) {
         npyiter_opitflags flags = op_itflags[iop];
@@ -3167,10 +3169,11 @@ npyiter_allocate_transfer_functions(NpyIter *iter)
                                         op_dtype[iop],
                                         move_references,
                                         &transferinfo[iop].read,
-                                        &needs_api) != NPY_SUCCEED) {
+                                        &nc_flags) != NPY_SUCCEED) {
                     iop -= 1;  /* This one cannot be cleaned up yet. */
                     goto fail;
                 }
+                cflags = PyArrayMethod_COMBINED_FLAGS(cflags, nc_flags);
             }
             else {
                 transferinfo[iop].read.func = NULL;
@@ -3199,9 +3202,10 @@ npyiter_allocate_transfer_functions(NpyIter *iter)
                             mask_dtype,
                             move_references,
                             &transferinfo[iop].write,
-                            &needs_api) != NPY_SUCCEED) {
+                            &nc_flags) != NPY_SUCCEED) {
                         goto fail;
                     }
+                    cflags = PyArrayMethod_COMBINED_FLAGS(cflags, nc_flags);
                 }
                 else {
                     if (PyArray_GetDTypeTransferFunction(
@@ -3212,9 +3216,10 @@ npyiter_allocate_transfer_functions(NpyIter *iter)
                             PyArray_DESCR(op[iop]),
                             move_references,
                             &transferinfo[iop].write,
-                            &needs_api) != NPY_SUCCEED) {
+                            &nc_flags) != NPY_SUCCEED) {
                         goto fail;
                     }
+                    cflags = PyArrayMethod_COMBINED_FLAGS(cflags, nc_flags);
                 }
             }
             /* If no write back but there are references make a decref fn */
@@ -3230,9 +3235,10 @@ npyiter_allocate_transfer_functions(NpyIter *iter)
                         op_dtype[iop], NULL,
                         1,
                         &transferinfo[iop].write,
-                        &needs_api) != NPY_SUCCEED) {
+                        &nc_flags) != NPY_SUCCEED) {
                     goto fail;
                 }
+                cflags = PyArrayMethod_COMBINED_FLAGS(cflags, nc_flags);
             }
             else {
                 transferinfo[iop].write.func = NULL;
@@ -3244,8 +3250,12 @@ npyiter_allocate_transfer_functions(NpyIter *iter)
         }
     }
 
-    /* If any of the dtype transfer functions needed the API, flag it */
-    if (needs_api) {
+    /* Store the combined transfer flags on the iterator */
+    NIT_ITFLAGS(iter) |= cflags << NPY_ITFLAG_TRANSFERFLAGS_SHIFT;
+    assert(NIT_ITFLAGS(iter) >> NPY_ITFLAG_TRANSFERFLAGS_SHIFT == cflags);
+
+    /* If any of the dtype transfer functions needed the API, flag it. */
+    if (cflags & NPY_METH_REQUIRES_PYAPI) {
         NIT_ITFLAGS(iter) |= NPY_ITFLAG_NEEDSAPI;
     }
 

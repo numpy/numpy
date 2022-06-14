@@ -1380,7 +1380,10 @@ typedef struct {
         int                   nd_fancy;
         npy_intp              fancy_dims[NPY_MAXDIMS];
 
-        /* Whether the iterator (any of the iterators) requires API */
+        /*
+         * Whether the iterator (any of the iterators) requires API.  This is
+         * unused by NumPy itself; ArrayMethod flags are more precise.
+         */
         int                   needs_api;
 
         /*

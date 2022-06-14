@@ -620,8 +620,9 @@ class TestUfunc:
                                 atol = max(np.finfo(dtout).tiny, 3e-308)
                             else:
                                 atol = 3e-308
-                        # Some test values result in invalid for float16.
-                        with np.errstate(invalid='ignore'):
+                        # Some test values result in invalid for float16
+                        # and the cast to it may overflow to inf.
+                        with np.errstate(invalid='ignore', over='ignore'):
                             res = np.true_divide(x, y, dtype=dtout)
                         if not np.isfinite(res) and tcout == 'e':
                             continue
@@ -665,19 +666,21 @@ class TestUfunc:
         for dt in (int, np.float16, np.float32, np.float64, np.longdouble):
             for v in (0, 1, 2, 7, 8, 9, 15, 16, 19, 127,
                       128, 1024, 1235):
-                tgt = dt(v * (v + 1) / 2)
-                d = np.arange(1, v + 1, dtype=dt)
-
                 # warning if sum overflows, which it does in float16
-                overflow = not np.isfinite(tgt)
-
                 with warnings.catch_warnings(record=True) as w:
-                    warnings.simplefilter("always")
-                    assert_almost_equal(np.sum(d), tgt)
+                    warnings.simplefilter("always", RuntimeWarning)
+
+                    tgt = dt(v * (v + 1) / 2)
+                    overflow = not np.isfinite(tgt)
                     assert_equal(len(w), 1 * overflow)
 
-                    assert_almost_equal(np.sum(d[::-1]), tgt)
+                    d = np.arange(1, v + 1, dtype=dt)
+
+                    assert_almost_equal(np.sum(d), tgt)
                     assert_equal(len(w), 2 * overflow)
+
+                    assert_almost_equal(np.sum(d[::-1]), tgt)
+                    assert_equal(len(w), 3 * overflow)
 
             d = np.ones(500, dtype=dt)
             assert_almost_equal(np.sum(d[::2]), 250.)
@@ -2454,7 +2457,7 @@ def test_ufunc_warn_with_nan(ufunc):
 
 
 @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
-def test_ufunc_casterrors():
+def test_ufunc_out_casterrors():
     # Tests that casting errors are correctly reported and buffers are
     # cleared.
     # The following array can be added to itself as an object array, but
@@ -2483,6 +2486,28 @@ def test_ufunc_casterrors():
     # output is unchanged after the error, this shows that the iteration
     # was aborted (this is not necessarily defined behaviour)
     assert out[-1] == 1
+
+
+@pytest.mark.parametrize("bad_offset", [0, int(np.BUFSIZE * 1.5)])
+def test_ufunc_input_casterrors(bad_offset):
+    value = 123
+    arr = np.array([value] * bad_offset +
+                   ["string"] +
+                   [value] * int(1.5 * np.BUFSIZE), dtype=object)
+    with pytest.raises(ValueError):
+        # Force cast inputs, but the buffered cast of `arr` to intp fails:
+        np.add(arr, arr, dtype=np.intp, casting="unsafe")
+
+
+@pytest.mark.parametrize("bad_offset", [0, int(np.BUFSIZE * 1.5)])
+def test_ufunc_input_floatingpoint_error(bad_offset):
+    value = 123
+    arr = np.array([value] * bad_offset +
+                   [np.nan] +
+                   [value] * int(1.5 * np.BUFSIZE))
+    with np.errstate(invalid="raise"), pytest.raises(FloatingPointError):
+        # Force cast inputs, but the buffered cast of `arr` to intp fails:
+        np.add(arr, arr, dtype=np.intp, casting="unsafe")
 
 
 def test_trivial_loop_invalid_cast():
