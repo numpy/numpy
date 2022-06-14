@@ -419,9 +419,12 @@ else:
         from pathlib import Path
         return [str(Path(__file__).with_name("_pyinstaller").resolve())]
 
+    # Remove symbols imported for internal use
+    del os
+
 
 # get the version using versioneer
 from .version import __version__, git_revision as __git_version__
 
 # Remove symbols imported for internal use
-del sys, warnings, os
+del sys, warnings
