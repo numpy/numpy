@@ -329,7 +329,7 @@ class ABCPolyBase(abc.ABC):
         if self._use_unicode:
             s = self._generate_string(self._str_term_unicode)
         else:
-            s =  self._generate_string(self._str_term_ascii)
+            s = self._generate_string(self._str_term_ascii)
         if scaled_series:
             s += ' (scaled)'
         return s
