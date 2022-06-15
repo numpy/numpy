@@ -29,10 +29,23 @@ def test_nep50_examples():
         res = np.array([1], np.uint8) + np.array(1, dtype=np.int64)
     assert res.dtype == np.int64
 
-    # Note: The following should warn due to overflow (depends gh-21437)
     with pytest.warns(UserWarning, match="result dtype changed"):
+        # Note: Should warn (error with the errstate), but does not:
+        with np.errstate(over="raise"):
+            res = np.uint8(100) + 200
+    assert res.dtype == np.uint8
+
+    with pytest.warns(Warning) as recwarn:
         res = np.float32(1) + 3e100
+
+    # Check that both warnings were given in the one call:
+    warning = str(recwarn.pop(UserWarning).message)
+    assert warning.startswith("result dtype changed")
+    warning = str(recwarn.pop(RuntimeWarning).message)
+    assert warning.startswith("overflow")
+    assert len(recwarn) == 0  # no further warnings
     assert np.isinf(res)
+    assert res.dtype == np.float32
 
     # Changes, but we don't warn for it (too noisy)
     res = np.array([0.1], np.float32) == np.float64(0.1)
