@@ -20,7 +20,7 @@ class TestABC:
     def test_floats(self):
         for t in sctypes['float']:
             assert_(isinstance(t(), numbers.Real),
-                    f"{t.__name__} is not instance of Real"))
+                    f"{t.__name__} is not instance of Real")
             assert_(issubclass(t, numbers.Real),
                     f"{t.__name__} is not subclass of Real")
             assert_(not isinstance(t(), numbers.Rational),
