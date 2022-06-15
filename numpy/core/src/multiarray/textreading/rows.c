@@ -432,7 +432,12 @@ read_rows(stream *s,
     }
 
     tokenizer_clear(&ts);
-    PyMem_FREE(conv_funcs);
+    if (conv_funcs != NULL) {
+        for (Py_ssize_t i = 0; i < actual_num_fields; i++) {
+            Py_XDECREF(conv_funcs[i]);
+        }
+        PyMem_FREE(conv_funcs);
+    }
 
     if (data_array == NULL) {
         assert(row_count == 0 && result_shape[0] == 0);
@@ -474,7 +479,12 @@ read_rows(stream *s,
     return data_array;
 
   error:
-    PyMem_FREE(conv_funcs);
+    if (conv_funcs != NULL) {
+        for (Py_ssize_t i = 0; i < actual_num_fields; i++) {
+            Py_XDECREF(conv_funcs[i]);
+        }
+        PyMem_FREE(conv_funcs);
+    }
     tokenizer_clear(&ts);
     Py_XDECREF(data_array);
     return NULL;
