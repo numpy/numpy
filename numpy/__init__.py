@@ -274,6 +274,7 @@ else:
     def __getattr__(attr):
         # Warn for expired attributes, and return a dummy function
         # that always raises an exception.
+        import warnings
         try:
             msg = __expired_functions__[attr]
         except KeyError:
@@ -312,7 +313,11 @@ else:
                              "{!r}".format(__name__, attr))
 
     def __dir__():
-        return list(globals().keys() | {'Tester', 'testing'})
+        public_symbols = globals().keys() | {'Tester', 'testing'}
+        public_symbols -= {
+            "core", "matrixlib",
+        }
+        return list(public_symbols)
 
     # Pytest testing
     from numpy._pytesttester import PytestTester
@@ -358,7 +363,6 @@ else:
         except ValueError:
             pass
 
-    import sys
     if sys.platform == "darwin":
         with warnings.catch_warnings(record=True) as w:
             _mac_os_check()
@@ -414,6 +418,12 @@ else:
         from pathlib import Path
         return [str(Path(__file__).with_name("_pyinstaller").resolve())]
 
+    # Remove symbols imported for internal use
+    del os
+
 
 # get the version using versioneer
 from .version import __version__, git_revision as __git_version__
+
+# Remove symbols imported for internal use
+del sys, warnings
