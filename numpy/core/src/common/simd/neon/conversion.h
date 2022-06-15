@@ -86,6 +86,30 @@ NPY_FINLINE npyv_u32x2 npyv_expand_u32_u16(npyv_u16 data) {
     return r;
 }
 
+// pack two 16-bit boolean into one 8-bit boolean vector
+NPY_FINLINE npyv_b8 npyv_pack_b8_b16(npyv_b16 a, npyv_b16 b) {
+    return vcombine_u8(vmovn_u16(a), vmovn_u16(b));
+}
+
+// pack four 32-bit boolean vectors into one 8-bit boolean vector
+NPY_FINLINE npyv_b8
+npyv_pack_b8_b32(npyv_b32 a, npyv_b32 b, npyv_b32 c, npyv_b32 d) {
+    npyv_b16 ab = vcombine_u16(vmovn_u32(a), vmovn_u32(b));
+    npyv_b16 cd = vcombine_u16(vmovn_u32(c), vmovn_u32(d));
+    return npyv_pack_b8_b16(ab, cd);
+}
+
+// pack eight 64-bit boolean vectors into one 8-bit boolean vector
+NPY_FINLINE npyv_b8
+npyv_pack_b8_b64(npyv_b64 a, npyv_b64 b, npyv_b64 c, npyv_b64 d,
+                 npyv_b64 e, npyv_b64 f, npyv_b64 g, npyv_b64 h) {
+    npyv_b32 ab = vcombine_u32(vmovn_u64(a), vmovn_u64(b));
+    npyv_b32 cd = vcombine_u32(vmovn_u64(c), vmovn_u64(d));
+    npyv_b32 ef = vcombine_u32(vmovn_u64(e), vmovn_u64(f));
+    npyv_b32 gh = vcombine_u32(vmovn_u64(g), vmovn_u64(h));
+    return npyv_pack_b8_b32(ab, cd, ef, gh);
+}
+
 // round to nearest integer
 #if NPY_SIMD_F64
     #define npyv_round_s32_f32 vcvtnq_s32_f32

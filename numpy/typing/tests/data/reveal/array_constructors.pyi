@@ -39,6 +39,11 @@ reveal_type(np.empty([1, 5, 6], dtype=np.int64))  # E: ndarray[Any, dtype[{int64
 reveal_type(np.empty([1, 5, 6], dtype='c16'))  # E: ndarray[Any, dtype[Any]]
 
 reveal_type(np.concatenate(A))  # E: ndarray[Any, dtype[{float64}]]
+reveal_type(np.concatenate([A, A]))  # E: Any
+reveal_type(np.concatenate([[1], A]))  # E: ndarray[Any, dtype[Any]]
+reveal_type(np.concatenate([[1], [1]]))  # E: ndarray[Any, dtype[Any]]
+reveal_type(np.concatenate((A, A)))  # E: ndarray[Any, dtype[{float64}]]
+reveal_type(np.concatenate(([1], [1])))  # E: ndarray[Any, dtype[Any]]
 reveal_type(np.concatenate([1, 1.0]))  # E: ndarray[Any, dtype[Any]]
 reveal_type(np.concatenate(A, dtype=np.int64))  # E: ndarray[Any, dtype[{int64}]]
 reveal_type(np.concatenate(A, dtype='c16'))  # E: ndarray[Any, dtype[Any]]
@@ -163,7 +168,7 @@ reveal_type(np.full(1, i8, dtype=np.float64))  # E: ndarray[Any, dtype[{float64}
 reveal_type(np.full(1, i8, dtype=float))  # E: ndarray[Any, dtype[Any]]
 
 reveal_type(np.indices([1, 2, 3]))  # E: ndarray[Any, dtype[{int_}]]
-reveal_type(np.indices([1, 2, 3], sparse=True))  # E: tuple[ndarray[Any, dtype[{int_}]]]
+reveal_type(np.indices([1, 2, 3], sparse=True))  # E: tuple[ndarray[Any, dtype[{int_}]], ...]
 
 reveal_type(np.fromfunction(func, (3, 5)))  # E: SubClass[{float64}]
 

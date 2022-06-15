@@ -189,7 +189,7 @@ Standard acronyms to start the commit message with are::
    REL: related to releasing numpy
 
 Commands to skip continuous integration
-```````````````````````````````````````
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 By default a lot of continuous integration (CI) jobs are run for every PR,
 from running the test suite on different operating systems and hardware
@@ -209,6 +209,36 @@ CircleCI supports ``ci skip`` but has no command to skip only CircleCI.
 Azure chooses to still run jobs with skip commands on PRs, the jobs only get
 skipped on merging to master.
 
+Test building wheels
+~~~~~~~~~~~~~~~~~~~~
+
+Numpy currently uses `cibuildwheel <https://https://cibuildwheel.readthedocs.io/en/stable/>`_
+in order to build wheels through continuous integration services. To save resources, the
+cibuildwheel wheel builders are not run by default on every single PR or commit to main.
+
+If you would like to test that your pull request do not break the wheel builders,
+you may either append ``[wheel build]`` to the end of the commit message of the commit
+or add one of the following labels to the pull request(if you have the permissions to do so):
+
+- ``36 - Build``: for pull requests changing build processes/configurations
+- ``03 - Maintenance``: for pull requests upgrading dependencies
+- ``14 - Release``: for pull requests preparing for a release
+
+The wheels built via github actions (including 64-bit linux, macOS, and
+windows, arm64 macOS, and 32-bit windows) will be uploaded as artifacts in zip
+files. You can access them from the Summary page of the "Wheel builder"
+Action_. The aarch64 wheels built via travis_ CI are not available as artifacts.
+Additionally, the wheels will be uploaded to
+https://anaconda.org/scipy-wheels-nightly/ on the following conditions:
+
+- by a weekly cron job or
+- if the github action or travis build has been manually triggered, which requires appropriate permissions
+
+The wheels wil be uploaded to https://anaconda.org/multibuild-wheels-staging/
+if the build was triggered by a tag to the repo that begins with ``v``
+
+.. _Action: https://github.com/numpy/numpy/actions
+.. _travis: https://app.travis-ci.com/github/numpy/numpy/builds
 
 .. _workflow_mailing_list:
 

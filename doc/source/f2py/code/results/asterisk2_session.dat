@@ -1,0 +1,6 @@
+>>> import asterisk
+>>> asterisk.foo2(2)
+b'12'
+>>> asterisk.foo2(12)
+b'123456789A12'
+>>> 

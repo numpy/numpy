@@ -12,7 +12,9 @@ npyv, npyv2 = (npyvs + [None, None])[:2]
 
 unsigned_sfx = ["u8", "u16", "u32", "u64"]
 signed_sfx = ["s8", "s16", "s32", "s64"]
-fp_sfx = ["f32"]
+fp_sfx = []
+if npyv and npyv.simd_f32:
+    fp_sfx.append("f32")
 if npyv and npyv.simd_f64:
     fp_sfx.append("f64")
 

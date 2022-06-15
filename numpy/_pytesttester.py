@@ -33,7 +33,6 @@ import os
 __all__ = ['PytestTester']
 
 
-
 def _show_numpy_info():
     import numpy as np
 
@@ -42,7 +41,6 @@ def _show_numpy_info():
     print("NumPy relaxed strides checking option:", relaxed_strides)
     info = np.lib.utils._opt_info()
     print("NumPy CPU features: ", (info if info else 'nothing enabled'))
-
 
 
 class PytestTester:
@@ -167,7 +165,7 @@ class PytestTester:
             ]
 
         if doctests:
-            raise ValueError("Doctests not supported")
+            pytest_args += ["--doctest-modules"]
 
         if extra_argv:
             pytest_args += list(extra_argv)

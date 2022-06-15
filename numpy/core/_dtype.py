@@ -237,6 +237,11 @@ def _struct_dict_str(dtype, includealignedflag):
     return ret
 
 
+def _aligned_offset(offset, alignment):
+    # round up offset:
+    return - (-offset // alignment) * alignment
+
+
 def _is_packed(dtype):
     """
     Checks whether the structured data type in 'dtype'
@@ -249,12 +254,23 @@ def _is_packed(dtype):
 
     Duplicates the C `is_dtype_struct_simple_unaligned_layout` function.
     """
+    align = dtype.isalignedstruct
+    max_alignment = 1
     total_offset = 0
     for name in dtype.names:
         fld_dtype, fld_offset, title = _unpack_field(*dtype.fields[name])
+
+        if align:
+            total_offset = _aligned_offset(total_offset, fld_dtype.alignment)
+            max_alignment = max(max_alignment, fld_dtype.alignment)
+
         if fld_offset != total_offset:
             return False
         total_offset += fld_dtype.itemsize
+
+    if align:
+        total_offset = _aligned_offset(total_offset, max_alignment)
+
     if total_offset != dtype.itemsize:
         return False
     return True

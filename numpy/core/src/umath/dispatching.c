@@ -145,6 +145,38 @@ PyUFunc_AddLoop(PyUFuncObject *ufunc, PyObject *info, int ignore_duplicate)
 }
 
 
+/*
+ * Add loop directly to a ufunc from a given ArrayMethod spec.
+ */
+NPY_NO_EXPORT int
+PyUFunc_AddLoopFromSpec(PyObject *ufunc, PyArrayMethod_Spec *spec)
+{
+    if (!PyObject_TypeCheck(ufunc, &PyUFunc_Type)) {
+        PyErr_SetString(PyExc_TypeError,
+                "ufunc object passed is not a ufunc!");
+        return -1;
+    }
+    PyBoundArrayMethodObject *bmeth =
+            (PyBoundArrayMethodObject *)PyArrayMethod_FromSpec(spec);
+    if (bmeth == NULL) {
+        return -1;
+    }
+    int nargs = bmeth->method->nin + bmeth->method->nout;
+    PyObject *dtypes = PyArray_TupleFromItems(
+            nargs, (PyObject **)bmeth->dtypes, 1);
+    if (dtypes == NULL) {
+        return -1;
+    }
+    PyObject *info = PyTuple_Pack(2, dtypes, bmeth->method);
+    Py_DECREF(bmeth);
+    Py_DECREF(dtypes);
+    if (info == NULL) {
+        return -1;
+    }
+    return PyUFunc_AddLoop((PyUFuncObject *)ufunc, info, 0);
+}
+
+
 /**
  * Resolves the implementation to use, this uses typical multiple dispatching
  * methods of finding the best matching implementation or resolver.
@@ -746,6 +778,40 @@ promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
     }
     info = promote_and_get_info_and_ufuncimpl(ufunc,
             ops, signature, new_op_dtypes, NPY_FALSE);
+    if (info == NULL) {
+        /*
+         * NOTE: This block exists solely to support numba's DUFuncs which add
+         * new loops dynamically, so our list may get outdated.  Thus, we
+         * have to make sure that the loop exists.
+         *
+         * Before adding a new loop, ensure that it actually exists. There
+         * is a tiny chance that this would not work, but it would require an
+         * extension additionally have a custom loop getter.
+         * This check should ensure a the right error message, but in principle
+         * we could try to call the loop getter here.
+         */
+        char *types = ufunc->types;
+        npy_bool loop_exists = NPY_FALSE;
+        for (int i = 0; i < ufunc->ntypes; ++i) {
+            loop_exists = NPY_TRUE;  /* assume it exists, break if not */
+            for (int j = 0; j < ufunc->nargs; ++j) {
+                if (types[j] != new_op_dtypes[j]->type_num) {
+                    loop_exists = NPY_FALSE;
+                    break;
+                }
+            }
+            if (loop_exists) {
+                break;
+            }
+            types += ufunc->nargs;
+        }
+
+        if (loop_exists) {
+            info = add_and_return_legacy_wrapping_ufunc_loop(
+                    ufunc, new_op_dtypes, 0);
+        }
+    }
+
     for (int i = 0; i < ufunc->nargs; i++) {
         Py_XDECREF(new_op_dtypes[i]);
     }

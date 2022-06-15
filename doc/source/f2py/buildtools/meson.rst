@@ -77,11 +77,18 @@ possible. The easiest way to solve this is to let ``f2py`` deal with it:
 
 
 Automating wrapper generation
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A major pain point in the workflow defined above, is the manual tracking of
 inputs. Although it would require more effort to figure out the actual outputs
 for reasons discussed in :ref:`f2py-bldsys`.
+
+.. note::
+
+   From NumPy ``1.22.4`` onwards, ``f2py`` will deterministically generate
+   wrapper files based on the input file Fortran standard (F77 or greater).
+   ``--skip-empty-wrappers`` can be passed to ``f2py`` to restore the previous
+   behaviour of only generating wrappers when needed by the input .
 
 However, we can augment our workflow in a straightforward to take into account
 files for which the outputs are known when the build system is set up.

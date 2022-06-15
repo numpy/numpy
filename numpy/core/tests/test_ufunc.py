@@ -389,7 +389,7 @@ class TestUfunc:
         assert_equal(ixs, (0, 0, 0, 1, 2))
         assert_equal(flags, (self.can_ignore, self.size_inferred, 0))
         assert_equal(sizes, (3, -1, 9))
-    
+
     def test_signature9(self):
         enabled, num_dims, ixs, flags, sizes = umt.test_signature(
             1, 1, "(  3)  -> ( )")
@@ -620,8 +620,9 @@ class TestUfunc:
                                 atol = max(np.finfo(dtout).tiny, 3e-308)
                             else:
                                 atol = 3e-308
-                        # Some test values result in invalid for float16.
-                        with np.errstate(invalid='ignore'):
+                        # Some test values result in invalid for float16
+                        # and the cast to it may overflow to inf.
+                        with np.errstate(invalid='ignore', over='ignore'):
                             res = np.true_divide(x, y, dtype=dtout)
                         if not np.isfinite(res) and tcout == 'e':
                             continue
@@ -665,19 +666,21 @@ class TestUfunc:
         for dt in (int, np.float16, np.float32, np.float64, np.longdouble):
             for v in (0, 1, 2, 7, 8, 9, 15, 16, 19, 127,
                       128, 1024, 1235):
-                tgt = dt(v * (v + 1) / 2)
-                d = np.arange(1, v + 1, dtype=dt)
-
                 # warning if sum overflows, which it does in float16
-                overflow = not np.isfinite(tgt)
-
                 with warnings.catch_warnings(record=True) as w:
-                    warnings.simplefilter("always")
-                    assert_almost_equal(np.sum(d), tgt)
+                    warnings.simplefilter("always", RuntimeWarning)
+
+                    tgt = dt(v * (v + 1) / 2)
+                    overflow = not np.isfinite(tgt)
                     assert_equal(len(w), 1 * overflow)
 
-                    assert_almost_equal(np.sum(d[::-1]), tgt)
+                    d = np.arange(1, v + 1, dtype=dt)
+
+                    assert_almost_equal(np.sum(d), tgt)
                     assert_equal(len(w), 2 * overflow)
+
+                    assert_almost_equal(np.sum(d[::-1]), tgt)
+                    assert_equal(len(w), 3 * overflow)
 
             d = np.ones(500, dtype=dt)
             assert_almost_equal(np.sum(d[::2]), 250.)
@@ -798,6 +801,20 @@ class TestUfunc:
         umt.inner1d(arr, arr, out=out)
         # the result would be just a scalar `5`, but is broadcast fully:
         assert (out == 5).all()
+
+    @pytest.mark.parametrize(["arr", "out"], [
+                ([2], np.empty(())),
+                ([1, 2], np.empty(1)),
+                (np.ones((4, 3)), np.empty((4, 1)))],
+            ids=["(1,)->()", "(2,)->(1,)", "(4, 3)->(4, 1)"])
+    def test_out_broadcast_errors(self, arr, out):
+        # Output is (currently) allowed to broadcast inputs, but it cannot be
+        # smaller than the actual result.
+        with pytest.raises(ValueError, match="non-broadcastable"):
+            np.positive(arr, out=out)
+
+        with pytest.raises(ValueError, match="non-broadcastable"):
+            np.add(np.ones(()), arr, out=out)
 
     def test_type_cast(self):
         msg = "type cast"
@@ -2002,6 +2019,20 @@ class TestUfunc:
         # Test multiple output ufuncs raise error, gh-5665
         assert_raises(ValueError, np.modf.at, np.arange(10), [1])
 
+        # Test maximum
+        a = np.array([1, 2, 3])
+        np.maximum.at(a, [0], 0)
+        assert_equal(np.array([1, 2, 3]), a)
+
+    def test_at_not_none_signature(self):
+        # Test ufuncs with non-trivial signature raise a TypeError
+        a = np.ones((2, 2, 2))
+        b = np.ones((1, 2, 2))
+        assert_raises(TypeError, np.matmul.at, a, [0], b)
+
+        a = np.array([[[1, 2], [3, 4]]])
+        assert_raises(TypeError, np.linalg._umath_linalg.det.at, a, [0])
+
     def test_reduce_arguments(self):
         f = np.add.reduce
         d = np.ones((5,2), dtype=int)
@@ -2426,7 +2457,7 @@ def test_ufunc_warn_with_nan(ufunc):
 
 
 @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
-def test_ufunc_casterrors():
+def test_ufunc_out_casterrors():
     # Tests that casting errors are correctly reported and buffers are
     # cleared.
     # The following array can be added to itself as an object array, but
@@ -2455,6 +2486,28 @@ def test_ufunc_casterrors():
     # output is unchanged after the error, this shows that the iteration
     # was aborted (this is not necessarily defined behaviour)
     assert out[-1] == 1
+
+
+@pytest.mark.parametrize("bad_offset", [0, int(np.BUFSIZE * 1.5)])
+def test_ufunc_input_casterrors(bad_offset):
+    value = 123
+    arr = np.array([value] * bad_offset +
+                   ["string"] +
+                   [value] * int(1.5 * np.BUFSIZE), dtype=object)
+    with pytest.raises(ValueError):
+        # Force cast inputs, but the buffered cast of `arr` to intp fails:
+        np.add(arr, arr, dtype=np.intp, casting="unsafe")
+
+
+@pytest.mark.parametrize("bad_offset", [0, int(np.BUFSIZE * 1.5)])
+def test_ufunc_input_floatingpoint_error(bad_offset):
+    value = 123
+    arr = np.array([value] * bad_offset +
+                   [np.nan] +
+                   [value] * int(1.5 * np.BUFSIZE))
+    with np.errstate(invalid="raise"), pytest.raises(FloatingPointError):
+        # Force cast inputs, but the buffered cast of `arr` to intp fails:
+        np.add(arr, arr, dtype=np.intp, casting="unsafe")
 
 
 def test_trivial_loop_invalid_cast():
@@ -2507,3 +2560,57 @@ def test_ufunc_methods_floaterrors(method):
     with np.errstate(all="raise"):
         with pytest.raises(FloatingPointError):
             method(arr)
+
+
+def _check_neg_zero(value):
+    if value != 0.0:
+        return False
+    if not np.signbit(value.real):
+        return False
+    if value.dtype.kind == "c":
+        return np.signbit(value.imag)
+    return True
+
+@pytest.mark.parametrize("dtype", np.typecodes["AllFloat"])
+def test_addition_negative_zero(dtype):
+    dtype = np.dtype(dtype)
+    if dtype.kind == "c":
+        neg_zero = dtype.type(complex(-0.0, -0.0))
+    else:
+        neg_zero = dtype.type(-0.0)
+
+    arr = np.array(neg_zero)
+    arr2 = np.array(neg_zero)
+
+    assert _check_neg_zero(arr + arr2)
+    # In-place ops may end up on a different path (reduce path) see gh-21211
+    arr += arr2
+    assert _check_neg_zero(arr)
+
+
+@pytest.mark.parametrize("dtype", np.typecodes["AllFloat"])
+@pytest.mark.parametrize("use_initial", [True, False])
+def test_addition_reduce_negative_zero(dtype, use_initial):
+    dtype = np.dtype(dtype)
+    if dtype.kind == "c":
+        neg_zero = dtype.type(complex(-0.0, -0.0))
+    else:
+        neg_zero = dtype.type(-0.0)
+
+    kwargs = {}
+    if use_initial:
+        kwargs["initial"] = neg_zero
+    else:
+        pytest.xfail("-0. propagation in sum currently requires initial")
+
+    # Test various length, in case SIMD paths or chunking play a role.
+    # 150 extends beyond the pairwise blocksize; probably not important.
+    for i in range(0, 150):
+        arr = np.array([neg_zero] * i, dtype=dtype)
+        res = np.sum(arr, **kwargs)
+        if i > 0 or use_initial:
+            assert _check_neg_zero(res)
+        else:
+            # `sum([])` should probably be 0.0 and not -0.0 like `sum([-0.0])`
+            assert not np.signbit(res.real)
+            assert not np.signbit(res.imag)

@@ -185,6 +185,52 @@ class TestOut:
 
 
 class TestComparisons:
+    import operator
+
+    @pytest.mark.parametrize('dtype', np.sctypes['uint'] + np.sctypes['int'] +
+                             np.sctypes['float'] + [np.bool_])
+    @pytest.mark.parametrize('py_comp,np_comp', [
+        (operator.lt, np.less),
+        (operator.le, np.less_equal),
+        (operator.gt, np.greater),
+        (operator.ge, np.greater_equal),
+        (operator.eq, np.equal),
+        (operator.ne, np.not_equal)
+    ])
+    def test_comparison_functions(self, dtype, py_comp, np_comp):
+        # Initialize input arrays
+        if dtype == np.bool_:
+            a = np.random.choice(a=[False, True], size=1000)
+            b = np.random.choice(a=[False, True], size=1000)
+            scalar = True
+        else:
+            a = np.random.randint(low=1, high=10, size=1000).astype(dtype)
+            b = np.random.randint(low=1, high=10, size=1000).astype(dtype)
+            scalar = 5
+        np_scalar = np.dtype(dtype).type(scalar)
+        a_lst = a.tolist()
+        b_lst = b.tolist()
+
+        # (Binary) Comparison (x1=array, x2=array)
+        comp_b = np_comp(a, b)
+        comp_b_list = [py_comp(x, y) for x, y in zip(a_lst, b_lst)]
+
+        # (Scalar1) Comparison (x1=scalar, x2=array)
+        comp_s1 = np_comp(np_scalar, b)
+        comp_s1_list = [py_comp(scalar, x) for x in b_lst]
+
+        # (Scalar2) Comparison (x1=array, x2=scalar)
+        comp_s2 = np_comp(a, np_scalar)
+        comp_s2_list = [py_comp(x, scalar) for x in a_lst]
+
+        # Sequence: Binary, Scalar1 and Scalar2
+        assert_(comp_b.tolist() == comp_b_list,
+            f"Failed comparision ({py_comp.__name__})")
+        assert_(comp_s1.tolist() == comp_s1_list,
+            f"Failed comparision ({py_comp.__name__})")
+        assert_(comp_s2.tolist() == comp_s2_list,
+            f"Failed comparision ({py_comp.__name__})")
+
     def test_ignore_object_identity_in_equal(self):
         # Check comparing identical objects whose comparison
         # is not a simple boolean, e.g., arrays that are compared elementwise.
@@ -281,7 +327,9 @@ class TestDivision:
         a_lst, b_lst = a.tolist(), b.tolist()
 
         c_div = lambda n, d: (
-            0 if d == 0 or (n and n == fo.min and d == -1) else n//d
+            0 if d == 0 else (
+                fo.min if (n and n == fo.min and d == -1) else n//d
+            )
         )
         with np.errstate(divide='ignore'):
             ac = a.copy()
@@ -296,7 +344,7 @@ class TestDivision:
 
         for divisor in divisors:
             ac = a.copy()
-            with np.errstate(divide='ignore'):
+            with np.errstate(divide='ignore', over='ignore'):
                 div_a = a // divisor
                 ac //= divisor
             div_lst = [c_div(i, divisor) for i in a_lst]
@@ -304,21 +352,25 @@ class TestDivision:
             assert all(div_a == div_lst), msg
             assert all(ac == div_lst), msg_eq
 
-        with np.errstate(divide='raise'):
-            if 0 in b or (fo.min and -1 in b and fo.min in a):
+        with np.errstate(divide='raise', over='raise'):
+            if 0 in b:
                 # Verify overflow case
-                with pytest.raises(FloatingPointError):
+                with pytest.raises(FloatingPointError,
+                        match="divide by zero encountered in floor_divide"):
                     a // b
             else:
                 a // b
             if fo.min and fo.min in a:
-                with pytest.raises(FloatingPointError):
+                with pytest.raises(FloatingPointError,
+                        match='overflow encountered in floor_divide'):
                     a // -1
             elif fo.min:
                 a // -1
-            with pytest.raises(FloatingPointError):
+            with pytest.raises(FloatingPointError,
+                    match="divide by zero encountered in floor_divide"):
                 a // 0
-            with pytest.raises(FloatingPointError):
+            with pytest.raises(FloatingPointError,
+                    match="divide by zero encountered in floor_divide"):
                 ac = a.copy()
                 ac //= 0
 
@@ -346,11 +398,13 @@ class TestDivision:
         msg = "Reduce floor integer division check"
         assert div_a == div_lst, msg
 
-        with np.errstate(divide='raise'):
-            with pytest.raises(FloatingPointError):
+        with np.errstate(divide='raise', over='raise'):
+            with pytest.raises(FloatingPointError,
+                    match="divide by zero encountered in reduce"):
                 np.floor_divide.reduce(np.arange(-100, 100, dtype=dtype))
             if fo.min:
-                with pytest.raises(FloatingPointError):
+                with pytest.raises(FloatingPointError,
+                        match='overflow encountered in reduce'):
                     np.floor_divide.reduce(
                         np.array([fo.min, 1, -1], dtype=dtype)
                     )
@@ -995,12 +1049,13 @@ class TestExp:
 
 class TestSpecialFloats:
     def test_exp_values(self):
-        x = [np.nan,  np.nan, np.inf, 0.]
-        y = [np.nan, -np.nan, np.inf, -np.inf]
-        for dt in ['f', 'd', 'g']:
-            xf = np.array(x, dtype=dt)
-            yf = np.array(y, dtype=dt)
-            assert_equal(np.exp(yf), xf)
+        with np.errstate(under='raise', over='raise'):
+            x = [np.nan,  np.nan, np.inf, 0.]
+            y = [np.nan, -np.nan, np.inf, -np.inf]
+            for dt in ['f', 'd', 'g']:
+                xf = np.array(x, dtype=dt)
+                yf = np.array(y, dtype=dt)
+                assert_equal(np.exp(yf), xf)
 
     # See: https://github.com/numpy/numpy/issues/19192
     @pytest.mark.xfail(

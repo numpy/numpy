@@ -1,5 +1,6 @@
 import platform
 import pytest
+import numpy as np
 
 from . import util
 
@@ -8,6 +9,10 @@ from . import util
     platform.system() == "Darwin",
     reason="Prone to error when run with numpy/f2py/tests on mac os, "
     "but not when run in isolation",
+)
+@pytest.mark.skipif(
+    np.dtype(np.intp).itemsize < 8,
+    reason="32-bit builds are buggy"
 )
 class TestMultiline(util.F2PyTest):
     suffix = ".pyf"
@@ -37,6 +42,10 @@ end python module {module_name}
     platform.system() == "Darwin",
     reason="Prone to error when run with numpy/f2py/tests on mac os, "
     "but not when run in isolation",
+)
+@pytest.mark.skipif(
+    np.dtype(np.intp).itemsize < 8,
+    reason="32-bit builds are buggy"
 )
 class TestCallstatement(util.F2PyTest):
     suffix = ".pyf"

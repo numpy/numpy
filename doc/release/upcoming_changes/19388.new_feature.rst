@@ -1,0 +1,10 @@
+F2PY support for Fortran ``character`` strings
+----------------------------------------------
+F2PY now supports wrapping Fortran functions with:
+
+* character (e.g. ``character x``)
+* character array (e.g. ``character, dimension(n) :: x``)
+* character string (e.g. ``character(len=10) x``)
+* and character string array (e.g. ``character(len=10), dimension(n, m) :: x``)
+
+arguments, including passing Python unicode strings as Fortran character string arguments.

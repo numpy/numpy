@@ -88,6 +88,7 @@ ifeq "$(GITVER)" "Unknown"
 	# @echo sdist build with unlabeled sources
 else ifeq ("", "$(NUMPYVER)")
 	@echo numpy not found, cannot build documentation without successful \"import numpy\"
+	@echo Try overriding the makefile PYTHON variable with '"make PYTHON=python $(MAKECMDGOALS)"'
 	@exit 1
 else ifneq ($(NUMPYVER),$(GITVER))
 	@echo installed numpy $(NUMPYVER) != current repo git version \'$(GITVER)\'
@@ -156,7 +157,7 @@ endif
 	tar -C build/merge/$(TAG) -xf build/dist.tar.gz
 	git -C build/merge add $(TAG)
 	@# For now, the user must do this. If it is onerous, automate it and change
-	@# the instructions in doc/HOWTO_RELEASE.rst.txt
+	@# the instructions in doc/HOWTO_RELEASE.rst
 	@echo " "
 	@echo New documentation archive added to ./build/merge.
 	@echo Now add/modify the appropriate section after
@@ -263,4 +264,3 @@ info:
 
 show:
 	@python -c "import webbrowser; webbrowser.open_new_tab('file://$(PWD)/build/html/index.html')"
-

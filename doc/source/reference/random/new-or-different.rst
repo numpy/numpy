@@ -40,7 +40,7 @@ Feature            Older Equivalent     Notes
                                         supported.
 ------------------ -------------------- -------------
 ``integers``       ``randint``,         Use the ``endpoint`` kwarg to adjust
-                   ``random_integers``  the inclusion or exclution of the
+                   ``random_integers``  the inclusion or exclusion of the
                                         ``high`` interval endpoint
 ================== ==================== =============
 

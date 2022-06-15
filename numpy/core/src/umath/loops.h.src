@@ -28,9 +28,19 @@
  *****************************************************************************
  */
 
+#ifndef NPY_DISABLE_OPTIMIZATION
+    #include "loops_comparison.dispatch.h"
+#endif
+
 /**begin repeat
- * #kind = equal, not_equal, greater, greater_equal, less, less_equal,
- *         logical_and, logical_or, absolute, logical_not#
+ * #kind = equal, not_equal, greater, greater_equal, less, less_equal#
+ */
+NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void BOOL_@kind@,
+    (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func)))
+/**end repeat**/
+
+/**begin repeat
+ * #kind = logical_and, logical_or, absolute, logical_not#
  **/
 NPY_NO_EXPORT void
 BOOL_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
@@ -60,8 +70,40 @@ BOOL_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void
  * #TYPE = UBYTE, USHORT, UINT, ULONG, ULONGLONG,
            BYTE,  SHORT,  INT,  LONG,  LONGLONG#
  */
- NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void @TYPE@_divide,
-     (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func)))
+NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void @TYPE@_divide,
+    (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func)))
+/**end repeat**/
+
+#ifndef NPY_DISABLE_OPTIMIZATION
+    #include "loops_modulo.dispatch.h"
+#endif
+
+/**begin repeat
+ * #TYPE = UBYTE, USHORT, UINT, ULONG, ULONGLONG,
+           BYTE,  SHORT,  INT,  LONG,  LONGLONG#
+ */
+/**begin repeat1
+ * #kind = divmod, fmod, remainder#
+ */
+NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void @TYPE@_@kind@,
+    (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func)))
+/**end repeat1**/
+/**end repeat**/
+
+#ifndef NPY_DISABLE_OPTIMIZATION
+    #include "loops_comparison.dispatch.h"
+#endif
+
+/**begin repeat
+ * #TYPE = UBYTE, USHORT, UINT, ULONG, ULONGLONG,
+           BYTE,  SHORT,  INT,  LONG,  LONGLONG#
+ */
+/**begin repeat1
+ * #kind = equal, not_equal, greater, greater_equal, less, less_equal#
+ */
+NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void @TYPE@_@kind@,
+    (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func)))
+/**end repeat1**/
 /**end repeat**/
 
 /**begin repeat
@@ -118,9 +160,8 @@ NPY_NO_EXPORT void
 /**end repeat3**/
 
 /**begin repeat3
- * #kind = equal, not_equal, greater, greater_equal, less, less_equal,
- *         logical_and, logical_or#
- * #OP =  ==, !=, >, >=, <, <=, &&, ||#
+ * #kind = logical_and, logical_or#
+ * #OP = &&, ||#
  */
 NPY_NO_EXPORT void
 @S@@TYPE@_@kind@@isa@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
@@ -143,19 +184,10 @@ NPY_NO_EXPORT void
 @S@@TYPE@_power(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
 
 NPY_NO_EXPORT void
-@S@@TYPE@_fmod(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
-
-NPY_NO_EXPORT void
 @S@@TYPE@_absolute(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
 
 NPY_NO_EXPORT void
 @S@@TYPE@_sign(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
-
-NPY_NO_EXPORT void
-@S@@TYPE@_remainder(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
-
-NPY_NO_EXPORT void
-@S@@TYPE@_divmod(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
 
 NPY_NO_EXPORT void
 @S@@TYPE@_gcd(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
@@ -220,9 +252,6 @@ NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void @TYPE@_@kind@,
  */
 NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void @TYPE@_@func@,
     (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func)))
-/**end repeat1**/
-/**end repeat**/
-
 /**end repeat1**/
 /**end repeat**/
 
@@ -291,13 +320,27 @@ NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void @TYPE@_@kind@, (
 /**end repeat1**/
 /**end repeat**/
 
+#ifndef NPY_DISABLE_OPTIMIZATION
+    #include "loops_comparison.dispatch.h"
+#endif
+/**begin repeat
+ *  #TYPE = FLOAT, DOUBLE#
+ */
+/**begin repeat1
+ * #kind = equal, not_equal, less, less_equal, greater, greater_equal#
+ */
+NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void @TYPE@_@kind@, (
+  char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func)
+))
+/**end repeat1**/
+/**end repeat**/
+
 /**begin repeat
  * Float types
  *  #TYPE = HALF, FLOAT, DOUBLE, LONGDOUBLE#
  *  #c = f, f, , l#
  *  #C = F, F, , L#
  */
-
 
 /**begin repeat1
  * Arithmetic
@@ -309,9 +352,8 @@ NPY_NO_EXPORT void
 /**end repeat1**/
 
 /**begin repeat1
- * #kind = equal, not_equal, less, less_equal, greater, greater_equal,
- *        logical_and, logical_or#
- * #OP = ==, !=, <, <=, >, >=, &&, ||#
+ * #kind = logical_and, logical_or#
+ * #OP = &&, ||#
  */
 NPY_NO_EXPORT void
 @TYPE@_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
@@ -398,6 +440,16 @@ NPY_NO_EXPORT void
 @TYPE@_ldexp_long(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
 /**end repeat**/
 
+/**begin repeat
+ * #TYPE = HALF, LONGDOUBLE#
+ */
+/**begin repeat1
+ * #kind = equal, not_equal, less, less_equal, greater, greater_equal#
+ */
+NPY_NO_EXPORT void
+@TYPE@_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
+/**end repeat1**/
+/**end repeat**/
 
 /*
  *****************************************************************************

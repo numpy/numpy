@@ -16,6 +16,14 @@ import re
 import subprocess
 import textwrap
 
+# These flags are used to compile any C++ source within Numpy.
+# They are chosen to have very few runtime dependencies.
+NPY_CXX_FLAGS = [
+    '-std=c++11',  # Minimal standard version
+    '-D__STDC_VERSION__=0',  # for compatibility with C headers
+    '-fno-exceptions',  # no exception support
+    '-fno-rtti']  # no runtime type information
+
 
 class _Config:
     """An abstract class holds all configurable attributes of `CCompilerOpt`,
@@ -346,7 +354,7 @@ class _Config:
             FMA4   = dict(flags="-mfma4"),
             FMA3   = dict(flags="-mfma"),
             AVX2   = dict(flags="-mavx2"),
-            AVX512F = dict(flags="-mavx512f"),
+            AVX512F = dict(flags="-mavx512f -mno-mmx"),
             AVX512CD = dict(flags="-mavx512cd"),
             AVX512_KNL = dict(flags="-mavx512er -mavx512pf"),
             AVX512_KNM = dict(
@@ -769,18 +777,18 @@ class _Cache:
 
     Parameters
     ----------
-    cache_path: str or None
+    cache_path : str or None
         The path of cache file, if None then cache in file will disabled.
 
-    *factors:
+    *factors :
         The caching factors that need to utilize next to `conf_cache_factors`.
 
     Attributes
     ----------
-    cache_private: set
+    cache_private : set
         Hold the attributes that need be skipped from "in-memory cache".
 
-    cache_infile: bool
+    cache_infile : bool
         Utilized during initializing this class, to determine if the cache was able
         to loaded from the specified cache path in 'cache_path'.
     """
@@ -947,50 +955,56 @@ class _CCompiler:
     def __init__(self):
         if hasattr(self, "cc_is_cached"):
             return
-        #      attr                regex
+        #      attr            regex        compiler-expression
         detect_arch = (
-            ("cc_on_x64",      ".*(x|x86_|amd)64.*"),
-            ("cc_on_x86",      ".*(win32|x86|i386|i686).*"),
-            ("cc_on_ppc64le",  ".*(powerpc|ppc)64(el|le).*"),
-            ("cc_on_ppc64",    ".*(powerpc|ppc)64.*"),
-            ("cc_on_aarch64",  ".*(aarch64|arm64).*"),
-            ("cc_on_armhf",    ".*arm.*"),
-            ("cc_on_s390x",    ".*s390x.*"),
+            ("cc_on_x64",      ".*(x|x86_|amd)64.*", ""),
+            ("cc_on_x86",      ".*(win32|x86|i386|i686).*", ""),
+            ("cc_on_ppc64le",  ".*(powerpc|ppc)64(el|le).*", ""),
+            ("cc_on_ppc64",    ".*(powerpc|ppc)64.*", ""),
+            ("cc_on_aarch64",  ".*(aarch64|arm64).*", ""),
+            ("cc_on_armhf",    ".*arm.*", "defined(__ARM_ARCH_7__) || "
+                                          "defined(__ARM_ARCH_7A__)"),
+            ("cc_on_s390x",    ".*s390x.*", ""),
             # undefined platform
-            ("cc_on_noarch",    ""),
+            ("cc_on_noarch",   "", ""),
         )
         detect_compiler = (
-            ("cc_is_gcc",     r".*(gcc|gnu\-g).*"),
-            ("cc_is_clang",    ".*clang.*"),
-            ("cc_is_iccw",     ".*(intelw|intelemw|iccw).*"), # intel msvc like
-            ("cc_is_icc",      ".*(intel|icc).*"), # intel unix like
-            ("cc_is_msvc",     ".*msvc.*"),
+            ("cc_is_gcc",     r".*(gcc|gnu\-g).*", ""),
+            ("cc_is_clang",    ".*clang.*", ""),
+            # intel msvc like
+            ("cc_is_iccw",     ".*(intelw|intelemw|iccw).*", ""),
+            ("cc_is_icc",      ".*(intel|icc).*", ""),  # intel unix like
+            ("cc_is_msvc",     ".*msvc.*", ""),
             # undefined compiler will be treat it as gcc
-            ("cc_is_nocc",     ""),
+            ("cc_is_nocc",     "", ""),
         )
         detect_args = (
-           ("cc_has_debug",  ".*(O0|Od|ggdb|coverage|debug:full).*"),
-           ("cc_has_native", ".*(-march=native|-xHost|/QxHost).*"),
+           ("cc_has_debug",  ".*(O0|Od|ggdb|coverage|debug:full).*", ""),
+           ("cc_has_native", ".*(-march=native|-xHost|/QxHost).*", ""),
            # in case if the class run with -DNPY_DISABLE_OPTIMIZATION
-           ("cc_noopt", ".*DISABLE_OPT.*"),
+           ("cc_noopt", ".*DISABLE_OPT.*", ""),
         )
 
         dist_info = self.dist_info()
         platform, compiler_info, extra_args = dist_info
         # set False to all attrs
         for section in (detect_arch, detect_compiler, detect_args):
-            for attr, rgex in section:
+            for attr, rgex, cexpr in section:
                 setattr(self, attr, False)
 
         for detect, searchin in ((detect_arch, platform), (detect_compiler, compiler_info)):
-            for attr, rgex in detect:
+            for attr, rgex, cexpr in detect:
                 if rgex and not re.match(rgex, searchin, re.IGNORECASE):
+                    continue
+                if cexpr and not self.cc_test_cexpr(cexpr):
                     continue
                 setattr(self, attr, True)
                 break
 
-        for attr, rgex in detect_args:
+        for attr, rgex, cexpr in detect_args:
             if rgex and not re.match(rgex, extra_args, re.IGNORECASE):
+                continue
+            if cexpr and not self.cc_test_cexpr(cexpr):
                 continue
             setattr(self, attr, True)
 
@@ -1058,6 +1072,25 @@ class _CCompiler:
         assert(isinstance(flags, list))
         self.dist_log("testing flags", flags)
         test_path = os.path.join(self.conf_check_path, "test_flags.c")
+        test = self.dist_test(test_path, flags)
+        if not test:
+            self.dist_log("testing failed", stderr=True)
+        return test
+
+    @_Cache.me
+    def cc_test_cexpr(self, cexpr, flags=[]):
+        """
+        Same as the above but supports compile-time expressions.
+        """
+        self.dist_log("testing compiler expression", cexpr)
+        test_path = os.path.join(self.conf_tmp_path, "npy_dist_test_cexpr.c")
+        with open(test_path, "w") as fd:
+            fd.write(textwrap.dedent(f"""\
+               #if !({cexpr})
+                   #error "unsupported expression"
+               #endif
+               int dummy;
+            """))
         test = self.dist_test(test_path, flags)
         if not test:
             self.dist_log("testing failed", stderr=True)
@@ -1231,12 +1264,12 @@ class _Feature:
 
         Parameters
         ----------
-        names: sequence or None, optional
+        names : sequence or None, optional
             Specify certain CPU features to test it against the **C** compiler.
             if None(default), it will test all current supported features.
             **Note**: feature names must be in upper-case.
 
-        force_flags: list or None, optional
+        force_flags : list or None, optional
             If None(default), default compiler flags for every CPU feature will
             be used during the test.
 
@@ -1305,10 +1338,10 @@ class _Feature:
 
         Parameters
         ----------
-        names: str or sequence of str
+        names : str or sequence of str
             CPU feature name(s) in uppercase.
 
-        keep_origins: bool
+        keep_origins : bool
             if False(default) then the returned set will not contain any
             features from 'names'. This case happens only when two features
             imply each other.
@@ -1498,10 +1531,10 @@ class _Feature:
 
         Parameters
         ----------
-        name: str
+        name : str
             Supported CPU feature name.
 
-        force_flags: list or None, optional
+        force_flags : list or None, optional
             If None(default), the returned flags from `feature_flags()`
             will be used.
 
@@ -1537,10 +1570,10 @@ class _Feature:
 
         Parameters
         ----------
-        name: str
+        name : str
             CPU feature name in uppercase.
 
-        force_flags: list or None, optional
+        force_flags : list or None, optional
             If None(default), default compiler flags for every CPU feature will
             be used during test.
 
@@ -1582,7 +1615,7 @@ class _Feature:
 
         Parameters
         ----------
-        names: str
+        names : str
             CPU feature name in uppercase.
         """
         assert isinstance(name, str)
@@ -1668,10 +1701,10 @@ class _Parse:
 
     Parameters
     ----------
-    cpu_baseline: str or None
+    cpu_baseline : str or None
         minimal set of required CPU features or special options.
 
-    cpu_dispatch: str or None
+    cpu_dispatch : str or None
         dispatched set of additional CPU features or special options.
 
     Special options can be:
@@ -1804,7 +1837,7 @@ class _Parse:
 
         Parameters
         ----------
-        source: str
+        source : str
             the path of **C** source file.
 
         Returns
@@ -2243,7 +2276,7 @@ class CCompilerOpt(_Config, _Distutils, _Cache, _CCompiler, _Feature, _Parse):
             Path of parent directory for the generated headers and wrapped sources.
             If None(default) the files will generated in-place.
 
-        ccompiler: CCompiler
+        ccompiler : CCompiler
             Distutils `CCompiler` instance to be used for compilation.
             If None (default), the provided instance during the initialization
             will be used instead.
@@ -2550,6 +2583,8 @@ class CCompilerOpt(_Config, _Distutils, _Cache, _CCompiler, _Feature, _Parse):
                     return True
         except OSError:
             pass
+
+        os.makedirs(os.path.dirname(config_path), exist_ok=True)
 
         self.dist_log("generate dispatched config -> ", config_path)
         dispatch_calls = []

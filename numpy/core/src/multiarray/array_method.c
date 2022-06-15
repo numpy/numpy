@@ -68,7 +68,7 @@ default_resolve_descriptors(
     for (int i = 0; i < nin + nout; i++) {
         PyArray_DTypeMeta *dtype = dtypes[i];
         if (input_descrs[i] != NULL) {
-            output_descrs[i] = ensure_dtype_nbo(input_descrs[i]);
+            output_descrs[i] = NPY_DT_CALL_ensure_canonical(input_descrs[i]);
         }
         else {
             output_descrs[i] = NPY_DT_CALL_default_descr(dtype);
@@ -588,7 +588,7 @@ boundarraymethod__resolve_descripors(
         return NULL;
     }
     else if (casting < 0) {
-        return Py_BuildValue("iO", casting, Py_None, Py_None);
+        return Py_BuildValue("iOO", casting, Py_None, Py_None);
     }
 
     PyObject *result_tuple = PyTuple_New(nin + nout);
@@ -863,15 +863,17 @@ generic_masked_strided_loop(PyArrayMethod_Context *context,
 
         /* Process unmasked values */
         mask = npy_memchr(mask, 0, mask_stride, N, &subloopsize, 0);
-        int res = strided_loop(context,
-                dataptrs, &subloopsize, strides, strided_loop_auxdata);
-        if (res != 0) {
-            return res;
+        if (subloopsize > 0) {
+            int res = strided_loop(context,
+                    dataptrs, &subloopsize, strides, strided_loop_auxdata);
+            if (res != 0) {
+                return res;
+            }
+            for (int i = 0; i < nargs; i++) {
+                dataptrs[i] += subloopsize * strides[i];
+            }
+            N -= subloopsize;
         }
-        for (int i = 0; i < nargs; i++) {
-            dataptrs[i] += subloopsize * strides[i];
-        }
-        N -= subloopsize;
     } while (N > 0);
 
     return 0;

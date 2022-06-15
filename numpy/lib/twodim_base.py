@@ -2,6 +2,7 @@
 
 """
 import functools
+import operator
 
 from numpy.core.numeric import (
     asanyarray, arange, zeros, greater_equal, multiply, ones,
@@ -214,6 +215,11 @@ def eye(N, M=None, k=0, dtype=float, order='C', *, like=None):
     m = zeros((N, M), dtype=dtype, order=order)
     if k >= M:
         return m
+    # Ensure M and k are integers, so we don't get any surprise casting
+    # results in the expressions `M-k` and `M+1` used below.  This avoids
+    # a problem with inputs with type (for example) np.uint64.
+    M = operator.index(M)
+    k = operator.index(k)
     if k >= 0:
         i = k
     else:
@@ -494,8 +500,8 @@ def triu(m, k=0):
     Upper triangle of an array.
 
     Return a copy of an array with the elements below the `k`-th diagonal
-    zeroed. For arrays with ``ndim`` exceeding 2, `triu` will apply to the final
-    two axes.
+    zeroed. For arrays with ``ndim`` exceeding 2, `triu` will apply to the
+    final two axes.
 
     Please refer to the documentation for `tril` for further details.
 
@@ -628,8 +634,8 @@ def vander(x, N=None, increasing=False):
     return v
 
 
-def _histogram2d_dispatcher(x, y, bins=None, range=None, normed=None,
-                            weights=None, density=None):
+def _histogram2d_dispatcher(x, y, bins=None, range=None, density=None,
+                            weights=None):
     yield x
     yield y
 
@@ -647,8 +653,7 @@ def _histogram2d_dispatcher(x, y, bins=None, range=None, normed=None,
 
 
 @array_function_dispatch(_histogram2d_dispatcher)
-def histogram2d(x, y, bins=10, range=None, normed=None, weights=None,
-                density=None):
+def histogram2d(x, y, bins=10, range=None, density=None, weights=None):
     """
     Compute the bi-dimensional histogram of two data samples.
 
@@ -682,13 +687,9 @@ def histogram2d(x, y, bins=10, range=None, normed=None, weights=None,
         If False, the default, returns the number of samples in each bin.
         If True, returns the probability *density* function at the bin,
         ``bin_count / sample_count / bin_area``.
-    normed : bool, optional
-        An alias for the density argument that behaves identically. To avoid
-        confusion with the broken normed argument to `histogram`, `density`
-        should be preferred.
     weights : array_like, shape(N,), optional
         An array of values ``w_i`` weighing each sample ``(x_i, y_i)``.
-        Weights are normalized to 1 if `normed` is True. If `normed` is
+        Weights are normalized to 1 if `density` is True. If `density` is
         False, the values of the returned histogram are equal to the sum of
         the weights belonging to the samples falling into each bin.
 
@@ -710,7 +711,7 @@ def histogram2d(x, y, bins=10, range=None, normed=None, weights=None,
 
     Notes
     -----
-    When `normed` is True, then the returned histogram is the sample
+    When `density` is True, then the returned histogram is the sample
     density, defined such that the sum over bins of the product
     ``bin_value * bin_area`` is 1.
 
@@ -804,7 +805,7 @@ def histogram2d(x, y, bins=10, range=None, normed=None, weights=None,
     >>> plt.show()
     """
     from numpy import histogramdd
-    
+
     if len(x) != len(y):
         raise ValueError('x and y must have the same length.')
 
@@ -816,7 +817,7 @@ def histogram2d(x, y, bins=10, range=None, normed=None, weights=None,
     if N != 1 and N != 2:
         xedges = yedges = asarray(bins)
         bins = [xedges, yedges]
-    hist, edges = histogramdd([x, y], bins, range, normed, weights, density)
+    hist, edges = histogramdd([x, y], bins, range, density, weights)
     return hist, edges[0], edges[1]
 
 

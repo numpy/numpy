@@ -171,6 +171,16 @@ html_logo = '_static/numpylogo.svg'
 
 html_favicon = '_static/favicon/favicon.ico'
 
+# Set up the version switcher.  The versions.json is stored in the doc repo.
+if os.environ.get('CIRCLE_JOB', False) and \
+        os.environ.get('CIRCLE_BRANCH', '') != 'main':
+    # For PR, name is set to its ref
+    switcher_version = os.environ['CIRCLE_BRANCH']
+elif ".dev" in version:
+    switcher_version = "devdocs"
+else:
+    switcher_version = f"doc/{version}"
+
 html_theme_options = {
   "logo_link": "index",
   "github_url": "https://github.com/numpy/numpy",
@@ -179,11 +189,22 @@ html_theme_options = {
   "external_links": [
       {"name": "Learn", "url": "https://numpy.org/numpy-tutorials/"}
       ],
+  # Add light/dark mode and documentation version switcher:
+  "navbar_end": ["version-switcher", "navbar-icon-links"],
+  "switcher": {
+      "version_match": switcher_version,
+      "json_url": "https://numpy.org/doc/_static/versions.json",
+  },
 }
 
 html_title = "%s v%s Manual" % (project, version)
 html_static_path = ['_static']
 html_last_updated_fmt = '%b %d, %Y'
+html_css_files = ["numpy.css"]
+
+# Prevent sphinx-panels from loading bootstrap css, the pydata-sphinx-theme
+# already loads it
+panels_add_bootstrap_css = False
 
 html_use_modindex = True
 html_copy_source = False
@@ -307,6 +328,7 @@ intersphinx_mapping = {
     'pytest': ('https://docs.pytest.org/en/stable', None),
     'numpy-tutorials': ('https://numpy.org/numpy-tutorials', None),
     'numpydoc': ('https://numpydoc.readthedocs.io/en/latest', None),
+    'dlpack': ('https://dmlc.github.io/dlpack/latest', None)
 }
 
 

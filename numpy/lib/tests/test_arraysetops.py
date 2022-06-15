@@ -765,3 +765,11 @@ class TestUnique:
         assert_array_equal(uniq[:, inv], data)
         msg = "Unique's return_counts=True failed with axis=1"
         assert_array_equal(cnt, np.array([2, 1, 1]), msg)
+
+    def test_unique_nanequals(self):
+        # issue 20326
+        a = np.array([1, 1, np.nan, np.nan, np.nan])
+        unq = np.unique(a)
+        not_unq = np.unique(a, equal_nan=False)
+        assert_array_equal(unq, np.array([1, np.nan]))
+        assert_array_equal(not_unq, np.array([1, np.nan, np.nan, np.nan]))

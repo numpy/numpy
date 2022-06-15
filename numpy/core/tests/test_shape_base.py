@@ -157,6 +157,19 @@ class TestHstack:
         with assert_warns(FutureWarning):
             hstack(map(lambda x: x, np.ones((3, 2))))
 
+    def test_casting_and_dtype(self):
+        a = np.array([1, 2, 3])
+        b = np.array([2.5, 3.5, 4.5])
+        res = np.hstack((a, b), casting="unsafe", dtype=np.int64)
+        expected_res = np.array([1, 2, 3, 2, 3, 4])
+        assert_array_equal(res, expected_res)
+    
+    def test_casting_and_dtype_type_error(self):
+        a = np.array([1, 2, 3])
+        b = np.array([2.5, 3.5, 4.5])
+        with pytest.raises(TypeError):
+            hstack((a, b), casting="safe", dtype=np.int64)
+
 
 class TestVstack:
     def test_non_iterable(self):
@@ -196,6 +209,20 @@ class TestVstack:
     def test_generator(self):
         with assert_warns(FutureWarning):
             vstack((np.arange(3) for _ in range(2)))
+
+    def test_casting_and_dtype(self):
+        a = np.array([1, 2, 3])
+        b = np.array([2.5, 3.5, 4.5])
+        res = np.vstack((a, b), casting="unsafe", dtype=np.int64)
+        expected_res = np.array([[1, 2, 3], [2, 3, 4]])
+        assert_array_equal(res, expected_res)
+    
+    def test_casting_and_dtype_type_error(self):
+        a = np.array([1, 2, 3])
+        b = np.array([2.5, 3.5, 4.5])
+        with pytest.raises(TypeError):
+            vstack((a, b), casting="safe", dtype=np.int64)
+        
 
 
 class TestConcatenate:
@@ -449,6 +476,41 @@ def test_stack():
     with assert_warns(FutureWarning):
         result = stack((x for x in range(3)))
     assert_array_equal(result, np.array([0, 1, 2]))
+    #casting and dtype test
+    a = np.array([1, 2, 3])
+    b = np.array([2.5, 3.5, 4.5])
+    res = np.stack((a, b), axis=1, casting="unsafe", dtype=np.int64)
+    expected_res = np.array([[1, 2], [2, 3], [3, 4]])
+    assert_array_equal(res, expected_res)
+    #casting and dtype with TypeError
+    with assert_raises(TypeError):
+        stack((a, b), dtype=np.int64, axis=1, casting="safe")
+
+
+@pytest.mark.parametrize("axis", [0])
+@pytest.mark.parametrize("out_dtype", ["c8", "f4", "f8", ">f8", "i8"])
+@pytest.mark.parametrize("casting",
+                         ['no', 'equiv', 'safe', 'same_kind', 'unsafe'])
+def test_stack_out_and_dtype(axis, out_dtype, casting):
+    to_concat = (array([1, 2]), array([3, 4]))
+    res = array([[1, 2], [3, 4]])
+    out = np.zeros_like(res)
+
+    if not np.can_cast(to_concat[0], out_dtype, casting=casting):
+        with assert_raises(TypeError):
+            stack(to_concat, dtype=out_dtype,
+                  axis=axis, casting=casting)
+    else:
+        res_out = stack(to_concat, out=out,
+                        axis=axis, casting=casting)
+        res_dtype = stack(to_concat, dtype=out_dtype,
+                          axis=axis, casting=casting)
+        assert res_out is out
+        assert_array_equal(out, res_dtype)
+        assert res_dtype.dtype == out_dtype
+
+    with assert_raises(TypeError):
+        stack(to_concat, out=out, dtype=out_dtype, axis=axis)
 
 
 class TestBlock:

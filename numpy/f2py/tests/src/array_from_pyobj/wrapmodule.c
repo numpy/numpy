@@ -33,6 +33,7 @@ static PyObject *f2py_rout_wrap_call(PyObject *capi_self,
                                      PyObject *capi_args) {
   PyObject * volatile capi_buildvalue = NULL;
   int type_num = 0;
+  int elsize = 0;
   npy_intp *dims = NULL;
   PyObject *dims_capi = Py_None;
   int rank = 0;
@@ -41,8 +42,8 @@ static PyObject *f2py_rout_wrap_call(PyObject *capi_self,
   PyObject *arr_capi = Py_None;
   int i;
 
-  if (!PyArg_ParseTuple(capi_args,"iOiO|:wrap.call",\
-                        &type_num,&dims_capi,&intent,&arr_capi))
+  if (!PyArg_ParseTuple(capi_args,"iiOiO|:wrap.call",\
+                        &type_num,&elsize,&dims_capi,&intent,&arr_capi))
     return NULL;
   rank = PySequence_Length(dims_capi);
   dims = malloc(rank*sizeof(npy_intp));
@@ -58,7 +59,7 @@ static PyObject *f2py_rout_wrap_call(PyObject *capi_self,
         goto fail;
     }
   }
-  capi_arr_tmp = array_from_pyobj(type_num,dims,rank,intent|F2PY_INTENT_OUT,arr_capi);
+  capi_arr_tmp = ndarray_from_pyobj(type_num,elsize,dims,rank,intent|F2PY_INTENT_OUT,arr_capi,"wrap.call failed");
   if (capi_arr_tmp == NULL) {
     free(dims);
     return NULL;

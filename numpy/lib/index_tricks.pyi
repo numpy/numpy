@@ -26,7 +26,7 @@ from numpy import (
     _OrderCF,
     _ModeKind,
 )
-from numpy.typing import (
+from numpy._typing import (
     # Arrays
     ArrayLike,
     _NestedSequence,

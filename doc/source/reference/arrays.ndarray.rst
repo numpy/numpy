@@ -170,8 +170,8 @@ base offset itself is a multiple of `self.itemsize`. Understanding
     ``NPY_RELAXED_STRIDES_DEBUG=1`` can be used to help find errors when
     incorrectly relying on the strides in C-extension code (see below warning).
 
-Data in new :class:`ndarrays <ndarray>` is in the :term:`row-major`
-(C) order, unless otherwise specified, but, for example, :ref:`basic
+Data in new :class:`ndarrays <ndarray>` is in the :term:`row-major` (C)
+order, unless otherwise specified, but, for example, :ref:`basic
 array slicing <arrays.indexing>` often produces :term:`views <view>`
 in a different scheme.
 

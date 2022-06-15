@@ -59,10 +59,9 @@ np.float64(None)
 np.float32("1")
 np.float16(b"2.5")
 
-if sys.version_info >= (3, 8):
-    np.uint64(D())
-    np.float32(D())
-    np.complex64(D())
+np.uint64(D())
+np.float32(D())
+np.complex64(D())
 
 np.bytes_(b"hello")
 np.bytes_("hello", 'utf-8')

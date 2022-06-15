@@ -7,6 +7,9 @@
 #include <Python.h>
 #include <numpy/ndarraytypes.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef enum {
     /* Flag for whether the GIL is required */
@@ -17,7 +20,11 @@ typedef enum {
      * setup/check. No function should set error flags and ignore them
      * since it would interfere with chaining operations (e.g. casting).
      */
-    /* TODO: Change this into a positive flag */
+    /*
+     * TODO: Change this into a positive flag?  That would make "combing"
+     *       multiple methods easier. OTOH, if we add more flags, the default
+     *       would be 0 just like it is here.
+     */
     NPY_METH_NO_FLOATINGPOINT_ERRORS = 1 << 2,
     /* Whether the method supports unaligned access (not runtime) */
     NPY_METH_SUPPORTS_UNALIGNED = 1 << 3,
@@ -38,6 +45,20 @@ typedef enum {
             NPY_METH_REQUIRES_PYAPI |
             NPY_METH_NO_FLOATINGPOINT_ERRORS),
 } NPY_ARRAYMETHOD_FLAGS;
+
+
+/*
+ * It would be nice to just | flags, but in general it seems that 0 bits
+ * probably should indicate "default".
+ * And that is not necessarily compatible with `|`.
+ *
+ * NOTE: If made public, should maybe be a function to easier add flags?
+ */
+#define PyArrayMethod_MINIMAL_FLAGS NPY_METH_NO_FLOATINGPOINT_ERRORS
+#define PyArrayMethod_COMBINED_FLAGS(flags1, flags2)  \
+        ((NPY_ARRAYMETHOD_FLAGS)(  \
+            ((flags1 | flags2) & ~PyArrayMethod_MINIMAL_FLAGS)  \
+            | (flags1 & flags2)))
 
 
 struct PyArrayMethodObject_tag;
@@ -249,6 +270,10 @@ PyArrayMethod_FromSpec(PyArrayMethod_Spec *spec);
  *       need better tests when a public version is exposed.
  */
 NPY_NO_EXPORT PyBoundArrayMethodObject *
-PyArrayMethod_FromSpec_int(PyArrayMethod_Spec *spec, int private);
+PyArrayMethod_FromSpec_int(PyArrayMethod_Spec *spec, int priv);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_ARRAY_METHOD_H_ */

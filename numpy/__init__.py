@@ -11,14 +11,14 @@ How to use the documentation
 ----------------------------
 Documentation is available in two forms: docstrings provided
 with the code, and a loose standing reference guide, available from
-`the NumPy homepage <https://www.scipy.org>`_.
+`the NumPy homepage <https://numpy.org>`_.
 
 We recommend exploring the docstrings using
 `IPython <https://ipython.org>`_, an advanced Python shell with
 TAB-completion and introspection capabilities.  See below for further
 instructions.
 
-The docstring examples assume that `numpy` has been imported as `np`::
+The docstring examples assume that `numpy` has been imported as ``np``::
 
   >>> import numpy as np
 
@@ -86,7 +86,7 @@ __version__
 Viewing documentation using IPython
 -----------------------------------
 Start IPython with the NumPy profile (``ipython -p numpy``), which will
-import `numpy` under the alias `np`.  Then, use the ``cpaste`` command to
+import `numpy` under the alias ``np``.  Then, use the ``cpaste`` command to
 paste examples into the shell.  To see which functions are available in
 `numpy`, type ``np.<TAB>`` (where ``<TAB>`` refers to the TAB key), or use
 ``np.*cos*?<ENTER>`` (where ``<ENTER>`` refers to the ENTER key) to narrow
@@ -274,6 +274,7 @@ else:
     def __getattr__(attr):
         # Warn for expired attributes, and return a dummy function
         # that always raises an exception.
+        import warnings
         try:
             msg = __expired_functions__[attr]
         except KeyError:
@@ -312,7 +313,11 @@ else:
                              "{!r}".format(__name__, attr))
 
     def __dir__():
-        return list(globals().keys() | {'Tester', 'testing'})
+        public_symbols = globals().keys() | {'Tester', 'testing'}
+        public_symbols -= {
+            "core", "matrixlib",
+        }
+        return list(public_symbols)
 
     # Pytest testing
     from numpy._pytesttester import PytestTester
@@ -358,7 +363,6 @@ else:
         except ValueError:
             pass
 
-    import sys
     if sys.platform == "darwin":
         with warnings.catch_warnings(record=True) as w:
             _mac_os_check()
@@ -414,6 +418,12 @@ else:
         from pathlib import Path
         return [str(Path(__file__).with_name("_pyinstaller").resolve())]
 
+    # Remove symbols imported for internal use
+    del os
+
 
 # get the version using versioneer
 from .version import __version__, git_revision as __git_version__
+
+# Remove symbols imported for internal use
+del sys, warnings

@@ -1,0 +1,7 @@
+Faster comparison operators
+----------------------------
+The comparison functions (``numpy.equal``, ``numpy.not_equal``, ``numpy.less``,
+``numpy.less_equal``, ``numpy.greater`` and ``numpy.greater_equal``) are now
+much faster as they are now vectorized with universal intrinsics. For a CPU
+with SIMD extension AVX512BW, the performance gain is up to 2.57x, 1.65x and
+19.15x for integer, float and boolean data types, respectively (with N=50000).

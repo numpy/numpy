@@ -1,4 +1,6 @@
 
+.. _basics.interoperability:
+
 ***************************
 Interoperability with NumPy
 ***************************
@@ -21,7 +23,7 @@ functionality on top of the NumPy API.
 Yet, users still want to work with these arrays using the familiar NumPy API and
 re-use existing code with minimal (ideally zero) porting overhead. With this
 goal in mind, various protocols are defined for implementations of
-multi-dimensional arrays with high-level APIs matching NumPy. 
+multi-dimensional arrays with high-level APIs matching NumPy.
 
 Broadly speaking, there are three groups of features used for interoperability
 with NumPy:
@@ -55,6 +57,14 @@ describes its memory layout and NumPy does everything else (zero-copy if
 possible). If that's not possible, the object itself is responsible for
 returning a ``ndarray`` from ``__array__()``.
 
+:doc:`DLPack <dlpack:index>` is yet another protocol to convert foreign objects
+to NumPy arrays in a language and device agnostic manner. NumPy doesn't implicitly
+convert objects to ndarrays using DLPack. It provides the function
+`numpy.from_dlpack` that accepts any object implementing the ``__dlpack__`` method
+and outputs a NumPy ndarray (which is generally a view of the input object's data
+buffer). The :ref:`dlpack:python-spec` page explains the ``__dlpack__`` protocol
+in detail.
+
 The array interface protocol
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -80,7 +90,7 @@ data in place:
 
  >>> class wrapper():
  ...     pass
- ... 
+ ...
  >>> arr = np.array([1, 2, 3, 4])
  >>> buf = arr.__array_interface__
  >>> buf
@@ -118,6 +128,26 @@ as the original object and any attributes/behavior it may have had, is lost.
 To see an example of a custom array implementation including the use of
 ``__array__()``, see :ref:`basics.dispatch`.
 
+The DLPack Protocol
+~~~~~~~~~~~~~~~~~~~
+
+The :doc:`DLPack <dlpack:index>` protocol defines a memory-layout of
+strided n-dimensional array objects. It offers the following syntax
+for data exchange:
+
+1. A `numpy.from_dlpack` function, which accepts (array) objects with a
+   ``__dlpack__`` method and uses that method to construct a new array
+   containing the data from ``x``.
+2. ``__dlpack__(self, stream=None)`` and ``__dlpack_device__`` methods on the
+   array object, which will be called from within ``from_dlpack``, to query
+   what device the array is on (may be needed to pass in the correct
+   stream, e.g. in the case of multiple GPUs) and to access the data.
+
+Unlike the buffer protocol, DLPack allows exchanging arrays containing data on
+devices other than the CPU (e.g. Vulkan or GPU). Since NumPy only supports CPU,
+it can only convert objects whose data exists on the CPU. But other libraries,
+like PyTorch_ and CuPy_, may exchange data on GPU using this protocol.
+
 
 2. Operating on foreign objects without converting
 --------------------------------------------------
@@ -142,7 +172,7 @@ We can apply ``f`` to a NumPy ndarray object directly:
  21.1977562209304
 
 We would like this function to work equally well with any NumPy-like array
-object. 
+object.
 
 NumPy allows a class to indicate that it would like to handle computations in a
 custom-defined way through the following interfaces:
@@ -154,7 +184,7 @@ custom-defined way through the following interfaces:
 
 As long as foreign objects implement the ``__array_ufunc__`` or
 ``__array_function__`` protocols, it is possible to operate on them without the
-need for explicit conversion. 
+need for explicit conversion.
 
 The ``__array_ufunc__`` protocol
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -296,7 +326,7 @@ explicit conversion:
          [20.0855, 54.5982]], dtype=torch.float64)
 
 Also, note that the return type of this function is compatible with the initial
-data type. 
+data type.
 
 .. admonition:: Warning
 
@@ -374,7 +404,7 @@ Example: Dask arrays
 Dask is a flexible library for parallel computing in Python. Dask Array
 implements a subset of the NumPy ndarray interface using blocked algorithms,
 cutting up the large array into many small arrays. This allows computations on
-larger-than-memory arrays using multiple cores. 
+larger-than-memory arrays using multiple cores.
 
 Dask supports ``__array__()`` and ``__array_ufunc__``.
 
@@ -394,6 +424,78 @@ See `the Dask array documentation
 <https://docs.dask.org/en/stable/array.html>`__
 and the `scope of Dask arrays interoperability with NumPy arrays
 <https://docs.dask.org/en/stable/array.html#scope>`__ for details.
+
+Example: DLPack
+~~~~~~~~~~~~~~~
+
+Several Python data science libraries implement the ``__dlpack__`` protocol.
+Among them are PyTorch_ and CuPy_. A full list of libraries that implement
+this protocol can be found on
+:doc:`this page of DLPack documentation <dlpack:index>`.
+
+Convert a PyTorch CPU tensor to NumPy array:
+
+ >>> import torch
+ >>> x_torch = torch.arange(5)
+ >>> x_torch
+ tensor([0, 1, 2, 3, 4])
+ >>> x_np = np.from_dlpack(x_torch)
+ >>> x_np
+ array([0, 1, 2, 3, 4])
+ >>> # note that x_np is a view of x_torch
+ >>> x_torch[1] = 100
+ >>> x_torch
+ tensor([  0, 100,   2,   3,   4])
+ >>> x_np
+ array([  0, 100,   2,   3,   4])
+
+The imported arrays are read-only so writing or operating in-place will fail:
+
+ >>> x.flags.writeable
+ False
+ >>> x_np[1] = 1
+ Traceback (most recent call last):
+   File "<stdin>", line 1, in <module>
+ ValueError: assignment destination is read-only
+
+A copy must be created in order to operate on the imported arrays in-place, but
+will mean duplicating the memory. Do not do this for very large arrays:
+
+ >>> x_np_copy = x_np.copy()
+ >>> x_np_copy.sort()  # works
+
+.. note::
+
+  Note that GPU tensors can't be converted to NumPy arrays since NumPy doesn't
+  support GPU devices:
+
+   >>> x_torch = torch.arange(5, device='cuda')
+   >>> np.from_dlpack(x_torch)
+   Traceback (most recent call last):
+     File "<stdin>", line 1, in <module>
+   RuntimeError: Unsupported device in DLTensor.
+
+  But, if both libraries support the device the data buffer is on, it is
+  possible to use the ``__dlpack__`` protocol (e.g. PyTorch_ and CuPy_):
+
+   >>> x_torch = torch.arange(5, device='cuda')
+   >>> x_cupy = cupy.from_dlpack(x_torch)
+
+Similarly, a NumPy array can be converted to a PyTorch tensor:
+
+ >>> x_np = np.arange(5)
+ >>> x_torch = torch.from_dlpack(x_np)
+
+Read-only arrays cannot be exported:
+
+ >>> x_np = np.arange(5)
+ >>> x_np.flags.writeable = False
+ >>> torch.from_dlpack(x_np)  # doctest: +ELLIPSIS
+ Traceback (most recent call last):
+   File "<stdin>", line 1, in <module>
+   File ".../site-packages/torch/utils/dlpack.py", line 63, in from_dlpack
+     dlpack = ext_tensor.__dlpack__()
+ TypeError: NumPy currently only supports dlpack for writeable arrays
 
 Further reading
 ---------------

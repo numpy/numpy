@@ -3,7 +3,7 @@
 .. currentmodule:: numpy.random
 
 Upgrading ``PCG64`` with ``PCG64DXSM``
---------------------------------------
+======================================
 
 Uses of the `PCG64` `BitGenerator` in a massively-parallel context have been
 shown to have statistical weaknesses that were not apparent at the first
@@ -15,7 +15,7 @@ the statistical weakness while preserving the performance and the features of
 `PCG64`.
 
 Does this affect me?
-====================
+--------------------
 
 If you
 
@@ -48,7 +48,7 @@ swamped by the remaining streams in most applications.
 .. _upgrading-pcg64-details:
 
 Technical Details
-=================
+-----------------
 
 Like many PRNG algorithms, `PCG64` is constructed from a transition function,
 which advances a 128-bit state, and an output function, that mixes the 128-bit

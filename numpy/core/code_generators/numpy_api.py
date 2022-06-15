@@ -353,7 +353,7 @@ multiarray_funcs_api = {
     # End 1.14 API
     'PyDataMem_SetHandler':                 (304,),
     'PyDataMem_GetHandler':                 (305,),
-    # End 1.21 API
+    # End 1.22 API
 }
 
 ufunc_types_api = {

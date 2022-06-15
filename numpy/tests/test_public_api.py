@@ -252,7 +252,6 @@ PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "f2py.crackfortran",
     "f2py.diagnose",
     "f2py.f2py2e",
-    "f2py.f2py_testing",
     "f2py.f90mod_rules",
     "f2py.func2subr",
     "f2py.rules",

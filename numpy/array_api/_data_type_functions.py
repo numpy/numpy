@@ -56,7 +56,8 @@ def can_cast(from_: Union[Dtype, Array], to: Dtype, /) -> bool:
         raise TypeError(f"{from_=}, but should be an array_api array or dtype")
     if to not in _all_dtypes:
         raise TypeError(f"{to=}, but should be a dtype")
-    # Note: We avoid np.can_cast() as it has discrepancies with the array API.
+    # Note: We avoid np.can_cast() as it has discrepancies with the array API,
+    # since NumPy allows cross-kind casting (e.g., NumPy allows bool -> int8).
     # See https://github.com/numpy/numpy/issues/20870
     try:
         # We promote `from_` and `to` together. We then check if the promoted

@@ -1,5 +1,5 @@
 SFC64 Small Fast Chaotic PRNG
------------------------------
+=============================
 
 .. currentmodule:: numpy.random
 
@@ -8,7 +8,7 @@ SFC64 Small Fast Chaotic PRNG
     :exclude-members: __init__
 
 State
-=====
+-----
 
 .. autosummary::
    :toctree: generated/
@@ -16,7 +16,7 @@ State
    ~SFC64.state
 
 Extending
-=========
+---------
 .. autosummary::
    :toctree: generated/
 

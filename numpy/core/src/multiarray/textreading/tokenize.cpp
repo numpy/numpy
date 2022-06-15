@@ -40,7 +40,7 @@
 
 
 template <typename UCS>
-static NPY_INLINE int
+static inline int
 copy_to_field_buffer(tokenizer_state *ts,
         const UCS *chunk_start, const UCS *chunk_end)
 {
@@ -73,7 +73,7 @@ copy_to_field_buffer(tokenizer_state *ts,
 }
 
 
-static NPY_INLINE int
+static inline int
 add_field(tokenizer_state *ts)
 {
     /* The previous field is done, advance to keep a NUL byte at the end */
@@ -109,7 +109,7 @@ add_field(tokenizer_state *ts)
 
 
 template <typename UCS>
-static NPY_INLINE int
+static inline int
 tokenizer_core(tokenizer_state *ts, parser_config *const config)
 {
     UCS *pos = (UCS *)ts->pos;
@@ -386,9 +386,10 @@ tokenize(stream *s, tokenizer_state *ts, parser_config *const config)
      *    empty.
      * 2. If we are splitting on whitespace we always ignore a last empty
      *    field to match Python's splitting: `" 1 ".split()`.
+     *    (Zero fields are possible when we are only skipping lines)
      */
-    if (ts->num_fields == 1
-            || ts->unquoted_state == TOKENIZE_UNQUOTED_WHITESPACE) {
+    if (ts->num_fields == 1 || (ts->num_fields > 0
+                && ts->unquoted_state == TOKENIZE_UNQUOTED_WHITESPACE)) {
         size_t offset_last = ts->fields[ts->num_fields-1].offset;
         size_t end_last = ts->fields[ts->num_fields].offset;
         if (!ts->fields->quoted && end_last - offset_last == 1) {

@@ -227,9 +227,10 @@ def get_build_overrides():
 
     class new_build_clib(build_clib):
         def build_a_library(self, build_info, lib_name, libraries):
+            from numpy.distutils.ccompiler_opt import NPY_CXX_FLAGS
             if _needs_gcc_c99_flag(self):
                 build_info['extra_cflags'] = ['-std=c99']
-            build_info['extra_cxxflags'] = ['-std=c++11']
+            build_info['extra_cxxflags'] = NPY_CXX_FLAGS
             build_clib.build_a_library(self, build_info, lib_name, libraries)
 
     class new_build_ext(build_ext):
@@ -257,8 +258,8 @@ def generate_cython():
         raise OSError(msg) from e
     else:
         # Note: keep in sync with that in pyproject.toml
-        # Update for Python 3.10
-        required_version = '0.29.24'
+        # Update for Python 3.11
+        required_version = '0.29.30'
 
         if _pep440.parse(cython_version) < _pep440.Version(required_version):
             cython_path = Cython.__file__

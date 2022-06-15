@@ -196,7 +196,7 @@ PyArray_GetDTypeTransferFunction(int aligned,
                             PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
                             int move_references,
                             NPY_cast_info *cast_info,
-                            int *out_needs_api);
+                            NPY_ARRAYMETHOD_FLAGS *out_flags);
 
 NPY_NO_EXPORT int
 get_fields_transfer_function(int aligned,
@@ -205,7 +205,7 @@ get_fields_transfer_function(int aligned,
         int move_references,
         PyArrayMethod_StridedLoop **out_stransfer,
         NpyAuxData **out_transferdata,
-        int *out_needs_api);
+        NPY_ARRAYMETHOD_FLAGS *out_flags);
 
 NPY_NO_EXPORT int
 get_subarray_transfer_function(int aligned,
@@ -214,7 +214,7 @@ get_subarray_transfer_function(int aligned,
         int move_references,
         PyArrayMethod_StridedLoop **out_stransfer,
         NpyAuxData **out_transferdata,
-        int *out_needs_api);
+        NPY_ARRAYMETHOD_FLAGS *out_flags);
 
 /*
  * This is identical to PyArray_GetDTypeTransferFunction, but returns a
@@ -241,7 +241,7 @@ PyArray_GetMaskedDTypeTransferFunction(int aligned,
                             PyArray_Descr *mask_dtype,
                             int move_references,
                             NPY_cast_info *cast_info,
-                            int *out_needs_api);
+                            NPY_ARRAYMETHOD_FLAGS *out_flags);
 
 /*
  * Casts the specified number of elements from 'src' with data type
@@ -336,10 +336,14 @@ mapiter_trivial_set(PyArrayObject *self, PyArrayObject *ind,
                        PyArrayObject *result);
 
 NPY_NO_EXPORT int
-mapiter_get(PyArrayMapIterObject *mit);
+mapiter_get(
+        PyArrayMapIterObject *mit, NPY_cast_info *cast_info,
+        NPY_ARRAYMETHOD_FLAGS flags, int is_aligned);
 
 NPY_NO_EXPORT int
-mapiter_set(PyArrayMapIterObject *mit);
+mapiter_set(
+        PyArrayMapIterObject *mit, NPY_cast_info *cast_info,
+        NPY_ARRAYMETHOD_FLAGS flags, int is_aligned);
 
 /*
  * Prepares shape and strides for a simple raw array iteration.
@@ -692,6 +696,19 @@ PyArray_EQUIVALENTLY_ITERABLE_OVERLAP_OK(PyArrayObject *arr1, PyArrayObject *arr
         return 1;
     }
 
+    size1 = PyArray_SIZE(arr1);
+    stride1 = PyArray_TRIVIAL_PAIR_ITERATION_STRIDE(size1, arr1);
+
+    /*
+     * arr1 == arr2 is common for in-place operations, so we fast-path it here.
+     * TODO: The stride1 != 0 check rejects broadcast arrays.  This may affect
+     *       self-overlapping arrays, but seems only necessary due to
+     *       `try_trivial_single_output_loop` not rejecting broadcast outputs.
+     */
+    if (arr1 == arr2 && stride1 != 0) {
+        return 1;
+    }
+
     if (solve_may_share_memory(arr1, arr2, 1) == 0) {
         return 1;
     }
@@ -701,10 +718,7 @@ PyArray_EQUIVALENTLY_ITERABLE_OVERLAP_OK(PyArrayObject *arr1, PyArrayObject *arr
      * arrays stride ahead faster than output arrays.
      */
 
-    size1 = PyArray_SIZE(arr1);
     size2 = PyArray_SIZE(arr2);
-
-    stride1 = PyArray_TRIVIAL_PAIR_ITERATION_STRIDE(size1, arr1);
     stride2 = PyArray_TRIVIAL_PAIR_ITERATION_STRIDE(size2, arr2);
 
     /*
