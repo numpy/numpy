@@ -61,6 +61,8 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.9", "3.10", "3.11-dev"]
+    env:
+      EXPECT_CPU_FEATURES: "SSE SSE2 SSE3 SSSE3 SSE41 POPCNT SSE42 AVX F16C FMA3 AVX2 AVX512F AVX512CD AVX512_KNL AVX512_KNM AVX512_SKX AVX512_CLX AVX512_CNL AVX512_ICL"
     steps:
     - uses: actions/checkout@v3
       with:

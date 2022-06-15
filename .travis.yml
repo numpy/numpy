@@ -34,6 +34,8 @@ jobs:
        - DOWNLOAD_OPENBLAS=1
        - NPY_USE_BLAS_ILP64=1
        - ATLAS=None
+       # VSX4 still not supported by ubuntu/gcc-11
+       - EXPECT_CPU_FEATURES="VSX VSX2 VSX3"
 
     - python: "3.8"
       os: linux
@@ -46,6 +48,7 @@ jobs:
        - DOWNLOAD_OPENBLAS=1
        - NPY_USE_BLAS_ILP64=1
        - ATLAS=None
+       - EXPECT_CPU_FEATURES="VX VXE VXE2"
 
     # Wheel builders
     - python: "3.8"
@@ -54,6 +57,7 @@ jobs:
       virt: vm
       env:
         - CIBW_BUILD: cp38-manylinux_aarch64
+        - EXPECT_CPU_FEATURES: "NEON NEON_FP16 NEON_VFPV4 ASIMD ASIMDHP ASIMDDP ASIMDFHM"
       install: python3 -m pip install cibuildwheel==2.4.0
       script: |
         cibuildwheel --output-dir wheelhouse
