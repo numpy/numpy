@@ -7,9 +7,6 @@
 #include <Python.h>
 #include <numpy/ndarraytypes.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 typedef enum {
     /* Flag for whether the GIL is required */
@@ -252,10 +249,6 @@ PyArrayMethod_FromSpec(PyArrayMethod_Spec *spec);
  *       need better tests when a public version is exposed.
  */
 NPY_NO_EXPORT PyBoundArrayMethodObject *
-PyArrayMethod_FromSpec_int(PyArrayMethod_Spec *spec, int priv);
-
-#ifdef __cplusplus
-}
-#endif
+PyArrayMethod_FromSpec_int(PyArrayMethod_Spec *spec, int private);
 
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_ARRAY_METHOD_H_ */
