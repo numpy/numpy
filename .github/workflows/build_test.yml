@@ -75,7 +75,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - uses: ./.github/actions
 
-  without_opt:
+  without_optimizations:
     needs: [smoke_test]
     runs-on: ubuntu-latest
     env:
