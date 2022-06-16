@@ -160,7 +160,7 @@ names contributed a patch for the first time.
 Pull requests merged
 ====================
 
-A total of 485 pull requests were merged for this release.
+A total of 492 pull requests were merged for this release.
 
 * `#15006 <https://github.com/numpy/numpy/pull/15006>`__: ENH: add support for operator() in crackfortran.
 * `#15844 <https://github.com/numpy/numpy/pull/15844>`__: ENH: add inline definition of access rights for Fortran types
@@ -647,3 +647,11 @@ A total of 485 pull requests were merged for this release.
 * `#21720 <https://github.com/numpy/numpy/pull/21720>`__: BUG: Enable fortran preprocessing for ifort on Windows
 * `#21721 <https://github.com/numpy/numpy/pull/21721>`__: BLD, SIMD: Fix detect armhf and hardened the Neon/ASIMD compile-time...
 * `#21722 <https://github.com/numpy/numpy/pull/21722>`__: BUG: .f2py_f2cmap doesn't map long_long and other options
+* `#21729 <https://github.com/numpy/numpy/pull/21729>`__: REL: Prepare for the NumPy 1.23.0rc3 release.
+* `#21754 <https://github.com/numpy/numpy/pull/21754>`__: BUG, SIMD: Fix detecting NEON/ASIMD on aarch64
+* `#21757 <https://github.com/numpy/numpy/pull/21757>`__: BUG: Do not skip value-based promotion path for large Python...
+* `#21761 <https://github.com/numpy/numpy/pull/21761>`__: BUG: Fix small reference leaks found with pytest-leaks
+* `#21777 <https://github.com/numpy/numpy/pull/21777>`__: REV: Revert "ENH: Implement string comparison ufuncs (or almost)...
+* `#21809 <https://github.com/numpy/numpy/pull/21809>`__: MAINT: Add a check of the return value of PyMem_Calloc().
+* `#21810 <https://github.com/numpy/numpy/pull/21810>`__: BUG: lib: A loadtxt error message had two values reversed.
+
