@@ -106,7 +106,8 @@ class ABCPolyBase(abc.ABC):
     # the full set of superscripts and subscripts, including common/default
     # fonts in Windows shells/terminals. Therefore, default to ascii-only
     # printing on windows.
-    _use_unicode = os.name != 'nt' or get_ipython().__class__.__name__ == 'ZMQInteractiveShell'
+    _use_unicode = os.name != 'nt' or \
+                   get_ipython().__class__.__name__ == 'ZMQInteractiveShell'
 
     @property
     def symbol(self):
