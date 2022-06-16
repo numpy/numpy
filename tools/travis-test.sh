@@ -39,7 +39,7 @@ setup_base()
 
   build_args=()
   # Strictly disable all kinds of optimizations
-  if [ -n "$WITHOUT_OPT" ]; then
+  if [ -n "$WITHOUT_OPTIMIZATIONS" ]; then
       build_args+=("--disable-optimization")
   # only disable SIMD optimizations
   elif [ -n "$WITHOUT_SIMD" ]; then
