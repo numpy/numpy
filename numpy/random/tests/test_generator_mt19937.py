@@ -1453,7 +1453,11 @@ class TestRandomDist:
         assert_raises(ValueError, random.multivariate_normal,
                       mu, np.eye(3))
         
-        assert_raises(NotImplementedError, np.random.multivariate_normal, [0], [[1+1j]])
+    @pytest.mark.parametrize('mean, cov', [([0], [[1+1j]]), ([0j], [[1]])])
+    def test_multivariate_normal_disallow_complex(self, mean, cov):
+        random = Generator(MT19937(self.seed))
+        with pytest.raises(TypeError, match="must not be complex"):
+            random.multivariate_normal(mean, cov)
 
     @pytest.mark.parametrize("method", ["svd", "eigh", "cholesky"])
     def test_multivariate_normal_basic_stats(self, method):

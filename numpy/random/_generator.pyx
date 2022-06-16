@@ -3661,8 +3661,9 @@ cdef class Generator:
         mean = np.array(mean)
         cov = np.array(cov)
 
-        if np.issubdtype(cov.dtype, np.complexfloating):
-            raise NotImplementedError("Complex gaussians are not supported.")
+        if (np.issubdtype(mean.dtype, np.complexfloating) or
+                np.issubdtype(cov.dtype, np.complexfloating)):
+            raise TypeError("mean and cov must not be complex")
 
         if size is None:
             shape = []
