@@ -1016,11 +1016,14 @@ class ABCPolyBase(abc.ABC):
         if full:
             [coef, status] = res
             return (
-                cls(coef, domain=domain, window=window, symbol=symbol), status
+                cls(coef, domain=domain, window=window, symbol=symbol)\
+                .convert(),
+                status
             )
         else:
             coef = res
-            return cls(coef, domain=domain, window=window, symbol=symbol)
+            return cls(coef, domain=domain, window=window, symbol=symbol)\
+                   .convert()
 
     @classmethod
     def fromroots(cls, roots, domain=[], window=None, symbol='x'):
