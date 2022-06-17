@@ -559,11 +559,12 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, method='auto'):
           to be the faster method if the following formula is true:
           `log10(len(ar2)) > (log10(max(ar2)-min(ar2)) - 2.27) / 0.927`,
           but may use greater memory.
-        - If 'auto', will automatically choose the method which is
-          expected to perform the fastest, using the above
-          formula. For larger sizes or smaller range,
-          'dictionary' is chosen. For larger range or smaller
-          sizes, 'sort' is chosen.
+        - If 'auto', will automatically choose 'dictionary' if
+          the required memory allocation is less than or equal to
+          6 times the sum of the sizes of `ar1` and `ar2`,
+          otherwise will use 'sort'. This is done to not use
+          a large amount of memory by default, even though
+          'dictionary' may be faster in most cases.
 
         .. versionadded:: 1.8.0
 
@@ -631,6 +632,7 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, method='auto'):
     if integer_arrays and method in {'auto', 'dictionary'}:
         ar2_min = np.min(ar2)
         ar2_max = np.max(ar2)
+        ar1_size = ar1.size
         ar2_size = ar2.size
 
         # Check for integer overflow
@@ -640,17 +642,20 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, method='auto'):
 
                 # Optimal performance is for approximately
                 # log10(size) > (log10(range) - 2.27) / 0.927.
-                # See discussion on
-                # https://github.com/numpy/numpy/pull/12065
-                optimal_parameters = (
-                        np.log10(ar2_size) >
-                        ((np.log10(ar2_range + 1.0) - 2.27) / 0.927)
-                    )
+                # However, here we set the requirement that
+                # the intermediate array can only be 6x
+                # the combined memory allocation of the original
+                # arrays.
+                # (see discussion on 
+                # https://github.com/numpy/numpy/pull/12065)
+                below_memory_constraint = (
+                    ar2_range <= 6 * (ar1_size + ar2_size)
+                )
             except FloatingPointError:
-                optimal_parameters = False
+                below_memory_constraint = False
 
         # Use the fast integer algorithm
-        if optimal_parameters or method == 'dictionary':
+        if below_memory_constraint or method == 'dictionary':
 
             if invert:
                 outgoing_array = np.ones_like(ar1, dtype=bool)
