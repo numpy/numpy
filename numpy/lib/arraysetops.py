@@ -652,11 +652,14 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, kind=None):
                 below_memory_constraint = (
                     ar2_range <= 6 * (ar1_size + ar2_size)
                 )
+                range_safe_from_overflow = True
             except FloatingPointError:
-                below_memory_constraint = False
+                range_safe_from_overflow = False
 
-        # Use the fast integer algorithm
-        if below_memory_constraint or kind == 'dictionary':
+        if (
+            range_safe_from_overflow and 
+            (below_memory_constraint or kind == 'dictionary')
+        ):
 
             if invert:
                 outgoing_array = np.ones_like(ar1, dtype=bool)
