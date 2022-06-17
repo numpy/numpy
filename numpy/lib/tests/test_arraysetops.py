@@ -110,6 +110,7 @@ class TestSetOps:
         zero_elem = np.array([])
         one_elem = np.array([1])
         two_elem = np.array([1, 2])
+        datetime64_elem = np.arange(np.datetime64('2000-01-01'), 2)
 
         assert_array_equal([], ediff1d(zero_elem))
         assert_array_equal([0], ediff1d(zero_elem, to_begin=0))
@@ -124,6 +125,30 @@ class TestSetOps:
         assert_array_equal([1, 7, 8], ediff1d(two_elem, to_end=[7, 8]))
         assert_array_equal([7, 1], ediff1d(two_elem, to_begin=7))
         assert_array_equal([5, 6, 1], ediff1d(two_elem, to_begin=[5, 6]))
+
+        assert_array_equal(
+                [np.timedelta64(1, 'D')], ediff1d(datetime64_elem)
+        )
+        assert_array_equal(
+                [np.timedelta64(5, 'D'), np.timedelta64(1, 'D')],
+                ediff1d(datetime64_elem, to_begin=np.timedelta64(5, 'D'))
+        )
+        assert_array_equal(
+                [np.timedelta64(1, 'D'), np.timedelta64(5, 'D')],
+                ediff1d(datetime64_elem, to_end=np.timedelta64(5, 'D'))
+        )
+        assert_array_equal(
+                [
+                    np.timedelta64(2, 'D'),
+                    np.timedelta64(1, 'D'),
+                    np.timedelta64(5, 'D')
+                ],
+                ediff1d(
+                    datetime64_elem,
+                    to_begin=np.timedelta64(2, 'D'),
+                    to_end=np.timedelta64(5, 'D')
+                )
+        )
 
     @pytest.mark.parametrize("ary, prepend, append, expected", [
         # should fail because trying to cast

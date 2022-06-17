@@ -82,7 +82,12 @@ def ediff1d(ary, to_end=None, to_begin=None):
     ary = np.asanyarray(ary).ravel()
 
     # enforce that the dtype of `ary` is used for the output
-    dtype_req = ary.dtype
+    # The difference of np.datetime64 will yield an np.timedelta64 as the
+    # required dtype for to_begin and to_end
+    if np.issubdtype(ary.dtype, np.datetime64):
+        dtype_req = np.timedelta64
+    else:
+        dtype_req = ary.dtype
 
     # fast track default case
     if to_begin is None and to_end is None:
