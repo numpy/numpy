@@ -906,7 +906,7 @@ def test_scalar_integer_operation_overflow(dtype, operation):
             marks=pytest.mark.xfail(reason="broken on some platforms")),
         pytest.param(lambda min, neg_1: min // neg_1,
             marks=pytest.mark.skip(reason="broken on some platforms"))],
-        ids=["neg","abs", "*", "//"])
+        ids=["neg", "abs", "*", "//"])
 def test_scalar_signed_integer_overflow(dtype, operation):
     # The minimum signed integer can "overflow" for some additional operations
     st = np.dtype(dtype).type
