@@ -840,7 +840,7 @@ class TestPower:
 
     # Testing 0^{Non-zero} issue 18378
     def test_zero_power_nonzero(self):
-        zero = np.array([0.0j])
+        zero = np.array([0.0+0.0j])
         cnan = np.array([complex(np.nan, np.nan)])
 
         def assert_complex_equal(x, y):
@@ -851,8 +851,8 @@ class TestPower:
         assert_complex_equal(np.power(zero, 1+4j), zero)
         assert_complex_equal(np.power(zero, 2-3j), zero)
         #Testing zero values when real part is greater than zero
-        assert_complex_equal(np.power(zero, 1+1j), -zero)
-        assert_complex_equal(np.power(zero, 1+0j), -zero)
+        assert_complex_equal(np.power(zero, 1+1j), zero)
+        assert_complex_equal(np.power(zero, 1+0j), zero)
         assert_complex_equal(np.power(zero, 1-1j), zero)
         #Complex powers will negative real part or 0 (provided imaginary 
         # part is not zero) will generate a NAN and hence a RUNTIME warning

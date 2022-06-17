@@ -462,32 +462,26 @@ npy_cpow@c@ (@ctype@ a, @ctype@ b)
      */
     else if (ar == 0. && ai == 0.) {
         /* 
-         * If br > 0 then result is 0 but contains sign opposite
-         * of bi.
-         * Else the result is undefined and we return (nan,nan)
+         * If the real part of b is positive (br>0) then this is
+         * the zero complex with positive sign on both the
+         * real and imaginary part.
          */
          if (br > 0) {
-             if (bi < 0) {
-                 return npy_cpack@c@(0., 0.);
-             }
-             else {
-                 return npy_cpack@c@(0., -0.);
-             }
-             
+             return npy_cpack@c@(0., 0.);
          }
-         else {
-             /* 
-              * Raising an invalid and returning
-              * (nan, nan)
-              */
-              volatile @type@ tmp = NPY_INFINITY@C@;
-              r = npy_cpack@c@(NPY_NAN@C@, NPY_NAN@C@);
-
-              /* Raise invalid */
-              tmp -= NPY_INFINITY@C@;
-              ar = tmp;
-              return r;
-         }
+        /* else we are in the case where the
+         * real part of b is negative (br<0).
+         * Here we should return a complex nan
+         * and raise FloatingPointError: invalid value...
+         */
+         
+         /* Raise invalid value by calling inf - inf*/
+          volatile @type@ tmp = NPY_INFINITY@C@;
+          tmp -= NPY_INFINITY@C@;
+          ar = tmp;
+          
+          r = npy_cpack@c@(NPY_NAN@C@, NPY_NAN@C@);
+          return r;
     }
     if (bi == 0 && (n=(npy_intp)br) == br) {
         if (n == 1) {

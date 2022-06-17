@@ -1,8 +1,8 @@
 Fix power of complex zero
 -------------------------
-``np.power`` now returns the correct result for ``0^{non-zero}``
+``np.power`` now returns a IEEE 754-compliant result for ``0^{non-zero}``
 for complex numbers.  Note that the value is only defined when
 the real part of the exponent is larger than zero.
 Previously, NaN was returned unless the imaginary part was strictly
-zero.  Now the correct zero value is returned, with the sign bit
+zero.  Now a zero value is returned, with the sign bit
 set.  The return value is either ``0+0j`` or ``0-0j``.
