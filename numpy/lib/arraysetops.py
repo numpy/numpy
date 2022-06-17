@@ -545,12 +545,12 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, kind=None):
         False where an element of `ar1` is in `ar2` and True otherwise).
         Default is False. ``np.in1d(a, b, invert=True)`` is equivalent
         to (but is faster than) ``np.invert(in1d(a, b))``.
-   kind : {None, 'sort', 'dictionary'}, optional
+   kind : {None, 'mergesort', 'dictionary'}, optional
         The algorithm to use. This will not affect the final result,
         but will affect the speed. Default will select automatically
         based on memory considerations.
 
-        - If 'sort', will use a mergesort-based approach. This will have
+        - If 'mergesort', will use a mergesort-based approach. This will have
           a memory usage of roughly 6 times the sum of the sizes of
           `ar1` and `ar2`, not accounting for size of dtypes.
         - If 'dictionary', will use a key-dictionary approach similar
@@ -563,7 +563,7 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, kind=None):
         - If `None`, will automatically choose 'dictionary' if
           the required memory allocation is less than or equal to
           6 times the sum of the sizes of `ar1` and `ar2`,
-          otherwise will use 'sort'. This is done to not use
+          otherwise will use 'mergesort'. This is done to not use
           a large amount of memory by default, even though
            'dictionary' may be faster in most cases.
 
@@ -625,10 +625,10 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, kind=None):
     integer_arrays = (np.issubdtype(ar1.dtype, np.integer) and
                       np.issubdtype(ar2.dtype, np.integer))
 
-    if kind not in {None, 'sort', 'dictionary'}:
+    if kind not in {None, 'mergesort', 'dictionary'}:
         raise ValueError(
             "Invalid kind: {0}. ".format(kind)
-            + "Please use None, 'sort' or 'dictionary'.")
+            + "Please use None, 'mergesort' or 'dictionary'.")
 
     if integer_arrays and kind in {None, 'dictionary'}:
         ar2_min = np.min(ar2)
@@ -681,7 +681,7 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, kind=None):
         raise ValueError(
             "The 'dictionary' method is only "
             "supported for boolean or integer arrays. "
-            "Please select 'sort' or None for kind."
+            "Please select 'mergesort' or None for kind."
         )
 
 
@@ -757,12 +757,12 @@ def isin(element, test_elements, assume_unique=False, invert=False,
         calculating `element not in test_elements`. Default is False.
         ``np.isin(a, b, invert=True)`` is equivalent to (but faster
         than) ``np.invert(np.isin(a, b))``.
-   kind : {None, 'sort', 'dictionary'}, optional
+   kind : {None, 'mergesort', 'dictionary'}, optional
         The algorithm to use. This will not affect the final result,
         but will affect the speed. Default will select automatically
         based on memory considerations.
 
-        - If 'sort', will use a mergesort-based approach. This will have
+        - If 'mergesort', will use a mergesort-based approach. This will have
           a memory usage of roughly 6 times the sum of the sizes of
           `ar1` and `ar2`, not accounting for size of dtypes.
         - If 'dictionary', will use a key-dictionary approach similar
@@ -775,7 +775,7 @@ def isin(element, test_elements, assume_unique=False, invert=False,
         - If `None`, will automatically choose 'dictionary' if
           the required memory allocation is less than or equal to
           6 times the sum of the sizes of `ar1` and `ar2`,
-          otherwise will use 'sort'. This is done to not use
+          otherwise will use 'mergesort'. This is done to not use
           a large amount of memory by default, even though
            'dictionary' may be faster in most cases.
 
