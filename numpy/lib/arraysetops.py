@@ -517,12 +517,12 @@ def setxor1d(ar1, ar2, assume_unique=False):
 
 
 def _in1d_dispatcher(ar1, ar2, assume_unique=None, invert=None,
-                     method=None):
+                     kind=None):
     return (ar1, ar2)
 
 
 @array_function_dispatch(_in1d_dispatcher)
-def in1d(ar1, ar2, assume_unique=False, invert=False, method='auto'):
+def in1d(ar1, ar2, assume_unique=False, invert=False, kind=None):
     """
     Test whether each element of a 1-D array is also present in a second array.
 
@@ -545,9 +545,10 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, method='auto'):
         False where an element of `ar1` is in `ar2` and True otherwise).
         Default is False. ``np.in1d(a, b, invert=True)`` is equivalent
         to (but is faster than) ``np.invert(in1d(a, b))``.
-    method : {'auto', 'sort', 'dictionary'}, optional
+   kind : {None, 'sort', 'dictionary'}, optional
         The algorithm to use. This will not affect the final result,
-        but will affect the speed. Default is 'auto'.
+        but will affect the speed. Default will select automatically
+        based on memory considerations.
 
         - If 'sort', will use a mergesort-based approach. This will have
           a memory usage of roughly 6 times the sum of the sizes of
@@ -559,12 +560,12 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, method='auto'):
           to be the faster method if the following formula is true:
           `log10(len(ar2)) > (log10(max(ar2)-min(ar2)) - 2.27) / 0.927`,
           but may use greater memory.
-        - If 'auto', will automatically choose 'dictionary' if
+        - If `None`, will automatically choose 'dictionary' if
           the required memory allocation is less than or equal to
           6 times the sum of the sizes of `ar1` and `ar2`,
           otherwise will use 'sort'. This is done to not use
           a large amount of memory by default, even though
-          'dictionary' may be faster in most cases.
+           'dictionary' may be faster in most cases.
 
         .. versionadded:: 1.8.0
 
@@ -624,12 +625,12 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, method='auto'):
     integer_arrays = (np.issubdtype(ar1.dtype, np.integer) and
                       np.issubdtype(ar2.dtype, np.integer))
 
-    if method not in {'auto', 'sort', 'dictionary'}:
+    if kind not in {None, 'sort', 'dictionary'}:
         raise ValueError(
-            "Invalid method: {0}. ".format(method)
-            + "Please use 'auto', 'sort' or 'dictionary'.")
+            "Invalid kind: {0}. ".format(kind)
+            + "Please use None, 'sort' or 'dictionary'.")
 
-    if integer_arrays and method in {'auto', 'dictionary'}:
+    if integer_arrays and kind in {None, 'dictionary'}:
         ar2_min = np.min(ar2)
         ar2_max = np.max(ar2)
         ar1_size = ar1.size
@@ -655,7 +656,7 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, method='auto'):
                 below_memory_constraint = False
 
         # Use the fast integer algorithm
-        if below_memory_constraint or method == 'dictionary':
+        if below_memory_constraint or kind == 'dictionary':
 
             if invert:
                 outgoing_array = np.ones_like(ar1, dtype=bool)
@@ -676,11 +677,11 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, method='auto'):
                                                         ar2_min]
 
             return outgoing_array
-    elif method == 'dictionary':
+    elif kind == 'dictionary':
         raise ValueError(
-            "'dictionary' method is only "
+            "The 'dictionary' method is only "
             "supported for boolean or integer arrays. "
-            "Please select 'sort' or 'auto' for the method."
+            "Please select 'sort' or None for kind."
         )
 
 
@@ -728,13 +729,13 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, method='auto'):
 
 
 def _isin_dispatcher(element, test_elements, assume_unique=None, invert=None,
-                     method=None):
+                     kind=None):
     return (element, test_elements)
 
 
 @array_function_dispatch(_isin_dispatcher)
 def isin(element, test_elements, assume_unique=False, invert=False,
-         method='auto'):
+         kind=None):
     """
     Calculates ``element in test_elements``, broadcasting over `element` only.
     Returns a boolean array of the same shape as `element` that is True
@@ -756,9 +757,10 @@ def isin(element, test_elements, assume_unique=False, invert=False,
         calculating `element not in test_elements`. Default is False.
         ``np.isin(a, b, invert=True)`` is equivalent to (but faster
         than) ``np.invert(np.isin(a, b))``.
-    method : {'auto', 'sort', 'dictionary'}, optional
+   kind : {None, 'sort', 'dictionary'}, optional
         The algorithm to use. This will not affect the final result,
-        but will affect the speed. Default is 'auto'.
+        but will affect the speed. Default will select automatically
+        based on memory considerations.
 
         - If 'sort', will use a mergesort-based approach. This will have
           a memory usage of roughly 6 times the sum of the sizes of
@@ -770,11 +772,13 @@ def isin(element, test_elements, assume_unique=False, invert=False,
           to be the faster method if the following formula is true:
           `log10(len(ar2)) > (log10(max(ar2)-min(ar2)) - 2.27) / 0.927`,
           but may use greater memory.
-        - If 'auto', will automatically choose the method which is
-          expected to perform the fastest, using the above
-          formula. For larger sizes or smaller range,
-          'dictionary' is chosen. For larger range or smaller
-          sizes, 'sort' is chosen.
+        - If `None`, will automatically choose 'dictionary' if
+          the required memory allocation is less than or equal to
+          6 times the sum of the sizes of `ar1` and `ar2`,
+          otherwise will use 'sort'. This is done to not use
+          a large amount of memory by default, even though
+           'dictionary' may be faster in most cases.
+
 
     Returns
     -------
@@ -848,7 +852,7 @@ def isin(element, test_elements, assume_unique=False, invert=False,
     """
     element = np.asarray(element)
     return in1d(element, test_elements, assume_unique=assume_unique,
-                invert=invert, method=method).reshape(element.shape)
+                invert=invert, kind=kind).reshape(element.shape)
 
 
 def _union1d_dispatcher(ar1, ar2):
