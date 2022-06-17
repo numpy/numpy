@@ -542,6 +542,40 @@ class TestSetOps:
         result = np.in1d(ar1, ar2, invert=True)
         assert_array_equal(result, np.invert(expected))
 
+    def test_in1d_errors(self):
+        """Test that in1d raises expected errors."""
+
+        # Error 1: `kind` is not one of 'mergesort' 'dictionary' or None.
+        ar1 = np.array([1, 2, 3, 4, 5])
+        ar2 = np.array([2, 4, 6, 8, 10])
+        assert_raises(ValueError, in1d, ar1, ar2, kind='quicksort')
+
+        # Error 2: `kind="dictionary"` does not work for non-integral arrays.
+        obj_ar1 = np.array([1, 'a', 3, 'b', 5], dtype=object)
+        obj_ar2 = np.array([1, 'a', 3, 'b', 5], dtype=object)
+        assert_raises(ValueError, in1d, obj_ar1, obj_ar2, kind='dictionary')
+
+        for dtype in [np.int32, np.int64]:
+            ar1 = np.array([-1, 2, 3, 4, 5], dtype=dtype)
+            # The range of this array will overflow:
+            overflow_ar2 = np.array([-1, np.iinfo(dtype).max], dtype=dtype)
+
+            # Error 3: `kind="dictionary"` will trigger a runtime error
+            #  if there is an integer overflow expected when computing the
+            #  range of ar2
+            assert_raises(
+                RuntimeError,
+                in1d, ar1, overflow_ar2, kind='dictionary'
+            )
+
+            # Non-error: `kind=None` will *not* trigger a runtime error
+            #  if there is an integer overflow, it will switch to
+            #  the `mergesort` algorithm.
+            result = np.in1d(ar1, overflow_ar2, kind=None)
+            assert_array_equal(result, [True] + [False] * 4)
+            result = np.in1d(ar1, overflow_ar2, kind='mergesort')
+            assert_array_equal(result, [True] + [False] * 4)
+
     def test_union1d(self):
         a = np.array([5, 4, 7, 1, 2])
         b = np.array([2, 4, 3, 3, 2, 1, 5])
