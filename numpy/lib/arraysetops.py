@@ -672,6 +672,13 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, kind=None):
                                                         ar2_min]
 
             return outgoing_array
+        elif kind == 'dictionary':  # not range_safe_from_overflow
+            raise RuntimeError(
+                "You have specified kind='dictionary', "
+                "but the range of values in `ar2` exceeds the "
+                "maximum integer of the datatype. "
+                "Please set `kind` to None or 'mergesort'."
+            )
     elif kind == 'dictionary':
         raise ValueError(
             "The 'dictionary' method is only "
