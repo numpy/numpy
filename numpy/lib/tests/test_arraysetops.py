@@ -205,8 +205,8 @@ class TestSetOps:
         isin_slow = np.vectorize(_isin_slow, otypes=[bool], excluded={1})
 
         def assert_isin_equal(a, b, old_algorithm=None):
-            method = "sort" if old_algorithm else "auto"
-            x = isin(a, b, method=method)
+            kind = "sort" if old_algorithm else "auto"
+            x = isin(a, b, kind=kind)
             y = isin_slow(a, b)
             assert_array_equal(x, y)
 
@@ -258,21 +258,21 @@ class TestSetOps:
             ec = np.array([True, False, True, True])
             c = in1d(a, b, assume_unique=True)
             assert_array_equal(c, ec)
-            c = in1d(a, b, assume_unique=True, method="sort")
+            c = in1d(a, b, assume_unique=True, kind="sort")
             assert_array_equal(c, ec)
 
             a[0] = 8
             ec = np.array([False, False, True, True])
             c = in1d(a, b, assume_unique=True)
             assert_array_equal(c, ec)
-            c = in1d(a, b, assume_unique=True, method="sort")
+            c = in1d(a, b, assume_unique=True, kind="sort")
             assert_array_equal(c, ec)
 
             a[0], a[3] = 4, 8
             ec = np.array([True, False, True, False])
             c = in1d(a, b, assume_unique=True)
             assert_array_equal(c, ec)
-            c = in1d(a, b, assume_unique=True, method="sort")
+            c = in1d(a, b, assume_unique=True, kind="sort")
             assert_array_equal(c, ec)
 
             a = np.array([5, 4, 5, 3, 4, 4, 3, 4, 3, 5, 2, 1, 5, 5])
@@ -281,7 +281,7 @@ class TestSetOps:
                   False, True, False, False, False]
             c = in1d(a, b)
             assert_array_equal(c, ec)
-            c = in1d(a, b, method="sort")
+            c = in1d(a, b, kind="sort")
             assert_array_equal(c, ec)
 
             b = b + [5, 5, 4] * mult
@@ -289,7 +289,7 @@ class TestSetOps:
                   True, False, True, True]
             c = in1d(a, b)
             assert_array_equal(c, ec)
-            c = in1d(a, b, method="sort")
+            c = in1d(a, b, kind="sort")
             assert_array_equal(c, ec)
 
             a = np.array([5, 7, 1, 2])
@@ -297,7 +297,7 @@ class TestSetOps:
             ec = np.array([True, False, True, True])
             c = in1d(a, b)
             assert_array_equal(c, ec)
-            c = in1d(a, b, method="sort")
+            c = in1d(a, b, kind="sort")
             assert_array_equal(c, ec)
 
             a = np.array([5, 7, 1, 1, 2])
@@ -305,7 +305,7 @@ class TestSetOps:
             ec = np.array([True, False, True, True, True])
             c = in1d(a, b)
             assert_array_equal(c, ec)
-            c = in1d(a, b, method="sort")
+            c = in1d(a, b, kind="sort")
             assert_array_equal(c, ec)
 
             a = np.array([5, 5])
@@ -313,7 +313,7 @@ class TestSetOps:
             ec = np.array([False, False])
             c = in1d(a, b)
             assert_array_equal(c, ec)
-            c = in1d(a, b, method="sort")
+            c = in1d(a, b, kind="sort")
             assert_array_equal(c, ec)
 
         a = np.array([5])
@@ -321,7 +321,7 @@ class TestSetOps:
         ec = np.array([False])
         c = in1d(a, b)
         assert_array_equal(c, ec)
-        c = in1d(a, b, method="sort")
+        c = in1d(a, b, kind="sort")
         assert_array_equal(c, ec)
 
         assert_array_equal(in1d([], []), [])
@@ -413,7 +413,7 @@ class TestSetOps:
             b = [2, 3, 4] * mult
             assert_array_equal(np.invert(in1d(a, b)), in1d(a, b, invert=True))
             assert_array_equal(np.invert(in1d(a, b)),
-                               in1d(a, b, invert=True, method="sort"))
+                               in1d(a, b, invert=True, kind="sort"))
 
         for mult in (1, 10):
             a = np.array([5, 4, 5, 3, 4, 4, 3, 4, 3, 5, 2, 1, 5, 5],
@@ -422,7 +422,7 @@ class TestSetOps:
             b = np.array(b, dtype=np.float32)
             assert_array_equal(np.invert(in1d(a, b)), in1d(a, b, invert=True))
             assert_array_equal(np.invert(in1d(a, b)),
-                               in1d(a, b, invert=True, method="sort"))
+                               in1d(a, b, invert=True, kind="sort"))
 
     def test_in1d_ravel(self):
         # Test that in1d ravels its input arrays. This is not documented
@@ -436,22 +436,22 @@ class TestSetOps:
         assert_array_equal(in1d(a, b, assume_unique=False), ec)
         assert_array_equal(in1d(a, long_b, assume_unique=True), ec)
         assert_array_equal(in1d(a, long_b, assume_unique=False), ec)
-        assert_array_equal(in1d(a, b, assume_unique=True, method="sort"),
+        assert_array_equal(in1d(a, b, assume_unique=True, kind="sort"),
                            ec)
         assert_array_equal(in1d(a, b, assume_unique=False,
-                                method="sort"),
+                                kind="sort"),
                            ec)
         assert_array_equal(in1d(a, long_b, assume_unique=True,
-                                method="sort"),
+                                kind="sort"),
                            ec)
         assert_array_equal(in1d(a, long_b, assume_unique=False,
-                                method="sort"),
+                                kind="sort"),
                            ec)
 
     def test_in1d_hit_alternate_algorithm(self):
         """Hit the standard isin code with integers"""
         # Need extreme range to hit standard code
-        # This hits it without the use of method='dictionary'
+        # This hits it without the use of kind='dictionary'
         a = np.array([5, 4, 5, 3, 4, 4, 1e9], dtype=np.int64)
         b = np.array([2, 3, 4, 1e9], dtype=np.int64)
         expected = np.array([0, 1, 0, 1, 1, 1, 1], dtype=bool)
@@ -472,11 +472,11 @@ class TestSetOps:
         assert_array_equal(expected,
                            in1d(a, b))
         assert_array_equal(expected,
-                           in1d(a, b, method="sort"))
+                           in1d(a, b, kind="sort"))
         assert_array_equal(np.invert(expected),
                            in1d(a, b, invert=True))
         assert_array_equal(np.invert(expected),
-                           in1d(a, b, invert=True, method="sort"))
+                           in1d(a, b, invert=True, kind="sort"))
 
     def test_in1d_first_array_is_object(self):
         ar1 = [None]
