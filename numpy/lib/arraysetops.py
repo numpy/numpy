@@ -85,7 +85,7 @@ def ediff1d(ary, to_end=None, to_begin=None):
     # The difference of np.datetime64 will yield an np.timedelta64 as the
     # required dtype for to_begin and to_end
     if np.issubdtype(ary.dtype, np.datetime64):
-        dtype_req = np.timedelta64
+        dtype_req = ary.astype(np.timedelta64).dtype
     else:
         dtype_req = ary.dtype
 
