@@ -549,7 +549,6 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, kind=None):
         The algorithm to use. This will not affect the final result,
         but will affect the speed. Default will select automatically
         based on memory considerations.
-
         - If 'mergesort', will use a mergesort-based approach. This will have
           a memory usage of roughly 6 times the sum of the sizes of
           `ar1` and `ar2`, not accounting for size of dtypes.
@@ -565,7 +564,7 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, kind=None):
           6 times the sum of the sizes of `ar1` and `ar2`,
           otherwise will use 'mergesort'. This is done to not use
           a large amount of memory by default, even though
-           'dictionary' may be faster in most cases.
+          'dictionary' may be faster in most cases.
 
         .. versionadded:: 1.8.0
 
@@ -763,7 +762,6 @@ def isin(element, test_elements, assume_unique=False, invert=False,
         The algorithm to use. This will not affect the final result,
         but will affect the speed. Default will select automatically
         based on memory considerations.
-
         - If 'mergesort', will use a mergesort-based approach. This will have
           a memory usage of roughly 6 times the sum of the sizes of
           `ar1` and `ar2`, not accounting for size of dtypes.
@@ -779,7 +777,7 @@ def isin(element, test_elements, assume_unique=False, invert=False,
           6 times the sum of the sizes of `ar1` and `ar2`,
           otherwise will use 'mergesort'. This is done to not use
           a large amount of memory by default, even though
-           'dictionary' may be faster in most cases.
+          'dictionary' may be faster in most cases.
 
 
     Returns
