@@ -359,7 +359,7 @@ jobs:
       run: |
         # use x86_64 cross-compiler to speed up the build
         sudo apt update
-        sudo apt install -y gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
+        sudo apt install -y gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf gfortran-arm-linux-gnueabihf
 
         # Keep the `test_requirements.txt` dependency-subset synced
         docker run --name the_container --interactive -v /:/host arm32v7/ubuntu:22.04 /bin/bash -c "
@@ -372,6 +372,7 @@ jobs:
           rm -rf /usr/lib/gcc/arm-linux-gnueabihf && ln -s /host/usr/lib/gcc-cross/arm-linux-gnueabihf /usr/lib/gcc/arm-linux-gnueabihf &&
           rm -f /usr/bin/arm-linux-gnueabihf-gcc && ln -s /host/usr/bin/arm-linux-gnueabihf-gcc /usr/bin/arm-linux-gnueabihf-gcc &&
           rm -f /usr/bin/arm-linux-gnueabihf-g++ && ln -s /host/usr/bin/arm-linux-gnueabihf-g++ /usr/bin/arm-linux-gnueabihf-g++ &&
+          rm -f /usr/bin/arm-linux-gnueabihf-gfortran && ln -s /host/usr/bin/arm-linux-gnueabihf-gfortran /usr/bin/arm-linux-gnueabihf-gfortran &&
           rm -f /usr/bin/arm-linux-gnueabihf-ar && ln -s /host/usr/bin/arm-linux-gnueabihf-ar /usr/bin/arm-linux-gnueabihf-ar &&
           rm -f /usr/bin/arm-linux-gnueabihf-as && ln -s /host/usr/bin/arm-linux-gnueabihf-as /usr/bin/arm-linux-gnueabihf-as &&
           rm -f /usr/bin/arm-linux-gnueabihf-ld && ln -s /host/usr/bin/arm-linux-gnueabihf-ld /usr/bin/arm-linux-gnueabihf-ld &&
@@ -384,6 +385,7 @@ jobs:
           uname -a &&
           gcc --version &&
           g++ --version &&
+          arm-linux-gnueabihf-gfortran --version &&
           python3 --version &&
           git config --global --add safe.directory /numpy
           cd /numpy &&
@@ -393,7 +395,7 @@ jobs:
     - name: Run SIMD Tests
       run: |
         docker run --rm --interactive -v $(pwd):/numpy the_build /bin/bash -c "
-          cd /numpy && python3 runtests.py -n -v -- -k test_simd
+          cd /numpy && F90=arm-linux-gnueabihf-gfortran python3 runtests.py -n -v -- -k 'test_simd or test_kind'
         "
 
   sde_simd_avx512_test:
