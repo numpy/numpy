@@ -280,7 +280,7 @@ Typically, a large number of ``observations``, perhaps read from a database,
 are compared to a set of ``codes``. Consider this scenario::
 
   Observation      (2d array):      10 x 3
-  Codes            (2d array):       5 x 3
+  Codes            (3d array):   5 x 1 x 3
   Diff             (3d array):  5 x 10 x 3
 
 The three-dimensional array, ``diff``, is a consequence of broadcasting, not a

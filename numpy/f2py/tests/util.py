@@ -58,7 +58,7 @@ def get_module_dir():
 def get_temp_module_name():
     # Assume single-threaded, and the module dir usable only by this thread
     global _module_num
-    d = get_module_dir()
+    get_module_dir()
     name = "_test_ext_module_%d" % _module_num
     _module_num += 1
     if name in sys.modules:
@@ -116,6 +116,8 @@ def build_module(source_files, options=[], skip=[], only=[], module_name=None):
         base, ext = os.path.splitext(dst)
         if ext in (".f90", ".f", ".c", ".pyf"):
             f2py_sources.append(dst)
+
+    assert f2py_sources
 
     # Prepare options
     if module_name is None:
@@ -332,7 +334,11 @@ class F2PyTest:
     only = []
     suffix = ".f"
     module = None
-    module_name = None
+
+    @property
+    def module_name(self):
+        cls = type(self)
+        return f'_{cls.__module__.rsplit(".",1)[-1]}_{cls.__name__}_ext_module'
 
     def setup(self):
         if sys.platform == "win32":
@@ -353,15 +359,20 @@ class F2PyTest:
 
         needs_f77 = False
         needs_f90 = False
+        needs_pyf = False
         for fn in codes:
             if str(fn).endswith(".f"):
                 needs_f77 = True
             elif str(fn).endswith(".f90"):
                 needs_f90 = True
+            elif str(fn).endswith(".pyf"):
+                needs_pyf = True
         if needs_f77 and not has_f77_compiler():
             pytest.skip("No Fortran 77 compiler available")
         if needs_f90 and not has_f90_compiler():
             pytest.skip("No Fortran 90 compiler available")
+        if needs_pyf and not (has_f90_compiler() or has_f77_compiler()):
+            pytest.skip("No Fortran compiler available")
 
         # Build the module
         if self.code is not None:

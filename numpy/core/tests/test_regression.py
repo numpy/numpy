@@ -17,12 +17,6 @@ from numpy.testing import (
 from numpy.testing._private.utils import _no_tracing, requires_memory
 from numpy.compat import asbytes, asunicode, pickle
 
-try:
-    RecursionError
-except NameError:
-    RecursionError = RuntimeError  # python < 3.5
-
-
 
 class TestRegression:
     def test_invalid_round(self):
@@ -332,20 +326,20 @@ class TestRegression:
         assert_raises(ValueError, bfa)
         assert_raises(ValueError, bfb)
 
-    def test_nonarray_assignment(self):
+    @pytest.mark.parametrize("index",
+            [np.ones(10, dtype=bool), np.arange(10)],
+            ids=["boolean-arr-index", "integer-arr-index"])
+    def test_nonarray_assignment(self, index):
         # See also Issue gh-2870, test for non-array assignment
         # and equivalent unsafe casted array assignment
         a = np.arange(10)
-        b = np.ones(10, dtype=bool)
-        r = np.arange(10)
 
-        def assign(a, b, c):
-            a[b] = c
+        with pytest.raises(ValueError):
+            a[index] = np.nan
 
-        assert_raises(ValueError, assign, a, b, np.nan)
-        a[b] = np.array(np.nan)  # but not this.
-        assert_raises(ValueError, assign, a, r, np.nan)
-        a[r] = np.array(np.nan)
+        with np.errstate(invalid="warn"):
+            with pytest.warns(RuntimeWarning, match="invalid value"):
+                a[index] = np.array(np.nan)  # Only warns
 
     def test_unpickle_dtype_with_object(self):
         # Implemented in r2840
@@ -430,7 +424,6 @@ class TestRegression:
     def test_lexsort_zerolen_custom_strides(self):
         # Ticket #14228
         xs = np.array([], dtype='i8')
-        assert xs.strides == (8,)
         assert np.lexsort((xs,)).shape[0] == 0 # Works
 
         xs.strides = (16,)
@@ -1503,7 +1496,7 @@ class TestRegression:
             min = np.array([np.iinfo(t).min])
             min //= -1
 
-        with np.errstate(divide="ignore"):
+        with np.errstate(over="ignore"):
             for t in (np.int8, np.int16, np.int32, np.int64, int):
                 test_type(t)
 
@@ -2310,6 +2303,8 @@ class TestRegression:
             new_shape = (2, 7, 7, 43826197)
         assert_raises(ValueError, a.reshape, new_shape)
 
+    @pytest.mark.skipif(IS_PYPY and sys.implementation.version <= (7, 3, 8),
+            reason="PyPy bug in error formatting")
     def test_invalid_structured_dtypes(self):
         # gh-2865
         # mapping python objects to other dtypes
@@ -2485,8 +2480,6 @@ class TestRegression:
         assert arr.shape == (1, 0, 0)
 
     @pytest.mark.skipif(sys.maxsize < 2 ** 31 + 1, reason='overflows 32-bit python')
-    @pytest.mark.skipif(sys.platform == 'win32' and sys.version_info[:2] < (3, 8),
-                        reason='overflows on windows, fixed in bpo-16865')
     def test_to_ctypes(self):
         #gh-14214
         arr = np.zeros((2 ** 31 + 1,), 'b')

@@ -16,7 +16,7 @@ from ._multiarray_umath import *  # noqa: F403
 from ._multiarray_umath import (
     _fastCopyAndTranspose, _flagdict, from_dlpack, _insert, _reconstruct,
     _vec_string, _ARRAY_API, _monotonicity, _get_ndarray_c_version,
-    _set_madvise_hugepage,
+    _get_madvise_hugepage, _set_madvise_hugepage,
     )
 
 __all__ = [
@@ -287,7 +287,7 @@ def inner(a, b):
 
         np.inner(a, b) = sum(a[:]*b[:])
 
-    More generally, if `ndim(a) = r > 0` and `ndim(b) = s > 0`::
+    More generally, if ``ndim(a) = r > 0`` and ``ndim(b) = s > 0``::
 
         np.inner(a, b) = np.tensordot(a, b, axes=(-1,-1))
 

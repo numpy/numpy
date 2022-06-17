@@ -2990,7 +2990,7 @@ cdef class Generator:
         probability of success, :math:`N+n` is the number of trials, and
         :math:`\\Gamma` is the gamma function. When :math:`n` is an integer,
         :math:`\\frac{\\Gamma(N+n)}{N!\\Gamma(n)} = \\binom{N+n-1}{N}`, which is
-        the more common form of this term in the the pmf. The negative
+        the more common form of this term in the pmf. The negative
         binomial distribution gives the probability of N failures given n
         successes, with a success on the last trial.
 
@@ -3660,6 +3660,11 @@ cdef class Generator:
         # Check preconditions on arguments
         mean = np.array(mean)
         cov = np.array(cov)
+
+        if (np.issubdtype(mean.dtype, np.complexfloating) or
+                np.issubdtype(cov.dtype, np.complexfloating)):
+            raise TypeError("mean and cov must not be complex")
+
         if size is None:
             shape = []
         elif isinstance(size, (int, long, np.integer)):
@@ -3787,6 +3792,9 @@ cdef class Generator:
 
             Each entry ``out[i,j,...,:]`` is a ``p``-dimensional value drawn
             from the distribution.
+
+            .. versionchanged:: 1.22.0
+                Added support for broadcasting `pvals` against `n`
 
         Examples
         --------

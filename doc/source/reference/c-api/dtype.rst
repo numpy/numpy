@@ -219,7 +219,7 @@ Defines
 -------
 
 Max and min values for integers
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ``NPY_MAX_INT{bits}``, ``NPY_MAX_UINT{bits}``, ``NPY_MIN_INT{bits}``
     These are defined for ``{bits}`` = 8, 16, 32, 64, 128, and 256 and provide
@@ -238,7 +238,7 @@ Max and min values for integers
 
 
 Number of bits in data types
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 All ``NPY_SIZEOF_{CTYPE}`` constants have corresponding
 ``NPY_BITSOF_{CTYPE}`` constants defined. The ``NPY_BITSOF_{CTYPE}``
@@ -250,7 +250,7 @@ the available ``{CTYPE}s`` are
 
 
 Bit-width references to enumerated typenums
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 All of the numeric data types (integer, floating point, and complex)
 have constants that are defined to be a specific enumerated type
@@ -265,7 +265,7 @@ types are available.
 
 
 Integer that can hold a pointer
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The constants **NPY_INTP** and **NPY_UINTP** refer to an
 enumerated integer type that is large enough to hold a pointer on the
@@ -283,7 +283,7 @@ types.
 
 
 Boolean
-^^^^^^^
+~~~~~~~
 
 .. c:type:: npy_bool
 
@@ -292,7 +292,7 @@ Boolean
 
 
 (Un)Signed Integer
-^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~
 
 Unsigned versions of the integers can be defined by pre-pending a 'u'
 to the front of the integer name.
@@ -373,7 +373,7 @@ to the front of the integer name.
 
 
 (Complex) Floating point
-^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. c:type:: npy_half
 
@@ -408,7 +408,7 @@ that order).
 
 
 Bit-width names
-^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~
 
 There are also typedefs for signed integers, unsigned integers,
 floating point, and complex floating point types of specific bit-

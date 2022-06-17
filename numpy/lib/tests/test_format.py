@@ -283,7 +283,7 @@ from io import BytesIO
 import numpy as np
 from numpy.testing import (
     assert_, assert_array_equal, assert_raises, assert_raises_regex,
-    assert_warns,
+    assert_warns, IS_PYPY,
     )
 from numpy.testing._private.utils import requires_memory
 from numpy.lib import format
@@ -945,6 +945,8 @@ def test_unicode_field_names(tmpdir):
         float, np.dtype({'names': ['c'], 'formats': [np.dtype(int, metadata={})]})
     ]}), False)
     ])
+@pytest.mark.skipif(IS_PYPY and sys.implementation.version <= (7, 3, 8),
+        reason="PyPy bug in error formatting")
 def test_metadata_dtype(dt, fail):
     # gh-14142
     arr = np.ones(10, dtype=dt)

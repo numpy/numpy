@@ -6,6 +6,9 @@ extern "C" {
 
 #include <Python.h>
 
+#ifndef NPY_NO_DEPRECATED_API
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#endif
 #ifdef FORTRANOBJECT_C
 #define NO_IMPORT_ARRAY
 #endif
@@ -44,6 +47,7 @@ Author: Pearu Peterson <pearu@cens.ioc.ee>
 */
 
 #define F2PY_MAX_DIMS 40
+#define F2PY_MESSAGE_BUFFER_SIZE 300  // Increase on "stack smashing detected"
 
 typedef void (*f2py_set_data_func)(char *, npy_intp *);
 typedef void (*f2py_void_func)(void);
@@ -61,6 +65,7 @@ typedef struct {
         npy_intp d[F2PY_MAX_DIMS];
     } dims;              /* dimensions of the array, || not used */
     int type;            /* PyArray_<type> || not used */
+    int elsize;                /* Element size || not used */
     char *data;          /* pointer to array || Fortran routine */
     f2py_init_func func; /* initialization function for
                             allocatable arrays:
@@ -125,6 +130,14 @@ F2PyGetThreadLocalCallbackPtr(char *key);
              : (F2PY_ALIGN8(intent) ? 8 : (F2PY_ALIGN16(intent) ? 16 : 1)))
 #define F2PY_CHECK_ALIGNMENT(arr, intent) \
     ARRAY_ISALIGNED(arr, F2PY_GET_ALIGNMENT(intent))
+#define F2PY_ARRAY_IS_CHARACTER_COMPATIBLE(arr) ((PyArray_DESCR(arr)->type_num == NPY_STRING && PyArray_DESCR(arr)->elsize >= 1) \
+                                                 || PyArray_DESCR(arr)->type_num == NPY_UINT8)
+#define F2PY_IS_UNICODE_ARRAY(arr) (PyArray_DESCR(arr)->type_num == NPY_UNICODE)
+
+extern PyArrayObject *
+ndarray_from_pyobj(const int type_num, const int elsize_, npy_intp *dims,
+                   const int rank, const int intent, PyObject *obj,
+                   const char *errmess);
 
 extern PyArrayObject *
 array_from_pyobj(const int type_num, npy_intp *dims, const int rank,
@@ -136,6 +149,23 @@ copy_ND_array(const PyArrayObject *in, PyArrayObject *out);
 extern void
 dump_attrs(const PyArrayObject *arr);
 #endif
+
+  extern int f2py_describe(PyObject *obj, char *buf);
+
+  /* Utility CPP macros and functions that can be used in signature file
+     expressions. See signature-file.rst for documentation.
+  */
+
+#define f2py_itemsize(var) (PyArray_DESCR((capi_ ## var ## _as_array))->elsize)
+#define f2py_size(var, ...) f2py_size_impl((PyArrayObject *)(capi_ ## var ## _as_array), ## __VA_ARGS__, -1)
+#define f2py_rank(var) var ## _Rank
+#define f2py_shape(var,dim) var ## _Dims[dim]
+#define f2py_len(var) f2py_shape(var,0)
+#define f2py_fshape(var,dim) f2py_shape(var,rank(var)-dim-1)
+#define f2py_flen(var) f2py_fshape(var,0)
+#define f2py_slen(var) capi_ ## var ## _len
+
+  extern npy_intp f2py_size_impl(PyArrayObject* var, ...);
 
 #ifdef __cplusplus
 }

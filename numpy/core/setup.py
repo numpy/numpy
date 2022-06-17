@@ -1,9 +1,9 @@
 import os
 import sys
+import sysconfig
 import pickle
 import copy
 import warnings
-import platform
 import textwrap
 import glob
 from os.path import join
@@ -79,9 +79,8 @@ def can_link_svml():
     """
     if NPY_DISABLE_SVML:
         return False
-    machine = platform.machine()
-    system = platform.system()
-    return "x86_64" in machine and system == "Linux"
+    platform = sysconfig.get_platform()
+    return "x86_64" in platform and "linux" in platform
 
 def check_svml_submodule(svmlpath):
     if not os.path.exists(svmlpath + "/README.md"):
@@ -476,11 +475,8 @@ def configuration(parent_package='',top_path=None):
     local_dir = config.local_path
     codegen_dir = join(local_dir, 'code_generators')
 
-    if is_released:
-        warnings.simplefilter('error', MismatchCAPIWarning)
-
     # Check whether we have a mismatch between the set C API VERSION and the
-    # actual C API VERSION
+    # actual C API VERSION. Will raise a MismatchCAPIError if so.
     check_api_version(C_API_VERSION, codegen_dir)
 
     generate_umath_py = join(codegen_dir, 'generate_umath.py')
@@ -769,7 +765,8 @@ def configuration(parent_package='',top_path=None):
 
     npymath_sources = [join('src', 'npymath', 'npy_math_internal.h.src'),
                        join('src', 'npymath', 'npy_math.c'),
-                       join('src', 'npymath', 'ieee754.cpp'),
+                       # join('src', 'npymath', 'ieee754.cpp'),
+                       join('src', 'npymath', 'ieee754.c.src'),
                        join('src', 'npymath', 'npy_math_complex.c.src'),
                        join('src', 'npymath', 'halffloat.c')
                        ]
@@ -858,7 +855,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'common', 'ucsnarrow.c'),
             join('src', 'common', 'ufunc_override.c'),
             join('src', 'common', 'numpyos.c'),
-            join('src', 'common', 'npy_cpu_features.c.src'),
+            join('src', 'common', 'npy_cpu_features.c'),
             ]
 
     if os.environ.get('NPY_USE_BLAS_ILP64', "0") != "0":
@@ -1070,6 +1067,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'umath', 'loops_exponent_log.dispatch.c.src'),
             join('src', 'umath', 'loops_hyperbolic.dispatch.c.src'),
             join('src', 'umath', 'loops_modulo.dispatch.c.src'),
+            join('src', 'umath', 'loops_comparison.dispatch.c.src'),
             join('src', 'umath', 'matmul.h.src'),
             join('src', 'umath', 'matmul.c.src'),
             join('src', 'umath', 'clip.h'),
@@ -1082,6 +1080,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'umath', 'scalarmath.c.src'),
             join('src', 'umath', 'ufunc_type_resolution.c'),
             join('src', 'umath', 'override.c'),
+            join('src', 'umath', 'string_ufuncs.cpp'),
             # For testing. Eventually, should use public API and be separate:
             join('src', 'umath', '_scaled_float_dtype.c'),
             ]
@@ -1113,6 +1112,10 @@ def configuration(parent_package='',top_path=None):
         svml_objs = glob.glob(svml_path + '/**/*.s', recursive=True)
         svml_objs = [o for o in svml_objs if not o.endswith(svml_filter)]
 
+        # The ordering of names returned by glob is undefined, so we sort
+        # to make builds reproducible.
+        svml_objs.sort()
+
     config.add_extension('_multiarray_umath',
                          # Forcing C language even though we have C++ sources.
                          # It forces the C linker and don't link C++ runtime.
@@ -1142,7 +1145,7 @@ def configuration(parent_package='',top_path=None):
     config.add_extension('_umath_tests', sources=[
         join('src', 'umath', '_umath_tests.c.src'),
         join('src', 'umath', '_umath_tests.dispatch.c'),
-        join('src', 'common', 'npy_cpu_features.c.src'),
+        join('src', 'common', 'npy_cpu_features.c'),
     ])
 
     #######################################################################
@@ -1172,7 +1175,7 @@ def configuration(parent_package='',top_path=None):
     #######################################################################
 
     config.add_extension('_simd', sources=[
-        join('src', 'common', 'npy_cpu_features.c.src'),
+        join('src', 'common', 'npy_cpu_features.c'),
         join('src', '_simd', '_simd.c'),
         join('src', '_simd', '_simd_inc.h.src'),
         join('src', '_simd', '_simd_data.inc.src'),

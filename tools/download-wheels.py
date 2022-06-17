@@ -31,11 +31,17 @@ import argparse
 import urllib3
 from bs4 import BeautifulSoup
 
-__version__ = '0.1'
+__version__ = "0.1"
 
 # Edit these for other projects.
-STAGING_URL = 'https://anaconda.org/multibuild-wheels-staging/numpy'
-PREFIX = 'numpy'
+STAGING_URL = "https://anaconda.org/multibuild-wheels-staging/numpy"
+PREFIX = "numpy"
+
+# Name endings of the files to download.
+WHL = r"-.*\.whl$"
+ZIP = r"\.zip$"
+GZIP = r"\.tar\.gz$"
+SUFFIX = rf"({WHL}|{GZIP}|{ZIP})"
 
 
 def get_wheel_names(version):
@@ -50,11 +56,11 @@ def get_wheel_names(version):
         The release version. For instance, "1.18.3".
 
     """
-    http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED')
-    tmpl = re.compile(rf"^.*{PREFIX}-{version}-.*\.whl$")
+    http = urllib3.PoolManager(cert_reqs="CERT_REQUIRED")
+    tmpl = re.compile(rf"^.*{PREFIX}-{version}{SUFFIX}")
     index_url = f"{STAGING_URL}/files"
-    index_html = http.request('GET', index_url)
-    soup = BeautifulSoup(index_html.data, 'html.parser')
+    index_html = http.request("GET", index_url)
+    soup = BeautifulSoup(index_html.data, "html.parser")
     return soup.findAll(text=tmpl)
 
 
@@ -72,20 +78,20 @@ def download_wheels(version, wheelhouse):
         Directory in which to download the wheels.
 
     """
-    http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED')
+    http = urllib3.PoolManager(cert_reqs="CERT_REQUIRED")
     wheel_names = get_wheel_names(version)
 
     for i, wheel_name in enumerate(wheel_names):
         wheel_url = f"{STAGING_URL}/{version}/download/{wheel_name}"
         wheel_path = os.path.join(wheelhouse, wheel_name)
-        with open(wheel_path, 'wb') as f:
-            with http.request('GET', wheel_url, preload_content=False,) as r:
+        with open(wheel_path, "wb") as f:
+            with http.request("GET", wheel_url, preload_content=False,) as r:
                 print(f"{i + 1:<4}{wheel_name}")
                 shutil.copyfileobj(r, f)
     print(f"\nTotal files downloaded: {len(wheel_names)}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "version",

@@ -3,6 +3,7 @@
  ** neon asimd
  ** sse2 avx2 avx512_skx
  ** vsx2
+ ** vx vxe
  **/
 #define _UMATHMODULE
 #define _MULTIARRAYMODULE
@@ -144,7 +145,7 @@ NPY_FINLINE @type@ scalar_@op@_@c_sfx@(@type@ a, @type@ b) {
 /**begin repeat
  * #sfx = f32, f64#
  * #bsfx = b32, b64#
- * #simd_chk = NPY_SIMD, NPY_SIMD_F64#
+ * #simd_chk = NPY_SIMD_F32, NPY_SIMD_F64#
  * #scalar_sfx = f, d#
  */
 #if @simd_chk@
@@ -196,7 +197,7 @@ NPY_FINLINE @type@ scalar_@op@_@c_sfx@(@type@ a, @type@ b) {
  ******************************************************************************/
 /**begin repeat
  * #sfx = s8, u8, s16, u16, s32, u32, s64, u64, f32, f64#
- * #simd_chk = NPY_SIMD*9, NPY_SIMD_F64#
+ * #simd_chk = NPY_SIMD*8, NPY_SIMD_F32, NPY_SIMD_F64#
  * #is_fp = 0*8, 1, 1#
  * #scalar_sfx = i*8, f, d#
  */
@@ -395,6 +396,9 @@ simd_binary_@intrin@_@sfx@(const npyv_lanetype_@sfx@ *ip1, npy_intp sip1,
 #elif NPY_SIMD && NPY_BITSOF_@BTYPE@ == @len@
     #if @is_fp@
         #define TO_SIMD_SFX(X) X##_f@len@
+        #if NPY_BITSOF_@BTYPE@ == 32 && !NPY_SIMD_F32
+            #undef TO_SIMD_SFX
+        #endif
         #if NPY_BITSOF_@BTYPE@ == 64 && !NPY_SIMD_F64
             #undef TO_SIMD_SFX
         #endif

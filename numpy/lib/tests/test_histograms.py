@@ -38,30 +38,6 @@ class TestHistogram:
         assert_equal(h, np.array([2]))
         assert_allclose(e, np.array([1., 2.]))
 
-    def test_normed(self):
-        sup = suppress_warnings()
-        with sup:
-            rec = sup.record(np.VisibleDeprecationWarning, '.*normed.*')
-            # Check that the integral of the density equals 1.
-            n = 100
-            v = np.random.rand(n)
-            a, b = histogram(v, normed=True)
-            area = np.sum(a * np.diff(b))
-            assert_almost_equal(area, 1)
-            assert_equal(len(rec), 1)
-
-        sup = suppress_warnings()
-        with sup:
-            rec = sup.record(np.VisibleDeprecationWarning, '.*normed.*')
-            # Check with non-constant bin widths (buggy but backwards
-            # compatible)
-            v = np.arange(10)
-            bins = [0, 1, 5, 9, 10]
-            a, b = histogram(v, bins, normed=True)
-            area = np.sum(a * np.diff(b))
-            assert_almost_equal(area, 1)
-            assert_equal(len(rec), 1)
-
     def test_density(self):
         # Check that the integral of the density equals 1.
         n = 100
@@ -819,20 +795,3 @@ class TestHistogramdd:
         hist_dd, edges_dd = histogramdd((v,), (bins,), density=True)
         assert_equal(hist, hist_dd)
         assert_equal(edges, edges_dd[0])
-
-    def test_density_via_normed(self):
-        # normed should simply alias to density argument
-        v = np.arange(10)
-        bins = np.array([0, 1, 3, 6, 10])
-        hist, edges = histogram(v, bins, density=True)
-        hist_dd, edges_dd = histogramdd((v,), (bins,), normed=True)
-        assert_equal(hist, hist_dd)
-        assert_equal(edges, edges_dd[0])
-
-    def test_density_normed_redundancy(self):
-        v = np.arange(10)
-        bins = np.array([0, 1, 3, 6, 10])
-        with assert_raises_regex(TypeError, "Cannot specify both"):
-            hist_dd, edges_dd = histogramdd((v,), (bins,),
-                                            density=True,
-                                            normed=True)

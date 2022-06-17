@@ -804,7 +804,7 @@ def argpartition(a, kth, axis=-1, kind='introselect', order=None):
     index_array : ndarray, int
         Array of indices that partition `a` along the specified axis.
         If `a` is one-dimensional, ``a[index_array]`` yields a partitioned `a`.
-        More generally, ``np.take_along_axis(a, index_array, axis)``
+        More generally, ``np.take_along_axis(a, index_array, axis=axis)``
         always yields the partitioned `a`, irrespective of dimensionality.
 
     See Also

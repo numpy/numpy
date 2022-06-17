@@ -3,6 +3,7 @@
  ** sse2 sse41
  ** vsx2
  ** neon asimd
+ ** vx vxe
  **/
 /**
  * Force use SSE only on x86, even if AVX2 or AVX512F are enabled
@@ -18,7 +19,7 @@
 /**********************************************************
  ** Scalars
  **********************************************************/
-#if !NPY_SIMD
+#if !NPY_SIMD_F32
 NPY_FINLINE float c_recip_f32(float a)
 { return 1.0f / a; }
 NPY_FINLINE float c_abs_f32(float a)
@@ -29,7 +30,7 @@ NPY_FINLINE float c_abs_f32(float a)
 }
 NPY_FINLINE float c_square_f32(float a)
 { return a * a; }
-#endif // !NPY_SIMD
+#endif // !NPY_SIMD_F32
 
 #if !NPY_SIMD_F64
 NPY_FINLINE double c_recip_f64(double a)
@@ -147,7 +148,7 @@ NPY_FINLINE double c_square_f64(double a)
 /**begin repeat
  * #TYPE = FLOAT, DOUBLE#
  * #sfx  = f32, f64#
- * #VCHK = NPY_SIMD, NPY_SIMD_F64#
+ * #VCHK = NPY_SIMD_F32, NPY_SIMD_F64#
  */
 #if @VCHK@
 /**begin repeat1
@@ -259,7 +260,7 @@ static void simd_@TYPE@_@kind@_@STYPE@_@DTYPE@
 /**begin repeat
  * #TYPE = FLOAT, DOUBLE#
  * #sfx  = f32, f64#
- * #VCHK = NPY_SIMD, NPY_SIMD_F64#
+ * #VCHK = NPY_SIMD_F32, NPY_SIMD_F64#
  */
 /**begin repeat1
  * #kind  = rint, floor, ceil, trunc, sqrt, absolute, square, reciprocal#

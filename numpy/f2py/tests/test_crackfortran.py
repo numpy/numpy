@@ -1,3 +1,4 @@
+import codecs
 import pytest
 import numpy as np
 from numpy.f2py.crackfortran import markinnerspaces
@@ -18,7 +19,7 @@ class TestNoSpace(util.F2PyTest):
         assert np.allclose(k, w + 1)
         self.module.subc([w, k])
         assert np.allclose(k, w + 1)
-        assert self.module.t0(23) == b"2"
+        assert self.module.t0("23") == b"2"
 
 
 class TestPublicPrivate:
@@ -73,6 +74,15 @@ class TestModuleProcedure():
         assert mod["body"][3]["implementedby"] == \
             ["get_int", "get_real"]
 
+    def test_notPublicPrivate(self, tmp_path):
+        fpath = util.getpath("tests", "src", "crackfortran", "pubprivmod.f90")
+        mod = crackfortran.crackfortran([str(fpath)])
+        assert len(mod) == 1
+        mod = mod[0]
+        assert mod['vars']['a']['attrspec'] == ['private', ]
+        assert mod['vars']['b']['attrspec'] == ['public', ]
+        assert mod['vars']['seta']['attrspec'] == ['public', ]
+
 
 class TestExternal(util.F2PyTest):
     # issue gh-17859: add external attribute support
@@ -121,7 +131,6 @@ class TestMarkinnerspaces:
     def test_multiple_relevant_spaces(self):
         assert markinnerspaces("a 'b c' 'd e'") == "a 'b@_@c' 'd@_@e'"
         assert markinnerspaces(r'a "b c" "d e"') == r'a "b@_@c" "d@_@e"'
-
 
 class TestDimSpec(util.F2PyTest):
     """This test suite tests various expressions that are used as dimension
@@ -231,3 +240,30 @@ class TestModuleDeclaration:
         mod = crackfortran.crackfortran([str(fpath)])
         assert len(mod) == 1
         assert mod[0]["vars"]["abar"]["="] == "bar('abar')"
+
+class TestEval(util.F2PyTest):
+    def test_eval_scalar(self):
+        eval_scalar = crackfortran._eval_scalar
+
+        assert eval_scalar('123', {}) == '123'
+        assert eval_scalar('12 + 3', {}) == '15'
+        assert eval_scalar('a + b', dict(a=1, b=2)) == '3'
+        assert eval_scalar('"123"', {}) == "'123'"
+
+
+class TestFortranReader(util.F2PyTest):
+    @pytest.mark.parametrize("encoding",
+                             ['ascii', 'utf-8', 'utf-16', 'utf-32'])
+    def test_input_encoding(self, tmp_path, encoding):
+        # gh-635
+        f_path = tmp_path / f"input_with_{encoding}_encoding.f90"
+        # explicit BOM is required for UTF8
+        bom = {'utf-8': codecs.BOM_UTF8}.get(encoding, b'')
+        with f_path.open('w', encoding=encoding) as ff:
+            ff.write(bom.decode(encoding) +
+                     """
+                     subroutine foo()
+                     end subroutine foo
+                     """)
+        mod = crackfortran.crackfortran([str(f_path)])
+        assert mod[0]['name'] == 'foo'

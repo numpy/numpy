@@ -34,16 +34,14 @@ def histogram(
     a: ArrayLike,
     bins: _BinKind | SupportsIndex | ArrayLike = ...,
     range: None | tuple[float, float] = ...,
-    normed: None = ...,
-    weights: None | ArrayLike = ...,
     density: bool = ...,
+    weights: None | ArrayLike = ...,
 ) -> tuple[NDArray[Any], NDArray[Any]]: ...
 
 def histogramdd(
     sample: ArrayLike,
     bins: SupportsIndex | ArrayLike = ...,
     range: Sequence[tuple[float, float]] = ...,
-    normed: None | bool = ...,
-    weights: None | ArrayLike = ...,
     density: None | bool = ...,
+    weights: None | ArrayLike = ...,
 ) -> tuple[NDArray[Any], list[NDArray[Any]]]: ...

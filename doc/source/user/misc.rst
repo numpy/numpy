@@ -123,8 +123,6 @@ Only a survey of the choices. Little detail on how each works.
 
      - getting it wrong leads to memory leaks, and worse, segfaults
 
-   - API will change for Python 3.0!
-
 2) Cython
 
  - Plusses:
@@ -183,21 +181,7 @@ Only a survey of the choices. Little detail on how each works.
    - doesn't necessarily avoid reference counting issues or needing to know
      API's
 
-5) scipy.weave
-
- - Plusses:
-
-   - can turn many numpy expressions into C code
-   - dynamic compiling and loading of generated C code
-   - can embed pure C code in Python module and have weave extract, generate
-     interfaces and compile, etc.
-
- - Minuses:
-
-   - Future very uncertain: it's the only part of Scipy not ported to Python 3
-     and is effectively deprecated in favor of Cython.
-
-6) Psyco
+5) Psyco
 
  - Plusses:
 
@@ -226,5 +210,3 @@ Interfacing to C++:
  3) Boost.python
  4) SWIG
  5) SIP (used mainly in PyQT)
-
-

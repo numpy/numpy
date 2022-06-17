@@ -235,7 +235,7 @@ the buffer pointer.  Names with ``FARRAY`` are for Fortran-ordered
 arrays, and names with ``ARRAY`` are for C-ordered (or 1D arrays).
 
 Input Arrays
-````````````
+~~~~~~~~~~~~
 
 Input arrays are defined as arrays of data that are passed into a
 routine but are not altered in-place or returned to the user.  The
@@ -279,7 +279,7 @@ one-dimensional arrays with hard-coded dimensions.  Likewise,
 with hard-coded dimensions, and similarly for three-dimensional.
 
 In-Place Arrays
-```````````````
+~~~~~~~~~~~~~~~
 
 In-place arrays are defined as arrays that are modified in-place.  The
 input values may or may not be used, but the values at the time the
@@ -332,7 +332,7 @@ ND:
 
 
 Argout Arrays
-`````````````
+~~~~~~~~~~~~~
 
 Argout arrays are arrays that appear in the input arguments in C, but
 are in fact output arrays.  This pattern occurs often when there is
@@ -376,7 +376,7 @@ cannot be avoided.  Note that for these types of 1D typemaps, the
 Python function will take a single argument representing ``DIM1``.
 
 Argout View Arrays
-``````````````````
+~~~~~~~~~~~~~~~~~~
 
 Argoutview arrays are for when your C code provides you with a view of
 its internal data and does not require any memory to be allocated by
@@ -424,7 +424,7 @@ Note that arrays with hard-coded dimensions are not supported.  These
 cannot follow the double pointer signatures of these typemaps.
 
 Memory Managed Argout View Arrays
-`````````````````````````````````
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A recent addition to ``numpy.i`` are typemaps that permit argout
 arrays with views into memory that is managed.  See the discussion `here
@@ -458,7 +458,7 @@ arrays with views into memory that is managed.  See the discussion `here
 
 
 Output Arrays
-`````````````
+~~~~~~~~~~~~~
 
 The ``numpy.i`` interface file does not support typemaps for output
 arrays, for several reasons.  First, C/C++ return arguments are
@@ -479,7 +479,7 @@ function to be wrapped, either with ``%extend`` for the case of class
 methods or ``%ignore`` and ``%rename`` for the case of functions.
 
 Other Common Types: bool
-````````````````````````
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 Note that C++ type ``bool`` is not supported in the list in the
 `Available Typemaps`_ section.  NumPy bools are a single byte, while
@@ -497,7 +497,7 @@ to fix the data length problem, and `Input Arrays`_ will work fine,
 but `In-Place Arrays`_ might fail type-checking.
 
 Other Common Types: complex
-```````````````````````````
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Typemap conversions for complex floating-point types is also not
 supported automatically.  This is because Python and NumPy are
@@ -566,7 +566,7 @@ be fixed.  It is suggested that you do this anyway, as it only
 increases the capabilities of your Python interface.
 
 Why is There a Second File?
-```````````````````````````
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The `SWIG`_ type checking and conversion system is a complicated
 combination of C macros, `SWIG`_ macros, `SWIG`_ typemaps and `SWIG`_
@@ -604,7 +604,7 @@ in your code using::
 in your `SWIG`_ interface file.
 
 Macros
-``````
+~~~~~~
 
   **is_array(a)**
     Evaluates as true if ``a`` is non-``NULL`` and can be cast to a
@@ -667,7 +667,7 @@ Macros
     Evaluates as true if ``a`` is FORTRAN ordered.
 
 Routines
-````````
+~~~~~~~~
 
   **pytype_string()**
 
@@ -916,7 +916,7 @@ There are many C or C++ array/NumPy array situations not covered by
 a simple ``%include "numpy.i"`` and subsequent ``%apply`` directives.
 
 A Common Example
-````````````````
+~~~~~~~~~~~~~~~~
 
 Consider a reasonable prototype for a dot product function::
 
@@ -974,7 +974,7 @@ above for ``my_dot`` to get the behavior we want (note that
 macro to perform this task.
 
 Other Situations
-````````````````
+~~~~~~~~~~~~~~~~
 
 There are other wrapping situations in which ``numpy.i`` may be
 helpful when you encounter them.
@@ -1007,7 +1007,7 @@ helpful when you encounter them.
     `Swig-user <mailto:Swig-user@lists.sourceforge.net>`_ mail lists.
 
 A Final Note
-````````````
+~~~~~~~~~~~~
 
 When you use the ``%apply`` directive, as is usually necessary to use
 ``numpy.i``, it will remain in effect until you tell `SWIG`_ that it

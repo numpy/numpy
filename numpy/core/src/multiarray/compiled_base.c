@@ -1393,11 +1393,7 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *args)
 {
     PyObject *obj;
     PyObject *str;
-    #if !defined(PYPY_VERSION_NUM) || PYPY_VERSION_NUM > 0x07030300
     const char *docstr;
-    #else
-    char *docstr;
-    #endif
     static char *msg = "already has a different docstring";
 
     /* Don't add docstrings */

@@ -57,6 +57,10 @@
 #include "legacy_array_method.h"
 #include "abstractdtypes.h"
 
+/* TODO: Only for `NpyIter_GetTransferFlags` until it is public */
+#define NPY_ITERATOR_IMPLEMENTATION_CODE
+#include "nditer_impl.h"
+
 /********** PRINTF DEBUG TRACING **************/
 #define NPY_UF_DBG_TRACING 0
 
@@ -1206,6 +1210,7 @@ prepare_ufunc_output(PyUFuncObject *ufunc,
  * cannot broadcast any other array (as it requires a single stride).
  * The function accepts all 1-D arrays, and N-D arrays that are either all
  * C- or all F-contiguous.
+ * NOTE: Broadcast outputs are implicitly rejected in the overlap detection.
  *
  * Returns -2 if a trivial loop is not possible, 0 on success and -1 on error.
  */
@@ -1242,7 +1247,7 @@ try_trivial_single_output_loop(PyArrayMethod_Context *context,
         int op_ndim = PyArray_NDIM(op[iop]);
 
         /* Special case 0-D since we can handle broadcasting using a 0-stride */
-        if (op_ndim == 0) {
+        if (op_ndim == 0 && iop < nin) {
             fixed_strides[iop] = 0;
             continue;
         }
@@ -1253,7 +1258,7 @@ try_trivial_single_output_loop(PyArrayMethod_Context *context,
             operation_shape = PyArray_SHAPE(op[iop]);
         }
         else if (op_ndim != operation_ndim) {
-            return -2;  /* dimension mismatch (except 0-d ops) */
+            return -2;  /* dimension mismatch (except 0-d input ops) */
         }
         else if (!PyArray_CompareLists(
                 operation_shape, PyArray_DIMS(op[iop]), op_ndim)) {
@@ -1321,6 +1326,10 @@ try_trivial_single_output_loop(PyArrayMethod_Context *context,
      */
     char *data[NPY_MAXARGS];
     npy_intp count = PyArray_MultiplyList(operation_shape, operation_ndim);
+    if (count == 0) {
+        /* Nothing to do */
+        return 0;
+    }
     NPY_BEGIN_THREADS_DEF;
 
     PyArrayMethod_StridedLoop *strided_loop;
@@ -1539,10 +1548,6 @@ execute_ufunc_loop(PyArrayMethod_Context *context, int masked,
     if (masked) {
         baseptrs[nop] = PyArray_BYTES(op_it[nop]);
     }
-    if (NpyIter_ResetBasePointers(iter, baseptrs, NULL) != NPY_SUCCEED) {
-        NpyIter_Deallocate(iter);
-        return -1;
-    }
 
     /*
      * Get the inner loop, with the possibility of specialization
@@ -1579,15 +1584,23 @@ execute_ufunc_loop(PyArrayMethod_Context *context, int masked,
     char **dataptr = NpyIter_GetDataPtrArray(iter);
     npy_intp *strides = NpyIter_GetInnerStrideArray(iter);
     npy_intp *countptr = NpyIter_GetInnerLoopSizePtr(iter);
-    int needs_api = NpyIter_IterationNeedsAPI(iter);
 
     NPY_BEGIN_THREADS_DEF;
+
+    flags = PyArrayMethod_COMBINED_FLAGS(flags, NpyIter_GetTransferFlags(iter));
 
     if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
         npy_clear_floatstatus_barrier((char *)context);
     }
-    if (!needs_api && !(flags & NPY_METH_REQUIRES_PYAPI)) {
+    if (!(flags & NPY_METH_REQUIRES_PYAPI)) {
         NPY_BEGIN_THREADS_THRESHOLDED(full_size);
+    }
+
+    /* The reset may copy the first buffer chunk, which could cause FPEs */
+    if (NpyIter_ResetBasePointers(iter, baseptrs, NULL) != NPY_SUCCEED) {
+        NPY_AUXDATA_FREE(auxdata);
+        NpyIter_Deallocate(iter);
+        return -1;
     }
 
     NPY_UF_DBG_PRINT("Actual inner loop:\n");
@@ -2383,7 +2396,8 @@ PyUFunc_GeneralizedFunctionInternal(PyUFuncObject *ufunc,
                  NPY_ITER_MULTI_INDEX |
                  NPY_ITER_REFS_OK |
                  NPY_ITER_ZEROSIZE_OK |
-                 NPY_ITER_COPY_IF_OVERLAP;
+                 NPY_ITER_COPY_IF_OVERLAP |
+                 NPY_ITER_DELAY_BUFALLOC;
 
     /* Create the iterator */
     iter = NpyIter_AdvancedNew(nop, op, iter_flags,
@@ -2819,7 +2833,7 @@ reduce_loop(PyArrayMethod_Context *context,
         npy_intp const *countptr, NpyIter_IterNextFunc *iternext,
         int needs_api, npy_intp skip_first_count)
 {
-    int retval;
+    int retval = 0;
     char *dataptrs_copy[4];
     npy_intp strides_copy[4];
     npy_bool masked;
@@ -2849,19 +2863,20 @@ reduce_loop(PyArrayMethod_Context *context,
                     count = 0;
                 }
             }
+            if (count > 0) {
+                /* Turn the two items into three for the inner loop */
+                dataptrs_copy[0] = dataptrs[0];
+                dataptrs_copy[1] = dataptrs[1];
+                dataptrs_copy[2] = dataptrs[0];
+                strides_copy[0] = strides[0];
+                strides_copy[1] = strides[1];
+                strides_copy[2] = strides[0];
 
-            /* Turn the two items into three for the inner loop */
-            dataptrs_copy[0] = dataptrs[0];
-            dataptrs_copy[1] = dataptrs[1];
-            dataptrs_copy[2] = dataptrs[0];
-            strides_copy[0] = strides[0];
-            strides_copy[1] = strides[1];
-            strides_copy[2] = strides[0];
-
-            retval = strided_loop(context,
-                    dataptrs_copy, &count, strides_copy, auxdata);
-            if (retval < 0) {
-                goto finish_loop;
+                retval = strided_loop(context,
+                        dataptrs_copy, &count, strides_copy, auxdata);
+                if (retval < 0) {
+                    goto finish_loop;
+                }
             }
 
             /* Advance loop, and abort on error (or finish) */
@@ -5887,6 +5902,13 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
     NpyAuxData *auxdata = NULL;
 
     NPY_BEGIN_THREADS_DEF;
+
+    if (ufunc->core_enabled) {
+        PyErr_Format(PyExc_TypeError,
+            "%s.at does not support ufunc with non-trivial signature: %s has signature %s.",
+            ufunc->name, ufunc->name, ufunc->core_signature);
+        return NULL;
+    }
 
     if (ufunc->nin > 2) {
         PyErr_SetString(PyExc_ValueError,

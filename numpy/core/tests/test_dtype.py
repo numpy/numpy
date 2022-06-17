@@ -180,11 +180,11 @@ class TestBuiltin:
                       'formats': ['i4', 'f4'],
                       'offsets': [0, 4]})
         y = np.dtype({'names': ['B', 'A'],
-                      'formats': ['f4', 'i4'],
+                      'formats': ['i4', 'f4'],
                       'offsets': [4, 0]})
         assert_equal(x == y, False)
-        # But it is currently an equivalent cast:
-        assert np.can_cast(x, y, casting="equiv")
+        # This is an safe cast (not equiv) due to the different names:
+        assert np.can_cast(x, y, casting="safe")
 
 
 class TestRecord:
@@ -223,7 +223,8 @@ class TestRecord:
         assert refcounts == refcounts_new
 
     def test_mutate(self):
-        # Mutating a dtype should reset the cached hash value
+        # Mutating a dtype should reset the cached hash value.
+        # NOTE: Mutating should be deprecated, but new API added to replace it.
         a = np.dtype([('yo', int)])
         b = np.dtype([('yo', int)])
         c = np.dtype([('ye', int)])
@@ -236,6 +237,16 @@ class TestRecord:
         a.__setstate__(state)
         assert_dtype_equal(a, b)
         assert_dtype_not_equal(a, c)
+
+    def test_mutate_error(self):
+        # NOTE: Mutating should be deprecated, but new API added to replace it.
+        a = np.dtype("i,i")
+
+        with pytest.raises(ValueError, match="must replace all names at once"):
+            a.names = ["f0"]
+
+        with pytest.raises(ValueError, match=".*and not string"):
+            a.names = ["f0", b"not a unicode name"]
 
     def test_not_lists(self):
         """Test if an appropriate exception is raised when passing bad values to
@@ -1064,6 +1075,12 @@ class TestDtypeAttributes:
             pass
         assert_equal(np.dtype(user_def_subcls).name, 'user_def_subcls')
 
+    def test_zero_stride(self):
+        arr = np.ones(1, dtype="i8")
+        arr = np.broadcast_to(arr, 10)
+        assert arr.strides == (0,)
+        with pytest.raises(ValueError):
+            arr.dtype = "i1"
 
 class TestDTypeMakeCanonical:
     def check_canonical(self, dtype, canonical):
@@ -1157,6 +1174,9 @@ class TestDTypeMakeCanonical:
     def test_make_canonical_hypothesis(self, dtype):
         canonical = np.result_type(dtype)
         self.check_canonical(dtype, canonical)
+        # result_type with two arguments should always give identical results:
+        two_arg_result = np.result_type(dtype, dtype)
+        assert np.can_cast(two_arg_result, canonical, casting="no")
 
     @pytest.mark.slow
     @hypothesis.given(
@@ -1171,6 +1191,10 @@ class TestDTypeMakeCanonical:
         assert dtype_with_empty_space.itemsize == dtype.itemsize
         canonicalized = np.result_type(dtype_with_empty_space)
         self.check_canonical(dtype_with_empty_space, canonicalized)
+        # promotion with two arguments should always give identical results:
+        two_arg_result = np.promote_types(
+                dtype_with_empty_space, dtype_with_empty_space)
+        assert np.can_cast(two_arg_result, canonicalized, casting="no")
 
         # Ensure that we also check aligned struct (check the opposite, in
         # case hypothesis grows support for `align`.  Then repeat the test:
@@ -1179,6 +1203,10 @@ class TestDTypeMakeCanonical:
         assert dtype_with_empty_space.itemsize == dtype_aligned.itemsize
         canonicalized = np.result_type(dtype_with_empty_space)
         self.check_canonical(dtype_with_empty_space, canonicalized)
+        # promotion with two arguments should always give identical results:
+        two_arg_result = np.promote_types(
+            dtype_with_empty_space, dtype_with_empty_space)
+        assert np.can_cast(two_arg_result, canonicalized, casting="no")
 
 
 class TestPickling:
@@ -1317,6 +1345,16 @@ class TestPromotion:
         with pytest.raises(TypeError,
                 match=r".* no common DType exists for the given inputs"):
             np.result_type(1j, rational(1, 2))
+
+    @pytest.mark.parametrize("val", [2, 2**32, 2**63, 2**64, 2*100])
+    def test_python_integer_promotion(self, val):
+        # If we only path scalars (mainly python ones!), the result must take
+        # into account that the integer may be considered int32, int64, uint64,
+        # or object depending on the input value.  So test those paths!
+        expected_dtype = np.result_type(np.array(val).dtype, np.array(0).dtype)
+        assert np.result_type(val, 0) == expected_dtype
+        # For completeness sake, also check with a NumPy scalar as second arg:
+        assert np.result_type(val, np.int8(0)) == expected_dtype
 
     @pytest.mark.parametrize(["other", "expected"],
             [(1, rational), (1., np.float64)])

@@ -857,12 +857,34 @@ NpyIter_RequiresBuffering(NpyIter *iter)
  * Whether the iteration loop, and in particular the iternext()
  * function, needs API access.  If this is true, the GIL must
  * be retained while iterating.
+ *
+ * NOTE: Internally (currently), `NpyIter_GetTransferFlags` will
+ *       additionally provide information on whether floating point errors
+ *       may be given during casts.  The flags only require the API use
+ *       necessary for buffering though.  So an iterate which does not require
+ *       buffering may indicate `NpyIter_IterationNeedsAPI`, but not include
+ *       the flag in `NpyIter_GetTransferFlags`.
  */
 NPY_NO_EXPORT npy_bool
 NpyIter_IterationNeedsAPI(NpyIter *iter)
 {
     return (NIT_ITFLAGS(iter)&NPY_ITFLAG_NEEDSAPI) != 0;
 }
+
+
+/*
+ * Fetch the ArrayMethod (runtime) flags for all "transfer functions' (i.e.
+ * copy to buffer/casts).
+ *
+ * TODO: This should be public API, but that only makes sense when the
+ *       ArrayMethod API is made public.
+ */
+NPY_NO_EXPORT int
+NpyIter_GetTransferFlags(NpyIter *iter)
+{
+    return NIT_ITFLAGS(iter) >> NPY_ITFLAG_TRANSFERFLAGS_SHIFT;
+}
+
 
 /*NUMPY_API
  * Gets the number of dimensions being iterated

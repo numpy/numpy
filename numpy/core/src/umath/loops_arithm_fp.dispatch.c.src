@@ -1,6 +1,7 @@
 /*@targets
  ** $maxopt baseline
  ** sse2 avx2 avx512f
+ ** vx vxe
  **/
 #define _UMATHMODULE
 #define _MULTIARRAYMODULE
@@ -364,7 +365,7 @@ sse2_binary_scalar2_@kind@_@TYPE@(@type@ * op, @type@ * ip1, @type@ * ip2, npy_i
  *  #type = npy_float, npy_double#
  *  #TYPE = FLOAT, DOUBLE#
  *  #sfx = f32, f64#
- *  #CHK =    , _F64#
+ *  #CHK = _F32, _F64#
  */
 #if NPY_SIMD@CHK@
 /**begin repeat1
@@ -444,7 +445,7 @@ simd_binary_scalar2_@kind@_@TYPE@(@type@ * op, @type@ * ip1, @type@ * ip2, npy_i
  *  #type = npy_float, npy_double, npy_longdouble#
  *  #TYPE = FLOAT, DOUBLE, LONGDOUBLE#
  *  #vector = 1, 1, 0#
- *  #VECTOR = NPY_SIMD, NPY_SIMD_F64, 0 #
+ *  #VECTOR = NPY_SIMD_F32, NPY_SIMD_F64, 0 #
  */
 /**begin repeat1
  * Arithmetic

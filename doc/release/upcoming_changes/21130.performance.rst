@@ -1,4 +1,0 @@
-Faster ``np.where``
--------------------
-`numpy.where` is now much faster than previously on unpredictable/random
-input data.

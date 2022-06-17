@@ -1,26 +1,43 @@
 .. _how-to-io:
 
-##############################################################################
-Reading and writing files
-##############################################################################
+.. Setting up files temporarily to be used in the examples below. Clear-up
+   has to be done at the end of the document.
+
+.. testsetup::
+
+   >>> from numpy.testing import temppath
+   >>> with open("csv.txt", "wt") as f:
+   ...    _ = f.write("1, 2, 3\n4,, 6\n7, 8, 9")
+   >>> with open("fixedwidth.txt", "wt") as f:
+   ...    _ = f.write("1   2      3\n44      6\n7   88889")
+   >>> with open("nan.txt", "wt") as f:
+   ...    _ = f.write("1 2 3\n44 x 6\n7 8888 9")
+   >>> with open("skip.txt", "wt") as f:
+   ...    _ = f.write("1 2   3\n44   6\n7 888 9")
+   >>> with open("tabs.txt", "wt") as f:
+   ...    _ = f.write("1\t2\t3\n44\t \t6\n7\t888\t9")
+
+
+===========================
+ Reading and writing files
+===========================
 
 This page tackles common applications; for the full collection of I/O
 routines, see :ref:`routines.io`.
 
 
-******************************************************************************
 Reading text and CSV_ files
-******************************************************************************
+===========================
 
 .. _CSV: https://en.wikipedia.org/wiki/Comma-separated_values
 
 With no missing values
-==============================================================================
+----------------------
 
 Use :func:`numpy.loadtxt`.
 
 With missing values
-==============================================================================
+-------------------
 
 Use :func:`numpy.genfromtxt`.
 
@@ -33,20 +50,20 @@ Use :func:`numpy.genfromtxt`.
     ``filling_values`` (default is ``np.nan`` for float, -1 for int).
 
 With non-whitespace delimiters
-------------------------------------------------------------------------------
-::
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    >>> print(open("csv.txt").read())  # doctest: +SKIP
+
+    >>> with open("csv.txt", "r") as f:
+    ...     print(f.read())
     1, 2, 3
     4,, 6
     7, 8, 9
 
 
 Masked-array output
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-::
++++++++++++++++++++
 
-    >>> np.genfromtxt("csv.txt", delimiter=",", usemask=True)  # doctest: +SKIP
+    >>> np.genfromtxt("csv.txt", delimiter=",", usemask=True)
     masked_array(
       data=[[1.0, 2.0, 3.0],
             [4.0, --, 6.0],
@@ -57,73 +74,72 @@ Masked-array output
       fill_value=1e+20)
 
 Array output
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-::
+++++++++++++
 
-    >>> np.genfromtxt("csv.txt", delimiter=",")  # doctest: +SKIP
+    >>> np.genfromtxt("csv.txt", delimiter=",")
     array([[ 1.,  2.,  3.],
            [ 4., nan,  6.],
            [ 7.,  8.,  9.]])
 
 Array output, specified fill-in value
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-::
++++++++++++++++++++++++++++++++++++++
 
-    >>> np.genfromtxt("csv.txt", delimiter=",", dtype=np.int8, filling_values=99)  # doctest: +SKIP
+
+    >>> np.genfromtxt("csv.txt", delimiter=",", dtype=np.int8, filling_values=99)
     array([[ 1,  2,  3],
            [ 4, 99,  6],
            [ 7,  8,  9]], dtype=int8)
 
 Whitespace-delimited
--------------------------------------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~
 
 :func:`numpy.genfromtxt` can also parse whitespace-delimited data files
 that have missing values if
 
 * **Each field has a fixed width**: Use the width as the `delimiter` argument.
-  ::
 
     # File with width=4. The data does not have to be justified (for example,
     # the 2 in row 1), the last column can be less than width (for example, the 6
     # in row 2), and no delimiting character is required (for instance 8888 and 9
     # in row 3)
 
-    >>> f = open("fixedwidth.txt").read()  # doctest: +SKIP
-    >>> print(f)  # doctest: +SKIP
+    >>> with open("fixedwidth.txt", "r") as f:
+    ...    data = (f.read())
+    >>> print(data)
     1   2      3
     44      6
     7   88889
 
     # Showing spaces as ^
-    >>> print(f.replace(" ","^"))  # doctest: +SKIP
+    >>> print(data.replace(" ","^"))
     1^^^2^^^^^^3
     44^^^^^^6
     7^^^88889
 
-    >>> np.genfromtxt("fixedwidth.txt", delimiter=4)  # doctest: +SKIP
+    >>> np.genfromtxt("fixedwidth.txt", delimiter=4)
     array([[1.000e+00, 2.000e+00, 3.000e+00],
            [4.400e+01,       nan, 6.000e+00],
            [7.000e+00, 8.888e+03, 9.000e+00]])
 
 * **A special value (e.g. "x") indicates a missing field**: Use it as the
   `missing_values` argument.
-  ::
 
-    >>> print(open("nan.txt").read())  # doctest: +SKIP
+    >>> with open("nan.txt", "r") as f:
+    ...     print(f.read())
     1 2 3
     44 x 6
     7  8888 9
 
-    >>> np.genfromtxt("nan.txt", missing_values="x")  # doctest: +SKIP
+    >>> np.genfromtxt("nan.txt", missing_values="x")
     array([[1.000e+00, 2.000e+00, 3.000e+00],
            [4.400e+01,       nan, 6.000e+00],
            [7.000e+00, 8.888e+03, 9.000e+00]])
 
 * **You want to skip the rows with missing values**: Set
   `invalid_raise=False`.
-  ::
 
-    >>> print(open("skip.txt").read())  # doctest: +SKIP
+    >>> with open("skip.txt", "r") as f:
+    ...     print(f.read())
     1 2   3
     44    6
     7 888 9
@@ -139,28 +155,27 @@ that have missing values if
   indicates missing data**. For instance, if columns are delimited by ``\t``,
   then missing data will be recognized if it consists of one
   or more spaces.
-  ::
 
-    >>> f = open("tabs.txt").read()  # doctest: +SKIP
-    >>> print(f)  # doctest: +SKIP
+    >>> with open("tabs.txt", "r") as f:
+    ...    data = (f.read())
+    >>> print(data)
     1       2       3
     44              6
     7       888     9
 
     # Tabs vs. spaces
-    >>> print(f.replace("\t","^"))  # doctest: +SKIP
+    >>> print(data.replace("\t","^"))
     1^2^3
     44^ ^6
     7^888^9
 
-    >>> np.genfromtxt("tabs.txt", delimiter="\t", missing_values=" +")  # doctest: +SKIP
+    >>> np.genfromtxt("tabs.txt", delimiter="\t", missing_values=" +")
     array([[  1.,   2.,   3.],
            [ 44.,  nan,   6.],
            [  7., 888.,   9.]])
 
-******************************************************************************
 Read a file in .npy or .npz format
-******************************************************************************
+==================================
 
 Choices:
 
@@ -169,12 +184,11 @@ Choices:
 
   - Use memory mapping. See `numpy.lib.format.open_memmap`.
 
-******************************************************************************
 Write to a file to be read back by NumPy
-******************************************************************************
+========================================
 
 Binary
-===============================================================================
+------
 
 Use
 :func:`numpy.save`, or to store multiple arrays :func:`numpy.savez`
@@ -188,20 +202,19 @@ Masked arrays :any:`can't currently be saved <MaskedArray.tofile>`,
 nor can other arbitrary array subclasses.
 
 Human-readable
-==============================================================================
+--------------
 
 :func:`numpy.save` and :func:`numpy.savez` create binary files. To **write a
 human-readable file**, use :func:`numpy.savetxt`. The array can only be 1- or
 2-dimensional, and there's no ` savetxtz` for multiple files.
 
 Large arrays
-==============================================================================
+------------
 
 See :ref:`how-to-io-large-arrays`.
 
-******************************************************************************
 Read an arbitrarily formatted binary file ("binary blob")
-******************************************************************************
+=========================================================
 
 Use a :doc:`structured array <basics.rec>`.
 
@@ -255,9 +268,8 @@ under `CC BY 4.0 <https://creativecommons.org/licenses/by/4.0/>`_.)
 
 .. _how-to-io-large-arrays:
 
-******************************************************************************
 Write or read large arrays
-******************************************************************************
+==========================
 
 **Arrays too large to fit in memory** can be treated like ordinary in-memory
 arrays using memory mapping.
@@ -282,16 +294,14 @@ full-featured formats and libraries usable with NumPy include:
 For tradeoffs among memmap, Zarr, and HDF5, see
 `pythonspeed.com <https://pythonspeed.com/articles/mmap-vs-zarr-hdf5/>`_.
 
-******************************************************************************
 Write files for reading by other (non-NumPy) tools
-******************************************************************************
+==================================================
 
 Formats for **exchanging data** with other tools include HDF5, Zarr, and
 NetCDF (see :ref:`how-to-io-large-arrays`).
 
-******************************************************************************
 Write or read a JSON file
-******************************************************************************
+=========================
 
 NumPy arrays are **not** directly
 `JSON serializable <https://github.com/numpy/numpy/issues/12481>`_.
@@ -299,9 +309,8 @@ NumPy arrays are **not** directly
 
 .. _how-to-io-pickle-file:
 
-******************************************************************************
 Save/restore using a pickle file
-******************************************************************************
+================================
 
 Avoid when possible; :doc:`pickles <python:library/pickle>` are not secure
 against erroneous or maliciously constructed data.
@@ -310,15 +319,13 @@ Use :func:`numpy.save` and :func:`numpy.load`.  Set ``allow_pickle=False``,
 unless the array dtype includes Python objects, in which case pickling is
 required.
 
-******************************************************************************
 Convert from a pandas DataFrame to a NumPy array
-******************************************************************************
+================================================
 
 See :meth:`pandas.DataFrame.to_numpy`.
 
-******************************************************************************
- Save/restore using `~numpy.ndarray.tofile` and `~numpy.fromfile`
-******************************************************************************
+Save/restore using `~numpy.ndarray.tofile` and `~numpy.fromfile`
+================================================================
 
 In general, prefer :func:`numpy.save` and :func:`numpy.load`.
 
@@ -326,3 +333,11 @@ In general, prefer :func:`numpy.save` and :func:`numpy.load`.
 endianness and precision and so are unsuitable for anything but scratch
 storage.
 
+
+.. testcleanup::
+
+   >>> import os
+   >>> # list all files created in testsetup. If needed there are
+   >>> # convenienes in e.g. astroquery to do this more automatically
+   >>> for filename in ['csv.txt', 'fixedwidth.txt', 'nan.txt', 'skip.txt', 'tabs.txt']:
+   ...     os.remove(filename)

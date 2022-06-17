@@ -1342,9 +1342,6 @@ def assert_raises_regex(exception_class, expected_regexp, *args, **kwargs):
 
     Alternatively, can be used as a context manager like `assert_raises`.
 
-    Name of this function adheres to Python 3.2+ reference, but should work in
-    all versions down to 2.6.
-
     Notes
     -----
     .. versionadded:: 1.9.0
@@ -1479,6 +1476,12 @@ def assert_allclose(actual, desired, rtol=1e-7, atol=0, equal_nan=True,
     Raises an AssertionError if two objects are not equal up to desired
     tolerance.
 
+    Given two array_like objects, check that their shapes and all elements
+    are equal (but see the Notes for the special handling of a scalar). An
+    exception is raised if the shapes mismatch or any values conflict. In 
+    contrast to the standard usage in numpy, NaNs are compared like numbers,
+    no assertion is raised if both objects have NaNs in the same positions.
+
     The test is equivalent to ``allclose(actual, desired, rtol, atol)`` (note
     that ``allclose`` has different default values). It compares the difference
     between `actual` and `desired` to ``atol + rtol * abs(desired)``.
@@ -1510,6 +1513,12 @@ def assert_allclose(actual, desired, rtol=1e-7, atol=0, equal_nan=True,
     See Also
     --------
     assert_array_almost_equal_nulp, assert_array_max_ulp
+
+    Notes
+    -----
+    When one of `actual` and `desired` is a scalar and the other is
+    array_like, the function checks that each element of the array_like
+    object is equal to the scalar.
 
     Examples
     --------

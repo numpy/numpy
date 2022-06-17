@@ -1,0 +1,25 @@
+New attribute ``symbol`` added to polynomial classes
+----------------------------------------------------
+
+The polynomial classes in the ``numpy.polynomial`` package have a new
+``symbol`` attribute which is used to represent the indeterminate
+of the polynomial.
+This can be used to change the value of the variable when printing::
+
+    >>> P_y = np.polynomial.Polynomial([1, 0, -1], symbol="y")
+    >>> print(P_y)
+    1.0 + 0.0·y¹ - 1.0·y²
+
+Note that the polynomial classes only support 1D polynomials, so operations
+that involve polynomials with different symbols are disallowed when the
+result would be multivariate::
+
+    >>> P = np.polynomial.Polynomial([1, -1])  # default symbol is "x"
+    >>> P_z = np.polynomial.Polynomial([1, 1], symbol="z")
+    >>> P * P_z
+    Traceback (most recent call last)
+       ...
+    ValueError: Polynomial symbols differ
+
+The symbol can be any valid Python identifier. The default is ``symbol=x``,
+consistent with existing behavior.

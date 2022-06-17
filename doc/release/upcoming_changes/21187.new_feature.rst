@@ -1,8 +1,0 @@
-deterministic output files for F2PY
------------------------------------
-For F77 inputs, ``f2py`` will generate ``modname-f2pywrappers.f``
-unconditionally, though these may be empty.  For free-form inputs,
-``modname-f2pywrappers.f``, ``modname-f2pywrappers2.f90`` will both be generated
-unconditionally, and may be empty. This allows writing generic output rules in
-``cmake`` or ``meson`` and other build systems. Older behavior can be restored
-by passing ``--skip-empty-wrappers`` to ``f2py``. :ref:`f2py-meson` details usage.

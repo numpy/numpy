@@ -267,6 +267,33 @@ _extract_pyvals(PyObject *ref, const char *name, int *bufsize,
 }
 
 /*
+ * Handler which uses the default `np.errstate` given that `fpe_errors` is
+ * already set.  `fpe_errors` is typically the (nonzero) result of
+ * `npy_get_floatstatus_barrier`.
+ *
+ * Returns -1 on failure (an error was raised) and 0 on success.
+ */
+NPY_NO_EXPORT int
+PyUFunc_GiveFloatingpointErrors(const char *name, int fpe_errors)
+{
+    int bufsize, errmask;
+    PyObject *errobj;
+
+    if (PyUFunc_GetPyValues((char *)name, &bufsize, &errmask,
+                            &errobj) < 0) {
+        return -1;
+    }
+    int first = 1;
+    if (PyUFunc_handlefperr(errmask, errobj, fpe_errors, &first)) {
+        Py_XDECREF(errobj);
+        return -1;
+    }
+    Py_XDECREF(errobj);
+    return 0;
+}
+
+
+/*
  * check the floating point status
  *  - errmask: mask of status to check
  *  - extobj: ufunc pyvals object

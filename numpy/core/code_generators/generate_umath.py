@@ -445,7 +445,7 @@ defdict = {
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.greater'),
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
-          TD(all, out='?', simd=[('avx2', ints)]),
+          TD(all, out='?', dispatch=[('loops_comparison', bints+'fd')]),
           [TypeDescription('O', FullTypeDescr, 'OO', 'O')],
           TD('O', out='?'),
           ),
@@ -453,7 +453,7 @@ defdict = {
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.greater_equal'),
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
-          TD(all, out='?', simd=[('avx2', ints)]),
+          TD(all, out='?', dispatch=[('loops_comparison', bints+'fd')]),
           [TypeDescription('O', FullTypeDescr, 'OO', 'O')],
           TD('O', out='?'),
           ),
@@ -461,7 +461,7 @@ defdict = {
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.less'),
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
-          TD(all, out='?', simd=[('avx2', ints)]),
+          TD(all, out='?', dispatch=[('loops_comparison', bints+'fd')]),
           [TypeDescription('O', FullTypeDescr, 'OO', 'O')],
           TD('O', out='?'),
           ),
@@ -469,7 +469,7 @@ defdict = {
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.less_equal'),
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
-          TD(all, out='?', simd=[('avx2', ints)]),
+          TD(all, out='?', dispatch=[('loops_comparison', bints+'fd')]),
           [TypeDescription('O', FullTypeDescr, 'OO', 'O')],
           TD('O', out='?'),
           ),
@@ -477,7 +477,7 @@ defdict = {
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.equal'),
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
-          TD(all, out='?', simd=[('avx2', ints)]),
+          TD(all, out='?', dispatch=[('loops_comparison', bints+'fd')]),
           [TypeDescription('O', FullTypeDescr, 'OO', 'O')],
           TD('O', out='?'),
           ),
@@ -485,7 +485,7 @@ defdict = {
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.not_equal'),
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
-          TD(all, out='?', simd=[('avx2', ints)]),
+          TD(all, out='?', dispatch=[('loops_comparison', bints+'fd')]),
           [TypeDescription('O', FullTypeDescr, 'OO', 'O')],
           TD('O', out='?'),
           ),
@@ -1236,7 +1236,7 @@ def make_code(funcdict, filename):
 
         return 0;
     }
-    """) % (filename, code1, code2, code3)
+    """) % (os.path.basename(filename), code1, code2, code3)
     return code
 
 
