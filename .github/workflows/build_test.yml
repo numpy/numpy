@@ -45,6 +45,8 @@ jobs:
   smoke_test:
     if: "github.repository == 'numpy/numpy' && !contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]') && !contains(github.event.head_commit.message, '[skip github]')"
     runs-on: ubuntu-latest
+    env:
+      WITHOUT_SIMD: 1
     steps:
     - uses: actions/checkout@v3
       with:
@@ -71,6 +73,21 @@ jobs:
     - uses: actions/setup-python@v3
       with:
         python-version: ${{ matrix.python-version }}
+    - uses: ./.github/actions
+
+  without_optimizations:
+    needs: [smoke_test]
+    runs-on: ubuntu-latest
+    env:
+      WITHOUT_OPTIMIZATIONS: 1
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    - uses: actions/setup-python@v3
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
 
   debug:
