@@ -117,7 +117,7 @@ def ediff1d(ary, to_end=None, to_begin=None):
 
     # do the calculation in place and copy to_begin and to_end
     l_diff = max(len(ary) - 1, 0)
-    result = np.empty(l_diff + l_begin + l_end, dtype=ary.dtype)
+    result = np.empty(l_diff + l_begin + l_end, dtype=dtype_req)
     result = ary.__array_wrap__(result)
     if l_begin > 0:
         result[:l_begin] = to_begin
