@@ -641,20 +641,18 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, kind=None):
             try:
                 ar2_range = ar2_max - ar2_min
 
-                # Optimal performance is for approximately
-                # log10(size) > (log10(range) - 2.27) / 0.927.
-                # However, here we set the requirement that
-                # the intermediate array can only be 6x
-                # the combined memory allocation of the original
-                # arrays.
-                # (see discussion on 
-                # https://github.com/numpy/numpy/pull/12065)
-                below_memory_constraint = (
-                    ar2_range <= 6 * (ar1_size + ar2_size)
-                )
                 range_safe_from_overflow = True
             except FloatingPointError:
                 range_safe_from_overflow = False
+
+        # Optimal performance is for approximately
+        # log10(size) > (log10(range) - 2.27) / 0.927.
+        # However, here we set the requirement that
+        # the intermediate array can only be 6x
+        # the combined memory allocation of the original
+        # arrays. See discussion on 
+        # https://github.com/numpy/numpy/pull/12065.
+        below_memory_constraint = ar2_range <= 6 * (ar1_size + ar2_size)
 
         if (
             range_safe_from_overflow and 
