@@ -2387,19 +2387,19 @@ def _selected_int_kind_func(r):
 
 def _selected_real_kind_func(p, r=0, radix=0):
     # XXX: This should be processor dependent
-    # This is only good for 0 <= p <= 20
+    # This is only verified for 0 <= p <= 20, possibly good for p <= 33 and above
     if p < 7:
         return 4
     if p < 16:
         return 8
     machine = platform.machine().lower()
-    if machine.startswith(('aarch64', 'power', 'ppc', 'riscv', 's390x', 'sparc', 'arm64')):
-        if p <= 20:
+    if machine.startswith(('aarch64', 'arm64', 'power', 'ppc', 'riscv', 's390x', 'sparc')):
+        if p <= 33:
             return 16
     else:
         if p < 19:
             return 10
-        elif p <= 20:
+        elif p <= 33:
             return 16
     return -1
 

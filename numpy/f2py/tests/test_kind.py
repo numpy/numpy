@@ -20,7 +20,7 @@ class TestKind(util.F2PyTest):
                 i
             ), f"selectedintkind({i}): expected {selected_int_kind(i)!r} but got {selectedintkind(i)!r}"
 
-        for i in range(20):
+        for i in range(40):
             assert selectedrealkind(i) == selected_real_kind(
                 i
             ), f"selectedrealkind({i}): expected {selected_real_kind(i)!r} but got {selectedrealkind(i)!r}"
