@@ -683,12 +683,12 @@ class TestNegative:
             sup.filter(RuntimeWarning)
             for dt in types:
                 a = np.ones((), dtype=dt)[()]
-            if dt in np.typecodes['UnsignedInteger']:
-                st = np.dtype(dt).type
-                min = st(np.iinfo(dt).min)
-                assert_equal(operator.neg(a), min)
-            else:
-                assert_equal(operator.neg(a) + a, 0)
+                if dt in np.typecodes['UnsignedInteger']:
+                    st = np.dtype(dt).type
+                    max = st(np.iinfo(dt).max)
+                    assert_equal(operator.neg(a), max)
+                else:
+                    assert_equal(operator.neg(a) + a, 0)
 
 class TestSubtract:
     def test_exceptions(self):
