@@ -511,7 +511,7 @@ static NPY_INLINE int
 #if @uns@
     *out = -a;
     return NPY_FPE_OVERFLOW;
-#elif ~@uns@ && @int@
+#elif @int@
     if(a == NPY_MIN_@NAME@){
         *out = a;
         return NPY_FPE_OVERFLOW;
