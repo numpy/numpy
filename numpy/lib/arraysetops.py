@@ -633,26 +633,20 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, kind=None):
     if integer_arrays and kind in {None, 'dictionary'}:
         ar2_min = np.min(ar2)
         ar2_max = np.max(ar2)
-        ar1_size = ar1.size
-        ar2_size = ar2.size
 
-        # Check for integer overflow
-        with np.errstate(over='raise'):
-            try:
-                ar2_range = ar2_max - ar2_min
+        ar2_range = int(ar2_max) - int(ar2_min)
 
-                range_safe_from_overflow = True
-            except FloatingPointError:
-                range_safe_from_overflow = False
+        # Constraints on whether we can actually use the dictionary method:
+        range_safe_from_overflow = ar2_range < np.iinfo(ar2.dtype).max
+        below_memory_constraint = ar2_range <= 6 * (ar1.size + ar2.size)
 
         # Optimal performance is for approximately
         # log10(size) > (log10(range) - 2.27) / 0.927.
-        # However, here we set the requirement that
+        # However, here we set the requirement that by default
         # the intermediate array can only be 6x
         # the combined memory allocation of the original
         # arrays. See discussion on 
         # https://github.com/numpy/numpy/pull/12065.
-        below_memory_constraint = ar2_range <= 6 * (ar1_size + ar2_size)
 
         if (
             range_safe_from_overflow and 
