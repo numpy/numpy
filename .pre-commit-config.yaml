@@ -12,8 +12,8 @@ repos:
       - id: end-of-file-fixer
       - id: trailing-whitespace
       - id: mixed-line-ending
+      # Defaults to 500 kB
       - id: check-added-large-files
-        args: [--maxkb=500]
 
   # "Darker" runs the black formatter, isort import sorter, and
   # flake8 checker only on edited lines rather than entire file
@@ -31,15 +31,19 @@ repos:
           - flake8-bugbear
           - pep8-naming
 
-
-  - repo: https://github.com/jlebar/pre-commit-hooks.git
-    rev: 62ca83ba4958da48ea44d9f24cd0aa58633376c7
+  # We want to use git-clang-format which is provided by the clang-format wheel,
+  # but not exposed in its precommit hook.
+  - repo: local
     hooks:
       - id: clang-format-diff
-        verbose: true
+        name: clang-format-diff
+        entry: bash tools/precommit-clang-format.sh
+        language: python
+        args: [--style, file]
         types_or: [c++, c]
-
-
+        verbose: true
+        additional_dependencies:
+          - clang-format==14.0.3
 
   # Allow black to be run on entire file manually
   # Use pre-commit run --hook-stage manual black
@@ -78,11 +82,6 @@ repos:
         verbose: true
         types_or: [c++, c]
 
-  - repo: https://github.com/jumanjihouse/pre-commit-hooks
-    rev: 2.1.6
-    hooks:
-      - id: markdownlint
-
   # Validate .rst files
   - repo: https://github.com/myint/rstcheck
     rev: v5.0.0
@@ -115,12 +114,6 @@ repos:
     rev: v0.3.7
     hooks:
       - id: fprettify
-
-  #   # Fortran linter
-  # - repo: https://github.com/pseewald/fprettify.git
-  #   rev: 0.3.7
-  #   hooks:
-  #     - id: fprettify
 
   # Docker linter
   - repo: https://github.com/hadolint/hadolint
