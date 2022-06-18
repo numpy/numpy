@@ -499,17 +499,26 @@ half_ctype_power(npy_half a, npy_half b, npy_half *out)
  * #type = npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
  *         npy_long, npy_ulong, npy_longlong, npy_ulonglong,
  *         npy_float, npy_double, npy_longdouble#
+ * #NAME = BYTE, UBYTE, SHORT, USHORT, INT, UINT,
+ *         LONG, ULONG, LONGLONG, ULONGLONG,
+ *         FLOAT, DOUBLE, LONGDOUBLE#
  * #uns = (0,1)*5,0*3#
+ * #int = 1*10,0*3#
  */
 static NPY_INLINE int
 @name@_ctype_negative(@type@ a, @type@ *out)
 {
-    *out = -a;
 #if @uns@
+    *out = -a;
     return NPY_FPE_OVERFLOW;
-#else
-    return 0;
+#elif @int@
+    if(a == NPY_MIN_@NAME@){
+        *out = a;
+        return NPY_FPE_OVERFLOW;
+    }
 #endif
+    *out = -a;
+    return 0;
 }
 /**end repeat**/
 
