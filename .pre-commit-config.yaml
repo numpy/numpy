@@ -48,7 +48,8 @@ repos:
       - id: clang-format-diff
         name: clang-format-diff
         entry: bash tools/precommit-clang-format.sh
-        language: python
+        language: python        # Script is bash but need python deps
+        require_serial: true    # Lock errors if it tries to chunk the files
         types_or: [c++, c]
         verbose: true
         additional_dependencies:

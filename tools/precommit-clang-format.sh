@@ -93,10 +93,10 @@ exitcode=$?
 
 echo -e "${output}\n"
 
-if [[ $output = "no modified files to format" ]]; then
+if [[ $output = "no modified files to format" || $output = "clang-format did not modify any files" ]]; then
     echo -e "${GREEN_LIGHT}Everything looks OK; no work for me here${END_C}"
     exit $exitcode
 else
-    echo -e "${YELLOW}OK, I formatted that nice for you. Retry your commit now.${END_C}"
+    echo -e "${YELLOW}OK, I formatted that really nice for you. Retry your commit now.${END_C}"
     exit 1
 fi
