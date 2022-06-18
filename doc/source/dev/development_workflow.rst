@@ -158,7 +158,7 @@ your branch.
 Automatic code formatting with pre-commit
 -----------------------------------------
 
-NumPy recommends that code follow pep7/pep8 guidelines, but does not currently
+NumPy recommends that code follow PEP7/PEP8 guidelines, but does not currently
 enfoce any formatters. However, the repository does come with a an optional
 pre-commit hook that performs automatic formatting and validation of changes,
 and using it is highly recommended. Tasks and checks that it runs include:
