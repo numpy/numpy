@@ -205,7 +205,7 @@ class TestSetOps:
         isin_slow = np.vectorize(_isin_slow, otypes=[bool], excluded={1})
 
         def assert_isin_equal(a, b, old_algorithm=None):
-            kind = "mergesort" if old_algorithm else None
+            kind = "sort" if old_algorithm else None
             x = isin(a, b, kind=kind)
             y = isin_slow(a, b)
             assert_array_equal(x, y)
@@ -258,21 +258,21 @@ class TestSetOps:
             ec = np.array([True, False, True, True])
             c = in1d(a, b, assume_unique=True)
             assert_array_equal(c, ec)
-            c = in1d(a, b, assume_unique=True, kind="mergesort")
+            c = in1d(a, b, assume_unique=True, kind="sort")
             assert_array_equal(c, ec)
 
             a[0] = 8
             ec = np.array([False, False, True, True])
             c = in1d(a, b, assume_unique=True)
             assert_array_equal(c, ec)
-            c = in1d(a, b, assume_unique=True, kind="mergesort")
+            c = in1d(a, b, assume_unique=True, kind="sort")
             assert_array_equal(c, ec)
 
             a[0], a[3] = 4, 8
             ec = np.array([True, False, True, False])
             c = in1d(a, b, assume_unique=True)
             assert_array_equal(c, ec)
-            c = in1d(a, b, assume_unique=True, kind="mergesort")
+            c = in1d(a, b, assume_unique=True, kind="sort")
             assert_array_equal(c, ec)
 
             a = np.array([5, 4, 5, 3, 4, 4, 3, 4, 3, 5, 2, 1, 5, 5])
@@ -281,7 +281,7 @@ class TestSetOps:
                   False, True, False, False, False]
             c = in1d(a, b)
             assert_array_equal(c, ec)
-            c = in1d(a, b, kind="mergesort")
+            c = in1d(a, b, kind="sort")
             assert_array_equal(c, ec)
 
             b = b + [5, 5, 4] * mult
@@ -289,7 +289,7 @@ class TestSetOps:
                   True, False, True, True]
             c = in1d(a, b)
             assert_array_equal(c, ec)
-            c = in1d(a, b, kind="mergesort")
+            c = in1d(a, b, kind="sort")
             assert_array_equal(c, ec)
 
             a = np.array([5, 7, 1, 2])
@@ -297,7 +297,7 @@ class TestSetOps:
             ec = np.array([True, False, True, True])
             c = in1d(a, b)
             assert_array_equal(c, ec)
-            c = in1d(a, b, kind="mergesort")
+            c = in1d(a, b, kind="sort")
             assert_array_equal(c, ec)
 
             a = np.array([5, 7, 1, 1, 2])
@@ -305,7 +305,7 @@ class TestSetOps:
             ec = np.array([True, False, True, True, True])
             c = in1d(a, b)
             assert_array_equal(c, ec)
-            c = in1d(a, b, kind="mergesort")
+            c = in1d(a, b, kind="sort")
             assert_array_equal(c, ec)
 
             a = np.array([5, 5])
@@ -313,7 +313,7 @@ class TestSetOps:
             ec = np.array([False, False])
             c = in1d(a, b)
             assert_array_equal(c, ec)
-            c = in1d(a, b, kind="mergesort")
+            c = in1d(a, b, kind="sort")
             assert_array_equal(c, ec)
 
         a = np.array([5])
@@ -321,7 +321,7 @@ class TestSetOps:
         ec = np.array([False])
         c = in1d(a, b)
         assert_array_equal(c, ec)
-        c = in1d(a, b, kind="mergesort")
+        c = in1d(a, b, kind="sort")
         assert_array_equal(c, ec)
 
         assert_array_equal(in1d([], []), [])
@@ -413,7 +413,7 @@ class TestSetOps:
             b = [2, 3, 4] * mult
             assert_array_equal(np.invert(in1d(a, b)), in1d(a, b, invert=True))
             assert_array_equal(np.invert(in1d(a, b)),
-                               in1d(a, b, invert=True, kind="mergesort"))
+                               in1d(a, b, invert=True, kind="sort"))
 
         for mult in (1, 10):
             a = np.array([5, 4, 5, 3, 4, 4, 3, 4, 3, 5, 2, 1, 5, 5],
@@ -422,7 +422,7 @@ class TestSetOps:
             b = np.array(b, dtype=np.float32)
             assert_array_equal(np.invert(in1d(a, b)), in1d(a, b, invert=True))
             assert_array_equal(np.invert(in1d(a, b)),
-                               in1d(a, b, invert=True, kind="mergesort"))
+                               in1d(a, b, invert=True, kind="sort"))
 
     def test_in1d_ravel(self):
         # Test that in1d ravels its input arrays. This is not documented
@@ -436,22 +436,22 @@ class TestSetOps:
         assert_array_equal(in1d(a, b, assume_unique=False), ec)
         assert_array_equal(in1d(a, long_b, assume_unique=True), ec)
         assert_array_equal(in1d(a, long_b, assume_unique=False), ec)
-        assert_array_equal(in1d(a, b, assume_unique=True, kind="mergesort"),
+        assert_array_equal(in1d(a, b, assume_unique=True, kind="sort"),
                            ec)
         assert_array_equal(in1d(a, b, assume_unique=False,
-                                kind="mergesort"),
+                                kind="sort"),
                            ec)
         assert_array_equal(in1d(a, long_b, assume_unique=True,
-                                kind="mergesort"),
+                                kind="sort"),
                            ec)
         assert_array_equal(in1d(a, long_b, assume_unique=False,
-                                kind="mergesort"),
+                                kind="sort"),
                            ec)
 
     def test_in1d_hit_alternate_algorithm(self):
         """Hit the standard isin code with integers"""
         # Need extreme range to hit standard code
-        # This hits it without the use of kind='dictionary'
+        # This hits it without the use of kind='table'
         a = np.array([5, 4, 5, 3, 4, 4, 1e9], dtype=np.int64)
         b = np.array([2, 3, 4, 1e9], dtype=np.int64)
         expected = np.array([0, 1, 0, 1, 1, 1, 1], dtype=bool)
@@ -472,11 +472,11 @@ class TestSetOps:
         assert_array_equal(expected,
                            in1d(a, b))
         assert_array_equal(expected,
-                           in1d(a, b, kind="mergesort"))
+                           in1d(a, b, kind="sort"))
         assert_array_equal(np.invert(expected),
                            in1d(a, b, invert=True))
         assert_array_equal(np.invert(expected),
-                           in1d(a, b, invert=True, kind="mergesort"))
+                           in1d(a, b, invert=True, kind="sort"))
 
     def test_in1d_first_array_is_object(self):
         ar1 = [None]
@@ -545,35 +545,35 @@ class TestSetOps:
     def test_in1d_errors(self):
         """Test that in1d raises expected errors."""
 
-        # Error 1: `kind` is not one of 'mergesort' 'dictionary' or None.
+        # Error 1: `kind` is not one of 'sort' 'table' or None.
         ar1 = np.array([1, 2, 3, 4, 5])
         ar2 = np.array([2, 4, 6, 8, 10])
         assert_raises(ValueError, in1d, ar1, ar2, kind='quicksort')
 
-        # Error 2: `kind="dictionary"` does not work for non-integral arrays.
+        # Error 2: `kind="table"` does not work for non-integral arrays.
         obj_ar1 = np.array([1, 'a', 3, 'b', 5], dtype=object)
         obj_ar2 = np.array([1, 'a', 3, 'b', 5], dtype=object)
-        assert_raises(ValueError, in1d, obj_ar1, obj_ar2, kind='dictionary')
+        assert_raises(ValueError, in1d, obj_ar1, obj_ar2, kind='table')
 
         for dtype in [np.int32, np.int64]:
             ar1 = np.array([-1, 2, 3, 4, 5], dtype=dtype)
             # The range of this array will overflow:
             overflow_ar2 = np.array([-1, np.iinfo(dtype).max], dtype=dtype)
 
-            # Error 3: `kind="dictionary"` will trigger a runtime error
+            # Error 3: `kind="table"` will trigger a runtime error
             #  if there is an integer overflow expected when computing the
             #  range of ar2
             assert_raises(
                 RuntimeError,
-                in1d, ar1, overflow_ar2, kind='dictionary'
+                in1d, ar1, overflow_ar2, kind='table'
             )
 
             # Non-error: `kind=None` will *not* trigger a runtime error
             #  if there is an integer overflow, it will switch to
-            #  the `mergesort` algorithm.
+            #  the `sort` algorithm.
             result = np.in1d(ar1, overflow_ar2, kind=None)
             assert_array_equal(result, [True] + [False] * 4)
-            result = np.in1d(ar1, overflow_ar2, kind='mergesort')
+            result = np.in1d(ar1, overflow_ar2, kind='sort')
             assert_array_equal(result, [True] + [False] * 4)
 
     def test_union1d(self):
