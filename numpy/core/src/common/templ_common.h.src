@@ -12,8 +12,10 @@
  *          npy_longlong, npy_ulonglong, npy_intp#
  *  #MAX = NPY_MAX_INT, NPY_MAX_UINT, NPY_MAX_LONG, NPY_MAX_ULONG,
  *         NPY_MAX_LONGLONG, NPY_MAX_ULONGLONG, NPY_MAX_INTP#
+ *
+ *  #signed = (1,0)*3, 0#
+ *  #abs_func = abs*2, labs*2, llabs*2, 0#
  */
-
 /*
  * writes result of a * b into r
  * returns 1 if a * b overflowed else returns 0
@@ -34,8 +36,14 @@ npy_mul_with_overflow_@name@(@type@ * r, @type@ a, @type@ b)
     /*
      * avoid expensive division on common no overflow case
      */
-    if (NPY_UNLIKELY((a | b) >= half_sz) &&
-            a != 0 && b > @MAX@ / a) {
+    if ((NPY_UNLIKELY((a | b) >= half_sz) || (a | b) < 0) &&
+            a != 0 && 
+#if @signed@
+            @abs_func@(b) > @abs_func@(@MAX@ / a)
+#else
+            b > @MAX@ / a
+#endif
+            ) {
         return 1;
     }
     return 0;
