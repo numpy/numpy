@@ -1,5 +1,13 @@
 ---
 repos:
+  ### Always-run hooks ###
+  # This section includes hooks that run whenever relevant files change.
+  #
+  # If you are not familiar with pre-commit, see documentation here:
+  # https://numpy.org/doc/stable/dev/development_workflow.html
+
+
+  # Basic checkers
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.2.0
     hooks:
@@ -22,11 +30,11 @@ repos:
     hooks:
       - id: darker
         args:
-          # - '--isort'
+          - --isort
           - -L
           - flake8
         additional_dependencies:
-          # - isort
+          - isort
           - flake8
           - flake8-bugbear
           - pep8-naming
@@ -44,6 +52,22 @@ repos:
         verbose: true
         additional_dependencies:
           - clang-format==14.0.3
+
+  # YAML Formatter
+  - repo: https://github.com/jumanjihouse/pre-commit-hook-yamlfmt
+    rev: 0.2.1
+    hooks:
+      - id: yamlfmt
+        args: [--mapping, '2', --sequence, '4', --offset, '2', --width, '88']
+
+
+  ### Manually-run hooks ###
+  # These hooks are disabled by default because NumPy currently has one or more
+  # files that are known to fail. You are encouraged to run these hooks if you
+  # are changing some files, and aim to have them pass. However, the goal is
+  # that somebody doing development is not required to work on anything outside
+  # of their own section of interest, so do not worry if other parts of files fail.
+  # (though in general, if you would _like_ to fix them, that would be amazing!)
 
   # Allow black to be run on entire file manually
   # Use pre-commit run --hook-stage manual black
@@ -73,50 +97,46 @@ repos:
           - pep8-naming
 
   # Allow clang-format to be run on entire file manually
-  # Use pre-commit run --hook-stage manual clang-format-whole-file
-  - repo: https://github.com/jlebar/pre-commit-hooks
-    rev: 62ca83ba4958da48ea44d9f24cd0aa58633376c7
+  # Use pre-commit run --hook-stage manual clang-format
+  - repo: https://github.com/pre-commit/mirrors-clang-format
+    rev: v14.0.5
     hooks:
-      - id: clang-format-whole-file
+      - id: clang-format
         stages: [manual]
-        verbose: true
-        types_or: [c++, c]
 
   # Validate .rst files
   - repo: https://github.com/myint/rstcheck
     rev: v5.0.0
     hooks:
       - id: rstcheck
-        # stages: [manual
+        stages: [manual]
 
-    # bash/sh checker
+  # bash/sh checker
   - repo: https://github.com/shellcheck-py/shellcheck-py
     rev: v0.8.0.4
     hooks:
       - id: shellcheck
+        stages: [manual]
 
-    # bash/sh formatter
+  # bash/sh formatter
   - repo: https://github.com/lovesegfault/beautysh
     rev: v6.2.1
     hooks:
       - id: beautysh
-        args: [--tab]
+        stages: [manual]
 
-    # YAML Formatter
-  - repo: https://github.com/jumanjihouse/pre-commit-hook-yamlfmt
-    rev: 0.2.1
-    hooks:
-      - id: yamlfmt
-        args: [--mapping, '2', --sequence, '4', --offset, '2', --width, '88']
-
-    # Fortran beautifier
+  # Fortran formatter
   - repo: https://github.com/pseewald/fprettify
     rev: v0.3.7
     hooks:
       - id: fprettify
+        stages: [manual]
 
-  # Docker linter
-  - repo: https://github.com/hadolint/hadolint
-    rev: v2.10.0
+  # Dockerfile linter
+  - repo: https://github.com/AleksaC/hadolint-py
+    rev: v1.19.0
     hooks:
       - id: hadolint
+        # Ignore not pinning versions on `pip install``
+        args: [--ignore, DL3013]
+        stages: [manual]

@@ -177,13 +177,13 @@ Tasks and checks that it runs include:
 
 To use the hook, first make sure that pre-commit is installed:
 
-:: 
+.. code-block:: bash
 
    pip install pre-commit
 
 And then install the hook to your git repository:
 
-:: 
+.. code-block:: bash
 
    pre-commit install
 
@@ -191,16 +191,17 @@ This will add a script to your ``.git/hooks`` folder. This script will run
 pre-commit to check your changed files whenever you run ``git commit``. Note
 that if there are any failures, the commit will not go through and you will have
 to re-run the commit (and ``git add`` first if any files were automatically
-changed). It is generally bad practice to commit files that do not pass tests
-but if it is necessary (e.g., for a local commit that will be rebased later),
-you can run ``git commit --no-verify`` to skip pre-commit checks.
+changed, or ``git commit`` with the ``-a`` flag). It is generally bad practice
+to commit files that do not pass tests but if it is necessary (e.g., for a local
+commit that will be rebased later), you can run ``git commit --no-verify`` to
+skip pre-commit checks.
 
 Note that the first time pre-commit runs, it will take a while to download the
 necessary files. Subsequent times will be very fast.
 
 Other useful commands includes:
 
-::
+.. code-block:: bash
 
    # Validate specific files
    pre-commit run  --files a.py b.py ...
