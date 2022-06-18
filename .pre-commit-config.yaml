@@ -9,7 +9,7 @@ repos:
 
   # Basic checkers
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.2.0
+    rev: v4.3.0
     hooks:
       # File validity checkers
       - id: check-yaml
@@ -41,13 +41,14 @@ repos:
 
   # We want to use git-clang-format which is provided by the clang-format wheel,
   # but not exposed in its precommit hook.
+  # Do not specify args here; use the tools/precommit-clang-format.sh that this
+  # calls.
   - repo: local
     hooks:
       - id: clang-format-diff
         name: clang-format-diff
         entry: bash tools/precommit-clang-format.sh
         language: python
-        args: [--style, file]
         types_or: [c++, c]
         verbose: true
         additional_dependencies:
@@ -59,6 +60,8 @@ repos:
     hooks:
       - id: yamlfmt
         args: [--mapping, '2', --sequence, '4', --offset, '2', --width, '88']
+        # Will eventually apply to all YAML files
+        files: \.pre-commit-config.yaml
 
 
   ### Manually-run hooks ###
@@ -70,15 +73,24 @@ repos:
   # (though in general, if you would _like_ to fix them, that would be amazing!)
 
   # Allow black to be run on entire file manually
-  # Use pre-commit run --hook-stage manual black
+  # Run with: pre-commit run --hook-stage manual black
   - repo: https://github.com/psf/black
     rev: 22.3.0
     hooks:
       - id: black
         stages: [manual]
 
+  # Apply black formatting to docstrings and .rst files
+  # Run with: pre-commit run --hook-stage manual blacken-docs
+  - repo: https://github.com/asottile/blacken-docs
+    rev: v1.12.1
+    hooks:
+      - id: blacken-docs
+        args: [--line-length, '79']
+        stages: [manual]
+
   # Allow isort to be run on entire file manually
-  # Use pre-commit run --hook-stage manual isort
+  # Run with: pre-commit run --hook-stage manual isort
   - repo: https://github.com/pycqa/isort
     rev: 5.10.1
     hooks:
@@ -86,7 +98,7 @@ repos:
         stages: [manual]
 
   # Allow flake8 to be run on entire file manually
-  # Use pre-commit run --hook-stage manual flake8
+  # Run with: pre-commit run --hook-stage manual flake8
   - repo: https://github.com/pycqa/flake8
     rev: 4.0.1
     hooks:
@@ -94,10 +106,15 @@ repos:
         stages: [manual]
         additional_dependencies:
           - flake8-bugbear
+          - flake8-import-order
+          - flake8-builtins
+          - flake8-future-annotations
+          - flake8-docstrings
+          - flake8-rst-docstrings
           - pep8-naming
 
   # Allow clang-format to be run on entire file manually
-  # Use pre-commit run --hook-stage manual clang-format
+  # Run with: pre-commit run --hook-stage manual clang-format
   - repo: https://github.com/pre-commit/mirrors-clang-format
     rev: v14.0.5
     hooks:
@@ -105,13 +122,15 @@ repos:
         stages: [manual]
 
   # Validate .rst files
+  # Run with: pre-commit run --hook-stage manual rstcheck
   - repo: https://github.com/myint/rstcheck
-    rev: v5.0.0
+    rev: v6.0.0.post1
     hooks:
       - id: rstcheck
         stages: [manual]
 
   # bash/sh checker
+  # Run with: pre-commit run --hook-stage manual shellcheck
   - repo: https://github.com/shellcheck-py/shellcheck-py
     rev: v0.8.0.4
     hooks:
@@ -119,6 +138,7 @@ repos:
         stages: [manual]
 
   # bash/sh formatter
+  # Run with: pre-commit run --hook-stage manual beautysh
   - repo: https://github.com/lovesegfault/beautysh
     rev: v6.2.1
     hooks:
@@ -126,6 +146,7 @@ repos:
         stages: [manual]
 
   # Fortran formatter
+  # Run with: pre-commit run --hook-stage manual fprettify
   - repo: https://github.com/pseewald/fprettify
     rev: v0.3.7
     hooks:
@@ -133,8 +154,9 @@ repos:
         stages: [manual]
 
   # Dockerfile linter
+  # Run with: pre-commit run --hook-stage manual hadolint
   - repo: https://github.com/AleksaC/hadolint-py
-    rev: v1.19.0
+    rev: v2.10.0
     hooks:
       - id: hadolint
         # Ignore not pinning versions on `pip install``
