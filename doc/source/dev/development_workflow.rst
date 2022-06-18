@@ -158,19 +158,19 @@ your branch.
 Automatic code formatting with pre-commit
 -----------------------------------------
 
-NymPy recommends that code follow pep7/pep8 guidelines, but does not currently
+NumPy recommends that code follow pep7/pep8 guidelines, but does not currently
 enfoce any formatters. However, the repository does come with a an optional
-pre-commit hook that performs automatic formatting and validation of changes.
-Tasks and checks that it runs include:
+pre-commit hook that performs automatic formatting and validation of changes,
+and using it is highly recommended. Tasks and checks that it runs include:
 
 * Format changed lines only of Python files to pep8 standard using `Darker
-  <darker>`_, which wraps `black <black>`_ and `isort <isort>`_ (enabled by
-  default). Additionally, check only these changed lines using `flake8
-  <flake8>`_.
+  <darker>`_, which wraps `black <black>`_ and `isort <isort>`_ and applies them
+  to the diff (this hook is enabled by default). Additionally, check only these
+  changed lines using `flake8 <flake8>`_.
 
 * Format changed lines only of C and C++ source files to pep7 standard using a
-  python wrapper for `ClangFormat versioning <clang_format>`_ (enabled by
-  default).
+  python wrapper for `ClangFormat versioning <clang_format>`_ (this hook is
+  enabled by default).
 
 * Format and lint YAML shell files, and perform linting on Fortran, rst, Docker,
   and markdown files (some enabled and some disabled by default)
@@ -214,11 +214,17 @@ Other useful commands includes:
 
    # Run hooks with the stage marked as "manual". These are hooks where we
    # expect lots of failures from before formatters were available
+   # see .pre-commit-config.yaml for more possible manual hook names
    pre-commit run --hook-stage manual [hook-name]
+
+   # If you have a branch that you may soon want to merge to main and want to
+   # ensure that all changes on your branch are linted and formatted, run the
+   # following:
+   pre-commit run --from-ref $(git merge-base --fork-point main) --to-ref HEAD
 
 More information is available `on the pre-commit website <pre_commit>`_. Do not
 commit the changes of ``pre-comit run --all-files`` as that will likely generate
-a diff much larger than your change.
+a diff much larger than your code.
 
 .. Section links (not displayed)
 .. _black: https://black.readthedocs.io/en/stable/
