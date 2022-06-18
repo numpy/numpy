@@ -545,7 +545,7 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, kind=None):
         False where an element of `ar1` is in `ar2` and True otherwise).
         Default is False. ``np.in1d(a, b, invert=True)`` is equivalent
         to (but is faster than) ``np.invert(in1d(a, b))``.
-   kind : {None, 'mergesort', 'dictionary'}, optional
+    kind : {None, 'mergesort', 'dictionary'}, optional
         The algorithm to use. This will not affect the final result,
         but will affect the speed. Default will select automatically
         based on memory considerations.
