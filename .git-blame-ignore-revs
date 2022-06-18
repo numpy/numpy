@@ -2,7 +2,7 @@
 
 # This file contains a list of SHAs that should be ignored by git blame Github
 # follows this convention as of approximately 2022-03-24, and Gitlab appears to
-# be adding support. The main use case is for large formattingcommits as NumPy
+# be adding support. The main use case is for large formatting commits as NumPy
 # works on acheiving pre-commit compliance. More information at:
 # https://docs.github.com/en/repositories/working-with-files/using-files
 # /viewing-a-file#ignore-commits-in-the-blame-view
