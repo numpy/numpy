@@ -549,17 +549,18 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, kind=None):
         The algorithm to use. This will not affect the final result,
         but will affect the speed. Default will select automatically
         based on memory considerations.
-        - If 'mergesort', will use a mergesort-based approach. This will have
+
+        * If 'mergesort', will use a mergesort-based approach. This will have
           a memory usage of roughly 6 times the sum of the sizes of
           `ar1` and `ar2`, not accounting for size of dtypes.
-        - If 'dictionary', will use a key-dictionary approach similar
+        * If 'dictionary', will use a key-dictionary approach similar
           to a counting sort. This is only available for boolean and
           integer arrays. This will have a memory usage of the
           size of `ar1` plus the max-min value of `ar2`. This tends
           to be the faster method if the following formula is true:
-          `log10(len(ar2)) > (log10(max(ar2)-min(ar2)) - 2.27) / 0.927`,
+          ``log10(len(ar2)) > (log10(max(ar2)-min(ar2)) - 2.27) / 0.927``,
           but may use greater memory.
-        - If `None`, will automatically choose 'dictionary' if
+        * If `None`, will automatically choose 'dictionary' if
           the required memory allocation is less than or equal to
           6 times the sum of the sizes of `ar1` and `ar2`,
           otherwise will use 'mergesort'. This is done to not use
@@ -758,21 +759,22 @@ def isin(element, test_elements, assume_unique=False, invert=False,
         calculating `element not in test_elements`. Default is False.
         ``np.isin(a, b, invert=True)`` is equivalent to (but faster
         than) ``np.invert(np.isin(a, b))``.
-   kind : {None, 'mergesort', 'dictionary'}, optional
+    kind : {None, 'mergesort', 'dictionary'}, optional
         The algorithm to use. This will not affect the final result,
         but will affect the speed. Default will select automatically
         based on memory considerations.
-        - If 'mergesort', will use a mergesort-based approach. This will have
+
+        * If 'mergesort', will use a mergesort-based approach. This will have
           a memory usage of roughly 6 times the sum of the sizes of
           `ar1` and `ar2`, not accounting for size of dtypes.
-        - If 'dictionary', will use a key-dictionary approach similar
+        * If 'dictionary', will use a key-dictionary approach similar
           to a counting sort. This is only available for boolean and
           integer arrays. This will have a memory usage of the
           size of `ar1` plus the max-min value of `ar2`. This tends
           to be the faster method if the following formula is true:
-          `log10(len(ar2)) > (log10(max(ar2)-min(ar2)) - 2.27) / 0.927`,
+          ``log10(len(ar2)) > (log10(max(ar2)-min(ar2)) - 2.27) / 0.927``,
           but may use greater memory.
-        - If `None`, will automatically choose 'dictionary' if
+        * If `None`, will automatically choose 'dictionary' if
           the required memory allocation is less than or equal to
           6 times the sum of the sizes of `ar1` and `ar2`,
           otherwise will use 'mergesort'. This is done to not use
