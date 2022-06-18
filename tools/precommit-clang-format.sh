@@ -11,9 +11,13 @@
 # This script usage allows for comparing two diffs from arbritrary points in
 # time easily.
 #
-# It can also be fake run without pre-commit:
-# PRE_COMMIT_FROM_REF=someref PRE_COMMIT_TO_REF=someref ./tools/precommit-clang-format.sh file1.c file2.c
+# It can also be fake run without pre-commit: PRE_COMMIT_FROM_REF=someref
+# PRE_COMMIT_TO_REF=someref ./tools/precommit-clang-format.sh file1.c file2.c
 # PRE_COMMIT_TO_REF can be omitted to use HEAD
+#
+# This is known to work with clang-format==14.0.3 available on PyPi. If their
+# "no modified files to format" message or return code scheme changes, this will
+# need to be updated.
 
 set -o errexit
 set -o nounset
