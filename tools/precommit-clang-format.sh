@@ -11,7 +11,9 @@
 # This script usage allows for comparing two diffs from arbritrary points in
 # time easily.
 #
-# It can also be
+# It can also be fake run without pre-commit:
+# PRE_COMMIT_FROM_REF=someref PRE_COMMIT_TO_REF=someref ./tools/precommit-clang-format.sh file1.c file2.c
+# PRE_COMMIT_TO_REF can be omitted to use HEAD
 
 set -o errexit
 set -o nounset
@@ -79,14 +81,15 @@ fi
 # Otherwise, our target ref is HEAD and the tool can edit it
 run_cmd="git-clang-format $FORMAT_ARGS $PRE_COMMIT_FROM_REF -- $*"
 
-echo -e "${CYAN_LIGHT}Target ref is HEAD, running...\n> ${run_cmd}${END_C}"
+echo -e "${CYAN_LIGHT}Target ref is HEAD, running...\n> ${run_cmd}${END_C}\n"
 
-eval "$run_cmd"
+# Collect our output, print it and act upon it
+output=$(eval "$run_cmd")
 exitcode=$?
 
-echo -e "\n"
+echo -e "${output}\n"
 
-if [[ exitcode -eq 0 ]]; then
+if [[ $output = "no modified files to format" ]]; then
     echo -e "${GREEN_LIGHT}Everything looks OK; no work for me here${END_C}"
 else
     echo -e "${YELLOW}OK, I formatted that nice for you. Retry your commit now.${END_C}"
