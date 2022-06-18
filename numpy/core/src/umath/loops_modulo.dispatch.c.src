@@ -181,7 +181,6 @@ vsx4_simd_@func@_contig_@sfx@(char **args, npy_intp len)
     const int vstep           = npyv_nlanes_@sfx@;
 #if @id@ == 2 /* divmod */
     npyv_lanetype_@sfx@ *dst2 = (npyv_lanetype_@sfx@ *) args[3];
-    const npyv_@sfx@ vneg_one = npyv_setall_@sfx@(-1);
     npyv_b@len@ warn          = npyv_cvt_b@len@_@sfx@(npyv_zero_@sfx@());
 
     for (; len >= vstep; len -= vstep, src1 += vstep, src2 += vstep,
@@ -191,11 +190,11 @@ vsx4_simd_@func@_contig_@sfx@(char **args, npy_intp len)
         npyv_@sfx@ quo      = vsx4_div_@sfx@(a, b);
         npyv_@sfx@ rem      = npyv_sub_@sfx@(a, vec_mul(b, quo));
         npyv_b@len@ bzero   = npyv_cmpeq_@sfx@(b, vzero);
-        // when b is 0, 'cvtozero' forces the modulo to be 0 too
-        npyv_@sfx@ cvtozero = npyv_select_@sfx@(bzero, vzero, vneg_one);
+        // when b is 0, forces the remainder to be 0 too
+                        rem = npyv_select_@sfx@(bzero, vzero, rem);
                        warn = npyv_or_@sfx@(bzero, warn);
         npyv_store_@sfx@(dst1, quo);
-        npyv_store_@sfx@(dst2, npyv_and_@sfx@(cvtozero, rem));
+        npyv_store_@sfx@(dst2, rem);
     }
 
     if (!vec_all_eq(warn, vzero)) {
@@ -345,10 +344,12 @@ vsx4_simd_@func@_contig_@sfx@(char **args, npy_intp len)
                       quo = npyv_add_@sfx@(quo, to_sub);
                       // Divide by zero
                       quo = npyv_select_@sfx@(bzero, vzero, quo);
+                      rem = npyv_select_@sfx@(bzero, vzero, rem);
                       // Overflow
                       quo = npyv_select_@sfx@(overflow, vmin, quo);
+                      rem = npyv_select_@sfx@(overflow, vzero, rem);
         npyv_store_@sfx@(dst1, quo);
-        npyv_store_@sfx@(dst2, npyv_and_@sfx@(cvtozero, rem));
+        npyv_store_@sfx@(dst2, rem);
 #else /* fmod and remainder */
         npyv_store_@sfx@(dst1, rem);
         if (NPY_UNLIKELY(vec_any_eq(b, vzero))) {
@@ -460,7 +461,7 @@ vsx4_simd_@func@_by_scalar_contig_@sfx@(char **args, npy_intp len)
         quo               = npyv_add_@sfx@(quo, to_sub);
         // Overflow: set quo to minimum and rem to 0
         quo               = npyv_select_@sfx@(overflow, vmin, quo);
-        rem               = npyv_select_@sfx@(overflow, vzero, quo);
+        rem               = npyv_select_@sfx@(overflow, vzero, rem);
         npyv_store_@sfx@(dst1, quo);
         npyv_store_@sfx@(dst2, rem);
 #else /* fmod and remainder */
