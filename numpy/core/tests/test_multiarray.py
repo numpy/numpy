@@ -1244,7 +1244,7 @@ class TestStructured:
         # The main importance is that it does not return True:
         with pytest.raises(TypeError):
             x == y
-        
+ 
     def test_empty_structured_array_comparison(self):
         # Check that comparison works on empty arrays with nontrivially 
         # shaped fields
