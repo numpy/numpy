@@ -1245,6 +1245,7 @@ class TestStructured:
         with pytest.raises(TypeError):
             x == y
         
+    def test_empty_structured_array_comparison(self):
         # Check that comparison works on empty arrays with nontrivially 
         # shaped fields
         a = np.zeros(0, [('a', '<f8', (1, 1))])

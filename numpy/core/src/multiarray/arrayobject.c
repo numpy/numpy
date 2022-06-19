@@ -768,8 +768,8 @@ _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
                     }
 
                     /*
-                    * Compute the new dimension size manually 
-                    * (instead of reshaping with -1) to avoid division by zero.
+                    * Compute the new dimension size manually, as reshaping
+                    * with -1 does not work on empty arrays.
                     */
                     dimensions[result_ndim] = PyArray_MultiplyList(
                         PyArray_DIMS((PyArrayObject *)temp) + result_ndim,
