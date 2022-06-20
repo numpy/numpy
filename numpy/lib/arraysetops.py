@@ -547,8 +547,8 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, kind=None):
         to (but is faster than) ``np.invert(in1d(a, b))``.
     kind : {None, 'sort', 'table'}, optional
         The algorithm to use. This will not affect the final result,
-        but will affect the speed. Default will select automatically
-        based on memory considerations.
+        but will affect the speed and memory use. The default, None,
+        will select automatically based on memory considerations.
 
         * If 'sort', will use a mergesort-based approach. This will have
           a memory usage of roughly 6 times the sum of the sizes of
@@ -560,7 +560,7 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, kind=None):
           to be the faster method if the following formula is true:
           ``log10(len(ar2)) > (log10(max(ar2)-min(ar2)) - 2.27) / 0.927``,
           but may use greater memory.
-        * If `None`, will automatically choose 'table' if
+        * If None, will automatically choose 'table' if
           the required memory allocation is less than or equal to
           6 times the sum of the sizes of `ar1` and `ar2`,
           otherwise will use 'sort'. This is done to not use
@@ -761,8 +761,8 @@ def isin(element, test_elements, assume_unique=False, invert=False,
         than) ``np.invert(np.isin(a, b))``.
     kind : {None, 'sort', 'table'}, optional
         The algorithm to use. This will not affect the final result,
-        but will affect the speed. Default will select automatically
-        based on memory considerations.
+        but will affect the speed and memory use. The default, None,
+        will select automatically based on memory considerations.
 
         * If 'sort', will use a mergesort-based approach. This will have
           a memory usage of roughly 6 times the sum of the sizes of
@@ -774,7 +774,7 @@ def isin(element, test_elements, assume_unique=False, invert=False,
           to be the faster method if the following formula is true:
           ``log10(len(ar2)) > (log10(max(ar2)-min(ar2)) - 2.27) / 0.927``,
           but may use greater memory.
-        * If `None`, will automatically choose 'table' if
+        * If None, will automatically choose 'table' if
           the required memory allocation is less than or equal to
           6 times the sum of the sizes of `ar1` and `ar2`,
           otherwise will use 'sort'. This is done to not use
