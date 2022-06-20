@@ -559,13 +559,15 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, kind=None):
           size of `ar1` plus the max-min value of `ar2`. This tends
           to be the faster method if the following formula is true:
           ``log10(len(ar2)) > (log10(max(ar2)-min(ar2)) - 2.27) / 0.927``,
-          but may use greater memory.
+          but may use greater memory. `assume_unique` has no effect
+          when the 'table' option is used.
         * If None, will automatically choose 'table' if
           the required memory allocation is less than or equal to
           6 times the sum of the sizes of `ar1` and `ar2`,
           otherwise will use 'sort'. This is done to not use
           a large amount of memory by default, even though
-          'table' may be faster in most cases.
+          'table' may be faster in most cases. If 'table' is chosen,
+          `assume_unique` will have no effect.
 
         .. versionadded:: 1.8.0
 
@@ -773,13 +775,15 @@ def isin(element, test_elements, assume_unique=False, invert=False,
           size of `ar1` plus the max-min value of `ar2`. This tends
           to be the faster method if the following formula is true:
           ``log10(len(ar2)) > (log10(max(ar2)-min(ar2)) - 2.27) / 0.927``,
-          but may use greater memory.
+          but may use greater memory. `assume_unique` has no effect
+          when the 'table' option is used.
         * If None, will automatically choose 'table' if
           the required memory allocation is less than or equal to
           6 times the sum of the sizes of `ar1` and `ar2`,
           otherwise will use 'sort'. This is done to not use
           a large amount of memory by default, even though
-          'table' may be faster in most cases.
+          'table' may be faster in most cases. If 'table' is chosen,
+          `assume_unique` will have no effect.
 
 
     Returns
