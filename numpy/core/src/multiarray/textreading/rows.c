@@ -11,6 +11,7 @@
 #include <string.h>
 #include <stdbool.h>
 
+#include "textreading/seq_to_ssize_c_array.h"
 #include "textreading/stream.h"
 #include "textreading/tokenize.h"
 #include "textreading/conversions.h"
@@ -134,6 +135,11 @@ create_conv_funcs(
  * @param usecols An array of length `num_usecols` or NULL.  If given indicates
  *        which column is read for each individual row (negative columns are
  *        accepted).
+ * @param usecols_obj Either `Py_None` or a callable Python object.  If
+ *        callable, the function must accept a single integer argument (the
+ *        number of columns in the file), and return a sequence of integers
+ *        (the sequence of column indices to use).  When `usecols_obj` is not
+ *        `Py_None`, `usecols` MUST be NULL.
  * @param skiplines The number of lines to skip, these lines are ignored.
  * @param converters Python dictionary of converters.  Finalizing converters
  *        is difficult without information about the number of columns.
@@ -155,7 +161,8 @@ create_conv_funcs(
 NPY_NO_EXPORT PyArrayObject *
 read_rows(stream *s,
         npy_intp max_rows, Py_ssize_t num_field_types, field_type *field_types,
-        parser_config *pconfig, Py_ssize_t num_usecols, Py_ssize_t *usecols,
+        parser_config *pconfig,
+        Py_ssize_t num_usecols, Py_ssize_t *usecols, PyObject *usecols_obj,
         Py_ssize_t skiplines, PyObject *converters,
         PyArrayObject *data_array, PyArray_Descr *out_descr,
         bool homogeneous)
@@ -178,6 +185,10 @@ read_rows(stream *s,
 
     /* We give a warning if max_rows is used and an empty line is encountered */
     bool give_empty_row_warning = max_rows >= 0;
+
+    // If the caller passes in a callable for usecols_obj, then they must
+    // also pass in NULL for usecols.
+    assert(usecols == NULL || usecols_obj == Py_None);
 
     int ts_result = 0;
     tokenizer_state ts;
@@ -246,6 +257,56 @@ read_rows(stream *s,
             // We've deferred some of the initialization tasks to here,
             // because we've now read the first line, and we definitively
             // know how many fields (i.e. columns) we will be processing.
+
+            if (usecols_obj != Py_None) {
+                // Call the Python function provided by the caller to
+                // create the usecols array.
+                PyObject *seq = PyObject_CallFunction(usecols_obj, "n",
+                                                      current_num_fields);
+                if (PyErr_Occurred()) {
+                    // User-provided function failed.
+                    goto error;
+                }
+                // The user-defined usecols function must return a sequence
+                // of integers.
+                num_usecols = PySequence_Length(seq);
+                if (num_usecols == -1) {
+                    // User-provided function did not return a sequence.
+                    PyErr_Clear();
+                    PyErr_Format(PyExc_TypeError,
+                        "the user-provided callable usecols must return a "
+                        "sequence of ints, but it returned an instance of "
+                        "type '%s'", Py_TYPE(seq)->tp_name);
+                    Py_DECREF(seq);
+                    goto error;
+                }
+
+                if (!homogeneous && num_field_types != num_usecols) {
+                    // A structured dtype was provided, and the length of
+                    // the sequence returned by the user-provided function
+                    // does not have the same length as the number of fields
+                    // in the dtype.
+                    Py_DECREF(seq);
+                    PyErr_Format(PyExc_RuntimeError,
+                        "length of the sequence returned by the callable "
+                        "usecols (%d) does not equal the number of fields "
+                        "in the given dtype (%d)",
+                        num_usecols, num_field_types);
+                    goto error;
+                }
+
+                // Convert the sequence to a C array of Py_ssize_t ints.
+                usecols = seq_to_ssize_c_array(num_usecols, seq,
+                        "the user-provided callable usecols must return a "
+                        "sequence of ints, but it returned a sequence "
+                        "containing at least one occurrence of type '%s'");
+                Py_DECREF(seq);
+                if (usecols == NULL) {
+                    goto error;
+                }
+                actual_num_fields = num_usecols;
+            }
+
             if (actual_num_fields == -1) {
                 actual_num_fields = current_num_fields;
             }
@@ -431,6 +492,12 @@ read_rows(stream *s,
         data_ptr += row_size;
     }
 
+    if (usecols_obj != Py_None) {
+        // This function owns usecols if a callable usecols_obj was given.
+        PyMem_Free(usecols);
+        usecols = NULL;  // An overabundance of caution...
+    }
+
     tokenizer_clear(&ts);
     if (conv_funcs != NULL) {
         for (Py_ssize_t i = 0; i < actual_num_fields; i++) {
@@ -479,6 +546,12 @@ read_rows(stream *s,
     return data_array;
 
   error:
+    if (usecols_obj != Py_None) {
+        // If the error occurred early enough in the function, we might
+        // not have allocated usecols yet, but that's OK, because we know
+        // that usecols is NULL in that case.
+        PyMem_Free(usecols);
+    }
     if (conv_funcs != NULL) {
         for (Py_ssize_t i = 0; i < actual_num_fields; i++) {
             Py_XDECREF(conv_funcs[i]);

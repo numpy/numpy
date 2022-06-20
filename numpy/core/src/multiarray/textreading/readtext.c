@@ -11,6 +11,7 @@
 #include "common.h"
 #include "conversion_utils.h"
 
+#include "textreading/seq_to_ssize_c_array.h"
 #include "textreading/parser_config.h"
 #include "textreading/stream_pyobject.h"
 #include "textreading/field_types.h"
@@ -19,8 +20,8 @@
 
 
 //
-// `usecols` must point to a Python object that is Py_None or a 1-d contiguous
-// numpy array with data type int32.
+// If the argument `usecols_obj` is not Py_None, it must be a callable.
+// In that case, the argument `usecols` must be NULL.
 //
 // `dtype` must point to a Python object that is Py_None or a numpy dtype
 // instance.  If the latter, code and sizes must be arrays of length
@@ -37,6 +38,7 @@
 static PyObject *
 _readtext_from_stream(stream *s,
         parser_config *pc, Py_ssize_t num_usecols, Py_ssize_t usecols[],
+        PyObject *usecols_obj,
         Py_ssize_t skiplines, Py_ssize_t max_rows,
         PyObject *converters, PyObject *dtype)
 {
@@ -69,7 +71,8 @@ _readtext_from_stream(stream *s,
 
     arr = read_rows(
             s, max_rows, num_fields, ft, pc,
-            num_usecols, usecols, skiplines, converters,
+            num_usecols, usecols, usecols_obj,
+            skiplines, converters,
             NULL, out_dtype, homogeneous);
     if (arr == NULL) {
         goto finish;
@@ -263,38 +266,25 @@ _load_from_filelike(PyObject *NPY_UNUSED(mod),
      */
     Py_ssize_t num_usecols = -1;
     Py_ssize_t *usecols = NULL;
-    if (usecols_obj != Py_None) {
+    if (usecols_obj != Py_None && !PyCallable_Check(usecols_obj)) {
         num_usecols = PySequence_Length(usecols_obj);
         if (num_usecols < 0) {
             return NULL;
         }
-        /* Calloc just to not worry about overflow */
-        usecols = PyMem_Calloc(num_usecols, sizeof(Py_ssize_t));
+        usecols = seq_to_ssize_c_array(num_usecols, usecols_obj,
+                    "usecols must be an int or a sequence of ints but "
+                    "it contains at least one element of type '%s'");
         if (usecols == NULL) {
-            PyErr_NoMemory();
             return NULL;
         }
-        for (Py_ssize_t i = 0; i < num_usecols; i++) {
-            PyObject *tmp = PySequence_GetItem(usecols_obj, i);
-            if (tmp == NULL) {
-                PyMem_FREE(usecols);
-                return NULL;
-            }
-            usecols[i] = PyNumber_AsSsize_t(tmp, PyExc_OverflowError);
-            if (error_converting(usecols[i])) {
-                if (PyErr_ExceptionMatches(PyExc_TypeError)) {
-                    PyErr_Format(PyExc_TypeError,
-                            "usecols must be an int or a sequence of ints but "
-                            "it contains at least one element of type '%s'",
-                            Py_TYPE(tmp)->tp_name);
-                }
-                Py_DECREF(tmp);
-                PyMem_FREE(usecols);
-                return NULL;
-            }
-            Py_DECREF(tmp);
-        }
+        /*
+         *  The given usecols_obj is a Python sequence; it has been processed to
+         *  give the usecols array, so reset the Python object to None.
+         */
+        usecols_obj = Py_None;
     }
+    assert(usecols == NULL || usecols_obj == Py_None);
+    /* At this point, if usecols_obj is not Py_None, it must be a callable object. */
 
     stream *s;
     if (filelike) {
@@ -304,14 +294,15 @@ _load_from_filelike(PyObject *NPY_UNUSED(mod),
         s = stream_python_iterable(file, encoding);
     }
     if (s == NULL) {
-        PyMem_FREE(usecols);
+        PyMem_Free(usecols);
         return NULL;
     }
 
     arr = _readtext_from_stream(
-            s, &pc, num_usecols, usecols, skiplines, max_rows, converters, dtype);
+            s, &pc, num_usecols, usecols, usecols_obj, skiplines, max_rows,
+            converters, dtype);
     stream_close(s);
-    PyMem_FREE(usecols);
+    PyMem_Free(usecols);
     return arr;
 }
 

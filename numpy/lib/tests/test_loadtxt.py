@@ -225,7 +225,8 @@ def test_converters_negative_indices():
     assert_equal(res, expected)
 
 
-def test_converters_negative_indices_with_usecols():
+@pytest.mark.parametrize('usecols', [[0, -1], lambda n: [0, -1]])
+def test_converters_negative_indices_with_usecols(usecols):
     txt = StringIO('1.5,2.5,3.5\n3.0,4.0,XXX\n5.5,6.0,7.5\n')
     conv = {-1: lambda s: np.nan if s == 'XXX' else float(s)}
     expected = np.array([[1.5, 3.5], [3.0, np.nan], [5.5, 7.5]])
@@ -234,35 +235,86 @@ def test_converters_negative_indices_with_usecols():
         dtype=np.float64,
         delimiter=",",
         converters=conv,
-        usecols=[0, -1],
+        usecols=usecols,
         encoding=None,
     )
     assert_equal(res, expected)
 
     # Second test with variable number of rows:
     res = np.loadtxt(StringIO('''0,1,2\n0,1,2,3,4'''), delimiter=",",
-                     usecols=[0, -1], converters={-1: (lambda x: -1)})
+                     usecols=usecols, converters={-1: (lambda x: -1)})
     assert_array_equal(res, [[0, -1], [0, -1]])
 
-def test_ragged_usecols():
+
+@pytest.mark.parametrize('usecols', [[0, -2], lambda n: [0, -2]])
+def test_ragged_usecols(usecols):
     # usecols, and negative ones, work even with varying number of columns.
     txt = StringIO("0,0,XXX\n0,XXX,0,XXX\n0,XXX,XXX,0,XXX\n")
     expected = np.array([[0, 0], [0, 0], [0, 0]])
-    res = np.loadtxt(txt, dtype=float, delimiter=",", usecols=[0, -2])
+    res = np.loadtxt(txt, dtype=float, delimiter=",", usecols=usecols)
     assert_equal(res, expected)
 
     txt = StringIO("0,0,XXX\n0\n0,XXX,XXX,0,XXX\n")
     with pytest.raises(ValueError,
                 match="invalid column index -2 at row 2 with 1 columns"):
         # There is no -2 column in the second row:
-        np.loadtxt(txt, dtype=float, delimiter=",", usecols=[0, -2])
+        np.loadtxt(txt, dtype=float, delimiter=",", usecols=usecols)
 
 
-def test_empty_usecols():
+@pytest.mark.parametrize('usecols', [[], lambda n: []])
+def test_empty_usecols(usecols):
     txt = StringIO("0,0,XXX\n0,XXX,0,XXX\n0,XXX,XXX,0,XXX\n")
-    res = np.loadtxt(txt, dtype=np.dtype([]), delimiter=",", usecols=[])
+    res = np.loadtxt(txt, dtype=np.dtype([]), delimiter=",", usecols=usecols)
     assert res.shape == (3,)
     assert res.dtype == np.dtype([])
+
+
+def test_callable_usecols_basic():
+    txt = StringIO('1 2 3 4 5\n6 7 8 9 1\n2 3 4 5 6\n')
+    res = np.loadtxt(txt, dtype=int, usecols=lambda n: list(range(n)[::2]))
+    expected = np.array([[1, 3, 5], [6, 8, 1], [2, 4, 6]])
+    assert_equal(res, expected)
+
+
+def test_callable_usecols_method():
+
+    class Foo:
+
+        def usecols(self, n):
+            return list(range(n)[1::2])
+
+        def load(self):
+            return np.loadtxt(StringIO('1 2 3 4\n5 6 7 8'),
+                              usecols=self.usecols)
+
+    res = Foo().load()
+    expected = np.array([[2.0, 4.0], [6.0, 8.0]])
+    assert_equal(res, expected)
+
+
+def test_callable_usecols_raises_exception():
+    with pytest.raises(ZeroDivisionError, match='division by zero'):
+        np.loadtxt(StringIO('1 2\n4 5'), usecols=lambda n: 1/0)
+
+
+def test_callable_usecols_not_a_sequence():
+    with pytest.raises(TypeError,
+                       match="returned an instance of type 'module'"):
+        np.loadtxt(StringIO('1 2\n4 5'), usecols=lambda n: np)
+
+
+def test_callable_usecols_bad_element_type():
+    with pytest.raises(TypeError,
+                       match="at least one occurrence of type 'module'"):
+        np.loadtxt(StringIO('1 2\n3 4'), usecols=lambda n: [np])
+
+
+def test_callable_usecols_bad_len_with_structured_dtype():
+    dt = np.dtype([('x', float), ('y', float)])
+    txt = StringIO('1 2 3 4\n5 6 7 8\n')
+    with pytest.raises(RuntimeError,
+                       match='the number of fields in the given dtype'):
+        np.loadtxt(txt, usecols=lambda n: [0, 2, 3], dtype=dt)
 
 
 @pytest.mark.parametrize("c1", ["a", "の", "🫕"])
@@ -414,6 +466,7 @@ def test_implicit_cast_float_to_int_fails(dtype):
     txt = StringIO("1.0, 2.1, 3.7\n4, 5, 6")
     with pytest.raises(ValueError):
         np.loadtxt(txt, dtype=dtype, delimiter=",")
+
 
 @pytest.mark.parametrize("dtype", (np.complex64, np.complex128))
 @pytest.mark.parametrize("with_parens", (False, True))
@@ -610,6 +663,7 @@ def test_quoted_field_is_not_empty():
     res = np.loadtxt(txt, delimiter=",", dtype="U1", quotechar='"')
     assert_equal(res, expected)
 
+
 def test_quoted_field_is_not_empty_nonstrict():
     # Same as test_quoted_field_is_not_empty but check that we are not strict
     # about missing closing quote (this is the `csv.reader` default also)
@@ -617,6 +671,7 @@ def test_quoted_field_is_not_empty_nonstrict():
     expected = np.array(["1", "4", ""], dtype="U1")
     res = np.loadtxt(txt, delimiter=",", dtype="U1", quotechar='"')
     assert_equal(res, expected)
+
 
 def test_consecutive_quotechar_escaped():
     txt = StringIO('"Hello, my name is ""Monty""!"')
@@ -648,6 +703,7 @@ def test_warn_on_no_data(data, ndmin, usecols):
         with pytest.warns(UserWarning, match="input contained no data"):
             res = np.loadtxt(txt, ndmin=ndmin, usecols=usecols)
         assert res.shape == expected_shape
+
 
 @pytest.mark.parametrize("skiprows", (2, 3))
 def test_warn_on_skipped_data(skiprows):
