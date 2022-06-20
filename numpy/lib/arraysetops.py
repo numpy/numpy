@@ -556,11 +556,8 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, kind=None):
         * If 'table', will use a key-dictionary approach similar
           to a counting sort. This is only available for boolean and
           integer arrays. This will have a memory usage of the
-          size of `ar1` plus the max-min value of `ar2`. This tends
-          to be the faster method if the following formula is true:
-          ``log10(len(ar2)) > (log10(max(ar2)-min(ar2)) - 2.27) / 0.927``,
-          but may use greater memory. `assume_unique` has no effect
-          when the 'table' option is used.
+          size of `ar1` plus the max-min value of `ar2`. `assume_unique`
+          has no effect when the 'table' option is used.
         * If None, will automatically choose 'table' if
           the required memory allocation is less than or equal to
           6 times the sum of the sizes of `ar1` and `ar2`,
@@ -592,6 +589,13 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, kind=None):
     container:  As ``ar2`` is converted to an array, in those cases
     ``asarray(ar2)`` is an object array rather than the expected array of
     contained values.
+
+    Using ``kind='table'`` tends to be faster than `kind='sort'` if the
+    following relationship is true:
+    ``log10(len(ar2)) > (log10(max(ar2)-min(ar2)) - 2.27) / 0.927``,
+    but may use greater memory. The default value for `kind` will
+    be automatically selected based only on memory usage, so one may
+    manually set ``kind='table'`` if memory constraints can be relaxed.
 
     .. versionadded:: 1.4.0
 
@@ -772,11 +776,8 @@ def isin(element, test_elements, assume_unique=False, invert=False,
         * If 'table', will use a key-dictionary approach similar
           to a counting sort. This is only available for boolean and
           integer arrays. This will have a memory usage of the
-          size of `ar1` plus the max-min value of `ar2`. This tends
-          to be the faster method if the following formula is true:
-          ``log10(len(ar2)) > (log10(max(ar2)-min(ar2)) - 2.27) / 0.927``,
-          but may use greater memory. `assume_unique` has no effect
-          when the 'table' option is used.
+          size of `ar1` plus the max-min value of `ar2`. `assume_unique`
+          has no effect when the 'table' option is used.
         * If None, will automatically choose 'table' if
           the required memory allocation is less than or equal to
           6 times the sum of the sizes of `ar1` and `ar2`,
@@ -811,6 +812,13 @@ def isin(element, test_elements, assume_unique=False, invert=False,
     array of the values contained in `test_elements`. This is a consequence
     of the `array` constructor's way of handling non-sequence collections.
     Converting the set to a list usually gives the desired behavior.
+
+    Using ``kind='table'`` tends to be faster than `kind='sort'` if the
+    following relationship is true:
+    ``log10(len(ar2)) > (log10(max(ar2)-min(ar2)) - 2.27) / 0.927``,
+    but may use greater memory. The default value for `kind` will
+    be automatically selected based only on memory usage, so one may
+    manually set ``kind='table'`` if memory constraints can be relaxed.
 
     .. versionadded:: 1.13.0
 
