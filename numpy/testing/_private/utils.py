@@ -709,11 +709,46 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
     # original array for output formatting
     ox, oy = x, y
 
+    kwargs = dict(comparison=comparison, err_msg=err_msg, verbose=verbose,
+                    header=header,precision=precision, equal_nan=equal_nan,
+                    equal_inf=equal_inf)
     def isnumber(x):
         return x.dtype.char in '?bhilqpBHILQPefdgFDG'
 
     def istime(x):
         return x.dtype.char in "Mm"
+
+    def check_shape(x, y):
+        cond = (x.shape == () or y.shape == ()) or x.shape == y.shape
+        if not cond:
+            msg = build_err_msg([x, y],
+                                err_msg
+                                + f'\n(shapes {x.shape}, {y.shape} mismatch)',
+                                verbose=verbose, header=header,
+                                names=('x', 'y'), precision=precision)
+            raise AssertionError(msg)
+
+    def isstructured(x):
+        return x.dtype.names and len(x.dtype.names)>0
+
+    def structured_dtype_compare(x, y, **kwargs):
+        x_dtype = x.dtype
+        y_dtype = y.dtype
+        rec_arrs = isinstance(x, np.recarray) or isinstance(y, np.recarray)
+        check_shape(x,y)
+        if x_dtype.names is None:
+            check_flagged_comparison(x, y, **kwargs)
+        else:
+            for f_x, f_y in zip(x_dtype.fields, y_dtype.fields):
+                if rec_arrs and not f_x==f_y:
+                    msg = build_err_msg([x, y],
+                                        err_msg
+                                        + f'\nfield name mismatch for record arrays ({f_x} vs {f_y})',
+                                        verbose=verbose, header=header,
+                                        names=('x', 'y'), precision=precision)
+                    raise AssertionError(msg)
+                
+                structured_dtype_compare(x[f_x], y[f_y], **kwargs)
 
     def func_assert_same_pos(x, y, func=isnan, hasval='nan'):
         """Handling nan/inf.
@@ -752,16 +787,9 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
         else:
             return y_id
 
-    try:
-        cond = (x.shape == () or y.shape == ()) or x.shape == y.shape
-        if not cond:
-            msg = build_err_msg([x, y],
-                                err_msg
-                                + f'\n(shapes {x.shape}, {y.shape} mismatch)',
-                                verbose=verbose, header=header,
-                                names=('x', 'y'), precision=precision)
-            raise AssertionError(msg)
-
+    def check_flagged_comparison(x, y, comparison, err_msg, verbose, header,
+                                precision, equal_nan, equal_inf):
+        check_shape(x,y)
         flagged = bool_(False)
         if isnumber(x) and isnumber(y):
             if equal_nan:
@@ -842,6 +870,12 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
                                 verbose=verbose, header=header,
                                 names=('x', 'y'), precision=precision)
             raise AssertionError(msg)
+    try:
+        if isstructured(x) and isstructured(y):
+            structured_dtype_compare(x, y, **kwargs)
+        else:
+            check_flagged_comparison(x, y, **kwargs)
+
     except ValueError:
         import traceback
         efmt = traceback.format_exc()
