@@ -43,7 +43,7 @@ _PyArray_ArgMinMaxCommon(PyArrayObject *op,
 {
     PyArrayObject *ap = NULL, *wp = NULL, *rp = NULL;
     PyArray_ArgFunc* arg_func = NULL;
-    char *ip, *jp, *vp, *masked, *func_name;
+    char *ip, *vp, *masked, *func_name;
     npy_intp *rptr;
     npy_intp i, j, n, m;
     int elsize;
@@ -55,6 +55,13 @@ _PyArray_ArgMinMaxCommon(PyArrayObject *op,
     // original array. Helps when `keepdims` is True.
     npy_intp* original_op_shape = PyArray_DIMS(op);
     int out_ndim = PyArray_NDIM(op);
+    // Use NpyIter to broadcast `where`
+    char **it_ptr;
+    NpyIter* iter;
+    NpyIter_IterNextFunc *iternext;
+    PyArrayObject *it_ops[2];
+    npy_intp itemsize, innerstride;
+    npy_uint32 it_opflags[2] = {NPY_ITER_READONLY, NPY_ITER_READONLY};
     NPY_BEGIN_THREADS_DEF;
 
     if (initial != NULL) {
@@ -103,7 +110,7 @@ _PyArray_ArgMinMaxCommon(PyArrayObject *op,
     }
     if (where != NULL) {
         wp = (PyArrayObject *)PyArray_ContiguousFromAny((PyObject *)where,
-                                                        NPY_BOOL, 1, 0);
+                                                        NPY_BOOL, 0, 0);
         if (wp == NULL) {
             return NULL;
         }
@@ -189,18 +196,25 @@ _PyArray_ArgMinMaxCommon(PyArrayObject *op,
         }
     }
     else {
+        it_ops[0] = ap;
+        it_ops[1] = wp;
+        iter = NpyIter_MultiNew(2, it_ops, 0, NPY_KEEPORDER, NPY_NO_CASTING, 
+                                it_opflags, NULL);
+        iternext = NpyIter_GetIterNext(iter, NULL);
+        it_ptr = NpyIter_GetDataPtrArray(iter);
+        innerstride = NpyIter_GetInnerStrideArray(iter)[0];
+        itemsize = NpyIter_GetDescrArray(iter)[0]->elsize;
         masked = PyArray_malloc(elsize*m);
-        ip = PyArray_DATA(ap);
-        jp = PyArray_DATA(wp);
         vp = PyArray_DATA(initial);
-        for (i = 0; i < n; i++, ip += elsize*m, jp += sizeof(npy_bool)*m) {
-            for (j = 0; j < m; j++) {
-                memmove(masked+j*elsize, !jp[j] ? vp : ip+j*elsize, elsize);
+        j = 0;
+        do {
+            memmove(masked+j*elsize, !*it_ptr[1] ? vp : it_ptr[0], elsize);
+            j = (j + 1) % m;
+            if (j == 0) {
+                arg_func(masked, m, rptr, NULL);
+                rptr += 1;
             }
-            arg_func(masked, m, rptr, ap);
-            rptr += 1;
-        }
-        Py_DECREF(wp);
+        } while (iternext(iter));
     }
     NPY_END_THREADS_DESCR(PyArray_DESCR(ap));
 
