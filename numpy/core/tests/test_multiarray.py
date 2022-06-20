@@ -68,8 +68,8 @@ def _aligned_zeros(shape, dtype=float, order="C", align=None):
     # Note: slices producing 0-size arrays do not necessarily change
     # data pointer --- so we use and allocate size+1
     buf = buf[offset:offset+size+1][:-1]
+    buf.fill(0)
     data = np.ndarray(shape, dtype, buf, order=order)
-    data.fill(0)
     return data
 
 
@@ -1244,6 +1244,18 @@ class TestStructured:
         # The main importance is that it does not return True:
         with pytest.raises(TypeError):
             x == y
+ 
+    def test_empty_structured_array_comparison(self):
+        # Check that comparison works on empty arrays with nontrivially 
+        # shaped fields
+        a = np.zeros(0, [('a', '<f8', (1, 1))])
+        assert_equal(a, a)
+        a = np.zeros(0, [('a', '<f8', (1,))])
+        assert_equal(a, a)
+        a = np.zeros((0, 0), [('a', '<f8', (1, 1))])
+        assert_equal(a, a)
+        a = np.zeros((1, 0, 1), [('a', '<f8', (1, 1))])
+        assert_equal(a, a)
 
     def test_structured_comparisons_with_promotion(self):
         # Check that structured arrays can be compared so long as their

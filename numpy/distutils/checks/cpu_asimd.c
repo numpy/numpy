@@ -14,7 +14,7 @@ int main(int argc, char **argv)
     ret += (int)vgetq_lane_f32(vrndq_f32(v1), 0);
 #ifdef __aarch64__
     {
-        double *src2 = (float*)argv[argc-1];
+        double *src2 = (double*)argv[argc-1];
         float64x2_t vd1 = vdupq_n_f64(src2[0]), vd2 = vdupq_n_f64(src2[1]);
         /* MAXMIN */
         ret += (int)vgetq_lane_f64(vmaxnmq_f64(vd1, vd2), 0);

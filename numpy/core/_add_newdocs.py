@@ -3437,6 +3437,24 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('fill',
     >>> a
     array([1.,  1.])
 
+    Fill expects a scalar value and always behaves the same as assigning
+    to a single array element.  The following is a rare example where this
+    distinction is important:
+
+    >>> a = np.array([None, None], dtype=object)
+    >>> a[0] = np.array(3)
+    >>> a
+    array([array(3), None], dtype=object)
+    >>> a.fill(np.array(3))
+    >>> a
+    array([array(3), array(3)], dtype=object)
+
+    Where other forms of assignments will unpack the array being assigned:
+
+    >>> a[...] = np.array(3)
+    >>> a
+    array([3, 3], dtype=object)
+
     """))
 
 

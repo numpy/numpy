@@ -2939,7 +2939,9 @@ class TestLikeFuncs:
         self.check_like_function(np.full_like, 1, True)
         self.check_like_function(np.full_like, 1000, True)
         self.check_like_function(np.full_like, 123.456, True)
-        self.check_like_function(np.full_like, np.inf, True)
+        # Inf to integer casts cause invalid-value errors: ignore them.
+        with np.errstate(invalid="ignore"):
+            self.check_like_function(np.full_like, np.inf, True)
 
     @pytest.mark.parametrize('likefunc', [np.empty_like, np.full_like,
                                           np.zeros_like, np.ones_like])

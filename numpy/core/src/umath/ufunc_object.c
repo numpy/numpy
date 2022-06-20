@@ -57,6 +57,10 @@
 #include "legacy_array_method.h"
 #include "abstractdtypes.h"
 
+/* TODO: Only for `NpyIter_GetTransferFlags` until it is public */
+#define NPY_ITERATOR_IMPLEMENTATION_CODE
+#include "nditer_impl.h"
+
 /********** PRINTF DEBUG TRACING **************/
 #define NPY_UF_DBG_TRACING 0
 
@@ -1544,10 +1548,6 @@ execute_ufunc_loop(PyArrayMethod_Context *context, int masked,
     if (masked) {
         baseptrs[nop] = PyArray_BYTES(op_it[nop]);
     }
-    if (NpyIter_ResetBasePointers(iter, baseptrs, NULL) != NPY_SUCCEED) {
-        NpyIter_Deallocate(iter);
-        return -1;
-    }
 
     /*
      * Get the inner loop, with the possibility of specialization
@@ -1584,15 +1584,23 @@ execute_ufunc_loop(PyArrayMethod_Context *context, int masked,
     char **dataptr = NpyIter_GetDataPtrArray(iter);
     npy_intp *strides = NpyIter_GetInnerStrideArray(iter);
     npy_intp *countptr = NpyIter_GetInnerLoopSizePtr(iter);
-    int needs_api = NpyIter_IterationNeedsAPI(iter);
 
     NPY_BEGIN_THREADS_DEF;
+
+    flags = PyArrayMethod_COMBINED_FLAGS(flags, NpyIter_GetTransferFlags(iter));
 
     if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
         npy_clear_floatstatus_barrier((char *)context);
     }
-    if (!needs_api && !(flags & NPY_METH_REQUIRES_PYAPI)) {
+    if (!(flags & NPY_METH_REQUIRES_PYAPI)) {
         NPY_BEGIN_THREADS_THRESHOLDED(full_size);
+    }
+
+    /* The reset may copy the first buffer chunk, which could cause FPEs */
+    if (NpyIter_ResetBasePointers(iter, baseptrs, NULL) != NPY_SUCCEED) {
+        NPY_AUXDATA_FREE(auxdata);
+        NpyIter_Deallocate(iter);
+        return -1;
     }
 
     NPY_UF_DBG_PRINT("Actual inner loop:\n");
@@ -2388,7 +2396,8 @@ PyUFunc_GeneralizedFunctionInternal(PyUFuncObject *ufunc,
                  NPY_ITER_MULTI_INDEX |
                  NPY_ITER_REFS_OK |
                  NPY_ITER_ZEROSIZE_OK |
-                 NPY_ITER_COPY_IF_OVERLAP;
+                 NPY_ITER_COPY_IF_OVERLAP |
+                 NPY_ITER_DELAY_BUFALLOC;
 
     /* Create the iterator */
     iter = NpyIter_AdvancedNew(nop, op, iter_flags,

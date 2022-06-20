@@ -366,7 +366,7 @@ class ABCPolyBase(abc.ABC):
         linewidth = np.get_printoptions().get('linewidth', 75)
         if linewidth < 1:
             linewidth = 1
-        out = f"{self.coef[0]}"
+        out = pu.format_float(self.coef[0])
         for i, coef in enumerate(self.coef[1:]):
             out += " "
             power = str(i + 1)
@@ -376,9 +376,9 @@ class ABCPolyBase(abc.ABC):
             # complex). In this case, represent the coefficient as-is.
             try:
                 if coef >= 0:
-                    next_term = f"+ {coef}"
+                    next_term = f"+ " + pu.format_float(coef, parens=True)
                 else:
-                    next_term = f"- {-coef}"
+                    next_term = f"- " + pu.format_float(-coef, parens=True)
             except TypeError:
                 next_term = f"+ {coef}"
             # Polynomial term
@@ -432,10 +432,10 @@ class ABCPolyBase(abc.ABC):
         return f"{{{cls.basis_name}}}_{{{i}}}({arg_str})"
 
     @staticmethod
-    def _repr_latex_scalar(x):
+    def _repr_latex_scalar(x, parens=False):
         # TODO: we're stuck with disabling math formatting until we handle
         # exponents in this function
-        return r'\text{{{}}}'.format(x)
+        return r'\text{{{}}}'.format(pu.format_float(x, parens=parens))
 
     def _repr_latex_(self):
         # get the scaled argument string to the basis functions
@@ -466,9 +466,9 @@ class ABCPolyBase(abc.ABC):
             elif not isinstance(c, numbers.Real):
                 coef_str = f" + ({self._repr_latex_scalar(c)})"
             elif not np.signbit(c):
-                coef_str = f" + {self._repr_latex_scalar(c)}"
+                coef_str = f" + {self._repr_latex_scalar(c, parens=True)}"
             else:
-                coef_str = f" - {self._repr_latex_scalar(-c)}"
+                coef_str = f" - {self._repr_latex_scalar(-c, parens=True)}"
 
             # produce the string for the term
             term_str = self._repr_latex_term(i, term, needs_parens)

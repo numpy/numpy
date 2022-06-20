@@ -242,7 +242,7 @@ NPY_NO_EXPORT int
 init_string_ufuncs(PyObject *umath)
 {
     int res = -1;
-    /* NOTE: This should recieve global symbols? */
+    /* NOTE: This should receive global symbols? */
     PyArray_DTypeMeta *String = PyArray_DTypeFromTypeNum(NPY_STRING);
     PyArray_DTypeMeta *Unicode = PyArray_DTypeFromTypeNum(NPY_UNICODE);
     PyArray_DTypeMeta *Bool = PyArray_DTypeFromTypeNum(NPY_BOOL);

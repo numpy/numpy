@@ -358,7 +358,7 @@ if terminal_has_colors():
             fgcode = 30 + _colour_codes.get(fg.lower(), 0)
             seq.append(str(fgcode))
         if bg:
-            bgcode = 40 + _colour_codes.get(fg.lower(), 7)
+            bgcode = 40 + _colour_codes.get(bg.lower(), 7)
             seq.append(str(bgcode))
         if seq:
             return '\x1b[%sm%s\x1b[0m' % (';'.join(seq), s)

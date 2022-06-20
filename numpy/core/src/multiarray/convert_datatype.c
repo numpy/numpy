@@ -1691,8 +1691,12 @@ PyArray_ResultType(
             all_DTypes[i_all] = &PyArray_PyComplexAbstractDType;
         }
         else {
-            /* N.B.: Could even be an object dtype here for large ints */
+            /* This could even be an object dtype here for large ints */
             all_DTypes[i_all] = &PyArray_PyIntAbstractDType;
+            if (PyArray_TYPE(arrs[i]) != NPY_LONG) {
+                /* Not a "normal" scalar, so we cannot avoid the legacy path */
+                all_pyscalar = 0;
+            }
         }
         Py_INCREF(all_DTypes[i_all]);
         /*
@@ -3042,26 +3046,22 @@ nonstructured_to_structured_get_loop(
         NPY_ARRAYMETHOD_FLAGS *flags)
 {
     if (context->descriptors[1]->names != NULL) {
-        int needs_api = 0;
         if (get_fields_transfer_function(
                 aligned, strides[0], strides[1],
                 context->descriptors[0], context->descriptors[1],
                 move_references, out_loop, out_transferdata,
-                &needs_api) == NPY_FAIL) {
+                flags) == NPY_FAIL) {
             return -1;
         }
-        *flags = needs_api ? NPY_METH_REQUIRES_PYAPI : 0;
     }
     else if (context->descriptors[1]->subarray != NULL) {
-        int needs_api = 0;
         if (get_subarray_transfer_function(
                 aligned, strides[0], strides[1],
                 context->descriptors[0], context->descriptors[1],
                 move_references, out_loop, out_transferdata,
-                &needs_api) == NPY_FAIL) {
+                flags) == NPY_FAIL) {
             return -1;
         }
-        *flags = needs_api ? NPY_METH_REQUIRES_PYAPI : 0;
     }
     else {
         /*
@@ -3204,26 +3204,22 @@ structured_to_nonstructured_get_loop(
         NPY_ARRAYMETHOD_FLAGS *flags)
 {
     if (context->descriptors[0]->names != NULL) {
-        int needs_api = 0;
         if (get_fields_transfer_function(
                 aligned, strides[0], strides[1],
                 context->descriptors[0], context->descriptors[1],
                 move_references, out_loop, out_transferdata,
-                &needs_api) == NPY_FAIL) {
+                flags) == NPY_FAIL) {
             return -1;
         }
-        *flags = needs_api ? NPY_METH_REQUIRES_PYAPI : 0;
     }
     else if (context->descriptors[0]->subarray != NULL) {
-        int needs_api = 0;
         if (get_subarray_transfer_function(
                 aligned, strides[0], strides[1],
                 context->descriptors[0], context->descriptors[1],
                 move_references, out_loop, out_transferdata,
-                &needs_api) == NPY_FAIL) {
+                flags) == NPY_FAIL) {
             return -1;
         }
-        *flags = needs_api ? NPY_METH_REQUIRES_PYAPI : 0;
     }
     else {
         /*
@@ -3513,27 +3509,23 @@ void_to_void_get_loop(
 {
     if (context->descriptors[0]->names != NULL ||
             context->descriptors[1]->names != NULL) {
-        int needs_api = 0;
         if (get_fields_transfer_function(
                 aligned, strides[0], strides[1],
                 context->descriptors[0], context->descriptors[1],
                 move_references, out_loop, out_transferdata,
-                &needs_api) == NPY_FAIL) {
+                flags) == NPY_FAIL) {
             return -1;
         }
-        *flags = needs_api ? NPY_METH_REQUIRES_PYAPI : 0;
     }
     else if (context->descriptors[0]->subarray != NULL ||
              context->descriptors[1]->subarray != NULL) {
-        int needs_api = 0;
         if (get_subarray_transfer_function(
                 aligned, strides[0], strides[1],
                 context->descriptors[0], context->descriptors[1],
                 move_references, out_loop, out_transferdata,
-                &needs_api) == NPY_FAIL) {
+                flags) == NPY_FAIL) {
             return -1;
         }
-        *flags = needs_api ? NPY_METH_REQUIRES_PYAPI : 0;
     }
     else {
         /*
@@ -3546,7 +3538,7 @@ void_to_void_get_loop(
                 out_loop, out_transferdata) == NPY_FAIL) {
             return -1;
         }
-        *flags = 0;
+        *flags = PyArrayMethod_MINIMAL_FLAGS;
     }
     return 0;
 }

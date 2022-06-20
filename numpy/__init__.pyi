@@ -203,7 +203,6 @@ from numpy import (
     lib as lib,
     linalg as linalg,
     ma as ma,
-    matrixlib as matrixlib,
     polynomial as polynomial,
     random as random,
     testing as testing,

@@ -326,20 +326,20 @@ class TestRegression:
         assert_raises(ValueError, bfa)
         assert_raises(ValueError, bfb)
 
-    def test_nonarray_assignment(self):
+    @pytest.mark.parametrize("index",
+            [np.ones(10, dtype=bool), np.arange(10)],
+            ids=["boolean-arr-index", "integer-arr-index"])
+    def test_nonarray_assignment(self, index):
         # See also Issue gh-2870, test for non-array assignment
         # and equivalent unsafe casted array assignment
         a = np.arange(10)
-        b = np.ones(10, dtype=bool)
-        r = np.arange(10)
 
-        def assign(a, b, c):
-            a[b] = c
+        with pytest.raises(ValueError):
+            a[index] = np.nan
 
-        assert_raises(ValueError, assign, a, b, np.nan)
-        a[b] = np.array(np.nan)  # but not this.
-        assert_raises(ValueError, assign, a, r, np.nan)
-        a[r] = np.array(np.nan)
+        with np.errstate(invalid="warn"):
+            with pytest.warns(RuntimeWarning, match="invalid value"):
+                a[index] = np.array(np.nan)  # Only warns
 
     def test_unpickle_dtype_with_object(self):
         # Implemented in r2840

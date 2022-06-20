@@ -5,6 +5,7 @@ These tests complement those found in `test_io.py`.
 """
 
 import sys
+import os
 import pytest
 from tempfile import NamedTemporaryFile, mkstemp
 from io import StringIO
@@ -252,7 +253,7 @@ def test_ragged_usecols():
 
     txt = StringIO("0,0,XXX\n0\n0,XXX,XXX,0,XXX\n")
     with pytest.raises(ValueError,
-                match="invalid column index -2 at row 1 with 2 columns"):
+                match="invalid column index -2 at row 2 with 1 columns"):
         # There is no -2 column in the second row:
         np.loadtxt(txt, dtype=float, delimiter=",", usecols=[0, -2])
 
@@ -960,9 +961,11 @@ def test_parametric_unit_discovery(
 
     # file-obj path
     fd, fname = mkstemp()
+    os.close(fd)
     with open(fname, "w") as fh:
         fh.write("\n".join(data))
     a = np.loadtxt(fname, dtype=unitless_dtype)
+    os.remove(fname)
     assert a.dtype == expected.dtype
     assert_equal(a, expected)
 
@@ -982,9 +985,11 @@ def test_str_dtype_unit_discovery_with_converter():
 
     # file-obj path
     fd, fname = mkstemp()
+    os.close(fd)
     with open(fname, "w") as fh:
         fh.write("\n".join(data))
     a = np.loadtxt(fname, dtype="U", converters=conv, encoding=None)
+    os.remove(fname)
     assert a.dtype == expected.dtype
     assert_equal(a, expected)
 
