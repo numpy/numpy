@@ -590,18 +590,24 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
     ar1 = np.asarray(ar1).ravel()
     ar2 = np.asarray(ar2).ravel()
 
-    # Ensure that iteration through object arrays yields size-1 arrays
-    if ar2.dtype == object:
-        ar2 = ar2.reshape(-1, 1)
-
     # Check if one of the arrays may contain arbitrary objects
     contains_object = ar1.dtype.hasobject or ar2.dtype.hasobject
+
+    # String is counted as arbitary python object above however it can be sorted 
+    if(all(map(lambda i: isinstance(i, str), ar1)) and all(map(lambda i: isinstance(i, str), ar2))):
+        contains_object = False
+    
 
     # This code is run when
     # a) the first condition is true, making the code significantly faster
     # b) the second condition is true (i.e. `ar1` or `ar2` may contain
     #    arbitrary objects), since then sorting is not guaranteed to work
+
     if len(ar2) < 10 * len(ar1) ** 0.145 or contains_object:
+        # Ensure that iteration through object arrays yields size-1 arrays
+        if ar2.dtype == object:
+            ar2 = ar2.reshape(-1, 1)
+        
         if invert:
             mask = np.ones(len(ar1), dtype=bool)
             for a in ar2:
@@ -822,9 +828,10 @@ def setdiff1d(ar1, ar2, assume_unique=False):
     array([1, 2])
 
     """
-    if assume_unique:
+    if not assume_unique:
         ar1 = np.asarray(ar1).ravel()
     else:
         ar1 = unique(ar1)
         ar2 = unique(ar2)
+
     return ar1[in1d(ar1, ar2, assume_unique=True, invert=True)]
