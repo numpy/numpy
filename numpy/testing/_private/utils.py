@@ -759,9 +759,13 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
         else:
             cond = (x.shape == () or y.shape == ()) or x.shape == y.shape
         if not cond:
+            if x.shape != y.shape:
+                reason = f'\n(shapes {x.shape}, {y.shape} mismatch)'
+            else:
+                reason = f'\n(dtypes {x.dtype}, {y.dtype} mismatch)'
             msg = build_err_msg([x, y],
                                 err_msg
-                                + f'\n(shapes {x.shape}, {y.shape} mismatch)',
+                                + reason,
                                 verbose=verbose, header=header,
                                 names=('x', 'y'), precision=precision)
             raise AssertionError(msg)
@@ -881,7 +885,7 @@ def assert_array_equal(x, y, err_msg='', verbose=True, *, strict=False):
     verbose : bool, optional
         If True, the conflicting values are appended to the error message.
     strict : bool, optional
-        If True, raise an assertion when either the shape or the data
+        If True, raise an AssertionError when either the shape or the data
         type of the array_like objects does not match. The special
         handling for scalars mentioned in the Notes section is disabled.
 
@@ -937,7 +941,7 @@ def assert_array_equal(x, y, err_msg='', verbose=True, *, strict=False):
     >>> x = np.full((2, 5), fill_value=3)
     >>> np.testing.assert_array_equal(x, 3)
 
-    Use `strict` to raise an assertion when comparing a scalar with an array:
+    Use `strict` to raise an AssertionError when comparing a scalar with an array:
 
     >>> np.testing.assert_array_equal(x, 3, strict=True)
     Traceback (most recent call last):
@@ -960,7 +964,7 @@ def assert_array_equal(x, y, err_msg='', verbose=True, *, strict=False):
     AssertionError:
     Arrays are not equal
     <BLANKLINE>
-    (shapes (3,), (3,) mismatch)
+    (dtypes int64, float32 mismatch)
      x: array([2, 2, 2])
      y: array([2., 2., 2.], dtype=float32)
     """
