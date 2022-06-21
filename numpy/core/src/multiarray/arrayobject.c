@@ -1253,7 +1253,8 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
             descr = NULL;
             goto fail;
         }
-        if (PyDataType_FLAGCHK(descr, NPY_ITEM_HASOBJECT)) {
+        /* Logic shared by `empty`, `empty_like`, and `ndarray.__new__` */
+        if (PyDataType_REFCHK(PyArray_DESCR(ret))) {
             /* place Py_None in object positions */
             PyArray_FillObjectArray(ret, Py_None);
             if (PyErr_Occurred()) {

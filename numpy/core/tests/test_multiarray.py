@@ -1172,6 +1172,21 @@ class TestCreation:
         a = np.array([1, Decimal(1)])
         a = np.array([[1], [Decimal(1)]])
 
+    @pytest.mark.parametrize("dtype", [object, "O,O", "O,(3)O", "(2,3)O"])
+    @pytest.mark.parametrize("function", [
+            np.ndarray, np.empty,
+            lambda shape, dtype: np.empty_like(np.empty(shape, dtype=dtype))])
+    def test_object_initialized_to_None(self, function, dtype):
+        # NumPy has support for object fields to be NULL (meaning None)
+        # but generally, we should always fill with the proper None, and
+        # downstream may rely on that.  (For fully initialized arrays!)
+        arr = function(3, dtype=dtype)
+        # We expect a fill value of None, which is not NULL:
+        expected = np.array(None).tobytes()
+        expected = expected * (arr.nbytes // len(expected))
+        assert arr.tobytes() == expected
+
+
 class TestStructured:
     def test_subarray_field_access(self):
         a = np.zeros((3, 5), dtype=[('a', ('i4', (2, 2)))])
