@@ -1756,6 +1756,52 @@ class TestMaskedArrayArithmetic:
         assert_equal(test.mask, [True, False])
         assert_(test.fill_value == True)
 
+    @pytest.mark.parametrize('dt1', num_dts, ids=num_ids)
+    @pytest.mark.parametrize('dt2', num_dts, ids=num_ids)
+    @pytest.mark.parametrize('fill', [None, 1])
+    @pytest.mark.parametrize('op',
+            [operator.le, operator.lt, operator.ge, operator.gt])
+    def test_comparisons_for_numeric(self, op, dt1, dt2, fill):
+        # Test the equality of structured arrays
+        a = array([0, 1], dtype=dt1, mask=[0, 1], fill_value=fill)
+
+        test = op(a, a)
+        assert_equal(test.data, op(a._data, a._data))
+        assert_equal(test.mask, [False, True])
+        assert_(test.fill_value == True)
+
+        test = op(a, a[0])
+        assert_equal(test.data, op(a._data, a._data[0]))
+        assert_equal(test.mask, [False, True])
+        assert_(test.fill_value == True)
+
+        b = array([0, 1], dtype=dt2, mask=[1, 0], fill_value=fill)
+        test = op(a, b)
+        assert_equal(test.data, op(a._data, b._data))
+        assert_equal(test.mask, [True, True])
+        assert_(test.fill_value == True)
+
+        test = op(a[0], b)
+        assert_equal(test.data, op(a._data[0], b._data))
+        assert_equal(test.mask, [True, False])
+        assert_(test.fill_value == True)
+
+        test = op(b, a[0])
+        assert_equal(test.data, op(b._data, a._data[0]))
+        assert_equal(test.mask, [True, False])
+        assert_(test.fill_value == True)
+
+    @pytest.mark.parametrize('op',
+            [operator.le, operator.lt, operator.ge, operator.gt])
+    @pytest.mark.parametrize('fill', [None, "N/A"])
+    def test_comparisons_strings(self, op, fill):
+        # See gh-21770, mask propagation is broken for strings (and some other
+        # cases) so we explicitly test strings here.
+        # In principle only == and != may need special handling...
+        ma1 = masked_array(["a", "b", "cde"], mask=[0, 1, 0], fill_value=fill)
+        ma2 = masked_array(["cde", "b", "a"], mask=[0, 1, 0], fill_value=fill)
+        assert_equal(op(ma1, ma2)._data, op(ma1._data, ma2._data))
+
     def test_eq_with_None(self):
         # Really, comparisons with None should not be done, but check them
         # anyway. Note that pep8 will flag these tests.
