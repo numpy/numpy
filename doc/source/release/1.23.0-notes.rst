@@ -367,16 +367,6 @@ while computing the Kronecker product of the inputs
 
 (`gh-21262 <https://github.com/numpy/numpy/pull/21262>`__)
 
-String comparisons now supported in ufuncs
-------------------------------------------
-The comparison ufuncs `np.equal`, `np.greater`, etc. now support
-unicode and byte string inputs (dtypes ``S`` and ``U``).
-Due to this change a ``FutureWarning`` is now given when comparing
-unicode to byte strings.  Such comparisons always returned ``False``
-and continue to do so at this time.
-
-(`gh-21716 <https://github.com/numpy/numpy/pull/21716>`__)
-
 
 Performance improvements and changes
 ====================================
