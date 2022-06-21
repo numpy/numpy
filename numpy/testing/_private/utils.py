@@ -941,7 +941,8 @@ def assert_array_equal(x, y, err_msg='', verbose=True, *, strict=False):
     >>> x = np.full((2, 5), fill_value=3)
     >>> np.testing.assert_array_equal(x, 3)
 
-    Use `strict` to raise an AssertionError when comparing a scalar with an array:
+    Use `strict` to raise an AssertionError when comparing a scalar with an
+    array:
 
     >>> np.testing.assert_array_equal(x, 3, strict=True)
     Traceback (most recent call last):
