@@ -266,6 +266,8 @@ def _register_known_types():
                             tiny=tiny_f80)
     # float80, first 10 bytes containing actual storage
     _register_type(float80_ma, b'\xcd\xcc\xcc\xcc\xcc\xcc\xcc\xcc\xfb\xbf')
+    # The following signature is produced under valgrind.
+    _register_type(float80_ma, b'\x00\xd0\xcc\xcc\xcc\xcc\xcc\xcc\xfb\xbf')
     _float_ma[80] = float80_ma
 
     # Guessed / known parameters for double double; see:
