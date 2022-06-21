@@ -326,7 +326,9 @@ class MachAr:
         self.tiny = self.xmin
         self.huge = self.xmax
         self.smallest_normal = self.xmin
+        self._str_smallest_normal = float_to_str(self.xmin)
         self.smallest_subnormal = float_to_float(smallest_subnormal)
+        self._str_smallest_subnormal = float_to_str(smallest_subnormal)
 
         import math
         self.precision = int(-math.log10(float_to_float(self.eps)))
