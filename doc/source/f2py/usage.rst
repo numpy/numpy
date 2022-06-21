@@ -220,6 +220,26 @@ Other options
   ``--build-dir <dirname>``
     All F2PY generated files are created in ``<dirname>``. Default is
     ``tempfile.mkdtemp()``.
+  ``--f2cmap <filename>``
+    Load Fortran-to-Python KIND specification from the given file.
+    For example, if you have a fortran file ``func1.f`` with the following:
+
+    .. literalinclude:: ./code/f2cmap_demo.f
+       :language: fortran
+
+    In order to convert ``int64`` and ``real64`` to vaild C data types,
+    you can create a ``.f2py_f2cmap`` file in the current directory:
+
+    .. code-block:: text
+
+      dict(real=dict(real32='float', real64='double'), integer=dict(int64='long long'))
+
+    and pass it to ``f2py`` using ``--f2cmap`` flag.
+
+    .. code-block:: sh
+
+      f2py -c func1.f -m func1 --f2cmap .f2py_f2cmap
+
   ``--quiet``
     Run quietly.
   ``--verbose``
