@@ -828,7 +828,7 @@ def setdiff1d(ar1, ar2, assume_unique=False):
     array([1, 2])
 
     """
-    if not assume_unique:
+    if assume_unique:
         ar1 = np.asarray(ar1).ravel()
     else:
         ar1 = unique(ar1)
