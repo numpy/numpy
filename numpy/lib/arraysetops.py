@@ -594,7 +594,8 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
     contains_object = ar1.dtype.hasobject or ar2.dtype.hasobject
 
     # String is counted as arbitary python object above however it can be sorted 
-    if(all(map(lambda i: isinstance(i, str), ar1)) and all(map(lambda i: isinstance(i, str), ar2))):
+    if(all(map(lambda i: isinstance(i, str), ar1)) 
+        and all(map(lambda i: isinstance(i, str), ar2))):
         contains_object = False
     
 
