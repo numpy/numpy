@@ -263,7 +263,7 @@ read_rows(stream *s,
                 // create the usecols array.
                 PyObject *seq = PyObject_CallFunction(usecols_obj, "n",
                                                       current_num_fields);
-                if (PyErr_Occurred()) {
+                if (seq == NULL) {
                     // User-provided function failed.
                     goto error;
                 }
