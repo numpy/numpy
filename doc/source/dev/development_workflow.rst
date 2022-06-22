@@ -164,12 +164,12 @@ pre-commit hook that performs automatic formatting and validation of changes,
 and using it is highly recommended. Tasks and checks that it runs include:
 
 * Format changed lines only of Python files to pep8 standard using `Darker
-  <darker>`_, which wraps `black <black>`_ and `isort <isort>`_ and applies them
-  to the diff (this hook is enabled by default). Additionally, check only these
-  changed lines using `flake8 <flake8>`_.
+  <darker_>`_, which wraps `black <black_>`_ and `isort <isort_>`_ and applies
+  them to the diff (this hook is enabled by default). Additionally, check only
+  these changed lines using `flake8 <flake8_>`_.
 
 * Format changed lines only of C and C++ source files to pep7 standard using a
-  python wrapper for `ClangFormat versioning <clang_format>`_ (this hook is
+  python wrapper for `ClangFormat versioning <clang_format_>`_ (this hook is
   enabled by default).
 
 * Format and lint YAML shell files, and perform linting on Fortran, rst, Docker,

@@ -87,7 +87,6 @@ repos:
     rev: v1.12.1
     hooks:
       - id: blacken-docs
-        args: [--line-length, '79']
         stages: [manual]
 
   # Allow isort to be run on entire file manually
