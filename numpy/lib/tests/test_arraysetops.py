@@ -232,10 +232,11 @@ class TestSetOps:
         assert_isin_equal(5, 6)
 
         # empty array-like:
-        x = []
-        assert_isin_equal(x, b)
-        assert_isin_equal(a, x)
-        assert_isin_equal(x, x)
+        if kind in {None, "sort"}:
+            x = []
+            assert_isin_equal(x, b)
+            assert_isin_equal(a, x)
+            assert_isin_equal(x, x)
 
     @pytest.mark.parametrize("kind", [None, "sort", "table"])
     def test_in1d(self, kind):
@@ -296,7 +297,8 @@ class TestSetOps:
         c = in1d(a, b, kind=kind)
         assert_array_equal(c, ec)
 
-        assert_array_equal(in1d([], [], kind=kind), [])
+        if kind in {None, "sort"}:
+            assert_array_equal(in1d([], [], kind=kind), [])
 
     def test_in1d_char_array(self):
         a = np.array(['a', 'b', 'c', 'd', 'e', 'c', 'e', 'b'])
