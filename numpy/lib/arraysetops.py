@@ -553,7 +553,7 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
         * If 'sort', will use a mergesort-based approach. This will have
           a memory usage of roughly 6 times the sum of the sizes of
           `ar1` and `ar2`, not accounting for size of dtypes.
-        * If 'table', will use a key-dictionary approach similar
+        * If 'table', will use a lookup table approach similar
           to a counting sort. This is only available for boolean and
           integer arrays. This will have a memory usage of the
           size of `ar1` plus the max-min value of `ar2`. `assume_unique`
@@ -772,7 +772,7 @@ def isin(element, test_elements, assume_unique=False, invert=False, *,
         * If 'sort', will use a mergesort-based approach. This will have
           a memory usage of roughly 6 times the sum of the sizes of
           `ar1` and `ar2`, not accounting for size of dtypes.
-        * If 'table', will use a key-dictionary approach similar
+        * If 'table', will use a lookup table approach similar
           to a counting sort. This is only available for boolean and
           integer arrays. This will have a memory usage of the
           size of `ar1` plus the max-min value of `ar2`. `assume_unique`
