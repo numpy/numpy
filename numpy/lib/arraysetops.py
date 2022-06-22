@@ -736,12 +736,12 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
 
 
 def _isin_dispatcher(element, test_elements, assume_unique=None, invert=None,
-                     kind=None):
+                     *, kind=None):
     return (element, test_elements)
 
 
 @array_function_dispatch(_isin_dispatcher)
-def isin(element, test_elements, assume_unique=False, invert=False,
+def isin(element, test_elements, assume_unique=False, invert=False, *,
          kind=None):
     """
     Calculates ``element in test_elements``, broadcasting over `element` only.
