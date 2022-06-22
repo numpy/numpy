@@ -1,7 +1,7 @@
 Faster version of ``np.isin`` and ``np.in1d`` for integer arrays
 ----------------------------------------------------------------
 ``np.in1d`` (used by ``np.isin``) can now switch to a faster algorithm
-(up to >10x faster) when it is fed two integer arrays.
+(up to >10x faster) when it is passed two integer arrays.
 The algorithm has similarities to a counting sort in that it
 uses the ``ar2`` (``test_elements`` in ``np.isin``) argument to
 index a boolean array, setting them to ``True`` where elements exist.

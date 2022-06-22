@@ -516,13 +516,13 @@ def setxor1d(ar1, ar2, assume_unique=False):
     return aux[flag[1:] & flag[:-1]]
 
 
-def _in1d_dispatcher(ar1, ar2, assume_unique=None, invert=None,
+def _in1d_dispatcher(ar1, ar2, assume_unique=None, invert=None, *,
                      kind=None):
     return (ar1, ar2)
 
 
 @array_function_dispatch(_in1d_dispatcher)
-def in1d(ar1, ar2, assume_unique=False, invert=False, kind=None):
+def in1d(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
     """
     Test whether each element of a 1-D array is also present in a second array.
 
@@ -633,8 +633,7 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, kind=None):
 
     if kind not in {None, 'sort', 'table'}:
         raise ValueError(
-            "Invalid kind: {0}. ".format(kind)
-            + "Please use None, 'sort' or 'table'.")
+            f"Invalid kind: '{kind}'. Please use None, 'sort' or 'table'.")
 
     if integer_arrays and kind in {None, 'table'}:
         ar2_min = np.min(ar2)
