@@ -195,7 +195,8 @@ class TestSetOps:
         assert_equal(actual, expected)
         assert actual.dtype == expected.dtype
 
-    def test_isin(self):
+    @pytest.mark.parametrize("kind", [None, "sort", "table"])
+    def test_isin(self, kind):
         # the tests for in1d cover most of isin's behavior
         # if in1d is removed, would need to change those tests to test
         # isin instead.
@@ -204,8 +205,7 @@ class TestSetOps:
             return a in b
         isin_slow = np.vectorize(_isin_slow, otypes=[bool], excluded={1})
 
-        def assert_isin_equal(a, b, old_algorithm=None):
-            kind = "sort" if old_algorithm else None
+        def assert_isin_equal(a, b):
             x = isin(a, b, kind=kind)
             y = isin_slow(a, b)
             assert_array_equal(x, y)
@@ -214,41 +214,31 @@ class TestSetOps:
         a = np.arange(24).reshape([2, 3, 4])
         b = np.array([[10, 20, 30], [0, 1, 3], [11, 22, 33]])
         assert_isin_equal(a, b)
-        assert_isin_equal(a, b, old_algorithm=True)
 
         # array-likes as both arguments
         c = [(9, 8), (7, 6)]
         d = (9, 7)
         assert_isin_equal(c, d)
-        assert_isin_equal(c, d, old_algorithm=True)
 
         # zero-d array:
         f = np.array(3)
         assert_isin_equal(f, b)
         assert_isin_equal(a, f)
         assert_isin_equal(f, f)
-        assert_isin_equal(f, b, old_algorithm=True)
-        assert_isin_equal(a, f, old_algorithm=True)
-        assert_isin_equal(f, f, old_algorithm=True)
 
         # scalar:
         assert_isin_equal(5, b)
         assert_isin_equal(a, 6)
         assert_isin_equal(5, 6)
-        assert_isin_equal(5, b, old_algorithm=True)
-        assert_isin_equal(a, 6, old_algorithm=True)
-        assert_isin_equal(5, 6, old_algorithm=True)
 
         # empty array-like:
         x = []
         assert_isin_equal(x, b)
         assert_isin_equal(a, x)
         assert_isin_equal(x, x)
-        assert_isin_equal(x, b, old_algorithm=True)
-        assert_isin_equal(a, x, old_algorithm=True)
-        assert_isin_equal(x, x, old_algorithm=True)
 
-    def test_in1d(self):
+    @pytest.mark.parametrize("kind", [None, "sort", "table"])
+    def test_in1d(self, kind):
         # we use two different sizes for the b array here to test the
         # two different paths in in1d().
         for mult in (1, 10):
@@ -256,144 +246,57 @@ class TestSetOps:
             a = [5, 7, 1, 2]
             b = [2, 4, 3, 1, 5] * mult
             ec = np.array([True, False, True, True])
-            c = in1d(a, b, assume_unique=True)
-            assert_array_equal(c, ec)
-            c = in1d(a, b, assume_unique=True, kind="sort")
+            c = in1d(a, b, assume_unique=True, kind=kind)
             assert_array_equal(c, ec)
 
             a[0] = 8
             ec = np.array([False, False, True, True])
-            c = in1d(a, b, assume_unique=True)
-            assert_array_equal(c, ec)
-            c = in1d(a, b, assume_unique=True, kind="sort")
+            c = in1d(a, b, assume_unique=True, kind=kind)
             assert_array_equal(c, ec)
 
             a[0], a[3] = 4, 8
             ec = np.array([True, False, True, False])
-            c = in1d(a, b, assume_unique=True)
-            assert_array_equal(c, ec)
-            c = in1d(a, b, assume_unique=True, kind="sort")
+            c = in1d(a, b, assume_unique=True, kind=kind)
             assert_array_equal(c, ec)
 
             a = np.array([5, 4, 5, 3, 4, 4, 3, 4, 3, 5, 2, 1, 5, 5])
             b = [2, 3, 4] * mult
             ec = [False, True, False, True, True, True, True, True, True,
                   False, True, False, False, False]
-            c = in1d(a, b)
-            assert_array_equal(c, ec)
-            c = in1d(a, b, kind="sort")
+            c = in1d(a, b, kind=kind)
             assert_array_equal(c, ec)
 
             b = b + [5, 5, 4] * mult
             ec = [True, True, True, True, True, True, True, True, True, True,
                   True, False, True, True]
-            c = in1d(a, b)
-            assert_array_equal(c, ec)
-            c = in1d(a, b, kind="sort")
+            c = in1d(a, b, kind=kind)
             assert_array_equal(c, ec)
 
             a = np.array([5, 7, 1, 2])
             b = np.array([2, 4, 3, 1, 5] * mult)
             ec = np.array([True, False, True, True])
-            c = in1d(a, b)
-            assert_array_equal(c, ec)
-            c = in1d(a, b, kind="sort")
+            c = in1d(a, b, kind=kind)
             assert_array_equal(c, ec)
 
             a = np.array([5, 7, 1, 1, 2])
             b = np.array([2, 4, 3, 3, 1, 5] * mult)
             ec = np.array([True, False, True, True, True])
-            c = in1d(a, b)
-            assert_array_equal(c, ec)
-            c = in1d(a, b, kind="sort")
+            c = in1d(a, b, kind=kind)
             assert_array_equal(c, ec)
 
             a = np.array([5, 5])
             b = np.array([2, 2] * mult)
             ec = np.array([False, False])
-            c = in1d(a, b)
-            assert_array_equal(c, ec)
-            c = in1d(a, b, kind="sort")
+            c = in1d(a, b, kind=kind)
             assert_array_equal(c, ec)
 
         a = np.array([5])
         b = np.array([2])
         ec = np.array([False])
-        c = in1d(a, b)
-        assert_array_equal(c, ec)
-        c = in1d(a, b, kind="sort")
+        c = in1d(a, b, kind=kind)
         assert_array_equal(c, ec)
 
-        assert_array_equal(in1d([], []), [])
-
-    def test_in1d_hit_alternate_algorithm_floats(self):
-        # Perform the above test but with floats
-        # This forces the old in1d (pre-Oct 1/2018) algorithm
-        for mult in (1, 10):
-            # One check without np.array to make sure lists are handled correct
-            a = [5, 7, 1, 2]
-            b = [2, 4, 3, 1, 5] * mult
-            ec = np.array([True, False, True, True])
-            c = in1d(np.array(a, dtype=np.float32),
-                     np.array(b, dtype=np.float32), assume_unique=True)
-            assert_array_equal(c, ec)
-
-            a[0] = 8
-            ec = np.array([False, False, True, True])
-            c = in1d(np.array(a, dtype=np.float32),
-                     np.array(b, dtype=np.float32), assume_unique=True)
-            assert_array_equal(c, ec)
-
-            a[0], a[3] = 4, 8
-            ec = np.array([True, False, True, False])
-            c = in1d(np.array(a, dtype=np.float32),
-                     np.array(b, dtype=np.float32), assume_unique=True)
-            assert_array_equal(c, ec)
-
-            a = np.array([5, 4, 5, 3, 4, 4, 3, 4, 3, 5, 2, 1, 5, 5])
-            b = [2, 3, 4] * mult
-            ec = [False, True, False, True, True, True, True, True, True,
-                  False, True, False, False, False]
-            c = in1d(np.array(a, dtype=np.float32),
-                     np.array(b, dtype=np.float32))
-            assert_array_equal(c, ec)
-
-            b = b + [5, 5, 4] * mult
-            ec = [True, True, True, True, True, True, True, True, True, True,
-                  True, False, True, True]
-            c = in1d(np.array(a, dtype=np.float32),
-                     np.array(b, dtype=np.float32))
-            assert_array_equal(c, ec)
-
-            a = np.array([5, 7, 1, 2])
-            b = np.array([2, 4, 3, 1, 5] * mult)
-            ec = np.array([True, False, True, True])
-            c = in1d(np.array(a, dtype=np.float32),
-                     np.array(b, dtype=np.float32))
-            assert_array_equal(c, ec)
-
-            a = np.array([5, 7, 1, 1, 2])
-            b = np.array([2, 4, 3, 3, 1, 5] * mult)
-            ec = np.array([True, False, True, True, True])
-            c = in1d(np.array(a, dtype=np.float32),
-                     np.array(b, dtype=np.float32))
-            assert_array_equal(c, ec)
-
-            a = np.array([5, 5])
-            b = np.array([2, 2] * mult)
-            ec = np.array([False, False])
-            c = in1d(np.array(a, dtype=np.float32),
-                     np.array(b, dtype=np.float32))
-            assert_array_equal(c, ec)
-
-        a = np.array([5])
-        b = np.array([2])
-        ec = np.array([False])
-        c = in1d(np.array(a, dtype=np.float32),
-                 np.array(b, dtype=np.float32))
-        assert_array_equal(c, ec)
-
-        assert_array_equal(in1d([], []), [])
+        assert_array_equal(in1d([], [], kind=kind), [])
 
     def test_in1d_char_array(self):
         a = np.array(['a', 'b', 'c', 'd', 'e', 'c', 'e', 'b'])
@@ -404,27 +307,29 @@ class TestSetOps:
 
         assert_array_equal(c, ec)
 
-    def test_in1d_invert(self):
+    @pytest.mark.parametrize("kind", [None, "sort", "table"])
+    def test_in1d_invert(self, kind):
         "Test in1d's invert parameter"
         # We use two different sizes for the b array here to test the
         # two different paths in in1d().
         for mult in (1, 10):
             a = np.array([5, 4, 5, 3, 4, 4, 3, 4, 3, 5, 2, 1, 5, 5])
             b = [2, 3, 4] * mult
-            assert_array_equal(np.invert(in1d(a, b)), in1d(a, b, invert=True))
-            assert_array_equal(np.invert(in1d(a, b)),
-                               in1d(a, b, invert=True, kind="sort"))
+            assert_array_equal(np.invert(in1d(a, b, kind=kind)),
+                               in1d(a, b, invert=True, kind=kind))
 
-        for mult in (1, 10):
-            a = np.array([5, 4, 5, 3, 4, 4, 3, 4, 3, 5, 2, 1, 5, 5],
-                         dtype=np.float32)
-            b = [2, 3, 4] * mult
-            b = np.array(b, dtype=np.float32)
-            assert_array_equal(np.invert(in1d(a, b)), in1d(a, b, invert=True))
-            assert_array_equal(np.invert(in1d(a, b)),
-                               in1d(a, b, invert=True, kind="sort"))
+        # float:
+        if kind in {None, "sort"}:
+            for mult in (1, 10):
+                a = np.array([5, 4, 5, 3, 4, 4, 3, 4, 3, 5, 2, 1, 5, 5],
+                            dtype=np.float32)
+                b = [2, 3, 4] * mult
+                b = np.array(b, dtype=np.float32)
+                assert_array_equal(np.invert(in1d(a, b, kind=kind)),
+                                   in1d(a, b, invert=True, kind=kind))
 
-    def test_in1d_ravel(self):
+    @pytest.mark.parametrize("kind", [None, "sort", "table"])
+    def test_in1d_ravel(self, kind):
         # Test that in1d ravels its input arrays. This is not documented
         # behavior however. The test is to ensure consistentency.
         a = np.arange(6).reshape(2, 3)
@@ -432,20 +337,16 @@ class TestSetOps:
         long_b = np.arange(3, 63).reshape(30, 2)
         ec = np.array([False, False, False, True, True, True])
 
-        assert_array_equal(in1d(a, b, assume_unique=True), ec)
-        assert_array_equal(in1d(a, b, assume_unique=False), ec)
-        assert_array_equal(in1d(a, long_b, assume_unique=True), ec)
-        assert_array_equal(in1d(a, long_b, assume_unique=False), ec)
-        assert_array_equal(in1d(a, b, assume_unique=True, kind="sort"),
+        assert_array_equal(in1d(a, b, assume_unique=True, kind=kind),
                            ec)
         assert_array_equal(in1d(a, b, assume_unique=False,
-                                kind="sort"),
+                                kind=kind),
                            ec)
         assert_array_equal(in1d(a, long_b, assume_unique=True,
-                                kind="sort"),
+                                kind=kind),
                            ec)
         assert_array_equal(in1d(a, long_b, assume_unique=False,
-                                kind="sort"),
+                                kind=kind),
                            ec)
 
     def test_in1d_hit_alternate_algorithm(self):
@@ -464,19 +365,16 @@ class TestSetOps:
         c = in1d(a, b, assume_unique=True)
         assert_array_equal(c, ec)
 
-    def test_in1d_boolean(self):
+    @pytest.mark.parametrize("kind", [None, "sort", "table"])
+    def test_in1d_boolean(self, kind):
         """Test that in1d works for boolean input"""
         a = np.array([True, False])
         b = np.array([False, False, False])
         expected = np.array([False, True])
         assert_array_equal(expected,
-                           in1d(a, b))
-        assert_array_equal(expected,
-                           in1d(a, b, kind="sort"))
+                           in1d(a, b, kind=kind))
         assert_array_equal(np.invert(expected),
-                           in1d(a, b, invert=True))
-        assert_array_equal(np.invert(expected),
-                           in1d(a, b, invert=True, kind="sort"))
+                           in1d(a, b, invert=True, kind=kind))
 
     def test_in1d_first_array_is_object(self):
         ar1 = [None]
