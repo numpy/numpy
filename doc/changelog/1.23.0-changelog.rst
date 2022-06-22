@@ -160,7 +160,7 @@ names contributed a patch for the first time.
 Pull requests merged
 ====================
 
-A total of 492 pull requests were merged for this release.
+A total of 494 pull requests were merged for this release.
 
 * `#15006 <https://github.com/numpy/numpy/pull/15006>`__: ENH: add support for operator() in crackfortran.
 * `#15844 <https://github.com/numpy/numpy/pull/15844>`__: ENH: add inline definition of access rights for Fortran types
@@ -654,4 +654,7 @@ A total of 492 pull requests were merged for this release.
 * `#21777 <https://github.com/numpy/numpy/pull/21777>`__: REV: Revert "ENH: Implement string comparison ufuncs (or almost)...
 * `#21809 <https://github.com/numpy/numpy/pull/21809>`__: MAINT: Add a check of the return value of PyMem_Calloc().
 * `#21810 <https://github.com/numpy/numpy/pull/21810>`__: BUG: lib: A loadtxt error message had two values reversed.
+* `#21811 <https://github.com/numpy/numpy/pull/21811>`__: REL: Prepare for the NumPy 1.23.0 release
+* `#21824 <https://github.com/numpy/numpy/pull/21824>`__: MAINT: Try fixing broken Anaconda uploads
+
 
