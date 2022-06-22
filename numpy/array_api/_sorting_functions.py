@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from ._array_object import Array
-
 import numpy as np
+
+from ._array_object import Array
 
 
 # Note: the descending keyword argument is new in this function
@@ -31,6 +31,7 @@ def argsort(
         max_i = x.shape[normalised_axis] - 1
         res = max_i - res
     return Array._new(res)
+
 
 # Note: the descending keyword argument is new in this function
 def sort(

@@ -4,13 +4,13 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
-#include "numpy/npy_common.h"
 #include "numpy/arrayobject.h"
+#include "numpy/npy_common.h"
 
 #include "common_dtype.h"
-#include "dtypemeta.h"
-#include "abstractdtypes.h"
 
+#include "abstractdtypes.h"
+#include "dtypemeta.h"
 
 /*
  * This file defines all logic necessary for generic "common dtype"
@@ -25,7 +25,6 @@
  * can give the correct result for any order of inputs and can further
  * generalize to user DTypes.
  */
-
 
 /**
  * This function defines the common DType operator.
@@ -61,15 +60,16 @@ PyArray_CommonDType(PyArray_DTypeMeta *dtype1, PyArray_DTypeMeta *dtype2)
     }
     if (common_dtype == (PyArray_DTypeMeta *)Py_NotImplemented) {
         Py_DECREF(Py_NotImplemented);
-        PyErr_Format(PyExc_TypeError,
+        PyErr_Format(
+                PyExc_TypeError,
                 "The DTypes %S and %S do not have a common DType. "
                 "For example they cannot be stored in a single array unless "
-                "the dtype is `object`.", dtype1, dtype2);
+                "the dtype is `object`.",
+                dtype1, dtype2);
         return NULL;
     }
     return common_dtype;
 }
-
 
 /**
  * This function takes a list of dtypes and "reduces" them (in a sense,
@@ -114,8 +114,8 @@ PyArray_CommonDType(PyArray_DTypeMeta *dtype1, PyArray_DTypeMeta *dtype2)
  * @param dtypes
  */
 static PyArray_DTypeMeta *
-reduce_dtypes_to_most_knowledgeable(
-        npy_intp length, PyArray_DTypeMeta **dtypes)
+reduce_dtypes_to_most_knowledgeable(npy_intp length,
+                                    PyArray_DTypeMeta **dtypes)
 {
     assert(length >= 2);
     npy_intp half = length / 2;
@@ -139,7 +139,8 @@ reduce_dtypes_to_most_knowledgeable(
                 dtypes[high] = tmp;
             }
 
-            Py_XSETREF(res, NPY_DT_CALL_common_dtype(dtypes[low], dtypes[high]));
+            Py_XSETREF(res,
+                       NPY_DT_CALL_common_dtype(dtypes[low], dtypes[high]));
             if (res == NULL) {
                 return NULL;
             }
@@ -162,7 +163,6 @@ reduce_dtypes_to_most_knowledgeable(
     Py_DECREF(res);
     return reduce_dtypes_to_most_knowledgeable(length - half, dtypes);
 }
-
 
 /**
  * Promotes a list of DTypes with each other in a way that should guarantee
@@ -204,8 +204,7 @@ reduce_dtypes_to_most_knowledgeable(
  * @return NULL or the promoted DType.
  */
 NPY_NO_EXPORT PyArray_DTypeMeta *
-PyArray_PromoteDTypeSequence(
-        npy_intp length, PyArray_DTypeMeta **dtypes_in)
+PyArray_PromoteDTypeSequence(npy_intp length, PyArray_DTypeMeta **dtypes_in)
 {
     if (length == 1) {
         Py_INCREF(dtypes_in[0]);
@@ -271,8 +270,8 @@ PyArray_PromoteDTypeSequence(
          * a higher category). We assume that the result is not in a lower
          * category.
          */
-        PyArray_DTypeMeta *promotion = NPY_DT_CALL_common_dtype(
-                main_dtype, dtypes[i]);
+        PyArray_DTypeMeta *promotion =
+                NPY_DT_CALL_common_dtype(main_dtype, dtypes[i]);
         if (promotion == NULL) {
             Py_XSETREF(result, NULL);
             goto finish;
@@ -284,14 +283,17 @@ PyArray_PromoteDTypeSequence(
             if (dtypes_in_tuple == NULL) {
                 goto finish;
             }
-            for (npy_intp l=0; l < length; l++) {
+            for (npy_intp l = 0; l < length; l++) {
                 Py_INCREF(dtypes_in[l]);
                 PyTuple_SET_ITEM(dtypes_in_tuple, l, (PyObject *)dtypes_in[l]);
             }
-            PyErr_Format(PyExc_TypeError,
-                    "The DType %S could not be promoted by %S. This means that "
+            PyErr_Format(
+                    PyExc_TypeError,
+                    "The DType %S could not be promoted by %S. This means "
+                    "that "
                     "no common DType exists for the given inputs. "
-                    "For example they cannot be stored in a single array unless "
+                    "For example they cannot be stored in a single array "
+                    "unless "
                     "the dtype is `object`. The full list of DTypes is: %S",
                     dtypes[i], main_dtype, dtypes_in_tuple);
             Py_DECREF(dtypes_in_tuple);
@@ -313,7 +315,7 @@ PyArray_PromoteDTypeSequence(
         }
     }
 
-  finish:
+finish:
     PyMem_Free(_scratch_heap);
     return result;
 }

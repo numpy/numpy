@@ -1,12 +1,7 @@
 from collections.abc import Generator
-from typing import (
-    Any,
-    TypeVar,
-    Union,
-    overload,
-)
+from typing import Any, TypeVar, Union, overload
 
-from numpy import ndarray, dtype, generic
+from numpy import dtype, generic, ndarray
 from numpy._typing import DTypeLike
 
 # TODO: Set a shape bound once we've got proper shape support

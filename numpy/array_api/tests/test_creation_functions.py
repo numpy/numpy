@@ -1,10 +1,11 @@
-from numpy.testing import assert_raises
 import numpy as np
+from numpy.testing import assert_raises
 
 from .. import all
+from .._array_object import Array
 from .._creation_functions import (
-    asarray,
     arange,
+    asarray,
     empty,
     empty_like,
     eye,
@@ -18,7 +19,6 @@ from .._creation_functions import (
     zeros_like,
 )
 from .._dtypes import float32, float64
-from .._array_object import Array
 
 
 def test_asarray_errors():
@@ -53,8 +53,7 @@ def test_asarray_copy():
     a[0] = 0
     assert all(b[0] == 0)
     assert_raises(NotImplementedError, lambda: asarray(a, copy=False))
-    assert_raises(NotImplementedError,
-                  lambda: asarray(a, copy=np._CopyMode.IF_NEEDED))
+    assert_raises(NotImplementedError, lambda: asarray(a, copy=np._CopyMode.IF_NEEDED))
 
 
 def test_arange_errors():
@@ -133,10 +132,14 @@ def test_zeros_like_errors():
     assert_raises(ValueError, lambda: zeros_like(asarray(1), dtype=int))
     assert_raises(ValueError, lambda: zeros_like(asarray(1), dtype="i"))
 
+
 def test_meshgrid_dtype_errors():
     # Doesn't raise
     meshgrid()
-    meshgrid(asarray([1.], dtype=float32))
-    meshgrid(asarray([1.], dtype=float32), asarray([1.], dtype=float32))
+    meshgrid(asarray([1.0], dtype=float32))
+    meshgrid(asarray([1.0], dtype=float32), asarray([1.0], dtype=float32))
 
-    assert_raises(ValueError, lambda: meshgrid(asarray([1.], dtype=float32), asarray([1.], dtype=float64)))
+    assert_raises(
+        ValueError,
+        lambda: meshgrid(asarray([1.0], dtype=float32), asarray([1.0], dtype=float64)),
+    )

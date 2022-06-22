@@ -28,38 +28,38 @@
 #ifndef NUMPY_CORE_SRC_COMMON_NPY_CPUINFO_PARSER_H_
 #define NUMPY_CORE_SRC_COMMON_NPY_CPUINFO_PARSER_H_
 #include <errno.h>
-#include <stdio.h>
 #include <fcntl.h>
-#include <string.h>
 #include <stddef.h>
+#include <stdio.h>
+#include <string.h>
 
-#define NPY__HWCAP  16
+#define NPY__HWCAP 16
 #define NPY__HWCAP2 26
 
 // arch/arm/include/uapi/asm/hwcap.h
-#define NPY__HWCAP_HALF   (1 << 1)
-#define NPY__HWCAP_NEON   (1 << 12)
-#define NPY__HWCAP_VFPv3  (1 << 13)
-#define NPY__HWCAP_VFPv4  (1 << 16)
-#define NPY__HWCAP2_AES   (1 << 0)
+#define NPY__HWCAP_HALF (1 << 1)
+#define NPY__HWCAP_NEON (1 << 12)
+#define NPY__HWCAP_VFPv3 (1 << 13)
+#define NPY__HWCAP_VFPv4 (1 << 16)
+#define NPY__HWCAP2_AES (1 << 0)
 #define NPY__HWCAP2_PMULL (1 << 1)
-#define NPY__HWCAP2_SHA1  (1 << 2)
-#define NPY__HWCAP2_SHA2  (1 << 3)
+#define NPY__HWCAP2_SHA1 (1 << 2)
+#define NPY__HWCAP2_SHA2 (1 << 3)
 #define NPY__HWCAP2_CRC32 (1 << 4)
 // arch/arm64/include/uapi/asm/hwcap.h
-#define NPY__HWCAP_FP       (1 << 0)
-#define NPY__HWCAP_ASIMD    (1 << 1)
-#define NPY__HWCAP_FPHP     (1 << 9)
-#define NPY__HWCAP_ASIMDHP  (1 << 10)
-#define NPY__HWCAP_ASIMDDP  (1 << 20)
+#define NPY__HWCAP_FP (1 << 0)
+#define NPY__HWCAP_ASIMD (1 << 1)
+#define NPY__HWCAP_FPHP (1 << 9)
+#define NPY__HWCAP_ASIMDHP (1 << 10)
+#define NPY__HWCAP_ASIMDDP (1 << 20)
 #define NPY__HWCAP_ASIMDFHM (1 << 23)
-/* 
+/*
  * Get the size of a file by reading it until the end. This is needed
  * because files under /proc do not always return a valid size when
  * using fseek(0, SEEK_END) + ftell(). Nor can they be mmap()-ed.
  */
 static int
-get_file_size(const char* pathname)
+get_file_size(const char *pathname)
 {
     int fd, result = 0;
     char buffer[256];
@@ -86,16 +86,16 @@ get_file_size(const char* pathname)
     return result;
 }
 
-/* 
+/*
  * Read the content of /proc/cpuinfo into a user-provided buffer.
  * Return the length of the data, or -1 on error. Does *not*
  * zero-terminate the content. Will not read more
  * than 'buffsize' bytes.
  */
 static int
-read_file(const char*  pathname, char*  buffer, size_t  buffsize)
+read_file(const char *pathname, char *buffer, size_t buffsize)
 {
-    int  fd, count;
+    int fd, count;
 
     fd = open(pathname, O_RDONLY);
     if (fd < 0) {
@@ -122,26 +122,26 @@ read_file(const char*  pathname, char*  buffer, size_t  buffsize)
     return count;
 }
 
-/* 
+/*
  * Extract the content of a the first occurrence of a given field in
  * the content of /proc/cpuinfo and return it as a heap-allocated
  * string that must be freed by the caller.
  *
  * Return NULL if not found
  */
-static char*
-extract_cpuinfo_field(const char* buffer, int buflen, const char* field)
+static char *
+extract_cpuinfo_field(const char *buffer, int buflen, const char *field)
 {
     int fieldlen = strlen(field);
-    const char* bufend = buffer + buflen;
-    char* result = NULL;
+    const char *bufend = buffer + buflen;
+    char *result = NULL;
     int len;
     const char *p, *q;
 
     /* Look for first field occurrence, and ensures it starts the line. */
     p = buffer;
     for (;;) {
-        p = memmem(p, bufend-p, field, fieldlen);
+        p = memmem(p, bufend - p, field, fieldlen);
         if (p == NULL) {
             goto EXIT;
         }
@@ -155,14 +155,14 @@ extract_cpuinfo_field(const char* buffer, int buflen, const char* field)
 
     /* Skip to the first column followed by a space */
     p += fieldlen;
-    p = memchr(p, ':', bufend-p);
+    p = memchr(p, ':', bufend - p);
     if (p == NULL || p[1] != ' ') {
         goto EXIT;
     }
 
     /* Find the end of the line */
     p += 2;
-    q = memchr(p, '\n', bufend-p);
+    q = memchr(p, '\n', bufend - p);
     if (q == NULL) {
         q = bufend;
     }
@@ -181,14 +181,14 @@ EXIT:
     return result;
 }
 
-/* 
+/*
  * Checks that a space-separated list of items contains one given 'item'.
  * Returns 1 if found, 0 otherwise.
  */
 static int
-has_list_item(const char* list, const char* item)
+has_list_item(const char *list, const char *item)
 {
-    const char* p = list;
+    const char *p = list;
     int itemlen = strlen(item);
 
     if (list == NULL) {
@@ -196,7 +196,7 @@ has_list_item(const char* list, const char* item)
     }
 
     while (*p) {
-        const char*  q;
+        const char *q;
 
         /* skip spaces */
         while (*p == ' ' || *p == '\t') {
@@ -209,7 +209,7 @@ has_list_item(const char* list, const char* item)
             q++;
         }
 
-        if (itemlen == q-p && !memcmp(p, item, itemlen)) {
+        if (itemlen == q - p && !memcmp(p, item, itemlen)) {
             return 1;
         }
 
@@ -219,7 +219,9 @@ has_list_item(const char* list, const char* item)
     return 0;
 }
 
-static void setHwcap(char* cpuFeatures, unsigned long* hwcap) {
+static void
+setHwcap(char *cpuFeatures, unsigned long *hwcap)
+{
     *hwcap |= has_list_item(cpuFeatures, "neon") ? NPY__HWCAP_NEON : 0;
     *hwcap |= has_list_item(cpuFeatures, "half") ? NPY__HWCAP_HALF : 0;
     *hwcap |= has_list_item(cpuFeatures, "vfpv3") ? NPY__HWCAP_VFPv3 : 0;
@@ -234,8 +236,9 @@ static void setHwcap(char* cpuFeatures, unsigned long* hwcap) {
 }
 
 static int
-get_feature_from_proc_cpuinfo(unsigned long *hwcap, unsigned long *hwcap2) {
-    char* cpuinfo = NULL;
+get_feature_from_proc_cpuinfo(unsigned long *hwcap, unsigned long *hwcap2)
+{
+    char *cpuinfo = NULL;
     int cpuinfo_len;
     cpuinfo_len = get_file_size("/proc/cpuinfo");
     if (cpuinfo_len < 0) {
@@ -246,8 +249,9 @@ get_feature_from_proc_cpuinfo(unsigned long *hwcap, unsigned long *hwcap2) {
         return 0;
     }
     cpuinfo_len = read_file("/proc/cpuinfo", cpuinfo, cpuinfo_len);
-    char* cpuFeatures = extract_cpuinfo_field(cpuinfo, cpuinfo_len, "Features");
-    if(cpuFeatures == NULL) {
+    char *cpuFeatures =
+            extract_cpuinfo_field(cpuinfo, cpuinfo_len, "Features");
+    if (cpuFeatures == NULL) {
         return 0;
     }
     setHwcap(cpuFeatures, hwcap);
@@ -259,4 +263,4 @@ get_feature_from_proc_cpuinfo(unsigned long *hwcap, unsigned long *hwcap2) {
     *hwcap2 |= has_list_item(cpuFeatures, "crc32") ? NPY__HWCAP2_CRC32 : 0;
     return 1;
 }
-#endif  /* NUMPY_CORE_SRC_COMMON_NPY_CPUINFO_PARSER_H_ */
+#endif /* NUMPY_CORE_SRC_COMMON_NPY_CPUINFO_PARSER_H_ */

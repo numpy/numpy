@@ -9,39 +9,94 @@ dgeev, zgeev, dgesdd, zgesdd, dgelsd, zgelsd, dsyevd, zheevd, dgetrf,
 zgetrf, dpotrf, zpotrf, dgeqrf, zgeqrf, zungqr, dorgqr.
 """
 
-__all__ = ['matrix_power', 'solve', 'tensorsolve', 'tensorinv', 'inv',
-           'cholesky', 'eigvals', 'eigvalsh', 'pinv', 'slogdet', 'det',
-           'svd', 'eig', 'eigh', 'lstsq', 'norm', 'qr', 'cond', 'matrix_rank',
-           'LinAlgError', 'multi_dot']
+__all__ = [
+    "matrix_power",
+    "solve",
+    "tensorsolve",
+    "tensorinv",
+    "inv",
+    "cholesky",
+    "eigvals",
+    "eigvalsh",
+    "pinv",
+    "slogdet",
+    "det",
+    "svd",
+    "eig",
+    "eigh",
+    "lstsq",
+    "norm",
+    "qr",
+    "cond",
+    "matrix_rank",
+    "LinAlgError",
+    "multi_dot",
+]
 
 import functools
 import operator
 import warnings
 
 from numpy.core import (
-    array, asarray, zeros, empty, empty_like, intc, single, double,
-    csingle, cdouble, inexact, complexfloating, newaxis, all, Inf, dot,
-    add, multiply, sqrt, fastCopyAndTranspose, sum, isfinite,
-    finfo, errstate, geterrobj, moveaxis, amin, amax, product, abs,
-    atleast_2d, intp, asanyarray, object_, matmul,
-    swapaxes, divide, count_nonzero, isnan, sign, argsort, sort,
-    reciprocal
+    Inf,
+    abs,
+    add,
+    all,
+    amax,
+    amin,
+    argsort,
+    array,
+    asanyarray,
+    asarray,
+    atleast_2d,
+    cdouble,
+    complexfloating,
+    count_nonzero,
+    csingle,
+    divide,
+    dot,
+    double,
+    empty,
+    empty_like,
+    errstate,
+    fastCopyAndTranspose,
+    finfo,
+    geterrobj,
+    inexact,
+    intc,
+    intp,
+    isfinite,
+    isnan,
+    matmul,
+    moveaxis,
+    multiply,
+    newaxis,
+    object_,
+    overrides,
+    product,
+    reciprocal,
+    sign,
+    single,
+    sort,
+    sqrt,
+    sum,
+    swapaxes,
+    zeros,
 )
 from numpy.core.multiarray import normalize_axis_index
 from numpy.core.overrides import set_module
-from numpy.core import overrides
-from numpy.lib.twodim_base import triu, eye
+from numpy.lib.twodim_base import eye, triu
 from numpy.linalg import _umath_linalg
 
-
 array_function_dispatch = functools.partial(
-    overrides.array_function_dispatch, module='numpy.linalg')
+    overrides.array_function_dispatch, module="numpy.linalg"
+)
 
 
 fortran_int = intc
 
 
-@set_module('numpy.linalg')
+@set_module("numpy.linalg")
 class LinAlgError(Exception):
     """
     Generic Python-exception-derived object raised by linalg functions.
@@ -75,63 +130,74 @@ def _determine_error_states():
     errobj = geterrobj()
     bufsize = errobj[0]
 
-    with errstate(invalid='call', over='ignore',
-                  divide='ignore', under='ignore'):
+    with errstate(invalid="call", over="ignore", divide="ignore", under="ignore"):
         invalid_call_errmask = geterrobj()[1]
 
     return [bufsize, invalid_call_errmask, None]
+
 
 # Dealing with errors in _umath_linalg
 _linalg_error_extobj = _determine_error_states()
 del _determine_error_states
 
+
 def _raise_linalgerror_singular(err, flag):
     raise LinAlgError("Singular matrix")
+
 
 def _raise_linalgerror_nonposdef(err, flag):
     raise LinAlgError("Matrix is not positive definite")
 
+
 def _raise_linalgerror_eigenvalues_nonconvergence(err, flag):
     raise LinAlgError("Eigenvalues did not converge")
+
 
 def _raise_linalgerror_svd_nonconvergence(err, flag):
     raise LinAlgError("SVD did not converge")
 
+
 def _raise_linalgerror_lstsq(err, flag):
     raise LinAlgError("SVD did not converge in Linear Least Squares")
 
+
 def _raise_linalgerror_qr(err, flag):
-    raise LinAlgError("Incorrect argument found while performing "
-                      "QR factorization")
+    raise LinAlgError("Incorrect argument found while performing " "QR factorization")
+
 
 def get_linalg_error_extobj(callback):
     extobj = list(_linalg_error_extobj)  # make a copy
     extobj[2] = callback
     return extobj
 
+
 def _makearray(a):
     new = asarray(a)
     wrap = getattr(a, "__array_prepare__", new.__array_wrap__)
     return new, wrap
 
+
 def isComplexType(t):
     return issubclass(t, complexfloating)
 
-_real_types_map = {single : single,
-                   double : double,
-                   csingle : single,
-                   cdouble : double}
 
-_complex_types_map = {single : csingle,
-                      double : cdouble,
-                      csingle : csingle,
-                      cdouble : cdouble}
+_real_types_map = {single: single, double: double, csingle: single, cdouble: double}
+
+_complex_types_map = {
+    single: csingle,
+    double: cdouble,
+    csingle: csingle,
+    cdouble: cdouble,
+}
+
 
 def _realType(t, default=double):
     return _real_types_map.get(t, default)
 
+
 def _complexType(t, default=cdouble):
     return _complex_types_map.get(t, default)
+
 
 def _commonType(*arrays):
     # in lite version, use higher precision (always double or cdouble)
@@ -144,8 +210,9 @@ def _commonType(*arrays):
             rt = _realType(a.dtype.type, default=None)
             if rt is None:
                 # unsupported inexact scalar
-                raise TypeError("array type %s is unsupported in linalg" %
-                        (a.dtype.name,))
+                raise TypeError(
+                    "array type %s is unsupported in linalg" % (a.dtype.name,)
+                )
         else:
             rt = double
         if rt is double:
@@ -162,17 +229,19 @@ def _commonType(*arrays):
 
 _fastCT = fastCopyAndTranspose
 
+
 def _to_native_byte_order(*arrays):
     ret = []
     for arr in arrays:
-        if arr.dtype.byteorder not in ('=', '|'):
-            ret.append(asarray(arr, dtype=arr.dtype.newbyteorder('=')))
+        if arr.dtype.byteorder not in ("=", "|"):
+            ret.append(asarray(arr, dtype=arr.dtype.newbyteorder("=")))
         else:
             ret.append(arr)
     if len(ret) == 1:
         return ret[0]
     else:
         return ret
+
 
 def _fastCopyAndTranspose(type, *arrays):
     cast_arrays = ()
@@ -185,28 +254,36 @@ def _fastCopyAndTranspose(type, *arrays):
     else:
         return cast_arrays
 
+
 def _assert_2d(*arrays):
     for a in arrays:
         if a.ndim != 2:
-            raise LinAlgError('%d-dimensional array given. Array must be '
-                    'two-dimensional' % a.ndim)
+            raise LinAlgError(
+                "%d-dimensional array given. Array must be " "two-dimensional" % a.ndim
+            )
+
 
 def _assert_stacked_2d(*arrays):
     for a in arrays:
         if a.ndim < 2:
-            raise LinAlgError('%d-dimensional array given. Array must be '
-                    'at least two-dimensional' % a.ndim)
+            raise LinAlgError(
+                "%d-dimensional array given. Array must be "
+                "at least two-dimensional" % a.ndim
+            )
+
 
 def _assert_stacked_square(*arrays):
     for a in arrays:
         m, n = a.shape[-2:]
         if m != n:
-            raise LinAlgError('Last 2 dimensions of the array must be square')
+            raise LinAlgError("Last 2 dimensions of the array must be square")
+
 
 def _assert_finite(*arrays):
     for a in arrays:
         if not isfinite(a).all():
             raise LinAlgError("Array must not contain infs or NaNs")
+
 
 def _is_empty_2d(arr):
     # check size first for efficiency
@@ -230,7 +307,9 @@ def transpose(a):
     """
     return swapaxes(a, -1, -2)
 
+
 # Linear equations
+
 
 def _tensorsolve_dispatcher(a, b, axes=None):
     return (a, b)
@@ -295,12 +374,12 @@ def tensorsolve(a, b, axes=None):
             allaxes.insert(an, k)
         a = a.transpose(allaxes)
 
-    oldshape = a.shape[-(an-b.ndim):]
+    oldshape = a.shape[-(an - b.ndim) :]
     prod = 1
     for k in oldshape:
         prod *= k
 
-    if a.size != prod ** 2:
+    if a.size != prod**2:
         raise LinAlgError(
             "Input arrays must satisfy the requirement \
             prod(a.shape[b.ndim:]) == prod(a.shape[:b.ndim])"
@@ -395,7 +474,7 @@ def solve(a, b):
     else:
         gufunc = _umath_linalg.solve
 
-    signature = 'DD->D' if isComplexType(t) else 'dd->d'
+    signature = "DD->D" if isComplexType(t) else "dd->d"
     extobj = get_linalg_error_extobj(_raise_linalgerror_singular)
     r = gufunc(a, b, signature=signature, extobj=extobj)
 
@@ -476,6 +555,7 @@ def tensorinv(a, ind=2):
 
 # Matrix inversion
 
+
 def _unary_dispatcher(a):
     return (a,)
 
@@ -547,7 +627,7 @@ def inv(a):
     _assert_stacked_square(a)
     t, result_t = _commonType(a)
 
-    signature = 'D->D' if isComplexType(t) else 'd->d'
+    signature = "D->D" if isComplexType(t) else "d->d"
     extobj = get_linalg_error_extobj(_raise_linalgerror_singular)
     ainv = _umath_linalg.inv(a, signature=signature, extobj=extobj)
     return wrap(ainv.astype(result_t, copy=False))
@@ -639,7 +719,8 @@ def matrix_power(a, n):
         fmatmul = dot
     else:
         raise NotImplementedError(
-            "matrix_power not supported for stacks of object arrays")
+            "matrix_power not supported for stacks of object arrays"
+        )
 
     if n == 0:
         a = empty_like(a)
@@ -766,19 +847,20 @@ def cholesky(a):
     _assert_stacked_2d(a)
     _assert_stacked_square(a)
     t, result_t = _commonType(a)
-    signature = 'D->D' if isComplexType(t) else 'd->d'
+    signature = "D->D" if isComplexType(t) else "d->d"
     r = gufunc(a, signature=signature, extobj=extobj)
     return wrap(r.astype(result_t, copy=False))
 
 
 # QR decomposition
 
+
 def _qr_dispatcher(a, mode=None):
     return (a,)
 
 
 @array_function_dispatch(_qr_dispatcher)
-def qr(a, mode='reduced'):
+def qr(a, mode="reduced"):
     """
     Compute the qr factorization of a matrix.
 
@@ -907,19 +989,22 @@ def qr(a, mode='reduced'):
     array([  1.,   1.])
 
     """
-    if mode not in ('reduced', 'complete', 'r', 'raw'):
-        if mode in ('f', 'full'):
+    if mode not in ("reduced", "complete", "r", "raw"):
+        if mode in ("f", "full"):
             # 2013-04-01, 1.8
-            msg = "".join((
+            msg = "".join(
+                (
                     "The 'full' option is deprecated in favor of 'reduced'.\n",
-                    "For backward compatibility let mode default."))
+                    "For backward compatibility let mode default.",
+                )
+            )
             warnings.warn(msg, DeprecationWarning, stacklevel=3)
-            mode = 'reduced'
-        elif mode in ('e', 'economic'):
+            mode = "reduced"
+        elif mode in ("e", "economic"):
             # 2013-04-01, 1.8
             msg = "The 'economic' option is deprecated."
             warnings.warn(msg, DeprecationWarning, stacklevel=3)
-            mode = 'economic'
+            mode = "economic"
         else:
             raise ValueError(f"Unrecognized mode '{mode}'")
 
@@ -936,38 +1021,38 @@ def qr(a, mode='reduced'):
     else:
         gufunc = _umath_linalg.qr_r_raw_n
 
-    signature = 'D->D' if isComplexType(t) else 'd->d'
+    signature = "D->D" if isComplexType(t) else "d->d"
     extobj = get_linalg_error_extobj(_raise_linalgerror_qr)
     tau = gufunc(a, signature=signature, extobj=extobj)
 
     # handle modes that don't return q
-    if mode == 'r':
+    if mode == "r":
         r = triu(a[..., :mn, :])
         r = r.astype(result_t, copy=False)
         return wrap(r)
 
-    if mode == 'raw':
+    if mode == "raw":
         q = transpose(a)
         q = q.astype(result_t, copy=False)
         tau = tau.astype(result_t, copy=False)
         return wrap(q), tau
 
-    if mode == 'economic':
+    if mode == "economic":
         a = a.astype(result_t, copy=False)
         return wrap(a)
 
     # mc is the number of columns in the resulting q
-    # matrix. If the mode is complete then it is 
+    # matrix. If the mode is complete then it is
     # same as number of rows, and if the mode is reduced,
     # then it is the minimum of number of rows and columns.
-    if mode == 'complete' and m > n:
+    if mode == "complete" and m > n:
         mc = m
         gufunc = _umath_linalg.qr_complete
     else:
         mc = mn
         gufunc = _umath_linalg.qr_reduced
 
-    signature = 'DD->D' if isComplexType(t) else 'dd->d'
+    signature = "DD->D" if isComplexType(t) else "dd->d"
     extobj = get_linalg_error_extobj(_raise_linalgerror_qr)
     q = gufunc(a, tau, signature=signature, extobj=extobj)
     r = triu(a[..., :mc, :])
@@ -976,6 +1061,7 @@ def qr(a, mode='reduced'):
     r = r.astype(result_t, copy=False)
 
     return wrap(q), wrap(r)
+
 
 # Eigenvalues
 
@@ -1057,9 +1143,8 @@ def eigvals(a):
     _assert_finite(a)
     t, result_t = _commonType(a)
 
-    extobj = get_linalg_error_extobj(
-        _raise_linalgerror_eigenvalues_nonconvergence)
-    signature = 'D->D' if isComplexType(t) else 'd->D'
+    extobj = get_linalg_error_extobj(_raise_linalgerror_eigenvalues_nonconvergence)
+    signature = "D->D" if isComplexType(t) else "d->D"
     w = _umath_linalg.eigvals(a, signature=signature, extobj=extobj)
 
     if not isComplexType(t):
@@ -1077,7 +1162,7 @@ def _eigvalsh_dispatcher(a, UPLO=None):
 
 
 @array_function_dispatch(_eigvalsh_dispatcher)
-def eigvalsh(a, UPLO='L'):
+def eigvalsh(a, UPLO="L"):
     """
     Compute the eigenvalues of a complex Hermitian or real symmetric matrix.
 
@@ -1152,12 +1237,11 @@ def eigvalsh(a, UPLO='L'):
 
     """
     UPLO = UPLO.upper()
-    if UPLO not in ('L', 'U'):
+    if UPLO not in ("L", "U"):
         raise ValueError("UPLO argument must be 'L' or 'U'")
 
-    extobj = get_linalg_error_extobj(
-        _raise_linalgerror_eigenvalues_nonconvergence)
-    if UPLO == 'L':
+    extobj = get_linalg_error_extobj(_raise_linalgerror_eigenvalues_nonconvergence)
+    if UPLO == "L":
         gufunc = _umath_linalg.eigvalsh_lo
     else:
         gufunc = _umath_linalg.eigvalsh_up
@@ -1166,9 +1250,10 @@ def eigvalsh(a, UPLO='L'):
     _assert_stacked_2d(a)
     _assert_stacked_square(a)
     t, result_t = _commonType(a)
-    signature = 'D->d' if isComplexType(t) else 'd->d'
+    signature = "D->d" if isComplexType(t) else "d->d"
     w = gufunc(a, signature=signature, extobj=extobj)
     return w.astype(_realType(result_t), copy=False)
+
 
 def _convertarray(a):
     t, result_t = _commonType(a)
@@ -1312,9 +1397,8 @@ def eig(a):
     _assert_finite(a)
     t, result_t = _commonType(a)
 
-    extobj = get_linalg_error_extobj(
-        _raise_linalgerror_eigenvalues_nonconvergence)
-    signature = 'D->DD' if isComplexType(t) else 'd->DD'
+    extobj = get_linalg_error_extobj(_raise_linalgerror_eigenvalues_nonconvergence)
+    signature = "D->DD" if isComplexType(t) else "d->DD"
     w, vt = _umath_linalg.eig(a, signature=signature, extobj=extobj)
 
     if not isComplexType(t) and all(w.imag == 0.0):
@@ -1329,7 +1413,7 @@ def eig(a):
 
 
 @array_function_dispatch(_eigvalsh_dispatcher)
-def eigh(a, UPLO='L'):
+def eigh(a, UPLO="L"):
     """
     Return the eigenvalues and eigenvectors of a complex Hermitian
     (conjugate symmetric) or a real symmetric matrix.
@@ -1446,7 +1530,7 @@ def eigh(a, UPLO='L'):
            [-0.        +0.4472136j,  0.89442719+0.j       ]])
     """
     UPLO = UPLO.upper()
-    if UPLO not in ('L', 'U'):
+    if UPLO not in ("L", "U"):
         raise ValueError("UPLO argument must be 'L' or 'U'")
 
     a, wrap = _makearray(a)
@@ -1454,14 +1538,13 @@ def eigh(a, UPLO='L'):
     _assert_stacked_square(a)
     t, result_t = _commonType(a)
 
-    extobj = get_linalg_error_extobj(
-        _raise_linalgerror_eigenvalues_nonconvergence)
-    if UPLO == 'L':
+    extobj = get_linalg_error_extobj(_raise_linalgerror_eigenvalues_nonconvergence)
+    if UPLO == "L":
         gufunc = _umath_linalg.eigh_lo
     else:
         gufunc = _umath_linalg.eigh_up
 
-    signature = 'D->dD' if isComplexType(t) else 'd->dd'
+    signature = "D->dD" if isComplexType(t) else "d->dd"
     w, vt = gufunc(a, signature=signature, extobj=extobj)
     w = w.astype(_realType(result_t), copy=False)
     vt = vt.astype(result_t, copy=False)
@@ -1469,6 +1552,7 @@ def eigh(a, UPLO='L'):
 
 
 # Singular value decomposition
+
 
 def _svd_dispatcher(a, full_matrices=None, compute_uv=None, hermitian=None):
     return (a,)
@@ -1612,6 +1696,7 @@ def svd(a, full_matrices=True, compute_uv=True, hermitian=False):
 
     """
     import numpy as _nx
+
     a, wrap = _makearray(a)
 
     if hermitian:
@@ -1653,7 +1738,7 @@ def svd(a, full_matrices=True, compute_uv=True, hermitian=False):
             else:
                 gufunc = _umath_linalg.svd_n_s
 
-        signature = 'D->DdD' if isComplexType(t) else 'd->ddd'
+        signature = "D->DdD" if isComplexType(t) else "d->ddd"
         u, s, vh = gufunc(a, signature=signature, extobj=extobj)
         u = u.astype(result_t, copy=False)
         s = s.astype(_realType(result_t), copy=False)
@@ -1665,7 +1750,7 @@ def svd(a, full_matrices=True, compute_uv=True, hermitian=False):
         else:
             gufunc = _umath_linalg.svd_n
 
-        signature = 'D->d' if isComplexType(t) else 'd->d'
+        signature = "D->d" if isComplexType(t) else "d->d"
         s = gufunc(a, signature=signature, extobj=extobj)
         s = s.astype(_realType(result_t), copy=False)
         return s
@@ -1760,7 +1845,7 @@ def cond(x, p=None):
         raise LinAlgError("cond is not defined on empty arrays")
     if p is None or p == 2 or p == -2:
         s = svd(x, compute_uv=False)
-        with errstate(all='ignore'):
+        with errstate(all="ignore"):
             if p == -2:
                 r = s[..., -1] / s[..., 0]
             else:
@@ -1771,8 +1856,8 @@ def cond(x, p=None):
         _assert_stacked_2d(x)
         _assert_stacked_square(x)
         t, result_t = _commonType(x)
-        signature = 'D->D' if isComplexType(t) else 'd->d'
-        with errstate(all='ignore'):
+        signature = "D->D" if isComplexType(t) else "d->d"
+        with errstate(all="ignore"):
             invx = _umath_linalg.inv(x, signature=signature)
             r = norm(x, p, axis=(-2, -1)) * norm(invx, p, axis=(-2, -1))
         r = r.astype(result_t, copy=False)
@@ -1894,7 +1979,7 @@ def matrix_rank(A, tol=None, hermitian=False):
     """
     A = asarray(A)
     if A.ndim < 2:
-        return int(not all(A==0))
+        return int(not all(A == 0))
     S = svd(A, compute_uv=False, hermitian=hermitian)
     if tol is None:
         tol = S.max(axis=-1, keepdims=True) * max(A.shape[-2:]) * finfo(S.dtype).eps
@@ -1904,6 +1989,7 @@ def matrix_rank(A, tol=None, hermitian=False):
 
 
 # Generalized inverse
+
 
 def _pinv_dispatcher(a, rcond=None, hermitian=None):
     return (a,)
@@ -2090,7 +2176,7 @@ def slogdet(a):
     _assert_stacked_square(a)
     t, result_t = _commonType(a)
     real_t = _realType(result_t)
-    signature = 'D->Dd' if isComplexType(t) else 'd->dd'
+    signature = "D->Dd" if isComplexType(t) else "d->dd"
     sign, logdet = _umath_linalg.slogdet(a, signature=signature)
     sign = sign.astype(result_t, copy=False)
     logdet = logdet.astype(real_t, copy=False)
@@ -2150,13 +2236,14 @@ def det(a):
     _assert_stacked_2d(a)
     _assert_stacked_square(a)
     t, result_t = _commonType(a)
-    signature = 'D->D' if isComplexType(t) else 'd->d'
+    signature = "D->D" if isComplexType(t) else "d->d"
     r = _umath_linalg.det(a, signature=signature)
     r = r.astype(result_t, copy=False)
     return r
 
 
 # Linear Least Squares
+
 
 def _lstsq_dispatcher(a, b, rcond=None):
     return (a, b)
@@ -2268,7 +2355,7 @@ def lstsq(a, b, rcond="warn"):
     m, n = a.shape[-2:]
     m2, n_rhs = b.shape[-2:]
     if m != m2:
-        raise LinAlgError('Incompatible dimensions')
+        raise LinAlgError("Incompatible dimensions")
 
     t, result_t = _commonType(a, b)
     result_real_t = _realType(result_t)
@@ -2276,13 +2363,16 @@ def lstsq(a, b, rcond="warn"):
     # Determine default rcond value
     if rcond == "warn":
         # 2017-08-19, 1.14.0
-        warnings.warn("`rcond` parameter will change to the default of "
-                      "machine precision times ``max(M, N)`` where M and N "
-                      "are the input matrix dimensions.\n"
-                      "To use the future default and silence this warning "
-                      "we advise to pass `rcond=None`, to keep using the old, "
-                      "explicitly pass `rcond=-1`.",
-                      FutureWarning, stacklevel=3)
+        warnings.warn(
+            "`rcond` parameter will change to the default of "
+            "machine precision times ``max(M, N)`` where M and N "
+            "are the input matrix dimensions.\n"
+            "To use the future default and silence this warning "
+            "we advise to pass `rcond=None`, to keep using the old, "
+            "explicitly pass `rcond=-1`.",
+            FutureWarning,
+            stacklevel=3,
+        )
         rcond = -1
     if rcond is None:
         rcond = finfo(t).eps * max(n, m)
@@ -2292,7 +2382,7 @@ def lstsq(a, b, rcond="warn"):
     else:
         gufunc = _umath_linalg.lstsq_n
 
-    signature = 'DDd->Ddid' if isComplexType(t) else 'ddd->ddid'
+    signature = "DDd->Ddid" if isComplexType(t) else "ddd->ddid"
     extobj = get_linalg_error_extobj(_raise_linalgerror_lstsq)
     if n_rhs == 0:
         # lapack can't handle n_rhs = 0 - so allocate the array one larger in that axis
@@ -2513,11 +2603,13 @@ def norm(x, ord=None, axis=None, keepdims=False):
     # Immediately handle some default, simple, fast, and common cases.
     if axis is None:
         ndim = x.ndim
-        if ((ord is None) or
-            (ord in ('f', 'fro') and ndim == 2) or
-            (ord == 2 and ndim == 1)):
+        if (
+            (ord is None)
+            or (ord in ("f", "fro") and ndim == 2)
+            or (ord == 2 and ndim == 1)
+        ):
 
-            x = x.ravel(order='K')
+            x = x.ravel(order="K")
             if isComplexType(x.dtype.type):
                 x_real = x.real
                 x_imag = x.imag
@@ -2526,7 +2618,7 @@ def norm(x, ord=None, axis=None, keepdims=False):
                 sqnorm = x.dot(x)
             ret = sqrt(sqnorm)
             if keepdims:
-                ret = ret.reshape(ndim*[1])
+                ret = ret.reshape(ndim * [1])
             return ret
 
     # Normalize the `axis` argument to a tuple.
@@ -2537,7 +2629,9 @@ def norm(x, ord=None, axis=None, keepdims=False):
         try:
             axis = int(axis)
         except Exception as e:
-            raise TypeError("'axis' must be None, an integer or a tuple of integers") from e
+            raise TypeError(
+                "'axis' must be None, an integer or a tuple of integers"
+            ) from e
         axis = (axis,)
 
     if len(axis) == 1:
@@ -2570,9 +2664,9 @@ def norm(x, ord=None, axis=None, keepdims=False):
         row_axis = normalize_axis_index(row_axis, nd)
         col_axis = normalize_axis_index(col_axis, nd)
         if row_axis == col_axis:
-            raise ValueError('Duplicate axes given.')
+            raise ValueError("Duplicate axes given.")
         if ord == 2:
-            ret =  _multi_svd_norm(x, row_axis, col_axis, amax)
+            ret = _multi_svd_norm(x, row_axis, col_axis, amax)
         elif ord == -2:
             ret = _multi_svd_norm(x, row_axis, col_axis, amin)
         elif ord == 1:
@@ -2591,9 +2685,9 @@ def norm(x, ord=None, axis=None, keepdims=False):
             if row_axis > col_axis:
                 row_axis -= 1
             ret = add.reduce(abs(x), axis=col_axis).min(axis=row_axis)
-        elif ord in [None, 'fro', 'f']:
+        elif ord in [None, "fro", "f"]:
             ret = sqrt(add.reduce((x.conj() * x).real, axis=axis))
-        elif ord == 'nuc':
+        elif ord == "nuc":
             ret = _multi_svd_norm(x, row_axis, col_axis, sum)
         else:
             raise ValueError("Invalid norm order for matrices.")
@@ -2608,6 +2702,7 @@ def norm(x, ord=None, axis=None, keepdims=False):
 
 
 # multi_dot
+
 
 def _multidot_dispatcher(arrays, *, out=None):
     yield from arrays
@@ -2789,7 +2884,7 @@ def _multi_dot_matrix_chain_order(arrays, return_costs=False):
             j = i + l
             m[i, j] = Inf
             for k in range(i, j):
-                q = m[i, k] + m[k+1, j] + p[i]*p[k+1]*p[j+1]
+                q = m[i, k] + m[k + 1, j] + p[i] * p[k + 1] * p[j + 1]
                 if q < m[i, j]:
                     m[i, j] = q
                     s[i, j] = k  # Note that Cormen uses 1-based index
@@ -2805,6 +2900,8 @@ def _multi_dot(arrays, order, i, j, out=None):
 
         return arrays[i]
     else:
-        return dot(_multi_dot(arrays, order, i, order[i, j]),
-                   _multi_dot(arrays, order, order[i, j] + 1, j),
-                   out=out)
+        return dot(
+            _multi_dot(arrays, order, i, order[i, j]),
+            _multi_dot(arrays, order, order[i, j] + 1, j),
+            out=out,
+        )

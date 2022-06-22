@@ -8,7 +8,13 @@ extend over multiple lines, the closing three quotation marks must be on
 a line by itself, preferably preceded by a blank line.
 
 """
-import os # standard library imports first
+import os  # standard library imports first
+
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+from my_module import my_func, other_func
+
+import numpy as np
 
 # Do NOT import using *, e.g. from numpy import *
 #
@@ -23,17 +29,14 @@ import os # standard library imports first
 # If you prefer the use of abbreviated module names, we suggest the
 # convention used by NumPy itself::
 
-import numpy as np
-import matplotlib as mpl
-import matplotlib.pyplot as plt
 
 # These abbreviated names are not to be used in docstrings; users must
 # be able to paste and execute docstrings after importing only the
 # numpy module itself, unabbreviated.
 
-from my_module import my_func, other_func
 
-def foo(var1, var2, long_var_name='hi'):
+
+def foo(var1, var2, long_var_name="hi"):
     r"""A one-line summary that does not use variable names or the
     function name.
 

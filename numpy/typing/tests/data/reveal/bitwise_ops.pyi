@@ -14,7 +14,6 @@ i = int(1)
 AR = np.array([0, 1, 2], dtype=np.int32)
 AR.setflags(write=False)
 
-
 reveal_type(i8 << i8)  # E: {int64}
 reveal_type(i8 >> i8)  # E: {int64}
 reveal_type(i8 | i8)  # E: {int64}

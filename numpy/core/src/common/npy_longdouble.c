@@ -6,7 +6,9 @@
 
 #include "numpy/ndarraytypes.h"
 #include "numpy/npy_math.h"
+
 #include "npy_pycompat.h"
+
 #include "numpyos.h"
 
 /*
@@ -41,14 +43,15 @@ npy_longdouble_to_PyLong(npy_longdouble ldval)
         neg = 1;
         ldval = -ldval;
     }
-    frac = npy_frexpl(ldval, &expo); /* ldval = frac*2**expo; 0.0 <= frac < 1.0 */
+    frac = npy_frexpl(ldval,
+                      &expo); /* ldval = frac*2**expo; 0.0 <= frac < 1.0 */
     v = PyLong_FromLong(0L);
     if (v == NULL)
         return NULL;
     if (expo <= 0)
         return v;
 
-    ndig = (expo-1) / chunk_size + 1;
+    ndig = (expo - 1) / chunk_size + 1;
 
     l_chunk_size = PyLong_FromLong(chunk_size);
     if (l_chunk_size == NULL) {
@@ -57,8 +60,8 @@ npy_longdouble_to_PyLong(npy_longdouble ldval)
     }
 
     /* Get the MSBs of the integral part of the float */
-    frac = npy_ldexpl(frac, (expo-1) % chunk_size + 1);
-    for (i = ndig; --i >= 0; ) {
+    frac = npy_ldexpl(frac, (expo - 1) % chunk_size + 1);
+    for (i = ndig; --i >= 0;) {
         npy_ulonglong chunk = (npy_ulonglong)frac;
         PyObject *l_chunk;
         /* v = v << chunk_size */
@@ -80,7 +83,7 @@ npy_longdouble_to_PyLong(npy_longdouble ldval)
         }
 
         /* Remove the msbs, and repeat */
-        frac = frac - (npy_longdouble) chunk;
+        frac = frac - (npy_longdouble)chunk;
         frac = npy_ldexpl(frac, chunk_size);
     }
 
@@ -99,7 +102,8 @@ done:
 
 /* Helper function to get unicode(PyLong).encode('utf8') */
 static PyObject *
-_PyLong_Bytes(PyObject *long_obj) {
+_PyLong_Bytes(PyObject *long_obj)
+{
     PyObject *bytes;
     PyObject *unicode = PyObject_Str(long_obj);
     if (unicode == NULL) {
@@ -109,7 +113,6 @@ _PyLong_Bytes(PyObject *long_obj) {
     Py_DECREF(unicode);
     return bytes;
 }
-
 
 /**
  * TODO: currently a hack that converts the long through a string. This is
@@ -121,7 +124,8 @@ _PyLong_Bytes(PyObject *long_obj) {
  * the size of the mantissa, which is platform-dependent.
  */
 NPY_VISIBILITY_HIDDEN npy_longdouble
-npy_longdouble_from_PyLong(PyObject *long_obj) {
+npy_longdouble_from_PyLong(PyObject *long_obj)
+{
     npy_longdouble result = 1234;
     char *end;
     char *cstr;
@@ -145,23 +149,22 @@ npy_longdouble_from_PyLong(PyObject *long_obj) {
     if (errno == ERANGE) {
         /* strtold returns INFINITY of the correct sign. */
         if (PyErr_Warn(PyExc_RuntimeWarning,
-                "overflow encountered in conversion from python long") < 0) {
+                       "overflow encountered in conversion from python long") <
+            0) {
             goto fail;
         }
     }
     else if (errno) {
         PyErr_Format(PyExc_RuntimeError,
                      "Could not parse python long as longdouble: %s (%s)",
-                     cstr,
-                     strerror(errno));
+                     cstr, strerror(errno));
         goto fail;
     }
 
     /* Extra characters at the end of the string, or nothing parsed */
     if (end == cstr || *end != '\0') {
         PyErr_Format(PyExc_RuntimeError,
-                     "Could not parse long as longdouble: %s",
-                     cstr);
+                     "Could not parse long as longdouble: %s", cstr);
         goto fail;
     }
 

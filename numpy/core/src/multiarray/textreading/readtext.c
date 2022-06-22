@@ -1,5 +1,5 @@
-#include <stdio.h>
 #include <stdbool.h>
+#include <stdio.h>
 
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
@@ -7,16 +7,16 @@
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
 #include "numpy/arrayobject.h"
-#include "npy_argparse.h"
+
 #include "common.h"
 #include "conversion_utils.h"
+#include "npy_argparse.h"
 
-#include "textreading/parser_config.h"
-#include "textreading/stream_pyobject.h"
 #include "textreading/field_types.h"
+#include "textreading/parser_config.h"
 #include "textreading/rows.h"
 #include "textreading/str_to_int.h"
-
+#include "textreading/stream_pyobject.h"
 
 //
 // `usecols` must point to a Python object that is Py_None or a 1-d contiguous
@@ -35,10 +35,10 @@
 // number of columns in the file must match the number of fields in `dtype`.
 //
 static PyObject *
-_readtext_from_stream(stream *s,
-        parser_config *pc, Py_ssize_t num_usecols, Py_ssize_t usecols[],
-        Py_ssize_t skiplines, Py_ssize_t max_rows,
-        PyObject *converters, PyObject *dtype)
+_readtext_from_stream(stream *s, parser_config *pc, Py_ssize_t num_usecols,
+                      Py_ssize_t usecols[], Py_ssize_t skiplines,
+                      Py_ssize_t max_rows, PyObject *converters,
+                      PyObject *dtype)
 {
     PyArrayObject *arr = NULL;
     PyArray_Descr *out_dtype = NULL;
@@ -59,7 +59,8 @@ _readtext_from_stream(stream *s,
     bool homogeneous = num_fields == 1 && ft[0].descr == out_dtype;
 
     if (!homogeneous && usecols != NULL && num_usecols != num_fields) {
-        PyErr_Format(PyExc_TypeError,
+        PyErr_Format(
+                PyExc_TypeError,
                 "If a structured dtype is used, the number of columns in "
                 "`usecols` must match the effective number of fields. "
                 "But %zd usecols were given and the number of fields is %zd.",
@@ -67,38 +68,35 @@ _readtext_from_stream(stream *s,
         goto finish;
     }
 
-    arr = read_rows(
-            s, max_rows, num_fields, ft, pc,
-            num_usecols, usecols, skiplines, converters,
-            NULL, out_dtype, homogeneous);
+    arr = read_rows(s, max_rows, num_fields, ft, pc, num_usecols, usecols,
+                    skiplines, converters, NULL, out_dtype, homogeneous);
     if (arr == NULL) {
         goto finish;
     }
 
-  finish:
+finish:
     Py_XDECREF(out_dtype);
     field_types_xclear(num_fields, ft);
     return (PyObject *)arr;
 }
 
-
 static int
 parse_control_character(PyObject *obj, Py_UCS4 *character)
 {
     if (obj == Py_None) {
-        *character = (Py_UCS4)-1;  /* character beyond unicode range */
+        *character = (Py_UCS4)-1; /* character beyond unicode range */
         return 1;
     }
     if (!PyUnicode_Check(obj) || PyUnicode_GetLength(obj) != 1) {
         PyErr_Format(PyExc_TypeError,
-                "Text reading control character must be a single unicode "
-                "character or None; but got: %.100R", obj);
+                     "Text reading control character must be a single unicode "
+                     "character or None; but got: %.100R",
+                     obj);
         return 0;
     }
     *character = PyUnicode_READ_CHAR(obj, 0);
     return 1;
 }
-
 
 /*
  * A (somewhat verbose) check that none of the control characters match or are
@@ -113,8 +111,8 @@ parse_control_character(PyObject *obj, Py_UCS4 *character)
  * This also checks that the control characters cannot be newlines.
  */
 static int
-error_if_matching_control_characters(
-        Py_UCS4 delimiter, Py_UCS4 quote, Py_UCS4 comment)
+error_if_matching_control_characters(Py_UCS4 delimiter, Py_UCS4 quote,
+                                     Py_UCS4 comment)
 {
     char *control_char1;
     char *control_char2 = NULL;
@@ -162,25 +160,25 @@ error_if_matching_control_characters(
     }
     return 0;
 
-  error:
+error:
     if (control_char2 != NULL) {
         PyErr_Format(PyExc_TypeError,
-                "The values for control characters '%s' and '%s' are "
-                "incompatible",
-                control_char1, control_char2);
+                     "The values for control characters '%s' and '%s' are "
+                     "incompatible",
+                     control_char1, control_char2);
     }
     else {
-        PyErr_Format(PyExc_TypeError,
+        PyErr_Format(
+                PyExc_TypeError,
                 "control character '%s' cannot be a newline (`\\r` or `\\n`).",
                 control_char1, control_char2);
     }
     return -1;
 }
 
-
 NPY_NO_EXPORT PyObject *
-_load_from_filelike(PyObject *NPY_UNUSED(mod),
-        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
+_load_from_filelike(PyObject *NPY_UNUSED(mod), PyObject *const *args,
+                    Py_ssize_t len_args, PyObject *kwnames)
 {
     PyObject *file;
     Py_ssize_t skiplines = 0;
@@ -193,43 +191,42 @@ _load_from_filelike(PyObject *NPY_UNUSED(mod),
     const char *encoding = NULL;
 
     parser_config pc = {
-        .delimiter = ',',
-        .comment = '#',
-        .quote = '"',
-        .imaginary_unit = 'j',
-        .delimiter_is_whitespace = false,
-        .ignore_leading_whitespace = false,
-        .python_byte_converters = false,
-        .c_byte_converters = false,
-        .gave_int_via_float_warning = false,
+            .delimiter = ',',
+            .comment = '#',
+            .quote = '"',
+            .imaginary_unit = 'j',
+            .delimiter_is_whitespace = false,
+            .ignore_leading_whitespace = false,
+            .python_byte_converters = false,
+            .c_byte_converters = false,
+            .gave_int_via_float_warning = false,
     };
     bool filelike = true;
 
     PyObject *arr = NULL;
 
     NPY_PREPARE_ARGPARSER;
-    if (npy_parse_arguments("_load_from_filelike", args, len_args, kwnames,
-            "file", NULL, &file,
-            "|delimiter", &parse_control_character, &pc.delimiter,
-            "|comment", &parse_control_character, &pc.comment,
-            "|quote", &parse_control_character, &pc.quote,
-            "|imaginary_unit", &parse_control_character, &pc.imaginary_unit,
-            "|usecols", NULL, &usecols_obj,
-            "|skiplines", &PyArray_IntpFromPyIntConverter, &skiplines,
-            "|max_rows", &PyArray_IntpFromPyIntConverter, &max_rows,
-            "|converters", NULL, &converters,
-            "|dtype", NULL, &dtype,
-            "|encoding", NULL, &encoding_obj,
-            "|filelike", &PyArray_BoolConverter, &filelike,
-            "|byte_converters", &PyArray_BoolConverter, &pc.python_byte_converters,
-            "|c_byte_converters", PyArray_BoolConverter, &pc.c_byte_converters,
-            NULL, NULL, NULL) < 0) {
+    if (npy_parse_arguments(
+                "_load_from_filelike", args, len_args, kwnames, "file", NULL,
+                &file, "|delimiter", &parse_control_character, &pc.delimiter,
+                "|comment", &parse_control_character, &pc.comment, "|quote",
+                &parse_control_character, &pc.quote, "|imaginary_unit",
+                &parse_control_character, &pc.imaginary_unit, "|usecols", NULL,
+                &usecols_obj, "|skiplines", &PyArray_IntpFromPyIntConverter,
+                &skiplines, "|max_rows", &PyArray_IntpFromPyIntConverter,
+                &max_rows, "|converters", NULL, &converters, "|dtype", NULL,
+                &dtype, "|encoding", NULL, &encoding_obj, "|filelike",
+                &PyArray_BoolConverter, &filelike, "|byte_converters",
+                &PyArray_BoolConverter, &pc.python_byte_converters,
+                "|c_byte_converters", PyArray_BoolConverter,
+                &pc.c_byte_converters, NULL, NULL, NULL) < 0) {
         return NULL;
     }
 
-    /* Reject matching control characters, they just rarely make sense anyway */
-    if (error_if_matching_control_characters(
-            pc.delimiter, pc.quote, pc.comment) < 0) {
+    /* Reject matching control characters, they just rarely make sense anyway
+     */
+    if (error_if_matching_control_characters(pc.delimiter, pc.quote,
+                                             pc.comment) < 0) {
         return NULL;
     }
 
@@ -239,8 +236,9 @@ _load_from_filelike(PyObject *NPY_UNUSED(mod),
         pc.ignore_leading_whitespace = true;
     }
 
-    if (!PyArray_DescrCheck(dtype) ) {
-        PyErr_SetString(PyExc_TypeError,
+    if (!PyArray_DescrCheck(dtype)) {
+        PyErr_SetString(
+                PyExc_TypeError,
                 "internal error: dtype must be provided and be a NumPy dtype");
         return NULL;
     }
@@ -248,7 +246,7 @@ _load_from_filelike(PyObject *NPY_UNUSED(mod),
     if (encoding_obj != Py_None) {
         if (!PyUnicode_Check(encoding_obj)) {
             PyErr_SetString(PyExc_TypeError,
-                    "encoding must be a unicode string.");
+                            "encoding must be a unicode string.");
             return NULL;
         }
         encoding = PyUnicode_AsUTF8(encoding_obj);
@@ -283,7 +281,8 @@ _load_from_filelike(PyObject *NPY_UNUSED(mod),
             usecols[i] = PyNumber_AsSsize_t(tmp, PyExc_OverflowError);
             if (error_converting(usecols[i])) {
                 if (PyErr_ExceptionMatches(PyExc_TypeError)) {
-                    PyErr_Format(PyExc_TypeError,
+                    PyErr_Format(
+                            PyExc_TypeError,
                             "usecols must be an int or a sequence of ints but "
                             "it contains at least one element of type '%s'",
                             Py_TYPE(tmp)->tp_name);
@@ -308,10 +307,9 @@ _load_from_filelike(PyObject *NPY_UNUSED(mod),
         return NULL;
     }
 
-    arr = _readtext_from_stream(
-            s, &pc, num_usecols, usecols, skiplines, max_rows, converters, dtype);
+    arr = _readtext_from_stream(s, &pc, num_usecols, usecols, skiplines,
+                                max_rows, converters, dtype);
     stream_close(s);
     PyMem_FREE(usecols);
     return arr;
 }
-

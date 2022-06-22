@@ -1,5 +1,6 @@
 from collections.abc import Callable
 from typing import Any
+
 import numpy as np
 
 AR: np.ndarray

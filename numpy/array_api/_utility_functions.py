@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from ._array_object import Array
-
 from typing import Optional, Tuple, Union
 
 import numpy as np
+
+from ._array_object import Array
 
 
 def all(

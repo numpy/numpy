@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 
-import sys
-import toml
 import os
+import sys
+
+import toml
 
 path = toml.load("pyproject.toml")["tool"]["towncrier"]["directory"]
 

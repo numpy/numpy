@@ -29,4 +29,4 @@ npy_cache_import(const char *module, const char *attr, PyObject **cache)
     }
 }
 
-#endif  /* NUMPY_CORE_SRC_COMMON_NPY_IMPORT_H_ */
+#endif /* NUMPY_CORE_SRC_COMMON_NPY_IMPORT_H_ */

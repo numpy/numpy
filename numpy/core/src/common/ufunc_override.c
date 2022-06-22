@@ -2,9 +2,11 @@
 #define _MULTIARRAYMODULE
 
 #include "npy_pycompat.h"
+
+#include "ufunc_override.h"
+
 #include "get_attr_string.h"
 #include "npy_import.h"
-#include "ufunc_override.h"
 #include "scalartypes.h"
 
 /*
@@ -31,7 +33,7 @@ PyUFuncOverride_GetNonDefaultArrayUfunc(PyObject *obj)
     if (PyArray_CheckExact(obj)) {
         return NULL;
     }
-   /* Fast return for numpy scalar types */
+    /* Fast return for numpy scalar types */
     if (is_anyscalar_exact(obj)) {
         return NULL;
     }
@@ -43,7 +45,8 @@ PyUFuncOverride_GetNonDefaultArrayUfunc(PyObject *obj)
     cls_array_ufunc = PyArray_LookupSpecial(obj, npy_um_str_array_ufunc);
     if (cls_array_ufunc == NULL) {
         if (PyErr_Occurred()) {
-            PyErr_Clear(); /* TODO[gh-14801]: propagate crashes during attribute access? */
+            PyErr_Clear(); /* TODO[gh-14801]: propagate crashes during
+                              attribute access? */
         }
         return NULL;
     }
@@ -64,7 +67,7 @@ PyUFuncOverride_GetNonDefaultArrayUfunc(PyObject *obj)
  */
 
 NPY_NO_EXPORT int
-PyUFunc_HasOverride(PyObject * obj)
+PyUFunc_HasOverride(PyObject *obj)
 {
     PyObject *method = PyUFuncOverride_GetNonDefaultArrayUfunc(obj);
     if (method) {
@@ -85,7 +88,8 @@ PyUFunc_HasOverride(PyObject * obj)
  * Returns 0 if no outputs found, -1 if kwds is not a dict (with an error set).
  */
 NPY_NO_EXPORT int
-PyUFuncOverride_GetOutObjects(PyObject *kwds, PyObject **out_kwd_obj, PyObject ***out_objs)
+PyUFuncOverride_GetOutObjects(PyObject *kwds, PyObject **out_kwd_obj,
+                              PyObject ***out_objs)
 {
     if (kwds == NULL) {
         Py_INCREF(Py_None);
@@ -93,9 +97,10 @@ PyUFuncOverride_GetOutObjects(PyObject *kwds, PyObject **out_kwd_obj, PyObject *
         return 0;
     }
     if (!PyDict_CheckExact(kwds)) {
-        PyErr_SetString(PyExc_TypeError,
-                        "Internal Numpy error: call to PyUFuncOverride_GetOutObjects "
-                        "with non-dict kwds");
+        PyErr_SetString(
+                PyExc_TypeError,
+                "Internal Numpy error: call to PyUFuncOverride_GetOutObjects "
+                "with non-dict kwds");
         *out_kwd_obj = NULL;
         return -1;
     }

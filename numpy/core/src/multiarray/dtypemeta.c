@@ -6,23 +6,25 @@
 #include <Python.h>
 #include <structmember.h>
 
-#include <numpy/ndarraytypes.h>
-#include <numpy/arrayscalars.h>
 #include "npy_pycompat.h"
 
-#include "common.h"
 #include "dtypemeta.h"
-#include "descriptor.h"
+
 #include "_datetime.h"
 #include "array_coercion.h"
-#include "scalartypes.h"
+#include "common.h"
 #include "convert_datatype.h"
+#include "descriptor.h"
+#include "scalartypes.h"
 #include "usertypes.h"
 
 #include <assert.h>
+#include <numpy/arrayscalars.h>
+#include <numpy/ndarraytypes.h>
 
 static void
-dtypemeta_dealloc(PyArray_DTypeMeta *self) {
+dtypemeta_dealloc(PyArray_DTypeMeta *self)
+{
     /* Do not accidentally delete a statically defined DType: */
     assert(((PyTypeObject *)self)->tp_flags & Py_TPFLAGS_HEAPTYPE);
 
@@ -30,32 +32,32 @@ dtypemeta_dealloc(PyArray_DTypeMeta *self) {
     Py_XDECREF(self->singleton);
     Py_XDECREF(NPY_DT_SLOTS(self)->castingimpls);
     PyMem_Free(self->dt_slots);
-    PyType_Type.tp_dealloc((PyObject *) self);
+    PyType_Type.tp_dealloc((PyObject *)self);
 }
 
 static PyObject *
 dtypemeta_alloc(PyTypeObject *NPY_UNUSED(type), Py_ssize_t NPY_UNUSED(items))
 {
     PyErr_SetString(PyExc_TypeError,
-            "DTypes can only be created using the NumPy API.");
+                    "DTypes can only be created using the NumPy API.");
     return NULL;
 }
 
 static PyObject *
-dtypemeta_new(PyTypeObject *NPY_UNUSED(type),
-        PyObject *NPY_UNUSED(args), PyObject *NPY_UNUSED(kwds))
+dtypemeta_new(PyTypeObject *NPY_UNUSED(type), PyObject *NPY_UNUSED(args),
+              PyObject *NPY_UNUSED(kwds))
 {
     PyErr_SetString(PyExc_TypeError,
-            "Preliminary-API: Cannot subclass DType.");
+                    "Preliminary-API: Cannot subclass DType.");
     return NULL;
 }
 
 static int
-dtypemeta_init(PyTypeObject *NPY_UNUSED(type),
-        PyObject *NPY_UNUSED(args), PyObject *NPY_UNUSED(kwds))
+dtypemeta_init(PyTypeObject *NPY_UNUSED(type), PyObject *NPY_UNUSED(args),
+               PyObject *NPY_UNUSED(kwds))
 {
     PyErr_SetString(PyExc_TypeError,
-            "Preliminary-API: Cannot __init__ DType class.");
+                    "Preliminary-API: Cannot __init__ DType class.");
     return -1;
 }
 
@@ -79,7 +81,6 @@ dtypemeta_is_gc(PyObject *dtype_class)
     return PyType_Type.tp_is_gc(dtype_class);
 }
 
-
 static int
 dtypemeta_traverse(PyArray_DTypeMeta *type, visitproc visit, void *arg)
 {
@@ -91,29 +92,32 @@ dtypemeta_traverse(PyArray_DTypeMeta *type, visitproc visit, void *arg)
      * defined types). It should be revised at that time.
      */
     assert(0);
-    assert(!NPY_DT_is_legacy(type) && (PyTypeObject *)type != &PyArrayDescr_Type);
+    assert(!NPY_DT_is_legacy(type) &&
+           (PyTypeObject *)type != &PyArrayDescr_Type);
     Py_VISIT(type->singleton);
     Py_VISIT(type->scalar_type);
     return PyType_Type.tp_traverse((PyObject *)type, visit, arg);
 }
 
-
 static PyObject *
-legacy_dtype_default_new(PyArray_DTypeMeta *self,
-        PyObject *args, PyObject *kwargs)
+legacy_dtype_default_new(PyArray_DTypeMeta *self, PyObject *args,
+                         PyObject *kwargs)
 {
     /* TODO: This should allow endianness and possibly metadata */
     if (NPY_DT_is_parametric(self)) {
         /* reject parametric ones since we would need to get unit, etc. info */
-        PyErr_Format(PyExc_TypeError,
+        PyErr_Format(
+                PyExc_TypeError,
                 "Preliminary-API: Flexible/Parametric legacy DType '%S' can "
-                "only be instantiated using `np.dtype(...)`", self);
+                "only be instantiated using `np.dtype(...)`",
+                self);
         return NULL;
     }
 
     if (PyTuple_GET_SIZE(args) != 0 ||
-                (kwargs != NULL && PyDict_Size(kwargs))) {
-        PyErr_Format(PyExc_TypeError,
+        (kwargs != NULL && PyDict_Size(kwargs))) {
+        PyErr_Format(
+                PyExc_TypeError,
                 "currently only the no-argument instantiation is supported; "
                 "use `np.dtype` instead.");
         return NULL;
@@ -122,10 +126,9 @@ legacy_dtype_default_new(PyArray_DTypeMeta *self,
     return (PyObject *)self->singleton;
 }
 
-
 static PyArray_Descr *
-nonparametric_discover_descr_from_pyobject(
-        PyArray_DTypeMeta *cls, PyObject *obj)
+nonparametric_discover_descr_from_pyobject(PyArray_DTypeMeta *cls,
+                                           PyObject *obj)
 {
     /* If the object is of the correct scalar type return our singleton */
     assert(!NPY_DT_is_parametric(cls));
@@ -133,10 +136,8 @@ nonparametric_discover_descr_from_pyobject(
     return cls->singleton;
 }
 
-
 static PyArray_Descr *
-string_discover_descr_from_pyobject(
-        PyArray_DTypeMeta *cls, PyObject *obj)
+string_discover_descr_from_pyobject(PyArray_DTypeMeta *cls, PyObject *obj)
 {
     npy_intp itemsize = -1;
     if (PyBytes_Check(obj)) {
@@ -151,7 +152,7 @@ string_discover_descr_from_pyobject(
         }
         if (itemsize > NPY_MAX_INT) {
             PyErr_SetString(PyExc_TypeError,
-                    "string to large to store inside array.");
+                            "string to large to store inside array.");
         }
         PyArray_Descr *res = PyArray_DescrNewFromType(cls->type_num);
         if (res == NULL) {
@@ -163,10 +164,9 @@ string_discover_descr_from_pyobject(
     return PyArray_DTypeFromObjectStringDiscovery(obj, NULL, cls->type_num);
 }
 
-
 static PyArray_Descr *
-void_discover_descr_from_pyobject(
-        PyArray_DTypeMeta *NPY_UNUSED(cls), PyObject *obj)
+void_discover_descr_from_pyobject(PyArray_DTypeMeta *NPY_UNUSED(cls),
+                                  PyObject *obj)
 {
     if (PyArray_IsScalar(obj, Void)) {
         PyVoidScalarObject *void_obj = (PyVoidScalarObject *)obj;
@@ -181,24 +181,23 @@ void_discover_descr_from_pyobject(
         Py_ssize_t itemsize = PyBytes_Size(obj);
         if (itemsize > NPY_MAX_INT) {
             PyErr_SetString(PyExc_TypeError,
-                    "byte-like to large to store inside array.");
+                            "byte-like to large to store inside array.");
             Py_DECREF(descr);
             return NULL;
         }
         descr->elsize = (int)itemsize;
         return descr;
     }
-    PyErr_Format(PyExc_TypeError,
-            "A bytes-like object is required, not '%s'", Py_TYPE(obj)->tp_name);
+    PyErr_Format(PyExc_TypeError, "A bytes-like object is required, not '%s'",
+                 Py_TYPE(obj)->tp_name);
     return NULL;
 }
 
-
 static PyArray_Descr *
-discover_datetime_and_timedelta_from_pyobject(
-        PyArray_DTypeMeta *cls, PyObject *obj) {
-    if (PyArray_IsScalar(obj, Datetime) ||
-            PyArray_IsScalar(obj, Timedelta)) {
+discover_datetime_and_timedelta_from_pyobject(PyArray_DTypeMeta *cls,
+                                              PyObject *obj)
+{
+    if (PyArray_IsScalar(obj, Datetime) || PyArray_IsScalar(obj, Timedelta)) {
         PyArray_DatetimeMetaData *meta;
         PyArray_Descr *descr = PyArray_DescrFromScalar(obj);
         meta = get_datetime_metadata_from_dtype(descr);
@@ -214,14 +213,12 @@ discover_datetime_and_timedelta_from_pyobject(
     }
 }
 
-
 static PyArray_Descr *
 nonparametric_default_descr(PyArray_DTypeMeta *cls)
 {
     Py_INCREF(cls->singleton);
     return cls->singleton;
 }
-
 
 /*
  * For most builtin (and legacy) dtypes, the canonical property means to
@@ -239,14 +236,12 @@ ensure_native_byteorder(PyArray_Descr *descr)
     }
 }
 
-
 /* Ensure a copy of the singleton (just in case we do adapt it somewhere) */
 static PyArray_Descr *
 datetime_and_timedelta_default_descr(PyArray_DTypeMeta *cls)
 {
     return PyArray_DescrNew(cls->singleton);
 }
-
 
 static PyArray_Descr *
 void_default_descr(PyArray_DTypeMeta *cls)
@@ -278,7 +273,6 @@ string_and_unicode_default_descr(PyArray_DTypeMeta *cls)
     return res;
 }
 
-
 static PyArray_Descr *
 string_unicode_common_instance(PyArray_Descr *descr1, PyArray_Descr *descr2)
 {
@@ -290,13 +284,12 @@ string_unicode_common_instance(PyArray_Descr *descr1, PyArray_Descr *descr2)
     }
 }
 
-
 static PyArray_Descr *
 void_ensure_canonical(PyArray_Descr *self)
 {
     if (self->subarray != NULL) {
-        PyArray_Descr *new_base = NPY_DT_CALL_ensure_canonical(
-                self->subarray->base);
+        PyArray_Descr *new_base =
+                NPY_DT_CALL_ensure_canonical(self->subarray->base);
         if (new_base == NULL) {
             return NULL;
         }
@@ -337,7 +330,7 @@ void_ensure_canonical(PyArray_Descr *self)
         }
         int aligned = PyDataType_FLAGCHK(new, NPY_ALIGNED_STRUCT);
         new->flags = new->flags & ~NPY_FROM_FIELDS;
-        new->flags |= NPY_NEEDS_PYAPI;  /* always needed for field access */
+        new->flags |= NPY_NEEDS_PYAPI; /* always needed for field access */
         int totalsize = 0;
         int maxalign = 1;
         for (Py_ssize_t i = 0; i < field_num; i++) {
@@ -351,12 +344,12 @@ void_ensure_canonical(PyArray_Descr *self)
                 Py_DECREF(new);
                 return NULL;
             }
-            new->flags |= field_descr->flags & NPY_FROM_FIELDS;
+            new->flags |= field_descr->flags &NPY_FROM_FIELDS;
             PyTuple_SET_ITEM(new_tuple, 0, (PyObject *)field_descr);
 
             if (aligned) {
-                totalsize = NPY_NEXT_ALIGNED_OFFSET(
-                        totalsize, field_descr->alignment);
+                totalsize = NPY_NEXT_ALIGNED_OFFSET(totalsize,
+                                                    field_descr->alignment);
                 maxalign = PyArray_MAX(maxalign, field_descr->alignment);
             }
             PyObject *offset_obj = PyLong_FromLong(totalsize);
@@ -382,7 +375,7 @@ void_ensure_canonical(PyArray_Descr *self)
                 Py_DECREF(new);
                 return NULL;
             }
-            Py_DECREF(new_tuple);  /* Reference now owned by new->fields */
+            Py_DECREF(new_tuple); /* Reference now owned by new->fields */
             totalsize += field_descr->elsize;
         }
         totalsize = NPY_NEXT_ALIGNED_OFFSET(totalsize, maxalign);
@@ -397,14 +390,14 @@ void_ensure_canonical(PyArray_Descr *self)
     }
 }
 
-
 static PyArray_Descr *
 void_common_instance(PyArray_Descr *descr1, PyArray_Descr *descr2)
 {
     if (descr1->subarray == NULL && descr1->names == NULL &&
-            descr2->subarray == NULL && descr2->names == NULL) {
+        descr2->subarray == NULL && descr2->names == NULL) {
         if (descr1->elsize != descr2->elsize) {
-            PyErr_SetString(PyExc_TypeError,
+            PyErr_SetString(
+                    PyExc_TypeError,
                     "Invalid type promotion with void datatypes of different "
                     "lengths. Use the `np.bytes_` datatype instead to pad the "
                     "shorter value with trailing zero bytes.");
@@ -418,17 +411,18 @@ void_common_instance(PyArray_Descr *descr1, PyArray_Descr *descr2)
         /* If both have fields promoting individual fields may be possible */
         static PyObject *promote_fields_func = NULL;
         npy_cache_import("numpy.core._internal", "_promote_fields",
-                &promote_fields_func);
+                         &promote_fields_func);
         if (promote_fields_func == NULL) {
             return NULL;
         }
         PyObject *result = PyObject_CallFunctionObjArgs(promote_fields_func,
-                descr1, descr2, NULL);
+                                                        descr1, descr2, NULL);
         if (result == NULL) {
             return NULL;
         }
         if (!PyObject_TypeCheck(result, Py_TYPE(descr1))) {
-            PyErr_SetString(PyExc_RuntimeError,
+            PyErr_SetString(
+                    PyExc_RuntimeError,
                     "Internal NumPy error: `_promote_fields` did not return "
                     "a valid descriptor object.");
             Py_DECREF(result);
@@ -437,19 +431,19 @@ void_common_instance(PyArray_Descr *descr1, PyArray_Descr *descr2)
         return (PyArray_Descr *)result;
     }
     else if (descr1->subarray != NULL && descr2->subarray != NULL) {
-        int cmp = PyObject_RichCompareBool(
-                descr1->subarray->shape, descr2->subarray->shape, Py_EQ);
+        int cmp = PyObject_RichCompareBool(descr1->subarray->shape,
+                                           descr2->subarray->shape, Py_EQ);
         if (error_converting(cmp)) {
             return NULL;
         }
         if (!cmp) {
             PyErr_SetString(PyExc_TypeError,
-                    "invalid type promotion with subarray datatypes "
-                    "(shape mismatch).");
+                            "invalid type promotion with subarray datatypes "
+                            "(shape mismatch).");
             return NULL;
         }
-        PyArray_Descr *new_base = PyArray_PromoteTypes(
-                descr1->subarray->base, descr2->subarray->base);
+        PyArray_Descr *new_base = PyArray_PromoteTypes(descr1->subarray->base,
+                                                       descr2->subarray->base);
         if (new_base == NULL) {
             return NULL;
         }
@@ -474,13 +468,13 @@ void_common_instance(PyArray_Descr *descr1, PyArray_Descr *descr2)
     }
 
     PyErr_SetString(PyExc_TypeError,
-            "invalid type promotion with structured datatype(s).");
+                    "invalid type promotion with structured datatype(s).");
     return NULL;
 }
 
 NPY_NO_EXPORT int
-python_builtins_are_known_scalar_types(
-        PyArray_DTypeMeta *NPY_UNUSED(cls), PyTypeObject *pytype)
+python_builtins_are_known_scalar_types(PyArray_DTypeMeta *NPY_UNUSED(cls),
+                                       PyTypeObject *pytype)
 {
     /*
      * Always accept the common Python types, this ensures that we do not
@@ -510,10 +504,9 @@ python_builtins_are_known_scalar_types(
     return 0;
 }
 
-
 static int
-signed_integers_is_known_scalar_types(
-        PyArray_DTypeMeta *cls, PyTypeObject *pytype)
+signed_integers_is_known_scalar_types(PyArray_DTypeMeta *cls,
+                                      PyTypeObject *pytype)
 {
     if (python_builtins_are_known_scalar_types(cls, pytype)) {
         return 1;
@@ -522,10 +515,8 @@ signed_integers_is_known_scalar_types(
     return PyType_IsSubtype(pytype, &PyGenericArrType_Type);
 }
 
-
 static int
-datetime_known_scalar_types(
-        PyArray_DTypeMeta *cls, PyTypeObject *pytype)
+datetime_known_scalar_types(PyArray_DTypeMeta *cls, PyTypeObject *pytype)
 {
     if (python_builtins_are_known_scalar_types(cls, pytype)) {
         return 1;
@@ -539,10 +530,9 @@ datetime_known_scalar_types(
             PyType_IsSubtype(pytype, &PyUnicode_Type));
 }
 
-
 static int
-string_known_scalar_types(
-        PyArray_DTypeMeta *cls, PyTypeObject *pytype) {
+string_known_scalar_types(PyArray_DTypeMeta *cls, PyTypeObject *pytype)
+{
     if (python_builtins_are_known_scalar_types(cls, pytype)) {
         return 1;
     }
@@ -561,7 +551,6 @@ string_known_scalar_types(
     }
     return 0;
 }
-
 
 /*
  * The following set of functions define the common dtype operator for
@@ -593,14 +582,14 @@ default_builtin_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
     return PyArray_DTypeFromTypeNum(common_num);
 }
 
-
 static PyArray_DTypeMeta *
 string_unicode_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
 {
     assert(cls->type_num < NPY_NTYPES && cls != other);
-    if (!NPY_DT_is_legacy(other) || (!PyTypeNum_ISNUMBER(other->type_num) &&
-            /* Not numeric so defer unless cls is unicode and other is string */
-            !(cls->type_num == NPY_UNICODE && other->type_num == NPY_STRING))) {
+    if (!NPY_DT_is_legacy(other) ||
+        (!PyTypeNum_ISNUMBER(other->type_num) &&
+         /* Not numeric so defer unless cls is unicode and other is string */
+         !(cls->type_num == NPY_UNICODE && other->type_num == NPY_STRING))) {
         Py_INCREF(Py_NotImplemented);
         return (PyArray_DTypeMeta *)Py_NotImplemented;
     }
@@ -612,7 +601,6 @@ string_unicode_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
     Py_INCREF(cls);
     return cls;
 }
-
 
 static PyArray_DTypeMeta *
 datetime_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
@@ -629,11 +617,9 @@ datetime_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
     return default_builtin_common_dtype(cls, other);
 }
 
-
-
 static PyArray_DTypeMeta *
-object_common_dtype(
-        PyArray_DTypeMeta *cls, PyArray_DTypeMeta *NPY_UNUSED(other))
+object_common_dtype(PyArray_DTypeMeta *cls,
+                    PyArray_DTypeMeta *NPY_UNUSED(other))
 {
     /*
      * The object DType is special in that it can represent everything,
@@ -645,7 +631,6 @@ object_common_dtype(
     Py_INCREF(cls);
     return cls;
 }
-
 
 /**
  * This function takes a PyArray_Descr and replaces its base class with
@@ -692,7 +677,8 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
         }
     }
     if (!has_type_set) {
-        PyErr_Format(PyExc_RuntimeError,
+        PyErr_Format(
+                PyExc_RuntimeError,
                 "During creation/wrapping of legacy DType, the original class "
                 "was not of PyArrayDescr_Type (it is replaced in this step). "
                 "The extension creating a custom DType for type %S must be "
@@ -758,16 +744,18 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
      * will be inherited automatically there.
      */
     static PyArray_DTypeMeta prototype = {
-        {{
-            PyVarObject_HEAD_INIT(&PyArrayDTypeMeta_Type, 0)
-            .tp_name = NULL,  /* set below */
-            .tp_basicsize = sizeof(PyArray_Descr),
-            .tp_flags = Py_TPFLAGS_DEFAULT,
-            .tp_base = &PyArrayDescr_Type,
-            .tp_new = (newfunc)legacy_dtype_default_new,
-        },},
-        .flags = NPY_DT_LEGACY,
-        /* Further fields are not common between DTypes */
+            {
+                    {
+                            PyVarObject_HEAD_INIT(&PyArrayDTypeMeta_Type, 0)
+                                    .tp_name = NULL, /* set below */
+                            .tp_basicsize = sizeof(PyArray_Descr),
+                            .tp_flags = Py_TPFLAGS_DEFAULT,
+                            .tp_base = &PyArrayDescr_Type,
+                            .tp_new = (newfunc)legacy_dtype_default_new,
+                    },
+            },
+            .flags = NPY_DT_LEGACY,
+            /* Further fields are not common between DTypes */
     };
     memcpy(dtype_class, &prototype, sizeof(PyArray_DTypeMeta));
     /* Fix name of the Type*/
@@ -797,8 +785,8 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
 
     /* Set default functions (correct for most dtypes, override below) */
     dt_slots->default_descr = nonparametric_default_descr;
-    dt_slots->discover_descr_from_pyobject = (
-            nonparametric_discover_descr_from_pyobject);
+    dt_slots->discover_descr_from_pyobject =
+            (nonparametric_discover_descr_from_pyobject);
     dt_slots->is_known_scalar_type = python_builtins_are_known_scalar_types;
     dt_slots->common_dtype = default_builtin_common_dtype;
     dt_slots->common_instance = NULL;
@@ -819,8 +807,8 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
         /* Datetimes are flexible, but were not considered previously */
         dtype_class->flags |= NPY_DT_PARAMETRIC;
         dt_slots->default_descr = datetime_and_timedelta_default_descr;
-        dt_slots->discover_descr_from_pyobject = (
-                discover_datetime_and_timedelta_from_pyobject);
+        dt_slots->discover_descr_from_pyobject =
+                (discover_datetime_and_timedelta_from_pyobject);
         dt_slots->common_dtype = datetime_common_dtype;
         dt_slots->common_instance = datetime_type_promotion;
         if (descr->type_num == NPY_DATETIME) {
@@ -831,23 +819,24 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
         dtype_class->flags |= NPY_DT_PARAMETRIC;
         if (descr->type_num == NPY_VOID) {
             dt_slots->default_descr = void_default_descr;
-            dt_slots->discover_descr_from_pyobject = (
-                    void_discover_descr_from_pyobject);
+            dt_slots->discover_descr_from_pyobject =
+                    (void_discover_descr_from_pyobject);
             dt_slots->common_instance = void_common_instance;
             dt_slots->ensure_canonical = void_ensure_canonical;
         }
         else {
             dt_slots->default_descr = string_and_unicode_default_descr;
             dt_slots->is_known_scalar_type = string_known_scalar_types;
-            dt_slots->discover_descr_from_pyobject = (
-                    string_discover_descr_from_pyobject);
+            dt_slots->discover_descr_from_pyobject =
+                    (string_discover_descr_from_pyobject);
             dt_slots->common_dtype = string_unicode_common_dtype;
             dt_slots->common_instance = string_unicode_common_instance;
         }
     }
 
     if (_PyArray_MapPyTypeToDType(dtype_class, descr->typeobj,
-            PyTypeNum_ISUSERDEF(dtype_class->type_num)) < 0) {
+                                  PyTypeNum_ISUSERDEF(dtype_class->type_num)) <
+        0) {
         Py_DECREF(dtype_class);
         return -1;
     }
@@ -858,14 +847,15 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
     return 0;
 }
 
-
 static PyObject *
-dtypemeta_get_abstract(PyArray_DTypeMeta *self) {
+dtypemeta_get_abstract(PyArray_DTypeMeta *self)
+{
     return PyBool_FromLong(NPY_DT_is_abstract(self));
 }
 
 static PyObject *
-dtypemeta_get_parametric(PyArray_DTypeMeta *self) {
+dtypemeta_get_parametric(PyArray_DTypeMeta *self)
+{
     return PyBool_FromLong(NPY_DT_is_parametric(self));
 }
 
@@ -875,30 +865,28 @@ dtypemeta_get_parametric(PyArray_DTypeMeta *self) {
 static PyGetSetDef dtypemeta_getset[] = {
         {"_abstract", (getter)dtypemeta_get_abstract, NULL, NULL, NULL},
         {"_parametric", (getter)dtypemeta_get_parametric, NULL, NULL, NULL},
-        {NULL, NULL, NULL, NULL, NULL}
-};
+        {NULL, NULL, NULL, NULL, NULL}};
 
 static PyMemberDef dtypemeta_members[] = {
-    {"type",
-        T_OBJECT, offsetof(PyArray_DTypeMeta, scalar_type), READONLY, NULL},
-    {NULL, 0, 0, 0, NULL},
+        {"type", T_OBJECT, offsetof(PyArray_DTypeMeta, scalar_type), READONLY,
+         NULL},
+        {NULL, 0, 0, 0, NULL},
 };
 
-
 NPY_NO_EXPORT PyTypeObject PyArrayDTypeMeta_Type = {
-    PyVarObject_HEAD_INIT(NULL, 0)
-    .tp_name = "numpy._DTypeMeta",
-    .tp_basicsize = sizeof(PyArray_DTypeMeta),
-    .tp_dealloc = (destructor)dtypemeta_dealloc,
-    /* Types are garbage collected (see dtypemeta_is_gc documentation) */
-    .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,
-    .tp_doc = "Preliminary NumPy API: The Type of NumPy DTypes (metaclass)",
-    .tp_getset = dtypemeta_getset,
-    .tp_members = dtypemeta_members,
-    .tp_base = NULL,  /* set to PyType_Type at import time */
-    .tp_alloc = dtypemeta_alloc,
-    .tp_init = (initproc)dtypemeta_init,
-    .tp_new = dtypemeta_new,
-    .tp_is_gc = dtypemeta_is_gc,
-    .tp_traverse = (traverseproc)dtypemeta_traverse,
+        PyVarObject_HEAD_INIT(NULL, 0).tp_name = "numpy._DTypeMeta",
+        .tp_basicsize = sizeof(PyArray_DTypeMeta),
+        .tp_dealloc = (destructor)dtypemeta_dealloc,
+        /* Types are garbage collected (see dtypemeta_is_gc documentation) */
+        .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,
+        .tp_doc =
+                "Preliminary NumPy API: The Type of NumPy DTypes (metaclass)",
+        .tp_getset = dtypemeta_getset,
+        .tp_members = dtypemeta_members,
+        .tp_base = NULL, /* set to PyType_Type at import time */
+        .tp_alloc = dtypemeta_alloc,
+        .tp_init = (initproc)dtypemeta_init,
+        .tp_new = dtypemeta_new,
+        .tp_is_gc = dtypemeta_is_gc,
+        .tp_traverse = (traverseproc)dtypemeta_traverse,
 };

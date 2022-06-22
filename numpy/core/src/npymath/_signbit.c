@@ -3,8 +3,7 @@
 int
 _npy_signbit_d(double x)
 {
-    union
-    {
+    union {
         double d;
         short s[4];
         int i[2];
@@ -20,7 +19,7 @@ _npy_signbit_d(double x)
     return u.i[1] < 0;
 #endif
 
-#else  /* NPY_SIZEOF_INT != 4 */
+#else /* NPY_SIZEOF_INT != 4 */
 
 #ifdef WORDS_BIGENDIAN
     return u.s[0] < 0;
@@ -28,5 +27,5 @@ _npy_signbit_d(double x)
     return u.s[3] < 0;
 #endif
 
-#endif  /* NPY_SIZEOF_INT */
+#endif /* NPY_SIZEOF_INT */
 }

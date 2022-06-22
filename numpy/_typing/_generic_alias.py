@@ -3,13 +3,7 @@ from __future__ import annotations
 import sys
 import types
 from collections.abc import Generator, Iterable, Iterator
-from typing import (
-    Any,
-    ClassVar,
-    NoReturn,
-    TypeVar,
-    TYPE_CHECKING,
-)
+from typing import TYPE_CHECKING, Any, ClassVar, NoReturn, TypeVar
 
 import numpy as np
 
@@ -21,12 +15,12 @@ _T = TypeVar("_T", bound="_GenericAlias")
 def _to_str(obj: object) -> str:
     """Helper function for `_GenericAlias.__repr__`."""
     if obj is Ellipsis:
-        return '...'
+        return "..."
     elif isinstance(obj, type) and not isinstance(obj, _GENERIC_ALIAS_TYPE):
-        if obj.__module__ == 'builtins':
+        if obj.__module__ == "builtins":
             return obj.__qualname__
         else:
-            return f'{obj.__module__}.{obj.__qualname__}'
+            return f"{obj.__module__}.{obj.__qualname__}"
     else:
         return repr(obj)
 
@@ -128,10 +122,9 @@ class _GenericAlias:
     def __call__(self) -> type[Any]:
         return self.__origin__
 
-    def __reduce__(self: _T) -> tuple[
-        type[_T],
-        tuple[type[Any], tuple[object, ...], bool],
-    ]:
+    def __reduce__(
+        self: _T,
+    ) -> tuple[type[_T], tuple[type[Any], tuple[object, ...], bool],]:
         cls = type(self)
         return cls, (self.__origin__, self.__args__, self.__unpacked__)
 
@@ -151,21 +144,17 @@ class _GenericAlias:
             return super().__getattribute__("_hash")
         except AttributeError:
             self._hash: int = (
-                hash(self.__origin__) ^
-                hash(self.__args__) ^
-                hash(self.__unpacked__)
+                hash(self.__origin__) ^ hash(self.__args__) ^ hash(self.__unpacked__)
             )
             return super().__getattribute__("_hash")
 
     def __instancecheck__(self, obj: object) -> NoReturn:
         """Check if an `obj` is an instance."""
-        raise TypeError("isinstance() argument 2 cannot be a "
-                        "parameterized generic")
+        raise TypeError("isinstance() argument 2 cannot be a " "parameterized generic")
 
     def __subclasscheck__(self, cls: type) -> NoReturn:
         """Check if a `cls` is a subclass."""
-        raise TypeError("issubclass() argument 2 cannot be a "
-                        "parameterized generic")
+        raise TypeError("issubclass() argument 2 cannot be a " "parameterized generic")
 
     def __repr__(self) -> str:
         """Return ``repr(self)``."""
@@ -193,11 +182,9 @@ class _GenericAlias:
         if not isinstance(value, _GENERIC_ALIAS_TYPE):
             return NotImplemented
         return (
-            self.__origin__ == value.__origin__ and
-            self.__args__ == value.__args__ and
-            self.__unpacked__ == getattr(
-                value, "__unpacked__", self.__unpacked__
-            )
+            self.__origin__ == value.__origin__
+            and self.__args__ == value.__args__
+            and self.__unpacked__ == getattr(value, "__unpacked__", self.__unpacked__)
         )
 
     def __iter__(self: _T) -> Generator[_T, None, None]:
@@ -205,18 +192,20 @@ class _GenericAlias:
         cls = type(self)
         yield cls(self.__origin__, self.__args__, True)
 
-    _ATTR_EXCEPTIONS: ClassVar[frozenset[str]] = frozenset({
-        "__origin__",
-        "__args__",
-        "__parameters__",
-        "__mro_entries__",
-        "__reduce__",
-        "__reduce_ex__",
-        "__copy__",
-        "__deepcopy__",
-        "__unpacked__",
-        "__typing_unpacked_tuple_args__",
-    })
+    _ATTR_EXCEPTIONS: ClassVar[frozenset[str]] = frozenset(
+        {
+            "__origin__",
+            "__args__",
+            "__parameters__",
+            "__mro_entries__",
+            "__reduce__",
+            "__reduce_ex__",
+            "__copy__",
+            "__deepcopy__",
+            "__unpacked__",
+            "__typing_unpacked_tuple_args__",
+        }
+    )
 
     def __getattribute__(self, name: str) -> Any:
         """Return ``getattr(self, name)``."""

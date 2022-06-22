@@ -1,13 +1,10 @@
 from numpy._pytesttester import PytestTester
-
-from numpy.polynomial import (
-    chebyshev as chebyshev,
-    hermite as hermite,
-    hermite_e as hermite_e,
-    laguerre as laguerre,
-    legendre as legendre,
-    polynomial as polynomial,
-)
+from numpy.polynomial import chebyshev as chebyshev
+from numpy.polynomial import hermite as hermite
+from numpy.polynomial import hermite_e as hermite_e
+from numpy.polynomial import laguerre as laguerre
+from numpy.polynomial import legendre as legendre
+from numpy.polynomial import polynomial as polynomial
 from numpy.polynomial.chebyshev import Chebyshev as Chebyshev
 from numpy.polynomial.hermite import Hermite as Hermite
 from numpy.polynomial.hermite_e import HermiteE as HermiteE

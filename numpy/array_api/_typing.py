@@ -18,20 +18,12 @@ __all__ = [
 ]
 
 import sys
-from typing import (
-    Any,
-    Literal,
-    Sequence,
-    Type,
-    Union,
-    TYPE_CHECKING,
-    TypeVar,
-    Protocol,
-)
+from typing import TYPE_CHECKING, Any, Literal, Protocol, Sequence, Type, TypeVar, Union
 
-from ._array_object import Array
 from numpy import (
     dtype,
+    float32,
+    float64,
     int8,
     int16,
     int32,
@@ -40,35 +32,44 @@ from numpy import (
     uint16,
     uint32,
     uint64,
-    float32,
-    float64,
 )
+
+from ._array_object import Array
 
 _T_co = TypeVar("_T_co", covariant=True)
 
+
 class NestedSequence(Protocol[_T_co]):
-    def __getitem__(self, key: int, /) -> _T_co | NestedSequence[_T_co]: ...
-    def __len__(self, /) -> int: ...
+    def __getitem__(self, key: int, /) -> _T_co | NestedSequence[_T_co]:
+        ...
+
+    def __len__(self, /) -> int:
+        ...
+
 
 Device = Literal["cpu"]
 if TYPE_CHECKING or sys.version_info >= (3, 9):
-    Dtype = dtype[Union[
-        int8,
-        int16,
-        int32,
-        int64,
-        uint8,
-        uint16,
-        uint32,
-        uint64,
-        float32,
-        float64,
-    ]]
+    Dtype = dtype[
+        Union[
+            int8,
+            int16,
+            int32,
+            int64,
+            uint8,
+            uint16,
+            uint32,
+            uint64,
+            float32,
+            float64,
+        ]
+    ]
 else:
     Dtype = dtype
 
 SupportsBufferProtocol = Any
 PyCapsule = Any
 
+
 class SupportsDLPack(Protocol):
-    def __dlpack__(self, /, *, stream: None = ...) -> PyCapsule: ...
+    def __dlpack__(self, /, *, stream: None = ...) -> PyCapsule:
+        ...

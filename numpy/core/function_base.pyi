@@ -1,18 +1,14 @@
-from typing import (
-    Literal as L,
-    overload,
-    Any,
-    SupportsIndex,
-    TypeVar,
-)
+from typing import Any
+from typing import Literal as L
+from typing import SupportsIndex, TypeVar, overload
 
-from numpy import floating, complexfloating, generic
+from numpy import complexfloating, floating, generic
 from numpy._typing import (
-    NDArray,
     DTypeLike,
-    _DTypeLike,
-    _ArrayLikeFloat_co,
+    NDArray,
     _ArrayLikeComplex_co,
+    _ArrayLikeFloat_co,
+    _DTypeLike,
 )
 
 _SCT = TypeVar("_SCT", bound=generic)
@@ -99,7 +95,6 @@ def linspace(
     dtype: DTypeLike = ...,
     axis: SupportsIndex = ...,
 ) -> tuple[NDArray[Any], Any]: ...
-
 @overload
 def logspace(
     start: _ArrayLikeFloat_co,
@@ -140,7 +135,6 @@ def logspace(
     dtype: DTypeLike = ...,
     axis: SupportsIndex = ...,
 ) -> NDArray[Any]: ...
-
 @overload
 def geomspace(
     start: _ArrayLikeFloat_co,

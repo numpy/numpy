@@ -106,8 +106,10 @@ import sys
 import warnings
 
 from ._globals import (
-    ModuleDeprecationWarning, VisibleDeprecationWarning,
-    _NoValue, _CopyMode
+    ModuleDeprecationWarning,
+    VisibleDeprecationWarning,
+    _CopyMode,
+    _NoValue,
 )
 
 # We first need to detect if we're being called as part of the numpy setup
@@ -118,7 +120,7 @@ except NameError:
     __NUMPY_SETUP__ = False
 
 if __NUMPY_SETUP__:
-    sys.stderr.write('Running from numpy source directory.\n')
+    sys.stderr.write("Running from numpy source directory.\n")
 else:
     try:
         from numpy.__config__ import show as show_config
@@ -128,50 +130,43 @@ else:
         your python interpreter from there."""
         raise ImportError(msg) from e
 
-    __all__ = ['ModuleDeprecationWarning',
-               'VisibleDeprecationWarning']
+    __all__ = ["ModuleDeprecationWarning", "VisibleDeprecationWarning"]
 
     # mapping of {name: (value, deprecation_msg)}
     __deprecated_attrs__ = {}
 
     # Allow distributors to run custom init code
-    from . import _distributor_init
+    # Deprecations introduced in NumPy 1.20.0, 2020-06-06
+    import builtins as _builtins
 
-    from . import core
+    from . import _distributor_init, compat, core, ctypeslib, fft, lib, linalg, ma
+    from . import matrixlib as _mat
+    from . import polynomial, random
     from .core import *
-    from . import compat
-    from . import lib
+
     # NOTE: to be revisited following future namespace cleanup.
     # See gh-14454 and gh-15672 for discussion.
     from .lib import *
-
-    from . import linalg
-    from . import fft
-    from . import polynomial
-    from . import random
-    from . import ctypeslib
-    from . import ma
-    from . import matrixlib as _mat
     from .matrixlib import *
-
-    # Deprecations introduced in NumPy 1.20.0, 2020-06-06
-    import builtins as _builtins
 
     _msg = (
         "`np.{n}` is a deprecated alias for the builtin `{n}`. "
         "To silence this warning, use `{n}` by itself. Doing this will not "
         "modify any behavior and is safe. {extended_msg}\n"
         "Deprecated in NumPy 1.20; for more details and guidance: "
-        "https://numpy.org/devdocs/release/1.20.0-notes.html#deprecations")
+        "https://numpy.org/devdocs/release/1.20.0-notes.html#deprecations"
+    )
 
     _specific_msg = (
-        "If you specifically wanted the numpy scalar type, use `np.{}` here.")
+        "If you specifically wanted the numpy scalar type, use `np.{}` here."
+    )
 
     _int_extended_msg = (
         "When replacing `np.{}`, you may wish to use e.g. `np.int64` "
         "or `np.int32` to specify the precision. If you wish to review "
         "your current use, check the release note link for "
-        "additional information.")
+        "additional information."
+    )
 
     _type_info = [
         ("object", ""),  # The NumPy scalar only exists by name.
@@ -179,23 +174,26 @@ else:
         ("float", _specific_msg.format("float64")),
         ("complex", _specific_msg.format("complex128")),
         ("str", _specific_msg.format("str_")),
-        ("int", _int_extended_msg.format("int"))]
+        ("int", _int_extended_msg.format("int")),
+    ]
 
-    __deprecated_attrs__.update({
-        n: (getattr(_builtins, n), _msg.format(n=n, extended_msg=extended_msg))
-        for n, extended_msg in _type_info
-    })
+    __deprecated_attrs__.update(
+        {
+            n: (getattr(_builtins, n), _msg.format(n=n, extended_msg=extended_msg))
+            for n, extended_msg in _type_info
+        }
+    )
 
     # Numpy 1.20.0, 2020-10-19
     __deprecated_attrs__["typeDict"] = (
         core.numerictypes.typeDict,
-        "`np.typeDict` is a deprecated alias for `np.sctypeDict`."
+        "`np.typeDict` is a deprecated alias for `np.sctypeDict`.",
     )
 
     # NumPy 1.22, 2021-10-20
     __deprecated_attrs__["MachAr"] = (
         core._machar.MachAr,
-        "`np.MachAr` is deprecated (NumPy 1.22)."
+        "`np.MachAr` is deprecated (NumPy 1.22).",
     )
 
     _msg = (
@@ -206,60 +204,75 @@ else:
         "an alias. Doing this will not modify any behaviour and is safe. "
         "{extended_msg}\n"
         "Deprecated in NumPy 1.20; for more details and guidance: "
-        "https://numpy.org/devdocs/release/1.20.0-notes.html#deprecations")
+        "https://numpy.org/devdocs/release/1.20.0-notes.html#deprecations"
+    )
 
     __deprecated_attrs__["long"] = (
         getattr(compat, "long"),
-        _msg.format(n="long", n2="int",
-                    extended_msg=_int_extended_msg.format("long")))
+        _msg.format(n="long", n2="int", extended_msg=_int_extended_msg.format("long")),
+    )
 
     __deprecated_attrs__["unicode"] = (
         getattr(compat, "unicode"),
-        _msg.format(n="unicode", n2="str",
-                    extended_msg=_specific_msg.format("str_")))
+        _msg.format(n="unicode", n2="str", extended_msg=_specific_msg.format("str_")),
+    )
 
     del _msg, _specific_msg, _int_extended_msg, _type_info, _builtins
 
-    from .core import round, abs, max, min
+    from .core import abs, max, min, round
+
     # now that numpy modules are imported, can initialize limits
     core.getlimits._register_known_types()
 
-    __all__.extend(['__version__', 'show_config'])
+    __all__.extend(["__version__", "show_config"])
     __all__.extend(core.__all__)
     __all__.extend(_mat.__all__)
     __all__.extend(lib.__all__)
-    __all__.extend(['linalg', 'fft', 'random', 'ctypeslib', 'ma'])
+    __all__.extend(["linalg", "fft", "random", "ctypeslib", "ma"])
 
     # Remove one of the two occurrences of `issubdtype`, which is exposed as
     # both `numpy.core.issubdtype` and `numpy.lib.issubdtype`.
-    __all__.remove('issubdtype')
+    __all__.remove("issubdtype")
 
     # These are exported by np.core, but are replaced by the builtins below
     # remove them to ensure that we don't end up with `np.long == np.int_`,
     # which would be a breaking change.
     del long, unicode
-    __all__.remove('long')
-    __all__.remove('unicode')
+    __all__.remove("long")
+    __all__.remove("unicode")
 
     # Remove things that are in the numpy.lib but not in the numpy namespace
     # Note that there is a test (numpy/tests/test_public_api.py:test_numpy_namespace)
     # that prevents adding more things to the main namespace by accident.
     # The list below will grow until the `from .lib import *` fixme above is
     # taken care of
-    __all__.remove('Arrayterator')
+    __all__.remove("Arrayterator")
     del Arrayterator
 
     # These names were removed in NumPy 1.20.  For at least one release,
     # attempts to access these names in the numpy namespace will trigger
     # a warning, and calling the function will raise an exception.
-    _financial_names = ['fv', 'ipmt', 'irr', 'mirr', 'nper', 'npv', 'pmt',
-                        'ppmt', 'pv', 'rate']
+    _financial_names = [
+        "fv",
+        "ipmt",
+        "irr",
+        "mirr",
+        "nper",
+        "npv",
+        "pmt",
+        "ppmt",
+        "pv",
+        "rate",
+    ]
     __expired_functions__ = {
-        name: (f'In accordance with NEP 32, the function {name} was removed '
-               'from NumPy version 1.20.  A replacement for this function '
-               'is available in the numpy_financial library: '
-               'https://pypi.org/project/numpy-financial')
-        for name in _financial_names}
+        name: (
+            f"In accordance with NEP 32, the function {name} was removed "
+            "from NumPy version 1.20.  A replacement for this function "
+            "is available in the numpy_financial library: "
+            "https://pypi.org/project/numpy-financial"
+        )
+        for name in _financial_names
+    }
 
     # Filter out Cython harmless warnings
     warnings.filterwarnings("ignore", message="numpy.dtype size changed")
@@ -268,13 +281,14 @@ else:
 
     # oldnumeric and numarray were removed in 1.9. In case some packages import
     # but do not use them, we define them here for backward compatibility.
-    oldnumeric = 'removed'
-    numarray = 'removed'
+    oldnumeric = "removed"
+    numarray = "removed"
 
     def __getattr__(attr):
         # Warn for expired attributes, and return a dummy function
         # that always raises an exception.
         import warnings
+
         try:
             msg = __expired_functions__[attr]
         except KeyError:
@@ -302,25 +316,30 @@ else:
         #
         # The previous way Tester was imported also had a side effect of adding
         # the full `numpy.testing` namespace
-        if attr == 'testing':
+        if attr == "testing":
             import numpy.testing as testing
+
             return testing
-        elif attr == 'Tester':
+        elif attr == "Tester":
             from .testing import Tester
+
             return Tester
 
-        raise AttributeError("module {!r} has no attribute "
-                             "{!r}".format(__name__, attr))
+        raise AttributeError(
+            "module {!r} has no attribute " "{!r}".format(__name__, attr)
+        )
 
     def __dir__():
-        public_symbols = globals().keys() | {'Tester', 'testing'}
+        public_symbols = globals().keys() | {"Tester", "testing"}
         public_symbols -= {
-            "core", "matrixlib",
+            "core",
+            "matrixlib",
         }
         return list(public_symbols)
 
     # Pytest testing
     from numpy._pytesttester import PytestTester
+
     test = PytestTester(__name__)
     del PytestTester
 
@@ -340,11 +359,13 @@ else:
             if not abs(x.dot(x) - 2.0) < 1e-5:
                 raise AssertionError()
         except AssertionError:
-            msg = ("The current Numpy installation ({!r}) fails to "
-                   "pass simple sanity checks. This can be caused for example "
-                   "by incorrect BLAS library being linked in, or by mixing "
-                   "package managers (pip, conda, apt, ...). Search closed "
-                   "numpy issues for similar problems.")
+            msg = (
+                "The current Numpy installation ({!r}) fails to "
+                "pass simple sanity checks. This can be caused for example "
+                "by incorrect BLAS library being linked in, or by mixing "
+                "package managers (pip, conda, apt, ...). Search closed "
+                "numpy issues for similar problems."
+            )
             raise RuntimeError(msg.format(__file__)) from None
 
     _sanity_check()
@@ -356,7 +377,7 @@ else:
         Testing numpy polyfit calls init_dgelsd(LAPACK)
         """
         try:
-            c = array([3., 2., 1.])
+            c = array([3.0, 2.0, 1.0])
             x = linspace(0, 2, 5)
             y = polyval(c, x)
             _ = polyfit(x, y, 2, cov=True)
@@ -369,14 +390,17 @@ else:
             # Throw runtime error, if the test failed Check for warning and error_message
             error_message = ""
             if len(w) > 0:
-                error_message = "{}: {}".format(w[-1].category.__name__, str(w[-1].message))
+                error_message = "{}: {}".format(
+                    w[-1].category.__name__, str(w[-1].message)
+                )
                 msg = (
                     "Polyfit sanity test emitted a warning, most likely due "
                     "to using a buggy Accelerate backend."
                     "\nIf you compiled yourself, more information is available at:"
                     "\nhttps://numpy.org/doc/stable/user/building.html#accelerated-blas-lapack-libraries"
                     "\nOtherwise report this to the vendor "
-                    "that provided NumPy.\n{}\n".format(error_message))
+                    "that provided NumPy.\n{}\n".format(error_message)
+                )
                 raise RuntimeError(msg)
     del _mac_os_check
 
@@ -385,6 +409,7 @@ else:
     # Specifically kernel version 4.6 had a bug fix which probably fixed this:
     # https://github.com/torvalds/linux/commit/7cf91a98e607c2f935dbcc177d70011e95b8faff
     import os
+
     use_hugepage = os.environ.get("NUMPY_MADVISE_HUGEPAGE", None)
     if sys.platform == "linux" and use_hugepage is None:
         # If there is an issue with parsing the kernel version,
@@ -416,6 +441,7 @@ else:
     # Tell PyInstaller where to find hook-numpy.py
     def _pyinstaller_hooks_dir():
         from pathlib import Path
+
         return [str(Path(__file__).with_name("_pyinstaller").resolve())]
 
     # Remove symbols imported for internal use
@@ -423,7 +449,8 @@ else:
 
 
 # get the version using versioneer
-from .version import __version__, git_revision as __git_version__
+from .version import __version__
+from .version import git_revision as __git_version__
 
 # Remove symbols imported for internal use
 del sys, warnings

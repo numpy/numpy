@@ -1,4 +1,5 @@
 import os
+
 import pytest
 
 import numpy as np
@@ -35,9 +36,9 @@ class TestNegativeBounds(util.F2PyTest):
         # Keeping the 1 index in mind
         def ubound(xl, xh):
             return xh - xl + 1
-        rval = self.module.foo(is_=xlow, ie_=xhigh,
-                        arr=xvec[:ubound(xlow, xhigh)])
-        expval = np.arange(11, dtype = np.float32)
+
+        rval = self.module.foo(is_=xlow, ie_=xhigh, arr=xvec[: ubound(xlow, xhigh)])
+        expval = np.arange(11, dtype=np.float32)
         assert np.allclose(rval, expval)
 
 

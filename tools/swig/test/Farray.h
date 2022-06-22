@@ -4,53 +4,51 @@
 #include <stdexcept>
 #include <string>
 
-class Farray
-{
-public:
+class Farray {
+   public:
+    // Size constructor
+    Farray(int nrows, int ncols);
 
-  // Size constructor
-  Farray(int nrows, int ncols);
+    // Copy constructor
+    Farray(const Farray &source);
 
-  // Copy constructor
-  Farray(const Farray & source);
+    // Destructor
+    ~Farray();
 
-  // Destructor
-  ~Farray();
+    // Assignment operator
+    Farray &operator=(const Farray &source);
 
-  // Assignment operator
-  Farray & operator=(const Farray & source);
+    // Equals operator
+    bool operator==(const Farray &other) const;
 
-  // Equals operator
-  bool operator==(const Farray & other) const;
+    // Length accessors
+    int nrows() const;
+    int ncols() const;
 
-  // Length accessors
-  int nrows() const;
-  int ncols() const;
+    // Set item accessor
+    long &operator()(int i, int j);
 
-  // Set item accessor
-  long & operator()(int i, int j);
+    // Get item accessor
+    const long &operator()(int i, int j) const;
 
-  // Get item accessor
-  const long & operator()(int i, int j) const;
+    // String output
+    std::string asString() const;
 
-  // String output
-  std::string asString() const;
+    // Get view
+    void view(int *nrows, int *ncols, long **data) const;
 
-  // Get view
-  void view(int* nrows, int* ncols, long** data) const;
+   private:
+    // Members
+    int _nrows;
+    int _ncols;
+    long *_buffer;
 
-private:
-  // Members
-  int _nrows;
-  int _ncols;
-  long * _buffer;
+    // Default constructor: not implemented
+    Farray();
 
-  // Default constructor: not implemented
-  Farray();
-
-  // Methods
-  void allocateMemory();
-  int  offset(int i, int j) const;
+    // Methods
+    void allocateMemory();
+    int offset(int i, int j) const;
 };
 
 #endif

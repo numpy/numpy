@@ -13,34 +13,33 @@ useful to have in the main name-space.
 """
 import math
 
+from numpy.core._multiarray_umath import tracemalloc_domain
 from numpy.version import version as __version__
 
 # Public submodules
 # Note: recfunctions and (maybe) format are public too, but not imported
 from . import mixins
 from . import scimath as emath
-
-# Private submodules
-from .type_check import *
-from .index_tricks import *
+from ._version import *
+from .arraypad import *
+from .arraysetops import *
+from .arrayterator import Arrayterator
 from .function_base import *
+from .histograms import *
+from .index_tricks import *
 from .nanfunctions import *
+from .npyio import *
+from .polynomial import *
 from .shape_base import *
 from .stride_tricks import *
 from .twodim_base import *
+
+# Private submodules
+from .type_check import *
 from .ufunclike import *
-from .histograms import *
-
-from .polynomial import *
 from .utils import *
-from .arraysetops import *
-from .npyio import *
-from .arrayterator import Arrayterator
-from .arraypad import *
-from ._version import *
-from numpy.core._multiarray_umath import tracemalloc_domain
 
-__all__ = ['emath', 'math', 'tracemalloc_domain', 'Arrayterator']
+__all__ = ["emath", "math", "tracemalloc_domain", "Arrayterator"]
 __all__ += type_check.__all__
 __all__ += index_tricks.__all__
 __all__ += function_base.__all__
@@ -57,5 +56,6 @@ __all__ += nanfunctions.__all__
 __all__ += histograms.__all__
 
 from numpy._pytesttester import PytestTester
+
 test = PytestTester(__name__)
 del PytestTester

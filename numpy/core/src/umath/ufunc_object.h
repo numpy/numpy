@@ -9,7 +9,7 @@ ufunc_geterr(PyObject *NPY_UNUSED(dummy), PyObject *args);
 NPY_NO_EXPORT PyObject *
 ufunc_seterr(PyObject *NPY_UNUSED(dummy), PyObject *args);
 
-NPY_NO_EXPORT const char*
+NPY_NO_EXPORT const char *
 ufunc_get_name_cstr(PyUFuncObject *ufunc);
 
 /* strings from umathmodule.c that are interned on umath import */

@@ -4,4 +4,4 @@
 NPY_NO_EXPORT PyObject *
 cblas_matrixproduct(int, PyArrayObject *, PyArrayObject *, PyArrayObject *);
 
-#endif  /* NUMPY_CORE_SRC_COMMON_CBLASFUNCS_H_ */
+#endif /* NUMPY_CORE_SRC_COMMON_CBLASFUNCS_H_ */

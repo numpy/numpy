@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-from ._array_object import Array
-from ._data_type_functions import result_type
-
 from typing import List, Optional, Tuple, Union
 
 import numpy as np
+
+from ._array_object import Array
+from ._data_type_functions import result_type
+
 
 # Note: the function name is different here
 def concat(

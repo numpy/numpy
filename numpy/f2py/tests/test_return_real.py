@@ -1,8 +1,10 @@
 import platform
-import pytest
-import numpy as np
 
+import pytest
+
+import numpy as np
 from numpy import array
+
 from . import util
 
 
@@ -18,7 +20,7 @@ class TestReturnReal(util.F2PyTest):
         assert abs(t("234.6") - 234.6) <= err
         assert abs(t(-234) + 234) <= err
         assert abs(t([234]) - 234) <= err
-        assert abs(t((234, )) - 234.0) <= err
+        assert abs(t((234,)) - 234.0) <= err
         assert abs(t(array(234)) - 234.0) <= err
         assert abs(t(array([234])) - 234.0) <= err
         assert abs(t(array([[234]])) - 234.0) <= err
@@ -53,10 +55,7 @@ class TestReturnReal(util.F2PyTest):
     reason="Prone to error when run with numpy/f2py/tests on mac os, "
     "but not when run in isolation",
 )
-@pytest.mark.skipif(
-    np.dtype(np.intp).itemsize < 8,
-    reason="32-bit builds are buggy"
-)
+@pytest.mark.skipif(np.dtype(np.intp).itemsize < 8, reason="32-bit builds are buggy")
 class TestCReturnReal(TestReturnReal):
     suffix = ".pyf"
     module_name = "c_ext_return_real"

@@ -17,9 +17,9 @@ def values_and_dtypes():
     yield param(70000, "float16", id="int-to-f2")
     yield param("70000", "float16", id="str-to-f2")
     yield param(70000.0, "float16", id="float-to-f2")
-    yield param(np.longdouble(70000.), "float16", id="longdouble-to-f2")
-    yield param(np.float64(70000.), "float16", id="double-to-f2")
-    yield param(np.float32(70000.), "float16", id="float-to-f2")
+    yield param(np.longdouble(70000.0), "float16", id="longdouble-to-f2")
+    yield param(np.float64(70000.0), "float16", id="double-to-f2")
+    yield param(np.float32(70000.0), "float16", id="float-to-f2")
     # Casting to float32:
     yield param(10**100, "float32", id="int-to-f4")
     yield param(1e100, "float32", id="float-to-f2")
@@ -31,12 +31,11 @@ def values_and_dtypes():
     max_ld = np.finfo(np.longdouble).max
     spacing = np.spacing(np.nextafter(np.finfo("f8").max, 0))
     if max_ld - spacing > np.finfo("f8").max:
-        yield param(np.finfo(np.longdouble).max, "float64",
-                    id="longdouble-to-f8")
+        yield param(np.finfo(np.longdouble).max, "float64", id="longdouble-to-f8")
 
     # Cast to complex32:
     yield param(2e300, "complex64", id="float-to-c8")
-    yield param(2e300+0j, "complex64", id="complex-to-c8")
+    yield param(2e300 + 0j, "complex64", id="complex-to-c8")
     yield param(2e300j, "complex64", id="complex-to-c8")
     yield param(np.longdouble(2e300), "complex64", id="longdouble-to-c8")
 
@@ -56,7 +55,7 @@ def check_operations(dtype, value):
     There are many dedicated paths in NumPy which cast and should check for
     floating point errors which occurred during those casts.
     """
-    if dtype.kind != 'i':
+    if dtype.kind != "i":
         # These assignments use the stricter setitem logic:
         def assignment():
             arr = np.empty(3, dtype=dtype)
@@ -84,15 +83,18 @@ def check_operations(dtype, value):
 
     def copyto_scalar_masked():
         arr = np.empty(3, dtype=dtype)
-        np.copyto(arr, value, casting="unsafe",
-                  where=[True, False, True])
+        np.copyto(arr, value, casting="unsafe", where=[True, False, True])
 
     yield copyto_scalar_masked
 
     def copyto_masked():
         arr = np.empty(3, dtype=dtype)
-        np.copyto(arr, np.array([value, value, value]), casting="unsafe",
-                  where=[True, False, True])
+        np.copyto(
+            arr,
+            np.array([value, value, value]),
+            casting="unsafe",
+            where=[True, False, True],
+        )
 
     yield copyto_masked
 
@@ -136,6 +138,7 @@ def check_operations(dtype, value):
 
     yield flat_assignment
 
+
 @pytest.mark.parametrize(["value", "dtype"], values_and_dtypes())
 @pytest.mark.filterwarnings("ignore::numpy.ComplexWarning")
 def test_floatingpoint_errors_casting(dtype, value):
@@ -143,11 +146,10 @@ def test_floatingpoint_errors_casting(dtype, value):
     for operation in check_operations(dtype, value):
         dtype = np.dtype(dtype)
 
-        match = "invalid" if dtype.kind in 'iu' else "overflow"
+        match = "invalid" if dtype.kind in "iu" else "overflow"
         with pytest.warns(RuntimeWarning, match=match):
             operation()
 
         with np.errstate(all="raise"):
             with pytest.raises(FloatingPointError, match=match):
                 operation()
-

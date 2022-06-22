@@ -1,5 +1,6 @@
-from scipy import misc
 import matplotlib.pyplot as plt
+from scipy import misc
+
 import numpy as np
 from numpy import linalg
 

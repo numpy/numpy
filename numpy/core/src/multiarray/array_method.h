@@ -5,6 +5,7 @@
 #define _MULTIARRAYMODULE
 
 #include <Python.h>
+
 #include <numpy/ndarraytypes.h>
 
 #ifdef __cplusplus
@@ -41,11 +42,9 @@ typedef enum {
     _NPY_METH_FORCE_CAST_INPUTS = 1 << 17,
 
     /* All flags which can change at runtime */
-    NPY_METH_RUNTIME_FLAGS = (
-            NPY_METH_REQUIRES_PYAPI |
-            NPY_METH_NO_FLOATINGPOINT_ERRORS),
+    NPY_METH_RUNTIME_FLAGS =
+            (NPY_METH_REQUIRES_PYAPI | NPY_METH_NO_FLOATINGPOINT_ERRORS),
 } NPY_ARRAYMETHOD_FLAGS;
-
 
 /*
  * It would be nice to just | flags, but in general it seems that 0 bits
@@ -55,11 +54,10 @@ typedef enum {
  * NOTE: If made public, should maybe be a function to easier add flags?
  */
 #define PyArrayMethod_MINIMAL_FLAGS NPY_METH_NO_FLOATINGPOINT_ERRORS
-#define PyArrayMethod_COMBINED_FLAGS(flags1, flags2)  \
-        ((NPY_ARRAYMETHOD_FLAGS)(  \
-            ((flags1 | flags2) & ~PyArrayMethod_MINIMAL_FLAGS)  \
-            | (flags1 & flags2)))
-
+#define PyArrayMethod_COMBINED_FLAGS(flags1, flags2)          \
+    ((NPY_ARRAYMETHOD_FLAGS)(((flags1 | flags2) &             \
+                              ~PyArrayMethod_MINIMAL_FLAGS) | \
+                             (flags1 & flags2)))
 
 struct PyArrayMethodObject_tag;
 
@@ -74,35 +72,29 @@ struct PyArrayMethodObject_tag;
  *       be stored on the Context/BoundArrayMethod vs. the ArrayMethod.
  */
 typedef struct {
-    PyObject *caller;  /* E.g. the original ufunc, may be NULL */
+    PyObject *caller; /* E.g. the original ufunc, may be NULL */
     struct PyArrayMethodObject_tag *method;
 
     /* Operand descriptors, filled in by resolve_descriptors */
     PyArray_Descr **descriptors;
 } PyArrayMethod_Context;
 
+typedef int(PyArrayMethod_StridedLoop)(PyArrayMethod_Context *context,
+                                       char *const *data,
+                                       const npy_intp *dimensions,
+                                       const npy_intp *strides,
+                                       NpyAuxData *transferdata);
 
-typedef int (PyArrayMethod_StridedLoop)(PyArrayMethod_Context *context,
-        char *const *data, const npy_intp *dimensions, const npy_intp *strides,
-        NpyAuxData *transferdata);
-
-
-typedef NPY_CASTING (resolve_descriptors_function)(
-        struct PyArrayMethodObject_tag *method,
-        PyArray_DTypeMeta **dtypes,
-        PyArray_Descr **given_descrs,
-        PyArray_Descr **loop_descrs,
+typedef NPY_CASTING(resolve_descriptors_function)(
+        struct PyArrayMethodObject_tag *method, PyArray_DTypeMeta **dtypes,
+        PyArray_Descr **given_descrs, PyArray_Descr **loop_descrs,
         npy_intp *view_offset);
 
-
-typedef int (get_loop_function)(
-        PyArrayMethod_Context *context,
-        int aligned, int move_references,
-        const npy_intp *strides,
-        PyArrayMethod_StridedLoop **out_loop,
-        NpyAuxData **out_transferdata,
-        NPY_ARRAYMETHOD_FLAGS *flags);
-
+typedef int(get_loop_function)(PyArrayMethod_Context *context, int aligned,
+                               int move_references, const npy_intp *strides,
+                               PyArrayMethod_StridedLoop **out_loop,
+                               NpyAuxData **out_transferdata,
+                               NPY_ARRAYMETHOD_FLAGS *flags);
 
 /*
  * The following functions are only used be the wrapping array method defined
@@ -129,9 +121,11 @@ typedef int (get_loop_function)(
  *       (I am considering including `auxdata` as an "optional" parameter to
  *       `resolve_descriptors`, so that it can be filled there if not NULL.)
  */
-typedef int translate_given_descrs_func(int nin, int nout,
-        PyArray_DTypeMeta *wrapped_dtypes[],
-        PyArray_Descr *given_descrs[], PyArray_Descr *new_descrs[]);
+typedef int
+translate_given_descrs_func(int nin, int nout,
+                            PyArray_DTypeMeta *wrapped_dtypes[],
+                            PyArray_Descr *given_descrs[],
+                            PyArray_Descr *new_descrs[]);
 
 /**
  * The function to convert the actual loop descriptors (as returned by the
@@ -151,10 +145,11 @@ typedef int translate_given_descrs_func(int nin, int nout,
  *
  * @returns 0 on success, -1 on failure.
  */
-typedef int translate_loop_descrs_func(int nin, int nout,
-        PyArray_DTypeMeta *new_dtypes[], PyArray_Descr *given_descrs[],
-        PyArray_Descr *original_descrs[], PyArray_Descr *loop_descrs[]);
-
+typedef int
+translate_loop_descrs_func(int nin, int nout, PyArray_DTypeMeta *new_dtypes[],
+                           PyArray_Descr *given_descrs[],
+                           PyArray_Descr *original_descrs[],
+                           PyArray_Descr *loop_descrs[]);
 
 /*
  * This struct will be public and necessary for creating a new ArrayMethod
@@ -171,7 +166,6 @@ typedef struct {
     PyArray_DTypeMeta **dtypes;
     PyType_Slot *slots;
 } PyArrayMethod_Spec;
-
 
 /*
  * Structure of the ArrayMethod. This structure should probably not be made
@@ -205,7 +199,6 @@ typedef struct PyArrayMethodObject_tag {
     translate_loop_descrs_func *translate_loop_descrs;
 } PyArrayMethodObject;
 
-
 /*
  * We will sometimes have to create a ArrayMethod and allow passing it around,
  * similar to `instance.method` returning a bound method, e.g. a function like
@@ -222,7 +215,6 @@ typedef struct {
     PyArrayMethodObject *method;
 } PyBoundArrayMethodObject;
 
-
 extern NPY_NO_EXPORT PyTypeObject PyArrayMethod_Type;
 extern NPY_NO_EXPORT PyTypeObject PyBoundArrayMethod_Type;
 
@@ -238,32 +230,26 @@ extern NPY_NO_EXPORT PyTypeObject PyBoundArrayMethod_Type;
 #define NPY_METH_unaligned_strided_loop 5
 #define NPY_METH_unaligned_contiguous_loop 6
 
-
 /*
  * Used internally (initially) for real to complex loops only
  */
 NPY_NO_EXPORT int
-npy_default_get_strided_loop(
-        PyArrayMethod_Context *context,
-        int aligned, int NPY_UNUSED(move_references), const npy_intp *strides,
-        PyArrayMethod_StridedLoop **out_loop, NpyAuxData **out_transferdata,
-        NPY_ARRAYMETHOD_FLAGS *flags);
-
+npy_default_get_strided_loop(PyArrayMethod_Context *context, int aligned,
+                             int NPY_UNUSED(move_references),
+                             const npy_intp *strides,
+                             PyArrayMethod_StridedLoop **out_loop,
+                             NpyAuxData **out_transferdata,
+                             NPY_ARRAYMETHOD_FLAGS *flags);
 
 NPY_NO_EXPORT int
-PyArrayMethod_GetMaskedStridedLoop(
-        PyArrayMethod_Context *context,
-        int aligned,
-        npy_intp *fixed_strides,
-        PyArrayMethod_StridedLoop **out_loop,
-        NpyAuxData **out_transferdata,
-        NPY_ARRAYMETHOD_FLAGS *flags);
-
-
+PyArrayMethod_GetMaskedStridedLoop(PyArrayMethod_Context *context, int aligned,
+                                   npy_intp *fixed_strides,
+                                   PyArrayMethod_StridedLoop **out_loop,
+                                   NpyAuxData **out_transferdata,
+                                   NPY_ARRAYMETHOD_FLAGS *flags);
 
 NPY_NO_EXPORT PyObject *
 PyArrayMethod_FromSpec(PyArrayMethod_Spec *spec);
-
 
 /*
  * TODO: This function is the internal version, and its error paths may
@@ -276,4 +262,4 @@ PyArrayMethod_FromSpec_int(PyArrayMethod_Spec *spec, int priv);
 }
 #endif
 
-#endif  /* NUMPY_CORE_SRC_MULTIARRAY_ARRAY_METHOD_H_ */
+#endif /* NUMPY_CORE_SRC_MULTIARRAY_ARRAY_METHOD_H_ */

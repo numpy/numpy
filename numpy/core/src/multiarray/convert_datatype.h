@@ -25,9 +25,8 @@ NPY_NO_EXPORT PyArrayObject **
 PyArray_ConvertToCommonType(PyObject *op, int *retn);
 
 NPY_NO_EXPORT PyArray_Descr *
-PyArray_LegacyResultType(
-        npy_intp narrs, PyArrayObject **arr,
-        npy_intp ndtypes, PyArray_Descr **dtypes);
+PyArray_LegacyResultType(npy_intp narrs, PyArrayObject **arr, npy_intp ndtypes,
+                         PyArray_Descr **dtypes);
 
 NPY_NO_EXPORT int
 PyArray_ValidType(int type);
@@ -41,64 +40,61 @@ can_cast_scalar_to(PyArray_Descr *scal_type, char *scal_data,
                    PyArray_Descr *to, NPY_CASTING casting);
 
 NPY_NO_EXPORT int
-should_use_min_scalar(npy_intp narrs, PyArrayObject **arr,
-                      npy_intp ndtypes, PyArray_Descr **dtypes);
+should_use_min_scalar(npy_intp narrs, PyArrayObject **arr, npy_intp ndtypes,
+                      PyArray_Descr **dtypes);
 
 NPY_NO_EXPORT const char *
 npy_casting_to_string(NPY_CASTING casting);
 
 NPY_NO_EXPORT void
-npy_set_invalid_cast_error(
-        PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
-        NPY_CASTING casting, npy_bool scalar);
+npy_set_invalid_cast_error(PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
+                           NPY_CASTING casting, npy_bool scalar);
 
 NPY_NO_EXPORT PyArray_Descr *
 PyArray_CastDescrToDType(PyArray_Descr *descr, PyArray_DTypeMeta *given_DType);
 
 NPY_NO_EXPORT PyArray_Descr *
-PyArray_FindConcatenationDescriptor(
-        npy_intp n, PyArrayObject **arrays, PyObject *requested_dtype);
+PyArray_FindConcatenationDescriptor(npy_intp n, PyArrayObject **arrays,
+                                    PyObject *requested_dtype);
 
 NPY_NO_EXPORT int
 PyArray_AddCastingImplementation(PyBoundArrayMethodObject *meth);
 
 NPY_NO_EXPORT int
-PyArray_AddCastingImplementation_FromSpec(PyArrayMethod_Spec *spec, int private_);
+PyArray_AddCastingImplementation_FromSpec(PyArrayMethod_Spec *spec,
+                                          int private_);
 
 NPY_NO_EXPORT NPY_CASTING
 PyArray_MinCastSafety(NPY_CASTING casting1, NPY_CASTING casting2);
 
 NPY_NO_EXPORT NPY_CASTING
-PyArray_GetCastInfo(
-        PyArray_Descr *from, PyArray_Descr *to, PyArray_DTypeMeta *to_dtype,
-        npy_intp *view_offset);
+PyArray_GetCastInfo(PyArray_Descr *from, PyArray_Descr *to,
+                    PyArray_DTypeMeta *to_dtype, npy_intp *view_offset);
 
 NPY_NO_EXPORT int
-PyArray_CheckCastSafety(NPY_CASTING casting,
-        PyArray_Descr *from, PyArray_Descr *to, PyArray_DTypeMeta *to_dtype);
+PyArray_CheckCastSafety(NPY_CASTING casting, PyArray_Descr *from,
+                        PyArray_Descr *to, PyArray_DTypeMeta *to_dtype);
 
 NPY_NO_EXPORT NPY_CASTING
-legacy_same_dtype_resolve_descriptors(
-        PyArrayMethodObject *self,
-        PyArray_DTypeMeta *dtypes[2],
-        PyArray_Descr *given_descrs[2],
-        PyArray_Descr *loop_descrs[2],
-        npy_intp *view_offset);
+legacy_same_dtype_resolve_descriptors(PyArrayMethodObject *self,
+                                      PyArray_DTypeMeta *dtypes[2],
+                                      PyArray_Descr *given_descrs[2],
+                                      PyArray_Descr *loop_descrs[2],
+                                      npy_intp *view_offset);
 
 NPY_NO_EXPORT int
-legacy_cast_get_strided_loop(
-        PyArrayMethod_Context *context,
-        int aligned, int move_references, npy_intp *strides,
-        PyArrayMethod_StridedLoop **out_loop, NpyAuxData **out_transferdata,
-        NPY_ARRAYMETHOD_FLAGS *flags);
+legacy_cast_get_strided_loop(PyArrayMethod_Context *context, int aligned,
+                             int move_references, npy_intp *strides,
+                             PyArrayMethod_StridedLoop **out_loop,
+                             NpyAuxData **out_transferdata,
+                             NPY_ARRAYMETHOD_FLAGS *flags);
 
 NPY_NO_EXPORT NPY_CASTING
-simple_cast_resolve_descriptors(
-        PyArrayMethodObject *self,
-        PyArray_DTypeMeta *dtypes[2],
-        PyArray_Descr *input_descrs[2],
-        PyArray_Descr *loop_descrs[2],
-        npy_intp *view_offset);
+simple_cast_resolve_descriptors(PyArrayMethodObject *self,
+                                PyArray_DTypeMeta *dtypes[2],
+                                PyArray_Descr *input_descrs[2],
+                                PyArray_Descr *loop_descrs[2],
+                                npy_intp *view_offset);
 
 NPY_NO_EXPORT int
 PyArray_InitializeCasts(void);
@@ -107,4 +103,4 @@ PyArray_InitializeCasts(void);
 }
 #endif
 
-#endif  /* NUMPY_CORE_SRC_MULTIARRAY_CONVERT_DATATYPE_H_ */
+#endif /* NUMPY_CORE_SRC_MULTIARRAY_CONVERT_DATATYPE_H_ */

@@ -28,7 +28,6 @@ typedef struct {
 
 extern NPY_NO_EXPORT PyTypeObject NpyBusDayCalendar_Type;
 
-
 /*
  * Converts a Python input into a 7-element weekmask, where 0 means
  * weekend and 1 means business day.
@@ -57,6 +56,4 @@ normalize_holidays_list(npy_holidayslist *holidays, npy_bool *weekmask);
 NPY_NO_EXPORT int
 PyArray_HolidaysConverter(PyObject *dates_in, npy_holidayslist *holidays);
 
-
-
-#endif  /* NUMPY_CORE_SRC_MULTIARRAY_DATETIME_BUSDAYCAL_H_ */
+#endif /* NUMPY_CORE_SRC_MULTIARRAY_DATETIME_BUSDAYCAL_H_ */

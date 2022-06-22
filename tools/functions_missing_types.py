@@ -14,9 +14,12 @@ import ast
 import importlib
 import os
 
-NUMPY_ROOT = os.path.dirname(os.path.join(
-    os.path.abspath(__file__), "..",
-))
+NUMPY_ROOT = os.path.dirname(
+    os.path.join(
+        os.path.abspath(__file__),
+        "..",
+    )
+)
 
 # Technically "public" functions (they don't start with an underscore)
 # that we don't want to include.

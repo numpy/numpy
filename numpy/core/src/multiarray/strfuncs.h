@@ -13,4 +13,4 @@ array_str(PyArrayObject *self);
 NPY_NO_EXPORT PyObject *
 array_format(PyArrayObject *self, PyObject *args);
 
-#endif  /* NUMPY_CORE_SRC_MULTIARRAY_STRFUNCS_H_ */
+#endif /* NUMPY_CORE_SRC_MULTIARRAY_STRFUNCS_H_ */

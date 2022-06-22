@@ -128,8 +128,8 @@ from ._constants import e, inf, nan, pi
 __all__ += ["e", "inf", "nan", "pi"]
 
 from ._creation_functions import (
-    asarray,
     arange,
+    asarray,
     empty,
     empty_like,
     eye,
@@ -186,6 +186,9 @@ __all__ += [
 ]
 
 from ._dtypes import (
+    bool,
+    float32,
+    float64,
     int8,
     int16,
     int32,
@@ -194,9 +197,6 @@ from ._dtypes import (
     uint16,
     uint32,
     uint64,
-    float32,
-    float64,
-    bool,
 )
 
 __all__ += [
@@ -224,8 +224,8 @@ from ._elementwise_functions import (
     atan2,
     atanh,
     bitwise_and,
-    bitwise_left_shift,
     bitwise_invert,
+    bitwise_left_shift,
     bitwise_or,
     bitwise_right_shift,
     bitwise_xor,
@@ -264,8 +264,8 @@ from ._elementwise_functions import (
     sign,
     sin,
     sinh,
-    square,
     sqrt,
+    square,
     subtract,
     tan,
     tanh,
@@ -337,7 +337,7 @@ from . import linalg
 
 __all__ += ["linalg"]
 
-from .linalg import matmul, tensordot, matrix_transpose, vecdot
+from .linalg import matmul, matrix_transpose, tensordot, vecdot
 
 __all__ += ["matmul", "tensordot", "matrix_transpose", "vecdot"]
 
@@ -352,7 +352,16 @@ from ._manipulation_functions import (
     stack,
 )
 
-__all__ += ["concat", "expand_dims", "flip", "permute_dims", "reshape", "roll", "squeeze", "stack"]
+__all__ += [
+    "concat",
+    "expand_dims",
+    "flip",
+    "permute_dims",
+    "reshape",
+    "roll",
+    "squeeze",
+    "stack",
+]
 
 from ._searching_functions import argmax, argmin, nonzero, where
 

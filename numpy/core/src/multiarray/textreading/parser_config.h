@@ -49,26 +49,25 @@ typedef struct {
      */
     Py_UCS4 imaginary_unit;
 
-     /*
-      * Data should be encoded as `latin1` when using python converter
-      * (implementing `loadtxt` default Python 2 compatibility mode).
-      * The c byte converter is used when the user requested `dtype="S"`.
-      * In this case we go via `dtype=object`, however, loadtxt allows latin1
-      * while normal object to string casts only accept ASCII, so it ensures
-      * that that the object array already contains bytes and not strings.
-      */
-     bool python_byte_converters;
-     bool c_byte_converters;
-     /*
-      * Flag to store whether a warning was already given for an integer being
-      * parsed by first converting to a float.
-      */
-     bool gave_int_via_float_warning;
+    /*
+     * Data should be encoded as `latin1` when using python converter
+     * (implementing `loadtxt` default Python 2 compatibility mode).
+     * The c byte converter is used when the user requested `dtype="S"`.
+     * In this case we go via `dtype=object`, however, loadtxt allows latin1
+     * while normal object to string casts only accept ASCII, so it ensures
+     * that that the object array already contains bytes and not strings.
+     */
+    bool python_byte_converters;
+    bool c_byte_converters;
+    /*
+     * Flag to store whether a warning was already given for an integer being
+     * parsed by first converting to a float.
+     */
+    bool gave_int_via_float_warning;
 } parser_config;
-
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif  /* NUMPY_CORE_SRC_MULTIARRAY_TEXTREADING_PARSER_CONFIG_H_ */
+#endif /* NUMPY_CORE_SRC_MULTIARRAY_TEXTREADING_PARSER_CONFIG_H_ */

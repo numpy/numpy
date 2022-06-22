@@ -4,11 +4,12 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
-#include "npy_config.h"
 #include "numpy/arrayobject.h"
 
+#include "npy_config.h"
+
 #define NPY_NUMBER_MAX(a, b) ((a) > (b) ? (a) : (b))
-#define ARRAY_SIZE(a) (sizeof(a)/sizeof(a[0]))
+#define ARRAY_SIZE(a) (sizeof(a) / sizeof(a[0]))
 
 /*
  * Functions used to try to avoid/elide temporaries in python expressions
@@ -58,7 +59,7 @@
  * supported too by using the appropriate Windows APIs.
  */
 
-#if defined HAVE_BACKTRACE && defined HAVE_DLFCN_H && ! defined PYPY_VERSION
+#if defined HAVE_BACKTRACE && defined HAVE_DLFCN_H && !defined PYPY_VERSION
 /* 1 prints elided operations, 2 prints stacktraces */
 #define NPY_ELIDE_DEBUG 0
 #define NPY_MAX_STACKSIZE 10
@@ -67,8 +68,8 @@
 #define PYFRAMEEVAL_FUNC "_PyEval_EvalFrameDefault"
 /*
  * Heuristic size of the array in bytes at which backtrace overhead generation
- * becomes less than speed gained by in-place operations. Depends on stack depth
- * being checked.  Measurements with 10 stacks show it getting worthwhile
+ * becomes less than speed gained by in-place operations. Depends on stack
+ * depth being checked.  Measurements with 10 stacks show it getting worthwhile
  * around 100KiB but to be conservative put it higher around where the L2 cache
  * spills.
  */
@@ -90,7 +91,7 @@
  * measured this could be converted to a binary search
  */
 static int
-find_addr(void * addresses[], npy_intp naddr, void * addr)
+find_addr(void *addresses[], npy_intp naddr, void *addr)
 {
     npy_intp j;
     for (j = 0; j < naddr; j++) {
@@ -102,7 +103,7 @@ find_addr(void * addresses[], npy_intp naddr, void * addr)
 }
 
 static int
-check_callers(int * cannot)
+check_callers(int *cannot)
 {
     /*
      * get base addresses of multiarray and python, check if
@@ -122,14 +123,14 @@ check_callers(int * cannot)
      * inside these bounds it is part of that library so we don't need to call
      * dladdr on it (assuming linear memory)
      */
-    static void * pos_python_start;
-    static void * pos_python_end;
-    static void * pos_ma_start;
-    static void * pos_ma_end;
+    static void *pos_python_start;
+    static void *pos_python_end;
+    static void *pos_ma_start;
+    static void *pos_ma_end;
 
     /* known address storage to save dladdr calls */
-    static void * py_addr[64];
-    static void * pyeval_addr[64];
+    static void *py_addr[64];
+    static void *pyeval_addr[64];
     static npy_intp n_py_addr = 0;
     static npy_intp n_pyeval = 0;
 
@@ -240,7 +241,7 @@ check_callers(int * cannot)
                 break;
             }
             if (info.dli_sname &&
-                    strcmp(info.dli_sname, PYFRAMEEVAL_FUNC) == 0) {
+                strcmp(info.dli_sname, PYFRAMEEVAL_FUNC) == 0) {
                 if (n_pyeval < (npy_intp)ARRAY_SIZE(pyeval_addr)) {
                     /* store address to not have to dladdr it again */
                     pyeval_addr[n_pyeval++] = buffer[i];
@@ -283,16 +284,15 @@ can_elide_temp(PyObject *olhs, PyObject *orhs, int *cannot)
      */
     PyArrayObject *alhs = (PyArrayObject *)olhs;
     if (Py_REFCNT(olhs) != 1 || !PyArray_CheckExact(olhs) ||
-            !PyArray_ISNUMBER(alhs) ||
-            !PyArray_CHKFLAGS(alhs, NPY_ARRAY_OWNDATA) ||
-            !PyArray_ISWRITEABLE(alhs) ||
-            PyArray_CHKFLAGS(alhs, NPY_ARRAY_WRITEBACKIFCOPY) ||
-            PyArray_NBYTES(alhs) < NPY_MIN_ELIDE_BYTES) {
+        !PyArray_ISNUMBER(alhs) ||
+        !PyArray_CHKFLAGS(alhs, NPY_ARRAY_OWNDATA) ||
+        !PyArray_ISWRITEABLE(alhs) ||
+        PyArray_CHKFLAGS(alhs, NPY_ARRAY_WRITEBACKIFCOPY) ||
+        PyArray_NBYTES(alhs) < NPY_MIN_ELIDE_BYTES) {
         return 0;
     }
-    if (PyArray_CheckExact(orhs) ||
-        PyArray_CheckAnyScalar(orhs)) {
-        PyArrayObject * arhs;
+    if (PyArray_CheckExact(orhs) || PyArray_CheckAnyScalar(orhs)) {
+        PyArrayObject *arhs;
 
         /* create array from right hand side */
         Py_INCREF(orhs);
@@ -309,8 +309,8 @@ can_elide_temp(PyObject *olhs, PyObject *orhs, int *cannot)
               (PyArray_NDIM(arhs) == PyArray_NDIM(alhs) &&
                PyArray_CompareLists(PyArray_DIMS(alhs), PyArray_DIMS(arhs),
                                     PyArray_NDIM(arhs))))) {
-                Py_DECREF(arhs);
-                return 0;
+            Py_DECREF(arhs);
+            return 0;
         }
 
         /* must be safe to cast (checks values for scalar in rhs) */
@@ -329,9 +329,9 @@ can_elide_temp(PyObject *olhs, PyObject *orhs, int *cannot)
  * try eliding a binary op, if commutative is true also try swapped arguments
  */
 NPY_NO_EXPORT int
-try_binary_elide(PyObject * m1, PyObject * m2,
-                 PyObject * (inplace_op)(PyArrayObject * m1, PyObject * m2),
-                 PyObject ** res, int commutative)
+try_binary_elide(PyObject *m1, PyObject *m2,
+                 PyObject *(inplace_op)(PyArrayObject *m1, PyObject *m2),
+                 PyObject **res, int commutative)
 {
     /* set when no elision can be done independent of argument order */
     int cannot = 0;
@@ -357,14 +357,12 @@ try_binary_elide(PyObject * m1, PyObject * m2,
 
 /* try elide unary temporary */
 NPY_NO_EXPORT int
-can_elide_temp_unary(PyArrayObject * m1)
+can_elide_temp_unary(PyArrayObject *m1)
 {
     int cannot;
     if (Py_REFCNT(m1) != 1 || !PyArray_CheckExact(m1) ||
-            !PyArray_ISNUMBER(m1) ||
-            !PyArray_CHKFLAGS(m1, NPY_ARRAY_OWNDATA) ||
-            !PyArray_ISWRITEABLE(m1) ||
-            PyArray_NBYTES(m1) < NPY_MIN_ELIDE_BYTES) {
+        !PyArray_ISNUMBER(m1) || !PyArray_CHKFLAGS(m1, NPY_ARRAY_OWNDATA) ||
+        !PyArray_ISWRITEABLE(m1) || PyArray_NBYTES(m1) < NPY_MIN_ELIDE_BYTES) {
         return 0;
     }
     if (check_callers(&cannot)) {
@@ -379,15 +377,15 @@ can_elide_temp_unary(PyArrayObject * m1)
 }
 #else /* unsupported interpreter or missing backtrace */
 NPY_NO_EXPORT int
-can_elide_temp_unary(PyArrayObject * m1)
+can_elide_temp_unary(PyArrayObject *m1)
 {
     return 0;
 }
 
 NPY_NO_EXPORT int
-try_binary_elide(PyArrayObject * m1, PyObject * m2,
-                 PyObject * (inplace_op)(PyArrayObject * m1, PyObject * m2),
-                 PyObject ** res, int commutative)
+try_binary_elide(PyArrayObject *m1, PyObject *m2,
+                 PyObject *(inplace_op)(PyArrayObject *m1, PyObject *m2),
+                 PyObject **res, int commutative)
 {
     *res = NULL;
     return 0;

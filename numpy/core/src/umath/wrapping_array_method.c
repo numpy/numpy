@@ -26,41 +26,38 @@
 
 #include "numpy/ndarraytypes.h"
 
-#include "common.h"
 #include "array_method.h"
-#include "legacy_array_method.h"
-#include "dtypemeta.h"
+#include "common.h"
 #include "dispatching.h"
-
+#include "dtypemeta.h"
+#include "legacy_array_method.h"
 
 static NPY_CASTING
-wrapping_method_resolve_descriptors(
-        PyArrayMethodObject *self,
-        PyArray_DTypeMeta *dtypes[],
-        PyArray_Descr *given_descrs[],
-        PyArray_Descr *loop_descrs[],
-        npy_intp *view_offset)
+wrapping_method_resolve_descriptors(PyArrayMethodObject *self,
+                                    PyArray_DTypeMeta *dtypes[],
+                                    PyArray_Descr *given_descrs[],
+                                    PyArray_Descr *loop_descrs[],
+                                    npy_intp *view_offset)
 {
     int nin = self->nin, nout = self->nout, nargs = nin + nout;
     PyArray_Descr *orig_given_descrs[NPY_MAXARGS];
     PyArray_Descr *orig_loop_descrs[NPY_MAXARGS];
 
-    if (self->translate_given_descrs(
-            nin, nout, self->wrapped_dtypes,
-            given_descrs, orig_given_descrs) < 0) {
+    if (self->translate_given_descrs(nin, nout, self->wrapped_dtypes,
+                                     given_descrs, orig_given_descrs) < 0) {
         return -1;
     }
     NPY_CASTING casting = self->wrapped_meth->resolve_descriptors(
-            self->wrapped_meth, self->wrapped_dtypes,
-            orig_given_descrs, orig_loop_descrs, view_offset);
+            self->wrapped_meth, self->wrapped_dtypes, orig_given_descrs,
+            orig_loop_descrs, view_offset);
     for (int i = 0; i < nargs; i++) {
         Py_XDECREF(orig_given_descrs);
     }
     if (casting < 0) {
         return -1;
     }
-    int res = self->translate_loop_descrs(
-            nin, nout, dtypes, given_descrs, orig_loop_descrs, loop_descrs);
+    int res = self->translate_loop_descrs(nin, nout, dtypes, given_descrs,
+                                          orig_loop_descrs, loop_descrs);
     for (int i = 0; i < nargs; i++) {
         Py_DECREF(orig_given_descrs);
     }
@@ -69,7 +66,6 @@ wrapping_method_resolve_descriptors(
     }
     return casting;
 }
-
 
 typedef struct {
     NpyAuxData base;
@@ -80,11 +76,10 @@ typedef struct {
     PyArray_Descr *descriptors[NPY_MAXARGS];
 } wrapping_auxdata;
 
-
 #define WRAPPING_AUXDATA_FREELIST_SIZE 5
 static int wrapping_auxdata_freenum = 0;
-static wrapping_auxdata *wrapping_auxdata_freelist[WRAPPING_AUXDATA_FREELIST_SIZE] = {NULL};
-
+static wrapping_auxdata
+        *wrapping_auxdata_freelist[WRAPPING_AUXDATA_FREELIST_SIZE] = {NULL};
 
 static void
 wrapping_auxdata_free(wrapping_auxdata *wrapping_auxdata)
@@ -100,7 +95,6 @@ wrapping_auxdata_free(wrapping_auxdata *wrapping_auxdata)
         PyMem_Free(wrapping_auxdata);
     }
 }
-
 
 static wrapping_auxdata *
 get_wrapping_auxdata(void)
@@ -123,30 +117,28 @@ get_wrapping_auxdata(void)
     return res;
 }
 
-
 static int
 wrapping_method_strided_loop(PyArrayMethod_Context *NPY_UNUSED(context),
-        char *const data[], npy_intp const dimensions[],
-        npy_intp const strides[], wrapping_auxdata *auxdata)
+                             char *const data[], npy_intp const dimensions[],
+                             npy_intp const strides[],
+                             wrapping_auxdata *auxdata)
 {
     /*
      * If more things get stored on the context, it could be possible that
      * we would have to copy it here.  But currently, we do not.
      */
-    return auxdata->orig_loop(
-            &auxdata->orig_context, data, dimensions, strides,
-            auxdata->orig_auxdata);
+    return auxdata->orig_loop(&auxdata->orig_context, data, dimensions,
+                              strides, auxdata->orig_auxdata);
 }
 
-
 static int
-wrapping_method_get_loop(
-        PyArrayMethod_Context *context,
-        int aligned, int move_references, const npy_intp *strides,
-        PyArrayMethod_StridedLoop **out_loop, NpyAuxData **out_transferdata,
-        NPY_ARRAYMETHOD_FLAGS *flags)
+wrapping_method_get_loop(PyArrayMethod_Context *context, int aligned,
+                         int move_references, const npy_intp *strides,
+                         PyArrayMethod_StridedLoop **out_loop,
+                         NpyAuxData **out_transferdata,
+                         NPY_ARRAYMETHOD_FLAGS *flags)
 {
-    assert(move_references == 0);  /* only used internally for "decref" funcs */
+    assert(move_references == 0); /* only used internally for "decref" funcs */
     int nin = context->method->nin, nout = context->method->nout;
 
     wrapping_auxdata *auxdata = get_wrapping_auxdata();
@@ -158,15 +150,14 @@ wrapping_method_get_loop(
     auxdata->orig_context.caller = context->caller;
 
     if (context->method->translate_given_descrs(
-            nin, nout, context->method->wrapped_dtypes,
-            context->descriptors, auxdata->orig_context.descriptors) < 0) {
+                nin, nout, context->method->wrapped_dtypes,
+                context->descriptors, auxdata->orig_context.descriptors) < 0) {
         NPY_AUXDATA_FREE((NpyAuxData *)auxdata);
         return -1;
     }
     if (context->method->wrapped_meth->get_strided_loop(
-            &auxdata->orig_context, aligned, 0, strides,
-            &auxdata->orig_loop, &auxdata->orig_auxdata,
-            flags) < 0) {
+                &auxdata->orig_context, aligned, 0, strides,
+                &auxdata->orig_loop, &auxdata->orig_auxdata, flags) < 0) {
         NPY_AUXDATA_FREE((NpyAuxData *)auxdata);
         return -1;
     }
@@ -175,7 +166,6 @@ wrapping_method_get_loop(
     *out_transferdata = (NpyAuxData *)auxdata;
     return 0;
 }
-
 
 /**
  * Allows creating of a fairly lightweight wrapper around an existing ufunc
@@ -190,10 +180,10 @@ wrapping_method_get_loop(
  * @return 0 on success -1 on failure
  */
 NPY_NO_EXPORT int
-PyUFunc_AddWrappingLoop(PyObject *ufunc_obj,
-        PyArray_DTypeMeta *new_dtypes[], PyArray_DTypeMeta *wrapped_dtypes[],
-        translate_given_descrs_func *translate_given_descrs,
-        translate_loop_descrs_func *translate_loop_descrs)
+PyUFunc_AddWrappingLoop(PyObject *ufunc_obj, PyArray_DTypeMeta *new_dtypes[],
+                        PyArray_DTypeMeta *wrapped_dtypes[],
+                        translate_given_descrs_func *translate_given_descrs,
+                        translate_loop_descrs_func *translate_loop_descrs)
 {
     int res = -1;
     PyUFuncObject *ufunc = (PyUFuncObject *)ufunc_obj;
@@ -203,12 +193,12 @@ PyUFunc_AddWrappingLoop(PyObject *ufunc_obj,
 
     if (!PyObject_TypeCheck(ufunc_obj, &PyUFunc_Type)) {
         PyErr_SetString(PyExc_TypeError,
-                "ufunc object passed is not a ufunc!");
+                        "ufunc object passed is not a ufunc!");
         return -1;
     }
 
-    wrapped_dt_tuple = PyArray_TupleFromItems(
-            ufunc->nargs, (PyObject **)wrapped_dtypes, 1);
+    wrapped_dt_tuple = PyArray_TupleFromItems(ufunc->nargs,
+                                              (PyObject **)wrapped_dtypes, 1);
     if (wrapped_dt_tuple == NULL) {
         goto finish;
     }
@@ -219,7 +209,8 @@ PyUFunc_AddWrappingLoop(PyObject *ufunc_obj,
     for (Py_ssize_t i = 0; i < length; i++) {
         PyObject *item = PyList_GetItem(loops, i);
         PyObject *cur_DType_tuple = PyTuple_GetItem(item, 0);
-        int cmp = PyObject_RichCompareBool(cur_DType_tuple, wrapped_dt_tuple, Py_EQ);
+        int cmp = PyObject_RichCompareBool(cur_DType_tuple, wrapped_dt_tuple,
+                                           Py_EQ);
         if (cmp < 0) {
             goto finish;
         }
@@ -229,31 +220,30 @@ PyUFunc_AddWrappingLoop(PyObject *ufunc_obj,
         wrapped_meth = (PyArrayMethodObject *)PyTuple_GET_ITEM(item, 1);
         if (!PyObject_TypeCheck(wrapped_meth, &PyArrayMethod_Type)) {
             PyErr_SetString(PyExc_TypeError,
-                    "Matching loop was not an ArrayMethod.");
+                            "Matching loop was not an ArrayMethod.");
             goto finish;
         }
         break;
     }
     if (wrapped_meth == NULL) {
         PyErr_SetString(PyExc_TypeError,
-                "Did not find the to-be-wrapped loop in the ufunc.");
+                        "Did not find the to-be-wrapped loop in the ufunc.");
         goto finish;
     }
 
-    PyType_Slot slots[] = {
-        {NPY_METH_resolve_descriptors, &wrapping_method_resolve_descriptors},
-        {NPY_METH_get_loop, &wrapping_method_get_loop},
-        {0, NULL}
-    };
+    PyType_Slot slots[] = {{NPY_METH_resolve_descriptors,
+                            &wrapping_method_resolve_descriptors},
+                           {NPY_METH_get_loop, &wrapping_method_get_loop},
+                           {0, NULL}};
 
     PyArrayMethod_Spec spec = {
-        .name = "wrapped-method",
-        .nin = wrapped_meth->nin,
-        .nout = wrapped_meth->nout,
-        .casting = wrapped_meth->casting,
-        .flags = wrapped_meth->flags,
-        .dtypes = new_dtypes,
-        .slots = slots,
+            .name = "wrapped-method",
+            .nin = wrapped_meth->nin,
+            .nout = wrapped_meth->nout,
+            .casting = wrapped_meth->casting,
+            .flags = wrapped_meth->flags,
+            .dtypes = new_dtypes,
+            .slots = slots,
     };
     PyBoundArrayMethodObject *bmeth = PyArrayMethod_FromSpec_int(&spec, 1);
     if (bmeth == NULL) {
@@ -265,7 +255,8 @@ PyUFunc_AddWrappingLoop(PyObject *ufunc_obj,
     Py_SETREF(bmeth, NULL);
 
     /* Finalize the "wrapped" part of the new ArrayMethod */
-    meth->wrapped_dtypes = PyMem_Malloc(ufunc->nargs * sizeof(PyArray_DTypeMeta *));
+    meth->wrapped_dtypes =
+            PyMem_Malloc(ufunc->nargs * sizeof(PyArray_DTypeMeta *));
     if (meth->wrapped_dtypes == NULL) {
         goto finish;
     }
@@ -279,8 +270,8 @@ PyUFunc_AddWrappingLoop(PyObject *ufunc_obj,
         meth->wrapped_dtypes[i] = wrapped_dtypes[i];
     }
 
-    new_dt_tuple = PyArray_TupleFromItems(
-            ufunc->nargs, (PyObject **)new_dtypes, 1);
+    new_dt_tuple =
+            PyArray_TupleFromItems(ufunc->nargs, (PyObject **)new_dtypes, 1);
     if (new_dt_tuple == NULL) {
         goto finish;
     }
@@ -293,7 +284,7 @@ PyUFunc_AddWrappingLoop(PyObject *ufunc_obj,
     res = PyUFunc_AddLoop(ufunc, info, 0);
     Py_DECREF(info);
 
-  finish:
+finish:
     Py_XDECREF(wrapped_dt_tuple);
     Py_XDECREF(new_dt_tuple);
     Py_XDECREF(meth);

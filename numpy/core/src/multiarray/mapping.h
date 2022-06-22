@@ -3,7 +3,6 @@
 
 extern NPY_NO_EXPORT PyMappingMethods array_as_mapping;
 
-
 /*
  * Struct into which indices are parsed.
  * I.e. integer ones should only be parsed once, slices and arrays
@@ -24,7 +23,6 @@ typedef struct {
     /* kind of index, see constants in mapping.c */
     int type;
 } npy_index_info;
-
 
 NPY_NO_EXPORT Py_ssize_t
 array_length(PyArrayObject *self);
@@ -61,13 +59,13 @@ NPY_NO_EXPORT int
 PyArray_MapIterCheckIndices(PyArrayMapIterObject *mit);
 
 NPY_NO_EXPORT void
-PyArray_MapIterSwapAxes(PyArrayMapIterObject *mit, PyArrayObject **ret, int getmap);
+PyArray_MapIterSwapAxes(PyArrayMapIterObject *mit, PyArrayObject **ret,
+                        int getmap);
 
-NPY_NO_EXPORT PyObject*
-PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
-                   int ndim, int fancy_ndim,
-                   PyArrayObject *arr, PyArrayObject *subspace,
-                   npy_uint32 subspace_iter_flags, npy_uint32 subspace_flags,
-                   npy_uint32 extra_op_flags, PyArrayObject *extra_op,
-                   PyArray_Descr *extra_op_dtype);
-#endif  /* NUMPY_CORE_SRC_MULTIARRAY_MAPPING_H_ */
+NPY_NO_EXPORT PyObject *
+PyArray_MapIterNew(npy_index_info *indices, int index_num, int index_type,
+                   int ndim, int fancy_ndim, PyArrayObject *arr,
+                   PyArrayObject *subspace, npy_uint32 subspace_iter_flags,
+                   npy_uint32 subspace_flags, npy_uint32 extra_op_flags,
+                   PyArrayObject *extra_op, PyArray_Descr *extra_op_dtype);
+#endif /* NUMPY_CORE_SRC_MULTIARRAY_MAPPING_H_ */

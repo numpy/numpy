@@ -1,35 +1,57 @@
 """ Test functions for linalg module using the matrix class."""
 import numpy as np
-
 from numpy.linalg.tests.test_linalg import (
-    LinalgCase, apply_tag, TestQR as _TestQR, LinalgTestCase,
-    _TestNorm2D, _TestNormDoubleBase, _TestNormSingleBase, _TestNormInt64Base,
-    SolveCases, InvCases, EigvalsCases, EigCases, SVDCases, CondCases,
-    PinvCases, DetCases, LstsqCases)
-
+    CondCases,
+    DetCases,
+    EigCases,
+    EigvalsCases,
+    InvCases,
+    LinalgCase,
+    LinalgTestCase,
+    LstsqCases,
+    PinvCases,
+    SolveCases,
+    SVDCases,
+)
+from numpy.linalg.tests.test_linalg import TestQR as _TestQR
+from numpy.linalg.tests.test_linalg import (
+    _TestNorm2D,
+    _TestNormDoubleBase,
+    _TestNormInt64Base,
+    _TestNormSingleBase,
+    apply_tag,
+)
 
 CASES = []
 
 # square test cases
-CASES += apply_tag('square', [
-    LinalgCase("0x0_matrix",
-               np.empty((0, 0), dtype=np.double).view(np.matrix),
-               np.empty((0, 1), dtype=np.double).view(np.matrix),
-               tags={'size-0'}),
-    LinalgCase("matrix_b_only",
-               np.array([[1., 2.], [3., 4.]]),
-               np.matrix([2., 1.]).T),
-    LinalgCase("matrix_a_and_b",
-               np.matrix([[1., 2.], [3., 4.]]),
-               np.matrix([2., 1.]).T),
-])
+CASES += apply_tag(
+    "square",
+    [
+        LinalgCase(
+            "0x0_matrix",
+            np.empty((0, 0), dtype=np.double).view(np.matrix),
+            np.empty((0, 1), dtype=np.double).view(np.matrix),
+            tags={"size-0"},
+        ),
+        LinalgCase(
+            "matrix_b_only", np.array([[1.0, 2.0], [3.0, 4.0]]), np.matrix([2.0, 1.0]).T
+        ),
+        LinalgCase(
+            "matrix_a_and_b",
+            np.matrix([[1.0, 2.0], [3.0, 4.0]]),
+            np.matrix([2.0, 1.0]).T,
+        ),
+    ],
+)
 
 # hermitian test-cases
-CASES += apply_tag('hermitian', [
-    LinalgCase("hmatrix_a_and_b",
-               np.matrix([[1., 2.], [2., 1.]]),
-               None),
-])
+CASES += apply_tag(
+    "hermitian",
+    [
+        LinalgCase("hmatrix_a_and_b", np.matrix([[1.0, 2.0], [2.0, 1.0]]), None),
+    ],
+)
 # No need to make generalized or strided cases for matrices.
 
 

@@ -2,13 +2,7 @@
 
 from __future__ import annotations
 
-from typing import (
-    Any,
-    Iterator,
-    overload,
-    TypeVar,
-    Protocol,
-)
+from typing import Any, Iterator, Protocol, TypeVar, overload
 
 __all__ = ["_NestedSequence"]
 
@@ -61,9 +55,12 @@ class _NestedSequence(Protocol[_T_co]):
         raise NotImplementedError
 
     @overload
-    def __getitem__(self, index: int, /) -> _T_co | _NestedSequence[_T_co]: ...
+    def __getitem__(self, index: int, /) -> _T_co | _NestedSequence[_T_co]:
+        ...
+
     @overload
-    def __getitem__(self, index: slice, /) -> _NestedSequence[_T_co]: ...
+    def __getitem__(self, index: slice, /) -> _NestedSequence[_T_co]:
+        ...
 
     def __getitem__(self, index, /):
         """Implement ``self[x]``."""

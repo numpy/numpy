@@ -1,4 +1,5 @@
 #include "Python.h"
+
 #include "dlpack/dlpack.h"
 
 #ifndef NPY_DLPACK_H
@@ -17,10 +18,8 @@ PyObject *
 array_dlpack(PyArrayObject *self, PyObject *const *args, Py_ssize_t len_args,
              PyObject *kwnames);
 
-
 PyObject *
 array_dlpack_device(PyArrayObject *self, PyObject *NPY_UNUSED(args));
-
 
 NPY_NO_EXPORT PyObject *
 from_dlpack(PyObject *NPY_UNUSED(self), PyObject *obj);

@@ -4,13 +4,12 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
-#include <numpy/arrayobject.h>
-
 #include "npy_config.h"
-
 #include "npy_pycompat.h"
 
 #include "hashdescr.h"
+
+#include <numpy/arrayobject.h>
 
 /*
  * How does this work ? The hash is computed from a list which contains all the
@@ -28,17 +27,22 @@
  *
  */
 
-static int _is_array_descr_builtin(PyArray_Descr* descr);
-static int _array_descr_walk(PyArray_Descr* descr, PyObject *l);
-static int _array_descr_walk_fields(PyObject *names, PyObject* fields, PyObject* l);
-static int _array_descr_builtin(PyArray_Descr* descr, PyObject *l);
+static int
+_is_array_descr_builtin(PyArray_Descr *descr);
+static int
+_array_descr_walk(PyArray_Descr *descr, PyObject *l);
+static int
+_array_descr_walk_fields(PyObject *names, PyObject *fields, PyObject *l);
+static int
+_array_descr_builtin(PyArray_Descr *descr, PyObject *l);
 
 /*
  * normalize endian character: always return 'I', '<' or '>'
  */
-static char _normalize_byteorder(char byteorder)
+static char
+_normalize_byteorder(char byteorder)
 {
-    switch(byteorder) {
+    switch (byteorder) {
         case '=':
             if (PyArray_GetEndianness() == NPY_CPU_BIG) {
                 return '>';
@@ -54,7 +58,8 @@ static char _normalize_byteorder(char byteorder)
 /*
  * Return true if descr is a builtin type
  */
-static int _is_array_descr_builtin(PyArray_Descr* descr)
+static int
+_is_array_descr_builtin(PyArray_Descr *descr)
 {
     if (descr->fields != NULL && descr->fields != Py_None) {
         return 0;
@@ -68,7 +73,8 @@ static int _is_array_descr_builtin(PyArray_Descr* descr)
 /*
  * Add to l all the items which uniquely define a builtin type
  */
-static int _array_descr_builtin(PyArray_Descr* descr, PyObject *l)
+static int
+_array_descr_builtin(PyArray_Descr *descr, PyObject *l)
 {
     Py_ssize_t i;
     PyObject *t, *item;
@@ -78,14 +84,14 @@ static int _array_descr_builtin(PyArray_Descr* descr, PyObject *l)
      * For builtin type, hash relies on : kind + byteorder + flags +
      * type_num + elsize + alignment
      */
-    t = Py_BuildValue("(cccii)", descr->kind, nbyteorder,
-            descr->flags, descr->elsize, descr->alignment);
+    t = Py_BuildValue("(cccii)", descr->kind, nbyteorder, descr->flags,
+                      descr->elsize, descr->alignment);
 
-    for(i = 0; i < PyTuple_Size(t); ++i) {
+    for (i = 0; i < PyTuple_Size(t); ++i) {
         item = PyTuple_GetItem(t, i);
         if (item == NULL) {
             PyErr_SetString(PyExc_SystemError,
-                    "(Hash) Error while computing builting hash");
+                            "(Hash) Error while computing builting hash");
             goto clean_t;
         }
         PyList_Append(l, item);
@@ -105,20 +111,19 @@ clean_t:
  *
  * Return 0 on success
  */
-static int _array_descr_walk_fields(PyObject *names, PyObject* fields, PyObject* l)
+static int
+_array_descr_walk_fields(PyObject *names, PyObject *fields, PyObject *l)
 {
     PyObject *key, *value, *foffset, *fdescr, *ftitle;
     Py_ssize_t pos = 0;
     int st;
 
     if (!PyTuple_Check(names)) {
-        PyErr_SetString(PyExc_SystemError,
-                "(Hash) names is not a tuple ???");
+        PyErr_SetString(PyExc_SystemError, "(Hash) names is not a tuple ???");
         return -1;
     }
     if (!PyDict_Check(fields)) {
-        PyErr_SetString(PyExc_SystemError,
-                "(Hash) fields is not a dict ???");
+        PyErr_SetString(PyExc_SystemError, "(Hash) fields is not a dict ???");
         return -1;
     }
 
@@ -131,22 +136,22 @@ static int _array_descr_walk_fields(PyObject *names, PyObject* fields, PyObject*
         /* XXX: are those checks necessary ? */
         if (value == NULL) {
             PyErr_SetString(PyExc_SystemError,
-                    "(Hash) names and fields inconsistent ???");
+                            "(Hash) names and fields inconsistent ???");
             return -1;
         }
         if (!PyUnicode_Check(key)) {
             PyErr_SetString(PyExc_SystemError,
-                    "(Hash) key of dtype dict not a string ???");
+                            "(Hash) key of dtype dict not a string ???");
             return -1;
         }
         if (!PyTuple_Check(value)) {
             PyErr_SetString(PyExc_SystemError,
-                    "(Hash) value of dtype dict not a dtype ???");
+                            "(Hash) value of dtype dict not a dtype ???");
             return -1;
         }
         if (PyTuple_GET_SIZE(value) < 2) {
             PyErr_SetString(PyExc_SystemError,
-                    "(Hash) Less than 2 items in dtype dict ???");
+                            "(Hash) Less than 2 items in dtype dict ???");
             return -1;
         }
         PyList_Append(l, key);
@@ -154,12 +159,13 @@ static int _array_descr_walk_fields(PyObject *names, PyObject* fields, PyObject*
         fdescr = PyTuple_GET_ITEM(value, 0);
         if (!PyArray_DescrCheck(fdescr)) {
             PyErr_SetString(PyExc_SystemError,
-                    "(Hash) First item in compound dtype tuple not a descr ???");
+                            "(Hash) First item in compound dtype tuple not a "
+                            "descr ???");
             return -1;
         }
         else {
             Py_INCREF(fdescr);
-            st = _array_descr_walk((PyArray_Descr*)fdescr, l);
+            st = _array_descr_walk((PyArray_Descr *)fdescr, l);
             Py_DECREF(fdescr);
             if (st) {
                 return -1;
@@ -169,7 +175,8 @@ static int _array_descr_walk_fields(PyObject *names, PyObject* fields, PyObject*
         foffset = PyTuple_GET_ITEM(value, 1);
         if (!PyLong_Check(foffset)) {
             PyErr_SetString(PyExc_SystemError,
-                    "(Hash) Second item in compound dtype tuple not an int ???");
+                            "(Hash) Second item in compound dtype tuple not "
+                            "an int ???");
             return -1;
         }
         else {
@@ -190,7 +197,8 @@ static int _array_descr_walk_fields(PyObject *names, PyObject* fields, PyObject*
  *
  * Return 0 on success
  */
-static int _array_descr_walk_subarray(PyArray_ArrayDescr* adescr, PyObject *l)
+static int
+_array_descr_walk_subarray(PyArray_ArrayDescr *adescr, PyObject *l)
 {
     PyObject *item;
     Py_ssize_t i;
@@ -200,11 +208,12 @@ static int _array_descr_walk_subarray(PyArray_ArrayDescr* adescr, PyObject *l)
      * Add shape and descr itself to the list of object to hash
      */
     if (PyTuple_Check(adescr->shape)) {
-        for(i = 0; i < PyTuple_Size(adescr->shape); ++i) {
+        for (i = 0; i < PyTuple_Size(adescr->shape); ++i) {
             item = PyTuple_GetItem(adescr->shape, i);
             if (item == NULL) {
                 PyErr_SetString(PyExc_SystemError,
-                        "(Hash) Error while getting shape item of subarray dtype ???");
+                                "(Hash) Error while getting shape item of "
+                                "subarray dtype ???");
                 return -1;
             }
             PyList_Append(l, item);
@@ -214,7 +223,8 @@ static int _array_descr_walk_subarray(PyArray_ArrayDescr* adescr, PyObject *l)
         PyList_Append(l, adescr->shape);
     }
     else {
-        PyErr_SetString(PyExc_SystemError,
+        PyErr_SetString(
+                PyExc_SystemError,
                 "(Hash) Shape of subarray dtype neither a tuple or int ???");
         return -1;
     }
@@ -229,7 +239,8 @@ static int _array_descr_walk_subarray(PyArray_ArrayDescr* adescr, PyObject *l)
 /*
  * 'Root' function to walk into a dtype. May be called recursively
  */
-static int _array_descr_walk(PyArray_Descr* descr, PyObject *l)
+static int
+_array_descr_walk(PyArray_Descr *descr, PyObject *l)
 {
     int st;
 
@@ -237,13 +248,13 @@ static int _array_descr_walk(PyArray_Descr* descr, PyObject *l)
         return _array_descr_builtin(descr, l);
     }
     else {
-        if(descr->fields != NULL && descr->fields != Py_None) {
+        if (descr->fields != NULL && descr->fields != Py_None) {
             st = _array_descr_walk_fields(descr->names, descr->fields, l);
             if (st) {
                 return -1;
             }
         }
-        if(PyDataType_HASSUBARRAY(descr)) {
+        if (PyDataType_HASSUBARRAY(descr)) {
             st = _array_descr_walk_subarray(descr->subarray, l);
             if (st) {
                 return -1;
@@ -257,7 +268,8 @@ static int _array_descr_walk(PyArray_Descr* descr, PyObject *l)
 /*
  * Return 0 if successful
  */
-static int _PyArray_DescrHashImp(PyArray_Descr *descr, npy_hash_t *hash)
+static int
+_PyArray_DescrHashImp(PyArray_Descr *descr, npy_hash_t *hash)
 {
     PyObject *l, *tl;
     int st;
@@ -297,17 +309,18 @@ static int _PyArray_DescrHashImp(PyArray_Descr *descr, npy_hash_t *hash)
 }
 
 NPY_NO_EXPORT npy_hash_t
-PyArray_DescrHash(PyObject* odescr)
+PyArray_DescrHash(PyObject *odescr)
 {
     PyArray_Descr *descr;
     int st;
 
     if (!PyArray_DescrCheck(odescr)) {
-        PyErr_SetString(PyExc_ValueError,
+        PyErr_SetString(
+                PyExc_ValueError,
                 "PyArray_DescrHash argument must be a type descriptor");
         return -1;
     }
-    descr = (PyArray_Descr*)odescr;
+    descr = (PyArray_Descr *)odescr;
 
     if (descr->hash == -1) {
         st = _PyArray_DescrHashImp(descr, &descr->hash);

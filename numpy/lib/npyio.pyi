@@ -1,43 +1,19 @@
 import os
 import sys
-import zipfile
 import types
+import zipfile
+from collections.abc import Callable, Collection, Iterable, Iterator, Mapping, Sequence
 from re import Pattern
-from collections.abc import Collection, Mapping, Iterator, Sequence, Callable, Iterable
-from typing import (
-    Literal as L,
-    Any,
-    TypeVar,
-    Generic,
-    IO,
-    overload,
-    Protocol,
-)
+from typing import IO, Any, Generic
+from typing import Literal as L
+from typing import Protocol, TypeVar, overload
 
-from numpy import (
-    DataSource as DataSource,
-    ndarray,
-    recarray,
-    dtype,
-    generic,
-    float64,
-    void,
-    record,
-)
-
+from numpy import DataSource as DataSource
+from numpy import dtype, float64, generic, ndarray, recarray, record, void
+from numpy._typing import ArrayLike, DTypeLike, NDArray, _DTypeLike, _SupportsArrayFunc
+from numpy.core.multiarray import packbits as packbits
+from numpy.core.multiarray import unpackbits as unpackbits
 from numpy.ma.mrecords import MaskedRecords
-from numpy._typing import (
-    ArrayLike,
-    DTypeLike,
-    NDArray,
-    _DTypeLike,
-    _SupportsArrayFunc,
-)
-
-from numpy.core.multiarray import (
-    packbits as packbits,
-    unpackbits as unpackbits,
-)
 
 _T = TypeVar("_T")
 _T_contra = TypeVar("_T_contra", contravariant=True)
@@ -107,20 +83,17 @@ def load(
     fix_imports: bool = ...,
     encoding: L["ASCII", "latin1", "bytes"] = ...,
 ) -> Any: ...
-
 def save(
     file: str | os.PathLike[str] | _SupportsWrite[bytes],
     arr: ArrayLike,
     allow_pickle: bool = ...,
     fix_imports: bool = ...,
 ) -> None: ...
-
 def savez(
     file: str | os.PathLike[str] | _SupportsWrite[bytes],
     *args: ArrayLike,
     **kwds: ArrayLike,
 ) -> None: ...
-
 def savez_compressed(
     file: str | os.PathLike[str] | _SupportsWrite[bytes],
     *args: ArrayLike,
@@ -144,7 +117,7 @@ def loadtxt(
     max_rows: None | int = ...,
     *,
     quotechar: None | str = ...,
-    like: None | _SupportsArrayFunc = ...
+    like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[float64]: ...
 @overload
 def loadtxt(
@@ -161,7 +134,7 @@ def loadtxt(
     max_rows: None | int = ...,
     *,
     quotechar: None | str = ...,
-    like: None | _SupportsArrayFunc = ...
+    like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def loadtxt(
@@ -178,9 +151,8 @@ def loadtxt(
     max_rows: None | int = ...,
     *,
     quotechar: None | str = ...,
-    like: None | _SupportsArrayFunc = ...
+    like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
-
 def savetxt(
     fname: str | os.PathLike[str] | _SupportsWrite[str] | _SupportsWrite[bytes],
     X: ArrayLike,
@@ -192,22 +164,20 @@ def savetxt(
     comments: str = ...,
     encoding: None | str = ...,
 ) -> None: ...
-
 @overload
 def fromregex(
     file: str | os.PathLike[str] | _SupportsRead[str] | _SupportsRead[bytes],
     regexp: str | bytes | Pattern[Any],
     dtype: _DTypeLike[_SCT],
-    encoding: None | str = ...
+    encoding: None | str = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def fromregex(
     file: str | os.PathLike[str] | _SupportsRead[str] | _SupportsRead[bytes],
     regexp: str | bytes | Pattern[Any],
     dtype: DTypeLike,
-    encoding: None | str = ...
+    encoding: None | str = ...,
 ) -> NDArray[Any]: ...
-
 @overload
 def genfromtxt(
     fname: str | os.PathLike[str] | Iterable[str] | Iterable[bytes],
@@ -225,7 +195,7 @@ def genfromtxt(
     deletechars: str = ...,
     replace_space: str = ...,
     autostrip: bool = ...,
-    case_sensitive: bool | L['upper', 'lower'] = ...,
+    case_sensitive: bool | L["upper", "lower"] = ...,
     defaultfmt: str = ...,
     unpack: None | bool = ...,
     usemask: bool = ...,
@@ -254,7 +224,7 @@ def genfromtxt(
     deletechars: str = ...,
     replace_space: str = ...,
     autostrip: bool = ...,
-    case_sensitive: bool | L['upper', 'lower'] = ...,
+    case_sensitive: bool | L["upper", "lower"] = ...,
     defaultfmt: str = ...,
     unpack: None | bool = ...,
     usemask: bool = ...,
@@ -283,7 +253,7 @@ def genfromtxt(
     deletechars: str = ...,
     replace_space: str = ...,
     autostrip: bool = ...,
-    case_sensitive: bool | L['upper', 'lower'] = ...,
+    case_sensitive: bool | L["upper", "lower"] = ...,
     defaultfmt: str = ...,
     unpack: None | bool = ...,
     usemask: bool = ...,
@@ -295,7 +265,6 @@ def genfromtxt(
     ndmin: L[0, 1, 2] = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
-
 @overload
 def recfromtxt(
     fname: str | os.PathLike[str] | Iterable[str] | Iterable[bytes],
@@ -310,7 +279,6 @@ def recfromtxt(
     usemask: L[True],
     **kwargs: Any,
 ) -> MaskedRecords[Any, dtype[void]]: ...
-
 @overload
 def recfromcsv(
     fname: str | os.PathLike[str] | Iterable[str] | Iterable[bytes],

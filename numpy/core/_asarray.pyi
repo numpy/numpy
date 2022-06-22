@@ -1,5 +1,5 @@
 from collections.abc import Iterable
-from typing import TypeVar, Union, overload, Literal
+from typing import Literal, TypeVar, Union, overload
 
 from numpy import ndarray
 from numpy._typing import DTypeLike, _SupportsArrayFunc
@@ -7,11 +7,18 @@ from numpy._typing import DTypeLike, _SupportsArrayFunc
 _ArrayType = TypeVar("_ArrayType", bound=ndarray)
 
 _Requirements = Literal[
-    "C", "C_CONTIGUOUS", "CONTIGUOUS",
-    "F", "F_CONTIGUOUS", "FORTRAN",
-    "A", "ALIGNED",
-    "W", "WRITEABLE",
-    "O", "OWNDATA"
+    "C",
+    "C_CONTIGUOUS",
+    "CONTIGUOUS",
+    "F",
+    "F_CONTIGUOUS",
+    "FORTRAN",
+    "A",
+    "ALIGNED",
+    "W",
+    "WRITEABLE",
+    "O",
+    "OWNDATA",
 ]
 _E = Literal["E", "ENSUREARRAY"]
 _RequirementsWithE = Union[_Requirements, _E]

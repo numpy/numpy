@@ -30,25 +30,15 @@ np.swapaxes(A, 1, [0])  # E: No overload variant
 np.transpose(A, axes=1.0)  # E: No overload variant
 
 np.partition(a, None)  # E: No overload variant
-np.partition(  # E: No overload variant
-    a, 0, axis="bob"
-)
-np.partition(  # E: No overload variant
-    A, 0, kind="bob"
-)
+np.partition(a, 0, axis="bob")  # E: No overload variant
+np.partition(A, 0, kind="bob")  # E: No overload variant
 np.partition(
     A, 0, order=range(5)  # E: Argument "order" to "partition" has incompatible type
 )
 
-np.argpartition(
-    a, None  # E: incompatible type
-)
-np.argpartition(
-    a, 0, axis="bob"  # E: incompatible type
-)
-np.argpartition(
-    A, 0, kind="bob"  # E: incompatible type
-)
+np.argpartition(a, None)  # E: incompatible type
+np.argpartition(a, 0, axis="bob")  # E: incompatible type
+np.argpartition(A, 0, kind="bob")  # E: incompatible type
 np.argpartition(
     A, 0, order=range(5)  # E: Argument "order" to "argpartition" has incompatible type
 )
@@ -88,9 +78,7 @@ np.trace(A, axis2=[])  # E: No overload variant
 
 np.ravel(a, order="bob")  # E: No overload variant
 
-np.compress(  # E: No overload variant
-    [True], A, axis=1.0
-)
+np.compress([True], A, axis=1.0)  # E: No overload variant
 
 np.clip(a, 1, 2, out=1)  # E: No overload variant of "clip" matches argument type
 
@@ -150,12 +138,12 @@ np.mean(AR_U)  # E: incompatible type
 
 np.std(a, axis=1.0)  # E: No overload variant
 np.std(a, out=False)  # E: No overload variant
-np.std(a, ddof='test')  # E: No overload variant
+np.std(a, ddof="test")  # E: No overload variant
 np.std(a, keepdims=1.0)  # E: No overload variant
 np.std(AR_U)  # E: incompatible type
 
 np.var(a, axis=1.0)  # E: No overload variant
 np.var(a, out=False)  # E: No overload variant
-np.var(a, ddof='test')  # E: No overload variant
+np.var(a, ddof="test")  # E: No overload variant
 np.var(a, keepdims=1.0)  # E: No overload variant
 np.var(AR_U)  # E: incompatible type

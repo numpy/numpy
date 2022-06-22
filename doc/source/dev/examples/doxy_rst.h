@@ -12,4 +12,5 @@
  *   }
  * @endrst
  */
-void doxy_reST_example(void);
+void
+doxy_reST_example(void);

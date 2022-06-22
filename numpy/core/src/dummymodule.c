@@ -12,25 +12,22 @@
 
 #include "npy_pycompat.h"
 
-static struct PyMethodDef methods[] = {
-    {NULL, NULL, 0, NULL}
-};
+static struct PyMethodDef methods[] = {{NULL, NULL, 0, NULL}};
 
-
-static struct PyModuleDef moduledef = {
-        PyModuleDef_HEAD_INIT,
-        "dummy",
-        NULL,
-        -1,
-        methods,
-        NULL,
-        NULL,
-        NULL,
-        NULL
-};
+static struct PyModuleDef moduledef = {PyModuleDef_HEAD_INIT,
+                                       "dummy",
+                                       NULL,
+                                       -1,
+                                       methods,
+                                       NULL,
+                                       NULL,
+                                       NULL,
+                                       NULL};
 
 /* Initialization function for the module */
-PyMODINIT_FUNC PyInit__dummy(void) {
+PyMODINIT_FUNC
+PyInit__dummy(void)
+{
     PyObject *m;
     m = PyModule_Create(&moduledef);
     if (!m) {

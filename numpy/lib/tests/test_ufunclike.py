@@ -2,12 +2,15 @@ import numpy as np
 import numpy.core as nx
 import numpy.lib.ufunclike as ufl
 from numpy.testing import (
-    assert_, assert_equal, assert_array_equal, assert_warns, assert_raises
+    assert_,
+    assert_array_equal,
+    assert_equal,
+    assert_raises,
+    assert_warns,
 )
 
 
 class TestUfunclike:
-
     def test_isposinf(self):
         a = nx.array([nx.inf, -nx.inf, nx.nan, 0.0, 3.0, -3.0])
         out = nx.zeros(a.shape, bool)
@@ -41,7 +44,7 @@ class TestUfunclike:
     def test_fix(self):
         a = nx.array([[1.0, 1.1, 1.5, 1.8], [-1.0, -1.1, -1.5, -1.8]])
         out = nx.zeros(a.shape, float)
-        tgt = nx.array([[1., 1., 1., 1.], [-1., -1., -1., -1.]])
+        tgt = nx.array([[1.0, 1.0, 1.0, 1.0], [-1.0, -1.0, -1.0, -1.0]])
 
         res = ufl.fix(a)
         assert_equal(res, tgt)
@@ -63,22 +66,22 @@ class TestUfunclike:
                 return obj
 
             def __array_finalize__(self, obj):
-                self.metadata = getattr(obj, 'metadata', None)
+                self.metadata = getattr(obj, "metadata", None)
                 return self
 
         a = nx.array([1.1, -1.1])
-        m = MyArray(a, metadata='foo')
+        m = MyArray(a, metadata="foo")
         f = ufl.fix(m)
         assert_array_equal(f, nx.array([1, -1]))
         assert_(isinstance(f, MyArray))
-        assert_equal(f.metadata, 'foo')
+        assert_equal(f.metadata, "foo")
 
         # check 0d arrays don't decay to scalars
-        m0d = m[0,...]
-        m0d.metadata = 'bar'
+        m0d = m[0, ...]
+        m0d.metadata = "bar"
         f0d = ufl.fix(m0d)
         assert_(isinstance(f0d, MyArray))
-        assert_equal(f0d.metadata, 'bar')
+        assert_equal(f0d.metadata, "bar")
 
     def test_deprecated(self):
         # NumPy 1.13.0, 2017-04-26

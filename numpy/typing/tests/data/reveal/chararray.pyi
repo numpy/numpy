@@ -1,5 +1,6 @@
-import numpy as np
 from typing import Any
+
+import numpy as np
 
 AR_U: np.chararray[Any, np.dtype[np.str_]]
 AR_S: np.chararray[Any, np.dtype[np.bytes_]]
@@ -44,9 +45,13 @@ reveal_type(AR_U.join("_"))  # E: chararray[Any, dtype[str_]]
 reveal_type(AR_S.join([b"_", b""]))  # E: chararray[Any, dtype[bytes_]]
 
 reveal_type(AR_U.ljust(5))  # E: chararray[Any, dtype[str_]]
-reveal_type(AR_S.ljust([4, 3, 1], fillchar=[b"a", b"b", b"c"]))  # E: chararray[Any, dtype[bytes_]]
+reveal_type(
+    AR_S.ljust([4, 3, 1], fillchar=[b"a", b"b", b"c"])
+)  # E: chararray[Any, dtype[bytes_]]
 reveal_type(AR_U.rjust(5))  # E: chararray[Any, dtype[str_]]
-reveal_type(AR_S.rjust([4, 3, 1], fillchar=[b"a", b"b", b"c"]))  # E: chararray[Any, dtype[bytes_]]
+reveal_type(
+    AR_S.rjust([4, 3, 1], fillchar=[b"a", b"b", b"c"])
+)  # E: chararray[Any, dtype[bytes_]]
 
 reveal_type(AR_U.lstrip())  # E: chararray[Any, dtype[str_]]
 reveal_type(AR_S.lstrip(chars=b"_"))  # E: chararray[Any, dtype[bytes_]]
@@ -69,7 +74,9 @@ reveal_type(AR_U.rsplit("_"))  # E: ndarray[Any, dtype[object_]]
 reveal_type(AR_S.rsplit(maxsplit=[1, 2, 3]))  # E: ndarray[Any, dtype[object_]]
 
 reveal_type(AR_U.splitlines())  # E: ndarray[Any, dtype[object_]]
-reveal_type(AR_S.splitlines(keepends=[True, True, False]))  # E: ndarray[Any, dtype[object_]]
+reveal_type(
+    AR_S.splitlines(keepends=[True, True, False])
+)  # E: ndarray[Any, dtype[object_]]
 
 reveal_type(AR_U.swapcase())  # E: chararray[Any, dtype[str_]]
 reveal_type(AR_S.swapcase())  # E: chararray[Any, dtype[bytes_]]

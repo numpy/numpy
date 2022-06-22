@@ -155,21 +155,18 @@ API
 # NOTE: The API section will be appended with additional entries
 # further down in this file
 
-from numpy._typing import (
-    ArrayLike,
-    DTypeLike,
-    NBitBase,
-    NDArray,
-)
+from numpy._typing import ArrayLike, DTypeLike, NBitBase, NDArray
 
 __all__ = ["ArrayLike", "DTypeLike", "NBitBase", "NDArray"]
 
 if __doc__ is not None:
     from numpy._typing._add_docstring import _docstrings
+
     __doc__ += _docstrings
-    __doc__ += '\n.. autoclass:: numpy.typing.NBitBase\n'
+    __doc__ += "\n.. autoclass:: numpy.typing.NBitBase\n"
     del _docstrings
 
 from numpy._pytesttester import PytestTester
+
 test = PytestTester(__name__)
 del PytestTester

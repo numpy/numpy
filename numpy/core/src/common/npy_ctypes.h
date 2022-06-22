@@ -47,4 +47,4 @@ fail:
     return 0;
 }
 
-#endif  /* NUMPY_CORE_SRC_COMMON_NPY_CTYPES_H_ */
+#endif /* NUMPY_CORE_SRC_COMMON_NPY_CTYPES_H_ */

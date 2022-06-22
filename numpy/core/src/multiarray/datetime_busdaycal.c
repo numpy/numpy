@@ -19,11 +19,12 @@
 #include "npy_config.h"
 #include "npy_pycompat.h"
 
-#include "common.h"
-#include "lowlevel_strided_loops.h"
-#include "_datetime.h"
-#include "datetime_busday.h"
 #include "datetime_busdaycal.h"
+
+#include "_datetime.h"
+#include "common.h"
+#include "datetime_busday.h"
+#include "lowlevel_strided_loops.h"
 
 NPY_NO_EXPORT int
 PyArray_WeekMaskConverter(PyObject *weekmask_in, npy_bool *weekmask)
@@ -43,7 +44,6 @@ PyArray_WeekMaskConverter(PyObject *weekmask_in, npy_bool *weekmask)
         Py_INCREF(obj);
     }
 
-
     if (PyUnicode_Check(obj)) {
         Py_ssize_t len;
         char const *str = PyUnicode_AsUTF8AndSize(obj, &len);
@@ -55,7 +55,7 @@ PyArray_WeekMaskConverter(PyObject *weekmask_in, npy_bool *weekmask)
         /* Length 7 is a string like "1111100" */
         if (len == 7) {
             for (int i = 0; i < 7; ++i) {
-                switch(str[i]) {
+                switch (str[i]) {
                     case '0':
                         weekmask[i] = 0;
                         break;
@@ -70,12 +70,11 @@ PyArray_WeekMaskConverter(PyObject *weekmask_in, npy_bool *weekmask)
             goto finish;
         }
 
-general_weekmask_string:
+    general_weekmask_string:
         /* a string like "SatSun" or "Mon Tue Wed" */
         memset(weekmask, 0, 7);
         for (Py_ssize_t i = 0; i < len; i += 3) {
-            while (isspace(str[i]))
-                ++i;
+            while (isspace(str[i])) ++i;
 
             if (i == len) {
                 goto finish;
@@ -86,7 +85,7 @@ general_weekmask_string:
 
             switch (str[i]) {
                 case 'M':
-                    if (str[i+1] == 'o' && str[i+2] == 'n') {
+                    if (str[i + 1] == 'o' && str[i + 2] == 'n') {
                         weekmask[0] = 1;
                     }
                     else {
@@ -94,10 +93,10 @@ general_weekmask_string:
                     }
                     break;
                 case 'T':
-                    if (str[i+1] == 'u' && str[i+2] == 'e') {
+                    if (str[i + 1] == 'u' && str[i + 2] == 'e') {
                         weekmask[1] = 1;
                     }
-                    else if (str[i+1] == 'h' && str[i+2] == 'u') {
+                    else if (str[i + 1] == 'h' && str[i + 2] == 'u') {
                         weekmask[3] = 1;
                     }
                     else {
@@ -105,7 +104,7 @@ general_weekmask_string:
                     }
                     break;
                 case 'W':
-                    if (str[i+1] == 'e' && str[i+2] == 'd') {
+                    if (str[i + 1] == 'e' && str[i + 2] == 'd') {
                         weekmask[2] = 1;
                     }
                     else {
@@ -113,7 +112,7 @@ general_weekmask_string:
                     }
                     break;
                 case 'F':
-                    if (str[i+1] == 'r' && str[i+2] == 'i') {
+                    if (str[i + 1] == 'r' && str[i + 2] == 'i') {
                         weekmask[4] = 1;
                     }
                     else {
@@ -121,10 +120,10 @@ general_weekmask_string:
                     }
                     break;
                 case 'S':
-                    if (str[i+1] == 'a' && str[i+2] == 't') {
+                    if (str[i + 1] == 'a' && str[i + 2] == 't') {
                         weekmask[5] = 1;
                     }
-                    else if (str[i+1] == 'u' && str[i+2] == 'n') {
+                    else if (str[i + 1] == 'u' && str[i + 2] == 'n') {
                         weekmask[6] = 1;
                     }
                     else {
@@ -138,20 +137,19 @@ general_weekmask_string:
 
         goto finish;
 
-invalid_weekmask_string:
+    invalid_weekmask_string:
         PyErr_Format(PyExc_ValueError,
-                "Invalid business day weekmask string \"%s\"",
-                str);
+                     "Invalid business day weekmask string \"%s\"", str);
         Py_DECREF(obj);
         return 0;
     }
     /* Something like [1,1,1,1,1,0,0] */
     else if (PySequence_Check(obj)) {
         if (PySequence_Size(obj) != 7 ||
-                        (PyArray_Check(obj) &&
-                         PyArray_NDIM((PyArrayObject *)obj) != 1)) {
-            PyErr_SetString(PyExc_ValueError,
-                "A business day weekmask array must have length 7");
+            (PyArray_Check(obj) && PyArray_NDIM((PyArrayObject *)obj) != 1)) {
+            PyErr_SetString(
+                    PyExc_ValueError,
+                    "A business day weekmask array must have length 7");
             Py_DECREF(obj);
             return 0;
         }
@@ -179,9 +177,10 @@ invalid_weekmask_string:
                     weekmask[i] = 1;
                 }
                 else {
-                    PyErr_SetString(PyExc_ValueError,
-                        "A business day weekmask array must have all "
-                        "1's and 0's");
+                    PyErr_SetString(
+                            PyExc_ValueError,
+                            "A business day weekmask array must have all "
+                            "1's and 0's");
                     Py_DECREF(f);
                     Py_DECREF(obj);
                     return 0;
@@ -194,7 +193,7 @@ invalid_weekmask_string:
     }
 
     PyErr_SetString(PyExc_ValueError,
-            "Couldn't convert object into a business day weekmask");
+                    "Couldn't convert object into a business day weekmask");
     Py_DECREF(obj);
     return 0;
 
@@ -290,8 +289,8 @@ PyArray_HolidaysConverter(PyObject *dates_in, npy_holidayslist *holidays)
         }
 
         /* This steals the datetime_dtype reference */
-        dates = (PyArrayObject *)PyArray_FromAny(dates_in, datetime_dtype,
-                                                0, 0, 0, NULL);
+        dates = (PyArrayObject *)PyArray_FromAny(dates_in, datetime_dtype, 0,
+                                                 0, 0, NULL);
         if (dates == NULL) {
             goto fail;
         }
@@ -302,14 +301,16 @@ PyArray_HolidaysConverter(PyObject *dates_in, npy_holidayslist *holidays)
         goto fail;
     }
 
-    if (!PyArray_CanCastTypeTo(PyArray_DESCR(dates),
-                                    date_dtype, NPY_SAFE_CASTING)) {
-        PyErr_SetString(PyExc_ValueError, "Cannot safely convert "
+    if (!PyArray_CanCastTypeTo(PyArray_DESCR(dates), date_dtype,
+                               NPY_SAFE_CASTING)) {
+        PyErr_SetString(PyExc_ValueError,
+                        "Cannot safely convert "
                         "provided holidays input into an array of dates");
         goto fail;
     }
     if (PyArray_NDIM(dates) != 1) {
-        PyErr_SetString(PyExc_ValueError, "holidays must be a provided "
+        PyErr_SetString(PyExc_ValueError,
+                        "holidays must be a provided "
                         "as a one-dimensional array");
         goto fail;
     }
@@ -324,11 +325,10 @@ PyArray_HolidaysConverter(PyObject *dates_in, npy_holidayslist *holidays)
     holidays->end = holidays->begin + count;
 
     /* Cast the data into a raw date array */
-    if (PyArray_CastRawArrays(count,
-                            PyArray_BYTES(dates), (char *)holidays->begin,
-                            PyArray_STRIDE(dates, 0), sizeof(npy_datetime),
-                            PyArray_DESCR(dates), date_dtype,
-                            0) != NPY_SUCCEED) {
+    if (PyArray_CastRawArrays(
+                count, PyArray_BYTES(dates), (char *)holidays->begin,
+                PyArray_STRIDE(dates, 0), sizeof(npy_datetime),
+                PyArray_DESCR(dates), date_dtype, 0) != NPY_SUCCEED) {
         goto fail;
     }
 
@@ -344,8 +344,8 @@ fail:
 }
 
 static PyObject *
-busdaycalendar_new(PyTypeObject *subtype,
-                    PyObject *NPY_UNUSED(args), PyObject *NPY_UNUSED(kwds))
+busdaycalendar_new(PyTypeObject *subtype, PyObject *NPY_UNUSED(args),
+                   PyObject *NPY_UNUSED(kwds))
 {
     NpyBusDayCalendar *self;
 
@@ -393,10 +393,10 @@ busdaycalendar_init(NpyBusDayCalendar *self, PyObject *args, PyObject *kwds)
     self->weekmask[6] = 0;
 
     /* Parse the parameters */
-    if (!PyArg_ParseTupleAndKeywords(args, kwds,
-                        "|O&O&:busdaycal", kwlist,
-                        &PyArray_WeekMaskConverter, &self->weekmask[0],
-                        &PyArray_HolidaysConverter, &self->holidays)) {
+    if (!PyArg_ParseTupleAndKeywords(
+                args, kwds, "|O&O&:busdaycal", kwlist,
+                &PyArray_WeekMaskConverter, &self->weekmask[0],
+                &PyArray_HolidaysConverter, &self->holidays)) {
         return -1;
     }
 
@@ -411,7 +411,8 @@ busdaycalendar_init(NpyBusDayCalendar *self, PyObject *args, PyObject *kwds)
     normalize_holidays_list(&self->holidays, self->weekmask);
 
     if (self->busdays_in_weekmask == 0) {
-        PyErr_SetString(PyExc_ValueError,
+        PyErr_SetString(
+                PyExc_ValueError,
                 "Cannot construct a numpy.busdaycal with a weekmask of "
                 "all zeros");
         return -1;
@@ -430,7 +431,7 @@ busdaycalendar_dealloc(NpyBusDayCalendar *self)
         self->holidays.end = NULL;
     }
 
-    Py_TYPE(self)->tp_free((PyObject*)self);
+    Py_TYPE(self)->tp_free((PyObject *)self);
 }
 
 static PyObject *
@@ -473,30 +474,24 @@ busdaycalendar_holidays_get(NpyBusDayCalendar *self, void *NPY_UNUSED(ignored))
     /* Copy the holidays */
     if (size > 0) {
         memcpy(PyArray_DATA(ret), self->holidays.begin,
-                    size * sizeof(npy_datetime));
+               size * sizeof(npy_datetime));
     }
 
     return (PyObject *)ret;
 }
 
 static PyGetSetDef busdaycalendar_getsets[] = {
-    {"weekmask",
-        (getter)busdaycalendar_weekmask_get,
-        NULL, NULL, NULL},
-    {"holidays",
-        (getter)busdaycalendar_holidays_get,
-        NULL, NULL, NULL},
+        {"weekmask", (getter)busdaycalendar_weekmask_get, NULL, NULL, NULL},
+        {"holidays", (getter)busdaycalendar_holidays_get, NULL, NULL, NULL},
 
-    {NULL, NULL, NULL, NULL, NULL}
-};
+        {NULL, NULL, NULL, NULL, NULL}};
 
 NPY_NO_EXPORT PyTypeObject NpyBusDayCalendar_Type = {
-    PyVarObject_HEAD_INIT(NULL, 0)
-    .tp_name = "numpy.busdaycalendar",
-    .tp_basicsize = sizeof(NpyBusDayCalendar),
-    .tp_dealloc = (destructor)busdaycalendar_dealloc,
-    .tp_flags = Py_TPFLAGS_DEFAULT,
-    .tp_getset = busdaycalendar_getsets,
-    .tp_init = (initproc)busdaycalendar_init,
-    .tp_new = busdaycalendar_new,
+        PyVarObject_HEAD_INIT(NULL, 0).tp_name = "numpy.busdaycalendar",
+        .tp_basicsize = sizeof(NpyBusDayCalendar),
+        .tp_dealloc = (destructor)busdaycalendar_dealloc,
+        .tp_flags = Py_TPFLAGS_DEFAULT,
+        .tp_getset = busdaycalendar_getsets,
+        .tp_init = (initproc)busdaycalendar_init,
+        .tp_new = busdaycalendar_new,
 };

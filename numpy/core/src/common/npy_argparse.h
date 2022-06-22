@@ -2,6 +2,7 @@
 #define NUMPY_CORE_SRC_COMMON_NPY_ARGPARSE_H
 
 #include <Python.h>
+
 #include "numpy/ndarraytypes.h"
 
 /*
@@ -20,7 +21,6 @@
 NPY_NO_EXPORT int
 PyArray_PythonPyIntFromInt(PyObject *obj, int *value);
 
-
 #define _NPY_MAX_KWARGS 15
 
 typedef struct {
@@ -29,9 +29,8 @@ typedef struct {
     int npositional_only;
     int nrequired;
     /* Null terminated list of keyword argument name strings */
-    PyObject *kw_strings[_NPY_MAX_KWARGS+1];
+    PyObject *kw_strings[_NPY_MAX_KWARGS + 1];
 } _NpyArgParserCache;
-
 
 /*
  * The sole purpose of this macro is to hide the argument parsing cache.
@@ -82,15 +81,16 @@ typedef struct {
  * @return Returns 0 on success and -1 on failure.
  */
 NPY_NO_EXPORT int
-_npy_parse_arguments(const char *funcname,
+_npy_parse_arguments(
+        const char *funcname,
         /* cache_ptr is a NULL initialized persistent storage for data */
-        _NpyArgParserCache *cache_ptr,
-        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames,
+        _NpyArgParserCache *cache_ptr, PyObject *const *args,
+        Py_ssize_t len_args, PyObject *kwnames,
         /* va_list is NULL, NULL, NULL terminated: name, converter, value */
         ...) NPY_GCC_NONNULL(1);
 
-#define npy_parse_arguments(funcname, args, len_args, kwnames, ...)      \
-        _npy_parse_arguments(funcname, &__argparse_cache,                \
-                args, len_args, kwnames, __VA_ARGS__)
+#define npy_parse_arguments(funcname, args, len_args, kwnames, ...)   \
+    _npy_parse_arguments(funcname, &__argparse_cache, args, len_args, \
+                         kwnames, __VA_ARGS__)
 
-#endif  /* NUMPY_CORE_SRC_COMMON_NPY_ARGPARSE_H */
+#endif /* NUMPY_CORE_SRC_COMMON_NPY_ARGPARSE_H */

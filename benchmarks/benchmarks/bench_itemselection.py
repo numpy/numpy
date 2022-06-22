@@ -1,15 +1,16 @@
 from __future__ import absolute_import, division, print_function
 
-from .common import Benchmark, TYPES1
-
 import numpy as np
+
+from .common import TYPES1, Benchmark
 
 
 class Take(Benchmark):
     params = [
         [(1000, 1), (1000, 2), (2, 1000, 1), (1000, 3)],
         ["raise", "wrap", "clip"],
-        TYPES1]
+        TYPES1,
+    ]
     param_names = ["shape", "mode", "dtype"]
 
     def setup(self, shape, mode, dtype):
@@ -21,14 +22,12 @@ class Take(Benchmark):
 
 
 class PutMask(Benchmark):
-    params = [
-        [True, False],
-        TYPES1]
+    params = [[True, False], TYPES1]
     param_names = ["values_is_scalar", "dtype"]
 
     def setup(self, values_is_scalar, dtype):
         if values_is_scalar:
-            self.vals = np.array(1., dtype=dtype)
+            self.vals = np.array(1.0, dtype=dtype)
         else:
             self.vals = np.ones(1000, dtype=dtype)
 
@@ -42,4 +41,3 @@ class PutMask(Benchmark):
 
     def time_sparse(self, values_is_scalar, dtype):
         np.putmask(self.arr, self.sparse_mask, self.vals)
-

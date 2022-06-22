@@ -1,6 +1,6 @@
-from .common import Benchmark, TYPES1
-
 import numpy as np
+
+from .common import TYPES1, Benchmark
 
 
 class ScalarMath(Benchmark):
@@ -8,6 +8,7 @@ class ScalarMath(Benchmark):
     # the function call overhead to some degree.
     params = [TYPES1]
     param_names = ["type"]
+
     def setup(self, typename):
         self.num = np.dtype(typename).type(2)
         self.int32 = np.int32(2)
@@ -27,7 +28,18 @@ class ScalarMath(Benchmark):
 
     def time_power_of_two(self, typename):
         n = self.num
-        res = n**2, n**2, n**2, n**2, n**2, n**2, n**2, n**2, n**2, n**2
+        res = (
+            n**2,
+            n**2,
+            n**2,
+            n**2,
+            n**2,
+            n**2,
+            n**2,
+            n**2,
+            n**2,
+            n**2,
+        )
 
     def time_abs(self, typename):
         n = self.num

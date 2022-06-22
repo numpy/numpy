@@ -1,7 +1,9 @@
 import os
 import subprocess
 from collections.abc import Iterable
-from typing import Literal as L, Any, overload, TypedDict
+from typing import Any
+from typing import Literal as L
+from typing import TypedDict, overload
 
 from numpy._pytesttester import PytestTester
 
@@ -18,7 +20,6 @@ __path__: list[str]
 test: PytestTester
 
 def run_main(comline_list: Iterable[str]) -> dict[str, _F2PyDict]: ...
-
 @overload
 def compile(  # type: ignore[misc]
     source: str | bytes,
@@ -39,5 +40,4 @@ def compile(
     extension: L[".f", ".f90"] = ...,
     full_output: L[True] = ...,
 ) -> subprocess.CompletedProcess[bytes]: ...
-
 def get_include() -> str: ...

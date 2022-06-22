@@ -40,7 +40,7 @@ get_datetime_metadata_from_dtype(PyArray_Descr *dtype);
 
 NPY_NO_EXPORT int
 find_string_array_datetime64_type(PyArrayObject *arr,
-        PyArray_DatetimeMetaData *meta);
+                                  PyArray_DatetimeMetaData *meta);
 
 /*
  * Both type1 and type2 must be either NPY_DATETIME or NPY_TIMEDELTA.
@@ -56,8 +56,8 @@ datetime_type_promotion(PyArray_Descr *type1, PyArray_Descr *type2);
  */
 NPY_NO_EXPORT int
 convert_datetimestruct_to_datetime(PyArray_DatetimeMetaData *meta,
-                                    const npy_datetimestruct *dts,
-                                    npy_datetime *out);
+                                   const npy_datetimestruct *dts,
+                                   npy_datetime *out);
 
 /*
  * Extracts the month number, within the current year,
@@ -73,8 +73,7 @@ days_to_month_number(npy_datetime days);
  */
 NPY_NO_EXPORT int
 parse_datetime_metadata_from_metastr(char const *metastr, Py_ssize_t len,
-                                    PyArray_DatetimeMetaData *out_meta);
-
+                                     PyArray_DatetimeMetaData *out_meta);
 
 /*
  * Converts a datetype dtype string into a dtype descr object.
@@ -92,7 +91,8 @@ parse_dtype_from_datetime_typestr(char const *typestr, Py_ssize_t len);
  * Returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT NPY_DATETIMEUNIT
-parse_datetime_unit_from_string(char const *str, Py_ssize_t len, char const *metastr);
+parse_datetime_unit_from_string(char const *str, Py_ssize_t len,
+                                char const *metastr);
 
 /*
  * Translate divisors into multiples of smaller units.
@@ -102,18 +102,17 @@ parse_datetime_unit_from_string(char const *str, Py_ssize_t len, char const *met
  * Returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT int
-convert_datetime_divisor_to_multiple(PyArray_DatetimeMetaData *meta,
-                                    int den, char const *metastr);
+convert_datetime_divisor_to_multiple(PyArray_DatetimeMetaData *meta, int den,
+                                     char const *metastr);
 
 /*
  * Determines whether the 'divisor' metadata divides evenly into
  * the 'dividend' metadata.
  */
 NPY_NO_EXPORT npy_bool
-datetime_metadata_divides(
-                        PyArray_DatetimeMetaData *dividend,
-                        PyArray_DatetimeMetaData *divisor,
-                        int strict_with_nonlinear_units);
+datetime_metadata_divides(PyArray_DatetimeMetaData *dividend,
+                          PyArray_DatetimeMetaData *divisor,
+                          int strict_with_nonlinear_units);
 
 /*
  * This provides the casting rules for the DATETIME data type units.
@@ -122,8 +121,7 @@ datetime_metadata_divides(
  * for all but 'unsafe' casting.
  */
 NPY_NO_EXPORT npy_bool
-can_cast_datetime64_units(NPY_DATETIMEUNIT src_unit,
-                          NPY_DATETIMEUNIT dst_unit,
+can_cast_datetime64_units(NPY_DATETIMEUNIT src_unit, NPY_DATETIMEUNIT dst_unit,
                           NPY_CASTING casting);
 
 /*
@@ -142,16 +140,15 @@ can_cast_datetime64_metadata(PyArray_DatetimeMetaData *src_meta,
  */
 NPY_NO_EXPORT npy_bool
 can_cast_timedelta64_units(NPY_DATETIMEUNIT src_unit,
-                          NPY_DATETIMEUNIT dst_unit,
-                          NPY_CASTING casting);
+                           NPY_DATETIMEUNIT dst_unit, NPY_CASTING casting);
 
 /*
  * This provides the casting rules for the TIMEDELTA data type metadata.
  */
 NPY_NO_EXPORT npy_bool
 can_cast_timedelta64_metadata(PyArray_DatetimeMetaData *src_meta,
-                             PyArray_DatetimeMetaData *dst_meta,
-                             NPY_CASTING casting);
+                              PyArray_DatetimeMetaData *dst_meta,
+                              NPY_CASTING casting);
 
 /*
  * Computes the conversion factor to convert data with 'src_meta' metadata
@@ -162,8 +159,8 @@ can_cast_timedelta64_metadata(PyArray_DatetimeMetaData *src_meta,
  */
 NPY_NO_EXPORT void
 get_datetime_conversion_factor(PyArray_DatetimeMetaData *src_meta,
-                                PyArray_DatetimeMetaData *dst_meta,
-                                npy_int64 *out_num, npy_int64 *out_denom);
+                               PyArray_DatetimeMetaData *dst_meta,
+                               npy_int64 *out_num, npy_int64 *out_denom);
 
 /*
  * Given a pointer to datetime metadata,
@@ -178,9 +175,9 @@ convert_datetime_metadata_to_tuple(PyArray_DatetimeMetaData *meta);
  * Returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT int
-convert_datetime_metadata_tuple_to_datetime_metadata(PyObject *tuple,
-                                        PyArray_DatetimeMetaData *out_meta,
-                                        npy_bool from_pickle);
+convert_datetime_metadata_tuple_to_datetime_metadata(
+        PyObject *tuple, PyArray_DatetimeMetaData *out_meta,
+        npy_bool from_pickle);
 
 /*
  * Gets a tzoffset in minutes by calling the fromutc() function on
@@ -197,7 +194,7 @@ get_tzoffset_from_pytzinfo(PyObject *timezone, npy_datetimestruct *dts);
  */
 NPY_NO_EXPORT int
 convert_pyobject_to_datetime_metadata(PyObject *obj,
-                                        PyArray_DatetimeMetaData *out_meta);
+                                      PyArray_DatetimeMetaData *out_meta);
 
 /*
  * Returns datetime metadata as a new reference a Unicode object.
@@ -208,7 +205,6 @@ convert_pyobject_to_datetime_metadata(PyObject *obj,
  */
 NPY_NO_EXPORT PyObject *
 metastr_to_unicode(PyArray_DatetimeMetaData *meta, int skip_brackets);
-
 
 /*
  * Tests for and converts a Python datetime.datetime or datetime.date
@@ -245,7 +241,7 @@ convert_pydatetime_to_datetimestruct(PyObject *obj, npy_datetimestruct *out,
  */
 NPY_NO_EXPORT int
 convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
-                                NPY_CASTING casting, npy_datetime *out);
+                             NPY_CASTING casting, npy_datetime *out);
 
 /*
  * Converts a PyObject * into a timedelta, in any of the forms supported
@@ -264,7 +260,7 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
  */
 NPY_NO_EXPORT int
 convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
-                                NPY_CASTING casting, npy_timedelta *out);
+                              NPY_CASTING casting, npy_timedelta *out);
 
 /*
  * Converts a datetime into a PyObject *.
@@ -284,15 +280,15 @@ convert_datetime_to_pyobject(npy_datetime dt, PyArray_DatetimeMetaData *meta);
  * For units finer than microseconds, returns an integer.
  */
 NPY_NO_EXPORT PyObject *
-convert_timedelta_to_pyobject(npy_timedelta td, PyArray_DatetimeMetaData *meta);
+convert_timedelta_to_pyobject(npy_timedelta td,
+                              PyArray_DatetimeMetaData *meta);
 
 /*
  * Converts a datetime based on the given metadata into a datetimestruct
  */
 NPY_NO_EXPORT int
 convert_datetime_to_datetimestruct(PyArray_DatetimeMetaData *meta,
-                                    npy_datetime dt,
-                                    npy_datetimestruct *out);
+                                   npy_datetime dt, npy_datetimestruct *out);
 
 /*
  * Converts a datetime from a datetimestruct to a datetime based
@@ -304,8 +300,8 @@ convert_datetime_to_datetimestruct(PyArray_DatetimeMetaData *meta,
  */
 NPY_NO_EXPORT int
 convert_datetimestruct_to_datetime(PyArray_DatetimeMetaData *meta,
-                                    const npy_datetimestruct *dts,
-                                    npy_datetime *out);
+                                   const npy_datetimestruct *dts,
+                                   npy_datetime *out);
 
 /*
  * Adjusts a datetimestruct based on a seconds offset. Assumes
@@ -336,8 +332,7 @@ has_equivalent_datetime_metadata(PyArray_Descr *type1, PyArray_Descr *type2);
 NPY_NO_EXPORT int
 cast_datetime_to_datetime(PyArray_DatetimeMetaData *src_meta,
                           PyArray_DatetimeMetaData *dst_meta,
-                          npy_datetime src_dt,
-                          npy_datetime *dst_dt);
+                          npy_datetime src_dt, npy_datetime *dst_dt);
 
 /*
  * Casts a single timedelta from having src_meta metadata into
@@ -347,9 +342,8 @@ cast_datetime_to_datetime(PyArray_DatetimeMetaData *src_meta,
  */
 NPY_NO_EXPORT int
 cast_timedelta_to_timedelta(PyArray_DatetimeMetaData *src_meta,
-                          PyArray_DatetimeMetaData *dst_meta,
-                          npy_timedelta src_dt,
-                          npy_timedelta *dst_dt);
+                            PyArray_DatetimeMetaData *dst_meta,
+                            npy_timedelta src_dt, npy_timedelta *dst_dt);
 
 /*
  * Returns true if the object is something that is best considered
@@ -376,4 +370,4 @@ find_object_datetime_type(PyObject *obj, int type_num);
 NPY_NO_EXPORT int
 PyArray_InitializeDatetimeCasts(void);
 
-#endif  /* NUMPY_CORE_SRC_MULTIARRAY__DATETIME_H_ */
+#endif /* NUMPY_CORE_SRC_MULTIARRAY__DATETIME_H_ */

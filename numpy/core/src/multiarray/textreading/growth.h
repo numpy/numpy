@@ -12,4 +12,4 @@ grow_size_and_multiply(npy_intp *size, npy_intp min_grow, npy_intp itemsize);
 }
 #endif
 
-#endif  /* NUMPY_CORE_SRC_MULTIARRAY_TEXTREADING_GROWTH_H_ */
+#endif /* NUMPY_CORE_SRC_MULTIARRAY_TEXTREADING_GROWTH_H_ */

@@ -2,6 +2,6 @@
 #define NUMPY_CORE_SRC_MULTIARRAY_HASHDESCR_H_
 
 NPY_NO_EXPORT npy_hash_t
-PyArray_DescrHash(PyObject* odescr);
+PyArray_DescrHash(PyObject *odescr);
 
-#endif  /* NUMPY_CORE_SRC_MULTIARRAY_HASHDESCR_H_ */
+#endif /* NUMPY_CORE_SRC_MULTIARRAY_HASHDESCR_H_ */

@@ -16,28 +16,27 @@ of ndarray.
 from __future__ import annotations
 
 import operator
+import types
 from enum import IntEnum
+from typing import TYPE_CHECKING, Any, Optional, SupportsIndex, Tuple, Union
+
 from ._creation_functions import asarray
 from ._dtypes import (
     _all_dtypes,
     _boolean_dtypes,
+    _dtype_categories,
+    _floating_dtypes,
     _integer_dtypes,
     _integer_or_boolean_dtypes,
-    _floating_dtypes,
     _numeric_dtypes,
     _result_type,
-    _dtype_categories,
 )
-
-from typing import TYPE_CHECKING, Optional, Tuple, Union, Any, SupportsIndex
-import types
 
 if TYPE_CHECKING:
     from ._typing import Any, PyCapsule, Device, Dtype
     import numpy.typing as npt
 
 import numpy as np
-
 from numpy import array_api
 
 
@@ -56,6 +55,7 @@ class Array:
     functions, such as asarray().
 
     """
+
     _array: np.ndarray
 
     # Use a custom constructor instead of __init__, as manually initializing
@@ -108,7 +108,9 @@ class Array:
             mid = str(self.shape)
         else:
             prefix = "Array("
-            mid = np.array2string(self._array, separator=', ', prefix=prefix, suffix=suffix)
+            mid = np.array2string(
+                self._array, separator=", ", prefix=prefix, suffix=suffix
+            )
         return prefix + mid + suffix
 
     # This function is not required by the spec, but we implement it here for
@@ -126,7 +128,9 @@ class Array:
     # spec in places where it either deviates from or is more strict than
     # NumPy behavior
 
-    def _check_allowed_dtypes(self, other: bool | int | float | Array, dtype_category: str, op: str) -> Array:
+    def _check_allowed_dtypes(
+        self, other: bool | int | float | Array, dtype_category: str, op: str
+    ) -> Array:
         """
         Helper function for operators to only allow specific input dtypes
 
@@ -352,9 +356,7 @@ class Array:
                         break
             assert ellipsis_start is not None  # sanity check
             ellipsis_end = self.ndim - (n_single_axes - ellipsis_start)
-            indexed_shape = (
-                self.shape[:ellipsis_start] + self.shape[ellipsis_end:]
-            )
+            indexed_shape = self.shape[:ellipsis_start] + self.shape[ellipsis_end:]
         for i, side in zip(single_axes, indexed_shape):
             if isinstance(i, slice):
                 if side == 0:
@@ -1053,7 +1055,7 @@ class Array:
     def to_device(self: Array, device: Device, /, stream: None = None) -> Array:
         if stream is not None:
             raise ValueError("The stream argument to to_device() is not supported")
-        if device == 'cpu':
+        if device == "cpu":
             return self
         raise ValueError(f"Unsupported device {device!r}")
 
@@ -1074,6 +1076,7 @@ class Array:
     @property
     def mT(self) -> Array:
         from .linalg import matrix_transpose
+
         return matrix_transpose(self)
 
     @property
@@ -1114,5 +1117,7 @@ class Array:
         # note in the specification:
         # https://data-apis.org/array-api/latest/API_specification/array_object.html#t
         if self.ndim != 2:
-            raise ValueError("x.T requires x to have 2 dimensions. Use x.mT to transpose stacks of matrices and permute_dims() to permute dimensions.")
+            raise ValueError(
+                "x.T requires x to have 2 dimensions. Use x.mT to transpose stacks of matrices and permute_dims() to permute dimensions."
+            )
         return self.__class__._new(self._array.T)

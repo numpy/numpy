@@ -1,6 +1,6 @@
 from typing import TypedDict
 
-from numpy import generic, signedinteger, unsignedinteger, floating, complexfloating
+from numpy import complexfloating, floating, generic, signedinteger, unsignedinteger
 
 class _SCTypes(TypedDict):
     int: list[type[signedinteger]]

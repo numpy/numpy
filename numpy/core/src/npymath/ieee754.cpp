@@ -198,7 +198,7 @@ _next(long double x, int p)
     npy_int64 hx, ihx, ilx;
     npy_uint64 lx;
     npy_longdouble u;
-    const npy_longdouble eps = exp2l(-105.); // 0x1.0000000000000p-105L
+    const npy_longdouble eps = exp2l(-105.);  // 0x1.0000000000000p-105L
 
     GET_LDOUBLE_WORDS64(hx, lx, x);
     ihx = hx & 0x7fffffffffffffffLL; /* |hx| */
@@ -646,12 +646,11 @@ npy_get_floatstatus()
     return npy_get_floatstatus_barrier(&x);
 }
 
-
-/* 
+/*
  * General C99 code for floating point error handling.  These functions mainly
  * exists, because `fenv.h` was not standardized in C89 so they gave better
  * portability.  This should be unnecessary with C99/C++11 and further
- * functionality can be used from `fenv.h` directly. 
+ * functionality can be used from `fenv.h` directly.
  */
 #include <fenv.h>
 
@@ -666,18 +665,17 @@ npy_get_floatstatus()
  * http://nsz.repo.hu/git/?p=libc-test;a=blob;f=src/common/mtest.h;h=706c1ba23ea8989b17a2f72ed1a919e187c06b6a;hb=HEAD#l30
  */
 #ifndef FE_DIVBYZERO
-    #define FE_DIVBYZERO 0
+#define FE_DIVBYZERO 0
 #endif
 #ifndef FE_OVERFLOW
-    #define FE_OVERFLOW 0
+#define FE_OVERFLOW 0
 #endif
 #ifndef FE_UNDERFLOW
-    #define FE_UNDERFLOW 0
+#define FE_UNDERFLOW 0
 #endif
 #ifndef FE_INVALID
-    #define FE_INVALID 0
+#define FE_INVALID 0
 #endif
-
 
 extern "C" int
 npy_get_floatstatus_barrier(char *param)

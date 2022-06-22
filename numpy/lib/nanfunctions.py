@@ -22,20 +22,32 @@ Functions
 """
 import functools
 import warnings
-import numpy as np
-from numpy.lib import function_base
-from numpy.core import overrides
 
+import numpy as np
+from numpy.core import overrides
+from numpy.lib import function_base
 
 array_function_dispatch = functools.partial(
-    overrides.array_function_dispatch, module='numpy')
+    overrides.array_function_dispatch, module="numpy"
+)
 
 
 __all__ = [
-    'nansum', 'nanmax', 'nanmin', 'nanargmax', 'nanargmin', 'nanmean',
-    'nanmedian', 'nanpercentile', 'nanvar', 'nanstd', 'nanprod',
-    'nancumsum', 'nancumprod', 'nanquantile'
-    ]
+    "nansum",
+    "nanmax",
+    "nanmin",
+    "nanargmax",
+    "nanargmin",
+    "nanmean",
+    "nanmedian",
+    "nanpercentile",
+    "nanvar",
+    "nanstd",
+    "nanprod",
+    "nancumsum",
+    "nancumprod",
+    "nanquantile",
+]
 
 
 def _nan_mask(a, out=None):
@@ -58,12 +70,13 @@ def _nan_mask(a, out=None):
     """
     # we assume that a is an array for this private function
 
-    if a.dtype.kind not in 'fc':
+    if a.dtype.kind not in "fc":
         return True
 
     y = np.isnan(a, out=out)
     y = np.invert(y, out=y)
     return y
+
 
 def _replace_nan(a, val):
     """
@@ -133,7 +146,7 @@ def _copyto(a, val, mask):
 
     """
     if isinstance(a, np.ndarray):
-        np.copyto(a, val, where=mask, casting='unsafe')
+        np.copyto(a, val, where=mask, casting="unsafe")
     else:
         a = a.dtype.type(val)
     return a
@@ -168,8 +181,7 @@ def _remove_nan_1d(arr1d, overwrite_input=False):
 
     s = np.nonzero(c)[0]
     if s.size == arr1d.size:
-        warnings.warn("All-NaN slice encountered", RuntimeWarning,
-                      stacklevel=5)
+        warnings.warn("All-NaN slice encountered", RuntimeWarning, stacklevel=5)
         return arr1d[:0], True
     elif s.size == 0:
         return arr1d, overwrite_input
@@ -177,11 +189,11 @@ def _remove_nan_1d(arr1d, overwrite_input=False):
         if not overwrite_input:
             arr1d = arr1d.copy()
         # select non-nans at end of array
-        enonan = arr1d[-s.size:][~c[-s.size:]]
+        enonan = arr1d[-s.size :][~c[-s.size :]]
         # fill nans in beginning of array with non-nans of end
-        arr1d[s[:enonan.size]] = enonan
+        arr1d[s[: enonan.size]] = enonan
 
-        return arr1d[:-s.size], True
+        return arr1d[: -s.size], True
 
 
 def _divide_by_count(a, b, out=None):
@@ -209,12 +221,12 @@ def _divide_by_count(a, b, out=None):
         in place. If `a` is a numpy scalar, the division preserves its type.
 
     """
-    with np.errstate(invalid='ignore', divide='ignore'):
+    with np.errstate(invalid="ignore", divide="ignore"):
         if isinstance(a, np.ndarray):
             if out is None:
-                return np.divide(a, b, out=a, casting='unsafe')
+                return np.divide(a, b, out=a, casting="unsafe")
             else:
-                return np.divide(a, b, out=out, casting='unsafe')
+                return np.divide(a, b, out=out, casting="unsafe")
         else:
             if out is None:
                 # Precaution against reduced object arrays
@@ -225,17 +237,17 @@ def _divide_by_count(a, b, out=None):
             else:
                 # This is questionable, but currently a numpy scalar can
                 # be output to a zero dimensional array.
-                return np.divide(a, b, out=out, casting='unsafe')
+                return np.divide(a, b, out=out, casting="unsafe")
 
 
-def _nanmin_dispatcher(a, axis=None, out=None, keepdims=None,
-                       initial=None, where=None):
+def _nanmin_dispatcher(a, axis=None, out=None, keepdims=None, initial=None, where=None):
     return (a, out)
 
 
 @array_function_dispatch(_nanmin_dispatcher)
-def nanmin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
-           where=np._NoValue):
+def nanmin(
+    a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue, where=np._NoValue
+):
     """
     Return minimum of an array or minimum along an axis, ignoring any NaNs.
     When all-NaN slices are encountered a ``RuntimeWarning`` is raised and
@@ -331,19 +343,18 @@ def nanmin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     """
     kwargs = {}
     if keepdims is not np._NoValue:
-        kwargs['keepdims'] = keepdims
+        kwargs["keepdims"] = keepdims
     if initial is not np._NoValue:
-        kwargs['initial'] = initial
+        kwargs["initial"] = initial
     if where is not np._NoValue:
-        kwargs['where'] = where
+        kwargs["where"] = where
 
     if type(a) is np.ndarray and a.dtype != np.object_:
         # Fast, but not safe for subclasses of ndarray, or object arrays,
         # which do not implement isnan (gh-9009), or fmin correctly (gh-8975)
         res = np.fmin.reduce(a, axis=axis, out=out, **kwargs)
         if np.isnan(res).any():
-            warnings.warn("All-NaN slice encountered", RuntimeWarning,
-                          stacklevel=3)
+            warnings.warn("All-NaN slice encountered", RuntimeWarning, stacklevel=3)
     else:
         # Slow, but safe for subclasses of ndarray
         a, mask = _replace_nan(a, +np.inf)
@@ -356,19 +367,18 @@ def nanmin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
         mask = np.all(mask, axis=axis, **kwargs)
         if np.any(mask):
             res = _copyto(res, np.nan, mask)
-            warnings.warn("All-NaN axis encountered", RuntimeWarning,
-                          stacklevel=3)
+            warnings.warn("All-NaN axis encountered", RuntimeWarning, stacklevel=3)
     return res
 
 
-def _nanmax_dispatcher(a, axis=None, out=None, keepdims=None,
-                       initial=None, where=None):
+def _nanmax_dispatcher(a, axis=None, out=None, keepdims=None, initial=None, where=None):
     return (a, out)
 
 
 @array_function_dispatch(_nanmax_dispatcher)
-def nanmax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
-           where=np._NoValue):
+def nanmax(
+    a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue, where=np._NoValue
+):
     """
     Return the maximum of an array or maximum along an axis, ignoring any
     NaNs.  When all-NaN slices are encountered a ``RuntimeWarning`` is
@@ -464,19 +474,18 @@ def nanmax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     """
     kwargs = {}
     if keepdims is not np._NoValue:
-        kwargs['keepdims'] = keepdims
+        kwargs["keepdims"] = keepdims
     if initial is not np._NoValue:
-        kwargs['initial'] = initial
+        kwargs["initial"] = initial
     if where is not np._NoValue:
-        kwargs['where'] = where
+        kwargs["where"] = where
 
     if type(a) is np.ndarray and a.dtype != np.object_:
         # Fast, but not safe for subclasses of ndarray, or object arrays,
         # which do not implement isnan (gh-9009), or fmax correctly (gh-8975)
         res = np.fmax.reduce(a, axis=axis, out=out, **kwargs)
         if np.isnan(res).any():
-            warnings.warn("All-NaN slice encountered", RuntimeWarning,
-                          stacklevel=3)
+            warnings.warn("All-NaN slice encountered", RuntimeWarning, stacklevel=3)
     else:
         # Slow, but safe for subclasses of ndarray
         a, mask = _replace_nan(a, -np.inf)
@@ -489,8 +498,7 @@ def nanmax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
         mask = np.all(mask, axis=axis, **kwargs)
         if np.any(mask):
             res = _copyto(res, np.nan, mask)
-            warnings.warn("All-NaN axis encountered", RuntimeWarning,
-                          stacklevel=3)
+            warnings.warn("All-NaN axis encountered", RuntimeWarning, stacklevel=3)
     return res
 
 
@@ -615,14 +623,22 @@ def nanargmax(a, axis=None, out=None, *, keepdims=np._NoValue):
     return res
 
 
-def _nansum_dispatcher(a, axis=None, dtype=None, out=None, keepdims=None,
-                       initial=None, where=None):
+def _nansum_dispatcher(
+    a, axis=None, dtype=None, out=None, keepdims=None, initial=None, where=None
+):
     return (a, out)
 
 
 @array_function_dispatch(_nansum_dispatcher)
-def nansum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
-           initial=np._NoValue, where=np._NoValue):
+def nansum(
+    a,
+    axis=None,
+    dtype=None,
+    out=None,
+    keepdims=np._NoValue,
+    initial=np._NoValue,
+    where=np._NoValue,
+):
     """
     Return the sum of array elements over a given axis treating Not a
     Numbers (NaNs) as zero.
@@ -720,18 +736,33 @@ def nansum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
 
     """
     a, mask = _replace_nan(a, 0)
-    return np.sum(a, axis=axis, dtype=dtype, out=out, keepdims=keepdims,
-                  initial=initial, where=where)
+    return np.sum(
+        a,
+        axis=axis,
+        dtype=dtype,
+        out=out,
+        keepdims=keepdims,
+        initial=initial,
+        where=where,
+    )
 
 
-def _nanprod_dispatcher(a, axis=None, dtype=None, out=None, keepdims=None,
-                        initial=None, where=None):
+def _nanprod_dispatcher(
+    a, axis=None, dtype=None, out=None, keepdims=None, initial=None, where=None
+):
     return (a, out)
 
 
 @array_function_dispatch(_nanprod_dispatcher)
-def nanprod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
-            initial=np._NoValue, where=np._NoValue):
+def nanprod(
+    a,
+    axis=None,
+    dtype=None,
+    out=None,
+    keepdims=np._NoValue,
+    initial=np._NoValue,
+    where=np._NoValue,
+):
     """
     Return the product of array elements over a given axis treating Not a
     Numbers (NaNs) as ones.
@@ -803,8 +834,15 @@ def nanprod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
 
     """
     a, mask = _replace_nan(a, 1)
-    return np.prod(a, axis=axis, dtype=dtype, out=out, keepdims=keepdims,
-                   initial=initial, where=where)
+    return np.prod(
+        a,
+        axis=axis,
+        dtype=dtype,
+        out=out,
+        keepdims=keepdims,
+        initial=initial,
+        where=where,
+    )
 
 
 def _nancumsum_dispatcher(a, axis=None, dtype=None, out=None):
@@ -944,14 +982,16 @@ def nancumprod(a, axis=None, dtype=None, out=None):
     return np.cumprod(a, axis=axis, dtype=dtype, out=out)
 
 
-def _nanmean_dispatcher(a, axis=None, dtype=None, out=None, keepdims=None,
-                        *, where=None):
+def _nanmean_dispatcher(
+    a, axis=None, dtype=None, out=None, keepdims=None, *, where=None
+):
     return (a, out)
 
 
 @array_function_dispatch(_nanmean_dispatcher)
-def nanmean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
-            *, where=np._NoValue):
+def nanmean(
+    a, axis=None, dtype=None, out=None, keepdims=np._NoValue, *, where=np._NoValue
+):
     """
     Compute the arithmetic mean along the specified axis, ignoring NaNs.
 
@@ -1031,8 +1071,9 @@ def nanmean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
     """
     arr, mask = _replace_nan(a, 0)
     if mask is None:
-        return np.mean(arr, axis=axis, dtype=dtype, out=out, keepdims=keepdims,
-                       where=where)
+        return np.mean(
+            arr, axis=axis, dtype=dtype, out=out, keepdims=keepdims, where=where
+        )
 
     if dtype is not None:
         dtype = np.dtype(dtype)
@@ -1041,13 +1082,11 @@ def nanmean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
     if out is not None and not issubclass(out.dtype.type, np.inexact):
         raise TypeError("If a is inexact, then out must be inexact")
 
-    cnt = np.sum(~mask, axis=axis, dtype=np.intp, keepdims=keepdims,
-                 where=where)
-    tot = np.sum(arr, axis=axis, dtype=dtype, out=out, keepdims=keepdims,
-                 where=where)
+    cnt = np.sum(~mask, axis=axis, dtype=np.intp, keepdims=keepdims, where=where)
+    tot = np.sum(arr, axis=axis, dtype=dtype, out=out, keepdims=keepdims, where=where)
     avg = _divide_by_count(tot, cnt, out=out)
 
-    isbad = (cnt == 0)
+    isbad = cnt == 0
     if isbad.any():
         warnings.warn("Mean of empty slice", RuntimeWarning, stacklevel=3)
         # NaN is the only possible bad value, so no further
@@ -1061,7 +1100,8 @@ def _nanmedian1d(arr1d, overwrite_input=False):
     See nanmedian for parameter usage
     """
     arr1d_parsed, overwrite_input = _remove_nan_1d(
-        arr1d, overwrite_input=overwrite_input,
+        arr1d,
+        overwrite_input=overwrite_input,
     )
 
     if arr1d_parsed.size == 0:
@@ -1108,8 +1148,7 @@ def _nanmedian_small(a, axis=None, out=None, overwrite_input=False):
     a = np.ma.masked_array(a, np.isnan(a))
     m = np.ma.median(a, axis=axis, overwrite_input=overwrite_input)
     for i in range(np.count_nonzero(m.mask.ravel())):
-        warnings.warn("All-NaN slice encountered", RuntimeWarning,
-                      stacklevel=4)
+        warnings.warn("All-NaN slice encountered", RuntimeWarning, stacklevel=4)
 
     fill_value = np.timedelta64("NaT") if m.dtype.kind == "m" else np.nan
     if out is not None:
@@ -1118,8 +1157,7 @@ def _nanmedian_small(a, axis=None, out=None, overwrite_input=False):
     return m.filled(fill_value)
 
 
-def _nanmedian_dispatcher(
-        a, axis=None, out=None, overwrite_input=None, keepdims=None):
+def _nanmedian_dispatcher(a, axis=None, out=None, overwrite_input=None, keepdims=None):
     return (a, out)
 
 
@@ -1214,8 +1252,9 @@ def nanmedian(a, axis=None, out=None, overwrite_input=False, keepdims=np._NoValu
     if a.size == 0:
         return np.nanmean(a, axis, out=out, keepdims=keepdims)
 
-    r, k = function_base._ureduce(a, func=_nanmedian, axis=axis, out=out,
-                                  overwrite_input=overwrite_input)
+    r, k = function_base._ureduce(
+        a, func=_nanmedian, axis=axis, out=out, overwrite_input=overwrite_input
+    )
     if keepdims and keepdims is not np._NoValue:
         return r.reshape(k)
     else:
@@ -1223,22 +1262,30 @@ def nanmedian(a, axis=None, out=None, overwrite_input=False, keepdims=np._NoValu
 
 
 def _nanpercentile_dispatcher(
-        a, q, axis=None, out=None, overwrite_input=None,
-        method=None, keepdims=None, *, interpolation=None):
+    a,
+    q,
+    axis=None,
+    out=None,
+    overwrite_input=None,
+    method=None,
+    keepdims=None,
+    *,
+    interpolation=None,
+):
     return (a, q, out)
 
 
 @array_function_dispatch(_nanpercentile_dispatcher)
 def nanpercentile(
-        a,
-        q,
-        axis=None,
-        out=None,
-        overwrite_input=False,
-        method="linear",
-        keepdims=np._NoValue,
-        *,
-        interpolation=None,
+    a,
+    q,
+    axis=None,
+    out=None,
+    overwrite_input=False,
+    method="linear",
+    keepdims=np._NoValue,
+    *,
+    interpolation=None,
 ):
     """
     Compute the qth percentile of the data along the specified axis,
@@ -1373,7 +1420,8 @@ def nanpercentile(
     """
     if interpolation is not None:
         method = function_base._check_interpolation_as_method(
-            method, interpolation, "nanpercentile")
+            method, interpolation, "nanpercentile"
+        )
 
     a = np.asanyarray(a)
     q = np.true_divide(q, 100.0)
@@ -1381,26 +1429,34 @@ def nanpercentile(
     q = np.asanyarray(q)
     if not function_base._quantile_is_valid(q):
         raise ValueError("Percentiles must be in the range [0, 100]")
-    return _nanquantile_unchecked(
-        a, q, axis, out, overwrite_input, method, keepdims)
+    return _nanquantile_unchecked(a, q, axis, out, overwrite_input, method, keepdims)
 
 
-def _nanquantile_dispatcher(a, q, axis=None, out=None, overwrite_input=None,
-                            method=None, keepdims=None, *, interpolation=None):
+def _nanquantile_dispatcher(
+    a,
+    q,
+    axis=None,
+    out=None,
+    overwrite_input=None,
+    method=None,
+    keepdims=None,
+    *,
+    interpolation=None,
+):
     return (a, q, out)
 
 
 @array_function_dispatch(_nanquantile_dispatcher)
 def nanquantile(
-        a,
-        q,
-        axis=None,
-        out=None,
-        overwrite_input=False,
-        method="linear",
-        keepdims=np._NoValue,
-        *,
-        interpolation=None,
+    a,
+    q,
+    axis=None,
+    out=None,
+    overwrite_input=False,
+    method="linear",
+    keepdims=np._NoValue,
+    *,
+    interpolation=None,
 ):
     """
     Compute the qth quantile of the data along the specified axis,
@@ -1532,45 +1588,48 @@ def nanquantile(
     """
     if interpolation is not None:
         method = function_base._check_interpolation_as_method(
-            method, interpolation, "nanquantile")
+            method, interpolation, "nanquantile"
+        )
 
     a = np.asanyarray(a)
     q = np.asanyarray(q)
     if not function_base._quantile_is_valid(q):
         raise ValueError("Quantiles must be in the range [0, 1]")
-    return _nanquantile_unchecked(
-        a, q, axis, out, overwrite_input, method, keepdims)
+    return _nanquantile_unchecked(a, q, axis, out, overwrite_input, method, keepdims)
 
 
 def _nanquantile_unchecked(
-        a,
-        q,
-        axis=None,
-        out=None,
-        overwrite_input=False,
-        method="linear",
-        keepdims=np._NoValue,
+    a,
+    q,
+    axis=None,
+    out=None,
+    overwrite_input=False,
+    method="linear",
+    keepdims=np._NoValue,
 ):
     """Assumes that q is in [0, 1], and is an ndarray"""
     # apply_along_axis in _nanpercentile doesn't handle empty arrays well,
     # so deal them upfront
     if a.size == 0:
         return np.nanmean(a, axis, out=out, keepdims=keepdims)
-    r, k = function_base._ureduce(a,
-                                  func=_nanquantile_ureduce_func,
-                                  q=q,
-                                  axis=axis,
-                                  out=out,
-                                  overwrite_input=overwrite_input,
-                                  method=method)
+    r, k = function_base._ureduce(
+        a,
+        func=_nanquantile_ureduce_func,
+        q=q,
+        axis=axis,
+        out=out,
+        overwrite_input=overwrite_input,
+        method=method,
+    )
     if keepdims and keepdims is not np._NoValue:
         return r.reshape(q.shape + k)
     else:
         return r
 
 
-def _nanquantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
-                              method="linear"):
+def _nanquantile_ureduce_func(
+    a, q, axis=None, out=None, overwrite_input=False, method="linear"
+):
     """
     Private function that doesn't support extended axis or keepdims.
     These methods are extended to this function using _ureduce
@@ -1580,8 +1639,9 @@ def _nanquantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
         part = a.ravel()
         result = _nanquantile_1d(part, q, overwrite_input, method)
     else:
-        result = np.apply_along_axis(_nanquantile_1d, axis, a, q,
-                                     overwrite_input, method)
+        result = np.apply_along_axis(
+            _nanquantile_1d, axis, a, q, overwrite_input, method
+        )
         # apply_along_axis fills in collapsed axis with results.
         # Move that axis to the beginning to match percentile's
         # convention.
@@ -1598,24 +1658,33 @@ def _nanquantile_1d(arr1d, q, overwrite_input=False, method="linear"):
     Private function for rank 1 arrays. Compute quantile ignoring NaNs.
     See nanpercentile for parameter usage
     """
-    arr1d, overwrite_input = _remove_nan_1d(arr1d,
-        overwrite_input=overwrite_input)
+    arr1d, overwrite_input = _remove_nan_1d(arr1d, overwrite_input=overwrite_input)
     if arr1d.size == 0:
         # convert to scalar
         return np.full(q.shape, np.nan, dtype=arr1d.dtype)[()]
 
     return function_base._quantile_unchecked(
-        arr1d, q, overwrite_input=overwrite_input, method=method)
+        arr1d, q, overwrite_input=overwrite_input, method=method
+    )
 
 
-def _nanvar_dispatcher(a, axis=None, dtype=None, out=None, ddof=None,
-                       keepdims=None, *, where=None):
+def _nanvar_dispatcher(
+    a, axis=None, dtype=None, out=None, ddof=None, keepdims=None, *, where=None
+):
     return (a, out)
 
 
 @array_function_dispatch(_nanvar_dispatcher)
-def nanvar(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue,
-           *, where=np._NoValue):
+def nanvar(
+    a,
+    axis=None,
+    dtype=None,
+    out=None,
+    ddof=0,
+    keepdims=np._NoValue,
+    *,
+    where=np._NoValue,
+):
     """
     Compute the variance along the specified axis, while ignoring NaNs.
 
@@ -1711,8 +1780,15 @@ def nanvar(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue,
     """
     arr, mask = _replace_nan(a, 0)
     if mask is None:
-        return np.var(arr, axis=axis, dtype=dtype, out=out, ddof=ddof,
-                      keepdims=keepdims, where=where)
+        return np.var(
+            arr,
+            axis=axis,
+            dtype=dtype,
+            out=out,
+            ddof=ddof,
+            keepdims=keepdims,
+            where=where,
+        )
 
     if dtype is not None:
         dtype = np.dtype(dtype)
@@ -1731,13 +1807,12 @@ def nanvar(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue,
     # keepdims=True, however matrix now raises an error in this case, but
     # the reason that it drops the keepdims kwarg is to force keepdims=True
     # so this used to work by serendipity.
-    cnt = np.sum(~mask, axis=axis, dtype=np.intp, keepdims=_keepdims,
-                 where=where)
+    cnt = np.sum(~mask, axis=axis, dtype=np.intp, keepdims=_keepdims, where=where)
     avg = np.sum(arr, axis=axis, dtype=dtype, keepdims=_keepdims, where=where)
     avg = _divide_by_count(avg, cnt)
 
     # Compute squared deviation from mean.
-    np.subtract(arr, avg, out=arr, casting='unsafe', where=where)
+    np.subtract(arr, avg, out=arr, casting="unsafe", where=where)
     arr = _copyto(arr, 0, mask)
     if issubclass(arr.dtype.type, np.complexfloating):
         sqr = np.multiply(arr, arr.conj(), out=arr, where=where).real
@@ -1745,8 +1820,7 @@ def nanvar(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue,
         sqr = np.multiply(arr, arr, out=arr, where=where)
 
     # Compute variance.
-    var = np.sum(sqr, axis=axis, dtype=dtype, out=out, keepdims=keepdims,
-                 where=where)
+    var = np.sum(sqr, axis=axis, dtype=dtype, out=out, keepdims=keepdims, where=where)
 
     # Precaution against reduced object arrays
     try:
@@ -1759,24 +1833,34 @@ def nanvar(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue,
     dof = cnt - ddof
     var = _divide_by_count(var, dof)
 
-    isbad = (dof <= 0)
+    isbad = dof <= 0
     if np.any(isbad):
-        warnings.warn("Degrees of freedom <= 0 for slice.", RuntimeWarning,
-                      stacklevel=3)
+        warnings.warn(
+            "Degrees of freedom <= 0 for slice.", RuntimeWarning, stacklevel=3
+        )
         # NaN, inf, or negative numbers are all possible bad
         # values, so explicitly replace them with NaN.
         var = _copyto(var, np.nan, isbad)
     return var
 
 
-def _nanstd_dispatcher(a, axis=None, dtype=None, out=None, ddof=None,
-                       keepdims=None, *, where=None):
+def _nanstd_dispatcher(
+    a, axis=None, dtype=None, out=None, ddof=None, keepdims=None, *, where=None
+):
     return (a, out)
 
 
 @array_function_dispatch(_nanstd_dispatcher)
-def nanstd(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue,
-           *, where=np._NoValue):
+def nanstd(
+    a,
+    axis=None,
+    dtype=None,
+    out=None,
+    ddof=0,
+    keepdims=np._NoValue,
+    *,
+    where=np._NoValue,
+):
     """
     Compute the standard deviation along the specified axis, while
     ignoring NaNs.
@@ -1875,11 +1959,12 @@ def nanstd(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue,
     array([0.,  0.5]) # may vary
 
     """
-    var = nanvar(a, axis=axis, dtype=dtype, out=out, ddof=ddof,
-                 keepdims=keepdims, where=where)
+    var = nanvar(
+        a, axis=axis, dtype=dtype, out=out, ddof=ddof, keepdims=keepdims, where=where
+    )
     if isinstance(var, np.ndarray):
         std = np.sqrt(var, out=var)
-    elif hasattr(var, 'dtype'):
+    elif hasattr(var, "dtype"):
         std = var.dtype.type(np.sqrt(var))
     else:
         std = np.sqrt(var)

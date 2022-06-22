@@ -1,51 +1,46 @@
-from typing import (
-    Literal as L,
-    Any,
-    TypeVar,
-    overload,
-    SupportsIndex,
-)
+from typing import Any
+from typing import Literal as L
+from typing import SupportsIndex, TypeVar, overload
 
 from numpy import (
-    generic,
-    number,
     bool_,
-    ushort,
-    ubyte,
-    uintc,
-    uint,
-    ulonglong,
-    short,
-    int8,
     byte,
-    intc,
-    int_,
-    intp,
-    longlong,
-    half,
-    single,
-    double,
-    longdouble,
-    csingle,
+    bytes_,
     cdouble,
     clongdouble,
-    timedelta64,
+    csingle,
     datetime64,
+    double,
+    generic,
+    half,
+    int8,
+    int_,
+    intc,
+    intp,
+    longdouble,
+    longlong,
+    number,
     object_,
+    short,
+    single,
     str_,
-    bytes_,
+    timedelta64,
+    ubyte,
+    uint,
+    uintc,
+    ulonglong,
+    ushort,
     void,
 )
-
 from numpy._typing import (
     ArrayLike,
     NDArray,
     _ArrayLike,
     _ArrayLikeBool_co,
     _ArrayLikeDT64_co,
-    _ArrayLikeTD64_co,
-    _ArrayLikeObject_co,
     _ArrayLikeNumber_co,
+    _ArrayLikeObject_co,
+    _ArrayLikeTD64_co,
 )
 
 _SCT = TypeVar("_SCT", bound=generic)
@@ -117,7 +112,6 @@ def ediff1d(
     to_end: None | ArrayLike = ...,
     to_begin: None | ArrayLike = ...,
 ) -> NDArray[object_]: ...
-
 @overload
 def unique(
     ar: _ArrayLike[_SCT],
@@ -278,7 +272,6 @@ def unique(
     *,
     equal_nan: bool = ...,
 ) -> tuple[NDArray[Any], NDArray[intp], NDArray[intp], NDArray[intp]]: ...
-
 @overload
 def intersect1d(
     ar1: _ArrayLike[_SCTNoCast],
@@ -307,7 +300,6 @@ def intersect1d(
     assume_unique: bool = ...,
     return_indices: L[True] = ...,
 ) -> tuple[NDArray[Any], NDArray[intp], NDArray[intp]]: ...
-
 @overload
 def setxor1d(
     ar1: _ArrayLike[_SCTNoCast],
@@ -320,21 +312,18 @@ def setxor1d(
     ar2: ArrayLike,
     assume_unique: bool = ...,
 ) -> NDArray[Any]: ...
-
 def in1d(
     ar1: ArrayLike,
     ar2: ArrayLike,
     assume_unique: bool = ...,
     invert: bool = ...,
 ) -> NDArray[bool_]: ...
-
 def isin(
     element: ArrayLike,
     test_elements: ArrayLike,
     assume_unique: bool = ...,
     invert: bool = ...,
 ) -> NDArray[bool_]: ...
-
 @overload
 def union1d(
     ar1: _ArrayLike[_SCTNoCast],
@@ -345,7 +334,6 @@ def union1d(
     ar1: ArrayLike,
     ar2: ArrayLike,
 ) -> NDArray[Any]: ...
-
 @overload
 def setdiff1d(
     ar1: _ArrayLike[_SCTNoCast],

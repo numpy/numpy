@@ -1,14 +1,10 @@
 from __future__ import annotations
 
-from ._dtypes import (
-    _floating_dtypes,
-    _numeric_dtypes,
-)
+from typing import TYPE_CHECKING, Optional, Tuple, Union
+
 from ._array_object import Array
 from ._creation_functions import asarray
-from ._dtypes import float32, float64
-
-from typing import TYPE_CHECKING, Optional, Tuple, Union
+from ._dtypes import _floating_dtypes, _numeric_dtypes, float32, float64
 
 if TYPE_CHECKING:
     from ._typing import Dtype

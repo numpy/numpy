@@ -33,6 +33,7 @@ PyUFunc_HasOverride(PyObject *obj);
  * Returns 0 if no outputs found, -1 if kwds is not a dict (with an error set).
  */
 NPY_NO_EXPORT int
-PyUFuncOverride_GetOutObjects(PyObject *kwds, PyObject **out_kwd_obj, PyObject ***out_objs);
+PyUFuncOverride_GetOutObjects(PyObject *kwds, PyObject **out_kwd_obj,
+                              PyObject ***out_objs);
 
-#endif  /* NUMPY_CORE_SRC_COMMON_UFUNC_OVERRIDE_H_ */
+#endif /* NUMPY_CORE_SRC_COMMON_UFUNC_OVERRIDE_H_ */

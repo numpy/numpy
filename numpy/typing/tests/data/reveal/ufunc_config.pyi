@@ -17,9 +17,19 @@ reveal_type(np.geterr())  # E: TypedDict('core._ufunc_config._ErrDict'
 reveal_type(np.setbufsize(4096))  # E: int
 reveal_type(np.getbufsize())  # E: int
 
-reveal_type(np.seterrcall(func))  # E: Union[None, def (builtins.str, builtins.int) -> Any, _SupportsWrite[builtins.str]]
-reveal_type(np.seterrcall(Write()))  # E: Union[None, def (builtins.str, builtins.int) -> Any, _SupportsWrite[builtins.str]]
-reveal_type(np.geterrcall())  # E: Union[None, def (builtins.str, builtins.int) -> Any, _SupportsWrite[builtins.str]]
+reveal_type(
+    np.seterrcall(func)
+)  # E: Union[None, def (builtins.str, builtins.int) -> Any, _SupportsWrite[builtins.str]]
+reveal_type(
+    np.seterrcall(Write())
+)  # E: Union[None, def (builtins.str, builtins.int) -> Any, _SupportsWrite[builtins.str]]
+reveal_type(
+    np.geterrcall()
+)  # E: Union[None, def (builtins.str, builtins.int) -> Any, _SupportsWrite[builtins.str]]
 
-reveal_type(np.errstate(call=func, all="call"))  # E: errstate[def (a: builtins.str, b: builtins.int)]
-reveal_type(np.errstate(call=Write(), divide="log", over="log"))  # E: errstate[ufunc_config.Write]
+reveal_type(
+    np.errstate(call=func, all="call")
+)  # E: errstate[def (a: builtins.str, b: builtins.int)]
+reveal_type(
+    np.errstate(call=Write(), divide="log", over="log")
+)  # E: errstate[ufunc_config.Write]

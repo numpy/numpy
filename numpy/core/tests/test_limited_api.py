@@ -3,6 +3,7 @@ import shutil
 import subprocess
 import sys
 import sysconfig
+
 import pytest
 
 
@@ -32,7 +33,8 @@ def test_limited_api(tmp_path):
             "setup.py",
             "build",
             "install",
-            "--prefix", str(tmp_path / "installdir"),
+            "--prefix",
+            str(tmp_path / "installdir"),
             "--single-version-externally-managed",
             "--record",
             install_log,

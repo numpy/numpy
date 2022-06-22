@@ -3,9 +3,9 @@ Test machar. Given recent changes to hardcode type data, we might want to get
 rid of both MachAr and this test at some point.
 
 """
-from numpy.core._machar import MachAr
 import numpy.core.numerictypes as ntypes
-from numpy import errstate, array
+from numpy import array, errstate
+from numpy.core._machar import MachAr
 
 
 class TestMachAr:
@@ -22,7 +22,7 @@ class TestMachAr:
     def test_underlow(self):
         # Regression test for #759:
         # instantiating MachAr for dtype = np.float96 raises spurious warning.
-        with errstate(all='raise'):
+        with errstate(all="raise"):
             try:
                 self._run_machar_highprec()
             except FloatingPointError as e:

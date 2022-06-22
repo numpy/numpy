@@ -11,21 +11,21 @@
 #include "npy_config.h"
 #include "npy_pycompat.h"
 
-#include "common.h"
-#include "arraytypes.h"
-
 #include "conversion_utils.h"
+
 #include "alloc.h"
+#include "arraytypes.h"
+#include "common.h"
 #include "npy_buffer.h"
 
 static int
-PyArray_PyIntAsInt_ErrMsg(PyObject *o, const char * msg) NPY_GCC_NONNULL(2);
+PyArray_PyIntAsInt_ErrMsg(PyObject *o, const char *msg) NPY_GCC_NONNULL(2);
 static npy_intp
-PyArray_PyIntAsIntp_ErrMsg(PyObject *o, const char * msg) NPY_GCC_NONNULL(2);
+PyArray_PyIntAsIntp_ErrMsg(PyObject *o, const char *msg) NPY_GCC_NONNULL(2);
 
 /****************************************************************
-* Useful function for conversion when used with PyArg_ParseTuple
-****************************************************************/
+ * Useful function for conversion when used with PyArg_ParseTuple
+ ****************************************************************/
 
 /*NUMPY_API
  *
@@ -71,13 +71,11 @@ PyArray_OutputConverter(PyObject *object, PyArrayObject **address)
         return NPY_SUCCEED;
     }
     else {
-        PyErr_SetString(PyExc_TypeError,
-                        "output must be an array");
+        PyErr_SetString(PyExc_TypeError, "output must be an array");
         *address = NULL;
         return NPY_FAIL;
     }
 }
-
 
 /*
  * Convert the given value to an integer. Replaces the error when compared
@@ -92,7 +90,7 @@ dimension_from_scalar(PyObject *ob)
     if (error_converting(value)) {
         if (PyErr_ExceptionMatches(PyExc_OverflowError)) {
             PyErr_SetString(PyExc_ValueError,
-                    "Maximum allowed dimension exceeded");
+                            "Maximum allowed dimension exceeded");
         }
         return -1;
     }
@@ -121,8 +119,8 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
     if (obj == Py_None) {
         /* Numpy 1.20, 2020-05-31 */
         if (DEPRECATE(
-                "Passing None into shape arguments as an alias for () is "
-                "deprecated.") < 0){
+                    "Passing None into shape arguments as an alias for () is "
+                    "deprecated.") < 0) {
             return NPY_FAIL;
         }
         return NPY_SUCCEED;
@@ -135,8 +133,8 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
      * dimension_from_scalar as soon as possible.
      */
     if (!PyLong_CheckExact(obj) && PySequence_Check(obj)) {
-        seq_obj = PySequence_Fast(obj,
-               "expected a sequence of integers or a single integer.");
+        seq_obj = PySequence_Fast(
+                obj, "expected a sequence of integers or a single integer.");
         if (seq_obj == NULL) {
             /* continue attempting to parse as a single integer. */
             PyErr_Clear();
@@ -165,8 +163,9 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
                  */
                 if (PyErr_ExceptionMatches(PyExc_TypeError)) {
                     PyErr_Format(PyExc_TypeError,
-                            "expected a sequence of integers or a single "
-                            "integer, got '%.100R'", obj);
+                                 "expected a sequence of integers or a single "
+                                 "integer, got '%.100R'",
+                                 obj);
                 }
                 npy_free_cache_dim_obj(*seq);
                 seq->ptr = NULL;
@@ -181,8 +180,9 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
         Py_ssize_t len = PySequence_Fast_GET_SIZE(seq_obj);
         if (len > NPY_MAXDIMS) {
             PyErr_Format(PyExc_ValueError,
-                    "maximum supported dimension for an ndarray "
-                    "is %d, found %d", NPY_MAXDIMS, len);
+                         "maximum supported dimension for an ndarray "
+                         "is %d, found %d",
+                         NPY_MAXDIMS, len);
             Py_DECREF(seq_obj);
             return NPY_FAIL;
         }
@@ -196,8 +196,8 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
         }
 
         seq->len = len;
-        int nd = PyArray_IntpFromIndexSequence(seq_obj,
-                (npy_intp *)seq->ptr, len);
+        int nd = PyArray_IntpFromIndexSequence(seq_obj, (npy_intp *)seq->ptr,
+                                               len);
         Py_DECREF(seq_obj);
 
         if (nd == -1 || nd != len) {
@@ -225,19 +225,19 @@ PyArray_OptionalIntpConverter(PyObject *obj, PyArray_Dims *seq)
 }
 
 NPY_NO_EXPORT int
-PyArray_CopyConverter(PyObject *obj, _PyArray_CopyMode *copymode) {
+PyArray_CopyConverter(PyObject *obj, _PyArray_CopyMode *copymode)
+{
     if (obj == Py_None) {
-        PyErr_SetString(PyExc_ValueError,
-                        "NoneType copy mode not allowed.");
+        PyErr_SetString(PyExc_ValueError, "NoneType copy mode not allowed.");
         return NPY_FAIL;
     }
 
     int int_copymode;
-    static PyObject* numpy_CopyMode = NULL;
+    static PyObject *numpy_CopyMode = NULL;
     npy_cache_import("numpy", "_CopyMode", &numpy_CopyMode);
 
     if (numpy_CopyMode != NULL && (PyObject *)Py_TYPE(obj) == numpy_CopyMode) {
-        PyObject* mode_value = PyObject_GetAttrString(obj, "value");
+        PyObject *mode_value = PyObject_GetAttrString(obj, "value");
         if (mode_value == NULL) {
             return NPY_FAIL;
         }
@@ -284,18 +284,19 @@ PyArray_BufferConverter(PyObject *obj, PyArray_Chunk *buf)
         return NPY_SUCCEED;
     }
 
-    if (PyObject_GetBuffer(obj, &view,
-                PyBUF_ANY_CONTIGUOUS|PyBUF_WRITABLE|PyBUF_SIMPLE) != 0) {
+    if (PyObject_GetBuffer(
+                obj, &view,
+                PyBUF_ANY_CONTIGUOUS | PyBUF_WRITABLE | PyBUF_SIMPLE) != 0) {
         PyErr_Clear();
         buf->flags &= ~NPY_ARRAY_WRITEABLE;
         if (PyObject_GetBuffer(obj, &view,
-                PyBUF_ANY_CONTIGUOUS|PyBUF_SIMPLE) != 0) {
+                               PyBUF_ANY_CONTIGUOUS | PyBUF_SIMPLE) != 0) {
             return NPY_FAIL;
         }
     }
 
     buf->ptr = view.buf;
-    buf->len = (npy_intp) view.len;
+    buf->len = (npy_intp)view.len;
 
     /*
      * In Python 3 both of the deprecated functions PyObject_AsWriteBuffer and
@@ -327,17 +328,18 @@ PyArray_AxisConverter(PyObject *obj, int *axis)
         *axis = NPY_MAXDIMS;
     }
     else {
-        *axis = PyArray_PyIntAsInt_ErrMsg(obj,
-                               "an integer is required for the axis");
+        *axis = PyArray_PyIntAsInt_ErrMsg(
+                obj, "an integer is required for the axis");
         if (error_converting(*axis)) {
             return NPY_FAIL;
         }
-        if (*axis == NPY_MAXDIMS){
+        if (*axis == NPY_MAXDIMS) {
             /* NumPy 1.23, 2022-05-19 */
-            if (DEPRECATE("Using `axis=32` (MAXDIMS) is deprecated. "
-                          "32/MAXDIMS had the same meaning as `axis=None` which "
-                          "should be used instead.  "
-                          "(Deprecated NumPy 1.23)") < 0) {
+            if (DEPRECATE(
+                        "Using `axis=32` (MAXDIMS) is deprecated. "
+                        "32/MAXDIMS had the same meaning as `axis=None` which "
+                        "should be used instead.  "
+                        "(Deprecated NumPy 1.23)") < 0) {
                 return NPY_FAIL;
             }
         }
@@ -373,8 +375,8 @@ PyArray_ConvertMultiAxis(PyObject *axis_in, int ndim, npy_bool *out_axis_flags)
         }
         for (i = 0; i < naxes; ++i) {
             PyObject *tmp = PyTuple_GET_ITEM(axis_in, i);
-            int axis = PyArray_PyIntAsInt_ErrMsg(tmp,
-                          "integers are required for the axis tuple elements");
+            int axis = PyArray_PyIntAsInt_ErrMsg(
+                    tmp, "integers are required for the axis tuple elements");
             if (error_converting(axis)) {
                 return NPY_FAIL;
             }
@@ -382,8 +384,7 @@ PyArray_ConvertMultiAxis(PyObject *axis_in, int ndim, npy_bool *out_axis_flags)
                 return NPY_FAIL;
             }
             if (out_axis_flags[axis]) {
-                PyErr_SetString(PyExc_ValueError,
-                        "duplicate value in 'axis'");
+                PyErr_SetString(PyExc_ValueError, "duplicate value in 'axis'");
                 return NPY_FAIL;
             }
             out_axis_flags[axis] = 1;
@@ -397,8 +398,8 @@ PyArray_ConvertMultiAxis(PyObject *axis_in, int ndim, npy_bool *out_axis_flags)
 
         memset(out_axis_flags, 0, ndim);
 
-        axis = PyArray_PyIntAsInt_ErrMsg(axis_in,
-                                   "an integer is required for the axis");
+        axis = PyArray_PyIntAsInt_ErrMsg(
+                axis_in, "an integer is required for the axis");
 
         if (error_converting(axis)) {
             return NPY_FAIL;
@@ -440,20 +441,17 @@ PyArray_BoolConverter(PyObject *object, npy_bool *val)
 }
 
 static int
-string_converter_helper(
-    PyObject *object,
-    void *out,
-    int (*str_func)(char const*, Py_ssize_t, void*),
-    char const *name,
-    char const *message)
+string_converter_helper(PyObject *object, void *out,
+                        int (*str_func)(char const *, Py_ssize_t, void *),
+                        char const *name, char const *message)
 {
     /* allow bytes for compatibility */
     PyObject *str_object = NULL;
     if (PyBytes_Check(object)) {
         str_object = PyUnicode_FromEncodedObject(object, NULL, NULL);
         if (str_object == NULL) {
-            PyErr_Format(PyExc_ValueError,
-                "%s %s (got %R)", name, message, object);
+            PyErr_Format(PyExc_ValueError, "%s %s (got %R)", name, message,
+                         object);
             return NPY_FAIL;
         }
     }
@@ -462,8 +460,8 @@ string_converter_helper(
         Py_INCREF(str_object);
     }
     else {
-        PyErr_Format(PyExc_TypeError,
-            "%s must be str, not %s", name, Py_TYPE(object)->tp_name);
+        PyErr_Format(PyExc_TypeError, "%s must be str, not %s", name,
+                     Py_TYPE(object)->tp_name);
         return NPY_FAIL;
     }
 
@@ -479,15 +477,16 @@ string_converter_helper(
     if (ret < 0) {
         /* str_func returns -1 without an exception if the value is wrong */
         if (!PyErr_Occurred()) {
-            PyErr_Format(PyExc_ValueError,
-                "%s %s (got %R)", name, message, object);
+            PyErr_Format(PyExc_ValueError, "%s %s (got %R)", name, message,
+                         object);
         }
         return NPY_FAIL;
     }
     return NPY_SUCCEED;
 }
 
-static int byteorder_parser(char const *str, Py_ssize_t length, void *data)
+static int
+byteorder_parser(char const *str, Py_ssize_t length, void *data)
 {
     char *endian = (char *)data;
 
@@ -530,11 +529,12 @@ static int byteorder_parser(char const *str, Py_ssize_t length, void *data)
 NPY_NO_EXPORT int
 PyArray_ByteorderConverter(PyObject *obj, char *endian)
 {
-    return string_converter_helper(
-        obj, (void *)endian, byteorder_parser, "byteorder", "not recognized");
+    return string_converter_helper(obj, (void *)endian, byteorder_parser,
+                                   "byteorder", "not recognized");
 }
 
-static int sortkind_parser(char const *str, Py_ssize_t length, void *data)
+static int
+sortkind_parser(char const *str, Py_ssize_t length, void *data)
 {
     NPY_SORTKIND *sortkind = (NPY_SORTKIND *)data;
 
@@ -586,11 +586,12 @@ PyArray_SortkindConverter(PyObject *obj, NPY_SORTKIND *sortkind)
         return NPY_SUCCEED;
     }
     return string_converter_helper(
-        obj, (void *)sortkind, sortkind_parser, "sort kind",
-        "must be one of 'quick', 'heap', or 'stable'");
+            obj, (void *)sortkind, sortkind_parser, "sort kind",
+            "must be one of 'quick', 'heap', or 'stable'");
 }
 
-static int selectkind_parser(char const *str, Py_ssize_t length, void *data)
+static int
+selectkind_parser(char const *str, Py_ssize_t length, void *data)
 {
     NPY_SELECTKIND *selectkind = (NPY_SELECTKIND *)data;
 
@@ -609,12 +610,12 @@ static int selectkind_parser(char const *str, Py_ssize_t length, void *data)
 NPY_NO_EXPORT int
 PyArray_SelectkindConverter(PyObject *obj, NPY_SELECTKIND *selectkind)
 {
-    return string_converter_helper(
-        obj, (void *)selectkind, selectkind_parser, "select kind",
-        "must be 'introselect'");
+    return string_converter_helper(obj, (void *)selectkind, selectkind_parser,
+                                   "select kind", "must be 'introselect'");
 }
 
-static int searchside_parser(char const *str, Py_ssize_t length, void *data)
+static int
+searchside_parser(char const *str, Py_ssize_t length, void *data)
 {
     NPY_SEARCHSIDE *side = (NPY_SEARCHSIDE *)data;
     int is_exact = 0;
@@ -655,12 +656,12 @@ static int searchside_parser(char const *str, Py_ssize_t length, void *data)
 NPY_NO_EXPORT int
 PyArray_SearchsideConverter(PyObject *obj, void *addr)
 {
-    return string_converter_helper(
-        obj, addr, searchside_parser, "search side",
-        "must be 'left' or 'right'");
+    return string_converter_helper(obj, addr, searchside_parser, "search side",
+                                   "must be 'left' or 'right'");
 }
 
-static int order_parser(char const *str, Py_ssize_t length, void *data)
+static int
+order_parser(char const *str, Py_ssize_t length, void *data)
 {
     NPY_ORDER *val = (NPY_ORDER *)data;
     if (length != 1) {
@@ -697,12 +698,12 @@ PyArray_OrderConverter(PyObject *object, NPY_ORDER *val)
     if (object == Py_None) {
         return NPY_SUCCEED;
     }
-    return string_converter_helper(
-        object, (void *)val, order_parser, "order",
-        "must be one of 'C', 'F', 'A', or 'K'");
+    return string_converter_helper(object, (void *)val, order_parser, "order",
+                                   "must be one of 'C', 'F', 'A', or 'K'");
 }
 
-static int clipmode_parser(char const *str, Py_ssize_t length, void *data)
+static int
+clipmode_parser(char const *str, Py_ssize_t length, void *data)
 {
     NPY_CLIPMODE *val = (NPY_CLIPMODE *)data;
     int is_exact = 0;
@@ -753,8 +754,8 @@ PyArray_ClipmodeConverter(PyObject *object, NPY_CLIPMODE *val)
 
     else if (PyBytes_Check(object) || PyUnicode_Check(object)) {
         return string_converter_helper(
-            object, (void *)val, clipmode_parser, "clipmode",
-            "must be one of 'clip', 'raise', or 'wrap'");
+                object, (void *)val, clipmode_parser, "clipmode",
+                "must be one of 'clip', 'raise', or 'wrap'");
     }
     else {
         /* For users passing `np.RAISE`, `np.WRAP`, `np.CLIP` */
@@ -762,20 +763,19 @@ PyArray_ClipmodeConverter(PyObject *object, NPY_CLIPMODE *val)
         if (error_converting(number)) {
             goto fail;
         }
-        if (number <= (int) NPY_RAISE
-                && number >= (int) NPY_CLIP) {
-            *val = (NPY_CLIPMODE) number;
+        if (number <= (int)NPY_RAISE && number >= (int)NPY_CLIP) {
+            *val = (NPY_CLIPMODE)number;
         }
         else {
-            PyErr_Format(PyExc_ValueError,
+            PyErr_Format(
+                    PyExc_ValueError,
                     "integer clipmode must be np.RAISE, np.WRAP, or np.CLIP");
         }
     }
     return NPY_SUCCEED;
 
- fail:
-    PyErr_SetString(PyExc_TypeError,
-                    "clipmode not understood");
+fail:
+    PyErr_SetString(PyExc_TypeError, "clipmode not understood");
     return NPY_FAIL;
 }
 
@@ -791,7 +791,8 @@ PyArray_ConvertClipmodeSequence(PyObject *object, NPY_CLIPMODE *modes, int n)
     /* Get the clip mode(s) */
     if (object && (PyTuple_Check(object) || PyList_Check(object))) {
         if (PySequence_Size(object) != n) {
-            PyErr_Format(PyExc_ValueError,
+            PyErr_Format(
+                    PyExc_ValueError,
                     "list of clipmodes has wrong length (%zd instead of %d)",
                     PySequence_Size(object), n);
             return NPY_FAIL;
@@ -799,11 +800,11 @@ PyArray_ConvertClipmodeSequence(PyObject *object, NPY_CLIPMODE *modes, int n)
 
         for (i = 0; i < n; ++i) {
             PyObject *item = PySequence_GetItem(object, i);
-            if(item == NULL) {
+            if (item == NULL) {
                 return NPY_FAIL;
             }
 
-            if(PyArray_ClipmodeConverter(item, &modes[i]) != NPY_SUCCEED) {
+            if (PyArray_ClipmodeConverter(item, &modes[i]) != NPY_SUCCEED) {
                 Py_DECREF(item);
                 return NPY_FAIL;
             }
@@ -822,7 +823,8 @@ PyArray_ConvertClipmodeSequence(PyObject *object, NPY_CLIPMODE *modes, int n)
     return NPY_SUCCEED;
 }
 
-static int correlatemode_parser(char const *str, Py_ssize_t length, void *data)
+static int
+correlatemode_parser(char const *str, Py_ssize_t length, void *data)
 {
     NPY_CORRELATEMODE *val = (NPY_CORRELATEMODE *)data;
     int is_exact = 0;
@@ -869,8 +871,8 @@ PyArray_CorrelatemodeConverter(PyObject *object, NPY_CORRELATEMODE *val)
 {
     if (PyUnicode_Check(object)) {
         return string_converter_helper(
-            object, (void *)val, correlatemode_parser, "mode",
-            "must be one of 'valid', 'same', or 'full'");
+                object, (void *)val, correlatemode_parser, "mode",
+                "must be one of 'valid', 'same', or 'full'");
     }
 
     else {
@@ -878,59 +880,59 @@ PyArray_CorrelatemodeConverter(PyObject *object, NPY_CORRELATEMODE *val)
         int number = PyArray_PyIntAsInt(object);
         if (error_converting(number)) {
             PyErr_SetString(PyExc_TypeError,
-                        "convolve/correlate mode not understood");
+                            "convolve/correlate mode not understood");
             return NPY_FAIL;
         }
-        if (number <= (int) NPY_FULL
-                && number >= (int) NPY_VALID) {
-            *val = (NPY_CORRELATEMODE) number;
+        if (number <= (int)NPY_FULL && number >= (int)NPY_VALID) {
+            *val = (NPY_CORRELATEMODE)number;
             return NPY_SUCCEED;
         }
         else {
             PyErr_Format(PyExc_ValueError,
-                    "integer convolve/correlate mode must be 0, 1, or 2");
+                         "integer convolve/correlate mode must be 0, 1, or 2");
             return NPY_FAIL;
         }
     }
 }
 
-static int casting_parser(char const *str, Py_ssize_t length, void *data)
+static int
+casting_parser(char const *str, Py_ssize_t length, void *data)
 {
     NPY_CASTING *casting = (NPY_CASTING *)data;
     if (length < 2) {
         return -1;
     }
     switch (str[2]) {
-    case 0:
-        if (length == 2 && strcmp(str, "no") == 0) {
-            *casting = NPY_NO_CASTING;
-            return 0;
-        }
-        break;
-    case 'u':
-        if (length == 5 && strcmp(str, "equiv") == 0) {
-            *casting = NPY_EQUIV_CASTING;
-            return 0;
-        }
-        break;
-    case 'f':
-        if (length == 4 && strcmp(str, "safe") == 0) {
-            *casting = NPY_SAFE_CASTING;
-            return 0;
-        }
-        break;
-    case 'm':
-        if (length == 9 && strcmp(str, "same_kind") == 0) {
-            *casting = NPY_SAME_KIND_CASTING;
-            return 0;
-        }
-        break;
-    case 's':
-        if (length == 6 && strcmp(str, "unsafe") == 0) {
-            *casting = NPY_UNSAFE_CASTING;
-            return 0;
-        }
-        break;
+        case 0:
+            if (length == 2 && strcmp(str, "no") == 0) {
+                *casting = NPY_NO_CASTING;
+                return 0;
+            }
+            break;
+        case 'u':
+            if (length == 5 && strcmp(str, "equiv") == 0) {
+                *casting = NPY_EQUIV_CASTING;
+                return 0;
+            }
+            break;
+        case 'f':
+            if (length == 4 && strcmp(str, "safe") == 0) {
+                *casting = NPY_SAFE_CASTING;
+                return 0;
+            }
+            break;
+        case 'm':
+            if (length == 9 && strcmp(str, "same_kind") == 0) {
+                *casting = NPY_SAME_KIND_CASTING;
+                return 0;
+            }
+            break;
+        case 's':
+            if (length == 6 && strcmp(str, "unsafe") == 0) {
+                *casting = NPY_UNSAFE_CASTING;
+                return 0;
+            }
+            break;
     }
     return -1;
 }
@@ -941,19 +943,19 @@ static int casting_parser(char const *str, Py_ssize_t length, void *data)
 NPY_NO_EXPORT int
 PyArray_CastingConverter(PyObject *obj, NPY_CASTING *casting)
 {
-    return string_converter_helper(
-        obj, (void *)casting, casting_parser, "casting",
-            "must be one of 'no', 'equiv', 'safe', "
-            "'same_kind', or 'unsafe'");
+    return string_converter_helper(obj, (void *)casting, casting_parser,
+                                   "casting",
+                                   "must be one of 'no', 'equiv', 'safe', "
+                                   "'same_kind', or 'unsafe'");
     return 0;
 }
 
 /*****************************
-* Other conversion functions
-*****************************/
+ * Other conversion functions
+ *****************************/
 
 static int
-PyArray_PyIntAsInt_ErrMsg(PyObject *o, const char * msg)
+PyArray_PyIntAsInt_ErrMsg(PyObject *o, const char *msg)
 {
     npy_intp long_value;
     /* This assumes that NPY_SIZEOF_INTP >= NPY_SIZEOF_INT */
@@ -965,7 +967,7 @@ PyArray_PyIntAsInt_ErrMsg(PyObject *o, const char * msg)
         return -1;
     }
 #endif
-    return (int) long_value;
+    return (int)long_value;
 }
 
 /*NUMPY_API*/
@@ -976,7 +978,7 @@ PyArray_PyIntAsInt(PyObject *o)
 }
 
 static npy_intp
-PyArray_PyIntAsIntp_ErrMsg(PyObject *o, const char * msg)
+PyArray_PyIntAsIntp_ErrMsg(PyObject *o, const char *msg)
 {
 #if (NPY_SIZEOF_LONG < NPY_SIZEOF_INTP)
     long long long_value = -1;
@@ -1036,21 +1038,21 @@ PyArray_PyIntAsIntp_ErrMsg(PyObject *o, const char * msg)
 
 overflow_check:
 #if (NPY_SIZEOF_LONG < NPY_SIZEOF_INTP)
-  #if (NPY_SIZEOF_LONGLONG > NPY_SIZEOF_INTP)
+#if (NPY_SIZEOF_LONGLONG > NPY_SIZEOF_INTP)
     if ((long_value < NPY_MIN_INTP) || (long_value > NPY_MAX_INTP)) {
         PyErr_SetString(PyExc_OverflowError,
-                "Python int too large to convert to C numpy.intp");
+                        "Python int too large to convert to C numpy.intp");
         return -1;
     }
-  #endif
+#endif
 #else
-  #if (NPY_SIZEOF_LONG > NPY_SIZEOF_INTP)
+#if (NPY_SIZEOF_LONG > NPY_SIZEOF_INTP)
     if ((long_value < NPY_MIN_INTP) || (long_value > NPY_MAX_INTP)) {
         PyErr_SetString(PyExc_OverflowError,
-                "Python int too large to convert to C numpy.intp");
+                        "Python int too large to convert to C numpy.intp");
         return -1;
     }
-  #endif
+#endif
 #endif
     return long_value;
 }
@@ -1062,7 +1064,6 @@ PyArray_PyIntAsIntp(PyObject *o)
     return PyArray_PyIntAsIntp_ErrMsg(o, "an integer is required");
 }
 
-
 NPY_NO_EXPORT int
 PyArray_IntpFromPyIntConverter(PyObject *o, npy_intp *val)
 {
@@ -1073,14 +1074,14 @@ PyArray_IntpFromPyIntConverter(PyObject *o, npy_intp *val)
     return NPY_SUCCEED;
 }
 
-
 /**
  * Reads values from a sequence of integers and stores them into an array.
  *
  * @param  seq      A sequence created using `PySequence_Fast`.
  * @param  vals     Array used to store dimensions (must be large enough to
  *                      hold `maxvals` values).
- * @param  max_vals Maximum number of dimensions that can be written into `vals`.
+ * @param  max_vals Maximum number of dimensions that can be written into
+ * `vals`.
  * @return          Number of dimensions or -1 if an error occurred.
  *
  * .. note::
@@ -1118,8 +1119,8 @@ PyArray_IntpFromSequence(PyObject *seq, npy_intp *vals, int maxvals)
 {
     PyObject *seq_obj = NULL;
     if (!PyLong_CheckExact(seq) && PySequence_Check(seq)) {
-        seq_obj = PySequence_Fast(seq,
-            "expected a sequence of integers or a single integer");
+        seq_obj = PySequence_Fast(
+                seq, "expected a sequence of integers or a single integer");
         if (seq_obj == NULL) {
             /* continue attempting to parse as a single integer. */
             PyErr_Clear();
@@ -1131,8 +1132,9 @@ PyArray_IntpFromSequence(PyObject *seq, npy_intp *vals, int maxvals)
         if (error_converting(vals[0])) {
             if (PyErr_ExceptionMatches(PyExc_TypeError)) {
                 PyErr_Format(PyExc_TypeError,
-                        "expected a sequence of integers or a single "
-                        "integer, got '%.100R'", seq);
+                             "expected a sequence of integers or a single "
+                             "integer, got '%.100R'",
+                             seq);
             }
             return -1;
         }
@@ -1145,7 +1147,6 @@ PyArray_IntpFromSequence(PyObject *seq, npy_intp *vals, int maxvals)
         return res;
     }
 }
-
 
 /**
  * WARNING: This flag is a bad idea, but was the only way to both
@@ -1175,7 +1176,7 @@ PyArray_TypestrConvert(int itemsize, int gentype)
             break;
 
         case NPY_SIGNEDLTR:
-            switch(itemsize) {
+            switch (itemsize) {
                 case 1:
                     newtype = NPY_INT8;
                     break;
@@ -1197,7 +1198,7 @@ PyArray_TypestrConvert(int itemsize, int gentype)
             break;
 
         case NPY_UNSIGNEDLTR:
-            switch(itemsize) {
+            switch (itemsize) {
                 case 1:
                     newtype = NPY_UINT8;
                     break;
@@ -1219,7 +1220,7 @@ PyArray_TypestrConvert(int itemsize, int gentype)
             break;
 
         case NPY_FLOATINGLTR:
-            switch(itemsize) {
+            switch (itemsize) {
                 case 2:
                     newtype = NPY_FLOAT16;
                     break;
@@ -1248,7 +1249,7 @@ PyArray_TypestrConvert(int itemsize, int gentype)
             break;
 
         case NPY_COMPLEXLTR:
-            switch(itemsize) {
+            switch (itemsize) {
                 case 8:
                     newtype = NPY_COMPLEX64;
                     break;
@@ -1283,7 +1284,8 @@ PyArray_TypestrConvert(int itemsize, int gentype)
                 int ret = 0;
                 if (evil_global_disable_warn_O4O8_flag) {
                     /* 2012-02-04, 1.7, not sure when this can be removed */
-                    ret = DEPRECATE("DType strings 'O4' and 'O8' are "
+                    ret = DEPRECATE(
+                            "DType strings 'O4' and 'O8' are "
                             "deprecated because they are platform "
                             "specific. Use 'O' instead");
                 }
@@ -1347,6 +1349,6 @@ PyArray_IntTupleFromIntp(int len, npy_intp const *vals)
         PyTuple_SET_ITEM(intTuple, i, o);
     }
 
- fail:
+fail:
     return intTuple;
 }

@@ -5,26 +5,23 @@
 extern "C" {
 #endif
 
-NPY_NO_EXPORT char*
-NumPyOS_ascii_formatd(char *buffer, size_t buf_size,
-                      const char *format,
+NPY_NO_EXPORT char *
+NumPyOS_ascii_formatd(char *buffer, size_t buf_size, const char *format,
                       double val, int decimal);
 
-NPY_NO_EXPORT char*
-NumPyOS_ascii_formatf(char *buffer, size_t buf_size,
-                      const char *format,
+NPY_NO_EXPORT char *
+NumPyOS_ascii_formatf(char *buffer, size_t buf_size, const char *format,
                       float val, int decimal);
 
-NPY_NO_EXPORT char*
-NumPyOS_ascii_formatl(char *buffer, size_t buf_size,
-                      const char *format,
+NPY_NO_EXPORT char *
+NumPyOS_ascii_formatl(char *buffer, size_t buf_size, const char *format,
                       long double val, int decimal);
 
 NPY_NO_EXPORT double
-NumPyOS_ascii_strtod(const char *s, char** endptr);
+NumPyOS_ascii_strtod(const char *s, char **endptr);
 
 NPY_NO_EXPORT long double
-NumPyOS_ascii_strtold(const char *s, char** endptr);
+NumPyOS_ascii_strtold(const char *s, char **endptr);
 
 NPY_NO_EXPORT int
 NumPyOS_ascii_ftolf(FILE *fp, double *value);
@@ -47,4 +44,4 @@ NumPyOS_strtoull(const char *str, char **endptr, int base);
 }
 #endif
 
-#endif  /* NUMPY_CORE_SRC_COMMON_NPY_NUMPYOS_H_ */
+#endif /* NUMPY_CORE_SRC_COMMON_NPY_NUMPYOS_H_ */

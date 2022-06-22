@@ -1,6 +1,6 @@
-from .common import Benchmark, TYPES1, get_squares
-
 import numpy as np
+
+from .common import TYPES1, Benchmark, get_squares
 
 
 class AddReduce(Benchmark):
@@ -16,7 +16,7 @@ class AddReduce(Benchmark):
 
 class AddReduceSeparate(Benchmark):
     params = [[0, 1], TYPES1]
-    param_names = ['axis', 'type']
+    param_names = ["axis", "type"]
 
     def setup(self, axis, typename):
         self.a = get_squares()[typename]
@@ -46,9 +46,20 @@ class AnyAll(Benchmark):
 
 
 class MinMax(Benchmark):
-    params = [np.int8, np.uint8, np.int16, np.uint16, np.int32, np.uint32,
-              np.int64, np.uint64, np.float32, np.float64, np.intp]
-    param_names = ['dtype']
+    params = [
+        np.int8,
+        np.uint8,
+        np.int16,
+        np.uint16,
+        np.int32,
+        np.uint32,
+        np.int64,
+        np.uint64,
+        np.float32,
+        np.float64,
+        np.intp,
+    ]
+    param_names = ["dtype"]
 
     def setup(self, dtype):
         self.d = np.ones(20000, dtype=dtype)
@@ -59,9 +70,10 @@ class MinMax(Benchmark):
     def time_max(self, dtype):
         np.max(self.d)
 
+
 class FMinMax(Benchmark):
     params = [np.float32, np.float64]
-    param_names = ['dtype']
+    param_names = ["dtype"]
 
     def setup(self, dtype):
         self.d = np.ones(20000, dtype=dtype)
@@ -72,10 +84,22 @@ class FMinMax(Benchmark):
     def time_max(self, dtype):
         np.fmax.reduce(self.d)
 
+
 class ArgMax(Benchmark):
-    params = [np.int8, np.uint8, np.int16, np.uint16, np.int32, np.uint32,
-              np.int64, np.uint64, np.float32, np.float64, bool]
-    param_names = ['dtype']
+    params = [
+        np.int8,
+        np.uint8,
+        np.int16,
+        np.uint16,
+        np.int32,
+        np.uint32,
+        np.int64,
+        np.uint64,
+        np.float32,
+        np.float64,
+        bool,
+    ]
+    param_names = ["dtype"]
 
     def setup(self, dtype):
         self.d = np.zeros(200000, dtype=dtype)
@@ -83,16 +107,29 @@ class ArgMax(Benchmark):
     def time_argmax(self, dtype):
         np.argmax(self.d)
 
+
 class ArgMin(Benchmark):
-    params = [np.int8, np.uint8, np.int16, np.uint16, np.int32, np.uint32,
-              np.int64, np.uint64, np.float32, np.float64, bool]
-    param_names = ['dtype']
+    params = [
+        np.int8,
+        np.uint8,
+        np.int16,
+        np.uint16,
+        np.int32,
+        np.uint32,
+        np.int64,
+        np.uint64,
+        np.float32,
+        np.float64,
+        bool,
+    ]
+    param_names = ["dtype"]
 
     def setup(self, dtype):
         self.d = np.ones(200000, dtype=dtype)
 
     def time_argmin(self, dtype):
         np.argmin(self.d)
+
 
 class SmallReduction(Benchmark):
     def setup(self):

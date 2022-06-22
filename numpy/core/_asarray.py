@@ -3,16 +3,10 @@ Functions in the ``as*array`` family that promote array-likes into arrays.
 
 `require` fits this category despite its name not matching this pattern.
 """
-from .overrides import (
-    array_function_dispatch,
-    set_array_function_like_doc,
-    set_module,
-)
 from .multiarray import array, asanyarray
-
+from .overrides import array_function_dispatch, set_array_function_like_doc, set_module
 
 __all__ = ["require"]
-
 
 
 def _require_dispatcher(a, dtype=None, requirements=None, *, like=None):
@@ -20,7 +14,7 @@ def _require_dispatcher(a, dtype=None, requirements=None, *, like=None):
 
 
 @set_array_function_like_doc
-@set_module('numpy')
+@set_module("numpy")
 def require(a, dtype=None, requirements=None, *, like=None):
     """
     Return an ndarray of the provided type that satisfies requirements.
@@ -97,32 +91,42 @@ def require(a, dtype=None, requirements=None, *, like=None):
             like=like,
         )
 
-    possible_flags = {'C': 'C', 'C_CONTIGUOUS': 'C', 'CONTIGUOUS': 'C',
-                      'F': 'F', 'F_CONTIGUOUS': 'F', 'FORTRAN': 'F',
-                      'A': 'A', 'ALIGNED': 'A',
-                      'W': 'W', 'WRITEABLE': 'W',
-                      'O': 'O', 'OWNDATA': 'O',
-                      'E': 'E', 'ENSUREARRAY': 'E'}
+    possible_flags = {
+        "C": "C",
+        "C_CONTIGUOUS": "C",
+        "CONTIGUOUS": "C",
+        "F": "F",
+        "F_CONTIGUOUS": "F",
+        "FORTRAN": "F",
+        "A": "A",
+        "ALIGNED": "A",
+        "W": "W",
+        "WRITEABLE": "W",
+        "O": "O",
+        "OWNDATA": "O",
+        "E": "E",
+        "ENSUREARRAY": "E",
+    }
     if not requirements:
         return asanyarray(a, dtype=dtype)
     else:
         requirements = {possible_flags[x.upper()] for x in requirements}
 
-    if 'E' in requirements:
-        requirements.remove('E')
+    if "E" in requirements:
+        requirements.remove("E")
         subok = False
     else:
         subok = True
 
-    order = 'A'
-    if requirements >= {'C', 'F'}:
+    order = "A"
+    if requirements >= {"C", "F"}:
         raise ValueError('Cannot specify both "C" and "F" order')
-    elif 'F' in requirements:
-        order = 'F'
-        requirements.remove('F')
-    elif 'C' in requirements:
-        order = 'C'
-        requirements.remove('C')
+    elif "F" in requirements:
+        order = "F"
+        requirements.remove("F")
+    elif "C" in requirements:
+        order = "C"
+        requirements.remove("C")
 
     arr = array(a, dtype=dtype, order=order, copy=False, subok=subok)
 
@@ -133,6 +137,4 @@ def require(a, dtype=None, requirements=None, *, like=None):
     return arr
 
 
-_require_with_like = array_function_dispatch(
-    _require_dispatcher
-)(require)
+_require_with_like = array_function_dispatch(_require_dispatcher)(require)

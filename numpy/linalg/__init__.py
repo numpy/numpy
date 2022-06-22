@@ -76,5 +76,6 @@ from .linalg import *
 __all__ = linalg.__all__.copy()
 
 from numpy._pytesttester import PytestTester
+
 test = PytestTester(__name__)
 del PytestTester

@@ -1,29 +1,29 @@
 from collections.abc import Sequence
-from typing import TypeVar, Any, overload, Union, Literal
+from typing import Any, Literal, TypeVar, Union, overload
 
 from numpy import (
-    ndarray,
-    dtype,
-    bool_,
-    unsignedinteger,
-    signedinteger,
-    floating,
-    complexfloating,
-    number,
     _OrderKACF,
+    bool_,
+    complexfloating,
+    dtype,
+    floating,
+    ndarray,
+    number,
+    signedinteger,
+    unsignedinteger,
 )
 from numpy._typing import (
     _ArrayLikeBool_co,
-    _ArrayLikeUInt_co,
-    _ArrayLikeInt_co,
-    _ArrayLikeFloat_co,
     _ArrayLikeComplex_co,
+    _ArrayLikeFloat_co,
+    _ArrayLikeInt_co,
+    _ArrayLikeUInt_co,
     _DTypeLikeBool,
-    _DTypeLikeUInt,
-    _DTypeLikeInt,
-    _DTypeLikeFloat,
     _DTypeLikeComplex,
     _DTypeLikeComplex_co,
+    _DTypeLikeFloat,
+    _DTypeLikeInt,
+    _DTypeLikeUInt,
 )
 
 _ArrayType = TypeVar(

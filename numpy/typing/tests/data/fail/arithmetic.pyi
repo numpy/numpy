@@ -1,4 +1,5 @@
 from typing import Any
+
 import numpy as np
 
 b_ = np.bool_()

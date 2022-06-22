@@ -8,4 +8,5 @@
  * @param  str  leave a comment for the second parameter.
  * @return      leave a comment for the returned value.
  */
-int doxy_javadoc_example(int num, const char *str);
+int
+doxy_javadoc_example(int num, const char *str);

@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from ._array_object import Array
-from ._dtypes import _result_type
-
 from typing import Optional, Tuple
 
 import numpy as np
+
+from ._array_object import Array
+from ._dtypes import _result_type
 
 
 def argmax(x: Array, /, *, axis: Optional[int] = None, keepdims: bool = False) -> Array:

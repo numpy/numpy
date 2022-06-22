@@ -2,8 +2,8 @@
 #ifndef NUMPY_CORE_SRC_MULTIARRAY_TEXTREADING_FIELD_TYPES_H_
 #define NUMPY_CORE_SRC_MULTIARRAY_TEXTREADING_FIELD_TYPES_H_
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
 #include "numpy/ndarraytypes.h"
@@ -45,9 +45,9 @@
  *          error may or may not be set.  If an error is set, it is chained
  *          behind the generic ValueError.
  */
-typedef int (set_from_ucs4_function)(
-        PyArray_Descr *descr, const Py_UCS4 *str, const Py_UCS4 *end,
-        char *dataptr, parser_config *pconfig);
+typedef int(set_from_ucs4_function)(PyArray_Descr *descr, const Py_UCS4 *str,
+                                    const Py_UCS4 *end, char *dataptr,
+                                    parser_config *pconfig);
 
 typedef struct _field_type {
     set_from_ucs4_function *set_from_ucs4;
@@ -57,11 +57,10 @@ typedef struct _field_type {
     npy_intp structured_offset;
 } field_type;
 
-
 NPY_NO_EXPORT void
 field_types_xclear(int num_field_types, field_type *ft);
 
 NPY_NO_EXPORT npy_intp
 field_types_create(PyArray_Descr *descr, field_type **ft);
 
-#endif  /* NUMPY_CORE_SRC_MULTIARRAY_TEXTREADING_FIELD_TYPES_H_ */
+#endif /* NUMPY_CORE_SRC_MULTIARRAY_TEXTREADING_FIELD_TYPES_H_ */

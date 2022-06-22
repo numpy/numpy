@@ -37,13 +37,12 @@ typedef struct _stream {
     int (*stream_close)(struct _stream *strm);
 } stream;
 
-
-#define stream_nextbuf(s, start, end, kind)  \
-        ((s)->stream_nextbuf((s), start, end, kind))
-#define stream_close(s)    ((s)->stream_close((s)))
+#define stream_nextbuf(s, start, end, kind) \
+    ((s)->stream_nextbuf((s), start, end, kind))
+#define stream_close(s) ((s)->stream_close((s)))
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif  /* NUMPY_CORE_SRC_MULTIARRAY_TEXTREADING_STREAM_H_ */
+#endif /* NUMPY_CORE_SRC_MULTIARRAY_TEXTREADING_STREAM_H_ */

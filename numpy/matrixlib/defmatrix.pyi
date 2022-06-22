@@ -1,5 +1,6 @@
-from collections.abc import Sequence, Mapping
+from collections.abc import Mapping, Sequence
 from typing import Any
+
 from numpy import matrix as matrix
 from numpy._typing import ArrayLike, DTypeLike, NDArray
 
@@ -10,7 +11,6 @@ def bmat(
     ldict: None | Mapping[str, Any] = ...,
     gdict: None | Mapping[str, Any] = ...,
 ) -> matrix[Any, Any]: ...
-
 def asmatrix(data: ArrayLike, dtype: DTypeLike = ...) -> matrix[Any, Any]: ...
 
 mat = asmatrix

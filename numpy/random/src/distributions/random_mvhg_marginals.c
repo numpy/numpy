@@ -1,11 +1,11 @@
 #include "numpy/random/distributions.h"
-#include <stdint.h>
-#include <stddef.h>
-#include <stdbool.h>
-#include <math.h>
 
 #include "logfactorial.h"
 
+#include <math.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
 
 /*
  *  random_multivariate_hypergeometric_marginals
@@ -95,11 +95,12 @@
  *    *  the product num_variates * num_colors does not overflow
  */
 
-void random_multivariate_hypergeometric_marginals(bitgen_t *bitgen_state,
-                           int64_t total,
-                           size_t num_colors, int64_t *colors,
-                           int64_t nsample,
-                           size_t num_variates, int64_t *variates)
+void
+random_multivariate_hypergeometric_marginals(bitgen_t *bitgen_state,
+                                             int64_t total, size_t num_colors,
+                                             int64_t *colors, int64_t nsample,
+                                             size_t num_variates,
+                                             int64_t *variates)
 {
     bool more_than_half;
 
@@ -119,8 +120,8 @@ void random_multivariate_hypergeometric_marginals(bitgen_t *bitgen_state,
         for (size_t j = 0; (num_to_sample > 0) && (j + 1 < num_colors); ++j) {
             int64_t r;
             remaining -= colors[j];
-            r = random_hypergeometric(bitgen_state,
-                                      colors[j], remaining, num_to_sample);
+            r = random_hypergeometric(bitgen_state, colors[j], remaining,
+                                      num_to_sample);
             variates[i + j] = r;
             num_to_sample -= r;
         }

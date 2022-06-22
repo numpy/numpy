@@ -8,7 +8,8 @@
  * Returns -1 on error.
  */
 NPY_NO_EXPORT npy_intp
-count_boolean_trues(int ndim, char *data, npy_intp const *ashape, npy_intp const *astrides);
+count_boolean_trues(int ndim, char *data, npy_intp const *ashape,
+                    npy_intp const *astrides);
 
 /*
  * Gets a single item from the array, based on a single multi-index
@@ -25,6 +26,6 @@ PyArray_MultiIndexGetItem(PyArrayObject *self, const npy_intp *multi_index);
  */
 NPY_NO_EXPORT int
 PyArray_MultiIndexSetItem(PyArrayObject *self, const npy_intp *multi_index,
-                                                PyObject *obj);
+                          PyObject *obj);
 
-#endif  /* NUMPY_CORE_SRC_MULTIARRAY_ITEM_SELECTION_H_ */
+#endif /* NUMPY_CORE_SRC_MULTIARRAY_ITEM_SELECTION_H_ */

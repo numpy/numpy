@@ -1,3 +1,3 @@
 function hi()
-  print*, "Hello World"
+   print *, "Hello World"
 end function

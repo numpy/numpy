@@ -1,12 +1,12 @@
 """Provide class for testing in French locale
 
 """
-import sys
 import locale
+import sys
 
 import pytest
 
-__ALL__ = ['CommaDecimalPointLocale']
+__ALL__ = ["CommaDecimalPointLocale"]
 
 
 def find_comma_decimal_point_locale():
@@ -23,10 +23,10 @@ def find_comma_decimal_point_locale():
         First French locale found, None if none found.
 
     """
-    if sys.platform == 'win32':
-        locales = ['FRENCH']
+    if sys.platform == "win32":
+        locales = ["FRENCH"]
     else:
-        locales = ['fr_FR', 'fr_FR.UTF-8', 'fi_FI', 'fi_FI.UTF-8']
+        locales = ["fr_FR", "fr_FR.UTF-8", "fi_FI", "fi_FI.UTF-8"]
 
     old_locale = locale.getlocale(locale.LC_NUMERIC)
     new_locale = None
@@ -55,6 +55,7 @@ class CommaDecimalPointLocale:
     .. versionadded:: 1.15.0
 
     """
+
     (cur_locale, tst_locale) = find_comma_decimal_point_locale()
 
     def setup(self):

@@ -1,6 +1,6 @@
 /*
-  Solving memory overlap integer programs and bounded Diophantine equations with
-  positive coefficients.
+  Solving memory overlap integer programs and bounded Diophantine equations
+  with positive coefficients.
 
   Asking whether two strided arrays `a` and `b` overlap is equivalent to
   asking whether there is a solution to the following problem::
@@ -34,9 +34,9 @@
 
   *Algorithm description*
 
-  A straightforward algorithm that excludes infeasible solutions using GCD-based
-  pruning is outlined in Ref. [1]. It is implemented below. A number of other
-  algorithms exist in the literature; however, this one seems to have
+  A straightforward algorithm that excludes infeasible solutions using
+  GCD-based pruning is outlined in Ref. [1]. It is implemented below. A number
+  of other algorithms exist in the literature; however, this one seems to have
   performance satisfactory for the present purpose.
 
   The idea is that an equation::
@@ -61,16 +61,16 @@
 
       0 <= x_n <= ub_n
 
-  Now, one can enumerate all candidate solutions for x_n.  For each, one can use
-  the previous-level equation to enumerate potential solutions for x_{n-1}, with
-  transformed right-hand side b -> b - a_n x_n.  And so forth, until after n-1
-  nested for loops we either arrive at a candidate solution for x_1 (in which
-  case we have found one solution to the problem), or find that the equations do
-  not allow any solutions either for x_1 or one of the intermediate x_i (in
-  which case we have proved there is no solution for the upper-level candidates
-  chosen). If no solution is found for any candidate x_n, we have proved the
-  problem is infeasible --- which for the memory overlap problem means there is
-  no overlap.
+  Now, one can enumerate all candidate solutions for x_n.  For each, one can
+  use the previous-level equation to enumerate potential solutions for x_{n-1},
+  with transformed right-hand side b -> b - a_n x_n.  And so forth, until after
+  n-1 nested for loops we either arrive at a candidate solution for x_1 (in
+  which case we have found one solution to the problem), or find that the
+  equations do not allow any solutions either for x_1 or one of the
+  intermediate x_i (in which case we have proved there is no solution for the
+  upper-level candidates chosen). If no solution is found for any candidate
+  x_n, we have proved the problem is infeasible --- which for the memory
+  overlap problem means there is no overlap.
 
 
   *Performance*
@@ -84,13 +84,13 @@
     take some time.
 
   - Arrays produced by continuous slicing of a continuous parent array (no
-    internal overlap), e.g., a=x[:,0,:], b=x[:,1,:]. The strides taken together,
-    mapped positive, and duplicates then satisfy gcd(stride[0], .., stride[j]) =
-    stride[j] for some ordering.
+    internal overlap), e.g., a=x[:,0,:], b=x[:,1,:]. The strides taken
+  together, mapped positive, and duplicates then satisfy gcd(stride[0], ..,
+  stride[j]) = stride[j] for some ordering.
 
     In this case, for each x[i] at most one candidate exists, given that the
-    algorithm runs with strides sorted from largest to smallest. The problem can
-    be written as::
+    algorithm runs with strides sorted from largest to smallest. The problem
+  can be written as::
 
        sum a_j x_j ?= b = sum a_j z_j
 
@@ -122,7 +122,7 @@
       20*x1 + 7*x2 + 3*x3 = 78    (= 3 + 3*20 + 5*3)
       0 <= x1 <= 6, 0 <= x2 <= 2, 0 <= x3 <= 5
 
-  Non-overlapping in this case relies on x.shape[1] <= lcm(7, 3) = 21.  However,
+  Non-overlapping in this case relies on x.shape[1] <= lcm(7, 3) = 21. However,
   elimination of x1 does not restrict candidate values for x3, so the algorithm
   ends up considering all values x3=0...5 separately.
 
@@ -134,8 +134,9 @@
       from numpy.lib.stride_tricks import as_strided
       # Construct non-overlapping x1 and x2
       x = np.zeros([192163377], dtype=np.int8)
-      x1 = as_strided(x, strides=(36674, 61119, 85569), shape=(1049, 1049, 1049))
-      x2 = as_strided(x[64023025:], strides=(12223, 12224, 1), shape=(1049, 1049, 1))
+      x1 = as_strided(x, strides=(36674, 61119, 85569), shape=(1049, 1049,
+  1049)) x2 = as_strided(x[64023025:], strides=(12223, 12224, 1), shape=(1049,
+  1049, 1))
 
   To avoid such worst cases, the amount of work done needs to be capped. If the
   overlap problem is related to ufuncs, one suitable cap choice is to scale
@@ -174,7 +175,7 @@
   .. [3] K. Aardal, A.K. Lenstra,
          ''Hard equality constrained integer knapsacks'',
          Lecture Notes in Computer Science 2337, 350-366 (2002).
-*/  
+*/
 
 /*
   Copyright (c) 2015 Pauli Virtanen
@@ -187,17 +188,17 @@
 #include <Python.h>
 
 #include "numpy/ndarraytypes.h"
+
 #include "mem_overlap.h"
+
 #include "npy_extint128.h"
 
-#include <stdlib.h>
-#include <stdio.h>
 #include <assert.h>
-
+#include <stdio.h>
+#include <stdlib.h>
 
 #define MAX(a, b) (((a) >= (b)) ? (a) : (b))
 #define MIN(a, b) (((a) <= (b)) ? (a) : (b))
-
 
 /**
  * Euclid's algorithm for GCD.
@@ -206,7 +207,8 @@
  * providing |gamma| < |a2|/gcd, |epsilon| < |a1|/gcd.
  */
 static void
-euclid(npy_int64 a1, npy_int64 a2, npy_int64 *a_gcd, npy_int64 *gamma, npy_int64 *epsilon)
+euclid(npy_int64 a1, npy_int64 a2, npy_int64 *a_gcd, npy_int64 *gamma,
+       npy_int64 *epsilon)
 {
     npy_int64 gamma1, gamma2, epsilon1, epsilon2, r;
 
@@ -222,10 +224,10 @@ euclid(npy_int64 a1, npy_int64 a2, npy_int64 *a_gcd, npy_int64 *gamma, npy_int64
        the iteration, so no integer overflows */
     while (1) {
         if (a2 > 0) {
-            r = a1/a2;
-            a1 -= r*a2;
-            gamma1 -= r*gamma2;
-            epsilon1 -= r*epsilon2;
+            r = a1 / a2;
+            a1 -= r * a2;
+            gamma1 -= r * gamma2;
+            epsilon1 -= r * epsilon2;
         }
         else {
             *a_gcd = a1;
@@ -235,10 +237,10 @@ euclid(npy_int64 a1, npy_int64 a2, npy_int64 *a_gcd, npy_int64 *gamma, npy_int64
         }
 
         if (a1 > 0) {
-            r = a2/a1;
-            a2 -= r*a1;
-            gamma2 -= r*gamma1;
-            epsilon2 -= r*epsilon1;
+            r = a2 / a1;
+            a2 -= r * a1;
+            gamma2 -= r * gamma1;
+            epsilon2 -= r * epsilon1;
         }
         else {
             *a_gcd = a2;
@@ -249,15 +251,13 @@ euclid(npy_int64 a1, npy_int64 a2, npy_int64 *a_gcd, npy_int64 *gamma, npy_int64
     }
 }
 
-
 /**
  * Precompute GCD and bounds transformations
  */
 static int
-diophantine_precompute(unsigned int n,
-                       diophantine_term_t *E,
-                       diophantine_term_t *Ep,
-                       npy_int64 *Gamma, npy_int64 *Epsilon)
+diophantine_precompute(unsigned int n, diophantine_term_t *E,
+                       diophantine_term_t *Ep, npy_int64 *Gamma,
+                       npy_int64 *Epsilon)
 {
     npy_int64 a_gcd, gamma, epsilon, c1, c2;
     unsigned int j;
@@ -283,18 +283,19 @@ diophantine_precompute(unsigned int n,
     }
 
     for (j = 2; j < n; ++j) {
-        euclid(Ep[j-2].a, E[j].a, &a_gcd, &gamma, &epsilon);
-        Ep[j-1].a = a_gcd;
-        Gamma[j-1] = gamma;
-        Epsilon[j-1] = epsilon;
+        euclid(Ep[j - 2].a, E[j].a, &a_gcd, &gamma, &epsilon);
+        Ep[j - 1].a = a_gcd;
+        Gamma[j - 1] = gamma;
+        Epsilon[j - 1] = epsilon;
 
         if (j < n - 1) {
-            c1 = Ep[j-2].a / a_gcd;
+            c1 = Ep[j - 2].a / a_gcd;
             c2 = E[j].a / a_gcd;
 
             /* Ep[j-1].ub = c1 * Ep[j-2].ub + c2 * E[j].ub; */
-            Ep[j-1].ub = safe_add(safe_mul(c1, Ep[j-2].ub, &overflow),
-                                  safe_mul(c2, E[j].ub, &overflow), &overflow);
+            Ep[j - 1].ub =
+                    safe_add(safe_mul(c1, Ep[j - 2].ub, &overflow),
+                             safe_mul(c2, E[j].ub, &overflow), &overflow);
 
             if (overflow) {
                 return 1;
@@ -305,23 +306,17 @@ diophantine_precompute(unsigned int n,
     return 0;
 }
 
-
 /**
  * Depth-first bounded Euclid search
  */
 static mem_overlap_t
-diophantine_dfs(unsigned int n,
-                unsigned int v,
-                diophantine_term_t *E,
-                diophantine_term_t *Ep,
-                npy_int64 *Gamma, npy_int64 *Epsilon,
-                npy_int64 b,
-                Py_ssize_t max_work,
-                int require_ub_nontrivial,
-                npy_int64 *x,
-                Py_ssize_t *count)
+diophantine_dfs(unsigned int n, unsigned int v, diophantine_term_t *E,
+                diophantine_term_t *Ep, npy_int64 *Gamma, npy_int64 *Epsilon,
+                npy_int64 b, Py_ssize_t max_work, int require_ub_nontrivial,
+                npy_int64 *x, Py_ssize_t *count)
 {
-    npy_int64 a_gcd, gamma, epsilon, a1, u1, a2, u2, c, r, c1, c2, t, t_l, t_u, b2, x1, x2;
+    npy_int64 a_gcd, gamma, epsilon, a1, u1, a2, u2, c, r, c1, c2, t, t_l, t_u,
+            b2, x1, x2;
     npy_extint128_t x10, x20, t_l1, t_l2, t_u1, t_u2;
     mem_overlap_t res;
     char overflow = 0;
@@ -336,16 +331,16 @@ diophantine_dfs(unsigned int n,
         u1 = E[0].ub;
     }
     else {
-        a1 = Ep[v-2].a;
-        u1 = Ep[v-2].ub;
+        a1 = Ep[v - 2].a;
+        u1 = Ep[v - 2].ub;
     }
 
     a2 = E[v].a;
     u2 = E[v].ub;
 
-    a_gcd = Ep[v-1].a;
-    gamma = Gamma[v-1];
-    epsilon = Epsilon[v-1];
+    a_gcd = Ep[v - 1].a;
+    gamma = Gamma[v - 1];
+    epsilon = Epsilon[v - 1];
 
     /* Generate set of allowed solutions */
     c = b / a_gcd;
@@ -414,15 +409,15 @@ diophantine_dfs(unsigned int n,
     if (v == 1) {
         /* Base case */
         if (t_u >= t_l) {
-            x[0] = x1 + c1*t_l;
-            x[1] = x2 - c2*t_l;
+            x[0] = x1 + c1 * t_l;
+            x[1] = x2 - c2 * t_l;
             if (require_ub_nontrivial) {
                 unsigned int j;
                 int is_ub_trivial;
 
                 is_ub_trivial = 1;
                 for (j = 0; j < n; ++j) {
-                    if (x[j] != E[j].ub/2) {
+                    if (x[j] != E[j].ub / 2) {
                         is_ub_trivial = 0;
                         break;
                     }
@@ -442,7 +437,7 @@ diophantine_dfs(unsigned int n,
     else {
         /* Recurse to all candidates */
         for (t = t_l; t <= t_u; ++t) {
-            x[v] = x2 - c2*t;
+            x[v] = x2 - c2 * t;
 
             /* b2 = b - a2*x[v]; */
             b2 = safe_sub(b, safe_mul(a2, x[v], &overflow), &overflow);
@@ -450,9 +445,8 @@ diophantine_dfs(unsigned int n,
                 return MEM_OVERLAP_OVERFLOW;
             }
 
-            res = diophantine_dfs(n, v-1, E, Ep, Gamma, Epsilon,
-                                  b2, max_work, require_ub_nontrivial,
-                                  x, count);
+            res = diophantine_dfs(n, v - 1, E, Ep, Gamma, Epsilon, b2,
+                                  max_work, require_ub_nontrivial, x, count);
             if (res != MEM_OVERLAP_NO) {
                 return res;
             }
@@ -461,7 +455,6 @@ diophantine_dfs(unsigned int n,
         return MEM_OVERLAP_NO;
     }
 }
-
 
 /**
  * Solve bounded Diophantine equation
@@ -502,8 +495,7 @@ solve_diophantine(unsigned int n, diophantine_term_t *E, npy_int64 b,
             if (E[j].ub % 2 != 0) {
                 return MEM_OVERLAP_ERROR;
             }
-            ub_sum = safe_add(ub_sum,
-                              safe_mul(E[j].a, E[j].ub/2, &overflow),
+            ub_sum = safe_add(ub_sum, safe_mul(E[j].a, E[j].ub / 2, &overflow),
                               &overflow);
         }
         if (overflow) {
@@ -554,7 +546,7 @@ solve_diophantine(unsigned int n, diophantine_term_t *E, npy_int64 b,
             res = MEM_OVERLAP_OVERFLOW;
         }
         else {
-            res = diophantine_dfs(n, n-1, E, Ep, Gamma, Epsilon, b, max_work,
+            res = diophantine_dfs(n, n - 1, E, Ep, Gamma, Epsilon, b, max_work,
                                   require_ub_nontrivial, x, &count);
         }
         free(Ep);
@@ -564,12 +556,11 @@ solve_diophantine(unsigned int n, diophantine_term_t *E, npy_int64 b,
     }
 }
 
-
 static int
 diophantine_sort_A(const void *xp, const void *yp)
 {
-    npy_int64 xa = ((diophantine_term_t*)xp)->a;
-    npy_int64 ya = ((diophantine_term_t*)yp)->a;
+    npy_int64 xa = ((diophantine_term_t *)xp)->a;
+    npy_int64 ya = ((diophantine_term_t *)yp)->a;
 
     if (xa < ya) {
         return 1;
@@ -581,7 +572,6 @@ diophantine_sort_A(const void *xp, const void *yp)
         return 0;
     }
 }
-
 
 /**
  * Simplify Diophantine decision problem.
@@ -654,7 +644,6 @@ diophantine_simplify(unsigned int *n, diophantine_term_t *E, npy_int64 b)
     }
 }
 
-
 /* Gets a half-open range [start, end) of offsets from the data pointer */
 NPY_VISIBILITY_HIDDEN void
 offset_bounds_from_strides(const int itemsize, const int nd,
@@ -688,18 +677,16 @@ offset_bounds_from_strides(const int itemsize, const int nd,
     *upper_offset = upper;
 }
 
-
 /* Gets a half-open range [start, end) which contains the array data */
 static void
-get_array_memory_extents(PyArrayObject *arr,
-                         npy_uintp *out_start, npy_uintp *out_end,
-                         npy_uintp *num_bytes)
+get_array_memory_extents(PyArrayObject *arr, npy_uintp *out_start,
+                         npy_uintp *out_end, npy_uintp *num_bytes)
 {
     npy_intp low, upper;
     int j;
     offset_bounds_from_strides(PyArray_ITEMSIZE(arr), PyArray_NDIM(arr),
-                               PyArray_DIMS(arr), PyArray_STRIDES(arr),
-                               &low, &upper);
+                               PyArray_DIMS(arr), PyArray_STRIDES(arr), &low,
+                               &upper);
     *out_start = (npy_uintp)PyArray_DATA(arr) + (npy_uintp)low;
     *out_end = (npy_uintp)PyArray_DATA(arr) + (npy_uintp)upper;
 
@@ -708,7 +695,6 @@ get_array_memory_extents(PyArrayObject *arr,
         *num_bytes *= PyArray_DIM(arr, j);
     }
 }
-
 
 static int
 strides_to_terms(PyArrayObject *arr, diophantine_term_t *terms,
@@ -741,7 +727,6 @@ strides_to_terms(PyArrayObject *arr, diophantine_term_t *terms,
     return 0;
 }
 
-
 /**
  * Determine whether two arrays share some memory.
  *
@@ -750,20 +735,19 @@ strides_to_terms(PyArrayObject *arr, diophantine_term_t *terms,
  * Note that failures to solve can occur due to integer overflows, or effort
  * required solving the problem exceeding max_work.  The general problem is
  * NP-hard and worst case runtime is exponential in the number of dimensions.
- * max_work controls the amount of work done, either exact (max_work == -1), only
- * a simple memory extent check (max_work == 0), or set an upper bound
+ * max_work controls the amount of work done, either exact (max_work == -1),
+ * only a simple memory extent check (max_work == 0), or set an upper bound
  * max_work > 0 for the number of solution candidates considered.
  */
 NPY_VISIBILITY_HIDDEN mem_overlap_t
-solve_may_share_memory(PyArrayObject *a, PyArrayObject *b,
-                       Py_ssize_t max_work)
+solve_may_share_memory(PyArrayObject *a, PyArrayObject *b, Py_ssize_t max_work)
 {
     npy_int64 rhs;
-    diophantine_term_t terms[2*NPY_MAXDIMS + 2];
+    diophantine_term_t terms[2 * NPY_MAXDIMS + 2];
     npy_uintp start1 = 0, end1 = 0, size1 = 0;
     npy_uintp start2 = 0, end2 = 0, size2 = 0;
     npy_uintp uintp_rhs;
-    npy_int64 x[2*NPY_MAXDIMS + 2];
+    npy_int64 x[2 * NPY_MAXDIMS + 2];
     unsigned int nterms;
 
     get_array_memory_extents(a, &start1, &end1, &size1);
@@ -837,7 +821,6 @@ solve_may_share_memory(PyArrayObject *a, PyArrayObject *b,
     return solve_diophantine(nterms, terms, rhs, max_work, 0, x);
 }
 
-
 /**
  * Determine whether an array has internal overlap.
  *
@@ -848,8 +831,8 @@ solve_may_share_memory(PyArrayObject *a, PyArrayObject *b,
 NPY_VISIBILITY_HIDDEN mem_overlap_t
 solve_may_have_internal_overlap(PyArrayObject *a, Py_ssize_t max_work)
 {
-    diophantine_term_t terms[NPY_MAXDIMS+1];
-    npy_int64 x[NPY_MAXDIMS+1];
+    diophantine_term_t terms[NPY_MAXDIMS + 1];
+    npy_int64 x[NPY_MAXDIMS + 1];
     unsigned int i, j, nterms;
 
     if (PyArray_ISCONTIGUOUS(a)) {

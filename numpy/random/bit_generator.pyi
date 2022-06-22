@@ -1,18 +1,16 @@
 import abc
-from threading import Lock
 from collections.abc import Callable, Mapping, Sequence
-from typing import (
-    Any,
-    NamedTuple,
-    TypedDict,
-    TypeVar,
-    Union,
-    overload,
-    Literal,
-)
+from threading import Lock
+from typing import Any, Literal, NamedTuple, TypedDict, TypeVar, Union, overload
 
 from numpy import dtype, ndarray, uint32, uint64
-from numpy._typing import _ArrayLikeInt_co, _ShapeLike, _SupportsDType, _UInt32Codes, _UInt64Codes
+from numpy._typing import (
+    _ArrayLikeInt_co,
+    _ShapeLike,
+    _SupportsDType,
+    _UInt32Codes,
+    _UInt64Codes,
+)
 
 _T = TypeVar("_T")
 

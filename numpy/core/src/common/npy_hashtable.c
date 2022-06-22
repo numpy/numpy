@@ -12,21 +12,24 @@
  * case is likely desired.
  */
 
-#include "templ_common.h"
 #include "npy_hashtable.h"
 
-
+#include "templ_common.h"
 
 #if SIZEOF_PY_UHASH_T > 4
 #define _NpyHASH_XXPRIME_1 ((Py_uhash_t)11400714785074694791ULL)
 #define _NpyHASH_XXPRIME_2 ((Py_uhash_t)14029467366897019727ULL)
 #define _NpyHASH_XXPRIME_5 ((Py_uhash_t)2870177450012600261ULL)
-#define _NpyHASH_XXROTATE(x) ((x << 31) | (x >> 33))  /* Rotate left 31 bits */
+#define _NpyHASH_XXROTATE(x)                       \
+    ((x << 31) | (x >> 33)) /* Rotate left 31 bits \
+                             */
 #else
 #define _NpyHASH_XXPRIME_1 ((Py_uhash_t)2654435761UL)
 #define _NpyHASH_XXPRIME_2 ((Py_uhash_t)2246822519UL)
 #define _NpyHASH_XXPRIME_5 ((Py_uhash_t)374761393UL)
-#define _NpyHASH_XXROTATE(x) ((x << 13) | (x >> 19))  /* Rotate left 13 bits */
+#define _NpyHASH_XXROTATE(x)                       \
+    ((x << 13) | (x >> 19)) /* Rotate left 13 bits \
+                             */
 #endif
 
 /*
@@ -57,14 +60,13 @@ identity_list_hash(PyObject *const *v, int len)
 #undef _NpyHASH_XXPRIME_5
 #undef _NpyHASH_XXROTATE
 
-
 static NPY_INLINE PyObject **
 find_item(PyArrayIdentityHash const *tb, PyObject *const *key)
 {
     Py_hash_t hash = identity_list_hash(key, tb->key_len);
     npy_uintp perturb = (npy_uintp)hash;
     npy_intp bucket;
-    npy_intp mask = tb->size - 1 ;
+    npy_intp mask = tb->size - 1;
     PyObject **item;
 
     bucket = (npy_intp)hash & mask;
@@ -75,16 +77,15 @@ find_item(PyArrayIdentityHash const *tb, PyObject *const *key)
             /* The item is not in the cache; return the empty bucket */
             return item;
         }
-        if (memcmp(item+1, key, tb->key_len * sizeof(PyObject *)) == 0) {
+        if (memcmp(item + 1, key, tb->key_len * sizeof(PyObject *)) == 0) {
             /* This is a match, so return the item/bucket */
             return item;
         }
         /* Hash collision, perturb like Python (must happen rarely!) */
-        perturb >>= 5;  /* Python uses the macro PERTURB_SHIFT == 5 */
+        perturb >>= 5; /* Python uses the macro PERTURB_SHIFT == 5 */
         bucket = mask & (bucket * 5 + perturb + 1);
     }
 }
-
 
 NPY_NO_EXPORT PyArrayIdentityHash *
 PyArrayIdentityHash_New(int key_len)
@@ -97,7 +98,7 @@ PyArrayIdentityHash_New(int key_len)
 
     assert(key_len > 0);
     res->key_len = key_len;
-    res->size = 4;  /* Start with a size of 4 */
+    res->size = 4; /* Start with a size of 4 */
     res->nelem = 0;
 
     res->buckets = PyMem_Calloc(4 * (key_len + 1), sizeof(PyObject *));
@@ -109,14 +110,12 @@ PyArrayIdentityHash_New(int key_len)
     return res;
 }
 
-
 NPY_NO_EXPORT void
 PyArrayIdentityHash_Dealloc(PyArrayIdentityHash *tb)
 {
     PyMem_Free(tb->buckets);
     PyMem_Free(tb);
 }
-
 
 static int
 _resize_if_necessary(PyArrayIdentityHash *tb)
@@ -160,14 +159,13 @@ _resize_if_necessary(PyArrayIdentityHash *tb)
     for (npy_intp i = 0; i < prev_size; i++) {
         PyObject **item = &old_table[i * (tb->key_len + 1)];
         if (item[0] != NULL) {
-            tb->nelem -= 1;  /* Decrement, setitem will increment again */
-            PyArrayIdentityHash_SetItem(tb, item+1, item[0], 1);
+            tb->nelem -= 1; /* Decrement, setitem will increment again */
+            PyArrayIdentityHash_SetItem(tb, item + 1, item[0], 1);
         }
     }
     PyMem_Free(old_table);
     return 0;
 }
-
 
 /**
  * Add an item to the identity cache.  The storage location must not change
@@ -185,8 +183,8 @@ _resize_if_necessary(PyArrayIdentityHash *tb)
  *        the RuntimeError.
  */
 NPY_NO_EXPORT int
-PyArrayIdentityHash_SetItem(PyArrayIdentityHash *tb,
-        PyObject *const *key, PyObject *value, int replace)
+PyArrayIdentityHash_SetItem(PyArrayIdentityHash *tb, PyObject *const *key,
+                            PyObject *value, int replace)
 {
     if (value != NULL && _resize_if_necessary(tb) < 0) {
         /* Shrink, only if a new value is added. */
@@ -197,11 +195,11 @@ PyArrayIdentityHash_SetItem(PyArrayIdentityHash *tb,
     if (value != NULL) {
         if (tb_item[0] != NULL && !replace) {
             PyErr_SetString(PyExc_RuntimeError,
-                    "Identity cache already includes the item.");
+                            "Identity cache already includes the item.");
             return -1;
         }
         tb_item[0] = value;
-        memcpy(tb_item+1, key, tb->key_len * sizeof(PyObject *));
+        memcpy(tb_item + 1, key, tb->key_len * sizeof(PyObject *));
         tb->nelem += 1;
     }
     else {
@@ -212,9 +210,9 @@ PyArrayIdentityHash_SetItem(PyArrayIdentityHash *tb,
     return 0;
 }
 
-
 NPY_NO_EXPORT PyObject *
-PyArrayIdentityHash_GetItem(PyArrayIdentityHash const *tb, PyObject *const *key)
+PyArrayIdentityHash_GetItem(PyArrayIdentityHash const *tb,
+                            PyObject *const *key)
 {
     return find_item(tb, key)[0];
 }

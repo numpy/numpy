@@ -4,30 +4,31 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
-#include "common.h"
 #include "vdot.h"
-#include "npy_cblas.h"
 
+#include "common.h"
+#include "npy_cblas.h"
 
 /*
  * All data is assumed aligned.
  */
 NPY_NO_EXPORT void
-CFLOAT_vdot(char *ip1, npy_intp is1, char *ip2, npy_intp is2,
-            char *op, npy_intp n, void *NPY_UNUSED(ignore))
+CFLOAT_vdot(char *ip1, npy_intp is1, char *ip2, npy_intp is2, char *op,
+            npy_intp n, void *NPY_UNUSED(ignore))
 {
 #if defined(HAVE_CBLAS)
     CBLAS_INT is1b = blas_stride(is1, sizeof(npy_cfloat));
     CBLAS_INT is2b = blas_stride(is2, sizeof(npy_cfloat));
 
     if (is1b && is2b) {
-        double sum[2] = {0., 0.};  /* double for stability */
+        double sum[2] = {0., 0.}; /* double for stability */
 
         while (n > 0) {
             CBLAS_INT chunk = n < NPY_CBLAS_CHUNK ? n : NPY_CBLAS_CHUNK;
             float tmp[2];
 
-            CBLAS_FUNC(cblas_cdotc_sub)((CBLAS_INT)n, ip1, is1b, ip2, is2b, tmp);
+            CBLAS_FUNC(cblas_cdotc_sub)
+            ((CBLAS_INT)n, ip1, is1b, ip2, is2b, tmp);
             sum[0] += (double)tmp[0];
             sum[1] += (double)tmp[1];
             /* use char strides here */
@@ -59,26 +60,26 @@ CFLOAT_vdot(char *ip1, npy_intp is1, char *ip2, npy_intp is2,
     }
 }
 
-
 /*
  * All data is assumed aligned.
  */
 NPY_NO_EXPORT void
-CDOUBLE_vdot(char *ip1, npy_intp is1, char *ip2, npy_intp is2,
-             char *op, npy_intp n, void *NPY_UNUSED(ignore))
+CDOUBLE_vdot(char *ip1, npy_intp is1, char *ip2, npy_intp is2, char *op,
+             npy_intp n, void *NPY_UNUSED(ignore))
 {
 #if defined(HAVE_CBLAS)
     CBLAS_INT is1b = blas_stride(is1, sizeof(npy_cdouble));
     CBLAS_INT is2b = blas_stride(is2, sizeof(npy_cdouble));
 
     if (is1b && is2b) {
-        double sum[2] = {0., 0.};  /* double for stability */
+        double sum[2] = {0., 0.}; /* double for stability */
 
         while (n > 0) {
             CBLAS_INT chunk = n < NPY_CBLAS_CHUNK ? n : NPY_CBLAS_CHUNK;
             double tmp[2];
 
-            CBLAS_FUNC(cblas_zdotc_sub)((CBLAS_INT)n, ip1, is1b, ip2, is2b, tmp);
+            CBLAS_FUNC(cblas_zdotc_sub)
+            ((CBLAS_INT)n, ip1, is1b, ip2, is2b, tmp);
             sum[0] += (double)tmp[0];
             sum[1] += (double)tmp[1];
             /* use char strides here */
@@ -110,13 +111,12 @@ CDOUBLE_vdot(char *ip1, npy_intp is1, char *ip2, npy_intp is2,
     }
 }
 
-
 /*
  * All data is assumed aligned.
  */
 NPY_NO_EXPORT void
-CLONGDOUBLE_vdot(char *ip1, npy_intp is1, char *ip2, npy_intp is2,
-                 char *op, npy_intp n, void *NPY_UNUSED(ignore))
+CLONGDOUBLE_vdot(char *ip1, npy_intp is1, char *ip2, npy_intp is2, char *op,
+                 npy_intp n, void *NPY_UNUSED(ignore))
 {
     npy_longdouble tmpr = 0.0L;
     npy_longdouble tmpi = 0.0L;
@@ -139,8 +139,8 @@ CLONGDOUBLE_vdot(char *ip1, npy_intp is1, char *ip2, npy_intp is2,
  * All data is assumed aligned.
  */
 NPY_NO_EXPORT void
-OBJECT_vdot(char *ip1, npy_intp is1, char *ip2, npy_intp is2, char *op, npy_intp n,
-            void *NPY_UNUSED(ignore))
+OBJECT_vdot(char *ip1, npy_intp is1, char *ip2, npy_intp is2, char *op,
+            npy_intp n, void *NPY_UNUSED(ignore))
 {
     npy_intp i;
     PyObject *tmp0, *tmp1, *tmp2, *tmp = NULL;
@@ -176,7 +176,7 @@ OBJECT_vdot(char *ip1, npy_intp is1, char *ip2, npy_intp is2, char *op, npy_intp
             tmp = tmp2;
         }
     }
-    tmp3 = (PyObject**) op;
+    tmp3 = (PyObject **)op;
     tmp2 = *tmp3;
     *((PyObject **)op) = tmp;
     Py_XDECREF(tmp2);

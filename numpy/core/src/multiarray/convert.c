@@ -5,22 +5,22 @@
 #include <Python.h>
 #include <structmember.h>
 
-#include "npy_config.h"
-
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
+
+#include "npy_config.h"
 #include "npy_pycompat.h"
 
-#include "common.h"
-#include "arrayobject.h"
-#include "ctors.h"
-#include "mapping.h"
-#include "lowlevel_strided_loops.h"
-#include "scalartypes.h"
-#include "array_assign.h"
-
 #include "convert.h"
+
+#include "array_assign.h"
 #include "array_coercion.h"
+#include "arrayobject.h"
+#include "common.h"
+#include "ctors.h"
+#include "lowlevel_strided_loops.h"
+#include "mapping.h"
+#include "scalartypes.h"
 
 int
 fallocate(int fd, int mode, off_t offset, off_t len);
@@ -32,7 +32,7 @@ fallocate(int fd, int mode, off_t offset, off_t len);
  * returns -1 and raises exception on no space, ignores all other errors
  */
 static int
-npy_fallocate(npy_intp nbytes, FILE * fp)
+npy_fallocate(npy_intp nbytes, FILE *fp)
 {
     /*
      * unknown behavior on non-linux so don't try it
@@ -63,8 +63,10 @@ npy_fallocate(npy_intp nbytes, FILE * fp)
      * early exit on no space, other errors will also get found during fwrite
      */
     if (r == -1 && errno == ENOSPC) {
-        PyErr_Format(PyExc_OSError, "Not enough free space to write "
-                     "%"NPY_INTP_FMT" bytes", nbytes);
+        PyErr_Format(PyExc_OSError,
+                     "Not enough free space to write "
+                     "%" NPY_INTP_FMT " bytes",
+                     nbytes);
         return -1;
     }
 #endif
@@ -97,7 +99,7 @@ recursive_tolist(PyArrayObject *self, char *dataptr, int startdim)
     }
 
     for (i = 0; i < n; ++i) {
-        item = recursive_tolist(self, dataptr, startdim+1);
+        item = recursive_tolist(self, dataptr, startdim + 1);
         if (item == NULL) {
             Py_DECREF(ret);
             return NULL;
@@ -140,7 +142,8 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
     if (n3 == 0) {
         /* binary data */
         if (PyDataType_FLAGCHK(PyArray_DESCR(self), NPY_LIST_PICKLE)) {
-            PyErr_SetString(PyExc_OSError,
+            PyErr_SetString(
+                    PyExc_OSError,
                     "cannot write object arrays to a file in binary mode");
             return -1;
         }
@@ -156,7 +159,7 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
             size = PyArray_SIZE(self);
             NPY_BEGIN_ALLOW_THREADS;
 
-#if defined (_MSC_VER) && defined(_WIN64)
+#if defined(_MSC_VER) && defined(_WIN64)
             /* Workaround Win64 fwrite() bug. Ticket #1660 */
             {
                 npy_intp maxsize = 2147483648 / PyArray_DESCR(self)->elsize;
@@ -165,10 +168,11 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
                 n = 0;
                 while (size > 0) {
                     chunksize = (size > maxsize) ? maxsize : size;
-                    n2 = fwrite((const void *)
-                             ((char *)PyArray_DATA(self) + (n * PyArray_DESCR(self)->elsize)),
-                             (size_t) PyArray_DESCR(self)->elsize,
-                             (size_t) chunksize, fp);
+                    n2 = fwrite(
+                            (const void *)((char *)PyArray_DATA(self) +
+                                           (n * PyArray_DESCR(self)->elsize)),
+                            (size_t)PyArray_DESCR(self)->elsize,
+                            (size_t)chunksize, fp);
                     if (n2 < chunksize) {
                         break;
                     }
@@ -179,30 +183,28 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
             }
 #else
             n = fwrite((const void *)PyArray_DATA(self),
-                    (size_t) PyArray_DESCR(self)->elsize,
-                    (size_t) size, fp);
+                       (size_t)PyArray_DESCR(self)->elsize, (size_t)size, fp);
 #endif
             NPY_END_ALLOW_THREADS;
             if (n < size) {
-                PyErr_Format(PyExc_OSError,
-                        "%ld requested and %ld written",
-                        (long) size, (long) n);
+                PyErr_Format(PyExc_OSError, "%ld requested and %ld written",
+                             (long)size, (long)n);
                 return -1;
             }
         }
         else {
             NPY_BEGIN_THREADS_DEF;
 
-            it = (PyArrayIterObject *) PyArray_IterNew((PyObject *)self);
+            it = (PyArrayIterObject *)PyArray_IterNew((PyObject *)self);
             NPY_BEGIN_THREADS;
             while (it->index < it->size) {
                 if (fwrite((const void *)it->dataptr,
-                            (size_t) PyArray_DESCR(self)->elsize,
-                            1, fp) < 1) {
+                           (size_t)PyArray_DESCR(self)->elsize, 1, fp) < 1) {
                     NPY_END_THREADS;
                     PyErr_Format(PyExc_OSError,
-                            "problem writing element %" NPY_INTP_FMT
-                            " to file", it->index);
+                                 "problem writing element %" NPY_INTP_FMT
+                                 " to file",
+                                 it->index);
                     Py_DECREF(it);
                     return -1;
                 }
@@ -217,8 +219,7 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
          * text data
          */
 
-        it = (PyArrayIterObject *)
-            PyArray_IterNew((PyObject *)self);
+        it = (PyArrayIterObject *)PyArray_IterNew((PyObject *)self);
         n4 = (format ? strlen((const char *)format) : 0);
         while (it->index < it->size) {
             obj = PyArray_GETITEM(self, it->dataptr);
@@ -246,7 +247,7 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
                     Py_DECREF(it);
                     return -1;
                 }
-                PyTuple_SET_ITEM(tupobj,0,obj);
+                PyTuple_SET_ITEM(tupobj, 0, obj);
                 obj = PyUnicode_FromString((const char *)format);
                 if (obj == NULL) {
                     Py_DECREF(tupobj);
@@ -269,17 +270,18 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
             Py_DECREF(byteobj);
             if (n < n2) {
                 PyErr_Format(PyExc_OSError,
-                        "problem writing element %" NPY_INTP_FMT
-                        " to file", it->index);
+                             "problem writing element %" NPY_INTP_FMT
+                             " to file",
+                             it->index);
                 Py_DECREF(strobj);
                 Py_DECREF(it);
                 return -1;
             }
             /* write separator for all but last one */
-            if (it->index != it->size-1) {
+            if (it->index != it->size - 1) {
                 if (fwrite(sep, 1, n3, fp) < n3) {
                     PyErr_Format(PyExc_OSError,
-                            "problem writing separator to file");
+                                 "problem writing separator to file");
                     Py_DECREF(strobj);
                     Py_DECREF(it);
                     return -1;
@@ -315,9 +317,10 @@ PyArray_ToString(PyArrayObject *self, NPY_ORDER order)
     */
 
     numbytes = PyArray_NBYTES(self);
-    if ((PyArray_IS_C_CONTIGUOUS(self) && (order == NPY_CORDER))
-        || (PyArray_IS_F_CONTIGUOUS(self) && (order == NPY_FORTRANORDER))) {
-        ret = PyBytes_FromStringAndSize(PyArray_DATA(self), (Py_ssize_t) numbytes);
+    if ((PyArray_IS_C_CONTIGUOUS(self) && (order == NPY_CORDER)) ||
+        (PyArray_IS_F_CONTIGUOUS(self) && (order == NPY_FORTRANORDER))) {
+        ret = PyBytes_FromStringAndSize(PyArray_DATA(self),
+                                        (Py_ssize_t)numbytes);
     }
     else {
         PyObject *new;
@@ -337,7 +340,7 @@ PyArray_ToString(PyArrayObject *self, NPY_ORDER order)
         if (it == NULL) {
             return NULL;
         }
-        ret = PyBytes_FromStringAndSize(NULL, (Py_ssize_t) numbytes);
+        ret = PyBytes_FromStringAndSize(NULL, (Py_ssize_t)numbytes);
         if (ret == NULL) {
             Py_DECREF(it);
             return NULL;
@@ -388,10 +391,9 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
      * There is no cast anymore, the above already coerced using scalar
      * coercion rules
      */
-    int retcode = raw_array_assign_scalar(
-            PyArray_NDIM(arr), PyArray_DIMS(arr), descr,
-            PyArray_BYTES(arr), PyArray_STRIDES(arr),
-            descr, value);
+    int retcode = raw_array_assign_scalar(PyArray_NDIM(arr), PyArray_DIMS(arr),
+                                          descr, PyArray_BYTES(arr),
+                                          PyArray_STRIDES(arr), descr, value);
 
     PyMem_FREE(value_buffer_heap);
     return retcode;
@@ -406,8 +408,7 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
  * Returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT int
-PyArray_AssignZero(PyArrayObject *dst,
-                   PyArrayObject *wheremask)
+PyArray_AssignZero(PyArrayObject *dst, PyArrayObject *wheremask)
 {
     npy_bool value;
     PyArray_Descr *bool_dtype;
@@ -427,7 +428,6 @@ PyArray_AssignZero(PyArrayObject *dst,
     return retcode;
 }
 
-
 /*NUMPY_API
  * Copy an array.
  */
@@ -437,8 +437,7 @@ PyArray_NewCopy(PyArrayObject *obj, NPY_ORDER order)
     PyArrayObject *ret;
 
     if (obj == NULL) {
-        PyErr_SetString(PyExc_ValueError,
-            "obj is NULL in PyArray_NewCopy");
+        PyErr_SetString(PyExc_ValueError, "obj is NULL in PyArray_NewCopy");
         return NULL;
     }
 
@@ -479,11 +478,9 @@ PyArray_View(PyArrayObject *self, PyArray_Descr *type, PyTypeObject *pytype)
 
     Py_INCREF(dtype);
     ret = (PyArrayObject *)PyArray_NewFromDescr_int(
-            subtype, dtype,
-            PyArray_NDIM(self), PyArray_DIMS(self), PyArray_STRIDES(self),
-            PyArray_DATA(self),
-            flags, (PyObject *)self, (PyObject *)self,
-            0, 1);
+            subtype, dtype, PyArray_NDIM(self), PyArray_DIMS(self),
+            PyArray_STRIDES(self), PyArray_DATA(self), flags, (PyObject *)self,
+            (PyObject *)self, 0, 1);
     if (ret == NULL) {
         Py_XDECREF(type);
         return NULL;

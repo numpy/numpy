@@ -1,4 +1,5 @@
 import numpy as np
+
 f: float
 f8: np.float64
 c8: np.complex64
@@ -13,7 +14,7 @@ iinfo_i8: np.iinfo[np.int64]
 reveal_type(np.finfo(f))  # E: finfo[{double}]
 reveal_type(np.finfo(f8))  # E: finfo[{float64}]
 reveal_type(np.finfo(c8))  # E: finfo[{float32}]
-reveal_type(np.finfo('f2'))  # E: finfo[floating[Any]]
+reveal_type(np.finfo("f2"))  # E: finfo[floating[Any]]
 
 reveal_type(finfo_f8.dtype)  # E: dtype[{float64}]
 reveal_type(finfo_f8.bits)  # E: int
@@ -37,7 +38,7 @@ reveal_type(finfo_f8.smallest_subnormal)  # E: {float64}
 reveal_type(np.iinfo(i))  # E: iinfo[{int_}]
 reveal_type(np.iinfo(i8))  # E: iinfo[{int64}]
 reveal_type(np.iinfo(u4))  # E: iinfo[{uint32}]
-reveal_type(np.iinfo('i2'))  # E: iinfo[Any]
+reveal_type(np.iinfo("i2"))  # E: iinfo[Any]
 
 reveal_type(iinfo_i8.dtype)  # E: dtype[{int64}]
 reveal_type(iinfo_i8.kind)  # E: str

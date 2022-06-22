@@ -1,10 +1,13 @@
 import codecs
-import pytest
-import numpy as np
-from numpy.f2py.crackfortran import markinnerspaces
-from . import util
-from numpy.f2py import crackfortran
 import textwrap
+
+import pytest
+
+import numpy as np
+from numpy.f2py import crackfortran
+from numpy.f2py.crackfortran import markinnerspaces
+
+from . import util
 
 
 class TestNoSpace(util.F2PyTest):
@@ -49,13 +52,13 @@ class TestPublicPrivate:
         fpath = util.getpath("tests", "src", "crackfortran", "accesstype.f90")
         mod = crackfortran.crackfortran([str(fpath)])
         assert len(mod) == 1
-        tt = mod[0]['vars']
-        assert set(tt['a']['attrspec']) == {'private', 'bind(c)'}
-        assert set(tt['b_']['attrspec']) == {'public', 'bind(c)'}
-        assert set(tt['c']['attrspec']) == {'public'}
+        tt = mod[0]["vars"]
+        assert set(tt["a"]["attrspec"]) == {"private", "bind(c)"}
+        assert set(tt["b_"]["attrspec"]) == {"public", "bind(c)"}
+        assert set(tt["c"]["attrspec"]) == {"public"}
 
 
-class TestModuleProcedure():
+class TestModuleProcedure:
     def test_moduleOperators(self, tmp_path):
         fpath = util.getpath("tests", "src", "crackfortran", "operators.f90")
         mod = crackfortran.crackfortran([str(fpath)])
@@ -64,24 +67,28 @@ class TestModuleProcedure():
         assert "body" in mod and len(mod["body"]) == 9
         assert mod["body"][1]["name"] == "operator(.item.)"
         assert "implementedby" in mod["body"][1]
-        assert mod["body"][1]["implementedby"] == \
-            ["item_int", "item_real"]
+        assert mod["body"][1]["implementedby"] == ["item_int", "item_real"]
         assert mod["body"][2]["name"] == "operator(==)"
         assert "implementedby" in mod["body"][2]
         assert mod["body"][2]["implementedby"] == ["items_are_equal"]
         assert mod["body"][3]["name"] == "assignment(=)"
         assert "implementedby" in mod["body"][3]
-        assert mod["body"][3]["implementedby"] == \
-            ["get_int", "get_real"]
+        assert mod["body"][3]["implementedby"] == ["get_int", "get_real"]
 
     def test_notPublicPrivate(self, tmp_path):
         fpath = util.getpath("tests", "src", "crackfortran", "pubprivmod.f90")
         mod = crackfortran.crackfortran([str(fpath)])
         assert len(mod) == 1
         mod = mod[0]
-        assert mod['vars']['a']['attrspec'] == ['private', ]
-        assert mod['vars']['b']['attrspec'] == ['public', ]
-        assert mod['vars']['seta']['attrspec'] == ['public', ]
+        assert mod["vars"]["a"]["attrspec"] == [
+            "private",
+        ]
+        assert mod["vars"]["b"]["attrspec"] == [
+            "public",
+        ]
+        assert mod["vars"]["seta"]["attrspec"] == [
+            "public",
+        ]
 
 
 class TestExternal(util.F2PyTest):
@@ -132,6 +139,7 @@ class TestMarkinnerspaces:
         assert markinnerspaces("a 'b c' 'd e'") == "a 'b@_@c' 'd@_@e'"
         assert markinnerspaces(r'a "b c" "d e"') == r'a "b@_@c" "d@_@e"'
 
+
 class TestDimSpec(util.F2PyTest):
     """This test suite tests various expressions that are used as dimension
     specifications.
@@ -165,7 +173,8 @@ class TestDimSpec(util.F2PyTest):
 
     suffix = ".f90"
 
-    code_template = textwrap.dedent("""
+    code_template = textwrap.dedent(
+        """
       function get_arr_size_{count}(a, n) result (length)
         integer, intent(in) :: n
         integer, dimension({dimspec}), intent(out) :: a
@@ -182,18 +191,25 @@ class TestDimSpec(util.F2PyTest):
           print*, "a=", a
         endif
       end subroutine
-    """)
+    """
+    )
 
     linear_dimspecs = [
-        "n", "2*n", "2:n", "n/2", "5 - n/2", "3*n:20", "n*(n+1):n*(n+5)",
-        "2*n, n"
+        "n",
+        "2*n",
+        "2:n",
+        "n/2",
+        "5 - n/2",
+        "3*n:20",
+        "n*(n+1):n*(n+5)",
+        "2*n, n",
     ]
     nonlinear_dimspecs = ["2*n:3*n*n+2*n"]
     all_dimspecs = linear_dimspecs + nonlinear_dimspecs
 
     code = ""
     for count, dimspec in enumerate(all_dimspecs):
-        lst = [(d.split(":")[0] if ":" in d else "1") for d in dimspec.split(',')]
+        lst = [(d.split(":")[0] if ":" in d else "1") for d in dimspec.split(",")]
         code += code_template.format(
             count=count,
             dimspec=dimspec,
@@ -241,29 +257,31 @@ class TestModuleDeclaration:
         assert len(mod) == 1
         assert mod[0]["vars"]["abar"]["="] == "bar('abar')"
 
+
 class TestEval(util.F2PyTest):
     def test_eval_scalar(self):
         eval_scalar = crackfortran._eval_scalar
 
-        assert eval_scalar('123', {}) == '123'
-        assert eval_scalar('12 + 3', {}) == '15'
-        assert eval_scalar('a + b', dict(a=1, b=2)) == '3'
+        assert eval_scalar("123", {}) == "123"
+        assert eval_scalar("12 + 3", {}) == "15"
+        assert eval_scalar("a + b", dict(a=1, b=2)) == "3"
         assert eval_scalar('"123"', {}) == "'123'"
 
 
 class TestFortranReader(util.F2PyTest):
-    @pytest.mark.parametrize("encoding",
-                             ['ascii', 'utf-8', 'utf-16', 'utf-32'])
+    @pytest.mark.parametrize("encoding", ["ascii", "utf-8", "utf-16", "utf-32"])
     def test_input_encoding(self, tmp_path, encoding):
         # gh-635
         f_path = tmp_path / f"input_with_{encoding}_encoding.f90"
         # explicit BOM is required for UTF8
-        bom = {'utf-8': codecs.BOM_UTF8}.get(encoding, b'')
-        with f_path.open('w', encoding=encoding) as ff:
-            ff.write(bom.decode(encoding) +
-                     """
+        bom = {"utf-8": codecs.BOM_UTF8}.get(encoding, b"")
+        with f_path.open("w", encoding=encoding) as ff:
+            ff.write(
+                bom.decode(encoding)
+                + """
                      subroutine foo()
                      end subroutine foo
-                     """)
+                     """
+            )
         mod = crackfortran.crackfortran([str(f_path)])
-        assert mod[0]['name'] == 'foo'
+        assert mod[0]["name"] == "foo"

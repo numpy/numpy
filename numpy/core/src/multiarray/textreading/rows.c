@@ -6,17 +6,17 @@
 #define _MULTIARRAYMODULE
 #include "numpy/arrayobject.h"
 #include "numpy/npy_3kcompat.h"
+
 #include "alloc.h"
 
-#include <string.h>
-#include <stdbool.h>
-
-#include "textreading/stream.h"
-#include "textreading/tokenize.h"
 #include "textreading/conversions.h"
 #include "textreading/field_types.h"
-#include "textreading/rows.h"
 #include "textreading/growth.h"
+#include "textreading/rows.h"
+#include "textreading/stream.h"
+#include "textreading/tokenize.h"
+#include <stdbool.h>
+#include <string.h>
 
 /*
  * Minimum size to grow the allcoation by (or 25%). The 8KiB means the actual
@@ -24,14 +24,12 @@
  */
 #define MIN_BLOCK_SIZE (1 << 13)
 
-
-
 /*
  *  Create the array of converter functions from the Python converters.
  */
 static PyObject **
-create_conv_funcs(
-        PyObject *converters, Py_ssize_t num_fields, const Py_ssize_t *usecols)
+create_conv_funcs(PyObject *converters, Py_ssize_t num_fields,
+                  const Py_ssize_t *usecols)
 {
     assert(converters != Py_None);
 
@@ -50,7 +48,8 @@ create_conv_funcs(
         return conv_funcs;
     }
     else if (!PyDict_Check(converters)) {
-        PyErr_SetString(PyExc_TypeError,
+        PyErr_SetString(
+                PyExc_TypeError,
                 "converters must be a dictionary mapping columns to converter "
                 "functions or a single callable.");
         goto error;
@@ -62,8 +61,9 @@ create_conv_funcs(
         Py_ssize_t column = PyNumber_AsSsize_t(key, PyExc_IndexError);
         if (column == -1 && PyErr_Occurred()) {
             PyErr_Format(PyExc_TypeError,
-                    "keys of the converters dictionary must be integers; "
-                    "got %.100R", key);
+                         "keys of the converters dictionary must be integers; "
+                         "got %.100R",
+                         key);
             goto error;
         }
         if (usecols != NULL) {
@@ -84,14 +84,16 @@ create_conv_funcs(
                 }
             }
             if (i == num_fields) {
-                continue;  /* ignore unused converter */
+                continue; /* ignore unused converter */
             }
         }
         else {
             if (column < -num_fields || column >= num_fields) {
-                PyErr_Format(PyExc_ValueError,
+                PyErr_Format(
+                        PyExc_ValueError,
                         "converter specified for column %zd, which is invalid "
-                        "for the number of fields %d.", column, num_fields);
+                        "for the number of fields %d.",
+                        column, num_fields);
                 goto error;
             }
             if (column < 0) {
@@ -99,9 +101,11 @@ create_conv_funcs(
             }
         }
         if (!PyCallable_Check(value)) {
-            PyErr_Format(PyExc_TypeError,
+            PyErr_Format(
+                    PyExc_TypeError,
                     "values of the converters dictionary must be callable, "
-                    "but the value associated with key %R is not", key);
+                    "but the value associated with key %R is not",
+                    key);
             goto error;
         }
         Py_INCREF(value);
@@ -109,7 +113,7 @@ create_conv_funcs(
     }
     return conv_funcs;
 
-  error:
+error:
     for (Py_ssize_t i = 0; i < num_fields; i++) {
         Py_XDECREF(conv_funcs[i]);
     }
@@ -153,12 +157,11 @@ create_conv_funcs(
  *          is always a new reference (even when `data_array` was passed in).
  */
 NPY_NO_EXPORT PyArrayObject *
-read_rows(stream *s,
-        npy_intp max_rows, Py_ssize_t num_field_types, field_type *field_types,
-        parser_config *pconfig, Py_ssize_t num_usecols, Py_ssize_t *usecols,
-        Py_ssize_t skiplines, PyObject *converters,
-        PyArrayObject *data_array, PyArray_Descr *out_descr,
-        bool homogeneous)
+read_rows(stream *s, npy_intp max_rows, Py_ssize_t num_field_types,
+          field_type *field_types, parser_config *pconfig,
+          Py_ssize_t num_usecols, Py_ssize_t *usecols, Py_ssize_t skiplines,
+          PyObject *converters, PyArrayObject *data_array,
+          PyArray_Descr *out_descr, bool homogeneous)
 {
     char *data_ptr = NULL;
     Py_ssize_t current_num_fields;
@@ -173,10 +176,11 @@ read_rows(stream *s,
     bool data_array_allocated = data_array == NULL;
     /* Make sure we own `data_array` for the purpose of error handling */
     Py_XINCREF(data_array);
-    size_t rows_per_block = 1;  /* will be increased depending on row size */
+    size_t rows_per_block = 1; /* will be increased depending on row size */
     npy_intp data_allocated_rows = 0;
 
-    /* We give a warning if max_rows is used and an empty line is encountered */
+    /* We give a warning if max_rows is used and an empty line is encountered
+     */
     bool give_empty_row_warning = max_rows >= 0;
 
     int ts_result = 0;
@@ -208,7 +212,7 @@ read_rows(stream *s,
         }
     }
 
-    Py_ssize_t row_count = 0;  /* number of rows actually processed */
+    Py_ssize_t row_count = 0; /* number of rows actually processed */
     while ((max_rows < 0 || row_count < max_rows) && ts_result == 0) {
         ts_result = tokenize(s, &ts, pconfig);
         if (ts_result < 0) {
@@ -221,25 +225,32 @@ read_rows(stream *s,
              * Deprecated NumPy 1.23, 2021-01-13 (not really a deprecation,
              * but similar policy should apply to removing the warning again)
              */
-             /* Tokenizer may give a final "empty line" even if there is none */
+            /* Tokenizer may give a final "empty line" even if there is none */
             if (give_empty_row_warning && ts_result == 0) {
                 give_empty_row_warning = false;
-                if (PyErr_WarnFormat(PyExc_UserWarning, 3,
-                        "Input line %zd contained no data and will not be "
-                        "counted towards `max_rows=%zd`.  This differs from "
-                        "the behaviour in NumPy <=1.22 which counted lines "
-                        "rather than rows.  If desired, the previous behaviour "
-                        "can be achieved by using `itertools.islice`.\n"
-                        "Please see the 1.23 release notes for an example on "
-                        "how to do this.  If you wish to ignore this warning, "
-                        "use `warnings.filterwarnings`.  This warning is "
-                        "expected to be removed in the future and is given "
-                        "only once per `loadtxt` call.",
-                        row_count + skiplines + 1, max_rows) < 0) {
+                if (PyErr_WarnFormat(
+                            PyExc_UserWarning, 3,
+                            "Input line %zd contained no data and will not be "
+                            "counted towards `max_rows=%zd`.  This differs "
+                            "from "
+                            "the behaviour in NumPy <=1.22 which counted "
+                            "lines "
+                            "rather than rows.  If desired, the previous "
+                            "behaviour "
+                            "can be achieved by using `itertools.islice`.\n"
+                            "Please see the 1.23 release notes for an example "
+                            "on "
+                            "how to do this.  If you wish to ignore this "
+                            "warning, "
+                            "use `warnings.filterwarnings`.  This warning is "
+                            "expected to be removed in the future and is "
+                            "given "
+                            "only once per `loadtxt` call.",
+                            row_count + skiplines + 1, max_rows) < 0) {
                     goto error;
                 }
             }
-            continue;  /* Ignore empty line */
+            continue; /* Ignore empty line */
         }
 
         if (NPY_UNLIKELY(data_ptr == NULL)) {
@@ -251,8 +262,8 @@ read_rows(stream *s,
             }
 
             if (converters != Py_None) {
-                conv_funcs = create_conv_funcs(
-                        converters, actual_num_fields, usecols);
+                conv_funcs = create_conv_funcs(converters, actual_num_fields,
+                                               usecols);
                 if (conv_funcs == NULL) {
                     goto error;
                 }
@@ -278,8 +289,8 @@ read_rows(stream *s,
                     }
                     else {
                         /* safe on overflow since min_rows will be 0 or 1 */
-                        size_t min_rows = (
-                                (MIN_BLOCK_SIZE + row_size - 1) / row_size);
+                        size_t min_rows =
+                                ((MIN_BLOCK_SIZE + row_size - 1) / row_size);
                         while (rows_per_block < min_rows) {
                             rows_per_block *= 2;
                         }
@@ -298,7 +309,8 @@ read_rows(stream *s,
                 data_array = (PyArrayObject *)PyArray_SimpleNewFromDescr(
                         ndim, result_shape, out_descr);
 #ifdef NPY_RELAXED_STRIDES_DEBUG
-                /* Incompatible with NPY_RELAXED_STRIDES_DEBUG due to growing */
+                /* Incompatible with NPY_RELAXED_STRIDES_DEBUG due to growing
+                 */
                 if (result_shape[0] == 1) {
                     PyArray_STRIDES(data_array)[0] = row_size;
                 }
@@ -307,21 +319,23 @@ read_rows(stream *s,
                     goto error;
                 }
                 if (needs_init) {
-                    memset(PyArray_BYTES(data_array), 0, PyArray_NBYTES(data_array));
+                    memset(PyArray_BYTES(data_array), 0,
+                           PyArray_NBYTES(data_array));
                 }
             }
             else {
-                assert(max_rows >=0);
+                assert(max_rows >= 0);
                 data_allocated_rows = max_rows;
             }
             data_ptr = PyArray_BYTES(data_array);
         }
 
         if (!usecols && (actual_num_fields != current_num_fields)) {
-            PyErr_Format(PyExc_ValueError,
+            PyErr_Format(
+                    PyExc_ValueError,
                     "the number of columns changed from %d to %d at row %zu; "
                     "use `usecols` to select a subset and avoid this error",
-                    actual_num_fields, current_num_fields, row_count+1);
+                    actual_num_fields, current_num_fields, row_count + 1);
             goto error;
         }
 
@@ -336,14 +350,16 @@ read_rows(stream *s,
             if (alloc_size < 0) {
                 /* should normally error much earlier, but make sure */
                 PyErr_SetString(PyExc_ValueError,
-                        "array is too big. Cannot read file as a single array; "
-                        "providing a maximum number of rows to read may help.");
+                                "array is too big. Cannot read file as a "
+                                "single array; "
+                                "providing a maximum number of rows to read "
+                                "may help.");
                 goto error;
             }
 
-            char *new_data = PyDataMem_UserRENEW(
-                    PyArray_BYTES(data_array), alloc_size ? alloc_size : 1,
-                    PyArray_HANDLER(data_array));
+            char *new_data = PyDataMem_UserRENEW(PyArray_BYTES(data_array),
+                                                 alloc_size ? alloc_size : 1,
+                                                 PyArray_HANDLER(data_array));
             if (new_data == NULL) {
                 PyErr_NoMemory();
                 goto error;
@@ -359,8 +375,8 @@ read_rows(stream *s,
         }
 
         for (Py_ssize_t i = 0; i < actual_num_fields; ++i) {
-            Py_ssize_t f;  /* The field, either 0 (if homogeneous) or i. */
-            Py_ssize_t col;  /* The column as read, remapped by usecols */
+            Py_ssize_t f;   /* The field, either 0 (if homogeneous) or i. */
+            Py_ssize_t col; /* The column as read, remapped by usecols */
             char *item_ptr;
             if (homogeneous) {
                 f = 0;
@@ -377,14 +393,16 @@ read_rows(stream *s,
             else {
                 col = usecols[i];
                 if (col < 0) {
-                    // Python-like column indexing: k = -1 means the last column.
+                    // Python-like column indexing: k = -1 means the last
+                    // column.
                     col += current_num_fields;
                 }
                 if (NPY_UNLIKELY((col < 0) || (col >= current_num_fields))) {
                     PyErr_Format(PyExc_ValueError,
-                            "invalid column index %d at row %zu with %d "
-                            "columns",
-                            usecols[i], current_num_fields, row_count+1);
+                                 "invalid column index %d at row %zu with %d "
+                                 "columns",
+                                 usecols[i], current_num_fields,
+                                 row_count + 1);
                     goto error;
                 }
             }
@@ -398,12 +416,13 @@ read_rows(stream *s,
             Py_UCS4 *str = ts.field_buffer + fields[col].offset;
             Py_UCS4 *end = ts.field_buffer + fields[col + 1].offset - 1;
             if (conv_funcs == NULL || conv_funcs[i] == NULL) {
-                parser_res = field_types[f].set_from_ucs4(field_types[f].descr,
-                        str, end, item_ptr, pconfig);
+                parser_res = field_types[f].set_from_ucs4(
+                        field_types[f].descr, str, end, item_ptr, pconfig);
             }
             else {
                 parser_res = to_generic_with_converter(field_types[f].descr,
-                        str, end, item_ptr, pconfig, conv_funcs[i]);
+                                                       str, end, item_ptr,
+                                                       pconfig, conv_funcs[i]);
             }
 
             if (NPY_UNLIKELY(parser_res < 0)) {
@@ -418,9 +437,9 @@ read_rows(stream *s,
                     goto error;
                 }
                 PyErr_Format(PyExc_ValueError,
-                        "could not convert string %.100R to %S at "
-                        "row %zu, column %d.",
-                        string, field_types[f].descr, row_count, col+1);
+                             "could not convert string %.100R to %S at "
+                             "row %zu, column %d.",
+                             string, field_types[f].descr, row_count, col + 1);
                 Py_DECREF(string);
                 npy_PyErr_ChainExceptionsCause(exc, val, tb);
                 goto error;
@@ -454,8 +473,8 @@ read_rows(stream *s,
             result_shape[1] = actual_num_fields;
         }
         Py_INCREF(out_descr);
-        data_array = (PyArrayObject *)PyArray_Empty(
-                ndim, result_shape, out_descr, 0);
+        data_array = (PyArrayObject *)PyArray_Empty(ndim, result_shape,
+                                                    out_descr, 0);
     }
 
     /*
@@ -464,9 +483,9 @@ read_rows(stream *s,
      */
     if (data_array_allocated && data_allocated_rows != row_count) {
         size_t size = row_count * row_size;
-        char *new_data = PyDataMem_UserRENEW(
-                PyArray_BYTES(data_array), size ? size : 1,
-                PyArray_HANDLER(data_array));
+        char *new_data =
+                PyDataMem_UserRENEW(PyArray_BYTES(data_array), size ? size : 1,
+                                    PyArray_HANDLER(data_array));
         if (new_data == NULL) {
             Py_DECREF(data_array);
             PyErr_NoMemory();
@@ -478,7 +497,7 @@ read_rows(stream *s,
 
     return data_array;
 
-  error:
+error:
     if (conv_funcs != NULL) {
         for (Py_ssize_t i = 0; i < actual_num_fields; i++) {
             Py_XDECREF(conv_funcs[i]);

@@ -7,22 +7,15 @@ four private subclasses, one for each combination of
 
 """
 
-from typing import (
-    Any,
-    Generic,
-    overload,
-    TypeVar,
-    Literal,
-    SupportsIndex,
-)
+from typing import Any, Generic, Literal, SupportsIndex, TypeVar, overload
 
-from numpy import ufunc, _CastingKind, _OrderKACF
+from numpy import _CastingKind, _OrderKACF, ufunc
 from numpy.typing import NDArray
 
-from ._shape import _ShapeLike
-from ._scalars import _ScalarLike_co
 from ._array_like import ArrayLike, _ArrayLikeBool_co, _ArrayLikeInt_co
 from ._dtype_like import DTypeLike
+from ._scalars import _ScalarLike_co
+from ._shape import _ShapeLike
 
 _T = TypeVar("_T")
 _2Tuple = tuple[_T, _T]
@@ -71,7 +64,6 @@ class _UFunc_Nin1_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: i
     def reduceat(self) -> None: ...
     @property
     def outer(self) -> None: ...
-
     @overload
     def __call__(
         self,
@@ -100,7 +92,6 @@ class _UFunc_Nin1_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: i
         signature: str | _2Tuple[None | str] = ...,
         extobj: list[Any] = ...,
     ) -> NDArray[Any]: ...
-
     def at(
         self,
         a: NDArray[Any],
@@ -123,7 +114,6 @@ class _UFunc_Nin2_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: i
     def nargs(self) -> Literal[3]: ...
     @property
     def signature(self) -> None: ...
-
     @overload
     def __call__(
         self,
@@ -154,7 +144,6 @@ class _UFunc_Nin2_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: i
         signature: str | _3Tuple[None | str] = ...,
         extobj: list[Any] = ...,
     ) -> NDArray[Any]: ...
-
     def at(
         self,
         a: NDArray[Any],
@@ -162,7 +151,6 @@ class _UFunc_Nin2_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: i
         b: ArrayLike,
         /,
     ) -> None: ...
-
     def reduce(
         self,
         array: ArrayLike,
@@ -173,7 +161,6 @@ class _UFunc_Nin2_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: i
         initial: Any = ...,
         where: _ArrayLikeBool_co = ...,
     ) -> Any: ...
-
     def accumulate(
         self,
         array: ArrayLike,
@@ -181,7 +168,6 @@ class _UFunc_Nin2_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: i
         dtype: DTypeLike = ...,
         out: None | NDArray[Any] = ...,
     ) -> NDArray[Any]: ...
-
     def reduceat(
         self,
         array: ArrayLike,
@@ -197,7 +183,8 @@ class _UFunc_Nin2_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: i
         self,
         A: _ScalarLike_co,
         B: _ScalarLike_co,
-        /, *,
+        /,
+        *,
         out: None = ...,
         where: None | _ArrayLikeBool_co = ...,
         casting: _CastingKind = ...,
@@ -212,7 +199,8 @@ class _UFunc_Nin2_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: i
         self,
         A: ArrayLike,
         B: ArrayLike,
-        /, *,
+        /,
+        *,
         out: None | NDArray[Any] | tuple[NDArray[Any]] = ...,
         where: None | _ArrayLikeBool_co = ...,
         casting: _CastingKind = ...,
@@ -248,7 +236,6 @@ class _UFunc_Nin1_Nout2(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: i
     def reduceat(self) -> None: ...
     @property
     def outer(self) -> None: ...
-
     @overload
     def __call__(
         self,
@@ -306,7 +293,6 @@ class _UFunc_Nin2_Nout2(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: i
     def reduceat(self) -> None: ...
     @property
     def outer(self) -> None: ...
-
     @overload
     def __call__(
         self,

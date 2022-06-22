@@ -1,4 +1,5 @@
 import ctypes as ct
+
 import numpy as np
 
 dtype_U: np.dtype[np.str_]
@@ -48,7 +49,9 @@ reveal_type(np.dtype(("U", 10)))  # E: dtype[void]
 
 # Methods and attributes
 reveal_type(dtype_U.base)  # E: dtype[Any]
-reveal_type(dtype_U.subdtype)  # E: Union[None, Tuple[dtype[Any], builtins.tuple[builtins.int, ...]]]
+reveal_type(
+    dtype_U.subdtype
+)  # E: Union[None, Tuple[dtype[Any], builtins.tuple[builtins.int, ...]]]
 reveal_type(dtype_U.newbyteorder())  # E: dtype[str_]
 reveal_type(dtype_U.type)  # E: Type[str_]
 reveal_type(dtype_U.name)  # E: str

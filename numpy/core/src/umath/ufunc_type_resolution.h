@@ -9,99 +9,76 @@ PyUFunc_SimpleBinaryComparisonTypeResolver(PyUFuncObject *ufunc,
                                            PyArray_Descr **out_dtypes);
 
 NPY_NO_EXPORT int
-PyUFunc_NegativeTypeResolver(PyUFuncObject *ufunc,
-                             NPY_CASTING casting,
-                             PyArrayObject **operands,
-                             PyObject *type_tup,
+PyUFunc_NegativeTypeResolver(PyUFuncObject *ufunc, NPY_CASTING casting,
+                             PyArrayObject **operands, PyObject *type_tup,
                              PyArray_Descr **out_dtypes);
 
 NPY_NO_EXPORT int
-PyUFunc_OnesLikeTypeResolver(PyUFuncObject *ufunc,
-                             NPY_CASTING casting,
-                             PyArrayObject **operands,
-                             PyObject *type_tup,
+PyUFunc_OnesLikeTypeResolver(PyUFuncObject *ufunc, NPY_CASTING casting,
+                             PyArrayObject **operands, PyObject *type_tup,
                              PyArray_Descr **out_dtypes);
 
 NPY_NO_EXPORT int
 PyUFunc_SimpleUniformOperationTypeResolver(PyUFuncObject *ufunc,
-                                          NPY_CASTING casting,
-                                          PyArrayObject **operands,
-                                          PyObject *type_tup,
-                                          PyArray_Descr **out_dtypes);
+                                           NPY_CASTING casting,
+                                           PyArrayObject **operands,
+                                           PyObject *type_tup,
+                                           PyArray_Descr **out_dtypes);
 
 NPY_NO_EXPORT int
-PyUFunc_AbsoluteTypeResolver(PyUFuncObject *ufunc,
-                             NPY_CASTING casting,
-                             PyArrayObject **operands,
-                             PyObject *type_tup,
+PyUFunc_AbsoluteTypeResolver(PyUFuncObject *ufunc, NPY_CASTING casting,
+                             PyArrayObject **operands, PyObject *type_tup,
                              PyArray_Descr **out_dtypes);
 
 NPY_NO_EXPORT int
-PyUFunc_IsNaTTypeResolver(PyUFuncObject *ufunc,
-                          NPY_CASTING casting,
-                          PyArrayObject **operands,
-                          PyObject *type_tup,
+PyUFunc_IsNaTTypeResolver(PyUFuncObject *ufunc, NPY_CASTING casting,
+                          PyArrayObject **operands, PyObject *type_tup,
                           PyArray_Descr **out_dtypes);
 
 NPY_NO_EXPORT int
-PyUFunc_IsFiniteTypeResolver(PyUFuncObject *ufunc,
-                             NPY_CASTING casting,
-                             PyArrayObject **operands,
-                             PyObject *type_tup,
+PyUFunc_IsFiniteTypeResolver(PyUFuncObject *ufunc, NPY_CASTING casting,
+                             PyArrayObject **operands, PyObject *type_tup,
                              PyArray_Descr **out_dtypes);
 
 NPY_NO_EXPORT int
-PyUFunc_AdditionTypeResolver(PyUFuncObject *ufunc,
-                             NPY_CASTING casting,
-                             PyArrayObject **operands,
-                             PyObject *type_tup,
+PyUFunc_AdditionTypeResolver(PyUFuncObject *ufunc, NPY_CASTING casting,
+                             PyArrayObject **operands, PyObject *type_tup,
                              PyArray_Descr **out_dtypes);
 
 NPY_NO_EXPORT int
-PyUFunc_SubtractionTypeResolver(PyUFuncObject *ufunc,
-                                NPY_CASTING casting,
-                                PyArrayObject **operands,
-                                PyObject *type_tup,
+PyUFunc_SubtractionTypeResolver(PyUFuncObject *ufunc, NPY_CASTING casting,
+                                PyArrayObject **operands, PyObject *type_tup,
                                 PyArray_Descr **out_dtypes);
 
 NPY_NO_EXPORT int
-PyUFunc_MultiplicationTypeResolver(PyUFuncObject *ufunc,
-                                   NPY_CASTING casting,
+PyUFunc_MultiplicationTypeResolver(PyUFuncObject *ufunc, NPY_CASTING casting,
                                    PyArrayObject **operands,
                                    PyObject *type_tup,
                                    PyArray_Descr **out_dtypes);
 
 NPY_NO_EXPORT int
-PyUFunc_TrueDivisionTypeResolver(PyUFuncObject *ufunc,
-                                 NPY_CASTING casting,
-                                 PyArrayObject **operands,
-                                 PyObject *type_tup,
+PyUFunc_TrueDivisionTypeResolver(PyUFuncObject *ufunc, NPY_CASTING casting,
+                                 PyArrayObject **operands, PyObject *type_tup,
                                  PyArray_Descr **out_dtypes);
 
 NPY_NO_EXPORT int
-PyUFunc_DivisionTypeResolver(PyUFuncObject *ufunc,
-                             NPY_CASTING casting,
-                             PyArrayObject **operands,
-                             PyObject *type_tup,
+PyUFunc_DivisionTypeResolver(PyUFuncObject *ufunc, NPY_CASTING casting,
+                             PyArrayObject **operands, PyObject *type_tup,
                              PyArray_Descr **out_dtypes);
 
 NPY_NO_EXPORT int
-PyUFunc_RemainderTypeResolver(PyUFuncObject *ufunc,
-                              NPY_CASTING casting,
-                              PyArrayObject **operands,
-                              PyObject *type_tup,
+PyUFunc_RemainderTypeResolver(PyUFuncObject *ufunc, NPY_CASTING casting,
+                              PyArrayObject **operands, PyObject *type_tup,
                               PyArray_Descr **out_dtypes);
 
 NPY_NO_EXPORT int
-PyUFunc_DivmodTypeResolver(PyUFuncObject *ufunc,
-                              NPY_CASTING casting,
-                              PyArrayObject **operands,
-                              PyObject *type_tup,
-                              PyArray_Descr **out_dtypes);
+PyUFunc_DivmodTypeResolver(PyUFuncObject *ufunc, NPY_CASTING casting,
+                           PyArrayObject **operands, PyObject *type_tup,
+                           PyArray_Descr **out_dtypes);
 
 NPY_NO_EXPORT int
-PyUFunc_ValidateOutCasting(PyUFuncObject *ufunc,
-        NPY_CASTING casting, PyArrayObject **operands, PyArray_Descr **dtypes);
+PyUFunc_ValidateOutCasting(PyUFuncObject *ufunc, NPY_CASTING casting,
+                           PyArrayObject **operands, PyArray_Descr **dtypes);
 
 /*
  * Does a linear search for the best inner loop of the ufunc.
@@ -110,11 +87,9 @@ PyUFunc_ValidateOutCasting(PyUFuncObject *ufunc,
  * references in out_dtype.  This function does not do its own clean-up.
  */
 NPY_NO_EXPORT int
-linear_search_type_resolver(PyUFuncObject *self,
-                            PyArrayObject **op,
+linear_search_type_resolver(PyUFuncObject *self, PyArrayObject **op,
                             NPY_CASTING input_casting,
-                            NPY_CASTING output_casting,
-                            int any_object,
+                            NPY_CASTING output_casting, int any_object,
                             PyArray_Descr **out_dtype);
 
 /*
@@ -124,12 +99,9 @@ linear_search_type_resolver(PyUFuncObject *self,
  * references in out_dtype.  This function does not do its own clean-up.
  */
 NPY_NO_EXPORT int
-type_tuple_type_resolver(PyUFuncObject *self,
-                         PyObject *type_tup,
-                         PyArrayObject **op,
-                         NPY_CASTING input_casting,
-                         NPY_CASTING casting,
-                         int any_object,
+type_tuple_type_resolver(PyUFuncObject *self, PyObject *type_tup,
+                         PyArrayObject **op, NPY_CASTING input_casting,
+                         NPY_CASTING casting, int any_object,
                          PyArray_Descr **out_dtype);
 
 NPY_NO_EXPORT int

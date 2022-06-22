@@ -1,10 +1,11 @@
 # XXX: Handle setuptools ?
 from distutils.core import Distribution
 
+
 # This class is used because we add new files (sconscripts, and so on) with the
 # scons command
 class NumpyDistribution(Distribution):
-    def __init__(self, attrs = None):
+    def __init__(self, attrs=None):
         # A list of (sconscripts, pre_hook, post_hook, src, parent_names)
         self.scons_data = []
         # A list of installable libraries

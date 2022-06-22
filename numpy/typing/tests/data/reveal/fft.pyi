@@ -12,10 +12,14 @@ reveal_type(np.fft.ifftshift(AR_f8))  # E: ndarray[Any, dtype[{float64}]]
 reveal_type(np.fft.ifftshift(AR_LIKE_f8, axes=0))  # E: ndarray[Any, dtype[Any]]
 
 reveal_type(np.fft.fftfreq(5, AR_f8))  # E: ndarray[Any, dtype[floating[Any]]]
-reveal_type(np.fft.fftfreq(np.int64(), AR_c16))  # E: ndarray[Any, dtype[complexfloating[Any, Any]]]
+reveal_type(
+    np.fft.fftfreq(np.int64(), AR_c16)
+)  # E: ndarray[Any, dtype[complexfloating[Any, Any]]]
 
 reveal_type(np.fft.fftfreq(5, AR_f8))  # E: ndarray[Any, dtype[floating[Any]]]
-reveal_type(np.fft.fftfreq(np.int64(), AR_c16))  # E: ndarray[Any, dtype[complexfloating[Any, Any]]]
+reveal_type(
+    np.fft.fftfreq(np.int64(), AR_c16)
+)  # E: ndarray[Any, dtype[complexfloating[Any, Any]]]
 
 reveal_type(np.fft.fft(AR_f8))  # E: ndarray[Any, dtype[{complex128}]]
 reveal_type(np.fft.ifft(AR_f8, axis=1))  # E: ndarray[Any, dtype[{complex128}]]

@@ -3,7 +3,6 @@
 
 #include "array_method.h"
 
-
 /*
  * More than for most functions, cast information needs to be stored in
  * a few places.  Most importantly, in many cases we need to chain or wrap
@@ -24,7 +23,6 @@ typedef struct {
     PyArray_Descr *descriptors[2];
 } NPY_cast_info;
 
-
 /*
  * Create a new cast-info struct with cast_info->context.descriptors linked.
  * Compilers should inline this to ensure the whole struct is not actually
@@ -34,7 +32,7 @@ typedef struct {
 static NPY_INLINE void
 NPY_cast_info_init(NPY_cast_info *cast_info)
 {
-    cast_info->func = NULL;  /* mark as uninitialized. */
+    cast_info->func = NULL; /* mark as uninitialized. */
     /*
      * Support for auxdata being unchanged, in the future, we might add
      * a scratch space to `NPY_cast_info` and link to that instead.
@@ -45,7 +43,6 @@ NPY_cast_info_init(NPY_cast_info *cast_info)
     // TODO: Delete this again probably maybe create a new minimal init macro
     cast_info->context.caller = NULL;
 }
-
 
 /*
  * Free's all references and data held inside the struct (not the struct).
@@ -65,7 +62,6 @@ NPY_cast_info_xfree(NPY_cast_info *cast_info)
     Py_XDECREF(cast_info->context.method);
     cast_info->func = NULL;
 }
-
 
 /*
  * Move the data from `original` to `cast_info`. Original is cleared
@@ -114,52 +110,48 @@ NPY_cast_info_copy(NPY_cast_info *cast_info, NPY_cast_info *original)
     return 0;
 }
 
+NPY_NO_EXPORT int
+_strided_to_strided_move_references(PyArrayMethod_Context *NPY_UNUSED(context),
+                                    char *const *args,
+                                    const npy_intp *dimensions,
+                                    const npy_intp *strides,
+                                    NpyAuxData *NPY_UNUSED(auxdata));
 
 NPY_NO_EXPORT int
-_strided_to_strided_move_references(
-        PyArrayMethod_Context *NPY_UNUSED(context), char *const *args,
-        const npy_intp *dimensions, const npy_intp *strides,
-        NpyAuxData *NPY_UNUSED(auxdata));
+_strided_to_strided_copy_references(PyArrayMethod_Context *NPY_UNUSED(context),
+                                    char *const *args,
+                                    const npy_intp *dimensions,
+                                    const npy_intp *strides,
+                                    NpyAuxData *NPY_UNUSED(auxdata));
 
 NPY_NO_EXPORT int
-_strided_to_strided_copy_references(
-        PyArrayMethod_Context *NPY_UNUSED(context), char *const *args,
-        const npy_intp *dimensions, const npy_intp *strides,
-        NpyAuxData *NPY_UNUSED(auxdata));
-
-
-NPY_NO_EXPORT int
-any_to_object_get_loop(
-        PyArrayMethod_Context *context,
-        int aligned, int move_references,
-        const npy_intp *strides,
-        PyArrayMethod_StridedLoop **out_loop,
-        NpyAuxData **out_transferdata,
-        NPY_ARRAYMETHOD_FLAGS *flags);
+any_to_object_get_loop(PyArrayMethod_Context *context, int aligned,
+                       int move_references, const npy_intp *strides,
+                       PyArrayMethod_StridedLoop **out_loop,
+                       NpyAuxData **out_transferdata,
+                       NPY_ARRAYMETHOD_FLAGS *flags);
 
 NPY_NO_EXPORT int
-object_to_any_get_loop(
-        PyArrayMethod_Context *context,
-        int NPY_UNUSED(aligned), int move_references,
-        const npy_intp *NPY_UNUSED(strides),
-        PyArrayMethod_StridedLoop **out_loop,
-        NpyAuxData **out_transferdata,
-        NPY_ARRAYMETHOD_FLAGS *flags);
-
+object_to_any_get_loop(PyArrayMethod_Context *context, int NPY_UNUSED(aligned),
+                       int move_references,
+                       const npy_intp *NPY_UNUSED(strides),
+                       PyArrayMethod_StridedLoop **out_loop,
+                       NpyAuxData **out_transferdata,
+                       NPY_ARRAYMETHOD_FLAGS *flags);
 
 NPY_NO_EXPORT int
-wrap_aligned_transferfunction(
-        int aligned, int must_wrap,
-        npy_intp src_stride, npy_intp dst_stride,
-        PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
-        PyArray_Descr *src_wrapped_dtype, PyArray_Descr *dst_wrapped_dtype,
-        PyArrayMethod_StridedLoop **out_stransfer,
-        NpyAuxData **out_transferdata, int *out_needs_api);
-
+wrap_aligned_transferfunction(int aligned, int must_wrap, npy_intp src_stride,
+                              npy_intp dst_stride, PyArray_Descr *src_dtype,
+                              PyArray_Descr *dst_dtype,
+                              PyArray_Descr *src_wrapped_dtype,
+                              PyArray_Descr *dst_wrapped_dtype,
+                              PyArrayMethod_StridedLoop **out_stransfer,
+                              NpyAuxData **out_transferdata,
+                              int *out_needs_api);
 
 NPY_NO_EXPORT int
-get_nbo_cast_datetime_transfer_function(int aligned,
-        PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
+get_nbo_cast_datetime_transfer_function(
+        int aligned, PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
         PyArrayMethod_StridedLoop **out_stransfer,
         NpyAuxData **out_transferdata);
 
@@ -176,30 +168,26 @@ get_nbo_string_to_datetime_transfer_function(
         NpyAuxData **out_transferdata);
 
 NPY_NO_EXPORT int
-get_datetime_to_unicode_transfer_function(int aligned,
-        npy_intp src_stride, npy_intp dst_stride,
+get_datetime_to_unicode_transfer_function(
+        int aligned, npy_intp src_stride, npy_intp dst_stride,
         PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
         PyArrayMethod_StridedLoop **out_stransfer,
-        NpyAuxData **out_transferdata,
-        int *out_needs_api);
+        NpyAuxData **out_transferdata, int *out_needs_api);
 
 NPY_NO_EXPORT int
-get_unicode_to_datetime_transfer_function(int aligned,
-        npy_intp src_stride, npy_intp dst_stride,
+get_unicode_to_datetime_transfer_function(
+        int aligned, npy_intp src_stride, npy_intp dst_stride,
         PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
         PyArrayMethod_StridedLoop **out_stransfer,
-        NpyAuxData **out_transferdata,
-        int *out_needs_api);
+        NpyAuxData **out_transferdata, int *out_needs_api);
 
 /* Creates a wrapper around copyswapn or legacy cast functions */
 NPY_NO_EXPORT int
-get_wrapped_legacy_cast_function(int aligned,
-        npy_intp src_stride, npy_intp dst_stride,
-        PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
-        int move_references,
-        PyArrayMethod_StridedLoop **out_stransfer,
-        NpyAuxData **out_transferdata,
-        int *out_needs_api, int allow_wrapped);
+get_wrapped_legacy_cast_function(int aligned, npy_intp src_stride,
+                                 npy_intp dst_stride, PyArray_Descr *src_dtype,
+                                 PyArray_Descr *dst_dtype, int move_references,
+                                 PyArrayMethod_StridedLoop **out_stransfer,
+                                 NpyAuxData **out_transferdata,
+                                 int *out_needs_api, int allow_wrapped);
 
-
-#endif  /* NUMPY_CORE_SRC_MULTIARRAY_DTYPE_TRANSFER_H_  */
+#endif /* NUMPY_CORE_SRC_MULTIARRAY_DTYPE_TRANSFER_H_  */

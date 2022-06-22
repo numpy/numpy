@@ -1,19 +1,11 @@
 from ast import AST
 from collections.abc import Callable, Mapping, Sequence
-from typing import (
-    Any,
-    overload,
-    TypeVar,
-    Protocol,
-)
+from typing import Any, Protocol, TypeVar, overload
 
-from numpy import ndarray, generic
-
-from numpy.core.numerictypes import (
-    issubclass_ as issubclass_,
-    issubdtype as issubdtype,
-    issubsctype as issubsctype,
-)
+from numpy import generic, ndarray
+from numpy.core.numerictypes import issubclass_ as issubclass_
+from numpy.core.numerictypes import issubdtype as issubdtype
+from numpy.core.numerictypes import issubsctype as issubsctype
 
 _T_contra = TypeVar("_T_contra", contravariant=True)
 _FuncType = TypeVar("_FuncType", bound=Callable[..., Any])
@@ -39,7 +31,6 @@ class _Deprecate:
     def __call__(self, func: _FuncType) -> _FuncType: ...
 
 def get_include() -> str: ...
-
 @overload
 def deprecate(
     *,
@@ -55,7 +46,6 @@ def deprecate(
     new_name: None | str = ...,
     message: None | str = ...,
 ) -> _FuncType: ...
-
 def deprecate_with_doc(msg: None | str) -> _Deprecate: ...
 
 # NOTE: In practice `byte_bounds` can (potentially) take any object
@@ -63,27 +53,22 @@ def deprecate_with_doc(msg: None | str) -> _Deprecate: ...
 # that certain keys, marked as optional in the spec, must be present for
 #  `byte_bounds`. This concerns `"strides"` and `"data"`.
 def byte_bounds(a: generic | ndarray[Any, Any]) -> tuple[int, int]: ...
-
 def who(vardict: None | Mapping[str, ndarray[Any, Any]] = ...) -> None: ...
-
 def info(
     object: object = ...,
     maxwidth: int = ...,
     output: None | _SupportsWrite[str] = ...,
     toplevel: str = ...,
 ) -> None: ...
-
 def source(
     object: object,
     output: None | _SupportsWrite[str] = ...,
 ) -> None: ...
-
 def lookfor(
     what: str,
     module: None | str | Sequence[str] = ...,
     import_modules: bool = ...,
     regenerate: bool = ...,
-    output: None | _SupportsWrite[str] =...,
+    output: None | _SupportsWrite[str] = ...,
 ) -> None: ...
-
 def safe_eval(source: str | AST) -> Any: ...

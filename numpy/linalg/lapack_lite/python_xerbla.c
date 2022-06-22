@@ -2,6 +2,7 @@
 #include <Python.h>
 
 #include "numpy/npy_common.h"
+
 #include "npy_cblas.h"
 
 /*
@@ -21,29 +22,29 @@
   info: Number of the invalid parameter.
 */
 
-CBLAS_INT BLAS_FUNC(xerbla)(char *srname, CBLAS_INT *info)
+CBLAS_INT
+BLAS_FUNC(xerbla)(char *srname, CBLAS_INT *info)
 {
-        static const char format[] = "On entry to %.*s" \
-                " parameter number %d had an illegal value";
-        char buf[sizeof(format) + 6 + 4];   /* 6 for name, 4 for param. num. */
+    static const char format[] =
+            "On entry to %.*s"
+            " parameter number %d had an illegal value";
+    char buf[sizeof(format) + 6 + 4]; /* 6 for name, 4 for param. num. */
 
-        int len = 0; /* length of subroutine name*/
+    int len = 0; /* length of subroutine name*/
 #ifdef WITH_THREAD
-        PyGILState_STATE save;
+    PyGILState_STATE save;
 #endif
 
-        while( len<6 && srname[len]!='\0' )
-                len++;
-        while( len && srname[len-1]==' ' )
-                len--;
+    while (len < 6 && srname[len] != '\0') len++;
+    while (len && srname[len - 1] == ' ') len--;
 #ifdef WITH_THREAD
-        save = PyGILState_Ensure();
+    save = PyGILState_Ensure();
 #endif
-        PyOS_snprintf(buf, sizeof(buf), format, len, srname, (int)*info);
-        PyErr_SetString(PyExc_ValueError, buf);
+    PyOS_snprintf(buf, sizeof(buf), format, len, srname, (int)*info);
+    PyErr_SetString(PyExc_ValueError, buf);
 #ifdef WITH_THREAD
-        PyGILState_Release(save);
+    PyGILState_Release(save);
 #endif
 
-        return 0;
+    return 0;
 }

@@ -3,4 +3,4 @@
 
 extern NPY_NO_EXPORT PySequenceMethods array_as_sequence;
 
-#endif  /* NUMPY_CORE_SRC_MULTIARRAY_SEQUENCE_H_ */
+#endif /* NUMPY_CORE_SRC_MULTIARRAY_SEQUENCE_H_ */

@@ -33,12 +33,9 @@
  * Returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT int
-parse_iso_8601_datetime(char const *str, Py_ssize_t len,
-                    NPY_DATETIMEUNIT unit,
-                    NPY_CASTING casting,
-                    npy_datetimestruct *out,
-                    NPY_DATETIMEUNIT *out_bestunit,
-                    npy_bool *out_special);
+parse_iso_8601_datetime(char const *str, Py_ssize_t len, NPY_DATETIMEUNIT unit,
+                        NPY_CASTING casting, npy_datetimestruct *out,
+                        NPY_DATETIMEUNIT *out_bestunit, npy_bool *out_special);
 
 /*
  * Provides a string length to use for converting datetime
@@ -71,14 +68,14 @@ get_datetime_iso_8601_strlen(int local, NPY_DATETIMEUNIT base);
  */
 NPY_NO_EXPORT int
 make_iso_8601_datetime(npy_datetimestruct *dts, char *outstr, npy_intp outlen,
-                    int local, int utc, NPY_DATETIMEUNIT base, int tzoffset,
-                    NPY_CASTING casting);
+                       int local, int utc, NPY_DATETIMEUNIT base, int tzoffset,
+                       NPY_CASTING casting);
 
 /*
  * This is the Python-exposed datetime_as_string function.
  */
 NPY_NO_EXPORT PyObject *
 array_datetime_as_string(PyObject *NPY_UNUSED(self), PyObject *args,
-                                PyObject *kwds);
+                         PyObject *kwds);
 
-#endif  /* NUMPY_CORE_SRC_MULTIARRAY_DATETIME_STRINGS_H_ */
+#endif /* NUMPY_CORE_SRC_MULTIARRAY_DATETIME_STRINGS_H_ */

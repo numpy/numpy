@@ -2,12 +2,14 @@
 Tests which scan for certain occurrences in the code, they may not find
 all of these occurrences but should catch almost all.
 """
-import pytest
-
-from pathlib import Path
 import ast
 import tokenize
+from pathlib import Path
+
+import pytest
+
 import numpy
+
 
 class ParseCall(ast.NodeVisitor):
     def __init__(self):
@@ -31,14 +33,14 @@ class FindFuncs(ast.NodeVisitor):
         p.visit(node.func)
         ast.NodeVisitor.generic_visit(self, node)
 
-        if p.ls[-1] == 'simplefilter' or p.ls[-1] == 'filterwarnings':
+        if p.ls[-1] == "simplefilter" or p.ls[-1] == "filterwarnings":
             if node.args[0].s == "ignore":
                 raise AssertionError(
                     "warnings should have an appropriate stacklevel; found in "
-                    "{} on line {}".format(self.__filename, node.lineno))
+                    "{} on line {}".format(self.__filename, node.lineno)
+                )
 
-        if p.ls[-1] == 'warn' and (
-                len(p.ls) == 1 or p.ls[-2] == 'warnings'):
+        if p.ls[-1] == "warn" and (len(p.ls) == 1 or p.ls[-2] == "warnings"):
 
             if "testing/tests/test_warnings.py" == self.__filename:
                 # This file
@@ -52,7 +54,8 @@ class FindFuncs(ast.NodeVisitor):
                 return
             raise AssertionError(
                 "warnings should have an appropriate stacklevel; found in "
-                "{} on line {}".format(self.__filename, node.lineno))
+                "{} on line {}".format(self.__filename, node.lineno)
+            )
 
 
 @pytest.mark.slow

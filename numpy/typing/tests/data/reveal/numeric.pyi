@@ -8,8 +8,7 @@ Does not include tests which fall under ``array_constructors``.
 import numpy as np
 import numpy.typing as npt
 
-class SubClass(npt.NDArray[np.int64]):
-    ...
+class SubClass(npt.NDArray[np.int64]): ...
 
 i8: np.int64
 
@@ -39,23 +38,35 @@ reveal_type(np.argwhere(AR_i8))  # E: ndarray[Any, dtype[{intp}]]
 reveal_type(np.flatnonzero(i8))  # E: ndarray[Any, dtype[{intp}]]
 reveal_type(np.flatnonzero(AR_i8))  # E: ndarray[Any, dtype[{intp}]]
 
-reveal_type(np.correlate(B, AR_i8, mode="valid"))  # E: ndarray[Any, dtype[signedinteger[Any]]]
-reveal_type(np.correlate(AR_i8, AR_i8, mode="same"))  # E: ndarray[Any, dtype[signedinteger[Any]]]
+reveal_type(
+    np.correlate(B, AR_i8, mode="valid")
+)  # E: ndarray[Any, dtype[signedinteger[Any]]]
+reveal_type(
+    np.correlate(AR_i8, AR_i8, mode="same")
+)  # E: ndarray[Any, dtype[signedinteger[Any]]]
 reveal_type(np.correlate(AR_b, AR_b))  # E: ndarray[Any, dtype[bool_]]
 reveal_type(np.correlate(AR_b, AR_u8))  # E: ndarray[Any, dtype[unsignedinteger[Any]]]
 reveal_type(np.correlate(AR_i8, AR_b))  # E: ndarray[Any, dtype[signedinteger[Any]]]
 reveal_type(np.correlate(AR_i8, AR_f8))  # E: ndarray[Any, dtype[floating[Any]]]
-reveal_type(np.correlate(AR_i8, AR_c16))  # E: ndarray[Any, dtype[complexfloating[Any, Any]]]
+reveal_type(
+    np.correlate(AR_i8, AR_c16)
+)  # E: ndarray[Any, dtype[complexfloating[Any, Any]]]
 reveal_type(np.correlate(AR_i8, AR_m))  # E: ndarray[Any, dtype[timedelta64]]
 reveal_type(np.correlate(AR_O, AR_O))  # E: ndarray[Any, dtype[object_]]
 
-reveal_type(np.convolve(B, AR_i8, mode="valid"))  # E: ndarray[Any, dtype[signedinteger[Any]]]
-reveal_type(np.convolve(AR_i8, AR_i8, mode="same"))  # E: ndarray[Any, dtype[signedinteger[Any]]]
+reveal_type(
+    np.convolve(B, AR_i8, mode="valid")
+)  # E: ndarray[Any, dtype[signedinteger[Any]]]
+reveal_type(
+    np.convolve(AR_i8, AR_i8, mode="same")
+)  # E: ndarray[Any, dtype[signedinteger[Any]]]
 reveal_type(np.convolve(AR_b, AR_b))  # E: ndarray[Any, dtype[bool_]]
 reveal_type(np.convolve(AR_b, AR_u8))  # E: ndarray[Any, dtype[unsignedinteger[Any]]]
 reveal_type(np.convolve(AR_i8, AR_b))  # E: ndarray[Any, dtype[signedinteger[Any]]]
 reveal_type(np.convolve(AR_i8, AR_f8))  # E: ndarray[Any, dtype[floating[Any]]]
-reveal_type(np.convolve(AR_i8, AR_c16))  # E: ndarray[Any, dtype[complexfloating[Any, Any]]]
+reveal_type(
+    np.convolve(AR_i8, AR_c16)
+)  # E: ndarray[Any, dtype[complexfloating[Any, Any]]]
 reveal_type(np.convolve(AR_i8, AR_m))  # E: ndarray[Any, dtype[timedelta64]]
 reveal_type(np.convolve(AR_O, AR_O))  # E: ndarray[Any, dtype[object_]]
 
@@ -67,19 +78,27 @@ reveal_type(np.outer(AR_b, AR_b))  # E: ndarray[Any, dtype[bool_]]
 reveal_type(np.outer(AR_b, AR_u8))  # E: ndarray[Any, dtype[unsignedinteger[Any]]]
 reveal_type(np.outer(AR_i8, AR_b))  # E: ndarray[Any, dtype[signedinteger[Any]]]
 reveal_type(np.convolve(AR_i8, AR_f8))  # E: ndarray[Any, dtype[floating[Any]]]
-reveal_type(np.outer(AR_i8, AR_c16))  # E: ndarray[Any, dtype[complexfloating[Any, Any]]]
+reveal_type(
+    np.outer(AR_i8, AR_c16)
+)  # E: ndarray[Any, dtype[complexfloating[Any, Any]]]
 reveal_type(np.outer(AR_i8, AR_m))  # E: ndarray[Any, dtype[timedelta64]]
 reveal_type(np.outer(AR_O, AR_O))  # E: ndarray[Any, dtype[object_]]
 
 reveal_type(np.tensordot(B, AR_i8))  # E: ndarray[Any, dtype[signedinteger[Any]]]
 reveal_type(np.tensordot(AR_i8, AR_i8))  # E: ndarray[Any, dtype[signedinteger[Any]]]
-reveal_type(np.tensordot(AR_i8, AR_i8, axes=0))  # E: ndarray[Any, dtype[signedinteger[Any]]]
-reveal_type(np.tensordot(AR_i8, AR_i8, axes=(0, 1)))  # E: ndarray[Any, dtype[signedinteger[Any]]]
+reveal_type(
+    np.tensordot(AR_i8, AR_i8, axes=0)
+)  # E: ndarray[Any, dtype[signedinteger[Any]]]
+reveal_type(
+    np.tensordot(AR_i8, AR_i8, axes=(0, 1))
+)  # E: ndarray[Any, dtype[signedinteger[Any]]]
 reveal_type(np.tensordot(AR_b, AR_b))  # E: ndarray[Any, dtype[bool_]]
 reveal_type(np.tensordot(AR_b, AR_u8))  # E: ndarray[Any, dtype[unsignedinteger[Any]]]
 reveal_type(np.tensordot(AR_i8, AR_b))  # E: ndarray[Any, dtype[signedinteger[Any]]]
 reveal_type(np.tensordot(AR_i8, AR_f8))  # E: ndarray[Any, dtype[floating[Any]]]
-reveal_type(np.tensordot(AR_i8, AR_c16))  # E: ndarray[Any, dtype[complexfloating[Any, Any]]]
+reveal_type(
+    np.tensordot(AR_i8, AR_c16)
+)  # E: ndarray[Any, dtype[complexfloating[Any, Any]]]
 reveal_type(np.tensordot(AR_i8, AR_m))  # E: ndarray[Any, dtype[timedelta64]]
 reveal_type(np.tensordot(AR_O, AR_O))  # E: ndarray[Any, dtype[object_]]
 
@@ -101,15 +120,25 @@ reveal_type(np.cross(AR_i8, AR_i8))  # E: ndarray[Any, dtype[signedinteger[Any]]
 reveal_type(np.cross(AR_b, AR_u8))  # E: ndarray[Any, dtype[unsignedinteger[Any]]]
 reveal_type(np.cross(AR_i8, AR_b))  # E: ndarray[Any, dtype[signedinteger[Any]]]
 reveal_type(np.cross(AR_i8, AR_f8))  # E: ndarray[Any, dtype[floating[Any]]]
-reveal_type(np.cross(AR_i8, AR_c16))  # E: ndarray[Any, dtype[complexfloating[Any, Any]]]
+reveal_type(
+    np.cross(AR_i8, AR_c16)
+)  # E: ndarray[Any, dtype[complexfloating[Any, Any]]]
 reveal_type(np.cross(AR_O, AR_O))  # E: ndarray[Any, dtype[object_]]
 
 reveal_type(np.indices([0, 1, 2]))  # E: ndarray[Any, dtype[{int_}]]
-reveal_type(np.indices([0, 1, 2], sparse=True))  # E: tuple[ndarray[Any, dtype[{int_}]], ...]
-reveal_type(np.indices([0, 1, 2], dtype=np.float64))  # E: ndarray[Any, dtype[{float64}]]
-reveal_type(np.indices([0, 1, 2], sparse=True, dtype=np.float64))  # E: tuple[ndarray[Any, dtype[{float64}]], ...]
+reveal_type(
+    np.indices([0, 1, 2], sparse=True)
+)  # E: tuple[ndarray[Any, dtype[{int_}]], ...]
+reveal_type(
+    np.indices([0, 1, 2], dtype=np.float64)
+)  # E: ndarray[Any, dtype[{float64}]]
+reveal_type(
+    np.indices([0, 1, 2], sparse=True, dtype=np.float64)
+)  # E: tuple[ndarray[Any, dtype[{float64}]], ...]
 reveal_type(np.indices([0, 1, 2], dtype=float))  # E: ndarray[Any, dtype[Any]]
-reveal_type(np.indices([0, 1, 2], sparse=True, dtype=float))  # E: tuple[ndarray[Any, dtype[Any]], ...]
+reveal_type(
+    np.indices([0, 1, 2], sparse=True, dtype=float)
+)  # E: tuple[ndarray[Any, dtype[Any]], ...]
 
 reveal_type(np.binary_repr(1))  # E: str
 

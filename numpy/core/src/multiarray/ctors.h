@@ -2,38 +2,34 @@
 #define NUMPY_CORE_SRC_MULTIARRAY_CTORS_H_
 
 NPY_NO_EXPORT PyObject *
-PyArray_NewFromDescr(
-        PyTypeObject *subtype, PyArray_Descr *descr, int nd,
-        npy_intp const *dims, npy_intp const *strides, void *data,
-        int flags, PyObject *obj);
+PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
+                     npy_intp const *dims, npy_intp const *strides, void *data,
+                     int flags, PyObject *obj);
 
 NPY_NO_EXPORT PyObject *
-PyArray_NewFromDescrAndBase(
-        PyTypeObject *subtype, PyArray_Descr *descr, int nd,
-        npy_intp const *dims, npy_intp const *strides, void *data,
-        int flags, PyObject *obj, PyObject *base);
+PyArray_NewFromDescrAndBase(PyTypeObject *subtype, PyArray_Descr *descr,
+                            int nd, npy_intp const *dims,
+                            npy_intp const *strides, void *data, int flags,
+                            PyObject *obj, PyObject *base);
 
 NPY_NO_EXPORT PyObject *
-PyArray_NewFromDescr_int(
-        PyTypeObject *subtype, PyArray_Descr *descr, int nd,
-        npy_intp const *dims, npy_intp const *strides, void *data,
-        int flags, PyObject *obj, PyObject *base, int zeroed,
-        int allow_emptystring);
+PyArray_NewFromDescr_int(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
+                         npy_intp const *dims, npy_intp const *strides,
+                         void *data, int flags, PyObject *obj, PyObject *base,
+                         int zeroed, int allow_emptystring);
 
 NPY_NO_EXPORT PyObject *
-PyArray_NewLikeArrayWithShape(
-        PyArrayObject *prototype, NPY_ORDER order,
-        PyArray_Descr *dtype, int ndim, npy_intp const *dims, int subok);
+PyArray_NewLikeArrayWithShape(PyArrayObject *prototype, NPY_ORDER order,
+                              PyArray_Descr *dtype, int ndim,
+                              npy_intp const *dims, int subok);
 
 NPY_NO_EXPORT PyObject *
-PyArray_New(
-        PyTypeObject *, int nd, npy_intp const *,
-        int, npy_intp const*, void *, int, int, PyObject *);
+PyArray_New(PyTypeObject *, int nd, npy_intp const *, int, npy_intp const *,
+            void *, int, int, PyObject *);
 
 NPY_NO_EXPORT PyObject *
-_array_from_array_like(PyObject *op,
-        PyArray_Descr *requested_dtype, npy_bool writeable, PyObject *context,
-        int never_copy);
+_array_from_array_like(PyObject *op, PyArray_Descr *requested_dtype,
+                       npy_bool writeable, PyObject *context, int never_copy);
 
 NPY_NO_EXPORT PyObject *
 PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
@@ -53,8 +49,7 @@ NPY_NO_EXPORT PyObject *
 PyArray_FromInterface(PyObject *input);
 
 NPY_NO_EXPORT PyObject *
-PyArray_FromArrayAttr_int(
-        PyObject *op, PyArray_Descr *descr, int never_copy);
+PyArray_FromArrayAttr_int(PyObject *op, PyArray_Descr *descr, int never_copy);
 
 NPY_NO_EXPORT PyObject *
 PyArray_FromArrayAttr(PyObject *op, PyArray_Descr *typecode,
@@ -77,13 +72,12 @@ PyArray_CheckAxis(PyArrayObject *arr, int *axis, int flags);
 
 /* TODO: Put the order parameter in PyArray_CopyAnyInto and remove this */
 NPY_NO_EXPORT int
-PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src,
-                                NPY_ORDER order);
+PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src, NPY_ORDER order);
 
 /* FIXME: remove those from here */
 NPY_NO_EXPORT void
-_array_fill_strides(npy_intp *strides, npy_intp const *dims, int nd, size_t itemsize,
-                    int inflag, int *objflags);
+_array_fill_strides(npy_intp *strides, npy_intp const *dims, int nd,
+                    size_t itemsize, int inflag, int *objflags);
 
 NPY_NO_EXPORT void
 _unaligned_strided_byte_copy(char *dst, npy_intp outstrides, char *src,
@@ -106,5 +100,4 @@ byte_swap_vector(void *p, npy_intp n, int size);
 NPY_NO_EXPORT PyArrayObject *
 PyArray_SubclassWrap(PyArrayObject *arr_of_subclass, PyArrayObject *towrap);
 
-
-#endif  /* NUMPY_CORE_SRC_MULTIARRAY_CTORS_H_ */
+#endif /* NUMPY_CORE_SRC_MULTIARRAY_CTORS_H_ */

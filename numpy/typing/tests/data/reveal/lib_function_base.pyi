@@ -28,9 +28,11 @@ reveal_type(vectorized_func.excluded)  # E: set[Union[builtins.int, builtins.str
 reveal_type(vectorized_func.__doc__)  # E: Union[None, builtins.str]
 reveal_type(vectorized_func([1]))  # E: Any
 reveal_type(np.vectorize(int))  # E: vectorize
-reveal_type(np.vectorize(  # E: vectorize
-    int, otypes="i", doc="doc", excluded=(), cache=True, signature=None
-))
+reveal_type(
+    np.vectorize(  # E: vectorize
+        int, otypes="i", doc="doc", excluded=(), cache=True, signature=None
+    )
+)
 
 reveal_type(np.add_newdoc("__main__", "blabla", doc="test doc"))  # E: None
 reveal_type(np.add_newdoc("__main__", "blabla", doc=("meth", "test doc")))  # E: None
@@ -51,14 +53,18 @@ reveal_type(np.average(AR_f8))  # E: floating[Any]
 reveal_type(np.average(AR_f8, weights=AR_c16))  # E: complexfloating[Any, Any]
 reveal_type(np.average(AR_O))  # E: Any
 reveal_type(np.average(AR_f8, returned=True))  # E: Tuple[floating[Any], floating[Any]]
-reveal_type(np.average(AR_f8, weights=AR_c16, returned=True))  # E: Tuple[complexfloating[Any, Any], complexfloating[Any, Any]]
+reveal_type(
+    np.average(AR_f8, weights=AR_c16, returned=True)
+)  # E: Tuple[complexfloating[Any, Any], complexfloating[Any, Any]]
 reveal_type(np.average(AR_O, returned=True))  # E: Tuple[Any, Any]
 reveal_type(np.average(AR_f8, axis=0))  # E: Any
 reveal_type(np.average(AR_f8, axis=0, returned=True))  # E: Tuple[Any, Any]
 
 reveal_type(np.asarray_chkfinite(AR_f8))  # E: ndarray[Any, dtype[{float64}]]
 reveal_type(np.asarray_chkfinite(AR_LIKE_f8))  # E: ndarray[Any, dtype[Any]]
-reveal_type(np.asarray_chkfinite(AR_f8, dtype=np.float64))  # E: ndarray[Any, dtype[{float64}]]
+reveal_type(
+    np.asarray_chkfinite(AR_f8, dtype=np.float64)
+)  # E: ndarray[Any, dtype[{float64}]]
 reveal_type(np.asarray_chkfinite(AR_f8, dtype=float))  # E: ndarray[Any, dtype[Any]]
 
 reveal_type(np.piecewise(AR_f8, AR_b, [func]))  # E: ndarray[Any, dtype[{float64}]]
@@ -101,12 +107,18 @@ with open("test", "w") as f:
     reveal_type(np.disp("message", device=f))  # E: None
 
 reveal_type(np.cov(AR_f8, bias=True))  # E: ndarray[Any, dtype[floating[Any]]]
-reveal_type(np.cov(AR_f8, AR_c16, ddof=1))  # E: ndarray[Any, dtype[complexfloating[Any, Any]]]
-reveal_type(np.cov(AR_f8, aweights=AR_f8, dtype=np.float32))  # E: ndarray[Any, dtype[{float32}]]
+reveal_type(
+    np.cov(AR_f8, AR_c16, ddof=1)
+)  # E: ndarray[Any, dtype[complexfloating[Any, Any]]]
+reveal_type(
+    np.cov(AR_f8, aweights=AR_f8, dtype=np.float32)
+)  # E: ndarray[Any, dtype[{float32}]]
 reveal_type(np.cov(AR_f8, fweights=AR_f8, dtype=float))  # E: ndarray[Any, dtype[Any]]
 
 reveal_type(np.corrcoef(AR_f8, rowvar=True))  # E: ndarray[Any, dtype[floating[Any]]]
-reveal_type(np.corrcoef(AR_f8, AR_c16))  # E: ndarray[Any, dtype[complexfloating[Any, Any]]]
+reveal_type(
+    np.corrcoef(AR_f8, AR_c16)
+)  # E: ndarray[Any, dtype[complexfloating[Any, Any]]]
 reveal_type(np.corrcoef(AR_f8, dtype=np.float32))  # E: ndarray[Any, dtype[{float32}]]
 reveal_type(np.corrcoef(AR_f8, dtype=float))  # E: ndarray[Any, dtype[Any]]
 
@@ -142,13 +154,19 @@ reveal_type(np.percentile(AR_m, 50))  # E: timedelta64
 reveal_type(np.percentile(AR_M, 50, overwrite_input=True))  # E: datetime64
 reveal_type(np.percentile(AR_O, 50))  # E: Any
 reveal_type(np.percentile(AR_f8, [50]))  # E: ndarray[Any, dtype[floating[Any]]]
-reveal_type(np.percentile(AR_c16, [50]))  # E: ndarray[Any, dtype[complexfloating[Any, Any]]]
+reveal_type(
+    np.percentile(AR_c16, [50])
+)  # E: ndarray[Any, dtype[complexfloating[Any, Any]]]
 reveal_type(np.percentile(AR_m, [50]))  # E: ndarray[Any, dtype[timedelta64]]
-reveal_type(np.percentile(AR_M, [50], method="nearest"))  # E: ndarray[Any, dtype[datetime64]]
+reveal_type(
+    np.percentile(AR_M, [50], method="nearest")
+)  # E: ndarray[Any, dtype[datetime64]]
 reveal_type(np.percentile(AR_O, [50]))  # E: ndarray[Any, dtype[object_]]
 reveal_type(np.percentile(AR_f8, [50], keepdims=True))  # E: Any
 reveal_type(np.percentile(AR_f8, [50], axis=[1]))  # E: Any
-reveal_type(np.percentile(AR_f8, [50], out=AR_c16))  # E: ndarray[Any, dtype[{complex128}]]
+reveal_type(
+    np.percentile(AR_f8, [50], out=AR_c16)
+)  # E: ndarray[Any, dtype[{complex128}]]
 
 reveal_type(np.quantile(AR_f8, 0.5))  # E: floating[Any]
 reveal_type(np.quantile(AR_c16, 0.5))  # E: complexfloating[Any, Any]
@@ -156,22 +174,32 @@ reveal_type(np.quantile(AR_m, 0.5))  # E: timedelta64
 reveal_type(np.quantile(AR_M, 0.5, overwrite_input=True))  # E: datetime64
 reveal_type(np.quantile(AR_O, 0.5))  # E: Any
 reveal_type(np.quantile(AR_f8, [0.5]))  # E: ndarray[Any, dtype[floating[Any]]]
-reveal_type(np.quantile(AR_c16, [0.5]))  # E: ndarray[Any, dtype[complexfloating[Any, Any]]]
+reveal_type(
+    np.quantile(AR_c16, [0.5])
+)  # E: ndarray[Any, dtype[complexfloating[Any, Any]]]
 reveal_type(np.quantile(AR_m, [0.5]))  # E: ndarray[Any, dtype[timedelta64]]
-reveal_type(np.quantile(AR_M, [0.5], method="nearest"))  # E: ndarray[Any, dtype[datetime64]]
+reveal_type(
+    np.quantile(AR_M, [0.5], method="nearest")
+)  # E: ndarray[Any, dtype[datetime64]]
 reveal_type(np.quantile(AR_O, [0.5]))  # E: ndarray[Any, dtype[object_]]
 reveal_type(np.quantile(AR_f8, [0.5], keepdims=True))  # E: Any
 reveal_type(np.quantile(AR_f8, [0.5], axis=[1]))  # E: Any
-reveal_type(np.quantile(AR_f8, [0.5], out=AR_c16))  # E: ndarray[Any, dtype[{complex128}]]
+reveal_type(
+    np.quantile(AR_f8, [0.5], out=AR_c16)
+)  # E: ndarray[Any, dtype[{complex128}]]
 
 reveal_type(np.meshgrid(AR_f8, AR_i8, copy=False))  # E: list[ndarray[Any, dtype[Any]]]
-reveal_type(np.meshgrid(AR_f8, AR_i8, AR_c16, indexing="ij"))  # E: list[ndarray[Any, dtype[Any]]]
+reveal_type(
+    np.meshgrid(AR_f8, AR_i8, AR_c16, indexing="ij")
+)  # E: list[ndarray[Any, dtype[Any]]]
 
 reveal_type(np.delete(AR_f8, np.s_[:5]))  # E: ndarray[Any, dtype[{float64}]]
 reveal_type(np.delete(AR_LIKE_f8, [0, 4, 9], axis=0))  # E: ndarray[Any, dtype[Any]]
 
 reveal_type(np.insert(AR_f8, np.s_[:5], 5))  # E: ndarray[Any, dtype[{float64}]]
-reveal_type(np.insert(AR_LIKE_f8, [0, 4, 9], [0.5, 9.2, 7], axis=0))  # E: ndarray[Any, dtype[Any]]
+reveal_type(
+    np.insert(AR_LIKE_f8, [0, 4, 9], [0.5, 9.2, 7], axis=0)
+)  # E: ndarray[Any, dtype[Any]]
 
 reveal_type(np.append(AR_f8, 5))  # E: ndarray[Any, dtype[Any]]
 reveal_type(np.append(AR_LIKE_f8, 1j, axis=0))  # E: ndarray[Any, dtype[Any]]

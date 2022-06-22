@@ -1,5 +1,7 @@
 #include "numpy/random/distributions.h"
+
 #include "logfactorial.h"
+
 #include <stdint.h>
 
 /*
@@ -39,17 +41,18 @@
  *
  *  It is assumed that when this function is called:
  *    * good, bad and sample are nonnegative;
- *    * the sum good+bad will not result in overflow; 
+ *    * the sum good+bad will not result in overflow;
  *    * sample <= good+bad.
  */
 
-static int64_t hypergeometric_sample(bitgen_t *bitgen_state,
-                                     int64_t good, int64_t bad, int64_t sample)
+static int64_t
+hypergeometric_sample(bitgen_t *bitgen_state, int64_t good, int64_t bad,
+                      int64_t sample)
 {
     int64_t remaining_total, remaining_good, result, computed_sample;
     int64_t total = good + bad;
 
-    if (sample > total/2) {
+    if (sample > total / 2) {
         computed_sample = total - sample;
     }
     else {
@@ -61,12 +64,12 @@ static int64_t hypergeometric_sample(bitgen_t *bitgen_state,
 
     while ((computed_sample > 0) && (remaining_good > 0) &&
            (remaining_total > remaining_good)) {
-         // random_interval(bitgen_state, max) returns an integer in
-         // [0, max] *inclusive*, so we decrement remaining_total before
-         // passing it to random_interval().
+        // random_interval(bitgen_state, max) returns an integer in
+        // [0, max] *inclusive*, so we decrement remaining_total before
+        // passing it to random_interval().
         --remaining_total;
-        if ((int64_t) random_interval(bitgen_state,
-                                      remaining_total) < remaining_good) {
+        if ((int64_t)random_interval(bitgen_state, remaining_total) <
+            remaining_good) {
             // Selected a "good" one, so decrement remaining_good.
             --remaining_good;
         }
@@ -78,7 +81,7 @@ static int64_t hypergeometric_sample(bitgen_t *bitgen_state,
         remaining_good -= computed_sample;
     }
 
-    if (sample > total/2) {
+    if (sample > total / 2) {
         result = remaining_good;
     }
     else {
@@ -87,7 +90,6 @@ static int64_t hypergeometric_sample(bitgen_t *bitgen_state,
 
     return result;
 }
-
 
 // D1 = 2*sqrt(2/e)
 // D2 = 3 - 2*sqrt(3/e)
@@ -104,7 +106,7 @@ static int64_t hypergeometric_sample(bitgen_t *bitgen_state,
  *
  *  It is assumed that when this function is called:
  *    * good, bad and sample are nonnegative;
- *    * the sum good+bad will not result in overflow; 
+ *    * the sum good+bad will not result in overflow;
  *    * sample <= good+bad.
  *
  *  References:
@@ -116,8 +118,9 @@ static int64_t hypergeometric_sample(bitgen_t *bitgen_state,
  *     Mathematics, 31, pp. 181-189 (1990).
  */
 
-static int64_t hypergeometric_hrua(bitgen_t *bitgen_state,
-                                   int64_t good, int64_t bad, int64_t sample)
+static int64_t
+hypergeometric_hrua(bitgen_t *bitgen_state, int64_t good, int64_t bad,
+                    int64_t sample)
 {
     int64_t mingoodbad, maxgoodbad, popsize;
     int64_t computed_sample;
@@ -140,8 +143,8 @@ static int64_t hypergeometric_hrua(bitgen_t *bitgen_state,
      *    computed_sample       n
      */
 
-    p = ((double) mingoodbad) / popsize;
-    q = ((double) maxgoodbad) / popsize;
+    p = ((double)mingoodbad) / popsize;
+    q = ((double)maxgoodbad) / popsize;
 
     // mu is the mean of the distribution.
     mu = computed_sample * p;
@@ -149,8 +152,8 @@ static int64_t hypergeometric_hrua(bitgen_t *bitgen_state,
     a = mu + 0.5;
 
     // var is the variance of the distribution.
-    var = ((double)(popsize - computed_sample) *
-           computed_sample * p * q / (popsize - 1));
+    var = ((double)(popsize - computed_sample) * computed_sample * p * q /
+           (popsize - 1));
 
     c = sqrt(var + 0.5);
 
@@ -160,13 +163,12 @@ static int64_t hypergeometric_hrua(bitgen_t *bitgen_state,
      *  function that dominates the scaled hypergeometric PMF ("scaled" means
      *  normalized to have a maximum value of 1).
      */
-    h = D1*c + D2;
+    h = D1 * c + D2;
 
-    m = (int64_t) floor((double)(computed_sample + 1) * (mingoodbad + 1) /
-                        (popsize + 2));
+    m = (int64_t)floor((double)(computed_sample + 1) * (mingoodbad + 1) /
+                       (popsize + 2));
 
-    g = (logfactorial(m) +
-         logfactorial(mingoodbad - m) +
+    g = (logfactorial(m) + logfactorial(mingoodbad - m) +
          logfactorial(computed_sample - m) +
          logfactorial(maxgoodbad - computed_sample + m));
 
@@ -183,42 +185,41 @@ static int64_t hypergeometric_hrua(bitgen_t *bitgen_state,
      *  but there is no documented justification for this value.  A lower value
      *  might work just as well, but I've kept the value 16 here.
      */
-    b = MIN(MIN(computed_sample, mingoodbad) + 1, floor(a + 16*c));
+    b = MIN(MIN(computed_sample, mingoodbad) + 1, floor(a + 16 * c));
 
     while (1) {
         double U, V, X, T;
         double gp;
         U = next_double(bitgen_state);
         V = next_double(bitgen_state);  // "U star" in Stadlober (1989)
-        X = a + h*(V - 0.5) / U;
+        X = a + h * (V - 0.5) / U;
 
         // fast rejection:
         if ((X < 0.0) || (X >= b)) {
             continue;
         }
 
-        K = (int64_t) floor(X);
+        K = (int64_t)floor(X);
 
-        gp = (logfactorial(K) +
-              logfactorial(mingoodbad - K) +
+        gp = (logfactorial(K) + logfactorial(mingoodbad - K) +
               logfactorial(computed_sample - K) +
               logfactorial(maxgoodbad - computed_sample + K));
 
         T = g - gp;
 
         // fast acceptance:
-        if ((U*(4.0 - U) - 3.0) <= T) {
+        if ((U * (4.0 - U) - 3.0) <= T) {
             break;
         }
 
         // fast rejection:
-        if (U*(U - T) >= 1) {
+        if (U * (U - T) >= 1) {
             continue;
         }
 
-        if (2.0*log(U) <= T) {
+        if (2.0 * log(U) <= T) {
             // acceptance
-            break;  
+            break;
         }
     }
 
@@ -233,18 +234,18 @@ static int64_t hypergeometric_hrua(bitgen_t *bitgen_state,
     return K;
 }
 
-
 /*
  *  Draw a sample from the hypergeometric distribution.
  *
  *  It is assumed that when this function is called:
  *    * good, bad and sample are nonnegative;
- *    * the sum good+bad will not result in overflow; 
+ *    * the sum good+bad will not result in overflow;
  *    * sample <= good+bad.
  */
 
-int64_t random_hypergeometric(bitgen_t *bitgen_state,
-                              int64_t good, int64_t bad, int64_t sample)
+int64_t
+random_hypergeometric(bitgen_t *bitgen_state, int64_t good, int64_t bad,
+                      int64_t sample)
 {
     int64_t r;
 

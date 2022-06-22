@@ -140,7 +140,7 @@ struct vector<npy_int> {
     static type_t reducemax(zmm_t v) { return npyv_reducemax_s32(v); }
     static type_t reducemin(zmm_t v) { return npyv_reducemin_s32(v); }
     static zmm_t set1(type_t v) { return _mm512_set1_epi32(v); }
-    template<__mmask16 mask>
+    template <__mmask16 mask>
     static zmm_t shuffle(zmm_t zmm)
     {
         return _mm512_shuffle_epi32(zmm, (_MM_PERM_ENUM)mask);
@@ -164,7 +164,7 @@ struct vector<npy_uint> {
     static type_t type_min() { return 0; }
     static zmm_t zmm_max() { return _mm512_set1_epi32(type_max()); }
 
-    template<int scale>
+    template <int scale>
     static ymm_t i64gather(__m512i index, void const *base)
     {
         return _mm512_i64gather_epi32(index, base, scale);
@@ -199,7 +199,7 @@ struct vector<npy_uint> {
     static type_t reducemax(zmm_t v) { return npyv_reducemax_u32(v); }
     static type_t reducemin(zmm_t v) { return npyv_reducemin_u32(v); }
     static zmm_t set1(type_t v) { return _mm512_set1_epi32(v); }
-    template<__mmask16 mask>
+    template <__mmask16 mask>
     static zmm_t shuffle(zmm_t zmm)
     {
         return _mm512_shuffle_epi32(zmm, (_MM_PERM_ENUM)mask);
@@ -227,7 +227,7 @@ struct vector<npy_float> {
     {
         return _mm512_cmp_ps_mask(x, y, _CMP_GE_OQ);
     }
-    template<int scale>
+    template <int scale>
     static ymm_t i64gather(__m512i index, void const *base)
     {
         return _mm512_i64gather_ps(index, base, scale);
@@ -258,7 +258,7 @@ struct vector<npy_float> {
     static type_t reducemax(zmm_t v) { return npyv_reducemax_f32(v); }
     static type_t reducemin(zmm_t v) { return npyv_reducemin_f32(v); }
     static zmm_t set1(type_t v) { return _mm512_set1_ps(v); }
-    template<__mmask16 mask>
+    template <__mmask16 mask>
     static zmm_t shuffle(zmm_t zmm)
     {
         return _mm512_shuffle_ps(zmm, zmm, (_MM_PERM_ENUM)mask);
@@ -298,26 +298,33 @@ template <typename vtype, typename zmm_t = typename vtype::zmm_t>
 static inline zmm_t
 sort_zmm(zmm_t zmm)
 {
-    zmm = cmp_merge<vtype>(zmm, vtype::template shuffle<SHUFFLE_MASK(2, 3, 0, 1)>(zmm),
-                           0xAAAA);
-    zmm = cmp_merge<vtype>(zmm, vtype::template shuffle<SHUFFLE_MASK(0, 1, 2, 3)>(zmm),
-                           0xCCCC);
-    zmm = cmp_merge<vtype>(zmm, vtype::template shuffle<SHUFFLE_MASK(2, 3, 0, 1)>(zmm),
-                           0xAAAA);
+    zmm = cmp_merge<vtype>(
+            zmm, vtype::template shuffle<SHUFFLE_MASK(2, 3, 0, 1)>(zmm),
+            0xAAAA);
+    zmm = cmp_merge<vtype>(
+            zmm, vtype::template shuffle<SHUFFLE_MASK(0, 1, 2, 3)>(zmm),
+            0xCCCC);
+    zmm = cmp_merge<vtype>(
+            zmm, vtype::template shuffle<SHUFFLE_MASK(2, 3, 0, 1)>(zmm),
+            0xAAAA);
     zmm = cmp_merge<vtype>(
             zmm, vtype::permutexvar(_mm512_set_epi32(NETWORK3), zmm), 0xF0F0);
-    zmm = cmp_merge<vtype>(zmm, vtype::template shuffle<SHUFFLE_MASK(1, 0, 3, 2)>(zmm),
-                           0xCCCC);
-    zmm = cmp_merge<vtype>(zmm, vtype::template shuffle<SHUFFLE_MASK(2, 3, 0, 1)>(zmm),
-                           0xAAAA);
+    zmm = cmp_merge<vtype>(
+            zmm, vtype::template shuffle<SHUFFLE_MASK(1, 0, 3, 2)>(zmm),
+            0xCCCC);
+    zmm = cmp_merge<vtype>(
+            zmm, vtype::template shuffle<SHUFFLE_MASK(2, 3, 0, 1)>(zmm),
+            0xAAAA);
     zmm = cmp_merge<vtype>(
             zmm, vtype::permutexvar(_mm512_set_epi32(NETWORK5), zmm), 0xFF00);
     zmm = cmp_merge<vtype>(
             zmm, vtype::permutexvar(_mm512_set_epi32(NETWORK6), zmm), 0xF0F0);
-    zmm = cmp_merge<vtype>(zmm, vtype::template shuffle<SHUFFLE_MASK(1, 0, 3, 2)>(zmm),
-                           0xCCCC);
-    zmm = cmp_merge<vtype>(zmm, vtype::template shuffle<SHUFFLE_MASK(2, 3, 0, 1)>(zmm),
-                           0xAAAA);
+    zmm = cmp_merge<vtype>(
+            zmm, vtype::template shuffle<SHUFFLE_MASK(1, 0, 3, 2)>(zmm),
+            0xCCCC);
+    zmm = cmp_merge<vtype>(
+            zmm, vtype::template shuffle<SHUFFLE_MASK(2, 3, 0, 1)>(zmm),
+            0xAAAA);
     return zmm;
 }
 
@@ -333,11 +340,13 @@ bitonic_merge_zmm(zmm_t zmm)
     zmm = cmp_merge<vtype>(
             zmm, vtype::permutexvar(_mm512_set_epi32(NETWORK6), zmm), 0xF0F0);
     // 3) half_cleaner[4]
-    zmm = cmp_merge<vtype>(zmm, vtype::template shuffle<SHUFFLE_MASK(1, 0, 3, 2)>(zmm),
-                           0xCCCC);
+    zmm = cmp_merge<vtype>(
+            zmm, vtype::template shuffle<SHUFFLE_MASK(1, 0, 3, 2)>(zmm),
+            0xCCCC);
     // 3) half_cleaner[1]
-    zmm = cmp_merge<vtype>(zmm, vtype::template shuffle<SHUFFLE_MASK(2, 3, 0, 1)>(zmm),
-                           0xAAAA);
+    zmm = cmp_merge<vtype>(
+            zmm, vtype::template shuffle<SHUFFLE_MASK(2, 3, 0, 1)>(zmm),
+            0xAAAA);
     return zmm;
 }
 

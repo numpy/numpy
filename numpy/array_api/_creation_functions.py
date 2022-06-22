@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-
 from typing import TYPE_CHECKING, List, Optional, Tuple, Union
 
 if TYPE_CHECKING:
@@ -12,9 +11,10 @@ if TYPE_CHECKING:
         SupportsBufferProtocol,
     )
     from collections.abc import Sequence
-from ._dtypes import _all_dtypes
 
 import numpy as np
+
+from ._dtypes import _all_dtypes
 
 
 def _check_valid_dtype(dtype):
@@ -64,7 +64,7 @@ def asarray(
         if copy in (True, np._CopyMode.ALWAYS):
             return Array._new(np.array(obj._array, copy=True, dtype=dtype))
         return obj
-    if dtype is None and isinstance(obj, int) and (obj > 2 ** 64 or obj < -(2 ** 63)):
+    if dtype is None and isinstance(obj, int) and (obj > 2**64 or obj < -(2**63)):
         # Give a better error message in this case. NumPy would convert this
         # to an object array. TODO: This won't handle large integers in lists.
         raise OverflowError("Integer out of bounds for array dtypes")

@@ -13,23 +13,23 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
-#include <numpy/ndarraytypes.h>
 #include "npy_config.h"
 #include "npy_pycompat.h"
 
-#include "shape.h"
-
 #include "array_assign.h"
+
 #include "common.h"
 #include "lowlevel_strided_loops.h"
 #include "mem_overlap.h"
+#include "shape.h"
+
+#include <numpy/ndarraytypes.h>
 
 /* See array_assign.h for parameter documentation */
 NPY_NO_EXPORT int
-broadcast_strides(int ndim, npy_intp const *shape,
-                int strides_ndim, npy_intp const *strides_shape, npy_intp const *strides,
-                char const *strides_name,
-                npy_intp *out_strides)
+broadcast_strides(int ndim, npy_intp const *shape, int strides_ndim,
+                  npy_intp const *strides_shape, npy_intp const *strides,
+                  char const *strides_name, npy_intp *out_strides)
 {
     int idim, idim_start = ndim - strides_ndim;
 
@@ -63,33 +63,32 @@ broadcast_strides(int ndim, npy_intp const *shape,
 
     return 0;
 
-broadcast_error: {
-        PyObject *shape1 = convert_shape_to_string(strides_ndim,
-                                                   strides_shape, "");
-        if (shape1 == NULL) {
-            return -1;
-        }
-
-        PyObject *shape2 = convert_shape_to_string(ndim, shape, "");
-        if (shape2 == NULL) {
-            Py_DECREF(shape1);
-            return -1;
-        }
-        PyErr_Format(PyExc_ValueError,
-                "could not broadcast %s from shape %S into shape %S",
-                strides_name, shape1, shape2);
-        Py_DECREF(shape1);
-        Py_DECREF(shape2);
+broadcast_error : {
+    PyObject *shape1 =
+            convert_shape_to_string(strides_ndim, strides_shape, "");
+    if (shape1 == NULL) {
         return -1;
     }
+
+    PyObject *shape2 = convert_shape_to_string(ndim, shape, "");
+    if (shape2 == NULL) {
+        Py_DECREF(shape1);
+        return -1;
+    }
+    PyErr_Format(PyExc_ValueError,
+                 "could not broadcast %s from shape %S into shape %S",
+                 strides_name, shape1, shape2);
+    Py_DECREF(shape1);
+    Py_DECREF(shape2);
+    return -1;
+}
 }
 
 /* See array_assign.h for parameter documentation */
 NPY_NO_EXPORT int
-raw_array_is_aligned(int ndim, npy_intp const *shape,
-                     char *data, npy_intp const *strides, int alignment)
+raw_array_is_aligned(int ndim, npy_intp const *shape, char *data,
+                     npy_intp const *strides, int alignment)
 {
-
     /*
      * The code below expects the following:
      *  * that alignment is a power of two, as required by the C standard.
@@ -127,7 +126,8 @@ raw_array_is_aligned(int ndim, npy_intp const *shape,
         return 1;
     }
     else {
-        /* always return false for alignment == 0, which means cannot-be-aligned */
+        /* always return false for alignment == 0, which means
+         * cannot-be-aligned */
         return 0;
     }
 }
@@ -147,8 +147,6 @@ IsUintAligned(PyArrayObject *ap)
                                 PyArray_DATA(ap), PyArray_STRIDES(ap),
                                 npy_uint_alignment(PyArray_DESCR(ap)->elsize));
 }
-
-
 
 /* Returns 1 if the arrays have overlapping data, 0 otherwise */
 NPY_NO_EXPORT int

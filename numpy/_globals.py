@@ -18,15 +18,17 @@ motivated this module.
 import enum
 
 __ALL__ = [
-    'ModuleDeprecationWarning', 'VisibleDeprecationWarning',
-    '_NoValue', '_CopyMode'
-    ]
+    "ModuleDeprecationWarning",
+    "VisibleDeprecationWarning",
+    "_NoValue",
+    "_CopyMode",
+]
 
 
 # Disallow reloading this module so as to preserve the identities of the
 # classes defined here.
-if '_is_loaded' in globals():
-    raise RuntimeError('Reloading numpy._globals is not allowed')
+if "_is_loaded" in globals():
+    raise RuntimeError("Reloading numpy._globals is not allowed")
 _is_loaded = True
 
 
@@ -41,7 +43,7 @@ class ModuleDeprecationWarning(DeprecationWarning):
     """
 
 
-ModuleDeprecationWarning.__module__ = 'numpy'
+ModuleDeprecationWarning.__module__ = "numpy"
 
 
 class VisibleDeprecationWarning(UserWarning):
@@ -54,7 +56,7 @@ class VisibleDeprecationWarning(UserWarning):
     """
 
 
-VisibleDeprecationWarning.__module__ = 'numpy'
+VisibleDeprecationWarning.__module__ = "numpy"
 
 
 class _NoValueType:
@@ -76,7 +78,9 @@ class _NoValueType:
       emitted when the keyword is used.
 
     """
+
     __instance = None
+
     def __new__(cls):
         # ensure that only one instance exists
         if not cls.__instance:
@@ -126,4 +130,4 @@ class _CopyMode(enum.Enum):
         raise ValueError(f"{self} is neither True nor False.")
 
 
-_CopyMode.__module__ = 'numpy'
+_CopyMode.__module__ = "numpy"

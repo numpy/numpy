@@ -12,8 +12,7 @@ f: tuple[int, ...]
 g: list[int]
 h: Sequence[Any]
 
-def func(a: _NestedSequence[int]) -> None:
-    ...
+def func(a: _NestedSequence[int]) -> None: ...
 
 reveal_type(func(a))  # E: None
 reveal_type(func(b))  # E: None

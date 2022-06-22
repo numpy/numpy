@@ -26,7 +26,9 @@ reveal_type(np.mintypecode(["f8"], typeset="qfQF"))
 
 reveal_type(np.asfarray(AR_f8))  # E: ndarray[Any, dtype[{float64}]]
 reveal_type(np.asfarray(AR_LIKE_f))  # E: ndarray[Any, dtype[{float64}]]
-reveal_type(np.asfarray(AR_f8, dtype="c16"))  # E: ndarray[Any, dtype[complexfloating[Any, Any]]]
+reveal_type(
+    np.asfarray(AR_f8, dtype="c16")
+)  # E: ndarray[Any, dtype[complexfloating[Any, Any]]]
 reveal_type(np.asfarray(AR_f8, dtype="i8"))  # E: ndarray[Any, dtype[floating[Any]]]
 
 reveal_type(np.real(RealObj()))  # E: slice
@@ -56,8 +58,12 @@ reveal_type(np.nan_to_num(AR_f8, nan=1.5))  # E: ndarray[Any, dtype[{float64}]]
 reveal_type(np.nan_to_num(AR_LIKE_f, posinf=9999))  # E: ndarray[Any, dtype[Any]]
 
 reveal_type(np.real_if_close(AR_f8))  # E: ndarray[Any, dtype[{float64}]]
-reveal_type(np.real_if_close(AR_c16))  # E: Union[ndarray[Any, dtype[{float64}]], ndarray[Any, dtype[{complex128}]]]
-reveal_type(np.real_if_close(AR_c8))  # E: Union[ndarray[Any, dtype[{float32}]], ndarray[Any, dtype[{complex64}]]]
+reveal_type(
+    np.real_if_close(AR_c16)
+)  # E: Union[ndarray[Any, dtype[{float64}]], ndarray[Any, dtype[{complex128}]]]
+reveal_type(
+    np.real_if_close(AR_c8)
+)  # E: Union[ndarray[Any, dtype[{float32}]], ndarray[Any, dtype[{complex64}]]]
 reveal_type(np.real_if_close(AR_LIKE_f))  # E: ndarray[Any, dtype[Any]]
 
 reveal_type(np.typename("h"))  # E: Literal['short']

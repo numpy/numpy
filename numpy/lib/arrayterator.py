@@ -7,10 +7,10 @@ an array object, and when iterated it will return sub-arrays with at most
 a user-specified number of elements.
 
 """
-from operator import mul
 from functools import reduce
+from operator import mul
 
-__all__ = ['Arrayterator']
+__all__ = ["Arrayterator"]
 
 
 class Arrayterator:
@@ -104,23 +104,24 @@ class Arrayterator:
         length, dims = len(index), self.ndim
         for slice_ in index:
             if slice_ is Ellipsis:
-                fixed.extend([slice(None)] * (dims-length+1))
+                fixed.extend([slice(None)] * (dims - length + 1))
                 length = len(fixed)
             elif isinstance(slice_, int):
-                fixed.append(slice(slice_, slice_+1, 1))
+                fixed.append(slice(slice_, slice_ + 1, 1))
             else:
                 fixed.append(slice_)
         index = tuple(fixed)
         if len(index) < dims:
-            index += (slice(None),) * (dims-len(index))
+            index += (slice(None),) * (dims - len(index))
 
         # Return a new arrayterator object.
         out = self.__class__(self.var, self.buf_size)
         for i, (start, stop, step, slice_) in enumerate(
-                zip(self.start, self.stop, self.step, index)):
+            zip(self.start, self.stop, self.step, index)
+        ):
             out.start[i] = start + (slice_.start or 0)
             out.step[i] = step * (slice_.step or 1)
-            out.stop[i] = start + (slice_.stop or stop-start)
+            out.stop[i] = start + (slice_.stop or stop - start)
             out.stop[i] = min(stop, out.stop[i])
         return out
 
@@ -129,8 +130,7 @@ class Arrayterator:
         Return corresponding data.
 
         """
-        slice_ = tuple(slice(*t) for t in zip(
-                self.start, self.stop, self.step))
+        slice_ = tuple(slice(*t) for t in zip(self.start, self.stop, self.step))
         return self.var[slice_]
 
     @property
@@ -169,8 +169,10 @@ class Arrayterator:
         For an example, see `Arrayterator`.
 
         """
-        return tuple(((stop-start-1)//step+1) for start, stop, step in
-                zip(self.start, self.stop, self.step))
+        return tuple(
+            ((stop - start - 1) // step + 1)
+            for start, stop, step in zip(self.start, self.stop, self.step)
+        )
 
     def __iter__(self):
         # Skip arrays with degenerate dimensions
@@ -189,20 +191,20 @@ class Arrayterator:
             # running dimension (ie, the dimension along which
             # the blocks will be built from)
             rundim = 0
-            for i in range(ndims-1, -1, -1):
+            for i in range(ndims - 1, -1, -1):
                 # if count is zero we ran out of elements to read
                 # along higher dimensions, so we read only a single position
                 if count == 0:
-                    stop[i] = start[i]+1
+                    stop[i] = start[i] + 1
                 elif count <= self.shape[i]:
                     # limit along this dimension
-                    stop[i] = start[i] + count*step[i]
+                    stop[i] = start[i] + count * step[i]
                     rundim = i
                 else:
                     # read everything along this dimension
                     stop[i] = self.stop[i]
                 stop[i] = min(self.stop[i], stop[i])
-                count = count//self.shape[i]
+                count = count // self.shape[i]
 
             # yield a block
             slice_ = tuple(slice(*t) for t in zip(start, stop, step))
@@ -211,9 +213,9 @@ class Arrayterator:
             # Update start position, taking care of overflow to
             # other dimensions
             start[rundim] = stop[rundim]  # start where we stopped
-            for i in range(ndims-1, 0, -1):
+            for i in range(ndims - 1, 0, -1):
                 if start[i] >= self.stop[i]:
                     start[i] = self.start[i]
-                    start[i-1] += self.step[i-1]
+                    start[i - 1] += self.step[i - 1]
             if start[0] >= self.stop[0]:
                 return

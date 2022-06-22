@@ -15,8 +15,8 @@
  *
  * It should return -1 on failure, or 0 on success.
  */
-typedef int (PyArray_AssignReduceIdentityFunc)(PyArrayObject *result,
-                                               void *data);
+typedef int(PyArray_AssignReduceIdentityFunc)(PyArrayObject *result,
+                                              void *data);
 
 /*
  * Inner definition of the reduce loop, only used for a static function.
@@ -25,11 +25,13 @@ typedef int (PyArray_AssignReduceIdentityFunc)(PyArrayObject *result,
  *
  * TODO: This should be refactored/removed.
  */
-typedef int (PyArray_ReduceLoopFunc)(PyArrayMethod_Context *context,
-        PyArrayMethod_StridedLoop *strided_loop, NpyAuxData *auxdata,
-        NpyIter *iter, char **dataptrs, npy_intp const *strides,
-        npy_intp const *countptr, NpyIter_IterNextFunc *iternext,
-        int needs_api, npy_intp skip_first_count);
+typedef int(PyArray_ReduceLoopFunc)(PyArrayMethod_Context *context,
+                                    PyArrayMethod_StridedLoop *strided_loop,
+                                    NpyAuxData *auxdata, NpyIter *iter,
+                                    char **dataptrs, npy_intp const *strides,
+                                    npy_intp const *countptr,
+                                    NpyIter_IterNextFunc *iternext,
+                                    int needs_api, npy_intp skip_first_count);
 
 /*
  * This function executes all the standard NumPy reduction function
@@ -62,10 +64,11 @@ typedef int (PyArray_ReduceLoopFunc)(PyArrayMethod_Context *context,
  * errormask   : forwarded from _get_bufsize_errmask
  */
 NPY_NO_EXPORT PyArrayObject *
-PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
-        PyArrayObject *operand, PyArrayObject *out, PyArrayObject *wheremask,
-        npy_bool *axis_flags, int reorderable, int keepdims,
-        PyObject *identity, PyArray_ReduceLoopFunc *loop,
-        void *data, npy_intp buffersize, const char *funcname, int errormask);
+PyUFunc_ReduceWrapper(PyArrayMethod_Context *context, PyArrayObject *operand,
+                      PyArrayObject *out, PyArrayObject *wheremask,
+                      npy_bool *axis_flags, int reorderable, int keepdims,
+                      PyObject *identity, PyArray_ReduceLoopFunc *loop,
+                      void *data, npy_intp buffersize, const char *funcname,
+                      int errormask);
 
 #endif

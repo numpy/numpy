@@ -1,34 +1,35 @@
 import pytest
 
 from numpy.f2py.symbolic import (
-    Expr,
-    Op,
     ArithOp,
+    Expr,
     Language,
-    as_symbol,
-    as_number,
-    as_string,
+    Op,
+    as_apply,
     as_array,
     as_complex,
-    as_terms,
-    as_factors,
-    eliminate_quotes,
-    insert_quotes,
-    fromstring,
-    as_expr,
-    as_apply,
-    as_numer_denom,
-    as_ternary,
-    as_ref,
     as_deref,
-    normalize,
     as_eq,
-    as_ne,
-    as_lt,
+    as_expr,
+    as_factors,
+    as_ge,
     as_gt,
     as_le,
-    as_ge,
+    as_lt,
+    as_ne,
+    as_number,
+    as_numer_denom,
+    as_ref,
+    as_string,
+    as_symbol,
+    as_terms,
+    as_ternary,
+    eliminate_quotes,
+    fromstring,
+    insert_quotes,
+    normalize,
 )
+
 from . import util
 
 
@@ -77,8 +78,9 @@ class TestSymbolic(util.F2PyTest):
         c = as_complex(1, 2)
         c2 = as_complex(3, 4)
         assert c.op == Op.COMPLEX
-        assert repr(c) == ("Expr(Op.COMPLEX, (Expr(Op.INTEGER, (1, 4)),"
-                           " Expr(Op.INTEGER, (2, 4))))")
+        assert repr(c) == (
+            "Expr(Op.COMPLEX, (Expr(Op.INTEGER, (1, 4))," " Expr(Op.INTEGER, (2, 4))))"
+        )
         assert c == c
         assert c != c2
         assert hash(c) is not None
@@ -91,10 +93,12 @@ class TestSymbolic(util.F2PyTest):
         assert s != s2
 
         a = as_array((n, m))
-        b = as_array((n, ))
+        b = as_array((n,))
         assert a.op == Op.ARRAY
-        assert repr(a) == ("Expr(Op.ARRAY, (Expr(Op.INTEGER, (123, 4)),"
-                           " Expr(Op.INTEGER, (456, 4))))")
+        assert repr(a) == (
+            "Expr(Op.ARRAY, (Expr(Op.INTEGER, (123, 4)),"
+            " Expr(Op.INTEGER, (456, 4))))"
+        )
         assert a == a
         assert a != b
 
@@ -165,7 +169,7 @@ class TestSymbolic(util.F2PyTest):
         assert str(v) == "x ** 2 * (x * y) ** 3", str(v)
 
         assert str(Expr(Op.APPLY, ("f", (), {}))) == "f()"
-        assert str(Expr(Op.APPLY, ("f", (x, ), {}))) == "f(x)"
+        assert str(Expr(Op.APPLY, ("f", (x,), {}))) == "f(x)"
         assert str(Expr(Op.APPLY, ("f", (x, y), {}))) == "f(x, y)"
         assert str(Expr(Op.INDEXING, ("f", x))) == "f[x]"
 
@@ -185,21 +189,23 @@ class TestSymbolic(util.F2PyTest):
         n = as_number(123)
 
         assert Expr(Op.FACTORS, {x: 2}).tostring(language=language) == "x * x"
-        assert (Expr(Op.FACTORS, {
-            x + y: 2
-        }).tostring(language=language) == "(x + y) * (x + y)")
-        assert Expr(Op.FACTORS, {
-            x: 12
-        }).tostring(language=language) == "pow(x, 12)"
+        assert (
+            Expr(Op.FACTORS, {x + y: 2}).tostring(language=language)
+            == "(x + y) * (x + y)"
+        )
+        assert Expr(Op.FACTORS, {x: 12}).tostring(language=language) == "pow(x, 12)"
 
-        assert as_apply(ArithOp.DIV, x,
-                        y).tostring(language=language) == "x / y"
-        assert (as_apply(ArithOp.DIV, x,
-                         x + y).tostring(language=language) == "x / (x + y)")
-        assert (as_apply(ArithOp.DIV, x - y, x +
-                         y).tostring(language=language) == "(x - y) / (x + y)")
-        assert (x + (x - y) / (x + y) +
-                n).tostring(language=language) == "123 + x + (x - y) / (x + y)"
+        assert as_apply(ArithOp.DIV, x, y).tostring(language=language) == "x / y"
+        assert (
+            as_apply(ArithOp.DIV, x, x + y).tostring(language=language) == "x / (x + y)"
+        )
+        assert (
+            as_apply(ArithOp.DIV, x - y, x + y).tostring(language=language)
+            == "(x - y) / (x + y)"
+        )
+        assert (x + (x - y) / (x + y) + n).tostring(
+            language=language
+        ) == "123 + x + (x - y) / (x + y)"
 
         assert as_ternary(x, y, z).tostring(language=language) == "(x?y:z)"
         assert as_eq(x, y).tostring(language=language) == "x == y"
@@ -229,20 +235,17 @@ class TestSymbolic(util.F2PyTest):
         assert (x + y) * 2 == Expr(Op.TERMS, {x: 2, y: 2})
 
         assert x**2 == Expr(Op.FACTORS, {x: 2})
-        assert (x + y)**2 == Expr(
+        assert (x + y) ** 2 == Expr(
             Op.TERMS,
             {
                 Expr(Op.FACTORS, {x: 2}): 1,
                 Expr(Op.FACTORS, {y: 2}): 1,
-                Expr(Op.FACTORS, {
-                    x: 1,
-                    y: 1
-                }): 2,
+                Expr(Op.FACTORS, {x: 1, y: 1}): 2,
             },
         )
         assert (x + y) * x == x**2 + x * y
-        assert (x + y)**2 == x**2 + 2 * x * y + y**2
-        assert (x + y)**2 + (x - y)**2 == 2 * x**2 + 2 * y**2
+        assert (x + y) ** 2 == x**2 + 2 * x * y + y**2
+        assert (x + y) ** 2 + (x - y) ** 2 == 2 * x**2 + 2 * y**2
         assert (x + y) * z == x * z + y * z
         assert z * (x + y) == x * z + y * z
 
@@ -254,9 +257,11 @@ class TestSymbolic(util.F2PyTest):
         assert (6 * x / 2) == 3 * x
         assert ((3 * 5) * x / 6) == as_apply(ArithOp.DIV, 5 * x, as_number(2))
         assert (30 * x**2 * y**4 / (24 * x**3 * y**3)) == as_apply(
-            ArithOp.DIV, 5 * y, 4 * x)
-        assert ((15 * x / 6) / 5) == as_apply(ArithOp.DIV, x,
-                                              as_number(2)), (15 * x / 6) / 5
+            ArithOp.DIV, 5 * y, 4 * x
+        )
+        assert ((15 * x / 6) / 5) == as_apply(ArithOp.DIV, x, as_number(2)), (
+            15 * x / 6
+        ) / 5
         assert (x / (5 / x)) == as_apply(ArithOp.DIV, x**2, as_number(5))
 
         assert (x / 2.0) == Expr(Op.TERMS, {x: 0.5})
@@ -271,7 +276,7 @@ class TestSymbolic(util.F2PyTest):
         c = as_complex(1.0, 2.0)
         assert -c == as_complex(-1.0, -2.0)
         assert c + c == as_expr((1 + 2j) * 2)
-        assert c * c == as_expr((1 + 2j)**2)
+        assert c * c == as_expr((1 + 2j) ** 2)
 
     def test_substitute(self):
         x = as_symbol("x")
@@ -287,8 +292,7 @@ class TestSymbolic(util.F2PyTest):
         assert x.substitute({x: y + z}) == y + z
         assert a.substitute({x: y + z}) == as_array((y + z, y))
 
-        assert as_ternary(x, y,
-                          z).substitute({x: y + z}) == as_ternary(y + z, y, z)
+        assert as_ternary(x, y, z).substitute({x: y + z}) == as_ternary(y + z, y, z)
         assert as_eq(x, y).substitute({x: y + z}) == as_eq(y + z, y)
 
     def test_fromstring(self):
@@ -319,15 +323,16 @@ class TestSymbolic(util.F2PyTest):
         assert fromstring("f[x][y]") == f[x][y]
 
         assert fromstring('"ABC"') == s
-        assert (normalize(
-            fromstring('"ABC" // "123" ',
-                       language=Language.Fortran)) == s // t)
+        assert (
+            normalize(fromstring('"ABC" // "123" ', language=Language.Fortran))
+            == s // t
+        )
         assert fromstring('f("ABC")') == f(s)
         assert fromstring('MYSTRKIND_"ABC"') == as_string('"ABC"', "MYSTRKIND")
 
         assert fromstring("(/x, y/)") == a, fromstring("(/x, y/)")
         assert fromstring("f((/x, y/))") == f(a)
-        assert fromstring("(/(x+y)*z/)") == as_array(((x + y) * z, ))
+        assert fromstring("(/(x+y)*z/)") == as_array(((x + y) * z,))
 
         assert fromstring("123") == as_number(123)
         assert fromstring("123_2") == as_number(123, 2)
@@ -345,21 +350,19 @@ class TestSymbolic(util.F2PyTest):
         assert fromstring("3E4") == as_number(30000.0, 4)
 
         assert fromstring("(1, 2)") == as_complex(1, 2)
-        assert fromstring("(1e2, PI)") == as_complex(as_number(100.0),
-                                                     as_symbol("PI"))
+        assert fromstring("(1e2, PI)") == as_complex(as_number(100.0), as_symbol("PI"))
 
         assert fromstring("[1, 2]") == as_array((as_number(1), as_number(2)))
 
-        assert fromstring("POINT(x, y=1)") == as_apply(as_symbol("POINT"),
-                                                       x,
-                                                       y=as_number(1))
-        assert fromstring(
-            'PERSON(name="John", age=50, shape=(/34, 23/))') == as_apply(
-                as_symbol("PERSON"),
-                name=as_string('"John"'),
-                age=as_number(50),
-                shape=as_array((as_number(34), as_number(23))),
-            )
+        assert fromstring("POINT(x, y=1)") == as_apply(
+            as_symbol("POINT"), x, y=as_number(1)
+        )
+        assert fromstring('PERSON(name="John", age=50, shape=(/34, 23/))') == as_apply(
+            as_symbol("PERSON"),
+            name=as_string('"John"'),
+            age=as_number(50),
+            shape=as_array((as_number(34), as_number(23))),
+        )
 
         assert fromstring("x?y:z") == as_ternary(x, y, z)
 
@@ -404,9 +407,7 @@ class TestSymbolic(util.F2PyTest):
         assert (f[y]).traverse(replace_visit) == f[y]
         assert (f[z]).traverse(replace_visit) == f[z]
         assert (x + y + z).traverse(replace_visit) == (2 * z + y)
-        assert (x +
-                f(y, x - z)).traverse(replace_visit) == (z +
-                                                         f(y, as_number(0)))
+        assert (x + f(y, x - z)).traverse(replace_visit) == (z + f(y, as_number(0)))
         assert as_eq(x, y).traverse(replace_visit) == as_eq(z, y)
 
         # Use traverse to collect symbols, method 1
@@ -491,4 +492,4 @@ class TestSymbolic(util.F2PyTest):
         assert (y(x)).polynomial_atoms() == {y(x)}
         assert (y(x) + x).polynomial_atoms() == {y(x), x}
         assert (y(x) * x[y]).polynomial_atoms() == {y(x), x[y]}
-        assert (y(x)**x).polynomial_atoms() == {y(x)}
+        assert (y(x) ** x).polynomial_atoms() == {y(x)}

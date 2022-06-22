@@ -1,4 +1,5 @@
 import sys
+
 import numpy as np
 
 f2: np.float16
@@ -37,7 +38,6 @@ class A:
     def __float__(self):
         return 1.0
 
-
 np.int8(A())  # E: incompatible type
 np.int16(A())  # E: incompatible type
 np.int32(A())  # E: incompatible type
@@ -60,15 +60,15 @@ np.float64(value=0.0)  # E: Unexpected keyword argument
 np.int64(value=0)  # E: Unexpected keyword argument
 np.uint64(value=0)  # E: Unexpected keyword argument
 np.complex128(value=0.0j)  # E: Unexpected keyword argument
-np.str_(value='bob')  # E: No overload variant
-np.bytes_(value=b'test')  # E: No overload variant
-np.void(value=b'test')  # E: Unexpected keyword argument
+np.str_(value="bob")  # E: No overload variant
+np.bytes_(value=b"test")  # E: No overload variant
+np.void(value=b"test")  # E: Unexpected keyword argument
 np.bool_(value=True)  # E: Unexpected keyword argument
 np.datetime64(value="2019")  # E: No overload variant
 np.timedelta64(value=0)  # E: Unexpected keyword argument
 
-np.bytes_(b"hello", encoding='utf-8')  # E: No overload variant
-np.str_("hello", encoding='utf-8')  # E: No overload variant
+np.bytes_(b"hello", encoding="utf-8")  # E: No overload variant
+np.str_("hello", encoding="utf-8")  # E: No overload variant
 
 complex(np.bytes_("1"))  # E: No overload variant
 

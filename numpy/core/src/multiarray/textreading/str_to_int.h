@@ -7,7 +7,6 @@
 
 #include "textreading/parser_config.h"
 
-
 /*
  * The following two string conversion functions are largely equivalent
  * in Pandas.  They are in the header file here, to ensure they can be easily
@@ -17,9 +16,8 @@
  * The actual functions are defined using macro templating below.
  */
 NPY_FINLINE int
-str_to_int64(
-        const Py_UCS4 *p_item, const Py_UCS4 *p_end,
-        int64_t int_min, int64_t int_max, int64_t *result)
+str_to_int64(const Py_UCS4 *p_item, const Py_UCS4 *p_end, int64_t int_min,
+             int64_t int_max, int64_t *result)
 {
     const Py_UCS4 *p = (const Py_UCS4 *)p_item;
     bool isneg = 0;
@@ -53,7 +51,8 @@ str_to_int64(
         // Process the digits.
         int d = *p;
         while (isdigit(d)) {
-            if ((number > pre_min) || ((number == pre_min) && (d - '0' <= dig_pre_min))) {
+            if ((number > pre_min) ||
+                ((number == pre_min) && (d - '0' <= dig_pre_min))) {
                 number = number * 10 - (d - '0');
                 d = *++p;
             }
@@ -71,7 +70,8 @@ str_to_int64(
         // Process the digits.
         int d = *p;
         while (isdigit(d)) {
-            if ((number < pre_max) || ((number == pre_max) && (d - '0' <= dig_pre_max))) {
+            if ((number < pre_max) ||
+                ((number == pre_max) && (d - '0' <= dig_pre_max))) {
                 number = number * 10 + (d - '0');
                 d = *++p;
             }
@@ -95,11 +95,9 @@ str_to_int64(
     return 0;
 }
 
-
 NPY_FINLINE int
-str_to_uint64(
-        const Py_UCS4 *p_item, const Py_UCS4 *p_end,
-        uint64_t uint_max, uint64_t *result)
+str_to_uint64(const Py_UCS4 *p_item, const Py_UCS4 *p_end, uint64_t uint_max,
+              uint64_t *result)
 {
     const Py_UCS4 *p = (const Py_UCS4 *)p_item;
     uint64_t number = 0;
@@ -131,7 +129,8 @@ str_to_uint64(
     // Process the digits.
     d = *p;
     while (isdigit(d)) {
-        if ((number < pre_max) || ((number == pre_max) && (d - '0' <= dig_pre_max))) {
+        if ((number < pre_max) ||
+            ((number == pre_max) && (d - '0' <= dig_pre_max))) {
             number = number * 10 + (d - '0');
             d = *++p;
         }
@@ -154,12 +153,10 @@ str_to_uint64(
     return 0;
 }
 
-
-#define DECLARE_TO_INT_PROTOTYPE(intw)                                  \
-    NPY_NO_EXPORT int                                                   \
-    to_##intw(PyArray_Descr *descr,                                     \
-            const Py_UCS4 *str, const Py_UCS4 *end, char *dataptr,      \
-            parser_config *pconfig);
+#define DECLARE_TO_INT_PROTOTYPE(intw)                                    \
+    NPY_NO_EXPORT int to_##intw(PyArray_Descr *descr, const Py_UCS4 *str, \
+                                const Py_UCS4 *end, char *dataptr,        \
+                                parser_config *pconfig);
 
 DECLARE_TO_INT_PROTOTYPE(int8)
 DECLARE_TO_INT_PROTOTYPE(int16)
@@ -171,4 +168,4 @@ DECLARE_TO_INT_PROTOTYPE(uint16)
 DECLARE_TO_INT_PROTOTYPE(uint32)
 DECLARE_TO_INT_PROTOTYPE(uint64)
 
-#endif  /* NUMPY_CORE_SRC_MULTIARRAY_TEXTREADING_STR_TO_INT_H_ */
+#endif /* NUMPY_CORE_SRC_MULTIARRAY_TEXTREADING_STR_TO_INT_H_ */

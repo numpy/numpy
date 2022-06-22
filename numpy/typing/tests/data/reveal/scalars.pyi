@@ -1,4 +1,5 @@
 import sys
+
 import numpy as np
 
 b: np.bool_
@@ -34,8 +35,8 @@ reveal_type(c8.dtype)  # E: dtype[{complex64}]
 reveal_type(c8.real)  # E: {float32}
 reveal_type(c16.imag)  # E: {float64}
 
-reveal_type(np.unicode_('foo'))  # E: str_
-reveal_type(np.str0('foo'))  # E: str_
+reveal_type(np.unicode_("foo"))  # E: str_
+reveal_type(np.str0("foo"))  # E: str_
 
 reveal_type(V[0])  # E: Any
 reveal_type(V["field1"])  # E: Any

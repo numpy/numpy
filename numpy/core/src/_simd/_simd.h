@@ -1,5 +1,6 @@
 /**
- * A module to expose the NumPy C SIMD vectorization interface "NPYV" for testing purposes.
+ * A module to expose the NumPy C SIMD vectorization interface "NPYV" for
+ * testing purposes.
  *
  * Please keep this module independent from other c-extension modules,
  * since NPYV intrinsics may be involved in their functionality,
@@ -13,6 +14,7 @@
 #define _SIMD_SIMD_H_
 
 #include <Python.h>
+
 #include "numpy/npy_common.h"
 
 #ifndef NPY_DISABLE_OPTIMIZATION
@@ -20,11 +22,13 @@
 #include "_simd.dispatch.h"
 #endif
 /**
- * Create a new module for each required optimization which contains all NPYV intrinsics,
+ * Create a new module for each required optimization which contains all NPYV
+ * intrinsics,
  *
- * If required optimization is not supported by NPYV, the module will still provides
- * access to NPYV constants NPY_SIMD, NPY_SIMD_F64, and NPY_SIMD_WIDTH but without
- * any intrinsics.
+ * If required optimization is not supported by NPYV, the module will still
+ * provides access to NPYV constants NPY_SIMD, NPY_SIMD_F64, and NPY_SIMD_WIDTH
+ * but without any intrinsics.
  */
-NPY_CPU_DISPATCH_DECLARE(NPY_VISIBILITY_HIDDEN PyObject *simd_create_module, (void))
-#endif // _SIMD_SIMD_H_
+NPY_CPU_DISPATCH_DECLARE(NPY_VISIBILITY_HIDDEN PyObject *simd_create_module,
+                         (void))
+#endif  // _SIMD_SIMD_H_

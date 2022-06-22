@@ -1,9 +1,10 @@
 #!python
 #cython: wraparound=False, nonecheck=False, boundscheck=False, cdivision=True, language_level=3
-from numpy cimport npy_intp
+from libc.stdint cimport int32_t, int64_t, uint64_t
 
-from libc.stdint cimport (uint64_t, int32_t, int64_t)
+from numpy cimport npy_intp
 from numpy.random cimport bitgen_t
+
 
 cdef extern from "numpy/random/distributions.h":
 

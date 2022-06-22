@@ -9,12 +9,13 @@
 DEF _buffer_format_string_len = 255
 
 cimport cpython.buffer as pybuf
-from cpython.ref cimport Py_INCREF
-from cpython.mem cimport PyObject_Malloc, PyObject_Free
-from cpython.object cimport PyObject, PyTypeObject
-from cpython.buffer cimport PyObject_GetBuffer
-from cpython.type cimport type
 cimport libc.stdio as stdio
+from cpython.buffer cimport PyObject_GetBuffer
+from cpython.mem cimport PyObject_Free, PyObject_Malloc
+from cpython.object cimport PyObject, PyTypeObject
+from cpython.ref cimport Py_INCREF
+from cpython.type cimport type
+
 
 cdef extern from "Python.h":
     ctypedef int Py_intptr_t

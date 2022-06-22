@@ -8,8 +8,8 @@
 #include "numpy/npy_math.h"
 
 #include "npy_config.h"
-
 #include "npy_pycompat.h"
+
 #include "ctors.h"
 
 /*
@@ -65,7 +65,7 @@ PyUnicode_FromUCS4(char const *src_char, Py_ssize_t size, int swap, int align)
         ucs4len--;
     }
     PyUnicodeObject *ret = (PyUnicodeObject *)PyUnicode_FromKindAndData(
-        PyUnicode_4BYTE_KIND, src, ucs4len);
+            PyUnicode_4BYTE_KIND, src, ucs4len);
     free(buf);
     return ret;
 }

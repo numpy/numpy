@@ -15,4 +15,4 @@ CLONGDOUBLE_vdot(char *, npy_intp, char *, npy_intp, char *, npy_intp, void *);
 NPY_NO_EXPORT void
 OBJECT_vdot(char *, npy_intp, char *, npy_intp, char *, npy_intp, void *);
 
-#endif  /* NUMPY_CORE_SRC_MULTIARRAY_VDOT_H_ */
+#endif /* NUMPY_CORE_SRC_MULTIARRAY_VDOT_H_ */

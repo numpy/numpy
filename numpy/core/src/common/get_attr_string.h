@@ -2,40 +2,31 @@
 #define NUMPY_CORE_SRC_COMMON_GET_ATTR_STRING_H_
 
 #include <Python.h>
+
 #include "ufunc_object.h"
 
 static NPY_INLINE npy_bool
 _is_basic_python_type(PyTypeObject *tp)
 {
     return (
-        /* Basic number types */
-        tp == &PyBool_Type ||
-        tp == &PyLong_Type ||
-        tp == &PyFloat_Type ||
-        tp == &PyComplex_Type ||
+            /* Basic number types */
+            tp == &PyBool_Type || tp == &PyLong_Type || tp == &PyFloat_Type ||
+            tp == &PyComplex_Type ||
 
-        /* Basic sequence types */
-        tp == &PyList_Type ||
-        tp == &PyTuple_Type ||
-        tp == &PyDict_Type ||
-        tp == &PySet_Type ||
-        tp == &PyFrozenSet_Type ||
-        tp == &PyUnicode_Type ||
-        tp == &PyBytes_Type ||
+            /* Basic sequence types */
+            tp == &PyList_Type || tp == &PyTuple_Type || tp == &PyDict_Type ||
+            tp == &PySet_Type || tp == &PyFrozenSet_Type ||
+            tp == &PyUnicode_Type || tp == &PyBytes_Type ||
 
-        /* other builtins */
-        tp == &PySlice_Type ||
-        tp == Py_TYPE(Py_None) ||
-        tp == Py_TYPE(Py_Ellipsis) ||
-        tp == Py_TYPE(Py_NotImplemented) ||
+            /* other builtins */
+            tp == &PySlice_Type || tp == Py_TYPE(Py_None) ||
+            tp == Py_TYPE(Py_Ellipsis) || tp == Py_TYPE(Py_NotImplemented) ||
 
-        /* TODO: ndarray, but we can't see PyArray_Type here */
+            /* TODO: ndarray, but we can't see PyArray_Type here */
 
-        /* sentinel to swallow trailing || */
-        NPY_FALSE
-    );
+            /* sentinel to swallow trailing || */
+            NPY_FALSE);
 }
-
 
 /*
  * Lookup a special method, following the python approach of looking up
@@ -64,7 +55,6 @@ PyArray_LookupSpecial(PyObject *obj, PyObject *name_unicode)
     return res;
 }
 
-
 /*
  * PyArray_LookupSpecial_OnInstance:
  *
@@ -92,4 +82,4 @@ PyArray_LookupSpecial_OnInstance(PyObject *obj, PyObject *name_unicode)
     return res;
 }
 
-#endif  /* NUMPY_CORE_SRC_COMMON_GET_ATTR_STRING_H_ */
+#endif /* NUMPY_CORE_SRC_COMMON_GET_ATTR_STRING_H_ */

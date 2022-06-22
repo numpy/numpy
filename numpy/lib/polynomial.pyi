@@ -1,37 +1,29 @@
-from typing import (
-    Literal as L,
-    overload,
-    Any,
-    SupportsInt,
-    SupportsIndex,
-    TypeVar,
-    NoReturn,
-)
+from typing import Any
+from typing import Literal as L
+from typing import NoReturn, SupportsIndex, SupportsInt, TypeVar, overload
 
+from numpy import RankWarning as RankWarning
 from numpy import (
-    RankWarning as RankWarning,
-    poly1d as poly1d,
-    unsignedinteger,
-    signedinteger,
-    floating,
-    complexfloating,
     bool_,
+    complex128,
+    complexfloating,
+    float64,
+    floating,
     int32,
     int64,
-    float64,
-    complex128,
     object_,
 )
-
+from numpy import poly1d as poly1d
+from numpy import signedinteger, unsignedinteger
 from numpy._typing import (
-    NDArray,
     ArrayLike,
+    NDArray,
     _ArrayLikeBool_co,
-    _ArrayLikeUInt_co,
-    _ArrayLikeInt_co,
-    _ArrayLikeFloat_co,
     _ArrayLikeComplex_co,
+    _ArrayLikeFloat_co,
+    _ArrayLikeInt_co,
     _ArrayLikeObject_co,
+    _ArrayLikeUInt_co,
 )
 
 _T = TypeVar("_T")
@@ -51,8 +43,9 @@ def poly(seq_of_zeros: ArrayLike) -> NDArray[floating[Any]]: ...
 
 # Returns either a float or complex array depending on the input values.
 # See `np.linalg.eigvals`.
-def roots(p: ArrayLike) -> NDArray[complexfloating[Any, Any]] | NDArray[floating[Any]]: ...
-
+def roots(
+    p: ArrayLike,
+) -> NDArray[complexfloating[Any, Any]] | NDArray[floating[Any]]: ...
 @overload
 def polyint(
     p: poly1d,
@@ -77,7 +70,6 @@ def polyint(
     m: SupportsInt | SupportsIndex = ...,
     k: None | _ArrayLikeObject_co = ...,
 ) -> NDArray[object_]: ...
-
 @overload
 def polyder(
     p: poly1d,
@@ -98,7 +90,6 @@ def polyder(
     p: _ArrayLikeObject_co,
     m: SupportsInt | SupportsIndex = ...,
 ) -> NDArray[object_]: ...
-
 @overload
 def polyfit(
     x: _ArrayLikeFloat_co,
@@ -159,7 +150,6 @@ def polyfit(
     w: None | _ArrayLikeFloat_co = ...,
     cov: bool | L["unscaled"] = ...,
 ) -> _5Tup[NDArray[complex128]]: ...
-
 @overload
 def polyval(
     p: _ArrayLikeBool_co,
@@ -190,7 +180,6 @@ def polyval(
     p: _ArrayLikeObject_co,
     x: _ArrayLikeObject_co,
 ) -> NDArray[object_]: ...
-
 @overload
 def polyadd(
     a1: poly1d,
@@ -231,7 +220,6 @@ def polyadd(
     a1: _ArrayLikeObject_co,
     a2: _ArrayLikeObject_co,
 ) -> NDArray[object_]: ...
-
 @overload
 def polysub(
     a1: poly1d,

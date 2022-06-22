@@ -17,7 +17,6 @@
 
 #define READ_CHUNKSIZE 1 << 14
 
-
 typedef struct {
     stream stream;
     /* The Python file object being read. */
@@ -34,7 +33,6 @@ typedef struct {
     /* Encoding compatible with Python's `PyUnicode_Encode` (may be NULL) */
     const char *encoding;
 } python_chunks_from_file;
-
 
 /*
  * Helper function to support byte objects as well as unicode strings.
@@ -55,13 +53,12 @@ process_stringlike(PyObject *str, const char *encoding)
     }
     else if (!PyUnicode_Check(str)) {
         PyErr_SetString(PyExc_TypeError,
-                "non-string returned while reading data");
+                        "non-string returned while reading data");
         Py_DECREF(str);
         return NULL;
     }
     return str;
 }
-
 
 static NPY_INLINE void
 buffer_info_from_unicode(PyObject *str, char **start, char **end, int *kind)
@@ -83,14 +80,14 @@ buffer_info_from_unicode(PyObject *str, char **start, char **end, int *kind)
     *end = *start + length;
 }
 
-
 static int
 fb_nextbuf(python_chunks_from_file *fb, char **start, char **end, int *kind)
 {
     Py_XDECREF(fb->chunk);
     fb->chunk = NULL;
 
-    PyObject *chunk = PyObject_CallFunctionObjArgs(fb->read, fb->chunksize, NULL);
+    PyObject *chunk =
+            PyObject_CallFunctionObjArgs(fb->read, fb->chunksize, NULL);
     if (chunk == NULL) {
         return -1;
     }
@@ -104,7 +101,6 @@ fb_nextbuf(python_chunks_from_file *fb, char **start, char **end, int *kind)
     }
     return BUFFER_MAY_CONTAIN_NEWLINE;
 }
-
 
 static int
 fb_del(stream *strm)
@@ -121,13 +117,13 @@ fb_del(stream *strm)
     return 0;
 }
 
-
 NPY_NO_EXPORT stream *
 stream_python_file(PyObject *obj, const char *encoding)
 {
     python_chunks_from_file *fb;
 
-    fb = (python_chunks_from_file *)PyMem_Calloc(1, sizeof(python_chunks_from_file));
+    fb = (python_chunks_from_file *)PyMem_Calloc(
+            1, sizeof(python_chunks_from_file));
     if (fb == NULL) {
         PyErr_NoMemory();
         return NULL;
@@ -156,7 +152,6 @@ fail:
     return NULL;
 }
 
-
 /*
  * Stream from a Python iterable by interpreting each item as a line in a file
  */
@@ -172,7 +167,6 @@ typedef struct {
     const char *encoding;
 } python_lines_from_iterator;
 
-
 static int
 it_del(stream *strm)
 {
@@ -184,7 +178,6 @@ it_del(stream *strm)
     PyMem_FREE(strm);
     return 0;
 }
-
 
 static int
 it_nextbuf(python_lines_from_iterator *it, char **start, char **end, int *kind)
@@ -210,7 +203,6 @@ it_nextbuf(python_lines_from_iterator *it, char **start, char **end, int *kind)
     return BUFFER_IS_LINEND;
 }
 
-
 NPY_NO_EXPORT stream *
 stream_python_iterable(PyObject *obj, const char *encoding)
 {
@@ -218,7 +210,7 @@ stream_python_iterable(PyObject *obj, const char *encoding)
 
     if (!PyIter_Check(obj)) {
         PyErr_SetString(PyExc_TypeError,
-                "error reading from object, expected an iterable.");
+                        "error reading from object, expected an iterable.");
         return NULL;
     }
 

@@ -1,8 +1,8 @@
 #include "numpy/random/distributions.h"
+
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include <stdbool.h>
-
 
 /*
  *  random_multivariate_hypergeometric_count
@@ -57,11 +57,11 @@
  *    *  the product num_variates * num_colors does not overflow
  */
 
-int random_multivariate_hypergeometric_count(bitgen_t *bitgen_state,
-                      int64_t total,
-                      size_t num_colors, int64_t *colors,
-                      int64_t nsample,
-                      size_t num_variates, int64_t *variates)
+int
+random_multivariate_hypergeometric_count(bitgen_t *bitgen_state, int64_t total,
+                                         size_t num_colors, int64_t *colors,
+                                         int64_t nsample, size_t num_variates,
+                                         int64_t *variates)
 {
     size_t *choices;
     bool more_than_half;
@@ -99,12 +99,12 @@ int random_multivariate_hypergeometric_count(bitgen_t *bitgen_state,
          *  choices[:nsample] contains a random sample from the
          *  the full array.
          */
-        for (size_t j = 0; j < (size_t) nsample; ++j) {
+        for (size_t j = 0; j < (size_t)nsample; ++j) {
             size_t tmp, k;
             // Note: nsample is not greater than total, so there is no danger
             // of integer underflow in `(size_t) total - j - 1`.
-            k = j + (size_t) random_interval(bitgen_state,
-                                             (size_t) total - j - 1);
+            k = j +
+                (size_t)random_interval(bitgen_state, (size_t)total - j - 1);
             tmp = choices[k];
             choices[k] = choices[j];
             choices[j] = tmp;
@@ -114,7 +114,7 @@ int random_multivariate_hypergeometric_count(bitgen_t *bitgen_state,
          *  The result, stored in sample[i:i+num_colors], is the sample from
          *  the multivariate hypergeometric distribution.
          */
-        for (size_t j = 0; j < (size_t) nsample; ++j) {
+        for (size_t j = 0; j < (size_t)nsample; ++j) {
             variates[i + choices[j]] += 1;
         }
 

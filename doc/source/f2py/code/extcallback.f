@@ -4,9 +4,9 @@
          call f2()
          return
       end
-      
+
       subroutine f2()
-cf2py    intent(callback, hide) fpy
+         cf2py intent(callback, hide) fpy
          external fpy
          print *, "in f2, calling f2py.."
          call fpy()

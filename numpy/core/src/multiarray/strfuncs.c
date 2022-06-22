@@ -5,13 +5,15 @@
 #include <Python.h>
 
 #include "numpy/arrayobject.h"
+
 #include "npy_pycompat.h"
-#include "npy_import.h"
+
 #include "strfuncs.h"
+
+#include "npy_import.h"
 
 static PyObject *PyArray_StrFunction = NULL;
 static PyObject *PyArray_ReprFunction = NULL;
-
 
 static void
 npy_PyErr_SetStringChained(PyObject *type, const char *message)
@@ -22,7 +24,6 @@ npy_PyErr_SetStringChained(PyObject *type, const char *message)
     PyErr_SetString(type, message);
     npy_PyErr_ChainExceptionsCause(exc, val, tb);
 }
-
 
 /*NUMPY_API
  * Set the array print function to be a Python function.
@@ -48,7 +49,6 @@ PyArray_SetStringFunction(PyObject *op, int repr)
     }
 }
 
-
 NPY_NO_EXPORT PyObject *
 array_repr(PyArrayObject *self)
 {
@@ -64,13 +64,13 @@ array_repr(PyArrayObject *self)
      */
     npy_cache_import("numpy.core.arrayprint", "_default_array_repr", &repr);
     if (repr == NULL) {
-        npy_PyErr_SetStringChained(PyExc_RuntimeError,
+        npy_PyErr_SetStringChained(
+                PyExc_RuntimeError,
                 "Unable to configure default ndarray.__repr__");
         return NULL;
     }
     return PyObject_CallFunctionObjArgs(repr, self, NULL);
 }
-
 
 NPY_NO_EXPORT PyObject *
 array_str(PyArrayObject *self)
@@ -82,18 +82,18 @@ array_str(PyArrayObject *self)
     }
 
     /*
-     * We need to do a delayed import here as initialization on module load leads
-     * to circular import problems.
+     * We need to do a delayed import here as initialization on module load
+     * leads to circular import problems.
      */
     npy_cache_import("numpy.core.arrayprint", "_default_array_str", &str);
     if (str == NULL) {
-        npy_PyErr_SetStringChained(PyExc_RuntimeError,
+        npy_PyErr_SetStringChained(
+                PyExc_RuntimeError,
                 "Unable to configure default ndarray.__str__");
         return NULL;
     }
     return PyObject_CallFunctionObjArgs(str, self, NULL);
 }
-
 
 NPY_NO_EXPORT PyObject *
 array_format(PyArrayObject *self, PyObject *args)
@@ -116,9 +116,8 @@ array_format(PyArrayObject *self, PyObject *args)
     }
     /* Everything else - use the builtin */
     else {
-        return PyObject_CallMethod(
-            (PyObject *)&PyBaseObject_Type, "__format__", "OO",
-            (PyObject *)self, format
-        );
+        return PyObject_CallMethod((PyObject *)&PyBaseObject_Type,
+                                   "__format__", "OO", (PyObject *)self,
+                                   format);
     }
 }

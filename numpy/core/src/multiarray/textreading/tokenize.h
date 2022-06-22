@@ -3,15 +3,15 @@
 #define NUMPY_CORE_SRC_MULTIARRAY_TEXTREADING_TOKENIZE_H_
 
 #include <Python.h>
+
 #include "numpy/ndarraytypes.h"
 
-#include "textreading/stream.h"
 #include "textreading/parser_config.h"
+#include "textreading/stream.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 
 typedef enum {
     /* Initialization of fields */
@@ -25,16 +25,14 @@ typedef enum {
     TOKENIZE_QUOTED_CHECK_DOUBLE_QUOTE,
     /* Line end handling */
     TOKENIZE_LINE_END,
-    TOKENIZE_EAT_CRLF,  /* "\r\n" support (carriage return, line feed) */
+    TOKENIZE_EAT_CRLF, /* "\r\n" support (carriage return, line feed) */
     TOKENIZE_GOTO_LINE_END,
 } tokenizer_parsing_state;
-
 
 typedef struct {
     size_t offset;
     bool quoted;
 } field_info;
-
 
 typedef struct {
     tokenizer_parsing_state state;
@@ -68,10 +66,8 @@ typedef struct {
     field_info *fields;
 } tokenizer_state;
 
-
 NPY_NO_EXPORT void
 tokenizer_clear(tokenizer_state *ts);
-
 
 NPY_NO_EXPORT int
 tokenizer_init(tokenizer_state *ts, parser_config *config);
@@ -83,4 +79,4 @@ tokenize(stream *s, tokenizer_state *ts, parser_config *const config);
 }
 #endif
 
-#endif  /* NUMPY_CORE_SRC_MULTIARRAY_TEXTREADING_TOKENIZE_H_ */
+#endif /* NUMPY_CORE_SRC_MULTIARRAY_TEXTREADING_TOKENIZE_H_ */

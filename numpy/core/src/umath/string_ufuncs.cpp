@@ -6,14 +6,12 @@
 
 #include "numpy/ndarraytypes.h"
 
-#include "numpyos.h"
-#include "dispatching.h"
-#include "dtypemeta.h"
 #include "common_dtype.h"
 #include "convert_datatype.h"
-
+#include "dispatching.h"
+#include "dtypemeta.h"
+#include "numpyos.h"
 #include "string_ufuncs.h"
-
 
 template <typename character>
 static NPY_INLINE int
@@ -30,7 +28,6 @@ character_cmp(character a, character b)
     }
 }
 
-
 /*
  * Compare two strings of different length.  Note that either string may be
  * zero padded (trailing zeros are ignored in other words, the shorter word
@@ -46,14 +43,14 @@ string_cmp(int len1, const character *str1, int len2, const character *str2)
          * does not support unicode whitespace (and never has).
          */
         while (len1 > 0) {
-            character c = str1[len1-1];
+            character c = str1[len1 - 1];
             if (c != (character)0 && !NumPyOS_ascii_isspace(c)) {
                 break;
             }
             len1--;
         }
         while (len2 > 0) {
-            character c = str2[len2-1];
+            character c = str2[len2 - 1];
             if (c != (character)0 && !NumPyOS_ascii_isspace(c)) {
                 break;
             }
@@ -106,35 +103,45 @@ string_cmp(int len1, const character *str1, int len2, const character *str2)
     return 0;
 }
 
-
 /*
  * Helper for templating, avoids warnings about uncovered switch paths.
  */
 enum class COMP {
-    EQ, NE, LT, LE, GT, GE,
+    EQ,
+    NE,
+    LT,
+    LE,
+    GT,
+    GE,
 };
 
 static char const *
-comp_name(COMP comp) {
-    switch(comp) {
-        case COMP::EQ: return "equal";
-        case COMP::NE: return "not_equal";
-        case COMP::LT: return "less";
-        case COMP::LE: return "less_equal";
-        case COMP::GT: return "greater";
-        case COMP::GE: return "greater_equal";
+comp_name(COMP comp)
+{
+    switch (comp) {
+        case COMP::EQ:
+            return "equal";
+        case COMP::NE:
+            return "not_equal";
+        case COMP::LT:
+            return "less";
+        case COMP::LE:
+            return "less_equal";
+        case COMP::GT:
+            return "greater";
+        case COMP::GE:
+            return "greater_equal";
         default:
             assert(0);
             return nullptr;
     }
 }
 
-
 template <bool rstrip, COMP comp, typename character>
 static int
-string_comparison_loop(PyArrayMethod_Context *context,
-        char *const data[], npy_intp const dimensions[],
-        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+string_comparison_loop(PyArrayMethod_Context *context, char *const data[],
+                       npy_intp const dimensions[], npy_intp const strides[],
+                       NpyAuxData *NPY_UNUSED(auxdata))
 {
     /*
      * Note, fetching `elsize` from the descriptor is OK even without the GIL,
@@ -151,8 +158,8 @@ string_comparison_loop(PyArrayMethod_Context *context,
     npy_intp N = dimensions[0];
 
     while (N--) {
-        int cmp = string_cmp<rstrip>(
-                len1, (character *)in1, len2, (character *)in2);
+        int cmp = string_cmp<rstrip>(len1, (character *)in1, len2,
+                                     (character *)in2);
         npy_bool res;
         switch (comp) {
             case COMP::EQ:
@@ -183,7 +190,6 @@ string_comparison_loop(PyArrayMethod_Context *context,
     return 0;
 }
 
-
 /*
  * Machinery to add the string loops to the existing ufuncs.
  */
@@ -193,8 +199,8 @@ string_comparison_loop(PyArrayMethod_Context *context,
  * and registers it with the given ufunc.
  */
 static int
-add_loop(PyObject *umath, const char *ufunc_name,
-         PyArrayMethod_Spec *spec, PyArrayMethod_StridedLoop *loop)
+add_loop(PyObject *umath, const char *ufunc_name, PyArrayMethod_Spec *spec,
+         PyArrayMethod_StridedLoop *loop)
 {
     PyObject *name = PyUnicode_FromString(ufunc_name);
     if (name == nullptr) {
@@ -212,21 +218,20 @@ add_loop(PyObject *umath, const char *ufunc_name,
     return res;
 }
 
-
-template<bool rstrip, typename character, COMP...>
+template <bool rstrip, typename character, COMP...>
 struct add_loops;
 
-template<bool rstrip, typename character>
+template <bool rstrip, typename character>
 struct add_loops<rstrip, character> {
-    int operator()(PyObject*, PyArrayMethod_Spec*) {
-        return 0;
-    }
+    int operator()(PyObject *, PyArrayMethod_Spec *) { return 0; }
 };
 
-template<bool rstrip, typename character, COMP comp, COMP... comps>
+template <bool rstrip, typename character, COMP comp, COMP... comps>
 struct add_loops<rstrip, character, comp, comps...> {
-    int operator()(PyObject* umath, PyArrayMethod_Spec* spec) {
-        PyArrayMethod_StridedLoop* loop = string_comparison_loop<rstrip, comp, character>;
+    int operator()(PyObject *umath, PyArrayMethod_Spec *spec)
+    {
+        PyArrayMethod_StridedLoop *loop =
+                string_comparison_loop<rstrip, comp, character>;
 
         if (add_loop(umath, comp_name(comp), spec, loop) < 0) {
             return -1;
@@ -236,7 +241,6 @@ struct add_loops<rstrip, character, comp, comps...> {
         }
     }
 };
-
 
 NPY_NO_EXPORT int
 init_string_ufuncs(PyObject *umath)
@@ -253,10 +257,7 @@ init_string_ufuncs(PyObject *umath)
      * We only have one loop right now, the strided one.  The default type
      * resolver ensures native byte order/canonical representation.
      */
-    PyType_Slot slots[] = {
-        {NPY_METH_strided_loop, nullptr},
-        {0, nullptr}
-    };
+    PyType_Slot slots[] = {{NPY_METH_strided_loop, nullptr}, {0, nullptr}};
 
     PyArrayMethod_Spec spec = {};
     spec.name = "templated_string_comparison";
@@ -267,13 +268,15 @@ init_string_ufuncs(PyObject *umath)
     spec.flags = NPY_METH_NO_FLOATINGPOINT_ERRORS;
 
     /* All String loops */
-    using string_looper = add_loops<false, npy_byte, COMP::EQ, COMP::NE, COMP::LT, COMP::LE, COMP::GT, COMP::GE>;
+    using string_looper = add_loops<false, npy_byte, COMP::EQ, COMP::NE,
+                                    COMP::LT, COMP::LE, COMP::GT, COMP::GE>;
     if (string_looper()(umath, &spec) < 0) {
         goto finish;
     }
 
     /* All Unicode loops */
-    using ucs_looper = add_loops<false, npy_ucs4, COMP::EQ, COMP::NE, COMP::LT, COMP::LE, COMP::GT, COMP::GE>;
+    using ucs_looper = add_loops<false, npy_ucs4, COMP::EQ, COMP::NE, COMP::LT,
+                                 COMP::LE, COMP::GT, COMP::GE>;
     dtypes[0] = Unicode;
     dtypes[1] = Unicode;
     if (ucs_looper()(umath, &spec) < 0) {
@@ -281,13 +284,12 @@ init_string_ufuncs(PyObject *umath)
     }
 
     res = 0;
-  finish:
+finish:
     Py_DECREF(String);
     Py_DECREF(Unicode);
     Py_DECREF(Bool);
     return res;
 }
-
 
 template <bool rstrip, typename character>
 static PyArrayMethod_StridedLoop *
@@ -307,11 +309,10 @@ get_strided_loop(int comp)
         case Py_GE:
             return string_comparison_loop<rstrip, COMP::GE, character>;
         default:
-            assert(false);  /* caller ensures this */
+            assert(false); /* caller ensures this */
     }
     return nullptr;
 }
-
 
 /*
  * This function is used for `compare_chararrays` and currently also void
@@ -327,8 +328,8 @@ get_strided_loop(int comp)
  *       `npy_byte` is correct.
  */
 NPY_NO_EXPORT PyObject *
-_umath_strings_richcompare(
-        PyArrayObject *self, PyArrayObject *other, int cmp_op, int rstrip)
+_umath_strings_richcompare(PyArrayObject *self, PyArrayObject *other,
+                           int cmp_op, int rstrip)
 {
     NpyIter *iter = nullptr;
     PyObject *result = nullptr;
@@ -341,9 +342,8 @@ _umath_strings_richcompare(
     PyArrayMethod_Context context = {};
     NpyIter_IterNextFunc *iternext = nullptr;
 
-    npy_uint32 it_flags = (
-            NPY_ITER_EXTERNAL_LOOP | NPY_ITER_ZEROSIZE_OK |
-            NPY_ITER_BUFFERED | NPY_ITER_GROWINNER);
+    npy_uint32 it_flags = (NPY_ITER_EXTERNAL_LOOP | NPY_ITER_ZEROSIZE_OK |
+                           NPY_ITER_BUFFERED | NPY_ITER_GROWINNER);
     npy_uint32 op_flags[3] = {
             NPY_ITER_READONLY | NPY_ITER_ALIGNED,
             NPY_ITER_READONLY | NPY_ITER_ALIGNED,
@@ -365,8 +365,10 @@ _umath_strings_richcompare(
     }
 
     PyArrayObject *ops[3] = {self, other, nullptr};
-    PyArray_Descr *descrs[3] = {nullptr, nullptr, PyArray_DescrFromType(NPY_BOOL)};
-    /* TODO: ensuring native byte order is not really necessary for == and != */
+    PyArray_Descr *descrs[3] = {nullptr, nullptr,
+                                PyArray_DescrFromType(NPY_BOOL)};
+    /* TODO: ensuring native byte order is not really necessary for == and !=
+     */
     descrs[0] = NPY_DT_CALL_ensure_canonical(PyArray_DESCR(self));
     if (descrs[0] == nullptr) {
         goto finish;
@@ -379,9 +381,9 @@ _umath_strings_richcompare(
     /*
      * Create the iterator:
      */
-    iter = NpyIter_AdvancedNew(
-            3, ops, it_flags, NPY_KEEPORDER, NPY_SAFE_CASTING, op_flags, descrs,
-            -1, nullptr, nullptr, 0);
+    iter = NpyIter_AdvancedNew(3, ops, it_flags, NPY_KEEPORDER,
+                               NPY_SAFE_CASTING, op_flags, descrs, -1, nullptr,
+                               nullptr, 0);
     if (iter == nullptr) {
         goto finish;
     }
@@ -429,8 +431,8 @@ _umath_strings_richcompare(
     NPY_BEGIN_THREADS_THRESHOLDED(size);
 
     do {
-         /* We know the loop cannot fail */
-         strided_loop(&context, dataptr, countptr, strides, nullptr);
+        /* We know the loop cannot fail */
+        strided_loop(&context, dataptr, countptr, strides, nullptr);
     } while (iternext(iter) != 0);
 
     NPY_END_THREADS;
@@ -438,7 +440,7 @@ _umath_strings_richcompare(
     result = (PyObject *)NpyIter_GetOperandArray(iter)[2];
     Py_INCREF(result);
 
- finish:
+finish:
     if (NpyIter_Deallocate(iter) < 0) {
         Py_CLEAR(result);
     }

@@ -2,25 +2,27 @@ from __future__ import annotations
 
 # NOTE: Import `Sequence` from `typing` as we it is needed for a type-alias,
 # not an annotation
-from collections.abc import Collection, Callable
-from typing import Any, Sequence, Protocol, Union, TypeVar
+from collections.abc import Callable, Collection
+from typing import Any, Protocol, Sequence, TypeVar, Union
+
 from numpy import (
-    ndarray,
-    dtype,
-    generic,
     bool_,
-    unsignedinteger,
-    integer,
-    floating,
-    complexfloating,
-    number,
-    timedelta64,
-    datetime64,
-    object_,
-    void,
-    str_,
     bytes_,
+    complexfloating,
+    datetime64,
+    dtype,
+    floating,
+    generic,
+    integer,
+    ndarray,
+    number,
+    object_,
+    str_,
+    timedelta64,
+    unsignedinteger,
+    void,
 )
+
 from ._nested_sequence import _NestedSequence
 
 _T = TypeVar("_T")
@@ -34,18 +36,21 @@ _DType_co = TypeVar("_DType_co", covariant=True, bound="dtype[Any]")
 # Concrete implementations of the protocol are responsible for adding
 # any and all remaining overloads
 class _SupportsArray(Protocol[_DType_co]):
-    def __array__(self) -> ndarray[Any, _DType_co]: ...
+    def __array__(self) -> ndarray[Any, _DType_co]:
+        ...
 
 
 class _SupportsArrayFunc(Protocol):
     """A protocol class representing `~class.__array_function__`."""
+
     def __array_function__(
         self,
         func: Callable[..., Any],
         types: Collection[type[Any]],
         args: tuple[Any, ...],
         kwargs: dict[str, Any],
-    ) -> object: ...
+    ) -> object:
+        ...
 
 
 # TODO: Wait until mypy supports recursive objects in combination with typevars

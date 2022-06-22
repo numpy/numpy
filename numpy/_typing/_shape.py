@@ -1,4 +1,4 @@
-from typing import Sequence, Tuple, Union, SupportsIndex
+from typing import Sequence, SupportsIndex, Tuple, Union
 
 _Shape = Tuple[int, ...]
 

@@ -8,16 +8,15 @@
 
 #include "npy_config.h"
 #include "npy_pycompat.h"
+
 #include "common.h"
 
 #include "abstractdtypes.h"
-#include "usertypes.h"
-
-#include "npy_buffer.h"
-
+#include "array_coercion.h"
 #include "get_attr_string.h"
 #include "mem_overlap.h"
-#include "array_coercion.h"
+#include "npy_buffer.h"
+#include "usertypes.h"
 
 /*
  * The casting to use for implicit assignment operations resulting from
@@ -36,7 +35,6 @@
 
 NPY_NO_EXPORT NPY_CASTING NPY_DEFAULT_ASSIGN_CASTING = NPY_SAME_KIND_CASTING;
 
-
 NPY_NO_EXPORT PyArray_Descr *
 _array_find_python_scalar_type(PyObject *op)
 {
@@ -53,14 +51,14 @@ _array_find_python_scalar_type(PyObject *op)
     return NULL;
 }
 
-
 /*
  * Get a suitable string dtype by calling `__str__`.
  * For `np.bytes_`, this assumes an ASCII encoding.
  */
 NPY_NO_EXPORT PyArray_Descr *
-PyArray_DTypeFromObjectStringDiscovery(
-        PyObject *obj, PyArray_Descr *last_dtype, int string_type)
+PyArray_DTypeFromObjectStringDiscovery(PyObject *obj,
+                                       PyArray_Descr *last_dtype,
+                                       int string_type)
 {
     int itemsize;
 
@@ -86,13 +84,12 @@ PyArray_DTypeFromObjectStringDiscovery(
         if (itemsize < 0) {
             return NULL;
         }
-        itemsize *= 4;  /* convert UCS4 codepoints to bytes */
+        itemsize *= 4; /* convert UCS4 codepoints to bytes */
     }
     else {
         return NULL;
     }
-    if (last_dtype != NULL &&
-        last_dtype->type_num == string_type &&
+    if (last_dtype != NULL && last_dtype->type_num == string_type &&
         last_dtype->elsize >= itemsize) {
         Py_INCREF(last_dtype);
         return last_dtype;
@@ -104,7 +101,6 @@ PyArray_DTypeFromObjectStringDiscovery(
     dtype->elsize = itemsize;
     return dtype;
 }
-
 
 /*
  * This function is now identical to the new PyArray_DiscoverDTypeAndShape
@@ -118,15 +114,14 @@ PyArray_DTypeFromObject(PyObject *obj, int maxdims, PyArray_Descr **out_dtype)
     npy_intp shape[NPY_MAXDIMS];
     int ndim;
 
-    ndim = PyArray_DiscoverDTypeAndShape(
-            obj, maxdims, shape, &cache, NULL, NULL, out_dtype, 0);
+    ndim = PyArray_DiscoverDTypeAndShape(obj, maxdims, shape, &cache, NULL,
+                                         NULL, out_dtype, 0);
     if (ndim < 0) {
         return -1;
     }
     npy_free_coercion_cache(cache);
     return 0;
 }
-
 
 NPY_NO_EXPORT int
 _zerofill(PyArrayObject *ret)
@@ -194,14 +189,13 @@ _IsWriteable(PyArrayObject *ap)
         assert(!PyArray_CHKFLAGS(ap, NPY_ARRAY_OWNDATA));
     }
 
-    if (PyObject_GetBuffer(base, &view, PyBUF_WRITABLE|PyBUF_SIMPLE) < 0) {
+    if (PyObject_GetBuffer(base, &view, PyBUF_WRITABLE | PyBUF_SIMPLE) < 0) {
         PyErr_Clear();
         return NPY_FALSE;
     }
     PyBuffer_Release(&view);
     return NPY_TRUE;
 }
-
 
 /**
  * Convert an array shape to a string such as "(1, 2)".
@@ -222,7 +216,8 @@ convert_shape_to_string(npy_intp n, npy_intp const *vals, char *ending)
      * be discarded for printing if it's a leading dimension.
      * Find the first non-"newaxis" dimension.
      */
-    for (i = 0; i < n && vals[i] < 0; i++);
+    for (i = 0; i < n && vals[i] < 0; i++)
+        ;
 
     if (i == n) {
         return PyUnicode_FromFormat("()%s", ending);
@@ -262,17 +257,16 @@ convert_shape_to_string(npy_intp n, npy_intp const *vals, char *ending)
     return ret;
 }
 
-
 NPY_NO_EXPORT void
 dot_alignment_error(PyArrayObject *a, int i, PyArrayObject *b, int j)
 {
-    PyObject *errmsg = NULL, *format = NULL, *fmt_args = NULL,
-             *i_obj = NULL, *j_obj = NULL,
-             *shape1 = NULL, *shape2 = NULL,
-             *shape1_i = NULL, *shape2_j = NULL;
+    PyObject *errmsg = NULL, *format = NULL, *fmt_args = NULL, *i_obj = NULL,
+             *j_obj = NULL, *shape1 = NULL, *shape2 = NULL, *shape1_i = NULL,
+             *shape2_j = NULL;
 
-    format = PyUnicode_FromString("shapes %s and %s not aligned:"
-                                  " %d (dim %d) != %d (dim %d)");
+    format = PyUnicode_FromString(
+            "shapes %s and %s not aligned:"
+            " %d (dim %d) != %d (dim %d)");
 
     shape1 = convert_shape_to_string(PyArray_NDIM(a), PyArray_DIMS(a), "");
     shape2 = convert_shape_to_string(PyArray_NDIM(b), PyArray_DIMS(b), "");
@@ -283,13 +277,13 @@ dot_alignment_error(PyArrayObject *a, int i, PyArrayObject *b, int j)
     shape1_i = PyLong_FromSsize_t(PyArray_DIM(a, i));
     shape2_j = PyLong_FromSsize_t(PyArray_DIM(b, j));
 
-    if (!format || !shape1 || !shape2 || !i_obj || !j_obj ||
-            !shape1_i || !shape2_j) {
+    if (!format || !shape1 || !shape2 || !i_obj || !j_obj || !shape1_i ||
+        !shape2_j) {
         goto end;
     }
 
-    fmt_args = PyTuple_Pack(6, shape1, shape2,
-                            shape1_i, i_obj, shape2_j, j_obj);
+    fmt_args =
+            PyTuple_Pack(6, shape1, shape2, shape1_i, i_obj, shape2_j, j_obj);
     if (fmt_args == NULL) {
         goto end;
     }
@@ -327,12 +321,12 @@ end:
 NPY_NO_EXPORT int
 _unpack_field(PyObject *value, PyArray_Descr **descr, npy_intp *offset)
 {
-    PyObject * off;
+    PyObject *off;
     if (PyTuple_GET_SIZE(value) < 2) {
         return -1;
     }
     *descr = (PyArray_Descr *)PyTuple_GET_ITEM(value, 0);
-    off  = PyTuple_GET_ITEM(value, 1);
+    off = PyTuple_GET_ITEM(value, 1);
 
     if (PyLong_Check(off)) {
         *offset = PyLong_AsSsize_t(off);
@@ -360,7 +354,7 @@ _may_have_objects(PyArray_Descr *dtype)
     }
 
     return (PyDataType_HASFIELDS(base) ||
-            PyDataType_FLAGCHK(base, NPY_ITEM_HASOBJECT) );
+            PyDataType_FLAGCHK(base, NPY_ITEM_HASOBJECT));
 }
 
 /*
@@ -373,8 +367,9 @@ _may_have_objects(PyArray_Descr *dtype)
  * otherwise) is incref'd and put to *result.
  */
 NPY_NO_EXPORT PyArrayObject *
-new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject* out,
-                  int nd, npy_intp dimensions[], int typenum, PyArrayObject **result)
+new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject *out,
+                  int nd, npy_intp dimensions[], int typenum,
+                  PyArrayObject **result)
 {
     PyArrayObject *out_buf;
 
@@ -382,18 +377,18 @@ new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject* out,
         int d;
 
         /* verify that out is usable */
-        if (PyArray_NDIM(out) != nd ||
-            PyArray_TYPE(out) != typenum ||
+        if (PyArray_NDIM(out) != nd || PyArray_TYPE(out) != typenum ||
             !PyArray_ISCARRAY(out)) {
             PyErr_SetString(PyExc_ValueError,
-                "output array is not acceptable (must have the right datatype, "
-                "number of dimensions, and be a C-Array)");
+                            "output array is not acceptable (must have the "
+                            "right datatype, "
+                            "number of dimensions, and be a C-Array)");
             return 0;
         }
         for (d = 0; d < nd; ++d) {
             if (dimensions[d] != PyArray_DIM(out, d)) {
                 PyErr_SetString(PyExc_ValueError,
-                    "output array has wrong dimensions");
+                                "output array has wrong dimensions");
                 return 0;
             }
         }
@@ -445,10 +440,9 @@ new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject* out,
             subtype = Py_TYPE(ap1);
         }
 
-        out_buf = (PyArrayObject *)PyArray_New(subtype, nd, dimensions,
-                                               typenum, NULL, NULL, 0, 0,
-                                               (PyObject *)
-                                               (prior2 > prior1 ? ap2 : ap1));
+        out_buf = (PyArrayObject *)PyArray_New(
+                subtype, nd, dimensions, typenum, NULL, NULL, 0, 0,
+                (PyObject *)(prior2 > prior1 ? ap2 : ap1));
 
         if (out_buf != NULL && result) {
             Py_INCREF(out_buf);
@@ -458,4 +452,3 @@ new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject* out,
         return out_buf;
     }
 }
-

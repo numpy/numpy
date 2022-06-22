@@ -25,9 +25,9 @@ pushd builds
 
 if [ -n "$USE_DEBUG" ]
 then
-  python3-dbg -m venv venv
+    python3-dbg -m venv venv
 else
-  python -m venv venv
+    python -m venv venv
 fi
 
 source venv/bin/activate
@@ -51,10 +51,10 @@ pip install --upgrade pip 'setuptools<49.2.0' wheel
 pip install `grep cython test_requirements.txt`
 
 if [ -n "$DOWNLOAD_OPENBLAS" ]; then
-  pwd
-  target=$(python tools/openblas_support.py)
-  sudo cp -r $target/lib/* /usr/lib
-  sudo cp $target/include/* /usr/include
+    pwd
+    target=$(python tools/openblas_support.py)
+    sudo cp -r $target/lib/* /usr/lib
+    sudo cp $target/include/* /usr/include
 fi
 
 

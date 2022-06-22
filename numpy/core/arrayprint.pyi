@@ -1,25 +1,25 @@
-from types import TracebackType
 from collections.abc import Callable
-from typing import Any, Literal, TypedDict, SupportsIndex
 
 # Using a private class is by no means ideal, but it is simply a consequence
 # of a `contextlib.context` returning an instance of aforementioned class
 from contextlib import _GeneratorContextManager
+from types import TracebackType
+from typing import Any, Literal, SupportsIndex, TypedDict
 
 from numpy import (
-    ndarray,
-    generic,
     bool_,
-    integer,
-    timedelta64,
+    bytes_,
+    clongdouble,
+    complexfloating,
     datetime64,
     floating,
-    complexfloating,
-    void,
-    str_,
-    bytes_,
+    generic,
+    integer,
     longdouble,
-    clongdouble,
+    ndarray,
+    str_,
+    timedelta64,
+    void,
 )
 from numpy._typing import ArrayLike, _CharLike_co, _FloatLike_co
 
@@ -68,7 +68,7 @@ def set_printoptions(
     sign: Literal[None, "-", "+", " "] = ...,
     floatmode: None | _FloatMode = ...,
     *,
-    legacy: Literal[None, False, "1.13", "1.21"] = ...
+    legacy: Literal[None, False, "1.13", "1.21"] = ...,
 ) -> None: ...
 def get_printoptions() -> _FormatOptions: ...
 def array2string(
@@ -138,5 +138,5 @@ def printoptions(
     sign: Literal[None, "-", "+", " "] = ...,
     floatmode: None | _FloatMode = ...,
     *,
-    legacy: Literal[None, False, "1.13", "1.21"] = ...
+    legacy: Literal[None, False, "1.13", "1.21"] = ...,
 ) -> _GeneratorContextManager[_FormatOptions]: ...

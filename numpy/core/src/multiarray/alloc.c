@@ -3,13 +3,15 @@
 
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
-#include <structmember.h>
 #include <pymem.h>
+#include <structmember.h>
 
-#include "numpy/ndarraytypes.h"
 #include "numpy/arrayobject.h"
+#include "numpy/ndarraytypes.h"
 #include "numpy/npy_common.h"
+
 #include "npy_config.h"
+
 #include "alloc.h"
 
 #include <assert.h>
@@ -24,19 +26,18 @@
 #endif
 #endif
 
-#define NBUCKETS 1024 /* number of buckets for data*/
+#define NBUCKETS 1024   /* number of buckets for data*/
 #define NBUCKETS_DIM 16 /* number of buckets for dimensions/strides */
-#define NCACHE 7 /* number of cache entries per bucket */
+#define NCACHE 7        /* number of cache entries per bucket */
 /* this structure fits neatly into a cacheline */
 typedef struct {
     npy_uintp available; /* number of cached pointers */
-    void * ptrs[NCACHE];
+    void *ptrs[NCACHE];
 } cache_bucket;
 static cache_bucket datacache[NBUCKETS];
 static cache_bucket dimcache[NBUCKETS_DIM];
 
 static int _madvise_hugepage = 1;
-
 
 /*
  * This function tells whether NumPy attempts to call `madvise` with
@@ -55,7 +56,6 @@ _get_madvise_hugepage(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args))
 #endif
     Py_RETURN_FALSE;
 }
-
 
 /*
  * This function enables or disables the use of `MADV_HUGEPAGE` on Linux
@@ -79,7 +79,6 @@ _set_madvise_hugepage(PyObject *NPY_UNUSED(self), PyObject *enabled_obj)
     Py_RETURN_FALSE;
 }
 
-
 /* as the cache is managed in global variables verify the GIL is held */
 
 /*
@@ -90,9 +89,9 @@ _set_madvise_hugepage(PyObject *NPY_UNUSED(self), PyObject *enabled_obj)
  */
 static NPY_INLINE void *
 _npy_alloc_cache(npy_uintp nelem, npy_uintp esz, npy_uint msz,
-                 cache_bucket * cache, void * (*alloc)(size_t))
+                 cache_bucket *cache, void *(*alloc)(size_t))
 {
-    void * p;
+    void *p;
     assert((esz == 1 && cache == datacache) ||
            (esz == sizeof(npy_intp) && cache == dimcache));
     assert(PyGILState_Check());
@@ -108,14 +107,14 @@ _npy_alloc_cache(npy_uintp nelem, npy_uintp esz, npy_uint msz,
 #endif
 #ifdef NPY_OS_LINUX
         /* allow kernel allocating huge pages for large arrays */
-        if (NPY_UNLIKELY(nelem * esz >= ((1u<<22u))) && _madvise_hugepage) {
+        if (NPY_UNLIKELY(nelem * esz >= ((1u << 22u))) && _madvise_hugepage) {
             npy_uintp offset = 4096u - (npy_uintp)p % (4096u);
             npy_uintp length = nelem * esz - offset;
             /**
              * Intentionally not checking for errors that may be returned by
              * older kernel versions; optimistically tries enabling huge pages.
              */
-            madvise((void*)((npy_uintp)p + offset), length, MADV_HUGEPAGE);
+            madvise((void *)((npy_uintp)p + offset), length, MADV_HUGEPAGE);
         }
 #endif
     }
@@ -127,8 +126,8 @@ _npy_alloc_cache(npy_uintp nelem, npy_uintp esz, npy_uint msz,
  * size (1 or sizeof(npy_intp)) of the block pointed too
  */
 static NPY_INLINE void
-_npy_free_cache(void * p, npy_uintp nelem, npy_uint msz,
-                cache_bucket * cache, void (*dealloc)(void *))
+_npy_free_cache(void *p, npy_uintp nelem, npy_uint msz, cache_bucket *cache,
+                void (*dealloc)(void *))
 {
     assert(PyGILState_Check());
     if (p != NULL && nelem < msz) {
@@ -139,7 +138,6 @@ _npy_free_cache(void * p, npy_uintp nelem, npy_uint msz,
     }
     dealloc(p);
 }
-
 
 /*
  * array data cache, sz is number of bytes to allocate
@@ -154,7 +152,7 @@ npy_alloc_cache(npy_uintp sz)
 NPY_NO_EXPORT void *
 npy_alloc_cache_zero(size_t nmemb, size_t size)
 {
-    void * p;
+    void *p;
     size_t sz = nmemb * size;
     NPY_BEGIN_THREADS_DEF;
     if (sz < NBUCKETS) {
@@ -171,7 +169,7 @@ npy_alloc_cache_zero(size_t nmemb, size_t size)
 }
 
 NPY_NO_EXPORT void
-npy_free_cache(void * p, npy_uintp sz)
+npy_free_cache(void *p, npy_uintp sz)
 {
     _npy_free_cache(p, sz, NBUCKETS, datacache, &PyDataMem_FREE);
 }
@@ -195,21 +193,21 @@ npy_alloc_cache_dim(npy_uintp sz)
 }
 
 NPY_NO_EXPORT void
-npy_free_cache_dim(void * p, npy_uintp sz)
+npy_free_cache_dim(void *p, npy_uintp sz)
 {
     /* see npy_alloc_cache_dim */
     if (sz < 2) {
         sz = 2;
     }
-    _npy_free_cache(p, sz, NBUCKETS_DIM, dimcache,
-                    &PyArray_free);
+    _npy_free_cache(p, sz, NBUCKETS_DIM, dimcache, &PyArray_free);
 }
 
 /* Similar to array_dealloc in arrayobject.c */
 static NPY_INLINE void
-WARN_NO_RETURN(PyObject* warning, const char * msg) {
+WARN_NO_RETURN(PyObject *warning, const char *msg)
+{
     if (PyErr_WarnEx(warning, msg, 1) < 0) {
-        PyObject * s;
+        PyObject *s;
 
         s = PyUnicode_FromString("PyDataMem_UserFREE");
         if (s) {
@@ -221,8 +219,6 @@ WARN_NO_RETURN(PyObject* warning, const char * msg) {
         }
     }
 }
-
-
 
 /* malloc/free/realloc hook */
 NPY_NO_EXPORT PyDataMem_EventHookFunc *_PyDataMem_eventhook = NULL;
@@ -237,10 +233,11 @@ NPY_NO_EXPORT void *_PyDataMem_eventhook_user_data = NULL;
  * Returns a pointer to the previous hook or NULL.  If old_data is
  * non-NULL, the previous user_data pointer will be copied to it.
  *
- * If not NULL, hook will be called at the end of each PyDataMem_NEW/FREE/RENEW:
- *   result = PyDataMem_NEW(size)        -> (*hook)(NULL, result, size, user_data)
- *   PyDataMem_FREE(ptr)                 -> (*hook)(ptr, NULL, 0, user_data)
- *   result = PyDataMem_RENEW(ptr, size) -> (*hook)(ptr, result, size, user_data)
+ * If not NULL, hook will be called at the end of each
+ * PyDataMem_NEW/FREE/RENEW: result = PyDataMem_NEW(size)        ->
+ * (*hook)(NULL, result, size, user_data) PyDataMem_FREE(ptr) -> (*hook)(ptr,
+ * NULL, 0, user_data) result = PyDataMem_RENEW(ptr, size) -> (*hook)(ptr,
+ * result, size, user_data)
  *
  * When the hook is called, the GIL will be held by the calling
  * thread.  The hook should be written to be reentrant, if it performs
@@ -251,16 +248,16 @@ NPY_NO_EXPORT void *_PyDataMem_eventhook_user_data = NULL;
  * Deprecated in 1.23
  */
 NPY_NO_EXPORT PyDataMem_EventHookFunc *
-PyDataMem_SetEventHook(PyDataMem_EventHookFunc *newhook,
-                       void *user_data, void **old_data)
+PyDataMem_SetEventHook(PyDataMem_EventHookFunc *newhook, void *user_data,
+                       void **old_data)
 {
     PyDataMem_EventHookFunc *temp;
     NPY_ALLOW_C_API_DEF
     NPY_ALLOW_C_API
     /* 2021-11-18, 1.23 */
     WARN_NO_RETURN(PyExc_DeprecationWarning,
-                     "PyDataMem_SetEventHook is deprecated, use tracemalloc "
-                     "and the 'np.lib.tracemalloc_domain' domain");
+                   "PyDataMem_SetEventHook is deprecated, use tracemalloc "
+                   "and the 'np.lib.tracemalloc_domain' domain");
     temp = _PyDataMem_eventhook;
     _PyDataMem_eventhook = newhook;
     if (old_data != NULL) {
@@ -376,7 +373,7 @@ default_malloc(void *NPY_UNUSED(ctx), size_t size)
 static NPY_INLINE void *
 default_calloc(void *NPY_UNUSED(ctx), size_t nelem, size_t elsize)
 {
-    void * p;
+    void *p;
     size_t sz = nelem * elsize;
     NPY_BEGIN_THREADS_DEF;
     if (sz < NBUCKETS) {
@@ -411,22 +408,20 @@ default_free(void *NPY_UNUSED(ctx), void *ptr, size_t size)
 }
 
 /* Memory handler global default */
-PyDataMem_Handler default_handler = {
-    "default_allocator",
-    1,
-    {
-        NULL,            /* ctx */
-        default_malloc,  /* malloc */
-        default_calloc,  /* calloc */
-        default_realloc, /* realloc */
-        default_free     /* free */
-    }
-};
+PyDataMem_Handler default_handler = {"default_allocator",
+                                     1,
+                                     {
+                                             NULL,            /* ctx */
+                                             default_malloc,  /* malloc */
+                                             default_calloc,  /* calloc */
+                                             default_realloc, /* realloc */
+                                             default_free     /* free */
+                                     }};
 /* singleton capsule of the default handler */
 PyObject *PyDataMem_DefaultHandler;
 PyObject *current_handler;
 
-int uo_index=0;   /* user_override index */
+int uo_index = 0; /* user_override index */
 
 /* Wrappers for the default or any user-assigned PyDataMem_Handler */
 
@@ -434,7 +429,8 @@ NPY_NO_EXPORT void *
 PyDataMem_UserNEW(size_t size, PyObject *mem_handler)
 {
     void *result;
-    PyDataMem_Handler *handler = (PyDataMem_Handler *) PyCapsule_GetPointer(mem_handler, "mem_handler");
+    PyDataMem_Handler *handler = (PyDataMem_Handler *)PyCapsule_GetPointer(
+            mem_handler, "mem_handler");
     if (handler == NULL) {
         return NULL;
     }
@@ -457,7 +453,8 @@ NPY_NO_EXPORT void *
 PyDataMem_UserNEW_ZEROED(size_t nmemb, size_t size, PyObject *mem_handler)
 {
     void *result;
-    PyDataMem_Handler *handler = (PyDataMem_Handler *) PyCapsule_GetPointer(mem_handler, "mem_handler");
+    PyDataMem_Handler *handler = (PyDataMem_Handler *)PyCapsule_GetPointer(
+            mem_handler, "mem_handler");
     if (handler == NULL) {
         return NULL;
     }
@@ -475,14 +472,15 @@ PyDataMem_UserNEW_ZEROED(size_t nmemb, size_t size, PyObject *mem_handler)
     return result;
 }
 
-
 NPY_NO_EXPORT void
 PyDataMem_UserFREE(void *ptr, size_t size, PyObject *mem_handler)
 {
-    PyDataMem_Handler *handler = (PyDataMem_Handler *) PyCapsule_GetPointer(mem_handler, "mem_handler");
+    PyDataMem_Handler *handler = (PyDataMem_Handler *)PyCapsule_GetPointer(
+            mem_handler, "mem_handler");
     if (handler == NULL) {
-        WARN_NO_RETURN(PyExc_RuntimeWarning,
-                     "Could not get pointer to 'mem_handler' from PyCapsule");
+        WARN_NO_RETURN(
+                PyExc_RuntimeWarning,
+                "Could not get pointer to 'mem_handler' from PyCapsule");
         return;
     }
     PyTraceMalloc_Untrack(NPY_TRACE_DOMAIN, (npy_uintp)ptr);
@@ -502,7 +500,8 @@ NPY_NO_EXPORT void *
 PyDataMem_UserRENEW(void *ptr, size_t size, PyObject *mem_handler)
 {
     void *result;
-    PyDataMem_Handler *handler = (PyDataMem_Handler *) PyCapsule_GetPointer(mem_handler, "mem_handler");
+    PyDataMem_Handler *handler = (PyDataMem_Handler *)PyCapsule_GetPointer(
+            mem_handler, "mem_handler");
     if (handler == NULL) {
         return NULL;
     }
@@ -569,19 +568,20 @@ PyDataMem_GetHandler()
 NPY_NO_EXPORT PyObject *
 get_handler_name(PyObject *NPY_UNUSED(self), PyObject *args)
 {
-    PyObject *arr=NULL;
+    PyObject *arr = NULL;
     if (!PyArg_ParseTuple(args, "|O:get_handler_name", &arr)) {
         return NULL;
     }
     if (arr != NULL && !PyArray_Check(arr)) {
-         PyErr_SetString(PyExc_ValueError, "if supplied, argument must be an ndarray");
-         return NULL;
+        PyErr_SetString(PyExc_ValueError,
+                        "if supplied, argument must be an ndarray");
+        return NULL;
     }
     PyObject *mem_handler;
     PyDataMem_Handler *handler;
     PyObject *name;
     if (arr != NULL) {
-        mem_handler = PyArray_HANDLER((PyArrayObject *) arr);
+        mem_handler = PyArray_HANDLER((PyArrayObject *)arr);
         if (mem_handler == NULL) {
             Py_RETURN_NONE;
         }
@@ -593,7 +593,8 @@ get_handler_name(PyObject *NPY_UNUSED(self), PyObject *args)
             return NULL;
         }
     }
-    handler = (PyDataMem_Handler *) PyCapsule_GetPointer(mem_handler, "mem_handler");
+    handler = (PyDataMem_Handler *)PyCapsule_GetPointer(mem_handler,
+                                                        "mem_handler");
     if (handler == NULL) {
         Py_DECREF(mem_handler);
         return NULL;
@@ -606,19 +607,20 @@ get_handler_name(PyObject *NPY_UNUSED(self), PyObject *args)
 NPY_NO_EXPORT PyObject *
 get_handler_version(PyObject *NPY_UNUSED(self), PyObject *args)
 {
-    PyObject *arr=NULL;
+    PyObject *arr = NULL;
     if (!PyArg_ParseTuple(args, "|O:get_handler_version", &arr)) {
         return NULL;
     }
     if (arr != NULL && !PyArray_Check(arr)) {
-         PyErr_SetString(PyExc_ValueError, "if supplied, argument must be an ndarray");
-         return NULL;
+        PyErr_SetString(PyExc_ValueError,
+                        "if supplied, argument must be an ndarray");
+        return NULL;
     }
     PyObject *mem_handler;
     PyDataMem_Handler *handler;
     PyObject *version;
     if (arr != NULL) {
-        mem_handler = PyArray_HANDLER((PyArrayObject *) arr);
+        mem_handler = PyArray_HANDLER((PyArrayObject *)arr);
         if (mem_handler == NULL) {
             Py_RETURN_NONE;
         }
@@ -630,7 +632,8 @@ get_handler_version(PyObject *NPY_UNUSED(self), PyObject *args)
             return NULL;
         }
     }
-    handler = (PyDataMem_Handler *) PyCapsule_GetPointer(mem_handler, "mem_handler");
+    handler = (PyDataMem_Handler *)PyCapsule_GetPointer(mem_handler,
+                                                        "mem_handler");
     if (handler == NULL) {
         Py_DECREF(mem_handler);
         return NULL;

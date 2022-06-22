@@ -1,13 +1,14 @@
 #if (__VEC__ < 10302) || (__ARCH__ < 12)
-    #error VXE not supported
+#error VXE not supported
 #endif
 
 #include <vecintrin.h>
-int main(int argc, char **argv)
+int
+main(int argc, char **argv)
 {
-    __vector float x = vec_nabs(vec_xl(argc, (float*)argv));
-    __vector float y = vec_load_len((float*)argv, (unsigned int)argc);
-    
+    __vector float x = vec_nabs(vec_xl(argc, (float *)argv));
+    __vector float y = vec_load_len((float *)argv, (unsigned int)argc);
+
     x = vec_round(vec_ceil(x) + vec_floor(y));
     __vector bool int m = vec_cmpge(x, y);
     x = vec_sel(x, y, m);

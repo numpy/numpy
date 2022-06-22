@@ -26,4 +26,4 @@ array_might_be_written(PyArrayObject *obj);
  */
 static const int NPY_ARRAY_WARN_ON_WRITE = (1 << 31);
 
-#endif  /* NUMPY_CORE_SRC_MULTIARRAY_ARRAYOBJECT_H_ */
+#endif /* NUMPY_CORE_SRC_MULTIARRAY_ARRAYOBJECT_H_ */

@@ -23,10 +23,10 @@ While in the repository root::
     $ python tools/download-wheels.py 1.19.0 -w ~/wheelhouse
 
 """
+import argparse
 import os
 import re
 import shutil
-import argparse
 
 import urllib3
 from bs4 import BeautifulSoup
@@ -45,7 +45,7 @@ SUFFIX = rf"({WHL}|{GZIP}|{ZIP})"
 
 
 def get_wheel_names(version):
-    """ Get wheel names from Anaconda HTML directory.
+    """Get wheel names from Anaconda HTML directory.
 
     This looks in the Anaconda multibuild-wheels-staging page and
     parses the HTML to get all the wheel names for a release version.
@@ -85,7 +85,11 @@ def download_wheels(version, wheelhouse):
         wheel_url = f"{STAGING_URL}/{version}/download/{wheel_name}"
         wheel_path = os.path.join(wheelhouse, wheel_name)
         with open(wheel_path, "wb") as f:
-            with http.request("GET", wheel_url, preload_content=False,) as r:
+            with http.request(
+                "GET",
+                wheel_url,
+                preload_content=False,
+            ) as r:
                 print(f"{i + 1:<4}{wheel_name}")
                 shutil.copyfileobj(r, f)
     print(f"\nTotal files downloaded: {len(wheel_names)}")
@@ -93,14 +97,14 @@ def download_wheels(version, wheelhouse):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
+    parser.add_argument("version", help="NumPy version to download.")
     parser.add_argument(
-        "version",
-        help="NumPy version to download.")
-    parser.add_argument(
-        "-w", "--wheelhouse",
+        "-w",
+        "--wheelhouse",
         default=os.path.join(os.getcwd(), "release", "installers"),
         help="Directory in which to store downloaded wheels\n"
-             "[defaults to <cwd>/release/installers]")
+        "[defaults to <cwd>/release/installers]",
+    )
 
     args = parser.parse_args()
 
@@ -108,6 +112,7 @@ if __name__ == "__main__":
     if not os.path.isdir(wheelhouse):
         raise RuntimeError(
             f"{wheelhouse} wheelhouse directory is not present."
-            " Perhaps you need to use the '-w' flag to specify one.")
+            " Perhaps you need to use the '-w' flag to specify one."
+        )
 
     download_wheels(args.version, wheelhouse)

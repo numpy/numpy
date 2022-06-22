@@ -1,23 +1,20 @@
 from collections.abc import Callable
 from typing import Any, TypeVar
-from numpy import ndarray, dtype, float64
 
-from numpy import (
-    amax as amax,
-    amin as amin,
-    bool_ as bool_,
-    expand_dims as expand_dims,
-    diff as diff,
-    clip as clip,
-    indices as indices,
-    ones_like as ones_like,
-    squeeze as squeeze,
-    zeros_like as zeros_like,
-)
-
-from numpy.lib.function_base import (
-    angle as angle,
-)
+from numpy import amax as amax
+from numpy import amin as amin
+from numpy import bool_ as bool_
+from numpy import clip as clip
+from numpy import diff as diff
+from numpy import dtype
+from numpy import expand_dims as expand_dims
+from numpy import float64
+from numpy import indices as indices
+from numpy import ndarray
+from numpy import ones_like as ones_like
+from numpy import squeeze as squeeze
+from numpy import zeros_like as zeros_like
+from numpy.lib.function_base import angle as angle
 
 # TODO: Set the `bound` to something more suitable once we
 # have proper shape support
@@ -40,6 +37,7 @@ def set_fill_value(a, fill_value): ...
 def common_fill_value(a, b): ...
 def filled(a, fill_value=...): ...
 def getdata(a, subok=...): ...
+
 get_data = getdata
 
 def fix_invalid(a, mask=..., copy=..., fill_value=...): ...
@@ -127,6 +125,7 @@ mod: _MaskedBinaryOperation
 
 def make_mask_descr(ndtype): ...
 def getmask(a): ...
+
 get_mask = getmask
 
 def getmaskarray(arr): ...
@@ -171,7 +170,20 @@ class MaskedIterator:
 
 class MaskedArray(ndarray[_ShapeType, _DType_co]):
     __array_priority__: Any
-    def __new__(cls, data=..., mask=..., dtype=..., copy=..., subok=..., ndmin=..., fill_value=..., keep_mask=..., hard_mask=..., shrink=..., order=...): ...
+    def __new__(
+        cls,
+        data=...,
+        mask=...,
+        dtype=...,
+        copy=...,
+        subok=...,
+        ndmin=...,
+        fill_value=...,
+        keep_mask=...,
+        hard_mask=...,
+        shrink=...,
+        order=...,
+    ): ...
     def __array_finalize__(self, obj): ...
     def __array_wrap__(self, obj, context=...): ...
     def view(self, dtype=..., type=..., fill_value=...): ...
@@ -318,6 +330,7 @@ class mvoid(MaskedArray[_ShapeType, _DType_co]):
     def tolist(self): ...
 
 def isMaskedArray(x): ...
+
 isarray = isMaskedArray
 isMA = isMaskedArray
 
@@ -433,12 +446,15 @@ def size(obj, axis=...): ...
 def where(condition, x=..., y=...): ...
 def choose(indices, choices, out=..., mode=...): ...
 def round_(a, decimals=..., out=...): ...
+
 round = round_
 
 def inner(a, b): ...
+
 innerproduct = inner
 
 def outer(a, b): ...
+
 outerproduct = outer
 
 def correlate(a, v, mode=..., propagate_mask=...): ...

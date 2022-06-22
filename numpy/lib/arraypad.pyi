@@ -1,19 +1,9 @@
-from typing import (
-    Literal as L,
-    Any,
-    overload,
-    TypeVar,
-    Protocol,
-)
+from typing import Any
+from typing import Literal as L
+from typing import Protocol, TypeVar, overload
 
 from numpy import generic
-
-from numpy._typing import (
-    ArrayLike,
-    NDArray,
-    _ArrayLikeInt,
-    _ArrayLike,
-)
+from numpy._typing import ArrayLike, NDArray, _ArrayLike, _ArrayLikeInt
 
 _SCT = TypeVar("_SCT", bound=generic)
 

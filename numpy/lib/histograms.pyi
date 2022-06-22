@@ -1,14 +1,9 @@
 from collections.abc import Sequence
-from typing import (
-    Literal as L,
-    Any,
-    SupportsIndex,
-)
+from typing import Any
+from typing import Literal as L
+from typing import SupportsIndex
 
-from numpy._typing import (
-    NDArray,
-    ArrayLike,
-)
+from numpy._typing import ArrayLike, NDArray
 
 _BinKind = L[
     "stone",
@@ -29,7 +24,6 @@ def histogram_bin_edges(
     range: None | tuple[float, float] = ...,
     weights: None | ArrayLike = ...,
 ) -> NDArray[Any]: ...
-
 def histogram(
     a: ArrayLike,
     bins: _BinKind | SupportsIndex | ArrayLike = ...,
@@ -37,7 +31,6 @@ def histogram(
     density: bool = ...,
     weights: None | ArrayLike = ...,
 ) -> tuple[NDArray[Any], NDArray[Any]]: ...
-
 def histogramdd(
     sample: ArrayLike,
     bins: SupportsIndex | ArrayLike = ...,

@@ -1,6 +1,6 @@
-from .common import Benchmark
-
 import numpy as np
+
+from .common import Benchmark
 
 
 class Histogram1D(Benchmark):
@@ -19,7 +19,7 @@ class Histogram1D(Benchmark):
 
 class Histogram2D(Benchmark):
     def setup(self):
-        self.d = np.linspace(0, 100, 200000).reshape((-1,2))
+        self.d = np.linspace(0, 100, 200000).reshape((-1, 2))
 
     def time_full_coverage(self):
         np.histogramdd(self.d, (200, 200), ((0, 100), (0, 100)))
@@ -44,11 +44,11 @@ class Bincount(Benchmark):
 
 
 class Mean(Benchmark):
-    param_names = ['size']
+    param_names = ["size"]
     params = [[1, 10, 100_000]]
 
     def setup(self, size):
-        self.array = np.arange(2*size).reshape(2, size)
+        self.array = np.arange(2 * size).reshape(2, size)
 
     def time_mean(self, size):
         np.mean(self.array)
@@ -120,10 +120,11 @@ class Select(Benchmark):
 
 def memoize(f):
     _memoized = {}
+
     def wrapped(*args):
         if args not in _memoized:
             _memoized[args] = f(*args)
-        
+
         return _memoized[args].copy()
 
     return f
@@ -145,7 +146,7 @@ class SortGenerator:
         arr = np.arange(size, dtype=dtype)
         np.random.shuffle(arr)
         return arr
-    
+
     @staticmethod
     @memoize
     def ordered(size, dtype):
@@ -160,7 +161,7 @@ class SortGenerator:
         """
         Returns an array that's in descending order.
         """
-        return np.arange(size-1, -1, -1, dtype=dtype)
+        return np.arange(size - 1, -1, -1, dtype=dtype)
 
     @staticmethod
     @memoize
@@ -211,7 +212,7 @@ class SortGenerator:
         area_num = int(size * frac / area_size)
         a = np.arange(size, dtype=dtype)
         for _ in range(area_num):
-            start = np.random.randint(size-area_size)
+            start = np.random.randint(size - area_size)
             end = start + area_size
             np.random.shuffle(a[start:end])
         return a
@@ -235,19 +236,20 @@ class Sort(Benchmark):
     different types of arrays that are likely to appear in
     real-world applications.
     """
+
     params = [
         # In NumPy 1.17 and newer, 'merge' can be one of several
         # stable sorts, it isn't necessarily merge sort.
-        ['quick', 'merge', 'heap'],
-        ['float64', 'int64', 'float32', 'uint32', 'int32', 'int16'],
+        ["quick", "merge", "heap"],
+        ["float64", "int64", "float32", "uint32", "int32", "int16"],
         [
-            ('random',),
-            ('ordered',),
-            ('reversed',),
-            ('uniform',),
-            ('sorted_block', 10),
-            ('sorted_block', 100),
-            ('sorted_block', 1000),
+            ("random",),
+            ("ordered",),
+            ("reversed",),
+            ("uniform",),
+            ("sorted_block", 10),
+            ("sorted_block", 100),
+            ("sorted_block", 1000),
             # ('swapped_pair', 0.01),
             # ('swapped_pair', 0.1),
             # ('swapped_pair', 0.5),
@@ -259,7 +261,7 @@ class Sort(Benchmark):
             # ('random_bubble', 10),
         ],
     ]
-    param_names = ['kind', 'dtype', 'array_type']
+    param_names = ["kind", "dtype", "array_type"]
 
     # The size of the benchmarked arrays.
     ARRAY_SIZE = 10000
@@ -267,7 +269,9 @@ class Sort(Benchmark):
     def setup(self, kind, dtype, array_type):
         np.random.seed(1234)
         array_class = array_type[0]
-        self.arr = getattr(SortGenerator, array_class)(self.ARRAY_SIZE, dtype, *array_type[1:])
+        self.arr = getattr(SortGenerator, array_class)(
+            self.ARRAY_SIZE, dtype, *array_type[1:]
+        )
 
     def time_sort(self, kind, dtype, array_type):
         # Using np.sort(...) instead of arr.sort(...) because it makes a copy.
@@ -300,7 +304,7 @@ class Where(Benchmark):
     def setup(self):
         self.d = np.arange(20000)
         self.e = self.d.copy()
-        self.cond = (self.d > 5000)
+        self.cond = self.d > 5000
         size = 1024 * 1024 // 8
         rnd_array = np.random.rand(size)
         self.rand_cond_01 = rnd_array > 0.01
@@ -364,4 +368,3 @@ class Where(Benchmark):
 
     def time_interleaved_ones_x8(self):
         np.where(self.rep_ones_8)
-

@@ -16,15 +16,14 @@
 #define _UMATHMODULE
 
 #include "numpy/ndarrayobject.h"
+#include "numpy/npy_math.h"
 #include "numpy/ufuncobject.h"
 
 #include "array_method.h"
 #include "common.h"
-#include "numpy/npy_math.h"
 #include "convert_datatype.h"
-#include "dtypemeta.h"
 #include "dispatching.h"
-
+#include "dtypemeta.h"
 
 typedef struct {
     PyArray_Descr base;
@@ -34,9 +33,9 @@ typedef struct {
 static PyArray_DTypeMeta PyArray_SFloatDType;
 static PyArray_SFloatDescr SFloatSingleton;
 
-
 static int
-sfloat_is_known_scalar_type(PyArray_DTypeMeta *NPY_UNUSED(cls), PyTypeObject *type)
+sfloat_is_known_scalar_type(PyArray_DTypeMeta *NPY_UNUSED(cls),
+                            PyTypeObject *type)
 {
     /* Accept only floats (some others may work due to normal casting) */
     if (type == &PyFloat_Type) {
@@ -45,7 +44,6 @@ sfloat_is_known_scalar_type(PyArray_DTypeMeta *NPY_UNUSED(cls), PyTypeObject *ty
     return 0;
 }
 
-
 static PyArray_Descr *
 sfloat_default_descr(PyArray_DTypeMeta *NPY_UNUSED(cls))
 {
@@ -53,13 +51,12 @@ sfloat_default_descr(PyArray_DTypeMeta *NPY_UNUSED(cls))
     return (PyArray_Descr *)&SFloatSingleton;
 }
 
-
 static PyArray_Descr *
-sfloat_discover_from_pyobject(PyArray_DTypeMeta *cls, PyObject *NPY_UNUSED(obj))
+sfloat_discover_from_pyobject(PyArray_DTypeMeta *cls,
+                              PyObject *NPY_UNUSED(obj))
 {
     return sfloat_default_descr(cls);
 }
-
 
 static PyArray_DTypeMeta *
 sfloat_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
@@ -71,7 +68,6 @@ sfloat_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
     Py_INCREF(Py_NotImplemented);
     return (PyArray_DTypeMeta *)Py_NotImplemented;
 }
-
 
 static PyArray_Descr *
 sfloat_common_instance(PyArray_Descr *descr1, PyArray_Descr *descr2)
@@ -87,12 +83,11 @@ sfloat_common_instance(PyArray_Descr *descr1, PyArray_Descr *descr2)
     return descr2;
 }
 
-
 /*
  * Implement minimal getitem and setitem to make this DType mostly(?) safe to
  * expose in Python.
  * TODO: This should not use the old-style API, but the new-style is missing!
-*/
+ */
 
 static PyObject *
 sfloat_getitem(char *data, PyArrayObject *arr)
@@ -104,13 +99,12 @@ sfloat_getitem(char *data, PyArrayObject *arr)
     return PyFloat_FromDouble(value * descr->scaling);
 }
 
-
 static int
 sfloat_setitem(PyObject *obj, char *data, PyArrayObject *arr)
 {
     if (!PyFloat_CheckExact(obj)) {
         PyErr_SetString(PyExc_NotImplementedError,
-                "Currently only accepts floats");
+                        "Currently only accepts floats");
         return -1;
     }
 
@@ -122,56 +116,52 @@ sfloat_setitem(PyObject *obj, char *data, PyArrayObject *arr)
     return 0;
 }
 
-
 /* Special DType methods and the descr->f slot storage */
 NPY_DType_Slots sfloat_slots = {
-    .default_descr = &sfloat_default_descr,
-    .discover_descr_from_pyobject = &sfloat_discover_from_pyobject,
-    .is_known_scalar_type = &sfloat_is_known_scalar_type,
-    .common_dtype = &sfloat_common_dtype,
-    .common_instance = &sfloat_common_instance,
-    .f = {
-        .getitem = (PyArray_GetItemFunc *)&sfloat_getitem,
-        .setitem = (PyArray_SetItemFunc *)&sfloat_setitem,
-    }
+        .default_descr = &sfloat_default_descr,
+        .discover_descr_from_pyobject = &sfloat_discover_from_pyobject,
+        .is_known_scalar_type = &sfloat_is_known_scalar_type,
+        .common_dtype = &sfloat_common_dtype,
+        .common_instance = &sfloat_common_instance,
+        .f = {
+                .getitem = (PyArray_GetItemFunc *)&sfloat_getitem,
+                .setitem = (PyArray_SetItemFunc *)&sfloat_setitem,
+        }};
+
+static PyArray_SFloatDescr SFloatSingleton = {
+        {
+                .elsize = sizeof(double),
+                .alignment = _ALIGN(double),
+                .flags = NPY_USE_GETITEM | NPY_USE_SETITEM,
+                .type_num = -1,
+                .f = &sfloat_slots.f,
+                .byteorder = '|', /* do not bother with byte-swapping... */
+        },
+        .scaling = 1,
 };
-
-
-static PyArray_SFloatDescr SFloatSingleton = {{
-        .elsize = sizeof(double),
-        .alignment = _ALIGN(double),
-        .flags = NPY_USE_GETITEM|NPY_USE_SETITEM,
-        .type_num = -1,
-        .f = &sfloat_slots.f,
-        .byteorder = '|',  /* do not bother with byte-swapping... */
-    },
-    .scaling = 1,
-};
-
 
 static PyArray_Descr *
-sfloat_scaled_copy(PyArray_SFloatDescr *self, double factor) {
+sfloat_scaled_copy(PyArray_SFloatDescr *self, double factor)
+{
     PyArray_SFloatDescr *new = PyObject_New(
             PyArray_SFloatDescr, (PyTypeObject *)&PyArray_SFloatDType);
     if (new == NULL) {
         return NULL;
     }
     /* Don't copy PyObject_HEAD part */
-    memcpy((char *)new + sizeof(PyObject),
-            (char *)self + sizeof(PyObject),
-            sizeof(PyArray_SFloatDescr) - sizeof(PyObject));
+    memcpy((char *)new + sizeof(PyObject), (char *)self + sizeof(PyObject),
+           sizeof(PyArray_SFloatDescr) - sizeof(PyObject));
 
-    new->scaling = new->scaling * factor;
+    new->scaling = new->scaling *factor;
     return (PyArray_Descr *)new;
 }
-
 
 PyObject *
 python_sfloat_scaled_copy(PyArray_SFloatDescr *self, PyObject *arg)
 {
     if (!PyFloat_Check(arg)) {
         PyErr_SetString(PyExc_TypeError,
-                "Scaling factor must be a python float.");
+                        "Scaling factor must be a python float.");
         return NULL;
     }
     double factor = PyFloat_AsDouble(arg);
@@ -179,24 +169,18 @@ python_sfloat_scaled_copy(PyArray_SFloatDescr *self, PyObject *arg)
     return (PyObject *)sfloat_scaled_copy(self, factor);
 }
 
-
 static PyObject *
 sfloat_get_scaling(PyArray_SFloatDescr *self, PyObject *NPY_UNUSED(args))
 {
     return PyFloat_FromDouble(self->scaling);
 }
 
-
 PyMethodDef sfloat_methods[] = {
-    {"scaled_by",
-         (PyCFunction)python_sfloat_scaled_copy, METH_O,
-        "Method to get a dtype copy with different scaling, mainly to "
-        "avoid having to implement many ways to create new instances."},
-    {"get_scaling",
-        (PyCFunction)sfloat_get_scaling, METH_NOARGS, NULL},
-    {NULL, NULL, 0, NULL}
-};
-
+        {"scaled_by", (PyCFunction)python_sfloat_scaled_copy, METH_O,
+         "Method to get a dtype copy with different scaling, mainly to "
+         "avoid having to implement many ways to create new instances."},
+        {"get_scaling", (PyCFunction)sfloat_get_scaling, METH_NOARGS, NULL},
+        {NULL, NULL, 0, NULL}};
 
 static PyObject *
 sfloat_new(PyTypeObject *NPY_UNUSED(cls), PyObject *args, PyObject *kwds)
@@ -204,8 +188,8 @@ sfloat_new(PyTypeObject *NPY_UNUSED(cls), PyObject *args, PyObject *kwds)
     double scaling = 1.;
     static char *kwargs_strs[] = {"scaling", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(
-            args, kwds, "|d:_ScaledFloatTestDType", kwargs_strs, &scaling)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|d:_ScaledFloatTestDType",
+                                     kwargs_strs, &scaling)) {
         return NULL;
     }
     if (scaling == 1.) {
@@ -215,7 +199,6 @@ sfloat_new(PyTypeObject *NPY_UNUSED(cls), PyObject *args, PyObject *kwds)
     return (PyObject *)sfloat_scaled_copy(&SFloatSingleton, scaling);
 }
 
-
 static PyObject *
 sfloat_repr(PyArray_SFloatDescr *self)
 {
@@ -223,28 +206,27 @@ sfloat_repr(PyArray_SFloatDescr *self)
     if (scaling == NULL) {
         return NULL;
     }
-    PyObject *res = PyUnicode_FromFormat(
-            "_ScaledFloatTestDType(scaling=%R)", scaling);
+    PyObject *res =
+            PyUnicode_FromFormat("_ScaledFloatTestDType(scaling=%R)", scaling);
     Py_DECREF(scaling);
     return res;
 }
 
-
-static PyArray_DTypeMeta PyArray_SFloatDType = {{{
-        PyVarObject_HEAD_INIT(NULL, 0)
-        .tp_name = "numpy._ScaledFloatTestDType",
-        .tp_methods = sfloat_methods,
-        .tp_new = sfloat_new,
-        .tp_repr = (reprfunc)sfloat_repr,
-        .tp_str = (reprfunc)sfloat_repr,
-        .tp_basicsize = sizeof(PyArray_SFloatDescr),
-    }},
-    .type_num = -1,
-    .scalar_type = NULL,
-    .flags = NPY_DT_PARAMETRIC,
-    .dt_slots = &sfloat_slots,
+static PyArray_DTypeMeta PyArray_SFloatDType = {
+        {{
+                PyVarObject_HEAD_INIT(NULL, 0).tp_name =
+                        "numpy._ScaledFloatTestDType",
+                .tp_methods = sfloat_methods,
+                .tp_new = sfloat_new,
+                .tp_repr = (reprfunc)sfloat_repr,
+                .tp_str = (reprfunc)sfloat_repr,
+                .tp_basicsize = sizeof(PyArray_SFloatDescr),
+        }},
+        .type_num = -1,
+        .scalar_type = NULL,
+        .flags = NPY_DT_PARAMETRIC,
+        .dt_slots = &sfloat_slots,
 };
-
 
 /*
  * Implement some casts.
@@ -255,23 +237,25 @@ static PyArray_DTypeMeta PyArray_SFloatDType = {{{
  * error returns.
  */
 static int
-check_factor(double factor) {
+check_factor(double factor)
+{
     if (npy_isfinite(factor) && factor != 0.) {
         return 0;
     }
     NPY_ALLOW_C_API_DEF;
     NPY_ALLOW_C_API;
     PyErr_SetString(PyExc_TypeError,
-            "error raised inside the core-loop: non-finite factor!");
+                    "error raised inside the core-loop: non-finite factor!");
     NPY_DISABLE_C_API;
     return -1;
 }
 
-
 static int
 cast_sfloat_to_sfloat_unaligned(PyArrayMethod_Context *context,
-        char *const data[], npy_intp const dimensions[],
-        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+                                char *const data[],
+                                npy_intp const dimensions[],
+                                npy_intp const strides[],
+                                NpyAuxData *NPY_UNUSED(auxdata))
 {
     /* could also be moved into auxdata: */
     double factor = ((PyArray_SFloatDescr *)context->descriptors[0])->scaling;
@@ -295,11 +279,11 @@ cast_sfloat_to_sfloat_unaligned(PyArrayMethod_Context *context,
     return 0;
 }
 
-
 static int
 cast_sfloat_to_sfloat_aligned(PyArrayMethod_Context *context,
-        char *const data[], npy_intp const dimensions[],
-        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+                              char *const data[], npy_intp const dimensions[],
+                              npy_intp const strides[],
+                              NpyAuxData *NPY_UNUSED(auxdata))
 {
     /* could also be moved into auxdata: */
     double factor = ((PyArray_SFloatDescr *)context->descriptors[0])->scaling;
@@ -319,14 +303,12 @@ cast_sfloat_to_sfloat_aligned(PyArrayMethod_Context *context,
     return 0;
 }
 
-
 static NPY_CASTING
-sfloat_to_sfloat_resolve_descriptors(
-            PyArrayMethodObject *NPY_UNUSED(self),
-            PyArray_DTypeMeta *NPY_UNUSED(dtypes[2]),
-            PyArray_Descr *given_descrs[2],
-            PyArray_Descr *loop_descrs[2],
-            npy_intp *view_offset)
+sfloat_to_sfloat_resolve_descriptors(PyArrayMethodObject *NPY_UNUSED(self),
+                                     PyArray_DTypeMeta *NPY_UNUSED(dtypes[2]),
+                                     PyArray_Descr *given_descrs[2],
+                                     PyArray_Descr *loop_descrs[2],
+                                     npy_intp *view_offset)
 {
     loop_descrs[0] = given_descrs[0];
     Py_INCREF(loop_descrs[0]);
@@ -339,21 +321,20 @@ sfloat_to_sfloat_resolve_descriptors(
     }
     Py_INCREF(loop_descrs[1]);
 
-    if (((PyArray_SFloatDescr *)loop_descrs[0])->scaling
-            == ((PyArray_SFloatDescr *)loop_descrs[1])->scaling) {
+    if (((PyArray_SFloatDescr *)loop_descrs[0])->scaling ==
+        ((PyArray_SFloatDescr *)loop_descrs[1])->scaling) {
         /* same scaling is just a view */
         *view_offset = 0;
         return NPY_NO_CASTING;
     }
-    else if (-((PyArray_SFloatDescr *)loop_descrs[0])->scaling
-             == ((PyArray_SFloatDescr *)loop_descrs[1])->scaling) {
+    else if (-((PyArray_SFloatDescr *)loop_descrs[0])->scaling ==
+             ((PyArray_SFloatDescr *)loop_descrs[1])->scaling) {
         /* changing the sign does not lose precision */
         return NPY_EQUIV_CASTING;
     }
     /* Technically, this is not a safe cast, since over/underflows can occur */
     return NPY_SAME_KIND_CASTING;
 }
-
 
 /*
  * Casting to and from doubles.
@@ -366,8 +347,9 @@ sfloat_to_sfloat_resolve_descriptors(
  */
 static int
 cast_float_to_from_sfloat(PyArrayMethod_Context *NPY_UNUSED(context),
-        char *const data[], npy_intp const dimensions[],
-        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+                          char *const data[], npy_intp const dimensions[],
+                          npy_intp const strides[],
+                          NpyAuxData *NPY_UNUSED(auxdata))
 {
     npy_intp N = dimensions[0];
     char *in = data[0];
@@ -380,14 +362,11 @@ cast_float_to_from_sfloat(PyArrayMethod_Context *NPY_UNUSED(context),
     return 0;
 }
 
-
 static NPY_CASTING
 float_to_from_sfloat_resolve_descriptors(
-        PyArrayMethodObject *NPY_UNUSED(self),
-        PyArray_DTypeMeta *dtypes[2],
+        PyArrayMethodObject *NPY_UNUSED(self), PyArray_DTypeMeta *dtypes[2],
         PyArray_Descr *NPY_UNUSED(given_descrs[2]),
-        PyArray_Descr *loop_descrs[2],
-        npy_intp *view_offset)
+        PyArray_Descr *loop_descrs[2], npy_intp *view_offset)
 {
     loop_descrs[0] = NPY_DT_CALL_default_descr(dtypes[0]);
     if (loop_descrs[0] == NULL) {
@@ -401,14 +380,13 @@ float_to_from_sfloat_resolve_descriptors(
     return NPY_NO_CASTING;
 }
 
-
 /*
  * Cast to boolean (for testing the logical functions a bit better).
  */
 static int
 cast_sfloat_to_bool(PyArrayMethod_Context *NPY_UNUSED(context),
-        char *const data[], npy_intp const dimensions[],
-        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+                    char *const data[], npy_intp const dimensions[],
+                    npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
 {
     npy_intp N = dimensions[0];
     char *in = data[0];
@@ -422,37 +400,36 @@ cast_sfloat_to_bool(PyArrayMethod_Context *NPY_UNUSED(context),
 }
 
 static NPY_CASTING
-sfloat_to_bool_resolve_descriptors(
-        PyArrayMethodObject *NPY_UNUSED(self),
-        PyArray_DTypeMeta *NPY_UNUSED(dtypes[2]),
-        PyArray_Descr *given_descrs[2],
-        PyArray_Descr *loop_descrs[2],
-        npy_intp *NPY_UNUSED(view_offset))
+sfloat_to_bool_resolve_descriptors(PyArrayMethodObject *NPY_UNUSED(self),
+                                   PyArray_DTypeMeta *NPY_UNUSED(dtypes[2]),
+                                   PyArray_Descr *given_descrs[2],
+                                   PyArray_Descr *loop_descrs[2],
+                                   npy_intp *NPY_UNUSED(view_offset))
 {
     Py_INCREF(given_descrs[0]);
     loop_descrs[0] = given_descrs[0];
     if (loop_descrs[0] == NULL) {
         return -1;
     }
-    loop_descrs[1] = PyArray_DescrFromType(NPY_BOOL);  /* cannot fail */
+    loop_descrs[1] = PyArray_DescrFromType(NPY_BOOL); /* cannot fail */
     return NPY_UNSAFE_CASTING;
 }
-
 
 static int
 init_casts(void)
 {
-    PyArray_DTypeMeta *dtypes[2] = {&PyArray_SFloatDType, &PyArray_SFloatDType};
+    PyArray_DTypeMeta *dtypes[2] = {&PyArray_SFloatDType,
+                                    &PyArray_SFloatDType};
     PyType_Slot slots[4] = {{0, NULL}};
     PyArrayMethod_Spec spec = {
-        .name = "sfloat_to_sfloat_cast",
-        .nin = 1,
-        .nout = 1,
-        .flags = NPY_METH_SUPPORTS_UNALIGNED,
-        .dtypes = dtypes,
-        .slots = slots,
-        /* minimal guaranteed casting */
-        .casting = NPY_SAME_KIND_CASTING,
+            .name = "sfloat_to_sfloat_cast",
+            .nin = 1,
+            .nout = 1,
+            .flags = NPY_METH_SUPPORTS_UNALIGNED,
+            .dtypes = dtypes,
+            .slots = slots,
+            /* minimal guaranteed casting */
+            .casting = NPY_SAME_KIND_CASTING,
     };
 
     slots[0].slot = NPY_METH_resolve_descriptors;
@@ -472,7 +449,7 @@ init_casts(void)
     /* Technically, it is just a copy currently so this is fine: */
     spec.flags = NPY_METH_NO_FLOATINGPOINT_ERRORS;
     PyArray_DTypeMeta *double_DType = PyArray_DTypeFromTypeNum(NPY_DOUBLE);
-    Py_DECREF(double_DType);  /* immortal anyway */
+    Py_DECREF(double_DType); /* immortal anyway */
     dtypes[0] = double_DType;
 
     slots[0].slot = NPY_METH_resolve_descriptors;
@@ -504,7 +481,7 @@ init_casts(void)
     spec.name = "sfloat_to_bool_cast";
     dtypes[0] = &PyArray_SFloatDType;
     dtypes[1] = PyArray_DTypeFromTypeNum(NPY_BOOL);
-    Py_DECREF(dtypes[1]);  /* immortal anyway */
+    Py_DECREF(dtypes[1]); /* immortal anyway */
 
     if (PyArray_AddCastingImplementation_FromSpec(&spec, 0)) {
         return -1;
@@ -512,7 +489,6 @@ init_casts(void)
 
     return 0;
 }
-
 
 /*
  * We also wish to test very simple ufunc functionality.  So create two
@@ -524,8 +500,8 @@ init_casts(void)
  */
 static int
 multiply_sfloats(PyArrayMethod_Context *NPY_UNUSED(context),
-        char *const data[], npy_intp const dimensions[],
-        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+                 char *const data[], npy_intp const dimensions[],
+                 npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
 {
     npy_intp N = dimensions[0];
     char *in1 = data[0];
@@ -540,22 +516,20 @@ multiply_sfloats(PyArrayMethod_Context *NPY_UNUSED(context),
     return 0;
 }
 
-
 static NPY_CASTING
-multiply_sfloats_resolve_descriptors(
-        PyArrayMethodObject *NPY_UNUSED(self),
-        PyArray_DTypeMeta *NPY_UNUSED(dtypes[3]),
-        PyArray_Descr *given_descrs[3],
-        PyArray_Descr *loop_descrs[3],
-        npy_intp *NPY_UNUSED(view_offset))
+multiply_sfloats_resolve_descriptors(PyArrayMethodObject *NPY_UNUSED(self),
+                                     PyArray_DTypeMeta *NPY_UNUSED(dtypes[3]),
+                                     PyArray_Descr *given_descrs[3],
+                                     PyArray_Descr *loop_descrs[3],
+                                     npy_intp *NPY_UNUSED(view_offset))
 {
     /*
      * Multiply the scaling for the result.  If the result was passed in we
      * simply ignore it and let the casting machinery fix it up here.
      */
     double factor = ((PyArray_SFloatDescr *)given_descrs[1])->scaling;
-    loop_descrs[2] = sfloat_scaled_copy(
-            (PyArray_SFloatDescr *)given_descrs[0], factor);
+    loop_descrs[2] =
+            sfloat_scaled_copy((PyArray_SFloatDescr *)given_descrs[0], factor);
     if (loop_descrs[2] == 0) {
         return -1;
     }
@@ -566,15 +540,14 @@ multiply_sfloats_resolve_descriptors(
     return NPY_NO_CASTING;
 }
 
-
 /*
  * Unlike the multiplication implementation above, this loops deals with
  * scaling (casting) internally.  This allows to test some different paths.
  */
 static int
-add_sfloats(PyArrayMethod_Context *context,
-        char *const data[], npy_intp const dimensions[],
-        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+add_sfloats(PyArrayMethod_Context *context, char *const data[],
+            npy_intp const dimensions[], npy_intp const strides[],
+            NpyAuxData *NPY_UNUSED(auxdata))
 {
     double fin1 = ((PyArray_SFloatDescr *)context->descriptors[0])->scaling;
     double fin2 = ((PyArray_SFloatDescr *)context->descriptors[1])->scaling;
@@ -602,22 +575,20 @@ add_sfloats(PyArrayMethod_Context *context,
     return 0;
 }
 
-
 static NPY_CASTING
-add_sfloats_resolve_descriptors(
-        PyArrayMethodObject *NPY_UNUSED(self),
-        PyArray_DTypeMeta *NPY_UNUSED(dtypes[3]),
-        PyArray_Descr *given_descrs[3],
-        PyArray_Descr *loop_descrs[3],
-        npy_intp *NPY_UNUSED(view_offset))
+add_sfloats_resolve_descriptors(PyArrayMethodObject *NPY_UNUSED(self),
+                                PyArray_DTypeMeta *NPY_UNUSED(dtypes[3]),
+                                PyArray_Descr *given_descrs[3],
+                                PyArray_Descr *loop_descrs[3],
+                                npy_intp *NPY_UNUSED(view_offset))
 {
     /*
      * Here we accept an output descriptor (the inner loop can deal with it),
      * if none is given, we use the "common instance":
      */
     if (given_descrs[2] == NULL) {
-        loop_descrs[2] = sfloat_common_instance(
-                given_descrs[0], given_descrs[1]);
+        loop_descrs[2] =
+                sfloat_common_instance(given_descrs[0], given_descrs[1]);
         if (loop_descrs[2] == 0) {
             return -1;
         }
@@ -645,10 +616,9 @@ add_sfloats_resolve_descriptors(
     return NPY_SAME_KIND_CASTING;
 }
 
-
 static int
-add_loop(const char *ufunc_name,
-        PyArray_DTypeMeta *dtypes[3], PyObject *meth_or_promoter)
+add_loop(const char *ufunc_name, PyArray_DTypeMeta *dtypes[3],
+         PyObject *meth_or_promoter)
 {
     PyObject *mod = PyImport_ImportModule("numpy");
     if (mod == NULL) {
@@ -658,8 +628,7 @@ add_loop(const char *ufunc_name,
     Py_DECREF(mod);
     if (!PyObject_TypeCheck(ufunc, &PyUFunc_Type)) {
         Py_DECREF(ufunc);
-        PyErr_Format(PyExc_TypeError,
-                "numpy.%s was not a ufunc!", ufunc_name);
+        PyErr_Format(PyExc_TypeError, "numpy.%s was not a ufunc!", ufunc_name);
         return -1;
     }
     PyObject *dtype_tup = PyArray_TupleFromItems(3, (PyObject **)dtypes, 1);
@@ -679,16 +648,14 @@ add_loop(const char *ufunc_name,
     return res;
 }
 
-
-
 /*
  * We add some very basic promoters to allow multiplying normal and scaled
  */
 static int
 promote_to_sfloat(PyUFuncObject *NPY_UNUSED(ufunc),
-        PyArray_DTypeMeta *const NPY_UNUSED(dtypes[3]),
-        PyArray_DTypeMeta *const signature[3],
-        PyArray_DTypeMeta *new_dtypes[3])
+                  PyArray_DTypeMeta *const NPY_UNUSED(dtypes[3]),
+                  PyArray_DTypeMeta *const signature[3],
+                  PyArray_DTypeMeta *new_dtypes[3])
 {
     for (int i = 0; i < 3; i++) {
         PyArray_DTypeMeta *new = &PyArray_SFloatDType;
@@ -701,21 +668,21 @@ promote_to_sfloat(PyUFuncObject *NPY_UNUSED(ufunc),
     return 0;
 }
 
-
 /*
  * Add new ufunc loops (this is somewhat clumsy as of writing it, but should
  * get less so with the introduction of public API).
  */
 static int
-init_ufuncs(void) {
-    PyArray_DTypeMeta *dtypes[3] = {
-            &PyArray_SFloatDType, &PyArray_SFloatDType, &PyArray_SFloatDType};
+init_ufuncs(void)
+{
+    PyArray_DTypeMeta *dtypes[3] = {&PyArray_SFloatDType, &PyArray_SFloatDType,
+                                    &PyArray_SFloatDType};
     PyType_Slot slots[3] = {{0, NULL}};
     PyArrayMethod_Spec spec = {
-        .nin = 2,
-        .nout =1,
-        .dtypes = dtypes,
-        .slots = slots,
+            .nin = 2,
+            .nout = 1,
+            .dtypes = dtypes,
+            .slots = slots,
     };
     spec.name = "sfloat_multiply";
     spec.casting = NPY_NO_CASTING;
@@ -728,8 +695,7 @@ init_ufuncs(void) {
     if (bmeth == NULL) {
         return -1;
     }
-    int res = add_loop("multiply",
-            bmeth->dtypes, (PyObject *)bmeth->method);
+    int res = add_loop("multiply", bmeth->dtypes, (PyObject *)bmeth->method);
     Py_DECREF(bmeth);
     if (res < 0) {
         return -1;
@@ -746,8 +712,7 @@ init_ufuncs(void) {
     if (bmeth == NULL) {
         return -1;
     }
-    res = add_loop("add",
-            bmeth->dtypes, (PyObject *)bmeth->method);
+    res = add_loop("add", bmeth->dtypes, (PyObject *)bmeth->method);
     Py_DECREF(bmeth);
     if (res < 0) {
         return -1;
@@ -757,13 +722,13 @@ init_ufuncs(void) {
      * Add a promoter for both directions of multiply with double.
      */
     PyArray_DTypeMeta *double_DType = PyArray_DTypeFromTypeNum(NPY_DOUBLE);
-    Py_DECREF(double_DType);  /* immortal anyway */
+    Py_DECREF(double_DType); /* immortal anyway */
 
-    PyArray_DTypeMeta *promoter_dtypes[3] = {
-            &PyArray_SFloatDType, double_DType, NULL};
+    PyArray_DTypeMeta *promoter_dtypes[3] = {&PyArray_SFloatDType,
+                                             double_DType, NULL};
 
-    PyObject *promoter = PyCapsule_New(
-            &promote_to_sfloat, "numpy._ufunc_promoter", NULL);
+    PyObject *promoter =
+            PyCapsule_New(&promote_to_sfloat, "numpy._ufunc_promoter", NULL);
     if (promoter == NULL) {
         return -1;
     }
@@ -782,7 +747,6 @@ init_ufuncs(void) {
 
     return 0;
 }
-
 
 /*
  * Python entry point, exported via `umathmodule.h` and `multiarraymodule.c`.
@@ -809,8 +773,8 @@ get_sfloat_dtype(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(args))
         return NULL;
     }
 
-    PyObject *o = PyObject_Init(
-            (PyObject *)&SFloatSingleton, (PyTypeObject *)&PyArray_SFloatDType);
+    PyObject *o = PyObject_Init((PyObject *)&SFloatSingleton,
+                                (PyTypeObject *)&PyArray_SFloatDType);
     if (o == NULL) {
         return NULL;
     }

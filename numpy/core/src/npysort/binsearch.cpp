@@ -13,13 +13,11 @@
 #include <functional>  // for std::less and std::less_equal
 
 // Enumerators for the variant of binsearch
-enum arg_t
-{
+enum arg_t {
     noarg,
     arg
 };
-enum side_t
-{
+enum side_t {
     left,
     right
 };

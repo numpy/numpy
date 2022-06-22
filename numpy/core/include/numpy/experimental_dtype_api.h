@@ -113,46 +113,47 @@
 #define NUMPY_CORE_INCLUDE_NUMPY_EXPERIMENTAL_DTYPE_API_H_
 
 #include <Python.h>
-#include "ndarraytypes.h"
 
+#include "ndarraytypes.h"
 
 /*
  * There must be a better way?! -- Oh well, this is experimental
  * (my issue with it, is that I cannot undef those helpers).
  */
 #if defined(PY_ARRAY_UNIQUE_SYMBOL)
-    #define NPY_EXP_DTYPE_API_CONCAT_HELPER2(x, y) x ## y
-    #define NPY_EXP_DTYPE_API_CONCAT_HELPER(arg) NPY_EXP_DTYPE_API_CONCAT_HELPER2(arg, __experimental_dtype_api_table)
-    #define __experimental_dtype_api_table NPY_EXP_DTYPE_API_CONCAT_HELPER(PY_ARRAY_UNIQUE_SYMBOL)
+#define NPY_EXP_DTYPE_API_CONCAT_HELPER2(x, y) x##y
+#define NPY_EXP_DTYPE_API_CONCAT_HELPER(arg) \
+    NPY_EXP_DTYPE_API_CONCAT_HELPER2(arg, __experimental_dtype_api_table)
+#define __experimental_dtype_api_table \
+    NPY_EXP_DTYPE_API_CONCAT_HELPER(PY_ARRAY_UNIQUE_SYMBOL)
 #else
-    #define __experimental_dtype_api_table __experimental_dtype_api_table
+#define __experimental_dtype_api_table __experimental_dtype_api_table
 #endif
 
 /* Support for correct multi-file projects: */
 #if defined(NO_IMPORT) || defined(NO_IMPORT_ARRAY)
-    extern void **__experimental_dtype_api_table;
+extern void **__experimental_dtype_api_table;
 #else
-    /*
-     * Just a hack so I don't forget importing as much myself, I spend way too
-     * much time noticing it the first time around :).
-     */
-    static void
-    __not_imported(void)
-    {
-        printf("*****\nCritical error, dtype API not imported\n*****\n");
-    }
+/*
+ * Just a hack so I don't forget importing as much myself, I spend way too
+ * much time noticing it the first time around :).
+ */
+static void
+__not_imported(void)
+{
+    printf("*****\nCritical error, dtype API not imported\n*****\n");
+}
 
-    static void *__uninitialized_table[] = {
-            &__not_imported, &__not_imported, &__not_imported, &__not_imported,
-            &__not_imported, &__not_imported, &__not_imported, &__not_imported};
+static void *__uninitialized_table[] = {
+        &__not_imported, &__not_imported, &__not_imported, &__not_imported,
+        &__not_imported, &__not_imported, &__not_imported, &__not_imported};
 
-    #if defined(PY_ARRAY_UNIQUE_SYMBOL)
-        void **__experimental_dtype_api_table = __uninitialized_table;
-    #else
-        static void **__experimental_dtype_api_table = __uninitialized_table;
-    #endif
+#if defined(PY_ARRAY_UNIQUE_SYMBOL)
+void **__experimental_dtype_api_table = __uninitialized_table;
+#else
+static void **__experimental_dtype_api_table = __uninitialized_table;
 #endif
-
+#endif
 
 /*
  * DTypeMeta struct, the content may be made fully opaque (except the size).
@@ -167,7 +168,6 @@ typedef struct {
     void *dt_slots;
     void *reserved[3];
 } PyArray_DTypeMeta;
-
 
 /*
  * ******************************************************
@@ -194,11 +194,9 @@ typedef enum {
     NPY_METH_SUPPORTS_UNALIGNED = 1 << 3,
 
     /* All flags which can change at runtime */
-    NPY_METH_RUNTIME_FLAGS = (
-            NPY_METH_REQUIRES_PYAPI |
-            NPY_METH_NO_FLOATINGPOINT_ERRORS),
+    NPY_METH_RUNTIME_FLAGS =
+            (NPY_METH_REQUIRES_PYAPI | NPY_METH_NO_FLOATINGPOINT_ERRORS),
 } NPY_ARRAYMETHOD_FLAGS;
-
 
 /*
  * The main object for creating a new ArrayMethod. We use the typical `slots`
@@ -213,9 +211,8 @@ typedef struct {
     PyType_Slot *slots;
 } PyArrayMethod_Spec;
 
-
-typedef int _ufunc_addloop_fromspec_func(
-        PyObject *ufunc, PyArrayMethod_Spec *spec);
+typedef int
+_ufunc_addloop_fromspec_func(PyObject *ufunc, PyArrayMethod_Spec *spec);
 /*
  * The main ufunc registration function.  This adds a new implementation/loop
  * to a ufunc.  It replaces `PyUFunc_RegisterLoopForType`.
@@ -223,19 +220,23 @@ typedef int _ufunc_addloop_fromspec_func(
 #define PyUFunc_AddLoopFromSpec \
     (*(_ufunc_addloop_fromspec_func *)(__experimental_dtype_api_table[0]))
 
-
 /* Please see the NumPy definitions in `array_method.h` for details on these */
-typedef int translate_given_descrs_func(int nin, int nout,
-        PyArray_DTypeMeta *wrapped_dtypes[],
-        PyArray_Descr *given_descrs[], PyArray_Descr *new_descrs[]);
-typedef int translate_loop_descrs_func(int nin, int nout,
-        PyArray_DTypeMeta *new_dtypes[], PyArray_Descr *given_descrs[],
-        PyArray_Descr *original_descrs[], PyArray_Descr *loop_descrs[]);
+typedef int
+translate_given_descrs_func(int nin, int nout,
+                            PyArray_DTypeMeta *wrapped_dtypes[],
+                            PyArray_Descr *given_descrs[],
+                            PyArray_Descr *new_descrs[]);
+typedef int
+translate_loop_descrs_func(int nin, int nout, PyArray_DTypeMeta *new_dtypes[],
+                           PyArray_Descr *given_descrs[],
+                           PyArray_Descr *original_descrs[],
+                           PyArray_Descr *loop_descrs[]);
 
-typedef int _ufunc_wrapping_loop_func(PyObject *ufunc_obj,
-        PyArray_DTypeMeta *new_dtypes[], PyArray_DTypeMeta *wrapped_dtypes[],
-        translate_given_descrs_func *translate_given_descrs,
-        translate_loop_descrs_func *translate_loop_descrs);
+typedef int
+_ufunc_wrapping_loop_func(PyObject *ufunc_obj, PyArray_DTypeMeta *new_dtypes[],
+                          PyArray_DTypeMeta *wrapped_dtypes[],
+                          translate_given_descrs_func *translate_given_descrs,
+                          translate_loop_descrs_func *translate_loop_descrs);
 #define PyUFunc_AddWrappingLoop \
     (*(_ufunc_wrapping_loop_func *)(__experimental_dtype_api_table[7]))
 
@@ -249,9 +250,10 @@ typedef int _ufunc_wrapping_loop_func(PyObject *ufunc_obj,
  * need for output dtypes.
  * (There are potential use-cases, these are currently unsupported.)
  */
-typedef int promoter_function(PyObject *ufunc,
-        PyArray_DTypeMeta *op_dtypes[], PyArray_DTypeMeta *signature[],
-        PyArray_DTypeMeta *new_op_dtypes[]);
+typedef int
+promoter_function(PyObject *ufunc, PyArray_DTypeMeta *op_dtypes[],
+                  PyArray_DTypeMeta *signature[],
+                  PyArray_DTypeMeta *new_op_dtypes[]);
 
 /*
  * Function to register a promoter.
@@ -262,11 +264,11 @@ typedef int promoter_function(PyObject *ufunc,
  * @param promoter A PyCapsule with name "numpy._ufunc_promoter" containing
  *        a pointer to a `promoter_function`.
  */
-typedef int _ufunc_addpromoter_func(
-        PyObject *ufunc, PyObject *DType_tuple, PyObject *promoter);
+typedef int
+_ufunc_addpromoter_func(PyObject *ufunc, PyObject *DType_tuple,
+                        PyObject *promoter);
 #define PyUFunc_AddPromoter \
     (*(_ufunc_addpromoter_func *)(__experimental_dtype_api_table[1]))
-
 
 /*
  * The resolve descriptors function, must be able to handle NULL values for
@@ -279,7 +281,7 @@ typedef int _ufunc_addpromoter_func(
  * `resolve_descriptors` is optional if all output DTypes are non-parametric.
  */
 #define NPY_METH_resolve_descriptors 1
-typedef NPY_CASTING (resolve_descriptors_function)(
+typedef NPY_CASTING(resolve_descriptors_function)(
         /* "method" is currently opaque (necessary e.g. to wrap Python) */
         PyObject *method,
         /* DTypes the method was created for */
@@ -287,8 +289,7 @@ typedef NPY_CASTING (resolve_descriptors_function)(
         /* Input descriptors (instances).  Outputs may be NULL. */
         PyArray_Descr **given_descrs,
         /* Exact loop descriptors to use, must not hold references on error */
-        PyArray_Descr **loop_descrs,
-        npy_intp *view_offset);
+        PyArray_Descr **loop_descrs, npy_intp *view_offset);
 
 /* NOT public yet: Signature needs adapting as external API. */
 #define _NPY_METH_get_loop 2
@@ -306,21 +307,20 @@ typedef NPY_CASTING (resolve_descriptors_function)(
 #define NPY_METH_unaligned_strided_loop 5
 #define NPY_METH_unaligned_contiguous_loop 6
 
-
 typedef struct {
-    PyObject *caller;  /* E.g. the original ufunc, may be NULL */
-    PyObject *method;  /* The method "self". Currently an opaque object */
+    PyObject *caller; /* E.g. the original ufunc, may be NULL */
+    PyObject *method; /* The method "self". Currently an opaque object */
 
     /* Operand descriptors, filled in by resolve_descriptors */
     PyArray_Descr **descriptors;
     /* Structure may grow (this is harmless for DType authors) */
 } PyArrayMethod_Context;
 
-typedef int (PyArrayMethod_StridedLoop)(PyArrayMethod_Context *context,
-        char *const *data, const npy_intp *dimensions, const npy_intp *strides,
-        NpyAuxData *transferdata);
-
-
+typedef int(PyArrayMethod_StridedLoop)(PyArrayMethod_Context *context,
+                                       char *const *data,
+                                       const npy_intp *dimensions,
+                                       const npy_intp *strides,
+                                       NpyAuxData *transferdata);
 
 /*
  * ****************************
@@ -339,23 +339,23 @@ typedef int (PyArrayMethod_StridedLoop)(PyArrayMethod_Context *context,
 #define NPY_DT_setitem 6
 #define NPY_DT_getitem 7
 
-
 // TODO: These slots probably still need some thought, and/or a way to "grow"?
-typedef struct{
-    PyTypeObject *typeobj;    /* type of python scalar or NULL */
-    int flags;                /* flags, including parametric and abstract */
-    /* NULL terminated cast definitions. Use NULL for the newly created DType */
+typedef struct {
+    PyTypeObject *typeobj; /* type of python scalar or NULL */
+    int flags;             /* flags, including parametric and abstract */
+    /* NULL terminated cast definitions. Use NULL for the newly created DType
+     */
     PyArrayMethod_Spec **casts;
     PyType_Slot *slots;
     /* Baseclass or NULL (will always subclass `np.dtype`) */
     PyTypeObject *baseclass;
 } PyArrayDTypeMeta_Spec;
 
-
 #define PyArrayDTypeMeta_Type \
     (*(PyTypeObject *)__experimental_dtype_api_table[2])
-typedef int __dtypemeta_fromspec(
-        PyArray_DTypeMeta *DType, PyArrayDTypeMeta_Spec *dtype_spec);
+typedef int
+__dtypemeta_fromspec(PyArray_DTypeMeta *DType,
+                     PyArrayDTypeMeta_Spec *dtype_spec);
 /*
  * Finalize creation of a DTypeMeta.  You must ensure that the DTypeMeta is
  * a proper subclass.  The DTypeMeta object has additional fields compared to
@@ -367,27 +367,24 @@ typedef int __dtypemeta_fromspec(
 #define PyArrayInitDTypeMeta_FromSpec \
     ((__dtypemeta_fromspec *)(__experimental_dtype_api_table[3]))
 
-
 /*
  * *************************************
  *          WORKING WITH DTYPES
  * *************************************
  */
 
-typedef PyArray_DTypeMeta *__common_dtype(
-        PyArray_DTypeMeta *DType1, PyArray_DTypeMeta *DType2);
+typedef PyArray_DTypeMeta *
+__common_dtype(PyArray_DTypeMeta *DType1, PyArray_DTypeMeta *DType2);
 #define PyArray_CommonDType \
     ((__common_dtype *)(__experimental_dtype_api_table[4]))
 
-
-typedef PyArray_DTypeMeta *__promote_dtype_sequence(
-        npy_intp num, PyArray_DTypeMeta *DTypes[]);
+typedef PyArray_DTypeMeta *
+__promote_dtype_sequence(npy_intp num, PyArray_DTypeMeta *DTypes[]);
 #define PyArray_PromoteDTypeSequence \
     ((__promote_dtype_sequence *)(__experimental_dtype_api_table[5]))
 
-
-typedef PyArray_Descr *__get_default_descr(
-        PyArray_DTypeMeta *DType);
+typedef PyArray_Descr *
+__get_default_descr(PyArray_DTypeMeta *DType);
 #define _PyArray_GetDefaultDescr \
     ((__get_default_descr *)(__experimental_dtype_api_table[6]))
 
@@ -401,49 +398,79 @@ PyArray_GetDefaultDescr(PyArray_DTypeMeta *DType)
     return _PyArray_GetDefaultDescr(DType);
 }
 
-
 /*
  * NumPy's builtin DTypes:
  */
-#define PyArray_BoolDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[10])
+#define PyArray_BoolDType \
+    (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[10])
 /* Integers */
-#define PyArray_ByteDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[11])
-#define PyArray_UByteDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[12])
-#define PyArray_ShortDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[13])
-#define PyArray_UShortDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[14])
-#define PyArray_IntDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[15])
-#define PyArray_UIntDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[16])
-#define PyArray_LongDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[17])
-#define PyArray_ULongDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[18])
-#define PyArray_LongLongDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[19])
-#define PyArray_ULongLongDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[20])
+#define PyArray_ByteDType \
+    (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[11])
+#define PyArray_UByteDType \
+    (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[12])
+#define PyArray_ShortDType \
+    (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[13])
+#define PyArray_UShortDType \
+    (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[14])
+#define PyArray_IntDType \
+    (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[15])
+#define PyArray_UIntDType \
+    (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[16])
+#define PyArray_LongDType \
+    (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[17])
+#define PyArray_ULongDType \
+    (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[18])
+#define PyArray_LongLongDType \
+    (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[19])
+#define PyArray_ULongLongDType \
+    (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[20])
 /* Integer aliases */
-#define PyArray_Int8Type (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[21])
-#define PyArray_UInt8DType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[22])
-#define PyArray_Int16DType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[23])
-#define PyArray_UInt16DType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[24])
-#define PyArray_Int32DType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[25])
-#define PyArray_UInt32DType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[26])
-#define PyArray_Int64DType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[27])
-#define PyArray_UInt64DType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[28])
-#define PyArray_IntpDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[29])
-#define PyArray_UIntpDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[30])
+#define PyArray_Int8Type \
+    (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[21])
+#define PyArray_UInt8DType \
+    (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[22])
+#define PyArray_Int16DType \
+    (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[23])
+#define PyArray_UInt16DType \
+    (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[24])
+#define PyArray_Int32DType \
+    (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[25])
+#define PyArray_UInt32DType \
+    (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[26])
+#define PyArray_Int64DType \
+    (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[27])
+#define PyArray_UInt64DType \
+    (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[28])
+#define PyArray_IntpDType \
+    (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[29])
+#define PyArray_UIntpDType \
+    (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[30])
 /* Floats */
-#define PyArray_HalfType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[31])
-#define PyArray_FloatDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[32])
-#define PyArray_DoubleDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[33])
-#define PyArray_LongDoubleDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[34])
+#define PyArray_HalfType \
+    (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[31])
+#define PyArray_FloatDType \
+    (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[32])
+#define PyArray_DoubleDType \
+    (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[33])
+#define PyArray_LongDoubleDType \
+    (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[34])
 /* Complex */
-#define PyArray_CFloatDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[35])
-#define PyArray_CDoubleDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[36])
-#define PyArray_CLongDoubleDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[37])
+#define PyArray_CFloatDType \
+    (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[35])
+#define PyArray_CDoubleDType \
+    (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[36])
+#define PyArray_CLongDoubleDType \
+    (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[37])
 /* String/Bytes */
-#define PyArray_StringDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[38])
-#define PyArray_UnicodeDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[39])
+#define PyArray_StringDType \
+    (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[38])
+#define PyArray_UnicodeDType \
+    (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[39])
 /* Datetime/Timedelta */
-#define PyArray_DatetimeDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[40])
-#define PyArray_TimedeltaDType (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[41])
-
+#define PyArray_DatetimeDType \
+    (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[40])
+#define PyArray_TimedeltaDType \
+    (*(PyArray_DTypeMeta *)__experimental_dtype_api_table[41])
 
 /*
  * ********************************
@@ -463,7 +490,8 @@ static int
 import_experimental_dtype_api(int version)
 {
     if (version != __EXPERIMENTAL_DTYPE_VERSION) {
-        PyErr_Format(PyExc_RuntimeError,
+        PyErr_Format(
+                PyExc_RuntimeError,
                 "DType API version %d did not match header version %d. Please "
                 "update the import statement and check for API changes.",
                 version, __EXPERIMENTAL_DTYPE_VERSION);
@@ -474,19 +502,20 @@ import_experimental_dtype_api(int version)
         return 0;
     }
 
-    PyObject *multiarray = PyImport_ImportModule("numpy.core._multiarray_umath");
+    PyObject *multiarray =
+            PyImport_ImportModule("numpy.core._multiarray_umath");
     if (multiarray == NULL) {
         return -1;
     }
 
-    PyObject *api = PyObject_CallMethod(multiarray,
-        "_get_experimental_dtype_api", "i", version);
+    PyObject *api = PyObject_CallMethod(
+            multiarray, "_get_experimental_dtype_api", "i", version);
     Py_DECREF(multiarray);
     if (api == NULL) {
         return -1;
     }
-    __experimental_dtype_api_table = (void **)PyCapsule_GetPointer(api,
-            "experimental_dtype_api_table");
+    __experimental_dtype_api_table =
+            (void **)PyCapsule_GetPointer(api, "experimental_dtype_api_table");
     Py_DECREF(api);
 
     if (__experimental_dtype_api_table == NULL) {
@@ -496,6 +525,6 @@ import_experimental_dtype_api(int version)
     return 0;
 }
 
-#endif  /* !defined(NO_IMPORT) && !defined(NO_IMPORT_ARRAY) */
+#endif /* !defined(NO_IMPORT) && !defined(NO_IMPORT_ARRAY) */
 
-#endif  /* NUMPY_CORE_INCLUDE_NUMPY_EXPERIMENTAL_DTYPE_API_H_ */
+#endif /* NUMPY_CORE_INCLUDE_NUMPY_EXPERIMENTAL_DTYPE_API_H_ */

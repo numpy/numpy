@@ -1,51 +1,37 @@
 from collections.abc import Sequence
-from typing import (
-    Any,
-    TypeVar,
-    Generic,
-    overload,
-    Literal,
-    SupportsIndex,
-)
+from typing import Any, Generic, Literal, SupportsIndex, TypeVar, overload
 
 from numpy import (
-    # Circumvent a naming conflict with `AxisConcatenator.matrix`
-    matrix as _Matrix,
-    ndenumerate as ndenumerate,
-    ndindex as ndindex,
-    ndarray,
-    dtype,
-    integer,
-    str_,
-    bytes_,
-    bool_,
-    int_,
-    float_,
-    complex_,
-    intp,
-    _OrderCF,
     _ModeKind,
+    _OrderCF,
+    bool_,
+    bytes_,
+    complex_,
+    dtype,
+    float_,
+    int_,
+    integer,
+    intp,
 )
-from numpy._typing import (
-    # Arrays
+from numpy import (
+    matrix as _Matrix,  # Circumvent a naming conflict with `AxisConcatenator.matrix`
+)
+from numpy import ndarray
+from numpy import ndenumerate as ndenumerate
+from numpy import ndindex as ndindex
+from numpy import str_
+from numpy._typing import (  # Arrays; DTypes; Shapes
     ArrayLike,
-    _NestedSequence,
-    _FiniteNestedSequence,
+    DTypeLike,
     NDArray,
     _ArrayLikeInt,
-
-    # DTypes
-    DTypeLike,
-    _SupportsDType,
-
-    # Shapes
+    _FiniteNestedSequence,
+    _NestedSequence,
     _ShapeLike,
+    _SupportsDType,
 )
-
-from numpy.core.multiarray import (
-    unravel_index as unravel_index,
-    ravel_multi_index as ravel_multi_index,
-)
+from numpy.core.multiarray import ravel_multi_index as ravel_multi_index
+from numpy.core.multiarray import unravel_index as unravel_index
 
 _T = TypeVar("_T")
 _DType = TypeVar("_DType", bound=dtype[Any])
@@ -56,7 +42,9 @@ _ArrayType = TypeVar("_ArrayType", bound=ndarray[Any, Any])
 __all__: list[str]
 
 @overload
-def ix_(*args: _FiniteNestedSequence[_SupportsDType[_DType]]) -> tuple[ndarray[Any, _DType], ...]: ...
+def ix_(
+    *args: _FiniteNestedSequence[_SupportsDType[_DType]],
+) -> tuple[ndarray[Any, _DType], ...]: ...
 @overload
 def ix_(*args: str | _NestedSequence[str]) -> tuple[NDArray[str_], ...]: ...
 @overload

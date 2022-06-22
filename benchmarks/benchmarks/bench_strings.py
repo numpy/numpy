@@ -1,18 +1,18 @@
 from __future__ import absolute_import, division, print_function
 
-from .common import Benchmark
-
-import numpy as np
 import operator
 
+import numpy as np
+
+from .common import Benchmark
 
 _OPERATORS = {
-    '==': operator.eq,
-    '!=': operator.ne,
-    '<': operator.lt,
-    '<=': operator.le,
-    '>': operator.gt,
-    '>=': operator.ge,
+    "==": operator.eq,
+    "!=": operator.ne,
+    "<": operator.lt,
+    "<=": operator.le,
+    ">": operator.gt,
+    ">=": operator.ge,
 }
 
 
@@ -20,10 +20,11 @@ class StringComparisons(Benchmark):
     # Basic string comparison speed tests
     params = [
         [100, 10000, (1000, 20)],
-        ['U', 'S'],
+        ["U", "S"],
         [True, False],
-        ['==', '!=', '<', '<=', '>', '>=']]
-    param_names = ['shape', 'dtype', 'contig', 'operator']
+        ["==", "!=", "<", "<=", ">", ">="],
+    ]
+    param_names = ["shape", "dtype", "contig", "operator"]
     int64 = np.dtype(np.int64)
 
     def setup(self, shape, dtype, contig, operator):

@@ -51,7 +51,6 @@ PyArray_IntpFromSequence(PyObject *seq, npy_intp *vals, int maxvals);
 NPY_NO_EXPORT int
 PyArray_TypestrConvert(int itemsize, int gentype);
 
-
 static NPY_INLINE PyObject *
 PyArray_PyIntFromIntp(npy_intp const value)
 {
@@ -80,7 +79,8 @@ PyArray_SelectkindConverter(PyObject *obj, NPY_SELECTKIND *selectkind);
  * just that axis is set to True.
  */
 NPY_NO_EXPORT int
-PyArray_ConvertMultiAxis(PyObject *axis_in, int ndim, npy_bool *out_axis_flags);
+PyArray_ConvertMultiAxis(PyObject *axis_in, int ndim,
+                         npy_bool *out_axis_flags);
 
 /**
  * WARNING: This flag is a bad idea, but was the only way to both
@@ -94,4 +94,4 @@ PyArray_ConvertMultiAxis(PyObject *axis_in, int ndim, npy_bool *out_axis_flags);
  */
 extern NPY_NO_EXPORT int evil_global_disable_warn_O4O8_flag;
 
-#endif  /* NUMPY_CORE_SRC_MULTIARRAY_CONVERSION_UTILS_H_ */
+#endif /* NUMPY_CORE_SRC_MULTIARRAY_CONVERSION_UTILS_H_ */

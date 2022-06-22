@@ -3,17 +3,17 @@ set_travis_vars() {
     echo "TRAVIS_EVENT_TYPE is $TRAVIS_EVENT_TYPE"
     echo "TRAVIS_TAG is $TRAVIS_TAG"
     if [[ "$TRAVIS_EVENT_TYPE" == "push" && "$TRAVIS_TAG" == v* ]]; then
-      IS_PUSH="true"
+        IS_PUSH="true"
     else
-      IS_PUSH="false"
+        IS_PUSH="false"
     fi
     if [[ "$TRAVIS_EVENT_TYPE" == "cron" ]]; then
-      IS_SCHEDULE_DISPATCH="true"
+        IS_SCHEDULE_DISPATCH="true"
     elif [[ "$TRAVIS_EVENT_TYPE" == "api" ]]; then
-      # Manual CI run, so upload
-      IS_SCHEDULE_DISPATCH="true"
+        # Manual CI run, so upload
+        IS_SCHEDULE_DISPATCH="true"
     else
-      IS_SCHEDULE_DISPATCH="false"
+        IS_SCHEDULE_DISPATCH="false"
     fi
 }
 set_upload_vars() {

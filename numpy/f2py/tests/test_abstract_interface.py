@@ -1,7 +1,9 @@
-from pathlib import Path
 import textwrap
-from . import util
+from pathlib import Path
+
 from numpy.f2py import crackfortran
+
+from . import util
 
 
 class TestAbstractInterface(util.F2PyTest):
@@ -14,8 +16,7 @@ class TestAbstractInterface(util.F2PyTest):
 
     def test_parse_abstract_interface(self):
         # Test gh18403
-        fpath = util.getpath("tests", "src", "abstract_interface",
-                             "gh18403_mod.f90")
+        fpath = util.getpath("tests", "src", "abstract_interface", "gh18403_mod.f90")
         mod = crackfortran.crackfortran([str(fpath)])
         assert len(mod) == 1
         assert len(mod[0]["body"]) == 1

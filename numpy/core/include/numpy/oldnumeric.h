@@ -7,8 +7,8 @@
 
 #ifndef PYPY_VERSION
 #ifndef REFCOUNT
-#  define REFCOUNT NPY_REFCOUNT
-#  define MAX_ELSIZE 16
+#define REFCOUNT NPY_REFCOUNT
+#define MAX_ELSIZE 16
 #endif
 #endif
 
@@ -27,6 +27,13 @@
 #define SAVESPACEBIT 0
 
 #undef import_array
-#define import_array() { if (_import_array() < 0) {PyErr_Print(); PyErr_SetString(PyExc_ImportError, "numpy.core.multiarray failed to import"); } }
+#define import_array()                                                 \
+    {                                                                  \
+        if (_import_array() < 0) {                                     \
+            PyErr_Print();                                             \
+            PyErr_SetString(PyExc_ImportError,                         \
+                            "numpy.core.multiarray failed to import"); \
+        }                                                              \
+    }
 
-#endif  /* NUMPY_CORE_INCLUDE_NUMPY_OLDNUMERIC_H_ */
+#endif /* NUMPY_CORE_INCLUDE_NUMPY_OLDNUMERIC_H_ */

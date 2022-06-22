@@ -2,28 +2,31 @@
 #define NUMPY_CORE_SRC_MULTIARRAY_COMMON_H_
 
 #include <structmember.h>
-#include "numpy/npy_common.h"
+
 #include "numpy/ndarraytypes.h"
+#include "numpy/npy_common.h"
+
 #include "npy_import.h"
+
 #include <limits.h>
 
-#define error_converting(x)  (((x) == -1) && PyErr_Occurred())
+#define error_converting(x) (((x) == -1) && PyErr_Occurred())
 
 #ifdef NPY_ALLOW_THREADS
-#define NPY_BEGIN_THREADS_NDITER(iter) \
-        do { \
-            if (!NpyIter_IterationNeedsAPI(iter)) { \
-                NPY_BEGIN_THREADS_THRESHOLDED(NpyIter_GetIterSize(iter)); \
-            } \
-        } while(0)
+#define NPY_BEGIN_THREADS_NDITER(iter)                                \
+    do {                                                              \
+        if (!NpyIter_IterationNeedsAPI(iter)) {                       \
+            NPY_BEGIN_THREADS_THRESHOLDED(NpyIter_GetIterSize(iter)); \
+        }                                                             \
+    } while (0)
 #else
 #define NPY_BEGIN_THREADS_NDITER(iter)
 #endif
 
-
 NPY_NO_EXPORT PyArray_Descr *
-PyArray_DTypeFromObjectStringDiscovery(
-        PyObject *obj, PyArray_Descr *last_dtype, int string_type);
+PyArray_DTypeFromObjectStringDiscovery(PyObject *obj,
+                                       PyArray_Descr *last_dtype,
+                                       int string_type);
 
 /*
  * Recursively examines the object to determine an appropriate dtype
@@ -40,9 +43,7 @@ PyArray_DTypeFromObjectStringDiscovery(
  * Returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT int
-PyArray_DTypeFromObject(PyObject *obj, int maxdims,
-                        PyArray_Descr **out_dtype);
-
+PyArray_DTypeFromObject(PyObject *obj, int maxdims, PyArray_Descr **out_dtype);
 
 /*
  * Returns NULL without setting an exception if no scalar is matched, a
@@ -101,7 +102,7 @@ _may_have_objects(PyArray_Descr *dtype);
  */
 static NPY_INLINE int
 check_and_adjust_index(npy_intp *index, npy_intp max_item, int axis,
-                       PyThreadState * _save)
+                       PyThreadState *_save)
 {
     /* Check that index is valid, taking into account negative indices */
     if (NPY_UNLIKELY((*index < -max_item) || (*index >= max_item))) {
@@ -109,13 +110,17 @@ check_and_adjust_index(npy_intp *index, npy_intp max_item, int axis,
         /* Try to be as clear as possible about what went wrong. */
         if (axis >= 0) {
             PyErr_Format(PyExc_IndexError,
-                         "index %"NPY_INTP_FMT" is out of bounds "
-                         "for axis %d with size %"NPY_INTP_FMT,
+                         "index %" NPY_INTP_FMT
+                         " is out of bounds "
+                         "for axis %d with size %" NPY_INTP_FMT,
                          *index, axis, max_item);
-        } else {
+        }
+        else {
             PyErr_Format(PyExc_IndexError,
-                         "index %"NPY_INTP_FMT" is out of bounds "
-                         "for size %"NPY_INTP_FMT, *index, max_item);
+                         "index %" NPY_INTP_FMT
+                         " is out of bounds "
+                         "for size %" NPY_INTP_FMT,
+                         *index, max_item);
         }
         return -1;
     }
@@ -145,14 +150,15 @@ check_and_adjust_axis_msg(int *axis, int ndim, PyObject *msg_prefix)
         static PyObject *AxisError_cls = NULL;
         PyObject *exc;
 
-        npy_cache_import("numpy.core._exceptions", "AxisError", &AxisError_cls);
+        npy_cache_import("numpy.core._exceptions", "AxisError",
+                         &AxisError_cls);
         if (AxisError_cls == NULL) {
             return -1;
         }
 
         /* Invoke the AxisError constructor */
-        exc = PyObject_CallFunction(AxisError_cls, "iiO",
-                                    *axis, ndim, msg_prefix);
+        exc = PyObject_CallFunction(AxisError_cls, "iiO", *axis, ndim,
+                                    msg_prefix);
         if (exc == NULL) {
             return -1;
         }
@@ -174,21 +180,27 @@ check_and_adjust_axis(int *axis, int ndim)
 }
 
 /* used for some alignment checks */
-#define _ALIGN(type) offsetof(struct {char c; type v;}, v)
+#define _ALIGN(type)    \
+    offsetof(           \
+            struct {    \
+                char c; \
+                type v; \
+            },          \
+            v)
 #define _UINT_ALIGN(type) npy_uint_alignment(sizeof(type))
 /*
  * Disable harmless compiler warning "4116: unnamed type definition in
  * parentheses" which is caused by the _ALIGN macro.
  */
 #if defined(_MSC_VER)
-#pragma warning(disable:4116)
+#pragma warning(disable : 4116)
 #endif
 
 /*
  * return true if pointer is aligned to 'alignment'
  */
 static NPY_INLINE int
-npy_is_aligned(const void * p, const npy_uintp alignment)
+npy_is_aligned(const void *p, const npy_uintp alignment)
 {
     /*
      * Assumes alignment is a power of two, as required by the C standard.
@@ -197,7 +209,7 @@ npy_is_aligned(const void * p, const npy_uintp alignment)
      * This test is faster than a direct modulo.
      * Note alignment value of 0 is allowed and returns False.
      */
-    return ((npy_uintp)(p) & ((alignment) - 1)) == 0;
+    return ((npy_uintp)(p) & ((alignment)-1)) == 0;
 }
 
 /* Get equivalent "uint" alignment given an itemsize, for use in copy code */
@@ -206,7 +218,7 @@ npy_uint_alignment(int itemsize)
 {
     npy_uintp alignment = 0; /* return value of 0 means unaligned */
 
-    switch(itemsize){
+    switch (itemsize) {
         case 1:
             return 1;
         case 2:
@@ -240,19 +252,19 @@ npy_uint_alignment(int itemsize)
  * is not found.
  */
 #ifdef __clang__
-    /*
-     * The code below currently makes use of !NPY_ALIGNMENT_REQUIRED, which
-     * should be OK but causes the clang sanitizer to warn.  It may make
-     * sense to modify the code to avoid this "unaligned" access but
-     * it would be good to carefully check the performance changes.
-     */
-    __attribute__((no_sanitize("alignment")))
+/*
+ * The code below currently makes use of !NPY_ALIGNMENT_REQUIRED, which
+ * should be OK but causes the clang sanitizer to warn.  It may make
+ * sense to modify the code to avoid this "unaligned" access but
+ * it would be good to carefully check the performance changes.
+ */
+__attribute__((no_sanitize("alignment")))
 #endif
 static NPY_INLINE char *
-npy_memchr(char * haystack, char needle,
-           npy_intp stride, npy_intp size, npy_intp * psubloopsize, int invert)
+npy_memchr(char *haystack, char needle, npy_intp stride, npy_intp size,
+           npy_intp *psubloopsize, int invert)
 {
-    char * p = haystack;
+    char *p = haystack;
     npy_intp subloopsize = 0;
 
     if (!invert) {
@@ -270,9 +282,9 @@ npy_memchr(char * haystack, char needle,
         /* usually find elements to skip path */
         if (!NPY_ALIGNMENT_REQUIRED && needle == 0 && stride == 1) {
             /* iterate until last multiple of 4 */
-            char * block_end = haystack + size - (size % sizeof(unsigned int));
+            char *block_end = haystack + size - (size % sizeof(unsigned int));
             while (p < block_end) {
-                unsigned int  v = *(unsigned int*)p;
+                unsigned int v = *(unsigned int *)p;
                 if (v != 0) {
                     break;
                 }
@@ -292,7 +304,6 @@ npy_memchr(char * haystack, char needle,
     return p;
 }
 
-
 /*
  * Simple helper to create a tuple from an array of items. The `make_null_none`
  * flag means that NULL entries are replaced with None, which is occasionally
@@ -305,7 +316,7 @@ PyArray_TupleFromItems(int n, PyObject *const *items, int make_null_none)
     if (tuple == NULL) {
         return NULL;
     }
-    for (int i = 0; i < n; i ++) {
+    for (int i = 0; i < n; i++) {
         PyObject *tmp;
         if (!make_null_none || items[i] != NULL) {
             tmp = items[i];
@@ -319,7 +330,6 @@ PyArray_TupleFromItems(int n, PyObject *const *items, int make_null_none)
     return tuple;
 }
 
-
 #include "ucsnarrow.h"
 
 /*
@@ -332,9 +342,9 @@ PyArray_TupleFromItems(int n, PyObject *const *items, int make_null_none)
  * otherwise) is incref'd and put to *result.
  */
 NPY_NO_EXPORT PyArrayObject *
-new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject* out,
-                  int nd, npy_intp dimensions[], int typenum, PyArrayObject **result);
-
+new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject *out,
+                  int nd, npy_intp dimensions[], int typenum,
+                  PyArrayObject **result);
 
 /*
  * Used to indicate a broadcast axis, see also `npyiter_get_op_axis` in
@@ -344,4 +354,4 @@ new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject* out,
  */
 #define NPY_ITER_REDUCTION_AXIS(axis) (axis + (1 << (NPY_BITSOF_INT - 2)))
 
-#endif  /* NUMPY_CORE_SRC_MULTIARRAY_COMMON_H_ */
+#endif /* NUMPY_CORE_SRC_MULTIARRAY_COMMON_H_ */

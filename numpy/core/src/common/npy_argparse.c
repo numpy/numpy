@@ -5,12 +5,13 @@
 #include <Python.h>
 
 #include "numpy/ndarraytypes.h"
-#include "npy_argparse.h"
+
 #include "npy_pycompat.h"
-#include "npy_import.h"
+
+#include "npy_argparse.h"
 
 #include "arrayfunction_override.h"
-
+#include "npy_import.h"
 
 /**
  * Small wrapper converting to array just like CPython does.
@@ -50,8 +51,8 @@ PyArray_PythonPyIntFromInt(PyObject *obj, int *value)
     }
 }
 
-
-typedef int convert(PyObject *, void *);
+typedef int
+convert(PyObject *, void *);
 
 /**
  * Internal function to initialize keyword argument parsing.
@@ -71,8 +72,9 @@ typedef int convert(PyObject *, void *);
  * @return 0 on success, -1 on failure
  */
 static int
-initialize_keywords(const char *funcname,
-        _NpyArgParserCache *cache, va_list va_orig) {
+initialize_keywords(const char *funcname, _NpyArgParserCache *cache,
+                    va_list va_orig)
+{
     va_list va;
     int nargs = 0;
     int nkwargs = 0;
@@ -95,15 +97,17 @@ initialize_keywords(const char *funcname,
 
         if (name == NULL) {
             PyErr_Format(PyExc_SystemError,
-                    "NumPy internal error: name is NULL in %s() at "
-                    "argument %d.", funcname, nargs);
+                         "NumPy internal error: name is NULL in %s() at "
+                         "argument %d.",
+                         funcname, nargs);
             va_end(va);
             return -1;
         }
         if (data == NULL) {
             PyErr_Format(PyExc_SystemError,
-                    "NumPy internal error: data is NULL in %s() at "
-                    "argument %d.", funcname, nargs);
+                         "NumPy internal error: data is NULL in %s() at "
+                         "argument %d.",
+                         funcname, nargs);
             va_end(va);
             return -1;
         }
@@ -111,7 +115,8 @@ initialize_keywords(const char *funcname,
         nargs += 1;
         if (*name == '|') {
             if (state == '$') {
-                PyErr_Format(PyExc_SystemError,
+                PyErr_Format(
+                        PyExc_SystemError,
                         "NumPy internal error: positional argument `|` "
                         "after keyword only `$` one to %s() at argument %d.",
                         funcname, nargs);
@@ -119,16 +124,17 @@ initialize_keywords(const char *funcname,
                 return -1;
             }
             state = '|';
-            name++;  /* advance to actual name. */
+            name++; /* advance to actual name. */
             npositional += 1;
         }
         else if (*name == '$') {
             state = '$';
-            name++;  /* advance to actual name. */
+            name++; /* advance to actual name. */
         }
         else {
             if (state != '\0') {
-                PyErr_Format(PyExc_SystemError,
+                PyErr_Format(
+                        PyExc_SystemError,
                         "NumPy internal error: non-required argument after "
                         "required | or $ one to %s() at argument %d.",
                         funcname, nargs);
@@ -143,9 +149,11 @@ initialize_keywords(const char *funcname,
         if (*name == '\0') {
             /* Empty string signals positional only */
             if (state != '\0') {
-                PyErr_Format(PyExc_SystemError,
+                PyErr_Format(
+                        PyExc_SystemError,
                         "NumPy internal error: non-kwarg marked with | or $ "
-                        "to %s() at argument %d.", funcname, nargs);
+                        "to %s() at argument %d.",
+                        funcname, nargs);
                 va_end(va);
                 return -1;
             }
@@ -162,7 +170,8 @@ initialize_keywords(const char *funcname,
     }
 
     if (nargs > _NPY_MAX_KWARGS) {
-        PyErr_Format(PyExc_SystemError,
+        PyErr_Format(
+                PyExc_SystemError,
                 "NumPy internal error: function %s() has %d arguments, but "
                 "the maximum is currently limited to %d for easier parsing; "
                 "it can be increased by modifying `_NPY_MAX_KWARGS`.",
@@ -190,7 +199,7 @@ initialize_keywords(const char *funcname,
         va_arg(va, void *);
 
         if (*name == '|' || *name == '$') {
-            name++;  /* ignore | and $ */
+            name++; /* ignore | and $ */
         }
         if (i >= npositional_only) {
             int i_kwarg = i - npositional_only;
@@ -209,46 +218,45 @@ error:
     for (int i = 0; i < nkwargs; i++) {
         Py_XDECREF(cache->kw_strings[i]);
     }
-    cache->npositional = -1;  /* not initialized */
+    cache->npositional = -1; /* not initialized */
     return -1;
 }
 
-
 static int
 raise_incorrect_number_of_positional_args(const char *funcname,
-        const _NpyArgParserCache *cache, Py_ssize_t len_args)
+                                          const _NpyArgParserCache *cache,
+                                          Py_ssize_t len_args)
 {
     if (cache->npositional == cache->nrequired) {
         PyErr_Format(PyExc_TypeError,
-                "%s() takes %d positional arguments but %zd were given",
-                funcname, cache->npositional, len_args);
+                     "%s() takes %d positional arguments but %zd were given",
+                     funcname, cache->npositional, len_args);
     }
     else {
         PyErr_Format(PyExc_TypeError,
-                "%s() takes from %d to %d positional arguments but "
-                "%zd were given",
-                funcname, cache->nrequired, cache->npositional, len_args);
+                     "%s() takes from %d to %d positional arguments but "
+                     "%zd were given",
+                     funcname, cache->nrequired, cache->npositional, len_args);
     }
     return -1;
 }
 
 static void
-raise_missing_argument(const char *funcname,
-        const _NpyArgParserCache *cache, int i)
+raise_missing_argument(const char *funcname, const _NpyArgParserCache *cache,
+                       int i)
 {
     if (i < cache->npositional_only) {
         PyErr_Format(PyExc_TypeError,
-                "%s() missing required positional argument %d",
-                funcname, i);
+                     "%s() missing required positional argument %d", funcname,
+                     i);
     }
     else {
         PyObject *kw = cache->kw_strings[i - cache->npositional_only];
         PyErr_Format(PyExc_TypeError,
-                "%s() missing required argument '%S' (pos %d)",
-                funcname, kw, i);
+                     "%s() missing required argument '%S' (pos %d)", funcname,
+                     kw, i);
     }
 }
-
 
 /**
  * Generic helper for argument parsing
@@ -265,10 +273,11 @@ raise_missing_argument(const char *funcname,
  * @return Returns 0 on success and -1 on failure.
  */
 NPY_NO_EXPORT int
-_npy_parse_arguments(const char *funcname,
-         /* cache_ptr is a NULL initialized persistent storage for data */
-        _NpyArgParserCache *cache,
-        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames,
+_npy_parse_arguments(
+        const char *funcname,
+        /* cache_ptr is a NULL initialized persistent storage for data */
+        _NpyArgParserCache *cache, PyObject *const *args, Py_ssize_t len_args,
+        PyObject *kwnames,
         /* ... is NULL, NULL, NULL terminated: name, converter, value */
         ...)
 {
@@ -284,8 +293,8 @@ _npy_parse_arguments(const char *funcname,
     }
 
     if (NPY_UNLIKELY(len_args > cache->npositional)) {
-        return raise_incorrect_number_of_positional_args(
-                funcname, cache, len_args);
+        return raise_incorrect_number_of_positional_args(funcname, cache,
+                                                         len_args);
     }
 
     /* NOTE: Could remove the limit but too many kwargs are slow anyway. */
@@ -332,21 +341,24 @@ _npy_parse_arguments(const char *funcname,
                 }
                 if (NPY_UNLIKELY(*name == NULL)) {
                     /* Invalid keyword argument. */
-                    PyErr_Format(PyExc_TypeError,
+                    PyErr_Format(
+                            PyExc_TypeError,
                             "%s() got an unexpected keyword argument '%S'",
                             funcname, key);
                     return -1;
                 }
             }
 
-             Py_ssize_t param_pos = (
-                    (name - cache->kw_strings) + cache->npositional_only);
+            Py_ssize_t param_pos =
+                    ((name - cache->kw_strings) + cache->npositional_only);
 
             /* There could be an identical positional argument */
             if (NPY_UNLIKELY(all_arguments[param_pos] != NULL)) {
-                PyErr_Format(PyExc_TypeError,
+                PyErr_Format(
+                        PyExc_TypeError,
                         "argument for %s() given by name ('%S') and position "
-                        "(position %zd)", funcname, key, param_pos);
+                        "(position %zd)",
+                        funcname, key, param_pos);
                 return -1;
             }
 
@@ -375,7 +387,7 @@ _npy_parse_arguments(const char *funcname,
 
         int res;
         if (converter == NULL) {
-            *((PyObject **) data) = all_arguments[i];
+            *((PyObject **)data) = all_arguments[i];
             continue;
         }
         res = converter(all_arguments[i], data);
@@ -389,7 +401,8 @@ _npy_parse_arguments(const char *funcname,
         }
         else if (NPY_UNLIKELY(res == Py_CLEANUP_SUPPORTED)) {
             /* TODO: Implementing cleanup if/when needed should not be hard */
-            PyErr_Format(PyExc_SystemError,
+            PyErr_Format(
+                    PyExc_SystemError,
                     "converter cleanup of parameter %d to %s() not supported.",
                     i, funcname);
             goto converting_failed;
@@ -418,5 +431,4 @@ _npy_parse_arguments(const char *funcname,
 converting_failed:
     va_end(va);
     return -1;
-
 }

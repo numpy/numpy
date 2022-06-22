@@ -11,15 +11,14 @@
 
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
-#include "iterators.h"
 
 #include "npy_config.h"
-
 #include "npy_pycompat.h"
+
+#include "iterators.h"
 
 static void
 _fillobject(char *optr, PyObject *obj, PyArray_Descr *dtype);
-
 
 /*NUMPY_API
  * XINCREF all objects in a single array item. This is complicated for
@@ -49,8 +48,7 @@ PyArray_Item_INCREF(char *data, PyArray_Descr *descr)
             if (NPY_TITLE_KEY(key, value)) {
                 continue;
             }
-            if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset,
-                                  &title)) {
+            if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset, &title)) {
                 return;
             }
             PyArray_Item_INCREF(data + offset, new);
@@ -67,8 +65,9 @@ PyArray_Item_INCREF(char *data, PyArray_Descr *descr)
         /* Subarrays are always contiguous in memory */
         size = descr->elsize / inner_elsize;
 
-        for (i = 0; i < size; i++){
-            /* Recursively increment the reference count of subarray elements */
+        for (i = 0; i < size; i++) {
+            /* Recursively increment the reference count of subarray elements
+             */
             PyArray_Item_INCREF(data + i * inner_elsize,
                                 descr->subarray->base);
         }
@@ -79,7 +78,6 @@ PyArray_Item_INCREF(char *data, PyArray_Descr *descr)
     }
     return;
 }
-
 
 /*NUMPY_API
  *
@@ -102,22 +100,21 @@ PyArray_Item_XDECREF(char *data, PyArray_Descr *descr)
         Py_XDECREF(temp);
     }
     else if (PyDataType_HASFIELDS(descr)) {
-            PyObject *key, *value, *title = NULL;
-            PyArray_Descr *new;
-            int offset;
-            Py_ssize_t pos = 0;
+        PyObject *key, *value, *title = NULL;
+        PyArray_Descr *new;
+        int offset;
+        Py_ssize_t pos = 0;
 
-            while (PyDict_Next(descr->fields, &pos, &key, &value)) {
-                if (NPY_TITLE_KEY(key, value)) {
-                    continue;
-                }
-                if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset,
-                                      &title)) {
-                    return;
-                }
-                PyArray_Item_XDECREF(data + offset, new);
+        while (PyDict_Next(descr->fields, &pos, &key, &value)) {
+            if (NPY_TITLE_KEY(key, value)) {
+                continue;
             }
+            if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset, &title)) {
+                return;
+            }
+            PyArray_Item_XDECREF(data + offset, new);
         }
+    }
     else if (PyDataType_HASSUBARRAY(descr)) {
         int size, i, inner_elsize;
 
@@ -129,8 +126,9 @@ PyArray_Item_XDECREF(char *data, PyArray_Descr *descr)
         /* Subarrays are always contiguous in memory */
         size = descr->elsize / inner_elsize;
 
-        for (i = 0; i < size; i++){
-            /* Recursively decrement the reference count of subarray elements */
+        for (i = 0; i < size; i++) {
+            /* Recursively decrement the reference count of subarray elements
+             */
             PyArray_Item_XDECREF(data + i * inner_elsize,
                                  descr->subarray->base);
         }
@@ -163,7 +161,7 @@ PyArray_INCREF(PyArrayObject *mp)
         if (it == NULL) {
             return -1;
         }
-        while(it->index < it->size) {
+        while (it->index < it->size) {
             PyArray_Item_INCREF(it->dataptr, PyArray_DESCR(mp));
             PyArray_ITER_NEXT(it);
         }
@@ -180,7 +178,7 @@ PyArray_INCREF(PyArrayObject *mp)
             }
         }
         else {
-            for( i = 0; i < n; i++, data++) {
+            for (i = 0; i < n; i++, data++) {
                 memcpy(&temp, data, sizeof(temp));
                 Py_XINCREF(temp);
             }
@@ -191,7 +189,7 @@ PyArray_INCREF(PyArrayObject *mp)
         if (it == NULL) {
             return -1;
         }
-        while(it->index < it->size) {
+        while (it->index < it->size) {
             memcpy(&temp, it->dataptr, sizeof(temp));
             Py_XINCREF(temp);
             PyArray_ITER_NEXT(it);
@@ -223,7 +221,7 @@ PyArray_XDECREF(PyArrayObject *mp)
     }
     if (PyArray_DESCR(mp)->type_num != NPY_OBJECT) {
         PyArray_RawIterBaseInit(&it, mp);
-        while(it.index < it.size) {
+        while (it.index < it.size) {
             PyArray_Item_XDECREF(it.dataptr, PyArray_DESCR(mp));
             PyArray_ITER_NEXT(&it);
         }
@@ -245,7 +243,7 @@ PyArray_XDECREF(PyArrayObject *mp)
     }
     else { /* handles misaligned data too */
         PyArray_RawIterBaseInit(&it, mp);
-        while(it.index < it.size) {
+        while (it.index < it.size) {
             memcpy(&temp, it.dataptr, sizeof(temp));
             Py_XDECREF(temp);
             PyArray_ITER_NEXT(&it);
@@ -260,7 +258,7 @@ PyArray_XDECREF(PyArrayObject *mp)
 NPY_NO_EXPORT void
 PyArray_FillObjectArray(PyArrayObject *arr, PyObject *obj)
 {
-    npy_intp i,n;
+    npy_intp i, n;
     n = PyArray_SIZE(arr);
     if (PyArray_DESCR(arr)->type_num == NPY_OBJECT) {
         PyObject **optr;
@@ -295,16 +293,15 @@ _fillobject(char *optr, PyObject *obj, PyArray_Descr *dtype)
         PyObject *arr;
 
         if ((obj == Py_None) ||
-                (PyLong_Check(obj) && PyLong_AsLong(obj) == 0)) {
+            (PyLong_Check(obj) && PyLong_AsLong(obj) == 0)) {
             return;
         }
         /* Clear possible long conversion error */
         PyErr_Clear();
         Py_INCREF(dtype);
-        arr = PyArray_NewFromDescr(&PyArray_Type, dtype,
-                                   0, NULL, NULL, NULL,
+        arr = PyArray_NewFromDescr(&PyArray_Type, dtype, 0, NULL, NULL, NULL,
                                    0, NULL);
-        if (arr!=NULL) {
+        if (arr != NULL) {
             dtype->f->setitem(obj, optr, arr);
         }
         Py_XDECREF(arr);
@@ -341,7 +338,7 @@ _fillobject(char *optr, PyObject *obj, PyArray_Descr *dtype)
         size = dtype->elsize / inner_elsize;
 
         /* Call _fillobject on each item recursively. */
-        for (i = 0; i < size; i++){
+        for (i = 0; i < size; i++) {
             _fillobject(optr, obj, dtype->subarray->base);
             optr += inner_elsize;
         }

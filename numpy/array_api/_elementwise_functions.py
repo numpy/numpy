@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import numpy as np
+
+from ._array_object import Array
 from ._dtypes import (
     _boolean_dtypes,
     _floating_dtypes,
@@ -8,9 +11,6 @@ from ._dtypes import (
     _numeric_dtypes,
     _result_type,
 )
-from ._array_object import Array
-
-import numpy as np
 
 
 def abs(x: Array, /) -> Array:

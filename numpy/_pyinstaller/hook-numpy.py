@@ -18,11 +18,12 @@ if is_pure_conda:
     # communal Conda bin directory. DLLs from NumPy's dependencies must also be
     # collected to capture MKL, OpenBlas, OpenMP, etc.
     from PyInstaller.utils.hooks import conda_support
+
     datas = conda_support.collect_dynamic_libs("numpy", dependencies=True)
 
 # Submodules PyInstaller cannot detect (probably because they are only imported
 # by extension modules, which PyInstaller cannot read).
-hiddenimports = ['numpy.core._dtype_ctypes']
+hiddenimports = ["numpy.core._dtype_ctypes"]
 if is_conda:
     hiddenimports.append("six")
 

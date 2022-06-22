@@ -130,8 +130,8 @@ if [ "$(uname)" == "Darwin" ]; then
         sudo mkdir -p /opt/
         sudo cp "gfortran-darwin-arm64.tar.gz" /opt/gfortran-darwin-arm64.tar.gz
         pushd /opt
-            sudo tar -xvf gfortran-darwin-arm64.tar.gz
-            sudo rm gfortran-darwin-arm64.tar.gz
+        sudo tar -xvf gfortran-darwin-arm64.tar.gz
+        sudo rm gfortran-darwin-arm64.tar.gz
         popd
         export FC_ARM64="$(find /opt/gfortran-darwin-arm64/bin -name "*-gfortran")"
         local libgfortran="$(find /opt/gfortran-darwin-arm64/lib -name libgfortran.dylib)"

@@ -25,8 +25,12 @@ reveal_type(nd.astype(float))  # E: ndarray[Any, dtype[Any]]
 reveal_type(nd.astype(np.float64))  # E: ndarray[Any, dtype[{float64}]]
 reveal_type(nd.astype(np.float64, "K"))  # E: ndarray[Any, dtype[{float64}]]
 reveal_type(nd.astype(np.float64, "K", "unsafe"))  # E: ndarray[Any, dtype[{float64}]]
-reveal_type(nd.astype(np.float64, "K", "unsafe", True))  # E: ndarray[Any, dtype[{float64}]]
-reveal_type(nd.astype(np.float64, "K", "unsafe", True, True))  # E: ndarray[Any, dtype[{float64}]]
+reveal_type(
+    nd.astype(np.float64, "K", "unsafe", True)
+)  # E: ndarray[Any, dtype[{float64}]]
+reveal_type(
+    nd.astype(np.float64, "K", "unsafe", True, True)
+)  # E: ndarray[Any, dtype[{float64}]]
 
 # byteswap
 reveal_type(nd.byteswap())  # E: ndarray[Any, dtype[{int_}]]

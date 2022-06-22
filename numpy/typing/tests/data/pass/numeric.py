@@ -9,8 +9,10 @@ from __future__ import annotations
 
 import numpy as np
 
+
 class SubClass(np.ndarray):
     ...
+
 
 i8 = np.int64(1)
 

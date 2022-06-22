@@ -113,21 +113,27 @@ Misc
 - ``p.truncate(size)`` -- Truncate p to given size
 
 """
-from .polynomial import Polynomial
 from .chebyshev import Chebyshev
-from .legendre import Legendre
 from .hermite import Hermite
 from .hermite_e import HermiteE
 from .laguerre import Laguerre
+from .legendre import Legendre
+from .polynomial import Polynomial
 
 __all__ = [
     "set_default_printstyle",
-    "polynomial", "Polynomial",
-    "chebyshev", "Chebyshev",
-    "legendre", "Legendre",
-    "hermite", "Hermite",
-    "hermite_e", "HermiteE",
-    "laguerre", "Laguerre",
+    "polynomial",
+    "Polynomial",
+    "chebyshev",
+    "Chebyshev",
+    "legendre",
+    "Legendre",
+    "hermite",
+    "Hermite",
+    "hermite_e",
+    "HermiteE",
+    "laguerre",
+    "Laguerre",
 ]
 
 
@@ -168,18 +174,20 @@ def set_default_printstyle(style):
     >>> print(f"{p:unicode}")
     1.0 + 2.0·x + 3.0·x²
     """
-    if style not in ('unicode', 'ascii'):
+    if style not in ("unicode", "ascii"):
         raise ValueError(
             f"Unsupported format string '{style}'. Valid options are 'ascii' "
             f"and 'unicode'"
         )
     _use_unicode = True
-    if style == 'ascii':
+    if style == "ascii":
         _use_unicode = False
     from ._polybase import ABCPolyBase
+
     ABCPolyBase._use_unicode = _use_unicode
 
 
 from numpy._pytesttester import PytestTester
+
 test = PytestTester(__name__)
 del PytestTester

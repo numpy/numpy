@@ -31,20 +31,18 @@ maintainer email:  oliphant.travis@ieee.org
 #include "numpy/arrayscalars.h"
 
 #include "npy_config.h"
-
-#include "common.h"
-
 #include "npy_pycompat.h"
 
 #include "usertypes.h"
-#include "dtypemeta.h"
-#include "scalartypes.h"
+
 #include "array_method.h"
+#include "common.h"
 #include "convert_datatype.h"
+#include "dtypemeta.h"
 #include "legacy_dtype_implementation.h"
+#include "scalartypes.h"
 
-
-NPY_NO_EXPORT PyArray_Descr **userdescrs=NULL;
+NPY_NO_EXPORT PyArray_Descr **userdescrs = NULL;
 
 static int
 _append_new(int **p_types, int insert)
@@ -56,7 +54,7 @@ _append_new(int **p_types, int insert)
     while (types[n] != NPY_NOTYPE) {
         n++;
     }
-    newtypes = (int *)realloc(types, (n + 2)*sizeof(int));
+    newtypes = (int *)realloc(types, (n + 2) * sizeof(int));
     if (newtypes == NULL) {
         PyErr_NoMemory();
         return -1;
@@ -83,8 +81,8 @@ _default_nonzero(void *ip, void *arr)
 }
 
 static void
-_default_copyswapn(void *dst, npy_intp dstride, void *src,
-                   npy_intp sstride, npy_intp n, int swap, void *arr)
+_default_copyswapn(void *dst, npy_intp dstride, void *src, npy_intp sstride,
+                   npy_intp n, int swap, void *arr)
 {
     npy_intp i;
     PyArray_CopySwapFunc *copyswap;
@@ -108,7 +106,7 @@ PyArray_InitArrFuncs(PyArray_ArrFuncs *f)
 {
     int i;
 
-    for(i = 0; i < NPY_NTYPES_ABI_COMPATIBLE; i++) {
+    for (i = 0; i < NPY_NTYPES_ABI_COMPATIBLE; i++) {
         f->cast[i] = NULL;
     }
     f->getitem = NULL;
@@ -124,7 +122,7 @@ PyArray_InitArrFuncs(PyArray_ArrFuncs *f)
     f->nonzero = NULL;
     f->fill = NULL;
     f->fillwithscalar = NULL;
-    for(i = 0; i < NPY_NSORTS; i++) {
+    for (i = 0; i < NPY_NSORTS; i++) {
         f->sort[i] = NULL;
         f->argsort[i] = NULL;
     }
@@ -137,26 +135,26 @@ PyArray_InitArrFuncs(PyArray_ArrFuncs *f)
     f->fasttake = NULL;
 }
 
-
 static int
-test_deprecated_arrfuncs_members(PyArray_ArrFuncs *f) {
+test_deprecated_arrfuncs_members(PyArray_ArrFuncs *f)
+{
     /* NumPy 1.19, 2020-01-15 */
     if (f->fastputmask != NULL) {
         if (DEPRECATE(
-                "The ->f->fastputmask member of custom dtypes is ignored; "
-                "setting it may be an error in the future.\n"
-                "The custom dtype you are using must be revised, but "
-                "results will not be affected.") < 0) {
+                    "The ->f->fastputmask member of custom dtypes is ignored; "
+                    "setting it may be an error in the future.\n"
+                    "The custom dtype you are using must be revised, but "
+                    "results will not be affected.") < 0) {
             return -1;
         }
     }
     /* NumPy 1.19, 2020-01-15 */
     if (f->fasttake != NULL) {
         if (DEPRECATE(
-                "The ->f->fastputmask member of custom dtypes is ignored; "
-                "setting it may be an error in the future.\n"
-                "The custom dtype you are using must be revised, but "
-                "results will not be affected.") < 0) {
+                    "The ->f->fastputmask member of custom dtypes is ignored; "
+                    "setting it may be an error in the future.\n"
+                    "The custom dtype you are using must be revised, but "
+                    "results will not be affected.") < 0) {
             return -1;
         }
     }
@@ -164,11 +162,11 @@ test_deprecated_arrfuncs_members(PyArray_ArrFuncs *f) {
     if (f->fastclip != NULL) {
         /* fastclip was already deprecated at execution time in 1.17. */
         if (DEPRECATE(
-                "The ->f->fastclip member of custom dtypes is deprecated; "
-                "setting it will be an error in the future.\n"
-                "The custom dtype you are using must be changed to use "
-                "PyUFunc_RegisterLoopForDescr to attach a custom loop to "
-                "np.core.umath.clip, np.minimum, and np.maximum") < 0) {
+                    "The ->f->fastclip member of custom dtypes is deprecated; "
+                    "setting it will be an error in the future.\n"
+                    "The custom dtype you are using must be changed to use "
+                    "PyUFunc_RegisterLoopForDescr to attach a custom loop to "
+                    "np.core.umath.clip, np.minimum, and np.maximum") < 0) {
             return -1;
         }
     }
@@ -202,7 +200,8 @@ PyArray_RegisterDataType(PyArray_Descr *descr)
     typenum = NPY_USERDEF + NPY_NUMUSERTYPES;
     descr->type_num = -1;
     if (PyDataType_ISUNSIZED(descr)) {
-        PyErr_SetString(PyExc_ValueError, "cannot register a" \
+        PyErr_SetString(PyExc_ValueError,
+                        "cannot register a"
                         "flexible data-type");
         return -1;
     }
@@ -213,9 +212,9 @@ PyArray_RegisterDataType(PyArray_Descr *descr)
     if (f->copyswapn == NULL) {
         f->copyswapn = _default_copyswapn;
     }
-    if (f->copyswap == NULL || f->getitem == NULL ||
-        f->setitem == NULL) {
-        PyErr_SetString(PyExc_ValueError, "a required array function"   \
+    if (f->copyswap == NULL || f->getitem == NULL || f->setitem == NULL) {
+        PyErr_SetString(PyExc_ValueError,
+                        "a required array function"
                         " is missing.");
         return -1;
     }
@@ -233,14 +232,16 @@ PyArray_RegisterDataType(PyArray_Descr *descr)
          */
         if (descr->names == NULL || descr->fields == NULL ||
             !PyDict_CheckExact(descr->fields)) {
-            PyErr_Format(PyExc_ValueError,
+            PyErr_Format(
+                    PyExc_ValueError,
                     "Failed to register dtype for %S: Legacy user dtypes "
                     "using `NPY_ITEM_IS_POINTER` or `NPY_ITEM_REFCOUNT` are "
                     "unsupported.  It is possible to create such a dtype only "
                     "if it is a structured dtype with names and fields "
                     "hardcoded at registration time.\n"
                     "Please contact the NumPy developers if this used to work "
-                    "but now fails.", descr->typeobj);
+                    "but now fails.",
+                    descr->typeobj);
             return -1;
         }
     }
@@ -249,8 +250,7 @@ PyArray_RegisterDataType(PyArray_Descr *descr)
         return -1;
     }
 
-    userdescrs = realloc(userdescrs,
-                         (NPY_NUMUSERTYPES+1)*sizeof(void *));
+    userdescrs = realloc(userdescrs, (NPY_NUMUSERTYPES + 1) * sizeof(void *));
     if (userdescrs == NULL) {
         PyErr_SetString(PyExc_MemoryError, "RegisterDataType");
         return -1;
@@ -268,7 +268,6 @@ PyArray_RegisterDataType(PyArray_Descr *descr)
     return typenum;
 }
 
-
 /*
  * Checks that there is no cast already cached using the new casting-impl
  * mechanism.
@@ -277,15 +276,16 @@ PyArray_RegisterDataType(PyArray_Descr *descr)
  * but this may also happen accidentally during setup (and may never have
  * mattered).  See https://github.com/numpy/numpy/issues/20009
  */
-static int _warn_if_cast_exists_already(
-        PyArray_Descr *descr, int totype, char *funcname)
+static int
+_warn_if_cast_exists_already(PyArray_Descr *descr, int totype, char *funcname)
 {
     PyArray_DTypeMeta *to_DType = PyArray_DTypeFromTypeNum(totype);
     if (to_DType == NULL) {
         return -1;
     }
     PyObject *cast_impl = PyDict_GetItemWithError(
-            NPY_DT_SLOTS(NPY_DTYPE(descr))->castingimpls, (PyObject *)to_DType);
+            NPY_DT_SLOTS(NPY_DTYPE(descr))->castingimpls,
+            (PyObject *)to_DType);
     Py_DECREF(to_DType);
     if (cast_impl == NULL) {
         if (PyErr_Occurred()) {
@@ -302,7 +302,8 @@ static int _warn_if_cast_exists_already(
         }
         Py_DECREF(cast_impl);
         PyArray_Descr *to_descr = PyArray_DescrFromType(totype);
-        int ret = PyErr_WarnFormat(PyExc_RuntimeWarning, 1,
+        int ret = PyErr_WarnFormat(
+                PyExc_RuntimeWarning, 1,
                 "A cast from %R to %R was registered/modified using `%s` "
                 "after the cast had been used.  "
                 "This registration will have (mostly) no effect: %s\n"
@@ -333,8 +334,8 @@ PyArray_RegisterCastFunc(PyArray_Descr *descr, int totype,
         PyErr_SetString(PyExc_TypeError, "invalid type number.");
         return -1;
     }
-    if (_warn_if_cast_exists_already(
-            descr, totype, "PyArray_RegisterCastFunc") < 0) {
+    if (_warn_if_cast_exists_already(descr, totype,
+                                     "PyArray_RegisterCastFunc") < 0) {
         return -1;
     }
 
@@ -377,14 +378,14 @@ PyArray_RegisterCanCast(PyArray_Descr *descr, int totype,
      * not checked for them.
      */
     if (!PyTypeNum_ISUSERDEF(descr->type_num) &&
-                                        !PyTypeNum_ISUSERDEF(totype)) {
+        !PyTypeNum_ISUSERDEF(totype)) {
         PyErr_SetString(PyExc_ValueError,
                         "At least one of the types provided to "
                         "RegisterCanCast must be user-defined.");
         return -1;
     }
-    if (_warn_if_cast_exists_already(
-            descr, totype, "PyArray_RegisterCanCast") < 0) {
+    if (_warn_if_cast_exists_already(descr, totype,
+                                     "PyArray_RegisterCanCast") < 0) {
         return -1;
     }
 
@@ -395,7 +396,7 @@ PyArray_RegisterCanCast(PyArray_Descr *descr, int totype,
          * -- they become part of the data-type
          */
         if (descr->f->cancastto == NULL) {
-            descr->f->cancastto = (int *)malloc(1*sizeof(int));
+            descr->f->cancastto = (int *)malloc(1 * sizeof(int));
             if (descr->f->cancastto == NULL) {
                 PyErr_NoMemory();
                 return -1;
@@ -409,7 +410,7 @@ PyArray_RegisterCanCast(PyArray_Descr *descr, int totype,
         if (descr->f->cancastscalarkindto == NULL) {
             int i;
             descr->f->cancastscalarkindto =
-                (int **)malloc(NPY_NSCALARKINDS* sizeof(int*));
+                    (int **)malloc(NPY_NSCALARKINDS * sizeof(int *));
             if (descr->f->cancastscalarkindto == NULL) {
                 PyErr_NoMemory();
                 return -1;
@@ -420,18 +421,16 @@ PyArray_RegisterCanCast(PyArray_Descr *descr, int totype,
         }
         if (descr->f->cancastscalarkindto[scalar] == NULL) {
             descr->f->cancastscalarkindto[scalar] =
-                (int *)malloc(1*sizeof(int));
+                    (int *)malloc(1 * sizeof(int));
             if (descr->f->cancastscalarkindto[scalar] == NULL) {
                 PyErr_NoMemory();
                 return -1;
             }
-            descr->f->cancastscalarkindto[scalar][0] =
-                NPY_NOTYPE;
+            descr->f->cancastscalarkindto[scalar][0] = NPY_NOTYPE;
         }
         return _append_new(&descr->f->cancastscalarkindto[scalar], totype);
     }
 }
-
 
 /*
  * Legacy user DTypes implemented the common DType operation
@@ -442,8 +441,8 @@ PyArray_RegisterCanCast(PyArray_Descr *descr, int totype,
  * when legacy user dtypes are involved.
  */
 NPY_NO_EXPORT PyArray_DTypeMeta *
-legacy_userdtype_common_dtype_function(
-        PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
+legacy_userdtype_common_dtype_function(PyArray_DTypeMeta *cls,
+                                       PyArray_DTypeMeta *other)
 {
     int skind1 = NPY_NOSCALAR, skind2 = NPY_NOSCALAR, skind;
 
@@ -518,13 +517,11 @@ legacy_userdtype_common_dtype_function(
 
     /* If both are scalars, there may be a promotion possible */
     if (skind1 != NPY_NOSCALAR && skind2 != NPY_NOSCALAR) {
-
         /* Start with the larger scalar kind */
         skind = (skind1 > skind2) ? skind1 : skind2;
         int ret_type_num = _npy_smallest_type_of_kind_table[skind];
 
         for (;;) {
-
             /* If there is no larger type of this kind, try a larger kind */
             if (ret_type_num < 0) {
                 ++skind;
@@ -552,7 +549,6 @@ legacy_userdtype_common_dtype_function(
     return (PyArray_DTypeMeta *)Py_NotImplemented;
 }
 
-
 /**
  * This function wraps a legacy cast into an array-method. This is mostly
  * used for legacy user-dtypes, but for example numeric to/from datetime
@@ -564,19 +560,20 @@ legacy_userdtype_common_dtype_function(
  *        otherwise uses the provided cast.
  */
 NPY_NO_EXPORT int
-PyArray_AddLegacyWrapping_CastingImpl(
-        PyArray_DTypeMeta *from, PyArray_DTypeMeta *to, NPY_CASTING casting)
+PyArray_AddLegacyWrapping_CastingImpl(PyArray_DTypeMeta *from,
+                                      PyArray_DTypeMeta *to,
+                                      NPY_CASTING casting)
 {
     if (casting < 0) {
         if (from == to) {
             casting = NPY_NO_CASTING;
         }
-        else if (PyArray_LegacyCanCastTypeTo(
-                from->singleton, to->singleton, NPY_SAFE_CASTING)) {
+        else if (PyArray_LegacyCanCastTypeTo(from->singleton, to->singleton,
+                                             NPY_SAFE_CASTING)) {
             casting = NPY_SAFE_CASTING;
         }
-        else if (PyArray_LegacyCanCastTypeTo(
-                from->singleton, to->singleton, NPY_SAME_KIND_CASTING)) {
+        else if (PyArray_LegacyCanCastTypeTo(from->singleton, to->singleton,
+                                             NPY_SAME_KIND_CASTING)) {
             casting = NPY_SAME_KIND_CASTING;
         }
         else {
@@ -587,28 +584,27 @@ PyArray_AddLegacyWrapping_CastingImpl(
     PyArray_DTypeMeta *dtypes[2] = {from, to};
     PyArrayMethod_Spec spec = {
             /* Name is not actually used, but allows identifying these. */
-            .name = "legacy_cast",
-            .nin = 1,
-            .nout = 1,
-            .casting = casting,
-            .dtypes = dtypes,
+            .name = "legacy_cast", .nin = 1,         .nout = 1,
+            .casting = casting,    .dtypes = dtypes,
     };
 
     if (from == to) {
         spec.flags = NPY_METH_REQUIRES_PYAPI | NPY_METH_SUPPORTS_UNALIGNED;
         PyType_Slot slots[] = {
-            {NPY_METH_get_loop, &legacy_cast_get_strided_loop},
-            {NPY_METH_resolve_descriptors, &legacy_same_dtype_resolve_descriptors},
-            {0, NULL}};
+                {NPY_METH_get_loop, &legacy_cast_get_strided_loop},
+                {NPY_METH_resolve_descriptors,
+                 &legacy_same_dtype_resolve_descriptors},
+                {0, NULL}};
         spec.slots = slots;
         return PyArray_AddCastingImplementation_FromSpec(&spec, 1);
     }
     else {
         spec.flags = NPY_METH_REQUIRES_PYAPI;
         PyType_Slot slots[] = {
-            {NPY_METH_get_loop, &legacy_cast_get_strided_loop},
-            {NPY_METH_resolve_descriptors, &simple_cast_resolve_descriptors},
-            {0, NULL}};
+                {NPY_METH_get_loop, &legacy_cast_get_strided_loop},
+                {NPY_METH_resolve_descriptors,
+                 &simple_cast_resolve_descriptors},
+                {0, NULL}};
         spec.slots = slots;
         return PyArray_AddCastingImplementation_FromSpec(&spec, 1);
     }

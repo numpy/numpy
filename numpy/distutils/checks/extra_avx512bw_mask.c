@@ -6,9 +6,11 @@
  *  - Clang >= v8.0
  *  - GCC >= v7.1
  */
-int main(void)
+int
+main(void)
 {
-    __mmask64 m64 = _mm512_cmpeq_epi8_mask(_mm512_set1_epi8((char)1), _mm512_set1_epi8((char)1));
+    __mmask64 m64 = _mm512_cmpeq_epi8_mask(_mm512_set1_epi8((char)1),
+                                           _mm512_set1_epi8((char)1));
     m64 = _kor_mask64(m64, m64);
     m64 = _kxor_mask64(m64, m64);
     m64 = _cvtu64_mask64(_cvtmask64_u64(m64));

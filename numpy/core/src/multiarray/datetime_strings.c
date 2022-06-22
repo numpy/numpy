@@ -12,16 +12,16 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
-
 #include "numpy/arrayobject.h"
+#include "numpy/arrayscalars.h"
 
 #include "npy_config.h"
 #include "npy_pycompat.h"
 
-#include "numpy/arrayscalars.h"
-#include "convert_datatype.h"
-#include "_datetime.h"
 #include "datetime_strings.h"
+
+#include "_datetime.h"
+#include "convert_datatype.h"
 
 #include <time.h>
 
@@ -34,9 +34,9 @@
  * [1] http://thread.gmane.org/gmane.comp.gnu.mingw.user/27011
  */
 #if defined(NPY_MINGW_USE_CUSTOM_MSVCR)
- typedef __time64_t NPY_TIME_T;
+typedef __time64_t NPY_TIME_T;
 #else
- typedef time_t NPY_TIME_T;
+typedef time_t NPY_TIME_T;
 #endif
 
 /*
@@ -56,9 +56,9 @@
  *    to a year ~ 1905). If NPY_TIME_T is 64 bit, then there is no such
  *    problem in practice.
  * 2) If the "ts" argument to localtime() is negative, it represents
- *    years < 1970 both for 32 and 64 bits (for 32 bits the earliest year it can
- *    represent is 1901, while 64 bits can represent much earlier years).
- * 3) On Linux, localtime() works for negative "ts". On Windows and in Wine,
+ *    years < 1970 both for 32 and 64 bits (for 32 bits the earliest year it
+ * can represent is 1901, while 64 bits can represent much earlier years). 3)
+ * On Linux, localtime() works for negative "ts". On Windows and in Wine,
  *    localtime() as well as the localtime_s() and _localtime64_s() functions
  *    will fail for any negative "ts" and return a nonzero exit number
  *    (localtime_s, _localtime64_s) or NULL (localtime). This behavior is the
@@ -77,17 +77,17 @@ get_localtime(NPY_TIME_T *ts, struct tm *tms)
 {
     char *func_name = "<unknown>";
 #if defined(_WIN32)
- #if defined(_MSC_VER) && (_MSC_VER >= 1400)
+#if defined(_MSC_VER) && (_MSC_VER >= 1400)
     if (localtime_s(tms, ts) != 0) {
         func_name = "localtime_s";
         goto fail;
     }
- #elif defined(NPY_MINGW_USE_CUSTOM_MSVCR)
+#elif defined(NPY_MINGW_USE_CUSTOM_MSVCR)
     if (_localtime64_s(tms, ts) != 0) {
         func_name = "_localtime64_s";
         goto fail;
     }
- #else
+#else
     struct tm *tms_tmp;
     tms_tmp = localtime(ts);
     if (tms_tmp == NULL) {
@@ -95,7 +95,7 @@ get_localtime(NPY_TIME_T *ts, struct tm *tms)
         goto fail;
     }
     memcpy(tms, tms_tmp, sizeof(struct tm));
- #endif
+#endif
 #else
     if (localtime_r(ts, tms) == NULL) {
         func_name = "localtime_r";
@@ -106,8 +106,10 @@ get_localtime(NPY_TIME_T *ts, struct tm *tms)
     return 0;
 
 fail:
-    PyErr_Format(PyExc_OSError, "Failed to use '%s' to convert "
-                                "to a local time", func_name);
+    PyErr_Format(PyExc_OSError,
+                 "Failed to use '%s' to convert "
+                 "to a local time",
+                 func_name);
     return -1;
 }
 
@@ -121,7 +123,8 @@ fail:
  */
 static int
 convert_datetimestruct_utc_to_local(npy_datetimestruct *out_dts_local,
-                const npy_datetimestruct *dts_utc, int *out_timezone_offset)
+                                    const npy_datetimestruct *dts_utc,
+                                    int *out_timezone_offset)
 {
     NPY_TIME_T rawtime = 0, localrawtime;
     struct tm tm_;
@@ -156,7 +159,8 @@ convert_datetimestruct_utc_to_local(npy_datetimestruct *out_dts_local,
      * we drop the seconds value from the npy_datetimestruct, everything
      * is ok for this operation.
      */
-    rawtime = (NPY_TIME_T)get_datetimestruct_days(out_dts_local) * 24 * 60 * 60;
+    rawtime =
+            (NPY_TIME_T)get_datetimestruct_days(out_dts_local) * 24 * 60 * 60;
     rawtime += dts_utc->hour * 60 * 60;
     rawtime += dts_utc->min * 60;
 
@@ -175,7 +179,8 @@ convert_datetimestruct_utc_to_local(npy_datetimestruct *out_dts_local,
 
     /* Extract the timezone offset that was applied */
     rawtime /= 60;
-    localrawtime = (NPY_TIME_T)get_datetimestruct_days(out_dts_local) * 24 * 60;
+    localrawtime =
+            (NPY_TIME_T)get_datetimestruct_days(out_dts_local) * 24 * 60;
     localrawtime += out_dts_local->hour * 60;
     localrawtime += out_dts_local->min;
 
@@ -219,12 +224,9 @@ convert_datetimestruct_utc_to_local(npy_datetimestruct *out_dts_local,
  * Returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT int
-parse_iso_8601_datetime(char const *str, Py_ssize_t len,
-                    NPY_DATETIMEUNIT unit,
-                    NPY_CASTING casting,
-                    npy_datetimestruct *out,
-                    NPY_DATETIMEUNIT *out_bestunit,
-                    npy_bool *out_special)
+parse_iso_8601_datetime(char const *str, Py_ssize_t len, NPY_DATETIMEUNIT unit,
+                        NPY_CASTING casting, npy_datetimestruct *out,
+                        NPY_DATETIMEUNIT *out_bestunit, npy_bool *out_special)
 {
     int year_leap = 0;
     int i, numdigits;
@@ -242,10 +244,8 @@ parse_iso_8601_datetime(char const *str, Py_ssize_t len,
      * Tried to use PyOS_stricmp, but that function appears to be broken,
      * not even matching the strcmp function signature as it should.
      */
-    if (len <= 0 || (len == 3 &&
-                        tolower(str[0]) == 'n' &&
-                        tolower(str[1]) == 'a' &&
-                        tolower(str[2]) == 't')) {
+    if (len <= 0 || (len == 3 && tolower(str[0]) == 'n' &&
+                     tolower(str[1]) == 'a' && tolower(str[2]) == 't')) {
         out->year = NPY_DATETIME_NAT;
 
         /*
@@ -264,8 +264,8 @@ parse_iso_8601_datetime(char const *str, Py_ssize_t len,
 
     if (unit == NPY_FR_GENERIC) {
         PyErr_SetString(PyExc_ValueError,
-                    "Cannot create a NumPy datetime other than NaT "
-                    "with generic units");
+                        "Cannot create a NumPy datetime other than NaT "
+                        "with generic units");
         return -1;
     }
 
@@ -278,11 +278,9 @@ parse_iso_8601_datetime(char const *str, Py_ssize_t len,
      * switching to an adjacent day depending on the current time and your
      * timezone.
      */
-    if (len == 5 && tolower(str[0]) == 't' &&
-                    tolower(str[1]) == 'o' &&
-                    tolower(str[2]) == 'd' &&
-                    tolower(str[3]) == 'a' &&
-                    tolower(str[4]) == 'y') {
+    if (len == 5 && tolower(str[0]) == 't' && tolower(str[1]) == 'o' &&
+        tolower(str[2]) == 'd' && tolower(str[3]) == 'a' &&
+        tolower(str[4]) == 'y') {
         NPY_TIME_T rawtime = 0;
         struct tm tm_;
 
@@ -309,8 +307,9 @@ parse_iso_8601_datetime(char const *str, Py_ssize_t len,
 
         /* Check the casting rule */
         if (unit != NPY_FR_ERROR &&
-                !can_cast_datetime64_units(bestunit, unit, casting)) {
-            PyErr_Format(PyExc_TypeError, "Cannot parse \"%s\" as unit "
+            !can_cast_datetime64_units(bestunit, unit, casting)) {
+            PyErr_Format(PyExc_TypeError,
+                         "Cannot parse \"%s\" as unit "
                          "'%s' using casting rule %s",
                          str, _datetime_strings[unit],
                          npy_casting_to_string(casting));
@@ -321,9 +320,8 @@ parse_iso_8601_datetime(char const *str, Py_ssize_t len,
     }
 
     /* The string "now" resolves to the current UTC time */
-    if (len == 3 && tolower(str[0]) == 'n' &&
-                    tolower(str[1]) == 'o' &&
-                    tolower(str[2]) == 'w') {
+    if (len == 3 && tolower(str[0]) == 'n' && tolower(str[1]) == 'o' &&
+        tolower(str[2]) == 'w') {
         NPY_TIME_T rawtime = 0;
         PyArray_DatetimeMetaData meta;
 
@@ -349,8 +347,9 @@ parse_iso_8601_datetime(char const *str, Py_ssize_t len,
 
         /* Check the casting rule */
         if (unit != NPY_FR_ERROR &&
-                !can_cast_datetime64_units(bestunit, unit, casting)) {
-            PyErr_Format(PyExc_TypeError, "Cannot parse \"%s\" as unit "
+            !can_cast_datetime64_units(bestunit, unit, casting)) {
+            PyErr_Format(PyExc_TypeError,
+                         "Cannot parse \"%s\" as unit "
                          "'%s' using casting rule %s",
                          str, _datetime_strings[unit],
                          npy_casting_to_string(casting));
@@ -423,7 +422,7 @@ parse_iso_8601_datetime(char const *str, Py_ssize_t len,
 
         if (out->month < 1 || out->month > 12) {
             PyErr_Format(PyExc_ValueError,
-                        "Month out of range in datetime string \"%s\"", str);
+                         "Month out of range in datetime string \"%s\"", str);
             goto error;
         }
         substr += 2;
@@ -456,9 +455,9 @@ parse_iso_8601_datetime(char const *str, Py_ssize_t len,
         out->day = 10 * (substr[0] - '0') + (substr[1] - '0');
 
         if (out->day < 1 ||
-                    out->day > _days_per_month_table[year_leap][out->month-1]) {
+            out->day > _days_per_month_table[year_leap][out->month - 1]) {
             PyErr_Format(PyExc_ValueError,
-                        "Day out of range in datetime string \"%s\"", str);
+                         "Day out of range in datetime string \"%s\"", str);
             goto error;
         }
         substr += 2;
@@ -487,7 +486,7 @@ parse_iso_8601_datetime(char const *str, Py_ssize_t len,
 
         if (out->hour >= 24) {
             PyErr_Format(PyExc_ValueError,
-                        "Hours out of range in datetime string \"%s\"", str);
+                         "Hours out of range in datetime string \"%s\"", str);
             goto error;
         }
         substr += 2;
@@ -518,7 +517,8 @@ parse_iso_8601_datetime(char const *str, Py_ssize_t len,
 
         if (out->min >= 60) {
             PyErr_Format(PyExc_ValueError,
-                        "Minutes out of range in datetime string \"%s\"", str);
+                         "Minutes out of range in datetime string \"%s\"",
+                         str);
             goto error;
         }
         substr += 2;
@@ -549,7 +549,8 @@ parse_iso_8601_datetime(char const *str, Py_ssize_t len,
 
         if (out->sec >= 60) {
             PyErr_Format(PyExc_ValueError,
-                        "Seconds out of range in datetime string \"%s\"", str);
+                         "Seconds out of range in datetime string \"%s\"",
+                         str);
             goto error;
         }
         substr += 2;
@@ -573,7 +574,7 @@ parse_iso_8601_datetime(char const *str, Py_ssize_t len,
     numdigits = 0;
     for (i = 0; i < 6; ++i) {
         out->us *= 10;
-        if (sublen > 0  && isdigit(*substr)) {
+        if (sublen > 0 && isdigit(*substr)) {
             out->us += (*substr - '0');
             ++substr;
             --sublen;
@@ -639,9 +640,8 @@ parse_timezone:
     else {
         /* 2016-01-14, 1.11 */
         PyErr_Clear();
-        if (DEPRECATE(
-                "parsing timezone aware datetimes is deprecated; "
-                "this will raise an error in the future") < 0) {
+        if (DEPRECATE("parsing timezone aware datetimes is deprecated; "
+                      "this will raise an error in the future") < 0) {
             return -1;
         }
     }
@@ -673,8 +673,9 @@ parse_timezone:
             sublen -= 2;
             if (offset_hour >= 24) {
                 PyErr_Format(PyExc_ValueError,
-                            "Timezone hours offset out of range "
-                            "in datetime string \"%s\"", str);
+                             "Timezone hours offset out of range "
+                             "in datetime string \"%s\"",
+                             str);
                 goto error;
             }
         }
@@ -697,8 +698,9 @@ parse_timezone:
                 sublen -= 2;
                 if (offset_minute >= 60) {
                     PyErr_Format(PyExc_ValueError,
-                                "Timezone minutes offset out of range "
-                                "in datetime string \"%s\"", str);
+                                 "Timezone minutes offset out of range "
+                                 "in datetime string \"%s\"",
+                                 str);
                     goto error;
                 }
             }
@@ -732,8 +734,9 @@ finish:
 
     /* Check the casting rule */
     if (unit != NPY_FR_ERROR &&
-            !can_cast_datetime64_units(bestunit, unit, casting)) {
-        PyErr_Format(PyExc_TypeError, "Cannot parse \"%s\" as unit "
+        !can_cast_datetime64_units(bestunit, unit, casting)) {
+        PyErr_Format(PyExc_TypeError,
+                     "Cannot parse \"%s\" as unit "
                      "'%s' using casting rule %s",
                      str, _datetime_strings[unit],
                      npy_casting_to_string(casting));
@@ -744,8 +747,8 @@ finish:
 
 parse_error:
     PyErr_Format(PyExc_ValueError,
-            "Error parsing datetime string \"%s\" at position %zd",
-            str, substr - str);
+                 "Error parsing datetime string \"%s\" at position %zd", str,
+                 substr - str);
     return -1;
 
 error:
@@ -769,28 +772,28 @@ get_datetime_iso_8601_strlen(int local, NPY_DATETIMEUNIT base)
             /* Generic units can only be used to represent NaT */
             return 4;
         case NPY_FR_as:
-            len += 3;  /* "###" */
+            len += 3; /* "###" */
         case NPY_FR_fs:
-            len += 3;  /* "###" */
+            len += 3; /* "###" */
         case NPY_FR_ps:
-            len += 3;  /* "###" */
+            len += 3; /* "###" */
         case NPY_FR_ns:
-            len += 3;  /* "###" */
+            len += 3; /* "###" */
         case NPY_FR_us:
-            len += 3;  /* "###" */
+            len += 3; /* "###" */
         case NPY_FR_ms:
-            len += 4;  /* ".###" */
+            len += 4; /* ".###" */
         case NPY_FR_s:
-            len += 3;  /* ":##" */
+            len += 3; /* ":##" */
         case NPY_FR_m:
-            len += 3;  /* ":##" */
+            len += 3; /* ":##" */
         case NPY_FR_h:
-            len += 3;  /* "T##" */
+            len += 3; /* "T##" */
         case NPY_FR_D:
         case NPY_FR_W:
-            len += 3;  /* "-##" */
+            len += 3; /* "-##" */
         case NPY_FR_M:
-            len += 3;  /* "-##" */
+            len += 3; /* "-##" */
         case NPY_FR_Y:
             len += 21; /* 64-bit year */
             break;
@@ -798,10 +801,10 @@ get_datetime_iso_8601_strlen(int local, NPY_DATETIMEUNIT base)
 
     if (base >= NPY_FR_h) {
         if (local) {
-            len += 5;  /* "+####" or "-####" */
+            len += 5; /* "+####" or "-####" */
         }
         else {
-            len += 1;  /* "Z" */
+            len += 1; /* "Z" */
         }
     }
 
@@ -885,8 +888,8 @@ lossless_unit_from_datetimestruct(npy_datetimestruct *dts)
  */
 NPY_NO_EXPORT int
 make_iso_8601_datetime(npy_datetimestruct *dts, char *outstr, npy_intp outlen,
-                    int local, int utc, NPY_DATETIMEUNIT base, int tzoffset,
-                    NPY_CASTING casting)
+                       int local, int utc, NPY_DATETIMEUNIT base, int tzoffset,
+                       NPY_CASTING casting)
 {
     npy_datetimestruct dts_local;
     int timezone_offset = 0;
@@ -980,9 +983,10 @@ make_iso_8601_datetime(npy_datetimestruct *dts, char *outstr, npy_intp outlen,
     if (casting != NPY_UNSAFE_CASTING) {
         /* Producing a date as a local time is always 'unsafe' */
         if (base <= NPY_FR_D && local) {
-            PyErr_SetString(PyExc_TypeError, "Cannot create a local "
-                        "timezone-based date string from a NumPy "
-                        "datetime without forcing 'unsafe' casting");
+            PyErr_SetString(PyExc_TypeError,
+                            "Cannot create a local "
+                            "timezone-based date string from a NumPy "
+                            "datetime without forcing 'unsafe' casting");
             return -1;
         }
         /* Only 'unsafe' and 'same_kind' allow data loss */
@@ -991,11 +995,12 @@ make_iso_8601_datetime(npy_datetimestruct *dts, char *outstr, npy_intp outlen,
 
             unitprec = lossless_unit_from_datetimestruct(dts);
             if (casting != NPY_SAME_KIND_CASTING && unitprec > base) {
-                PyErr_Format(PyExc_TypeError, "Cannot create a "
-                            "string with unit precision '%s' "
-                            "from the NumPy datetime, which has data at "
-                            "unit precision '%s', "
-                            "requires 'unsafe' or 'same_kind' casting",
+                PyErr_Format(PyExc_TypeError,
+                             "Cannot create a "
+                             "string with unit precision '%s' "
+                             "from the NumPy datetime, which has data at "
+                             "unit precision '%s', "
+                             "requires 'unsafe' or 'same_kind' casting",
                              _datetime_strings[base],
                              _datetime_strings[unitprec]);
                 return -1;
@@ -1030,15 +1035,15 @@ make_iso_8601_datetime(npy_datetimestruct *dts, char *outstr, npy_intp outlen,
     }
 
     /* MONTH */
-    if (sublen < 1 ) {
+    if (sublen < 1) {
         goto string_too_short;
     }
     substr[0] = '-';
-    if (sublen < 2 ) {
+    if (sublen < 2) {
         goto string_too_short;
     }
     substr[1] = (char)((dts->month / 10) + '0');
-    if (sublen < 3 ) {
+    if (sublen < 3) {
         goto string_too_short;
     }
     substr[2] = (char)((dts->month % 10) + '0');
@@ -1054,15 +1059,15 @@ make_iso_8601_datetime(npy_datetimestruct *dts, char *outstr, npy_intp outlen,
     }
 
     /* DAY */
-    if (sublen < 1 ) {
+    if (sublen < 1) {
         goto string_too_short;
     }
     substr[0] = '-';
-    if (sublen < 2 ) {
+    if (sublen < 2) {
         goto string_too_short;
     }
     substr[1] = (char)((dts->day / 10) + '0');
-    if (sublen < 3 ) {
+    if (sublen < 3) {
         goto string_too_short;
     }
     substr[2] = (char)((dts->day % 10) + '0');
@@ -1078,15 +1083,15 @@ make_iso_8601_datetime(npy_datetimestruct *dts, char *outstr, npy_intp outlen,
     }
 
     /* HOUR */
-    if (sublen < 1 ) {
+    if (sublen < 1) {
         goto string_too_short;
     }
     substr[0] = 'T';
-    if (sublen < 2 ) {
+    if (sublen < 2) {
         goto string_too_short;
     }
     substr[1] = (char)((dts->hour / 10) + '0');
-    if (sublen < 3 ) {
+    if (sublen < 3) {
         goto string_too_short;
     }
     substr[2] = (char)((dts->hour % 10) + '0');
@@ -1099,15 +1104,15 @@ make_iso_8601_datetime(npy_datetimestruct *dts, char *outstr, npy_intp outlen,
     }
 
     /* MINUTE */
-    if (sublen < 1 ) {
+    if (sublen < 1) {
         goto string_too_short;
     }
     substr[0] = ':';
-    if (sublen < 2 ) {
+    if (sublen < 2) {
         goto string_too_short;
     }
     substr[1] = (char)((dts->min / 10) + '0');
-    if (sublen < 3 ) {
+    if (sublen < 3) {
         goto string_too_short;
     }
     substr[2] = (char)((dts->min % 10) + '0');
@@ -1120,15 +1125,15 @@ make_iso_8601_datetime(npy_datetimestruct *dts, char *outstr, npy_intp outlen,
     }
 
     /* SECOND */
-    if (sublen < 1 ) {
+    if (sublen < 1) {
         goto string_too_short;
     }
     substr[0] = ':';
-    if (sublen < 2 ) {
+    if (sublen < 2) {
         goto string_too_short;
     }
     substr[1] = (char)((dts->sec / 10) + '0');
-    if (sublen < 3 ) {
+    if (sublen < 3) {
         goto string_too_short;
     }
     substr[2] = (char)((dts->sec % 10) + '0');
@@ -1141,19 +1146,19 @@ make_iso_8601_datetime(npy_datetimestruct *dts, char *outstr, npy_intp outlen,
     }
 
     /* MILLISECOND */
-    if (sublen < 1 ) {
+    if (sublen < 1) {
         goto string_too_short;
     }
     substr[0] = '.';
-    if (sublen < 2 ) {
+    if (sublen < 2) {
         goto string_too_short;
     }
     substr[1] = (char)((dts->us / 100000) % 10 + '0');
-    if (sublen < 3 ) {
+    if (sublen < 3) {
         goto string_too_short;
     }
     substr[2] = (char)((dts->us / 10000) % 10 + '0');
-    if (sublen < 4 ) {
+    if (sublen < 4) {
         goto string_too_short;
     }
     substr[3] = (char)((dts->us / 1000) % 10 + '0');
@@ -1166,15 +1171,15 @@ make_iso_8601_datetime(npy_datetimestruct *dts, char *outstr, npy_intp outlen,
     }
 
     /* MICROSECOND */
-    if (sublen < 1 ) {
+    if (sublen < 1) {
         goto string_too_short;
     }
     substr[0] = (char)((dts->us / 100) % 10 + '0');
-    if (sublen < 2 ) {
+    if (sublen < 2) {
         goto string_too_short;
     }
     substr[1] = (char)((dts->us / 10) % 10 + '0');
-    if (sublen < 3 ) {
+    if (sublen < 3) {
         goto string_too_short;
     }
     substr[2] = (char)(dts->us % 10 + '0');
@@ -1187,15 +1192,15 @@ make_iso_8601_datetime(npy_datetimestruct *dts, char *outstr, npy_intp outlen,
     }
 
     /* NANOSECOND */
-    if (sublen < 1 ) {
+    if (sublen < 1) {
         goto string_too_short;
     }
     substr[0] = (char)((dts->ps / 100000) % 10 + '0');
-    if (sublen < 2 ) {
+    if (sublen < 2) {
         goto string_too_short;
     }
     substr[1] = (char)((dts->ps / 10000) % 10 + '0');
-    if (sublen < 3 ) {
+    if (sublen < 3) {
         goto string_too_short;
     }
     substr[2] = (char)((dts->ps / 1000) % 10 + '0');
@@ -1208,15 +1213,15 @@ make_iso_8601_datetime(npy_datetimestruct *dts, char *outstr, npy_intp outlen,
     }
 
     /* PICOSECOND */
-    if (sublen < 1 ) {
+    if (sublen < 1) {
         goto string_too_short;
     }
     substr[0] = (char)((dts->ps / 100) % 10 + '0');
-    if (sublen < 2 ) {
+    if (sublen < 2) {
         goto string_too_short;
     }
     substr[1] = (char)((dts->ps / 10) % 10 + '0');
-    if (sublen < 3 ) {
+    if (sublen < 3) {
         goto string_too_short;
     }
     substr[2] = (char)(dts->ps % 10 + '0');
@@ -1229,15 +1234,15 @@ make_iso_8601_datetime(npy_datetimestruct *dts, char *outstr, npy_intp outlen,
     }
 
     /* FEMTOSECOND */
-    if (sublen < 1 ) {
+    if (sublen < 1) {
         goto string_too_short;
     }
     substr[0] = (char)((dts->as / 100000) % 10 + '0');
-    if (sublen < 2 ) {
+    if (sublen < 2) {
         goto string_too_short;
     }
     substr[1] = (char)((dts->as / 10000) % 10 + '0');
-    if (sublen < 3 ) {
+    if (sublen < 3) {
         goto string_too_short;
     }
     substr[2] = (char)((dts->as / 1000) % 10 + '0');
@@ -1250,15 +1255,15 @@ make_iso_8601_datetime(npy_datetimestruct *dts, char *outstr, npy_intp outlen,
     }
 
     /* ATTOSECOND */
-    if (sublen < 1 ) {
+    if (sublen < 1) {
         goto string_too_short;
     }
     substr[0] = (char)((dts->as / 100) % 10 + '0');
-    if (sublen < 2 ) {
+    if (sublen < 2) {
         goto string_too_short;
     }
     substr[1] = (char)((dts->as / 10) % 10 + '0');
-    if (sublen < 3 ) {
+    if (sublen < 3) {
         goto string_too_short;
     }
     substr[2] = (char)(dts->as % 10 + '0');
@@ -1282,19 +1287,19 @@ add_time_zone:
         sublen -= 1;
 
         /* Add the timezone offset */
-        if (sublen < 1 ) {
+        if (sublen < 1) {
             goto string_too_short;
         }
-        substr[0] = (char)((timezone_offset / (10*60)) % 10 + '0');
-        if (sublen < 2 ) {
+        substr[0] = (char)((timezone_offset / (10 * 60)) % 10 + '0');
+        if (sublen < 2) {
             goto string_too_short;
         }
         substr[1] = (char)((timezone_offset / 60) % 10 + '0');
-        if (sublen < 3 ) {
+        if (sublen < 3) {
             goto string_too_short;
         }
         substr[2] = (char)(((timezone_offset % 60) / 10) % 10 + '0');
-        if (sublen < 4 ) {
+        if (sublen < 4) {
             goto string_too_short;
         }
         substr[3] = (char)((timezone_offset % 60) % 10 + '0');
@@ -1320,19 +1325,18 @@ add_time_zone:
 
 string_too_short:
     PyErr_Format(PyExc_RuntimeError,
-                "The string provided for NumPy ISO datetime formatting "
-                "was too short, with length %"NPY_INTP_FMT,
-                outlen);
+                 "The string provided for NumPy ISO datetime formatting "
+                 "was too short, with length %" NPY_INTP_FMT,
+                 outlen);
     return -1;
 }
-
 
 /*
  * This is the Python-exposed datetime_as_string function.
  */
 NPY_NO_EXPORT PyObject *
 array_datetime_as_string(PyObject *NPY_UNUSED(self), PyObject *args,
-                                PyObject *kwds)
+                         PyObject *kwds)
 {
     PyObject *arr_in = NULL, *unit_in = NULL, *timezone_obj = NULL;
     NPY_DATETIMEUNIT unit;
@@ -1352,12 +1356,9 @@ array_datetime_as_string(PyObject *NPY_UNUSED(self), PyObject *args,
 
     static char *kwlist[] = {"arr", "unit", "timezone", "casting", NULL};
 
-    if(!PyArg_ParseTupleAndKeywords(args, kwds,
-                                "O|OOO&:datetime_as_string", kwlist,
-                                &arr_in,
-                                &unit_in,
-                                &timezone_obj,
-                                &PyArray_CastingConverter, &casting)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OOO&:datetime_as_string",
+                                     kwlist, &arr_in, &unit_in, &timezone_obj,
+                                     &PyArray_CastingConverter, &casting)) {
         return NULL;
     }
 
@@ -1370,7 +1371,7 @@ array_datetime_as_string(PyObject *NPY_UNUSED(self), PyObject *args,
     }
     if (PyArray_DESCR(op[0])->type_num != NPY_DATETIME) {
         PyErr_SetString(PyExc_TypeError,
-                    "input must have type NumPy datetime");
+                        "input must have type NumPy datetime");
         goto fail;
     }
 
@@ -1389,7 +1390,8 @@ array_datetime_as_string(PyObject *NPY_UNUSED(self), PyObject *args,
 
         if (PyBytes_Check(unit_in)) {
             /* accept bytes input */
-            PyObject *obj_str = PyUnicode_FromEncodedObject(unit_in, NULL, NULL);
+            PyObject *obj_str =
+                    PyUnicode_FromEncodedObject(unit_in, NULL, NULL);
             if (obj_str == NULL) {
                 return 0;
             }
@@ -1424,12 +1426,13 @@ array_datetime_as_string(PyObject *NPY_UNUSED(self), PyObject *args,
         Py_DECREF(strobj);
 
         if (unit != NPY_FR_ERROR &&
-                !can_cast_datetime64_units(meta->base, unit, casting)) {
-            PyErr_Format(PyExc_TypeError, "Cannot create a datetime "
-                        "string as units '%s' from a NumPy datetime "
-                        "with units '%s' according to the rule %s",
-                        _datetime_strings[unit],
-                        _datetime_strings[meta->base],
+            !can_cast_datetime64_units(meta->base, unit, casting)) {
+            PyErr_Format(PyExc_TypeError,
+                         "Cannot create a datetime "
+                         "string as units '%s' from a NumPy datetime "
+                         "with units '%s' according to the rule %s",
+                         _datetime_strings[unit],
+                         _datetime_strings[meta->base],
                          npy_casting_to_string(casting));
             goto fail;
         }
@@ -1440,7 +1443,8 @@ array_datetime_as_string(PyObject *NPY_UNUSED(self), PyObject *args,
         PyObject *strobj;
         if (PyBytes_Check(timezone_obj)) {
             /* accept bytes input */
-            PyObject *obj_str = PyUnicode_FromEncodedObject(timezone_obj, NULL, NULL);
+            PyObject *obj_str =
+                    PyUnicode_FromEncodedObject(timezone_obj, NULL, NULL);
             if (obj_str == NULL) {
                 goto fail;
             }
@@ -1480,8 +1484,10 @@ array_datetime_as_string(PyObject *NPY_UNUSED(self), PyObject *args,
                 timezone_obj = NULL;
             }
             else {
-                PyErr_Format(PyExc_ValueError, "Unsupported timezone "
-                            "input string \"%s\"", str);
+                PyErr_Format(PyExc_ValueError,
+                             "Unsupported timezone "
+                             "input string \"%s\"",
+                             str);
                 goto fail;
             }
         }
@@ -1503,8 +1509,8 @@ array_datetime_as_string(PyObject *NPY_UNUSED(self), PyObject *args,
     }
     op_dtypes[1]->elsize = strsize * 4;
     /* This steals the UNICODE dtype reference in op_dtypes[1] */
-    op[1] = (PyArrayObject *)PyArray_NewLikeArray(op[0],
-                                        NPY_KEEPORDER, op_dtypes[1], 1);
+    op[1] = (PyArrayObject *)PyArray_NewLikeArray(op[0], NPY_KEEPORDER,
+                                                  op_dtypes[1], 1);
     if (op[1] == NULL) {
         op_dtypes[1] = NULL;
         goto fail;
@@ -1516,12 +1522,9 @@ array_datetime_as_string(PyObject *NPY_UNUSED(self), PyObject *args,
     }
     op_dtypes[1]->elsize = strsize;
 
-    flags = NPY_ITER_ZEROSIZE_OK|
-            NPY_ITER_BUFFERED;
-    op_flags[0] = NPY_ITER_READONLY|
-                  NPY_ITER_ALIGNED;
-    op_flags[1] = NPY_ITER_WRITEONLY|
-                  NPY_ITER_ALLOCATE;
+    flags = NPY_ITER_ZEROSIZE_OK | NPY_ITER_BUFFERED;
+    op_flags[0] = NPY_ITER_READONLY | NPY_ITER_ALIGNED;
+    op_flags[1] = NPY_ITER_WRITEONLY | NPY_ITER_ALLOCATE;
 
     iter = NpyIter_MultiNew(2, op, flags, NPY_KEEPORDER, NPY_UNSAFE_CASTING,
                             op_flags, op_dtypes);
@@ -1564,10 +1567,11 @@ array_datetime_as_string(PyObject *NPY_UNUSED(self), PyObject *args,
             memset(dataptr[1], 0, strsize);
             /* Convert that into a string */
             if (make_iso_8601_datetime(&dts, (char *)dataptr[1], strsize,
-                                local, utc, unit, tzoffset, casting) < 0) {
+                                       local, utc, unit, tzoffset,
+                                       casting) < 0) {
                 goto fail;
             }
-        } while(iternext(iter));
+        } while (iternext(iter));
     }
 
     ret = NpyIter_GetOperandArray(iter)[1];

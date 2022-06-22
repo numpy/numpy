@@ -27,9 +27,9 @@ for name in ${dll_list};
 do
     echo ${name}
     ext_module=`echo ${name} | \
-                     sed -E \
-			 -e "s/^\/+(home|usr).*?site-packages\/+//" \
-			 -e "s/.cpython-3.m?-x86(_64)?-cygwin.dll$//" \
-			 -e "s/\//./g"`
+        sed -E \
+        -e "s/^\/+(home|usr).*?site-packages\/+//" \
+        -e "s/.cpython-3.m?-x86(_64)?-cygwin.dll$//" \
+        -e "s/\//./g"`
     python${py_ver} -c "import ${ext_module}"
 done

@@ -124,74 +124,80 @@ set_state            Set state of generator.
 
 """
 __all__ = [
-    'beta',
-    'binomial',
-    'bytes',
-    'chisquare',
-    'choice',
-    'dirichlet',
-    'exponential',
-    'f',
-    'gamma',
-    'geometric',
-    'get_state',
-    'gumbel',
-    'hypergeometric',
-    'laplace',
-    'logistic',
-    'lognormal',
-    'logseries',
-    'multinomial',
-    'multivariate_normal',
-    'negative_binomial',
-    'noncentral_chisquare',
-    'noncentral_f',
-    'normal',
-    'pareto',
-    'permutation',
-    'poisson',
-    'power',
-    'rand',
-    'randint',
-    'randn',
-    'random',
-    'random_integers',
-    'random_sample',
-    'ranf',
-    'rayleigh',
-    'sample',
-    'seed',
-    'set_state',
-    'shuffle',
-    'standard_cauchy',
-    'standard_exponential',
-    'standard_gamma',
-    'standard_normal',
-    'standard_t',
-    'triangular',
-    'uniform',
-    'vonmises',
-    'wald',
-    'weibull',
-    'zipf',
+    "beta",
+    "binomial",
+    "bytes",
+    "chisquare",
+    "choice",
+    "dirichlet",
+    "exponential",
+    "f",
+    "gamma",
+    "geometric",
+    "get_state",
+    "gumbel",
+    "hypergeometric",
+    "laplace",
+    "logistic",
+    "lognormal",
+    "logseries",
+    "multinomial",
+    "multivariate_normal",
+    "negative_binomial",
+    "noncentral_chisquare",
+    "noncentral_f",
+    "normal",
+    "pareto",
+    "permutation",
+    "poisson",
+    "power",
+    "rand",
+    "randint",
+    "randn",
+    "random",
+    "random_integers",
+    "random_sample",
+    "ranf",
+    "rayleigh",
+    "sample",
+    "seed",
+    "set_state",
+    "shuffle",
+    "standard_cauchy",
+    "standard_exponential",
+    "standard_gamma",
+    "standard_normal",
+    "standard_t",
+    "triangular",
+    "uniform",
+    "vonmises",
+    "wald",
+    "weibull",
+    "zipf",
 ]
 
 # add these for module-freeze analysis (like PyInstaller)
-from . import _pickle
-from . import _common
-from . import _bounded_integers
-
+from . import _bounded_integers, _common, _pickle
 from ._generator import Generator, default_rng
-from .bit_generator import SeedSequence, BitGenerator
 from ._mt19937 import MT19937
 from ._pcg64 import PCG64, PCG64DXSM
 from ._philox import Philox
 from ._sfc64 import SFC64
+from .bit_generator import BitGenerator, SeedSequence
 from .mtrand import *
 
-__all__ += ['Generator', 'RandomState', 'SeedSequence', 'MT19937',
-            'Philox', 'PCG64', 'PCG64DXSM', 'SFC64', 'default_rng',
-            'BitGenerator']
+__all__ += [
+    "Generator",
+    "RandomState",
+    "SeedSequence",
+    "MT19937",
+    "Philox",
+    "PCG64",
+    "PCG64DXSM",
+    "SFC64",
+    "default_rng",
+    "BitGenerator",
+]
 
 
 def __RandomState_ctor():
@@ -211,5 +217,6 @@ def __RandomState_ctor():
 
 
 from numpy._pytesttester import PytestTester
+
 test = PytestTester(__name__)
 del PytestTester

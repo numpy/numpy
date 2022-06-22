@@ -1,12 +1,10 @@
 #ifndef NUMPY_CORE_SRC_COMMON_NPY_EXTINT128_H_
 #define NUMPY_CORE_SRC_COMMON_NPY_EXTINT128_H_
 
-
 typedef struct {
     signed char sign;
     npy_uint64 lo, hi;
 } npy_extint128_t;
-
 
 /* Integer addition with overflow checking */
 static NPY_INLINE npy_int64
@@ -21,7 +19,6 @@ safe_add(npy_int64 a, npy_int64 b, char *overflow_flag)
     return a + b;
 }
 
-
 /* Integer subtraction with overflow checking */
 static NPY_INLINE npy_int64
 safe_sub(npy_int64 a, npy_int64 b, char *overflow_flag)
@@ -34,7 +31,6 @@ safe_sub(npy_int64 a, npy_int64 b, char *overflow_flag)
     }
     return a - b;
 }
-
 
 /* Integer multiplication with overflow checking */
 static NPY_INLINE npy_int64
@@ -56,7 +52,6 @@ safe_mul(npy_int64 a, npy_int64 b, char *overflow_flag)
     return a * b;
 }
 
-
 /* Long integer init */
 static NPY_INLINE npy_extint128_t
 to_128(npy_int64 x)
@@ -73,18 +68,15 @@ to_128(npy_int64 x)
     return result;
 }
 
-
 static NPY_INLINE npy_int64
 to_64(npy_extint128_t x, char *overflow)
 {
-    if (x.hi != 0 ||
-        (x.sign > 0 && x.lo > NPY_MAX_INT64) ||
+    if (x.hi != 0 || (x.sign > 0 && x.lo > NPY_MAX_INT64) ||
         (x.sign < 0 && x.lo != 0 && x.lo - 1 > -(NPY_MIN_INT64 + 1))) {
         *overflow = 1;
     }
     return x.lo * x.sign;
 }
-
 
 /* Long integer multiply */
 static NPY_INLINE npy_extint128_t
@@ -102,12 +94,12 @@ mul_64_64(npy_int64 a, npy_int64 b)
     y1 = y.lo & 0xffffffff;
     y2 = y.lo >> 32;
 
-    r1 = x1*y2;
-    r2 = x2*y1;
+    r1 = x1 * y2;
+    r2 = x2 * y1;
 
     z.sign = x.sign * y.sign;
-    z.hi = x2*y2 + (r1 >> 32) + (r2 >> 32);
-    z.lo = x1*y1;
+    z.hi = x2 * y2 + (r1 >> 32) + (r2 >> 32);
+    z.lo = x1 * y1;
 
     /* Add with carry */
     prev = z.lo;
@@ -124,7 +116,6 @@ mul_64_64(npy_int64 a, npy_int64 b)
 
     return z;
 }
-
 
 /* Long integer add */
 static NPY_INLINE npy_extint128_t
@@ -168,7 +159,6 @@ add_128(npy_extint128_t x, npy_extint128_t y, char *overflow)
     return z;
 }
 
-
 /* Long integer negation */
 static NPY_INLINE npy_extint128_t
 neg_128(npy_extint128_t x)
@@ -178,13 +168,11 @@ neg_128(npy_extint128_t x)
     return z;
 }
 
-
 static NPY_INLINE npy_extint128_t
 sub_128(npy_extint128_t x, npy_extint128_t y, char *overflow)
 {
     return add_128(x, neg_128(y), overflow);
 }
-
 
 static NPY_INLINE npy_extint128_t
 shl_128(npy_extint128_t v)
@@ -196,7 +184,6 @@ shl_128(npy_extint128_t v)
     z.lo <<= 1;
     return z;
 }
-
 
 static NPY_INLINE npy_extint128_t
 shr_128(npy_extint128_t v)
@@ -225,7 +212,6 @@ gt_128(npy_extint128_t a, npy_extint128_t b)
         return 0;
     }
 }
-
 
 /* Long integer divide */
 static NPY_INLINE npy_extint128_t
@@ -282,7 +268,6 @@ divmod_128_64(npy_extint128_t x, npy_int64 b, npy_int64 *mod)
     return result;
 }
 
-
 /* Divide and round down (positive divisor; no overflows) */
 static NPY_INLINE npy_extint128_t
 floordiv_128_64(npy_extint128_t a, npy_int64 b)
@@ -297,7 +282,6 @@ floordiv_128_64(npy_extint128_t a, npy_int64 b)
     }
     return result;
 }
-
 
 /* Divide and round up (positive divisor; no overflows) */
 static NPY_INLINE npy_extint128_t
@@ -314,4 +298,4 @@ ceildiv_128_64(npy_extint128_t a, npy_int64 b)
     return result;
 }
 
-#endif  /* NUMPY_CORE_SRC_COMMON_NPY_EXTINT128_H_ */
+#endif /* NUMPY_CORE_SRC_COMMON_NPY_EXTINT128_H_ */

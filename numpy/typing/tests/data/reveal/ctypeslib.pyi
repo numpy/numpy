@@ -25,11 +25,19 @@ pointer: ctypes.pointer[Any]
 reveal_type(np.ctypeslib.c_intp())  # E: {c_intp}
 
 reveal_type(np.ctypeslib.ndpointer())  # E: Type[ctypeslib._ndptr[None]]
-reveal_type(np.ctypeslib.ndpointer(dtype=np.float64))  # E: Type[ctypeslib._ndptr[dtype[{float64}]]]
-reveal_type(np.ctypeslib.ndpointer(dtype=float))  # E: Type[ctypeslib._ndptr[dtype[Any]]]
+reveal_type(
+    np.ctypeslib.ndpointer(dtype=np.float64)
+)  # E: Type[ctypeslib._ndptr[dtype[{float64}]]]
+reveal_type(
+    np.ctypeslib.ndpointer(dtype=float)
+)  # E: Type[ctypeslib._ndptr[dtype[Any]]]
 reveal_type(np.ctypeslib.ndpointer(shape=(10, 3)))  # E: Type[ctypeslib._ndptr[None]]
-reveal_type(np.ctypeslib.ndpointer(np.int64, shape=(10, 3)))  # E: Type[ctypeslib._concrete_ndptr[dtype[{int64}]]]
-reveal_type(np.ctypeslib.ndpointer(int, shape=(1,)))  # E: Type[ctypeslib._concrete_ndptr[dtype[Any]]]
+reveal_type(
+    np.ctypeslib.ndpointer(np.int64, shape=(10, 3))
+)  # E: Type[ctypeslib._concrete_ndptr[dtype[{int64}]]]
+reveal_type(
+    np.ctypeslib.ndpointer(int, shape=(1,))
+)  # E: Type[ctypeslib._concrete_ndptr[dtype[Any]]]
 
 reveal_type(np.ctypeslib.as_ctypes_type(np.bool_))  # E: Type[ctypes.c_bool]
 reveal_type(np.ctypeslib.as_ctypes_type(np.ubyte))  # E: Type[{c_ubyte}]
@@ -47,7 +55,9 @@ reveal_type(np.ctypeslib.as_ctypes_type(np.double))  # E: Type[{c_double}]
 reveal_type(np.ctypeslib.as_ctypes_type(np.longdouble))  # E: Type[{c_longdouble}]
 reveal_type(np.ctypeslib.as_ctypes_type(ctypes.c_double))  # E: Type[{c_double}]
 reveal_type(np.ctypeslib.as_ctypes_type("q"))  # E: Type[ctypes.c_longlong]
-reveal_type(np.ctypeslib.as_ctypes_type([("i8", np.int64), ("f8", np.float64)]))  # E: Type[Any]
+reveal_type(
+    np.ctypeslib.as_ctypes_type([("i8", np.int64), ("f8", np.float64)])
+)  # E: Type[Any]
 reveal_type(np.ctypeslib.as_ctypes_type("i8"))  # E: Type[Any]
 reveal_type(np.ctypeslib.as_ctypes_type("f8"))  # E: Type[Any]
 

@@ -12,16 +12,18 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
-#include <numpy/arrayobject.h>
+#include "numpy/arrayscalars.h"
 
 #include "npy_config.h"
 #include "npy_pycompat.h"
 
-#include "numpy/arrayscalars.h"
-#include "lowlevel_strided_loops.h"
-#include "_datetime.h"
 #include "datetime_busday.h"
+
+#include "_datetime.h"
 #include "datetime_busdaycal.h"
+#include "lowlevel_strided_loops.h"
+
+#include <numpy/arrayobject.h>
 
 /* Gets the day of the week for a datetime64[D] value */
 static int
@@ -47,8 +49,8 @@ get_day_of_week(npy_datetime date)
  * be removed, and the list should be sorted.
  */
 static int
-is_holiday(npy_datetime date,
-            npy_datetime *holidays_begin, const npy_datetime *holidays_end)
+is_holiday(npy_datetime date, npy_datetime *holidays_begin,
+           const npy_datetime *holidays_end)
 {
     npy_datetime *trial;
 
@@ -88,7 +90,8 @@ is_holiday(npy_datetime date,
  */
 static npy_datetime *
 find_earliest_holiday_on_or_after(npy_datetime date,
-            npy_datetime *holidays_begin, const npy_datetime *holidays_end)
+                                  npy_datetime *holidays_begin,
+                                  const npy_datetime *holidays_end)
 {
     npy_datetime *trial;
 
@@ -126,8 +129,8 @@ find_earliest_holiday_on_or_after(npy_datetime date,
  * be removed, and the list should be sorted.
  */
 static npy_datetime *
-find_earliest_holiday_after(npy_datetime date,
-            npy_datetime *holidays_begin, const npy_datetime *holidays_end)
+find_earliest_holiday_after(npy_datetime date, npy_datetime *holidays_begin,
+                            const npy_datetime *holidays_end)
 {
     npy_datetime *trial;
 
@@ -157,10 +160,9 @@ find_earliest_holiday_after(npy_datetime date,
  */
 static int
 apply_business_day_roll(npy_datetime date, npy_datetime *out,
-                    int *out_day_of_week,
-                    NPY_BUSDAY_ROLL roll,
-                    const npy_bool *weekmask,
-                    npy_datetime *holidays_begin, npy_datetime *holidays_end)
+                        int *out_day_of_week, NPY_BUSDAY_ROLL roll,
+                        const npy_bool *weekmask, npy_datetime *holidays_begin,
+                        npy_datetime *holidays_end)
 {
     int day_of_week;
 
@@ -168,8 +170,7 @@ apply_business_day_roll(npy_datetime date, npy_datetime *out,
     if (date == NPY_DATETIME_NAT) {
         *out = NPY_DATETIME_NAT;
         if (roll == NPY_BUSDAY_RAISE) {
-            PyErr_SetString(PyExc_ValueError,
-                    "NaT input in busday_offset");
+            PyErr_SetString(PyExc_ValueError, "NaT input in busday_offset");
             return -1;
         }
         else {
@@ -182,7 +183,7 @@ apply_business_day_roll(npy_datetime date, npy_datetime *out,
 
     /* Apply the 'roll' if it's not a business day */
     if (weekmask[day_of_week] == 0 ||
-                        is_holiday(date, holidays_begin, holidays_end)) {
+        is_holiday(date, holidays_begin, holidays_end)) {
         npy_datetime start_date = date;
         int start_day_of_week = day_of_week;
 
@@ -195,12 +196,12 @@ apply_business_day_roll(npy_datetime date, npy_datetime *out,
                         day_of_week = 0;
                     }
                 } while (weekmask[day_of_week] == 0 ||
-                            is_holiday(date, holidays_begin, holidays_end));
+                         is_holiday(date, holidays_begin, holidays_end));
 
                 if (roll == NPY_BUSDAY_MODIFIEDFOLLOWING) {
                     /* If we crossed a month boundary, do preceding instead */
                     if (days_to_month_number(start_date) !=
-                                days_to_month_number(date)) {
+                        days_to_month_number(date)) {
                         date = start_date;
                         day_of_week = start_day_of_week;
 
@@ -210,7 +211,8 @@ apply_business_day_roll(npy_datetime date, npy_datetime *out,
                                 day_of_week = 6;
                             }
                         } while (weekmask[day_of_week] == 0 ||
-                            is_holiday(date, holidays_begin, holidays_end));
+                                 is_holiday(date, holidays_begin,
+                                            holidays_end));
                     }
                 }
                 break;
@@ -223,12 +225,12 @@ apply_business_day_roll(npy_datetime date, npy_datetime *out,
                         day_of_week = 6;
                     }
                 } while (weekmask[day_of_week] == 0 ||
-                            is_holiday(date, holidays_begin, holidays_end));
+                         is_holiday(date, holidays_begin, holidays_end));
 
                 if (roll == NPY_BUSDAY_MODIFIEDPRECEDING) {
                     /* If we crossed a month boundary, do following instead */
                     if (days_to_month_number(start_date) !=
-                                days_to_month_number(date)) {
+                        days_to_month_number(date)) {
                         date = start_date;
                         day_of_week = start_day_of_week;
 
@@ -238,7 +240,8 @@ apply_business_day_roll(npy_datetime date, npy_datetime *out,
                                 day_of_week = 0;
                             }
                         } while (weekmask[day_of_week] == 0 ||
-                            is_holiday(date, holidays_begin, holidays_end));
+                                 is_holiday(date, holidays_begin,
+                                            holidays_end));
                     }
                 }
                 break;
@@ -250,7 +253,7 @@ apply_business_day_roll(npy_datetime date, npy_datetime *out,
             case NPY_BUSDAY_RAISE: {
                 *out = NPY_DATETIME_NAT;
                 PyErr_SetString(PyExc_ValueError,
-                        "Non-business day date in busday_offset");
+                                "Non-business day date in busday_offset");
                 return -1;
             }
         }
@@ -270,18 +273,16 @@ apply_business_day_roll(npy_datetime date, npy_datetime *out,
  */
 static int
 apply_business_day_offset(npy_datetime date, npy_int64 offset,
-                    npy_datetime *out,
-                    NPY_BUSDAY_ROLL roll,
-                    npy_bool *weekmask, int busdays_in_weekmask,
-                    npy_datetime *holidays_begin, npy_datetime *holidays_end)
+                          npy_datetime *out, NPY_BUSDAY_ROLL roll,
+                          npy_bool *weekmask, int busdays_in_weekmask,
+                          npy_datetime *holidays_begin,
+                          npy_datetime *holidays_end)
 {
     int day_of_week = 0;
     npy_datetime *holidays_temp;
 
     /* Roll the date to a business day */
-    if (apply_business_day_roll(date, &date, &day_of_week,
-                                roll,
-                                weekmask,
+    if (apply_business_day_roll(date, &date, &day_of_week, roll, weekmask,
                                 holidays_begin, holidays_end) < 0) {
         return -1;
     }
@@ -295,16 +296,16 @@ apply_business_day_offset(npy_datetime date, npy_int64 offset,
     /* Now we're on a valid business day */
     if (offset > 0) {
         /* Remove any earlier holidays */
-        holidays_begin = find_earliest_holiday_on_or_after(date,
-                                            holidays_begin, holidays_end);
+        holidays_begin = find_earliest_holiday_on_or_after(
+                date, holidays_begin, holidays_end);
 
         /* Jump by as many weeks as we can */
         date += (offset / busdays_in_weekmask) * 7;
         offset = offset % busdays_in_weekmask;
 
         /* Adjust based on the number of holidays we crossed */
-        holidays_temp = find_earliest_holiday_after(date,
-                                            holidays_begin, holidays_end);
+        holidays_temp = find_earliest_holiday_after(date, holidays_begin,
+                                                    holidays_end);
         offset += holidays_temp - holidays_begin;
         holidays_begin = holidays_temp;
 
@@ -314,24 +315,24 @@ apply_business_day_offset(npy_datetime date, npy_int64 offset,
             if (++day_of_week == 7) {
                 day_of_week = 0;
             }
-            if (weekmask[day_of_week] && !is_holiday(date,
-                                            holidays_begin, holidays_end)) {
+            if (weekmask[day_of_week] &&
+                !is_holiday(date, holidays_begin, holidays_end)) {
                 offset--;
             }
         }
     }
     else if (offset < 0) {
         /* Remove any later holidays */
-        holidays_end = find_earliest_holiday_after(date,
-                                            holidays_begin, holidays_end);
+        holidays_end = find_earliest_holiday_after(date, holidays_begin,
+                                                   holidays_end);
 
         /* Jump by as many weeks as we can */
         date += (offset / busdays_in_weekmask) * 7;
         offset = offset % busdays_in_weekmask;
 
         /* Adjust based on the number of holidays we crossed */
-        holidays_temp = find_earliest_holiday_on_or_after(date,
-                                            holidays_begin, holidays_end);
+        holidays_temp = find_earliest_holiday_on_or_after(date, holidays_begin,
+                                                          holidays_end);
         offset -= holidays_end - holidays_temp;
         holidays_end = holidays_temp;
 
@@ -341,8 +342,8 @@ apply_business_day_offset(npy_datetime date, npy_int64 offset,
             if (--day_of_week == -1) {
                 day_of_week = 6;
             }
-            if (weekmask[day_of_week] && !is_holiday(date,
-                                            holidays_begin, holidays_end)) {
+            if (weekmask[day_of_week] &&
+                !is_holiday(date, holidays_begin, holidays_end)) {
                 offset++;
             }
         }
@@ -360,9 +361,9 @@ apply_business_day_offset(npy_datetime date, npy_int64 offset,
  */
 static int
 apply_business_day_count(npy_datetime date_begin, npy_datetime date_end,
-                    npy_int64 *out,
-                    const npy_bool *weekmask, int busdays_in_weekmask,
-                    npy_datetime *holidays_begin, npy_datetime *holidays_end)
+                         npy_int64 *out, const npy_bool *weekmask,
+                         int busdays_in_weekmask, npy_datetime *holidays_begin,
+                         npy_datetime *holidays_end)
 {
     npy_int64 count, whole_weeks;
     int day_of_week = 0;
@@ -370,7 +371,8 @@ apply_business_day_count(npy_datetime date_begin, npy_datetime date_end,
 
     /* If we get a NaT, raise an error */
     if (date_begin == NPY_DATETIME_NAT || date_end == NPY_DATETIME_NAT) {
-        PyErr_SetString(PyExc_ValueError,
+        PyErr_SetString(
+                PyExc_ValueError,
                 "Cannot compute a business day count with a NaT (not-a-time) "
                 "date");
         return -1;
@@ -389,11 +391,11 @@ apply_business_day_count(npy_datetime date_begin, npy_datetime date_end,
     }
 
     /* Remove any earlier holidays */
-    holidays_begin = find_earliest_holiday_on_or_after(date_begin,
-                                        holidays_begin, holidays_end);
+    holidays_begin = find_earliest_holiday_on_or_after(
+            date_begin, holidays_begin, holidays_end);
     /* Remove any later holidays */
-    holidays_end = find_earliest_holiday_on_or_after(date_end,
-                                        holidays_begin, holidays_end);
+    holidays_end = find_earliest_holiday_on_or_after(date_end, holidays_begin,
+                                                     holidays_end);
 
     /* Start the count as negative the number of holidays in the range */
     count = -(holidays_end - holidays_begin);
@@ -454,8 +456,7 @@ apply_business_day_count(npy_datetime date_begin, npy_datetime date_end,
  */
 NPY_NO_EXPORT PyArrayObject *
 business_day_offset(PyArrayObject *dates, PyArrayObject *offsets,
-                    PyArrayObject *out,
-                    NPY_BUSDAY_ROLL roll,
+                    PyArrayObject *out, NPY_BUSDAY_ROLL roll,
                     npy_bool *weekmask, int busdays_in_weekmask,
                     npy_datetime *holidays_begin, npy_datetime *holidays_end)
 {
@@ -470,8 +471,8 @@ business_day_offset(PyArrayObject *dates, PyArrayObject *offsets,
 
     if (busdays_in_weekmask == 0) {
         PyErr_SetString(PyExc_ValueError,
-                "the business day weekmask must have at least one "
-                "valid business day");
+                        "the business day weekmask must have at least one "
+                        "valid business day");
         return NULL;
     }
 
@@ -490,9 +491,7 @@ business_day_offset(PyArrayObject *dates, PyArrayObject *offsets,
     Py_INCREF(dtypes[2]);
 
     /* Set up the iterator parameters */
-    flags = NPY_ITER_EXTERNAL_LOOP|
-            NPY_ITER_BUFFERED|
-            NPY_ITER_ZEROSIZE_OK;
+    flags = NPY_ITER_EXTERNAL_LOOP | NPY_ITER_BUFFERED | NPY_ITER_ZEROSIZE_OK;
     op[0] = dates;
     op_flags[0] = NPY_ITER_READONLY | NPY_ITER_ALIGNED;
     op[1] = offsets;
@@ -531,12 +530,11 @@ business_day_offset(PyArrayObject *dates, PyArrayObject *offsets,
             npy_intp count = *innersizeptr;
 
             while (count--) {
-                if (apply_business_day_offset(*(npy_int64 *)data_dates,
-                                       *(npy_int64 *)data_offsets,
-                                       (npy_int64 *)data_out,
-                                       roll,
-                                       weekmask, busdays_in_weekmask,
-                                       holidays_begin, holidays_end) < 0) {
+                if (apply_business_day_offset(
+                            *(npy_int64 *)data_dates,
+                            *(npy_int64 *)data_offsets, (npy_int64 *)data_out,
+                            roll, weekmask, busdays_in_weekmask,
+                            holidays_begin, holidays_end) < 0) {
                     goto fail;
                 }
 
@@ -591,9 +589,9 @@ finish:
  */
 NPY_NO_EXPORT PyArrayObject *
 business_day_count(PyArrayObject *dates_begin, PyArrayObject *dates_end,
-                    PyArrayObject *out,
-                    npy_bool *weekmask, int busdays_in_weekmask,
-                    npy_datetime *holidays_begin, npy_datetime *holidays_end)
+                   PyArrayObject *out, npy_bool *weekmask,
+                   int busdays_in_weekmask, npy_datetime *holidays_begin,
+                   npy_datetime *holidays_end)
 {
     PyArray_DatetimeMetaData temp_meta;
     PyArray_Descr *dtypes[3] = {NULL, NULL, NULL};
@@ -606,8 +604,8 @@ business_day_count(PyArrayObject *dates_begin, PyArrayObject *dates_end,
 
     if (busdays_in_weekmask == 0) {
         PyErr_SetString(PyExc_ValueError,
-                "the business day weekmask must have at least one "
-                "valid business day");
+                        "the business day weekmask must have at least one "
+                        "valid business day");
         return NULL;
     }
 
@@ -626,9 +624,7 @@ business_day_count(PyArrayObject *dates_begin, PyArrayObject *dates_end,
     }
 
     /* Set up the iterator parameters */
-    flags = NPY_ITER_EXTERNAL_LOOP|
-            NPY_ITER_BUFFERED|
-            NPY_ITER_ZEROSIZE_OK;
+    flags = NPY_ITER_EXTERNAL_LOOP | NPY_ITER_BUFFERED | NPY_ITER_ZEROSIZE_OK;
     op[0] = dates_begin;
     op_flags[0] = NPY_ITER_READONLY | NPY_ITER_ALIGNED;
     op[1] = dates_end;
@@ -668,10 +664,11 @@ business_day_count(PyArrayObject *dates_begin, PyArrayObject *dates_end,
 
             while (count--) {
                 if (apply_business_day_count(*(npy_int64 *)data_dates_begin,
-                                       *(npy_int64 *)data_dates_end,
-                                       (npy_int64 *)data_out,
-                                       weekmask, busdays_in_weekmask,
-                                       holidays_begin, holidays_end) < 0) {
+                                             *(npy_int64 *)data_dates_end,
+                                             (npy_int64 *)data_out, weekmask,
+                                             busdays_in_weekmask,
+                                             holidays_begin,
+                                             holidays_end) < 0) {
                     goto fail;
                 }
 
@@ -722,8 +719,8 @@ finish:
  */
 NPY_NO_EXPORT PyArrayObject *
 is_business_day(PyArrayObject *dates, PyArrayObject *out,
-                    const npy_bool *weekmask, int busdays_in_weekmask,
-                    npy_datetime *holidays_begin, npy_datetime *holidays_end)
+                const npy_bool *weekmask, int busdays_in_weekmask,
+                npy_datetime *holidays_begin, npy_datetime *holidays_end)
 {
     PyArray_DatetimeMetaData temp_meta;
     PyArray_Descr *dtypes[2] = {NULL, NULL};
@@ -736,8 +733,8 @@ is_business_day(PyArrayObject *dates, PyArrayObject *out,
 
     if (busdays_in_weekmask == 0) {
         PyErr_SetString(PyExc_ValueError,
-                "the business day weekmask must have at least one "
-                "valid business day");
+                        "the business day weekmask must have at least one "
+                        "valid business day");
         return NULL;
     }
 
@@ -754,9 +751,7 @@ is_business_day(PyArrayObject *dates, PyArrayObject *out,
     }
 
     /* Set up the iterator parameters */
-    flags = NPY_ITER_EXTERNAL_LOOP|
-            NPY_ITER_BUFFERED|
-            NPY_ITER_ZEROSIZE_OK;
+    flags = NPY_ITER_EXTERNAL_LOOP | NPY_ITER_BUFFERED | NPY_ITER_ZEROSIZE_OK;
     op[0] = dates;
     op_flags[0] = NPY_ITER_READONLY | NPY_ITER_ALIGNED;
     op[1] = out;
@@ -797,10 +792,10 @@ is_business_day(PyArrayObject *dates, PyArrayObject *out,
                 /* Check if it's a business day */
                 date = *(npy_datetime *)data_dates;
                 day_of_week = get_day_of_week(date);
-                *(npy_bool *)data_out = weekmask[day_of_week] &&
-                                        !is_holiday(date,
-                                            holidays_begin, holidays_end) &&
-                                        date != NPY_DATETIME_NAT;
+                *(npy_bool *)data_out =
+                        weekmask[day_of_week] &&
+                        !is_holiday(date, holidays_begin, holidays_end) &&
+                        date != NPY_DATETIME_NAT;
 
                 data_dates += stride_dates;
                 data_out += stride_out;
@@ -864,36 +859,38 @@ PyArray_BusDayRollConverter(PyObject *roll_in, NPY_BUSDAY_ROLL *roll)
             }
             break;
         case 'f':
-            if (len > 2) switch (str[2]) {
-                case 'r':
-                    if (strcmp(str, "forward") == 0) {
-                        *roll = NPY_BUSDAY_FORWARD;
-                        goto finish;
-                    }
-                    break;
-                case 'l':
-                    if (strcmp(str, "following") == 0) {
-                        *roll = NPY_BUSDAY_FOLLOWING;
-                        goto finish;
-                    }
-                    break;
-            }
+            if (len > 2)
+                switch (str[2]) {
+                    case 'r':
+                        if (strcmp(str, "forward") == 0) {
+                            *roll = NPY_BUSDAY_FORWARD;
+                            goto finish;
+                        }
+                        break;
+                    case 'l':
+                        if (strcmp(str, "following") == 0) {
+                            *roll = NPY_BUSDAY_FOLLOWING;
+                            goto finish;
+                        }
+                        break;
+                }
             break;
         case 'm':
-            if (len > 8) switch (str[8]) {
-                case 'f':
-                    if (strcmp(str, "modifiedfollowing") == 0) {
-                        *roll = NPY_BUSDAY_MODIFIEDFOLLOWING;
-                        goto finish;
-                    }
-                    break;
-                case 'p':
-                    if (strcmp(str, "modifiedpreceding") == 0) {
-                        *roll = NPY_BUSDAY_MODIFIEDPRECEDING;
-                        goto finish;
-                    }
-                    break;
-            }
+            if (len > 8)
+                switch (str[8]) {
+                    case 'f':
+                        if (strcmp(str, "modifiedfollowing") == 0) {
+                            *roll = NPY_BUSDAY_MODIFIEDFOLLOWING;
+                            goto finish;
+                        }
+                        break;
+                    case 'p':
+                        if (strcmp(str, "modifiedpreceding") == 0) {
+                            *roll = NPY_BUSDAY_MODIFIEDPRECEDING;
+                            goto finish;
+                        }
+                        break;
+                }
             break;
         case 'n':
             if (strcmp(str, "nat") == 0) {
@@ -916,8 +913,7 @@ PyArray_BusDayRollConverter(PyObject *roll_in, NPY_BUSDAY_ROLL *roll)
     }
 
     PyErr_Format(PyExc_ValueError,
-            "Invalid business day roll parameter \"%s\"",
-            str);
+                 "Invalid business day roll parameter \"%s\"", str);
     Py_DECREF(obj);
     return 0;
 
@@ -931,11 +927,10 @@ finish:
  * from Python.
  */
 NPY_NO_EXPORT PyObject *
-array_busday_offset(PyObject *NPY_UNUSED(self),
-                      PyObject *args, PyObject *kwds)
+array_busday_offset(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
 {
-    static char *kwlist[] = {"dates", "offsets", "roll",
-                             "weekmask", "holidays", "busdaycal", "out", NULL};
+    static char *kwlist[] = {"dates",    "offsets",   "roll", "weekmask",
+                             "holidays", "busdaycal", "out",  NULL};
 
     PyObject *dates_in = NULL, *offsets_in = NULL, *out_in = NULL;
 
@@ -947,15 +942,12 @@ array_busday_offset(PyObject *NPY_UNUSED(self),
     npy_holidayslist holidays = {NULL, NULL};
     int allocated_holidays = 1;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds,
-                                    "OO|O&O&O&O!O:busday_offset", kwlist,
-                                    &dates_in,
-                                    &offsets_in,
-                                    &PyArray_BusDayRollConverter, &roll,
-                                    &PyArray_WeekMaskConverter, &weekmask[0],
-                                    &PyArray_HolidaysConverter, &holidays,
-                                    &NpyBusDayCalendar_Type, &busdaycal,
-                                    &out_in)) {
+    if (!PyArg_ParseTupleAndKeywords(
+                args, kwds, "OO|O&O&O&O!O:busday_offset", kwlist, &dates_in,
+                &offsets_in, &PyArray_BusDayRollConverter, &roll,
+                &PyArray_WeekMaskConverter, &weekmask[0],
+                &PyArray_HolidaysConverter, &holidays, &NpyBusDayCalendar_Type,
+                &busdaycal, &out_in)) {
         goto fail;
     }
 
@@ -963,8 +955,8 @@ array_busday_offset(PyObject *NPY_UNUSED(self),
     if (busdaycal != NULL) {
         if (weekmask[0] != 2 || holidays.begin != NULL) {
             PyErr_SetString(PyExc_ValueError,
-                    "Cannot supply both the weekmask/holidays and the "
-                    "busdaycal parameters to busday_offset()");
+                            "Cannot supply both the weekmask/holidays and the "
+                            "busdaycal parameters to busday_offset()");
             goto fail;
         }
 
@@ -1010,17 +1002,16 @@ array_busday_offset(PyObject *NPY_UNUSED(self),
         }
 
         /* This steals the datetime_dtype reference */
-        dates = (PyArrayObject *)PyArray_FromAny(dates_in, datetime_dtype,
-                                                0, 0, 0, NULL);
+        dates = (PyArrayObject *)PyArray_FromAny(dates_in, datetime_dtype, 0,
+                                                 0, 0, NULL);
         if (dates == NULL) {
             goto fail;
         }
     }
 
     /* Make 'offsets' into an array */
-    offsets = (PyArrayObject *)PyArray_FromAny(offsets_in,
-                            PyArray_DescrFromType(NPY_INT64),
-                            0, 0, 0, NULL);
+    offsets = (PyArrayObject *)PyArray_FromAny(
+            offsets_in, PyArray_DescrFromType(NPY_INT64), 0, 0, 0, NULL);
     if (offsets == NULL) {
         goto fail;
     }
@@ -1028,16 +1019,17 @@ array_busday_offset(PyObject *NPY_UNUSED(self),
     /* Make sure 'out' is an array if it's provided */
     if (out_in != NULL) {
         if (!PyArray_Check(out_in)) {
-            PyErr_SetString(PyExc_ValueError,
+            PyErr_SetString(
+                    PyExc_ValueError,
                     "busday_offset: must provide a NumPy array for 'out'");
             goto fail;
         }
         out = (PyArrayObject *)out_in;
     }
 
-    ret = business_day_offset(dates, offsets, out, roll,
-                    weekmask, busdays_in_weekmask,
-                    holidays.begin, holidays.end);
+    ret = business_day_offset(dates, offsets, out, roll, weekmask,
+                              busdays_in_weekmask, holidays.begin,
+                              holidays.end);
 
     Py_DECREF(dates);
     Py_DECREF(offsets);
@@ -1062,11 +1054,10 @@ fail:
  * from Python.
  */
 NPY_NO_EXPORT PyObject *
-array_busday_count(PyObject *NPY_UNUSED(self),
-                      PyObject *args, PyObject *kwds)
+array_busday_count(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
 {
-    static char *kwlist[] = {"begindates", "enddates",
-                             "weekmask", "holidays", "busdaycal", "out", NULL};
+    static char *kwlist[] = {"begindates", "enddates", "weekmask", "holidays",
+                             "busdaycal",  "out",      NULL};
 
     PyObject *dates_begin_in = NULL, *dates_end_in = NULL, *out_in = NULL;
 
@@ -1077,14 +1068,11 @@ array_busday_count(PyObject *NPY_UNUSED(self),
     npy_holidayslist holidays = {NULL, NULL};
     int allocated_holidays = 1;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds,
-                                    "OO|O&O&O!O:busday_count", kwlist,
-                                    &dates_begin_in,
-                                    &dates_end_in,
-                                    &PyArray_WeekMaskConverter, &weekmask[0],
-                                    &PyArray_HolidaysConverter, &holidays,
-                                    &NpyBusDayCalendar_Type, &busdaycal,
-                                    &out_in)) {
+    if (!PyArg_ParseTupleAndKeywords(
+                args, kwds, "OO|O&O&O!O:busday_count", kwlist, &dates_begin_in,
+                &dates_end_in, &PyArray_WeekMaskConverter, &weekmask[0],
+                &PyArray_HolidaysConverter, &holidays, &NpyBusDayCalendar_Type,
+                &busdaycal, &out_in)) {
         goto fail;
     }
 
@@ -1092,8 +1080,8 @@ array_busday_count(PyObject *NPY_UNUSED(self),
     if (busdaycal != NULL) {
         if (weekmask[0] != 2 || holidays.begin != NULL) {
             PyErr_SetString(PyExc_ValueError,
-                    "Cannot supply both the weekmask/holidays and the "
-                    "busdaycal parameters to busday_count()");
+                            "Cannot supply both the weekmask/holidays and the "
+                            "busdaycal parameters to busday_count()");
             goto fail;
         }
 
@@ -1139,9 +1127,8 @@ array_busday_count(PyObject *NPY_UNUSED(self),
         }
 
         /* This steals the datetime_dtype reference */
-        dates_begin = (PyArrayObject *)PyArray_FromAny(dates_begin_in,
-                                                datetime_dtype,
-                                                0, 0, 0, NULL);
+        dates_begin = (PyArrayObject *)PyArray_FromAny(
+                dates_begin_in, datetime_dtype, 0, 0, 0, NULL);
         if (dates_begin == NULL) {
             goto fail;
         }
@@ -1162,9 +1149,8 @@ array_busday_count(PyObject *NPY_UNUSED(self),
         }
 
         /* This steals the datetime_dtype reference */
-        dates_end = (PyArrayObject *)PyArray_FromAny(dates_end_in,
-                                                datetime_dtype,
-                                                0, 0, 0, NULL);
+        dates_end = (PyArrayObject *)PyArray_FromAny(
+                dates_end_in, datetime_dtype, 0, 0, 0, NULL);
         if (dates_end == NULL) {
             goto fail;
         }
@@ -1173,16 +1159,17 @@ array_busday_count(PyObject *NPY_UNUSED(self),
     /* Make sure 'out' is an array if it's provided */
     if (out_in != NULL) {
         if (!PyArray_Check(out_in)) {
-            PyErr_SetString(PyExc_ValueError,
+            PyErr_SetString(
+                    PyExc_ValueError,
                     "busday_offset: must provide a NumPy array for 'out'");
             goto fail;
         }
         out = (PyArrayObject *)out_in;
     }
 
-    ret = business_day_count(dates_begin, dates_end, out,
-                    weekmask, busdays_in_weekmask,
-                    holidays.begin, holidays.end);
+    ret = business_day_count(dates_begin, dates_end, out, weekmask,
+                             busdays_in_weekmask, holidays.begin,
+                             holidays.end);
 
     Py_DECREF(dates_begin);
     Py_DECREF(dates_end);
@@ -1207,28 +1194,25 @@ fail:
  * from Python.
  */
 NPY_NO_EXPORT PyObject *
-array_is_busday(PyObject *NPY_UNUSED(self),
-                      PyObject *args, PyObject *kwds)
+array_is_busday(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
 {
-    static char *kwlist[] = {"dates",
-                             "weekmask", "holidays", "busdaycal", "out", NULL};
+    static char *kwlist[] = {"dates",     "weekmask", "holidays",
+                             "busdaycal", "out",      NULL};
 
     PyObject *dates_in = NULL, *out_in = NULL;
 
-    PyArrayObject *dates = NULL,*out = NULL, *ret;
+    PyArrayObject *dates = NULL, *out = NULL, *ret;
     npy_bool weekmask[7] = {2, 1, 1, 1, 1, 0, 0};
     NpyBusDayCalendar *busdaycal = NULL;
     int i, busdays_in_weekmask;
     npy_holidayslist holidays = {NULL, NULL};
     int allocated_holidays = 1;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds,
-                                    "O|O&O&O!O:is_busday", kwlist,
-                                    &dates_in,
-                                    &PyArray_WeekMaskConverter, &weekmask[0],
-                                    &PyArray_HolidaysConverter, &holidays,
-                                    &NpyBusDayCalendar_Type, &busdaycal,
-                                    &out_in)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O&O&O!O:is_busday", kwlist,
+                                     &dates_in, &PyArray_WeekMaskConverter,
+                                     &weekmask[0], &PyArray_HolidaysConverter,
+                                     &holidays, &NpyBusDayCalendar_Type,
+                                     &busdaycal, &out_in)) {
         goto fail;
     }
 
@@ -1236,8 +1220,8 @@ array_is_busday(PyObject *NPY_UNUSED(self),
     if (busdaycal != NULL) {
         if (weekmask[0] != 2 || holidays.begin != NULL) {
             PyErr_SetString(PyExc_ValueError,
-                    "Cannot supply both the weekmask/holidays and the "
-                    "busdaycal parameters to is_busday()");
+                            "Cannot supply both the weekmask/holidays and the "
+                            "busdaycal parameters to is_busday()");
             goto fail;
         }
 
@@ -1283,9 +1267,8 @@ array_is_busday(PyObject *NPY_UNUSED(self),
         }
 
         /* This steals the datetime_dtype reference */
-        dates = (PyArrayObject *)PyArray_FromAny(dates_in,
-                                                datetime_dtype,
-                                                0, 0, 0, NULL);
+        dates = (PyArrayObject *)PyArray_FromAny(dates_in, datetime_dtype, 0,
+                                                 0, 0, NULL);
         if (dates == NULL) {
             goto fail;
         }
@@ -1294,16 +1277,16 @@ array_is_busday(PyObject *NPY_UNUSED(self),
     /* Make sure 'out' is an array if it's provided */
     if (out_in != NULL) {
         if (!PyArray_Check(out_in)) {
-            PyErr_SetString(PyExc_ValueError,
+            PyErr_SetString(
+                    PyExc_ValueError,
                     "busday_offset: must provide a NumPy array for 'out'");
             goto fail;
         }
         out = (PyArrayObject *)out_in;
     }
 
-    ret = is_business_day(dates, out,
-                    weekmask, busdays_in_weekmask,
-                    holidays.begin, holidays.end);
+    ret = is_business_day(dates, out, weekmask, busdays_in_weekmask,
+                          holidays.begin, holidays.end);
 
     Py_DECREF(dates);
     if (allocated_holidays && holidays.begin != NULL) {

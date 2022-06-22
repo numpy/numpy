@@ -39,16 +39,15 @@ may now proceed to calculate the mean of the other values:
 .. moduleauthor:: Jarrod Millman
 
 """
-from . import core
+from . import core, extras
 from .core import *
-
-from . import extras
 from .extras import *
 
-__all__ = ['core', 'extras']
+__all__ = ["core", "extras"]
 __all__ += core.__all__
 __all__ += extras.__all__
 
 from numpy._pytesttester import PytestTester
+
 test = PytestTester(__name__)
 del PytestTester

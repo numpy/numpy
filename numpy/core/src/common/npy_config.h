@@ -1,12 +1,13 @@
 #ifndef NUMPY_CORE_SRC_COMMON_NPY_CONFIG_H_
 #define NUMPY_CORE_SRC_COMMON_NPY_CONFIG_H_
 
-#include "config.h"
-#include "npy_cpu_features.h"
-#include "npy_cpu_dispatch.h"
-#include "numpy/numpyconfig.h"
 #include "numpy/npy_cpu.h"
 #include "numpy/npy_os.h"
+#include "numpy/numpyconfig.h"
+
+#include "config.h"
+#include "npy_cpu_dispatch.h"
+#include "npy_cpu_features.h"
 
 /* blocklist */
 
@@ -20,7 +21,7 @@
 #endif
 
 /* Disable broken functions on z/OS */
-#if defined (__MVS__)
+#if defined(__MVS__)
 
 #undef HAVE_POWF
 #undef HAVE_EXPF
@@ -82,7 +83,6 @@
 #undef HAVE_HYPOTL
 
 #endif
-
 
 /* Intel C for Windows uses POW for 64 bits longdouble*/
 #if defined(_MSC_VER) && defined(__INTEL_COMPILER)
@@ -179,9 +179,9 @@
 #undef HAVE_CACOSHF
 #undef HAVE_CACOSHL
 
-#endif  /* __GLIBC_PREREQ(2, 18) */
-#endif  /* defined(__GLIBC_PREREQ) */
+#endif /* __GLIBC_PREREQ(2, 18) */
+#endif /* defined(__GLIBC_PREREQ) */
 
-#endif  /* defined(HAVE_FEATURES_H) */
+#endif /* defined(HAVE_FEATURES_H) */
 
-#endif  /* NUMPY_CORE_SRC_COMMON_NPY_CONFIG_H_ */
+#endif /* NUMPY_CORE_SRC_COMMON_NPY_CONFIG_H_ */

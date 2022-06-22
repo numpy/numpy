@@ -1,11 +1,16 @@
-import textwrap, re, sys, subprocess, shlex
-from pathlib import Path
+import re
+import shlex
+import subprocess
+import sys
+import textwrap
 from collections import namedtuple
+from pathlib import Path
 
 import pytest
 
-from . import util
 from numpy.f2py.f2py2e import main as f2pycli
+
+from . import util
 
 #########################
 # CLI utils and classes #
@@ -86,13 +91,13 @@ def test_gen_pyf(capfd, hello_world_f90, monkeypatch):
     """
     ipath = Path(hello_world_f90)
     opath = Path(hello_world_f90).stem + ".pyf"
-    monkeypatch.setattr(sys, "argv", f'f2py -h {opath} {ipath}'.split())
+    monkeypatch.setattr(sys, "argv", f"f2py -h {opath} {ipath}".split())
 
     with util.switchdir(ipath.parent):
         f2pycli()  # Generate wrappers
         out, _ = capfd.readouterr()
         assert "Saving signatures to file" in out
-        assert Path(f'{opath}').exists()
+        assert Path(f"{opath}").exists()
 
 
 def test_gen_pyf_stdout(capfd, hello_world_f90, monkeypatch):
@@ -100,7 +105,7 @@ def test_gen_pyf_stdout(capfd, hello_world_f90, monkeypatch):
     CLI :: -h
     """
     ipath = Path(hello_world_f90)
-    monkeypatch.setattr(sys, "argv", f'f2py -h stdout {ipath}'.split())
+    monkeypatch.setattr(sys, "argv", f"f2py -h stdout {ipath}".split())
     with util.switchdir(ipath.parent):
         f2pycli()
         out, _ = capfd.readouterr()
@@ -112,7 +117,7 @@ def test_gen_pyf_no_overwrite(capfd, hello_world_f90, monkeypatch):
     CLI :: -h without --overwrite-signature
     """
     ipath = Path(hello_world_f90)
-    monkeypatch.setattr(sys, "argv", f'f2py -h faker.pyf {ipath}'.split())
+    monkeypatch.setattr(sys, "argv", f"f2py -h faker.pyf {ipath}".split())
 
     with util.switchdir(ipath.parent):
         Path("faker.pyf").write_text("Fake news", encoding="ascii")
@@ -131,9 +136,7 @@ def test_f2py_skip(capfd, retreal_f77, monkeypatch):
     ipath = foutl.finp
     toskip = "t0 t4 t8 sd s8 s4"
     remaining = "td s0"
-    monkeypatch.setattr(
-        sys, "argv",
-        f'f2py {ipath} -m test skip: {toskip}'.split())
+    monkeypatch.setattr(sys, "argv", f"f2py {ipath} -m test skip: {toskip}".split())
 
     with util.switchdir(ipath.parent):
         f2pycli()
@@ -141,7 +144,8 @@ def test_f2py_skip(capfd, retreal_f77, monkeypatch):
         for skey in toskip.split():
             assert (
                 f'buildmodule: Could not found the body of interfaced routine "{skey}". Skipping.'
-                in err)
+                in err
+            )
         for rkey in remaining.split():
             assert f'Constructing wrapper function "{rkey}"' in out
 
@@ -154,9 +158,7 @@ def test_f2py_only(capfd, retreal_f77, monkeypatch):
     ipath = foutl.finp
     toskip = "t0 t4 t8 sd s8 s4"
     tokeep = "td s0"
-    monkeypatch.setattr(
-        sys, "argv",
-        f'f2py {ipath} -m test only: {tokeep}'.split())
+    monkeypatch.setattr(sys, "argv", f"f2py {ipath} -m test only: {tokeep}".split())
 
     with util.switchdir(ipath.parent):
         f2pycli()
@@ -164,13 +166,13 @@ def test_f2py_only(capfd, retreal_f77, monkeypatch):
         for skey in toskip.split():
             assert (
                 f'buildmodule: Could not find the body of interfaced routine "{skey}". Skipping.'
-                in err)
+                in err
+            )
         for rkey in tokeep.split():
             assert f'Constructing wrapper function "{rkey}"' in out
 
 
-def test_file_processing_switch(capfd, hello_world_f90, retreal_f77,
-                                monkeypatch):
+def test_file_processing_switch(capfd, hello_world_f90, retreal_f77, monkeypatch):
     """Tests that it is possible to return to file processing mode
     CLI :: :
     BUG: numpy-gh #20520
@@ -184,8 +186,7 @@ def test_file_processing_switch(capfd, hello_world_f90, retreal_f77,
     monkeypatch.setattr(
         sys,
         "argv",
-        f'f2py {ipath} -m {mname} only: {tokeep} : {ipath2}'.split(
-        ),
+        f"f2py {ipath} -m {mname} only: {tokeep} : {ipath2}".split(),
     )
 
     with util.switchdir(ipath.parent):
@@ -194,7 +195,8 @@ def test_file_processing_switch(capfd, hello_world_f90, retreal_f77,
         for skey in toskip.split():
             assert (
                 f'buildmodule: Could not find the body of interfaced routine "{skey}". Skipping.'
-                in err)
+                in err
+            )
         for rkey in tokeep.split():
             assert f'Constructing wrapper function "{rkey}"' in out
 
@@ -206,7 +208,7 @@ def test_mod_gen_f77(capfd, hello_world_f90, monkeypatch):
     MNAME = "hi"
     foutl = get_io_paths(hello_world_f90, mname=MNAME)
     ipath = foutl.f90inp
-    monkeypatch.setattr(sys, "argv", f'f2py {ipath} -m {MNAME}'.split())
+    monkeypatch.setattr(sys, "argv", f"f2py {ipath} -m {MNAME}".split())
     with util.switchdir(ipath.parent):
         f2pycli()
 
@@ -226,15 +228,14 @@ def test_lower_cmod(capfd, hello_world_f77, monkeypatch):
     capshi = re.compile(r"HI\(\)")
     capslo = re.compile(r"hi\(\)")
     # Case I: --lower is passed
-    monkeypatch.setattr(sys, "argv", f'f2py {ipath} -m test --lower'.split())
+    monkeypatch.setattr(sys, "argv", f"f2py {ipath} -m test --lower".split())
     with util.switchdir(ipath.parent):
         f2pycli()
         out, _ = capfd.readouterr()
         assert capslo.search(out) is not None
         assert capshi.search(out) is None
     # Case II: --no-lower is passed
-    monkeypatch.setattr(sys, "argv",
-                        f'f2py {ipath} -m test --no-lower'.split())
+    monkeypatch.setattr(sys, "argv", f"f2py {ipath} -m test --no-lower".split())
     with util.switchdir(ipath.parent):
         f2pycli()
         out, _ = capfd.readouterr()
@@ -257,7 +258,7 @@ def test_lower_sig(capfd, hello_world_f77, monkeypatch):
     monkeypatch.setattr(
         sys,
         "argv",
-        f'f2py {ipath} -h {foutl.pyf} -m test --overwrite-signature'.split(),
+        f"f2py {ipath} -h {foutl.pyf} -m test --overwrite-signature".split(),
     )
 
     with util.switchdir(ipath.parent):
@@ -270,8 +271,7 @@ def test_lower_sig(capfd, hello_world_f77, monkeypatch):
     monkeypatch.setattr(
         sys,
         "argv",
-        f'f2py {ipath} -h {foutl.pyf} -m test --overwrite-signature --no-lower'
-        .split(),
+        f"f2py {ipath} -h {foutl.pyf} -m test --overwrite-signature --no-lower".split(),
     )
 
     with util.switchdir(ipath.parent):
@@ -289,13 +289,14 @@ def test_build_dir(capfd, hello_world_f90, monkeypatch):
     ipath = Path(hello_world_f90)
     mname = "blah"
     odir = "tttmp"
-    monkeypatch.setattr(sys, "argv",
-                        f'f2py -m {mname} {ipath} --build-dir {odir}'.split())
+    monkeypatch.setattr(
+        sys, "argv", f"f2py -m {mname} {ipath} --build-dir {odir}".split()
+    )
 
     with util.switchdir(ipath.parent):
         f2pycli()
         out, _ = capfd.readouterr()
-        assert f"Wrote C/API module \"{mname}\"" in out
+        assert f'Wrote C/API module "{mname}"' in out
 
 
 def test_overwrite(capfd, hello_world_f90, monkeypatch):
@@ -305,8 +306,8 @@ def test_overwrite(capfd, hello_world_f90, monkeypatch):
     """
     ipath = Path(hello_world_f90)
     monkeypatch.setattr(
-        sys, "argv",
-        f'f2py -h faker.pyf {ipath} --overwrite-signature'.split())
+        sys, "argv", f"f2py -h faker.pyf {ipath} --overwrite-signature".split()
+    )
 
     with util.switchdir(ipath.parent):
         Path("faker.pyf").write_text("Fake news", encoding="ascii")
@@ -322,8 +323,7 @@ def test_latexdoc(capfd, hello_world_f90, monkeypatch):
     """
     ipath = Path(hello_world_f90)
     mname = "blah"
-    monkeypatch.setattr(sys, "argv",
-                        f'f2py -m {mname} {ipath} --latex-doc'.split())
+    monkeypatch.setattr(sys, "argv", f"f2py -m {mname} {ipath} --latex-doc".split())
 
     with util.switchdir(ipath.parent):
         f2pycli()
@@ -340,8 +340,7 @@ def test_nolatexdoc(capfd, hello_world_f90, monkeypatch):
     """
     ipath = Path(hello_world_f90)
     mname = "blah"
-    monkeypatch.setattr(sys, "argv",
-                        f'f2py -m {mname} {ipath} --no-latex-doc'.split())
+    monkeypatch.setattr(sys, "argv", f"f2py -m {mname} {ipath} --no-latex-doc".split())
 
     with util.switchdir(ipath.parent):
         f2pycli()
@@ -360,7 +359,7 @@ def test_shortlatex(capfd, hello_world_f90, monkeypatch):
     monkeypatch.setattr(
         sys,
         "argv",
-        f'f2py -m {mname} {ipath} --latex-doc --short-latex'.split(),
+        f"f2py -m {mname} {ipath} --latex-doc --short-latex".split(),
     )
 
     with util.switchdir(ipath.parent):
@@ -378,8 +377,7 @@ def test_restdoc(capfd, hello_world_f90, monkeypatch):
     """
     ipath = Path(hello_world_f90)
     mname = "blah"
-    monkeypatch.setattr(sys, "argv",
-                        f'f2py -m {mname} {ipath} --rest-doc'.split())
+    monkeypatch.setattr(sys, "argv", f"f2py -m {mname} {ipath} --rest-doc".split())
 
     with util.switchdir(ipath.parent):
         f2pycli()
@@ -396,8 +394,7 @@ def test_norestexdoc(capfd, hello_world_f90, monkeypatch):
     """
     ipath = Path(hello_world_f90)
     mname = "blah"
-    monkeypatch.setattr(sys, "argv",
-                        f'f2py -m {mname} {ipath} --no-rest-doc'.split())
+    monkeypatch.setattr(sys, "argv", f"f2py -m {mname} {ipath} --no-rest-doc".split())
 
     with util.switchdir(ipath.parent):
         f2pycli()
@@ -412,8 +409,7 @@ def test_debugcapi(capfd, hello_world_f90, monkeypatch):
     """
     ipath = Path(hello_world_f90)
     mname = "blah"
-    monkeypatch.setattr(sys, "argv",
-                        f'f2py -m {mname} {ipath} --debug-capi'.split())
+    monkeypatch.setattr(sys, "argv", f"f2py -m {mname} {ipath} --debug-capi".split())
 
     with util.switchdir(ipath.parent):
         f2pycli()
@@ -429,15 +425,15 @@ def test_debugcapi_bld(hello_world_f90, monkeypatch):
     """
     ipath = Path(hello_world_f90)
     mname = "blah"
-    monkeypatch.setattr(sys, "argv",
-                        f'f2py -m {mname} {ipath} -c --debug-capi'.split())
+    monkeypatch.setattr(sys, "argv", f"f2py -m {mname} {ipath} -c --debug-capi".split())
 
     with util.switchdir(ipath.parent):
         f2pycli()
-        cmd_run = shlex.split("python3 -c \"import blah; blah.hi()\"")
-        rout = subprocess.run(cmd_run, capture_output=True, encoding='UTF-8')
-        eout = ' Hello World\n'
-        eerr = textwrap.dedent("""\
+        cmd_run = shlex.split('python3 -c "import blah; blah.hi()"')
+        rout = subprocess.run(cmd_run, capture_output=True, encoding="UTF-8")
+        eout = " Hello World\n"
+        eerr = textwrap.dedent(
+            """\
 debug-capi:Python C/API function blah.hi()
 debug-capi:float hi=:output,hidden,scalar
 debug-capi:hi=0
@@ -446,7 +442,8 @@ debug-capi:hi=0
 debug-capi:Building return value.
 debug-capi:Python C/API function blah.hi: successful.
 debug-capi:Freeing memory.
-        """)
+        """
+        )
         assert rout.stdout == eout
         assert rout.stderr == eerr
 
@@ -459,7 +456,7 @@ def test_wrapfunc_def(capfd, hello_world_f90, monkeypatch):
     # Implied
     ipath = Path(hello_world_f90)
     mname = "blah"
-    monkeypatch.setattr(sys, "argv", f'f2py -m {mname} {ipath}'.split())
+    monkeypatch.setattr(sys, "argv", f"f2py -m {mname} {ipath}".split())
 
     with util.switchdir(ipath.parent):
         f2pycli()
@@ -467,8 +464,9 @@ def test_wrapfunc_def(capfd, hello_world_f90, monkeypatch):
     assert r"Fortran 77 wrappers are saved to" in out
 
     # Explicit
-    monkeypatch.setattr(sys, "argv",
-                        f'f2py -m {mname} {ipath} --wrap-functions'.split())
+    monkeypatch.setattr(
+        sys, "argv", f"f2py -m {mname} {ipath} --wrap-functions".split()
+    )
 
     with util.switchdir(ipath.parent):
         f2pycli()
@@ -483,8 +481,9 @@ def test_nowrapfunc(capfd, hello_world_f90, monkeypatch):
     """
     ipath = Path(hello_world_f90)
     mname = "blah"
-    monkeypatch.setattr(sys, "argv",
-                        f'f2py -m {mname} {ipath} --no-wrap-functions'.split())
+    monkeypatch.setattr(
+        sys, "argv", f"f2py -m {mname} {ipath} --no-wrap-functions".split()
+    )
 
     with util.switchdir(ipath.parent):
         f2pycli()
@@ -503,8 +502,7 @@ def test_inclheader(capfd, hello_world_f90, monkeypatch):
     monkeypatch.setattr(
         sys,
         "argv",
-        f'f2py -m {mname} {ipath} -include<stdbool.h> -include<stdio.h> '.
-        split(),
+        f"f2py -m {mname} {ipath} -include<stdbool.h> -include<stdio.h> ".split(),
     )
 
     with util.switchdir(ipath.parent):
@@ -548,7 +546,7 @@ def test_quiet(capfd, hello_world_f90, monkeypatch):
     CLI :: --quiet
     """
     ipath = Path(hello_world_f90)
-    monkeypatch.setattr(sys, "argv", f'f2py -m blah {ipath} --quiet'.split())
+    monkeypatch.setattr(sys, "argv", f"f2py -m blah {ipath} --quiet".split())
 
     with util.switchdir(ipath.parent):
         f2pycli()
@@ -562,7 +560,7 @@ def test_verbose(capfd, hello_world_f90, monkeypatch):
     CLI :: --verbose
     """
     ipath = Path(hello_world_f90)
-    monkeypatch.setattr(sys, "argv", f'f2py -m blah {ipath} --verbose'.split())
+    monkeypatch.setattr(sys, "argv", f"f2py -m blah {ipath} --verbose".split())
 
     with util.switchdir(ipath.parent):
         f2pycli()
@@ -575,12 +573,13 @@ def test_version(capfd, monkeypatch):
 
     CLI :: -v
     """
-    monkeypatch.setattr(sys, "argv", 'f2py -v'.split())
+    monkeypatch.setattr(sys, "argv", "f2py -v".split())
     # TODO: f2py2e should not call sys.exit() after printing the version
     with pytest.raises(SystemExit):
         f2pycli()
         out, _ = capfd.readouterr()
         import numpy as np
+
         assert np.__version__ == out.strip()
 
 
@@ -590,13 +589,13 @@ def test_npdistop(hello_world_f90, monkeypatch):
     CLI :: -c
     """
     ipath = Path(hello_world_f90)
-    monkeypatch.setattr(sys, "argv", f'f2py -m blah {ipath} -c'.split())
+    monkeypatch.setattr(sys, "argv", f"f2py -m blah {ipath} -c".split())
 
     with util.switchdir(ipath.parent):
         f2pycli()
-        cmd_run = shlex.split("python -c \"import blah; blah.hi()\"")
-        rout = subprocess.run(cmd_run, capture_output=True, encoding='UTF-8')
-        eout = ' Hello World\n'
+        cmd_run = shlex.split('python -c "import blah; blah.hi()"')
+        rout = subprocess.run(cmd_run, capture_output=True, encoding="UTF-8")
+        eout = " Hello World\n"
         assert rout.stdout == eout
 
 

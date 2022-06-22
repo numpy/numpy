@@ -5,7 +5,6 @@
 
 extern NPY_NO_EXPORT PyMethodDef array_methods[];
 
-
 /*
  * Pathlib support, takes a borrowed reference and returns a new one.
  * The new object may be the same as the old.
@@ -31,4 +30,4 @@ NpyPath_PathlikeToFspath(PyObject *file)
     return PyObject_CallFunctionObjArgs(os_fspath, file, NULL);
 }
 
-#endif  /* NUMPY_CORE_SRC_MULTIARRAY_METHODS_H_ */
+#endif /* NUMPY_CORE_SRC_MULTIARRAY_METHODS_H_ */

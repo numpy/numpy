@@ -2,16 +2,17 @@
 #define _RANDOMDGEN__ALIGNED_MALLOC_H_
 
 #include <Python.h>
+
 #include "numpy/npy_common.h"
 
 #define NPY_MEMALIGN 16 /* 16 for SSE2, 32 for AVX, 64 for Xeon Phi */
 
-static NPY_INLINE void *PyArray_realloc_aligned(void *p, size_t n)
+static NPY_INLINE void *
+PyArray_realloc_aligned(void *p, size_t n)
 {
     void *p1, **p2, *base;
     size_t old_offs, offs = NPY_MEMALIGN - 1 + sizeof(void *);
-    if (NPY_UNLIKELY(p != NULL))
-    {
+    if (NPY_UNLIKELY(p != NULL)) {
         base = *(((void **)p) - 1);
         if (NPY_UNLIKELY((p1 = PyMem_Realloc(base, n + offs)) == NULL))
             return NULL;
@@ -21,8 +22,7 @@ static NPY_INLINE void *PyArray_realloc_aligned(void *p, size_t n)
         old_offs = (size_t)((Py_uintptr_t)p - (Py_uintptr_t)base);
         memmove((void *)p2, ((char *)p1) + old_offs, n);
     }
-    else
-    {
+    else {
         if (NPY_UNLIKELY((p1 = PyMem_Malloc(n + offs)) == NULL))
             return NULL;
         p2 = (void **)(((Py_uintptr_t)(p1) + offs) & ~(NPY_MEMALIGN - 1));
@@ -31,12 +31,14 @@ static NPY_INLINE void *PyArray_realloc_aligned(void *p, size_t n)
     return (void *)p2;
 }
 
-static NPY_INLINE void *PyArray_malloc_aligned(size_t n)
+static NPY_INLINE void *
+PyArray_malloc_aligned(size_t n)
 {
     return PyArray_realloc_aligned(NULL, n);
 }
 
-static NPY_INLINE void *PyArray_calloc_aligned(size_t n, size_t s)
+static NPY_INLINE void *
+PyArray_calloc_aligned(size_t n, size_t s)
 {
     void *p;
     if (NPY_UNLIKELY((p = PyArray_realloc_aligned(NULL, n * s)) == NULL))
@@ -45,7 +47,8 @@ static NPY_INLINE void *PyArray_calloc_aligned(size_t n, size_t s)
     return p;
 }
 
-static NPY_INLINE void PyArray_free_aligned(void *p)
+static NPY_INLINE void
+PyArray_free_aligned(void *p)
 {
     void *base = *(((void **)p) - 1);
     PyMem_Free(base);

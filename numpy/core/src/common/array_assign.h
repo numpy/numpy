@@ -27,13 +27,11 @@ PyArray_AssignArrayAsFlat(PyArrayObject *dst, NPY_ORDER dst_order,
 
 NPY_NO_EXPORT int
 PyArray_AssignArray(PyArrayObject *dst, PyArrayObject *src,
-                    PyArrayObject *wheremask,
-                    NPY_CASTING casting);
+                    PyArrayObject *wheremask, NPY_CASTING casting);
 
 NPY_NO_EXPORT int
-PyArray_AssignRawScalar(PyArrayObject *dst,
-                        PyArray_Descr *src_dtype, char *src_data,
-                        PyArrayObject *wheremask,
+PyArray_AssignRawScalar(PyArrayObject *dst, PyArray_Descr *src_dtype,
+                        char *src_data, PyArrayObject *wheremask,
                         NPY_CASTING casting);
 
 /******** LOW-LEVEL SCALAR TO ARRAY ASSIGNMENT ********/
@@ -45,8 +43,9 @@ PyArray_AssignRawScalar(PyArrayObject *dst,
  */
 NPY_NO_EXPORT int
 raw_array_assign_scalar(int ndim, npy_intp const *shape,
-        PyArray_Descr *dst_dtype, char *dst_data, npy_intp const *dst_strides,
-        PyArray_Descr *src_dtype, char *src_data);
+                        PyArray_Descr *dst_dtype, char *dst_data,
+                        npy_intp const *dst_strides, PyArray_Descr *src_dtype,
+                        char *src_data);
 
 /*
  * Assigns the scalar value to every element of the destination raw array
@@ -56,10 +55,12 @@ raw_array_assign_scalar(int ndim, npy_intp const *shape,
  */
 NPY_NO_EXPORT int
 raw_array_wheremasked_assign_scalar(int ndim, npy_intp const *shape,
-        PyArray_Descr *dst_dtype, char *dst_data, npy_intp const *dst_strides,
-        PyArray_Descr *src_dtype, char *src_data,
-        PyArray_Descr *wheremask_dtype, char *wheremask_data,
-        npy_intp const *wheremask_strides);
+                                    PyArray_Descr *dst_dtype, char *dst_data,
+                                    npy_intp const *dst_strides,
+                                    PyArray_Descr *src_dtype, char *src_data,
+                                    PyArray_Descr *wheremask_dtype,
+                                    char *wheremask_data,
+                                    npy_intp const *wheremask_strides);
 
 /******** LOW-LEVEL ARRAY MANIPULATION HELPERS ********/
 
@@ -80,10 +81,9 @@ raw_array_wheremasked_assign_scalar(int ndim, npy_intp const *shape,
  * Returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT int
-broadcast_strides(int ndim, npy_intp const *shape,
-                int strides_ndim, npy_intp const *strides_shape, npy_intp const *strides,
-                char const *strides_name,
-                npy_intp *out_strides);
+broadcast_strides(int ndim, npy_intp const *shape, int strides_ndim,
+                  npy_intp const *strides_shape, npy_intp const *strides,
+                  char const *strides_name, npy_intp *out_strides);
 
 /*
  * Checks whether a data pointer + set of strides refers to a raw
@@ -93,8 +93,8 @@ broadcast_strides(int ndim, npy_intp const *shape,
  * cannot-be-aligned, in which case 0 (false) is always returned.
  */
 NPY_NO_EXPORT int
-raw_array_is_aligned(int ndim, npy_intp const *shape,
-                     char *data, npy_intp const *strides, int alignment);
+raw_array_is_aligned(int ndim, npy_intp const *shape, char *data,
+                     npy_intp const *strides, int alignment);
 
 /*
  * Checks if an array is aligned to its "true alignment"
@@ -114,5 +114,4 @@ IsUintAligned(PyArrayObject *ap);
 NPY_NO_EXPORT int
 arrays_overlap(PyArrayObject *arr1, PyArrayObject *arr2);
 
-
-#endif  /* NUMPY_CORE_SRC_COMMON_ARRAY_ASSIGN_H_ */
+#endif /* NUMPY_CORE_SRC_COMMON_ARRAY_ASSIGN_H_ */

@@ -1,8 +1,10 @@
 import os
 import textwrap
+
 import pytest
 
 from numpy.testing import IS_PYPY
+
 from . import util
 
 
@@ -18,10 +20,10 @@ class TestMixed(util.F2PyTest):
         assert self.module.foo_fixed.bar12() == 12
         assert self.module.foo_free.bar13() == 13
 
-    @pytest.mark.xfail(IS_PYPY,
-                       reason="PyPy cannot modify tp_doc after PyType_Ready")
+    @pytest.mark.xfail(IS_PYPY, reason="PyPy cannot modify tp_doc after PyType_Ready")
     def test_docstring(self):
-        expected = textwrap.dedent("""\
+        expected = textwrap.dedent(
+            """\
         a = bar11()
 
         Wrapper for ``bar11``.
@@ -29,5 +31,6 @@ class TestMixed(util.F2PyTest):
         Returns
         -------
         a : int
-        """)
+        """
+        )
         assert self.module.bar11.__doc__ == expected

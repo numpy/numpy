@@ -1,10 +1,9 @@
+import operator
+
 import pytest
 
-import operator
 import numpy as np
-
 from numpy.testing import assert_array_equal
-
 
 COMPARISONS = [
     (operator.eq, np.equal, "=="),
@@ -27,6 +26,7 @@ def test_mixed_string_comparison_ufuncs_fail(op, ufunc, sym):
     with pytest.raises(TypeError, match="did not contain a loop"):
         ufunc(arr_unicode, arr_string)
 
+
 @pytest.mark.parametrize(["op", "ufunc", "sym"], COMPARISONS)
 def test_mixed_string_comparisons_ufuncs_with_cast(op, ufunc, sym):
     arr_string = np.array(["a", "b"], dtype="S")
@@ -36,16 +36,24 @@ def test_mixed_string_comparisons_ufuncs_with_cast(op, ufunc, sym):
     res1 = ufunc(arr_string, arr_unicode, signature="UU->?", casting="unsafe")
     res2 = ufunc(arr_string, arr_unicode, signature="SS->?", casting="unsafe")
 
-    expected = op(arr_string.astype('U'), arr_unicode)
+    expected = op(arr_string.astype("U"), arr_unicode)
     assert_array_equal(res1, expected)
     assert_array_equal(res2, expected)
 
 
 @pytest.mark.parametrize(["op", "ufunc", "sym"], COMPARISONS)
-@pytest.mark.parametrize("dtypes", [
-        ("S2", "S2"), ("S2", "S10"),
-        ("<U1", "<U1"), ("<U1", ">U1"), (">U1", ">U1"),
-        ("<U1", "<U10"), ("<U1", ">U10")])
+@pytest.mark.parametrize(
+    "dtypes",
+    [
+        ("S2", "S2"),
+        ("S2", "S10"),
+        ("<U1", "<U1"),
+        ("<U1", ">U1"),
+        (">U1", ">U1"),
+        ("<U1", "<U10"),
+        ("<U1", ">U10"),
+    ],
+)
 @pytest.mark.parametrize("aligned", [True, False])
 def test_string_comparisons(op, ufunc, sym, dtypes, aligned):
     # ensure native byte-order for the first view to stay within unicode range
@@ -73,8 +81,9 @@ def test_string_comparisons(op, ufunc, sym, dtypes, aligned):
 
 
 @pytest.mark.parametrize(["op", "ufunc", "sym"], COMPARISONS)
-@pytest.mark.parametrize("dtypes", [
-        ("S2", "S2"), ("S2", "S10"), ("<U1", "<U1"), ("<U1", ">U10")])
+@pytest.mark.parametrize(
+    "dtypes", [("S2", "S2"), ("S2", "S10"), ("<U1", "<U1"), ("<U1", ">U10")]
+)
 def test_string_comparisons_empty(op, ufunc, sym, dtypes):
     arr = np.empty((1, 0, 1, 5), dtype=dtypes[0])
     arr2 = np.empty((100, 1, 0, 1), dtype=dtypes[1])

@@ -12,7 +12,7 @@
  */
 NPY_NO_EXPORT void
 PyArray_CreateMultiSortedStridePerm(int narrays, PyArrayObject **arrays,
-                        int ndim, int *out_strideperm);
+                                    int ndim, int *out_strideperm);
 
 /*
  * Just like PyArray_Squeeze, but allows the caller to select
@@ -21,4 +21,4 @@ PyArray_CreateMultiSortedStridePerm(int narrays, PyArrayObject **arrays,
 NPY_NO_EXPORT PyObject *
 PyArray_SqueezeSelected(PyArrayObject *self, npy_bool *axis_flags);
 
-#endif  /* NUMPY_CORE_SRC_MULTIARRAY_SHAPE_H_ */
+#endif /* NUMPY_CORE_SRC_MULTIARRAY_SHAPE_H_ */

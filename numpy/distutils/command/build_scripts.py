@@ -2,11 +2,12 @@
 
 """
 from distutils.command.build_scripts import build_scripts as old_build_scripts
+
 from numpy.distutils import log
 from numpy.distutils.misc_util import is_string
 
-class build_scripts(old_build_scripts):
 
+class build_scripts(old_build_scripts):
     def generate_scripts(self, scripts):
         new_scripts = []
         func_scripts = []
@@ -32,7 +33,7 @@ class build_scripts(old_build_scripts):
                 new_scripts.extend(list(script))
         return new_scripts
 
-    def run (self):
+    def run(self):
         if not self.scripts:
             return
 
@@ -46,4 +47,5 @@ class build_scripts(old_build_scripts):
 
     def get_source_files(self):
         from numpy.distutils.misc_util import get_script_files
+
         return get_script_files(self.scripts)

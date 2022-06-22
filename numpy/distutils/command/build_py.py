@@ -1,19 +1,20 @@
 from distutils.command.build_py import build_py as old_build_py
+
 from numpy.distutils.misc_util import is_string
 
-class build_py(old_build_py):
 
+class build_py(old_build_py):
     def run(self):
-        build_src = self.get_finalized_command('build_src')
+        build_src = self.get_finalized_command("build_src")
         if build_src.py_modules_dict and self.packages is None:
-            self.packages = list(build_src.py_modules_dict.keys ())
+            self.packages = list(build_src.py_modules_dict.keys())
         old_build_py.run(self)
 
     def find_package_modules(self, package, package_dir):
         modules = old_build_py.find_package_modules(self, package, package_dir)
 
         # Find build_src generated *.py files.
-        build_src = self.get_finalized_command('build_src')
+        build_src = self.get_finalized_command("build_src")
         modules += build_src.py_modules_dict.get(package, [])
 
         return modules

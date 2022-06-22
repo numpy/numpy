@@ -8,7 +8,6 @@
 #include "numpy/npy_math.h"
 
 #include "npy_config.h"
-
 #include "npy_pycompat.h"
 
 #include <locale.h>
@@ -20,8 +19,6 @@
 #include <xlocale.h>  // xlocale was removed in glibc 2.26, see gh-8367
 #endif
 #endif
-
-
 
 /*
  * From the C99 standard, section 7.19.6: The exponent always contains at least
@@ -36,7 +33,7 @@
  * in length.
  */
 static void
-ensure_minimum_exponent_length(char* buffer, size_t buf_size)
+ensure_minimum_exponent_length(char *buffer, size_t buf_size)
 {
     char *p = strpbrk(buffer, "eE");
     if (p && (*(p + 1) == '-' || *(p + 1) == '+')) {
@@ -111,10 +108,10 @@ ensure_minimum_exponent_length(char* buffer, size_t buf_size)
  * will not be in the current locale, it will always be '.'
  */
 static void
-ensure_decimal_point(char* buffer, size_t buf_size)
+ensure_decimal_point(char *buffer, size_t buf_size)
 {
     int insert_count = 0;
-    char* chars_to_insert;
+    char *chars_to_insert;
 
     /* search for the first non-digit character */
     char *p = buffer;
@@ -128,7 +125,7 @@ ensure_decimal_point(char* buffer, size_t buf_size)
         ++p;
     }
     if (*p == '.') {
-        if (isdigit(Py_CHARMASK(*(p+1)))) {
+        if (isdigit(Py_CHARMASK(*(p + 1)))) {
             /*
              * Nothing to do, we already have a decimal
              * point and a digit after it.
@@ -173,7 +170,7 @@ ensure_decimal_point(char* buffer, size_t buf_size)
  * longer, no need for a maximum buffer size parameter.
  */
 static void
-change_decimal_from_locale_to_dot(char* buffer)
+change_decimal_from_locale_to_dot(char *buffer)
 {
     struct lconv *locale_data = localeconv();
     const char *decimal_point = locale_data->decimal_point;
@@ -232,9 +229,8 @@ check_ascii_format(const char *format)
      * interface to this function is not very good, but changing it is
      * difficult because it's a public API.
      */
-    if (!(format_char == 'e' || format_char == 'E'
-          || format_char == 'f' || format_char == 'F'
-          || format_char == 'g' || format_char == 'G')) {
+    if (!(format_char == 'e' || format_char == 'E' || format_char == 'f' ||
+          format_char == 'F' || format_char == 'g' || format_char == 'G')) {
         return -1;
     }
 
@@ -247,8 +243,8 @@ check_ascii_format(const char *format)
  * decimal if decimal argument != 0 (Same effect that 'Z' format in
  * PyOS_ascii_formatd)
  */
-static char*
-fix_ascii_format(char* buf, size_t buflen, int decimal)
+static char *
+fix_ascii_format(char *buf, size_t buflen, int decimal)
 {
     /*
      * Get the current locale, and find the decimal point string.
@@ -292,40 +288,39 @@ fix_ascii_format(char* buf, size_t buflen, int decimal)
  *
  * Return value: The pointer to the buffer with the converted string.
  */
-#define ASCII_FORMAT(type, suffix, print_type)                          \
-    NPY_NO_EXPORT char*                                                 \
-    NumPyOS_ascii_format ## suffix(char *buffer, size_t buf_size,       \
-                                   const char *format,                  \
-                                   type val, int decimal)               \
-    {                                                                   \
-        if (npy_isfinite(val)) {                                        \
-            if (check_ascii_format(format)) {                           \
-                return NULL;                                            \
-            }                                                           \
-            PyOS_snprintf(buffer, buf_size, format, (print_type)val);   \
-            return fix_ascii_format(buffer, buf_size, decimal);         \
-        }                                                               \
-        else if (npy_isnan(val)){                                       \
-            if (buf_size < 4) {                                         \
-                return NULL;                                            \
-            }                                                           \
-            strcpy(buffer, "nan");                                      \
-        }                                                               \
-        else {                                                          \
-            if (npy_signbit(val)) {                                     \
-                if (buf_size < 5) {                                     \
-                    return NULL;                                        \
-                }                                                       \
-                strcpy(buffer, "-inf");                                 \
-            }                                                           \
-            else {                                                      \
-                if (buf_size < 4) {                                     \
-                    return NULL;                                        \
-                }                                                       \
-                strcpy(buffer, "inf");                                  \
-            }                                                           \
-        }                                                               \
-        return buffer;                                                  \
+#define ASCII_FORMAT(type, suffix, print_type)                           \
+    NPY_NO_EXPORT char *NumPyOS_ascii_format##suffix(                    \
+            char *buffer, size_t buf_size, const char *format, type val, \
+            int decimal)                                                 \
+    {                                                                    \
+        if (npy_isfinite(val)) {                                         \
+            if (check_ascii_format(format)) {                            \
+                return NULL;                                             \
+            }                                                            \
+            PyOS_snprintf(buffer, buf_size, format, (print_type)val);    \
+            return fix_ascii_format(buffer, buf_size, decimal);          \
+        }                                                                \
+        else if (npy_isnan(val)) {                                       \
+            if (buf_size < 4) {                                          \
+                return NULL;                                             \
+            }                                                            \
+            strcpy(buffer, "nan");                                       \
+        }                                                                \
+        else {                                                           \
+            if (npy_signbit(val)) {                                      \
+                if (buf_size < 5) {                                      \
+                    return NULL;                                         \
+                }                                                        \
+                strcpy(buffer, "-inf");                                  \
+            }                                                            \
+            else {                                                       \
+                if (buf_size < 4) {                                      \
+                    return NULL;                                         \
+                }                                                        \
+                strcpy(buffer, "inf");                                   \
+            }                                                            \
+        }                                                                \
+        return buffer;                                                   \
     }
 
 ASCII_FORMAT(float, f, float)
@@ -344,10 +339,9 @@ ASCII_FORMAT(long double, l, double)
 NPY_NO_EXPORT int
 NumPyOS_ascii_isspace(int c)
 {
-    return c == ' ' || c == '\f' || c == '\n' || c == '\r' || c == '\t'
-                    || c == '\v';
+    return c == ' ' || c == '\f' || c == '\n' || c == '\r' || c == '\t' ||
+           c == '\v';
 }
-
 
 /*
  * NumPyOS_ascii_isalpha:
@@ -360,7 +354,6 @@ NumPyOS_ascii_isalpha(char c)
     return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
 }
 
-
 /*
  * NumPyOS_ascii_isdigit:
  *
@@ -371,7 +364,6 @@ NumPyOS_ascii_isdigit(char c)
 {
     return (c >= '0' && c <= '9');
 }
-
 
 /*
  * NumPyOS_ascii_isalnum:
@@ -384,7 +376,6 @@ NumPyOS_ascii_isalnum(char c)
     return NumPyOS_ascii_isdigit(c) || NumPyOS_ascii_isalpha(c);
 }
 
-
 /*
  * NumPyOS_ascii_tolower:
  *
@@ -394,11 +385,10 @@ static int
 NumPyOS_ascii_tolower(int c)
 {
     if (c >= 'A' && c <= 'Z') {
-        return c + ('a'-'A');
+        return c + ('a' - 'A');
     }
     return c;
 }
-
 
 /*
  * NumPyOS_ascii_strncasecmp:
@@ -406,7 +396,7 @@ NumPyOS_ascii_tolower(int c)
  * Same as strncasecmp under C locale
  */
 static int
-NumPyOS_ascii_strncasecmp(const char* s1, const char* s2, size_t len)
+NumPyOS_ascii_strncasecmp(const char *s1, const char *s2, size_t len)
 {
     while (len > 0 && *s1 != '\0' && *s2 != '\0') {
         int diff = NumPyOS_ascii_tolower(*s1) - NumPyOS_ascii_tolower(*s2);
@@ -430,7 +420,7 @@ NumPyOS_ascii_strncasecmp(const char* s1, const char* s2, size_t len)
  * for forward compatibility with Python >= 2.7
  */
 static double
-NumPyOS_ascii_strtod_plain(const char *s, char** endptr)
+NumPyOS_ascii_strtod_plain(const char *s, char **endptr)
 {
     double result;
     NPY_ALLOW_C_API_DEF;
@@ -438,7 +428,7 @@ NumPyOS_ascii_strtod_plain(const char *s, char** endptr)
     result = PyOS_string_to_double(s, endptr, NULL);
     if (PyErr_Occurred()) {
         if (endptr) {
-            *endptr = (char*)s;
+            *endptr = (char *)s;
         }
         PyErr_Clear();
     }
@@ -452,7 +442,7 @@ NumPyOS_ascii_strtod_plain(const char *s, char** endptr)
  * Work around bugs in PyOS_ascii_strtod
  */
 NPY_NO_EXPORT double
-NumPyOS_ascii_strtod(const char *s, char** endptr)
+NumPyOS_ascii_strtod(const char *s, char **endptr)
 {
     const char *p;
     double result;
@@ -487,7 +477,7 @@ NumPyOS_ascii_strtod(const char *s, char** endptr)
             }
         }
         if (endptr != NULL) {
-            *endptr = (char*)p;
+            *endptr = (char *)p;
         }
         return NPY_NAN;
     }
@@ -497,9 +487,9 @@ NumPyOS_ascii_strtod(const char *s, char** endptr)
             p += 5;
         }
         if (endptr != NULL) {
-            *endptr = (char*)p;
+            *endptr = (char *)p;
         }
-        return result*NPY_INFINITY;
+        return result * NPY_INFINITY;
     }
     /* End of ##1 */
 
@@ -507,7 +497,7 @@ NumPyOS_ascii_strtod(const char *s, char** endptr)
 }
 
 NPY_NO_EXPORT long double
-NumPyOS_ascii_strtold(const char *s, char** endptr)
+NumPyOS_ascii_strtold(const char *s, char **endptr)
 {
     const char *p;
     long double result;
@@ -545,7 +535,7 @@ NumPyOS_ascii_strtold(const char *s, char** endptr)
             }
         }
         if (endptr != NULL) {
-            *endptr = (char*)p;
+            *endptr = (char *)p;
         }
         return NPY_NAN;
     }
@@ -555,9 +545,9 @@ NumPyOS_ascii_strtold(const char *s, char** endptr)
             p += 5;
         }
         if (endptr != NULL) {
-            *endptr = (char*)p;
+            *endptr = (char *)p;
         }
-        return result*NPY_INFINITY;
+        return result * NPY_INFINITY;
     }
     /* End of ##1 */
 
@@ -570,7 +560,7 @@ NumPyOS_ascii_strtold(const char *s, char** endptr)
     }
     else {
         if (endptr != NULL) {
-            *endptr = (char*)s;
+            *endptr = (char *)s;
         }
         result = 0;
     }
@@ -599,7 +589,6 @@ NumPyOS_ascii_strtold(const char *s, char** endptr)
 static int
 read_numberlike_string(FILE *fp, char *buffer, size_t buflen)
 {
-
     char *endp;
     char *p;
     int c;
@@ -619,36 +608,46 @@ read_numberlike_string(FILE *fp, char *buffer, size_t buflen)
      * properly eg. in "if ... else" structures.
      */
 
-#define END_MATCH()                                                         \
-        goto buffer_filled
+#define END_MATCH() goto buffer_filled
 
-#define NEXT_CHAR()                                                         \
-        do {                                                                \
-            if (c == EOF || endp >= buffer + buflen - 1)            \
-                END_MATCH();                                                \
-            *endp++ = (char)c;                                              \
-            c = getc(fp);                                                   \
-        } while (0)
+#define NEXT_CHAR()                                  \
+    do {                                             \
+        if (c == EOF || endp >= buffer + buflen - 1) \
+            END_MATCH();                             \
+        *endp++ = (char)c;                           \
+        c = getc(fp);                                \
+    } while (0)
 
-#define MATCH_ALPHA_STRING_NOCASE(string)                                   \
-        do {                                                                \
-            for (p=(string); *p!='\0' && (c==*p || c+('a'-'A')==*p); ++p)   \
-                NEXT_CHAR();                                                \
-            if (*p != '\0') END_MATCH();                                    \
-        } while (0)
+#define MATCH_ALPHA_STRING_NOCASE(string)                                    \
+    do {                                                                     \
+        for (p = (string); *p != '\0' && (c == *p || c + ('a' - 'A') == *p); \
+             ++p)                                                            \
+            NEXT_CHAR();                                                     \
+        if (*p != '\0')                                                      \
+            END_MATCH();                                                     \
+    } while (0)
 
-#define MATCH_ONE_OR_NONE(condition)                                        \
-        do { if (condition) NEXT_CHAR(); } while (0)
+#define MATCH_ONE_OR_NONE(condition) \
+    do {                             \
+        if (condition)               \
+            NEXT_CHAR();             \
+    } while (0)
 
-#define MATCH_ONE_OR_MORE(condition)                                        \
-        do {                                                                \
-            ok = 0;                                                         \
-            while (condition) { NEXT_CHAR(); ok = 1; }                      \
-            if (!ok) END_MATCH();                                           \
-        } while (0)
+#define MATCH_ONE_OR_MORE(condition) \
+    do {                             \
+        ok = 0;                      \
+        while (condition) {          \
+            NEXT_CHAR();             \
+            ok = 1;                  \
+        }                            \
+        if (!ok)                     \
+            END_MATCH();             \
+    } while (0)
 
-#define MATCH_ZERO_OR_MORE(condition)                                       \
-        while (condition) { NEXT_CHAR(); }
+#define MATCH_ZERO_OR_MORE(condition) \
+    while (condition) {               \
+        NEXT_CHAR();                  \
+    }
 
     /* 1. emulate fscanf EOF handling */
     c = getc(fp);
@@ -742,7 +741,7 @@ NumPyOS_ascii_ftolf(FILE *fp, double *value)
     char *p;
     int r;
 
-    r = read_numberlike_string(fp, buffer, FLOAT_FORMATBUFLEN+1);
+    r = read_numberlike_string(fp, buffer, FLOAT_FORMATBUFLEN + 1);
 
     if (r != EOF && r != 0) {
         *value = NumPyOS_ascii_strtod(buffer, &p);
@@ -758,7 +757,7 @@ NumPyOS_ascii_ftoLf(FILE *fp, long double *value)
     char *p;
     int r;
 
-    r = read_numberlike_string(fp, buffer, FLOAT_FORMATBUFLEN+1);
+    r = read_numberlike_string(fp, buffer, FLOAT_FORMATBUFLEN + 1);
 
     if (r != EOF && r != 0) {
         *value = NumPyOS_ascii_strtold(buffer, &p);
@@ -792,5 +791,3 @@ NumPyOS_strtoull(const char *str, char **endptr, int base)
     return PyOS_strtoul(str, endptr, base);
 #endif
 }
-
-

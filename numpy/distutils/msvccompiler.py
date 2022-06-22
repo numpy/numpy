@@ -33,7 +33,7 @@ def _merge(old, new):
         return new
 
     # Neither new nor old is empty. Give old priority.
-    return ';'.join([old, new])
+    return ";".join([old, new])
 
 
 class MSVCCompiler(_MSVCCompiler):
@@ -43,16 +43,16 @@ class MSVCCompiler(_MSVCCompiler):
     def initialize(self):
         # The 'lib' and 'include' variables may be overwritten
         # by MSVCCompiler.initialize, so save them for later merge.
-        environ_lib = os.getenv('lib', '')
-        environ_include = os.getenv('include', '')
+        environ_lib = os.getenv("lib", "")
+        environ_include = os.getenv("include", "")
         _MSVCCompiler.initialize(self)
 
         # Merge current and previous values of 'lib' and 'include'
-        os.environ['lib'] = _merge(environ_lib, os.environ['lib'])
-        os.environ['include'] = _merge(environ_include, os.environ['include'])
+        os.environ["lib"] = _merge(environ_lib, os.environ["lib"])
+        os.environ["include"] = _merge(environ_include, os.environ["include"])
 
         # msvc9 building for 32 bits requires SSE2 to work around a
         # compiler bug.
         if platform_bits == 32:
-            self.compile_options += ['/arch:SSE2']
-            self.compile_options_debug += ['/arch:SSE2']
+            self.compile_options += ["/arch:SSE2"]
+            self.compile_options_debug += ["/arch:SSE2"]

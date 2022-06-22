@@ -13,17 +13,17 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
-#include "npy_config.h"
 #include "numpy/arrayobject.h"
-
-#include "npy_pycompat.h"
-#include "ctors.h"
-
 #include "numpy/ufuncobject.h"
-#include "lowlevel_strided_loops.h"
-#include "reduction.h"
-#include "extobj.h"  /* for _check_ufunc_fperr */
 
+#include "npy_config.h"
+#include "npy_pycompat.h"
+
+#include "reduction.h"
+
+#include "ctors.h"
+#include "extobj.h" /* for _check_ufunc_fperr */
+#include "lowlevel_strided_loops.h"
 
 /*
  * Count the number of dimensions selected in 'axis_flags'
@@ -69,10 +69,9 @@ count_axes(int ndim, const npy_bool *axis_flags)
  * which is the number of elements already initialized.
  */
 static npy_intp
-PyArray_CopyInitialReduceValues(
-                    PyArrayObject *result, PyArrayObject *operand,
-                    const npy_bool *axis_flags, const char *funcname,
-                    int keepdims)
+PyArray_CopyInitialReduceValues(PyArrayObject *result, PyArrayObject *operand,
+                                const npy_bool *axis_flags,
+                                const char *funcname, int keepdims)
 {
     npy_intp shape[NPY_MAXDIMS], strides[NPY_MAXDIMS];
     npy_intp *shape_orig = PyArray_SHAPE(operand);
@@ -94,8 +93,9 @@ PyArray_CopyInitialReduceValues(
         if (axis_flags[idim]) {
             if (NPY_UNLIKELY(shape_orig[idim] == 0)) {
                 PyErr_Format(PyExc_ValueError,
-                        "zero-size array to reduction operation %s "
-                        "which has no identity", funcname);
+                             "zero-size array to reduction operation %s "
+                             "which has no identity",
+                             funcname);
                 return -1;
             }
             if (keepdims) {
@@ -180,11 +180,12 @@ PyArray_CopyInitialReduceValues(
  * generalized ufuncs!)
  */
 NPY_NO_EXPORT PyArrayObject *
-PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
-        PyArrayObject *operand, PyArrayObject *out, PyArrayObject *wheremask,
-        npy_bool *axis_flags, int reorderable, int keepdims,
-        PyObject *identity, PyArray_ReduceLoopFunc *loop,
-        void *data, npy_intp buffersize, const char *funcname, int errormask)
+PyUFunc_ReduceWrapper(PyArrayMethod_Context *context, PyArrayObject *operand,
+                      PyArrayObject *out, PyArrayObject *wheremask,
+                      npy_bool *axis_flags, int reorderable, int keepdims,
+                      PyObject *identity, PyArray_ReduceLoopFunc *loop,
+                      void *data, npy_intp buffersize, const char *funcname,
+                      int errormask)
 {
     assert(loop != NULL);
     PyArrayObject *result = NULL;
@@ -215,28 +216,19 @@ PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
         return NULL;
     }
 
-
     /* Set up the iterator */
     op[0] = out;
     op[1] = operand;
     op_dtypes[0] = context->descriptors[0];
     op_dtypes[1] = context->descriptors[1];
 
-    it_flags = NPY_ITER_BUFFERED |
-            NPY_ITER_EXTERNAL_LOOP |
-            NPY_ITER_GROWINNER |
-            NPY_ITER_DONT_NEGATE_STRIDES |
-            NPY_ITER_ZEROSIZE_OK |
-            NPY_ITER_REFS_OK |
-            NPY_ITER_DELAY_BUFALLOC |
-            NPY_ITER_COPY_IF_OVERLAP;
-    op_flags[0] = NPY_ITER_READWRITE |
-                  NPY_ITER_ALIGNED |
-                  NPY_ITER_ALLOCATE |
+    it_flags = NPY_ITER_BUFFERED | NPY_ITER_EXTERNAL_LOOP |
+               NPY_ITER_GROWINNER | NPY_ITER_DONT_NEGATE_STRIDES |
+               NPY_ITER_ZEROSIZE_OK | NPY_ITER_REFS_OK |
+               NPY_ITER_DELAY_BUFALLOC | NPY_ITER_COPY_IF_OVERLAP;
+    op_flags[0] = NPY_ITER_READWRITE | NPY_ITER_ALIGNED | NPY_ITER_ALLOCATE |
                   NPY_ITER_NO_SUBTYPE;
-    op_flags[1] = NPY_ITER_READONLY |
-                  NPY_ITER_ALIGNED |
-                  NPY_ITER_NO_BROADCAST;
+    op_flags[1] = NPY_ITER_READONLY | NPY_ITER_ALIGNED | NPY_ITER_NO_BROADCAST;
 
     if (wheremask != NULL) {
         op[2] = wheremask;
@@ -272,14 +264,16 @@ PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
         /* NpyIter does not raise a good error message in this common case. */
         if (NPY_UNLIKELY(curr_axis != PyArray_NDIM(out))) {
             if (keepdims) {
-                PyErr_Format(PyExc_ValueError,
+                PyErr_Format(
+                        PyExc_ValueError,
                         "output parameter for reduction operation %s has the "
                         "wrong number of dimensions: Found %d but expected %d "
                         "(must match the operand's when keepdims=True)",
                         funcname, PyArray_NDIM(out), curr_axis);
             }
             else {
-                PyErr_Format(PyExc_ValueError,
+                PyErr_Format(
+                        PyExc_ValueError,
                         "output parameter for reduction operation %s has the "
                         "wrong number of dimensions: Found %d but expected %d",
                         funcname, PyArray_NDIM(out), curr_axis);
@@ -289,10 +283,9 @@ PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
     }
 
     iter = NpyIter_AdvancedNew(wheremask == NULL ? 2 : 3, op, it_flags,
-                               NPY_KEEPORDER, NPY_UNSAFE_CASTING,
-                               op_flags,
-                               op_dtypes,
-                               PyArray_NDIM(operand), op_axes, NULL, buffersize);
+                               NPY_KEEPORDER, NPY_UNSAFE_CASTING, op_flags,
+                               op_dtypes, PyArray_NDIM(operand), op_axes, NULL,
+                               buffersize);
     if (iter == NULL) {
         goto fail;
     }
@@ -306,7 +299,7 @@ PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
     needs_api |= NpyIter_IterationNeedsAPI(iter);
     if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
         /* Start with the floating-point exception flags cleared */
-        npy_clear_floatstatus_barrier((char*)&iter);
+        npy_clear_floatstatus_barrier((char *)&iter);
     }
 
     /*
@@ -342,14 +335,16 @@ PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
     npy_intp fixed_strides[3];
     NpyIter_GetInnerFixedStrideArray(iter, fixed_strides);
     if (wheremask != NULL) {
-        if (PyArrayMethod_GetMaskedStridedLoop(context,
-                1, fixed_strides, &strided_loop, &auxdata, &flags) < 0) {
+        if (PyArrayMethod_GetMaskedStridedLoop(context, 1, fixed_strides,
+                                               &strided_loop, &auxdata,
+                                               &flags) < 0) {
             goto fail;
         }
     }
     else {
-        if (context->method->get_strided_loop(context,
-                1, 0, fixed_strides, &strided_loop, &auxdata, &flags) < 0) {
+        if (context->method->get_strided_loop(context, 1, 0, fixed_strides,
+                                              &strided_loop, &auxdata,
+                                              &flags) < 0) {
             goto fail;
         }
     }
@@ -368,9 +363,8 @@ PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
         strideptr = NpyIter_GetInnerStrideArray(iter);
         countptr = NpyIter_GetInnerLoopSizePtr(iter);
 
-        if (loop(context, strided_loop, auxdata,
-                iter, dataptr, strideptr, countptr, iternext,
-                needs_api, skip_first_count) < 0) {
+        if (loop(context, strided_loop, auxdata, iter, dataptr, strideptr,
+                 countptr, iternext, needs_api, skip_first_count) < 0) {
             goto fail;
         }
     }

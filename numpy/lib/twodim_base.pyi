@@ -1,38 +1,32 @@
 from collections.abc import Callable, Sequence
-from typing import (
-    Any,
-    overload,
-    TypeVar,
-    Union,
-)
+from typing import Any, TypeVar, Union, overload
 
 from numpy import (
-    generic,
-    number,
+    _OrderCF,
     bool_,
-    timedelta64,
+    complexfloating,
     datetime64,
+    float64,
+    floating,
+    generic,
     int_,
     intp,
-    float64,
-    signedinteger,
-    floating,
-    complexfloating,
+    number,
     object_,
-    _OrderCF,
+    signedinteger,
+    timedelta64,
 )
-
 from numpy._typing import (
-    DTypeLike,
-    _DTypeLike,
     ArrayLike,
-    _ArrayLike,
+    DTypeLike,
     NDArray,
-    _SupportsArrayFunc,
-    _ArrayLikeInt_co,
-    _ArrayLikeFloat_co,
+    _ArrayLike,
     _ArrayLikeComplex_co,
+    _ArrayLikeFloat_co,
+    _ArrayLikeInt_co,
     _ArrayLikeObject_co,
+    _DTypeLike,
+    _SupportsArrayFunc,
 )
 
 _T = TypeVar("_T")
@@ -50,12 +44,10 @@ __all__: list[str]
 def fliplr(m: _ArrayLike[_SCT]) -> NDArray[_SCT]: ...
 @overload
 def fliplr(m: ArrayLike) -> NDArray[Any]: ...
-
 @overload
 def flipud(m: _ArrayLike[_SCT]) -> NDArray[_SCT]: ...
 @overload
 def flipud(m: ArrayLike) -> NDArray[Any]: ...
-
 @overload
 def eye(
     N: int,
@@ -86,17 +78,14 @@ def eye(
     *,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
-
 @overload
 def diag(v: _ArrayLike[_SCT], k: int = ...) -> NDArray[_SCT]: ...
 @overload
 def diag(v: ArrayLike, k: int = ...) -> NDArray[Any]: ...
-
 @overload
 def diagflat(v: _ArrayLike[_SCT], k: int = ...) -> NDArray[_SCT]: ...
 @overload
 def diagflat(v: ArrayLike, k: int = ...) -> NDArray[Any]: ...
-
 @overload
 def tri(
     N: int,
@@ -104,7 +93,7 @@ def tri(
     k: int = ...,
     dtype: None = ...,
     *,
-    like: None | _SupportsArrayFunc = ...
+    like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[float64]: ...
 @overload
 def tri(
@@ -113,7 +102,7 @@ def tri(
     k: int = ...,
     dtype: _DTypeLike[_SCT] = ...,
     *,
-    like: None | _SupportsArrayFunc = ...
+    like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def tri(
@@ -122,19 +111,16 @@ def tri(
     k: int = ...,
     dtype: DTypeLike = ...,
     *,
-    like: None | _SupportsArrayFunc = ...
+    like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
-
 @overload
 def tril(v: _ArrayLike[_SCT], k: int = ...) -> NDArray[_SCT]: ...
 @overload
 def tril(v: ArrayLike, k: int = ...) -> NDArray[Any]: ...
-
 @overload
 def triu(v: _ArrayLike[_SCT], k: int = ...) -> NDArray[_SCT]: ...
 @overload
 def triu(v: ArrayLike, k: int = ...) -> NDArray[Any]: ...
-
 @overload
 def vander(  # type: ignore[misc]
     x: _ArrayLikeInt_co,
@@ -159,7 +145,6 @@ def vander(
     N: None | int = ...,
     increasing: bool = ...,
 ) -> NDArray[object_]: ...
-
 @overload
 def histogram2d(  # type: ignore[misc]
     x: _ArrayLikeFloat_co,
@@ -168,11 +153,7 @@ def histogram2d(  # type: ignore[misc]
     range: None | _ArrayLikeFloat_co = ...,
     density: None | bool = ...,
     weights: None | _ArrayLikeFloat_co = ...,
-) -> tuple[
-    NDArray[float64],
-    NDArray[floating[Any]],
-    NDArray[floating[Any]],
-]: ...
+) -> tuple[NDArray[float64], NDArray[floating[Any]], NDArray[floating[Any]],]: ...
 @overload
 def histogram2d(
     x: _ArrayLikeComplex_co,
@@ -194,11 +175,7 @@ def histogram2d(
     range: None | _ArrayLikeFloat_co = ...,
     density: None | bool = ...,
     weights: None | _ArrayLikeFloat_co = ...,
-) -> tuple[
-    NDArray[float64],
-    NDArray[Any],
-    NDArray[Any],
-]: ...
+) -> tuple[NDArray[float64], NDArray[Any], NDArray[Any],]: ...
 
 # NOTE: we're assuming/demanding here the `mask_func` returns
 # an ndarray of shape `(n, n)`; otherwise there is the possibility
@@ -215,24 +192,20 @@ def mask_indices(
     mask_func: _MaskFunc[_T],
     k: _T,
 ) -> tuple[NDArray[intp], NDArray[intp]]: ...
-
 def tril_indices(
     n: int,
     k: int = ...,
     m: None | int = ...,
 ) -> tuple[NDArray[int_], NDArray[int_]]: ...
-
 def tril_indices_from(
     arr: NDArray[Any],
     k: int = ...,
 ) -> tuple[NDArray[int_], NDArray[int_]]: ...
-
 def triu_indices(
     n: int,
     k: int = ...,
     m: None | int = ...,
 ) -> tuple[NDArray[int_], NDArray[int_]]: ...
-
 def triu_indices_from(
     arr: NDArray[Any],
     k: int = ...,

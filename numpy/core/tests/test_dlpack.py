@@ -1,8 +1,9 @@
 import sys
+
 import pytest
 
 import numpy as np
-from numpy.testing import assert_array_equal, IS_PYPY
+from numpy.testing import IS_PYPY, assert_array_equal
 
 
 class TestDLPack:
@@ -22,9 +23,9 @@ class TestDLPack:
             x.__dlpack__(stream=1)
 
     def test_strides_not_multiple_of_itemsize(self):
-        dt = np.dtype([('int', np.int32), ('char', np.int8)])
+        dt = np.dtype([("int", np.int32), ("char", np.int8)])
         y = np.zeros((5,), dtype=dt)
-        z = y['int']
+        z = y["int"]
 
         with pytest.raises(RuntimeError):
             np.from_dlpack(z)
@@ -37,12 +38,24 @@ class TestDLPack:
         del y
         assert sys.getrefcount(x) == 2
 
-    @pytest.mark.parametrize("dtype", [
-        np.int8, np.int16, np.int32, np.int64,
-        np.uint8, np.uint16, np.uint32, np.uint64,
-        np.float16, np.float32, np.float64,
-        np.complex64, np.complex128
-    ])
+    @pytest.mark.parametrize(
+        "dtype",
+        [
+            np.int8,
+            np.int16,
+            np.int32,
+            np.int64,
+            np.uint8,
+            np.uint16,
+            np.uint32,
+            np.uint64,
+            np.float16,
+            np.float32,
+            np.float64,
+            np.complex64,
+            np.complex128,
+        ],
+    )
     def test_dtype_passthrough(self, dtype):
         x = np.arange(5, dtype=dtype)
         y = np.from_dlpack(x)
@@ -51,13 +64,13 @@ class TestDLPack:
         assert_array_equal(x, y)
 
     def test_invalid_dtype(self):
-        x = np.asarray(np.datetime64('2021-05-27'))
+        x = np.asarray(np.datetime64("2021-05-27"))
 
         with pytest.raises(TypeError):
             np.from_dlpack(x)
 
     def test_invalid_byte_swapping(self):
-        dt = np.dtype('=i8').newbyteorder()
+        dt = np.dtype("=i8").newbyteorder()
         x = np.arange(5, dtype=dt)
 
         with pytest.raises(TypeError):
@@ -100,7 +113,7 @@ class TestDLPack:
         x = np.arange(5)
         _ = x.__dlpack__()
         raise RuntimeError
-    
+
     def test_dlpack_destructor_exception(self):
         with pytest.raises(RuntimeError):
             self.dlpack_deleter_exception()
@@ -117,7 +130,12 @@ class TestDLPack:
         assert_array_equal(x, y)
 
     def test_size1dims_arrays(self):
-        x = np.ndarray(dtype='f8', shape=(10, 5, 1), strides=(8, 80, 4),
-                       buffer=np.ones(1000, dtype=np.uint8), order='F')
+        x = np.ndarray(
+            dtype="f8",
+            shape=(10, 5, 1),
+            strides=(8, 80, 4),
+            buffer=np.ones(1000, dtype=np.uint8),
+            order="F",
+        )
         y = np.from_dlpack(x)
         assert_array_equal(x, y)

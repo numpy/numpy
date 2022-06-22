@@ -1,11 +1,13 @@
 #ifndef NUMPY_CORE_SRC_COMMON_BINOP_OVERRIDE_H_
 #define NUMPY_CORE_SRC_COMMON_BINOP_OVERRIDE_H_
 
-#include <string.h>
 #include <Python.h>
+
 #include "numpy/arrayobject.h"
 
 #include "get_attr_string.h"
+
+#include <string.h>
 
 /*
  * Logic for deciding when binops should return NotImplemented versus when
@@ -86,7 +88,8 @@
  * However, backwards compatibility requires that we follow the rules of
  * __array_priority__ for arrays that define it. For classes that use the new
  * __array_ufunc__ mechanism we simply defer to the ufunc. That has the effect
- * that when the other array has__array_ufunc = None a TypeError will be raised.
+ * that when the other array has__array_ufunc = None a TypeError will be
+ * raised.
  *
  * In the future we might change these rules further. For example, we plan to
  * eventually deprecate __array_priority__ in cases where __array_ufunc__ is
@@ -117,11 +120,8 @@ binop_should_defer(PyObject *self, PyObject *other, int inplace)
     /*
      * attribute check is expensive for scalar operations, avoid if possible
      */
-    if (other == NULL ||
-        self == NULL ||
-        Py_TYPE(self) == Py_TYPE(other) ||
-        PyArray_CheckExact(other) ||
-        PyArray_CheckAnyScalarExact(other)) {
+    if (other == NULL || self == NULL || Py_TYPE(self) == Py_TYPE(other) ||
+        PyArray_CheckExact(other) || PyArray_CheckAnyScalarExact(other)) {
         return 0;
     }
     /*
@@ -135,14 +135,15 @@ binop_should_defer(PyObject *self, PyObject *other, int inplace)
         return defer;
     }
     else if (PyErr_Occurred()) {
-        PyErr_Clear(); /* TODO[gh-14801]: propagate crashes during attribute access? */
+        PyErr_Clear(); /* TODO[gh-14801]: propagate crashes during attribute
+                          access? */
     }
     /*
      * Otherwise, we need to check for the legacy __array_priority__. But if
      * other.__class__ is a subtype of self.__class__, then it's already had
      * a chance to run, so no need to defer to it.
      */
-    if(PyType_IsSubtype(Py_TYPE(other), Py_TYPE(self))) {
+    if (PyType_IsSubtype(Py_TYPE(other), Py_TYPE(self))) {
         return 0;
     }
     self_prio = PyArray_GetPriority((PyObject *)self, NPY_SCALAR_PRIORITY);
@@ -174,26 +175,26 @@ binop_should_defer(PyObject *self, PyObject *other, int inplace)
  * This is modeled on the checks in CPython's typeobject.c SLOT1BINFULL
  * macro.
  */
-#define BINOP_IS_FORWARD(m1, m2, SLOT_NAME, test_func)  \
-    (Py_TYPE(m2)->tp_as_number != NULL &&                               \
-     (void*)(Py_TYPE(m2)->tp_as_number->SLOT_NAME) != (void*)(test_func))
+#define BINOP_IS_FORWARD(m1, m2, SLOT_NAME, test_func) \
+    (Py_TYPE(m2)->tp_as_number != NULL &&              \
+     (void *)(Py_TYPE(m2)->tp_as_number->SLOT_NAME) != (void *)(test_func))
 
-#define BINOP_GIVE_UP_IF_NEEDED(m1, m2, slot_expr, test_func)           \
-    do {                                                                \
-        if (BINOP_IS_FORWARD(m1, m2, slot_expr, test_func) &&           \
-            binop_should_defer((PyObject*)m1, (PyObject*)m2, 0)) {      \
-            Py_INCREF(Py_NotImplemented);                               \
-            return Py_NotImplemented;                                   \
-        }                                                               \
+#define BINOP_GIVE_UP_IF_NEEDED(m1, m2, slot_expr, test_func)        \
+    do {                                                             \
+        if (BINOP_IS_FORWARD(m1, m2, slot_expr, test_func) &&        \
+            binop_should_defer((PyObject *)m1, (PyObject *)m2, 0)) { \
+            Py_INCREF(Py_NotImplemented);                            \
+            return Py_NotImplemented;                                \
+        }                                                            \
     } while (0)
 
-#define INPLACE_GIVE_UP_IF_NEEDED(m1, m2, slot_expr, test_func)         \
-    do {                                                                \
-        if (BINOP_IS_FORWARD(m1, m2, slot_expr, test_func) &&           \
-            binop_should_defer((PyObject*)m1, (PyObject*)m2, 1)) {      \
-            Py_INCREF(Py_NotImplemented);                               \
-            return Py_NotImplemented;                                   \
-        }                                                               \
+#define INPLACE_GIVE_UP_IF_NEEDED(m1, m2, slot_expr, test_func)      \
+    do {                                                             \
+        if (BINOP_IS_FORWARD(m1, m2, slot_expr, test_func) &&        \
+            binop_should_defer((PyObject *)m1, (PyObject *)m2, 1)) { \
+            Py_INCREF(Py_NotImplemented);                            \
+            return Py_NotImplemented;                                \
+        }                                                            \
     } while (0)
 
 /*
@@ -204,12 +205,12 @@ binop_should_defer(PyObject *self, PyObject *other, int inplace)
  * asymmetric -- you can never have two duck-array types that each decide to
  * defer to the other.
  */
-#define RICHCMP_GIVE_UP_IF_NEEDED(m1, m2)                               \
-    do {                                                                \
-        if (binop_should_defer((PyObject*)m1, (PyObject*)m2, 0)) {      \
-            Py_INCREF(Py_NotImplemented);                               \
-            return Py_NotImplemented;                                   \
-        }                                                               \
+#define RICHCMP_GIVE_UP_IF_NEEDED(m1, m2)                            \
+    do {                                                             \
+        if (binop_should_defer((PyObject *)m1, (PyObject *)m2, 0)) { \
+            Py_INCREF(Py_NotImplemented);                            \
+            return Py_NotImplemented;                                \
+        }                                                            \
     } while (0)
 
-#endif  /* NUMPY_CORE_SRC_COMMON_BINOP_OVERRIDE_H_ */
+#endif /* NUMPY_CORE_SRC_COMMON_BINOP_OVERRIDE_H_ */

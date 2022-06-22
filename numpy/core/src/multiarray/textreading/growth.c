@@ -16,7 +16,8 @@
  * The user has to ensure the input is ssize_t but not negative.
  */
 NPY_NO_EXPORT npy_intp
-grow_size_and_multiply(npy_intp *size, npy_intp min_grow, npy_intp itemsize) {
+grow_size_and_multiply(npy_intp *size, npy_intp min_grow, npy_intp itemsize)
+{
     /* min_grow must be a power of two: */
     assert((min_grow & (min_grow - 1)) == 0);
     npy_uintp new_size = (npy_uintp)*size;
@@ -39,9 +40,9 @@ grow_size_and_multiply(npy_intp *size, npy_intp min_grow, npy_intp itemsize) {
     }
     *size = (npy_intp)new_size;
     npy_intp alloc_size;
-    if (npy_mul_with_overflow_intp(&alloc_size, (npy_intp)new_size, itemsize)) {
+    if (npy_mul_with_overflow_intp(&alloc_size, (npy_intp)new_size,
+                                   itemsize)) {
         return -1;
     }
     return alloc_size;
 }
-

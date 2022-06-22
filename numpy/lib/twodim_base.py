@@ -4,25 +4,52 @@
 import functools
 import operator
 
+from numpy.core import iinfo, overrides
 from numpy.core.numeric import (
-    asanyarray, arange, zeros, greater_equal, multiply, ones,
-    asarray, where, int8, int16, int32, int64, intp, empty, promote_types,
-    diagonal, nonzero, indices
-    )
+    arange,
+    asanyarray,
+    asarray,
+    diagonal,
+    empty,
+    greater_equal,
+    indices,
+    int8,
+    int16,
+    int32,
+    int64,
+    intp,
+    multiply,
+    nonzero,
+    ones,
+    promote_types,
+    where,
+    zeros,
+)
 from numpy.core.overrides import set_array_function_like_doc, set_module
-from numpy.core import overrides
-from numpy.core import iinfo
 from numpy.lib.stride_tricks import broadcast_to
 
-
 __all__ = [
-    'diag', 'diagflat', 'eye', 'fliplr', 'flipud', 'tri', 'triu',
-    'tril', 'vander', 'histogram2d', 'mask_indices', 'tril_indices',
-    'tril_indices_from', 'triu_indices', 'triu_indices_from', ]
+    "diag",
+    "diagflat",
+    "eye",
+    "fliplr",
+    "flipud",
+    "tri",
+    "triu",
+    "tril",
+    "vander",
+    "histogram2d",
+    "mask_indices",
+    "tril_indices",
+    "tril_indices_from",
+    "triu_indices",
+    "triu_indices_from",
+]
 
 
 array_function_dispatch = functools.partial(
-    overrides.array_function_dispatch, module='numpy')
+    overrides.array_function_dispatch, module="numpy"
+)
 
 
 i1 = iinfo(int8)
@@ -31,7 +58,7 @@ i4 = iinfo(int32)
 
 
 def _min_int(low, high):
-    """ get small int that fits the range """
+    """get small int that fits the range"""
     if high <= i1.max and low >= i1.min:
         return int8
     if high <= i2.max and low >= i2.min:
@@ -160,8 +187,8 @@ def _eye_dispatcher(N, M=None, k=None, dtype=None, order=None, *, like=None):
 
 
 @set_array_function_like_doc
-@set_module('numpy')
-def eye(N, M=None, k=0, dtype=float, order='C', *, like=None):
+@set_module("numpy")
+def eye(N, M=None, k=0, dtype=float, order="C", *, like=None):
     """
     Return a 2-D array with ones on the diagonal and zeros elsewhere.
 
@@ -224,13 +251,11 @@ def eye(N, M=None, k=0, dtype=float, order='C', *, like=None):
         i = k
     else:
         i = (-k) * M
-    m[:M-k].flat[i::M+1] = 1
+    m[: M - k].flat[i :: M + 1] = 1
     return m
 
 
-_eye_with_like = array_function_dispatch(
-    _eye_dispatcher
-)(eye)
+_eye_with_like = array_function_dispatch(_eye_dispatcher)(eye)
 
 
 def _diag_dispatcher(v, k=None):
@@ -295,13 +320,13 @@ def diag(v, k=0):
     v = asanyarray(v)
     s = v.shape
     if len(s) == 1:
-        n = s[0]+abs(k)
+        n = s[0] + abs(k)
         res = zeros((n, n), v.dtype)
         if k >= 0:
             i = k
         else:
             i = (-k) * n
-        res[:n-k].flat[i::n+1] = v
+        res[: n - k].flat[i :: n + 1] = v
         return res
     elif len(s) == 2:
         return diagonal(v, k)
@@ -357,12 +382,12 @@ def diagflat(v, k=0):
     s = len(v)
     n = s + abs(k)
     res = zeros((n, n), v.dtype)
-    if (k >= 0):
-        i = arange(0, n-k, dtype=intp)
-        fi = i+k+i*n
+    if k >= 0:
+        i = arange(0, n - k, dtype=intp)
+        fi = i + k + i * n
     else:
-        i = arange(0, n+k, dtype=intp)
-        fi = i+(i-k)*n
+        i = arange(0, n + k, dtype=intp)
+        fi = i + (i - k) * n
     res.flat[fi] = v
     if not wrap:
         return res
@@ -374,7 +399,7 @@ def _tri_dispatcher(N, M=None, k=None, dtype=None, *, like=None):
 
 
 @set_array_function_like_doc
-@set_module('numpy')
+@set_module("numpy")
 def tri(N, M=None, k=0, dtype=float, *, like=None):
     """
     An array with ones at and below the given diagonal and zeros elsewhere.
@@ -421,8 +446,9 @@ def tri(N, M=None, k=0, dtype=float, *, like=None):
     if M is None:
         M = N
 
-    m = greater_equal.outer(arange(N, dtype=_min_int(0, N)),
-                            arange(-k, M-k, dtype=_min_int(-k, M - k)))
+    m = greater_equal.outer(
+        arange(N, dtype=_min_int(0, N)), arange(-k, M - k, dtype=_min_int(-k, M - k))
+    )
 
     # Avoid making a copy if the requested type is already bool
     m = m.astype(dtype, copy=False)
@@ -430,9 +456,7 @@ def tri(N, M=None, k=0, dtype=float, *, like=None):
     return m
 
 
-_tri_with_like = array_function_dispatch(
-    _tri_dispatcher
-)(tri)
+_tri_with_like = array_function_dispatch(_tri_dispatcher)(tri)
 
 
 def _trilu_dispatcher(m, k=None):
@@ -533,7 +557,7 @@ def triu(m, k=0):
 
     """
     m = asanyarray(m)
-    mask = tri(*m.shape[-2:], k=k-1, dtype=bool)
+    mask = tri(*m.shape[-2:], k=k - 1, dtype=bool)
 
     return where(mask, zeros(1, m.dtype), m)
 
@@ -634,8 +658,7 @@ def vander(x, N=None, increasing=False):
     return v
 
 
-def _histogram2d_dispatcher(x, y, bins=None, range=None, density=None,
-                            weights=None):
+def _histogram2d_dispatcher(x, y, bins=None, range=None, density=None, weights=None):
     yield x
     yield y
 
@@ -807,7 +830,7 @@ def histogram2d(x, y, bins=10, range=None, density=None, weights=None):
     from numpy import histogramdd
 
     if len(x) != len(y):
-        raise ValueError('x and y must have the same length.')
+        raise ValueError("x and y must have the same length.")
 
     try:
         N = len(bins)
@@ -821,7 +844,7 @@ def histogram2d(x, y, bins=10, range=None, density=None, weights=None):
     return hist, edges[0], edges[1]
 
 
-@set_module('numpy')
+@set_module("numpy")
 def mask_indices(n, mask_func, k=0):
     """
     Return the indices to access (n, n) arrays, given a masking function.
@@ -892,7 +915,7 @@ def mask_indices(n, mask_func, k=0):
     return nonzero(a != 0)
 
 
-@set_module('numpy')
+@set_module("numpy")
 def tril_indices(n, k=0, m=None):
     """
     Return the indices for the lower-triangle of an (n, m) array.
@@ -972,8 +995,10 @@ def tril_indices(n, k=0, m=None):
     """
     tri_ = tri(n, m, k=k, dtype=bool)
 
-    return tuple(broadcast_to(inds, tri_.shape)[tri_]
-                 for inds in indices(tri_.shape, sparse=True))
+    return tuple(
+        broadcast_to(inds, tri_.shape)[tri_]
+        for inds in indices(tri_.shape, sparse=True)
+    )
 
 
 def _trilu_indices_form_dispatcher(arr, k=None):
@@ -1009,7 +1034,7 @@ def tril_indices_from(arr, k=0):
     return tril_indices(arr.shape[-2], k=k, m=arr.shape[-1])
 
 
-@set_module('numpy')
+@set_module("numpy")
 def triu_indices(n, k=0, m=None):
     """
     Return the indices for the upper-triangle of an (n, m) array.
@@ -1091,8 +1116,10 @@ def triu_indices(n, k=0, m=None):
     """
     tri_ = ~tri(n, m, k=k - 1, dtype=bool)
 
-    return tuple(broadcast_to(inds, tri_.shape)[tri_]
-                 for inds in indices(tri_.shape, sparse=True))
+    return tuple(
+        broadcast_to(inds, tri_.shape)[tri_]
+        for inds in indices(tri_.shape, sparse=True)
+    )
 
 
 @array_function_dispatch(_trilu_indices_form_dispatcher)

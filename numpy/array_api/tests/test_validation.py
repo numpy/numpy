@@ -6,9 +6,7 @@ from numpy import array_api as xp
 
 
 def p(func: Callable, *args, **kwargs):
-    f_sig = ", ".join(
-        [str(a) for a in args] + [f"{k}={v}" for k, v in kwargs.items()]
-    )
+    f_sig = ", ".join([str(a) for a in args] + [f"{k}={v}" for k, v in kwargs.items()])
     id_ = f"{func.__name__}({f_sig})"
     return pytest.param(func, args, kwargs, id=id_)
 

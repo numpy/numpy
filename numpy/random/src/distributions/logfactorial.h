@@ -4,6 +4,7 @@
 
 #include <stdint.h>
 
-double logfactorial(int64_t k);
+double
+logfactorial(int64_t k);
 
 #endif

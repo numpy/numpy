@@ -1,9 +1,9 @@
-import re
 import pathlib
+import re
 from typing import IO
 
-import numpy.typing as npt
 import numpy as np
+import numpy.typing as npt
 
 str_path: str
 pathlib_path: pathlib.Path
@@ -69,24 +69,44 @@ reveal_type(np.loadtxt(str_path, delimiter="\n"))  # E: ndarray[Any, dtype[{floa
 reveal_type(np.loadtxt(str_path, ndmin=2))  # E: ndarray[Any, dtype[{float64}]]
 reveal_type(np.loadtxt(["1", "2", "3"]))  # E: ndarray[Any, dtype[{float64}]]
 
-reveal_type(np.fromregex(bytes_file, "test", np.float64))  # E: ndarray[Any, dtype[{float64}]]
+reveal_type(
+    np.fromregex(bytes_file, "test", np.float64)
+)  # E: ndarray[Any, dtype[{float64}]]
 reveal_type(np.fromregex(str_file, b"test", dtype=float))  # E: ndarray[Any, dtype[Any]]
-reveal_type(np.fromregex(str_path, re.compile("test"), dtype=np.str_, encoding="utf8"))  # E: ndarray[Any, dtype[str_]]
-reveal_type(np.fromregex(pathlib_path, "test", np.float64))  # E: ndarray[Any, dtype[{float64}]]
-reveal_type(np.fromregex(bytes_reader, "test", np.float64))  # E: ndarray[Any, dtype[{float64}]]
+reveal_type(
+    np.fromregex(str_path, re.compile("test"), dtype=np.str_, encoding="utf8")
+)  # E: ndarray[Any, dtype[str_]]
+reveal_type(
+    np.fromregex(pathlib_path, "test", np.float64)
+)  # E: ndarray[Any, dtype[{float64}]]
+reveal_type(
+    np.fromregex(bytes_reader, "test", np.float64)
+)  # E: ndarray[Any, dtype[{float64}]]
 
 reveal_type(np.genfromtxt(bytes_file))  # E: ndarray[Any, dtype[{float64}]]
 reveal_type(np.genfromtxt(pathlib_path, dtype=np.str_))  # E: ndarray[Any, dtype[str_]]
-reveal_type(np.genfromtxt(str_path, dtype=str, skip_header=2))  # E: ndarray[Any, dtype[Any]]
-reveal_type(np.genfromtxt(str_file, comments="test"))  # E: ndarray[Any, dtype[{float64}]]
-reveal_type(np.genfromtxt(str_path, delimiter="\n"))  # E: ndarray[Any, dtype[{float64}]]
+reveal_type(
+    np.genfromtxt(str_path, dtype=str, skip_header=2)
+)  # E: ndarray[Any, dtype[Any]]
+reveal_type(
+    np.genfromtxt(str_file, comments="test")
+)  # E: ndarray[Any, dtype[{float64}]]
+reveal_type(
+    np.genfromtxt(str_path, delimiter="\n")
+)  # E: ndarray[Any, dtype[{float64}]]
 reveal_type(np.genfromtxt(str_path, ndmin=2))  # E: ndarray[Any, dtype[{float64}]]
-reveal_type(np.genfromtxt(["1", "2", "3"], ndmin=2))  # E: ndarray[Any, dtype[{float64}]]
+reveal_type(
+    np.genfromtxt(["1", "2", "3"], ndmin=2)
+)  # E: ndarray[Any, dtype[{float64}]]
 
 reveal_type(np.recfromtxt(bytes_file))  # E: recarray[Any, dtype[record]]
-reveal_type(np.recfromtxt(pathlib_path, usemask=True))  # E: ma.mrecords.MaskedRecords[Any, dtype[void]]
+reveal_type(
+    np.recfromtxt(pathlib_path, usemask=True)
+)  # E: ma.mrecords.MaskedRecords[Any, dtype[void]]
 reveal_type(np.recfromtxt(["1", "2", "3"]))  # E: recarray[Any, dtype[record]]
 
 reveal_type(np.recfromcsv(bytes_file))  # E: recarray[Any, dtype[record]]
-reveal_type(np.recfromcsv(pathlib_path, usemask=True))  # E: ma.mrecords.MaskedRecords[Any, dtype[void]]
+reveal_type(
+    np.recfromcsv(pathlib_path, usemask=True)
+)  # E: ma.mrecords.MaskedRecords[Any, dtype[void]]
 reveal_type(np.recfromcsv(["1", "2", "3"]))  # E: recarray[Any, dtype[record]]

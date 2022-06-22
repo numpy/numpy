@@ -208,6 +208,7 @@ NumPy provides several hooks that classes can customize:
 
        HANDLED_FUNCTIONS = {}
 
+
        class MyArray:
            def __array_function__(self, func, types, args, kwargs):
                if func not in HANDLED_FUNCTIONS:
@@ -218,16 +219,21 @@ NumPy provides several hooks that classes can customize:
                    return NotImplemented
                return HANDLED_FUNCTIONS[func](*args, **kwargs)
 
+
        def implements(numpy_function):
            """Register an __array_function__ implementation for MyArray objects."""
+
            def decorator(func):
                HANDLED_FUNCTIONS[numpy_function] = func
                return func
+
            return decorator
+
 
        @implements(np.concatenate)
        def concatenate(arrays, axis=0, out=None):
            ...  # implementation of concatenate for MyArray objects
+
 
        @implements(np.broadcast_to)
        def broadcast_to(array, shape):

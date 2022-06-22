@@ -13,31 +13,28 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
+#include "numpy/arrayobject.h"
+#include "numpy/npy_3kcompat.h"
+#include "numpy/npy_math.h"
+#include "numpy/ufuncobject.h"
+
 #include "npy_config.h"
 
-#include "numpy/arrayobject.h"
-#include "numpy/ufuncobject.h"
-#include "numpy/npy_3kcompat.h"
 #include "abstract.h"
-
-#include "numpy/npy_math.h"
-#include "number.h"
 #include "dispatching.h"
+#include "number.h"
 #include "string_ufuncs.h"
 
 /* Automatically generated code to define all ufuncs: */
-#include "funcs.inc"
 #include "__umath_generated.c"
-
+#include "funcs.inc"
 
 static PyUFuncGenericFunction pyfunc_functions[] = {PyUFunc_On_Om};
 
 static int
-object_ufunc_type_resolver(PyUFuncObject *ufunc,
-                                NPY_CASTING casting,
-                                PyArrayObject **operands,
-                                PyObject *type_tup,
-                                PyArray_Descr **out_dtypes)
+object_ufunc_type_resolver(PyUFuncObject *ufunc, NPY_CASTING casting,
+                           PyArrayObject **operands, PyObject *type_tup,
+                           PyArray_Descr **out_dtypes)
 {
     int i, nop = ufunc->nin + ufunc->nout;
 
@@ -56,10 +53,9 @@ object_ufunc_type_resolver(PyUFuncObject *ufunc,
 
 static int
 object_ufunc_loop_selector(PyUFuncObject *ufunc,
-                            PyArray_Descr **NPY_UNUSED(dtypes),
-                            PyUFuncGenericFunction *out_innerloop,
-                            void **out_innerloopdata,
-                            int *out_needs_api)
+                           PyArray_Descr **NPY_UNUSED(dtypes),
+                           PyUFuncGenericFunction *out_innerloop,
+                           void **out_innerloopdata, int *out_needs_api)
 {
     *out_innerloop = ufunc->functions[0];
     *out_innerloopdata = (ufunc->data == NULL) ? NULL : ufunc->data[0];
@@ -69,7 +65,8 @@ object_ufunc_loop_selector(PyUFuncObject *ufunc,
 }
 
 PyObject *
-ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds) {
+ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
+{
     PyObject *function, *pyname = NULL;
     int nin, nout, i, nargs;
     PyUFunc_PyFuncData *fdata;
@@ -77,13 +74,13 @@ ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds) {
     const char *fname = NULL;
     char *str, *types, *doc;
     Py_ssize_t fname_len = -1;
-    void * ptr, **data;
+    void *ptr, **data;
     int offset[2];
-    PyObject *identity = NULL;  /* note: not the same semantics as Py_None */
+    PyObject *identity = NULL; /* note: not the same semantics as Py_None */
     static char *kwlist[] = {"", "nin", "nout", "identity", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "Oii|$O:frompyfunc", kwlist,
-                &function, &nin, &nout, &identity)) {
+                                     &function, &nin, &nout, &identity)) {
         return NULL;
     }
     if (!PyCallable_Check(function)) {
@@ -121,10 +118,10 @@ ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds) {
     offset[1] = nargs;
     i = (nargs % sizeof(void *));
     if (i) {
-        offset[1] += (sizeof(void *)-i);
+        offset[1] += (sizeof(void *) - i);
     }
     ptr = PyArray_malloc(offset[0] + offset[1] + sizeof(void *) +
-                            (fname_len + 14));
+                         (fname_len + 14));
     if (ptr == NULL) {
         Py_XDECREF(pyname);
         return PyErr_NoMemory();
@@ -142,16 +139,17 @@ ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds) {
     }
     str = types + offset[1];
     memcpy(str, fname, fname_len);
-    memcpy(str+fname_len, " (vectorized)", 14);
+    memcpy(str + fname_len, " (vectorized)", 14);
     Py_XDECREF(pyname);
 
     /* Do a better job someday */
     doc = "dynamic ufunc based on a python function";
 
     self = (PyUFuncObject *)PyUFunc_FromFuncAndDataAndSignatureAndIdentity(
-            (PyUFuncGenericFunction *)pyfunc_functions, data,
-            types, /* ntypes */ 1, nin, nout, identity ? PyUFunc_IdentityValue : PyUFunc_None,
-            str, doc, /* unused */ 0, NULL, identity);
+            (PyUFuncGenericFunction *)pyfunc_functions, data, types,
+            /* ntypes */ 1, nin, nout,
+            identity ? PyUFunc_IdentityValue : PyUFunc_None, str, doc,
+            /* unused */ 0, NULL, identity);
 
     if (self == NULL) {
         PyArray_free(ptr);
@@ -174,12 +172,13 @@ add_newdoc_ufunc(PyObject *NPY_UNUSED(dummy), PyObject *args)
 {
     PyUFuncObject *ufunc;
     PyObject *str;
-    if (!PyArg_ParseTuple(args, "O!O!:_add_newdoc_ufunc", &PyUFunc_Type, &ufunc,
-                                        &PyUnicode_Type, &str)) {
+    if (!PyArg_ParseTuple(args, "O!O!:_add_newdoc_ufunc", &PyUFunc_Type,
+                          &ufunc, &PyUnicode_Type, &str)) {
         return NULL;
     }
     if (ufunc->doc != NULL) {
-        PyErr_SetString(PyExc_ValueError,
+        PyErr_SetString(
+                PyExc_ValueError,
                 "Cannot change docstring of ufunc with non-NULL docstring");
         return NULL;
     }
@@ -207,7 +206,6 @@ add_newdoc_ufunc(PyObject *NPY_UNUSED(dummy), PyObject *args)
     Py_DECREF(tmp);
     Py_RETURN_NONE;
 }
-
 
 /*
  *****************************************************************************
@@ -245,7 +243,8 @@ intern_strings(void)
 
 /* Setup the umath part of the module */
 
-int initumath(PyObject *m)
+int
+initumath(PyObject *m)
 {
     PyObject *d, *s, *s2;
     int UFUNC_FLOATING_POINT_SUPPORT = 1;
@@ -269,7 +268,8 @@ int initumath(PyObject *m)
     Py_DECREF(s);
 
 #define ADDCONST(str) PyModule_AddIntConstant(m, #str, UFUNC_##str)
-#define ADDSCONST(str) PyModule_AddStringConstant(m, "UFUNC_" #str, UFUNC_##str)
+#define ADDSCONST(str) \
+    PyModule_AddStringConstant(m, "UFUNC_" #str, UFUNC_##str)
 
     ADDCONST(ERR_IGNORE);
     ADDCONST(ERR_WARN);
@@ -317,7 +317,8 @@ int initumath(PyObject *m)
 
     if (intern_strings() < 0) {
         PyErr_SetString(PyExc_RuntimeError,
-           "cannot intern umath strings while initializing _multiarray_umath.");
+                        "cannot intern umath strings while initializing "
+                        "_multiarray_umath.");
         return -1;
     }
 

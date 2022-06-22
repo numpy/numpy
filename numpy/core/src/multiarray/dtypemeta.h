@@ -10,9 +10,9 @@ extern "C" {
 #define NPY_DT_ABSTRACT 1 << 1
 #define NPY_DT_PARAMETRIC 1 << 2
 
-
-typedef PyArray_Descr *(discover_descr_from_pyobject_function)(
-        PyArray_DTypeMeta *cls, PyObject *obj);
+typedef PyArray_Descr *(
+        discover_descr_from_pyobject_function)(PyArray_DTypeMeta *cls,
+                                               PyObject *obj);
 
 /*
  * Before making this public, we should decide whether it should pass
@@ -20,14 +20,14 @@ typedef PyArray_Descr *(discover_descr_from_pyobject_function)(
  * `np.array(np.array([0]), dtype=np.ndarray)`
  * Could consider arrays that are not `dtype=ndarray` "scalars".
  */
-typedef int (is_known_scalar_type_function)(
-        PyArray_DTypeMeta *cls, PyTypeObject *obj);
+typedef int(is_known_scalar_type_function)(PyArray_DTypeMeta *cls,
+                                           PyTypeObject *obj);
 
 typedef PyArray_Descr *(default_descr_function)(PyArray_DTypeMeta *cls);
-typedef PyArray_DTypeMeta *(common_dtype_function)(
-        PyArray_DTypeMeta *dtype1, PyArray_DTypeMeta *dtype2);
-typedef PyArray_Descr *(common_instance_function)(
-        PyArray_Descr *dtype1, PyArray_Descr *dtype2);
+typedef PyArray_DTypeMeta *(common_dtype_function)(PyArray_DTypeMeta *dtype1,
+                                                   PyArray_DTypeMeta *dtype2);
+typedef PyArray_Descr *(common_instance_function)(PyArray_Descr *dtype1,
+                                                  PyArray_Descr *dtype2);
 typedef PyArray_Descr *(ensure_canonical_function)(PyArray_Descr *dtype);
 
 /*
@@ -39,7 +39,6 @@ typedef PyArray_Descr *(ensure_canonical_function)(PyArray_Descr *dtype);
  */
 typedef int(setitemfunction)(PyArray_Descr *, PyObject *, char *);
 typedef PyObject *(getitemfunction)(PyArray_Descr *, char *);
-
 
 typedef struct {
     /* DType methods, these could be moved into its own struct */
@@ -75,7 +74,6 @@ typedef struct {
     PyArray_ArrFuncs f;
 } NPY_DType_Slots;
 
-
 #define NPY_DTYPE(descr) ((PyArray_DTypeMeta *)Py_TYPE(descr))
 #define NPY_DT_SLOTS(dtype) ((NPY_DType_Slots *)(dtype)->dt_slots)
 
@@ -89,20 +87,20 @@ typedef struct {
  *
  * (Macros may include NULL checks where appropriate)
  */
-#define NPY_DT_CALL_discover_descr_from_pyobject(dtype, obj)  \
+#define NPY_DT_CALL_discover_descr_from_pyobject(dtype, obj) \
     NPY_DT_SLOTS(dtype)->discover_descr_from_pyobject(dtype, obj)
-#define NPY_DT_CALL_is_known_scalar_type(dtype, obj)  \
-    (NPY_DT_SLOTS(dtype)->is_known_scalar_type != NULL  \
-        && NPY_DT_SLOTS(dtype)->is_known_scalar_type(dtype, obj))
-#define NPY_DT_CALL_default_descr(dtype)  \
+#define NPY_DT_CALL_is_known_scalar_type(dtype, obj)      \
+    (NPY_DT_SLOTS(dtype)->is_known_scalar_type != NULL && \
+     NPY_DT_SLOTS(dtype)->is_known_scalar_type(dtype, obj))
+#define NPY_DT_CALL_default_descr(dtype) \
     NPY_DT_SLOTS(dtype)->default_descr(dtype)
-#define NPY_DT_CALL_common_dtype(dtype, other)  \
+#define NPY_DT_CALL_common_dtype(dtype, other) \
     NPY_DT_SLOTS(dtype)->common_dtype(dtype, other)
-#define NPY_DT_CALL_ensure_canonical(descr)  \
+#define NPY_DT_CALL_ensure_canonical(descr) \
     NPY_DT_SLOTS(NPY_DTYPE(descr))->ensure_canonical(descr)
-#define NPY_DT_CALL_getitem(descr, data_ptr)  \
+#define NPY_DT_CALL_getitem(descr, data_ptr) \
     NPY_DT_SLOTS(NPY_DTYPE(descr))->getitem(descr, data_ptr)
-#define NPY_DT_CALL_setitem(descr, value, data_ptr)  \
+#define NPY_DT_CALL_setitem(descr, value, data_ptr) \
     NPY_DT_SLOTS(NPY_DTYPE(descr))->setitem(descr, value, data_ptr)
 
 /*
@@ -121,10 +119,9 @@ PyArray_DTypeFromTypeNum(int typenum)
     return dtype;
 }
 
-
 NPY_NO_EXPORT int
-python_builtins_are_known_scalar_types(
-        PyArray_DTypeMeta *cls, PyTypeObject *pytype);
+python_builtins_are_known_scalar_types(PyArray_DTypeMeta *cls,
+                                       PyTypeObject *pytype);
 
 NPY_NO_EXPORT int
 dtypemeta_wrap_legacy_descriptor(PyArray_Descr *dtypem);
@@ -133,4 +130,4 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *dtypem);
 }
 #endif
 
-#endif  /* NUMPY_CORE_SRC_MULTIARRAY_DTYPEMETA_H_ */
+#endif /* NUMPY_CORE_SRC_MULTIARRAY_DTYPEMETA_H_ */

@@ -164,7 +164,7 @@ site-packages directory.
 
     .. code-block:: python
 
-        '''
+        """
             setup.py file for spammodule.c
 
             Calling
@@ -185,18 +185,19 @@ site-packages directory.
             See the distutils section of
             'Extending and Embedding the Python Interpreter'
             at docs.python.org for more information.
-        '''
+        """
 
 
         from distutils.core import setup, Extension
 
-        module1 = Extension('spam', sources=['spammodule.c'],
-                                include_dirs=['/usr/local/lib'])
+        module1 = Extension("spam", sources=["spammodule.c"], include_dirs=["/usr/local/lib"])
 
-        setup(name = 'spam',
-                version='1.0',
-                description='This is my spam package',
-                ext_modules = [module1])
+        setup(
+            name="spam",
+            version="1.0",
+            description="This is my spam package",
+            ext_modules=[module1],
+        )
 
 
 Once the spam module is imported into python, you can call logit
@@ -352,7 +353,7 @@ using ``python setup.py build_ext --inplace``.
 
     .. code-block:: python
 
-        '''
+        """
             setup.py file for single_type_logit.c
             Note that since this is a numpy extension
             we use numpy.distutils instead of
@@ -377,21 +378,21 @@ using ``python setup.py build_ext --inplace``.
             'Extending and Embedding the Python Interpreter'
             at docs.python.org  and the documentation
             on numpy.distutils for more information.
-        '''
+        """
 
 
-        def configuration(parent_package='', top_path=None):
+        def configuration(parent_package="", top_path=None):
             from numpy.distutils.misc_util import Configuration
 
-            config = Configuration('npufunc_directory',
-                                   parent_package,
-                                   top_path)
-            config.add_extension('npufunc', ['single_type_logit.c'])
+            config = Configuration("npufunc_directory", parent_package, top_path)
+            config.add_extension("npufunc", ["single_type_logit.c"])
 
             return config
 
+
         if __name__ == "__main__":
             from numpy.distutils.core import setup
+
             setup(configuration=configuration)
 
 After the above has been installed, it can be imported and used as follows.
@@ -604,7 +605,7 @@ or installed to site-packages via ``python setup.py install``.
 
     .. code-block:: python
 
-        '''
+        """
             setup.py file for multi_type_logit.c
             Note that since this is a numpy extension
             we use numpy.distutils instead of
@@ -629,26 +630,24 @@ or installed to site-packages via ``python setup.py install``.
             'Extending and Embedding the Python Interpreter'
             at docs.python.org  and the documentation
             on numpy.distutils for more information.
-        '''
+        """
 
 
-        def configuration(parent_package='', top_path=None):
+        def configuration(parent_package="", top_path=None):
             from numpy.distutils.misc_util import Configuration, get_info
 
-            #Necessary for the half-float d-type.
-            info = get_info('npymath')
+            # Necessary for the half-float d-type.
+            info = get_info("npymath")
 
-            config = Configuration('npufunc_directory',
-                                    parent_package,
-                                    top_path)
-            config.add_extension('npufunc',
-                                    ['multi_type_logit.c'],
-                                    extra_info=info)
+            config = Configuration("npufunc_directory", parent_package, top_path)
+            config.add_extension("npufunc", ["multi_type_logit.c"], extra_info=info)
 
             return config
 
+
         if __name__ == "__main__":
             from numpy.distutils.core import setup
+
             setup(configuration=configuration)
 
 After the above has been installed, it can be imported and used as follows.
@@ -678,13 +677,13 @@ the line
 
     .. code-block:: python
 
-        config.add_extension('npufunc', ['single_type_logit.c'])
+        config.add_extension("npufunc", ["single_type_logit.c"])
 
 is replaced with
 
     .. code-block:: python
 
-        config.add_extension('npufunc', ['multi_arg_logit.c'])
+        config.add_extension("npufunc", ["multi_arg_logit.c"])
 
 The C file is given below. The ufunc generated takes two arguments ``A``
 and ``B``. It returns a tuple whose first element is ``A * B`` and whose second
@@ -809,13 +808,13 @@ the line
 
     .. code-block:: python
 
-        config.add_extension('npufunc', ['single_type_logit.c'])
+        config.add_extension("npufunc", ["single_type_logit.c"])
 
 is replaced with
 
     .. code-block:: python
 
-        config.add_extension('npufunc', ['add_triplet.c'])
+        config.add_extension("npufunc", ["add_triplet.c"])
 
 The C file is given below.
 

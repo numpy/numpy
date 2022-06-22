@@ -9,14 +9,13 @@
 #include "numpy/arrayscalars.h"
 
 #include "npy_config.h"
-
 #include "npy_pycompat.h"
 
+#include "sequence.h"
+
+#include "calculation.h"
 #include "common.h"
 #include "mapping.h"
-
-#include "sequence.h"
-#include "calculation.h"
 
 /*************************************************************************
  ****************   Implement Sequence Protocol **************************
@@ -34,8 +33,8 @@ array_contains(PyArrayObject *self, PyObject *el)
     int ret;
     PyObject *res, *any;
 
-    res = PyArray_EnsureAnyArray(PyObject_RichCompare((PyObject *)self,
-                                                      el, Py_EQ));
+    res = PyArray_EnsureAnyArray(
+            PyObject_RichCompare((PyObject *)self, el, Py_EQ));
     if (res == NULL) {
         return -1;
     }
@@ -58,27 +57,25 @@ array_concat(PyObject *self, PyObject *other)
      * Throw a type error, when trying to concat NDArrays
      * NOTE: This error is not Thrown when running with PyPy
      */
-    PyErr_SetString(PyExc_TypeError,
+    PyErr_SetString(
+            PyExc_TypeError,
             "Concatenation operation is not implemented for NumPy arrays, "
             "use np.concatenate() instead. Please do not rely on this error; "
             "it may not be given on all Python implementations.");
     return NULL;
 }
 
-
 NPY_NO_EXPORT PySequenceMethods array_as_sequence = {
-    (lenfunc)array_length,                  /*sq_length*/
-    (binaryfunc)array_concat,               /*sq_concat for operator.concat*/
-    (ssizeargfunc)NULL,
-    (ssizeargfunc)array_item,
-    (ssizessizeargfunc)NULL,
-    (ssizeobjargproc)array_assign_item,     /*sq_ass_item*/
-    (ssizessizeobjargproc)NULL,             /*sq_ass_slice*/
-    (objobjproc) array_contains,            /*sq_contains */
-    (binaryfunc) NULL,                      /*sg_inplace_concat */
-    (ssizeargfunc)NULL,
+        (lenfunc)array_length,    /*sq_length*/
+        (binaryfunc)array_concat, /*sq_concat for operator.concat*/
+        (ssizeargfunc)NULL,
+        (ssizeargfunc)array_item,
+        (ssizessizeargfunc)NULL,
+        (ssizeobjargproc)array_assign_item, /*sq_ass_item*/
+        (ssizessizeobjargproc)NULL,         /*sq_ass_slice*/
+        (objobjproc)array_contains,         /*sq_contains */
+        (binaryfunc)NULL,                   /*sg_inplace_concat */
+        (ssizeargfunc)NULL,
 };
 
-
 /****************** End of Sequence Protocol ****************************/
-

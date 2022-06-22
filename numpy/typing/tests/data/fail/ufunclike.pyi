@@ -1,4 +1,5 @@
 from typing import Any
+
 import numpy as np
 
 AR_c: np.ndarray[Any, np.dtype[np.complex128]]

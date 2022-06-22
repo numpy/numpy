@@ -37,8 +37,8 @@ to that.
 
 .. code:: python
 
-    x = dask.array.arange(5)    # Creates dask.array
-    np.diff(x)                  # Returns dask.array
+    x = dask.array.arange(5)  # Creates dask.array
+    np.diff(x)  # Returns dask.array
 
 Note above how we called Dask's implementation of ``diff`` via the NumPy
 namespace by calling ``np.diff``, and the same would apply if we had a CuPy
@@ -104,11 +104,13 @@ CuPy arrays:
     import numpy as np
     import cupy
 
+
     def my_pad(arr, padding):
         padding = np.array(padding, like=arr)
         return np.concatenate((padding, arr, padding))
 
-    my_pad(np.arange(5), [-1, -1])    # Returns np.ndarray
+
+    my_pad(np.arange(5), [-1, -1])  # Returns np.ndarray
     my_pad(cupy.arange(5), [-1, -1])  # Returns cupy.core.core.ndarray
 
 Note in the ``my_pad`` function above how ``arr`` is used as a reference to
@@ -148,9 +150,11 @@ array we would use for padding, as seen below:
     import dask.array as da
     from dask.array.utils import meta_from_array
 
+
     def my_dask_pad(arr, padding):
         padding = np.array(padding, like=meta_from_array(arr))
         return np.concatenate((padding, arr, padding))
+
 
     # Returns dask.array<concatenate, shape=(9,), dtype=int64, chunksize=(5,), chunktype=numpy.ndarray>
     my_dask_pad(da.arange(5), [-1, -1])
@@ -288,7 +292,8 @@ with ``overrides.array_function_dispatch``:
     def _asarray_decorator(a, dtype=None, order=None, *, like=None):
         return (like,)
 
-    @set_module('numpy')
+
+    @set_module("numpy")
     @array_function_dispatch(_asarray_decorator)
     def asarray(a, dtype=None, order=None, *, like=None):
         return array(a, dtype, copy=False, order=order)
@@ -310,11 +315,14 @@ the module too.
 
     array_function_nodocs_from_c_func_and_dispatcher = functools.partial(
         overrides.array_function_from_dispatcher,
-        module='numpy', docs_from_dispatcher=False, verify=False)
+        module="numpy",
+        docs_from_dispatcher=False,
+        verify=False,
+    )
+
 
     @array_function_nodocs_from_c_func_and_dispatcher(_multiarray_umath.array)
-    def array(a, dtype=None, *, copy=True, order='K', subok=False, ndmin=0,
-              like=None):
+    def array(a, dtype=None, *, copy=True, order="K", subok=False, ndmin=0, like=None):
         return (like,)
 
 There are two downsides to the implementation above for C functions:
@@ -397,12 +405,13 @@ And this is how the updated code would look like:
 
         # Inspect ``da_func``'s  signature and store keyword-only arguments
         import inspect
+
         kwonlyargs = inspect.getfullargspec(da_func).kwonlyargs
 
         # If ``like`` is contained in ``da_func``'s signature, add ``like=self``
         # to the kwargs dictionary.
-        if 'like' in kwonlyargs:
-            kwargs['like'] = self
+        if "like" in kwonlyargs:
+            kwargs["like"] = self
 
         # Dispatch ``da_func`` (da.asarray, for example) with args and kwargs.
         # Here, kwargs contain ``like=self`` if the function's signature does too.

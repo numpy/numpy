@@ -1,7 +1,10 @@
 import os
-import pytest
 import textwrap
+
+import pytest
+
 import numpy as np
+
 from . import util
 
 
@@ -11,8 +14,7 @@ class TestString(util.F2PyTest):
     @pytest.mark.slow
     def test_char(self):
         strings = np.array(["ab", "cd", "ef"], dtype="c").T
-        inp, out = self.module.char_test.change_strings(
-            strings, strings.shape[1])
+        inp, out = self.module.char_test.change_strings(strings, strings.shape[1])
         assert inp == pytest.approx(strings)
         expected = strings.copy()
         expected[1, :] = "AAA"

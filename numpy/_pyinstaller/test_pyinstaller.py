@@ -5,9 +5,9 @@ import pytest
 
 
 # PyInstaller has been very unproactive about replacing 'imp' with 'importlib'.
-@pytest.mark.filterwarnings('ignore::DeprecationWarning')
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 # It also leaks io.BytesIO()s.
-@pytest.mark.filterwarnings('ignore::ResourceWarning')
+@pytest.mark.filterwarnings("ignore::ResourceWarning")
 @pytest.mark.parametrize("mode", ["--onedir", "--onefile"])
 @pytest.mark.slow
 def test_pyinstaller(mode, tmp_path):
@@ -18,9 +18,12 @@ def test_pyinstaller(mode, tmp_path):
     source = Path(__file__).with_name("pyinstaller-smoke.py").resolve()
     args = [
         # Place all generated files in ``tmp_path``.
-        '--workpath', str(tmp_path / "build"),
-        '--distpath', str(tmp_path / "dist"),
-        '--specpath', str(tmp_path),
+        "--workpath",
+        str(tmp_path / "build"),
+        "--distpath",
+        str(tmp_path / "dist"),
+        "--specpath",
+        str(tmp_path),
         mode,
         str(source),
     ]

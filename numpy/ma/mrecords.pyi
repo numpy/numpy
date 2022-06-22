@@ -62,7 +62,6 @@ def fromarrays(
     byteorder=...,
     fill_value=...,
 ): ...
-
 def fromrecords(
     reclist,
     dtype=...,
@@ -75,7 +74,6 @@ def fromrecords(
     fill_value=...,
     mask=...,
 ): ...
-
 def fromtextfile(
     fname,
     delimiter=...,
@@ -86,5 +84,4 @@ def fromtextfile(
     # NOTE: deprecated: NumPy 1.22.0, 2021-09-23
     # delimitor=...,
 ): ...
-
 def addfield(mrecord, newfield, newfieldname=...): ...

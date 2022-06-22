@@ -1,23 +1,100 @@
-from .common import Benchmark, get_squares_
-
 import numpy as np
 
+from .common import Benchmark, get_squares_
 
-ufuncs = ['abs', 'absolute', 'add', 'arccos', 'arccosh', 'arcsin', 'arcsinh',
-          'arctan', 'arctan2', 'arctanh', 'bitwise_and', 'bitwise_not',
-          'bitwise_or', 'bitwise_xor', 'cbrt', 'ceil', 'conj', 'conjugate',
-          'copysign', 'cos', 'cosh', 'deg2rad', 'degrees', 'divide', 'divmod',
-          'equal', 'exp', 'exp2', 'expm1', 'fabs', 'float_power', 'floor',
-          'floor_divide', 'fmax', 'fmin', 'fmod', 'frexp', 'gcd', 'greater',
-          'greater_equal', 'heaviside', 'hypot', 'invert', 'isfinite',
-          'isinf', 'isnan', 'isnat', 'lcm', 'ldexp', 'left_shift', 'less',
-          'less_equal', 'log', 'log10', 'log1p', 'log2', 'logaddexp',
-          'logaddexp2', 'logical_and', 'logical_not', 'logical_or',
-          'logical_xor', 'matmul', 'maximum', 'minimum', 'mod', 'modf', 'multiply',
-          'negative', 'nextafter', 'not_equal', 'positive', 'power',
-          'rad2deg', 'radians', 'reciprocal', 'remainder', 'right_shift',
-          'rint', 'sign', 'signbit', 'sin', 'sinh', 'spacing', 'sqrt',
-          'square', 'subtract', 'tan', 'tanh', 'true_divide', 'trunc']
+ufuncs = [
+    "abs",
+    "absolute",
+    "add",
+    "arccos",
+    "arccosh",
+    "arcsin",
+    "arcsinh",
+    "arctan",
+    "arctan2",
+    "arctanh",
+    "bitwise_and",
+    "bitwise_not",
+    "bitwise_or",
+    "bitwise_xor",
+    "cbrt",
+    "ceil",
+    "conj",
+    "conjugate",
+    "copysign",
+    "cos",
+    "cosh",
+    "deg2rad",
+    "degrees",
+    "divide",
+    "divmod",
+    "equal",
+    "exp",
+    "exp2",
+    "expm1",
+    "fabs",
+    "float_power",
+    "floor",
+    "floor_divide",
+    "fmax",
+    "fmin",
+    "fmod",
+    "frexp",
+    "gcd",
+    "greater",
+    "greater_equal",
+    "heaviside",
+    "hypot",
+    "invert",
+    "isfinite",
+    "isinf",
+    "isnan",
+    "isnat",
+    "lcm",
+    "ldexp",
+    "left_shift",
+    "less",
+    "less_equal",
+    "log",
+    "log10",
+    "log1p",
+    "log2",
+    "logaddexp",
+    "logaddexp2",
+    "logical_and",
+    "logical_not",
+    "logical_or",
+    "logical_xor",
+    "matmul",
+    "maximum",
+    "minimum",
+    "mod",
+    "modf",
+    "multiply",
+    "negative",
+    "nextafter",
+    "not_equal",
+    "positive",
+    "power",
+    "rad2deg",
+    "radians",
+    "reciprocal",
+    "remainder",
+    "right_shift",
+    "rint",
+    "sign",
+    "signbit",
+    "sin",
+    "sinh",
+    "spacing",
+    "sqrt",
+    "square",
+    "subtract",
+    "tan",
+    "tanh",
+    "true_divide",
+    "trunc",
+]
 
 
 for name in dir(np):
@@ -36,11 +113,11 @@ class Broadcast(Benchmark):
 
 class UFunc(Benchmark):
     params = [ufuncs]
-    param_names = ['ufunc']
+    param_names = ["ufunc"]
     timeout = 10
 
     def setup(self, ufuncname):
-        np.seterr(all='ignore')
+        np.seterr(all="ignore")
         try:
             self.f = getattr(np, ufuncname)
         except AttributeError:
@@ -57,32 +134,34 @@ class UFunc(Benchmark):
     def time_ufunc_types(self, ufuncname):
         [self.f(*arg) for arg in self.args]
 
-class UFuncSmall(Benchmark):
-    """  Benchmark for a selection of ufuncs on a small arrays and scalars 
 
-    Since the arrays and scalars are small, we are benchmarking the overhead 
+class UFuncSmall(Benchmark):
+    """Benchmark for a selection of ufuncs on a small arrays and scalars
+
+    Since the arrays and scalars are small, we are benchmarking the overhead
     of the numpy ufunc functionality
     """
-    params = ['abs', 'sqrt', 'cos']
-    param_names = ['ufunc']
+
+    params = ["abs", "sqrt", "cos"]
+    param_names = ["ufunc"]
     timeout = 10
 
     def setup(self, ufuncname):
-        np.seterr(all='ignore')
+        np.seterr(all="ignore")
         try:
             self.f = getattr(np, ufuncname)
         except AttributeError:
             raise NotImplementedError()
-        self.array_5 = np.array([1., 2., 10., 3., 4.])
+        self.array_5 = np.array([1.0, 2.0, 10.0, 3.0, 4.0])
         self.array_int_3 = np.array([1, 2, 3])
         self.float64 = np.float64(1.1)
         self.python_float = 1.1
-        
+
     def time_ufunc_small_array(self, ufuncname):
         self.f(self.array_5)
 
     def time_ufunc_small_array_inplace(self, ufuncname):
-        self.f(self.array_5, out = self.array_5)
+        self.f(self.array_5, out=self.array_5)
 
     def time_ufunc_small_int_array(self, ufuncname):
         self.f(self.array_int_3)
@@ -92,7 +171,7 @@ class UFuncSmall(Benchmark):
 
     def time_ufunc_python_float(self, ufuncname):
         self.f(self.python_float)
-        
+
 
 class Custom(Benchmark):
     def setup(self):
@@ -122,8 +201,8 @@ class CustomInplace(Benchmark):
         self.f = np.zeros(150000, dtype=np.float32)
         self.d = np.zeros(75000, dtype=np.float64)
         # fault memory
-        self.f *= 1.
-        self.d *= 1.
+        self.f *= 1.0
+        self.d *= 1.0
 
     def time_char_or(self):
         np.bitwise_or(self.c, 0, out=self.c)
@@ -140,23 +219,23 @@ class CustomInplace(Benchmark):
         0 | self.i | 0
 
     def time_float_add(self):
-        np.add(self.f, 1., out=self.f)
-        np.add(1., self.f, out=self.f)
+        np.add(self.f, 1.0, out=self.f)
+        np.add(1.0, self.f, out=self.f)
 
     def time_float_add_temp(self):
-        1. + self.f + 1.
+        1.0 + self.f + 1.0
 
     def time_double_add(self):
-        np.add(self.d, 1., out=self.d)
-        np.add(1., self.d, out=self.d)
+        np.add(self.d, 1.0, out=self.d)
+        np.add(1.0, self.d, out=self.d)
 
     def time_double_add_temp(self):
-        1. + self.d + 1.
+        1.0 + self.d + 1.0
 
 
 class CustomScalar(Benchmark):
     params = [np.float32, np.float64]
-    param_names = ['dtype']
+    param_names = ["dtype"]
 
     def setup(self, dtype):
         self.d = np.ones(20000, dtype=dtype)
@@ -172,9 +251,20 @@ class CustomScalar(Benchmark):
 
 
 class CustomComparison(Benchmark):
-    params = (np.int8,  np.int16,  np.int32,  np.int64, np.uint8, np.uint16,
-              np.uint32, np.uint64, np.float32, np.float64, np.bool_)
-    param_names = ['dtype']
+    params = (
+        np.int8,
+        np.int16,
+        np.int32,
+        np.int64,
+        np.uint8,
+        np.uint16,
+        np.uint32,
+        np.uint64,
+        np.float32,
+        np.float64,
+        np.bool_,
+    )
+    param_names = ["dtype"]
 
     def setup(self, dtype):
         self.x = np.ones(50000, dtype=dtype)
@@ -192,29 +282,29 @@ class CustomComparison(Benchmark):
 
 
 class CustomScalarFloorDivideInt(Benchmark):
-    params = (np.sctypes['int'] + np.sctypes['uint'], [8, -8, 43, -43])
-    param_names = ['dtype', 'divisors']
+    params = (np.sctypes["int"] + np.sctypes["uint"], [8, -8, 43, -43])
+    param_names = ["dtype", "divisors"]
 
     def setup(self, dtype, divisor):
-        if dtype in np.sctypes['uint'] and divisor < 0:
+        if dtype in np.sctypes["uint"] and divisor < 0:
             raise NotImplementedError(
-                    "Skipping test for negative divisor with unsigned type")
+                "Skipping test for negative divisor with unsigned type"
+            )
 
         iinfo = np.iinfo(dtype)
-        self.x = np.random.randint(
-                    iinfo.min, iinfo.max, size=10000, dtype=dtype)
+        self.x = np.random.randint(iinfo.min, iinfo.max, size=10000, dtype=dtype)
 
     def time_floor_divide_int(self, dtype, divisor):
         self.x // divisor
 
+
 class CustomArrayFloorDivideInt(Benchmark):
-    params = (np.sctypes['int'] + np.sctypes['uint'], [100, 10000, 1000000])
-    param_names = ['dtype', 'size']
+    params = (np.sctypes["int"] + np.sctypes["uint"], [100, 10000, 1000000])
+    param_names = ["dtype", "size"]
 
     def setup(self, dtype, size):
         iinfo = np.iinfo(dtype)
-        self.x = np.random.randint(
-                    iinfo.min, iinfo.max, size=size, dtype=dtype)
+        self.x = np.random.randint(iinfo.min, iinfo.max, size=size, dtype=dtype)
         self.y = np.random.randint(2, 32, size=size, dtype=dtype)
 
     def time_floor_divide_int(self, dtype, size):
@@ -238,15 +328,19 @@ class Scalar(Benchmark):
 
 
 class ArgPack:
-    __slots__ = ['args', 'kwargs']
+    __slots__ = ["args", "kwargs"]
+
     def __init__(self, *args, **kwargs):
         self.args = args
         self.kwargs = kwargs
+
     def __repr__(self):
-        return '({})'.format(', '.join(
-            [repr(a) for a in self.args] +
-            ['{}={}'.format(k, repr(v)) for k, v in self.kwargs.items()]
-        ))
+        return "({})".format(
+            ", ".join(
+                [repr(a) for a in self.args]
+                + ["{}={}".format(k, repr(v)) for k, v in self.kwargs.items()]
+            )
+        )
 
 
 class ArgParsing(Benchmark):
@@ -255,20 +349,22 @@ class ArgParsing(Benchmark):
     # calculation.  In particular, subok=True and where=True are
     # defaults, and the dtype is the correct one (the latter will
     # still have some effect on the search for the correct inner loop).
-    x = np.array(1.)
-    y = np.array(2.)
-    out = np.array(3.)
-    param_names = ['arg_kwarg']
-    params = [[
-        ArgPack(x, y),
-        ArgPack(x, y, out),
-        ArgPack(x, y, out=out),
-        ArgPack(x, y, out=(out,)),
-        ArgPack(x, y, out=out, subok=True, where=True),
-        ArgPack(x, y, subok=True),
-        ArgPack(x, y, subok=True, where=True),
-        ArgPack(x, y, out, subok=True, where=True)
-    ]]
+    x = np.array(1.0)
+    y = np.array(2.0)
+    out = np.array(3.0)
+    param_names = ["arg_kwarg"]
+    params = [
+        [
+            ArgPack(x, y),
+            ArgPack(x, y, out),
+            ArgPack(x, y, out=out),
+            ArgPack(x, y, out=(out,)),
+            ArgPack(x, y, out=out, subok=True, where=True),
+            ArgPack(x, y, subok=True),
+            ArgPack(x, y, subok=True, where=True),
+            ArgPack(x, y, out, subok=True, where=True),
+        ]
+    ]
 
     def time_add_arg_parsing(self, arg_pack):
         np.add(*arg_pack.args, **arg_pack.kwargs)
@@ -278,19 +374,23 @@ class ArgParsingReduce(Benchmark):
     # In order to benchmark the speed of argument parsing, all but the
     # out arguments are chosen such that they have minimal effect on the
     # calculation.
-    a = np.arange(2.)
-    out = np.array(0.)
-    param_names = ['arg_kwarg']
-    params = [[
-        ArgPack(a,),
-        ArgPack(a, 0),
-        ArgPack(a, axis=0),
-        ArgPack(a, 0, None),
-        ArgPack(a, axis=0, dtype=None),
-        ArgPack(a, 0, None, out),
-        ArgPack(a, axis=0, dtype=None, out=out),
-        ArgPack(a, out=out)
-    ]]
+    a = np.arange(2.0)
+    out = np.array(0.0)
+    param_names = ["arg_kwarg"]
+    params = [
+        [
+            ArgPack(
+                a,
+            ),
+            ArgPack(a, 0),
+            ArgPack(a, axis=0),
+            ArgPack(a, 0, None),
+            ArgPack(a, axis=0, dtype=None),
+            ArgPack(a, 0, None, out),
+            ArgPack(a, axis=0, dtype=None, out=out),
+            ArgPack(a, out=out),
+        ]
+    ]
 
     def time_add_reduce_arg_parsing(self, arg_pack):
         np.add.reduce(*arg_pack.args, **arg_pack.kwargs)

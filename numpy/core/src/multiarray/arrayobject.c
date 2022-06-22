@@ -31,35 +31,33 @@ maintainer email:  oliphant.travis@ieee.org
 #include "numpy/arrayscalars.h"
 
 #include "npy_config.h"
-
 #include "npy_pycompat.h"
 
-#include "common.h"
-
-#include "number.h"
-#include "usertypes.h"
-#include "arraytypes.h"
-#include "scalartypes.h"
 #include "arrayobject.h"
-#include "convert_datatype.h"
+
+#include "alloc.h"
+#include "array_assign.h"
+#include "array_coercion.h"
+#include "arraytypes.h"
+#include "binop_override.h"
+#include "common.h"
 #include "conversion_utils.h"
+#include "convert_datatype.h"
 #include "ctors.h"
-#include "dtypemeta.h"
-#include "methods.h"
 #include "descriptor.h"
+#include "dtypemeta.h"
+#include "getset.h"
 #include "iterators.h"
 #include "mapping.h"
-#include "getset.h"
-#include "sequence.h"
-#include "npy_buffer.h"
-#include "array_assign.h"
-#include "alloc.h"
 #include "mem_overlap.h"
+#include "methods.h"
+#include "npy_buffer.h"
+#include "number.h"
 #include "numpyos.h"
+#include "scalartypes.h"
+#include "sequence.h"
 #include "strfuncs.h"
-
-#include "binop_override.h"
-#include "array_coercion.h"
+#include "usertypes.h"
 
 /*NUMPY_API
   Compute the size of an array (in number of items)
@@ -80,20 +78,22 @@ NPY_NO_EXPORT int
 PyArray_SetUpdateIfCopyBase(PyArrayObject *arr, PyArrayObject *base)
 {
     /* 2021-Dec-15 1.23*/
-    PyErr_SetString(PyExc_RuntimeError,
-        "PyArray_SetUpdateIfCopyBase is disabled, use "
-        "PyArray_SetWritebackIfCopyBase instead, and be sure to call "
-        "PyArray_ResolveWritebackIfCopy before the array is deallocated, "
-        "i.e. before the last call to Py_DECREF. If cleaning up from an "
-        "error, PyArray_DiscardWritebackIfCopy may be called instead to "
-        "throw away the scratch buffer.");
+    PyErr_SetString(
+            PyExc_RuntimeError,
+            "PyArray_SetUpdateIfCopyBase is disabled, use "
+            "PyArray_SetWritebackIfCopyBase instead, and be sure to call "
+            "PyArray_ResolveWritebackIfCopy before the array is deallocated, "
+            "i.e. before the last call to Py_DECREF. If cleaning up from an "
+            "error, PyArray_DiscardWritebackIfCopy may be called instead to "
+            "throw away the scratch buffer.");
     return -1;
 }
 
 /*NUMPY_API
  *
  * Precondition: 'arr' is a copy of 'base' (though possibly with different
- * strides, ordering, etc.). This function sets the WRITEBACKIFCOPY flag and the
+ * strides, ordering, etc.). This function sets the WRITEBACKIFCOPY flag and
+ * the
  * ->base pointer on 'arr', call PyArray_ResolveWritebackIfCopy to copy any
  * changes back to 'base' before deallocating the array.
  *
@@ -106,12 +106,13 @@ PyArray_SetWritebackIfCopyBase(PyArrayObject *arr, PyArrayObject *base)
 {
     if (base == NULL) {
         PyErr_SetString(PyExc_ValueError,
-                  "Cannot WRITEBACKIFCOPY to NULL array");
+                        "Cannot WRITEBACKIFCOPY to NULL array");
         return -1;
     }
     if (PyArray_BASE(arr) != NULL) {
-        PyErr_SetString(PyExc_ValueError,
-                  "Cannot set array with existing base to WRITEBACKIFCOPY");
+        PyErr_SetString(
+                PyExc_ValueError,
+                "Cannot set array with existing base to WRITEBACKIFCOPY");
         goto fail;
     }
     if (PyArray_FailUnlessWriteable(base, "WRITEBACKIFCOPY base") < 0) {
@@ -136,7 +137,7 @@ PyArray_SetWritebackIfCopyBase(PyArrayObject *arr, PyArrayObject *base)
 
     return 0;
 
-  fail:
+fail:
     Py_DECREF(base);
     return -1;
 }
@@ -152,8 +153,8 @@ PyArray_SetBaseObject(PyArrayObject *arr, PyObject *obj)
 {
     if (obj == NULL) {
         PyErr_SetString(PyExc_ValueError,
-                "Cannot set the NumPy array 'base' "
-                "dependency to NULL after initialization");
+                        "Cannot set the NumPy array 'base' "
+                        "dependency to NULL after initialization");
         return -1;
     }
     /*
@@ -163,8 +164,8 @@ PyArray_SetBaseObject(PyArrayObject *arr, PyObject *obj)
     if (PyArray_BASE(arr) != NULL) {
         Py_DECREF(obj);
         PyErr_SetString(PyExc_ValueError,
-                "Cannot set the NumPy array 'base' "
-                "dependency more than once");
+                        "Cannot set the NumPy array 'base' "
+                        "dependency more than once");
         return -1;
     }
 
@@ -201,7 +202,6 @@ PyArray_SetBaseObject(PyArrayObject *arr, PyObject *obj)
             break;
         }
 
-
         Py_INCREF(tmp);
         Py_DECREF(obj);
         obj = tmp;
@@ -210,7 +210,8 @@ PyArray_SetBaseObject(PyArrayObject *arr, PyObject *obj)
     /* Disallow circular references */
     if ((PyObject *)arr == obj) {
         Py_DECREF(obj);
-        PyErr_SetString(PyExc_ValueError,
+        PyErr_SetString(
+                PyExc_ValueError,
                 "Cannot create a circular NumPy array 'base' dependency");
         return -1;
     }
@@ -219,7 +220,6 @@ PyArray_SetBaseObject(PyArrayObject *arr, PyObject *obj)
 
     return 0;
 }
-
 
 /**
  * Assign an arbitrary object a NumPy array. This is largely basically
@@ -244,8 +244,8 @@ PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
      * We have to set the maximum number of dimensions here to support
      * sequences within object arrays.
      */
-    ndim = PyArray_DiscoverDTypeAndShape(src_object,
-            PyArray_NDIM(dest), dims, &cache,
+    ndim = PyArray_DiscoverDTypeAndShape(
+            src_object, PyArray_NDIM(dest), dims, &cache,
             NPY_DTYPE(PyArray_DESCR(dest)), PyArray_DESCR(dest), &dtype, 0);
     if (ndim < 0) {
         return -1;
@@ -267,13 +267,13 @@ PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
      * it from the sequences/scalar.
      */
     if (ndim != PyArray_NDIM(dest) ||
-            !PyArray_CompareLists(PyArray_DIMS(dest), dims, ndim)) {
+        !PyArray_CompareLists(PyArray_DIMS(dest), dims, ndim)) {
         /*
          * Broadcasting may be necessary, so assign to a view first.
          * This branch could lead to a shape mismatch error later.
          */
-        assert (ndim <= PyArray_NDIM(dest));  /* would error during discovery */
-        view = (PyArrayObject *) PyArray_NewFromDescr(
+        assert(ndim <= PyArray_NDIM(dest)); /* would error during discovery */
+        view = (PyArrayObject *)PyArray_NewFromDescr(
                 &PyArray_Type, dtype, ndim, dims, NULL, NULL,
                 PyArray_FLAGS(dest) & NPY_ARRAY_F_CONTIGUOUS, NULL);
         if (view == NULL) {
@@ -289,8 +289,8 @@ PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
     /* Assign the values to `view` (whichever array that is) */
     if (cache == NULL) {
         /* single (non-array) item, assign immediately */
-        if (PyArray_Pack(
-                PyArray_DESCR(view), PyArray_DATA(view), src_object) < 0) {
+        if (PyArray_Pack(PyArray_DESCR(view), PyArray_DATA(view), src_object) <
+            0) {
             goto fail;
         }
     }
@@ -306,13 +306,12 @@ PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
     Py_DECREF(view);
     return ret;
 
-  fail:
+fail:
     if (view != dest) {
         Py_DECREF(view);
     }
     return -1;
 }
-
 
 /* returns an Array-Scalar Object of the type of arr
    from the given pointer to memory -- main Scalar creation function
@@ -323,7 +322,6 @@ PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
    So, that we simply need the data and the descriptor, and perhaps
    a flag
 */
-
 
 /*
   Given a string return the type-number for
@@ -356,7 +354,7 @@ PyArray_TypeNumFromName(char const *str)
  * appropriately. Return 0 if not relevant, 1 if success, < 0 on failure
  */
 NPY_NO_EXPORT int
-PyArray_ResolveWritebackIfCopy(PyArrayObject * self)
+PyArray_ResolveWritebackIfCopy(PyArrayObject *self)
 {
     PyArrayObject_fields *fa = (PyArrayObject_fields *)self;
     if (fa && fa->base) {
@@ -370,7 +368,7 @@ PyArray_ResolveWritebackIfCopy(PyArrayObject * self)
              */
             int retval = 0;
             PyArray_ENABLEFLAGS(((PyArrayObject *)fa->base),
-                                                    NPY_ARRAY_WRITEABLE);
+                                NPY_ARRAY_WRITEABLE);
             PyArray_CLEARFLAGS(self, NPY_ARRAY_WRITEBACKIFCOPY);
             retval = PyArray_CopyAnyInto((PyArrayObject *)fa->base, self);
             Py_DECREF(fa->base);
@@ -389,15 +387,15 @@ PyArray_ResolveWritebackIfCopy(PyArrayObject * self)
 
 /*********************** end C-API functions **********************/
 
-
 /* dealloc must not raise an error, best effort try to write
    to stderr and clear the error
 */
 
 static NPY_INLINE void
-WARN_IN_DEALLOC(PyObject* warning, const char * msg) {
+WARN_IN_DEALLOC(PyObject *warning, const char *msg)
+{
     if (PyErr_WarnEx(warning, msg, 1) < 0) {
-        PyObject * s;
+        PyObject *s;
 
         s = PyUnicode_FromString("array_dealloc");
         if (s) {
@@ -426,11 +424,11 @@ array_dealloc(PyArrayObject *self)
     }
     if (fa->base) {
         int retval;
-        if (PyArray_FLAGS(self) & NPY_ARRAY_WRITEBACKIFCOPY)
-        {
-            char const * msg = "WRITEBACKIFCOPY detected in array_dealloc. "
-                " Required call to PyArray_ResolveWritebackIfCopy or "
-                "PyArray_DiscardWritebackIfCopy is missing.";
+        if (PyArray_FLAGS(self) & NPY_ARRAY_WRITEBACKIFCOPY) {
+            char const *msg =
+                    "WRITEBACKIFCOPY detected in array_dealloc. "
+                    " Required call to PyArray_ResolveWritebackIfCopy or "
+                    "PyArray_DiscardWritebackIfCopy is missing.";
             /*
              * prevent reaching 0 twice and thus recursing into dealloc.
              * Increasing sys.gettotalrefcount, but path should not be taken.
@@ -438,8 +436,7 @@ array_dealloc(PyArrayObject *self)
             Py_INCREF(self);
             WARN_IN_DEALLOC(PyExc_RuntimeWarning, msg);
             retval = PyArray_ResolveWritebackIfCopy(self);
-            if (retval < 0)
-            {
+            if (retval < 0) {
                 PyErr_Print();
                 PyErr_Clear();
             }
@@ -459,9 +456,11 @@ array_dealloc(PyArrayObject *self)
         if (fa->mem_handler == NULL) {
             char *env = getenv("NUMPY_WARN_IF_NO_MEM_POLICY");
             if ((env != NULL) && (strncmp(env, "1", 1) == 0)) {
-                char const * msg = "Trying to dealloc data, but a memory policy "
-                    "is not set. If you take ownership of the data, you must "
-                    "set a base owning the data (e.g. a PyCapsule).";
+                char const *msg =
+                        "Trying to dealloc data, but a memory policy "
+                        "is not set. If you take ownership of the data, you "
+                        "must "
+                        "set a base owning the data (e.g. a PyCapsule).";
                 WARN_IN_DEALLOC(PyExc_RuntimeWarning, msg);
             }
             // Guess at malloc/free ???
@@ -545,7 +544,6 @@ PyArray_DebugPrint(PyArrayObject *obj)
     fflush(stdout);
 }
 
-
 /*NUMPY_API
  * This function is scheduled to be removed
  *
@@ -562,7 +560,7 @@ NPY_NO_EXPORT int
 PyArray_CompareUCS4(npy_ucs4 const *s1, npy_ucs4 const *s2, size_t len)
 {
     npy_ucs4 c1, c2;
-    while(len-- > 0) {
+    while (len-- > 0) {
         c1 = *s1++;
         c2 = *s2++;
         if (c1 != c2) {
@@ -581,14 +579,13 @@ PyArray_CompareString(const char *s1, const char *s2, size_t len)
     const unsigned char *c2 = (unsigned char *)s2;
     size_t i;
 
-    for(i = 0; i < len; ++i) {
+    for (i = 0; i < len; ++i) {
         if (c1[i] != c2[i]) {
             return (c1[i] > c2[i]) ? 1 : -1;
         }
     }
     return 0;
 }
-
 
 /* Call this from contexts where an array might be written to, but we have no
  * way to tell. (E.g., when converting to a read-write buffer.)
@@ -597,9 +594,11 @@ NPY_NO_EXPORT int
 array_might_be_written(PyArrayObject *obj)
 {
     const char *msg =
-        "Numpy has detected that you (may be) writing to an array with\n"
-        "overlapping memory from np.broadcast_arrays. If this is intentional\n"
-        "set the WRITEABLE flag True or make a copy immediately before writing.";
+            "Numpy has detected that you (may be) writing to an array with\n"
+            "overlapping memory from np.broadcast_arrays. If this is "
+            "intentional\n"
+            "set the WRITEABLE flag True or make a copy immediately before "
+            "writing.";
     if (PyArray_FLAGS(obj) & NPY_ARRAY_WARN_ON_WRITE) {
         if (DEPRECATE(msg) < 0) {
             return -1;
@@ -641,11 +640,10 @@ PyArray_FailUnlessWriteable(PyArrayObject *obj, const char *name)
     return 0;
 }
 
-
 /* From umath/string_ufuncs.cpp/h */
 NPY_NO_EXPORT PyObject *
-_umath_strings_richcompare(
-        PyArrayObject *self, PyArrayObject *other, int cmp_op, int rstrip);
+_umath_strings_richcompare(PyArrayObject *self, PyArrayObject *other,
+                           int cmp_op, int rstrip);
 
 /*
  * VOID-type arrays can only be compared equal and not-equal
@@ -662,11 +660,12 @@ _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
 {
     if (!(cmp_op == Py_EQ || cmp_op == Py_NE)) {
         PyErr_SetString(PyExc_TypeError,
-                "Void-arrays can only be compared for equality.");
+                        "Void-arrays can only be compared for equality.");
         return NULL;
     }
     if (PyArray_TYPE(other) != NPY_VOID) {
-        PyErr_SetString(PyExc_TypeError,
+        PyErr_SetString(
+                PyExc_TypeError,
                 "Cannot compare structured or void to non-void arrays.");
         return NULL;
     }
@@ -675,9 +674,11 @@ _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
         PyArray_Descr *other_descr = PyArray_DESCR(other);
 
         /* Use promotion to decide whether the comparison is valid */
-        PyArray_Descr *promoted = PyArray_PromoteTypes(self_descr, other_descr);
+        PyArray_Descr *promoted =
+                PyArray_PromoteTypes(self_descr, other_descr);
         if (promoted == NULL) {
-            PyErr_SetString(PyExc_TypeError,
+            PyErr_SetString(
+                    PyExc_TypeError,
                     "Cannot compare structured arrays unless they have a "
                     "common dtype.  I.e. `np.result_type(arr1, arr2)` must "
                     "be defined.");
@@ -685,32 +686,36 @@ _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
         }
         Py_DECREF(promoted);
 
-        npy_intp result_ndim = PyArray_NDIM(self) > PyArray_NDIM(other) ?
-                            PyArray_NDIM(self) : PyArray_NDIM(other);
+        npy_intp result_ndim = PyArray_NDIM(self) > PyArray_NDIM(other)
+                                       ? PyArray_NDIM(self)
+                                       : PyArray_NDIM(other);
 
         int field_count = PyTuple_GET_SIZE(self_descr->names);
         if (field_count != PyTuple_GET_SIZE(other_descr->names)) {
             PyErr_SetString(PyExc_TypeError,
-                    "Cannot compare structured dtypes with different number of "
-                    "fields.  (unreachable error please report to NumPy devs)");
+                            "Cannot compare structured dtypes with different "
+                            "number of "
+                            "fields.  (unreachable error please report to "
+                            "NumPy devs)");
             return NULL;
         }
 
-        PyObject *op = (cmp_op == Py_EQ ? n_ops.logical_and : n_ops.logical_or);
+        PyObject *op =
+                (cmp_op == Py_EQ ? n_ops.logical_and : n_ops.logical_or);
         PyObject *res = NULL;
         for (int i = 0; i < field_count; ++i) {
             PyObject *fieldname, *temp, *temp2;
 
             fieldname = PyTuple_GET_ITEM(self_descr->names, i);
-            PyArrayObject *a = (PyArrayObject *)array_subscript_asarray(
-                    self, fieldname);
+            PyArrayObject *a =
+                    (PyArrayObject *)array_subscript_asarray(self, fieldname);
             if (a == NULL) {
                 Py_XDECREF(res);
                 return NULL;
             }
             fieldname = PyTuple_GET_ITEM(other_descr->names, i);
-            PyArrayObject *b = (PyArrayObject *)array_subscript_asarray(
-                    other, fieldname);
+            PyArrayObject *b =
+                    (PyArrayObject *)array_subscript_asarray(other, fieldname);
             if (b == NULL) {
                 Py_XDECREF(res);
                 Py_DECREF(a);
@@ -723,14 +728,14 @@ _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
              */
             int field_dims_a = PyArray_NDIM(a) - PyArray_NDIM(self);
             int field_dims_b = PyArray_NDIM(b) - PyArray_NDIM(other);
-            if (field_dims_a != field_dims_b || (
-                    field_dims_a != 0 &&  /* neither is subarray */
-                    /* Compare only the added (subarray) dimensions: */
-                    !PyArray_CompareLists(
-                            PyArray_DIMS(a) + PyArray_NDIM(self),
-                            PyArray_DIMS(b) + PyArray_NDIM(other),
-                            field_dims_a))) {
-                PyErr_SetString(PyExc_TypeError,
+            if (field_dims_a != field_dims_b ||
+                (field_dims_a != 0 && /* neither is subarray */
+                 /* Compare only the added (subarray) dimensions: */
+                 !PyArray_CompareLists(PyArray_DIMS(a) + PyArray_NDIM(self),
+                                       PyArray_DIMS(b) + PyArray_NDIM(other),
+                                       field_dims_a))) {
+                PyErr_SetString(
+                        PyExc_TypeError,
                         "Cannot compare subarrays with different shapes. "
                         "(unreachable error, please report to NumPy devs.)");
                 Py_DECREF(a);
@@ -753,22 +758,22 @@ _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
              * In that case, reduce them using `op`.
              */
             if (PyArray_Check(temp) &&
-                        PyArray_NDIM((PyArrayObject *)temp) > result_ndim) {
+                PyArray_NDIM((PyArrayObject *)temp) > result_ndim) {
                 /* If the type was multidimensional, collapse that part to 1-D
                  */
-                if (PyArray_NDIM((PyArrayObject *)temp) != result_ndim+1) {
+                if (PyArray_NDIM((PyArrayObject *)temp) != result_ndim + 1) {
                     npy_intp dimensions[NPY_MAXDIMS];
                     PyArray_Dims newdims;
 
                     newdims.ptr = dimensions;
-                    newdims.len = result_ndim+1;
+                    newdims.len = result_ndim + 1;
                     if (result_ndim) {
                         memcpy(dimensions, PyArray_DIMS((PyArrayObject *)temp),
-                               sizeof(npy_intp)*result_ndim);
+                               sizeof(npy_intp) * result_ndim);
                     }
                     dimensions[result_ndim] = -1;
-                    temp2 = PyArray_Newshape((PyArrayObject *)temp,
-                                             &newdims, NPY_ANYORDER);
+                    temp2 = PyArray_Newshape((PyArrayObject *)temp, &newdims,
+                                             NPY_ANYORDER);
                     if (temp2 == NULL) {
                         Py_DECREF(temp);
                         Py_XDECREF(res);
@@ -806,26 +811,27 @@ _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
         if (res == NULL && !PyErr_Occurred()) {
             /* these dtypes had no fields. Use a MultiIter to broadcast them
              * to an output array, and fill with True (for EQ)*/
-            PyArrayMultiIterObject *mit = (PyArrayMultiIterObject *)
-                                          PyArray_MultiIterNew(2, self, other);
+            PyArrayMultiIterObject *mit =
+                    (PyArrayMultiIterObject *)PyArray_MultiIterNew(2, self,
+                                                                   other);
             if (mit == NULL) {
                 return NULL;
             }
 
-            res = PyArray_NewFromDescr(&PyArray_Type,
-                                       PyArray_DescrFromType(NPY_BOOL),
-                                       mit->nd, mit->dimensions,
-                                       NULL, NULL, 0, NULL);
+            res = PyArray_NewFromDescr(
+                    &PyArray_Type, PyArray_DescrFromType(NPY_BOOL), mit->nd,
+                    mit->dimensions, NULL, NULL, 0, NULL);
             Py_DECREF(mit);
             if (res) {
-                 PyArray_FILLWBYTE((PyArrayObject *)res,
-                                   cmp_op == Py_EQ ? 1 : 0);
+                PyArray_FILLWBYTE((PyArrayObject *)res,
+                                  cmp_op == Py_EQ ? 1 : 0);
             }
         }
         return res;
     }
     else if (PyArray_HASFIELDS(self) || PyArray_HASFIELDS(other)) {
-        PyErr_SetString(PyExc_TypeError,
+        PyErr_SetString(
+                PyExc_TypeError,
                 "Cannot compare structured with unstructured void arrays. "
                 "(unreachable error, please report to NumPy devs.)");
         return NULL;
@@ -836,7 +842,8 @@ _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
          * reached when both arrays have unstructured voids "V<len>" dtypes.
          */
         if (PyArray_ITEMSIZE(self) != PyArray_ITEMSIZE(other)) {
-            PyErr_SetString(PyExc_TypeError,
+            PyErr_SetString(
+                    PyExc_TypeError,
                     "cannot compare unstructured voids of different length. "
                     "Use bytes to compare. "
                     "(This may return array of False in the future.)");
@@ -854,7 +861,8 @@ _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
  * silenced error.
  */
 NPY_NO_EXPORT int
-DEPRECATE_silence_error(const char *msg) {
+DEPRECATE_silence_error(const char *msg)
+{
     PyObject *exc, *val, *tb;
     PyErr_Fetch(&exc, &val, &tb);
     if (DEPRECATE(msg) < 0) {
@@ -893,8 +901,8 @@ _failed_comparison_workaround(PyArrayObject *self, PyObject *other, int cmp_op)
      */
     array_other = (PyArrayObject *)PyArray_FROM_O(other);
     if (array_other) {
-        other_is_flexible = PyTypeNum_ISFLEXIBLE(
-            PyArray_DESCR(array_other)->type_num);
+        other_is_flexible =
+                PyTypeNum_ISFLEXIBLE(PyArray_DESCR(array_other)->type_num);
         ndim_other = PyArray_NDIM(array_other);
         Py_DECREF(array_other);
     }
@@ -918,9 +926,9 @@ _failed_comparison_workaround(PyArrayObject *self, PyObject *other, int cmp_op)
             if (ndim_other != 0 || PyArray_NDIM(self) != 0) {
                 /* 2015-05-14, 1.10 */
                 if (DEPRECATE_FUTUREWARNING(
-                        "elementwise comparison failed; returning scalar "
-                        "instead, but in the future will perform "
-                        "elementwise comparison") < 0) {
+                            "elementwise comparison failed; returning scalar "
+                            "instead, but in the future will perform "
+                            "elementwise comparison") < 0) {
                     goto fail;
                 }
             }
@@ -932,9 +940,8 @@ _failed_comparison_workaround(PyArrayObject *self, PyObject *other, int cmp_op)
              *
              * 2015-05-14, 1.10
              */
-            if (DEPRECATE(
-                    "elementwise comparison failed; "
-                    "this will raise an error in the future.") < 0) {
+            if (DEPRECATE("elementwise comparison failed; "
+                          "this will raise an error in the future.") < 0) {
                 goto fail;
             }
         }
@@ -978,93 +985,95 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
     PyObject *result = NULL;
 
     switch (cmp_op) {
-    case Py_LT:
-        RICHCMP_GIVE_UP_IF_NEEDED(obj_self, other);
-        result = PyArray_GenericBinaryFunction(
-                (PyObject *)self, other, n_ops.less);
-        break;
-    case Py_LE:
-        RICHCMP_GIVE_UP_IF_NEEDED(obj_self, other);
-        result = PyArray_GenericBinaryFunction(
-                (PyObject *)self, other, n_ops.less_equal);
-        break;
-    case Py_EQ:
-        RICHCMP_GIVE_UP_IF_NEEDED(obj_self, other);
-        /*
-         * The ufunc does not support void/structured types, so these
-         * need to be handled specifically. Only a few cases are supported.
-         */
-
-        if (PyArray_TYPE(self) == NPY_VOID) {
-            array_other = (PyArrayObject *)PyArray_FROM_O(other);
+        case Py_LT:
+            RICHCMP_GIVE_UP_IF_NEEDED(obj_self, other);
+            result = PyArray_GenericBinaryFunction((PyObject *)self, other,
+                                                   n_ops.less);
+            break;
+        case Py_LE:
+            RICHCMP_GIVE_UP_IF_NEEDED(obj_self, other);
+            result = PyArray_GenericBinaryFunction((PyObject *)self, other,
+                                                   n_ops.less_equal);
+            break;
+        case Py_EQ:
+            RICHCMP_GIVE_UP_IF_NEEDED(obj_self, other);
             /*
-             * If not successful, indicate that the items cannot be compared
-             * this way.
+             * The ufunc does not support void/structured types, so these
+             * need to be handled specifically. Only a few cases are supported.
              */
-            if (array_other == NULL) {
-                /* 2015-05-07, 1.10 */
-                if (DEPRECATE_silence_error(
-                        "elementwise == comparison failed and returning scalar "
-                        "instead; this will raise an error in the future.") < 0) {
-                    return NULL;
+
+            if (PyArray_TYPE(self) == NPY_VOID) {
+                array_other = (PyArrayObject *)PyArray_FROM_O(other);
+                /*
+                 * If not successful, indicate that the items cannot be
+                 * compared this way.
+                 */
+                if (array_other == NULL) {
+                    /* 2015-05-07, 1.10 */
+                    if (DEPRECATE_silence_error("elementwise == comparison "
+                                                "failed and returning scalar "
+                                                "instead; this will raise an "
+                                                "error in the future.") < 0) {
+                        return NULL;
+                    }
+                    Py_INCREF(Py_NotImplemented);
+                    return Py_NotImplemented;
                 }
-                Py_INCREF(Py_NotImplemented);
-                return Py_NotImplemented;
+
+                result = _void_compare(self, array_other, cmp_op);
+                Py_DECREF(array_other);
+                return result;
             }
 
-            result = _void_compare(self, array_other, cmp_op);
-            Py_DECREF(array_other);
-            return result;
-        }
-
-        result = PyArray_GenericBinaryFunction(
-                (PyObject *)self, (PyObject *)other, n_ops.equal);
-        break;
-    case Py_NE:
-        RICHCMP_GIVE_UP_IF_NEEDED(obj_self, other);
-        /*
-         * The ufunc does not support void/structured types, so these
-         * need to be handled specifically. Only a few cases are supported.
-         */
-
-        if (PyArray_TYPE(self) == NPY_VOID) {
-            array_other = (PyArrayObject *)PyArray_FROM_O(other);
+            result = PyArray_GenericBinaryFunction(
+                    (PyObject *)self, (PyObject *)other, n_ops.equal);
+            break;
+        case Py_NE:
+            RICHCMP_GIVE_UP_IF_NEEDED(obj_self, other);
             /*
-             * If not successful, indicate that the items cannot be compared
-             * this way.
-            */
-            if (array_other == NULL) {
-                /* 2015-05-07, 1.10 */
-                if (DEPRECATE_silence_error(
-                        "elementwise != comparison failed and returning scalar "
-                        "instead; this will raise an error in the future.") < 0) {
-                    return NULL;
+             * The ufunc does not support void/structured types, so these
+             * need to be handled specifically. Only a few cases are supported.
+             */
+
+            if (PyArray_TYPE(self) == NPY_VOID) {
+                array_other = (PyArrayObject *)PyArray_FROM_O(other);
+                /*
+                 * If not successful, indicate that the items cannot be
+                 * compared this way.
+                 */
+                if (array_other == NULL) {
+                    /* 2015-05-07, 1.10 */
+                    if (DEPRECATE_silence_error("elementwise != comparison "
+                                                "failed and returning scalar "
+                                                "instead; this will raise an "
+                                                "error in the future.") < 0) {
+                        return NULL;
+                    }
+                    Py_INCREF(Py_NotImplemented);
+                    return Py_NotImplemented;
                 }
-                Py_INCREF(Py_NotImplemented);
-                return Py_NotImplemented;
+
+                result = _void_compare(self, array_other, cmp_op);
+                Py_DECREF(array_other);
+                return result;
             }
 
-            result = _void_compare(self, array_other, cmp_op);
-            Py_DECREF(array_other);
-            return result;
-        }
-
-        result = PyArray_GenericBinaryFunction(
-                (PyObject *)self, (PyObject *)other, n_ops.not_equal);
-        break;
-    case Py_GT:
-        RICHCMP_GIVE_UP_IF_NEEDED(obj_self, other);
-        result = PyArray_GenericBinaryFunction(
-                (PyObject *)self, other, n_ops.greater);
-        break;
-    case Py_GE:
-        RICHCMP_GIVE_UP_IF_NEEDED(obj_self, other);
-        result = PyArray_GenericBinaryFunction(
-                (PyObject *)self, other, n_ops.greater_equal);
-        break;
-    default:
-        Py_INCREF(Py_NotImplemented);
-        return Py_NotImplemented;
+            result = PyArray_GenericBinaryFunction(
+                    (PyObject *)self, (PyObject *)other, n_ops.not_equal);
+            break;
+        case Py_GT:
+            RICHCMP_GIVE_UP_IF_NEEDED(obj_self, other);
+            result = PyArray_GenericBinaryFunction((PyObject *)self, other,
+                                                   n_ops.greater);
+            break;
+        case Py_GE:
+            RICHCMP_GIVE_UP_IF_NEEDED(obj_self, other);
+            result = PyArray_GenericBinaryFunction((PyObject *)self, other,
+                                                   n_ops.greater_equal);
+            break;
+        default:
+            Py_INCREF(Py_NotImplemented);
+            return Py_NotImplemented;
     }
     if (result == NULL) {
         /*
@@ -1158,8 +1167,8 @@ PyArray_CheckStrides(int elsize, int nd, npy_intp numbytes, npy_intp offset,
     begin = -offset;
     end = numbytes - offset;
 
-    offset_bounds_from_strides(elsize, nd, dims, newstrides,
-                                        &lower_offset, &upper_offset);
+    offset_bounds_from_strides(elsize, nd, dims, newstrides, &lower_offset,
+                               &upper_offset);
 
     if ((upper_offset > end) || (lower_offset < begin)) {
         return NPY_FALSE;
@@ -1167,12 +1176,11 @@ PyArray_CheckStrides(int elsize, int nd, npy_intp numbytes, npy_intp offset,
     return NPY_TRUE;
 }
 
-
 static PyObject *
 array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
 {
-    static char *kwlist[] = {"shape", "dtype", "buffer", "offset", "strides",
-                             "order", NULL};
+    static char *kwlist[] = {"shape",   "dtype", "buffer", "offset",
+                             "strides", "order", NULL};
     PyArray_Descr *descr = NULL;
     int itemsize;
     PyArray_Dims dims = {NULL, 0};
@@ -1190,17 +1198,11 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
      * empty, contiguous array of a specific type and shape.
      */
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&O&LO&O&:ndarray",
-                                     kwlist, PyArray_IntpConverter,
-                                     &dims,
-                                     PyArray_DescrConverter,
-                                     &descr,
-                                     PyArray_BufferConverter,
-                                     &buffer,
-                                     &offset,
-                                     &PyArray_OptionalIntpConverter,
-                                     &strides,
-                                     &PyArray_OrderConverter,
-                                     &order)) {
+                                     kwlist, PyArray_IntpConverter, &dims,
+                                     PyArray_DescrConverter, &descr,
+                                     PyArray_BufferConverter, &buffer, &offset,
+                                     &PyArray_OptionalIntpConverter, &strides,
+                                     &PyArray_OrderConverter, &order)) {
         goto fail;
     }
     if (order == NPY_FORTRANORDER) {
@@ -1216,7 +1218,7 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
         npy_intp nb, off;
         if (strides.len != dims.len) {
             PyErr_SetString(PyExc_ValueError,
-                            "strides, if given, must be "   \
+                            "strides, if given, must be "
                             "the same length as shape");
             goto fail;
         }
@@ -1227,28 +1229,23 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
         }
         else {
             nb = buffer.len;
-            off = (npy_intp) offset;
+            off = (npy_intp)offset;
         }
 
-
-        if (!PyArray_CheckStrides(itemsize, dims.len,
-                                  nb, off,
-                                  dims.ptr, strides.ptr)) {
+        if (!PyArray_CheckStrides(itemsize, dims.len, nb, off, dims.ptr,
+                                  strides.ptr)) {
             PyErr_SetString(PyExc_ValueError,
-                            "strides is incompatible "      \
-                            "with shape of requested "      \
+                            "strides is incompatible "
+                            "with shape of requested "
                             "array and size of buffer");
             goto fail;
         }
     }
 
     if (buffer.ptr == NULL) {
-        ret = (PyArrayObject *)
-            PyArray_NewFromDescr_int(subtype, descr,
-                                     (int)dims.len,
-                                     dims.ptr,
-                                     strides.ptr, NULL, is_f_order, NULL, NULL,
-                                     0, 1);
+        ret = (PyArrayObject *)PyArray_NewFromDescr_int(
+                subtype, descr, (int)dims.len, dims.ptr, strides.ptr, NULL,
+                is_f_order, NULL, NULL, 0, 1);
         if (ret == NULL) {
             descr = NULL;
             goto fail;
@@ -1265,14 +1262,14 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
     else {
         /* buffer given -- use it */
         if (dims.len == 1 && dims.ptr[0] == -1) {
-            dims.ptr[0] = (buffer.len-(npy_intp)offset) / itemsize;
+            dims.ptr[0] = (buffer.len - (npy_intp)offset) / itemsize;
         }
         else if ((strides.ptr == NULL) &&
-                 (buffer.len < (offset + (((npy_intp)itemsize)*
-                                          PyArray_MultiplyList(dims.ptr,
-                                                               dims.len))))) {
+                 (buffer.len <
+                  (offset + (((npy_intp)itemsize) *
+                             PyArray_MultiplyList(dims.ptr, dims.len))))) {
             PyErr_SetString(PyExc_TypeError,
-                            "buffer is too small for "      \
+                            "buffer is too small for "
                             "requested array");
             goto fail;
         }
@@ -1281,9 +1278,8 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
             buffer.flags |= NPY_ARRAY_F_CONTIGUOUS;
         }
         ret = (PyArrayObject *)PyArray_NewFromDescr_int(
-                subtype, descr,
-                dims.len, dims.ptr, strides.ptr, offset + (char *)buffer.ptr,
-                buffer.flags, NULL, buffer.base,
+                subtype, descr, dims.len, dims.ptr, strides.ptr,
+                offset + (char *)buffer.ptr, buffer.flags, NULL, buffer.base,
                 0, 1);
         if (ret == NULL) {
             descr = NULL;
@@ -1295,44 +1291,40 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
     npy_free_cache_dim_obj(strides);
     return (PyObject *)ret;
 
- fail:
+fail:
     Py_XDECREF(descr);
     npy_free_cache_dim_obj(dims);
     npy_free_cache_dim_obj(strides);
     return NULL;
 }
 
-
 static PyObject *
 array_iter(PyArrayObject *arr)
 {
     if (PyArray_NDIM(arr) == 0) {
-        PyErr_SetString(PyExc_TypeError,
-                        "iteration over a 0-d array");
+        PyErr_SetString(PyExc_TypeError, "iteration over a 0-d array");
         return NULL;
     }
     return PySeqIter_New((PyObject *)arr);
 }
 
-
 NPY_NO_EXPORT PyTypeObject PyArray_Type = {
-    PyVarObject_HEAD_INIT(NULL, 0)
-    .tp_name = "numpy.ndarray",
-    .tp_basicsize = sizeof(PyArrayObject_fields),
-    /* methods */
-    .tp_dealloc = (destructor)array_dealloc,
-    .tp_repr = (reprfunc)array_repr,
-    .tp_as_number = &array_as_number,
-    .tp_as_sequence = &array_as_sequence,
-    .tp_as_mapping = &array_as_mapping,
-    .tp_str = (reprfunc)array_str,
-    .tp_as_buffer = &array_as_buffer,
-    .tp_flags =(Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE),
+        PyVarObject_HEAD_INIT(NULL, 0).tp_name = "numpy.ndarray",
+        .tp_basicsize = sizeof(PyArrayObject_fields),
+        /* methods */
+        .tp_dealloc = (destructor)array_dealloc,
+        .tp_repr = (reprfunc)array_repr,
+        .tp_as_number = &array_as_number,
+        .tp_as_sequence = &array_as_sequence,
+        .tp_as_mapping = &array_as_mapping,
+        .tp_str = (reprfunc)array_str,
+        .tp_as_buffer = &array_as_buffer,
+        .tp_flags = (Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE),
 
-    .tp_richcompare = (richcmpfunc)array_richcompare,
-    .tp_weaklistoffset = offsetof(PyArrayObject_fields, weakreflist),
-    .tp_iter = (getiterfunc)array_iter,
-    .tp_methods = array_methods,
-    .tp_getset = array_getsetlist,
-    .tp_new = (newfunc)array_new,
+        .tp_richcompare = (richcmpfunc)array_richcompare,
+        .tp_weaklistoffset = offsetof(PyArrayObject_fields, weakreflist),
+        .tp_iter = (getiterfunc)array_iter,
+        .tp_methods = array_methods,
+        .tp_getset = array_getsetlist,
+        .tp_new = (newfunc)array_new,
 };

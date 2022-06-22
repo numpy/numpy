@@ -10,13 +10,10 @@ from collections.abc import Iterator
 from typing import IO, TYPE_CHECKING
 
 import pytest
+
 import numpy as np
 import numpy.typing as npt
-from numpy.typing.mypy_plugin import (
-    _PRECISION_DICT,
-    _EXTENDED_PRECISION_LIST,
-    _C_INTP,
-)
+from numpy.typing.mypy_plugin import _C_INTP, _EXTENDED_PRECISION_LIST, _PRECISION_DICT
 
 try:
     from mypy import api
@@ -75,26 +72,27 @@ def run_mypy() -> None:
 
     NUMPY_TYPING_TEST_CLEAR_CACHE=0 pytest numpy/typing/tests
     """
-    if (
-        os.path.isdir(CACHE_DIR)
-        and bool(os.environ.get("NUMPY_TYPING_TEST_CLEAR_CACHE", True))
+    if os.path.isdir(CACHE_DIR) and bool(
+        os.environ.get("NUMPY_TYPING_TEST_CLEAR_CACHE", True)
     ):
         shutil.rmtree(CACHE_DIR)
 
     for directory in (PASS_DIR, REVEAL_DIR, FAIL_DIR, MISC_DIR):
         # Run mypy
-        stdout, stderr, exit_code = api.run([
-            "--config-file",
-            MYPY_INI,
-            "--cache-dir",
-            CACHE_DIR,
-            directory,
-        ])
+        stdout, stderr, exit_code = api.run(
+            [
+                "--config-file",
+                MYPY_INI,
+                "--cache-dir",
+                CACHE_DIR,
+                directory,
+            ]
+        )
         if stderr:
             pytest.fail(f"Unexpected mypy standard error\n\n{stderr}")
         elif exit_code not in {0, 1}:
             pytest.fail(f"Unexpected mypy exit code: {exit_code}\n\n{stdout}")
-        stdout = stdout.replace('*', '')
+        stdout = stdout.replace("*", "")
 
         # Parse the output
         iterator = itertools.groupby(stdout.split("\n"), key=_key_func)
@@ -143,15 +141,12 @@ def test_fail(path: str) -> None:
         )
         if match is None:
             raise ValueError(f"Unexpected error line format: {error_line}")
-        lineno = int(match.group('lineno'))
-        errors[lineno] += f'{error_line}\n'
+        lineno = int(match.group("lineno"))
+        errors[lineno] += f"{error_line}\n"
 
     for i, line in enumerate(lines):
         lineno = i + 1
-        if (
-            line.startswith('#')
-            or (" E:" not in line and lineno not in errors)
-        ):
+        if line.startswith("#") or (" E:" not in line and lineno not in errors):
             continue
 
         target_line = lines[lineno - 1]
@@ -161,9 +156,7 @@ def test_fail(path: str) -> None:
             marker = marker.strip()
             _test_fail(path, expression, marker, expected_error, lineno)
         else:
-            pytest.fail(
-                f"Unexpected mypy output at line {lineno}\n\n{errors[lineno]}"
-            )
+            pytest.fail(f"Unexpected mypy output at line {lineno}\n\n{errors[lineno]}")
 
 
 _FAIL_MSG1 = """Extra error at line {}
@@ -190,9 +183,9 @@ def _test_fail(
     if expected_error is None:
         raise AssertionError(_FAIL_MSG1.format(lineno, expression, error))
     elif error not in expected_error:
-        raise AssertionError(_FAIL_MSG2.format(
-            lineno, expression, expected_error, error
-        ))
+        raise AssertionError(
+            _FAIL_MSG2.format(lineno, expression, expected_error, error)
+        )
 
 
 def _construct_ctypes_dict() -> dict[str, str]:
@@ -228,8 +221,10 @@ def _construct_ctypes_dict() -> dict[str, str]:
 
 
 def _construct_format_dict() -> dict[str, str]:
-    dct = {k.split(".")[-1]: v.replace("numpy", "numpy._typing") for
-           k, v in _PRECISION_DICT.items()}
+    dct = {
+        k.split(".")[-1]: v.replace("numpy", "numpy._typing")
+        for k, v in _PRECISION_DICT.items()
+    }
 
     return {
         "uint8": "numpy.unsignedinteger[numpy._typing._8Bit]",
@@ -251,19 +246,24 @@ def _construct_format_dict() -> dict[str, str]:
         "float96": "numpy.floating[numpy._typing._96Bit]",
         "float128": "numpy.floating[numpy._typing._128Bit]",
         "float256": "numpy.floating[numpy._typing._256Bit]",
-        "complex64": ("numpy.complexfloating"
-                      "[numpy._typing._32Bit, numpy._typing._32Bit]"),
-        "complex128": ("numpy.complexfloating"
-                       "[numpy._typing._64Bit, numpy._typing._64Bit]"),
-        "complex160": ("numpy.complexfloating"
-                       "[numpy._typing._80Bit, numpy._typing._80Bit]"),
-        "complex192": ("numpy.complexfloating"
-                       "[numpy._typing._96Bit, numpy._typing._96Bit]"),
-        "complex256": ("numpy.complexfloating"
-                       "[numpy._typing._128Bit, numpy._typing._128Bit]"),
-        "complex512": ("numpy.complexfloating"
-                       "[numpy._typing._256Bit, numpy._typing._256Bit]"),
-
+        "complex64": (
+            "numpy.complexfloating" "[numpy._typing._32Bit, numpy._typing._32Bit]"
+        ),
+        "complex128": (
+            "numpy.complexfloating" "[numpy._typing._64Bit, numpy._typing._64Bit]"
+        ),
+        "complex160": (
+            "numpy.complexfloating" "[numpy._typing._80Bit, numpy._typing._80Bit]"
+        ),
+        "complex192": (
+            "numpy.complexfloating" "[numpy._typing._96Bit, numpy._typing._96Bit]"
+        ),
+        "complex256": (
+            "numpy.complexfloating" "[numpy._typing._128Bit, numpy._typing._128Bit]"
+        ),
+        "complex512": (
+            "numpy.complexfloating" "[numpy._typing._256Bit, numpy._typing._256Bit]"
+        ),
         "ubyte": f"numpy.unsignedinteger[{dct['_NBitByte']}]",
         "ushort": f"numpy.unsignedinteger[{dct['_NBitShort']}]",
         "uintc": f"numpy.unsignedinteger[{dct['_NBitIntC']}]",
@@ -276,25 +276,24 @@ def _construct_format_dict() -> dict[str, str]:
         "intp": f"numpy.signedinteger[{dct['_NBitIntP']}]",
         "int_": f"numpy.signedinteger[{dct['_NBitInt']}]",
         "longlong": f"numpy.signedinteger[{dct['_NBitLongLong']}]",
-
         "half": f"numpy.floating[{dct['_NBitHalf']}]",
         "single": f"numpy.floating[{dct['_NBitSingle']}]",
         "double": f"numpy.floating[{dct['_NBitDouble']}]",
         "longdouble": f"numpy.floating[{dct['_NBitLongDouble']}]",
-        "csingle": ("numpy.complexfloating"
-                    f"[{dct['_NBitSingle']}, {dct['_NBitSingle']}]"),
-        "cdouble": ("numpy.complexfloating"
-                    f"[{dct['_NBitDouble']}, {dct['_NBitDouble']}]"),
+        "csingle": (
+            "numpy.complexfloating" f"[{dct['_NBitSingle']}, {dct['_NBitSingle']}]"
+        ),
+        "cdouble": (
+            "numpy.complexfloating" f"[{dct['_NBitDouble']}, {dct['_NBitDouble']}]"
+        ),
         "clongdouble": (
             "numpy.complexfloating"
             f"[{dct['_NBitLongDouble']}, {dct['_NBitLongDouble']}]"
         ),
-
         # numpy.typing
-        "_NBitInt": dct['_NBitInt'],
-
+        "_NBitInt": dct["_NBitInt"],
         # numpy.ctypeslib
-        "c_intp": f"ctypes.{_C_INTP}"
+        "c_intp": f"ctypes.{_C_INTP}",
     }
 
 
@@ -324,8 +323,7 @@ def _parse_reveals(file: IO[str]) -> tuple[npt.NDArray[np.str_], list[str]]:
     # there is the risk of accidentally grabbing dictionaries and sets
     key_set = set(re.findall(r"\{(.*?)\}", comments))
     kwargs = {
-        k: FORMAT_DICT.get(k, f"<UNRECOGNIZED FORMAT KEY {k!r}>") for
-        k in key_set
+        k: FORMAT_DICT.get(k, f"<UNRECOGNIZED FORMAT KEY {k!r}>") for k in key_set
     }
     fmt_str = comments.format(**kwargs)
 
@@ -354,7 +352,7 @@ def test_reveal(path: str) -> None:
         )
         if match is None:
             raise ValueError(f"Unexpected reveal line format: {error_line}")
-        lineno = int(match.group('lineno')) - 1
+        lineno = int(match.group("lineno")) - 1
         assert "Revealed type is" in error_line
 
         marker = reveal_list[lineno]
@@ -383,10 +381,9 @@ def _test_reveal(
     stripped_expected_reveal = _STRIP_PATTERN.sub(strip_func, expected_reveal)
     if stripped_reveal not in stripped_expected_reveal:
         raise AssertionError(
-            _REVEAL_MSG.format(lineno,
-                               expression,
-                               stripped_expected_reveal,
-                               stripped_reveal)
+            _REVEAL_MSG.format(
+                lineno, expression, stripped_expected_reveal, stripped_reveal
+            )
         )
 
 
@@ -398,9 +395,7 @@ def test_code_runs(path: str) -> None:
     path_without_extension, _ = os.path.splitext(path)
     dirname, filename = path.split(os.sep)[-2:]
 
-    spec = importlib.util.spec_from_file_location(
-        f"{dirname}.{filename}", path
-    )
+    spec = importlib.util.spec_from_file_location(f"{dirname}.{filename}", path)
     assert spec is not None
     assert spec.loader is not None
 

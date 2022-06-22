@@ -32,15 +32,21 @@ Functions
 """
 import numpy.core.numeric as nx
 import numpy.core.numerictypes as nt
-from numpy.core.numeric import asarray, any
+from numpy.core.numeric import any, asarray
 from numpy.core.overrides import array_function_dispatch
 from numpy.lib.type_check import isreal
 
-
 __all__ = [
-    'sqrt', 'log', 'log2', 'logn', 'log10', 'power', 'arccos', 'arcsin',
-    'arctanh'
-    ]
+    "sqrt",
+    "log",
+    "log2",
+    "logn",
+    "log10",
+    "power",
+    "arccos",
+    "arcsin",
+    "arctanh",
+]
 
 
 _ln2 = nx.log(2.0)
@@ -102,8 +108,9 @@ def _tocomplex(arr):
     >>> cc
     array([1.+0.j,  2.+0.j,  3.+0.j], dtype=complex64)
     """
-    if issubclass(arr.dtype.type, (nt.single, nt.byte, nt.short, nt.ubyte,
-                                   nt.ushort, nt.csingle)):
+    if issubclass(
+        arr.dtype.type, (nt.single, nt.byte, nt.short, nt.ubyte, nt.ushort, nt.csingle)
+    ):
         return arr.astype(nt.csingle)
     else:
         return arr.astype(nt.cdouble)
@@ -347,7 +354,10 @@ def log10(x):
 
 
 def _logn_dispatcher(n, x):
-    return (n, x,)
+    return (
+        n,
+        x,
+    )
 
 
 @array_function_dispatch(_logn_dispatcher)
@@ -383,7 +393,7 @@ def logn(n, x):
     """
     x = _fix_real_lt_zero(x)
     n = _fix_real_lt_zero(n)
-    return nx.log(x)/nx.log(n)
+    return nx.log(x) / nx.log(n)
 
 
 @array_function_dispatch(_unary_dispatcher)

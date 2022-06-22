@@ -69,4 +69,4 @@ NPY_NO_EXPORT PyObject *
 PyArray_GenericAccumulateFunction(PyArrayObject *m1, PyObject *op, int axis,
                                   int rtype, PyArrayObject *out);
 
-#endif  /* NUMPY_CORE_SRC_MULTIARRAY_NUMBER_H_ */
+#endif /* NUMPY_CORE_SRC_MULTIARRAY_NUMBER_H_ */

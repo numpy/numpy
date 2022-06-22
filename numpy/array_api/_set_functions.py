@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from ._array_object import Array
-
 from typing import NamedTuple
 
 import numpy as np
+
+from ._array_object import Array
 
 # Note: np.unique() is split into four functions in the array API:
 # unique_all, unique_counts, unique_inverse, and unique_values (this is done
@@ -17,6 +17,7 @@ import numpy as np
 
 # Note: The functions here return a namedtuple (np.unique() returns a normal
 # tuple).
+
 
 class UniqueAllResult(NamedTuple):
     values: Array

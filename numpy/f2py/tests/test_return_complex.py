@@ -1,6 +1,7 @@
 import pytest
 
 from numpy import array
+
 from . import util
 
 
@@ -18,7 +19,7 @@ class TestReturnComplex(util.F2PyTest):
         # assert abs(t('234.6')-234.6)<=err
         assert abs(t(-234) + 234.0) <= err
         assert abs(t([234]) - 234.0) <= err
-        assert abs(t((234, )) - 234.0) <= err
+        assert abs(t((234,)) - 234.0) <= err
         assert abs(t(array(234)) - 234.0) <= err
         assert abs(t(array(23 + 4j, "F")) - (23 + 4j)) <= err
         assert abs(t(array([234])) - 234.0) <= err
@@ -61,5 +62,4 @@ class TestFReturnComplex(TestReturnComplex):
 
     @pytest.mark.parametrize("name", "t0,t8,t16,td,s0,s8,s16,sd".split(","))
     def test_all_f90(self, name):
-        self.check_function(getattr(self.module.f90_return_complex, name),
-                            name)
+        self.check_function(getattr(self.module.f90_return_complex, name), name)

@@ -1,4 +1,5 @@
 from typing import Any
+
 import numpy as np
 
 AR_i8: np.ndarray[Any, np.dtype[np.int64]]

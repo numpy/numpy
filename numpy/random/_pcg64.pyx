@@ -1,9 +1,11 @@
 import numpy as np
-cimport numpy as np
 
 from libc.stdint cimport uint32_t, uint64_t
-from ._common cimport uint64_to_double, wrap_int
+
+cimport numpy as np
 from numpy.random cimport BitGenerator
+
+from ._common cimport uint64_to_double, wrap_int
 
 __all__ = ['PCG64']
 

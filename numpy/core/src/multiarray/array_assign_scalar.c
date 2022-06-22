@@ -13,21 +13,20 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
-#include <numpy/ndarraytypes.h>
 #include "numpy/npy_math.h"
 
 #include "npy_config.h"
 #include "npy_pycompat.h"
 
+#include "array_assign.h"
 #include "convert_datatype.h"
+#include "dtype_transfer.h"
+#include "lowlevel_strided_loops.h"
 #include "methods.h"
 #include "shape.h"
-#include "lowlevel_strided_loops.h"
-
-#include "array_assign.h"
-#include "dtype_transfer.h"
-
 #include "umathmodule.h"
+
+#include <numpy/ndarraytypes.h>
 
 /*
  * Assigns the scalar value to every element of the destination raw array.
@@ -36,8 +35,9 @@
  */
 NPY_NO_EXPORT int
 raw_array_assign_scalar(int ndim, npy_intp const *shape,
-        PyArray_Descr *dst_dtype, char *dst_data, npy_intp const *dst_strides,
-        PyArray_Descr *src_dtype, char *src_data)
+                        PyArray_Descr *dst_dtype, char *dst_data,
+                        npy_intp const *dst_strides, PyArray_Descr *src_dtype,
+                        char *src_data)
 {
     int idim;
     npy_intp shape_it[NPY_MAXDIMS], dst_strides_it[NPY_MAXDIMS];
@@ -52,26 +52,24 @@ raw_array_assign_scalar(int ndim, npy_intp const *shape,
                                    npy_uint_alignment(dst_dtype->elsize)) &&
               raw_array_is_aligned(ndim, shape, dst_data, dst_strides,
                                    dst_dtype->alignment) &&
-              npy_is_aligned(src_data, npy_uint_alignment(src_dtype->elsize) &&
-              npy_is_aligned(src_data, src_dtype->alignment));
+              npy_is_aligned(
+                      src_data,
+                      npy_uint_alignment(src_dtype->elsize) &&
+                              npy_is_aligned(src_data, src_dtype->alignment));
 
     /* Use raw iteration with no heap allocation */
-    if (PyArray_PrepareOneRawArrayIter(
-                    ndim, shape,
-                    dst_data, dst_strides,
-                    &ndim, shape_it,
-                    &dst_data, dst_strides_it) < 0) {
+    if (PyArray_PrepareOneRawArrayIter(ndim, shape, dst_data, dst_strides,
+                                       &ndim, shape_it, &dst_data,
+                                       dst_strides_it) < 0) {
         return -1;
     }
 
     /* Get the function to do the casting */
     NPY_cast_info cast_info;
     NPY_ARRAYMETHOD_FLAGS flags;
-    if (PyArray_GetDTypeTransferFunction(aligned,
-                        0, dst_strides_it[0],
-                        src_dtype, dst_dtype,
-                        0,
-                        &cast_info, &flags) != NPY_SUCCEED) {
+    if (PyArray_GetDTypeTransferFunction(aligned, 0, dst_strides_it[0],
+                                         src_dtype, dst_dtype, 0, &cast_info,
+                                         &flags) != NPY_SUCCEED) {
         return -1;
     }
 
@@ -88,15 +86,17 @@ raw_array_assign_scalar(int ndim, npy_intp const *shape,
 
     npy_intp strides[2] = {0, dst_strides_it[0]};
 
-    NPY_RAW_ITER_START(idim, ndim, coord, shape_it) {
+    NPY_RAW_ITER_START(idim, ndim, coord, shape_it)
+    {
         /* Process the innermost dimension */
         char *args[2] = {src_data, dst_data};
-        if (cast_info.func(&cast_info.context,
-                args, &shape_it[0], strides, cast_info.auxdata) < 0) {
+        if (cast_info.func(&cast_info.context, args, &shape_it[0], strides,
+                           cast_info.auxdata) < 0) {
             goto fail;
         }
-    } NPY_RAW_ITER_ONE_NEXT(idim, ndim, coord,
-                            shape_it, dst_data, dst_strides_it);
+    }
+    NPY_RAW_ITER_ONE_NEXT(idim, ndim, coord, shape_it, dst_data,
+                          dst_strides_it);
 
     NPY_END_THREADS;
     NPY_cast_info_xfree(&cast_info);
@@ -123,10 +123,12 @@ fail:
  */
 NPY_NO_EXPORT int
 raw_array_wheremasked_assign_scalar(int ndim, npy_intp const *shape,
-        PyArray_Descr *dst_dtype, char *dst_data, npy_intp const *dst_strides,
-        PyArray_Descr *src_dtype, char *src_data,
-        PyArray_Descr *wheremask_dtype, char *wheremask_data,
-        npy_intp const *wheremask_strides)
+                                    PyArray_Descr *dst_dtype, char *dst_data,
+                                    npy_intp const *dst_strides,
+                                    PyArray_Descr *src_dtype, char *src_data,
+                                    PyArray_Descr *wheremask_dtype,
+                                    char *wheremask_data,
+                                    npy_intp const *wheremask_strides)
 {
     int idim;
     npy_intp shape_it[NPY_MAXDIMS], dst_strides_it[NPY_MAXDIMS];
@@ -142,28 +144,26 @@ raw_array_wheremasked_assign_scalar(int ndim, npy_intp const *shape,
                                    npy_uint_alignment(dst_dtype->elsize)) &&
               raw_array_is_aligned(ndim, shape, dst_data, dst_strides,
                                    dst_dtype->alignment) &&
-              npy_is_aligned(src_data, npy_uint_alignment(src_dtype->elsize) &&
-              npy_is_aligned(src_data, src_dtype->alignment));
+              npy_is_aligned(
+                      src_data,
+                      npy_uint_alignment(src_dtype->elsize) &&
+                              npy_is_aligned(src_data, src_dtype->alignment));
 
     /* Use raw iteration with no heap allocation */
     if (PyArray_PrepareTwoRawArrayIter(
-                    ndim, shape,
-                    dst_data, dst_strides,
-                    wheremask_data, wheremask_strides,
-                    &ndim, shape_it,
-                    &dst_data, dst_strides_it,
-                    &wheremask_data, wheremask_strides_it) < 0) {
+                ndim, shape, dst_data, dst_strides, wheremask_data,
+                wheremask_strides, &ndim, shape_it, &dst_data, dst_strides_it,
+                &wheremask_data, wheremask_strides_it) < 0) {
         return -1;
     }
 
     /* Get the function to do the casting */
     NPY_cast_info cast_info;
     NPY_ARRAYMETHOD_FLAGS flags;
-    if (PyArray_GetMaskedDTypeTransferFunction(aligned,
-                        0, dst_strides_it[0], wheremask_strides_it[0],
-                        src_dtype, dst_dtype, wheremask_dtype,
-                        0,
-                        &cast_info, &flags) != NPY_SUCCEED) {
+    if (PyArray_GetMaskedDTypeTransferFunction(
+                aligned, 0, dst_strides_it[0], wheremask_strides_it[0],
+                src_dtype, dst_dtype, wheremask_dtype, 0, &cast_info,
+                &flags) != NPY_SUCCEED) {
         return -1;
     }
 
@@ -180,21 +180,22 @@ raw_array_wheremasked_assign_scalar(int ndim, npy_intp const *shape,
 
     npy_intp strides[2] = {0, dst_strides_it[0]};
 
-    NPY_RAW_ITER_START(idim, ndim, coord, shape_it) {
+    NPY_RAW_ITER_START(idim, ndim, coord, shape_it)
+    {
         /* Process the innermost dimension */
         PyArray_MaskedStridedUnaryOp *stransfer;
         stransfer = (PyArray_MaskedStridedUnaryOp *)cast_info.func;
 
         char *args[2] = {src_data, dst_data};
-        if (stransfer(&cast_info.context,
-                args, &shape_it[0], strides,
-                (npy_bool *)wheremask_data, wheremask_strides_it[0],
-                cast_info.auxdata) < 0) {
+        if (stransfer(&cast_info.context, args, &shape_it[0], strides,
+                      (npy_bool *)wheremask_data, wheremask_strides_it[0],
+                      cast_info.auxdata) < 0) {
             goto fail;
         }
-    } NPY_RAW_ITER_TWO_NEXT(idim, ndim, coord, shape_it,
-                            dst_data, dst_strides_it,
-                            wheremask_data, wheremask_strides_it);
+    }
+    NPY_RAW_ITER_TWO_NEXT(idim, ndim, coord, shape_it, dst_data,
+                          dst_strides_it, wheremask_data,
+                          wheremask_strides_it);
 
     NPY_END_THREADS;
     NPY_cast_info_xfree(&cast_info);
@@ -230,9 +231,8 @@ fail:
  * Returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT int
-PyArray_AssignRawScalar(PyArrayObject *dst,
-                        PyArray_Descr *src_dtype, char *src_data,
-                        PyArrayObject *wheremask,
+PyArray_AssignRawScalar(PyArrayObject *dst, PyArray_Descr *src_dtype,
+                        char *src_data, PyArrayObject *wheremask,
                         NPY_CASTING casting)
 {
     int allocated_src_data = 0;
@@ -243,10 +243,10 @@ PyArray_AssignRawScalar(PyArrayObject *dst,
     }
 
     /* Check the casting rule */
-    if (!can_cast_scalar_to(src_dtype, src_data,
-                            PyArray_DESCR(dst), casting)) {
-        npy_set_invalid_cast_error(
-                src_dtype, PyArray_DESCR(dst), casting, NPY_TRUE);
+    if (!can_cast_scalar_to(src_dtype, src_data, PyArray_DESCR(dst),
+                            casting)) {
+        npy_set_invalid_cast_error(src_dtype, PyArray_DESCR(dst), casting,
+                                   NPY_TRUE);
         return -1;
     }
 
@@ -257,10 +257,9 @@ PyArray_AssignRawScalar(PyArrayObject *dst,
      * we also skip this if 'dst' has an object dtype.
      */
     if ((!PyArray_EquivTypes(PyArray_DESCR(dst), src_dtype) ||
-            !(npy_is_aligned(src_data, npy_uint_alignment(src_dtype->elsize)) &&
-              npy_is_aligned(src_data, src_dtype->alignment))) &&
-                    PyArray_SIZE(dst) > 1 &&
-                    !PyDataType_REFCHK(PyArray_DESCR(dst))) {
+         !(npy_is_aligned(src_data, npy_uint_alignment(src_dtype->elsize)) &&
+           npy_is_aligned(src_data, src_dtype->alignment))) &&
+        PyArray_SIZE(dst) > 1 && !PyDataType_REFCHK(PyArray_DESCR(dst))) {
         char *tmp_src_data;
 
         /*
@@ -283,8 +282,8 @@ PyArray_AssignRawScalar(PyArrayObject *dst,
             memset(tmp_src_data, 0, PyArray_DESCR(dst)->elsize);
         }
 
-        if (PyArray_CastRawArrays(1, src_data, tmp_src_data, 0, 0,
-                            src_dtype, PyArray_DESCR(dst), 0) != NPY_SUCCEED) {
+        if (PyArray_CastRawArrays(1, src_data, tmp_src_data, 0, 0, src_dtype,
+                                  PyArray_DESCR(dst), 0) != NPY_SUCCEED) {
             src_data = tmp_src_data;
             goto fail;
         }
@@ -298,8 +297,9 @@ PyArray_AssignRawScalar(PyArrayObject *dst,
         /* A straightforward value assignment */
         /* Do the assignment with raw array iteration */
         if (raw_array_assign_scalar(PyArray_NDIM(dst), PyArray_DIMS(dst),
-                PyArray_DESCR(dst), PyArray_DATA(dst), PyArray_STRIDES(dst),
-                src_dtype, src_data) < 0) {
+                                    PyArray_DESCR(dst), PyArray_DATA(dst),
+                                    PyArray_STRIDES(dst), src_dtype,
+                                    src_data) < 0) {
             goto fail;
         }
     }
@@ -308,19 +308,18 @@ PyArray_AssignRawScalar(PyArrayObject *dst,
 
         /* Broadcast the wheremask to 'dst' for raw iteration */
         if (broadcast_strides(PyArray_NDIM(dst), PyArray_DIMS(dst),
-                    PyArray_NDIM(wheremask), PyArray_DIMS(wheremask),
-                    PyArray_STRIDES(wheremask), "where mask",
-                    wheremask_strides) < 0) {
+                              PyArray_NDIM(wheremask), PyArray_DIMS(wheremask),
+                              PyArray_STRIDES(wheremask), "where mask",
+                              wheremask_strides) < 0) {
             goto fail;
         }
 
         /* Do the masked assignment with raw array iteration */
         if (raw_array_wheremasked_assign_scalar(
-                PyArray_NDIM(dst), PyArray_DIMS(dst),
-                PyArray_DESCR(dst), PyArray_DATA(dst), PyArray_STRIDES(dst),
-                src_dtype, src_data,
-                PyArray_DESCR(wheremask), PyArray_DATA(wheremask),
-                wheremask_strides) < 0) {
+                    PyArray_NDIM(dst), PyArray_DIMS(dst), PyArray_DESCR(dst),
+                    PyArray_DATA(dst), PyArray_STRIDES(dst), src_dtype,
+                    src_data, PyArray_DESCR(wheremask),
+                    PyArray_DATA(wheremask), wheremask_strides) < 0) {
             goto fail;
         }
     }

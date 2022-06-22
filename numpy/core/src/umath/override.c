@@ -1,13 +1,14 @@
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define NO_IMPORT_ARRAY
 
-#include "npy_pycompat.h"
 #include "numpy/ufuncobject.h"
-#include "npy_import.h"
+
+#include "npy_pycompat.h"
 
 #include "override.h"
-#include "ufunc_override.h"
 
+#include "npy_import.h"
+#include "ufunc_override.h"
 
 /*
  * For each positional argument and each argument in a possible "out"
@@ -56,9 +57,10 @@ get_array_ufunc_overrides(PyObject *in_args, PyObject *out_args,
         }
         if (new_class) {
             /*
-             * Now see if the object provides an __array_ufunc__. However, we should
-             * ignore the base ndarray.__ufunc__, so we skip any ndarray as well as
-             * any ndarray subclass instances that did not override __array_ufunc__.
+             * Now see if the object provides an __array_ufunc__. However, we
+             * should ignore the base ndarray.__ufunc__, so we skip any ndarray
+             * as well as any ndarray subclass instances that did not override
+             * __array_ufunc__.
              */
             PyObject *method = PyUFuncOverride_GetNonDefaultArrayUfunc(obj);
             if (method == NULL) {
@@ -88,20 +90,19 @@ fail:
     return -1;
 }
 
-
 /*
  * Build a dictionary from the keyword arguments, but replace out with the
  * normalized version (and always pass it even if it was passed by position).
  */
 static int
-initialize_normal_kwds(PyObject *out_args,
-        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames,
-        PyObject *normal_kwds)
+initialize_normal_kwds(PyObject *out_args, PyObject *const *args,
+                       Py_ssize_t len_args, PyObject *kwnames,
+                       PyObject *normal_kwds)
 {
     if (kwnames != NULL) {
         for (Py_ssize_t i = 0; i < PyTuple_GET_SIZE(kwnames); i++) {
-            if (PyDict_SetItem(normal_kwds,
-                    PyTuple_GET_ITEM(kwnames, i), args[i + len_args]) < 0) {
+            if (PyDict_SetItem(normal_kwds, PyTuple_GET_ITEM(kwnames, i),
+                               args[i + len_args]) < 0) {
                 return -1;
             }
         }
@@ -144,7 +145,7 @@ static int
 normalize_signature_keyword(PyObject *normal_kwds)
 {
     /* If the keywords include `sig` rename to `signature`. */
-    PyObject* obj = _PyDict_GetItemStringWithError(normal_kwds, "sig");
+    PyObject *obj = _PyDict_GetItemStringWithError(normal_kwds, "sig");
     if (obj == NULL && PyErr_Occurred()) {
         return -1;
     }
@@ -163,11 +164,9 @@ normalize_signature_keyword(PyObject *normal_kwds)
     return 0;
 }
 
-
 static int
-copy_positional_args_to_kwargs(const char **keywords,
-        PyObject *const *args, Py_ssize_t len_args,
-        PyObject *normal_kwds)
+copy_positional_args_to_kwargs(const char **keywords, PyObject *const *args,
+                               Py_ssize_t len_args, PyObject *normal_kwds)
 {
     for (Py_ssize_t i = 0; i < len_args; i++) {
         if (keywords[i] == NULL) {
@@ -207,10 +206,10 @@ copy_positional_args_to_kwargs(const char **keywords,
  * result of the operation, if any. If *result is NULL, there is no override.
  */
 NPY_NO_EXPORT int
-PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
-        PyObject *in_args, PyObject *out_args,
-        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames,
-        PyObject **result)
+PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method, PyObject *in_args,
+                      PyObject *out_args, PyObject *const *args,
+                      Py_ssize_t len_args, PyObject *kwnames,
+                      PyObject **result)
 {
     int status;
 
@@ -227,7 +226,7 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
      * Check inputs for overrides
      */
     num_override_args = get_array_ufunc_overrides(
-           in_args, out_args, with_override, array_ufunc_methods);
+            in_args, out_args, with_override, array_ufunc_methods);
     if (num_override_args == -1) {
         goto fail;
     }
@@ -245,8 +244,8 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
     if (normal_kwds == NULL) {
         goto fail;
     }
-    if (initialize_normal_kwds(out_args,
-            args, len_args, kwnames, normal_kwds) < 0) {
+    if (initialize_normal_kwds(out_args, args, len_args, kwnames,
+                               normal_kwds) < 0) {
         goto fail;
     }
 
@@ -263,25 +262,22 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
     }
     /* ufunc.reduce */
     else if (strcmp(method, "reduce") == 0) {
-        static const char *keywords[] = {
-                NULL, "axis", "dtype", NULL, "keepdims",
-                "initial", "where"};
-        status = copy_positional_args_to_kwargs(keywords,
-                args, len_args, normal_kwds);
+        static const char *keywords[] = {NULL,       "axis",    "dtype", NULL,
+                                         "keepdims", "initial", "where"};
+        status = copy_positional_args_to_kwargs(keywords, args, len_args,
+                                                normal_kwds);
     }
     /* ufunc.accumulate */
     else if (strcmp(method, "accumulate") == 0) {
-        static const char *keywords[] = {
-                NULL, "axis", "dtype", NULL};
-        status = copy_positional_args_to_kwargs(keywords,
-                args, len_args, normal_kwds);
+        static const char *keywords[] = {NULL, "axis", "dtype", NULL};
+        status = copy_positional_args_to_kwargs(keywords, args, len_args,
+                                                normal_kwds);
     }
     /* ufunc.reduceat */
     else if (strcmp(method, "reduceat") == 0) {
-        static const char *keywords[] = {
-                NULL, NULL, "axis", "dtype", NULL};
-        status = copy_positional_args_to_kwargs(keywords,
-                args, len_args, normal_kwds);
+        static const char *keywords[] = {NULL, NULL, "axis", "dtype", NULL};
+        status = copy_positional_args_to_kwargs(keywords, args, len_args,
+                                                normal_kwds);
     }
     /* ufunc.outer (identical to call) */
     else if (strcmp(method, "outer") == 0) {
@@ -295,7 +291,8 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
     else {
         PyErr_Format(PyExc_TypeError,
                      "Internal Numpy error: unknown ufunc method '%s' in call "
-                     "to PyUFunc_CheckOverride", method);
+                     "to PyUFunc_CheckOverride",
+                     method);
         status = -1;
     }
     if (status != 0) {
@@ -397,8 +394,8 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
          */
         PyTuple_SET_ITEM(override_args, 0, override_obj);
         /* Call the method */
-        *result = PyObject_Call(
-            override_array_ufunc, override_args, normal_kwds);
+        *result = PyObject_Call(override_array_ufunc, override_args,
+                                normal_kwds);
         Py_DECREF(override_array_ufunc);
         Py_DECREF(override_args);
         if (*result == NULL) {

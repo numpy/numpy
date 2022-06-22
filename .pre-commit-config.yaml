@@ -120,6 +120,7 @@ repos:
     hooks:
       - id: clang-format
         stages: [manual]
+        types_or: [c++, c]
 
   # Validate .rst files
   # Run with: pre-commit run --hook-stage manual rstcheck
@@ -144,6 +145,7 @@ repos:
     hooks:
       - id: beautysh
         stages: [manual]
+        exclude: (tools/list_numpy_dlls\.sh)
 
   # Fortran formatter
   # Run with: pre-commit run --hook-stage manual fprettify
