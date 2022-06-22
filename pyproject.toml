@@ -109,7 +109,4 @@ environment = { OPENBLAS64_="", OPENBLAS="openblas", NPY_USE_BLAS_ILP64="0", CFL
 
 [tool.isort]
 profile = "black"
-
-[tool.black]
-# Default line length of 88
-# line-length = 79
+skip = ["numpy/__init__.py"]

@@ -7,7 +7,7 @@ repos:
   # https://numpy.org/doc/stable/dev/development_workflow.html
 
 
-  # Basic checkers
+  # Basic checkers, fairly self-explanatory
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.3.0
     hooks:
@@ -39,6 +39,7 @@ repos:
           - flake8-bugbear
           - pep8-naming
 
+  # Format changed lines only of C/C++ files
   # We want to use git-clang-format which is provided by the clang-format wheel,
   # but not exposed in its precommit hook.
   # Do not specify args here; use the tools/precommit-clang-format.sh that this
@@ -55,7 +56,7 @@ repos:
         additional_dependencies:
           - clang-format==14.0.3
 
-  # YAML Formatter
+  # YAML Formatter. Only enabled on one file for now, will add more eventually
   - repo: https://github.com/jumanjihouse/pre-commit-hook-yamlfmt
     rev: 0.2.1
     hooks:
@@ -72,8 +73,10 @@ repos:
   # that somebody doing development is not required to work on anything outside
   # of their own section of interest, so do not worry if other parts of files fail.
   # (though in general, if you would _like_ to fix them, that would be amazing!)
+  # A reason each hook is disabled accompanies each of them
 
   # Allow black to be run on entire file manually
+  # Disabled for now to avoid whole-file commit diffs
   # Run with: pre-commit run --hook-stage manual black
   - repo: https://github.com/psf/black
     rev: 22.3.0
@@ -81,7 +84,16 @@ repos:
       - id: black
         stages: [manual]
 
-  # Apply black formatting to docstrings and .rst files
+  # Apply black formatting to docstrings and .rst files Disabled for now to
+  # avoid whole-file commit diffs, diff-only formatter is applied by the
+  # "darker" hook
+  #
+  # NOTE: This hook throws a ton of errors. Most of them are because `..
+  # code-block:: python` is used where `.. code-block:: pycon` should be.
+  # `python` is for code blocks as one might see in a source file. `pycon` is
+  # the correct code block type for python console syntax, i.e., blocks with
+  # `>>>`/`...`, like `doctest` might run
+  #
   # Run with: pre-commit run --hook-stage manual blacken-docs
   - repo: https://github.com/asottile/blacken-docs
     rev: v1.12.1
@@ -90,6 +102,7 @@ repos:
         stages: [manual]
 
   # Allow isort to be run on entire file manually
+  # Disabled for now to avoid whole-file commit diffs
   # Run with: pre-commit run --hook-stage manual isort
   - repo: https://github.com/pycqa/isort
     rev: 5.10.1
@@ -98,6 +111,8 @@ repos:
         stages: [manual]
 
   # Allow flake8 to be run on entire file manually
+  # Disabled for now because there are about 14k failures, and fixing them
+  # requires whole-file changes
   # Run with: pre-commit run --hook-stage manual flake8
   - repo: https://github.com/pycqa/flake8
     rev: 4.0.1
@@ -114,14 +129,20 @@ repos:
           - pep8-naming
 
   # Allow clang-format to be run on entire file manually
+  # Disabled for now to avoid large diffs. clang-format-diff runs this only
+  # on changed lines.
   # Run with: pre-commit run --hook-stage manual clang-format
   - repo: https://github.com/pre-commit/mirrors-clang-format
     rev: v14.0.5
     hooks:
       - id: clang-format
         stages: [manual]
+        # By default, hook formats c/c++/c#/cuda/java/javascript/json/obj-c/proto
+        # But it can't format `jsonc` (json+comments) so we exclude it here
+        exclude_types: [json]
 
   # Validate .rst files
+  # Disabled for now because there are a few thousand failures
   # Run with: pre-commit run --hook-stage manual rstcheck
   - repo: https://github.com/myint/rstcheck
     rev: v6.0.0.post1
@@ -130,6 +151,7 @@ repos:
         stages: [manual]
 
   # bash/sh checker
+  # Disabled for now because of ~500 errors
   # Run with: pre-commit run --hook-stage manual shellcheck
   - repo: https://github.com/shellcheck-py/shellcheck-py
     rev: v0.8.0.4
@@ -138,6 +160,7 @@ repos:
         stages: [manual]
 
   # bash/sh formatter
+  # Disabled for now because shellcheck fails
   # Run with: pre-commit run --hook-stage manual beautysh
   - repo: https://github.com/lovesegfault/beautysh
     rev: v6.2.1
@@ -146,6 +169,7 @@ repos:
         stages: [manual]
 
   # Fortran formatter
+  # Disabled for now because files need mild cleanup for it to run
   # Run with: pre-commit run --hook-stage manual fprettify
   - repo: https://github.com/pseewald/fprettify
     rev: v0.3.7
@@ -154,6 +178,7 @@ repos:
         stages: [manual]
 
   # Dockerfile linter
+  # Disabled for now because of failures
   # Run with: pre-commit run --hook-stage manual hadolint
   - repo: https://github.com/AleksaC/hadolint-py
     rev: v2.10.0
