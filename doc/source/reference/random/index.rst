@@ -4,6 +4,71 @@
 
 .. currentmodule:: numpy.random
 
+Generator interface
+===================
+
+This is the recommended interface ... <etc - list methods too>
+
+`default_rng`
+Generator
+Generator.random
+Generator.integers
+
+Interface for unit testing and legacy code
+==========================================
+
+<short explainer>
+np.random.random_sample
+np.random.randint
+RandomState
+
+
+Distributions
+-------------
+.. autosummary::
+   :toctree: generated/
+
+   ~numpy.random.Generator.beta
+   ~numpy.random.Generator.binomial
+   ~numpy.random.Generator.chisquare
+   ~numpy.random.Generator.dirichlet
+   ~numpy.random.Generator.exponential
+   ~numpy.random.Generator.f
+   ~numpy.random.Generator.gamma
+   ~numpy.random.Generator.geometric
+   ~numpy.random.Generator.gumbel
+   ~numpy.random.Generator.hypergeometric
+   ~numpy.random.Generator.laplace
+   ~numpy.random.Generator.logistic
+   ~numpy.random.Generator.lognormal
+   ~numpy.random.Generator.logseries
+   ~numpy.random.Generator.multinomial
+   ~numpy.random.Generator.multivariate_hypergeometric
+   ~numpy.random.Generator.multivariate_normal
+   ~numpy.random.Generator.negative_binomial
+   ~numpy.random.Generator.noncentral_chisquare
+   ~numpy.random.Generator.noncentral_f
+   ~numpy.random.Generator.normal
+   ~numpy.random.Generator.pareto
+   ~numpy.random.Generator.poisson
+   ~numpy.random.Generator.power
+   ~numpy.random.Generator.rayleigh
+   ~numpy.random.Generator.standard_cauchy
+   ~numpy.random.Generator.standard_exponential
+   ~numpy.random.Generator.standard_gamma
+   ~numpy.random.Generator.standard_normal
+   ~numpy.random.Generator.standard_t
+   ~numpy.random.Generator.triangular
+   ~numpy.random.Generator.uniform
+   ~numpy.random.Generator.vonmises
+   ~numpy.random.Generator.wald
+   ~numpy.random.Generator.weibull
+   ~numpy.random.Generator.zipf
+
+
+
+
+
 Random sampling (:mod:`numpy.random`)
 =====================================
 
@@ -243,7 +308,7 @@ Features
    Parallel Applications <parallel>
    Multithreaded Generation <multithreading>
    new-or-different
-   Comparing Performance <performance>
+   Comparing Performance (different name given) <performance> 
    c-api
    Examples of using Numba, Cython, CFFI <extending>
 

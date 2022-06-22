@@ -20,7 +20,7 @@ Standard FFTs
    fftn      Discrete Fourier transform in N-dimensions.
    ifftn     Inverse discrete Fourier transform in N dimensions.
 
-Real FFTs
+Real FFTss
 ---------
 
 .. autosummary::

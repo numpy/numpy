@@ -122,7 +122,7 @@ def _fft_dispatcher(a, n=None, axis=None, norm=None):
 @array_function_dispatch(_fft_dispatcher)
 def fft(a, n=None, axis=-1, norm=None):
     """
-    Compute the one-dimensional discrete Fourier Transform.
+    Compute the one-dimensional discrete Fourier Transform and testing work.
 
     This function computes the one-dimensional *n*-point discrete Fourier
     Transform (DFT) with the efficient Fast Fourier Transform (FFT)
