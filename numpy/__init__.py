@@ -11,14 +11,14 @@ How to use the documentation
 ----------------------------
 Documentation is available in two forms: docstrings provided
 with the code, and a loose standing reference guide, available from
-`the NumPy homepage <https://www.scipy.org>`_.
+`the NumPy homepage <https://numpy.org>`_.
 
 We recommend exploring the docstrings using
 `IPython <https://ipython.org>`_, an advanced Python shell with
 TAB-completion and introspection capabilities.  See below for further
 instructions.
 
-The docstring examples assume that `numpy` has been imported as `np`::
+The docstring examples assume that `numpy` has been imported as ``np``::
 
   >>> import numpy as np
 
@@ -52,8 +52,6 @@ of numpy are available under the ``doc`` sub-module::
 
 Available subpackages
 ---------------------
-doc
-    Topical documentation on broadcasting, indexing, etc.
 lib
     Basic functions used by several sub-packages.
 random
@@ -66,8 +64,6 @@ polynomial
     Polynomial tools
 testing
     NumPy testing tools
-f2py
-    Fortran to Python Interface Generator.
 distutils
     Enhancements to distutils with support for
     Fortran compilers support and more.
@@ -90,7 +86,7 @@ __version__
 Viewing documentation using IPython
 -----------------------------------
 Start IPython with the NumPy profile (``ipython -p numpy``), which will
-import `numpy` under the alias `np`.  Then, use the ``cpaste`` command to
+import `numpy` under the alias ``np``.  Then, use the ``cpaste`` command to
 paste examples into the shell.  To see which functions are available in
 `numpy`, type ``np.<TAB>`` (where ``<TAB>`` refers to the TAB key), or use
 ``np.*cos*?<ENTER>`` (where ``<ENTER>`` refers to the ENTER key) to narrow
@@ -110,7 +106,8 @@ import sys
 import warnings
 
 from ._globals import (
-    ModuleDeprecationWarning, VisibleDeprecationWarning, _NoValue
+    ModuleDeprecationWarning, VisibleDeprecationWarning,
+    _NoValue, _CopyMode
 )
 
 # We first need to detect if we're being called as part of the numpy setup
@@ -133,13 +130,6 @@ else:
 
     __all__ = ['ModuleDeprecationWarning',
                'VisibleDeprecationWarning']
-
-    # get the version using versioneer
-    from ._version import get_versions
-    vinfo = get_versions()
-    __version__ = vinfo.get("closest-tag", vinfo["version"])
-    __git_version__ = vinfo.get("full-revisionid")
-    del get_versions, vinfo
 
     # mapping of {name: (value, deprecation_msg)}
     __deprecated_attrs__ = {}
@@ -195,10 +185,17 @@ else:
         n: (getattr(_builtins, n), _msg.format(n=n, extended_msg=extended_msg))
         for n, extended_msg in _type_info
     })
+
     # Numpy 1.20.0, 2020-10-19
     __deprecated_attrs__["typeDict"] = (
         core.numerictypes.typeDict,
         "`np.typeDict` is a deprecated alias for `np.sctypeDict`."
+    )
+
+    # NumPy 1.22, 2021-10-20
+    __deprecated_attrs__["MachAr"] = (
+        core._machar.MachAr,
+        "`np.MachAr` is deprecated (NumPy 1.22)."
     )
 
     _msg = (
@@ -232,6 +229,10 @@ else:
     __all__.extend(_mat.__all__)
     __all__.extend(lib.__all__)
     __all__.extend(['linalg', 'fft', 'random', 'ctypeslib', 'ma'])
+
+    # Remove one of the two occurrences of `issubdtype`, which is exposed as
+    # both `numpy.core.issubdtype` and `numpy.lib.issubdtype`.
+    __all__.remove('issubdtype')
 
     # These are exported by np.core, but are replaced by the builtins below
     # remove them to ensure that we don't end up with `np.long == np.int_`,
@@ -273,6 +274,7 @@ else:
     def __getattr__(attr):
         # Warn for expired attributes, and return a dummy function
         # that always raises an exception.
+        import warnings
         try:
             msg = __expired_functions__[attr]
         except KeyError:
@@ -311,7 +313,11 @@ else:
                              "{!r}".format(__name__, attr))
 
     def __dir__():
-        return list(globals().keys() | {'Tester', 'testing'})
+        public_symbols = globals().keys() | {'Tester', 'testing'}
+        public_symbols -= {
+            "core", "matrixlib",
+        }
+        return list(public_symbols)
 
     # Pytest testing
     from numpy._pytesttester import PytestTester
@@ -357,7 +363,6 @@ else:
         except ValueError:
             pass
 
-    import sys
     if sys.platform == "darwin":
         with warnings.catch_warnings(record=True) as w:
             _mac_os_check()
@@ -408,6 +413,17 @@ else:
     # it is tidier organized.
     core.multiarray._multiarray_umath._reload_guard()
 
-from ._version import get_versions
-__version__ = get_versions()['version']
-del get_versions
+    # Tell PyInstaller where to find hook-numpy.py
+    def _pyinstaller_hooks_dir():
+        from pathlib import Path
+        return [str(Path(__file__).with_name("_pyinstaller").resolve())]
+
+    # Remove symbols imported for internal use
+    del os
+
+
+# get the version using versioneer
+from .version import __version__, git_revision as __git_version__
+
+# Remove symbols imported for internal use
+del sys, warnings

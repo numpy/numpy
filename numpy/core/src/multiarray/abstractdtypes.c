@@ -157,7 +157,7 @@ int_common_dtype(PyArray_DTypeMeta *NPY_UNUSED(cls), PyArray_DTypeMeta *other)
         }
         else if (PyTypeNum_ISNUMBER(other->type_num) ||
                  other->type_num == NPY_TIMEDELTA) {
-            /* All other numeric types (ant timdelta) are preserved: */
+            /* All other numeric types (ant timedelta) are preserved: */
             Py_INCREF(other);
             return other;
         }
@@ -259,6 +259,7 @@ NPY_NO_EXPORT PyArray_DTypeMeta PyArray_PyIntAbstractDType = {{{
         .tp_name = "numpy._IntegerAbstractDType",
     },},
     .flags = NPY_DT_ABSTRACT,
+    .type_num = -1,
     .dt_slots = &pyintabstractdtype_slots,
 };
 
@@ -276,6 +277,7 @@ NPY_NO_EXPORT PyArray_DTypeMeta PyArray_PyFloatAbstractDType = {{{
         .tp_name = "numpy._FloatAbstractDType",
     },},
     .flags = NPY_DT_ABSTRACT,
+    .type_num = -1,
     .dt_slots = &pyfloatabstractdtype_slots,
 };
 
@@ -293,5 +295,6 @@ NPY_NO_EXPORT PyArray_DTypeMeta PyArray_PyComplexAbstractDType = {{{
         .tp_name = "numpy._ComplexAbstractDType",
     },},
     .flags = NPY_DT_ABSTRACT,
+    .type_num = -1,
     .dt_slots = &pycomplexabstractdtype_slots,
 };

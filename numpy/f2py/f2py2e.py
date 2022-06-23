@@ -18,6 +18,7 @@ import sys
 import os
 import pprint
 import re
+from pathlib import Path
 
 from . import crackfortran
 from . import rules
@@ -82,6 +83,9 @@ Options:
                    file <modulename>module.c or extension module <modulename>.
                    Default is 'untitled'.
 
+  '-include<header>'  Writes additional headers in the C wrapper, can be passed
+                      multiple times, generates #include <header> each time.
+
   --[no-]lower     Do [not] lower the cases in <fortran files>. By default,
                    --lower is assumed with -h key, and --no-lower without -h key.
 
@@ -118,6 +122,7 @@ Options:
 
   --quiet          Run quietly.
   --verbose        Run with extra verbosity.
+  --skip-empty-wrappers   Only generate wrapper files when needed.
   -v               Print f2py version ID and exit.
 
 
@@ -168,13 +173,14 @@ numpy Version: {numpy_version}
 Requires:    Python 3.5 or higher.
 License:     NumPy license (see LICENSE.txt in the NumPy source code)
 Copyright 1999 - 2011 Pearu Peterson all rights reserved.
-http://cens.ioc.ee/projects/f2py2e/"""
+https://web.archive.org/web/20140822061353/http://cens.ioc.ee/projects/f2py2e"""
 
 
 def scaninputline(inputline):
     files, skipfuncs, onlyfuncs, debug = [], [], [], []
     f, f2, f3, f5, f6, f7, f8, f9, f10 = 1, 0, 0, 0, 0, 0, 0, 0, 0
     verbose = 1
+    emptygen = True
     dolc = -1
     dolatexdoc = 0
     dorestdoc = 0
@@ -246,6 +252,8 @@ def scaninputline(inputline):
             f7 = 1
         elif l[:15] in '--include-paths':
             f7 = 1
+        elif l == '--skip-empty-wrappers':
+            emptygen = False
         elif l[0] == '-':
             errmess('Unknown option %s\n' % repr(l))
             sys.exit()
@@ -286,7 +294,7 @@ def scaninputline(inputline):
         sys.exit()
     if not os.path.isdir(buildpath):
         if not verbose:
-            outmess('Creating build directory %s' % (buildpath))
+            outmess('Creating build directory %s\n' % (buildpath))
         os.mkdir(buildpath)
     if signsfile:
         signsfile = os.path.join(buildpath, signsfile)
@@ -295,6 +303,7 @@ def scaninputline(inputline):
             'Signature file "%s" exists!!! Use --overwrite-signature to overwrite.\n' % (signsfile))
         sys.exit()
 
+    options['emptygen'] = emptygen
     options['debug'] = debug
     options['verbose'] = verbose
     if dolc == -1 and not signsfile:
@@ -408,16 +417,18 @@ def run_main(comline_list):
     where ``<args>=string.join(<list>,' ')``, but in Python.  Unless
     ``-h`` is used, this function returns a dictionary containing
     information on generated modules and their dependencies on source
-    files.  For example, the command ``f2py -m scalar scalar.f`` can be
-    executed from Python as follows
+    files.
 
     You cannot build extension modules with this function, that is,
-    using ``-c`` is not allowed. Use ``compile`` command instead
+    using ``-c`` is not allowed. Use the ``compile`` command instead.
 
     Examples
     --------
-    .. include:: run_main_session.dat
-        :literal:
+    The command ``f2py -m scalar scalar.f`` can be executed from Python as
+    follows.
+
+    .. literalinclude:: ../../source/f2py/code/results/run_main_session.dat
+        :language: python
 
     """
     crackfortran.reset_global_f2py_vars()
@@ -456,7 +467,7 @@ def run_main(comline_list):
                 errmess(
                     'Tip: If your original code is Fortran source then you must use -m option.\n')
             raise TypeError('All blocks must be python module blocks but got %s' % (
-                repr(postlist[i]['block'])))
+                repr(plist['block'])))
     auxfuncs.debugoptions = options['debug']
     f90mod_rules.options = options
     auxfuncs.wrapfuncs = options['wrapfuncs']
@@ -520,7 +531,7 @@ def run_compile():
         sysinfo_flags = [f[7:] for f in sysinfo_flags]
 
     _reg2 = re.compile(
-        r'--((no-|)(wrap-functions|lower)|debug-capi|quiet)|-include')
+        r'--((no-|)(wrap-functions|lower)|debug-capi|quiet|skip-empty-wrappers)|-include')
     f2py_flags = [_m for _m in sys.argv[1:] if _reg2.match(_m)]
     sys.argv = [_m for _m in sys.argv if _m not in f2py_flags]
     f2py_flags2 = []
@@ -546,30 +557,29 @@ def run_compile():
     fc_flags = [_m for _m in sys.argv[1:] if _reg4.match(_m)]
     sys.argv = [_m for _m in sys.argv if _m not in fc_flags]
 
-    if 1:
-        del_list = []
-        for s in flib_flags:
-            v = '--fcompiler='
-            if s[:len(v)] == v:
-                from numpy.distutils import fcompiler
-                fcompiler.load_all_fcompiler_classes()
-                allowed_keys = list(fcompiler.fcompiler_class.keys())
-                nv = ov = s[len(v):].lower()
-                if ov not in allowed_keys:
-                    vmap = {}  # XXX
-                    try:
-                        nv = vmap[ov]
-                    except KeyError:
-                        if ov not in vmap.values():
-                            print('Unknown vendor: "%s"' % (s[len(v):]))
-                    nv = ov
-                i = flib_flags.index(s)
-                flib_flags[i] = '--fcompiler=' + nv
-                continue
-        for s in del_list:
+    del_list = []
+    for s in flib_flags:
+        v = '--fcompiler='
+        if s[:len(v)] == v:
+            from numpy.distutils import fcompiler
+            fcompiler.load_all_fcompiler_classes()
+            allowed_keys = list(fcompiler.fcompiler_class.keys())
+            nv = ov = s[len(v):].lower()
+            if ov not in allowed_keys:
+                vmap = {}  # XXX
+                try:
+                    nv = vmap[ov]
+                except KeyError:
+                    if ov not in vmap.values():
+                        print('Unknown vendor: "%s"' % (s[len(v):]))
+                nv = ov
             i = flib_flags.index(s)
-            del flib_flags[i]
-        assert len(flib_flags) <= 2, repr(flib_flags)
+            flib_flags[i] = '--fcompiler=' + nv
+            continue
+    for s in del_list:
+        i = flib_flags.index(s)
+        del flib_flags[i]
+    assert len(flib_flags) <= 2, repr(flib_flags)
 
     _reg5 = re.compile(r'--(verbose)')
     setup_flags = [_m for _m in sys.argv[1:] if _reg5.match(_m)]

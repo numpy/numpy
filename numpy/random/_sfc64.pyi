@@ -1,10 +1,10 @@
-from typing import Any, Union, TypedDict
+from typing import Any, TypedDict
 
 from numpy import dtype as dtype
 from numpy import ndarray as ndarray
 from numpy import uint64
 from numpy.random.bit_generator import BitGenerator, SeedSequence
-from numpy.typing import _ArrayLikeInt_co
+from numpy._typing import _ArrayLikeInt_co
 
 class _SFC64Internal(TypedDict):
     state: ndarray[Any, dtype[uint64]]
@@ -16,7 +16,7 @@ class _SFC64State(TypedDict):
     uinteger: int
 
 class SFC64(BitGenerator):
-    def __init__(self, seed: Union[None, _ArrayLikeInt_co, SeedSequence] = ...) -> None: ...
+    def __init__(self, seed: None | _ArrayLikeInt_co | SeedSequence = ...) -> None: ...
     @property
     def state(
         self,

@@ -214,6 +214,8 @@ PyUFunc_O_O(char **args, npy_intp const *dimensions, npy_intp const *steps, void
     UNARY_LOOP {
         PyObject *in1 = *(PyObject **)ip1;
         PyObject **out = (PyObject **)op1;
+        /* We allow NULL, but try to guarantee non-NULL to downstream */
+        assert(in1 != NULL);
         PyObject *ret = f(in1 ? in1 : Py_None);
         if (ret == NULL) {
             return;
@@ -231,6 +233,8 @@ PyUFunc_O_O_method(char **args, npy_intp const *dimensions, npy_intp const *step
     UNARY_LOOP {
         PyObject *in1 = *(PyObject **)ip1;
         PyObject **out = (PyObject **)op1;
+        /* We allow NULL, but try to guarantee non-NULL to downstream */
+        assert(in1 != NULL);
         PyObject *ret, *func;
         func = PyObject_GetAttrString(in1 ? in1 : Py_None, meth);
         if (func != NULL && !PyCallable_Check(func)) {
@@ -268,6 +272,9 @@ PyUFunc_OO_O(char **args, npy_intp const *dimensions, npy_intp const *steps, voi
         PyObject *in1 = *(PyObject **)ip1;
         PyObject *in2 = *(PyObject **)ip2;
         PyObject **out = (PyObject **)op1;
+        /* We allow NULL, but try to guarantee non-NULL to downstream */
+        assert(in1 != NULL);
+        assert(in2 != NULL);
         PyObject *ret = f(in1 ? in1 : Py_None, in2 ? in2 : Py_None);
         if (ret == NULL) {
             return;
@@ -286,6 +293,10 @@ PyUFunc_OOO_O(char **args, npy_intp const *dimensions, npy_intp const *steps, vo
         PyObject *in2 = *(PyObject **)ip2;
         PyObject *in3 = *(PyObject **)ip3;
         PyObject **out = (PyObject **)op1;
+        /* We allow NULL, but try to guarantee non-NULL to downstream */
+        assert(in1 != NULL);
+        assert(in2 != NULL);
+        assert(in3 != NULL);
         PyObject *ret = f(
             in1 ? in1 : Py_None,
             in2 ? in2 : Py_None,
@@ -308,6 +319,9 @@ PyUFunc_OO_O_method(char **args, npy_intp const *dimensions, npy_intp const *ste
         PyObject *in1 = *(PyObject **)ip1;
         PyObject *in2 = *(PyObject **)ip2;
         PyObject **out = (PyObject **)op1;
+        /* We allow NULL, but try to guarantee non-NULL to downstream */
+        assert(in1 != NULL);
+        assert(in2 != NULL);
         PyObject *ret = PyObject_CallMethod(in1 ? in1 : Py_None,
                                             meth, "(O)", in2);
         if (ret == NULL) {
@@ -349,6 +363,8 @@ PyUFunc_On_Om(char **args, npy_intp const *dimensions, npy_intp const *steps, vo
         }
         for(j = 0; j < nin; j++) {
             in = *((PyObject **)ptrs[j]);
+            /* We allow NULL, but try to guarantee non-NULL to downstream */
+            assert(in != NULL);
             if (in == NULL) {
                 in = Py_None;
             }
@@ -399,23 +415,6 @@ PyUFunc_On_Om(char **args, npy_intp const *dimensions, npy_intp const *steps, vo
  **                             BOOLEAN LOOPS                               **
  *****************************************************************************
  */
-
-/**begin repeat
- * #kind = equal, not_equal, greater, greater_equal, less, less_equal#
- * #OP =  ==, !=, >, >=, <, <=#
- **/
-
-NPY_NO_EXPORT void
-BOOL_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
-{
-    BINARY_LOOP {
-        npy_bool in1 = *((npy_bool *)ip1) != 0;
-        npy_bool in2 = *((npy_bool *)ip2) != 0;
-        *((npy_bool *)op1)= in1 @OP@ in2;
-    }
-}
-/**end repeat**/
-
 
 /**begin repeat
  * #kind = logical_and, logical_or#
@@ -636,10 +635,7 @@ NPY_NO_EXPORT NPY_GCC_OPT_3 @ATTR@ void
 @TYPE@_@kind@@isa@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
     if (IS_BINARY_REDUCE) {
-        BINARY_REDUCE_LOOP(@type@) {
-            io1 @OP@= *(@type@ *)ip2;
-        }
-        *((@type@ *)iop1) = io1;
+        BINARY_REDUCE_LOOP_FAST(@type@, io1 @OP@= in2);
     }
     else {
         BINARY_LOOP_FAST(@type@, @type@, *out = in1 @OP@ in2);
@@ -691,9 +687,8 @@ void
 
 
 /**begin repeat2
- * #kind = equal, not_equal, greater, greater_equal, less, less_equal,
- *         logical_and, logical_or#
- * #OP =  ==, !=, >, >=, <, <=, &&, ||#
+ * #kind = logical_and, logical_or#
+ * #OP = &&, ||#
  */
 
 #if @CHK@
@@ -721,32 +716,6 @@ NPY_NO_EXPORT NPY_GCC_OPT_3 @ATTR@ void
     }
 }
 #endif
-
-/**end repeat1**/
-
-/**begin repeat1
- * #kind = maximum, minimum#
- * #OP =  >, <#
- **/
-
-NPY_NO_EXPORT void
-@TYPE@_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
-{
-    if (IS_BINARY_REDUCE) {
-        BINARY_REDUCE_LOOP(@type@) {
-            const @type@ in2 = *(@type@ *)ip2;
-            io1 = (io1 @OP@ in2) ? io1 : in2;
-        }
-        *((@type@ *)iop1) = io1;
-    }
-    else {
-        BINARY_LOOP {
-            const @type@ in1 = *(@type@ *)ip1;
-            const @type@ in2 = *(@type@ *)ip2;
-            *((@type@ *)op1) = (in1 @OP@ in2) ? in1 : in2;
-        }
-    }
-}
 
 /**end repeat1**/
 
@@ -790,23 +759,6 @@ NPY_NO_EXPORT void
     }
 }
 
-NPY_NO_EXPORT void
-@TYPE@_fmod(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
-{
-    BINARY_LOOP {
-        const @type@ in1 = *(@type@ *)ip1;
-        const @type@ in2 = *(@type@ *)ip2;
-        if (in2 == 0) {
-            npy_set_floatstatus_divbyzero();
-            *((@type@ *)op1) = 0;
-        }
-        else {
-            *((@type@ *)op1)= in1 % in2;
-        }
-
-    }
-}
-
 /**begin repeat1
  * #kind = isnan, isinf, isfinite#
  * #func = npy_isnan, npy_isinf, npy_isfinite#
@@ -843,57 +795,6 @@ NPY_NO_EXPORT NPY_GCC_OPT_3 void
     UNARY_LOOP_FAST(@type@, @type@, *out = in > 0 ? 1 : (in < 0 ? -1 : 0));
 }
 
-NPY_NO_EXPORT void
-@TYPE@_remainder(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
-{
-    BINARY_LOOP {
-        const @type@ in1 = *(@type@ *)ip1;
-        const @type@ in2 = *(@type@ *)ip2;
-        if (in2 == 0) {
-            npy_set_floatstatus_divbyzero();
-            *((@type@ *)op1) = 0;
-        }
-        else {
-            /* handle mixed case the way Python does */
-            const @type@ rem = in1 % in2;
-            if ((in1 > 0) == (in2 > 0) || rem == 0) {
-                *((@type@ *)op1) = rem;
-            }
-            else {
-                *((@type@ *)op1) = rem + in2;
-            }
-        }
-    }
-}
-
-NPY_NO_EXPORT void
-@TYPE@_divmod(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
-{
-    BINARY_LOOP_TWO_OUT {
-        const @type@ in1 = *(@type@ *)ip1;
-        const @type@ in2 = *(@type@ *)ip2;
-        /* see FIXME note for divide above */
-        if (in2 == 0 || (in1 == NPY_MIN_@TYPE@ && in2 == -1)) {
-            npy_set_floatstatus_divbyzero();
-            *((@type@ *)op1) = 0;
-            *((@type@ *)op2) = 0;
-        }
-        else {
-            /* handle mixed case the way Python does */
-            const @type@ quo = in1 / in2;
-            const @type@ rem = in1 % in2;
-            if ((in1 > 0) == (in2 > 0) || rem == 0) {
-                *((@type@ *)op1) = quo;
-                *((@type@ *)op2) = rem;
-            }
-            else {
-                *((@type@ *)op1) = quo - 1;
-                *((@type@ *)op2) = rem + in2;
-            }
-        }
-    }
-}
-
 /**begin repeat1
  * #kind = gcd, lcm#
  **/
@@ -926,40 +827,6 @@ NPY_NO_EXPORT NPY_GCC_OPT_3 void
 @TYPE@_sign(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
     UNARY_LOOP_FAST(@type@, @type@, *out = in > 0 ? 1 : 0);
-}
-
-NPY_NO_EXPORT void
-@TYPE@_remainder(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
-{
-    BINARY_LOOP {
-        const @type@ in1 = *(@type@ *)ip1;
-        const @type@ in2 = *(@type@ *)ip2;
-        if (in2 == 0) {
-            npy_set_floatstatus_divbyzero();
-            *((@type@ *)op1) = 0;
-        }
-        else {
-            *((@type@ *)op1) = in1 % in2;
-        }
-    }
-}
-
-NPY_NO_EXPORT void
-@TYPE@_divmod(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
-{
-    BINARY_LOOP_TWO_OUT {
-        const @type@ in1 = *(@type@ *)ip1;
-        const @type@ in2 = *(@type@ *)ip2;
-        if (in2 == 0) {
-            npy_set_floatstatus_divbyzero();
-            *((@type@ *)op1) = 0;
-            *((@type@ *)op2) = 0;
-        }
-        else {
-            *((@type@ *)op1)= in1/in2;
-            *((@type@ *)op2) = in1 % in2;
-        }
-    }
 }
 
 /**begin repeat1
@@ -1532,62 +1399,6 @@ TIMEDELTA_mm_qm_divmod(char **args, npy_intp const *dimensions, npy_intp const *
  */
 
 /**begin repeat
- *  #func = rint, ceil, floor, trunc#
- *  #scalarf = npy_rint, npy_ceil, npy_floor, npy_trunc#
- */
-
-/**begin repeat1
-*  #TYPE = FLOAT, DOUBLE#
-*  #type = npy_float, npy_double#
-*  #typesub = f, #
-*/
-
-NPY_NO_EXPORT NPY_GCC_OPT_3 void
-@TYPE@_@func@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
-{
-    UNARY_LOOP {
-        const @type@ in1 = *(@type@ *)ip1;
-        *(@type@ *)op1 = @scalarf@@typesub@(in1);
-    }
-}
-
-
-/**end repeat1**/
-/**end repeat**/
-
-/**begin repeat
- * #isa = avx512f, fma#
- * #ISA = AVX512F, FMA#
- * #CHK = HAVE_ATTRIBUTE_TARGET_AVX512F_WITH_INTRINSICS, HAVE_ATTRIBUTE_TARGET_AVX2_WITH_INTRINSICS#
- */
-
-/**begin repeat1
- *  #TYPE = FLOAT, DOUBLE#
- *  #type = npy_float, npy_double#
- *  #typesub = f, #
- */
-
-/**begin repeat2
- *  #func = rint, ceil, floor, trunc#
- *  #scalarf = npy_rint, npy_ceil, npy_floor, npy_trunc#
- */
-
-NPY_NO_EXPORT NPY_GCC_OPT_3 void
-@TYPE@_@func@_@isa@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
-{
-    if (!run_unary_@isa@_@func@_@TYPE@(args, dimensions, steps)) {
-        UNARY_LOOP {
-            const @type@ in1 = *(@type@ *)ip1;
-            *(@type@ *)op1 = @scalarf@@typesub@(in1);
-        }
-    }
-}
-
-/**end repeat2**/
-/**end repeat1**/
-/**end repeat**/
-
-/**begin repeat
  * Float types
  *  #type = npy_float, npy_double, npy_longdouble#
  *  #TYPE = FLOAT, DOUBLE, LONGDOUBLE#
@@ -1595,19 +1406,16 @@ NPY_NO_EXPORT NPY_GCC_OPT_3 void
  *  #C = F, , L#
  */
 /**begin repeat1
- * #kind = equal, not_equal, less, less_equal, greater, greater_equal,
- *        logical_and, logical_or#
- * #OP = ==, !=, <, <=, >, >=, &&, ||#
+ * #kind = logical_and, logical_or#
+ * #OP = &&, ||#
  */
 NPY_NO_EXPORT void
 @TYPE@_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
-    if (!run_binary_simd_@kind@_@TYPE@(args, dimensions, steps)) {
-        BINARY_LOOP {
-            const @type@ in1 = *(@type@ *)ip1;
-            const @type@ in2 = *(@type@ *)ip2;
-            *((npy_bool *)op1) = in1 @OP@ in2;
-        }
+    BINARY_LOOP {
+        const @type@ in1 = *(@type@ *)ip1;
+        const @type@ in2 = *(@type@ *)ip2;
+        *((npy_bool *)op1) = in1 @OP@ in2;
     }
     npy_clear_floatstatus_barrier((char*)dimensions);
 }
@@ -1683,93 +1491,6 @@ NPY_NO_EXPORT void
         *((@type@ *)op1)= npy_nextafter@c@(in1, in2);
     }
 }
-
-/**begin repeat1
- * #kind = maximum, minimum#
- * #OP =  >=, <=#
- **/
-NPY_NO_EXPORT void
-@TYPE@_@kind@_avx512f(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
-{
-    /*  */
-    if (IS_BINARY_REDUCE) {
-        if (!run_unary_reduce_simd_@kind@_@TYPE@(args, dimensions, steps)) {
-            BINARY_REDUCE_LOOP(@type@) {
-                const @type@ in2 = *(@type@ *)ip2;
-                /* Order of operations important for MSVC 2015 */
-                io1 = (io1 @OP@ in2 || npy_isnan(io1)) ? io1 : in2;
-            }
-            *((@type@ *)iop1) = io1;
-        }
-    }
-    else {
-        if (!run_binary_avx512f_@kind@_@TYPE@(args, dimensions, steps)) {
-            BINARY_LOOP {
-                @type@ in1 = *(@type@ *)ip1;
-                const @type@ in2 = *(@type@ *)ip2;
-                /* Order of operations important for MSVC 2015 */
-                in1 = (in1 @OP@ in2 || npy_isnan(in1)) ? in1 : in2;
-                *((@type@ *)op1) = in1;
-            }
-        }
-    }
-    npy_clear_floatstatus_barrier((char*)dimensions);
-}
-
-NPY_NO_EXPORT void
-@TYPE@_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
-{
-    /*  */
-    if (IS_BINARY_REDUCE) {
-        if (!run_unary_reduce_simd_@kind@_@TYPE@(args, dimensions, steps)) {
-            BINARY_REDUCE_LOOP(@type@) {
-                const @type@ in2 = *(@type@ *)ip2;
-                /* Order of operations important for MSVC 2015 */
-                io1 = (io1 @OP@ in2 || npy_isnan(io1)) ? io1 : in2;
-            }
-            *((@type@ *)iop1) = io1;
-        }
-    }
-    else {
-        BINARY_LOOP {
-            @type@ in1 = *(@type@ *)ip1;
-            const @type@ in2 = *(@type@ *)ip2;
-            /* Order of operations important for MSVC 2015 */
-            in1 = (in1 @OP@ in2 || npy_isnan(in1)) ? in1 : in2;
-            *((@type@ *)op1) = in1;
-        }
-    }
-    npy_clear_floatstatus_barrier((char*)dimensions);
-}
-/**end repeat1**/
-
-/**begin repeat1
- * #kind = fmax, fmin#
- * #OP =  >=, <=#
- **/
-NPY_NO_EXPORT void
-@TYPE@_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
-{
-    /*  */
-    if (IS_BINARY_REDUCE) {
-        BINARY_REDUCE_LOOP(@type@) {
-            const @type@ in2 = *(@type@ *)ip2;
-            /* Order of operations important for MSVC 2015 */
-            io1 = (io1 @OP@ in2 || npy_isnan(in2)) ? io1 : in2;
-        }
-        *((@type@ *)iop1) = io1;
-    }
-    else {
-        BINARY_LOOP {
-            const @type@ in1 = *(@type@ *)ip1;
-            const @type@ in2 = *(@type@ *)ip2;
-            /* Order of operations important for MSVC 2015 */
-            *((@type@ *)op1) = (in1 @OP@ in2 || npy_isnan(in2)) ? in1 : in2;
-        }
-    }
-    npy_clear_floatstatus_barrier((char*)dimensions);
-}
-/**end repeat1**/
 
 NPY_NO_EXPORT void
 @TYPE@_floor_divide(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
@@ -1925,6 +1646,22 @@ LONGDOUBLE_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps
             *((npy_longdouble *)op1) = in1 @OP@ in2;
         }
     }
+}
+/**end repeat**/
+
+/**begin repeat
+ * #kind = equal, not_equal, less, less_equal, greater, greater_equal#
+ * #OP = ==, !=, <, <=, >, >=#
+ */
+NPY_NO_EXPORT void
+LONGDOUBLE_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+{
+    BINARY_LOOP {
+        const npy_longdouble in1 = *(npy_longdouble *)ip1;
+        const npy_longdouble in2 = *(npy_longdouble *)ip2;
+        *((npy_bool *)op1) = in1 @OP@ in2;
+    }
+    npy_clear_floatstatus_barrier((char*)dimensions);
 }
 /**end repeat**/
 

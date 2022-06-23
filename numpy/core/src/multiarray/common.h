@@ -43,9 +43,6 @@ NPY_NO_EXPORT int
 PyArray_DTypeFromObject(PyObject *obj, int maxdims,
                         PyArray_Descr **out_dtype);
 
-NPY_NO_EXPORT int
-PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
-                              PyArray_Descr **out_dtype, int string_status);
 
 /*
  * Returns NULL without setting an exception if no scalar is matched, a
@@ -53,12 +50,6 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
  */
 NPY_NO_EXPORT PyArray_Descr *
 _array_find_python_scalar_type(PyObject *op);
-
-NPY_NO_EXPORT PyArray_Descr *
-_array_typedescr_fromstr(char const *str);
-
-NPY_NO_EXPORT char *
-index2ptr(PyArrayObject *mp, npy_intp i);
 
 NPY_NO_EXPORT int
 _zerofill(PyArrayObject *ret);
@@ -248,6 +239,15 @@ npy_uint_alignment(int itemsize)
  * compared to memchr it returns one stride past end instead of NULL if needle
  * is not found.
  */
+#ifdef __clang__
+    /*
+     * The code below currently makes use of !NPY_ALIGNMENT_REQUIRED, which
+     * should be OK but causes the clang sanitizer to warn.  It may make
+     * sense to modify the code to avoid this "unaligned" access but
+     * it would be good to carefully check the performance changes.
+     */
+    __attribute__((no_sanitize("alignment")))
+#endif
 static NPY_INLINE char *
 npy_memchr(char * haystack, char needle,
            npy_intp stride, npy_intp size, npy_intp * psubloopsize, int invert)

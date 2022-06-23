@@ -1,0 +1,16 @@
+``casting`` and ``dtype`` keyword arguments for `numpy.stack`
+-------------------------------------------------------------
+The ``casting`` and ``dtype`` keyword arguments are now available for `numpy.stack`. 
+To use them, write ``np.stack(..., dtype=None, casting='same_kind')``.
+
+
+``casting`` and ``dtype`` keyword arguments for `numpy.vstack`
+--------------------------------------------------------------
+The ``casting`` and ``dtype`` keyword arguments are now available for `numpy.vstack`. 
+To use them, write ``np.vstack(..., dtype=None, casting='same_kind')``.
+
+
+``casting`` and ``dtype`` keyword arguments for `numpy.hstack`
+--------------------------------------------------------------
+The ``casting`` and ``dtype`` keyword arguments are now available for `numpy.hstack`. 
+To use them, write ``np.hstack(..., dtype=None, casting='same_kind')``.

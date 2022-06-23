@@ -135,7 +135,7 @@ def scalar_instances(times=True, extended_precision=True, user_dtype=True):
 
 
 def is_parametric_dtype(dtype):
-    """Returns True if the the dtype is a parametric legacy dtype (itemsize
+    """Returns True if the dtype is a parametric legacy dtype (itemsize
     is 0, or a datetime without units)
     """
     if dtype.itemsize == 0:
@@ -373,28 +373,29 @@ class TestScalarDiscovery:
         assert discovered_dtype.itemsize == dtype.itemsize
 
     @pytest.mark.parametrize("dtype", np.typecodes["Integer"])
-    def test_scalar_to_int_coerce_does_not_cast(self, dtype):
+    @pytest.mark.parametrize(["scalar", "error"],
+            [(np.float64(np.nan), ValueError),
+             (np.ulonglong(-1), OverflowError)])
+    def test_scalar_to_int_coerce_does_not_cast(self, dtype, scalar, error):
         """
         Signed integers are currently different in that they do not cast other
-        NumPy scalar, but instead use scalar.__int__(). The harcoded
+        NumPy scalar, but instead use scalar.__int__(). The hardcoded
         exception to this rule is `np.array(scalar, dtype=integer)`.
         """
         dtype = np.dtype(dtype)
-        invalid_int = np.ulonglong(-1)
 
-        float_nan = np.float64(np.nan)
-
-        for scalar in [float_nan, invalid_int]:
-            # This is a special case using casting logic and thus not failing:
+        # This is a special case using casting logic.  It warns for the NaN
+        # but allows the cast (giving undefined behaviour).
+        with np.errstate(invalid="ignore"):
             coerced = np.array(scalar, dtype=dtype)
             cast = np.array(scalar).astype(dtype)
-            assert_array_equal(coerced, cast)
+        assert_array_equal(coerced, cast)
 
-            # However these fail:
-            with pytest.raises((ValueError, OverflowError)):
-                np.array([scalar], dtype=dtype)
-            with pytest.raises((ValueError, OverflowError)):
-                cast[()] = scalar
+        # However these fail:
+        with pytest.raises(error):
+            np.array([scalar], dtype=dtype)
+        with pytest.raises(error):
+            cast[()] = scalar
 
 
 class TestTimeScalars:
@@ -444,7 +445,7 @@ class TestTimeScalars:
         # never use casting.  This is because casting will error in this
         # case, and traditionally in most cases the behaviour is maintained
         # like this.  (`np.array(scalar, dtype="U6")` would have failed before)
-        # TODO: This discrepency _should_ be resolved, either by relaxing the
+        # TODO: This discrepancy _should_ be resolved, either by relaxing the
         #       cast, or by deprecating the first part.
         scalar = np.datetime64(val, unit)
         dtype = np.dtype(dtype)
@@ -614,8 +615,8 @@ class TestBadSequences:
 
         obj.append([2, 3])
         obj.append(mylist([1, 2]))
-        with pytest.raises(RuntimeError):
-            np.array(obj)
+        # Does not crash:
+        np.array(obj)
 
     def test_replace_0d_array(self):
         # List to coerce, `mylist` will mutate the first element
@@ -746,3 +747,22 @@ class TestArrayLikes:
         with pytest.raises(error):
             np.array(BadSequence())
 
+
+class TestSpecialAttributeLookupFailure:
+    # An exception was raised while fetching the attribute
+
+    class WeirdArrayLike:
+        @property
+        def __array__(self):
+            raise RuntimeError("oops!")
+
+    class WeirdArrayInterface:
+        @property
+        def __array_interface__(self):
+            raise RuntimeError("oops!")
+
+    def test_deprecated(self):
+        with pytest.raises(RuntimeError):
+            np.array(self.WeirdArrayLike())
+        with pytest.raises(RuntimeError):
+            np.array(self.WeirdArrayInterface())

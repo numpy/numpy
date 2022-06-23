@@ -4,18 +4,18 @@
 
 .. _arrays.interface:
 
-*******************
-The Array Interface
-*******************
+****************************
+The array interface protocol
+****************************
 
 .. note::
 
-   This page describes the numpy-specific API for accessing the contents of
-   a numpy array from other C extensions. :pep:`3118` --
+   This page describes the NumPy-specific API for accessing the contents of
+   a NumPy array from other C extensions. :pep:`3118` --
    :c:func:`The Revised Buffer Protocol <PyObject_GetBuffer>` introduces
    similar, standardized API to Python 2.6 and 3.0 for any extension
    module to use. Cython__'s buffer array support
-   uses the :pep:`3118` API; see the `Cython numpy
+   uses the :pep:`3118` API; see the `Cython NumPy
    tutorial`__. Cython provides a way to write code that supports the buffer
    protocol with Python versions older than 2.6 because it has a
    backward-compatible implementation utilizing the array interface
@@ -81,7 +81,8 @@ This approach to the interface consists of the object having an
        =====  ================================================================
        ``t``  Bit field (following integer gives the number of
               bits in the bit field).
-       ``b``  Boolean (integer type where all values are only True or False)
+       ``b``  Boolean (integer type where all values are only ``True`` or
+              ``False``)
        ``i``  Integer
        ``u``  Unsigned integer
        ``f``  Floating point
@@ -90,7 +91,7 @@ This approach to the interface consists of the object having an
        ``M``  Datetime
        ``O``  Object (i.e. the memory contains a pointer to :c:type:`PyObject`)
        ``S``  String (fixed-length sequence of char)
-       ``U``  Unicode (fixed-length sequence of :c:type:`Py_UNICODE`)
+       ``U``  Unicode (fixed-length sequence of :c:type:`Py_UCS4`)
        ``V``  Other (void \* -- each item is a fixed-size chunk of memory)
        =====  ================================================================
 
@@ -141,11 +142,11 @@ This approach to the interface consists of the object having an
        must be stored by the new object if the memory area is to be
        secured.
 
-       **Default**: None
+       **Default**: ``None``
 
    **strides** (optional)
        Either ``None`` to indicate a C-style contiguous array or
-       a Tuple of strides which provides the number of bytes needed
+       a tuple of strides which provides the number of bytes needed
        to jump to the next array element in the corresponding
        dimension. Each entry must be an integer (a Python
        :py:class:`int`). As with shape, the values may
@@ -156,26 +157,26 @@ This approach to the interface consists of the object having an
        memory buffer. In this model, the last dimension of the array
        varies the fastest.  For example, the default strides tuple
        for an object whose array entries are 8 bytes long and whose
-       shape is ``(10, 20, 30)`` would be ``(4800, 240, 8)``
+       shape is ``(10, 20, 30)`` would be ``(4800, 240, 8)``.
 
        **Default**: ``None`` (C-style contiguous)
 
    **mask** (optional)
-       None or an object exposing the array interface.  All
+       ``None`` or an object exposing the array interface.  All
        elements of the mask array should be interpreted only as true
        or not true indicating which elements of this array are valid.
        The shape of this object should be `"broadcastable"
        <arrays.broadcasting.broadcastable>` to the shape of the
        original array.
 
-       **Default**: None (All array values are valid)
+       **Default**: ``None`` (All array values are valid)
 
    **offset** (optional)
        An integer offset into the array data region. This can only be
        used when data is ``None`` or returns a :class:`buffer`
        object.
 
-       **Default**: 0.
+       **Default**: ``0``.
 
    **version** (required)
        An integer showing the version of the interface (i.e. 3 for
@@ -242,6 +243,12 @@ flag is present.
    reference to the object and call :c:func:`PyCapsule_SetContext` before
    returning the :c:type:`PyCapsule`, and configure a destructor to decref this
    reference.
+
+.. note::
+
+    :obj:`__array_struct__` is considered legacy and should not be used for new
+    code. Use the :py:doc:`buffer protocol <c-api/buffer>` or the DLPack protocol
+    `numpy.from_dlpack` instead.
 
 
 Type description examples

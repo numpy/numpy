@@ -42,7 +42,7 @@ NPY_FINLINE npyv_f64 npyv_square_f64(npyv_f64 a)
 #define npyv_max_f64 _mm_max_pd
 // Maximum, supports IEEE floating-point arithmetic (IEC 60559),
 // - If one of the two vectors contains NaN, the equivalent element of the other vector is set
-// - Only if both corresponded elements are NaN, NaN is set. 
+// - Only if both corresponded elements are NaN, NaN is set.
 NPY_FINLINE npyv_f32 npyv_maxp_f32(npyv_f32 a, npyv_f32 b)
 {
     __m128 nn  = _mm_cmpord_ps(b, b);
@@ -95,7 +95,7 @@ NPY_FINLINE npyv_s64 npyv_max_s64(npyv_s64 a, npyv_s64 b)
 #define npyv_min_f64 _mm_min_pd
 // Minimum, supports IEEE floating-point arithmetic (IEC 60559),
 // - If one of the two vectors contains NaN, the equivalent element of the other vector is set
-// - Only if both corresponded elements are NaN, NaN is set. 
+// - Only if both corresponded elements are NaN, NaN is set.
 NPY_FINLINE npyv_f32 npyv_minp_f32(npyv_f32 a, npyv_f32 b)
 {
     __m128 nn  = _mm_cmpord_ps(b, b);
@@ -142,5 +142,115 @@ NPY_FINLINE npyv_s64 npyv_min_s64(npyv_s64 a, npyv_s64 b)
 {
     return npyv_select_s64(npyv_cmplt_s64(a, b), a, b);
 }
+
+// round to nearest integer even
+NPY_FINLINE npyv_f32 npyv_rint_f32(npyv_f32 a)
+{
+#ifdef NPY_HAVE_SSE41
+    return _mm_round_ps(a, _MM_FROUND_TO_NEAREST_INT);
+#else
+    const npyv_f32 szero = _mm_set1_ps(-0.0f);
+    __m128i roundi = _mm_cvtps_epi32(a);
+    __m128i overflow = _mm_cmpeq_epi32(roundi, _mm_castps_si128(szero));
+    __m128 r = _mm_cvtepi32_ps(roundi);
+    // respect sign of zero
+    r = _mm_or_ps(r, _mm_and_ps(a, szero));
+    return npyv_select_f32(overflow, a, r);
+#endif
+}
+
+// round to nearest integer even
+NPY_FINLINE npyv_f64 npyv_rint_f64(npyv_f64 a)
+{
+#ifdef NPY_HAVE_SSE41
+    return _mm_round_pd(a, _MM_FROUND_TO_NEAREST_INT);
+#else
+    const npyv_f64 szero = _mm_set1_pd(-0.0);
+    const npyv_f64 two_power_52 = _mm_set1_pd(0x10000000000000);
+    npyv_f64 sign_two52 = _mm_or_pd(two_power_52, _mm_and_pd(a, szero));
+    // round by add magic number 2^52
+    npyv_f64 round = _mm_sub_pd(_mm_add_pd(a, sign_two52), sign_two52);
+    // respect signed zero, e.g. -0.5 -> -0.0
+    return _mm_or_pd(round, _mm_and_pd(a, szero));
+#endif
+}
+
+// ceil
+#ifdef NPY_HAVE_SSE41
+    #define npyv_ceil_f32 _mm_ceil_ps
+    #define npyv_ceil_f64 _mm_ceil_pd
+#else
+    NPY_FINLINE npyv_f32 npyv_ceil_f32(npyv_f32 a)
+    {
+        const npyv_f32 szero = _mm_set1_ps(-0.0f);
+        const npyv_f32 one = _mm_set1_ps(1.0f);
+        npyv_s32 roundi = _mm_cvttps_epi32(a);
+        npyv_f32 round = _mm_cvtepi32_ps(roundi);
+        npyv_f32 ceil = _mm_add_ps(round, _mm_and_ps(_mm_cmplt_ps(round, a), one));
+        // respect signed zero, e.g. -0.5 -> -0.0
+        npyv_f32 rzero = _mm_or_ps(ceil, _mm_and_ps(a, szero));
+        // if overflow return a
+        return npyv_select_f32(_mm_cmpeq_epi32(roundi, _mm_castps_si128(szero)), a, rzero);
+    }
+    NPY_FINLINE npyv_f64 npyv_ceil_f64(npyv_f64 a)
+    {
+        const npyv_f64 szero = _mm_set1_pd(-0.0);
+        const npyv_f64 one = _mm_set1_pd(1.0);
+        const npyv_f64 two_power_52 = _mm_set1_pd(0x10000000000000);
+        npyv_f64 sign_two52 = _mm_or_pd(two_power_52, _mm_and_pd(a, szero));
+        // round by add magic number 2^52
+        npyv_f64 round = _mm_sub_pd(_mm_add_pd(a, sign_two52), sign_two52);
+        npyv_f64 ceil = _mm_add_pd(round, _mm_and_pd(_mm_cmplt_pd(round, a), one));
+        // respect signed zero, e.g. -0.5 -> -0.0
+        return _mm_or_pd(ceil, _mm_and_pd(a, szero));
+    }
+#endif
+
+// trunc
+#ifdef NPY_HAVE_SSE41
+    #define npyv_trunc_f32(A) _mm_round_ps(A, _MM_FROUND_TO_ZERO)
+    #define npyv_trunc_f64(A) _mm_round_pd(A, _MM_FROUND_TO_ZERO)
+#else
+    NPY_FINLINE npyv_f32 npyv_trunc_f32(npyv_f32 a)
+    {
+        const npyv_f32 szero = _mm_set1_ps(-0.0f);
+        npyv_s32 roundi = _mm_cvttps_epi32(a);
+        npyv_f32 trunc = _mm_cvtepi32_ps(roundi);
+        // respect signed zero, e.g. -0.5 -> -0.0
+        npyv_f32 rzero = _mm_or_ps(trunc, _mm_and_ps(a, szero));
+        // if overflow return a
+        return npyv_select_f32(_mm_cmpeq_epi32(roundi, _mm_castps_si128(szero)), a, rzero);
+    }
+    NPY_FINLINE npyv_f64 npyv_trunc_f64(npyv_f64 a)
+    {
+        const npyv_f64 szero = _mm_set1_pd(-0.0);
+        const npyv_f64 one = _mm_set1_pd(1.0);
+        const npyv_f64 two_power_52 = _mm_set1_pd(0x10000000000000);
+        npyv_f64 abs_a = npyv_abs_f64(a);
+        // round by add magic number 2^52
+        npyv_f64 abs_round = _mm_sub_pd(_mm_add_pd(abs_a, two_power_52), two_power_52);
+        npyv_f64 subtrahend = _mm_and_pd(_mm_cmpgt_pd(abs_round, abs_a), one);
+        return _mm_or_pd(_mm_sub_pd(abs_round, subtrahend), _mm_and_pd(a, szero));
+    }
+#endif
+
+// floor
+#ifdef NPY_HAVE_SSE41
+    #define npyv_floor_f32 _mm_floor_ps
+    #define npyv_floor_f64 _mm_floor_pd
+#else
+    NPY_FINLINE npyv_f32 npyv_floor_f32(npyv_f32 a)
+    {
+        const npyv_f32 one = _mm_set1_ps(1.0f);
+        npyv_f32 round = npyv_rint_f32(a);
+        return _mm_sub_ps(round, _mm_and_ps(_mm_cmpgt_ps(round, a), one));
+    }
+    NPY_FINLINE npyv_f64 npyv_floor_f64(npyv_f64 a)
+    {
+        const npyv_f64 one = _mm_set1_pd(1.0);
+        npyv_f64 round = npyv_rint_f64(a);
+        return _mm_sub_pd(round, _mm_and_pd(_mm_cmpgt_pd(round, a), one));
+    }
+#endif // NPY_HAVE_SSE41
 
 #endif // _NPY_SIMD_SSE_MATH_H

@@ -1,5 +1,5 @@
 /**
- * Testing the utilites of the CPU dispatcher
+ * Testing the utilities of the CPU dispatcher
  *
  * @targets $werror baseline
  * SSE2 SSE41 AVX2

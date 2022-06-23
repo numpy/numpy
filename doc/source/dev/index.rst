@@ -27,8 +27,10 @@ the `numpy-discussion mailing list <https://mail.python.org/mailman/listinfo/num
 or on `GitHub <https://github.com/numpy/numpy>`__ (open an issue or comment on a
 relevant issue). These are our preferred communication channels (open source is open
 by nature!), however if you prefer to discuss in private first, please reach out to
-our community coordinators at `numpy-team@googlegroups.com` or `numpy-team.slack.com`
-(send an email to `numpy-team@googlegroups.com` for an invite the first time).
+our community coordinators at `numpy-team@googlegroups.com
+<mailto://numpy-team@googlegroups.com>`_ or `numpy-team.slack.com
+<https://numpy-team.slack.com>`__ (send an email to `numpy-team@googlegroups.com`_ for an
+invite the first time).
 
 Development process - summary
 =============================
@@ -53,7 +55,7 @@ Here's the short summary, complete TOC links are below:
 
       git remote add upstream https://github.com/numpy/numpy.git
 
-   * Now, `git remote -v` will show two remote repositories named:
+   * Now, ``git remote -v`` will show two remote repositories named:
 
      - ``upstream``, which refers to the ``numpy`` repository
      - ``origin``, which refers to your personal fork

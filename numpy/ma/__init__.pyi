@@ -1,5 +1,3 @@
-from typing import Any, List
-
 from numpy._pytesttester import PytestTester
 
 from numpy.ma import extras as extras
@@ -218,6 +216,7 @@ from numpy.ma.extras import (
     masked_all_like as masked_all_like,
     median as median,
     mr_ as mr_,
+    ndenumerate as ndenumerate,
     notmasked_contiguous as notmasked_contiguous,
     notmasked_edges as notmasked_edges,
     polyfit as polyfit,
@@ -231,6 +230,6 @@ from numpy.ma.extras import (
     vstack as vstack,
 )
 
-__all__: List[str]
-__path__: List[str]
+__all__: list[str]
+__path__: list[str]
 test: PytestTester

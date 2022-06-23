@@ -27,7 +27,7 @@
 # OS/ARCH: linux/amd64
 FROM gitpod/workspace-base:latest
 
-ARG MAMBAFORGE_VERSION="4.10.0-0"
+ARG MAMBAFORGE_VERSION="4.11.0-0"
 ARG CONDA_ENV=numpy-dev
 
 

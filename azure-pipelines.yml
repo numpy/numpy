@@ -24,6 +24,9 @@ stages:
       vmImage: 'ubuntu-20.04'
     steps:
     - script: |
+        git submodule update --init
+      displayName: 'Fetch submodules'
+    - script: |
             if ! `gcc 2>/dev/null`; then
                 sudo apt install gcc
             fi
@@ -72,10 +75,15 @@ stages:
       vmImage: 'ubuntu-20.04'
     steps:
     - script: |
+        git submodule update --init
+      displayName: 'Fetch submodules'
+    - script: |
             docker run -v $(pwd):/numpy -e CFLAGS="-msse2 -std=c99 -UNDEBUG" \
             -e F77=gfortran-5 -e F90=gfortran-5 quay.io/pypa/manylinux2014_i686 \
-            /bin/bash -xc "cd numpy && \
-            /opt/python/cp38-cp38/bin/python -mvenv venv &&\
+            /bin/bash -xc " \
+            git config --global --add safe.directory /numpy && \
+            cd /numpy && \
+            /opt/python/cp38-cp38/bin/python -mvenv venv && \
             source venv/bin/activate && \
             target=\$(python3 tools/openblas_support.py) && \
             cp -r \$target/lib/* /usr/lib && \
@@ -103,7 +111,7 @@ stages:
       # the docs even though i.e., numba uses another in their
       # azure config for mac os -- Microsoft has indicated
       # they will patch this issue
-      vmImage: macOS-10.14
+      vmImage: 'macOS-1015'
     strategy:
       maxParallel: 3
       matrix:
@@ -167,7 +175,8 @@ stages:
       displayName: 'Install tools'
     - script: |
         python -m pip install -r test_requirements.txt
-        python -m pip install vulture docutils sphinx==2.2.0 numpydoc
+        # Don't use doc_requirements.txt since that messes up tests
+        python -m pip install vulture sphinx==4.2.0 numpydoc==1.2.0
       displayName: 'Install dependencies; some are optional to avoid test skips'
     - script: /bin/bash -c "! vulture . --min-confidence 100 --exclude doc/,numpy/distutils/ | grep 'unreachable'"
       displayName: 'Check for unreachable code paths in Python modules'
@@ -224,7 +233,7 @@ stages:
 
   - job: Windows
     pool:
-      vmImage: 'VS2017-Win2016'
+      vmImage: 'windows-2019'
     strategy:
       maxParallel: 6
       matrix:
@@ -249,6 +258,12 @@ stages:
             TEST_MODE: full
             BITS: 64
             NPY_USE_BLAS_ILP64: '1'
+          PyPy38-64bit-fast:
+            PYTHON_VERSION: 'PyPy'
+            PYTHON_ARCH: 'x64'
+            TEST_MODE: fast
+            BITS: 64
+            NPY_USE_BLAS_ILP64: '1'
 
     steps:
     - template: azure-steps-windows.yml
@@ -258,6 +273,9 @@ stages:
     pool:
       vmImage: 'ubuntu-20.04'
     steps:
+    - script: |
+        git submodule update --init
+      displayName: 'Fetch submodules'
     - script: |
             # create and activate conda environment
             conda env create -f environment.yml
@@ -281,31 +299,3 @@ stages:
         testResultsFiles: '**/test-*.xml'
         failTaskOnFailedTests: true
         testRunTitle: 'Publish test results for conda installation'
-
-
-  #- job: Linux_gcc48
-    #pool:
-      ## ubuntu-20.04 does not provide a gcc-4.8 package
-      #vmImage: 'ubuntu-18.04'
-    #steps:
-    #- script: |
-            #sudo apt update
-            #sudo apt install python3.7
-            #sudo apt install python3.7-dev
-            #if ! `gcc-4.8 2>/dev/null`; then
-                #sudo apt install gcc-4.8
-            #fi
-      #displayName: 'add gcc 4.8'
-    #- script: |
-            ## python3 has no setuptools, so install one to get us going
-            #python3.7 -m pip install --user --upgrade pip 'setuptools<49.2.0'
-            #python3.7 -m pip install --user -r test_requirements.txt
-            #CPPFLAGS='' CC=gcc-4.8 F77=gfortran-5 F90=gfortran-5 \
-            #python3.7 runtests.py --debug-info --mode=full -- -rsx --junitxml=junit/test-results.xml
-      #displayName: 'Run gcc4.8 Build / Tests'
-    #- task: PublishTestResults@2
-      #condition: succeededOrFailed()
-      #inputs:
-        #testResultsFiles: '**/test-*.xml'
-        #failTaskOnFailedTests: true
-        #testRunTitle: 'Publish test results for gcc 4.8'

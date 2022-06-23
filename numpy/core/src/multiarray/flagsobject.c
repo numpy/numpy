@@ -105,20 +105,11 @@ PyArray_UpdateFlags(PyArrayObject *ret, int flagmask)
  *
  * According to these rules, a 0- or 1-dimensional array is either both
  * C- and F-contiguous, or neither; and an array with 2+ dimensions
- * can be C- or F- contiguous, or neither, but not both. Though there
- * there are exceptions for arrays with zero or one item, in the first
- * case the check is relaxed up to and including the first dimension
- * with shape[i] == 0. In the second case `strides == itemsize` will
- * can be true for all dimensions and both flags are set.
- *
- * When NPY_RELAXED_STRIDES_CHECKING is set, we use a more accurate
- * definition of C- and F-contiguity, in which all 0-sized arrays are
- * contiguous (regardless of dimensionality), and if shape[i] == 1
- * then we ignore strides[i] (since it has no affect on memory layout).
- * With these new rules, it is possible for e.g. a 10x1 array to be both
- * C- and F-contiguous -- but, they break downstream code which assumes
- * that for contiguous arrays strides[-1] (resp. strides[0]) always
- * contains the itemsize.
+ * can be C- or F- contiguous, or neither, but not both (unless it has only
+ * a single element).
+ * We correct this, however.  When a dimension has length 1, its stride is
+ * never used and thus has no effect on the  memory layout.
+ * The above rules thus only apply when ignorning all size 1 dimenions.
  */
 static void
 _UpdateContiguousFlags(PyArrayObject *ap)
@@ -131,7 +122,6 @@ _UpdateContiguousFlags(PyArrayObject *ap)
     sd = PyArray_ITEMSIZE(ap);
     for (i = PyArray_NDIM(ap) - 1; i >= 0; --i) {
         dim = PyArray_DIMS(ap)[i];
-#if NPY_RELAXED_STRIDES_CHECKING
         /* contiguous by definition */
         if (dim == 0) {
             PyArray_ENABLEFLAGS(ap, NPY_ARRAY_C_CONTIGUOUS);
@@ -144,17 +134,6 @@ _UpdateContiguousFlags(PyArrayObject *ap)
             }
             sd *= dim;
         }
-#else /* not NPY_RELAXED_STRIDES_CHECKING */
-        if (PyArray_STRIDES(ap)[i] != sd) {
-            is_c_contig = 0;
-            break;
-        }
-        /* contiguous, if it got this far */
-        if (dim == 0) {
-            break;
-        }
-        sd *= dim;
-#endif /* not NPY_RELAXED_STRIDES_CHECKING */
     }
     if (is_c_contig) {
         PyArray_ENABLEFLAGS(ap, NPY_ARRAY_C_CONTIGUOUS);
@@ -167,7 +146,6 @@ _UpdateContiguousFlags(PyArrayObject *ap)
     sd = PyArray_ITEMSIZE(ap);
     for (i = 0; i < PyArray_NDIM(ap); ++i) {
         dim = PyArray_DIMS(ap)[i];
-#if NPY_RELAXED_STRIDES_CHECKING
         if (dim != 1) {
             if (PyArray_STRIDES(ap)[i] != sd) {
                 PyArray_CLEARFLAGS(ap, NPY_ARRAY_F_CONTIGUOUS);
@@ -175,16 +153,6 @@ _UpdateContiguousFlags(PyArrayObject *ap)
             }
             sd *= dim;
         }
-#else /* not NPY_RELAXED_STRIDES_CHECKING */
-        if (PyArray_STRIDES(ap)[i] != sd) {
-            PyArray_CLEARFLAGS(ap, NPY_ARRAY_F_CONTIGUOUS);
-            return;
-        }
-        if (dim == 0) {
-            break;
-        }
-        sd *= dim;
-#endif /* not NPY_RELAXED_STRIDES_CHECKING */
     }
     PyArray_ENABLEFLAGS(ap, NPY_ARRAY_F_CONTIGUOUS);
     return;
@@ -236,25 +204,6 @@ _define_get_warn(NPY_ARRAY_ALIGNED|
 _define_get_warn(NPY_ARRAY_ALIGNED|
             NPY_ARRAY_WRITEABLE|
             NPY_ARRAY_C_CONTIGUOUS, carray)
-
-static PyObject *
-arrayflags_updateifcopy_get(PyArrayFlagsObject *self, void *NPY_UNUSED(ignored))
-{
-    PyObject *item;
-    /* 2017-Nov-10 1.14 */
-    if(DEPRECATE("UPDATEIFCOPY deprecated, use WRITEBACKIFCOPY instead") < 0) {
-        return NULL;
-    }
-    if ((self->flags & (NPY_ARRAY_UPDATEIFCOPY)) == (NPY_ARRAY_UPDATEIFCOPY)) {
-        item = Py_True;
-    }
-    else {
-        item = Py_False;
-    }
-    Py_INCREF(item);
-    return item;
-}
-
 
 static PyObject *
 arrayflags_forc_get(PyArrayFlagsObject *self, void *NPY_UNUSED(ignored))
@@ -310,36 +259,6 @@ static PyObject *
 arrayflags_num_get(PyArrayFlagsObject *self, void *NPY_UNUSED(ignored))
 {
     return PyLong_FromLong(self->flags);
-}
-
-/* relies on setflags order being write, align, uic */
-static int
-arrayflags_updateifcopy_set(
-        PyArrayFlagsObject *self, PyObject *obj, void *NPY_UNUSED(ignored))
-{
-    PyObject *res;
-
-    if (obj == NULL) {
-        PyErr_SetString(PyExc_AttributeError,
-                "Cannot delete flags updateifcopy attribute");
-        return -1;
-    }
-    if (self->arr == NULL) {
-        PyErr_SetString(PyExc_ValueError,
-                "Cannot set flags on array scalars.");
-        return -1;
-    }
-    /* 2017-Nov-10 1.14 */
-    if(DEPRECATE("UPDATEIFCOPY deprecated, use WRITEBACKIFCOPY instead") < 0) {
-        return -1;
-    }
-    res = PyObject_CallMethod(self->arr, "setflags", "OOO", Py_None, Py_None,
-                              (PyObject_IsTrue(obj) ? Py_True : Py_False));
-    if (res == NULL) {
-        return -1;
-    }
-    Py_DECREF(res);
-    return 0;
 }
 
 /* relies on setflags order being write, align, uic */
@@ -473,10 +392,6 @@ static PyGetSetDef arrayflags_getsets[] = {
         (getter)arrayflags_fortran_get,
         NULL,
         NULL, NULL},
-    {"updateifcopy",
-        (getter)arrayflags_updateifcopy_get,
-        (setter)arrayflags_updateifcopy_set,
-        NULL, NULL},
     {"writebackifcopy",
         (getter)arrayflags_writebackifcopy_get,
         (setter)arrayflags_writebackifcopy_set,
@@ -574,8 +489,6 @@ arrayflags_getitem(PyArrayFlagsObject *self, PyObject *ind)
             return arrayflags_aligned_get(self, NULL);
         case 'X':
             return arrayflags_writebackifcopy_get(self, NULL);
-        case 'U':
-            return arrayflags_updateifcopy_get(self, NULL);
         default:
             goto fail;
         }
@@ -631,9 +544,6 @@ arrayflags_getitem(PyArrayFlagsObject *self, PyObject *ind)
         }
         break;
     case 12:
-        if (strncmp(key, "UPDATEIFCOPY", n) == 0) {
-            return arrayflags_updateifcopy_get(self, NULL);
-        }
         if (strncmp(key, "C_CONTIGUOUS", n) == 0) {
             return arrayflags_contiguous_get(self, NULL);
         }
@@ -684,10 +594,6 @@ arrayflags_setitem(PyArrayFlagsObject *self, PyObject *ind, PyObject *item)
              ((n==1) && (strncmp(key, "A", n) == 0))) {
         return arrayflags_aligned_set(self, item, NULL);
     }
-    else if (((n==12) && (strncmp(key, "UPDATEIFCOPY", n) == 0)) ||
-             ((n==1) && (strncmp(key, "U", n) == 0))) {
-        return arrayflags_updateifcopy_set(self, item, NULL);
-    }
     else if (((n==15) && (strncmp(key, "WRITEBACKIFCOPY", n) == 0)) ||
              ((n==1) && (strncmp(key, "X", n) == 0))) {
         return arrayflags_writebackifcopy_set(self, item, NULL);
@@ -721,16 +627,14 @@ arrayflags_print(PyArrayFlagsObject *self)
     return PyUnicode_FromFormat(
                         "  %s : %s\n  %s : %s\n"
                         "  %s : %s\n  %s : %s%s\n"
-                        "  %s : %s\n  %s : %s\n"
-                        "  %s : %s\n",
+                        "  %s : %s\n  %s : %s\n",
                         "C_CONTIGUOUS",    _torf_(fl, NPY_ARRAY_C_CONTIGUOUS),
                         "F_CONTIGUOUS",    _torf_(fl, NPY_ARRAY_F_CONTIGUOUS),
                         "OWNDATA",         _torf_(fl, NPY_ARRAY_OWNDATA),
                         "WRITEABLE",       _torf_(fl, NPY_ARRAY_WRITEABLE),
                         _warn_on_write,
                         "ALIGNED",         _torf_(fl, NPY_ARRAY_ALIGNED),
-                        "WRITEBACKIFCOPY", _torf_(fl, NPY_ARRAY_WRITEBACKIFCOPY),
-                        "UPDATEIFCOPY",    _torf_(fl, NPY_ARRAY_UPDATEIFCOPY)
+                        "WRITEBACKIFCOPY", _torf_(fl, NPY_ARRAY_WRITEBACKIFCOPY)
     );
 }
 

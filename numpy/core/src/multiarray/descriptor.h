@@ -6,6 +6,18 @@ NPY_NO_EXPORT PyObject *arraydescr_protocol_typestr_get(
 NPY_NO_EXPORT PyObject *arraydescr_protocol_descr_get(
         PyArray_Descr *self, void *);
 
+/*
+ * offset:    A starting offset.
+ * alignment: A power-of-two alignment.
+ *
+ * This macro returns the smallest value >= 'offset'
+ * that is divisible by 'alignment'. Because 'alignment'
+ * is a power of two and integers are twos-complement,
+ * it is possible to use some simple bit-fiddling to do this.
+ */
+#define NPY_NEXT_ALIGNED_OFFSET(offset, alignment) \
+                (((offset) + (alignment) - 1) & (-(alignment)))
+
 NPY_NO_EXPORT PyObject *
 array_set_typeDict(PyObject *NPY_UNUSED(ignored), PyObject *args);
 

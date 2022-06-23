@@ -4,6 +4,10 @@
 #include <stdlib.h>
 #include <numpy/ndarraytypes.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  *****************************************************************************
  **                        SWAP MACROS                                      **
@@ -139,14 +143,14 @@ LONGDOUBLE_LT(npy_longdouble a, npy_longdouble b)
 
 
 NPY_INLINE static int
-npy_half_isnan(npy_half h)
+_npy_half_isnan(npy_half h)
 {
     return ((h&0x7c00u) == 0x7c00u) && ((h&0x03ffu) != 0x0000u);
 }
 
 
 NPY_INLINE static int
-npy_half_lt_nonan(npy_half h1, npy_half h2)
+_npy_half_lt_nonan(npy_half h1, npy_half h2)
 {
     if (h1&0x8000u) {
         if (h2&0x8000u) {
@@ -173,11 +177,11 @@ HALF_LT(npy_half a, npy_half b)
 {
     int ret;
 
-    if (npy_half_isnan(b)) {
-        ret = !npy_half_isnan(a);
+    if (_npy_half_isnan(b)) {
+        ret = !_npy_half_isnan(a);
     }
     else {
-        ret = !npy_half_isnan(a) && npy_half_lt_nonan(a, b);
+        ret = !_npy_half_isnan(a) && _npy_half_lt_nonan(a, b);
     }
 
     return ret;
@@ -255,7 +259,7 @@ CLONGDOUBLE_LT(npy_clongdouble a, npy_clongdouble b)
 
 
 NPY_INLINE static void
-STRING_COPY(char *s1, char *s2, size_t len)
+STRING_COPY(char *s1, char const*s2, size_t len)
 {
     memcpy(s1, s2, len);
 }
@@ -291,7 +295,7 @@ STRING_LT(const char *s1, const char *s2, size_t len)
 
 
 NPY_INLINE static void
-UNICODE_COPY(npy_ucs4 *s1, npy_ucs4 *s2, size_t len)
+UNICODE_COPY(npy_ucs4 *s1, npy_ucs4 const *s2, size_t len)
 {
     while(len--) {
         *s1++ = *s2++;
@@ -372,5 +376,9 @@ GENERIC_SWAP(char *a, char *b, size_t len)
         *b++ = t;
     }
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

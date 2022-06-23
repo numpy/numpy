@@ -86,6 +86,7 @@ def as_strided(x, shape=None, strides=None, subok=False, writeable=True):
     Vectorized write operations on such arrays will typically be
     unpredictable. They may even give different results for small, large,
     or transposed arrays.
+
     Since writing to these arrays has to be tested and done with great
     care, you may want to use ``writeable=False`` to avoid accidental write
     operations.

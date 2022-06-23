@@ -87,11 +87,12 @@ def print_new_cast_table(*, can_cast=True, legacy=False, flags=False):
     from numpy.core._multiarray_tests import get_all_cast_information
 
     cast_table = {
-        0 : "#",  # No cast (classify as equivalent here)
-        1 : "#",  # equivalent casting
-        2 : "=",  # safe casting
-        3 : "~",  # same-kind casting
-        4 : ".",  # unsafe casting
+        -1: " ",
+        0: "#",  # No cast (classify as equivalent here)
+        1: "#",  # equivalent casting
+        2: "=",  # safe casting
+        3: "~",  # same-kind casting
+        4: ".",  # unsafe casting
     }
     flags_table = {
         0 : "▗", 7: "█",

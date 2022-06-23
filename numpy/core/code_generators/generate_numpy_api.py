@@ -89,19 +89,22 @@ _import_array(void)
    */
   st = PyArray_GetEndianness();
   if (st == NPY_CPU_UNKNOWN_ENDIAN) {
-      PyErr_Format(PyExc_RuntimeError, "FATAL: module compiled as unknown endian");
+      PyErr_SetString(PyExc_RuntimeError,
+                      "FATAL: module compiled as unknown endian");
       return -1;
   }
 #if NPY_BYTE_ORDER == NPY_BIG_ENDIAN
   if (st != NPY_CPU_BIG) {
-      PyErr_Format(PyExc_RuntimeError, "FATAL: module compiled as "\
-             "big endian, but detected different endianness at runtime");
+      PyErr_SetString(PyExc_RuntimeError,
+                      "FATAL: module compiled as big endian, but "
+                      "detected different endianness at runtime");
       return -1;
   }
 #elif NPY_BYTE_ORDER == NPY_LITTLE_ENDIAN
   if (st != NPY_CPU_LITTLE) {
-      PyErr_Format(PyExc_RuntimeError, "FATAL: module compiled as "\
-             "little endian, but detected different endianness at runtime");
+      PyErr_SetString(PyExc_RuntimeError,
+                      "FATAL: module compiled as little endian, but "
+                      "detected different endianness at runtime");
       return -1;
   }
 #endif

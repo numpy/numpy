@@ -13,7 +13,14 @@ if TYPE_CHECKING:
 import numpy as np
 
 
-def broadcast_arrays(*arrays: Sequence[Array]) -> List[Array]:
+# Note: astype is a function, not an array method as in NumPy.
+def astype(x: Array, dtype: Dtype, /, *, copy: bool = True) -> Array:
+    if not copy and dtype == x.dtype:
+        return x
+    return Array._new(x._array.astype(dtype=dtype, copy=copy))
+
+
+def broadcast_arrays(*arrays: Array) -> List[Array]:
     """
     Array API compatible wrapper for :py:func:`np.broadcast_arrays <numpy.broadcast_arrays>`.
 
@@ -43,11 +50,23 @@ def can_cast(from_: Union[Dtype, Array], to: Dtype, /) -> bool:
 
     See its docstring for more information.
     """
-    from ._array_object import Array
-
     if isinstance(from_, Array):
-        from_ = from_._array
-    return np.can_cast(from_, to)
+        from_ = from_.dtype
+    elif from_ not in _all_dtypes:
+        raise TypeError(f"{from_=}, but should be an array_api array or dtype")
+    if to not in _all_dtypes:
+        raise TypeError(f"{to=}, but should be a dtype")
+    # Note: We avoid np.can_cast() as it has discrepancies with the array API,
+    # since NumPy allows cross-kind casting (e.g., NumPy allows bool -> int8).
+    # See https://github.com/numpy/numpy/issues/20870
+    try:
+        # We promote `from_` and `to` together. We then check if the promoted
+        # dtype is `to`, which indicates if `from_` can (up)cast to `to`.
+        dtype = _result_type(from_, to)
+        return to == dtype
+    except TypeError:
+        # _result_type() raises if the dtypes don't promote together
+        return False
 
 
 # These are internal objects for the return types of finfo and iinfo, since
@@ -98,7 +117,7 @@ def iinfo(type: Union[Dtype, Array], /) -> iinfo_object:
     return iinfo_object(ii.bits, ii.max, ii.min)
 
 
-def result_type(*arrays_and_dtypes: Sequence[Union[Array, Dtype]]) -> Dtype:
+def result_type(*arrays_and_dtypes: Union[Array, Dtype]) -> Dtype:
     """
     Array API compatible wrapper for :py:func:`np.result_type <numpy.result_type>`.
 

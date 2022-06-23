@@ -510,13 +510,19 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
         coefficients for `k`-th data set are in ``p[:,k]``.
 
     residuals, rank, singular_values, rcond
-        Present only if `full` = True.  Residuals is sum of squared residuals
-        of the least-squares fit, the effective rank of the scaled Vandermonde
-        coefficient matrix, its singular values, and the specified value of
-        `rcond`. For more details, see `linalg.lstsq`.
+        These values are only returned if ``full == True``
+
+        - residuals -- sum of squared residuals of the least squares fit
+        - rank -- the effective rank of the scaled Vandermonde
+           coefficient matrix
+        - singular_values -- singular values of the scaled Vandermonde
+           coefficient matrix
+        - rcond -- value of `rcond`.
+
+        For more details, see `numpy.linalg.lstsq`.
 
     V : ndarray, shape (M,M) or (M,M,K)
-        Present only if `full` = False and `cov`=True.  The covariance
+        Present only if ``full == False`` and ``cov == True``.  The covariance
         matrix of the polynomial coefficient estimates.  The diagonal of
         this matrix are the variance estimates for each coefficient.  If y
         is a 2-D array, then the covariance matrix for the `k`-th data set
@@ -527,7 +533,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
     -----
     RankWarning
         The rank of the coefficient matrix in the least-squares fit is
-        deficient. The warning is only raised if `full` = False.
+        deficient. The warning is only raised if ``full == False``.
 
         The warnings can be turned off by
 
@@ -544,7 +550,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
     -----
     The solution minimizes the squared error
 
-    .. math ::
+    .. math::
         E = \\sum_{j=0}^k |p(x_j) - y_j|^2
 
     in the equations::
@@ -680,7 +686,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
                                  "to scale the covariance matrix")
             # note, this used to be: fac = resids / (len(x) - order - 2.0)
             # it was deciced that the "- 2" (originally justified by "Bayesian
-            # uncertainty analysis") is not was the user expects
+            # uncertainty analysis") is not what the user expects
             # (see gh-11196 and gh-11197)
             fac = resids / (len(x) - order)
         if y.ndim == 1:

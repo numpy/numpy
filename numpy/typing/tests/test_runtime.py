@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import sys
-from typing import get_type_hints, Union, Tuple, NamedTuple, get_args, get_origin
+from typing import get_type_hints, Union, NamedTuple, get_args, get_origin
 
 import pytest
 import numpy as np
@@ -12,7 +12,7 @@ import numpy.typing as npt
 
 class TypeTup(NamedTuple):
     typ: type
-    args: Tuple[type, ...]
+    args: tuple[type, ...]
     origin: None | type
 
 

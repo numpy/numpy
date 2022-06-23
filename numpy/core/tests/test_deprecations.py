@@ -13,7 +13,8 @@ import sys
 
 import numpy as np
 from numpy.testing import (
-    assert_raises, assert_warns, assert_, assert_array_equal, SkipTest, KnownFailureException
+    assert_raises, assert_warns, assert_, assert_array_equal, SkipTest,
+    KnownFailureException, break_cycles,
     )
 
 from numpy.core._multiarray_tests import fromstring_null_term_c_api
@@ -137,22 +138,6 @@ class _VisibleDeprecationTestCase(_DeprecationTestCase):
     warning_cls = np.VisibleDeprecationWarning
 
 
-class TestNonTupleNDIndexDeprecation:
-    def test_basic(self):
-        a = np.zeros((5, 5))
-        with warnings.catch_warnings():
-            warnings.filterwarnings('always')
-            assert_warns(FutureWarning, a.__getitem__, [[0, 1], [0, 1]])
-            assert_warns(FutureWarning, a.__getitem__, [slice(None)])
-
-            warnings.filterwarnings('error')
-            assert_raises(FutureWarning, a.__getitem__, [[0, 1], [0, 1]])
-            assert_raises(FutureWarning, a.__getitem__, [slice(None)])
-
-            # a a[[0, 1]] always was advanced indexing, so no error/warning
-            a[[0, 1]]
-
-
 class TestComparisonDeprecations(_DeprecationTestCase):
     """This tests the deprecation, for non-element-wise comparison logic.
     This used to mean that when an error occurred during element-wise comparison
@@ -181,7 +166,7 @@ class TestComparisonDeprecations(_DeprecationTestCase):
         # For two string arrays, strings always raised the broadcasting error:
         a = np.array(['a', 'b'])
         b = np.array(['a', 'b', 'c'])
-        assert_raises(ValueError, lambda x, y: x == y, a, b)
+        assert_warns(FutureWarning, lambda x, y: x == y, a, b)
 
         # The empty list is not cast to string, and this used to pass due
         # to dtype mismatch; now (2018-06-21) it correctly leads to a
@@ -199,14 +184,6 @@ class TestComparisonDeprecations(_DeprecationTestCase):
 
         self.assert_deprecated(lambda: np.arange(2) == NotArray())
         self.assert_deprecated(lambda: np.arange(2) != NotArray())
-
-        struct1 = np.zeros(2, dtype="i4,i4")
-        struct2 = np.zeros(2, dtype="i4,i4,i4")
-
-        assert_warns(FutureWarning, lambda: struct1 == 1)
-        assert_warns(FutureWarning, lambda: struct1 == struct2)
-        assert_warns(FutureWarning, lambda: struct1 != 1)
-        assert_warns(FutureWarning, lambda: struct1 != struct2)
 
     def test_array_richcompare_legacy_weirdness(self):
         # It doesn't really work to use assert_deprecated here, b/c part of
@@ -254,20 +231,6 @@ class TestDatetime64Timezone(_DeprecationTestCase):
         tz = pytz.timezone('US/Eastern')
         dt = datetime.datetime(2000, 1, 1, 0, 0, tzinfo=tz)
         self.assert_deprecated(np.datetime64, args=(dt,))
-
-
-class TestNonCContiguousViewDeprecation(_DeprecationTestCase):
-    """View of non-C-contiguous arrays deprecated in 1.11.0.
-
-    The deprecation will not be raised for arrays that are both C and F
-    contiguous, as C contiguous is dominant. There are more such arrays
-    with relaxed stride checking than without so the deprecation is not
-    as visible with relaxed stride checking in force.
-    """
-
-    def test_fortran_contiguous(self):
-        self.assert_deprecated(np.ones((2,2)).T.view, args=(complex,))
-        self.assert_deprecated(np.ones((2,2)).T.view, args=(np.int8,))
 
 
 class TestArrayDataAttributeAssignmentDeprecation(_DeprecationTestCase):
@@ -379,18 +342,6 @@ class TestPyArray_AS2D(_DeprecationTestCase):
         assert_raises(NotImplementedError, npy_pyarrayas2d_deprecation)
 
 
-class Test_UPDATEIFCOPY(_DeprecationTestCase):
-    """
-    v1.14 deprecates creating an array with the UPDATEIFCOPY flag, use
-    WRITEBACKIFCOPY instead
-    """
-    def test_npy_updateifcopy_deprecation(self):
-        from numpy.core._multiarray_tests import npy_updateifcopy_deprecation
-        arr = np.arange(9).reshape(3, 3)
-        v = arr.T
-        self.assert_deprecated(npy_updateifcopy_deprecation, args=(v,))
-
-
 class TestDatetimeEvent(_DeprecationTestCase):
     # 2017-08-11, 1.14.0
     def test_3_tuple(self):
@@ -425,11 +376,6 @@ class TestBincount(_DeprecationTestCase):
     def test_bincount_minlength(self):
         self.assert_deprecated(lambda: np.bincount([1, 2, 3], minlength=None))
 
-
-class TestAlen(_DeprecationTestCase):
-    # 2019-08-02, 1.18.0
-    def test_alen(self):
-        self.assert_deprecated(lambda: np.alen(np.array([1, 2, 3])))
 
 
 class TestGeneratorSum(_DeprecationTestCase):
@@ -667,9 +613,6 @@ class TestNonExactMatchDeprecation(_DeprecationTestCase):
 
 class TestDeprecatedGlobals(_DeprecationTestCase):
     # 2020-06-06
-    @pytest.mark.skipif(
-        sys.version_info < (3, 7),
-        reason='module-level __getattr__ not supported')
     def test_type_aliases(self):
         # from builtins
         self.assert_deprecated(lambda: np.bool(True))
@@ -791,7 +734,7 @@ class TestFutureWarningArrayLikeNotIterable(_DeprecationTestCase):
         *not* define the sequence protocol.
 
         NOTE: Tests for the versions including __len__ and __getitem__ exist
-              in `test_array_coercion.py` and they can be modified or ammended
+              in `test_array_coercion.py` and they can be modified or amended
               when this deprecation expired.
         """
         blueprint = np.arange(10)
@@ -1124,24 +1067,6 @@ class TestComparisonBadObjectDType(_DeprecationTestCase):
                 lambda: np.equal(1, 1, sig=(None, None, object)))
 
 
-class TestSpecialAttributeLookupFailure(_DeprecationTestCase):
-    message = r"An exception was ignored while fetching the attribute"
-
-    class WeirdArrayLike:
-        @property
-        def __array__(self):
-            raise RuntimeError("oops!")
-
-    class WeirdArrayInterface:
-        @property
-        def __array_interface__(self):
-            raise RuntimeError("oops!")
-
-    def test_deprecated(self):
-        self.assert_deprecated(lambda: np.array(self.WeirdArrayLike()))
-        self.assert_deprecated(lambda: np.array(self.WeirdArrayInterface()))
-
-
 class TestCtypesGetter(_DeprecationTestCase):
     # Deprecated 2021-05-18, Numpy 1.21.0
     warning_cls = DeprecationWarning
@@ -1204,3 +1129,123 @@ class TestScalarConversion(_DeprecationTestCase):
         c = np.zeros(5)
         with pytest.warns(DeprecationWarning):
             c[0] = b
+
+PARTITION_DICT = {
+    "partition method": np.arange(10).partition,
+    "argpartition method": np.arange(10).argpartition,
+    "partition function": lambda kth: np.partition(np.arange(10), kth),
+    "argpartition function": lambda kth: np.argpartition(np.arange(10), kth),
+}
+
+
+@pytest.mark.parametrize("func", PARTITION_DICT.values(), ids=PARTITION_DICT)
+class TestPartitionBoolIndex(_DeprecationTestCase):
+    # Deprecated 2021-09-29, NumPy 1.22
+    warning_cls = DeprecationWarning
+    message = "Passing booleans as partition index is deprecated"
+
+    def test_deprecated(self, func):
+        self.assert_deprecated(lambda: func(True))
+        self.assert_deprecated(lambda: func([False, True]))
+
+    def test_not_deprecated(self, func):
+        self.assert_not_deprecated(lambda: func(1))
+        self.assert_not_deprecated(lambda: func([0, 1]))
+
+
+class TestMachAr(_DeprecationTestCase):
+    # Deprecated 2021-10-19, NumPy 1.22
+    warning_cls = DeprecationWarning
+
+    def test_deprecated(self):
+        self.assert_deprecated(lambda: np.MachAr)
+
+    def test_deprecated_module(self):
+        self.assert_deprecated(lambda: getattr(np.core, "machar"))
+
+    def test_deprecated_attr(self):
+        finfo = np.finfo(float)
+        self.assert_deprecated(lambda: getattr(finfo, "machar"))
+
+
+class TestQuantileInterpolationDeprecation(_DeprecationTestCase):
+    # Deprecated 2021-11-08, NumPy 1.22
+    @pytest.mark.parametrize("func",
+        [np.percentile, np.quantile, np.nanpercentile, np.nanquantile])
+    def test_deprecated(self, func):
+        self.assert_deprecated(
+            lambda: func([0., 1.], 0., interpolation="linear"))
+        self.assert_deprecated(
+            lambda: func([0., 1.], 0., interpolation="nearest"))
+
+    @pytest.mark.parametrize("func",
+            [np.percentile, np.quantile, np.nanpercentile, np.nanquantile])
+    def test_both_passed(self, func):
+        with warnings.catch_warnings():
+            # catch the DeprecationWarning so that it does not raise:
+            warnings.simplefilter("always", DeprecationWarning)
+            with pytest.raises(TypeError):
+                func([0., 1.], 0., interpolation="nearest", method="nearest")
+
+
+class TestMemEventHook(_DeprecationTestCase):
+    # Deprecated 2021-11-18, NumPy 1.23
+    def test_mem_seteventhook(self):
+        # The actual tests are within the C code in
+        # multiarray/_multiarray_tests.c.src
+        import numpy.core._multiarray_tests as ma_tests
+        with pytest.warns(DeprecationWarning,
+                          match='PyDataMem_SetEventHook is deprecated'):
+            ma_tests.test_pydatamem_seteventhook_start()
+        # force an allocation and free of a numpy array
+        # needs to be larger then limit of small memory cacher in ctors.c
+        a = np.zeros(1000)
+        del a
+        break_cycles()
+        with pytest.warns(DeprecationWarning,
+                          match='PyDataMem_SetEventHook is deprecated'):
+            ma_tests.test_pydatamem_seteventhook_end()
+
+
+class TestArrayFinalizeNone(_DeprecationTestCase):
+    message = "Setting __array_finalize__ = None"
+
+    def test_use_none_is_deprecated(self):
+        # Deprecated way that ndarray itself showed nothing needs finalizing.
+        class NoFinalize(np.ndarray):
+            __array_finalize__ = None
+
+        self.assert_deprecated(lambda: np.array(1).view(NoFinalize))
+
+class TestAxisNotMAXDIMS(_DeprecationTestCase):
+    # Deprecated 2022-01-08, NumPy 1.23
+    message = r"Using `axis=32` \(MAXDIMS\) is deprecated"
+
+    def test_deprecated(self):
+        a = np.zeros((1,)*32)
+        self.assert_deprecated(lambda: np.repeat(a, 1, axis=np.MAXDIMS))
+
+
+class TestLoadtxtParseIntsViaFloat(_DeprecationTestCase):
+    # Deprecated 2022-07-03, NumPy 1.23
+    # This test can be removed without replacement after the deprecation.
+    # The tests:
+    #   * numpy/lib/tests/test_loadtxt.py::test_integer_signs
+    #   * lib/tests/test_loadtxt.py::test_implicit_cast_float_to_int_fails
+    # Have a warning filter that needs to be removed.
+    message = r"loadtxt\(\): Parsing an integer via a float is deprecated.*"
+
+    @pytest.mark.parametrize("dtype", np.typecodes["AllInteger"])
+    def test_deprecated_warning(self, dtype):
+        with pytest.warns(DeprecationWarning, match=self.message):
+            np.loadtxt(["10.5"], dtype=dtype)
+
+    @pytest.mark.parametrize("dtype", np.typecodes["AllInteger"])
+    def test_deprecated_raised(self, dtype):
+        # The DeprecationWarning is chained when raised, so test manually:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", DeprecationWarning)
+            try:
+                np.loadtxt(["10.5"], dtype=dtype)
+            except ValueError as e:
+                assert isinstance(e.__cause__, DeprecationWarning)

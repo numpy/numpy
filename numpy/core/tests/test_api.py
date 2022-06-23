@@ -8,9 +8,6 @@ from numpy.testing import (
      HAS_REFCOUNT
     )
 
-# Switch between new behaviour when NPY_RELAXED_STRIDES_CHECKING is set.
-NPY_RELAXED_STRIDES_CHECKING = np.ones((10, 1), order='C').flags.f_contiguous
-
 
 def test_array_array():
     tobj = type(object)
@@ -144,7 +141,7 @@ def test_array_array():
 
 @pytest.mark.parametrize("array", [True, False])
 def test_array_impossible_casts(array):
-    # All builtin types can forst cast as least theoretically
+    # All builtin types can be forcibly cast, at least theoretically,
     # but user dtypes cannot necessarily.
     rt = rational(1, 2)
     if array:
@@ -482,13 +479,6 @@ def test_copy_order():
         assert_equal(x, y)
         assert_equal(res.flags.c_contiguous, ccontig)
         assert_equal(res.flags.f_contiguous, fcontig)
-        # This check is impossible only because
-        # NPY_RELAXED_STRIDES_CHECKING changes the strides actively
-        if not NPY_RELAXED_STRIDES_CHECKING:
-            if strides:
-                assert_equal(x.strides, y.strides)
-            else:
-                assert_(x.strides != y.strides)
 
     # Validate the initial state of a, b, and c
     assert_(a.flags.c_contiguous)
@@ -542,8 +532,7 @@ def test_copy_order():
 
 def test_contiguous_flags():
     a = np.ones((4, 4, 1))[::2,:,:]
-    if NPY_RELAXED_STRIDES_CHECKING:
-        a.strides = a.strides[:2] + (-123,)
+    a.strides = a.strides[:2] + (-123,)
     b = np.ones((2, 2, 1, 2, 2)).swapaxes(3, 4)
 
     def check_contig(a, ccontig, fcontig):
@@ -553,12 +542,8 @@ def test_contiguous_flags():
     # Check if new arrays are correct:
     check_contig(a, False, False)
     check_contig(b, False, False)
-    if NPY_RELAXED_STRIDES_CHECKING:
-        check_contig(np.empty((2, 2, 0, 2, 2)), True, True)
-        check_contig(np.array([[[1], [2]]], order='F'), True, True)
-    else:
-        check_contig(np.empty((2, 2, 0, 2, 2)), True, False)
-        check_contig(np.array([[[1], [2]]], order='F'), False, True)
+    check_contig(np.empty((2, 2, 0, 2, 2)), True, True)
+    check_contig(np.array([[[1], [2]]], order='F'), True, True)
     check_contig(np.empty((2, 2)), True, False)
     check_contig(np.empty((2, 2), order='F'), False, True)
 
@@ -567,18 +552,11 @@ def test_contiguous_flags():
     check_contig(np.array(a, copy=False, order='C'), True, False)
     check_contig(np.array(a, ndmin=4, copy=False, order='F'), False, True)
 
-    if NPY_RELAXED_STRIDES_CHECKING:
-        # Check slicing update of flags and :
-        check_contig(a[0], True, True)
-        check_contig(a[None, ::4, ..., None], True, True)
-        check_contig(b[0, 0, ...], False, True)
-        check_contig(b[:,:, 0:0,:,:], True, True)
-    else:
-        # Check slicing update of flags:
-        check_contig(a[0], True, False)
-        # Would be nice if this was C-Contiguous:
-        check_contig(a[None, 0, ..., None], False, False)
-        check_contig(b[0, 0, 0, ...], False, True)
+    # Check slicing update of flags and :
+    check_contig(a[0], True, True)
+    check_contig(a[None, ::4, ..., None], True, True)
+    check_contig(b[0, 0, ...], False, True)
+    check_contig(b[:, :, 0:0, :, :], True, True)
 
     # Test ravel and squeeze.
     check_contig(a.ravel(), True, True)
@@ -598,3 +576,31 @@ def test_broadcast_arrays():
 def test_full_from_list(shape, fill_value, expected_output):
     output = np.full(shape, fill_value)
     assert_equal(output, expected_output)
+
+def test_astype_copyflag():
+    # test the various copyflag options
+    arr = np.arange(10, dtype=np.intp)
+
+    res_true = arr.astype(np.intp, copy=True)
+    assert not np.may_share_memory(arr, res_true)
+    res_always = arr.astype(np.intp, copy=np._CopyMode.ALWAYS)
+    assert not np.may_share_memory(arr, res_always)
+
+    res_false = arr.astype(np.intp, copy=False)
+    # `res_false is arr` currently, but check `may_share_memory`.
+    assert np.may_share_memory(arr, res_false)
+    res_if_needed = arr.astype(np.intp, copy=np._CopyMode.IF_NEEDED)
+    # `res_if_needed is arr` currently, but check `may_share_memory`.
+    assert np.may_share_memory(arr, res_if_needed)
+
+    res_never = arr.astype(np.intp, copy=np._CopyMode.NEVER)
+    assert np.may_share_memory(arr, res_never)
+
+    # Simple tests for when a copy is necessary:
+    res_false = arr.astype(np.float64, copy=False)
+    assert_array_equal(res_false, arr)
+    res_if_needed = arr.astype(np.float64, 
+                               copy=np._CopyMode.IF_NEEDED)
+    assert_array_equal(res_if_needed, arr)
+    assert_raises(ValueError, arr.astype, np.float64,
+                  copy=np._CopyMode.NEVER)

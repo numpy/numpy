@@ -1,7 +1,11 @@
+import operator
+
 from numpy.testing import assert_raises
 import numpy as np
+import pytest
 
-from .. import ones, asarray, result_type
+from .. import ones, asarray, reshape, result_type, all, equal
+from .._array_object import Array
 from .._dtypes import (
     _all_dtypes,
     _boolean_dtypes,
@@ -14,6 +18,7 @@ from .._dtypes import (
     int32,
     int64,
     uint64,
+    bool as bool_,
 )
 
 
@@ -37,18 +42,18 @@ def test_validate_index():
     assert_raises(IndexError, lambda: a[:-4])
     assert_raises(IndexError, lambda: a[:3:-1])
     assert_raises(IndexError, lambda: a[:-5:-1])
-    assert_raises(IndexError, lambda: a[3:])
+    assert_raises(IndexError, lambda: a[4:])
     assert_raises(IndexError, lambda: a[-4:])
-    assert_raises(IndexError, lambda: a[3::-1])
+    assert_raises(IndexError, lambda: a[4::-1])
     assert_raises(IndexError, lambda: a[-4::-1])
 
     assert_raises(IndexError, lambda: a[...,:5])
     assert_raises(IndexError, lambda: a[...,:-5])
-    assert_raises(IndexError, lambda: a[...,:4:-1])
+    assert_raises(IndexError, lambda: a[...,:5:-1])
     assert_raises(IndexError, lambda: a[...,:-6:-1])
-    assert_raises(IndexError, lambda: a[...,4:])
+    assert_raises(IndexError, lambda: a[...,5:])
     assert_raises(IndexError, lambda: a[...,-5:])
-    assert_raises(IndexError, lambda: a[...,4::-1])
+    assert_raises(IndexError, lambda: a[...,5::-1])
     assert_raises(IndexError, lambda: a[...,-5::-1])
 
     # Boolean indices cannot be part of a larger tuple index
@@ -67,11 +72,11 @@ def test_validate_index():
     assert_raises(IndexError, lambda: a[[0, 1]])
     assert_raises(IndexError, lambda: a[np.array([[0, 1]])])
 
-    # np.newaxis is not allowed
-    assert_raises(IndexError, lambda: a[None])
-    assert_raises(IndexError, lambda: a[None, ...])
-    assert_raises(IndexError, lambda: a[..., None])
-
+    # Multiaxis indices must contain exactly as many indices as dimensions
+    assert_raises(IndexError, lambda: a[()])
+    assert_raises(IndexError, lambda: a[0,])
+    assert_raises(IndexError, lambda: a[0])
+    assert_raises(IndexError, lambda: a[:])
 
 def test_operators():
     # For every operator, we test that it works for the required type
@@ -90,7 +95,7 @@ def test_operators():
         "__mul__": "numeric",
         "__ne__": "all",
         "__or__": "integer_or_boolean",
-        "__pow__": "floating",
+        "__pow__": "numeric",
         "__rshift__": "integer",
         "__sub__": "numeric",
         "__truediv__": "floating",
@@ -255,15 +260,116 @@ def test_operators():
 
 
 def test_python_scalar_construtors():
-    a = asarray(False)
-    b = asarray(0)
-    c = asarray(0.0)
+    b = asarray(False)
+    i = asarray(0)
+    f = asarray(0.0)
 
-    assert bool(a) == bool(b) == bool(c) == False
-    assert int(a) == int(b) == int(c) == 0
-    assert float(a) == float(b) == float(c) == 0.0
+    assert bool(b) == False
+    assert int(i) == 0
+    assert float(f) == 0.0
+    assert operator.index(i) == 0
 
     # bool/int/float should only be allowed on 0-D arrays.
     assert_raises(TypeError, lambda: bool(asarray([False])))
     assert_raises(TypeError, lambda: int(asarray([0])))
     assert_raises(TypeError, lambda: float(asarray([0.0])))
+    assert_raises(TypeError, lambda: operator.index(asarray([0])))
+
+    # bool/int/float should only be allowed on arrays of the corresponding
+    # dtype
+    assert_raises(ValueError, lambda: bool(i))
+    assert_raises(ValueError, lambda: bool(f))
+
+    assert_raises(ValueError, lambda: int(b))
+    assert_raises(ValueError, lambda: int(f))
+
+    assert_raises(ValueError, lambda: float(b))
+    assert_raises(ValueError, lambda: float(i))
+
+    assert_raises(TypeError, lambda: operator.index(b))
+    assert_raises(TypeError, lambda: operator.index(f))
+
+
+def test_device_property():
+    a = ones((3, 4))
+    assert a.device == 'cpu'
+
+    assert all(equal(a.to_device('cpu'), a))
+    assert_raises(ValueError, lambda: a.to_device('gpu'))
+
+    assert all(equal(asarray(a, device='cpu'), a))
+    assert_raises(ValueError, lambda: asarray(a, device='gpu'))
+
+def test_array_properties():
+    a = ones((1, 2, 3))
+    b = ones((2, 3))
+    assert_raises(ValueError, lambda: a.T)
+
+    assert isinstance(b.T, Array)
+    assert b.T.shape == (3, 2)
+
+    assert isinstance(a.mT, Array)
+    assert a.mT.shape == (1, 3, 2)
+    assert isinstance(b.mT, Array)
+    assert b.mT.shape == (3, 2)
+
+def test___array__():
+    a = ones((2, 3), dtype=int16)
+    assert np.asarray(a) is a._array
+    b = np.asarray(a, dtype=np.float64)
+    assert np.all(np.equal(b, np.ones((2, 3), dtype=np.float64)))
+    assert b.dtype == np.float64
+
+def test_allow_newaxis():
+    a = ones(5)
+    indexed_a = a[None, :]
+    assert indexed_a.shape == (1, 5)
+
+def test_disallow_flat_indexing_with_newaxis():
+    a = ones((3, 3, 3))
+    with pytest.raises(IndexError):
+        a[None, 0, 0]
+
+def test_disallow_mask_with_newaxis():
+    a = ones((3, 3, 3))
+    with pytest.raises(IndexError):
+        a[None, asarray(True)]
+
+@pytest.mark.parametrize("shape", [(), (5,), (3, 3, 3)])
+@pytest.mark.parametrize("index", ["string", False, True])
+def test_error_on_invalid_index(shape, index):
+    a = ones(shape)
+    with pytest.raises(IndexError):
+        a[index]
+
+def test_mask_0d_array_without_errors():
+    a = ones(())
+    a[asarray(True)]
+
+@pytest.mark.parametrize(
+    "i", [slice(5), slice(5, 0), asarray(True), asarray([0, 1])]
+)
+def test_error_on_invalid_index_with_ellipsis(i):
+    a = ones((3, 3, 3))
+    with pytest.raises(IndexError):
+        a[..., i]
+    with pytest.raises(IndexError):
+        a[i, ...]
+
+def test_array_keys_use_private_array():
+    """
+    Indexing operations convert array keys before indexing the internal array
+
+    Fails when array_api array keys are not converted into NumPy-proper arrays
+    in __getitem__(). This is achieved by passing array_api arrays with 0-sized
+    dimensions, which NumPy-proper treats erroneously - not sure why!
+
+    TODO: Find and use appropiate __setitem__() case.
+    """
+    a = ones((0, 0), dtype=bool_)
+    assert a[a].shape == (0,)
+
+    a = ones((0,), dtype=bool_)
+    key = ones((0, 0), dtype=bool_)
+    with pytest.raises(IndexError):
+        a[key]

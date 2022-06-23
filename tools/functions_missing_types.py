@@ -32,7 +32,6 @@ EXCLUDE_LIST = {
         "math",
         # Accidentally public, deprecated, or shouldn't be used
         "Tester",
-        "alen",
         "add_docstring",
         "add_newdoc",
         "add_newdoc_ufunc",

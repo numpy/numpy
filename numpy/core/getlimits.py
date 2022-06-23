@@ -5,13 +5,12 @@ __all__ = ['finfo', 'iinfo']
 
 import warnings
 
-from .machar import MachAr
+from ._machar import MachAr
 from .overrides import set_module
 from . import numeric
 from . import numerictypes as ntypes
 from .numeric import array, inf, NaN
 from .umath import log10, exp2, nextafter, isnan
-from . import umath
 
 
 def _fr0(a):
@@ -386,6 +385,8 @@ class finfo:
     machar : MachAr
         The object which calculated these parameters and holds more
         detailed information.
+
+        .. deprecated:: 1.22
     machep : int
         The exponent that yields `eps`.
     max : floating point number of the appropriate type
@@ -502,7 +503,7 @@ class finfo:
         self.eps = machar.eps.flat[0]
         self.nexp = machar.iexp
         self.nmant = machar.it
-        self.machar = machar
+        self._machar = machar
         self._str_tiny = machar._str_xmin.strip()
         self._str_max = machar._str_xmax.strip()
         self._str_epsneg = machar._str_epsneg.strip()
@@ -552,11 +553,11 @@ class finfo:
         """
         # This check is necessary because the value for smallest_normal is
         # platform dependent for longdouble types.
-        if isnan(self.machar.smallest_normal.flat[0]):
+        if isnan(self._machar.smallest_normal.flat[0]):
             warnings.warn(
                 'The value of smallest normal is undefined for double double',
                 UserWarning, stacklevel=2)
-        return self.machar.smallest_normal.flat[0]
+        return self._machar.smallest_normal.flat[0]
 
     @property
     def tiny(self):
@@ -574,6 +575,20 @@ class finfo:
             double-double.
         """
         return self.smallest_normal
+
+    @property
+    def machar(self):
+        """The object which calculated these parameters and holds more
+        detailed information.
+
+        .. deprecated:: 1.22
+        """
+        # Deprecated 2021-10-27, NumPy 1.22
+        warnings.warn(
+            "`finfo.machar` is deprecated (NumPy 1.22)",
+            DeprecationWarning, stacklevel=2,
+        )
+        return self._machar
 
 
 @set_module('numpy')

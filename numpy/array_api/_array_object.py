@@ -29,10 +29,12 @@ from ._dtypes import (
     _dtype_categories,
 )
 
-from typing import TYPE_CHECKING, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Optional, Tuple, Union, Any, SupportsIndex
+import types
 
 if TYPE_CHECKING:
-    from ._typing import PyCapsule, Device, Dtype
+    from ._typing import Any, PyCapsule, Device, Dtype
+    import numpy.typing as npt
 
 import numpy as np
 
@@ -54,6 +56,7 @@ class Array:
     functions, such as asarray().
 
     """
+    _array: np.ndarray
 
     # Use a custom constructor instead of __init__, as manually initializing
     # this class is not supported API.
@@ -99,13 +102,31 @@ class Array:
         """
         Performs the operation __repr__.
         """
-        return f"Array({np.array2string(self._array, separator=', ')}, dtype={self.dtype.name})"
+        suffix = f", dtype={self.dtype.name})"
+        if 0 in self.shape:
+            prefix = "empty("
+            mid = str(self.shape)
+        else:
+            prefix = "Array("
+            mid = np.array2string(self._array, separator=', ', prefix=prefix, suffix=suffix)
+        return prefix + mid + suffix
+
+    # This function is not required by the spec, but we implement it here for
+    # convenience so that np.asarray(np.array_api.Array) will work.
+    def __array__(self, dtype: None | np.dtype[Any] = None) -> npt.NDArray[Any]:
+        """
+        Warning: this method is NOT part of the array API spec. Implementers
+        of other libraries need not include it, and users should not assume it
+        will be present in other implementations.
+
+        """
+        return np.asarray(self._array, dtype=dtype)
 
     # These are various helper functions to make the array behavior match the
     # spec in places where it either deviates from or is more strict than
     # NumPy behavior
 
-    def _check_allowed_dtypes(self, other, dtype_category, op):
+    def _check_allowed_dtypes(self, other: bool | int | float | Array, dtype_category: str, op: str) -> Array:
         """
         Helper function for operators to only allow specific input dtypes
 
@@ -156,6 +177,8 @@ class Array:
         integer that is too large to fit in a NumPy integer dtype, or
         TypeError when the scalar type is incompatible with the dtype of self.
         """
+        # Note: Only Python scalar types that match the array dtype are
+        # allowed.
         if isinstance(scalar, bool):
             if self.dtype not in _boolean_dtypes:
                 raise TypeError(
@@ -174,6 +197,9 @@ class Array:
         else:
             raise TypeError("'scalar' must be a Python scalar")
 
+        # Note: scalars are unconditionally cast to the same dtype as the
+        # array.
+
         # Note: the spec only specifies integer-dtype/int promotion
         # behavior for integers within the bounds of the integer dtype.
         # Outside of those bounds we use the default NumPy behavior (either
@@ -181,7 +207,7 @@ class Array:
         return Array._new(np.array(scalar, self.dtype))
 
     @staticmethod
-    def _normalize_two_args(x1, x2):
+    def _normalize_two_args(x1, x2) -> Tuple[Array, Array]:
         """
         Normalize inputs to two arg functions to fix type promotion rules
 
@@ -217,8 +243,7 @@ class Array:
 
     # Note: A large fraction of allowed indices are disallowed here (see the
     # docstring below)
-    @staticmethod
-    def _validate_index(key, shape):
+    def _validate_index(self, key):
         """
         Validate an index according to the array API.
 
@@ -231,8 +256,7 @@ class Array:
         https://data-apis.org/array-api/latest/API_specification/indexing.html
         for the full list of required indexing behavior
 
-        This function either raises IndexError if the index ``key`` is
-        invalid, or a new key to be used in place of ``key`` in indexing. It
+        This function raises IndexError if the index ``key`` is invalid. It
         only raises ``IndexError`` on indices that are not already rejected by
         NumPy, as NumPy will already raise the appropriate error on such
         indices. ``shape`` may be None, in which case, only cases that are
@@ -240,6 +264,10 @@ class Array:
 
         The following cases are allowed by NumPy, but not specified by the array
         API specification:
+
+        - Indices to not include an implicit ellipsis at the end. That is,
+          every axis of an array must be explicitly indexed or an ellipsis
+          included. This behaviour is sometimes referred to as flat indexing.
 
         - The start and stop of a slice may not be out of bounds. In
           particular, for a slice ``i:j:k`` on an axis of size ``n``, only the
@@ -262,87 +290,122 @@ class Array:
         ``Array._new`` constructor, not this function.
 
         """
-        if isinstance(key, slice):
-            if shape is None:
-                return key
-            if shape == ():
-                return key
-            size = shape[0]
-            # Ensure invalid slice entries are passed through.
-            if key.start is not None:
-                try:
-                    operator.index(key.start)
-                except TypeError:
-                    return key
-                if not (-size <= key.start <= max(0, size - 1)):
-                    raise IndexError(
-                        "Slices with out-of-bounds start are not allowed in the array API namespace"
-                    )
-            if key.stop is not None:
-                try:
-                    operator.index(key.stop)
-                except TypeError:
-                    return key
-                step = 1 if key.step is None else key.step
-                if (step > 0 and not (-size <= key.stop <= size)
-                    or step < 0 and not (-size - 1 <= key.stop <= max(0, size - 1))):
-                    raise IndexError("Slices with out-of-bounds stop are not allowed in the array API namespace")
-            return key
-
-        elif isinstance(key, tuple):
-            key = tuple(Array._validate_index(idx, None) for idx in key)
-
-            for idx in key:
-                if (
-                    isinstance(idx, np.ndarray)
-                    and idx.dtype in _boolean_dtypes
-                    or isinstance(idx, (bool, np.bool_))
-                ):
-                    if len(key) == 1:
-                        return key
-                    raise IndexError(
-                        "Boolean array indices combined with other indices are not allowed in the array API namespace"
-                    )
-                if isinstance(idx, tuple):
-                    raise IndexError(
-                        "Nested tuple indices are not allowed in the array API namespace"
-                    )
-
-            if shape is None:
-                return key
-            n_ellipsis = key.count(...)
-            if n_ellipsis > 1:
-                return key
-            ellipsis_i = key.index(...) if n_ellipsis else len(key)
-
-            for idx, size in list(zip(key[:ellipsis_i], shape)) + list(
-                zip(key[:ellipsis_i:-1], shape[:ellipsis_i:-1])
+        _key = key if isinstance(key, tuple) else (key,)
+        for i in _key:
+            if isinstance(i, bool) or not (
+                isinstance(i, SupportsIndex)  # i.e. ints
+                or isinstance(i, slice)
+                or i == Ellipsis
+                or i is None
+                or isinstance(i, Array)
+                or isinstance(i, np.ndarray)
             ):
-                Array._validate_index(idx, (size,))
-            return key
-        elif isinstance(key, bool):
-            return key
-        elif isinstance(key, Array):
-            if key.dtype in _integer_dtypes:
-                if key.ndim != 0:
+                raise IndexError(
+                    f"Single-axes index {i} has {type(i)=}, but only "
+                    "integers, slices (:), ellipsis (...), newaxis (None), "
+                    "zero-dimensional integer arrays and boolean arrays "
+                    "are specified in the Array API."
+                )
+
+        nonexpanding_key = []
+        single_axes = []
+        n_ellipsis = 0
+        key_has_mask = False
+        for i in _key:
+            if i is not None:
+                nonexpanding_key.append(i)
+                if isinstance(i, Array) or isinstance(i, np.ndarray):
+                    if i.dtype in _boolean_dtypes:
+                        key_has_mask = True
+                    single_axes.append(i)
+                else:
+                    # i must not be an array here, to avoid elementwise equals
+                    if i == Ellipsis:
+                        n_ellipsis += 1
+                    else:
+                        single_axes.append(i)
+
+        n_single_axes = len(single_axes)
+        if n_ellipsis > 1:
+            return  # handled by ndarray
+        elif n_ellipsis == 0:
+            # Note boolean masks must be the sole index, which we check for
+            # later on.
+            if not key_has_mask and n_single_axes < self.ndim:
+                raise IndexError(
+                    f"{self.ndim=}, but the multi-axes index only specifies "
+                    f"{n_single_axes} dimensions. If this was intentional, "
+                    "add a trailing ellipsis (...) which expands into as many "
+                    "slices (:) as necessary - this is what np.ndarray arrays "
+                    "implicitly do, but such flat indexing behaviour is not "
+                    "specified in the Array API."
+                )
+
+        if n_ellipsis == 0:
+            indexed_shape = self.shape
+        else:
+            ellipsis_start = None
+            for pos, i in enumerate(nonexpanding_key):
+                if not (isinstance(i, Array) or isinstance(i, np.ndarray)):
+                    if i == Ellipsis:
+                        ellipsis_start = pos
+                        break
+            assert ellipsis_start is not None  # sanity check
+            ellipsis_end = self.ndim - (n_single_axes - ellipsis_start)
+            indexed_shape = (
+                self.shape[:ellipsis_start] + self.shape[ellipsis_end:]
+            )
+        for i, side in zip(single_axes, indexed_shape):
+            if isinstance(i, slice):
+                if side == 0:
+                    f_range = "0 (or None)"
+                else:
+                    f_range = f"between -{side} and {side - 1} (or None)"
+                if i.start is not None:
+                    try:
+                        start = operator.index(i.start)
+                    except TypeError:
+                        pass  # handled by ndarray
+                    else:
+                        if not (-side <= start <= side):
+                            raise IndexError(
+                                f"Slice {i} contains {start=}, but should be "
+                                f"{f_range} for an axis of size {side} "
+                                "(out-of-bounds starts are not specified in "
+                                "the Array API)"
+                            )
+                if i.stop is not None:
+                    try:
+                        stop = operator.index(i.stop)
+                    except TypeError:
+                        pass  # handled by ndarray
+                    else:
+                        if not (-side <= stop <= side):
+                            raise IndexError(
+                                f"Slice {i} contains {stop=}, but should be "
+                                f"{f_range} for an axis of size {side} "
+                                "(out-of-bounds stops are not specified in "
+                                "the Array API)"
+                            )
+            elif isinstance(i, Array):
+                if i.dtype in _boolean_dtypes and len(_key) != 1:
+                    assert isinstance(key, tuple)  # sanity check
                     raise IndexError(
-                        "Non-zero dimensional integer array indices are not allowed in the array API namespace"
+                        f"Single-axes index {i} is a boolean array and "
+                        f"{len(key)=}, but masking is only specified in the "
+                        "Array API when the array is the sole index."
                     )
-            return key._array
-        elif key is Ellipsis:
-            return key
-        elif key is None:
-            raise IndexError(
-                "newaxis indices are not allowed in the array API namespace"
-            )
-        try:
-            return operator.index(key)
-        except TypeError:
-            # Note: This also omits boolean arrays that are not already in
-            # Array() form, like a list of booleans.
-            raise IndexError(
-                "Only integers, slices (`:`), ellipsis (`...`), and boolean arrays are valid indices in the array API namespace"
-            )
+                elif i.dtype in _integer_dtypes and i.ndim != 0:
+                    raise IndexError(
+                        f"Single-axes index {i} is a non-zero-dimensional "
+                        "integer array, but advanced integer indexing is not "
+                        "specified in the Array API."
+                    )
+            elif isinstance(i, tuple):
+                raise IndexError(
+                    f"Single-axes index {i} is a tuple, but nested tuple "
+                    "indices are not specified in the Array API."
+                )
 
     # Everything below this line is required by the spec.
 
@@ -379,7 +442,7 @@ class Array:
 
     def __array_namespace__(
         self: Array, /, *, api_version: Optional[str] = None
-    ) -> object:
+    ) -> types.ModuleType:
         if api_version is not None and not api_version.startswith("2021."):
             raise ValueError(f"Unrecognized array API version: {api_version!r}")
         return array_api
@@ -391,6 +454,8 @@ class Array:
         # Note: This is an error here.
         if self._array.ndim != 0:
             raise TypeError("bool is only allowed on arrays with 0 dimensions")
+        if self.dtype not in _boolean_dtypes:
+            raise ValueError("bool is only allowed on boolean arrays")
         res = self._array.__bool__()
         return res
 
@@ -398,16 +463,14 @@ class Array:
         """
         Performs the operation __dlpack__.
         """
-        res = self._array.__dlpack__(stream=stream)
-        return self.__class__._new(res)
+        return self._array.__dlpack__(stream=stream)
 
     def __dlpack_device__(self: Array, /) -> Tuple[IntEnum, int]:
         """
         Performs the operation __dlpack_device__.
         """
         # Note: device support is required for this
-        res = self._array.__dlpack_device__()
-        return self.__class__._new(res)
+        return self._array.__dlpack_device__()
 
     def __eq__(self: Array, other: Union[int, float, bool, Array], /) -> Array:
         """
@@ -429,6 +492,8 @@ class Array:
         # Note: This is an error here.
         if self._array.ndim != 0:
             raise TypeError("float is only allowed on arrays with 0 dimensions")
+        if self.dtype not in _floating_dtypes:
+            raise ValueError("float is only allowed on floating-point arrays")
         res = self._array.__float__()
         return res
 
@@ -466,7 +531,10 @@ class Array:
         """
         # Note: Only indices required by the spec are allowed. See the
         # docstring of _validate_index
-        key = self._validate_index(key, self.shape)
+        self._validate_index(key)
+        if isinstance(key, Array):
+            # Indexing self._array with array_api arrays can be erroneous
+            key = key._array
         res = self._array.__getitem__(key)
         return self._new(res)
 
@@ -488,7 +556,16 @@ class Array:
         # Note: This is an error here.
         if self._array.ndim != 0:
             raise TypeError("int is only allowed on arrays with 0 dimensions")
+        if self.dtype not in _integer_dtypes:
+            raise ValueError("int is only allowed on integer arrays")
         res = self._array.__int__()
+        return res
+
+    def __index__(self: Array, /) -> int:
+        """
+        Performs the operation __index__.
+        """
+        res = self._array.__index__()
         return res
 
     def __invert__(self: Array, /) -> Array:
@@ -510,13 +587,6 @@ class Array:
         self, other = self._normalize_two_args(self, other)
         res = self._array.__le__(other._array)
         return self.__class__._new(res)
-
-    # Note: __len__ may end up being removed from the array API spec.
-    def __len__(self, /) -> int:
-        """
-        Performs the operation __len__.
-        """
-        return self._array.__len__()
 
     def __lshift__(self: Array, other: Union[int, Array], /) -> Array:
         """
@@ -614,15 +684,13 @@ class Array:
         res = self._array.__pos__()
         return self.__class__._new(res)
 
-    # PEP 484 requires int to be a subtype of float, but __pow__ should not
-    # accept int.
-    def __pow__(self: Array, other: Union[float, Array], /) -> Array:
+    def __pow__(self: Array, other: Union[int, float, Array], /) -> Array:
         """
         Performs the operation __pow__.
         """
         from ._elementwise_functions import pow
 
-        other = self._check_allowed_dtypes(other, "floating-point", "__pow__")
+        other = self._check_allowed_dtypes(other, "numeric", "__pow__")
         if other is NotImplemented:
             return other
         # Note: NumPy's __pow__ does not follow type promotion rules for 0-d
@@ -653,7 +721,10 @@ class Array:
         """
         # Note: Only indices required by the spec are allowed. See the
         # docstring of _validate_index
-        key = self._validate_index(key, self.shape)
+        self._validate_index(key)
+        if isinstance(key, Array):
+            # Indexing self._array with array_api arrays can be erroneous
+            key = key._array
         self._array.__setitem__(key, asarray(value)._array)
 
     def __sub__(self: Array, other: Union[int, float, Array], /) -> Array:
@@ -872,23 +943,23 @@ class Array:
         res = self._array.__ror__(other._array)
         return self.__class__._new(res)
 
-    def __ipow__(self: Array, other: Union[float, Array], /) -> Array:
+    def __ipow__(self: Array, other: Union[int, float, Array], /) -> Array:
         """
         Performs the operation __ipow__.
         """
-        other = self._check_allowed_dtypes(other, "floating-point", "__ipow__")
+        other = self._check_allowed_dtypes(other, "numeric", "__ipow__")
         if other is NotImplemented:
             return other
         self._array.__ipow__(other._array)
         return self
 
-    def __rpow__(self: Array, other: Union[float, Array], /) -> Array:
+    def __rpow__(self: Array, other: Union[int, float, Array], /) -> Array:
         """
         Performs the operation __rpow__.
         """
         from ._elementwise_functions import pow
 
-        other = self._check_allowed_dtypes(other, "floating-point", "__rpow__")
+        other = self._check_allowed_dtypes(other, "numeric", "__rpow__")
         if other is NotImplemented:
             return other
         # Note: NumPy's __pow__ does not follow the spec type promotion rules
@@ -979,6 +1050,13 @@ class Array:
         res = self._array.__rxor__(other._array)
         return self.__class__._new(res)
 
+    def to_device(self: Array, device: Device, /, stream: None = None) -> Array:
+        if stream is not None:
+            raise ValueError("The stream argument to to_device() is not supported")
+        if device == 'cpu':
+            return self
+        raise ValueError(f"Unsupported device {device!r}")
+
     @property
     def dtype(self) -> Dtype:
         """
@@ -991,6 +1069,12 @@ class Array:
     @property
     def device(self) -> Device:
         return "cpu"
+
+    # Note: mT is new in array API spec (see matrix_transpose)
+    @property
+    def mT(self) -> Array:
+        from .linalg import matrix_transpose
+        return matrix_transpose(self)
 
     @property
     def ndim(self) -> int:
@@ -1026,4 +1110,9 @@ class Array:
 
         See its docstring for more information.
         """
-        return self._array.T
+        # Note: T only works on 2-dimensional arrays. See the corresponding
+        # note in the specification:
+        # https://data-apis.org/array-api/latest/API_specification/array_object.html#t
+        if self.ndim != 2:
+            raise ValueError("x.T requires x to have 2 dimensions. Use x.mT to transpose stacks of matrices and permute_dims() to permute dimensions.")
+        return self.__class__._new(self._array.T)

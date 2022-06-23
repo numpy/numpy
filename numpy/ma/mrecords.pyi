@@ -1,9 +1,9 @@
-from typing import List, Any, TypeVar
+from typing import Any, TypeVar
 
 from numpy import dtype
 from numpy.ma import MaskedArray
 
-__all__: List[str]
+__all__: list[str]
 
 # TODO: Set the `bound` to something more suitable once we
 # have proper shape support
@@ -78,11 +78,13 @@ def fromrecords(
 
 def fromtextfile(
     fname,
-    delimitor=...,
+    delimiter=...,
     commentchar=...,
     missingchar=...,
     varnames=...,
     vartypes=...,
+    # NOTE: deprecated: NumPy 1.22.0, 2021-09-23
+    # delimitor=...,
 ): ...
 
 def addfield(mrecord, newfield, newfieldname=...): ...

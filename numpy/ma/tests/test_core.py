@@ -43,9 +43,9 @@ from numpy.ma.core import (
     masked_less, masked_less_equal, masked_not_equal, masked_outside,
     masked_print_option, masked_values, masked_where, max, maximum,
     maximum_fill_value, min, minimum, minimum_fill_value, mod, multiply,
-    mvoid, nomask, not_equal, ones, outer, power, product, put, putmask,
-    ravel, repeat, reshape, resize, shape, sin, sinh, sometrue, sort, sqrt,
-    subtract, sum, take, tan, tanh, transpose, where, zeros,
+    mvoid, nomask, not_equal, ones, ones_like, outer, power, product, put,
+    putmask, ravel, repeat, reshape, resize, shape, sin, sinh, sometrue, sort,
+    sqrt, subtract, sum, take, tan, tanh, transpose, where, zeros, zeros_like,
     )
 from numpy.compat import pickle
 
@@ -1071,7 +1071,7 @@ class TestMaskedArrayArithmetic:
         assert_equal(z.mask, [[1, 1, 1], [0, 0, 0]])
 
     def test_mixed_arithmetic(self):
-        # Tests mixed arithmetics.
+        # Tests mixed arithmetic.
         na = np.array([1])
         ma = array([1])
         assert_(isinstance(na + ma, MaskedArray))
@@ -1084,7 +1084,7 @@ class TestMaskedArrayArithmetic:
         assert_equal(getmaskarray(2 / a), [1, 0, 1])
 
     def test_masked_singleton_arithmetic(self):
-        # Tests some scalar arithmetics on MaskedArrays.
+        # Tests some scalar arithmetic on MaskedArrays.
         # Masked singleton should remain masked no matter what
         xm = array(0, mask=1)
         assert_((1 / array(0)).mask)
@@ -1756,6 +1756,52 @@ class TestMaskedArrayArithmetic:
         assert_equal(test.mask, [True, False])
         assert_(test.fill_value == True)
 
+    @pytest.mark.parametrize('dt1', num_dts, ids=num_ids)
+    @pytest.mark.parametrize('dt2', num_dts, ids=num_ids)
+    @pytest.mark.parametrize('fill', [None, 1])
+    @pytest.mark.parametrize('op',
+            [operator.le, operator.lt, operator.ge, operator.gt])
+    def test_comparisons_for_numeric(self, op, dt1, dt2, fill):
+        # Test the equality of structured arrays
+        a = array([0, 1], dtype=dt1, mask=[0, 1], fill_value=fill)
+
+        test = op(a, a)
+        assert_equal(test.data, op(a._data, a._data))
+        assert_equal(test.mask, [False, True])
+        assert_(test.fill_value == True)
+
+        test = op(a, a[0])
+        assert_equal(test.data, op(a._data, a._data[0]))
+        assert_equal(test.mask, [False, True])
+        assert_(test.fill_value == True)
+
+        b = array([0, 1], dtype=dt2, mask=[1, 0], fill_value=fill)
+        test = op(a, b)
+        assert_equal(test.data, op(a._data, b._data))
+        assert_equal(test.mask, [True, True])
+        assert_(test.fill_value == True)
+
+        test = op(a[0], b)
+        assert_equal(test.data, op(a._data[0], b._data))
+        assert_equal(test.mask, [True, False])
+        assert_(test.fill_value == True)
+
+        test = op(b, a[0])
+        assert_equal(test.data, op(b._data, a._data[0]))
+        assert_equal(test.mask, [True, False])
+        assert_(test.fill_value == True)
+
+    @pytest.mark.parametrize('op',
+            [operator.le, operator.lt, operator.ge, operator.gt])
+    @pytest.mark.parametrize('fill', [None, "N/A"])
+    def test_comparisons_strings(self, op, fill):
+        # See gh-21770, mask propagation is broken for strings (and some other
+        # cases) so we explicitly test strings here.
+        # In principle only == and != may need special handling...
+        ma1 = masked_array(["a", "b", "cde"], mask=[0, 1, 0], fill_value=fill)
+        ma2 = masked_array(["cde", "b", "a"], mask=[0, 1, 0], fill_value=fill)
+        assert_equal(op(ma1, ma2)._data, op(ma1._data, ma2._data))
+
     def test_eq_with_None(self):
         # Really, comparisons with None should not be done, but check them
         # anyway. Note that pep8 will flag these tests.
@@ -1804,7 +1850,7 @@ class TestMaskedArrayArithmetic:
             assert_equal(test.mask, [[False, True],
                                      [False, True]])
 
-    def test_numpyarithmetics(self):
+    def test_numpyarithmetic(self):
         # Check that the mask is not back-propagated when using numpy functions
         a = masked_array([-1, 0, 1, 2, 3], mask=[0, 0, 0, 0, 1])
         control = masked_array([np.nan, np.nan, 0, np.log(2), -1],
@@ -2479,8 +2525,8 @@ class TestUfuncs:
             # also check that allclose uses ma ufuncs, to avoid warning
             allclose(m, 0.5)
 
-class TestMaskedArrayInPlaceArithmetics:
-    # Test MaskedArray Arithmetics
+class TestMaskedArrayInPlaceArithmetic:
+    # Test MaskedArray Arithmetic
 
     def setup(self):
         x = arange(10)
@@ -2763,8 +2809,8 @@ class TestMaskedArrayInPlaceArithmetics:
     def test_inplace_addition_scalar_type(self):
         # Test of inplace additions
         for t in self.othertypes:
-            with warnings.catch_warnings(record=True) as w:
-                warnings.filterwarnings("always")
+            with warnings.catch_warnings():
+                warnings.filterwarnings("error")
                 (x, y, xm) = (_.astype(t) for _ in self.uint8data)
                 xm[2] = masked
                 x += t(1)
@@ -2772,13 +2818,11 @@ class TestMaskedArrayInPlaceArithmetics:
                 xm += t(1)
                 assert_equal(xm, y + t(1))
 
-                assert_equal(len(w), 0, f'Failed on type={t}.')
-
     def test_inplace_addition_array_type(self):
         # Test of inplace additions
         for t in self.othertypes:
-            with warnings.catch_warnings(record=True) as w:
-                warnings.filterwarnings("always")
+            with warnings.catch_warnings():
+                warnings.filterwarnings("error")
                 (x, y, xm) = (_.astype(t) for _ in self.uint8data)
                 m = xm.mask
                 a = arange(10, dtype=t)
@@ -2789,26 +2833,22 @@ class TestMaskedArrayInPlaceArithmetics:
                 assert_equal(xm, y + a)
                 assert_equal(xm.mask, mask_or(m, a.mask))
 
-                assert_equal(len(w), 0, f'Failed on type={t}.')
-
     def test_inplace_subtraction_scalar_type(self):
         # Test of inplace subtractions
         for t in self.othertypes:
-            with warnings.catch_warnings(record=True) as w:
-                warnings.filterwarnings("always")
+            with warnings.catch_warnings():
+                warnings.filterwarnings("error")
                 (x, y, xm) = (_.astype(t) for _ in self.uint8data)
                 x -= t(1)
                 assert_equal(x, y - t(1))
                 xm -= t(1)
                 assert_equal(xm, y - t(1))
 
-                assert_equal(len(w), 0, f'Failed on type={t}.')
-
     def test_inplace_subtraction_array_type(self):
         # Test of inplace subtractions
         for t in self.othertypes:
-            with warnings.catch_warnings(record=True) as w:
-                warnings.filterwarnings("always")
+            with warnings.catch_warnings():
+                warnings.filterwarnings("error")
                 (x, y, xm) = (_.astype(t) for _ in self.uint8data)
                 m = xm.mask
                 a = arange(10, dtype=t)
@@ -2819,26 +2859,22 @@ class TestMaskedArrayInPlaceArithmetics:
                 assert_equal(xm, y - a)
                 assert_equal(xm.mask, mask_or(m, a.mask))
 
-                assert_equal(len(w), 0, f'Failed on type={t}.')
-
     def test_inplace_multiplication_scalar_type(self):
         # Test of inplace multiplication
         for t in self.othertypes:
-            with warnings.catch_warnings(record=True) as w:
-                warnings.filterwarnings("always")
+            with warnings.catch_warnings():
+                warnings.filterwarnings("error")
                 (x, y, xm) = (_.astype(t) for _ in self.uint8data)
                 x *= t(2)
                 assert_equal(x, y * t(2))
                 xm *= t(2)
                 assert_equal(xm, y * t(2))
 
-                assert_equal(len(w), 0, f'Failed on type={t}.')
-
     def test_inplace_multiplication_array_type(self):
         # Test of inplace multiplication
         for t in self.othertypes:
-            with warnings.catch_warnings(record=True) as w:
-                warnings.filterwarnings("always")
+            with warnings.catch_warnings():
+                warnings.filterwarnings("error")
                 (x, y, xm) = (_.astype(t) for _ in self.uint8data)
                 m = xm.mask
                 a = arange(10, dtype=t)
@@ -2849,15 +2885,13 @@ class TestMaskedArrayInPlaceArithmetics:
                 assert_equal(xm, y * a)
                 assert_equal(xm.mask, mask_or(m, a.mask))
 
-                assert_equal(len(w), 0, f'Failed on type={t}.')
-
     def test_inplace_floor_division_scalar_type(self):
         # Test of inplace division
         # Check for TypeError in case of unsupported types
         unsupported = {np.dtype(t).type for t in np.typecodes["Complex"]}
         for t in self.othertypes:
-            with warnings.catch_warnings(record=True) as w:
-                warnings.filterwarnings("always")
+            with warnings.catch_warnings():
+                warnings.filterwarnings("error")
                 (x, y, xm) = (_.astype(t) for _ in self.uint8data)
                 x = arange(10, dtype=t) * t(2)
                 xm = arange(10, dtype=t) * t(2)
@@ -2867,8 +2901,6 @@ class TestMaskedArrayInPlaceArithmetics:
                     xm //= t(2)
                     assert_equal(x, y)
                     assert_equal(xm, y)
-
-                    assert_equal(len(w), 0, "Failed on type=%s." % t)
                 except TypeError:
                     msg = f"Supported type {t} throwing TypeError"
                     assert t in unsupported, msg
@@ -2878,8 +2910,8 @@ class TestMaskedArrayInPlaceArithmetics:
         # Check for TypeError in case of unsupported types
         unsupported = {np.dtype(t).type for t in np.typecodes["Complex"]}
         for t in self.othertypes:
-            with warnings.catch_warnings(record=True) as w:
-                warnings.filterwarnings("always")
+            with warnings.catch_warnings():
+                warnings.filterwarnings("error")
                 (x, y, xm) = (_.astype(t) for _ in self.uint8data)
                 m = xm.mask
                 a = arange(10, dtype=t)
@@ -2893,8 +2925,6 @@ class TestMaskedArrayInPlaceArithmetics:
                         xm.mask,
                         mask_or(mask_or(m, a.mask), (a == t(0)))
                     )
-
-                    assert_equal(len(w), 0, f'Failed on type={t}.')
                 except TypeError:
                     msg = f"Supported type {t} throwing TypeError"
                     assert t in unsupported, msg
@@ -2977,8 +3007,8 @@ class TestMaskedArrayInPlaceArithmetics:
     def test_inplace_pow_type(self):
         # Test keeping data w/ (inplace) power
         for t in self.othertypes:
-            with warnings.catch_warnings(record=True) as w:
-                warnings.filterwarnings("always")
+            with warnings.catch_warnings():
+                warnings.filterwarnings("error")
                 # Test pow on scalar
                 x = array([1, 2, 3], mask=[0, 0, 1], dtype=t)
                 xx = x ** t(2)
@@ -2989,8 +3019,6 @@ class TestMaskedArrayInPlaceArithmetics:
                 x **= t(2)
                 assert_equal(x.data, xx_r.data)
                 assert_equal(x.mask, xx_r.mask)
-
-                assert_equal(len(w), 0, f'Failed on type={t}.')
 
 
 class TestMaskedArrayMethods:
@@ -3229,6 +3257,50 @@ class TestMaskedArrayMethods:
         b = a.view(masked_array)
         assert_(np.may_share_memory(a.mask, b.mask))
 
+    def test_zeros(self):
+        # Tests zeros/like
+        datatype = [('a', int), ('b', float), ('c', '|S8')]
+        a = masked_array([(1, 1.1, '1.1'), (2, 2.2, '2.2'), (3, 3.3, '3.3')],
+                         dtype=datatype)
+        assert_equal(len(a.fill_value.item()), len(datatype))
+
+        b = zeros(len(a), dtype=datatype)
+        assert_equal(b.shape, a.shape)
+        assert_equal(b.fill_value, a.fill_value)
+
+        b = zeros_like(a)
+        assert_equal(b.shape, a.shape)
+        assert_equal(b.fill_value, a.fill_value)
+
+        # check zeros_like mask handling
+        a = masked_array([1, 2, 3], mask=[False, True, False])
+        b = zeros_like(a)
+        assert_(not np.may_share_memory(a.mask, b.mask))
+        b = a.view()
+        assert_(np.may_share_memory(a.mask, b.mask))
+
+    def test_ones(self):
+        # Tests ones/like
+        datatype = [('a', int), ('b', float), ('c', '|S8')]
+        a = masked_array([(1, 1.1, '1.1'), (2, 2.2, '2.2'), (3, 3.3, '3.3')],
+                         dtype=datatype)
+        assert_equal(len(a.fill_value.item()), len(datatype))
+
+        b = ones(len(a), dtype=datatype)
+        assert_equal(b.shape, a.shape)
+        assert_equal(b.fill_value, a.fill_value)
+
+        b = ones_like(a)
+        assert_equal(b.shape, a.shape)
+        assert_equal(b.fill_value, a.fill_value)
+
+        # check ones_like mask handling
+        a = masked_array([1, 2, 3], mask=[False, True, False])
+        b = ones_like(a)
+        assert_(not np.may_share_memory(a.mask, b.mask))
+        b = a.view()
+        assert_(np.may_share_memory(a.mask, b.mask))
+
     @suppress_copy_mask_on_assignment
     def test_put(self):
         # Tests put.
@@ -3378,6 +3450,10 @@ class TestMaskedArrayMethods:
         assert_equal(sortedx._data, [1, 2, -2, -1, 0])
         assert_equal(sortedx._mask, [1, 1, 0, 0, 0])
 
+        x = array([0, -1], dtype=np.int8)
+        sortedx = sort(x, kind="stable")
+        assert_equal(sortedx, array([-1, 0], dtype=np.int8))
+
     def test_stable_sort(self):
         x = array([1, 2, 3, 1, 2, 3], dtype=np.uint8)
         expected = array([0, 3, 1, 4, 2, 5])
@@ -3464,7 +3540,7 @@ class TestMaskedArrayMethods:
         # Test sort on dtype with subarray (gh-8069)
         # Just check that the sort does not error, structured array subarrays
         # are treated as byte strings and that leads to differing behavior
-        # depending on endianess and `endwith`.
+        # depending on endianness and `endwith`.
         dt = np.dtype([('v', int, 2)])
         a = a.view(dt)
         test = sort(a)
@@ -4006,6 +4082,12 @@ class TestMaskedArrayMathMethods:
         assert_equal(a.max(-1), [3, 6])
         assert_equal(a.max(1), [3, 6])
 
+    def test_mean_overflow(self):
+        # Test overflow in masked arrays
+        # gh-20272
+        a = masked_array(np.full((10000, 10000), 65535, dtype=np.uint16),
+                         mask=np.zeros((10000, 10000)))
+        assert_equal(a.mean(), 65535.0)
 
 class TestMaskedArrayMathMethodsComplex:
     # Test class for miscellaneous MaskedArrays methods.
@@ -4128,7 +4210,11 @@ class TestMaskedArrayFunctions:
         # test that masked_where on a structured array sets a structured
         # mask (see issue #2972)
         a = np.zeros(10, dtype=[("A", "<f2"), ("B", "<f4")])
-        am = np.ma.masked_where(a["A"] < 5, a)
+        with np.errstate(over="ignore"):
+            # NOTE: The float16 "uses" 1e20 as mask, which overflows to inf
+            #       and warns.  Unrelated to this test, but probably undesired.
+            #       But NumPy previously did not warn for this overflow.
+            am = np.ma.masked_where(a["A"] < 5, a)
         assert_equal(am.mask.dtype.names, am.dtype.names)
         assert_equal(am["A"],
                     np.ma.masked_array(np.zeros(10), np.ones(10)))
@@ -4304,7 +4390,10 @@ class TestMaskedArrayFunctions:
         tmp[(xm <= 2).filled(True)] = True
         assert_equal(d._mask, tmp)
 
-        ixm = xm.astype(int)
+        with np.errstate(invalid="warn"):
+            # The fill value is 1e20, it cannot be converted to `int`:
+            with pytest.warns(RuntimeWarning, match="invalid value"):
+                ixm = xm.astype(int)
         d = where(ixm > 2, ixm, masked)
         assert_equal(d, [-9, -9, -9, -9, -9, 4, -9, -9, 10, -9, -9, 3])
         assert_equal(d.dtype, ixm.dtype)

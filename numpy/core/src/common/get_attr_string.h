@@ -1,6 +1,9 @@
 #ifndef NUMPY_CORE_SRC_COMMON_GET_ATTR_STRING_H_
 #define NUMPY_CORE_SRC_COMMON_GET_ATTR_STRING_H_
 
+#include <Python.h>
+#include "ufunc_object.h"
+
 static NPY_INLINE npy_bool
 _is_basic_python_type(PyTypeObject *tp)
 {
@@ -33,55 +36,18 @@ _is_basic_python_type(PyTypeObject *tp)
     );
 }
 
-/*
- * Stripped down version of PyObject_GetAttrString(obj, name) that does not
- * raise PyExc_AttributeError.
- *
- * This allows it to avoid creating then discarding exception objects when
- * performing lookups on objects without any attributes.
- *
- * Returns attribute value on success, NULL without an exception set if
- * there is no such attribute, and NULL with an exception on failure.
- */
-static NPY_INLINE PyObject *
-maybe_get_attr(PyObject *obj, char const *name)
-{
-    PyTypeObject *tp = Py_TYPE(obj);
-    PyObject *res = (PyObject *)NULL;
-
-    /* Attribute referenced by (char *)name */
-    if (tp->tp_getattr != NULL) {
-        res = (*tp->tp_getattr)(obj, (char *)name);
-        if (res == NULL && PyErr_ExceptionMatches(PyExc_AttributeError)) {
-            PyErr_Clear();
-        }
-    }
-    /* Attribute referenced by (PyObject *)name */
-    else if (tp->tp_getattro != NULL) {
-        PyObject *w = PyUnicode_InternFromString(name);
-        if (w == NULL) {
-            return (PyObject *)NULL;
-        }
-        res = (*tp->tp_getattro)(obj, w);
-        Py_DECREF(w);
-        if (res == NULL && PyErr_ExceptionMatches(PyExc_AttributeError)) {
-            PyErr_Clear();
-        }
-    }
-    return res;
-}
 
 /*
  * Lookup a special method, following the python approach of looking up
  * on the type object, rather than on the instance itself.
  *
  * Assumes that the special method is a numpy-specific one, so does not look
- * at builtin types, nor does it look at a base ndarray.
+ * at builtin types. It does check base ndarray and numpy scalar types.
  *
  * In future, could be made more like _Py_LookupSpecial
  */
 static NPY_INLINE PyObject *
-PyArray_LookupSpecial(PyObject *obj, char const *name)
+PyArray_LookupSpecial(PyObject *obj, PyObject *name_unicode)
 {
     PyTypeObject *tp = Py_TYPE(obj);
 
@@ -89,8 +55,15 @@ PyArray_LookupSpecial(PyObject *obj, char const *name)
     if (_is_basic_python_type(tp)) {
         return NULL;
     }
-    return maybe_get_attr((PyObject *)tp, name);
+    PyObject *res = PyObject_GetAttr((PyObject *)tp, name_unicode);
+
+    if (res == NULL && PyErr_ExceptionMatches(PyExc_AttributeError)) {
+        PyErr_Clear();
+    }
+
+    return res;
 }
+
 
 /*
  * PyArray_LookupSpecial_OnInstance:
@@ -101,7 +74,7 @@ PyArray_LookupSpecial(PyObject *obj, char const *name)
  * Kept for backwards compatibility. In future, we should deprecate this.
  */
 static NPY_INLINE PyObject *
-PyArray_LookupSpecial_OnInstance(PyObject *obj, char const *name)
+PyArray_LookupSpecial_OnInstance(PyObject *obj, PyObject *name_unicode)
 {
     PyTypeObject *tp = Py_TYPE(obj);
 
@@ -110,7 +83,13 @@ PyArray_LookupSpecial_OnInstance(PyObject *obj, char const *name)
         return NULL;
     }
 
-    return maybe_get_attr(obj, name);
+    PyObject *res = PyObject_GetAttr(obj, name_unicode);
+
+    if (res == NULL && PyErr_ExceptionMatches(PyExc_AttributeError)) {
+        PyErr_Clear();
+    }
+
+    return res;
 }
 
 #endif  /* NUMPY_CORE_SRC_COMMON_GET_ATTR_STRING_H_ */

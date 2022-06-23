@@ -28,7 +28,7 @@ from numpy.ma.extras import (
     ediff1d, apply_over_axes, apply_along_axis, compress_nd, compress_rowcols,
     mask_rowcols, clump_masked, clump_unmasked, flatnotmasked_contiguous,
     notmasked_contiguous, notmasked_edges, masked_all, masked_all_like, isin,
-    diagflat, stack, vstack
+    diagflat, ndenumerate, stack, vstack
     )
 
 
@@ -75,7 +75,7 @@ class TestGeneric:
         assert_equal(len(masked_arr['b']['c']), 1)
         assert_equal(masked_arr['b']['c'].shape, (1, 1))
         assert_equal(masked_arr['b']['c']._fill_value.shape, ())
-    
+
     def test_masked_all_with_object(self):
         # same as above except that the array is not nested
         my_dtype = np.dtype([('b', (object, (1,)))])
@@ -292,6 +292,29 @@ class TestAverage:
         assert_almost_equal(wav1.real, expected1.real)
         assert_almost_equal(wav1.imag, expected1.imag)
 
+    @pytest.mark.parametrize(
+        'x, axis, expected_avg, weights, expected_wavg, expected_wsum',
+        [([1, 2, 3], None, [2.0], [3, 4, 1], [1.75], [8.0]),
+         ([[1, 2, 5], [1, 6, 11]], 0, [[1.0, 4.0, 8.0]],
+          [1, 3], [[1.0, 5.0, 9.5]], [[4, 4, 4]])],
+    )
+    def test_basic_keepdims(self, x, axis, expected_avg,
+                            weights, expected_wavg, expected_wsum):
+        avg = np.ma.average(x, axis=axis, keepdims=True)
+        assert avg.shape == np.shape(expected_avg)
+        assert_array_equal(avg, expected_avg)
+
+        wavg = np.ma.average(x, axis=axis, weights=weights, keepdims=True)
+        assert wavg.shape == np.shape(expected_wavg)
+        assert_array_equal(wavg, expected_wavg)
+
+        wavg, wsum = np.ma.average(x, axis=axis, weights=weights,
+                                   returned=True, keepdims=True)
+        assert wavg.shape == np.shape(expected_wavg)
+        assert_array_equal(wavg, expected_wavg)
+        assert wsum.shape == np.shape(expected_wsum)
+        assert_array_equal(wsum, expected_wsum)
+
     def test_masked_weights(self):
         # Test with masked weights.
         # (Regression test for https://github.com/numpy/numpy/issues/10438)
@@ -308,6 +331,32 @@ class TestAverage:
         avg_masked = average(a, axis=0, weights=weights_masked, returned=False)
         expected_masked = np.array([6.0, 5.576271186440678, 6.576271186440678])
         assert_almost_equal(avg_masked, expected_masked)
+
+        # weights should be masked if needed
+        # depending on the array mask. This is to avoid summing
+        # masked nan or other values that are not cancelled by a zero
+        a = np.ma.array([1.0,   2.0,   3.0,  4.0],
+                   mask=[False, False, True, True])
+        avg_unmasked = average(a, weights=[1, 1, 1, np.nan])
+
+        assert_almost_equal(avg_unmasked, 1.5)
+
+        a = np.ma.array([
+            [1.0, 2.0, 3.0, 4.0],
+            [5.0, 6.0, 7.0, 8.0],
+            [9.0, 1.0, 2.0, 3.0],
+        ], mask=[
+            [False, True, True, False],
+            [True, False, True, True],
+            [True, False, True, False],
+        ])
+
+        avg_masked = np.ma.average(a, weights=[1, np.nan, 1], axis=0)
+        avg_expected = np.ma.array([1.0, np.nan, np.nan, 3.5],
+                              mask=[False, True, True, False])
+
+        assert_almost_equal(avg_masked, avg_expected)
+        assert_equal(avg_masked.mask, avg_expected.mask)
 
 
 class TestConcatenator:
@@ -1617,10 +1666,47 @@ class TestShapeBase:
             assert_equal(a.mask.shape, a.shape)
             assert_equal(a.data.shape, a.shape)
 
-
         b = diagflat(1.0)
         assert_equal(b.shape, (1, 1))
         assert_equal(b.mask.shape, b.data.shape)
+
+
+class TestNDEnumerate:
+
+    def test_ndenumerate_nomasked(self):
+        ordinary = np.arange(6.).reshape((1, 3, 2))
+        empty_mask = np.zeros_like(ordinary, dtype=bool)
+        with_mask = masked_array(ordinary, mask=empty_mask)
+        assert_equal(list(np.ndenumerate(ordinary)),
+                     list(ndenumerate(ordinary)))
+        assert_equal(list(ndenumerate(ordinary)),
+                     list(ndenumerate(with_mask)))
+        assert_equal(list(ndenumerate(with_mask)),
+                     list(ndenumerate(with_mask, compressed=False)))
+
+    def test_ndenumerate_allmasked(self):
+        a = masked_all(())
+        b = masked_all((100,))
+        c = masked_all((2, 3, 4))
+        assert_equal(list(ndenumerate(a)), [])
+        assert_equal(list(ndenumerate(b)), [])
+        assert_equal(list(ndenumerate(b, compressed=False)),
+                     list(zip(np.ndindex((100,)), 100 * [masked])))
+        assert_equal(list(ndenumerate(c)), [])
+        assert_equal(list(ndenumerate(c, compressed=False)),
+                     list(zip(np.ndindex((2, 3, 4)), 2 * 3 * 4 * [masked])))
+
+    def test_ndenumerate_mixedmasked(self):
+        a = masked_array(np.arange(12).reshape((3, 4)),
+                         mask=[[1, 1, 1, 1],
+                               [1, 1, 0, 1],
+                               [0, 0, 0, 0]])
+        items = [((1, 2), 6),
+                 ((2, 0), 8), ((2, 1), 9), ((2, 2), 10), ((2, 3), 11)]
+        assert_equal(list(ndenumerate(a)), items)
+        assert_equal(len(list(ndenumerate(a, compressed=False))), a.size)
+        for coordinate, value in ndenumerate(a, compressed=False):
+            assert_equal(a[coordinate], value)
 
 
 class TestStack:

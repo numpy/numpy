@@ -15,9 +15,10 @@
 /**begin repeat
  * #sfx       = u8, s8, u16, s16, u32, s32, u64, s64, f32, f64#
  * #bsfx      = b8, b8, b16, b16, b32, b32, b64, b64, b32, b64#
- * #esfx      = u16, s8, u32,s16, u32, s32, u64, s64, f32, f64#
+ * #esfx      = u16,s8, u32, s16, u32, s32, u64, s64, f32, f64#
+ * #size      = 8,  8,  16,  16,  32,  32,  64,  64,  32,  64#
  * #expand_sup= 1,  0,  1,   0,   0,   0,   0,   0,   0,   0#
- * #simd_sup  = 1,  1,  1,   1,   1,   1,   1,   1,   1,   NPY_SIMD_F64#
+ * #simd_sup  = 1,  1,  1,   1,   1,   1,   1,   1,   NPY_SIMD_F32, NPY_SIMD_F64#
  * #fp_only   = 0,  0,  0,   0,   0,   0,   0,   0,   1,   1#
  * #sat_sup   = 1,  1,  1,   1,   0,   0,   0,   0,   0,   0#
  * #mul_sup   = 1,  1,  1,   1,   1,   1,   0,   0,   1,   1#
@@ -30,6 +31,7 @@
  * #intdiv_sup= 1,  1,  1,   1,   1,   1,   1,   1,   0,   0#
  * #shl_imm   = 0,  0,  15,  15,  31,  31,  63,  63,  0,   0#
  * #shr_imm   = 0,  0,  16,  16,  32,  32,  64,  64,  0,   0#
+ * #bitw8b_sup= 1,  0,  0,   0,   0,   0,   0,   0,   0,   0#
  */
 #if @simd_sup@
 /***************************
@@ -232,6 +234,15 @@ err:
 /**end repeat1**/
 #endif // @ncont_sup@
 
+/****************************
+ * Lookup tables
+ ****************************/
+#if @size@ == 32
+SIMD_IMPL_INTRIN_2(lut32_@sfx@, v@sfx@, q@sfx@, vu@size@)
+#endif
+#if @size@ == 64
+SIMD_IMPL_INTRIN_2(lut16_@sfx@, v@sfx@, q@sfx@, vu@size@)
+#endif
 /***************************
  * Misc
  ***************************/
@@ -241,7 +252,7 @@ SIMD_IMPL_INTRIN_3(select_@sfx@, v@sfx@, v@bsfx@, v@sfx@, v@sfx@)
 
 /**begin repeat1
  * #sfx_to     = u8, s8, u16, s16, u32, s32, u64, s64, f32, f64#
- * #simd_sup2  = 1,  1,  1,   1,   1,   1,   1,   1,   1,   NPY_SIMD_F64#
+ * #simd_sup2  = 1,  1,  1,   1,   1,   1,   1,   1,   NPY_SIMD_F32, NPY_SIMD_F64#
  */
 #if @simd_sup2@
 SIMD_IMPL_INTRIN_1(reinterpret_@sfx_to@_@sfx@, v@sfx_to@, v@sfx@)
@@ -322,6 +333,13 @@ SIMD_IMPL_INTRIN_1(not_@sfx@, v@sfx@, v@sfx@)
 SIMD_IMPL_INTRIN_2(@intrin@_@sfx@, v@bsfx@, v@sfx@, v@sfx@)
 /**end repeat1**/
 
+#if @bitw8b_sup@
+SIMD_IMPL_INTRIN_2(andc_@sfx@, v@sfx@, v@sfx@, v@sfx@)
+SIMD_IMPL_INTRIN_2(andc_@bsfx@, v@bsfx@, v@bsfx@, v@bsfx@)
+SIMD_IMPL_INTRIN_2(orc_@bsfx@, v@bsfx@, v@bsfx@, v@bsfx@)
+SIMD_IMPL_INTRIN_2(xnor_@bsfx@, v@bsfx@, v@bsfx@, v@bsfx@)
+#endif
+
 /***************************
  * Conversion
  ***************************/
@@ -381,7 +399,7 @@ SIMD_IMPL_INTRIN_1(sumup_@sfx@, @esfx@, v@sfx@)
  ***************************/
 #if @fp_only@
 /**begin repeat1
- * #intrin = sqrt, recip, abs, square#
+ * #intrin = sqrt, recip, abs, square, rint, ceil, trunc, floor#
  */
 SIMD_IMPL_INTRIN_1(@intrin@_@sfx@, v@sfx@, v@sfx@)
 /**end repeat1**/
@@ -424,7 +442,9 @@ SIMD_IMPL_INTRIN_0N(cleanup)
  * Operators
  ***************************/
 // check special cases
-SIMD_IMPL_INTRIN_1(notnan_f32, vb32, vf32)
+#if NPY_SIMD_F32
+    SIMD_IMPL_INTRIN_1(notnan_f32, vb32, vf32)
+#endif
 #if NPY_SIMD_F64
     SIMD_IMPL_INTRIN_1(notnan_f64, vb64, vf64)
 #endif
@@ -432,7 +452,9 @@ SIMD_IMPL_INTRIN_1(notnan_f32, vb32, vf32)
  * Conversions
  ***************************/
 // round to nearest integer (assume even)
-SIMD_IMPL_INTRIN_1(round_s32_f32, vs32, vf32)
+#if NPY_SIMD_F32
+    SIMD_IMPL_INTRIN_1(round_s32_f32, vs32, vf32)
+#endif
 #if NPY_SIMD_F64
     SIMD_IMPL_INTRIN_2(round_s32_f64, vs32, vf64, vf64)
 #endif
@@ -462,6 +484,10 @@ SIMD_IMPL_INTRIN_1(not_@bsfx@, v@bsfx@, v@bsfx@)
 SIMD_IMPL_INTRIN_1(tobits_@bsfx@, u64, v@bsfx@)
 /**end repeat**/
 
+SIMD_IMPL_INTRIN_2(pack_b8_b16, vb8, vb16, vb16)
+SIMD_IMPL_INTRIN_4(pack_b8_b32, vb8, vb32, vb32, vb32, vb32)
+SIMD_IMPL_INTRIN_8(pack_b8_b64, vb8, vb64, vb64, vb64, vb64,
+                                     vb64, vb64, vb64, vb64)
 
 //#########################################################################
 //## Attach module functions
@@ -470,9 +496,10 @@ static PyMethodDef simd__intrinsics_methods[] = {
 /**begin repeat
  * #sfx       = u8, s8, u16, s16, u32, s32, u64, s64, f32, f64#
  * #bsfx      = b8, b8, b16, b16, b32, b32, b64, b64, b32, b64#
+ * #size      = 8,  8,  16,  16,  32,  32,  64,  64,  32,  64#
  * #esfx      = u16, s8, u32,s16, u32, s32, u64, s64, f32, f64#
- * #expand_sup =1,  0,  1,   0,   0,   0,   0,   0,   0,   0#
- * #simd_sup  = 1,  1,  1,   1,   1,   1,   1,   1,   1,   NPY_SIMD_F64#
+ * #expand_sup= 1,  0,  1,   0,   0,   0,   0,   0,   0,   0#
+ * #simd_sup  = 1,  1,  1,   1,   1,   1,   1,   1,   NPY_SIMD_F32, NPY_SIMD_F64#
  * #fp_only   = 0,  0,  0,   0,   0,   0,   0,   0,   1,   1#
  * #sat_sup   = 1,  1,  1,   1,   0,   0,   0,   0,   0,   0#
  * #mul_sup   = 1,  1,  1,   1,   1,   1,   0,   0,   1,   1#
@@ -485,6 +512,7 @@ static PyMethodDef simd__intrinsics_methods[] = {
  * #intdiv_sup= 1,  1,  1,   1,   1,   1,   1,   1,   0,   0#
  * #shl_imm   = 0,  0,  15,  15,  31,  31,  63,  63,  0,   0#
  * #shr_imm   = 0,  0,  16,  16,  32,  32,  64,  64,  0,   0#
+ * #bitw8b_sup= 1,  0,  0,   0,   0,   0,   0,   0,   0,   0#
  */
 #if @simd_sup@
 
@@ -509,12 +537,21 @@ SIMD_INTRIN_DEF(@intrin@_@sfx@)
 /**end repeat1**/
 #endif // ncont_sup
 
+/****************************
+ * Lookup tables
+ ****************************/
+#if @size@ == 32
+SIMD_INTRIN_DEF(lut32_@sfx@)
+#endif
+#if @size@ == 64
+SIMD_INTRIN_DEF(lut16_@sfx@)
+#endif
 /***************************
  * Misc
  ***************************/
 /**begin repeat1
  * #sfx_to     = u8, s8, u16, s16, u32, s32, u64, s64, f32, f64#
- * #simd_sup2  = 1,  1,  1,   1,   1,   1,   1,   1,   1,   NPY_SIMD_F64#
+ * #simd_sup2  = 1,  1,  1,   1,   1,   1,   1,   1,   NPY_SIMD_F32, NPY_SIMD_F64#
  */
 #if @simd_sup2@
 SIMD_INTRIN_DEF(reinterpret_@sfx_to@_@sfx@)
@@ -556,6 +593,13 @@ SIMD_INTRIN_DEF(@intrin@_@sfx@)
  */
 SIMD_INTRIN_DEF(@intrin@_@sfx@)
 /**end repeat1**/
+
+#if @bitw8b_sup@
+SIMD_INTRIN_DEF(andc_@sfx@)
+SIMD_INTRIN_DEF(andc_@bsfx@)
+SIMD_INTRIN_DEF(orc_@bsfx@)
+SIMD_INTRIN_DEF(xnor_@bsfx@)
+#endif
 
 /***************************
  * Conversion
@@ -615,7 +659,7 @@ SIMD_INTRIN_DEF(sumup_@sfx@)
  ***************************/
 #if @fp_only@
 /**begin repeat1
- * #intrin = sqrt, recip, abs, square#
+ * #intrin = sqrt, recip, abs, square, rint, ceil, trunc, floor#
  */
 SIMD_INTRIN_DEF(@intrin@_@sfx@)
 /**end repeat1**/
@@ -658,7 +702,9 @@ SIMD_INTRIN_DEF(cleanup)
  * Operators
  ***************************/
 // check special cases
-SIMD_INTRIN_DEF(notnan_f32)
+#if NPY_SIMD_F32
+    SIMD_INTRIN_DEF(notnan_f32)
+#endif
 #if NPY_SIMD_F64
     SIMD_INTRIN_DEF(notnan_f64)
 #endif
@@ -666,7 +712,9 @@ SIMD_INTRIN_DEF(notnan_f32)
  * Conversions
  ***************************/
 // round to nearest integer (assume even)
-SIMD_INTRIN_DEF(round_s32_f32)
+#if NPY_SIMD_F32
+    SIMD_INTRIN_DEF(round_s32_f32)
+#endif
 #if NPY_SIMD_F64
     SIMD_INTRIN_DEF(round_s32_f64)
 #endif
@@ -695,6 +743,11 @@ SIMD_INTRIN_DEF(not_@bsfx@)
  */
 SIMD_INTRIN_DEF(tobits_@bsfx@)
 /**end repeat**/
+
+// Pack multiple vectors into one
+SIMD_INTRIN_DEF(pack_b8_b16)
+SIMD_INTRIN_DEF(pack_b8_b32)
+SIMD_INTRIN_DEF(pack_b8_b64)
 
 /************************************************************************/
 {NULL, NULL, 0, NULL}
@@ -732,10 +785,16 @@ NPY_CPU_DISPATCH_CURFX(simd_create_module)(void)
     if (PyModule_AddIntConstant(m, "simd_f64", NPY_SIMD_F64)) {
         goto err;
     }
+    if (PyModule_AddIntConstant(m, "simd_f32", NPY_SIMD_F32)) {
+        goto err;
+    }
     if (PyModule_AddIntConstant(m, "simd_fma3", NPY_SIMD_FMA3)) {
         goto err;
     }
     if (PyModule_AddIntConstant(m, "simd_width", NPY_SIMD_WIDTH)) {
+        goto err;
+    }
+    if (PyModule_AddIntConstant(m, "simd_bigendian", NPY_SIMD_BIGENDIAN)) {
         goto err;
     }
 #if NPY_SIMD

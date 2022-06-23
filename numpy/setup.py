@@ -19,10 +19,12 @@ def configuration(parent_package='',top_path=None):
     config.add_subpackage('random')
     config.add_subpackage('testing')
     config.add_subpackage('typing')
+    config.add_subpackage('_typing')
     config.add_data_dir('doc')
     config.add_data_files('py.typed')
     config.add_data_files('*.pyi')
     config.add_subpackage('tests')
+    config.add_subpackage('_pyinstaller')
     config.make_config_py() # installs __config__.py
     return config
 

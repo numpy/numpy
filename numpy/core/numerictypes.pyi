@@ -1,16 +1,12 @@
 import sys
 import types
+from collections.abc import Iterable
 from typing import (
     Literal as L,
-    Type,
     Union,
-    Tuple,
     overload,
     Any,
     TypeVar,
-    Dict,
-    List,
-    Iterable,
     Protocol,
     TypedDict,
 )
@@ -50,17 +46,10 @@ from numpy.core._type_aliases import (
     sctypes as sctypes,
 )
 
-from numpy.typing import DTypeLike, ArrayLike, _SupportsDType
+from numpy._typing import DTypeLike, ArrayLike, _DTypeLike
 
 _T = TypeVar("_T")
 _SCT = TypeVar("_SCT", bound=generic)
-
-# A paramtrizable subset of `npt.DTypeLike`
-_DTypeLike = Union[
-    Type[_SCT],
-    dtype[_SCT],
-    _SupportsDType[dtype[_SCT]],
-]
 
 class _CastFunc(Protocol):
     def __call__(
@@ -78,48 +67,48 @@ class _TypeCodes(TypedDict):
     Datetime: L['Mm']
     All: L['?bhilqpBHILQPefdgFDGSUVOMm']
 
-class _typedict(Dict[Type[generic], _T]):
+class _typedict(dict[type[generic], _T]):
     def __getitem__(self, key: DTypeLike) -> _T: ...
 
 if sys.version_info >= (3, 10):
     _TypeTuple = Union[
-        Type[Any],
+        type[Any],
         types.UnionType,
-        Tuple[Union[Type[Any], types.UnionType, Tuple[Any, ...]], ...],
+        tuple[Union[type[Any], types.UnionType, tuple[Any, ...]], ...],
     ]
 else:
     _TypeTuple = Union[
-        Type[Any],
-        Tuple[Union[Type[Any], Tuple[Any, ...]], ...],
+        type[Any],
+        tuple[Union[type[Any], tuple[Any, ...]], ...],
     ]
 
-__all__: List[str]
+__all__: list[str]
 
 @overload
-def maximum_sctype(t: _DTypeLike[_SCT]) -> Type[_SCT]: ...
+def maximum_sctype(t: _DTypeLike[_SCT]) -> type[_SCT]: ...
 @overload
-def maximum_sctype(t: DTypeLike) -> Type[Any]: ...
+def maximum_sctype(t: DTypeLike) -> type[Any]: ...
 
 @overload
-def issctype(rep: dtype[Any] | Type[Any]) -> bool: ...
+def issctype(rep: dtype[Any] | type[Any]) -> bool: ...
 @overload
 def issctype(rep: object) -> L[False]: ...
 
 @overload
-def obj2sctype(rep: _DTypeLike[_SCT], default: None = ...) -> None | Type[_SCT]: ...
+def obj2sctype(rep: _DTypeLike[_SCT], default: None = ...) -> None | type[_SCT]: ...
 @overload
-def obj2sctype(rep: _DTypeLike[_SCT], default: _T) -> _T | Type[_SCT]: ...
+def obj2sctype(rep: _DTypeLike[_SCT], default: _T) -> _T | type[_SCT]: ...
 @overload
-def obj2sctype(rep: DTypeLike, default: None = ...) -> None | Type[Any]: ...
+def obj2sctype(rep: DTypeLike, default: None = ...) -> None | type[Any]: ...
 @overload
-def obj2sctype(rep: DTypeLike, default: _T) -> _T | Type[Any]: ...
+def obj2sctype(rep: DTypeLike, default: _T) -> _T | type[Any]: ...
 @overload
 def obj2sctype(rep: object, default: None = ...) -> None: ...
 @overload
 def obj2sctype(rep: object, default: _T) -> _T: ...
 
 @overload
-def issubclass_(arg1: Type[Any], arg2: _TypeTuple) -> bool: ...
+def issubclass_(arg1: type[Any], arg2: _TypeTuple) -> bool: ...
 @overload
 def issubclass_(arg1: object, arg2: object) -> L[False]: ...
 
@@ -137,37 +126,36 @@ def find_common_type(
 cast: _typedict[_CastFunc]
 nbytes: _typedict[int]
 typecodes: _TypeCodes
-ScalarType: Tuple[
-    Type[int],
-    Type[float],
-    Type[complex],
-    Type[int],
-    Type[bool],
-    Type[bytes],
-    Type[str],
-    Type[memoryview],
-    Type[bool_],
-    Type[csingle],
-    Type[cdouble],
-    Type[clongdouble],
-    Type[half],
-    Type[single],
-    Type[double],
-    Type[longdouble],
-    Type[byte],
-    Type[short],
-    Type[intc],
-    Type[int_],
-    Type[longlong],
-    Type[timedelta64],
-    Type[datetime64],
-    Type[object_],
-    Type[bytes_],
-    Type[str_],
-    Type[ubyte],
-    Type[ushort],
-    Type[uintc],
-    Type[uint],
-    Type[ulonglong],
-    Type[void],
+ScalarType: tuple[
+    type[int],
+    type[float],
+    type[complex],
+    type[bool],
+    type[bytes],
+    type[str],
+    type[memoryview],
+    type[bool_],
+    type[csingle],
+    type[cdouble],
+    type[clongdouble],
+    type[half],
+    type[single],
+    type[double],
+    type[longdouble],
+    type[byte],
+    type[short],
+    type[intc],
+    type[int_],
+    type[longlong],
+    type[timedelta64],
+    type[datetime64],
+    type[object_],
+    type[bytes_],
+    type[str_],
+    type[ubyte],
+    type[ushort],
+    type[uintc],
+    type[uint],
+    type[ulonglong],
+    type[void],
 ]

@@ -1,6 +1,6 @@
-.. _reference:
-
 .. module:: numpy
+
+.. _reference:
 
 ###############
 NumPy Reference
@@ -18,6 +18,7 @@ For learning how to use NumPy, see the :ref:`complete documentation <numpy_docs_
    :maxdepth: 2
 
    arrays
+   array_api
    constants
    ufuncs
    routines
@@ -25,8 +26,9 @@ For learning how to use NumPy, see the :ref:`complete documentation <numpy_docs_
    global_state
    distutils
    distutils_guide
+   distutils_status_migration
    c-api/index
-   simd/simd-optimizations
+   simd/index
    swig
 
 

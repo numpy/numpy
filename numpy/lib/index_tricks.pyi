@@ -1,12 +1,9 @@
+from collections.abc import Sequence
 from typing import (
     Any,
-    Tuple,
     TypeVar,
     Generic,
     overload,
-    List,
-    Union,
-    Sequence,
     Literal,
     SupportsIndex,
 )
@@ -29,11 +26,11 @@ from numpy import (
     _OrderCF,
     _ModeKind,
 )
-from numpy.typing import (
+from numpy._typing import (
     # Arrays
     ArrayLike,
     _NestedSequence,
-    _RecursiveSequence,
+    _FiniteNestedSequence,
     NDArray,
     _ArrayLikeInt,
 
@@ -53,27 +50,25 @@ from numpy.core.multiarray import (
 _T = TypeVar("_T")
 _DType = TypeVar("_DType", bound=dtype[Any])
 _BoolType = TypeVar("_BoolType", Literal[True], Literal[False])
-_TupType = TypeVar("_TupType", bound=Tuple[Any, ...])
+_TupType = TypeVar("_TupType", bound=tuple[Any, ...])
 _ArrayType = TypeVar("_ArrayType", bound=ndarray[Any, Any])
 
-__all__: List[str]
+__all__: list[str]
 
 @overload
-def ix_(*args: _NestedSequence[_SupportsDType[_DType]]) -> Tuple[ndarray[Any, _DType], ...]: ...
+def ix_(*args: _FiniteNestedSequence[_SupportsDType[_DType]]) -> tuple[ndarray[Any, _DType], ...]: ...
 @overload
-def ix_(*args: _NestedSequence[str]) -> Tuple[NDArray[str_], ...]: ...
+def ix_(*args: str | _NestedSequence[str]) -> tuple[NDArray[str_], ...]: ...
 @overload
-def ix_(*args: _NestedSequence[bytes]) -> Tuple[NDArray[bytes_], ...]: ...
+def ix_(*args: bytes | _NestedSequence[bytes]) -> tuple[NDArray[bytes_], ...]: ...
 @overload
-def ix_(*args: _NestedSequence[bool]) -> Tuple[NDArray[bool_], ...]: ...
+def ix_(*args: bool | _NestedSequence[bool]) -> tuple[NDArray[bool_], ...]: ...
 @overload
-def ix_(*args: _NestedSequence[int]) -> Tuple[NDArray[int_], ...]: ...
+def ix_(*args: int | _NestedSequence[int]) -> tuple[NDArray[int_], ...]: ...
 @overload
-def ix_(*args: _NestedSequence[float]) -> Tuple[NDArray[float_], ...]: ...
+def ix_(*args: float | _NestedSequence[float]) -> tuple[NDArray[float_], ...]: ...
 @overload
-def ix_(*args: _NestedSequence[complex]) -> Tuple[NDArray[complex_], ...]: ...
-@overload
-def ix_(*args: _RecursiveSequence) -> Tuple[NDArray[Any], ...]: ...
+def ix_(*args: complex | _NestedSequence[complex]) -> tuple[NDArray[complex_], ...]: ...
 
 class nd_grid(Generic[_BoolType]):
     sparse: _BoolType
@@ -81,13 +76,13 @@ class nd_grid(Generic[_BoolType]):
     @overload
     def __getitem__(
         self: nd_grid[Literal[False]],
-        key: Union[slice, Sequence[slice]],
+        key: slice | Sequence[slice],
     ) -> NDArray[Any]: ...
     @overload
     def __getitem__(
         self: nd_grid[Literal[True]],
-        key: Union[slice, Sequence[slice]],
-    ) -> List[NDArray[Any]]: ...
+        key: slice | Sequence[slice],
+    ) -> list[NDArray[Any]]: ...
 
 class MGridClass(nd_grid[Literal[False]]):
     def __init__(self) -> None: ...
@@ -153,7 +148,7 @@ class IndexExpression(Generic[_BoolType]):
     @overload
     def __getitem__(self, item: _TupType) -> _TupType: ...  # type: ignore[misc]
     @overload
-    def __getitem__(self: IndexExpression[Literal[True]], item: _T) -> Tuple[_T]: ...
+    def __getitem__(self: IndexExpression[Literal[True]], item: _T) -> tuple[_T]: ...
     @overload
     def __getitem__(self: IndexExpression[Literal[False]], item: _T) -> _T: ...
 
@@ -161,7 +156,7 @@ index_exp: IndexExpression[Literal[True]]
 s_: IndexExpression[Literal[False]]
 
 def fill_diagonal(a: ndarray[Any, Any], val: Any, wrap: bool = ...) -> None: ...
-def diag_indices(n: int, ndim: int = ...) -> Tuple[NDArray[int_], ...]: ...
-def diag_indices_from(arr: ArrayLike) -> Tuple[NDArray[int_], ...]: ...
+def diag_indices(n: int, ndim: int = ...) -> tuple[NDArray[int_], ...]: ...
+def diag_indices_from(arr: ArrayLike) -> tuple[NDArray[int_], ...]: ...
 
 # NOTE: see `numpy/__init__.pyi` for `ndenumerate` and `ndindex`

@@ -1,5 +1,3 @@
-from typing import List
-
 from numpy._pytesttester import PytestTester
 
 from numpy.random._generator import Generator as Generator
@@ -67,6 +65,6 @@ from numpy.random.mtrand import (
     zipf as zipf,
 )
 
-__all__: List[str]
-__path__: List[str]
+__all__: list[str]
+__path__: list[str]
 test: PytestTester

@@ -5,7 +5,8 @@ Does not include tests which fall under ``array_constructors``.
 
 """
 
-from typing import List
+from __future__ import annotations
+
 import numpy as np
 
 class SubClass(np.ndarray):
@@ -14,7 +15,7 @@ class SubClass(np.ndarray):
 i8 = np.int64(1)
 
 A = np.arange(27).reshape(3, 3, 3)
-B: List[List[List[int]]] = A.tolist()
+B: list[list[list[int]]] = A.tolist()
 C = np.empty((27, 27)).view(SubClass)
 
 np.count_nonzero(i8)

@@ -103,7 +103,8 @@ NPY_NO_EXPORT NPY_CASTING
 wrapped_legacy_resolve_descriptors(PyArrayMethodObject *NPY_UNUSED(self),
         PyArray_DTypeMeta *NPY_UNUSED(dtypes[]),
         PyArray_Descr *NPY_UNUSED(given_descrs[]),
-        PyArray_Descr *NPY_UNUSED(loop_descrs[]))
+        PyArray_Descr *NPY_UNUSED(loop_descrs[]),
+        npy_intp *NPY_UNUSED(view_offset))
 {
     PyErr_SetString(PyExc_RuntimeError,
             "cannot use legacy wrapping ArrayMethod without calling the ufunc "
@@ -121,14 +122,45 @@ simple_legacy_resolve_descriptors(
         PyArrayMethodObject *method,
         PyArray_DTypeMeta **dtypes,
         PyArray_Descr **given_descrs,
-        PyArray_Descr **output_descrs)
+        PyArray_Descr **output_descrs,
+        npy_intp *NPY_UNUSED(view_offset))
 {
+    int i = 0;
     int nin = method->nin;
     int nout = method->nout;
 
-    for (int i = 0; i < nin + nout; i++) {
+    if (nin == 2 && nout == 1 && given_descrs[2] != NULL
+            && dtypes[0] == dtypes[2]) {
+        /*
+         * Could be a reduction, which requires `descr[0] is descr[2]`
+         * (identity) at least currently. This is because `op[0] is op[2]`.
+         * (If the output descriptor is not passed, the below works.)
+         */
+        output_descrs[2] = NPY_DT_CALL_ensure_canonical(given_descrs[2]);
+        if (output_descrs[2] == NULL) {
+            Py_CLEAR(output_descrs[2]);
+            return -1;
+        }
+        Py_INCREF(output_descrs[2]);
+        output_descrs[0] = output_descrs[2];
+        if (dtypes[1] == dtypes[2]) {
+            /* Same for the second one (accumulation is stricter) */
+            Py_INCREF(output_descrs[2]);
+            output_descrs[1] = output_descrs[2];
+        }
+        else {
+            output_descrs[1] = NPY_DT_CALL_ensure_canonical(given_descrs[1]);
+            if (output_descrs[1] == NULL) {
+                i = 2;
+                goto fail;
+            }
+        }
+        return NPY_NO_CASTING;
+    }
+
+    for (; i < nin + nout; i++) {
         if (given_descrs[i] != NULL) {
-            output_descrs[i] = ensure_dtype_nbo(given_descrs[i]);
+            output_descrs[i] = NPY_DT_CALL_ensure_canonical(given_descrs[i]);
         }
         else if (dtypes[i] == dtypes[0] && i > 0) {
             /* Preserve metadata from the first operand if same dtype */
@@ -146,7 +178,7 @@ simple_legacy_resolve_descriptors(
     return NPY_NO_CASTING;
 
   fail:
-    for (int i = 0; i < nin + nout; i++) {
+    for (; i >= 0; i--) {
         Py_CLEAR(output_descrs[i]);
     }
     return -1;
@@ -160,7 +192,7 @@ simple_legacy_resolve_descriptors(
 NPY_NO_EXPORT int
 get_wrapped_legacy_ufunc_loop(PyArrayMethod_Context *context,
         int aligned, int move_references,
-        npy_intp *NPY_UNUSED(strides),
+        const npy_intp *NPY_UNUSED(strides),
         PyArrayMethod_StridedLoop **out_loop,
         NpyAuxData **out_transferdata,
         NPY_ARRAYMETHOD_FLAGS *flags)
@@ -194,6 +226,10 @@ get_wrapped_legacy_ufunc_loop(PyArrayMethod_Context *context,
     *out_loop = &generic_wrapped_legacy_loop;
     *out_transferdata = get_new_loop_data(
             loop, user_data, (*flags & NPY_METH_REQUIRES_PYAPI) != 0);
+    if (*out_transferdata == NULL) {
+        PyErr_NoMemory();
+        return -1;
+    }
     return 0;
 }
 
@@ -217,6 +253,25 @@ PyArray_NewLegacyWrappingArrayMethod(PyUFuncObject *ufunc,
      */
     int any_output_flexible = 0;
     NPY_ARRAYMETHOD_FLAGS flags = 0;
+    if (ufunc->nargs == 3 &&
+            signature[0]->type_num == NPY_BOOL &&
+            signature[1]->type_num == NPY_BOOL &&
+            signature[2]->type_num == NPY_BOOL && (
+                strcmp(ufunc->name, "logical_or") == 0 ||
+                strcmp(ufunc->name, "logical_and") == 0 ||
+                strcmp(ufunc->name, "logical_xor") == 0)) {
+        /*
+         * This is a logical ufunc, and the `??->?` loop`. It is always OK
+         * to cast any input to bool, because that cast is defined by
+         * truthiness.
+         * This allows to ensure two things:
+         * 1. `np.all`/`np.any` know that force casting the input is OK
+         *    (they must do this since there are no `?l->?`, etc. loops)
+         * 2. The logical functions automatically work for any DType
+         *    implementing a cast to boolean.
+         */
+        flags = _NPY_METH_FORCE_CAST_INPUTS;
+    }
 
     for (int i = 0; i < ufunc->nin+ufunc->nout; i++) {
         if (signature[i]->singleton->flags & (

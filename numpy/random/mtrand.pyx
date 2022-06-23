@@ -139,7 +139,7 @@ cdef class RandomState:
     'RandomState' methods using the same parameters will always produce the
     same results up to roundoff error except when the values were incorrect.
     `RandomState` is effectively frozen and will only receive updates that
-    are required by changes in the the internals of Numpy. More substantial
+    are required by changes in the internals of Numpy. More substantial
     changes, including algorithmic improvements, are reserved for
     `Generator`.
 
@@ -402,7 +402,7 @@ cdef class RandomState:
 
         See Also
         --------
-        Generator.random: which should be used for new code.
+        random.Generator.random: which should be used for new code.
 
         Examples
         --------
@@ -476,7 +476,7 @@ cdef class RandomState:
 
         See Also
         --------
-        Generator.beta: which should be used for new code.
+        random.Generator.beta: which should be used for new code.
         """
         return cont(&legacy_beta, &self._aug_state, size, self.lock, 2,
                     a, 'a', CONS_POSITIVE,
@@ -525,7 +525,7 @@ cdef class RandomState:
 
         See Also
         --------
-        Generator.exponential: which should be used for new code.
+        random.Generator.exponential: which should be used for new code.
 
         References
         ----------
@@ -570,7 +570,7 @@ cdef class RandomState:
 
         See Also
         --------
-        Generator.standard_exponential: which should be used for new code.
+        random.Generator.standard_exponential: which should be used for new code.
 
         Examples
         --------
@@ -688,7 +688,7 @@ cdef class RandomState:
         random_integers : similar to `randint`, only for the closed
             interval [`low`, `high`], and 1 is the lowest value if `high` is
             omitted.
-        Generator.integers: which should be used for new code.
+        random.Generator.integers: which should be used for new code.
 
         Examples
         --------
@@ -790,7 +790,7 @@ cdef class RandomState:
 
         See Also
         --------
-        Generator.bytes: which should be used for new code.
+        random.Generator.bytes: which should be used for new code.
 
         Examples
         --------
@@ -850,7 +850,7 @@ cdef class RandomState:
         See Also
         --------
         randint, shuffle, permutation
-        Generator.choice: which should be used in new code
+        random.Generator.choice: which should be used in new code
 
         Notes
         -----
@@ -1033,7 +1033,10 @@ cdef class RandomState:
             greater than or equal to low.  The default value is 0.
         high : float or array_like of floats
             Upper boundary of the output interval.  All values generated will be
-            less than or equal to high.  The default value is 1.0.
+            less than or equal to high.  The high limit may be included in the 
+            returned array of floats due to floating-point rounding in the 
+            equation ``low + (high-low) * random_sample()``.  The default value 
+            is 1.0.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
@@ -1055,7 +1058,7 @@ cdef class RandomState:
         rand : Convenience function that accepts dimensions as input, e.g.,
                ``rand(2,2)`` would generate a 2-by-2 array of floats,
                uniformly distributed over ``[0, 1)``.
-        Generator.uniform: which should be used for new code.
+        random.Generator.uniform: which should be used for new code.
 
         Notes
         -----
@@ -1217,7 +1220,7 @@ cdef class RandomState:
         --------
         standard_normal : Similar, but takes a tuple as its argument.
         normal : Also accepts mu and sigma arguments.
-        Generator.standard_normal: which should be used for new code.
+        random.Generator.standard_normal: which should be used for new code.
 
         Notes
         -----
@@ -1366,7 +1369,7 @@ cdef class RandomState:
         normal :
             Equivalent function with additional ``loc`` and ``scale`` arguments
             for setting the mean and standard deviation.
-        Generator.standard_normal: which should be used for new code.
+        random.Generator.standard_normal: which should be used for new code.
 
         Notes
         -----
@@ -1445,7 +1448,7 @@ cdef class RandomState:
         --------
         scipy.stats.norm : probability density function, distribution or
             cumulative density function, etc.
-        Generator.normal: which should be used for new code.
+        random.Generator.normal: which should be used for new code.
 
         Notes
         -----
@@ -1542,7 +1545,7 @@ cdef class RandomState:
         --------
         scipy.stats.gamma : probability density function, distribution or
             cumulative density function, etc.
-        Generator.standard_gamma: which should be used for new code.
+        random.Generator.standard_gamma: which should be used for new code.
 
         Notes
         -----
@@ -1626,7 +1629,7 @@ cdef class RandomState:
         --------
         scipy.stats.gamma : probability density function, distribution or
             cumulative density function, etc.
-        Generator.gamma: which should be used for new code.
+        random.Generator.gamma: which should be used for new code.
 
         Notes
         -----
@@ -1714,7 +1717,7 @@ cdef class RandomState:
         --------
         scipy.stats.f : probability density function, distribution or
             cumulative density function, etc.
-        Generator.f: which should be used for new code.
+        random.Generator.f: which should be used for new code.
 
         Notes
         -----
@@ -1807,7 +1810,7 @@ cdef class RandomState:
 
         See Also
         --------
-        Generator.noncentral_f: which should be used for new code.
+        random.Generator.noncentral_f: which should be used for new code.
 
         Notes
         -----
@@ -1889,7 +1892,7 @@ cdef class RandomState:
 
         See Also
         --------
-        Generator.chisquare: which should be used for new code.
+        random.Generator.chisquare: which should be used for new code.
 
         Notes
         -----
@@ -1961,7 +1964,7 @@ cdef class RandomState:
 
         See Also
         --------
-        Generator.noncentral_chisquare: which should be used for new code.
+        random.Generator.noncentral_chisquare: which should be used for new code.
 
         Notes
         -----
@@ -2039,7 +2042,7 @@ cdef class RandomState:
 
         See Also
         --------
-        Generator.standard_cauchy: which should be used for new code.
+        random.Generator.standard_cauchy: which should be used for new code.
 
         Notes
         -----
@@ -2118,7 +2121,7 @@ cdef class RandomState:
 
         See Also
         --------
-        Generator.standard_t: which should be used for new code.
+        random.Generator.standard_t: which should be used for new code.
 
         Notes
         -----
@@ -2239,7 +2242,7 @@ cdef class RandomState:
         --------
         scipy.stats.vonmises : probability density function, distribution, or
             cumulative density function, etc.
-        Generator.vonmises: which should be used for new code.
+        random.Generator.vonmises: which should be used for new code.
 
         Notes
         -----
@@ -2337,7 +2340,7 @@ cdef class RandomState:
             cumulative density function, etc.
         scipy.stats.genpareto : probability density function, distribution or
             cumulative density function, etc.
-        Generator.pareto: which should be used for new code.
+        random.Generator.pareto: which should be used for new code.
 
         Notes
         -----
@@ -2431,7 +2434,7 @@ cdef class RandomState:
         scipy.stats.weibull_min
         scipy.stats.genextreme
         gumbel
-        Generator.weibull: which should be used for new code.
+        random.Generator.weibull: which should be used for new code.
 
         Notes
         -----
@@ -2524,11 +2527,11 @@ cdef class RandomState:
         Raises
         ------
         ValueError
-            If a < 1.
+            If a <= 0.
 
         See Also
         --------
-        Generator.power: which should be used for new code.
+        random.Generator.power: which should be used for new code.
 
         Notes
         -----
@@ -2637,7 +2640,7 @@ cdef class RandomState:
 
         See Also
         --------
-        Generator.laplace: which should be used for new code.
+        random.Generator.laplace: which should be used for new code.
 
         Notes
         -----
@@ -2732,7 +2735,7 @@ cdef class RandomState:
         scipy.stats.gumbel_r
         scipy.stats.genextreme
         weibull
-        Generator.gumbel: which should be used for new code.
+        random.Generator.gumbel: which should be used for new code.
 
         Notes
         -----
@@ -2852,7 +2855,7 @@ cdef class RandomState:
         --------
         scipy.stats.logistic : probability density function, distribution or
             cumulative density function, etc.
-        Generator.logistic: which should be used for new code.
+        random.Generator.logistic: which should be used for new code.
 
         Notes
         -----
@@ -2939,7 +2942,7 @@ cdef class RandomState:
         --------
         scipy.stats.lognorm : probability density function, distribution,
             cumulative density function, etc.
-        Generator.lognormal: which should be used for new code.
+        random.Generator.lognormal: which should be used for new code.
 
         Notes
         -----
@@ -3047,7 +3050,7 @@ cdef class RandomState:
 
         See Also
         --------
-        Generator.rayleigh: which should be used for new code.
+        random.Generator.rayleigh: which should be used for new code.
 
         Notes
         -----
@@ -3131,7 +3134,7 @@ cdef class RandomState:
 
         See Also
         --------
-        Generator.wald: which should be used for new code.
+        random.Generator.wald: which should be used for new code.
 
         Notes
         -----
@@ -3208,7 +3211,7 @@ cdef class RandomState:
 
         See Also
         --------
-        Generator.triangular: which should be used for new code.
+        random.Generator.triangular: which should be used for new code.
 
         Notes
         -----
@@ -3315,7 +3318,7 @@ cdef class RandomState:
         --------
         scipy.stats.binom : probability density function, distribution or
             cumulative density function, etc.
-        Generator.binomial: which should be used for new code.
+        random.Generator.binomial: which should be used for new code.
 
         Notes
         -----
@@ -3463,7 +3466,7 @@ cdef class RandomState:
 
         See Also
         --------
-        Generator.negative_binomial: which should be used for new code.
+        random.Generator.negative_binomial: which should be used for new code.
 
         Notes
         -----
@@ -3475,7 +3478,7 @@ cdef class RandomState:
         probability of success, :math:`N+n` is the number of trials, and
         :math:`\\Gamma` is the gamma function. When :math:`n` is an integer,
         :math:`\\frac{\\Gamma(N+n)}{N!\\Gamma(n)} = \\binom{N+n-1}{N}`, which is
-        the more common form of this term in the the pmf. The negative
+        the more common form of this term in the pmf. The negative
         binomial distribution gives the probability of N failures given n
         successes, with a success on the last trial.
 
@@ -3546,7 +3549,7 @@ cdef class RandomState:
 
         See Also
         --------
-        Generator.poisson: which should be used for new code.
+        random.Generator.poisson: which should be used for new code.
 
         Notes
         -----
@@ -3606,7 +3609,7 @@ cdef class RandomState:
         `a` > 1.
 
         The Zipf distribution (also known as the zeta distribution) is a
-        continuous probability distribution that satisfies Zipf's law: the
+        discrete probability distribution that satisfies Zipf's law: the
         frequency of an item is inversely proportional to its rank in a
         frequency table.
 
@@ -3633,15 +3636,16 @@ cdef class RandomState:
         --------
         scipy.stats.zipf : probability density function, distribution, or
             cumulative density function, etc.
-        Generator.zipf: which should be used for new code.
+        random.Generator.zipf: which should be used for new code.
 
         Notes
         -----
         The probability density for the Zipf distribution is
 
-        .. math:: p(x) = \\frac{x^{-a}}{\\zeta(a)},
+        .. math:: p(k) = \\frac{k^{-a}}{\\zeta(a)},
 
-        where :math:`\\zeta` is the Riemann Zeta function.
+        for integers :math:`k \geq 1`, where :math:`\\zeta` is the Riemann Zeta
+        function.
 
         It is named for the American linguist George Kingsley Zipf, who noted
         that the frequency of any word in a sample of a language is inversely
@@ -3657,21 +3661,29 @@ cdef class RandomState:
         --------
         Draw samples from the distribution:
 
-        >>> a = 2. # parameter
-        >>> s = np.random.zipf(a, 1000)
+        >>> a = 4.0
+        >>> n = 20000
+        >>> s = np.random.zipf(a, n)
 
         Display the histogram of the samples, along with
-        the probability density function:
+        the expected histogram based on the probability
+        density function:
 
         >>> import matplotlib.pyplot as plt
-        >>> from scipy import special  # doctest: +SKIP
+        >>> from scipy.special import zeta  # doctest: +SKIP
 
-        Truncate s values at 50 so plot is interesting:
+        `bincount` provides a fast histogram for small integers.
 
-        >>> count, bins, ignored = plt.hist(s[s<50], 50, density=True)
-        >>> x = np.arange(1., 50.)
-        >>> y = x**(-a) / special.zetac(a)  # doctest: +SKIP
-        >>> plt.plot(x, y/max(y), linewidth=2, color='r')  # doctest: +SKIP
+        >>> count = np.bincount(s)
+        >>> k = np.arange(1, s.max() + 1)
+
+        >>> plt.bar(k, count[1:], alpha=0.5, label='sample count')
+        >>> plt.plot(k, n*(k**-a)/zeta(a), 'k.-', alpha=0.5,
+        ...          label='expected count')   # doctest: +SKIP
+        >>> plt.semilogy()
+        >>> plt.grid(alpha=0.4)
+        >>> plt.legend()
+        >>> plt.title(f'Zipf sample, a={a}, size={n}')
         >>> plt.show()
 
         """
@@ -3721,7 +3733,7 @@ cdef class RandomState:
 
         See Also
         --------
-        Generator.geometric: which should be used for new code.
+        random.Generator.geometric: which should be used for new code.
 
         Examples
         --------
@@ -3785,7 +3797,7 @@ cdef class RandomState:
         --------
         scipy.stats.hypergeom : probability density function, distribution or
             cumulative density function, etc.
-        Generator.hypergeometric: which should be used for new code.
+        random.Generator.hypergeometric: which should be used for new code.
 
         Notes
         -----
@@ -3908,7 +3920,7 @@ cdef class RandomState:
         --------
         scipy.stats.logser : probability density function, distribution or
             cumulative density function, etc.
-        Generator.logseries: which should be used for new code.
+        random.Generator.logseries: which should be used for new code.
 
         Notes
         -----
@@ -4011,7 +4023,7 @@ cdef class RandomState:
 
         See Also
         --------
-        Generator.multivariate_normal: which should be used for new code.
+        random.Generator.multivariate_normal: which should be used for new code.
 
         Notes
         -----
@@ -4067,12 +4079,35 @@ cdef class RandomState:
         >>> x.shape
         (3, 3, 2)
 
-        The following is probably true, given that 0.6 is roughly twice the
-        standard deviation:
+        Here we generate 800 samples from the bivariate normal distribution
+        with mean [0, 0] and covariance matrix [[6, -3], [-3, 3.5]].  The
+        expected variances of the first and second components of the sample
+        are 6 and 3.5, respectively, and the expected correlation
+        coefficient is -3/sqrt(6*3.5) ≈ -0.65465.
 
-        >>> list((x[0,0,:] - mean) < 0.6)
-        [True, True] # random
+        >>> cov = np.array([[6, -3], [-3, 3.5]])
+        >>> pts = np.random.multivariate_normal([0, 0], cov, size=800)
 
+        Check that the mean, covariance, and correlation coefficient of the
+        sample are close to the expected values:
+
+        >>> pts.mean(axis=0)
+        array([ 0.0326911 , -0.01280782])  # may vary
+        >>> np.cov(pts.T)
+        array([[ 5.96202397, -2.85602287],
+               [-2.85602287,  3.47613949]])  # may vary
+        >>> np.corrcoef(pts.T)[0, 1]
+        -0.6273591314603949  # may vary
+
+        We can visualize this data with a scatter plot.  The orientation
+        of the point cloud illustrates the negative correlation of the
+        components of this sample.
+
+        >>> import matplotlib.pyplot as plt
+        >>> plt.plot(pts[:, 0], pts[:, 1], '.', alpha=0.5)
+        >>> plt.axis('equal')
+        >>> plt.grid()
+        >>> plt.show()
         """
         from numpy.linalg import svd
 
@@ -4181,7 +4216,7 @@ cdef class RandomState:
 
         See Also
         --------
-        Generator.multinomial: which should be used for new code.
+        random.Generator.multinomial: which should be used for new code.
 
         Examples
         --------
@@ -4222,18 +4257,21 @@ cdef class RandomState:
         ValueError: pvals < 0, pvals > 1 or pvals contains NaNs
 
         """
-        cdef np.npy_intp d, i, sz, offset
+        cdef np.npy_intp d, i, sz, offset, niter
         cdef np.ndarray parr, mnarr
         cdef double *pix
         cdef long *mnix
         cdef long ni
 
-        d = len(pvals)
         parr = <np.ndarray>np.PyArray_FROMANY(
-            pvals, np.NPY_DOUBLE, 1, 1, np.NPY_ARRAY_ALIGNED | np.NPY_ARRAY_C_CONTIGUOUS)
+            pvals, np.NPY_DOUBLE, 0, 1, np.NPY_ARRAY_ALIGNED | np.NPY_ARRAY_C_CONTIGUOUS)
+        if np.PyArray_NDIM(parr) == 0:
+            raise TypeError("pvals must be a 1-d sequence")
+        d = np.PyArray_SIZE(parr)
         pix = <double*>np.PyArray_DATA(parr)
         check_array_constraint(parr, 'pvals', CONS_BOUNDED_0_1)
-        if kahan_sum(pix, d-1) > (1.0 + 1e-12):
+        # Only check if pvals is non-empty due no checks in kahan_sum
+        if d and kahan_sum(pix, d-1) > (1.0 + 1e-12):
             # When floating, but not float dtype, and close, improve the error
             # 1.0001 works for float16 and float32
             if (isinstance(pvals, np.ndarray)
@@ -4248,7 +4286,6 @@ cdef class RandomState:
             else:
                 msg = "sum(pvals[:-1]) > 1.0"
             raise ValueError(msg)
-
         if size is None:
             shape = (d,)
         else:
@@ -4256,7 +4293,6 @@ cdef class RandomState:
                 shape = (operator.index(size), d)
             except:
                 shape = tuple(size) + (d,)
-
         multin = np.zeros(shape, dtype=int)
         mnarr = <np.ndarray>multin
         mnix = <long*>np.PyArray_DATA(mnarr)
@@ -4264,8 +4300,10 @@ cdef class RandomState:
         ni = n
         check_constraint(ni, 'n', CONS_NON_NEGATIVE)
         offset = 0
+        # gh-20483: Avoids divide by 0
+        niter = sz // d if d else 0
         with self.lock, nogil:
-            for i in range(sz // d):
+            for i in range(niter):
                 legacy_random_multinomial(&self._bitgen, ni, &mnix[offset], pix, d, &self._binomial)
                 offset += d
 
@@ -4303,13 +4341,13 @@ cdef class RandomState:
             The drawn samples, of shape ``(size, k)``.
 
         Raises
-        -------
+        ------
         ValueError
             If any value in ``alpha`` is less than or equal to zero
 
         See Also
         --------
-        Generator.dirichlet: which should be used for new code.
+        random.Generator.dirichlet: which should be used for new code.
 
         Notes
         -----
@@ -4444,7 +4482,7 @@ cdef class RandomState:
 
         See Also
         --------
-        Generator.shuffle: which should be used for new code.
+        random.Generator.shuffle: which should be used for new code.
 
         Examples
         --------
@@ -4468,11 +4506,14 @@ cdef class RandomState:
             char* x_ptr
             char* buf_ptr
 
+        if isinstance(x, np.ndarray) and not x.flags.writeable:
+            raise ValueError('array is read-only')
+
         if type(x) is np.ndarray and x.ndim == 1 and x.size:
             # Fast, statically typed path: shuffle the underlying buffer.
             # Only for non-empty, 1d objects of class ndarray (subclasses such
             # as MaskedArrays may not support this approach).
-            x_ptr = <char*><size_t>np.PyArray_DATA(x)
+            x_ptr = np.PyArray_BYTES(x)
             stride = x.strides[0]
             itemsize = x.dtype.itemsize
             # As the array x could contain python objects we use a buffer
@@ -4480,7 +4521,7 @@ cdef class RandomState:
             # within the buffer and erroneously decrementing it's refcount
             # when the function exits.
             buf = np.empty(itemsize, dtype=np.int8)  # GC'd at function exit
-            buf_ptr = <char*><size_t>np.PyArray_DATA(buf)
+            buf_ptr = np.PyArray_BYTES(buf)
             with self.lock:
                 # We trick gcc into providing a specialized implementation for
                 # the most common case, yielding a ~33% performance improvement.
@@ -4499,7 +4540,7 @@ cdef class RandomState:
                         "Shuffling a one dimensional array subclass containing "
                         "objects gives incorrect results for most array "
                         "subclasses.  "
-                        "Please us the new random number API instead: "
+                        "Please use the new random number API instead: "
                         "https://numpy.org/doc/stable/reference/random/index.html\n"
                         "The new API fixes this issue. This version will not "
                         "be fixed due to stability guarantees of the API.",
@@ -4567,7 +4608,7 @@ cdef class RandomState:
 
         See Also
         --------
-        Generator.permutation: which should be used for new code.
+        random.Generator.permutation: which should be used for new code.
 
         Examples
         --------

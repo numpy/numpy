@@ -24,13 +24,14 @@ from numpy.core import (
     add, multiply, sqrt, fastCopyAndTranspose, sum, isfinite,
     finfo, errstate, geterrobj, moveaxis, amin, amax, product, abs,
     atleast_2d, intp, asanyarray, object_, matmul,
-    swapaxes, divide, count_nonzero, isnan, sign, argsort, sort
+    swapaxes, divide, count_nonzero, isnan, sign, argsort, sort,
+    reciprocal
 )
 from numpy.core.multiarray import normalize_axis_index
 from numpy.core.overrides import set_module
 from numpy.core import overrides
 from numpy.lib.twodim_base import triu, eye
-from numpy.linalg import lapack_lite, _umath_linalg
+from numpy.linalg import _umath_linalg
 
 
 array_function_dispatch = functools.partial(
@@ -299,7 +300,13 @@ def tensorsolve(a, b, axes=None):
     for k in oldshape:
         prod *= k
 
-    a = a.reshape(-1, prod)
+    if a.size != prod ** 2:
+        raise LinAlgError(
+            "Input arrays must satisfy the requirement \
+            prod(a.shape[b.ndim:]) == prod(a.shape[:b.ndim])"
+        )
+
+    a = a.reshape(prod, prod)
     b = b.ravel()
     res = wrap(solve(a, b))
     res.shape = oldshape
@@ -691,8 +698,8 @@ def cholesky(a):
     Returns
     -------
     L : (..., M, M) array_like
-        Upper or lower-triangular Cholesky factor of `a`.  Returns a
-        matrix object if `a` is a matrix object.
+        Lower-triangular Cholesky factor of `a`.  Returns a matrix object if
+        `a` is a matrix object.
 
     Raises
     ------
@@ -893,11 +900,11 @@ def qr(a, mode='reduced'):
            [1, 1],
            [1, 1],
            [2, 1]])
-    >>> b = np.array([1, 0, 2, 1])
+    >>> b = np.array([1, 2, 2, 3])
     >>> q, r = np.linalg.qr(A)
     >>> p = np.dot(q.T, b)
     >>> np.dot(np.linalg.inv(r), p)
-    array([  1.1e-16,   1.0e+00])
+    array([  1.,   1.])
 
     """
     if mode not in ('reduced', 'complete', 'r', 'raw'):
@@ -1472,10 +1479,12 @@ def svd(a, full_matrices=True, compute_uv=True, hermitian=False):
     """
     Singular Value Decomposition.
 
-    When `a` is a 2D array, it is factorized as ``u @ np.diag(s) @ vh
-    = (u * s) @ vh``, where `u` and `vh` are 2D unitary arrays and `s` is a 1D
-    array of `a`'s singular values. When `a` is higher-dimensional, SVD is
-    applied in stacked mode as explained below.
+    When `a` is a 2D array, and ``full_matrices=False``, then it is
+    factorized as ``u @ np.diag(s) @ vh = (u * s) @ vh``, where
+    `u` and the Hermitian transpose of `vh` are 2D arrays with
+    orthonormal columns and `s` is a 1D array of `a`'s singular
+    values. When `a` is higher-dimensional, SVD is applied in
+    stacked mode as explained below.
 
     Parameters
     ----------
@@ -1680,7 +1689,7 @@ def cond(x, p=None):
     x : (..., M, N) array_like
         The matrix whose condition number is sought.
     p : {None, 1, -1, 2, -2, inf, -inf, 'fro'}, optional
-        Order of the norm:
+        Order of the norm used in the condition number computation:
 
         =====  ============================
         p      norm for matrices
@@ -1695,7 +1704,7 @@ def cond(x, p=None):
         -2     smallest singular value
         =====  ============================
 
-        inf means the numpy.inf object, and the Frobenius norm is
+        inf means the `numpy.inf` object, and the Frobenius norm is
         the root-of-sum-of-squares norm.
 
     Returns
@@ -1864,7 +1873,7 @@ def matrix_rank(A, tol=None, hermitian=False):
 
     References
     ----------
-    .. [1] MATLAB reference documention, "Rank"
+    .. [1] MATLAB reference documentation, "Rank"
            https://www.mathworks.com/help/techdoc/ref/rank.html
     .. [2] W. H. Press, S. A. Teukolsky, W. T. Vetterling and B. P. Flannery,
            "Numerical Recipes (3rd edition)", Cambridge University Press, 2007,
@@ -1942,7 +1951,6 @@ def pinv(a, rcond=1e-15, hermitian=False):
     See Also
     --------
     scipy.linalg.pinv : Similar function in SciPy.
-    scipy.linalg.pinv2 : Similar function in SciPy (SVD-based).
     scipy.linalg.pinvh : Compute the (Moore-Penrose) pseudo-inverse of a
                          Hermitian matrix.
 
@@ -2159,7 +2167,7 @@ def lstsq(a, b, rcond="warn"):
     r"""
     Return the least-squares solution to a linear matrix equation.
 
-    Computes the vector `x` that approximatively solves the equation
+    Computes the vector `x` that approximately solves the equation
     ``a @ x = b``. The equation may be under-, well-, or over-determined
     (i.e., the number of linearly independent rows of `a` can be less than,
     equal to, or greater than its number of linearly independent columns).
@@ -2511,9 +2519,11 @@ def norm(x, ord=None, axis=None, keepdims=False):
 
             x = x.ravel(order='K')
             if isComplexType(x.dtype.type):
-                sqnorm = dot(x.real, x.real) + dot(x.imag, x.imag)
+                x_real = x.real
+                x_imag = x.imag
+                sqnorm = x_real.dot(x_real) + x_imag.dot(x_imag)
             else:
-                sqnorm = dot(x, x)
+                sqnorm = x.dot(x)
             ret = sqrt(sqnorm)
             if keepdims:
                 ret = ret.reshape(ndim*[1])
@@ -2553,7 +2563,7 @@ def norm(x, ord=None, axis=None, keepdims=False):
             absx = abs(x)
             absx **= ord
             ret = add.reduce(absx, axis=axis, keepdims=keepdims)
-            ret **= (1 / ord)
+            ret **= reciprocal(ord, dtype=ret.dtype)
             return ret
     elif len(axis) == 2:
         row_axis, col_axis = axis

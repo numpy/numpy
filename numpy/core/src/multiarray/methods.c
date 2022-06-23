@@ -26,6 +26,7 @@
 #include "shape.h"
 #include "strfuncs.h"
 #include "array_assign.h"
+#include "npy_dlpack.h"
 
 #include "methods.h"
 #include "alloc.h"
@@ -378,6 +379,18 @@ PyArray_GetField(PyArrayObject *self, PyArray_Descr *typed, int offset)
     static PyObject *checkfunc = NULL;
     int self_elsize, typed_elsize;
 
+    if (self == NULL) {
+        PyErr_SetString(PyExc_ValueError,
+            "self is NULL in PyArray_GetField");
+        return NULL;
+    }
+
+    if (typed == NULL) {
+        PyErr_SetString(PyExc_ValueError,
+            "typed is NULL in PyArray_GetField");
+        return NULL;
+    }
+
     /* check that we are not reinterpreting memory containing Objects. */
     if (_may_have_objects(PyArray_DESCR(self)) || _may_have_objects(typed)) {
         npy_cache_import("numpy.core._internal", "_getfield_is_safe",
@@ -455,6 +468,18 @@ PyArray_SetField(PyArrayObject *self, PyArray_Descr *dtype,
 {
     PyObject *ret = NULL;
     int retval = 0;
+
+    if (self == NULL) {
+        PyErr_SetString(PyExc_ValueError,
+            "self is NULL in PyArray_SetField");
+        return -1;
+    }
+
+    if (dtype == NULL) {
+        PyErr_SetString(PyExc_ValueError,
+            "dtype is NULL in PyArray_SetField");
+        return -1;
+    }
 
     if (PyArray_FailUnlessWriteable(self, "assignment destination") < 0) {
         Py_DECREF(dtype);
@@ -833,15 +858,15 @@ array_astype(PyArrayObject *self,
      */
     NPY_CASTING casting = NPY_UNSAFE_CASTING;
     NPY_ORDER order = NPY_KEEPORDER;
-    int forcecopy = 1, subok = 1;
+    _PyArray_CopyMode forcecopy = 1;
+    int subok = 1;
     NPY_PREPARE_ARGPARSER;
-
     if (npy_parse_arguments("astype", args, len_args, kwnames,
             "dtype", &PyArray_DescrConverter, &dtype,
             "|order", &PyArray_OrderConverter, &order,
             "|casting", &PyArray_CastingConverter, &casting,
             "|subok", &PyArray_PythonPyIntFromInt, &subok,
-            "|copy", &PyArray_PythonPyIntFromInt, &forcecopy,
+            "|copy", &PyArray_CopyConverter, &forcecopy,
             NULL, NULL, NULL) < 0) {
         Py_XDECREF(dtype);
         return NULL;
@@ -858,20 +883,29 @@ array_astype(PyArrayObject *self,
      * and it's not a subtype if subok is False, then we
      * can skip the copy.
      */
-    if (!forcecopy && (order == NPY_KEEPORDER ||
-                       (order == NPY_ANYORDER &&
-                            (PyArray_IS_C_CONTIGUOUS(self) ||
-                            PyArray_IS_F_CONTIGUOUS(self))) ||
-                       (order == NPY_CORDER &&
-                            PyArray_IS_C_CONTIGUOUS(self)) ||
-                       (order == NPY_FORTRANORDER &&
-                            PyArray_IS_F_CONTIGUOUS(self))) &&
-                    (subok || PyArray_CheckExact(self)) &&
-                    PyArray_EquivTypes(dtype, PyArray_DESCR(self))) {
+    if (forcecopy != NPY_COPY_ALWAYS &&
+                    (order == NPY_KEEPORDER ||
+                    (order == NPY_ANYORDER &&
+                        (PyArray_IS_C_CONTIGUOUS(self) ||
+                        PyArray_IS_F_CONTIGUOUS(self))) ||
+                    (order == NPY_CORDER &&
+                        PyArray_IS_C_CONTIGUOUS(self)) ||
+                    (order == NPY_FORTRANORDER &&
+                        PyArray_IS_F_CONTIGUOUS(self))) &&
+                (subok || PyArray_CheckExact(self)) &&
+                PyArray_EquivTypes(dtype, PyArray_DESCR(self))) {
         Py_DECREF(dtype);
         Py_INCREF(self);
         return (PyObject *)self;
     }
+
+    if (forcecopy == NPY_COPY_NEVER) {
+        PyErr_SetString(PyExc_ValueError,
+                "Unable to avoid copy while casting in never copy mode.");
+        Py_DECREF(dtype);
+        return NULL;
+    }
+
     if (!PyArray_CanCastArrayTo(self, dtype, casting)) {
         PyErr_Clear();
         npy_set_invalid_cast_error(
@@ -913,6 +947,13 @@ array_astype(PyArrayObject *self,
 }
 
 /* default sub-type implementation */
+
+
+static PyObject *
+array_finalizearray(PyArrayObject *self, PyObject *obj)
+{
+    Py_RETURN_NONE;
+}
 
 
 static PyObject *
@@ -1320,6 +1361,10 @@ array_sort(PyArrayObject *self,
             return NULL;
         }
         newd = PyArray_DescrNew(saved);
+        if (newd == NULL) {
+            Py_DECREF(new_name);
+            return NULL;
+        }
         Py_DECREF(newd->names);
         newd->names = new_name;
         ((PyArrayObject_fields *)self)->descr = newd;
@@ -1382,6 +1427,10 @@ array_partition(PyArrayObject *self,
             return NULL;
         }
         newd = PyArray_DescrNew(saved);
+        if (newd == NULL) {
+            Py_DECREF(new_name);
+            return NULL;
+        }
         Py_DECREF(newd->names);
         newd->names = new_name;
         ((PyArrayObject_fields *)self)->descr = newd;
@@ -1445,6 +1494,10 @@ array_argsort(PyArrayObject *self,
             return NULL;
         }
         newd = PyArray_DescrNew(saved);
+        if (newd == NULL) {
+            Py_DECREF(new_name);
+            return NULL;
+        }
         Py_DECREF(newd->names);
         newd->names = new_name;
         ((PyArrayObject_fields *)self)->descr = newd;
@@ -1502,6 +1555,10 @@ array_argpartition(PyArrayObject *self,
             return NULL;
         }
         newd = PyArray_DescrNew(saved);
+        if (newd == NULL) {
+            Py_DECREF(new_name);
+            return NULL;
+        }
         Py_DECREF(newd->names);
         newd->names = new_name;
         ((PyArrayObject_fields *)self)->descr = newd;
@@ -1821,22 +1878,8 @@ array_reduce_ex_picklebuffer(PyArrayObject *self, int protocol)
 
     descr = PyArray_DESCR(self);
 
-    /* if the python version is below 3.8, the pickle module does not provide
-     * built-in support for protocol 5. We try importing the pickle5
-     * backport instead */
-#if PY_VERSION_HEX >= 0x03080000
     /* we expect protocol 5 to be available in Python 3.8 */
     pickle_module = PyImport_ImportModule("pickle");
-#else
-    pickle_module = PyImport_ImportModule("pickle5");
-    if (pickle_module == NULL) {
-        /* for protocol 5, raise a clear ImportError if pickle5 is not found
-         */
-        PyErr_SetString(PyExc_ImportError, "Using pickle protocol 5 "
-                "requires the pickle5 module for Python >=3.6 and <3.8");
-        return NULL;
-    }
-#endif
     if (pickle_module == NULL){
         return NULL;
     }
@@ -1938,7 +1981,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
     PyObject *rawdata = NULL;
     char *datastr;
     Py_ssize_t len;
-    npy_intp size, dimensions[NPY_MAXDIMS];
+    npy_intp dimensions[NPY_MAXDIMS];
     int nd;
     npy_intp nbytes;
     int overflowed;
@@ -1975,6 +2018,15 @@ array_setstate(PyArrayObject *self, PyObject *args)
         return NULL;
     }
 
+    /*
+     * Reassigning fa->descr messes with the reallocation strategy,
+     * since fa could be a 0-d or scalar, and then
+     * PyDataMem_UserFREE will be confused
+     */
+    size_t n_tofree = PyArray_NBYTES(self);
+    if (n_tofree == 0) {
+        n_tofree = 1;
+    }
     Py_XDECREF(PyArray_DESCR(self));
     fa->descr = typecode;
     Py_INCREF(typecode);
@@ -1982,16 +2034,38 @@ array_setstate(PyArrayObject *self, PyObject *args)
     if (nd < 0) {
         return NULL;
     }
-    size = PyArray_MultiplyList(dimensions, nd);
-    if (size < 0) {
-        /* More items than are addressable */
-        return PyErr_NoMemory();
+    /*
+     * We should do two things here:
+     * 1. Validate the input, that it is neither invalid, nor "too big"
+     *    ("too big" ignores dimensios of size 0).
+     * 2. Find `PyArray_NBYTES` of the result, as this is what we may need to
+     *    copy from the pickled data (may not match allocation currently if 0).
+     * Compare with `PyArray_NewFromDescr`, raise MemoryError for simplicity.
+     */
+    npy_bool empty = NPY_FALSE;
+    nbytes = 1;
+    for (int i = 0; i < nd; i++) {
+        if (dimensions[i] < 0) {
+            PyErr_SetString(PyExc_TypeError,
+                    "impossible dimension while unpickling array");
+            return NULL;
+        }
+        if (dimensions[i] == 0) {
+            empty = NPY_TRUE;
+        }
+        overflowed = npy_mul_with_overflow_intp(
+                &nbytes, nbytes, dimensions[i]);
+        if (overflowed) {
+            return PyErr_NoMemory();
+        }
     }
     overflowed = npy_mul_with_overflow_intp(
-        &nbytes, size, PyArray_DESCR(self)->elsize);
+            &nbytes, nbytes, PyArray_DESCR(self)->elsize);
     if (overflowed) {
-        /* More bytes than are addressable */
         return PyErr_NoMemory();
+    }
+    if (empty) {
+        nbytes = 0;
     }
 
     if (PyDataType_FLAGCHK(typecode, NPY_LIST_PICKLE)) {
@@ -2033,22 +2107,31 @@ array_setstate(PyArrayObject *self, PyObject *args)
 
         if (len != nbytes) {
             PyErr_SetString(PyExc_ValueError,
-                            "buffer size does not"  \
-                            " match array size");
+                    "buffer size does not match array size");
             Py_DECREF(rawdata);
             return NULL;
         }
     }
 
     if ((PyArray_FLAGS(self) & NPY_ARRAY_OWNDATA)) {
-        PyDataMem_FREE(PyArray_DATA(self));
+        /*
+         * Allocation will never be 0, see comment in ctors.c
+         * line 820
+         */
+        PyObject *handler = PyArray_HANDLER(self);
+        if (handler == NULL) {
+            /* This can happen if someone arbitrarily sets NPY_ARRAY_OWNDATA */
+            PyErr_SetString(PyExc_RuntimeError,
+                            "no memory handler found but OWNDATA flag set");
+            return NULL;
+        }
+        PyDataMem_UserFREE(PyArray_DATA(self), n_tofree, handler);
         PyArray_CLEARFLAGS(self, NPY_ARRAY_OWNDATA);
     }
     Py_XDECREF(PyArray_BASE(self));
     fa->base = NULL;
 
     PyArray_CLEARFLAGS(self, NPY_ARRAY_WRITEBACKIFCOPY);
-    PyArray_CLEARFLAGS(self, NPY_ARRAY_UPDATEIFCOPY);
 
     if (PyArray_DIMS(self) != NULL) {
         npy_free_cache_dim_array(self);
@@ -2077,17 +2160,24 @@ array_setstate(PyArrayObject *self, PyObject *args)
 
     if (!PyDataType_FLAGCHK(typecode, NPY_LIST_PICKLE)) {
         int swap = PyArray_ISBYTESWAPPED(self);
-        fa->data = datastr;
         /* Bytes should always be considered immutable, but we just grab the
          * pointer if they are large, to save memory. */
         if (!IsAligned(self) || swap || (len <= 1000)) {
             npy_intp num = PyArray_NBYTES(self);
             if (num == 0) {
-                Py_DECREF(rawdata);
-                Py_RETURN_NONE;
+                num = 1;
             }
-            fa->data = PyDataMem_NEW(num);
+            /* Store the handler in case the default is modified */
+            Py_XDECREF(fa->mem_handler);
+            fa->mem_handler = PyDataMem_GetHandler();
+            if (fa->mem_handler == NULL) {
+                Py_CLEAR(fa->mem_handler);
+                Py_DECREF(rawdata);
+                return NULL;
+            }
+            fa->data = PyDataMem_UserNEW(num, PyArray_HANDLER(self));
             if (PyArray_DATA(self) == NULL) {
+                Py_CLEAR(fa->mem_handler);
                 Py_DECREF(rawdata);
                 return PyErr_NoMemory();
             }
@@ -2106,6 +2196,11 @@ array_setstate(PyArrayObject *self, PyObject *args)
                 }
                 else {
                     fa->descr = PyArray_DescrNew(typecode);
+                    if (fa->descr == NULL) {
+                        Py_CLEAR(fa->mem_handler);
+                        Py_DECREF(rawdata);
+                        return NULL;
+                    }
                     if (PyArray_DESCR(self)->byteorder == NPY_BIG) {
                         PyArray_DESCR(self)->byteorder = NPY_LITTLE;
                     }
@@ -2116,26 +2211,38 @@ array_setstate(PyArrayObject *self, PyObject *args)
                 Py_DECREF(typecode);
             }
             else {
-                memcpy(PyArray_DATA(self), datastr, num);
+                memcpy(PyArray_DATA(self), datastr, PyArray_NBYTES(self));
             }
             PyArray_ENABLEFLAGS(self, NPY_ARRAY_OWNDATA);
             fa->base = NULL;
             Py_DECREF(rawdata);
         }
         else {
+            /* The handlers should never be called in this case */
+            Py_XDECREF(fa->mem_handler);
+            fa->mem_handler = NULL;
+            fa->data = datastr;
             if (PyArray_SetBaseObject(self, rawdata) < 0) {
+                Py_DECREF(rawdata);
                 return NULL;
             }
         }
     }
     else {
         npy_intp num = PyArray_NBYTES(self);
-        int elsize = PyArray_DESCR(self)->elsize;
-        if (num == 0 || elsize == 0) {
-            Py_RETURN_NONE;
+        if (num == 0) {
+            num = 1;
         }
-        fa->data = PyDataMem_NEW(num);
+
+        /* Store the functions in case the default handler is modified */
+        Py_XDECREF(fa->mem_handler);
+        fa->mem_handler = PyDataMem_GetHandler();
+        if (fa->mem_handler == NULL) {
+            return NULL;
+        }
+        fa->data = PyDataMem_UserNEW(num, PyArray_HANDLER(self));
         if (PyArray_DATA(self) == NULL) {
+            Py_CLEAR(fa->mem_handler);
             return PyErr_NoMemory();
         }
         if (PyDataType_FLAGCHK(PyArray_DESCR(self), NPY_NEEDS_INIT)) {
@@ -2209,7 +2316,7 @@ array_dumps(PyArrayObject *self, PyObject *args, PyObject *kwds)
 
 
 static PyObject *
-array_sizeof(PyArrayObject *self)
+array_sizeof(PyArrayObject *self, PyObject *NPY_UNUSED(args))
 {
     /* object + dimension and strides */
     Py_ssize_t nbytes = Py_TYPE(self)->tp_basicsize +
@@ -2584,7 +2691,6 @@ array_setflags(PyArrayObject *self, PyObject *args, PyObject *kwds)
         }
         else {
             PyArray_CLEARFLAGS(self, NPY_ARRAY_WRITEBACKIFCOPY);
-            PyArray_CLEARFLAGS(self, NPY_ARRAY_UPDATEIFCOPY);
             Py_XDECREF(fa->base);
             fa->base = NULL;
         }
@@ -2697,6 +2803,30 @@ array_complex(PyArrayObject *self, PyObject *NPY_UNUSED(args))
     return c;
 }
 
+static PyObject *
+array_class_getitem(PyObject *cls, PyObject *args)
+{
+    PyObject *generic_alias;
+
+#ifdef Py_GENERICALIASOBJECT_H
+    Py_ssize_t args_len;
+
+    args_len = PyTuple_Check(args) ? PyTuple_Size(args) : 1;
+    if (args_len != 2) {
+        return PyErr_Format(PyExc_TypeError,
+                            "Too %s arguments for %s",
+                            args_len > 2 ? "many" : "few",
+                            ((PyTypeObject *)cls)->tp_name);
+    }
+    generic_alias = Py_GenericAlias(cls, args);
+#else
+    PyErr_SetString(PyExc_TypeError,
+                    "Type subscription requires python >= 3.9");
+    generic_alias = NULL;
+#endif
+    return generic_alias;
+}
+
 NPY_NO_EXPORT PyMethodDef array_methods[] = {
 
     /* for subtypes */
@@ -2706,6 +2836,9 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
     {"__array_prepare__",
         (PyCFunction)array_preparearray,
         METH_VARARGS, NULL},
+    {"__array_finalize__",
+        (PyCFunction)array_finalizearray,
+        METH_O, NULL},
     {"__array_wrap__",
         (PyCFunction)array_wraparray,
         METH_VARARGS, NULL},
@@ -2753,6 +2886,11 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
     {"__format__",
         (PyCFunction) array_format,
         METH_VARARGS, NULL},
+
+    /* for typing; requires python >= 3.9 */
+    {"__class_getitem__",
+        (PyCFunction)array_class_getitem,
+        METH_CLASS | METH_O, NULL},
 
     /* Original and Extended methods added 2005 */
     {"all",
@@ -2917,5 +3055,13 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
     {"view",
         (PyCFunction)array_view,
         METH_FASTCALL | METH_KEYWORDS, NULL},
+    // For data interchange between libraries
+    {"__dlpack__",
+        (PyCFunction)array_dlpack,
+        METH_FASTCALL | METH_KEYWORDS, NULL},
+
+    {"__dlpack_device__",
+        (PyCFunction)array_dlpack_device,
+        METH_NOARGS, NULL},
     {NULL, NULL, 0, NULL}           /* sentinel */
 };

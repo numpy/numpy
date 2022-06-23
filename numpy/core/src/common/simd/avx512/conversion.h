@@ -90,6 +90,48 @@ NPY_FINLINE npyv_u32x2 npyv_expand_u32_u16(npyv_u16 data)
     return r;
 }
 
+// pack two 16-bit boolean into one 8-bit boolean vector
+NPY_FINLINE npyv_b8 npyv_pack_b8_b16(npyv_b16 a, npyv_b16 b) {
+#ifdef NPY_HAVE_AVX512BW
+    return _mm512_kunpackd((__mmask64)b, (__mmask64)a);
+#else
+    const __m512i idx = _mm512_setr_epi64(0, 2, 4, 6, 1, 3, 5, 7);
+    return _mm512_permutexvar_epi64(idx, npyv512_packs_epi16(a, b));
+#endif
+}
+
+// pack four 32-bit boolean vectors into one 8-bit boolean vector
+NPY_FINLINE npyv_b8
+npyv_pack_b8_b32(npyv_b32 a, npyv_b32 b, npyv_b32 c, npyv_b32 d) {
+#ifdef NPY_HAVE_AVX512BW
+    __mmask32 ab = _mm512_kunpackw((__mmask32)b, (__mmask32)a);
+    __mmask32 cd = _mm512_kunpackw((__mmask32)d, (__mmask32)c);
+    return npyv_pack_b8_b16(ab, cd);
+#else
+    const __m512i idx = _mm512_setr_epi32(
+        0, 4, 1, 5, 2, 6, 3, 7, 8, 12, 9, 13, 10, 14, 11, 15);
+    __m256i ta = npyv512_pack_lo_hi(npyv_cvt_u32_b32(a));
+    __m256i tb = npyv512_pack_lo_hi(npyv_cvt_u32_b32(b));
+    __m256i tc = npyv512_pack_lo_hi(npyv_cvt_u32_b32(c));
+    __m256i td = npyv512_pack_lo_hi(npyv_cvt_u32_b32(d));
+    __m256i ab = _mm256_packs_epi16(ta, tb);
+    __m256i cd = _mm256_packs_epi16(tc, td);
+    __m512i abcd = npyv512_combine_si256(ab, cd);
+    return _mm512_permutexvar_epi32(idx, abcd);
+#endif
+}
+
+// pack eight 64-bit boolean vectors into one 8-bit boolean vector
+NPY_FINLINE npyv_b8
+npyv_pack_b8_b64(npyv_b64 a, npyv_b64 b, npyv_b64 c, npyv_b64 d,
+                 npyv_b64 e, npyv_b64 f, npyv_b64 g, npyv_b64 h) {
+    __mmask16 ab = _mm512_kunpackb((__mmask16)b, (__mmask16)a);
+    __mmask16 cd = _mm512_kunpackb((__mmask16)d, (__mmask16)c);
+    __mmask16 ef = _mm512_kunpackb((__mmask16)f, (__mmask16)e);
+    __mmask16 gh = _mm512_kunpackb((__mmask16)h, (__mmask16)g);
+    return npyv_pack_b8_b32(ab, cd, ef, gh);
+}
+
 // convert boolean vectors to integer bitfield
 NPY_FINLINE npy_uint64 npyv_tobits_b8(npyv_b8 a)
 {

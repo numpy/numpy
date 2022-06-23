@@ -1,7 +1,8 @@
-from typing import TypeVar, Union, Iterable, overload, Literal
+from collections.abc import Iterable
+from typing import TypeVar, Union, overload, Literal
 
 from numpy import ndarray
-from numpy.typing import ArrayLike, DTypeLike
+from numpy._typing import DTypeLike, _SupportsArrayFunc
 
 _ArrayType = TypeVar("_ArrayType", bound=ndarray)
 
@@ -19,23 +20,23 @@ _RequirementsWithE = Union[_Requirements, _E]
 def require(
     a: _ArrayType,
     dtype: None = ...,
-    requirements: Union[None, _Requirements, Iterable[_Requirements]] = ...,
+    requirements: None | _Requirements | Iterable[_Requirements] = ...,
     *,
-    like: ArrayLike = ...
+    like: _SupportsArrayFunc = ...
 ) -> _ArrayType: ...
 @overload
 def require(
     a: object,
     dtype: DTypeLike = ...,
-    requirements: Union[_E, Iterable[_RequirementsWithE]] = ...,
+    requirements: _E | Iterable[_RequirementsWithE] = ...,
     *,
-    like: ArrayLike = ...
+    like: _SupportsArrayFunc = ...
 ) -> ndarray: ...
 @overload
 def require(
     a: object,
     dtype: DTypeLike = ...,
-    requirements: Union[None, _Requirements, Iterable[_Requirements]] = ...,
+    requirements: None | _Requirements | Iterable[_Requirements] = ...,
     *,
-    like: ArrayLike = ...
+    like: _SupportsArrayFunc = ...
 ) -> ndarray: ...

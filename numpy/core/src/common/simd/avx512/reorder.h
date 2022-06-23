@@ -214,13 +214,13 @@ NPY_FINLINE npyv_u16 npyv_rev64_u16(npyv_u16 a)
 
 NPY_FINLINE npyv_u32 npyv_rev64_u32(npyv_u32 a)
 {
-    return _mm512_shuffle_epi32(a, _MM_SHUFFLE(2, 3, 0, 1));
+    return _mm512_shuffle_epi32(a, (_MM_PERM_ENUM)_MM_SHUFFLE(2, 3, 0, 1));
 }
 #define npyv_rev64_s32 npyv_rev64_u32
 
 NPY_FINLINE npyv_f32 npyv_rev64_f32(npyv_f32 a)
 {
-    return _mm512_shuffle_ps(a, a, _MM_SHUFFLE(2, 3, 0, 1));
+    return _mm512_shuffle_ps(a, a, (_MM_PERM_ENUM)_MM_SHUFFLE(2, 3, 0, 1));
 }
 
 #endif // _NPY_SIMD_AVX512_REORDER_H

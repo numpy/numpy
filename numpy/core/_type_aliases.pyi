@@ -1,13 +1,13 @@
-from typing import Dict, Union, Type, List, TypedDict
+from typing import TypedDict
 
 from numpy import generic, signedinteger, unsignedinteger, floating, complexfloating
 
 class _SCTypes(TypedDict):
-    int: List[Type[signedinteger]]
-    uint: List[Type[unsignedinteger]]
-    float: List[Type[floating]]
-    complex: List[Type[complexfloating]]
-    others: List[type]
+    int: list[type[signedinteger]]
+    uint: list[type[unsignedinteger]]
+    float: list[type[floating]]
+    complex: list[type[complexfloating]]
+    others: list[type]
 
-sctypeDict: Dict[Union[int, str], Type[generic]]
+sctypeDict: dict[int | str, type[generic]]
 sctypes: _SCTypes

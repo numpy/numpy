@@ -1,0 +1,6 @@
+Faster version of ``np.isin`` and ``np.in1d`` for integer arrays
+----------------------------------------------------------------
+``np.in1d`` (used by ``np.isin``) can now switch to a faster algorithm
+(up to >10x faster) when it is passed two integer arrays.
+This is often automatically used, but you can use ``kind="sort"`` or 
+``kind="table"`` to force the old or new method, respectively.

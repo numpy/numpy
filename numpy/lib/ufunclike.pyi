@@ -1,7 +1,7 @@
-from typing import Any, overload, TypeVar, List, Union
+from typing import Any, overload, TypeVar
 
 from numpy import floating, bool_, object_, ndarray
-from numpy.typing import (
+from numpy._typing import (
     NDArray,
     _FloatLike_co,
     _ArrayLikeFloat_co,
@@ -10,7 +10,7 @@ from numpy.typing import (
 
 _ArrayType = TypeVar("_ArrayType", bound=ndarray[Any, Any])
 
-__all__: List[str]
+__all__: list[str]
 
 @overload
 def fix(  # type: ignore[misc]
@@ -29,7 +29,7 @@ def fix(
 ) -> NDArray[object_]: ...
 @overload
 def fix(
-    x: Union[_ArrayLikeFloat_co, _ArrayLikeObject_co],
+    x: _ArrayLikeFloat_co | _ArrayLikeObject_co,
     out: _ArrayType,
 ) -> _ArrayType: ...
 
