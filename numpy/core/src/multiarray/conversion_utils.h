@@ -48,6 +48,11 @@ PyArray_IntpFromIndexSequence(PyObject *seq, npy_intp *vals, npy_intp maxvals);
 NPY_NO_EXPORT int
 PyArray_IntpFromSequence(PyObject *seq, npy_intp *vals, int maxvals);
 
+NPY_NO_EXPORT Py_ssize_t
+PyArray_SeqToSsizeCArray(PyObject *seq, Py_ssize_t **parr,
+                         char *seq_typeerror_text,
+                         char *element_typeerror_text);
+
 NPY_NO_EXPORT int
 PyArray_TypestrConvert(int itemsize, int gentype);
 

@@ -1147,6 +1147,69 @@ PyArray_IntpFromSequence(PyObject *seq, npy_intp *vals, int maxvals)
 }
 
 
+//
+// Convert a Python sequence to a C array of Py_ssize_t integers.
+//
+// `seq` must be a Python sequence.
+//
+// `seq_typeerror_text` and `element_typeerror_text` must be provided, and
+// each must contain one occurrence of the format code sequence '%s'.  The
+// '%s' format code will be replaced with the type of the object that failed
+// the conversion.
+// * `seq_typeerror_text` is used if the attempt to get the length of `seq`
+//   fails.
+// * `element_typerror_text` is used if the attempt to convert an element
+//   of `seq` to a Py_ssize_t fails.
+//
+// On success, the function assigns the allocated memory to *parr, and
+// returns the length of the sequence.
+//
+// The memory for the array is allocated with PyMem_Calloc.
+// The caller must free the memory with PyMem_FREE or PyMem_Free.
+//
+// Returns -1 with an exception set and with *parr set to NULL if the
+// conversion fails.
+//
+NPY_NO_EXPORT Py_ssize_t
+PyArray_SeqToSsizeCArray(PyObject *seq, Py_ssize_t **parr,
+                         char *seq_typeerror_text,
+                         char *element_typeerror_text)
+{
+    *parr = NULL;
+    Py_ssize_t len = PySequence_Length(seq);
+    if (len == -1) {
+        PyErr_Format(PyExc_TypeError, seq_typeerror_text,
+                     Py_TYPE(seq)->tp_name);
+        return -1;
+    }
+    Py_ssize_t *arr = PyMem_Calloc(len, sizeof(Py_ssize_t));
+    if (arr == NULL) {
+        PyErr_NoMemory();
+        return -1;
+    }
+    for (Py_ssize_t i = 0; i < len; ++i) {
+        PyObject *tmp = PySequence_GetItem(seq, i);
+        if (tmp == NULL) {
+            PyMem_Free(arr);
+            return -1;
+        }
+        arr[i] = PyNumber_AsSsize_t(tmp, PyExc_OverflowError);
+        if (error_converting(arr[i])) {
+            if (PyErr_ExceptionMatches(PyExc_TypeError)) {
+                PyErr_Format(PyExc_TypeError, element_typeerror_text,
+                             Py_TYPE(tmp)->tp_name);
+            }
+            Py_DECREF(tmp);
+            PyMem_Free(arr);
+            return -1;
+        }
+        Py_DECREF(tmp);
+    }
+    *parr = arr;
+    return len;
+}
+
+
 /**
  * WARNING: This flag is a bad idea, but was the only way to both
  *   1) Support unpickling legacy pickles with object types.

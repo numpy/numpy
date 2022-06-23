@@ -269,6 +269,12 @@ def test_empty_usecols(usecols):
     assert res.dtype == np.dtype([])
 
 
+def test_usecols_dtype_num_fields_mismatch():
+    dt = np.dtype([('x', float), ('y', float)])
+    with pytest.raises(TypeError, match='the number of fields is 2'):
+        np.loadtxt(StringIO('1 2 3 4\n5 6 7 8'), dtype=dt, usecols=[1, 2, 3])
+
+
 def test_callable_usecols_basic():
     txt = StringIO('1 2 3 4 5\n6 7 8 9 1\n2 3 4 5 6\n')
     res = np.loadtxt(txt, dtype=int, usecols=lambda n: list(range(n)[::2]))
@@ -292,9 +298,41 @@ def test_callable_usecols_method():
     assert_equal(res, expected)
 
 
+def test_callable_usecols_ragged_input_columns():
+    txt = StringIO('1 2 3\n2 4 6 8 10\n99\n21 22 23')
+    res = np.loadtxt(txt, dtype=int, usecols=lambda n: [0, n - 1, n//2])
+    expected = np.array([[1, 3, 2], [2, 10, 6], [99, 99, 99], [21, 23, 22]])
+    assert_equal(res, expected)
+
+
+# The second 'text' instance has varying numbers of fields in the rows.
+@pytest.mark.parametrize('text', ['1 2 3 4 5\n6 7 8 9 1\n2 3 5 7 9',
+                                  '1 3 5\n6 7 8 9 1\n2 3 7 9'])
+@pytest.mark.parametrize('usecols, expected',
+        [(lambda n: [0, n-1], [[10, 5], [60, 1], [20, 9]]),
+         (lambda n: [0, -1], [[10, -5], [60, -1], [20, -9]])])
+def test_callable_usecols_with_converters(text, usecols, expected):
+    # converters contains the keys 0 and -1.  When usecols returns [0, n-1],
+    # the last column is *not* passed through a converter, because the code
+    # that processes converters treats the key -1 and the positive key n-1
+    # as distinct, and only uses the key that exactly matches what is
+    # given in usecols.
+    converters = {0: lambda s: 10*float(s),
+                  -1: lambda s: -float(s)}
+    res = np.loadtxt(StringIO(text), dtype=int, usecols=usecols,
+                     converters=converters)
+    assert_equal(res, expected)
+
+
 def test_callable_usecols_raises_exception():
     with pytest.raises(ZeroDivisionError, match='division by zero'):
         np.loadtxt(StringIO('1 2\n4 5'), usecols=lambda n: 1/0)
+
+
+def test_callable_usecols_second_call_raises_exception():
+    with pytest.raises(ZeroDivisionError, match='division by zero'):
+        np.loadtxt(StringIO('1 2\n3 4 5'),
+                   usecols=lambda n: [0, 1] if n == 2 else 1/0)
 
 
 def test_callable_usecols_not_a_sequence():
@@ -315,6 +353,12 @@ def test_callable_usecols_bad_len_with_structured_dtype():
     with pytest.raises(RuntimeError,
                        match='the number of fields in the given dtype'):
         np.loadtxt(txt, usecols=lambda n: [0, 2, 3], dtype=dt)
+
+
+def test_callable_usecols_returned_num_fields_changed():
+    txt = StringIO('1 2 3\n6 7 8 9\n2 3 4 5\n')
+    with pytest.raises(RuntimeError, match="not the same as in the previous"):
+        np.loadtxt(txt, dtype=int, usecols=lambda n: range(n - 1))
 
 
 @pytest.mark.parametrize("c1", ["a", "の", "🫕"])

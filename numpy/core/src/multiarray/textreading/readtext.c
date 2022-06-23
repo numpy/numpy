@@ -11,78 +11,9 @@
 #include "common.h"
 #include "conversion_utils.h"
 
-#include "textreading/seq_to_ssize_c_array.h"
 #include "textreading/parser_config.h"
 #include "textreading/stream_pyobject.h"
-#include "textreading/field_types.h"
 #include "textreading/rows.h"
-#include "textreading/str_to_int.h"
-
-
-//
-// If the argument `usecols_obj` is not Py_None, it must be a callable.
-// In that case, the argument `usecols` must be NULL.
-//
-// `dtype` must point to a Python object that is Py_None or a numpy dtype
-// instance.  If the latter, code and sizes must be arrays of length
-// num_dtype_fields, holding the flattened data field type codes and byte
-// sizes. (num_dtype_fields, codes, and sizes can be inferred from dtype,
-// but we do that in Python code.)
-//
-// If both `usecols` and `dtype` are not None, and the data type is compound,
-// then len(usecols) must equal num_dtype_fields.
-//
-// If `dtype` is given and it is compound, and `usecols` is None, then the
-// number of columns in the file must match the number of fields in `dtype`.
-//
-static PyObject *
-_readtext_from_stream(stream *s,
-        parser_config *pc, Py_ssize_t num_usecols, Py_ssize_t usecols[],
-        PyObject *usecols_obj,
-        Py_ssize_t skiplines, Py_ssize_t max_rows,
-        PyObject *converters, PyObject *dtype)
-{
-    PyArrayObject *arr = NULL;
-    PyArray_Descr *out_dtype = NULL;
-    field_type *ft = NULL;
-
-    /*
-     * If dtypes[0] is dtype the input was not structured and the result
-     * is considered "homogeneous" and we have to discover the number of
-     * columns/
-     */
-    out_dtype = (PyArray_Descr *)dtype;
-    Py_INCREF(out_dtype);
-
-    Py_ssize_t num_fields = field_types_create(out_dtype, &ft);
-    if (num_fields < 0) {
-        goto finish;
-    }
-    bool homogeneous = num_fields == 1 && ft[0].descr == out_dtype;
-
-    if (!homogeneous && usecols != NULL && num_usecols != num_fields) {
-        PyErr_Format(PyExc_TypeError,
-                "If a structured dtype is used, the number of columns in "
-                "`usecols` must match the effective number of fields. "
-                "But %zd usecols were given and the number of fields is %zd.",
-                num_usecols, num_fields);
-        goto finish;
-    }
-
-    arr = read_rows(
-            s, max_rows, num_fields, ft, pc,
-            num_usecols, usecols, usecols_obj,
-            skiplines, converters,
-            NULL, out_dtype, homogeneous);
-    if (arr == NULL) {
-        goto finish;
-    }
-
-  finish:
-    Py_XDECREF(out_dtype);
-    field_types_xclear(num_fields, ft);
-    return (PyObject *)arr;
-}
 
 
 static int
@@ -208,8 +139,6 @@ _load_from_filelike(PyObject *NPY_UNUSED(mod),
     };
     bool filelike = true;
 
-    PyObject *arr = NULL;
-
     NPY_PREPARE_ARGPARSER;
     if (npy_parse_arguments("_load_from_filelike", args, len_args, kwnames,
             "file", NULL, &file,
@@ -260,32 +189,6 @@ _load_from_filelike(PyObject *NPY_UNUSED(mod),
         }
     }
 
-    /*
-     * Parse usecols, the rest of NumPy has no clear helper for this, so do
-     * it here manually.
-     */
-    Py_ssize_t num_usecols = -1;
-    Py_ssize_t *usecols = NULL;
-    if (usecols_obj != Py_None && !PyCallable_Check(usecols_obj)) {
-        num_usecols = PySequence_Length(usecols_obj);
-        if (num_usecols < 0) {
-            return NULL;
-        }
-        usecols = seq_to_ssize_c_array(num_usecols, usecols_obj,
-                    "usecols must be an int or a sequence of ints but "
-                    "it contains at least one element of type '%s'");
-        if (usecols == NULL) {
-            return NULL;
-        }
-        /*
-         *  The given usecols_obj is a Python sequence; it has been processed to
-         *  give the usecols array, so reset the Python object to None.
-         */
-        usecols_obj = Py_None;
-    }
-    assert(usecols == NULL || usecols_obj == Py_None);
-    /* At this point, if usecols_obj is not Py_None, it must be a callable object. */
-
     stream *s;
     if (filelike) {
         s = stream_python_file(file, encoding);
@@ -294,15 +197,13 @@ _load_from_filelike(PyObject *NPY_UNUSED(mod),
         s = stream_python_iterable(file, encoding);
     }
     if (s == NULL) {
-        PyMem_Free(usecols);
         return NULL;
     }
 
-    arr = _readtext_from_stream(
-            s, &pc, num_usecols, usecols, usecols_obj, skiplines, max_rows,
-            converters, dtype);
+    PyArrayObject *arr = read_rows(s, max_rows, &pc, usecols_obj, skiplines,
+                                   converters, NULL, dtype);
+
     stream_close(s);
-    PyMem_Free(usecols);
-    return arr;
+    return (PyObject *)arr;
 }
 

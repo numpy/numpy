@@ -12,12 +12,8 @@
 
 
 NPY_NO_EXPORT PyArrayObject *
-read_rows(stream *s,
-        npy_intp nrows, Py_ssize_t num_field_types, field_type *field_types,
-        parser_config *pconfig,
-        Py_ssize_t num_usecols, Py_ssize_t *usecols, PyObject *usecols_obj,
-        Py_ssize_t skiplines, PyObject *converters,
-        PyArrayObject *data_array, PyArray_Descr *out_descr,
-        bool homogeneous);
+read_rows(stream *s, npy_intp nrows, parser_config *pconfig,
+          PyObject *usecols_obj, Py_ssize_t skiplines, PyObject *converters,
+          PyArrayObject *data_array, PyObject *dtype);
 
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_TEXTREADING_ROWS_H_ */

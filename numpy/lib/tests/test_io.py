@@ -874,13 +874,13 @@ class TestLoadTxt(LoadTxtBase):
         bogus_idx = 1.5
         assert_raises_regex(
             TypeError,
-            '^usecols must be.*%s' % type(bogus_idx).__name__,
+            '^usecols must contain.*%s' % type(bogus_idx).__name__,
             np.loadtxt, c, usecols=bogus_idx
             )
 
         assert_raises_regex(
             TypeError,
-            '^usecols must be.*%s' % type(bogus_idx).__name__,
+            '^usecols must contain.*%s' % type(bogus_idx).__name__,
             np.loadtxt, c, usecols=[0, bogus_idx, 0]
             )
 
