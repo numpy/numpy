@@ -79,6 +79,17 @@ def retreal_f77(tmpdir_factory):
     fn.write_text(fdat, encoding="ascii")
     return fn
 
+@pytest.fixture(scope="session")
+def f2cmap_f90(tmpdir_factory):
+    """Generates a single f90 file for testing"""
+    fdat = util.getpath("tests", "src", "f2cmap", "isoFortranEnvMap.f90").read_text()
+    f2cmap = util.getpath("tests", "src", "f2cmap", ".f2py_f2cmap").read_text()
+    fn = tmpdir_factory.getbasetemp() / "f2cmap.f90"
+    fmap = tmpdir_factory.getbasetemp() / "mapfile"
+    fn.write_text(fdat, encoding="ascii")
+    fmap.write_text(f2cmap, encoding="ascii")
+    return fn
+
 
 def test_gen_pyf(capfd, hello_world_f90, monkeypatch):
     """Ensures that a signature file is generated via the CLI
@@ -105,6 +116,7 @@ def test_gen_pyf_stdout(capfd, hello_world_f90, monkeypatch):
         f2pycli()
         out, _ = capfd.readouterr()
         assert "Saving signatures to file" in out
+        assert "function hi() ! in " in out
 
 
 def test_gen_pyf_no_overwrite(capfd, hello_world_f90, monkeypatch):
@@ -533,13 +545,22 @@ def test_hlink():
     pass
 
 
-def test_f2cmap():
+def test_f2cmap(capfd, f2cmap_f90, monkeypatch):
     """Check that Fortran-to-Python KIND specs can be passed
 
     CLI :: --f2cmap
     """
-    # TODO: populate
-    pass
+    ipath = Path(f2cmap_f90)
+    monkeypatch.setattr(sys, "argv", f'f2py -m blah {ipath} --f2cmap mapfile'.split())
+
+    with util.switchdir(ipath.parent):
+        f2pycli()
+        out, _ = capfd.readouterr()
+        assert "Reading f2cmap from 'mapfile' ..." in out
+        assert "Mapping \"real(kind=real32)\" to \"float\"" in out
+        assert "Mapping \"real(kind=real64)\" to \"double\"" in out
+        assert "Mapping \"integer(kind=int64)\" to \"long_long\"" in out
+        assert "Successfully applied user defined f2cmap changes" in out
 
 
 def test_quiet(capfd, hello_world_f90, monkeypatch):
