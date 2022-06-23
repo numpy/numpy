@@ -231,12 +231,19 @@ class TestSetOps:
         assert_isin_equal(a, 6)
         assert_isin_equal(5, 6)
 
-        # empty array-like:
         if kind in {None, "sort"}:
+            # empty array-like:
             x = []
             assert_isin_equal(x, b)
             assert_isin_equal(a, x)
             assert_isin_equal(x, x)
+
+            # empty array with various types:
+            for dtype in [bool, np.int64, np.float64]:
+                x = np.array([], dtype=dtype)
+                assert_isin_equal(x, b)
+                assert_isin_equal(a, x)
+                assert_isin_equal(x, x)
 
     @pytest.mark.parametrize("kind", [None, "sort", "table"])
     def test_in1d(self, kind):
