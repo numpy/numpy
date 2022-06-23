@@ -75,6 +75,34 @@ we expect that the behaviour in functions (promotion) will, in practice, be far
 more important than the casting change itself.
 
 
+.. note::
+
+    As of the early NumPy 1.24 development branch, NumPy has preliminary and
+    limited support to test this proposal.  To try it, you can use the
+    development wheels from: https://anaconda.org/scipy-wheels-nightly/numpy
+
+    It is further necessary to set the following environment variable::
+
+        export NPY_PROMOTION_STATE=weak
+
+    Valid values are ``weak``, ``weak_and_warn``, and ``legacy``.  Note that
+    ``weak_and_warn`` implements the optional warnings proposed in this NEP
+    and is expected to be *very* noisy.
+    We recommend using it mainly to track down a *specific* change rather than
+    running it on a full test-suite or program.
+
+    The following futher API exists:
+
+    * ``np._set_promotion_state()`` and ``np._get_promotion_state()`` which is
+      equivalent to the environment variable.
+    * ``with np._no_nep50_warning():`` allows to safely suppress warnings when
+      ``weak_and_warn`` promotion is used.
+
+    The main *limitations* are that proposed integer errors (for example for
+    ``np.uint8(1) + 400``) are not yet given and that integer overflow warnings
+    on many scalar operations are missing.
+
+
 Schema of the new proposed promotion rules
 ------------------------------------------
 
