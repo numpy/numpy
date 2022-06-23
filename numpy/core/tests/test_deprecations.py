@@ -651,8 +651,11 @@ class TestRaggedArray(_DeprecationTestCase):
     def test_deprecated(self):
         arr = np.ones((1, 1))
         # Deprecated if the array is a leave node:
-        self.assert_deprecated(lambda: np.array([arr, 0], dtype=np.float64))
-        self.assert_deprecated(lambda: np.array([0, arr], dtype=np.float64))
+        # Should also raise deprecation for scalar conversion of an array
+        # with `ndim>0` (gh-10615)
+        self.assert_deprecated(lambda: np.array([arr, 0], dtype=np.float64), num=2)
+        self.assert_deprecated(lambda: np.array([0, arr], dtype=np.float64), num=2)
+
         # And when it is an assignment into a lower dimensional subarray:
         self.assert_deprecated(lambda: np.array([arr, [0]], dtype=np.float64))
         self.assert_deprecated(lambda: np.array([[0], arr], dtype=np.float64))

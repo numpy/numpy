@@ -8630,7 +8630,6 @@ class TestConversion:
                     def __trunc__(self):
                         return 3
                 assert_equal(3, int_func(np.array(HasTrunc())))
-                assert_equal(3, int_func(np.array([HasTrunc()])))
             else:
                 pass
 
