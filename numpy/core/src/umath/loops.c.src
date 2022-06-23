@@ -214,6 +214,8 @@ PyUFunc_O_O(char **args, npy_intp const *dimensions, npy_intp const *steps, void
     UNARY_LOOP {
         PyObject *in1 = *(PyObject **)ip1;
         PyObject **out = (PyObject **)op1;
+        /* We allow NULL, but try to guarantee non-NULL to downstream */
+        assert(in1 != NULL);
         PyObject *ret = f(in1 ? in1 : Py_None);
         if (ret == NULL) {
             return;
@@ -231,6 +233,8 @@ PyUFunc_O_O_method(char **args, npy_intp const *dimensions, npy_intp const *step
     UNARY_LOOP {
         PyObject *in1 = *(PyObject **)ip1;
         PyObject **out = (PyObject **)op1;
+        /* We allow NULL, but try to guarantee non-NULL to downstream */
+        assert(in1 != NULL);
         PyObject *ret, *func;
         func = PyObject_GetAttrString(in1 ? in1 : Py_None, meth);
         if (func != NULL && !PyCallable_Check(func)) {
@@ -268,6 +272,9 @@ PyUFunc_OO_O(char **args, npy_intp const *dimensions, npy_intp const *steps, voi
         PyObject *in1 = *(PyObject **)ip1;
         PyObject *in2 = *(PyObject **)ip2;
         PyObject **out = (PyObject **)op1;
+        /* We allow NULL, but try to guarantee non-NULL to downstream */
+        assert(in1 != NULL);
+        assert(in2 != NULL);
         PyObject *ret = f(in1 ? in1 : Py_None, in2 ? in2 : Py_None);
         if (ret == NULL) {
             return;
@@ -286,6 +293,10 @@ PyUFunc_OOO_O(char **args, npy_intp const *dimensions, npy_intp const *steps, vo
         PyObject *in2 = *(PyObject **)ip2;
         PyObject *in3 = *(PyObject **)ip3;
         PyObject **out = (PyObject **)op1;
+        /* We allow NULL, but try to guarantee non-NULL to downstream */
+        assert(in1 != NULL);
+        assert(in2 != NULL);
+        assert(in3 != NULL);
         PyObject *ret = f(
             in1 ? in1 : Py_None,
             in2 ? in2 : Py_None,
@@ -308,6 +319,9 @@ PyUFunc_OO_O_method(char **args, npy_intp const *dimensions, npy_intp const *ste
         PyObject *in1 = *(PyObject **)ip1;
         PyObject *in2 = *(PyObject **)ip2;
         PyObject **out = (PyObject **)op1;
+        /* We allow NULL, but try to guarantee non-NULL to downstream */
+        assert(in1 != NULL);
+        assert(in2 != NULL);
         PyObject *ret = PyObject_CallMethod(in1 ? in1 : Py_None,
                                             meth, "(O)", in2);
         if (ret == NULL) {
@@ -349,6 +363,8 @@ PyUFunc_On_Om(char **args, npy_intp const *dimensions, npy_intp const *steps, vo
         }
         for(j = 0; j < nin; j++) {
             in = *((PyObject **)ptrs[j]);
+            /* We allow NULL, but try to guarantee non-NULL to downstream */
+            assert(in != NULL);
             if (in == NULL) {
                 in = Py_None;
             }

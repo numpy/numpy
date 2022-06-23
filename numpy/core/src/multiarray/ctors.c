@@ -1068,6 +1068,18 @@ PyArray_NewLikeArrayWithShape(PyArrayObject *prototype, NPY_ORDER order,
                                         0,
                                         subok ? (PyObject *)prototype : NULL);
     }
+    if (ret == NULL) {
+        return NULL;
+    }
+
+    /* Logic shared by `empty`, `empty_like`, and `ndarray.__new__` */
+    if (PyDataType_REFCHK(PyArray_DESCR((PyArrayObject *)ret))) {
+        PyArray_FillObjectArray((PyArrayObject *)ret, Py_None);
+        if (PyErr_Occurred()) {
+            Py_DECREF(ret);
+            return NULL;
+        }
+    }
 
     return ret;
 }
@@ -2979,22 +2991,23 @@ PyArray_Empty(int nd, npy_intp const *dims, PyArray_Descr *type, int is_f_order)
      * PyArray_NewFromDescr steals a ref,
      * but we need to look at type later.
      * */
-    Py_INCREF(type);
-
     ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
                                                 type, nd, dims,
                                                 NULL, NULL,
                                                 is_f_order, NULL);
-    if (ret != NULL && PyDataType_REFCHK(type)) {
+    if (ret == NULL) {
+        return NULL;
+    }
+
+    /* Logic shared by `empty`, `empty_like`, and `ndarray.__new__` */
+    if (PyDataType_REFCHK(PyArray_DESCR(ret))) {
         PyArray_FillObjectArray(ret, Py_None);
         if (PyErr_Occurred()) {
             Py_DECREF(ret);
-            Py_DECREF(type);
             return NULL;
         }
     }
 
-    Py_DECREF(type);
     return (PyObject *)ret;
 }
 
