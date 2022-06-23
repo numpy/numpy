@@ -108,7 +108,7 @@ you can create a ``.f2py_f2cmap`` file in the current directory:
 
   dict(real=dict(real32='float', real64='double'), integer=dict(int64='long long'))
 
-and create your module as usual. F2PY check if a ``.f2py_f2cmap`` file is present
+and create your module as usual. F2PY checks if a ``.f2py_f2cmap`` file is present
 in the current directory and use it to map KIND specifiers to C data types.
 
 .. code-block:: sh
