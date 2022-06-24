@@ -179,7 +179,6 @@ else:
     switcher_version = f"doc/{version}"
 
 html_theme_options = {
-  "logo_link": "index",
   "github_url": "https://github.com/numpy/numpy",
   "twitter_url": "https://twitter.com/numpy_team",
   "collapse_navigation": True,
