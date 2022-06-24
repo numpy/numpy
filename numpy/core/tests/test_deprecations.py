@@ -653,8 +653,10 @@ class TestRaggedArray(_DeprecationTestCase):
         # Deprecated if the array is a leave node:
         # Should also raise deprecation for scalar conversion of an array
         # with `ndim>0` (gh-10615)
-        self.assert_deprecated(lambda: np.array([arr, 0], dtype=np.float64), num=2)
-        self.assert_deprecated(lambda: np.array([0, arr], dtype=np.float64), num=2)
+        self.assert_deprecated(lambda: np.array([arr, 0],
+                                dtype=np.float64), num=2)
+        self.assert_deprecated(lambda: np.array([0, arr],
+                                dtype=np.float64), num=2)
 
         # And when it is an assignment into a lower dimensional subarray:
         self.assert_deprecated(lambda: np.array([arr, [0]], dtype=np.float64))
@@ -1133,8 +1135,10 @@ class TestScalarConversion(_DeprecationTestCase):
     def test_behaviour(self):
         b = np.array([[3.14]])
         c = np.zeros(5)
+
         def _assign(x, y):
-            x[0]=y
+            x[0] = y
+
         match = "setting an array element with a sequence"
         with pytest.raises(ValueError, match=match):
             self.assert_deprecated(_assign, args=(c, b))
