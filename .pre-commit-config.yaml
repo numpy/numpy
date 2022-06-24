@@ -1,15 +1,22 @@
 ---
+# Pre-commit hooks definition file
+#
+# This file holds information for file formatting and validation. See
+# documentation here:
+# https://numpy.org/doc/stable/dev/development_workflow.html?highlight=development%20workflow
+# Or the pre-commit docs here:
+# https://numpy.org/doc/stable/dev/development_workflow.html
+#
+# If you add or adjust hooks, or want to update to the latest version, use
+# `pre-commit autoupdate --freeze`. This pins the version to the commit hash
+# rather than a (movable) tag, which adds some security benefit. This sets the
+# "rev:" key and the adds the "# frozen: vx.x.x" comments that you see.
 repos:
   ### Always-run hooks ###
   # This section includes hooks that run whenever relevant files change.
-  #
-  # If you are not familiar with pre-commit, see documentation here:
-  # https://numpy.org/doc/stable/dev/development_workflow.html
-
-
   # Basic checkers, fairly self-explanatory
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.3.0
+    rev: 3298ddab3c13dd77d6ce1fc0baf97691430d84b0  # frozen: v4.3.0
     hooks:
       # File validity checkers
       - id: check-yaml
@@ -26,7 +33,7 @@ repos:
   # "Darker" runs the black formatter, isort import sorter, and
   # flake8 checker only on edited lines rather than entire file
   - repo: https://github.com/akaihola/darker
-    rev: 1.5.0
+    rev: 05a0ce72765aa4ed7cab7b722fd8371a4f712423  # frozen: 1.5.0
     hooks:
       - id: darker
         args:
@@ -58,7 +65,7 @@ repos:
 
   # YAML Formatter. Only enabled on one file for now, will add more eventually
   - repo: https://github.com/jumanjihouse/pre-commit-hook-yamlfmt
-    rev: 0.2.1
+    rev: 752eb7b8990459b8134765a395eeee06f87d0f17  # frozen: 0.2.1
     hooks:
       - id: yamlfmt
         args: [--mapping, '2', --sequence, '4', --offset, '2', --width, '88']
@@ -79,7 +86,7 @@ repos:
   # Disabled for now to avoid whole-file commit diffs
   # Run with: pre-commit run --hook-stage manual black
   - repo: https://github.com/psf/black
-    rev: 22.3.0
+    rev: ae2c0758c9e61a385df9700dc9c231bf54887041  # frozen: 22.3.0
     hooks:
       - id: black
         stages: [manual]
@@ -96,7 +103,7 @@ repos:
   #
   # Run with: pre-commit run --hook-stage manual blacken-docs
   - repo: https://github.com/asottile/blacken-docs
-    rev: v1.12.1
+    rev: 7ae9389351f4090e3993de28015a05a18ca6b8a7  # frozen: v1.12.1
     hooks:
       - id: blacken-docs
         stages: [manual]
@@ -105,7 +112,7 @@ repos:
   # Disabled for now to avoid whole-file commit diffs
   # Run with: pre-commit run --hook-stage manual isort
   - repo: https://github.com/pycqa/isort
-    rev: 5.10.1
+    rev: c5e8fa75dda5f764d20f66a215d71c21cfa198e1  # frozen: 5.10.1
     hooks:
       - id: isort
         stages: [manual]
@@ -115,7 +122,7 @@ repos:
   # requires whole-file changes
   # Run with: pre-commit run --hook-stage manual flake8
   - repo: https://github.com/pycqa/flake8
-    rev: 4.0.1
+    rev: cbeb4c9c4137cff1568659fcc48e8b85cddd0c8d  # frozen: 4.0.1
     hooks:
       - id: flake8
         stages: [manual]
@@ -133,7 +140,7 @@ repos:
   # on changed lines.
   # Run with: pre-commit run --hook-stage manual clang-format
   - repo: https://github.com/pre-commit/mirrors-clang-format
-    rev: v14.0.5
+    rev: b5693898283249c74468e9876f8a707625861067  # frozen: v14.0.5
     hooks:
       - id: clang-format
         stages: [manual]
@@ -145,7 +152,7 @@ repos:
   # Disabled for now because there are a few thousand failures
   # Run with: pre-commit run --hook-stage manual rstcheck
   - repo: https://github.com/myint/rstcheck
-    rev: v6.0.0.post1
+    rev: 2e2717d279fc149e1d0e063b42e2def3a08d37c1  # frozen: v6.0.0.post1
     hooks:
       - id: rstcheck
         stages: [manual]
@@ -154,7 +161,7 @@ repos:
   # Disabled for now because of ~500 errors
   # Run with: pre-commit run --hook-stage manual shellcheck
   - repo: https://github.com/shellcheck-py/shellcheck-py
-    rev: v0.8.0.4
+    rev: 4c7c3dd7161ef39e984cb295e93a968236dc8e8a  # frozen: v0.8.0.4
     hooks:
       - id: shellcheck
         stages: [manual]
@@ -163,7 +170,7 @@ repos:
   # Disabled for now because shellcheck fails
   # Run with: pre-commit run --hook-stage manual beautysh
   - repo: https://github.com/lovesegfault/beautysh
-    rev: v6.2.1
+    rev: 386e46cf6e6e68e26e90a6c0e8c3d0f0d30c101c  # frozen: v6.2.1
     hooks:
       - id: beautysh
         stages: [manual]
@@ -172,7 +179,7 @@ repos:
   # Disabled for now because files need mild cleanup for it to run
   # Run with: pre-commit run --hook-stage manual fprettify
   - repo: https://github.com/pseewald/fprettify
-    rev: v0.3.7
+    rev: 71781aaaa0cd513e0e25093a3b69fbdd778e8409  # frozen: v0.3.7
     hooks:
       - id: fprettify
         stages: [manual]
@@ -181,7 +188,7 @@ repos:
   # Disabled for now because of failures
   # Run with: pre-commit run --hook-stage manual hadolint
   - repo: https://github.com/AleksaC/hadolint-py
-    rev: v2.10.0
+    rev: ecf2d2c004e7a753f48e44952a81d7c9cf1f202c  # frozen: v2.10.0
     hooks:
       - id: hadolint
         # Ignore not pinning versions on `pip install``
