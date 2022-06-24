@@ -635,9 +635,14 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
         raise ValueError(
             f"Invalid kind: '{kind}'. Please use None, 'sort' or 'table'.")
 
-    non_empty_arrays = (ar1.size > 0) and (ar2.size > 0)
+    if integer_arrays and kind in {None, 'table'}:
 
-    if integer_arrays and kind in {None, 'table'} and non_empty_arrays:
+        if ar2.size == 0:
+            if invert:
+                return np.ones_like(ar1, dtype=bool)
+            else:
+                return np.zeros_like(ar1, dtype=bool)
+
         ar2_min = np.min(ar2)
         ar2_max = np.max(ar2)
 
@@ -689,7 +694,7 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
     elif kind == 'table':
         raise ValueError(
             "The 'table' method is only "
-            "supported for non-empty boolean or integer arrays. "
+            "supported for boolean or integer arrays. "
             "Please select 'sort' or None for kind."
         )
 
