@@ -4,7 +4,7 @@ import sys
 import importlib
 
 # Minimum version, enforced by sphinx
-needs_sphinx = '5.0.1'
+needs_sphinx = '4.3'
 
 
 # This is a nasty hack to use platform-agnostic names for types in the
