@@ -232,11 +232,29 @@ class TestSetOps:
         assert_isin_equal(5, 6)
 
         # empty array-like:
-        if kind in {None, "sort"}:
+        if kind != "table":
+            # An empty list will become float64,
+            # which is invalid for kind="table"
             x = []
             assert_isin_equal(x, b)
             assert_isin_equal(a, x)
             assert_isin_equal(x, x)
+
+        # empty array with various types:
+        for dtype in [bool, np.int64, np.float64]:
+            if kind == "table" and dtype == np.float64:
+                continue
+
+            if dtype in {np.int64, np.float64}:
+                ar = np.array([10, 20, 30], dtype=dtype)
+            elif dtype in {bool}:
+                ar = np.array([True, False, False])
+
+            empty_array = np.array([], dtype=dtype)
+
+            assert_isin_equal(empty_array, ar)
+            assert_isin_equal(ar, empty_array)
+            assert_isin_equal(empty_array, empty_array)
 
     @pytest.mark.parametrize("kind", [None, "sort", "table"])
     def test_in1d(self, kind):

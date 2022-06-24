@@ -636,6 +636,13 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
             f"Invalid kind: '{kind}'. Please use None, 'sort' or 'table'.")
 
     if integer_arrays and kind in {None, 'table'}:
+
+        if ar2.size == 0:
+            if invert:
+                return np.ones_like(ar1, dtype=bool)
+            else:
+                return np.zeros_like(ar1, dtype=bool)
+
         ar2_min = np.min(ar2)
         ar2_max = np.max(ar2)
 
