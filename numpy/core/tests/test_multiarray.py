@@ -2416,11 +2416,40 @@ class TestMethods:
         assert_raises(ValueError, d.argsort, kind=k)
 
     def test_searchsorted(self):
-        # test for floats and complex containing nans. The logic is the
-        # same for all float types so only test double types for now.
+        # test for floats and complex containing nans. Explicitly test 
+        # half, single, and double precision floats to verify that
+        # the NaN-handling is correct.
         # The search sorted routines use the compare functions for the
         # array type, so this checks if that is consistent with the sort
         # order.
+
+        # check half
+        a = np.array([0, 1, np.nan], dtype=np.float16)
+        msg = "Test real searchsorted with nans, side='l'"
+        b = a.searchsorted(a, side='left')
+        assert_equal(b, np.arange(3), msg)
+        msg = "Test real searchsorted with nans, side='r'"
+        b = a.searchsorted(a, side='right')
+        assert_equal(b, np.arange(1, 4), msg)
+        # check keyword arguments
+        a.searchsorted(v=1)
+        x = np.array([0, 1, np.nan], dtype='float16')
+        y = np.searchsorted(x, x[-1])
+        assert_equal(y, 2)
+
+        # check single
+        a = np.array([0, 1, np.nan], dtype=np.float32)
+        msg = "Test real searchsorted with nans, side='l'"
+        b = a.searchsorted(a, side='left')
+        assert_equal(b, np.arange(3), msg)
+        msg = "Test real searchsorted with nans, side='r'"
+        b = a.searchsorted(a, side='right')
+        assert_equal(b, np.arange(1, 4), msg)
+        # check keyword arguments
+        a.searchsorted(v=1)
+        x = np.array([0, 1, np.nan], dtype='float32')
+        y = np.searchsorted(x, x[-1])
+        assert_equal(y, 2)
 
         # check double
         a = np.array([0, 1, np.nan])
@@ -2432,6 +2461,10 @@ class TestMethods:
         assert_equal(b, np.arange(1, 4), msg)
         # check keyword arguments
         a.searchsorted(v=1)
+        x = np.array([0, 1, np.nan])
+        y = np.searchsorted(x, x[-1])
+        assert_equal(y, 2)
+
         # check double complex
         a = np.zeros(9, dtype=np.complex128)
         a.real += [0, 0, 1, 1, 0, 1, np.nan, np.nan, np.nan]
