@@ -635,7 +635,9 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
         raise ValueError(
             f"Invalid kind: '{kind}'. Please use None, 'sort' or 'table'.")
 
-    if integer_arrays and kind in {None, 'table'}:
+    non_empty_arrays = (ar1.size > 0) and (ar2.size > 0)
+
+    if integer_arrays and kind in {None, 'table'} and non_empty_arrays:
         ar2_min = np.min(ar2)
         ar2_max = np.max(ar2)
 
@@ -643,11 +645,7 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
 
         # Constraints on whether we can actually use the table method:
         range_safe_from_overflow = ar2_range < np.iinfo(ar2.dtype).max
-        default_parameter_range = (
-            ar2_range <= 6 * (ar1.size + ar2.size)
-            and ar1.size > 0
-            and ar2.size > 0
-        )
+        below_memory_constraint = ar2_range <= 6 * (ar1.size + ar2.size)
 
         # Optimal performance is for approximately
         # log10(size) > (log10(range) - 2.27) / 0.927.
@@ -659,7 +657,7 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
 
         if (
             range_safe_from_overflow and 
-            (default_parameter_range or kind == 'table')
+            (below_memory_constraint or kind == 'table')
         ):
 
             if invert:
@@ -691,7 +689,7 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
     elif kind == 'table':
         raise ValueError(
             "The 'table' method is only "
-            "supported for boolean or integer arrays. "
+            "supported for non-empty boolean or integer arrays. "
             "Please select 'sort' or None for kind."
         )
 
