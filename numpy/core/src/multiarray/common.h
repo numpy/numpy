@@ -318,7 +318,11 @@ PyArray_TupleFromItems(int n, PyObject *const *items, int make_null_none)
     }
     return tuple;
 }
-
+/* 
+ * Helper for deprecating implicit/explicit ndarray-to-scalar conversion
+ * for ndarrays with ndim>0.
+ */
+NPY_NO_EXPORT int check_has_rank_0(PyArrayObject *v);
 
 #include "ucsnarrow.h"
 
