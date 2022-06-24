@@ -1123,15 +1123,21 @@ class TestUFuncForcedDTypeWarning(_DeprecationTestCase):
 
 
 class TestScalarConversion(_DeprecationTestCase):
-    # 2021-08-17, 1.22.0
-    def test_float_conversion(self):
+    """
+    Converting ndarrays w/ `ndim > 0` to scalars if `size==1` is deprecated
+    (`gh-10615`)
+    """
+    def test_1d_arr_to_float_conversion(self):
         self.assert_deprecated(float, args=(np.array([3.14]),))
 
     def test_behaviour(self):
         b = np.array([[3.14]])
         c = np.zeros(5)
-        with pytest.warns(DeprecationWarning):
-            c[0] = b
+        def _assign(x, y):
+            x[0]=y
+        match = "setting an array element with a sequence"
+        with pytest.raises(ValueError, match=match):
+            self.assert_deprecated(_assign, args=(c, b))
 
 PARTITION_DICT = {
     "partition method": np.arange(10).partition,
