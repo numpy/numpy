@@ -70,14 +70,18 @@ It starts with the trailing (i.e. rightmost) dimensions and works its
 way left.  Two dimensions are compatible when
 
 1) they are equal, or
-2) one of them is 1
+2) one of them is 1.
 
 If these conditions are not met, a
 ``ValueError: operands could not be broadcast together`` exception is
-thrown, indicating that the arrays have incompatible shapes. The size of
-the resulting array is the size that is not 1 along each axis of the inputs.
+thrown, indicating that the arrays have incompatible shapes.
 
-Arrays do not need to have the same *number* of dimensions.  For example,
+Arrays do not need to have the same *number* of dimensions.  Resulting
+array has as many dimensions as the largest (by number of dimensions)
+of inputs.  Size, along each axis, of the resulting array is equal to
+the largest size, along the same axis, of all inputs.
+
+For example,
 if you have a ``256x256x3`` array of RGB values, and you want to scale
 each color in the image by a different value, you can multiply the image
 by a one-dimensional array with 3 values. Lining up the sizes of the
