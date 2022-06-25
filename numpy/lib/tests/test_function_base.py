@@ -360,7 +360,7 @@ class TestAverage:
 
         assert_(np.average(y3, weights=w3).dtype == np.result_type(y3, w3))
 
-        # test weights with keepdims=True
+        # test weights with `keepdims=False` and `keepdims=True`
         x = np.array([2, 3, 4]).reshape(3, 1)
         w = np.array([4, 5, 6]).reshape(3, 1)
 
