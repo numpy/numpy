@@ -402,13 +402,13 @@ def _unique1d(ar, return_index=False, return_inverse=False,
         # Specify why the table method should not be used:
         prefix_error = "The 'table' method is not supported"
         if not integer_array:
-            postfix_error = "for non-integer arrays"
+            postfix_error = "for non-integer arrays."
         if return_index:
-            postfix_error = "for `return_index=True`"
+            postfix_error = "for `return_index=True`."
         if return_inverse:
-            postfix_error = "for `return_inverse=True`"
+            postfix_error = "for `return_inverse=True`."
         if isinstance(ar, np.ma.MaskedArray):
-            postfix_error = "for `return_inverse=True`"
+            postfix_error = "for masked arrays."
         raise ValueError(prefix_error + " " + postfix_error)
 
 
