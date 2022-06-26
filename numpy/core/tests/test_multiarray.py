@@ -1,4 +1,3 @@
-from cgi import test
 import collections.abc
 import tempfile
 import sys
