@@ -361,11 +361,11 @@ def _unique1d(ar, return_index=False, return_inverse=False,
             # Not an integer. e.g.,
             # a datetime dtype is a subdtype,
             # but can't be used as an integer.
+            integer_array = False
             use_table_method = False
 
     if use_table_method:
         # Can use lookup table-like approach.
-        # TODO HACK need solution for empty array.
         ar_min = np.min(ar)
         ar_max = np.max(ar)
 
@@ -399,11 +399,18 @@ def _unique1d(ar, return_index=False, return_inverse=False,
                 "Please set `kind` to None or 'sort'."
             )
     elif kind == 'table':
-        # TODO: Specify why.
-        raise ValueError(
-            "The 'table' method is not supported "
-            "supported for this input."
-        )
+        # Specify why the table method should not be used:
+        prefix_error = "The 'table' method is not supported"
+        if not integer_array:
+            postfix_error = "for non-integer arrays"
+        if return_index:
+            postfix_error = "for `return_index=True`"
+        if return_inverse:
+            postfix_error = "for `return_inverse=True`"
+        if isinstance(ar, np.ma.MaskedArray):
+            postfix_error = "for `return_inverse=True`"
+        raise ValueError(prefix_error + " " + postfix_error)
+
 
     optional_indices = return_index or return_inverse
 
