@@ -253,7 +253,7 @@ def test_ragged_usecols():
 
     txt = StringIO("0,0,XXX\n0\n0,XXX,XXX,0,XXX\n")
     with pytest.raises(ValueError,
-                match="invalid column index -2 at row 1 with 2 columns"):
+                match="invalid column index -2 at row 2 with 1 columns"):
         # There is no -2 column in the second row:
         np.loadtxt(txt, dtype=float, delimiter=",", usecols=[0, -2])
 

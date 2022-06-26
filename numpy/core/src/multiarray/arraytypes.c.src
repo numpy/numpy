@@ -716,6 +716,7 @@ OBJECT_getitem(void *ip, void *NPY_UNUSED(ap))
     PyObject *obj;
     memcpy(&obj, ip, sizeof(obj));
     if (obj == NULL) {
+        /* We support NULL, but still try to guarantee this never happens! */
         Py_RETURN_NONE;
     }
     else {
@@ -733,6 +734,7 @@ OBJECT_setitem(PyObject *op, void *ov, void *NPY_UNUSED(ap))
     memcpy(&obj, ov, sizeof(obj));
 
     Py_INCREF(op);
+    /* A newly created array/buffer may only be NULLed, so XDECREF */
     Py_XDECREF(obj);
 
     memcpy(ov, &op, sizeof(op));

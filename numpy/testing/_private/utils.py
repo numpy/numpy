@@ -699,7 +699,8 @@ def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=True):
 
 
 def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
-                         precision=6, equal_nan=True, equal_inf=True):
+                         precision=6, equal_nan=True, equal_inf=True,
+                         *, strict=False):
     __tracebackhide__ = True  # Hide traceback for py.test
     from numpy.core import array, array2string, isnan, inf, bool_, errstate, all, max, object_
 
@@ -711,44 +712,64 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
 
     kwargs = dict(comparison=comparison, err_msg=err_msg, verbose=verbose,
                     header=header,precision=precision, equal_nan=equal_nan,
-                    equal_inf=equal_inf)
+                    equal_inf=equal_inf, strict=strict, ox=ox, oy=oy)
     def isnumber(x):
         return x.dtype.char in '?bhilqpBHILQPefdgFDG'
 
     def istime(x):
         return x.dtype.char in "Mm"
 
-    def check_shape(x, y):
-        cond = (x.shape == () or y.shape == ()) or x.shape == y.shape
+    def check_shape(x, y, strict, d=0):
+        if strict:
+            cond = x.shape == y.shape and x.dtype == y.dtype
+        else:
+            cond = (x.shape == () or y.shape == ()) or x.shape == y.shape
         if not cond:
+            if d>0:
+                d_str = f' at depth {d}'
+                names=('_x', '_y')
+            else:
+                d_str =''
+                names=('x', 'y')
+            if x.shape != y.shape:
+                reason = f'\n(shapes {x.shape}, {y.shape} mismatch)'
+            else:
+                reason = f'\n(dtypes {x.dtype}, {y.dtype} mismatch)'
             msg = build_err_msg([x, y],
                                 err_msg
-                                + f'\n(shapes {x.shape}, {y.shape} mismatch)',
+                                + reason + d_str,
                                 verbose=verbose, header=header,
-                                names=('x', 'y'), precision=precision)
-            raise AssertionError(msg)
+                                names=names, precision=precision)
+            return msg
 
     def isstructured(x):
         return x.dtype.names and len(x.dtype.names)>0
 
-    def structured_dtype_compare(x, y, **kwargs):
+    def structured_dtype_compare(x, y, d=0, **kwargs):
         x_dtype = x.dtype
         y_dtype = y.dtype
         rec_arrs = isinstance(x, np.recarray) or isinstance(y, np.recarray)
-        check_shape(x,y)
+        msg = check_shape(x, y, strict=strict, d=d)
+        if msg: return msg
+        _x = x[0] if x.shape == (1,) else x
+        _y = x[0] if x.shape == (1,) else x
         if x_dtype.names is None:
-            check_flagged_comparison(x, y, **kwargs)
+            msg = check_flagged_comparison(_x, _y, d=d, **kwargs)
+            if msg: return msg
         else:
+            d_str = f' at depth {d}' if d>0 else ''
             for f_x, f_y in zip(x_dtype.fields, y_dtype.fields):
                 if rec_arrs and not f_x==f_y:
-                    msg = build_err_msg([x, y],
+                    msg = build_err_msg([_x, _y],
                                         err_msg
-                                        + f'\nfield name mismatch for record arrays ({f_x} vs {f_y})',
+                                        + f'\nfield name mismatch for record '
+                                        + 'arrays ({f_x} vs {f_y})' + d_str,
                                         verbose=verbose, header=header,
                                         names=('x', 'y'), precision=precision)
-                    raise AssertionError(msg)
+                    if msg: return msg
                 
-                structured_dtype_compare(x[f_x], y[f_y], **kwargs)
+                msg = structured_dtype_compare(_x[f_x], _y[f_y], d=d+1, **kwargs)
+                if msg: return msg
 
     def func_assert_same_pos(x, y, func=isnan, hasval='nan'):
         """Handling nan/inf.
@@ -788,8 +809,9 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
             return y_id
 
     def check_flagged_comparison(x, y, comparison, err_msg, verbose, header,
-                                precision, equal_nan, equal_inf):
-        check_shape(x,y)
+                                precision, equal_nan, equal_inf, strict, ox, oy, d=0):
+        msg = check_shape(x, y, strict=strict, d=d)
+        if msg: return msg
         flagged = bool_(False)
         if isnumber(x) and isnumber(y):
             if equal_nan:
@@ -866,15 +888,22 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
                                         + array2string(max_rel_error))
 
             err_msg += '\n' + '\n'.join(remarks)
-            msg = build_err_msg([ox, oy], err_msg,
+            d_str = f' at depth {d}' if d>0 else ''
+            msg = build_err_msg([ox, oy], err_msg+d_str,
                                 verbose=verbose, header=header,
                                 names=('x', 'y'), precision=precision)
-            raise AssertionError(msg)
+            return msg
     try:
+        # import pdb; pdb.set_trace()
         if isstructured(x) and isstructured(y):
-            structured_dtype_compare(x, y, **kwargs)
+            msg = structured_dtype_compare(x, y, **kwargs)
+            if msg: 
+                msg = build_err_msg([x, y], msg+'\n', verbose=True,
+                                        header='', names=('x', 'y'),
+                                        precision=precision)
         else:
-            check_flagged_comparison(x, y, **kwargs)
+            msg = check_flagged_comparison(x, y, **kwargs)
+        if msg: raise AssertionError(msg)
 
     except ValueError:
         import traceback
@@ -886,7 +915,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
         raise ValueError(msg)
 
 
-def assert_array_equal(x, y, err_msg='', verbose=True):
+def assert_array_equal(x, y, err_msg='', verbose=True, *, strict=False):
     """
     Raises an AssertionError if two array_like objects are not equal.
 
@@ -910,6 +939,10 @@ def assert_array_equal(x, y, err_msg='', verbose=True):
         The error message to be printed in case of failure.
     verbose : bool, optional
         If True, the conflicting values are appended to the error message.
+    strict : bool, optional
+        If True, raise an AssertionError when either the shape or the data
+        type of the array_like objects does not match. The special
+        handling for scalars mentioned in the Notes section is disabled.
 
     Raises
     ------
@@ -926,7 +959,7 @@ def assert_array_equal(x, y, err_msg='', verbose=True):
     -----
     When one of `x` and `y` is a scalar and the other is array_like, the
     function checks that each element of the array_like object is equal to
-    the scalar.
+    the scalar. This behaviour can be disabled with the `strict` parameter.
 
     Examples
     --------
@@ -963,10 +996,38 @@ def assert_array_equal(x, y, err_msg='', verbose=True):
     >>> x = np.full((2, 5), fill_value=3)
     >>> np.testing.assert_array_equal(x, 3)
 
+    Use `strict` to raise an AssertionError when comparing a scalar with an
+    array:
+
+    >>> np.testing.assert_array_equal(x, 3, strict=True)
+    Traceback (most recent call last):
+        ...
+    AssertionError:
+    Arrays are not equal
+    <BLANKLINE>
+    (shapes (2, 5), () mismatch)
+     x: array([[3, 3, 3, 3, 3],
+           [3, 3, 3, 3, 3]])
+     y: array(3)
+
+    The `strict` parameter also ensures that the array data types match:
+
+    >>> x = np.array([2, 2, 2])
+    >>> y = np.array([2., 2., 2.], dtype=np.float32)
+    >>> np.testing.assert_array_equal(x, y, strict=True)
+    Traceback (most recent call last):
+        ...
+    AssertionError:
+    Arrays are not equal
+    <BLANKLINE>
+    (dtypes int64, float32 mismatch)
+     x: array([2, 2, 2])
+     y: array([2., 2., 2.], dtype=float32)
     """
     __tracebackhide__ = True  # Hide traceback for py.test
     assert_array_compare(operator.__eq__, x, y, err_msg=err_msg,
-                         verbose=verbose, header='Arrays are not equal')
+                         verbose=verbose, header='Arrays are not equal',
+                         strict=strict)
 
 
 def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):

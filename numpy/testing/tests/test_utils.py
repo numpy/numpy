@@ -152,16 +152,24 @@ class TestArrayEqual(_GenericTest):
         r_b = np.core.records.array(b)
         self._test_equal(a, b)
         self._test_equal(r_a, r_b)
+        self._test_equal(r_a, b)
 
         c = np.empty(2, [('floupipi', float),
                          ('floupi', float), ('floupa', float)])
         c['floupipi'] = a['floupi'].copy()
         c['floupa'] = a['floupa'].copy()
         r_c = np.core.records.array(c)
-        self._test_equal(c, b)
 
-        with pytest.raises(TypeError):
-            self._test_not_equal(c, b)
+        self._test_not_equal(c, b)
+        self._test_not_equal(r_c, r_b)
+
+        d = np.empty(2, [('f1', float), ('f2', float)])
+        d['f1'] = a['floupi'].copy()
+        d['f2'] = a['floupa'].copy()
+        r_d = np.core.records.array(d)
+        self._test_equal(a, d)
+        self._test_not_equal(r_a, r_d)
+        self._test_not_equal(r_a, d)
 
     def test_masked_nan_inf(self):
         # Regression test for gh-11121
@@ -217,6 +225,43 @@ class TestArrayEqual(_GenericTest):
                 np.testing.assert_array_equal(
                     np.array([1, 2, 3], np.float32),
                     np.array([1, 1e-40, 3], np.float32))
+
+    def test_array_vs_scalar_is_equal(self):
+        """Test comparing an array with a scalar when all values are equal."""
+        a = np.array([1., 1., 1.])
+        b = 1.
+
+        self._test_equal(a, b)
+
+    def test_array_vs_scalar_not_equal(self):
+        """Test comparing an array with a scalar when not all values equal."""
+        a = np.array([1., 2., 3.])
+        b = 1.
+
+        self._test_not_equal(a, b)
+
+    def test_array_vs_scalar_strict(self):
+        """Test comparing an array with a scalar with strict option."""
+        a = np.array([1., 1., 1.])
+        b = 1.
+
+        with pytest.raises(AssertionError):
+            assert_array_equal(a, b, strict=True)
+
+    def test_array_vs_array_strict(self):
+        """Test comparing two arrays with strict option."""
+        a = np.array([1., 1., 1.])
+        b = np.array([1., 1., 1.])
+
+        assert_array_equal(a, b, strict=True)
+
+    def test_array_vs_float_array_strict(self):
+        """Test comparing two arrays with strict option."""
+        a = np.array([1, 1, 1])
+        b = np.array([1., 1., 1.])
+
+        with pytest.raises(AssertionError):
+            assert_array_equal(a, b, strict=True)
 
 
 class TestBuildErrorMessage:
