@@ -375,19 +375,16 @@ def _unique1d(ar, return_index=False, return_inverse=False,
             (below_memory_constraint or kind == 'table')
         ):
 
-            number = np.arange(ar_min, ar_max + 1, dtype=ar.dtype)
+            value = np.arange(ar_min, ar_max + 1, dtype=ar.dtype)
 
             if return_counts:
-                counts = np.zeros(ar_range + 1, dtype=np.intp)
-                # Use `at` because of repeated indices:
-                np.add.at(counts, ar - ar_min, 1)
-                mask = counts > 0
-                return (number[mask], counts[mask])
-
+                counts = np.bincount(ar - ar_min, minlength=ar_range)
+                exists = counts > 0
+                return (value[exists], counts[exists])
             else:
                 exists = np.zeros(ar_range + 1, dtype=bool)
                 exists[ar - ar_min] = 1
-                return (number[exists],)
+                return (value[exists],)
 
         elif kind == 'table':  # not range_safe_from_overflow
             raise RuntimeError(
