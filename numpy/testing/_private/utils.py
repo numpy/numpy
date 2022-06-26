@@ -36,6 +36,7 @@ __all__ = [
         'SkipTest', 'KnownFailureException', 'temppath', 'tempdir', 'IS_PYPY',
         'HAS_REFCOUNT', 'suppress_warnings', 'assert_array_compare',
         'assert_no_gc_cycles', 'break_cycles', 'HAS_LAPACK64', 'IS_PYSTON',
+        '_OLD_PROMOTION'
         ]
 
 
@@ -51,6 +52,8 @@ IS_PYPY = platform.python_implementation() == 'PyPy'
 IS_PYSTON = hasattr(sys, "pyston_version_info")
 HAS_REFCOUNT = getattr(sys, 'getrefcount', None) is not None and not IS_PYSTON
 HAS_LAPACK64 = numpy.linalg.lapack_lite._ilp64
+
+_OLD_PROMOTION = lambda: np._get_promotion_state() == 'legacy'
 
 
 def import_nose():
@@ -473,6 +476,7 @@ def print_assert_equal(test_string, actual, desired):
         raise AssertionError(msg.getvalue())
 
 
+@np._no_nep50_warning()
 def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
     """
     Raises an AssertionError if two items are not equal up to desired
@@ -485,7 +489,7 @@ def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
 
     The test verifies that the elements of `actual` and `desired` satisfy.
 
-        ``abs(desired-actual) < 1.5 * 10**(-decimal)``
+        ``abs(desired-actual) < float64(1.5 * 10**(-decimal))``
 
     That is a looser test than originally documented, but agrees with what the
     actual implementation in `assert_array_almost_equal` did up to rounding
@@ -595,10 +599,11 @@ def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
             return
     except (NotImplementedError, TypeError):
         pass
-    if abs(desired - actual) >= 1.5 * 10.0**(-decimal):
+    if abs(desired - actual) >= np.float64(1.5 * 10.0**(-decimal)):
         raise AssertionError(_build_err_msg())
 
 
+@np._no_nep50_warning()
 def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=True):
     """
     Raises an AssertionError if two items are not equal up to significant
@@ -698,6 +703,7 @@ def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=True):
         raise AssertionError(msg)
 
 
+@np._no_nep50_warning()
 def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
                          precision=6, equal_nan=True, equal_inf=True,
                          *, strict=False):
@@ -975,6 +981,7 @@ def assert_array_equal(x, y, err_msg='', verbose=True, *, strict=False):
                          strict=strict)
 
 
+@np._no_nep50_warning()
 def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
     """
     Raises an AssertionError if two objects are not equal up to desired

@@ -17,7 +17,7 @@ from .multiarray import (
     fromstring, inner, lexsort, matmul, may_share_memory,
     min_scalar_type, ndarray, nditer, nested_iters, promote_types,
     putmask, result_type, set_numeric_ops, shares_memory, vdot, where,
-    zeros, normalize_axis_index)
+    zeros, normalize_axis_index, _get_promotion_state, _set_promotion_state)
 
 from . import overrides
 from . import umath
@@ -27,7 +27,7 @@ from .umath import (multiply, invert, sin, PINF, NAN)
 from . import numerictypes
 from .numerictypes import longlong, intc, int_, float_, complex_, bool_
 from ._exceptions import TooHardError, AxisError
-from ._ufunc_config import errstate
+from ._ufunc_config import errstate, _no_nep50_warning
 
 bitwise_not = invert
 ufunc = type(sin)
@@ -54,7 +54,8 @@ __all__ = [
     'False_', 'True_', 'bitwise_not', 'CLIP', 'RAISE', 'WRAP', 'MAXDIMS',
     'BUFSIZE', 'ALLOW_THREADS', 'ComplexWarning', 'full', 'full_like',
     'matmul', 'shares_memory', 'may_share_memory', 'MAY_SHARE_BOUNDS',
-    'MAY_SHARE_EXACT', 'TooHardError', 'AxisError']
+    'MAY_SHARE_EXACT', 'TooHardError', 'AxisError',
+    '_get_promotion_state', '_set_promotion_state']
 
 
 @set_module('numpy')
@@ -2352,7 +2353,7 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     array([False,  True])
     """
     def within_tol(x, y, atol, rtol):
-        with errstate(invalid='ignore'):
+        with errstate(invalid='ignore'), _no_nep50_warning():
             return less_equal(abs(x-y), atol + rtol * abs(y))
 
     x = asanyarray(a)

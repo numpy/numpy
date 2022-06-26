@@ -1803,9 +1803,9 @@ class TestCholesky:
         c = np.linalg.cholesky(a)
 
         b = np.matmul(c, c.transpose(t).conj())
-        assert_allclose(b, a,
-                        err_msg=f'{shape} {dtype}\n{a}\n{c}',
-                        atol=500 * a.shape[0] * np.finfo(dtype).eps)
+        with np._no_nep50_warning():
+            atol = 500 * a.shape[0] * np.finfo(dtype).eps
+        assert_allclose(b, a, atol=atol, err_msg=f'{shape} {dtype}\n{a}\n{c}')
 
     def test_0_size(self):
         class ArraySubclass(np.ndarray):

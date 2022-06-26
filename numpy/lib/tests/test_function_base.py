@@ -2954,11 +2954,11 @@ class TestPercentile:
 
     H_F_TYPE_CODES = [(int_type, np.float64)
                       for int_type in np.typecodes["AllInteger"]
-                      ] + [(np.float16, np.float64),
-                           (np.float32, np.float64),
+                      ] + [(np.float16, np.float16),
+                           (np.float32, np.float32),
                            (np.float64, np.float64),
                            (np.longdouble, np.longdouble),
-                           (np.complex64, np.complex128),
+                           (np.complex64, np.complex64),
                            (np.complex128, np.complex128),
                            (np.clongdouble, np.clongdouble),
                            (np.dtype("O"), np.float64)]
@@ -2980,10 +2980,15 @@ class TestPercentile:
                                   expected,
                                   input_dtype,
                                   expected_dtype):
+        expected_dtype = np.dtype(expected_dtype)
+        if np._get_promotion_state() == "legacy":
+            expected_dtype = np.promote_types(expected_dtype, np.float64)
+
         arr = np.asarray([15.0, 20.0, 35.0, 40.0, 50.0], dtype=input_dtype)
         actual = np.percentile(arr, 40.0, method=method)
 
-        np.testing.assert_almost_equal(actual, expected, 14)
+        np.testing.assert_almost_equal(
+            actual, expected_dtype.type(expected), 14)
 
         if method in ["inverted_cdf", "closest_observation"]:
             if input_dtype == "O":
