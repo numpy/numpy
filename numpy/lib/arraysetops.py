@@ -373,6 +373,12 @@ def _unique1d(ar, return_index=False, return_inverse=False,
 
         # Constraints on whether we can actually use the table method:
         range_safe_from_overflow = ar_range < np.iinfo(ar.dtype).max
+        if return_counts:
+            # We use np.bincount for `return_counts`, which converts
+            # to int64, and so we also need to check that limit
+            # for overflow
+            range_safe_from_overflow &= ar_range < np.iinfo(np.intp).max
+
         below_memory_constraint = ar_range <= 6 * ar.size
 
         if (
@@ -383,7 +389,9 @@ def _unique1d(ar, return_index=False, return_inverse=False,
             value = np.arange(ar_min, ar_max + 1, dtype=ar.dtype)
 
             if return_counts:
-                counts = np.bincount(ar - ar_min, minlength=ar_range)
+                counts = np.bincount(ar.astype(np.intp)
+                                     - ar_min.astype(np.intp),
+                                     minlength=ar_range)
                 exists = counts > 0
                 return (value[exists], counts[exists])
             else:
