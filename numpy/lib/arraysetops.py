@@ -347,9 +347,14 @@ def _unique1d(ar, return_index=False, return_inverse=False,
         and not return_index
         and not return_inverse
         and not isinstance(ar, np.ma.MaskedArray)
-        and not ar.size == 0
     )
     if use_table_method:
+        if ar.size == 0:
+            ret = (np.array([], dtype=ar.dtype),)
+            if return_counts:
+                ret += (np.array([], dtype=np.intp),)
+            return ret
+        
         try:
             int(np.min(ar))
         except TypeError:
