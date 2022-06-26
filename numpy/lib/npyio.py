@@ -1133,6 +1133,11 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         is to read all the lines.
 
         .. versionadded:: 1.16.0
+        
+        .. versionchanged:: 1.23.0
+            Lines containing no data, including comment lines (e.g., lines 
+            starting with '#' or as specified via `comments`) are not counted 
+            towards `max_rows`.
     quotechar : unicode character or None, optional
         The character used to denote the start and end of a quoted item.
         Occurrences of the delimiter or comment characters are ignored within
