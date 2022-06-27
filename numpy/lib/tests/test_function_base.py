@@ -925,18 +925,39 @@ class TestDelete:
         with pytest.raises(IndexError):
             np.delete([0, 1, 2], np.array([], dtype=float))
 
-    def test_single_item_array(self):
-        a_del = delete(self.a, 1)
-        a_del_arr = delete(self.a, np.array([1]))
-        a_del_lst = delete(self.a, [1])
-        a_del_obj = delete(self.a, np.array([1], dtype=object))
-        assert_equal(a_del, a_del_arr, a_del_lst, a_del_obj)
+    @pytest.mark.parametrize("indexer", [np.array([1]), [1]])
+    def test_single_item_array(self, indexer):
+        a_del_int = delete(self.a, 1)
+        a_del = delete(self.a, indexer)
+        assert_equal(a_del_int, a_del)
 
-        nd_a_del = delete(self.nd_a, 1, axis=1)
-        nd_a_del_arr = delete(self.nd_a, np.array([1]), axis=1)
-        nd_a_del_lst = delete(self.nd_a, [1], axis=1)
-        nd_a_del_obj = delete(self.nd_a, np.array([1], dtype=object), axis=1)
-        assert_equal(nd_a_del, nd_a_del_arr, nd_a_del_lst, nd_a_del_obj)
+        nd_a_del_int = delete(self.nd_a, 1, axis=1)
+        nd_a_del = delete(self.nd_a, np.array([1]), axis=1)
+        assert_equal(nd_a_del_int, nd_a_del)
+
+    def test_single_item_array_non_int(self):
+        # Special handling for integer arrays must not affect non-integer ones.
+        # If `False` was cast to `0` it would delete the element:
+        res = delete(np.ones(1), np.array([False]))
+        assert_array_equal(res, np.ones(1))
+
+        # Test the more complicated (with axis) case from gh-21840
+        x = np.ones((3, 1))
+        false_mask = np.array([False], dtype=bool)
+        true_mask = np.array([True], dtype=bool)
+
+        res = delete(x, false_mask, axis=-1)
+        assert_array_equal(res, x)
+        res = delete(x, true_mask, axis=-1)
+        assert_array_equal(res, x[:, :0])
+
+        # Object or e.g. timedeltas should *not* be allowed
+        with pytest.raises(IndexError):
+            delete(np.ones(2), np.array([0], dtype=object))
+
+        with pytest.raises(IndexError):
+            # timedeltas are sometimes "integral, but clearly not allowed:
+            delete(np.ones(2), np.array([0], dtype="m8[ns]"))
 
 
 class TestGradient:
