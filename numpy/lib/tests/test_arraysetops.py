@@ -407,6 +407,13 @@ class TestSetOps:
         b_timedelta = b.astype("timedelta64[s]")
         assert_array_equal(truth, in1d(a_timedelta, b_timedelta, kind=kind))
 
+    def test_in1d_table_timedelta_fails(self):
+        a = np.array([0, 1, 2], dtype="timedelta64[s]")
+        b = a
+        # Make sure it raises a value error:
+        with pytest.raises(ValueError):
+            in1d(a, b, kind="table")
+
     def test_in1d_first_array_is_object(self):
         ar1 = [None]
         ar2 = np.array([1]*10)
