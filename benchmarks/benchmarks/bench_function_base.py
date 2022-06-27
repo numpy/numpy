@@ -2,6 +2,15 @@ from .common import Benchmark
 
 import numpy as np
 
+class Linspace(Benchmark):
+    def setup(self):
+        self.d = np.array([1, 2, 3])
+
+    def time_linspace_scalar(self):
+        np.linspace(0, 10, 2)
+
+    def time_linspace_array(self):
+        np.linspace(self.d, 10, 10)
 
 class Histogram1D(Benchmark):
     def setup(self):
