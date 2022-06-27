@@ -539,57 +539,61 @@ class TestUnique:
 
     # Cannot test "table" here, as many of the types
     # are non-integral or otherwise incompatible.
-    @pytest.mark.parametrize("kind", [None, "sort"])
+    def _check_parameter_combinations(self, a, b, i1, i2, c, dt, kind):
+        base_msg = 'check {0} failed for type {1}'
+
+        msg = base_msg.format('values', dt)
+        v = unique(a, kind=kind)
+        assert_array_equal(v, b, msg)
+
+        msg = base_msg.format('return_counts', dt)
+        v, j = unique(a, False, False, True, kind=kind)
+        assert_array_equal(v, b, msg)
+        assert_array_equal(j, c, msg)
+
+        if kind == 'table':
+            # Remaining tests are invalid for kind='table'.
+            return
+
+        msg = base_msg.format('return_index', dt)
+        v, j = unique(a, True, False, False, kind=kind)
+        assert_array_equal(v, b, msg)
+        assert_array_equal(j, i1, msg)
+
+        msg = base_msg.format('return_inverse', dt)
+        v, j = unique(a, False, True, False, kind=kind)
+        assert_array_equal(v, b, msg)
+        assert_array_equal(j, i2, msg)
+
+        msg = base_msg.format('return_index and return_inverse', dt)
+        v, j1, j2 = unique(a, True, True, False, kind=kind)
+        assert_array_equal(v, b, msg)
+        assert_array_equal(j1, i1, msg)
+        assert_array_equal(j2, i2, msg)
+
+        msg = base_msg.format('return_index and return_counts', dt)
+        v, j1, j2 = unique(a, True, False, True, kind=kind)
+        assert_array_equal(v, b, msg)
+        assert_array_equal(j1, i1, msg)
+        assert_array_equal(j2, c, msg)
+
+        msg = base_msg.format('return_inverse and return_counts', dt)
+        v, j1, j2 = unique(a, False, True, True, kind=kind)
+        assert_array_equal(v, b, msg)
+        assert_array_equal(j1, i2, msg)
+        assert_array_equal(j2, c, msg)
+
+        msg = base_msg.format(('return_index, return_inverse '
+                                'and return_counts'), dt)
+        v, j1, j2, j3 = unique(a, True, True, True, kind=kind)
+        assert_array_equal(v, b, msg)
+        assert_array_equal(j1, i1, msg)
+        assert_array_equal(j2, i2, msg)
+        assert_array_equal(j3, c, msg)
+
+    @pytest.mark.parametrize("kind", [None, "sort", "table"])
     def test_unique_1d(self, kind):
-
-        def check_all(a, b, i1, i2, c, dt):
-            base_msg = 'check {0} failed for type {1}'
-
-            msg = base_msg.format('values', dt)
-            v = unique(a, kind=kind)
-            assert_array_equal(v, b, msg)
-
-            msg = base_msg.format('return_index', dt)
-            v, j = unique(a, True, False, False, kind=kind)
-            assert_array_equal(v, b, msg)
-            assert_array_equal(j, i1, msg)
-
-            msg = base_msg.format('return_inverse', dt)
-            v, j = unique(a, False, True, False, kind=kind)
-            assert_array_equal(v, b, msg)
-            assert_array_equal(j, i2, msg)
-
-            msg = base_msg.format('return_counts', dt)
-            v, j = unique(a, False, False, True, kind=kind)
-            assert_array_equal(v, b, msg)
-            assert_array_equal(j, c, msg)
-
-            msg = base_msg.format('return_index and return_inverse', dt)
-            v, j1, j2 = unique(a, True, True, False, kind=kind)
-            assert_array_equal(v, b, msg)
-            assert_array_equal(j1, i1, msg)
-            assert_array_equal(j2, i2, msg)
-
-            msg = base_msg.format('return_index and return_counts', dt)
-            v, j1, j2 = unique(a, True, False, True, kind=kind)
-            assert_array_equal(v, b, msg)
-            assert_array_equal(j1, i1, msg)
-            assert_array_equal(j2, c, msg)
-
-            msg = base_msg.format('return_inverse and return_counts', dt)
-            v, j1, j2 = unique(a, False, True, True, kind=kind)
-            assert_array_equal(v, b, msg)
-            assert_array_equal(j1, i2, msg)
-            assert_array_equal(j2, c, msg)
-
-            msg = base_msg.format(('return_index, return_inverse '
-                                   'and return_counts'), dt)
-            v, j1, j2, j3 = unique(a, True, True, True, kind=kind)
-            assert_array_equal(v, b, msg)
-            assert_array_equal(j1, i1, msg)
-            assert_array_equal(j2, i2, msg)
-            assert_array_equal(j3, c, msg)
-
+        """Tests for np.unique with real-valued data"""
         a = [5, 7, 1, 2, 1, 5, 7]*10
         b = [1, 2, 5, 7]
         i1 = [2, 3, 0, 1]
@@ -599,13 +603,25 @@ class TestUnique:
         # test for numeric arrays
         types = []
         types.extend(np.typecodes['AllInteger'])
-        types.extend(np.typecodes['AllFloat'])
-        types.append('datetime64[D]')
-        types.append('timedelta64[D]')
+
+        if kind != "table":
+            types.extend(np.typecodes['AllFloat'])
+            types.append('datetime64[D]')
+            types.append('timedelta64[D]')
+
         for dt in types:
             aa = np.array(a, dt)
             bb = np.array(b, dt)
-            check_all(aa, bb, i1, i2, c, dt)
+            self._check_parameter_combinations(aa, bb, i1, i2, c, dt, kind)
+
+    @pytest.mark.parametrize("kind", [None, "sort"])
+    def test_unique_1d_non_real(self, kind):
+        """Tests for np.unique with non-real types"""
+        a = [5, 7, 1, 2, 1, 5, 7]*10
+        b = [1, 2, 5, 7]
+        i1 = [2, 3, 0, 1]
+        i2 = [2, 3, 0, 1, 0, 2, 3]*10
+        c = np.multiply([2, 1, 2, 2], 10)
 
         # test for object arrays
         dt = 'O'
@@ -613,13 +629,13 @@ class TestUnique:
         aa[:] = a
         bb = np.empty(len(b), dt)
         bb[:] = b
-        check_all(aa, bb, i1, i2, c, dt)
+        self._check_parameter_combinations(aa, bb, i1, i2, c, dt, kind)
 
         # test for structured arrays
         dt = [('', 'i'), ('', 'i')]
         aa = np.array(list(zip(a, a)), dt)
         bb = np.array(list(zip(b, b)), dt)
-        check_all(aa, bb, i1, i2, c, dt)
+        self._check_parameter_combinations(aa, bb, i1, i2, c, dt, kind)
 
         # test for ticket #2799
         aa = [1. + 0.j, 1 - 1.j, 1]
