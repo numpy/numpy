@@ -281,6 +281,11 @@ def unique(ar, return_index=False, return_inverse=False,
         ret = _unique1d(ar, return_index, return_inverse, return_counts, 
                         equal_nan=equal_nan, kind=kind)
         return _unpack_tuple(ret)
+    elif kind == "table":
+        raise ValueError(
+            "Using `kind='table'` is not supported "
+            "when a particular axis is specified."
+        )
 
     # axis was specified and not None
     try:
