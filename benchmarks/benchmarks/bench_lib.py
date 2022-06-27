@@ -163,9 +163,9 @@ class Unique(Benchmark):
 
     param_names = ["size", "highest_element"]
     params = [
-        list(np.logspace(np.log10(10), np.log10(10_000_000),
+        list(np.logspace(np.log10(10), np.log10(100_000_000),
                          num=5, dtype=np.intp)),
-        list(np.logspace(np.log10(10), np.log10(10_000_000),
+        list(np.logspace(np.log10(10), np.log10(100_000_000),
                          num=5, dtype=np.intp)),
     ]
 
