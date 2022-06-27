@@ -396,6 +396,17 @@ class TestSetOps:
         assert_array_equal(np.invert(expected),
                            in1d(a, b, invert=True, kind=kind))
 
+    @pytest.mark.parametrize("kind", [None, "sort"])
+    def test_in1d_timedelta(self, kind):
+        """Test that in1d works for timedelta input"""
+        rstate = np.random.RandomState(0)
+        a = rstate.randint(0, 100, size=10)
+        b = rstate.randint(0, 100, size=10)
+        truth = in1d(a, b)
+        a_timedelta = a.astype("timedelta64[s]")
+        b_timedelta = b.astype("timedelta64[s]")
+        assert_array_equal(truth, in1d(a_timedelta, b_timedelta, kind=kind))
+
     def test_in1d_first_array_is_object(self):
         ar1 = [None]
         ar2 = np.array([1]*10)
