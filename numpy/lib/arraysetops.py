@@ -627,8 +627,9 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
             f"Invalid kind: '{kind}'. Please use None, 'sort' or 'table'.")
 
     # Check if we can use a fast integer algorithm:
-    is_integer_arrays = all(ar.dtype.kind in "uib?" for ar in (ar1, ar2))
-    use_table_method = is_integer_arrays and kind in {None, 'table'}
+    int_typecodes = ["u", "i", "b"]
+    is_int_arrays = all(ar.dtype.kind in int_typecodes for ar in (ar1, ar2))
+    use_table_method = is_int_arrays and kind in {None, 'table'}
 
     if use_table_method:
         if ar2.size == 0:
