@@ -542,7 +542,7 @@ def average(a, axis=None, weights=None, returned=False, *,
             wgt = np.broadcast_to(wgt, (a.ndim-1)*(1,) + wgt.shape)
             wgt = wgt.swapaxes(-1, axis)
 
-        scl = wgt.sum(axis=axis, dtype=result_dtype)
+        scl = wgt.sum(axis=axis, dtype=result_dtype, **keepdims_kw)
         if np.any(scl == 0.0):
             raise ZeroDivisionError(
                 "Weights sum to zero, can't be normalized")
