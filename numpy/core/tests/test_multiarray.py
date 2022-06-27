@@ -2415,23 +2415,32 @@ class TestMethods:
         assert_raises(ValueError, d.sort, kind=k)
         assert_raises(ValueError, d.argsort, kind=k)
 
-    def test_searchsorted(self):
-        # test for floats and complex containing nans. The logic is the
-        # same for all float types so only test double types for now.
-        # The search sorted routines use the compare functions for the
-        # array type, so this checks if that is consistent with the sort
-        # order.
-
-        # check double
-        a = np.array([0, 1, np.nan])
-        msg = "Test real searchsorted with nans, side='l'"
+    @pytest.mark.parametrize('a', [
+        np.array([0, 1, np.nan], dtype=np.float16),
+        np.array([0, 1, np.nan], dtype=np.float32),
+        np.array([0, 1, np.nan]),
+    ])
+    def test_searchsorted_floats(self, a):
+        # test for floats arrays containing nans. Explicitly test 
+        # half, single, and double precision floats to verify that
+        # the NaN-handling is correct.
+        msg = "Test real (%s) searchsorted with nans, side='l'" % a.dtype
         b = a.searchsorted(a, side='left')
         assert_equal(b, np.arange(3), msg)
-        msg = "Test real searchsorted with nans, side='r'"
+        msg = "Test real (%s) searchsorted with nans, side='r'" % a.dtype
         b = a.searchsorted(a, side='right')
         assert_equal(b, np.arange(1, 4), msg)
         # check keyword arguments
         a.searchsorted(v=1)
+        x = np.array([0, 1, np.nan], dtype='float32')
+        y = np.searchsorted(x, x[-1])
+        assert_equal(y, 2)
+
+    def test_searchsorted_complex(self):
+        # test for complex arrays containing nans. 
+        # The search sorted routines use the compare functions for the
+        # array type, so this checks if that is consistent with the sort
+        # order.
         # check double complex
         a = np.zeros(9, dtype=np.complex128)
         a.real += [0, 0, 1, 1, 0, 1, np.nan, np.nan, np.nan]
@@ -2450,7 +2459,8 @@ class TestMethods:
         a = np.array([0, 128], dtype='>i4')
         b = a.searchsorted(np.array(128, dtype='>i4'))
         assert_equal(b, 1, msg)
-
+        
+    def test_searchsorted_n_elements(self):
         # Check 0 elements
         a = np.ones(0)
         b = a.searchsorted([0, 1, 2], 'left')
@@ -2470,6 +2480,7 @@ class TestMethods:
         b = a.searchsorted([0, 1, 2], 'right')
         assert_equal(b, [0, 2, 2])
 
+    def test_searchsorted_unaligned_array(self):
         # Test searching unaligned array
         a = np.arange(10)
         aligned = np.empty(a.itemsize * a.size + 1, 'uint8')
@@ -2486,6 +2497,7 @@ class TestMethods:
         b = a.searchsorted(unaligned, 'right')
         assert_equal(b, a + 1)
 
+    def test_searchsorted_resetting(self):
         # Test smart resetting of binsearch indices
         a = np.arange(5)
         b = a.searchsorted([6, 5, 4], 'left')
@@ -2493,6 +2505,7 @@ class TestMethods:
         b = a.searchsorted([6, 5, 4], 'right')
         assert_equal(b, [5, 5, 5])
 
+    def test_searchsorted_type_specific(self):
         # Test all type specific binary search functions
         types = ''.join((np.typecodes['AllInteger'], np.typecodes['AllFloat'],
                          np.typecodes['Datetime'], '?O'))
