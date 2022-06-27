@@ -184,6 +184,19 @@ def unique(ar, return_index=False, return_inverse=False,
         but will affect the speed and memory use. The default, None,
         will select automatically based on memory considerations.
 
+        * If 'sort', will use a mergesort-based approach.
+        * If 'table', will use a lookup table approach similar
+          to a counting sort. This is only available for boolean and
+          integer arrays. This will have a memory usage of the
+          size of `ar` plus the max-min value of `ar`. The options
+          `return_index`, `return_inverse`, `axis`, and `equal_nan`
+          are unavailable with this option.
+        * If None, will automatically choose 'table' if possible,
+          and the required memory allocation is less than or equal to
+          6 times the size of `ar`. Will otherwise will use 'sort'.
+          This is done to not use a large amount of memory by default,
+          even though 'table' may be faster in most cases.
+
     Returns
     -------
     unique : ndarray
