@@ -627,21 +627,28 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
     if ar2.dtype == bool:
         ar2 = ar2 + np.uint8(0)
 
-    # Check if we can use a fast integer algorithm:
-    integer_arrays = (np.issubdtype(ar1.dtype, np.integer) and
-                      np.issubdtype(ar2.dtype, np.integer))
-
     if kind not in {None, 'sort', 'table'}:
         raise ValueError(
             f"Invalid kind: '{kind}'. Please use None, 'sort' or 'table'.")
 
-    if integer_arrays and kind in {None, 'table'}:
+    # Check if we can use a fast integer algorithm:
+    integer_arrays = (np.issubdtype(ar1.dtype, np.integer) and
+                      np.issubdtype(ar2.dtype, np.integer))
+    use_table_method = integer_arrays and kind in {None, 'table'}
 
+    if use_table_method:
         if ar2.size == 0:
             if invert:
                 return np.ones_like(ar1, dtype=bool)
             else:
                 return np.zeros_like(ar1, dtype=bool)
+
+        try:
+            int(np.min(ar2))
+        except TypeError:
+            use_table_method = False
+
+    if use_table_method:
 
         ar2_min = np.min(ar2)
         ar2_max = np.max(ar2)
