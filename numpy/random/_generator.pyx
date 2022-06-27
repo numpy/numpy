@@ -1001,7 +1001,8 @@ cdef class Generator:
 
         Notes
         -----
-        For random samples from :math:`N(\\mu, \\sigma^2)`, use one of::
+        For random samples from the normal distribution with mean ``mu`` and
+        standard deviation ``sigma``, use one of::
 
             mu + sigma * rng.standard_normal(size=...)
             rng.normal(mu, sigma, size=...)
@@ -1022,7 +1023,8 @@ cdef class Generator:
         >>> s.shape
         (3, 4, 2)
 
-        Two-by-four array of samples from :math:`N(3, 6.25)`:
+        Two-by-four array of samples from the normal distribution with
+        mean 3 and standard deviation 2.5:
 
         >>> 3 + 2.5 * rng.standard_normal(size=(2, 4))
         array([[-4.49401501,  4.00950034, -1.81814867,  7.29718677],   # random
@@ -1126,7 +1128,8 @@ cdef class Generator:
         ...          linewidth=2, color='r')
         >>> plt.show()
 
-        Two-by-four array of samples from N(3, 6.25):
+        Two-by-four array of samples from the normal distribution with
+        mean 3 and standard deviation 2.5:
 
         >>> np.random.default_rng().normal(3, 2.5, size=(2, 4))
         array([[-4.49401501,  4.00950034, -1.81814867,  7.29718677],   # random

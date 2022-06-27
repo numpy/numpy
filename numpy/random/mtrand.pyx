@@ -1224,16 +1224,18 @@ cdef class RandomState:
 
         Notes
         -----
-        For random samples from :math:`N(\\mu, \\sigma^2)`, use:
+        For random samples from the normal distribution with mean ``mu`` and
+        standard deviation ``sigma``, use::
 
-        ``sigma * np.random.randn(...) + mu``
+            sigma * np.random.randn(...) + mu
 
         Examples
         --------
         >>> np.random.randn()
         2.1923875335537315  # random
 
-        Two-by-four array of samples from N(3, 6.25):
+        Two-by-four array of samples from the normal distribution with
+        mean 3 and standard deviation 2.5:
 
         >>> 3 + 2.5 * np.random.randn(2, 4)
         array([[-4.49401501,  4.00950034, -1.81814867,  7.29718677],   # random
@@ -1373,7 +1375,8 @@ cdef class RandomState:
 
         Notes
         -----
-        For random samples from :math:`N(\\mu, \\sigma^2)`, use one of::
+        For random samples from the normal distribution with mean ``mu`` and
+        standard deviation ``sigma``, use one of::
 
             mu + sigma * np.random.standard_normal(size=...)
             np.random.normal(mu, sigma, size=...)
@@ -1393,7 +1396,8 @@ cdef class RandomState:
         >>> s.shape
         (3, 4, 2)
 
-        Two-by-four array of samples from :math:`N(3, 6.25)`:
+        Two-by-four array of samples from the normal distribution with
+        mean 3 and standard deviation 2.5:
 
         >>> 3 + 2.5 * np.random.standard_normal(size=(2, 4))
         array([[-4.49401501,  4.00950034, -1.81814867,  7.29718677],   # random
@@ -1500,7 +1504,8 @@ cdef class RandomState:
         ...          linewidth=2, color='r')
         >>> plt.show()
 
-        Two-by-four array of samples from N(3, 6.25):
+        Two-by-four array of samples from the normal distribution with
+        mean 3 and standard deviation 2.5:
 
         >>> np.random.normal(3, 2.5, size=(2, 4))
         array([[-4.49401501,  4.00950034, -1.81814867,  7.29718677],   # random

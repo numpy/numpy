@@ -1339,7 +1339,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
     >>> np.random.seed(123)
     >>> from numpy.polynomial import polynomial as P
     >>> x = np.linspace(-1,1,51) # x "data": [-1, -0.96, ..., 0.96, 1]
-    >>> y = x**3 - x + np.random.randn(len(x)) # x^3 - x + N(0,1) "noise"
+    >>> y = x**3 - x + np.random.randn(len(x))  # x^3 - x + Gaussian noise
     >>> c, stats = P.polyfit(x,y,3,full=True)
     >>> np.random.seed(123)
     >>> c # c[0], c[2] should be approx. 0, c[1] approx. -1, c[3] approx. 1
