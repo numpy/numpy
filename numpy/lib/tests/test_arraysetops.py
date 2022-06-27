@@ -414,6 +414,19 @@ class TestSetOps:
         with pytest.raises(ValueError):
             in1d(a, b, kind="table")
 
+    @pytest.mark.parametrize("kind", [None, "sort", "table"])
+    def test_in1d_mixed_boolean(self, kind):
+        """Test that in1d works as expected for bool/int input."""
+        for dtype in np.typecodes["AllInteger"]:
+            a = np.array([True, False, False], dtype=bool)
+            b = np.array([1, 1, 1, 1], dtype=dtype)
+            expected = np.array([True, False, False], dtype=bool)
+            assert_array_equal(in1d(a, b, kind=kind), expected)
+
+            a, b = b, a
+            expected = np.array([True, True, True, True], dtype=bool)
+            assert_array_equal(in1d(a, b, kind=kind), expected)
+
     def test_in1d_first_array_is_object(self):
         ar1 = [None]
         ar2 = np.array([1]*10)
