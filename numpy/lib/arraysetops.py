@@ -353,36 +353,27 @@ def _unique1d(ar, return_index=False, return_inverse=False,
     """
     ar = np.asanyarray(ar).flatten()
 
-    integer_array = np.issubdtype(ar.dtype, np.integer)
+    is_integer_array = ar.dtype.kind in "uib"
 
     if kind not in {None, 'sort', 'table'}:
         raise ValueError(
             f"Invalid kind: '{kind}'. Please use None, 'sort' or 'table'.")
     
     use_table_method = (
-        integer_array
+        is_integer_array
         and kind in {'table', None}
         and not return_index
         and not return_inverse
         and not isinstance(ar, np.ma.MaskedArray)
     )
+
     if use_table_method:
         if ar.size == 0:
             ret = (np.array([], dtype=ar.dtype),)
             if return_counts:
                 ret += (np.array([], dtype=np.intp),)
             return ret
-        
-        try:
-            int(np.min(ar))
-        except TypeError:
-            # Not an integer. e.g.,
-            # a datetime dtype is a subdtype,
-            # but can't be used as an integer.
-            integer_array = False
-            use_table_method = False
 
-    if use_table_method:
         # Can use lookup table-like approach.
         ar_min = np.min(ar)
         ar_max = np.max(ar)
@@ -427,7 +418,7 @@ def _unique1d(ar, return_index=False, return_inverse=False,
     elif kind == 'table':
         # Specify why the table method should not be used:
         prefix_error = "The 'table' method is not supported"
-        if not integer_array:
+        if not is_integer_array:
             postfix_error = "for non-integer arrays."
         if return_index:
             postfix_error = "for `return_index=True`."
