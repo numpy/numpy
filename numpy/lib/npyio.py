@@ -1129,10 +1129,17 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
 
         .. versionadded:: 1.14.0
     max_rows : int, optional
-        Read `max_rows` lines of content after `skiprows` lines. The default
-        is to read all the lines.
+        Read `max_rows` rows of content after `skiprows` lines. The default is
+        to read all the rows. Note that empty rows containing no data such as
+        empty lines and comment lines are not counted towards `max_rows`,
+        while such lines are counted in `skiprows`.
 
         .. versionadded:: 1.16.0
+        
+        .. versionchanged:: 1.23.0
+            Lines containing no data, including comment lines (e.g., lines 
+            starting with '#' or as specified via `comments`) are not counted 
+            towards `max_rows`.
     quotechar : unicode character or None, optional
         The character used to denote the start and end of a quoted item.
         Occurrences of the delimiter or comment characters are ignored within
