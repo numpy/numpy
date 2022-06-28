@@ -394,19 +394,9 @@ static int
         /* Overflow could have occured converting double to float */
         if (NPY_UNLIKELY((npy_isinf(temp.real) && !npy_isinf(oop.real)) ||
                          (npy_isinf(temp.imag) && !npy_isinf(oop.imag)))) {
-            int bufsize, errmask;
-            PyObject *errobj;
-
-            if (PyUFunc_GetPyValues("assignment", &bufsize, &errmask,
-                    &errobj) < 0) {
+            if (PyUFunc_GiveFloatingpointErrors("cast", NPY_FPE_OVERFLOW) < 0) {
                 return -1;
             }
-            int first = 1;
-            if (PyUFunc_handlefperr(errmask, errobj, NPY_FPE_OVERFLOW, &first)) {
-                Py_XDECREF(errobj);
-                return -1;
-            }
-            Py_XDECREF(errobj);
         }
 #endif
     }
