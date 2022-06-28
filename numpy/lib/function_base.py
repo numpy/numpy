@@ -5140,10 +5140,14 @@ def delete(arr, obj, axis=None):
         single_value = False
         _obj = obj
         obj = np.asarray(obj)
+        # `size == 0` to allow empty lists similar to indexing, but (as there)
+        # is really too generic:
         if obj.size == 0 and not isinstance(_obj, np.ndarray):
             obj = obj.astype(intp)
-        elif obj.size == 1 and not isinstance(_obj, bool):
-            obj = obj.astype(intp).reshape(())
+        elif obj.size == 1 and obj.dtype.kind in "ui":
+            # For a size 1 integer array we can use the single-value path
+            # (most dtypes, except boolean, should just fail later).
+            obj = obj.item()
             single_value = True
 
     if single_value:
