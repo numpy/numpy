@@ -11,6 +11,7 @@
 #include <string.h>
 #include <stdbool.h>
 
+#include "conversion_utils.h"
 #include "textreading/stream.h"
 #include "textreading/tokenize.h"
 #include "textreading/conversions.h"
@@ -148,7 +149,7 @@ create_conv_funcs(
 }
 
 static void
-free_conv_funcs(Py_ssize_t num_fields, Py_ssize_t *conv_funcs)
+free_conv_funcs(Py_ssize_t num_fields, PyObject **conv_funcs)
 {
     if (conv_funcs != NULL) {
         for (Py_ssize_t i = 0; i < num_fields; i++) {
@@ -195,6 +196,7 @@ read_rows(stream *s,
     Py_ssize_t num_usecols = -1;
     Py_ssize_t *usecols_arr = NULL;
     PyArray_Descr *out_descr = NULL;
+    Py_ssize_t num_field_types = 0;
     field_type *field_types = NULL;
 
     int ts_result = 0;
@@ -234,7 +236,7 @@ read_rows(stream *s,
     /* Hold on to a reference while processing the file. */
     Py_INCREF(out_descr);
 
-    Py_ssize_t num_field_types = field_types_create(out_descr, &field_types);
+    num_field_types = field_types_create(out_descr, &field_types);
     if (num_field_types < 0) {
         goto error;
     }
@@ -250,6 +252,15 @@ read_rows(stream *s,
     }
 
     bool needs_init = PyDataType_FLAGCHK(out_descr, NPY_NEEDS_INIT);
+
+    /*
+     * Initial guess of the number of bytes in each "row" of the output array.
+     * This is correct if the user provided a structure data type.  For a
+     * simple data type (i.e the "homogeneous" case), this will have to be
+     * multiplied by the number of fields in each row (i.e. the number of
+     * columns in the output array).
+     */
+    row_size = out_descr->elsize;
 
     int ndim = homogeneous ? 2 : 1;
     npy_intp result_shape[2] = {0, 1};
@@ -358,12 +369,9 @@ read_rows(stream *s,
 
             /* Note that result_shape[1] is only used if homogeneous is true */
             result_shape[1] = actual_num_fields;
-            /*
-             * We can now set row_size, the number of bytes in each "row" of
-             * the output array.
-             */
-            row_size = out_descr->elsize;
+
             if (homogeneous) {
+                /* We're create a 2-d output array, so scale up row_size. */
                 row_size *= actual_num_fields;
             }
 
