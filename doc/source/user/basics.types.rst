@@ -237,6 +237,11 @@ range of possible values.
     >>> np.power(100, 100, dtype=np.float64)
     1e+200
 
+    >>> np.power(53782400000 - 61917364224, 2) # Integer arithmetic is modular
+    -7609333369078284288
+    >>> np.power(53782400000.0 - 61917364224.0, 2) # Prefer floating point for computation
+    6.617764292575992e+19
+
 Extended Precision
 ==================
 
