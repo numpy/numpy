@@ -2,6 +2,7 @@
 #ifndef NUMPY_CORE_SRC_MULTIARRAY_TEXTREADING_TOKENIZE_H_
 #define NUMPY_CORE_SRC_MULTIARRAY_TEXTREADING_TOKENIZE_H_
 
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include "numpy/ndarraytypes.h"
 
