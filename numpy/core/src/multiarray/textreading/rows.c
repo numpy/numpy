@@ -190,7 +190,7 @@ read_rows(stream *s,
 {
     char *data_ptr = NULL;
     Py_ssize_t current_num_fields;
-    Py_ssize_t prev_num_fields;
+    Py_ssize_t prev_num_fields = 0;  /* Set value to avoid compiler warning */
     PyObject **conv_funcs = NULL;
     npy_intp row_size;
     Py_ssize_t num_usecols = -1;
