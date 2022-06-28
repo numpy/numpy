@@ -1067,7 +1067,10 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     r"""
     Load data from a text file.
 
-    Each row in the text file must have the same number of values.
+    Each row in the text file must have the same number of values to be able to
+    read all values. If all rows do not have same number of values, a subset of
+    up to n-columns (where n is the least number of values present in all rows)
+    can be read by specifying the columns via `usecols`.
 
     Parameters
     ----------
