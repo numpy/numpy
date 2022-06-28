@@ -645,7 +645,7 @@ def average(a, axis=None, weights=None, returned=False, *,
             wgt = wgt*(~a.mask)
             wgt.mask |= a.mask
 
-        scl = wgt.sum(axis=axis, dtype=result_dtype)
+        scl = wgt.sum(axis=axis, dtype=result_dtype, **keepdims_kw)
         avg = np.multiply(a, wgt,
                           dtype=result_dtype).sum(axis, **keepdims_kw) / scl
 
