@@ -97,7 +97,7 @@ def seterr(all=None, divide=None, over=None, under=None, invalid=None):
     >>> np.int16(32000) * np.int16(3)
     Traceback (most recent call last):
       File "<stdin>", line 1, in <module>
-    FloatingPointError: overflow encountered in short_scalars
+    FloatingPointError: overflow encountered in scalar multiply
 
     >>> old_settings = np.seterr(all='print')
     >>> np.geterr()

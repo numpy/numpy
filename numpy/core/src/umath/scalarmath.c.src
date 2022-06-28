@@ -29,6 +29,8 @@
 #include "array_coercion.h"
 #include "common.h"
 #include "can_cast_table.h"
+#include "umathmodule.h"
+
 
 /* TODO: Used for some functions, should possibly move these to npy_math.h */
 #include "loops.h"
@@ -1162,6 +1164,14 @@ convert_to_@name@(PyObject *value, @type@ *result, npy_bool *may_need_deferring)
  *          (Half, Float, Double, LongDouble)*3#
  */
 #define IS_@name@
+/* drop the "true_" from "true_divide" for floating point warnings: */
+#define IS_@oper@
+#ifdef IS_true_divide
+    #define OP_NAME "divide"
+#else
+    #define OP_NAME "@oper@"
+#endif
+#undef IS_@oper@
 
 static PyObject *
 @name@_@oper@(PyObject *a, PyObject *b)
@@ -1281,19 +1291,9 @@ static PyObject *
     retstatus |= npy_get_floatstatus_barrier((char*)&out);
 #endif
     if (retstatus) {
-        int bufsize, errmask;
-        PyObject *errobj;
-
-        if (PyUFunc_GetPyValues("@name@_scalars", &bufsize, &errmask,
-                                &errobj) < 0) {
+        if (PyUFunc_GiveFloatingpointErrors("scalar " OP_NAME, retstatus) < 0) {
             return NULL;
         }
-        int first = 1;
-        if (PyUFunc_handlefperr(errmask, errobj, retstatus, &first)) {
-            Py_XDECREF(errobj);
-            return NULL;
-        }
-        Py_XDECREF(errobj);
     }
 
 
@@ -1327,6 +1327,7 @@ static PyObject *
 }
 
 
+#undef OP_NAME
 #undef IS_@name@
 
 /**end repeat**/
@@ -1449,19 +1450,9 @@ static PyObject *
     retstatus |= npy_get_floatstatus_barrier((char*)&out);
 #endif
     if (retstatus) {
-        int bufsize, errmask;
-        PyObject *errobj;
-
-        if (PyUFunc_GetPyValues("@name@_scalars", &bufsize, &errmask,
-                                &errobj) < 0) {
+        if (PyUFunc_GiveFloatingpointErrors("scalar power", retstatus) < 0) {
             return NULL;
         }
-        int first = 1;
-        if (PyUFunc_handlefperr(errmask, errobj, retstatus, &first)) {
-            Py_XDECREF(errobj);
-            return NULL;
-        }
-        Py_XDECREF(errobj);
     }
 
     ret = PyArrayScalar_New(@Name@);
@@ -1581,19 +1572,9 @@ static PyObject *
     int retstatus = @name@_ctype_@oper@(val, &out);
 
     if (retstatus) {
-        int bufsize, errmask;
-        PyObject *errobj;
-
-        if (PyUFunc_GetPyValues("@name@_scalars", &bufsize, &errmask,
-                                &errobj) < 0) {
+        if (PyUFunc_GiveFloatingpointErrors("scalar @oper@", retstatus) < 0) {
             return NULL;
         }
-        int first = 1;
-        if (PyUFunc_handlefperr(errmask, errobj, retstatus, &first)) {
-            Py_XDECREF(errobj);
-            return NULL;
-        }
-        Py_XDECREF(errobj);
     }
 
     /*
