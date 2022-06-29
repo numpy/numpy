@@ -626,9 +626,8 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
         raise ValueError(
             f"Invalid kind: '{kind}'. Please use None, 'sort' or 'table'.")
 
-    # Check if we can use a fast integer algorithm:
-    int_typecodes = ["u", "i", "b"]
-    is_int_arrays = all(ar.dtype.kind in int_typecodes for ar in (ar1, ar2))
+    # Can use the table method if all arrays are integers or boolean:
+    is_int_arrays = all(ar.dtype.kind in ("u", "i", "b") for ar in (ar1, ar2))
     use_table_method = is_int_arrays and kind in {None, 'table'}
 
     if use_table_method:
@@ -640,9 +639,9 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
 
         # Convert booleans to uint8 so we can use the fast integer algorithm
         if ar1.dtype == bool:
-            ar1 = ar1 + np.uint8(0)
+            ar1 = ar1.astype(np.uint8)
         if ar2.dtype == bool:
-            ar2 = ar2 + np.uint8(0)
+            ar2 = ar2.astype(np.uint8)
 
         ar2_min = np.min(ar2)
         ar2_max = np.max(ar2)
