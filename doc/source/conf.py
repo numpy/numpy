@@ -176,7 +176,7 @@ if os.environ.get('CIRCLE_JOB', False) and \
 elif ".dev" in version:
     switcher_version = "devdocs"
 else:
-    switcher_version = f"doc/{version}"
+    switcher_version = f"{version}"
 
 html_theme_options = {
   "github_url": "https://github.com/numpy/numpy",
