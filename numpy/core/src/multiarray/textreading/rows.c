@@ -281,7 +281,6 @@ read_rows(stream *s,
         actual_num_fields = num_usecols;
     }
     else if (!homogeneous) {
-        assert(num_field_types == num_usecols);
         actual_num_fields = num_field_types;
     }
 
