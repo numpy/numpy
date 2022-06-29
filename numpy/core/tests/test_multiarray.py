@@ -12,6 +12,7 @@ import gc
 import weakref
 import pytest
 from contextlib import contextmanager
+import re
 
 from numpy.compat import pickle
 
@@ -5192,7 +5193,7 @@ class TestIO:
         """Test workarounds for 32-bit limited fwrite, fseek, and ftell
         calls in windows. These normally would hang doing something like this.
         See http://projects.scipy.org/numpy/ticket/1660"""
-        if sys.platform != 'win32':
+        if sys.platform != 'win32' or re.search(r'\[GCC ', sys.version):
             return
         try:
             # before workarounds, only up to 2**32-1 worked
