@@ -139,13 +139,6 @@ _load_from_filelike(PyObject *NPY_UNUSED(mod),
     };
     bool filelike = true;
 
-    if (sizeof(npy_intp) != sizeof(Py_ssize_t)) {
-        PyErr_Format(PyExc_RuntimeError,
-                     "sizeof(npy_intp) = %zu, sizeof(Py_ssize_t) = %zu\n",
-                     sizeof(npy_intp), sizeof(Py_ssize_t));
-        return NULL;
-    }
-
     NPY_PREPARE_ARGPARSER;
     if (npy_parse_arguments("_load_from_filelike", args, len_args, kwnames,
             "file", NULL, &file,
