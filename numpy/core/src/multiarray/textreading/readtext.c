@@ -159,6 +159,13 @@ _load_from_filelike(PyObject *NPY_UNUSED(mod),
         return NULL;
     }
 
+    if (sizeof(npy_intp) != sizeof(Py_ssize_t)) {
+        PyErr_Format(PyExc_RuntimeError,
+                     "sizeof(npy_intp) = %zu, sizeof(Py_ssize_t) = %zu\n",
+                     sizeof(npy_intp), sizeof(Py_ssize_t));
+        return NULL;
+    }
+
     /* Reject matching control characters, they just rarely make sense anyway */
     if (error_if_matching_control_characters(
             pc.delimiter, pc.quote, pc.comment) < 0) {
