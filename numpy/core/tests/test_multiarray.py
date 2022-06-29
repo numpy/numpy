@@ -12,6 +12,7 @@ import gc
 import weakref
 import pytest
 from contextlib import contextmanager
+import re
 
 from numpy.compat import pickle
 
@@ -5497,10 +5498,12 @@ class TestIO:
 
     @pytest.mark.slow  # takes > 1 minute on mechanical hard drive
     def test_big_binary(self):
-        """Test workarounds for 32-bit limited fwrite, fseek, and ftell
-        calls in windows. These normally would hang doing something like this.
-        See http://projects.scipy.org/numpy/ticket/1660"""
-        if sys.platform != 'win32':
+        """Test workarounds for 32-bit limit for MSVC fwrite, fseek, and ftell
+
+        These normally would hang doing something like this.
+        See : https://github.com/numpy/numpy/issues/2256
+        """
+        if sys.platform != 'win32' or re.search(r'\[GCC ', sys.version):
             return
         try:
             # before workarounds, only up to 2**32-1 worked
