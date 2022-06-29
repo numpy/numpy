@@ -269,7 +269,7 @@ cdef class Generator:
 
         See Also
         --------
-        ~.Generator.uniform : Drawn samples from the parameterized uniform distribution.
+        `~.Generator.uniform` : Drawn samples from the parameterized uniform distribution.
 
         Examples
         --------
