@@ -86,5 +86,6 @@ def test_nep50_integer_conversion_errors():
     with pytest.raises(OverflowError, match=".*uint8"):
         np.uint8(1) + 300
 
-    with pytest.raises(OverflowError, match=".*unsigned int"):
+    # Error message depends on platform (maybe unsigned int or unsigned long)
+    with pytest.raises(OverflowError, match=".*unsigned"):
         np.uint8(1) + -1
