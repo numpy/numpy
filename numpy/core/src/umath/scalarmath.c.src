@@ -997,7 +997,11 @@ convert_to_@name@(PyObject *value, @type@ *result, npy_bool *may_need_deferring)
         int overflow;
         long val = PyLong_AsLongAndOverflow(value, &overflow);
         if (overflow) {
-            return CONVERT_PYSCALAR;  /* handle as if "unsafe" */
+            /* handle as if "unsafe" */
+            if (npy_promotion_state != NPY_USE_WEAK_PROMOTION) {
+                return PROMOTION_REQUIRED;
+            }
+            return CONVERT_PYSCALAR;
         }
         if (error_converting(val)) {
             return CONVERSION_ERROR;  /* should not be possible */

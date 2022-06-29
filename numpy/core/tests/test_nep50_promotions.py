@@ -89,3 +89,12 @@ def test_nep50_integer_conversion_errors():
     # Error message depends on platform (maybe unsigned int or unsigned long)
     with pytest.raises(OverflowError, match=".*unsigned"):
         np.uint8(1) + -1
+
+
+def test_nep50_integer_regression():
+    # Test the old integer promotion rules.  When the integer is too large,
+    # we need to keep using the old-style promotion.
+    np._set_promotion_state("legacy")
+    arr = np.array(1)
+    assert (arr + 2**63).dtype == np.float64
+    assert (arr[()] + 2**63).dtype == np.float64
