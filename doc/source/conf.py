@@ -164,8 +164,6 @@ sys.modules['numpy.testing.dec'] = numpy.testing.dec
 
 html_theme = 'pydata_sphinx_theme'
 
-html_logo = '_static/numpylogo.svg'
-
 html_favicon = '_static/favicon/favicon.ico'
 
 # Set up the version switcher.  The versions.json is stored in the doc repo.
@@ -179,6 +177,10 @@ else:
     switcher_version = f"{version}"
 
 html_theme_options = {
+  "logo": {
+      "image_light": "numpylogo.svg",
+      "image_dark": "numpylogo_dark.svg",
+  },
   "github_url": "https://github.com/numpy/numpy",
   "twitter_url": "https://twitter.com/numpy_team",
   "collapse_navigation": True,
