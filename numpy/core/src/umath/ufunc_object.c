@@ -4947,6 +4947,41 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
         goto fail;
     }
 
+    if (promoting_pyscalars) {
+        /*
+         * Python integers need to be cast specially.  For other python
+         * scalars it does not hurt either.  It would be nice to never create
+         * the array in this case, but that is difficult until value-based
+         * promotion rules are gone.  (After that, we may get away with using
+         * dummy arrays rather than real arrays for the legacy resolvers.)
+         */
+        for (int i = 0; i < nin; i++) {
+            int orig_flags = PyArray_FLAGS(operands[i]);
+            if (!(orig_flags & NPY_ARRAY_WAS_PYTHON_LITERAL)) {
+                continue;
+            }
+            /* If the descriptor matches, no need to worry about conversion */
+            if (PyArray_EquivTypes(
+                    PyArray_DESCR(operands[i]), operation_descrs[i])) {
+                continue;
+            }
+            /* Otherwise, replace the operand with a new array */
+            PyArray_Descr *descr = operation_descrs[i];
+            Py_INCREF(descr);
+            PyArrayObject *new = (PyArrayObject *)PyArray_NewFromDescr(
+                    &PyArray_Type, descr, 0, NULL, NULL, NULL, 0, NULL);
+            Py_SETREF(operands[i], new);
+            if (operands[i] == NULL) {
+                goto fail;
+            }
+
+            PyObject *value = PyTuple_GET_ITEM(full_args.in, i);
+            if (PyArray_SETITEM(new, PyArray_BYTES(operands[i]), value) < 0) {
+                goto fail;
+            }
+        }
+    }
+
     if (subok) {
         _find_array_prepare(full_args, output_array_prepare, nout);
     }

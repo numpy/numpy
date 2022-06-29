@@ -51,7 +51,6 @@ typedef struct {
     ensure_canonical_function *ensure_canonical;
     /*
      * Currently only used for experimental user DTypes.
-     * Typing as `void *` until NumPy itself uses these (directly).
      */
     setitemfunction *setitem;
     getitemfunction *getitem;
@@ -104,6 +103,7 @@ typedef struct {
     NPY_DT_SLOTS(NPY_DTYPE(descr))->getitem(descr, data_ptr)
 #define NPY_DT_CALL_setitem(descr, value, data_ptr)  \
     NPY_DT_SLOTS(NPY_DTYPE(descr))->setitem(descr, value, data_ptr)
+
 
 /*
  * This function will hopefully be phased out or replaced, but was convenient
