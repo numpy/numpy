@@ -15,7 +15,26 @@ pr:
 
 stages:
 
+- stage: Check
+  jobs:
+    - job: Skip
+      pool:
+        vmImage: 'ubuntu-20.04'
+      variables:
+        DECODE_PERCENTS: 'false'
+        RET: 'true'
+      steps:
+      - bash: |
+          git_log=`git log --max-count=1 --skip=1 --pretty=format:"%B" | tr "\n" " "`
+          echo "##vso[task.setvariable variable=log]$git_log"
+      - bash: echo "##vso[task.setvariable variable=RET]false"
+        condition: or(contains(variables.log, '[skip azp]'), contains(variables.log, '[azp skip]'), contains(variables.log, '[skip ci]'), contains(variables.log, '[ci skip]'))
+      - bash: echo "##vso[task.setvariable variable=start_main;isOutput=true]$RET"
+        name: result
+
 - stage: InitialTests
+  condition: and(succeeded(), eq(dependencies.Check.outputs['Skip.result.start_main'], 'true'))
+  dependsOn: Check
   jobs:
 
   # Native build is based on gcc flag `-march=native`
@@ -48,6 +67,8 @@ stages:
         testRunTitle: 'Publish test results for baseline/native'
 
 - stage: ComprehensiveTests
+  condition: and(succeeded(), eq(dependencies.Check.outputs['Skip.result.start_main'], 'true'))
+  dependsOn: Check
   jobs:
 
   - job: Lint
