@@ -242,7 +242,7 @@ cdef class Generator:
         Return random floats in the half-open interval [0.0, 1.0).
 
         Results are from the "continuous uniform" distribution over the
-        stated interval.  To sample :math:`Unif[a, b), b > a` use `uniform` or multiply
+        stated interval.  To sample :math:`Unif[a, b), b > a` use `~.Generator.uniform` or multiply
         the output of `random` by `(b-a)` and add `a`::
 
           (b - a) * random() + a
@@ -269,7 +269,7 @@ cdef class Generator:
 
         See Also
         --------
-        uniform : Drawn samples from the parameterized uniform distribution.
+        ~.Generator.uniform : Drawn samples from the parameterized uniform distribution.
 
         Examples
         --------
