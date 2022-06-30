@@ -142,8 +142,8 @@ def load_f2cmap_file(f2cmap_file):
     if f2cmap_file is None:
         # Default value
         f2cmap_file = '.f2py_f2cmap'
-        if not os.path.isfile(f2cmap_file):
-            return
+    if not os.path.isfile(f2cmap_file):
+        return
 
     # User defined additions to f2cmap_all.
     # f2cmap_file must contain a dictionary of dictionaries, only. For
