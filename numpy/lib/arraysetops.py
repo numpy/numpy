@@ -87,7 +87,7 @@ def ediff1d(ary, to_end=None, to_begin=None):
     # TODO: Once exposed, may use `np.subtract.resolve_descriptors()`
     #       (or similar) to find the result dtype and generalize this.
     if ary.dtype.kind == "M":
-        dtype_req = np.dtype(ary.dtype.str.replace("M", "m"))
+        dtype_req = (ary[:1] - ary[:1]).dtype
     else:
         dtype_req = ary.dtype
 
