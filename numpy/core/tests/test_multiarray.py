@@ -5503,7 +5503,7 @@ class TestIO:
         These normally would hang doing something like this.
         See : https://github.com/numpy/numpy/issues/2256
         """
-        if sys.platform != 'win32' or re.search(r'\[GCC ', sys.version):
+        if sys.platform != 'win32' or '[GCC ' in sys.version:
             return
         try:
             # before workarounds, only up to 2**32-1 worked
