@@ -31,6 +31,7 @@ from numpy.core.multiarray import normalize_axis_index
 from numpy.core.overrides import set_module
 from numpy.core import overrides
 from numpy.lib.twodim_base import triu, eye
+from numpy.lib.function_base import asarray_chkfinite
 from numpy.linalg import _umath_linalg
 
 
@@ -202,11 +203,6 @@ def _assert_stacked_square(*arrays):
         m, n = a.shape[-2:]
         if m != n:
             raise LinAlgError('Last 2 dimensions of the array must be square')
-
-def _assert_finite(*arrays):
-    for a in arrays:
-        if not isfinite(a).all():
-            raise LinAlgError("Array must not contain infs or NaNs")
 
 def _is_empty_2d(arr):
     # check size first for efficiency
@@ -1054,7 +1050,7 @@ def eigvals(a):
     a, wrap = _makearray(a)
     _assert_stacked_2d(a)
     _assert_stacked_square(a)
-    _assert_finite(a)
+    asarray_chkfinite(a)
     t, result_t = _commonType(a)
 
     extobj = get_linalg_error_extobj(
@@ -1309,7 +1305,7 @@ def eig(a):
     a, wrap = _makearray(a)
     _assert_stacked_2d(a)
     _assert_stacked_square(a)
-    _assert_finite(a)
+    asarray_chkfinite(a)
     t, result_t = _commonType(a)
 
     extobj = get_linalg_error_extobj(
