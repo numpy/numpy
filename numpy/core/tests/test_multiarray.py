@@ -12,7 +12,6 @@ import gc
 import weakref
 import pytest
 from contextlib import contextmanager
-import re
 
 from numpy.compat import pickle
 
