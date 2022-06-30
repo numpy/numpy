@@ -86,7 +86,7 @@ def check_dir(dname: str):
     """Function which checks the build directory
 
     This is meant to ensure no odd directories are passed, it will fail if a
-    file is passed
+    file is passed. Creates directory if not present.
 
     Parameters
     ----------
@@ -103,10 +103,8 @@ def check_dir(dname: str):
         return pathlib.Path(dname)
     else:
         dpname = pathlib.Path(dname)
-        if dpname.is_dir():
-            return dpname
-        else:
-            raise RuntimeError(f"{dpname} is not a directory")
+        dpname.mkdir(parents=True, exist_ok=True)
+        return dpname
 
 
 def check_dccomp(opt: str):
