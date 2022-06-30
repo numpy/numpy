@@ -85,17 +85,6 @@ if os.path.exists('MANIFEST'):
 # so that it is in sys.modules
 import numpy.distutils.command.sdist
 import setuptools
-if int(setuptools.__version__.split('.')[0]) >= 60:
-    # setuptools >= 60 switches to vendored distutils by default; this
-    # may break the numpy build, so make sure the stdlib version is used
-    try:
-        setuptools_use_distutils = os.environ['SETUPTOOLS_USE_DISTUTILS']
-    except KeyError:
-        os.environ['SETUPTOOLS_USE_DISTUTILS'] = "stdlib"
-    else:
-        if setuptools_use_distutils != "stdlib":
-            raise RuntimeError("setuptools versions >= '60.0.0' require "
-                    "SETUPTOOLS_USE_DISTUTILS=stdlib in the environment")
 
 # Initialize cmdclass from versioneer
 from numpy.distutils.core import numpy_cmdclass
