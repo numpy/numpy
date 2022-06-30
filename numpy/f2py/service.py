@@ -1,6 +1,7 @@
 import sys
 import os
 import logging
+import tempfile
 
 from pathlib import Path
 from typing import List, Tuple
@@ -52,9 +53,9 @@ def check_dir(dname: str):
     """
     if dname == "tempfile.mkdtemp()":
         dname = tempfile.mkdtemp()
-        return pathlib.Path(dname)
+        return Path(dname)
     else:
-        dpname = pathlib.Path(dname)
+        dpname = Path(dname)
         dpname.mkdir(parents=True, exist_ok=True)
         return dpname
 
