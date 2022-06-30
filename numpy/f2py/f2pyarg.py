@@ -312,8 +312,9 @@ parser.add_argument(
     type=bool,
     default=False,
     nargs=1,
-    help="""Create (or not) <modulename>module.rst.
-                   Default is --no-rest-doc.""",
+    help="""Create (or not) Fortran subroutine wrappers to Fortran 77
+                   functions. Default is --wrap-functions because it
+                   ensures maximum portability/compiler independence""",
 )
 
 parser.add_argument(
