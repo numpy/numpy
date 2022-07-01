@@ -742,15 +742,16 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
 
     def get_flat_names(dtype, parents=()):
         if dtype.names is None: return []
-        top_names = [(*parents, name) for name in dtype.names]
-        total_names = top_names.copy()
-        for name_tuple in top_names:
-            name = name_tuple[-1]
-            child = dtype[name]
-            if not child.names is None:
-                sub_names = get_flat_names(child, (*parents, name))
-                total_names.extend(sub_names)
-        return total_names
+        names = [(*parents, name) for name in dtype.names]
+        for name_spec in names:
+            _dt = dtype
+            for name in name_spec:
+                _dt = _dt[name]
+            if not _dt.names is None:
+                for child_name in _dt.names:
+                    spec = (*name_spec, child_name)
+                    names.append(spec)
+        return names
 
     def _scalar_select(x):
         return x[0] if x.shape == (1,) else x

@@ -909,7 +909,7 @@ class TestLoadTxt(LoadTxtBase):
         dt = np.dtype([('name', 'S4'), ('x', float), ('y', float),
                        ('block', int, (2, 3))])
         x = np.loadtxt(c, dtype=dt)
-        a = np.array([('aaaa', 1.0, 8.0, [[1, 2, 3], [4, 5, 6]])],
+        a = np.array(('aaaa', 1.0, 8.0, [[1, 2, 3], [4, 5, 6]]),
                      dtype=dt)
         assert_array_equal(x, a)
 
@@ -918,8 +918,8 @@ class TestLoadTxt(LoadTxtBase):
         dt = np.dtype([('name', 'S4'), ('x', float), ('y', float),
                        ('block', int, (2, 2, 3))])
         x = np.loadtxt(c, dtype=dt)
-        a = np.array([('aaaa', 1.0, 8.0,
-                       [[[1, 2, 3], [4, 5, 6]], [[7, 8, 9], [10, 11, 12]]])],
+        a = np.array(('aaaa', 1.0, 8.0,
+                       [[[1, 2, 3], [4, 5, 6]], [[7, 8, 9], [10, 11, 12]]]),
                      dtype=dt)
         assert_array_equal(x, a)
 
@@ -1800,7 +1800,7 @@ M   33  21.99
         dt = np.dtype([('name', 'S4'), ('x', float), ('y', float),
                        ('block', int, (2, 3))])
         x = np.genfromtxt(c, dtype=dt)
-        a = np.array([('aaaa', 1.0, 8.0, [[1, 2, 3], [4, 5, 6]])],
+        a = np.array(('aaaa', 1.0, 8.0, [[1, 2, 3], [4, 5, 6]]),
                      dtype=dt)
         assert_array_equal(x, a)
 
