@@ -719,25 +719,20 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
     def istime(x):
         return x.dtype.char in "Mm"
 
-    def check_shape(x, y, strict, d=0):
+    def check_shape(x, y, strict):
         if strict:
             cond = x.shape == y.shape and x.dtype == y.dtype
         else:
             cond = (x.shape == () or y.shape == ()) or x.shape == y.shape
         if not cond:
-            if d>0:
-                d_str = f' at depth {d}'
-                names=('_x', '_y')
-            else:
-                d_str =''
-                names=('x', 'y')
+            names=('x', 'y')
             if x.shape != y.shape:
                 reason = f'\n(shapes {x.shape}, {y.shape} mismatch)'
             else:
                 reason = f'\n(dtypes {x.dtype}, {y.dtype} mismatch)'
             msg = build_err_msg([x, y],
                                 err_msg
-                                + reason + d_str,
+                                + reason,
                                 verbose=verbose, header=header,
                                 names=names, precision=precision)
             return msg
@@ -745,31 +740,55 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
     def isstructured(x):
         return x.dtype.names and len(x.dtype.names)>0
 
-    def structured_dtype_compare(x, y, d=0, **kwargs):
+    def get_flat_names(dtype, parents=()):
+        if dtype.names is None: return []
+        top_names = [(*parents, name) for name in dtype.names]
+        total_names = top_names.copy()
+        for name_tuple in top_names:
+            name = name_tuple[-1]
+            child = dtype[name]
+            if not child.names is None:
+                sub_names = get_flat_names(child, (*parents, name))
+                total_names.extend(sub_names)
+        return total_names
+
+    def _scalar_select(x):
+        return x[0] if x.shape == (1,) else x
+
+    def structured_dtype_compare(x, y, **kwargs):
         x_dtype = x.dtype
         y_dtype = y.dtype
         rec_arrs = isinstance(x, np.recarray) or isinstance(y, np.recarray)
-        msg = check_shape(x, y, strict=strict, d=d)
+        msg = check_shape(x, y, strict=strict)
         if msg: return msg
-        _x = x[0] if x.shape == (1,) else x
-        _y = x[0] if x.shape == (1,) else x
         if x_dtype.names is None:
-            msg = check_flagged_comparison(_x, _y, d=d, **kwargs)
+            _x = _scalar_select(x)
+            _y = _scalar_select(y)
+            msg = check_flagged_comparison(_x, _y, **kwargs)
             if msg: return msg
         else:
-            d_str = f' at depth {d}' if d>0 else ''
-            for f_x, f_y in zip(x_dtype.fields, y_dtype.fields):
-                if rec_arrs and not f_x==f_y:
-                    msg = build_err_msg([_x, _y],
-                                        err_msg
-                                        + f'\nfield name mismatch for record '
-                                        + 'arrays ({f_x} vs {f_y})' + d_str,
-                                        verbose=verbose, header=header,
-                                        names=('x', 'y'), precision=precision)
-                    if msg: return msg
-                
-                msg = structured_dtype_compare(_x[f_x], _y[f_y], d=d+1, **kwargs)
+            x_name_specs = get_flat_names(x_dtype)
+            y_name_specs = get_flat_names(y_dtype)
+            if rec_arrs and x_name_specs!=y_name_specs: 
+                msg = build_err_msg([x, y],
+                                    err_msg
+                                    + f'\nfield name mismatch for record '
+                                    + f'arrays ({x_name_specs} vs {y_name_specs})',
+                                    verbose=verbose, header=header,
+                                    names=('x', 'y'), precision=precision)
                 if msg: return msg
+            for x_spec, y_spec in zip(x_name_specs, y_name_specs):
+                _x = x
+                _y = y
+                for x_name, y_name in zip(x_spec, y_spec):
+                    _x = _x[x_name]
+                    _y = _y[y_name]
+                    _x = _scalar_select(_x)
+                    _y = _scalar_select(_y)
+                check_shape(_x, _y, strict=strict)
+                if _x.dtype.names is None:
+                    msg = check_flagged_comparison(_x, _y, **kwargs)
+                    if msg: return msg
 
     def func_assert_same_pos(x, y, func=isnan, hasval='nan'):
         """Handling nan/inf.
@@ -810,7 +829,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
 
     def check_flagged_comparison(x, y, comparison, err_msg, verbose, header,
                                 precision, equal_nan, equal_inf, strict, ox, oy, d=0):
-        msg = check_shape(x, y, strict=strict, d=d)
+        msg = check_shape(x, y, strict=strict)
         if msg: return msg
         flagged = bool_(False)
         if isnumber(x) and isnumber(y):
