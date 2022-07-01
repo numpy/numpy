@@ -711,8 +711,9 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
     ox, oy = x, y
 
     kwargs = dict(comparison=comparison, err_msg=err_msg, verbose=verbose,
-                    header=header,precision=precision, equal_nan=equal_nan,
+                    header=header, precision=precision, equal_nan=equal_nan,
                     equal_inf=equal_inf, strict=strict, ox=ox, oy=oy)
+
     def isnumber(x):
         return x.dtype.char in '?bhilqpBHILQPefdgFDG'
 
@@ -725,7 +726,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
         else:
             cond = (x.shape == () or y.shape == ()) or x.shape == y.shape
         if not cond:
-            names=('x', 'y')
+            names = ('x', 'y')
             if x.shape != y.shape:
                 reason = f'\n(shapes {x.shape}, {y.shape} mismatch)'
             else:
@@ -738,16 +739,17 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
             return msg
 
     def isstructured(x):
-        return x.dtype.names and len(x.dtype.names)>0
+        return x.dtype.names and len(x.dtype.names) > 0
 
     def get_flat_names(dtype, parents=()):
-        if dtype.names is None: return []
+        if dtype.names is None:
+            return []
         names = [(*parents, name) for name in dtype.names]
         for name_spec in names:
             _dt = dtype
             for name in name_spec:
                 _dt = _dt[name]
-            if not _dt.names is None:
+            if _dt.names is not None:
                 for child_name in _dt.names:
                     spec = (*name_spec, child_name)
                     names.append(spec)
@@ -761,23 +763,26 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
         y_dtype = y.dtype
         rec_arrs = isinstance(x, np.recarray) or isinstance(y, np.recarray)
         msg = check_shape(x, y, strict=strict)
-        if msg: return msg
+        if msg:
+            return msg
         if x_dtype.names is None:
             _x = _scalar_select(x)
             _y = _scalar_select(y)
             msg = check_flagged_comparison(_x, _y, **kwargs)
-            if msg: return msg
+            if msg:
+                return msg
         else:
             x_name_specs = get_flat_names(x_dtype)
             y_name_specs = get_flat_names(y_dtype)
-            if rec_arrs and x_name_specs!=y_name_specs: 
+            if rec_arrs and x_name_specs != y_name_specs:
                 msg = build_err_msg([x, y],
                                     err_msg
-                                    + f'\nfield name mismatch for record '
-                                    + f'arrays ({x_name_specs} vs {y_name_specs})',
+                                    + '\nfield name mismatch for record arrays'
+                                    + f' ({x_name_specs} vs {y_name_specs})',
                                     verbose=verbose, header=header,
                                     names=('x', 'y'), precision=precision)
-                if msg: return msg
+                if msg:
+                    return msg
             for x_spec, y_spec in zip(x_name_specs, y_name_specs):
                 _x = x
                 _y = y
@@ -789,7 +794,8 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
                 check_shape(_x, _y, strict=strict)
                 if _x.dtype.names is None:
                     msg = check_flagged_comparison(_x, _y, **kwargs)
-                    if msg: return msg
+                    if msg:
+                        return msg
 
     def func_assert_same_pos(x, y, func=isnan, hasval='nan'):
         """Handling nan/inf.
@@ -813,7 +819,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
         #     not implement np.all(), so favor using the .all() method
         # We are not committed to supporting such subclasses, but it's nice to
         # support them if possible.
-        if bool_(x_id == y_id).all() != True:
+        if not bool_(x_id == y_id).all():
             msg = build_err_msg([x, y],
                                 err_msg + '\nx and y %s location mismatch:'
                                 % (hasval), verbose=verbose, header=header,
@@ -829,9 +835,11 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
             return y_id
 
     def check_flagged_comparison(x, y, comparison, err_msg, verbose, header,
-                                precision, equal_nan, equal_inf, strict, ox, oy, d=0):
+                                 precision, equal_nan, equal_inf, strict,
+                                 ox, oy, d=0):
         msg = check_shape(x, y, strict=strict)
-        if msg: return msg
+        if msg:
+            return msg
         flagged = bool_(False)
         if isnumber(x) and isnumber(y):
             if equal_nan:
@@ -872,7 +880,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
         # results, for which val.ravel().all() returns np.ma.masked,
         # do not trigger a failure (np.ma.masked != True evaluates as
         # np.ma.masked, which is falsy).
-        if cond != True:
+        if not cond:
             n_mismatch = reduced.size - reduced.sum(dtype=intp)
             n_elements = flagged.size if flagged.ndim != 0 else reduced.size
             percent_mismatch = 100 * n_mismatch / n_elements
@@ -908,7 +916,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
                                         + array2string(max_rel_error))
 
             err_msg += '\n' + '\n'.join(remarks)
-            d_str = f' at depth {d}' if d>0 else ''
+            d_str = f' at depth {d}' if d > 0 else ''
             msg = build_err_msg([ox, oy], err_msg+d_str,
                                 verbose=verbose, header=header,
                                 names=('x', 'y'), precision=precision)
@@ -916,7 +924,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
     try:
         if isstructured(x) and isstructured(y):
             msg = structured_dtype_compare(x, y, **kwargs)
-            if msg: 
+            if msg:
                 msg = build_err_msg([x, y], msg+'\n', verbose=True,
                                         header='', names=('x', 'y'),
                                         precision=precision)
