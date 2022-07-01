@@ -894,7 +894,6 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
                                 names=('x', 'y'), precision=precision)
             return msg
     try:
-        # import pdb; pdb.set_trace()
         if isstructured(x) and isstructured(y):
             msg = structured_dtype_compare(x, y, **kwargs)
             if msg: 
