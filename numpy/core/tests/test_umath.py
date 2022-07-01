@@ -774,7 +774,7 @@ class TestDivisionOverflows:
     @pytest.mark.parametrize("operation",
             [np.remainder, np.fmod, np.divmod, np.floor_divide,
              operator.mod, operator.floordiv])
-    @np.errstate(divide='raise', over='raise')
+    @np.errstate(divide='warn', over='warn')
     def test_overflows(self, dividend_dtype, divisor_dtype, operation):
         # SIMD tries to perform the operation on as many elements as possible
         # that is a multiple of the register's size. We resort to the
@@ -790,36 +790,45 @@ class TestDivisionOverflows:
                 divisor_dtype).itemsize and operation in (
                         np.divmod, np.floor_divide,
                         TestDivisionOverflows.operator.floordiv):
-            with pytest.raises(
-                    FloatingPointError,
+            with pytest.warns(
+                    RuntimeWarning,
                     match="overflow encountered in"):
                 result = operation(
                             dividend_dtype(np.iinfo(dividend_dtype).min),
                             divisor_dtype(-1)
                         )
+                assert result == self.overflow_results[operation].nocast(
+                        dividend_dtype)
 
             # Arrays
             for a in arrays:
                 # In case of divmod, we need to flatten the result
                 # column first as we get a column vector of quotient and
                 # remainder and a normal flatten of the expected result.
-                with pytest.raises(FloatingPointError):
+                with pytest.warns(
+                        RuntimeWarning,
+                        match="overflow encountered in"):
                     result = np.array(operation(a, divisor)).flatten('f')
+                    expected_array = np.array(
+                            [self.overflow_results[operation].nocast(
+                                dividend_dtype)]*len(a)).flatten()
+                    assert_array_equal(result, expected_array)
         else:
             # Scalars
             result = operation(
                         dividend_dtype(np.iinfo(dividend_dtype).min),
                         divisor_dtype(-1)
                     )
-            assert result == self.overflow_results[operation].casted(dividend_dtype)
+            assert result == self.overflow_results[operation].casted(
+                    dividend_dtype)
 
             # Arrays
             for a in arrays:
                 # See above comment on flatten
                 result = np.array(operation(a, divisor)).flatten('f')
                 expected_array = np.array(
-                        [self.overflow_results[operation].casted(dividend_dtype)]*len(a)
-                        ).flatten()
+                        [self.overflow_results[operation].casted(
+                            dividend_dtype)]*len(a)).flatten()
                 assert_array_equal(result, expected_array)
 
 
