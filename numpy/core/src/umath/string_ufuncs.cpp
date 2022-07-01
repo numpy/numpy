@@ -50,14 +50,14 @@ string_cmp(int len1, const character *str1, int len2, const character *str2)
             if (c != (character)0 && !NumPyOS_ascii_isspace(c)) {
                 break;
             }
-            len1--;
+            --len1;
         }
         while (len2 > 0) {
             character c = str2[len2-1];
             if (c != (character)0 && !NumPyOS_ascii_isspace(c)) {
                 break;
             }
-            len2--;
+            --len2;
         }
     }
 
@@ -81,8 +81,8 @@ string_cmp(int len1, const character *str1, int len2, const character *str2)
             if (cmp != 0) {
                 return cmp;
             }
-            str1++;
-            str2++;
+            ++str1;
+            ++str2;
         }
     }
     if (len1 > len2) {
@@ -91,7 +91,7 @@ string_cmp(int len1, const character *str1, int len2, const character *str2)
             if (cmp != 0) {
                 return cmp;
             }
-            str1++;
+            ++str1;
         }
     }
     else if (len2 > len1) {
@@ -100,7 +100,7 @@ string_cmp(int len1, const character *str1, int len2, const character *str2)
             if (cmp != 0) {
                 return cmp;
             }
-            str2++;
+            ++str2;
         }
     }
     return 0;
@@ -150,7 +150,7 @@ string_comparison_loop(PyArrayMethod_Context *context,
 
     npy_intp N = dimensions[0];
 
-    while (N--) {
+    while (--N) {
         int cmp = string_cmp<rstrip>(
                 len1, (character *)in1, len2, (character *)in2);
         npy_bool res;
