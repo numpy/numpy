@@ -745,16 +745,26 @@ class TestDivisionOverflows:
     import operator
     result_type = namedtuple('result_type',
             ['nocast', 'casted'])
+    helper_lambdas = {
+        'zero': lambda dtype: 0,
+        'min': lambda dtype: np.iinfo(dtype).min,
+        'neg_min': lambda dtype: -np.iinfo(dtype).min,
+        'min-zero': lambda dtype: (np.iinfo(dtype).min, 0),
+        'neg_min-zero': lambda dtype: (-np.iinfo(dtype).min, 0),
+    }
     overflow_results = {
-        np.remainder: result_type('0', '0'),
-        np.fmod: result_type('0', '0'),
-        operator.mod: result_type('0', '0'),
-        operator.floordiv: result_type('np.iinfo(dividend_dtype).min',
-            '-np.iinfo(dividend_dtype).min'),
-        np.floor_divide: result_type('np.iinfo(dividend_dtype).min',
-            '-np.iinfo(dividend_dtype).min'),
-        np.divmod: result_type('(np.iinfo(dividend_dtype).min, 0)',
-            '(-np.iinfo(dividend_dtype).min, 0)')
+        np.remainder: result_type(
+            helper_lambdas['zero'], helper_lambdas['zero']),
+        np.fmod: result_type(
+            helper_lambdas['zero'], helper_lambdas['zero']),
+        operator.mod: result_type(
+            helper_lambdas['zero'], helper_lambdas['zero']),
+        operator.floordiv: result_type(
+            helper_lambdas['min'], helper_lambdas['neg_min']),
+        np.floor_divide: result_type(
+            helper_lambdas['min'], helper_lambdas['neg_min']),
+        np.divmod: result_type(
+            helper_lambdas['min-zero'], helper_lambdas['neg_min-zero'])
     }
 
     @pytest.mark.parametrize("dividend_dtype",
@@ -787,34 +797,28 @@ class TestDivisionOverflows:
                             dividend_dtype(np.iinfo(dividend_dtype).min),
                             divisor_dtype(-1)
                         )
-                assert result == eval(self.overflow_results[operation].nocast)
 
             # Arrays
-            with pytest.raises(FloatingPointError):
-                for a in arrays:
-                    # In case of divmod, we need to flatten the result
-                    # column first as we get a column vector of quotient and
-                    # remainder and a normal flatten of the expected result.
+            for a in arrays:
+                # In case of divmod, we need to flatten the result
+                # column first as we get a column vector of quotient and
+                # remainder and a normal flatten of the expected result.
+                with pytest.raises(FloatingPointError):
                     result = np.array(operation(a, divisor)).flatten('f')
-                    expected_array = np.array(
-                            [eval(
-                                self.overflow_results[operation].nocast
-                            )]*len(a)).flatten()
-                    assert_array_equal(result, expected_array)
         else:
             # Scalars
             result = operation(
                         dividend_dtype(np.iinfo(dividend_dtype).min),
                         divisor_dtype(-1)
                     )
-            assert result == eval(self.overflow_results[operation].casted)
+            assert result == self.overflow_results[operation].casted(dividend_dtype)
 
             # Arrays
             for a in arrays:
                 # See above comment on flatten
                 result = np.array(operation(a, divisor)).flatten('f')
                 expected_array = np.array(
-                        [eval(self.overflow_results[operation].casted)]*len(a)
+                        [self.overflow_results[operation].casted(dividend_dtype)]*len(a)
                         ).flatten()
                 assert_array_equal(result, expected_array)
 
