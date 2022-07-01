@@ -148,6 +148,7 @@ class TestArrayEqual(_GenericTest):
         a['floupi'] = [1, 2]
         a['floupa'] = [1, 2]
         b = a.copy()
+
         r_a = np.core.records.array(a)
         r_b = np.core.records.array(b)
         self._test_equal(a, b)
