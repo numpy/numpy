@@ -819,7 +819,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
         #     not implement np.all(), so favor using the .all() method
         # We are not committed to supporting such subclasses, but it's nice to
         # support them if possible.
-        if not bool_(x_id == y_id).all():
+        if bool_(x_id == y_id).all() != True:
             msg = build_err_msg([x, y],
                                 err_msg + '\nx and y %s location mismatch:'
                                 % (hasval), verbose=verbose, header=header,
@@ -836,7 +836,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
 
     def check_flagged_comparison(x, y, comparison, err_msg, verbose, header,
                                  precision, equal_nan, equal_inf, strict,
-                                 ox, oy, d=0):
+                                 ox, oy):
         msg = check_shape(x, y, strict=strict)
         if msg:
             return msg
@@ -880,7 +880,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
         # results, for which val.ravel().all() returns np.ma.masked,
         # do not trigger a failure (np.ma.masked != True evaluates as
         # np.ma.masked, which is falsy).
-        if not cond:
+        if cond != True:
             n_mismatch = reduced.size - reduced.sum(dtype=intp)
             n_elements = flagged.size if flagged.ndim != 0 else reduced.size
             percent_mismatch = 100 * n_mismatch / n_elements
