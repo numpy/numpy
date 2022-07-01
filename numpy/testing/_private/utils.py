@@ -929,7 +929,8 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
                                         precision=precision)
         else:
             msg = check_flagged_comparison(x, y, **kwargs)
-        if msg: raise AssertionError(msg)
+        if msg:
+            raise AssertionError(msg)
 
     except ValueError:
         import traceback
