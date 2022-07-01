@@ -25,36 +25,89 @@
  */
 #define MIN_BLOCK_SIZE (1 << 13)
 
-
+#define USECOLS_ERROR    -1
+#define USECOLS_NOCHANGE  0
+#define USECOLS_CHANGED   1
 /*
- * Call the user-defined usecols callable and create the C array of
- * Py_ssize_t integers.
+ * Call the user-defined usecols callable and create or update the
+ * C array of Py_ssize_t integers.
  *
- * Returns the size of the array, and sets *p_usecols_arr to the
- * C array, allocated with PyMem_Calloc.  The caller is responsible
- * for freeing this memory with PyMem_Free().
+ * On input, *p_usecols_arr must be either NULL or the result of
+ * a previous call to this function.  If *p_usecols is not NULL,
+ * *p_num_usecols must be the length of the array pointed to by
+ * *p_usecols_arr.
  *
- * Returns -1 with an exception set and *p_usecols_arr set to NULL
- * if the call or conversion fails.
+ * Return values:
+ *   USECOLS_ERROR (-1)
+ *       Error.  An exception has been set. The values pointed to by
+ *       p_num_usecols and p_usecols_arr have not been changed.
+ *   USECOLS_NOCHANGE (0)
+ *       The usecols data has not changed.  This value can be returned
+ *       only if p_usecols_arr was not NULL.
+ *   USECOLS_CHANGED (1)
+ *       The usecols data has changed.
+ *
+ * If no error occurs and *p_usecols_arr was NULL on input, then
+ * on return, *p_usecol_arr points to an array with length
+ * *p_num_usecols.  If *p_usecols_arr was not NULL, then on
+ * output *p_num_usecols is not change, and whether or not
+ * *p_usecol_arr has changed is indicated by the return value.
  */
-static Py_ssize_t
+static int
 get_usecols_arr_from_callable(PyObject *usecols_obj, Py_ssize_t n,
+                              Py_ssize_t *p_num_usecols,
                               Py_ssize_t **p_usecols_arr)
 {
-    *p_usecols_arr = NULL;
+    Py_ssize_t new_num_usecols;
+    Py_ssize_t *new_usecols_arr = NULL;
     PyObject *seq = PyObject_CallFunction(usecols_obj, "n", n);
     if (seq == NULL) {
-        return -1;
+        return USECOLS_ERROR;
     }
-    Py_ssize_t num_usecols = PyArray_SeqToSsizeCArray(seq, p_usecols_arr,
-                    "the user-provided callable usecols must return a "
-                    "sequence of ints, but it returned an instance of "
-                    "type '%s'",
-                    "the user-provided callable usecols must return a "
-                    "sequence of ints, but it returned a sequence "
-                    "containing at least one occurrence of type '%s'");
+    new_num_usecols = PyArray_SeqToSsizeCArray(seq, &new_usecols_arr,
+                        "the user-provided callable usecols must return a "
+                        "sequence of ints, but it returned an instance of "
+                        "type '%s'",
+                        "the user-provided callable usecols must return a "
+                        "sequence of ints, but it returned a sequence "
+                        "containing at least one occurrence of type '%s'");
     Py_DECREF(seq);
-    return num_usecols;
+    if (new_num_usecols < 0) {
+        return USECOLS_ERROR;
+    }
+    if (*p_usecols_arr == NULL) {
+        /* This is an initial call. */
+        *p_num_usecols = new_num_usecols;
+        *p_usecols_arr = new_usecols_arr;
+        return USECOLS_CHANGED;
+    }
+    /* This is a update call. */
+    if (new_num_usecols != *p_num_usecols) {
+        /* A new call of usecols returned a different length. */
+        PyErr_Format(PyExc_RuntimeError,
+                     "the length of the sequence returned by the "
+                     "user-defined usecols function (%zd) is not the "
+                     "same as in the previous call (%zd)",
+                     new_num_usecols, *p_num_usecols);
+        PyMem_Free(new_usecols_arr);
+        return USECOLS_ERROR;
+    }
+    /* Check if the usecols data is different. */
+    bool usecols_changed = false;
+    for (Py_ssize_t i = 0; i < new_num_usecols; ++i) {
+        if (new_usecols_arr[i] != *p_usecols_arr[i]) {
+            usecols_changed = true;
+            break;
+        }
+    }
+    if (!usecols_changed) {
+        PyMem_Free(new_usecols_arr);
+        return USECOLS_NOCHANGE;
+    }
+    /* The data is different; update the pointer to the new array. */
+    PyMem_Free(*p_usecols_arr);
+    *p_usecols_arr = new_usecols_arr;
+    return USECOLS_CHANGED;
 }
 
 /*
@@ -338,9 +391,9 @@ read_rows(stream *s,
             prev_num_fields = current_num_fields;
 
             if (usecols_iscallable) {
-                num_usecols = get_usecols_arr_from_callable(usecols_obj,
-                                    current_num_fields, &usecols_arr);
-                if (num_usecols < 0) {
+                int status = get_usecols_arr_from_callable(usecols_obj,
+                               current_num_fields, &num_usecols, &usecols_arr);
+                if (status == USECOLS_ERROR) {
                     goto error;
                 }
                 if (!homogeneous && num_field_types != num_usecols) {
@@ -437,54 +490,29 @@ read_rows(stream *s,
                 goto error;
             }
         }
-        else {
-            if (usecols_iscallable && current_num_fields != prev_num_fields) {
+        else if (NPY_UNLIKELY(current_num_fields != prev_num_fields)
+                 && usecols_iscallable) {
+            /*
+             * The number of fields in this row is not the same as in the
+             * previous row. Call the user-defined function to update
+             * usecols_arr.  Then update the array of converters, if
+             * necessary.
+             */
+            int status = get_usecols_arr_from_callable(usecols_obj,
+                            current_num_fields, &num_usecols, &usecols_arr);
+            if (status == USECOLS_ERROR) {
+                goto error;
+            }
+            if (status == USECOLS_CHANGED && conv_funcs != NULL) {
                 /*
-                 * The number of fields in this row is not the same as in the
-                 * previous row. Call the user-defined function to update
-                 * usecols_arr, and possibly the array of converters.
+                 * Changing usecols can change the conv_funcs array, so
+                 * free the old one and create a new one.
                  */
-                Py_ssize_t new_num_usecols;
-                Py_ssize_t *new_usecols_arr = NULL;
-                new_num_usecols = get_usecols_arr_from_callable(usecols_obj,
-                                    current_num_fields, &new_usecols_arr);
-                if (new_num_usecols < 0) {
+                free_conv_funcs(actual_num_fields, conv_funcs);
+                conv_funcs = create_conv_funcs(
+                        converters, actual_num_fields, usecols_arr);
+                if (conv_funcs == NULL) {
                     goto error;
-                }
-                if (new_num_usecols != num_usecols) {
-                    PyErr_Format(PyExc_RuntimeError,
-                            "the length of the sequence returned by the "
-                            "user-defined usecols function (%zd) is not the "
-                            "same as in the previous call (%zd)",
-                            new_num_usecols, num_usecols);
-                    PyMem_Free(new_usecols_arr);
-                    goto error;
-                }
-                bool usecols_changed = false;
-                for (Py_ssize_t i = 0; i < num_usecols; ++i) {
-                    if (new_usecols_arr[i] != usecols_arr[i]) {
-                        usecols_changed = true;
-                        break;
-                    }
-                }
-                if (!usecols_changed) {
-                    PyMem_Free(new_usecols_arr);
-                }
-                else {
-                    PyMem_Free(usecols_arr);
-                    usecols_arr = new_usecols_arr;
-                    if (conv_funcs != NULL) {
-                        /*
-                         * Changing usecols can change the conv_funcs array, so
-                         * free the old one and create a new one.
-                         */
-                        free_conv_funcs(actual_num_fields, conv_funcs);
-                        conv_funcs = create_conv_funcs(
-                                converters, actual_num_fields, usecols_arr);
-                        if (conv_funcs == NULL) {
-                            goto error;
-                        }
-                    }
                 }
             }
         }
