@@ -213,7 +213,7 @@ parser.add_argument(
     "--no-lower",
     metavar="--[no-]lower",
     action=BoolAction,
-    default=True,
+    default=False,
     type=bool,
     help="""Do [not] lower the cases in <fortran files>.
     By default, --lower is assumed with -h key, and --no-lower without -h
@@ -226,7 +226,6 @@ parser.add_argument(
     metavar="<dirname>",
     type=check_dir,
     nargs=1,
-    default="tempfile.mkdtemp()",
     help="""All f2py generated files are created in <dirname>.
                    Default is tempfile.mkdtemp().""",
 )
@@ -283,7 +282,7 @@ parser.add_argument(
     metavar="--[no-]wrap-functions",
     action=BoolAction,
     type=bool,
-    default=False,
+    default=True,
     nargs=1,
     help="""Create (or not) Fortran subroutine wrappers to Fortran 77
                    functions. Default is --wrap-functions because it
@@ -294,6 +293,7 @@ parser.add_argument(
     "--include-paths",
     metavar="<path1>:<path2>",
     action="extend",
+    default=[],
     nargs="*",
     type=pathlib.Path,
     help="Search include files from the given directories.",
