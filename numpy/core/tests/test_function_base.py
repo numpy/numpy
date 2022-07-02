@@ -1,10 +1,11 @@
 from numpy import (
     logspace, linspace, geomspace, dtype, array, sctypes, arange, isnan,
-    ndarray, sqrt, nextafter, stack, errstate
+    ndarray, sqrt, nextafter, stack, errstate, datetime64, timedelta64, diff,
     )
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_array_equal, assert_allclose,
     )
+import pytest
 
 
 class PhysicalQuantity(float):
@@ -407,3 +408,81 @@ class TestLinspace:
         y = linspace(-1, 3, num=8, dtype=int)
         t = array([-1, -1, 0, 0, 1, 1, 2, 3], dtype=int)
         assert_array_equal(y, t)
+
+    def test_datetime(self):
+        t1 = datetime64("2018-12-12 06:00:00")
+        t2 = datetime64("2018-12-12 07:00:00")
+        quarters = array([0, 15*60, 30*60, 45*60, 60*60], dtype="m8[s]")
+        assert_array_equal(linspace(t1, t2, 5), t1 + quarters)
+
+    def test_timedelta(self):
+        t1 = timedelta64(0, "s")
+        t2 = timedelta64(3600, "s")
+        quarters = array([0, 15*60, 30*60, 45*60, 60*60], dtype="m8[s]")
+        assert_array_equal(linspace(t1, t2, 5), t1 + quarters)
+
+    def test_nat(self):
+        t1 = timedelta64("NaT")
+        t2 = timedelta64(1, "s")
+        actual = linspace(t1, t2, 5)
+        expected = array([t1]*4+[1], dtype="timedelta64[s]")
+        assert_array_equal(actual, expected)
+        actual = linspace(t2, t1, 5)
+        expected = array([t1]*5)
+        assert_array_equal(actual, expected)
+        t1 = datetime64("NaT")
+        t2 = datetime64("2020-01-01")
+        actual = linspace(t1, t2, 5)
+        expected = array([t1]*4+[t2])
+        assert_array_equal(actual, expected)
+        actual = linspace(t2, t1, 5)
+        expected = array([t1]*5)
+        assert_array_equal(actual, expected)
+
+    def test_datetime_mixedunits(self):
+        t1 = datetime64("2020-01-01").astype("M8[D]")
+        t2 = datetime64("2020-02-01").astype("M8[s]")
+        actual = linspace(t1, t2, 31, False, dtype="M8[ms]")
+        expected = array(
+            [datetime64(f"2020-01-{i:0>2}") for i in range(1, 32)], "M8[ms]")
+        assert_array_equal(actual, expected)
+
+    def test_datetime_div0(self):
+        t1 = datetime64("2020-01-01")
+        t2 = datetime64("2020-01-02")
+        actual = linspace(t1, t2, 1, True, False, "M8[D]")
+        expected = array(t1)
+        assert_array_equal(actual, expected)
+
+    def test_datetime_multidimensional(self):
+        t1 = datetime64("2020-07-01")
+        t2 = datetime64("2020-08-01")
+        t3 = datetime64("2020-09-01")
+        actual = linspace([t1, t2], [t2, t3], 31, False, dtype="M8[D]")
+        expected0 = array(
+            [datetime64(f"2020-07-{i:0>2}") for i in range(1, 32)])
+        expected1 = array(
+            [datetime64(f"2020-08-{i:0>2}") for i in range(1, 32)])
+        expected = array([expected0, expected1]).T
+        assert_array_equal(actual, expected)
+
+    def test_datetime_nicely_spaced_step(self):
+        t1 = datetime64("2020-01-01T00:00:00")
+        t2 = datetime64("2020-01-01T00:00:01")
+        arr = linspace(t1, t2, 33, dtype="M8[ms]")
+        actual = diff(arr)
+        expected = diff(linspace(0, 1000, 33, dtype="int64"))
+        assert_array_equal(actual, expected)
+
+    def test_datetime_output_dtype(self):
+        t1 = datetime64("2020-01-01T00:00:00")
+        t2 = datetime64("2020-01-01T00:00:01")
+        actual = linspace(t1, t2, 10, dtype="M8[m]")
+        expected = array([datetime64("2020-01-01T00:00")]*10)
+        assert_array_equal(actual, expected)
+
+    def test_datetime_retstep(self):
+        with pytest.raises(NotImplementedError):
+            t1 = timedelta64(0, "s")
+            t2 = timedelta64(3600, "s")
+            linspace(t1, t2, 5, retstep=True)
