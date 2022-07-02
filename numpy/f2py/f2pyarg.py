@@ -590,6 +590,7 @@ def callcrackfortran(files, options):
 
 
 def process_args(args):
+    build_dir = args.build_dir[0] if args.build_dir else tempfile.mkdtemp()
     if args.help:
         parser.print_help()
     elif getattr(args, "Fortran Files"):
