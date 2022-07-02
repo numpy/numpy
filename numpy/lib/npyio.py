@@ -1067,8 +1067,6 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     r"""
     Load data from a text file.
 
-    Each row in the text file must have the same number of values.
-
     Parameters
     ----------
     fname : file, str, pathlib.Path, list of str, generator
@@ -1170,6 +1168,11 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     This function aims to be a fast reader for simply formatted files.  The
     `genfromtxt` function provides more sophisticated handling of, e.g.,
     lines with missing values.
+
+    Each row in the input text file must have the same number of values to be
+    able to read all values. If all rows do not have same number of values, a
+    subset of up to n columns (where n is the least number of values present
+    in all rows) can be read by specifying the columns via `usecols`.
 
     .. versionadded:: 1.10.0
 
@@ -1278,6 +1281,15 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     >>> s = StringIO('"Hello, my name is ""Monty""!"')
     >>> np.loadtxt(s, dtype="U", delimiter=",", quotechar='"')
     array('Hello, my name is "Monty"!', dtype='<U26')
+
+    Read subset of columns when all rows do not contain equal number of values:
+
+    >>> d = StringIO("1 2\n2 4\n3 9 12\n4 16 20")
+    >>> np.loadtxt(d, usecols=(0, 1))
+    array([[ 1.,  2.],
+           [ 2.,  4.],
+           [ 3.,  9.],
+           [ 4., 16.]])
 
     """
 
