@@ -9,7 +9,6 @@ import enum
 from abc import abstractmethod
 from types import TracebackType, MappingProxyType
 from contextlib import ContextDecorator
-from contextlib import contextmanager
 
 if sys.version_info >= (3, 9):
     from types import GenericAlias
@@ -181,7 +180,6 @@ from collections.abc import (
 from typing import (
     Literal as L,
     Any,
-    Generator,
     Generic,
     IO,
     NoReturn,
@@ -1915,7 +1913,6 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
     def __neg__(self: NDArray[object_]) -> Any: ...
 
     # Binary ops
-    # NOTE: `ndarray` does not implement `__imatmul__`
     @overload
     def __matmul__(self: NDArray[bool_], other: _ArrayLikeBool_co) -> NDArray[bool_]: ...  # type: ignore[misc]
     @overload
@@ -1932,6 +1929,22 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
     def __matmul__(self: NDArray[object_], other: Any) -> Any: ...
     @overload
     def __matmul__(self: NDArray[Any], other: _ArrayLikeObject_co) -> Any: ...
+
+    def __imatmul__(self: NDArray[bool_], other: _ArrayLikeBool_co) -> NDArray[bool_]: ...  # type: ignore[misc]
+    @overload
+    def __imatmul__(self: _ArrayUInt_co, other: _ArrayLikeUInt_co) -> NDArray[unsignedinteger[Any]]: ...  # type: ignore[misc]
+    @overload
+    def __imatmul__(self: _ArrayInt_co, other: _ArrayLikeInt_co) -> NDArray[signedinteger[Any]]: ...  # type: ignore[misc]
+    @overload
+    def __imatmul__(self: _ArrayFloat_co, other: _ArrayLikeFloat_co) -> NDArray[floating[Any]]: ...  # type: ignore[misc]
+    @overload
+    def __imatmul__(self: _ArrayComplex_co, other: _ArrayLikeComplex_co) -> NDArray[complexfloating[Any, Any]]: ...
+    @overload
+    def __imatmul__(self: NDArray[number[Any]], other: _ArrayLikeNumber_co) -> NDArray[number[Any]]: ...
+    @overload
+    def __imatmul__(self: NDArray[object_], other: Any) -> Any: ...
+    @overload
+    def __imatmul__(self: NDArray[Any], other: _ArrayLikeObject_co) -> Any: ...
 
     @overload
     def __rmatmul__(self: NDArray[bool_], other: _ArrayLikeBool_co) -> NDArray[bool_]: ...  # type: ignore[misc]
@@ -3351,11 +3364,6 @@ class errstate(Generic[_CallType], ContextDecorator):
         traceback: None | TracebackType,
         /,
     ) -> None: ...
-
-@contextmanager
-def _no_nep50_warning() -> Generator[None, None, None]: ...
-def _get_promotion_state() -> str: ...
-def _set_promotion_state(state: str, /) -> None: ...
 
 class ndenumerate(Generic[_ScalarType]):
     iter: flatiter[NDArray[_ScalarType]]

@@ -116,6 +116,7 @@ _PyArray_SetNumericOps(PyObject *dict)
     SET(conjugate);
     SET(matmul);
     SET(clip);
+    SET(imatmul);
     return 0;
 }
 
@@ -183,6 +184,7 @@ _PyArray_GetNumericOps(void)
     GET(conjugate);
     GET(matmul);
     GET(clip);
+    GET(imatmul);
     return dict;
 
  fail:
@@ -348,13 +350,11 @@ array_matrix_multiply(PyObject *m1, PyObject *m2)
 }
 
 static PyObject *
-array_inplace_matrix_multiply(
-        PyArrayObject *NPY_UNUSED(m1), PyObject *NPY_UNUSED(m2))
+array_inplace_matrix_multiply(PyArrayObject *m1, PyObject *m2)
 {
-    PyErr_SetString(PyExc_TypeError,
-                    "In-place matrix multiplication is not (yet) supported. "
-                    "Use 'a = a @ b' instead of 'a @= b'.");
-    return NULL;
+    INPLACE_GIVE_UP_IF_NEEDED(
+            m1, m2, nb_inplace_matrix_multiply, array_inplace_multiply);
+    return PyArray_GenericInplaceBinaryFunction(m1, m2, n_ops.imatmul);
 }
 
 /*
@@ -690,7 +690,7 @@ array_inplace_multiply(PyArrayObject *m1, PyObject *m2)
 {
     INPLACE_GIVE_UP_IF_NEEDED(
             m1, m2, nb_inplace_multiply, array_inplace_multiply);
-    return PyArray_GenericInplaceBinaryFunction(m1, m2, n_ops.multiply);
+    return PyArray_GenericInplaceBinaryFunction(m1, m2, n_ops.matmul);
 }
 
 static PyObject *
