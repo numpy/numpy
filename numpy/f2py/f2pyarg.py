@@ -196,16 +196,6 @@ parser.add_argument(
     help="Use only fortran functions that follow until `:'.",
 )
 
-# TODO: Remove?
-parser.add_argument(
-    "Fortran Files Again",
-    metavar=":",
-    action="extend",
-    type=check_fortran,
-    nargs="*",
-    help="Get back to <fortran files> mode.",
-)
-
 parser.add_argument(
     "-m",
     "--module",
