@@ -8,6 +8,13 @@ from typing import Any, Dict, List, Tuple
 from argparse import Namespace
 
 from . import crackfortran
+from . import capi_maps
+from . import rules
+from . import auxfuncs
+from . import cfuncs
+from . import cb_rules
+
+outmess = auxfuncs.outmess
 
 logger = logging.getLogger("f2py_cli")
 logger.setLevel(logging.WARNING)
@@ -218,6 +225,16 @@ def _callcrackfortran(files: List[Path], module_name: str, include_paths: List[P
         mod["coutput"] = f"{module_name}module.c"
         mod["f2py_wrapper_output"] = f"{module_name}-f2pywrappers.f"
     return postlist
+
+def generate_files(files: List[Path], module_name: str, include_paths: List[Path], sign_file: str, file_gen_options: Dict[str, Any], settings: Dict[str, Any]):
+    _set_options(settings)
+    postlist = _callcrackfortran(files, module_name, include_paths, file_gen_options)
+    _parse_postlist(postlist, sign_file, file_gen_options["verbose"])
+    if(sign_file):
+        _generate_signature(postlist, sign_file)
+    if(module_name != 'untitled'):
+        _buildmodules(postlist)
+
 
 def segregate_files(files: List[Path]) -> Tuple[List[Path], List[Path], List[Path], List[Path]]:
 	"""
