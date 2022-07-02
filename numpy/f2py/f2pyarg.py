@@ -167,23 +167,6 @@ generate_wrappers = parser.add_argument_group("wrappers and signature files")
 parser.add_argument("--help", action="store_true", help="Print the help")
 
 # TODO: Remove?
-parser.add_argument(
-    "--2d-numpy",
-    type=bool,
-    default=True,
-    help="Use f2py with Numeric support [DEFAULT]",
-)
-
-parser.add_argument(
-    "Fortran Functions",
-    metavar="<fortran functions>",
-    type=str,
-    nargs="*",  # As many as present, 0 OK
-    default="ALL",
-    help="""Names of fortran routines for which Python C/API
-                   functions will be generated. Default is all that are found
-                   in <fortran files>.""",
-)
 
 parser.add_argument(
     "Fortran Files",
