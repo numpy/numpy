@@ -106,6 +106,119 @@ def check_npfcomp(opt: str):
 
 
 
+def _set_options(settings):
+    crackfortran.reset_global_f2py_vars()
+    capi_maps.load_f2cmap_file(settings['f2cmap'])
+    auxfuncs.options = {'verbose': settings['verbose']}
+    auxfuncs.debugoptions = settings["debug"]
+    auxfuncs.wrapfuncs = settings['wrapfuncs']
+    rules.options = {
+        'buildpath': settings['buildpath'],
+        'dorestdoc': settings['dorestdoc'],
+        'dolatexdoc': settings['dolatexdoc'],
+        'shortlatex': settings['shortlatex'],
+    }    
+
+
+def _dict_append(d_out, d_in):
+    for (k, v) in d_in.items():
+        if k not in d_out:
+            d_out[k] = []
+        if isinstance(v, list):
+            d_out[k] = d_out[k] + v
+        else:
+            d_out[k].append(v)
+
+
+def _buildmodules(lst):
+    cfuncs.buildcfuncs()
+    outmess('Building modules...\n')
+    modules, mnames, isusedby = [], [], {}
+    for item in lst:
+        if '__user__' in item['name']:
+            cb_rules.buildcallbacks(item)
+        else:
+            if 'use' in item:
+                for u in item['use'].keys():
+                    if u not in isusedby:
+                        isusedby[u] = []
+                    isusedby[u].append(item['name'])
+            modules.append(item)
+            mnames.append(item['name'])
+    ret = {}
+    for module, name in zip(modules, mnames):
+        if name in isusedby:
+            outmess('\tSkipping module "%s" which is used by %s.\n' % (
+                name, ','.join('"%s"' % s for s in isusedby[name])))
+        else:
+            um = []
+            if 'use' in module:
+                for u in module['use'].keys():
+                    if u in isusedby and u in mnames:
+                        um.append(modules[mnames.index(u)])
+                    else:
+                        outmess(
+                            f'\tModule "{name}" uses nonexisting "{u}" '
+                            'which will be ignored.\n')
+            ret[name] = {}
+            _dict_append(ret[name], rules.buildmodule(module, um))
+    return ret
+
+
+def _generate_signature(postlist, sign_file: str):
+    outmess(f"Saving signatures to file {sign_file}" + "\n")
+    pyf = crackfortran.crack2fortran(postlist)
+    if sign_file in ["-", "stdout"]:
+        sys.stdout.write(pyf)
+    else:
+        with open(sign_file, "w") as f:
+            f.write(pyf)
+
+def _parse_postlist(postlist, sign_file: str, verbose: bool):
+    isusedby = {}
+    for plist in postlist:
+        if 'use' in plist:
+            for u in plist['use'].keys():
+                if u not in isusedby:
+                    isusedby[u] = []
+                isusedby[u].append(plist['name'])
+    for plist in postlist:
+        if plist['block'] == 'python module' and '__user__' in plist['name']:
+            if plist['name'] in isusedby:
+                # if not quiet:
+                outmess(
+                    f'Skipping Makefile build for module "{plist["name"]}" '
+                    'which is used by {}\n'.format(
+                        ','.join(f'"{s}"' for s in isusedby[plist['name']])))
+    if(sign_file):
+        if verbose:
+            outmess(
+                'Stopping. Edit the signature file and then run f2py on the signature file: ')
+            outmess('%s %s\n' %
+                    (os.path.basename(sys.argv[0]), sign_file))
+        return
+    for plist in postlist:
+        if plist['block'] != 'python module':
+            # if 'python module' not in options:
+                outmess(
+                    'Tip: If your original code is Fortran source then you must use -m option.\n', verbose)
+            # raise TypeError('All blocks must be python module blocks but got %s' % (
+            #     repr(postlist[i]['block'])))
+
+def _callcrackfortran(files: List[Path], module_name: str, include_paths: List[Path], options: Dict[str, Any]):
+    crackfortran.f77modulename = module_name
+    crackfortran.include_paths[:] = include_paths
+    crackfortran.debug = options["debug"]
+    crackfortran.verbose = options["verbose"]
+    crackfortran.skipfuncs = options["skipfuncs"]
+    crackfortran.onlyfuncs = options["onlyfuncs"]
+    crackfortran.dolowercase  = options["do-lower"]
+    postlist = crackfortran.crackfortran([str(file) for file in files])
+    for mod in postlist:
+        mod["coutput"] = f"{module_name}module.c"
+        mod["f2py_wrapper_output"] = f"{module_name}-f2pywrappers.f"
+    return postlist
+
 def segregate_files(files: List[Path]) -> Tuple[List[Path], List[Path], List[Path], List[Path]]:
 	"""
 	Segregate files into three groups:
