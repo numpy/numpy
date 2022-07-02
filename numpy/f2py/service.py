@@ -4,7 +4,9 @@ import logging
 import tempfile
 
 from pathlib import Path
-from typing import List, Tuple
+from typing import Any, Dict, List, Tuple
+from argparse import Namespace
+
 from . import crackfortran
 
 logger = logging.getLogger("f2py_cli")
@@ -106,3 +108,32 @@ def check_npfcomp(opt: str):
         raise RuntimeError(f"{opt} is not an np.distutils supported compiler, choose from {fchoices}")
 
 
+
+def segregate_files(files: List[Path]) -> Tuple[List[Path], List[Path], List[Path], List[Path]]:
+	"""
+	Segregate files into three groups:
+	* .f files
+	* .o files
+	* others
+	"""
+	f77_ext = ('.f', '.for', '.ftn', '.f77')
+	f90_ext = ('.f90', '.f95', '.f03', '.f08')
+	out_ext = ('.o', '.out', '.so', '.a')
+
+	f77_files = []
+	f90_files = []
+	out_files = []
+	other_files = []
+
+	for f in files:
+		ext = os.path.splitext(f)[1]
+		if ext in f77_ext:
+			f77_files.append(f)
+		elif ext in f90_ext:
+			f90_files.append(f)
+		elif ext in out_ext:
+			out_files.append(f)
+		else:
+			other_files.append(f)
+
+	return f77_files, f90_files, out_files, other_files
