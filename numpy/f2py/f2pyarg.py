@@ -343,7 +343,7 @@ parser.add_argument(
 # Wrappers/Signatures #
 #######################
 
-parser.add_argument(
+generate_wrappers.add_argument(
     # TODO: Seriously consider scrapping this naming convention
     "-h",
     "--hint-signature",
