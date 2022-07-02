@@ -53,10 +53,7 @@ def check_dir(dname: str):
     pathlib.Path
         This is the string as a path
     """
-    if dname == "tempfile.mkdtemp()":
-        dname = tempfile.mkdtemp()
-        return Path(dname)
-    else:
+    if dname:
         dpname = Path(dname)
         dpname.mkdir(parents=True, exist_ok=True)
         return dpname
