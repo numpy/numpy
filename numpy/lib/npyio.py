@@ -1165,13 +1165,14 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
 
     Notes
     -----
-    * This function aims to be a fast reader for simply formatted files.  The
-      `genfromtxt` function provides more sophisticated handling of, e.g.,
-      lines with missing values.
-    * Each row in the input text file must have the same number of values to be
-      able to read all values. If all rows do not have same number of values, a
-      subset of up to n-columns (where n is the least number of values present
-      in all rows) can be read by specifying the columns via `usecols`.
+    This function aims to be a fast reader for simply formatted files.  The
+    `genfromtxt` function provides more sophisticated handling of, e.g.,
+    lines with missing values.
+
+    Each row in the input text file must have the same number of values to be
+    able to read all values. If all rows do not have same number of values, a
+    subset of up to n columns (where n is the least number of values present
+    in all rows) can be read by specifying the columns via `usecols`.
 
     .. versionadded:: 1.10.0
 
