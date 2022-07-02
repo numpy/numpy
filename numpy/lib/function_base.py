@@ -4000,7 +4000,7 @@ def percentile(a,
     With 'i' being the floor and 'g' the fractional part of the result.
 
     .. math::
-        i + g = (q - alpha) / ( n - alpha - beta + 1 )
+        i + g = q * ( n - alpha - beta + 1 ) + alpha
 
     The different methods then work as follows
 
@@ -4279,7 +4279,7 @@ def quantile(a,
     and alpha and beta are correction constants modifying i and j:
 
     .. math::
-        i + g = (q - alpha) / ( n - alpha - beta + 1 )
+        i + g = q * ( n - alpha - beta + 1 ) + alpha
 
     The different methods then work as follows
 
