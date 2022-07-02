@@ -552,19 +552,40 @@ parser.add_argument('otherfiles',
 
 def process_args(args):
     build_dir = args.build_dir[0] if args.build_dir else tempfile.mkdtemp()
+    sign_file = None
+    if(args.hint_signature):
+        if(args.build_dir):
+            sign_file = args.build_dir[0] / args.hint_signature[0]
+        else:
+            sign_file = args.hint_signature[0]
+
+    settings = {
+        'f2cmap': args.f2cmap,
+        'verbose': args.verbose,
+        'buildpath': build_dir,
+        'dorestdoc': args.rest_doc,
+        'dolatexdoc': args.latex_doc,
+        'shortlatex': args.short_latex,
+        'debug': args.debug_capi,
+        'wrapfuncs': args.wrap_functions,
+    }
+
+    file_gen_options = {
+        'verbose': args.verbose,
+        'module': args.module[0],
+        'skipfuncs': getattr(args, 'Skip Functions', []),
+        'onlyfuncs': getattr(args, 'Keep Functions', []),
+        'include_paths': args.include_paths,
+        'do-lower': args.lower,
+        'debug': args.debug_capi,
+        'wrapfuncs': args.wrap_functions,
+    }
+
     if args.help:
         parser.print_help()
-    elif getattr(args, "Fortran Files"):
-        print("BOOM")
-        if args.c:
-            if args.fcompiler:
-                print(f"got {args.fcompiler}")
-            elif args.compiler:
-                print(args.compiler)
-            else:
-                print("Compilation requested without options, using defaults")
-    else:
-        parser.print_usage()
+    if getattr(args, "Fortran Files"):
+        f77_files, f90_files, out_files, other_files = segregate_files(getattr(args, "Fortran Files"))        
+        generate_files(f77_files + f90_files, args.module[0], args.include_paths, sign_file, file_gen_options, settings)
 
 
 def main():
