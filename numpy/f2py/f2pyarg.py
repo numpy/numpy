@@ -15,6 +15,7 @@ The three functionalities are largely independent of each other, hence the
 implementation in terms of subparsers
 """
 
+import os
 import argparse
 import logging
 import pathlib
@@ -556,6 +557,8 @@ def process_args(args):
             sign_file = args.build_dir[0] / args.hint_signature[0]
         else:
             sign_file = args.hint_signature[0]
+        if sign_file and os.path.isfile(sign_file) and not args.overwrite_signature:
+            print(f'Signature file "{sign_file}" exists!!! Use --overwrite-signature to overwrite.')
 
     settings = {
         'f2cmap': args.f2cmap,
