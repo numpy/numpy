@@ -1749,6 +1749,7 @@ array_asarray(PyObject *NPY_UNUSED(ignored),
     PyObject *op;
     PyArray_Descr *type = NULL;
     NPY_ORDER order = NPY_KEEPORDER;
+    _PyArray_CopyMode copy = NPY_COPY_IF_NEEDED;
     PyObject *like = NULL;
     NPY_PREPARE_ARGPARSER;
 
@@ -1757,6 +1758,7 @@ array_asarray(PyObject *NPY_UNUSED(ignored),
                 "a", NULL, &op,
                 "|dtype", &PyArray_DescrConverter2, &type,
                 "|order", &PyArray_OrderConverter, &order,
+                "$copy", &PyArray_CopyConverter, &copy,
                 "$like", NULL, &like,
                 NULL, NULL, NULL) < 0) {
             Py_XDECREF(type);
@@ -1776,7 +1778,7 @@ array_asarray(PyObject *NPY_UNUSED(ignored),
     }
 
     PyObject *res = _array_fromobject_generic(
-            op, type, NPY_FALSE, order, NPY_FALSE, 0);
+            op, type, copy, order, NPY_FALSE, 0);
     Py_XDECREF(type);
     return res;
 }
