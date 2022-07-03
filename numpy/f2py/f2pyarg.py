@@ -331,6 +331,7 @@ parser.add_argument(
 parser.add_argument(
     "--verbose",
     action="store_true",
+    default=True,
     help="Run with extra verbosity.",
 )
 
