@@ -25,7 +25,7 @@ from numpy.version import version as __version__
 # F2PY imports
 from . import crackfortran
 from . import rules
-from .service import check_dccomp, check_npfcomp, check_fortran, check_dir
+from .service import check_dccomp, check_npfcomp, check_fortran, check_dir, generate_files, segregate_files
 
 ##################
 # Temp Variables #
