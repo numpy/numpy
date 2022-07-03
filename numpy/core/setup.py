@@ -81,7 +81,9 @@ def can_link_svml():
     if NPY_DISABLE_SVML:
         return False
     platform = sysconfig.get_platform()
-    return "x86_64" in platform and "linux" in platform
+    return ("x86_64" in platform
+            and "linux" in platform
+            and sys.maxsize > 2**31)
 
 def check_svml_submodule(svmlpath):
     if not os.path.exists(svmlpath + "/README.md"):
