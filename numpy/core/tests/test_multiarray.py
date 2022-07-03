@@ -7111,15 +7111,27 @@ class TestMatmulOperator(MatmulCommon):
         assert_raises(TypeError, self.matmul, np.arange(10), np.void(b'abc'))
 
 def test_matmul_inplace():
-    # It would be nice to support in-place matmul eventually, but for now
-    # we don't have a working implementation, so better just to error out
-    # and nudge people to writing "a = a @ b".
     a = np.eye(3)
-    b = np.eye(3)
-    assert_raises(TypeError, a.__imatmul__, b)
+    b = 2*np.eye(3)
+    c = np.eye(4)
+
+    a @= a
+    assert_array_equal(a, np.eye(3))
+
+    b @= a
+    assert_array_equal(b, 2*np.eye(3))
+
+    a @= b
+    assert_array_equal(a, 2*np.eye(3))
+
+    a @= a
+    assert_array_equal(a, 4*np.eye(3))
+
+    assert_raises(ValueError, a.__imatmul__, c)
+
     import operator
-    assert_raises(TypeError, operator.imatmul, a, b)
-    assert_raises(TypeError, exec, "a @= b", globals(), locals())
+    assert_raises(ValueError, operator.imatmul, a, c)
+    assert_raises(ValueError, exec, "a @= c", globals(), locals())
 
 def test_matmul_axes():
     a = np.arange(3*4*5).reshape(3, 4, 5)
