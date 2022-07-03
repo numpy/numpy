@@ -7127,12 +7127,6 @@ def test_matmul_inplace():
     a @= a
     assert_array_equal(a, 4*np.eye(3))
 
-    assert_raises(ValueError, a.__imatmul__, c)
-
-    import operator
-    assert_raises(ValueError, operator.imatmul, a, c)
-    assert_raises(ValueError, exec, "a @= c", globals(), locals())
-
 def test_matmul_axes():
     a = np.arange(3*4*5).reshape(3, 4, 5)
     c = np.matmul(a, a, axes=[(-2, -1), (-1, -2), (1, 2)])
