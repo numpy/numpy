@@ -1,0 +1,4 @@
+Added ``copy`` keyword argument to `asarray`
+--------------------------------------------
+Added ``copy`` keyword argument to `asarray` with the same semantics as
+the ``copy`` keyword in other functions, e.g. `array`.
