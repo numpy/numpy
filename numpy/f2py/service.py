@@ -181,7 +181,7 @@ def _generate_signature(postlist, sign_file: str):
         with open(sign_file, "w") as f:
             f.write(pyf)
 
-def _parse_postlist(postlist, sign_file: str, verbose: bool):
+def _check_postlist(postlist, sign_file: str, verbose: bool):
     isusedby = {}
     for plist in postlist:
         if 'use' in plist:
@@ -228,7 +228,7 @@ def _callcrackfortran(files: List[Path], module_name: str, include_paths: List[P
 def generate_files(files: List[Path], module_name: str, include_paths: List[Path], sign_file: str, file_gen_options: Dict[str, Any], settings: Dict[str, Any]):
     _set_options(settings)
     postlist = _callcrackfortran(files, module_name, include_paths, file_gen_options)
-    _parse_postlist(postlist, sign_file, file_gen_options["verbose"])
+    _check_postlist(postlist, sign_file, file_gen_options["verbose"])
     if(sign_file):
         _generate_signature(postlist, sign_file)
     if(module_name != 'untitled'):
