@@ -245,11 +245,13 @@ def segregate_files(files: List[Path]) -> Tuple[List[Path], List[Path], List[Pat
 	"""
 	f77_ext = ('.f', '.for', '.ftn', '.f77')
 	f90_ext = ('.f90', '.f95', '.f03', '.f08')
+	pyf_ext = ('.pyf',)
 	out_ext = ('.o', '.out', '.so', '.a')
 
 	f77_files = []
 	f90_files = []
 	out_files = []
+	pyf_files = []
 	other_files = []
 
 	for f in files:
@@ -260,7 +262,9 @@ def segregate_files(files: List[Path]) -> Tuple[List[Path], List[Path], List[Pat
 			f90_files.append(f)
 		elif ext in out_ext:
 			out_files.append(f)
+		elif ext in pyf_ext:
+			pyf_files.append(f)
 		else:
 			other_files.append(f)
 
-	return f77_files, f90_files, out_files, other_files
+	return f77_files, f90_files, pyf_files, out_files, other_files
