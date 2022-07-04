@@ -20,6 +20,7 @@ import argparse
 import logging
 import pathlib
 import tempfile
+from numpy.f2py.auxfuncs import outmess
 
 from numpy.version import version as __version__
 
@@ -80,7 +81,7 @@ class BoolAction(argparse.Action):
         Essentially this returns the semantically valid operation implied by
         --no
         """
-        setattr(namespace, self.dest, False if option_string.contains("no") else True)
+        setattr(namespace, self.dest, not option_string.contains("no"))
 
 
 # TODO: Generalize or kill this np.distutils specific helper action class

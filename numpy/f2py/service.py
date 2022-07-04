@@ -175,7 +175,7 @@ def _buildmodules(lst):
 def _generate_signature(postlist, sign_file: str):
     outmess(f"Saving signatures to file {sign_file}" + "\n")
     pyf = crackfortran.crack2fortran(postlist)
-    if sign_file in ["-", "stdout"]:
+    if sign_file in {"-", "stdout"}:
         sys.stdout.write(pyf)
     else:
         with open(sign_file, "w") as f:
@@ -190,13 +190,12 @@ def _parse_postlist(postlist, sign_file: str, verbose: bool):
                     isusedby[u] = []
                 isusedby[u].append(plist['name'])
     for plist in postlist:
-        if plist['block'] == 'python module' and '__user__' in plist['name']:
-            if plist['name'] in isusedby:
-                # if not quiet:
-                outmess(
-                    f'Skipping Makefile build for module "{plist["name"]}" '
-                    'which is used by {}\n'.format(
-                        ','.join(f'"{s}"' for s in isusedby[plist['name']])))
+        if plist['block'] == 'python module' and '__user__' in plist['name'] and plist['name'] in isusedby:
+            # if not quiet:
+            outmess(
+                f'Skipping Makefile build for module "{plist["name"]}" '
+                'which is used by {}\n'.format(
+                    ','.join(f'"{s}"' for s in isusedby[plist['name']])))
     if(sign_file):
         if verbose:
             outmess(
