@@ -587,14 +587,20 @@ def process_args(args):
     module_name = args.module[0] if args.module else None
 
     settings = {
+        'buildpath': wrapper_build_dir,
         'f2cmap': args.f2cmap,
         'verbose': args.verbose,
-        'buildpath': build_dir,
         'dorestdoc': args.rest_doc,
         'dolatexdoc': args.latex_doc,
         'shortlatex': args.short_latex,
-        'debug': args.debug_capi,
+        'debug': args.debug_api,
         'wrapfuncs': args.wrap_functions,
+        'do-lower': args.lower,
+        'include_paths': args.include_paths,
+        # Disabing these options from frontend
+        'emptygen': True,
+        'f2py_wrapper_output': None,
+        'coutput': None,
     }
 
     file_gen_options = {

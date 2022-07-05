@@ -124,6 +124,13 @@ def _set_options(settings):
         'dorestdoc': settings['dorestdoc'],
         'dolatexdoc': settings['dolatexdoc'],
         'shortlatex': settings['shortlatex'],
+        'coutput': settings['coutput'],
+        'f2py_wrapper_output': settings['f2py_wrapper_output'],
+        'emptygen': settings['emptygen'],
+        'verbose': settings['verbose'],
+        'do-lower': settings['do-lower'],
+        'f2cmap_file': settings['f2cmap'],
+        'include_paths': settings['include_paths'],
     }    
 
 
