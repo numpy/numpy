@@ -61,19 +61,53 @@ def test_nep50_examples():
     assert res.dtype == np.float64
 
 
-def test_nep50_without_warnings():
-    # Test that avoid the "warn" method, since that may lead to different
-    # code paths in some cases.
-    # Set promotion to weak (no warning), the auto-fixture will reset it.
+@pytest.mark.parametrize("dtype", np.typecodes["AllInteger"])
+def test_nep50_weak_integers(dtype):
+    # Avoids warning (different code path for scalars)
     np._set_promotion_state("weak")
+    scalar_type = np.dtype(dtype).type
+
+    maxint = int(np.iinfo(dtype).max)
+
     with np.errstate(over="warn"):
         with pytest.warns(RuntimeWarning):
-            res = np.uint8(100) + 200
-    assert res.dtype == np.uint8
+            res = scalar_type(100) + maxint
+    assert res.dtype == dtype
 
-    with pytest.warns(RuntimeWarning):
-        res = np.float32(1) + 3e100
-    assert res.dtype == np.float32
+    # Array operations are not expected to warn, but should give the same
+    # result dtype.
+    res = np.array(100, dtype=dtype) + maxint
+    assert res.dtype == dtype
+
+
+@pytest.mark.parametrize("dtype", np.typecodes["AllFloat"])
+def test_nep50_weak_integers_with_inexact(dtype):
+    # Avoids warning (different code path for scalars)
+    np._set_promotion_state("weak")
+    scalar_type = np.dtype(dtype).type
+
+    too_big_int = int(np.finfo(dtype).max) * 2
+
+    if dtype in "dDG":
+        # These dtypes currently convert to Python float internally, which
+        # raises an OverflowError, while the other dtypes overflow to inf.
+        # NOTE: It may make sense to normalize the behavior!
+        with pytest.raises(OverflowError):
+            scalar_type(1) + too_big_int
+
+        with pytest.raises(OverflowError):
+            np.array(1, dtype=dtype) + too_big_int
+    else:
+        # Otherwise, we overflow to infinity:
+        with pytest.warns(RuntimeWarning):
+            res = scalar_type(1) + too_big_int
+        assert res.dtype == dtype
+        assert res == np.inf
+
+        with pytest.warns(RuntimeWarning):
+            res = np.array(1, dtype=dtype) + too_big_int
+        assert res.dtype == dtype
+        assert res == np.inf
 
 
 def test_nep50_integer_conversion_errors():
