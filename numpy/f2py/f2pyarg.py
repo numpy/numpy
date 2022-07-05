@@ -220,7 +220,6 @@ parser.add_argument(
     metavar="<modulename>",
     type=str,
     nargs=1,
-    default="untitled",
     help="""Name of the module; f2py generates a Python/C API
                    file <modulename>module.c or extension module <modulename>.
                    Default is 'untitled'.""",
@@ -573,15 +572,19 @@ parser.add_argument('otherfiles',
 
 
 def process_args(args):
-    build_dir = args.build_dir[0] if args.build_dir else tempfile.mkdtemp()
+    # Default build dir for wrappers is the current directory
+    # while for compilations its a temporary directory
+    wrapper_build_dir = args.build_dir[0] if args.build_dir else pathlib.Path.cwd()
+    compile_build_dir = args.build_dir[0] if args.build_dir else tempfile.mkdtemp()
+
+    # Wrapper generation code
     sign_file = None
     if(args.hint_signature):
-        if(args.build_dir):
-            sign_file = args.build_dir[0] / args.hint_signature[0]
-        else:
-            sign_file = args.hint_signature[0]
+        sign_file = wrapper_build_dir /  args.hint_signature[0]
         if sign_file and os.path.isfile(sign_file) and not args.overwrite_signature:
             print(f'Signature file "{sign_file}" exists!!! Use --overwrite-signature to overwrite.')
+    
+    module_name = args.module[0] if args.module else None
 
     settings = {
         'f2cmap': args.f2cmap,
