@@ -113,7 +113,7 @@ def check_npfcomp(opt: str):
 
 
 
-def _set_options(settings):
+def _set_options(module_name: str, settings: Dict[str, Any]):
     crackfortran.reset_global_f2py_vars()
     capi_maps.load_f2cmap_file(settings['f2cmap'])
     auxfuncs.options = {'verbose': settings['verbose']}
@@ -131,6 +131,7 @@ def _set_options(settings):
         'do-lower': settings['do-lower'],
         'f2cmap_file': settings['f2cmap'],
         'include_paths': settings['include_paths'],
+        'module': module_name,
     }    
 
 
@@ -218,9 +219,9 @@ def _check_postlist(postlist, sign_file: str, verbose: bool):
             # raise TypeError('All blocks must be python module blocks but got %s' % (
             #     repr(postlist[i]['block'])))
 
-def _callcrackfortran(files: List[Path], module_name: str, include_paths: List[Path], options: Dict[str, Any]):
+def _callcrackfortran(files: List[Path], module_name: str, options: Dict[str, Any]):
     crackfortran.f77modulename = module_name
-    crackfortran.include_paths[:] = include_paths
+    crackfortran.include_paths[:] = options['include_paths']
     crackfortran.debug = options["debug"]
     crackfortran.verbose = options["verbose"]
     crackfortran.skipfuncs = options["skipfuncs"]
@@ -228,17 +229,18 @@ def _callcrackfortran(files: List[Path], module_name: str, include_paths: List[P
     crackfortran.dolowercase  = options["do-lower"]
     postlist = crackfortran.crackfortran([str(file) for file in files])
     for mod in postlist:
+        module_name = module_name or 'untitled'
         mod["coutput"] = f"{module_name}module.c"
         mod["f2py_wrapper_output"] = f"{module_name}-f2pywrappers.f"
     return postlist
 
-def generate_files(files: List[Path], module_name: str, include_paths: List[Path], sign_file: str, file_gen_options: Dict[str, Any], settings: Dict[str, Any]):
-    _set_options(settings)
-    postlist = _callcrackfortran(files, module_name, include_paths, file_gen_options)
+def generate_files(files: List[Path], module_name: str, sign_file: str, file_gen_options: Dict[str, Any], settings: Dict[str, Any]):
+    _set_options(module_name, settings)
+    postlist = _callcrackfortran(files, module_name, file_gen_options)
     _check_postlist(postlist, sign_file, file_gen_options["verbose"])
     if(sign_file):
         _generate_signature(postlist, sign_file)
-    if(module_name != 'untitled'):
+    if(module_name):
         _buildmodules(postlist)
 
 
