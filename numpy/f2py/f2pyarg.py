@@ -526,6 +526,7 @@ build_helpers.add_argument(
 
 # TODO: Kill this ASAP
 # Also collect in to REMAINDER and extract from there
+# Flag not working. To be debugged.
 build_helpers.add_argument(
     '--link-atlas', '--link-atlas_threads', '--link-atlas_blas',
     '--link-atlas_blas_threads', '--link-lapack_atlas',
@@ -605,12 +606,12 @@ def process_args(args):
 
     file_gen_options = {
         'verbose': args.verbose,
-        'module': args.module[0],
+        'module': module_name,
         'skipfuncs': getattr(args, 'Skip Functions', []),
         'onlyfuncs': getattr(args, 'Keep Functions', []),
         'include_paths': args.include_paths,
         'do-lower': args.lower,
-        'debug': args.debug_capi,
+        'debug': args.debug_api,
         'wrapfuncs': args.wrap_functions,
     }
 
