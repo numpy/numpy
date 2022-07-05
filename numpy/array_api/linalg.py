@@ -379,7 +379,20 @@ def trace(x: Array, /, *, offset: int = 0) -> Array:
 def vecdot(x1: Array, x2: Array, /, *, axis: int = -1) -> Array:
     if x1.dtype not in _numeric_dtypes or x2.dtype not in _numeric_dtypes:
         raise TypeError('Only numeric dtypes are allowed in vecdot')
-    return tensordot(x1, x2, axes=((axis,), (axis,)))
+    ndim = max(x1.ndim, x2.ndim)
+    x1_shape = (1,)*(ndim - x1.ndim) + tuple(x1.shape)
+    x2_shape = (1,)*(ndim - x2.ndim) + tuple(x2.shape)
+    if x1_shape[axis] != x2_shape[axis]:
+        raise ValueError("x1 and x2 must have the same size along the given axis")
+    if axis < 0:
+        axis += ndim
+
+    x1_, x2_ = np.broadcast_arrays(x1._array, x2._array)
+    in_indices = list(range(ndim))
+    out_indices = list(range(ndim))
+    out_indices.pop(axis)
+
+    return Array._new(np.einsum(x1_, in_indices, x2_, in_indices, out_indices))
 
 
 # Note: the name here is different from norm(). The array API norm is split
