@@ -4772,6 +4772,7 @@ cdef class Generator:
         return arr[tuple(slices)]
 
 
+@cython.embedsignature(True)
 def default_rng(seed=None):
     """Construct a new Generator with the default BitGenerator (PCG64).
 
