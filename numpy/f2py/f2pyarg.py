@@ -50,6 +50,8 @@ npd_link = ['atlas', 'atlas_threads', 'atlas_blas', 'atlas_blas_threads',
             'gtk+-x11-2.0', 'gtkp_2', 'gtk+-2.0', 'xft', 'freetype2', 'umfpack',
             'amd']
 
+debug_api = ['capi']
+
 
 # TODO: Compatibility helper, kill later
 # From 3.9 onwards should be argparse.BooleanOptionalAction
@@ -112,6 +114,23 @@ class NPDLinkHelper(argparse.Action):
             items.extend(outvar)
         else:
             raise RuntimeError(f"{outvar} is not in {npd_link}")
+
+class DebugLinkHelper(argparse.Action):
+    """A custom action to work with f2py's --debug-blah"""
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        """The storage action
+
+        Essentially, split the value on -, store in dest
+
+        """
+        items = getattr(namespace, self.dest) or []
+        outvar = option_string.split("--debug-")[1]
+        if outvar in debug_api:
+            items.append(outvar)
+            setattr(namespace, self.dest, items)
+        else:
+            raise RuntimeError(f"{outvar} is not in {debug_api}")
 
 
 ##########
@@ -270,7 +289,10 @@ parser.add_argument(
 
 parser.add_argument(
     "--debug-capi",
-    action="store_true",
+    dest="debug_api",
+    default=[],
+    nargs="*",
+    action=DebugLinkHelper,
     help="""Create C/API code that reports the state of the wrappers
                    during runtime. Useful for debugging.""",
 )
