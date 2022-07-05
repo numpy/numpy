@@ -611,8 +611,8 @@ def process_args(args):
     if args.help:
         parser.print_help()
     if getattr(args, "Fortran Files"):
-        f77_files, f90_files, fpy_files, out_files, other_files = segregate_files(getattr(args, "Fortran Files"))        
-        generate_files(f77_files + f90_files, args.module[0], args.include_paths, sign_file, file_gen_options, settings)
+        f77_files, f90_files, pyf_files, out_files, other_files = segregate_files(getattr(args, "Fortran Files"))        
+        generate_files(pyf_files + f77_files + f90_files, module_name, sign_file, file_gen_options, settings)
 
 
 def main():
