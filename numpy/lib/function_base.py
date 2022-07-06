@@ -4267,14 +4267,13 @@ def quantile(a,
 
     Notes
     -----
-    Given a vector ``V`` of length ``N``, the q-th percentile of ``V`` is
-    the value ``q/100`` of the way from the minimum to the maximum in a
-    sorted copy of ``V``. The values and distances of the two nearest
-    neighbors as well as the `method` parameter will determine the
-    percentile if the normalized ranking does not match the location of
-    ``q`` exactly. This function is the same as the median if ``q=50``, the
-    same as the minimum if ``q=0`` and the same as the maximum if
-    ``q=100``.
+    Given a vector ``V`` of length ``N``, the q-th quantile of ``V`` is the
+    value ``q`` of the way from the minimum to the maximum in a sorted copy of
+    ``V``. The values and distances of the two nearest neighbors as well as the
+    `method` parameter will determine the quantile if the normalized
+    ranking does not match the location of ``q`` exactly. This function is the
+    same as the median if ``q=0.5``, the same as the minimum if ``q=0.0`` and
+    the same as the maximum if ``q=1.0``.
 
     The optional `method` parameter specifies the method to use when the
     desired quantile lies between two indexes ``i``  and ``j = i + 1 ``. 
