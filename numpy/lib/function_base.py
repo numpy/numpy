@@ -3979,7 +3979,7 @@ def percentile(a,
 
     Notes
     -----
-    Given a vector ``V`` of length ``N``, the q-th percentile of ``V`` is
+    Given a vector ``V`` of length ``n``, the q-th percentile of ``V`` is
     the value ``q/100`` of the way from the minimum to the maximum in a
     sorted copy of ``V``. The values and distances of the two nearest
     neighbors as well as the `method` parameter will determine the
@@ -3999,10 +3999,11 @@ def percentile(a,
     python uses 0-based indexing, the code subtracts another 1 from the index 
     internally.
 
-    The virtual index is determined using the formula:
+    The following formula determines the virtual index ``i + g``, the location of 
+    the percentile in the sorted sample:
 
     .. math::
-        i + g = q * ( n - alpha - beta + 1 ) + alpha
+        i + g = (q / 100) * ( n - alpha - beta + 1 ) + alpha
 
     The different methods then work as follows
 
@@ -4267,7 +4268,7 @@ def quantile(a,
 
     Notes
     -----
-    Given a vector ``V`` of length ``N``, the q-th quantile of ``V`` is the
+    Given a vector ``V`` of length ``n``, the q-th quantile of ``V`` is the
     value ``q`` of the way from the minimum to the maximum in a sorted copy of
     ``V``. The values and distances of the two nearest neighbors as well as the
     `method` parameter will determine the quantile if the normalized
@@ -4286,7 +4287,9 @@ def quantile(a,
     python uses 0-based indexing, the code subtracts another 1 from the index 
     internally.
     
-    The virtual index is determined using the formula:
+    
+   The following formula determines the virtual index ``i + g``, the location of 
+   the quantile in the sorted sample:
 
     .. math::
         i + g = q * ( n - alpha - beta + 1 ) + alpha
