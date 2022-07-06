@@ -1167,6 +1167,14 @@ PyArray_IntpFromSequence(PyObject *seq, npy_intp *vals, int maxvals)
 // The memory for the array is allocated with PyMem_Calloc.
 // The caller must free the memory with PyMem_FREE or PyMem_Free.
 //
+// If the length of the sequence is 0, a non-NULL pointer is returned
+// in *parr, but it must not be dereferenced.  To quote the PyMem_Calloc
+// documentation:
+//
+//    Requesting zero elements or elements of size zero bytes returns a
+//    distinct non-NULL pointer if possible, as if PyMem_Calloc(1, 1) had
+//    been called instead.
+//
 // Returns -1 with an exception set and with *parr set to NULL if the
 // conversion fails.
 //

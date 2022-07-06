@@ -10,6 +10,7 @@
 
 #include <string.h>
 #include <stdbool.h>
+#include <stdio.h>
 
 #include "conversion_utils.h"
 #include "textreading/stream.h"
@@ -32,8 +33,8 @@
  * Call the user-defined usecols callable and create or update the
  * C array of Py_ssize_t integers.
  *
- * On input, *p_usecols_arr must be either NULL or the result of
- * a previous call to this function.  If *p_usecols is not NULL,
+ * On input, *p_usecols_arr must be either NULL or the result of a
+ * previous call to this function.  If *p_usecols_arr is not NULL,
  * *p_num_usecols must be the length of the array pointed to by
  * *p_usecols_arr.
  *
@@ -112,6 +113,8 @@ get_usecols_arr_from_callable(PyObject *usecols_obj, Py_ssize_t n,
 
 /*
  *  Create the array of converter functions from the Python converters.
+ *  Elements of conv_funcs for which a corresponding converter has not
+ *  been given will be NULL.
  */
 static PyObject **
 create_conv_funcs(
