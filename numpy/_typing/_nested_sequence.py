@@ -36,9 +36,9 @@ class _NestedSequence(Protocol[_T_co]):
 
         >>> from typing import TYPE_CHECKING
         >>> import numpy as np
-        >>> from numpy._typing import _NestedSequnce
+        >>> from numpy._typing import _NestedSequence
 
-        >>> def get_dtype(seq: _NestedSequnce[float]) -> np.dtype[np.float64]:
+        >>> def get_dtype(seq: _NestedSequence[float]) -> np.dtype[np.float64]:
         ...     return np.asarray(seq).dtype
 
         >>> a = get_dtype([1.0])
