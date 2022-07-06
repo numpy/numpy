@@ -18,8 +18,6 @@ Advise for using NumPy on untrusted data
 
 A user who can freely execute NumPy (or Python) functions must be considered
 to have the same privilege as the process/Python interpreter.
-If an untrusted user has direct access to parts of the NumPy API,
-a the whole process must generally be isolated.
 
 That said, NumPy should be generally safe to use on *data* provided by
 unprivileged users and read through safe API functions (e.g. loaded from a
@@ -39,11 +37,12 @@ untrusted data:
 
 * NumPy structured dtypes allow for a large amount of complexity.  Fortunately,
   most code fails gracefully when a structured dtype is provided unexpectedly.
-  However, code should either not allow untrusted users to provide these
-  (e.g. via ``.npy`` files) or carefully check the fields including for
+  However, code should either disallow untrusted users to provide these
+  (e.g. via ``.npy`` files) or carefully check the fields included for
   nested structured/subarray dtypes.
 
-* Passing should generally be considered unsafe (except for data being read).
+* Passing on user input should generally be considered unsafe
+  (except for the data being read).
   An example would be ``np.dtype(user_string)`` or ``dtype=user_string``.
 
 * The speed of operations can depend on values and memory order can lead to
@@ -55,8 +54,7 @@ untrusted data:
   or dtype such as ``float64``, ``float32``, or ``int64`` to reduce complexity.
 
 When working with non-trivial untrusted data, it is advisable to sandbox the
-analysis to guard against memory exhaustion and potential other privilege
-escalation.
+analysis to guard against potential privilege escalation.
 This is especially advisable if further libraries based on NumPy are used since
 these add additional complexity and potential security issues.
 
