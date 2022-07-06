@@ -3993,7 +3993,7 @@ def percentile(a,
     In that case, we first  determine ``i + g``, a virtual index that lies 
     between ``i`` and ``j`, where  ``i`` is the floor and ``g`` is the 
     fractional part of the index. The final result is, then, an interpolation
-    of `a[i]` and `a[j]` based ``g``. During  the computation of ``g``, ``i`` 
+    of `a[i]` and `a[j]` based on ``g``. During  the computation of ``g``, ``i`` 
     and ``j`` are modified using correction constants ``alpha`` and ``beta`` 
     whose choices depend on the ``method`` used. Finally, note that since
     python uses 0-based indexing, the code subtracts another 1 from the index 
@@ -4281,7 +4281,7 @@ def quantile(a,
     In that case, we first  determine ``i + g``, a virtual index that lies 
     between ``i`` and ``j`, where  ``i`` is the floor and ``g`` is the 
     fractional part of the index. The final result is, then, an interpolation
-    of `a[i]` and `a[j]` based ``g``. During  the computation of ``g``, ``i`` 
+    of `a[i]` and `a[j]` based on ``g``. During  the computation of ``g``, ``i`` 
     and ``j`` are modified using correction constants ``alpha`` and ``beta`` 
     whose choices depend on the ``method`` used. Finally, note that since
     python uses 0-based indexing, the code subtracts another 1 from the index 
