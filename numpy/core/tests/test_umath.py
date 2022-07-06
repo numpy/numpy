@@ -849,7 +849,7 @@ class TestDivisionIntegerOverflowsAndDivideByZero:
             assert extractor(res1) == np.iinfo(op1.dtype).min
             assert extractor(res2) == 0
 
-    @pytest.mark.parametrize("dtype", np.typecodes["Integer"])
+    @pytest.mark.parametrize("dtype", np.typecodes["AllInteger"])
     def test_divide_by_zero(self, dtype):
         # Note that the return value cannot be well defined here, but NumPy
         # currently uses 0 consistently.  This could be changed.
