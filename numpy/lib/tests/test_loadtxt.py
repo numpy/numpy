@@ -226,7 +226,7 @@ def test_converters_negative_indices():
 
 
 @pytest.mark.parametrize('usecols', [[0, -1], lambda n: [0, -1]])
-def test_converters_negative_indices_with_usecols(usecols):
+def test_converters_neg_indices_usecols(usecols):
     txt = StringIO('1.5,2.5,3.5\n3.0,4.0,XXX\n5.5,6.0,7.5\n')
     conv = {-1: lambda s: np.nan if s == 'XXX' else float(s)}
     expected = np.array([[1.5, 3.5], [3.0, np.nan], [5.5, 7.5]])
@@ -240,8 +240,10 @@ def test_converters_negative_indices_with_usecols(usecols):
     )
     assert_equal(res, expected)
 
-    # Second test with variable number of rows:
-    res = np.loadtxt(StringIO('''0,1,2\n0,1,2,3,4'''), delimiter=",",
+
+@pytest.mark.parametrize('usecols', [[0, -1], lambda n: [0, -1]])
+def test_converters_neg_indices_usecols_varying_fields(usecols):
+    res = np.loadtxt(StringIO('0,1,2\n0,1,2,3,4'), delimiter=",",
                      usecols=usecols, converters={-1: (lambda x: -1)})
     assert_array_equal(res, [[0, -1], [0, -1]])
 
