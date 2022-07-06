@@ -370,7 +370,7 @@ vsx4_simd_@func@_contig_@sfx@(char **args, npy_intp len)
         const npyv_lanetype_@sfx@ a = *src1;
         const npyv_lanetype_@sfx@ b = *src2;
         if (DIVIDEBYZERO_OVERFLOW_CHECK(a, b, NPY_MIN_INT@len@, NPY_TRUE)) {
-            if (NPY_UNLIKELY(b == 0)) {
+            if (b == 0) {
                 npy_set_floatstatus_divbyzero();
                 *dst1 = 0;
                 *dst2 = 0;
@@ -632,7 +632,7 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_divmod)
         const @type@ in2 = *(@type@ *)ip2;
         /* see FIXME note for divide above */
         if (DIVIDEBYZERO_OVERFLOW_CHECK(in1, in2, NPY_MIN_@TYPE@, NPY_TRUE)) {
-            if (NPY_UNLIKELY(in2 == 0)) {
+            if (in2 == 0) {
                 npy_set_floatstatus_divbyzero();
                 *((@type@ *)op1) = 0;
                 *((@type@ *)op2) = 0;
