@@ -130,7 +130,7 @@ How to tell if the array is a view or a copy
 
 The :attr:`base <.ndarray.base>` attribute of the ndarray makes it easy
 to tell if an array is a view or a copy. The base attribute of a view returns
-the original array while it returns ``None`` for a copy.
+an array while it returns ``None`` for a copy.
 
     >>> x = np.arange(9)
     >>> x
