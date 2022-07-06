@@ -115,9 +115,28 @@ repository::
     $ git tag -a -s v1.21.0 -m"NumPy 1.21.0 release"
     $ git push upstream v1.21.0
 
+Build wheels via cibuildwheel (preferred)
+-----------------------------------------
+Tagging the build at the beginning of this process will trigger a wheel build
+via cibuildwheel and upload wheels and an sdist to the staging area. The CI run
+on github actions (for all x86-based and macOS arm64 wheels) takes about 1 1/4
+hours. The CI run on travis (for aarch64) takes less time.
+
+If you wish to manually trigger a wheel build, you can do so:
+
+- On github actions -> `Wheel builder`_ there is a "Run workflow" button, click
+  on it and choose the tag to build
+- On travis_ there is a "More Options" button, click on it and choose a branch
+  to build. There does not appear to be an option to build a tag.
+
+.. _`Wheel builder`: https://github.com/numpy/numpy/actions/workflows/wheels.yml
+.. _travis : https://app.travis-ci.com/github/numpy/numpy
+
+Build wheels with multibuild (outdated)
+---------------------------------------
 
 Build source releases
----------------------
+~~~~~~~~~~~~~~~~~~~~~
 
 Paver is used to build the source releases. It will create the ``release`` and
 ``release/installers`` directories and put the ``*.zip`` and ``*.tar.gz``
@@ -127,7 +146,7 @@ source releases in the latter. ::
 
 
 Build wheels via MacPython/numpy-wheels
----------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Trigger the wheels build by pointing the numpy-wheels repository at this
 commit. This can take up to an hour. The numpy-wheels repository is cloned from
@@ -162,23 +181,6 @@ uploaded to the staging repository before proceeding.
 Note that sometimes builds, like tests, fail for unrelated reasons and you will
 need to rerun them. You will need to be logged in under 'numpy' to do this
 on azure.
-
-Build wheels via cibuildwheel
------------------------------
-Tagging the build at the beginning of this process will trigger a wheel build
-via cibuildwheel and upload wheels and an sdist to the staging area. The CI run
-on github actions (for all x86-based and macOS arm64 wheels) takes about 1 1/4
-hours. The CI run on travis (for aarch64) takes less time. 
-
-If you wish to manually trigger a wheel build, you can do so:
-
-- On github actions -> `Wheel builder`_ there is a "Run workflow" button, click
-  on it and choose the tag to build
-- On travis_ there is a "More Options" button, click on it and choose a branch
-  to build. There does not appear to be an option to build a tag.
-
-.. _`Wheel builder`: https://github.com/numpy/numpy/actions/workflows/wheels.yml
-.. _travis : https://app.travis-ci.com/github/numpy/numpy
 
 Download wheels
 ---------------
@@ -266,14 +268,12 @@ Upload documents to numpy.org (skip for prereleases)
 
 This step is only needed for final releases and can be skipped for pre-releases
 and most patch releases. ``make merge-doc`` clones the ``numpy/doc`` repo into
-``doc/build/merge`` and updates it with the new documentation. If you already
-have a numpy installed, you need to locally install the new NumPy version so
-that document generation will use the correct NumPy. This is because ``make
-dist`` does not correctly set up the path. Note that Python 3.10 cannot be used
-for generating the docs as it has no ``easy_install``, use 3.9 or 3.8 instead::
+``doc/build/merge`` and updates it with the new documentation::
 
+    $ git clean -xdfq
+    $ git co v1.21.0
     $ pushd doc
-    $ make dist
+    $ make docenv && source docenv/bin/activate
     $ make merge-doc
     $ pushd build/merge
 
@@ -287,8 +287,9 @@ update the version marked `(stable)`::
 
     $ gvim _static/versions.json
 
-Otherwise, only the ``zip`` and ``pdf`` links should be updated with the
-new tag name::
+Otherwise, only the ``zip`` link should be updated with the new tag name. Since
+we are no longer generating ``pdf`` files, remove the line for the ``pdf``
+files if present::
 
     $ gvim index.html +/'tag v1.21'
 
@@ -307,6 +308,7 @@ Once everything seems satisfactory, update, commit and upload the changes::
     $ python3 update.py
     $ git commit -a -m"Add documentation for v1.21.0"
     $ git push
+    $ deactivate
     $ popd
     $ popd
 
@@ -360,3 +362,13 @@ Checkout main and forward port the documentation changes::
     $ git push origin HEAD
 
 Go to GitHub and make a PR.
+
+Update oldest-supported-numpy
+-----------------------------
+
+If this release is the first one to support a new Python version, or the first
+to provide wheels for a new platform or PyPy version, the version pinnings
+in https://github.com/scipy/oldest-supported-numpy should be updated.
+Either submit a PR with changes to ``setup.cfg`` there, or open an issue with
+info on needed changes.
+

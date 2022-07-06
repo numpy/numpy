@@ -516,12 +516,13 @@ def setxor1d(ar1, ar2, assume_unique=False):
     return aux[flag[1:] & flag[:-1]]
 
 
-def _in1d_dispatcher(ar1, ar2, assume_unique=None, invert=None):
+def _in1d_dispatcher(ar1, ar2, assume_unique=None, invert=None, *,
+                     kind=None):
     return (ar1, ar2)
 
 
 @array_function_dispatch(_in1d_dispatcher)
-def in1d(ar1, ar2, assume_unique=False, invert=False):
+def in1d(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
     """
     Test whether each element of a 1-D array is also present in a second array.
 
@@ -544,6 +545,26 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
         False where an element of `ar1` is in `ar2` and True otherwise).
         Default is False. ``np.in1d(a, b, invert=True)`` is equivalent
         to (but is faster than) ``np.invert(in1d(a, b))``.
+    kind : {None, 'sort', 'table'}, optional
+        The algorithm to use. This will not affect the final result,
+        but will affect the speed and memory use. The default, None,
+        will select automatically based on memory considerations.
+
+        * If 'sort', will use a mergesort-based approach. This will have
+          a memory usage of roughly 6 times the sum of the sizes of
+          `ar1` and `ar2`, not accounting for size of dtypes.
+        * If 'table', will use a lookup table approach similar
+          to a counting sort. This is only available for boolean and
+          integer arrays. This will have a memory usage of the
+          size of `ar1` plus the max-min value of `ar2`. `assume_unique`
+          has no effect when the 'table' option is used.
+        * If None, will automatically choose 'table' if
+          the required memory allocation is less than or equal to
+          6 times the sum of the sizes of `ar1` and `ar2`,
+          otherwise will use 'sort'. This is done to not use
+          a large amount of memory by default, even though
+          'table' may be faster in most cases. If 'table' is chosen,
+          `assume_unique` will have no effect.
 
         .. versionadded:: 1.8.0
 
@@ -569,6 +590,13 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
     ``asarray(ar2)`` is an object array rather than the expected array of
     contained values.
 
+    Using ``kind='table'`` tends to be faster than `kind='sort'` if the
+    following relationship is true:
+    ``log10(len(ar2)) > (log10(max(ar2)-min(ar2)) - 2.27) / 0.927``,
+    but may use greater memory. The default value for `kind` will
+    be automatically selected based only on memory usage, so one may
+    manually set ``kind='table'`` if memory constraints can be relaxed.
+
     .. versionadded:: 1.4.0
 
     Examples
@@ -593,6 +621,83 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
     # Ensure that iteration through object arrays yields size-1 arrays
     if ar2.dtype == object:
         ar2 = ar2.reshape(-1, 1)
+
+    if kind not in {None, 'sort', 'table'}:
+        raise ValueError(
+            f"Invalid kind: '{kind}'. Please use None, 'sort' or 'table'.")
+
+    # Can use the table method if all arrays are integers or boolean:
+    is_int_arrays = all(ar.dtype.kind in ("u", "i", "b") for ar in (ar1, ar2))
+    use_table_method = is_int_arrays and kind in {None, 'table'}
+
+    if use_table_method:
+        if ar2.size == 0:
+            if invert:
+                return np.ones_like(ar1, dtype=bool)
+            else:
+                return np.zeros_like(ar1, dtype=bool)
+
+        # Convert booleans to uint8 so we can use the fast integer algorithm
+        if ar1.dtype == bool:
+            ar1 = ar1.astype(np.uint8)
+        if ar2.dtype == bool:
+            ar2 = ar2.astype(np.uint8)
+
+        ar2_min = np.min(ar2)
+        ar2_max = np.max(ar2)
+
+        ar2_range = int(ar2_max) - int(ar2_min)
+
+        # Constraints on whether we can actually use the table method:
+        range_safe_from_overflow = ar2_range < np.iinfo(ar2.dtype).max
+        below_memory_constraint = ar2_range <= 6 * (ar1.size + ar2.size)
+
+        # Optimal performance is for approximately
+        # log10(size) > (log10(range) - 2.27) / 0.927.
+        # However, here we set the requirement that by default
+        # the intermediate array can only be 6x
+        # the combined memory allocation of the original
+        # arrays. See discussion on 
+        # https://github.com/numpy/numpy/pull/12065.
+
+        if (
+            range_safe_from_overflow and 
+            (below_memory_constraint or kind == 'table')
+        ):
+
+            if invert:
+                outgoing_array = np.ones_like(ar1, dtype=bool)
+            else:
+                outgoing_array = np.zeros_like(ar1, dtype=bool)
+
+            # Make elements 1 where the integer exists in ar2
+            if invert:
+                isin_helper_ar = np.ones(ar2_range + 1, dtype=bool)
+                isin_helper_ar[ar2 - ar2_min] = 0
+            else:
+                isin_helper_ar = np.zeros(ar2_range + 1, dtype=bool)
+                isin_helper_ar[ar2 - ar2_min] = 1
+
+            # Mask out elements we know won't work
+            basic_mask = (ar1 <= ar2_max) & (ar1 >= ar2_min)
+            outgoing_array[basic_mask] = isin_helper_ar[ar1[basic_mask] -
+                                                        ar2_min]
+
+            return outgoing_array
+        elif kind == 'table':  # not range_safe_from_overflow
+            raise RuntimeError(
+                "You have specified kind='table', "
+                "but the range of values in `ar2` exceeds the "
+                "maximum integer of the datatype. "
+                "Please set `kind` to None or 'sort'."
+            )
+    elif kind == 'table':
+        raise ValueError(
+            "The 'table' method is only "
+            "supported for boolean or integer arrays. "
+            "Please select 'sort' or None for kind."
+        )
+
 
     # Check if one of the arrays may contain arbitrary objects
     contains_object = ar1.dtype.hasobject or ar2.dtype.hasobject
@@ -637,12 +742,14 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
         return ret[rev_idx]
 
 
-def _isin_dispatcher(element, test_elements, assume_unique=None, invert=None):
+def _isin_dispatcher(element, test_elements, assume_unique=None, invert=None,
+                     *, kind=None):
     return (element, test_elements)
 
 
 @array_function_dispatch(_isin_dispatcher)
-def isin(element, test_elements, assume_unique=False, invert=False):
+def isin(element, test_elements, assume_unique=False, invert=False, *,
+         kind=None):
     """
     Calculates ``element in test_elements``, broadcasting over `element` only.
     Returns a boolean array of the same shape as `element` that is True
@@ -664,6 +771,27 @@ def isin(element, test_elements, assume_unique=False, invert=False):
         calculating `element not in test_elements`. Default is False.
         ``np.isin(a, b, invert=True)`` is equivalent to (but faster
         than) ``np.invert(np.isin(a, b))``.
+    kind : {None, 'sort', 'table'}, optional
+        The algorithm to use. This will not affect the final result,
+        but will affect the speed and memory use. The default, None,
+        will select automatically based on memory considerations.
+
+        * If 'sort', will use a mergesort-based approach. This will have
+          a memory usage of roughly 6 times the sum of the sizes of
+          `ar1` and `ar2`, not accounting for size of dtypes.
+        * If 'table', will use a lookup table approach similar
+          to a counting sort. This is only available for boolean and
+          integer arrays. This will have a memory usage of the
+          size of `ar1` plus the max-min value of `ar2`. `assume_unique`
+          has no effect when the 'table' option is used.
+        * If None, will automatically choose 'table' if
+          the required memory allocation is less than or equal to
+          6 times the sum of the sizes of `ar1` and `ar2`,
+          otherwise will use 'sort'. This is done to not use
+          a large amount of memory by default, even though
+          'table' may be faster in most cases. If 'table' is chosen,
+          `assume_unique` will have no effect.
+
 
     Returns
     -------
@@ -690,6 +818,13 @@ def isin(element, test_elements, assume_unique=False, invert=False):
     array of the values contained in `test_elements`. This is a consequence
     of the `array` constructor's way of handling non-sequence collections.
     Converting the set to a list usually gives the desired behavior.
+
+    Using ``kind='table'`` tends to be faster than `kind='sort'` if the
+    following relationship is true:
+    ``log10(len(ar2)) > (log10(max(ar2)-min(ar2)) - 2.27) / 0.927``,
+    but may use greater memory. The default value for `kind` will
+    be automatically selected based only on memory usage, so one may
+    manually set ``kind='table'`` if memory constraints can be relaxed.
 
     .. versionadded:: 1.13.0
 
@@ -737,7 +872,7 @@ def isin(element, test_elements, assume_unique=False, invert=False):
     """
     element = np.asarray(element)
     return in1d(element, test_elements, assume_unique=assume_unique,
-                invert=invert).reshape(element.shape)
+                invert=invert, kind=kind).reshape(element.shape)
 
 
 def _union1d_dispatcher(ar1, ar2):

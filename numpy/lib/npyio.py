@@ -1068,8 +1068,6 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     r"""
     Load data from a text file.
 
-    Each row in the text file must have the same number of values.
-
     Parameters
     ----------
     fname : file, str, pathlib.Path, list of str, generator
@@ -1139,10 +1137,17 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
 
         .. versionadded:: 1.14.0
     max_rows : int, optional
-        Read `max_rows` lines of content after `skiprows` lines. The default
-        is to read all the lines.
+        Read `max_rows` rows of content after `skiprows` lines. The default is
+        to read all the rows. Note that empty rows containing no data such as
+        empty lines and comment lines are not counted towards `max_rows`,
+        while such lines are counted in `skiprows`.
 
         .. versionadded:: 1.16.0
+        
+        .. versionchanged:: 1.23.0
+            Lines containing no data, including comment lines (e.g., lines 
+            starting with '#' or as specified via `comments`) are not counted 
+            towards `max_rows`.
     quotechar : unicode character or None, optional
         The character used to denote the start and end of a quoted item.
         Occurrences of the delimiter or comment characters are ignored within
@@ -1173,6 +1178,11 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     This function aims to be a fast reader for simply formatted files.  The
     `genfromtxt` function provides more sophisticated handling of, e.g.,
     lines with missing values.
+
+    Each row in the input text file must have the same number of values to be
+    able to read all values. If all rows do not have same number of values, a
+    subset of up to n columns (where n is the least number of values present
+    in all rows) can be read by specifying the columns via `usecols`.
 
     .. versionadded:: 1.10.0
 
@@ -1282,8 +1292,18 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     >>> np.loadtxt(s, dtype="U", delimiter=",", quotechar='"')
     array('Hello, my name is "Monty"!', dtype='<U26')
 
-    The parameter `usecols` can be a callable function.  This example shows
-    how `usecols` can be used to skip the second column of the input file.
+    Use ``usecols`` to read a subset of the columns when all rows do not
+    contain an equal number of values:
+
+    >>> d = StringIO("1 2\n2 4\n3 9 12\n4 16 20")
+    >>> np.loadtxt(d, usecols=(0, 1))
+    array([[ 1.,  2.],
+           [ 2.,  4.],
+           [ 3.,  9.],
+           [ 4., 16.]])
+
+    `usecols` can be a callable function.  This example shows how `usecols`
+    can be used to skip the second column of the input file.
 
     >>> s1 = StringIO('10.25 ABC 1.5 3.5\n12.50 XYZ 2.5 8.0')
     >>> np.loadtxt(s1, usecols=lambda n: [0] + list(range(2, n)))

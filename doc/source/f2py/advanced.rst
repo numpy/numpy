@@ -96,6 +96,32 @@ and the corresponding <C type>. The <C type> can be one of the following::
     complex_long_double
     string
 
+For example, for a Fortran file ``func1.f`` containing:
+
+.. literalinclude:: ./code/f2cmap_demo.f
+    :language: fortran
+
+In order to convert ``int64`` and ``real64`` to valid ``C`` data types,
+a ``.f2py_f2cmap`` file with the following content can be created in the current directory:
+
+.. code-block:: python
+
+  dict(real=dict(real64='double'), integer=dict(int64='long long'))
+
+and create the module as usual. F2PY checks if a ``.f2py_f2cmap`` file is present
+in the current directory and will use it to map ``KIND`` specifiers to ``C`` data types.
+
+.. code-block:: sh
+
+  f2py -c func1.f -m func1
+
+Alternatively, the mapping file can be saved with any other name, for example 
+``mapfile.txt``, and this information can be passed to F2PY by using the ``--f2cmap`` option.
+
+.. code-block:: sh
+
+  f2py -c func1.f -m func1 --f2cmap mapfile.txt
+
 For more information, see F2Py source code ``numpy/f2py/capi_maps.py``.
 
 .. _Character strings:

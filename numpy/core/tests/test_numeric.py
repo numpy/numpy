@@ -3383,6 +3383,14 @@ class TestCross:
         for axisc in range(-2, 2):
             assert_equal(np.cross(u, u, axisc=axisc).shape, (3, 4))
 
+    def test_uint8_int32_mixed_dtypes(self):
+        # regression test for gh-19138
+        u = np.array([[195, 8, 9]], np.uint8)
+        v = np.array([250, 166, 68], np.int32)
+        z = np.array([[950, 11010, -30370]], dtype=np.int32)
+        assert_equal(np.cross(v, u), z)
+        assert_equal(np.cross(u, v), -z)
+
 
 def test_outer_out_param():
     arr1 = np.ones((5,))

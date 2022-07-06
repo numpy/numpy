@@ -161,7 +161,7 @@ NPY_FINLINE npyv_f32 npyv_rint_f32(npyv_f32 a)
 #else
     // ARMv7 NEON only supports fp to int truncate conversion.
     // a magic trick of adding 1.5 * 2**23 is used for rounding
-    // to nearest even and then substract this magic number to get
+    // to nearest even and then subtract this magic number to get
     // the integer.
     const npyv_s32 szero = vreinterpretq_s32_f32(vdupq_n_f32(-0.0f));
     const npyv_f32 magic = vdupq_n_f32(12582912.0f); // 1.5 * 2**23
