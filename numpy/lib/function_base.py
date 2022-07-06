@@ -3993,15 +3993,11 @@ def percentile(a,
     In that case, we first  determine ``i + g``, a virtual index that lies 
     between ``i`` and ``j`, where  ``i`` is the floor and ``g`` is the 
     fractional part of the index. The final result is, then, an interpolation
-    of `a[i]` and `a[j]` based on ``g``. During  the computation of ``g``, ``i`` 
+    of `a[i]` and `a[j]` based ``g``. During  the computation of ``g``, ``i`` 
     and ``j`` are modified using correction constants ``alpha`` and ``beta`` 
-    whose choices depend on the ``method`` used. Finally, note that since python 
-    uses 0-based indexing, we subtract another 1 from the index internally.
-
-    The optional `method` parameter specifies the method to use when the
-    desired quantile lies between two data points ``i < j``.
-    If ``g`` is the fractional part of the index surrounded by ``i`` and ``j``,
-    and alpha and beta are correction constants modifying i and j:
+    whose choices depend on the ``method`` used. Finally, note that since
+    python uses 0-based indexing, the code subtracts another 1 from the index 
+    internally.
 
     The virtual index is determined using the formula:
 
@@ -4271,37 +4267,27 @@ def quantile(a,
 
     Notes
     -----
-    Given a vector ``V`` of length ``N``, the q-th quantile of ``V`` is the
-    value ``q`` of the way from the minimum to the maximum in a sorted copy of
-    ``V``. The values and distances of the two nearest neighbors 
-    `method` parameter will determine the quantile if the normalized
-    ranking does not match the location of ``q`` exactly. This function is the
-    same as the median if ``q=0.5``, the same as the minimum if ``q=0.0`` and
-    the same as the maximum if ``q=1.0``.
-
     Given a vector ``V`` of length ``N``, the q-th percentile of ``V`` is
     the value ``q/100`` of the way from the minimum to the maximum in a
     sorted copy of ``V``. The values and distances of the two nearest
-    neighbors as well as the `method` parameter will determine the percentile 
-    if the normalized ranking does not match the location of ``q`` exactly.
-    
-    This function is the same as the median if ``q=50``, the same as the minimum 
-    if ``q=0`` and the same as the maximum if``q=100``.
+    neighbors as well as the `method` parameter will determine the
+    percentile if the normalized ranking does not match the location of
+    ``q`` exactly. This function is the same as the median if ``q=50``, the
+    same as the minimum if ``q=0`` and the same as the maximum if
+    ``q=100``.
 
-    This optional `method` parameter specifies the method to use when the
+    The optional `method` parameter specifies the method to use when the
     desired quantile lies between two indexes ``i``  and ``j = i + 1 ``. 
     In that case, we first  determine ``i + g``, a virtual index that lies 
     between ``i`` and ``j`, where  ``i`` is the floor and ``g`` is the 
     fractional part of the index. The final result is, then, an interpolation
     of `a[i]` and `a[j]` based ``g``. During  the computation of ``g``, ``i`` 
     and ``j`` are modified using correction constants ``alpha`` and ``beta`` 
-    whose choices depend on the ``method`` used. Finally, note that since python 
-    uses 0-based indexing, we subtract another 1 from the index internally.
-
-    The optional `method` parameter specifies the method to use when the
-    desired quantile lies between two data points ``i < j``.
-    If ``g`` is the fractional part of the index surrounded by ``i`` and ``j``,
-    and alpha and beta are correction constants modifying i and j:
+    whose choices depend on the ``method`` used. Finally, note that since
+    python uses 0-based indexing, the code subtracts another 1 from the index 
+    internally.
+    
+    The virtual index is determined using the formula:
 
     .. math::
         i + g = q * ( n - alpha - beta + 1 ) + alpha
