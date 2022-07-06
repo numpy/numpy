@@ -66,7 +66,7 @@ because broadcasting moves less memory around during the multiplication
 General Broadcasting Rules
 ==========================
 When operating on two arrays, NumPy compares their shapes element-wise.
-It starts with the trailing (i.e. rightmost) dimensions and works its
+It starts with the trailing (i.e. rightmost) dimension and works its
 way left.  Two dimensions are compatible when
 
 1) they are equal, or
@@ -76,15 +76,15 @@ If these conditions are not met, a
 ``ValueError: operands could not be broadcast together`` exception is
 thrown, indicating that the arrays have incompatible shapes.
 
-Arrays do not need to have the same *number* of dimensions.  Resulting
-array has as many dimensions as the largest (by number of dimensions)
-of inputs.  Size, along each axis, of the resulting array is equal to
-the largest size, along the same axis, of all inputs.
+Input arrays do not need to have the same *number* of dimensions.  The
+resulting array will have the same number of dimensions as the input array
+with the greatest number of dimensions, where the *size* of each dimension is
+the largest size of the corresponding dimension among the input arrays.  Note
+that missing dimensions are assumed to have size one.
 
-For example,
-if you have a ``256x256x3`` array of RGB values, and you want to scale
-each color in the image by a different value, you can multiply the image
-by a one-dimensional array with 3 values. Lining up the sizes of the
+For example, if you have a ``256x256x3`` array of RGB values, and you want
+to scale each color in the image by a different value, you can multiply the
+image by a one-dimensional array with 3 values. Lining up the sizes of the
 trailing axes of these arrays according to the broadcast rules, shows that
 they are compatible::
 
