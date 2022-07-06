@@ -1,8 +1,9 @@
-NumPy security considertions and reporting
-==========================================
+NumPy security
+==============
 
-Security issues can be reported privately as described on the issue tracker.
-The [Python security reporting guidlines](https://www.python.org/dev/security/)
+Security issues can be reported privately as described in the project README
+and when opening a `new issue on the issue tracker <https://github.com/numpy/numpy/issues/new/choose>`_.
+The `Python security reporting guidlines <https://www.python.org/dev/security/>`_
 are a good resource and its notes apply also to NumPy.
 
 NumPy's maintainers are not security experts.  However, we are conscientious
@@ -13,7 +14,7 @@ A security advisory we are not aware of beforehand can lead to a lot of work
 for all involved parties.
 
 
-Advise for using NumPy on untrusted data
+Advice for using NumPy on untrusted data
 ----------------------------------------
 
 A user who can freely execute NumPy (or Python) functions must be considered
