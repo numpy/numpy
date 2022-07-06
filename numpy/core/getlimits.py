@@ -343,8 +343,9 @@ def _get_machar(ftype):
         return ma_like
     # Fall back to parameter discovery
     warnings.warn(
-        'Signature {} for {} does not match any known type: '
-        'falling back to type probe function'.format(key, ftype),
+        f'Signature {key} for {ftype} does not match any known type: '
+        'falling back to type probe function.\n'
+        'This warnings indicates broken support for the dtype!',
         UserWarning, stacklevel=2)
     return _discovered_machar(ftype)
 

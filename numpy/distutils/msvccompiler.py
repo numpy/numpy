@@ -56,3 +56,21 @@ class MSVCCompiler(_MSVCCompiler):
         if platform_bits == 32:
             self.compile_options += ['/arch:SSE2']
             self.compile_options_debug += ['/arch:SSE2']
+
+
+def lib_opts_if_msvc(build_cmd):
+    """ Add flags if we are using MSVC compiler
+
+    We can't see `build_cmd` in our scope, because we have not initialized
+    the distutils build command, so use this deferred calculation to run
+    when we are building the library.
+    """
+    if build_cmd.compiler.compiler_type != 'msvc':
+        return []
+    # Explicitly disable whole-program optimization.
+    flags = ['/GL-']
+    # Disable voltbl section for vc142 to allow link using mingw-w64; see:
+    # https://github.com/matthew-brett/dll_investigation/issues/1#issuecomment-1100468171
+    if build_cmd.compiler_opt.cc_test_flags(['-d2VolatileMetadata-']):
+        flags.append('-d2VolatileMetadata-')
+    return flags

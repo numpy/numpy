@@ -459,7 +459,7 @@ Some special methods and attributes are used by arrays in order to
 facilitate the interoperation of sub-types with the base ndarray type.
 
 The __array_finalize\__ method
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. attribute:: ndarray.__array_finalize__
 
@@ -495,7 +495,7 @@ The __array_finalize\__ method
 
 
 The __array_priority\__ attribute
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. attribute:: ndarray.__array_priority__
 
@@ -513,7 +513,7 @@ The __array_priority\__ attribute
    the return output.
 
 The __array_wrap\__ method
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. attribute:: ndarray.__array_wrap__
 

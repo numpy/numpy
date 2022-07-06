@@ -239,7 +239,7 @@ A total of 532 pull requests were merged for this release.
 * `#12594 <https://github.com/numpy/numpy/pull/12594>`__: DEV, BUILD: add pypy3 to azure CI
 * `#12596 <https://github.com/numpy/numpy/pull/12596>`__: ENH: improve performance of numpy.core.records.fromarrays
 * `#12601 <https://github.com/numpy/numpy/pull/12601>`__: DOC: Correct documentation of `numpy.delete` obj parameter.
-* `#12602 <https://github.com/numpy/numpy/pull/12602>`__: DOC: Update RELEASE_WALKTHROUGH.rst.txt.
+* `#12602 <https://github.com/numpy/numpy/pull/12602>`__: DOC: Update RELEASE_WALKTHROUGH.rst.
 * `#12604 <https://github.com/numpy/numpy/pull/12604>`__: BUG: Check that dtype and formats arguments for None.
 * `#12606 <https://github.com/numpy/numpy/pull/12606>`__: DOC: Document NPY_SORTKIND parameter in PyArray_Sort
 * `#12608 <https://github.com/numpy/numpy/pull/12608>`__: MAINT: Use `*.format` for some strings.
@@ -609,7 +609,7 @@ A total of 532 pull requests were merged for this release.
 * `#13724 <https://github.com/numpy/numpy/pull/13724>`__: MAINT: fix use of cache_dim
 * `#13725 <https://github.com/numpy/numpy/pull/13725>`__: BUG: fix compilation of 3rd party modules with Py_LIMITED_API...
 * `#13726 <https://github.com/numpy/numpy/pull/13726>`__: MAINT: Update PCG jump sizes
-* `#13729 <https://github.com/numpy/numpy/pull/13729>`__: DOC: Merge together DISTUTILS.rst.txt#template-files" and distutils.r…
+* `#13729 <https://github.com/numpy/numpy/pull/13729>`__: DOC: Merge together DISTUTILS.rst#template-files" and distutils.r…
 * `#13730 <https://github.com/numpy/numpy/pull/13730>`__: MAINT: Change keyword from reserved word
 * `#13737 <https://github.com/numpy/numpy/pull/13737>`__: DOC: Mention and try to explain pairwise summation in sum
 * `#13741 <https://github.com/numpy/numpy/pull/13741>`__: MAINT: random: Remove unused empty file binomial.h.
@@ -630,7 +630,7 @@ A total of 532 pull requests were merged for this release.
 * `#13774 <https://github.com/numpy/numpy/pull/13774>`__: BUG: Make ``Generator._masked`` flag default to ``False``.
 * `#13777 <https://github.com/numpy/numpy/pull/13777>`__: MAINT: Remove duplication of should_use_min_scalar_type function
 * `#13780 <https://github.com/numpy/numpy/pull/13780>`__: ENH: use SeedSequence instead of seed()
-* `#13781 <https://github.com/numpy/numpy/pull/13781>`__: DOC: Update TESTS.rst.txt for pytest
+* `#13781 <https://github.com/numpy/numpy/pull/13781>`__: DOC: Update TESTS.rst for pytest
 * `#13786 <https://github.com/numpy/numpy/pull/13786>`__: MAINT: random: Fix a few compiler warnings.
 * `#13787 <https://github.com/numpy/numpy/pull/13787>`__: DOC: Fixed the problem of "versionadded"
 * `#13788 <https://github.com/numpy/numpy/pull/13788>`__: MAINT: fix 'in' -> 'is' typo

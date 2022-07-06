@@ -801,3 +801,8 @@ Other Differences
      - **Strictness**
      - The spec allows duck typing, so ``finfo`` returning dtype
        scalars is considered type compatible with ``float``.
+   * - Positional arguments in every function are positional-only.
+     - **Breaking**
+     - See the spec for the exact signature of each function. Note that NumPy
+       ufuncs already use positional-only arguments, but non-ufuncs like
+       ``asarray`` generally do not.

@@ -91,7 +91,17 @@ For maintainers
   explain why. If it's not, then it's a good idea to first explain why you
   think the PR is not suitable for inclusion in NumPy and then let a second
   committer comment or close.
-
+- If the PR submitter doesn't respond to your comments for 6 months, move the PR 
+  in question to the inactive category with the “inactive” tag attached. 
+  At this point, the PR can be closed by a maintainer. If there is any interest 
+  in finalizing the PR under consideration, this can be indicated at any time, 
+  without waiting 6 months, by a comment.  
+- Maintainers are encouraged to finalize PRs when only small changes are
+  necessary before merging (e.g., fixing code style or grammatical errors).
+  If a PR becomes inactive, maintainers may make larger changes. 
+  Remember, a PR is a collaboration between a contributor and a reviewer/s, 
+  sometimes a direct push is the best way to finish it.
+ 
 GitHub Workflow
 ---------------
 

@@ -189,7 +189,7 @@ Standard acronyms to start the commit message with are::
    REL: related to releasing numpy
 
 Commands to skip continuous integration
-```````````````````````````````````````
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 By default a lot of continuous integration (CI) jobs are run for every PR,
 from running the test suite on different operating systems and hardware
@@ -210,7 +210,7 @@ Azure chooses to still run jobs with skip commands on PRs, the jobs only get
 skipped on merging to master.
 
 Test building wheels
-```````````````````````````````````````
+~~~~~~~~~~~~~~~~~~~~
 
 Numpy currently uses `cibuildwheel <https://https://cibuildwheel.readthedocs.io/en/stable/>`_
 in order to build wheels through continuous integration services. To save resources, the

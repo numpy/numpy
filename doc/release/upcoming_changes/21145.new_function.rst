@@ -1,6 +1,0 @@
-NumPy now supports the DLPack protocol
---------------------------------------
-`numpy.from_dlpack` has been added to NumPy to exchange data using the DLPack protocol.
-It accepts Python objects that implement the ``__dlpack__`` and ``__dlpack_device__``
-methods and returns a ndarray object which is generally the view of the data of the input
-object.

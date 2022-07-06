@@ -1,7 +1,0 @@
-Math C library feature detection now uses correct signatures
-------------------------------------------------------------
-Compiling is preceded by a detection phase to determine whether the
-underlying libc supports certain math operations. Previously this code
-did not respect the proper signatures. Fixing this enables compilation
-for the ``wasm-ld`` backend (compilation for web assembly) and reduces
-the number of warnings.

@@ -5,6 +5,7 @@ These tests complement those found in `test_io.py`.
 """
 
 import sys
+import os
 import pytest
 from tempfile import NamedTemporaryFile, mkstemp
 from io import StringIO
@@ -252,7 +253,7 @@ def test_ragged_usecols():
 
     txt = StringIO("0,0,XXX\n0\n0,XXX,XXX,0,XXX\n")
     with pytest.raises(ValueError,
-                match="invalid column index -2 at row 1 with 2 columns"):
+                match="invalid column index -2 at row 2 with 1 columns"):
         # There is no -2 column in the second row:
         np.loadtxt(txt, dtype=float, delimiter=",", usecols=[0, -2])
 
@@ -390,6 +391,7 @@ def test_bool():
 @pytest.mark.skipif(IS_PYPY and sys.implementation.version <= (7, 3, 8),
                     reason="PyPy bug in error formatting")
 @pytest.mark.parametrize("dtype", np.typecodes["AllInteger"])
+@pytest.mark.filterwarnings("error:.*integer via a float.*:DeprecationWarning")
 def test_integer_signs(dtype):
     dtype = np.dtype(dtype)
     assert np.loadtxt(["+2"], dtype=dtype) == 2
@@ -407,6 +409,7 @@ def test_integer_signs(dtype):
 @pytest.mark.skipif(IS_PYPY and sys.implementation.version <= (7, 3, 8),
                     reason="PyPy bug in error formatting")
 @pytest.mark.parametrize("dtype", np.typecodes["AllInteger"])
+@pytest.mark.filterwarnings("error:.*integer via a float.*:DeprecationWarning")
 def test_implicit_cast_float_to_int_fails(dtype):
     txt = StringIO("1.0, 2.1, 3.7\n4, 5, 6")
     with pytest.raises(ValueError):
@@ -958,9 +961,11 @@ def test_parametric_unit_discovery(
 
     # file-obj path
     fd, fname = mkstemp()
+    os.close(fd)
     with open(fname, "w") as fh:
         fh.write("\n".join(data))
     a = np.loadtxt(fname, dtype=unitless_dtype)
+    os.remove(fname)
     assert a.dtype == expected.dtype
     assert_equal(a, expected)
 
@@ -980,9 +985,11 @@ def test_str_dtype_unit_discovery_with_converter():
 
     # file-obj path
     fd, fname = mkstemp()
+    os.close(fd)
     with open(fname, "w") as fh:
         fh.write("\n".join(data))
     a = np.loadtxt(fname, dtype="U", converters=conv, encoding=None)
+    os.remove(fname)
     assert a.dtype == expected.dtype
     assert_equal(a, expected)
 

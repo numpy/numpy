@@ -386,9 +386,10 @@ tokenize(stream *s, tokenizer_state *ts, parser_config *const config)
      *    empty.
      * 2. If we are splitting on whitespace we always ignore a last empty
      *    field to match Python's splitting: `" 1 ".split()`.
+     *    (Zero fields are possible when we are only skipping lines)
      */
-    if (ts->num_fields == 1
-            || ts->unquoted_state == TOKENIZE_UNQUOTED_WHITESPACE) {
+    if (ts->num_fields == 1 || (ts->num_fields > 0
+                && ts->unquoted_state == TOKENIZE_UNQUOTED_WHITESPACE)) {
         size_t offset_last = ts->fields[ts->num_fields-1].offset;
         size_t end_last = ts->fields[ts->num_fields].offset;
         if (!ts->fields->quoted && end_last - offset_last == 1) {

@@ -424,8 +424,11 @@ cb_arg_rules = [
                  {debugcapi: 'CFUNCSMESS'}, 'string.h'],
         '_check': l_and(isstring, isintent_out)
     }, {
-        'pyobjfrom': [{debugcapi: '    fprintf(stderr,"debug-capi:cb:#varname#=\\"#showvalueformat#\\":%d:\\n",#varname_i#,#varname_i#_cb_len);'},
-                      {isintent_in: """\
+        'pyobjfrom': [
+            {debugcapi:
+             ('    fprintf(stderr,"debug-capi:cb:#varname#=#showvalueformat#:'
+              '%d:\\n",#varname_i#,#varname_i#_cb_len);')},
+            {isintent_in: """\
     if (cb->nofargs>capi_i)
         if (CAPI_ARGLIST_SETITEM(capi_i++,pyobj_from_#ctype#1size(#varname_i#,#varname_i#_cb_len)))
             goto capi_fail;"""},
@@ -451,15 +454,21 @@ cb_arg_rules = [
         'pyobjfrom': [{debugcapi: '    fprintf(stderr,"debug-capi:cb:#varname#\\n");'},
                       {isintent_c: """\
     if (cb->nofargs>capi_i) {
-        int itemsize_ = #atype# == NPY_STRING ? 1 : 0;
-        /*XXX: Hmm, what will destroy this array??? */
-        PyArrayObject *tmp_arr = (PyArrayObject *)PyArray_New(&PyArray_Type,#rank#,#varname_i#_Dims,#atype#,NULL,(char*)#varname_i#,itemsize_,NPY_ARRAY_CARRAY,NULL);
+        /* tmp_arr will be inserted to capi_arglist_list that will be
+           destroyed when leaving callback function wrapper together
+           with tmp_arr. */
+        PyArrayObject *tmp_arr = (PyArrayObject *)PyArray_New(&PyArray_Type,
+          #rank#,#varname_i#_Dims,#atype#,NULL,(char*)#varname_i#,#elsize#,
+          NPY_ARRAY_CARRAY,NULL);
 """,
                        l_not(isintent_c): """\
     if (cb->nofargs>capi_i) {
-        int itemsize_ = #atype# == NPY_STRING ? 1 : 0;
-        /*XXX: Hmm, what will destroy this array??? */
-        PyArrayObject *tmp_arr = (PyArrayObject *)PyArray_New(&PyArray_Type,#rank#,#varname_i#_Dims,#atype#,NULL,(char*)#varname_i#,itemsize_,NPY_ARRAY_FARRAY,NULL);
+        /* tmp_arr will be inserted to capi_arglist_list that will be
+           destroyed when leaving callback function wrapper together
+           with tmp_arr. */
+        PyArrayObject *tmp_arr = (PyArrayObject *)PyArray_New(&PyArray_Type,
+          #rank#,#varname_i#_Dims,#atype#,NULL,(char*)#varname_i#,#elsize#,
+          NPY_ARRAY_FARRAY,NULL);
 """,
                        },
                       """

@@ -114,6 +114,12 @@ NPY_FINLINE __m256i npyv_shr_s64(__m256i a, int c)
 #define npyv_not_b32 npyv_not_u8
 #define npyv_not_b64 npyv_not_u8
 
+// ANDC, ORC and XNOR
+#define npyv_andc_u8(A, B) _mm256_andnot_si256(B, A)
+#define npyv_andc_b8(A, B) _mm256_andnot_si256(B, A)
+#define npyv_orc_b8(A, B) npyv_or_b8(npyv_not_b8(B), A)
+#define npyv_xnor_b8 _mm256_cmpeq_epi8
+
 /***************************
  * Comparison
  ***************************/
@@ -202,8 +208,8 @@ NPY_FINLINE __m256i npyv_cmpge_u32(__m256i a, __m256i b)
 // precision comparison
 #define npyv_cmpeq_f32(A, B)  _mm256_castps_si256(_mm256_cmp_ps(A, B, _CMP_EQ_OQ))
 #define npyv_cmpeq_f64(A, B)  _mm256_castpd_si256(_mm256_cmp_pd(A, B, _CMP_EQ_OQ))
-#define npyv_cmpneq_f32(A, B) _mm256_castps_si256(_mm256_cmp_ps(A, B, _CMP_NEQ_OQ))
-#define npyv_cmpneq_f64(A, B) _mm256_castpd_si256(_mm256_cmp_pd(A, B, _CMP_NEQ_OQ))
+#define npyv_cmpneq_f32(A, B) _mm256_castps_si256(_mm256_cmp_ps(A, B, _CMP_NEQ_UQ))
+#define npyv_cmpneq_f64(A, B) _mm256_castpd_si256(_mm256_cmp_pd(A, B, _CMP_NEQ_UQ))
 #define npyv_cmplt_f32(A, B)  _mm256_castps_si256(_mm256_cmp_ps(A, B, _CMP_LT_OQ))
 #define npyv_cmplt_f64(A, B)  _mm256_castpd_si256(_mm256_cmp_pd(A, B, _CMP_LT_OQ))
 #define npyv_cmple_f32(A, B)  _mm256_castps_si256(_mm256_cmp_ps(A, B, _CMP_LE_OQ))

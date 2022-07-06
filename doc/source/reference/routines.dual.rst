@@ -1,5 +1,5 @@
 Optionally SciPy-accelerated routines (:mod:`numpy.dual`)
-*********************************************************
+=========================================================
 
 .. automodule:: numpy.dual
 

@@ -166,7 +166,7 @@ class TestComparisonDeprecations(_DeprecationTestCase):
         # For two string arrays, strings always raised the broadcasting error:
         a = np.array(['a', 'b'])
         b = np.array(['a', 'b', 'c'])
-        assert_raises(ValueError, lambda x, y: x == y, a, b)
+        assert_warns(FutureWarning, lambda x, y: x == y, a, b)
 
         # The empty list is not cast to string, and this used to pass due
         # to dtype mismatch; now (2018-06-21) it correctly leads to a
@@ -184,14 +184,6 @@ class TestComparisonDeprecations(_DeprecationTestCase):
 
         self.assert_deprecated(lambda: np.arange(2) == NotArray())
         self.assert_deprecated(lambda: np.arange(2) != NotArray())
-
-        struct1 = np.zeros(2, dtype="i4,i4")
-        struct2 = np.zeros(2, dtype="i4,i4,i4")
-
-        assert_warns(FutureWarning, lambda: struct1 == 1)
-        assert_warns(FutureWarning, lambda: struct1 == struct2)
-        assert_warns(FutureWarning, lambda: struct1 != 1)
-        assert_warns(FutureWarning, lambda: struct1 != struct2)
 
     def test_array_richcompare_legacy_weirdness(self):
         # It doesn't really work to use assert_deprecated here, b/c part of
@@ -621,9 +613,6 @@ class TestNonExactMatchDeprecation(_DeprecationTestCase):
 
 class TestDeprecatedGlobals(_DeprecationTestCase):
     # 2020-06-06
-    @pytest.mark.skipif(
-        sys.version_info < (3, 7),
-        reason='module-level __getattr__ not supported')
     def test_type_aliases(self):
         # from builtins
         self.assert_deprecated(lambda: np.bool(True))
@@ -1216,3 +1205,36 @@ class TestArrayFinalizeNone(_DeprecationTestCase):
             __array_finalize__ = None
 
         self.assert_deprecated(lambda: np.array(1).view(NoFinalize))
+
+class TestAxisNotMAXDIMS(_DeprecationTestCase):
+    # Deprecated 2022-01-08, NumPy 1.23
+    message = r"Using `axis=32` \(MAXDIMS\) is deprecated"
+
+    def test_deprecated(self):
+        a = np.zeros((1,)*32)
+        self.assert_deprecated(lambda: np.repeat(a, 1, axis=np.MAXDIMS))
+
+
+class TestLoadtxtParseIntsViaFloat(_DeprecationTestCase):
+    # Deprecated 2022-07-03, NumPy 1.23
+    # This test can be removed without replacement after the deprecation.
+    # The tests:
+    #   * numpy/lib/tests/test_loadtxt.py::test_integer_signs
+    #   * lib/tests/test_loadtxt.py::test_implicit_cast_float_to_int_fails
+    # Have a warning filter that needs to be removed.
+    message = r"loadtxt\(\): Parsing an integer via a float is deprecated.*"
+
+    @pytest.mark.parametrize("dtype", np.typecodes["AllInteger"])
+    def test_deprecated_warning(self, dtype):
+        with pytest.warns(DeprecationWarning, match=self.message):
+            np.loadtxt(["10.5"], dtype=dtype)
+
+    @pytest.mark.parametrize("dtype", np.typecodes["AllInteger"])
+    def test_deprecated_raised(self, dtype):
+        # The DeprecationWarning is chained when raised, so test manually:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", DeprecationWarning)
+            try:
+                np.loadtxt(["10.5"], dtype=dtype)
+            except ValueError as e:
+                assert isinstance(e.__cause__, DeprecationWarning)

@@ -2,7 +2,7 @@ set_travis_vars() {
     # Set env vars
     echo "TRAVIS_EVENT_TYPE is $TRAVIS_EVENT_TYPE"
     echo "TRAVIS_TAG is $TRAVIS_TAG"
-    if [[ "$TRAVIS_EVENT_TYPE" == "push" && "$TRAVIS_TAG" == refs/tags/v* ]]; then
+    if [[ "$TRAVIS_EVENT_TYPE" == "push" && "$TRAVIS_TAG" == v* ]]; then
       IS_PUSH="true"
     else
       IS_PUSH="false"
@@ -40,7 +40,8 @@ upload_wheels() {
         if [ -z ${TOKEN} ]; then
             echo no token set, not uploading
         else
-            python -m pip install git+https://github.com/Anaconda-Server/anaconda-client
+            python -m pip install \
+            git+https://github.com/Anaconda-Platform/anaconda-client.git@be1e14936a8e947da94d026c990715f0596d7043
             # sdists are located under dist folder when built through setup.py
             if compgen -G "./dist/*.gz"; then
                 echo "Found sdist"

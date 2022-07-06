@@ -330,9 +330,9 @@ struct binsearch_t : binsearch_base<arg> {
             npy::bool_tag, npy::byte_tag, npy::ubyte_tag, npy::short_tag,
             npy::ushort_tag, npy::int_tag, npy::uint_tag, npy::long_tag,
             npy::ulong_tag, npy::longlong_tag, npy::ulonglong_tag,
-            npy::half_tag, npy::float_tag, npy::double_tag,
-            npy::longdouble_tag, npy::cfloat_tag, npy::cdouble_tag,
-            npy::clongdouble_tag, npy::datetime_tag, npy::timedelta_tag>;
+            npy::float_tag, npy::double_tag, npy::longdouble_tag, 
+            npy::cfloat_tag, npy::cdouble_tag, npy::clongdouble_tag, 
+            npy::datetime_tag, npy::timedelta_tag, npy::half_tag>;
 
     static constexpr std::array<value_type, taglist::size> map =
             make_binsearch_map(taglist());

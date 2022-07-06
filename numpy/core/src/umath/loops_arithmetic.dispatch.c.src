@@ -3,6 +3,7 @@
  ** sse2 sse41 avx2 avx512f avx512_skx
  ** vsx2 vsx4
  ** neon
+ ** vx
  **/
 #define _UMATHMODULE
 #define _MULTIARRAYMODULE
@@ -51,13 +52,14 @@ simd_divide_by_scalar_contig_@sfx@(char **args, npy_intp len)
     const npyv_@sfx@x3 divisor = npyv_divisor_@sfx@(scalar);
 
     if (scalar == -1) {
-        npyv_b@len@ noverflow = npyv_cvt_b@len@_@sfx@(npyv_setall_@sfx@(-1));
-        npyv_@sfx@ vzero      = npyv_zero_@sfx@();
+        npyv_b@len@ noverflow  = npyv_cvt_b@len@_@sfx@(npyv_setall_@sfx@(-1));
+        const npyv_@sfx@ vzero = npyv_zero_@sfx@();
+        const npyv_@sfx@ vmin  = npyv_setall_@sfx@(NPY_MIN_INT@len@);
         for (; len >= vstep; len -= vstep, src += vstep, dst += vstep) {
             npyv_@sfx@ a       = npyv_load_@sfx@(src);
             npyv_b@len@ gt_min = npyv_cmpgt_@sfx@(a, npyv_setall_@sfx@(NPY_MIN_INT@len@));
             noverflow          = npyv_and_b@len@(noverflow, gt_min);
-            npyv_@sfx@ neg     = npyv_ifsub_@sfx@(gt_min, vzero, a, vzero);
+            npyv_@sfx@ neg     = npyv_ifsub_@sfx@(gt_min, vzero, a, vmin);
             npyv_store_@sfx@(dst, neg);
         }
 
@@ -66,13 +68,13 @@ simd_divide_by_scalar_contig_@sfx@(char **args, npy_intp len)
             npyv_lanetype_@sfx@ a = *src;
             if (a == NPY_MIN_INT@len@) {
                 raise_err = 1;
-                *dst  = 0;
+                *dst  = NPY_MIN_INT@len@;
             } else {
                 *dst = -a;
             }
         }
         if (raise_err) {
-            npy_set_floatstatus_divbyzero();
+            npy_set_floatstatus_overflow();
         }
     } else {
         for (; len >= vstep; len -= vstep, src += vstep, dst += vstep) {
@@ -253,7 +255,8 @@ vsx4_simd_divide_contig_@sfx@(char **args, npy_intp len)
     const npyv_@sfx@ vneg_one = npyv_setall_@sfx@(-1);
     const npyv_@sfx@ vzero    = npyv_zero_@sfx@();
     const npyv_@sfx@ vmin     = npyv_setall_@sfx@(NPY_MIN_INT@len@);
-    npyv_b@len@ warn          = npyv_cvt_b@len@_@sfx@(npyv_zero_@sfx@());
+    npyv_b@len@ warn_zero     = npyv_cvt_b@len@_@sfx@(npyv_zero_@sfx@());
+    npyv_b@len@ warn_overflow = npyv_cvt_b@len@_@sfx@(npyv_zero_@sfx@());
     const int vstep           = npyv_nlanes_@sfx@;
 
     for (; len >= vstep; len -= vstep, src1 += vstep, src2 += vstep,
@@ -267,10 +270,8 @@ vsx4_simd_divide_contig_@sfx@(char **args, npy_intp len)
         npyv_b@len@ amin     = npyv_cmpeq_@sfx@(a, vmin);
         npyv_b@len@ bneg_one = npyv_cmpeq_@sfx@(b, vneg_one);
         npyv_b@len@ overflow = npyv_and_@sfx@(bneg_one, amin);
-        npyv_b@len@ error    = npyv_or_@sfx@(bzero, overflow);
-        // in case of overflow or b = 0, 'cvtozero' forces quo/rem to be 0
-        npyv_@sfx@ cvtozero  = npyv_select_@sfx@(error, vzero, vneg_one);
-                        warn = npyv_or_@sfx@(error, warn);
+                   warn_zero = npyv_or_@sfx@(bzero, warn_zero);
+               warn_overflow = npyv_or_@sfx@(overflow, warn_overflow);
         // handle mixed case the way Python does
         // ((a > 0) == (b > 0) || rem == 0)
         npyv_b@len@ a_gt_zero  = npyv_cmpgt_@sfx@(a, vzero);
@@ -280,21 +281,30 @@ vsx4_simd_divide_contig_@sfx@(char **args, npy_intp len)
         npyv_b@len@ or         = npyv_or_@sfx@(ab_eq_cond, rem_zero);
         npyv_@sfx@ to_sub = npyv_select_@sfx@(or, vzero, vneg_one);
                       quo = npyv_add_@sfx@(quo, to_sub);
-        npyv_store_@sfx@(dst1, npyv_and_@sfx@(cvtozero, quo));
+                      // Divide by zero
+                      quo = npyv_select_@sfx@(bzero, vzero, quo);
+                      // Overflow
+                      quo = npyv_select_@sfx@(overflow, vmin, quo);
+        npyv_store_@sfx@(dst1, quo);
     }
 
-    if (!vec_all_eq(warn, vzero)) {
+    if (!vec_all_eq(warn_zero, vzero)) {
         npy_set_floatstatus_divbyzero();
+    }
+    if (!vec_all_eq(warn_overflow, vzero)) {
+        npy_set_floatstatus_overflow();
     }
 
     for (; len > 0; --len, ++src1, ++src2, ++dst1) {
         const npyv_lanetype_@sfx@ a = *src1;
         const npyv_lanetype_@sfx@ b = *src2;
-        if (b == 0 || (a == NPY_MIN_INT@len@ && b == -1)) {
+        if (NPY_UNLIKELY(b == 0)) {
             npy_set_floatstatus_divbyzero();
             *dst1 = 0;
-        }
-        else {
+        } else if (NPY_UNLIKELY((a == NPY_MIN_INT@len@) && (b == -1))) {
+            npy_set_floatstatus_overflow();
+            *dst1 = NPY_MIN_INT@len@;
+        } else {
             *dst1 = a / b;
             if (((a > 0) != (b > 0)) && ((*dst1 * b) != a)) {
                 *dst1 -= 1;
@@ -340,8 +350,14 @@ NPY_FINLINE @type@ floor_div_@TYPE@(const @type@ n, const @type@ d)
      * (i.e. a different approach than npy_set_floatstatus_divbyzero()).
      */
     if (NPY_UNLIKELY(d == 0 || (n == NPY_MIN_@TYPE@ && d == -1))) {
-        npy_set_floatstatus_divbyzero();
-        return 0;
+        if (d == 0) {
+            npy_set_floatstatus_divbyzero();
+            return 0;
+        }
+        else {
+            npy_set_floatstatus_overflow();
+            return NPY_MIN_@TYPE@;
+        }
     }
     @type@ r = n / d;
     // Negative quotients needs to be rounded down

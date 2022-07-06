@@ -1339,7 +1339,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
     >>> np.random.seed(123)
     >>> from numpy.polynomial import polynomial as P
     >>> x = np.linspace(-1,1,51) # x "data": [-1, -0.96, ..., 0.96, 1]
-    >>> y = x**3 - x + np.random.randn(len(x)) # x^3 - x + N(0,1) "noise"
+    >>> y = x**3 - x + np.random.randn(len(x))  # x^3 - x + Gaussian noise
     >>> c, stats = P.polyfit(x,y,3,full=True)
     >>> np.random.seed(123)
     >>> c # c[0], c[2] should be approx. 0, c[1] approx. -1, c[3] approx. 1
@@ -1512,11 +1512,17 @@ class Polynomial(ABCPolyBase):
 
     @classmethod
     def _str_term_unicode(cls, i, arg_str):
-        return f"·{arg_str}{i.translate(cls._superscript_mapping)}"
+        if i == '1':
+            return f"·{arg_str}"
+        else:
+            return f"·{arg_str}{i.translate(cls._superscript_mapping)}"
 
     @staticmethod
     def _str_term_ascii(i, arg_str):
-        return f" {arg_str}**{i}"
+        if i == '1':
+            return f" {arg_str}"
+        else:
+            return f" {arg_str}**{i}"
 
     @staticmethod
     def _repr_latex_term(i, arg_str, needs_parens):

@@ -1344,6 +1344,7 @@ add_newdoc('numpy.core.multiarray', 'fromstring',
             text, the binary mode of `fromstring` will first encode it into
             bytes using either utf-8 (python 3) or the default encoding
             (python 2), neither of which produce sane results.
+
     ${ARRAY_FUNCTION_LIKE}
 
         .. versionadded:: 1.20.0
@@ -1851,7 +1852,8 @@ add_newdoc('numpy.core.multiarray', 'promote_types',
 
     Returns the data type with the smallest size and smallest scalar
     kind to which both ``type1`` and ``type2`` may be safely cast.
-    The returned data type is always in native byte order.
+    The returned data type is always considered "canonical", this mainly
+    means that the promoted dtype will always be in native byte order.
 
     This function is symmetric, but rarely associative.
 
@@ -1869,6 +1871,8 @@ add_newdoc('numpy.core.multiarray', 'promote_types',
 
     Notes
     -----
+    Please see `numpy.result_type` for additional information about promotion.
+
     .. versionadded:: 1.6.0
 
     Starting in NumPy 1.9, promote_types function now returns a valid string
@@ -1876,6 +1880,12 @@ add_newdoc('numpy.core.multiarray', 'promote_types',
     dtype as another argument. Previously it always returned the input string
     dtype, even if it wasn't long enough to store the max integer/float value
     converted to a string.
+
+    .. versionchanged:: 1.23.0
+
+    NumPy now supports promotion for more structured dtypes.  It will now
+    remove unnecessary padding from a structure dtype and promote included
+    fields individually.
 
     See Also
     --------
@@ -3453,6 +3463,24 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('fill',
     >>> a
     array([1.,  1.])
 
+    Fill expects a scalar value and always behaves the same as assigning
+    to a single array element.  The following is a rare example where this
+    distinction is important:
+
+    >>> a = np.array([None, None], dtype=object)
+    >>> a[0] = np.array(3)
+    >>> a
+    array([array(3), None], dtype=object)
+    >>> a.fill(np.array(3))
+    >>> a
+    array([array(3), array(3)], dtype=object)
+
+    Where other forms of assignments will unpack the array being assigned:
+
+    >>> a[...] = np.array(3)
+    >>> a
+    array([3, 3], dtype=object)
+
     """))
 
 
@@ -4889,6 +4917,15 @@ add_newdoc('numpy.core.multiarray', 'get_handler_version',
     return the version of the memory handler that will be used to allocate data
     for the next `ndarray` in this context. May return None if `a` does not own
     its memory, in which case you can traverse ``a.base`` for a memory handler.
+    """)
+
+add_newdoc('numpy.core.multiarray', '_get_madvise_hugepage',
+    """
+    _get_madvise_hugepage() -> bool
+
+    Get use of ``madvise (2)`` MADV_HUGEPAGE support when
+    allocating the array data. Returns the currently set value.
+    See `global_state` for more information.
     """)
 
 add_newdoc('numpy.core.multiarray', '_set_madvise_hugepage',

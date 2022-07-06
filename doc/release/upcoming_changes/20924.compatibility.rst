@@ -1,0 +1,13 @@
+``array.fill(scalar)`` may behave slightly different
+----------------------------------------------------
+`~numpy.ndarray.fill` may in some cases behave slightly different
+now due to the fact that the logic is aligned with item assignment::
+
+    arr = np.array([1])  # with any dtype/value
+    arr.fill(scalar)
+    # is now identical to:
+    arr[0] = scalar
+
+Previously casting may have produced slightly different answers when using
+values that could not be represented in the target ``dtype`` or when the
+target had ``object`` dtype.

@@ -16,7 +16,8 @@ from ._multiarray_umath import *  # noqa: F403
 from ._multiarray_umath import (
     _fastCopyAndTranspose, _flagdict, from_dlpack, _insert, _reconstruct,
     _vec_string, _ARRAY_API, _monotonicity, _get_ndarray_c_version,
-    _set_madvise_hugepage,
+    _get_madvise_hugepage, _set_madvise_hugepage,
+    _get_promotion_state, _set_promotion_state,
     )
 
 __all__ = [
@@ -40,7 +41,8 @@ __all__ = [
     'ravel_multi_index', 'result_type', 'scalar', 'set_datetimeparse_function',
     'set_legacy_print_mode', 'set_numeric_ops', 'set_string_function',
     'set_typeDict', 'shares_memory', 'tracemalloc_domain', 'typeinfo',
-    'unpackbits', 'unravel_index', 'vdot', 'where', 'zeros']
+    'unpackbits', 'unravel_index', 'vdot', 'where', 'zeros',
+    '_get_promotion_state', '_set_promotion_state']
 
 # For backward compatibility, make sure pickle imports these functions from here
 _reconstruct.__module__ = 'numpy.core.multiarray'
@@ -68,6 +70,8 @@ promote_types.__module__ = 'numpy'
 set_numeric_ops.__module__ = 'numpy'
 seterrobj.__module__ = 'numpy'
 zeros.__module__ = 'numpy'
+_get_promotion_state.__module__ = 'numpy'
+_set_promotion_state.__module__ = 'numpy'
 
 
 # We can't verify dispatcher signatures because NumPy's C functions don't
@@ -287,7 +291,7 @@ def inner(a, b):
 
         np.inner(a, b) = sum(a[:]*b[:])
 
-    More generally, if `ndim(a) = r > 0` and `ndim(b) = s > 0`::
+    More generally, if ``ndim(a) = r > 0`` and ``ndim(b) = s > 0``::
 
         np.inner(a, b) = np.tensordot(a, b, axes=(-1,-1))
 

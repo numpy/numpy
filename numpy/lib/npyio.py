@@ -250,26 +250,6 @@ class NpzFile(Mapping):
         else:
             raise KeyError("%s is not a file in the archive" % key)
 
-    # deprecate the python 2 dict apis that we supported by accident in
-    # python 3. We forgot to implement itervalues() at all in earlier
-    # versions of numpy, so no need to deprecated it here.
-
-    def iteritems(self):
-        # Numpy 1.15, 2018-02-20
-        warnings.warn(
-            "NpzFile.iteritems is deprecated in python 3, to match the "
-            "removal of dict.itertems. Use .items() instead.",
-            DeprecationWarning, stacklevel=2)
-        return self.items()
-
-    def iterkeys(self):
-        # Numpy 1.15, 2018-02-20
-        warnings.warn(
-            "NpzFile.iterkeys is deprecated in python 3, to match the "
-            "removal of dict.iterkeys. Use .keys() instead.",
-            DeprecationWarning, stacklevel=2)
-        return self.keys()
-
 
 @set_module('numpy')
 def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
@@ -1087,8 +1067,6 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     r"""
     Load data from a text file.
 
-    Each row in the text file must have the same number of values.
-
     Parameters
     ----------
     fname : file, str, pathlib.Path, list of str, generator
@@ -1149,10 +1127,17 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
 
         .. versionadded:: 1.14.0
     max_rows : int, optional
-        Read `max_rows` lines of content after `skiprows` lines. The default
-        is to read all the lines.
+        Read `max_rows` rows of content after `skiprows` lines. The default is
+        to read all the rows. Note that empty rows containing no data such as
+        empty lines and comment lines are not counted towards `max_rows`,
+        while such lines are counted in `skiprows`.
 
         .. versionadded:: 1.16.0
+        
+        .. versionchanged:: 1.23.0
+            Lines containing no data, including comment lines (e.g., lines 
+            starting with '#' or as specified via `comments`) are not counted 
+            towards `max_rows`.
     quotechar : unicode character or None, optional
         The character used to denote the start and end of a quoted item.
         Occurrences of the delimiter or comment characters are ignored within
@@ -1183,6 +1168,11 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     This function aims to be a fast reader for simply formatted files.  The
     `genfromtxt` function provides more sophisticated handling of, e.g.,
     lines with missing values.
+
+    Each row in the input text file must have the same number of values to be
+    able to read all values. If all rows do not have same number of values, a
+    subset of up to n columns (where n is the least number of values present
+    in all rows) can be read by specifying the columns via `usecols`.
 
     .. versionadded:: 1.10.0
 
@@ -1291,6 +1281,15 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     >>> s = StringIO('"Hello, my name is ""Monty""!"')
     >>> np.loadtxt(s, dtype="U", delimiter=",", quotechar='"')
     array('Hello, my name is "Monty"!', dtype='<U26')
+
+    Read subset of columns when all rows do not contain equal number of values:
+
+    >>> d = StringIO("1 2\n2 4\n3 9 12\n4 16 20")
+    >>> np.loadtxt(d, usecols=(0, 1))
+    array([[ 1.,  2.],
+           [ 2.,  4.],
+           [ 3.,  9.],
+           [ 4., 16.]])
 
     """
 

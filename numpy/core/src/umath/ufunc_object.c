@@ -49,6 +49,8 @@
 #include "override.h"
 #include "npy_import.h"
 #include "extobj.h"
+
+#include "arrayobject.h"
 #include "common.h"
 #include "dtypemeta.h"
 #include "numpyos.h"
@@ -56,6 +58,10 @@
 #include "convert_datatype.h"
 #include "legacy_array_method.h"
 #include "abstractdtypes.h"
+
+/* TODO: Only for `NpyIter_GetTransferFlags` until it is public */
+#define NPY_ITERATOR_IMPLEMENTATION_CODE
+#include "nditer_impl.h"
 
 /********** PRINTF DEBUG TRACING **************/
 #define NPY_UF_DBG_TRACING 0
@@ -941,6 +947,7 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
         ufunc_full_args full_args, PyArrayObject *out_op[],
         PyArray_DTypeMeta *out_op_DTypes[],
         npy_bool *force_legacy_promotion, npy_bool *allow_legacy_promotion,
+        npy_bool *promoting_pyscalars,
         PyObject *order_obj, NPY_ORDER *out_order,
         PyObject *casting_obj, NPY_CASTING *out_casting,
         PyObject *subok_obj, npy_bool *out_subok,
@@ -957,6 +964,7 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
     npy_bool any_scalar = NPY_FALSE;
     *allow_legacy_promotion = NPY_TRUE;
     *force_legacy_promotion = NPY_FALSE;
+    *promoting_pyscalars = NPY_FALSE;
     for (int i = 0; i < nin; i++) {
         obj = PyTuple_GET_ITEM(full_args.in, i);
 
@@ -976,6 +984,8 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
 
         if (!NPY_DT_is_legacy(out_op_DTypes[i])) {
             *allow_legacy_promotion = NPY_FALSE;
+            // TODO: A subclass of int, float, complex could reach here and
+            //       it should not be flagged as "weak" if it does.
         }
         if (PyArray_NDIM(out_op[i]) == 0) {
             any_scalar = NPY_TRUE;
@@ -984,17 +994,24 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
             all_scalar = NPY_FALSE;
             continue;
         }
+
+        // TODO: Is this equivalent/better by removing the logic which enforces
+        //       that we always use weak promotion in the core?
+        if (npy_promotion_state == NPY_USE_LEGACY_PROMOTION) {
+            continue;  /* Skip use of special dtypes */
+        }
+
         /*
-         * TODO: we need to special case scalars here, if the input is a
-         *       Python int, float, or complex, we have to use the "weak"
-         *       DTypes: `PyArray_PyIntAbstractDType`, etc.
-         *       This is to allow e.g. `float32(1.) + 1` to return `float32`.
-         *       The correct array dtype can only be found after promotion for
-         *       such a "weak scalar".  We could avoid conversion here, but
-         *       must convert it for use in the legacy promotion.
-         *       There is still a small chance that this logic can instead
-         *       happen inside the Python operators.
+         * Handle the "weak" Python scalars/literals.  We use a special DType
+         * for these.
+         * Further, we mark the operation array with a special flag to indicate
+         * this.  This is because the legacy dtype resolution makes use of
+         * `np.can_cast(operand, dtype)`.  The flag is local to this use, but
+         * necessary to propagate the information to the legacy type resolution.
          */
+        if (npy_mark_tmp_array_if_pyscalar(obj, out_op[i], &out_op_DTypes[i])) {
+            *promoting_pyscalars = NPY_TRUE;
+        }
     }
     if (*allow_legacy_promotion && (!all_scalar && any_scalar)) {
         *force_legacy_promotion = should_use_min_scalar(nin, out_op, 0, NULL);
@@ -1206,6 +1223,7 @@ prepare_ufunc_output(PyUFuncObject *ufunc,
  * cannot broadcast any other array (as it requires a single stride).
  * The function accepts all 1-D arrays, and N-D arrays that are either all
  * C- or all F-contiguous.
+ * NOTE: Broadcast outputs are implicitly rejected in the overlap detection.
  *
  * Returns -2 if a trivial loop is not possible, 0 on success and -1 on error.
  */
@@ -1242,7 +1260,7 @@ try_trivial_single_output_loop(PyArrayMethod_Context *context,
         int op_ndim = PyArray_NDIM(op[iop]);
 
         /* Special case 0-D since we can handle broadcasting using a 0-stride */
-        if (op_ndim == 0) {
+        if (op_ndim == 0 && iop < nin) {
             fixed_strides[iop] = 0;
             continue;
         }
@@ -1253,7 +1271,7 @@ try_trivial_single_output_loop(PyArrayMethod_Context *context,
             operation_shape = PyArray_SHAPE(op[iop]);
         }
         else if (op_ndim != operation_ndim) {
-            return -2;  /* dimension mismatch (except 0-d ops) */
+            return -2;  /* dimension mismatch (except 0-d input ops) */
         }
         else if (!PyArray_CompareLists(
                 operation_shape, PyArray_DIMS(op[iop]), op_ndim)) {
@@ -1543,10 +1561,6 @@ execute_ufunc_loop(PyArrayMethod_Context *context, int masked,
     if (masked) {
         baseptrs[nop] = PyArray_BYTES(op_it[nop]);
     }
-    if (NpyIter_ResetBasePointers(iter, baseptrs, NULL) != NPY_SUCCEED) {
-        NpyIter_Deallocate(iter);
-        return -1;
-    }
 
     /*
      * Get the inner loop, with the possibility of specialization
@@ -1583,15 +1597,23 @@ execute_ufunc_loop(PyArrayMethod_Context *context, int masked,
     char **dataptr = NpyIter_GetDataPtrArray(iter);
     npy_intp *strides = NpyIter_GetInnerStrideArray(iter);
     npy_intp *countptr = NpyIter_GetInnerLoopSizePtr(iter);
-    int needs_api = NpyIter_IterationNeedsAPI(iter);
 
     NPY_BEGIN_THREADS_DEF;
+
+    flags = PyArrayMethod_COMBINED_FLAGS(flags, NpyIter_GetTransferFlags(iter));
 
     if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
         npy_clear_floatstatus_barrier((char *)context);
     }
-    if (!needs_api && !(flags & NPY_METH_REQUIRES_PYAPI)) {
+    if (!(flags & NPY_METH_REQUIRES_PYAPI)) {
         NPY_BEGIN_THREADS_THRESHOLDED(full_size);
+    }
+
+    /* The reset may copy the first buffer chunk, which could cause FPEs */
+    if (NpyIter_ResetBasePointers(iter, baseptrs, NULL) != NPY_SUCCEED) {
+        NPY_AUXDATA_FREE(auxdata);
+        NpyIter_Deallocate(iter);
+        return -1;
     }
 
     NPY_UF_DBG_PRINT("Actual inner loop:\n");
@@ -2387,7 +2409,8 @@ PyUFunc_GeneralizedFunctionInternal(PyUFuncObject *ufunc,
                  NPY_ITER_MULTI_INDEX |
                  NPY_ITER_REFS_OK |
                  NPY_ITER_ZEROSIZE_OK |
-                 NPY_ITER_COPY_IF_OVERLAP;
+                 NPY_ITER_COPY_IF_OVERLAP |
+                 NPY_ITER_DELAY_BUFALLOC;
 
     /* Create the iterator */
     iter = NpyIter_AdvancedNew(nop, op, iter_flags,
@@ -2758,7 +2781,8 @@ reducelike_promote_and_resolve(PyUFuncObject *ufunc,
     }
 
     PyArrayMethodObject *ufuncimpl = promote_and_get_ufuncimpl(ufunc,
-            ops, signature, operation_DTypes, NPY_FALSE, NPY_TRUE, NPY_TRUE);
+            ops, signature, operation_DTypes, NPY_FALSE, NPY_TRUE,
+            NPY_FALSE, NPY_TRUE);
     if (evil_ndim_mutating_hack) {
         ((PyArrayObject_fields *)out)->nd = 0;
     }
@@ -4865,10 +4889,13 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
     int keepdims = -1;  /* We need to know if it was passed */
     npy_bool force_legacy_promotion;
     npy_bool allow_legacy_promotion;
+    npy_bool promoting_pyscalars;
     if (convert_ufunc_arguments(ufunc,
             /* extract operand related information: */
             full_args, operands,
-            operand_DTypes, &force_legacy_promotion, &allow_legacy_promotion,
+            operand_DTypes,
+            &force_legacy_promotion, &allow_legacy_promotion,
+            &promoting_pyscalars,
             /* extract general information: */
             order_obj, &order,
             casting_obj, &casting,
@@ -4889,7 +4916,7 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
     PyArrayMethodObject *ufuncimpl = promote_and_get_ufuncimpl(ufunc,
             operands, signature,
             operand_DTypes, force_legacy_promotion, allow_legacy_promotion,
-            NPY_FALSE);
+            promoting_pyscalars, NPY_FALSE);
     if (ufuncimpl == NULL) {
         goto fail;
     }
@@ -6022,7 +6049,8 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
 
     PyArrayMethodObject *ufuncimpl = promote_and_get_ufuncimpl(ufunc,
             operands, signature, operand_DTypes,
-            force_legacy_promotion, allow_legacy_promotion, NPY_FALSE);
+            force_legacy_promotion, allow_legacy_promotion,
+            NPY_FALSE, NPY_FALSE);
     if (ufuncimpl == NULL) {
         goto fail;
     }

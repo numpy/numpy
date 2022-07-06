@@ -645,7 +645,7 @@ def average(a, axis=None, weights=None, returned=False, *,
             wgt = wgt*(~a.mask)
             wgt.mask |= a.mask
 
-        scl = wgt.sum(axis=axis, dtype=result_dtype)
+        scl = wgt.sum(axis=axis, dtype=result_dtype, **keepdims_kw)
         avg = np.multiply(a, wgt,
                           dtype=result_dtype).sum(axis, **keepdims_kw) / scl
 
@@ -1844,7 +1844,7 @@ def notmasked_contiguous(a, axis=None):
     a = asarray(a)
     nd = a.ndim
     if nd > 2:
-        raise NotImplementedError("Currently limited to atmost 2D array.")
+        raise NotImplementedError("Currently limited to at most 2D array.")
     if axis is None or nd == 1:
         return flatnotmasked_contiguous(a)
     #

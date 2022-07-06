@@ -22,7 +22,7 @@
  * which is explicitly disabling the module ccompiler_opt.
  */
 #ifndef NPY_DISABLE_OPTIMIZATION
-    #if defined(__powerpc64__) && !defined(__cplusplus) && defined(bool)
+    #if (defined(__s390x__) || defined(__powerpc64__)) && !defined(__cplusplus) && defined(bool)
         /**
          * "altivec.h" header contains the definitions(bool, vector, pixel),
          * usually in c++ we undefine them after including the header.
@@ -34,7 +34,7 @@
         typedef bool npy__dispatch_bkbool;
     #endif
     #include "npy_cpu_dispatch_config.h"
-    #ifdef NPY_HAVE_VSX
+    #if defined(NPY_HAVE_VSX) || defined(NPY_HAVE_VX)
         #undef bool
         #undef vector
         #undef pixel

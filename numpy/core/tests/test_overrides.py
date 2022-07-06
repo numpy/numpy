@@ -355,6 +355,45 @@ class TestArrayFunctionImplementation:
                 TypeError, "no implementation found for 'my.func'"):
             func(MyArray())
 
+    def test_signature_error_message(self):
+        # The lambda function will be named "<lambda>", but the TypeError
+        # should show the name as "func"
+        def _dispatcher():
+            return ()
+
+        @array_function_dispatch(_dispatcher)
+        def func():
+            pass
+
+        try:
+            func(bad_arg=3)
+        except TypeError as e:
+            expected_exception = e
+
+        try:
+            func(bad_arg=3)
+            raise AssertionError("must fail")
+        except TypeError as exc:
+            assert exc.args == expected_exception.args
+
+    @pytest.mark.parametrize("value", [234, "this func is not replaced"])
+    def test_dispatcher_error(self, value):
+        # If the dispatcher raises an error, we must not attempt to mutate it
+        error = TypeError(value)
+
+        def dispatcher():
+            raise error
+
+        @array_function_dispatch(dispatcher)
+        def func():
+            return 3
+
+        try:
+            func()
+            raise AssertionError("must fail")
+        except TypeError as exc:
+            assert exc is error  # unmodified exception
+
 
 class TestNDArrayMethods:
 

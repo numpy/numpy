@@ -66,21 +66,25 @@ because broadcasting moves less memory around during the multiplication
 General Broadcasting Rules
 ==========================
 When operating on two arrays, NumPy compares their shapes element-wise.
-It starts with the trailing (i.e. rightmost) dimensions and works its
+It starts with the trailing (i.e. rightmost) dimension and works its
 way left.  Two dimensions are compatible when
 
 1) they are equal, or
-2) one of them is 1
+2) one of them is 1.
 
 If these conditions are not met, a
 ``ValueError: operands could not be broadcast together`` exception is
-thrown, indicating that the arrays have incompatible shapes. The size of
-the resulting array is the size that is not 1 along each axis of the inputs.
+thrown, indicating that the arrays have incompatible shapes.
 
-Arrays do not need to have the same *number* of dimensions.  For example,
-if you have a ``256x256x3`` array of RGB values, and you want to scale
-each color in the image by a different value, you can multiply the image
-by a one-dimensional array with 3 values. Lining up the sizes of the
+Input arrays do not need to have the same *number* of dimensions.  The
+resulting array will have the same number of dimensions as the input array
+with the greatest number of dimensions, where the *size* of each dimension is
+the largest size of the corresponding dimension among the input arrays.  Note
+that missing dimensions are assumed to have size one.
+
+For example, if you have a ``256x256x3`` array of RGB values, and you want
+to scale each color in the image by a different value, you can multiply the
+image by a one-dimensional array with 3 values. Lining up the sizes of the
 trailing axes of these arrays according to the broadcast rules, shows that
 they are compatible::
 
@@ -280,7 +284,7 @@ Typically, a large number of ``observations``, perhaps read from a database,
 are compared to a set of ``codes``. Consider this scenario::
 
   Observation      (2d array):      10 x 3
-  Codes            (2d array):       5 x 3
+  Codes            (3d array):   5 x 1 x 3
   Diff             (3d array):  5 x 10 x 3
 
 The three-dimensional array, ``diff``, is a consequence of broadcasting, not a

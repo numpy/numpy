@@ -872,17 +872,6 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
  */
 #define NPY_ARRAY_ENSUREARRAY     0x0040
 
-#if defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD
-    /*
-     * Dual use of the ENSUREARRAY flag, to indicate that this was converted
-     * from a python float, int, or complex.
-     * An array using this flag must be a temporary array that can never
-     * leave the C internals of NumPy.  Even if it does, ENSUREARRAY is
-     * absolutely safe to abuse, since it already is a base class array :).
-     */
-    #define _NPY_ARRAY_WAS_PYSCALAR   0x0040
-#endif  /* NPY_INTERNAL_BUILD */
-
 /*
  * Make sure that the strides are in units of the element size Needed
  * for some operations with record-arrays.
@@ -1380,7 +1369,10 @@ typedef struct {
         int                   nd_fancy;
         npy_intp              fancy_dims[NPY_MAXDIMS];
 
-        /* Whether the iterator (any of the iterators) requires API */
+        /*
+         * Whether the iterator (any of the iterators) requires API.  This is
+         * unused by NumPy itself; ArrayMethod flags are more precise.
+         */
         int                   needs_api;
 
         /*

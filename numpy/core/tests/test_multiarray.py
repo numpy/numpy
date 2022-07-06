@@ -31,6 +31,7 @@ from numpy.testing import (
     )
 from numpy.testing._private.utils import _no_tracing
 from numpy.core.tests._locales import CommaDecimalPointLocale
+from numpy.lib.recfunctions import repack_fields
 
 # Need to test an object that does not fully implement math interface
 from datetime import timedelta, datetime
@@ -67,8 +68,8 @@ def _aligned_zeros(shape, dtype=float, order="C", align=None):
     # Note: slices producing 0-size arrays do not necessarily change
     # data pointer --- so we use and allocate size+1
     buf = buf[offset:offset+size+1][:-1]
+    buf.fill(0)
     data = np.ndarray(shape, dtype, buf, order=order)
-    data.fill(0)
     return data
 
 
@@ -1171,6 +1172,21 @@ class TestCreation:
         a = np.array([1, Decimal(1)])
         a = np.array([[1], [Decimal(1)]])
 
+    @pytest.mark.parametrize("dtype", [object, "O,O", "O,(3)O", "(2,3)O"])
+    @pytest.mark.parametrize("function", [
+            np.ndarray, np.empty,
+            lambda shape, dtype: np.empty_like(np.empty(shape, dtype=dtype))])
+    def test_object_initialized_to_None(self, function, dtype):
+        # NumPy has support for object fields to be NULL (meaning None)
+        # but generally, we should always fill with the proper None, and
+        # downstream may rely on that.  (For fully initialized arrays!)
+        arr = function(3, dtype=dtype)
+        # We expect a fill value of None, which is not NULL:
+        expected = np.array(None).tobytes()
+        expected = expected * (arr.nbytes // len(expected))
+        assert arr.tobytes() == expected
+
+
 class TestStructured:
     def test_subarray_field_access(self):
         a = np.zeros((3, 5), dtype=[('a', ('i4', (2, 2)))])
@@ -1210,7 +1226,8 @@ class TestStructured:
                 assert_equal(a == b, [False, True])
                 assert_equal(a != b, [True, False])
 
-        # Check that broadcasting with a subarray works
+        # Check that broadcasting with a subarray works, including cases that
+        # require promotion to work:
         a = np.array([[(0,)], [(1,)]], dtype=[('a', 'f8')])
         b = np.array([(0,), (0,), (1,)], dtype=[('a', 'f8')])
         assert_equal(a == b, [[True, True, False], [False, False, True]])
@@ -1233,27 +1250,68 @@ class TestStructured:
         # Check that incompatible sub-array shapes don't result to broadcasting
         x = np.zeros((1,), dtype=[('a', ('f4', (1, 2))), ('b', 'i1')])
         y = np.zeros((1,), dtype=[('a', ('f4', (2,))), ('b', 'i1')])
-        # This comparison invokes deprecated behaviour, and will probably
-        # start raising an error eventually. What we really care about in this
-        # test is just that it doesn't return True.
-        with suppress_warnings() as sup:
-            sup.filter(FutureWarning, "elementwise == comparison failed")
-            assert_equal(x == y, False)
+        # The main importance is that it does not return True:
+        with pytest.raises(TypeError):
+            x == y
 
         x = np.zeros((1,), dtype=[('a', ('f4', (2, 1))), ('b', 'i1')])
         y = np.zeros((1,), dtype=[('a', ('f4', (2,))), ('b', 'i1')])
-        # This comparison invokes deprecated behaviour, and will probably
-        # start raising an error eventually. What we really care about in this
-        # test is just that it doesn't return True.
-        with suppress_warnings() as sup:
-            sup.filter(FutureWarning, "elementwise == comparison failed")
-            assert_equal(x == y, False)
+        # The main importance is that it does not return True:
+        with pytest.raises(TypeError):
+            x == y
+ 
+    def test_empty_structured_array_comparison(self):
+        # Check that comparison works on empty arrays with nontrivially 
+        # shaped fields
+        a = np.zeros(0, [('a', '<f8', (1, 1))])
+        assert_equal(a, a)
+        a = np.zeros(0, [('a', '<f8', (1,))])
+        assert_equal(a, a)
+        a = np.zeros((0, 0), [('a', '<f8', (1, 1))])
+        assert_equal(a, a)
+        a = np.zeros((1, 0, 1), [('a', '<f8', (1, 1))])
+        assert_equal(a, a)
 
-        # Check that structured arrays that are different only in
-        # byte-order work
+    def test_structured_comparisons_with_promotion(self):
+        # Check that structured arrays can be compared so long as their
+        # dtypes promote fine:
         a = np.array([(5, 42), (10, 1)], dtype=[('a', '>i8'), ('b', '<f8')])
         b = np.array([(5, 43), (10, 1)], dtype=[('a', '<i8'), ('b', '>f8')])
         assert_equal(a == b, [False, True])
+        assert_equal(a != b, [True, False])
+
+        a = np.array([(5, 42), (10, 1)], dtype=[('a', '>f8'), ('b', '<f8')])
+        b = np.array([(5, 43), (10, 1)], dtype=[('a', '<i8'), ('b', '>i8')])
+        assert_equal(a == b, [False, True])
+        assert_equal(a != b, [True, False])
+
+        # Including with embedded subarray dtype (although subarray comparison
+        # itself may still be a bit weird and compare the raw data)
+        a = np.array([(5, 42), (10, 1)], dtype=[('a', '10>f8'), ('b', '5<f8')])
+        b = np.array([(5, 43), (10, 1)], dtype=[('a', '10<i8'), ('b', '5>i8')])
+        assert_equal(a == b, [False, True])
+        assert_equal(a != b, [True, False])
+
+    def test_void_comparison_failures(self):
+        # In principle, one could decide to return an array of False for some
+        # if comparisons are impossible.  But right now we return TypeError
+        # when "void" dtype are involved.
+        x = np.zeros(3, dtype=[('a', 'i1')])
+        y = np.zeros(3)
+        # Cannot compare non-structured to structured:
+        with pytest.raises(TypeError):
+            x == y
+
+        # Added title prevents promotion, but casts are OK:
+        y = np.zeros(3, dtype=[(('title', 'a'), 'i1')])
+        assert np.can_cast(y.dtype, x.dtype)
+        with pytest.raises(TypeError):
+            x == y
+
+        x = np.zeros(3, dtype="V7")
+        y = np.zeros(3, dtype="V8")
+        with pytest.raises(TypeError):
+            x == y
 
     def test_casting(self):
         # Check that casting a structured array to change its byte order
@@ -1428,7 +1486,7 @@ class TestStructured:
         assert_equal(testassign(arr, v1), ans)
         assert_equal(testassign(arr, v2), ans)
         assert_equal(testassign(arr, v3), ans)
-        assert_raises(ValueError, lambda: testassign(arr, v4))
+        assert_raises(TypeError, lambda: testassign(arr, v4))
         assert_equal(testassign(arr, v5), ans)
         w[:] = 4
         assert_equal(arr, np.array([(1,4),(1,4)], dtype=dt))
@@ -1462,6 +1520,75 @@ class TestStructured:
         assert_raises(KeyError, lambda : a[['a','a']])
         assert_raises(ValueError, lambda : a[['b','b']])  # field exists, but repeated
         a[['b','c']]  # no exception
+
+    def test_structured_cast_promotion_fieldorder(self):
+        # gh-15494
+        # dtypes with different field names are not promotable
+        A = ("a", "<i8")
+        B = ("b", ">i8")
+        ab = np.array([(1, 2)], dtype=[A, B])
+        ba = np.array([(1, 2)], dtype=[B, A])
+        assert_raises(TypeError, np.concatenate, ab, ba)
+        assert_raises(TypeError, np.result_type, ab.dtype, ba.dtype)
+        assert_raises(TypeError, np.promote_types, ab.dtype, ba.dtype)
+
+        # dtypes with same field names/order but different memory offsets
+        # and byte-order are promotable to packed nbo.
+        assert_equal(np.promote_types(ab.dtype, ba[['a', 'b']].dtype),
+                     repack_fields(ab.dtype.newbyteorder('N')))
+
+        # gh-13667
+        # dtypes with different fieldnames but castable field types are castable
+        assert_equal(np.can_cast(ab.dtype, ba.dtype), True)
+        assert_equal(ab.astype(ba.dtype).dtype, ba.dtype)
+        assert_equal(np.can_cast('f8,i8', [('f0', 'f8'), ('f1', 'i8')]), True)
+        assert_equal(np.can_cast('f8,i8', [('f1', 'f8'), ('f0', 'i8')]), True)
+        assert_equal(np.can_cast('f8,i8', [('f1', 'i8'), ('f0', 'f8')]), False)
+        assert_equal(np.can_cast('f8,i8', [('f1', 'i8'), ('f0', 'f8')],
+                                 casting='unsafe'), True)
+
+        ab[:] = ba  # make sure assignment still works
+
+        # tests of type-promotion of corresponding fields
+        dt1 = np.dtype([("", "i4")])
+        dt2 = np.dtype([("", "i8")])
+        assert_equal(np.promote_types(dt1, dt2), np.dtype([('f0', 'i8')]))
+        assert_equal(np.promote_types(dt2, dt1), np.dtype([('f0', 'i8')]))
+        assert_raises(TypeError, np.promote_types, dt1, np.dtype([("", "V3")]))
+        assert_equal(np.promote_types('i4,f8', 'i8,f4'),
+                     np.dtype([('f0', 'i8'), ('f1', 'f8')]))
+        # test nested case
+        dt1nest = np.dtype([("", dt1)])
+        dt2nest = np.dtype([("", dt2)])
+        assert_equal(np.promote_types(dt1nest, dt2nest),
+                     np.dtype([('f0', np.dtype([('f0', 'i8')]))]))
+
+        # note that offsets are lost when promoting:
+        dt = np.dtype({'names': ['x'], 'formats': ['i4'], 'offsets': [8]})
+        a = np.ones(3, dtype=dt)
+        assert_equal(np.concatenate([a, a]).dtype, np.dtype([('x', 'i4')]))
+
+    @pytest.mark.parametrize("dtype_dict", [
+            dict(names=["a", "b"], formats=["i4", "f"], itemsize=100),
+            dict(names=["a", "b"], formats=["i4", "f"],
+                 offsets=[0, 12])])
+    @pytest.mark.parametrize("align", [True, False])
+    def test_structured_promotion_packs(self, dtype_dict, align):
+        # Structured dtypes are packed when promoted (we consider the packed
+        # form to be "canonical"), so tere is no extra padding.
+        dtype = np.dtype(dtype_dict, align=align)
+        # Remove non "canonical" dtype options:
+        dtype_dict.pop("itemsize", None)
+        dtype_dict.pop("offsets", None)
+        expected = np.dtype(dtype_dict, align=align)
+
+        res = np.promote_types(dtype, dtype)
+        assert res.itemsize == expected.itemsize
+        assert res.fields == expected.fields
+
+        # But the "expected" one, should just be returned unchanged:
+        res = np.promote_types(expected, expected)
+        assert res is expected
 
     def test_structured_asarray_is_view(self):
         # A scalar viewing an array preserves its view even when creating a
@@ -2288,23 +2415,32 @@ class TestMethods:
         assert_raises(ValueError, d.sort, kind=k)
         assert_raises(ValueError, d.argsort, kind=k)
 
-    def test_searchsorted(self):
-        # test for floats and complex containing nans. The logic is the
-        # same for all float types so only test double types for now.
-        # The search sorted routines use the compare functions for the
-        # array type, so this checks if that is consistent with the sort
-        # order.
-
-        # check double
-        a = np.array([0, 1, np.nan])
-        msg = "Test real searchsorted with nans, side='l'"
+    @pytest.mark.parametrize('a', [
+        np.array([0, 1, np.nan], dtype=np.float16),
+        np.array([0, 1, np.nan], dtype=np.float32),
+        np.array([0, 1, np.nan]),
+    ])
+    def test_searchsorted_floats(self, a):
+        # test for floats arrays containing nans. Explicitly test 
+        # half, single, and double precision floats to verify that
+        # the NaN-handling is correct.
+        msg = "Test real (%s) searchsorted with nans, side='l'" % a.dtype
         b = a.searchsorted(a, side='left')
         assert_equal(b, np.arange(3), msg)
-        msg = "Test real searchsorted with nans, side='r'"
+        msg = "Test real (%s) searchsorted with nans, side='r'" % a.dtype
         b = a.searchsorted(a, side='right')
         assert_equal(b, np.arange(1, 4), msg)
         # check keyword arguments
         a.searchsorted(v=1)
+        x = np.array([0, 1, np.nan], dtype='float32')
+        y = np.searchsorted(x, x[-1])
+        assert_equal(y, 2)
+
+    def test_searchsorted_complex(self):
+        # test for complex arrays containing nans. 
+        # The search sorted routines use the compare functions for the
+        # array type, so this checks if that is consistent with the sort
+        # order.
         # check double complex
         a = np.zeros(9, dtype=np.complex128)
         a.real += [0, 0, 1, 1, 0, 1, np.nan, np.nan, np.nan]
@@ -2323,7 +2459,8 @@ class TestMethods:
         a = np.array([0, 128], dtype='>i4')
         b = a.searchsorted(np.array(128, dtype='>i4'))
         assert_equal(b, 1, msg)
-
+        
+    def test_searchsorted_n_elements(self):
         # Check 0 elements
         a = np.ones(0)
         b = a.searchsorted([0, 1, 2], 'left')
@@ -2343,6 +2480,7 @@ class TestMethods:
         b = a.searchsorted([0, 1, 2], 'right')
         assert_equal(b, [0, 2, 2])
 
+    def test_searchsorted_unaligned_array(self):
         # Test searching unaligned array
         a = np.arange(10)
         aligned = np.empty(a.itemsize * a.size + 1, 'uint8')
@@ -2359,6 +2497,7 @@ class TestMethods:
         b = a.searchsorted(unaligned, 'right')
         assert_equal(b, a + 1)
 
+    def test_searchsorted_resetting(self):
         # Test smart resetting of binsearch indices
         a = np.arange(5)
         b = a.searchsorted([6, 5, 4], 'left')
@@ -2366,6 +2505,7 @@ class TestMethods:
         b = a.searchsorted([6, 5, 4], 'right')
         assert_equal(b, [5, 5, 5])
 
+    def test_searchsorted_type_specific(self):
         # Test all type specific binary search functions
         types = ''.join((np.typecodes['AllInteger'], np.typecodes['AllFloat'],
                          np.typecodes['Datetime'], '?O'))
@@ -4035,13 +4175,6 @@ class TestPickling:
     def test_correct_protocol5_error_message(self):
         array = np.arange(10)
 
-        if sys.version_info[:2] in ((3, 6), (3, 7)):
-            # For the specific case of python3.6 and 3.7, raise a clear import
-            # error about the pickle5 backport when trying to use protocol=5
-            # without the pickle5 package
-            with pytest.raises(ImportError):
-                array.__reduce_ex__(5)
-
     def test_record_array_with_object_dtype(self):
         my_object = object()
 
@@ -5364,10 +5497,12 @@ class TestIO:
 
     @pytest.mark.slow  # takes > 1 minute on mechanical hard drive
     def test_big_binary(self):
-        """Test workarounds for 32-bit limited fwrite, fseek, and ftell
-        calls in windows. These normally would hang doing something like this.
-        See http://projects.scipy.org/numpy/ticket/1660"""
-        if sys.platform != 'win32':
+        """Test workarounds for 32-bit limit for MSVC fwrite, fseek, and ftell
+
+        These normally would hang doing something like this.
+        See : https://github.com/numpy/numpy/issues/2256
+        """
+        if sys.platform != 'win32' or '[GCC ' in sys.version:
             return
         try:
             # before workarounds, only up to 2**32-1 worked
@@ -5515,12 +5650,13 @@ class TestFromBuffer:
         buf = x.tobytes()
         assert_array_equal(np.frombuffer(buf, dtype=dt), x.flat)
 
-    def test_array_base(self):
-        arr = np.arange(10)
-        new = np.frombuffer(arr)
-        # We currently special case arrays to ensure they are used as a base.
-        # This could probably be changed (removing the test).
-        assert new.base is arr
+    @pytest.mark.parametrize("obj", [np.arange(10), b"12345678"])
+    def test_array_base(self, obj):
+        # Objects (including NumPy arrays), which do not use the
+        # `release_buffer` slot should be directly used as a base object.
+        # See also gh-21612
+        new = np.frombuffer(obj)
+        assert new.base is obj
 
     def test_empty(self):
         assert_array_equal(np.frombuffer(b''), np.array([]))
@@ -8469,10 +8605,9 @@ class TestConversion:
 
         self_containing = np.array([None])
         self_containing[0] = self_containing
-        try:
-            Error = RecursionError
-        except NameError:
-            Error = RuntimeError  # python < 3.5
+
+        Error = RecursionError
+
         assert_raises(Error, bool, self_containing)  # previously stack overflow
         self_containing[0] = None  # resolve circular reference
 
@@ -8490,11 +8625,16 @@ class TestConversion:
             assert_equal(5, int_func(np.bytes_(b'5')))
             assert_equal(6, int_func(np.unicode_(u'6')))
 
-            class HasTrunc:
-                def __trunc__(self):
-                    return 3
-            assert_equal(3, int_func(np.array(HasTrunc())))
-            assert_equal(3, int_func(np.array([HasTrunc()])))
+            # The delegation of int() to __trunc__ was deprecated in
+            # Python 3.11.
+            if sys.version_info < (3, 11):
+                class HasTrunc:
+                    def __trunc__(self):
+                        return 3
+                assert_equal(3, int_func(np.array(HasTrunc())))
+                assert_equal(3, int_func(np.array([HasTrunc()])))
+            else:
+                pass
 
             class NotConvertible:
                 def __int__(self):

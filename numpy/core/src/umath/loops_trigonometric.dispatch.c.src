@@ -3,6 +3,7 @@
  ** (avx2 fma3) avx512f
  ** vsx2 vsx3 vsx4
  ** neon_vfpv4
+ ** vxe vxe2
  **/
 #include "numpy/npy_math.h"
 #include "simd/simd.h"
@@ -13,7 +14,7 @@
  * - use vectorized version of Payne-Hanek style reduction for large elements or
  *   when there's no native FUSED support instead of fallback to libc
  */
-#if NPY_SIMD_FMA3 // native support
+#if NPY_SIMD_F32 && NPY_SIMD_FMA3 // native support
 /*
  * Vectorized Cody-Waite range reduction technique
  * Performs the reduction step x* = x - y*C in three steps:
@@ -210,7 +211,7 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(FLOAT_@func@)
     const npy_intp sdst = steps[1] / lsize;
     npy_intp len = dimensions[0];
     assert(len <= 1 || (steps[0] % lsize == 0 && steps[1] % lsize == 0));
-#if NPY_SIMD_FMA3
+#if NPY_SIMD_F32 && NPY_SIMD_FMA3
     if (is_mem_overlap(src, steps[0], dst, steps[1], len) ||
         !npyv_loadable_stride_f32(ssrc) || !npyv_storable_stride_f32(sdst)
     ) {

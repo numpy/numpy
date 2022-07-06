@@ -1297,10 +1297,9 @@ class TestBooleanIndexing:
     def test_boolean_indexing_weirdness(self):
         # Weird boolean indexing things
         a = np.ones((2, 3, 4))
-        a[False, True, ...].shape == (0, 2, 3, 4)
-        a[True, [0, 1], True, True, [1], [[2]]] == (1, 2)
+        assert a[False, True, ...].shape == (0, 2, 3, 4)
+        assert a[True, [0, 1], True, True, [1], [[2]]].shape == (1, 2)
         assert_raises(IndexError, lambda: a[False, [0, 1], ...])
-
 
     def test_boolean_indexing_fast_path(self):
         # These used to either give the wrong error, or incorrectly give no

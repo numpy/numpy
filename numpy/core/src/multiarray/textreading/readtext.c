@@ -201,6 +201,7 @@ _load_from_filelike(PyObject *NPY_UNUSED(mod),
         .ignore_leading_whitespace = false,
         .python_byte_converters = false,
         .c_byte_converters = false,
+        .gave_int_via_float_warning = false,
     };
     bool filelike = true;
 
@@ -269,6 +270,10 @@ _load_from_filelike(PyObject *NPY_UNUSED(mod),
         }
         /* Calloc just to not worry about overflow */
         usecols = PyMem_Calloc(num_usecols, sizeof(Py_ssize_t));
+        if (usecols == NULL) {
+            PyErr_NoMemory();
+            return NULL;
+        }
         for (Py_ssize_t i = 0; i < num_usecols; i++) {
             PyObject *tmp = PySequence_GetItem(usecols_obj, i);
             if (tmp == NULL) {

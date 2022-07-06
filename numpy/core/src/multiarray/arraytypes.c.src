@@ -7,6 +7,7 @@
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
+#define _UMATHMODULE
 #define _NPY_NO_DEPRECATIONS /* for NPY_CHAR */
 
 #include "numpy/npy_common.h"
@@ -37,6 +38,9 @@
 #include "npy_buffer.h"
 
 #include "arraytypes.h"
+
+#include "umathmodule.h"
+
 /*
  * Define a stack allocated dummy array with only the minimum information set:
  *   1. The descr, the main field interesting here.
@@ -91,15 +95,37 @@ MyPyFloat_AsDouble(PyObject *obj)
     if (num == NULL) {
         return NPY_NAN;
     }
-    ret = PyFloat_AsDouble(num);
+    ret = PyFloat_AS_DOUBLE(num);
     Py_DECREF(num);
     return ret;
 }
 
+
+static float
+MyPyFloat_AsFloat(PyObject *obj)
+{
+    double d_val = MyPyFloat_AsDouble(obj);
+    float res = (float)d_val;
+    if (NPY_UNLIKELY(npy_isinf(res) && !npy_isinf(d_val))) {
+        if (PyUFunc_GiveFloatingpointErrors("cast", NPY_FPE_OVERFLOW) < 0) {
+            return -1;
+        }
+    }
+    return res;
+}
+
+
 static npy_half
 MyPyFloat_AsHalf(PyObject *obj)
 {
-    return npy_double_to_half(MyPyFloat_AsDouble(obj));
+    double d_val = MyPyFloat_AsDouble(obj);
+    npy_half res = npy_double_to_half(d_val);
+    if (NPY_UNLIKELY(npy_half_isinf(res) && !npy_isinf(d_val))) {
+        if (PyUFunc_GiveFloatingpointErrors("cast", NPY_FPE_OVERFLOW) < 0) {
+            return npy_double_to_half(-1.);
+        }
+    }
+    return res;
 }
 
 static PyObject *
@@ -200,7 +226,7 @@ MyPyLong_AsUnsigned@Type@ (PyObject *obj)
  *          MyPyFloat_FromHalf, PyFloat_FromDouble*2#
  * #func2 = PyObject_IsTrue, MyPyLong_AsLong*6, MyPyLong_AsUnsignedLong*2,
  *          MyPyLong_AsLongLong, MyPyLong_AsUnsignedLongLong,
- *          MyPyFloat_AsHalf, MyPyFloat_AsDouble*2#
+ *          MyPyFloat_AsHalf, MyPyFloat_AsFloat, MyPyFloat_AsDouble#
  * #type = npy_bool,
  *         npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int,
  *         npy_long, npy_uint, npy_ulong, npy_longlong, npy_ulonglong,
@@ -363,6 +389,16 @@ static int
         }
         temp.real = (@ftype@) oop.real;
         temp.imag = (@ftype@) oop.imag;
+
+#if NPY_SIZEOF_@NAME@ < NPY_SIZEOF_CDOUBLE  /* really just float... */
+        /* Overflow could have occured converting double to float */
+        if (NPY_UNLIKELY((npy_isinf(temp.real) && !npy_isinf(oop.real)) ||
+                         (npy_isinf(temp.imag) && !npy_isinf(oop.imag)))) {
+            if (PyUFunc_GiveFloatingpointErrors("cast", NPY_FPE_OVERFLOW) < 0) {
+                return -1;
+            }
+        }
+#endif
     }
 
     memcpy(ov, &temp, PyArray_DESCR(ap)->elsize);
@@ -670,6 +706,7 @@ OBJECT_getitem(void *ip, void *NPY_UNUSED(ap))
     PyObject *obj;
     memcpy(&obj, ip, sizeof(obj));
     if (obj == NULL) {
+        /* We support NULL, but still try to guarantee this never happens! */
         Py_RETURN_NONE;
     }
     else {
@@ -687,6 +724,7 @@ OBJECT_setitem(PyObject *op, void *ov, void *NPY_UNUSED(ap))
     memcpy(&obj, ov, sizeof(obj));
 
     Py_INCREF(op);
+    /* A newly created array/buffer may only be NULLed, so XDECREF */
     Py_XDECREF(obj);
 
     memcpy(ov, &op, sizeof(op));
@@ -1151,13 +1189,22 @@ static void
     @totype@ *op = output;
 
     while (n--) {
-        @fromtype@ f = *ip++;
-        @totype@ t = (@totype@)f;
 #if @supports_nat@ && @floatingpoint@
-        /* Avoid undefined behaviour for NaN -> NaT */
+        /*
+         * volatile works around clang (and gcc sometimes) not branching
+         * correctly, leading to floating point errors in the test suite.
+         */
+        volatile @fromtype@ f = *ip++;
+        @totype@ t;
+        /* Avoid undefined behaviour and warning for NaN -> NaT */
         if (npy_isnan(f)) {
             t = (@totype@)NPY_DATETIME_NAT;
         }
+        else {
+            t = (@totype@)f;
+        }
+#else
+        @totype@ t = (@totype@)*ip++;
 #endif
         *op++ = t;
     }
@@ -1177,13 +1224,22 @@ static void
     @totype@ *op = output;
 
     while (n--) {
-        @fromtype@ f = *ip;
-        @totype@ t = (@totype@)f;
 #if @supports_nat@
-        /* Avoid undefined behaviour for NaN -> NaT */
+        /*
+         * volatile works around clang (and gcc sometimes) not branching
+         * correctly, leading to floating point errors in the test suite.
+         */
+        volatile @fromtype@ f = *ip;
+        @totype@ t;
+        /* Avoid undefined behaviour and warning for NaN -> NaT */
         if (npy_isnan(f)) {
             t = (@totype@)NPY_DATETIME_NAT;
         }
+        else {
+            t = (@totype@)f;
+        }
+#else
+        @totype@ t = (@totype@)*ip;
 #endif
         *op++ = t;
         ip += 2;

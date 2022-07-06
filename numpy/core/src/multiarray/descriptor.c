@@ -2164,6 +2164,7 @@ arraydescr_names_set(
 
     N = PyTuple_GET_SIZE(self->names);
     if (!PySequence_Check(val) || PyObject_Size((PyObject *)val) != N) {
+        /* Should be a TypeError, but this should be deprecated anyway. */
         PyErr_Format(PyExc_ValueError,
                 "must replace all names at once with a sequence of length %d",
                 N);
@@ -2172,16 +2173,17 @@ arraydescr_names_set(
     /* Make sure all entries are strings */
     for (i = 0; i < N; i++) {
         PyObject *item;
-        int valid = 1;
+        int valid;
         item = PySequence_GetItem(val, i);
         valid = PyUnicode_Check(item);
-        Py_DECREF(item);
         if (!valid) {
             PyErr_Format(PyExc_ValueError,
                     "item #%d of names is of type %s and not string",
                     i, Py_TYPE(item)->tp_name);
+            Py_DECREF(item);
             return -1;
         }
+        Py_DECREF(item);
     }
     /* Invalidate cached hash value */
     self->hash = -1;

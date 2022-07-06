@@ -68,6 +68,7 @@ _build
 # setup.py dist directory
 dist
 doc/build
+doc/docenv
 doc/cdoc/build
 # Egg metadata
 *.egg-info
@@ -173,6 +174,7 @@ numpy/core/src/umath/struct_ufunc_test.c
 numpy/core/src/umath/test_rational.c
 numpy/core/src/umath/umath_tests.c
 numpy/core/src/umath/loops_utils.h
+numpy/core/src/umath/loops_modulo.dispatch.c
 numpy/distutils/__config__.py
 numpy/linalg/umath_linalg.c
 doc/source/**/generated/
@@ -224,6 +226,8 @@ numpy/core/src/umath/loops_trigonometric.dispatch.c
 numpy/core/src/umath/loops_exponent_log.dispatch.c
 numpy/core/src/umath/loops_umath_fp.dispatch.c
 numpy/core/src/umath/loops_hyperbolic.dispatch.c
+numpy/core/src/umath/loops_modulo.dispatch.c
+numpy/core/src/umath/loops_comparison.dispatch.c
 # npysort module
 numpy/core/src/npysort/x86-qsort.dispatch.c
 numpy/core/src/npysort/x86-qsort.dispatch.*.cpp

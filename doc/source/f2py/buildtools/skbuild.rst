@@ -29,7 +29,7 @@ We will consider the ``fib``  example from :ref:`f2py-getting-started` section.
     :language: fortran
 
 ``CMake`` modules only
-^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~
 
 Consider using the following ``CMakeLists.txt``.
 
@@ -52,7 +52,7 @@ The resulting extension can be built and loaded in the standard workflow.
 
 
 ``setuptools`` replacement
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. note::
 

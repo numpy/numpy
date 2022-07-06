@@ -91,7 +91,7 @@ create_conv_funcs(
             if (column < -num_fields || column >= num_fields) {
                 PyErr_Format(PyExc_ValueError,
                         "converter specified for column %zd, which is invalid "
-                        "for the number of fields %d.", column, num_fields);
+                        "for the number of fields %zd.", column, num_fields);
                 goto error;
             }
             if (column < 0) {
@@ -319,7 +319,7 @@ read_rows(stream *s,
 
         if (!usecols && (actual_num_fields != current_num_fields)) {
             PyErr_Format(PyExc_ValueError,
-                    "the number of columns changed from %d to %d at row %zu; "
+                    "the number of columns changed from %zd to %zd at row %zd; "
                     "use `usecols` to select a subset and avoid this error",
                     actual_num_fields, current_num_fields, row_count+1);
             goto error;
@@ -382,9 +382,9 @@ read_rows(stream *s,
                 }
                 if (NPY_UNLIKELY((col < 0) || (col >= current_num_fields))) {
                     PyErr_Format(PyExc_ValueError,
-                            "invalid column index %d at row %zu with %d "
+                            "invalid column index %zd at row %zd with %zd "
                             "columns",
-                            usecols[i], current_num_fields, row_count+1);
+                            usecols[i], row_count+1, current_num_fields);
                     goto error;
                 }
             }
@@ -419,7 +419,7 @@ read_rows(stream *s,
                 }
                 PyErr_Format(PyExc_ValueError,
                         "could not convert string %.100R to %S at "
-                        "row %zu, column %d.",
+                        "row %zd, column %zd.",
                         string, field_types[f].descr, row_count, col+1);
                 Py_DECREF(string);
                 npy_PyErr_ChainExceptionsCause(exc, val, tb);
@@ -432,7 +432,12 @@ read_rows(stream *s,
     }
 
     tokenizer_clear(&ts);
-    PyMem_FREE(conv_funcs);
+    if (conv_funcs != NULL) {
+        for (Py_ssize_t i = 0; i < actual_num_fields; i++) {
+            Py_XDECREF(conv_funcs[i]);
+        }
+        PyMem_FREE(conv_funcs);
+    }
 
     if (data_array == NULL) {
         assert(row_count == 0 && result_shape[0] == 0);
@@ -474,7 +479,12 @@ read_rows(stream *s,
     return data_array;
 
   error:
-    PyMem_FREE(conv_funcs);
+    if (conv_funcs != NULL) {
+        for (Py_ssize_t i = 0; i < actual_num_fields; i++) {
+            Py_XDECREF(conv_funcs[i]);
+        }
+        PyMem_FREE(conv_funcs);
+    }
     tokenizer_clear(&ts);
     Py_XDECREF(data_array);
     return NULL;

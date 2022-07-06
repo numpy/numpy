@@ -68,7 +68,7 @@
  *            0*3#
  * #NPYV_CHK = 0*5,
  *             0*5,
- *             0, NPY_SIMD, NPY_SIMD_F64, 0,
+ *             0, NPY_SIMD_F32, NPY_SIMD_F64, 0,
  *             0*3#
  */
 

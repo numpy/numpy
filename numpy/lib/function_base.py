@@ -542,7 +542,7 @@ def average(a, axis=None, weights=None, returned=False, *,
             wgt = np.broadcast_to(wgt, (a.ndim-1)*(1,) + wgt.shape)
             wgt = wgt.swapaxes(-1, axis)
 
-        scl = wgt.sum(axis=axis, dtype=result_dtype)
+        scl = wgt.sum(axis=axis, dtype=result_dtype, **keepdims_kw)
         if np.any(scl == 0.0):
             raise ZeroDivisionError(
                 "Weights sum to zero, can't be normalized")
@@ -3562,14 +3562,16 @@ def sinc(x):
     r"""
     Return the normalized sinc function.
 
-    The sinc function is :math:`\sin(\pi x)/(\pi x)`.
+    The sinc function is equal to :math:`\sin(\pi x)/(\pi x)` for any argument
+    :math:`x\ne 0`. ``sinc(0)`` takes the limit value 1, making ``sinc`` not
+    only everywhere continuous but also infinitely differentiable.
 
     .. note::
 
         Note the normalization factor of ``pi`` used in the definition.
         This is the most commonly used definition in signal processing.
         Use ``sinc(x / np.pi)`` to obtain the unnormalized sinc function
-        :math:`\sin(x)/(x)` that is more common in mathematics.
+        :math:`\sin(x)/x` that is more common in mathematics.
 
     Parameters
     ----------
@@ -3584,8 +3586,6 @@ def sinc(x):
 
     Notes
     -----
-    ``sinc(0)`` is the limit value 1.
-
     The name sinc is short for "sine cardinal" or "sinus cardinalis".
 
     The sinc function is used in various signal processing applications,
@@ -4000,7 +4000,7 @@ def percentile(a,
     With 'i' being the floor and 'g' the fractional part of the result.
 
     .. math::
-        i + g = (q - alpha) / ( n - alpha - beta + 1 )
+        i + g = q * ( n - alpha - beta + 1 ) + alpha
 
     The different methods then work as follows
 
@@ -4279,7 +4279,7 @@ def quantile(a,
     and alpha and beta are correction constants modifying i and j:
 
     .. math::
-        i + g = (q - alpha) / ( n - alpha - beta + 1 )
+        i + g = q * ( n - alpha - beta + 1 ) + alpha
 
     The different methods then work as follows
 
@@ -5140,10 +5140,14 @@ def delete(arr, obj, axis=None):
         single_value = False
         _obj = obj
         obj = np.asarray(obj)
+        # `size == 0` to allow empty lists similar to indexing, but (as there)
+        # is really too generic:
         if obj.size == 0 and not isinstance(_obj, np.ndarray):
             obj = obj.astype(intp)
-        elif obj.size == 1 and not isinstance(_obj, bool):
-            obj = obj.astype(intp).reshape(())
+        elif obj.size == 1 and obj.dtype.kind in "ui":
+            # For a size 1 integer array we can use the single-value path
+            # (most dtypes, except boolean, should just fail later).
+            obj = obj.item()
             single_value = True
 
     if single_value:

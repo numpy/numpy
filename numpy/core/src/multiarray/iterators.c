@@ -827,7 +827,8 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
     if (PyBool_Check(ind)) {
         retval = 0;
         if (PyObject_IsTrue(ind)) {
-            retval = PyArray_Pack(PyArray_DESCR(self->ao), self->dataptr, val);
+            retval = PyArray_Pack(
+                    PyArray_DESCR(self->ao), self->dataptr, val);
         }
         goto finish;
     }
