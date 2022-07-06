@@ -1084,31 +1084,31 @@ add_newdoc('numpy.core.multiarray', 'ascontiguousarray',
 
     Examples
     --------
-    Starting with a Fortran-contiguous array::
+    Starting with a Fortran-contiguous array:
 
-      >>> x = np.ones((2, 3), order='F')
-      >>> x.flags['F_CONTIGUOUS']
-      True
+    >>> x = np.ones((2, 3), order='F')
+    >>> x.flags['F_CONTIGUOUS']
+    True
 
-    Calling ``ascontiguousarray`` makes a C-contiguous copy::
+    Calling ``ascontiguousarray`` makes a C-contiguous copy:
 
-      >>> y = np.ascontiguousarray(x)
-      >>> y.flags['C_CONTIGUOUS']
-      True
-      >>> np.may_share_memory(x, y)
-      False
+    >>> y = np.ascontiguousarray(x)
+    >>> y.flags['C_CONTIGUOUS']
+    True
+    >>> np.may_share_memory(x, y)
+    False
 
-    Now, starting with a C-contiguous array::
+    Now, starting with a C-contiguous array:
 
-      >>> x = np.ones((2, 3), order='C')
-      >>> x.flags['C_CONTIGUOUS']
-      True
+    >>> x = np.ones((2, 3), order='C')
+    >>> x.flags['C_CONTIGUOUS']
+    True
 
-    Then, calling ``ascontiguousarray`` returns the same object::
+    Then, calling ``ascontiguousarray`` returns the same object:
 
-      >>> y = np.ascontiguousarray(x)
-      >>> x is y
-      True
+    >>> y = np.ascontiguousarray(x)
+    >>> x is y
+    True
 
     Note: This function returns an array with at least one-dimension (1-d)
     so it will not preserve 0-d arrays.
@@ -1149,31 +1149,31 @@ add_newdoc('numpy.core.multiarray', 'asfortranarray',
 
     Examples
     --------
-    Starting with a C-contiguous array::
+    Starting with a C-contiguous array:
 
-      >>> x = np.ones((2, 3), order='C')
-      >>> x.flags['C_CONTIGUOUS']
-      True
+    >>> x = np.ones((2, 3), order='C')
+    >>> x.flags['C_CONTIGUOUS']
+    True
 
-    Calling ``asfortranarray`` makes a Fortran-contiguous copy::
+    Calling ``asfortranarray`` makes a Fortran-contiguous copy:
 
-      >>> y = np.asfortranarray(x)
-      >>> y.flags['F_CONTIGUOUS']
-      True
-      >>> np.may_share_memory(x, y)
-      False
+    >>> y = np.asfortranarray(x)
+    >>> y.flags['F_CONTIGUOUS']
+    True
+    >>> np.may_share_memory(x, y)
+    False
 
-    Now, starting with a Fortran-contiguous array::
+    Now, starting with a Fortran-contiguous array:
 
-      >>> x = np.ones((2, 3), order='F')
-      >>> x.flags['F_CONTIGUOUS']
-      True
+    >>> x = np.ones((2, 3), order='F')
+    >>> x.flags['F_CONTIGUOUS']
+    True
 
-    Then, calling ``asfortranarray`` returns the same object::
+    Then, calling ``asfortranarray`` returns the same object:
 
-      >>> y = np.asfortranarray(x)
-      >>> x is y
-      True
+    >>> y = np.asfortranarray(x)
+    >>> x is y
+    True
 
     Note: This function returns an array with at least one-dimension (1-d)
     so it will not preserve 0-d arrays.
