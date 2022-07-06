@@ -1332,12 +1332,13 @@ Special functions for NPY_OBJECT
     NumPy itself accepts ``NULL`` as an alias for ``None``, but may ``assert``
     non-``NULL`` when compiled in debug mode.
 
-    Users **must** expect a value of ``NULL`` when working with buffers created
+    Because NumPy is not yet consistent about initialization with None,
+    users **must** expect a value of ``NULL`` when working with buffers created
     by NumPy.  Users **should** also ensure to pass fully initialized buffers
     to NumPy, since NumPy may make this a strong requirement in the future.
 
     There is currently an intention to ensure that NumPy always initalizes
-    object arrays before it may be read.  Any failure to do so will be
+    object arrays before they may be read.  Any failure to do so will be
     regarded as a bug.
     In the future, users may be able to rely on non-NULL values when reading
     from any array, although exceptions for writing to freshly created arrays
