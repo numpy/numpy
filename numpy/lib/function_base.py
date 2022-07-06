@@ -3999,8 +3999,8 @@ def percentile(a,
     python uses 0-based indexing, the code subtracts another 1 from the index 
     internally.
 
-    The following formula determines the virtual index ``i + g``, the location of 
-    the percentile in the sorted sample:
+    The following formula determines the virtual index ``i + g``, the location 
+    of the percentile in the sorted sample:
 
     .. math::
         i + g = (q / 100) * ( n - alpha - beta + 1 ) + alpha
@@ -4288,8 +4288,8 @@ def quantile(a,
     internally.
     
     
-   The following formula determines the virtual index ``i + g``, the location of 
-   the quantile in the sorted sample:
+   The following formula determines the virtual index ``i + g``, the location
+   of the quantile in the sorted sample:
 
     .. math::
         i + g = q * ( n - alpha - beta + 1 ) + alpha
