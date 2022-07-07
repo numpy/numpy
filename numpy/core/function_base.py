@@ -143,7 +143,7 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
         _mult_inplace = _nx.isscalar(delta)
         step = delta / div
         any_step_zero = (
-            step == 0 if _mult_inplace else _nx.asarray(step == 0).any())
+            step == 0 if _mult_inplace else _nx.asanyarray(step == 0).any())
         if any_step_zero:
             # Special handling for denormal numbers, gh-5437
             y /= div
