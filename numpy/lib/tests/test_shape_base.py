@@ -639,12 +639,11 @@ class TestSplit:
         matrix = np.reshape(np.arange(16), (4, 4))
 
         res = split(matrix, 2, (0, 1))
-        desired = np.empty(4, dtype=object)
-        desired[0] = np.array([[0, 1], [4, 5]])
-        desired[1] = np.array([[2, 3], [6, 7]])
-        desired[2] = np.array([[8, 9], [12, 13]])
-        desired[3] = np.array([[10, 11], [14, 15]])
-        desired = np.reshape(desired, (2, 2))
+        desired = np.empty((2, 2), dtype=object)
+        desired[0, 0] = np.array([[0, 1], [4, 5]])
+        desired[0, 1] = np.array([[2, 3], [6, 7]])
+        desired[1, 0] = np.array([[8, 9], [12, 13]])
+        desired[1, 1] = np.array([[10, 11], [14, 15]])
 
         assert(res.shape == desired.shape)
 
