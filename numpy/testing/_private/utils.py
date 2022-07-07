@@ -828,6 +828,9 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
                 # ignore errors for non-numeric types
                 with contextlib.suppress(TypeError):
                     error = abs(x - y)
+                    if np.issubdtype(x.dtype, np.unsignedinteger):
+                        error2 = abs(y - x)
+                        np.minimum(error, error2, out=error)
                     max_abs_error = max(error)
                     if getattr(error, 'dtype', object_) == object_:
                         remarks.append('Max absolute difference: '

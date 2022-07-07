@@ -953,6 +953,20 @@ class TestAssertAllclose:
         a = np.array([[1, 2, 3, "NaT"]], dtype="m8[ns]")
         assert_allclose(a, a)
 
+    def test_error_message_unsigned(self):
+        """Check the the message is formatted correctly when overflow can occur
+           (gh21768)"""
+        # Ensure to test for potential overflow in the case of:
+        #        x - y
+        # and
+        #        y - x
+        x = np.asarray([0, 1, 8], dtype='uint8')
+        y = np.asarray([4, 4, 4], dtype='uint8')
+        with pytest.raises(AssertionError) as exc_info:
+            assert_allclose(x, y, atol=3)
+        msgs = str(exc_info.value).split('\n')
+        assert_equal(msgs[4], 'Max absolute difference: 4')
+
 
 class TestArrayAlmostEqualNulp:
 
