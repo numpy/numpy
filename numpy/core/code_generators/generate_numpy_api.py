@@ -80,7 +80,7 @@ _import_array(void)
       PyErr_Format(PyExc_RuntimeError, "module compiled against "\
              "API version 0x%%x but this version of numpy is 0x%%x ."\
              "Check the section C-API incompatibility at the Troubleshooting ImportError section at "\ 
-             "https://numpy.org/devdocs/user/troubleshooting-importerror.html#troubleshooting-importerror "\
+             "https://numpy.org/devdocs/user/troubleshooting-importerror.html#c-api-incompatibility "\
               "for indications on how to solve this problem .", \
              (int) NPY_FEATURE_VERSION, (int) PyArray_GetNDArrayCFeatureVersion());
       return -1;
