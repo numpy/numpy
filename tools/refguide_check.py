@@ -42,7 +42,6 @@ from contextlib import contextmanager, redirect_stderr
 from doctest import NORMALIZE_WHITESPACE, ELLIPSIS, IGNORE_EXCEPTION_DETAIL
 
 from docutils.parsers.rst import directives
-from pkg_resources import parse_version
 
 import sphinx
 import numpy as np
@@ -52,20 +51,10 @@ from numpydoc.docscrape_sphinx import get_doc_object
 
 SKIPBLOCK = doctest.register_optionflag('SKIPBLOCK')
 
-if parse_version(sphinx.__version__) >= parse_version('1.5'):
-    # Enable specific Sphinx directives
-    from sphinx.directives.other import SeeAlso, Only
-    directives.register_directive('seealso', SeeAlso)
-    directives.register_directive('only', Only)
-else:
-    # Remove sphinx directives that don't run without Sphinx environment.
-    # Sphinx < 1.5 installs all directives on import...
-    directives._directives.pop('versionadded', None)
-    directives._directives.pop('versionchanged', None)
-    directives._directives.pop('moduleauthor', None)
-    directives._directives.pop('sectionauthor', None)
-    directives._directives.pop('codeauthor', None)
-    directives._directives.pop('toctree', None)
+# Enable specific Sphinx directives
+from sphinx.directives.other import SeeAlso, Only
+directives.register_directive('seealso', SeeAlso)
+directives.register_directive('only', Only)
 
 
 BASE_MODULE = "numpy"
@@ -93,18 +82,29 @@ OTHER_MODULE_DOCS = {
 
 # these names are known to fail doctesting and we like to keep it that way
 # e.g. sometimes pseudocode is acceptable etc
-DOCTEST_SKIPLIST = set([
+#
+# Optionally, a subset of methods can be skipped by setting dict-values
+# to a container of method-names
+DOCTEST_SKIPDICT = {
     # cases where NumPy docstrings import things from SciPy:
-    'numpy.lib.vectorize',
-    'numpy.random.standard_gamma',
-    'numpy.random.gamma',
-    'numpy.random.vonmises',
-    'numpy.random.power',
-    'numpy.random.zipf',
+    'numpy.lib.vectorize': None,
+    'numpy.random.standard_gamma': None,
+    'numpy.random.gamma': None,
+    'numpy.random.vonmises': None,
+    'numpy.random.power': None,
+    'numpy.random.zipf': None,
+    # cases where NumPy docstrings import things from other 3'rd party libs:
+    'numpy.core.from_dlpack': None,
     # remote / local file IO with DataSource is problematic in doctest:
-    'numpy.lib.DataSource',
-    'numpy.lib.Repository',
-])
+    'numpy.lib.DataSource': None,
+    'numpy.lib.Repository': None,
+}
+if sys.version_info < (3, 9):
+    DOCTEST_SKIPDICT.update({
+        "numpy.core.ndarray": {"__class_getitem__"},
+        "numpy.core.dtype": {"__class_getitem__"},
+        "numpy.core.number": {"__class_getitem__"},
+    })
 
 # Skip non-numpy RST files, historical release notes
 # Any single-directory exact match will skip the directory and all subdirs.
@@ -118,19 +118,18 @@ RST_SKIPLIST = [
     'changelog',
     'doc/release',
     'doc/source/release',
+    'doc/release/upcoming_changes',
     'c-info.ufunc-tutorial.rst',
     'c-info.python-as-glue.rst',
     'f2py.getting-started.rst',
+    'f2py-examples.rst',
     'arrays.nditer.cython.rst',
     # See PR 17222, these should be fixed
-    'basics.broadcasting.rst',
-    'basics.byteswapping.rst',
-    'basics.creation.rst',
     'basics.dispatch.rst',
-    'basics.indexing.rst',
     'basics.subclassing.rst',
-    'basics.types.rst',
+    'basics.interoperability.rst',
     'misc.rst',
+    'TESTS.rst'
 ]
 
 # these names are not required to be present in ALL despite being in
@@ -870,8 +869,12 @@ def check_doctests(module, verbose, ns=None,
     for name in get_all_dict(module)[0]:
         full_name = module.__name__ + '.' + name
 
-        if full_name in DOCTEST_SKIPLIST:
-            continue
+        if full_name in DOCTEST_SKIPDICT:
+            skip_methods = DOCTEST_SKIPDICT[full_name]
+            if skip_methods is None:
+                continue
+        else:
+            skip_methods = None
 
         try:
             obj = getattr(module, name)
@@ -891,6 +894,10 @@ def check_doctests(module, verbose, ns=None,
                             "Failed to get doctests!\n" +
                             traceback.format_exc()))
             continue
+
+        if skip_methods is not None:
+            tests = [i for i in tests if
+                     i.name.partition(".")[2] not in skip_methods]
 
         success, output = _run_doctests(tests, full_name, verbose,
                                         doctest_warnings)
@@ -972,7 +979,7 @@ def check_doctests_testfile(fname, verbose, ns=None,
     results = []
 
     _, short_name = os.path.split(fname)
-    if short_name in DOCTEST_SKIPLIST:
+    if short_name in DOCTEST_SKIPDICT:
         return results
 
     full_name = fname
@@ -1151,7 +1158,12 @@ def main(argv):
         init_matplotlib()
 
     for submodule_name in module_names:
-        module_name = BASE_MODULE + '.' + submodule_name
+        prefix = BASE_MODULE + '.'
+        if not submodule_name.startswith(prefix):
+            module_name = prefix + submodule_name
+        else:
+            module_name = submodule_name
+            
         __import__(module_name)
         module = sys.modules[module_name]
 

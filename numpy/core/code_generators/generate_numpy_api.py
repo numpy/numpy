@@ -89,19 +89,22 @@ _import_array(void)
    */
   st = PyArray_GetEndianness();
   if (st == NPY_CPU_UNKNOWN_ENDIAN) {
-      PyErr_Format(PyExc_RuntimeError, "FATAL: module compiled as unknown endian");
+      PyErr_SetString(PyExc_RuntimeError,
+                      "FATAL: module compiled as unknown endian");
       return -1;
   }
 #if NPY_BYTE_ORDER == NPY_BIG_ENDIAN
   if (st != NPY_CPU_BIG) {
-      PyErr_Format(PyExc_RuntimeError, "FATAL: module compiled as "\
-             "big endian, but detected different endianness at runtime");
+      PyErr_SetString(PyExc_RuntimeError,
+                      "FATAL: module compiled as big endian, but "
+                      "detected different endianness at runtime");
       return -1;
   }
 #elif NPY_BYTE_ORDER == NPY_LITTLE_ENDIAN
   if (st != NPY_CPU_LITTLE) {
-      PyErr_Format(PyExc_RuntimeError, "FATAL: module compiled as "\
-             "little endian, but detected different endianness at runtime");
+      PyErr_SetString(PyExc_RuntimeError,
+                      "FATAL: module compiled as little endian, but "
+                      "detected different endianness at runtime");
       return -1;
   }
 #endif
@@ -176,9 +179,6 @@ def do_generate_api(targets, sources):
 
     numpyapi_list = genapi.get_api_functions('NUMPY_API',
                                              multiarray_funcs)
-
-    # FIXME: ordered_funcs_api is unused
-    ordered_funcs_api = genapi.order_dict(multiarray_funcs)
 
     # Create dict name -> *Api instance
     api_name = 'PyArray_API'

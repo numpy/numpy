@@ -6,7 +6,8 @@ NumPy: the absolute basics for beginners
 .. currentmodule:: numpy
 
 Welcome to the absolute beginner's guide to NumPy! If you have comments or
-suggestions, please don’t hesitate to reach out!
+suggestions, please don’t hesitate to `reach out
+<https://numpy.org/community/>`_!
 
 
 Welcome to NumPy!
@@ -37,8 +38,7 @@ Installing NumPy
 
 To install NumPy, we strongly recommend using a scientific Python distribution.
 If you're looking for the full instructions for installing NumPy on your
-operating system, you can `find all of the details here
-<https://www.scipy.org/install.html>`_.
+operating system, see `Installing NumPy <https://numpy.org/install/>`_.
 
 
 
@@ -55,10 +55,6 @@ If you don't have Python yet, you might want to consider using `Anaconda
 thing about getting this distribution is the fact that you don’t need to worry
 too much about separately installing NumPy or any of the major packages that
 you’ll be using for your data analyses, like pandas, Scikit-Learn, etc.
-
-You can find all of the installation details in the
-`Installation <https://www.scipy.org/install.html>`_ section
-at `SciPy <https://www.scipy.org>`_.
 
 How to import NumPy
 -------------------
@@ -87,7 +83,11 @@ If you aren't familiar with this style, it's very easy to understand.
 If you see ``>>>``, you're looking at **input**, or the code that
 you would enter. Everything that doesn't have ``>>>`` in front of it
 is **output**, or the results of running your code. This is the style
-you see when you run ``python`` on the command line, but if you're using IPython, you might see a different style.
+you see when you run ``python`` on the command line, but if you're using
+IPython, you might see a different style. Note that it is not part of the
+code and will cause an error if typed or pasted into the Python
+shell. It can be safely typed or pasted into the IPython shell; the ``>>>``
+is ignored.
 
 
 What’s the difference between a Python list and a NumPy array?
@@ -229,8 +229,8 @@ content is random and depends on the state of the memory. The reason to use
 fill every element afterwards! ::
 
   >>> # Create an empty array with 2 elements
-  >>> np.empty(2)
-  array([ 3.14, 42.  ])  # may vary
+  >>> np.empty(2) #doctest: +SKIP
+  array([3.14, 42.  ])  # may vary
 
 You can create an array with a range of elements::
 
@@ -391,7 +391,7 @@ this array to an array with three rows and two columns::
 
 With ``np.reshape``, you can specify a few optional parameters::
 
-  >>> numpy.reshape(a, newshape=(1, 6), order='C')
+  >>> np.reshape(a, newshape=(1, 6), order='C')
   array([[0, 1, 2, 3, 4, 5]])
 
 ``a`` is the array to be reshaped.
@@ -613,7 +613,7 @@ How to create an array from existing data
 
 -----
 
-You can easily use create a new array from a section of an existing array.
+You can easily create a new array from a section of an existing array.
 
 Let's say you have this array:
 
@@ -669,18 +669,18 @@ If you wanted to split this array into three equally shaped arrays, you would
 run::
 
   >>> np.hsplit(x, 3)
-  [array([[1,  2,  3,  4],
-          [13, 14, 15, 16]]), array([[ 5,  6,  7,  8],
-          [17, 18, 19, 20]]), array([[ 9, 10, 11, 12],
-          [21, 22, 23, 24]])]
+    [array([[ 1,  2,  3,  4],
+           [13, 14, 15, 16]]), array([[ 5,  6,  7,  8],
+           [17, 18, 19, 20]]), array([[ 9, 10, 11, 12],
+           [21, 22, 23, 24]])]
 
 If you wanted to split your array after the third and fourth column, you'd run::
 
   >>> np.hsplit(x, (3, 4))
-  [array([[1, 2, 3],
-          [13, 14, 15]]), array([[ 4],
-          [16]]), array([[ 5, 6, 7, 8, 9, 10, 11, 12],
-          [17, 18, 19, 20, 21, 22, 23, 24]])]
+    [array([[ 1,  2,  3],
+           [13, 14, 15]]), array([[ 4],
+           [16]]), array([[ 5,  6,  7,  8,  9, 10, 11, 12],
+           [17, 18, 19, 20, 21, 22, 23, 24]])]
 
 :ref:`Learn more about stacking and splitting arrays here <quickstart.stacking-arrays>`.
 
@@ -771,12 +771,12 @@ If you start with this array::
 
   >>> b = np.array([[1, 1], [2, 2]])
 
-You can sum the rows with::
+You can sum over the axis of rows with::
 
   >>> b.sum(axis=0)
   array([3, 3])
 
-You can sum the columns with::
+You can sum over the axis of columns with::
 
   >>> b.sum(axis=1)
   array([2, 4])
@@ -899,12 +899,18 @@ You can aggregate matrices the same way you aggregated vectors::
 .. image:: images/np_matrix_aggregation.png
 
 You can aggregate all the values in a matrix and you can aggregate them across
-columns or rows using the ``axis`` parameter::
+columns or rows using the ``axis`` parameter. To illustrate this point, let's
+look at a slightly modified dataset::
 
+  >>> data = np.array([[1, 2], [5, 3], [4, 6]])
+  >>> data
+  array([[1, 2],
+         [5, 3],
+         [4, 6]])
   >>> data.max(axis=0)
   array([5, 6])
   >>> data.max(axis=1)
-  array([2, 4, 6])
+  array([2, 5, 6])
 
 .. image:: images/np_matrix_aggregation_row.png
 
@@ -961,9 +967,8 @@ All you need to do is pass in the number of elements you want it to generate::
   array([1., 1., 1.])
   >>> np.zeros(3)
   array([0., 0., 0.])
-  # the simplest way to generate random numbers
-  >>> rng = np.random.default_rng(0)
-  >>> rng.random(3)
+  >>> rng = np.random.default_rng()  # the simplest way to generate random numbers
+  >>> rng.random(3) #doctest: +SKIP
   array([0.63696169, 0.26978671, 0.04097352])
 
 .. image:: images/np_ones_zeros_random.png
@@ -979,7 +984,7 @@ a 2D array if you give them a tuple describing the dimensions of the matrix::
   array([[0., 0.],
          [0., 0.],
          [0., 0.]])
-  >>> rng.random((3, 2))
+  >>> rng.random((3, 2)) #doctest: +SKIP
   array([[0.01652764, 0.81327024],
          [0.91275558, 0.60663578],
          [0.72949656, 0.54362499]])  # may vary
@@ -1005,7 +1010,7 @@ that this is inclusive with NumPy) to high (exclusive). You can set
 
 You can generate a 2 x 4 array of random integers between 0 and 4 with::
 
-  >>> rng.integers(5, size=(2, 4))
+  >>> rng.integers(5, size=(2, 4)) #doctest: +SKIP
   array([[2, 1, 1, 0],
          [0, 0, 0, 4]])  # may vary
 
@@ -1339,7 +1344,7 @@ followed by the docstring of ``ndarray`` of which ``a`` is an instance):
   Type:            ndarray
   String form:     [1 2 3 4 5 6]
   Length:          6
-  File:            ~/anaconda3/lib/python3.7/site-packages/numpy/__init__.py
+  File:            ~/anaconda3/lib/python3.9/site-packages/numpy/__init__.py
   Docstring:       <no docstring>
   Class docstring:
   ndarray(shape, dtype=float, buffer=None, offset=0,
@@ -1583,7 +1588,7 @@ If you created this array "a" ::
 
 .. for doctests
    The continuous integration truncates dataframe display without this setting.
-   >>> pd.set_option('max_columns', 10)
+   >>> pd.set_option('display.max_columns', 10)
 
 You could create a Pandas dataframe ::
 

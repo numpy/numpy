@@ -1,5 +1,5 @@
-#ifndef _NPY_ARRAYSCALARS_H_
-#define _NPY_ARRAYSCALARS_H_
+#ifndef NUMPY_CORE_INCLUDE_NUMPY_ARRAYSCALARS_H_
+#define NUMPY_CORE_INCLUDE_NUMPY_ARRAYSCALARS_H_
 
 #ifndef _MULTIARRAYMODULE
 typedef struct {
@@ -179,4 +179,4 @@ typedef struct {
 #define PyArrayScalar_ASSIGN(obj, cls, val) \
         PyArrayScalar_VAL(obj, cls) = val
 
-#endif
+#endif  /* NUMPY_CORE_INCLUDE_NUMPY_ARRAYSCALARS_H_ */

@@ -1,4 +1,5 @@
 import sys
+import sysconfig
 import subprocess
 import pkgutil
 import types
@@ -45,8 +46,6 @@ def test_numpy_namespace():
         'fastCopyAndTranspose': 'numpy.core._multiarray_umath._fastCopyAndTranspose',
         'get_array_wrap': 'numpy.lib.shape_base.get_array_wrap',
         'get_include': 'numpy.lib.utils.get_include',
-        'mafromtxt': 'numpy.lib.npyio.mafromtxt',
-        'ndfromtxt': 'numpy.lib.npyio.ndfromtxt',
         'recfromcsv': 'numpy.lib.npyio.recfromcsv',
         'recfromtxt': 'numpy.lib.npyio.recfromtxt',
         'safe_eval': 'numpy.lib.utils.safe_eval',
@@ -54,22 +53,8 @@ def test_numpy_namespace():
         'show_config': 'numpy.__config__.show',
         'who': 'numpy.lib.utils.who',
     }
-    if sys.version_info < (3, 7):
-        # These built-in types are re-exported by numpy.
-        builtins = {
-            'bool': 'builtins.bool',
-            'complex': 'builtins.complex',
-            'float': 'builtins.float',
-            'int': 'builtins.int',
-            'long': 'builtins.int',
-            'object': 'builtins.object',
-            'str': 'builtins.str',
-            'unicode': 'builtins.str',
-        }
-        allowlist = dict(undocumented, **builtins)
-    else:
-        # after 3.7, we override dir to not show these members
-        allowlist = undocumented
+    # We override dir to not show these members
+    allowlist = undocumented
     bad_results = check_dir(np)
     # pytest gives better error messages with the builtin assert than with
     # assert_equal
@@ -137,6 +122,8 @@ def test_NPY_NO_EXPORT():
 # current status is fine.  For others it may make sense to work on making them
 # private, to clean up our public API and avoid confusion.
 PUBLIC_MODULES = ['numpy.' + s for s in [
+    "array_api",
+    "array_api.linalg",
     "ctypeslib",
     "distutils",
     "distutils.cpuinfo",
@@ -193,7 +180,6 @@ PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "core.fromnumeric",
     "core.function_base",
     "core.getlimits",
-    "core.machar",
     "core.memmap",
     "core.multiarray",
     "core.numeric",
@@ -203,6 +189,7 @@ PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "core.shape_base",
     "core.umath",
     "core.umath_tests",
+    "distutils.armccompiler",
     "distutils.ccompiler",
     'distutils.ccompiler_opt',
     "distutils.command",
@@ -228,6 +215,7 @@ PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "distutils.extension",
     "distutils.fcompiler",
     "distutils.fcompiler.absoft",
+    "distutils.fcompiler.arm",
     "distutils.fcompiler.compaq",
     "distutils.fcompiler.environment",
     "distutils.fcompiler.g95",
@@ -264,10 +252,10 @@ PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "f2py.crackfortran",
     "f2py.diagnose",
     "f2py.f2py2e",
-    "f2py.f2py_testing",
     "f2py.f90mod_rules",
     "f2py.func2subr",
     "f2py.rules",
+    "f2py.symbolic",
     "f2py.use_rules",
     "fft.helper",
     "lib.arraypad",
@@ -328,6 +316,7 @@ SKIP_LIST = [
     "numpy.core.code_generators.generate_numpy_api",
     "numpy.core.code_generators.generate_ufunc_api",
     "numpy.core.code_generators.numpy_api",
+    "numpy.core.code_generators.generate_umath_doc",
     "numpy.core.cversions",
     "numpy.core.generate_numpy_api",
     "numpy.distutils.msvc9compiler",
@@ -473,3 +462,40 @@ def test_api_importable():
         raise AssertionError("Modules that are not really public but looked "
                              "public and can not be imported: "
                              "{}".format(module_names))
+
+
+@pytest.mark.xfail(
+    sysconfig.get_config_var("Py_DEBUG") is not None,
+    reason=(
+        "NumPy possibly built with `USE_DEBUG=True ./tools/travis-test.sh`, "
+        "which does not expose the `array_api` entry point. "
+        "See https://github.com/numpy/numpy/pull/19800"
+    ),
+)
+def test_array_api_entry_point():
+    """
+    Entry point for Array API implementation can be found with importlib and
+    returns the numpy.array_api namespace.
+    """
+    eps = importlib.metadata.entry_points()
+    try:
+        xp_eps = eps.select(group="array_api")
+    except AttributeError:
+        # The select interface for entry_points was introduced in py3.10,
+        # deprecating its dict interface. We fallback to dict keys for finding
+        # Array API entry points so that running this test in <=3.9 will
+        # still work - see https://github.com/numpy/numpy/pull/19800.
+        xp_eps = eps.get("array_api", [])
+    assert len(xp_eps) > 0, "No entry points for 'array_api' found"
+
+    try:
+        ep = next(ep for ep in xp_eps if ep.name == "numpy")
+    except StopIteration:
+        raise AssertionError("'numpy' not in array_api entry points") from None
+
+    xp = ep.load()
+    msg = (
+        f"numpy entry point value '{ep.value}' "
+        "does not point to our Array API implementation"
+    )
+    assert xp is numpy.array_api, msg

@@ -1,5 +1,5 @@
-#ifndef NPY_CTYPES_H
-#define NPY_CTYPES_H
+#ifndef NUMPY_CORE_SRC_COMMON_NPY_CTYPES_H_
+#define NUMPY_CORE_SRC_COMMON_NPY_CTYPES_H_
 
 #include <Python.h>
 
@@ -47,4 +47,4 @@ fail:
     return 0;
 }
 
-#endif
+#endif  /* NUMPY_CORE_SRC_COMMON_NPY_CTYPES_H_ */

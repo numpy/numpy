@@ -1,7 +1,7 @@
 .. _NEP26:
 
 ====================================================
-NEP 26 — Summary of Missing Data NEPs and discussion
+NEP 26 — Summary of missing data NEPs and discussion
 ====================================================
 
 :Author: Mark Wiebe <mwwiebe@gmail.com>, Nathaniel J. Smith <njs@pobox.com>

@@ -1,7 +1,10 @@
-sphinx==3.5.4
-numpydoc==1.1.0
-ipython
+# doxygen required, use apt-get or dnf
+sphinx>=4.5.0
+numpydoc==1.4
+pydata-sphinx-theme==0.9.0
+sphinx-panels
+ipython!=8.1.0
 scipy
 matplotlib
 pandas
-pydata-sphinx-theme==0.5.2
+breathe

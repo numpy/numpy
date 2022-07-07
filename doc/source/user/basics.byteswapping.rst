@@ -5,7 +5,7 @@ Byte-swapping
 Introduction to byte ordering and ndarrays
 ==========================================
 
-The ``ndarray`` is an object that provide a python array interface to data
+The ``ndarray`` is an object that provides a python array interface to data
 in memory.
 
 It often happens that the memory that you want to view with an array is
@@ -31,7 +31,7 @@ The bytes I have loaded from the file would have these contents:
 
 >>> big_end_buffer = bytearray([0,1,3,2])
 >>> big_end_buffer
-bytearray(b'\\x00\\x01\\x03\\x02')
+bytearray(b'\x00\x01\x03\x02')
 
 We might want to use an ``ndarray`` to access these integers.  In that
 case, we can create an array around this memory, and tell numpy that

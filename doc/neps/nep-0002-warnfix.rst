@@ -76,7 +76,7 @@ expanded to::
    int foo(int * __NPY_UNUSED_TAGGEDdummy __COMP_NPY_UNUSED)
 
 Thus avoiding any accidental use of the variable. The mangling is pure C, and
-thuse portable. The per-variable warning disabling is compiler specific.
+thus portable. The per-variable warning disabling is compiler specific.
 
 signed/unsigned comparison
 --------------------------

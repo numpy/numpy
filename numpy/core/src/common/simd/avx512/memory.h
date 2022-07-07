@@ -110,7 +110,7 @@ NPY_FINLINE npyv_f32 npyv_loadn_f32(const float *ptr, npy_intp stride)
 //// 64
 NPY_FINLINE npyv_u64 npyv_loadn_u64(const npy_uint64 *ptr, npy_intp stride)
 {
-    const __m512i idx = _mm512_setr_epi64(
+    const __m512i idx = npyv_set_s64(
         0*stride, 1*stride, 2*stride, 3*stride,
         4*stride, 5*stride, 6*stride, 7*stride
     );
@@ -140,7 +140,7 @@ NPY_FINLINE void npyv_storen_f32(float *ptr, npy_intp stride, npyv_f32 a)
 //// 64
 NPY_FINLINE void npyv_storen_u64(npy_uint64 *ptr, npy_intp stride, npyv_u64 a)
 {
-    const __m512i idx = _mm512_setr_epi64(
+    const __m512i idx = npyv_set_s64(
         0*stride, 1*stride, 2*stride, 3*stride,
         4*stride, 5*stride, 6*stride, 7*stride
     );
@@ -173,7 +173,7 @@ NPY_FINLINE npyv_s32 npyv_load_tillz_s32(const npy_int32 *ptr, npy_uintp nlane)
 NPY_FINLINE npyv_s64 npyv_load_till_s64(const npy_int64 *ptr, npy_uintp nlane, npy_int64 fill)
 {
     assert(nlane > 0);
-    const __m512i vfill = _mm512_set1_epi64(fill);
+    const __m512i vfill = npyv_setall_s64(fill);
     const __mmask8 mask = nlane > 31 ? -1 : (1 << nlane) - 1;
     return _mm512_mask_loadu_epi64(vfill, mask, (const __m512i*)ptr);
 }
@@ -210,11 +210,11 @@ NPY_FINLINE npyv_s64
 npyv_loadn_till_s64(const npy_int64 *ptr, npy_intp stride, npy_uintp nlane, npy_int64 fill)
 {
     assert(nlane > 0);
-    const __m512i idx = _mm512_setr_epi64(
+    const __m512i idx = npyv_set_s64(
         0*stride, 1*stride, 2*stride, 3*stride,
         4*stride, 5*stride, 6*stride, 7*stride
     );
-    const __m512i vfill = _mm512_set1_epi64(fill);
+    const __m512i vfill = npyv_setall_s64(fill);
     const __mmask8 mask = nlane > 31 ? -1 : (1 << nlane) - 1;
     return _mm512_mask_i64gather_epi64(vfill, mask, idx, (const __m512i*)ptr, 8);
 }
@@ -258,7 +258,7 @@ NPY_FINLINE void npyv_storen_till_s32(npy_int32 *ptr, npy_intp stride, npy_uintp
 NPY_FINLINE void npyv_storen_till_s64(npy_int64 *ptr, npy_intp stride, npy_uintp nlane, npyv_s64 a)
 {
     assert(nlane > 0);
-    const __m512i idx = _mm512_setr_epi64(
+    const __m512i idx = npyv_set_s64(
         0*stride, 1*stride, 2*stride, 3*stride,
         4*stride, 5*stride, 6*stride, 7*stride
     );
@@ -276,7 +276,8 @@ NPY_FINLINE void npyv_storen_till_s64(npy_int64 *ptr, npy_intp stride, npy_uintp
         union {                                                                             \
             npyv_lanetype_##F_SFX from_##F_SFX;                                             \
             npyv_lanetype_##T_SFX to_##T_SFX;                                               \
-        } pun = {.from_##F_SFX = fill};                                                     \
+        } pun;                                                                              \
+        pun.from_##F_SFX = fill;                                                            \
         return npyv_reinterpret_##F_SFX##_##T_SFX(npyv_load_till_##T_SFX(                   \
             (const npyv_lanetype_##T_SFX *)ptr, nlane, pun.to_##T_SFX                       \
         ));                                                                                 \
@@ -288,7 +289,8 @@ NPY_FINLINE void npyv_storen_till_s64(npy_int64 *ptr, npy_intp stride, npy_uintp
         union {                                                                             \
             npyv_lanetype_##F_SFX from_##F_SFX;                                             \
             npyv_lanetype_##T_SFX to_##T_SFX;                                               \
-        } pun = {.from_##F_SFX = fill};                                                     \
+        } pun;                                                                              \
+        pun.from_##F_SFX = fill;                                                            \
         return npyv_reinterpret_##F_SFX##_##T_SFX(npyv_loadn_till_##T_SFX(                  \
             (const npyv_lanetype_##T_SFX *)ptr, stride, nlane, pun.to_##T_SFX               \
         ));                                                                                 \
@@ -328,5 +330,34 @@ NPYV_IMPL_AVX512_REST_PARTIAL_TYPES(u32, s32)
 NPYV_IMPL_AVX512_REST_PARTIAL_TYPES(f32, s32)
 NPYV_IMPL_AVX512_REST_PARTIAL_TYPES(u64, s64)
 NPYV_IMPL_AVX512_REST_PARTIAL_TYPES(f64, s64)
+
+/**************************************************
+ * Lookup table
+ *************************************************/
+// uses vector as indexes into a table
+// that contains 32 elements of float32.
+NPY_FINLINE npyv_f32 npyv_lut32_f32(const float *table, npyv_u32 idx)
+{
+    const npyv_f32 table0 = npyv_load_f32(table);
+    const npyv_f32 table1 = npyv_load_f32(table + 16);
+    return _mm512_permutex2var_ps(table0, idx, table1);
+}
+NPY_FINLINE npyv_u32 npyv_lut32_u32(const npy_uint32 *table, npyv_u32 idx)
+{ return npyv_reinterpret_u32_f32(npyv_lut32_f32((const float*)table, idx)); }
+NPY_FINLINE npyv_s32 npyv_lut32_s32(const npy_int32 *table, npyv_u32 idx)
+{ return npyv_reinterpret_s32_f32(npyv_lut32_f32((const float*)table, idx)); }
+
+// uses vector as indexes into a table
+// that contains 16 elements of float64.
+NPY_FINLINE npyv_f64 npyv_lut16_f64(const double *table, npyv_u64 idx)
+{
+    const npyv_f64 table0 = npyv_load_f64(table);
+    const npyv_f64 table1 = npyv_load_f64(table + 8);
+    return _mm512_permutex2var_pd(table0, idx, table1);
+}
+NPY_FINLINE npyv_u64 npyv_lut16_u64(const npy_uint64 *table, npyv_u64 idx)
+{ return npyv_reinterpret_u64_f64(npyv_lut16_f64((const double*)table, idx)); }
+NPY_FINLINE npyv_s64 npyv_lut16_s64(const npy_int64 *table, npyv_u64 idx)
+{ return npyv_reinterpret_s64_f64(npyv_lut16_f64((const double*)table, idx)); }
 
 #endif // _NPY_SIMD_AVX512_MEMORY_H

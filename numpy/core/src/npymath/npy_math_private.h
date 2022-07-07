@@ -19,7 +19,13 @@
 #define _NPY_MATH_PRIVATE_H_
 
 #include <Python.h>
+#ifdef __cplusplus
+#include <cmath>
+using std::isgreater;
+using std::isless;
+#else
 #include <math.h>
+#endif
 
 #include "npy_config.h"
 #include "npy_fpmath.h"
@@ -507,17 +513,29 @@ typedef union {
 #else /* !_MSC_VER */
 typedef union {
         npy_cdouble npy_z;
+#ifdef __cplusplus
+        std::complex<double> c99_z;
+#else
         complex double c99_z;
+#endif
 } __npy_cdouble_to_c99_cast;
 
 typedef union {
         npy_cfloat npy_z;
+#ifdef __cplusplus
+        std::complex<float> c99_z;
+#else
         complex float c99_z;
+#endif
 } __npy_cfloat_to_c99_cast;
 
 typedef union {
         npy_clongdouble npy_z;
+#ifdef __cplusplus
+        std::complex<long double> c99_z;
+#else
         complex long double c99_z;
+#endif
 } __npy_clongdouble_to_c99_cast;
 #endif /* !_MSC_VER */
 

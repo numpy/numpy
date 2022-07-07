@@ -80,12 +80,10 @@ Exported symbols include:
 
 """
 import numbers
-import warnings
 
 from numpy.core.multiarray import (
-        typeinfo, ndarray, array, empty, dtype, datetime_data,
-        datetime_as_string, busday_offset, busday_count, is_busday,
-        busdaycalendar
+        ndarray, array, dtype, datetime_data, datetime_as_string,
+        busday_offset, busday_count, is_busday, busdaycalendar
         )
 from numpy.core.overrides import set_module
 
@@ -518,7 +516,7 @@ def _scalar_type_key(typ):
     return (dt.kind.lower(), dt.itemsize)
 
 
-ScalarType = [int, float, complex, int, bool, bytes, str, memoryview]
+ScalarType = [int, float, complex, bool, bytes, str, memoryview]
 ScalarType += sorted(_concrete_types, key=_scalar_type_key)
 ScalarType = tuple(ScalarType)
 

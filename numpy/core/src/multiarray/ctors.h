@@ -1,5 +1,5 @@
-#ifndef _NPY_ARRAY_CTORS_H_
-#define _NPY_ARRAY_CTORS_H_
+#ifndef NUMPY_CORE_SRC_MULTIARRAY_CTORS_H_
+#define NUMPY_CORE_SRC_MULTIARRAY_CTORS_H_
 
 NPY_NO_EXPORT PyObject *
 PyArray_NewFromDescr(
@@ -32,7 +32,8 @@ PyArray_New(
 
 NPY_NO_EXPORT PyObject *
 _array_from_array_like(PyObject *op,
-        PyArray_Descr *requested_dtype, npy_bool writeable, PyObject *context);
+        PyArray_Descr *requested_dtype, npy_bool writeable, PyObject *context,
+        int never_copy);
 
 NPY_NO_EXPORT PyObject *
 PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
@@ -50,6 +51,10 @@ PyArray_FromStructInterface(PyObject *input);
 
 NPY_NO_EXPORT PyObject *
 PyArray_FromInterface(PyObject *input);
+
+NPY_NO_EXPORT PyObject *
+PyArray_FromArrayAttr_int(
+        PyObject *op, PyArray_Descr *descr, int never_copy);
 
 NPY_NO_EXPORT PyObject *
 PyArray_FromArrayAttr(PyObject *op, PyArray_Descr *typecode,
@@ -102,4 +107,4 @@ NPY_NO_EXPORT PyArrayObject *
 PyArray_SubclassWrap(PyArrayObject *arr_of_subclass, PyArrayObject *towrap);
 
 
-#endif
+#endif  /* NUMPY_CORE_SRC_MULTIARRAY_CTORS_H_ */

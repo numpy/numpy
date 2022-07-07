@@ -1,5 +1,5 @@
-#ifndef _NPY_ARRAY_COERCION_H
-#define _NPY_ARRAY_COERCION_H
+#ifndef NUMPY_CORE_SRC_MULTIARRAY_ARRAY_COERCION_H_
+#define NUMPY_CORE_SRC_MULTIARRAY_ARRAY_COERCION_H_
 
 
 /*
@@ -15,10 +15,12 @@ typedef struct coercion_cache_obj {
     int depth;  /* the dimension at which this object was found. */
 } coercion_cache_obj;
 
-
 NPY_NO_EXPORT int
 _PyArray_MapPyTypeToDType(
         PyArray_DTypeMeta *DType, PyTypeObject *pytype, npy_bool userdef);
+
+NPY_NO_EXPORT PyObject *
+PyArray_DiscoverDTypeFromScalarType(PyTypeObject *pytype);
 
 NPY_NO_EXPORT int
 PyArray_Pack(PyArray_Descr *descr, char *item, PyObject *value);
@@ -32,7 +34,7 @@ PyArray_DiscoverDTypeAndShape(
         npy_intp out_shape[NPY_MAXDIMS],
         coercion_cache_obj **coercion_cache,
         PyArray_DTypeMeta *fixed_DType, PyArray_Descr *requested_descr,
-        PyArray_Descr **out_descr);
+        PyArray_Descr **out_descr, int never_copy);
 
 NPY_NO_EXPORT int
 PyArray_ExtractDTypeAndDescriptor(PyObject *dtype,
@@ -55,4 +57,4 @@ npy_unlink_coercion_cache(coercion_cache_obj *current);
 NPY_NO_EXPORT int
 PyArray_AssignFromCache(PyArrayObject *self, coercion_cache_obj *cache);
 
-#endif  /* _NPY_ARRAY_COERCION_H */
+#endif  /* NUMPY_CORE_SRC_MULTIARRAY_ARRAY_COERCION_H_ */

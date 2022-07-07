@@ -1,0 +1,31 @@
+.. currentmodule:: numpy
+
+==========================
+NumPy 1.18.5 Release Notes
+==========================
+
+This is a short release to allow pickle ``protocol=5`` to be used in
+Python3.5. It is motivated by the recent backport of pickle5 to Python3.5.
+
+The Python versions supported in this release are 3.5-3.8. Downstream
+developers should use Cython >= 0.29.15 for Python 3.8 support and
+OpenBLAS >= 3.7 to avoid errors on the Skylake architecture.
+
+Contributors
+============
+
+A total of 3 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Charles Harris
+* Matti Picus
+* Siyuan Zhuang +
+
+Pull requests merged
+====================
+
+A total of 2 pull requests were merged for this release.
+
+* `#16439 <https://github.com/numpy/numpy/pull/16439>`__: ENH: enable pickle protocol 5 support for python3.5
+* `#16441 <https://github.com/numpy/numpy/pull/16441>`__: BUG: relpath fails for different drives on windows
+

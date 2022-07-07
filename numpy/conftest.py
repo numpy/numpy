@@ -33,7 +33,7 @@ hypothesis.settings.register_profile(
     suppress_health_check=hypothesis.HealthCheck.all(),
 )
 # Note that the default profile is chosen based on the presence 
-# of pytest.ini, but can be overriden by passing the 
+# of pytest.ini, but can be overridden by passing the 
 # --hypothesis-profile=NAME argument to pytest.
 _pytest_ini = os.path.join(os.path.dirname(__file__), "..", "pytest.ini")
 hypothesis.settings.load_profile(
@@ -117,3 +117,20 @@ def add_np(doctest_namespace):
 @pytest.fixture(autouse=True)
 def env_setup(monkeypatch):
     monkeypatch.setenv('PYTHONHASHSEED', '0')
+
+
+@pytest.fixture(params=[True, False])
+def weak_promotion(request):
+    """
+    Fixture to ensure "legacy" promotion state or change it to use the new
+    weak promotion (plus warning).  `old_promotion` should be used as a
+    parameter in the function.
+    """
+    state = numpy._get_promotion_state()
+    if request.param:
+        numpy._set_promotion_state("weak_and_warn")
+    else:
+        numpy._set_promotion_state("legacy")
+
+    yield request.param
+    numpy._set_promotion_state(state)

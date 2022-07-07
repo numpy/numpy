@@ -1,7 +1,7 @@
 .. _NEP24:
 
 =============================================================
-NEP 24 — Missing Data Functionality - Alternative 1 to NEP 12
+NEP 24 — Missing data functionality - Alternative 1 to NEP 12
 =============================================================
 
 :Author: Nathaniel J. Smith <njs@pobox.com>, Matthew Brett <matthew.brett@gmail.com>
@@ -193,7 +193,7 @@ is obvious in the NA case::
    >>> na_arr
    array([1., 2., NA], dtype='NA[<f8]')
 
-Direct assignnent in the masked case is magic and confusing, and so happens only
+Direct assignment in the masked case is magic and confusing, and so happens only
 via the mask::
 
    >>> masked_array = np.array([1.0, 2.0, 7.0], masked=True)

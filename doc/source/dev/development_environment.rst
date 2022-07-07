@@ -18,6 +18,10 @@ sources needs some additional steps, which are explained below.  For the rest
 of this chapter we assume that you have set up your git repo as described in
 :ref:`using-git`.
 
+.. note:: If you are having trouble building NumPy from source or setting up
+   your local development environment, you can try
+   to :ref:`build NumPy with Gitpod <development-gitpod>`.
+
 .. _testing-builds:
 
 Testing builds
@@ -122,7 +126,7 @@ source tree is to use::
 
 
 NumPy uses a series of tests to probe the compiler and libc libraries for
-funtions. The results are stored in ``_numpyconfig.h`` and ``config.h`` files
+functions. The results are stored in ``_numpyconfig.h`` and ``config.h`` files
 using ``HAVE_XXX`` definitions. These tests are run during the ``build_src``
 phase of the ``_multiarray_umath`` module in the ``generate_config_h`` and
 ``generate_numpyconfig_h`` functions. Since the output of these calls includes
@@ -190,9 +194,9 @@ That also takes extra arguments, like ``--pdb`` which drops you into the Python
 debugger when a test fails or an exception is raised.
 
 Running tests with `tox`_ is also supported.  For example, to build NumPy and
-run the test suite with Python 3.7, use::
+run the test suite with Python 3.9, use::
 
-    $ tox -e py37
+    $ tox -e py39
 
 For more extensive information, see :ref:`testing-guidelines`
 

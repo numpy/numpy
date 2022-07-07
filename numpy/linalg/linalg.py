@@ -24,13 +24,14 @@ from numpy.core import (
     add, multiply, sqrt, fastCopyAndTranspose, sum, isfinite,
     finfo, errstate, geterrobj, moveaxis, amin, amax, product, abs,
     atleast_2d, intp, asanyarray, object_, matmul,
-    swapaxes, divide, count_nonzero, isnan, sign, argsort, sort
+    swapaxes, divide, count_nonzero, isnan, sign, argsort, sort,
+    reciprocal
 )
 from numpy.core.multiarray import normalize_axis_index
 from numpy.core.overrides import set_module
 from numpy.core import overrides
 from numpy.lib.twodim_base import triu, eye
-from numpy.linalg import lapack_lite, _umath_linalg
+from numpy.linalg import _umath_linalg
 
 
 array_function_dispatch = functools.partial(
@@ -99,6 +100,10 @@ def _raise_linalgerror_svd_nonconvergence(err, flag):
 def _raise_linalgerror_lstsq(err, flag):
     raise LinAlgError("SVD did not converge in Linear Least Squares")
 
+def _raise_linalgerror_qr(err, flag):
+    raise LinAlgError("Incorrect argument found while performing "
+                      "QR factorization")
+
 def get_linalg_error_extobj(callback):
     extobj = list(_linalg_error_extobj)  # make a copy
     extobj[2] = callback
@@ -127,10 +132,6 @@ def _realType(t, default=double):
 
 def _complexType(t, default=cdouble):
     return _complex_types_map.get(t, default)
-
-def _linalgRealType(t):
-    """Cast the type t to either double or cdouble."""
-    return double
 
 def _commonType(*arrays):
     # in lite version, use higher precision (always double or cdouble)
@@ -299,7 +300,13 @@ def tensorsolve(a, b, axes=None):
     for k in oldshape:
         prod *= k
 
-    a = a.reshape(-1, prod)
+    if a.size != prod ** 2:
+        raise LinAlgError(
+            "Input arrays must satisfy the requirement \
+            prod(a.shape[b.ndim:]) == prod(a.shape[:b.ndim])"
+        )
+
+    a = a.reshape(prod, prod)
     b = b.ravel()
     res = wrap(solve(a, b))
     res.shape = oldshape
@@ -691,8 +698,8 @@ def cholesky(a):
     Returns
     -------
     L : (..., M, M) array_like
-        Upper or lower-triangular Cholesky factor of `a`.  Returns a
-        matrix object if `a` is a matrix object.
+        Lower-triangular Cholesky factor of `a`.  Returns a matrix object if
+        `a` is a matrix object.
 
     Raises
     ------
@@ -780,15 +787,16 @@ def qr(a, mode='reduced'):
 
     Parameters
     ----------
-    a : array_like, shape (M, N)
-        Matrix to be factored.
+    a : array_like, shape (..., M, N)
+        An array-like object with the dimensionality of at least 2.
     mode : {'reduced', 'complete', 'r', 'raw'}, optional
         If K = min(M, N), then
 
-        * 'reduced'  : returns q, r with dimensions (M, K), (K, N) (default)
-        * 'complete' : returns q, r with dimensions (M, M), (M, N)
-        * 'r'        : returns r only with dimensions (K, N)
-        * 'raw'      : returns h, tau with dimensions (N, M), (K,)
+        * 'reduced'  : returns q, r with dimensions
+                       (..., M, K), (..., K, N) (default)
+        * 'complete' : returns q, r with dimensions (..., M, M), (..., M, N)
+        * 'r'        : returns r only with dimensions (..., K, N)
+        * 'raw'      : returns h, tau with dimensions (..., N, M), (..., K,)
 
         The options 'reduced', 'complete, and 'raw' are new in numpy 1.8,
         see the notes for more information. The default is 'reduced', and to
@@ -807,9 +815,13 @@ def qr(a, mode='reduced'):
         A matrix with orthonormal columns. When mode = 'complete' the
         result is an orthogonal/unitary matrix depending on whether or not
         a is real/complex. The determinant may be either +/- 1 in that
-        case.
+        case. In case the number of dimensions in the input array is
+        greater than 2 then a stack of the matrices with above properties
+        is returned.
     r : ndarray of float or complex, optional
-        The upper-triangular matrix.
+        The upper-triangular matrix or a stack of upper-triangular
+        matrices if the number of dimensions in the input array is greater
+        than 2.
     (h, tau) : ndarrays of np.double or np.cdouble, optional
         The array h contains the Householder reflectors that generate q
         along with r. The tau array contains scaling factors for the
@@ -857,6 +869,14 @@ def qr(a, mode='reduced'):
     >>> r2 = np.linalg.qr(a, mode='r')
     >>> np.allclose(r, r2)  # mode='r' returns the same r as mode='full'
     True
+    >>> a = np.random.normal(size=(3, 2, 2)) # Stack of 2 x 2 matrices as input
+    >>> q, r = np.linalg.qr(a)
+    >>> q.shape
+    (3, 2, 2)
+    >>> r.shape
+    (3, 2, 2)
+    >>> np.allclose(a, np.matmul(q, r))
+    True
 
     Example illustrating a common use of `qr`: solving of least squares
     problems
@@ -880,11 +900,11 @@ def qr(a, mode='reduced'):
            [1, 1],
            [1, 1],
            [2, 1]])
-    >>> b = np.array([1, 0, 2, 1])
+    >>> b = np.array([1, 2, 2, 3])
     >>> q, r = np.linalg.qr(A)
     >>> p = np.dot(q.T, b)
     >>> np.dot(np.linalg.inv(r), p)
-    array([  1.1e-16,   1.0e+00])
+    array([  1.,   1.])
 
     """
     if mode not in ('reduced', 'complete', 'r', 'raw'):
@@ -904,83 +924,58 @@ def qr(a, mode='reduced'):
             raise ValueError(f"Unrecognized mode '{mode}'")
 
     a, wrap = _makearray(a)
-    _assert_2d(a)
-    m, n = a.shape
+    _assert_stacked_2d(a)
+    m, n = a.shape[-2:]
     t, result_t = _commonType(a)
-    a = _fastCopyAndTranspose(t, a)
+    a = a.astype(t, copy=True)
     a = _to_native_byte_order(a)
     mn = min(m, n)
-    tau = zeros((mn,), t)
 
-    if isComplexType(t):
-        lapack_routine = lapack_lite.zgeqrf
-        routine_name = 'zgeqrf'
+    if m <= n:
+        gufunc = _umath_linalg.qr_r_raw_m
     else:
-        lapack_routine = lapack_lite.dgeqrf
-        routine_name = 'dgeqrf'
+        gufunc = _umath_linalg.qr_r_raw_n
 
-    # calculate optimal size of work data 'work'
-    lwork = 1
-    work = zeros((lwork,), t)
-    results = lapack_routine(m, n, a, max(1, m), tau, work, -1, 0)
-    if results['info'] != 0:
-        raise LinAlgError('%s returns %d' % (routine_name, results['info']))
-
-    # do qr decomposition
-    lwork = max(1, n, int(abs(work[0])))
-    work = zeros((lwork,), t)
-    results = lapack_routine(m, n, a, max(1, m), tau, work, lwork, 0)
-    if results['info'] != 0:
-        raise LinAlgError('%s returns %d' % (routine_name, results['info']))
+    signature = 'D->D' if isComplexType(t) else 'd->d'
+    extobj = get_linalg_error_extobj(_raise_linalgerror_qr)
+    tau = gufunc(a, signature=signature, extobj=extobj)
 
     # handle modes that don't return q
     if mode == 'r':
-        r = _fastCopyAndTranspose(result_t, a[:, :mn])
-        return wrap(triu(r))
+        r = triu(a[..., :mn, :])
+        r = r.astype(result_t, copy=False)
+        return wrap(r)
 
     if mode == 'raw':
-        return a, tau
+        q = transpose(a)
+        q = q.astype(result_t, copy=False)
+        tau = tau.astype(result_t, copy=False)
+        return wrap(q), tau
 
     if mode == 'economic':
-        if t != result_t :
-            a = a.astype(result_t, copy=False)
-        return wrap(a.T)
+        a = a.astype(result_t, copy=False)
+        return wrap(a)
 
-    #  generate q from a
+    # mc is the number of columns in the resulting q
+    # matrix. If the mode is complete then it is 
+    # same as number of rows, and if the mode is reduced,
+    # then it is the minimum of number of rows and columns.
     if mode == 'complete' and m > n:
         mc = m
-        q = empty((m, m), t)
+        gufunc = _umath_linalg.qr_complete
     else:
         mc = mn
-        q = empty((n, m), t)
-    q[:n] = a
+        gufunc = _umath_linalg.qr_reduced
 
-    if isComplexType(t):
-        lapack_routine = lapack_lite.zungqr
-        routine_name = 'zungqr'
-    else:
-        lapack_routine = lapack_lite.dorgqr
-        routine_name = 'dorgqr'
+    signature = 'DD->D' if isComplexType(t) else 'dd->d'
+    extobj = get_linalg_error_extobj(_raise_linalgerror_qr)
+    q = gufunc(a, tau, signature=signature, extobj=extobj)
+    r = triu(a[..., :mc, :])
 
-    # determine optimal lwork
-    lwork = 1
-    work = zeros((lwork,), t)
-    results = lapack_routine(m, mc, mn, q, max(1, m), tau, work, -1, 0)
-    if results['info'] != 0:
-        raise LinAlgError('%s returns %d' % (routine_name, results['info']))
+    q = q.astype(result_t, copy=False)
+    r = r.astype(result_t, copy=False)
 
-    # compute q
-    lwork = max(1, n, int(abs(work[0])))
-    work = zeros((lwork,), t)
-    results = lapack_routine(m, mc, mn, q, max(1, m), tau, work, lwork, 0)
-    if results['info'] != 0:
-        raise LinAlgError('%s returns %d' % (routine_name, results['info']))
-
-    q = _fastCopyAndTranspose(result_t, q[:mc])
-    r = _fastCopyAndTranspose(result_t, a[:, :mc])
-
-    return wrap(q), wrap(triu(r))
-
+    return wrap(q), wrap(r)
 
 # Eigenvalues
 
@@ -1484,10 +1479,12 @@ def svd(a, full_matrices=True, compute_uv=True, hermitian=False):
     """
     Singular Value Decomposition.
 
-    When `a` is a 2D array, it is factorized as ``u @ np.diag(s) @ vh
-    = (u * s) @ vh``, where `u` and `vh` are 2D unitary arrays and `s` is a 1D
-    array of `a`'s singular values. When `a` is higher-dimensional, SVD is
-    applied in stacked mode as explained below.
+    When `a` is a 2D array, and ``full_matrices=False``, then it is
+    factorized as ``u @ np.diag(s) @ vh = (u * s) @ vh``, where
+    `u` and the Hermitian transpose of `vh` are 2D arrays with
+    orthonormal columns and `s` is a 1D array of `a`'s singular
+    values. When `a` is higher-dimensional, SVD is applied in
+    stacked mode as explained below.
 
     Parameters
     ----------
@@ -1692,7 +1689,7 @@ def cond(x, p=None):
     x : (..., M, N) array_like
         The matrix whose condition number is sought.
     p : {None, 1, -1, 2, -2, inf, -inf, 'fro'}, optional
-        Order of the norm:
+        Order of the norm used in the condition number computation:
 
         =====  ============================
         p      norm for matrices
@@ -1707,7 +1704,7 @@ def cond(x, p=None):
         -2     smallest singular value
         =====  ============================
 
-        inf means the numpy.inf object, and the Frobenius norm is
+        inf means the `numpy.inf` object, and the Frobenius norm is
         the root-of-sum-of-squares norm.
 
     Returns
@@ -1797,12 +1794,12 @@ def cond(x, p=None):
     return r
 
 
-def _matrix_rank_dispatcher(M, tol=None, hermitian=None):
-    return (M,)
+def _matrix_rank_dispatcher(A, tol=None, hermitian=None):
+    return (A,)
 
 
 @array_function_dispatch(_matrix_rank_dispatcher)
-def matrix_rank(M, tol=None, hermitian=False):
+def matrix_rank(A, tol=None, hermitian=False):
     """
     Return matrix rank of array using SVD method
 
@@ -1814,18 +1811,18 @@ def matrix_rank(M, tol=None, hermitian=False):
 
     Parameters
     ----------
-    M : {(M,), (..., M, N)} array_like
+    A : {(M,), (..., M, N)} array_like
         Input vector or stack of matrices.
     tol : (...) array_like, float, optional
         Threshold below which SVD values are considered zero. If `tol` is
         None, and ``S`` is an array with singular values for `M`, and
         ``eps`` is the epsilon value for datatype of ``S``, then `tol` is
-        set to ``S.max() * max(M.shape) * eps``.
+        set to ``S.max() * max(M, N) * eps``.
 
         .. versionchanged:: 1.14
            Broadcasted against the stack of matrices
     hermitian : bool, optional
-        If True, `M` is assumed to be Hermitian (symmetric if real-valued),
+        If True, `A` is assumed to be Hermitian (symmetric if real-valued),
         enabling a more efficient method for finding singular values.
         Defaults to False.
 
@@ -1834,39 +1831,39 @@ def matrix_rank(M, tol=None, hermitian=False):
     Returns
     -------
     rank : (...) array_like
-        Rank of M.
+        Rank of A.
 
     Notes
     -----
     The default threshold to detect rank deficiency is a test on the magnitude
-    of the singular values of `M`.  By default, we identify singular values less
-    than ``S.max() * max(M.shape) * eps`` as indicating rank deficiency (with
+    of the singular values of `A`.  By default, we identify singular values less
+    than ``S.max() * max(M, N) * eps`` as indicating rank deficiency (with
     the symbols defined above). This is the algorithm MATLAB uses [1].  It also
     appears in *Numerical recipes* in the discussion of SVD solutions for linear
     least squares [2].
 
     This default threshold is designed to detect rank deficiency accounting for
     the numerical errors of the SVD computation.  Imagine that there is a column
-    in `M` that is an exact (in floating point) linear combination of other
-    columns in `M`. Computing the SVD on `M` will not produce a singular value
+    in `A` that is an exact (in floating point) linear combination of other
+    columns in `A`. Computing the SVD on `A` will not produce a singular value
     exactly equal to 0 in general: any difference of the smallest SVD value from
     0 will be caused by numerical imprecision in the calculation of the SVD.
     Our threshold for small SVD values takes this numerical imprecision into
     account, and the default threshold will detect such numerical rank
-    deficiency.  The threshold may declare a matrix `M` rank deficient even if
-    the linear combination of some columns of `M` is not exactly equal to
-    another column of `M` but only numerically very close to another column of
-    `M`.
+    deficiency.  The threshold may declare a matrix `A` rank deficient even if
+    the linear combination of some columns of `A` is not exactly equal to
+    another column of `A` but only numerically very close to another column of
+    `A`.
 
     We chose our default threshold because it is in wide use.  Other thresholds
     are possible.  For example, elsewhere in the 2007 edition of *Numerical
     recipes* there is an alternative threshold of ``S.max() *
-    np.finfo(M.dtype).eps / 2. * np.sqrt(m + n + 1.)``. The authors describe
+    np.finfo(A.dtype).eps / 2. * np.sqrt(m + n + 1.)``. The authors describe
     this threshold as being based on "expected roundoff error" (p 71).
 
     The thresholds above deal with floating point roundoff error in the
     calculation of the SVD.  However, you may have more information about the
-    sources of error in `M` that would make you consider other tolerance values
+    sources of error in `A` that would make you consider other tolerance values
     to detect *effective* rank deficiency.  The most useful measure of the
     tolerance depends on the operations you intend to use on your matrix.  For
     example, if your data come from uncertain measurements with uncertainties
@@ -1876,7 +1873,7 @@ def matrix_rank(M, tol=None, hermitian=False):
 
     References
     ----------
-    .. [1] MATLAB reference documention, "Rank"
+    .. [1] MATLAB reference documentation, "Rank"
            https://www.mathworks.com/help/techdoc/ref/rank.html
     .. [2] W. H. Press, S. A. Teukolsky, W. T. Vetterling and B. P. Flannery,
            "Numerical Recipes (3rd edition)", Cambridge University Press, 2007,
@@ -1895,12 +1892,12 @@ def matrix_rank(M, tol=None, hermitian=False):
     >>> matrix_rank(np.zeros((4,)))
     0
     """
-    M = asarray(M)
-    if M.ndim < 2:
-        return int(not all(M==0))
-    S = svd(M, compute_uv=False, hermitian=hermitian)
+    A = asarray(A)
+    if A.ndim < 2:
+        return int(not all(A==0))
+    S = svd(A, compute_uv=False, hermitian=hermitian)
     if tol is None:
-        tol = S.max(axis=-1, keepdims=True) * max(M.shape[-2:]) * finfo(S.dtype).eps
+        tol = S.max(axis=-1, keepdims=True) * max(A.shape[-2:]) * finfo(S.dtype).eps
     else:
         tol = asarray(tol)[..., newaxis]
     return count_nonzero(S > tol, axis=-1)
@@ -1954,7 +1951,6 @@ def pinv(a, rcond=1e-15, hermitian=False):
     See Also
     --------
     scipy.linalg.pinv : Similar function in SciPy.
-    scipy.linalg.pinv2 : Similar function in SciPy (SVD-based).
     scipy.linalg.pinvh : Compute the (Moore-Penrose) pseudo-inverse of a
                          Hermitian matrix.
 
@@ -2171,13 +2167,13 @@ def lstsq(a, b, rcond="warn"):
     r"""
     Return the least-squares solution to a linear matrix equation.
 
-    Computes the vector `x` that approximatively solves the equation
+    Computes the vector `x` that approximately solves the equation
     ``a @ x = b``. The equation may be under-, well-, or over-determined
     (i.e., the number of linearly independent rows of `a` can be less than,
     equal to, or greater than its number of linearly independent columns).
     If `a` is square and of full rank, then `x` (but for round-off error)
     is the "exact" solution of the equation. Else, `x` minimizes the
-    Euclidean 2-norm :math:`||b - ax||`. If there are multiple minimizing 
+    Euclidean 2-norm :math:`||b - ax||`. If there are multiple minimizing
     solutions, the one with the smallest 2-norm :math:`||x||` is returned.
 
     Parameters
@@ -2275,8 +2271,6 @@ def lstsq(a, b, rcond="warn"):
         raise LinAlgError('Incompatible dimensions')
 
     t, result_t = _commonType(a, b)
-    # FIXME: real_t is unused
-    real_t = _linalgRealType(t)
     result_real_t = _realType(result_t)
 
     # Determine default rcond value
@@ -2525,9 +2519,11 @@ def norm(x, ord=None, axis=None, keepdims=False):
 
             x = x.ravel(order='K')
             if isComplexType(x.dtype.type):
-                sqnorm = dot(x.real, x.real) + dot(x.imag, x.imag)
+                x_real = x.real
+                x_imag = x.imag
+                sqnorm = x_real.dot(x_real) + x_imag.dot(x_imag)
             else:
-                sqnorm = dot(x, x)
+                sqnorm = x.dot(x)
             ret = sqrt(sqnorm)
             if keepdims:
                 ret = ret.reshape(ndim*[1])
@@ -2567,7 +2563,7 @@ def norm(x, ord=None, axis=None, keepdims=False):
             absx = abs(x)
             absx **= ord
             ret = add.reduce(absx, axis=axis, keepdims=keepdims)
-            ret **= (1 / ord)
+            ret **= reciprocal(ord, dtype=ret.dtype)
             return ret
     elif len(axis) == 2:
         row_axis, col_axis = axis

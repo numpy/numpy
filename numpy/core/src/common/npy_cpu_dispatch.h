@@ -1,5 +1,5 @@
-#ifndef NPY_CPU_DISPATCH_H_
-#define NPY_CPU_DISPATCH_H_
+#ifndef NUMPY_CORE_SRC_COMMON_NPY_CPU_DISPATCH_H_
+#define NUMPY_CORE_SRC_COMMON_NPY_CPU_DISPATCH_H_
 /**
  * This file is part of the NumPy CPU dispatcher. Please have a look at doc/reference/simd-optimizations.html
  * To get a better understanding of the mechanism behind it.
@@ -22,7 +22,7 @@
  * which is explicitly disabling the module ccompiler_opt.
  */
 #ifndef NPY_DISABLE_OPTIMIZATION
-    #if defined(__powerpc64__) && !defined(__cplusplus) && defined(bool)
+    #if (defined(__s390x__) || defined(__powerpc64__)) && !defined(__cplusplus) && defined(bool)
         /**
          * "altivec.h" header contains the definitions(bool, vector, pixel),
          * usually in c++ we undefine them after including the header.
@@ -34,7 +34,7 @@
         typedef bool npy__dispatch_bkbool;
     #endif
     #include "npy_cpu_dispatch_config.h"
-    #ifdef NPY_HAVE_VSX
+    #if defined(NPY_HAVE_VSX) || defined(NPY_HAVE_VX)
         #undef bool
         #undef vector
         #undef pixel
@@ -57,7 +57,7 @@
  * avoid linking duplications due to the nature of the dispatch-able sources.
  *
  * Example:
- *    @targets baseline avx avx512_skx vsx3 asimdhp // configration statments
+ *    @targets baseline avx avx512_skx vsx3 asimdhp // configuration statements
  *
  *    void NPY_CPU_DISPATCH_CURFX(dispatch_me)(const int *src, int *dst)
  *    {
@@ -180,7 +180,7 @@
  * Macro NPY_CPU_DISPATCH_DECLARE_XB(LEFT, ...)
  *
  * Same as `NPY_CPU_DISPATCH_DECLARE` but exclude the baseline declaration even
- * if it was provided within the configration statments.
+ * if it was provided within the configuration statements.
  */
 #define NPY_CPU_DISPATCH_DECLARE_XB(...) \
     NPY__CPU_DISPATCH_CALL(NPY_CPU_DISPATCH_DECLARE_CHK_, NPY_CPU_DISPATCH_DECLARE_CB_, __VA_ARGS__)
@@ -196,7 +196,7 @@
  * Example:
  *  Assume we have a dispatch-able source exporting the following function:
  *
- *    @targets baseline avx2 avx512_skx // configration statments
+ *    @targets baseline avx2 avx512_skx // configuration statements
  *
  *    void NPY_CPU_DISPATCH_CURFX(dispatch_me)(const int *src, int *dst)
  *    {
@@ -238,7 +238,7 @@
  * Macro NPY_CPU_DISPATCH_CALL_XB(LEFT, ...)
  *
  * Same as `NPY_CPU_DISPATCH_DECLARE` but exclude the baseline declaration even
- * if it was provided within the configration statements.
+ * if it was provided within the configuration statements.
  * Returns void.
  */
 #define NPY_CPU_DISPATCH_CALL_XB_CB_(TESTED_FEATURES, TARGET_NAME, LEFT, ...) \
@@ -262,4 +262,4 @@
 #define NPY_CPU_DISPATCH_CALL_ALL_BASE_CB_(LEFT, ...) \
     ( LEFT __VA_ARGS__ )
 
-#endif // NPY_CPU_DISPATCH_H_
+#endif  // NUMPY_CORE_SRC_COMMON_NPY_CPU_DISPATCH_H_

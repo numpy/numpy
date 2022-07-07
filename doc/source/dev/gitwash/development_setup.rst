@@ -112,7 +112,7 @@ Look it over
    - the ``main`` branch you just cloned on your own machine
    - the ``main`` branch from your fork on GitHub, which git named
      ``origin`` by default
-   - the ``main`` branch on the the main NumPy repo, which you named
+   - the ``main`` branch on the main NumPy repo, which you named
      ``upstream``.
 
    ::
@@ -165,7 +165,7 @@ slightly. Instead of ::
 
 run ::
 
-  git clone git@github.com:numpy/numpy.git
+  git clone git@github.com:your-user-name/numpy.git
 
 and instead of showing an ``https`` URL,  ``git remote -v`` will show ::
 

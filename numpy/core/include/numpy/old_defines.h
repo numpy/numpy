@@ -1,6 +1,6 @@
 /* This header is deprecated as of NumPy 1.7 */
-#ifndef OLD_DEFINES_H
-#define OLD_DEFINES_H
+#ifndef NUMPY_CORE_INCLUDE_NUMPY_OLD_DEFINES_H_
+#define NUMPY_CORE_INCLUDE_NUMPY_OLD_DEFINES_H_
 
 #if defined(NPY_NO_DEPRECATED_API) && NPY_NO_DEPRECATED_API >= NPY_1_7_API_VERSION
 #error The header "old_defines.h" is deprecated as of NumPy 1.7.
@@ -184,4 +184,4 @@
 
 #define PyArray_UCS4 npy_ucs4
 
-#endif
+#endif  /* NUMPY_CORE_INCLUDE_NUMPY_OLD_DEFINES_H_ */

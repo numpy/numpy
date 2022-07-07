@@ -1,0 +1,460 @@
+.. currentmodule:: numpy
+
+==========================
+NumPy 1.22.0 Release Notes
+==========================
+NumPy 1.22.0 is a big release featuring the work of 153 contributors spread
+over 609 pull requests. There have been many improvements, highlights are:
+
+* Annotations of the main namespace are essentially complete. Upstream is a
+  moving target, so there will likely be further improvements, but the major
+  work is done. This is probably the most user visible enhancement in this
+  release.
+* A preliminary version of the proposed Array-API is provided. This is a step
+  in creating a standard collection of functions that can be used across
+  applications such as CuPy and JAX.
+* NumPy now has a DLPack backend. DLPack provides a common interchange format
+  for array (tensor) data.
+* New methods for ``quantile``, ``percentile``, and related functions. The new
+  methods provide a complete set of the methods commonly found in the
+  literature.
+* The universal functions have been refactored to implement most of
+  :ref:`NEP 43 <NEP43>`.  This also unlocks the ability to experiment with the
+  future DType API.
+* A new configurable allocator for use by downstream projects.
+
+These are in addition to the ongoing work to provide SIMD support for commonly
+used functions, improvements to F2PY, and better documentation.
+
+The Python versions supported in this release are 3.8-3.10, Python 3.7 has been
+dropped. Note that the Mac wheels are now based on OS X 10.14 rather than 10.9
+that was used in previous NumPy release cycles. 10.14 is the oldest release
+supported by Apple. Also note that 32 bit wheels are only provided for Python
+3.8 and 3.9 on Windows, all other wheels are 64 bits on account of Ubuntu,
+Fedora, and other Linux distributions dropping 32 bit support. All 64 bit
+wheels are also linked with 64 bit integer OpenBLAS, which should fix the
+occasional problems encountered by folks using truly huge arrays.
+
+
+Expired deprecations
+====================
+
+Deprecated numeric style dtype strings have been removed
+--------------------------------------------------------
+Using the strings ``"Bytes0"``, ``"Datetime64"``, ``"Str0"``, ``"Uint32"``,
+and ``"Uint64"`` as a dtype will now raise a ``TypeError``.
+
+(`gh-19539 <https://github.com/numpy/numpy/pull/19539>`__)
+
+Expired deprecations for ``loads``, ``ndfromtxt``, and ``mafromtxt`` in npyio
+-----------------------------------------------------------------------------
+``numpy.loads`` was deprecated in v1.15, with the recommendation that users use
+``pickle.loads`` instead.  ``ndfromtxt`` and ``mafromtxt`` were both deprecated
+in v1.17 - users should use ``numpy.genfromtxt`` instead with the appropriate
+value for the ``usemask`` parameter.
+
+(`gh-19615 <https://github.com/numpy/numpy/pull/19615>`__)
+
+
+Deprecations
+============
+
+Use delimiter rather than delimitor as kwarg in mrecords
+--------------------------------------------------------
+The misspelled keyword argument ``delimitor`` of
+``numpy.ma.mrecords.fromtextfile()`` has been changed to ``delimiter``, using
+it will emit a deprecation warning.
+
+(`gh-19921 <https://github.com/numpy/numpy/pull/19921>`__)
+
+Passing boolean ``kth`` values to (arg-)partition has been deprecated
+---------------------------------------------------------------------
+``numpy.partition`` and ``numpy.argpartition`` would previously accept boolean
+values for the ``kth`` parameter, which would subsequently be converted into
+integers. This behavior has now been deprecated.
+
+(`gh-20000 <https://github.com/numpy/numpy/pull/20000>`__)
+
+The ``np.MachAr`` class has been deprecated
+-------------------------------------------
+The ``numpy.MachAr`` class and ``finfo.machar <numpy.finfo>`` attribute have
+been deprecated. Users are encouraged to access the property if interest
+directly from the corresponding ``numpy.finfo`` attribute.
+
+(`gh-20201 <https://github.com/numpy/numpy/pull/20201>`__)
+
+
+Compatibility notes
+===================
+
+Distutils forces strict floating point model on clang
+-----------------------------------------------------
+NumPy now sets the ``-ftrapping-math`` option on clang to enforce correct
+floating point error handling for universal functions.  Clang defaults to
+non-IEEE and C99 conform behaviour otherwise.  This change (using the
+equivalent but newer ``-ffp-exception-behavior=strict``) was attempted in NumPy
+1.21, but was effectively never used.
+
+(`gh-19479 <https://github.com/numpy/numpy/pull/19479>`__)
+
+Removed floor division support for complex types
+------------------------------------------------
+Floor division of complex types will now result in a ``TypeError``
+
+.. code-block:: python
+
+    >>> a = np.arange(10) + 1j* np.arange(10)
+    >>> a // 1
+    TypeError: ufunc 'floor_divide' not supported for the input types...
+
+(`gh-19135 <https://github.com/numpy/numpy/pull/19135>`__)
+
+``numpy.vectorize`` functions now produce the same output class as the base function
+------------------------------------------------------------------------------------
+When a function that respects ``numpy.ndarray`` subclasses is vectorized using
+``numpy.vectorize``, the vectorized function will now be subclass-safe also for
+cases that a signature is given (i.e., when creating a ``gufunc``): the output
+class will be the same as that returned by the first call to the underlying
+function.
+
+(`gh-19356 <https://github.com/numpy/numpy/pull/19356>`__)
+
+Python 3.7 is no longer supported
+---------------------------------
+Python support has been dropped. This is rather strict, there are changes that
+require Python >= 3.8.
+
+(`gh-19665 <https://github.com/numpy/numpy/pull/19665>`__)
+
+str/repr of complex dtypes now include space after punctuation
+--------------------------------------------------------------
+The repr of ``np.dtype({"names": ["a"], "formats": [int], "offsets": [2]})`` is
+now ``dtype({'names': ['a'], 'formats': ['<i8'], 'offsets': [2], 'itemsize':
+10})``, whereas spaces where previously omitted after colons and between
+fields.
+
+The old behavior can be restored via ``np.set_printoptions(legacy="1.21")``.
+
+(`gh-19687 <https://github.com/numpy/numpy/pull/19687>`__)
+
+Corrected ``advance`` in ``PCG64DSXM`` and ``PCG64``
+----------------------------------------------------
+Fixed a bug in the ``advance`` method of ``PCG64DSXM`` and ``PCG64``. The bug
+only affects results when the step was larger than :math:`2^{64}` on platforms
+that do not support 128-bit integers(e.g., Windows and 32-bit Linux).
+
+(`gh-20049 <https://github.com/numpy/numpy/pull/20049>`__)
+
+Change in generation of random 32 bit floating point variates
+-------------------------------------------------------------
+There was bug in the generation of 32 bit floating point values from the
+uniform distribution that would result in the least significant bit of the
+random variate always being 0.  This has been fixed.
+
+This change affects the variates produced by the ``random.Generator`` methods
+``random``, ``standard_normal``, ``standard_exponential``, and
+``standard_gamma``, but only when the dtype is specified as ``numpy.float32``.
+
+(`gh-20314 <https://github.com/numpy/numpy/pull/20314>`__)
+
+
+C API changes
+=============
+
+Masked inner-loops cannot be customized anymore
+-----------------------------------------------
+The masked inner-loop selector is now never used.  A warning will be given in
+the unlikely event that it was customized.
+
+We do not expect that any code uses this.  If you do use it, you must unset the
+selector on newer NumPy version.  Please also contact the NumPy developers, we
+do anticipate providing a new, more specific, mechanism.
+
+The customization was part of a never-implemented feature to allow for faster
+masked operations.
+
+(`gh-19259 <https://github.com/numpy/numpy/pull/19259>`__)
+
+Experimental exposure of future DType and UFunc API
+---------------------------------------------------
+The new header ``experimental_public_dtype_api.h`` allows to experiment with
+future API for improved universal function and especially user DType support.
+At this time it is advisable to experiment using the development version
+of NumPy since some changes are expected and new features will be unlocked.
+
+(`gh-19919 <https://github.com/numpy/numpy/pull/19919>`__)
+
+
+New Features
+============
+
+NEP 49 configurable allocators
+------------------------------
+As detailed in `NEP 49`_, the function used for allocation of the data segment
+of a ndarray can be changed. The policy can be set globally or in a context.
+For more information see the NEP and the :ref:`data_memory` reference docs.
+Also add a ``NUMPY_WARN_IF_NO_MEM_POLICY`` override to warn on dangerous use
+of transfering ownership by setting ``NPY_ARRAY_OWNDATA``.
+
+.. _`NEP 49`: https://numpy.org/neps/nep-0049.html
+
+(`gh-17582 <https://github.com/numpy/numpy/pull/17582>`__)
+
+Implementation of the NEP 47 (adopting the array API standard)
+--------------------------------------------------------------
+An initial implementation of `NEP 47`_ (adoption the array API standard) has
+been added as ``numpy.array_api``. The implementation is experimental and will
+issue a UserWarning on import, as the `array API standard
+<https://data-apis.org/array-api/latest/index.html>`_ is still in draft state.
+``numpy.array_api`` is a conforming implementation of the array API standard,
+which is also minimal, meaning that only those functions and behaviors that are
+required by the standard are implemented (see the NEP for more info).
+Libraries wishing to make use of the array API standard are encouraged to use
+``numpy.array_api`` to check that they are only using functionality that is
+guaranteed to be present in standard conforming implementations.
+
+.. _`NEP 47`: https://numpy.org/neps/nep-0047-array-api-standard.html
+
+(`gh-18585 <https://github.com/numpy/numpy/pull/18585>`__)
+
+Generate C/C++ API reference documentation from comments blocks is now possible
+-------------------------------------------------------------------------------
+This feature depends on Doxygen_ in the generation process and on Breathe_ to
+integrate it with Sphinx.
+
+.. _`Doxygen`: https://www.doxygen.nl/index.html
+.. _`Breathe`: https://breathe.readthedocs.io/en/latest/
+
+(`gh-18884 <https://github.com/numpy/numpy/pull/18884>`__)
+
+Assign the platform-specific ``c_intp`` precision via a mypy plugin
+-------------------------------------------------------------------
+The mypy_ plugin, introduced in `numpy/numpy#17843`_, has again been expanded:
+the plugin now is now responsible for setting the platform-specific precision
+of ``numpy.ctypeslib.c_intp``, the latter being used as data type for various
+``numpy.ndarray.ctypes`` attributes.
+
+Without the plugin, aforementioned type will default to ``ctypes.c_int64``.
+
+To enable the plugin, one must add it to their mypy `configuration file`_:
+
+.. code-block:: ini
+
+    [mypy]
+    plugins = numpy.typing.mypy_plugin
+
+
+.. _mypy: http://mypy-lang.org/
+.. _configuration file: https://mypy.readthedocs.io/en/stable/config_file.html
+.. _`numpy/numpy#17843`: https://github.com/numpy/numpy/pull/17843
+
+(`gh-19062 <https://github.com/numpy/numpy/pull/19062>`__)
+
+Add NEP 47-compatible dlpack support
+------------------------------------
+Add a ``ndarray.__dlpack__()`` method which returns a ``dlpack`` C structure
+wrapped in a ``PyCapsule``. Also add a ``np._from_dlpack(obj)`` function, where
+``obj`` supports ``__dlpack__()``, and returns an ``ndarray``.
+
+(`gh-19083 <https://github.com/numpy/numpy/pull/19083>`__)
+
+``keepdims`` optional argument added to ``numpy.argmin``, ``numpy.argmax``
+--------------------------------------------------------------------------
+``keepdims`` argument is added to ``numpy.argmin``, ``numpy.argmax``.  If set
+to ``True``, the axes which are reduced are left in the result as dimensions
+with size one.  The resulting array has the same number of dimensions and will
+broadcast with the input array.
+
+(`gh-19211 <https://github.com/numpy/numpy/pull/19211>`__)
+
+``bit_count`` to compute the number of 1-bits in an integer
+-----------------------------------------------------------
+Computes the number of 1-bits in the absolute value of the input.
+This works on all the numpy integer types. Analogous to the builtin
+``int.bit_count`` or ``popcount`` in C++.
+
+.. code-block:: python
+
+    >>> np.uint32(1023).bit_count()
+    10
+    >>> np.int32(-127).bit_count()
+    7
+
+(`gh-19355 <https://github.com/numpy/numpy/pull/19355>`__)
+
+The ``ndim`` and ``axis`` attributes have been added to ``numpy.AxisError``
+---------------------------------------------------------------------------
+The ``ndim`` and ``axis`` parameters are now also stored as attributes
+within each ``numpy.AxisError`` instance.
+
+(`gh-19459 <https://github.com/numpy/numpy/pull/19459>`__)
+
+Preliminary support for ``windows/arm64`` target
+------------------------------------------------
+``numpy`` added support for windows/arm64 target. Please note ``OpenBLAS``
+support is not yet available for windows/arm64 target.
+
+(`gh-19513 <https://github.com/numpy/numpy/pull/19513>`__)
+
+Added support for LoongArch
+---------------------------
+LoongArch is a new instruction set, numpy compilation failure on LoongArch
+architecture, so add the commit.
+
+(`gh-19527 <https://github.com/numpy/numpy/pull/19527>`__)
+
+A ``.clang-format`` file has been added
+---------------------------------------
+Clang-format is a C/C++ code formatter, together with the added
+``.clang-format`` file, it produces code close enough to the NumPy
+C_STYLE_GUIDE for general use. Clang-format version 12+ is required due to the
+use of several new features, it is available in Fedora 34 and Ubuntu Focal
+among other distributions.
+
+(`gh-19754 <https://github.com/numpy/numpy/pull/19754>`__)
+
+``is_integer`` is now available to ``numpy.floating`` and ``numpy.integer``
+---------------------------------------------------------------------------
+Based on its counterpart in Python ``float`` and ``int``, the numpy floating
+point and integer types now support ``float.is_integer``. Returns ``True`` if
+the number is finite with integral value, and ``False`` otherwise.
+
+.. code-block:: python
+
+    >>> np.float32(-2.0).is_integer()
+    True
+    >>> np.float64(3.2).is_integer()
+    False
+    >>> np.int32(-2).is_integer()
+    True
+
+(`gh-19803 <https://github.com/numpy/numpy/pull/19803>`__)
+
+Symbolic parser for Fortran dimension specifications
+----------------------------------------------------
+A new symbolic parser has been added to f2py in order to correctly parse
+dimension specifications. The parser is the basis for future improvements and
+provides compatibility with Draft Fortran 202x.
+
+(`gh-19805 <https://github.com/numpy/numpy/pull/19805>`__)
+
+``ndarray``, ``dtype`` and ``number`` are now runtime-subscriptable
+-------------------------------------------------------------------
+Mimicking :pep:`585`, the ``numpy.ndarray``, ``numpy.dtype`` and
+``numpy.number`` classes are now subscriptable for python 3.9 and later.
+Consequently, expressions that were previously only allowed in .pyi stub files
+or with the help of ``from __future__ import annotations`` are now also legal
+during runtime.
+
+.. code-block:: python
+
+    >>> import numpy as np
+    >>> from typing import Any
+
+    >>> np.ndarray[Any, np.dtype[np.float64]]
+    numpy.ndarray[typing.Any, numpy.dtype[numpy.float64]]
+
+(`gh-19879 <https://github.com/numpy/numpy/pull/19879>`__)
+
+
+Improvements
+============
+
+``ctypeslib.load_library`` can now take any path-like object
+------------------------------------------------------------
+All parameters in the can now take any :term:`python:path-like object`.
+This includes the likes of strings, bytes and objects implementing the
+:meth:`__fspath__<os.PathLike.__fspath__>` protocol.
+
+(`gh-17530 <https://github.com/numpy/numpy/pull/17530>`__)
+
+Add ``smallest_normal`` and ``smallest_subnormal`` attributes to ``finfo``
+--------------------------------------------------------------------------
+The attributes ``smallest_normal`` and ``smallest_subnormal`` are available as
+an extension of ``finfo`` class for any floating-point data type. To use these
+new attributes, write ``np.finfo(np.float64).smallest_normal`` or
+``np.finfo(np.float64).smallest_subnormal``.
+
+(`gh-18536 <https://github.com/numpy/numpy/pull/18536>`__)
+
+``numpy.linalg.qr`` accepts stacked matrices as inputs
+------------------------------------------------------
+``numpy.linalg.qr`` is able to produce results for stacked matrices as inputs.
+Moreover, the implementation of QR decomposition has been shifted to C from
+Python.
+
+(`gh-19151 <https://github.com/numpy/numpy/pull/19151>`__)
+
+``numpy.fromregex`` now accepts ``os.PathLike`` implementations
+---------------------------------------------------------------
+``numpy.fromregex`` now accepts objects implementing the ``__fspath__<os.PathLike>``
+protocol, *e.g.* ``pathlib.Path``.
+
+(`gh-19680 <https://github.com/numpy/numpy/pull/19680>`__)
+
+Add new methods for ``quantile`` and ``percentile``
+---------------------------------------------------
+``quantile`` and ``percentile`` now have have a ``method=`` keyword argument
+supporting 13 different methods.  This replaces the ``interpolation=`` keyword
+argument.
+
+The methods are now aligned with nine methods which can be found in scientific
+literature and the R language.  The remaining methods are the previous
+discontinuous variations of the default "linear" one.
+
+Please see the documentation of ``numpy.percentile`` for more information.
+
+(`gh-19857 <https://github.com/numpy/numpy/pull/19857>`__)
+
+Missing parameters have been added to the ``nan<x>`` functions
+--------------------------------------------------------------
+A number of the ``nan<x>`` functions previously lacked parameters that were
+present in their ``<x>``-based counterpart, *e.g.* the ``where`` parameter was
+present in ``numpy.mean`` but absent from ``numpy.nanmean``.
+
+The following parameters have now been added to the ``nan<x>`` functions:
+
+* nanmin: ``initial`` & ``where``
+* nanmax: ``initial`` & ``where``
+* nanargmin: ``keepdims`` & ``out``
+* nanargmax: ``keepdims`` & ``out``
+* nansum: ``initial`` & ``where``
+* nanprod: ``initial`` & ``where``
+* nanmean: ``where``
+* nanvar: ``where``
+* nanstd: ``where``
+
+(`gh-20027 <https://github.com/numpy/numpy/pull/20027>`__)
+
+Annotating the main Numpy namespace
+-----------------------------------
+Starting from the 1.20 release, PEP 484 type annotations have been included for
+parts of the NumPy library; annotating the remaining functions being a work in
+progress. With the release of 1.22 this process has been completed for the main
+NumPy namespace, which is now fully annotated.
+
+Besides the main namespace, a limited number of sub-packages contain
+annotations as well. This includes, among others, ``numpy.testing``,
+``numpy.linalg`` and ``numpy.random`` (available since 1.21).
+
+(`gh-20217 <https://github.com/numpy/numpy/pull/20217>`__)
+
+Vectorize umath module using AVX-512
+-------------------------------------
+By leveraging Intel Short Vector Math Library (SVML), 18 umath functions
+(``exp2``, ``log2``, ``log10``, ``expm1``, ``log1p``, ``cbrt``, ``sin``,
+``cos``, ``tan``, ``arcsin``, ``arccos``, ``arctan``, ``sinh``, ``cosh``,
+``tanh``, ``arcsinh``, ``arccosh``, ``arctanh``) are vectorized using AVX-512
+instruction set for both single and double precision implementations.  This
+change is currently enabled only for Linux users and on processors with AVX-512
+instruction set.  It provides an average speed up of 32x and 14x for single and
+double precision functions respectively.
+
+(`gh-19478 <https://github.com/numpy/numpy/pull/19478>`__)
+
+OpenBLAS v0.3.18
+----------------
+Update the OpenBLAS used in testing and in wheels to v0.3.18
+
+(`gh-20058 <https://github.com/numpy/numpy/pull/20058>`__)
+

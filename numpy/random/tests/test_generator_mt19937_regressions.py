@@ -1,7 +1,7 @@
 from numpy.testing import (assert_, assert_array_equal)
 import numpy as np
 import pytest
-from numpy.random import Generator, MT19937, RandomState
+from numpy.random import Generator, MT19937
 
 mt19937 = Generator(MT19937())
 
@@ -32,11 +32,11 @@ class TestRegression:
         # these two frequency counts should be close to theoretical
         # numbers with this large sample
         # theoretical large N result is 0.49706795
-        freq = np.sum(rvsn == 1) / float(N)
+        freq = np.sum(rvsn == 1) / N
         msg = f'Frequency was {freq:f}, should be > 0.45'
         assert_(freq > 0.45, msg)
         # theoretical large N result is 0.19882718
-        freq = np.sum(rvsn == 2) / float(N)
+        freq = np.sum(rvsn == 2) / N
         msg = f'Frequency was {freq:f}, should be < 0.23'
         assert_(freq < 0.23, msg)
 

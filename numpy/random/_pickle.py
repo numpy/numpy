@@ -1,6 +1,6 @@
 from .mtrand import RandomState
 from ._philox import Philox
-from ._pcg64 import PCG64
+from ._pcg64 import PCG64, PCG64DXSM
 from ._sfc64 import SFC64
 
 from ._generator import Generator
@@ -8,6 +8,7 @@ from ._mt19937 import MT19937
 
 BitGenerators = {'MT19937': MT19937,
                  'PCG64': PCG64,
+                 'PCG64DXSM': PCG64DXSM,
                  'Philox': Philox,
                  'SFC64': SFC64,
                  }
@@ -24,7 +25,7 @@ def __generator_ctor(bit_generator_name='MT19937'):
 
     Returns
     -------
-    rg: Generator
+    rg : Generator
         Generator using the named core BitGenerator
     """
     if bit_generator_name in BitGenerators:
@@ -47,7 +48,7 @@ def __bit_generator_ctor(bit_generator_name='MT19937'):
 
     Returns
     -------
-    bit_generator: BitGenerator
+    bit_generator : BitGenerator
         BitGenerator instance
     """
     if bit_generator_name in BitGenerators:
@@ -70,7 +71,7 @@ def __randomstate_ctor(bit_generator_name='MT19937'):
 
     Returns
     -------
-    rs: RandomState
+    rs : RandomState
         Legacy RandomState using the named core BitGenerator
     """
     if bit_generator_name in BitGenerators:

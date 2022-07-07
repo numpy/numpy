@@ -14,6 +14,15 @@ from .multiarray import array, asanyarray
 __all__ = ["require"]
 
 
+POSSIBLE_FLAGS = {
+    'C': 'C', 'C_CONTIGUOUS': 'C', 'CONTIGUOUS': 'C',
+    'F': 'F', 'F_CONTIGUOUS': 'F', 'FORTRAN': 'F',
+    'A': 'A', 'ALIGNED': 'A',
+    'W': 'W', 'WRITEABLE': 'W',
+    'O': 'O', 'OWNDATA': 'O',
+    'E': 'E', 'ENSUREARRAY': 'E'
+}
+
 
 def _require_dispatcher(a, dtype=None, requirements=None, *, like=None):
     return (like,)
@@ -36,7 +45,7 @@ def require(a, dtype=None, requirements=None, *, like=None):
        The required data-type. If None preserve the current dtype. If your
        application requires the data to be in native byteorder, include
        a byteorder specification as a part of the dtype specification.
-    requirements : str or list of str
+    requirements : str or sequence of str
        The requirements list can be any of the following
 
        * 'F_CONTIGUOUS' ('F') - ensure a Fortran-contiguous array
@@ -78,7 +87,6 @@ def require(a, dtype=None, requirements=None, *, like=None):
       WRITEABLE : True
       ALIGNED : True
       WRITEBACKIFCOPY : False
-      UPDATEIFCOPY : False
 
     >>> y = np.require(x, dtype=np.float32, requirements=['A', 'O', 'W', 'F'])
     >>> y.flags
@@ -88,7 +96,6 @@ def require(a, dtype=None, requirements=None, *, like=None):
       WRITEABLE : True
       ALIGNED : True
       WRITEBACKIFCOPY : False
-      UPDATEIFCOPY : False
 
     """
     if like is not None:
@@ -99,16 +106,10 @@ def require(a, dtype=None, requirements=None, *, like=None):
             like=like,
         )
 
-    possible_flags = {'C': 'C', 'C_CONTIGUOUS': 'C', 'CONTIGUOUS': 'C',
-                      'F': 'F', 'F_CONTIGUOUS': 'F', 'FORTRAN': 'F',
-                      'A': 'A', 'ALIGNED': 'A',
-                      'W': 'W', 'WRITEABLE': 'W',
-                      'O': 'O', 'OWNDATA': 'O',
-                      'E': 'E', 'ENSUREARRAY': 'E'}
     if not requirements:
         return asanyarray(a, dtype=dtype)
-    else:
-        requirements = {possible_flags[x.upper()] for x in requirements}
+
+    requirements = {POSSIBLE_FLAGS[x.upper()] for x in requirements}
 
     if 'E' in requirements:
         requirements.remove('E')
@@ -130,8 +131,7 @@ def require(a, dtype=None, requirements=None, *, like=None):
 
     for prop in requirements:
         if not arr.flags[prop]:
-            arr = arr.copy(order)
-            break
+            return arr.copy(order)
     return arr
 
 

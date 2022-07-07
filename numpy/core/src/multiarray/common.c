@@ -1,8 +1,9 @@
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#define _MULTIARRAYMODULE
+
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
-#define NPY_NO_DEPRECATED_API NPY_API_VERSION
-#define _MULTIARRAYMODULE
 #include "numpy/arrayobject.h"
 
 #include "npy_config.h"
@@ -46,8 +47,8 @@ _array_find_python_scalar_type(PyObject *op)
         return PyArray_DescrFromType(NPY_CDOUBLE);
     }
     else if (PyLong_Check(op)) {
-        return PyArray_PyIntAbstractDType.discover_descr_from_pyobject(
-                    &PyArray_PyIntAbstractDType, op);
+        return NPY_DT_CALL_discover_descr_from_pyobject(
+                &PyArray_PyIntAbstractDType, op);
     }
     return NULL;
 }
@@ -107,8 +108,8 @@ PyArray_DTypeFromObjectStringDiscovery(
 
 /*
  * This function is now identical to the new PyArray_DiscoverDTypeAndShape
- * but only returns the the dtype. It should in most cases be slowly phased
- * out. (Which may need some refactoring to PyArray_FromAny to make it simpler)
+ * but only returns the dtype. It should in most cases be slowly phased out.
+ * (Which may need some refactoring to PyArray_FromAny to make it simpler)
  */
 NPY_NO_EXPORT int
 PyArray_DTypeFromObject(PyObject *obj, int maxdims, PyArray_Descr **out_dtype)
@@ -118,7 +119,7 @@ PyArray_DTypeFromObject(PyObject *obj, int maxdims, PyArray_Descr **out_dtype)
     int ndim;
 
     ndim = PyArray_DiscoverDTypeAndShape(
-            obj, maxdims, shape, &cache, NULL, NULL, out_dtype);
+            obj, maxdims, shape, &cache, NULL, NULL, out_dtype, 0);
     if (ndim < 0) {
         return -1;
     }
@@ -126,23 +127,6 @@ PyArray_DTypeFromObject(PyObject *obj, int maxdims, PyArray_Descr **out_dtype)
     return 0;
 }
 
-NPY_NO_EXPORT char *
-index2ptr(PyArrayObject *mp, npy_intp i)
-{
-    npy_intp dim0;
-
-    if (PyArray_NDIM(mp) == 0) {
-        PyErr_SetString(PyExc_IndexError, "0-d arrays can't be indexed");
-        return NULL;
-    }
-    dim0 = PyArray_DIMS(mp)[0];
-    if (check_and_adjust_index(&i, dim0, 0, NULL) < 0)
-        return NULL;
-    if (i == 0) {
-        return PyArray_DATA(mp);
-    }
-    return PyArray_BYTES(mp)+i*PyArray_STRIDES(mp)[0];
-}
 
 NPY_NO_EXPORT int
 _zerofill(PyArrayObject *ret)
@@ -152,7 +136,6 @@ _zerofill(PyArrayObject *ret)
         PyArray_FillObjectArray(ret, zero);
         Py_DECREF(zero);
         if (PyErr_Occurred()) {
-            Py_DECREF(ret);
             return -1;
         }
     }

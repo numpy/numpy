@@ -38,9 +38,9 @@ np.nbytes[np.int64]
 
 np.ScalarType
 np.ScalarType[0]
-np.ScalarType[4]
-np.ScalarType[9]
-np.ScalarType[11]
+np.ScalarType[3]
+np.ScalarType[8]
+np.ScalarType[10]
 
 np.typecodes["Character"]
 np.typecodes["Complex"]

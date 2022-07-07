@@ -85,10 +85,11 @@
 # ATLAS
 # -----
 # ATLAS is an open source optimized implementation of the BLAS and LAPACK
-# routines. NumPy will try to build against ATLAS by default when available in
-# the system library dirs. To build NumPy against a custom installation of
-# ATLAS you can add an explicit section such as the following. Here we assume
-# that ATLAS was configured with ``prefix=/opt/atlas``.
+# routines. NumPy will try to build against ATLAS when available in
+# the system library dirs (and OpenBLAS, MKL and BLIS are not installed). To
+# build NumPy against a custom installation of ATLAS you can add an explicit
+# section such as the following. Here we assume that ATLAS was configured with
+# ``prefix=/opt/atlas``.
 #
 # [atlas]
 # library_dirs = /opt/atlas/lib
@@ -96,29 +97,11 @@
 
 # OpenBLAS
 # --------
-# OpenBLAS is another open source optimized implementation of BLAS and LAPACK
-# and can be seen as an alternative to ATLAS. To build NumPy against OpenBLAS
-# instead of ATLAS, use this section instead of the above, adjusting as needed
-# for your configuration (in the following example we installed OpenBLAS with
-# ``make install PREFIX=/opt/OpenBLAS``.
-# OpenBLAS is generically installed as a shared library, to force the OpenBLAS
-# library linked to also be used at runtime you can utilize the
-# runtime_library_dirs variable.
-#
-# **Warning**: OpenBLAS, by default, is built in multithreaded mode. Due to the
-# way Python's multiprocessing is implemented, a multithreaded OpenBLAS can
-# cause programs using both to hang as soon as a worker process is forked on
-# POSIX systems (Linux, Mac).
-# This is fixed in OpenBLAS 0.2.9 for the pthread build, the OpenMP build using
-# GNU openmp is as of gcc-4.9 not fixed yet.
-# Python 3.4 will introduce a new feature in multiprocessing, called the
-# "forkserver", which solves this problem. For older versions, make sure
-# OpenBLAS is built using pthreads or use Python threads instead of
-# multiprocessing.
-# (This problem does not exist with multithreaded ATLAS.)
-#
-# https://docs.python.org/library/multiprocessing.html#contexts-and-start-methods
-# https://github.com/xianyi/OpenBLAS/issues/294
+# OpenBLAS is an open source optimized implementation of BLAS and LAPACK
+# and is the default choice for NumPy itself (CI, wheels). OpenBLAS will be
+# selected above ATLAS and Netlib BLAS/LAPACK.  OpenBLAS is generically
+# installed as a shared library, to force the OpenBLAS library linked to also
+# be used at runtime you can utilize the runtime_library_dirs variable.
 #
 # [openblas]
 # libraries = openblas

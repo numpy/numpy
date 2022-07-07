@@ -587,6 +587,12 @@ class TestIndexing:
 
         assert arr.dtype is dt
 
+    def test_nontuple_ndindex(self):
+        a = np.arange(25).reshape((5, 5))
+        assert_equal(a[[0, 1]], np.array([a[0], a[1]]))
+        assert_equal(a[[0, 1], [0, 1]], np.array([0, 6]))
+        assert_raises(IndexError, a.__getitem__, [slice(None)])
+
 
 class TestFieldIndexing:
     def test_scalar_return_type(self):
@@ -1291,10 +1297,9 @@ class TestBooleanIndexing:
     def test_boolean_indexing_weirdness(self):
         # Weird boolean indexing things
         a = np.ones((2, 3, 4))
-        a[False, True, ...].shape == (0, 2, 3, 4)
-        a[True, [0, 1], True, True, [1], [[2]]] == (1, 2)
+        assert a[False, True, ...].shape == (0, 2, 3, 4)
+        assert a[True, [0, 1], True, True, [1], [[2]]].shape == (1, 2)
         assert_raises(IndexError, lambda: a[False, [0, 1], ...])
-
 
     def test_boolean_indexing_fast_path(self):
         # These used to either give the wrong error, or incorrectly give no
@@ -1332,7 +1337,7 @@ class TestBooleanIndexing:
 
 
 class TestArrayToIndexDeprecation:
-    """Creating an an index from array not 0-D is an error.
+    """Creating an index from array not 0-D is an error.
 
     """
     def test_array_to_index_error(self):

@@ -11,14 +11,14 @@ How to use the documentation
 ----------------------------
 Documentation is available in two forms: docstrings provided
 with the code, and a loose standing reference guide, available from
-`the NumPy homepage <https://www.scipy.org>`_.
+`the NumPy homepage <https://numpy.org>`_.
 
 We recommend exploring the docstrings using
 `IPython <https://ipython.org>`_, an advanced Python shell with
 TAB-completion and introspection capabilities.  See below for further
 instructions.
 
-The docstring examples assume that `numpy` has been imported as `np`::
+The docstring examples assume that `numpy` has been imported as ``np``::
 
   >>> import numpy as np
 
@@ -52,8 +52,6 @@ of numpy are available under the ``doc`` sub-module::
 
 Available subpackages
 ---------------------
-doc
-    Topical documentation on broadcasting, indexing, etc.
 lib
     Basic functions used by several sub-packages.
 random
@@ -66,8 +64,6 @@ polynomial
     Polynomial tools
 testing
     NumPy testing tools
-f2py
-    Fortran to Python Interface Generator.
 distutils
     Enhancements to distutils with support for
     Fortran compilers support and more.
@@ -90,7 +86,7 @@ __version__
 Viewing documentation using IPython
 -----------------------------------
 Start IPython with the NumPy profile (``ipython -p numpy``), which will
-import `numpy` under the alias `np`.  Then, use the ``cpaste`` command to
+import `numpy` under the alias ``np``.  Then, use the ``cpaste`` command to
 paste examples into the shell.  To see which functions are available in
 `numpy`, type ``np.<TAB>`` (where ``<TAB>`` refers to the TAB key), or use
 ``np.*cos*?<ENTER>`` (where ``<ENTER>`` refers to the ENTER key) to narrow
@@ -110,7 +106,8 @@ import sys
 import warnings
 
 from ._globals import (
-    ModuleDeprecationWarning, VisibleDeprecationWarning, _NoValue
+    ModuleDeprecationWarning, VisibleDeprecationWarning,
+    _NoValue, _CopyMode
 )
 
 # We first need to detect if we're being called as part of the numpy setup
@@ -133,13 +130,6 @@ else:
 
     __all__ = ['ModuleDeprecationWarning',
                'VisibleDeprecationWarning']
-
-    # get the version using versioneer
-    from ._version import get_versions
-    vinfo = get_versions()
-    __version__ = vinfo.get("closest-tag", vinfo["version"])
-    __git_version__ = vinfo.get("full-revisionid")
-    del get_versions, vinfo
 
     # mapping of {name: (value, deprecation_msg)}
     __deprecated_attrs__ = {}
@@ -195,10 +185,17 @@ else:
         n: (getattr(_builtins, n), _msg.format(n=n, extended_msg=extended_msg))
         for n, extended_msg in _type_info
     })
+
     # Numpy 1.20.0, 2020-10-19
     __deprecated_attrs__["typeDict"] = (
         core.numerictypes.typeDict,
         "`np.typeDict` is a deprecated alias for `np.sctypeDict`."
+    )
+
+    # NumPy 1.22, 2021-10-20
+    __deprecated_attrs__["MachAr"] = (
+        core._machar.MachAr,
+        "`np.MachAr` is deprecated (NumPy 1.22)."
     )
 
     _msg = (
@@ -232,6 +229,10 @@ else:
     __all__.extend(_mat.__all__)
     __all__.extend(lib.__all__)
     __all__.extend(['linalg', 'fft', 'random', 'ctypeslib', 'ma'])
+
+    # Remove one of the two occurrences of `issubdtype`, which is exposed as
+    # both `numpy.core.issubdtype` and `numpy.lib.issubdtype`.
+    __all__.remove('issubdtype')
 
     # These are exported by np.core, but are replaced by the builtins below
     # remove them to ensure that we don't end up with `np.long == np.int_`,
@@ -270,69 +271,58 @@ else:
     oldnumeric = 'removed'
     numarray = 'removed'
 
-    if sys.version_info[:2] >= (3, 7):
-        # module level getattr is only supported in 3.7 onwards
-        # https://www.python.org/dev/peps/pep-0562/
-        def __getattr__(attr):
-            # Warn for expired attributes, and return a dummy function
-            # that always raises an exception.
-            try:
-                msg = __expired_functions__[attr]
-            except KeyError:
-                pass
-            else:
-                warnings.warn(msg, DeprecationWarning, stacklevel=2)
+    def __getattr__(attr):
+        # Warn for expired attributes, and return a dummy function
+        # that always raises an exception.
+        import warnings
+        try:
+            msg = __expired_functions__[attr]
+        except KeyError:
+            pass
+        else:
+            warnings.warn(msg, DeprecationWarning, stacklevel=2)
 
-                def _expired(*args, **kwds):
-                    raise RuntimeError(msg)
+            def _expired(*args, **kwds):
+                raise RuntimeError(msg)
 
-                return _expired
+            return _expired
 
-            # Emit warnings for deprecated attributes
-            try:
-                val, msg = __deprecated_attrs__[attr]
-            except KeyError:
-                pass
-            else:
-                warnings.warn(msg, DeprecationWarning, stacklevel=2)
-                return val
+        # Emit warnings for deprecated attributes
+        try:
+            val, msg = __deprecated_attrs__[attr]
+        except KeyError:
+            pass
+        else:
+            warnings.warn(msg, DeprecationWarning, stacklevel=2)
+            return val
 
-            # Importing Tester requires importing all of UnitTest which is not a
-            # cheap import Since it is mainly used in test suits, we lazy import it
-            # here to save on the order of 10 ms of import time for most users
-            #
-            # The previous way Tester was imported also had a side effect of adding
-            # the full `numpy.testing` namespace
-            if attr == 'testing':
-                import numpy.testing as testing
-                return testing
-            elif attr == 'Tester':
-                from .testing import Tester
-                return Tester
+        # Importing Tester requires importing all of UnitTest which is not a
+        # cheap import Since it is mainly used in test suits, we lazy import it
+        # here to save on the order of 10 ms of import time for most users
+        #
+        # The previous way Tester was imported also had a side effect of adding
+        # the full `numpy.testing` namespace
+        if attr == 'testing':
+            import numpy.testing as testing
+            return testing
+        elif attr == 'Tester':
+            from .testing import Tester
+            return Tester
 
-            raise AttributeError("module {!r} has no attribute "
-                                 "{!r}".format(__name__, attr))
+        raise AttributeError("module {!r} has no attribute "
+                             "{!r}".format(__name__, attr))
 
-        def __dir__():
-            return list(globals().keys() | {'Tester', 'testing'})
-
-    else:
-        # We don't actually use this ourselves anymore, but I'm not 100% sure that
-        # no-one else in the world is using it (though I hope not)
-        from .testing import Tester
-
-        # We weren't able to emit a warning about these, so keep them around
-        globals().update({
-            k: v
-            for k, (v, msg) in __deprecated_attrs__.items()
-        })
-
+    def __dir__():
+        public_symbols = globals().keys() | {'Tester', 'testing'}
+        public_symbols -= {
+            "core", "matrixlib",
+        }
+        return list(public_symbols)
 
     # Pytest testing
     from numpy._pytesttester import PytestTester
     test = PytestTester(__name__)
     del PytestTester
-
 
     def _sanity_check():
         """
@@ -347,7 +337,7 @@ else:
         """
         try:
             x = ones(2, dtype=float32)
-            if not abs(x.dot(x) - 2.0) < 1e-5:
+            if not abs(x.dot(x) - float32(2.0)) < 1e-5:
                 raise AssertionError()
         except AssertionError:
             msg = ("The current Numpy installation ({!r}) fails to "
@@ -373,7 +363,6 @@ else:
         except ValueError:
             pass
 
-    import sys
     if sys.platform == "darwin":
         with warnings.catch_warnings(record=True) as w:
             _mac_os_check()
@@ -383,10 +372,10 @@ else:
                 error_message = "{}: {}".format(w[-1].category.__name__, str(w[-1].message))
                 msg = (
                     "Polyfit sanity test emitted a warning, most likely due "
-                    "to using a buggy Accelerate backend. If you compiled "
-                    "yourself, more information is available at "
-                    "https://numpy.org/doc/stable/user/building.html#accelerated-blas-lapack-libraries "
-                    "Otherwise report this to the vendor "
+                    "to using a buggy Accelerate backend."
+                    "\nIf you compiled yourself, more information is available at:"
+                    "\nhttps://numpy.org/doc/stable/user/building.html#accelerated-blas-lapack-libraries"
+                    "\nOtherwise report this to the vendor "
                     "that provided NumPy.\n{}\n".format(error_message))
                 raise RuntimeError(msg)
     del _mac_os_check
@@ -424,6 +413,19 @@ else:
     # it is tidier organized.
     core.multiarray._multiarray_umath._reload_guard()
 
-from ._version import get_versions
-__version__ = get_versions()['version']
-del get_versions
+    core._set_promotion_state(os.environ.get("NPY_PROMOTION_STATE", "legacy"))
+
+    # Tell PyInstaller where to find hook-numpy.py
+    def _pyinstaller_hooks_dir():
+        from pathlib import Path
+        return [str(Path(__file__).with_name("_pyinstaller").resolve())]
+
+    # Remove symbols imported for internal use
+    del os
+
+
+# get the version using versioneer
+from .version import __version__, git_revision as __git_version__
+
+# Remove symbols imported for internal use
+del sys, warnings

@@ -18,3 +18,6 @@ fundamental NumPy ideas and philosophy.
    basics.rec
    basics.dispatch
    basics.subclassing
+   basics.ufuncs
+   basics.copies
+   basics.interoperability

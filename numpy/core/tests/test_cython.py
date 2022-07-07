@@ -13,14 +13,14 @@ try:
 except ImportError:
     cython = None
 else:
-    from distutils.version import LooseVersion
+    from numpy.compat import _pep440
 
-    # Cython 0.29.21 is required for Python 3.9 and there are
+    # Cython 0.29.30 is required for Python 3.11 and there are
     # other fixes in the 0.29 series that are needed even for earlier
     # Python versions.
     # Note: keep in sync with the one in pyproject.toml
-    required_version = LooseVersion("0.29.21")
-    if LooseVersion(cython_version) < required_version:
+    required_version = "0.29.30"
+    if _pep440.parse(cython_version) < _pep440.Version(required_version):
         # too old or wrong cython, skip the test
         cython = None
 
@@ -32,7 +32,7 @@ def install_temp(request, tmp_path):
     # Based in part on test_cython from random.tests.test_extending
 
     here = os.path.dirname(__file__)
-    ext_dir = os.path.join(here, "examples")
+    ext_dir = os.path.join(here, "examples", "cython")
 
     cytest = str(tmp_path / "cytest")
 
@@ -40,7 +40,7 @@ def install_temp(request, tmp_path):
     # build the examples and "install" them into a temporary directory
 
     install_log = str(tmp_path / "tmp_install_log.txt")
-    subprocess.check_call(
+    subprocess.check_output(
         [
             sys.executable,
             "setup.py",

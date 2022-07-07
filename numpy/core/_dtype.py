@@ -200,34 +200,46 @@ def _struct_dict_str(dtype, includealignedflag):
 
     # Build up a string to make the dictionary
 
+    if np.core.arrayprint._get_legacy_print_mode() <= 121:
+        colon = ":"
+        fieldsep = ","
+    else:
+        colon = ": "
+        fieldsep = ", "
+
     # First, the names
-    ret = "{'names':["
-    ret += ",".join(repr(name) for name in names)
+    ret = "{'names'%s[" % colon
+    ret += fieldsep.join(repr(name) for name in names)
 
     # Second, the formats
-    ret += "], 'formats':["
-    ret += ",".join(
+    ret += "], 'formats'%s[" % colon
+    ret += fieldsep.join(
         _construction_repr(fld_dtype, short=True) for fld_dtype in fld_dtypes)
 
     # Third, the offsets
-    ret += "], 'offsets':["
-    ret += ",".join("%d" % offset for offset in offsets)
+    ret += "], 'offsets'%s[" % colon
+    ret += fieldsep.join("%d" % offset for offset in offsets)
 
     # Fourth, the titles
     if any(title is not None for title in titles):
-        ret += "], 'titles':["
-        ret += ",".join(repr(title) for title in titles)
+        ret += "], 'titles'%s[" % colon
+        ret += fieldsep.join(repr(title) for title in titles)
 
     # Fifth, the itemsize
-    ret += "], 'itemsize':%d" % dtype.itemsize
+    ret += "], 'itemsize'%s%d" % (colon, dtype.itemsize)
 
     if (includealignedflag and dtype.isalignedstruct):
         # Finally, the aligned flag
-        ret += ", 'aligned':True}"
+        ret += ", 'aligned'%sTrue}" % colon
     else:
         ret += "}"
 
     return ret
+
+
+def _aligned_offset(offset, alignment):
+    # round up offset:
+    return - (-offset // alignment) * alignment
 
 
 def _is_packed(dtype):
@@ -242,12 +254,23 @@ def _is_packed(dtype):
 
     Duplicates the C `is_dtype_struct_simple_unaligned_layout` function.
     """
+    align = dtype.isalignedstruct
+    max_alignment = 1
     total_offset = 0
     for name in dtype.names:
         fld_dtype, fld_offset, title = _unpack_field(*dtype.fields[name])
+
+        if align:
+            total_offset = _aligned_offset(total_offset, fld_dtype.alignment)
+            max_alignment = max(max_alignment, fld_dtype.alignment)
+
         if fld_offset != total_offset:
             return False
         total_offset += fld_dtype.itemsize
+
+    if align:
+        total_offset = _aligned_offset(total_offset, max_alignment)
+
     if total_offset != dtype.itemsize:
         return False
     return True

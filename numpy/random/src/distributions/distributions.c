@@ -17,7 +17,7 @@ static NPY_INLINE uint64_t next_uint64(bitgen_t *bitgen_state) {
 }
 
 static NPY_INLINE float next_float(bitgen_t *bitgen_state) {
-  return (next_uint32(bitgen_state) >> 9) * (1.0f / 8388608.0f);
+  return (next_uint32(bitgen_state) >> 8) * (1.0f / 16777216.0f);
 }
 
 /* Random generators for external use */
@@ -452,7 +452,7 @@ double random_standard_cauchy(bitgen_t *bitgen_state) {
 }
 
 double random_pareto(bitgen_t *bitgen_state, double a) {
-  return exp(random_standard_exponential(bitgen_state) / a) - 1;
+  return expm1(random_standard_exponential(bitgen_state) / a);
 }
 
 double random_weibull(bitgen_t *bitgen_state, double a) {
@@ -463,7 +463,7 @@ double random_weibull(bitgen_t *bitgen_state, double a) {
 }
 
 double random_power(bitgen_t *bitgen_state, double a) {
-  return pow(1 - exp(-random_standard_exponential(bitgen_state)), 1. / a);
+  return pow(-expm1(-random_standard_exponential(bitgen_state)), 1. / a);
 }
 
 double random_laplace(bitgen_t *bitgen_state, double loc, double scale) {
@@ -918,7 +918,7 @@ int64_t random_logseries(bitgen_t *bitgen_state, double p) {
       return 1;
     }
     U = next_double(bitgen_state);
-    q = 1.0 - exp(r * U);
+    q = -expm1(r * U);
     if (V <= q * q) {
       result = (int64_t)floor(1 + log(V) / log(q));
       if ((result < 1) || (V == 0.0)) {

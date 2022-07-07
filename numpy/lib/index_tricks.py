@@ -148,32 +148,33 @@ class nd_grid:
     def __getitem__(self, key):
         try:
             size = []
-            typ = int
+            # Mimic the behavior of `np.arange` and use a data type
+            # which is at least as large as `np.int_`
+            num_list = [0]
             for k in range(len(key)):
                 step = key[k].step
                 start = key[k].start
+                stop = key[k].stop
                 if start is None:
                     start = 0
                 if step is None:
                     step = 1
                 if isinstance(step, (_nx.complexfloating, complex)):
-                    size.append(int(abs(step)))
-                    typ = float
+                    step = abs(step)
+                    size.append(int(step))
                 else:
                     size.append(
-                        int(math.ceil((key[k].stop - start)/(step*1.0))))
-                if (isinstance(step, (_nx.floating, float)) or
-                        isinstance(start, (_nx.floating, float)) or
-                        isinstance(key[k].stop, (_nx.floating, float))):
-                    typ = float
+                        int(math.ceil((stop - start) / (step*1.0))))
+                num_list += [start, stop, step]
+            typ = _nx.result_type(*num_list)
             if self.sparse:
                 nn = [_nx.arange(_x, dtype=_t)
                       for _x, _t in zip(size, (typ,)*len(size))]
             else:
                 nn = _nx.indices(size, typ)
-            for k in range(len(size)):
-                step = key[k].step
-                start = key[k].start
+            for k, kk in enumerate(key):
+                step = kk.step
+                start = kk.start
                 if start is None:
                     start = 0
                 if step is None:
@@ -181,7 +182,7 @@ class nd_grid:
                 if isinstance(step, (_nx.complexfloating, complex)):
                     step = int(abs(step))
                     if step != 1:
-                        step = (key[k].stop - start)/float(step-1)
+                        step = (kk.stop - start) / float(step - 1)
                 nn[k] = (nn[k]*step+start)
             if self.sparse:
                 slobj = [_nx.newaxis]*len(size)
@@ -197,12 +198,13 @@ class nd_grid:
             if start is None:
                 start = 0
             if isinstance(step, (_nx.complexfloating, complex)):
-                step = abs(step)
-                length = int(step)
+                # Prevent the (potential) creation of integer arrays
+                step_float = abs(step)
+                step = length = int(step_float)
                 if step != 1:
                     step = (key.stop-start)/float(step-1)
-                stop = key.stop + step
-                return _nx.arange(0, length, 1, float)*step + start
+                typ = _nx.result_type(start, stop, step_float)
+                return _nx.arange(0, length, 1, dtype=typ)*step + start
             else:
                 return _nx.arange(start, stop, step)
 
@@ -228,13 +230,13 @@ class MGridClass(nd_grid):
 
     See Also
     --------
-    numpy.lib.index_tricks.nd_grid : class of `ogrid` and `mgrid` objects
+    lib.index_tricks.nd_grid : class of `ogrid` and `mgrid` objects
     ogrid : like mgrid but returns open (not fleshed out) mesh grids
     r_ : array concatenator
 
     Examples
     --------
-    >>> np.mgrid[0:5,0:5]
+    >>> np.mgrid[0:5, 0:5]
     array([[[0, 0, 0, 0, 0],
             [1, 1, 1, 1, 1],
             [2, 2, 2, 2, 2],
@@ -622,7 +624,7 @@ class ndindex:
     Parameters
     ----------
     shape : ints, or a single tuple of ints
-        The size of each dimension of the array can be passed as 
+        The size of each dimension of the array can be passed as
         individual parameters or as the elements of a tuple.
 
     See Also
@@ -631,7 +633,8 @@ class ndindex:
 
     Examples
     --------
-    # dimensions as individual arguments
+    Dimensions as individual arguments
+
     >>> for index in np.ndindex(3, 2, 1):
     ...     print(index)
     (0, 0, 0)
@@ -641,7 +644,8 @@ class ndindex:
     (2, 0, 0)
     (2, 1, 0)
 
-    # same dimensions - but in a tuple (3, 2, 1)
+    Same dimensions - but in a tuple ``(3, 2, 1)``
+
     >>> for index in np.ndindex((3, 2, 1)):
     ...     print(index)
     (0, 0, 0)

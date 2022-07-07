@@ -1,12 +1,14 @@
 /**
- * Testing the utilites of the CPU dispatcher
+ * Testing the utilities of the CPU dispatcher
  *
  * @targets $werror baseline
  * SSE2 SSE41 AVX2
  * VSX VSX2 VSX3
  * NEON ASIMD ASIMDHP
  */
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
+
 #include "npy_cpu_dispatch.h"
 
 #ifndef NPY_DISABLE_OPTIMIZATION

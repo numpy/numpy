@@ -49,24 +49,24 @@ Floating point classification
 .. c:macro:: npy_isnan(x)
 
     This is a macro, and is equivalent to C99 isnan: works for single, double
-    and extended precision, and return a non 0 value is x is a NaN.
+    and extended precision, and return a non 0 value if x is a NaN.
 
 .. c:macro:: npy_isfinite(x)
 
     This is a macro, and is equivalent to C99 isfinite: works for single,
-    double and extended precision, and return a non 0 value is x is neither a
+    double and extended precision, and return a non 0 value if x is neither a
     NaN nor an infinity.
 
 .. c:macro:: npy_isinf(x)
 
     This is a macro, and is equivalent to C99 isinf: works for single, double
-    and extended precision, and return a non 0 value is x is infinite (positive
+    and extended precision, and return a non 0 value if x is infinite (positive
     and negative).
 
 .. c:macro:: npy_signbit(x)
 
     This is a macro, and is equivalent to C99 signbit: works for single, double
-    and extended precision, and return a non 0 value is x has the signbit set
+    and extended precision, and return a non 0 value if x has the signbit set
     (that is the number is negative).
 
 .. c:macro:: npy_copysign(x, y)

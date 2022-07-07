@@ -332,5 +332,45 @@ NPYV_IMPL_NEON_REST_PARTIAL_TYPES(u64, s64)
 #if NPY_SIMD_F64
 NPYV_IMPL_NEON_REST_PARTIAL_TYPES(f64, s64)
 #endif
+/*********************************
+ * Lookup table
+ *********************************/
+// uses vector as indexes into a table
+// that contains 32 elements of uint32.
+NPY_FINLINE npyv_u32 npyv_lut32_u32(const npy_uint32 *table, npyv_u32 idx)
+{
+    const unsigned i0 = vgetq_lane_u32(idx, 0);
+    const unsigned i1 = vgetq_lane_u32(idx, 1);
+    const unsigned i2 = vgetq_lane_u32(idx, 2);
+    const unsigned i3 = vgetq_lane_u32(idx, 3);
+
+    uint32x2_t low = vcreate_u32(table[i0]);
+               low = vld1_lane_u32((const uint32_t*)table + i1, low, 1);
+    uint32x2_t high = vcreate_u32(table[i2]);
+               high = vld1_lane_u32((const uint32_t*)table + i3, high, 1);
+    return vcombine_u32(low, high);
+}
+NPY_FINLINE npyv_s32 npyv_lut32_s32(const npy_int32 *table, npyv_u32 idx)
+{ return npyv_reinterpret_s32_u32(npyv_lut32_u32((const npy_uint32*)table, idx)); }
+NPY_FINLINE npyv_f32 npyv_lut32_f32(const float *table, npyv_u32 idx)
+{ return npyv_reinterpret_f32_u32(npyv_lut32_u32((const npy_uint32*)table, idx)); }
+
+// uses vector as indexes into a table
+// that contains 16 elements of uint64.
+NPY_FINLINE npyv_u64 npyv_lut16_u64(const npy_uint64 *table, npyv_u64 idx)
+{
+    const unsigned i0 = vgetq_lane_u32(vreinterpretq_u32_u64(idx), 0);
+    const unsigned i1 = vgetq_lane_u32(vreinterpretq_u32_u64(idx), 2);
+    return vcombine_u64(
+        vld1_u64((const uint64_t*)table + i0),
+        vld1_u64((const uint64_t*)table + i1)
+    );
+}
+NPY_FINLINE npyv_s64 npyv_lut16_s64(const npy_int64 *table, npyv_u64 idx)
+{ return npyv_reinterpret_s64_u64(npyv_lut16_u64((const npy_uint64*)table, idx)); }
+#if NPY_SIMD_F64
+NPY_FINLINE npyv_f64 npyv_lut16_f64(const double *table, npyv_u64 idx)
+{ return npyv_reinterpret_f64_u64(npyv_lut16_u64((const npy_uint64*)table, idx)); }
+#endif
 
 #endif // _NPY_SIMD_NEON_MEMORY_H

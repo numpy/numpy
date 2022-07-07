@@ -8,7 +8,10 @@ Examples::
 
     $ python runtests.py
     $ python runtests.py -s {SAMPLE_SUBMODULE}
+    $ # Run a standalone test function:
     $ python runtests.py -t {SAMPLE_TEST}
+    $ # Run a test defined as a method of a TestXXX class:
+    $ python runtests.py -t {SAMPLE_TEST2}
     $ python runtests.py --ipython
     $ python runtests.py --python somescript.py
     $ python runtests.py --bench
@@ -43,6 +46,7 @@ Provide target branch name or `uncommitted` to check before committing:
 PROJECT_MODULE = "numpy"
 PROJECT_ROOT_FILES = ['numpy', 'LICENSE.txt', 'setup.py']
 SAMPLE_TEST = "numpy/linalg/tests/test_linalg.py::test_byteorder_check"
+SAMPLE_TEST2 = "numpy/core/tests/test_memmap.py::TestMemmap::test_open_with_filename"
 SAMPLE_SUBMODULE = "linalg"
 
 EXTRA_PATH = ['/usr/lib/ccache', '/usr/lib/f90cache',
@@ -188,10 +192,16 @@ def main(argv):
         site_dir, site_dir_noarch = build_project(args)
         sys.path.insert(0, site_dir)
         sys.path.insert(0, site_dir_noarch)
-        os.environ['PYTHONPATH'] = site_dir + os.pathsep + site_dir_noarch
+        os.environ['PYTHONPATH'] = \
+            os.pathsep.join((
+                site_dir, 
+                site_dir_noarch, 
+                os.environ.get('PYTHONPATH', '')
+            ))
     else:
-        _temp = __import__(PROJECT_MODULE)
-        site_dir = os.path.sep.join(_temp.__file__.split(os.path.sep)[:-2])
+        if not args.bench_compare:
+            _temp = __import__(PROJECT_MODULE)
+            site_dir = os.path.sep.join(_temp.__file__.split(os.path.sep)[:-2])
 
     extra_argv = args.args[:]
     if not args.bench:
@@ -277,6 +287,8 @@ def main(argv):
     if args.refguide_check:
         cmd = [os.path.join(ROOT_DIR, 'tools', 'refguide_check.py'),
                '--doctests']
+        if args.verbose:
+            cmd += ['-' + 'v'*args.verbose]
         if args.submodule:
             cmd += [args.submodule]
         os.execv(sys.executable, [sys.executable] + cmd)
@@ -470,16 +482,27 @@ def build_project(args):
             '--single-version-externally-managed',
             '--record=' + dst_dir + 'tmp_install_log.txt']
 
-    from distutils.sysconfig import get_python_lib
-    site_dir = get_python_lib(prefix=dst_dir, plat_specific=True)
-    site_dir_noarch = get_python_lib(prefix=dst_dir, plat_specific=False)
+    config_vars = dict(sysconfig.get_config_vars())
+    config_vars["platbase"] = dst_dir
+    config_vars["base"] = dst_dir
+
+    site_dir_template = os.path.normpath(sysconfig.get_path(
+        'platlib', expand=False
+    ))
+    site_dir = site_dir_template.format(**config_vars)
+    noarch_template = os.path.normpath(sysconfig.get_path(
+        'purelib', expand=False
+    ))
+    site_dir_noarch = noarch_template.format(**config_vars)
+
     # easy_install won't install to a path that Python by default cannot see
     # and isn't on the PYTHONPATH.  Plus, it has to exist.
     if not os.path.exists(site_dir):
         os.makedirs(site_dir)
     if not os.path.exists(site_dir_noarch):
         os.makedirs(site_dir_noarch)
-    env['PYTHONPATH'] = site_dir + os.pathsep + site_dir_noarch
+    env['PYTHONPATH'] = \
+        os.pathsep.join((site_dir, site_dir_noarch, env.get('PYTHONPATH', '')))
 
     log_filename = os.path.join(ROOT_DIR, 'build.log')
 
@@ -605,7 +628,7 @@ def asv_substitute_config(in_config, out_config, **custom_vars):
             hash_line = wfd.readline().split('hash:')
             if len(hash_line) > 1 and int(hash_line[1]) == vars_hash:
                 return True
-    except IOError:
+    except OSError:
         pass
 
     custom_vars = {f'{{{k}}}':v for k, v in custom_vars.items()}

@@ -16,7 +16,6 @@ The preferred alias for `defchararray` is `numpy.char`.
 
 """
 import functools
-import sys
 from .numerictypes import (
     string_, unicode_, integer, int_, object_, bool_, character)
 from .numeric import ndarray, compare_chararrays
@@ -446,6 +445,22 @@ def center(a, width, fillchar=' '):
     See Also
     --------
     str.center
+    
+    Notes
+    -----
+    This function is intended to work with arrays of strings.  The
+    fill character is not applied to numeric types.
+
+    Examples
+    --------
+    >>> c = np.array(['a1b2','1b2a','b2a1','2a1b']); c
+    array(['a1b2', '1b2a', 'b2a1', '2a1b'], dtype='<U4')
+    >>> np.char.center(c, width=9)
+    array(['   a1b2  ', '   1b2a  ', '   b2a1  ', '   2a1b  '], dtype='<U9')
+    >>> np.char.center(c, width=9, fillchar='*')
+    array(['***a1b2**', '***1b2a**', '***b2a1**', '***2a1b**'], dtype='<U9')
+    >>> np.char.center(c, width=1)
+    array(['a', '1', 'b', '2'], dtype='<U1')
 
     """
     a_arr = numpy.asarray(a)
@@ -2610,6 +2625,7 @@ class chararray(ndarray):
         return isdecimal(self)
 
 
+@set_module("numpy.char")
 def array(obj, itemsize=None, copy=True, unicode=None, order=None):
     """
     Create a `chararray`.
@@ -2743,6 +2759,7 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
     return val.view(chararray)
 
 
+@set_module("numpy.char")
 def asarray(obj, itemsize=None, unicode=None, order=None):
     """
     Convert the input to a `chararray`, copying the data only if

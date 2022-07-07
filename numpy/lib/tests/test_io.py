@@ -203,6 +203,7 @@ class TestSavezLoad(RoundtripTest):
                 self.arr_reloaded.fid.close()
                 os.remove(self.arr_reloaded.fid.name)
 
+    @pytest.mark.skipif(IS_PYPY, reason="Hangs on PyPy")
     @pytest.mark.skipif(not IS_64BIT, reason="Needs 64bit platform")
     @pytest.mark.slow
     def test_big_arrays(self):
@@ -695,7 +696,7 @@ class TestLoadTxt(LoadTxtBase):
         assert_array_equal(x, a)
 
         d = TextIO()
-        d.write('M 64.0 75.0\nF 25.0 60.0')
+        d.write('M 64 75.0\nF 25 60.0')
         d.seek(0)
         mydescriptor = {'names': ('gender', 'age', 'weight'),
                         'formats': ('S1', 'i4', 'f4')}
@@ -779,6 +780,8 @@ class TestLoadTxt(LoadTxtBase):
         a = np.array([[1, 2, 3], [4, 5, 6]], int)
         assert_array_equal(x, a)
 
+    @pytest.mark.skipif(IS_PYPY and sys.implementation.version <= (7, 3, 8),
+                        reason="PyPy bug in error formatting")
     def test_comments_multi_chars(self):
         c = TextIO()
         c.write('/* comment\n1,2,3,5\n')
@@ -871,15 +874,26 @@ class TestLoadTxt(LoadTxtBase):
         bogus_idx = 1.5
         assert_raises_regex(
             TypeError,
-            '^usecols must be.*%s' % type(bogus_idx),
+            '^usecols must be.*%s' % type(bogus_idx).__name__,
             np.loadtxt, c, usecols=bogus_idx
             )
 
         assert_raises_regex(
             TypeError,
-            '^usecols must be.*%s' % type(bogus_idx),
+            '^usecols must be.*%s' % type(bogus_idx).__name__,
             np.loadtxt, c, usecols=[0, bogus_idx, 0]
             )
+
+    def test_bad_usecols(self):
+        with pytest.raises(OverflowError):
+            np.loadtxt(["1\n"], usecols=[2**64], delimiter=",")
+        with pytest.raises((ValueError, OverflowError)):
+            # Overflow error on 32bit platforms
+            np.loadtxt(["1\n"], usecols=[2**62], delimiter=",")
+        with pytest.raises(TypeError,
+                match="If a structured dtype .*. But 1 usecols were given and "
+                      "the number of fields is 3."):
+            np.loadtxt(["1,1\n"], dtype="i,(2)i", usecols=[0], delimiter=",")
 
     def test_fancy_dtype(self):
         c = TextIO()
@@ -919,8 +933,7 @@ class TestLoadTxt(LoadTxtBase):
             assert_array_equal(x, a)
 
     def test_empty_file(self):
-        with suppress_warnings() as sup:
-            sup.filter(message="loadtxt: Empty input file:")
+        with pytest.warns(UserWarning, match="input contained no data"):
             c = TextIO()
             x = np.loadtxt(c)
             assert_equal(x.shape, (0,))
@@ -981,8 +994,33 @@ class TestLoadTxt(LoadTxtBase):
         c.write(inp)
         for dt in [float, np.float32]:
             c.seek(0)
-            res = np.loadtxt(c, dtype=dt)
+            res = np.loadtxt(
+                c, dtype=dt, converters=float.fromhex, encoding="latin1")
             assert_equal(res, tgt, err_msg="%s" % dt)
+
+    @pytest.mark.skipif(IS_PYPY and sys.implementation.version <= (7, 3, 8),
+                        reason="PyPy bug in error formatting")
+    def test_default_float_converter_no_default_hex_conversion(self):
+        """
+        Ensure that fromhex is only used for values with the correct prefix and
+        is not called by default. Regression test related to gh-19598.
+        """
+        c = TextIO("a b c")
+        with pytest.raises(ValueError,
+                match=".*convert string 'a' to float64 at row 0, column 1"):
+            np.loadtxt(c)
+
+    @pytest.mark.skipif(IS_PYPY and sys.implementation.version <= (7, 3, 8),
+                        reason="PyPy bug in error formatting")
+    def test_default_float_converter_exception(self):
+        """
+        Ensure that the exception message raised during failed floating point
+        conversion is correct. Regression test related to gh-19598.
+        """
+        c = TextIO("qrs tuv")  # Invalid values for default float converter
+        with pytest.raises(ValueError,
+                match="could not convert string 'qrs' to float64"):
+            np.loadtxt(c)
 
     def test_from_complex(self):
         tgt = (complex(1, 1), complex(1, -1))
@@ -1077,8 +1115,7 @@ class TestLoadTxt(LoadTxtBase):
         assert_(x.shape == (3,))
 
         # Test ndmin kw with empty file.
-        with suppress_warnings() as sup:
-            sup.filter(message="loadtxt: Empty input file:")
+        with pytest.warns(UserWarning, match="input contained no data"):
             f = TextIO()
             assert_(np.loadtxt(f, ndmin=2).shape == (0, 1,))
             assert_(np.loadtxt(f, ndmin=1).shape == (0,))
@@ -1110,8 +1147,8 @@ class TestLoadTxt(LoadTxtBase):
     @pytest.mark.skipif(locale.getpreferredencoding() == 'ANSI_X3.4-1968',
                         reason="Wrong preferred encoding")
     def test_binary_load(self):
-        butf8 = b"5,6,7,\xc3\x95scarscar\n\r15,2,3,hello\n\r"\
-                b"20,2,3,\xc3\x95scar\n\r"
+        butf8 = b"5,6,7,\xc3\x95scarscar\r\n15,2,3,hello\r\n"\
+                b"20,2,3,\xc3\x95scar\r\n"
         sutf8 = butf8.decode("UTF-8").replace("\r", "").splitlines()
         with temppath() as path:
             with open(path, "wb") as f:
@@ -1174,6 +1211,31 @@ class TestLoadTxt(LoadTxtBase):
         a = np.array([[1, 2, 3, 5], [4, 5, 7, 8], [2, 1, 4, 5]], int)
         assert_array_equal(x, a)
 
+    @pytest.mark.parametrize(["skip", "data"], [
+            (1, ["ignored\n", "1,2\n", "\n", "3,4\n"]),
+            # "Bad" lines that do not end in newlines:
+            (1, ["ignored", "1,2", "", "3,4"]),
+            (1, StringIO("ignored\n1,2\n\n3,4")),
+            # Same as above, but do not skip any lines:
+            (0, ["-1,0\n", "1,2\n", "\n", "3,4\n"]),
+            (0, ["-1,0", "1,2", "", "3,4"]),
+            (0, StringIO("-1,0\n1,2\n\n3,4"))])
+    def test_max_rows_empty_lines(self, skip, data):
+        with pytest.warns(UserWarning,
+                    match=f"Input line 3.*max_rows={3-skip}"):
+            res = np.loadtxt(data, dtype=int, skiprows=skip, delimiter=",",
+                             max_rows=3-skip)
+            assert_array_equal(res, [[-1, 0], [1, 2], [3, 4]][skip:])
+
+        if isinstance(data, StringIO):
+            data.seek(0)
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", UserWarning)
+            with pytest.raises(UserWarning):
+                np.loadtxt(data, dtype=int, skiprows=skip, delimiter=",",
+                           max_rows=3-skip)
+
 class Testfromregex:
     def test_record(self):
         c = TextIO()
@@ -1207,9 +1269,11 @@ class Testfromregex:
         a = np.array([(1312,), (1534,), (4444,)], dtype=dt)
         assert_array_equal(x, a)
 
-    def test_record_unicode(self):
+    @pytest.mark.parametrize("path_type", [str, Path])
+    def test_record_unicode(self, path_type):
         utf8 = b'\xcf\x96'
-        with temppath() as path:
+        with temppath() as str_path:
+            path = path_type(str_path)
             with open(path, 'wb') as f:
                 f.write(b'1.312 foo' + utf8 + b' \n1.534 bar\n4.444 qux')
 
@@ -1230,6 +1294,13 @@ class Testfromregex:
         a = np.array([1, 2, 3], dtype=dt)
         x = np.fromregex(c, regexp, dt)
         assert_array_equal(x, a)
+
+    def test_bad_dtype_not_structured(self):
+        regexp = re.compile(b'(\\d)')
+        c = BytesIO(b'123')
+        with pytest.raises(TypeError, match='structured datatype'):
+            np.fromregex(c, regexp, dtype=np.float64)
+
 
 #####--------------------------------------------------------------------------
 
@@ -1392,6 +1463,10 @@ class TestFromTxt(LoadTxtBase):
         control = np.array([('M', 64.0, 75.0),
                             ('F', 25.0, 60.0)], dtype=descriptor)
         assert_equal(test, control)
+
+    def test_bad_fname(self):
+        with pytest.raises(TypeError, match='fname must be a string,'):
+            np.genfromtxt(123)
 
     def test_commented_header(self):
         # Check that names can be retrieved even if the line is commented out.
@@ -2361,6 +2436,13 @@ M   33  21.99
         assert_equal(test['f1'], 17179869184)
         assert_equal(test['f2'], 1024)
 
+    def test_unpack_float_data(self):
+        txt = TextIO("1,2,3\n4,5,6\n7,8,9\n0.0,1.0,2.0")
+        a, b, c = np.loadtxt(txt, delimiter=",", unpack=True)
+        assert_array_equal(a, np.array([1.0, 4.0, 7.0, 0.0]))
+        assert_array_equal(b, np.array([2.0, 5.0, 8.0, 1.0]))
+        assert_array_equal(c, np.array([3.0, 6.0, 9.0, 2.0]))
+
     def test_unpack_structured(self):
         # Regression test for gh-4341
         # Unpacking should work on structured arrays
@@ -2405,6 +2487,17 @@ M   33  21.99
         assert_array_equal(expected, test)
         assert_equal((), test.shape)
         assert_equal(expected.dtype, test.dtype)
+
+    @pytest.mark.parametrize("ndim", [0, 1, 2])
+    def test_ndmin_keyword(self, ndim: int):
+        # lets have the same behaivour of ndmin as loadtxt
+        # as they should be the same for non-missing values
+        txt = "42"
+
+        a = np.loadtxt(StringIO(txt), ndmin=ndim)
+        b = np.genfromtxt(StringIO(txt), ndmin=ndim)
+
+        assert_array_equal(a, b)
 
 
 class TestPathUsage:
@@ -2480,28 +2573,6 @@ class TestPathUsage:
             np.savetxt(path, a)
             data = np.genfromtxt(path)
             assert_array_equal(a, data)
-
-    def test_ndfromtxt(self):
-        # Test outputting a standard ndarray
-        with temppath(suffix='.txt') as path:
-            path = Path(path)
-            with path.open('w') as f:
-                f.write(u'1 2\n3 4')
-
-            control = np.array([[1, 2], [3, 4]], dtype=int)
-            test = np.genfromtxt(path, dtype=int)
-            assert_array_equal(test, control)
-
-    def test_mafromtxt(self):
-        # From `test_fancy_dtype_alt` above
-        with temppath(suffix='.txt') as path:
-            path = Path(path)
-            with path.open('w') as f:
-                f.write(u'1,2,3.0\n4,5,6.0\n')
-
-            test = np.genfromtxt(path, delimiter=',', usemask=True)
-            control = ma.array([(1.0, 2.0, 3.0), (4.0, 5.0, 6.0)])
-            assert_equal(test, control)
 
     def test_recfromtxt(self):
         with temppath(suffix='.txt') as path:

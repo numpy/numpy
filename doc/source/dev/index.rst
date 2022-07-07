@@ -4,22 +4,6 @@
 Contributing to NumPy
 #####################
 
-.. TODO: this is hidden because there's a bug in the pydata theme that won't render TOC items under headers
-
-.. toctree::
-   :hidden:
-
-   Git Basics <gitwash/index>
-   development_environment
-   development_workflow
-   development_advanced_debugging
-   ../benchmarking
-   NumPy C style guide <https://numpy.org/neps/nep-0045-c_style_guide.html>
-   releasing
-   governance/index
-   howto-docs
-
-
 Not a coder? Not a problem! NumPy is multi-faceted, and we can use a lot of help.
 These are all activities we'd like to get help with (they're all important, so
 we list them in alphabetical order):
@@ -43,8 +27,10 @@ the `numpy-discussion mailing list <https://mail.python.org/mailman/listinfo/num
 or on `GitHub <https://github.com/numpy/numpy>`__ (open an issue or comment on a
 relevant issue). These are our preferred communication channels (open source is open
 by nature!), however if you prefer to discuss in private first, please reach out to
-our community coordinators at `numpy-team@googlegroups.com` or `numpy-team.slack.com`
-(send an email to `numpy-team@googlegroups.com` for an invite the first time).
+our community coordinators at `numpy-team@googlegroups.com
+<mailto://numpy-team@googlegroups.com>`_ or `numpy-team.slack.com
+<https://numpy-team.slack.com>`__ (send an email to `numpy-team@googlegroups.com`_ for an
+invite the first time).
 
 Development process - summary
 =============================
@@ -69,7 +55,7 @@ Here's the short summary, complete TOC links are below:
 
       git remote add upstream https://github.com/numpy/numpy.git
 
-   * Now, `git remote -v` will show two remote repositories named:
+   * Now, ``git remote -v`` will show two remote repositories named:
 
      - ``upstream``, which refers to the ``numpy`` repository
      - ``origin``, which refers to your personal fork
@@ -202,7 +188,7 @@ Stylistic Guidelines
   pep-0008/>`_ (remove trailing white space, no tabs, etc.).  Check code with
   pyflakes / flake8.
 
-* Use numpy data types instead of strings (``np.uint8`` instead of
+* Use NumPy data types instead of strings (``np.uint8`` instead of
   ``"uint8"``).
 
 * Use the following import conventions::
@@ -245,42 +231,12 @@ Building docs
 -------------
 
 To build docs, run ``make`` from the ``doc`` directory. ``make help`` lists
-all targets. For example, to build the HTML documentation, you can run:
-
-.. code:: sh
+all targets. For example, to build the HTML documentation, you can run::
 
     make html
 
-Then, all the HTML files will be generated in ``doc/build/html/``.
-Since the documentation is based on docstrings, the appropriate version of
-numpy must be installed in the host python used to run sphinx.
-
-Requirements
-~~~~~~~~~~~~
-
-`Sphinx <http://www.sphinx-doc.org/en/stable/>`__ is needed to build
-the documentation. Matplotlib, SciPy, and IPython are also required.
-
-These additional dependencies for building the documentation are listed in
-``doc_requirements.txt`` and can be conveniently installed with::
-
-    pip install -r doc_requirements.txt
-
-The numpy documentation also depends on the
-`numpydoc <https://numpydoc.readthedocs.io/en/latest/>`__ sphinx extension
-as well as an external sphinx theme.
-These extensions are included as git submodules and must be initialized
-before building the docs.
-From the ``doc/`` directory:
-
-.. code:: sh
-
-    git submodule update --init
-
-The documentation includes mathematical formulae with LaTeX formatting.
-A working LaTeX document production system
-(e.g. `texlive <https://www.tug.org/texlive/>`__) is required for the
-proper rendering of the LaTeX math in the documentation.
+To get the appropriate dependencies and other requirements,
+see :ref:`howto-build-docs`.
 
 Fixing Warnings
 ~~~~~~~~~~~~~~~
@@ -302,6 +258,8 @@ The rest of the story
 
    Git Basics <gitwash/index>
    development_environment
+   development_gitpod
+   howto_build_docs
    development_workflow
    development_advanced_debugging
    reviewer_guidelines
