@@ -1,33 +1,25 @@
-This file gives an overview of what is necessary to build binary releases for
-NumPy.
+These instructions give an overview of what is necessary to build binary
+releases for NumPy.
 
 Current build and release info
 ==============================
-The current info on building and releasing NumPy and SciPy is scattered in
-several places. It should be summarized in one place, updated, and where
-necessary described in more detail. The sections below list all places where
-useful info can be found.
 
+Useful info can be found in the following locations:
 
-Source tree
------------
-- INSTALL.rst
-- pavement.py
+* **Source tree**
 
+  - `INSTALL.rst <https://github.com/numpy/numpy/blob/main/INSTALL.rst>`_
+  - `pavement.py <https://github.com/numpy/numpy/blob/main/pavement.py>`_
 
-NumPy Docs
-----------
-- https://github.com/numpy/numpy/blob/main/doc/HOWTO_RELEASE.rst
+* **NumPy docs**
 
+  - https://github.com/numpy/numpy/blob/main/doc/HOWTO_RELEASE.rst
+  - https://github.com/numpy/numpy/blob/main/doc/RELEASE_WALKTHROUGH.rst
+  - https://github.com/numpy/numpy/blob/main/doc/BRANCH_WALKTHROUGH.rst
 
-SciPy.org wiki
---------------
-- https://www.scipy.org/Installing_SciPy and links on that page.
+* **Release scripts**
 
-
-Release Scripts
----------------
-- https://github.com/numpy/numpy-vendor
+  - https://github.com/numpy/numpy-vendor
 
 
 Supported platforms and versions
@@ -37,33 +29,29 @@ are supported; For the first half of 2020, this will be Python >= 3.6. We test
 NumPy against all these versions every time we merge code to main.  Binary
 installers may be available for a subset of these versions (see below).
 
-OS X
-----
-OS X versions >= 10.9 are supported, for Python version support see
-:ref:`NEP 29 <NEP29>`. We build binary wheels for
-OSX that are compatible with Python.org Python, system Python, homebrew and
-macports - see this `OSX wheel building summary
-<https://github.com/MacPython/wiki/wiki/Spinning-wheels>`_ for details.
+* **OS X**
 
+  OS X versions >= 10.9 are supported, for Python version support see
+  :ref:`NEP 29 <NEP29>`. We build binary wheels for OSX that are compatible with
+  Python.org Python, system Python, homebrew and macports - see this
+  `OSX wheel building summary <https://github.com/MacPython/wiki/wiki/Spinning-wheels>`_
+  for details.
 
-Windows
--------
-We build 32- and 64-bit wheels on Windows. Windows 7, 8 and 10 are supported.
-We build NumPy using the `mingw-w64 toolchain`_ on Appveyor.
+* **Windows**
 
+  We build 32- and 64-bit wheels on Windows. Windows 7, 8 and 10 are supported.
+  We build NumPy using the `mingw-w64 toolchain`_ on Appveyor.
 
-Linux
------
-We build and ship `manylinux1 <https://www.python.org/dev/peps/pep-0513>`_
-wheels for NumPy.  Many Linux distributions include their own binary builds
-of NumPy.
+* **Linux**
 
+  We build and ship `manylinux1 <https://www.python.org/dev/peps/pep-0513>`_
+  wheels for NumPy.  Many Linux distributions include their own binary builds
+  of NumPy.
 
-BSD / Solaris
--------------
-No binaries are provided, but successful builds on Solaris and BSD have been
-reported.
+* **BSD / Solaris**
 
+  No binaries are provided, but successful builds on Solaris and BSD have been
+  reported.
 
 Tool chain
 ==========
@@ -91,7 +79,8 @@ files in the NumPy distribution to ``.c`` files.
 .. _mingw-w64 toolchain : https://mingwpy.github.io
 
 OpenBLAS
-------------
+--------
+
 All the wheels link to a version of OpenBLAS_ supplied via the openblas-libs_ repo.
 The shared object (or DLL) is shipped with in the wheel, renamed to prevent name
 collisions with other OpenBLAS shared objects that may exist in the filesystem.
@@ -128,7 +117,7 @@ twine keyring_  documentation for how to do that.
 .. _keyring: https://twine.readthedocs.io/en/stable/#keyring-support
 
 
-Generating author/pr lists
+Generating author/PR lists
 --------------------------
 You will need a personal access token
 `<https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/>`_
@@ -138,33 +127,21 @@ so that scripts can access the github NumPy repository.
 - pygithub (pip)
 
 
-Virtualenv
-----------
-Virtualenv is a very useful tool to keep several versions of packages around.
-It is also used when building the documentation.
-
-
 What is released
 ================
 
-Wheels
-------
-We currently support Python 3.8-3.10 on Windows, OSX, and Linux
+* **Wheels**
+  We currently support Python 3.8-3.10 on Windows, OSX, and Linux.
 
-* Windows: 32-bit and 64-bit wheels built using Github actions;
-* OSX: x64_86 and arm64 OSX wheels built using Github actions;
-* Linux: x64_86 and aarch64 Manylinux2014 wheels built using Github actions.
+  * Windows: 32-bit and 64-bit wheels built using Github actions;
+  * OSX: x64_86 and arm64 OSX wheels built using Github actions;
+  * Linux: x64_86 and aarch64 Manylinux2014 wheels built using Github actions.
 
+* **Other**
+  Release notes and changelog
 
-Other
------
-- Release Notes
-- Changelog
-
-
-Source distribution
--------------------
-We build source releases in the .tar.gz format.
+* **Source distribution**
+  We build source releases in the .tar.gz format.
 
 
 Release process
@@ -199,10 +176,10 @@ Step-by-Step Directions below.
 
 Check deprecations
 ------------------
-Before the release branch is made, it should be checked that all deprecated
-code that should be removed is actually removed, and all new deprecations say
-in the docstring or deprecation warning at what version the code will be
-removed.
+Before :ref:`the release branch is made <branching>`, it should be checked that
+all deprecated code that should be removed is actually removed, and all new
+deprecations say in the docstring or deprecation warning at what version the
+code will be removed.
 
 Check the C API version number
 ------------------------------
