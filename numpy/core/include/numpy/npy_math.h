@@ -1,10 +1,6 @@
 #ifndef NUMPY_CORE_INCLUDE_NUMPY_NPY_MATH_H_
 #define NUMPY_CORE_INCLUDE_NUMPY_NPY_MATH_H_
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <numpy/npy_common.h>
 
 #include <math.h>
@@ -20,6 +16,10 @@ extern "C" {
 #define NPY_INPLACE
 #endif
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /*
  * NAN and INFINITY like macros (same behavior as glibc for NAN, same as C99
