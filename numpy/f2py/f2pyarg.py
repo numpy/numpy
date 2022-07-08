@@ -24,7 +24,7 @@ from numpy.f2py.auxfuncs import outmess
 
 from numpy.version import version as __version__
 
-from .service import check_dccomp, check_npfcomp, check_fortran, check_dir, generate_files, segregate_files
+from .service import check_dccomp, check_npfcomp, check_fortran, check_dir, generate_files, segregate_files, compile_dist, get_f2py_modulename
 
 ##################
 # Temp Variables #
