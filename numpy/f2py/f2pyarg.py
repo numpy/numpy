@@ -77,13 +77,13 @@ class BoolAction(argparse.Action):
         """
         super(BoolAction, self).__init__(option_strings, dest, nargs=0, **kwargs)
 
-    def __call__(self, parser, namespace, values, option_string=None):
+    def __call__(self, parser, namespace, values, option_string: str=None):
         """The logical negation action
 
         Essentially this returns the semantically valid operation implied by
         --no
         """
-        setattr(namespace, self.dest, not option_string.contains("no"))
+        setattr(namespace, self.dest, "no" not in option_string)
 
 
 # TODO: Generalize or kill this np.distutils specific helper action class
