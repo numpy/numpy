@@ -155,7 +155,7 @@ Note that the correct ``dtype`` is now returned even when a zero array is one of
 the arguments to `numpy.polymul`.
 
 *********************************************************
-1. Support NumPy development by verifying and fixing bugs
+5. Support NumPy development by verifying and fixing bugs
 *********************************************************
 
 Go to the `NumPy GitHub issues page <https://github.com/numpy/numpy/issues>`_
