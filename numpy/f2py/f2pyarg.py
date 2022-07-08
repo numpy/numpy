@@ -572,55 +572,74 @@ parser.add_argument('otherfiles',
 ################
 
 
-def process_args(args):
-    # Default build dir for wrappers is the current directory
-    # while for compilations its a temporary directory
-    wrapper_build_dir = args.build_dir[0] if args.build_dir else pathlib.Path.cwd()
-    compile_build_dir = args.build_dir[0] if args.build_dir else tempfile.mkdtemp()
+def get_build_dir(args):
+    if(args.build_dir is not None):
+        return args.build_dir[0]
+    if(args.c):
+        return tempfile.mkdtemp()
+    return pathlib.Path.cwd()
 
-    # Wrapper generation code
+def get_module_name(args, pyf_files):
+    if(args.module_name is not None):
+        return args.module_name[0]
+    if args.c:
+        for file in pyf_files:
+            if name := get_f2py_modulename(file):
+                return name
+        return "unititled"
+    return None
+
+def get_signature_file(args, build_dir):
     sign_file = None
     if(args.hint_signature):
-        sign_file = wrapper_build_dir /  args.hint_signature[0]
+        sign_file = build_dir /  args.hint_signature[0]
         if sign_file and os.path.isfile(sign_file) and not args.overwrite_signature:
             print(f'Signature file "{sign_file}" exists!!! Use --overwrite-signature to overwrite.')
-    
-    module_name = args.module[0] if args.module else None
 
-    settings = {
-        'buildpath': wrapper_build_dir,
-        'f2cmap': args.f2cmap,
-        'verbose': args.verbose,
-        'dorestdoc': args.rest_doc,
-        'dolatexdoc': args.latex_doc,
-        'shortlatex': args.short_latex,
-        'debug': args.debug_api,
-        'wrapfuncs': args.wrap_functions,
-        'do-lower': args.lower,
-        'include_paths': args.include_paths,
-        # Disabing these options from frontend
-        'emptygen': True,
-        'f2py_wrapper_output': None,
-        'coutput': None,
-    }
-
-    file_gen_options = {
-        'verbose': args.verbose,
-        'module': module_name,
-        'skipfuncs': getattr(args, 'Skip Functions', []),
-        'onlyfuncs': getattr(args, 'Keep Functions', []),
-        'include_paths': args.include_paths,
-        'do-lower': args.lower,
-        'debug': args.debug_api,
-        'wrapfuncs': args.wrap_functions,
-    }
-
+def process_args(args):
     if args.help:
         parser.print_help()
     if getattr(args, "Fortran Files"):
-        f77_files, f90_files, pyf_files, out_files, other_files = segregate_files(getattr(args, "Fortran Files"))        
-        generate_files(pyf_files + f77_files + f90_files, module_name, sign_file, file_gen_options, settings)
+        f77_files, f90_files, pyf_files, obj_files, other_files = segregate_files(getattr(args, "Fortran Files"))        
 
+    module_name = get_module_name(args, pyf_files)
+    build_dir = get_build_dir(args)
+    sign_file = get_signature_file(args, build_dir)
+
+    # Disutils receives all the options and builds the extension.
+    if(args.c):
+        sources = pyf_files + f77_files + f90_files
+        remove_build_dir = not bool(args.build_dir)
+    else:
+        settings = {
+            'buildpath': build_dir,
+            'f2cmap': args.f2cmap,
+            'verbose': args.verbose,
+            'dorestdoc': args.rest_doc,
+            'dolatexdoc': args.latex_doc,
+            'shortlatex': args.short_latex,
+            'debug': args.debug_api,
+            'wrapfuncs': args.wrap_functions,
+            'do-lower': args.lower,
+            'include_paths': args.include_paths,
+            # Disabing these options from frontend
+            'emptygen': True,
+            'f2py_wrapper_output': None,
+            'coutput': None,
+        }
+
+        file_gen_options = {
+            'verbose': args.verbose,
+            'module': module_name,
+            'skipfuncs': getattr(args, 'Skip Functions', []),
+            'onlyfuncs': getattr(args, 'Keep Functions', []),
+            'include_paths': args.include_paths,
+            'do-lower': args.lower,
+            'debug': args.debug_api,
+            'wrapfuncs': args.wrap_functions,
+        }
+
+        generate_files(f77_files + f90_files, module_name, sign_file, file_gen_options, settings)
 
 def main():
     logger = logging.getLogger("f2py_cli")
