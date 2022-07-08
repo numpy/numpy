@@ -111,7 +111,8 @@ class NPDLinkHelper(argparse.Action):
         outvar = option_string.split("--link-")[1]
         if outvar in npd_link:
             # replicate the extend functionality
-            items.extend(outvar)
+            items.append(outvar)
+            setattr(namespace, self.dest, items)
         else:
             raise RuntimeError(f"{outvar} is not in {npd_link}")
 
