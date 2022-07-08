@@ -264,7 +264,7 @@ def generate_files(files: List[Path], module_name: str, sign_file: str, file_gen
         _buildmodules(postlist)
 
 
-def segregate_files(files: List[Path]) -> Tuple[List[Path], List[Path], List[Path], List[Path]]:
+def segregate_files(files: List[str]) -> Tuple[List[Path], List[Path], List[Path], List[Path]]:
 	"""
 	Segregate files into three groups:
 	* .f files
@@ -283,6 +283,7 @@ def segregate_files(files: List[Path]) -> Tuple[List[Path], List[Path], List[Pat
 	other_files = []
 
 	for f in files:
+		f = Path(f)
 		ext = os.path.splitext(f)[1]
 		if ext in f77_ext:
 			f77_files.append(f)
