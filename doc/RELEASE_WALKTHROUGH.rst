@@ -1,10 +1,9 @@
 This is a walkthrough of the NumPy 1.21.0 release on Linux, modified for
-building on azure and uploading to `anaconda.org`_. The commands can be
-copied into the command line, but be sure to replace 1.21.0 by the correct
-version. This should be read together with the
+building with GitHub Actions and cibuildwheels and uploading to the
+`anaconda.org staging repository for NumPy <https://anaconda.org/multibuild-wheels-staging/numpy>`_.
+The commands can be copied into the command line, but be sure to replace 1.21.0
+by the correct version. This should be read together with the
 :ref:`general release guide <prepare_release>`.
-
-.. _anaconda.org : https://anaconda.org
 
 Facility preparation
 ====================
@@ -124,7 +123,7 @@ Build wheels via cibuildwheel (preferred)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Tagging the build at the beginning of this process will trigger a wheel build
-via cibuildwheel and upload wheels and an sdist to the staging area. The CI run
+via cibuildwheel and upload wheels and an sdist to the staging repo. The CI run
 on github actions (for all x86-based and macOS arm64 wheels) takes about 1 1/4
 hours. The CI run on travis (for aarch64) takes less time.
 

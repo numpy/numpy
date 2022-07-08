@@ -40,11 +40,14 @@ installers may be available for a subset of these versions (see below).
 * **Windows**
 
   We build 32- and 64-bit wheels on Windows. Windows 7, 8 and 10 are supported.
-  We build NumPy using the `mingw-w64 toolchain`_ on Appveyor.
+  We build NumPy using the `mingw-w64 toolchain`_, `cibuildwheels`_ and GitHub
+  actions.
+
+.. _cibuildwheels: https://cibuildwheel.readthedocs.io/en/stable/
 
 * **Linux**
 
-  We build and ship `manylinux1 <https://www.python.org/dev/peps/pep-0513>`_
+  We build and ship `manylinux2014 <https://www.python.org/dev/peps/pep-0513>`_
   wheels for NumPy.  Many Linux distributions include their own binary builds
   of NumPy.
 
@@ -178,8 +181,8 @@ Check deprecations
 ------------------
 Before :ref:`the release branch is made <branching>`, it should be checked that
 all deprecated code that should be removed is actually removed, and all new
-deprecations say in the docstring or deprecation warning at what version the
-code will be removed.
+deprecations say in the docstring or deprecation warning what version the code
+will be removed.
 
 Check the C API version number
 ------------------------------
@@ -236,10 +239,10 @@ Check that the release notes are up-to-date.
 Update the release notes with a Highlights section. Mention some of the
 following:
 
-  - major new features
-  - deprecated and removed features
-  - supported Python versions
-  - for SciPy, supported NumPy version(s)
-  - outlook for the near future
+- major new features
+- deprecated and removed features
+- supported Python versions
+- for SciPy, supported NumPy version(s)
+- outlook for the near future
 
 .. _towncrier: https://pypi.org/project/towncrier/
