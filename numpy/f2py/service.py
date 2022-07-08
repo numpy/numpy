@@ -220,7 +220,7 @@ def _check_postlist(postlist, sign_file: str, verbose: bool):
         if plist['block'] != 'python module':
             # if 'python module' not in options:
                 outmess(
-                    'Tip: If your original code is Fortran source then you must use -m option.\n', verbose)
+                    'Tip: If your original code is Fortran source then you must use -m option.\n')
             # raise TypeError('All blocks must be python module blocks but got %s' % (
             #     repr(postlist[i]['block'])))
 
