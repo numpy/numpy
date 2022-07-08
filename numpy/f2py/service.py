@@ -1,7 +1,7 @@
 import sys
 import os
 import logging
-import tempfile
+import re
 
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
@@ -18,6 +18,11 @@ outmess = auxfuncs.outmess
 
 logger = logging.getLogger("f2py_cli")
 logger.setLevel(logging.WARNING)
+
+_f2py_module_name_match = re.compile(r'\s*python\s*module\s*(?P<name>[\w_]+)',
+                                     re.I).match
+_f2py_user_module_name_match = re.compile(r'\s*python\s*module\s*(?P<name>[\w_]*?'
+                                          r'__user__[\w_]*)', re.I).match
 
 def check_fortran(fname: str):
     """Function which checks <fortran files>
@@ -233,6 +238,21 @@ def _callcrackfortran(files: List[Path], module_name: str, options: Dict[str, An
         mod["coutput"] = f"{module_name}module.c"
         mod["f2py_wrapper_output"] = f"{module_name}-f2pywrappers.f"
     return postlist
+
+def get_f2py_modulename(source):
+    name = None
+    _f2py_module_name_match = re.compile(r'\s*python\s*module\s*(?P<name>[\w_]+)',
+                                        re.I).match
+    _f2py_user_module_name_match = re.compile(r'\s*python\s*module\s*(?P<name>[\w_]*?'
+                                            r'__user__[\w_]*)', re.I).match
+    with open(source) as f:
+        for line in f:
+            if m := _f2py_module_name_match(line):
+                if _f2py_user_module_name_match(line): # skip *__user__* names
+                    continue
+                name = m.group('name')
+                break
+    return name
 
 def generate_files(files: List[Path], module_name: str, sign_file: str, file_gen_options: Dict[str, Any], settings: Dict[str, Any]):
     _set_options(module_name, settings)
