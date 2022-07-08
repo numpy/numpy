@@ -1,18 +1,3 @@
-.. currentmodule:: numpy
-
-==========================
-NumPy 1.23.1 Release Notes
-==========================
-
-The NumPy 1.23.1 is a maintenance release that fixes bugs discovered after the
-1.23.0 release. Notable fixes are:
-
-- Fix searchsorted for float16 NaNs
-- Fix compilation on Apple M1
-- Fix KeyError in crackfortran operator support (Slycot)
-
-The Python version supported for this release are 3.8-3.10.
-
 
 Contributors
 ============
@@ -28,7 +13,6 @@ names contributed a patch for the first time.
 * Serge Guelton
 * Srimukh Sripada +
 
-
 Pull requests merged
 ====================
 
@@ -42,4 +26,3 @@ A total of 8 pull requests were merged for this release.
 * `#21949 <https://github.com/numpy/numpy/pull/21949>`__: BLD: Make can_link_svml return False for 32bit builds on x86_64
 * `#21951 <https://github.com/numpy/numpy/pull/21951>`__: BUG: Reorder extern "C" to only apply to function declarations...
 * `#21952 <https://github.com/numpy/numpy/pull/21952>`__: BUG: Fix KeyError in crackfortran operator support
-
