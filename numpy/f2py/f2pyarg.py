@@ -385,7 +385,7 @@ generate_wrappers.add_argument(
 # as a default
 build_helpers.add_argument(
     "-c",
-    default="numpy.distutils",
+    default=False,
     action="store_true",
     help="Compilation (via NumPy distutils)"
 )
