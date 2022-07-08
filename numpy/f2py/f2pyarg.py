@@ -598,8 +598,8 @@ def get_build_dir(args):
     return pathlib.Path.cwd()
 
 def get_module_name(args, pyf_files):
-    if(args.module_name is not None):
-        return args.module_name[0]
+    if(args.module is not None):
+        return args.module[0]
     if args.c:
         for file in pyf_files:
             if name := get_f2py_modulename(file):
