@@ -488,20 +488,19 @@ build_helpers.add_argument(
 
 build_helpers.add_argument(
     "-U",
-    "--undef-macros",
     type=str,
     nargs="*",
     action="extend",
+    dest='undef_macros',
     help="Undefined macros"
 )
 
 build_helpers.add_argument(
     "-D",
-    "--def-macros",
     type=str,
     nargs="*",
-    action="extend",
-    help="Defined macros"
+    dest='define_macros',
+    help="Define macros"
 )
 
 build_helpers.add_argument(
