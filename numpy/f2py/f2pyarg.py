@@ -209,7 +209,6 @@ parser.add_argument(
     metavar="<fortran files>",
     action="extend",  # List storage
     nargs="*",
-    type=check_fortran,  # Returns a pathlib.Path
     help="""Paths to fortran/signature files that will be scanned for
                    <fortran functions> in order to determine their signatures.""",
 )
@@ -614,11 +613,30 @@ def get_signature_file(args, build_dir):
         if sign_file and os.path.isfile(sign_file) and not args.overwrite_signature:
             print(f'Signature file "{sign_file}" exists!!! Use --overwrite-signature to overwrite.')
 
+def segregate_posn_args(args):
+    # Currently, argparse does not recognise 'skip:' and 'only:' as optional args
+    # and clubs them all in "Fortran Files" attr. This function segregates them.
+    funcs = {"skip:": [], "only:": []}
+    mode = "file"
+    files = []
+    for arg in getattr(args, "Fortran Files"):
+        if arg in funcs:
+            mode = arg
+        elif arg == ':' and mode in funcs:
+            mode = "file"
+        elif mode == "file":
+            files.append(arg)
+        else:
+            funcs[mode].append(arg)
+    return files, funcs['skip:'], funcs['only:']
+
 def process_args(args):
     if args.help:
         parser.print_help()
+        parser.exit()
+    files, skip_funcs, only_funcs = segregate_posn_args(args)
     if getattr(args, "Fortran Files"):
-        f77_files, f90_files, pyf_files, obj_files, other_files = segregate_files(getattr(args, "Fortran Files"))        
+        f77_files, f90_files, pyf_files, obj_files, other_files = segregate_files(files)        
 
     module_name = get_module_name(args, pyf_files)
     build_dir = get_build_dir(args)
@@ -653,10 +671,10 @@ def process_args(args):
         }
 
         file_gen_options = {
-            'verbose': args.verbose,
             'module': module_name,
-            'skipfuncs': getattr(args, 'Skip Functions', []),
-            'onlyfuncs': getattr(args, 'Keep Functions', []),
+            'skipfuncs': skip_funcs,
+            'onlyfuncs': only_funcs,
+            'verbose': args.verbose,
             'include_paths': args.include_paths,
             'do-lower': args.lower,
             'debug': args.debug_api,
