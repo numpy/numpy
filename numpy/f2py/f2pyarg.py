@@ -628,6 +628,12 @@ def process_args(args):
     if(args.c):
         sources = pyf_files + f77_files + f90_files
         remove_build_dir = not bool(args.build_dir)
+        link_files = args.link_resource
+        include_dirs = args.include_dirs
+        library_dirs = args.library_path
+        libraries = args.library_name
+        define_macros = args.define_macros
+        undef_macros = args.undef_macros
     else:
         settings = {
             'buildpath': build_dir,
