@@ -132,6 +132,23 @@ class DebugLinkHelper(argparse.Action):
         else:
             raise RuntimeError(f"{outvar} is not in {debug_api}")
 
+class ProcessMacros(argparse.Action):
+    """Process macros in the form of --Dmacro=value and -Dmacro"""
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        """The storage action
+
+        Essentially, split the value on -D, store in dest
+
+        """
+        items = getattr(namespace, self.dest) or []
+        outvar = option_string.split("-D")[1]
+        if('=' in outvar):
+            items.append((outvar.split("=")[0], outvar.split("=")[1]))
+        else:
+            items.append((outvar, None))
+        setattr(namespace, self.dest, items)
+
 
 ##########
 # Parser #
@@ -499,6 +516,7 @@ build_helpers.add_argument(
     "-D",
     type=str,
     nargs="*",
+    action=ProcessMacros,
     dest='define_macros',
     help="Define macros"
 )
