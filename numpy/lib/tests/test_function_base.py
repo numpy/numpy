@@ -780,7 +780,7 @@ class TestDiff:
                      mask=[[False, False], [True, False],
                            [False, True], [True, True], [False, False]])
         out = diff(x)
-        assert_array_equal(out.data, [[1], [4], [6], [8], [1]])
+        assert_array_equal(out.data, [[1], [1], [1], [1], [1]])
         assert_array_equal(out.mask, [[False], [True],
                                       [True], [True], [False]])
         assert_(type(out) is type(x))
