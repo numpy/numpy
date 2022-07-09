@@ -934,6 +934,7 @@ _FlatIterSelf = TypeVar("_FlatIterSelf", bound=flatiter)
 
 @final
 class flatiter(Generic[_NdArraySubClass]):
+    __hash__: ClassVar[None]
     @property
     def base(self) -> _NdArraySubClass: ...
     @property
@@ -1475,6 +1476,7 @@ class _SupportsImag(Protocol[_T_co]):
     def imag(self) -> _T_co: ...
 
 class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
+    __hash__: ClassVar[None]
     @property
     def base(self) -> None | ndarray: ...
     @property
@@ -3792,7 +3794,7 @@ class poly1d:
     @coefficients.setter
     def coefficients(self, value: NDArray[Any]) -> None: ...
 
-    __hash__: None  # type: ignore
+    __hash__: ClassVar[None]  # type: ignore
 
     @overload
     def __array__(self, t: None = ...) -> NDArray[Any]: ...
