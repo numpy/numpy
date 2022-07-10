@@ -102,7 +102,7 @@ def compare_skip_formatting() -> NoReturn:
         f'\n${TC.CYAN}Comparing "{from_ref}" to "{to_ref}"{TC.ENDC}\n'
         f'{TC.YELLOW}Cannot safely apply changes; "to" ref "{to_ref}" is not HEAD.\n'
         f"I'll just show you the diff instead. Running...\n"
-        f"> {run_cmd}{TC.ENDC}\n"
+        f"> {' '.join(run_cmd)}{TC.ENDC}\n"
     )
 
     output, exitcode = tee_cmd(run_cmd)
@@ -145,11 +145,15 @@ def main() -> NoReturn:
             # No return
             compare_skip_formatting()
 
-    run_cmd = (
-        ["git-clang-format"] + FORMAT_ARGS + [PRE_COMMIT_FROM_REF, "--"] + sys.argv
-    )
+    run_cmd = ["git-clang-format"] + FORMAT_ARGS
 
-    print(f"{TC.CYAN}Target ref is HEAD, running...\n>{run_cmd}{TC.ENDC}")
+    if PRE_COMMIT_FROM_REF:
+        run_cmd.append(PRE_COMMIT_FROM_REF)
+
+    run_cmd.append("--")
+    run_cmd.extend(sys.argv)
+
+    print(f"{TC.CYAN}Target ref is HEAD, running...\n> {' '.join(run_cmd)}{TC.ENDC}")
 
     output, exitcode = tee_cmd(run_cmd)
 
