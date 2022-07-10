@@ -1721,7 +1721,7 @@ npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, npyiter_opitflags *op_itf
     /* Now fill in the ITERSIZE member */
     NIT_ITERSIZE(iter) = 1;
     for (idim = 0; idim < ndim; ++idim) {
-        if (npy_mul_with_overflow_intp(&NIT_ITERSIZE(iter),
+        if (npy_mul_sizes_with_overflow(&NIT_ITERSIZE(iter),
                     NIT_ITERSIZE(iter), broadcast_shape[idim])) {
             if ((itflags & NPY_ITFLAG_HASMULTIINDEX) &&
                     !(itflags & NPY_ITFLAG_HASINDEX) &&
