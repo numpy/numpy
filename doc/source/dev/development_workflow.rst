@@ -159,7 +159,7 @@ Automatic code formatting with pre-commit
 -----------------------------------------
 
 NumPy recommends that code follow PEP7/PEP8 guidelines, but does not currently
-enfoce any formatters. However, the repository does come with a an optional
+enforce any formatters. However, the repository does come with a an optional
 pre-commit hook that performs automatic formatting and validation of changes,
 and using it is highly recommended. Tasks and checks that it runs include:
 
@@ -169,7 +169,7 @@ and using it is highly recommended. Tasks and checks that it runs include:
   these changed lines using `flake8 <flake8_>`_.
 
 * Format changed lines only of C and C++ source files to pep7 standard using a
-  python wrapper for `ClangFormat versioning <clang_format_>`_ (this hook is
+  Python wrapper for `ClangFormat versioning <clang_format_>`_ (this hook is
   enabled by default).
 
 * Format and lint YAML shell files, and perform linting on Fortran, rst, Docker,
@@ -188,9 +188,10 @@ And then install the hook to your git repository:
    pre-commit install
 
 This will add a script to your ``.git/hooks`` folder. This script will run
-pre-commit to check your changed files whenever you run ``git commit``. Note
-that if there are any failures, the commit will not go through and you will have
-to re-run the commit (and ``git add`` first if any files were automatically
+pre-commit to check your changed files whenever you run ``git commit`` (the
+Python environment does not need to be active for this to work). Note that if
+there are any failures, the commit will not go through and you will have to
+re-run the commit (and ``git add`` first if any files were automatically
 changed, or ``git commit`` with the ``-a`` flag). It is generally bad practice
 to commit files that do not pass tests but if it is necessary (e.g., for a local
 commit that will be rebased later), you can run ``git commit --no-verify`` to
@@ -225,6 +226,11 @@ Other useful commands includes:
 More information is available `on the pre-commit website <pre_commit>`_. Do not
 commit the changes of ``pre-comit run --all-files`` as that will likely generate
 a diff much larger than your code.
+
+If a commit is done that includes formatting changes only, its hash should be
+added to ``.git-blame-ignore-revs`` so that it does not appear in the blame.
+More information is available as comments in that file. Note that care should be
+taken that formatting commits are not squashed with regular development commits.
 
 .. Section links (not displayed)
 .. _black: https://black.readthedocs.io/en/stable/

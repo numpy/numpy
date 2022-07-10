@@ -11,6 +11,7 @@
 # `pre-commit autoupdate --freeze`. This pins the version to the commit hash
 # rather than a (movable) tag, which adds some security benefit. This sets the
 # "rev:" key and the adds the "# frozen: vx.x.x" comments that you see.
+
 repos:
   ### Always-run hooks ###
   # This section includes hooks that run whenever relevant files change.
@@ -55,7 +56,7 @@ repos:
     hooks:
       - id: clang-format-diff
         name: clang-format-diff
-        entry: bash tools/precommit-clang-format.sh
+        entry: tools/precommit-clang-format.py
         language: python        # Script is bash but need python deps
         require_serial: true    # Lock errors if it tries to chunk the files
         types_or: [c++, c]
