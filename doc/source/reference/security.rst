@@ -51,7 +51,7 @@ untrusted data:
   This means that operations may be significantly slower or use more memory
   compared to simple test cases.
 
-* When reading data consider enforcing a specific shape (e.g. one dimensional)
+* When reading data, consider enforcing a specific shape (e.g. one dimensional)
   or dtype such as ``float64``, ``float32``, or ``int64`` to reduce complexity.
 
 When working with non-trivial untrusted data, it is advisable to sandbox the
