@@ -80,9 +80,27 @@ config.rndm_markers.add('#uninitialized')
 config.rndm_markers.add('# uninitialized')
 config.optionflags = doctest.NORMALIZE_WHITESPACE | doctest.ELLIPSIS
 
+config.skiplist = [
+    # cases where NumPy docstrings import things from SciPy:
+    'numpy.lib.vectorize',
+    'numpy.random.standard_gamma',
+    'numpy.random.gamma',
+    'numpy.random.vonmises',
+    'numpy.random.power',
+    'numpy.random.zipf',
+    # cases where NumPy docstrings import things from other 3'rd party libs:
+    'numpy.core.from_dlpack',
+    # remote / local file IO with DataSource is problematic in doctest:
+    'numpy.lib.DataSource',
+    'numpy.lib.Repository',
+]
 
-# printing the Romberg extrap table is flaky, adds blanklines on some platforms
-##config.stopwords.add('integrate.romb(y, show=True)')
+if sys.version_info < (3, 9):
+    config.skiplist += [
+        "numpy.core.ndarray.__class_getitem__",
+        "numpy.core.dtype.__class_getitem__",
+        "numpy.core.number.__class_getitem__",
+    ]
 
 
 ############################################################################
