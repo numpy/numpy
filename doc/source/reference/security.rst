@@ -7,7 +7,7 @@ The `Python security reporting guidlines <https://www.python.org/dev/security/>`
 are a good resource and its notes apply also to NumPy.
 
 NumPy's maintainers are not security experts.  However, we are conscientious
-about security and experts of both the code NumPy and its typical use.
+about security and experts of both the NumPy codebase and how it's used.
 Please do notify us before creating security advisories against NumPy as
 we are happy to prioritize issues or help with assessing the severity of a bug.
 A security advisory we are not aware of beforehand can lead to a lot of work
