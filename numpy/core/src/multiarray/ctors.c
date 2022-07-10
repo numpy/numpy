@@ -27,7 +27,7 @@
 #include "datetime_strings.h"
 #include "array_assign.h"
 #include "mapping.h" /* for array_item_asarray */
-#include "templ_common.h" /* for npy_mul_with_overflow_intp */
+#include "templ_common.h" /* for npy_mul_sizes_with_overflow */
 #include "alloc.h"
 #include <assert.h>
 
@@ -746,7 +746,7 @@ PyArray_NewFromDescr_int(
              * Care needs to be taken to avoid integer overflow when multiplying
              * the dimensions together to get the total size of the array.
              */
-            if (npy_mul_with_overflow_intp(&nbytes, nbytes, fa->dimensions[i])) {
+            if (npy_mul_sizes_with_overflow(&nbytes, nbytes, fa->dimensions[i])) {
                 PyErr_SetString(PyExc_ValueError,
                         "array is too big; `arr.size * arr.dtype.itemsize` "
                         "is larger than the maximum possible size.");
@@ -3956,7 +3956,7 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, npy_intp count)
                     be suitable to reuse here.
             */
             elcount = (i >> 1) + (i < 4 ? 4 : 2) + i;
-            if (!npy_mul_with_overflow_intp(&nbytes, elcount, elsize)) {
+            if (!npy_mul_sizes_with_overflow(&nbytes, elcount, elsize)) {
                 /* The handler is always valid */
                 new_data = PyDataMem_UserRENEW(
                         PyArray_BYTES(ret), nbytes, PyArray_HANDLER(ret));
