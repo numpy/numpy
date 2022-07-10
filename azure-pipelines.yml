@@ -204,6 +204,10 @@ stages:
       displayName: 'Install matplotlib before refguide run'
     - script: python runtests.py -g --refguide-check
       displayName: 'Run Refguide Check'
+    - script: python -m pip install git+https://github.com/ev-br/scpdt.git
+      displayName: 'install scpdt for doctesting'
+    - script: python runtests.py --doctests -v
+      displayName: 'Run doctests'
       condition: eq(variables['USE_OPENBLAS'], '1')
     - script: python runtests.py -n --mode=full -- -rsx --junitxml=junit/test-results.xml
       displayName: 'Run Full NumPy Test Suite'
