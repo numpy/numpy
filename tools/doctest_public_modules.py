@@ -23,58 +23,15 @@ PUBLIC_SUBMODULES = [
     'random',
     'testing',
 ]
-################### A user ctx mgr to turn warnings to errors ###################
-'''
-from contextlib import contextmanager
-import warnings
 
-@contextmanager
-def warnings_errors(test):
-    """Temporarily turn (almost) all warnings to errors.
+# these tutorials fail doctesting
+RST_SKIPLIST = ['c-info.ufunc-tutorial.rst',
+               'basics.subclassing.rst',
+               'basics.interoperability.rst',
+               'absolute_beginners.rst',
+               'misc.rst']
 
-    Some functions are allowed to emit specific warnings though;
-    these are listed explicitly.
-    """
-    from scipy import integrate
-    known_warnings = {
-        'scipy.linalg.norm':
-            dict(category=RuntimeWarning, message='divide by zero'),
-        'scipy.ndimage.center_of_mass':
-            dict(category=RuntimeWarning, message='divide by zero'),
-        'scipy.signal.bohman':
-            dict(category=RuntimeWarning, message='divide by zero'),
-        'scipy.signal.windows.bohman':
-            dict(category=RuntimeWarning, message='divide by zero'),
-        'scipy.signal.cosine':
-            dict(category=RuntimeWarning, message='divide by zero'),
-        'scipy.signal.windows.cosine':
-            dict(category=RuntimeWarning, message='divide by zero'),
-        'scipy.stats.anderson_ksamp':
-            dict(category=UserWarning, message='p-value capped:'),
-        'scipy.special.ellip_normal':
-            dict(category=integrate.IntegrationWarning,
-                 message='The occurrence of roundoff'),
-        'scipy.special.ellip_harm_2':
-            dict(category=integrate.IntegrationWarning,
-                 message='The occurrence of roundoff'),
-        # tutorials
-        'linalg.rst':
-            dict(message='the matrix subclass is not',
-                 category=PendingDeprecationWarning),
-        'stats.rst':
-            dict(message='The maximum number of subdivisions',
-                 category=integrate.IntegrationWarning),
-    }
-
-    with warnings.catch_warnings(record=True) as w:
-        if test.name in known_warnings:
-            warnings.filterwarnings('ignore', **known_warnings[test.name])      
-            yield
-        else:
-            warnings.simplefilter('error', Warning)
-            yield
-'''
-
+################### Numpy-specific user configuration ###################
 config = DTConfig()
 config.rndm_markers.add('#uninitialized')
 config.rndm_markers.add('# uninitialized')
@@ -102,6 +59,7 @@ if sys.version_info < (3, 9):
         "numpy.core.number.__class_getitem__",
     ]
 
+config.skiplist += RST_SKIPLIST
 
 ############################################################################
 
@@ -146,24 +104,21 @@ def doctest_single_file(fname, verbose, fail_fast):
 
 
 def doctest_tutorial(verbose, fail_fast):
-    base_dir = os.path.join(os.path.abspath(os.path.dirname(__file__)), '..')
-    tut_path = os.path.join(base_dir, 'doc', 'source', 'tutorial', '*.rst')
-    sys.stderr.write('\nChecking tutorial files at %s:\n'
-                     % os.path.relpath(tut_path, os.getcwd()))
+    base_dir = os.path.join(os.path.abspath(os.path.dirname(__file__)),
+                            '..', 'doc', 'source')
+    user_path = os.path.relpath(os.path.join(base_dir, 'user'))
+    user_rst = glob.glob(os.path.join(user_path, '*rst'))
 
-    tutorials = [f for f in sorted(glob.glob(tut_path))]
-
-    # set up scipy-specific config
-    config.pseudocode = set(['integrate.nquad(func,'])
-
-    io_matfiles = glob.glob(os.path.join(tut_path.replace('.rst', '.mat')))
-    config.local_resources = {'io.rst': io_matfiles}
-
+    dev_path = os.path.relpath(os.path.join(base_dir, 'dev'))
+    dev_rst = glob.glob(os.path.join(dev_path, '*rst'))
 
     all_success = True
-    for filename in tutorials:
+    for filename in dev_rst + user_rst:
         sys.stderr.write('\n' + filename + '\n')
         sys.stderr.write("="*len(filename) + '\n')
+        if os.path.split(filename)[1] in config.skiplist:
+            sys.stderr.write(f'skipping {filename}\n')
+            continue
 
         result, history = testfile(filename, module_relative=False,
                                     verbose=verbose, raise_on_error=fail_fast,
@@ -177,22 +132,24 @@ def main(args):
         raise ValueError("Specify either a submodule or a single file,"
                          " not both.")
 
+    tut_success = True
+    if args.rst:
+        tut_success = doctest_tutorial(verbose=args.verbose,
+                                       fail_fast=args.fail_fast)
+
+    all_success = True
     if args.filename:
         all_success = doctest_single_file(args.filename,
                                           verbose=args.verbose,
                                           fail_fast=args.fail_fast)
     else:
-        name = args.submodule   # XXX : dance w/ subsubmodules : cluster.vq etc
+        name = args.submodule
         submodule_names = [name]  if name else list(PUBLIC_SUBMODULES)
         all_success = doctest_submodules(submodule_names,
                                          verbose=args.verbose,
                                          fail_fast=args.fail_fast)
-
-        # if full run: also check the tutorial
-        if not args.submodule:
-            tut_success = doctest_tutorial(verbose=args.verbose,
-                                           fail_fast=args.fail_fast)
-            all_success = all_success and tut_success
+    
+    all_success = all_success and tut_success
 
     # final report
     if all_success:
@@ -217,6 +174,8 @@ if __name__ == "__main__":
                              " constants, ...)")
     parser.add_argument( "-t", "--filename", default=None,
                         help="Specify a .py file to check")
+    parser.add_argument( "-r", "--rst", action='store_true',
+                        help="Check *rst tutorials.")
     args = parser.parse_args()
 
     main(args)
