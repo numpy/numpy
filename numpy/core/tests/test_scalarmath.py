@@ -683,8 +683,12 @@ class TestNegative:
             sup.filter(RuntimeWarning)
             for dt in types:
                 a = np.ones((), dtype=dt)[()]
-                assert_equal(operator.neg(a) + a, 0)
-
+                if dt in np.typecodes['UnsignedInteger']:
+                    st = np.dtype(dt).type
+                    max = st(np.iinfo(dt).max)
+                    assert_equal(operator.neg(a), max)
+                else:
+                    assert_equal(operator.neg(a) + a, 0)
 
 class TestSubtract:
     def test_exceptions(self):
@@ -896,11 +900,12 @@ def test_scalar_integer_operation_overflow(dtype, operation):
 
 @pytest.mark.parametrize("dtype", np.typecodes["Integer"])
 @pytest.mark.parametrize("operation", [
+        lambda min, neg_1: -min,
         lambda min, neg_1: abs(min),
         lambda min, neg_1: min * neg_1,
         pytest.param(lambda min, neg_1: min // neg_1,
             marks=pytest.mark.skip(reason="broken on some platforms"))],
-        ids=["abs", "*", "//"])
+        ids=["neg", "abs", "*", "//"])
 def test_scalar_signed_integer_overflow(dtype, operation):
     # The minimum signed integer can "overflow" for some additional operations
     st = np.dtype(dtype).type
@@ -997,6 +1002,7 @@ def test_longdouble_complex():
 
 @pytest.mark.parametrize(["__op__", "__rop__", "op", "cmp"], ops_with_names)
 @pytest.mark.parametrize("subtype", [float, int, complex, np.float16])
+@np._no_nep50_warning()
 def test_pyscalar_subclasses(subtype, __op__, __rop__, op, cmp):
     def op_func(self, other):
         return __op__

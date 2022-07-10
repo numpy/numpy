@@ -51,15 +51,6 @@ setup_base()
     # warnings as errors
     build_args+=("--simd-test=\$werror BASELINE SSE2 SSE42 XOP FMA4 (FMA3 AVX2) AVX512F AVX512_SKX VSX VSX2 VSX3 NEON ASIMD VX VXE VXE2")
   fi
-  # We used to use 'setup.py install' here, but that has the terrible
-  # behaviour that if a copy of the package is already installed in the
-  # install location, then the new copy just gets dropped on top of it.
-  # Travis typically has a stable numpy release pre-installed, and if we
-  # don't remove it, then we can accidentally end up e.g. running old
-  # test modules that were in the stable release but have been removed
-  # from main. (See gh-2765, gh-2768.)  Using 'pip install' also has
-  # the advantage that it tests that numpy is 'pip install' compatible,
-  # see e.g. gh-2766...
   if [ -z "$USE_DEBUG" ]; then
     # activates '-Werror=undef' when DEBUG isn't enabled since _cffi_backend'
     # extension breaks the build due to the following error:

@@ -14,9 +14,9 @@
 #include "f2c.h"
 
 
-extern void s_wsfe(cilist *f) {;}
-extern void e_wsfe(void) {;}
-extern void do_fio(integer *c, char *s, ftnlen l) {;}
+extern int s_wsfe(cilist *f) {return 0;}
+extern int e_wsfe(void) {return 0;}
+extern int do_fio(integer *c, char *s, ftnlen l) {return 0;}
 
 /* You'll want this if you redo the f2c_*.c files with the -C option
  * to f2c for checking array subscripts. (It's not suggested you do that
@@ -377,10 +377,11 @@ p->i = p1.i;
 
 #endif /* NO_OVERWRITE */
 
- VOID
 #ifdef KR_headers
+int
 s_cat(lp, rpp, rnp, np, ll) char *lp, *rpp[]; ftnlen rnp[], *np, ll;
 #else
+int
 s_cat(char *lp, char *rpp[], ftnlen rnp[], ftnlen *np, ftnlen ll)
 #endif
 {
@@ -429,7 +430,8 @@ s_cat(char *lp, char *rpp[], ftnlen rnp[], ftnlen *np, ftnlen ll)
 		free(lp1);
 		}
 #endif
-	}
+	return 0;
+}
 
 
 /* compare two strings */
@@ -485,9 +487,9 @@ return(0);
 /* assign strings:  a = b */
 
 #ifdef KR_headers
-VOID s_copy(a, b, la, lb) register char *a, *b; ftnlen la, lb;
+int s_copy(a, b, la, lb) register char *a, *b; ftnlen la, lb;
 #else
-void s_copy(register char *a, register char *b, ftnlen la, ftnlen lb)
+int s_copy(register char *a, register char *b, ftnlen la, ftnlen lb)
 #endif
 {
 	register char *aend, *bend;
@@ -524,6 +526,7 @@ void s_copy(register char *a, register char *b, ftnlen la, ftnlen lb)
 		while(a < aend)
 			*a++ = ' ';
 		}
+        return 0;
 	}
 
 

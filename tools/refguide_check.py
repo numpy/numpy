@@ -42,7 +42,6 @@ from contextlib import contextmanager, redirect_stderr
 from doctest import NORMALIZE_WHITESPACE, ELLIPSIS, IGNORE_EXCEPTION_DETAIL
 
 from docutils.parsers.rst import directives
-from pkg_resources import parse_version
 
 import sphinx
 import numpy as np
@@ -52,20 +51,10 @@ from numpydoc.docscrape_sphinx import get_doc_object
 
 SKIPBLOCK = doctest.register_optionflag('SKIPBLOCK')
 
-if parse_version(sphinx.__version__) >= parse_version('1.5'):
-    # Enable specific Sphinx directives
-    from sphinx.directives.other import SeeAlso, Only
-    directives.register_directive('seealso', SeeAlso)
-    directives.register_directive('only', Only)
-else:
-    # Remove sphinx directives that don't run without Sphinx environment.
-    # Sphinx < 1.5 installs all directives on import...
-    directives._directives.pop('versionadded', None)
-    directives._directives.pop('versionchanged', None)
-    directives._directives.pop('moduleauthor', None)
-    directives._directives.pop('sectionauthor', None)
-    directives._directives.pop('codeauthor', None)
-    directives._directives.pop('toctree', None)
+# Enable specific Sphinx directives
+from sphinx.directives.other import SeeAlso, Only
+directives.register_directive('seealso', SeeAlso)
+directives.register_directive('only', Only)
 
 
 BASE_MODULE = "numpy"

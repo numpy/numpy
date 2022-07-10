@@ -766,7 +766,15 @@ _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
                         memcpy(dimensions, PyArray_DIMS((PyArrayObject *)temp),
                                sizeof(npy_intp)*result_ndim);
                     }
-                    dimensions[result_ndim] = -1;
+
+                    /*
+                     * Compute the new dimension size manually, as reshaping
+                     * with -1 does not work on empty arrays.
+                     */
+                    dimensions[result_ndim] = PyArray_MultiplyList(
+                        PyArray_DIMS((PyArrayObject *)temp) + result_ndim,
+                        PyArray_NDIM((PyArrayObject *)temp) - result_ndim);
+
                     temp2 = PyArray_Newshape((PyArrayObject *)temp,
                                              &newdims, NPY_ANYORDER);
                     if (temp2 == NULL) {
@@ -1253,7 +1261,8 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
             descr = NULL;
             goto fail;
         }
-        if (PyDataType_FLAGCHK(descr, NPY_ITEM_HASOBJECT)) {
+        /* Logic shared by `empty`, `empty_like`, and `ndarray.__new__` */
+        if (PyDataType_REFCHK(PyArray_DESCR(ret))) {
             /* place Py_None in object positions */
             PyArray_FillObjectArray(ret, Py_None);
             if (PyErr_Occurred()) {

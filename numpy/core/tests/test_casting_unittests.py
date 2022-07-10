@@ -10,6 +10,7 @@ import pytest
 import textwrap
 import enum
 import random
+import ctypes
 
 import numpy as np
 from numpy.lib.stride_tricks import as_strided
@@ -786,7 +787,8 @@ class TestCasting:
         # None to <other> casts may succeed or fail, but a NULL'ed array must
         # behave the same as one filled with None's.
         arr_normal = np.array([None] * 5)
-        arr_NULLs = np.empty_like([None] * 5)
+        arr_NULLs = np.empty_like(arr_normal)
+        ctypes.memset(arr_NULLs.ctypes.data, 0, arr_NULLs.nbytes)
         # If the check fails (maybe it should) the test would lose its purpose:
         assert arr_NULLs.tobytes() == b"\x00" * arr_NULLs.nbytes
 
