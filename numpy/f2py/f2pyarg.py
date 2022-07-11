@@ -444,7 +444,6 @@ build_helpers.add_argument(
 build_helpers.add_argument(
     "--f77flags",
     nargs="*",
-    type=pathlib.Path,
     action="extend",
     help="Specify F77 compiler flags"
 )
@@ -452,7 +451,6 @@ build_helpers.add_argument(
 build_helpers.add_argument(
     "--f90flags",
     nargs="*",
-    type=pathlib.Path,
     action="extend",
     help="Specify F90 compiler flags"
 )
