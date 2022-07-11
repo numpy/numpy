@@ -1626,8 +1626,9 @@ def angle(z, deg=False):
 
     Notes
     -----
-    Although the angle of the complex number 0 is undefined, ``numpy.angle(0)``
-    returns the value 0.
+    Although the angle of a complex number is undefined if both the real and
+    imaginary parts are 0.0,``numpy.angle(0.0+0.0j)`` returns 0.0,
+    which is mathematically equivalent to the angle of the complex number 1.0+0.0j.
 
     Examples
     --------
