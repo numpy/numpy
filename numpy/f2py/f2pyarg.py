@@ -610,6 +610,8 @@ def get_signature_file(args, build_dir):
         sign_file = build_dir /  args.hint_signature[0]
         if sign_file and os.path.isfile(sign_file) and not args.overwrite_signature:
             print(f'Signature file "{sign_file}" exists!!! Use --overwrite-signature to overwrite.')
+            parser.exit()
+    return sign_file
 
 def segregate_posn_args(args):
     # Currently, argparse does not recognise 'skip:' and 'only:' as optional args
