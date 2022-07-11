@@ -589,6 +589,62 @@ parser.add_argument('otherfiles',
 def get_additional_headers(rem):
     return [val[8:] for val in rem if val[:8] == '-include']
 
+def get_f2pyflags_dist(args, skip_funcs, only_funcs, rem):
+    # Distutils requires 'f2py_options' which will be a subset of
+    # sys.argv array received. This function reconstructs the array
+    # from received args.
+    f2py_flags = []
+    if(args.wrap_functions):
+        f2py_flags.append('--wrap-functions')
+    else:
+        f2py_flags.append('--no-wrap-functions')
+    if(args.lower):
+        f2py_flags.append('--lower')
+    else:
+        f2py_flags.append('--no-lower')
+    if(args.debug_api):
+        f2py_flags.append('--debug-capi')
+    if(args.quiet):
+        f2py_flags.append('--quiet')
+    f2py_flags.append("--skip-empty-wrappers")
+    if(skip_funcs):
+        f2py_flags.extend(['skip:']+skip_funcs + [':'])
+    if(only_funcs):
+        f2py_flags.extend(['only:']+only_funcs + [':'])
+    if(args.include_paths):
+        f2py_flags.extend(['--include-paths']+args.include_paths)
+    return f2py_flags
+
+def get_fortran_library_flags(args):
+    flib_flags = []
+    if args.fcompiler:
+        flib_flags.append(f'--fcompiler={args.fcompiler[0]}')
+    if args.compiler:
+        flib_flags.append(f'--compiler={args.compiler[0]}')
+    return flib_flags
+
+def get_fortran_compiler_flags(args):
+    fc_flags = []
+    if(args.help_fcompiler):
+        fc_flags.append('--help-fcompiler')
+    if(args.f77exec):
+        fc_flags.append(f'--f77exec={str(args.f77exec[0])}')
+    if(args.f90exec):
+        fc_flags.append(f'--f90exec={str(args.f90exec[0])}')
+    if(args.f77flags):
+        fc_flags.append(f'--f77flags={" ".join(args.f77flags)}')
+    if(args.f90flags):
+        fc_flags.append(f'--f90flags={" ".join(args.f90flags)}')
+    if(args.arch):
+        fc_flags.append(f'--arch={" ".join(args.arch)}')
+    if(args.opt):
+        fc_flags.append(f'--opt={" ".join(args.opt)}')
+    if(args.noopt):
+        fc_flags.append('--noopt')
+    if(args.noarch):
+        fc_flags.append('--noarch')
+    if(args.debug):
+        fc_flags.append('--debug')
 
 def get_build_dir(args):
     if(args.build_dir is not None):
@@ -682,8 +738,25 @@ def process_args(args, rem):
 
     wrapper_settings(rules_setts, crackfortran_setts, capi_maps_setts, auxfuncs_setts)
 
-
-        generate_files(f77_files + f90_files, module_name, sign_file, file_gen_options, settings)
+    # Disutils receives all the options and builds the extension.
+    if(args.c):
+        remove_build_dir = not bool(args.build_dir)
+        link_resource = args.link_resource
+        f2py_flags = get_f2pyflags_dist(args, skip_funcs, only_funcs, rem)
+        fc_flags = get_fortran_compiler_flags(args)
+        flib_flags = get_fortran_library_flags(args)
+        
+        ext_args = {
+            'name': module_name,
+            'sources': pyf_files + f77_files + f90_files,
+            'include_dirs': args.include_dirs,
+            'library_dirs': args.library_path,
+            'libraries': args.library_name,
+            'define_macros': args.define_macros,
+            'undef_macros': args.undef_macros,
+            'extra_objects': obj_files,
+            'f2py_options': f2py_flags,
+        }
 
 def main():
     logger = logging.getLogger("f2py_cli")
