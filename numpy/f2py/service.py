@@ -117,28 +117,32 @@ def check_npfcomp(opt: str):
         raise RuntimeError(f"{opt} is not an np.distutils supported compiler, choose from {fchoices}")
 
 
+def _set_additional_headers(headers: List[str]):
+    for header in headers:
+        cfuncs.outneeds['userincludes'].append(header[1:-1])
+        cfuncs.userincludes[header[1:-1]] = f"#include {header}"
 
-def _set_options(module_name: str, settings: Dict[str, Any]):
+def _set_crackfortran(crackfortran_setts):
     crackfortran.reset_global_f2py_vars()
-    capi_maps.load_f2cmap_file(settings['f2cmap'])
-    auxfuncs.options = {'verbose': settings['verbose']}
-    auxfuncs.debugoptions = settings["debug"]
-    auxfuncs.wrapfuncs = settings['wrapfuncs']
-    rules.options = {
-        'buildpath': settings['buildpath'],
-        'dorestdoc': settings['dorestdoc'],
-        'dolatexdoc': settings['dolatexdoc'],
-        'shortlatex': settings['shortlatex'],
-        'coutput': settings['coutput'],
-        'f2py_wrapper_output': settings['f2py_wrapper_output'],
-        'emptygen': settings['emptygen'],
-        'verbose': settings['verbose'],
-        'do-lower': settings['do-lower'],
-        'f2cmap_file': settings['f2cmap'],
-        'include_paths': settings['include_paths'],
-        'module': module_name,
-    }    
+    crackfortran.f77modulename = crackfortran_setts["module"]
+    crackfortran.include_paths[:] = crackfortran_setts["include_paths"]
+    crackfortran.debug = crackfortran_setts["debug"]
+    crackfortran.verbose = crackfortran_setts["verbose"]
+    crackfortran.skipfuncs = crackfortran_setts["skipfuncs"]
+    crackfortran.onlyfuncs = crackfortran_setts["onlyfuncs"]
+    crackfortran.dolowercase = crackfortran_setts["do-lower"]
 
+def _set_rules(rules_setts):
+    rules.options = rules_setts
+
+def _set_capi_maps(capi_maps_setts):
+    capi_maps.load_f2cmap_file(capi_maps_setts["f2cmap"])
+    _set_additional_headers(capi_maps_setts["headers"])
+
+def _set_auxfuncs(aux_funcs_setts):
+    auxfuncs.options = {'verbose': aux_funcs_setts['verbose']}
+    auxfuncs.debugoptions = aux_funcs_setts["debug"]
+    auxfuncs.wrapfuncs = aux_funcs_setts['wrapfuncs']
 
 def _dict_append(d_out, d_in):
     for (k, v) in d_in.items():
@@ -224,17 +228,9 @@ def _check_postlist(postlist, sign_file: str, verbose: bool):
             # raise TypeError('All blocks must be python module blocks but got %s' % (
             #     repr(postlist[i]['block'])))
 
-def _callcrackfortran(files: List[Path], module_name: str, options: Dict[str, Any]):
-    crackfortran.f77modulename = module_name
-    crackfortran.include_paths[:] = options['include_paths']
-    crackfortran.debug = options["debug"]
-    crackfortran.verbose = options["verbose"]
-    crackfortran.skipfuncs = options["skipfuncs"]
-    crackfortran.onlyfuncs = options["onlyfuncs"]
-    crackfortran.dolowercase  = options["do-lower"]
+def _callcrackfortran(files: List[Path], module_name: str):
     postlist = crackfortran.crackfortran([str(file) for file in files])
     for mod in postlist:
-        module_name = module_name or 'untitled'
         mod["coutput"] = f"{module_name}module.c"
         mod["f2py_wrapper_output"] = f"{module_name}-f2pywrappers.f"
     return postlist
@@ -254,10 +250,15 @@ def get_f2py_modulename(source):
                 break
     return name
 
-def generate_files(files: List[Path], module_name: str, sign_file: str, file_gen_options: Dict[str, Any], settings: Dict[str, Any]):
-    _set_options(module_name, settings)
-    postlist = _callcrackfortran(files, module_name, file_gen_options)
-    _check_postlist(postlist, sign_file, file_gen_options["verbose"])
+def wrapper_settings(rules_setts, crackfortran_setts, capi_maps_setts, auxfuncs_setts):
+    _set_rules(rules_setts)
+    _set_crackfortran(crackfortran_setts)
+    _set_capi_maps(capi_maps_setts)
+    _set_auxfuncs(auxfuncs_setts)
+
+def generate_files(files: List[Path], module_name: str, sign_file: str):
+    postlist = _callcrackfortran(files, module_name)
+    _check_postlist(postlist, sign_file)
     if(sign_file):
         _generate_signature(postlist, sign_file)
     if(module_name):
