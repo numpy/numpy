@@ -70,7 +70,7 @@ body:
 
 - type: textarea
   attributes:
-    label: "Significance of the issue:"
+    label: "Context for the issue:"
     description: >
       Please explain how this issue affects your work or why it should be prioritized.
     placeholder: |
