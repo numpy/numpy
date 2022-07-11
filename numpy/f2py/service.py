@@ -205,7 +205,7 @@ def _generate_signature(postlist, sign_file: str):
         with open(sign_file, "w") as f:
             f.write(pyf)
 
-def _check_postlist(postlist, sign_file: str, verbose: bool):
+def _check_postlist(postlist, sign_file: str):
     isusedby = {}
     for plist in postlist:
         if 'use' in plist:
@@ -221,11 +221,10 @@ def _check_postlist(postlist, sign_file: str, verbose: bool):
                 'which is used by {}\n'.format(
                     ','.join(f'"{s}"' for s in isusedby[plist['name']])))
     if(sign_file):
-        if verbose:
-            outmess(
-                'Stopping. Edit the signature file and then run f2py on the signature file: ')
-            outmess('%s %s\n' %
-                    (os.path.basename(sys.argv[0]), sign_file))
+        outmess(
+            'Stopping. Edit the signature file and then run f2py on the signature file: ')
+        outmess('%s %s\n' %
+                (os.path.basename(sys.argv[0]), sign_file))
         return
     for plist in postlist:
         if plist['block'] != 'python module':
