@@ -49,3 +49,31 @@ body:
     description: Output from `import sys, numpy; print(numpy.__version__, sys.version)`.
   validations:
     required: true
+
+- type: dropdown
+  attributes:
+    label: "Please select priority:"
+    description: |
+      Critical - The issue prevents users from running NumPy or causes crashes.
+      High - Issues that negatively affect someone’s work or that are critical for the project.
+      Medium -Issues that are important for the project, but not critical.
+      Low - Issues that are not critical for the project.
+      Trivial - The issue is a cosmetic issue or a very low-priority bug.
+    options:
+    - P1 (Critical)
+    - P2 (High)
+    - P3 (Medium)
+    - P4 (Low)
+    - P5 (Trivial)
+  validations:
+    required: true
+
+- type: textarea
+  attributes:
+    label: "Significance of the issue:"
+    description: >
+      Please explain how this issue negatively affects your work or why it should be prioritized.
+    placeholder: |
+      << your explanation here >>
+  validations:
+    required: true
