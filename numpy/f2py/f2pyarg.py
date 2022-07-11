@@ -635,8 +635,7 @@ def process_args(args):
         parser.print_help()
         parser.exit()
     files, skip_funcs, only_funcs = segregate_posn_args(args)
-    if getattr(args, "Fortran Files"):
-        f77_files, f90_files, pyf_files, obj_files, other_files = segregate_files(files)        
+    f77_files, f90_files, pyf_files, obj_files, other_files = segregate_files(files)
 
     module_name = get_module_name(args, pyf_files)
     build_dir = get_build_dir(args)
