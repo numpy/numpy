@@ -586,6 +586,9 @@ parser.add_argument('otherfiles',
 # Main Process #
 ################
 
+def get_additional_headers(rem):
+    return [val[8:] for val in rem if val[:8] == '-include']
+
 
 def get_build_dir(args):
     if(args.build_dir is not None):
@@ -630,7 +633,7 @@ def segregate_posn_args(args):
             funcs[mode].append(arg)
     return files, funcs['skip:'], funcs['only:']
 
-def process_args(args):
+def process_args(args, rem):
     if args.help:
         parser.print_help()
         parser.exit()
@@ -641,53 +644,54 @@ def process_args(args):
     build_dir = get_build_dir(args)
     sign_file = get_signature_file(args, build_dir)
 
-    # Disutils receives all the options and builds the extension.
-    if(args.c):
-        sources = pyf_files + f77_files + f90_files
-        remove_build_dir = not bool(args.build_dir)
-        link_files = args.link_resource
-        include_dirs = args.include_dirs
-        library_dirs = args.library_path
-        libraries = args.library_name
-        define_macros = args.define_macros
-        undef_macros = args.undef_macros
-    else:
-        settings = {
-            'buildpath': build_dir,
-            'f2cmap': args.f2cmap,
-            'verbose': args.verbose,
-            'dorestdoc': args.rest_doc,
-            'dolatexdoc': args.latex_doc,
-            'shortlatex': args.short_latex,
-            'debug': args.debug_api,
-            'wrapfuncs': args.wrap_functions,
-            'do-lower': args.lower,
-            'include_paths': args.include_paths,
-            # Disabing these options from frontend
-            'emptygen': True,
-            'f2py_wrapper_output': None,
-            'coutput': None,
-        }
+    headers = get_additional_headers(rem)
+    # TODO: Refine rules settings. Read codebase and remove unused ones
+    rules_setts = {
+        'module': module_name,
+        'buildpath': build_dir,
+        'dorestdoc': args.rest_doc,
+        'dolatexdoc': args.latex_doc,
+        'shortlatex': args.short_latex,
+        'verbose': args.verbose,
+        'do-lower': args.lower,
+        'f2cmap_file': args.f2cmap,
+        'include_paths': args.include_paths,
+        'coutput': None,
+        'f2py_wrapper_output': None,
+        'emptygen': True,
+    }
+    crackfortran_setts = {
+        'module': module_name,
+        'skipfuncs': skip_funcs,
+        'onlyfuncs': only_funcs,
+        'verbose': args.verbose,
+        'include_paths': args.include_paths,
+        'do-lower': args.lower,
+        'debug': args.debug_api,
+        'wrapfuncs': args.wrap_functions,
+    }
+    capi_maps_setts = {
+        'f2cmap': args.f2cmap,
+        'headers': headers,
+    }
+    auxfuncs_setts = {
+        'verbose': args.verbose,
+        'debug': args.debug_api,
+        'wrapfuncs': args.wrap_functions,
+    }
 
-        file_gen_options = {
-            'module': module_name,
-            'skipfuncs': skip_funcs,
-            'onlyfuncs': only_funcs,
-            'verbose': args.verbose,
-            'include_paths': args.include_paths,
-            'do-lower': args.lower,
-            'debug': args.debug_api,
-            'wrapfuncs': args.wrap_functions,
-        }
+    wrapper_settings(rules_setts, crackfortran_setts, capi_maps_setts, auxfuncs_setts)
+
 
         generate_files(f77_files + f90_files, module_name, sign_file, file_gen_options, settings)
 
 def main():
     logger = logging.getLogger("f2py_cli")
     logger.setLevel(logging.WARNING)
-    args = parser.parse_args()
-    process_args(args)
-
+    args, rem = parser.parse_known_args()
+    # since argparse can't handle '-include<header>'
+    # we filter it out into rem and parse it manually.
+    process_args(args, rem)
 
 if __name__ == "__main__":
     main()
