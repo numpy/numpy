@@ -569,6 +569,7 @@ build_helpers.add_argument(
     '--link-umfpack', '--link-amd',
     metavar="--link-<resource>",
     dest="link_resource",
+    default=[],
     nargs="*",
     action=NPDLinkHelper,
     help="The link helpers for numpy distutils"
