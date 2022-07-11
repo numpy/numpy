@@ -72,7 +72,7 @@ body:
   attributes:
     label: "Significance of the issue:"
     description: >
-      Please explain how this issue negatively affects your work or why it should be prioritized.
+      Please explain how this issue affects your work or why it should be prioritized.
     placeholder: |
       << your explanation here >>
   validations:
