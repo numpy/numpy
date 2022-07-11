@@ -24,7 +24,7 @@ from numpy.f2py.auxfuncs import outmess
 
 from numpy.version import version as __version__
 
-from .service import check_dccomp, check_npfcomp, check_fortran, check_dir, generate_files, segregate_files, compile_dist, get_f2py_modulename
+from .service import check_dccomp, check_npfcomp, check_dir, generate_files, segregate_files, get_f2py_modulename, wrapper_settings, compile_dist
 
 ##################
 # Temp Variables #
@@ -757,6 +757,9 @@ def process_args(args, rem):
             'extra_objects': obj_files,
             'f2py_options': f2py_flags,
         }
+        compile_dist(ext_args, link_resource, build_dir, fc_flags, flib_flags, args.quiet, remove_build_dir)
+    else:
+        generate_files(f77_files + f90_files, module_name, sign_file)
 
 def main():
     logger = logging.getLogger("f2py_cli")
