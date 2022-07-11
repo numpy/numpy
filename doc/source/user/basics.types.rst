@@ -232,15 +232,18 @@ If 64-bit integers are still too small the result may be cast to a
 floating point number. Floating point numbers offer a larger, but inexact,
 range of possible values.
 
+Integer arithemtic is modular so prefer floating point for any computation.
+
     >>> np.power(100, 100, dtype=np.int64) # Incorrect even with 64-bit int
     0
     >>> np.power(100, 100, dtype=np.float64)
     1e+200
-
-    >>> np.power(53782400000 - 61917364224, 2) # Integer arithmetic is modular
-    -7609333369078284288
-    >>> np.power(53782400000.0 - 61917364224.0, 2) # Prefer floating point for computation
-    6.617764292575992e+19
+    >>> np.power(int(2**32)+1, 2)
+    8589934593
+    >>> np.power(int(2**32)-1, 2)
+    -8589934591
+    >>> np.power(float(2**32)+1, 2)
+    1.8446744082299486e+19
 
 Extended Precision
 ==================
