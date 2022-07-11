@@ -7,12 +7,19 @@ from pathlib import Path
 from typing import Any, Dict, List, Tuple
 from argparse import Namespace
 
+# Distutil dependencies
+from numpy.distutils.misc_util import dict_append
+from numpy.distutils.system_info import get_info
+from numpy.distutils.core import setup, Extension
+
 from . import crackfortran
 from . import capi_maps
 from . import rules
 from . import auxfuncs
 from . import cfuncs
 from . import cb_rules
+
+from .utils import get_f2py_dir
 
 outmess = auxfuncs.outmess
 
@@ -235,6 +242,14 @@ def _callcrackfortran(files: List[Path], module_name: str):
         mod["f2py_wrapper_output"] = f"{module_name}-f2pywrappers.f"
     return postlist
 
+def _set_dependencies_dist(ext_args, link_resource):
+    for dep in link_resource:
+        info = get_info(dep)
+        if not info:
+                outmess('No %s resources found in system'
+                        ' (try `f2py --help-link`)\n' % (repr(n)))
+        dict_append(ext_args, **link_resource)
+
 def get_f2py_modulename(source):
     name = None
     _f2py_module_name_match = re.compile(r'\s*python\s*module\s*(?P<name>[\w_]+)',
@@ -264,6 +279,24 @@ def generate_files(files: List[Path], module_name: str, sign_file: str):
     if(module_name):
         _buildmodules(postlist)
 
+def compile_dist(ext_args, link_resources, build_dir, fc_flags, flib_flags, quiet_build, remove_build_dir=True):
+    _set_dependencies_dist(ext_args, link_resources)
+    f2py_dir = get_f2py_dir()
+    ext = Extension(**ext_args)
+    f2py_build_flags = ['--quiet'] if quiet_build else ['--verbose']
+    f2py_build_flags.extend( ['build', '--build-temp', str(build_dir),
+                              '--build-base', str(build_dir),
+                              '--build-platlib', '.',
+                              '--disable-optimization'])
+    if fc_flags:
+        f2py_build_flags.extend(['config_fc'] + fc_flags)
+    if flib_flags:
+        f2py_build_flags.extend(['build_ext'] + flib_flags)
+    setup(ext_modules=[ext], script_name=f2py_dir, script_args=f2py_build_flags)
+    if(remove_build_dir and os.path.exists(build_dir)):
+        import shutil
+        outmess('Removing build directory %s\n' % (build_dir))
+        shutil.rmtree(build_dir)
 
 def segregate_files(files: List[str]) -> Tuple[List[Path], List[Path], List[Path], List[Path]]:
 	"""
