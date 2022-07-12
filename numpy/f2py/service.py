@@ -278,7 +278,7 @@ def generate_files(files: List[Path], module_name: str, sign_file: str):
     if(module_name):
         _buildmodules(postlist)
 
-def compile_dist(ext_args, link_resources, build_dir, fc_flags, flib_flags, quiet_build, remove_build_dir=True):
+def compile_dist(ext_args, link_resources, build_dir, fc_flags, flib_flags, quiet_build):
     _set_dependencies_dist(ext_args, link_resources)
     f2py_dir = get_f2py_dir()
     ext = Extension(**ext_args)
@@ -292,10 +292,6 @@ def compile_dist(ext_args, link_resources, build_dir, fc_flags, flib_flags, quie
     if flib_flags:
         f2py_build_flags.extend(['build_ext'] + flib_flags)
     setup(ext_modules=[ext], script_name=f2py_dir, script_args=f2py_build_flags)
-    if(remove_build_dir and os.path.exists(build_dir)):
-        import shutil
-        outmess('Removing build directory %s\n' % (build_dir))
-        shutil.rmtree(build_dir)
 
 def segregate_files(files: List[str]) -> Tuple[List[Path], List[Path], List[Path], List[Path]]:
 	"""

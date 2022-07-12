@@ -24,6 +24,7 @@ import tempfile
 from numpy.version import version as __version__
 
 from .service import check_dccomp, check_npfcomp, check_dir, generate_files, segregate_files, get_f2py_modulename, wrapper_settings, compile_dist
+from .utils import open_build_dir
 
 ##################
 # Temp Variables #
@@ -696,70 +697,69 @@ def process_args(args, rem):
     files, skip_funcs, only_funcs = segregate_posn_args(args)
     f77_files, f90_files, pyf_files, obj_files, other_files = segregate_files(files)
 
-    module_name = get_module_name(args, pyf_files)
-    build_dir = get_build_dir(args)
-    sign_file = get_signature_file(args, build_dir)
-
-    headers = get_additional_headers(rem)
-    # TODO: Refine rules settings. Read codebase and remove unused ones
-    rules_setts = {
-        'module': module_name,
-        'buildpath': build_dir,
-        'dorestdoc': args.rest_doc,
-        'dolatexdoc': args.latex_doc,
-        'shortlatex': args.short_latex,
-        'verbose': args.verbose,
-        'do-lower': args.lower,
-        'f2cmap_file': args.f2cmap,
-        'include_paths': args.include_paths,
-        'coutput': None,
-        'f2py_wrapper_output': None,
-        'emptygen': True,
-    }
-    crackfortran_setts = {
-        'module': module_name,
-        'skipfuncs': skip_funcs,
-        'onlyfuncs': only_funcs,
-        'verbose': args.verbose,
-        'include_paths': args.include_paths,
-        'do-lower': args.lower,
-        'debug': args.debug_api,
-        'wrapfuncs': args.wrap_functions,
-    }
-    capi_maps_setts = {
-        'f2cmap': args.f2cmap,
-        'headers': headers,
-    }
-    auxfuncs_setts = {
-        'verbose': args.verbose,
-        'debug': args.debug_api,
-        'wrapfuncs': args.wrap_functions,
-    }
-
-    wrapper_settings(rules_setts, crackfortran_setts, capi_maps_setts, auxfuncs_setts)
-
-    # Disutils receives all the options and builds the extension.
-    if(args.c):
-        remove_build_dir = not bool(args.build_dir)
-        link_resource = args.link_resource
-        f2py_flags = get_f2pyflags_dist(args, skip_funcs, only_funcs, rem)
-        fc_flags = get_fortran_compiler_flags(args)
-        flib_flags = get_fortran_library_flags(args)
-        
-        ext_args = {
-            'name': module_name,
-            'sources': pyf_files + f77_files + f90_files,
-            'include_dirs': args.include_dirs,
-            'library_dirs': args.library_path,
-            'libraries': args.library_name,
-            'define_macros': args.define_macros,
-            'undef_macros': args.undef_macros,
-            'extra_objects': obj_files,
-            'f2py_options': f2py_flags,
+    with open_build_dir(args.build_dir, args.c) as build_dir:
+        breakpoint()
+        module_name = get_module_name(args, pyf_files)
+        sign_file = get_signature_file(args, build_dir)
+        headers = get_additional_headers(rem)
+        # TODO: Refine rules settings. Read codebase and remove unused ones
+        rules_setts = {
+            'module': module_name,
+            'buildpath': build_dir,
+            'dorestdoc': args.rest_doc,
+            'dolatexdoc': args.latex_doc,
+            'shortlatex': args.short_latex,
+            'verbose': args.verbose,
+            'do-lower': args.lower,
+            'f2cmap_file': args.f2cmap,
+            'include_paths': args.include_paths,
+            'coutput': None,
+            'f2py_wrapper_output': None,
+            'emptygen': True,
         }
-        compile_dist(ext_args, link_resource, build_dir, fc_flags, flib_flags, args.quiet, remove_build_dir)
-    else:
-        generate_files(f77_files + f90_files, module_name, sign_file)
+        crackfortran_setts = {
+            'module': module_name,
+            'skipfuncs': skip_funcs,
+            'onlyfuncs': only_funcs,
+            'verbose': args.verbose,
+            'include_paths': args.include_paths,
+            'do-lower': args.lower,
+            'debug': args.debug_api,
+            'wrapfuncs': args.wrap_functions,
+        }
+        capi_maps_setts = {
+            'f2cmap': args.f2cmap,
+            'headers': headers,
+        }
+        auxfuncs_setts = {
+            'verbose': args.verbose,
+            'debug': args.debug_api,
+            'wrapfuncs': args.wrap_functions,
+        }
+
+        wrapper_settings(rules_setts, crackfortran_setts, capi_maps_setts, auxfuncs_setts)
+
+        # Disutils receives all the options and builds the extension.
+        if(args.c):
+            link_resource = args.link_resource
+            f2py_flags = get_f2pyflags_dist(args, skip_funcs, only_funcs, rem)
+            fc_flags = get_fortran_compiler_flags(args)
+            flib_flags = get_fortran_library_flags(args)
+            
+            ext_args = {
+                'name': module_name,
+                'sources': pyf_files + f77_files + f90_files,
+                'include_dirs': args.include_dirs,
+                'library_dirs': args.library_path,
+                'libraries': args.library_name,
+                'define_macros': args.define_macros,
+                'undef_macros': args.undef_macros,
+                'extra_objects': obj_files,
+                'f2py_options': f2py_flags,
+            }
+            compile_dist(ext_args, link_resource, build_dir, fc_flags, flib_flags, args.quiet)
+        else:
+            generate_files(f77_files + f90_files, module_name, sign_file)
 
 def main():
     logger = logging.getLogger("f2py_cli")
