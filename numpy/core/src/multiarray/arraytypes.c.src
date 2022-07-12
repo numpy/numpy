@@ -804,7 +804,7 @@ VOID_getitem(void *input, void *vap)
          *       could have special handling.
          */
         PyObject *base = (PyObject *)ap;
-        while (Py_TYPE(base) == NULL) {
+        while (base != NULL && Py_TYPE(base) == NULL) {
             base = PyArray_BASE((PyArrayObject *)base);
         }
         ret = (PyArrayObject *)PyArray_NewFromDescrAndBase(
@@ -812,6 +812,15 @@ VOID_getitem(void *input, void *vap)
                 shape.len, shape.ptr, NULL, ip,
                 PyArray_FLAGS(ap) & ~NPY_ARRAY_F_CONTIGUOUS,
                 NULL, base);
+        if (base == NULL) {
+            /*
+             * Need to create a copy, or we may point to wrong data.  This path
+             * is taken when no "valid" array is passed.  This happens for
+             * casts.
+             */
+            PyObject *copy = PyArray_FromArray(ret, NULL, NPY_ARRAY_ENSURECOPY);
+            Py_SETREF(ret, (PyArrayObject *)copy);
+        }
         npy_free_cache_dim_obj(shape);
         return (PyObject *)ret;
     }

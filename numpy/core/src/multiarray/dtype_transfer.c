@@ -258,6 +258,7 @@ any_to_object_get_loop(
     data->base.free = &_any_to_object_auxdata_free;
     data->base.clone = &_any_to_object_auxdata_clone;
     data->arr_fields.base = NULL;
+    Py_SET_TYPE(&data->arr_fields, NULL);
     data->arr_fields.descr = context->descriptors[0];
     Py_INCREF(data->arr_fields.descr);
     data->arr_fields.flags = aligned ? NPY_ARRAY_ALIGNED : 0;

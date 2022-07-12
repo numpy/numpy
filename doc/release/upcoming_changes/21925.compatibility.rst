@@ -1,0 +1,12 @@
+Subarray to object cast now copies
+----------------------------------
+Casting a dtype that includes a subarray to an object will now ensure
+a copy of the subarray.  Previously an unsafe view was returned::
+
+    arr = np.ones(3, dtype=[("f", "i", 3)])
+    subarray_fields = arr.astype(object)[0]
+    subarray = subarray_fields[0]  # "f" field
+
+    np.may_share_memory(subarray, arr)
+
+Is now always false.  While previously it was true for the specific cast.
