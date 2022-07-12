@@ -134,7 +134,14 @@ class DebugLinkHelper(argparse.Action):
             raise RuntimeError(f"{outvar} is not in {debug_api}")
 
 class ProcessMacros(argparse.Action):
-    """Process macros in the form of --Dmacro=value and -Dmacro"""
+    """Process macros in the form of -Dmacro=value and -Dmacro"""
+
+    def __init__(self, option_strings, dest, nargs="*", **kwargs):
+        """Initialization of the boolean flag
+
+        Mimics the parent
+        """
+        super(ProcessMacros, self).__init__(option_strings, dest, nargs="*", **kwargs)
 
     def __call__(self, parser, namespace, values, option_string=None):
         """The storage action
@@ -143,11 +150,11 @@ class ProcessMacros(argparse.Action):
 
         """
         items = getattr(namespace, self.dest) or []
-        outvar = option_string.split("-D")[1]
-        if('=' in outvar):
-            items.append((outvar.split("=")[0], outvar.split("=")[1]))
-        else:
-            items.append((outvar, None))
+        for value in values:
+            if('=' in value):
+                items.append((value.split("=")[0], value.split("=")[1]))
+            else:
+                items.append((value, None))
         setattr(namespace, self.dest, items)
 
 
@@ -513,9 +520,10 @@ build_helpers.add_argument(
 build_helpers.add_argument(
     "-D",
     type=str,
+    metavar='MACRO[=value]',
     nargs="*",
     action=ProcessMacros,
-    dest='define_macros',
+    dest="define_macros",
     help="Define macros"
 )
 
