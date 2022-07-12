@@ -19,12 +19,12 @@ import os
 import argparse
 import logging
 import pathlib
-import tempfile
 
 from numpy.version import version as __version__
 
 from .service import check_dccomp, check_npfcomp, check_dir, generate_files, segregate_files, get_f2py_modulename, wrapper_settings, compile_dist
 from .utils import open_build_dir
+from .auxfuncs import outmess
 
 ##################
 # Temp Variables #
@@ -380,6 +380,7 @@ parser.add_argument(
 parser.add_argument(
     "-v",
     action="store_true",
+    dest="version",
     help="Print f2py version ID and exit.",
 )
 
@@ -693,6 +694,9 @@ def segregate_posn_args(args):
 def process_args(args, rem):
     if args.help:
         parser.print_help()
+        parser.exit()
+    if(args.version):
+        outmess(__version__)
         parser.exit()
     files, skip_funcs, only_funcs = segregate_posn_args(args)
     f77_files, f90_files, pyf_files, obj_files, other_files = segregate_files(files)
