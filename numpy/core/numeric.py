@@ -682,7 +682,7 @@ def correlate(a, v, mode='valid'):
     This function computes the correlation as generally defined in signal
     processing texts:
 
-    .. math:: c_k = \sum_n a_{n+k} \cdot \overline{v_n}
+    .. math:: c_k = \sum_n a_{n+k} \cdot \overline{v}_n
 
     with a and v sequences being zero-padded where necessary and
     :math:`\overline x` denoting complex conjugation.
