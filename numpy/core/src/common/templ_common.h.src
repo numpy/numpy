@@ -58,7 +58,7 @@ npy_mul_sizes_with_overflow (npy_intp * r, npy_intp a, npy_intp b)
     return __builtin_mul_overflow(a, b, r);
 #else
 
-    assert a >= 0 && b >= 0, "this function only supports non-negative numbers"
+    assert(a >= 0 && b >= 0, "this function only supports non-negative numbers")
     const npy_intp half_sz = ((npy_intp)1 << ((sizeof(a) * 8 - 1 ) / 2));
 
     *r = a * b;
