@@ -647,12 +647,6 @@ def get_fortran_compiler_flags(args):
     if(args.debug):
         fc_flags.append('--debug')
 
-def get_build_dir(args):
-    if(args.build_dir is not None):
-        return args.build_dir[0]
-    if(args.c):
-        return tempfile.mkdtemp()
-    return pathlib.Path.cwd()
 
 def get_module_name(args, pyf_files):
     if(args.module is not None):
