@@ -20,7 +20,6 @@ import argparse
 import logging
 import pathlib
 import tempfile
-from numpy.f2py.auxfuncs import outmess
 
 from numpy.version import version as __version__
 
