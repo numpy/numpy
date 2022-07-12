@@ -358,8 +358,6 @@ parser.add_argument(
 parser.add_argument(
     "--f2cmap",
     metavar="<filename>",
-    action="extend",
-    nargs="*",
     type=pathlib.Path,
     default=".f2py_f2cmap",
     help="""Load Fortran-to-Python KIND specification from the given
