@@ -274,6 +274,7 @@ def generate_files(files: List[Path], module_name: str, sign_file: str):
     _check_postlist(postlist, sign_file)
     if(sign_file):
         _generate_signature(postlist, sign_file)
+        return
     if(module_name):
         _buildmodules(postlist)
 
