@@ -698,7 +698,6 @@ def process_args(args, rem):
     f77_files, f90_files, pyf_files, obj_files, other_files = segregate_files(files)
 
     with open_build_dir(args.build_dir, args.c) as build_dir:
-        breakpoint()
         module_name = get_module_name(args, pyf_files)
         sign_file = get_signature_file(args, build_dir)
         headers = get_additional_headers(rem)
