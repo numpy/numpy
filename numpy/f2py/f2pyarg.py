@@ -621,6 +621,8 @@ def get_f2pyflags_dist(args, skip_funcs, only_funcs, rem):
         f2py_flags.extend(['only:']+only_funcs + [':'])
     if(args.include_paths):
         f2py_flags.extend(['--include-paths']+args.include_paths)
+    if(args.f2cmap):
+        f2py_flags.extend(['--f2cmap', str(args.f2cmap)])
     return f2py_flags
 
 def get_fortran_library_flags(args):
