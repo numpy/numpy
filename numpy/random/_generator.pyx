@@ -935,6 +935,7 @@ cdef class Generator:
         >>> plt.show()
 
         """
+        print("This is a print statement from uniform()")
         cdef bint is_scalar = True
         cdef np.ndarray alow, ahigh, arange
         cdef double _low, _high, rng

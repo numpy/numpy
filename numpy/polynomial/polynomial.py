@@ -82,10 +82,11 @@ __all__ = [
 import numpy as np
 import numpy.linalg as la
 from numpy.core.multiarray import normalize_axis_index
-
+import math 
 from . import polyutils as pu
 from ._polybase import ABCPolyBase
-
+import warnings
+warnings.filterwarnings('ignore')
 polytrim = pu.trimcoef
 
 #
@@ -407,7 +408,10 @@ def polydiv(c1, c2):
     if lc1 < lc2:
         return c1[:1]*0, c1
     elif lc2 == 1:
-        return c1/c2[-1], c1[:1]*0
+        try:            
+            return c1/c2[-1], c1[:1]*0
+        except:
+            return c1/c2[-1], 1 
     else:
         dlen = lc1 - lc2
         scl = c2[-1]
