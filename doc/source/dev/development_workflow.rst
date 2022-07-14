@@ -177,32 +177,45 @@ and using it is highly recommended. Tasks and checks that it runs include:
 
 To use the hook, first make sure that pre-commit is installed:
 
-.. code-block:: bash
+.. code-block:: shell
 
    pip install pre-commit
 
 And then install the hook to your git repository:
 
-.. code-block:: bash
+.. code-block:: shell
 
    pre-commit install
 
 This will add a script to your ``.git/hooks`` folder. This script will run
 pre-commit to check your changed files whenever you run ``git commit`` (the
-Python environment does not need to be active for this to work). Note that if
-there are any failures, the commit will not go through and you will have to
-re-run the commit (and ``git add`` first if any files were automatically
-changed, or ``git commit`` with the ``-a`` flag). It is generally bad practice
-to commit files that do not pass tests but if it is necessary (e.g., for a local
-commit that will be rebased later), you can run ``git commit --no-verify`` to
-skip pre-commit checks.
+Python environment does not need to be active for this to work). Note that the
+first time pre-commit runs, it will take a while to download the necessary
+files. Subsequent times will be very fast.
 
-Note that the first time pre-commit runs, it will take a while to download the
-necessary files. Subsequent times will be very fast.
+If there are any failures or changes when the hook is run, the commit will fail.
+Fix any linter issues (no manual action is needed if there were only
+autoformatting changes) and re-run the commit (you will need to re-add any
+changed files, either with ``git add`` or ``git commit -a``). If you would like
+a quick way to retry a commit with the same message, an alias is a good option:
+
+.. code-block:: shell
+
+   # Add the below to ~/.bash_aliases, ~/.bashrc, or ~/.zshrc, as relevant,
+   # then reload your terminal
+
+   # Git commit rerun alias; commit with the same message as the last commit
+   # or commit attempt.
+   alias gcr='git commit -am "$(cat "$(git rev-parse --git-dir)/COMMIT_EDITMSG")"'
+
+It is generally bad practice to commit files that do not pass tests, but it may
+occationally be necessary (e.g., for a local commit that will be rebased later).
+In these cases, running ``git commit --no-verify`` (``git commit -n``) will skip
+pre-commit checks.
 
 Other useful commands includes:
 
-.. code-block:: bash
+.. code-block:: shell
 
    # Validate specific files
    pre-commit run  --files a.py b.py ...
@@ -228,9 +241,12 @@ commit the changes of ``pre-comit run --all-files`` as that will likely generate
 a diff much larger than your code.
 
 If a commit is done that includes formatting changes only, its hash should be
-added to ``.git-blame-ignore-revs`` so that it does not appear in the blame.
-More information is available as comments in that file. Note that care should be
-taken that formatting commits are not squashed with regular development commits.
+added to ``.git-blame-ignore-revs`` so that it does not appear in the blame -
+more information is available in that file. For this reason, it is generally
+good to separate large formatting commits from code changes. Since pull request
+commits are usually squashed, this generally means that large formatting changes
+should go in a separate PR and have its hash added to ``.git-blame-ignore-revs``
+*after* merge separately.
 
 .. Section links (not displayed)
 .. _black: https://black.readthedocs.io/en/stable/

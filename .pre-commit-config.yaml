@@ -11,6 +11,10 @@
 # `pre-commit autoupdate --freeze`. This pins the version to the commit hash
 # rather than a (movable) tag, which adds some security benefit. This sets the
 # "rev:" key and the adds the "# frozen: vx.x.x" comments that you see.
+#
+# Note that additional_dependencies pins need to be manually updated. Try to
+# ensure versiong stay in sync when a dependency is used across multiple
+# hooks.
 
 repos:
   ### Always-run hooks ###
@@ -42,10 +46,15 @@ repos:
           - -L
           - flake8
         additional_dependencies:
-          - isort
-          - flake8
-          - flake8-bugbear
-          - pep8-naming
+          - isort==5.10.1
+          - flake8==4.0.1
+          - flake8-bugbear==16.4.0
+          - flake8-import-order==0.18.1
+          - flake8-builtins==1.5.3
+          - flake8-future-annotations==0.0.5
+          - flake8-docstrings==1.6.0
+          - flake8-rst-docstrings==0.2.6
+          - pep8-naming==0.13.0
 
   # Format changed lines only of C/C++ files
   # We want to use git-clang-format which is provided by the clang-format wheel,
@@ -62,11 +71,11 @@ repos:
         types_or: [c++, c]
         verbose: true
         additional_dependencies:
-          - clang-format==14.0.3
+          - clang-format==14.0.6
 
   # YAML Formatter. Only enabled on one file for now, will add more eventually
   - repo: https://github.com/jumanjihouse/pre-commit-hook-yamlfmt
-    rev: 752eb7b8990459b8134765a395eeee06f87d0f17  # frozen: 0.2.1
+    rev: d0cf8a7a8e09127a5a61c0644a823544e32f492b  # frozen: 0.2.2
     hooks:
       - id: yamlfmt
         args: [--mapping, '2', --sequence, '4', --offset, '2', --width, '88']
@@ -87,7 +96,7 @@ repos:
   # Disabled for now to avoid whole-file commit diffs
   # Run with: pre-commit run --hook-stage manual black
   - repo: https://github.com/psf/black
-    rev: ae2c0758c9e61a385df9700dc9c231bf54887041  # frozen: 22.3.0
+    rev: f6c139c5215ce04fd3e73a900f1372942d58eca0  # frozen: 22.6.0
     hooks:
       - id: black
         stages: [manual]
@@ -128,20 +137,20 @@ repos:
       - id: flake8
         stages: [manual]
         additional_dependencies:
-          - flake8-bugbear
-          - flake8-import-order
-          - flake8-builtins
-          - flake8-future-annotations
-          - flake8-docstrings
-          - flake8-rst-docstrings
-          - pep8-naming
+          - flake8-bugbear==16.4.0
+          - flake8-import-order==0.18.1
+          - flake8-builtins==1.5.3
+          - flake8-future-annotations==0.0.5
+          - flake8-docstrings==1.6.0
+          - flake8-rst-docstrings==0.2.6
+          - pep8-naming==0.13.0
 
   # Allow clang-format to be run on entire file manually
   # Disabled for now to avoid large diffs. clang-format-diff runs this only
   # on changed lines.
   # Run with: pre-commit run --hook-stage manual clang-format
   - repo: https://github.com/pre-commit/mirrors-clang-format
-    rev: b5693898283249c74468e9876f8a707625861067  # frozen: v14.0.5
+    rev: 4c1506e7e6f7712eee075b58391eabe1192d3adb  # frozen: v14.0.6
     hooks:
       - id: clang-format
         stages: [manual]

@@ -1,8 +1,16 @@
 # .git-blame-ignore-revs
-
+#
 # This file contains a list of SHAs that should be ignored by git blame Github
 # follows this convention as of approximately 2022-03-24, and Gitlab appears to
 # be adding support. The main use case is for large formatting commits as NumPy
 # works on acheiving pre-commit compliance. More information at:
 # https://docs.github.com/en/repositories/working-with-files/using-files
 # /viewing-a-file#ignore-commits-in-the-blame-view
+#
+# Ensure commit hashes that appear here exist on main; this will not be the case
+# if a pull request with multiple commits squashed before merge (squashing
+# performs a rebase that changes commit hashes). In these cases, the commit hash
+# will need to be added to this file after the merge.
+#
+# Note that because of this squashing, it is better to keep large formatting
+# pull requests separate from code change pull requests.
