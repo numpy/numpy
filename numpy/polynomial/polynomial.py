@@ -423,7 +423,7 @@ def polydiv(c1, c2):
             i -= 1
             j -= 1
         return c1[j+1:]/scl, pu.trimseq(c1[:j+1])
-
+ 
 
 def polypow(c, pow, maxpower=None):
     """Raise a polynomial to a power.
