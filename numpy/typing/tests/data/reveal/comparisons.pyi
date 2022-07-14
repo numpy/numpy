@@ -1,4 +1,6 @@
 import numpy as np
+import fractions
+import decimal
 
 c16 = np.complex128()
 f8 = np.float64()
@@ -24,6 +26,13 @@ AR = np.array([0], dtype=np.int64)
 AR.setflags(write=False)
 
 SEQ = (0, 1, 2, 3, 4)
+
+# object-like comparisons
+
+reveal_type(i8 > fractions.Fraction(1, 5))  # E: Any
+reveal_type(i8 > [fractions.Fraction(1, 5)])  # E: Any
+reveal_type(i8 > decimal.Decimal("1.5"))  # E: Any
+reveal_type(i8 > [decimal.Decimal("1.5")])  # E: Any
 
 # Time structures
 
