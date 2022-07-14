@@ -410,7 +410,7 @@ def polydiv(c1, c2):
     elif lc2 == 1:
         try:            
             return c1/c2[-1], c1[:1]*0
-        except:
+        except RuntimeWarning:
             return c1/c2[-1], 1 
     else:
         dlen = lc1 - lc2
