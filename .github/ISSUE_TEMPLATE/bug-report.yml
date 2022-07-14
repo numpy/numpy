@@ -58,4 +58,4 @@ body:
     placeholder: |
       << your explanation here >>
   validations:
-    required: true
+    required: false
