@@ -120,9 +120,12 @@ class TestGenericAlias:
         # and they are thus now longer equivalent
         ("__ne__", lambda n: n != next(iter(n)), ("beta", 1)),
 
-        # >= beta3 stuff
+        # >= beta3
         ("__typing_unpacked_tuple_args__",
          lambda n: n.__typing_unpacked_tuple_args__, ("beta", 3)),
+
+        # >= beta4
+        ("__class__", lambda n: n.__class__ == type(n), ("beta", 4)),
     ])
     def test_py311_features(
         self,
