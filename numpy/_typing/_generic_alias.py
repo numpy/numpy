@@ -216,6 +216,7 @@ class _GenericAlias:
         "__deepcopy__",
         "__unpacked__",
         "__typing_unpacked_tuple_args__",
+        "__class__",
     })
 
     def __getattribute__(self, name: str) -> Any:
