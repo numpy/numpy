@@ -54,7 +54,8 @@ datetime_type_promotion(PyArray_Descr *type1, PyArray_Descr *type2);
  * Converts a datetime from a datetimestruct to a datetime based
  * on some metadata.
  */
-int convert_datetimestruct_to_datetime(PyArray_DatetimeMetaData *meta,
+NPY_NO_EXPORT int
+convert_datetimestruct_to_datetime(PyArray_DatetimeMetaData *meta,
                                     const npy_datetimestruct *dts,
                                     npy_datetime *out);
 
@@ -222,7 +223,8 @@ metastr_to_unicode(PyArray_DatetimeMetaData *meta, int skip_brackets);
  * Returns -1 on error, 0 on success, and 1 (with no error set)
  * if obj doesn't have the needed date or datetime attributes.
  */
-int convert_pydatetime_to_datetimestruct(PyObject *obj, npy_datetimestruct *out,
+NPY_NO_EXPORT int
+convert_pydatetime_to_datetimestruct(PyObject *obj, npy_datetimestruct *out,
                                      NPY_DATETIMEUNIT *out_bestunit,
                                      int apply_tzinfo);
 
@@ -287,7 +289,8 @@ convert_timedelta_to_pyobject(npy_timedelta td, PyArray_DatetimeMetaData *meta);
 /*
  * Converts a datetime based on the given metadata into a datetimestruct
  */
-int convert_datetime_to_datetimestruct(PyArray_DatetimeMetaData *meta,
+NPY_NO_EXPORT int
+convert_datetime_to_datetimestruct(PyArray_DatetimeMetaData *meta,
                                     npy_datetime dt,
                                     npy_datetimestruct *out);
 
@@ -299,9 +302,17 @@ int convert_datetime_to_datetimestruct(PyArray_DatetimeMetaData *meta,
  *
  * Returns 0 on success, -1 on failure.
  */
-int convert_datetimestruct_to_datetime(PyArray_DatetimeMetaData *meta,
+NPY_NO_EXPORT int
+convert_datetimestruct_to_datetime(PyArray_DatetimeMetaData *meta,
                                     const npy_datetimestruct *dts,
                                     npy_datetime *out);
+
+/*
+ * Adjusts a datetimestruct based on a seconds offset. Assumes
+ * the current values are valid.
+ */
+NPY_NO_EXPORT void
+add_seconds_to_datetimestruct(npy_datetimestruct *dts, int seconds);
 
 /*
  * Adjusts a datetimestruct based on a minutes offset. Assumes

@@ -269,7 +269,8 @@ set_datetimestruct_days(npy_int64 days, npy_datetimestruct *dts)
     }
 }
 
-/*
+/*NUMPY_API
+ *
  * Converts a datetime from a datetimestruct to a datetime based
  * on some metadata. The date is assumed to be valid.
  *
@@ -277,7 +278,8 @@ set_datetimestruct_days(npy_int64 days, npy_datetimestruct *dts)
  *
  * Returns 0 on success, -1 on failure.
  */
-int convert_datetimestruct_to_datetime(PyArray_DatetimeMetaData *meta,
+NPY_NO_EXPORT int
+convert_datetimestruct_to_datetime(PyArray_DatetimeMetaData *meta,
                                     const npy_datetimestruct *dts,
                                     npy_datetime *out)
 {
@@ -441,10 +443,12 @@ PyArray_TimedeltaStructToTimedelta(
     return -1;
 }
 
-/*
+/*NUMPY_API
+ *
  * Converts a datetime based on the given metadata into a datetimestruct
  */
-int convert_datetime_to_datetimestruct(PyArray_DatetimeMetaData *meta,
+NPY_NO_EXPORT int
+convert_datetime_to_datetimestruct(PyArray_DatetimeMetaData *meta,
                                     npy_datetime dt,
                                     npy_datetimestruct *out)
 {
@@ -2037,6 +2041,20 @@ metastr_to_unicode(PyArray_DatetimeMetaData *meta, int skip_brackets)
 
 
 /*
+ * Adjusts a datetimestruct based on a seconds offset. Assumes
+ * the current values are valid.
+ */
+NPY_NO_EXPORT void
+add_seconds_to_datetimestruct(npy_datetimestruct *dts, int seconds)
+{
+    int minutes;
+
+    dts->sec += seconds;
+    minutes = extract_unit_32(&dts->sec, 60);
+    add_minutes_to_datetimestruct(dts, minutes);
+}
+
+/*
  * Adjusts a datetimestruct based on a minutes offset. Assumes
  * the current values are valid.
  */
@@ -2074,7 +2092,8 @@ add_minutes_to_datetimestruct(npy_datetimestruct *dts, int minutes)
     }
 }
 
-/*
+/*NUMPY_API
+ *
  * Tests for and converts a Python datetime.datetime or datetime.date
  * object into a NumPy npy_datetimestruct.
  *
@@ -2092,7 +2111,8 @@ add_minutes_to_datetimestruct(npy_datetimestruct *dts, int minutes)
  * Returns -1 on error, 0 on success, and 1 (with no error set)
  * if obj doesn't have the needed date or datetime attributes.
  */
-int convert_pydatetime_to_datetimestruct(PyObject *obj, npy_datetimestruct *out,
+NPY_NO_EXPORT int
+convert_pydatetime_to_datetimestruct(PyObject *obj, npy_datetimestruct *out,
                                      NPY_DATETIMEUNIT *out_bestunit,
                                      int apply_tzinfo)
 {
@@ -3893,8 +3913,7 @@ datetime_to_timedelta_resolve_descriptors(
         PyArrayMethodObject *NPY_UNUSED(self),
         PyArray_DTypeMeta *dtypes[2],
         PyArray_Descr *given_descrs[2],
-        PyArray_Descr *loop_descrs[2],
-        npy_intp *NPY_UNUSED(view_offset))
+        PyArray_Descr *loop_descrs[2])
 {
     loop_descrs[0] = NPY_DT_CALL_ensure_canonical(given_descrs[0]);
     if (loop_descrs[0] == NULL) {

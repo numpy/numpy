@@ -752,11 +752,13 @@ error:
     return -1;
 }
 
-/*
+/*NUMPY_API
+ *
  * Provides a string length to use for converting datetime
  * objects with the given local and unit settings.
  */
-int get_datetime_iso_8601_strlen(int local, NPY_DATETIMEUNIT base)
+NPY_NO_EXPORT int
+get_datetime_iso_8601_strlen(int local, NPY_DATETIMEUNIT base)
 {
     int len = 0;
 
@@ -854,7 +856,8 @@ lossless_unit_from_datetimestruct(npy_datetimestruct *dts)
     }
 }
 
-/*
+/*NUMPY_API
+ *
  * Converts an npy_datetimestruct to an (almost) ISO 8601
  * NULL-terminated string. If the string fits in the space exactly,
  * it leaves out the NULL terminator and returns success.
@@ -882,7 +885,8 @@ lossless_unit_from_datetimestruct(npy_datetimestruct *dts)
  *  Returns 0 on success, -1 on failure (for example if the output
  *  string was too short).
  */
-int make_iso_8601_datetime(npy_datetimestruct *dts, char *outstr, npy_intp outlen,
+NPY_NO_EXPORT int
+make_iso_8601_datetime(npy_datetimestruct *dts, char *outstr, npy_intp outlen,
                     int local, int utc, NPY_DATETIMEUNIT base, int tzoffset,
                     NPY_CASTING casting)
 {

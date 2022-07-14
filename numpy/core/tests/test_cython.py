@@ -153,6 +153,7 @@ def test_convert_datetime_to_datetimestruct(install_temp):
 class TestDatetimeStrings:
     def test_make_iso_8601_datetime(self, install_temp):
         # GH#21199
+        import checks
         dt = datetime(2016, 6, 2, 10, 45, 19)
         # uses NPY_FR_s
         result = checks.make_iso_8601_datetime(dt)
