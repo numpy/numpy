@@ -4956,16 +4956,25 @@ def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
     >>> yv
     array([[0.,  0.,  0.],
            [1.,  1.,  1.]])
-    >>> xv, yv = np.meshgrid(x, y, sparse=True)  # make sparse output arrays
+
+    The result of `meshgrid` is a coordinate grid:
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.plot(xv, yv, marker='o', color='k', linestyle='none')
+    >>> plt.show()
+
+    You can create sparse output arrays to save memory and computation time.
+
+    >>> xv, yv = np.meshgrid(x, y, sparse=True)
     >>> xv
     array([[0. ,  0.5,  1. ]])
     >>> yv
     array([[0.],
            [1.]])
 
-    `meshgrid` is very useful to evaluate functions on a grid.  If the
-    function depends on all coordinates, you can use the parameter
-    ``sparse=True`` to save memory and computation time.
+    `meshgrid` is very useful to evaluate functions on a grid. If the
+    function depends on all coordinates, both dense and sparse outputs can be
+    used.
 
     >>> x = np.linspace(-5, 5, 101)
     >>> y = np.linspace(-5, 5, 101)
@@ -4982,7 +4991,6 @@ def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
     >>> np.array_equal(zz, zs)
     True
 
-    >>> import matplotlib.pyplot as plt
     >>> h = plt.contourf(x, y, zs)
     >>> plt.axis('scaled')
     >>> plt.colorbar()
