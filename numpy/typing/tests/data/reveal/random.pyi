@@ -1538,5 +1538,5 @@ reveal_type(random_st.tomaxint())  # E: int
 reveal_type(random_st.tomaxint(1))  # E: ndarray[Any, dtype[{int_}]]
 reveal_type(random_st.tomaxint((1,)))  # E: ndarray[Any, dtype[{int_}]]
 
-reveal_type(np.random.set_bit_generator(pcg64))  # E: BitGenerator
-reveal_type(np.random.get_bit_generator())  # E: None
+reveal_type(np.random.set_bit_generator(pcg64))  # E: None
+reveal_type(np.random.get_bit_generator())  # E: BitGenerator
