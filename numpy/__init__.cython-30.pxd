@@ -858,6 +858,23 @@ cdef extern from "numpy/arrayscalars.h":
         NPY_FR_fs
         NPY_FR_as
 
+    # actually in datetime_strings.h
+    int get_datetime_iso_8601_strlen(int local, NPY_DATETIMEUNIT base)
+    int make_iso_8601_datetime(npy_datetimestruct *dts, char *outstr,
+                               npy_intp outlen, int local, int utc,
+                               NPY_DATETIMEUNIT base, int tzoffset,
+                               NPY_CASTING casting)
+
+    # actually in _datetime.h
+    int convert_pydatetime_to_datetimestruct(PyObject *obj, npy_datetimestruct *out,
+                                             NPY_DATETIMEUNIT *out_bestunit,
+                                             int apply_tzinfo)
+    int convert_datetime_to_datetimestruct(PyArray_DatetimeMetaData *meta,
+                                           npy_datetime dt,
+                                           npy_datetimestruct *out)
+    int convert_datetimestruct_to_datetime(PyArray_DatetimeMetaData *meta,
+                                           const npy_datetimestruct *dts,
+                                           npy_datetime *out)
 
 #
 # ufunc API
