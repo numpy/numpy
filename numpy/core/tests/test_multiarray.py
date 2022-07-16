@@ -2245,7 +2245,8 @@ class TestMethods:
         b = a.__deepcopy__({})
 
         a[0] = 42
-        assert_raises(AssertionError, assert_array_equal, a, b)
+        with pytest.raises(AssertionError):
+            assert_array_equal(a, b)
 
 
     def test_sort_order(self):
