@@ -5387,7 +5387,7 @@ def test_ufunc_with_out_varied():
 
 
 def test_astype_mask_ordering():
-    descr = [('v', int, 3), ('x', [('y', float)])]
+    descr = np.dtype([('v', int, 3), ('x', [('y', float)])])
     x = array([
         [([1, 2, 3], (1.0,)),  ([1, 2, 3], (2.0,))],
         [([1, 2, 3], (3.0,)),  ([1, 2, 3], (4.0,))]], dtype=descr)
