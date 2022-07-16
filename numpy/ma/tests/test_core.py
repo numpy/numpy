@@ -4054,8 +4054,8 @@ class TestMaskedArrayMathMethods:
     def test_std_float32(self):
         x = masked_array([[1, 2], [2, 4]], dtype=np.float32,
                          mask=[[True, False], [False, True]])
-        y = x.mean(axis=0)
-        z = x.mean(axis=0, dtype=np.float32)
+        y = x.std(axis=0)
+        z = x.std(axis=0, dtype=np.float32)
         assert_equal(y.dtype, np.float32)
         assert_equal(z.dtype, np.float32)
 

@@ -5305,9 +5305,9 @@ class MaskedArray(ndarray):
             if cnt.shape == () and (cnt == 0):
                 result = masked
             elif is_float16_result:
-                result = self.dtype.type(dsum * 1. / cnt)
+                result = divide(dsum, cnt, dtype=self.dtype)
             else:
-                result = dsum * 1. / cnt
+                result = divide(dsum, cnt, dtype=dsum.dtype)
         if out is not None:
             out.flat = result
             if isinstance(out, MaskedArray):
@@ -5389,7 +5389,7 @@ class MaskedArray(ndarray):
             danom = umath.absolute(danom) ** 2
         else:
             danom *= danom
-        dvar = divide(danom.sum(axis, **kwargs), cnt).view(type(self))
+        dvar = divide(danom.sum(axis, **kwargs), cnt, dtype=danom.dtype)
         # Apply the mask if it's not a scalar
         if dvar.ndim:
             dvar._mask = mask_or(self._mask.all(axis, **kwargs), (cnt <= 0))
