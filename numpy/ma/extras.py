@@ -726,7 +726,7 @@ def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
 
     a = np.ma.asarray(a)
 
-    if a.mask is np.nomask:
+    if a.mask is np.ma.nomask:
         m = np.median(getdata(a, subok=True), axis=axis,
                       out=out, overwrite_input=overwrite_input,
                       keepdims=keepdims)
