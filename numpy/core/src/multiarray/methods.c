@@ -1620,11 +1620,11 @@ _deepcopy_call(char *iptr, char *optr, PyArray_Descr *dtype,
             }
             if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset,
                                   &title)) {
-                return 0;
+                return -1;
             }
             res = _deepcopy_call(iptr + offset, optr + offset, new,
                                  deepcopy, visit);
-            if (res == -1) {
+            if (res < 0) {
                 return -1;
             }
         }
