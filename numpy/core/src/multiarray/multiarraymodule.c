@@ -1640,7 +1640,7 @@ _array_fromobject_generic(
                      * PyArray_Descr. Use the reference `op` as the base
                      * object. */
                     Py_INCREF(type);
-                    ret = PyArray_NewFromDescr(
+                    ret = (PyArrayObject *)PyArray_NewFromDescr(
                             Py_TYPE(op),
                             type,
                             PyArray_NDIM(oparr),
