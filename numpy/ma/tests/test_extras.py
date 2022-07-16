@@ -1167,8 +1167,8 @@ class TestMedian:
         masked2 = np.ma.masked_where(data2 == 4, data2)
         list = [masked1, masked2]
         median_masked_list = np.ma.median(list, axis=0).data
-        assert_equal( median_masked_list , np.array([[4.5, 4.5, 4.5, 5], [5, 4.5, 4.5, 4.5]]))
-
+        assert_equal(median_masked_list,
+                     np.array([[4.5, 4.5, 4.5, 5], [5, 4.5, 4.5, 4.5]]))
 
     def test_list_of_masked_array_no_axis(self):
         data1 = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])
