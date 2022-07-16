@@ -4525,7 +4525,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('transpose',
      * None or no argument: reverses the order of the axes.
 
      * tuple of ints: `i` in the `j`-th place in the tuple means that the
-       array's `i`-th axis becomes transposed array's `j`-th axis.
+       array's `i`-th axis becomes the transposed array's `j`-th axis.
 
      * `n` ints: same as an n-tuple of the same ints (this form is
        intended simply as a "convenience" alternative to the tuple form).
