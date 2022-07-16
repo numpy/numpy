@@ -2234,6 +2234,19 @@ class TestMethods:
         assert_c(a.copy('C'))
         assert_fortran(a.copy('F'))
         assert_c(a.copy('A'))
+    
+    @pytest.mark.parametrize("dtype", ['O', np.int32, 'i,O'])
+    def test__deepcopy__(self, dtype):
+        # Force the entry of NULLs into array
+        a = np.empty(4, dtype=dtype)
+        ctypes.memset(a.ctypes.data, 0, a.nbytes)
+
+        # Ensure no error is raised, see gh-21833
+        b = a.__deepcopy__({})
+
+        a[0] = 42
+        assert_raises(AssertionError, assert_array_equal, a, b)
+
 
     def test_sort_order(self):
         # Test sorting an array with fields
