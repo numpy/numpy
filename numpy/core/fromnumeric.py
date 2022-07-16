@@ -601,7 +601,7 @@ def _transpose_dispatcher(a, axes=None):
 @array_function_dispatch(_transpose_dispatcher)
 def transpose(a, axes=None):
     """
-    Returns an array with axes reversed or permuted.
+    Returns an array with axes transposed.
 
     For a 1-D array, this returns an unchanged view of the original array, as a
     transposed vector is simply the same vector.

@@ -4514,7 +4514,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('transpose',
     """
     a.transpose(*axes)
 
-    Returns a view of the array with axes reversed or permuted.
+    Returns a view of the array with axes transposed.
 
     Refer to `numpy.transpose` for full documentation.
 
