@@ -1648,7 +1648,7 @@ _array_fromobject_generic(
                             PyArray_STRIDES(oparr),
                             PyArray_DATA(oparr),
                             PyArray_FLAGS(oparr),
-                            oparr
+                            op
                             );
                 }
                 goto finish;
