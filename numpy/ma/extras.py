@@ -724,10 +724,9 @@ def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
 
     """
 
-    if isinstance(a, list):
-        a = np.ma.asarray(a)
+    a = np.ma.asarray(a)
 
-    if not hasattr(a, 'mask'):
+    if a.mask is np.nomask:
         m = np.median(getdata(a, subok=True), axis=axis,
                       out=out, overwrite_input=overwrite_input,
                       keepdims=keepdims)
