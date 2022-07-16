@@ -176,8 +176,8 @@ General purpose equivalents
 
    * - ``eps``
      - ``np.finfo(float).eps`` or ``np.spacing(1)``
-     - Upper bound to relative error due to rounding in 64-bit floating point
-       arithmetic.
+     - distance from 1 to the next larger representable real number in double
+       precision
 
    * - ``load data.mat``
      - ``io.loadmat('data.mat')``
