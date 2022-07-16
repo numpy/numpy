@@ -16,8 +16,8 @@ def test_fast_return():
 
     equivalent_requirement = np.dtype('i', metadata={'spam': True})
     c = np.asarray(b, dtype=equivalent_requirement)
-    # A quirk of the metadata test is that equivalent metadata dicts are still
-    # separate objects and so don't evaluate as the same array type description.
+    # The descriptors are equivalent, but we have created
+    # distinct dtype instances.
     assert unequal_type == equivalent_requirement
     assert unequal_type is not equivalent_requirement
     assert c is not b
