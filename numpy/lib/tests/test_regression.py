@@ -1,3 +1,4 @@
+import io
 import os
 
 import numpy as np
@@ -245,3 +246,30 @@ class TestRegression:
             raise AssertionError()
         finally:
             out.close()
+
+    def test_savez_deterministic(self):
+        # gh-9439
+        # Test that savez and savez_compressed are deterministic by comparing
+        # their results to bytes of existing files containing the same data.
+
+        data_path = os.path.join(os.path.dirname(__file__), "data")
+        testcases = [
+            ("py3-arr-savez.npz", np.savez),
+            ("py3-arr-savez-compressed.npz", np.savez_compressed),
+        ]
+
+        for fname, save_fcn in testcases:
+            # Given
+            path = os.path.join(data_path, fname)
+            with open(path, "rb") as f:
+                expected_bytes = f.read()
+            with np.load(path) as f_npz:
+                data = dict(f_npz.items())
+
+            # When
+            stream = io.BytesIO()
+            save_fcn(stream, **data)
+            result_bytes = stream.getvalue()
+
+            # Then
+            assert result_bytes == expected_bytes
