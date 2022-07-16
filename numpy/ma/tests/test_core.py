@@ -3267,8 +3267,9 @@ class TestMaskedArrayMethods:
         b = zeros(len(a), dtype=datatype)
         assert_equal(b.shape, a.shape)
         assert_equal(b.fill_value, a.fill_value)
-        assert_equal(b.data, array([(0, 0.0, b''), (0, 0.0, b''), (0, 0.0, b'')],
-            dtype=datatype))
+        assert_equal(b.data,
+                     array([(0, 0.0, b''), (0, 0.0, b''), (0, 0.0, b'')],
+                           dtype=datatype))
 
     def test_zeros_like(self):
         # Tests zeros_like
@@ -3280,8 +3281,9 @@ class TestMaskedArrayMethods:
         b = zeros_like(a)
         assert_equal(b.shape, a.shape)
         assert_equal(b.fill_value, a.fill_value)
-        assert_equal(b.data, array([(0, 0.0, b''), (0, 0.0, b''), (0, 0.0, b'')],
-            dtype=datatype))
+        assert_equal(b.data,
+                     array([(0, 0.0, b''), (0, 0.0, b''), (0, 0.0, b'')],
+                           dtype=datatype))
 
         # check zeros_like mask handling
         a = masked_array([1, 2, 3], mask=[False, True, False])
@@ -3300,8 +3302,9 @@ class TestMaskedArrayMethods:
         b = ones(len(a), dtype=datatype)
         assert_equal(b.shape, a.shape)
         assert_equal(b.fill_value, a.fill_value)
-        assert_equal(b.data, array([(1, 1.0, b'1'), (1, 1.0, b'1'), (1, 1.0, b'1')],
-            dtype=datatype))
+        assert_equal(b.data,
+                     array([(1, 1.0, b'1'), (1, 1.0, b'1'), (1, 1.0, b'1')],
+                           dtype=datatype))
 
     def test_ones_like(self):
         # Tests ones_like
@@ -3313,8 +3316,9 @@ class TestMaskedArrayMethods:
         b = ones_like(a)
         assert_equal(b.shape, a.shape)
         assert_equal(b.fill_value, a.fill_value)
-        assert_equal(b.data, array([(1, 1.0, b'1'), (1, 1.0, b'1'), (1, 1.0, b'1')],
-            dtype=datatype))
+        assert_equal(b.data,
+                     array([(1, 1.0, b'1'), (1, 1.0, b'1'), (1, 1.0, b'1')],
+                           dtype=datatype))
 
         # check ones_like mask handling
         a = masked_array([1, 2, 3], mask=[False, True, False])

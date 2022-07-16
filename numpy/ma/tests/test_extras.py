@@ -16,14 +16,16 @@ from numpy.testing import (
     assert_warns, suppress_warnings
     )
 from numpy.ma.testutils import (
-    assert_, assert_array_equal, assert_equal, assert_almost_equal, assert_raises
+    assert_, assert_array_equal, assert_equal, assert_almost_equal,
+    assert_raises
     )
 from numpy.ma.core import (
     array, arange, masked, MaskedArray, masked_array, getmaskarray, shape,
     nomask, ones, zeros, count
     )
 from numpy.ma.extras import (
-    atleast_1d, atleast_2d, atleast_3d, mr_, dot, dsplit, polyfit, cov, corrcoef,
+    atleast_1d, atleast_2d, atleast_3d, mr_, dot, dsplit, polyfit, cov,
+    corrcoef,
     median, average, unique, setxor1d, setdiff1d, union1d, intersect1d, in1d,
     ediff1d, apply_over_axes, apply_along_axis, compress_nd, compress_rowcols,
     mask_rowcols, clump_masked, clump_unmasked, flatnotmasked_contiguous,
@@ -1799,19 +1801,22 @@ class TestStack:
         assert_array_equal(a1.mask, c[..., 0].mask)
         assert_array_equal(a2.mask, c[..., 1].mask)
 
+
 class TestSplit:
 
     def test_equal_split(self):
-        a = masked_array(np.arange(10), mask=[i%2 for i in range(10)]);
+        a = masked_array(np.arange(10), mask=[i % 2 for i in range(10)])
         res = split(a, 2)
-        desired = masked_array([np.arange(5), np.arange(5, 10)],
-                mask=[[i%2 for i in range(5)], [i%2 for i in range(5, 10)]])
+        desired = masked_array(
+            [np.arange(5), np.arange(5, 10)],
+            mask=[[i % 2 for i in range(5)], [i % 2 for i in range(5, 10)]])
         assert_equal(res.mask, desired.mask)
         assert_equal(res.data, desired.data)
 
     def test_unequal_split(self):
-        a = masked_array(np.arange(10), mask=[i%2 for i in range(10)])
+        a = masked_array(np.arange(10), mask=[i % 2 for i in range(10)])
         assert_raises(ValueError, split, a, 3)
+
 
 class TestHsplit:
     """Only testing for integer splits.
@@ -1824,16 +1829,17 @@ class TestHsplit:
     def test_1D_array(self):
         a = masked_array(np.array([1, 2, 3, 4]), mask=[1, 0, 1, 0])
         res = hsplit(a, 2)
-        desired = masked_array(np.array([[1, 2], [3, 4]]), mask=[[1, 0], [1, 0]])
+        desired = masked_array(np.array([[1, 2], [3, 4]]),
+                               mask=[[1, 0], [1, 0]])
         assert_equal(res.mask, desired.mask)
         assert_equal(res.data, desired.data)
 
     def test_2D_array(self):
         a = masked_array(np.array([[1, 2, 3, 4], [1, 2, 3, 4]]),
-                mask=[[0, 1, 0, 1], [1, 0, 1, 0]]);
+                         mask=[[0, 1, 0, 1], [1, 0, 1, 0]])
         res = hsplit(a, 2)
         desired = masked_array(np.array([[[1, 2], [1, 2]], [[3, 4], [3, 4]]]),
-                [[[0, 1], [1, 0]], [[0, 1], [1, 0]]]);
+                               [[[0, 1], [1, 0]], [[0, 1], [1, 0]]])
         assert_equal(res.mask, desired.mask)
         assert_equal(res.data, desired.data)
 
@@ -1852,10 +1858,10 @@ class TestVsplit:
 
     def test_2D_array(self):
         a = masked_array(np.array([[1, 2, 3, 4], [1, 2, 3, 4]]),
-                mask=[[0, 1, 0, 1], [1, 0, 1, 0]]);
+                         mask=[[0, 1, 0, 1], [1, 0, 1, 0]])
         res = vsplit(a, 2)
         desired = masked_array(np.array([[[1, 2, 3, 4]], [[1, 2, 3, 4]]]),
-                mask=[[[0, 1, 0, 1]], [[1, 0, 1, 0]]]);
+                               mask=[[[0, 1, 0, 1]], [[1, 0, 1, 0]]])
         assert_equal(res.mask, desired.mask)
         assert_equal(res.data, desired.data)
 
@@ -1872,20 +1878,19 @@ class TestDsplit:
 
     def test_2D_array(self):
         a = masked_array(np.array([[1, 2, 3, 4], [1, 2, 3, 4]]),
-                mask=[[0, 1, 0, 1], [1, 0, 1, 0]]);
+                         mask=[[0, 1, 0, 1], [1, 0, 1, 0]])
         assert_raises(ValueError, dsplit, a, 2)
 
     def test_3D_array(self):
-        a = masked_array(
-                np.array([[[1, 2, 3, 4], [1, 2, 3, 4]],
-                    [[1, 2, 3, 4], [1, 2, 3, 4]]]),
-                mask=[[[1, 0 ,1, 0], [0, 1 ,0, 1]],
-                    [[0, 1, 0, 1], [1, 0, 1, 0]]]);
+        a = masked_array(np.array([[[1, 2, 3, 4], [1, 2, 3, 4]],
+                                   [[1, 2, 3, 4], [1, 2, 3, 4]]]),
+                         mask=[[[1, 0, 1, 0], [0, 1, 0, 1]],
+                               [[0, 1, 0, 1], [1, 0, 1, 0]]])
         res = dsplit(a, 2)
         desired = masked_array(
-                np.array([[[[1, 2], [1, 2]], [[1, 2], [1, 2]]],
-                    [[[3, 4], [3, 4]], [[3, 4], [3, 4]]]]),
-                mask=[[[[1, 0], [0, 1]], [[0, 1], [1, 0]]],
-                    [[[1, 0], [0, 1]], [[0, 1], [1, 0]]]]);
+            np.array([[[[1, 2], [1, 2]], [[1, 2], [1, 2]]],
+                      [[[3, 4], [3, 4]], [[3, 4], [3, 4]]]]),
+            mask=[[[[1, 0], [0, 1]], [[0, 1], [1, 0]]],
+                  [[[1, 0], [0, 1]], [[0, 1], [1, 0]]]])
         assert_equal(res.mask, desired.mask)
         assert_equal(res.data, desired.data)
