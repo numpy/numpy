@@ -146,7 +146,7 @@ _resize_if_necessary(PyArrayIdentityHash *tb)
     }
 
     npy_intp alloc_size;
-    if (npy_mul_with_overflow_intp(&alloc_size, new_size, tb->key_len + 1)) {
+    if (npy_mul_sizes_with_overflow(&alloc_size, new_size, tb->key_len + 1)) {
         return -1;
     }
     tb->buckets = PyMem_Calloc(alloc_size, sizeof(PyObject *));

@@ -17,7 +17,7 @@
 #include "ufunc_override.h"
 #include "array_coercion.h"
 #include "common.h"
-#include "templ_common.h" /* for npy_mul_with_overflow_intp */
+#include "templ_common.h" /* for npy_mul_sizes_with_overflow */
 #include "ctors.h"
 #include "calculation.h"
 #include "convert_datatype.h"
@@ -2053,13 +2053,13 @@ array_setstate(PyArrayObject *self, PyObject *args)
         if (dimensions[i] == 0) {
             empty = NPY_TRUE;
         }
-        overflowed = npy_mul_with_overflow_intp(
+        overflowed = npy_mul_sizes_with_overflow(
                 &nbytes, nbytes, dimensions[i]);
         if (overflowed) {
             return PyErr_NoMemory();
         }
     }
-    overflowed = npy_mul_with_overflow_intp(
+    overflowed = npy_mul_sizes_with_overflow(
             &nbytes, nbytes, PyArray_DESCR(self)->elsize);
     if (overflowed) {
         return PyErr_NoMemory();

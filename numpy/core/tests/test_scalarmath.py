@@ -902,8 +902,7 @@ def test_scalar_integer_operation_overflow(dtype, operation):
 @pytest.mark.parametrize("operation", [
         lambda min, neg_1: -min,
         lambda min, neg_1: abs(min),
-        pytest.param(lambda min, neg_1: min * neg_1,
-            marks=pytest.mark.xfail(reason="broken on some platforms")),
+        lambda min, neg_1: min * neg_1,
         pytest.param(lambda min, neg_1: min // neg_1,
             marks=pytest.mark.skip(reason="broken on some platforms"))],
         ids=["neg", "abs", "*", "//"])

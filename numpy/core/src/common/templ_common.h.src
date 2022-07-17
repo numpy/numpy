@@ -7,13 +7,15 @@
 
 /**begin repeat
  *  #name = int, uint, long, ulong,
- *          longlong, ulonglong, intp#
+ *          longlong, ulonglong#
  *  #type = npy_int, npy_uint, npy_long, npy_ulong,
- *          npy_longlong, npy_ulonglong, npy_intp#
+ *          npy_longlong, npy_ulonglong#
  *  #MAX = NPY_MAX_INT, NPY_MAX_UINT, NPY_MAX_LONG, NPY_MAX_ULONG,
- *         NPY_MAX_LONGLONG, NPY_MAX_ULONGLONG, NPY_MAX_INTP#
+ *         NPY_MAX_LONGLONG, NPY_MAX_ULONGLONG#
+ *
+ *  #neg = (1,0)*3#
+ *  #abs_func = abs*2, labs*2, llabs*2#
  */
-
 /*
  * writes result of a * b into r
  * returns 1 if a * b overflowed else returns 0
@@ -34,13 +36,41 @@ npy_mul_with_overflow_@name@(@type@ * r, @type@ a, @type@ b)
     /*
      * avoid expensive division on common no overflow case
      */
-    if (NPY_UNLIKELY((a | b) >= half_sz) &&
-            a != 0 && b > @MAX@ / a) {
+    if ((NPY_UNLIKELY((a | b) >= half_sz) || (a | b) < 0) &&
+            a != 0 && 
+#if @neg@
+            @abs_func@(b) > @abs_func@(@MAX@ / a)
+#else
+            b > @MAX@ / a
+#endif
+            ) {
         return 1;
     }
     return 0;
 #endif
 }
 /**end repeat**/
+
+static NPY_INLINE int
+npy_mul_sizes_with_overflow (npy_intp * r, npy_intp a, npy_intp b)
+{
+#ifdef HAVE___BUILTIN_MUL_OVERFLOW
+    return __builtin_mul_overflow(a, b, r);
+#else
+
+    assert(a >= 0 && b >= 0, "this function only supports non-negative numbers");
+    const npy_intp half_sz = ((npy_intp)1 << ((sizeof(a) * 8 - 1 ) / 2));
+
+    *r = a * b;
+    /*
+     * avoid expensive division on common no overflow case
+     */
+    if (NPY_UNLIKELY((a | b) >= half_sz)
+        && a != 0 && b > NPY_MAX_INTP / a) {
+        return 1;
+    }
+    return 0;
+#endif
+}
 
 #endif

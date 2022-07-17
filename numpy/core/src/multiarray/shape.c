@@ -19,7 +19,7 @@
 #include "shape.h"
 
 #include "multiarraymodule.h" /* for interned strings */
-#include "templ_common.h" /* for npy_mul_with_overflow_intp */
+#include "templ_common.h" /* for npy_mul_sizes_with_overflow */
 #include "common.h" /* for convert_shape_to_string */
 #include "alloc.h"
 
@@ -71,7 +71,7 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
                     "negative dimensions not allowed");
             return NULL;
         }
-        if (npy_mul_with_overflow_intp(&newsize, newsize, new_dimensions[k])) {
+        if (npy_mul_sizes_with_overflow(&newsize, newsize, new_dimensions[k])) {
             return PyErr_NoMemory();
         }
     }
@@ -79,7 +79,7 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
     /* Convert to number of bytes. The new count might overflow */
     elsize = PyArray_DESCR(self)->elsize;
     oldnbytes = oldsize * elsize;
-    if (npy_mul_with_overflow_intp(&newnbytes, newsize, elsize)) {
+    if (npy_mul_sizes_with_overflow(&newnbytes, newsize, elsize)) {
         return PyErr_NoMemory();
     }
 
@@ -498,7 +498,7 @@ _fix_unknown_dimension(PyArray_Dims *newshape, PyArrayObject *arr)
                 return -1;
             }
         }
-        else if (npy_mul_with_overflow_intp(&s_known, s_known,
+        else if (npy_mul_sizes_with_overflow(&s_known, s_known,
                                             dimensions[i])) {
             raise_reshape_size_mismatch(newshape, arr);
             return -1;
