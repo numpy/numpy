@@ -894,9 +894,9 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
                                         + array2string(max_rel_error))
 
             err_msg += '\n' + '\n'.join(remarks)
-            msg = build_err_msg([ox, oy], err_msg, verbose=verbose,
-                                header=header, names=('x', 'y'),
-                                precision=precision)
+            msg = build_err_msg([ox, oy], err_msg,
+                                verbose=verbose, header=header,
+                                names=('x', 'y'), precision=precision)
             return msg
     try:
         msg = structured_dtype_compare(x, y, **kwargs)
