@@ -31,11 +31,12 @@ def test_dtype_identity():
     assert long_int_array is not int_array
     assert np.asarray(int_array, dtype='q') is not int_array
     assert np.asarray(long_int_array, dtype='q') is not long_int_array
-    assert np.asarray(int_array, dtype='l') is not np.asarray(int_array, dtype='l')
-    assert np.asarray(int_array, dtype='l').base is np.asarray(int_array, dtype='l').base
+    assert long_int_array is not np.asarray(int_array, dtype='l')
+    assert long_int_array.base is np.asarray(int_array, dtype='l').base
 
     equivalent_requirement = np.dtype('i', metadata={'spam': True})
-    annotated_int_array_alt = np.asarray(annotated_int_array, dtype=equivalent_requirement)
+    annotated_int_array_alt = np.asarray(annotated_int_array,
+                                         dtype=equivalent_requirement)
     # The descriptors are equivalent, but we have created
     # distinct dtype instances.
     assert unequal_type == equivalent_requirement
