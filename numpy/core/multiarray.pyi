@@ -12,6 +12,7 @@ from typing import (
     final,
     Final,
     Protocol,
+    ClassVar,
 )
 
 from numpy import (
@@ -977,7 +978,7 @@ _SetItemKeys = L[
 
 @final
 class flagsobj:
-    __hash__: None  # type: ignore[assignment]
+    __hash__: ClassVar[None]  # type: ignore[assignment]
     aligned: bool
     # NOTE: deprecated
     # updateifcopy: bool

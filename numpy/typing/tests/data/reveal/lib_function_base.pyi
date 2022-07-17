@@ -79,9 +79,10 @@ reveal_type(np.diff("bob", n=0))  # E: str
 reveal_type(np.diff(AR_f8, axis=0))  # E: ndarray[Any, dtype[Any]]
 reveal_type(np.diff(AR_LIKE_f8, prepend=1.5))  # E: ndarray[Any, dtype[Any]]
 
-reveal_type(np.angle(AR_f8))  # E: floating[Any]
-reveal_type(np.angle(AR_c16, deg=True))  # E: complexfloating[Any, Any]
-reveal_type(np.angle(AR_O))  # E: Any
+reveal_type(np.angle(f8))  # E: floating[Any]
+reveal_type(np.angle(AR_f8))  # E: ndarray[Any, dtype[floating[Any]]]
+reveal_type(np.angle(AR_c16, deg=True))  # E: ndarray[Any, dtype[floating[Any]]]
+reveal_type(np.angle(AR_O))  # E: ndarray[Any, dtype[object_]]
 
 reveal_type(np.unwrap(AR_f8))  # E: ndarray[Any, dtype[floating[Any]]]
 reveal_type(np.unwrap(AR_O))  # E: ndarray[Any, dtype[object_]]

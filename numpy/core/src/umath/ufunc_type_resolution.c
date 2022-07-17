@@ -49,6 +49,7 @@
 #endif
 
 #include <stdbool.h>
+#include <arrayobject.h>
 
 static PyObject *
 npy_casting_to_py_object(NPY_CASTING casting)
@@ -1929,14 +1930,21 @@ linear_search_type_resolver(PyUFuncObject *self,
     int types[NPY_MAXARGS];
     const char *ufunc_name;
     int no_castable_output = 0;
-    int use_min_scalar;
 
     /* For making a better error message on coercion error */
     char err_dst_typecode = '-', err_src_typecode = '-';
 
     ufunc_name = ufunc_get_name_cstr(self);
 
-    use_min_scalar = should_use_min_scalar(nin, op, 0, NULL);
+    assert(npy_promotion_state != NPY_USE_WEAK_PROMOTION_AND_WARN);
+    /* Always "use" with new promotion in case of Python int/float/complex */
+    int use_min_scalar;
+    if (npy_promotion_state == NPY_USE_LEGACY_PROMOTION) {
+        use_min_scalar = should_use_min_scalar(nin, op, 0, NULL);
+    }
+    else {
+        use_min_scalar = should_use_min_scalar_weak_literals(nin, op);
+    }
 
     /* If the ufunc has userloops, search for them. */
     if (self->userloops) {
@@ -2126,11 +2134,19 @@ type_tuple_type_resolver(PyUFuncObject *self,
     int nin = self->nin, nop = nin + self->nout;
     int specified_types[NPY_MAXARGS];
     const char *ufunc_name;
-    int no_castable_output = 0, use_min_scalar;
+    int no_castable_output = 0;
 
     ufunc_name = ufunc_get_name_cstr(self);
 
-    use_min_scalar = should_use_min_scalar(nin, op, 0, NULL);
+    assert(npy_promotion_state != NPY_USE_WEAK_PROMOTION_AND_WARN);
+    /* Always "use" with new promotion in case of Python int/float/complex */
+    int use_min_scalar;
+    if (npy_promotion_state == NPY_USE_LEGACY_PROMOTION) {
+        use_min_scalar = should_use_min_scalar(nin, op, 0, NULL);
+    }
+    else {
+        use_min_scalar = should_use_min_scalar_weak_literals(nin, op);
+    }
 
     /* Fill in specified_types from the tuple or string */
     const char *bad_type_tup_msg = (

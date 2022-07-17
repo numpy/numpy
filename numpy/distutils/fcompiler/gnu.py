@@ -382,7 +382,13 @@ class Gnu95FCompiler(GnuFCompiler):
 
     def get_target(self):
         try:
-            output = subprocess.check_output(self.compiler_f77 + ['-v'])
+            p = subprocess.Popen(
+                self.compiler_f77 + ['-v'],
+                stdin=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+            stdout, stderr = p.communicate()
+            output = (stdout or b"") + (stderr or b"")
         except (OSError, subprocess.CalledProcessError):
             pass
         else:

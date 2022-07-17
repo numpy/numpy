@@ -3,7 +3,6 @@ import copy
 import pathlib
 import sys
 import textwrap
-import warnings
 
 from numpy.distutils.misc_util import mingw32
 

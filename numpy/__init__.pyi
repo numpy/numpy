@@ -9,6 +9,7 @@ import enum
 from abc import abstractmethod
 from types import TracebackType, MappingProxyType
 from contextlib import ContextDecorator
+from contextlib import contextmanager
 
 if sys.version_info >= (3, 9):
     from types import GenericAlias
@@ -180,6 +181,7 @@ from collections.abc import (
 from typing import (
     Literal as L,
     Any,
+    Generator,
     Generic,
     IO,
     NoReturn,
@@ -932,6 +934,7 @@ _FlatIterSelf = TypeVar("_FlatIterSelf", bound=flatiter)
 
 @final
 class flatiter(Generic[_NdArraySubClass]):
+    __hash__: ClassVar[None]
     @property
     def base(self) -> _NdArraySubClass: ...
     @property
@@ -1473,6 +1476,7 @@ class _SupportsImag(Protocol[_T_co]):
     def imag(self) -> _T_co: ...
 
 class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
+    __hash__: ClassVar[None]
     @property
     def base(self) -> None | ndarray: ...
     @property
@@ -3350,6 +3354,11 @@ class errstate(Generic[_CallType], ContextDecorator):
         /,
     ) -> None: ...
 
+@contextmanager
+def _no_nep50_warning() -> Generator[None, None, None]: ...
+def _get_promotion_state() -> str: ...
+def _set_promotion_state(state: str, /) -> None: ...
+
 class ndenumerate(Generic[_ScalarType]):
     iter: flatiter[NDArray[_ScalarType]]
     @overload
@@ -3785,7 +3794,7 @@ class poly1d:
     @coefficients.setter
     def coefficients(self, value: NDArray[Any]) -> None: ...
 
-    __hash__: None  # type: ignore
+    __hash__: ClassVar[None]  # type: ignore
 
     @overload
     def __array__(self, t: None = ...) -> NDArray[Any]: ...

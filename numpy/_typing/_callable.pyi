@@ -44,6 +44,7 @@ from ._scalars import (
 )
 from . import NBitBase
 from ._generic_alias import NDArray
+from ._nested_sequence import _NestedSequence
 
 _T1 = TypeVar("_T1")
 _T2 = TypeVar("_T2")
@@ -318,8 +319,20 @@ class _ComplexOp(Protocol[_NBit1]):
 class _NumberOp(Protocol):
     def __call__(self, other: _NumberLike_co, /) -> Any: ...
 
+class _SupportsLT(Protocol):
+    def __lt__(self, other: Any, /) -> object: ...
+
+class _SupportsGT(Protocol):
+    def __gt__(self, other: Any, /) -> object: ...
+
 class _ComparisonOp(Protocol[_T1_contra, _T2_contra]):
     @overload
     def __call__(self, other: _T1_contra, /) -> bool_: ...
     @overload
     def __call__(self, other: _T2_contra, /) -> NDArray[bool_]: ...
+    @overload
+    def __call__(
+        self,
+        other: _SupportsLT | _SupportsGT | _NestedSequence[_SupportsLT | _SupportsGT],
+        /,
+    ) -> Any: ...

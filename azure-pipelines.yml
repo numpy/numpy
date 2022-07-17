@@ -176,7 +176,7 @@ stages:
     - script: |
         python -m pip install -r test_requirements.txt
         # Don't use doc_requirements.txt since that messes up tests
-        python -m pip install vulture sphinx==4.2.0 numpydoc==1.2.0
+        python -m pip install vulture sphinx==4.3.0 numpydoc==1.4.0
       displayName: 'Install dependencies; some are optional to avoid test skips'
     - script: /bin/bash -c "! vulture . --min-confidence 100 --exclude doc/,numpy/distutils/ | grep 'unreachable'"
       displayName: 'Check for unreachable code paths in Python modules'

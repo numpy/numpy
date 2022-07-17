@@ -337,7 +337,7 @@ else:
         """
         try:
             x = ones(2, dtype=float32)
-            if not abs(x.dot(x) - 2.0) < 1e-5:
+            if not abs(x.dot(x) - float32(2.0)) < 1e-5:
                 raise AssertionError()
         except AssertionError:
             msg = ("The current Numpy installation ({!r}) fails to "
@@ -412,6 +412,8 @@ else:
     # We do this from python, since the C-module may not be reloaded and
     # it is tidier organized.
     core.multiarray._multiarray_umath._reload_guard()
+
+    core._set_promotion_state(os.environ.get("NPY_PROMOTION_STATE", "legacy"))
 
     # Tell PyInstaller where to find hook-numpy.py
     def _pyinstaller_hooks_dir():
