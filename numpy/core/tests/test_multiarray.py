@@ -2250,7 +2250,7 @@ class TestMethods:
 
     def test__deepcopy__catches_failure(self):
         class MyObj:
-             def __deepcopy__(self, *args, **kwargs):
+            def __deepcopy__(self, *args, **kwargs):
                 raise RuntimeError
 
         arr = np.array([1, MyObj(), 3], dtype='O')
