@@ -3428,6 +3428,12 @@ class TestPercentile:
         with pytest.raises(ValueError, match="Percentiles must be in"):
             np.percentile([1, 2, 3, 4.0], q)
 
+    def test_inf_behavior(self):
+        a = np.array([0, np.inf, np.inf])
+        assert_equal(np.percentile(a, 50), np.inf)
+        a = np.array([0, np.inf, np.inf, np.inf])
+        assert_equal(np.percentile(a, 50), np.inf)
+
 
 class TestQuantile:
     # most of this is already tested by TestPercentile
@@ -3536,6 +3542,10 @@ class TestQuantile:
         actual = np.quantile(a, 0.5)
         assert np.isscalar(actual)
         assert_equal(np.quantile(a, 0.5), np.nan)
+
+    def test_quantile_inf_values(self):
+        assert_equal(np.quantile([1, 2, 3, np.inf, np.inf], 0.), 1)
+        assert np.isinf(np.quantile([1, 2, 3, np.inf, np.inf], 1.))
 
 
 class TestLerp:

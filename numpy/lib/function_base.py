@@ -24,8 +24,9 @@ from numpy.core import overrides
 from numpy.core.function_base import add_newdoc
 from numpy.lib.twodim_base import diag
 from numpy.core.multiarray import (
-    _insert, add_docstring, bincount, normalize_axis_index, _monotonicity,
-    interp as compiled_interp, interp_complex as compiled_interp_complex
+    _insert, add_docstring, bincount, copyto, normalize_axis_index,
+    _monotonicity, interp as compiled_interp,
+    interp_complex as compiled_interp_complex
     )
 from numpy.core.umath import _add_newdoc_ufunc as add_newdoc_ufunc
 
@@ -4524,10 +4525,15 @@ def _lerp(a, b, t, out=None):
     out : array_like
         Output array.
     """
-    diff_b_a = subtract(b, a)
+    eq = a == b
+    diff_b_a = subtract(b, a, where=~eq)
     # asanyarray is a stop-gap until gh-13105
-    lerp_interpolation = asanyarray(add(a, diff_b_a * t, out=out))
-    subtract(b, diff_b_a * (1 - t), out=lerp_interpolation, where=t >= 0.5)
+    lerp_interpolation = asanyarray(add(a, diff_b_a * t, out=out, where=~eq))
+    subtract(b,
+             diff_b_a * (1 - t),
+             out=lerp_interpolation,
+             where=(t >= 0.5) & ~eq)
+    copyto(lerp_interpolation, a, where=eq, casting="unsafe")
     if lerp_interpolation.ndim == 0 and out is None:
         lerp_interpolation = lerp_interpolation[()]  # unpack 0d arrays
     return lerp_interpolation
