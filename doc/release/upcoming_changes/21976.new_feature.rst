@@ -1,7 +1,8 @@
 The bit generator underlying the singleton RandomState can be changed
 ---------------------------------------------------------------------
 The singleton ``RandomState`` instance exposed in the ``numpy.random`` module
-is initialized at startup with the ``MT19937` bit generator. The function new ``set_bit_generator`` allows the default bit generator to be
+is initialized at startup with the ``MT19937` bit generator. The new
+function ``set_bit_generator`` allows the default bit generator to be
 replaced with a user-provided bit generator. This function has been introduced
 to provide a method allowing seamless integration of a high-quality, modern bit
 generator in new code with existing code that makes use of the
