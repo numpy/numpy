@@ -761,6 +761,8 @@ def dot(a, b, out=None):
 
         dot(a, b)[i,j,k,m] = sum(a[i,j,:] * b[k,:,m])
 
+    It uses an optimized BLAS library when possible (see `numpy.linalg`).
+
     Parameters
     ----------
     a : array_like

@@ -2800,6 +2800,8 @@ add_newdoc('numpy.core.umath', 'matmul',
     The matmul function implements the semantics of the ``@`` operator introduced
     in Python 3.5 following :pep:`465`.
 
+    It uses an optimized BLAS library when possible (see `numpy.linalg`).
+
     Examples
     --------
     For 2-D arrays it is the matrix product:
