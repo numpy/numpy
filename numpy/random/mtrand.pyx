@@ -4749,7 +4749,7 @@ def get_bit_generator():
     Notes
     -----
     The singleton RandomState provides the random variate generators in the
-    NumPy random namespace. This function, and its counterpart set method,
+    ``numpy.random`` namespace. This function, and its counterpart set method,
     provides a path to hot-swap the default MT19937 bit generator with a
     user provided alternative. These function are intended to provide
     a continuous path where a single underlying bit generator can be
@@ -4775,7 +4775,7 @@ def set_bit_generator(bitgen):
     Notes
     -----
     The singleton RandomState provides the random variate generators in the
-    NumPy random namespace. This function, and its counterpart get method,
+    ``numpy.random``namespace. This function, and its counterpart get method,
     provides a path to hot-swap the default MT19937 bit generator with a
     user provided alternative. These function are intended to provide
     a continuous path where a single underlying bit generator can be
