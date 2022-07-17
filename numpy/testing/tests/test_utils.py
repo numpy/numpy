@@ -4,6 +4,8 @@ import os
 import itertools
 import pytest
 import weakref
+from hypothesis import given
+import hypothesis.extra.numpy as npst
 
 import numpy as np
 from numpy.testing import (
@@ -264,6 +266,14 @@ class TestArrayEqual(_GenericTest):
         with pytest.raises(AssertionError):
             assert_array_equal(a, b, strict=True)
 
+    @given(
+        npst.arrays(
+            dtype=npst.nested_dtypes(),  # includes subarrays
+            shape=npst.array_shapes(max_side=3),
+        )
+    )
+    def test_all_arrays_are_equal_to_themselves(self, arr):
+        self._assert_func(arr, arr)
 
 class TestBuildErrorMessage:
 
