@@ -1602,17 +1602,17 @@ array_searchsorted(PyArrayObject *self,
     return PyArray_Return((PyArrayObject *)PyArray_SearchSorted(self, keys, side, sorter));
 }
 
-static void
+static int
 _deepcopy_call(char *iptr, char *optr, PyArray_Descr *dtype,
                PyObject *deepcopy, PyObject *visit)
 {
     if (!PyDataType_REFCHK(dtype)) {
-        return;
+        return 0;
     }
     else if (PyDataType_HASFIELDS(dtype)) {
         PyObject *key, *value, *title = NULL;
         PyArray_Descr *new;
-        int offset;
+        int offset, res;
         Py_ssize_t pos = 0;
         while (PyDict_Next(dtype->fields, &pos, &key, &value)) {
             if (NPY_TITLE_KEY(key, value)) {
@@ -1620,10 +1620,13 @@ _deepcopy_call(char *iptr, char *optr, PyArray_Descr *dtype,
             }
             if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset,
                                   &title)) {
-                return;
+                return -1;
             }
-            _deepcopy_call(iptr + offset, optr + offset, new,
-                           deepcopy, visit);
+            res = _deepcopy_call(iptr + offset, optr + offset, new,
+                                 deepcopy, visit);
+            if (res < 0) {
+                return -1;
+            }
         }
     }
     else {
@@ -1631,13 +1634,20 @@ _deepcopy_call(char *iptr, char *optr, PyArray_Descr *dtype,
         PyObject *res;
         memcpy(&itemp, iptr, sizeof(itemp));
         memcpy(&otemp, optr, sizeof(otemp));
-        Py_XINCREF(itemp);
+        if (itemp == NULL) {
+            itemp = Py_None;
+        }
+        Py_INCREF(itemp);
         /* call deepcopy on this argument */
         res = PyObject_CallFunctionObjArgs(deepcopy, itemp, visit, NULL);
-        Py_XDECREF(itemp);
+        Py_DECREF(itemp);
+        if (res == NULL) {
+            return -1;
+        }
         Py_XDECREF(otemp);
         memcpy(optr, &res, sizeof(res));
     }
+    return 0;
 
 }
 
@@ -1654,6 +1664,7 @@ array_deepcopy(PyArrayObject *self, PyObject *args)
     npy_intp *strideptr, *innersizeptr;
     npy_intp stride, count;
     PyObject *copy, *deepcopy;
+    int deepcopy_res;
 
     if (!PyArg_ParseTuple(args, "O:__deepcopy__", &visit)) {
         return NULL;
@@ -1704,8 +1715,12 @@ array_deepcopy(PyArrayObject *self, PyObject *args)
                 stride = *strideptr;
                 count = *innersizeptr;
                 while (count--) {
-                    _deepcopy_call(data, data, PyArray_DESCR(copied_array),
-                                   deepcopy, visit);
+                    deepcopy_res = _deepcopy_call(data, data, PyArray_DESCR(copied_array),
+                                                  deepcopy, visit);
+                    if (deepcopy_res == -1) {
+                        return NULL;
+                    }
+
                     data += stride;
                 }
             } while (iternext(iter));
