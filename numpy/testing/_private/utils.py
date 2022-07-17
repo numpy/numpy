@@ -754,25 +754,6 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
     def _scalar_select(x):
         return x[0] if x.shape == (1,) else x
 
-    def structured_dtype_compare(x, y, **kwargs):
-        rec_arrs = isinstance(x, np.recarray) or isinstance(y, np.recarray)
-        x_structures = iter_field_views(x)
-        y_structures = iter_field_views(y)
-        for (_x, x_spec), (_y, y_spec) in zip(x_structures, y_structures):
-            if rec_arrs and x_spec != y_spec:
-                msg = build_err_msg([x, y],
-                                    err_msg
-                                    + '\nfield name mismatch for record arrays'
-                                    + f' ({x_spec} vs {y_spec})',
-                                    verbose=verbose, header=header,
-                                    names=('x', 'y'), precision=precision)
-                raise AssertionError(msg)
-            _x = _scalar_select(_x)
-            _y = _scalar_select(_y)
-            check_shape(_x, _y, strict=strict)
-            if _x.dtype.names is None:
-                check_flagged_comparison(_x, _y, **kwargs)
-
     def func_assert_same_pos(x, y, func=isnan, hasval='nan'):
         """Handling nan/inf.
 
@@ -898,7 +879,23 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
                                 names=('x', 'y'), precision=precision)
             raise AssertionError(msg)
     try:
-        structured_dtype_compare(x, y, **kwargs)
+        rec_arrs = isinstance(x, np.recarray) or isinstance(y, np.recarray)
+        x_structures = iter_field_views(x)
+        y_structures = iter_field_views(y)
+        for (_x, x_spec), (_y, y_spec) in zip(x_structures, y_structures):
+            if rec_arrs and x_spec != y_spec:
+                msg = build_err_msg([x, y],
+                                    err_msg
+                                    + '\nfield name mismatch for record arrays'
+                                    + f' ({x_spec} vs {y_spec})',
+                                    verbose=verbose, header=header,
+                                    names=('x', 'y'), precision=precision)
+                raise AssertionError(msg)
+            _x = _scalar_select(_x)
+            _y = _scalar_select(_y)
+            check_shape(_x, _y, strict=strict)
+            if _x.dtype.names is None:
+                check_flagged_comparison(_x, _y, **kwargs)
     except ValueError:
         import traceback
         efmt = traceback.format_exc()
