@@ -2728,7 +2728,4 @@ def test_load_refcount():
     dt = [("a", 'u1', 2), ("b", 'u1', 2)]
     with assert_no_gc_cycles():
         x = np.loadtxt(TextIO("0 1 2 3"), dtype=dt)
-        assert_equal(x, np.array(((0, 1), (2, 3)), dtype=dt))
-        # assert_equal uses a recursive function which
-        # makes this context unhappy.
-        break_cycles()
+    assert_equal(x, np.array(((0, 1), (2, 3)), dtype=dt))
