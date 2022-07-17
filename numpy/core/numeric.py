@@ -1096,7 +1096,7 @@ def tensordot(a, b, axes=2):
         axes_b = [axes_b]
         nb = 1
 
-    a, b = asarray(a), asarray(b)
+    a, b = asanyarray(a), asanyarray(b)
     as_ = a.shape
     nda = a.ndim
     bs = b.shape

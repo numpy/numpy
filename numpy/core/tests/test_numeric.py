@@ -3602,3 +3602,12 @@ class TestTensordot:
         arr_0d = np.array(1)
         ret = np.tensordot(arr_0d, arr_0d, ([], []))  # contracting no axes is well defined
         assert_array_equal(ret, arr_0d)
+
+    def test_subclass(self):
+        class Subclass(np.ndarray):
+            pass
+        a = np.ones((1, 2)).view(Subclass)
+        b = np.ones((2, 3)).view(Subclass)
+        td = np.tensordot(a, b, 1)
+        assert isinstance(td, Subclass)
+        assert_array_equal(td, np.dot(a, b))
