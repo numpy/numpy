@@ -3,13 +3,11 @@
 This tests the convert and cast methods of all the polynomial classes.
 
 """
-import cmath
 import operator as op
 from numbers import Number
 
 import pytest
 import numpy as np
-import math
 from numpy.polynomial import (
     Polynomial, Legendre, Chebyshev, Laguerre, Hermite, HermiteE)
 from numpy.testing import (
@@ -314,7 +312,6 @@ def test_truediv(Poly):
         if not issubclass(stype, Number) or issubclass(stype, bool):
             continue
         s = stype(5)
-   
         assert_poly_almost_equal(op.truediv(p2, s), p1)
         assert_raises(TypeError, op.truediv, s, p2)
     for stype in (int, float):
