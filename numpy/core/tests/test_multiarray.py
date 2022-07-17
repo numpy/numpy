@@ -2251,7 +2251,7 @@ class TestMethods:
     def test__deepcopy__catches_failure(self):
         class MyObj:
              def __deepcopy__(self, *args, **kwargs):
-                 return Exception
+                raise Exception
 
         arr = np.array([1, MyObj(), 3], dtype='O')
         arr.__deepcopy__({})
