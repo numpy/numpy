@@ -742,10 +742,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
                                 + reason,
                                 verbose=verbose, header=header,
                                 names=names, precision=precision)
-            return msg
-
-    def isstructured(x):
-        return x.dtype.names and len(x.dtype.names) > 0
+            raise AssertionError(msg)
 
     def iter_field_views(arr, field_name=()):
         if not arr.dtype.names:
@@ -769,17 +766,12 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
                                     + f' ({x_spec} vs {y_spec})',
                                     verbose=verbose, header=header,
                                     names=('x', 'y'), precision=precision)
-                if msg:
-                    return msg
+                raise AssertionError(msg)
             _x = _scalar_select(_x)
             _y = _scalar_select(_y)
-            msg = check_shape(_x, _y, strict=strict)
-            if msg:
-                return msg
+            check_shape(_x, _y, strict=strict)
             if _x.dtype.names is None:
-                msg = check_flagged_comparison(_x, _y, **kwargs)
-                if msg:
-                    return msg
+                check_flagged_comparison(_x, _y, **kwargs)
 
     def func_assert_same_pos(x, y, func=isnan, hasval='nan'):
         """Handling nan/inf.
@@ -821,9 +813,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
     def check_flagged_comparison(x, y, comparison, err_msg, verbose, header,
                                  precision, equal_nan, equal_inf, strict,
                                  ox, oy):
-        msg = check_shape(x, y, strict=strict)
-        if msg:
-            return msg
+        check_shape(x, y, strict=strict)
         flagged = bool_(False)
         if isnumber(x) and isnumber(y):
             if equal_nan:
@@ -906,11 +896,9 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
             msg = build_err_msg([ox, oy], err_msg,
                                 verbose=verbose, header=header,
                                 names=('x', 'y'), precision=precision)
-            return msg
-    try:
-        msg = structured_dtype_compare(x, y, **kwargs)
-        if msg:
             raise AssertionError(msg)
+    try:
+        structured_dtype_compare(x, y, **kwargs)
     except ValueError:
         import traceback
         efmt = traceback.format_exc()
