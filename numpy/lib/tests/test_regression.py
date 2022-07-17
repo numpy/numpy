@@ -212,7 +212,7 @@ class TestRegression:
 
         dt = [("a", [("a", 'u1', (1, 3)), ("b", 'u1')])]
         x = np.loadtxt(StringIO("0 1 2 3"), dtype=dt)
-        assert_equal(x, np.array([(((0, 1, 2), 3),)], dtype=dt))
+        assert_equal(x, np.array((((0, 1, 2), 3),), dtype=dt))
 
         dt = [("a", 'u1', (2, 2))]
         x = np.loadtxt(StringIO("0 1 2 3"), dtype=dt)

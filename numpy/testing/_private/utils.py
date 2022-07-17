@@ -741,61 +741,39 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
     def isstructured(x):
         return x.dtype.names and len(x.dtype.names) > 0
 
-    def get_flat_names(dtype, parents=()):
-        if dtype.names is None:
-            return []
-        names = [(*parents, name) for name in dtype.names]
-        for name_spec in names:
-            _dt = dtype
-            for name in name_spec:
-                _dt = _dt[name]
-            if _dt.names is not None:
-                for child_name in _dt.names:
-                    spec = (*name_spec, child_name)
-                    names.append(spec)
-        return names
-
+    def iter_field_views(arr, field_name=()):
+        if not arr.dtype.names:
+            yield arr, field_name
+        else:
+            for name in arr.dtype.names:
+                yield from iter_field_views(arr[name], field_name+(name,))
+            
     def _scalar_select(x):
         return x[0] if x.shape == (1,) else x
 
     def structured_dtype_compare(x, y, **kwargs):
-        x_dtype = x.dtype
-        y_dtype = y.dtype
         rec_arrs = isinstance(x, np.recarray) or isinstance(y, np.recarray)
-        msg = check_shape(x, y, strict=strict)
-        if msg:
-            return msg
-        if x_dtype.names is None:
-            _x = _scalar_select(x)
-            _y = _scalar_select(y)
-            msg = check_flagged_comparison(_x, _y, **kwargs)
-            if msg:
-                return msg
-        else:
-            x_name_specs = get_flat_names(x_dtype)
-            y_name_specs = get_flat_names(y_dtype)
-            if rec_arrs and x_name_specs != y_name_specs:
+        x_structures = iter_field_views(x)
+        y_structures = iter_field_views(y)
+        for (_x, x_spec), (_y, y_spec) in zip(x_structures, y_structures):
+            if rec_arrs and x_spec != y_spec:
                 msg = build_err_msg([x, y],
                                     err_msg
                                     + '\nfield name mismatch for record arrays'
-                                    + f' ({x_name_specs} vs {y_name_specs})',
+                                    + f' ({x_spec} vs {y_spec})',
                                     verbose=verbose, header=header,
                                     names=('x', 'y'), precision=precision)
                 if msg:
                     return msg
-            for x_spec, y_spec in zip(x_name_specs, y_name_specs):
-                _x = x
-                _y = y
-                for x_name, y_name in zip(x_spec, y_spec):
-                    _x = _x[x_name]
-                    _y = _y[y_name]
-                    _x = _scalar_select(_x)
-                    _y = _scalar_select(_y)
-                check_shape(_x, _y, strict=strict)
-                if _x.dtype.names is None:
-                    msg = check_flagged_comparison(_x, _y, **kwargs)
-                    if msg:
-                        return msg
+            _x = _scalar_select(_x)
+            _y = _scalar_select(_y)
+            msg = check_shape(_x, _y, strict=strict)
+            if msg:
+                return msg
+            if _x.dtype.names is None:
+                msg = check_flagged_comparison(_x, _y, **kwargs)
+                if msg:
+                    return msg
 
     def func_assert_same_pos(x, y, func=isnan, hasval='nan'):
         """Handling nan/inf.
