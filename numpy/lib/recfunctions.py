@@ -13,7 +13,6 @@ from numpy.ma import MaskedArray
 from numpy.ma.mrecords import MaskedRecords
 from numpy.core.overrides import array_function_dispatch
 from numpy.lib._iotools import _is_string_like
-from numpy.testing import suppress_warnings
 
 _check_fill_value = np.ma.core._check_fill_value
 
@@ -971,9 +970,7 @@ def structured_to_unstructured(arr, dtype=None, copy=False, casting='unsafe'):
                                  'formats': dts,
                                  'offsets': offsets,
                                  'itemsize': arr.dtype.itemsize})
-    with suppress_warnings() as sup:  # until 1.16 (gh-12447)
-        sup.filter(FutureWarning, "Numpy has detected")
-        arr = arr.view(flattened_fields)
+    arr = arr.view(flattened_fields)
 
     # next cast to a packed format with all fields converted to new dtype
     packed_fields = np.dtype({'names': names,
