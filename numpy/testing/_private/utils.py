@@ -750,9 +750,6 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
         else:
             for name in arr.dtype.names:
                 yield from iter_field_views(arr[name], field_name+(name,))
-            
-    def _scalar_select(x):
-        return x[0] if x.shape == (1,) else x
 
     def func_assert_same_pos(x, y, func=isnan, hasval='nan'):
         """Handling nan/inf.
@@ -891,8 +888,6 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
                                     verbose=verbose, header=header,
                                     names=('x', 'y'), precision=precision)
                 raise AssertionError(msg)
-            _x = _scalar_select(_x)
-            _y = _scalar_select(_y)
             check_shape(_x, _y, strict=strict)
             if _x.dtype.names is None:
                 check_flagged_comparison(_x, _y, **kwargs)
