@@ -1,3 +1,5 @@
+import itertools
+
 import numpy as np
 
 
@@ -24,22 +26,39 @@ def test_dtype_identity():
     annotated_int_array = np.asarray(int_array, dtype=unequal_type)
     assert annotated_int_array is not int_array
     assert annotated_int_array.base is int_array
-
-    # These ``asarray()`` calls may produce a new view or a copy,
-    # but never the same object.
-    long_int_array = np.asarray(int_array, dtype='l')
-    assert long_int_array is not int_array
-    assert np.asarray(int_array, dtype='q') is not int_array
-    assert np.asarray(long_int_array, dtype='q') is not long_int_array
-    assert long_int_array is not np.asarray(int_array, dtype='l')
-    assert long_int_array.base is np.asarray(int_array, dtype='l').base
-
+    # Create an equivalent descriptor with a new and distinct dtype instance.
     equivalent_requirement = np.dtype('i', metadata={'spam': True})
     annotated_int_array_alt = np.asarray(annotated_int_array,
                                          dtype=equivalent_requirement)
-    # The descriptors are equivalent, but we have created
-    # distinct dtype instances.
     assert unequal_type == equivalent_requirement
     assert unequal_type is not equivalent_requirement
     assert annotated_int_array_alt is not annotated_int_array
     assert annotated_int_array_alt.dtype is equivalent_requirement
+
+    # Check the same logic for a pair of C types whose equivalence may vary
+    # between computing environments.
+    # Find an equivalent pair.
+    integer_type_codes = ('i', 'l', 'q')
+    integer_dtypes = [np.dtype(code) for code in integer_type_codes]
+    typeA = None
+    typeB = None
+    for typeA, typeB in itertools.permutations(integer_dtypes, r=2):
+        if typeA == typeB:
+            assert typeA is not typeB
+            break
+    assert isinstance(typeA, np.dtype) and isinstance(typeB, np.dtype)
+
+    # These ``asarray()`` calls may produce a new view or a copy,
+    # but never the same object.
+    long_int_array = np.asarray(int_array, dtype='l')
+    long_long_int_array = np.asarray(int_array, dtype='q')
+    assert long_int_array is not int_array
+    assert long_long_int_array is not int_array
+    assert np.asarray(long_int_array, dtype='q') is not long_int_array
+    array_a = np.asarray(int_array, dtype=typeA)
+    assert typeA == typeB
+    assert typeA is not typeB
+    assert array_a.dtype is typeA
+    assert array_a is not np.asarray(array_a, dtype=typeB)
+    assert np.asarray(array_a, dtype=typeB).dtype is typeB
+    assert array_a is np.asarray(array_a, dtype=typeB).base
