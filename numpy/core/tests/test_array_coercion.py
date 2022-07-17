@@ -490,9 +490,10 @@ class TestNested:
         with pytest.raises(ValueError):
             np.array([nested], dtype="float64")
 
-        # We discover object automatically at this time:
-        with assert_warns(np.VisibleDeprecationWarning):
-            arr = np.array([nested])
+        with pytest.raises(ValueError, match=".*would exceed the maximum"):
+            np.array([nested])  # user must ask for `object` explicitly
+
+        arr = np.array([nested], dtype=object)
         assert arr.dtype == np.dtype("O")
         assert arr.shape == (1,) * np.MAXDIMS
         assert arr.item() is initial
@@ -523,7 +524,7 @@ class TestNested:
         for i in range(np.MAXDIMS - 1):
             nested = [nested]
 
-        with pytest.warns(DeprecationWarning):
+        with pytest.raises(ValueError, match=".*would exceed the maximum"):
             # It will refuse to assign the array into
             np.array(nested, dtype="float64")
 
