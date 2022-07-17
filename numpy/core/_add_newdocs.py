@@ -1601,6 +1601,12 @@ add_newdoc('numpy.core.multiarray', 'frombuffer',
     -------
     out : ndarray
 
+    See also
+    --------
+    ndarray.tobytes
+        Inverse of this operation, construct Python bytes from the raw data
+        bytes in the array.
+
     Notes
     -----
     If the buffer has data that is not in machine byte-order, this should
@@ -4457,6 +4463,12 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('tobytes', """
     -------
     s : bytes
         Python bytes exhibiting a copy of `a`'s raw data.
+
+    See also
+    --------
+    frombuffer
+        Inverse of this operation, construct a 1-dimensional array from Python
+        bytes.
 
     Examples
     --------
