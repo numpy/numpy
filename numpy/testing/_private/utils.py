@@ -899,17 +899,9 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
                                 precision=precision)
             return msg
     try:
-        if isstructured(x) and isstructured(y):
-            msg = structured_dtype_compare(x, y, **kwargs)
-            if msg:
-                msg = build_err_msg([x, y], msg+'\n', verbose=True,
-                                        header='', names=('x', 'y'),
-                                        precision=precision)
-        else:
-            msg = check_flagged_comparison(x, y, **kwargs)
+        msg = structured_dtype_compare(x, y, **kwargs)
         if msg:
             raise AssertionError(msg)
-
     except ValueError:
         import traceback
         efmt = traceback.format_exc()
