@@ -883,8 +883,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
                                     names=('x', 'y'), precision=precision)
                 raise AssertionError(msg)
             check_shape(_x, _y, strict=strict)
-            if _x.dtype.names is None:
-                check_flagged_comparison(_x, _y, err_msg)
+            check_flagged_comparison(_x, _y, err_msg)
     except ValueError:
         import traceback
         efmt = traceback.format_exc()
