@@ -5390,6 +5390,7 @@ class MaskedArray(ndarray):
         else:
             danom *= danom
         dvar = true_divide(danom.sum(axis, **kwargs), cnt).astype(danom.dtype)
+        dvar = dvar.view(type(self))
         # Apply the mask if it's not a scalar
         if dvar.ndim:
             dvar._mask = mask_or(self._mask.all(axis, **kwargs), (cnt <= 0))
