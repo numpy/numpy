@@ -421,6 +421,11 @@ class TestAverage:
         w /= w.sum()
         assert_almost_equal(a.mean(0), average(a, weights=w))
 
+    def test_average_class_without_dtype(self):
+        # see gh-21988
+        a = np.array([Fraction(1, 5), Fraction(3, 5)])
+        assert_equal(np.average(a), Fraction(2, 5))
+
 class TestSelect:
     choices = [np.array([1, 2, 3]),
                np.array([4, 5, 6]),
