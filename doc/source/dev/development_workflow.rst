@@ -172,8 +172,8 @@ and using it is highly recommended. Tasks and checks that it runs include:
   Python wrapper for `ClangFormat versioning <clang_format_>`_ (this hook is
   enabled by default).
 
-* Format and lint YAML shell files, and perform linting on Fortran, rst, Docker,
-  and markdown files (some enabled and some disabled by default)
+* Format and lint YAML and shell files, and perform linting on Fortran, rst,
+  Docker, and markdown files (some enabled and some disabled by default)
 
 To use the hook, first make sure that pre-commit is installed:
 
