@@ -716,10 +716,6 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
     # original array for output formatting
     ox, oy = x, y
 
-    kwargs = dict(comparison=comparison, err_msg=err_msg, verbose=verbose,
-                    header=header, precision=precision, equal_nan=equal_nan,
-                    equal_inf=equal_inf, strict=strict, ox=ox, oy=oy)
-
     def isnumber(x):
         return x.dtype.char in '?bhilqpBHILQPefdgFDG'
 
@@ -788,9 +784,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
         else:
             return y_id
 
-    def check_flagged_comparison(x, y, comparison, err_msg, verbose, header,
-                                 precision, equal_nan, equal_inf, strict,
-                                 ox, oy):
+    def check_flagged_comparison(x, y, err_msg):
         check_shape(x, y, strict=strict)
         flagged = bool_(False)
         if isnumber(x) and isnumber(y):
@@ -890,7 +884,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
                 raise AssertionError(msg)
             check_shape(_x, _y, strict=strict)
             if _x.dtype.names is None:
-                check_flagged_comparison(_x, _y, **kwargs)
+                check_flagged_comparison(_x, _y, err_msg)
     except ValueError:
         import traceback
         efmt = traceback.format_exc()
