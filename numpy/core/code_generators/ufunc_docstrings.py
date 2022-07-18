@@ -2797,8 +2797,10 @@ add_newdoc('numpy.core.umath', 'matmul',
       (9, 5, 7, 3)
       >>> # n is 7, k is 4, m is 3
 
-    The matmul function implements the semantics of the ``@`` operator introduced
-    in Python 3.5 following :pep:`465`.
+    The matmul function implements the semantics of the ``@`` operator
+    introduced in Python 3.5 following :pep:`465`.
+
+    It uses an optimized BLAS library when possible (see `numpy.linalg`).
 
     Examples
     --------
