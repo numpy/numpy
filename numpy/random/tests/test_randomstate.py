@@ -2025,7 +2025,7 @@ def test_broadcast_size_error():
 def test_randomstate_ctor_old_style_pickle():
     rs = np.random.RandomState(MT19937(0))
     rs.standard_normal(1)
-    # Directly call reduce which is used in pickline
+    # Directly call reduce which is used in pickling
     ctor, args, state_a = rs.__reduce__()
     # Simulate unpickling an old pickle that only has the name
     assert args[:1] == ("MT19937",)

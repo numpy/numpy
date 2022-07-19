@@ -2700,7 +2700,7 @@ def test_contig_req_out(dist, order, dtype):
 def test_generator_ctor_old_style_pickle():
     rg = np.random.Generator(np.random.PCG64DXSM(0))
     rg.standard_normal(1)
-    # Directly call reduce which is used in pickline
+    # Directly call reduce which is used in pickling
     ctor, args, state_a = rg.__reduce__()
     # Simulate unpickling an old pickle that only has the name
     assert args[:1] == ("PCG64DXSM",)
