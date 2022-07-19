@@ -44,7 +44,7 @@ defines several constants.
    
    Add ``set_display()`` to change the default string.
    Example usage: ``numpy.ma.masked_print_option.set_display('·')`` 
-   replaces missing data with ``'.'``
+   replaces missing data with ``'.'``.
    
 
 
