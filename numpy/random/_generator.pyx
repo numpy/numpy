@@ -220,8 +220,11 @@ cdef class Generator:
         self.bit_generator.state = state
 
     def __reduce__(self):
+        ctor, name_tpl, state = self._bit_generator.__reduce__()
+
         from ._pickle import __generator_ctor
-        return __generator_ctor, (self.bit_generator.state['bit_generator'],), self.bit_generator.state
+        # Requirements of __generator_ctor are (name, ctor)
+        return __generator_ctor, (name_tpl[0], ctor), state
 
     @property
     def bit_generator(self):
