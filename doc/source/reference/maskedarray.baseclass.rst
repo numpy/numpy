@@ -43,8 +43,8 @@ defines several constants.
 
    
    Add ``set_display()`` to change the default string.
-   Usage: ``numpy.ma.masked_print_option.set_display('·')`` 
-   replaces missing data with an ``'.'``
+   Example usage: ``numpy.ma.masked_print_option.set_display('·')`` 
+   replaces missing data with ``'.'``
    
 
 
