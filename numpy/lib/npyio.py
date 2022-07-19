@@ -1097,6 +1097,11 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         data, e.g. ``converters = lambda s: float(s.strip() or 0)`` will
         convert empty fields to 0.
         Default: None.
+
+        .. versionchanged:: 1.23.0
+           The ability to pass a single callable to be applied to all columns
+           was added.
+
     skiprows : int, optional
         Skip the first `skiprows` lines, including comments; default: 0.
     usecols : int or sequence, optional
