@@ -84,7 +84,6 @@ import numpy.linalg as la
 from numpy.core.multiarray import normalize_axis_index
 from . import polyutils as pu
 from ._polybase import ABCPolyBase
-from numpy.testing import suppress_warnings
 polytrim = pu.trimcoef
 
 #
@@ -418,8 +417,8 @@ def polydiv(c1, c2):
             c1[i:j] -= c2*c1[j]
             i -= 1
             j -= 1
-        return c1[j+1:]/scl, pu.trimseq(c1[:j+1])
- 
+        return c1[j+1:]/scl, pu.trimseq(c1[:j+1]) 
+
 
 def polypow(c, pow, maxpower=None):
     """Raise a polynomial to a power.
