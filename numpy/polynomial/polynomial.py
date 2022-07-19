@@ -407,6 +407,7 @@ def polydiv(c1, c2):
     if lc1 < lc2:
         return c1[:1]*0, c1
     elif lc2 == 1:
+        # with np.errstate(all='ignore'):
         return c1/c2[-1], c1[:1]*0
     else:
         dlen = lc1 - lc2
