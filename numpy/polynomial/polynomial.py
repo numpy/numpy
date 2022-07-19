@@ -82,10 +82,9 @@ __all__ = [
 import numpy as np
 import numpy.linalg as la
 from numpy.core.multiarray import normalize_axis_index
-
 from . import polyutils as pu
 from ._polybase import ABCPolyBase
-
+from numpy.testing import suppress_warnings
 polytrim = pu.trimcoef
 
 #
@@ -407,8 +406,8 @@ def polydiv(c1, c2):
     if lc1 < lc2:
         return c1[:1]*0, c1
     elif lc2 == 1:
-        # with np.errstate(all='ignore'):
-        return c1/c2[-1], c1[:1]*0
+        with np.errstate(all='ignore'):
+            return c1/c2[-1], c1[:1]*0
     else:
         dlen = lc1 - lc2
         scl = c2[-1]
@@ -420,7 +419,7 @@ def polydiv(c1, c2):
             i -= 1
             j -= 1
         return c1[j+1:]/scl, pu.trimseq(c1[:j+1])
-
+ 
 
 def polypow(c, pow, maxpower=None):
     """Raise a polynomial to a power.
