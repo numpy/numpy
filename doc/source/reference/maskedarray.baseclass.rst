@@ -35,13 +35,14 @@ defines several constants.
    is not needed. It is represented internally as ``np.False_``.
 
 
-.. data:: masked_print_options
+.. data:: masked_print_option
 
    String used in lieu of missing data when a masked array is printed.
    By default, this string is ``'--'``.
 
-
-
+   Use ``set_display()`` to change the default string.
+   Example usage: ``numpy.ma.masked_print_option.set_display('X')`` 
+   replaces missing data with ``'X'``.
 
 .. _maskedarray.baseclass:
 
