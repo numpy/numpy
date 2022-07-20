@@ -5428,7 +5428,7 @@ class MaskedArray(ndarray):
             result = self.view(np.ndarray).mean(axis=axis,
                                                    dtype=dtype, **kwargs)
             if isinstance(result, np.ndarray):
-                result = MaskedArray(result, mask=nomask)
+                result = MaskedArray(result, mask=False)
         else:
             is_float16_result = False
             if dtype is None:
@@ -5514,7 +5514,7 @@ class MaskedArray(ndarray):
             ret = self.view(np.ndarray).var(axis=axis, dtype=dtype,
                                             ddof=ddof, **kwargs)
             if isinstance(ret, np.ndarray):
-                ret = MaskedArray(ret, mask=nomask)
+                ret = MaskedArray(ret, mask=False)
             if out is not None:
                 out.flat = ret
                 if isinstance(out, MaskedArray):
