@@ -6875,8 +6875,6 @@ class _extrema_operation(_MaskedUFunc):
 
         if m is nomask:
             t = self.f.reduce(target.view(np.ndarray), **kwargs)
-            if isinstance(t, ndarray):
-                t = MaskedArray(t, mask=nomask)
         else:
             target = target.filled(
                 self.fill_value_func(target)).view(type(target))
