@@ -1160,25 +1160,6 @@ class TestMedian:
         o[2] = np.nan
         assert_(type(np.ma.median(o.astype(object))), float)
 
-    def test_list_of_masked_array(self):
-        data1 = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])
-        masked1 = np.ma.masked_where(data1 == 4, data1)
-        data2 = np.array([[8, 7, 6, 5], [4, 3, 2, 1]])
-        masked2 = np.ma.masked_where(data2 == 4, data2)
-        list = [masked1, masked2]
-        median_masked_list = np.ma.median(list, axis=0).data
-        assert_equal(median_masked_list,
-                     np.array([[4.5, 4.5, 4.5, 5], [5, 4.5, 4.5, 4.5]]))
-
-    def test_list_of_masked_array_no_axis(self):
-        data1 = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])
-        masked1 = np.ma.masked_where(data1 == 2, data1)
-        data2 = np.array([[8, 7, 6, 5], [4, 3, 2, 1]])
-        masked2 = np.ma.masked_where(data2 == 5, data2)
-        list = [masked1, masked2]
-        median_masked_list = np.ma.median(list)
-        assert_equal(median_masked_list, 4.5)
-
 
 class TestCov:
 
