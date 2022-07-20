@@ -40,13 +40,9 @@ defines several constants.
    String used in lieu of missing data when a masked array is printed.
    By default, this string is ``'--'``.
 
-
-   
    Use ``set_display()`` to change the default string.
    Example usage: ``numpy.ma.masked_print_option.set_display('X')`` 
    replaces missing data with ``'X'``.
-   
-
 
 .. _maskedarray.baseclass:
 
