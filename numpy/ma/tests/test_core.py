@@ -1235,18 +1235,6 @@ class TestMaskedArrayArithmetic:
         b = np.maximum.reduce(a)
         assert_equal(b, 3)
 
-    def test_minmax_reduce_axis(self):
-        # Test np.min/maximum.reduce along an axis for 2D array
-        import numpy as np
-        data = [[0, 1, 2, 3, 4, 9], [5, 5, 0, 9, 3, 3]]
-        mask = [[0, 0, 0, 0, 0, 1], [0, 0, 1, 1, 0, 0]]
-        a = array(data, mask=mask)
-
-        expected = array([0, 3], mask=False)
-        result = np.minimum.reduce(a, axis=1)
-
-        assert_array_equal(result, expected)
-
     def test_minmax_funcs_with_output(self):
         # Tests the min/max functions with explicit outputs
         mask = np.random.rand(12).round()
@@ -3220,7 +3208,7 @@ class TestMaskedArrayMethods:
         assert_equal(b.fill_value, 9999)
         assert_equal(b, a[condition])
 
-        condition = (a.data < 4.)
+        condition = (a < 4.)
         b = a.compress(condition)
         assert_equal(b._data, [1., 2., 3.])
         assert_equal(b._mask, [0, 0, 1])
@@ -5379,7 +5367,7 @@ def test_ufunc_with_out_varied():
     a        = array([ 1,  2,  3], mask=[1, 0, 0])
     b        = array([10, 20, 30], mask=[1, 0, 0])
     out      = array([ 0,  0,  0], mask=[0, 0, 1])
-    expected = array([1, 22, 33], mask=[1, 0, 0])
+    expected = array([11, 22, 33], mask=[1, 0, 0])
 
     out_pos = out.copy()
     res_pos = np.add(a, b, out_pos)
