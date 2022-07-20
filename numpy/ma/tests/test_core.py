@@ -3220,7 +3220,7 @@ class TestMaskedArrayMethods:
         assert_equal(b.fill_value, 9999)
         assert_equal(b, a[condition])
 
-        condition = (a.data < 4.)
+        condition = (a < 4.)
         b = a.compress(condition)
         assert_equal(b._data, [1., 2., 3.])
         assert_equal(b._mask, [0, 0, 1])
@@ -5379,7 +5379,7 @@ def test_ufunc_with_out_varied():
     a        = array([ 1,  2,  3], mask=[1, 0, 0])
     b        = array([10, 20, 30], mask=[1, 0, 0])
     out      = array([ 0,  0,  0], mask=[0, 0, 1])
-    expected = array([1, 22, 33], mask=[1, 0, 0])
+    expected = array([11, 22, 33], mask=[1, 0, 0])
 
     out_pos = out.copy()
     res_pos = np.add(a, b, out_pos)

@@ -22,7 +22,6 @@ Released for unlimited redistribution.
 # pylint: disable-msg=E1002
 import builtins
 import inspect
-from numbers import Number
 import operator
 import warnings
 import textwrap
@@ -59,10 +58,10 @@ __all__ = [
     'frombuffer', 'fromflex', 'fromfunction', 'getdata', 'getmask',
     'getmaskarray', 'greater', 'greater_equal', 'harden_mask', 'hypot',
     'identity', 'ids', 'indices', 'inner', 'innerproduct', 'isMA',
-    'isMaskedArray', 'is_mask', 'is_masked', 'isarray', 'isfinite',
-    'isinf', 'isnan', 'left_shift', 'less', 'less_equal', 'log', 'log10',
-    'log2', 'logical_and', 'logical_not', 'logical_or', 'logical_xor',
-    'make_mask', 'make_mask_descr', 'make_mask_none', 'mask_or', 'masked',
+    'isMaskedArray', 'is_mask', 'is_masked', 'isarray', 'left_shift',
+    'less', 'less_equal', 'log', 'log10', 'log2',
+    'logical_and', 'logical_not', 'logical_or', 'logical_xor', 'make_mask',
+    'make_mask_descr', 'make_mask_none', 'mask_or', 'masked',
     'masked_array', 'masked_equal', 'masked_greater',
     'masked_greater_equal', 'masked_inside', 'masked_invalid',
     'masked_less', 'masked_less_equal', 'masked_not_equal',
@@ -926,12 +925,6 @@ class _MaskedUnaryOperation(_MaskedUFunc):
 
         """
         d = getdata(a)
-        if 'out' in kwargs:
-            # Need to drop the mask from the output array when being called
-            kwargs['out'] = getdata(kwargs['out'])
-        args = [getdata(arg) if isinstance(arg, MaskedArray) else arg
-                for arg in args]
-
         # Deal with domain
         if self.domain is not None:
             # Case 1.1. : Domained function
@@ -1055,7 +1048,7 @@ class _MaskedBinaryOperation(_MaskedUFunc):
             masked_result._update_from(b)
         return masked_result
 
-    def reduce(self, target, axis=0, dtype=None, **kwargs):
+    def reduce(self, target, axis=0, dtype=None):
         """
         Reduce `target` along the given `axis`.
 
@@ -1190,10 +1183,6 @@ class _DomainedBinaryOperation(_MaskedUFunc):
 
         # Transforms to a (subclass of) MaskedArray
         masked_result = result.view(get_masked_subclass(a, b))
-        # If the original masks were scalar or nomask, don't expand the result
-        # which comes from the isfinite initialization above
-        if getmask(a).shape + getmask(b).shape == ():
-            m = _shrink_mask(m)
         masked_result._mask = m
         if isinstance(a, MaskedArray):
             masked_result._update_from(a)
@@ -1220,9 +1209,6 @@ floor = _MaskedUnaryOperation(umath.floor)
 ceil = _MaskedUnaryOperation(umath.ceil)
 around = _MaskedUnaryOperation(np.round_)
 logical_not = _MaskedUnaryOperation(umath.logical_not)
-isinf = _MaskedUnaryOperation(umath.isinf)
-isnan = _MaskedUnaryOperation(umath.isnan)
-isfinite = _MaskedUnaryOperation(umath.isfinite)
 
 # Domained unary ufuncs
 sqrt = _MaskedUnaryOperation(umath.sqrt, 0.0,
@@ -3095,7 +3081,7 @@ class MaskedArray(ndarray):
             func, args, out_i = context
             # args sometimes contains outputs (gh-10459), which we don't want
             input_args = args[:func.nin]
-            m = reduce(mask_or, [getmask(arg) for arg in input_args])
+            m = reduce(mask_or, [getmaskarray(arg) for arg in input_args])
             # Get the domain mask
             domain = ufunc_domain.get(func, None)
             if domain is not None:
@@ -3123,6 +3109,7 @@ class MaskedArray(ndarray):
                     else:
                         # Don't modify inplace, we risk back-propagation
                         m = (m | d)
+
             # Make sure the mask has the proper size
             if result is not self and result.shape == () and m:
                 return masked
@@ -3131,85 +3118,6 @@ class MaskedArray(ndarray):
                 result._sharedmask = False
 
         return result
-
-    def __array_ufunc__(self, np_ufunc, method, *inputs, **kwargs):
-        """
-        MaskedArray capability for ufuncs
-
-        Handle masked versions of ufuncs if they are implemented within
-        the MaskedArray module. If the masked ufunc is not implemented,
-        this falls back to the standard numpy ndarray ufunc, which we
-        then call with the ndarray view of the input data.
-
-        """
-        # Output can be specified as arguments or as keyword arguments
-        outputs = kwargs.pop('out', ())
-        if not isinstance(outputs, tuple):
-            outputs = (outputs,)
-        outputs += inputs[np_ufunc.nin:]
-        args = inputs[:np_ufunc.nin]
-
-        # Determine what class types we are compatible with and return
-        # NotImplemented if we don't know how to handle them
-        for arg in args + outputs:
-            if not isinstance(arg, (ndarray, np.bool_, Number, list, str)):
-                return NotImplemented
-
-        # Get the equivalent masked version of the numpy function
-        # if it is in the module level functions
-        ma_ufunc = np.ma.__dict__.get(np_ufunc.__name__, np_ufunc)
-        if ma_ufunc is np_ufunc:
-            # We didn't have a Masked version of the ufunc, so we need to
-            # call the ndarray version with the data from the objects and
-            # prevent infinite recursion.
-
-            # Make ndarray views of the input arguments
-            args = [getdata(input) if isinstance(input, MaskedArray)
-                    else input for input in args]
-        else:
-            # The masked power function doesn't support extra args
-            if np_ufunc.__name__ in ('power'):
-                kwargs = {}
-
-        results = getattr(ma_ufunc, method)(*args, **kwargs)
-        if results is NotImplemented:
-            return NotImplemented
-        if method == 'at':
-            return
-        if np_ufunc.nout == 1:
-            results = (results,)
-        if outputs == ():
-            outputs = (None,) * np_ufunc.nout
-
-        returns = []
-        for i, result in enumerate(results):
-            output = outputs[i]
-
-            # Reapply the mask
-            if isinstance(result, ndarray) and result is not masked:
-                # Need to copy over all of the data and mask from results
-                # to the original object requested with out
-                if output is not None:
-                    if isinstance(output, MaskedArray):
-                        output._update_from(result)
-                        if isinstance(result, MaskedArray):
-                            output.data[:] = result._data
-                            output._mask = result._mask
-                        else:
-                            output.data[:] = result
-                    else:
-                        output[:] = result
-
-                    result = output
-
-            elif output is not None:
-                # An out value was requested, but the result is a scalar
-                output[()] = result
-                result = output
-
-            returns.append(result)
-
-        return returns[0] if np_ufunc.nout == 1 else returns
 
     def view(self, dtype=None, type=None, fill_value=None):
         """
@@ -3384,7 +3292,7 @@ class MaskedArray(ndarray):
                     return dout
         else:
             # Force dout to MA
-            dout = MaskedArray(dout)
+            dout = dout.view(type(self))
             # Inherit attributes from self
             dout._update_from(self)
             # Check the fill_value
@@ -3946,23 +3854,6 @@ class MaskedArray(ndarray):
                     result = self._data
         return result
 
-    def clip(self, a_min, a_max, out=None, **kwargs):
-        """docstring inherited
-        np.clip.__doc__
-
-        TODO: Should we ignore the clip where the data is masked?
-        It is currently in line with the old numpy version
-        """
-        result = self.data.clip(a_min, a_max, **kwargs).view(MaskedArray)
-        if out is not None:
-            # Just copy the data and mask
-            out.data[:] = getdata(result)
-            out._mask = self._mask
-            return out
-        result._update_from(self)
-        result._mask = self._mask
-        return result
-
     def compressed(self):
         """
         Return all the non-masked data as a 1-D array.
@@ -4056,15 +3947,10 @@ class MaskedArray(ndarray):
         # values.
         condition = np.asarray(condition)
 
-        _new = _data.compress(condition, axis=axis).view(type(self))
+        _new = _data.compress(condition, axis=axis, out=out).view(type(self))
         _new._update_from(self)
         if _mask is not nomask:
             _new._mask = _mask.compress(condition, axis=axis)
-        if out is not None:
-            out._update_from(self)
-            out.data[:] = _new.data
-            out._mask = _new.mask
-            return out
         return _new
 
     def _insert_masked_print(self):
@@ -4314,7 +4200,7 @@ class MaskedArray(ndarray):
         """
         if self._delegate_binop(other):
             return NotImplemented
-        return np.add(self, other)
+        return add(self, other)
 
     def __radd__(self, other):
         """
@@ -4323,7 +4209,7 @@ class MaskedArray(ndarray):
         """
         # In analogy with __rsub__ and __rdiv__, use original order:
         # we get here from `other + self`.
-        return np.add(other, self)
+        return add(other, self)
 
     def __sub__(self, other):
         """
@@ -4332,20 +4218,20 @@ class MaskedArray(ndarray):
         """
         if self._delegate_binop(other):
             return NotImplemented
-        return np.subtract(self, other)
+        return subtract(self, other)
 
     def __rsub__(self, other):
         """
         Subtract self from other, and return a new masked array.
 
         """
-        return np.subtract(other, self)
+        return subtract(other, self)
 
     def __mul__(self, other):
         "Multiply self by other, and return a new masked array."
         if self._delegate_binop(other):
             return NotImplemented
-        return np.multiply(self, other)
+        return multiply(self, other)
 
     def __rmul__(self, other):
         """
@@ -4354,7 +4240,7 @@ class MaskedArray(ndarray):
         """
         # In analogy with __rsub__ and __rdiv__, use original order:
         # we get here from `other * self`.
-        return np.multiply(other, self)
+        return multiply(other, self)
 
     def __div__(self, other):
         """
@@ -4363,7 +4249,7 @@ class MaskedArray(ndarray):
         """
         if self._delegate_binop(other):
             return NotImplemented
-        return np.divide(self, other)
+        return divide(self, other)
 
     def __truediv__(self, other):
         """
@@ -4372,14 +4258,14 @@ class MaskedArray(ndarray):
         """
         if self._delegate_binop(other):
             return NotImplemented
-        return np.true_divide(self, other)
+        return true_divide(self, other)
 
     def __rtruediv__(self, other):
         """
         Divide self into other, and return a new masked array.
 
         """
-        return np.true_divide(other, self)
+        return true_divide(other, self)
 
     def __floordiv__(self, other):
         """
@@ -4388,14 +4274,14 @@ class MaskedArray(ndarray):
         """
         if self._delegate_binop(other):
             return NotImplemented
-        return np.floor_divide(self, other)
+        return floor_divide(self, other)
 
     def __rfloordiv__(self, other):
         """
         Divide self into other, and return a new masked array.
 
         """
-        return np.floor_divide(other, self)
+        return floor_divide(other, self)
 
     def __pow__(self, other):
         """
@@ -5172,8 +5058,8 @@ class MaskedArray(ndarray):
         #!!!: implement out + test!
         m = self._mask
         if m is nomask:
-            result = self.view(np.ndarray).trace(offset=offset, axis1=axis1,
-                                                    axis2=axis2, out=out)
+            result = super().trace(offset=offset, axis1=axis1, axis2=axis2,
+                                   out=out)
             return result.astype(dtype)
         else:
             D = self.diagonal(offset=offset, axis1=axis1, axis2=axis2)
@@ -5273,9 +5159,7 @@ class MaskedArray(ndarray):
                 result = masked
             return result
         # Explicit output
-
-        self.filled(0).sum(axis, dtype=dtype, out=out.view(np.ndarray),
-                           **kwargs)
+        result = self.filled(0).sum(axis, dtype=dtype, out=out, **kwargs)
         if isinstance(out, MaskedArray):
             outmask = getmask(out)
             if outmask is nomask:
@@ -5425,10 +5309,7 @@ class MaskedArray(ndarray):
         """
         kwargs = {} if keepdims is np._NoValue else {'keepdims': keepdims}
         if self._mask is nomask:
-            result = self.view(np.ndarray).mean(axis=axis,
-                                                   dtype=dtype, **kwargs)
-            if isinstance(result, np.ndarray):
-                result = MaskedArray(result, mask=False)
+            result = super().mean(axis=axis, dtype=dtype, **kwargs)[()]
         else:
             is_float16_result = False
             if dtype is None:
@@ -5511,12 +5392,9 @@ class MaskedArray(ndarray):
 
         # Easy case: nomask, business as usual
         if self._mask is nomask:
-            ret = self.view(np.ndarray).var(axis=axis, dtype=dtype,
-                                            ddof=ddof, **kwargs)
-            if isinstance(ret, np.ndarray):
-                ret = MaskedArray(ret, mask=False)
+            ret = super().var(axis=axis, dtype=dtype, out=out, ddof=ddof,
+                              **kwargs)[()]
             if out is not None:
-                out.flat = ret
                 if isinstance(out, MaskedArray):
                     out.__setmask__(nomask)
                 return out
@@ -5574,10 +5452,12 @@ class MaskedArray(ndarray):
         numpy.std : Equivalent function
         """
         kwargs = {} if keepdims is np._NoValue else {'keepdims': keepdims}
+
         dvar = self.var(axis, dtype, out, ddof, **kwargs)
         if dvar is not masked:
             if out is not None:
-                return np.power(out, 0.5, out=out, casting='unsafe')
+                np.power(out, 0.5, out=out, casting='unsafe')
+                return out
             dvar = sqrt(dvar)
         return dvar
 
@@ -5592,10 +5472,6 @@ class MaskedArray(ndarray):
         numpy.ndarray.round : corresponding function for ndarrays
         numpy.around : equivalent function
         """
-        stored_out = None
-        if isinstance(out, MaskedArray):
-            stored_out = out
-            out = getdata(out)
         result = self._data.round(decimals=decimals, out=out).view(type(self))
         if result.ndim > 0:
             result._mask = self._mask
@@ -5606,9 +5482,7 @@ class MaskedArray(ndarray):
         # No explicit output: we're done
         if out is None:
             return result
-        if stored_out is not None:
-            # We got in a masked array originally, so we need to return one
-            out = stored_out
+        if isinstance(out, MaskedArray):
             out.__setmask__(self._mask)
         return out
 
@@ -5996,7 +5870,7 @@ class MaskedArray(ndarray):
             "`mini` is deprecated; use the `min` method or "
             "`np.ma.minimum.reduce instead.",
             DeprecationWarning, stacklevel=2)
-        return MaskedArray(np.min(self, axis))
+        return minimum.reduce(self, axis)
 
     def max(self, axis=None, out=None, fill_value=None, keepdims=np._NoValue):
         """
@@ -6160,13 +6034,13 @@ class MaskedArray(ndarray):
         warnings.warn("Warning: 'partition' will ignore the 'mask' "
                       f"of the {self.__class__.__name__}.",
                       stacklevel=2)
-        return self.view(np.ndarray).partition(*args, **kwargs)
+        return super().partition(*args, **kwargs)
 
     def argpartition(self, *args, **kwargs):
         warnings.warn("Warning: 'argpartition' will ignore the 'mask' "
                       f"of the {self.__class__.__name__}.",
                       stacklevel=2)
-        return self.view(np.ndarray).argpartition(*args, **kwargs)
+        return super().argpartition(*args, **kwargs)
 
     def take(self, indices, axis=None, out=None, mode='raise'):
         """
@@ -6856,7 +6730,7 @@ class _extrema_operation(_MaskedUFunc):
             return self.reduce(a)
         return where(self.compare(a, b), a, b)
 
-    def reduce(self, target, axis=np._NoValue, **kwargs):
+    def reduce(self, target, axis=np._NoValue):
         "Reduce target along the given axis."
         target = narray(target, copy=False, subok=True)
         m = getmask(target)
@@ -6871,10 +6745,12 @@ class _extrema_operation(_MaskedUFunc):
             axis = None
 
         if axis is not np._NoValue:
-            kwargs['axis'] = axis
+            kwargs = dict(axis=axis)
+        else:
+            kwargs = dict()
 
         if m is nomask:
-            t = self.f.reduce(target.view(np.ndarray), **kwargs)
+            t = self.f.reduce(target, **kwargs)
         else:
             target = target.filled(
                 self.fill_value_func(target)).view(type(target))
@@ -8078,23 +7954,6 @@ def allclose(a, b, masked_equal=True, rtol=1e-5, atol=1e-8):
     """
     x = masked_array(a, copy=False)
     y = masked_array(b, copy=False)
-    if masked_equal:
-        # Apply the combined mask right away to avoid comparisons at the
-        # masked locations (assumed mask is True)
-        m = mask_or(getmask(x), getmask(y))
-        # Expand scalars to the proper dimension for comparison if needed
-        if shape(x) != shape(y):
-            if size(x) == 1:
-                # scalar a
-                x = masked_array(np.ones(shape=shape(y))*x, mask=m)
-            elif size(y) == 1:
-                # scalar b
-                y = masked_array(np.ones(shape=shape(x))*y, mask=m)
-            else:
-                raise ValueError("Cannot compare arrays of different shapes.")
-        else:
-            x = masked_array(a, copy=False, mask=m)
-            y = masked_array(b, copy=False, mask=m)
 
     # make sure y is an inexact type to avoid abs(MIN_INT); will cause
     # casting of x later.
@@ -8107,7 +7966,8 @@ def allclose(a, b, masked_equal=True, rtol=1e-5, atol=1e-8):
         if y.dtype != dtype:
             y = masked_array(y, dtype=dtype, copy=False)
 
-    xinf = filled(np.isinf(x), False)
+    m = mask_or(getmask(x), getmask(y))
+    xinf = np.isinf(masked_array(x, copy=False, mask=m)).filled(False)
     # If we have some infs, they should fall at the same place.
     if not np.all(xinf == filled(np.isinf(y), False)):
         return False
