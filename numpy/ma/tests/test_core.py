@@ -1235,18 +1235,6 @@ class TestMaskedArrayArithmetic:
         b = np.maximum.reduce(a)
         assert_equal(b, 3)
 
-    def test_minmax_reduce_axis(self):
-        # Test np.min/maximum.reduce along an axis for 2D array
-        import numpy as np
-        data = [[0, 1, 2, 3, 4, 9], [5, 5, 0, 9, 3, 3]]
-        mask = [[0, 0, 0, 0, 0, 1], [0, 0, 1, 1, 0, 0]]
-        a = array(data, mask=mask)
-
-        expected = array([0, 3], mask=False)
-        result = np.minimum.reduce(a, axis=1)
-
-        assert_array_equal(result, expected)
-
     def test_minmax_funcs_with_output(self):
         # Tests the min/max functions with explicit outputs
         mask = np.random.rand(12).round()
