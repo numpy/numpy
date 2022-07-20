@@ -42,17 +42,10 @@ defines several constants.
 
 
    
-   Use ``set_display()`` to change the default string::
+   Use ``set_display()`` to change the default string.
+   Example usage: ``numpy.ma.masked_print_option.set_display('X')`` 
+   replaces missing data with ``'X'``.
    
-       >>> a = ma.array([1, 2, 3], mask=[0, 1, 0])
-       >>> ma.masked_print_option.set_display("X")
-       >>> a
-       masked_array(data=[1, X, 3],                                             
-                    mask=[False,  True, False],                                    
-              fill_value=999999)
-   
-
-
 
 
 .. _maskedarray.baseclass:
