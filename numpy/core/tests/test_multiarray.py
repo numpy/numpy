@@ -3606,9 +3606,13 @@ class TestMethods:
             msg = 'dtype: {0}'.format(dt)
             ap = complex(a)
             assert_equal(ap, a, msg)
-            bp = complex(b)
+
+            with assert_warns(DeprecationWarning):
+                bp = complex(b)
             assert_equal(bp, b, msg)
-            cp = complex(c)
+
+            with assert_warns(DeprecationWarning):
+                cp = complex(c)
             assert_equal(cp, c, msg)
 
     def test__complex__should_not_work(self):
