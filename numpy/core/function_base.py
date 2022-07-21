@@ -166,7 +166,7 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
     y += start
 
     if endpoint and num > 1:
-        y[-1] = stop
+        y[-1, ...] = stop
 
     if axis != 0:
         y = _nx.moveaxis(y, 0, axis)
