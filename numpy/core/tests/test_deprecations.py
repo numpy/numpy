@@ -1196,3 +1196,15 @@ class TestLoadtxtParseIntsViaFloat(_DeprecationTestCase):
                 np.loadtxt(["10.5"], dtype=dtype)
             except ValueError as e:
                 assert isinstance(e.__cause__, DeprecationWarning)
+
+
+class TestScalarConversion(_DeprecationTestCase):
+    # 2022-07-19, 1.24.0
+    def test_float_conversion(self):
+        self.assert_deprecated(float, args=(np.array([3.14]),))
+
+    def test_behaviour(self):
+        b = np.array([[3.14]])
+        c = np.zeros(5)
+        with pytest.warns(DeprecationWarning):
+            c[0] = b
