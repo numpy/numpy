@@ -52,6 +52,7 @@
 #include "npy_cpu_features.h"
 #include "npy_sort.h"
 #include "npysort_common.h"
+#include "npysort_heapsort.h"
 #include "numpy_tag.h"
 
 #include "x86-qsort.h"
@@ -77,19 +78,6 @@
  **                            NUMERIC SORTS                                **
  *****************************************************************************
  */
-
-template <typename Tag, typename type>
-NPY_NO_EXPORT int
-heapsort_(type *start, npy_intp n);
-template <typename Tag, typename type>
-NPY_NO_EXPORT int
-aheapsort_(type *vv, npy_intp *tosort, npy_intp n);
-template <typename Tag, typename type>
-NPY_NO_EXPORT int
-string_heapsort_(type *start, npy_intp n, void *varr);
-template <typename Tag, typename type>
-NPY_NO_EXPORT int
-string_aheapsort_(type *vv, npy_intp *tosort, npy_intp n, void *varr);
 
 namespace {
 
