@@ -1307,95 +1307,10 @@ PyArray_DiscoverDTypeAndShape(
         /* Handle reaching the maximum depth differently: */
         int too_deep = ndim == max_dims;
 
-        if (fixed_DType == NULL) {
-            /* This is discovered as object, but deprecated */
-            static PyObject *visibleDeprecationWarning = NULL;
-            npy_cache_import(
-                    "numpy", "VisibleDeprecationWarning",
-                    &visibleDeprecationWarning);
-            if (visibleDeprecationWarning == NULL) {
-                goto fail;
-            }
-            if (!too_deep) {
-                /* NumPy 1.19, 2019-11-01 */
-                if (PyErr_WarnEx(visibleDeprecationWarning,
-                        "Creating an ndarray from ragged nested sequences (which "
-                        "is a list-or-tuple of lists-or-tuples-or ndarrays with "
-                        "different lengths or shapes) is deprecated. If you "
-                        "meant to do this, you must specify 'dtype=object' "
-                        "when creating the ndarray.", 1) < 0) {
-                    goto fail;
-                }
-            }
-            else {
-                /* NumPy 1.20, 2020-05-08 */
-                /* Note, max_dims should normally always be NPY_MAXDIMS here */
-                if (PyErr_WarnFormat(visibleDeprecationWarning, 1,
-                        "Creating an ndarray from nested sequences exceeding "
-                        "the maximum number of dimensions of %d is deprecated. "
-                        "If you mean to do this, you must specify "
-                        "'dtype=object' when creating the ndarray.",
-                        max_dims) < 0) {
-                    goto fail;
-                }
-            }
-            /* Ensure that ragged arrays always return object dtype */
-            Py_XSETREF(*out_descr, PyArray_DescrFromType(NPY_OBJECT));
-        }
-        else if (fixed_DType->type_num != NPY_OBJECT) {
+        if (fixed_DType == NULL || fixed_DType->type_num != NPY_OBJECT) {
             /* Only object DType supports ragged cases unify error */
 
-            /*
-             * We used to let certain ragged arrays pass if they also
-             * support e.g. conversion using `float(arr)`, which currently
-             * works for arrays with only one element.
-             * Thus we catch at least most of such cases here and give a
-             * DeprecationWarning instead of an error.
-             * Note that some of these will actually error later on when
-             * attempting to do the actual assign.
-             */
-            int deprecate_single_element_ragged = 0;
-            coercion_cache_obj *current = *coercion_cache_head;
-            while (current != NULL) {
-                if (current->sequence) {
-                    if (current->depth == ndim) {
-                        /*
-                         * Assume that only array-likes will allow the deprecated
-                         * behaviour
-                         */
-                        deprecate_single_element_ragged = 0;
-                        break;
-                    }
-                    /* check next converted sequence/array-like */
-                    current = current->next;
-                    continue;
-                }
-                PyArrayObject *arr = (PyArrayObject *)(current->arr_or_sequence);
-                assert(PyArray_NDIM(arr) + current->depth >= ndim);
-                if (PyArray_NDIM(arr) != ndim - current->depth) {
-                    /* This array is not compatible with the final shape */
-                    if (PyArray_SIZE(arr) != 1) {
-                        deprecate_single_element_ragged = 0;
-                        break;
-                    }
-                    deprecate_single_element_ragged = 1;
-                }
-                current = current->next;
-            }
-
-            if (deprecate_single_element_ragged) {
-                /* Deprecated 2020-07-24, NumPy 1.20 */
-                if (DEPRECATE(
-                        "setting an array element with a sequence. "
-                        "This was supported in some cases where the elements "
-                        "are arrays with a single element. For example "
-                        "`np.array([1, np.array([2])], dtype=int)`. "
-                        "In the future this will raise the same ValueError as "
-                        "`np.array([1, [2]], dtype=int)`.") < 0) {
-                    goto fail;
-                }
-            }
-            else if (!too_deep) {
+            if (!too_deep) {
                 PyObject *shape = PyArray_IntTupleFromIntp(ndim, out_shape);
                 PyErr_Format(PyExc_ValueError,
                         "setting an array element with a sequence. The "
@@ -1404,7 +1319,6 @@ PyArray_DiscoverDTypeAndShape(
                         "%R + inhomogeneous part.",
                         ndim, shape);
                 Py_DECREF(shape);
-                goto fail;
             }
             else {
                 PyErr_Format(PyExc_ValueError,
@@ -1412,8 +1326,8 @@ PyArray_DiscoverDTypeAndShape(
                         "requested array would exceed the maximum number of "
                         "dimension of %d.",
                         max_dims);
-                goto fail;
             }
+            goto fail;
         }
 
         /*

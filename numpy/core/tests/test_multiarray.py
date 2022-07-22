@@ -1118,12 +1118,11 @@ class TestCreation:
                           shape=(max_bytes//itemsize + 1,), dtype=dtype)
 
     def _ragged_creation(self, seq):
-        # without dtype=object, the ragged object should raise
-        with assert_warns(np.VisibleDeprecationWarning):
+        # without dtype=object, the ragged object raises
+        with pytest.raises(ValueError, match=".*detected shape was"):
             a = np.array(seq)
-        b = np.array(seq, dtype=object)
-        assert_equal(a, b)
-        return b
+
+        return np.array(seq, dtype=object)
 
     def test_ragged_ndim_object(self):
         # Lists of mismatching depths are treated as object arrays
@@ -2234,6 +2233,28 @@ class TestMethods:
         assert_c(a.copy('C'))
         assert_fortran(a.copy('F'))
         assert_c(a.copy('A'))
+    
+    @pytest.mark.parametrize("dtype", ['O', np.int32, 'i,O'])
+    def test__deepcopy__(self, dtype):
+        # Force the entry of NULLs into array
+        a = np.empty(4, dtype=dtype)
+        ctypes.memset(a.ctypes.data, 0, a.nbytes)
+
+        # Ensure no error is raised, see gh-21833
+        b = a.__deepcopy__({})
+
+        a[0] = 42
+        with pytest.raises(AssertionError):
+            assert_array_equal(a, b)
+
+    def test__deepcopy__catches_failure(self):
+        class MyObj:
+            def __deepcopy__(self, *args, **kwargs):
+                raise RuntimeError
+
+        arr = np.array([1, MyObj(), 3], dtype='O')
+        with pytest.raises(RuntimeError):
+            arr.__deepcopy__({})
 
     def test_sort_order(self):
         # Test sorting an array with fields

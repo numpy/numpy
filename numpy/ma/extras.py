@@ -588,8 +588,8 @@ def average(a, axis=None, weights=None, returned=False, *,
     >>> avg, sumweights = np.ma.average(x, axis=0, weights=[1, 2, 3],
     ...                                 returned=True)
     >>> avg
-    masked_array(data=[2.66666667, 3.66666667],
-                 mask=False,
+    masked_array(data=[2.6666666666666665, 3.6666666666666665],
+                 mask=[False, False],
            fill_value=1e+20)
 
     With ``keepdims=True``, the following result has shape (3, 1).
@@ -723,10 +723,7 @@ def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
            fill_value=1e+20)
 
     """
-
-    a = np.ma.asarray(a)
-
-    if a.mask is np.ma.nomask:
+    if not hasattr(a, 'mask'):
         m = np.median(getdata(a, subok=True), axis=axis,
                       out=out, overwrite_input=overwrite_input,
                       keepdims=keepdims)
@@ -2019,15 +2016,8 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
         not_m = ~m
         if w is not None:
             w = w[not_m]
-        x = x[not_m]
-        y = y[not_m]
-
-    # Only pass the ndarray data
-    if w is not None:
-        w = w.view(np.ndarray)
-    x = x.view(np.ndarray)
-    y = y.view(np.ndarray)
-
-    return np.polyfit(x, y, deg, rcond, full, w, cov)
+        return np.polyfit(x[not_m], y[not_m], deg, rcond, full, w, cov)
+    else:
+        return np.polyfit(x, y, deg, rcond, full, w, cov)
 
 polyfit.__doc__ = ma.doc_note(np.polyfit.__doc__, polyfit.__doc__)

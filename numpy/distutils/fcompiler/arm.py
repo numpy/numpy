@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-                                                                               
 import sys                                                                     
                                                                                
 from numpy.distutils.fcompiler import FCompiler, dummy_fortran_file

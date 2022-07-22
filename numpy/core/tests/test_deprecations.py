@@ -475,34 +475,6 @@ class TestNonZero(_DeprecationTestCase):
         self.assert_deprecated(lambda: np.nonzero(np.array(1)))
 
 
-def test_deprecate_ragged_arrays():
-    # 2019-11-29 1.19.0
-    #
-    # NEP 34 deprecated automatic object dtype when creating ragged
-    # arrays. Also see the "ragged" tests in `test_multiarray`
-    #
-    # emits a VisibleDeprecationWarning
-    arg = [1, [2, 3]]
-    with assert_warns(np.VisibleDeprecationWarning):
-        np.array(arg)
-
-
-class TestTooDeepDeprecation(_VisibleDeprecationTestCase):
-    # NumPy 1.20, 2020-05-08
-    # This is a bit similar to the above ragged array deprecation case.
-    message = re.escape("Creating an ndarray from nested sequences exceeding")
-
-    def test_deprecation(self):
-        nested = [1]
-        for i in range(np.MAXDIMS - 1):
-            nested = [nested]
-        self.assert_not_deprecated(np.array, args=(nested,))
-        self.assert_not_deprecated(np.array,
-                args=(nested,), kwargs=dict(dtype=object))
-
-        self.assert_deprecated(np.array, args=([nested],))
-
-
 class TestToString(_DeprecationTestCase):
     # 2020-03-06 1.19.0
     message = re.escape("tostring() is deprecated. Use tobytes() instead.")
@@ -642,20 +614,6 @@ class TestMatrixInOuter(_DeprecationTestCase):
         self.assert_deprecated(np.add.outer, args=(arr, m))
         self.assert_deprecated(np.add.outer, args=(m, arr))
         self.assert_not_deprecated(np.add.outer, args=(arr, arr))
-
-
-class TestRaggedArray(_DeprecationTestCase):
-    # 2020-07-24, NumPy 1.20.0
-    message = "setting an array element with a sequence"
-
-    def test_deprecated(self):
-        arr = np.ones((1, 1))
-        # Deprecated if the array is a leave node:
-        self.assert_deprecated(lambda: np.array([arr, 0], dtype=np.float64))
-        self.assert_deprecated(lambda: np.array([0, arr], dtype=np.float64))
-        # And when it is an assignment into a lower dimensional subarray:
-        self.assert_deprecated(lambda: np.array([arr, [0]], dtype=np.float64))
-        self.assert_deprecated(lambda: np.array([[0], arr], dtype=np.float64))
 
 
 class FlatteningConcatenateUnsafeCast(_DeprecationTestCase):

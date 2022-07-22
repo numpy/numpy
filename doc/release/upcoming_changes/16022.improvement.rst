@@ -1,9 +1,0 @@
-MaskedArray gains a ``__array_ufunc__`` method to better handle ufuncs
-----------------------------------------------------------------------
-The MaskedArray class now has an implementation of `__array_ufunc__` that
-handles deferrals to the desired implementations of the ufunc. If a masked
-implementation of a ufunc exists, that implementation will take priority.
-This means that code called with MaskedArray ma as ``np.ufunc(ma)`` will
-behave the same as ``np.ma.ufunc(ma)``. Additionally, adding this helps with
-dispatching to subclasses and preserving the proper types when another
-implementation should take priority.
