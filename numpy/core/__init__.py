@@ -75,8 +75,10 @@ from .numeric import *
 from . import fromnumeric
 from .fromnumeric import *
 from . import defchararray as char
+from . import records
 from . import records as rec
 from .records import record, recarray, format_parser
+from . import memmap
 from .memmap import *
 from .defchararray import chararray
 from . import function_base

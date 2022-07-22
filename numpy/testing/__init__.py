@@ -7,6 +7,7 @@ away.
 """
 from unittest import TestCase
 
+from . import _private
 from ._private.utils import *
 from ._private.utils import (_assert_valid_refcount, _gen_alignment_data)
 from ._private import extbuild, decorators as dec

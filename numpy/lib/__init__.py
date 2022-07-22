@@ -21,6 +21,24 @@ from . import mixins
 from . import scimath as emath
 
 # Private submodules
+# load module names. See https://github.com/networkx/networkx/issues/5838
+from . import type_check
+from . import index_tricks
+from . import function_base
+from . import nanfunctions
+from . import shape_base
+from . import stride_tricks
+from . import twodim_base
+from . import ufunclike
+from . import histograms
+from . import polynomial
+from . import utils
+from . import arraysetops
+from . import npyio
+from . import arrayterator
+from . import arraypad
+from . import _version
+
 from .type_check import *
 from .index_tricks import *
 from .function_base import *
