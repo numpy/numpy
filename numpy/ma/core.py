@@ -3152,9 +3152,12 @@ class MaskedArray(ndarray):
 
         # Determine what class types we are compatible with and return
         # NotImplemented if we don't know how to handle them
-        for arg in args + outputs:
-            if not isinstance(arg, (ndarray, np.bool_, Number, list, str)):
+        for arg in args:
+            if not isinstance(arg, (ndarray, Number, str)):
                 return NotImplemented
+        for arg in outputs:
+            if not isinstance(arg, ndarray):
+                raise NotImplemented
 
         # Get the equivalent masked version of the numpy function
         # if it is in the module level functions
