@@ -3160,16 +3160,8 @@ class MaskedArray(ndarray):
         ma_ufunc = np.ma.__dict__.get(np_ufunc.__name__, np_ufunc)
         if ma_ufunc is np_ufunc:
             # We didn't have a Masked version of the ufunc, so we need to
-            # call the ndarray version with the data from the objects and
-            # prevent infinite recursion.
-
-            # Make ndarray views of the input arguments
-            args = [getdata(input) if isinstance(input, MaskedArray)
-                    else input for input in args]
-        else:
-            # The masked power function doesn't support extra args
-            if np_ufunc.__name__ in ('power'):
-                kwargs = {}
+            # call the ndarray version to prevent infinite recursion.
+            return super().__array_ufunc__(np_ufunc, method, *inputs, **kwargs)
 
         results = getattr(ma_ufunc, method)(*args, **kwargs)
         if results is NotImplemented:
@@ -5487,7 +5479,7 @@ class MaskedArray(ndarray):
         dvar = self.var(axis, dtype, out, ddof, **kwargs)
         if dvar is not masked:
             if out is not None:
-                return np.power(out, 0.5, out=out, casting='unsafe')
+                return np.power(out, 0.5, out=out)
             dvar = sqrt(dvar)
         return dvar
 
