@@ -58,7 +58,7 @@ __all__ = [
     'flatten_structured_array', 'floor', 'floor_divide', 'fmod',
     'frombuffer', 'fromflex', 'fromfunction', 'getdata', 'getmask',
     'getmaskarray', 'greater', 'greater_equal', 'harden_mask', 'hypot',
-    'identity', 'ids', 'indices', 'inner', 'innerproduct', 'isMA',
+    'identity', 'ids', 'indices', 'inner', 'innerproduct', 'invert', 'isMA',
     'isMaskedArray', 'is_mask', 'is_masked', 'isarray', 'isfinite',
     'isinf', 'isnan', 'left_shift', 'less', 'less_equal', 'log', 'log10',
     'log2', 'logical_and', 'logical_not', 'logical_or', 'logical_xor',
@@ -1229,6 +1229,7 @@ logical_not = _MaskedUnaryOperation(umath.logical_not)
 isinf = _MaskedUnaryOperation(umath.isinf)
 isnan = _MaskedUnaryOperation(umath.isnan)
 isfinite = _MaskedUnaryOperation(umath.isfinite)
+invert = _MaskedUnaryOperation(np.invert)
 sign = _MaskedUnaryOperation(umath.sign)
 
 # Domained unary ufuncs
