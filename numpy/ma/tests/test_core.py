@@ -1458,6 +1458,13 @@ class TestMaskedArrayArithmetic:
         a = np.ma.masked_values([1., 2.5, 3.1], 1.5, shrink=False)
         assert_equal(a.mask, [0, 0, 0])
 
+    def test_sign(self):
+        x = np.ma.MaskedArray([1, 2], mask=[True, False])
+        expected = np.ma.MaskedArray([1, 1], mask=[True, False])
+        y = np.sign(x)
+        assert_equal(y, expected)
+        assert isinstance(y, np.ma.MaskedArray)
+
     def test_mod(self):
         # Tests mod
         (x, y, a10, m1, m2, xm, ym, z, zm, xf) = self.d

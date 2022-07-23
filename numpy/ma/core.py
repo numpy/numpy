@@ -73,7 +73,7 @@ __all__ = [
     'not_equal', 'ones', 'ones_like', 'outer', 'outerproduct', 'power', 'prod',
     'product', 'ptp', 'put', 'putmask', 'ravel', 'remainder',
     'repeat', 'reshape', 'resize', 'right_shift', 'round', 'round_',
-    'set_fill_value', 'shape', 'sin', 'sinh', 'size', 'soften_mask',
+    'set_fill_value', 'shape', 'sin', 'sign', 'sinh', 'size', 'soften_mask',
     'sometrue', 'sort', 'sqrt', 'squeeze', 'std', 'subtract', 'sum',
     'swapaxes', 'take', 'tan', 'tanh', 'trace', 'transpose', 'true_divide',
     'var', 'where', 'zeros', 'zeros_like',
@@ -1229,6 +1229,7 @@ logical_not = _MaskedUnaryOperation(umath.logical_not)
 isinf = _MaskedUnaryOperation(umath.isinf)
 isnan = _MaskedUnaryOperation(umath.isnan)
 isfinite = _MaskedUnaryOperation(umath.isfinite)
+sign = _MaskedUnaryOperation(umath.sign)
 
 # Domained unary ufuncs
 sqrt = _MaskedUnaryOperation(umath.sqrt, 0.0,
