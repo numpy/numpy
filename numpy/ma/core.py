@@ -6047,13 +6047,13 @@ class MaskedArray(ndarray):
         warnings.warn("Warning: 'partition' will ignore the 'mask' "
                       f"of the {self.__class__.__name__}.",
                       stacklevel=2)
-        return self.view(np.ndarray).partition(*args, **kwargs)
+        return super().partition(*args, **kwargs)
 
     def argpartition(self, *args, **kwargs):
         warnings.warn("Warning: 'argpartition' will ignore the 'mask' "
                       f"of the {self.__class__.__name__}.",
                       stacklevel=2)
-        return self.view(np.ndarray).argpartition(*args, **kwargs)
+        return super().argpartition(*args, **kwargs)
 
     def take(self, indices, axis=None, out=None, mode='raise'):
         """
