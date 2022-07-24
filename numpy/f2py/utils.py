@@ -4,7 +4,7 @@ import contextlib
 import tempfile
 import shutil
 
-from typing import Optional
+from typing import Optional, List
 from pathlib import Path
 
 def get_f2py_dir() -> Path:
@@ -12,7 +12,7 @@ def get_f2py_dir() -> Path:
 	return Path(__file__).resolve().parent
 
 @contextlib.contextmanager
-def open_build_dir(build_dir: Optional[list], compile: bool) -> Path:
+def open_build_dir(build_dir: Optional[List[str]], compile: bool) -> Path:
 	remove_build_dir: bool = False
 	if(isinstance(build_dir, list)):
 		build_dir = build_dir[0] if build_dir else None
