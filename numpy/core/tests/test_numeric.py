@@ -2722,7 +2722,7 @@ class TestStdVarComplex:
 
 
 class TestCreationFuncs:
-    # Test ones, zeros, empty and full.
+    # Test twos, ones, zeros, empty and full.
 
     def setup(self):
         dtypes = {np.dtype(tp) for tp in itertools.chain(*np.sctypes.values())}
@@ -2834,6 +2834,7 @@ class TestLikeFuncs:
                 else:
                     assert_(np.all(dz == z))
             else:
+    
                 assert_(np.all(dz == value))
 
     def check_like_function(self, like_function, value, fill_value=False):
@@ -2843,6 +2844,7 @@ class TestLikeFuncs:
             fill_kwarg = {}
         for d, dtype in self.data:
             # default (K) order, dtype
+            
             dz = like_function(d, dtype=dtype, **fill_kwarg)
             assert_equal(dz.shape, d.shape)
             assert_equal(np.array(dz.strides)*d.dtype.itemsize,
@@ -2933,9 +2935,6 @@ class TestLikeFuncs:
 
     def test_zeros_like(self):
         self.check_like_function(np.zeros_like, 0)
-
-    def test_twos_like(self):
-        self.check_like_function(np.twos_like, 2)
 
     def test_empty_like(self):
         self.check_like_function(np.empty_like, None)

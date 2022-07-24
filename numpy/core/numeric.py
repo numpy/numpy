@@ -50,7 +50,7 @@ __all__ = [
     'fromiter', 'array_equal', 'array_equiv', 'indices', 'fromfunction',
     'isclose', 'isscalar', 'binary_repr', 'base_repr', 'ones',
     'identity', 'allclose', 'compare_chararrays', 'putmask',
-    'flatnonzero', 'Inf', 'inf', 'infty', 'Infinity', 'nan', 'NaN',
+    'flatnonzero', 'Inf', 'inf', 'infty', 'Infinity', 'nan', 'NaN','twos',
     'False_', 'True_', 'bitwise_not', 'CLIP', 'RAISE', 'WRAP', 'MAXDIMS',
     'BUFSIZE', 'ALLOW_THREADS', 'ComplexWarning', 'full', 'full_like',
     'matmul', 'shares_memory', 'may_share_memory', 'MAY_SHARE_BOUNDS',
@@ -211,6 +211,75 @@ _ones_with_like = array_function_dispatch(
     _ones_dispatcher
 )(ones)
 
+def _twos_dispatcher(shape, dtype=None, order=None, *, like=None):
+    return(like,)
+
+
+@set_array_function_like_doc
+@set_module('numpy')
+def twos(shape, dtype=None, order='C', *, like=None):
+    """
+    Return a new array of given shape and type, filled with twos.
+
+    Parameters
+    ----------
+    shape : int or sequence of ints
+        Shape of the new array, e.g., ``(2, 3)`` or ``2``.
+    dtype : data-type, optional
+        The desired data-type for the array, e.g., `numpy.int8`.  Default is
+        `numpy.float64`.
+    order : {'C', 'F'}, optional, default: C
+        Whether to store multi-dimensional data in row-major
+        (C-style) or column-major (Fortran-style) order in
+        memory.
+    ${ARRAY_FUNCTION_LIKE}
+
+        .. versionadded:: 1.20.0
+
+    Returns
+    -------
+    out : ndarray
+        Array of twos with the given shape, dtype, and order.
+
+    See Also
+    --------
+    ones_like : Return an array of ones with shape and type of input.
+    empty : Return a new uninitialized array.
+    zeros : Return a new array setting values to zero.
+    full : Return a new array of given shape filled with value.
+
+
+    Examples
+    --------
+    >>> np.twos(5)
+    array([2., 2., 2., 2., 2.])
+
+    >>> np.twos((5,), dtype=int)
+    array([2, 2, 2, 2, 2])
+
+    >>> np.twos((2, 1))
+    array([[2.],
+           [2.]])
+
+    >>> s = (2,2)
+    >>> np.twos(s)
+    array([[2.,  2.],
+           [2.,  2.]])
+
+    """
+    if like is not None:
+        return _twos_with_like(shape, dtype=dtype, order=order, like=like)
+
+    a = empty(shape, dtype, order)
+    multiarray.copyto(a, 2, casting='unsafe')
+    return a
+
+
+_twos_with_like = array_function_dispatch(
+    _twos_dispatcher
+)(twos)
+
+
 
 def _ones_like_dispatcher(a, dtype=None, order=None, subok=None, shape=None):
     return (a,)
@@ -281,6 +350,7 @@ def ones_like(a, dtype=None, order='K', subok=True, shape=None):
     res = empty_like(a, dtype=dtype, order=order, subok=subok, shape=shape)
     multiarray.copyto(res, 1, casting='unsafe')
     return res
+
 
 
 def _full_dispatcher(shape, fill_value, dtype=None, order=None, *, like=None):
