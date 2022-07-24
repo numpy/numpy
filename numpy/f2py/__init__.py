@@ -8,10 +8,8 @@ import sys
 import subprocess
 import os
 
-from . import f2pyarg
 from . import diagnose
-
-main = f2pyarg.main
+from numpy.f2py.f2pyarg import main
 
 
 def compile(source,
@@ -101,7 +99,7 @@ def compile(source,
 
         c = [sys.executable,
              '-c',
-             'import numpy.f2py as f2pyarg;f2pyarg.main()'] + args
+             'from numpy.f2py import main;main()'] + args
         try:
             cp = subprocess.run(c, capture_output=True)
         except OSError:
