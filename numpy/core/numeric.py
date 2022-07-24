@@ -50,7 +50,7 @@ __all__ = [
     'fromiter', 'array_equal', 'array_equiv', 'indices', 'fromfunction',
     'isclose', 'isscalar', 'binary_repr', 'base_repr', 'ones',
     'identity', 'allclose', 'compare_chararrays', 'putmask',
-    'flatnonzero', 'Inf', 'inf', 'infty', 'Infinity', 'nan', 'NaN','twos',
+    'flatnonzero', 'Inf', 'inf', 'infty', 'Infinity', 'nan', 'NaN', 'twos',
     'False_', 'True_', 'bitwise_not', 'CLIP', 'RAISE', 'WRAP', 'MAXDIMS',
     'BUFSIZE', 'ALLOW_THREADS', 'ComplexWarning', 'full', 'full_like',
     'matmul', 'shares_memory', 'may_share_memory', 'MAY_SHARE_BOUNDS',
