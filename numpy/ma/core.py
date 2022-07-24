@@ -3143,6 +3143,14 @@ class MaskedArray(ndarray):
         then call with the ndarray view of the input data.
 
         """
+        # Get the equivalent masked version of the numpy function
+        # if it is in the module level functions
+        ma_ufunc = np.ma.__dict__.get(np_ufunc.__name__, np_ufunc)
+        if ma_ufunc is np_ufunc:
+            # We didn't have a Masked version of the ufunc, so we need to
+            # call the ndarray version to prevent infinite recursion.
+            return super().__array_ufunc__(np_ufunc, method, *inputs, **kwargs)
+
         # Output can be specified as arguments or as keyword arguments
         outputs = kwargs.pop('out', ())
         if not isinstance(outputs, tuple):
@@ -3153,19 +3161,14 @@ class MaskedArray(ndarray):
         # Determine what class types we are compatible with and return
         # NotImplemented if we don't know how to handle them
         for arg in args:
-            if not isinstance(arg, (ndarray, Number, str)):
+            if not isinstance(arg, ndarray) and hasattr(arg, "__array_ufunc__"):
+                # we want to defer to other implementations, unless it is an
+                # ndarray which MaskedArray will handle here instead
                 return NotImplemented
         for arg in outputs:
             if not isinstance(arg, ndarray):
-                raise NotImplemented
-
-        # Get the equivalent masked version of the numpy function
-        # if it is in the module level functions
-        ma_ufunc = np.ma.__dict__.get(np_ufunc.__name__, np_ufunc)
-        if ma_ufunc is np_ufunc:
-            # We didn't have a Masked version of the ufunc, so we need to
-            # call the ndarray version to prevent infinite recursion.
-            return super().__array_ufunc__(np_ufunc, method, *inputs, **kwargs)
+                # Output must be an ndarray
+                return NotImplemented
 
         results = getattr(ma_ufunc, method)(*args, **kwargs)
         if results is NotImplemented:
