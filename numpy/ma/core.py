@@ -1075,7 +1075,7 @@ class _MaskedBinaryOperation(_MaskedUFunc):
                 m.shape = (1,)
 
         if m is nomask:
-            tr = self.f.reduce(t, axis, **kwargs)
+            tr = self.f.reduce(t.view(np.ndarray), axis, dtype=dtype, **kwargs)
             mr = nomask
         else:
             tr = self.f.reduce(t, axis, dtype=dtype, **kwargs)
@@ -4057,15 +4057,10 @@ class MaskedArray(ndarray):
         # values.
         condition = np.asarray(condition)
 
-        _new = _data.compress(condition, axis=axis).view(type(self))
+        _new = _data.compress(condition, axis=axis, out=out).view(type(self))
         _new._update_from(self)
         if _mask is not nomask:
             _new._mask = _mask.compress(condition, axis=axis)
-        if out is not None:
-            out._update_from(self)
-            out.data[:] = _new.data
-            out._mask = _new.mask
-            return out
         return _new
 
     def _insert_masked_print(self):
