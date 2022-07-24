@@ -1,5 +1,4 @@
 import sys
-import os
 import logging
 import re
 
@@ -222,7 +221,7 @@ def _check_postlist(postlist: list[dict[str, Any]], sign_file: Path) -> None:
         outmess(
             'Stopping. Edit the signature file and then run f2py on the signature file: ')
         outmess('%s %s\n' %
-                (os.path.basename(sys.argv[0]), sign_file))
+                (PurePath(sys.argv[0]).name, sign_file))
         return
     for plist in postlist:
         if plist['block'] != 'python module':
