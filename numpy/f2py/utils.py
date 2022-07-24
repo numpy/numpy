@@ -17,7 +17,7 @@ def open_build_dir(build_dir: Optional[list[Path]], compile: bool):
 	if(isinstance(build_dir, list)):
 		build_dir = build_dir[0] if build_dir else None
 	if build_dir is None:
-		if(compile):
+		if compile:
 			remove_build_dir = True
 			build_dir = tempfile.mkdtemp()
 		else:
