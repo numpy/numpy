@@ -6,8 +6,8 @@ argparse+logging front-end to f2py
 The concept is based around the idea that F2PY is overloaded in terms of
 functionality:
 
-1. Creating the wrapper `.c` files
-2. Generating `.pyf` signature files
+1. Generating `.pyf` signature files
+2. Creating the wrapper `.c` files
 3. Compilation helpers
   a. This essentially means `numpy.distutils` for now
 
