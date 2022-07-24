@@ -7,12 +7,12 @@ import shutil
 from typing import Optional
 from pathlib import Path
 
-def get_f2py_dir():
+def get_f2py_dir() -> Path:
 	"""Return the directory where f2py is installed."""
 	return Path(__file__).resolve().parent
 
 @contextlib.contextmanager
-def open_build_dir(build_dir: Optional[list[Path]], compile: bool):
+def open_build_dir(build_dir: Optional[list], compile: bool) -> Path:
 	remove_build_dir: bool = False
 	if(isinstance(build_dir, list)):
 		build_dir = build_dir[0] if build_dir else None
