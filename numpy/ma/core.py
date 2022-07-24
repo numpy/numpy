@@ -5066,8 +5066,8 @@ class MaskedArray(ndarray):
         #!!!: implement out + test!
         m = self._mask
         if m is nomask:
-            result = self.view(np.ndarray).trace(offset=offset, axis1=axis1,
-                                                    axis2=axis2, out=out)
+            result = super().trace(offset=offset, axis1=axis1, axis2=axis2,
+                                   out=out)
             return result.astype(dtype)
         else:
             D = self.diagonal(offset=offset, axis1=axis1, axis2=axis2)
@@ -5168,8 +5168,7 @@ class MaskedArray(ndarray):
             return result
         # Explicit output
 
-        self.filled(0).sum(axis, dtype=dtype, out=out.view(np.ndarray),
-                           **kwargs)
+        self.filled(0).sum(axis, dtype=dtype, out=out, **kwargs)
         if isinstance(out, MaskedArray):
             outmask = getmask(out)
             if outmask is nomask:
