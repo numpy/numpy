@@ -256,21 +256,37 @@ def get_f2py_modulename(source: str) -> Optional[str]:
     return name
 
 def wrapper_settings(rules_setts: Dict[str, Any], crackfortran_setts: Dict[str, Any], capi_maps_setts: Dict[str, Any], auxfuncs_setts: Dict[str, Any]) -> None:
+    # This function also mimics f2py2e. I have added the link to specific code blocks that each function below mimics.
+    # Step 6.1: https://github.com/numpy/numpy/blob/45bc13e6d922690eea43b9d807d476e0f243f836/numpy/f2py/f2py2e.py#L331
     _set_rules(rules_setts)
+    # Step 6.2: https://github.com/numpy/numpy/blob/main/numpy/f2py/f2py2e.py#L332-L342
     _set_crackfortran(crackfortran_setts)
+    # Step 6.3: 1. https://github.com/numpy/numpy/blob/45bc13e6d922690eea43b9d807d476e0f243f836/numpy/f2py/f2py2e.py#L440
+    #           2. https://github.com/numpy/numpy/blob/main/numpy/f2py/f2py2e.py#L247-L248
     _set_capi_maps(capi_maps_setts)
+    # Step 6.4: 1. https://github.com/numpy/numpy/blob/45bc13e6d922690eea43b9d807d476e0f243f836/numpy/f2py/f2py2e.py#L439
+    #           2. https://github.com/numpy/numpy/blob/main/numpy/f2py/f2py2e.py#L471-L473
     _set_auxfuncs(auxfuncs_setts)
 
 def generate_files(files: List[str], module_name: str, sign_file: Path) -> None:
+    # Step 8.1: Generate postlist from crackfortran
     postlist = _callcrackfortran(files, module_name)
+
+    # Step 8.2: Check postlist. This function is taken from the following code:
+    # https://github.com/numpy/numpy/blob/main/numpy/f2py/f2py2e.py#L443-L456
     _check_postlist(postlist, sign_file)
     if(sign_file):
+        # Step 8.3: Generate signature file, take from this code piece
+        # https://github.com/numpy/numpy/blob/main/numpy/f2py/f2py2e.py#L343-L350
         _generate_signature(postlist, sign_file)
         return
     if(module_name):
+        # Step 8.4: Same as the buildmodules folder of f2py2e
         _buildmodules(postlist)
 
 def compile_dist(ext_args: Dict[str, Any], link_resources: List[str], build_dir: Path, fc_flags: List[str], flib_flags: List[str], quiet_build: bool) -> None:
+    # Step 7.2: The entire code below mimics 'f2py2e:run_compile()'
+    # https://github.com/numpy/numpy/blob/main/numpy/f2py/f2py2e.py#L647-L669
     _set_dependencies_dist(ext_args, link_resources)
     f2py_dir = get_f2py_dir()
     ext = Extension(**ext_args)
@@ -283,6 +299,10 @@ def compile_dist(ext_args: Dict[str, Any], link_resources: List[str], build_dir:
         f2py_build_flags.extend(['config_fc'] + fc_flags)
     if flib_flags:
         f2py_build_flags.extend(['build_ext'] + flib_flags)
+
+    # f2py2e used to pass `script_name` and `script_args` through `sys.argv` array
+    # Now we are passing it as attributes. They will be read later distutils core
+    # https://github.com/pypa/distutils/blob/main/distutils/core.py#L131-L134
     setup(ext_modules=[ext], script_name=f2py_dir, script_args=f2py_build_flags)
 
 def segregate_files(files: List[str]) -> Tuple[List[str], List[str], List[str], List[str], List[str]]:
