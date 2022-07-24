@@ -29,17 +29,17 @@ def run():
 
     try:
         import numpy
-        has_newnumpy = 1
-    except ImportError as e:
-        print('Failed to import new numpy:', e)
-        has_newnumpy = 0
+        has_newnumpy = True
+    except ImportError:
+        print('Failed to import new numpy:', sys.exc_info()[1])
+        has_newnumpy = False
 
     try:
         from numpy.f2py import f2pyarg
-        has_f2pyarg = 1
+        has_f2pyarg = True
     except ImportError:
         print('Failed to import f2pyarg:', sys.exc_info()[1])
-        has_f2pyarg = 0
+        has_f2pyarg = False
 
     try:
         import numpy.distutils
