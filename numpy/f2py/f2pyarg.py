@@ -700,14 +700,31 @@ def process_args(args: argparse.Namespace, rem: List[str]) -> None:
     if(args.version):
         outmess(__version__)
         parser.exit()
+    
+    # Step 1: Segregate input files from 'skip:' and 'only:' args
+    # Read comments in the 'segregate_posn_args' function for more detail
     files, skip_funcs, only_funcs = segregate_posn_args(args)
+
+    # Step 2: Segregate source source files based on their extensions
     f77_files, f90_files, pyf_files, obj_files, other_files = segregate_files(files)
 
+    # Step 3: Open the correct build directory. Read 'open_build_dir' docstring for more detail
     with open_build_dir(args.build_dir, args.c) as build_dir:
+        # Step 4: Get module name and signature file path
         module_name = get_module_name(args, pyf_files)
         sign_file = get_signature_file(args, build_dir)
+
+        # Step 5: Parse '-include<header>' flags and store <header>s in a list
+        # since argparse can't handle '-include<header>'
+        # we filter it out into rem and parse it manually.
         headers = get_additional_headers(rem)
         # TODO: Refine rules settings. Read codebase and remove unused ones
+
+        # Step 6: Generate settings dictionary for f2py internal files
+        #         The variables in `rules.py`, `crackfortran.py`, 
+        #         `capy_maps.py` and `auxfuncs.py` are set using
+        #         information in these dictionaries.
+        #         These are the same which 'f2py2e' passes to internal files
         rules_setts = {
             'module': module_name,
             'buildpath': build_dir,
@@ -742,15 +759,23 @@ def process_args(args: argparse.Namespace, rem: List[str]) -> None:
             'wrapfuncs': args.wrap_functions,
         }
 
+        # The function below sets the global and module variables in internal files
+        # Read the comments inside this function for explanation
         wrapper_settings(rules_setts, crackfortran_setts, capi_maps_setts, auxfuncs_setts)
 
+		# Step 7: If user has asked for compilation. Mimic 'run_compile' from f2py2e
         # Disutils receives all the options and builds the extension.
         if(args.c):
             link_resource = args.link_resource
+
+            # The 3 functions below generate arrays of flag similar to how 
+            # 'run_compile()' segregates flags into different arrays
             f2py_flags = get_f2pyflags_dist(args, skip_funcs, only_funcs)
             fc_flags = get_fortran_compiler_flags(args)
             flib_flags = get_fortran_library_flags(args)
             
+            # The array of flags from above is passed to distutils where 
+            # it is handled internally
             ext_args = {
                 'name': module_name,
                 'sources': pyf_files + f77_files + f90_files,
@@ -764,6 +789,7 @@ def process_args(args: argparse.Namespace, rem: List[str]) -> None:
             }
             compile_dist(ext_args, link_resource, build_dir, fc_flags, flib_flags, args.quiet)
         else:
+            # Step 8: Generate wrapper or signature file if compile flag is not given
             generate_files(f77_files + f90_files, module_name, sign_file)
 
 def main():
