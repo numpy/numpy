@@ -15,7 +15,6 @@ The three functionalities are largely independent of each other, hence the
 implementation in terms of subparsers
 """
 
-import os
 import argparse
 import logging
 import pathlib
@@ -671,7 +670,7 @@ def get_signature_file(args: argparse.Namespace, build_dir: pathlib.Path) -> pat
     sign_file = None
     if(args.hint_signature):
         sign_file = build_dir /  args.hint_signature[0]
-        if sign_file and os.path.isfile(sign_file) and not args.overwrite_signature:
+        if sign_file and sign_file.is_file() and not args.overwrite_signature:
             print(f'Signature file "{sign_file}" exists!!! Use --overwrite-signature to overwrite.')
             parser.exit()
     return sign_file
