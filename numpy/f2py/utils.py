@@ -13,6 +13,13 @@ def get_f2py_dir() -> Path:
 
 @contextlib.contextmanager
 def open_build_dir(build_dir: Optional[List[str]], compile: bool) -> Path:
+	"""Create build directory if the user specifies it,
+ 	Otherwise, create a temporary directory and remove it.
+  	
+	Default build directory for only wrapper generation is
+ 	the current directory. Therefore, if `compile` is False,
+  	the wrappers are generated in the current directory"""
+
 	remove_build_dir: bool = False
 	if(isinstance(build_dir, list)):
 		build_dir = build_dir[0] if build_dir else None
