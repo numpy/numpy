@@ -304,18 +304,18 @@ def segregate_files(files: list[str]) -> tuple[list[str], list[str], list[str], 
 	other_files = []
 
 	for f in files:
-		f = PurePath(f)
-		ext = f.suffix
+		f_path = PurePath(f)
+		ext = f_path.suffix
 		if ext in f77_ext:
-			f77_files.append(f.name)
+			f77_files.append(f)
 		elif ext in f90_ext:
-			f90_files.append(f.name)
+			f90_files.append(f)
 		elif ext in out_ext:
-			out_files.append(f.name)
+			out_files.append(f)
 		elif ext in pyf_ext:
-			if ext == '.src' and f.stem.endswith('.pyf') or ext != '.src':
-				pyf_files.append(f.name)
+			if ext == '.src' and f_path.stem.endswith('.pyf') or ext != '.src':
+				pyf_files.append(f)
 		else:
-			other_files.append(f.name)
+			other_files.append(f)
 
 	return f77_files, f90_files, pyf_files, out_files, other_files
