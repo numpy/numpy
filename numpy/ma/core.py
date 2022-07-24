@@ -71,7 +71,7 @@ __all__ = [
     'mod', 'multiply', 'mvoid', 'ndim', 'negative', 'nomask', 'nonzero',
     'not_equal', 'ones', 'ones_like', 'outer', 'outerproduct', 'power', 'prod',
     'product', 'ptp', 'put', 'putmask', 'ravel', 'remainder',
-    'repeat', 'reshape', 'resize', 'right_shift', 'round', 'round_',
+    'repeat', 'reshape', 'resize', 'right_shift', 'rint', 'round', 'round_',
     'set_fill_value', 'shape', 'sin', 'sign', 'sinh', 'size', 'soften_mask',
     'sometrue', 'sort', 'sqrt', 'square', 'squeeze', 'std', 'subtract', 'sum',
     'swapaxes', 'take', 'tan', 'tanh', 'trace', 'transpose', 'true_divide',
@@ -1229,6 +1229,7 @@ isinf = _MaskedUnaryOperation(umath.isinf)
 isnan = _MaskedUnaryOperation(umath.isnan)
 isfinite = _MaskedUnaryOperation(umath.isfinite)
 invert = _MaskedUnaryOperation(np.invert)
+rint = _MaskedUnaryOperation(umath.rint)
 sign = _MaskedUnaryOperation(umath.sign)
 square = _MaskedUnaryOperation(umath.square)
 
@@ -5485,10 +5486,6 @@ class MaskedArray(ndarray):
         numpy.ndarray.round : corresponding function for ndarrays
         numpy.around : equivalent function
         """
-        stored_out = None
-        if isinstance(out, MaskedArray):
-            stored_out = out
-            out = getdata(out)
         result = self._data.round(decimals=decimals, out=out).view(type(self))
         if result.ndim > 0:
             result._mask = self._mask
@@ -5499,9 +5496,7 @@ class MaskedArray(ndarray):
         # No explicit output: we're done
         if out is None:
             return result
-        if stored_out is not None:
-            # We got in a masked array originally, so we need to return one
-            out = stored_out
+        if isinstance(out, MaskedArray):
             out.__setmask__(self._mask)
         return out
 
