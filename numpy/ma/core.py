@@ -3384,7 +3384,7 @@ class MaskedArray(ndarray):
                     return dout
         else:
             # Force dout to MA
-            dout = MaskedArray(dout)
+            dout = dout.view(type(self))
             # Inherit attributes from self
             dout._update_from(self)
             # Check the fill_value
