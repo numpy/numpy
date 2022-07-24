@@ -3096,7 +3096,7 @@ class MaskedArray(ndarray):
             func, args, out_i = context
             # args sometimes contains outputs (gh-10459), which we don't want
             input_args = args[:func.nin]
-            m = reduce(mask_or, [getmask(arg) for arg in input_args])
+            m = reduce(mask_or, [getmaskarray(arg) for arg in input_args])
             # Get the domain mask
             domain = ufunc_domain.get(func, None)
             if domain is not None:
@@ -3124,6 +3124,7 @@ class MaskedArray(ndarray):
                     else:
                         # Don't modify inplace, we risk back-propagation
                         m = (m | d)
+
             # Make sure the mask has the proper size
             if result is not self and result.shape == () and m:
                 return masked
