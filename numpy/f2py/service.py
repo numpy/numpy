@@ -127,7 +127,7 @@ def _set_additional_headers(headers: list[str]) -> None:
         cfuncs.outneeds['userincludes'].append(header[1:-1])
         cfuncs.userincludes[header[1:-1]] = f"#include {header}"
 
-def _set_crackfortran(crackfortran_setts: dict[str, str or list[str]]) -> None:
+def _set_crackfortran(crackfortran_setts: dict[str, Any]) -> None:
     crackfortran.reset_global_f2py_vars()
     crackfortran.f77modulename = crackfortran_setts["module"]
     crackfortran.include_paths[:] = crackfortran_setts["include_paths"]
@@ -137,14 +137,14 @@ def _set_crackfortran(crackfortran_setts: dict[str, str or list[str]]) -> None:
     crackfortran.onlyfuncs = crackfortran_setts["onlyfuncs"]
     crackfortran.dolowercase = crackfortran_setts["do-lower"]
 
-def _set_rules(rules_setts: dict[str, str or list[str]]) -> None:
+def _set_rules(rules_setts: dict[str, Any]) -> None:
     rules.options = rules_setts
 
-def _set_capi_maps(capi_maps_setts: dict[str, str or list[str]]) -> None:
+def _set_capi_maps(capi_maps_setts: dict[str, Any]) -> None:
     capi_maps.load_f2cmap_file(capi_maps_setts["f2cmap"])
     _set_additional_headers(capi_maps_setts["headers"])
 
-def _set_auxfuncs(aux_funcs_setts: dict[str, str or list[str]]) -> None:
+def _set_auxfuncs(aux_funcs_setts: dict[str, Any]) -> None:
     auxfuncs.options = {'verbose': aux_funcs_setts['verbose']}
     auxfuncs.debugoptions = aux_funcs_setts["debug"]
     auxfuncs.wrapfuncs = aux_funcs_setts['wrapfuncs']
