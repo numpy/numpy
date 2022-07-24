@@ -73,7 +73,7 @@ __all__ = [
     'product', 'ptp', 'put', 'putmask', 'ravel', 'remainder',
     'repeat', 'reshape', 'resize', 'right_shift', 'round', 'round_',
     'set_fill_value', 'shape', 'sin', 'sign', 'sinh', 'size', 'soften_mask',
-    'sometrue', 'sort', 'sqrt', 'squeeze', 'std', 'subtract', 'sum',
+    'sometrue', 'sort', 'sqrt', 'square', 'squeeze', 'std', 'subtract', 'sum',
     'swapaxes', 'take', 'tan', 'tanh', 'trace', 'transpose', 'true_divide',
     'var', 'where', 'zeros', 'zeros_like',
     ]
@@ -1230,6 +1230,7 @@ isnan = _MaskedUnaryOperation(umath.isnan)
 isfinite = _MaskedUnaryOperation(umath.isfinite)
 invert = _MaskedUnaryOperation(np.invert)
 sign = _MaskedUnaryOperation(umath.sign)
+square = _MaskedUnaryOperation(umath.square)
 
 # Domained unary ufuncs
 sqrt = _MaskedUnaryOperation(umath.sqrt, 0.0,
@@ -4304,22 +4305,6 @@ class MaskedArray(ndarray):
 
     def __gt__(self, other):
         return self._comparison(other, operator.gt)
-
-    def __pow__(self, other):
-        """
-        Raise self to the power other, masking the potential NaNs/Infs
-
-        """
-        if self._delegate_binop(other):
-            return NotImplemented
-        return power(self, other)
-
-    def __rpow__(self, other):
-        """
-        Raise other to the power self, masking the potential NaNs/Infs
-
-        """
-        return power(other, self)
 
     def __iadd__(self, other):
         """
