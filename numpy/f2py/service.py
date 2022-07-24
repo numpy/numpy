@@ -24,9 +24,9 @@ outmess = auxfuncs.outmess
 logger = logging.getLogger("f2py_cli")
 logger.setLevel(logging.WARNING)
 
-_f2py_module_name_match = re.compile(r'\s*python\s*module\s*(?P<name>[\w_]+)',
+F2PY_MODULE_NAME_MATCH = re.compile(r'\s*python\s*module\s*(?P<name>[\w_]+)',
                                      re.I).match
-_f2py_user_module_name_match = re.compile(r'\s*python\s*module\s*(?P<name>[\w_]*?'
+F2PY_USER_MODULE_NAME_MATCH = re.compile(r'\s*python\s*module\s*(?P<name>[\w_]*?'
                                           r'__user__[\w_]*)', re.I).match
 
 def check_fortran(fname: str) -> Path:
@@ -244,14 +244,10 @@ def _set_dependencies_dist(ext_args: dict[str, Any], link_resource: list[str]) -
 
 def get_f2py_modulename(source: str) -> str:
     name = None
-    _f2py_module_name_match = re.compile(r'\s*python\s*module\s*(?P<name>[\w_]+)',
-                                        re.I).match
-    _f2py_user_module_name_match = re.compile(r'\s*python\s*module\s*(?P<name>[\w_]*?'
-                                            r'__user__[\w_]*)', re.I).match
     with open(source) as f:
         for line in f:
-            if m := _f2py_module_name_match(line):
-                if _f2py_user_module_name_match(line): # skip *__user__* names
+            if m := F2PY_MODULE_NAME_MATCH(line):
+                if F2PY_USER_MODULE_NAME_MATCH(line): # skip *__user__* names
                     continue
                 name = m.group('name')
                 break
