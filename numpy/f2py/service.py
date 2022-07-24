@@ -3,7 +3,7 @@ import os
 import logging
 import re
 
-from pathlib import Path
+from pathlib import Path, PurePath
 from typing import Any
 
 # Distutil dependencies
@@ -294,14 +294,16 @@ def compile_dist(ext_args: dict[str, Any], link_resources: list[str], build_dir:
 
 def segregate_files(files: list[str]) -> tuple[list[str], list[str], list[str], list[str], list[str]]:
 	"""
-	Segregate files into three groups:
-	* .f files
-	* .o files
+	Segregate files into five groups:
+	* Fortran 77 files
+	* Fortran 90 and above files
+	* F2PY Signature files
+	* Object files
 	* others
 	"""
 	f77_ext = ('.f', '.for', '.ftn', '.f77')
 	f90_ext = ('.f90', '.f95', '.f03', '.f08')
-	pyf_ext = ('.pyf',)
+	pyf_ext = ('.pyf', '.src')
 	out_ext = ('.o', '.out', '.so', '.a')
 
 	f77_files = []
@@ -311,16 +313,18 @@ def segregate_files(files: list[str]) -> tuple[list[str], list[str], list[str], 
 	other_files = []
 
 	for f in files:
-		ext = os.path.splitext(f)[1]
+		f = PurePath(f)
+		ext = f.suffix
 		if ext in f77_ext:
-			f77_files.append(f)
+			f77_files.append(f.name)
 		elif ext in f90_ext:
-			f90_files.append(f)
+			f90_files.append(f.name)
 		elif ext in out_ext:
-			out_files.append(f)
+			out_files.append(f.name)
 		elif ext in pyf_ext:
-			pyf_files.append(f)
+			if ext == '.src' and f.stem.endswith('.pyf') or ext != '.src':
+				pyf_files.append(f.name)
 		else:
-			other_files.append(f)
+			other_files.append(f.name)
 
 	return f77_files, f90_files, pyf_files, out_files, other_files
