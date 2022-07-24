@@ -2770,6 +2770,9 @@ class TestCreationFuncs:
     def test_ones(self):
         self.check_function(np.ones)
 
+    def test_twos(self):
+        self.check_function(np.twos)
+
     def test_empty(self):
         self.check_function(np.empty)
 
@@ -2930,6 +2933,9 @@ class TestLikeFuncs:
 
     def test_zeros_like(self):
         self.check_like_function(np.zeros_like, 0)
+
+    def test_twos_like(self):
+        self.check_like_function(np.twos_like, 2)
 
     def test_empty_like(self):
         self.check_like_function(np.empty_like, None)
