@@ -1,6 +1,5 @@
 """Global f2py utilities."""
 
-import os
 import contextlib
 import tempfile
 import pathlib
@@ -8,7 +7,7 @@ import shutil
 
 def get_f2py_dir():
 	"""Return the directory where f2py is installed."""
-	return os.path.dirname(os.path.abspath(__file__))
+	return pathlib.Path(__file__).resolve().parent
 
 @contextlib.contextmanager
 def open_build_dir(build_dir: list or None, compile: bool):
