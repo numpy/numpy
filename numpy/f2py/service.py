@@ -195,7 +195,7 @@ def _buildmodules(lst: list[dict[str, Any]]) -> dict[str, Any]:
     return ret
 
 
-def _generate_signature(postlist: list[dict[str, Any]], sign_file: str) -> None:
+def _generate_signature(postlist: list[dict[str, Any]], sign_file: Path) -> None:
     outmess(f"Saving signatures to file {sign_file}" + "\n")
     pyf = crackfortran.crack2fortran(postlist)
     if sign_file in {"-", "stdout"}:
@@ -204,7 +204,7 @@ def _generate_signature(postlist: list[dict[str, Any]], sign_file: str) -> None:
         with open(sign_file, "w") as f:
             f.write(pyf)
 
-def _check_postlist(postlist: list[dict[str, Any]], sign_file: str) -> None:
+def _check_postlist(postlist: list[dict[str, Any]], sign_file: Path) -> None:
     isusedby = {}
     for plist in postlist:
         if 'use' in plist:
@@ -269,7 +269,7 @@ def wrapper_settings(rules_setts: dict[str, Any], crackfortran_setts: dict[str, 
     _set_capi_maps(capi_maps_setts)
     _set_auxfuncs(auxfuncs_setts)
 
-def generate_files(files: list[Path], module_name: str, sign_file: str) -> None:
+def generate_files(files: list[Path], module_name: str, sign_file: Path) -> None:
     postlist = _callcrackfortran(files, module_name)
     _check_postlist(postlist, sign_file)
     if(sign_file):
@@ -293,7 +293,7 @@ def compile_dist(ext_args: dict[str, Any], link_resources: list[str], build_dir:
         f2py_build_flags.extend(['build_ext'] + flib_flags)
     setup(ext_modules=[ext], script_name=f2py_dir, script_args=f2py_build_flags)
 
-def segregate_files(files: list[str]) -> tuple[list[str], list[str], list[str], list[str]]:
+def segregate_files(files: list[str]) -> tuple[list[str], list[str], list[str], list[str], list[str]]:
 	"""
 	Segregate files into three groups:
 	* .f files
