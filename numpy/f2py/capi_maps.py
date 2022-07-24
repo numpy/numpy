@@ -142,6 +142,7 @@ def load_f2cmap_file(f2cmap_file):
     if f2cmap_file is None:
         # Default value
         f2cmap_file = Path.cwd() / Path('.f2py_f2cmap')
+    f2cmap_file = Path(f2cmap_file)
     if not f2cmap_file.is_file():
         return
 
