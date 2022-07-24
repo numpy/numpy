@@ -14,8 +14,8 @@ def get_f2py_dir():
 @contextlib.contextmanager
 def open_build_dir(build_dir: Optional[list[Path]], compile: bool):
 	remove_build_dir: bool = False
-	if(type(build_dir) is list and build_dir[0] is not None):
-		build_dir = build_dir[0]
+	if(isinstance(build_dir, list)):
+		build_dir = build_dir[0] if build_dir else None
 	try:
 		if build_dir is None:
 			if(compile):
