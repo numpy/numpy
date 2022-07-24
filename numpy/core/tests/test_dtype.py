@@ -639,6 +639,29 @@ class TestSubarray:
         dt = np.dtype({"names": [], "formats": [], "itemsize": 0}, align=True)
         assert dt == np.dtype([])
 
+    def test_subarray_base_item(self):
+        arr = np.ones(3, dtype=[("f", "i", 3)])
+        # Extracting the field "absorbs" the subarray into a view:
+        assert arr["f"].base is arr
+        # Extract the structured item, and then check the tuple component:
+        item = arr.item(0)
+        assert type(item) is tuple and len(item) == 1
+        assert item[0].base is arr
+
+    def test_subarray_cast_copies(self):
+        # Older versions of NumPy did NOT copy, but they got the ownership
+        # wrong (not actually knowing the correct base!).  Versions since 1.21
+        # (I think) crashed fairly reliable.  This defines the correct behavior
+        # as a copy.  Keeping the ownership would be possible (but harder)
+        arr = np.ones(3, dtype=[("f", "i", 3)])
+        cast = arr.astype(object)
+        for fields in cast:
+            assert type(fields) == tuple and len(fields) == 1
+            subarr = fields[0]
+            assert subarr.base is None
+            assert subarr.flags.owndata
+
+
 def iter_struct_object_dtypes():
     """
     Iterates over a few complex dtypes and object pattern which
