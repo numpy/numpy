@@ -196,7 +196,7 @@ def load_f2cmap_file(f2cmap_file):
     # interpreted as C 'float'. This feature is useful for F90/95 users if
     # they use PARAMETERS in type specifications.
     try:
-        outmess('Reading f2cmap from {!r} ...\n'.format(f2cmap_file))
+        outmess('Reading f2cmap from {!r} ...\n'.format(f2cmap_file.name))
         with open(f2cmap_file, 'r') as f:
             d = eval(f.read().lower(), {}, {})
         for k, d1 in d.items():
