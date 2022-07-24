@@ -239,7 +239,7 @@ def _set_dependencies_dist(ext_args: dict[str, Any], link_resource: list[str]) -
         info = get_info(dep)
         if not info:
                 outmess('No %s resources found in system'
-                        ' (try `f2py --help-link`)\n' % (repr(n)))
+                        ' (try `f2py --help-link`)\n' % (repr(dep)))
         dict_append(ext_args, **link_resource)
 
 def get_f2py_modulename(source: str) -> str:
