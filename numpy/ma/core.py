@@ -22,7 +22,6 @@ Released for unlimited redistribution.
 # pylint: disable-msg=E1002
 import builtins
 import inspect
-from numbers import Number
 import operator
 import warnings
 import textwrap
@@ -1076,11 +1075,11 @@ class _MaskedBinaryOperation(_MaskedUFunc):
                 m.shape = (1,)
 
         if m is nomask:
-            tr = self.f.reduce(t, axis)
+            tr = self.f.reduce(t, axis, **kwargs)
             mr = nomask
         else:
-            tr = self.f.reduce(t, axis, dtype=dtype)
-            mr = umath.logical_and.reduce(m, axis)
+            tr = self.f.reduce(t, axis, dtype=dtype, **kwargs)
+            mr = umath.logical_and.reduce(m, axis, **kwargs)
 
         if not tr.shape:
             if mr:
