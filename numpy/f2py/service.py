@@ -5,7 +5,6 @@ import re
 
 from pathlib import Path
 from typing import Any
-from argparse import Namespace
 
 # Distutil dependencies
 from numpy.distutils.misc_util import dict_append
