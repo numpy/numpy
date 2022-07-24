@@ -746,7 +746,7 @@ def process_args(args: argparse.Namespace, rem: list[str]) -> None:
         # Disutils receives all the options and builds the extension.
         if(args.c):
             link_resource = args.link_resource
-            f2py_flags = get_f2pyflags_dist(args, skip_funcs, only_funcs, rem)
+            f2py_flags = get_f2pyflags_dist(args, skip_funcs, only_funcs)
             fc_flags = get_fortran_compiler_flags(args)
             flib_flags = get_fortran_library_flags(args)
             
