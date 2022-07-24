@@ -212,7 +212,6 @@ def _check_postlist(postlist: list[dict[str, Any]], sign_file: Path) -> None:
                 isusedby[u].append(plist['name'])
     for plist in postlist:
         if plist['block'] == 'python module' and '__user__' in plist['name'] and plist['name'] in isusedby:
-            # if not quiet:
             outmess(
                 f'Skipping Makefile build for module "{plist["name"]}" '
                 'which is used by {}\n'.format(
@@ -225,11 +224,8 @@ def _check_postlist(postlist: list[dict[str, Any]], sign_file: Path) -> None:
         return
     for plist in postlist:
         if plist['block'] != 'python module':
-            # if 'python module' not in options:
-                outmess(
-                    'Tip: If your original code is Fortran source then you must use -m option.\n')
-            # raise TypeError('All blocks must be python module blocks but got %s' % (
-            #     repr(postlist[i]['block'])))
+            outmess(
+                'Tip: If your original code is Fortran source then you must use -m option.\n')
 
 def _callcrackfortran(files: list[str], module_name: str) -> list[dict[str, Any]]:
     postlist = crackfortran.crackfortran([str(file) for file in files])
