@@ -551,7 +551,7 @@ def decode(a, encoding=None, errors=None):
 
     See Also
     --------
-    str.decode
+    :py:meth:`str.decode`
 
     Notes
     -----
