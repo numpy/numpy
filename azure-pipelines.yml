@@ -111,7 +111,7 @@ stages:
       # the docs even though i.e., numba uses another in their
       # azure config for mac os -- Microsoft has indicated
       # they will patch this issue
-      vmImage: 'macOS-1015'
+      vmImage: 'macOS-11'
     strategy:
       maxParallel: 3
       matrix:
