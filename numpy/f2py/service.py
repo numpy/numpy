@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 import sys
 import logging
 import re
 
 from pathlib import Path, PurePath
-from typing import List, Dict, Tuple, Any, Optional
+from typing import Any, Optional
 
 # Distutil dependencies
 from numpy.distutils.misc_util import dict_append
@@ -123,12 +125,12 @@ def check_npfcomp(opt: str) -> str:
         raise RuntimeError(f"{opt} is not an np.distutils supported compiler, choose from {fchoices}")
 
 
-def _set_additional_headers(headers: List[str]) -> None:
+def _set_additional_headers(headers: list[str]) -> None:
     for header in headers:
         cfuncs.outneeds['userincludes'].append(header[1:-1])
         cfuncs.userincludes[header[1:-1]] = f"#include {header}"
 
-def _set_crackfortran(crackfortran_setts: Dict[str, Any]) -> None:
+def _set_crackfortran(crackfortran_setts: dict[str, Any]) -> None:
     crackfortran.reset_global_f2py_vars()
     crackfortran.f77modulename = crackfortran_setts["module"]
     crackfortran.include_paths[:] = crackfortran_setts["include_paths"]
@@ -138,19 +140,19 @@ def _set_crackfortran(crackfortran_setts: Dict[str, Any]) -> None:
     crackfortran.onlyfuncs = crackfortran_setts["onlyfuncs"]
     crackfortran.dolowercase = crackfortran_setts["do-lower"]
 
-def _set_rules(rules_setts: Dict[str, Any]) -> None:
+def _set_rules(rules_setts: dict[str, Any]) -> None:
     rules.options = rules_setts
 
-def _set_capi_maps(capi_maps_setts: Dict[str, Any]) -> None:
+def _set_capi_maps(capi_maps_setts: dict[str, Any]) -> None:
     capi_maps.load_f2cmap_file(capi_maps_setts["f2cmap"])
     _set_additional_headers(capi_maps_setts["headers"])
 
-def _set_auxfuncs(aux_funcs_setts: Dict[str, Any]) -> None:
+def _set_auxfuncs(aux_funcs_setts: dict[str, Any]) -> None:
     auxfuncs.options = {'verbose': aux_funcs_setts['verbose']}
     auxfuncs.debugoptions = aux_funcs_setts["debug"]
     auxfuncs.wrapfuncs = aux_funcs_setts['wrapfuncs']
 
-def _dict_append(d_out: Dict[str, Any], d_in: Dict[str, Any]) -> None:
+def _dict_append(d_out: dict[str, Any], d_in: dict[str, Any]) -> None:
     for (k, v) in d_in.items():
         if k not in d_out:
             d_out[k] = []
@@ -159,11 +161,11 @@ def _dict_append(d_out: Dict[str, Any], d_in: Dict[str, Any]) -> None:
         else:
             d_out[k].append(v)
 
-def _buildmodules(lst: List[Dict[str, Any]]) -> Dict[str, Any]:
+def _buildmodules(lst: list[dict[str, Any]]) -> dict[str, Any]:
     cfuncs.buildcfuncs()
     outmess('Building modules...\n')
     modules, mnames = [], []
-    isusedby: Dict[str, List[Any]] = {}
+    isusedby: dict[str, list[Any]] = {}
     for item in lst:
         if '__user__' in item['name']:
             cb_rules.buildcallbacks(item)
@@ -175,7 +177,7 @@ def _buildmodules(lst: List[Dict[str, Any]]) -> Dict[str, Any]:
                     isusedby[u].append(item['name'])
             modules.append(item)
             mnames.append(item['name'])
-    ret: Dict[str, Any] = {}
+    ret: dict[str, Any] = {}
     for module, name in zip(modules, mnames):
         if name in isusedby:
             outmess('\tSkipping module "%s" which is used by %s.\n' % (
@@ -195,7 +197,7 @@ def _buildmodules(lst: List[Dict[str, Any]]) -> Dict[str, Any]:
     return ret
 
 
-def _generate_signature(postlist: List[Dict[str, Any]], sign_file: Path) -> None:
+def _generate_signature(postlist: list[dict[str, Any]], sign_file: Path) -> None:
     outmess(f"Saving signatures to file {sign_file}" + "\n")
     pyf = crackfortran.crack2fortran(postlist)
     if sign_file in {"-", "stdout"}:
@@ -204,8 +206,8 @@ def _generate_signature(postlist: List[Dict[str, Any]], sign_file: Path) -> None
         with open(sign_file, "w") as f:
             f.write(pyf)
 
-def _check_postlist(postlist: List[Dict[str, Any]], sign_file: Path) -> None:
-    isusedby: Dict[str, List[Any]] = {}
+def _check_postlist(postlist: list[dict[str, Any]], sign_file: Path) -> None:
+    isusedby: dict[str, list[Any]] = {}
     for plist in postlist:
         if 'use' in plist:
             for u in plist['use'].keys():
@@ -229,14 +231,14 @@ def _check_postlist(postlist: List[Dict[str, Any]], sign_file: Path) -> None:
             outmess(
                 'Tip: If your original code is Fortran source then you must use -m option.\n')
 
-def _callcrackfortran(files: List[str], module_name: str) -> List[Dict[str, Any]]:
+def _callcrackfortran(files: list[str], module_name: str) -> list[dict[str, Any]]:
     postlist = crackfortran.crackfortran([str(file) for file in files])
     for mod in postlist:
         mod["coutput"] = f"{module_name}module.c"
         mod["f2py_wrapper_output"] = f"{module_name}-f2pywrappers.f"
     return postlist
 
-def _set_dependencies_dist(ext_args: Dict[str, Any], link_resource: List[str]) -> None:
+def _set_dependencies_dist(ext_args: dict[str, Any], link_resource: list[str]) -> None:
     for dep in link_resource:
         info = get_info(dep)
         if not info:
@@ -255,7 +257,7 @@ def get_f2py_modulename(source: str) -> Optional[str]:
                 break
     return name
 
-def wrapper_settings(rules_setts: Dict[str, Any], crackfortran_setts: Dict[str, Any], capi_maps_setts: Dict[str, Any], auxfuncs_setts: Dict[str, Any]) -> None:
+def wrapper_settings(rules_setts: dict[str, Any], crackfortran_setts: dict[str, Any], capi_maps_setts: dict[str, Any], auxfuncs_setts: dict[str, Any]) -> None:
     # This function also mimics f2py2e. I have added the link to specific code blocks that each function below mimics.
     # Step 6.1: https://github.com/numpy/numpy/blob/45bc13e6d922690eea43b9d807d476e0f243f836/numpy/f2py/f2py2e.py#L331
     _set_rules(rules_setts)
@@ -268,7 +270,7 @@ def wrapper_settings(rules_setts: Dict[str, Any], crackfortran_setts: Dict[str, 
     #           2. https://github.com/numpy/numpy/blob/main/numpy/f2py/f2py2e.py#L471-L473
     _set_auxfuncs(auxfuncs_setts)
 
-def generate_files(files: List[str], module_name: str, sign_file: Path) -> None:
+def generate_files(files: list[str], module_name: str, sign_file: Path) -> None:
     # Step 8.1: Generate postlist from crackfortran
     postlist = _callcrackfortran(files, module_name)
 
@@ -284,7 +286,7 @@ def generate_files(files: List[str], module_name: str, sign_file: Path) -> None:
         # Step 8.4: Same as the buildmodules folder of f2py2e
         _buildmodules(postlist)
 
-def compile_dist(ext_args: Dict[str, Any], link_resources: List[str], build_dir: Path, fc_flags: List[str], flib_flags: List[str], quiet_build: bool) -> None:
+def compile_dist(ext_args: dict[str, Any], link_resources: list[str], build_dir: Path, fc_flags: list[str], flib_flags: list[str], quiet_build: bool) -> None:
     # Step 7.2: The entire code below mimics 'f2py2e:run_compile()'
     # https://github.com/numpy/numpy/blob/main/numpy/f2py/f2py2e.py#L647-L669
     _set_dependencies_dist(ext_args, link_resources)
@@ -305,7 +307,7 @@ def compile_dist(ext_args: Dict[str, Any], link_resources: List[str], build_dir:
     # https://github.com/pypa/distutils/blob/main/distutils/core.py#L131-L134
     setup(ext_modules=[ext], script_name=f2py_dir, script_args=f2py_build_flags)
 
-def segregate_files(files: List[str]) -> Tuple[List[str], List[str], List[str], List[str], List[str]]:
+def segregate_files(files: list[str]) -> tuple[list[str], list[str], list[str], list[str], list[str]]:
 	"""
 	Segregate files into five groups:
 	* Fortran 77 files

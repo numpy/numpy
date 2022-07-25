@@ -1,10 +1,12 @@
 """Global f2py utilities."""
 
+from __future__ import annotations
+
 import contextlib
 import tempfile
 import shutil
 
-from typing import Optional, List
+from typing import Optional
 from pathlib import Path
 
 def get_f2py_dir() -> Path:
@@ -12,7 +14,7 @@ def get_f2py_dir() -> Path:
 	return Path(__file__).resolve().parent
 
 @contextlib.contextmanager
-def open_build_dir(build_dir: Optional[List[str]], compile: bool) -> Path:
+def open_build_dir(build_dir: Optional[list[str]], compile: bool) -> Path:
 	"""Create build directory if the user specifies it,
  	Otherwise, create a temporary directory and remove it.
   	

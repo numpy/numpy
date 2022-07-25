@@ -15,12 +15,13 @@ The three functionalities are largely independent of each other, hence the
 implementation in terms of subparsers
 """
 
+from __future__ import annotations
+
 import argparse
 import logging
 import pathlib
 
 from numpy.version import version as __version__
-from typing import List, Dict, Tuple, Any
 
 from .service import check_dccomp, check_npfcomp, check_dir, generate_files, segregate_files, get_f2py_modulename, wrapper_settings, compile_dist
 from .utils import open_build_dir
@@ -214,7 +215,7 @@ parser.add_argument("--help", action="store_true", help="Print the help")
 parser.add_argument(
     "Fortran Files",
     metavar="<fortran files>",
-    action="extend",  # List storage
+    action="extend",  # list storage
     nargs="*",
     help="""Paths to fortran/signature files that will be scanned for
                    <fortran functions> in order to determine their signatures.""",
@@ -594,10 +595,10 @@ parser.add_argument('otherfiles',
 # Main Process #
 ################
 
-def get_additional_headers(rem: List[str]) -> List[str]:
+def get_additional_headers(rem: list[str]) -> list[str]:
     return [val[8:] for val in rem if val[:8] == '-include']
 
-def get_f2pyflags_dist(args: argparse.Namespace, skip_funcs: List[str], only_funcs: List[str]) -> List[str]:
+def get_f2pyflags_dist(args: argparse.Namespace, skip_funcs: list[str], only_funcs: list[str]) -> list[str]:
     # Distutils requires 'f2py_options' which will be a subset of
     # sys.argv array received. This function reconstructs the array
     # from received args.
@@ -625,7 +626,7 @@ def get_f2pyflags_dist(args: argparse.Namespace, skip_funcs: List[str], only_fun
         f2py_flags.extend(['--f2cmap', str(args.f2cmap)])
     return f2py_flags
 
-def get_fortran_library_flags(args: argparse.Namespace) -> List[str]:
+def get_fortran_library_flags(args: argparse.Namespace) -> list[str]:
     flib_flags = []
     if args.fcompiler:
         flib_flags.append(f'--fcompiler={args.fcompiler[0]}')
@@ -633,7 +634,7 @@ def get_fortran_library_flags(args: argparse.Namespace) -> List[str]:
         flib_flags.append(f'--compiler={args.compiler[0]}')
     return flib_flags
 
-def get_fortran_compiler_flags(args: argparse.Namespace) -> List[str]:
+def get_fortran_compiler_flags(args: argparse.Namespace) -> list[str]:
     fc_flags = []
     if(args.help_fcompiler):
         fc_flags.append('--help-fcompiler')
@@ -657,7 +658,7 @@ def get_fortran_compiler_flags(args: argparse.Namespace) -> List[str]:
         fc_flags.append('--debug')
 
 
-def get_module_name(args: argparse.Namespace, pyf_files: List[str]) -> str:
+def get_module_name(args: argparse.Namespace, pyf_files: list[str]) -> str:
     if(args.module is not None):
         return args.module[0]
     if args.c:
@@ -676,7 +677,7 @@ def get_signature_file(args: argparse.Namespace, build_dir: pathlib.Path) -> pat
             parser.exit()
     return sign_file
 
-def segregate_posn_args(args: argparse.Namespace) -> Tuple[List[str], List[str], List[str]]:
+def segregate_posn_args(args: argparse.Namespace) -> tuple[list[str], list[str], list[str]]:
     # Currently, argparse does not recognise 'skip:' and 'only:' as optional args
     # and clubs them all in "Fortran Files" attr. This function segregates them.
     funcs = {"skip:": [], "only:": []}
@@ -693,7 +694,7 @@ def segregate_posn_args(args: argparse.Namespace) -> Tuple[List[str], List[str],
             funcs[mode].append(arg)
     return files, funcs['skip:'], funcs['only:']
 
-def process_args(args: argparse.Namespace, rem: List[str]) -> None:
+def process_args(args: argparse.Namespace, rem: list[str]) -> None:
     if args.help:
         parser.print_help()
         parser.exit()
