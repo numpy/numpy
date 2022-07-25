@@ -78,7 +78,7 @@ from . import defchararray as char
 from . import records
 from . import records as rec
 from .records import record, recarray, format_parser
-from . import memmap
+# Note: module name memmap is overwritten by a class with same name
 from .memmap import *
 from .defchararray import chararray
 from . import function_base
