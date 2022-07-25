@@ -18,7 +18,7 @@ def test_lazy_load():
 
     try:
         # create lazy load of numpy as np
-        spec  = find_spec("numpy")
+        spec = find_spec("numpy")
         module = module_from_spec(spec)
         sys.modules["numpy"] = module
         loader = LazyLoader(spec.loader)
@@ -27,6 +27,7 @@ def test_lazy_load():
 
         # test a subpackage import
         from numpy.lib import recfunctions
+
         # test triggering the import of the package
         np.ndarray
 
