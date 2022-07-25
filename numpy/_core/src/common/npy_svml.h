@@ -1,3 +1,27 @@
+#if NPY_SIMD && defined(NPY_HAVE_AVX512_SPR) && defined(NPY_CAN_LINK_SVML)
+extern __m512h __svml_exps32(npy_half*, npy_half*, npy_intp);
+extern __m512h __svml_exp2s32(npy_half*, npy_half*, npy_intp);
+extern __m512h __svml_logs32(npy_half*, npy_half*, npy_intp);
+extern __m512h __svml_log2s32(npy_half*, npy_half*, npy_intp);
+extern __m512h __svml_log10s32(npy_half*, npy_half*, npy_intp);
+extern __m512h __svml_expm1s32(npy_half*, npy_half*, npy_intp);
+extern __m512h __svml_log1ps32(npy_half*, npy_half*, npy_intp);
+extern __m512h __svml_cbrts32(npy_half*, npy_half*, npy_intp);
+extern __m512h __svml_sins32(npy_half*, npy_half*, npy_intp);
+extern __m512h __svml_coss32(npy_half*, npy_half*, npy_intp);
+extern __m512h __svml_tans32(npy_half*, npy_half*, npy_intp);
+extern __m512h __svml_asins32(npy_half*, npy_half*, npy_intp);
+extern __m512h __svml_acoss32(npy_half*, npy_half*, npy_intp);
+extern __m512h __svml_atans32(npy_half*, npy_half*, npy_intp);
+extern __m512h __svml_atan2s32(npy_half*, npy_half*, npy_intp);
+extern __m512h __svml_sinhs32(npy_half*, npy_half*, npy_intp);
+extern __m512h __svml_coshs32(npy_half*, npy_half*, npy_intp);
+extern __m512h __svml_tanhs32(npy_half*, npy_half*, npy_intp);
+extern __m512h __svml_asinhs32(npy_half*, npy_half*, npy_intp);
+extern __m512h __svml_acoshs32(npy_half*, npy_half*, npy_intp);
+extern __m512h __svml_atanhs32(npy_half*, npy_half*, npy_intp);
+#endif
+
 #if NPY_SIMD && defined(NPY_HAVE_AVX512_SKX) && defined(NPY_CAN_LINK_SVML)
 extern __m512 __svml_expf16(__m512 x);
 extern __m512 __svml_exp2f16(__m512 x);
