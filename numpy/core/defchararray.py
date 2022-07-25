@@ -529,7 +529,7 @@ def _code_dispatcher(a, encoding=None, errors=None):
 @array_function_dispatch(_code_dispatcher)
 def decode(a, encoding=None, errors=None):
     """
-    Calls `str.decode` element-wise.
+    Calls ``bytes.decode`` element-wise.
 
     The set of available codecs comes from the Python standard library,
     and may be extended at runtime.  For more information, see the
@@ -551,7 +551,7 @@ def decode(a, encoding=None, errors=None):
 
     See Also
     --------
-    str.decode
+    :py:meth:`bytes.decode`
 
     Notes
     -----
@@ -2192,7 +2192,7 @@ class chararray(ndarray):
 
     def decode(self, encoding=None, errors=None):
         """
-        Calls `str.decode` element-wise.
+        Calls ``bytes.decode`` element-wise.
 
         See Also
         --------
