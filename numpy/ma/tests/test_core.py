@@ -4496,6 +4496,13 @@ class TestMaskedArrayFunctions:
         assert_equal(ma, expected)
         assert_equal(ma.mask, expected.mask)
 
+    def test_masked_invalid_error(self):
+        a = np.arange(5, dtype=object)
+        a[3] = np.PINF
+        a[2] = np.NaN
+        with pytest.raises(TypeError, match="not supported for the input types"):
+            np.ma.masked_invalid(a)
+
     def test_choose(self):
         # Test choose
         choices = [[0, 1, 2, 3], [10, 11, 12, 13],

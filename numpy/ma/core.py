@@ -2356,20 +2356,11 @@ def masked_invalid(a, copy=True):
            fill_value=1e+20)
 
     """
-    a = np.array(a, copy=copy, subok=True)
-    mask = getattr(a, '_mask', None)
-    if mask is not None:
-        condition = ~(np.isfinite(getdata(a)))
-        if mask is not nomask:
-            condition |= mask
-        cls = type(a)
-    else:
-        condition = ~(np.isfinite(a))
-        cls = MaskedArray
-    result = a.view(cls)
-    result._mask = condition
-    return result
 
+    try:
+        return masked_where(~(np.isfinite(getdata(a))), a, copy=copy)
+    except TypeError:
+        raise
 
 ###############################################################################
 #                            Printing options                                 #
