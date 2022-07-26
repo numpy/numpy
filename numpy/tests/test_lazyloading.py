@@ -4,9 +4,10 @@ from importlib.util import LazyLoader, find_spec, module_from_spec
 import pytest
 
 
-@pytest.mark.filterwarnings("ignore:The NumPy")
+# Warning raised by _reload_guard() in numpy/__init__.py
+@pytest.mark.filterwarnings("ignore:The NumPy module was reloaded")
 def test_lazy_load():
-    # gh-XXXX. lazyload doesn't import submodule names into the namespace
+    # gh-22045. lazyload doesn't import submodule names into the namespace
     # muck with sys.modules to test the importing system
     old_numpy = sys.modules.pop("numpy")
 
