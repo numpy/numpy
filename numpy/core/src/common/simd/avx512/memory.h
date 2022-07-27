@@ -59,6 +59,11 @@ NPYV_IMPL_AVX512_MEM_INT(npy_uint64, u64)
 NPYV_IMPL_AVX512_MEM_INT(npy_int64,  s64)
 
 // unaligned load
+
+#ifdef NPY_HAVE_AVX512_SKX
+#define npyvh_load_f16(PTR) _mm256_loadu_si256((const __m256i*)(PTR))
+#endif
+
 #define npyv_load_f32(PTR) _mm512_loadu_ps((const __m512*)(PTR))
 #define npyv_load_f64(PTR) _mm512_loadu_pd((const __m512d*)(PTR))
 // aligned load
@@ -76,6 +81,11 @@ NPYV_IMPL_AVX512_MEM_INT(npy_int64,  s64)
 #define npyv_loads_f32(PTR) _mm512_castsi512_ps(npyv__loads(PTR))
 #define npyv_loads_f64(PTR) _mm512_castsi512_pd(npyv__loads(PTR))
 // unaligned store
+
+#ifdef NPY_HAVE_AVX512_SKX
+#define npyvh_store_f16(PTR, data) _mm256_storeu_si256((__m256i*)PTR, data)
+#endif
+
 #define npyv_store_f32 _mm512_storeu_ps
 #define npyv_store_f64 _mm512_storeu_pd
 // aligned store
@@ -154,6 +164,17 @@ NPY_FINLINE void npyv_storen_f64(double *ptr, npy_intp stride, npyv_f64 a)
 /*********************************
  * Partial Load
  *********************************/
+// 16
+#ifdef NPY_HAVE_AVX512_SKX
+NPY_FINLINE npyvh_f16 npyvh_load_till_f16(const npy_half *ptr, npy_uintp nlane, npy_half fill)
+{
+    assert(nlane > 0);
+    const __m256i vfill = _mm256_set1_epi16(fill);
+    const __mmask16 mask = (0x0001 << nlane) - 0x0001;
+    return _mm256_mask_loadu_epi16(vfill, mask, ptr);
+}
+#endif
+
 //// 32
 NPY_FINLINE npyv_s32 npyv_load_till_s32(const npy_int32 *ptr, npy_uintp nlane, npy_int32 fill)
 {
@@ -225,6 +246,14 @@ npyv_loadn_tillz_s64(const npy_int64 *ptr, npy_intp stride, npy_uintp nlane)
 /*********************************
  * Partial store
  *********************************/
+#ifdef NPY_HAVE_AVX512_SKX
+NPY_FINLINE void npyvh_store_till_f16(npy_half *ptr, npy_uintp nlane, npyvh_f16 data)
+{
+    assert(nlane > 0);
+    const __mmask16 mask = (0x0001 << nlane) - 0x0001;
+    _mm256_mask_storeu_epi16(ptr, mask, data);
+}
+#endif
 //// 32
 NPY_FINLINE void npyv_store_till_s32(npy_int32 *ptr, npy_uintp nlane, npyv_s32 a)
 {
