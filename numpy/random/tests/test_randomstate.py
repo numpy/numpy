@@ -2020,3 +2020,21 @@ def test_broadcast_size_error():
         random.binomial([1, 2], 0.3, size=(2, 1))
     with pytest.raises(ValueError):
         random.binomial([1, 2], [0.3, 0.7], size=(2, 1))
+
+
+def test_randomstate_ctor_old_style_pickle():
+    rs = np.random.RandomState(MT19937(0))
+    rs.standard_normal(1)
+    # Directly call reduce which is used in pickling
+    ctor, args, state_a = rs.__reduce__()
+    # Simulate unpickling an old pickle that only has the name
+    assert args[:1] == ("MT19937",)
+    b = ctor(*args[:1])
+    b.set_state(state_a)
+    state_b = b.get_state(legacy=False)
+
+    assert_equal(state_a['bit_generator'], state_b['bit_generator'])
+    assert_array_equal(state_a['state']['key'], state_b['state']['key'])
+    assert_array_equal(state_a['state']['pos'], state_b['state']['pos'])
+    assert_equal(state_a['has_gauss'], state_b['has_gauss'])
+    assert_equal(state_a['gauss'], state_b['gauss'])

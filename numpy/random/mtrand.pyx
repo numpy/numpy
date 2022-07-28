@@ -213,9 +213,10 @@ cdef class RandomState:
         self.set_state(state)
 
     def __reduce__(self):
-        state = self.get_state(legacy=False)
+        ctor, name_tpl, _ = self._bit_generator.__reduce__()
+
         from ._pickle import __randomstate_ctor
-        return __randomstate_ctor, (state['bit_generator'],), state
+        return __randomstate_ctor, (name_tpl[0], ctor), self.get_state(legacy=False)
 
     cdef _reset_gauss(self):
         self._aug_state.has_gauss = 0
