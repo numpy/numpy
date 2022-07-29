@@ -50,18 +50,23 @@ possible_aliases = numeric_type_aliases([
     ('complex256', 'Complex number type composed of 2 128-bit extended-precision floating-point numbers'),
     ])
 
-possible_aliases_dict = {p[0]: p for idx,p in enumerate(possible_aliases)}
+_possible_aliases_dict = {p[0]: p for idx, p in enumerate(possible_aliases)}
 
 def _get_platform_and_machine():
     try:
         system, _, _, _, machine = os.uname()
     except AttributeError:
         system = sys.platform
-        if system=='win32':
-            machine = os.environ.get('PROCESSOR_ARCHITEW6432', '') or os.environ.get('PROCESSOR_ARCHITECTURE', '')
+        if system == 'win32':
+            machine = os.environ.get('PROCESSOR_ARCHITEW6432', '') \
+                    or os.environ.get('PROCESSOR_ARCHITECTURE', '')
+        else:
+            machine = 'unknown'
     return system, machine
-        
-_doc_alias_platform_string = ":Alias on this platform ({} {}):".format(*_get_platform_and_machine())
+
+
+_system, _machine = _get_platform_and_machine()
+_doc_alias_string = f":Alias on this platform ({_system} {_machine}):"
 
 
 def add_newdoc_for_scalar_type(obj, fixed_aliases, doc):
@@ -69,15 +74,17 @@ def add_newdoc_for_scalar_type(obj, fixed_aliases, doc):
     o = getattr(_numerictypes, obj)
 
     character_code = dtype(o).char
-    canonical_name_doc = "" if obj == o.__name__ else f":Canonical name: `numpy.{obj}`\n    "
+    canonical_name_doc = "" if obj == o.__name__ else \
+                        f":Canonical name: `numpy.{obj}`\n    "
     if fixed_aliases:
-        alias_doc = ''.join(f":Alias: `numpy.{alias}`\n    " for alias in fixed_aliases)
+        alias_doc = ''.join(f":Alias: `numpy.{alias}`\n    "
+                            for alias in fixed_aliases)
     else:
         alias_doc = ''
-    p = possible_aliases_dict.get(o, None)
-    if p is not None:
-        alias_type, alias, doc= p
-        alias_doc += f"{_doc_alias_platform_string} `numpy.{alias}`: {doc}.\n    "
+    alias_entry = _possible_aliases_dict.get(o, None)
+    if alias_entry is not None:
+        alias_type, alias, doc = alias_entry
+        alias_doc += f"{_doc_alias_string} `numpy.{alias}`: {doc}.\n    "
 
     docstring = f"""
     {doc.strip()}
