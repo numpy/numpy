@@ -50,7 +50,6 @@ possible_aliases = numeric_type_aliases([
     ('complex256', 'Complex number type composed of 2 128-bit extended-precision floating-point numbers'),
     ])
 
-_possible_aliases_dict = {p[0]: p for idx, p in enumerate(possible_aliases)}
 
 def _get_platform_and_machine():
     try:
@@ -81,10 +80,8 @@ def add_newdoc_for_scalar_type(obj, fixed_aliases, doc):
                             for alias in fixed_aliases)
     else:
         alias_doc = ''
-    alias_entry = _possible_aliases_dict.get(o, None)
-    if alias_entry is not None:
-        alias_type, alias, doc = alias_entry
-        alias_doc += f"{_doc_alias_string} `numpy.{alias}`: {doc}.\n    "
+    alias_doc += ''.join("{_doc_alias_string} `numpy.{alias}`: {doc}.\n    "
+                         for (alias_type, alias, doc) in possible_aliases if alias_type is o)
 
     docstring = f"""
     {doc.strip()}
