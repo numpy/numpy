@@ -252,7 +252,26 @@ unpack_indices(PyObject *index, PyObject **result, npy_intp result_n)
 }
 
 /**
- * Prepare an npy_index_object from the python slicing object.
+ * If arg is a callable, apply it to self.
+ * 
+ * This function returns a new reference, so the caller is responible
+ * for decrementing the refcount.
+ *
+ * @returns arg, arg(self), or NULL. NULL is returned if arg(self) fails
+ *      (if the callable takes more than a single argument, for example).
+ */
+static NPY_INLINE PyObject *
+maybe_apply_callable(PyArrayObject *self, PyObject *arg)
+{
+    if (PyFunction_Check(arg)) {
+        return (PyObject *) PyObject_CallFunctionObjArgs(arg, self, NULL);
+    }
+    Py_INCREF(arg);
+    return arg;
+}
+
+/**
+ * Prepare an npy_index_info object from the python slicing object.
  *
  * This function handles all index preparations with the exception
  * of field access. It fills the array of index_info structs correctly.
@@ -264,18 +283,18 @@ unpack_indices(PyObject *index, PyObject **result, npy_intp result_n)
  *
  * Checks everything but the bounds.
  *
- * @param the array being indexed
- * @param the index object
- * @param index info struct being filled (size of NPY_MAXDIMS * 2 + 1)
- * @param number of indices found
- * @param dimension of the indexing result
- * @param dimension of the fancy/advanced indices part
- * @param whether to allow the boolean special case
+ * @param self The array being indexed
+ * @param arg The Python user-provided index object
+ * @param indices Index info struct being filled (size of NPY_MAXDIMS * 2 + 1)
+ * @param num Number of indices found
+ * @param ndim Dimension of the indexing result
+ * @param out_fancy_ndim Dimension of the fancy/advanced indices part
+ * @param allow_boolean Whether to allow the boolean special case
  *
  * @returns the index_type or -1 on failure and fills the number of indices.
  */
 NPY_NO_EXPORT int
-prepare_index(PyArrayObject *self, PyObject *index,
+prepare_index(PyArrayObject *self, PyObject *arg,
               npy_index_info *indices,
               int *num, int *ndim, int *out_fancy_ndim, int allow_boolean)
 {
@@ -284,6 +303,12 @@ prepare_index(PyArrayObject *self, PyObject *index,
 
     int i;
     npy_intp n;
+
+    PyObject *index = maybe_apply_callable(self, arg);
+    Py_DECREF(arg);
+    if (index == NULL) {
+        return -1;
+    }
 
     PyObject *obj = NULL;
     PyArrayObject *arr;
@@ -1430,11 +1455,8 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
  * General function for indexing a NumPy array with a Python object.
  */
 NPY_NO_EXPORT PyObject *
-array_subscript(PyArrayObject *self, PyObject *op)
+array_subscript(PyArrayObject *self, PyObject *arg)
 {
-    int index_type;
-    int index_num;
-    int i, ndim, fancy_ndim;
     NPY_cast_info cast_info = {.func = NULL};
 
     /*
@@ -1446,23 +1468,23 @@ array_subscript(PyArrayObject *self, PyObject *op)
     PyArrayObject *view = NULL;
     PyObject *result = NULL;
 
-    PyArrayMapIterObject * mit = NULL;
+    PyArrayMapIterObject *mit = NULL;
 
-    /* return fields if op is a string index */
+    /*
+     * If the provided arg is a string, it might be attempting to index
+     * a field in a structured array.
+     */
     if (PyDataType_HASFIELDS(PyArray_DESCR(self))) {
-        PyArrayObject *view;
-        int ret = _get_field_view(self, op, &view);
-        if (ret == 0){
-            if (view == NULL) {
-                return NULL;
-            }
-            return (PyObject*)view;
+        int status = _get_field_view(self, arg, &view);
+        if (status == 0) {
+            return (PyObject *) view; // potentially NULL
         }
     }
 
     /* Prepare the indices */
-    index_type = prepare_index(self, op, indices, &index_num,
-                               &ndim, &fancy_ndim, 1);
+    int index_num, ndim, fancy_ndim;
+    int index_type = prepare_index(self, arg, indices, &index_num,
+                                   &ndim, &fancy_ndim, 1);
 
     if (index_type < 0) {
         return NULL;
@@ -1677,7 +1699,7 @@ array_subscript(PyArrayObject *self, PyObject *op)
     Py_XDECREF(mit);
     Py_XDECREF(view);
     /* Clean up indices */
-    for (i=0; i < index_num; i++) {
+    for (int i = 0; i < index_num; i++) {
         Py_XDECREF(indices[i].object);
     }
     return result;

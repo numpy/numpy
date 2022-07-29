@@ -1414,3 +1414,29 @@ class TestCApiAccess:
         a = a.reshape(5, 2)
         assign(a, 4, 10)
         assert_array_equal(a[-1], [10, 10])
+
+    index_fns = [
+        lambda x: x > 2,
+        lambda _:  (..., 1),
+        lambda _:  [True, False],
+        lambda x: x == x.max(),
+    ]
+
+    @pytest.mark.parametrize("index_fn", index_fns)
+    def test_callable_getitem(self, index_fn):
+        data = np.array([[1, 2], [3, 4]])
+        index = index_fn(data)
+        assert_array_equal(data[index], data[index_fn])
+
+        # only one-parameter lambdas are allowed
+        assert_raises(TypeError, data.__getitem__, lambda: [True, False])
+        assert_raises(TypeError, data.__getitem__, lambda x, y: [True, False])
+
+    @pytest.mark.parametrize("index_fn", index_fns)
+    def test_callable_setitem(self, index_fn):
+        data1 = np.array([[1, 2], [3, 4]])
+        data2 = data1.copy()
+        index1 = index_fn(data1)
+        data1[index1] = 9
+        data2[index_fn] = 9
+        assert_array_equal(data1, data2)
