@@ -80,7 +80,7 @@ def add_newdoc_for_scalar_type(obj, fixed_aliases, doc):
                             for alias in fixed_aliases)
     else:
         alias_doc = ''
-    alias_doc += ''.join("{_doc_alias_string} `numpy.{alias}`: {doc}.\n    "
+    alias_doc += ''.join(f"{_doc_alias_string} `numpy.{alias}`: {doc}.\n    "
                          for (alias_type, alias, doc) in possible_aliases if alias_type is o)
 
     docstring = f"""
