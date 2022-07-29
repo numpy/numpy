@@ -3,10 +3,11 @@ This file is separate from ``_add_newdocs.py`` so that it can be mocked out by
 our sphinx ``conf.py`` during doc builds, where we want to avoid showing
 platform-dependent information.
 """
+import sys
+import os
 from numpy.core import dtype
 from numpy.core import numerictypes as _numerictypes
 from numpy.core.function_base import add_newdoc
-import platform
 
 ##############################################################################
 #
@@ -49,7 +50,18 @@ possible_aliases = numeric_type_aliases([
     ('complex256', 'Complex number type composed of 2 128-bit extended-precision floating-point numbers'),
     ])
 
+possible_aliases_dict = {p[0]: p for idx,p in enumerate(possible_aliases)}
 
+def _get_platform_and_machine():
+    try:
+        system, _, _, _, machine = os.uname()
+    except AttributeError:
+        system = sys.platform
+        if system=='win32':
+            machine = os.environ.get('PROCESSOR_ARCHITEW6432', '') or os.environ.get('PROCESSOR_ARCHITECTURE', '')
+    return system, machine
+        
+_doc_alias_platform_string = ":Alias on this platform ({} {}):".format(*_get_platform_and_machine())
 
 
 def add_newdoc_for_scalar_type(obj, fixed_aliases, doc):
@@ -57,17 +69,22 @@ def add_newdoc_for_scalar_type(obj, fixed_aliases, doc):
     o = getattr(_numerictypes, obj)
 
     character_code = dtype(o).char
-    canonical_name_doc = "" if obj == o.__name__ else ":Canonical name: `numpy.{}`\n    ".format(obj)
-    alias_doc = ''.join(":Alias: `numpy.{}`\n    ".format(alias) for alias in fixed_aliases)
-    alias_doc += ''.join(":Alias on this platform ({} {}): `numpy.{}`: {}.\n    ".format(platform.system(), platform.machine(), alias, doc)
-                         for (alias_type, alias, doc) in possible_aliases if alias_type is o)
-    docstring = """
-    {doc}
+    canonical_name_doc = "" if obj == o.__name__ else f":Canonical name: `numpy.{obj}`\n    "
+    if fixed_aliases:
+        alias_doc = ''.join(f":Alias: `numpy.{alias}`\n    " for alias in fixed_aliases)
+    else:
+        alias_doc = ''
+    p = possible_aliases_dict.get(o, None)
+    if p is not None:
+        alias_type, alias, doc= p
+        alias_doc += f"{_doc_alias_platform_string} `numpy.{alias}`: {doc}.\n    "
+
+    docstring = f"""
+    {doc.strip()}
 
     :Character code: ``'{character_code}'``
     {canonical_name_doc}{alias_doc}
-    """.format(doc=doc.strip(), character_code=character_code,
-               canonical_name_doc=canonical_name_doc, alias_doc=alias_doc)
+    """
 
     add_newdoc('numpy.core.numerictypes', obj, docstring)
 
