@@ -618,10 +618,6 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
     ar1 = np.asarray(ar1).ravel()
     ar2 = np.asarray(ar2).ravel()
 
-    # Ensure that iteration through object arrays yields size-1 arrays
-    if ar2.dtype == object:
-        ar2 = ar2.reshape(-1, 1)
-
     if kind not in {None, 'sort', 'table'}:
         raise ValueError(
             f"Invalid kind: '{kind}'. Please use None, 'sort' or 'table'.")
@@ -698,15 +694,30 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
             "Please select 'sort' or None for kind."
         )
 
-
     # Check if one of the arrays may contain arbitrary objects
     contains_object = ar1.dtype.hasobject or ar2.dtype.hasobject
+
+    # Check if all objects are strings.
+    def is_all_strings():
+        return (
+            all(isinstance(value, str) for value in ar1) and
+            all(isinstance(value, str) for value in ar2)
+        )
 
     # This code is run when
     # a) the first condition is true, making the code significantly faster
     # b) the second condition is true (i.e. `ar1` or `ar2` may contain
-    #    arbitrary objects), since then sorting is not guaranteed to work
-    if len(ar2) < 10 * len(ar1) ** 0.145 or contains_object:
+    #    arbitrary objects), since then sorting is not guaranteed to work.
+    #    We make a special exception for strings, which can be sorted and
+    #    do not need to take this slow path.
+    if (
+        (len(ar2) < 10 * len(ar1) ** 0.145) or
+        (contains_object and not is_all_strings())
+    ):
+        # Ensure that iteration through object arrays yields size-1 arrays
+        if ar2.dtype == object:
+            ar2 = ar2.reshape(-1, 1)
+
         if invert:
             mask = np.ones(len(ar1), dtype=bool)
             for a in ar2:
