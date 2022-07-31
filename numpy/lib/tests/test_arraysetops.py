@@ -491,6 +491,17 @@ class TestSetOps:
         result = np.in1d(ar1, ar2, invert=True)
         assert_array_equal(result, np.invert(expected))
 
+    def test_in1d_with_string_objects(self):
+        """Test special case of `in1d` for strings"""
+
+        # Miss first condition (small array optimization) of `in1d`
+        # and also miss second condition because all objects are strings.
+        ar1 = np.array(list("ababde"), dtype=object)
+        ar2 = np.array(list("bcdd0123456789"), dtype=object)
+        expected = np.array([False, True, False, True, True, False])
+        result = np.in1d(ar1, ar2)
+        assert_array_equal(result, expected)
+
     def test_in1d_errors(self):
         """Test that in1d raises expected errors."""
 
