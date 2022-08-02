@@ -284,12 +284,12 @@ VERSION_PATTERN = r"""
 
 class Version(_BaseVersion):
 
-    _regex = re.compile(
-        r"^\s*" + VERSION_PATTERN + r"\s*$",
-        re.VERBOSE | re.IGNORECASE,
-    )
+    _regex = None
 
     def __init__(self, version):
+        if Version._regex is None:
+            Version._regex = re.compile(r"^\s*" + VERSION_PATTERN + r"\s*$",
+                                        re.VERBOSE | re.IGNORECASE)
         # Validate the version and parse it into pieces
         match = self._regex.search(version)
         if not match:
