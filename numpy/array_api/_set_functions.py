@@ -104,3 +104,10 @@ def unique_values(x: Array, /) -> Array:
         equal_nan=False,
     )
     return Array._new(res)
+
+
+def jaccard(x,y):
+    '''Calculates the jaccard similarity between two sets, it takes two parameters for 2 sets'''
+    z=set(x).intersection(set(y))
+    a=float(len(z))/(len(x)+len(y)-len(z))
+    return a
