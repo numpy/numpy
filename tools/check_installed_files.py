@@ -30,7 +30,8 @@ NUMPY_DIR = os.path.join(ROOT_DIR, 'numpy')
 
 # Files whose installation path will be different from original one
 changed_installed_path = {
-    #'numpy/_build_utils/some_file.py': 'numpy/lib/some_file.py'
+    'core/src/common/simd/test/tests/test_simd.py':
+        'core/_simd/tests/test_simd.py'
 }
 
 
@@ -46,9 +47,10 @@ def main(install_dir):
 
     # Check test files detected in repo are installed
     for test_file in numpy_test_files.keys():
-        if test_file not in installed_test_files.keys():
+        test_file_path = changed_installed_path.get(test_file, test_file)
+        if test_file_path not in installed_test_files.keys():
             raise Exception(
-                "%s is not installed" % numpy_test_files[test_file]
+                "%s is not installed" % numpy_test_files[test_file_path]
             )
 
     print("----------- All the test files were installed --------------")

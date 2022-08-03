@@ -1,33 +1,55 @@
-#include "_simd.h"
+#include "module.hpp"
 
-#include "numpy/npy_math.h"
+#include "common.hpp"
 
-static PyObject *
-get_floatstatus(PyObject* NPY_UNUSED(self), PyObject *NPY_UNUSED(args))
-{
-    return PyLong_FromLong(npy_get_floatstatus());
-}
+#include <tuple>
+#include <array>
 
 static PyObject *
-clear_floatstatus(PyObject* NPY_UNUSED(self), PyObject *NPY_UNUSED(args))
+floatstatus(PyObject* NPY_UNUSED(self), PyObject *NPY_UNUSED(args))
 {
-    npy_clear_floatstatus();
-    Py_RETURN_NONE;
+    auto status = np::FloatStatus();
+    PyObject *status_dict = PyDict_New();
+    if (status_dict == nullptr) {
+        return nullptr;
+    }
+    std::array<std::tuple<const char*, bool>, 5> values {{
+        {"DivideByZero", status.IsDivideByZero()},
+        {"Inexact", status.IsInexact()},
+        {"Invalid", status.IsInvalid()},
+        {"OverFlow", status.IsOverFlow()},
+        {"UnderFlow", status.IsUnderFlow()}
+    }};
+    for (int i = 0; i < 5; ++i) {
+        auto v = values[i];
+        PyObject *obj = PyBool_FromLong(static_cast<long>(std::get<1>(v)));
+        if (obj == nullptr) {
+            Py_DECREF(status_dict);
+            return nullptr;
+        }
+        if (PyDict_SetItemString(status_dict, std::get<0>(v), obj) < 0) {
+            Py_DECREF(obj);
+            Py_DECREF(status_dict);
+            return nullptr;
+        }
+    }
+    return status_dict;
 }
 
-static PyMethodDef _simd_methods[] = {
-    {"get_floatstatus", get_floatstatus, METH_NOARGS, NULL},
-    {"clear_floatstatus", clear_floatstatus, METH_NOARGS, NULL},
-    {NULL, NULL, 0, NULL}
-};
 
-PyMODINIT_FUNC PyInit__simd(void)
+PyMODINIT_FUNC PyInit__intrinsics(void)
 {
+    static PyMethodDef intrinsics_methods[] = {
+        {"floatstatus", floatstatus, METH_NOARGS, NULL},
+        {NULL, NULL, 0, NULL}
+    };
+
     static struct PyModuleDef defs = {
-        .m_base = PyModuleDef_HEAD_INIT,
-        .m_name = "numpy.core._simd",
-        .m_size = -1,
-        .m_methods = _simd_methods
+        PyModuleDef_HEAD_INIT,
+        "numpy.core._simd",
+        "Simd module for testing purposes",
+        -1,
+        intrinsics_methods
     };
     if (npy_cpu_init() < 0) {
         return NULL;
@@ -44,6 +66,9 @@ PyMODINIT_FUNC PyInit__simd(void)
         Py_DECREF(targets);
         goto err;
     }
+#ifndef NPY_DISABLE_OPTIMIZATION
+    #include "intrinsics.dispatch.h"
+#endif
     // add keys for non-supported optimizations with None value
     #define ATTACH_MODULE(TESTED_FEATURES, TARGET_NAME, MAKE_MSVC_HAPPY)       \
         {                                                                      \
@@ -52,7 +77,7 @@ PyMODINIT_FUNC PyInit__simd(void)
                 Py_INCREF(Py_None);                                            \
                 simd_mod = Py_None;                                            \
             } else {                                                           \
-                simd_mod = NPY_CAT(simd_create_module_, TARGET_NAME)();        \
+                simd_mod = NPY_CAT(np::SimdExtention_, TARGET_NAME)();         \
                 if (simd_mod == NULL) {                                        \
                     goto err;                                                  \
                 }                                                              \
@@ -71,7 +96,7 @@ PyMODINIT_FUNC PyInit__simd(void)
 
     #define ATTACH_BASELINE_MODULE(MAKE_MSVC_HAPPY)                            \
         {                                                                      \
-            PyObject *simd_mod = simd_create_module();                         \
+            PyObject *simd_mod = np::SimdExtention();                          \
             if (simd_mod == NULL) {                                            \
                 goto err;                                                      \
             }                                                                  \
@@ -93,3 +118,4 @@ err:
     Py_DECREF(m);
     return NULL;
 }
+

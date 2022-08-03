@@ -869,25 +869,6 @@ py.extension_module('_multiarray_umath',
   subdir: 'numpy/core',
 )
 
-# Build SIMD module
-# -----------------
-
-py.extension_module('_simd',
-  [
-    'src/common/npy_cpu_features.c',
-    'src/_simd/_simd.c',
-    src_file.process('src/_simd/_simd_inc.h.src'),
-    src_file.process('src/_simd/_simd_data.inc.src'),
-    src_file.process('src/_simd/_simd.dispatch.c.src'),
-  ],
-  c_args: c_args_common,
-  include_directories: ['src/_simd', 'src/npymath'],
-  dependencies: np_core_dep,
-  link_with: npymath_lib,
-  install: true,
-  subdir: 'numpy/core',
-)
-
 python_sources = [
   '__init__.py',
   '__init__.pyi',
@@ -943,3 +924,4 @@ py.install_sources(
 
 subdir('include')
 install_subdir('tests', install_dir: np_dir / 'core')
+subdir('src/common/simd/test')

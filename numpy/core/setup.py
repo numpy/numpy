@@ -1062,28 +1062,10 @@ def configuration(parent_package='',top_path=None):
     #                        SIMD module                                  #
     #######################################################################
 
-    config.add_extension('_simd',
-        sources=[
-            join('src', 'common', 'npy_cpu_features.c'),
-            join('src', '_simd', '_simd.c'),
-            join('src', '_simd', '_simd_inc.h.src'),
-            join('src', '_simd', '_simd_data.inc.src'),
-            join('src', '_simd', '_simd.dispatch.c.src'),
-        ], depends=[
-            join('src', 'common', 'npy_cpu_dispatch.h'),
-            join('src', 'common', 'simd', 'simd.h'),
-            join('src', '_simd', '_simd.h'),
-            join('src', '_simd', '_simd_inc.h.src'),
-            join('src', '_simd', '_simd_data.inc.src'),
-            join('src', '_simd', '_simd_arg.inc'),
-            join('src', '_simd', '_simd_convert.inc'),
-            join('src', '_simd', '_simd_easyintrin.inc'),
-            join('src', '_simd', '_simd_vector.inc'),
-        ],
-        libraries=['npymath']
-    )
 
     config.add_subpackage('tests')
+    config.add_subpackage('src/common/simd/test')
+
     config.add_data_dir('tests/data')
     config.add_data_dir('tests/examples')
     config.add_data_files('*.pyi')
