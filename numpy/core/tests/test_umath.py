@@ -27,12 +27,17 @@ def on_powerpc():
 
 
 def bad_arcsinh():
-    """The blocklisted trig functions are not accurate on aarch64 for
+    """The blocklisted trig functions are not accurate on aarch64/PPC for
     complex256. Rather than dig through the actual problem skip the
     test. This should be fixed when we can move past glibc2.17
     which is the version in manylinux2014
     """
-    x = 1.78e-10
+    if platform.machine() == 'aarch64':
+        x = 1.78e-10
+    elif on_powerpc():
+        x = 2.16e-10
+    else:
+        return False
     v1 = np.arcsinh(np.float128(x))
     v2 = np.arcsinh(np.complex256(x)).real
     # The eps for float128 is 1-e33, so this is way bigger
@@ -3515,10 +3520,10 @@ class TestComplexFunctions:
         x_basic = np.logspace(-2.999, 0, 10, endpoint=False)
 
         if dtype is np.longcomplex:
-            if (platform.machine() == 'aarch64' and bad_arcsinh()):
+            if bad_arcsinh():
                 pytest.skip("Trig functions of np.longcomplex values known "
-                            "to be inaccurate on aarch64 for some compilation "
-                            "configurations.")
+                            "to be inaccurate on aarch64 and PPC for some "
+                            "compilation configurations.")
             # It's not guaranteed that the system-provided arc functions
             # are accurate down to a few epsilons. (Eg. on Linux 64-bit)
             # So, give more leeway for long complex tests here:
