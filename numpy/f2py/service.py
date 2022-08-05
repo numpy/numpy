@@ -257,7 +257,7 @@ def get_f2py_modulename(source: str) -> Optional[str]:
                 break
     return name
 
-def wrapper_settings(rules_setts: dict[str, Any], crackfortran_setts: dict[str, Any], capi_maps_setts: dict[str, Any], auxfuncs_setts: dict[str, Any]) -> None:
+def wrapper_settings(rules_setts: dict[str, Any], crackfortran_setts: dict[str, Any], capi_maps_setts: dict[str, Any], auxfuncs_setts: dict[str, Any]) -> Optional[Path]:
     # This function also mimics f2py2e. I have added the link to specific code blocks that each function below mimics.
     # Step 6.1: https://github.com/numpy/numpy/blob/45bc13e6d922690eea43b9d807d476e0f243f836/numpy/f2py/f2py2e.py#L331
     _set_rules(rules_setts)
@@ -284,7 +284,9 @@ def generate_files(files: list[str], module_name: str, sign_file: Path) -> None:
         return
     if(module_name):
         # Step 8.4: Same as the buildmodules folder of f2py2e
-        _buildmodules(postlist)
+        ret  = _buildmodules(postlist)
+        c_wrapper = ret.get(module_name).get('csrc')[0]
+        return Path(c_wrapper)
 
 def compile_dist(ext_args: dict[str, Any], link_resources: list[str], build_dir: Path, fc_flags: list[str], flib_flags: list[str], quiet_build: bool) -> None:
     # Step 7.2: The entire code below mimics 'f2py2e:run_compile()'
