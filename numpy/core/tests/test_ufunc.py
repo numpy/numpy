@@ -492,6 +492,15 @@ class TestUfunc:
         with pytest.raises(TypeError):
             np.ldexp(1., np.uint64(3), signature=(None, None, "d"))
 
+    def test_partial_signature_mismatch_with_cache(self):
+        with pytest.raises(TypeError):
+            np.add(np.float16(1), np.uint64(2), sig=("e", "d", None))
+        # Ensure e,d->None is in the dispatching cache (double loop)
+        np.add(np.float16(1), np.float64(2))
+        # The error must still be raised:
+        with pytest.raises(TypeError):
+            np.add(np.float16(1), np.uint64(2), sig=("e", "d", None))
+
     def test_use_output_signature_for_all_arguments(self):
         # Test that providing only `dtype=` or `signature=(None, None, dtype)`
         # is sufficient if falling back to a homogeneous signature works.
