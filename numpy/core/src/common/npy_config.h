@@ -2,10 +2,8 @@
 #define NUMPY_CORE_SRC_COMMON_NPY_CONFIG_H_
 
 #include "config.h"
-#include "npy_cpu_features.h"
-#include "npy_cpu_dispatch.h"
 #include "numpy/numpyconfig.h"
-#include "numpy/npy_cpu.h"
+#include "numpy/utils.h"
 #include "numpy/npy_os.h"
 
 /* blocklist */

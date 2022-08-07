@@ -4,6 +4,10 @@
 #include <structmember.h>
 #include "numpy/npy_common.h"
 #include "numpy/ndarraytypes.h"
+#include "npy_cpu_features.h"
+#include "npy_cpu_dispatch.h"
+#include "numpy/npy_cpu.h"
+
 #include "npy_import.h"
 #include <limits.h>
 
