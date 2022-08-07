@@ -10,15 +10,6 @@
 
 /* blocklist */
 
-/* Disable broken Sun Workshop Pro math functions */
-#ifdef __SUNPRO_C
-
-#undef HAVE_ATAN2
-#undef HAVE_ATAN2F
-#undef HAVE_ATAN2L
-
-#endif
-
 /* Disable broken functions on z/OS */
 #if defined (__MVS__)
 
