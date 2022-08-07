@@ -119,9 +119,9 @@ jobs:
         env:
           CIBW_BUILD: ${{ matrix.python }}-${{ matrix.buildplat[1] }}
 
-      - uses: actions/upload-artifact@v3
+      - uses: kittaakos/upload-artifact-as-is@v0
+        # upload the wheels with their actual wheel name
         with:
-          name: ${{ matrix.python }}-${{ startsWith(matrix.buildplat[1], 'macosx') && 'macosx' || matrix.buildplat[1] }}
           path: ./wheelhouse/*.whl
 
       - name: Upload wheels
