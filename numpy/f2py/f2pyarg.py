@@ -28,6 +28,7 @@ from numpy.version import version as __version__
 from .service import check_dccomp, check_npfcomp, check_dir, generate_files, segregate_files, get_f2py_modulename, wrapper_settings, compile_dist
 from .utils import open_build_dir
 from .auxfuncs import outmess
+from .backends import backends, Backend
 
 ##################
 # Temp Variables #
@@ -821,7 +822,7 @@ def process_args(args: argparse.Namespace, rem: list[str]) -> None:
 
 		# Step 7: If user has asked for compilation. Mimic 'run_compile' from f2py2e
         # Disutils receives all the options and builds the extension.
-        if(args.c):
+        if(args.c and args.backend == Backends.Distutils.value):
             link_resource = args.link_resource
 
             # The 3 functions below generate arrays of flag similar to how 
@@ -846,7 +847,10 @@ def process_args(args: argparse.Namespace, rem: list[str]) -> None:
             compile_dist(ext_args, link_resource, build_dir, fc_flags, flib_flags, args.quiet)
         else:
             # Step 8: Generate wrapper or signature file if compile flag is not given
-            generate_files(f77_files + f90_files, module_name, sign_file)
+            c_wrapper = generate_files(f77_files + f90_files, module_name, sign_file)
+            if c_wrapper and args.c:
+                backend: Backend = backends.get(args.backend.value)(module_name=module_name, include_dirs=args.include_dirs, include_path=args.include_paths, external_resources=args.link_resource, debug=args.debug)
+                backend.compile(f77_files + f90_files, c_wrapper, build_dir)
 
 def main():
     logger = logging.getLogger("f2py_cli")
