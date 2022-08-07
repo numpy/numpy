@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import os
 import pathlib
 import enum
 
@@ -184,6 +185,22 @@ class EnumAction(argparse.Action):
         # Convert value back into an Enum
         value = self._enum(values)
         setattr(namespace, self.dest, value)
+
+class IncludePathAction(argparse.Action):
+    """Custom action to extend paths when --include-paths <path1>:<path2> is called"""
+    def __init__(self, option_strings, dest, nargs="?", **kwargs):
+        """Initialization of the flag flag
+
+        Mimics the parent
+        """
+        super(IncludePathAction, self).__init__(option_strings, dest, nargs="?", **kwargs)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        """Split the paths by ':' convert them to path and append them to the attribute"""
+        items = getattr(namespace, self.dest) or []
+        if values:
+            items.extend([pathlib.Path(path) for path in values.split(os.pathsep)])
+        setattr(namespace, self.dest, items)
 
 
 class Backends(enum.Enum):
@@ -367,11 +384,12 @@ parser.add_argument(
 
 parser.add_argument(
     "--include-paths",
+    nargs='?',
+    dest="include_paths",
+    action=IncludePathAction,
     metavar="<path1>:<path2>",
-    action="extend",
+    type=str,
     default=[],
-    nargs="*",
-    type=pathlib.Path,
     help="Search include files from the given directories.",
 )
 
@@ -656,7 +674,7 @@ def get_f2pyflags_dist(args: argparse.Namespace, skip_funcs: list[str], only_fun
     if(only_funcs):
         f2py_flags.extend(['only:']+only_funcs + [':'])
     if(args.include_paths):
-        f2py_flags.extend(['--include-paths']+args.include_paths)
+        f2py_flags.extend(['--include-paths']+[str(include_path) for include_path in args.include_paths])
     if(args.f2cmap):
         f2py_flags.extend(['--f2cmap', str(args.f2cmap)])
     return f2py_flags
