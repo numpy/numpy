@@ -554,6 +554,7 @@ build_helpers.add_argument(
     metavar="/path/to/lib/",
     nargs="*",
     action="extend",
+    default=[],
     help="Path to library"
 )
 
@@ -592,6 +593,7 @@ build_helpers.add_argument(
     type=pathlib.Path,
     metavar="/path/to/include",
     nargs="*",
+    default=[],
     action="extend",
     help="Include directories"
 )
@@ -833,8 +835,8 @@ def process_args(args: argparse.Namespace, rem: list[str]) -> None:
             ext_args = {
                 'name': module_name,
                 'sources': pyf_files + f77_files + f90_files,
-                'include_dirs': args.include_dirs,
-                'library_dirs': args.library_path,
+                'include_dirs': [include_dir.absolute() for include_dir in args.include_dirs],
+                'library_dirs': [lib_path.absolute() for lib_path in args.library_path],
                 'libraries': args.library_name,
                 'define_macros': args.define_macros,
                 'undef_macros': args.undef_macros,
