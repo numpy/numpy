@@ -49,3 +49,13 @@ body:
     description: Output from `import sys, numpy; print(numpy.__version__, sys.version)`.
   validations:
     required: true
+
+- type: textarea
+  attributes:
+    label: "Context for the issue:"
+    description: |
+      Please explain how this issue affects your work or why it should be prioritized.
+    placeholder: |
+      << your explanation here >>
+  validations:
+    required: false
