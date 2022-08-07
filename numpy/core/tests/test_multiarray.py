@@ -9324,6 +9324,9 @@ class TestArange:
         assert len(keyword_start_stop) == 6
         assert_array_equal(keyword_stop, keyword_zerotostop)
 
+    def test_rejects_string(self):
+        assert_raises(TypeError, np.arange, step=2, dtype=str)
+
 
 class TestArrayFinalize:
     """ Tests __array_finalize__ """
