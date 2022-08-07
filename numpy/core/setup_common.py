@@ -124,9 +124,8 @@ MANDATORY_FUNCS = ["sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs",
         "floor", "ceil", "sqrt", "log10", "log", "exp", "asin",
         "acos", "atan", "fmod", 'modf', 'frexp', 'ldexp']
 
-# Standard functions which may not be available and for which we have a
-# replacement implementation. Note that some of these are C99 functions.
-OPTIONAL_STDFUNCS = ["expm1", "log1p", "acosh", "asinh", "atanh",
+# Some of these are C99 functions.
+MANDATORY_FUNCS += ["expm1", "log1p", "acosh", "asinh", "atanh",
         "rint", "trunc", "exp2", "log2", "hypot", "atan2", "pow",
         "copysign", "nextafter", "strtoll", "strtoull", "cbrt"]
 
@@ -227,9 +226,8 @@ OPTIONAL_FUNCTION_ATTRIBUTES_WITH_INTRINSICS = [('__attribute__((target("avx2,fm
 # variable attributes tested via "int %s a" % attribute
 OPTIONAL_VARIABLE_ATTRIBUTES = ["__thread", "__declspec(thread)"]
 
-# Subset of OPTIONAL_STDFUNCS which may already have HAVE_* defined by Python.h
-OPTIONAL_STDFUNCS_MAYBE = [
-    "expm1", "log1p", "acosh", "atanh", "asinh", "hypot", "copysign",
+# Subset of OPTIONAL_*_FUNCS which may already have HAVE_* defined by Python.h
+OPTIONAL_FUNCS_MAYBE = [
     "ftello", "fseeko"
     ]
 
