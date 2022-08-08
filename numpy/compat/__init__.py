@@ -9,7 +9,6 @@ extensions, which may be included for the following reasons:
 
 """
 from . import _inspect
-from . import _pep440
 from . import py3k
 from ._inspect import getargspec, formatargspec
 from .py3k import *
