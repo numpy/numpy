@@ -1,0 +1,15 @@
+arange() now explicitly fails with dtype=str
+---------------------------------------------
+Previously, the `np.arange(n, dtype=str)` function worked for n==1 and n==2,
+but would raise a non-specific exception message for other values of n. Now,
+it raises a TypeError with a specific error message saying dtype=str` is not
+supported for these types of calls:
+
+    In [2]: np.arange(1, dtype=str)
+    ---------------------------------------------------------------------------
+    TypeError                                 Traceback (most recent call last)
+    <ipython-input-2-863d487ace18> in <module>
+    ----> 1 np.arange(1, dtype=str)
+    
+    TypeError: string types for arange() not supported
+
