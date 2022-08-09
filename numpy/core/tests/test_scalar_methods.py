@@ -97,9 +97,8 @@ class TestAsIntegerRatio:
             n, d = f.as_integer_ratio()
 
             try:
-                # workaround for gh-9968
-                nf = np.longdouble(str(n))
-                df = np.longdouble(str(d))
+                nf = np.longdouble(n)
+                df = np.longdouble(d)
             except (OverflowError, RuntimeWarning):
                 # the values may not fit in any float type
                 pytest.skip("longdouble too small on this platform")
