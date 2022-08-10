@@ -113,48 +113,6 @@ static const npy_uint64 MAGIC64[] = {0x5555555555555555ull, 0x3333333333333333ul
  * instead test for the macro, but I am lazy to do that for now.
  */
 
-/**begin repeat
- * #type = npy_longdouble, npy_float#
- * #TYPE = NPY_LONGDOUBLE, FLOAT#
- * #c = l,f#
- * #C = L,F#
- */
-
-#ifdef modf@c@
-#undef modf@c@
-#endif
-#ifndef HAVE_MODF@C@
-NPY_INPLACE @type@ npy_modf@c@(@type@ x, @type@ *iptr)
-{
-    double niptr;
-    double y = npy_modf((double)x, &niptr);
-    *iptr = (@type@) niptr;
-    return (@type@) y;
-}
-#endif
-
-#ifdef ldexp@c@
-#undef ldexp@c@
-#endif
-#ifndef HAVE_LDEXP@C@
-NPY_INPLACE @type@ npy_ldexp@c@(@type@ x, int exp)
-{
-    return (@type@) npy_ldexp((double)x, exp);
-}
-#endif
-
-#ifdef frexp@c@
-#undef frexp@c@
-#endif
-#ifndef HAVE_FREXP@C@
-NPY_INPLACE @type@ npy_frexp@c@(@type@ x, int* exp)
-{
-    return (@type@) npy_frexp(x, exp);
-}
-#endif
-
-/**end repeat**/
-
 
 /*
  * Decorate all the math functions which are available on the current platform
@@ -211,6 +169,8 @@ NPY_INPLACE @type@ npy_@kind@@c@(@type@ x, @type@ y)
 }
 /**end repeat1**/
 
+/* C99 mandatory */
+
 NPY_INPLACE @type@ npy_modf@c@(@type@ x, @type@ *iptr)
 {
     return NPY__FP_SFX(modf)(x, iptr);
@@ -225,8 +185,6 @@ NPY_INPLACE @type@ npy_frexp@c@(@type@ x, int* exp)
 {
     return NPY__FP_SFX(frexp)(x, exp);
 }
-
-/* C99 mandatory */
 
 NPY_INPLACE @type@ npy_cbrt@c@(@type@ x)
 {
