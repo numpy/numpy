@@ -94,6 +94,41 @@ static const npy_uint64 MAGIC64[] = {0x5555555555555555ull, 0x3333333333333333ul
  * classification instead of calling npy_isinf/npy_isnan: we should have some
  * macros for this, though, instead of doing it manually
  */
+#ifndef HAVE_LOG2
+NPY_INPLACE double npy_log2(double x)
+{
+#ifdef HAVE_FREXP
+    if (!npy_isfinite(x) || x <= 0.) {
+        /* special value result */
+        return npy_log(x);
+    }
+    else {
+        /*
+         * fallback implementation copied from python3.4 math.log2
+         * provides int(log(2**i)) == i for i 1-64 in default rounding mode.
+         *
+         * We want log2(m * 2**e) == log(m) / log(2) + e.  Care is needed when
+         * x is just greater than 1.0: in that case e is 1, log(m) is negative,
+         * and we get significant cancellation error from the addition of
+         * log(m) / log(2) to e.  The slight rewrite of the expression below
+         * avoids this problem.
+         */
+        int e;
+        double m = frexp(x, &e);
+        if (x >= 1.0) {
+            return log(2.0 * m) / log(2.0) + (e - 1);
+        }
+        else {
+            return log(m) / log(2.0) + e;
+        }
+    }
+#else
+    /* does not provide int(log(2**i)) == i */
+    return NPY_LOG2E * npy_log(x);
+#endif
+}
+#endif
+
 /*
  *
  * sin, cos, tan
@@ -140,10 +175,12 @@ static const npy_uint64 MAGIC64[] = {0x5555555555555555ull, 0x3333333333333333ul
 #define WORKAROUND_APPLE_TRIG_BUG 0
 #endif
 
+/* mandatory C99 functions */
+
 /**begin repeat1
  * #kind = sin,cos,tan,sinh,cosh,tanh,fabs,floor,ceil,rint,trunc,sqrt,log10,
- *         log,exp,expm1,asin,acos,atan,asinh,acosh,atanh,log1p,exp2,log2#
- * #TRIG_WORKAROUND = WORKAROUND_APPLE_TRIG_BUG*3, 0*22#
+ *         log,exp,expm1,asin,acos,atan,asinh,acosh,atanh,log1p,exp2#
+ * #TRIG_WORKAROUND = WORKAROUND_APPLE_TRIG_BUG*3, 0*21#
  */
 NPY_INPLACE @type@ npy_@kind@@c@(@type@ x)
 {
@@ -154,6 +191,19 @@ NPY_INPLACE @type@ npy_@kind@@c@(@type@ x)
 #endif
     return NPY__FP_SFX(@kind@)(x);
 }
+
+/**end repeat1**/
+/* Optional C99 functions */
+/**begin repeat1
+ * #kind = log2#
+ * #KIND = LOG2#
+ */
+#ifdef HAVE_@KIND@@C@
+NPY_INPLACE @type@ npy_@kind@@c@(@type@ x)
+{
+    return NPY__FP_SFX(@kind@)(x);
+}
+#endif
 
 /**end repeat1**/
 

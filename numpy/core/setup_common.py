@@ -122,12 +122,15 @@ for file in [
 # Mandatory functions: if not found, fail the build
 MANDATORY_FUNCS = ["sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs",
         "floor", "ceil", "sqrt", "log10", "log", "exp", "asin",
-        "acos", "atan", "fmod", 'modf', 'frexp', 'ldexp']
-
-# Some of these are C99 functions.
-MANDATORY_FUNCS += ["expm1", "log1p", "acosh", "asinh", "atanh",
-        "rint", "trunc", "exp2", "log2", "hypot", "atan2", "pow",
+        "acos", "atan", "fmod", 'modf', 'frexp', 'ldexp',
+        "expm1", "log1p", "acosh", "asinh", "atanh",
+        "rint", "trunc", "exp2", "hypot", "atan2", "pow",
         "copysign", "nextafter", "strtoll", "strtoull", "cbrt"]
+
+OPTIONAL_STDFUNCS = [
+        # cygwin
+        "log2",
+]
 
 OPTIONAL_LOCALE_FUNCS = ["strtold_l"]
 OPTIONAL_FILE_FUNCS = ["ftello", "fseeko", "fallocate"]

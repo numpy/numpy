@@ -189,6 +189,7 @@ def check_math_capabilities(config, ext, moredefs, mathlibs):
         if config.check_decl(fname2def(f), headers=["Python.h"]):
             OPTIONAL_FILE_FUNCS.remove(f)
 
+    check_funcs(OPTIONAL_STDFUNCS)
     check_funcs(OPTIONAL_FILE_FUNCS, headers=["feature_detection_stdio.h"])
     check_funcs(OPTIONAL_MISC_FUNCS, headers=["feature_detection_misc.h"])
 
