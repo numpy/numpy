@@ -1,0 +1,33 @@
+The bit generator underlying the singleton RandomState can be changed
+---------------------------------------------------------------------
+The singleton ``RandomState`` instance exposed in the ``numpy.random`` module
+is initialized at startup with the ``MT19937` bit generator. The new
+function ``set_bit_generator`` allows the default bit generator to be
+replaced with a user-provided bit generator. This function has been introduced
+to provide a method allowing seamless integration of a high-quality, modern bit
+generator in new code with existing code that makes use of the
+singleton-provided random variate generating functions. The companion function
+``get_bit_generator`` returns the current bit generator being used by the
+singleton ``RandomState``. This is provided to simplify restoring
+the original source of randomness if required.
+
+The preferred method to generate reproducible random numbers is to use a modern
+bit generator in an instance of ``Generator``. The function ``default_rng``
+simplifies instantization.
+
+   >>> rg = np.random.default_rng(3728973198)
+   >>> rg.random()
+
+The same bit generator can then be shared with the singleton instance so that
+calling functions in the ``random`` module will use the same bit
+generator.
+
+   >>> orig_bit_gen = np.random.get_bit_generator()
+   >>> np.random.set_bit_generator(rg.bit_generator)
+   >>> np.random.normal()
+
+The swap is permanent (until reversed) and so any call to functions
+in the ``random`` module will use the new bit generator. The original
+can be restored if required for code to run correctly.
+
+   >>> np.random.set_bit_generator(orig_bit_gen)
