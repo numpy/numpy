@@ -100,8 +100,8 @@ NPY_FINLINE npyv_b8 npyv_pack_b8_b16(npyv_b16 a, npyv_b16 b) {
 NPY_FINLINE npyv_b8
 npyv_pack_b8_b32(npyv_b32 a, npyv_b32 b, npyv_b32 c, npyv_b32 d) {
 #if defined(__aarch64__)
-    npyv_b16 ab = vuzp1q_u16(a, b);
-    npyv_b16 cd = vuzp1q_u16(c, d);
+    npyv_b16 ab = vuzp1q_u16((uint16x8_t)a, (uint16x8_t)b);
+    npyv_b16 cd = vuzp1q_u16((uint16x8_t)c, (uint16x8_t)d);
 #else
     npyv_b16 ab = vcombine_u16(vmovn_u32(a), vmovn_u32(b));
     npyv_b16 cd = vcombine_u16(vmovn_u32(c), vmovn_u32(d));
@@ -114,10 +114,10 @@ NPY_FINLINE npyv_b8
 npyv_pack_b8_b64(npyv_b64 a, npyv_b64 b, npyv_b64 c, npyv_b64 d,
                  npyv_b64 e, npyv_b64 f, npyv_b64 g, npyv_b64 h) {
 #if defined(__aarch64__)
-    npyv_b32 ab = vuzp1q_u32(a, b);
-    npyv_b32 cd = vuzp1q_u32(c, d);
-    npyv_b32 ef = vuzp1q_u32(e, f);
-    npyv_u32 gh = vuzp1q_u32(g, h);
+    npyv_b32 ab = vuzp1q_u32((uint32x4_t)a, (uint32x4_t)b);
+    npyv_b32 cd = vuzp1q_u32((uint32x4_t)c, (uint32x4_t)d);
+    npyv_b32 ef = vuzp1q_u32((uint32x4_t)e, (uint32x4_t)f);
+    npyv_u32 gh = vuzp1q_u32((uint32x4_t)g, (uint32x4_t)h);
 #else
     npyv_b32 ab = vcombine_u32(vmovn_u64(a), vmovn_u64(b));
     npyv_b32 cd = vcombine_u32(vmovn_u64(c), vmovn_u64(d));
