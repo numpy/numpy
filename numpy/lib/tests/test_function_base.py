@@ -3574,7 +3574,7 @@ class TestLerp:
         # double subtraction is needed to remove the extra precision of t < 0.5
         left = nfb._lerp(a, b, 1 - (1 - t))
         right = nfb._lerp(b, a, 1 - t)
-        assert left == right
+        assert_allclose(left, right)
 
     def test_linear_interpolation_formula_0d_inputs(self):
         a = np.array(2)
