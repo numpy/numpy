@@ -193,7 +193,9 @@ NPY_INPLACE @type@ npy_@kind@@c@(@type@ x)
 }
 
 /**end repeat1**/
+
 /* Optional C99 functions */
+
 /**begin repeat1
  * #kind = log2#
  * #KIND = LOG2#
@@ -210,8 +212,33 @@ NPY_INPLACE @type@ npy_@kind@@c@(@type@ x)
 #undef WORKAROUND_APPLE_TRIG_BUG
 
 /**begin repeat1
- * #kind = atan2,hypot,pow,fmod,copysign#
- * #KIND = ATAN2,HYPOT,POW,FMOD,COPYSIGN#
+ * #kind = pow#
+ * #KIND = POW#
+ */
+#ifdef @kind@@c@
+#undef @kind@@c@
+#endif
+#ifndef HAVE_@KIND@@C@
+NPY_INPLACE @type@ npy_@kind@@c@(@type@ x, @type@ y)
+{
+    return (@type@) npy_@kind@((double)x, (double) y);
+}
+#endif
+
+#ifdef HAVE_@KIND@@C@
+NPY_INPLACE @type@ npy_@kind@@c@(@type@ x, @type@ y)
+{
+    return NPY__FP_SFX(@kind@)(x, y);
+}
+#endif
+/**end repeat1**/
+
+
+/* C99 mandatory */
+
+/**begin repeat1
+ * #kind = atan2,hypot,fmod,copysign#
+ * #KIND = ATAN2,HYPOT,FMOD,COPYSIGN#
  */
 NPY_INPLACE @type@ npy_@kind@@c@(@type@ x, @type@ y)
 {
@@ -219,7 +246,6 @@ NPY_INPLACE @type@ npy_@kind@@c@(@type@ x, @type@ y)
 }
 /**end repeat1**/
 
-/* C99 mandatory */
 
 NPY_INPLACE @type@ npy_modf@c@(@type@ x, @type@ *iptr)
 {
