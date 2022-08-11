@@ -90,7 +90,7 @@ NPY_FINLINE npyv_u32x2 npyv_expand_u32_u16(npyv_u16 data) {
 // pack two 16-bit boolean into one 8-bit boolean vector
 NPY_FINLINE npyv_b8 npyv_pack_b8_b16(npyv_b16 a, npyv_b16 b) {
 #if defined(__aarch64__)
-    return vuzp1q_u8(a, b);
+    return vuzp1q_u8((uint8x16_t)a, (uint8x16_t)b);
 #else
     return vcombine_u8(vmovn_u16(a), vmovn_u16(b));
 #endif
