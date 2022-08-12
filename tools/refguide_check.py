@@ -124,6 +124,7 @@ RST_SKIPLIST = [
     'f2py.getting-started.rst',
     'f2py-examples.rst',
     'arrays.nditer.cython.rst',
+    'how-to-verify-bug.rst',
     # See PR 17222, these should be fixed
     'basics.dispatch.rst',
     'basics.subclassing.rst',
@@ -1163,7 +1164,7 @@ def main(argv):
             module_name = prefix + submodule_name
         else:
             module_name = submodule_name
-            
+
         __import__(module_name)
         module = sys.modules[module_name]
 
