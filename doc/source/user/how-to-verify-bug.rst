@@ -57,7 +57,8 @@ This issue was:
 *******************************
 
 Create a new directory, enter into it, and set up a virtual environment using
-your preferred method. For example, this is how to do it using ``virtualenv``:
+your preferred method. For example, this is how to do it using
+``virtualenv`` on linux or macOS:
 
 ::
 
