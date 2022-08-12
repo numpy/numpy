@@ -175,6 +175,20 @@ class IncludePathAction(argparse.Action):
             items.extend([pathlib.Path(path) for path in values.split(os.pathsep)])
         setattr(namespace, self.dest, items)
 
+class ParseStringFlags(argparse.Action):
+    """Custom action to parse and store flags passed as string
+    Ex-
+    f2py --opt="-DDEBUG=1 -O" will be stored as ["-DDEBUG=1", -O]"""
+
+    def __init__(self, option_strings, dest, nargs="1", **kwargs):
+        """Initialization of the flag, mimics the parent"""
+        super(ParseStringFlags, self).__init__(option_strings, dest, nargs=1, **kwargs)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        """The storage action, mimics the parent"""
+        items = getattr(namespace, self.dest) or []
+        items.extend(value.split(' ') for value in values)
+        setattr(namespace, self.dest, items)
 
 ##########
 # Parser #
@@ -468,38 +482,39 @@ build_helpers.add_argument(
 
 build_helpers.add_argument(
     "--f77flags",
-    nargs="*",
-    action="extend",
+    nargs=1,
+    action=ParseStringFlags,
     help="Specify F77 compiler flags"
 )
 
 build_helpers.add_argument(
     "--f90flags",
-    nargs="*",
-    action="extend",
+    nargs=1,
+    action=ParseStringFlags,
     help="Specify F90 compiler flags"
 )
 
 build_helpers.add_argument(
     "--opt",
     "--optimization_flags",
-    nargs="*",
+    nargs=1,
     type=str,
-    action="extend",
+    action=ParseStringFlags,
     help="Specify optimization flags"
 )
 
 build_helpers.add_argument(
     "--arch",
     "--architecture_optimizations",
-    nargs="*",
+    nargs=1,
     type=str,
-    action="extend",
+    action=ParseStringFlags,
     help="Specify architecture specific optimization flags"
 )
 
 build_helpers.add_argument(
-    "--noopt",
+    """_summary_
+    """    "--noopt",
     action="store_true",
     help="Compile without optimization"
 )
