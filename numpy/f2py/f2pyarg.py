@@ -190,7 +190,7 @@ class EnumAction(argparse.Action):
 class IncludePathAction(argparse.Action):
     """Custom action to extend paths when --include-paths <path1>:<path2> is called"""
     def __init__(self, option_strings, dest, nargs="?", **kwargs):
-        """Initialization of the flag flag
+        """Initialization of the --include-paths flag
 
         Mimics the parent
         """
