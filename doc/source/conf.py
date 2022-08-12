@@ -84,7 +84,7 @@ extensions = [
     'IPython.sphinxext.ipython_console_highlighting',
     'IPython.sphinxext.ipython_directive',
     'sphinx.ext.mathjax',
-    'sphinx_panels',
+    'sphinx_design',
 ]
 
 skippable_extensions = [
@@ -200,11 +200,6 @@ html_static_path = ['_static']
 html_last_updated_fmt = '%b %d, %Y'
 html_css_files = ["numpy.css"]
 html_context = {"default_mode": "light"}
-
-# Prevent sphinx-panels from loading bootstrap css, the pydata-sphinx-theme
-# already loads it
-panels_add_bootstrap_css = False
-
 html_use_modindex = True
 html_copy_source = False
 html_domain_indices = False
