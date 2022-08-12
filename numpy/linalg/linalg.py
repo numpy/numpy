@@ -1631,7 +1631,6 @@ def svd(a, full_matrices=True, compute_uv=True, hermitian=False):
             return wrap(u), s, wrap(vt)
         else:
             s = eigvalsh(a)
-            s = s[..., ::-1]
             s = abs(s)
             return sort(s)[..., ::-1]
 
