@@ -184,7 +184,10 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
             else:
                 step *= 2
         else:
-            step = step + _nx.where(_nx.absolute(step) > may_overflow_threshold, _nx.where(step > 0, _nx.inf, -_nx.inf), step)
+            step = step + _nx.where(
+                _nx.absolute(step) > may_overflow_threshold,
+                _nx.where(step > 0, _nx.inf, -_nx.inf),
+                step)
 
     if axis != 0:
         y = _nx.moveaxis(y, 0, axis)
