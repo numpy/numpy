@@ -1,16 +1,3 @@
-.. currentmodule:: numpy
-
-==========================
-NumPy 1.23.2 Release Notes
-==========================
-
-NumPy 1.23.2 is a maintenance release that fixes bugs discovered after the
-1.23.1 release. Notable features are:
-
-- Typing changes needed for Python 3.11
-- Wheels for Python 3.11.0rc1
-
-The Python versions supported for this release are 3.8-3.11.
 
 Contributors
 ============
