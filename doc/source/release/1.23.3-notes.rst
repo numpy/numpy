@@ -1,0 +1,52 @@
+.. currentmodule:: numpy
+
+
+==========================
+NumPy 1.23.3 Release Notes
+==========================
+NumPy 1.23.3 is a maintenance release that fixes bugs discovered after the
+1.23.1 release. Notable features are:
+
+
+The Python versions supported for this release are 3.8-3.11.
+
+
+
+Highlights
+==========
+
+
+New functions
+=============
+
+
+Deprecations
+============
+
+
+Future Changes
+==============
+
+
+Expired deprecations
+====================
+
+
+Compatibility notes
+===================
+
+
+C API changes
+=============
+
+
+New Features
+============
+
+
+Improvements
+============
+
+
+Changes
+=======
