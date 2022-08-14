@@ -124,7 +124,7 @@ MANDATORY_FUNCS = ["sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs",
         "floor", "ceil", "sqrt", "log10", "log", "exp", "asin",
         "acos", "atan", "fmod", 'modf', 'frexp', 'ldexp',
         "expm1", "log1p", "acosh", "asinh", "atanh",
-        "rint", "trunc", "exp2", "hypot", "atan2",
+        "rint", "trunc", "exp2", "atan2",
         "copysign", "nextafter", "strtoll", "strtoull", "cbrt"]
 
 OPTIONAL_STDFUNCS = [
@@ -132,6 +132,8 @@ OPTIONAL_STDFUNCS = [
         "log2",
         # macos for powl
         "pow",
+        # 32-bit windows
+        "hypot"
 ]
 
 OPTIONAL_LOCALE_FUNCS = ["strtold_l"]

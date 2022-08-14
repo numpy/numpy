@@ -94,10 +94,11 @@ static const npy_uint64 MAGIC64[] = {0x5555555555555555ull, 0x3333333333333333ul
  * classification instead of calling npy_isinf/npy_isnan: we should have some
  * macros for this, though, instead of doing it manually
  */
-#ifndef HAVE_LOG2
 NPY_INPLACE double npy_log2(double x)
 {
-#ifdef HAVE_FREXP
+#ifdef HAVE_LOG2
+    return log2(x);
+#elif defined(HAVE_FREXP)
     if (!npy_isfinite(x) || x <= 0.) {
         /* special value result */
         return npy_log(x);
@@ -127,7 +128,38 @@ NPY_INPLACE double npy_log2(double x)
     return NPY_LOG2E * npy_log(x);
 #endif
 }
+
+NPY_INPLACE double npy_hypot(double x, double y)
+{
+#ifdef HAVE_HYPOT
+    return hypot(x, y);
+#else
+    double yx;
+
+    if (npy_isinf(x) || npy_isinf(y)) {
+        return NPY_INFINITY;
+    }
+
+    if (npy_isnan(x) || npy_isnan(y)) {
+        return NPY_NAN;
+    }
+
+    x = npy_fabs(x);
+    y = npy_fabs(y);
+    if (x < y) {
+        double temp = x;
+        x = y;
+        y = temp;
+    }
+    if (x == 0.) {
+        return 0.;
+    }
+    else {
+        yx = y/x;
+        return x*npy_sqrt(1.+yx*yx);
+    }
 #endif
+}
 
 /*
  *
@@ -194,51 +226,13 @@ NPY_INPLACE @type@ npy_@kind@@c@(@type@ x)
 
 /**end repeat1**/
 
-/* Optional C99 functions */
-
-/**begin repeat1
- * #kind = log2#
- * #KIND = LOG2#
- */
-#ifdef HAVE_@KIND@@C@
-NPY_INPLACE @type@ npy_@kind@@c@(@type@ x)
-{
-    return NPY__FP_SFX(@kind@)(x);
-}
-#endif
-
-/**end repeat1**/
-
 #undef WORKAROUND_APPLE_TRIG_BUG
-
-/**begin repeat1
- * #kind = pow#
- * #KIND = POW#
- */
-#ifdef @kind@@c@
-#undef @kind@@c@
-#endif
-#ifndef HAVE_@KIND@@C@
-NPY_INPLACE @type@ npy_@kind@@c@(@type@ x, @type@ y)
-{
-    return (@type@) npy_@kind@((double)x, (double) y);
-}
-#endif
-
-#ifdef HAVE_@KIND@@C@
-NPY_INPLACE @type@ npy_@kind@@c@(@type@ x, @type@ y)
-{
-    return NPY__FP_SFX(@kind@)(x, y);
-}
-#endif
-/**end repeat1**/
-
 
 /* C99 mandatory */
 
 /**begin repeat1
- * #kind = atan2,hypot,fmod,copysign#
- * #KIND = ATAN2,HYPOT,FMOD,COPYSIGN#
+ * #kind = atan2,fmod,copysign#
+ * #KIND = ATAN2,FMOD,COPYSIGN#
  */
 NPY_INPLACE @type@ npy_@kind@@c@(@type@ x, @type@ y)
 {
@@ -266,8 +260,74 @@ NPY_INPLACE @type@ npy_cbrt@c@(@type@ x)
 {
     return NPY__FP_SFX(cbrt)(x);
 }
-#undef NPY__FP_SFX
+
 /**end repeat**/
+
+/* Optional C99 functions */
+
+/**begin repeat
+ * #type = npy_longdouble, npy_float#
+ * #TYPE = LONGDOUBLE, FLOAT#
+ * #c = l,f#
+ * #C = L,F#
+ */
+#undef NPY__FP_SFX
+#if NPY_SIZEOF_@TYPE@ == NPY_SIZEOF_DOUBLE
+    #define NPY__FP_SFX(X) X
+#else
+    #define NPY__FP_SFX(X) NPY_CAT(X, @c@)
+#endif
+
+/**begin repeat1
+ * #kind = log2#
+ * #KIND = LOG2#
+ */
+
+#ifdef @kind@@c@
+#undef @kind@@c@
+#endif
+#ifndef HAVE_@KIND@@C@
+NPY_INPLACE @type@ npy_@kind@@c@(@type@ x)
+{
+    return (@type@) npy_@kind@((double)x);
+}
+#endif
+
+#ifdef HAVE_@KIND@@C@
+NPY_INPLACE @type@ npy_@kind@@c@(@type@ x)
+{
+    return NPY__FP_SFX(@kind@)(x);
+}
+#endif
+
+/**end repeat1**/
+
+
+/**begin repeat1
+ * #kind = hypot,pow#
+ * #KIND = HYPOT,POW#
+ */
+#ifdef @kind@@c@
+#undef @kind@@c@
+#endif
+#ifndef HAVE_@KIND@@C@
+NPY_INPLACE @type@ npy_@kind@@c@(@type@ x, @type@ y)
+{
+    return (@type@) npy_@kind@((double)x, (double) y);
+}
+#endif
+
+#ifdef HAVE_@KIND@@C@
+NPY_INPLACE @type@ npy_@kind@@c@(@type@ x, @type@ y)
+{
+    return NPY__FP_SFX(@kind@)(x, y);
+}
+#endif
+/**end repeat1**/
+/**end repeat**/
+
+
+#undef NPY__FP_SFX
 
 
 /*
@@ -603,3 +663,10 @@ npy_popcount@c@(npy_@type@ a)
     return npy_popcountu@c@(a < 0 ? -a : a);
 }
 /**end repeat**/
+
+/* XXX: will moving this to a define break anything? */
+
+NPY_INPLACE double npy_pow(double x, double y)
+{
+    return pow(x, y);
+}
