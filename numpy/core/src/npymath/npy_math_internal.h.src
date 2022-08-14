@@ -98,7 +98,7 @@ NPY_INPLACE double npy_log2(double x)
 {
 #ifdef HAVE_LOG2
     return log2(x);
-#elif defined(HAVE_FREXP)
+#else
     if (!npy_isfinite(x) || x <= 0.) {
         /* special value result */
         return npy_log(x);
@@ -123,9 +123,6 @@ NPY_INPLACE double npy_log2(double x)
             return log(m) / log(2.0) + e;
         }
     }
-#else
-    /* does not provide int(log(2**i)) == i */
-    return NPY_LOG2E * npy_log(x);
 #endif
 }
 
