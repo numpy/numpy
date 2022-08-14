@@ -527,6 +527,12 @@ class FCompiler(CCompiler):
                 ld_so_aix = os.path.join(python_lib, 'config', 'ld_so_aix')
                 python_exp = os.path.join(python_lib, 'config', 'python.exp')
                 linker_so = [ld_so_aix] + linker_so + ['-bI:'+python_exp]
+            if sys.platform.startswith('os400'):
+                from distutils.sysconfig import get_config_var
+                python_config = get_config_var('LIBPL')
+                ld_so_aix = os.path.join(python_config, 'ld_so_aix')
+                python_exp = os.path.join(python_config, 'python.exp')
+                linker_so = [ld_so_aix] + linker_so + ['-bI:'+python_exp]
             self.set_commands(linker_so=linker_so+linker_so_flags)
 
         linker_exe = self.linker_exe
