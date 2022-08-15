@@ -120,20 +120,28 @@ for file in [
             set_sig(line)
 
 # Mandatory functions: if not found, fail the build
-MANDATORY_FUNCS = ["sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs",
-        "floor", "ceil", "sqrt", "log10", "log", "exp", "asin",
-        "acos", "atan", "fmod", 'modf', 'frexp', 'ldexp',
-        "expm1", "log1p", "acosh", "asinh", "atanh",
-        "rint", "trunc", "exp2", "atan2",
-        "copysign", "nextafter", "strtoll", "strtoull", "cbrt"]
+MANDATORY_FUNCS = [
+    "sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs",
+    "floor", "ceil", "sqrt", "log10", "log", "exp", "asin",
+    "acos", "atan", "fmod", 'modf', 'frexp', 'ldexp',
+    "expm1", "log1p", "acosh", "asinh", "atanh",
+    "rint", "trunc", "exp2", 
+    "copysign", "nextafter", "strtoll", "strtoull", "cbrt",
+    # C99, mandatory
+    "sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs", "floor", "ceil",
+    "rint", "trunc", "sqrt", "log10", "log", "log1p", "exp", "expm1",
+    "asin", "acos", "atan", "asinh", "acosh", "atanh",
+]
 
 OPTIONAL_STDFUNCS = [
-        # cygwin
-        "log2",
-        # macos for powl
-        "pow",
-        # 32-bit windows
-        "hypot"
+    # cygwin
+    "log2",
+    # macos for powl
+    "pow",
+    # 32-bit windows
+    "hypot",
+    # 32-bit mingw, visual studio 2015
+    "atan2",
 ]
 
 OPTIONAL_LOCALE_FUNCS = ["strtold_l"]
@@ -238,16 +246,6 @@ OPTIONAL_FUNCS_MAYBE = [
     "ftello", "fseeko"
     ]
 
-# C99 functions: float and long double versions
-C99_FUNCS = [
-    "sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs", "floor", "ceil",
-    "rint", "trunc", "sqrt", "log10", "log", "log1p", "exp", "expm1",
-    "asin", "acos", "atan", "asinh", "acosh", "atanh", "hypot", "atan2",
-    "pow", "fmod", "modf", 'frexp', 'ldexp', "exp2", "log2", "copysign",
-    "nextafter", "cbrt"
-    ]
-C99_FUNCS_SINGLE = [f + 'f' for f in C99_FUNCS]
-C99_FUNCS_EXTENDED = [f + 'l' for f in C99_FUNCS]
 C99_COMPLEX_TYPES = [
     'complex double', 'complex float', 'complex long double'
     ]

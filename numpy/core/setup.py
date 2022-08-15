@@ -243,10 +243,6 @@ def check_math_capabilities(config, ext, moredefs, mathlibs):
             m = fn.replace("(", "_").replace(")", "_")
             moredefs.append((fname2def(m), 1))
 
-    # C99 functions: float and long double versions
-    check_funcs(C99_FUNCS_SINGLE)
-    check_funcs(C99_FUNCS_EXTENDED)
-
 def check_complex(config, mathlibs):
     priv = []
     pub = []

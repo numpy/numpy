@@ -126,6 +126,98 @@ NPY_INPLACE double npy_log2(double x)
 #endif
 }
 
+/* Taken from FreeBSD mlib, adapted for numpy
+ *
+ * XXX: we could be a bit faster by reusing high/low words for inf/nan
+ * classification instead of calling npy_isinf/npy_isnan: we should have some
+ * macros for this, though, instead of doing it manually
+ */
+/* XXX: we should have this in npy_math.h */
+#define NPY_DBL_EPSILON 1.2246467991473531772E-16
+NPY_INPLACE double npy_atan2(double y, double x)
+{
+#ifdef HAVE_ATAN2
+    return atan2(y, x);
+#else
+    npy_int32 k, m, iy, ix, hx, hy;
+    npy_uint32 lx,ly;
+    double z;
+
+    EXTRACT_WORDS(hx, lx, x);
+    ix = hx & 0x7fffffff;
+    EXTRACT_WORDS(hy, ly, y);
+    iy = hy & 0x7fffffff;
+
+    /* if x or y is nan, return nan */
+    if (npy_isnan(x * y)) {
+        return x + y;
+    }
+
+    if (x == 1.0) {
+        return npy_atan(y);
+    }
+
+    m = 2 * (npy_signbit((x)) != 0) + (npy_signbit((y)) != 0);
+    if (y == 0.0) {
+        switch(m) {
+        case 0:
+        case 1: return  y;  /* atan(+-0,+anything)=+-0 */
+        case 2: return  NPY_PI;/* atan(+0,-anything) = pi */
+        case 3: return -NPY_PI;/* atan(-0,-anything) =-pi */
+        }
+    }
+
+    if (x == 0.0) {
+        return y > 0 ? NPY_PI_2 : -NPY_PI_2;
+    }
+
+    if (npy_isinf(x)) {
+        if (npy_isinf(y)) {
+            switch(m) {
+                case 0: return  NPY_PI_4;/* atan(+INF,+INF) */
+                case 1: return -NPY_PI_4;/* atan(-INF,+INF) */
+                case 2: return  3.0*NPY_PI_4;/*atan(+INF,-INF)*/
+                case 3: return -3.0*NPY_PI_4;/*atan(-INF,-INF)*/
+            }
+        } else {
+            switch(m) {
+                case 0: return  NPY_PZERO;  /* atan(+...,+INF) */
+                case 1: return  NPY_NZERO;  /* atan(-...,+INF) */
+                case 2: return  NPY_PI;  /* atan(+...,-INF) */
+                case 3: return -NPY_PI;  /* atan(-...,-INF) */
+            }
+        }
+    }
+
+    if (npy_isinf(y)) {
+        return y > 0 ? NPY_PI_2 : -NPY_PI_2;
+    }
+
+    /* compute y/x */
+    k = (iy - ix) >> 20;
+    if (k > 60) {            /* |y/x| >  2**60 */
+        z = NPY_PI_2 + 0.5 * NPY_DBL_EPSILON;
+        m &= 1;
+    } else if (hx < 0 && k < -60) {
+        z = 0.0;    /* 0 > |y|/x > -2**-60 */
+    } else {
+        z = npy_atan(npy_fabs(y/x));        /* safe to do y/x */
+    }
+
+    switch (m) {
+        case 0: return  z  ;    /* atan(+,+) */
+        case 1: return -z  ;    /* atan(-,+) */
+        case 2: return  NPY_PI - (z - NPY_DBL_EPSILON);/* atan(+,-) */
+        default: /* case 3 */
+            return  (z - NPY_DBL_EPSILON) - NPY_PI;/* atan(-,-) */
+    }
+#endif
+}
+
+
+
+
+
 NPY_INPLACE double npy_hypot(double x, double y)
 {
 #ifdef HAVE_HYPOT
@@ -228,8 +320,8 @@ NPY_INPLACE @type@ npy_@kind@@c@(@type@ x)
 /* C99 mandatory */
 
 /**begin repeat1
- * #kind = atan2,fmod,copysign#
- * #KIND = ATAN2,FMOD,COPYSIGN#
+ * #kind = fmod,copysign#
+ * #KIND = FMOD,COPYSIGN#
  */
 NPY_INPLACE @type@ npy_@kind@@c@(@type@ x, @type@ y)
 {
@@ -301,8 +393,8 @@ NPY_INPLACE @type@ npy_@kind@@c@(@type@ x)
 
 
 /**begin repeat1
- * #kind = hypot,pow#
- * #KIND = HYPOT,POW#
+ * #kind = atan2,hypot,pow#
+ * #KIND = ATAN2,HYPOT,POW#
  */
 #ifdef @kind@@c@
 #undef @kind@@c@
