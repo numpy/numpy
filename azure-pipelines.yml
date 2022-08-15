@@ -114,7 +114,7 @@ stages:
             python3 -m pip install -v . && \
             python3 runtests.py -n --debug-info --mode=full -- -rsx --junitxml=junit/test-results.xml && \
             python3 tools/openblas_support.py --check_version"
-      displayName: 'Run 32-bit manylinux2010 Docker Build / Tests'
+      displayName: 'Run 32-bit manylinux2014 Docker Build / Tests'
     - task: PublishTestResults@2
       condition: succeededOrFailed()
       inputs:
