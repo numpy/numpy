@@ -256,7 +256,7 @@ class GnuFCompiler(FCompiler):
 
         if sys.platform == 'darwin':
             return f'-Wl,-rpath,{dir}'
-        elif sys.platform[:3] == 'aix':
+        elif sys.platform.startswith(('aix', 'os400')):
             # AIX RPATH is called LIBPATH
             return f'-Wl,-blibpath:{dir}'
         else:
@@ -305,7 +305,7 @@ class Gnu95FCompiler(GnuFCompiler):
     module_dir_switch = '-J'
     module_include_switch = '-I'
 
-    if sys.platform[:3] == 'aix':
+    if sys.platform.startswith(('aix', 'os400')):
         executables['linker_so'].append('-lpthread')
         if platform.architecture()[0][:2] == '64':
             for key in ['compiler_f77', 'compiler_f90','compiler_fix','linker_so', 'linker_exe']:
