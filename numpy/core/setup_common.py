@@ -127,13 +127,9 @@ MANDATORY_FUNCS = [
     "expm1", "log1p", "acosh", "asinh", "atanh",
     "rint", "trunc", "exp2", 
     "copysign", "nextafter", "strtoll", "strtoull", "cbrt",
-    # C99, mandatory
-    "sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs", "floor", "ceil",
-    "rint", "trunc", "sqrt", "log10", "log", "log1p", "exp", "expm1",
-    "asin", "acos", "atan", "asinh", "acosh", "atanh",
 ]
 
-OPTIONAL_STDFUNCS = [
+OPTIONAL_STDFUNCS_BASE = [
     # cygwin
     "log2",
     # macos for powl
@@ -143,6 +139,10 @@ OPTIONAL_STDFUNCS = [
     # 32-bit mingw, visual studio 2015
     "atan2",
 ]
+
+OPTIONAL_STDFUNCS = OPTIONAL_STDFUNCS_BASE[:]
+OPTIONAL_STDFUNCS += [f + 'f' for f in OPTIONAL_STDFUNCS_BASE]
+OPTIONAL_STDFUNCS += [f + 'l' for f in OPTIONAL_STDFUNCS_BASE]
 
 OPTIONAL_LOCALE_FUNCS = ["strtold_l"]
 OPTIONAL_FILE_FUNCS = ["ftello", "fseeko", "fallocate"]
