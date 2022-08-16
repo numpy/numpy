@@ -11,8 +11,8 @@
 /* Disable broken functions on z/OS */
 #if defined (__MVS__)
 
-#undef HAVE_POWF
-#undef HAVE_EXPF
+#define BLOCK_POWF
+#define BLOCK_EXPF
 #undef HAVE___THREAD
 
 #endif
@@ -20,13 +20,13 @@
 /* Disable broken MS math functions */
 #if defined(__MINGW32_VERSION)
 
-#undef HAVE_ATAN2
-#undef HAVE_ATAN2F
-#undef HAVE_ATAN2L
+#define BLOCK_ATAN2
+#define BLOCK_ATAN2F
+#define BLOCK_ATAN2L
 
-#undef HAVE_HYPOT
-#undef HAVE_HYPOTF
-#undef HAVE_HYPOTL
+#define BLOCK_HYPOT
+#define BLOCK_HYPOTF
+#define BLOCK_HYPOTL
 
 #endif
 
@@ -66,23 +66,23 @@
 #undef HAVE_CABSF
 #undef HAVE_CABSL
 
-#undef HAVE_HYPOT
-#undef HAVE_HYPOTF
-#undef HAVE_HYPOTL
+#define BLOCK_HYPOT
+#define BLOCK_HYPOTF
+#define BLOCK_HYPOTL
 
 #endif
 
 
 /* Intel C for Windows uses POW for 64 bits longdouble*/
 #if defined(_MSC_VER) && defined(__INTEL_COMPILER)
-#if defined(HAVE_POWL) && (NPY_SIZEOF_LONGDOUBLE == 8)
-#undef HAVE_POWL
+#if NPY_SIZEOF_LONGDOUBLE == 8
+#define BLOCK_POWL
 #endif
 #endif /* defined(_MSC_VER) && defined(__INTEL_COMPILER) */
 
 /* powl gives zero division warning on OS X, see gh-8307 */
-#if defined(HAVE_POWL) && defined(NPY_OS_DARWIN)
-#undef HAVE_POWL
+#if defined(NPY_OS_DARWIN)
+#define BLOCK_POWL
 #endif
 
 #ifdef __CYGWIN__
@@ -119,7 +119,7 @@
 #undef HAVE_CACOS
 
 /* log2(exp2(i)) off by a few eps */
-#undef HAVE_LOG2
+#define BLOCK_LOG2
 
 /* np.power(..., dtype=np.complex256) doesn't report overflow */
 #undef HAVE_CPOWL

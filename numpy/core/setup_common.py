@@ -127,27 +127,31 @@ MANDATORY_FUNCS = [
     "expm1", "log1p", "acosh", "asinh", "atanh",
     "rint", "trunc", "exp2", 
     "copysign", "nextafter", "strtoll", "strtoull", "cbrt",
+    "log2", "pow", "hypot", "atan2",
 ]
-
-OPTIONAL_STDFUNCS_BASE = [
-    # cygwin
-    "log2",
-    # macos for powl
-    "pow",
-    # 32-bit windows
-    "hypot",
-    # 32-bit mingw, visual studio 2015
-    "atan2",
-]
-
-OPTIONAL_STDFUNCS = OPTIONAL_STDFUNCS_BASE[:]
-OPTIONAL_STDFUNCS += [f + 'f' for f in OPTIONAL_STDFUNCS_BASE]
-OPTIONAL_STDFUNCS += [f + 'l' for f in OPTIONAL_STDFUNCS_BASE]
 
 OPTIONAL_LOCALE_FUNCS = ["strtold_l"]
 OPTIONAL_FILE_FUNCS = ["ftello", "fseeko", "fallocate"]
 OPTIONAL_MISC_FUNCS = ["backtrace", "madvise"]
 
+# variable attributes tested via "int %s a" % attribute
+OPTIONAL_VARIABLE_ATTRIBUTES = ["__thread", "__declspec(thread)"]
+
+# Subset of OPTIONAL_*_FUNCS which may already have HAVE_* defined by Python.h
+OPTIONAL_FUNCS_MAYBE = [
+    "ftello", "fseeko"
+    ]
+
+# TODO: make these mandatory and use BLOCK_ macros rather than HAVE_ macros
+# in npy_config.h and throughout the code
+C99_COMPLEX_TYPES = [
+    'complex double', 'complex float', 'complex long double'
+    ]
+C99_COMPLEX_FUNCS = [
+    "cabs", "cacos", "cacosh", "carg", "casin", "casinh", "catan",
+    "catanh", "ccos", "ccosh", "cexp", "cimag", "clog", "conj", "cpow",
+    "cproj", "creal", "csin", "csinh", "csqrt", "ctan", "ctanh"
+    ]
 
 OPTIONAL_HEADERS = [
 # sse headers only enabled automatically on amd64/x32 builds
@@ -237,23 +241,6 @@ OPTIONAL_FUNCTION_ATTRIBUTES_WITH_INTRINSICS = [('__attribute__((target("avx2,fm
                                 _mm_mask_storeu_epi8(NULL, 0xFF, _mm_broadcastmb_epi64(temp))',
                                 'immintrin.h'),
                                 ]
-
-# variable attributes tested via "int %s a" % attribute
-OPTIONAL_VARIABLE_ATTRIBUTES = ["__thread", "__declspec(thread)"]
-
-# Subset of OPTIONAL_*_FUNCS which may already have HAVE_* defined by Python.h
-OPTIONAL_FUNCS_MAYBE = [
-    "ftello", "fseeko"
-    ]
-
-C99_COMPLEX_TYPES = [
-    'complex double', 'complex float', 'complex long double'
-    ]
-C99_COMPLEX_FUNCS = [
-    "cabs", "cacos", "cacosh", "carg", "casin", "casinh", "catan",
-    "catanh", "ccos", "ccosh", "cexp", "cimag", "clog", "conj", "cpow",
-    "cproj", "creal", "csin", "csinh", "csqrt", "ctan", "ctanh"
-    ]
 
 def fname2def(name):
     return "HAVE_%s" % name.upper()

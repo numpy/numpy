@@ -83,9 +83,32 @@ static const npy_uint64 MAGIC64[] = {0x5555555555555555ull, 0x3333333333333333ul
 
 /*
  *****************************************************************************
- **                     BASIC MATH FUNCTIONS                                **
+ **                    BLOCKLIST-ABLE BASIC MATH FUNCTIONS                  **
  *****************************************************************************
  */
+
+/* The double variant for these functions are never blocked */
+
+NPY_INPLACE double npy_exp(double x){
+    return exp(x);
+}
+
+NPY_INPLACE double npy_pow(double x, double y)
+{
+    return pow(x, y);
+}
+
+NPY_INPLACE double npy_sqrt(double x)
+{
+    return sqrt(x);
+}
+
+NPY_INPLACE double npy_modf(double x, double *iptr)
+{
+    return modf(x, iptr);
+}
+
+/* The following functions can be blocked, even for doubles */
 
 /* Original code by Konrad Hinsen.  */
 /* Taken from FreeBSD mlib, adapted for numpy
@@ -96,7 +119,7 @@ static const npy_uint64 MAGIC64[] = {0x5555555555555555ull, 0x3333333333333333ul
  */
 NPY_INPLACE double npy_log2(double x)
 {
-#ifdef HAVE_LOG2
+#ifndef BLOCK_LOG2
     return log2(x);
 #else
     if (!npy_isfinite(x) || x <= 0.) {
@@ -136,7 +159,7 @@ NPY_INPLACE double npy_log2(double x)
 #define NPY_DBL_EPSILON 1.2246467991473531772E-16
 NPY_INPLACE double npy_atan2(double y, double x)
 {
-#ifdef HAVE_ATAN2
+#ifndef BLOCK_ATAN2
     return atan2(y, x);
 #else
     npy_int32 k, m, iy, ix, hx, hy;
@@ -220,7 +243,7 @@ NPY_INPLACE double npy_atan2(double y, double x)
 
 NPY_INPLACE double npy_hypot(double x, double y)
 {
-#ifdef HAVE_HYPOT
+#ifndef BLOCK_HYPOT
     return hypot(x, y);
 #else
     double yx;
@@ -296,12 +319,10 @@ NPY_INPLACE double npy_hypot(double x, double y)
 #define WORKAROUND_APPLE_TRIG_BUG 0
 #endif
 
-/* mandatory C99 functions */
-
 /**begin repeat1
- * #kind = sin,cos,tan,sinh,cosh,tanh,fabs,floor,ceil,rint,trunc,sqrt,log10,
- *         log,exp,expm1,asin,acos,atan,asinh,acosh,atanh,log1p,exp2#
- * #TRIG_WORKAROUND = WORKAROUND_APPLE_TRIG_BUG*3, 0*21#
+ * #kind = sin,cos,tan,sinh,cosh,tanh,fabs,floor,ceil,rint,trunc,log10,
+ *         log,expm1,asin,acos,atan,asinh,acosh,atanh,log1p,exp2#
+ * #TRIG_WORKAROUND = WORKAROUND_APPLE_TRIG_BUG*3, 0*19#
  */
 NPY_INPLACE @type@ npy_@kind@@c@(@type@ x)
 {
@@ -329,12 +350,6 @@ NPY_INPLACE @type@ npy_@kind@@c@(@type@ x, @type@ y)
 }
 /**end repeat1**/
 
-
-NPY_INPLACE @type@ npy_modf@c@(@type@ x, @type@ *iptr)
-{
-    return NPY__FP_SFX(modf)(x, iptr);
-}
-
 NPY_INPLACE @type@ npy_ldexp@c@(@type@ x, int exp)
 {
     return NPY__FP_SFX(ldexp)(x, exp);
@@ -352,13 +367,13 @@ NPY_INPLACE @type@ npy_cbrt@c@(@type@ x)
 
 /**end repeat**/
 
-/* Optional C99 functions */
+/* Blocklist-able C99 functions */
 
 /**begin repeat
- * #type = npy_longdouble, npy_float#
- * #TYPE = LONGDOUBLE, FLOAT#
- * #c = l,f#
- * #C = L,F#
+ * #type = npy_float,npy_longdouble#
+ * #TYPE = FLOAT,LONGDOUBLE#
+ * #c = f,l#
+ * #C = F,L#
  */
 #undef NPY__FP_SFX
 #if NPY_SIZEOF_@TYPE@ == NPY_SIZEOF_DOUBLE
@@ -368,21 +383,21 @@ NPY_INPLACE @type@ npy_cbrt@c@(@type@ x)
 #endif
 
 /**begin repeat1
- * #kind = log2#
- * #KIND = LOG2#
+ * #kind = exp,log2,sqrt#
+ * #KIND = EXP,LOG2,SQRT#
  */
 
 #ifdef @kind@@c@
 #undef @kind@@c@
 #endif
-#ifndef HAVE_@KIND@@C@
+#ifdef BLOCK_@KIND@@C@
 NPY_INPLACE @type@ npy_@kind@@c@(@type@ x)
 {
     return (@type@) npy_@kind@((double)x);
 }
 #endif
 
-#ifdef HAVE_@KIND@@C@
+#ifndef BLOCK_@KIND@@C@
 NPY_INPLACE @type@ npy_@kind@@c@(@type@ x)
 {
     return NPY__FP_SFX(@kind@)(x);
@@ -399,20 +414,42 @@ NPY_INPLACE @type@ npy_@kind@@c@(@type@ x)
 #ifdef @kind@@c@
 #undef @kind@@c@
 #endif
-#ifndef HAVE_@KIND@@C@
+#ifdef BLOCK_@KIND@@C@
 NPY_INPLACE @type@ npy_@kind@@c@(@type@ x, @type@ y)
 {
     return (@type@) npy_@kind@((double)x, (double) y);
 }
 #endif
 
-#ifdef HAVE_@KIND@@C@
+#ifndef BLOCK_@KIND@@C@
 NPY_INPLACE @type@ npy_@kind@@c@(@type@ x, @type@ y)
 {
     return NPY__FP_SFX(@kind@)(x, y);
 }
 #endif
 /**end repeat1**/
+
+#ifdef modf@c@
+#undef modf@c@
+#endif
+#ifdef BLOCK_MODF@C@
+NPY_INPLACE @type@ npy_modf@c@(@type@ x, @type@ *iptr)
+{
+    double niptr;
+    double y = npy_modf((double)x, &niptr);
+    *iptr = (@type@) niptr;
+    return (@type@) y;
+}
+#endif
+
+#ifndef BLOCK_MODF@C@
+NPY_INPLACE @type@ npy_modf@c@(@type@ x, @type@ *iptr)
+{
+    return NPY__FP_SFX(modf)(x, iptr);
+}
+#endif
+
+
 /**end repeat**/
 
 
@@ -753,9 +790,3 @@ npy_popcount@c@(npy_@type@ a)
 }
 /**end repeat**/
 
-/* XXX: will moving this to a define break anything? */
-
-NPY_INPLACE double npy_pow(double x, double y)
-{
-    return pow(x, y);
-}
