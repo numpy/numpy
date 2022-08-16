@@ -1,5 +1,5 @@
 * Support for Visual Studio 2015 has been removed. Please update to at least
-Visual Studio 2019.
+  Visual Studio 2019.
 
 * Support for the Windows Interix POSIX interop layer has been removed.
 
