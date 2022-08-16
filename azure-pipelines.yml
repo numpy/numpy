@@ -198,7 +198,11 @@ stages:
     - script: python runtests.py -g --refguide-check
       displayName: 'Run Refguide Check'
       condition: eq(variables['USE_OPENBLAS'], '1')
-    - script: python runtests.py -n --mode=full -- -rsx --junitxml=junit/test-results.xml
+    - script: |
+        echo LIBRARY_PATH ${LIBRARY_PATH}
+        echo ls LIBRARY_PATH
+        ls ${LIBRARY_PATH}
+        python runtests.py -n --mode=full -- -rsx --junitxml=junit/test-results.xml
       displayName: 'Run Full NumPy Test Suite'
       condition: eq(variables['USE_OPENBLAS'], '1')
       env:
