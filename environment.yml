@@ -23,7 +23,7 @@ dependencies:
   - typing_extensions>=4.2.0
   # For building docs
   - sphinx>=4.5.0
-  - sphinx-panels
+  - sphinx-design
   - numpydoc=1.4.0
   - ipython
   - scipy

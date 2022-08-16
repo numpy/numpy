@@ -2,7 +2,7 @@
 sphinx>=4.5.0
 numpydoc==1.4
 pydata-sphinx-theme==0.9.0
-sphinx-panels
+sphinx-design
 ipython!=8.1.0
 scipy
 matplotlib

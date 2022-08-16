@@ -44,7 +44,7 @@ objects to be treated as NumPy arrays whenever possible. When NumPy functions
 encounter a foreign object, they will try (in order):
 
 1. The buffer protocol, described :py:doc:`in the Python C-API documentation
-   <c-api/buffer>`.
+   <python:c-api/buffer>`.
 2. The ``__array_interface__`` protocol, described
    :ref:`in this page <arrays.interface>`. A precursor to Python's buffer
    protocol, it defines a way to access the contents of a NumPy array from other

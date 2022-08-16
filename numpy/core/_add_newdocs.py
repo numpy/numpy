@@ -1756,9 +1756,9 @@ add_newdoc('numpy.core.multiarray', 'arange',
     In such cases, the use of `numpy.linspace` should be preferred.
 
     The built-in :py:class:`range` generates :std:doc:`Python built-in integers
-    that have arbitrary size <c-api/long>`, while `numpy.arange` produces
-    `numpy.int32` or `numpy.int64` numbers. This may result in incorrect
-    results for large integer values::
+    that have arbitrary size <python:c-api/long>`, while `numpy.arange`
+    produces `numpy.int32` or `numpy.int64` numbers. This may result in
+    incorrect results for large integer values::
 
       >>> power = 40
       >>> modulo = 10000
