@@ -71,7 +71,7 @@
 #endif
 
 /* MSVC _hypot messes with fp precision mode on 32-bit, see gh-9567 */
-#if defined(_MSC_VER) !defined(_WIN64)
+#if defined(_MSC_VER) && !defined(_WIN64)
 
 #undef HAVE_CABS
 #undef HAVE_CABSF
