@@ -11,9 +11,8 @@ Facility preparation
 Before beginning to make a release, use the ``*_requirements.txt`` files to
 ensure that you have the needed software. Most software can be installed with
 pip, but some will require apt-get, dnf, or whatever your system uses for
-software. Note that at this time the documentation cannot be built with Python
-3.10, for that use 3.8-3.9 instead. You will also need a GitHub personal access
-token (PAT) to push the documentation. There are a few ways to streamline things.
+software. You will also need a GitHub personal access token (PAT) to push the
+documentation. There are a few ways to streamline things:
 
 - Git can be set up to use a keyring to store your GitHub personal access token.
   Search online for the details.
@@ -24,12 +23,27 @@ token (PAT) to push the documentation. There are a few ways to streamline things
 Release preparation
 ===================
 
+Add/drop Python versions
+------------------------
+
+When adding or dropping Python versions, three files need to be edited:
+
+- .github/workflows/wheels.yml  # for github cibuildwheel
+- .travis.yml  # for cibuildwheel aarch64 builds
+- setup.py  # for classifier and minimum version check.
+
+Make these changes in an ordinary PR against main and backport if necessary.
+Using the `BLD:` prefix (build label) for the commit summary will cause the
+wheel builds to be run so that the changes will be tested, We currently release
+wheels for new Python versions after the first Python rc once manylinux and
+cibuildwheel support it. For Python 3.11 we were able to release within a week
+of the rc1 announcement.
+
 Backport Pull Requests
 ----------------------
 
 Changes that have been marked for this release must be backported to the
 maintenance/1.21.x branch.
-
 
 Update release documentation
 ----------------------------
