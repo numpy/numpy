@@ -788,7 +788,7 @@ def argpartition(a, kth, axis=-1, kind='introselect', order=None):
     kth : int or sequence of ints
         Element index to partition by. The k-th element will be in its
         final sorted position and all smaller elements will be moved
-        before it and all larger elements behind it. The order all
+        before it and all larger elements behind it. The order of all
         elements in the partitions is undefined. If provided with a
         sequence of k-th it will partition all of them into their sorted
         position at once.
