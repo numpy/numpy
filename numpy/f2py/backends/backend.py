@@ -16,13 +16,13 @@ class Backend(ABC):
  	"""
 
 	def __init__(self, module_name, fortran_compiler: str, c_compiler: str,
-        f77exec: Path, f90exec: Path, f77_flags: list[str],
-        f90_flags: list[str], include_path: list[Path],
-        include_dirs: list[Path], external_resources: list[str],
-        linker_dirs: list[Path], linker_libname: list[str],
-        macros: list[tuple[str, str]], unset_macros: list[str],
-        debug: bool, opt_flags: list[str], arch_flags: list[str],
-        no_opt: bool, no_arch: bool) -> None:
+				f77exec: Path, f90exec: Path, f77_flags: list[str],
+				f90_flags: list[str], include_paths: list[Path],
+				include_dirs: list[Path], external_resources: list[str],
+				linker_libpath: list[Path], linker_libname: list[str],
+				define_macros: list[tuple[str, str]], undef_macros: list[str],
+				debug: bool, opt_flags: list[str], arch_flags: list[str],
+				no_opt: bool, no_arch: bool) -> None:
 		"""
 		The class is initialized with f2py compile options.
 		The parameters are mappings of f2py compilation flags.
@@ -43,7 +43,7 @@ class Backend(ABC):
 			List of flags to pass to the fortran compiler for Fortran 77 files (--f77flags)
 		f90_flags : list
 			List of flags to pass to the fortran compiler for Fortran 90 and above files (--f90flags)
-		include_path : list
+		include_paths : list
 			Search include files from given directories (--include-paths)
 		include_dirs : list
 			Append directory <dir> to the list of directories searched for include files. (-I<dir>)
@@ -51,7 +51,11 @@ class Backend(ABC):
 			Link the extension module with <resource> (--link-<resource>)
 		linker_libname : list
 			Use the library when linking. (-l<libname>)
-		linker_dirs : list
+		define_macros : list
+			Define <macro> to <value> if present else define <macro> to true (-D)
+		undef_macros : list
+			Undefine <macro> (-U)
+		linker_libpath : list
 			Add directory to the list of directories to be searched for `-l`. (-L)
 		opt_flags : list
 			Optimization flags to pass to the compiler. (--opt)
@@ -72,13 +76,13 @@ class Backend(ABC):
 		self.f90exec = f90exec
 		self.f77_flags = f77_flags
 		self.f90_flags = f90_flags
-		self.include_path = include_path
+		self.include_paths = include_paths
 		self.include_dirs = include_dirs
 		self.external_resources = external_resources
-		self.linker_dirs = linker_dirs
+		self.linker_libpath = linker_libpath
 		self.linker_libname = linker_libname
-		self.macros = macros
-		self.unset_macros = unset_macros
+		self.define_macros = define_macros
+		self.undef_macros = undef_macros
 		self.debug = debug
 		self.opt_flags = opt_flags
 		self.arch_flags = arch_flags
