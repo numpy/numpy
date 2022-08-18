@@ -178,7 +178,7 @@ class IncludePathAction(argparse.Action):
 class ParseStringFlags(argparse.Action):
     """Custom action to parse and store flags passed as string
     Ex-
-    f2py --opt="-DDEBUG=1 -O" will be stored as ["-DDEBUG=1", -O]"""
+    f2py --opt="-DDEBUG=1 -O" will be stored as ["-DDEBUG=1", "-O"]"""
 
     def __init__(self, option_strings, dest, nargs="1", **kwargs):
         """Initialization of the flag, mimics the parent"""
