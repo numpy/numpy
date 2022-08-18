@@ -678,12 +678,12 @@ def partition(a, kth, axis=-1, kind='introselect', order=None):
     Return a partitioned copy of an array.
 
     Creates a copy of the array with its elements rearranged in such a
-    way that the value of the element in k-th position is in the
-    position it would be in a sorted array.  In the partitioned array, all
-    elements before the kth element are less than or equal to that element,
-    and all the elements after the kth element are greater than or equal
-    to that element.  The ordering of the elements in the two partitions
-    is undefined.
+    way that the value of the element in k-th position is in the position
+    the value would be in a sorted array.  In the partitioned array, all
+    elements before the k-th element are less than or equal to that
+    element, and all the elements after the k-th element are greater than
+    or equal to that element.  The ordering of the elements in the two
+    partitions is undefined.
 
     .. versionadded:: 1.8.0
 
