@@ -50,7 +50,11 @@ using dispatch_scalar = typename std::conditional<std::is_scalar<typ>::value, sc
     } while (0)
 
 #if 0
+#if defined HAVE_EXECINFO_H
 #include <execinfo.h>
+#elif defined HAVE_LIBUNWIND_H
+#include <libunwind.h>
+#endif
 void
 dbg_stack_trace()
 {
