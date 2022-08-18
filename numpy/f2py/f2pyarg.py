@@ -536,7 +536,7 @@ build_helpers.add_argument(
     "--library-path",
     type=pathlib.Path,
     metavar="/path/to/lib/",
-    nargs="*",
+    nargs=1,
     action="extend",
     help="Path to library"
 )
@@ -563,9 +563,9 @@ build_helpers.add_argument(
 build_helpers.add_argument(
     "-l",
     "--library_name",
-    type=pathlib.Path,
+    type=str,
     metavar="<libname>",
-    nargs="*",
+    nargs=1,
     action="extend",
     help="Library name"
 )
