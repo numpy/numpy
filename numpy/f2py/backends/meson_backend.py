@@ -55,28 +55,32 @@ class MesonTemplate:
 
 class MesonBackend(Backend):
 
-	def __init__(self, module_name: str = 'untitled', fortran_compiler: str = None, c_compiler: str = None, f77exec: Path = None, f90exec: Path = None, f77_flags: list[str] = None, f90_flags: list[str] = None, include_path: list[Path] = None, include_dirs: list[Path] = None, external_resources: list[str] = None, linker_dirs: list[Path] = None, linker_libname: list[str] = None, macros: list[tuple[str, str]] = None, unset_macros: list[str] = None, debug: bool = False, opt_flags: list[str] = None, arch_flags: list[str] = None, no_opt: bool = False, no_arch: bool = False) -> None:
+	def __init__(self, module_name: str = 'untitled', fortran_compiler: str = None, c_compiler: str = None, f77exec: Path = None, f90exec: Path = None, f77_flags: list[str] = None, f90_flags: list[str] = None, include_paths: list[Path] = None, include_dirs: list[Path] = None, external_resources: list[str] = None, linker_libpath: list[Path] = None, linker_libname: list[str] = None, define_macros: list[tuple[str, str]] = None, undef_macros: list[str] = None, debug: bool = False, opt_flags: list[str] = None, arch_flags: list[str] = None, no_opt: bool = False, no_arch: bool = False) -> None:
 		if f77_flags is None:
 			f77_flags = []
-		if include_path is None:
-			include_path = []
+		if include_paths is None:
+			include_paths = []
 		if include_dirs is None:
 			include_dirs = []
 		if external_resources is None:
 			external_resources = []
-		if linker_dirs is None:
-			linker_dirs = []
+		if linker_libpath is None:
+			linker_libpath = []
 		if linker_libname is None:
 			linker_libname = []
-		if macros is None:
-			macros = []
-		if unset_macros is None:
-			unset_macros = []
+		if define_macros is None:
+			define_macros = []
+		if undef_macros is None:
+			undef_macros = []
+		if f77_flags is None:
+			f77_flags = []
+		if f90_flags is None:
+			f90_flags = []
 		if opt_flags is None:
 			opt_flags = []
 		if arch_flags is None:
 			arch_flags = []
-		super().__init__(module_name, fortran_compiler, c_compiler, f77exec, f90exec, f77_flags, f90_flags, include_path, include_dirs, external_resources, linker_dirs, linker_libname, macros, unset_macros, debug, opt_flags, arch_flags, no_opt, no_arch)
+		super().__init__(module_name, fortran_compiler, c_compiler, f77exec, f90exec, f77_flags, f90_flags, include_paths, include_dirs, external_resources, linker_libpath, linker_libname, define_macros, undef_macros, debug, opt_flags, arch_flags, no_opt, no_arch)
 
 		self.c_wrapper: Path = None
 		self.fortran_sources: list[Path] = []
