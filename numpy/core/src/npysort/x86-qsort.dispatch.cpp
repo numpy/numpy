@@ -648,11 +648,7 @@ partition_vec(type_t *arr, npy_intp left, npy_intp right, const zmm_t curr_vec,
     /* which elements are larger than the pivot */
     __mmask16 gt_mask = vtype::ge(curr_vec, pivot_vec);
     npy_int amount_gt_pivot = _mm_popcnt_u32((npy_int)gt_mask);
-#if defined(_MSC_VER) && _MSC_VER < 1922
-    vtype::mask_compressstoreu(arr + left, ~gt_mask, curr_vec);
-#else
-    vtype::mask_compressstoreu(arr + left, _knot_mask16(gt_mask), curr_vec);
-#endif
+    vtype::mask_compressstoreu(arr + left, _mm512_knot(gt_mask), curr_vec);
     vtype::mask_compressstoreu(arr + right - amount_gt_pivot, gt_mask,
                                curr_vec);
     *smallest_vec = vtype::min(curr_vec, *smallest_vec);
