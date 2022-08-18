@@ -1,0 +1,6 @@
+New function `np.show_runtime`
+------------------------------
+
+A new function `np.show_runtime` has been added to display the runtime
+information of the machine in addition to `np.show_config` which displays
+the build-related information.
