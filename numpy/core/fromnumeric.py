@@ -679,10 +679,11 @@ def partition(a, kth, axis=-1, kind='introselect', order=None):
 
     Creates a copy of the array with its elements rearranged in such a
     way that the value of the element in k-th position is in the
-    position it would be in a sorted array. All elements smaller than
-    the k-th element are moved before this element and all equal or
-    greater are moved behind it. The ordering of the elements in the two
-    partitions is undefined.
+    position it would be in a sorted array.  In the partitioned array, all
+    elements before the kth element are less than or equal to that element,
+    and all the elements after the kth element are greater than or equal
+    to that element.  The ordering of the elements in the two partitions
+    is undefined.
 
     .. versionadded:: 1.8.0
 
@@ -749,13 +750,30 @@ def partition(a, kth, axis=-1, kind='introselect', order=None):
 
     Examples
     --------
-    >>> a = np.array([3, 4, 2, 1])
-    >>> np.partition(a, 3)
-    array([2, 1, 3, 4])
+    >>> a = np.array([7, 1, 7, 7, 1, 5, 7, 2, 3, 2, 6, 2, 3, 0])
+    >>> p = np.partition(a, 4)
+    >>> p
+    array([0, 1, 2, 1, 2, 5, 2, 3, 3, 6, 7, 7, 7, 7])
 
-    >>> np.partition(a, (1, 3))
-    array([1, 2, 3, 4])
+    ``p[4]`` is 2;  all elements in ``p[:4]`` are less than or equal
+    to ``p[4]``, and all elements in ``p[5:]`` are greater than or
+    equal to ``p[4]``.  The partition is::
 
+        [0, 1, 2, 1], [2], [5, 2, 3, 3, 6, 7, 7, 7, 7]
+
+    The next example shows the use of multiple values passed to `kth`.
+
+    >>> p2 = np.partition(a, (4, 8))
+    >>> p2
+    array([0, 1, 2, 1, 2, 3, 3, 2, 5, 6, 7, 7, 7, 7])
+
+    ``p2[4]`` is 2  and ``p2[8]`` is 5.  All elements in ``p2[:4]``
+    are less than or equal to ``p2[4]``, all elements in ``p2[5:8]``
+    are greater than or equal to ``p2[4]`` and less than or equal to
+    ``p2[8]``, and all elements in ``p2[9:]`` are greater than or
+    equal to ``p2[8]``.  The partition is::
+
+        [0, 1, 2, 1], [2], [3, 3, 2], [5], [6, 7, 7, 7, 7]
     """
     if axis is None:
         # flatten returns (1, N) for np.matrix, so always use the last axis
