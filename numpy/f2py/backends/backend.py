@@ -10,9 +10,6 @@ class Backend(ABC):
 	"""
  	Superclass for backend compilation plugins to extend.
  
-	Parameters
-	----------
-	
  	"""
 
 	def __init__(self, module_name, fortran_compiler: str, c_compiler: str,
