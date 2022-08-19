@@ -8,21 +8,36 @@ This guide is an overview and explains the important features;
 details are found in :ref:`reference`.
 
 .. toctree::
+   :caption: Getting started
    :maxdepth: 1
 
    whatisnumpy
    Installation <https://numpy.org/install/>
    quickstart
    absolute_beginners
+
+.. toctree::
+   :caption: Fundamentals and usage
+   :maxdepth: 2
+
    basics
-   misc
+
+.. toctree::
+   :maxdepth: 1
+
    numpy-for-matlab-users
-   building
-   c-info
    NumPy Tutorials <https://numpy.org/numpy-tutorials/features.html>
    howtos_index
-   depending_on_numpy
 
+.. toctree::
+   :caption: Advanced usage and interoperability
+   :maxdepth: 1
+
+   building
+   c-info
+   ../f2py/index
+   ../dev/underthehood
+   basics.interoperability
 
 .. Links to these files are placed directly in the top-level html
    (doc/source/_templates/indexcontent.html, which appears for the URLs
@@ -32,10 +47,8 @@ details are found in :ref:`reference`.
 
 .. toctree::
    :hidden:
+   :caption: Extras
 
-   ../f2py/index
    ../glossary
-   ../dev/underthehood
-   ../bugs
    ../release
    ../license
