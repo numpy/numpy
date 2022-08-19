@@ -29,7 +29,7 @@
 #endif
 
 /* Disable broken MS math functions */
-#if (defined(_MSC_VER) && (_MSC_VER < 1900)) || defined(__MINGW32_VERSION)
+#if defined(__MINGW32_VERSION)
 
 #undef HAVE_ATAN2
 #undef HAVE_ATAN2F
@@ -41,7 +41,7 @@
 
 #endif
 
-#if defined(_MSC_VER) && (_MSC_VER >= 1900)
+#if defined(_MSC_VER)
 
 #undef HAVE_CASIN
 #undef HAVE_CASINF
@@ -71,7 +71,7 @@
 #endif
 
 /* MSVC _hypot messes with fp precision mode on 32-bit, see gh-9567 */
-#if defined(_MSC_VER) && (_MSC_VER >= 1900) && !defined(_WIN64)
+#if defined(_MSC_VER) && !defined(_WIN64)
 
 #undef HAVE_CABS
 #undef HAVE_CABSF

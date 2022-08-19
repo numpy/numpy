@@ -1,0 +1,4 @@
+* Support for Visual Studio 2015 and earlier has been removed.
+
+* Support for the Windows Interix POSIX interop layer has been removed.
+
