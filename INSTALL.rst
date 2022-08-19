@@ -75,7 +75,8 @@ skipped when running the test suite if no Fortran compiler is available.  For
 building Scipy a Fortran compiler is needed though, so we include some details
 on Fortran compilers in the rest of this section.
 
-On OS X and Linux, all common compilers will work.
+On OS X and Linux, all common compilers will work. The minimum supported GCC
+version is 6.5.
 
 For Fortran, ``gfortran`` works, ``g77`` does not.  In case ``g77`` is
 installed then ``g77`` will be detected and used first.  To explicitly select
