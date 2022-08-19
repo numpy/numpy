@@ -384,8 +384,8 @@ NPY_FINLINE npyv_s64 npyv_divc_s64(npyv_s64 a, const npyv_s64x3 divisor)
         const npyv_u32 idx2 = _mm512_set_epi32(3, 2, 1, 0, 7, 6, 5, 4, 11, 10, 9, 8, 15, 14, 13, 12);
         npyv_u32 a1 = _mm512_max_epu32(a, _mm512_permutex2var_epi32(a, idx1, a));
         npyv_u32 a2 = _mm512_max_epu32(a1, _mm512_permutex2var_epi32(a1, idx2, a1));
-        npyv_u32 a3 = _mm512_max_epu32(a2, _mm512_shuffle_epi32(a2, (1<<6 | 0<<4 | 3<<2 | 2)));
-        npyv_u32 a4 = _mm512_max_epu32(a3, _mm512_shuffle_epi32(a3, (2<<6 | 3<<4 | 0<<2 | 1)));
+        npyv_u32 a3 = _mm512_max_epu32(a2, _mm512_shuffle_epi32(a2, (_MM_PERM_ENUM)(1<<6 | 0<<4 | 3<<2 | 2)));
+        npyv_u32 a4 = _mm512_max_epu32(a3, _mm512_shuffle_epi32(a3, (_MM_PERM_ENUM)(2<<6 | 3<<4 | 0<<2 | 1)));
         return _mm_cvtsi128_si32(_mm512_extracti32x4_epi32(a4, 0x00));
     }
 
@@ -395,8 +395,8 @@ NPY_FINLINE npyv_s64 npyv_divc_s64(npyv_s64 a, const npyv_s64x3 divisor)
         const npyv_u32 idx2 = _mm512_set_epi32(3, 2, 1, 0, 7, 6, 5, 4, 11, 10, 9, 8, 15, 14, 13, 12);
         npyv_s32 a1 = _mm512_max_epi32(a, _mm512_permutex2var_epi32(a, idx1, a));
         npyv_s32 a2 = _mm512_max_epi32(a1, _mm512_permutex2var_epi32(a1, idx2, a1));
-        npyv_s32 a3 = _mm512_max_epi32(a2, _mm512_shuffle_epi32(a2, (1<<6 | 0<<4 | 3<<2 | 2)));
-        npyv_s32 a4 = _mm512_max_epi32(a3, _mm512_shuffle_epi32(a3, (2<<6 | 3<<4 | 0<<2 | 1)));
+        npyv_s32 a3 = _mm512_max_epi32(a2, _mm512_shuffle_epi32(a2, (_MM_PERM_ENUM)(1<<6 | 0<<4 | 3<<2 | 2)));
+        npyv_s32 a4 = _mm512_max_epi32(a3, _mm512_shuffle_epi32(a3, (_MM_PERM_ENUM)(2<<6 | 3<<4 | 0<<2 | 1)));
         return _mm_cvtsi128_si32(_mm512_extracti32x4_epi32(a4, 0x00));
     }
 
@@ -406,8 +406,8 @@ NPY_FINLINE npyv_s64 npyv_divc_s64(npyv_s64 a, const npyv_s64x3 divisor)
         const npyv_u32 idx2 = _mm512_set_epi32(3, 2, 1, 0, 7, 6, 5, 4, 11, 10, 9, 8, 15, 14, 13, 12);
         npyv_f32 a1 = _mm512_max_ps(a, _mm512_permutex2var_ps(a, idx1, a));
         npyv_f32 a2 = _mm512_max_ps(a1, _mm512_permutex2var_ps(a1, idx2, a1));
-        npyv_f32 a3 = _mm512_max_ps(a2, _mm512_shuffle_ps(a2, a2, (1<<6 | 0<<4 | 3<<2 | 2)));
-        npyv_f32 a4 = _mm512_max_ps(a3, _mm512_shuffle_sp(a3, a3, (2<<6 | 3<<4 | 0<<2 | 1)));
+        npyv_f32 a3 = _mm512_max_ps(a2, _mm512_shuffle_ps(a2, a2, (_MM_PERM_ENUM)(1<<6 | 0<<4 | 3<<2 | 2)));
+        npyv_f32 a4 = _mm512_max_ps(a3, _mm512_shuffle_ps(a3, a3, (_MM_PERM_ENUM)(2<<6 | 3<<4 | 0<<2 | 1)));
         return _mm_cvtss_f32(_mm512_extractf32x4_ps(a4, 0x00));
     }
 
@@ -417,8 +417,8 @@ NPY_FINLINE npyv_s64 npyv_divc_s64(npyv_s64 a, const npyv_s64x3 divisor)
         const npyv_u32 idx2 = _mm512_set_epi32(3, 2, 1, 0, 7, 6, 5, 4, 11, 10, 9, 8, 15, 14, 13, 12);
         npyv_u32 a1 = _mm512_min_epu32(a, _mm512_permutex2var_epi32(a, idx1, a));
         npyv_u32 a2 = _mm512_min_epu32(a1, _mm512_permutex2var_epi32(a1, idx2, a1));
-        npyv_u32 a3 = _mm512_min_epu32(a2, _mm512_shuffle_epi32(a2, (1<<6 | 0<<4 | 3<<2 | 2)));
-        npyv_u32 a4 = _mm512_min_epu32(a3, _mm512_shuffle_epi32(a3, (2<<6 | 3<<4 | 0<<2 | 1)));
+        npyv_u32 a3 = _mm512_min_epu32(a2, _mm512_shuffle_epi32(a2, (_MM_PERM_ENUM)(1<<6 | 0<<4 | 3<<2 | 2)));
+        npyv_u32 a4 = _mm512_min_epu32(a3, _mm512_shuffle_epi32(a3, (_MM_PERM_ENUM)(2<<6 | 3<<4 | 0<<2 | 1)));
         return _mm_cvtsi128_si32(_mm512_extracti32x4_epi32(a4, 0x00));
     }
 
@@ -428,8 +428,8 @@ NPY_FINLINE npyv_s64 npyv_divc_s64(npyv_s64 a, const npyv_s64x3 divisor)
         const npyv_u32 idx2 = _mm512_set_epi32(3, 2, 1, 0, 7, 6, 5, 4, 11, 10, 9, 8, 15, 14, 13, 12);
         npyv_s32 a1 = _mm512_min_epi32(a, _mm512_permutex2var_epi32(a, idx1, a));
         npyv_s32 a2 = _mm512_min_epi32(a1, _mm512_permutex2var_epi32(a1, idx2, a1));
-        npyv_s32 a3 = _mm512_min_epi32(a2, _mm512_shuffle_epi32(a2, (1<<6 | 0<<4 | 3<<2 | 2)));
-        npyv_s32 a4 = _mm512_min_epi32(a3, _mm512_shuffle_epi32(a3, (2<<6 | 3<<4 | 0<<2 | 1)));
+        npyv_s32 a3 = _mm512_min_epi32(a2, _mm512_shuffle_epi32(a2, (_MM_PERM_ENUM)(1<<6 | 0<<4 | 3<<2 | 2)));
+        npyv_s32 a4 = _mm512_min_epi32(a3, _mm512_shuffle_epi32(a3, (_MM_PERM_ENUM)(2<<6 | 3<<4 | 0<<2 | 1)));
         return _mm_cvtsi128_si32(_mm512_extracti32x4_epi32(a4, 0x00));
     }
 
@@ -439,8 +439,8 @@ NPY_FINLINE npyv_s64 npyv_divc_s64(npyv_s64 a, const npyv_s64x3 divisor)
         const npyv_u32 idx2 = _mm512_set_epi32(3, 2, 1, 0, 7, 6, 5, 4, 11, 10, 9, 8, 15, 14, 13, 12);
         npyv_f32 a1 = _mm512_min_ps(a, _mm512_permutex2var_ps(a, idx1, a));
         npyv_f32 a2 = _mm512_min_ps(a1, _mm512_permutex2var_ps(a1, idx2, a1));
-        npyv_f32 a3 = _mm512_min_ps(a2, _mm512_shuffle_ps(a2, a2, (1<<6 | 0<<4 | 3<<2 | 2)));
-        npyv_f32 a4 = _mm512_min_ps(a3, _mm512_shuffle_sp(a3, a3, (2<<6 | 3<<4 | 0<<2 | 1)));
+        npyv_f32 a3 = _mm512_min_ps(a2, _mm512_shuffle_ps(a2, a2, (_MM_PERM_ENUM)(1<<6 | 0<<4 | 3<<2 | 2)));
+        npyv_f32 a4 = _mm512_min_ps(a3, _mm512_shuffle_ps(a3, a3, (_MM_PERM_ENUM)(2<<6 | 3<<4 | 0<<2 | 1)));
         return _mm_cvtss_f32(_mm512_extractf32x4_ps(a4, 0x00));
     }
 
