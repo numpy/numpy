@@ -104,9 +104,14 @@ specify the version with ``==`` to the lowest supported version. For your other
 build dependencies you can probably be looser, however it's still important to
 set lower and upper bounds for each dependency. It's fine to specify either a
 range or a specific version for a dependency like ``wheel`` or ``setuptools``.
-It's recommended to set the upper bound of the range to the latest already
-released version of ``wheel`` and ``setuptools`` - this prevents future
-releases from breaking your packages on PyPI.
+
+.. warning::
+
+    Note that ``setuptools`` does major releases often and those may contain
+    changes that break ``numpy.distutils``, which will *not* be updated anymore
+    for new ``setuptools`` versions. It is therefore recommended to set an
+    upper version bound in your build configuration for the last known version
+    of ``setuptools`` that works with your build.
 
 
 Runtime dependency & version ranges
