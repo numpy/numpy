@@ -204,6 +204,7 @@ stages:
       displayName: 'Run Full NumPy Test Suite'
       condition: eq(variables['USE_OPENBLAS'], '1')
       env:
+        # gfortran installed above adds -lSystem, so this is needed to find it (gh-22043)
         LIBRARY_PATH: /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib
     - bash: python tools/openblas_support.py --check_version
       displayName: 'Verify OpenBLAS version'
