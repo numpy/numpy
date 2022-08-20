@@ -4,6 +4,9 @@ project('${modulename}', 'c',
 
 add_languages('fortran')
 
+add_global_arguments(${c_global_args}, language: 'c')
+add_global_arguments(${fortran_global_args}, language: 'fortran')
+
 py_mod = import('python')
 py3 = py_mod.find_installation('python3')
 py3_dep = py3.dependency()
@@ -16,4 +19,4 @@ incdir_f2py = '${f2py_get_include}'
 
 inc_np = include_directories(incdir_numpy, incdir_f2py)
 
-py3.extension_module('${modulename}', '${c_wrapper}', ${source_list}, incdir_f2py+'/fortranobject.c', include_directories: [inc_np, ${include_directories_list}], dependencies : [py3_dep, ${dependencies_list}], install : true)
+py3.extension_module('${modulename}', '${c_wrapper}', ${source_list}, incdir_f2py+'/fortranobject.c', include_directories: [inc_np, ${include_directories_list}], dependencies : [py3_dep, ${dependencies_list}], link_args : '${linker_args}', c_args : [${macros}], install : true)
