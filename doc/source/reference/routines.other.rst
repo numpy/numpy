@@ -45,6 +45,7 @@ Utility
 
    get_include
    show_config
+   show_runtime
    deprecate
    deprecate_with_doc
    broadcast_shapes
