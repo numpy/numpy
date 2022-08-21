@@ -139,7 +139,7 @@
 #include <cygwin/version.h>
 #if CYGWIN_VERSION_DLL_MAJOR < 3003
 // rather than blocklist cabsl, hypotl, modfl, sqrtl, error out
-#error cygwin < 3003 not supported, please update
+#error cygwin < 3.3 not supported, please update
 #endif
 #endif
 
