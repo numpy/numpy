@@ -119,7 +119,7 @@ NPY_INPLACE double npy_modf(double x, double *iptr)
  */
 NPY_INPLACE double npy_log2(double x)
 {
-#ifndef BLOCK_LOG2
+#ifndef NPY_BLOCK_LOG2
     return log2(x);
 #else
     if (!npy_isfinite(x) || x <= 0.) {
@@ -159,7 +159,7 @@ NPY_INPLACE double npy_log2(double x)
 #define NPY_DBL_EPSILON 1.2246467991473531772E-16
 NPY_INPLACE double npy_atan2(double y, double x)
 {
-#ifndef BLOCK_ATAN2
+#ifndef NPY_BLOCK_ATAN2
     return atan2(y, x);
 #else
     npy_int32 k, m, iy, ix, hx, hy;
@@ -243,7 +243,7 @@ NPY_INPLACE double npy_atan2(double y, double x)
 
 NPY_INPLACE double npy_hypot(double x, double y)
 {
-#ifndef BLOCK_HYPOT
+#ifndef NPY_BLOCK_HYPOT
     return hypot(x, y);
 #else
     double yx;
@@ -390,14 +390,14 @@ NPY_INPLACE @type@ npy_cbrt@c@(@type@ x)
 #ifdef @kind@@c@
 #undef @kind@@c@
 #endif
-#ifdef BLOCK_@KIND@@C@
+#ifdef NPY_BLOCK_@KIND@@C@
 NPY_INPLACE @type@ npy_@kind@@c@(@type@ x)
 {
     return (@type@) npy_@kind@((double)x);
 }
 #endif
 
-#ifndef BLOCK_@KIND@@C@
+#ifndef NPY_BLOCK_@KIND@@C@
 NPY_INPLACE @type@ npy_@kind@@c@(@type@ x)
 {
     return NPY__FP_SFX(@kind@)(x);
@@ -414,14 +414,14 @@ NPY_INPLACE @type@ npy_@kind@@c@(@type@ x)
 #ifdef @kind@@c@
 #undef @kind@@c@
 #endif
-#ifdef BLOCK_@KIND@@C@
+#ifdef NPY_BLOCK_@KIND@@C@
 NPY_INPLACE @type@ npy_@kind@@c@(@type@ x, @type@ y)
 {
     return (@type@) npy_@kind@((double)x, (double) y);
 }
 #endif
 
-#ifndef BLOCK_@KIND@@C@
+#ifndef NPY_BLOCK_@KIND@@C@
 NPY_INPLACE @type@ npy_@kind@@c@(@type@ x, @type@ y)
 {
     return NPY__FP_SFX(@kind@)(x, y);
@@ -432,7 +432,7 @@ NPY_INPLACE @type@ npy_@kind@@c@(@type@ x, @type@ y)
 #ifdef modf@c@
 #undef modf@c@
 #endif
-#ifdef BLOCK_MODF@C@
+#ifdef NPY_BLOCK_MODF@C@
 NPY_INPLACE @type@ npy_modf@c@(@type@ x, @type@ *iptr)
 {
     double niptr;
@@ -442,7 +442,7 @@ NPY_INPLACE @type@ npy_modf@c@(@type@ x, @type@ *iptr)
 }
 #endif
 
-#ifndef BLOCK_MODF@C@
+#ifndef NPY_BLOCK_MODF@C@
 NPY_INPLACE @type@ npy_modf@c@(@type@ x, @type@ *iptr)
 {
     return NPY__FP_SFX(modf)(x, iptr);

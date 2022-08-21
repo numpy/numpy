@@ -11,8 +11,8 @@
 /* Disable broken functions on z/OS */
 #if defined (__MVS__)
 
-#define BLOCK_POWF
-#define BLOCK_EXPF
+#define NPY_BLOCK_POWF
+#define NPY_BLOCK_EXPF
 #undef HAVE___THREAD
 
 #endif
@@ -20,13 +20,13 @@
 /* Disable broken MS math functions */
 #if defined(__MINGW32_VERSION)
 
-#define BLOCK_ATAN2
-#define BLOCK_ATAN2F
-#define BLOCK_ATAN2L
+#define NPY_BLOCK_ATAN2
+#define NPY_BLOCK_ATAN2F
+#define NPY_BLOCK_ATAN2L
 
-#define BLOCK_HYPOT
-#define BLOCK_HYPOTF
-#define BLOCK_HYPOTL
+#define NPY_BLOCK_HYPOT
+#define NPY_BLOCK_HYPOTF
+#define NPY_BLOCK_HYPOTL
 
 #endif
 
@@ -66,9 +66,9 @@
 #undef HAVE_CABSF
 #undef HAVE_CABSL
 
-#define BLOCK_HYPOT
-#define BLOCK_HYPOTF
-#define BLOCK_HYPOTL
+#define NPY_BLOCK_HYPOT
+#define NPY_BLOCK_HYPOTF
+#define NPY_BLOCK_HYPOTL
 
 #endif
 
@@ -76,13 +76,13 @@
 /* Intel C for Windows uses POW for 64 bits longdouble*/
 #if defined(_MSC_VER) && defined(__INTEL_COMPILER)
 #if NPY_SIZEOF_LONGDOUBLE == 8
-#define BLOCK_POWL
+#define NPY_BLOCK_POWL
 #endif
 #endif /* defined(_MSC_VER) && defined(__INTEL_COMPILER) */
 
 /* powl gives zero division warning on OS X, see gh-8307 */
 #if defined(NPY_OS_DARWIN)
-#define BLOCK_POWL
+#define NPY_BLOCK_POWL
 #endif
 
 #ifdef __CYGWIN__
@@ -119,7 +119,7 @@
 #undef HAVE_CACOS
 
 /* log2(exp2(i)) off by a few eps */
-#define BLOCK_LOG2
+#define NPY_BLOCK_LOG2
 
 /* np.power(..., dtype=np.complex256) doesn't report overflow */
 #undef HAVE_CPOWL

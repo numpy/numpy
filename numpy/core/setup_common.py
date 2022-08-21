@@ -142,8 +142,6 @@ OPTIONAL_FUNCS_MAYBE = [
     "ftello", "fseeko"
     ]
 
-# TODO: make these mandatory and use BLOCK_ macros rather than HAVE_ macros
-# in npy_config.h and throughout the code
 C99_COMPLEX_TYPES = [
     'complex double', 'complex float', 'complex long double'
     ]
