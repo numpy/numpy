@@ -29,10 +29,10 @@ def show_runtime():
 
     Notes
     -----
-    1. Information is derived with the help of `threadpoolctl`
+    1. Information is derived with the help of `threadpoolctl <https://pypi.org/project/threadpoolctl/>`_
        library.
-    2. SIMD related information is derived from `__cpu_features__`,
-       `__cpu_baseline__` and `__cpu_dispatch__`
+    2. SIMD related information is derived from ``__cpu_features__``,
+       ``__cpu_baseline__`` and ``__cpu_dispatch__``
 
     Examples
     --------
