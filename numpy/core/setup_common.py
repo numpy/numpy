@@ -128,6 +128,8 @@ MANDATORY_FUNCS = [
     "rint", "trunc", "exp2", 
     "copysign", "nextafter", "strtoll", "strtoull", "cbrt",
     "log2", "pow", "hypot", "atan2",
+    "csin", "csinh", "ccos", "ccosh", "ctan", "ctanh",
+    "creal", "cimag", "conj"
 ]
 
 OPTIONAL_LOCALE_FUNCS = ["strtold_l"]
@@ -147,8 +149,7 @@ C99_COMPLEX_TYPES = [
     ]
 C99_COMPLEX_FUNCS = [
     "cabs", "cacos", "cacosh", "carg", "casin", "casinh", "catan",
-    "catanh", "ccos", "ccosh", "cexp", "cimag", "clog", "conj", "cpow",
-    "cproj", "creal", "csin", "csinh", "csqrt", "ctan", "ctanh"
+    "catanh", "cexp", "clog", "cpow", "csqrt",
     ]
 
 OPTIONAL_HEADERS = [
