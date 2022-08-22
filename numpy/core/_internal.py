@@ -15,7 +15,7 @@ try:
 except ImportError:
     ctypes = None
 
-IS_PYPY = 'PyPy' in sys.version
+IS_PYPY = sys.implementation.name =='PyPY'
 
 if sys.byteorder == 'little':
     _nbo = '<'
