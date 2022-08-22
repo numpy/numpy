@@ -7,7 +7,6 @@ Some things are more easily handled Python.
 import ast
 import re
 import sys
-import platform
 import warnings
 
 from .multiarray import dtype, array, ndarray, promote_types
@@ -16,7 +15,7 @@ try:
 except ImportError:
     ctypes = None
 
-IS_PYPY = platform.python_implementation() == 'PyPy'
+IS_PYPY = 'PyPy' in sys.version
 
 if sys.byteorder == 'little':
     _nbo = '<'
