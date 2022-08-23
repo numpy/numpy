@@ -1306,6 +1306,8 @@ TIMEDELTA_mm_qm_divmod(char **args, npy_intp const *dimensions, npy_intp const *
  *  #TYPE = FLOAT, DOUBLE, LONGDOUBLE#
  *  #c = f, , l#
  *  #C = F, , L#
+ *  #fd = 1, 1, 0#
+ *  #VCHK = 1, 1, 0#
  */
 /**begin repeat1
  * #kind = logical_and, logical_or#
@@ -1342,32 +1344,22 @@ NPY_NO_EXPORT void
     }
 }
 
+#if !@fd@
 /**begin repeat1
  * #kind = isnan, isinf, isfinite, signbit#
  * #func = npy_isnan, npy_isinf, npy_isfinite, npy_signbit#
  **/
-
-/**begin repeat2
- * #ISA  = , _avx512_skx#
- * #isa  = simd, avx512_skx#
- * #CHK  = 1, defined(HAVE_ATTRIBUTE_TARGET_AVX512_SKX)#
- **/
-
-#if @CHK@
 NPY_NO_EXPORT void
-@TYPE@_@kind@@ISA@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+@TYPE@_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
-    if (!run_@kind@_@isa@_@TYPE@(args, dimensions, steps)) {
-        UNARY_LOOP {
-            const @type@ in1 = *(@type@ *)ip1;
-            *((npy_bool *)op1) = @func@(in1) != 0;
-        }
+    UNARY_LOOP {
+        const @type@ in1 = *(@type@ *)ip1;
+        *((npy_bool *)op1) = @func@(in1) != 0;
     }
     npy_clear_floatstatus_barrier((char*)dimensions);
 }
-#endif
-/**end repeat2**/
 /**end repeat1**/
+#endif
 
 NPY_NO_EXPORT void
 @TYPE@_spacing(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))

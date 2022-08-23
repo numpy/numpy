@@ -921,7 +921,7 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.isnan'),
           'PyUFunc_IsFiniteTypeResolver',
-          TD(noobj, simd=[('avx512_skx', 'fd')], out='?'),
+          TD(noobj, out='?', dispatch=[('loops_unary_fp', inexactvec)]),
           ),
 'isnat':
     Ufunc(1, 1, None,
@@ -933,19 +933,19 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.isinf'),
           'PyUFunc_IsFiniteTypeResolver',
-          TD(noobj, simd=[('avx512_skx', 'fd')], out='?'),
+          TD(noobj, out='?', dispatch=[('loops_unary_fp', inexactvec)]),
           ),
 'isfinite':
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.isfinite'),
           'PyUFunc_IsFiniteTypeResolver',
-          TD(noobj, simd=[('avx512_skx', 'fd')], out='?'),
+          TD(noobj, out='?', dispatch=[('loops_unary_fp', inexactvec)]),
           ),
 'signbit':
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.signbit'),
           None,
-          TD(flts, simd=[('avx512_skx', 'fd')], out='?'),
+          TD(flts, out='?', dispatch=[('loops_unary_fp', inexactvec)]),
           ),
 'copysign':
     Ufunc(2, 1, None,

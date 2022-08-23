@@ -241,7 +241,8 @@ NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void @TYPE@_@kind@,
  *  #TYPE = FLOAT, DOUBLE#
  */
 /**begin repeat1
- * #kind = rint, floor, trunc, ceil, sqrt, absolute, square, reciprocal#
+ * #kind = rint, floor, trunc, ceil, sqrt, absolute, square, reciprocal,
+ *         isnan, isinf, isfinite, signbit#
  */
 NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void @TYPE@_@kind@,
    (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data)))
@@ -400,6 +401,7 @@ NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void @TYPE@_@kind@, (
  *  #c = f, f, , l#
  *  #C = F, F, , L#
  *  #half = 1, 0, 0, 0#
+ *  #fd = 0, 1, 1, 0#
  */
 
 /**begin repeat1
@@ -428,13 +430,13 @@ NPY_NO_EXPORT void
 /**begin repeat1
  * #kind = isnan, isinf, isfinite, signbit, copysign, nextafter, spacing#
  * #func = npy_isnan, npy_isinf, npy_isfinite, npy_signbit, npy_copysign, nextafter, spacing#
+ * #dispatched = 1, 1, 1, 1, 0, 0, 0#
  **/
 
-/**begin repeat2
- * #ISA  = , _avx512_skx#
- **/
+#if !@fd@ || !@dispatched@
 NPY_NO_EXPORT void
-@TYPE@_@kind@@ISA@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
+@TYPE@_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
+#endif
 /**end repeat2**/
 /**end repeat1**/
 
