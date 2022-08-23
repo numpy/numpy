@@ -426,7 +426,7 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.negative'),
           'PyUFunc_NegativeTypeResolver',
-          TD(ints+flts+timedeltaonly, simd=[('avx2', ints)]),
+          TD(ints+flts+timedeltaonly, dispatch=[('loops_unary', ints+'fdg')]),
           TD(cmplx, f='neg'),
           TD(O, f='PyNumber_Negative'),
           ),
