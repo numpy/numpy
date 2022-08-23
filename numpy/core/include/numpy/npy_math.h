@@ -4,9 +4,6 @@
 #include <numpy/npy_common.h>
 
 #include <math.h>
-#ifdef __SUNPRO_CC
-#include <sunmath.h>
-#endif
 
 /* By adding static inline specifiers to npy_math function definitions when
    appropriate, compiler is given the opportunity to optimize */
