@@ -204,17 +204,15 @@ OPTIONAL_FUNCTION_ATTRIBUTES = [('__attribute__((optimize("unroll-loops")))',
                                  'attribute_optimize_opt_2'),
                                 ('__attribute__((nonnull (1)))',
                                  'attribute_nonnull'),
+                                ('__attribute__((target ("avx")))',
+                                 'attribute_target_avx'),
+                                ('__attribute__((target ("avx2")))',
+                                 'attribute_target_avx2'),
+                                ('__attribute__((target ("avx512f")))',
+                                 'attribute_target_avx512f'),
+                                ('__attribute__((target ("avx512f,avx512dq,avx512bw,avx512vl,avx512cd")))',
+                                 'attribute_target_avx512_skx'),
                                 ]
-
-OPTIONAL_FUNCTION_ATTRIBUTES_AVX = [('__attribute__((target ("avx")))',
-                                     'attribute_target_avx'),
-                                    ('__attribute__((target ("avx2")))',
-                                     'attribute_target_avx2'),
-                                    ('__attribute__((target ("avx512f")))',
-                                     'attribute_target_avx512f'),
-                                    ('__attribute__((target ("avx512f,avx512dq,avx512bw,avx512vl,avx512cd")))',
-                                     'attribute_target_avx512_skx'),
-                                    ]
 
 # function attributes with intrinsics
 # To ensure your compiler can compile avx intrinsics with just the attributes
@@ -224,7 +222,7 @@ OPTIONAL_FUNCTION_ATTRIBUTES_AVX = [('__attribute__((target ("avx")))',
 # The _mm512_castps_si512 instruction is specific check for AVX-512F support
 # in gcc-4.9 which is missing a subset of intrinsics. See
 # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=61878
-OPTIONAL_FUNCTION_ATTRIBUTES_WITH_INTRINSICS_AVX = [('__attribute__((target("avx2,fma")))',
+OPTIONAL_FUNCTION_ATTRIBUTES_WITH_INTRINSICS = [('__attribute__((target("avx2,fma")))',
                                 'attribute_target_avx2_with_intrinsics',
                                 '__m256 temp = _mm256_set1_ps(1.0); temp = \
                                 _mm256_fmadd_ps(temp, temp, temp)',

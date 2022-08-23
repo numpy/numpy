@@ -232,23 +232,10 @@ def check_math_capabilities(config, ext, moredefs, mathlibs):
                     ext.extra_compile_args.extend(
                             ['-ffixed-xmm%s' % n for n in range(16, 32)])
 
-    platform = sysconfig.get_platform()
-    if("x86_64" in platform):
-        for dec, fn in OPTIONAL_FUNCTION_ATTRIBUTES_AVX:
-            if config.check_gcc_function_attribute(dec, fn):
-                moredefs.append((fname2def(fn), 1))
-                if fn == 'attribute_target_avx512f':
-                    # GH-14787: Work around GCC<8.4 bug when compiling with AVX512
-                    # support on Windows-based platforms
-                    if (sys.platform in ('win32', 'cygwin') and
-                            config.check_compiler_gcc() and
-                            not config.check_gcc_version_at_least(8, 4)):
-                        ext.extra_compile_args.extend(
-                                ['-ffixed-xmm%s' % n for n in range(16, 32)])
-        for dec, fn, code, header in OPTIONAL_FUNCTION_ATTRIBUTES_WITH_INTRINSICS_AVX:
-            if config.check_gcc_function_attribute_with_intrinsics(dec, fn, code,
-                                                                   header):
-                moredefs.append((fname2def(fn), 1))
+    for dec, fn, code, header in OPTIONAL_FUNCTION_ATTRIBUTES_WITH_INTRINSICS:
+        if config.check_gcc_function_attribute_with_intrinsics(dec, fn, code,
+                                                               header):
+            moredefs.append((fname2def(fn), 1))
 
     for fn in OPTIONAL_VARIABLE_ATTRIBUTES:
         if config.check_gcc_variable_attribute(fn):
