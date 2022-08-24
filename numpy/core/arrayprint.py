@@ -423,13 +423,17 @@ def _get_formatdict(data, *, precision, floatmode, suppress, sign, legacy,
         'bool': lambda: BoolFormat(data),
         'int': lambda: IntegerFormat(data),
         'float': lambda: FloatingFormat(
-            data, precision, floatmode, suppress, sign, exp_format, trim, legacy=legacy,),
+            data, precision, floatmode, suppress, sign, exp_format=exp_format, trim=trim, 
+            legacy=legacy,),
         'longfloat': lambda: FloatingFormat(
-            data, precision, floatmode, suppress, sign, exp_format, trim, legacy=legacy,),
+            data, precision, floatmode, suppress, sign, exp_format=exp_format, trim=trim, 
+            legacy=legacy,),
         'complexfloat': lambda: ComplexFloatingFormat(
-            data, precision, floatmode, suppress, sign, exp_format, trim, legacy=legacy,),
+            data, precision, floatmode, suppress, sign, exp_format=exp_format, trim=trim, 
+            legacy=legacy,),
         'longcomplexfloat': lambda: ComplexFloatingFormat(
-            data, precision, floatmode, suppress, sign, exp_format, trim, legacy=legacy,),
+            data, precision, floatmode, suppress, sign, exp_format=exp_format, trim=trim, 
+            legacy=legacy,),
         'datetime': lambda: DatetimeFormat(data, legacy=legacy),
         'timedelta': lambda: TimedeltaFormat(data),
         'object': lambda: _object_format,
