@@ -28,7 +28,7 @@ def open_build_dir(build_dir: Optional[list[str]], compile: bool) -> Path:
 	if build_dir is None:
 		if compile:
 			remove_build_dir = True
-			build_dir = tempfile.mkdtemp()
+			build_dir = Path(tempfile.mkdtemp())
 		else:
 			build_dir = Path.cwd()
 	else:
