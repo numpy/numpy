@@ -480,7 +480,7 @@ class TestDateTime:
         ):
             format(v, "+.2f")
 
-        # TODO: this behaivour should not ocurr
+        # TODO: this behaviour should not occur
         assert_equal(format(v, ".10"), vs[:10])
         assert_equal(format(v, " <10"), vs)
 

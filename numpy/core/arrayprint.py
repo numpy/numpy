@@ -59,12 +59,12 @@ _format_options = {
     'infstr': 'inf',
     'sign': '-',
     'formatter': None,
+    'exp_format': False,  # force exp formatting as Python do when ".2e"
+    'trim': '.',  # Controls post-processing trimming of trailing digits
+                  # see Dragon4 arguments at `format_float_scientific` below
     # Internally stored as an int to simplify comparisons; converted from/to
     # str/False on the way in/out.
     'legacy': sys.maxsize,
-    'exp_format': False,  # force exp formatting as Python do when ".2e"
-    'trim': '.'  # Controls post-processing trimming of trailing digits
-                 # see Dragon4 arguments at `format_float_scientific` below
 }
 
 def _make_options_dict(precision=None, threshold=None, edgeitems=None,
@@ -130,7 +130,7 @@ def _make_options_dict(precision=None, threshold=None, edgeitems=None,
 def set_printoptions(precision=None, threshold=None, edgeitems=None,
                      linewidth=None, suppress=None, nanstr=None, infstr=None,
                      formatter=None, sign=None, floatmode=None,
-                     exp_format=None, trim=None, *, legacy=None):
+                     *, exp_format=None, trim=None, legacy=None):
     """
     Set printing options.
 
@@ -568,8 +568,8 @@ def _array2string_dispatcher(
         suppress_small=None, separator=None, prefix=None,
         style=None, formatter=None, threshold=None,
         edgeitems=None, sign=None, floatmode=None, suffix=None,
-        exp_format=None, trim=None,
-        *, legacy=None):
+        *, exp_format=None, trim=None,
+        legacy=None):
     return (a,)
 
 
@@ -578,8 +578,8 @@ def array2string(a, max_line_width=None, precision=None,
                  suppress_small=None, separator=' ', prefix="",
                  style=np._NoValue, formatter=None, threshold=None,
                  edgeitems=None, sign=None, floatmode=None, suffix="",
-                 exp_format=None, trim=None,
-                 *, legacy=None):
+                 *, exp_format=None, trim=None,
+                 legacy=None):
     """
     Return a string representation of an array.
 
@@ -922,8 +922,8 @@ def _none_or_positive_arg(x, name):
 class FloatingFormat:
     """ Formatter for subtypes of np.floating """
     def __init__(self, data, precision, floatmode, suppress_small, sign=False,
-                 exp_format=False, trim=".",
-                 *, legacy=None):
+                 *, exp_format=False, trim=".",
+                 legacy=None):
         # for backcompatibility, accept bools
         if isinstance(sign, bool):
             sign = '+' if sign else '-'
@@ -1264,7 +1264,8 @@ class BoolFormat:
 class ComplexFloatingFormat:
     """ Formatter for subtypes of np.complexfloating """
     def __init__(self, x, precision, floatmode, suppress_small,
-                 sign=False, exp_format=False, trim=".", *, legacy=None):
+                 *, sign=False, exp_format=False, trim=".", 
+                 legacy=None):
         # for backcompatibility, accept bools
         if isinstance(sign, bool):
             sign = '+' if sign else '-'
