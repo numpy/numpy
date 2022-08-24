@@ -530,6 +530,10 @@ def configuration(parent_package='',top_path=None):
 
             # Generate the config.h file from moredefs
             with open(target, 'w') as target_f:
+                if sys.platform == 'darwin':
+                    target_f.write(
+                        "/* may be overridden by numpyconfig.h on darwin */\n"
+                    )
                 for d in moredefs:
                     if isinstance(d, str):
                         target_f.write('#define %s\n' % (d))
