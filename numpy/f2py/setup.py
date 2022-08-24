@@ -26,6 +26,9 @@ from __version__ import version
 def configuration(parent_package='', top_path=None):
     config = Configuration('f2py', parent_package, top_path)
     config.add_subpackage('tests')
+    config.add_subpackage('backends')
+    config.add_data_dir('backends/src')
+    config.add_data_files('backends/src/meson.build.src')
     config.add_data_dir('tests/src')
     config.add_data_files(
         'src/fortranobject.c',
