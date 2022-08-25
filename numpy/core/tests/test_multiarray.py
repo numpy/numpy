@@ -1190,6 +1190,11 @@ class TestCreation:
         expected = expected * (arr.nbytes // len(expected))
         assert arr.tobytes() == expected
 
+    def test_like_as_none(self):
+        arr = np.array([1, 2, 3], like=None)
+        expected = np.array([1, 2, 3])
+        assert_array_equal(arr, expected)
+
 
 class TestStructured:
     def test_subarray_field_access(self):
