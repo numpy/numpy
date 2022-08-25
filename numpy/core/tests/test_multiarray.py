@@ -9327,6 +9327,9 @@ class TestArange:
     def test_rejects_string(self):
         with pytest.raises(TypeError, match="string types for arange"):
             np.arange(2, dtype=str)
+        with pytest.raises(TypeError, match="string types for arange"):
+            np.arange("a", "b")
+
 
 class TestArrayFinalize:
     """ Tests __array_finalize__ """

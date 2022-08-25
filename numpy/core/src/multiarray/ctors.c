@@ -3292,6 +3292,14 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
     else {
         Py_INCREF(dtype);
     }
+
+    /* Explicitly fail for string types */
+    if (dtype != NULL && PyDataType_ISSTRING(dtype)) {
+      PyErr_SetString(PyExc_TypeError,
+           "string types for arange() not supported");
+       return NULL;
+    }
+
     if (!step || step == Py_None) {
         step = PyLong_FromLong(1);
     }
