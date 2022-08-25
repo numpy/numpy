@@ -9325,8 +9325,8 @@ class TestArange:
         assert_array_equal(keyword_stop, keyword_zerotostop)
 
     def test_rejects_string(self):
-        assert_raises(TypeError, np.arange, step=2, dtype=str)
-
+        with pytest.raises(TypeError, match="string types for arange"):
+            np.arange(2, dtype=str)
 
 class TestArrayFinalize:
     """ Tests __array_finalize__ """
