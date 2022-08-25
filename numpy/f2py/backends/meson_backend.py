@@ -176,9 +176,9 @@ class MesonBackend(Backend):
 		if(completed_process.returncode != 0):
 			raise subprocess.CalledProcessError(completed_process.returncode, completed_process.args)
 
-	def compile(self, fortran_sources: list[Path], c_wrapper: Path, build_dir: Path) -> None:
+	def compile(self, f77_sources: list[Path], f90_sources:list[Path], object_files: list[Path], c_wrapper: Path, build_dir: Path) -> None:
 		self.load_wrapper(c_wrapper)
-		self.load_sources(fortran_sources)
+		self.load_sources(f77_sources + f90_sources + object_files)
 		self.write_meson_build(build_dir)
 		self.run_meson(build_dir)
 		self._move_exec_to_root(build_dir)
