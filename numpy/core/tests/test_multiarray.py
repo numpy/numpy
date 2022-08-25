@@ -1195,8 +1195,9 @@ class TestCreation:
              (np.ones, 5),
              (np.empty_like, np.zeros(5)),
              (np.arange, 5),
-             (np.fromstring, map(int, "123"),)  # mapping needed as expects bytes
-             (np.frombuffer, np.zeros(5),)
+             (np.frombuffer, np.zeros(5),),
+             # mapped as fromstring expects bytes
+             (np.fromstring, map(int, "123"),)
              ])
     def test_like_as_none(self, func, func_input):
         arr = func(func_input, like=None)
