@@ -1004,6 +1004,11 @@ class TestCreation:
         assert_array_equal(np.zeros_like(d), d)
         assert_equal(np.zeros_like(d).dtype, d.dtype)
 
+    def test_zeros_like_as_none(self):
+        arr = np.zeros(3, like=None)
+        expected = np.array(3)
+        assert_array_equal(arr, expected)
+
     def test_empty_unicode(self):
         # don't throw decode errors on garbage memory
         for i in range(5, 100, 5):
