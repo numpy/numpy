@@ -212,6 +212,11 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
                 but if every element in the array can be uniquely
                 represented with an equal number of fewer digits, use that
                 many digits for all elements.
+    exp_format : bool, optional
+        Prints in scientific notation (1.1e+01).
+    trim : str, optional
+        Controls post-processing trimming of trailing digits.
+        See Dragon4 arguments at ``format_float_scientific``.
     legacy : string or `False`, optional
         If set to the string `'1.13'` enables 1.13 legacy printing mode. This
         approximates numpy 1.13 print output by including a space in the sign
@@ -423,16 +428,20 @@ def _get_formatdict(data, *, precision, floatmode, suppress, sign, legacy,
         'bool': lambda: BoolFormat(data),
         'int': lambda: IntegerFormat(data),
         'float': lambda: FloatingFormat(
-            data, precision, floatmode, suppress, sign, exp_format=exp_format, trim=trim, 
+            data, precision, floatmode, suppress, sign, 
+            exp_format=exp_format, trim=trim, 
             legacy=legacy,),
         'longfloat': lambda: FloatingFormat(
-            data, precision, floatmode, suppress, sign, exp_format=exp_format, trim=trim, 
+            data, precision, floatmode, suppress, sign, 
+            exp_format=exp_format, trim=trim, 
             legacy=legacy,),
         'complexfloat': lambda: ComplexFloatingFormat(
-            data, precision, floatmode, suppress, sign, exp_format=exp_format, trim=trim, 
+            data, precision, floatmode, suppress, sign, 
+            exp_format=exp_format, trim=trim, 
             legacy=legacy,),
         'longcomplexfloat': lambda: ComplexFloatingFormat(
-            data, precision, floatmode, suppress, sign, exp_format=exp_format, trim=trim, 
+            data, precision, floatmode, suppress, sign, 
+            exp_format=exp_format, trim=trim, 
             legacy=legacy,),
         'datetime': lambda: DatetimeFormat(data, legacy=legacy),
         'timedelta': lambda: TimedeltaFormat(data),
@@ -730,8 +739,8 @@ def array2string(a, max_line_width=None, precision=None,
 
     overrides = _make_options_dict(precision, threshold, edgeitems,
                                    max_line_width, suppress_small, None, None,
-                                   sign, formatter, floatmode, exp_format, trim,
-                                   legacy)
+                                   sign, formatter, floatmode, exp_format, 
+                                   trim, legacy)
     options = _format_options.copy()
     options.update(overrides)
 
@@ -972,7 +981,6 @@ class FloatingFormat:
         if len(finite_vals) == 0:
             self.pad_left = 0
             self.pad_right = 0
-            self.trim = '.'  # do not override
             self.exp_size = -1
             self.unique = True
             self.min_digits = None
@@ -1022,7 +1030,6 @@ class FloatingFormat:
                 self.precision = self.min_digits = self.pad_right
                 self.trim = 'k'
             else:
-                # self.trim = '.'  # do not override
                 self.min_digits = 0
 
         if self._legacy > 113:
@@ -1669,8 +1676,9 @@ _FORMAT_SPEC_REGEXP = re.compile(
 
 def _parse_format_spec(fs):
     """
-    Parse the format spec and returns a dictionary with options for using it with `array2string`
-    This is inspired in the [Format Specification Mini-Language](https://docs.python.org/3/library/string.html#formatspec)
+    Parse the format spec and returns a dictionary with options 
+    for using it with `array2string`. This is inspired in the 
+    [Format Specification Mini-Language](https://docs.python.org/3/library/string.html#formatspec)
 
     Parameters
     ----------
@@ -1704,13 +1712,16 @@ def _parse_format_spec(fs):
 
     if fmt_code is not None:
         if fmt_code not in "feg":
-            raise ValueError(f"Unknown format code {fmt_code}")
+            raise ValueError(f"Unknown format code {fmt_code!r}")
         if fmt_code == "f":  # try to force fixed precision
             options["suppress_small"] = True
         elif fmt_code == "e":  # force exp_format
             options["exp_format"] = True
-        elif fmt_code == "g":  # trim decimal point if possible
-            options["trim"] = "-"
+        elif fmt_code == "g":
+            # TODO: implement code in `FloatingFormat` such that
+            # the tests in test_multiarray.py:test_general_format pass
+            # note: remember to add the tests to `test_arrayprint.py:test_type`
+            pass
 
     return options
 

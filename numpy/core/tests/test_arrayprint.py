@@ -529,7 +529,6 @@ class TestFormatSpec:
 
         assert_equal(_parse_format_spec("f"), {"suppress_small": True})
         assert_equal(_parse_format_spec("e"), {"exp_format": True})
-        assert_equal(_parse_format_spec("g"), {"trim": "-"})
 
     def test_numeric(self):
         from numpy.core.arrayprint import _parse_format_spec

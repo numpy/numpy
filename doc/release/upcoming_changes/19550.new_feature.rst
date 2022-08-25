@@ -6,9 +6,7 @@ You can use f-strings now to format the precision, sign and the use of exponenti
     >>> a = np.array([1.001, -0.101, np.pi, -np.e])
     >>> print(f"{a:.2f}")
     [ 1.   -0.1   3.14 -2.72]
-    >>> print(f"{a:.2e}")
-    [ 1.00e+00 -1.01e-01  3.14e+00 -2.72e+00]
-    >>> print(f"{a:+.2g}")
-    [+1    -0.1  +3.14 -2.72]
+    >>> print(f"{a:+.2e}")
+    [+1.00e+00 -1.01e-01 +3.14e+00 -2.72e+00]
 
 See ``_parse_format_spec`` and ``array2string`` for reference.

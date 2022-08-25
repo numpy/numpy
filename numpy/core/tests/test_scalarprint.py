@@ -49,7 +49,8 @@ class TestRealScalars:
 
     def test_scalar_cast32to64(self):
         # test that both str, repr and format are the same for np.float32
-        # even though the values are cut off when casted to 64 bits (Python float)
+        # even though the values are cut off when cast to
+        # 64 bits (Python float)
         # related to gh-10645
         def check(v):
             assert_equal(str(np.float32(v)), str(v))

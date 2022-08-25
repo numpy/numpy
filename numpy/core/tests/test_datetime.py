@@ -476,7 +476,7 @@ class TestDateTime:
         v = np.datetime64(vs)
         with assert_raises_regex(
             ValueError,
-            "Unknown format code 'f' for object of type 'str'"
+            "Unknown format code"
         ):
             format(v, "+.2f")
 

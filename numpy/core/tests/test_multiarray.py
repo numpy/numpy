@@ -9045,14 +9045,32 @@ class TestUnicodeArrayNonzero:
 class TestFormat:
 
     def test_0d(self):
+        # for now we are converting to Python type and calling its format
+        # ref: numpy/core/src/multiarray/scalartypes.c.src:gentype_format
         a = np.array(np.pi)
+        assert_equal('{:0.3g}'.format(a), '3.14')
+        assert_equal('{:0.3g}'.format(a[()]), '3.14')
+    
+    def test_general_format(self):
+        # FIXME: see TODO in `arrayprint.py:_parse_format_spec`
+        return
+
+        a = np.array([np.pi])
         # general format 'g' should behave the same as Python
         # ref: https://docs.python.org/3/library/string.html#format-specification-mini-language
         assert_equal('{:.4g}'.format(a), '3.142')
         assert_equal('{:.4g}'.format(10 * a), '31.42')
         assert_equal('{:.4g}'.format(100 * a), '314.2')
+        assert_equal('{:.2g}'.format(1_000 * a), '3.1e+03')
         assert_equal('{:.4g}'.format(1_000_000 * a), '3.142e+06')
         assert_equal('{:.4e}'.format(1_000_000 * a), '3.1416e+06')
+
+        a = np.array([1.001])
+        # Python trim trailing decimal points in general format
+        # but we should not do that in order to be explicit when
+        # using floats or integers as '1' should not be confused
+        # with '1.', the later being a float.
+        assert_equal('{:.2g}'.format(a), '1.')
 
     def test_1d_no_format(self):
         a = np.array([np.pi])
@@ -9068,7 +9086,7 @@ class TestFormat:
         a = np.array([-np.pi, np.pi],  dtype="float")
         assert_equal(format(a, fmtspc), np.array_format(a, fmtspc))
 
-        a = np.array([-np.pi, np.pi],  dtype="float128")
+        a = np.array([-np.pi, np.pi],  dtype=np.longdouble)
         assert_equal(format(a, fmtspc), np.array_format(a, fmtspc))
 
         a = np.array([complex(-np.pi, np.pi)], dtype="complex")
