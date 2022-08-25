@@ -3091,13 +3091,6 @@ array_arange(PyObject *NPY_UNUSED(ignored),
         }
     }
 
-    if (typecode != NULL && (typecode->kind == 'S' || typecode->kind == 'U')) {
-      PyErr_SetString(PyExc_TypeError,
-           "string types for arange() not supported");
-       Py_XDECREF(typecode);
-       return NULL;
-    }
-
     if (o_stop == NULL) {
         if (len_args == 0){
             PyErr_SetString(PyExc_TypeError,
