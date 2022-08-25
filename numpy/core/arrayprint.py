@@ -1267,8 +1267,8 @@ class BoolFormat:
 
 class ComplexFloatingFormat:
     """ Formatter for subtypes of np.complexfloating """
-    def __init__(self, x, precision, floatmode, suppress_small,
-                 *, sign=False, exp_format=False, trim=".", 
+    def __init__(self, x, precision, floatmode, suppress_small, sign=False, 
+                 *, exp_format=False, trim=".", 
                  legacy=None):
         # for backcompatibility, accept bools
         if isinstance(sign, bool):
