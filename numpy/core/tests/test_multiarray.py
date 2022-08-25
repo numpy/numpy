@@ -1004,11 +1004,6 @@ class TestCreation:
         assert_array_equal(np.zeros_like(d), d)
         assert_equal(np.zeros_like(d).dtype, d.dtype)
 
-    def test_zeros_like_as_none(self):
-        arr = np.zeros(3, like=None)
-        expected = np.array(3)
-        assert_array_equal(arr, expected)
-
     def test_empty_unicode(self):
         # don't throw decode errors on garbage memory
         for i in range(5, 100, 5):
@@ -1190,11 +1185,21 @@ class TestCreation:
         expected = expected * (arr.nbytes // len(expected))
         assert arr.tobytes() == expected
 
-    def test_like_as_none(self):
-        arr = np.array([1, 2, 3], like=None)
-        expected = np.array([1, 2, 3])
+    @pytest.mark.parametrize("func, func_input",
+            [(np.array, [1, 2, 3]),
+             (np.asarray, [1, 2, 3]),
+             (np.asanyarray, [1, 2, 3]),
+             (np.ascontiguousarray, [1, 2, 3]),
+             (np.asfortranarray, [1, 2, 3]),
+             (np.zeros, 5),
+             (np.ones, 5),
+             (np.empty_like, np.zeros(5)),
+             (np.arange, 5),
+             ])
+    def test_like_as_none(self, func, func_input):
+        arr = func(func_input, like=None)
+        expected = func(func_input, like=None)
         assert_array_equal(arr, expected)
-
 
 class TestStructured:
     def test_subarray_field_access(self):
