@@ -407,13 +407,3 @@ class TestLinspace:
         y = linspace(-1, 3, num=8, dtype=int)
         t = array([-1, -1, 0, 0, 1, 1, 2, 3], dtype=int)
         assert_array_equal(y, t)
-
-    def test_bignumber(self):
-        import numpy as np
-        max_number = np.finfo(np.float64).max
-        y, step = linspace(-max_number, max_number, 2, retstep=True)
-        assert_(not isnan(y[0]))
-        assert_equal(step, np.inf)
-        
-        y, step = linspace(-max_number/2, max_number/2, 2, retstep=True)
-        assert_equal(step, max_number)

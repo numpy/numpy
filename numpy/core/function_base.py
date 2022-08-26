@@ -4,7 +4,7 @@ import operator
 import types
 
 from . import numeric as _nx
-from .numeric import isscalar, result_type, NaN, asanyarray, ndim
+from .numeric import result_type, NaN, asanyarray, ndim
 from numpy.core.multiarray import add_docstring
 from numpy.core import overrides
 
@@ -133,14 +133,6 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
         integer_dtype = False
     else:
         integer_dtype = _nx.issubdtype(dtype, _nx.integer)
-    
-    import numpy as np  # import here for no circular import
-    may_overflow_threshold = np.finfo(np.float64).max / 2
-    may_overflow = _nx.any(_nx.absolute(start) > may_overflow_threshold)\
-                or _nx.any(_nx.absolute(stop) > may_overflow_threshold)
-    if may_overflow:
-        stop = stop / 2
-        start = start / 2
 
     delta = stop - start
     y = _nx.arange(0, num, dtype=dt).reshape((-1,) + (1,) * ndim(delta))
@@ -175,19 +167,6 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
 
     if endpoint and num > 1:
         y[-1] = stop
-
-    if may_overflow:
-        y = y * 2
-        if _nx.isscalar(step):
-            if _nx.absolute(step) > may_overflow_threshold:
-                step = _nx.sign(step) * _nx.inf
-            else:
-                step *= 2
-        else:
-            step = step + _nx.where(
-                _nx.absolute(step) > may_overflow_threshold,
-                _nx.where(step > 0, _nx.inf, -_nx.inf),
-                step)
 
     if axis != 0:
         y = _nx.moveaxis(y, 0, axis)
