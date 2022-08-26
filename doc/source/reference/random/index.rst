@@ -216,9 +216,10 @@ Parallel Generation
 ~~~~~~~~~~~~~~~~~~~
 
 The included generators can be used in parallel, distributed applications in
-one of three ways:
+a number of ways:
 
 * :ref:`seedsequence-spawn`
+* :ref:`sequence-of-seeds`
 * :ref:`independent-streams`
 * :ref:`parallel-jumped`
 

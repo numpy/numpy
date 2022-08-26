@@ -51,6 +51,7 @@ def test_numpy_namespace():
         'safe_eval': 'numpy.lib.utils.safe_eval',
         'set_string_function': 'numpy.core.arrayprint.set_string_function',
         'show_config': 'numpy.__config__.show',
+        'show_runtime': 'numpy.lib.utils.show_runtime',
         'who': 'numpy.lib.utils.who',
     }
     # We override dir to not show these members

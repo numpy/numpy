@@ -120,20 +120,36 @@ for file in [
             set_sig(line)
 
 # Mandatory functions: if not found, fail the build
-MANDATORY_FUNCS = ["sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs",
-        "floor", "ceil", "sqrt", "log10", "log", "exp", "asin",
-        "acos", "atan", "fmod", 'modf', 'frexp', 'ldexp']
-
-# Standard functions which may not be available and for which we have a
-# replacement implementation. Note that some of these are C99 functions.
-OPTIONAL_STDFUNCS = ["expm1", "log1p", "acosh", "asinh", "atanh",
-        "rint", "trunc", "exp2", "log2", "hypot", "atan2", "pow",
-        "copysign", "nextafter", "strtoll", "strtoull", "cbrt"]
+MANDATORY_FUNCS = [
+    "sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs",
+    "floor", "ceil", "sqrt", "log10", "log", "exp", "asin",
+    "acos", "atan", "fmod", 'modf', 'frexp', 'ldexp',
+    "expm1", "log1p", "acosh", "asinh", "atanh",
+    "rint", "trunc", "exp2", 
+    "copysign", "nextafter", "strtoll", "strtoull", "cbrt",
+    "log2", "pow", "hypot", "atan2",
+]
 
 OPTIONAL_LOCALE_FUNCS = ["strtold_l"]
 OPTIONAL_FILE_FUNCS = ["ftello", "fseeko", "fallocate"]
 OPTIONAL_MISC_FUNCS = ["backtrace", "madvise"]
 
+# variable attributes tested via "int %s a" % attribute
+OPTIONAL_VARIABLE_ATTRIBUTES = ["__thread", "__declspec(thread)"]
+
+# Subset of OPTIONAL_*_FUNCS which may already have HAVE_* defined by Python.h
+OPTIONAL_FUNCS_MAYBE = [
+    "ftello", "fseeko"
+    ]
+
+C99_COMPLEX_TYPES = [
+    'complex double', 'complex float', 'complex long double'
+    ]
+C99_COMPLEX_FUNCS = [
+    "cabs", "cacos", "cacosh", "carg", "casin", "casinh", "catan",
+    "catanh", "ccos", "ccosh", "cexp", "cimag", "clog", "conj", "cpow",
+    "cproj", "creal", "csin", "csinh", "csqrt", "ctan", "ctanh"
+    ]
 
 OPTIONAL_HEADERS = [
 # sse headers only enabled automatically on amd64/x32 builds
@@ -223,34 +239,6 @@ OPTIONAL_FUNCTION_ATTRIBUTES_WITH_INTRINSICS = [('__attribute__((target("avx2,fm
                                 _mm_mask_storeu_epi8(NULL, 0xFF, _mm_broadcastmb_epi64(temp))',
                                 'immintrin.h'),
                                 ]
-
-# variable attributes tested via "int %s a" % attribute
-OPTIONAL_VARIABLE_ATTRIBUTES = ["__thread", "__declspec(thread)"]
-
-# Subset of OPTIONAL_STDFUNCS which may already have HAVE_* defined by Python.h
-OPTIONAL_STDFUNCS_MAYBE = [
-    "expm1", "log1p", "acosh", "atanh", "asinh", "hypot", "copysign",
-    "ftello", "fseeko"
-    ]
-
-# C99 functions: float and long double versions
-C99_FUNCS = [
-    "sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs", "floor", "ceil",
-    "rint", "trunc", "sqrt", "log10", "log", "log1p", "exp", "expm1",
-    "asin", "acos", "atan", "asinh", "acosh", "atanh", "hypot", "atan2",
-    "pow", "fmod", "modf", 'frexp', 'ldexp', "exp2", "log2", "copysign",
-    "nextafter", "cbrt"
-    ]
-C99_FUNCS_SINGLE = [f + 'f' for f in C99_FUNCS]
-C99_FUNCS_EXTENDED = [f + 'l' for f in C99_FUNCS]
-C99_COMPLEX_TYPES = [
-    'complex double', 'complex float', 'complex long double'
-    ]
-C99_COMPLEX_FUNCS = [
-    "cabs", "cacos", "cacosh", "carg", "casin", "casinh", "catan",
-    "catanh", "ccos", "ccosh", "cexp", "cimag", "clog", "conj", "cpow",
-    "cproj", "creal", "csin", "csinh", "csqrt", "ctan", "ctanh"
-    ]
 
 def fname2def(name):
     return "HAVE_%s" % name.upper()

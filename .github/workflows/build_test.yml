@@ -75,6 +75,50 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - uses: ./.github/actions
 
+  old_gcc:
+    needs: [smoke_test]
+    # provides GCC 6, 7, 8
+    runs-on: ubuntu-18.04
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    # comes with python3.6
+    - name: Install Python3.8
+      run: |
+        sudo apt update
+        # for add-apt-repository
+        sudo apt install software-properties-common -y
+        sudo add-apt-repository ppa:deadsnakes/ppa -y
+        sudo apt install python3.8-dev -y
+        sudo ln -s /usr/bin/python3.8 /usr/bin/pythonx
+        pythonx -m pip install --upgrade pip setuptools wheel
+        pythonx -m pip install -r test_requirements.txt
+    - name: Install Compilers
+      run: sudo apt install g++-6 g++-7 g++-8 -y
+    - name: Build gcc-6
+      run: |
+        export CC=/usr/bin/gcc-6
+        export CXX=/usr/bin/g++-6
+        pythonx setup.py install --user
+    - name: Runtests gcc-6
+      run: pythonx runtests.py -n
+    - name: Build gcc-7
+      run: |
+        export CC=/usr/bin/gcc-7
+        export CXX=/usr/bin/g++-7
+        rm -rf build && pythonx setup.py install --user
+    - name: Runtests gcc-7
+      run: pythonx runtests.py -n
+    - name: Build gcc-8
+      run: |
+        export CC=/usr/bin/gcc-8
+        export CXX=/usr/bin/g++-8
+        rm -rf build && pythonx setup.py install --user
+    - name: Runtests gcc-8
+      run: pythonx runtests.py -n
+
   without_optimizations:
     needs: [smoke_test]
     runs-on: ubuntu-latest

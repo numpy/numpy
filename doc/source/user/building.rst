@@ -59,7 +59,7 @@ Building NumPy requires the following software installed:
    MSVC and Clang compilers. Compilers from other vendors such as Intel,
    Absoft, Sun, NAG, Compaq, Vast, Portland, Lahey, HP, IBM are only
    supported in the form of community feedback, and may not work out of the
-   box.  GCC 4.x (and later) compilers are recommended. On ARM64 (aarch64)
+   box.  GCC 6.5 (and later) compilers are recommended. On ARM64 (aarch64)
    GCC 8.x (and later) are recommended.
 
 3) Linear Algebra libraries

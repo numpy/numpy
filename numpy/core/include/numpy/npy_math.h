@@ -4,9 +4,6 @@
 #include <numpy/npy_common.h>
 
 #include <math.h>
-#ifdef __SUNPRO_CC
-#include <sunmath.h>
-#endif
 
 /* By adding static inline specifiers to npy_math function definitions when
    appropriate, compiler is given the opportunity to optimize */
@@ -219,11 +216,7 @@ double npy_spacing(double x);
     #ifndef NPY_HAVE_DECL_ISNAN
         #define npy_isnan(x) ((x) != (x))
     #else
-        #if defined(_MSC_VER) && (_MSC_VER < 1900)
-            #define npy_isnan(x) _isnan((x))
-        #else
-            #define npy_isnan(x) isnan(x)
-        #endif
+        #define npy_isnan(x) isnan(x)
     #endif
 #endif
 
@@ -250,11 +243,7 @@ double npy_spacing(double x);
     #ifndef NPY_HAVE_DECL_ISINF
         #define npy_isinf(x) (!npy_isfinite(x) && !npy_isnan(x))
     #else
-        #if defined(_MSC_VER) && (_MSC_VER < 1900)
-            #define npy_isinf(x) (!_finite((x)) && !_isnan((x)))
-        #else
-            #define npy_isinf(x) isinf((x))
-        #endif
+        #define npy_isinf(x) isinf((x))
     #endif
 #endif
 

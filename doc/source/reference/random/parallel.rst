@@ -1,7 +1,7 @@
 Parallel Random Number Generation
 =================================
 
-There are three strategies implemented that can be used to produce
+There are four main strategies implemented that can be used to produce
 repeatable pseudo-random numbers across multiple processes (local
 or distributed).
 
@@ -107,6 +107,87 @@ territory ([2]_).
 .. _`suffers if there are too many 0s`: http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/MT2002/emt19937ar.html
 .. _`avalanche properties`: https://en.wikipedia.org/wiki/Avalanche_effect
 .. _`not unique to numpy`: https://www.iro.umontreal.ca/~lecuyer/myftp/papers/parallel-rng-imacs.pdf
+
+
+.. _sequence-of-seeds:
+
+Sequence of Integer Seeds
+-------------------------
+
+As discussed in the previous section, `~SeedSequence` can not only take an
+integer seed, it can also take an arbitrary-length sequence of (non-negative)
+integers. If one exercises a little care, one can use this feature to design
+*ad hoc* schemes for getting safe parallel PRNG streams with similar safety
+guarantees as spawning.
+
+For example, one common use case is that a worker process is passed one
+root seed integer for the whole calculation and also an integer worker ID (or
+something more granular like a job ID, batch ID, or something similar). If
+these IDs are created deterministically and uniquely, then one can derive
+reproducible parallel PRNG streams by combining the ID and the root seed
+integer in a list.
+
+.. code-block:: python
+
+  # default_rng() and each of the BitGenerators use SeedSequence underneath, so
+  # they all accept sequences of integers as seeds the same way.
+  from numpy.random import default_rng
+
+  def worker(root_seed, worker_id):
+      rng = default_rng([worker_id, root_seed])
+      # Do work ...
+
+  root_seed = 0x8c3c010cb4754c905776bdac5ee7501
+  results = [worker(root_seed, worker_id) for worker_id in range(10)]
+
+.. end_block
+
+This can be used to replace a number of unsafe strategies that have been used
+in the past which try to combine the root seed and the ID back into a single
+integer seed value. For example, it is common to see users add the worker ID to
+the root seed, especially with the legacy `~RandomState` code.
+
+.. code-block:: python
+
+  # UNSAFE! Do not do this!
+  worker_seed = root_seed + worker_id
+  rng = np.random.RandomState(worker_seed)
+
+.. end_block
+
+It is true that for any one run of a parallel program constructed this way,
+each worker will have distinct streams. However, it is quite likely that
+multiple invocations of the program with different seeds will get overlapping
+sets of worker seeds. It is not uncommon (in the author's self-experience) to
+change the root seed merely by an increment or two when doing these repeat
+runs. If the worker seeds are also derived by small increments of the worker
+ID, then subsets of the workers will return identical results, causing a bias
+in the overall ensemble of results.
+
+Combining the worker ID and the root seed as a list of integers eliminates this
+risk. Lazy seeding practices will still be fairly safe.
+
+This scheme does require that the extra IDs be unique and deterministically
+created. This may require coordination between the worker processes. It is
+recommended to place the varying IDs *before* the unvarying root seed.
+`~SeedSequence.spawn` *appends* integers after the user-provided seed, so if
+you might be mixing both this *ad hoc* mechanism and spawning, or passing your
+objects down to library code that might be spawning, then it is a little bit
+safer to prepend your worker IDs rather than append them to avoid a collision.
+
+.. code-block:: python
+
+  # Good.
+  worker_seed = [worker_id, root_seed]
+
+  # Less good. It will *work*, but it's less flexible.
+  worker_seed = [root_seed, worker_id]
+
+.. end_block
+
+With those caveats in mind, the safety guarantees against collision are about
+the same as with spawning, discussed in the previous section. The algorithmic
+mechanisms are the same.
 
 
 .. _independent-streams:

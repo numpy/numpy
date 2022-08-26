@@ -18,6 +18,20 @@ jobs:
 
     steps:
       - checkout:
+
+      - run:
+          name: Check-skip
+          command: |
+            export git_log=$(git log --max-count=1 --pretty=format:"%B" | tr "\n" " ")
+            echo "Got commit message:"
+            echo "${git_log}"
+            if [[ -v CIRCLE_PULL_REQUEST ]] && \
+               ([[ "$git_log" == *"[skip circle]"* ]] || \
+                [[ "$git_log" == *"[circle skip]"* ]])
+            then
+              echo "Skip detected, exiting job ${CIRCLE_JOB} for PR ${CIRCLE_PULL_REQUEST}."
+              circleci-agent step halt;
+            fi
       - run:
           name: pull changes from merge
           command: |

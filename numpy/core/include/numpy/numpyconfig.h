@@ -22,13 +22,21 @@
 
     #undef NPY_SIZEOF_LONGDOUBLE
     #undef NPY_SIZEOF_COMPLEX_LONGDOUBLE
+    #ifdef HAVE_LDOUBLE_IEEE_DOUBLE_LE
+      #undef HAVE_LDOUBLE_IEEE_DOUBLE_LE
+    #endif
+    #ifdef HAVE_LDOUBLE_INTEL_EXTENDED_16_BYTES_LE
+      #undef HAVE_LDOUBLE_INTEL_EXTENDED_16_BYTES_LE
+    #endif
 
     #if defined(__arm64__)
         #define NPY_SIZEOF_LONGDOUBLE         8
         #define NPY_SIZEOF_COMPLEX_LONGDOUBLE 16
+        #define HAVE_LDOUBLE_IEEE_DOUBLE_LE 1
     #elif defined(__x86_64)
         #define NPY_SIZEOF_LONGDOUBLE         16
         #define NPY_SIZEOF_COMPLEX_LONGDOUBLE 32
+        #define HAVE_LDOUBLE_INTEL_EXTENDED_16_BYTES_LE 1
     #elif defined (__i386)
         #define NPY_SIZEOF_LONGDOUBLE         12
         #define NPY_SIZEOF_COMPLEX_LONGDOUBLE 24
