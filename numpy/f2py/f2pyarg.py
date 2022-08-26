@@ -651,7 +651,7 @@ build_helpers.add_argument(
 
 parser.add_argument('--backend',
                     type=Backends,
-                    default=Backends.Distutils.value,
+                    default=Backends.Distutils,
                     action=EnumAction)
 
 # The rest, only works for files, since we expect:
@@ -835,7 +835,7 @@ def process_args(args: argparse.Namespace, rem: list[str]) -> None:
 
 		# Step 7: If user has asked for compilation. Mimic 'run_compile' from f2py2e
         # Disutils receives all the options and builds the extension.
-        if(args.c and args.backend == Backends.Distutils.value):
+        if(args.c and args.backend == Backends.Distutils):
             link_resource = args.link_resource
 
             # The 3 functions below generate arrays of flag similar to how 
@@ -862,7 +862,7 @@ def process_args(args: argparse.Namespace, rem: list[str]) -> None:
             # Step 8: Generate wrapper or signature file if compile flag is not given
             c_wrapper = generate_files(f77_files + f90_files + pyf_files, module_name, sign_file)
             if c_wrapper and args.c:
-                backend: Backend = backends.get(args.backend)(module_name=module_name, include_dirs=args.include_dirs, include_paths=args.include_paths, external_resources=args.link_resource, debug=args.debug, arch_flags=args.arch, opt_flags=args.opt, f77_flags=args.f77flags, f90_flags=args.f90flags, linker_libpath=args.library_path, linker_libname=args.library_name, define_macros=args.define_macros, undef_macros=args.undef_macros)
+                backend: Backend = backends.get(args.backend.value)(module_name=module_name, include_dirs=args.include_dirs, include_paths=args.include_paths, external_resources=args.link_resource, debug=args.debug, arch_flags=args.arch, opt_flags=args.opt, f77_flags=args.f77flags, f90_flags=args.f90flags, linker_libpath=args.library_path, linker_libname=args.library_name, define_macros=args.define_macros, undef_macros=args.undef_macros)
                 backend.compile(f77_files, f90_files, obj_files, c_wrapper, build_dir)
 
 def main():
