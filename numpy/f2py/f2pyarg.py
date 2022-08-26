@@ -693,12 +693,11 @@ def get_fortran_compiler_flags(args: argparse.Namespace) -> list[str]:
 def get_module_name(args: argparse.Namespace, pyf_files: list[str]) -> str:
     if(args.module is not None):
         return args.module[0]
-    if args.c:
-        for file in pyf_files:
-            if name := get_f2py_modulename(file):
-                return name
-        return "unititled"
-    return None
+    for file in pyf_files:
+        if name := get_f2py_modulename(file):
+            return name
+    if not name:
+        return "untitled" if args.c else None
 
 def get_signature_file(args: argparse.Namespace, build_dir: pathlib.Path) -> pathlib.Path:
     sign_file = None
