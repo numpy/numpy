@@ -208,7 +208,7 @@ concepts to remember include:
 
 - You may use slicing to set values in the array, but (unlike lists) you
   can never grow the array. The size of the value to be set in
-  ``x[obj] = value`` must be (broadcastable) to the same shape as
+  ``x[obj] = value`` must be (broadcastable to) the same shape as
   ``x[obj]``.
 
 - A slicing tuple can always be constructed as *obj*
