@@ -1198,7 +1198,7 @@ class TestCreation:
              ])
     def test_like_as_none(self, func, func_input):
         arr = func(func_input, like=None)
-        expected = func(func_input, like=None)
+        expected = func(func_input)
         assert_array_equal(arr, expected)
 
 class TestStructured:
