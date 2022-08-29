@@ -403,12 +403,14 @@ array_implement_c_array_function_creation(
 
     /* If `like` doesn't implement `__array_function__`, raise a `TypeError` */
     PyObject *tmp_has_override = get_array_function(like);
-    if (tmp_has_override == NULL) {
+    if (tmp_has_override == NULL && like != Py_None) {
         return PyErr_Format(PyExc_TypeError,
                 "The `like` argument must be an array-like that "
                 "implements the `__array_function__` protocol.");
     }
-    Py_DECREF(tmp_has_override);
+    if (tmp_has_override != NULL){
+        Py_DECREF(tmp_has_override);
+    }
 
     if (fast_args != NULL) {
         /*
