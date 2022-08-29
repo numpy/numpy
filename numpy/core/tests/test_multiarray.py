@@ -1193,7 +1193,6 @@ class TestCreation:
              (np.asfortranarray, [1, 2, 3]),
              (np.zeros, 5),
              (np.ones, 5),
-             (np.empty_like, np.zeros(5)),
              (np.arange, 5),
              (np.frombuffer, np.zeros(5),),
              # mapped as fromstring expects bytes
