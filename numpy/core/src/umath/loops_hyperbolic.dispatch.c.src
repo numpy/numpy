@@ -82,18 +82,6 @@
     // implemented so we require `npyv_nlanes_f64` == 2.
     #if npyv_nlanes_f64 == 2
     #define TANH_TRANSPOSED_LUT
-    // Define missing universal intrinsics used below
-    #if !defined(npyv_get_lane_u64)
-        #if defined(NPY_HAVE_ASIMD)
-            #define UNDEF_npyv_get_lane_u64
-            #define npyv_get_lane_u64 vgetq_lane_u64
-        #elif defined(NPY_HAVE_SSE41)
-            #define UNDEF_npyv_get_lane_u64
-            #define npyv_get_lane_u64 _mm_extract_epi64
-        #else
-            #undef TANH_TRANSPOSED_LUT
-        #endif
-    #endif // !defined(npyv_get_lane_u64)
     #endif // npyv_nlanes_f64 == 2
 
 static void
@@ -386,10 +374,6 @@ simd_tanh_f64(const double *src, npy_intp ssrc, double *dst, npy_intp sdst, npy_
 }
 
 #undef TANH_TRANSPOSED_LUT
-#if defined(UNDEF_npyv_get_lane_u64)
-#undef UNDEF_npyv_get_lane_u64
-#undef npyv_get_lane_u64
-#endif
 
 #endif // NPY_SIMD_F64
 
