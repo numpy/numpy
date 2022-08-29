@@ -348,6 +348,10 @@ array_implement_array_function(
      */
     if (kwargs != NULL && PyDict_Contains(kwargs, npy_ma_str_like)) {
         PyObject *like_arg = PyDict_GetItem(kwargs, npy_ma_str_like);
+        if (like_arg == Py_None){
+            PyDict_SetItem(kwargs, "like", NULL);
+            like_arg == NULL;
+        }
         if (like_arg != NULL) {
             PyObject *tmp_has_override = get_array_function(like_arg);
             if (tmp_has_override == NULL) {
