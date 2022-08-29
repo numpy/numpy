@@ -12,6 +12,7 @@
  * such small operations that this file covers.
 */
 #define NPY_SIMD_FORCE_128
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #include <float.h>
 #include "numpy/npy_math.h"
 #include "simd/simd.h"
@@ -104,7 +105,7 @@ npyv_isnan_@sfx@(npyv_@sfx@ v)
 {
     // (v != v) >> (size - 1)
     npyv_@sfx@ r = npyv_cvt_@sfx@_b@ssfx@(npyv_cmpneq_@sfx@(v, v));
-    return npyv_shri_u@ssfx@(r, (sizeof(npyv_lanetype_@sfx@)*8)-1);
+    return npyv_shri_u@ssfx@(npyv_reinterpret_u@ssfx@_@sfx@(r), (sizeof(npyv_lanetype_@sfx@)*8)-1);
 }
 
 static NPY_INLINE npyv_u@ssfx@
@@ -113,7 +114,7 @@ npyv_isinf_@sfx@(npyv_@sfx@ v)
     // (abs(v) > fltmax) >> (size - 1)
     const npyv_@sfx@ fltmax = npyv_setall_@sfx@(@FDMAX@);
 #if defined(NPY_HAVE_NEON)
-    npyv_@sfx@ r = vcagtq_@sfx@(v, fltmax);
+    npyv_u@ssfx@ r = vcagtq_@sfx@(v, fltmax);
 #else
     // fabs via masking of sign bit
     const npyv_@sfx@ signmask = npyv_setall_@sfx@(-0.@fd@);
@@ -129,7 +130,7 @@ npyv_isfinite_@sfx@(npyv_@sfx@ v)
     // ((v & signmask) <= fltmax) >> (size-1)
     const npyv_@sfx@ fltmax = npyv_setall_@sfx@(@FDMAX@);
 #if defined(NPY_HAVE_NEON)
-    npyv_@sfx@ r = vcaleq_@sfx@(v, fltmax);
+    npyv_u@ssfx@ r = vcaleq_@sfx@(v, fltmax);
 #else
     // fabs via masking of sign bit
     const npyv_@sfx@ signmask = npyv_setall_@sfx@(-0.@fd@);
@@ -142,7 +143,7 @@ npyv_isfinite_@sfx@(npyv_@sfx@ v)
 static NPY_INLINE npyv_u@ssfx@
 npyv_signbit_@sfx@(npyv_@sfx@ v)
 {
-    return npyv_shri_u@ssfx@(v, (sizeof(npyv_lanetype_@sfx@)*8)-1);
+    return npyv_shri_u@ssfx@(npyv_reinterpret_u@ssfx@_@sfx@(v), (sizeof(npyv_lanetype_@sfx@)*8)-1);
 }
 
 #endif // @VCHK@
@@ -162,10 +163,10 @@ npyv_signbit_@sfx@(npyv_@sfx@ v)
         // with only exponent in high byte.  If not all bits are set,
         // then we've got a finite number.
         uint8x16x4_t tbl;
-        tbl.val[0] = npyv_shli_u32(v0, 1);
-        tbl.val[1] = npyv_shli_u32(v1, 1);
-        tbl.val[2] = npyv_shli_u32(v2, 1);
-        tbl.val[3] = npyv_shli_u32(v3, 1);
+        tbl.val[0] = npyv_reinterpret_u8_u32(npyv_shli_u32(npyv_reinterpret_u32_f32(v0), 1));
+        tbl.val[1] = npyv_reinterpret_u8_u32(npyv_shli_u32(npyv_reinterpret_u32_f32(v1), 1));
+        tbl.val[2] = npyv_reinterpret_u8_u32(npyv_shli_u32(npyv_reinterpret_u32_f32(v2), 1));
+        tbl.val[3] = npyv_reinterpret_u8_u32(npyv_shli_u32(npyv_reinterpret_u32_f32(v3), 1));
 
         const npyv_u8 permute = {3,7,11,15,  19,23,27,31,  35,39,43,47,  51,55,59,63};
         npyv_u8 r = vqtbl4q_u8(tbl, permute);
@@ -182,10 +183,10 @@ npyv_signbit_@sfx@(npyv_@sfx@ v)
         // We only need high byte for signbit, which means we can pack
         // multiple inputs into a single vector.
         uint8x16x4_t tbl;
-        tbl.val[0] = v0;
-        tbl.val[1] = v1;
-        tbl.val[2] = v2;
-        tbl.val[3] = v3;
+        tbl.val[0] = npyv_reinterpret_u8_f32(v0);
+        tbl.val[1] = npyv_reinterpret_u8_f32(v1);
+        tbl.val[2] = npyv_reinterpret_u8_f32(v2);
+        tbl.val[3] = npyv_reinterpret_u8_f32(v3);
 
         const npyv_u8 permute = {3,7,11,15,  19,23,27,31,  35,39,43,47,  51,55,59,63};
         npyv_u8 r = vqtbl4q_u8(tbl, permute);
@@ -205,18 +206,18 @@ npyv_signbit_@sfx@(npyv_@sfx@ v)
         // a single vector.  We'll need to use u16 to fit all exponent
         // bits.  If not all bits are set, then we've got a finite number.
         uint8x16x4_t t0123, t4567;
-        t0123.val[0] = v0;
-        t0123.val[1] = v1;
-        t0123.val[2] = v2;
-        t0123.val[3] = v3;
-        t4567.val[0] = v4;
-        t4567.val[1] = v5;
-        t4567.val[2] = v6;
-        t4567.val[3] = v7;
+        t0123.val[0] = npyv_reinterpret_u8_f64(v0);
+        t0123.val[1] = npyv_reinterpret_u8_f64(v1);
+        t0123.val[2] = npyv_reinterpret_u8_f64(v2);
+        t0123.val[3] = npyv_reinterpret_u8_f64(v3);
+        t4567.val[0] = npyv_reinterpret_u8_f64(v4);
+        t4567.val[1] = npyv_reinterpret_u8_f64(v5);
+        t4567.val[2] = npyv_reinterpret_u8_f64(v6);
+        t4567.val[3] = npyv_reinterpret_u8_f64(v7);
 
         const npyv_u8 permute = {6,7,14,15,  22,23,30,31,  38,39,46,47,  54,55,62,63};
-        npyv_u16 r0 = vqtbl4q_u8(t0123, permute);
-        npyv_u16 r1 = vqtbl4q_u8(t4567, permute);
+        npyv_u16 r0 = npyv_reinterpret_u16_u8(vqtbl4q_u8(t0123, permute));
+        npyv_u16 r1 = npyv_reinterpret_u16_u8(vqtbl4q_u8(t4567, permute));
 
         const npyv_u16 expmask = npyv_setall_u16(0x7ff0);
         r0 = npyv_and_u16(r0, expmask);
@@ -238,15 +239,15 @@ npyv_signbit_@sfx@(npyv_@sfx@ v)
         // multiple inputs into a single vector.
 
         // vuzp2 faster than vtbl for f64
-        npyv_u32 v01 = vuzp2q_u32(v0, v1);
-        npyv_u32 v23 = vuzp2q_u32(v2, v3);
-        npyv_u32 v45 = vuzp2q_u32(v4, v5);
-        npyv_u32 v67 = vuzp2q_u32(v6, v7);
+        npyv_u32 v01 = vuzp2q_u32(npyv_reinterpret_u32_f64(v0), npyv_reinterpret_u32_f64(v1));
+        npyv_u32 v23 = vuzp2q_u32(npyv_reinterpret_u32_f64(v2), npyv_reinterpret_u32_f64(v3));
+        npyv_u32 v45 = vuzp2q_u32(npyv_reinterpret_u32_f64(v4), npyv_reinterpret_u32_f64(v5));
+        npyv_u32 v67 = vuzp2q_u32(npyv_reinterpret_u32_f64(v6), npyv_reinterpret_u32_f64(v7));
 
-        npyv_u16 v0123 = vuzp2q_u16(v01, v23);
-        npyv_u16 v4567 = vuzp2q_u16(v45, v67);
+        npyv_u16 v0123 = vuzp2q_u16(npyv_reinterpret_u16_u32(v01), npyv_reinterpret_u16_u32(v23));
+        npyv_u16 v4567 = vuzp2q_u16(npyv_reinterpret_u16_u32(v45), npyv_reinterpret_u16_u32(v67));
 
-        npyv_u8 r = vuzp2q_u8(v0123, v4567);
+        npyv_u8 r = vuzp2q_u8(npyv_reinterpret_u8_u16(v0123), npyv_reinterpret_u8_u16(v4567));
                 r = vshrq_n_u8(r, 7);
         return r;
     }
@@ -540,7 +541,7 @@ static void simd_unary_@kind@_@TYPE@_@STYPE@_@DTYPE@
                 // Results are packed, so we can just loop over them
                 npy_uint8 lane_@N@[npyv_nlanes_u8];
                 npyv_store_u8(lane_@N@, r_@N@);
-                for (int ln=0; ln<npyv_nlanes_u8; ++ln){
+                for (int ln=0; (ln * sizeof(npyv_lanetype_@sfx@)) < npyv_nlanes_u8; ++ln){
                     op[(ln + @N@ * PACK_FACTOR * vstep) * ostride] = lane_@N@[ln * sizeof(npyv_lanetype_@sfx@)];
                 }
             #else
@@ -550,7 +551,7 @@ static void simd_unary_@kind@_@TYPE@_@STYPE@_@DTYPE@
                  */
                 #if @R@ < PACK_FACTOR
                 npy_uint8 lane@R@_@N@[npyv_nlanes_u8];
-                npyv_store_u8(lane@R@_@N@, r@R@_@N@);
+                npyv_store_u8(lane@R@_@N@, npyv_reinterpret_u8_u@ssfx@(r@R@_@N@));
                 op[(0 + (@R@ + @N@ * PACK_FACTOR) * vstep) * ostride] = lane@R@_@N@[0 * sizeof(npyv_lanetype_@sfx@)];
                 op[(1 + (@R@ + @N@ * PACK_FACTOR) * vstep) * ostride] = lane@R@_@N@[1 * sizeof(npyv_lanetype_@sfx@)];
                 #if npyv_nlanes_@sfx@ == 4
@@ -576,7 +577,7 @@ static void simd_unary_@kind@_@TYPE@_@STYPE@_@DTYPE@
         npyv_u@ssfx@ r = npyv_@kind@_@sfx@(v);
 
         npy_uint8 lane[npyv_nlanes_u8];
-        npyv_store_u8(lane, r);
+        npyv_store_u8(lane, npyv_reinterpret_u8_u@ssfx@(r));
 
         op[0*ostride] = lane[0 * sizeof(npyv_lanetype_@sfx@)];
         op[1*ostride] = lane[1 * sizeof(npyv_lanetype_@sfx@)];
