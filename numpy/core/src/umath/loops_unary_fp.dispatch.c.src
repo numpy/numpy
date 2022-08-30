@@ -118,8 +118,8 @@ npyv_isinf_@sfx@(npyv_@sfx@ v)
 #else
     // fabs via masking of sign bit
     const npyv_@sfx@ signmask = npyv_setall_@sfx@(-0.@fd@);
-    npyv_@sfx@ r = npyv_reinterpret_@sfx@_u8(npyv_andc_u8(v, signmask));
-               r = npyv_cmpgt_@sfx@(r, fltmax);
+    npyv_u8      r_u8 = npyv_andc_u8(npyv_reinterpret_u8_@sfx@(v), npyv_reinterpret_u8_@sfx@(signmask));
+    npyv_u@ssfx@ r    = npyv_cmpgt_@sfx@(npyv_reinterpret_@sfx@_u8(r_u8), fltmax);
 #endif
     return npyv_shri_u@ssfx@(r, (sizeof(npyv_lanetype_@sfx@)*8)-1);
 }
@@ -134,8 +134,8 @@ npyv_isfinite_@sfx@(npyv_@sfx@ v)
 #else
     // fabs via masking of sign bit
     const npyv_@sfx@ signmask = npyv_setall_@sfx@(-0.@fd@);
-    npyv_@sfx@ r = npyv_reinterpret_@sfx@_u8(npyv_andc_u8(v, signmask));
-               r = npyv_cmple_@sfx@(r, fltmax);
+    npyv_u8      r_u8 = npyv_andc_u8(npyv_reinterpret_u8_@sfx@(v), npyv_reinterpret_u8_@sfx@(signmask));
+    npyv_u@ssfx@ r    = npyv_cmple_@sfx@(npyv_reinterpret_@sfx@_u8(r_u8), fltmax);
 #endif
     return npyv_shri_u@ssfx@(r, (sizeof(npyv_lanetype_@sfx@)*8)-1);
 }
