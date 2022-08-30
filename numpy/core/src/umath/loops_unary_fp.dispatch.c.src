@@ -676,12 +676,12 @@ clear:;
 NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
 (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
+#if @VCHK@
     const char *ip = args[0];
     char *op = args[1];
     const npy_intp istep = steps[0];
     const npy_intp ostep = steps[1];
     npy_intp len = dimensions[0];
-#if @VCHK@
     const int ilsize = sizeof(npyv_lanetype_@sfx@);
     const int olsize = sizeof(npy_bool);
     const npy_intp istride = istep / ilsize;
