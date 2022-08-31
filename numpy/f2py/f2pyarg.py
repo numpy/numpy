@@ -286,7 +286,7 @@ parser.add_argument(
     "--no-lower",
     metavar="--[no-]lower",
     action=BoolAction,
-    default=True,
+    default=False,
     type=bool,
     help="""Do [not] lower the cases in <fortran files>.
     By default, --lower is assumed with -h key, and --no-lower without -h
