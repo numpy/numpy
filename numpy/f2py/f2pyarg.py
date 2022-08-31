@@ -698,7 +698,7 @@ def get_module_name(args: argparse.Namespace, pyf_files: list[str]) -> str:
             if name := get_f2py_modulename(file):
                 return name
         return "unititled"
-    return None
+    return ""
 
 def get_signature_file(args: argparse.Namespace, build_dir: pathlib.Path) -> pathlib.Path:
     sign_file = None
