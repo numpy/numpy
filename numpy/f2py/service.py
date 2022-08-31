@@ -234,8 +234,8 @@ def _check_postlist(postlist: list[dict[str, Any]], sign_file: Path) -> None:
 def _callcrackfortran(files: list[str], module_name: str) -> list[dict[str, Any]]:
     postlist = crackfortran.crackfortran([str(file) for file in files])
     for mod in postlist:
-        mod["coutput"] = f"{module_name}module.c"
-        mod["f2py_wrapper_output"] = f"{module_name}-f2pywrappers.f"
+        mod["coutput"] = f"{mod['name']}module.c"
+        mod["f2py_wrapper_output"] = f"{mod['name']}-f2pywrappers.f"
     return postlist
 
 def _set_dependencies_dist(ext_args: dict[str, Any], link_resource: list[str]) -> None:
