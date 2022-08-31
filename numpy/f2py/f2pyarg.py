@@ -770,7 +770,7 @@ def process_args(args: argparse.Namespace, rem: list[str]) -> None:
             'include_paths': args.include_paths,
             'coutput': None,
             'f2py_wrapper_output': None,
-            'emptygen': True,
+            'emptygen': False,
         }
         crackfortran_setts = {
             'module': module_name,
