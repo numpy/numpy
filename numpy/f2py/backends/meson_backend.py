@@ -9,14 +9,14 @@ from string import Template
 
 class MesonTemplate:
 	"""Template meson build file generation class."""
-	def __init__(self, module_name: str, numpy_install_path, numpy_get_include: Path, f2py_get_include: Path, c_wrapper: Path, fortran_sources: list[Path], dependencies: list[str], include_path: list[Path], optimization_flags: list[str], architecture_flags: list[str], f77_flags: list[str], f90_flags: list[str], linker_libpath: list[Path], linker_libname: list[str], define_macros: list[tuple[str, str]], undef_macros: list[str]):
+	def __init__(self, module_name: str, numpy_install_path, numpy_get_include: Path, f2py_get_include: Path, wrappers: list[Path], fortran_sources: list[Path], dependencies: list[str], include_path: list[Path], optimization_flags: list[str], architecture_flags: list[str], f77_flags: list[str], f90_flags: list[str], linker_libpath: list[Path], linker_libname: list[str], define_macros: list[tuple[str, str]], undef_macros: list[str]):
 		self.module_name = module_name
 		self.numpy_install_path = numpy_install_path
 		self.build_template_path = numpy_install_path / "f2py" / "backends" / "src" / "meson.build.src"
 		self.sources = fortran_sources
 		self.numpy_get_include = numpy_get_include
 		self.f2py_get_include = f2py_get_include
-		self.c_wrapper = c_wrapper
+		self.wrappers = wrappers
 		self.dependencies = dependencies
 		self.include_directories = include_path
 		self.substitutions = {}
@@ -49,7 +49,7 @@ class MesonTemplate:
 	
 	def sources_substitution(self) -> None:
 		self.substitutions["source_list"] = ",".join(["\'"+str(source.absolute())+"\'" for source in self.sources])
-		self.substitutions["c_wrapper"] = str(self.c_wrapper.absolute()) if self.c_wrapper else ""
+		self.substitutions["wrappers"] = ",".join(["\'"+str(wrapper.absolute())+"\'" for wrapper in self.wrappers])
 
 	def dependencies_substitution(self) -> None:
 		self.substitutions["dependencies_list"] = ", ".join([f"dependency('{dependecy}')" for dependecy in self.dependencies])
@@ -116,7 +116,7 @@ class MesonBackend(Backend):
 			arch_flags = []
 		super().__init__(module_name, fortran_compiler, c_compiler, f77exec, f90exec, f77_flags, f90_flags, include_paths, include_dirs, external_resources, linker_libpath, linker_libname, define_macros, undef_macros, debug, opt_flags, arch_flags, no_opt, no_arch)
 
-		self.c_wrapper: Path = None
+		self.wrappers: list[Path] = []
 		self.fortran_sources: list[Path] = []
 		self.template = Template(self.fortran_sources)
 
@@ -146,11 +146,8 @@ class MesonBackend(Backend):
 	def _get_build_command(self):
 		return ["meson", "setup", self.meson_build_dir, "-Ddebug=true" if self.debug else "-Ddebug=false", f"-Doptimization={str(self._get_optimization_level())}"]
 	
-	def load_wrapper(self, wrapper_path: Path) -> None:
-		wrapper_path: Path = Path(wrapper_path)
-		if not wrapper_path.is_file():
-			raise FileNotFoundError(errno.ENOENT, f"{wrapper_path.absolute()} does not exist.")
-		self.c_wrapper = wrapper_path
+	def load_wrapper(self, wrappers: list[Path]) -> None:
+		self.wrappers = wrappers
 	
 	def load_sources(self, fortran_sources: list[Path]) -> None:
 		for fortran_source in fortran_sources:
@@ -161,7 +158,7 @@ class MesonBackend(Backend):
 
 	def write_meson_build(self, build_dir: Path) -> None:
 		"""Writes the meson build file at specified location"""
-		meson_template = MesonTemplate(self.module_name, super().numpy_install_path(), self.numpy_get_include(), self.f2py_get_include(), self.c_wrapper, self.fortran_sources, self.external_resources, self.include_paths+self.include_dirs, optimization_flags=self.opt_flags, architecture_flags=self.arch_flags, f77_flags=self.f77_flags, f90_flags=self.f90_flags, linker_libpath=self.linker_libpath, linker_libname=self.linker_libname, define_macros=self.define_macros, undef_macros=self.undef_macros)
+		meson_template = MesonTemplate(self.module_name, super().numpy_install_path(), self.numpy_get_include(), self.f2py_get_include(), self.wrappers, self.fortran_sources, self.external_resources, self.include_paths+self.include_dirs, optimization_flags=self.opt_flags, architecture_flags=self.arch_flags, f77_flags=self.f77_flags, f90_flags=self.f90_flags, linker_libpath=self.linker_libpath, linker_libname=self.linker_libname, define_macros=self.define_macros, undef_macros=self.undef_macros)
 		src = meson_template.generate_meson_build()
 		meson_build_file = build_dir / "meson.build"
 		meson_build_file.write_text(src)
@@ -176,8 +173,8 @@ class MesonBackend(Backend):
 		if(completed_process.returncode != 0):
 			raise subprocess.CalledProcessError(completed_process.returncode, completed_process.args)
 
-	def compile(self, f77_sources: list[Path], f90_sources:list[Path], object_files: list[Path], c_wrapper: Path, build_dir: Path) -> None:
-		self.load_wrapper(c_wrapper)
+	def compile(self, f77_sources: list[Path], f90_sources:list[Path], object_files: list[Path], wrappers: list[Path], build_dir: Path) -> None:
+		self.load_wrapper(wrappers)
 		self.load_sources(f77_sources + f90_sources + object_files)
 		self.write_meson_build(build_dir)
 		self.run_meson(build_dir)

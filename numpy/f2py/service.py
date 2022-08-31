@@ -270,7 +270,8 @@ def wrapper_settings(rules_setts: dict[str, Any], crackfortran_setts: dict[str, 
     #           2. https://github.com/numpy/numpy/blob/main/numpy/f2py/f2py2e.py#L471-L473
     _set_auxfuncs(auxfuncs_setts)
 
-def generate_files(files: list[str], module_name: str, sign_file: Path) -> None:
+def generate_files(files: list[str], module_name: str, sign_file: Path) -> list[Path]:
+    """Generate signature file if wanted and return list of wrappers to be compiled"""
     # Step 8.1: Generate postlist from crackfortran
     postlist = _callcrackfortran(files, module_name)
 
@@ -282,11 +283,13 @@ def generate_files(files: list[str], module_name: str, sign_file: Path) -> None:
         # https://github.com/numpy/numpy/blob/main/numpy/f2py/f2py2e.py#L343-L350
         _generate_signature(postlist, sign_file)
         return
-    if(module_name):
-        # Step 8.4: Same as the buildmodules folder of f2py2e
-        ret  = _buildmodules(postlist)
-        c_wrapper = ret.get(module_name).get('csrc')[0]
-        return Path(c_wrapper)
+    # Step 8.4: Same as the buildmodules folder of f2py2e
+    ret  = _buildmodules(postlist)
+    module_name = list(ret.keys())[0]
+    wrappers = []
+    wrappers.extend(ret.get(module_name).get('csrc', []))
+    wrappers.extend(ret.get(module_name).get('fsrc', []))
+    return [Path(wrapper) for wrapper in wrappers]
 
 def compile_dist(ext_args: dict[str, Any], link_resources: list[str], build_dir: Path, fc_flags: list[str], flib_flags: list[str], quiet_build: bool) -> None:
     # Step 7.2: The entire code below mimics 'f2py2e:run_compile()'
