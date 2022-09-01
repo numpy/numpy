@@ -257,6 +257,12 @@ def flatnonzero(a: ArrayLike) -> NDArray[intp]: ...
 
 @overload
 def correlate(
+    a: _ArrayLikeObject_co,
+    v: _ArrayLikeObject_co,
+    mode: _CorrelateMode = ...,
+) -> NDArray[object_]: ...
+@overload
+def correlate(
     a: _ArrayLikeBool_co,
     v: _ArrayLikeBool_co,
     mode: _CorrelateMode = ...,
@@ -291,13 +297,13 @@ def correlate(
     v: _ArrayLikeTD64_co,
     mode: _CorrelateMode = ...,
 ) -> NDArray[timedelta64]: ...
+
 @overload
-def correlate(
+def convolve(
     a: _ArrayLikeObject_co,
     v: _ArrayLikeObject_co,
     mode: _CorrelateMode = ...,
 ) -> NDArray[object_]: ...
-
 @overload
 def convolve(
     a: _ArrayLikeBool_co,
@@ -334,13 +340,13 @@ def convolve(
     v: _ArrayLikeTD64_co,
     mode: _CorrelateMode = ...,
 ) -> NDArray[timedelta64]: ...
-@overload
-def convolve(
-    a: _ArrayLikeObject_co,
-    v: _ArrayLikeObject_co,
-    mode: _CorrelateMode = ...,
-) -> NDArray[object_]: ...
 
+@overload
+def outer(
+    a: _ArrayLikeObject_co,
+    b: _ArrayLikeObject_co,
+    out: None = ...,
+) -> NDArray[object_]: ...
 @overload
 def outer(
     a: _ArrayLikeBool_co,
@@ -377,12 +383,6 @@ def outer(
     b: _ArrayLikeTD64_co,
     out: None = ...,
 ) -> NDArray[timedelta64]: ...
-@overload
-def outer(
-    a: _ArrayLikeObject_co,
-    b: _ArrayLikeObject_co,
-    out: None = ...,
-) -> NDArray[object_]: ...
 @overload
 def outer(
     a: _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeObject_co,
@@ -392,6 +392,12 @@ def outer(
 
 @overload
 def tensordot(
+    a: _ArrayLikeObject_co,
+    b: _ArrayLikeObject_co,
+    axes: int | tuple[_ShapeLike, _ShapeLike] = ...,
+) -> NDArray[object_]: ...
+@overload
+def tensordot(
     a: _ArrayLikeBool_co,
     b: _ArrayLikeBool_co,
     axes: int | tuple[_ShapeLike, _ShapeLike] = ...,
@@ -426,12 +432,6 @@ def tensordot(
     b: _ArrayLikeTD64_co,
     axes: int | tuple[_ShapeLike, _ShapeLike] = ...,
 ) -> NDArray[timedelta64]: ...
-@overload
-def tensordot(
-    a: _ArrayLikeObject_co,
-    b: _ArrayLikeObject_co,
-    axes: int | tuple[_ShapeLike, _ShapeLike] = ...,
-) -> NDArray[object_]: ...
 
 @overload
 def roll(
@@ -458,6 +458,15 @@ def moveaxis(
     destination: _ShapeLike,
 ) -> NDArray[_SCT]: ...
 
+@overload
+def cross(
+    a: _ArrayLikeObject_co,
+    b: _ArrayLikeObject_co,
+    axisa: int = ...,
+    axisb: int = ...,
+    axisc: int = ...,
+    axis: None | int = ...,
+) -> NDArray[object_]: ...
 @overload
 def cross(
     a: _ArrayLikeBool_co,
@@ -503,15 +512,6 @@ def cross(
     axisc: int = ...,
     axis: None | int = ...,
 ) -> NDArray[complexfloating[Any, Any]]: ...
-@overload
-def cross(
-    a: _ArrayLikeObject_co,
-    b: _ArrayLikeObject_co,
-    axisa: int = ...,
-    axisb: int = ...,
-    axisc: int = ...,
-    axis: None | int = ...,
-) -> NDArray[object_]: ...
 
 @overload
 def indices(
