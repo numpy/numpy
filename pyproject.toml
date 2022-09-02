@@ -10,7 +10,7 @@ requires = [
 [tool.towncrier]
     # Do no set this since it is hard to import numpy inside the source directory
     # the name is hardcoded. Use "--version 1.18.0" to set the version
-    single_file = true
+    single_file = false
     filename = "doc/source/release/{version}-notes.rst"
     directory = "doc/release/upcoming_changes/"
     issue_format = "`gh-{issue} <https://github.com/numpy/numpy/pull/{issue}>`__"

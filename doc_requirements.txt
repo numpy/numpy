@@ -10,4 +10,4 @@ pandas
 breathe
 
 # needed to build release notes
-towncrier==21.9.0
+towncrier
