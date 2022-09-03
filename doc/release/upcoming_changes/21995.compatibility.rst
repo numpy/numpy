@@ -1,46 +1,21 @@
 Returned arrays respect uniqueness of dtype kwarg objects
 ---------------------------------------------------------
-When ``dtype`` keyword argument is used with :py:func:`np.array()`
-or :py:func:`asarray()`, the dtype of the returned array has
-the same dtype *instance* as provided by the caller.
+When the ``dtype`` keyword argument is used with :py:func:`np.array()`
+or :py:func:`asarray()`, the dtype of the returned array now
+always exactly matches the dtype provided by the caller.
 
-If the provided dtype is compatible, but not identically the same
-:py:class:`dtype` object, a new array handle is always created with
-a reference to the user-provided dtype instance.
-If the data type is compatible, and copying is not required, the new
-`ndarray` uses the original array as its
-`base <https://numpy.org/doc/stable/reference/generated/numpy.ndarray.base.html>`__.
+In some cases this change means that a *view* rather than the
+input array is returned.
+The following is an example for this on 64bit Linux where ``long``
+and ``longlong`` are the same precision::
 
-Before this change, for two equivalent but non-identical dtypes,
+    >>> arr = np.array([1, 2, 3], dtype="long")
+    >>> new_dtype = np.dtype("longlong")
+    >>> new = np.asarray(arr, dtype=new_dtype)
+    >>> new.dtype is dtype
+    True
+    >>> new is arr
+    False
 
-    assert isinstance(typeA, np.dtype) and isinstance(typeB, np.dtype)
-    assert typeA == typeB
-    assert typeA is not typeB
-    if my_array.dtype is typeA:
-        assert my_array is np.asarray(my_array, dtype=typeB)
-        assert np.asarray(my_array, dtype=typeB).dtype is not typeB
-
-This change allows programs to be able to reliably get the exact dtype
-representation they request, regardless of possibly aliased types on the
-calling platform.
-
-However, identity semantics for array results and their
-dtype members may require minor updates to calling code.
-
-After this change, on a system where C ``int`` and C ``long`` are the same
-precision, ``np.dtype('i') == np.dtype('l')``,
-but ``np.dtype('i') is not np.dtype('l')``.
-
-    assert int_array.dtype is np.dtype('i')
-    long_int_array = np.asarray(int_array, dtype='l')
-    assert long_int_array is not int_array
-    if np.dtype('i') == np.dtype('l'):
-        assert int_array is long_int_array.base
-
-New array views are created with each call to `asarray` with non-identical
-dtype kwarg, but the underlying data is the same.
-
-    assert int_array.dtype is np.dtype('i')
-    long_int_array = np.asarray(int_array, dtype='l')
-    assert long_int_array is not np.asarray(int_array, dtype='l')
-    assert long_int_array.base is np.asarray(int_array, dtype='l').base
+Before the change, the ``dtype`` did not match because ``new is arr``
+was true.
