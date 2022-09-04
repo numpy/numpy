@@ -735,7 +735,7 @@ def partition(a, kth, axis=-1, kind='introselect', order=None):
     ================= ======= ============= ============ =======
        kind            speed   worst case    work space  stable
     ================= ======= ============= ============ =======
-    'introselect'        1        O(n)           0         no
+    'introselect'       O(n)     O(nlogn)        0         no
     ================= ======= ============= ============ =======
 
     All the partition algorithms make temporary copies of the data when
