@@ -112,7 +112,7 @@ For more details, see the
 .. _numpy-setuptools-interaction:
 
 Interaction of ``numpy.distutils`` with ``setuptools``
------------------------------------------------------
+------------------------------------------------------
 
 It is recommended to use ``setuptools < 60.0``. Newer versions may work, but
 are not guaranteed to. The reason for this is that ``setuptools`` 60.0 enabled
