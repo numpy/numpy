@@ -32,7 +32,7 @@ recommend:
 If you have modest needs (only simple Cython/C extensions, and perhaps nested
 ``setup.py`` files) and have been happy with ``numpy.distutils`` so far, you
 can also consider switching to ``setuptools``. Note that most functionality of
-``numpy.disutils`` is unlikely to be ported to ``setuptools``.
+``numpy.distutils`` is unlikely to be ported to ``setuptools``.
 
 
 Moving to Meson
@@ -111,7 +111,7 @@ For more details, see the
 
 .. _numpy-setuptools-interaction:
 
-Interaction of ``numpy.disutils`` with ``setuptools``
+Interaction of ``numpy.distutils`` with ``setuptools``
 -----------------------------------------------------
 
 It is recommended to use ``setuptools < 60.0``. Newer versions may work, but
