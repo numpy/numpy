@@ -596,11 +596,11 @@ class TestSaveTxt:
         # in our process if needed, see gh-16889
         memoryerror_raised = Value(c_bool)
 
-        # Use the same start method between Linux and macOS, the default method of
-        # Linux is 'fork', and the default method of macOS is spawn. 'spawn' will
-        # cause problem in the check_large_zip since the data sharing model is
-        # built on 'fork'
-        p = get_context('fork').Process(target=check_large_zip, args=(memoryerror_raised,))
+        # Since Python 3.8, the default start method for multiprocessing has 
+        # been changed from 'fork' to 'spawn' on macOS, causing inconsistency 
+        # on memory sharing model, lead to failed test for check_large_zip
+        ctx = get_context('fork')
+        p = ctx.Process(target=check_large_zip, args=(memoryerror_raised,))
         p.start()
         p.join()
         if memoryerror_raised.value:
