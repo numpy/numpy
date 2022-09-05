@@ -1837,30 +1837,11 @@ gentype_setflags(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args),
 }
 
 static PyObject *
-numbertype_class_getitem_abc(PyObject *cls, PyObject *args)
+numbertype_class_getitem(PyObject *cls, PyObject *args)
 {
     PyObject *generic_alias;
 
 #ifdef Py_GENERICALIASOBJECT_H
-    Py_ssize_t args_len;
-    int args_len_expected;
-
-    /* complexfloating should take 2 parameters, all others take 1 */
-    if (PyType_IsSubtype((PyTypeObject *)cls,
-                         &PyComplexFloatingArrType_Type)) {
-        args_len_expected = 2;
-    }
-    else {
-        args_len_expected = 1;
-    }
-
-    args_len = PyTuple_Check(args) ? PyTuple_Size(args) : 1;
-    if (args_len != args_len_expected) {
-        return PyErr_Format(PyExc_TypeError,
-                            "Too %s arguments for %s",
-                            args_len > args_len_expected ? "many" : "few",
-                            ((PyTypeObject *)cls)->tp_name);
-    }
     generic_alias = Py_GenericAlias(cls, args);
 #else
     PyErr_SetString(PyExc_TypeError,
@@ -1868,25 +1849,6 @@ numbertype_class_getitem_abc(PyObject *cls, PyObject *args)
     generic_alias = NULL;
 #endif
     return generic_alias;
-}
-
-/*
- * Use for concrete np.number subclasses, making them act as if they
- * were subtyped from e.g. np.signedinteger[object], thus lacking any
- * free subscription parameters. Requires python >= 3.9.
- */
-static PyObject *
-numbertype_class_getitem(PyObject *cls, PyObject *args)
-{
-#ifdef Py_GENERICALIASOBJECT_H
-    PyErr_Format(PyExc_TypeError,
-                 "There are no type variables left in %s",
-                 ((PyTypeObject *)cls)->tp_name);
-#else
-    PyErr_SetString(PyExc_TypeError,
-                    "Type subscription requires python >= 3.9");
-#endif
-    return NULL;
 }
 
 /*
@@ -2275,7 +2237,7 @@ static PyGetSetDef inttype_getsets[] = {
 static PyMethodDef numbertype_methods[] = {
     /* for typing; requires python >= 3.9 */
     {"__class_getitem__",
-        (PyCFunction)numbertype_class_getitem_abc,
+        (PyCFunction)numbertype_class_getitem,
         METH_CLASS | METH_O, NULL},
     {NULL, NULL, 0, NULL}  /* sentinel */
 };
@@ -2287,10 +2249,6 @@ static PyMethodDef @name@type_methods[] = {
     {"__complex__",
         (PyCFunction)@name@_complex,
         METH_VARARGS | METH_KEYWORDS, NULL},
-    /* for typing; requires python >= 3.9 */
-    {"__class_getitem__",
-        (PyCFunction)numbertype_class_getitem,
-        METH_CLASS | METH_O, NULL},
     {NULL, NULL, 0, NULL}
 };
 /**end repeat**/
@@ -2328,10 +2286,6 @@ static PyMethodDef @name@type_methods[] = {
     {"is_integer",
         (PyCFunction)@name@_is_integer,
         METH_NOARGS, NULL},
-    /* for typing; requires python >= 3.9 */
-    {"__class_getitem__",
-        (PyCFunction)numbertype_class_getitem,
-        METH_CLASS | METH_O, NULL},
     {NULL, NULL, 0, NULL}
 };
 /**end repeat**/
@@ -2340,10 +2294,6 @@ static PyMethodDef @name@type_methods[] = {
  * #name = timedelta, cdouble#
  */
 static PyMethodDef @name@type_methods[] = {
-    /* for typing; requires python >= 3.9 */
-    {"__class_getitem__",
-        (PyCFunction)numbertype_class_getitem,
-        METH_CLASS | METH_O, NULL},
     {NULL, NULL, 0, NULL}
 };
 /**end repeat**/
@@ -2353,10 +2303,6 @@ static PyMethodDef @name@type_methods[] = {
  *         long, ulong, longlong, ulonglong#
  */
 static PyMethodDef @name@type_methods[] = {
-    /* for typing; requires python >= 3.9 */
-    {"__class_getitem__",
-        (PyCFunction)numbertype_class_getitem,
-        METH_CLASS | METH_O, NULL},
     {"bit_count",
         (PyCFunction)npy_@name@_bit_count,
         METH_NOARGS, NULL},

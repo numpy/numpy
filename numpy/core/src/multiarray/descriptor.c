@@ -3144,15 +3144,6 @@ arraydescr_class_getitem(PyObject *cls, PyObject *args)
     PyObject *generic_alias;
 
 #ifdef Py_GENERICALIASOBJECT_H
-    Py_ssize_t args_len;
-
-    args_len = PyTuple_Check(args) ? PyTuple_Size(args) : 1;
-    if (args_len != 1) {
-        return PyErr_Format(PyExc_TypeError,
-                            "Too %s arguments for %s",
-                            args_len > 1 ? "many" : "few",
-                            ((PyTypeObject *)cls)->tp_name);
-    }
     generic_alias = Py_GenericAlias(cls, args);
 #else
     PyErr_SetString(PyExc_TypeError,
