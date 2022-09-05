@@ -13,7 +13,7 @@ from tempfile import NamedTemporaryFile
 from io import BytesIO, StringIO
 from datetime import datetime
 import locale
-from multiprocessing import Process, Value
+from multiprocessing import Value, get_context
 from ctypes import c_bool
 
 import numpy as np
@@ -595,7 +595,12 @@ class TestSaveTxt:
         # Use an object in shared memory to re-raise the MemoryError exception
         # in our process if needed, see gh-16889
         memoryerror_raised = Value(c_bool)
-        p = Process(target=check_large_zip, args=(memoryerror_raised,))
+
+        # Use the same start method between Linux and macOS, the default method of
+        # Linux is 'fork', and the default method of macOS is spawn. 'spawn' will
+        # cause problem in the check_large_zip since the data sharing model is
+        # built on 'fork'
+        p = get_context('fork').Process(target=check_large_zip, args=(memoryerror_raised,))
         p.start()
         p.join()
         if memoryerror_raised.value:
