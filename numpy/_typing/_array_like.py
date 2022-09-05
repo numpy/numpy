@@ -141,3 +141,16 @@ _ArrayLikeInt = _DualArrayLike[
     "dtype[integer[Any]]",
     int,
 ]
+
+# Extra ArrayLike type so that pyright can deal with NDArray[Any]
+# Used as the first overload, should only match NDArray[Any],
+# not any actual types.
+# https://github.com/numpy/numpy/pull/22193
+class _UnknownType: 
+    ...
+
+
+_ArrayLikeUnknown = _DualArrayLike[
+    "dtype[_UnknownType]",
+    _UnknownType,
+]
