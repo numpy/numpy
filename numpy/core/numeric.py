@@ -1836,7 +1836,7 @@ def fromfunction(function, shape, *, dtype=float, like=None, **kwargs):
 
     Notes
     -----
-    Keywords other than `dtype` are passed to `function`.
+    Keywords other than `dtype` and `like` are passed to `function`.
 
     Examples
     --------
