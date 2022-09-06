@@ -141,7 +141,9 @@ OPTIONAL_HEADERS = [
                 "immintrin.h",  # AVX
                 "features.h",  # for glibc version linux
                 "xlocale.h",  # see GH#8367
-                "dlfcn.h", # dladdr
+                "dlfcn.h",  # dladdr
+                "execinfo.h",  # backtrace
+                "libunwind.h",  # backtrace for LLVM/Clang using libunwind
                 "sys/mman.h", #madvise
 ]
 
