@@ -3736,10 +3736,10 @@ cdef class Generator:
                 psd = not np.any(s < -tol)
             if not psd:
                 if check_valid == 'warn':
-                    warnings.warn("covariance is not positive-semidefinite.",
+                    warnings.warn("covariance is not symmetric positive-semidefinite.",
                                   RuntimeWarning)
                 else:
-                    raise ValueError("covariance is not positive-semidefinite.")
+                    raise ValueError("covariance is not symmetric positive-semidefinite.")
 
         if method == 'cholesky':
             _factor = l
