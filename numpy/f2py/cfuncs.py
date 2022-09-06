@@ -1116,12 +1116,12 @@ complex_double_from_pyobj(complex_double* v, PyObject *obj, const char *errmess)
         return 1;
     }
     if (PyArray_CheckScalar(obj)) { /* 0-dim array or still array scalar */
-        PyObject *arr;
+        PyArrayObject *arr;
         if (PyArray_Check(obj)) {
-            arr = PyArray_Cast((PyArrayObject *)obj, NPY_CDOUBLE);
+            arr = (PyArrayObject *)PyArray_Cast((PyArrayObject *)obj, NPY_CDOUBLE);
         }
         else {
-            arr = PyArray_FromScalar(obj, PyArray_DescrFromType(NPY_CDOUBLE));
+            arr = (PyArrayObject *)PyArray_FromScalar(obj, PyArray_DescrFromType(NPY_CDOUBLE));
         }
         if (arr == NULL) {
             return 0;
