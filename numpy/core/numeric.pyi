@@ -43,6 +43,7 @@ from numpy._typing import (
     _ArrayLikeComplex_co,
     _ArrayLikeTD64_co,
     _ArrayLikeObject_co,
+    _ArrayLikeUnknown,
 )
 
 _T = TypeVar("_T")
@@ -257,6 +258,12 @@ def flatnonzero(a: ArrayLike) -> NDArray[intp]: ...
 
 @overload
 def correlate(
+    a: _ArrayLikeUnknown,
+    v: _ArrayLikeUnknown,
+    mode: _CorrelateMode = ...,
+) -> NDArray[Any]: ...
+@overload
+def correlate(
     a: _ArrayLikeBool_co,
     v: _ArrayLikeBool_co,
     mode: _CorrelateMode = ...,
@@ -300,6 +307,12 @@ def correlate(
 
 @overload
 def convolve(
+    a: _ArrayLikeUnknown,
+    v: _ArrayLikeUnknown,
+    mode: _CorrelateMode = ...,
+) -> NDArray[Any]: ...
+@overload
+def convolve(
     a: _ArrayLikeBool_co,
     v: _ArrayLikeBool_co,
     mode: _CorrelateMode = ...,
@@ -341,6 +354,12 @@ def convolve(
     mode: _CorrelateMode = ...,
 ) -> NDArray[object_]: ...
 
+@overload
+def outer(
+    a: _ArrayLikeUnknown,
+    b: _ArrayLikeUnknown,
+    out: None = ...,
+) -> NDArray[Any]: ...
 @overload
 def outer(
     a: _ArrayLikeBool_co,
@@ -390,6 +409,12 @@ def outer(
     out: _ArrayType,
 ) -> _ArrayType: ...
 
+@overload
+def tensordot(
+    a: _ArrayLikeUnknown,
+    b: _ArrayLikeUnknown,
+    axes: int | tuple[_ShapeLike, _ShapeLike] = ...,
+) -> NDArray[Any]: ...
 @overload
 def tensordot(
     a: _ArrayLikeBool_co,
@@ -458,6 +483,15 @@ def moveaxis(
     destination: _ShapeLike,
 ) -> NDArray[_SCT]: ...
 
+@overload
+def cross(
+    a: _ArrayLikeUnknown,
+    b: _ArrayLikeUnknown,
+    axisa: int = ...,
+    axisb: int = ...,
+    axisc: int = ...,
+    axis: None | int = ...,
+) -> NDArray[Any]: ...
 @overload
 def cross(
     a: _ArrayLikeBool_co,
