@@ -1793,7 +1793,14 @@ class TestClassGetItem:
     @pytest.mark.parametrize("arg_len", range(4))
     def test_subscript_tuple(self, arg_len: int) -> None:
         arg_tup = (Any,) * arg_len
-        assert np.dtype[arg_tup]
+        if arg_len == 1:
+            assert np.dtype[arg_tup]
+        else:
+            with pytest.raises(TypeError):
+                np.dtype[arg_tup]
+
+    def test_subscript_scalar(self) -> None:
+        assert np.dtype[Any]
 
 
 def test_result_type_integers_and_unitless_timedelta64():

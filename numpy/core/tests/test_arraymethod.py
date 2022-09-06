@@ -78,7 +78,12 @@ class TestClassGetItem:
     @pytest.mark.parametrize("arg_len", range(4))
     def test_subscript_tup(self, cls: type[np.ndarray], arg_len: int) -> None:
         arg_tup = (Any,) * arg_len
-        assert cls[arg_tup]
+        if arg_len in (1, 2):
+            assert cls[arg_tup]
+        else:
+            match = f"Too {'few' if arg_len == 0 else 'many'} arguments"
+            with pytest.raises(TypeError, match=match):
+                cls[arg_tup]
 
 
 @pytest.mark.skipif(sys.version_info >= (3, 9), reason="Requires python 3.8")
