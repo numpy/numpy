@@ -272,6 +272,14 @@ class TestComparisons:
         a = np.array([np.nan], dtype=object)
         assert_equal(np.not_equal(a, a), [True])
 
+    def test_error_in_equal_reduce(self):
+        # gh-20929
+        # make sure np.equal.reduce raises a TypeError if an array is passed
+        # without specifying the dtype
+        a = np.array([0, 0])
+        assert_equal(np.equal.reduce(a, dtype=bool), True)
+        assert_raises(TypeError, np.equal.reduce, a)
+
 
 class TestAdd:
     def test_reduce_alignment(self):
