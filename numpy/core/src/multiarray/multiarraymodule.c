@@ -1627,12 +1627,31 @@ _array_fromobject_generic(
                 goto finish;
             }
         }
-        /* One more chance */
+        /* One more chance for faster exit if user specified the dtype. */
         oldtype = PyArray_DESCR(oparr);
         if (PyArray_EquivTypes(oldtype, type)) {
             if (copy != NPY_COPY_ALWAYS && STRIDING_OK(oparr, order)) {
                 Py_INCREF(op);
-                ret = oparr;
+                if (oldtype == type) {
+                    ret = oparr;
+                }
+                else {
+                    /* Create a new PyArrayObject from the caller's
+                     * PyArray_Descr. Use the reference `op` as the base
+                     * object. */
+                    Py_INCREF(type);
+                    ret = (PyArrayObject *)PyArray_NewFromDescrAndBase(
+                            Py_TYPE(op),
+                            type,
+                            PyArray_NDIM(oparr),
+                            PyArray_DIMS(oparr),
+                            PyArray_STRIDES(oparr),
+                            PyArray_DATA(oparr),
+                            PyArray_FLAGS(oparr),
+                            op,
+                            op
+                            );
+                }
                 goto finish;
             }
             else {
