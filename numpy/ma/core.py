@@ -2357,10 +2357,7 @@ def masked_invalid(a, copy=True):
 
     """
 
-    try:
-        return masked_where(~(np.isfinite(getdata(a))), a, copy=copy)
-    except TypeError:
-        raise
+    return masked_where(~(np.isfinite(getdata(a))), a, copy=copy)
 
 ###############################################################################
 #                            Printing options                                 #
