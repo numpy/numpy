@@ -513,8 +513,7 @@ build_helpers.add_argument(
 )
 
 build_helpers.add_argument(
-    """_summary_
-    """    "--noopt",
+    "--noopt",
     action="store_true",
     help="Compile without optimization"
 )
