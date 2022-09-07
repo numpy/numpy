@@ -17,6 +17,7 @@ implementation in terms of subparsers
 
 from __future__ import annotations
 
+import sys
 import argparse
 import logging
 import os
@@ -825,9 +826,16 @@ def process_args(args: argparse.Namespace, rem: list[str]) -> None:
             # Step 8: Generate wrapper or signature file if compile flag is not given
             generate_files(f77_files + f90_files, module_name, sign_file)
 
+def sort_args(args: list[str]) -> list[str]:
+    """Sort files at the end of the list"""
+    extensions = (".f", ".for", ".ftn", ".f77", ".f90", ".f95", ".f03", ".f08", ".pyf", ".src", ".o", ".out", ".so", ".a")
+    if any(arg.endswith(extensions) for arg in args):
+        return sorted(args, key=lambda arg: arg.endswith(extensions))
+
 def main():
     logger = logging.getLogger("f2py_cli")
     logger.setLevel(logging.WARNING)
+    sys.argv = sort_args(sys.argv)
     args, rem = parser.parse_known_args()
     # since argparse can't handle '-include<header>'
     # we filter it out into rem and parse it manually.
