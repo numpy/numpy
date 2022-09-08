@@ -552,7 +552,7 @@ def _array2string(a, options, separator=' ', prefix=""):
 def _array2string_dispatcher(
         a, max_line_width=None, precision=None,
         suppress_small=None, separator=None, prefix=None,
-        style=None, formatter=None, threshold=None,
+        formatter=None, threshold=None,
         edgeitems=None, sign=None, floatmode=None, suffix=None,
         *, legacy=None):
     return (a,)
@@ -561,7 +561,7 @@ def _array2string_dispatcher(
 @array_function_dispatch(_array2string_dispatcher, module='numpy')
 def array2string(a, max_line_width=None, precision=None,
                  suppress_small=None, separator=' ', prefix="",
-                 style=np._NoValue, formatter=None, threshold=None,
+                 formatter=None, threshold=None,
                  edgeitems=None, sign=None, floatmode=None, suffix="",
                  *, legacy=None):
     """
@@ -596,10 +596,6 @@ def array2string(a, max_line_width=None, precision=None,
         wrapping is forced at the column ``max_line_width - len(suffix)``.
         It should be noted that the content of prefix and suffix strings are
         not included in the output.
-    style : _NoValue, optional
-        Has no effect, do not use.
-
-        .. deprecated:: 1.14.0
     formatter : dict of callables, optional
         If not None, the keys should indicate the type(s) that the respective
         formatting function applies to.  Callables should return a string.
@@ -715,16 +711,9 @@ def array2string(a, max_line_width=None, precision=None,
     options.update(overrides)
 
     if options['legacy'] <= 113:
-        if style is np._NoValue:
-            style = repr
 
         if a.shape == () and a.dtype.names is None:
-            return style(a.item())
-    elif style is not np._NoValue:
-        # Deprecation 11-9-2017  v1.14
-        warnings.warn("'style' argument is deprecated and no longer functional"
-                      " except in 1.13 'legacy' mode",
-                      DeprecationWarning, stacklevel=3)
+            return repr(a.item())
 
     if options['legacy'] > 113:
         options['linewidth'] -= len(suffix)
@@ -1096,7 +1085,7 @@ def format_float_scientific(x, precision=None, unique=True, trim='k',
         identify the value may be printed and rounded unbiased.
 
         -- versionadded:: 1.21.0
-        
+
     Returns
     -------
     rep : string
@@ -1181,7 +1170,7 @@ def format_float_positional(x, precision=None, unique=True,
         Minimum number of digits to print. Only has an effect if `unique=True`
         in which case additional digits past those necessary to uniquely
         identify the value may be printed, rounding the last additional digit.
-        
+
         -- versionadded:: 1.21.0
 
     Returns
