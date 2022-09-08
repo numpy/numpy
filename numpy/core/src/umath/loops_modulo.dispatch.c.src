@@ -12,6 +12,21 @@
 // Provides the various *_LOOP macros
 #include "fast_loop_macros.h"
 
+
+#define DIVIDEBYZERO_OVERFLOW_CHECK(x, y, min_val, signed) \
+    (NPY_UNLIKELY(                                         \
+        (signed)                                    ?      \
+        ((y == 0) || ((x == min_val) && (y == -1))) :      \
+        (y == 0))                                          \
+    )
+
+#define FLAG_IF_DIVIDEBYZERO(x) do {     \
+    if (NPY_UNLIKELY(x == 0)) {          \
+        npy_set_floatstatus_divbyzero(); \
+    }                                    \
+} while (0)
+
+
 #if NPY_SIMD && defined(NPY_HAVE_VSX4)
 typedef struct {
     npyv_u32x2 hi;
@@ -166,7 +181,6 @@ vsx4_simd_@func@_contig_@sfx@(char **args, npy_intp len)
     const int vstep           = npyv_nlanes_@sfx@;
 #if @id@ == 2 /* divmod */
     npyv_lanetype_@sfx@ *dst2 = (npyv_lanetype_@sfx@ *) args[3];
-    const npyv_@sfx@ vneg_one = npyv_setall_@sfx@(-1);
     npyv_b@len@ warn          = npyv_cvt_b@len@_@sfx@(npyv_zero_@sfx@());
 
     for (; len >= vstep; len -= vstep, src1 += vstep, src2 += vstep,
@@ -176,11 +190,11 @@ vsx4_simd_@func@_contig_@sfx@(char **args, npy_intp len)
         npyv_@sfx@ quo      = vsx4_div_@sfx@(a, b);
         npyv_@sfx@ rem      = npyv_sub_@sfx@(a, vec_mul(b, quo));
         npyv_b@len@ bzero   = npyv_cmpeq_@sfx@(b, vzero);
-        // when b is 0, 'cvtozero' forces the modulo to be 0 too
-        npyv_@sfx@ cvtozero = npyv_select_@sfx@(bzero, vzero, vneg_one);
+        // when b is 0, forces the remainder to be 0 too
+                        rem = npyv_select_@sfx@(bzero, vzero, rem);
                        warn = npyv_or_@sfx@(bzero, warn);
         npyv_store_@sfx@(dst1, quo);
-        npyv_store_@sfx@(dst2, npyv_and_@sfx@(cvtozero, rem));
+        npyv_store_@sfx@(dst2, rem);
     }
 
     if (!vec_all_eq(warn, vzero)) {
@@ -290,7 +304,8 @@ vsx4_simd_@func@_contig_@sfx@(char **args, npy_intp len)
     npyv_lanetype_@sfx@ *dst2 = (npyv_lanetype_@sfx@ *) args[3];
     const npyv_@sfx@ vneg_one = npyv_setall_@sfx@(-1);
     const npyv_@sfx@ vmin     = npyv_setall_@sfx@(NPY_MIN_INT@len@);
-    npyv_b@len@ warn          = npyv_cvt_b@len@_@sfx@(npyv_zero_@sfx@());
+    npyv_b@len@ warn_zero     = npyv_cvt_b@len@_@sfx@(npyv_zero_@sfx@());
+    npyv_b@len@ warn_overflow = npyv_cvt_b@len@_@sfx@(npyv_zero_@sfx@());
 
     for (; len >= vstep; len -= vstep, src1 += vstep, src2 += vstep,
          dst1 += vstep, dst2 += vstep) {
@@ -310,10 +325,8 @@ vsx4_simd_@func@_contig_@sfx@(char **args, npy_intp len)
         npyv_b@len@ amin     = npyv_cmpeq_@sfx@(a, vmin);
         npyv_b@len@ bneg_one = npyv_cmpeq_@sfx@(b, vneg_one);
         npyv_b@len@ overflow = npyv_and_@sfx@(bneg_one, amin);
-        npyv_b@len@ error    = npyv_or_@sfx@(bzero, overflow);
-        // in case of overflow or b = 0, 'cvtozero' forces quo/rem to be 0
-        npyv_@sfx@ cvtozero  = npyv_select_@sfx@(error, vzero, vneg_one);
-                        warn = npyv_or_@sfx@(error, warn);
+                warn_zero = npyv_or_@sfx@(bzero, warn_zero);
+               warn_overflow = npyv_or_@sfx@(overflow, warn_overflow);
 #endif
 #if @id@ >= 1 /* remainder and divmod */
         // handle mixed case the way Python does
@@ -329,8 +342,14 @@ vsx4_simd_@func@_contig_@sfx@(char **args, npy_intp len)
 #if @id@ == 2 /* divmod */
         npyv_@sfx@ to_sub = npyv_select_@sfx@(or, vzero, vneg_one);
                       quo = npyv_add_@sfx@(quo, to_sub);
-        npyv_store_@sfx@(dst1, npyv_and_@sfx@(cvtozero, quo));
-        npyv_store_@sfx@(dst2, npyv_and_@sfx@(cvtozero, rem));
+                      // Divide by zero
+                      quo = npyv_select_@sfx@(bzero, vzero, quo);
+                      rem = npyv_select_@sfx@(bzero, vzero, rem);
+                      // Overflow
+                      quo = npyv_select_@sfx@(overflow, vmin, quo);
+                      rem = npyv_select_@sfx@(overflow, vzero, rem);
+        npyv_store_@sfx@(dst1, quo);
+        npyv_store_@sfx@(dst2, rem);
 #else /* fmod and remainder */
         npyv_store_@sfx@(dst1, rem);
         if (NPY_UNLIKELY(vec_any_eq(b, vzero))) {
@@ -340,17 +359,27 @@ vsx4_simd_@func@_contig_@sfx@(char **args, npy_intp len)
     }
 
 #if @id@ == 2 /* divmod */
-    if (!vec_all_eq(warn, vzero)) {
+    if (!vec_all_eq(warn_zero, vzero)) {
         npy_set_floatstatus_divbyzero();
+    }
+    if (!vec_all_eq(warn_overflow, vzero)) {
+        npy_set_floatstatus_overflow();
     }
 
     for (; len > 0; --len, ++src1, ++src2, ++dst1, ++dst2) {
         const npyv_lanetype_@sfx@ a = *src1;
         const npyv_lanetype_@sfx@ b = *src2;
-        if (b == 0 || (a == NPY_MIN_INT@len@ && b == -1)) {
-            npy_set_floatstatus_divbyzero();
-            *dst1 = 0;
-            *dst2 = 0;
+        if (DIVIDEBYZERO_OVERFLOW_CHECK(a, b, NPY_MIN_INT@len@, NPY_TRUE)) {
+            if (b == 0) {
+                npy_set_floatstatus_divbyzero();
+                *dst1 = 0;
+                *dst2 = 0;
+            }
+            else {
+                npy_set_floatstatus_overflow();
+                *dst1 = NPY_MIN_INT@len@;
+                *dst2 = 0;
+            }
         }
         else {
             *dst1 = a / b;
@@ -365,8 +394,8 @@ vsx4_simd_@func@_contig_@sfx@(char **args, npy_intp len)
     for (; len > 0; --len, ++src1, ++src2, ++dst1) {
         const npyv_lanetype_@sfx@ a = *src1;
         const npyv_lanetype_@sfx@ b = *src2;
-        if (NPY_UNLIKELY(b == 0)) {
-            npy_set_floatstatus_divbyzero();
+        if (DIVIDEBYZERO_OVERFLOW_CHECK(a, b, NPY_MIN_INT@len@, NPY_TRUE)) {
+            FLAG_IF_DIVIDEBYZERO(b);
             *dst1 = 0;
         } else{
             *dst1 = a % b;
@@ -415,8 +444,6 @@ vsx4_simd_@func@_by_scalar_contig_@sfx@(char **args, npy_intp len)
         // (a == NPY_MIN_INT@len@ && b == -1)
         npyv_b@len@ amin     = npyv_cmpeq_@sfx@(a, vmin);
         npyv_b@len@ overflow = npyv_and_@sfx@(bneg_one, amin);
-        // in case of overflow, 'cvtozero' forces quo/rem to be 0
-        npyv_@sfx@ cvtozero  = npyv_select_@sfx@(overflow, vzero, vneg_one);
                         warn = npyv_or_@sfx@(overflow, warn);
 #endif
 #if @id@ >= 1 /* remainder and divmod */
@@ -432,8 +459,11 @@ vsx4_simd_@func@_by_scalar_contig_@sfx@(char **args, npy_intp len)
 #if @id@ == 2 /* divmod */
         npyv_@sfx@ to_sub = npyv_select_@sfx@(or, vzero, vneg_one);
         quo               = npyv_add_@sfx@(quo, to_sub);
-        npyv_store_@sfx@(dst1, npyv_and_@sfx@(cvtozero, quo));
-        npyv_store_@sfx@(dst2, npyv_and_@sfx@(cvtozero, rem));
+        // Overflow: set quo to minimum and rem to 0
+        quo               = npyv_select_@sfx@(overflow, vmin, quo);
+        rem               = npyv_select_@sfx@(overflow, vzero, rem);
+        npyv_store_@sfx@(dst1, quo);
+        npyv_store_@sfx@(dst2, rem);
 #else /* fmod and remainder */
         npyv_store_@sfx@(dst1, rem);
 #endif
@@ -441,14 +471,14 @@ vsx4_simd_@func@_by_scalar_contig_@sfx@(char **args, npy_intp len)
 
 #if @id@ == 2 /* divmod */
     if (!vec_all_eq(warn, vzero)) {
-        npy_set_floatstatus_divbyzero();
+        npy_set_floatstatus_overflow();
     }
 
     for (; len > 0; --len, ++src1, ++dst1, ++dst2) {
         const npyv_lanetype_@sfx@ a = *src1;
-        if (a == NPY_MIN_INT@len@ && scalar == -1) {
-            npy_set_floatstatus_divbyzero();
-            *dst1 = 0;
+        if (NPY_UNLIKELY(a == NPY_MIN_INT@len@ && scalar == -1)) {
+            npy_set_floatstatus_overflow();
+            *dst1 = NPY_MIN_INT@len@;
             *dst2 = 0;
         }
         else {
@@ -524,8 +554,12 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_fmod)
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
         const @type@ in2 = *(@type@ *)ip2;
-        if (NPY_UNLIKELY(in2 == 0)) {
-            npy_set_floatstatus_divbyzero();
+#if @signed@
+        if (DIVIDEBYZERO_OVERFLOW_CHECK(in1, in2, NPY_MIN_@TYPE@, NPY_TRUE)) {
+#else
+        if (DIVIDEBYZERO_OVERFLOW_CHECK(in1, in2, 0, NPY_FALSE)) {
+#endif
+            FLAG_IF_DIVIDEBYZERO(in2);
             *((@type@ *)op1) = 0;
         } else{
             *((@type@ *)op1)= in1 % in2;
@@ -552,8 +586,12 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_remainder)
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
         const @type@ in2 = *(@type@ *)ip2;
-        if (NPY_UNLIKELY(in2 == 0)) {
-            npy_set_floatstatus_divbyzero();
+#if @signed@
+        if (DIVIDEBYZERO_OVERFLOW_CHECK(in1, in2, NPY_MIN_@TYPE@, NPY_TRUE)) {
+#else
+        if (DIVIDEBYZERO_OVERFLOW_CHECK(in1, in2, 0, NPY_FALSE)) {
+#endif
+            FLAG_IF_DIVIDEBYZERO(in2);
             *((@type@ *)op1) = 0;
         } else{
 #if @signed@
@@ -593,10 +631,17 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_divmod)
         const @type@ in1 = *(@type@ *)ip1;
         const @type@ in2 = *(@type@ *)ip2;
         /* see FIXME note for divide above */
-        if (NPY_UNLIKELY(in2 == 0 || (in1 == NPY_MIN_@TYPE@ && in2 == -1))) {
-            npy_set_floatstatus_divbyzero();
-            *((@type@ *)op1) = 0;
-            *((@type@ *)op2) = 0;
+        if (DIVIDEBYZERO_OVERFLOW_CHECK(in1, in2, NPY_MIN_@TYPE@, NPY_TRUE)) {
+            if (in2 == 0) {
+                npy_set_floatstatus_divbyzero();
+                *((@type@ *)op1) = 0;
+                *((@type@ *)op2) = 0;
+            }
+            else {
+                npy_set_floatstatus_overflow();
+                *((@type@ *)op1) = NPY_MIN_@TYPE@;
+                *((@type@ *)op2) = 0;
+            }
         }
         else {
             /* handle mixed case the way Python does */
@@ -616,7 +661,7 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_divmod)
     BINARY_LOOP_TWO_OUT {
         const @type@ in1 = *(@type@ *)ip1;
         const @type@ in2 = *(@type@ *)ip2;
-        if (NPY_UNLIKELY(in2 == 0)) {
+        if (DIVIDEBYZERO_OVERFLOW_CHECK(in1, in2, 0, NPY_FALSE)) {
             npy_set_floatstatus_divbyzero();
             *((@type@ *)op1) = 0;
             *((@type@ *)op2) = 0;
