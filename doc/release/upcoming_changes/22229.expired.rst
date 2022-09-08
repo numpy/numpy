@@ -1,1 +1,1 @@
-The style keyword argument has been removed from np.array2string.
+* The style keyword argument has been removed from `numpy.array2string`.
