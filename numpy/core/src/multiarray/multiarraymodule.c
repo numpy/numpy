@@ -1631,8 +1631,8 @@ _array_fromobject_generic(
         oldtype = PyArray_DESCR(oparr);
         if (PyArray_EquivTypes(oldtype, type)) {
             if (copy != NPY_COPY_ALWAYS && STRIDING_OK(oparr, order)) {
-                Py_INCREF(op);
                 if (oldtype == type) {
+                    Py_INCREF(op);
                     ret = oparr;
                 }
                 else {
