@@ -18,10 +18,6 @@ Simple script to invoke Cython (and Tempita) on all .pyx (.pyx.in)
 files; while waiting for a proper build system. Uses file hashes to
 figure out if rebuild is needed.
 
-For now, this script should be run by developers when changing Cython files
-only, and the resulting C files checked in, so that end-users (and Python-only
-developers) do not get the Cython/Tempita dependencies.
-
 Originally written by Dag Sverre Seljebotn, and copied here from:
 
 https://raw.github.com/dagss/private-scipy-refactor/cythonize/cythonize.py
