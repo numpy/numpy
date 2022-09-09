@@ -102,6 +102,16 @@ def test_array_array():
     assert_raises(ValueError, np.array, [nested], dtype=np.float64)
 
     # Try with lists...
+    # float32
+    assert_equal(np.array([None] * 10, dtype=np.float32),
+                 np.full((10,), np.nan, dtype=np.float32))
+    assert_equal(np.array([[None]] * 10, dtype=np.float32),
+                 np.full((10, 1), np.nan, dtype=np.float32))
+    assert_equal(np.array([[None] * 10], dtype=np.float32),
+                 np.full((1, 10), np.nan, dtype=np.float32))
+    assert_equal(np.array([[None] * 10] * 10, dtype=np.float32),
+                 np.full((10, 10), np.nan, dtype=np.float32))
+    # float64
     assert_equal(np.array([None] * 10, dtype=np.float64),
                  np.full((10,), np.nan, dtype=np.float64))
     assert_equal(np.array([[None]] * 10, dtype=np.float64),

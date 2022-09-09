@@ -3,8 +3,13 @@
  ** sse2 sse41
  ** vsx2
  ** neon asimd
- ** vx vxe
  **/
+
+/**
+ * We ran into lots of test failures trying to enable this file for
+ * VSE and VE on s390x (qemu) so avoiding these targets for now.
+*/
+
 /**
  * Force use SSE only on x86, even if AVX2 or AVX512F are enabled
  * through the baseline, since scatter(AVX512F) and gather very costly
@@ -12,6 +17,8 @@
  * such small operations that this file covers.
 */
 #define NPY_SIMD_FORCE_128
+#define _UMATHMODULE
+#define _MULTIARRAYMODULE
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #include <float.h>
 #include "numpy/npy_math.h"
@@ -119,7 +126,12 @@ npyv_isinf_@sfx@(npyv_@sfx@ v)
     // fabs via masking of sign bit
     const npyv_@sfx@ signmask = npyv_setall_@sfx@(-0.@fd@);
     npyv_u8      r_u8 = npyv_andc_u8(npyv_reinterpret_u8_@sfx@(v), npyv_reinterpret_u8_@sfx@(signmask));
+ #if defined(NPY_HAVE_SSE2) || defined (NPY_HAVE_SSE41)
+    // return cast already done in npyv_cmpgt_@sfx@
     npyv_u@ssfx@ r    = npyv_cmpgt_@sfx@(npyv_reinterpret_@sfx@_u8(r_u8), fltmax);
+ #else
+    npyv_u@ssfx@ r    = npyv_reinterpret_u@ssfx@_@sfx@(npyv_cmpgt_@sfx@(npyv_reinterpret_@sfx@_u8(r_u8), fltmax));
+ #endif
 #endif
     return npyv_shri_u@ssfx@(r, (sizeof(npyv_lanetype_@sfx@)*8)-1);
 }
@@ -135,7 +147,12 @@ npyv_isfinite_@sfx@(npyv_@sfx@ v)
     // fabs via masking of sign bit
     const npyv_@sfx@ signmask = npyv_setall_@sfx@(-0.@fd@);
     npyv_u8      r_u8 = npyv_andc_u8(npyv_reinterpret_u8_@sfx@(v), npyv_reinterpret_u8_@sfx@(signmask));
+ #if defined(NPY_HAVE_SSE2) || defined (NPY_HAVE_SSE41)
+    // return cast already done in npyv_cmpgt_@sfx@
     npyv_u@ssfx@ r    = npyv_cmple_@sfx@(npyv_reinterpret_@sfx@_u8(r_u8), fltmax);
+ #else
+    npyv_u@ssfx@ r    = npyv_reinterpret_u@ssfx@_@sfx@(npyv_cmple_@sfx@(npyv_reinterpret_@sfx@_u8(r_u8), fltmax));
+ #endif
 #endif
     return npyv_shri_u@ssfx@(r, (sizeof(npyv_lanetype_@sfx@)*8)-1);
 }
@@ -149,7 +166,8 @@ npyv_signbit_@sfx@(npyv_@sfx@ v)
 #endif // @VCHK@
 /**end repeat**/
 
-#if defined(NPY_HAVE_NEON)
+// In these functions we use vqtbl4q_u8 which is only available on aarch64
+#if defined(NPY_HAVE_NEON) && defined(__aarch64__)
     #define PREPACK_ISFINITE 1
     #define PREPACK_SIGNBIT  1
 
@@ -257,7 +275,7 @@ npyv_signbit_@sfx@(npyv_@sfx@ v)
 #else
     #define PREPACK_ISFINITE 0
     #define PREPACK_SIGNBIT  0
-#endif // defined(NPY_HAVE_NEON)
+#endif // defined(NPY_HAVE_NEON) && defined(__aarch64__)
 
 #endif // NPY_SIMD
 
@@ -503,15 +521,15 @@ static void simd_unary_@kind@_@TYPE@_@STYPE@_@DTYPE@
                                                  v4_@N@, v5_@N@, v6_@N@, v7_@N@);
             #endif
         #else
-            npyv_u@ssfx@ r0_@N@ = npyv_@kind@_@sfx@(v0_@N@);
-            npyv_u@ssfx@ r1_@N@ = npyv_@kind@_@sfx@(v1_@N@);
-            npyv_u@ssfx@ r2_@N@ = npyv_@kind@_@sfx@(v2_@N@);
-            npyv_u@ssfx@ r3_@N@ = npyv_@kind@_@sfx@(v3_@N@);
+            npyv_b@ssfx@ r0_@N@ = npyv_cvt_b@ssfx@_u@ssfx@(npyv_@kind@_@sfx@(v0_@N@));
+            npyv_b@ssfx@ r1_@N@ = npyv_cvt_b@ssfx@_u@ssfx@(npyv_@kind@_@sfx@(v1_@N@));
+            npyv_b@ssfx@ r2_@N@ = npyv_cvt_b@ssfx@_u@ssfx@(npyv_@kind@_@sfx@(v2_@N@));
+            npyv_b@ssfx@ r3_@N@ = npyv_cvt_b@ssfx@_u@ssfx@(npyv_@kind@_@sfx@(v3_@N@));
             #if PACK_FACTOR == 8
-            npyv_u@ssfx@ r4_@N@ = npyv_@kind@_@sfx@(v4_@N@);
-            npyv_u@ssfx@ r5_@N@ = npyv_@kind@_@sfx@(v5_@N@);
-            npyv_u@ssfx@ r6_@N@ = npyv_@kind@_@sfx@(v6_@N@);
-            npyv_u@ssfx@ r7_@N@ = npyv_@kind@_@sfx@(v7_@N@);
+            npyv_b@ssfx@ r4_@N@ = npyv_cvt_b@ssfx@_u@ssfx@(npyv_@kind@_@sfx@(v4_@N@));
+            npyv_b@ssfx@ r5_@N@ = npyv_cvt_b@ssfx@_u@ssfx@(npyv_@kind@_@sfx@(v5_@N@));
+            npyv_b@ssfx@ r6_@N@ = npyv_cvt_b@ssfx@_u@ssfx@(npyv_@kind@_@sfx@(v6_@N@));
+            npyv_b@ssfx@ r7_@N@ = npyv_cvt_b@ssfx@_u@ssfx@(npyv_@kind@_@sfx@(v7_@N@));
             #endif // PACK_FACTOR == 8
         #endif // @PREPACK@ && (@ssfx@ == 32 || @ssfx@ == 64)
         #endif // @unroll@ > @N@
