@@ -98,6 +98,16 @@ def test_nep50_weak_integers_with_inexact(dtype):
         with pytest.raises(OverflowError):
             np.array(1, dtype=dtype) + too_big_int
     else:
+        # NumPy uses (or used) `int -> string -> longdouble` for the
+        # conversion.  But Python may refuse `str(int)` for huge ints.
+        # In that case, RuntimeWarning would be correct, but conversion
+        # fails earlier (seems to happen on 32bit linux, possibly only debug).
+        if dtype in "gG":
+            try:
+                str(too_big_int)
+            except ValueError:
+                pytest.skip("`huge_int -> string -> longdouble` failed")
+
         # Otherwise, we overflow to infinity:
         with pytest.warns(RuntimeWarning):
             res = scalar_type(1) + too_big_int
@@ -105,7 +115,10 @@ def test_nep50_weak_integers_with_inexact(dtype):
         assert res == np.inf
 
         with pytest.warns(RuntimeWarning):
-            res = np.array(1, dtype=dtype) + too_big_int
+            # We force the dtype here, since windows may otherwise pick the
+            # double instead of the longdouble loop.  That leads to slightly
+            # different results (conversion of the int fails as above).
+            res = np.add(np.array(1, dtype=dtype), too_big_int, dtype=dtype)
         assert res.dtype == dtype
         assert res == np.inf
 
