@@ -1,0 +1,13 @@
+.. currentmodule:: numpy
+
+==========================
+NumPy 1.23.4 Release Notes
+==========================
+NumPy 1.23.4 is a maintenance release that fixes bugs discovered after the
+1.23.3 release. There is no major theme for this release, the main improvements
+are for some downstream builds and some annotation corner cases. The Python
+versions supported for this release are 3.8-3.11.
+
+Note that we have moved to MacOS 11 for the NumPy 1.23.4 MacOS wheels, the 10.15
+version previously used is no longer be supported by our build infrastructure.
+
