@@ -52,8 +52,11 @@
 
 #include <inttypes.h>
 
-#if defined(_WIN32) && !defined (__MINGW32__)
+#ifdef _WIN32
 #include <stdlib.h>
+#endif
+
+#if defined(_WIN32) && !defined (__MINGW32__)
 #define inline __forceinline
 #endif
 
