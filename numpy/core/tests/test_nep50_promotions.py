@@ -4,7 +4,10 @@ mode.  Most of these test are likely to be simply deleted again once NEP 50
 is adopted in the main test suite.  A few may be moved elsewhere.
 """
 
+import operator
+
 import numpy as np
+
 import pytest
 
 
@@ -121,6 +124,25 @@ def test_nep50_weak_integers_with_inexact(dtype):
             res = np.add(np.array(1, dtype=dtype), too_big_int, dtype=dtype)
         assert res.dtype == dtype
         assert res == np.inf
+
+
+@pytest.mark.parametrize("op", [operator.add, operator.pow, operator.eq])
+def test_weak_promotion_scalar_path(op):
+    # Some additional paths excercising the weak scalars.
+    np._set_promotion_state("weak")
+
+    # Integer path:
+    res = op(np.uint8(3), 5)
+    assert res == op(3, 5)
+    assert res.dtype == np.uint8 or res.dtype == bool
+
+    with pytest.raises(OverflowError):
+        op(np.uint8(3), 1000)
+
+    # Float path:
+    res = op(np.float32(3), 5.)
+    assert res == op(3., 5.)
+    assert res.dtype == np.float32 or res.dtype == bool
 
 
 def test_nep50_complex_promotion():
