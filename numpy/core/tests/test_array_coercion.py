@@ -758,7 +758,8 @@ class TestAsArray:
         The result of ``asarray()`` should have the dtype provided through the
         keyword argument, when used. This forces unique array handles to be
         produced for unique np.dtype objects, but (for equivalent dtypes), the
-        underlying data (the base object) is shared with the original array object.
+        underlying data (the base object) is shared with the original array
+        object.
 
         Ref https://github.com/numpy/numpy/issues/1468
         """
@@ -775,7 +776,8 @@ class TestAsArray:
         annotated_int_array = np.asarray(int_array, dtype=unequal_type)
         assert annotated_int_array is not int_array
         assert annotated_int_array.base is int_array
-        # Create an equivalent descriptor with a new and distinct dtype instance.
+        # Create an equivalent descriptor with a new and distinct dtype
+        # instance.
         equivalent_requirement = np.dtype('i', metadata={'spam': True})
         annotated_int_array_alt = np.asarray(annotated_int_array,
                                              dtype=equivalent_requirement)
