@@ -123,6 +123,15 @@ def test_nep50_weak_integers_with_inexact(dtype):
         assert res == np.inf
 
 
+def test_nep50_complex_promotion():
+    np._set_promotion_state("weak")
+
+    with pytest.warns(RuntimeWarning, match=".*overflow"):
+        res = np.complex64(3) + complex(2**300)
+
+    assert type(res) == np.complex64
+
+
 def test_nep50_integer_conversion_errors():
     # Do not worry about warnings here (auto-fixture will reset).
     np._set_promotion_state("weak")
