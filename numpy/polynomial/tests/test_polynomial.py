@@ -72,7 +72,16 @@ class TestArithmetic:
             tgt = [0]*(i + 1) + [1]
             assert_equal(poly.polymulx(ser), tgt)
 
-    def test_polymul(self):
+    def test_polymul(self, fourier=True):
+        for i in range(5):
+            for j in range(5):
+                msg = f"At i={i}, j={j}"
+                tgt = np.zeros(i + j + 1)
+                tgt[i + j] += 1
+                res = poly.polymul([0]*i + [1], [0]*j + [1])
+                assert_equal(trim(res), trim(tgt), err_msg=msg)
+
+    def test_polymul(self, fourier=False):
         for i in range(5):
             for j in range(5):
                 msg = f"At i={i}, j={j}"

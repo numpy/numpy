@@ -82,6 +82,7 @@ __all__ = [
 import numpy as np
 import numpy.linalg as la
 from numpy.core.multiarray import normalize_axis_index
+from numpy.fft import fft, ifft
 
 from . import polyutils as pu
 from ._polybase import ABCPolyBase
@@ -325,7 +326,7 @@ def polymulx(c):
     return prd
 
 
-def polymul(c1, c2):
+def polymul(c1, c2, fourier=False):
     """
     Multiply one polynomial by another.
 
@@ -338,6 +339,10 @@ def polymul(c1, c2):
     c1, c2 : array_like
         1-D arrays of coefficients representing a polynomial, relative to the
         "standard" basis, and ordered from lowest order term to highest.
+
+    fourier: boolean, optional
+        Decides whether to compute the product of the polynomials with discrete
+        fourier transforms instead of convolution.
 
     Returns
     -------
@@ -359,7 +364,15 @@ def polymul(c1, c2):
     """
     # c1, c2 are trimmed copies
     [c1, c2] = pu.as_series([c1, c2])
-    ret = np.convolve(c1, c2)
+    if fourier:
+        #We have to append zeroes to both vectors until their length
+        #is greater than the sums of the 2 original lengths
+        c2_length = len(c2)
+        c2 = np.append(c2, np.zeros(len(c1) + 1))
+        c1 = np.append(c1, np.zeros(c2_length + 1))
+        ret = ifft(fft(c1) * fft(c2))
+    else:
+        ret = np.convolve(c1, c2)
     return pu.trimseq(ret)
 
 
