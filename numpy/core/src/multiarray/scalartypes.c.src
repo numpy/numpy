@@ -319,18 +319,54 @@ genint_type_str(PyObject *self)
     if (item == NULL) {
         return NULL;
     }
-
-    item_str = PyUString_FromFormat("%s(%S)", Py_TYPE(self)->tp_name, item);
-
+    item_str = PyObject_Str(item);
     Py_DECREF(item);
     return item_str;
+}
+
+static PyObject *
+genint_type_repr(PyObject *self)
+{
+    PyObject *value_string = genint_type_str(self);
+    if (value_string == NULL) {
+        return NULL;
+    }
+
+    int num = _typenum_fromtypeobj((PyObject *)Py_TYPE(self), 0);
+
+    PyObject *repr;
+    if (num == 0) {
+        /* Not a builtin scalar (presumably), just use the name */
+        repr = PyUnicode_FromFormat("%S(%S)", Py_TYPE(self)->tp_name, value_string);
+        Py_DECREF(value_string);
+        return repr;
+    }
+
+    PyArray_Descr *descr = PyArray_DescrFromType(num);  /* cannot fail */
+    int bitsize = descr->elsize * 8;
+    Py_DECREF(descr);
+    if (PyTypeNum_ISUNSIGNED(num)) {
+        repr = PyUnicode_FromFormat("np.uint%d(%S)", bitsize, value_string);
+    }
+    else {
+        repr = PyUnicode_FromFormat("np.int%d(%S)", bitsize, value_string);
+    }
+    Py_DECREF(value_string);
+    return repr;
 }
 
 static PyObject *
 genbool_type_str(PyObject *self)
 {
     return PyUnicode_FromString(
-            ((PyBoolScalarObject *)self)->obval ? "numpy.True_" : "numpy.False_");
+            ((PyBoolScalarObject *)self)->obval ? "True" : "False");
+}
+
+static PyObject *
+genbool_type_repr(PyObject *self)
+{
+    return PyUnicode_FromString(
+            ((PyBoolScalarObject *)self)->obval ? "np.True_" : "np.False_");
 }
 
 /*
@@ -429,6 +465,8 @@ format_@name@(@type@ val, npy_bool scientific,
 /**begin repeat
  * #form = repr, str#
  */
+#define IS_@form@
+
 static PyObject *
 stringtype_@form@(PyObject *self)
 {
@@ -446,8 +484,15 @@ stringtype_@form@(PyObject *self)
     }
     ret = PyBytes_Type.tp_@form@(new);
     Py_DECREF(new);
+#ifdef IS_repr
+    if (ret == NULL) {
+        return NULL;
+    }
+    Py_SETREF(ret, PyUnicode_FromFormat("np.bytes_(%S)", ret));
+#endif   /* IS_repr */
     return ret;
 }
+#undef IS_@form@
 /**end repeat**/
 
 /*
@@ -458,6 +503,8 @@ stringtype_@form@(PyObject *self)
 /**begin repeat
  * #form = repr, str#
  */
+#define IS_@form@
+
 static PyObject *
 unicodetype_@form@(PyObject *self)
 {
@@ -481,8 +528,18 @@ unicodetype_@form@(PyObject *self)
     ret = PyUnicode_Type.tp_@form@(new);
     Py_DECREF(new);
     PyMem_Free(ip);
+
+#ifdef IS_repr
+    if (ret == NULL) {
+        return NULL;
+    }
+    Py_SETREF(ret, PyUnicode_FromFormat("np.bytes_(%S)", ret));
+#endif  /* IS_repr */
+
     return ret;
 }
+
+#undef IS_@form@
 /**end repeat**/
 
 /*
@@ -552,7 +609,7 @@ voidtype_repr(PyObject *self)
     if (PyDataType_HASFIELDS(s->descr)) {
         return _void_scalar_repr(self);
     }
-    return _void_to_hex(s->obval, s->descr->elsize, "void(b'", "\\x", "')");
+    return _void_to_hex(s->obval, s->descr->elsize, "np.void(b'", "\\x", "')");
 }
 
 static PyObject *
@@ -599,14 +656,14 @@ datetimetype_repr(PyObject *self)
      */
     if ((scal->obmeta.num == 1 && scal->obmeta.base != NPY_FR_h) ||
             scal->obmeta.base == NPY_FR_GENERIC) {
-        ret = PyUnicode_FromFormat("numpy.datetime64('%s')", iso);
+        ret = PyUnicode_FromFormat("np.datetime64('%s')", iso);
     }
     else {
         PyObject *meta = metastr_to_unicode(&scal->obmeta, 1);
         if (meta == NULL) {
             return NULL;
         }
-        ret = PyUnicode_FromFormat("numpy.datetime64('%s','%S')", iso, meta);
+        ret = PyUnicode_FromFormat("np.datetime64('%s','%S')", iso, meta);
         Py_DECREF(meta);
     }
 
@@ -645,7 +702,7 @@ timedeltatype_repr(PyObject *self)
 
     /* The metadata unit */
     if (scal->obmeta.base == NPY_FR_GENERIC) {
-        ret = PyUnicode_FromFormat("numpy.timedelta64(%S)", val);
+        ret = PyUnicode_FromFormat("np.timedelta64(%S)", val);
     }
     else {
         PyObject *meta = metastr_to_unicode(&scal->obmeta, 1);
@@ -653,7 +710,7 @@ timedeltatype_repr(PyObject *self)
             Py_DECREF(val);
             return NULL;
         }
-        ret = PyUnicode_FromFormat("numpy.timedelta64(%S,'%S')", val, meta);
+        ret = PyUnicode_FromFormat("np.timedelta64(%S,'%S')", val, meta);
         Py_DECREF(meta);
     }
     Py_DECREF(val);
@@ -930,10 +987,14 @@ legacy_@name@_format@kind@(npy_@name@ val){
  * #kind = str, repr#
  */
 
+#define IS_@kind@
+
 /**begin repeat1
  * #name = float, double, longdouble#
  * #Name = Float, Double, LongDouble#
  * #NAME = FLOAT, DOUBLE, LONGDOUBLE#
+ * #repr_format = np.float32(%S), np.float64(%S), np.longdouble('%S')#
+ * #crepr_format = np.complex64(%S), np.complex128(%S), np.clongdouble('%S')#
  */
 
 /* helper function choose scientific of fractional output, based on a cutoff */
@@ -964,8 +1025,19 @@ static PyObject *
 static PyObject *
 @name@type_@kind@(PyObject *self)
 {
-    return @name@type_@kind@_either(PyArrayScalar_VAL(self, @Name@),
-                                  TrimMode_LeaveOneZero, TrimMode_DptZeros, 0);
+    PyObject *string;
+    string = @name@type_@kind@_either(
+            PyArrayScalar_VAL(self, @Name@),
+            TrimMode_LeaveOneZero, TrimMode_DptZeros, 0);
+
+#ifdef IS_repr
+    if (string == NULL) {
+        return NULL;
+    }
+    Py_SETREF(string, PyUnicode_FromFormat("@repr_format@", string));
+#endif  /* IS_repr */
+
+    return string;
 }
 
 static PyObject *
@@ -1022,10 +1094,18 @@ c@name@type_@kind@(PyObject *self)
         return NULL;
     }
 
-    PyObject *ret = PyUnicode_FromFormat("(%S%Sj)", rstr, istr);
+    PyObject *string = PyUnicode_FromFormat("(%S%Sj)", rstr, istr);
     Py_DECREF(rstr);
     Py_DECREF(istr);
-    return ret;
+
+#ifdef IS_repr
+    if (string == NULL) {
+        return NULL;
+    }
+    Py_SETREF(string, PyUnicode_FromFormat("@crepr_format@", string));
+#endif  /* IS_repr */
+
+    return string;
 }
 
 #undef PREC
@@ -1052,7 +1132,7 @@ halftype_@kind@(PyObject *self)
     return format_half(val, 1, -1, 0, TrimMode_DptZeros, -1, -1, -1);
 }
 
-
+#undef IS_@kind@
 /**end repeat**/
 
 /**begin repeat
@@ -4077,14 +4157,13 @@ initialize_numeric_types(void)
      *         ULong, LongLong, ULongLong#
      */
 
-    /* both str/repr use genint_type_str to avoid trailing "L" of longs */
     Py@Type@ArrType_Type.tp_str = genint_type_str;
-    Py@Type@ArrType_Type.tp_repr = genint_type_str;
+    Py@Type@ArrType_Type.tp_repr = genint_type_repr;
 
     /**end repeat**/
 
     PyBoolArrType_Type.tp_str = genbool_type_str;
-    PyBoolArrType_Type.tp_repr = genbool_type_str;
+    PyBoolArrType_Type.tp_repr = genbool_type_repr;
 
 
     /**begin repeat
