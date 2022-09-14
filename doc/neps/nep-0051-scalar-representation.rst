@@ -177,6 +177,9 @@ The new representations can be implemented on the scalar types.
 Additional work may be necessary to ensure that the changes do not affect
 array representation as well.
 
+A large part of the implementation work has already been done by Ganesh
+Kathiresan in the open draft PR [2]_.
+
 Alternatives
 ============
 
@@ -204,7 +207,8 @@ Discussion
 * An initial discussion on this changed happened in the mailing list:
   https://mail.python.org/archives/list/numpy-discussion@python.org/thread/7GLGFHTZHJ6KQPOLMVY64OM6IC6KVMYI/
 * There was a previous issue [1]_ and PR [2]_ to change only the
-  representation of the NumPy booleans
+  representation of the NumPy booleans.  The PR was later updated to change
+  the representation of all (or at least most) NumPy scalars.
 
 
 References and Footnotes
