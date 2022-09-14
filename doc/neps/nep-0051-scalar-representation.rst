@@ -52,9 +52,9 @@ with the new scheme to use the ``np`` prefix consistently:
 The NEP does not propose to change how these scalars print – only
 their representation (``__repr__``) will be changed.
 Further, array representation will not be affected since it already
-includes the ``dtype=`` when necessary. 
+includes the ``dtype=`` when necessary.
 
-The main motivation behind the change is that the Python numerical types 
+The main motivation behind the change is that the Python numerical types
 behave differently from the NumPy scalars.
 For example numbers with lower precision (e.g. ``uint8`` or ``float16``)
 should be used with care and users should be aware when they are working
@@ -104,6 +104,14 @@ changes.  In general we believe that informing users about the type
 they are working with outweighs the need for adapting printing in
 some instances.
 
+The NumPy test suite includes code such as ``decimal.Decimal(repr(scalar))``.
+This code needs to be modified to use the ```str()``.
+
+.. admonition:: TODO
+
+    If there is a lot of similar code, we may need a better solution than
+    ``str()``, since it is plausible that ``str()`` should honor
+
 An exception to this are downstream libraries with documentation and
 especially documentation testing.
 Since the representation of many values will change, in many cases
@@ -136,7 +144,7 @@ This NEP proposes to change the represenatation for NumPy scalars to:
   ``np.longdouble('3.0')``.  This ensures that it can always roundtrip correctly
   and matches ``decimal.Decimal``.
   Further, for these two the size based name such as ``float128`` will not
-  be adopted, as it is platform dependend and imprecise. 
+  be adopted, as it is platform dependend and imprecise.
 * ``np.str_("string")`` and ``np.bytes_(b"byte_string")`` for string dtypes.
 
 Where booleans are printed as their singletons since this is more concise.
@@ -163,6 +171,24 @@ This NEP thus includes the proposal of changing the name of ``longdouble``
 to always print as ``longdouble`` and never ``float128`` or ``float96``.
 It does not include deprecating the ``np.float128`` alias.
 However, such a deprecation may occur independently of the NEP.
+
+Integer scalar type name and instance represenatation
+-----------------------------------------------------
+
+One detail is that due to NumPy scalar types being based on the C types,
+NumPy sometimes distinguishes them, for example on most 64 bit systems
+(not windows)::
+
+     >>> np.longlong
+     numpy.longlong
+     >>> np.longlong(3)
+     np.int64(3)
+
+The proposal will lead to the ``longlong`` name for the type while
+using the ``int64`` form for the scalar.
+This choice is made since ``int64`` is generally the more useful
+information for users, but the type name itself must be precise.
+
 
 Related Work
 ============
