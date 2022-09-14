@@ -15,7 +15,7 @@ longdouble_longer_than_double = (LD_INFO.eps < np.finfo(np.double).eps)
 
 
 _o = 1 + LD_INFO.eps
-string_to_longdouble_inaccurate = (_o != np.longdouble(repr(_o)))
+string_to_longdouble_inaccurate = (_o != np.longdouble(str(_o)))
 del _o
 
 
