@@ -23,7 +23,7 @@ In this NEP we propose to change the representation to include the
 NumPy scalar type information.  Changing the above example to::
 
     >>> np.float32(3.0)
-    float32(3.0)
+    np.float32(3.0)
 
 We expect that this change will help users distinguish the NumPy scalars
 from the Python builtin types and clarify their behavior.
@@ -35,13 +35,19 @@ Motivation and Scope
 ====================
 
 This NEP proposes to change the representation of the following
-NumPy scalars types:
+NumPy scalars types to distinguish them from the Python scalars:
 
 * ``np.bool_``
 * ``np.uint8``, ``np.int8``, and all other integer scalars
 * ``np.float16``, ``np.float32``, ``np.float64``, ``np.longdouble``
 * ``np.complex64``, ``np.complex128``, ``np.clongdouble``
 * ``np.str_``, ``np.bytes_``
+
+Additionally, these representation will be slightly modified to align
+with the new scheme to use the ``np`` prefix consistently:
+
+* ``np.datetime64`` and ``np.timedelta64``
+* ``np.void``
 
 The NEP does not propose to change how these scalars print – only
 their representation (``__repr__``) will be changed.
@@ -76,15 +82,15 @@ Most user code should not be impacted by the change, but users will now
 often see NumPy values shown as::
 
     np.True_
-    float64(3.0)
-    int64(34)
+    np.float64(3.0)
+    np.int64(34)
 
 and so on.  This will also mean that documentation and output in
 Jupyter notebook cells will often show the type information intact.
 
-``longdouble`` and ``clongdouble`` will print with single quotes::
+``np.longdouble`` and ``np.clongdouble`` will print with single quotes::
 
-    longdouble('3.0')
+    np.longdouble('3.0')
 
 to allow round-tripping.  Addtionally to this change, ``float128`` will
 now always be printed as ``longdouble`` since the old name gives a wrong
@@ -101,7 +107,9 @@ some instances.
 An exception to this are downstream libraries with documentation and
 especially documentation testing.
 Since the representation of many values will change, in many cases
-the documentationi will have to be updated to use the new representation.
+the documentation will have to be updated to use the new representation.
+This is expected to require larger documentation fixups.
+
 Further, it may be necessary to adept tools for doctest testing to
 allow approximate value checking for the new representation.
 
@@ -123,9 +131,9 @@ Detailed description
 This NEP proposes to change the represenatation for NumPy scalars to:
 
 * ``np.True_`` and ``np.False_`` for booleans
-* ``scalar(<value>)``, i.e. ``float64(3.0)`` for all numerical dtypes.
-* The value for ``longdouble`` and ``clongdouble`` will be given in quotes:
-  ``longdouble('3.0')``.  This ensures that it can always roundtrip correctly
+* ``np.scalar(<value>)``, i.e. ``np.float64(3.0)`` for all numerical dtypes.
+* The value for ``np.longdouble`` and ``np.clongdouble`` will be given in quotes:
+  ``np.longdouble('3.0')``.  This ensures that it can always roundtrip correctly
   and matches ``decimal.Decimal``.
   Further, for these two the size based name such as ``float128`` will not
   be adopted, as it is platform dependend and imprecise. 
@@ -172,16 +180,19 @@ array representation as well.
 Alternatives
 ============
 
-Different representation could be discussed, main alternatives are inclusion
+Different representation could be discussed, main alternatives are spelling
+``np.`` as ``numpy.`` or dropping the ``np.`` part from the numerical scalars.
+We believe that using ``np.`` is sufficiently clear, concise, and does allow
+copy pasting the representation.
+Using only ``float64(3.0)`` without the ``np.`` prefix is more concise but
+contexts may exists where the NumPy dependency is not fully clear and the name
+could clash with other libraries.
 of ``numpy`` or ``np`` for the numerical types to give for example
 ``np.float64(3.0)``.
-We believe that the numerical types are sufficiently clear without the ``np``
-and thus prefer to not include the ``np.`` part.
 
 For booleans an alternative would be to use ``np.bool_(True)`` or ``bool_(True)``.
 However, NumPy boolean scalars are singletons and the proposed formatting is more
-concise.  In general, ``numpy.True_`` would be a more verbose alternative.
-These were also discussed previously in [1]_.
+concise.  Alternatives for booleans were also discussed previously in [1]_.
 
 For the string scalars, the confusion is generally less pronounced.  It may be
 reasonable to defer changing these.
