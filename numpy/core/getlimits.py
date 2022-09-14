@@ -423,7 +423,8 @@ class finfo:
     Parameters
     ----------
     dtype : float, dtype, or instance
-        Kind of floating point data-type about which to get information.
+        Kind of floating point or complex floating point
+        data-type about which to get information.
 
     See Also
     --------
@@ -444,6 +445,11 @@ class finfo:
     standard [1]_, NumPy floating point types make use of subnormal numbers to
     fill the gap between 0 and ``smallest_normal``. However, subnormal numbers
     may have significantly reduced precision [2]_.
+
+    This function can also be used for complex data types as well. If used,
+    the output will be the same as the corresponding real float type
+    (e.g. numpy.finfo(numpy.csingle) is the same as numpy.finfo(numpy.single)).
+    However, the output is true for the real and imaginary components.
 
     References
     ----------
