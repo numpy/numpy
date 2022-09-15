@@ -63,6 +63,23 @@ NPY_FINLINE npyv_f64 npyv_square_f64(npyv_f64 a)
         return vec_max(vec_sel(b, a, nn_a), vec_sel(a, b, nn_b));
     }
 #endif
+#if NPY_SIMD_F32
+    NPY_FINLINE npyv_f32 npyv_maxn_f32(npyv_f32 a, npyv_f32 b)
+    {
+        npyv_b32 nn_a = npyv_notnan_f32(a);
+        npyv_b32 nn_b = npyv_notnan_f32(b);
+        npyv_f32 max = vec_max(a, b);
+        return vec_sel(a, vec_sel(b, max, nn_b), nn_a);
+    }
+#endif
+NPY_FINLINE npyv_f64 npyv_maxn_f64(npyv_f64 a, npyv_f64 b)
+{
+    npyv_b64 nn_a = npyv_notnan_f64(a);
+    npyv_b64 nn_b = npyv_notnan_f64(b);
+    npyv_f64 max = vec_max(a, b);
+    return vec_sel(a, vec_sel(b, max, nn_b), nn_a);
+}
+
 // Maximum, integer operations
 #define npyv_max_u8 vec_max
 #define npyv_max_s8 vec_max
@@ -95,6 +112,23 @@ NPY_FINLINE npyv_f64 npyv_square_f64(npyv_f64 a)
         return vec_min(vec_sel(b, a, nn_a), vec_sel(a, b, nn_b));
     }
 #endif
+#if NPY_SIMD_F32
+    NPY_FINLINE npyv_f32 npyv_minn_f32(npyv_f32 a, npyv_f32 b)
+    {
+        npyv_b32 nn_a = npyv_notnan_f32(a);
+        npyv_b32 nn_b = npyv_notnan_f32(b);
+        npyv_f32 min = vec_min(a, b);
+        return vec_sel(a, vec_sel(b, min, nn_b), nn_a);
+    }
+#endif
+NPY_FINLINE npyv_f64 npyv_minn_f64(npyv_f64 a, npyv_f64 b)
+{
+    npyv_b32 nn_a = npyv_notnan_f64(a);
+    npyv_b32 nn_b = npyv_notnan_f64(b);
+    npyv_f64 min = vec_min(a, b);
+    return vec_sel(a, vec_sel(b, min, nn_b), nn_a);
+}
+
 // Minimum, integer operations
 #define npyv_min_u8 vec_min
 #define npyv_min_s8 vec_min
@@ -104,6 +138,111 @@ NPY_FINLINE npyv_f64 npyv_square_f64(npyv_f64 a)
 #define npyv_min_s32 vec_min
 #define npyv_min_u64 vec_min
 #define npyv_min_s64 vec_min
+
+#define NPY_IMPL_VEC_REDUCE_MINMAX(INTRIN, STYPE, SFX)                  \
+    NPY_FINLINE npy_##STYPE npyv_reduce_##INTRIN##_##SFX(npyv_##SFX a)  \
+    {                                                                   \
+        npyv_##SFX r = vec_##INTRIN(a, vec_sld(a, a, 8));               \
+                   r = vec_##INTRIN(r, vec_sld(r, r, 4));               \
+                   r = vec_##INTRIN(r, vec_sld(r, r, 2));               \
+                   r = vec_##INTRIN(r, vec_sld(r, r, 1));               \
+        return (npy_##STYPE)vec_extract(r, 0);                          \
+    }
+NPY_IMPL_VEC_REDUCE_MINMAX(min, uint8, u8)
+NPY_IMPL_VEC_REDUCE_MINMAX(max, uint8, u8)
+NPY_IMPL_VEC_REDUCE_MINMAX(min, int8, s8)
+NPY_IMPL_VEC_REDUCE_MINMAX(max, int8, s8)
+#undef NPY_IMPL_VEC_REDUCE_MINMAX
+
+#define NPY_IMPL_VEC_REDUCE_MINMAX(INTRIN, STYPE, SFX)                  \
+    NPY_FINLINE npy_##STYPE npyv_reduce_##INTRIN##_##SFX(npyv_##SFX a)  \
+    {                                                                   \
+        npyv_##SFX r = vec_##INTRIN(a, vec_sld(a, a, 8));               \
+                   r = vec_##INTRIN(r, vec_sld(r, r, 4));               \
+                   r = vec_##INTRIN(r, vec_sld(r, r, 2));               \
+        return (npy_##STYPE)vec_extract(r, 0);                          \
+    }
+NPY_IMPL_VEC_REDUCE_MINMAX(min, uint16, u16)
+NPY_IMPL_VEC_REDUCE_MINMAX(max, uint16, u16)
+NPY_IMPL_VEC_REDUCE_MINMAX(min, int16, s16)
+NPY_IMPL_VEC_REDUCE_MINMAX(max, int16, s16)
+#undef NPY_IMPL_VEC_REDUCE_MINMAX
+
+#define NPY_IMPL_VEC_REDUCE_MINMAX(INTRIN, STYPE, SFX)                  \
+    NPY_FINLINE npy_##STYPE npyv_reduce_##INTRIN##_##SFX(npyv_##SFX a)  \
+    {                                                                   \
+        npyv_##SFX r = vec_##INTRIN(a, vec_sld(a, a, 8));               \
+                   r = vec_##INTRIN(r, vec_sld(r, r, 4));               \
+        return (npy_##STYPE)vec_extract(r, 0);                          \
+    }
+NPY_IMPL_VEC_REDUCE_MINMAX(min, uint32, u32)
+NPY_IMPL_VEC_REDUCE_MINMAX(max, uint32, u32)
+NPY_IMPL_VEC_REDUCE_MINMAX(min, int32, s32)
+NPY_IMPL_VEC_REDUCE_MINMAX(max, int32, s32)
+#undef NPY_IMPL_VEC_REDUCE_MINMAX
+
+#define NPY_IMPL_VEC_REDUCE_MINMAX(INTRIN, STYPE, SFX)                  \
+    NPY_FINLINE npy_##STYPE npyv_reduce_##INTRIN##_##SFX(npyv_##SFX a)  \
+    {                                                                   \
+        npyv_##SFX r = vec_##INTRIN(a, vec_sld(a, a, 8));               \
+        return (npy_##STYPE)vec_extract(r, 0);                          \
+    }
+NPY_IMPL_VEC_REDUCE_MINMAX(min, uint64, u64)
+NPY_IMPL_VEC_REDUCE_MINMAX(max, uint64, u64)
+NPY_IMPL_VEC_REDUCE_MINMAX(min, int64, s64)
+NPY_IMPL_VEC_REDUCE_MINMAX(max, int64, s64)
+#undef NPY_IMPL_VEC_REDUCE_MINMAX
+
+#if NPY_SIMD_F32
+    #define NPY_IMPL_VEC_REDUCE_MINMAX(INTRIN, INF)                   \
+        NPY_FINLINE float npyv_reduce_##INTRIN##_f32(npyv_f32 a)      \
+        {                                                             \
+            npyv_f32 r = vec_##INTRIN(a, vec_sld(a, a, 8));           \
+                     r = vec_##INTRIN(r, vec_sld(r, r, 4));           \
+            return vec_extract(r, 0);                                 \
+        }                                                             \
+        NPY_FINLINE float npyv_reduce_##INTRIN##p_f32(npyv_f32 a)     \
+        {                                                             \
+            return npyv_reduce_##INTRIN##_f32(a);                     \
+        }                                                             \
+        NPY_FINLINE float npyv_reduce_##INTRIN##n_f32(npyv_f32 a)     \
+        {                                                             \
+            npyv_b32 notnan = npyv_notnan_f32(a);                     \
+            if (NPY_UNLIKELY(!vec_all(notnan))) {                     \
+                const union { npy_uint32 i; float f;}                 \
+                pnan = {0x7fc00000UL};                                \
+                return pnan.f;                                        \
+            }                                                         \
+            return npyv_reduce_##INTRIN##_f32(a);                     \
+        }
+    NPY_IMPL_VEC_REDUCE_MINMAX(min, 0x7f800000)
+    NPY_IMPL_VEC_REDUCE_MINMAX(max, 0xff800000)
+    #undef NPY_IMPL_VEC_REDUCE_MINMAX
+#endif // NPY_SIMD_F32
+
+#define NPY_IMPL_VEC_REDUCE_MINMAX(INTRIN, INF)                   \
+    NPY_FINLINE double npyv_reduce_##INTRIN##_f64(npyv_f64 a)     \
+    {                                                             \
+        npyv_f64 r = vec_##INTRIN(a, vec_sld(a, a, 8));           \
+        return vec_extract(r, 0);                                 \
+    }                                                             \
+    NPY_FINLINE double npyv_reduce_##INTRIN##p_f64(npyv_f64 a)    \
+    {                                                             \
+        return npyv_reduce_##INTRIN##_f64(a);                     \
+    }                                                             \
+    NPY_FINLINE double npyv_reduce_##INTRIN##n_f64(npyv_f64 a)    \
+    {                                                             \
+        npyv_b64 notnan = npyv_notnan_f64(a);                     \
+        if (NPY_UNLIKELY(!vec_all(notnan))) {                     \
+            const union { npy_uint64 i; double f;}                \
+            pnan = {0x7ff8000000000000ull};                       \
+            return pnan.f;                                        \
+        }                                                         \
+        return npyv_reduce_##INTRIN##_f64(a);                     \
+    }
+NPY_IMPL_VEC_REDUCE_MINMAX(min, 0x7ff0000000000000)
+NPY_IMPL_VEC_REDUCE_MINMAX(max, 0xfff0000000000000)
+#undef NPY_IMPL_VEC_REDUCE_MINMAX
 
 // round to nearest int even
 #define npyv_rint_f64 vec_rint

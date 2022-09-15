@@ -247,6 +247,7 @@ SIMD_IMPL_INTRIN_2(lut16_@sfx@, v@sfx@, q@sfx@, vu@size@)
  * Misc
  ***************************/
 SIMD_IMPL_INTRIN_0(zero_@sfx@, v@sfx@)
+SIMD_IMPL_INTRIN_1(extract0_@sfx@, @sfx@, v@sfx@)
 SIMD_IMPL_INTRIN_1(setall_@sfx@, v@sfx@, @sfx@)
 SIMD_IMPL_INTRIN_3(select_@sfx@, v@sfx@, v@bsfx@, v@sfx@, v@sfx@)
 
@@ -409,13 +410,16 @@ SIMD_IMPL_INTRIN_1(@intrin@_@sfx@, v@sfx@, v@sfx@)
  * #intrin = max, min#
  */
 SIMD_IMPL_INTRIN_2(@intrin@_@sfx@, v@sfx@, v@sfx@, v@sfx@)
+SIMD_IMPL_INTRIN_1(reduce_@intrin@_@sfx@, @sfx@, v@sfx@)
 /**end repeat1**/
 
 #if @fp_only@
 /**begin repeat1
- * #intrin = maxp, minp#
+ * #intrin = maxp, minp, maxn, minn#
  */
 SIMD_IMPL_INTRIN_2(@intrin@_@sfx@, v@sfx@, v@sfx@, v@sfx@)
+SIMD_IMPL_INTRIN_1(reduce_@intrin@_@sfx@, @sfx@, v@sfx@)
+/**end repeat1**/
 /**end repeat1**/
 #endif
 
@@ -559,7 +563,7 @@ SIMD_INTRIN_DEF(reinterpret_@sfx_to@_@sfx@)
 /**end repeat1**/
 
 /**begin repeat1
- * # intrin = set, setf, setall, zero, select#
+ * # intrin = set, setf, setall, zero, select, extract0#
  */
 SIMD_INTRIN_DEF(@intrin@_@sfx@)
 /**end repeat1**/
@@ -669,13 +673,16 @@ SIMD_INTRIN_DEF(@intrin@_@sfx@)
  * #intrin = max, min#
  */
 SIMD_INTRIN_DEF(@intrin@_@sfx@)
+SIMD_INTRIN_DEF(reduce_@intrin@_@sfx@)
 /**end repeat1**/
 
 #if @fp_only@
 /**begin repeat1
- * #intrin = maxp, minp#
+ * #intrin = maxp, minp, maxn, minn#
  */
 SIMD_INTRIN_DEF(@intrin@_@sfx@)
+SIMD_INTRIN_DEF(reduce_@intrin@_@sfx@)
+/**end repeat1**/
 /**end repeat1**/
 #endif
 
