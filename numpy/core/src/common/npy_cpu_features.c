@@ -101,7 +101,8 @@ static struct {
                 {NPY_CPU_FEATURE_FPHP, "FPHP"},
                 {NPY_CPU_FEATURE_ASIMDHP, "ASIMDHP"},
                 {NPY_CPU_FEATURE_ASIMDDP, "ASIMDDP"},
-                {NPY_CPU_FEATURE_ASIMDFHM, "ASIMDFHM"}};
+                {NPY_CPU_FEATURE_ASIMDFHM, "ASIMDFHM"},
+                {NPY_CPU_FEATURE_SVE, "SVE"}};
 
 
 NPY_VISIBILITY_HIDDEN PyObject *
@@ -708,6 +709,7 @@ npy__cpu_init_features_linux(void)
         npy__cpu_have[NPY_CPU_FEATURE_ASIMDHP]    = (hwcap & NPY__HWCAP_ASIMDHP)  != 0;
         npy__cpu_have[NPY_CPU_FEATURE_ASIMDDP]    = (hwcap & NPY__HWCAP_ASIMDDP)  != 0;
         npy__cpu_have[NPY_CPU_FEATURE_ASIMDFHM]   = (hwcap & NPY__HWCAP_ASIMDFHM) != 0;
+        npy__cpu_have[NPY_CPU_FEATURE_SVE]        = (hwcap & NPY__HWCAP_SVE)      != 0;
         npy__cpu_init_features_arm8();
     } else {
         npy__cpu_have[NPY_CPU_FEATURE_NEON]       = (hwcap & NPY__HWCAP_NEON)   != 0;
@@ -741,6 +743,9 @@ npy__cpu_init_features(void)
     #endif
     #if defined(NPY_HAVE_ASIMDFHM) || defined(__ARM_FEATURE_FP16FML)
     npy__cpu_have[NPY_CPU_FEATURE_ASIMDFHM] = 1;
+    #endif
+    #if defined(NPY_HAVE_SVE) || defined(__ARM_FEATURE_SVE)
+    npy__cpu_have[NPY_CPU_FEATURE_SVE] = 1;
     #endif
     npy__cpu_init_features_arm8();
 #else

@@ -52,6 +52,7 @@
 #define NPY__HWCAP_FPHP     (1 << 9)
 #define NPY__HWCAP_ASIMDHP  (1 << 10)
 #define NPY__HWCAP_ASIMDDP  (1 << 20)
+#define NPY__HWCAP_SVE      (1 << 22)
 #define NPY__HWCAP_ASIMDFHM (1 << 23)
 /* 
  * Get the size of a file by reading it until the end. This is needed
