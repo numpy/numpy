@@ -333,7 +333,32 @@ def multiply(a, i):
     -------
     out : ndarray
         Output array of str or unicode, depending on input types
+    
+    Examples
+    --------
+    Note that a and i should have or could be broadcasted to the same shape.
 
+    For 1-D arrays:
+
+    >>> a = np.array(["a", "b", "c"])
+    >>> i = np.array([1,2,3])
+    >>> np.char.multiply(x, 3)
+    array(['aaa', 'bbb', 'ccc'], dtype='<U3')
+    >>> np.char.multiply(a, i)
+    array(['a', 'bb', 'ccc'], dtype='<U3')
+    >>> np.char.multiply(np.array(['a']), i)
+    array(['a', 'aa', 'aaa'], dtype='<U3')
+
+    For 2-D arrays:
+
+    >>> a = np.array(['a', 'b', 'c', 'd', 'e', 'f']).reshape((2,3))
+    >>> i = np.ones((2,3), np.int32) * 3
+    >>> i
+    array([[3., 3., 3.],
+           [3., 3., 3.]])
+    >>> np.char.multiply(a, i)
+    array([['aaa', 'bbb', 'ccc'],
+           ['ddd', 'eee', 'fff']], dtype='<U3')
     """
     a_arr = numpy.asarray(a)
     i_arr = numpy.asarray(i)
