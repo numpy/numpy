@@ -1261,8 +1261,8 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
         .. versionadded:: 1.5.0
         
    cov : bool, optional
-        Return the estimate and the covariance matrix of the estimate
-        If full is True, then cov is not returned.
+        Return the estimate and the covariance matrix of the estimate.
+        If ``full == True``, then ``cov`` is not returned.
 
     Returns
     -------
