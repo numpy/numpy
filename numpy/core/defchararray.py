@@ -848,7 +848,7 @@ def isdigit(a):
     Examples
     --------
     >>> a = np.array(['a', 'b', '0'])
-    >>> np.char.isdigit(a)                
+    >>> np.char.isdigit(a)
     array([False, False,  True])
     >>> a = np.array([['a', 'b', '0'], ['c','1','2']])
     >>> np.char.isdigit(a)
