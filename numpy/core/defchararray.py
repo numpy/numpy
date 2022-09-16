@@ -947,15 +947,15 @@ def isupper(a):
     --------
     >>> string = "hello"
     >>> np.char.isupper(string)
-    False
+    array(False)
 
     >>> string2 = "HELLO"
     >>> np.char.isupper(string2)
-    True
+    array(True)
 
     >>> string3 = "Hello"
     >>> np.char.isupper(string3)
-    False
+    array(False)
     """
     return _vec_string(a, bool_, 'isupper')
 
