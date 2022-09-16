@@ -835,17 +835,6 @@ def isdigit(a):
     See Also
     --------
     str.isdigit
-
-    Examples
-    --------
-    >>> a = np.array(['a', 'b', '0'])
-    >>> np.char.isdigit(a)                
-    array([False, False,  True])
-
-    >>> a = np.array([['a', 'b', '0'], ['c','1','2']])
-    >>> np.char.isdigit(a)
-    array([[False, False,  True],
-       [False,  True,  True]])
     """
     return _vec_string(a, bool_, 'isdigit')
 
