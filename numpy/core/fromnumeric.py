@@ -3044,6 +3044,9 @@ def prod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
     >>> np.prod([[1.,2.],[3.,4.]], axis=1)
     array([  2.,  12.])
 
+    >>> np.prod([[1.,2.,3.],[3.,4.,5.],[1.,3.,5.]], axis=0)
+    array([ 3., 24., 75.])
+    
     Or select specific elements to include:
 
     >>> np.prod([1., np.nan, 3.], where=[True, False, True])
