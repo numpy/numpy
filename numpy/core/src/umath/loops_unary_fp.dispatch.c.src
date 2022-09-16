@@ -111,8 +111,13 @@ static NPY_INLINE npyv_u@ssfx@
 npyv_isnan_@sfx@(npyv_@sfx@ v)
 {
     // (v != v) >> (size - 1)
-    npyv_@sfx@ r = npyv_cvt_@sfx@_b@ssfx@(npyv_cmpneq_@sfx@(v, v));
-    return npyv_shri_u@ssfx@(npyv_reinterpret_u@ssfx@_@sfx@(r), (sizeof(npyv_lanetype_@sfx@)*8)-1);
+#if defined(NPY_HAVE_SSE2) || defined (NPY_HAVE_SSE41)
+    // sse npyv_cmpneq_@sfx@ define includes a cast already
+    npyv_u@ssfx@ r = npyv_cmpneq_@sfx@(v, v);
+#else
+    npyv_u@ssfx@ r = npyv_cvt_u@ssfx@_b@ssfx@(npyv_cmpneq_@sfx@(v, v));
+#endif
+    return npyv_shri_u@ssfx@(r, (sizeof(npyv_lanetype_@sfx@)*8)-1);
 }
 
 static NPY_INLINE npyv_u@ssfx@
