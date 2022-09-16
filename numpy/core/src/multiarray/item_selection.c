@@ -2228,9 +2228,8 @@ count_nonzero_u8(const char *data, npy_intp bstride, npy_uintp len)
             npyv_b8 b = npyv_cmpneq_u8(d, zero);
 
             count += npyv_popcnt_b8(b);
-            len = 0;
-      }
-      return count;
+        }
+        return count;
     #else
         npy_uintp len_m = len & -npyv_nlanes_u8;
         npy_uintp zcount = 0;
@@ -2277,15 +2276,15 @@ count_nonzero_u16(const char *data, npy_intp bstride, npy_uintp len)
             npyv_u16 d = npyv_load_u16(data_u16);
             npyv_b16 b = npyv_cmpneq_u16(d, zero);
             count += npyv_popcnt_b16(b);
-      }
-      if (len) {
-          npyv_u16 d = npyv_load_tillz_u16(data_u16, len);
-          npyv_b16 b = npyv_cmpneq_u16(d, zero);
+        }
+        if (len) {
+            npyv_u16 d = npyv_load_tillz_u16(data_u16, len);
+            npyv_b16 b = npyv_cmpneq_u16(d, zero);
 
-          count += npyv_popcnt_b16(b);
-          len = 0;
-      }
-      return count;
+            count += npyv_popcnt_b16(b);
+            len = 0;
+        }
+        return count;
     #else
         npy_uintp zcount = 0, len_m = len & -npyv_nlanes_u16;
         const npyv_u16 vone  = npyv_setall_u16(1);
@@ -2335,7 +2334,6 @@ count_nonzero_u32(const char *data, npy_intp bstride, npy_uintp len)
             npyv_b32 b = npyv_cmpneq_u32(d, zero);
 
             count += npyv_popcnt_b32(b);
-            len = 0;
         }
         return count;
     #else
@@ -2385,9 +2383,8 @@ count_nonzero_u64(const char *data, npy_intp bstride, npy_uintp len)
             npyv_b64 b = npyv_cmpneq_u64(d, zero);
 
             count += npyv_popcnt_b64(b);
-            len = 0;
         }
-      return count;
+        return count;
     #else
         const npy_uintp len_m = len & -npyv_nlanes_u64;
         const npyv_u64 vone   = npyv_setall_u64(1);
