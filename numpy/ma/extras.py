@@ -930,9 +930,26 @@ def compress_rows(a):
     This is equivalent to ``np.ma.compress_rowcols(a, 0)``, see
     `compress_rowcols` for details.
 
-    See Also
+    Parameters
+    ----------
+    x : array_like, MaskedArray
+        The array to operate on.  If not a MaskedArray instance (or if no array
+        elements are masked), `x` is interpreted as a MaskedArray with
+        `mask` set to `nomask`. Must be a 2D array.
+    
+
+    Returns
+    -------
+    compressed_array : ndarray
+        The compressed array.
+
+    Examples
     --------
-    compress_rowcols
+    >>> x = np.ma.array(np.arange(6).reshape(3, 2), mask=[[1, 0], [0, 0], [0, 0]])
+
+    >>> np.ma.compress_rows(x)
+    array([[2, 3],
+       [4, 5]])
 
     """
     a = asarray(a)
@@ -966,8 +983,9 @@ def compress_cols(a):
     --------
     >>> x = np.ma.array(np.arange(6).reshape(3, 2), mask=[[1, 0], [0, 0], [0, 0]])
 
-    >>> np.ma.compress_rowcols(x)
-    array([[3],
+    >>> np.ma.compress_cols(x)
+    array([[1],
+       [3],
        [5]])
 
     """
