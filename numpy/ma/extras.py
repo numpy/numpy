@@ -845,6 +845,14 @@ def compress_nd(x, axis=None):
     -------
     compress_array : ndarray
         The compressed array.
+
+    Examples
+    --------
+    >>> x = np.ma.array(np.arange(6).reshape(3, 2), mask=[[1, 0], [0, 0], [0, 0]])
+
+    >>> np.ma.compress_nd(x)
+    array([[7, 8]])
+
     """
     x = asarray(x)
     m = getmask(x)
@@ -987,19 +995,6 @@ def compress_cols(a):
     array([[1],
        [3],
        [5]])
-
-    """
-    
-
-    # defining an array with mask
-    arr = geek.ma.array(geek.arange(6).reshape(2, 3),
-                        mask=[[1, 0, 0], [0, 0, 0]])
-    
-    # applying mask to array elements
-    gfg = geek.ma.compress_cols(arr)
-
-
-
 
     """
     a = asarray(a)
