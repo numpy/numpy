@@ -538,10 +538,13 @@ cdef class RandomState:
         A real world example: Assume a company has 10000 customer support 
         agents and each agent spends on average 4 minutes with a 
         customer.
+        
         >>> n = 10000
         >>> z = np.random.exponential(scale=4, size=n)
+
         What is the probability an agent will spend between 4
         to 5 minutes with a customer? 
+
         >>> x = ((d < 5).sum())/n 
         >>> y = ((d < 4).sum())/n
         >>> x-y
