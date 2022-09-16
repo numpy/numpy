@@ -1004,10 +1004,10 @@ class ABCPolyBase(abc.ABC):
             - sv -- singular values of the scaled Vandermonde matrix
             - rcond -- value of `rcond`.
         V : ndarray, shape (M,M) or (M,M,K)
-            Present only if `full` = False and `cov`=True.  The covariance
+            Present only if `full` = False and `cov` = True.  The covariance
             matrix of the polynomial coefficient estimates.  The diagonal of
             this matrix are the variance estimates for each coefficient.  If y
-            is a 2-D array, then the covariance matrix for the `k`-th data set
+            is a 2-D array, then the covariance matrix for the k-th data set
             are in ``V[:,:,k]``
 
             For more details, see `linalg.lstsq`.
