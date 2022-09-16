@@ -974,9 +974,6 @@ class ABCPolyBase(abc.ABC):
             chosen so that the errors of the products ``w[i]*y[i]`` all have
             the same variance.  When using inverse-variance weighting, use
             ``w[i] = 1/sigma(y[i])``.  The default value is None.
-        cov : bool, optional
-            Return the estimate and the covariance matrix of the estimate
-            If full is True, then cov is not returned.
 
             .. versionadded:: 1.5.0
         window : {[beg, end]}, optional
@@ -986,6 +983,10 @@ class ABCPolyBase(abc.ABC):
             .. versionadded:: 1.6.0
         symbol : str, optional
             Symbol representing the independent variable. Default is 'x'.
+            
+        cov : bool, optional
+            Return the estimate and the covariance matrix of the estimate
+            If full is True, then cov is not returned.
 
         Returns
         -------
