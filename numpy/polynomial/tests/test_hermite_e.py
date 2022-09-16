@@ -471,19 +471,19 @@ class TestFitting:
         assert_almost_equal(coef1, coef2)
         # test cov
         n = 100
-        x = np.linspace(-1,1,n)
+        x = np.linspace(-1, 1, n)
         y = x**2
-        p, cov = herme.hermefit(x,y,2,cov=True)
-        assert_almost_equal(cov,np.zeros((3,3)))
+        p, cov = herme.hermefit(x, y, 2, cov=True)
+        assert_almost_equal(cov, np.zeros((3, 3)))
         #
-        x = np.linspace(-1000,1000,n)
+        x = np.linspace(-1000, 1000, n)
         s = 0.1
         r = np.random.randn(n)
         yA = (x**2 - 1)*(1+s*r)
         yB = (x**2)*(1+s*r)
-        _, covA = herme.hermefit(x,yA,2,cov=True)
-        _, covB = np.polyfit(x,yB,2,cov=True)
-        assert_almost_equal(covA[2,2],covB[0,0])
+        _, covA = herme.hermefit(x, yA, 2, cov=True)
+        _, covB = np.polyfit(x, yB, 2, cov=True)
+        assert_almost_equal(covA[2, 2], covB[0, 0])
 
 
 class TestCompanion:
