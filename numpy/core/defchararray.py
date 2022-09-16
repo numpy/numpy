@@ -942,6 +942,14 @@ def isupper(a):
     See Also
     --------
     str.isupper
+
+     Examples
+    --------
+    >>> import numpy as np
+    >>> str="GHC"
+    >>> np.char.isupper(str)
+    array(True) 
+
     """
     return _vec_string(a, bool_, 'isupper')
 
