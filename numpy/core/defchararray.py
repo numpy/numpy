@@ -336,14 +336,10 @@ def multiply(a, i):
     
     Examples
     --------
-    Note that a and i should have or could be broadcasted to the same shape.
-
-    For 1-D arrays:
-
     >>> a = np.array(["a", "b", "c"])
-    >>> i = np.array([1,2,3])
     >>> np.char.multiply(x, 3)
     array(['aaa', 'bbb', 'ccc'], dtype='<U3')
+    >>> i = np.array([1, 2, 3])
     >>> np.char.multiply(a, i)
     array(['a', 'bb', 'ccc'], dtype='<U3')
     >>> np.char.multiply(np.array(['a']), i)
