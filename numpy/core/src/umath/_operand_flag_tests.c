@@ -62,7 +62,9 @@ PyMODINIT_FUNC PyInit__operand_flag_tests(void)
         goto fail;
     }
 
-    import_array();
+    if (!import_array()) {
+        goto fail;
+    }
     import_umath();
 
     ufunc = PyUFunc_FromFuncAndData(funcs, data, types, 1, 2, 0,
