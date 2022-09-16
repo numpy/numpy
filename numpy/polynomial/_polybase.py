@@ -932,7 +932,7 @@ class ABCPolyBase(abc.ABC):
 
     @classmethod
     def fit(cls, x, y, deg, domain=None, rcond=None, full=False, w=None,
-        window=None, symbol='x'):
+        window=None, symbol='x', cov=False):
         """Least squares fit to data.
 
         Return a series instance that is the least squares fit to the data
@@ -974,6 +974,9 @@ class ABCPolyBase(abc.ABC):
             chosen so that the errors of the products ``w[i]*y[i]`` all have
             the same variance.  When using inverse-variance weighting, use
             ``w[i] = 1/sigma(y[i])``.  The default value is None.
+        cov : bool, optional
+            Return the estimate and the covariance matrix of the estimate
+            If full is True, then cov is not returned.
 
             .. versionadded:: 1.5.0
         window : {[beg, end]}, optional
@@ -999,6 +1002,12 @@ class ABCPolyBase(abc.ABC):
             - rank -- the numerical rank of the scaled Vandermonde matrix
             - sv -- singular values of the scaled Vandermonde matrix
             - rcond -- value of `rcond`.
+        V : ndarray, shape (M,M) or (M,M,K)
+            Present only if `full` = False and `cov`=True.  The covariance
+            matrix of the polynomial coefficient estimates.  The diagonal of
+            this matrix are the variance estimates for each coefficient.  If y
+            is a 2-D array, then the covariance matrix for the `k`-th data set
+            are in ``V[:,:,k]``
 
             For more details, see `linalg.lstsq`.
 
@@ -1018,6 +1027,9 @@ class ABCPolyBase(abc.ABC):
             return (
                 cls(coef, domain=domain, window=window, symbol=symbol), status
             )
+        elif cov:
+            [coef, V] = res
+            return cls(coef, domain=domain, window=window, symbol=symbol), V
         else:
             coef = res
             return cls(coef, domain=domain, window=window, symbol=symbol)
