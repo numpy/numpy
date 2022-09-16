@@ -1276,6 +1276,15 @@ def union1d(ar1, ar2):
     --------
     numpy.union1d : Equivalent function for ndarrays.
 
+    Examples
+    --------
+    >>> import numpy.ma as ma
+    >>> ar1 = ma.masked_array([1, 1000, 2], [0, 1, 0])
+    >>> ar2 = ma.masked_array([3, 4, 9999], [0, 0, 1])
+    >>> ma.union1d(ar1, ar2)
+    masked_array(data=[1, 2, 3, 4, --],
+                mask=[False, False, False, False,  True],
+        fill_value=999999)
     """
     return unique(ma.concatenate((ar1, ar2), axis=None))
 
