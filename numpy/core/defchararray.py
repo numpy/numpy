@@ -953,7 +953,7 @@ def isupper(a):
     >>> np.char.isupper(string2)
     array(True)
 
-    >>> string3 = "Hello"
+    >>> string3 = "Hello" # mixed case
     >>> np.char.isupper(string3)
     array(False)
     """
