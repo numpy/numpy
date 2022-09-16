@@ -452,22 +452,22 @@ class TestFitting:
         assert_almost_equal(lag.lagfit(x, x, [0, 1]), [1, -1])
         # test cov
         n = 100
-        x = np.linspace(-1,1,n)
+        x = np.linspace(-1, 1, n)
         y = x**2
-        p, cov = lag.Laguerre.fit(x,y,2,cov=True)
-        assert_almost_equal(cov,np.zeros((3,3)))
+        p, cov = lag.Laguerre.fit(x, y, 2, cov=True)
+        assert_almost_equal(cov, np.zeros((3, 3)))
         #
         n = 100
         xl = -10000
         xu = 10000
-        x = np.linspace(xl,xu,n)
+        x = np.linspace(xl, xu, n)
         s = .1
         r = np.random.randn(n)
         yA = (0.5*x**2 - 2*x + 1)*(1+s*r)
         yB = (x**2)*(1+s*r)
-        pA, covA = lag.Laguerre.fit(x,yA,2,cov=True,window=[xl,xu])
-        pB, covB = np.polyfit(x,yB,2,cov=True)
-        assert_almost_equal(covA[2,2],covB[0,0])
+        pA, covA = lag.Laguerre.fit(x, yA, 2, cov=True, window=[xl, xu])
+        pB, covB = np.polyfit(x, yB, 2, cov=True)
+        assert_almost_equal(covA[2, 2], covB[0, 0])
 
 
 class TestCompanion:
