@@ -3668,11 +3668,10 @@ def msort(a):
 
     Examples
     --------
-    >>> a = np.array([[1,4],[3,1]])
-    >>> np.msort(a)                # sort along the first axis
+    >>> a = np.array([[1, 4], [3, 1]])
+    >>> np.msort(a)  # sort along the first axis
     array([[1, 1],
            [3, 4]])
-    
 
     """
     b = array(a, subok=True, copy=True)
