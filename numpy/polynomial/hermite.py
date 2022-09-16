@@ -1333,6 +1333,7 @@ def hermfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
         - rank -- the numerical rank of the scaled Vandermonde matrix
         - singular_values -- singular values of the scaled Vandermonde matrix
         - rcond -- value of `rcond`.
+        
         For more details, see `numpy.linalg.lstsq`.
         
     V : ndarray, shape (M,M) or (M,M,K)
