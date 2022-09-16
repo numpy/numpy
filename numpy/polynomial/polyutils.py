@@ -684,7 +684,7 @@ def _fit(vander_f, x, y, deg, rcond=None, full=False, w=None, cov=False):
         lhs = lhs.T / scl
         Vbase = np.linalg.inv(np.dot(lhs.T, lhs))
         Vbase /= np.outer(scl, scl)
-        fac = resids / (len(x) - order - 2.0)
+        fac = resids / (len(x) - order)
         if y.ndim == 1:
             return c, Vbase * fac
         else:
