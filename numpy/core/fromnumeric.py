@@ -3136,6 +3136,15 @@ def cumprod(a, axis=None, dtype=None, out=None):
     array([[  1,   2,   6],
            [  4,  20, 120]])
 
+    >>> a = np.array([[1,2,3],[4,5,6],[7,8,9]])
+    >>> np.cumprod(a,axis=0)
+    array([[  1,   2,   3],
+           [  4,  10,  18],
+           [ 28,  80, 162]])
+    >>> np.cumprod(a,axis=1)
+    array([[  1,   2,   6],
+           [  4,  20, 120],
+           [  7,  56, 504]])
     """
     return _wrapfunc(a, 'cumprod', axis=axis, dtype=dtype, out=out)
 
