@@ -89,36 +89,41 @@ else:
     # Adapted from Albert Strasheim
     def load_library(libname, loader_path):
         """
-        It is possible to load a library using
+            load_library(libname, loader_path)
+            
+            It is possible to load a library using
+            >>> lib = ctypes.cdll[<full_path_name>] # doctest: +SKIP
+            But there are cross-platform considerations, such as library file extensions,
+            plus the fact Windows will just load the first library it finds with that name.
+            NumPy supplies the load_library function as a convenience.
+            .. versionchanged:: 1.20.0
+                Allow libname and loader_path to take any
+                :term:`python:path-like object`.
 
-        >>> lib = ctypes.cdll[<full_path_name>] # doctest: +SKIP
+            Parameters
+            ----------
+            libname : path-like
+                Name of the library, which can have 'lib' as a prefix,
+                but without an extension.
+            loader_path : path-like
+                Where the library can be found.
 
-        But there are cross-platform considerations, such as library file extensions,
-        plus the fact Windows will just load the first library it finds with that name.
-        NumPy supplies the load_library function as a convenience.
+            Returns
+            -------
+            ctypes.cdll[libpath] : library object
+                A ctypes library object
 
-        .. versionchanged:: 1.20.0
-            Allow libname and loader_path to take any
-            :term:`python:path-like object`.
-
-        Parameters
-        ----------
-        libname : path-like
-            Name of the library, which can have 'lib' as a prefix,
-            but without an extension.
-        loader_path : path-like
-            Where the library can be found.
-
-        Returns
-        -------
-        ctypes.cdll[libpath] : library object
-           A ctypes library object
-
-        Raises
-        ------
-        OSError
-            If there is no library with the expected extension, or the
-            library is defective and cannot be loaded.
+            Raises
+            ------
+            OSError
+                If there is no library with the expected extension, or the
+                library is defective and cannot be loaded.
+            
+            Examples
+            --------
+            >>> np.ctypeslib.load_library('_multiarray_umath', np.core._multiarray_umath.__file__)
+            <CDLL '/usr/local/lib/python3.7/dist-packages/numpy/core/_multiarray_umath.cpython-37m-x86_64-linux-gnu.so', handle 2876300 at 0x7f4140ee7f50>
+            
         """
         if ctypes.__version__ < '1.0.1':
             import warnings
@@ -466,40 +471,46 @@ if ctypes is not None:
 
     def as_ctypes_type(dtype):
         r"""
-        Convert a dtype into a ctypes type.
+            as_ctypes_type(dtype)
 
-        Parameters
-        ----------
-        dtype : dtype
-            The dtype to convert
+            Convert a dtype into a ctypes type.
 
-        Returns
-        -------
-        ctype
-            A ctype scalar, union, array, or struct
+            Parameters
+            ----------
+            dtype : dtype
+                The dtype to convert
 
-        Raises
-        ------
-        NotImplementedError
-            If the conversion is not possible
+            Returns
+            -------
+            ctype
+                A ctype scalar, union, array, or struct
 
-        Notes
-        -----
-        This function does not losslessly round-trip in either direction.
+            Raises
+            ------
+            NotImplementedError
+                If the conversion is not possible
 
-        ``np.dtype(as_ctypes_type(dt))`` will:
+            Notes
+            -----
+            This function does not losslessly round-trip in either direction.
+            ``np.dtype(as_ctypes_type(dt))`` will:
+              - insert padding fields
+              - reorder fields to be sorted by offset
+              - discard field titles
+            ``as_ctypes_type(np.dtype(ctype))`` will:
+              - discard the class names of `ctypes.Structure`\ s and
+                `ctypes.Union`\ s
+              - convert single-element `ctypes.Union`\ s into single-element
+                `ctypes.Structure`\ s
+              - insert padding fields
 
-         - insert padding fields
-         - reorder fields to be sorted by offset
-         - discard field titles
+            Examples
+            --------
+            >>> np.ctypeslib.as_ctypes_type(np.int32)
+            ctypes.c_int
 
-        ``as_ctypes_type(np.dtype(ctype))`` will:
-
-         - discard the class names of `ctypes.Structure`\ s and
-           `ctypes.Union`\ s
-         - convert single-element `ctypes.Union`\ s into single-element
-           `ctypes.Structure`\ s
-         - insert padding fields
+            >>> np.ctypeslib.as_ctypes_type(np.float32)
+            ctypes.c_float
 
         """
         return _ctype_from_dtype(_dtype(dtype))
@@ -507,12 +518,42 @@ if ctypes is not None:
 
     def as_array(obj, shape=None):
         """
-        Create a numpy array from a ctypes array or POINTER.
+            as_array(obj, shape=None)
 
-        The numpy array shares the memory with the ctypes object.
+            Create a numpy array from a ctypes array or POINTER.
+            The numpy array shares the memory with the ctypes object.
+            The shape parameter must be given if converting from a ctypes POINTER.
+            The shape parameter is ignored if converting from a ctypes array.
 
-        The shape parameter must be given if converting from a ctypes POINTER.
-        The shape parameter is ignored if converting from a ctypes array
+            Parameters
+            ----------
+            obj : a ctypes array or POINTER
+            shape : {sequence of ints, int}
+                    required only when input obj is a POINTER
+            Returns
+            -------
+            out : a numpy array
+                  a numpy array given shape when specified
+            See Also
+            --------
+            as_ctypes : Create and return a ctypes object from a numpy array
+
+            Notes
+            -----
+            If `shape` has length one i.e. ``(N,)``, or is a scalar ``N``,
+            `out` becomes a single row matrix of shape ``(1,N)``.
+
+            Examples
+            --------
+            >>> ctype_array = (c_int * 3)(1, 2, 3, 4) 
+            >>> np.ctypeslib.as_array(ctype_array)  
+            array([[0, 1],
+               [2, 3]], dtype=int32)
+
+            >>> np.ctypeslib.as_array(pointer(c_int()), (2,3)) 
+            array([[0, 0, 0],
+               [0, 0, 0]], dtype=int32)
+
         """
         if isinstance(obj, ctypes._Pointer):
             # convert pointers to an array of the desired shape
@@ -527,8 +568,52 @@ if ctypes is not None:
 
 
     def as_ctypes(obj):
-        """Create and return a ctypes object from a numpy array.  Actually
-        anything that exposes the __array_interface__ is accepted."""
+        """
+            as_ctypes(obj)
+
+            Create and return a ctypes object from a numpy array.  Actually
+            anything that exposes the __array_interface__ is accepted.
+            Basically, converts a dtype into a ctypes type.
+
+            Parameters
+            ----------
+            dtype : dtype
+                The dtype to convert
+
+            Returns
+            -------
+            ctype
+                A ctype scalar, union, array, or struct
+
+            Raises
+            ------
+            NotImplementedError
+                If the conversion is not possible
+
+            Notes
+            -----
+            This function does not losslessly round-trip in either direction.
+            ``np.dtype(as_ctypes_type(dt))`` will:
+              - insert padding fields
+              - reorder fields to be sorted by offset
+              - discard field titles
+            ``as_ctypes_type(np.dtype(ctype))`` will:
+              - discard the class names of `ctypes.Structure`\ s and
+                `ctypes.Union`\ s
+              - convert single-element `ctypes.Union`\ s into single-element
+                `ctypes.Structure`\ s
+              - insert padding fields
+          
+
+            Examples  
+            --------
+            >>> np.ctypeslib.as_ctypes(np.array([[0, 1], [2, 3]], dtype=np.int32)) 
+            <c_int_Array_2_Array_2 at 0x7f41411cf440> 
+
+            >>> np.ctypeslib.as_ctypes(np.array([2, 3], dtype=np.float32))  
+            <c_float_Array_2 at 0x7f414111b8c0>
+
+        """
         ai = obj.__array_interface__
         if ai["strides"]:
             raise TypeError("strided arrays not supported")
