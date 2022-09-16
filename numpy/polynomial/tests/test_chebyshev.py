@@ -486,6 +486,7 @@ class TestFitting:
         _, cov = cheb.chebfit(x, y, 2, cov=True)
         assert_almost_equal(cov, np.zeros((3, 3)))
         #
+        n = 100
         x = np.linspace(-1000, 1000, n)
         s = 0.1
         r = np.random.randn(n)
