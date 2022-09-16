@@ -344,17 +344,13 @@ def multiply(a, i):
     array(['a', 'bb', 'ccc'], dtype='<U3')
     >>> np.char.multiply(np.array(['a']), i)
     array(['a', 'aa', 'aaa'], dtype='<U3')
-
-    For 2-D arrays:
-
-    >>> a = np.array(['a', 'b', 'c', 'd', 'e', 'f']).reshape((2,3))
-    >>> i = np.ones((2,3), np.int32) * 3
-    >>> i
-    array([[3., 3., 3.],
-           [3., 3., 3.]])
-    >>> np.char.multiply(a, i)
+    >>> a = np.array(['a', 'b', 'c', 'd', 'e', 'f']).reshape((2, 3))
+    >>> np.char.multiply(a, 3)
     array([['aaa', 'bbb', 'ccc'],
            ['ddd', 'eee', 'fff']], dtype='<U3')
+    >>> np.char.multiply(a, i)
+    array([['a', 'bb', 'ccc'],
+           ['d', 'ee', 'fff']], dtype='<U3')
     """
     a_arr = numpy.asarray(a)
     i_arr = numpy.asarray(i)
