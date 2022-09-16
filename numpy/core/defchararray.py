@@ -1817,7 +1817,7 @@ def isdecimal(a):
     For each element, return True if there are only decimal
     characters in the element.
 
-    Decimal characters in python are those that can be used to form numbers in base 10.
+    Decimal characters are those that can be used to form numbers in base 10.
 
     Calls `unicode.isdecimal` element-wise.
 
