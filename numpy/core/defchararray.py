@@ -727,6 +727,12 @@ def find(a, sub, start=0, end=None):
     --------
     str.find
 
+    Examples
+    --------
+    >>> a = np.array(["NumPy is a Python library"])
+    >>> np.char.find(a, "Python", start=0, end=None)
+    array([11])
+
     """
     return _vec_string(
         a, int_, 'find', [sub, start] + _clean_args(end))
