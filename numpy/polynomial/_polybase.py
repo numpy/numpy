@@ -985,8 +985,8 @@ class ABCPolyBase(abc.ABC):
             Symbol representing the independent variable. Default is 'x'.
             
         cov : bool, optional
-            Return the estimate and the covariance matrix of the estimate
-            If full is True, then cov is not returned.
+            Return the estimate and the covariance matrix of the estimate.
+            If ``full == True``, then ``cov`` is not returned.
 
         Returns
         -------
