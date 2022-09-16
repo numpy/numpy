@@ -581,6 +581,17 @@ class TestMisc:
         coef2 = poly.polyfit(x, y, [0, 2, 4])
         assert_almost_equal(poly.polyval(x, coef2), y)
         assert_almost_equal(coef1, coef2)
+        # test cov
+        n = 100
+        x = np.linspace(-1,1,n)
+        y = x**2 + 1
+        _, cov = poly.polyfit(x,y,2,cov=True)
+        assert_almost_equal(cov, np.zeros((3,3)) )
+        #
+        y = x**2 + np.random.randn(n)
+        _, cov = poly.polyfit(x,y,2,cov=True)
+        _, cov2 = np.polyfit(x,y,2,cov=True)
+        assert_almost_equal(cov, np.flip(np.flip(cov2,0),1))
 
     def test_polytrim(self):
         coef = [2, -1, 1, 0]
