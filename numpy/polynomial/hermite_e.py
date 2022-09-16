@@ -1307,8 +1307,8 @@ def hermefit(x, y, deg, rcond=None, full=False, w=None, cov=False):
         same variance.  When using inverse-variance weighting, use
         ``w[i] = 1/sigma(y[i])``.  The default value is None.
     cov : bool, optional
-        Return the estimate and the covariance matrix of the estimate
-        If full is True, then cov is not returned.
+        Return the estimate and the covariance matrix of the estimate.
+        If ``full == True``, then ``cov`` is not returned.
         
     Returns
     -------
