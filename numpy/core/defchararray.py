@@ -922,7 +922,7 @@ def istitle(a):
 @array_function_dispatch(_unary_op_dispatcher)
 def isupper(a):
     """
-    Returns true for each element if all cased characters in the
+    Return true for each element if all cased characters in the
     string are uppercase and there is at least one character, false
     otherwise.
 
@@ -942,6 +942,20 @@ def isupper(a):
     See Also
     --------
     str.isupper
+
+    Examples
+    --------
+    >>> string = "hello"
+    >>> np.char.isupper(string)
+    False
+
+    >>> string2 = "HELLO"
+    >>> np.char.isupper(string2)
+    True
+
+    >>> string3 = "Hello"
+    >>> np.char.isupper(string3)
+    False
     """
     return _vec_string(a, bool_, 'isupper')
 
