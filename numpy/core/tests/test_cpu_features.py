@@ -161,7 +161,7 @@ is_arm = re.match("^(arm|aarch64)", machine, re.IGNORECASE)
 @pytest.mark.skipif(not is_linux or not is_arm, reason="Only for Linux and ARM")
 class Test_ARM_Features(AbstractTest):
     features = [
-        "NEON", "ASIMD", "FPHP", "ASIMDHP", "ASIMDDP", "ASIMDFHM"
+        "NEON", "ASIMD", "FPHP", "ASIMDHP", "ASIMDDP", "ASIMDFHM", "SVE"
     ]
     features_groups = dict(
         NEON_FP16  = ["NEON", "HALF"],

@@ -320,10 +320,11 @@ class _Test_CCompilerOpt:
             x86="sse", ppc64="vsx", armhf="neon", unknown=""
         )
         self.expect(
-            "sse41 avx avx2 vsx2 vsx3 neon_vfpv4 asimd",
+            "sse41 avx avx2 vsx2 vsx3 neon_vfpv4 asimd sve",
             x86   = "sse41 avx avx2",
             ppc64 = "vsx2 vsx3",
             armhf = "neon_vfpv4 asimd",
+            aarch64="neon_vfpv4 asimd sve",
             unknown = ""
         )
         # any features in cpu_dispatch must be ignored if it's part of baseline
