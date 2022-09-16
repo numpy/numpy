@@ -862,6 +862,17 @@ add_newdoc('numpy.core.multiarray', 'array',
     and a copy is forced by a change in dtype, then the order of the result is
     not necessarily 'C' as expected. This is likely a bug.
 
+    Numpy array in zero dimension is an scalar. You cannot access it via indexing.
+    Zero dimensional array is mutable. It has shape = () and dimensional = 0.
+    Let us do this with the help of example.
+
+    Example
+    --------
+    >>> np.array(1).shape
+    ()
+    >>> np.array(1).ndim
+    0
+
     Examples
     --------
     >>> np.array([1, 2, 3])
