@@ -945,7 +945,7 @@ def isupper(a):
 
     Examples
     --------
-    >>> string = "hello"
+    >>> string = "hello" # lower case
     >>> np.char.isupper(string)
     array(False)
 
