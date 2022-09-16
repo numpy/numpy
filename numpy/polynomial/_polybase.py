@@ -1022,7 +1022,7 @@ class ABCPolyBase(abc.ABC):
             window = cls.window
 
         xnew = pu.mapdomain(x, domain, window)
-        res = cls._fit(xnew, y, deg, w=w, rcond=rcond, full=full)
+        res = cls._fit(xnew, y, deg, w=w, rcond=rcond, full=full, cov=cov)
         if full:
             [coef, status] = res
             return (
