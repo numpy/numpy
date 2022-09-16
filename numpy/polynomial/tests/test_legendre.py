@@ -493,8 +493,8 @@ class TestFitting:
         r = np.random.randn(n)
         yA = 0.5*(3*x**2 - 1)*(1+s*r)
         yB = (x**2)*(1+s*r)
-        pA, covA = leg.Legendre.fit(x, yA, 2, cov=True, window=[xl,xu])
-        pB, covB = np.polyfit(x, yB, 2,cov=True)
+        pA, covA = leg.Legendre.fit(x, yA, 2, cov=True, window=[xl, xu])
+        pB, covB = np.polyfit(x, yB, 2, cov=True)
         assert_almost_equal(covA[2, 2], covB[0, 0])
 
 
