@@ -27,6 +27,8 @@
     #define NPY_OS_MINGW
 #elif defined(__APPLE__)
     #define NPY_OS_DARWIN
+#elif defined(__HAIKU__)
+    #define NPY_OS_HAIKU
 #else
     #define NPY_OS_UNKNOWN
 #endif
