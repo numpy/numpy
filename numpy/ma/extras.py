@@ -967,8 +967,7 @@ def compress_cols(a):
     >>> x = np.ma.array(np.arange(6).reshape(3, 2), mask=[[1, 0], [0, 0], [0, 0]])
 
     >>> np.ma.compress_rowcols(x)
-    array([[1],
-       [3],
+    array([[3],
        [5]])
 
     """
