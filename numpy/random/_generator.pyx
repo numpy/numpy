@@ -392,8 +392,8 @@ cdef class Generator:
         >>> x = ((d < 5).sum())/n 
         >>> y = ((d < 4).sum())/n
         >>> x-y
-        0.08 # may vary
-        
+        0.08 # will vary
+
         References
         ----------
         .. [1] Peyton Z. Peebles Jr., "Probability, Random Variables and

@@ -545,7 +545,7 @@ cdef class RandomState:
         >>> x = ((d < 5).sum())/n 
         >>> y = ((d < 4).sum())/n
         >>> x-y
-        0.08 # may vary
+        0.08 # will vary
 
         See Also
         --------
