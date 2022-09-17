@@ -1195,7 +1195,7 @@ def replace(a, old, new, count=None):
     That is a banana
 
     >>> print(np.char.replace('The dish is fresh', 'is', 'was'))
-    The dwash is fresh
+    The dwash was fresh
     """
     return _to_string_or_unicode_array(
         _vec_string(
