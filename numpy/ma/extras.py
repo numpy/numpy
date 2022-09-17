@@ -848,7 +848,7 @@ def compress_nd(x, axis=None):
 
     Examples
     --------
-    >>> x = np.ma.array(np.arange(6).reshape(3, 2), mask=[[1, 0], [0, 0], [0, 0]])
+    >>> x = np.ma.array(np.arange(9).reshape(3, 3), mask=[[1, 0, 0],[1,0,0],[0,0,0]]
 
     >>> np.ma.compress_nd(x)
     array([[7, 8]])
@@ -1148,6 +1148,8 @@ def unique(ar1, return_index=False, return_inverse=False):
     --------
     numpy.unique : Equivalent function for ndarrays.
 
+
+
     """
     output = np.unique(ar1,
                        return_index=return_index,
@@ -1427,6 +1429,15 @@ def cov(x, y=None, rowvar=True, bias=False, allow_masked=True, ddof=None):
     --------
     numpy.cov
 
+
+    Examples
+    --------
+    >>> x = np.ma.array([1, 2, 3, 4], mask=[0, 1, 0, 1])
+    >>> np.ma.cov(x,rowvar=False)
+    masked_array(data=2.0,
+             mask=False,
+       fill_value=1e+20)
+       
     """
     # Check inputs
     if ddof is not None and ddof != int(ddof):
