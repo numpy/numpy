@@ -986,10 +986,10 @@ def join(sep, seq):
 
     Examples
     --------
-    >>> np.char.join('-','osd')
+    >>> np.char.join('-', 'osd')
     array('o-s-d', dtype='<U5')
 
-    >>> np.char.join(['-','.'],['ghc','osd'])
+    >>> np.char.join(['-', '.'], ['ghc', 'osd'])
     array(['g-h-c', 'o.s.d'], dtype='<U5')
 
     """
