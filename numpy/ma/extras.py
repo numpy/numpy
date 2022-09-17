@@ -1106,6 +1106,7 @@ def unique(ar1, return_index=False, return_inverse=False):
 
     Examples
     --------
+    >>> import numpy.ma as ma
     >>> a = [1, 2, 1000, 2, 3]
     >>> mask = [0, 0, 1, 0, 0]
     >>> masked_a = ma.masked_array(a, mask)
