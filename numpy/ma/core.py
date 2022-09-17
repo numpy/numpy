@@ -7092,6 +7092,24 @@ def putmask(a, mask, values):  # , mode='raise'):
     Using a masked array as `values` will **not** transform a `ndarray` into
     a `MaskedArray`.
 
+    Examples
+    --------
+    >>> x = np.arange(6).reshape(2, 3)
+    >>> np.putmask(x, x>2, x**2)
+    >>> x
+    array([[ 0,  1,  2],
+       [ 9, 16, 25]])
+
+
+    >>> x = np.array([[1, 2, 3],
+                [3, 2, 1],
+                [1, 2, 3]])
+    >>> np.putmask(x, x>2, 4)
+    >>> x
+    array([[1, 2, 4],
+       [4, 2, 1],
+       [1, 2, 4]])
+
     """
     # We can't use 'frommethod', the order of arguments is different
     if not isinstance(a, MaskedArray):

@@ -1114,10 +1114,22 @@ def ediff1d(arr, to_end=None, to_begin=None):
 
     This function is the equivalent of `numpy.ediff1d` that takes masked
     values into account, see `numpy.ediff1d` for details.
+    
+    to_end : [array_like, optional] Number to append at the end of the returned differences. 
+    to_begin : [array_like, optional] Number to prepend at the beginning of the returned differences. 
 
     See Also
     --------
     numpy.ediff1d : Equivalent function for ndarrays.
+
+    Examples
+    --------
+    >>> x = np.array([3,5,8,4,12])
+    >>> x=np.ma.ediff1d(x, to_begin=np.array([-23, 0]), to_end=25)
+    >>> x
+    masked_array(data=[-23, 0, 2, 3, -4, 8, 25],
+             mask=[False, False, False, False, False, False, False],
+       fill_value=999999)
 
     """
     arr = ma.asanyarray(arr).flat
