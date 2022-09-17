@@ -3875,6 +3875,10 @@ class MaskedArray(ndarray):
         >>> type(x.compressed())
         <class 'numpy.ndarray'>
 
+        >>> x = np.ma.array(np.arange(9).reshape(3, 3), mask=[[1, 0, 0],[1,0,0],[0,0,0]])
+        >>> x.compressed()
+        array([1, 2, 4, 5, 6, 7, 8])
+
         """
         data = ndarray.ravel(self._data)
         if self._mask is not nomask:

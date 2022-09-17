@@ -848,7 +848,7 @@ def compress_nd(x, axis=None):
 
     Examples
     --------
-    >>> x = np.ma.array(np.arange(9).reshape(3, 3), mask=[[1, 0, 0],[1,0,0],[0,0,0]]
+    >>> x = np.ma.array(np.arange(9).reshape(3, 3), mask=[[1, 0, 0],[1,0,0],[0,0,0]])
 
     >>> np.ma.compress_nd(x)
     array([[7, 8]])
@@ -1437,7 +1437,7 @@ def cov(x, y=None, rowvar=True, bias=False, allow_masked=True, ddof=None):
     masked_array(data=2.0,
              mask=False,
        fill_value=1e+20)
-       
+
     """
     # Check inputs
     if ddof is not None and ddof != int(ddof):
