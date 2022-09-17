@@ -6,7 +6,6 @@ requires = [
     "Cython>=0.29.30,<3.0",
 ]
 
-
 [tool.towncrier]
     # Do no set this since it is hard to import numpy inside the source directory
     # the name is hardcoded. Use "--version 1.18.0" to set the version
