@@ -848,7 +848,9 @@ def compress_nd(x, axis=None):
 
     Examples
     --------
-    >>> x = np.ma.array(np.arange(9).reshape(3, 3), mask=[[1, 0, 0],[1,0,0],[0,0,0]])
+    >>> x = np.ma.array(np.arange(9).reshape(3, 3), mask=[[1, 0, 0],
+                                                         [1,0,0],
+                                                         [0,0,0]])
 
     >>> np.ma.compress_nd(x)
     array([[7, 8]])
@@ -953,7 +955,9 @@ def compress_rows(a):
 
     Examples
     --------
-    >>> x = np.ma.array(np.arange(6).reshape(3, 2), mask=[[1, 0], [0, 0], [0, 0]])
+    >>> x = np.ma.array(np.arange(6).reshape(3, 2), mask=[[1, 0], 
+                                                          [0, 0], 
+                                                          [0, 0]])
 
     >>> np.ma.compress_rows(x)
     array([[2, 3],
@@ -985,11 +989,13 @@ def compress_cols(a):
     Returns
     -------
     compressed_array : ndarray
-        The compressed array.
+    The compressed array.
 
     Examples
     --------
-    >>> x = np.ma.array(np.arange(6).reshape(3, 2), mask=[[1, 0], [0, 0], [0, 0]])
+    >>> x = np.ma.array(np.arange(6).reshape(3, 2), mask=[[1, 0], 
+                                                          [0, 0], 
+                                                          [0, 0]])
 
     >>> np.ma.compress_cols(x)
     array([[1],
@@ -1114,7 +1120,7 @@ def ediff1d(arr, to_end=None, to_begin=None):
 
     This function is the equivalent of `numpy.ediff1d` that takes masked
     values into account, see `numpy.ediff1d` for details.
-    
+
     to_end : [array_like, optional] Number to append at the end of the returned differences. 
     to_begin : [array_like, optional] Number to prepend at the beginning of the returned differences. 
 
@@ -1128,8 +1134,8 @@ def ediff1d(arr, to_end=None, to_begin=None):
     >>> x=np.ma.ediff1d(x, to_begin=np.array([-23, 0]), to_end=25)
     >>> x
     masked_array(data=[-23, 0, 2, 3, -4, 8, 25],
-             mask=[False, False, False, False, False, False, False],
-       fill_value=999999)
+            mask=[False, False, False, False, False, False, False],
+            fill_value=999999)
 
     """
     arr = ma.asanyarray(arr).flat
