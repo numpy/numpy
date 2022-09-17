@@ -5844,6 +5844,10 @@ class MaskedArray(ndarray):
         ma.maximum_fill_value
             Returns the maximum filling value for a given datatype.
 
+        >>>  x = np.ma.array([1, 6, 4, 3], mask=[0, 0, 0, 1])
+        >>>  x_max= np.ma.max(x)
+        >>>  x_max
+        6
         """
         kwargs = {} if keepdims is np._NoValue else {'keepdims': keepdims}
 
@@ -6824,6 +6828,7 @@ count = _frommethod('count')
 
 def take(a, indices, axis=None, out=None, mode='raise'):
     """
+
     """
     a = masked_array(a)
     return a.take(indices, axis=axis, out=out, mode=mode)
@@ -6844,6 +6849,19 @@ def power(a, b, third=None):
     -----
     The *out* argument to `numpy.power` is not supported, `third` has to be
     None.
+
+    >>> x = np.ma.array([[1,2,3],[4,5,6],[7,8,9]], mask=[0] + [1,0]*4)
+    >>> x_exp= np.ma.array([[1,2,3],[2,5,4],[4,3,2]], mask=[0] + [0,1]*4)
+    >>> x_p=np.ma.power(x, x_exp)
+    >>> x_p
+    masked_array(
+        data=[[1, --, --],
+                [--, --, --],
+                [--, --, --]],
+        mask=[[False,  True,  True],
+                [ True,  True,  True],
+                [ True,  True,  True]],
+        fill_value=999999)
 
     """
     if third is not None:
