@@ -151,21 +151,28 @@ NPY_FINLINE npyv_f64 npyv_minn_f64(npyv_f64 a, npyv_f64 b)
     #define npyv_reduce_max_f64 _mm512_reduce_max_pd
 #else
     // reduce min&max for 32&64-bits
-    #define NPY_IMPL_AVX512_REDUCE_MINMAX(STYPE, INTRIN, VINTRIN)                                                 \
-        NPY_FINLINE STYPE##32 npyv_reduce_##INTRIN##32(__m512i a)                                                 \
-        {                                                                                                         \
-            __m256i v256 = _mm256_##VINTRIN##32(npyv512_lower_si256(a), npyv512_higher_si256(a));                 \
-            __m128i v128 = _mm_##VINTRIN##32(_mm256_castsi256_si128(v256), _mm256_extracti128_si256(v256, 1));    \
-            __m128i v64 =  _mm_##VINTRIN##32(v128, _mm_shuffle_epi32(v128, _MM_SHUFFLE(0, 0, 3, 2)));             \
-            __m128i v32 = _mm_##VINTRIN##32(v64, _mm_shuffle_epi32(v64, _MM_SHUFFLE(0, 0, 0, 1)));                \
-            return (STYPE##32)_mm_cvtsi128_si32(v32);                                                             \
-        }                                                                                                         \
-        NPY_FINLINE STYPE##64 npyv_reduce_##INTRIN##64(__m512i a)                                                 \
-        {                                                                                                         \
-            __m512i v256 = _mm512_##VINTRIN##64(a, _mm512_shuffle_i64x2(a, a, _MM_SHUFFLE(0, 0, 3, 2)));          \
-            __m512i v128 = _mm512_##VINTRIN##64(v256, _mm512_shuffle_i64x2(v256, v256, _MM_SHUFFLE(0, 0, 0, 1))); \
-            __m512i v64  = _mm512_##VINTRIN##64(v128, _mm512_shuffle_epi32(v128, _MM_SHUFFLE(0, 0, 3, 2)));       \
-            return (STYPE##64)npyv_extract0_u64(v64);                                                             \
+    #define NPY_IMPL_AVX512_REDUCE_MINMAX(STYPE, INTRIN, VINTRIN)                              \
+        NPY_FINLINE STYPE##32 npyv_reduce_##INTRIN##32(__m512i a)                              \
+        {                                                                                      \
+            __m256i v256 = _mm256_##VINTRIN##32(npyv512_lower_si256(a),                        \
+                    npyv512_higher_si256(a));                                                  \
+            __m128i v128 = _mm_##VINTRIN##32(_mm256_castsi256_si128(v256),                     \
+                    _mm256_extracti128_si256(v256, 1));                                        \
+            __m128i v64 =  _mm_##VINTRIN##32(v128, _mm_shuffle_epi32(v128,                     \
+                        (_MM_PERM_ENUM)_MM_SHUFFLE(0, 0, 3, 2)));                              \
+            __m128i v32 = _mm_##VINTRIN##32(v64, _mm_shuffle_epi32(v64,                        \
+                        (_MM_PERM_ENUM)_MM_SHUFFLE(0, 0, 0, 1)));                              \
+            return (STYPE##32)_mm_cvtsi128_si32(v32);                                          \
+        }                                                                                      \
+        NPY_FINLINE STYPE##64 npyv_reduce_##INTRIN##64(__m512i a)                              \
+        {                                                                                      \
+            __m512i v256 = _mm512_##VINTRIN##64(a,                                             \
+                    _mm512_shuffle_i64x2(a, a, (_MM_PERM_ENUM)_MM_SHUFFLE(0, 0, 3, 2)));       \
+            __m512i v128 = _mm512_##VINTRIN##64(v256,                                          \
+                    _mm512_shuffle_i64x2(v256, v256, (_MM_PERM_ENUM)_MM_SHUFFLE(0, 0, 0, 1))); \
+            __m512i v64  = _mm512_##VINTRIN##64(v128,                                          \
+                    _mm512_shuffle_epi32(v128, (_MM_PERM_ENUM)_MM_SHUFFLE(0, 0, 3, 2)));       \
+            return (STYPE##64)npyv_extract0_u64(v64);                                          \
         }
 
     NPY_IMPL_AVX512_REDUCE_MINMAX(npy_uint, min_u, min_epu)
@@ -174,21 +181,28 @@ NPY_FINLINE npyv_f64 npyv_minn_f64(npyv_f64 a, npyv_f64 b)
     NPY_IMPL_AVX512_REDUCE_MINMAX(npy_int,  max_s, max_epi)
     #undef NPY_IMPL_AVX512_REDUCE_MINMAX
     // reduce min&max for ps & pd
-    #define NPY_IMPL_AVX512_REDUCE_MINMAX(INTRIN)                                                                \
-        NPY_FINLINE float npyv_reduce_##INTRIN##_f32(npyv_f32 a)                                                 \
-        {                                                                                                        \
-            __m256 v256 = _mm256_##INTRIN##_ps(npyv512_lower_ps256(a), npyv512_higher_ps256(a));                 \
-            __m128 v128 = _mm_##INTRIN##_ps(_mm256_castps256_ps128(v256), _mm256_extractf128_ps(v256, 1));       \
-            __m128 v64 =  _mm_##INTRIN##_ps(v128, _mm_shuffle_ps(v128, v128, _MM_SHUFFLE(0, 0, 3, 2)));          \
-            __m128 v32 = _mm_##INTRIN##_ps(v64, _mm_shuffle_ps(v64, v64, _MM_SHUFFLE(0, 0, 0, 1)));              \
-            return _mm_cvtss_f32(v32);                                                                           \
-        }                                                                                                        \
-        NPY_FINLINE double npyv_reduce_##INTRIN##_f64(npyv_f64 a)                                                \
-        {                                                                                                        \
-            __m256d v256 = _mm256_##INTRIN##_pd(npyv512_lower_pd256(a), npyv512_higher_pd256(a));                \
-            __m128d v128 = _mm_##INTRIN##_pd(_mm256_castpd256_pd128(v256), _mm256_extractf128_pd(v256, 1));      \
-            __m128d v64 =  _mm_##INTRIN##_pd(v128, _mm_shuffle_pd(v128, v128, _MM_SHUFFLE(0, 0, 0, 1)));         \
-            return _mm_cvtsd_f64(v64);                                                                           \
+    #define NPY_IMPL_AVX512_REDUCE_MINMAX(INTRIN)                                         \
+        NPY_FINLINE float npyv_reduce_##INTRIN##_f32(npyv_f32 a)                          \
+        {                                                                                 \
+            __m256 v256 = _mm256_##INTRIN##_ps(                                           \
+                    npyv512_lower_ps256(a), npyv512_higher_ps256(a));                     \
+            __m128 v128 = _mm_##INTRIN##_ps(                                              \
+                    _mm256_castps256_ps128(v256), _mm256_extractf128_ps(v256, 1));        \
+            __m128 v64 =  _mm_##INTRIN##_ps(v128,                                         \
+                    _mm_shuffle_ps(v128, v128, (_MM_PERM_ENUM)_MM_SHUFFLE(0, 0, 3, 2)));  \
+            __m128 v32 = _mm_##INTRIN##_ps(v64,                                           \
+                    _mm_shuffle_ps(v64, v64, (_MM_PERM_ENUM)_MM_SHUFFLE(0, 0, 0, 1)));    \
+            return _mm_cvtss_f32(v32);                                                    \
+        }                                                                                 \
+        NPY_FINLINE double npyv_reduce_##INTRIN##_f64(npyv_f64 a)                         \
+        {                                                                                 \
+            __m256d v256 = _mm256_##INTRIN##_pd(                                          \
+                    npyv512_lower_pd256(a), npyv512_higher_pd256(a));                     \
+            __m128d v128 = _mm_##INTRIN##_pd(                                             \
+                    _mm256_castpd256_pd128(v256), _mm256_extractf128_pd(v256, 1));        \
+            __m128d v64 =  _mm_##INTRIN##_pd(v128,                                        \
+                    _mm_shuffle_pd(v128, v128, (_MM_PERM_ENUM)_MM_SHUFFLE(0, 0, 0, 1)));  \
+            return _mm_cvtsd_f64(v64);                                                    \
         }
 
     NPY_IMPL_AVX512_REDUCE_MINMAX(min)
@@ -199,7 +213,7 @@ NPY_FINLINE npyv_f64 npyv_minn_f64(npyv_f64 a, npyv_f64 b)
     NPY_FINLINE float npyv_reduce_##INTRIN##p_f32(npyv_f32 a)       \
     {                                                               \
         npyv_b32 notnan = npyv_notnan_f32(a);                       \
-        if (NPY_UNLIKELY(npyv_tobits_b32(notnan) == 0)) {           \
+        if (NPY_UNLIKELY(!npyv_any_b32(notnan))) {                  \
             return _mm_cvtss_f32(_mm512_castps512_ps128(a));        \
         }                                                           \
         a = npyv_select_f32(notnan, a,                              \
@@ -209,7 +223,7 @@ NPY_FINLINE npyv_f64 npyv_minn_f64(npyv_f64 a, npyv_f64 b)
     NPY_FINLINE double npyv_reduce_##INTRIN##p_f64(npyv_f64 a)      \
     {                                                               \
         npyv_b64 notnan = npyv_notnan_f64(a);                       \
-        if (NPY_UNLIKELY(npyv_tobits_b64(notnan) == 0)) {           \
+        if (NPY_UNLIKELY(!npyv_any_b64(notnan))) {                  \
             return _mm_cvtsd_f64(_mm512_castpd512_pd128(a));        \
         }                                                           \
         a = npyv_select_f64(notnan, a,                              \
@@ -219,7 +233,7 @@ NPY_FINLINE npyv_f64 npyv_minn_f64(npyv_f64 a, npyv_f64 b)
     NPY_FINLINE float npyv_reduce_##INTRIN##n_f32(npyv_f32 a)       \
     {                                                               \
         npyv_b32 notnan = npyv_notnan_f32(a);                       \
-        if (NPY_UNLIKELY(npyv_tobits_b32(notnan) != 0xffff)) {      \
+        if (NPY_UNLIKELY(!npyv_all_b32(notnan))) {                  \
             const union { npy_uint32 i; float f;} pnan = {          \
                 0x7fc00000ul                                        \
             };                                                      \
@@ -230,7 +244,7 @@ NPY_FINLINE npyv_f64 npyv_minn_f64(npyv_f64 a, npyv_f64 b)
     NPY_FINLINE double npyv_reduce_##INTRIN##n_f64(npyv_f64 a)      \
     {                                                               \
         npyv_b64 notnan = npyv_notnan_f64(a);                       \
-        if (NPY_UNLIKELY(npyv_tobits_b64(notnan) != 0xff)) {        \
+        if (NPY_UNLIKELY(!npyv_all_b64(notnan))) {                  \
             const union { npy_uint64 i; double d;} pnan = {         \
                 0x7ff8000000000000ull                               \
             };                                                      \
@@ -249,18 +263,24 @@ NPY_IMPL_AVX512_REDUCE_MINMAX(max, 0xff800000, 0xfff0000000000000)
     {                                                                                                       \
         __m256i v256 = _mm256_##VINTRIN##16(npyv512_lower_si256(a), npyv512_higher_si256(a));               \
         __m128i v128 = _mm_##VINTRIN##16(_mm256_castsi256_si128(v256), _mm256_extracti128_si256(v256, 1));  \
-        __m128i v64 =  _mm_##VINTRIN##16(v128, _mm_shuffle_epi32(v128, _MM_SHUFFLE(0, 0, 3, 2)));           \
-        __m128i v32 = _mm_##VINTRIN##16(v64, _mm_shuffle_epi32(v64, _MM_SHUFFLE(0, 0, 0, 1)));              \
-        __m128i v16 = _mm_##VINTRIN##16(v32, _mm_shufflelo_epi16(v32, _MM_SHUFFLE(0, 0, 0, 1)));            \
+        __m128i v64 =  _mm_##VINTRIN##16(v128, _mm_shuffle_epi32(v128,                                      \
+                   (_MM_PERM_ENUM)_MM_SHUFFLE(0, 0, 3, 2)));                                                \
+        __m128i v32 = _mm_##VINTRIN##16(v64, _mm_shuffle_epi32(v64,                                         \
+                   (_MM_PERM_ENUM)_MM_SHUFFLE(0, 0, 0, 1)));                                                \
+        __m128i v16 = _mm_##VINTRIN##16(v32, _mm_shufflelo_epi16(v32,                                       \
+                   (_MM_PERM_ENUM)_MM_SHUFFLE(0, 0, 0, 1)));                                                \
         return (STYPE##16)_mm_cvtsi128_si32(v16);                                                           \
     }                                                                                                       \
     NPY_FINLINE STYPE##8 npyv_reduce_##INTRIN##8(__m512i a)                                                 \
     {                                                                                                       \
         __m256i v256 = _mm256_##VINTRIN##8(npyv512_lower_si256(a), npyv512_higher_si256(a));                \
         __m128i v128 = _mm_##VINTRIN##8(_mm256_castsi256_si128(v256), _mm256_extracti128_si256(v256, 1));   \
-        __m128i v64 =  _mm_##VINTRIN##8(v128, _mm_shuffle_epi32(v128, _MM_SHUFFLE(0, 0, 3, 2)));            \
-        __m128i v32 = _mm_##VINTRIN##8(v64, _mm_shuffle_epi32(v64, _MM_SHUFFLE(0, 0, 0, 1)));               \
-        __m128i v16 = _mm_##VINTRIN##8(v32, _mm_shufflelo_epi16(v32, _MM_SHUFFLE(0, 0, 0, 1)));             \
+        __m128i v64 =  _mm_##VINTRIN##8(v128, _mm_shuffle_epi32(v128,                                       \
+                    (_MM_PERM_ENUM)_MM_SHUFFLE(0, 0, 3, 2)));                                               \
+        __m128i v32 = _mm_##VINTRIN##8(v64, _mm_shuffle_epi32(v64,                                          \
+                    (_MM_PERM_ENUM)_MM_SHUFFLE(0, 0, 0, 1)));                                               \
+        __m128i v16 = _mm_##VINTRIN##8(v32, _mm_shufflelo_epi16(v32,                                        \
+                    (_MM_PERM_ENUM)_MM_SHUFFLE(0, 0, 0, 1)));                                               \
         __m128i v8 = _mm_##VINTRIN##8(v16, _mm_srli_epi16(v16, 8));                                         \
         return (STYPE##16)_mm_cvtsi128_si32(v8);                                                            \
     }

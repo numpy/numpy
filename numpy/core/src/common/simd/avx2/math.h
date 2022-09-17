@@ -172,7 +172,7 @@ NPY_IMPL_AVX2_REDUCE_MINMAX(npy_int,  max_s, max_epi)
     NPY_FINLINE float npyv_reduce_##INTRIN##p_f32(npyv_f32 a)                                        \
     {                                                                                                \
         npyv_b32 notnan = npyv_notnan_f32(a);                                                        \
-        if (NPY_UNLIKELY(npyv_tobits_b32(notnan) == 0)) {                                            \
+        if (NPY_UNLIKELY(!npyv_any_b32(notnan))) {                                                   \
             return _mm_cvtss_f32(_mm256_castps256_ps128(a));                                         \
         }                                                                                            \
         a = npyv_select_f32(notnan, a, npyv_reinterpret_f32_u32(npyv_setall_u32(INF)));              \
@@ -181,7 +181,7 @@ NPY_IMPL_AVX2_REDUCE_MINMAX(npy_int,  max_s, max_epi)
     NPY_FINLINE double npyv_reduce_##INTRIN##p_f64(npyv_f64 a)                                       \
     {                                                                                                \
         npyv_b64 notnan = npyv_notnan_f64(a);                                                        \
-        if (NPY_UNLIKELY(npyv_tobits_b64(notnan) == 0)) {                                            \
+        if (NPY_UNLIKELY(!npyv_any_b64(notnan))) {                                                   \
             return _mm_cvtsd_f64(_mm256_castpd256_pd128(a));                                         \
         }                                                                                            \
         a = npyv_select_f64(notnan, a, npyv_reinterpret_f64_u64(npyv_setall_u64(INF64)));            \
@@ -190,7 +190,7 @@ NPY_IMPL_AVX2_REDUCE_MINMAX(npy_int,  max_s, max_epi)
     NPY_FINLINE float npyv_reduce_##INTRIN##n_f32(npyv_f32 a)                                        \
     {                                                                                                \
         npyv_b32 notnan = npyv_notnan_f32(a);                                                        \
-        if (NPY_UNLIKELY(npyv_tobits_b32(notnan) != 0xff)) {                                         \
+        if (NPY_UNLIKELY(!npyv_all_b32(notnan))) {                                                   \
             const union { npy_uint32 i; float f;} pnan = {0x7fc00000UL};                             \
             return pnan.f;                                                                           \
         }                                                                                            \
@@ -199,7 +199,7 @@ NPY_IMPL_AVX2_REDUCE_MINMAX(npy_int,  max_s, max_epi)
     NPY_FINLINE double npyv_reduce_##INTRIN##n_f64(npyv_f64 a)                                       \
     {                                                                                                \
         npyv_b64 notnan = npyv_notnan_f64(a);                                                        \
-        if (NPY_UNLIKELY(npyv_tobits_b64(notnan) != 0xf)) {                                          \
+        if (NPY_UNLIKELY(!npyv_all_b64(notnan))) {                                                   \
             const union { npy_uint64 i; double d;} pnan = {0x7ff8000000000000ull};                   \
             return pnan.d;                                                                           \
         }                                                                                            \

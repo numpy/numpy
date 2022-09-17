@@ -105,10 +105,12 @@ class _SIMD_BOOL(_Test_Utility):
     """
     To test all boolean vector types at once
     """
+    def _nlanes(self):
+        return getattr(self.npyv, "nlanes_u" + self.sfx[1:])
+
     def _data(self, start=None, count=None, reverse=False):
-        nlanes = getattr(self.npyv, "nlanes_u" + self.sfx[1:])
         true_mask = self._true_mask()
-        rng = range(nlanes)
+        rng = range(self._nlanes())
         if reverse:
             rng = reversed(rng)
         return [true_mask if x % 2 else 0 for x in rng]
@@ -201,6 +203,26 @@ class _SIMD_BOOL(_Test_Utility):
             vpack = pack_simd(vrdata, vrdata, vrdata, vrdata,
                                vdata,  vdata,  vdata,  vdata)
         assert vpack == spack
+
+    @pytest.mark.parametrize("intrin", ["any", "all"])
+    @pytest.mark.parametrize("data", (
+        [-1, 0],
+        [0, -1],
+        [-1],
+        [0]
+    ))
+    def test_operators_crosstest(self, intrin, data):
+        """
+        Test intrinsics:
+            npyv_any_##SFX
+            npyv_all_##SFX
+        """
+        data_a = self._load_b(data * self._nlanes())
+        func = eval(intrin)
+        intrin = getattr(self, intrin)
+        desired = func(data_a)
+        simd = intrin(data_a)
+        assert not not simd == desired
 
 class _SIMD_INT(_Test_Utility):
     """
@@ -446,7 +468,7 @@ class _SIMD_FP(_Test_Utility):
             npyv_reduce_minn_##sfx
         """
         pinf, ninf, nan = self._pinfinity(), self._ninfinity(), self._nan()
-        chk_nan = {"xp":1, "np":1, "nn":2, "xn": 2}.get(intrin[-2:], 0)
+        chk_nan = {"xp": 1, "np": 1, "nn": 2, "xn": 2}.get(intrin[-2:], 0)
         func = eval(intrin[:3])
         reduce_intrin = getattr(self, "reduce_" + intrin)
         intrin = getattr(self, intrin)
@@ -473,9 +495,13 @@ class _SIMD_FP(_Test_Utility):
         if not chk_nan:
             return
         if chk_nan == 1:
-            test_nan = lambda a, b: b if math.isnan(a) else a if math.isnan(b) else b
+            test_nan = lambda a, b: (
+                b if math.isnan(a) else a if math.isnan(b) else b
+            )
         else:
-            test_nan = lambda a, b: nan if math.isnan(a) or math.isnan(b) else b
+            test_nan = lambda a, b: (
+                nan if math.isnan(a) or math.isnan(b) else b
+            )
         cases = (
             (nan, 10),
             (10, nan),
@@ -490,7 +516,7 @@ class _SIMD_FP(_Test_Utility):
             assert simd == pytest.approx(data, nan_ok=True)
             vdata_a = self.setall(op1)
             vdata_b = self.setall(op2)
-            data = self.setall(data)
+            data = [data] * self.nlanes
             simd = intrin(vdata_a, vdata_b)
             assert simd == pytest.approx(data, nan_ok=True)
 
@@ -544,6 +570,30 @@ class _SIMD_FP(_Test_Utility):
             vcmp = to_bool(intrin(vdata_a, vdata_b))
             data_cmp = [py_comp(a, b) for a, b in zip(data_a, data_b)]
             assert vcmp == data_cmp
+
+    @pytest.mark.parametrize("intrin", ["any", "all"])
+    @pytest.mark.parametrize("data", (
+        [float("nan"), 0],
+        [0, float("nan")],
+        [float("nan"), 1],
+        [1, float("nan")],
+        [float("nan"), float("nan")],
+        [0.0, -0.0],
+        [-0.0, 0.0],
+        [1.0, -0.0]
+    ))
+    def test_operators_crosstest(self, intrin, data):
+        """
+        Test intrinsics:
+            npyv_any_##SFX
+            npyv_all_##SFX
+        """
+        data_a = self.load(data * self.nlanes)
+        func = eval(intrin)
+        intrin = getattr(self, intrin)
+        desired = func(data_a)
+        simd = intrin(data_a)
+        assert not not simd == desired
 
 class _SIMD_ALL(_Test_Utility):
     """
@@ -894,6 +944,30 @@ class _SIMD_ALL(_Test_Utility):
         data_andc = [a & ~b for a, b in zip(data_cast_a, data_cast_b)]
         vandc = cast(getattr(self, "andc")(vdata_a, vdata_b))
         assert vandc == data_andc
+
+    @pytest.mark.parametrize("intrin", ["any", "all"])
+    @pytest.mark.parametrize("data", (
+        [1, 2, 3, 4],
+        [-1, -2, -3, -4],
+        [0, 1, 2, 3, 4],
+        [0x7f, 0x7fff, 0x7fffffff, 0x7fffffffffffffff],
+        [0, -1, -2, -3, 4],
+        [0],
+        [1],
+        [-1]
+    ))
+    def test_operators_crosstest(self, intrin, data):
+        """
+        Test intrinsics:
+            npyv_any_##SFX
+            npyv_all_##SFX
+        """
+        data_a = self.load(data * self.nlanes)
+        func = eval(intrin)
+        intrin = getattr(self, intrin)
+        desired = func(data_a)
+        simd = intrin(data_a)
+        assert not not simd == desired
 
     def test_conversion_boolean(self):
         bsfx = "b" + self.sfx[1:]

@@ -274,4 +274,30 @@ NPY_FINLINE npyv_f64 npyv_not_f64(npyv_f64 a)
 NPY_FINLINE npyv_b64 npyv_notnan_f64(npyv_f64 a)
 { return vec_cmpeq(a, a); }
 
+// Test cross all vector lanes
+// any: returns true if any of the elements is not equal to zero
+// all: returns true if all elements are not equal to zero
+#define NPYV_IMPL_VEC_ANYALL(SFX, SFX2)                       \
+    NPY_FINLINE bool npyv_any_##SFX(npyv_##SFX a)             \
+    { return vec_any_ne(a, (npyv_##SFX)npyv_zero_##SFX2()); } \
+    NPY_FINLINE bool npyv_all_##SFX(npyv_##SFX a)             \
+    { return vec_all_ne(a, (npyv_##SFX)npyv_zero_##SFX2()); }
+NPYV_IMPL_VEC_ANYALL(b8,  u8)
+NPYV_IMPL_VEC_ANYALL(b16, u16)
+NPYV_IMPL_VEC_ANYALL(b32, u32)
+NPYV_IMPL_VEC_ANYALL(b64, u64)
+NPYV_IMPL_VEC_ANYALL(u8,  u8)
+NPYV_IMPL_VEC_ANYALL(s8,  s8)
+NPYV_IMPL_VEC_ANYALL(u16, u16)
+NPYV_IMPL_VEC_ANYALL(s16, s16)
+NPYV_IMPL_VEC_ANYALL(u32, u32)
+NPYV_IMPL_VEC_ANYALL(s32, s32)
+NPYV_IMPL_VEC_ANYALL(u64, u64)
+NPYV_IMPL_VEC_ANYALL(s64, s64)
+#if NPY_SIMD_F32
+    NPYV_IMPL_VEC_ANYALL(f32, f32)
+#endif
+NPYV_IMPL_VEC_ANYALL(f64, f64)
+#undef NPYV_IMPL_VEC_ANYALL
+
 #endif // _NPY_SIMD_VEC_OPERATORS_H

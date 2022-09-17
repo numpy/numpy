@@ -69,7 +69,7 @@ NPY_FINLINE npyv_f64 npyv_square_f64(npyv_f64 a)
         npyv_b32 nn_a = npyv_notnan_f32(a);
         npyv_b32 nn_b = npyv_notnan_f32(b);
         npyv_f32 max = vec_max(a, b);
-        return vec_sel(a, vec_sel(b, max, nn_b), nn_a);
+        return vec_sel(b, vec_sel(a, max, nn_a), nn_b);
     }
 #endif
 NPY_FINLINE npyv_f64 npyv_maxn_f64(npyv_f64 a, npyv_f64 b)
@@ -77,7 +77,7 @@ NPY_FINLINE npyv_f64 npyv_maxn_f64(npyv_f64 a, npyv_f64 b)
     npyv_b64 nn_a = npyv_notnan_f64(a);
     npyv_b64 nn_b = npyv_notnan_f64(b);
     npyv_f64 max = vec_max(a, b);
-    return vec_sel(a, vec_sel(b, max, nn_b), nn_a);
+    return vec_sel(b, vec_sel(a, max, nn_a), nn_b);
 }
 
 // Maximum, integer operations
@@ -118,15 +118,15 @@ NPY_FINLINE npyv_f64 npyv_maxn_f64(npyv_f64 a, npyv_f64 b)
         npyv_b32 nn_a = npyv_notnan_f32(a);
         npyv_b32 nn_b = npyv_notnan_f32(b);
         npyv_f32 min = vec_min(a, b);
-        return vec_sel(a, vec_sel(b, min, nn_b), nn_a);
+        return vec_sel(b, vec_sel(a, min, nn_a), nn_b);
     }
 #endif
 NPY_FINLINE npyv_f64 npyv_minn_f64(npyv_f64 a, npyv_f64 b)
 {
-    npyv_b32 nn_a = npyv_notnan_f64(a);
-    npyv_b32 nn_b = npyv_notnan_f64(b);
+    npyv_b64 nn_a = npyv_notnan_f64(a);
+    npyv_b64 nn_b = npyv_notnan_f64(b);
     npyv_f64 min = vec_min(a, b);
-    return vec_sel(a, vec_sel(b, min, nn_b), nn_a);
+    return vec_sel(b, vec_sel(a, min, nn_a), nn_b);
 }
 
 // Minimum, integer operations
@@ -208,7 +208,7 @@ NPY_IMPL_VEC_REDUCE_MINMAX(max, int64, s64)
         NPY_FINLINE float npyv_reduce_##INTRIN##n_f32(npyv_f32 a)     \
         {                                                             \
             npyv_b32 notnan = npyv_notnan_f32(a);                     \
-            if (NPY_UNLIKELY(!vec_all(notnan))) {                     \
+            if (NPY_UNLIKELY(!npyv_all_b32(notnan))) {                \
                 const union { npy_uint32 i; float f;}                 \
                 pnan = {0x7fc00000UL};                                \
                 return pnan.f;                                        \
@@ -226,14 +226,10 @@ NPY_IMPL_VEC_REDUCE_MINMAX(max, int64, s64)
         npyv_f64 r = vec_##INTRIN(a, vec_sld(a, a, 8));           \
         return vec_extract(r, 0);                                 \
     }                                                             \
-    NPY_FINLINE double npyv_reduce_##INTRIN##p_f64(npyv_f64 a)    \
-    {                                                             \
-        return npyv_reduce_##INTRIN##_f64(a);                     \
-    }                                                             \
     NPY_FINLINE double npyv_reduce_##INTRIN##n_f64(npyv_f64 a)    \
     {                                                             \
         npyv_b64 notnan = npyv_notnan_f64(a);                     \
-        if (NPY_UNLIKELY(!vec_all(notnan))) {                     \
+        if (NPY_UNLIKELY(!npyv_all_b64(notnan))) {                \
             const union { npy_uint64 i; double f;}                \
             pnan = {0x7ff8000000000000ull};                       \
             return pnan.f;                                        \
@@ -244,6 +240,31 @@ NPY_IMPL_VEC_REDUCE_MINMAX(min, 0x7ff0000000000000)
 NPY_IMPL_VEC_REDUCE_MINMAX(max, 0xfff0000000000000)
 #undef NPY_IMPL_VEC_REDUCE_MINMAX
 
+#if defined(NPY_HAVE_VXE) || defined(NPY_HAVE_VSX)
+    #define npyv_reduce_minp_f64 npyv_reduce_min_f64
+    #define npyv_reduce_maxp_f64 npyv_reduce_max_f64
+#else
+    NPY_FINLINE double npyv_reduce_minp_f64(npyv_f64 a)
+    {
+        npyv_b64 notnan = npyv_notnan_f64(a);
+        if (NPY_UNLIKELY(!npyv_any_b64(notnan))) {
+            return vec_extract(a, 0);
+        }
+        a = npyv_select_f64(notnan, a, npyv_reinterpret_f64_u64(
+                    npyv_setall_u64(0x7ff0000000000000)));
+        return npyv_reduce_min_f64(a);
+    }
+    NPY_FINLINE double npyv_reduce_maxp_f64(npyv_f64 a)
+    {
+        npyv_b64 notnan = npyv_notnan_f64(a);
+        if (NPY_UNLIKELY(!npyv_any_b64(notnan))) {
+            return vec_extract(a, 0);
+        }
+        a = npyv_select_f64(notnan, a, npyv_reinterpret_f64_u64(
+                    npyv_setall_u64(0xfff0000000000000)));
+        return npyv_reduce_max_f64(a);
+    }
+#endif
 // round to nearest int even
 #define npyv_rint_f64 vec_rint
 // ceil
