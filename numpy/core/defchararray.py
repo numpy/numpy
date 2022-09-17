@@ -1187,7 +1187,15 @@ def replace(a, old, new, count=None):
     See Also
     --------
     str.replace
+    
+    Examples
+    --------
+    >>> import numpy as np 
+    >>> print(np.char.replace('That is a mango', 'mango', 'banana'))
+    That is a banana
 
+    >>> print(np.char.replace('The dish is fresh', 'is', 'was'))
+    The dwash is fresh
     """
     return _to_string_or_unicode_array(
         _vec_string(
