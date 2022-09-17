@@ -1121,8 +1121,10 @@ def ediff1d(arr, to_end=None, to_begin=None):
     This function is the equivalent of `numpy.ediff1d` that takes masked
     values into account, see `numpy.ediff1d` for details.
 
-    to_end : [array_like, optional] Number to append at the end of the returned differences. 
-    to_begin : [array_like, optional] Number to prepend at the beginning of the returned differences. 
+    to_end : [array_like, optional] Number to append at the end of 
+            the returned differences. 
+    to_begin : [array_like, optional] Number to prepend at the beginning of 
+            the returned differences. 
 
     See Also
     --------
