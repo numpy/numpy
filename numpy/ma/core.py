@@ -5775,6 +5775,14 @@ class MaskedArray(ndarray):
         ma.minimum_fill_value
             Returns the minimum filling value for a given datatype.
 
+        Examples
+        --------
+
+        >>>  x = np.ma.array([1, 3, 4, 6], mask=[0, 0, 0, 1])
+        >>>  x_min= np.ma.min(x)
+        >>>  x_min 
+        1  
+
         """
         kwargs = {} if keepdims is np._NoValue else {'keepdims': keepdims}
 
@@ -5844,10 +5852,13 @@ class MaskedArray(ndarray):
         ma.maximum_fill_value
             Returns the maximum filling value for a given datatype.
 
-        >>>  x = np.ma.array([1, 6, 4, 3], mask=[0, 0, 0, 1])
+        Examples
+        --------    
+
+        >>>  x = np.ma.array([1, 3, 4, 6], mask=[0, 0, 0, 1])
         >>>  x_max= np.ma.max(x)
         >>>  x_max
-        6
+        4
         """
         kwargs = {} if keepdims is np._NoValue else {'keepdims': keepdims}
 
