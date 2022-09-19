@@ -40,13 +40,13 @@ repr_precision = len(repr(np.longdouble(0.1)))
 def test_repr_roundtrip():
     # We will only see eps in repr if within printing precision.
     o = 1 + LD_INFO.eps
-    assert_equal(np.longdouble(repr(o)), o, "repr was %s" % repr(o))
+    assert_equal(np.longdouble(str(o)), o, "str was %s" % str(o))
 
 
 @pytest.mark.skipif(string_to_longdouble_inaccurate, reason="Need strtold_l")
 def test_repr_roundtrip_bytes():
     o = 1 + LD_INFO.eps
-    assert_equal(np.longdouble(repr(o).encode("ascii")), o)
+    assert_equal(np.longdouble(str(o).encode("ascii")), o)
 
 
 @pytest.mark.skipif(string_to_longdouble_inaccurate, reason="Need strtold_l")
@@ -59,9 +59,9 @@ def test_array_and_stringlike_roundtrip(strtype):
     o = 1 + LD_INFO.eps
 
     if strtype in (np.bytes_, bytes):
-        o_str = strtype(repr(o).encode("ascii"))
+        o_str = strtype(str(o).encode("ascii"))
     else:
-        o_str = strtype(repr(o))
+        o_str = strtype(str(o))
 
     # Test that `o` is correctly coerced from the string-like
     assert o == np.longdouble(o_str)
@@ -83,7 +83,7 @@ def test_bogus_string():
 @pytest.mark.skipif(string_to_longdouble_inaccurate, reason="Need strtold_l")
 def test_fromstring():
     o = 1 + LD_INFO.eps
-    s = (" " + repr(o))*5
+    s = (" " + str(o))*5
     a = np.array([o]*5)
     assert_equal(np.fromstring(s, sep=" ", dtype=np.longdouble), a,
                  err_msg="reading '%s'" % s)
@@ -143,7 +143,7 @@ class TestFileBased:
 
     ldbl = 1 + LD_INFO.eps
     tgt = np.array([ldbl]*5)
-    out = ''.join([repr(t) + '\n' for t in tgt])
+    out = ''.join([str(t) + '\n' for t in tgt])
 
     def test_fromfile_bogus(self):
         with temppath() as path:
@@ -277,7 +277,7 @@ class TestFileBased:
 
 def test_repr_exact():
     o = 1 + LD_INFO.eps
-    assert_(repr(o) != '1')
+    assert_(str(o) != '1')
 
 
 @pytest.mark.skipif(longdouble_longer_than_double, reason="BUG #2376")
@@ -316,7 +316,7 @@ class TestCommaDecimalPointLocale(CommaDecimalPointLocale):
 
     def test_repr_roundtrip_foreign(self):
         o = 1.5
-        assert_equal(o, np.longdouble(repr(o)))
+        assert_equal(o, np.longdouble(str(o)))
 
     def test_fromstring_foreign_repr(self):
         f = 1.234

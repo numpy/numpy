@@ -149,7 +149,8 @@ class TestFromrecords:
 
         recordarr_r = eval("np." + repr(recordarr), {'np': np})
         recarr_r = eval("np." + repr(recarr), {'np': np})
-        recordview_r = eval("np." + repr(recordview), {'np': np})
+        # Prints the type `numpy.record` as part of the dtype:
+        recordview_r = eval("np." + repr(recordview), {'np': np, 'numpy': np})
 
         assert_equal(type(recordarr_r), np.recarray)
         assert_equal(recordarr_r.dtype.type, np.record)

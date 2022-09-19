@@ -240,10 +240,10 @@ class TestDateTime:
         # Some basic strings and repr
         assert_equal(str(np.datetime64('NaT')), 'NaT')
         assert_equal(repr(np.datetime64('NaT')),
-                     "numpy.datetime64('NaT')")
+                     "np.datetime64('NaT')")
         assert_equal(str(np.datetime64('2011-02')), '2011-02')
         assert_equal(repr(np.datetime64('2011-02')),
-                     "numpy.datetime64('2011-02')")
+                     "np.datetime64('2011-02')")
 
         # None gets constructed as NaT
         assert_equal(np.datetime64(None), np.datetime64('NaT'))
@@ -380,12 +380,12 @@ class TestDateTime:
         # Some basic strings and repr
         assert_equal(str(np.timedelta64('NaT')), 'NaT')
         assert_equal(repr(np.timedelta64('NaT')),
-                     "numpy.timedelta64('NaT')")
+                     "np.timedelta64('NaT')")
         assert_equal(str(np.timedelta64(3, 's')), '3 seconds')
         assert_equal(repr(np.timedelta64(-3, 's')),
-                     "numpy.timedelta64(-3,'s')")
+                     "np.timedelta64(-3,'s')")
         assert_equal(repr(np.timedelta64(12)),
-                     "numpy.timedelta64(12)")
+                     "np.timedelta64(12)")
 
         # Construction from an integer produces generic units
         assert_equal(np.timedelta64(12).dtype, np.dtype('m8'))
