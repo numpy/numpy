@@ -1,0 +1,10 @@
+Deprecate fastCopyAndTranspose and PyArray_CopyAndTranspose
+-----------------------------------------------------------
+
+The ``numpy.fastCopyAndTranspose`` function has been deprecated. Use the
+corresponding copy and transpose methods directly::
+
+    arr.T.copy()
+
+The underlying C function ``PyArray_CopyAndTranspose`` has also been
+deprecated from the NumPy C-API.
