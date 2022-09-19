@@ -779,6 +779,12 @@ def index(a, sub, start=0, end=None):
     --------
     find, str.find
 
+    Examples
+    --------
+    >>> a = np.array(["Computer Science"])
+    >>> np.char.index(a, "Science", start=0, end=None)
+    array([9])
+
     """
     return _vec_string(
         a, int_, 'index', [sub, start] + _clean_args(end))
@@ -1001,6 +1007,15 @@ def join(sep, seq):
     See Also
     --------
     str.join
+
+    Examples
+    --------
+    >>> np.char.join('-', 'osd')
+    array('o-s-d', dtype='<U5')
+
+    >>> np.char.join(['-', '.'], ['ghc', 'osd'])
+    array(['g-h-c', 'o.s.d'], dtype='<U5')
+
     """
     return _to_string_or_unicode_array(
         _vec_string(sep, object_, 'join', (seq,)))
