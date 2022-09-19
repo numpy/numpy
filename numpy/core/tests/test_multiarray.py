@@ -5347,10 +5347,9 @@ class TestIO:
         x = x.real.ravel()
         s = "@".join(map(str, x))
         y = np.fromstring(s, sep="@")
-        # NB. str imbues less precision
         nan_mask = ~np.isfinite(x)
         assert_array_equal(x[nan_mask], y[nan_mask])
-        assert_array_almost_equal(x[~nan_mask], y[~nan_mask], decimal=5)
+        assert_array_equal(x[~nan_mask], y[~nan_mask])
 
     def test_roundtrip_repr(self, x):
         x = x.real.ravel()
