@@ -1045,6 +1045,7 @@ NpyIter_NestedIters(PyObject *NPY_UNUSED(self),
 
         if (iter->iter == NULL) {
             Py_DECREF(ret);
+            Py_DECREF(iter);
             goto fail;
         }
 

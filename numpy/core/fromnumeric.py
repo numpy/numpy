@@ -2647,9 +2647,9 @@ def ptp(a, axis=None, out=None, keepdims=np._NoValue):
 
     Returns
     -------
-    ptp : ndarray
-        A new array holding the result, unless `out` was
-        specified, in which case a reference to `out` is returned.
+    ptp : ndarray or scalar
+        The range of a given array - `scalar` if array is one-dimensional
+        or a new array holding the result along the given axis
 
     Examples
     --------

@@ -3666,6 +3666,13 @@ def msort(a):
     -----
     ``np.msort(a)`` is equivalent to  ``np.sort(a, axis=0)``.
 
+    Examples
+    --------
+    >>> a = np.array([[1, 4], [3, 1]])
+    >>> np.msort(a)  # sort along the first axis
+    array([[1, 1],
+           [3, 4]])
+
     """
     b = array(a, subok=True, copy=True)
     b.sort(0)
