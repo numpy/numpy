@@ -145,10 +145,12 @@ EOF
   fi
 
   if [ -n "$RUN_FULL_TESTS" ]; then
+    # Travis has a limit on log length that is causeing test failutes.
+    # The fix here is to remove the "-v" from the runtest arguments.
     export PYTHONWARNINGS="ignore::DeprecationWarning:virtualenv"
-    $PYTHON -b ../runtests.py -n -v --mode=full $DURATIONS_FLAG $COVERAGE_FLAG
+    $PYTHON -b ../runtests.py -n --mode=full $DURATIONS_FLAG $COVERAGE_FLAG
   else
-    $PYTHON ../runtests.py -n -v $DURATIONS_FLAG -- -rs
+    $PYTHON ../runtests.py -n $DURATIONS_FLAG -- -rs
   fi
 
   if [ -n "$RUN_COVERAGE" ]; then
