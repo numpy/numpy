@@ -945,17 +945,9 @@ def isupper(a):
 
     Examples
     --------
-    >>> string = "hello" # lower case
-    >>> np.char.isupper(string)
-    array(False)
-
-    >>> string2 = "HELLO" # upper case
-    >>> np.char.isupper(string2)
-    array(True)
-
-    >>> string3 = "Hello" # mixed case
-    >>> np.char.isupper(string3)
-    array(False)
+    >>> a = np.array(["hello", "HELLO", "Hello"])
+    >>> np.char.isupper(a)
+    array([False,  True, False])
     """
     return _vec_string(a, bool_, 'isupper')
 
