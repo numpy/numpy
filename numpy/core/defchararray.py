@@ -275,6 +275,18 @@ def str_len(a):
     See Also
     --------
     builtins.len
+
+    Examples
+    --------
+    >>> a = np.array(['Grace Hopper Conference', 'Open Source Day'])
+    >>> np.char.str_len(a)
+    array([23, 15])
+    >>> a = np.array([u'\u0420', u'\u043e'])
+    >>> np.char.str_len(a)
+    array([1, 1])
+    >>> a = np.array([['hello', 'world'], [u'\u0420', u'\u043e']])
+    >>> np.char.str_len(a)
+    array([[5, 5], [1, 1]])
     """
     # Note: __len__, etc. currently return ints, which are not C-integers.
     # Generally intp would be expected for lengths, although int is sufficient
@@ -864,6 +876,15 @@ def isdigit(a):
     See Also
     --------
     str.isdigit
+
+    Examples
+    --------
+    >>> a = np.array(['a', 'b', '0'])
+    >>> np.char.isdigit(a)
+    array([False, False,  True])
+    >>> a = np.array([['a', 'b', '0'], ['c', '1', '2']])
+    >>> np.char.isdigit(a)
+    array([[False, False,  True], [False,  True,  True]])
     """
     return _vec_string(a, bool_, 'isdigit')
 
