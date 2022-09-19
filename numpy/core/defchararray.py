@@ -946,7 +946,7 @@ def isupper(a):
      Examples
     --------
     >>> import numpy as np
-    >>> str="GHC"
+    >>> str = "GHC"
     >>> np.char.isupper(str)
     array(True) 
 
