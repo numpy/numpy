@@ -545,8 +545,8 @@ def _code_dispatcher(a, encoding=None, errors=None):
 
 @array_function_dispatch(_code_dispatcher)
 def decode(a, encoding=None, errors=None):
-    """
-    Calls `str.decode` element-wise.
+    r"""
+    Calls ``bytes.decode`` element-wise.
 
     The set of available codecs comes from the Python standard library,
     and may be extended at runtime.  For more information, see the
@@ -568,7 +568,7 @@ def decode(a, encoding=None, errors=None):
 
     See Also
     --------
-    str.decode
+    :py:meth:`bytes.decode`
 
     Notes
     -----
@@ -576,13 +576,13 @@ def decode(a, encoding=None, errors=None):
 
     Examples
     --------
-    >>> c = np.array(['aAaAaA', '  aA  ', 'abBABba'])
+    >>> c = np.array([b'\x81\xc1\x81\xc1\x81\xc1', b'@@\x81\xc1@@',
+    ...               b'\x81\x82\xc2\xc1\xc2\x82\x81'])
     >>> c
+    array([b'\x81\xc1\x81\xc1\x81\xc1', b'@@\x81\xc1@@',
+    ...    b'\x81\x82\xc2\xc1\xc2\x82\x81'], dtype='|S7')
+    >>> np.char.decode(c, encoding='cp037')
     array(['aAaAaA', '  aA  ', 'abBABba'], dtype='<U7')
-    >>> np.char.encode(c, encoding='cp037')
-    array(['\\x81\\xc1\\x81\\xc1\\x81\\xc1', '@@\\x81\\xc1@@',
-        '\\x81\\x82\\xc2\\xc1\\xc2\\x82\\x81'],
-        dtype='|S7')
 
     """
     return _to_string_or_unicode_array(
@@ -2237,7 +2237,7 @@ class chararray(ndarray):
 
     def decode(self, encoding=None, errors=None):
         """
-        Calls `str.decode` element-wise.
+        Calls ``bytes.decode`` element-wise.
 
         See Also
         --------
