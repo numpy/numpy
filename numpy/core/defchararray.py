@@ -948,6 +948,13 @@ def isupper(a):
     See Also
     --------
     str.isupper
+
+    Examples
+    --------
+    >>> str = "GHC"
+    >>> np.char.isupper(str)
+    array(True) 
+
     """
     return _vec_string(a, bool_, 'isupper')
 
