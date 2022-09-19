@@ -278,12 +278,16 @@ def str_len(a):
 
     Examples
     --------
-    >>> a = "example"
+    >>> a = np.array(['Grace Hopper Conference', 'Open Source Day'])
     >>> np.char.str_len(a)
-    array(7)
-    >>> a = "hello world"
+    array([23, 15])
+    >>> a = np.array(['\u0420', '\u043e'])
     >>> np.char.str_len(a)
-    array(11)
+    array([1, 1])
+    >>> a = np.array([['hello', 'world'], ['\u0420', '\u043e']])
+    >>> np.char.str_len(a)
+    array([[5, 5],
+       [1, 1]])
     """
     # Note: __len__, etc. currently return ints, which are not C-integers.
     # Generally intp would be expected for lengths, although int is sufficient
