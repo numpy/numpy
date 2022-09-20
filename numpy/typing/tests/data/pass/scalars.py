@@ -113,6 +113,8 @@ np.void(True)
 np.void(np.bool_(True))
 np.void(b"test")
 np.void(np.bytes_("test"))
+np.void(object(), [("a", "O"), ("b", "O")])
+np.void(object(), dtype=[("a", "O"), ("b", "O")])
 
 # Protocols
 i8 = np.int64()

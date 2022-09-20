@@ -40,6 +40,7 @@ from numpy._typing import (
     # DTypes
     DTypeLike,
     _DTypeLike,
+    _DTypeLikeVoid,
     _SupportsDType,
     _VoidDTypeLike,
 
@@ -3058,7 +3059,10 @@ class flexible(generic): ...  # type: ignore
 # depending on whether or not it's used as an opaque bytes sequence
 # or a structure
 class void(flexible):
-    def __init__(self, value: _IntLike_co | bytes, /) -> None: ...
+    @overload
+    def __init__(self, value: _IntLike_co | bytes, /, dtype : None = ...) -> None: ...
+    @overload
+    def __init__(self, value: Any, /, dtype: _DTypeLikeVoid) -> None: ...
     @property
     def real(self: _ArraySelf) -> _ArraySelf: ...
     @property
