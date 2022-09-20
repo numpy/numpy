@@ -11,7 +11,7 @@ if [[ $RUNNER_OS == "Windows" ]]; then
     PY_DIR=$(python -c "import sys; print(sys.prefix)")
     mkdir $PY_DIR/libs
 fi
-python -c "import sys; import numpy; sys.exit(not numpy.test('full', extra_argv=['-vvv']))"
+python -c "import sys; import numpy; sys.exit(not numpy.test('full'))"
 
 python $PROJECT_DIR/tools/wheels/check_license.py
 if [[ $UNAME == "Linux" || $UNAME == "Darwin" ]] ; then
