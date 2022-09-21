@@ -1787,23 +1787,8 @@ def isnumeric(a):
 
     Examples
     --------
-    >>> np.char.isnumeric('¼')
-    array(True)
-
-    >>> np.char.isnumeric('123')
-    array(True)
-
-    >>> np.char.isnumeric('abc')
-    array(False)
-
-    >>> np.char.isnumeric('Ⅷ')
-    array(True)
-
-    >>> np.char.isnumeric(['Ⅷ', '㈥', '9.0', '1/4', '123abc'])
-    array([ True,  True, False, False, False])
-
-    >>> np.char.isnumeric('')
-    array(False)
+    >>> np.char.isnumeric(['123', '123abc', '9.0', '1/4', 'VIII'])
+    array([ True, False, False, False, False])
 
     """
     if _use_unicode(a) != unicode_:
@@ -1816,8 +1801,6 @@ def isdecimal(a):
     """
     For each element, return True if there are only decimal
     characters in the element.
-
-    Decimal characters are those that can be used to form numbers in base 10.
 
     Calls `unicode.isdecimal` element-wise.
 
@@ -1841,23 +1824,8 @@ def isdecimal(a):
 
     Examples
     --------
-    >>> np.char.isdecimal('12345')
-    array(True)
-
-    >>> np.char.isdecimal('4.99')
-    array(False)
-
-    >>> np.char.isdecimal('123ABC')
-    array(False)
-
-    >>> np.char.isdecimal(['000', 'abc', '9.0'])
-    array([ True, False, False])
-
-    >>> np.char.isdecimal('¼')
-    array(False)   
-
-    >>> np.char.isdecimal('')
-    array(False)
+    >>> np.char.isdecimal(['12345', '4.99', '123ABC', ''])
+    array([ True, False, False, False])
 
     """ 
     if _use_unicode(a) != unicode_:
