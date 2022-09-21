@@ -4,6 +4,7 @@ import textwrap
 import types
 import re
 import warnings
+import functools
 
 from numpy.core.numerictypes import issubclass_, issubsctype, issubdtype
 from numpy.core.overrides import set_module
@@ -122,11 +123,6 @@ def get_include():
     return d
 
 
-def _set_function_name(func, name):
-    func.__name__ = name
-    return func
-
-
 class _Deprecate:
     """
     Decorator class to deprecate old functions.
@@ -154,10 +150,7 @@ class _Deprecate:
         message = self.message
 
         if old_name is None:
-            try:
-                old_name = func.__name__
-            except AttributeError:
-                old_name = func.__name__
+            old_name = func.__name__
         if new_name is None:
             depdoc = "`%s` is deprecated!" % old_name
         else:
@@ -167,12 +160,12 @@ class _Deprecate:
         if message is not None:
             depdoc += "\n" + message
 
-        def newfunc(*args,**kwds):
-            """`arrayrange` is deprecated, use `arange` instead!"""
+        @functools.wraps(func)
+        def newfunc(*args, **kwds):
             warnings.warn(depdoc, DeprecationWarning, stacklevel=2)
             return func(*args, **kwds)
 
-        newfunc = _set_function_name(newfunc, old_name)
+        newfunc.__name__ = old_name
         doc = func.__doc__
         if doc is None:
             doc = depdoc
@@ -194,12 +187,7 @@ class _Deprecate:
             depdoc = textwrap.indent(depdoc, ' ' * indent)
             doc = '\n\n'.join([depdoc, doc])
         newfunc.__doc__ = doc
-        try:
-            d = func.__dict__
-        except AttributeError:
-            pass
-        else:
-            newfunc.__dict__.update(d)
+
         return newfunc
 
 
