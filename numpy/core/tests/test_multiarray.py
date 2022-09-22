@@ -29,7 +29,7 @@ from numpy.testing import (
     assert_allclose, IS_PYPY, IS_PYSTON, HAS_REFCOUNT, assert_array_less,
     runstring, temppath, suppress_warnings, break_cycles,
     )
-from numpy.testing._private.utils import _no_tracing
+from numpy.testing._private.utils import requires_memory, _no_tracing
 from numpy.core.tests._locales import CommaDecimalPointLocale
 from numpy.lib.recfunctions import repack_fields
 
@@ -6719,6 +6719,15 @@ class TestDot:
             # Strides in A cols and X
             assert_dot_close(A_f_12, X_f_2, desired)
 
+    @pytest.mark.slow
+    @pytest.mark.parametrize("dtype", [np.float64, np.complex128])
+    @requires_memory(free_bytes=9*10**9)  # complex case needs 8GiB+
+    def test_huge_vectordot(self, dtype):
+        # Large vector multiplications are chunked with 32bit BLAS
+        # Test that the chunking does the right thing, see also gh-22262
+        data = np.ones(2**30+100, dtype=dtype)
+        res = np.dot(data, data)
+        assert res == 2**30+100
 
 
 class MatmulCommon:
