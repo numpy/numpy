@@ -134,6 +134,36 @@ jobs:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
 
+  without_avx512:
+    needs: [smoke_test]
+    runs-on: ubuntu-latest
+    env:
+      CPU_DISPATCH: "max -xop -fma4 -avx512f -avx512cd -avx512_knl -avx512_knm -avx512_skx -avx512_clx -avx512_cnl -avx512_icl"
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    - uses: actions/setup-python@v3
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    - uses: ./.github/actions
+
+  without_avx512_avx2_fma3:
+    needs: [smoke_test]
+    runs-on: ubuntu-latest
+    env:
+      CPU_DISPATCH: "SSSE3 SSE41 POPCNT SSE42 AVX F16C"
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    - uses: actions/setup-python@v3
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    - uses: ./.github/actions
+
   debug:
     needs: [smoke_test]
     runs-on: ubuntu-20.04
