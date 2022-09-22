@@ -19,11 +19,6 @@ typedef __m512i npyv_u32;
 typedef __m512i npyv_s32;
 typedef __m512i npyv_u64;
 typedef __m512i npyv_s64;
-
-#ifdef NPY_HAVE_AVX512_SKX
-typedef __m256i npyvh_f16;
-#endif
-
 typedef __m512  npyv_f32;
 typedef __m512d npyv_f64;
 
@@ -70,7 +65,6 @@ typedef struct { __m512d val[3]; } npyv_f64x3;
 #define npyv_nlanes_s32 16
 #define npyv_nlanes_u64 8
 #define npyv_nlanes_s64 8
-#define npyv_nlanes_f16 32
 #define npyv_nlanes_f32 16
 #define npyv_nlanes_f64 8
 
