@@ -1258,9 +1258,9 @@ class TestStructured:
         # The main importance is that it does not return True:
         with pytest.raises(TypeError):
             x == y
- 
+
     def test_empty_structured_array_comparison(self):
-        # Check that comparison works on empty arrays with nontrivially 
+        # Check that comparison works on empty arrays with nontrivially
         # shaped fields
         a = np.zeros(0, [('a', '<f8', (1, 1))])
         assert_equal(a, a)
@@ -2233,7 +2233,7 @@ class TestMethods:
         assert_c(a.copy('C'))
         assert_fortran(a.copy('F'))
         assert_c(a.copy('A'))
-    
+
     @pytest.mark.parametrize("dtype", ['O', np.int32, 'i,O'])
     def test__deepcopy__(self, dtype):
         # Force the entry of NULLs into array
@@ -2442,7 +2442,7 @@ class TestMethods:
         np.array([0, 1, np.nan]),
     ])
     def test_searchsorted_floats(self, a):
-        # test for floats arrays containing nans. Explicitly test 
+        # test for floats arrays containing nans. Explicitly test
         # half, single, and double precision floats to verify that
         # the NaN-handling is correct.
         msg = "Test real (%s) searchsorted with nans, side='l'" % a.dtype
@@ -2458,7 +2458,7 @@ class TestMethods:
         assert_equal(y, 2)
 
     def test_searchsorted_complex(self):
-        # test for complex arrays containing nans. 
+        # test for complex arrays containing nans.
         # The search sorted routines use the compare functions for the
         # array type, so this checks if that is consistent with the sort
         # order.
@@ -2480,7 +2480,7 @@ class TestMethods:
         a = np.array([0, 128], dtype='>i4')
         b = a.searchsorted(np.array(128, dtype='>i4'))
         assert_equal(b, 1, msg)
-        
+
     def test_searchsorted_n_elements(self):
         # Check 0 elements
         a = np.ones(0)
@@ -9050,12 +9050,16 @@ class TestFormat:
         a = np.array(np.pi)
         assert_equal('{:0.3g}'.format(a), '3.14')
         assert_equal('{:0.3g}'.format(a[()]), '3.14')
-    
+
     def test_general_format(self):
-        # FIXME: see TODO in `arrayprint.py:_parse_format_spec`
+        a = np.array([np.pi])
+        with pytest.raises(NotImplementedError):
+            '{:.4g}'.format(a)
+
+        # FIXME: When the format character is implemented, the following
+        #        tests should succeed.
         return
 
-        a = np.array([np.pi])
         # general format 'g' should behave the same as Python
         # ref: https://docs.python.org/3/library/string.html#format-specification-mini-language
         assert_equal('{:.4g}'.format(a), '3.142')

@@ -428,20 +428,20 @@ def _get_formatdict(data, *, precision, floatmode, suppress, sign, legacy,
         'bool': lambda: BoolFormat(data),
         'int': lambda: IntegerFormat(data),
         'float': lambda: FloatingFormat(
-            data, precision, floatmode, suppress, sign, 
-            exp_format=exp_format, trim=trim, 
+            data, precision, floatmode, suppress, sign,
+            exp_format=exp_format, trim=trim,
             legacy=legacy,),
         'longfloat': lambda: FloatingFormat(
-            data, precision, floatmode, suppress, sign, 
-            exp_format=exp_format, trim=trim, 
+            data, precision, floatmode, suppress, sign,
+            exp_format=exp_format, trim=trim,
             legacy=legacy,),
         'complexfloat': lambda: ComplexFloatingFormat(
-            data, precision, floatmode, suppress, sign, 
-            exp_format=exp_format, trim=trim, 
+            data, precision, floatmode, suppress, sign,
+            exp_format=exp_format, trim=trim,
             legacy=legacy,),
         'longcomplexfloat': lambda: ComplexFloatingFormat(
-            data, precision, floatmode, suppress, sign, 
-            exp_format=exp_format, trim=trim, 
+            data, precision, floatmode, suppress, sign,
+            exp_format=exp_format, trim=trim,
             legacy=legacy,),
         'datetime': lambda: DatetimeFormat(data, legacy=legacy),
         'timedelta': lambda: TimedeltaFormat(data),
@@ -739,7 +739,7 @@ def array2string(a, max_line_width=None, precision=None,
 
     overrides = _make_options_dict(precision, threshold, edgeitems,
                                    max_line_width, suppress_small, None, None,
-                                   sign, formatter, floatmode, exp_format, 
+                                   sign, formatter, floatmode, exp_format,
                                    trim, legacy)
     options = _format_options.copy()
     options.update(overrides)
@@ -1126,7 +1126,7 @@ def format_float_scientific(x, precision=None, unique=True, trim='k',
         identify the value may be printed and rounded unbiased.
 
         -- versionadded:: 1.21.0
-        
+
     Returns
     -------
     rep : string
@@ -1211,7 +1211,7 @@ def format_float_positional(x, precision=None, unique=True,
         Minimum number of digits to print. Only has an effect if `unique=True`
         in which case additional digits past those necessary to uniquely
         identify the value may be printed, rounding the last additional digit.
-        
+
         -- versionadded:: 1.21.0
 
     Returns
@@ -1274,8 +1274,8 @@ class BoolFormat:
 
 class ComplexFloatingFormat:
     """ Formatter for subtypes of np.complexfloating """
-    def __init__(self, x, precision, floatmode, suppress_small, sign=False, 
-                 *, exp_format=False, trim=".", 
+    def __init__(self, x, precision, floatmode, suppress_small, sign=False,
+                 *, exp_format=False, trim=".",
                  legacy=None):
         # for backcompatibility, accept bools
         if isinstance(sign, bool):
@@ -1676,8 +1676,8 @@ _FORMAT_SPEC_REGEXP = re.compile(
 
 def _parse_format_spec(fs):
     """
-    Parse the format spec and returns a dictionary with options 
-    for using it with `array2string`. This is inspired in the 
+    Parse the format spec and returns a dictionary with options
+    for using it with `array2string`. This is inspired in the
     [Format Specification Mini-Language](https://docs.python.org/3/library/string.html#formatspec)
 
     Parameters
@@ -1718,10 +1718,9 @@ def _parse_format_spec(fs):
         elif fmt_code == "e":  # force exp_format
             options["exp_format"] = True
         elif fmt_code == "g":
-            # TODO: implement code in `FloatingFormat` such that
-            # the tests in test_multiarray.py:test_general_format pass
-            # note: remember to add the tests to `test_arrayprint.py:test_type`
-            pass
+            raise NotImplementedError(
+                "The format character 'g' is not yet implemented "
+                "for NumPy arrays.")
 
     return options
 
