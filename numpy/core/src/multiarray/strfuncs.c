@@ -116,9 +116,10 @@ array_format(PyArrayObject *self, PyObject *args)
     }
 
     /* if len(format_spec) == 0 this function is equivalent to __str__ */
-    if (PyUnicode_GET_LENGTH(format_spec) == 0)
+    if (PyUnicode_GET_LENGTH(format_spec) == 0) {
         // use the builtin
         return PyObject_Str((PyObject *)self);
+    }
 
     /* nd arrays - forward to _default_array_format */
     // ndim > 0
