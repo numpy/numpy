@@ -53,7 +53,7 @@ needs is to call out from Python code to a fast, machine-code routine
 relatively easy to do is a big reason why Python is such an excellent
 high-level language for scientific and engineering programming.
 
-Their are two basic approaches to calling compiled code: writing an
+There are two basic approaches to calling compiled code: writing an
 extension module that is then imported to Python using the import
 command, or calling a shared-library subroutine directly from Python
 using the `ctypes <https://docs.python.org/3/library/ctypes.html>`_
@@ -97,7 +97,7 @@ control over how the C-library gets used and called which can lead to
 a lean and tight interface with minimal over-head. The disadvantage is
 that you have to write, debug, and maintain C-code, although most of
 it can be adapted using the time-honored technique of
-"cutting-pasting-and-modifying" from other extension modules. Because,
+"cutting-pasting-and-modifying" from other extension modules. Because
 the procedure of calling out to additional C-code is fairly
 regimented, code-generation procedures have been developed to make
 this process easier. One of these code-generation techniques is
