@@ -247,6 +247,7 @@ SIMD_IMPL_INTRIN_2(lut16_@sfx@, v@sfx@, q@sfx@, vu@size@)
  * Misc
  ***************************/
 SIMD_IMPL_INTRIN_0(zero_@sfx@, v@sfx@)
+SIMD_IMPL_INTRIN_1(extract0_@sfx@, @sfx@, v@sfx@)
 SIMD_IMPL_INTRIN_1(setall_@sfx@, v@sfx@, @sfx@)
 SIMD_IMPL_INTRIN_3(select_@sfx@, v@sfx@, v@bsfx@, v@sfx@, v@sfx@)
 
@@ -340,6 +341,12 @@ SIMD_IMPL_INTRIN_2(orc_@bsfx@, v@bsfx@, v@bsfx@, v@bsfx@)
 SIMD_IMPL_INTRIN_2(xnor_@bsfx@, v@bsfx@, v@bsfx@, v@bsfx@)
 #endif
 
+// test cross all vector lanes
+/**begin repeat1
+ * #intrin = any, all#
+ */
+SIMD_IMPL_INTRIN_1(@intrin@_@sfx@, u8, v@sfx@)
+/**end repeat1**/
 /***************************
  * Conversion
  ***************************/
@@ -409,13 +416,16 @@ SIMD_IMPL_INTRIN_1(@intrin@_@sfx@, v@sfx@, v@sfx@)
  * #intrin = max, min#
  */
 SIMD_IMPL_INTRIN_2(@intrin@_@sfx@, v@sfx@, v@sfx@, v@sfx@)
+SIMD_IMPL_INTRIN_1(reduce_@intrin@_@sfx@, @sfx@, v@sfx@)
 /**end repeat1**/
 
 #if @fp_only@
 /**begin repeat1
- * #intrin = maxp, minp#
+ * #intrin = maxp, minp, maxn, minn#
  */
 SIMD_IMPL_INTRIN_2(@intrin@_@sfx@, v@sfx@, v@sfx@, v@sfx@)
+SIMD_IMPL_INTRIN_1(reduce_@intrin@_@sfx@, @sfx@, v@sfx@)
+/**end repeat1**/
 /**end repeat1**/
 #endif
 
@@ -465,14 +475,20 @@ SIMD_IMPL_INTRIN_0N(cleanup)
 /***************************
  * Operators
  ***************************/
-// Logical
 /**begin repeat
  * #bsfx = b8, b16, b32, b64#
  */
+// Logical
 SIMD_IMPL_INTRIN_2(and_@bsfx@, v@bsfx@, v@bsfx@, v@bsfx@)
 SIMD_IMPL_INTRIN_2(or_@bsfx@,  v@bsfx@, v@bsfx@, v@bsfx@)
 SIMD_IMPL_INTRIN_2(xor_@bsfx@, v@bsfx@, v@bsfx@, v@bsfx@)
 SIMD_IMPL_INTRIN_1(not_@bsfx@, v@bsfx@, v@bsfx@)
+// test cross vector's lanes
+/**begin repeat1
+ * #intrin = any, all#
+ */
+SIMD_IMPL_INTRIN_1(@intrin@_@bsfx@, u8, v@bsfx@)
+/**end repeat1**/
 /**end repeat**/
 /***************************
  * Conversions
@@ -559,7 +575,7 @@ SIMD_INTRIN_DEF(reinterpret_@sfx_to@_@sfx@)
 /**end repeat1**/
 
 /**begin repeat1
- * # intrin = set, setf, setall, zero, select#
+ * # intrin = set, setf, setall, zero, select, extract0#
  */
 SIMD_INTRIN_DEF(@intrin@_@sfx@)
 /**end repeat1**/
@@ -589,7 +605,8 @@ SIMD_INTRIN_DEF(@intrin@_@sfx@)
 #endif // shl_imm
 
 /**begin repeat1
- * #intrin = and, or, xor, not, cmpeq, cmpneq, cmpgt, cmpge, cmplt, cmple#
+ * #intrin = and, or, xor, not, cmpeq, cmpneq, cmpgt, cmpge, cmplt, cmple,
+ *           any, all#
  */
 SIMD_INTRIN_DEF(@intrin@_@sfx@)
 /**end repeat1**/
@@ -669,13 +686,16 @@ SIMD_INTRIN_DEF(@intrin@_@sfx@)
  * #intrin = max, min#
  */
 SIMD_INTRIN_DEF(@intrin@_@sfx@)
+SIMD_INTRIN_DEF(reduce_@intrin@_@sfx@)
 /**end repeat1**/
 
 #if @fp_only@
 /**begin repeat1
- * #intrin = maxp, minp#
+ * #intrin = maxp, minp, maxn, minn#
  */
 SIMD_INTRIN_DEF(@intrin@_@sfx@)
+SIMD_INTRIN_DEF(reduce_@intrin@_@sfx@)
+/**end repeat1**/
 /**end repeat1**/
 #endif
 
@@ -725,14 +745,20 @@ SIMD_INTRIN_DEF(cleanup)
 /***************************
  * Operators
  ***************************/
-// Logical
 /**begin repeat
  * #bsfx = b8, b16, b32, b64#
  */
+// Logical
 SIMD_INTRIN_DEF(and_@bsfx@)
 SIMD_INTRIN_DEF(or_@bsfx@)
 SIMD_INTRIN_DEF(xor_@bsfx@)
 SIMD_INTRIN_DEF(not_@bsfx@)
+// test cross vector's lanes
+/**begin repeat1
+ * #intrin = any, all#
+ */
+SIMD_INTRIN_DEF(@intrin@_@bsfx@)
+/**end repeat1**/
 /**end repeat**/
 /***************************
  * Conversions

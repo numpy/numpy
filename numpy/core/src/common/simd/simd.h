@@ -8,6 +8,10 @@
  * TODO: Add an independent sphinx doc.
 */
 #include "numpy/npy_common.h"
+#ifndef __cplusplus
+    #include <stdbool.h>
+#endif
+
 #include "npy_cpu_dispatch.h"
 #include "simd_utils.h"
 

@@ -138,6 +138,18 @@ NPY_FINLINE float64x2_t npyv__set_f64(double i0, double i1)
 #define npyv_select_f32 vbslq_f32
 #define npyv_select_f64 vbslq_f64
 
+// extract the first vector's lane
+#define npyv_extract0_u8(A) ((npy_uint8)vgetq_lane_u8(A, 0))
+#define npyv_extract0_s8(A) ((npy_int8)vgetq_lane_s8(A, 0))
+#define npyv_extract0_u16(A) ((npy_uint16)vgetq_lane_u16(A, 0))
+#define npyv_extract0_s16(A) ((npy_int16)vgetq_lane_s16(A, 0))
+#define npyv_extract0_u32(A) ((npy_uint32)vgetq_lane_u32(A, 0))
+#define npyv_extract0_s32(A) ((npy_int32)vgetq_lane_s32(A, 0))
+#define npyv_extract0_u64(A) ((npy_uint64)vgetq_lane_u64(A, 0))
+#define npyv_extract0_s64(A) ((npy_int64)vgetq_lane_s64(A, 0))
+#define npyv_extract0_f32(A) vgetq_lane_f32(A, 0)
+#define npyv_extract0_f64(A) vgetq_lane_f64(A, 0)
+
 // Reinterpret
 #define npyv_reinterpret_u8_u8(X) X
 #define npyv_reinterpret_u8_s8  vreinterpretq_u8_s8

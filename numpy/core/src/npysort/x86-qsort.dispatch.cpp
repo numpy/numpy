@@ -137,8 +137,8 @@ struct vector<npy_int> {
     {
         return _mm512_permutexvar_epi32(idx, zmm);
     }
-    static type_t reducemax(zmm_t v) { return npyv_reducemax_s32(v); }
-    static type_t reducemin(zmm_t v) { return npyv_reducemin_s32(v); }
+    static type_t reducemax(zmm_t v) { return npyv_reduce_max_s32(v); }
+    static type_t reducemin(zmm_t v) { return npyv_reduce_min_s32(v); }
     static zmm_t set1(type_t v) { return _mm512_set1_epi32(v); }
     template<__mmask16 mask>
     static zmm_t shuffle(zmm_t zmm)
@@ -196,8 +196,8 @@ struct vector<npy_uint> {
     {
         return _mm512_permutexvar_epi32(idx, zmm);
     }
-    static type_t reducemax(zmm_t v) { return npyv_reducemax_u32(v); }
-    static type_t reducemin(zmm_t v) { return npyv_reducemin_u32(v); }
+    static type_t reducemax(zmm_t v) { return npyv_reduce_max_u32(v); }
+    static type_t reducemin(zmm_t v) { return npyv_reduce_min_u32(v); }
     static zmm_t set1(type_t v) { return _mm512_set1_epi32(v); }
     template<__mmask16 mask>
     static zmm_t shuffle(zmm_t zmm)
@@ -255,8 +255,8 @@ struct vector<npy_float> {
     {
         return _mm512_permutexvar_ps(idx, zmm);
     }
-    static type_t reducemax(zmm_t v) { return npyv_reducemax_f32(v); }
-    static type_t reducemin(zmm_t v) { return npyv_reducemin_f32(v); }
+    static type_t reducemax(zmm_t v) { return npyv_reduce_max_f32(v); }
+    static type_t reducemin(zmm_t v) { return npyv_reduce_min_f32(v); }
     static zmm_t set1(type_t v) { return _mm512_set1_ps(v); }
     template<__mmask16 mask>
     static zmm_t shuffle(zmm_t zmm)

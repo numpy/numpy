@@ -225,4 +225,58 @@ NPY_FINLINE npyv_b32 npyv_notnan_f32(npyv_f32 a)
 NPY_FINLINE npyv_b64 npyv_notnan_f64(npyv_f64 a)
 { return _mm256_castpd_si256(_mm256_cmp_pd(a, a, _CMP_ORD_Q)); }
 
+// Test cross all vector lanes
+// any: returns true if any of the elements is not equal to zero
+// all: returns true if all elements are not equal to zero
+#define NPYV_IMPL_AVX2_ANYALL(SFX)                \
+    NPY_FINLINE bool npyv_any_##SFX(npyv_##SFX a) \
+    { return _mm256_movemask_epi8(a) != 0; }      \
+    NPY_FINLINE bool npyv_all_##SFX(npyv_##SFX a) \
+    { return _mm256_movemask_epi8(a) == -1; }
+NPYV_IMPL_AVX2_ANYALL(b8)
+NPYV_IMPL_AVX2_ANYALL(b16)
+NPYV_IMPL_AVX2_ANYALL(b32)
+NPYV_IMPL_AVX2_ANYALL(b64)
+#undef NPYV_IMPL_AVX2_ANYALL
+
+#define NPYV_IMPL_AVX2_ANYALL(SFX)                     \
+    NPY_FINLINE bool npyv_any_##SFX(npyv_##SFX a)      \
+    {                                                  \
+        return _mm256_movemask_epi8(                   \
+            npyv_cmpeq_##SFX(a, npyv_zero_##SFX())     \
+        ) != -1;                                       \
+    }                                                  \
+    NPY_FINLINE bool npyv_all_##SFX(npyv_##SFX a)      \
+    {                                                  \
+        return _mm256_movemask_epi8(                   \
+            npyv_cmpeq_##SFX(a, npyv_zero_##SFX())     \
+        ) == 0;                                        \
+    }
+NPYV_IMPL_AVX2_ANYALL(u8)
+NPYV_IMPL_AVX2_ANYALL(s8)
+NPYV_IMPL_AVX2_ANYALL(u16)
+NPYV_IMPL_AVX2_ANYALL(s16)
+NPYV_IMPL_AVX2_ANYALL(u32)
+NPYV_IMPL_AVX2_ANYALL(s32)
+NPYV_IMPL_AVX2_ANYALL(u64)
+NPYV_IMPL_AVX2_ANYALL(s64)
+#undef NPYV_IMPL_AVX2_ANYALL
+
+#define NPYV_IMPL_AVX2_ANYALL(SFX, XSFX, MASK)                   \
+    NPY_FINLINE bool npyv_any_##SFX(npyv_##SFX a)                \
+    {                                                            \
+        return _mm256_movemask_##XSFX(                           \
+            _mm256_cmp_##XSFX(a, npyv_zero_##SFX(), _CMP_EQ_OQ)  \
+        ) != MASK;                                               \
+    }                                                            \
+    NPY_FINLINE bool npyv_all_##SFX(npyv_##SFX a)                \
+    {                                                            \
+        return _mm256_movemask_##XSFX(                           \
+            _mm256_cmp_##XSFX(a, npyv_zero_##SFX(), _CMP_EQ_OQ)  \
+        ) == 0;                                                  \
+    }
+NPYV_IMPL_AVX2_ANYALL(f32, ps, 0xff)
+NPYV_IMPL_AVX2_ANYALL(f64, pd, 0xf)
+#undef NPYV_IMPL_AVX2_ANYALL
+
 #endif // _NPY_SIMD_AVX2_OPERATORS_H
