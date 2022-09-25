@@ -372,6 +372,8 @@ class finfo:
     ----------
     bits : int
         The number of bits occupied by the type.
+    dtype : dtype
+        Returns the type.
     eps : float
         The difference between 1.0 and the next smallest representable float
         larger than 1.0. For example, for 64-bit binary floats in the IEEE-754
@@ -609,6 +611,8 @@ class iinfo:
     ----------
     bits : int
         The number of bits occupied by the type.
+    dtype : dtype
+        Returns the type.
     min : int
         The smallest integer expressible by the type.
     max : int
