@@ -44,6 +44,8 @@ setup_base()
   # only disable SIMD optimizations
   elif [ -n "$WITHOUT_SIMD" ]; then
       build_args+=("--cpu-baseline=none" "--cpu-dispatch=none")
+  elif [ -n "$CPU_DISPATCH" ]; then
+      build_args+=("--cpu-dispatch=$CPU_DISPATCH")
   else
     # SIMD extensions that need to be tested on both runtime and compile-time via (test_simd.py)
     # any specified features will be ignored if they're not supported by compiler or platform
