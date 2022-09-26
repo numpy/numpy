@@ -5849,15 +5849,15 @@ class MaskedArray(ndarray):
           data=[[-1.0, 2.5],
                 [--, -2.0],
                 [--, 0.0]],
-        mask=[[False, False],
+          mask=[[False, False],
                 [ True, False],
                 [ True, False]],
-        fill_value=1e+20)
+          fill_value=1e+20)
         >>> ma.max(masked_x)
-        2.5
+          2.5
         >>> ma.max(masked_x, axis=0)
-        masked_array(data=[-1.0, 2.5],
-                    mask=[False, False],
+          masked_array(data=[-1.0, 2.5],
+                      mask=[False, False],
             fill_value=1e+20)
         >>> ma.max(masked_x, axis=1, keepdims=True)
         masked_array(
