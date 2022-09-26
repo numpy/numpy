@@ -1107,6 +1107,22 @@ def copyto(dst, src, casting=None, where=None):
         A boolean array which is broadcasted to match the dimensions
         of `dst`, and selects elements to copy from `src` to `dst`
         wherever it contains the value True.
+
+    Examples
+    --------
+    >>> A = np.array([4, 5, 6])
+    >>> B = [1, 2, 3]
+    >>> np.copyto(A, B)
+    >>> A
+    array([1, 2, 3])
+
+    >>> A = np.array([[1, 2, 3], [4, 5, 6]])
+    >>> B = [[4, 5, 6], [7, 8, 9]]
+    >>> np.copyto(A, B)
+    >>> A
+    array([[4, 5, 6],
+           [7, 8, 9]])
+       
     """
     return (dst, src, where)
 
