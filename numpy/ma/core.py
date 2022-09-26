@@ -5868,6 +5868,14 @@ class MaskedArray(ndarray):
                 [False],
                 [False]],
           fill_value=1e+20)
+        >>> mask = [[1, 1], [1, 1], [1, 1]]
+        >>> masked_x = ma.masked_array(x, mask)
+        >>> ma.max(masked_x, axis=1)
+        masked_array(
+            data=[--, --, --],
+            mask=[ True, True, True],
+            fill_value=1e+20,
+            dtype=float64)
         """
         kwargs = {} if keepdims is np._NoValue else {'keepdims': keepdims}
 
