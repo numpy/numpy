@@ -82,7 +82,7 @@ simd_@func@_f64(const double *src, npy_intp ssrc,
 /**begin repeat1
  * #func = pow, atan2#
  */
- 
+
 static void
 simd_@func@_@sfx@(const npyv_lanetype_@sfx@ *src1, npy_intp ssrc1,
                   const npyv_lanetype_@sfx@ *src2, npy_intp ssrc2,
@@ -96,14 +96,14 @@ simd_@func@_@sfx@(const npyv_lanetype_@sfx@ *src1, npy_intp ssrc1,
         } else {
             x1 = npyv_loadn_till_@sfx@(src1, ssrc1, len, 1);
         }
-        
+
         npyv_@sfx@ x2;
         if (ssrc2 == 1) {
             x2 = npyv_load_till_@sfx@(src2, len, 1);
         } else {
             x2 = npyv_loadn_till_@sfx@(src2, ssrc2, len, 1);
         }
-        
+
         npyv_@sfx@ out = __svml_@func@@func_suffix@(x1, x2);
         if (sdst == 1) {
             npyv_store_till_@sfx@(dst, len, out);
@@ -115,9 +115,6 @@ simd_@func@_@sfx@(const npyv_lanetype_@sfx@ *src1, npy_intp ssrc1,
 /**end repeat1**/
 /**end repeat**/
 
-#endif
-
-#if NPY_SIMD && defined(NPY_HAVE_AVX512_SKX) && defined(NPY_CAN_LINK_SVML)
 typedef __m256i npyvh_f16;
 #define npyv_cvt_f16_f32 _mm512_cvtph_ps
 #define npyv_cvt_f32_f16 _mm512_cvtps_ph
@@ -182,7 +179,9 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(HALF_@func@)
     const npy_intp ssrc = steps[0] / lsize;
     const npy_intp sdst = steps[1] / lsize;
     const npy_intp len = dimensions[0];
-    if ((ssrc == 1) && (sdst == 1)) {
+    if (!is_mem_overlap(src, steps[0], dst, steps[1], len) &&
+        (ssrc == 1) &&
+        (sdst == 1)) {
         avx512_@intrin@_f16(src, dst, len);
         return;
     }
