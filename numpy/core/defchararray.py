@@ -1848,6 +1848,11 @@ def isnumeric(a):
     --------
     unicode.isnumeric
 
+    Examples
+    --------
+    >>> np.char.isnumeric(['123', '123abc', '9.0', '1/4', 'VIII'])
+    array([ True, False, False, False, False])
+
     """
     if _use_unicode(a) != unicode_:
         raise TypeError("isnumeric is only available for Unicode strings and arrays")
@@ -1880,7 +1885,12 @@ def isdecimal(a):
     --------
     unicode.isdecimal
 
-    """
+    Examples
+    --------
+    >>> np.char.isdecimal(['12345', '4.99', '123ABC', ''])
+    array([ True, False, False, False])
+
+    """ 
     if _use_unicode(a) != unicode_:
         raise TypeError("isnumeric is only available for Unicode strings and arrays")
     return _vec_string(a, bool_, 'isdecimal')
