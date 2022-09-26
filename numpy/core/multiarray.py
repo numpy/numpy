@@ -1121,7 +1121,7 @@ def copyto(dst, src, casting=None, where=None):
     >>> np.copyto(A, B)
     >>> A
     array([[4, 5, 6],
-       [7, 8, 9]])
+           [7, 8, 9]])
        
     """
     return (dst, src, where)
