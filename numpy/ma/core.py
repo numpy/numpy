@@ -5846,7 +5846,7 @@ class MaskedArray(ndarray):
         >>> masked_x = ma.masked_array(x, mask)
         >>> masked_x
         masked_array(
-        data=[[-1.0, 2.5],
+          data=[[-1.0, 2.5],
                 [--, -2.0],
                 [--, 0.0]],
         mask=[[False, False],
