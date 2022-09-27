@@ -3036,16 +3036,16 @@ def prod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
 
     Even when the input array is two-dimensional:
 
-    >>> np.prod([[1.,2.],[3.,4.]])
+    >>> a = np.array([[1., 2.], [3., 4.]])
+    >>> np.prod(a)
     24.0
 
     But we can also specify the axis over which to multiply:
 
-    >>> np.prod([[1.,2.],[3.,4.]], axis=1)
+    >>> np.prod(a, axis=1)
     array([  2.,  12.])
-
-    >>> np.prod([[1.,2.,3.],[3.,4.,5.],[1.,3.,5.]], axis=0)
-    array([ 3., 24., 75.])
+    >>> np.prod(a, axis=0)
+    array([3., 8.])
     
     Or select specific elements to include:
 
