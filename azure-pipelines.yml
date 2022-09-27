@@ -113,6 +113,7 @@ stages:
             cp \$target/include/* /usr/include && \
             python3 -m pip install -r test_requirements.txt && \
             echo CFLAGS \$CFLAGS && \
+            yum install -y gdb && \
             python3 -m pip install -v . && \
             python3 runtests.py -n --debug-info --mode=full -- -rsx --junitxml=junit/test-results.xml && \
             python3 -m pip install threadpoolctl && \
