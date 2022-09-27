@@ -5838,6 +5838,43 @@ class MaskedArray(ndarray):
         ma.maximum_fill_value
             Returns the maximum filling value for a given datatype.
 
+        Examples
+        --------
+        >>> import numpy.ma as ma
+        >>> x = [[-1., 2.5], [4., -2.], [3., 0.]]
+        >>> mask = [[0, 0], [1, 0], [1, 0]]
+        >>> masked_x = ma.masked_array(x, mask)
+        >>> masked_x
+        masked_array(
+          data=[[-1.0, 2.5],
+                [--, -2.0],
+                [--, 0.0]],
+          mask=[[False, False],
+                [ True, False],
+                [ True, False]],
+          fill_value=1e+20)
+        >>> ma.max(masked_x)
+        2.5
+        >>> ma.max(masked_x, axis=0)
+        masked_array(data=[-1.0, 2.5],
+                     mask=[False, False],
+               fill_value=1e+20)
+        >>> ma.max(masked_x, axis=1, keepdims=True)
+        masked_array(
+          data=[[2.5],
+                [-2.0],
+                [0.0]],
+          mask=[[False],
+                [False],
+                [False]],
+          fill_value=1e+20)
+        >>> mask = [[1, 1], [1, 1], [1, 1]]
+        >>> masked_x = ma.masked_array(x, mask)
+        >>> ma.max(masked_x, axis=1)
+        masked_array(data=[--, --, --],
+                     mask=[ True,  True,  True],
+               fill_value=1e+20,
+                    dtype=float64)
         """
         kwargs = {} if keepdims is np._NoValue else {'keepdims': keepdims}
 
