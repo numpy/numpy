@@ -326,7 +326,7 @@ class TestArray2String:
             r"       b'\x1B\x5B\x33\x31\x6D\x52\x65\x64'], dtype='|V8')")
 
         assert_equal(eval(repr(a), vars(np)), a)
-        assert_equal(eval(repr(a[0]), vars(np)), a[0])
+        assert_equal(eval(repr(a[0]), dict(np=np)), a[0])
 
     def test_edgeitems_kwarg(self):
         # previously the global print options would be taken over the kwarg
@@ -505,6 +505,7 @@ class TestArray2String:
         a = np.array([text, text, text])
         # casting a list of them to an array does not e.g. truncate the value
         assert_equal(a[0], text)
+        text = text.item()  # use raw python strings for repr below
         # and that np.array2string puts a newline in the expected location
         expected_repr = "[{0!r} {0!r}\n {0!r}]".format(text)
         result = np.array2string(a, max_line_width=len(repr(text)) * 2 + 3)
@@ -966,12 +967,12 @@ class TestPrintOptions:
             repr(a),
             textwrap.dedent("""\
             array([[[ 0, ...,  2],
-                    ...,
+                    ..., 
                     [ 6, ...,  8]],
 
-                   ...,
+                   ..., 
                    [[18, ..., 20],
-                    ...,
+                    ..., 
                     [24, ..., 26]]])""")
         )
 
@@ -980,14 +981,14 @@ class TestPrintOptions:
             textwrap.dedent("""\
             array([[[[ 0.]],
 
-                    ...,
+                    ..., 
                     [[ 0.]]],
 
 
-                   ...,
+                   ..., 
                    [[[ 0.]],
 
-                    ...,
+                    ..., 
                     [[ 0.]]]])""")
         )
 

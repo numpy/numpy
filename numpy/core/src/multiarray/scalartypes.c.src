@@ -533,7 +533,7 @@ unicodetype_@form@(PyObject *self)
     if (ret == NULL) {
         return NULL;
     }
-    Py_SETREF(ret, PyUnicode_FromFormat("np.bytes_(%S)", ret));
+    Py_SETREF(ret, PyUnicode_FromFormat("np.str_(%S)", ret));
 #endif  /* IS_repr */
 
     return ret;

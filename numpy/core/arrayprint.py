@@ -395,9 +395,13 @@ def _object_format(o):
     return fmt.format(o)
 
 def repr_format(x):
+    if isinstance(x, (np.str_, np.bytes_)):
+        return repr(x.item())
     return repr(x)
 
 def str_format(x):
+    if isinstance(x, (np.str_, np.bytes_)):
+        return repr(x.item())
     return str(x)
 
 def _get_formatdict(data, *, precision, floatmode, suppress, sign, legacy,
