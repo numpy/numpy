@@ -346,7 +346,7 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(BOOL_@kind@)
 (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
     if(IS_BINARY_REDUCE) {
-#ifdef NPY_SIMD
+#if NPY_SIMD
         /*
          * stick with our variant for more reliable performance, only known
          * platform which outperforms it by ~20% is an i7 with glibc 2.17
