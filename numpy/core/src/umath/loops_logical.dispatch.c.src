@@ -20,37 +20,6 @@
  ** Extra SIMD intrinsics
  ******************************************************************************/
 
-#if NPY_SIMD
-#if !defined(NPY_HAVE_SSE2)
-#define USE_NPYV_REDUCE_MINMAX
-#endif
-
-#if defined(NPY_HAVE_ASIMD) && defined(__aarch64__)
-    #define npyv_reduce_min_u8 vminvq_u8
-    #define npyv_reduce_max_u8 vmaxvq_u8
-#elif defined(USE_NPYV_REDUCE_MINMAX)
-    // Scalar intrinsics
-    #define scalar_max_i(A, B) ((A > B) ? A : B)
-    #define scalar_min_i(A, B) ((A < B) ? A : B)
-
-    /**begin repeat
-     * #intrin = min, max#
-     */
-    NPY_FINLINE npyv_lanetype_u8 npyv_reduce_@intrin@_u8(npyv_u8 v)
-    {
-        npyv_lanetype_u8 NPY_DECL_ALIGNED(NPY_SIMD_WIDTH) s[npyv_nlanes_u8];
-        npyv_storea_u8(s, v);
-        npyv_lanetype_u8 result = s[0];
-        for(int i=1; i<npyv_nlanes_u8; ++i){
-            result = scalar_@intrin@_i(result, s[i]);
-        }
-        return result;
-    }
-    /**end repeat**/
-    #undef scalar_max_i
-    #undef scalar_min_i
-#endif
-#endif // NPY_SIMD
 
 /*******************************************************************************
  ** Defining the SIMD kernels
