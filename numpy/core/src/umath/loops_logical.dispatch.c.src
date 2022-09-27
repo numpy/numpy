@@ -1,7 +1,9 @@
 /*@targets
  ** $maxopt baseline
  ** neon asimd
- ** sse2
+ ** sse2 avx2 avx512_skx
+ ** vsx2
+ ** vx
  **/
 #define _UMATHMODULE
 #define _MULTIARRAYMODULE
