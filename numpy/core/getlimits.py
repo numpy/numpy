@@ -372,6 +372,10 @@ class finfo:
     ----------
     bits : int
         The number of bits occupied by the type.
+    dtype : dtype
+        Returns the dtype for which `finfo` returns information. For complex
+        input, the returned dtype is the associated ``float*`` dtype for its
+        real and complex components.
     eps : float
         The difference between 1.0 and the next smallest representable float
         larger than 1.0. For example, for 64-bit binary floats in the IEEE-754
@@ -457,6 +461,14 @@ class finfo:
            pp.1-70, 2008, http://www.doi.org/10.1109/IEEESTD.2008.4610935
     .. [2] Wikipedia, "Denormal Numbers",
            https://en.wikipedia.org/wiki/Denormal_number
+
+    Examples
+    --------
+    >>> np.finfo(np.float64).dtype
+    dtype('float64')
+    >>> np.finfo(np.complex64).dtype
+    dtype('float32')
+
     """
 
     _finfo_cache = {}
@@ -609,6 +621,8 @@ class iinfo:
     ----------
     bits : int
         The number of bits occupied by the type.
+    dtype : dtype
+        Returns the dtype for which `iinfo` returns information.
     min : int
         The smallest integer expressible by the type.
     max : int
