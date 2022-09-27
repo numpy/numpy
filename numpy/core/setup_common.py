@@ -102,12 +102,14 @@ def set_sig(sig):
     args = args.rpartition(")")[0]
     funcname = prefix.rpartition(" ")[-1]
     args = [arg.strip() for arg in args.split(",")]
-    FUNC_CALL_ARGS[funcname] = ", ".join("(%s) 0" % arg for arg in args)
+    # We use {0} because 0 alone cannot be cast to complex on MSVC in C:
+    FUNC_CALL_ARGS[funcname] = ", ".join("(%s){0}" % arg for arg in args)
 
 
 for file in [
     "feature_detection_locale.h",
     "feature_detection_math.h",
+    "feature_detection_cmath.h",
     "feature_detection_misc.h",
     "feature_detection_stdio.h",
 ]:
