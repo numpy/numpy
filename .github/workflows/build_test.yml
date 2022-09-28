@@ -395,8 +395,8 @@ jobs:
         python-version: ${{ env.PYTHON_VERSION }}
     - name: Install Intel SDE
       run: |
-        curl -o /tmp/sde.tar.bz2 https://www.intel.com/content/dam/develop/external/us/en/documents/downloads/sde-external-8.69.1-2021-07-18-lin.tar.bz2
-        mkdir /tmp/sde && tar -xvf /tmp/sde.tar.bz2 -C /tmp/sde/
+        curl -o /tmp/sde.tar.xz https://downloadmirror.intel.com/732268/sde-external-9.7.0-2022-05-09-lin.tar.xz
+        mkdir /tmp/sde && tar -xvf /tmp/sde.tar.xz -C /tmp/sde/
         sudo mv /tmp/sde/* /opt/sde && sudo ln -s /opt/sde/sde64 /usr/bin/sde
     - name: Install dependencies
       run: python -m pip install -r test_requirements.txt
