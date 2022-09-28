@@ -1191,11 +1191,13 @@ def replace(a, old, new, count=None):
     Examples
     --------
     >>> import numpy as np 
-    >>> print(np.char.replace('That is a mango', 'mango', 'banana'))
-    That is a banana
+    >>> a = np.array(["That is a mango", "Monkeys eat mangos"])
+    >>> np.char.replace(a, 'mango', 'banana')
+    array(['That is a banana', 'Monkeys eat bananas'], dtype='<U19')
 
-    >>> print(np.char.replace('The dish is fresh', 'is', 'was'))
-    The dwash was fresh
+    >>> a = np.array(["The dish is fresh", "This is it"])
+    >>> np.char.replace(a, 'is', 'was')
+    array(['The dwash was fresh', 'Thwas was it'], dtype='<U19')
     """
     return _to_string_or_unicode_array(
         _vec_string(
