@@ -1088,12 +1088,10 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         The string used to separate values. For backwards compatibility, byte
         strings will be decoded as 'latin1'. The default is whitespace.
     converters : dict or callable, optional
-        A function to parse all columns strings into the desired value, or
-        a dictionary mapping column number to a parser function.
-        E.g. if column 0 is a date string: ``converters = {0: datestr2num}``.
-        Converters can also be used to provide a default value for missing
-        data, e.g. ``converters = lambda s: float(s.strip() or 0)`` will
-        convert empty fields to 0.
+        Converter functions to customize value parsing. If `converters` is
+        callable, the function is applied to all columns, else it must be a
+        dict that maps column number to a parser function.
+        See examples for further details.
         Default: None.
 
         .. versionchanged:: 1.23.0
