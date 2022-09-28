@@ -7,12 +7,21 @@
 #endif
 
 #ifndef NPY_DISABLE_OPTIMIZATION
-#include "x86-qsort.dispatch.h"
+#include "x86-qsort-skx.dispatch.h"
 #endif
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void x86_quicksort_long,
+                         (void *start, npy_intp num))
+
+NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void x86_quicksort_ulong,
+                         (void *start, npy_intp num))
+
+NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void x86_quicksort_double,
+                         (void *start, npy_intp num))
+
 
 NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void x86_quicksort_int,
                          (void *start, npy_intp num))

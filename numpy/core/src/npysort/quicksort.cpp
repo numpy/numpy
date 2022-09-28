@@ -55,12 +55,12 @@
 #include "npysort_heapsort.h"
 #include "numpy_tag.h"
 
-#include "x86-qsort.h"
+#include "x86-qsort-skx.h"
 #include <cstdlib>
 #include <utility>
 
 #ifndef NPY_DISABLE_OPTIMIZATION
-#include "x86-qsort.dispatch.h"
+#include "x86-qsort-skx.dispatch.h"
 #endif
 
 #define NOT_USED NPY_UNUSED(unused)
@@ -84,6 +84,48 @@ namespace {
 template <typename Tag>
 struct x86_dispatch {
     static bool quicksort(typename Tag::type *, npy_intp) { return false; }
+};
+
+template <>
+struct x86_dispatch<npy::long_tag> {
+    static bool quicksort(npy_long *start, npy_intp num)
+    {
+        void (*dispfunc)(void *, npy_intp) = nullptr;
+        NPY_CPU_DISPATCH_CALL_XB(dispfunc = x86_quicksort_long);
+        if (dispfunc) {
+            (*dispfunc)(start, num);
+            return true;
+        }
+        return false;
+    }
+};
+
+template <>
+struct x86_dispatch<npy::ulong_tag> {
+    static bool quicksort(npy_ulong *start, npy_intp num)
+    {
+        void (*dispfunc)(void *, npy_intp) = nullptr;
+        NPY_CPU_DISPATCH_CALL_XB(dispfunc = x86_quicksort_ulong);
+        if (dispfunc) {
+            (*dispfunc)(start, num);
+            return true;
+        }
+        return false;
+    }
+};
+
+template <>
+struct x86_dispatch<npy::double_tag> {
+    static bool quicksort(npy_double *start, npy_intp num)
+    {
+        void (*dispfunc)(void *, npy_intp) = nullptr;
+        NPY_CPU_DISPATCH_CALL_XB(dispfunc = x86_quicksort_double);
+        if (dispfunc) {
+            (*dispfunc)(start, num);
+            return true;
+        }
+        return false;
+    }
 };
 
 template <>
