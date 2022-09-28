@@ -1190,7 +1190,6 @@ def replace(a, old, new, count=None):
     
     Examples
     --------
-    >>> import numpy as np 
     >>> a = np.array(["That is a mango", "Monkeys eat mangos"])
     >>> np.char.replace(a, 'mango', 'banana')
     array(['That is a banana', 'Monkeys eat bananas'], dtype='<U19')
