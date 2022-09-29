@@ -18,13 +18,21 @@
 NPY_NO_EXPORT void
 NPY_CPU_DISPATCH_CURFX(x86_quicksort_long)(void *arr, npy_intp arrsize)
 {
+#if NPY_SIZEOF_LONG == 8
     avx512_qsort<npy_long>((npy_long*)arr, arrsize);
+#else
+    avx512_qsort<npy_longlong>((npy_longlong*)arr, arrsize);
+#endif
 }
 
 NPY_NO_EXPORT void
 NPY_CPU_DISPATCH_CURFX(x86_quicksort_ulong)(void *arr, npy_intp arrsize)
 {
+#if NPY_SIZEOF_LONG == 8
     avx512_qsort<npy_ulong>((npy_ulong*)arr, arrsize);
+#else
+    avx512_qsort<npy_ulonglong>((npy_ulonglong*)arr, arrsize);
+#endif
 }
 
 NPY_NO_EXPORT void
