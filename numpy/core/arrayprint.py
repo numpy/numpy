@@ -453,12 +453,19 @@ def _get_formatdict(data, *, precision, floatmode, suppress, sign, legacy,
 
     return formatdict
 
-def _get_format_function(data, **options):
+def get_formatter(data, *, options=None):
     """
-    find the right formatting function for the dtype_
+    Find the right element formatting function for the dtype.
+
+    Parameters
+    ----------
+        scalar : bool
+            If True, a scalar formatter is requested.  In that case all
+            formatting options are ignored and the default formatter is
+            returned.
     """
-    dtype_ = data.dtype
-    dtypeobj = dtype_.type
+    dtype = data.dtype
+    dtypeobj = dtype.type
     formatdict = _get_formatdict(data, **options)
     if dtypeobj is None:
         return formatdict["numpystr"]()
@@ -486,7 +493,7 @@ def _get_format_function(data, **options):
     elif issubclass(dtypeobj, _nt.object_):
         return formatdict['object']()
     elif issubclass(dtypeobj, _nt.void):
-        if dtype_.names is not None:
+        if dtype.names is not None:
             return StructuredVoidFormat.from_data(data, **options)
         else:
             return formatdict['void']()
@@ -526,29 +533,34 @@ def _recursive_guard(fillvalue='...'):
 # gracefully handle recursive calls, when object arrays contain themselves
 @_recursive_guard()
 def _array2string(a, options, separator=' ', prefix=""):
-    # The formatter __init__s in _get_format_function cannot deal with
+    # The formatter __init__s in get_formatter cannot deal with
     # subclasses yet, and we also need to avoid recursion issues in
     # _formatArray with subclasses which return 0d arrays in place of scalars
     data = asarray(a)
     if a.shape == ():
         a = data
 
-    if a.size > options['threshold']:
+    threshold = options.pop("threshold")
+    linewidth = options.pop("linewidth")
+    edgeitems = options.pop("edgeitems")
+
+    if a.size > threshold:
         summary_insert = "..."
-        data = _leading_trailing(data, options['edgeitems'])
+        data = _leading_trailing(data, edgeitems)
     else:
         summary_insert = ""
 
+    print(data.shape)
     # find the right formatting function for the array
-    format_function = _get_format_function(data, **options)
+    format_function = get_formatter(data, options=options)
 
     # skip over "["
     next_line_prefix = " "
     # skip over array(
     next_line_prefix += " "*len(prefix)
 
-    lst = _formatArray(a, format_function, options['linewidth'],
-                       next_line_prefix, separator, options['edgeitems'],
+    lst = _formatArray(a, format_function, linewidth,
+                       next_line_prefix, separator, edgeitems,
                        summary_insert, options['legacy'])
     return lst
 
@@ -1386,9 +1398,9 @@ class StructuredVoidFormat:
         as input. Added to avoid changing the signature of __init__.
         """
         format_functions = []
-        for field_name in data.dtype.names:
-            format_function = _get_format_function(data[field_name], **options)
-            if data.dtype[field_name].shape != ():
+        for field_name in dtype.names:
+            format_function = get_formatter(dtype[field_name], options=options)
+            if dtype[field_name].shape != ():
                 format_function = SubArrayFormat(format_function, **options)
             format_functions.append(format_function)
         return cls(format_functions)
@@ -1410,7 +1422,7 @@ def _void_scalar_repr(x):
     scalartypes.c.src code, and is placed here because it uses the elementwise
     formatters defined above.
     """
-    return StructuredVoidFormat.from_data(array(x), **_format_options)(x)
+    return StructuredVoidFormat.from_dtype(array(x).dtype, **_format_options)(x)
 
 
 _typelessdata = [int_, float_, complex_, bool_]
