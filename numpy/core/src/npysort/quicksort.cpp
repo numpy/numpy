@@ -56,7 +56,6 @@
 #include "numpy_tag.h"
 
 #include "x86-qsort-skx.h"
-#include "x86-qsort-icl.h"
 #include <cstdlib>
 #include <utility>
 
@@ -86,7 +85,6 @@ template <typename Tag>
 struct x86_dispatch {
     static bool quicksort(typename Tag::type *, npy_intp) { return false; }
 };
-
 
 template <>
 #if NPY_SIZEOF_LONG == 8
@@ -174,38 +172,6 @@ struct x86_dispatch<npy::float_tag> {
     {
         void (*dispfunc)(void *, npy_intp) = nullptr;
         NPY_CPU_DISPATCH_CALL_XB(dispfunc = x86_quicksort_float);
-        if (dispfunc) {
-            (*dispfunc)(start, num);
-            return true;
-        }
-        return false;
-    }
-};
-
-#ifndef NPY_DISABLE_OPTIMIZATION
-#include "x86-qsort-icl.dispatch.h"
-#endif
-
-template <>
-struct x86_dispatch<npy::short_tag> {
-    static bool quicksort(npy_short *start, npy_intp num)
-    {
-        void (*dispfunc)(void *, npy_intp) = nullptr;
-        NPY_CPU_DISPATCH_CALL_XB(dispfunc = x86_quicksort_short);
-        if (dispfunc) {
-            (*dispfunc)(start, num);
-            return true;
-        }
-        return false;
-    }
-};
-
-template <>
-struct x86_dispatch<npy::ushort_tag> {
-    static bool quicksort(npy_ushort *start, npy_intp num)
-    {
-        void (*dispfunc)(void *, npy_intp) = nullptr;
-        NPY_CPU_DISPATCH_CALL_XB(dispfunc = x86_quicksort_ushort);
         if (dispfunc) {
             (*dispfunc)(start, num);
             return true;
