@@ -1250,7 +1250,16 @@ def replace(a, old, new, count=None):
     See Also
     --------
     str.replace
+    
+    Examples
+    --------
+    >>> a = np.array(["That is a mango", "Monkeys eat mangos"])
+    >>> np.char.replace(a, 'mango', 'banana')
+    array(['That is a banana', 'Monkeys eat bananas'], dtype='<U19')
 
+    >>> a = np.array(["The dish is fresh", "This is it"])
+    >>> np.char.replace(a, 'is', 'was')
+    array(['The dwash was fresh', 'Thwas was it'], dtype='<U19')
     """
     return _to_string_or_unicode_array(
         _vec_string(
