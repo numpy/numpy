@@ -243,7 +243,7 @@ def tensorsolve(a, b, axes=None):
 
     It is assumed that all indices of `x` are summed over in the product,
     together with the rightmost indices of `a`, as is done in, for example,
-    ``tensordot(a, x, axes=b.ndim)``.
+    ``tensordot(a, x, axes=x.ndim)``.
 
     Parameters
     ----------
