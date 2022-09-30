@@ -1,0 +1,6 @@
+``numpy.typing`` protocols are now runtime checkable
+----------------------------------------------------
+
+The protocols used in `~numpy.typing.ArrayLike` and `~numpy.typing.DTypeLike`
+are now properly marked as runtime checkable, making them easier to use for
+runtime type checkers.

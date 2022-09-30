@@ -8,6 +8,7 @@ from typing import (
     overload,
     TypeVar,
     Protocol,
+    runtime_checkable,
 )
 
 __all__ = ["_NestedSequence"]
@@ -15,6 +16,7 @@ __all__ = ["_NestedSequence"]
 _T_co = TypeVar("_T_co", covariant=True)
 
 
+@runtime_checkable
 class _NestedSequence(Protocol[_T_co]):
     """A protocol for representing nested sequences.
 
