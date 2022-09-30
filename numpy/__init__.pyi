@@ -36,6 +36,8 @@ from numpy._typing import (
     _ArrayLikeObject_co,
     _ArrayLikeStr_co,
     _ArrayLikeBytes_co,
+    _ArrayLikeUnknown,
+    _UnknownType,
 
     # DTypes
     DTypeLike,
@@ -2051,6 +2053,8 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
     def __radd__(self: NDArray[Any], other: _ArrayLikeObject_co) -> Any: ...
 
     @overload
+    def __sub__(self: NDArray[_UnknownType], other: _ArrayLikeUnknown) -> NDArray[Any]: ...
+    @overload
     def __sub__(self: NDArray[bool_], other: _ArrayLikeBool_co) -> NoReturn: ...
     @overload
     def __sub__(self: _ArrayUInt_co, other: _ArrayLikeUInt_co) -> NDArray[unsignedinteger[Any]]: ...  # type: ignore[misc]
@@ -2073,6 +2077,8 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
     @overload
     def __sub__(self: NDArray[Any], other: _ArrayLikeObject_co) -> Any: ...
 
+    @overload
+    def __rsub__(self: NDArray[_UnknownType], other: _ArrayLikeUnknown) -> NDArray[Any]: ...
     @overload
     def __rsub__(self: NDArray[bool_], other: _ArrayLikeBool_co) -> NoReturn: ...
     @overload
