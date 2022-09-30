@@ -86,14 +86,10 @@ struct x86_dispatch {
     static bool quicksort(typename Tag::type *, npy_intp) { return false; }
 };
 
-template <>
 #if NPY_SIZEOF_LONG == 8
+template <>
 struct x86_dispatch<npy::long_tag> {
     static bool quicksort(npy_long *start, npy_intp num)
-#else
-struct x86_dispatch<npy::longlong_tag> {
-    static bool quicksort(npy_longlong *start, npy_intp num)
-#endif
     {
         void (*dispfunc)(void *, npy_intp) = nullptr;
         NPY_CPU_DISPATCH_CALL_XB(dispfunc = x86_quicksort_long);
@@ -104,15 +100,9 @@ struct x86_dispatch<npy::longlong_tag> {
         return false;
     }
 };
-
 template <>
-#if NPY_SIZEOF_LONG == 8
 struct x86_dispatch<npy::ulong_tag> {
     static bool quicksort(npy_ulong *start, npy_intp num)
-#else
-struct x86_dispatch<npy::ulonglong_tag> {
-    static bool quicksort(npy_ulonglong *start, npy_intp num)
-#endif
     {
         void (*dispfunc)(void *, npy_intp) = nullptr;
         NPY_CPU_DISPATCH_CALL_XB(dispfunc = x86_quicksort_ulong);
@@ -123,6 +113,34 @@ struct x86_dispatch<npy::ulonglong_tag> {
         return false;
     }
 };
+#elif NPY_SIZEOF_LONGLONG == 8
+template <>
+struct x86_dispatch<npy::longlong_tag> {
+    static bool quicksort(npy_longlong *start, npy_intp num)
+    {
+        void (*dispfunc)(void *, npy_intp) = nullptr;
+        NPY_CPU_DISPATCH_CALL_XB(dispfunc = x86_quicksort_long);
+        if (dispfunc) {
+            (*dispfunc)(start, num);
+            return true;
+        }
+        return false;
+    }
+};
+template <>
+struct x86_dispatch<npy::ulonglong_tag> {
+    static bool quicksort(npy_ulonglong *start, npy_intp num)
+    {
+        void (*dispfunc)(void *, npy_intp) = nullptr;
+        NPY_CPU_DISPATCH_CALL_XB(dispfunc = x86_quicksort_ulong);
+        if (dispfunc) {
+            (*dispfunc)(start, num);
+            return true;
+        }
+        return false;
+    }
+};
+#endif
 
 template <>
 struct x86_dispatch<npy::double_tag> {
