@@ -2750,8 +2750,9 @@ def amax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     -------
     amax : ndarray or scalar
         Maximum of `a`. If `axis` is None, the result is a scalar value.
-        If `axis` is given, the result is an array of dimension
-        ``a.ndim - 1``.
+        If `axis` is an int, the result is an array of dimension
+        ``a.ndim - 1``. If `axis` is a tuple, the result is an array of 
+        dimension ``a.ndim - len(axis)``.
 
     See Also
     --------
@@ -2875,8 +2876,9 @@ def amin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     -------
     amin : ndarray or scalar
         Minimum of `a`. If `axis` is None, the result is a scalar value.
-        If `axis` is given, the result is an array of dimension
-        ``a.ndim - 1``.
+        If `axis` is an int, the result is an array of dimension
+        ``a.ndim - 1``.  If `axis` is a tuple, the result is an array of 
+        dimension ``a.ndim - len(axis)``.
 
     See Also
     --------
