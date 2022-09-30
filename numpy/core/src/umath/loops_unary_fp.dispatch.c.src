@@ -709,9 +709,10 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
     const int olsize = sizeof(npy_bool);
     const npy_intp istride = istep / ilsize;
     const npy_intp ostride = ostep / olsize;
-    assert(len <= 1 || (istep % ilsize == 0 && ostep % olsize == 0));
+    assert(len <= 1 || ostep % olsize == 0);
 
-    if (!is_mem_overlap(ip, istep, op, ostep, len) &&
+    if ((istep % ilsize == 0) &&
+        !is_mem_overlap(ip, istep, op, ostep, len) &&
         npyv_loadable_stride_@sfx@(istride) &&
         npyv_storable_stride_@sfx@(ostride))
     {
