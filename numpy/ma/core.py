@@ -5798,7 +5798,7 @@ class MaskedArray(ndarray):
         masked_array(data=[--, --, --],
                      mask=[ True,  True,  True],
                 fill_value=1e+20,
-                    dtype=float64) 
+                    dtype=float64)
         """
         kwargs = {} if keepdims is np._NoValue else {'keepdims': keepdims}
 
