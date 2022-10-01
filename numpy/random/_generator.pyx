@@ -383,17 +383,16 @@ cdef class Generator:
         Examples
         --------
         A real world example: Assume a company has 10000 customer support 
-        agents and each agent spends on average 4 minutes with a 
-        customer.
+        agents and the average time between customer calls is 4 minutes.
 
         >>> n = 10000
-        >>> z = np.random.default_rng().exponential(scale=4, size=n)
+        >>> time_between_calls = np.random.default_rng().exponential(scale=4, size=n)
 
-        What is the probability an agent will spend between 4
-        to 5 minutes with a customer? 
+        What is the probability that a customer will call in the next 
+        4 to 5 minutes? 
         
-        >>> x = ((d < 5).sum())/n 
-        >>> y = ((d < 4).sum())/n
+        >>> x = ((time_between_calls < 5).sum())/n 
+        >>> y = ((time_between_calls < 4).sum())/n
         >>> x-y
         0.08 # will vary
 
