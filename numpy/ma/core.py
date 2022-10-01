@@ -5769,6 +5769,36 @@ class MaskedArray(ndarray):
         ma.minimum_fill_value
             Returns the minimum filling value for a given datatype.
 
+        Examples
+        --------
+        >>> import numpy.ma as ma
+        >>> x = [[1., -2., 3.], [0.2, -0.7, 0.1]]
+        >>> mask = [[1, 1, 0], [0, 0, 1]]
+        >>> masked_x = ma.masked_array(x, mask)
+        >>> masked_x
+        masked_array(
+          data=[[--, --, 3.0],
+                [0.2, -0.7, --]],
+          mask=[[ True,  True, False],
+                [False, False,  True]],
+          fill_value=1e+20)
+        >>> ma.min(masked_x)
+        -0.7
+        >>> ma.min(masked_x, axis=-1)
+        masked_array(data=[3.0, -0.7],
+                     mask=[False, False],
+                fill_value=1e+20)
+        >>> ma.min(masked_x, axis=0, keepdims=True)
+        masked_array(data=[[0.2, -0.7, 3.0]],
+                     mask=[[False, False, False]],
+                fill_value=1e+20)
+        >>> mask = [[1, 1, 1,], [1, 1, 1]]
+        >>> masked_x = ma.masked_array(x, mask)
+        >>> ma.min(masked_x, axis=0)
+        masked_array(data=[--, --, --],
+                     mask=[ True,  True,  True],
+                fill_value=1e+20,
+                    dtype=float64) 
         """
         kwargs = {} if keepdims is np._NoValue else {'keepdims': keepdims}
 
