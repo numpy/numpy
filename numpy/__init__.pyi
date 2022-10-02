@@ -1549,6 +1549,12 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
     ) -> ndarray[_ShapeType2, _DType]: ...
 
     @overload
+    def __getitem__(self, key: (
+        NDArray[integer[Any]]
+        | NDArray[bool_]
+        | tuple[NDArray[integer[Any]] | NDArray[bool_], ...]
+    )) -> ndarray[Any, _DType_co]: ...
+    @overload
     def __getitem__(self, key: SupportsIndex | tuple[SupportsIndex, ...]) -> Any: ...
     @overload
     def __getitem__(self, key: (
