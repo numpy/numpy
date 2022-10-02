@@ -275,6 +275,18 @@ def str_len(a):
     See Also
     --------
     builtins.len
+
+    Examples
+    --------
+    >>> a = np.array(['Grace Hopper Conference', 'Open Source Day'])
+    >>> np.char.str_len(a)
+    array([23, 15])
+    >>> a = np.array([u'\u0420', u'\u043e'])
+    >>> np.char.str_len(a)
+    array([1, 1])
+    >>> a = np.array([['hello', 'world'], [u'\u0420', u'\u043e']])
+    >>> np.char.str_len(a)
+    array([[5, 5], [1, 1]])
     """
     # Note: __len__, etc. currently return ints, which are not C-integers.
     # Generally intp would be expected for lengths, although int is sufficient
@@ -333,7 +345,24 @@ def multiply(a, i):
     -------
     out : ndarray
         Output array of str or unicode, depending on input types
-
+    
+    Examples
+    --------
+    >>> a = np.array(["a", "b", "c"])
+    >>> np.char.multiply(x, 3)
+    array(['aaa', 'bbb', 'ccc'], dtype='<U3')
+    >>> i = np.array([1, 2, 3])
+    >>> np.char.multiply(a, i)
+    array(['a', 'bb', 'ccc'], dtype='<U3')
+    >>> np.char.multiply(np.array(['a']), i)
+    array(['a', 'aa', 'aaa'], dtype='<U3')
+    >>> a = np.array(['a', 'b', 'c', 'd', 'e', 'f']).reshape((2, 3))
+    >>> np.char.multiply(a, 3)
+    array([['aaa', 'bbb', 'ccc'],
+           ['ddd', 'eee', 'fff']], dtype='<U3')
+    >>> np.char.multiply(a, i)
+    array([['a', 'bb', 'ccc'],
+           ['d', 'ee', 'fff']], dtype='<U3')
     """
     a_arr = numpy.asarray(a)
     i_arr = numpy.asarray(i)
@@ -445,6 +474,22 @@ def center(a, width, fillchar=' '):
     See Also
     --------
     str.center
+    
+    Notes
+    -----
+    This function is intended to work with arrays of strings.  The
+    fill character is not applied to numeric types.
+
+    Examples
+    --------
+    >>> c = np.array(['a1b2','1b2a','b2a1','2a1b']); c
+    array(['a1b2', '1b2a', 'b2a1', '2a1b'], dtype='<U4')
+    >>> np.char.center(c, width=9)
+    array(['   a1b2  ', '   1b2a  ', '   b2a1  ', '   2a1b  '], dtype='<U9')
+    >>> np.char.center(c, width=9, fillchar='*')
+    array(['***a1b2**', '***1b2a**', '***b2a1**', '***2a1b**'], dtype='<U9')
+    >>> np.char.center(c, width=1)
+    array(['a', '1', 'b', '2'], dtype='<U1')
 
     """
     a_arr = numpy.asarray(a)
@@ -512,8 +557,8 @@ def _code_dispatcher(a, encoding=None, errors=None):
 
 @array_function_dispatch(_code_dispatcher)
 def decode(a, encoding=None, errors=None):
-    """
-    Calls `str.decode` element-wise.
+    r"""
+    Calls ``bytes.decode`` element-wise.
 
     The set of available codecs comes from the Python standard library,
     and may be extended at runtime.  For more information, see the
@@ -535,7 +580,7 @@ def decode(a, encoding=None, errors=None):
 
     See Also
     --------
-    str.decode
+    :py:meth:`bytes.decode`
 
     Notes
     -----
@@ -543,13 +588,13 @@ def decode(a, encoding=None, errors=None):
 
     Examples
     --------
-    >>> c = np.array(['aAaAaA', '  aA  ', 'abBABba'])
+    >>> c = np.array([b'\x81\xc1\x81\xc1\x81\xc1', b'@@\x81\xc1@@',
+    ...               b'\x81\x82\xc2\xc1\xc2\x82\x81'])
     >>> c
+    array([b'\x81\xc1\x81\xc1\x81\xc1', b'@@\x81\xc1@@',
+    ...    b'\x81\x82\xc2\xc1\xc2\x82\x81'], dtype='|S7')
+    >>> np.char.decode(c, encoding='cp037')
     array(['aAaAaA', '  aA  ', 'abBABba'], dtype='<U7')
-    >>> np.char.encode(c, encoding='cp037')
-    array(['\\x81\\xc1\\x81\\xc1\\x81\\xc1', '@@\\x81\\xc1@@',
-        '\\x81\\x82\\xc2\\xc1\\xc2\\x82\\x81'],
-        dtype='|S7')
 
     """
     return _to_string_or_unicode_array(
@@ -711,6 +756,12 @@ def find(a, sub, start=0, end=None):
     --------
     str.find
 
+    Examples
+    --------
+    >>> a = np.array(["NumPy is a Python library"])
+    >>> np.char.find(a, "Python", start=0, end=None)
+    array([11])
+
     """
     return _vec_string(
         a, int_, 'find', [sub, start] + _clean_args(end))
@@ -739,6 +790,12 @@ def index(a, sub, start=0, end=None):
     See Also
     --------
     find, str.find
+
+    Examples
+    --------
+    >>> a = np.array(["Computer Science"])
+    >>> np.char.index(a, "Science", start=0, end=None)
+    array([9])
 
     """
     return _vec_string(
@@ -819,6 +876,15 @@ def isdigit(a):
     See Also
     --------
     str.isdigit
+
+    Examples
+    --------
+    >>> a = np.array(['a', 'b', '0'])
+    >>> np.char.isdigit(a)
+    array([False, False,  True])
+    >>> a = np.array([['a', 'b', '0'], ['c', '1', '2']])
+    >>> np.char.isdigit(a)
+    array([[False, False,  True], [False,  True,  True]])
     """
     return _vec_string(a, bool_, 'isdigit')
 
@@ -906,7 +972,7 @@ def istitle(a):
 @array_function_dispatch(_unary_op_dispatcher)
 def isupper(a):
     """
-    Returns true for each element if all cased characters in the
+    Return true for each element if all cased characters in the
     string are uppercase and there is at least one character, false
     otherwise.
 
@@ -926,6 +992,16 @@ def isupper(a):
     See Also
     --------
     str.isupper
+
+    Examples
+    --------
+    >>> str = "GHC"
+    >>> np.char.isupper(str)
+    array(True)     
+    >>> a = np.array(["hello", "HELLO", "Hello"])
+    >>> np.char.isupper(a)
+    array([False,  True, False]) 
+
     """
     return _vec_string(a, bool_, 'isupper')
 
@@ -955,6 +1031,15 @@ def join(sep, seq):
     See Also
     --------
     str.join
+
+    Examples
+    --------
+    >>> np.char.join('-', 'osd')
+    array('o-s-d', dtype='<U5')
+
+    >>> np.char.join(['-', '.'], ['ghc', 'osd'])
+    array(['g-h-c', 'o.s.d'], dtype='<U5')
+
     """
     return _to_string_or_unicode_array(
         _vec_string(sep, object_, 'join', (seq,)))
@@ -1165,7 +1250,16 @@ def replace(a, old, new, count=None):
     See Also
     --------
     str.replace
+    
+    Examples
+    --------
+    >>> a = np.array(["That is a mango", "Monkeys eat mangos"])
+    >>> np.char.replace(a, 'mango', 'banana')
+    array(['That is a banana', 'Monkeys eat bananas'], dtype='<U19')
 
+    >>> a = np.array(["The dish is fresh", "This is it"])
+    >>> np.char.replace(a, 'is', 'was')
+    array(['The dwash was fresh', 'Thwas was it'], dtype='<U19')
     """
     return _to_string_or_unicode_array(
         _vec_string(
@@ -1763,6 +1857,11 @@ def isnumeric(a):
     --------
     unicode.isnumeric
 
+    Examples
+    --------
+    >>> np.char.isnumeric(['123', '123abc', '9.0', '1/4', 'VIII'])
+    array([ True, False, False, False, False])
+
     """
     if _use_unicode(a) != unicode_:
         raise TypeError("isnumeric is only available for Unicode strings and arrays")
@@ -1795,7 +1894,12 @@ def isdecimal(a):
     --------
     unicode.isdecimal
 
-    """
+    Examples
+    --------
+    >>> np.char.isdecimal(['12345', '4.99', '123ABC', ''])
+    array([ True, False, False, False])
+
+    """ 
     if _use_unicode(a) != unicode_:
         raise TypeError("isnumeric is only available for Unicode strings and arrays")
     return _vec_string(a, bool_, 'isdecimal')
@@ -2176,7 +2280,7 @@ class chararray(ndarray):
 
     def decode(self, encoding=None, errors=None):
         """
-        Calls `str.decode` element-wise.
+        Calls ``bytes.decode`` element-wise.
 
         See Also
         --------

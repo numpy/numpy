@@ -645,7 +645,7 @@ def average(a, axis=None, weights=None, returned=False, *,
             wgt = wgt*(~a.mask)
             wgt.mask |= a.mask
 
-        scl = wgt.sum(axis=axis, dtype=result_dtype)
+        scl = wgt.sum(axis=axis, dtype=result_dtype, **keepdims_kw)
         avg = np.multiply(a, wgt,
                           dtype=result_dtype).sum(axis, **keepdims_kw) / scl
 
@@ -1104,6 +1104,32 @@ def unique(ar1, return_index=False, return_inverse=False):
     --------
     numpy.unique : Equivalent function for ndarrays.
 
+    Examples
+    --------
+    >>> import numpy.ma as ma
+    >>> a = [1, 2, 1000, 2, 3]
+    >>> mask = [0, 0, 1, 0, 0]
+    >>> masked_a = ma.masked_array(a, mask)
+    >>> masked_a
+    masked_array(data=[1, 2, --, 2, 3],
+                mask=[False, False,  True, False, False],
+        fill_value=999999)
+    >>> ma.unique(masked_a)
+    masked_array(data=[1, 2, 3, --],
+                mask=[False, False, False,  True],
+        fill_value=999999)
+    >>> ma.unique(masked_a, return_index=True)
+    (masked_array(data=[1, 2, 3, --],
+                mask=[False, False, False,  True],
+        fill_value=999999), array([0, 1, 4, 2]))
+    >>> ma.unique(masked_a, return_inverse=True)
+    (masked_array(data=[1, 2, 3, --],
+                mask=[False, False, False,  True],
+        fill_value=999999), array([0, 1, 3, 1, 2]))
+    >>> ma.unique(masked_a, return_index=True, return_inverse=True)
+    (masked_array(data=[1, 2, 3, --],
+                mask=[False, False, False,  True],
+        fill_value=999999), array([0, 1, 4, 2]), array([0, 1, 3, 1, 2]))
     """
     output = np.unique(ar1,
                        return_index=return_index,

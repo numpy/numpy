@@ -15,7 +15,7 @@
 
 #include "_datetime.h"
 #include "common.h"
-#include "templ_common.h" /* for npy_mul_with_overflow_intp */
+#include "templ_common.h" /* for npy_mul_sizes_with_overflow */
 #include "descriptor.h"
 #include "alloc.h"
 #include "assert.h"

@@ -902,8 +902,7 @@ def test_scalar_integer_operation_overflow(dtype, operation):
 @pytest.mark.parametrize("operation", [
         lambda min, neg_1: -min,
         lambda min, neg_1: abs(min),
-        pytest.param(lambda min, neg_1: min * neg_1,
-            marks=pytest.mark.xfail(reason="broken on some platforms")),
+        lambda min, neg_1: min * neg_1,
         pytest.param(lambda min, neg_1: min // neg_1,
             marks=pytest.mark.skip(reason="broken on some platforms"))],
         ids=["neg", "abs", "*", "//"])
@@ -1003,6 +1002,7 @@ def test_longdouble_complex():
 
 @pytest.mark.parametrize(["__op__", "__rop__", "op", "cmp"], ops_with_names)
 @pytest.mark.parametrize("subtype", [float, int, complex, np.float16])
+@np._no_nep50_warning()
 def test_pyscalar_subclasses(subtype, __op__, __rop__, op, cmp):
     def op_func(self, other):
         return __op__

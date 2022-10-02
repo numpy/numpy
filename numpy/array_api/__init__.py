@@ -121,7 +121,9 @@ warnings.warn(
     "The numpy.array_api submodule is still experimental. See NEP 47.", stacklevel=2
 )
 
-__all__ = []
+__array_api_version__ = "2021.12"
+
+__all__ = ["__array_api_version__"]
 
 from ._constants import e, inf, nan, pi
 

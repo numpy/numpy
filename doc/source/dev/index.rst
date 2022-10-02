@@ -265,6 +265,7 @@ The rest of the story
    reviewer_guidelines
    ../benchmarking
    NumPy C style guide <https://numpy.org/neps/nep-0045-c_style_guide.html>
+   depending_on_numpy
    releasing
    governance/index
    howto-docs

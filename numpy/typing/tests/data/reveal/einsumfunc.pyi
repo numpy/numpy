@@ -30,3 +30,6 @@ reveal_type(np.einsum_path("i,i->i", AR_LIKE_f, AR_LIKE_f))  # E: Tuple[builtins
 reveal_type(np.einsum_path("i,i->i", AR_LIKE_c, AR_LIKE_c))  # E: Tuple[builtins.list[Any], builtins.str]
 reveal_type(np.einsum_path("i,i->i", AR_LIKE_b, AR_LIKE_i))  # E: Tuple[builtins.list[Any], builtins.str]
 reveal_type(np.einsum_path("i,i,i,i->i", AR_LIKE_b, AR_LIKE_u, AR_LIKE_i, AR_LIKE_c))  # E: Tuple[builtins.list[Any], builtins.str]
+
+reveal_type(np.einsum([[1, 1], [1, 1]], AR_LIKE_i, AR_LIKE_i))  # E: Any
+reveal_type(np.einsum_path([[1, 1], [1, 1]], AR_LIKE_i, AR_LIKE_i))  # E: Tuple[builtins.list[Any], builtins.str]

@@ -19,20 +19,20 @@ dependencies:
   - pytest-xdist
   - hypothesis
   # For type annotations
-  - mypy=0.950
+  - mypy=0.981
   - typing_extensions>=4.2.0
   # For building docs
-  - sphinx=4.5.0
-  - sphinx-panels
-  - numpydoc=1.3.1
+  - sphinx>=4.5.0
+  - sphinx-design
+  - numpydoc=1.4.0
   - ipython
   - scipy
   - pandas
   - matplotlib
-  - pydata-sphinx-theme=0.8.1
+  - pydata-sphinx-theme=0.9.0
   - doxygen
   # NOTE: breathe 4.33.0 collides with sphinx.ext.graphviz
-  - breathe!=4.33.0
+  - breathe>4.33.0
   # For linting
   - pycodestyle=2.7.0
   - gitpython

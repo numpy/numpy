@@ -1,0 +1,2 @@
+* Ragged array creation will now always raise a ``ValueError`` unless
+  ``dtype=object`` is passed.  This includes very deeply nested sequences.

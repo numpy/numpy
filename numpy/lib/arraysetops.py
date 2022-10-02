@@ -621,27 +621,27 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
     # Ensure that iteration through object arrays yields size-1 arrays
     if ar2.dtype == object:
         ar2 = ar2.reshape(-1, 1)
-    # Convert booleans to uint8 so we can use the fast integer algorithm
-    if ar1.dtype == bool:
-        ar1 = ar1 + np.uint8(0)
-    if ar2.dtype == bool:
-        ar2 = ar2 + np.uint8(0)
-
-    # Check if we can use a fast integer algorithm:
-    integer_arrays = (np.issubdtype(ar1.dtype, np.integer) and
-                      np.issubdtype(ar2.dtype, np.integer))
 
     if kind not in {None, 'sort', 'table'}:
         raise ValueError(
             f"Invalid kind: '{kind}'. Please use None, 'sort' or 'table'.")
 
-    if integer_arrays and kind in {None, 'table'}:
+    # Can use the table method if all arrays are integers or boolean:
+    is_int_arrays = all(ar.dtype.kind in ("u", "i", "b") for ar in (ar1, ar2))
+    use_table_method = is_int_arrays and kind in {None, 'table'}
 
+    if use_table_method:
         if ar2.size == 0:
             if invert:
                 return np.ones_like(ar1, dtype=bool)
             else:
                 return np.zeros_like(ar1, dtype=bool)
+
+        # Convert booleans to uint8 so we can use the fast integer algorithm
+        if ar1.dtype == bool:
+            ar1 = ar1.astype(np.uint8)
+        if ar2.dtype == bool:
+            ar2 = ar2.astype(np.uint8)
 
         ar2_min = np.min(ar2)
         ar2_max = np.max(ar2)

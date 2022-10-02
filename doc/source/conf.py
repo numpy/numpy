@@ -4,7 +4,7 @@ import sys
 import importlib
 
 # Minimum version, enforced by sphinx
-needs_sphinx = '3.2.0'
+needs_sphinx = '4.3'
 
 
 # This is a nasty hack to use platform-agnostic names for types in the
@@ -84,7 +84,7 @@ extensions = [
     'IPython.sphinxext.ipython_console_highlighting',
     'IPython.sphinxext.ipython_directive',
     'sphinx.ext.mathjax',
-    'sphinx_panels',
+    'sphinx_design',
 ]
 
 skippable_extensions = [
@@ -102,9 +102,6 @@ templates_path = ['_templates']
 
 # The suffix of source filenames.
 source_suffix = '.rst'
-
-# Will change to `root_doc` in Sphinx 4
-master_doc = 'index'
 
 # General substitutions.
 project = 'NumPy'
@@ -167,8 +164,6 @@ sys.modules['numpy.testing.dec'] = numpy.testing.dec
 
 html_theme = 'pydata_sphinx_theme'
 
-html_logo = '_static/numpylogo.svg'
-
 html_favicon = '_static/favicon/favicon.ico'
 
 # Set up the version switcher.  The versions.json is stored in the doc repo.
@@ -179,10 +174,13 @@ if os.environ.get('CIRCLE_JOB', False) and \
 elif ".dev" in version:
     switcher_version = "devdocs"
 else:
-    switcher_version = f"doc/{version}"
+    switcher_version = f"{version}"
 
 html_theme_options = {
-  "logo_link": "index",
+  "logo": {
+      "image_light": "numpylogo.svg",
+      "image_dark": "numpylogo_dark.svg",
+  },
   "github_url": "https://github.com/numpy/numpy",
   "twitter_url": "https://twitter.com/numpy_team",
   "collapse_navigation": True,
@@ -190,7 +188,7 @@ html_theme_options = {
       {"name": "Learn", "url": "https://numpy.org/numpy-tutorials/"}
       ],
   # Add light/dark mode and documentation version switcher:
-  "navbar_end": ["version-switcher", "navbar-icon-links"],
+  "navbar_end": ["theme-switcher", "version-switcher", "navbar-icon-links"],
   "switcher": {
       "version_match": switcher_version,
       "json_url": "https://numpy.org/doc/_static/versions.json",
@@ -201,11 +199,7 @@ html_title = "%s v%s Manual" % (project, version)
 html_static_path = ['_static']
 html_last_updated_fmt = '%b %d, %Y'
 html_css_files = ["numpy.css"]
-
-# Prevent sphinx-panels from loading bootstrap css, the pydata-sphinx-theme
-# already loads it
-panels_add_bootstrap_css = False
-
+html_context = {"default_mode": "light"}
 html_use_modindex = True
 html_copy_source = False
 html_domain_indices = False

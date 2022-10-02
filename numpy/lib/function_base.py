@@ -516,7 +516,8 @@ def average(a, axis=None, weights=None, returned=False, *,
 
     if weights is None:
         avg = a.mean(axis, **keepdims_kw)
-        scl = avg.dtype.type(a.size/avg.size)
+        avg_as_array = np.asanyarray(avg)
+        scl = avg_as_array.dtype.type(a.size/avg_as_array.size)
     else:
         wgt = np.asanyarray(weights)
 
@@ -542,17 +543,17 @@ def average(a, axis=None, weights=None, returned=False, *,
             wgt = np.broadcast_to(wgt, (a.ndim-1)*(1,) + wgt.shape)
             wgt = wgt.swapaxes(-1, axis)
 
-        scl = wgt.sum(axis=axis, dtype=result_dtype)
+        scl = wgt.sum(axis=axis, dtype=result_dtype, **keepdims_kw)
         if np.any(scl == 0.0):
             raise ZeroDivisionError(
                 "Weights sum to zero, can't be normalized")
 
-        avg = np.multiply(a, wgt,
+        avg = avg_as_array = np.multiply(a, wgt,
                           dtype=result_dtype).sum(axis, **keepdims_kw) / scl
 
     if returned:
-        if scl.shape != avg.shape:
-            scl = np.broadcast_to(scl, avg.shape).copy()
+        if scl.shape != avg_as_array.shape:
+            scl = np.broadcast_to(scl, avg_as_array.shape).copy()
         return avg, scl
     else:
         return avg
@@ -3665,6 +3666,13 @@ def msort(a):
     -----
     ``np.msort(a)`` is equivalent to  ``np.sort(a, axis=0)``.
 
+    Examples
+    --------
+    >>> a = np.array([[1, 4], [3, 1]])
+    >>> np.msort(a)  # sort along the first axis
+    array([[1, 1],
+           [3, 4]])
+
     """
     b = array(a, subok=True, copy=True)
     b.sort(0)
@@ -3934,7 +3942,7 @@ def percentile(a,
         8. 'median_unbiased'
         9. 'normal_unbiased'
 
-        The first three methods are discontiuous.  NumPy further defines the
+        The first three methods are discontinuous.  NumPy further defines the
         following discontinuous variations of the default 'linear' (7.) option:
 
         * 'lower'
@@ -3979,7 +3987,7 @@ def percentile(a,
 
     Notes
     -----
-    Given a vector ``V`` of length ``N``, the q-th percentile of ``V`` is
+    Given a vector ``V`` of length ``n``, the q-th percentile of ``V`` is
     the value ``q/100`` of the way from the minimum to the maximum in a
     sorted copy of ``V``. The values and distances of the two nearest
     neighbors as well as the `method` parameter will determine the
@@ -3988,19 +3996,22 @@ def percentile(a,
     same as the minimum if ``q=0`` and the same as the maximum if
     ``q=100``.
 
-    This optional `method` parameter specifies the method to use when the
-    desired quantile lies between two data points ``i < j``.
-    If ``g`` is the fractional part of the index surrounded by ``i`` and
-    alpha and beta are correction constants modifying i and j.
+    The optional `method` parameter specifies the method to use when the
+    desired percentile lies between two indexes ``i`` and ``j = i + 1``.
+    In that case, we first determine ``i + g``, a virtual index that lies
+    between ``i`` and ``j``, where  ``i`` is the floor and ``g`` is the
+    fractional part of the index. The final result is, then, an interpolation
+    of ``a[i]`` and ``a[j]`` based on ``g``. During the computation of ``g``,
+    ``i`` and ``j`` are modified using correction constants ``alpha`` and
+    ``beta`` whose choices depend on the ``method`` used. Finally, note that
+    since Python uses 0-based indexing, the code subtracts another 1 from the
+    index internally.
 
-    Below, 'q' is the quantile value, 'n' is the sample size and
-    alpha and beta are constants.
-    The following formula gives an interpolation "i + g" of where the quantile
-    would be in the sorted sample.
-    With 'i' being the floor and 'g' the fractional part of the result.
+    The following formula determines the virtual index ``i + g``, the location 
+    of the percentile in the sorted sample:
 
     .. math::
-        i + g = (q - alpha) / ( n - alpha - beta + 1 )
+        i + g = (q / 100) * ( n - alpha - beta + 1 ) + alpha
 
     The different methods then work as follows
 
@@ -4265,21 +4276,31 @@ def quantile(a,
 
     Notes
     -----
-    Given a vector ``V`` of length ``N``, the q-th quantile of ``V`` is the
-    value ``q`` of the way from the minimum to the maximum in a sorted copy of
-    ``V``. The values and distances of the two nearest neighbors as well as the
-    `method` parameter will determine the quantile if the normalized
-    ranking does not match the location of ``q`` exactly. This function is the
-    same as the median if ``q=0.5``, the same as the minimum if ``q=0.0`` and
-    the same as the maximum if ``q=1.0``.
+    Given a vector ``V`` of length ``n``, the q-th quantile of ``V`` is
+    the value ``q`` of the way from the minimum to the maximum in a
+    sorted copy of ``V``. The values and distances of the two nearest
+    neighbors as well as the `method` parameter will determine the
+    quantile if the normalized ranking does not match the location of
+    ``q`` exactly. This function is the same as the median if ``q=0.5``, the
+    same as the minimum if ``q=0.0`` and the same as the maximum if
+    ``q=1.0``.
 
     The optional `method` parameter specifies the method to use when the
-    desired quantile lies between two data points ``i < j``.
-    If ``g`` is the fractional part of the index surrounded by ``i`` and ``j``,
-    and alpha and beta are correction constants modifying i and j:
+    desired quantile lies between two indexes ``i`` and ``j = i + 1``.
+    In that case, we first determine ``i + g``, a virtual index that lies
+    between ``i`` and ``j``, where  ``i`` is the floor and ``g`` is the
+    fractional part of the index. The final result is, then, an interpolation
+    of ``a[i]`` and ``a[j]`` based on ``g``. During the computation of ``g``,
+    ``i`` and ``j`` are modified using correction constants ``alpha`` and
+    ``beta`` whose choices depend on the ``method`` used. Finally, note that
+    since Python uses 0-based indexing, the code subtracts another 1 from the
+    index internally.
+
+    The following formula determines the virtual index ``i + g``, the location 
+    of the quantile in the sorted sample:
 
     .. math::
-        i + g = (q - alpha) / ( n - alpha - beta + 1 )
+        i + g = q * ( n - alpha - beta + 1 ) + alpha
 
     The different methods then work as follows
 
@@ -5140,10 +5161,14 @@ def delete(arr, obj, axis=None):
         single_value = False
         _obj = obj
         obj = np.asarray(obj)
+        # `size == 0` to allow empty lists similar to indexing, but (as there)
+        # is really too generic:
         if obj.size == 0 and not isinstance(_obj, np.ndarray):
             obj = obj.astype(intp)
-        elif obj.size == 1 and not isinstance(_obj, bool):
-            obj = obj.astype(intp).reshape(())
+        elif obj.size == 1 and obj.dtype.kind in "ui":
+            # For a size 1 integer array we can use the single-value path
+            # (most dtypes, except boolean, should just fail later).
+            obj = obj.item()
             single_value = True
 
     if single_value:

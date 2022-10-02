@@ -1,7 +1,6 @@
 [build-system]
 # Minimum requirements for the build system to execute.
 requires = [
-    "packaging==20.5; platform_machine=='arm64'",  # macos M1
     "setuptools==59.2.0",
     "wheel==0.37.0",
     "Cython>=0.29.30,<3.0",
@@ -11,7 +10,7 @@ requires = [
 [tool.towncrier]
     # Do no set this since it is hard to import numpy inside the source directory
     # the name is hardcoded. Use "--version 1.18.0" to set the version
-    single_file = true
+    single_file = false
     filename = "doc/source/release/{version}-notes.rst"
     directory = "doc/release/upcoming_changes/"
     issue_format = "`gh-{issue} <https://github.com/numpy/numpy/pull/{issue}>`__"

@@ -1,0 +1,10 @@
+Added pickle support for third-party BitGenerators
+==================================================
+
+The pickle format for bit generators was extended to allow each bit generator
+to supply its own constructor when during pickling. Previous  versions of NumPy
+only supported unpickling ``Generator`` instances created with one of the core set
+of bit generators supplied with NumPy. Attempting to unpickle a ``Generator``
+that used a third-party bit generators would fail since the constructor used during
+the unpickling was only aware of the bit generators included in NumPy.
+

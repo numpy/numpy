@@ -260,7 +260,7 @@ class TestConcatenate:
             np.concatenate((a, b), axis=axis[0])  # OK
             assert_raises_regex(
                 ValueError,
-                "all the input array dimensions for the concatenation axis "
+                "all the input array dimensions except for the concatenation axis "
                 "must match exactly, but along dimension {}, the array at "
                 "index 0 has size 1 and the array at index 1 has size 2"
                 .format(i),

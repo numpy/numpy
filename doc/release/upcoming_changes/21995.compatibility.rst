@@ -1,0 +1,21 @@
+Returned arrays respect uniqueness of dtype kwarg objects
+---------------------------------------------------------
+When the ``dtype`` keyword argument is used with :py:func:`np.array()`
+or :py:func:`asarray()`, the dtype of the returned array now
+always exactly matches the dtype provided by the caller.
+
+In some cases this change means that a *view* rather than the
+input array is returned.
+The following is an example for this on 64bit Linux where ``long``
+and ``longlong`` are the same precision but different ``dtypes``::
+
+    >>> arr = np.array([1, 2, 3], dtype="long")
+    >>> new_dtype = np.dtype("longlong")
+    >>> new = np.asarray(arr, dtype=new_dtype)
+    >>> new.dtype is new_dtype
+    True
+    >>> new is arr
+    False
+
+Before the change, the ``dtype`` did not match because ``new is arr``
+was ``True``.

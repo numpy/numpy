@@ -1633,7 +1633,7 @@ incompatible_units: {
             return -1;
         }
         PyErr_Format(PyExc_TypeError,
-            "Cannot get a common metadata divisor for Numpy datatime "
+            "Cannot get a common metadata divisor for Numpy datetime "
             "metadata %S and %S because they have incompatible nonlinear "
             "base time units.", umeta1, umeta2);
         Py_DECREF(umeta1);
@@ -3904,7 +3904,8 @@ datetime_to_timedelta_resolve_descriptors(
         PyArrayMethodObject *NPY_UNUSED(self),
         PyArray_DTypeMeta *dtypes[2],
         PyArray_Descr *given_descrs[2],
-        PyArray_Descr *loop_descrs[2])
+        PyArray_Descr *loop_descrs[2],
+        npy_intp *NPY_UNUSED(view_offset))
 {
     loop_descrs[0] = NPY_DT_CALL_ensure_canonical(given_descrs[0]);
     if (loop_descrs[0] == NULL) {

@@ -903,7 +903,7 @@ def histogramdd(sample, bins=10, range=None, density=None, weights=None):
 
     Parameters
     ----------
-    sample : (N, D) array, or (D, N) array_like
+    sample : (N, D) array, or (N, D) array_like
         The data to be histogrammed.
 
         Note the unusual interpretation of sample when an array_like:

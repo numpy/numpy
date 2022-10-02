@@ -29,7 +29,7 @@ from numpy.testing import (
     assert_allclose, IS_PYPY, IS_PYSTON, HAS_REFCOUNT, assert_array_less,
     runstring, temppath, suppress_warnings, break_cycles,
     )
-from numpy.testing._private.utils import _no_tracing
+from numpy.testing._private.utils import requires_memory, _no_tracing
 from numpy.core.tests._locales import CommaDecimalPointLocale
 from numpy.lib.recfunctions import repack_fields
 
@@ -1118,12 +1118,11 @@ class TestCreation:
                           shape=(max_bytes//itemsize + 1,), dtype=dtype)
 
     def _ragged_creation(self, seq):
-        # without dtype=object, the ragged object should raise
-        with assert_warns(np.VisibleDeprecationWarning):
+        # without dtype=object, the ragged object raises
+        with pytest.raises(ValueError, match=".*detected shape was"):
             a = np.array(seq)
-        b = np.array(seq, dtype=object)
-        assert_equal(a, b)
-        return b
+
+        return np.array(seq, dtype=object)
 
     def test_ragged_ndim_object(self):
         # Lists of mismatching depths are treated as object arrays
@@ -2234,6 +2233,28 @@ class TestMethods:
         assert_c(a.copy('C'))
         assert_fortran(a.copy('F'))
         assert_c(a.copy('A'))
+    
+    @pytest.mark.parametrize("dtype", ['O', np.int32, 'i,O'])
+    def test__deepcopy__(self, dtype):
+        # Force the entry of NULLs into array
+        a = np.empty(4, dtype=dtype)
+        ctypes.memset(a.ctypes.data, 0, a.nbytes)
+
+        # Ensure no error is raised, see gh-21833
+        b = a.__deepcopy__({})
+
+        a[0] = 42
+        with pytest.raises(AssertionError):
+            assert_array_equal(a, b)
+
+    def test__deepcopy__catches_failure(self):
+        class MyObj:
+            def __deepcopy__(self, *args, **kwargs):
+                raise RuntimeError
+
+        arr = np.array([1, MyObj(), 3], dtype='O')
+        with pytest.raises(RuntimeError):
+            arr.__deepcopy__({})
 
     def test_sort_order(self):
         # Test sorting an array with fields
@@ -2415,23 +2436,32 @@ class TestMethods:
         assert_raises(ValueError, d.sort, kind=k)
         assert_raises(ValueError, d.argsort, kind=k)
 
-    def test_searchsorted(self):
-        # test for floats and complex containing nans. The logic is the
-        # same for all float types so only test double types for now.
-        # The search sorted routines use the compare functions for the
-        # array type, so this checks if that is consistent with the sort
-        # order.
-
-        # check double
-        a = np.array([0, 1, np.nan])
-        msg = "Test real searchsorted with nans, side='l'"
+    @pytest.mark.parametrize('a', [
+        np.array([0, 1, np.nan], dtype=np.float16),
+        np.array([0, 1, np.nan], dtype=np.float32),
+        np.array([0, 1, np.nan]),
+    ])
+    def test_searchsorted_floats(self, a):
+        # test for floats arrays containing nans. Explicitly test 
+        # half, single, and double precision floats to verify that
+        # the NaN-handling is correct.
+        msg = "Test real (%s) searchsorted with nans, side='l'" % a.dtype
         b = a.searchsorted(a, side='left')
         assert_equal(b, np.arange(3), msg)
-        msg = "Test real searchsorted with nans, side='r'"
+        msg = "Test real (%s) searchsorted with nans, side='r'" % a.dtype
         b = a.searchsorted(a, side='right')
         assert_equal(b, np.arange(1, 4), msg)
         # check keyword arguments
         a.searchsorted(v=1)
+        x = np.array([0, 1, np.nan], dtype='float32')
+        y = np.searchsorted(x, x[-1])
+        assert_equal(y, 2)
+
+    def test_searchsorted_complex(self):
+        # test for complex arrays containing nans. 
+        # The search sorted routines use the compare functions for the
+        # array type, so this checks if that is consistent with the sort
+        # order.
         # check double complex
         a = np.zeros(9, dtype=np.complex128)
         a.real += [0, 0, 1, 1, 0, 1, np.nan, np.nan, np.nan]
@@ -2450,7 +2480,8 @@ class TestMethods:
         a = np.array([0, 128], dtype='>i4')
         b = a.searchsorted(np.array(128, dtype='>i4'))
         assert_equal(b, 1, msg)
-
+        
+    def test_searchsorted_n_elements(self):
         # Check 0 elements
         a = np.ones(0)
         b = a.searchsorted([0, 1, 2], 'left')
@@ -2470,6 +2501,7 @@ class TestMethods:
         b = a.searchsorted([0, 1, 2], 'right')
         assert_equal(b, [0, 2, 2])
 
+    def test_searchsorted_unaligned_array(self):
         # Test searching unaligned array
         a = np.arange(10)
         aligned = np.empty(a.itemsize * a.size + 1, 'uint8')
@@ -2486,6 +2518,7 @@ class TestMethods:
         b = a.searchsorted(unaligned, 'right')
         assert_equal(b, a + 1)
 
+    def test_searchsorted_resetting(self):
         # Test smart resetting of binsearch indices
         a = np.arange(5)
         b = a.searchsorted([6, 5, 4], 'left')
@@ -2493,6 +2526,7 @@ class TestMethods:
         b = a.searchsorted([6, 5, 4], 'right')
         assert_equal(b, [5, 5, 5])
 
+    def test_searchsorted_type_specific(self):
         # Test all type specific binary search functions
         types = ''.join((np.typecodes['AllInteger'], np.typecodes['AllFloat'],
                          np.typecodes['Datetime'], '?O'))
@@ -5484,10 +5518,12 @@ class TestIO:
 
     @pytest.mark.slow  # takes > 1 minute on mechanical hard drive
     def test_big_binary(self):
-        """Test workarounds for 32-bit limited fwrite, fseek, and ftell
-        calls in windows. These normally would hang doing something like this.
-        See http://projects.scipy.org/numpy/ticket/1660"""
-        if sys.platform != 'win32':
+        """Test workarounds for 32-bit limit for MSVC fwrite, fseek, and ftell
+
+        These normally would hang doing something like this.
+        See : https://github.com/numpy/numpy/issues/2256
+        """
+        if sys.platform != 'win32' or '[GCC ' in sys.version:
             return
         try:
             # before workarounds, only up to 2**32-1 worked
@@ -6683,6 +6719,15 @@ class TestDot:
             # Strides in A cols and X
             assert_dot_close(A_f_12, X_f_2, desired)
 
+    @pytest.mark.slow
+    @pytest.mark.parametrize("dtype", [np.float64, np.complex128])
+    @requires_memory(free_bytes=9*10**9)  # complex case needs 8GiB+
+    def test_huge_vectordot(self, dtype):
+        # Large vector multiplications are chunked with 32bit BLAS
+        # Test that the chunking does the right thing, see also gh-22262
+        data = np.ones(2**30+100, dtype=dtype)
+        res = np.dot(data, data)
+        assert res == 2**30+100
 
 
 class MatmulCommon:

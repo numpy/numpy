@@ -396,6 +396,37 @@ class TestSetOps:
         assert_array_equal(np.invert(expected),
                            in1d(a, b, invert=True, kind=kind))
 
+    @pytest.mark.parametrize("kind", [None, "sort"])
+    def test_in1d_timedelta(self, kind):
+        """Test that in1d works for timedelta input"""
+        rstate = np.random.RandomState(0)
+        a = rstate.randint(0, 100, size=10)
+        b = rstate.randint(0, 100, size=10)
+        truth = in1d(a, b)
+        a_timedelta = a.astype("timedelta64[s]")
+        b_timedelta = b.astype("timedelta64[s]")
+        assert_array_equal(truth, in1d(a_timedelta, b_timedelta, kind=kind))
+
+    def test_in1d_table_timedelta_fails(self):
+        a = np.array([0, 1, 2], dtype="timedelta64[s]")
+        b = a
+        # Make sure it raises a value error:
+        with pytest.raises(ValueError):
+            in1d(a, b, kind="table")
+
+    @pytest.mark.parametrize("kind", [None, "sort", "table"])
+    def test_in1d_mixed_boolean(self, kind):
+        """Test that in1d works as expected for bool/int input."""
+        for dtype in np.typecodes["AllInteger"]:
+            a = np.array([True, False, False], dtype=bool)
+            b = np.array([1, 1, 1, 1], dtype=dtype)
+            expected = np.array([True, False, False], dtype=bool)
+            assert_array_equal(in1d(a, b, kind=kind), expected)
+
+            a, b = b, a
+            expected = np.array([True, True, True, True], dtype=bool)
+            assert_array_equal(in1d(a, b, kind=kind), expected)
+
     def test_in1d_first_array_is_object(self):
         ar1 = [None]
         ar2 = np.array([1]*10)

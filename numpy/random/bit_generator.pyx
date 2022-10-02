@@ -261,8 +261,10 @@ cdef class SeedSequence():
     entropy : {None, int, sequence[int]}, optional
         The entropy for creating a `SeedSequence`.
     spawn_key : {(), sequence[int]}, optional
-        A third source of entropy, used internally when calling
-        `SeedSequence.spawn`
+        An additional source of entropy based on the position of this
+        `SeedSequence` in the tree of such objects created with the
+        `SeedSequence.spawn` method. Typically, only `SeedSequence.spawn` will
+        set this, and users will not.
     pool_size : {int}, optional
         Size of the pooled entropy to store. Default is 4 to give a 128-bit
         entropy pool. 8 (for 256 bits) is another reasonable choice if working
@@ -486,7 +488,7 @@ cdef class BitGenerator():
         A seed to initialize the `BitGenerator`. If None, then fresh,
         unpredictable entropy will be pulled from the OS. If an ``int`` or
         ``array_like[ints]`` is passed, then it will be passed to
-        ~`numpy.random.SeedSequence` to derive the initial `BitGenerator` state.
+        `~numpy.random.SeedSequence` to derive the initial `BitGenerator` state.
         One may also pass in a `SeedSequence` instance.
 
     Attributes

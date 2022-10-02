@@ -1,18 +1,18 @@
-This file contains a walkthrough of the NumPy 1.21.0 release on Linux, modified
-for building on azure and uploading to anaconda.org The commands can be copied
-into the command line, but be sure to replace 1.21.0 by the correct version.
-This should be read together with the general directions in `releasing`.
+This is a walkthrough of the NumPy 1.21.0 release on Linux, modified for
+building with GitHub Actions and cibuildwheels and uploading to the
+`anaconda.org staging repository for NumPy <https://anaconda.org/multibuild-wheels-staging/numpy>`_.
+The commands can be copied into the command line, but be sure to replace 1.21.0
+by the correct version. This should be read together with the
+:ref:`general release guide <prepare_release>`.
 
-
-Facility Preparation
+Facility preparation
 ====================
 
 Before beginning to make a release, use the ``*_requirements.txt`` files to
 ensure that you have the needed software. Most software can be installed with
 pip, but some will require apt-get, dnf, or whatever your system uses for
-software. Note that at this time the documentation cannot be built with Python
-3.10, for that use 3.8-3.9 instead. You will also need a GitHub personal access
-token (PAT) to push the documentation. There are a few ways to streamline things.
+software. You will also need a GitHub personal access token (PAT) to push the
+documentation. There are a few ways to streamline things:
 
 - Git can be set up to use a keyring to store your GitHub personal access token.
   Search online for the details.
@@ -20,8 +20,24 @@ token (PAT) to push the documentation. There are a few ways to streamline things
   online twine documentation for details.
 
 
-Release Preparation
+Release preparation
 ===================
+
+Add/drop Python versions
+------------------------
+
+When adding or dropping Python versions, three files need to be edited:
+
+- .github/workflows/wheels.yml  # for github cibuildwheel
+- .travis.yml  # for cibuildwheel aarch64 builds
+- setup.py  # for classifier and minimum version check.
+
+Make these changes in an ordinary PR against main and backport if necessary.
+Using the `BLD:` prefix (build label) for the commit summary will cause the
+wheel builds to be run so that the changes will be tested, We currently release
+wheels for new Python versions after the first Python rc once manylinux and
+cibuildwheel support it. For Python 3.11 we were able to release within a week
+of the rc1 announcement.
 
 Backport Pull Requests
 ----------------------
@@ -29,8 +45,7 @@ Backport Pull Requests
 Changes that have been marked for this release must be backported to the
 maintenance/1.21.x branch.
 
-
-Update Release documentation
+Update release documentation
 ----------------------------
 
 Four documents usually need to be updated or created before making a release:
@@ -76,17 +91,17 @@ done. Note that the ``:orphan:`` markup at the top, if present, will need
 changing to ``.. currentmodule:: numpy`` and the ``doc/source/release.rst``
 index file will need updating.
 
-Check the pavement.py file
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+Check the ``pavement.py`` file
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Check that the pavement.py file points to the correct release notes. It should
 have been updated after the last release, but if not, fix it now::
 
-    $gvim pavement.py
+    $ gvim pavement.py
 
 
-Release  Walkthrough
-====================
+Release walkthrough
+===================
 
 Note that in the code snippets below, ``upstream`` refers to the root repository on
 GitHub and ``origin`` to its fork in your personal GitHub repositories. You may
@@ -94,8 +109,8 @@ need to make adjustments if you have not forked the repository but simply
 cloned it locally. You can also edit ``.git/config`` and add ``upstream`` if it
 isn't already present.
 
-Prepare the release commit
---------------------------
+1. Prepare the release commit
+-----------------------------
 
 Checkout the branch for the release, make sure it is up to date, and clean the
 repository::
@@ -115,9 +130,32 @@ repository::
     $ git tag -a -s v1.21.0 -m"NumPy 1.21.0 release"
     $ git push upstream v1.21.0
 
+2. Build wheels
+---------------
+
+Build wheels via cibuildwheel (preferred)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Tagging the build at the beginning of this process will trigger a wheel build
+via cibuildwheel and upload wheels and an sdist to the staging repo. The CI run
+on github actions (for all x86-based and macOS arm64 wheels) takes about 1 1/4
+hours. The CI run on travis (for aarch64) takes less time.
+
+If you wish to manually trigger a wheel build, you can do so:
+
+- On github actions -> `Wheel builder`_ there is a "Run workflow" button, click
+  on it and choose the tag to build
+- On travis_ there is a "More Options" button, click on it and choose a branch
+  to build. There does not appear to be an option to build a tag.
+
+.. _`Wheel builder`: https://github.com/numpy/numpy/actions/workflows/wheels.yml
+.. _travis : https://app.travis-ci.com/github/numpy/numpy
+
+Build wheels with multibuild (outdated)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Build source releases
----------------------
+^^^^^^^^^^^^^^^^^^^^^
 
 Paver is used to build the source releases. It will create the ``release`` and
 ``release/installers`` directories and put the ``*.zip`` and ``*.tar.gz``
@@ -127,7 +165,7 @@ source releases in the latter. ::
 
 
 Build wheels via MacPython/numpy-wheels
----------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Trigger the wheels build by pointing the numpy-wheels repository at this
 commit. This can take up to an hour. The numpy-wheels repository is cloned from
@@ -163,25 +201,8 @@ Note that sometimes builds, like tests, fail for unrelated reasons and you will
 need to rerun them. You will need to be logged in under 'numpy' to do this
 on azure.
 
-Build wheels via cibuildwheel
------------------------------
-Tagging the build at the beginning of this process will trigger a wheel build
-via cibuildwheel and upload wheels and an sdist to the staging area. The CI run
-on github actions (for all x86-based and macOS arm64 wheels) takes about 1 1/4
-hours. The CI run on travis (for aarch64) takes less time. 
-
-If you wish to manually trigger a wheel build, you can do so:
-
-- On github actions -> `Wheel builder`_ there is a "Run workflow" button, click
-  on it and choose the tag to build
-- On travis_ there is a "More Options" button, click on it and choose a branch
-  to build. There does not appear to be an option to build a tag.
-
-.. _`Wheel builder`: https://github.com/numpy/numpy/actions/workflows/wheels.yml
-.. _travis : https://app.travis-ci.com/github/numpy/numpy
-
-Download wheels
----------------
+3. Download wheels
+------------------
 
 When the wheels have all been successfully built and staged, download them from the
 Anaconda staging directory using the ``tools/download-wheels.py`` script::
@@ -190,8 +211,8 @@ Anaconda staging directory using the ``tools/download-wheels.py`` script::
     $ python3 tools/download-wheels.py 1.21.0
 
 
-Generate the README files
--------------------------
+4. Generate the README files
+----------------------------
 
 This needs to be done after all installers are downloaded, but before the pavement
 file is updated for continued development::
@@ -199,8 +220,8 @@ file is updated for continued development::
     $ paver write_release
 
 
-Reset the maintenance branch into a development state (skip for prereleases)
-----------------------------------------------------------------------------
+5. Reset the maintenance branch into a development state (skip for prereleases)
+-------------------------------------------------------------------------------
 
 Create release notes for next release and edit them to set the version. These
 notes will be a skeleton and have little content::
@@ -210,7 +231,7 @@ notes will be a skeleton and have little content::
     $ git add doc/source/release/1.21.1-notes.rst
 
 Add new release notes to the documentation release list and update the
-``RELEASE_NOTES`` variable in ``pavement.py``.
+``RELEASE_NOTES`` variable in ``pavement.py``::
 
     $ gvim doc/source/release.rst pavement.py
 
@@ -220,8 +241,8 @@ Commit the result::
     $ git push upstream HEAD
 
 
-Upload to PyPI
---------------
+6. Upload to PyPI
+-----------------
 
 Upload to PyPI using ``twine``. A recent version of ``twine`` of is needed
 after recent PyPI changes, version ``3.4.1`` was used here::
@@ -239,8 +260,8 @@ wheel. PyPI only allows a single source distribution, here we have
 chosen the zip archive.
 
 
-Upload files to github
-----------------------
+7. Upload files to github
+-------------------------
 
 Go to `<https://github.com/numpy/numpy/releases>`_, there should be a ``v1.21.0
 tag``, click on it and hit the edit button for that tag. There are two ways to
@@ -259,21 +280,19 @@ may take several tries to get it look right. Then
 - Hit the ``{Publish,Update} release`` button at the bottom.
 
 
-Upload documents to numpy.org (skip for prereleases)
-----------------------------------------------------
+8. Upload documents to numpy.org (skip for prereleases)
+-------------------------------------------------------
 
 .. note:: You will need a GitHub personal access token to push the update.
 
 This step is only needed for final releases and can be skipped for pre-releases
 and most patch releases. ``make merge-doc`` clones the ``numpy/doc`` repo into
-``doc/build/merge`` and updates it with the new documentation. If you already
-have a numpy installed, you need to locally install the new NumPy version so
-that document generation will use the correct NumPy. This is because ``make
-dist`` does not correctly set up the path. Note that Python 3.10 cannot be used
-for generating the docs as it has no ``easy_install``, use 3.9 or 3.8 instead::
+``doc/build/merge`` and updates it with the new documentation::
 
+    $ git clean -xdfq
+    $ git co v1.21.0
     $ pushd doc
-    $ make dist
+    $ make docenv && source docenv/bin/activate
     $ make merge-doc
     $ pushd build/merge
 
@@ -287,8 +306,9 @@ update the version marked `(stable)`::
 
     $ gvim _static/versions.json
 
-Otherwise, only the ``zip`` and ``pdf`` links should be updated with the
-new tag name::
+Otherwise, only the ``zip`` link should be updated with the new tag name. Since
+we are no longer generating ``pdf`` files, remove the line for the ``pdf``
+files if present::
 
     $ gvim index.html +/'tag v1.21'
 
@@ -307,12 +327,13 @@ Once everything seems satisfactory, update, commit and upload the changes::
     $ python3 update.py
     $ git commit -a -m"Add documentation for v1.21.0"
     $ git push
+    $ deactivate
     $ popd
     $ popd
 
 
-Announce the release on numpy.org (skip for prereleases)
---------------------------------------------------------
+9. Announce the release on numpy.org (skip for prereleases)
+-----------------------------------------------------------
 
 This assumes that you have forked `<https://github.com/numpy/numpy.org>`_::
 
@@ -334,8 +355,8 @@ commit and push::
 
 Go to your Github fork and make a pull request.
 
-Announce to mailing lists
--------------------------
+10. Announce to mailing lists
+-----------------------------
 
 The release should be announced on the numpy-discussion, scipy-devel,
 scipy-user, and python-announce-list mailing lists. Look at previous
@@ -344,8 +365,8 @@ as generated for the release notes above. If you crosspost, make sure that
 python-announce-list is BCC so that replies will not be sent to that list.
 
 
-Post-Release Tasks (skip for prereleases)
------------------------------------------
+11. Post-release tasks (skip for prereleases)
+---------------------------------------------
 
 Checkout main and forward port the documentation changes::
 
@@ -360,3 +381,13 @@ Checkout main and forward port the documentation changes::
     $ git push origin HEAD
 
 Go to GitHub and make a PR.
+
+12. Update oldest-supported-numpy
+---------------------------------
+
+If this release is the first one to support a new Python version, or the first
+to provide wheels for a new platform or PyPy version, the version pinnings
+in https://github.com/scipy/oldest-supported-numpy should be updated.
+Either submit a PR with changes to ``setup.cfg`` there, or open an issue with
+info on needed changes.
+

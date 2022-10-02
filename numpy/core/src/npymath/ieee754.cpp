@@ -344,211 +344,6 @@ _next(long double x, int p)
 }
 #endif
 
-/*
- * nextafter code taken from BSD math lib, the code contains the following
- * notice:
- *
- * ====================================================
- * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
- *
- * Developed at SunPro, a Sun Microsystems, Inc. business.
- * Permission to use, copy, modify, and distribute this
- * software is freely granted, provided that this notice
- * is preserved.
- * ====================================================
- */
-
-#ifndef HAVE_NEXTAFTER
-double
-npy_nextafter(double x, double y)
-{
-    volatile double t;
-    npy_int32 hx, hy, ix, iy;
-    npy_uint32 lx, ly;
-
-    EXTRACT_WORDS(hx, lx, x);
-    EXTRACT_WORDS(hy, ly, y);
-    ix = hx & 0x7fffffff; /* |x| */
-    iy = hy & 0x7fffffff; /* |y| */
-
-    if (((ix >= 0x7ff00000) && ((ix - 0x7ff00000) | lx) != 0) || /* x is nan */
-        ((iy >= 0x7ff00000) && ((iy - 0x7ff00000) | ly) != 0))   /* y is nan */
-        return x + y;
-    if (x == y)
-        return y;                            /* x=y, return y */
-    if ((ix | lx) == 0) {                    /* x == 0 */
-        INSERT_WORDS(x, hy & 0x80000000, 1); /* return +-minsubnormal */
-        t = x * x;
-        if (t == x)
-            return t;
-        else
-            return x; /* raise underflow flag */
-    }
-    if (hx >= 0) {                                  /* x > 0 */
-        if (hx > hy || ((hx == hy) && (lx > ly))) { /* x > y, x -= ulp */
-            if (lx == 0)
-                hx -= 1;
-            lx -= 1;
-        }
-        else { /* x < y, x += ulp */
-            lx += 1;
-            if (lx == 0)
-                hx += 1;
-        }
-    }
-    else { /* x < 0 */
-        if (hy >= 0 || hx > hy ||
-            ((hx == hy) && (lx > ly))) { /* x < y, x -= ulp */
-            if (lx == 0)
-                hx -= 1;
-            lx -= 1;
-        }
-        else { /* x > y, x += ulp */
-            lx += 1;
-            if (lx == 0)
-                hx += 1;
-        }
-    }
-    hy = hx & 0x7ff00000;
-    if (hy >= 0x7ff00000)
-        return x + x;      /* overflow  */
-    if (hy < 0x00100000) { /* underflow */
-        t = x * x;
-        if (t != x) { /* raise underflow flag */
-            INSERT_WORDS(y, hx, lx);
-            return y;
-        }
-    }
-    INSERT_WORDS(x, hx, lx);
-    return x;
-}
-#endif
-
-#ifndef HAVE_NEXTAFTERF
-float
-npy_nextafterf(float x, float y)
-{
-    volatile float t;
-    npy_int32 hx, hy, ix, iy;
-
-    GET_FLOAT_WORD(hx, x);
-    GET_FLOAT_WORD(hy, y);
-    ix = hx & 0x7fffffff; /* |x| */
-    iy = hy & 0x7fffffff; /* |y| */
-
-    if ((ix > 0x7f800000) || /* x is nan */
-        (iy > 0x7f800000))   /* y is nan */
-        return x + y;
-    if (x == y)
-        return y;                                 /* x=y, return y */
-    if (ix == 0) {                                /* x == 0 */
-        SET_FLOAT_WORD(x, (hy & 0x80000000) | 1); /* return +-minsubnormal */
-        t = x * x;
-        if (t == x)
-            return t;
-        else
-            return x; /* raise underflow flag */
-    }
-    if (hx >= 0) {     /* x > 0 */
-        if (hx > hy) { /* x > y, x -= ulp */
-            hx -= 1;
-        }
-        else { /* x < y, x += ulp */
-            hx += 1;
-        }
-    }
-    else {                        /* x < 0 */
-        if (hy >= 0 || hx > hy) { /* x < y, x -= ulp */
-            hx -= 1;
-        }
-        else { /* x > y, x += ulp */
-            hx += 1;
-        }
-    }
-    hy = hx & 0x7f800000;
-    if (hy >= 0x7f800000)
-        return x + x;      /* overflow  */
-    if (hy < 0x00800000) { /* underflow */
-        t = x * x;
-        if (t != x) { /* raise underflow flag */
-            SET_FLOAT_WORD(y, hx);
-            return y;
-        }
-    }
-    SET_FLOAT_WORD(x, hx);
-    return x;
-}
-#endif
-
-#ifndef HAVE_NEXTAFTERL
-npy_longdouble
-npy_nextafterl(npy_longdouble x, npy_longdouble y)
-{
-    volatile npy_longdouble t;
-    union IEEEl2bitsrep ux;
-    union IEEEl2bitsrep uy;
-
-    ux.e = x;
-    uy.e = y;
-
-    if ((GET_LDOUBLE_EXP(ux) == 0x7fff &&
-         ((GET_LDOUBLE_MANH(ux) & ~LDBL_NBIT) | GET_LDOUBLE_MANL(ux)) != 0) ||
-        (GET_LDOUBLE_EXP(uy) == 0x7fff &&
-         ((GET_LDOUBLE_MANH(uy) & ~LDBL_NBIT) | GET_LDOUBLE_MANL(uy)) != 0)) {
-        return ux.e + uy.e; /* x or y is nan */
-    }
-    if (ux.e == uy.e) {
-        return uy.e; /* x=y, return y */
-    }
-    if (ux.e == 0.0) {
-        SET_LDOUBLE_MANH(ux, 0); /* return +-minsubnormal */
-        SET_LDOUBLE_MANL(ux, 1);
-        SET_LDOUBLE_SIGN(ux, GET_LDOUBLE_SIGN(uy));
-        t = ux.e * ux.e;
-        if (t == ux.e) {
-            return t;
-        }
-        else {
-            return ux.e; /* raise underflow flag */
-        }
-    }
-    if ((ux.e > 0.0) ^ (ux.e < uy.e)) { /* x -= ulp */
-        if (GET_LDOUBLE_MANL(ux) == 0) {
-            if ((GET_LDOUBLE_MANH(ux) & ~LDBL_NBIT) == 0) {
-                SET_LDOUBLE_EXP(ux, GET_LDOUBLE_EXP(ux) - 1);
-            }
-            SET_LDOUBLE_MANH(ux, (GET_LDOUBLE_MANH(ux) - 1) |
-                                         (GET_LDOUBLE_MANH(ux) & LDBL_NBIT));
-        }
-        SET_LDOUBLE_MANL(ux, GET_LDOUBLE_MANL(ux) - 1);
-    }
-    else { /* x += ulp */
-        SET_LDOUBLE_MANL(ux, GET_LDOUBLE_MANL(ux) + 1);
-        if (GET_LDOUBLE_MANL(ux) == 0) {
-            SET_LDOUBLE_MANH(ux, (GET_LDOUBLE_MANH(ux) + 1) |
-                                         (GET_LDOUBLE_MANH(ux) & LDBL_NBIT));
-            if ((GET_LDOUBLE_MANH(ux) & ~LDBL_NBIT) == 0) {
-                SET_LDOUBLE_EXP(ux, GET_LDOUBLE_EXP(ux) + 1);
-            }
-        }
-    }
-    if (GET_LDOUBLE_EXP(ux) == 0x7fff) {
-        return ux.e + ux.e; /* overflow  */
-    }
-    if (GET_LDOUBLE_EXP(ux) == 0) { /* underflow */
-        if (LDBL_NBIT) {
-            SET_LDOUBLE_MANH(ux, GET_LDOUBLE_MANH(ux) & ~LDBL_NBIT);
-        }
-        t = ux.e * ux.e;
-        if (t != ux.e) { /* raise underflow flag */
-            return ux.e;
-        }
-    }
-
-    return ux.e;
-}
-#endif
-
 namespace {
 template <typename T>
 struct numeric_limits;
@@ -609,29 +404,23 @@ npy_spacingl(npy_longdouble x)
  * Decorate all the math functions which are available on the current platform
  */
 
-#ifdef HAVE_NEXTAFTERF
 extern "C" float
 npy_nextafterf(float x, float y)
 {
     return nextafterf(x, y);
 }
-#endif
 
-#ifdef HAVE_NEXTAFTER
 extern "C" double
 npy_nextafter(double x, double y)
 {
     return nextafter(x, y);
 }
-#endif
 
-#ifdef HAVE_NEXTAFTERL
 extern "C" npy_longdouble
 npy_nextafterl(npy_longdouble x, npy_longdouble y)
 {
     return nextafterl(x, y);
 }
-#endif
 
 extern "C" int
 npy_clear_floatstatus()

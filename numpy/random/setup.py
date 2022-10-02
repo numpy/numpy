@@ -1,12 +1,9 @@
 import os
-import platform
 import sys
 from os.path import join
 
 from numpy.distutils.system_info import platform_bits
-
-is_msvc = (platform.platform().startswith('Windows') and
-           platform.python_compiler().startswith('MS'))
+from numpy.distutils.msvccompiler import lib_opts_if_msvc
 
 
 def configuration(parent_package='', top_path=None):
@@ -43,13 +40,6 @@ def configuration(parent_package='', top_path=None):
     # Some bit generators exclude GCC inlining
     EXTRA_COMPILE_ARGS = ['-U__GNUC_GNU_INLINE__']
 
-    if is_msvc and platform_bits == 32:
-        # 32-bit windows requires explicit sse2 option
-        EXTRA_COMPILE_ARGS += ['/arch:SSE2']
-    elif not is_msvc:
-        # Some bit generators require c99
-        EXTRA_COMPILE_ARGS += ['-std=c99']
-
     if sys.platform == 'cygwin':
         # Export symbols without __declspec(dllexport) for using by cython.
         # Using __declspec(dllexport) does not export other necessary symbols
@@ -73,25 +63,25 @@ def configuration(parent_package='', top_path=None):
         'src/distributions/random_hypergeometric.c',
     ]
 
-    def gl_if_msvc(build_cmd):
-        """ Add flag if we are using MSVC compiler
+    def lib_opts(build_cmd):
+        """ Add flags that depend on the compiler.
 
-        We can't see this in our scope, because we have not initialized the
-        distutils build command, so use this deferred calculation to run when
-        we are building the library.
+        We can't see which compiler we are using in our scope, because we have
+        not initialized the distutils build command, so use this deferred
+        calculation to run when we are building the library.
         """
-        # Keep in sync with numpy/core/setup.py
-        if build_cmd.compiler.compiler_type == 'msvc':
-            # explicitly disable whole-program optimization
-            return ['/GL-']
-        return []
+        opts = lib_opts_if_msvc(build_cmd)
+        if build_cmd.compiler.compiler_type != 'msvc':
+            # Some bit generators require c99
+            opts.append('-std=c99')
+        return opts
 
     config.add_installed_library('npyrandom',
         sources=npyrandom_sources,
         install_dir='lib',
         build_info={
             'include_dirs' : [],  # empty list required for creating npyrandom.h
-            'extra_compiler_args': [gl_if_msvc],
+            'extra_compiler_args': [lib_opts],
         })
 
     for gen in ['mt19937']:

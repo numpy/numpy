@@ -15,7 +15,26 @@ pr:
 
 stages:
 
+- stage: Check
+  jobs:
+    - job: Skip
+      pool:
+        vmImage: 'ubuntu-20.04'
+      variables:
+        DECODE_PERCENTS: 'false'
+        RET: 'true'
+      steps:
+      - bash: |
+          git_log=`git log --max-count=1 --skip=1 --pretty=format:"%B" | tr "\n" " "`
+          echo "##vso[task.setvariable variable=log]$git_log"
+      - bash: echo "##vso[task.setvariable variable=RET]false"
+        condition: or(contains(variables.log, '[skip azp]'), contains(variables.log, '[azp skip]'), contains(variables.log, '[skip ci]'), contains(variables.log, '[ci skip]'))
+      - bash: echo "##vso[task.setvariable variable=start_main;isOutput=true]$RET"
+        name: result
+
 - stage: InitialTests
+  condition: and(succeeded(), eq(dependencies.Check.outputs['Skip.result.start_main'], 'true'))
+  dependsOn: Check
   jobs:
 
   # Native build is based on gcc flag `-march=native`
@@ -48,6 +67,8 @@ stages:
         testRunTitle: 'Publish test results for baseline/native'
 
 - stage: ComprehensiveTests
+  condition: and(succeeded(), eq(dependencies.Check.outputs['Skip.result.start_main'], 'true'))
+  dependsOn: Check
   jobs:
 
   - job: Lint
@@ -93,7 +114,7 @@ stages:
             python3 -m pip install -v . && \
             python3 runtests.py -n --debug-info --mode=full -- -rsx --junitxml=junit/test-results.xml && \
             python3 tools/openblas_support.py --check_version"
-      displayName: 'Run 32-bit manylinux2010 Docker Build / Tests'
+      displayName: 'Run 32-bit manylinux2014 Docker Build / Tests'
     - task: PublishTestResults@2
       condition: succeededOrFailed()
       inputs:
@@ -104,14 +125,7 @@ stages:
 
   - job: macOS
     pool:
-      # NOTE: at time of writing, there is a danger
-      # that using an invalid vmIMage string for macOS
-      # image silently redirects to a Windows build on Azure;
-      # for now, use the only image name officially present in
-      # the docs even though i.e., numba uses another in their
-      # azure config for mac os -- Microsoft has indicated
-      # they will patch this issue
-      vmImage: 'macOS-1015'
+      vmImage: 'macOS-11'
     strategy:
       maxParallel: 3
       matrix:
@@ -176,7 +190,7 @@ stages:
     - script: |
         python -m pip install -r test_requirements.txt
         # Don't use doc_requirements.txt since that messes up tests
-        python -m pip install vulture sphinx==4.2.0 numpydoc==1.2.0
+        python -m pip install vulture sphinx==4.3.0 numpydoc==1.4.0
       displayName: 'Install dependencies; some are optional to avoid test skips'
     - script: /bin/bash -c "! vulture . --min-confidence 100 --exclude doc/,numpy/distutils/ | grep 'unreachable'"
       displayName: 'Check for unreachable code paths in Python modules'
@@ -205,9 +219,14 @@ stages:
     - script: python runtests.py -g --refguide-check
       displayName: 'Run Refguide Check'
       condition: eq(variables['USE_OPENBLAS'], '1')
-    - script: python runtests.py -n --mode=full -- -rsx --junitxml=junit/test-results.xml
+    - script: |
+        echo LIBRARY_PATH ${LIBRARY_PATH}
+        python runtests.py -n --mode=full -- -rsx --junitxml=junit/test-results.xml
       displayName: 'Run Full NumPy Test Suite'
       condition: eq(variables['USE_OPENBLAS'], '1')
+      env:
+        # gfortran installed above adds -lSystem, so this is needed to find it (gh-22043)
+        LIBRARY_PATH: /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib
     - bash: python tools/openblas_support.py --check_version
       displayName: 'Verify OpenBLAS version'
       condition: eq(variables['USE_OPENBLAS'], '1')

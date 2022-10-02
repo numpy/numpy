@@ -243,7 +243,7 @@ def tensorsolve(a, b, axes=None):
 
     It is assumed that all indices of `x` are summed over in the product,
     together with the rightmost indices of `a`, as is done in, for example,
-    ``tensordot(a, x, axes=b.ndim)``.
+    ``tensordot(a, x, axes=x.ndim)``.
 
     Parameters
     ----------
@@ -1631,7 +1631,6 @@ def svd(a, full_matrices=True, compute_uv=True, hermitian=False):
             return wrap(u), s, wrap(vt)
         else:
             s = eigvalsh(a)
-            s = s[..., ::-1]
             s = abs(s)
             return sort(s)[..., ::-1]
 

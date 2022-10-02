@@ -164,7 +164,39 @@ int_common_dtype(PyArray_DTypeMeta *NPY_UNUSED(cls), PyArray_DTypeMeta *other)
     }
     else if (NPY_DT_is_legacy(other)) {
         /* This is a back-compat fallback to usually do the right thing... */
-        return PyArray_DTypeFromTypeNum(NPY_UINT8);
+        PyArray_DTypeMeta *uint8_dt = PyArray_DTypeFromTypeNum(NPY_UINT8);
+        PyArray_DTypeMeta *res = NPY_DT_CALL_common_dtype(other, uint8_dt);
+        Py_DECREF(uint8_dt);
+        if (res == NULL) {
+            PyErr_Clear();
+        }
+        else if (res == (PyArray_DTypeMeta *)Py_NotImplemented) {
+            Py_DECREF(res);
+        }
+        else {
+            return res;
+        }
+        /* Try again with `int8`, an error may have been set, though */
+        PyArray_DTypeMeta *int8_dt = PyArray_DTypeFromTypeNum(NPY_INT8);
+        res = NPY_DT_CALL_common_dtype(other, int8_dt);
+        Py_DECREF(int8_dt);
+        if (res == NULL) {
+            PyErr_Clear();
+        }
+        else if (res == (PyArray_DTypeMeta *)Py_NotImplemented) {
+            Py_DECREF(res);
+        }
+        else {
+            return res;
+        }
+        /* And finally, we will try the default integer, just for sports... */
+        PyArray_DTypeMeta *default_int = PyArray_DTypeFromTypeNum(NPY_LONG);
+        res = NPY_DT_CALL_common_dtype(other, default_int);
+        Py_DECREF(default_int);
+        if (res == NULL) {
+            PyErr_Clear();
+        }
+        return res;
     }
     Py_INCREF(Py_NotImplemented);
     return (PyArray_DTypeMeta *)Py_NotImplemented;
@@ -191,7 +223,23 @@ float_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
     }
     else if (NPY_DT_is_legacy(other)) {
         /* This is a back-compat fallback to usually do the right thing... */
-        return PyArray_DTypeFromTypeNum(NPY_HALF);
+        PyArray_DTypeMeta *half_dt = PyArray_DTypeFromTypeNum(NPY_HALF);
+        PyArray_DTypeMeta *res = NPY_DT_CALL_common_dtype(other, half_dt);
+        Py_DECREF(half_dt);
+        if (res == NULL) {
+            PyErr_Clear();
+        }
+        else if (res == (PyArray_DTypeMeta *)Py_NotImplemented) {
+            Py_DECREF(res);
+        }
+        else {
+            return res;
+        }
+        /* Retry with double (the default float) */
+        PyArray_DTypeMeta *double_dt = PyArray_DTypeFromTypeNum(NPY_DOUBLE);
+        res = NPY_DT_CALL_common_dtype(other, double_dt);
+        Py_DECREF(double_dt);
+        return res;
     }
     Py_INCREF(Py_NotImplemented);
     return (PyArray_DTypeMeta *)Py_NotImplemented;
@@ -229,7 +277,24 @@ complex_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
     }
     else if (NPY_DT_is_legacy(other)) {
         /* This is a back-compat fallback to usually do the right thing... */
-        return PyArray_DTypeFromTypeNum(NPY_CFLOAT);
+        PyArray_DTypeMeta *cfloat_dt = PyArray_DTypeFromTypeNum(NPY_CFLOAT);
+        PyArray_DTypeMeta *res = NPY_DT_CALL_common_dtype(other, cfloat_dt);
+        Py_DECREF(cfloat_dt);
+        if (res == NULL) {
+            PyErr_Clear();
+        }
+        else if (res == (PyArray_DTypeMeta *)Py_NotImplemented) {
+            Py_DECREF(res);
+        }
+        else {
+            return res;
+        }
+        /* Retry with cdouble (the default complex) */
+        PyArray_DTypeMeta *cdouble_dt = PyArray_DTypeFromTypeNum(NPY_CDOUBLE);
+        res = NPY_DT_CALL_common_dtype(other, cdouble_dt);
+        Py_DECREF(cdouble_dt);
+        return res;
+
     }
     else if (other == &PyArray_PyIntAbstractDType ||
              other == &PyArray_PyFloatAbstractDType) {

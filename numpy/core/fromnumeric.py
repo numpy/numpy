@@ -601,59 +601,67 @@ def _transpose_dispatcher(a, axes=None):
 @array_function_dispatch(_transpose_dispatcher)
 def transpose(a, axes=None):
     """
-    Reverse or permute the axes of an array; returns the modified array.
+    Returns an array with axes transposed.
 
-    For an array a with two axes, transpose(a) gives the matrix transpose.
-
-    Refer to `numpy.ndarray.transpose` for full documentation.
+    For a 1-D array, this returns an unchanged view of the original array, as a
+    transposed vector is simply the same vector.
+    To convert a 1-D array into a 2-D column vector, an additional dimension
+    must be added, e.g., ``np.atleast2d(a).T`` achieves this, as does
+    ``a[:, np.newaxis]``.
+    For a 2-D array, this is the standard matrix transpose.
+    For an n-D array, if axes are given, their order indicates how the
+    axes are permuted (see Examples). If axes are not provided, then
+    ``transpose(a).shape == a.shape[::-1]``.
 
     Parameters
     ----------
     a : array_like
         Input array.
     axes : tuple or list of ints, optional
-        If specified, it must be a tuple or list which contains a permutation of
-        [0,1,..,N-1] where N is the number of axes of a.  The i'th axis of the
-        returned array will correspond to the axis numbered ``axes[i]`` of the
-        input.  If not specified, defaults to ``range(a.ndim)[::-1]``, which
-        reverses the order of the axes.
+        If specified, it must be a tuple or list which contains a permutation
+        of [0,1,...,N-1] where N is the number of axes of `a`. The `i`'th axis
+        of the returned array will correspond to the axis numbered ``axes[i]``
+        of the input. If not specified, defaults to ``range(a.ndim)[::-1]``,
+        which reverses the order of the axes.
 
     Returns
     -------
     p : ndarray
-        `a` with its axes permuted.  A view is returned whenever
-        possible.
+        `a` with its axes permuted. A view is returned whenever possible.
 
     See Also
     --------
-    ndarray.transpose : Equivalent method
-    moveaxis
-    argsort
+    ndarray.transpose : Equivalent method.
+    moveaxis : Move axes of an array to new positions.
+    argsort : Return the indices that would sort an array.
 
     Notes
     -----
-    Use `transpose(a, argsort(axes))` to invert the transposition of tensors
+    Use ``transpose(a, argsort(axes))`` to invert the transposition of tensors
     when using the `axes` keyword argument.
-
-    Transposing a 1-D array returns an unchanged view of the original array.
 
     Examples
     --------
-    >>> x = np.arange(4).reshape((2,2))
-    >>> x
-    array([[0, 1],
-           [2, 3]])
+    >>> a = np.array([[1, 2], [3, 4]])
+    >>> a
+    array([[1, 2],
+           [3, 4]])
+    >>> np.transpose(a)
+    array([[1, 3],
+           [2, 4]])
 
-    >>> np.transpose(x)
-    array([[0, 2],
-           [1, 3]])
+    >>> a = np.array([1, 2, 3, 4])
+    >>> a
+    array([1, 2, 3, 4])
+    >>> np.transpose(a)
+    array([1, 2, 3, 4])
 
-    >>> x = np.ones((1, 2, 3))
-    >>> np.transpose(x, (1, 0, 2)).shape
+    >>> a = np.ones((1, 2, 3))
+    >>> np.transpose(a, (1, 0, 2)).shape
     (2, 1, 3)
 
-    >>> x = np.ones((2, 3, 4, 5))
-    >>> np.transpose(x).shape
+    >>> a = np.ones((2, 3, 4, 5))
+    >>> np.transpose(a).shape
     (5, 4, 3, 2)
 
     """
@@ -670,10 +678,11 @@ def partition(a, kth, axis=-1, kind='introselect', order=None):
     Return a partitioned copy of an array.
 
     Creates a copy of the array with its elements rearranged in such a
-    way that the value of the element in k-th position is in the
-    position it would be in a sorted array. All elements smaller than
-    the k-th element are moved before this element and all equal or
-    greater are moved behind it. The ordering of the elements in the two
+    way that the value of the element in k-th position is in the position
+    the value would be in a sorted array.  In the partitioned array, all
+    elements before the k-th element are less than or equal to that
+    element, and all the elements after the k-th element are greater than
+    or equal to that element.  The ordering of the elements in the two
     partitions is undefined.
 
     .. versionadded:: 1.8.0
@@ -741,13 +750,30 @@ def partition(a, kth, axis=-1, kind='introselect', order=None):
 
     Examples
     --------
-    >>> a = np.array([3, 4, 2, 1])
-    >>> np.partition(a, 3)
-    array([2, 1, 3, 4])
+    >>> a = np.array([7, 1, 7, 7, 1, 5, 7, 2, 3, 2, 6, 2, 3, 0])
+    >>> p = np.partition(a, 4)
+    >>> p
+    array([0, 1, 2, 1, 2, 5, 2, 3, 3, 6, 7, 7, 7, 7])
 
-    >>> np.partition(a, (1, 3))
-    array([1, 2, 3, 4])
+    ``p[4]`` is 2;  all elements in ``p[:4]`` are less than or equal
+    to ``p[4]``, and all elements in ``p[5:]`` are greater than or
+    equal to ``p[4]``.  The partition is::
 
+        [0, 1, 2, 1], [2], [5, 2, 3, 3, 6, 7, 7, 7, 7]
+
+    The next example shows the use of multiple values passed to `kth`.
+
+    >>> p2 = np.partition(a, (4, 8))
+    >>> p2
+    array([0, 1, 2, 1, 2, 3, 3, 2, 5, 6, 7, 7, 7, 7])
+
+    ``p2[4]`` is 2  and ``p2[8]`` is 5.  All elements in ``p2[:4]``
+    are less than or equal to ``p2[4]``, all elements in ``p2[5:8]``
+    are greater than or equal to ``p2[4]`` and less than or equal to
+    ``p2[8]``, and all elements in ``p2[9:]`` are greater than or
+    equal to ``p2[8]``.  The partition is::
+
+        [0, 1, 2, 1], [2], [3, 3, 2], [5], [6, 7, 7, 7, 7]
     """
     if axis is None:
         # flatten returns (1, N) for np.matrix, so always use the last axis
@@ -780,7 +806,7 @@ def argpartition(a, kth, axis=-1, kind='introselect', order=None):
     kth : int or sequence of ints
         Element index to partition by. The k-th element will be in its
         final sorted position and all smaller elements will be moved
-        before it and all larger elements behind it. The order all
+        before it and all larger elements behind it. The order of all
         elements in the partitions is undefined. If provided with a
         sequence of k-th it will partition all of them into their sorted
         position at once.
@@ -2621,9 +2647,9 @@ def ptp(a, axis=None, out=None, keepdims=np._NoValue):
 
     Returns
     -------
-    ptp : ndarray
-        A new array holding the result, unless `out` was
-        specified, in which case a reference to `out` is returned.
+    ptp : ndarray or scalar
+        The range of a given array - `scalar` if array is one-dimensional
+        or a new array holding the result along the given axis
 
     Examples
     --------
@@ -2724,8 +2750,9 @@ def amax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     -------
     amax : ndarray or scalar
         Maximum of `a`. If `axis` is None, the result is a scalar value.
-        If `axis` is given, the result is an array of dimension
-        ``a.ndim - 1``.
+        If `axis` is an int, the result is an array of dimension
+        ``a.ndim - 1``. If `axis` is a tuple, the result is an array of 
+        dimension ``a.ndim - len(axis)``.
 
     See Also
     --------
@@ -2849,8 +2876,9 @@ def amin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     -------
     amin : ndarray or scalar
         Minimum of `a`. If `axis` is None, the result is a scalar value.
-        If `axis` is given, the result is an array of dimension
-        ``a.ndim - 1``.
+        If `axis` is an int, the result is an array of dimension
+        ``a.ndim - 1``.  If `axis` is a tuple, the result is an array of 
+        dimension ``a.ndim - len(axis)``.
 
     See Also
     --------
@@ -3010,14 +3038,17 @@ def prod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
 
     Even when the input array is two-dimensional:
 
-    >>> np.prod([[1.,2.],[3.,4.]])
+    >>> a = np.array([[1., 2.], [3., 4.]])
+    >>> np.prod(a)
     24.0
 
     But we can also specify the axis over which to multiply:
 
-    >>> np.prod([[1.,2.],[3.,4.]], axis=1)
+    >>> np.prod(a, axis=1)
     array([  2.,  12.])
-
+    >>> np.prod(a, axis=0)
+    array([3., 8.])
+    
     Or select specific elements to include:
 
     >>> np.prod([1., np.nan, 3.], where=[True, False, True])

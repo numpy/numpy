@@ -26,4 +26,20 @@ array_might_be_written(PyArrayObject *obj);
  */
 static const int NPY_ARRAY_WARN_ON_WRITE = (1 << 31);
 
+
+/*
+ * These flags are used internally to indicate an array that was previously
+ * a Python scalar (int, float, complex).  The dtype of such an array should
+ * be considered as any integer, floating, or complex rather than the explicit
+ * dtype attached to the array.
+ *
+ * These flags must only be used in local context when the array in question
+ * is not returned.  Use three flags, to avoid having to double check the
+ * actual dtype when the flags are used.
+ */
+static const int NPY_ARRAY_WAS_PYTHON_INT = (1 << 30);
+static const int NPY_ARRAY_WAS_PYTHON_FLOAT = (1 << 29);
+static const int NPY_ARRAY_WAS_PYTHON_COMPLEX = (1 << 28);
+static const int NPY_ARRAY_WAS_PYTHON_LITERAL = (1 << 30 | 1 << 29 | 1 << 28);
+
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_ARRAYOBJECT_H_ */

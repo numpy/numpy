@@ -146,3 +146,40 @@ following in python::
 
 This may mainly help you if you are not running the python and/or NumPy
 version you are expecting to run.
+
+
+C-API incompatibility
+---------------------------
+
+If you see an error like:
+
+
+    RuntimeError: module compiled against API version v1 but this version of numpy is v2
+
+
+You may have:
+
+* A bad extension "wheel" (binary install) that should use
+  `oldest-support-numpy <https://pypi.org/project/oldest-supported-numpy/>`_ (
+  with manual constraints if necessary) to build their binary packages.
+
+* An environment issue messing with package versions.
+
+* Incompatible package versions somehow enforced manually.
+
+* An extension module compiled locally against a very recent version
+  followed by a NumPy downgrade.
+
+* A compiled extension copied to a different computer with an
+  older NumPy version.
+
+The best thing to do if you see this error is to contact
+the maintainers of the package that is causing problem
+so that they can solve the problem properly.
+
+However, while you wait for a solution, a work around
+that usually works is to upgrade the NumPy version:
+
+
+    pip install numpy --upgrade
+

@@ -336,8 +336,9 @@ typedef int (PyArrayMethod_StridedLoop)(PyArrayMethod_Context *context,
 #define NPY_DT_default_descr 3
 #define NPY_DT_common_dtype 4
 #define NPY_DT_common_instance 5
-#define NPY_DT_setitem 6
-#define NPY_DT_getitem 7
+#define NPY_DT_ensure_canonical 6
+#define NPY_DT_setitem 7
+#define NPY_DT_getitem 8
 
 
 // TODO: These slots probably still need some thought, and/or a way to "grow"?
@@ -457,7 +458,7 @@ PyArray_GetDefaultDescr(PyArray_DTypeMeta *DType)
  */
 #if !defined(NO_IMPORT) && !defined(NO_IMPORT_ARRAY)
 
-#define __EXPERIMENTAL_DTYPE_VERSION 4
+#define __EXPERIMENTAL_DTYPE_VERSION 5
 
 static int
 import_experimental_dtype_api(int version)

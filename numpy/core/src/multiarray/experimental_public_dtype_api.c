@@ -16,7 +16,7 @@
 #include "common_dtype.h"
 
 
-#define EXPERIMENTAL_DTYPE_API_VERSION 4
+#define EXPERIMENTAL_DTYPE_API_VERSION 5
 
 
 typedef struct{
@@ -117,7 +117,7 @@ PyArray_ArrFuncs default_funcs = {
 
 
 /* other slots are in order, so keep only last around: */
-#define NUM_DTYPE_SLOTS 7
+#define NUM_DTYPE_SLOTS 8
 
 
 int

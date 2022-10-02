@@ -132,7 +132,7 @@ NpyIter_RemoveAxis(NpyIter *iter, int axis)
     NIT_ITERSIZE(iter) = 1;
     axisdata = NIT_AXISDATA(iter);
     for (idim = 0; idim < ndim-1; ++idim) {
-        if (npy_mul_with_overflow_intp(&NIT_ITERSIZE(iter),
+        if (npy_mul_sizes_with_overflow(&NIT_ITERSIZE(iter),
                     NIT_ITERSIZE(iter), NAD_SHAPE(axisdata))) {
             NIT_ITERSIZE(iter) = -1;
             break;

@@ -33,7 +33,7 @@ static NPY_INLINE uint64_t mulhilo64(uint64_t a, uint64_t b, uint64_t *hip) {
   return (uint64_t)product;
 }
 #else
-#if defined(_WIN32)
+#if defined(_WIN32) && !defined(__MINGW32__)
 #include <intrin.h>
 #if defined(_WIN64) && defined(_M_AMD64)
 #pragma intrinsic(_umul128)

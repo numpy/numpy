@@ -2191,7 +2191,7 @@ def analyzebody(block, args, tab=''):
             as_ = args
         b = postcrack(b, as_, tab=tab + '\t')
         if b['block'] in ['interface', 'abstract interface'] and \
-           not b['body'] and not b['implementedby']:
+           not b['body'] and not b.get('implementedby'):
             if 'f2pyenhancements' not in b:
                 continue
         if b['block'].replace(' ', '') == 'pythonmodule':

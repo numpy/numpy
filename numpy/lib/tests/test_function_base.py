@@ -360,6 +360,18 @@ class TestAverage:
 
         assert_(np.average(y3, weights=w3).dtype == np.result_type(y3, w3))
 
+        # test weights with `keepdims=False` and `keepdims=True`
+        x = np.array([2, 3, 4]).reshape(3, 1)
+        w = np.array([4, 5, 6]).reshape(3, 1)
+
+        actual = np.average(x, weights=w, axis=1, keepdims=False)
+        desired = np.array([2., 3., 4.])
+        assert_array_equal(actual, desired)
+
+        actual = np.average(x, weights=w, axis=1, keepdims=True)
+        desired = np.array([[2.], [3.], [4.]])
+        assert_array_equal(actual, desired)
+
     def test_returned(self):
         y = np.array([[1, 2, 3], [4, 5, 6]])
 
@@ -408,6 +420,11 @@ class TestAverage:
         w = np.array([decimal.Decimal(1) for _ in range(10)])
         w /= w.sum()
         assert_almost_equal(a.mean(0), average(a, weights=w))
+
+    def test_average_class_without_dtype(self):
+        # see gh-21988
+        a = np.array([Fraction(1, 5), Fraction(3, 5)])
+        assert_equal(np.average(a), Fraction(2, 5))
 
 class TestSelect:
     choices = [np.array([1, 2, 3]),
@@ -913,18 +930,39 @@ class TestDelete:
         with pytest.raises(IndexError):
             np.delete([0, 1, 2], np.array([], dtype=float))
 
-    def test_single_item_array(self):
-        a_del = delete(self.a, 1)
-        a_del_arr = delete(self.a, np.array([1]))
-        a_del_lst = delete(self.a, [1])
-        a_del_obj = delete(self.a, np.array([1], dtype=object))
-        assert_equal(a_del, a_del_arr, a_del_lst, a_del_obj)
+    @pytest.mark.parametrize("indexer", [np.array([1]), [1]])
+    def test_single_item_array(self, indexer):
+        a_del_int = delete(self.a, 1)
+        a_del = delete(self.a, indexer)
+        assert_equal(a_del_int, a_del)
 
-        nd_a_del = delete(self.nd_a, 1, axis=1)
-        nd_a_del_arr = delete(self.nd_a, np.array([1]), axis=1)
-        nd_a_del_lst = delete(self.nd_a, [1], axis=1)
-        nd_a_del_obj = delete(self.nd_a, np.array([1], dtype=object), axis=1)
-        assert_equal(nd_a_del, nd_a_del_arr, nd_a_del_lst, nd_a_del_obj)
+        nd_a_del_int = delete(self.nd_a, 1, axis=1)
+        nd_a_del = delete(self.nd_a, np.array([1]), axis=1)
+        assert_equal(nd_a_del_int, nd_a_del)
+
+    def test_single_item_array_non_int(self):
+        # Special handling for integer arrays must not affect non-integer ones.
+        # If `False` was cast to `0` it would delete the element:
+        res = delete(np.ones(1), np.array([False]))
+        assert_array_equal(res, np.ones(1))
+
+        # Test the more complicated (with axis) case from gh-21840
+        x = np.ones((3, 1))
+        false_mask = np.array([False], dtype=bool)
+        true_mask = np.array([True], dtype=bool)
+
+        res = delete(x, false_mask, axis=-1)
+        assert_array_equal(res, x)
+        res = delete(x, true_mask, axis=-1)
+        assert_array_equal(res, x[:, :0])
+
+        # Object or e.g. timedeltas should *not* be allowed
+        with pytest.raises(IndexError):
+            delete(np.ones(2), np.array([0], dtype=object))
+
+        with pytest.raises(IndexError):
+            # timedeltas are sometimes "integral, but clearly not allowed:
+            delete(np.ones(2), np.array([0], dtype="m8[ns]"))
 
 
 class TestGradient:
@@ -2954,11 +2992,11 @@ class TestPercentile:
 
     H_F_TYPE_CODES = [(int_type, np.float64)
                       for int_type in np.typecodes["AllInteger"]
-                      ] + [(np.float16, np.float64),
-                           (np.float32, np.float64),
+                      ] + [(np.float16, np.float16),
+                           (np.float32, np.float32),
                            (np.float64, np.float64),
                            (np.longdouble, np.longdouble),
-                           (np.complex64, np.complex128),
+                           (np.complex64, np.complex64),
                            (np.complex128, np.complex128),
                            (np.clongdouble, np.clongdouble),
                            (np.dtype("O"), np.float64)]
@@ -2980,10 +3018,15 @@ class TestPercentile:
                                   expected,
                                   input_dtype,
                                   expected_dtype):
+        expected_dtype = np.dtype(expected_dtype)
+        if np._get_promotion_state() == "legacy":
+            expected_dtype = np.promote_types(expected_dtype, np.float64)
+
         arr = np.asarray([15.0, 20.0, 35.0, 40.0, 50.0], dtype=input_dtype)
         actual = np.percentile(arr, 40.0, method=method)
 
-        np.testing.assert_almost_equal(actual, expected, 14)
+        np.testing.assert_almost_equal(
+            actual, expected_dtype.type(expected), 14)
 
         if method in ["inverted_cdf", "closest_observation"]:
             if input_dtype == "O":
@@ -3541,7 +3584,7 @@ class TestLerp:
         # double subtraction is needed to remove the extra precision of t < 0.5
         left = nfb._lerp(a, b, 1 - (1 - t))
         right = nfb._lerp(b, a, 1 - t)
-        assert left == right
+        assert_allclose(left, right)
 
     def test_linear_interpolation_formula_0d_inputs(self):
         a = np.array(2)

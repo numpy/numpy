@@ -1,10 +1,13 @@
 # doxygen required, use apt-get or dnf
-sphinx==4.5.0
-numpydoc==1.3.1
-pydata-sphinx-theme==0.8.1
-sphinx-panels
+sphinx>=4.5.0
+numpydoc==1.4
+pydata-sphinx-theme==0.9.0
+sphinx-design
 ipython!=8.1.0
 scipy
 matplotlib
 pandas
 breathe
+
+# needed to build release notes
+towncrier
