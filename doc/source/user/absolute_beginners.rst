@@ -1504,7 +1504,7 @@ You can use ``np.load()`` to reconstruct your array. ::
 
   >>> b = np.load('filename.npy')
 
-If you want to check your array, you can run:::
+If you want to check your array, you can run::
 
   >>> print(b)
   [1 2 3 4 5 6]
