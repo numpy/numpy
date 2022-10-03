@@ -214,4 +214,53 @@ npyv_notnan_f64(npyv_f64 a)
     return svcmpeq(svptrue_b64(), a, a);
 }
 
+// Test cross all vector lanes
+// any: returns true if any of the elements is not equal to zero
+// all: returns true if all elements are not equal to zero
+#define NPYV_IMPL_SVE_ANYALL(SFX, T)	\
+  NPY_FINLINE bool npyv_any_##SFX(npyv_##SFX a) \
+  { return svcntp_##SFX(svptrue_##SFX(), a) != 0; } \
+  NPY_FINLINE bool npyv_all_##SFX(npyv_##SFX a) \
+  { return svcntp_##SFX(svptrue_##SFX(), a) == svcnt##T(); }
+NPYV_IMPL_SVE_ANYALL(b8,  b)
+NPYV_IMPL_SVE_ANYALL(b16, h)
+NPYV_IMPL_SVE_ANYALL(b32, w)
+NPYV_IMPL_SVE_ANYALL(b64, d)
+#undef NPYV_IMPL_SVE_ANYALL
+
+#define NPYV_IMPL_SVE_ANYALL(SFX, BSFX, T)	\
+  NPY_FINLINE bool npyv_any_##SFX(npyv_##SFX a) \
+  { \
+    return svorv_##SFX(svptrue_##BSFX(), a) != 0; \
+  } \
+  NPY_FINLINE bool npyv_all_##SFX(npyv_##SFX a) \
+  { \
+  const svbool_t cmp = svcmpne_n_##SFX(svptrue_##BSFX(), a, 0); \
+  return svcntp_##BSFX(svptrue_##BSFX(), cmp) == svcnt##T(); \
+  }
+NPYV_IMPL_SVE_ANYALL(u8,  b8,  b)
+NPYV_IMPL_SVE_ANYALL(u16, b16, h)
+NPYV_IMPL_SVE_ANYALL(u32, b32, w)
+NPYV_IMPL_SVE_ANYALL(u64, b64, d)
+NPYV_IMPL_SVE_ANYALL(s8,  b8,  b)
+NPYV_IMPL_SVE_ANYALL(s16, b16, h)
+NPYV_IMPL_SVE_ANYALL(s32, b32, w)
+NPYV_IMPL_SVE_ANYALL(s64, b64, d)
+#undef NPYV_IMPL_SVE_ANYALL
+
+#define NPYV_IMPL_SVE_ANYALL(SFX, BSFX, T) \
+  NPY_FINLINE bool npyv_any_##SFX(npyv_##SFX a) \
+{ \
+  const svbool_t cmp = svcmpne_n_##SFX(svptrue_##BSFX(), a, 0); \
+  return svcntp_##BSFX(svptrue_##BSFX(), cmp) != 0; \
+} \
+  NPY_FINLINE bool npyv_all_##SFX(npyv_##SFX a) \
+{ \
+  const svbool_t cmp = svcmpne_n_##SFX(svptrue_##BSFX(), a, 0); \
+  return svcntp_##BSFX(svptrue_##BSFX(), cmp) == svcnt##T(); \
+}
+NPYV_IMPL_SVE_ANYALL(f32, b32, w)
+NPYV_IMPL_SVE_ANYALL(f64, b64, d)
+#undef NPYV_IMPL_SVE_ANYALL
+
 #endif  // _NPY_SIMD_SVE_OPERATORS_H

@@ -155,6 +155,18 @@ NPYV_IMPL_SVE_SET_B(64)
 #define npyv_select_f32 svsel_f32
 #define npyv_select_f64 svsel_f64
 
+// extract the first vector's lane
+#define npyv_extract0_u8(A) svlastb_u8(svptrue_pat_b8(SV_VL1), A)
+#define npyv_extract0_u16(A) svlastb_u16(svptrue_pat_b16(SV_VL1), A)
+#define npyv_extract0_u32(A) svlastb_u32(svptrue_pat_b32(SV_VL1), A)
+#define npyv_extract0_u64(A) svlastb_u64(svptrue_pat_b64(SV_VL1), A)
+#define npyv_extract0_s8(A) svlastb_s8(svptrue_pat_b8(SV_VL1), A)
+#define npyv_extract0_s16(A) svlastb_s16(svptrue_pat_b16(SV_VL1), A)
+#define npyv_extract0_s32(A) svlastb_s32(svptrue_pat_b32(SV_VL1), A)
+#define npyv_extract0_s64(A) svlastb_s64(svptrue_pat_b64(SV_VL1), A)
+#define npyv_extract0_f32(A) svlastb_f32(svptrue_pat_b32(SV_VL1), A)
+#define npyv_extract0_f64(A) svlastb_f64(svptrue_pat_b64(SV_VL1), A)
+
 // Reinterpret
 #define npyv_reinterpret_u8_u8(X) X
 #define npyv_reinterpret_u8_s8 svreinterpret_u8_s8
@@ -285,23 +297,6 @@ NPYV_IMPL_SVE_BROADCAST_LANE0(32, s)
 NPYV_IMPL_SVE_BROADCAST_LANE0(64, s)
 NPYV_IMPL_SVE_BROADCAST_LANE0(32, f)
 NPYV_IMPL_SVE_BROADCAST_LANE0(64, f)
-
-// get simd lane#0
-#define NPYV_IMPL_SVE_GET_LANE0(W, S, T)                  \
-    NPY_FINLINE npy_##T##W npyv__get_simd_lane0_##S##W(   \
-            npyv_##S##W a)                                \
-    {                                                     \
-        return svorv_##S##W(svptrue_pat_b##W(SV_VL1), a); \
-    }
-
-NPYV_IMPL_SVE_GET_LANE0(8, u, uint)
-NPYV_IMPL_SVE_GET_LANE0(16, u, uint)
-NPYV_IMPL_SVE_GET_LANE0(32, u, uint)
-NPYV_IMPL_SVE_GET_LANE0(64, u, uint)
-NPYV_IMPL_SVE_GET_LANE0(8, s, int)
-NPYV_IMPL_SVE_GET_LANE0(16, s, int)
-NPYV_IMPL_SVE_GET_LANE0(32, s, int)
-NPYV_IMPL_SVE_GET_LANE0(64, s, int)
 
 /* Following npyv_popcnt_b(8/16/32/64) function requried
    to declare #define NPY_SIMD_POPCNT 1. */

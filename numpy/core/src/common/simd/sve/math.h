@@ -66,6 +66,11 @@ npyv_square_f64(npyv_f64 a)
 #define npyv_maxp_f32(A, B) svmaxnm_f32_x(svptrue_b32(), A, B)
 #define npyv_maxp_f64(A, B) svmaxnm_f64_x(svptrue_b64(), A, B)
 
+// Maximum, propagates NaNs
+// If any of corresponded element is NaN, NaN is set.
+#define npyv_maxn_f32(A, B) svmax_f32_x(svptrue_b32(), A, B)
+#define npyv_maxn_f64(A, B) svmax_f64_x(svptrue_b64(), A, B)
+
 // Maximum, integer operations
 #define npyv_max_u8(A, B) svmax_u8_x(svptrue_b8(), A, B)
 #define npyv_max_u16(A, B) svmax_u16_x(svptrue_b16(), A, B)
@@ -86,6 +91,11 @@ npyv_square_f64(npyv_f64 a)
 #define npyv_minp_f32(A, B) svminnm_f32_x(svptrue_b32(), A, B)
 #define npyv_minp_f64(A, B) svminnm_f64_x(svptrue_b64(), A, B)
 
+// Mininum, propagates NaNs
+// If any of corresponded element is NaN, NaN is set.
+#define npyv_minn_f32(A, B) svmin_f32_x(svptrue_b32(), A, B)
+#define npyv_minn_f64(A, B) svmin_f64_x(svptrue_b64(), A, B)
+
 // Minimum, integer operations
 #define npyv_min_u8(A, B) svmin_u8_x(svptrue_b8(), A, B)
 #define npyv_min_u16(A, B) svmin_u16_x(svptrue_b16(), A, B)
@@ -95,6 +105,36 @@ npyv_square_f64(npyv_f64 a)
 #define npyv_min_s16(A, B) svmin_s16_x(svptrue_b16(), A, B)
 #define npyv_min_s32(A, B) svmin_s32_x(svptrue_b32(), A, B)
 #define npyv_min_s64(A, B) svmin_s64_x(svptrue_b64(), A, B)
+
+#define npyv_reduce_min_u8(A) svminv_u8(svptrue_b8(), A)
+#define npyv_reduce_min_u16(A) svminv_u16(svptrue_b16(), A)
+#define npyv_reduce_min_u32(A) svminv_u32(svptrue_b32(), A)
+#define npyv_reduce_min_u64(A) svminv_u64(svptrue_b64(), A)
+#define npyv_reduce_min_s8(A) svminv_s8(svptrue_b8(), A)
+#define npyv_reduce_min_s16(A) svminv_s16(svptrue_b16(), A)
+#define npyv_reduce_min_s32(A) svminv_s32(svptrue_b32(), A)
+#define npyv_reduce_min_s64(A) svminv_s64(svptrue_b64(), A)
+#define npyv_reduce_min_f32(A) svminv_f32(svptrue_b32(), A)
+#define npyv_reduce_min_f64(A) svminv_f64(svptrue_b64(), A)
+#define npyv_reduce_minn_f32(A) svminv_f32(svptrue_b32(), A)
+#define npyv_reduce_minn_f64(A) svminv_f64(svptrue_b64(), A)
+#define npyv_reduce_minp_f32(A) svminnmv_f32(svptrue_b32(), A)
+#define npyv_reduce_minp_f64(A) svminnmv_f64(svptrue_b64(), A)
+
+#define npyv_reduce_max_u8(A) svmaxv_u8(svptrue_b8(), A)
+#define npyv_reduce_max_u16(A) svmaxv_u16(svptrue_b16(), A)
+#define npyv_reduce_max_u32(A) svmaxv_u32(svptrue_b32(), A)
+#define npyv_reduce_max_u64(A) svmaxv_u64(svptrue_b64(), A)
+#define npyv_reduce_max_s8(A) svmaxv_s8(svptrue_b8(), A)
+#define npyv_reduce_max_s16(A) svmaxv_s16(svptrue_b16(), A)
+#define npyv_reduce_max_s32(A) svmaxv_s32(svptrue_b32(), A)
+#define npyv_reduce_max_s64(A) svmaxv_s64(svptrue_b64(), A)
+#define npyv_reduce_max_f32(A) svmaxv_f32(svptrue_b32(), A)
+#define npyv_reduce_max_f64(A) svmaxv_f64(svptrue_b64(), A)
+#define npyv_reduce_maxn_f32(A) svmaxv_f32(svptrue_b32(), A)
+#define npyv_reduce_maxn_f64(A) svmaxv_f64(svptrue_b64(), A)
+#define npyv_reduce_maxp_f32(A) svmaxnmv_f32(svptrue_b32(), A)
+#define npyv_reduce_maxp_f64(A) svmaxnmv_f64(svptrue_b64(), A)
 
 // round to nearest integer even
 #define npyv_rint_f32(A) svrintn_f32_x(svptrue_b32(), A)
