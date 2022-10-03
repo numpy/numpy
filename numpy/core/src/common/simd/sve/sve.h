@@ -13,6 +13,9 @@
 #if __ARM_FEATURE_SVE_BITS == 512
 #define NPY_SIMD 512
 #define __SVE_ATTRIBUTE_SIZE_ __attribute__((arm_sve_vector_bits(NPY_SIMD)))
+#elif __ARM_FEATURE_SVE_BITS == 256
+#define NPY_SIMD 256
+#define __SVE_ATTRIBUTE_SIZE_ __attribute__((arm_sve_vector_bits(NPY_SIMD)))
 #else
 #error "unsupported sve size"
 #endif

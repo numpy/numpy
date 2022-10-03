@@ -12,7 +12,7 @@
  ***************************/
 // GCC requires literal type definitions for pointers types otherwise it causes
 // ambiguous errors
-#define NPYV_IMPL_SVE_MEM(VL_PAT, HALF_LANE, S, W, T)                         \
+#define NPYV_IMPL_SVE_MEM(S, W, T)                                            \
     NPY_FINLINE npyv_##S##W npyv_load_##S##W(const npyv_lanetype_##S##W *ptr) \
     {                                                                         \
         return svld1_##S##W(svptrue_b##W(), (const T##_t *)ptr);              \
@@ -25,7 +25,8 @@
     NPY_FINLINE npyv_##S##W npyv_loadl_##S##W(                                \
             const npyv_lanetype_##S##W *ptr)                                  \
     {                                                                         \
-        return svld1_##S##W(svptrue_pat_b##W(VL_PAT), (const T##_t *)ptr);    \
+        const svbool_t mask = svwhilelt_b##W##_u32(0, NPY_SIMD / W / 2);      \
+        return svld1_##S##W(mask, (const T##_t *)ptr);                        \
     }                                                                         \
     NPY_FINLINE npyv_##S##W npyv_loads_##S##W(                                \
             const npyv_lanetype_##S##W *ptr)                                  \
@@ -75,15 +76,14 @@
     NPY_FINLINE void npyv_storel_##S##W(npyv_lanetype_##S##W *ptr,            \
                                         npyv_##S##W vec)                      \
     {                                                                         \
-        svst1_##S##W(svptrue_pat_b##W(VL_PAT), (T##_t *)ptr, vec);            \
+        const svbool_t mask = svwhilelt_b##W##_u32(0, NPY_SIMD / W / 2);      \
+        svst1_##S##W(mask, (T##_t *)ptr, vec);                                \
     }                                                                         \
     NPY_FINLINE void npyv_storeh_##S##W(npyv_lanetype_##S##W *ptr,            \
                                         npyv_##S##W vec)                      \
     {                                                                         \
-        svbool_t mask = svptrue_pat_b##W(VL_PAT);                             \
-                                                                              \
-        sv##T##_t tmp = svext_##S##W(vec, vec, HALF_LANE);                    \
-        svst1_##S##W(mask, (T##_t *)ptr, tmp);                                \
+        sv##T##_t tmp = svext_##S##W(vec, vec, NPY_SIMD / W / 2);             \
+        svst1_##S##W(svptrue_pat_b##W(SV_POW2), (T##_t *)ptr, tmp);           \
     }                                                                         \
     NPY_FINLINE void npyv_store_till_##S##W(npy_##T *ptr, npy_uintp nlane,    \
                                             npyv_##S##W a)                    \
@@ -98,21 +98,16 @@
         }                                                                     \
     }
 
-#if NPY_SIMD == 512
-NPYV_IMPL_SVE_MEM(SV_VL32, 32, u, 8, uint8)
-NPYV_IMPL_SVE_MEM(SV_VL16, 16, u, 16, uint16)
-NPYV_IMPL_SVE_MEM(SV_VL8, 8, u, 32, uint32)
-NPYV_IMPL_SVE_MEM(SV_VL4, 4, u, 64, uint64)
-NPYV_IMPL_SVE_MEM(SV_VL32, 32, s, 8, int8)
-NPYV_IMPL_SVE_MEM(SV_VL16, 16, s, 16, int16)
-NPYV_IMPL_SVE_MEM(SV_VL8, 8, s, 32, int32)
-NPYV_IMPL_SVE_MEM(SV_VL4, 4, s, 64, int64)
-NPYV_IMPL_SVE_MEM(SV_VL8, 8, f, 32, float32)
-NPYV_IMPL_SVE_MEM(SV_VL4, 4, f, 64, float64)
-#else
-#error "unsupported sve size"
-#endif
-
+NPYV_IMPL_SVE_MEM(u, 8,  uint8)
+NPYV_IMPL_SVE_MEM(u, 16, uint16)
+NPYV_IMPL_SVE_MEM(u, 32, uint32)
+NPYV_IMPL_SVE_MEM(u, 64, uint64)
+NPYV_IMPL_SVE_MEM(s, 8,  int8)
+NPYV_IMPL_SVE_MEM(s, 16, int16)
+NPYV_IMPL_SVE_MEM(s, 32, int32)
+NPYV_IMPL_SVE_MEM(s, 64, int64)
+NPYV_IMPL_SVE_MEM(f, 32, float32)
+NPYV_IMPL_SVE_MEM(f, 64, float64)
 /***************************
  * Non-contiguous (partial) Load/Store
  ***************************/
@@ -198,15 +193,7 @@ NPYV_IMPL_SVE_LOADN(f, 64, float64)
 NPY_FINLINE npyv_f32
 npyv_lut32_f32(const float *table, npyv_u32 idx)
 {
-    const npyv_u32 t_idx =
-            svand_n_u32_m(svptrue_b32(), idx, npyv_nlanes_f32 - 1);
-    const npyv_f32 table0 = npyv_load_f32(table);
-    const npyv_f32 table1 = npyv_load_f32(table + npyv_nlanes_f32);
-    const svbool_t mask = svcmplt_n_u32(svptrue_b32(), idx, npyv_nlanes_f32);
-    npyv_f32 t0 = svtbl_f32(table0, t_idx);
-    npyv_f32 t1 = svtbl_f32(table1, t_idx);
-
-    return svsel_f32(mask, t0, t1);
+    return svld1_gather_u32index_f32(svptrue_b32(), table, idx);
 }
 NPY_FINLINE npyv_u32
 npyv_lut32_u32(const npy_uint32 *table, npyv_u32 idx)
@@ -224,15 +211,7 @@ npyv_lut32_s32(const npy_int32 *table, npyv_u32 idx)
 NPY_FINLINE npyv_f64
 npyv_lut16_f64(const double *table, npyv_u64 idx)
 {
-    const npyv_u64 t_idx =
-            svand_n_u64_m(svptrue_b64(), idx, npyv_nlanes_f64 - 1);
-    const npyv_f64 table0 = npyv_load_f64(table);
-    const npyv_f64 table1 = npyv_load_f64(table + npyv_nlanes_f64);
-    const svbool_t mask = svcmplt_n_u64(svptrue_b64(), idx, npyv_nlanes_f64);
-    npyv_f64 t0 = svtbl_f64(table0, t_idx);
-    npyv_f64 t1 = svtbl_f64(table1, t_idx);
-
-    return svsel_f64(mask, t0, t1);
+    return svld1_gather_u64index_f64(svptrue_b64(), table, idx);
 }
 NPY_FINLINE npyv_u64
 npyv_lut16_u64(const npy_uint64 *table, npyv_u64 idx)
