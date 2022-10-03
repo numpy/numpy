@@ -1085,7 +1085,8 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         comment. None implies no comments. For backwards compatibility, byte
         strings will be decoded as 'latin1'. The default is '#'.
     delimiter : str, optional
-        The string used to separate values. For backwards compatibility, byte
+        The character used to separate the values. Only single character
+        delimiters are supported. For backwards compatibility, byte
         strings will be decoded as 'latin1'. The default is whitespace.
     converters : dict or callable, optional
         Converter functions to customize value parsing. If `converters` is
