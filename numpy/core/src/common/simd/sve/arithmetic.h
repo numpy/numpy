@@ -34,6 +34,11 @@
     {                                                 \
         return sv##OP##_##S##W(svptrue_b##W(), a);    \
     }
+#define NPYV_IMPL_SVE_SUM0(FUNC, OP, S, W, T)          \
+    NPY_FINLINE T npyv_##FUNC##_##S##W(npyv_##S##W a)  \
+    {                                                  \
+        return sv##OP##_##S##W(svptrue_b##W(), 0., a); \
+    }
 
 /***************************
  * Addition
@@ -220,8 +225,8 @@ NPYV_IMPL_SVE_FUSED_OP(nmulsub, nmla, f, 64)
 // reduce sum across vector
 NPYV_IMPL_SVE_SUM(sum,   addv, u, 32, npy_uint32)
 NPYV_IMPL_SVE_SUM(sum,   addv, u, 64, npy_uint64)
-NPYV_IMPL_SVE_SUM(sum,   addv, f, 32, float)
-NPYV_IMPL_SVE_SUM(sum,   addv, f, 64, double)
+NPYV_IMPL_SVE_SUM0(sum,   adda, f, 32, float)
+NPYV_IMPL_SVE_SUM0(sum,   adda, f, 64, double)
 NPYV_IMPL_SVE_SUM(sumup, addv, u, 8,  npy_uint16)
 NPYV_IMPL_SVE_SUM(sumup, addv, u, 16, npy_uint32)
 

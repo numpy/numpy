@@ -115,39 +115,73 @@ NPYV_IMPL_SVE_MEM(f, 64, float64)
     NPY_FINLINE npyv_##S##W npyv_loadn_##S##W(const npy_##T *ptr,             \
                                               npy_intp stride)                \
     {                                                                         \
-        assert(llabs(stride) <= NPY_SIMD_MAXLOAD_STRIDE##W);                  \
-        const svint##W##_t steps = svindex_s##W(0, 1);                        \
-        const svint##W##_t idx =                                              \
-                svmul_n_s##W##_x(svptrue_b##W(), steps, stride);              \
+        switch (stride) {                                                     \
+        case 2:                                                               \
+            return svget2_##S##W(svld2_##S##W(svptrue_b##W(), ptr), 0);       \
+        case 3:                                                               \
+            return svget3_##S##W(svld3_##S##W(svptrue_b##W(), ptr), 0);       \
+        case 4:                                                               \
+            return svget4_##S##W(svld4_##S##W(svptrue_b##W(), ptr), 0);       \
+        default:                                                              \
+            assert(llabs(stride) <= NPY_SIMD_MAXLOAD_STRIDE##W);              \
+            const svint##W##_t steps = svindex_s##W(0, 1);                    \
+            const svint##W##_t idx =                                          \
+                    svmul_n_s##W##_x(svptrue_b##W(), steps, stride);          \
                                                                               \
-        return svld1_gather_s##W##index_##S##W(svptrue_b##W(), ptr, idx);     \
+            return svld1_gather_s##W##index_##S##W(svptrue_b##W(), ptr, idx); \
+        }                                                                     \
     }                                                                         \
     NPY_FINLINE npyv_##S##W npyv_loadn_till_##S##W(                           \
             const npy_##T *ptr, npy_intp stride, npy_uintp nlane,             \
             npy_##T fill)                                                     \
     {                                                                         \
+        const svbool_t mask = svwhilelt_b##W##_u32(0, nlane);                 \
+        const sv##T##_t vfill = svdup_##S##W(fill);                           \
+        npyv_##S##W v0;                                                       \
+                                                                              \
         assert(nlane > 0);                                                    \
         assert(llabs(stride) <= NPY_SIMD_MAXLOAD_STRIDE##W);                  \
+        switch (stride) {                                                     \
+        case 2:                                                               \
+          v0 = svget2_##S##W(svld2_##S##W(mask, ptr), 0);                     \
+          break;                                                              \
+        case 3:                                                               \
+          v0 = svget3_##S##W(svld3_##S##W(mask, ptr), 0);                     \
+          break;                                                              \
+        case 4:                                                               \
+          v0 = svget4_##S##W(svld4_##S##W(mask, ptr), 0);                     \
+          break;                                                              \
+        default:                                                              \
         const svint##W##_t steps = svindex_s##W(0, 1);                        \
         const svint##W##_t idx =                                              \
                 svmul_n_s##W##_x(svptrue_b##W(), steps, stride);              \
                                                                               \
-        if (nlane == NPY_SIMD_WIDTH / sizeof(T##_t)) {                        \
-            return svld1_gather_s##W##index_##S##W(svptrue_b##W(), ptr, idx); \
+        v0 = svld1_gather_s##W##index_##S##W(mask, ptr, idx);                 \
+        break;                                                                \
         }                                                                     \
-        else {                                                                \
-            const svbool_t mask = svwhilelt_b##W##_u32(0, nlane);             \
-            const sv##T##_t vfill = svdup_##S##W(fill);                       \
-                                                                              \
-            return svsel_##S##W(                                              \
-                    mask, svld1_gather_s##W##index_##S##W(mask, ptr, idx),    \
-                    vfill);                                                   \
-        }                                                                     \
+        return svsel_##S##W(mask, v0, vfill);                                 \
     }                                                                         \
     NPY_FINLINE npyv_##S##W npyv_loadn_tillz_##S##W(                          \
             const npy_##T *ptr, npy_intp stride, npy_uintp nlane)             \
     {                                                                         \
-        return npyv_loadn_till_##S##W(ptr, stride, nlane, 0);                 \
+        const svbool_t mask = svwhilelt_b##W##_u32(0, nlane);                 \
+                                                                              \
+        assert(nlane > 0);                                                    \
+        assert(llabs(stride) <= NPY_SIMD_MAXLOAD_STRIDE##W);                  \
+        switch (stride) {                                                     \
+        case 2:                                                               \
+          return svget2_##S##W(svld2_##S##W(mask, ptr), 0);                   \
+        case 3:                                                               \
+          return svget3_##S##W(svld3_##S##W(mask, ptr), 0);                   \
+        case 4:                                                               \
+          return svget4_##S##W(svld4_##S##W(mask, ptr), 0);                   \
+        default:                                                              \
+        const svint##W##_t steps = svindex_s##W(0, 1);                        \
+        const svint##W##_t idx =                                              \
+                svmul_n_s##W##_x(svptrue_b##W(), steps, stride);              \
+                                                                              \
+        return svld1_gather_s##W##index_##S##W(mask, ptr, idx);               \
+        }                                                                     \
     }                                                                         \
     NPY_FINLINE void npyv_storen_##S##W(npy_##T *ptr, npy_intp stride,        \
                                         npyv_##S##W a)                        \
