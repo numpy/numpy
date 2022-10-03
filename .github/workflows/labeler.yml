@@ -3,9 +3,6 @@ on:
   pull_request_target:
     types: [opened, synchronize, reopened, edited]
 
-permissions:
-  contents: write # to add labels
-
 jobs:
   pr-labeler:
     runs-on: ubuntu-latest
