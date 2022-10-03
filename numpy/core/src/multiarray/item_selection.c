@@ -2154,7 +2154,7 @@ count_nonzero_bytes_384(const npy_uint64 * w)
     return r;
 }
 
-#if NPY_SIMD
+#if NPY_SIMD && !defined(NPY_HAVE_SVE)
 /* Count the zero bytes between `*d` and `end`, updating `*d` to point to where to keep counting from. */
 NPY_FINLINE NPY_GCC_OPT_3 npyv_u8
 count_zero_bytes_u8(const npy_uint8 **d, const npy_uint8 *end, npy_uint8 max_count)
@@ -2190,7 +2190,7 @@ count_zero_bytes_u16(const npy_uint8 **d, const npy_uint8 *end, npy_uint16 max_c
     }
     return vsum16;
 }
-#endif // NPY_SIMD
+#endif // NPY_SIMD && !defined(NPY_HAVE_SVE)
 /*
  * Counts the number of non-zero values in a raw array.
  * The one loop process is shown below(take SSE2 with 128bits vector for example):
@@ -2215,6 +2215,23 @@ count_nonzero_u8(const char *data, npy_intp bstride, npy_uintp len)
     npy_intp count = 0;
     if (bstride == 1) {
     #if NPY_SIMD
+    #ifdef NPY_SIMD_POPCNT
+        npyv_u8 zero = npyv_zero_u8();
+
+        for (; len >= npyv_nlanes_u8; len -= npyv_nlanes_u8, data += npyv_nlanes_u8) {
+            npyv_u8 d = npyv_load_u8(data);
+            npyv_b8 b = npyv_cmpneq_u8(d, zero);
+            count += npyv_popcnt_b8(b);
+        }
+        if (len) {
+            npyv_u8 d = npyv_load_tillz_u8(data, len);
+            npyv_b8 b = npyv_cmpneq_u8(d, zero);
+
+            count += npyv_popcnt_b8(b);
+            len = 0;
+      }
+      return count;
+    #else
         npy_uintp len_m = len & -npyv_nlanes_u8;
         npy_uintp zcount = 0;
         for (const char *end = data + len_m; data < end;) {
@@ -2228,6 +2245,7 @@ count_nonzero_u8(const char *data, npy_intp bstride, npy_uintp len)
         }
         len  -= len_m;
         count = len_m - zcount;
+    #endif
     #else
         if (!NPY_ALIGNMENT_REQUIRED || npy_is_aligned(data, sizeof(npy_uint64))) {
             int step = 6 * sizeof(npy_uint64);
@@ -2251,6 +2269,24 @@ count_nonzero_u16(const char *data, npy_intp bstride, npy_uintp len)
     npy_intp count = 0;
 #if NPY_SIMD
     if (bstride == sizeof(npy_uint16)) {
+    #ifdef NPY_SIMD_POPCNT
+        npy_uint16 *data_u16 = (npy_uint16 *) data;
+        npyv_u16 zero = npyv_zero_u16();
+
+        for (; len >= npyv_nlanes_u16; len -= npyv_nlanes_u16, data_u16 += npyv_nlanes_u16) {
+            npyv_u16 d = npyv_load_u16(data_u16);
+            npyv_b16 b = npyv_cmpneq_u16(d, zero);
+            count += npyv_popcnt_b16(b);
+      }
+      if (len) {
+          npyv_u16 d = npyv_load_tillz_u16(data_u16, len);
+          npyv_b16 b = npyv_cmpneq_u16(d, zero);
+
+          count += npyv_popcnt_b16(b);
+          len = 0;
+      }
+      return count;
+    #else
         npy_uintp zcount = 0, len_m = len & -npyv_nlanes_u16;
         const npyv_u16 vone  = npyv_setall_u16(1);
         const npyv_u16 vzero = npyv_zero_u16();
@@ -2269,6 +2305,7 @@ count_nonzero_u16(const char *data, npy_intp bstride, npy_uintp len)
         }
         len  -= len_m;
         count = len_m - zcount;
+    #endif
     }
 #endif
     for (; len > 0; --len, data += bstride) {
@@ -2283,6 +2320,25 @@ count_nonzero_u32(const char *data, npy_intp bstride, npy_uintp len)
     npy_intp count = 0;
 #if NPY_SIMD
     if (bstride == sizeof(npy_uint32)) {
+    #ifdef NPY_SIMD_POPCNT
+        npy_uint32 *data_u32 = (npy_uint32 *) data;
+        npyv_u32 zero = npyv_zero_u32();
+
+        for (; len >= npyv_nlanes_u32; len -= npyv_nlanes_u32, data_u32 += npyv_nlanes_u32) {
+            npyv_u32 d = npyv_load_u32(data_u32);
+            npyv_b32 b = npyv_cmpneq_u32(d, zero);
+
+            count += npyv_popcnt_b32(b);
+        }
+        if (len) {
+            npyv_u32 d = npyv_load_tillz_u32(data_u32, len);
+            npyv_b32 b = npyv_cmpneq_u32(d, zero);
+
+            count += npyv_popcnt_b32(b);
+            len = 0;
+        }
+        return count;
+    #else
         const npy_uintp max_iter = NPY_MAX_UINT32*npyv_nlanes_u32;
         const npy_uintp len_m = (len > max_iter ? max_iter : len) & -npyv_nlanes_u32;
         const npyv_u32 vone   = npyv_setall_u32(1);
@@ -2299,6 +2355,7 @@ count_nonzero_u32(const char *data, npy_intp bstride, npy_uintp len)
         npyv_u64 even = npyv_reinterpret_u64_u32(npyv_and_u32(vsum32, maskevn));
         count = len_m - npyv_sum_u64(npyv_add_u64(odd, even));
         len  -= len_m;
+    #endif
     }
 #endif
     for (; len > 0; --len, data += bstride) {
@@ -2313,6 +2370,25 @@ count_nonzero_u64(const char *data, npy_intp bstride, npy_uintp len)
     npy_intp count = 0;
 #if NPY_SIMD
     if (bstride == sizeof(npy_uint64)) {
+    #ifdef NPY_SIMD_POPCNT
+        npy_uint64 *data_u64 = (npy_uint64 *) data;
+        npyv_u64 zero = npyv_zero_u64();
+
+        for (; len >= npyv_nlanes_u64; len -= npyv_nlanes_u64, data_u64 += npyv_nlanes_u64) {
+            npyv_u64 d = npyv_load_u64(data_u64);
+            npyv_b64 b = npyv_cmpneq_u64(d, zero);
+
+            count += npyv_popcnt_b64(b);
+        }
+        if (len) {
+            npyv_u64 d = npyv_load_tillz_u64(data_u64, len);
+            npyv_b64 b = npyv_cmpneq_u64(d, zero);
+
+            count += npyv_popcnt_b64(b);
+            len = 0;
+        }
+      return count;
+    #else
         const npy_uintp len_m = len & -npyv_nlanes_u64;
         const npyv_u64 vone   = npyv_setall_u64(1);
         const npyv_u64 vzero  = npyv_zero_u64();
@@ -2325,6 +2401,7 @@ count_nonzero_u64(const char *data, npy_intp bstride, npy_uintp len)
         }
         len  -= len_m;
         count = len_m - npyv_sum_u64(vsum64);
+    #endif
     }
 #endif
     for (; len > 0; --len, data += bstride) {

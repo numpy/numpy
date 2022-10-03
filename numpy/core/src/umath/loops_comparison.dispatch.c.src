@@ -2,7 +2,7 @@
  ** $maxopt baseline
  ** sse2 sse42 avx2 avx512f avx512_skx
  ** vsx2 vsx3
- ** neon
+ ** neon sve
  ** vx vxe
  **/
 #define _UMATHMODULE

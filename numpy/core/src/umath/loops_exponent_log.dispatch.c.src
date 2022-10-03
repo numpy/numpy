@@ -1,6 +1,7 @@
 /*@targets
  ** $maxopt baseline
  ** (avx2 fma3) avx512f avx512_skx
+ ** sve
  **/
 
 #define _UMATHMODULE

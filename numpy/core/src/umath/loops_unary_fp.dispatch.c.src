@@ -2,7 +2,7 @@
  ** $maxopt baseline
  ** sse2 sse41
  ** vsx2
- ** neon asimd
+ ** neon asimd sve
  ** vx vxe
  **/
 /**

@@ -2,7 +2,7 @@
  ** $maxopt baseline
  ** sse2 sse41 avx2 avx512f avx512_skx
  ** vsx2 vsx4
- ** neon
+ ** neon sve
  ** vx
  **/
 #define _UMATHMODULE
@@ -336,7 +336,8 @@ vsx4_simd_divide_contig_@sfx@(char **args, npy_intp len)
 /**end repeat1**/
 #endif
 
-#if NPY_BITSOF_@TYPE@ == 64 && !defined(NPY_HAVE_VSX4) && (defined(NPY_HAVE_VSX) || defined(NPY_HAVE_NEON))
+#if NPY_BITSOF_@TYPE@ == 64 && !defined(NPY_HAVE_VSX4) && (defined(NPY_HAVE_VSX) \
+        || defined(NPY_HAVE_NEON) || defined(NPY_HAVE_SVE))
     #undef TO_SIMD_SFX
 #endif
 
@@ -419,7 +420,8 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_divide)
  * Therefore it's better to disable NPYV in this special case to avoid any unnecessary shuffles.
  * Power10(VSX4) is an exception here since it has native support for integer vector division.
  */
-#if NPY_BITSOF_@STYPE@ == 64 && !defined(NPY_HAVE_VSX4) && (defined(NPY_HAVE_VSX) || defined(NPY_HAVE_NEON))
+#if NPY_BITSOF_@STYPE@ == 64 && !defined(NPY_HAVE_VSX4) && (defined(NPY_HAVE_VSX) \
+        || defined(NPY_HAVE_NEON) || defined(NPY_HAVE_SVE))
     #undef TO_SIMD_SFX
 #endif
 NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_divide)

@@ -1,6 +1,6 @@
 /*@targets
  ** $maxopt baseline
- ** neon asimd
+ ** neon asimd sve
  ** sse2 avx2 avx512_skx
  ** vsx2
  ** vx vxe

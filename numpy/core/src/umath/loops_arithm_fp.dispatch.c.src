@@ -2,6 +2,7 @@
  ** $maxopt baseline
  ** sse2 avx2 avx512f
  ** vx vxe
+ ** sve
  **/
 #define _UMATHMODULE
 #define _MULTIARRAYMODULE
@@ -365,6 +366,8 @@ sse2_binary_scalar2_@kind@_@TYPE@(@type@ * op, @type@ * ip1, @type@ * ip2, npy_i
  *  #type = npy_float, npy_double#
  *  #TYPE = FLOAT, DOUBLE#
  *  #sfx = f32, f64#
+ *  #mask = b32, b64#
+ *  #bits = 32, 64#
  *  #CHK = _F32, _F64#
  */
 #if NPY_SIMD@CHK@
@@ -378,9 +381,25 @@ sse2_binary_scalar2_@kind@_@TYPE@(@type@ * op, @type@ * ip1, @type@ * ip2, npy_i
 static void
 simd_binary_@kind@_@TYPE@(@type@ * op, @type@ * ip1, @type@ * ip2, npy_intp n)
 {
+#ifdef NPY_HAVE_SVE
+    npy_intp i = 0, peel;
+    {
+        peel = npy_aligned_block_offset(op, sizeof(@type@),
+                                                 NPY_SIMD_WIDTH, n);
+        if(peel) {
+            npyv_@sfx@ v1 = npyv_load_till_@sfx@(&ip1[i], peel, 1.0);
+            npyv_@sfx@ v2 = npyv_load_till_@sfx@(&ip2[i], peel, 1.0);
+            npyv_@sfx@ v3 = npyv_@VOP@_@sfx@(v1, v2);
+            npyv_store_till_s@bits@((npy_int@bits@ *)&op[i], peel, npyv_reinterpret_s@bits@_@sfx@(v3));
+            i += peel;
+        }
+    }
+#else
     LOOP_BLOCK_ALIGN_VAR(op, @type@, NPY_SIMD_WIDTH) {
         op[i] = ip1[i] @OP@ ip2[i];
     }
+#endif
+
     /* lots of specializations, to squeeze out max performance */
     if (ip1 == ip2) {
         LOOP_BLOCKED(@type@, NPY_SIMD_WIDTH) {
@@ -397,43 +416,96 @@ simd_binary_@kind@_@TYPE@(@type@ * op, @type@ * ip1, @type@ * ip2, npy_intp n)
             npyv_store_@sfx@(&op[i], c);
         }
     }
+#ifdef NPY_HAVE_SVE
+    if(n - i > 0) {
+        npyv_@sfx@ v1 = npyv_load_till_@sfx@(&ip1[i], n-i, 1.0);
+        npyv_@sfx@ v2 = npyv_load_till_@sfx@(&ip2[i], n-i, 1.0);
+        npyv_@sfx@ v3 = npyv_@VOP@_@sfx@(v1, v2);
+        npyv_store_till_s@bits@((npy_int@bits@ *)&op[i], n-i, npyv_reinterpret_s@bits@_@sfx@(v3));
+    }
+#else
     LOOP_BLOCKED_END {
         op[i] = ip1[i] @OP@ ip2[i];
     }
+#endif
 }
 
 static void
 simd_binary_scalar1_@kind@_@TYPE@(@type@ * op, @type@ * ip1, @type@ * ip2, npy_intp n)
 {
     const npyv_@sfx@ v1 = npyv_setall_@sfx@(ip1[0]);
+#ifdef NPY_HAVE_SVE
+    npy_intp i = 0, peel;
+    {
+        peel = npy_aligned_block_offset(op, sizeof(@type@),
+                                                 NPY_SIMD_WIDTH, n);
+        if(peel) {
+            npyv_@sfx@ v2 = npyv_load_till_@sfx@(&ip2[i], peel, 1.0);
+            npyv_@sfx@ v3 = npyv_@VOP@_@sfx@(v1, v2);
+            npyv_store_till_s@bits@((npy_int@bits@ *)&op[i], peel, npyv_reinterpret_s@bits@_@sfx@(v3));
+            i += peel;
+        }
+    }
+#else
     LOOP_BLOCK_ALIGN_VAR(op, @type@, NPY_SIMD_WIDTH) {
         op[i] = ip1[0] @OP@ ip2[i];
     }
+#endif
     LOOP_BLOCKED(@type@, NPY_SIMD_WIDTH) {
         npyv_@sfx@ v2 = npyv_load_@sfx@(&ip2[i]);
         npyv_@sfx@ v3 = npyv_@VOP@_@sfx@(v1, v2);
         npyv_store_@sfx@(&op[i], v3);
     }
+#ifdef NPY_HAVE_SVE
+    if(n - i > 0) {
+        npyv_@sfx@ v2 = npyv_load_till_@sfx@(&ip2[i], n-i, 1.0);
+        npyv_@sfx@ v3 = npyv_@VOP@_@sfx@(v1, v2);
+        npyv_store_till_s@bits@((npy_int@bits@ *)&op[i], n-i, npyv_reinterpret_s@bits@_@sfx@(v3));
+    }
+#else
     LOOP_BLOCKED_END {
         op[i] = ip1[0] @OP@ ip2[i];
     }
+#endif
 }
 
 static void
 simd_binary_scalar2_@kind@_@TYPE@(@type@ * op, @type@ * ip1, @type@ * ip2, npy_intp n)
 {
     const npyv_@sfx@ v2 = npyv_setall_@sfx@(ip2[0]);
+#ifdef NPY_HAVE_SVE
+    npy_intp i = 0, peel;
+    {
+        peel = npy_aligned_block_offset(op, sizeof(@type@),
+                                                 NPY_SIMD_WIDTH, n);
+        if(peel) {
+            npyv_@sfx@ v1 = npyv_load_till_@sfx@(&ip1[i], peel, 1.0);
+            npyv_@sfx@ v3 = npyv_@VOP@_@sfx@(v1, v2);
+            npyv_store_till_s@bits@((npy_int@bits@ *)&op[i], peel, npyv_reinterpret_s@bits@_@sfx@(v3));
+	    i += peel;
+        }
+    }
+#else
     LOOP_BLOCK_ALIGN_VAR(op, @type@, NPY_SIMD_WIDTH) {
         op[i] = ip1[i] @OP@ ip2[0];
     }
+#endif
     LOOP_BLOCKED(@type@, NPY_SIMD_WIDTH) {
         npyv_@sfx@ v1 = npyv_load_@sfx@(&ip1[i]);
         npyv_@sfx@ v3 = npyv_@VOP@_@sfx@(v1, v2);
         npyv_store_@sfx@(&op[i], v3);
     }
+#ifdef NPY_HAVE_SVE
+    if(n - i > 0) {
+        npyv_@sfx@ v1 = npyv_load_till_@sfx@(&ip1[i], n-i, 1.0);
+        npyv_@sfx@ v3 = npyv_@VOP@_@sfx@(v1, v2);
+        npyv_store_till_s@bits@((npy_int@bits@ *)&op[i], n-i, npyv_reinterpret_s@bits@_@sfx@(v3));
+    }
+#else
     LOOP_BLOCKED_END {
         op[i] = ip1[i] @OP@ ip2[0];
     }
+#endif
 }
 /**end repeat1**/
 #endif /* NPY_SIMD@CHK@ */
@@ -520,7 +592,17 @@ run_binary_simd_@kind@_@TYPE@(char **args, npy_intp const *dimensions, npy_intp 
  * # kind = add, subtract, multiply, divide#
  * # OP = +, -, *, /#
  * # PW = 1, 0, 0, 0#
+ * # NO_SVE = 0, 0, 0, 1#
  */
+#define NPY_KIND_@kind@
+/* Because GCC has the bug for vectorizing with SVE.
+   https://gcc.gnu.org/bugzilla/show_bug.cgi?id=105922
+   Divition can not be vectorized with SVE,
+   otherwise the zero-division flag is set and NumPy detects it.
+   To avoid this issue, SVE is disabled for division. */
+#if @NO_SVE@ && defined(NPY_HAVE_SVE)
+__attribute__((target("arch=armv8-a")))
+#endif
 NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
 (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
