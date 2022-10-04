@@ -139,6 +139,12 @@ class NpzFile(Mapping):
         Additional keyword arguments to pass on to pickle.load.
         These are only useful when loading object arrays saved on
         Python 2 when using Python 3.
+    max_header_size : int, optional
+        Maximum allowed size of the header.  Large headers may not be safe
+        to load securely and thus require explicitly passing a larger value.
+        See :py:meth:`ast.literal_eval()` for details.
+        This option is ignored when `allow_pickle` is passed.  In that case
+        the file is by definition trusted and the limit is unnecessary.
 
     Parameters
     ----------
@@ -174,13 +180,15 @@ class NpzFile(Mapping):
     fid = None
 
     def __init__(self, fid, own_fid=False, allow_pickle=False,
-                 pickle_kwargs=None):
+                 pickle_kwargs=None, *,
+                 max_header_size=format._MAX_HEADER_SIZE):
         # Import is postponed to here since zipfile depends on gzip, an
         # optional component of the so-called standard library.
         _zip = zipfile_factory(fid)
         self._files = _zip.namelist()
         self.files = []
         self.allow_pickle = allow_pickle
+        self.max_header_size = max_header_size
         self.pickle_kwargs = pickle_kwargs
         for x in self._files:
             if x.endswith('.npy'):
@@ -244,7 +252,8 @@ class NpzFile(Mapping):
                 bytes = self.zip.open(key)
                 return format.read_array(bytes,
                                          allow_pickle=self.allow_pickle,
-                                         pickle_kwargs=self.pickle_kwargs)
+                                         pickle_kwargs=self.pickle_kwargs,
+                                         max_header_size=self.max_header_size)
             else:
                 return self.zip.read(key)
         else:
@@ -253,7 +262,7 @@ class NpzFile(Mapping):
 
 @set_module('numpy')
 def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
-         encoding='ASCII'):
+         encoding='ASCII', *, max_header_size=format._MAX_HEADER_SIZE):
     """
     Load arrays or pickled objects from ``.npy``, ``.npz`` or pickled files.
 
@@ -297,6 +306,12 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
         npy/npz files containing object arrays. Values other than 'latin1',
         'ASCII', and 'bytes' are not allowed, as they can corrupt numerical
         data. Default: 'ASCII'
+    max_header_size : int, optional
+        Maximum allowed size of the header.  Large headers may not be safe
+        to load securely and thus require explicitly passing a larger value.
+        See :py:meth:`ast.literal_eval()` for details.
+        This option is ignored when `allow_pickle` is passed.  In that case
+        the file is by definition trusted and the limit is unnecessary.
 
     Returns
     -------
@@ -403,15 +418,20 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
             # Potentially transfer file ownership to NpzFile
             stack.pop_all()
             ret = NpzFile(fid, own_fid=own_fid, allow_pickle=allow_pickle,
-                          pickle_kwargs=pickle_kwargs)
+                          pickle_kwargs=pickle_kwargs,
+                          max_header_size=max_header_size)
             return ret
         elif magic == format.MAGIC_PREFIX:
             # .npy file
             if mmap_mode:
-                return format.open_memmap(file, mode=mmap_mode)
+                if allow_pickle:
+                    max_header_size = 2**64
+                return format.open_memmap(file, mode=mmap_mode,
+                                          max_header_size=max_header_size)
             else:
                 return format.read_array(fid, allow_pickle=allow_pickle,
-                                         pickle_kwargs=pickle_kwargs)
+                                         pickle_kwargs=pickle_kwargs,
+                                         max_header_size=max_header_size)
         else:
             # Try a pickle
             if not allow_pickle:
