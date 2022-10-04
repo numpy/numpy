@@ -1032,6 +1032,12 @@ def safe_eval(source):
     Evaluate a string containing a Python literal expression without
     allowing the execution of arbitrary non-literal code.
 
+    .. warning::
+
+        This function is identical to :py:meth:`ast.literal_eval` and
+        has the same security implications.  It may not always be safe
+        to evaluate large input strings.
+
     Parameters
     ----------
     source : str
