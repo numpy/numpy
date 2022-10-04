@@ -2021,7 +2021,7 @@ add_newdoc('numpy.core.umath', 'log',
     has a branch cut `[-inf, 0]` and is continuous from above on it. `log`
     handles the floating-point negative zero as an infinitesimal negative
     number, conforming to the C99 standard.
-    
+
     In the cases where the input has a negative real part and a very small
     negative complex part (approaching 0), the result is so close to `-pi`
     that it evaluates to exactly `-pi`.
@@ -3297,6 +3297,43 @@ add_newdoc('numpy.core.umath', 'deg2rad',
     --------
     >>> np.deg2rad(180)
     3.1415926535897931
+
+    """)
+
+add_newdoc('numpy.core.umath', 'cart2pol',
+    """
+    Transform Cartesian to polar coordinates
+
+    Parameters
+    ----------
+    x : array_like
+        Cartesian coordinates.
+    y : array_like
+        Cartesian coordinates.
+    $PARAMS
+
+    Returns
+    -------
+    out1 : ndarray
+        The polar angle θ (theta) (angle with respect to polar axis).
+        $OUT_SCALAR_1
+    out2 : ndarray
+        The radial distance r (distance to origin).
+        $OUT_SCALAR_2
+
+    See Also
+    --------
+    rad2deg : Convert angles from radians to degrees.
+    deg2rad : Convert angles from degrees to radians.
+
+    Notes
+    -----
+    .. versionadded:: 1.25.0
+
+    Examples
+    --------
+    >>> np.cart2pol(3, 4)
+    (0.9272952180016122, 5.0)
 
     """)
 

@@ -503,6 +503,12 @@ NPY_INPLACE @type@ npy_deg2rad@c@(@type@ x)
     return x*DEG2RAD;
 }
 
+NPY_INPLACE void npy_cart2pol@c@(@type@ x, @type@ y, @type@ *theta, @type@ *rho)
+{
+    *rho = npy_hypot(x, y);
+    *theta = npy_atan2(y, x);
+}
+
 NPY_INPLACE @type@ npy_log2_1p@c@(@type@ x)
 {
     return LOG2E*npy_log1p@c@(x);

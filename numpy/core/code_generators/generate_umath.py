@@ -641,6 +641,12 @@ defdict = {
           None,
           TD(fltsP, f='deg2rad', astype={'e': 'f'}),
           ),
+'cart2pol':
+    Ufunc(2, 2, None,
+          docstrings.get('numpy.core.umath.cart2pol'),
+          None,
+          TD('fdg', astype={'e': 'f'}),
+          ),
 'arccos':
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.arccos'),

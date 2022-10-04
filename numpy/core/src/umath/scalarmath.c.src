@@ -357,6 +357,11 @@ static NPY_INLINE int
     return 0;
 }
 
+static NPY_INLINE int
+@name@_ctype_cart2pol(@type@ a, @type@ b, @type@ *out1, @type@ *out2) {
+    npy_cart2pol@c@(a, b, out1, out2);
+    return 0;
+}
 
 /**end repeat**/
 

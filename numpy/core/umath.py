@@ -21,7 +21,7 @@ __all__ = [
     'SHIFT_OVERFLOW', 'SHIFT_UNDERFLOW', 'UFUNC_BUFSIZE_DEFAULT',
     'UFUNC_PYVALS_NAME', '_add_newdoc_ufunc', 'absolute', 'add',
     'arccos', 'arccosh', 'arcsin', 'arcsinh', 'arctan', 'arctan2', 'arctanh',
-    'bitwise_and', 'bitwise_or', 'bitwise_xor', 'cbrt', 'ceil', 'conj',
+    'bitwise_and', 'bitwise_or', 'bitwise_xor', 'cart2pol', 'cbrt', 'ceil', 'conj',
     'conjugate', 'copysign', 'cos', 'cosh', 'deg2rad', 'degrees', 'divide',
     'divmod', 'e', 'equal', 'euler_gamma', 'exp', 'exp2', 'expm1', 'fabs',
     'floor', 'floor_divide', 'float_power', 'fmax', 'fmin', 'fmod', 'frexp',
