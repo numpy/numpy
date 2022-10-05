@@ -2958,6 +2958,7 @@ PyUFunc_Reduce(PyUFuncObject *ufunc,
     int iaxes, ndim;
     npy_bool reorderable;
     npy_bool axis_flags[NPY_MAXDIMS];
+    PyArrayObject *result = NULL;
     PyObject *identity;
     const char *ufunc_name = ufunc_get_name_cstr(ufunc);
     /* These parameters come from a TLS global */
@@ -2983,11 +2984,21 @@ PyUFunc_Reduce(PyUFuncObject *ufunc,
         return NULL;
     }
 
+    /*
+     * Promote and fetch ufuncimpl (currently needed to fix up the identity).
+     */
+    PyArray_Descr *descrs[3];
+    PyArrayMethodObject *ufuncimpl = reducelike_promote_and_resolve(ufunc,
+            arr, out, signature, NPY_FALSE, descrs, "reduce");
+    if (ufuncimpl == NULL) {
+        return NULL;
+    }
+
     /* Get the identity */
     /* TODO: Both of these should be provided by the ArrayMethod! */
     identity = _get_identity(ufunc, &reorderable);
     if (identity == NULL) {
-        return NULL;
+        goto finish;
     }
 
     /* Get the initial value */
@@ -3003,17 +3014,25 @@ PyUFunc_Reduce(PyUFuncObject *ufunc,
             initial = Py_None;
             Py_INCREF(initial);
         }
+        else if (PyTypeNum_ISUNSIGNED(descrs[2]->type_num)
+                    && PyLong_CheckExact(initial)) {
+            /*
+             * This is a bit of a hack until we have truly loop specific
+             * identities.  Python -1 cannot be cast to unsigned so convert
+             * it to a NumPy scalar, but we use -1 for bitwise functions to
+             * signal all 1s.
+             * (A builtin identity would not overflow here, although we may
+             * unnecessary convert 0 and 1.)
+             */
+            Py_SETREF(initial, PyObject_CallFunctionObjArgs(
+                        (PyObject *)&PyLongArrType_Type, initial, NULL));
+            if (initial == NULL) {
+                goto finish;
+            }
+        }
     } else {
         Py_DECREF(identity);
         Py_INCREF(initial);  /* match the reference count in the if above */
-    }
-
-    PyArray_Descr *descrs[3];
-    PyArrayMethodObject *ufuncimpl = reducelike_promote_and_resolve(ufunc,
-            arr, out, signature, NPY_FALSE, descrs, "reduce");
-    if (ufuncimpl == NULL) {
-        Py_DECREF(initial);
-        return NULL;
     }
 
     PyArrayMethod_Context context = {
@@ -3022,14 +3041,15 @@ PyUFunc_Reduce(PyUFuncObject *ufunc,
         .descriptors = descrs,
     };
 
-    PyArrayObject *result = PyUFunc_ReduceWrapper(&context,
+    result = PyUFunc_ReduceWrapper(&context,
             arr, out, wheremask, axis_flags, reorderable, keepdims,
             initial, reduce_loop, ufunc, buffersize, ufunc_name, errormask);
 
+  finish:
     for (int i = 0; i < 3; i++) {
         Py_DECREF(descrs[i]);
     }
-    Py_DECREF(initial);
+    Py_XDECREF(initial);
     return result;
 }
 
