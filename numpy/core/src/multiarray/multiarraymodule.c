@@ -1725,7 +1725,7 @@ array_array(PyObject *NPY_UNUSED(ignored),
     int ndmin = 0;
     PyArray_Descr *type = NULL;
     NPY_ORDER order = NPY_KEEPORDER;
-    PyObject *like = NULL;
+    PyObject *like = Py_None;
     NPY_PREPARE_ARGPARSER;
 
     if (len_args != 1 || (kwnames != NULL)) {
@@ -1736,12 +1736,12 @@ array_array(PyObject *NPY_UNUSED(ignored),
                 "$order", &PyArray_OrderConverter, &order,
                 "$subok", &PyArray_BoolConverter, &subok,
                 "$ndmin", &PyArray_PythonPyIntFromInt, &ndmin,
-                "$like", NULL, &like,
+                "$like", Py_None, &like,
                 NULL, NULL, NULL) < 0) {
             Py_XDECREF(type);
             return NULL;
         }
-        if (like != NULL) {
+        if (like != Py_None) {
             PyObject *deferred = array_implement_c_array_function_creation(
                     "array", like, NULL, NULL, args, len_args, kwnames);
             if (deferred != Py_NotImplemented) {
@@ -1768,7 +1768,7 @@ array_asarray(PyObject *NPY_UNUSED(ignored),
     PyObject *op;
     PyArray_Descr *type = NULL;
     NPY_ORDER order = NPY_KEEPORDER;
-    PyObject *like = NULL;
+    PyObject *like = Py_None;
     NPY_PREPARE_ARGPARSER;
 
     if (len_args != 1 || (kwnames != NULL)) {
@@ -1776,12 +1776,12 @@ array_asarray(PyObject *NPY_UNUSED(ignored),
                 "a", NULL, &op,
                 "|dtype", &PyArray_DescrConverter2, &type,
                 "|order", &PyArray_OrderConverter, &order,
-                "$like", NULL, &like,
+                "$like", Py_None, &like,
                 NULL, NULL, NULL) < 0) {
             Py_XDECREF(type);
             return NULL;
         }
-        if (like != NULL) {
+        if (like != Py_None) {
             PyObject *deferred = array_implement_c_array_function_creation(
                     "asarray", like, NULL, NULL, args, len_args, kwnames);
             if (deferred != Py_NotImplemented) {
@@ -1807,7 +1807,7 @@ array_asanyarray(PyObject *NPY_UNUSED(ignored),
     PyObject *op;
     PyArray_Descr *type = NULL;
     NPY_ORDER order = NPY_KEEPORDER;
-    PyObject *like = NULL;
+    PyObject *like = Py_None;
     NPY_PREPARE_ARGPARSER;
 
     if (len_args != 1 || (kwnames != NULL)) {
@@ -1815,12 +1815,12 @@ array_asanyarray(PyObject *NPY_UNUSED(ignored),
                 "a", NULL, &op,
                 "|dtype", &PyArray_DescrConverter2, &type,
                 "|order", &PyArray_OrderConverter, &order,
-                "$like", NULL, &like,
+                "$like", Py_None, &like,
                 NULL, NULL, NULL) < 0) {
             Py_XDECREF(type);
             return NULL;
         }
-        if (like != NULL) {
+        if (like != Py_None) {
             PyObject *deferred = array_implement_c_array_function_creation(
                     "asanyarray", like, NULL, NULL, args, len_args, kwnames);
             if (deferred != Py_NotImplemented) {
@@ -1846,19 +1846,19 @@ array_ascontiguousarray(PyObject *NPY_UNUSED(ignored),
 {
     PyObject *op;
     PyArray_Descr *type = NULL;
-    PyObject *like = NULL;
+    PyObject *like = Py_None;
     NPY_PREPARE_ARGPARSER;
 
     if (len_args != 1 || (kwnames != NULL)) {
         if (npy_parse_arguments("ascontiguousarray", args, len_args, kwnames,
                 "a", NULL, &op,
                 "|dtype", &PyArray_DescrConverter2, &type,
-                "$like", NULL, &like,
+                "$like", Py_None, &like,
                 NULL, NULL, NULL) < 0) {
             Py_XDECREF(type);
             return NULL;
         }
-        if (like != NULL) {
+        if (like != Py_None) {
             PyObject *deferred = array_implement_c_array_function_creation(
                     "ascontiguousarray", like, NULL, NULL, args, len_args, kwnames);
             if (deferred != Py_NotImplemented) {
@@ -1884,19 +1884,19 @@ array_asfortranarray(PyObject *NPY_UNUSED(ignored),
 {
     PyObject *op;
     PyArray_Descr *type = NULL;
-    PyObject *like = NULL;
+    PyObject *like = Py_None;
     NPY_PREPARE_ARGPARSER;
 
     if (len_args != 1 || (kwnames != NULL)) {
         if (npy_parse_arguments("asfortranarray", args, len_args, kwnames,
                 "a", NULL, &op,
                 "|dtype", &PyArray_DescrConverter2, &type,
-                "$like", NULL, &like,
+                "$like", Py_None, &like,
                 NULL, NULL, NULL) < 0) {
             Py_XDECREF(type);
             return NULL;
         }
-        if (like != NULL) {
+        if (like != Py_None) {
             PyObject *deferred = array_implement_c_array_function_creation(
                     "asfortranarray", like, NULL, NULL, args, len_args, kwnames);
             if (deferred != Py_NotImplemented) {
@@ -1969,19 +1969,19 @@ array_empty(PyObject *NPY_UNUSED(ignored),
     NPY_ORDER order = NPY_CORDER;
     npy_bool is_f_order;
     PyArrayObject *ret = NULL;
-    PyObject *like = NULL;
+    PyObject *like = Py_None;
     NPY_PREPARE_ARGPARSER;
 
     if (npy_parse_arguments("empty", args, len_args, kwnames,
             "shape", &PyArray_IntpConverter, &shape,
             "|dtype", &PyArray_DescrConverter, &typecode,
             "|order", &PyArray_OrderConverter, &order,
-            "$like", NULL, &like,
+            "$like", Py_None, &like,
             NULL, NULL, NULL) < 0) {
         goto fail;
     }
 
-    if (like != NULL) {
+    if (like != Py_None) {
         PyObject *deferred = array_implement_c_array_function_creation(
                 "empty", like, NULL, NULL, args, len_args, kwnames);
         if (deferred != Py_NotImplemented) {
@@ -2171,20 +2171,20 @@ array_zeros(PyObject *NPY_UNUSED(ignored),
     NPY_ORDER order = NPY_CORDER;
     npy_bool is_f_order = NPY_FALSE;
     PyArrayObject *ret = NULL;
-    PyObject *like = NULL;
+    PyObject *like = Py_None;
     NPY_PREPARE_ARGPARSER;
 
     if (npy_parse_arguments("zeros", args, len_args, kwnames,
             "shape", &PyArray_IntpConverter, &shape,
             "|dtype", &PyArray_DescrConverter, &typecode,
             "|order", &PyArray_OrderConverter, &order,
-            "$like", NULL, &like,
+            "$like", Py_None, &like,
             NULL, NULL, NULL) < 0) {
         goto fail;
     }
 
 
-    if (like != NULL) {
+    if (like != Py_None) {
         PyObject *deferred = array_implement_c_array_function_creation(
                 "zeros", like, NULL, NULL, args, len_args, kwnames);
         if (deferred != Py_NotImplemented) {
@@ -2247,7 +2247,7 @@ array_fromstring(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds
     char *sep = NULL;
     Py_ssize_t s;
     static char *kwlist[] = {"string", "dtype", "count", "sep", "like", NULL};
-    PyObject *like = NULL;
+    PyObject *like = Py_None;
     PyArray_Descr *descr = NULL;
 
     if (!PyArg_ParseTupleAndKeywords(args, keywds,
@@ -2256,7 +2256,7 @@ array_fromstring(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds
         Py_XDECREF(descr);
         return NULL;
     }
-    if (like != NULL) {
+    if (like != Py_None) {
         PyObject *deferred = array_implement_c_array_function_creation(
                 "fromstring", like, args, keywds, NULL, 0, NULL);
         if (deferred != Py_NotImplemented) {
@@ -2288,7 +2288,7 @@ array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
     char *sep = "";
     Py_ssize_t nin = -1;
     static char *kwlist[] = {"file", "dtype", "count", "sep", "offset", "like", NULL};
-    PyObject *like = NULL;
+    PyObject *like = Py_None;
     PyArray_Descr *type = NULL;
     int own;
     npy_off_t orig_pos = 0, offset = 0;
@@ -2301,7 +2301,7 @@ array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
         return NULL;
     }
 
-    if (like != NULL) {
+    if (like != Py_None) {
         PyObject *deferred = array_implement_c_array_function_creation(
                 "fromfile", like, args, keywds, NULL, 0, NULL);
         if (deferred != Py_NotImplemented) {
@@ -2378,7 +2378,7 @@ array_fromiter(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
     PyObject *iter;
     Py_ssize_t nin = -1;
     static char *kwlist[] = {"iter", "dtype", "count", "like", NULL};
-    PyObject *like = NULL;
+    PyObject *like = Py_None;
     PyArray_Descr *descr = NULL;
 
     if (!PyArg_ParseTupleAndKeywords(args, keywds,
@@ -2387,7 +2387,7 @@ array_fromiter(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
         Py_XDECREF(descr);
         return NULL;
     }
-    if (like != NULL) {
+    if (like != Py_None) {
         PyObject *deferred = array_implement_c_array_function_creation(
                 "fromiter", like, args, keywds, NULL, 0, NULL);
         if (deferred != Py_NotImplemented) {
@@ -2405,7 +2405,7 @@ array_frombuffer(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds
     PyObject *obj = NULL;
     Py_ssize_t nin = -1, offset = 0;
     static char *kwlist[] = {"buffer", "dtype", "count", "offset", "like", NULL};
-    PyObject *like = NULL;
+    PyObject *like = Py_None;
     PyArray_Descr *type = NULL;
 
     if (!PyArg_ParseTupleAndKeywords(args, keywds,
@@ -2415,7 +2415,7 @@ array_frombuffer(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds
         return NULL;
     }
 
-    if (like != NULL) {
+    if (like != Py_None) {
         PyObject *deferred = array_implement_c_array_function_creation(
                 "frombuffer", like, args, keywds, NULL, 0, NULL);
         if (deferred != Py_NotImplemented) {
@@ -3034,7 +3034,7 @@ array_arange(PyObject *NPY_UNUSED(ignored),
 {
     PyObject *o_start = NULL, *o_stop = NULL, *o_step = NULL, *range=NULL;
     PyArray_Descr *typecode = NULL;
-    PyObject *like = NULL;
+    PyObject *like = Py_None;
     NPY_PREPARE_ARGPARSER;
 
     if (npy_parse_arguments("arange", args, len_args, kwnames,
@@ -3042,12 +3042,12 @@ array_arange(PyObject *NPY_UNUSED(ignored),
             "|stop", NULL, &o_stop,
             "|step", NULL, &o_step,
             "|dtype", &PyArray_DescrConverter2, &typecode,
-            "$like", NULL, &like,
+            "$like", Py_None, &like,
             NULL, NULL, NULL) < 0) {
         Py_XDECREF(typecode);
         return NULL;
     }
-    if (like != NULL) {
+    if (like != Py_None) {
         PyObject *deferred = array_implement_c_array_function_creation(
                 "arange", like, NULL, NULL, args, len_args, kwnames);
         if (deferred != Py_NotImplemented) {

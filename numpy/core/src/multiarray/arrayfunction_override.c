@@ -383,7 +383,7 @@ array_implement_array_function(PyObject *NPY_UNUSED(dummy),
  * only. Added as an extension to NEP-18 in an effort to bring NEP-35 to
  * life with minimal dispatch overhead.
  *
- * The caller must ensure that `like != NULL`.
+ * The caller must ensure that `like != Py_None`.
  */
 NPY_NO_EXPORT PyObject *
 array_implement_c_array_function_creation(const char *function_name,
