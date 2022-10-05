@@ -177,6 +177,8 @@ MAGIC_PREFIX = b'\x93NUMPY'
 MAGIC_LEN = len(MAGIC_PREFIX) + 2
 ARRAY_ALIGN = 64 # plausible values are powers of 2 between 16 and 4096
 BUFFER_SIZE = 2**18  # size of buffer for reading npz files in bytes
+# allow growth within the address space of a 64 bit machine along one axis
+GROWTH_AXIS_MAX_DIGITS = 21  # = len(str(8*2**64-1)) hypothetical int1 dtype
 
 # difference between version 1.0 and 2.0 is a 4 byte (I) header length
 # instead of 2 bytes (H) allowing storage of large structured arrays
@@ -431,6 +433,15 @@ def _write_array_header(fp, d, version=None):
         header.append("'%s': %s, " % (key, repr(value)))
     header.append("}")
     header = "".join(header)
+    
+    # Add some spare space so that the array header can be modified in-place
+    # when changing the array size, e.g. when growing it by appending data at
+    # the end. 
+    shape = d['shape']
+    header += " " * ((GROWTH_AXIS_MAX_DIGITS - len(repr(
+        shape[-1 if d['fortran_order'] else 0]
+    ))) if len(shape) > 0 else 0)
+    
     if version is None:
         header = _wrap_header_guess_version(header)
     else:

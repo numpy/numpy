@@ -791,11 +791,11 @@ def test_bad_magic_args():
 
 def test_large_header():
     s = BytesIO()
-    d = {'a': 1, 'b': 2}
+    d = {'shape': tuple(), 'fortran_order': False, 'descr': '<i8'}
     format.write_array_header_1_0(s, d)
 
     s = BytesIO()
-    d = {'a': 1, 'b': 2, 'c': 'x'*256*256}
+    d['descr'] = [('x'*256*256, '<i8')]
     assert_raises(ValueError, format.write_array_header_1_0, s, d)
 
 
@@ -837,10 +837,12 @@ def test_bad_header():
     assert_raises(ValueError, format.read_array_header_1_0, s)
 
     # headers without the exact keys required should fail
-    d = {"shape": (1, 2),
-         "descr": "x"}
-    s = BytesIO()
-    format.write_array_header_1_0(s, d)
+    # d = {"shape": (1, 2),
+    #      "descr": "x"}
+    s = BytesIO(
+        b"\x93NUMPY\x01\x006\x00{'descr': 'x', 'shape': (1, 2), }" +
+        b"                    \n"
+    )
     assert_raises(ValueError, format.read_array_header_1_0, s)
 
     d = {"shape": (1, 2),
@@ -934,6 +936,19 @@ def test_unicode_field_names(tmpdir):
         with assert_warns(UserWarning):
             format.write_array(f, arr, version=None)
 
+def test_header_growth_axis():
+    for is_fortran_array, dtype_space, expected_header_length in [
+        [False, 22, 128], [False, 23, 192], [True, 23, 128], [True, 24, 192]
+    ]:
+        for size in [10**i for i in range(format.GROWTH_AXIS_MAX_DIGITS)]:
+            fp = BytesIO()
+            format.write_array_header_1_0(fp, {
+                'shape': (2, size) if is_fortran_array else (size, 2),
+                'fortran_order': is_fortran_array,
+                'descr': np.dtype([(' '*dtype_space, int)])
+            })
+
+            assert len(fp.getvalue()) == expected_header_length
 
 @pytest.mark.parametrize('dt, fail', [
     (np.dtype({'names': ['a', 'b'], 'formats':  [float, np.dtype('S3',
