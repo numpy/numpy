@@ -4496,6 +4496,14 @@ class TestMaskedArrayFunctions:
         assert_equal(ma, expected)
         assert_equal(ma.mask, expected.mask)
 
+    def test_masked_invalid_error(self):
+        a = np.arange(5, dtype=object)
+        a[3] = np.PINF
+        a[2] = np.NaN
+        with pytest.raises(TypeError,
+                           match="not supported for the input types"):
+            np.ma.masked_invalid(a)
+
     def test_choose(self):
         # Test choose
         choices = [[0, 1, 2, 3], [10, 11, 12, 13],
@@ -5309,6 +5317,10 @@ def test_masked_array_no_copy():
     a = np.ma.array([1, 2, 3, 4], mask=[1, 0, 0, 0])
     _ = np.ma.masked_where(a == 3, a, copy=False)
     assert_array_equal(a.mask, [True, False, True, False])
+    # check masked array with masked_invalid is updated in place
+    a = np.ma.array([np.inf, 1, 2, 3, 4])
+    _ = np.ma.masked_invalid(a, copy=False)
+    assert_array_equal(a.mask, [True, False, False, False, False])
 
 def test_append_masked_array():
     a = np.ma.masked_equal([1,2,3], value=2)
