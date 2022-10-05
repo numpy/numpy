@@ -1185,22 +1185,6 @@ class TestCreation:
         expected = expected * (arr.nbytes // len(expected))
         assert arr.tobytes() == expected
 
-    @pytest.mark.parametrize("func, func_input",
-            [(np.array, [1, 2, 3]),
-             (np.asarray, [1, 2, 3]),
-             (np.asanyarray, [1, 2, 3]),
-             (np.ascontiguousarray, [1, 2, 3]),
-             (np.asfortranarray, [1, 2, 3]),
-             (np.zeros, 5),
-             (np.ones, 5),
-             (np.arange, 5),
-             (np.frombuffer, np.zeros(5),),
-             ])
-    def test_like_as_none(self, func, func_input):
-        arr = func(func_input, like=None)
-        expected = func(func_input)
-        assert_array_equal(arr, expected)
-
 class TestStructured:
     def test_subarray_field_access(self):
         a = np.zeros((3, 5), dtype=[('a', ('i4', (2, 2)))])
