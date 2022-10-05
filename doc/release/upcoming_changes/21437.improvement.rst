@@ -16,7 +16,7 @@ should expect invalid value warnings.
 Users can modify the behavior of these warnings using `np.errstate`.
 
 Note that for float to int casts, the exact warnings that are given may
-be platform dependend.  For example::
+be platform dependent.  For example::
 
     arr = np.full(100, value=1000, dtype=np.float64)
     arr.astype(np.int8)
@@ -25,9 +25,9 @@ May give a result equivalent to (the intermediat means no warning is given)::
 
     arr.astype(np.int64).astype(np.int8)
 
-May may return an undefined result, with a warning set::
+May return an undefined result, with a warning set::
 
     RuntimeWarning: invalid value encountered in cast
 
-The precise behavior if subject to the C99 standard and its implementation
+The precise behavior is subject to the C99 standard and its implementation
 in both software and hardware.

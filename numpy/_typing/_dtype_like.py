@@ -8,6 +8,7 @@ from typing import (
     TypeVar,
     Protocol,
     TypedDict,
+    runtime_checkable,
 )
 
 import numpy as np
@@ -80,6 +81,7 @@ class _DTypeDict(_DTypeDictBase, total=False):
 
 
 # A protocol for anything with the dtype attribute
+@runtime_checkable
 class _SupportsDType(Protocol[_DType_co]):
     @property
     def dtype(self) -> _DType_co: ...

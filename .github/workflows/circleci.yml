@@ -1,6 +1,10 @@
 # To enable this workflow on a fork, comment out:
 #
 # if: github.repository == 'numpy/numpy'
+
+permissions:
+  contents: read # to fetch code (actions/checkout)
+
 on: [status]
 jobs:
   circleci_artifacts_redirector_job:

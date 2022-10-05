@@ -1,0 +1,18 @@
+Better reporting of integer division overflow
+---------------------------------------------
+
+Integer division overflow of scalars and arrays used to provide a ``RuntimeWarning``
+and the return value was undefined leading to crashes at rare occasions::
+
+    >>> np.array([np.iinfo(np.int32).min]*10, dtype=np.int32) // np.int32(-1)
+    <stdin>:1: RuntimeWarning: divide by zero encountered in floor_divide
+    array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0], dtype=int32)
+
+Integer division overflow now returns the input dtype's minimum value and raise the
+following ``RuntimeWarning``::
+
+    >>> np.array([np.iinfo(np.int32).min]*10, dtype=np.int32) // np.int32(-1)
+    <stdin>:1: RuntimeWarning: overflow encountered in floor_divide
+    array([-2147483648, -2147483648, -2147483648, -2147483648, -2147483648,
+           -2147483648, -2147483648, -2147483648, -2147483648, -2147483648],
+          dtype=int32)

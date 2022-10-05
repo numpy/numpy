@@ -9,7 +9,7 @@ UNARY_OBJECT_UFUNCS.remove(getattr(np, 'invert'))
 
 stride = [1, 2, 4]
 stride_out = [1, 2, 4]
-dtype  = ['f', 'd']
+dtype = ['e', 'f', 'd']
 
 class Unary(Benchmark):
     params = [UNARY_OBJECT_UFUNCS, stride, stride_out, dtype]

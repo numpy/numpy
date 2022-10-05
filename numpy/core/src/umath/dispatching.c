@@ -1016,8 +1016,13 @@ promote_and_get_ufuncimpl(PyUFuncObject *ufunc,
             signature[i] = (PyArray_DTypeMeta *)PyTuple_GET_ITEM(all_dtypes, i);
             Py_INCREF(signature[i]);
         }
-        else {
-            assert((PyObject *)signature[i] == PyTuple_GET_ITEM(all_dtypes, i));
+        else if ((PyObject *)signature[i] != PyTuple_GET_ITEM(all_dtypes, i)) {
+            /*
+             * If signature is forced the cache may contain an incompatible
+             * loop found via promotion (signature not enforced).  Reject it.
+             */
+            raise_no_loop_found_error(ufunc, (PyObject **)op_dtypes);
+            return NULL;
         }
     }
 

@@ -99,8 +99,12 @@ NPY_FINLINE npyv_f32 npyv_recip_f32(npyv_f32 a)
         return vmaxq_f32(vbslq_f32(nn_a, a, b), vbslq_f32(nn_b, b, a));
     }
 #endif
+// Max, propagates NaNs
+// If any of corresponded element is NaN, NaN is set.
+#define npyv_maxn_f32 vmaxq_f32
 #if NPY_SIMD_F64
     #define npyv_maxp_f64 vmaxnmq_f64
+    #define npyv_maxn_f64 vmaxq_f64
 #endif // NPY_SIMD_F64
 // Maximum, integer operations
 #define npyv_max_u8 vmaxq_u8
@@ -134,9 +138,14 @@ NPY_FINLINE npyv_s64 npyv_max_s64(npyv_s64 a, npyv_s64 b)
         return vminq_f32(vbslq_f32(nn_a, a, b), vbslq_f32(nn_b, b, a));
     }
 #endif
+// Min, propagates NaNs
+// If any of corresponded element is NaN, NaN is set.
+#define npyv_minn_f32 vminq_f32
 #if NPY_SIMD_F64
     #define npyv_minp_f64 vminnmq_f64
+    #define npyv_minn_f64 vminq_f64
 #endif // NPY_SIMD_F64
+
 // Minimum, integer operations
 #define npyv_min_u8 vminq_u8
 #define npyv_min_s8 vminq_s8
@@ -152,6 +161,115 @@ NPY_FINLINE npyv_s64 npyv_min_s64(npyv_s64 a, npyv_s64 b)
 {
     return vbslq_s64(npyv_cmplt_s64(a, b), a, b);
 }
+// reduce min/max for all data types
+#if NPY_SIMD_F64
+    #define npyv_reduce_max_u8 vmaxvq_u8
+    #define npyv_reduce_max_s8 vmaxvq_s8
+    #define npyv_reduce_max_u16 vmaxvq_u16
+    #define npyv_reduce_max_s16 vmaxvq_s16
+    #define npyv_reduce_max_u32 vmaxvq_u32
+    #define npyv_reduce_max_s32 vmaxvq_s32
+
+    #define npyv_reduce_max_f32 vmaxvq_f32
+    #define npyv_reduce_max_f64 vmaxvq_f64
+    #define npyv_reduce_maxn_f32 vmaxvq_f32
+    #define npyv_reduce_maxn_f64 vmaxvq_f64
+    #define npyv_reduce_maxp_f32 vmaxnmvq_f32
+    #define npyv_reduce_maxp_f64 vmaxnmvq_f64
+
+    #define npyv_reduce_min_u8 vminvq_u8
+    #define npyv_reduce_min_s8 vminvq_s8
+    #define npyv_reduce_min_u16 vminvq_u16
+    #define npyv_reduce_min_s16 vminvq_s16
+    #define npyv_reduce_min_u32 vminvq_u32
+    #define npyv_reduce_min_s32 vminvq_s32
+
+    #define npyv_reduce_min_f32 vminvq_f32
+    #define npyv_reduce_min_f64 vminvq_f64
+    #define npyv_reduce_minn_f32 vminvq_f32
+    #define npyv_reduce_minn_f64 vminvq_f64
+    #define npyv_reduce_minp_f32 vminnmvq_f32
+    #define npyv_reduce_minp_f64 vminnmvq_f64
+#else
+    #define NPY_IMPL_NEON_REDUCE_MINMAX(INTRIN, STYPE, SFX)                            \
+        NPY_FINLINE npy_##STYPE npyv_reduce_##INTRIN##_##SFX(npyv_##SFX a)             \
+        {                                                                              \
+            STYPE##x8_t r = vp##INTRIN##_##SFX(vget_low_##SFX(a), vget_high_##SFX(a)); \
+                        r = vp##INTRIN##_##SFX(r, r);                                  \
+                        r = vp##INTRIN##_##SFX(r, r);                                  \
+                        r = vp##INTRIN##_##SFX(r, r);                                  \
+            return (npy_##STYPE)vget_lane_##SFX(r, 0);                                 \
+        }
+    NPY_IMPL_NEON_REDUCE_MINMAX(min, uint8, u8)
+    NPY_IMPL_NEON_REDUCE_MINMAX(max, uint8, u8)
+    NPY_IMPL_NEON_REDUCE_MINMAX(min, int8, s8)
+    NPY_IMPL_NEON_REDUCE_MINMAX(max, int8, s8)
+    #undef NPY_IMPL_NEON_REDUCE_MINMAX
+
+    #define NPY_IMPL_NEON_REDUCE_MINMAX(INTRIN, STYPE, SFX)                            \
+        NPY_FINLINE npy_##STYPE npyv_reduce_##INTRIN##_##SFX(npyv_##SFX a)             \
+        {                                                                              \
+            STYPE##x4_t r = vp##INTRIN##_##SFX(vget_low_##SFX(a), vget_high_##SFX(a)); \
+                        r = vp##INTRIN##_##SFX(r, r);                                  \
+                        r = vp##INTRIN##_##SFX(r, r);                                  \
+            return (npy_##STYPE)vget_lane_##SFX(r, 0);                                 \
+        }
+    NPY_IMPL_NEON_REDUCE_MINMAX(min, uint16, u16)
+    NPY_IMPL_NEON_REDUCE_MINMAX(max, uint16, u16)
+    NPY_IMPL_NEON_REDUCE_MINMAX(min, int16, s16)
+    NPY_IMPL_NEON_REDUCE_MINMAX(max, int16, s16)
+    #undef NPY_IMPL_NEON_REDUCE_MINMAX
+
+    #define NPY_IMPL_NEON_REDUCE_MINMAX(INTRIN, STYPE, SFX)                            \
+        NPY_FINLINE npy_##STYPE npyv_reduce_##INTRIN##_##SFX(npyv_##SFX a)             \
+        {                                                                              \
+            STYPE##x2_t r = vp##INTRIN##_##SFX(vget_low_##SFX(a), vget_high_##SFX(a)); \
+                        r = vp##INTRIN##_##SFX(r, r);                                  \
+            return (npy_##STYPE)vget_lane_##SFX(r, 0);                                 \
+        }
+    NPY_IMPL_NEON_REDUCE_MINMAX(min, uint32, u32)
+    NPY_IMPL_NEON_REDUCE_MINMAX(max, uint32, u32)
+    NPY_IMPL_NEON_REDUCE_MINMAX(min, int32, s32)
+    NPY_IMPL_NEON_REDUCE_MINMAX(max, int32, s32)
+    #undef NPY_IMPL_NEON_REDUCE_MINMAX
+
+    #define NPY_IMPL_NEON_REDUCE_MINMAX(INTRIN, INF)                            \
+        NPY_FINLINE float npyv_reduce_##INTRIN##_f32(npyv_f32 a)                \
+        {                                                                       \
+            float32x2_t r = vp##INTRIN##_f32(vget_low_f32(a), vget_high_f32(a));\
+                        r = vp##INTRIN##_f32(r, r);                             \
+            return vget_lane_f32(r, 0);                                         \
+        }                                                                       \
+        NPY_FINLINE float npyv_reduce_##INTRIN##p_f32(npyv_f32 a)               \
+        {                                                                       \
+            npyv_b32 notnan = npyv_notnan_f32(a);                               \
+            if (NPY_UNLIKELY(!npyv_any_b32(notnan))) {                          \
+                return vgetq_lane_f32(a, 0);                                    \
+            }                                                                   \
+            a = npyv_select_f32(notnan, a,                                      \
+                    npyv_reinterpret_f32_u32(npyv_setall_u32(INF)));            \
+            return npyv_reduce_##INTRIN##_f32(a);                               \
+        }                                                                       \
+        NPY_FINLINE float npyv_reduce_##INTRIN##n_f32(npyv_f32 a)               \
+        {                                                                       \
+            return npyv_reduce_##INTRIN##_f32(a);                               \
+        }
+    NPY_IMPL_NEON_REDUCE_MINMAX(min, 0x7f800000)
+    NPY_IMPL_NEON_REDUCE_MINMAX(max, 0xff800000)
+    #undef NPY_IMPL_NEON_REDUCE_MINMAX
+#endif // NPY_SIMD_F64
+#define NPY_IMPL_NEON_REDUCE_MINMAX(INTRIN, STYPE, SFX, OP)       \
+    NPY_FINLINE STYPE npyv_reduce_##INTRIN##_##SFX(npyv_##SFX a)  \
+    {                                                             \
+        STYPE al = (STYPE)vget_low_##SFX(a);                      \
+        STYPE ah = (STYPE)vget_high_##SFX(a);                     \
+        return al OP ah ? al : ah;                                \
+    }
+NPY_IMPL_NEON_REDUCE_MINMAX(max, npy_uint64, u64, >)
+NPY_IMPL_NEON_REDUCE_MINMAX(max, npy_int64,  s64, >)
+NPY_IMPL_NEON_REDUCE_MINMAX(min, npy_uint64, u64, <)
+NPY_IMPL_NEON_REDUCE_MINMAX(min, npy_int64,  s64, <)
+#undef NPY_IMPL_NEON_REDUCE_MINMAX
 
 // round to nearest integer even
 NPY_FINLINE npyv_f32 npyv_rint_f32(npyv_f32 a)

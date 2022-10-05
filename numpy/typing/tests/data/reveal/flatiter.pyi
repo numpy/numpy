@@ -7,7 +7,7 @@ reveal_type(a.base)  # E: ndarray[Any, dtype[str_]]
 reveal_type(a.copy())  # E: ndarray[Any, dtype[str_]]
 reveal_type(a.coords)  # E: tuple[builtins.int, ...]
 reveal_type(a.index)  # E: int
-reveal_type(iter(a))  # E: flatiter[ndarray[Any, dtype[str_]]]
+reveal_type(iter(a))  # E: Any
 reveal_type(next(a))  # E: str_
 reveal_type(a[0])  # E: str_
 reveal_type(a[[0, 1, 2]])  # E: ndarray[Any, dtype[str_]]

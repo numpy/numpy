@@ -1,0 +1,5 @@
+* The mini() method of ``np.ma.MaskedArray`` has been removed. Use either
+  ``np.ma.MaskedArray.min()`` or ``np.ma.minimum.reduce()``.
+
+* The single-argument form of ``np.ma.minimum`` and ``np.ma.maximum`` has been
+  removed. Use ``np.ma.minimum.reduce()`` or ``np.ma.maximum.reduce()`` instead.
