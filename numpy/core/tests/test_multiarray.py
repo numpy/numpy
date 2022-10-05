@@ -5020,6 +5020,8 @@ class TestPutmask:
             for types in np.sctypes.values():
                 for T in types:
                     if T not in unchecked_types:
+                        if val < 0 and np.dtype(T).kind == "u":
+                            val = np.iinfo(T).max - 99
                         self.tst_basic(x.copy().astype(T), T, mask, val)
 
             # Also test string of a length which uses an untypical length
@@ -7234,9 +7236,8 @@ class TestInner:
                    [2630, 2910, 3190]],
 
                   [[2198, 2542, 2886],
-                   [3230, 3574, 3918]]]],
-                dtype=dt
-            )
+                   [3230, 3574, 3918]]]]
+            ).astype(dt)
             assert_equal(np.inner(a, b), desired)
             assert_equal(np.inner(b, a).transpose(2,3,0,1), desired)
 

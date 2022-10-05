@@ -375,7 +375,7 @@ class TestScalarDiscovery:
     @pytest.mark.parametrize("dtype", np.typecodes["Integer"])
     @pytest.mark.parametrize(["scalar", "error"],
             [(np.float64(np.nan), ValueError),
-             (np.ulonglong(-1), OverflowError)])
+             (np.array(-1).astype(np.ulonglong)[()], OverflowError)])
     def test_scalar_to_int_coerce_does_not_cast(self, dtype, scalar, error):
         """
         Signed integers are currently different in that they do not cast other
