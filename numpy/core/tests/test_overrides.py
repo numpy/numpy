@@ -624,15 +624,17 @@ class TestArrayLike:
             np.array(1, value_error=True, like=ref)
 
     @pytest.mark.parametrize('function, args, kwargs', _array_tests)
-    # @requires_array_function
     def test_like_as_none(self, function, args, kwargs):
         self.add_method('array', self.MyArray)
         self.add_method(function, self.MyArray)
         np_func = getattr(np, function)
 
         like_args = tuple(a() if callable(a) else a for a in args)
+        # required for loadtxt and genfromtxt to init w/o error.
+        like_args_exp = tuple(a() if callable(a) else a for a in args)
+
         array_like = np_func(*like_args, **kwargs, like=None)
-        expected = np_func(*like_args, **kwargs)
+        expected = np_func(*like_args_exp, **kwargs)
         # Special-case np.empty to ensure values match
         if function == "empty":
             array_like.fill(1)
