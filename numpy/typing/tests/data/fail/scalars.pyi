@@ -70,8 +70,6 @@ np.timedelta64(value=0)  # E: Unexpected keyword argument
 np.bytes_(b"hello", encoding='utf-8')  # E: No overload variant
 np.str_("hello", encoding='utf-8')  # E: No overload variant
 
-complex(np.bytes_("1"))  # E: No overload variant
-
 f8.item(1)  # E: incompatible type
 f8.item((0, 1))  # E: incompatible type
 f8.squeeze(axis=1)  # E: incompatible type
