@@ -291,7 +291,10 @@ static int
             if (PyErr_WarnFormat(PyExc_DeprecationWarning, 1,
                     "NumPy will stop allowing conversion of out-of-bound "
                     "Python integers to integer arrays.  The conversion "
-                    "of %.100R to %S will fail in the future.",
+                    "of %.100R to %S will fail in the future.\n"
+                    "For the old behavior, usually:\n"
+                    "    np.array(value).astype(dtype)`\n"
+                    "will give the desired result (the cast overflows).",
                     obj, descr) < 0) {
                 Py_DECREF(descr);
                 return -1;
