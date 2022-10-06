@@ -49,7 +49,7 @@ with others in a way that makes our community thrive.
 Call for Contributions
 ----------------------
 
-The NumPy project welcomes your expertise and enthusiasm!
+The [NumPy](https://www.interviewbit.com/numpy-interview-questions/) project welcomes your expertise and enthusiasm!
 
 Small improvements or fixes are always appreciated. If you are considering larger contributions
 to the source code, please contact us through the [mailing
