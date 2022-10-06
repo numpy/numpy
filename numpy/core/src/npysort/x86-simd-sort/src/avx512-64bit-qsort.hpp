@@ -56,7 +56,7 @@ struct vector<int64_t> {
 
     static opmask_t knot_opmask(opmask_t x)
     {
-        return _knot_mask8(x);
+        return npyv_not_b64(x);
     }
     static opmask_t ge(zmm_t x, zmm_t y)
     {
@@ -101,11 +101,11 @@ struct vector<int64_t> {
     }
     static type_t reducemax(zmm_t v)
     {
-        return _mm512_reduce_max_epi64(v);
+        return npyv_reduce_max_s64(v);
     }
     static type_t reducemin(zmm_t v)
     {
-        return _mm512_reduce_min_epi64(v);
+        return npyv_reduce_min_s64(v);
     }
     static zmm_t set1(type_t v)
     {
@@ -163,7 +163,7 @@ struct vector<uint64_t> {
     }
     static opmask_t knot_opmask(opmask_t x)
     {
-        return _knot_mask8(x);
+        return npyv_not_b64(x);
     }
     static opmask_t ge(zmm_t x, zmm_t y)
     {
@@ -203,11 +203,11 @@ struct vector<uint64_t> {
     }
     static type_t reducemax(zmm_t v)
     {
-        return _mm512_reduce_max_epu64(v);
+        return npyv_reduce_max_u64(v);
     }
     static type_t reducemin(zmm_t v)
     {
-        return _mm512_reduce_min_epu64(v);
+        return npyv_reduce_min_u64(v);
     }
     static zmm_t set1(type_t v)
     {
@@ -260,7 +260,7 @@ struct vector<double> {
 
     static opmask_t knot_opmask(opmask_t x)
     {
-        return _knot_mask8(x);
+        return npyv_not_b64(x);
     }
     static opmask_t ge(zmm_t x, zmm_t y)
     {
@@ -305,11 +305,11 @@ struct vector<double> {
     }
     static type_t reducemax(zmm_t v)
     {
-        return _mm512_reduce_max_pd(v);
+        return npyv_reduce_max_f64(v);
     }
     static type_t reducemin(zmm_t v)
     {
-        return _mm512_reduce_min_pd(v);
+        return npyv_reduce_min_f64(v);
     }
     static zmm_t set1(type_t v)
     {

@@ -57,7 +57,7 @@ struct vector<int16_t> {
 
     static opmask_t knot_opmask(opmask_t x)
     {
-        return _knot_mask32(x);
+        return npyv_not_b16(x);
     }
     static opmask_t ge(zmm_t x, zmm_t y)
     {
@@ -106,16 +106,16 @@ struct vector<int16_t> {
     {
         zmm_t lo = _mm512_cvtepi16_epi32(_mm512_extracti64x4_epi64(v, 0));
         zmm_t hi = _mm512_cvtepi16_epi32(_mm512_extracti64x4_epi64(v, 1));
-        type_t lo_max = (type_t)_mm512_reduce_max_epi32(lo);
-        type_t hi_max = (type_t)_mm512_reduce_max_epi32(hi);
+        type_t lo_max = (type_t)npyv_reduce_max_s32(lo);
+        type_t hi_max = (type_t)npyv_reduce_max_s32(hi);
         return std::max(lo_max, hi_max);
     }
     static type_t reducemin(zmm_t v)
     {
         zmm_t lo = _mm512_cvtepi16_epi32(_mm512_extracti64x4_epi64(v, 0));
         zmm_t hi = _mm512_cvtepi16_epi32(_mm512_extracti64x4_epi64(v, 1));
-        type_t lo_min = (type_t)_mm512_reduce_min_epi32(lo);
-        type_t hi_min = (type_t)_mm512_reduce_min_epi32(hi);
+        type_t lo_min = (type_t)npyv_reduce_min_s32(lo);
+        type_t hi_min = (type_t)npyv_reduce_min_s32(hi);
         return std::min(lo_min, hi_min);
     }
     static zmm_t set1(type_t v)
@@ -161,7 +161,7 @@ struct vector<uint16_t> {
     //}
     static opmask_t knot_opmask(opmask_t x)
     {
-        return _knot_mask32(x);
+        return npyv_not_b16(x);
     }
     static opmask_t ge(zmm_t x, zmm_t y)
     {
@@ -203,16 +203,16 @@ struct vector<uint16_t> {
     {
         zmm_t lo = _mm512_cvtepu16_epi32(_mm512_extracti64x4_epi64(v, 0));
         zmm_t hi = _mm512_cvtepu16_epi32(_mm512_extracti64x4_epi64(v, 1));
-        type_t lo_max = (type_t)_mm512_reduce_max_epi32(lo);
-        type_t hi_max = (type_t)_mm512_reduce_max_epi32(hi);
+        type_t lo_max = (type_t)npyv_reduce_max_s32(lo);
+        type_t hi_max = (type_t)npyv_reduce_max_s32(hi);
         return std::max(lo_max, hi_max);
     }
     static type_t reducemin(zmm_t v)
     {
         zmm_t lo = _mm512_cvtepu16_epi32(_mm512_extracti64x4_epi64(v, 0));
         zmm_t hi = _mm512_cvtepu16_epi32(_mm512_extracti64x4_epi64(v, 1));
-        type_t lo_min = (type_t)_mm512_reduce_min_epi32(lo);
-        type_t hi_min = (type_t)_mm512_reduce_min_epi32(hi);
+        type_t lo_min = (type_t)npyv_reduce_min_s32(lo);
+        type_t hi_min = (type_t)npyv_reduce_min_s32(hi);
         return std::min(lo_min, hi_min);
     }
     static zmm_t set1(type_t v)

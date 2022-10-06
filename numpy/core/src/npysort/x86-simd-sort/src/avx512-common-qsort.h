@@ -38,6 +38,7 @@
 #include <cstdint>
 #include <immintrin.h>
 #include <limits>
+#include "simd/simd.h"
 
 #define X86_SIMD_SORT_INFINITY std::numeric_limits<double>::infinity()
 #define X86_SIMD_SORT_INFINITYF std::numeric_limits<float>::infinity()
