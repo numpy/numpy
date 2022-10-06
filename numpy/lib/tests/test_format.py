@@ -459,6 +459,7 @@ def test_long_str():
     assert_array_equal(long_str_arr, long_str_arr2)
 
 
+@pytest.mark.slow
 def test_memmap_roundtrip(tmpdir):
     for i, arr in enumerate(basic_arrays + record_arrays):
         if arr.dtype.hasobject:
@@ -667,7 +668,7 @@ def test_version_2_0():
     assert_(len(header) % format.ARRAY_ALIGN == 0)
 
     f.seek(0)
-    n = format.read_array(f)
+    n = format.read_array(f, max_header_size=200000)
     assert_array_equal(d, n)
 
     # 1.0 requested but data cannot be saved this way
@@ -689,7 +690,7 @@ def test_version_2_0_memmap(tmpdir):
                             shape=d.shape, version=(2, 0))
     ma[...] = d
     ma.flush()
-    ma = format.open_memmap(tf1, mode='r')
+    ma = format.open_memmap(tf1, mode='r', max_header_size=200000)
     assert_array_equal(ma, d)
 
     with warnings.catch_warnings(record=True) as w:
@@ -700,9 +701,49 @@ def test_version_2_0_memmap(tmpdir):
         ma[...] = d
         ma.flush()
 
-    ma = format.open_memmap(tf2, mode='r')
+    ma = format.open_memmap(tf2, mode='r', max_header_size=200000)
+
     assert_array_equal(ma, d)
 
+@pytest.mark.parametrize("mmap_mode", ["r", None])
+def test_huge_header(tmpdir, mmap_mode):
+    f = os.path.join(tmpdir, f'large_header.npy')
+    arr = np.array(1, dtype="i,"*10000+"i")
+
+    with pytest.warns(UserWarning, match=".*format 2.0"):
+        np.save(f, arr)
+    
+    with pytest.raises(ValueError, match="Header.*large"):
+        np.load(f, mmap_mode=mmap_mode)
+
+    with pytest.raises(ValueError, match="Header.*large"):
+        np.load(f, mmap_mode=mmap_mode, max_header_size=20000)
+
+    res = np.load(f, mmap_mode=mmap_mode, allow_pickle=True)
+    assert_array_equal(res, arr)
+
+    res = np.load(f, mmap_mode=mmap_mode, max_header_size=180000)
+    assert_array_equal(res, arr)
+
+def test_huge_header_npz(tmpdir):
+    f = os.path.join(tmpdir, f'large_header.npz')
+    arr = np.array(1, dtype="i,"*10000+"i")
+
+    with pytest.warns(UserWarning, match=".*format 2.0"):
+        np.savez(f, arr=arr)
+    
+    # Only getting the array from the file actually reads it
+    with pytest.raises(ValueError, match="Header.*large"):
+        np.load(f)["arr"]
+
+    with pytest.raises(ValueError, match="Header.*large"):
+        np.load(f, max_header_size=20000)["arr"]
+
+    res = np.load(f, allow_pickle=True)["arr"]
+    assert_array_equal(res, arr)
+
+    res = np.load(f, max_header_size=180000)["arr"]
+    assert_array_equal(res, arr)
 
 def test_write_version():
     f = BytesIO()
