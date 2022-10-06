@@ -425,39 +425,6 @@ class _SIMD_FP(_Test_Utility):
         square = self.square(vdata)
         assert square == data_square
 
-    def test_isfinite_isinf_isnan_signbit(self):
-        pinf, ninf, nan = self._pinfinity(), self._ninfinity(), self._nan()
-        assert np.isnan(nan) == True
-        assert np.isfinite(ninf) == False
-        assert np.isfinite(pinf) == False
-        assert np.isinf(ninf) == True
-        assert np.isinf(pinf) == True
-        assert np.signbit(pinf) == False
-        assert np.signbit(ninf) == True
-
-    def test_array_isfinite_isinf_isnan_signbit(self):
-        size = 12
-        for t in [np.float32, np.float64]:
-            arr = np.random.default_rng().random(size, t)
-            assert np.isnan(arr)[2] == False
-            assert np.isfinite(arr)[4] == True
-            assert np.isinf(arr)[6] == False
-            assert np.signbit(arr)[8] == False
-
-        for t in [np.uint8, np.uint16, np.uint32, np.uint64]:
-            arr = np.random.default_rng().integers(0,100,size,dtype=t)
-            assert np.isnan(arr)[2] == False
-            assert np.isfinite(arr)[4] == True
-            assert np.isinf(arr)[6] == False
-            assert np.signbit(arr)[8] == False
-
-        for t in [np.int8, np.int16, np.int32, np.int64]:
-            arr = np.random.default_rng().integers(-100,0,size,dtype=t)
-            assert np.isnan(arr)[2] == False
-            assert np.isfinite(arr)[4] == True
-            assert np.isinf(arr)[6] == False
-            assert np.signbit(arr)[8] == True
-
     @pytest.mark.parametrize("intrin, func", [("ceil", math.ceil),
     ("trunc", math.trunc), ("floor", math.floor), ("rint", round)])
     def test_rounding(self, intrin, func):
