@@ -171,17 +171,6 @@ def _to_native_byte_order(*arrays):
         return ret
 
 
-def _fastCopyAndTranspose(type, *arrays):
-    cast_arrays = ()
-    for a in arrays:
-        if a.dtype.type is not type:
-            a = a.astype(type)
-        cast_arrays = cast_arrays + (a.T.copy(),)
-    if len(cast_arrays) == 1:
-        return cast_arrays[0]
-    else:
-        return cast_arrays
-
 def _assert_2d(*arrays):
     for a in arrays:
         if a.ndim != 2:
