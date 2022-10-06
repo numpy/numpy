@@ -104,14 +104,7 @@ stages:
 
   - job: macOS
     pool:
-      # NOTE: at time of writing, there is a danger
-      # that using an invalid vmIMage string for macOS
-      # image silently redirects to a Windows build on Azure;
-      # for now, use the only image name officially present in
-      # the docs even though i.e., numba uses another in their
-      # azure config for mac os -- Microsoft has indicated
-      # they will patch this issue
-      vmImage: 'macOS-1015'
+      vmImage: 'macOS-11'
     strategy:
       maxParallel: 3
       matrix:
@@ -205,9 +198,14 @@ stages:
     - script: python runtests.py -g --refguide-check
       displayName: 'Run Refguide Check'
       condition: eq(variables['USE_OPENBLAS'], '1')
-    - script: python runtests.py -n --mode=full -- -rsx --junitxml=junit/test-results.xml
+    - script: |
+        echo LIBRARY_PATH ${LIBRARY_PATH}
+        python runtests.py -n --mode=full -- -rsx --junitxml=junit/test-results.xml
       displayName: 'Run Full NumPy Test Suite'
       condition: eq(variables['USE_OPENBLAS'], '1')
+      env:
+        # gfortran installed above adds -lSystem, so this is needed to find it (gh-22043)
+        LIBRARY_PATH: /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib
     - bash: python tools/openblas_support.py --check_version
       displayName: 'Verify OpenBLAS version'
       condition: eq(variables['USE_OPENBLAS'], '1')
