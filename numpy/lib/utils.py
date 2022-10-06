@@ -907,8 +907,12 @@ def _lookfor_generate_cache(module, import_modules, regenerate):
                             finally:
                                 sys.stdout = old_stdout
                                 sys.stderr = old_stderr
-                        # Catch SystemExit, too
-                        except (Exception, SystemExit):
+                        except KeyboardInterrupt:
+                            # Assume keyboard interrupt came from a user
+                            raise
+                        except BaseException:
+                            # Ignore also SystemExit and pytests.importorskip
+                            # `Skipped` (these are BaseExceptions; gh-22345)
                             continue
 
             for n, v in _getmembers(item):
