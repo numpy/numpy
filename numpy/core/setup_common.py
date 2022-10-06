@@ -102,12 +102,14 @@ def set_sig(sig):
     args = args.rpartition(")")[0]
     funcname = prefix.rpartition(" ")[-1]
     args = [arg.strip() for arg in args.split(",")]
-    FUNC_CALL_ARGS[funcname] = ", ".join("(%s) 0" % arg for arg in args)
+    # We use {0} because 0 alone cannot be cast to complex on MSVC in C:
+    FUNC_CALL_ARGS[funcname] = ", ".join("(%s){0}" % arg for arg in args)
 
 
 for file in [
     "feature_detection_locale.h",
     "feature_detection_math.h",
+    "feature_detection_cmath.h",
     "feature_detection_misc.h",
     "feature_detection_stdio.h",
 ]:
@@ -128,6 +130,8 @@ MANDATORY_FUNCS = [
     "rint", "trunc", "exp2", 
     "copysign", "nextafter", "strtoll", "strtoull", "cbrt",
     "log2", "pow", "hypot", "atan2",
+    "csin", "csinh", "ccos", "ccosh", "ctan", "ctanh",
+    "creal", "cimag", "conj"
 ]
 
 OPTIONAL_LOCALE_FUNCS = ["strtold_l"]
@@ -147,8 +151,7 @@ C99_COMPLEX_TYPES = [
     ]
 C99_COMPLEX_FUNCS = [
     "cabs", "cacos", "cacosh", "carg", "casin", "casinh", "catan",
-    "catanh", "ccos", "ccosh", "cexp", "cimag", "clog", "conj", "cpow",
-    "cproj", "creal", "csin", "csinh", "csqrt", "ctan", "ctanh"
+    "catanh", "cexp", "clog", "cpow", "csqrt",
     ]
 
 OPTIONAL_HEADERS = [
