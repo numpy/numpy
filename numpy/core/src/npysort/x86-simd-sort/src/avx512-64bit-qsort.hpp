@@ -331,7 +331,7 @@ struct vector<double> {
  * https://en.wikipedia.org/wiki/Bitonic_sorter#/media/File:BitonicSort.svg
  */
 template <typename vtype, typename zmm_t = typename vtype::zmm_t>
-static inline zmm_t sort_zmm_64bit(zmm_t zmm)
+NPY_FINLINE zmm_t sort_zmm_64bit(zmm_t zmm)
 {
     zmm = cmp_merge<vtype>(
             zmm, vtype::template shuffle<SHUFFLE_MASK(1, 1, 1, 1)>(zmm), 0xAA);
@@ -353,7 +353,7 @@ static inline zmm_t sort_zmm_64bit(zmm_t zmm)
 
 // Assumes zmm is bitonic and performs a recursive half cleaner
 template <typename vtype, typename zmm_t = typename vtype::zmm_t>
-static inline zmm_t bitonic_merge_zmm_64bit(zmm_t zmm)
+NPY_FINLINE zmm_t bitonic_merge_zmm_64bit(zmm_t zmm)
 {
 
     // 1) half_cleaner[8]: compare 0-4, 1-5, 2-6, 3-7
@@ -374,7 +374,7 @@ static inline zmm_t bitonic_merge_zmm_64bit(zmm_t zmm)
 
 // Assumes zmm1 and zmm2 are sorted and performs a recursive half cleaner
 template <typename vtype, typename zmm_t = typename vtype::zmm_t>
-static inline void bitonic_merge_two_zmm_64bit(zmm_t &zmm1, zmm_t &zmm2)
+NPY_FINLINE void bitonic_merge_two_zmm_64bit(zmm_t &zmm1, zmm_t &zmm2)
 {
     // 1) First step of a merging network: coex of zmm1 and zmm2 reversed
     zmm2 = vtype::permutexvar(rev_index, zmm2);
@@ -388,7 +388,7 @@ static inline void bitonic_merge_two_zmm_64bit(zmm_t &zmm1, zmm_t &zmm2)
 // Assumes [zmm0, zmm1] and [zmm2, zmm3] are sorted and performs a recursive
 // half cleaner
 template <typename vtype, typename zmm_t = typename vtype::zmm_t>
-static inline void bitonic_merge_four_zmm_64bit(zmm_t *zmm)
+NPY_FINLINE void bitonic_merge_four_zmm_64bit(zmm_t *zmm)
 {
     // 1) First step of a merging network
     zmm_t zmm2r = vtype::permutexvar(rev_index, zmm[2]);
@@ -409,7 +409,7 @@ static inline void bitonic_merge_four_zmm_64bit(zmm_t *zmm)
 }
 
 template <typename vtype, typename zmm_t = typename vtype::zmm_t>
-static inline void bitonic_merge_eight_zmm_64bit(zmm_t *zmm)
+NPY_FINLINE void bitonic_merge_eight_zmm_64bit(zmm_t *zmm)
 {
     zmm_t zmm4r = vtype::permutexvar(rev_index, zmm[4]);
     zmm_t zmm5r = vtype::permutexvar(rev_index, zmm[5]);
@@ -442,7 +442,7 @@ static inline void bitonic_merge_eight_zmm_64bit(zmm_t *zmm)
 }
 
 template <typename vtype, typename zmm_t = typename vtype::zmm_t>
-static inline void bitonic_merge_sixteen_zmm_64bit(zmm_t *zmm)
+NPY_FINLINE void bitonic_merge_sixteen_zmm_64bit(zmm_t *zmm)
 {
     zmm_t zmm8r = vtype::permutexvar(rev_index, zmm[8]);
     zmm_t zmm9r = vtype::permutexvar(rev_index, zmm[9]);
@@ -515,7 +515,7 @@ static inline void bitonic_merge_sixteen_zmm_64bit(zmm_t *zmm)
 }
 
 template <typename vtype, typename type_t>
-static inline void sort_8_64bit(type_t *arr, int32_t N)
+NPY_FINLINE void sort_8_64bit(type_t *arr, int32_t N)
 {
     typename vtype::opmask_t load_mask = (0x01 << N) - 0x01;
     typename vtype::zmm_t zmm
@@ -524,7 +524,7 @@ static inline void sort_8_64bit(type_t *arr, int32_t N)
 }
 
 template <typename vtype, typename type_t>
-static inline void sort_16_64bit(type_t *arr, int32_t N)
+NPY_FINLINE void sort_16_64bit(type_t *arr, int32_t N)
 {
     if (N <= 8) {
         sort_8_64bit<vtype>(arr, N);
@@ -542,7 +542,7 @@ static inline void sort_16_64bit(type_t *arr, int32_t N)
 }
 
 template <typename vtype, typename type_t>
-static inline void sort_32_64bit(type_t *arr, int32_t N)
+NPY_FINLINE void sort_32_64bit(type_t *arr, int32_t N)
 {
     if (N <= 16) {
         sort_16_64bit<vtype>(arr, N);
@@ -573,7 +573,7 @@ static inline void sort_32_64bit(type_t *arr, int32_t N)
 }
 
 template <typename vtype, typename type_t>
-static inline void sort_64_64bit(type_t *arr, int32_t N)
+NPY_FINLINE void sort_64_64bit(type_t *arr, int32_t N)
 {
     if (N <= 32) {
         sort_32_64bit<vtype>(arr, N);
@@ -624,7 +624,7 @@ static inline void sort_64_64bit(type_t *arr, int32_t N)
 }
 
 template <typename vtype, typename type_t>
-static inline void sort_128_64bit(type_t *arr, int32_t N)
+NPY_FINLINE void sort_128_64bit(type_t *arr, int32_t N)
 {
     if (N <= 64) {
         sort_64_64bit<vtype>(arr, N);
@@ -714,7 +714,7 @@ static inline void sort_128_64bit(type_t *arr, int32_t N)
 }
 
 template <typename vtype, typename type_t>
-static inline type_t
+NPY_FINLINE type_t
 get_pivot_64bit(type_t *arr, const int64_t left, const int64_t right)
 {
     // median of 8
@@ -735,7 +735,7 @@ get_pivot_64bit(type_t *arr, const int64_t left, const int64_t right)
 }
 
 template <typename vtype, typename type_t>
-static inline void
+static void
 qsort_64bit_(type_t *arr, int64_t left, int64_t right, int64_t max_iters)
 {
     /*
@@ -764,7 +764,7 @@ qsort_64bit_(type_t *arr, int64_t left, int64_t right, int64_t max_iters)
         qsort_64bit_<vtype>(arr, pivot_index, right, max_iters - 1);
 }
 
-static inline int64_t replace_nan_with_inf(double *arr, int64_t arrsize)
+NPY_FINLINE int64_t replace_nan_with_inf(double *arr, int64_t arrsize)
 {
     int64_t nan_count = 0;
     __mmask8 loadmask = 0xFF;
@@ -780,7 +780,7 @@ static inline int64_t replace_nan_with_inf(double *arr, int64_t arrsize)
     return nan_count;
 }
 
-static inline void
+NPY_FINLINE void
 replace_inf_with_nan(double *arr, int64_t arrsize, int64_t nan_count)
 {
     for (int64_t ii = arrsize - 1; nan_count > 0; --ii) {
