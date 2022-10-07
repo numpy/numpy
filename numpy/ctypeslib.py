@@ -530,6 +530,7 @@ if ctypes is not None:
             obj : a ctypes array or POINTER
             shape : {sequence of ints, int}
                     required only when input obj is a POINTER
+
             Returns
             -------
             out : a numpy array
