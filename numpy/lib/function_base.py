@@ -5412,6 +5412,10 @@ def append(arr, values, axis=None):
     """
     Append values to the end of an array.
 
+    .. note::
+       Using numpy.append on a masked array will remove the mask.
+       Use `numpy.ma.append` instead when working with masked arrays.
+
     Parameters
     ----------
     arr : array_like
