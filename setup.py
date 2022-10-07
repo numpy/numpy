@@ -65,7 +65,7 @@ if _V_MATCH is None:
 MAJOR, MINOR, MICRO = _V_MATCH.groups()
 VERSION = '{}.{}.{}'.format(MAJOR, MINOR, MICRO)
 
-# The first version not in the `Programming Language :: Python :: ...` classifiers above
+# The first version not in the `Programming Language :: Python :: ...` classifiers below
 if sys.version_info >= (3, 12):
     fmt = "NumPy {} may not yet support Python {}.{}."
     warnings.warn(
