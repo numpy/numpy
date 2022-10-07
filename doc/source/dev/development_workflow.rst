@@ -231,7 +231,7 @@ https://anaconda.org/scipy-wheels-nightly/ on the following conditions:
 - by a weekly cron job or
 - if the github action or travis build has been manually triggered, which requires appropriate permissions
 
-The wheels wil be uploaded to https://anaconda.org/multibuild-wheels-staging/
+The wheels will be uploaded to https://anaconda.org/multibuild-wheels-staging/
 if the build was triggered by a tag to the repo that begins with ``v``
 
 .. _Action: https://github.com/numpy/numpy/actions

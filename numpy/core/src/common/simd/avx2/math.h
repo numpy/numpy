@@ -234,7 +234,7 @@ NPY_IMPL_AVX256_REDUCE_MINMAX(npy_uint, max_u, max_epu)
 NPY_IMPL_AVX256_REDUCE_MINMAX(npy_int,  max_s, max_epi)
 #undef NPY_IMPL_AVX256_REDUCE_MINMAX
 
-// round to nearest intger even
+// round to nearest integer even
 #define npyv_rint_f32(A) _mm256_round_ps(A, _MM_FROUND_TO_NEAREST_INT)
 #define npyv_rint_f64(A) _mm256_round_pd(A, _MM_FROUND_TO_NEAREST_INT)
 

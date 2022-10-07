@@ -288,11 +288,11 @@ class TestComparisons:
 
         # Sequence: Binary, Scalar1 and Scalar2
         assert_(comp_b.tolist() == comp_b_list,
-            f"Failed comparision ({py_comp.__name__})")
+            f"Failed comparison ({py_comp.__name__})")
         assert_(comp_s1.tolist() == comp_s1_list,
-            f"Failed comparision ({py_comp.__name__})")
+            f"Failed comparison ({py_comp.__name__})")
         assert_(comp_s2.tolist() == comp_s2_list,
-            f"Failed comparision ({py_comp.__name__})")
+            f"Failed comparison ({py_comp.__name__})")
 
     def test_ignore_object_identity_in_equal(self):
         # Check comparing identical objects whose comparison

@@ -3014,7 +3014,7 @@ cdef class Generator:
         intermediate distribution exceeding the max acceptable value of the 
         ``Generator.poisson`` method. This happens when :math:`p` is too low 
         (a lot of failures happen for every success) and :math:`n` is too big (
-        a lot of sucesses are allowed).
+        a lot of successes are allowed).
         Therefore, the :math:`n` and :math:`p` values must satisfy the constraint:
 
         .. math:: n\\frac{1-p}{p}+10n\\sqrt{n}\\frac{1-p}{p}<2^{63}-1-10\\sqrt{2^{63}-1},
@@ -4433,7 +4433,7 @@ cdef class Generator:
             is shuffled independently of the others.  If `axis` is
             None, the flattened array is shuffled.
         out : ndarray, optional
-            If given, this is the destinaton of the shuffled array.
+            If given, this is the destination of the shuffled array.
             If `out` is None, a shuffled copy of the array is returned.
 
         Returns

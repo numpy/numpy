@@ -1337,7 +1337,7 @@ Special functions for NPY_OBJECT
     by NumPy.  Users **should** also ensure to pass fully initialized buffers
     to NumPy, since NumPy may make this a strong requirement in the future.
 
-    There is currently an intention to ensure that NumPy always initalizes
+    There is currently an intention to ensure that NumPy always initializes
     object arrays before they may be read.  Any failure to do so will be
     regarded as a bug.
     In the future, users may be able to rely on non-NULL values when reading

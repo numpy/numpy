@@ -637,7 +637,7 @@ get_pivot(type_t *arr, const npy_intp left, const npy_intp right)
 }
 
 /*
- * Parition one ZMM register based on the pivot and returns the index of the
+ * Partition one ZMM register based on the pivot and returns the index of the
  * last element that is less than equal to the pivot.
  */
 template <typename vtype, typename type_t, typename zmm_t>
@@ -657,7 +657,7 @@ partition_vec(type_t *arr, npy_intp left, npy_intp right, const zmm_t curr_vec,
 }
 
 /*
- * Parition an array based on the pivot and returns the index of the
+ * Partition an array based on the pivot and returns the index of the
  * last element that is less than equal to the pivot.
  */
 template <typename vtype, typename type_t>
@@ -746,7 +746,7 @@ static inline void
 qsort_(type_t *arr, npy_intp left, npy_intp right, npy_int max_iters)
 {
     /*
-     * Resort to heapsort if quicksort isnt making any progress
+     * Resort to heapsort if quicksort isn't making any progress
      */
     if (max_iters <= 0) {
         heapsort_<typename vtype::tag>(arr + left, right + 1 - left);

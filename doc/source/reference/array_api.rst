@@ -508,7 +508,7 @@ Linear Algebra Functions
    * - ``vector_norm`` (*)
      - Floating-point
 
-(*) Thes functions are split from ``norm`` from the main ``numpy`` namespace.
+(*) These functions are split from ``norm`` from the main ``numpy`` namespace.
 See :ref:`array_api-name-changes`.
 
 (**) These functions are new in the array API and are not in the main
