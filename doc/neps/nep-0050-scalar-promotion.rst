@@ -91,7 +91,7 @@ more important than the casting change itself.
     We recommend using it mainly to track down a *specific* change rather than
     running it on a full test-suite or program.
 
-    The following futher API exists:
+    The following further API exists:
 
     * ``np._set_promotion_state()`` and ``np._get_promotion_state()`` which is
       equivalent to the environment variable.
@@ -546,7 +546,7 @@ retaining the previous datatype is intuitive.
 Replacing this example with ``np.float32`` is maybe even more clear,
 as float will rarely have overflows.
 Without this behaviour, the above example would require writing ``np.uint8(4)``
-and lack of the behaviour would make the following suprising::
+and lack of the behaviour would make the following surprising::
 
     result = np.array([1, 2, 3], dtype=np.float32) * 2.
     result.dtype == np.float32
@@ -609,7 +609,7 @@ or be unspecified though:
 Implementation
 ==============
 
-Implemeting this NEP requires some additional machinery to be added to all
+Implementing this NEP requires some additional machinery to be added to all
 binary operators (or ufuncs), so that they attempt to use the "weak" logic
 if possible.
 There are two possible approaches to this:
@@ -676,7 +676,7 @@ This has advantages and disadvantages:
 
 * The main advantage is that limiting it to Python operators means that these
   "weak" types/dtypes are clearly ephemeral to short Python statements.
-* A disadvantage is that ``np.multiply`` and ``*`` are less interchangable.
+* A disadvantage is that ``np.multiply`` and ``*`` are less interchangeable.
 * Using "weak" promotion only for operators means that libraries do not have
   to worry about whether they want to "remember" that an input was a Python
   scalar initially.  On the other hand, it would add a the need for slightly
@@ -703,7 +703,7 @@ are "stronger" than Python scalars, but NumPy scalars are not).
 Such a distinction is very much possible, however, at this time NumPy will
 often (and silently) convert 0-D arrays to scalars.
 It may thus make sense, to only consider this alternative if we also
-change this silent conversion (sometimes refered to as "decay") behaviour.
+change this silent conversion (sometimes referred to as "decay") behaviour.
 
 
 Handling conversion of scalars when unsafe
