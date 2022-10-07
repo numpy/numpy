@@ -21,7 +21,7 @@ import warnings
 from numpy.core import (
     array, asarray, zeros, empty, empty_like, intc, single, double,
     csingle, cdouble, inexact, complexfloating, newaxis, all, Inf, dot,
-    add, multiply, sqrt, fastCopyAndTranspose, sum, isfinite,
+    add, multiply, sqrt, sum, isfinite,
     finfo, errstate, geterrobj, moveaxis, amin, amax, product, abs,
     atleast_2d, intp, asanyarray, object_, matmul,
     swapaxes, divide, count_nonzero, isnan, sign, argsort, sort,
@@ -158,10 +158,6 @@ def _commonType(*arrays):
     return t, result_type
 
 
-# _fastCopyAndTranpose assumes the input is 2D (as all the calls in here are).
-
-_fastCT = fastCopyAndTranspose
-
 def _to_native_byte_order(*arrays):
     ret = []
     for arr in arrays:
@@ -174,16 +170,6 @@ def _to_native_byte_order(*arrays):
     else:
         return ret
 
-def _fastCopyAndTranspose(type, *arrays):
-    cast_arrays = ()
-    for a in arrays:
-        if a.dtype.type is not type:
-            a = a.astype(type)
-        cast_arrays = cast_arrays + (_fastCT(a),)
-    if len(cast_arrays) == 1:
-        return cast_arrays[0]
-    else:
-        return cast_arrays
 
 def _assert_2d(*arrays):
     for a in arrays:
@@ -1172,7 +1158,7 @@ def eigvalsh(a, UPLO='L'):
 
 def _convertarray(a):
     t, result_t = _commonType(a)
-    a = _fastCT(a.astype(t))
+    a = a.astype(t).T.copy()
     return a, t, result_t
 
 

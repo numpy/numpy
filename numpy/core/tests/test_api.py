@@ -150,24 +150,20 @@ def test_array_impossible_casts(array):
         np.array(rt, dtype="M8")
 
 
-def test_fastCopyAndTranspose():
-    # 0D array
-    a = np.array(2)
-    b = np.fastCopyAndTranspose(a)
-    assert_equal(b, a.T)
-    assert_(b.flags.owndata)
+# TODO: remove when fastCopyAndTranspose deprecation expires
+@pytest.mark.parametrize("a",
+    (
+        np.array(2),  # 0D array
+        np.array([3, 2, 7, 0]),  # 1D array
+        np.arange(6).reshape(2, 3)  # 2D array
+    ),
+)
+def test_fastCopyAndTranspose(a):
+    with pytest.deprecated_call():
+        b = np.fastCopyAndTranspose(a)
+        assert_equal(b, a.T)
+        assert b.flags.owndata
 
-    # 1D array
-    a = np.array([3, 2, 7, 0])
-    b = np.fastCopyAndTranspose(a)
-    assert_equal(b, a.T)
-    assert_(b.flags.owndata)
-
-    # 2D array
-    a = np.arange(6).reshape(2, 3)
-    b = np.fastCopyAndTranspose(a)
-    assert_equal(b, a.T)
-    assert_(b.flags.owndata)
 
 def test_array_astype():
     a = np.arange(6, dtype='f4').reshape(2, 3)

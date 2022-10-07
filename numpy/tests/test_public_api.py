@@ -43,7 +43,7 @@ def test_numpy_namespace():
         'deprecate': 'numpy.lib.utils.deprecate',
         'deprecate_with_doc': 'numpy.lib.utils.deprecate_with_doc',
         'disp': 'numpy.lib.function_base.disp',
-        'fastCopyAndTranspose': 'numpy.core._multiarray_umath._fastCopyAndTranspose',
+        'fastCopyAndTranspose': 'numpy.core._multiarray_umath.fastCopyAndTranspose',
         'get_array_wrap': 'numpy.lib.shape_base.get_array_wrap',
         'get_include': 'numpy.lib.utils.get_include',
         'recfromcsv': 'numpy.lib.npyio.recfromcsv',
