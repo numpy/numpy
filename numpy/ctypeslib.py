@@ -595,7 +595,8 @@ if ctypes is not None:
             -----
             This function does not losslessly round-trip in either direction.
             ``np.dtype(as_ctypes_type(dt))`` will:
-              - insert padding fields
+
+             - insert padding fields
               - reorder fields to be sorted by offset
               - discard field titles
             ``as_ctypes_type(np.dtype(ctype))`` will:
