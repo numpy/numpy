@@ -1717,7 +1717,7 @@ class TestSpecialFloats:
             ufunc(array)
 
 class TestFPClass:
-    @pytest.mark.parametrize("stride", [-4,-2,-1,1,2,4])
+    @pytest.mark.parametrize("stride", [-5,-4,-3,-2,-1,1,2,4,5,6,7,8,9,10])
     def test_fpclass(self, stride):
         arr_f64 = np.array([np.nan, -np.nan, np.inf, -np.inf, -1.0, 1.0, -0.0, 0.0, 2.2251e-308, -2.2251e-308], dtype='d')
         arr_f32 = np.array([np.nan, -np.nan, np.inf, -np.inf, -1.0, 1.0, -0.0, 0.0, 1.4013e-045, -1.4013e-045], dtype='f')
@@ -1733,6 +1733,21 @@ class TestFPClass:
         assert_equal(np.signbit(arr_f64[::stride]), sign[::stride])
         assert_equal(np.isfinite(arr_f32[::stride]), finite[::stride])
         assert_equal(np.isfinite(arr_f64[::stride]), finite[::stride])
+        # Try with split
+        arr_f64_split = np.array(np.array_split(arr_f64, 2))
+        arr_f32_split = np.array(np.array_split(arr_f32, 2))
+        nan_split = np.array(np.array_split(nan, 2))
+        inf_split = np.array(np.array_split(inf, 2))
+        sign_split = np.array(np.array_split(sign, 2))
+        finite_split = np.array(np.array_split(finite, 2))
+        assert_equal(np.isnan(arr_f64_split), nan_split)
+        assert_equal(np.isinf(arr_f64_split), inf_split)
+        assert_equal(np.signbit(arr_f64_split), sign_split)
+        assert_equal(np.isfinite(arr_f64_split), finite_split)
+        assert_equal(np.isnan(arr_f32_split), nan_split)
+        assert_equal(np.isinf(arr_f32_split), inf_split)
+        assert_equal(np.signbit(arr_f32_split), sign_split)
+        assert_equal(np.isfinite(arr_f32_split), finite_split)
 
 class TestLDExp:
     @pytest.mark.parametrize("stride", [-4,-2,-1,1,2,4])
