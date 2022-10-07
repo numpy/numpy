@@ -570,10 +570,9 @@ if ctypes is not None:
 
     def as_ctypes(obj):
         """
-            as_ctypes(obj)
-
-            Create and return a ctypes object from a numpy array.  Actually
-            anything that exposes the __array_interface__ is accepted.
+            Create and return a ctypes array from a numpy array.  Actually
+            from a NumPy array or any object implementing the 
+            __array_interface__ protocol is accepted.
             Basically, converts a dtype into a ctypes type.
 
             Parameters
@@ -606,7 +605,6 @@ if ctypes is not None:
                 `ctypes.Structure`\ s
               - insert padding fields
           
-
             Examples  
             --------
             >>> np.ctypeslib.as_ctypes(np.array([[0, 1], [2, 3]], dtype=np.int32)) 
