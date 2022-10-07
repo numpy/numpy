@@ -804,7 +804,7 @@ class TestHash:
             assert hash(val) == hash(numpy_val)
 
         if hash(float(np.nan)) != hash(float(np.nan)):
-            # If Python distinguises different NaNs we do so too (gh-18833)
+            # If Python distinguishes different NaNs we do so too (gh-18833)
             assert hash(scalar(np.nan)) != hash(scalar(np.nan))
 
     @pytest.mark.parametrize("type_code", np.typecodes['Complex'])

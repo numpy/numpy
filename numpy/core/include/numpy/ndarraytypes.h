@@ -1878,7 +1878,7 @@ typedef void (PyDataMem_EventHookFunc)(void *inp, void *outp, size_t size,
     /*
      * The Structures defined in this block are currently considered
      * private API and may change without warning!
-     * Part of this (at least the size) is exepcted to be public API without
+     * Part of this (at least the size) is expected to be public API without
      * further modifications.
      */
     /* TODO: Make this definition public in the API, as soon as its settled */

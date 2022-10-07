@@ -38,7 +38,7 @@
  *
  *  ALGORITHM DETAILS
  *
- *  SVML handel |x| > HUGE_THRESHOLD, INF and NaNs by scalar callout as following:
+ *  SVML handle |x| > HUGE_THRESHOLD, INF and NaNs by scalar callout as following:
  *  1. check special cases
  *  2. return `+-1` for `|x| > HUGE_THRESHOLD`  otherwise return `x`
  *

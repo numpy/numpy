@@ -795,7 +795,7 @@ static int
 get_elsize(PyObject *obj) {
   /*
     get_elsize determines array itemsize from a Python object.  Returns
-    elsize if succesful, -1 otherwise.
+    elsize if successful, -1 otherwise.
 
     Supported types of the input are: numpy.ndarray, bytes, str, tuple,
     list.

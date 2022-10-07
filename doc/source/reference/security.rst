@@ -3,7 +3,7 @@ NumPy security
 
 Security issues can be reported privately as described in the project README
 and when opening a `new issue on the issue tracker <https://github.com/numpy/numpy/issues/new/choose>`_.
-The `Python security reporting guidlines <https://www.python.org/dev/security/>`_
+The `Python security reporting guidelines <https://www.python.org/dev/security/>`_
 are a good resource and its notes apply also to NumPy.
 
 NumPy's maintainers are not security experts.  However, we are conscientious

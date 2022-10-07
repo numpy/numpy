@@ -2495,7 +2495,7 @@ M   33  21.99
 
     @pytest.mark.parametrize("ndim", [0, 1, 2])
     def test_ndmin_keyword(self, ndim: int):
-        # lets have the same behaivour of ndmin as loadtxt
+        # lets have the same behaviour of ndmin as loadtxt
         # as they should be the same for non-missing values
         txt = "42"
 

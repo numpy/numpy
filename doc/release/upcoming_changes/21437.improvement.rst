@@ -21,7 +21,7 @@ be platform dependent.  For example::
     arr = np.full(100, value=1000, dtype=np.float64)
     arr.astype(np.int8)
 
-May give a result equivalent to (the intermediat means no warning is given)::
+May give a result equivalent to (the intermediate cast means no warning is given)::
 
     arr.astype(np.int64).astype(np.int8)
 

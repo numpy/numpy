@@ -792,7 +792,7 @@ typedef enum {
      */
     CONVERSION_SUCCESS,
     /*
-     * Other object is an unkown scalar or array-like, we (typically) use
+     * Other object is an unknown scalar or array-like, we (typically) use
      * the generic path, which normally ends up in the ufunc machinery.
      */
     OTHER_IS_UNKNOWN_OBJECT,

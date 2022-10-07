@@ -391,7 +391,7 @@ static int
         temp.imag = (@ftype@) oop.imag;
 
 #if NPY_SIZEOF_@NAME@ < NPY_SIZEOF_CDOUBLE  /* really just float... */
-        /* Overflow could have occured converting double to float */
+        /* Overflow could have occurred converting double to float */
         if (NPY_UNLIKELY((npy_isinf(temp.real) && !npy_isinf(oop.real)) ||
                          (npy_isinf(temp.imag) && !npy_isinf(oop.imag)))) {
             if (PyUFunc_GiveFloatingpointErrors("cast", NPY_FPE_OVERFLOW) < 0) {
