@@ -1,0 +1,6 @@
+``masked_invalid`` is modified consistently with ``masked_where``
+-----------------------------------------------------------------
+
+According to the related documentation, ``masked_invalid`` is now a call
+to ``masked_where``, then used with ``copy=False`` modifies the input masked
+array in place.   
