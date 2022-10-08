@@ -200,10 +200,9 @@ else:
 
     _msg = (
         "`np.{n}` is a deprecated alias for `np.compat.{n}`. "
-        "To silence this warning, use `np.compat.{n}` by itself. "
-        "In the likely event your code does not need to work on Python 2 "
-        "you can use the builtin `{n2}` for which `np.compat.{n}` is itself "
-        "an alias. Doing this will not modify any behaviour and is safe. "
+        "To silence this warning, use `np.compat.{n}` by itself, or "
+        "the builtin `{n2}` for which `np.compat.{n}` is itself an "
+        "alias. Doing this will not modify any behaviour and is safe. "
         "{extended_msg}\n"
         "Deprecated in NumPy 1.20; for more details and guidance: "
         "https://numpy.org/devdocs/release/1.20.0-notes.html#deprecations")
