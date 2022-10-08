@@ -547,7 +547,7 @@ cdef class RandomState:
         >>> x = ((time_between_calls < 5).sum())/n 
         >>> y = ((time_between_calls < 4).sum())/n
         >>> x-y
-        0.08 # will vary
+        0.08 # may vary
 
         See Also
         --------
