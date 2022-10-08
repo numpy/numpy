@@ -48,11 +48,18 @@ class TestFinfo:
         for dt1, dt2 in dts:
             for attr in ('bits', 'eps', 'epsneg', 'iexp', 'machep',
                          'max', 'maxexp', 'min', 'minexp', 'negep', 'nexp',
-                         'nmant', 'precision', 'resolution', 'tiny',
-                         'smallest_normal', 'smallest_subnormal'):
+                         'nmant', 'mant_dig', 'precision', 'resolution',
+                         'tiny', 'smallest_normal', 'smallest_subnormal'):
                 assert_equal(getattr(finfo(dt1), attr),
                              getattr(finfo(dt2), attr), attr)
         assert_raises(ValueError, finfo, 'i4')
+
+    def test_mant_dig(self):
+        dts = list(zip(['f2', 'f4', 'f8', 'c8', 'c16'],
+                       [np.float16, np.float32, np.float64, np.complex64,
+                        np.complex128]))
+        for dt in dts:
+            assert_equal(finfo(dt).nmant + 1, finfo(dt).mant_dig)
 
 class TestIinfo:
     def test_basic(self):
@@ -141,5 +148,6 @@ def test_plausible_finfo():
     for ftype in np.sctypes['float'] + np.sctypes['complex']:
         info = np.finfo(ftype)
         assert_(info.nmant > 1)
+        assert_(info.mant_dig > 1)
         assert_(info.minexp < -1)
         assert_(info.maxexp > 1)
