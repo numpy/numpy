@@ -7512,22 +7512,22 @@ def round_(a, decimals=0, out=None):
     >>> masked_x
     masked_array(
       data=[11.2, -3.973, 0.801, --],
-      mask=[False, False, False,  True],
+      mask=[False, False, False, True],
       fill_value=1e+20)
     >>> ma.round_(masked_x)
     masked_array(
       data=[11.0, -4.0, 1.0, --],
-      mask=[False, False, False,  True],
+      mask=[False, False, False, True],
       fill_value=1e+20)
     >>> ma.round(masked_x, decimals=1)
     masked_array(
       data=[11.2, -4.0, 0.8, --],
-      mask=[False, False, False,  True],
+      mask=[False, False, False, True],
       fill_value=1e+20)
     >>> ma.round_(masked_x, decimals=-1)
     masked_array(
       data=[10.0, -0.0, 0.0, --],
-      mask=[False, False, False,  True],
+      mask=[False, False, False, True],
       fill_value=1e+20)
     """
     if out is None:
