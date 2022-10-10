@@ -11,6 +11,10 @@ if [[ $RUNNER_OS == "Windows" ]]; then
     PY_DIR=$(python -c "import sys; print(sys.prefix)")
     mkdir $PY_DIR/libs
 fi
+
+# Set available memory value to avoid OOM problems on aarch64.
+# See gh-22418.
+export NPY_AVAILABLE_MEM="4 GB"
 python -c "import sys; import numpy; sys.exit(not numpy.test('full'))"
 
 python $PROJECT_DIR/tools/wheels/check_license.py

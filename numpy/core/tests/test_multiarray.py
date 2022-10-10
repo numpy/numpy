@@ -6721,7 +6721,7 @@ class TestDot:
 
     @pytest.mark.slow
     @pytest.mark.parametrize("dtype", [np.float64, np.complex128])
-    @requires_memory(free_bytes=9*10**9)  # complex case needs 8GiB+
+    @requires_memory(free_bytes=18e9)  # complex case needs 18GiB+
     def test_huge_vectordot(self, dtype):
         # Large vector multiplications are chunked with 32bit BLAS
         # Test that the chunking does the right thing, see also gh-22262
