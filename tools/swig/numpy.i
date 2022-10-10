@@ -48,7 +48,7 @@
 
 %fragment("NumPy_Backward_Compatibility", "header")
 {
-%#if NPY_API_VERSION < 0x00000007
+%#if NPY_API_VERSION < NPY_1_7_API_VERSION
 %#define NPY_ARRAY_DEFAULT NPY_DEFAULT
 %#define NPY_ARRAY_FARRAY  NPY_FARRAY
 %#define NPY_FORTRANORDER  NPY_FORTRAN
@@ -69,7 +69,7 @@
 {
 /* Macros to extract array attributes.
  */
-%#if NPY_API_VERSION < 0x00000007
+%#if NPY_API_VERSION < NPY_1_7_API_VERSION
 %#define is_array(a)            ((a) && PyArray_Check((PyArrayObject*)a))
 %#define array_type(a)          (int)(PyArray_TYPE((PyArrayObject*)a))
 %#define array_numdims(a)       (((PyArrayObject*)a)->nd)
@@ -291,7 +291,7 @@ void free_cap(PyObject * cap)
       Py_INCREF(array_descr(ary));
       result = (PyArrayObject*) PyArray_FromArray(ary,
                                                   array_descr(ary),
-%#if NPY_API_VERSION < 0x00000007
+%#if NPY_API_VERSION < NPY_1_7_API_VERSION
                                                   NPY_FORTRANORDER);
 %#else
                                                   NPY_ARRAY_F_CONTIGUOUS);
@@ -2459,7 +2459,7 @@ void free_cap(PyObject * cap)
 
 PyObject* cap = PyCapsule_New((void*)(*$1), SWIGPY_CAPSULE_NAME, free_cap);
 
-%#if NPY_API_VERSION < 0x00000007
+%#if NPY_API_VERSION < NPY_1_7_API_VERSION
   PyArray_BASE(array) = cap;
 %#else
   PyArray_SetBaseObject(array,cap);
@@ -2489,7 +2489,7 @@ PyObject* cap = PyCapsule_New((void*)(*$1), SWIGPY_CAPSULE_NAME, free_cap);
 
 PyObject* cap = PyCapsule_New((void*)(*$2), SWIGPY_CAPSULE_NAME, free_cap);
 
-%#if NPY_API_VERSION < 0x00000007
+%#if NPY_API_VERSION < NPY_1_7_API_VERSION
   PyArray_BASE(array) = cap;
 %#else
   PyArray_SetBaseObject(array,cap);
@@ -2520,7 +2520,7 @@ PyObject* cap = PyCapsule_New((void*)(*$2), SWIGPY_CAPSULE_NAME, free_cap);
 
 PyObject* cap = PyCapsule_New((void*)(*$1), SWIGPY_CAPSULE_NAME, free_cap);
 
-%#if NPY_API_VERSION < 0x00000007
+%#if NPY_API_VERSION < NPY_1_7_API_VERSION
   PyArray_BASE(array) = cap;
 %#else
   PyArray_SetBaseObject(array,cap);
@@ -2551,7 +2551,7 @@ PyObject* cap = PyCapsule_New((void*)(*$1), SWIGPY_CAPSULE_NAME, free_cap);
 
 PyObject* cap = PyCapsule_New((void*)(*$3), SWIGPY_CAPSULE_NAME, free_cap);
 
-%#if NPY_API_VERSION < 0x00000007
+%#if NPY_API_VERSION < NPY_1_7_API_VERSION
   PyArray_BASE(array) = cap;
 %#else
   PyArray_SetBaseObject(array,cap);
@@ -2582,7 +2582,7 @@ PyObject* cap = PyCapsule_New((void*)(*$3), SWIGPY_CAPSULE_NAME, free_cap);
 
 PyObject* cap = PyCapsule_New((void*)(*$1), SWIGPY_CAPSULE_NAME, free_cap);
 
-%#if NPY_API_VERSION < 0x00000007
+%#if NPY_API_VERSION < NPY_1_7_API_VERSION
   PyArray_BASE(array) = cap;
 %#else
   PyArray_SetBaseObject(array,cap);
@@ -2613,7 +2613,7 @@ PyObject* cap = PyCapsule_New((void*)(*$1), SWIGPY_CAPSULE_NAME, free_cap);
 
 PyObject* cap = PyCapsule_New((void*)(*$3), SWIGPY_CAPSULE_NAME, free_cap);
 
-%#if NPY_API_VERSION < 0x00000007
+%#if NPY_API_VERSION < NPY_1_7_API_VERSION
   PyArray_BASE(array) = cap;
 %#else
   PyArray_SetBaseObject(array,cap);
@@ -2646,7 +2646,7 @@ PyObject* cap = PyCapsule_New((void*)(*$3), SWIGPY_CAPSULE_NAME, free_cap);
 
 PyObject* cap = PyCapsule_New((void*)(*$1), SWIGPY_CAPSULE_NAME, free_cap);
 
-%#if NPY_API_VERSION < 0x00000007
+%#if NPY_API_VERSION < NPY_1_7_API_VERSION
   PyArray_BASE(array) = cap;
 %#else
   PyArray_SetBaseObject(array,cap);
@@ -2679,7 +2679,7 @@ PyObject* cap = PyCapsule_New((void*)(*$1), SWIGPY_CAPSULE_NAME, free_cap);
 
 PyObject* cap = PyCapsule_New((void*)(*$4), SWIGPY_CAPSULE_NAME, free_cap);
 
-%#if NPY_API_VERSION < 0x00000007
+%#if NPY_API_VERSION < NPY_1_7_API_VERSION
   PyArray_BASE(array) = cap;
 %#else
   PyArray_SetBaseObject(array,cap);
@@ -2712,7 +2712,7 @@ PyObject* cap = PyCapsule_New((void*)(*$4), SWIGPY_CAPSULE_NAME, free_cap);
 
 PyObject* cap = PyCapsule_New((void*)(*$1), SWIGPY_CAPSULE_NAME, free_cap);
 
-%#if NPY_API_VERSION < 0x00000007
+%#if NPY_API_VERSION < NPY_1_7_API_VERSION
   PyArray_BASE(array) = cap;
 %#else
   PyArray_SetBaseObject(array,cap);
@@ -2745,7 +2745,7 @@ PyObject* cap = PyCapsule_New((void*)(*$1), SWIGPY_CAPSULE_NAME, free_cap);
 
 PyObject* cap = PyCapsule_New((void*)(*$4), SWIGPY_CAPSULE_NAME, free_cap);
 
-%#if NPY_API_VERSION < 0x00000007
+%#if NPY_API_VERSION < NPY_1_7_API_VERSION
   PyArray_BASE(array) = cap;
 %#else
   PyArray_SetBaseObject(array,cap);
@@ -2779,7 +2779,7 @@ PyObject* cap = PyCapsule_New((void*)(*$4), SWIGPY_CAPSULE_NAME, free_cap);
 
 PyObject* cap = PyCapsule_New((void*)(*$1), SWIGPY_CAPSULE_NAME, free_cap);
 
-%#if NPY_API_VERSION < 0x00000007
+%#if NPY_API_VERSION < NPY_1_7_API_VERSION
   PyArray_BASE(array) = cap;
 %#else
   PyArray_SetBaseObject(array,cap);
@@ -2813,7 +2813,7 @@ PyObject* cap = PyCapsule_New((void*)(*$1), SWIGPY_CAPSULE_NAME, free_cap);
 
 PyObject* cap = PyCapsule_New((void*)(*$5), SWIGPY_CAPSULE_NAME, free_cap);
 
-%#if NPY_API_VERSION < 0x00000007
+%#if NPY_API_VERSION < NPY_1_7_API_VERSION
   PyArray_BASE(array) = cap;
 %#else
   PyArray_SetBaseObject(array,cap);
@@ -2847,7 +2847,7 @@ PyObject* cap = PyCapsule_New((void*)(*$5), SWIGPY_CAPSULE_NAME, free_cap);
 
 PyObject* cap = PyCapsule_New((void*)(*$1), SWIGPY_CAPSULE_NAME, free_cap);
 
-%#if NPY_API_VERSION < 0x00000007
+%#if NPY_API_VERSION < NPY_1_7_API_VERSION
   PyArray_BASE(array) = cap;
 %#else
   PyArray_SetBaseObject(array,cap);
@@ -2881,7 +2881,7 @@ PyObject* cap = PyCapsule_New((void*)(*$1), SWIGPY_CAPSULE_NAME, free_cap);
 
 PyObject* cap = PyCapsule_New((void*)(*$5), SWIGPY_CAPSULE_NAME, free_cap);
 
-%#if NPY_API_VERSION < 0x00000007
+%#if NPY_API_VERSION < NPY_1_7_API_VERSION
   PyArray_BASE(array) = cap;
 %#else
   PyArray_SetBaseObject(array,cap);
