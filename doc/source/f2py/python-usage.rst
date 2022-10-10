@@ -15,12 +15,13 @@ Routine wrappers are callable ``fortran`` type objects while wrappers to Fortran
 data have attributes referring to data objects.
 
 All ``fortran`` type objects have an attribute ``_cpointer`` that contains a
-``CObject`` referring to the C pointer of the corresponding Fortran/C function
-or variable at the C level. Such ``CObjects`` can be used as callback arguments
-for F2PY generated functions to bypass the Python C/API layer for calling Python
-functions from Fortran or C. This can be useful when the computational aspects
-of such functions are implemented in C or Fortran and wrapped with F2PY (or any
-other tool capable of providing the ``CObject`` of a function).
+``Capsule`` referring to the C pointer of the corresponding Fortran/C function
+or variable at the C level. Such ``Capsule`` objects can be used as callback
+arguments for F2PY generated functions to bypass the Python C/API layer for
+calling Python functions from Fortran or C. This can be useful when the
+computational aspects of such functions are implemented in C or Fortran and
+wrapped with F2PY (or any other tool capable of providing the ``Capsule``
+containing a function).
 
 Consider a Fortran 77 file ```ftype.f``:
 
