@@ -47,7 +47,7 @@ Nat Methods 8, 441 (2011). https://doi.org/10.1038/nmeth.1618
 #version_switcher_button[data-active-version-name*="dev"] {
   background-color: #E69F00;
   border-color: #E69F00;
-  color:#4A4A4A; /* numpy.org body color */
+  color:#000000;
 }
 
 /* green for `stable` */
