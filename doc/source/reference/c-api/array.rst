@@ -152,7 +152,7 @@ and its sub-types).
 
 .. c:function:: int PyArray_FinalizeFunc(PyArrayObject* arr, PyObject* obj)
 
-    The function pointed to by the Capsule
+    The function pointed to by the :c:type:`PyCapsule`
     :obj:`~numpy.class.__array_finalize__`.
     The first argument is the newly created sub-type. The second argument
     (if not NULL) is the "parent" array (if the array was created using

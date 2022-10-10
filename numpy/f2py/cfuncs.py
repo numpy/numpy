@@ -1324,7 +1324,7 @@ create_cb_arglist(PyObject* fun, PyTupleObject* xa , const int maxnofargs,
             if (xa != NULL)
                 ext = PyTuple_Size((PyObject *)xa);
             if(ext>0) {
-                fprintf(stderr,\"extra arguments tuple cannot be used with Capsule call-back\\n\");
+                fprintf(stderr,\"extra arguments tuple cannot be used with PyCapsule call-back\\n\");
                 goto capi_fail;
             }
             tmp_fun = fun;
