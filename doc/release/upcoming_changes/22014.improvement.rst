@@ -1,5 +1,5 @@
 Added pickle support for third-party BitGenerators
-==================================================
+--------------------------------------------------
 
 The pickle format for bit generators was extended to allow each bit generator
 to supply its own constructor when during pickling. Previous  versions of NumPy
