@@ -19,7 +19,6 @@
 #define NETWORK_64BIT_2 0, 1, 2, 3, 4, 5, 6, 7
 #define NETWORK_64BIT_3 5, 4, 7, 6, 1, 0, 3, 2
 #define NETWORK_64BIT_4 3, 2, 1, 0, 7, 6, 5, 4
-static const __m512i rev_index = _mm512_set_epi64(NETWORK_64BIT_2);
 
 template <>
 struct vector<int64_t> {
@@ -333,6 +332,7 @@ struct vector<double> {
 template <typename vtype, typename zmm_t = typename vtype::zmm_t>
 NPY_FINLINE zmm_t sort_zmm_64bit(zmm_t zmm)
 {
+    const __m512i rev_index = _mm512_set_epi64(NETWORK_64BIT_2);
     zmm = cmp_merge<vtype>(
             zmm, vtype::template shuffle<SHUFFLE_MASK(1, 1, 1, 1)>(zmm), 0xAA);
     zmm = cmp_merge<vtype>(
@@ -376,6 +376,7 @@ NPY_FINLINE zmm_t bitonic_merge_zmm_64bit(zmm_t zmm)
 template <typename vtype, typename zmm_t = typename vtype::zmm_t>
 NPY_FINLINE void bitonic_merge_two_zmm_64bit(zmm_t &zmm1, zmm_t &zmm2)
 {
+    const __m512i rev_index = _mm512_set_epi64(NETWORK_64BIT_2);
     // 1) First step of a merging network: coex of zmm1 and zmm2 reversed
     zmm2 = vtype::permutexvar(rev_index, zmm2);
     zmm_t zmm3 = vtype::min(zmm1, zmm2);
@@ -390,6 +391,7 @@ NPY_FINLINE void bitonic_merge_two_zmm_64bit(zmm_t &zmm1, zmm_t &zmm2)
 template <typename vtype, typename zmm_t = typename vtype::zmm_t>
 NPY_FINLINE void bitonic_merge_four_zmm_64bit(zmm_t *zmm)
 {
+    const __m512i rev_index = _mm512_set_epi64(NETWORK_64BIT_2);
     // 1) First step of a merging network
     zmm_t zmm2r = vtype::permutexvar(rev_index, zmm[2]);
     zmm_t zmm3r = vtype::permutexvar(rev_index, zmm[3]);
@@ -411,6 +413,7 @@ NPY_FINLINE void bitonic_merge_four_zmm_64bit(zmm_t *zmm)
 template <typename vtype, typename zmm_t = typename vtype::zmm_t>
 NPY_FINLINE void bitonic_merge_eight_zmm_64bit(zmm_t *zmm)
 {
+    const __m512i rev_index = _mm512_set_epi64(NETWORK_64BIT_2);
     zmm_t zmm4r = vtype::permutexvar(rev_index, zmm[4]);
     zmm_t zmm5r = vtype::permutexvar(rev_index, zmm[5]);
     zmm_t zmm6r = vtype::permutexvar(rev_index, zmm[6]);
@@ -444,6 +447,7 @@ NPY_FINLINE void bitonic_merge_eight_zmm_64bit(zmm_t *zmm)
 template <typename vtype, typename zmm_t = typename vtype::zmm_t>
 NPY_FINLINE void bitonic_merge_sixteen_zmm_64bit(zmm_t *zmm)
 {
+    const __m512i rev_index = _mm512_set_epi64(NETWORK_64BIT_2);
     zmm_t zmm8r = vtype::permutexvar(rev_index, zmm[8]);
     zmm_t zmm9r = vtype::permutexvar(rev_index, zmm[9]);
     zmm_t zmm10r = vtype::permutexvar(rev_index, zmm[10]);
