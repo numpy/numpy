@@ -2740,7 +2740,7 @@ reducelike_promote_and_resolve(PyUFuncObject *ufunc,
         PyArrayObject *arr, PyArrayObject *out,
         PyArray_DTypeMeta *signature[3],
         npy_bool enforce_uniform_args, PyArray_Descr *out_descrs[3],
-        char *method)
+        NPY_CASTING casting, char *method)
 {
      /*
       * If no dtype is specified and out is not specified, we override the
@@ -2836,7 +2836,7 @@ reducelike_promote_and_resolve(PyUFuncObject *ufunc,
      * (although this should possibly happen through a deprecation)
      */
     if (resolve_descriptors(3, ufunc, ufuncimpl,
-            ops, out_descrs, signature, NPY_UNSAFE_CASTING) < 0) {
+            ops, out_descrs, signature, casting) < 0) {
         return NULL;
     }
 
@@ -2859,8 +2859,7 @@ reducelike_promote_and_resolve(PyUFuncObject *ufunc,
         goto fail;
     }
     /* TODO: This really should _not_ be unsafe casting (same above)! */
-    if (validate_casting(ufuncimpl,
-            ufunc, ops, out_descrs, NPY_UNSAFE_CASTING) < 0) {
+    if (validate_casting(ufuncimpl, ufunc, ops, out_descrs, casting) < 0) {
         goto fail;
     }
 
@@ -3023,7 +3022,7 @@ PyUFunc_Reduce(PyUFuncObject *ufunc,
      */
     PyArray_Descr *descrs[3];
     PyArrayMethodObject *ufuncimpl = reducelike_promote_and_resolve(ufunc,
-            arr, out, signature, NPY_FALSE, descrs, "reduce");
+            arr, out, signature, NPY_FALSE, descrs, NPY_UNSAFE_CASTING, "reduce");
     if (ufuncimpl == NULL) {
         return NULL;
     }
@@ -3128,7 +3127,8 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
 
     PyArray_Descr *descrs[3];
     PyArrayMethodObject *ufuncimpl = reducelike_promote_and_resolve(ufunc,
-            arr, out, signature, NPY_TRUE, descrs, "accumulate");
+            arr, out, signature, NPY_TRUE, descrs, NPY_UNSAFE_CASTING,
+            "accumulate");
     if (ufuncimpl == NULL) {
         return NULL;
     }
@@ -3545,7 +3545,8 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
 
     PyArray_Descr *descrs[3];
     PyArrayMethodObject *ufuncimpl = reducelike_promote_and_resolve(ufunc,
-            arr, out, signature, NPY_TRUE, descrs, "reduceat");
+            arr, out, signature, NPY_TRUE, descrs, NPY_UNSAFE_CASTING,
+            "reduceat");
     if (ufuncimpl == NULL) {
         return NULL;
     }
@@ -6349,9 +6350,9 @@ py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
         return NULL;
     }
 
-    if (reduction) {
-        PyErr_SetString(PyExc_NotImplementedError,
-            "reduction option is not yet implemented.");
+    if (reduction && (ufunc->nin != 2 || ufunc->nout != 1)) {
+        PyErr_SetString(PyExc_ValueError,
+                "ufunc is not compatible with reduction operations.");
         return NULL;
     }
 
@@ -6461,9 +6462,10 @@ py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
             promoting_pyscalars = NPY_TRUE;
         }
         else if (descr_obj == Py_None) {
-            if (i < ufunc->nin) {
+            if (i < ufunc->nin && !(reduction && i == 0)) {
                 PyErr_SetString(PyExc_TypeError,
-                        "All input dtypes must be provided");
+                        "All input dtypes must be provided "
+                        "(except the first one reductions)");
                 goto finish;
             }
         }
@@ -6475,22 +6477,48 @@ py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
         }
     }
 
-    PyArrayMethodObject *ufuncimpl = promote_and_get_ufuncimpl(ufunc,
-            dummy_arrays, signature, DTypes, NPY_FALSE,
-            allow_legacy_promotion, promoting_pyscalars, NPY_FALSE);
-    if (ufuncimpl == NULL) {
-        goto finish;
-    }
+    PyArrayMethodObject *ufuncimpl;
+    if (!reduction) {
+        ufuncimpl = promote_and_get_ufuncimpl(ufunc,
+                dummy_arrays, signature, DTypes, NPY_FALSE,
+                allow_legacy_promotion, promoting_pyscalars, NPY_FALSE);
+        if (ufuncimpl == NULL) {
+            goto finish;
+        }
 
-    /* Find the correct descriptors for the operation */
-    if (resolve_descriptors(ufunc->nargs, ufunc, ufuncimpl,
-            dummy_arrays, operation_descrs, signature, casting) < 0) {
-        goto finish;
-    }
+        /* Find the correct descriptors for the operation */
+        if (resolve_descriptors(ufunc->nargs, ufunc, ufuncimpl,
+                dummy_arrays, operation_descrs, signature, casting) < 0) {
+            goto finish;
+        }
 
-    if (validate_casting(
-            ufuncimpl, ufunc, dummy_arrays, operation_descrs, casting) < 0) {
-        goto finish;
+        if (validate_casting(
+                ufuncimpl, ufunc, dummy_arrays, operation_descrs, casting) < 0) {
+            goto finish;
+        }
+    }
+    else {  /* reduction */
+        if (signature[2] != NULL) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Reduction signature must end with None, instead pass "
+                    "the first DType in the signature.");
+            goto finish;
+        }
+
+        if (dummy_arrays[2] != NULL) {
+            PyErr_SetString(PyExc_TypeError,
+                    "Output dtype must not be passed for reductions, "
+                    "pass the first input instead.");
+            goto finish;
+        }
+
+        ufuncimpl = reducelike_promote_and_resolve(ufunc,
+                dummy_arrays[1], dummy_arrays[0], signature, NPY_FALSE,
+                operation_descrs, casting, "resolve_dtypes");
+
+        if (ufuncimpl == NULL) {
+            goto finish;
+        }
     }
 
     result = PyArray_TupleFromItems(

@@ -2674,6 +2674,22 @@ class TestLowlevelAPIAccess:
         with pytest.raises(TypeError):
             np.add.resolve_dtypes(dtypes)
 
+    def test_resolve_dtypes_reduction(self):
+        i2 = np.dtype("i2")
+        long_ = np.dtype("long")
+        # Check special addition resolution:
+        res = np.add.resolve_dtypes((None, i2, None), reduction=True)
+        assert res == (long_, long_, long_)
+
+    def test_resolve_dtypes_reduction_errors(self):
+        i2 = np.dtype("i2")
+
+        with pytest.raises(TypeError):
+            np.add.resolve_dtypes((None, i2, i2))
+
+        with pytest.raises(TypeError):
+            np.add.signature((None, None, "i4"))
+
     def test_loop_access(self):
         # This is a basic test for the full strided loop access
         import ctypes as ct

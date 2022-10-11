@@ -5723,6 +5723,13 @@ add_newdoc('numpy.core', 'ufunc', ('resolve_dtypes',
     reduction : boolean
         If given, the resolution assumes a reduce operation is happening
         which slightly changes the promotion and type resolution rules.
+        `dtypes` is usually something like ``(None, np.dtype("i2"), None)``
+        for reductions (first input is also the output).
+
+        .. note::
+
+            The default casting mode is "same_kind", however, as of
+            NumPy 1.24, NumPy uses "unsafe" for reductions.
 
     Returns
     -------
