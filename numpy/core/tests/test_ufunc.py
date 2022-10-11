@@ -1,6 +1,7 @@
 import warnings
 import itertools
 import sys
+import ctypes as ct
 
 import pytest
 
@@ -2690,10 +2691,10 @@ class TestLowlevelAPIAccess:
         with pytest.raises(TypeError):
             np.add.signature((None, None, "i4"))
 
+    @pytest.mark.skipif(not hasattr(ct, "pythonapi"),
+            reason="`ctypes.pythonapi` required for capsule unpacking.")
     def test_loop_access(self):
         # This is a basic test for the full strided loop access
-        import ctypes as ct
-
         data_t = ct.ARRAY(ct.c_char_p, 2)
         dim_t = ct.ARRAY(ct.c_ssize_t, 1)
         strides_t = ct.ARRAY(ct.c_ssize_t, 2)
