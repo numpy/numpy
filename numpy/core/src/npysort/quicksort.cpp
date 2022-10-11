@@ -58,13 +58,6 @@
 #include <cstdlib>
 #include <utility>
 
-#ifdef NPY_ENABLE_AVX512_QSORT
-#include "x86-qsort-skx.h"
-#ifndef NPY_DISABLE_OPTIMIZATION
-#include "x86-qsort-skx.dispatch.h"
-#endif // NPY_DISABLE_OPTIMIZATION
-#endif // NPY_ENABLE_AVX512_QSORT
-
 #define NOT_USED NPY_UNUSED(unused)
 /*
  * pushing largest partition has upper bound of log2(n) space
@@ -88,7 +81,15 @@ struct x86_dispatch {
     static bool quicksort(typename Tag::type *, npy_intp) { return false; }
 };
 
+// Currently disabled on WIN32 only
 #ifdef NPY_ENABLE_AVX512_QSORT
+#include "x86-qsort-skx.h"
+#include "x86-qsort-icl.h"
+
+#ifndef NPY_DISABLE_OPTIMIZATION
+#include "x86-qsort-skx.dispatch.h"
+#endif
+
 #if NPY_SIZEOF_LONG == 8
 template <>
 struct x86_dispatch<npy::long_tag> {
@@ -143,7 +144,7 @@ struct x86_dispatch<npy::ulonglong_tag> {
         return false;
     }
 };
-#endif
+#endif // NPY_SIZEOF_LONG
 
 template <>
 struct x86_dispatch<npy::double_tag> {
@@ -200,9 +201,41 @@ struct x86_dispatch<npy::float_tag> {
         return false;
     }
 };
+
+#ifndef NPY_DISABLE_OPTIMIZATION
+#include "x86-qsort-icl.dispatch.h"
+#endif
+
+template <>
+struct x86_dispatch<npy::short_tag> {
+    static bool quicksort(npy_short *start, npy_intp num)
+    {
+        void (*dispfunc)(void *, npy_intp) = nullptr;
+        NPY_CPU_DISPATCH_CALL_XB(dispfunc = x86_quicksort_short);
+        if (dispfunc) {
+            (*dispfunc)(start, num);
+            return true;
+        }
+        return false;
+    }
+};
+
+template <>
+struct x86_dispatch<npy::ushort_tag> {
+    static bool quicksort(npy_ushort *start, npy_intp num)
+    {
+        void (*dispfunc)(void *, npy_intp) = nullptr;
+        NPY_CPU_DISPATCH_CALL_XB(dispfunc = x86_quicksort_ushort);
+        if (dispfunc) {
+            (*dispfunc)(start, num);
+            return true;
+        }
+        return false;
+    }
+};
 #endif // NPY_ENABLE_AVX512_QSORT
 
-}  // namespace
+}  // end namespace
 
 template <typename Tag, typename type>
 static int
