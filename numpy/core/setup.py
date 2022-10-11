@@ -68,12 +68,11 @@ class CallOnceOnly:
             out = copy.deepcopy(pickle.loads(self._check_complex))
         return out
 
-# Temporarily disable AVX512 sorting on WIN32 and macOS until we can figure
-# out why the build fails
+# Temporarily disable AVX512 sorting on WIN32 until we can figure
+# out why it has test failures
 def enable_avx512_qsort():
     enable = True
-    platform = sysconfig.get_platform()
-    if "win32" in platform:
+    if "win32" in sysconfig.get_platform():
         enable = False
     return enable
 
