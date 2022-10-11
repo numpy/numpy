@@ -8,7 +8,7 @@ fail in the future and give a ``DeprecationWarning`` now::
     np.uint8(-1)
     np.array([3000], dtype=np.int8)
 
-While many of these did succeed before.  Such code was mainly
+Many of these did succeed before.  Such code was mainly
 useful for unsigned integers with negative values such as
 `np.uint8(-1)` giving `np.iinfo(np.uint8).max`.
 
