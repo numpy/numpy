@@ -2867,7 +2867,7 @@ reducelike_promote_and_resolve(PyUFuncObject *ufunc,
 
   fail:
     for (int i = 0; i < 3; ++i) {
-        Py_DECREF(out_descrs[i]);
+        Py_CLEAR(out_descrs[i]);
     }
     return NULL;
 }
