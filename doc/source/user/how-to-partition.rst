@@ -1,8 +1,8 @@
 .. _how-to-partition:
 
-=====================================
-How to partition a domain using NumPy
-=====================================
+=================================================
+How to create arrays with regularly-spaced values
+=================================================
 
 There are a few NumPy functions that are similar in application, but which
 provide slightly different results, which may cause confusion if one is not sure
@@ -30,7 +30,7 @@ Both `numpy.linspace` and `numpy.arange` provide ways to partition an interval
 depending on the chosen starting and ending points, and the **step** (the length 
 of the subintervals).
 
-* Use `numpy.arange` if you want integer steps.
+* **Use** `numpy.arange` **if you want integer steps.**
 
   `numpy.arange` relies on step size to determine how many elements are in the
   returned array, which excludes the endpoint. This is determined through the
@@ -42,10 +42,14 @@ of the subintervals).
     array([0, 2, 4, 6, 8])
 
   The arguments ``start`` and ``stop`` should be integer or real, but not
-  complex numbers.
+  complex numbers. `numpy.arange` is similar to the Python built-in
+  :py:class:`range`.
 
-* Use `numpy.linspace` if you want the endpoint to be included in the result, or
-  if you are using a non-integer step size.
+  Floating-point inaccuracies can make ``arange`` results with floating-point
+  numbers confusing. In this case, you should use `numpy.linspace` instead.
+
+* **Use** `numpy.linspace` **if you want the endpoint to be included in the
+  result, or if you are using a non-integer step size.**
 
   `numpy.linspace` *can* include the endpoint and determines step size from the
   `num` argument, which specifies the number of elements in the returned
@@ -154,20 +158,14 @@ of ``start``) and ends with ``base ** stop``::
 nD domains
 ==========
 
-nD domains can be partitioned into *grids*.
-
-    Two instances of `nd_grid` are made available in the NumPy namespace,
-    `mgrid` and `ogrid`, approximately defined as::
-
-        mgrid = nd_grid(sparse=False)
-        ogrid = nd_grid(sparse=True)
-        xs, ys = np.meshgrid(x, y, sparse=True)
+nD domains can be partitioned into *grids*. This can be done using one of the
+following functions.
 
 ``meshgrid``
 ------------
 
-The purpose of ``numpy.meshgrid`` is to create a rectangular grid out of a set of
-one-dimensional coordinate arrays.
+The purpose of ``numpy.meshgrid`` is to create a rectangular grid out of a set
+of one-dimensional coordinate arrays.
 
 Given arrays
 
@@ -208,8 +206,7 @@ the coordinate pairs determining this grid.
 ---------
 
 ``numpy.mgrid`` can be used as a shortcut for creating meshgrids. It is not a
-function, but a ``nd_grid`` instance that, when indexed, returns a
-multidimensional meshgrid.
+function, but when indexed, returns a multidimensional meshgrid.
 
 ::
 
@@ -239,9 +236,10 @@ multidimensional meshgrid.
 ``ogrid``
 ---------
 
-Similar to ``numpy.mgrid``, ``numpy.ogrid`` returns a ``nd_grid`` instance, but
-the result is an *open* multidimensional meshgrid. This means that when it is
-indexed, so that only one dimension of each returned array is greater than 1.
+Similar to ``numpy.mgrid``, ``numpy.ogrid`` returns an *open* multidimensional
+meshgrid. This means that when it is indexed, only one dimension of each
+returned array is greater than 1. This avoids repeating the data and thus saves
+memory, which is often desirable.
 
 These sparse coordinate grids are intended to be use with :ref:`broadcasting`.
 When all coordinates are used in an expression, broadcasting still leads to a

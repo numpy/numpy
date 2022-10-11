@@ -91,6 +91,7 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
                 scale (a geometric progression).
     logspace : Similar to `geomspace`, but with the end points specified as
                logarithms.
+    :ref:`how-to-partition`
 
     Examples
     --------
@@ -242,6 +243,7 @@ def logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None,
     linspace : Similar to logspace, but with the samples uniformly distributed
                in linear space, instead of log space.
     geomspace : Similar to logspace, but with endpoints specified directly.
+    :ref:`how-to-partition`
 
     Notes
     -----
@@ -338,6 +340,7 @@ def geomspace(start, stop, num=50, endpoint=True, dtype=None, axis=0):
                progression.
     arange : Similar to linspace, with the step size specified instead of the
              number of samples.
+    :ref:`how-to-partition`
 
     Notes
     -----

@@ -1774,6 +1774,7 @@ add_newdoc('numpy.core.multiarray', 'arange',
     numpy.linspace : Evenly spaced numbers with careful handling of endpoints.
     numpy.ogrid: Arrays of evenly spaced numbers in N-dimensions.
     numpy.mgrid: Grid-shaped arrays of evenly spaced numbers in N-dimensions.
+    :ref:`how-to-partition`
 
     Examples
     --------

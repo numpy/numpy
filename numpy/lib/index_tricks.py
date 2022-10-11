@@ -234,6 +234,7 @@ class MGridClass(nd_grid):
     ogrid : like mgrid but returns open (not fleshed out) mesh grids
     meshgrid: return coordinate matrices from coordinate vectors
     r_ : array concatenator
+    :ref:`how-to-partition`
 
     Examples
     --------
@@ -286,6 +287,7 @@ class OGridClass(nd_grid):
     mgrid : like `ogrid` but returns dense (or fleshed out) mesh grids
     meshgrid: return coordinate matrices from coordinate vectors
     r_ : array concatenator
+    :ref:`how-to-partition`
 
     Examples
     --------
