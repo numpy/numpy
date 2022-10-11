@@ -1736,7 +1736,7 @@ array_array(PyObject *NPY_UNUSED(ignored),
                 "$order", &PyArray_OrderConverter, &order,
                 "$subok", &PyArray_BoolConverter, &subok,
                 "$ndmin", &PyArray_PythonPyIntFromInt, &ndmin,
-                "$like", Py_None, &like,
+                "$like", NULL, &like,
                 NULL, NULL, NULL) < 0) {
             Py_XDECREF(type);
             return NULL;
@@ -1776,7 +1776,7 @@ array_asarray(PyObject *NPY_UNUSED(ignored),
                 "a", NULL, &op,
                 "|dtype", &PyArray_DescrConverter2, &type,
                 "|order", &PyArray_OrderConverter, &order,
-                "$like", Py_None, &like,
+                "$like", NULL, &like,
                 NULL, NULL, NULL) < 0) {
             Py_XDECREF(type);
             return NULL;
@@ -1815,7 +1815,7 @@ array_asanyarray(PyObject *NPY_UNUSED(ignored),
                 "a", NULL, &op,
                 "|dtype", &PyArray_DescrConverter2, &type,
                 "|order", &PyArray_OrderConverter, &order,
-                "$like", Py_None, &like,
+                "$like", NULL, &like,
                 NULL, NULL, NULL) < 0) {
             Py_XDECREF(type);
             return NULL;
@@ -1853,7 +1853,7 @@ array_ascontiguousarray(PyObject *NPY_UNUSED(ignored),
         if (npy_parse_arguments("ascontiguousarray", args, len_args, kwnames,
                 "a", NULL, &op,
                 "|dtype", &PyArray_DescrConverter2, &type,
-                "$like", Py_None, &like,
+                "$like", NULL, &like,
                 NULL, NULL, NULL) < 0) {
             Py_XDECREF(type);
             return NULL;
@@ -1891,7 +1891,7 @@ array_asfortranarray(PyObject *NPY_UNUSED(ignored),
         if (npy_parse_arguments("asfortranarray", args, len_args, kwnames,
                 "a", NULL, &op,
                 "|dtype", &PyArray_DescrConverter2, &type,
-                "$like", Py_None, &like,
+                "$like", NULL, &like,
                 NULL, NULL, NULL) < 0) {
             Py_XDECREF(type);
             return NULL;
@@ -1976,7 +1976,7 @@ array_empty(PyObject *NPY_UNUSED(ignored),
             "shape", &PyArray_IntpConverter, &shape,
             "|dtype", &PyArray_DescrConverter, &typecode,
             "|order", &PyArray_OrderConverter, &order,
-            "$like", Py_None, &like,
+            "$like", NULL, &like,
             NULL, NULL, NULL) < 0) {
         goto fail;
     }
@@ -2178,7 +2178,7 @@ array_zeros(PyObject *NPY_UNUSED(ignored),
             "shape", &PyArray_IntpConverter, &shape,
             "|dtype", &PyArray_DescrConverter, &typecode,
             "|order", &PyArray_OrderConverter, &order,
-            "$like", Py_None, &like,
+            "$like", NULL, &like,
             NULL, NULL, NULL) < 0) {
         goto fail;
     }
@@ -3042,7 +3042,7 @@ array_arange(PyObject *NPY_UNUSED(ignored),
             "|stop", NULL, &o_stop,
             "|step", NULL, &o_step,
             "|dtype", &PyArray_DescrConverter2, &typecode,
-            "$like", Py_None, &like,
+            "$like", NULL, &like,
             NULL, NULL, NULL) < 0) {
         Py_XDECREF(typecode);
         return NULL;
