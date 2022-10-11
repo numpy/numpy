@@ -21,6 +21,7 @@
 #include "npy_sort.h"
 #include "common.h"
 #include "ctors.h"
+#include "convert_datatype.h"
 #include "dtypemeta.h"
 #include "lowlevel_strided_loops.h"
 #include "usertypes.h"
@@ -174,6 +175,13 @@ MyPyLong_As@Type@ (PyObject *obj)
     return ret;
 }
 
+static @type@
+MyPyLong_As@Type@WithWrap(PyObject *obj, int *wraparound)
+{
+    *wraparound = 0;  /* Never happens within the function */
+    return MyPyLong_As@Type@(obj);
+}
+
 /**end repeat**/
 
 /**begin repeat
@@ -182,9 +190,10 @@ MyPyLong_As@Type@ (PyObject *obj)
  * #type = npy_ulong, npy_ulonglong#
  */
 static @type@
-MyPyLong_AsUnsigned@Type@ (PyObject *obj)
+MyPyLong_AsUnsigned@Type@WithWrap(PyObject *obj, int *wraparound)
 {
     @type@ ret;
+    *wraparound = 0;
     PyObject *num = PyNumber_Long(obj);
 
     if (num == NULL) {
@@ -193,11 +202,20 @@ MyPyLong_AsUnsigned@Type@ (PyObject *obj)
     ret = PyLong_AsUnsigned@Type@(num);
     if (PyErr_Occurred()) {
         PyErr_Clear();
+        *wraparound = 1;  /* negative wrapped to positive */
         ret = PyLong_As@Type@(num);
     }
     Py_DECREF(num);
     return ret;
 }
+
+static @type@
+MyPyLong_AsUnsigned@Type@(PyObject *obj)
+{
+    int wraparound;
+    return MyPyLong_AsUnsigned@Type@WithWrap(obj, &wraparound);
+}
+
 
 /**end repeat**/
 
@@ -219,6 +237,88 @@ MyPyLong_AsUnsigned@Type@ (PyObject *obj)
 
 /**begin repeat
  *
+ * #type = npy_byte, npy_short, npy_int, npy_long, npy_longlong,
+ *         npy_ubyte, npy_ushort, npy_uint, npy_ulong, npy_ulonglong#
+ * #TYPE = BYTE, SHORT, INT, LONG, LONGLONG,
+ *         UBYTE, USHORT, UINT, ULONG, ULONGLONG#
+ * #STYPE = BYTE, SHORT, INT, LONG, LONGLONG,
+ *          BYTE, SHORT, INT, LONG, LONGLONG#
+ * #conv_type = npy_long*4, npy_longlong, npy_ulong*4, npy_ulonglong#
+ * #CSTYPE = LONG*4, LONGLONG, LONG*4, LONGLONG#
+ * #func = MyPyLong_AsLong*4, MyPyLong_AsLongLong,
+ *         MyPyLong_AsLong*2, MyPyLong_AsUnsignedLong*2,
+ *         MyPyLong_AsUnsignedLongLong#
+ */
+
+/*
+ * Helper for conversion from Python integers.  This uses the same conversion
+ * function as below for compatibility (which may seem strange).
+ * However, it adds more strict integer overflow checks to prevent mainly
+ * conversion of negative integers.  These are considered deprecated, which is
+ * related to NEP 50 (but somewhat independent).
+ */
+static int
+@TYPE@_safe_pyint_setitem(PyObject *obj, @type@ *result)
+{
+    /* Input is guaranteed to be a Python integer */
+    assert(PyLong_Check(obj));
+    int wraparound;
+    @conv_type@ value = @func@WithWrap(obj, &wraparound);
+    if (value == (@conv_type@)-1 && PyErr_Occurred()) {
+        return -1;
+    }
+    *result = (@type@)value;
+
+    if (wraparound
+#if NPY_SIZEOF_@STYPE@ < NPY_SIZEOF_@CSTYPE@
+            || *result != value
+#endif
+            ) {
+        PyArray_Descr *descr = PyArray_DescrFromType(NPY_@TYPE@);
+
+        if (npy_promotion_state == NPY_USE_LEGACY_PROMOTION || (
+                    npy_promotion_state == NPY_USE_WEAK_PROMOTION_AND_WARN
+                        && !npy_give_promotion_warnings())) {
+            /*
+             * This path will be taken both for the "promotion" case such as
+             * `uint8_arr + 123` as well as the assignment case.
+             * The "legacy" path should only ever be taken for assignment
+             * (legacy promotion will prevent overflows by promoting up)
+             * so a normal deprecation makes sense.
+             * When weak promotion is active, we use "future" behavior unless
+             * warnings were explicitly opt-in.
+             */
+            if (PyErr_WarnFormat(PyExc_DeprecationWarning, 1,
+                    "NumPy will stop allowing conversion of out-of-bound "
+                    "Python integers to integer arrays.  The conversion "
+                    "of %.100R to %S will fail in the future.\n"
+                    "For the old behavior, usually:\n"
+                    "    np.array(value).astype(dtype)`\n"
+                    "will give the desired result (the cast overflows).",
+                    obj, descr) < 0) {
+                Py_DECREF(descr);
+                return -1;
+            }
+            Py_DECREF(descr);
+            return 0;
+        }
+        else {
+            /* Live in the future, outright error: */
+            PyErr_Format(PyExc_OverflowError,
+                    "Python int %R too large to convert to %S", obj, descr);
+            Py_DECREF(descr);
+            return -1;
+            }
+        assert(0);
+    }
+    return 0;
+}
+
+/**end repeat**/
+
+
+/**begin repeat
+ *
  * #TYPE = BOOL, BYTE, UBYTE, SHORT, USHORT, INT, LONG, UINT, ULONG,
  *         LONGLONG, ULONGLONG, HALF, FLOAT, DOUBLE#
  * #func1 = PyBool_FromLong, PyLong_FromLong*6, PyLong_FromUnsignedLong*2,
@@ -235,7 +335,8 @@ MyPyLong_AsUnsigned@Type@ (PyObject *obj)
  *          npy_half, npy_float, npy_double#
  * #kind = Bool, Byte, UByte, Short, UShort, Int, Long, UInt, ULong,
  *         LongLong, ULongLong, Half, Float, Double#
-*/
+ * #is_int = 0,1*10,0*3#
+ */
 static PyObject *
 @TYPE@_getitem(void *input, void *vap)
 {
@@ -253,11 +354,25 @@ static PyObject *
     }
 }
 
-static int
+NPY_NO_EXPORT int
 @TYPE@_setitem(PyObject *op, void *ov, void *vap)
 {
     PyArrayObject *ap = vap;
     @type@ temp;  /* ensures alignment */
+
+#if @is_int@
+    if (PyLong_Check(op)) {
+        /*
+         * When weak promotion is enabled (using NEP 50) we also use more
+         * strict parsing of integers:  All out-of-bound Python integer
+         * parsing fails.
+         */
+        if (@TYPE@_safe_pyint_setitem(op, &temp) < 0) {
+            return -1;
+        }
+    }
+    else  /* continue with if below */
+#endif
 
     if (PyArray_IsScalar(op, @kind@)) {
         temp = PyArrayScalar_VAL(op, @kind@);
@@ -290,6 +405,7 @@ static int
 }
 
 /**end repeat**/
+
 
 /**begin repeat
  *
@@ -328,13 +444,12 @@ static PyObject *
  * #ftype = npy_float, npy_double, npy_longdouble#
  * #kind = CFloat, CDouble, CLongDouble#
  */
-static int
+NPY_NO_EXPORT int
 @NAME@_setitem(PyObject *op, void *ov, void *vap)
 {
     PyArrayObject *ap = vap;
     Py_complex oop;
     @type@ temp;
-    int rsize;
 
     if (PyArray_IsZeroDim(op)) {
         return convert_to_scalar_and_retry(op, ov, vap, @NAME@_setitem);
@@ -401,12 +516,10 @@ static int
 #endif
     }
 
-    memcpy(ov, &temp, PyArray_DESCR(ap)->elsize);
-    if (PyArray_ISBYTESWAPPED(ap)) {
+    memcpy(ov, &temp, NPY_SIZEOF_@NAME@);
+    if (ap != NULL && PyArray_ISBYTESWAPPED(ap)) {
         byte_swap_vector(ov, 2, sizeof(@ftype@));
     }
-    rsize = sizeof(@ftype@);
-    copy_and_swap(ov, &temp, rsize, 2, rsize, PyArray_ISBYTESWAPPED(ap));
     return 0;
 }
 
@@ -487,7 +600,7 @@ LONGDOUBLE_getitem(void *ip, void *ap)
     return PyArray_Scalar(ip, PyArray_DESCR((PyArrayObject *)ap), NULL);
 }
 
-static int
+NPY_NO_EXPORT int
 LONGDOUBLE_setitem(PyObject *op, void *ov, void *vap)
 {
     PyArrayObject *ap = vap;

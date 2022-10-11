@@ -442,7 +442,8 @@ class TestConversion:
 
     def test_iinfo_long_values(self):
         for code in 'bBhH':
-            res = np.array(np.iinfo(code).max + 1, dtype=code)
+            with pytest.warns(DeprecationWarning):
+                res = np.array(np.iinfo(code).max + 1, dtype=code)
             tgt = np.iinfo(code).min
             assert_(res == tgt)
 
@@ -767,7 +768,7 @@ class TestBitShifts:
         nbits = dt.itemsize * 8
         for val in [5, -5]:
             for shift in [nbits, nbits + 4]:
-                val_scl = dt.type(val)
+                val_scl = np.array(val).astype(dt)[()]
                 shift_scl = dt.type(shift)
                 res_scl = op(val_scl, shift_scl)
                 if val_scl < 0 and op is operator.rshift:
@@ -777,7 +778,7 @@ class TestBitShifts:
                     assert_equal(res_scl, 0)
 
                 # Result on scalars should be the same as on arrays
-                val_arr = np.array([val]*32, dtype=dt)
+                val_arr = np.array([val_scl]*32, dtype=dt)
                 shift_arr = np.array([shift]*32, dtype=dt)
                 res_arr = op(val_arr, shift_arr)
                 assert_equal(res_arr, res_scl)

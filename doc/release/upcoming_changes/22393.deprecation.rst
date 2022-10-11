@@ -1,0 +1,17 @@
+Conversion of out-of-bound Python integers
+------------------------------------------
+Attempting a conversion from a Python integer to a NumPy
+value will now always check whether the result can be
+represented by NumPy.  This means the following examples will
+fail in the future and give a ``DeprecationWarning`` now::
+
+    np.uint8(-1)
+    np.array([3000], dtype=np.int8)
+
+Many of these did succeed before.  Such code was mainly
+useful for unsigned integers with negative values such as
+`np.uint8(-1)` giving `np.iinfo(np.uint8).max`.
+
+Note that conversion between NumPy integers is unaffected,
+so that `np.array(-1).astype(np.uint8)` continues to work
+and use C integer overflow logic.

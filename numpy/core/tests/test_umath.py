@@ -366,24 +366,24 @@ class TestDivision:
         np.sctypes['int'] + np.sctypes['uint'], (
             (
                 # dividend
-                "np.arange(fo.max-lsize, fo.max, dtype=dtype),"
+                "np.array(range(fo.max-lsize, fo.max)).astype(dtype),"
                 # divisors
-                "np.arange(lsize, dtype=dtype),"
+                "np.arange(lsize).astype(dtype),"
                 # scalar divisors
                 "range(15)"
             ),
             (
                 # dividend
-                "np.arange(fo.min, fo.min+lsize, dtype=dtype),"
+                "np.arange(fo.min, fo.min+lsize).astype(dtype),"
                 # divisors
-                "np.arange(lsize//-2, lsize//2, dtype=dtype),"
+                "np.arange(lsize//-2, lsize//2).astype(dtype),"
                 # scalar divisors
                 "range(fo.min, fo.min + 15)"
             ), (
                 # dividend
-                "np.arange(fo.max-lsize, fo.max, dtype=dtype),"
+                "np.array(range(fo.max-lsize, fo.max)).astype(dtype),"
                 # divisors
-                "np.arange(lsize, dtype=dtype),"
+                "np.arange(lsize).astype(dtype),"
                 # scalar divisors
                 "[1,3,9,13,neg, fo.min+1, fo.min//2, fo.max//3, fo.max//4]"
             )
@@ -450,9 +450,9 @@ class TestDivision:
     @pytest.mark.parametrize("dtype,ex_val", itertools.product(
         np.sctypes['int'] + np.sctypes['uint'], (
             "np.array([fo.max, 1, 2, 1, 1, 2, 3], dtype=dtype)",
-            "np.array([fo.min, 1, -2, 1, 1, 2, -3], dtype=dtype)",
+            "np.array([fo.min, 1, -2, 1, 1, 2, -3]).astype(dtype)",
             "np.arange(fo.min, fo.min+(100*10), 10, dtype=dtype)",
-            "np.arange(fo.max-(100*7), fo.max, 7, dtype=dtype)",
+            "np.array(range(fo.max-(100*7), fo.max, 7)).astype(dtype)",
         )
     ))
     def test_division_int_reduce(self, dtype, ex_val):
@@ -472,7 +472,7 @@ class TestDivision:
         with np.errstate(divide='raise', over='raise'):
             with pytest.raises(FloatingPointError,
                     match="divide by zero encountered in reduce"):
-                np.floor_divide.reduce(np.arange(-100, 100, dtype=dtype))
+                np.floor_divide.reduce(np.arange(-100, 100).astype(dtype))
             if fo.min:
                 with pytest.raises(FloatingPointError,
                         match='overflow encountered in reduce'):
@@ -2328,7 +2328,7 @@ class TestBitwiseUFuncs:
     def test_values(self):
         for dt in self.bitwise_types:
             zeros = np.array([0], dtype=dt)
-            ones = np.array([-1], dtype=dt)
+            ones = np.array([-1]).astype(dt)
             msg = "dt = '%s'" % dt.char
 
             assert_equal(np.bitwise_not(zeros), ones, err_msg=msg)
@@ -2352,7 +2352,7 @@ class TestBitwiseUFuncs:
     def test_types(self):
         for dt in self.bitwise_types:
             zeros = np.array([0], dtype=dt)
-            ones = np.array([-1], dtype=dt)
+            ones = np.array([-1]).astype(dt)
             msg = "dt = '%s'" % dt.char
 
             assert_(np.bitwise_not(zeros).dtype == dt, msg)
@@ -2370,7 +2370,7 @@ class TestBitwiseUFuncs:
 
         for dt in self.bitwise_types:
             zeros = np.array([0], dtype=dt)
-            ones = np.array([-1], dtype=dt)
+            ones = np.array([-1]).astype(dt)
             for f in binary_funcs:
                 msg = "dt: '%s', f: '%s'" % (dt, f)
                 assert_equal(f.reduce(zeros), zeros, err_msg=msg)
@@ -2382,7 +2382,7 @@ class TestBitwiseUFuncs:
             empty = np.array([], dtype=dt)
             for f in binary_funcs:
                 msg = "dt: '%s', f: '%s'" % (dt, f)
-                tgt = np.array(f.identity, dtype=dt)
+                tgt = np.array(f.identity).astype(dt)
                 res = f.reduce(empty)
                 assert_equal(res, tgt, err_msg=msg)
                 assert_(res.dtype == tgt.dtype, msg)
