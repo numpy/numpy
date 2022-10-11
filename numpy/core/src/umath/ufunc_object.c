@@ -2742,6 +2742,39 @@ reducelike_promote_and_resolve(PyUFuncObject *ufunc,
         npy_bool enforce_uniform_args, PyArray_Descr *out_descrs[3],
         char *method)
 {
+     /*
+      * If no dtype is specified and out is not specified, we override the
+      * integer and bool dtype used for add and multiply.
+      *
+      * TODO: The following should be handled by a promoter!
+      */
+    if (signature[0] == NULL && out == NULL) {
+        /*
+         * For integer types --- make sure at least a long
+         * is used for add and multiply reduction to avoid overflow
+         */
+        int typenum = PyArray_TYPE(arr);
+        if ((PyTypeNum_ISBOOL(typenum) || PyTypeNum_ISINTEGER(typenum))
+                && ((strcmp(ufunc->name, "add") == 0)
+                    || (strcmp(ufunc->name, "multiply") == 0))) {
+            if (PyTypeNum_ISBOOL(typenum)) {
+                typenum = NPY_LONG;
+            }
+            else if ((size_t)PyArray_DESCR(arr)->elsize < sizeof(long)) {
+                if (PyTypeNum_ISUNSIGNED(typenum)) {
+                    typenum = NPY_ULONG;
+                }
+                else {
+                    typenum = NPY_LONG;
+                }
+            }
+            signature[0] = PyArray_DTypeFromTypeNum(typenum);
+        }
+    }
+    assert(signature[2] == NULL);  /* we always fill it here */
+    Py_XINCREF(signature[0]);
+    signature[2] = signature[0];
+
     /*
      * Note that the `ops` is not really correct.  But legacy resolution
      * cannot quite handle the correct ops (e.g. a NULL first item if `out`
@@ -4169,38 +4202,6 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
             naxes = 1;
         }
     }
-
-     /*
-      * If no dtype is specified and out is not specified, we override the
-      * integer and bool dtype used for add and multiply.
-      *
-      * TODO: The following should be handled by a promoter!
-      */
-    if (signature[0] == NULL && out == NULL) {
-        /*
-         * For integer types --- make sure at least a long
-         * is used for add and multiply reduction to avoid overflow
-         */
-        int typenum = PyArray_TYPE(mp);
-        if ((PyTypeNum_ISBOOL(typenum) || PyTypeNum_ISINTEGER(typenum))
-                && ((strcmp(ufunc->name, "add") == 0)
-                    || (strcmp(ufunc->name, "multiply") == 0))) {
-            if (PyTypeNum_ISBOOL(typenum)) {
-                typenum = NPY_LONG;
-            }
-            else if ((size_t)PyArray_DESCR(mp)->elsize < sizeof(long)) {
-                if (PyTypeNum_ISUNSIGNED(typenum)) {
-                    typenum = NPY_ULONG;
-                }
-                else {
-                    typenum = NPY_LONG;
-                }
-            }
-            signature[0] = PyArray_DTypeFromTypeNum(typenum);
-        }
-    }
-    Py_XINCREF(signature[0]);
-    signature[2] = signature[0];
 
     switch(operation) {
     case UFUNC_REDUCE:
