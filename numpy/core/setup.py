@@ -68,6 +68,15 @@ class CallOnceOnly:
             out = copy.deepcopy(pickle.loads(self._check_complex))
         return out
 
+# Temporarily disable AVX512 sorting on WIN32 and macOS until we can figure
+# out why the build fails
+def enable_avx512_qsort():
+    enable = True
+    platform = sysconfig.get_platform()
+    if "win32" in platform or "macos" in platform:
+        enable = False
+    return enable
+
 def can_link_svml():
     """SVML library is supported only on x86_64 architecture and currently
     only on linux
@@ -483,6 +492,9 @@ def configuration(parent_package='',top_path=None):
 
             if can_link_svml():
                 moredefs.append(('NPY_CAN_LINK_SVML', 1))
+
+            if enable_avx512_qsort():
+                moredefs.append(('NPY_ENABLE_AVX512_QSORT', 1))
 
             # Use bogus stride debug aid to flush out bugs where users use
             # strides of dimensions with length 1 to index a full contiguous
@@ -943,7 +955,6 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'usertypes.c'),
             join('src', 'multiarray', 'vdot.c'),
             join('src', 'common', 'npy_sort.h.src'),
-            join('src', 'npysort', 'x86-qsort-skx.dispatch.cpp'),
             join('src', 'npysort', 'quicksort.cpp'),
             join('src', 'npysort', 'mergesort.cpp'),
             join('src', 'npysort', 'timsort.cpp'),
@@ -966,6 +977,11 @@ def configuration(parent_package='',top_path=None):
             # see gh-22673
             join('src', 'npymath', 'arm64_exports.c'),
             ]
+
+    if enable_avx512_qsort():
+        multiarray_src += [
+                join('src', 'npysort', 'x86-qsort-skx.dispatch.cpp'),
+                ]
 
     #######################################################################
     #             _multiarray_umath module - umath part                   #

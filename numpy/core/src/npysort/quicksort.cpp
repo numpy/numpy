@@ -55,13 +55,15 @@
 #include "npysort_heapsort.h"
 #include "numpy_tag.h"
 
-#include "x86-qsort-skx.h"
 #include <cstdlib>
 #include <utility>
 
+#ifdef NPY_ENABLE_AVX512_QSORT
+#include "x86-qsort-skx.h"
 #ifndef NPY_DISABLE_OPTIMIZATION
 #include "x86-qsort-skx.dispatch.h"
-#endif
+#endif // NPY_DISABLE_OPTIMIZATION
+#endif // NPY_ENABLE_AVX512_QSORT
 
 #define NOT_USED NPY_UNUSED(unused)
 /*
@@ -86,6 +88,7 @@ struct x86_dispatch {
     static bool quicksort(typename Tag::type *, npy_intp) { return false; }
 };
 
+#ifdef NPY_ENABLE_AVX512_QSORT
 #if NPY_SIZEOF_LONG == 8
 template <>
 struct x86_dispatch<npy::long_tag> {
@@ -197,6 +200,7 @@ struct x86_dispatch<npy::float_tag> {
         return false;
     }
 };
+#endif // NPY_ENABLE_AVX512_QSORT
 
 }  // namespace
 
