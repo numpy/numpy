@@ -1,6 +1,7 @@
-``masked_invalid`` is modified consistently with ``masked_where``
+``masked_invalid`` now modifies the mask in-place
 -----------------------------------------------------------------
 
-According to the related documentation, ``masked_invalid`` is now a call
-to ``masked_where``, then used with ``copy=False`` modifies the input masked
-array in place.   
+When used with ``copy=False``, `numpy.ma.masked_invalid` now modifies the
+input masked array in-place.
+This makes it now behave identical to ``masked_where`` and better matches the
+documentation.
