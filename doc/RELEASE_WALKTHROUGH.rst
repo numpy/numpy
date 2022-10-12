@@ -130,6 +130,11 @@ repository::
     $ git tag -a -s v1.21.0 -m"NumPy 1.21.0 release"
     $ git push upstream v1.21.0
 
+If you need to delete the tag due to error::
+
+   $ git tag -d v1.21.0
+   $ git push --delete upstream v1.21.0
+
 2. Build wheels
 ---------------
 
@@ -139,7 +144,9 @@ Build wheels via cibuildwheel (preferred)
 Tagging the build at the beginning of this process will trigger a wheel build
 via cibuildwheel and upload wheels and an sdist to the staging repo. The CI run
 on github actions (for all x86-based and macOS arm64 wheels) takes about 1 1/4
-hours. The CI run on travis (for aarch64) takes less time.
+hours. The CI run on travis (for aarch64) takes less time. You can check for
+uploaded files at the `staging repository`_, but note that it is not closely
+synched with what you see of the running jobs.
 
 If you wish to manually trigger a wheel build, you can do so:
 
@@ -148,58 +155,23 @@ If you wish to manually trigger a wheel build, you can do so:
 - On travis_ there is a "More Options" button, click on it and choose a branch
   to build. There does not appear to be an option to build a tag.
 
+If a wheel build fails for unrelated reasons, you can rerun it individually:
+
+- On github actions select `Wheel builder`_ click on the commit that contains
+  the build you want to rerun. On the left there is a list of wheel builds,
+  select the one you want to rerun and on the resulting page hit the
+  counterclockwise arrows button.
+- On travis_ select the failing build, which will take you to the travis job for
+  that build. Hit the restart job button.
+
+Note that if you do need to rerun jobs, you will need to delete the uploaded
+file, if any, in the anaconda `staging repository`_, The old files will not be
+overwritten.
+
+.. _`staging repository`: https://anaconda.org/multibuild-wheels-staging/numpy/files
 .. _`Wheel builder`: https://github.com/numpy/numpy/actions/workflows/wheels.yml
 .. _travis : https://app.travis-ci.com/github/numpy/numpy
 
-Build wheels with multibuild (outdated)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Build source releases
-^^^^^^^^^^^^^^^^^^^^^
-
-Paver is used to build the source releases. It will create the ``release`` and
-``release/installers`` directories and put the ``*.zip`` and ``*.tar.gz``
-source releases in the latter. ::
-
-    $ paver sdist  # sdist will do a git clean -xdfq, so we omit that
-
-
-Build wheels via MacPython/numpy-wheels
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Trigger the wheels build by pointing the numpy-wheels repository at this
-commit. This can take up to an hour. The numpy-wheels repository is cloned from
-`<https://github.com/MacPython/numpy-wheels>`_. If this is the first release in
-a series, start with a pull as the repo may have been accessed and changed by
-someone else, then create a new branch for the series. If the branch already
-exists skip this::
-
-    $ cd ../numpy-wheels
-    $ git checkout main
-    $ git pull upstream main
-    $ git branch v1.21.x
-
-Checkout the new branch and edit the ``azure-pipelines.yml`` and
-``.travis.yml`` files to make sure they have the correct version, and put in
-the commit hash for the ``REL`` commit created above for ``BUILD_COMMIT``
-variable. The ``azure/posix.yml`` and ``.travis.yml`` files may also need the
-Cython versions updated to keep up with Python releases, but generally just
-do::
-
-    $ git checkout v1.21.x
-    $ gvim azure-pipelines.yml .travis.yml
-    $ git commit -a -m"NumPy 1.21.0 release."
-    $ git push upstream HEAD
-
-Now wait. If you get nervous at the amount of time taken -- the builds can take
-a while -- you can check the build progress by following the links
-provided at `<https://github.com/MacPython/numpy-wheels>`_ to check the
-build status. Check if all the needed wheels have been built and
-uploaded to the staging repository before proceeding.
-
-Note that sometimes builds, like tests, fail for unrelated reasons and you will
-need to rerun them. You will need to be logged in under 'numpy' to do this
-on azure.
 
 3. Download wheels
 ------------------
@@ -208,6 +180,7 @@ When the wheels have all been successfully built and staged, download them from 
 Anaconda staging directory using the ``tools/download-wheels.py`` script::
 
     $ cd ../numpy
+    $ mkdir -p release/installers
     $ python3 tools/download-wheels.py 1.21.0
 
 
@@ -249,7 +222,7 @@ after recent PyPI changes, version ``3.4.1`` was used here::
 
     $ cd ../numpy
     $ twine upload release/installers/*.whl
-    $ twine upload release/installers/numpy-1.21.0.zip  # Upload last.
+    $ twine upload release/installers/numpy-1.21.0.tar.gz  # Upload last.
 
 If one of the commands breaks in the middle, you may need to selectively upload
 the remaining files because PyPI does not allow the same file to be uploaded
@@ -273,7 +246,6 @@ Then copy the contents to the clipboard and paste them into the text window. It
 may take several tries to get it look right. Then
 
 - Upload ``release/installers/numpy-1.21.0.tar.gz`` as a binary file.
-- Upload ``release/installers/numpy-1.21.0.zip`` as a binary file.
 - Upload ``release/README.rst`` as a binary file.
 - Upload ``doc/changelog/1.21.0-changelog.rst`` as a binary file.
 - Check the pre-release button if this is a pre-releases.
@@ -338,8 +310,8 @@ Once everything seems satisfactory, update, commit and upload the changes::
 This assumes that you have forked `<https://github.com/numpy/numpy.org>`_::
 
     $ cd ../numpy.org
-    $ git checkout master
-    $ git pull upstream master
+    $ git checkout main
+    $ git pull upstream main
     $ git checkout -b announce-numpy-1.21.0
     $ gvim content/en/news.md
 
@@ -375,9 +347,8 @@ Checkout main and forward port the documentation changes::
     $ git checkout maintenance/1.21.x doc/changelog/1.21.0-changelog.rst
     $ git checkout maintenance/1.21.x .mailmap  # only if updated for release.
     $ gvim doc/source/release.rst  # Add link to new notes
-    $ git add doc/changelog/1.21.0-changelog.rst doc/source/release/1.21.0-notes.rst
     $ git status  # check status before commit
-    $ git commit -a -m"REL: Update main after 1.21.0 release."
+    $ git commit -a -m"MAINT: Update main after 1.21.0 release."
     $ git push origin HEAD
 
 Go to GitHub and make a PR.
