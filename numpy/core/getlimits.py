@@ -374,10 +374,6 @@ class finfo:
 
     Machine limits for floating point types.
 
-    .. note::
-       finfo.nmant is inaccurate and set to be deprecated in the future.
-       To get the number of bits in the mantissa, use finfo.mant_dig instead.
-
     Attributes
     ----------
     bits : int
@@ -419,7 +415,9 @@ class finfo:
         The number of bits in the exponent including its sign and bias.
     nmant : int
         The number of bits in the mantissa.
-        nmant is always off by 1 and should no longer be used.
+        .. note::
+        finfo.nmant is inaccurate and set to be deprecated in the future.
+        To get the number of bits in the mantissa, use ``finfo.mant_dig`` instead.
     mant_dig: int
         The number of bits in the mantissa.
     precision : int
