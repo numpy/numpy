@@ -417,7 +417,7 @@ class finfo:
         The number of bits in the mantissa.
         .. note::
         finfo.nmant is inaccurate and set to be deprecated in the future.
-        To get the number of bits in the mantissa, use ``finfo.mant_dig`` instead.
+        To get the number of bits in the mantissa, use ``finfo.mant_dig``.
     mant_dig: int
         The number of bits in the mantissa.
     precision : int
