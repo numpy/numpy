@@ -1770,7 +1770,7 @@ class TestFPClass:
         assert_equal(np.isinf(ncontig_in), inf[1::3])
         assert_equal(np.signbit(ncontig_in), sign[1::3])
         assert_equal(np.isfinite(ncontig_in), finite[1::3])
-        # Try with split
+        # contig in, contig out, nd stride
         data_split = np.array(np.array_split(data, 2))
         nan_split = np.array(np.array_split(nan, 2))
         inf_split = np.array(np.array_split(inf, 2))
