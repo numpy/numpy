@@ -33,7 +33,6 @@
 #include "umathmodule.h"
 
 #include "convert_datatype.h"
-#include "dtypemeta.h"
 
 
 /* TODO: Used for some functions, should possibly move these to npy_math.h */

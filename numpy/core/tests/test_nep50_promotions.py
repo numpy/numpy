@@ -33,7 +33,8 @@ def test_nep50_examples():
     assert res.dtype == np.int64
 
     with pytest.warns(UserWarning, match="result dtype changed"):
-        # Note: Overflow would be nice, but does not warn with change warning
+        # Note: For "weak_and_warn" promotion state the overflow warning is
+        #       unfortunately not given (because we use the full array path).
         with np.errstate(over="raise"):
             res = np.uint8(100) + 200
     assert res.dtype == np.uint8
