@@ -46,7 +46,7 @@ import operator
 import warnings
 import contextlib
 
-_format_options = {
+_default_format_options = {
     'edgeitems': 3,  # repr N leading and trailing items of each dimension
     'threshold': 1000,  # total items > triggers array summarization
     'floatmode': 'maxprec',
@@ -60,6 +60,9 @@ _format_options = {
     # Internally stored as an int to simplify comparisons; converted from/to
     # str/False on the way in/out.
     'legacy': sys.maxsize}
+
+_format_options = _default_format_options.copy()
+
 
 def _make_options_dict(precision=None, threshold=None, edgeitems=None,
                        linewidth=None, suppress=None, nanstr=None, infstr=None,
@@ -453,20 +456,54 @@ def _get_formatdict(data, *, precision, floatmode, suppress, sign, legacy,
 
     return formatdict
 
-def get_formatter(data, *, options=None):
+def get_formatter(*, dtype=None, data=None, fmt=None, options=None):
     """
-    Find the right element formatting function for the dtype.
+    Return a format function for a single element or scalar.
 
     Parameters
     ----------
-        scalar : bool
-            If True, a scalar formatter is requested.  In that case all
-            formatting options are ignored and the default formatter is
-            returned.
+    dtype : dtype
+        datatype of the values to be formatted, either `data` or `dtype`
+        must be given.  If both are given, the ``data.dtype`` of data has
+        to match.
+    data : ndarray or None
+        The data to be printed.  This can be an N-D array including all
+        elements to be printed.  It may also be ``None`` when ``fmt`` is
+        ``"s"`` or ``"r"``
+    fmt : str or None
+        A formatting string indicating the desired format style.
+        Using `None` means that array elements are being pretty-printed
+        and the printoptions should be used.
+        In this case, data may be an ndarray to be printed.
+    options: dict
+        Options dictionary, if given, must be compatible with
+        `np.get_printoptions()` and values not None replace the default
+        ones.
     """
-    dtype = data.dtype
+    if data is not None and not isinstance(data, np.ndarray):
+        raise TypeError("get_formatter: data must be None or a NumPy array.")
+
+    if dtype is not None and data is not None and data.dtype != dtype:
+        raise TypeError(
+            "get_formatter: data.dtype and dtype must be equivalent")
+    if dtype is None:
+        dtype = data.dtype
+
+    if fmt is not None and options is not None:
+        raise TypeError(
+                "get_formatter: either `fmt` or `options` can be given.")
+
+    if fmt is not None:
+        if fmt != "r":
+            raise TypeError(
+                    "get_formatter: only r format is currently supported.")
+
+        options = _default_format_options.copy()
+        options.update(floatmode="unique")
+
     dtypeobj = dtype.type
     formatdict = _get_formatdict(data, **options)
+
     if dtypeobj is None:
         return formatdict["numpystr"]()
     elif issubclass(dtypeobj, _nt.bool_):
@@ -495,6 +532,12 @@ def get_formatter(data, *, options=None):
     elif issubclass(dtypeobj, _nt.void):
         if dtype.names is not None:
             return StructuredVoidFormat.from_data(data, **options)
+        elif dtype.shape != ():
+            # This path can only be hit in nested calls when data is not
+            # given and `arr.dtype` cannot be a subarray dtype:
+            assert data is None
+            return SubArrayFormat(
+                get_formatter(dtype=dtype.base, fmt=fmt, options=options))
         else:
             return formatdict['void']()
     else:
@@ -550,9 +593,8 @@ def _array2string(a, options, separator=' ', prefix=""):
     else:
         summary_insert = ""
 
-    print(data.shape)
     # find the right formatting function for the array
-    format_function = get_formatter(data, options=options)
+    format_function = get_formatter(data=data, options=options)
 
     # skip over "["
     next_line_prefix = " "
@@ -1398,10 +1440,19 @@ class StructuredVoidFormat:
         as input. Added to avoid changing the signature of __init__.
         """
         format_functions = []
-        for field_name in dtype.names:
-            format_function = get_formatter(dtype[field_name], options=options)
-            if dtype[field_name].shape != ():
+        for field_name in data.dtype.names:
+            format_function = get_formatter(
+                    data=data[field_name], options=options)
+            if data.dtype[field_name].shape != ():
                 format_function = SubArrayFormat(format_function, **options)
+            format_functions.append(format_function)
+        return cls(format_functions)
+
+    @classmethod
+    def _from_fmt(cls, dtype, fmt):
+        format_functions = []
+        for field_name in dtype.names:
+            format_function = get_formatter(dtype=dtype[field_name], fmt=fmt)
             format_functions.append(format_function)
         return cls(format_functions)
 
@@ -1422,7 +1473,7 @@ def _void_scalar_repr(x):
     scalartypes.c.src code, and is placed here because it uses the elementwise
     formatters defined above.
     """
-    return StructuredVoidFormat.from_dtype(array(x).dtype, **_format_options)(x)
+    return StructuredVoidFormat.from_data(array(x), **_format_options)(x)
 
 
 _typelessdata = [int_, float_, complex_, bool_]
