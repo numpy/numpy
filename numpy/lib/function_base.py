@@ -5421,6 +5421,8 @@ def append(arr, values, dtype=None, axis=None):
         correct shape (the same shape as `arr`, excluding `axis`).  If
         `axis` is not specified, `values` can be any shape and will be
         flattened before use.
+    dtype : data-type, optional
+        If provided, the copy of `arr` will have this dtype.
     axis : int, optional
         The axis along which `values` are appended.  If `axis` is not
         given, both `arr` and `values` are flattened before use.
