@@ -1,0 +1,9 @@
+.. currentmodule:: numpy
+
+==========================
+NumPy 1.23.5 Release Notes
+==========================
+NumPy 1.23.5 is a maintenance release that fixes bugs discovered after the
+1.23.4 release and keeps the build infrastructure current.
+The Python versions supported for this release are 3.8-3.11.
+
