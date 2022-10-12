@@ -1734,59 +1734,6 @@ class TestFPClass:
         assert_equal(np.signbit(arr_f64[::stride]), sign[::stride])
         assert_equal(np.isfinite(arr_f32[::stride]), finite[::stride])
         assert_equal(np.isfinite(arr_f64[::stride]), finite[::stride])
-        # Try with split
-        arr_f64_split = np.array(np.array_split(arr_f64, 2))
-        arr_f32_split = np.array(np.array_split(arr_f32, 2))
-        nan_split = np.array(np.array_split(nan, 2))
-        inf_split = np.array(np.array_split(inf, 2))
-        sign_split = np.array(np.array_split(sign, 2))
-        finite_split = np.array(np.array_split(finite, 2))
-        assert_equal(np.isnan(arr_f64_split), nan_split)
-        assert_equal(np.isinf(arr_f64_split), inf_split)
-        assert_equal(np.signbit(arr_f64_split), sign_split)
-        assert_equal(np.isfinite(arr_f64_split), finite_split)
-        assert_equal(np.isnan(arr_f32_split), nan_split)
-        assert_equal(np.isinf(arr_f32_split), inf_split)
-        assert_equal(np.signbit(arr_f32_split), sign_split)
-        assert_equal(np.isfinite(arr_f32_split), finite_split)
-        # Try with as_strided
-        arr_f64_strided = np.lib.stride_tricks.as_strided(arr_f64,
-            strides=(stride, ))
-        nan_strided = [np.isnan(val) for val in arr_f64_strided]
-        inf_strided = [np.isinf(val) for val in arr_f64_strided]
-        sign_strided = [np.signbit(val) for val in arr_f64_strided]
-        finite_strided = [np.isfinite(val) for val in arr_f64_strided]
-        assert_equal(np.isnan(arr_f64_strided), nan_strided)
-        assert_equal(np.isinf(arr_f64_strided), inf_strided)
-        assert_equal(np.signbit(arr_f64_strided), sign_strided)
-        assert_equal(np.isfinite(arr_f64_strided), finite_strided)
-        out_strided = np.ndarray(arr_f64_strided.shape, dtype='bool')
-        np.isnan(arr_f64_strided, out=out_strided)
-        assert_equal(out_strided, nan_strided)
-        np.isinf(arr_f64_strided, out=out_strided)
-        assert_equal(out_strided, inf_strided)
-        np.signbit(arr_f64_strided, out=out_strided)
-        assert_equal(out_strided, sign_strided)
-        np.isfinite(arr_f64_strided, out=out_strided)
-        assert_equal(out_strided, finite_strided)
-        arr_f32_strided = np.lib.stride_tricks.as_strided(arr_f32,
-            strides=(stride, ))
-        nan_strided = [np.isnan(val) for val in arr_f32_strided]
-        inf_strided = [np.isinf(val) for val in arr_f32_strided]
-        sign_strided = [np.signbit(val) for val in arr_f32_strided]
-        finite_strided = [np.isfinite(val) for val in arr_f32_strided]
-        assert_equal(np.isnan(arr_f32_strided), nan_strided)
-        assert_equal(np.isinf(arr_f32_strided), inf_strided)
-        assert_equal(np.signbit(arr_f32_strided), sign_strided)
-        assert_equal(np.isfinite(arr_f32_strided), finite_strided)
-        np.isnan(arr_f32_strided, out=out_strided)
-        assert_equal(out_strided, nan_strided)
-        np.isinf(arr_f32_strided, out=out_strided)
-        assert_equal(out_strided, inf_strided)
-        np.signbit(arr_f32_strided, out=out_strided)
-        assert_equal(out_strided, sign_strided)
-        np.isfinite(arr_f32_strided, out=out_strided)
-        assert_equal(out_strided, finite_strided)
 
     @pytest.mark.parametrize("dtype", ['d', 'f'])
     def test_fp_noncontiguous(self, dtype):
@@ -1823,6 +1770,16 @@ class TestFPClass:
         assert_equal(np.isinf(ncontig_in), inf[1::3])
         assert_equal(np.signbit(ncontig_in), sign[1::3])
         assert_equal(np.isfinite(ncontig_in), finite[1::3])
+        # Try with split
+        data_split = np.array(np.array_split(data, 2))
+        nan_split = np.array(np.array_split(nan, 2))
+        inf_split = np.array(np.array_split(inf, 2))
+        sign_split = np.array(np.array_split(sign, 2))
+        finite_split = np.array(np.array_split(finite, 2))
+        assert_equal(np.isnan(data_split), nan_split)
+        assert_equal(np.isinf(data_split), inf_split)
+        assert_equal(np.signbit(data_split), sign_split)
+        assert_equal(np.isfinite(data_split), finite_split)
 
 class TestLDExp:
     @pytest.mark.parametrize("stride", [-4,-2,-1,1,2,4])
