@@ -5460,13 +5460,13 @@ def append(arr, values, dtype=None, axis=None):
         arr = asanyarray(arr, dtype=dtype)
     else:
         arr = asanyarray(arr)
-        
+
     if axis is None:
         if arr.ndim != 1:
             arr = arr.ravel()
         values = ravel(values)
         axis = arr.ndim-1
-    return concatenate((arr, values), axis=axis)
+    return concatenate((arr, values), dtype=dtype, axis=axis)
 
 
 def _digitize_dispatcher(x, bins, right=None):
