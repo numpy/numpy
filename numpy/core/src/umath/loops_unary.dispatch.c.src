@@ -36,7 +36,7 @@
 static NPY_INLINE npyv_@sfx@
 npyv_negative_@sfx@(npyv_@sfx@ v)
 {
-#if defined(NPY_HAVE_NEON)
+#if defined(NPY_HAVE_NEON) && (defined(__aarch64__) || @ssfx@ < 64)
     return npyv_reinterpret_@sfx@_s@ssfx@(vnegq_s@ssfx@(npyv_reinterpret_s@ssfx@_@sfx@(v)));
 #else
     // (x ^ -1) + 1
