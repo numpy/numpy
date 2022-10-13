@@ -5,6 +5,11 @@
  ** vsx2
  ** vx vxe
  **/
+
+#define _UMATHMODULE
+#define _MULTIARRAYMODULE
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+
 #include "numpy/npy_math.h"
 #include "simd/simd.h"
 #include "loops_utils.h"
@@ -32,7 +37,7 @@ static NPY_INLINE npyv_@sfx@
 npyv_negative_@sfx@(npyv_@sfx@ v)
 {
 #if defined(NPY_HAVE_NEON)
-    return vnegq_s@ssfx@(v);
+    return npyv_reinterpret_@sfx@_s@ssfx@(vnegq_s@ssfx@(npyv_reinterpret_s@ssfx@_@sfx@(v)));
 #else
     // (x ^ -1) + 1
     const npyv_@sfx@ m1 = npyv_setall_@sfx@((npyv_lanetype_@sfx@)-1);
