@@ -5403,12 +5403,12 @@ def insert(arr, obj, values, axis=None):
     return new
 
 
-def _append_dispatcher(arr, values, dtype=None, axis=None):
+def _append_dispatcher(arr, values, axis=None, dtype=None):
     return (arr, values)
 
 
 @array_function_dispatch(_append_dispatcher)
-def append(arr, values, dtype=None, axis=None):
+def append(arr, values, axis=None, dtype=None):
     """
     Append values to the end of an array.
 
@@ -5421,11 +5421,11 @@ def append(arr, values, dtype=None, axis=None):
         correct shape (the same shape as `arr`, excluding `axis`).  If
         `axis` is not specified, `values` can be any shape and will be
         flattened before use.
-    dtype : data-type, optional
-        If provided, the copy of `arr` will have this dtype.
     axis : int, optional
         The axis along which `values` are appended.  If `axis` is not
         given, both `arr` and `values` are flattened before use.
+    dtype : data-type, optional
+        If provided, the copy of `arr` will have this dtype.
 
     Returns
     -------
@@ -5458,11 +5458,7 @@ def append(arr, values, dtype=None, axis=None):
     dimension(s)
 
     """
-    if dtype is not None:
-        arr = asanyarray(arr, dtype=dtype)
-    else:
-        arr = asanyarray(arr)
-
+    arr = asanyarray(arr)
     if axis is None:
         if arr.ndim != 1:
             arr = arr.ravel()
