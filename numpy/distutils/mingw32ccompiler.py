@@ -184,14 +184,11 @@ def find_python_dll():
     # We can't do much here:
     # - find it in the virtualenv (sys.prefix)
     # - find it in python main dir (sys.base_prefix, if in a virtualenv)
-    # - sys.real_prefix is main dir for virtualenvs in Python 2.7
     # - in system32,
     # - ortherwise (Sxs), I don't know how to get it.
     stems = [sys.prefix]
-    if hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix:
+    if sys.base_prefix != sys.prefix:
         stems.append(sys.base_prefix)
-    elif hasattr(sys, 'real_prefix') and sys.real_prefix != sys.prefix:
-        stems.append(sys.real_prefix)
 
     sub_dirs = ['', 'lib', 'bin']
     # generate possible combinations of directory trees and sub-directories
