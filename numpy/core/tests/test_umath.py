@@ -2609,11 +2609,15 @@ class TestAbsoluteNegative:
         np.abs(np.ones_like(d), out=d)
 
     @pytest.mark.parametrize("dtype", ['d', 'f', 'int32', 'int64'])
-    def test_noncontiguous(self, dtype):
+    @pytest.mark.parametrize("big", [True, False])
+    def test_noncontiguous(self, dtype, big):
         data = np.array([-1.0, 1.0, -0.0, 0.0, 2.2251e-308, -2.5, 2.5, -6,
                             6, -2.2251e-308, -8, 10], dtype=dtype)
         expect = np.array([1.0, -1.0, 0.0, -0.0, -2.2251e-308, 2.5, -2.5, 6,
                             -6, 2.2251e-308, 8, -10], dtype=dtype)
+        if big:
+            data = np.repeat(data, 10)
+            expect = np.repeat(expect, 10)
         out = np.ndarray(data.shape, dtype=dtype)
         ncontig_in = data[1::2]
         ncontig_out = out[1::2]
