@@ -4067,7 +4067,16 @@ class MaskedArray(ndarray):
             separator=", ",
             prefix=indents['mask'] + 'mask=',
             suffix=',')
-        reprs['fill_value'] = repr(self.fill_value)
+
+        if self.fill_value.dtype == self.dtype:
+            # The dtype of the fill value should match that of the array
+            # and it is unnecessary to print the full `np.int64(...)`
+            fill_repr = np.core.arrayprint.get_formatter(
+                    dtype=self.fill_value.dtype, fmt="r")(self.fill_value)
+        else:
+            # Fall back to the normal repr just in case something is weird:
+            fill_repr = repr(self.fill_value)
+        reprs['fill_value'] = fill_repr
         if dtype_needed:
             reprs['dtype'] = np.core.arrayprint.dtype_short_repr(self.dtype)
 
@@ -5054,7 +5063,7 @@ class MaskedArray(ndarray):
                 [ True,  True,  True],
                 [ True,  True,  True]],
           mask=False,
-          fill_value=numpy.True_)
+          fill_value=True)
         >>> ma.nonzero(a > 3)
         (array([1, 1, 1, 2, 2, 2]), array([0, 1, 2, 0, 1, 2]))
 

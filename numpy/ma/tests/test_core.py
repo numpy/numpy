@@ -562,7 +562,7 @@ class TestMaskedArray:
                     [4, --, 6]],
               mask=[[False, False, False],
                     [False,  True, False]],
-              fill_value=999999,
+              fill_value=np.int64(999999),
               dtype=int8)''')
         )
 
@@ -572,7 +572,7 @@ class TestMaskedArray:
             textwrap.dedent('''\
             masked_array(data=[[1, 2, 3]],
                          mask=[[False, False, False]],
-                   fill_value=999999,
+                   fill_value=np.int64(999999),
                         dtype=int8)''')
         )
 

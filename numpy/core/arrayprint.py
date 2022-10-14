@@ -1305,8 +1305,12 @@ class IntegerFormat:
 class BoolFormat:
     def __init__(self, data, **kwargs):
         # add an extra space so " True" and "False" have the same length and
-        # array elements align nicely when printed, except in 0d arrays
-        self.truestr = ' True' if data.shape != () else 'True'
+        # array elements align nicely when printed, except in 0d arrays and
+        # when there is no data (e.g. scalar formatting we pass nothing)
+        if data.shape == () or data.size == 0:
+            self.truestr = 'True'
+        else:
+            self.truestr = ' True'
 
     def __call__(self, x):
         return self.truestr if x else "False"
