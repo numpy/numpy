@@ -9858,7 +9858,7 @@ class TestViewDtype:
 
 
 # Test various array sizes that hit different code paths in quicksort-avx512
-@pytest.mark.parametrize("N", np.arange(1,512))
+@pytest.mark.parametrize("N", np.arange(1, 512))
 @pytest.mark.parametrize("dtype", ['e', 'f', 'd'])
 def test_sort_float(N, dtype):
     # Regular data with nan sprinkled
@@ -9884,7 +9884,7 @@ def test_sort_float(N, dtype):
     assert_equal(np.sort(infarr, kind='quick'), np.sort(infarr, kind='heap'))
 
 
-@pytest.mark.parametrize("N", np.arange(1,512))
+@pytest.mark.parametrize("N", np.arange(1, 512))
 @pytest.mark.parametrize("dtype", ['h', 'H', 'i', 'I', 'l', 'L'])
 def test_sort_int(N, dtype):
     # Random data with MAX and MIN sprinkled
