@@ -592,14 +592,15 @@ _void_to_hex(const char* argbuf, const Py_ssize_t arglen,
 }
 
 static PyObject *
-_void_scalar_repr(PyObject *obj) {
+_void_scalar_repr(PyObject *obj, int repr) {
     static PyObject *reprfunc = NULL;
     npy_cache_import("numpy.core.arrayprint",
                      "_void_scalar_repr", &reprfunc);
     if (reprfunc == NULL) {
         return NULL;
     }
-    return PyObject_CallFunction(reprfunc, "O", obj);
+    PyObject *is_repr = repr ? Py_True : Py_False;
+    return PyObject_CallFunction(reprfunc, "OO", obj, is_repr);
 }
 
 static PyObject *
@@ -607,7 +608,7 @@ voidtype_repr(PyObject *self)
 {
     PyVoidScalarObject *s = (PyVoidScalarObject*) self;
     if (PyDataType_HASFIELDS(s->descr)) {
-        return _void_scalar_repr(self);
+        return _void_scalar_repr(self, 1);
     }
     return _void_to_hex(s->obval, s->descr->elsize, "np.void(b'", "\\x", "')");
 }
@@ -617,7 +618,7 @@ voidtype_str(PyObject *self)
 {
     PyVoidScalarObject *s = (PyVoidScalarObject*) self;
     if (PyDataType_HASFIELDS(s->descr)) {
-        return _void_scalar_repr(self);
+        return _void_scalar_repr(self, 0);
     }
     return _void_to_hex(s->obval, s->descr->elsize, "b'", "\\x", "'");
 }

@@ -695,7 +695,8 @@ class TestPrintOptions:
         a = np.ones(2, dtype='<f,<f')
         assert_equal(repr(a),
             "array([(1., 1.), (1., 1.)], dtype=[('f0', '<f4'), ('f1', '<f4')])")
-        assert_equal(repr(a[0]), "(1., 1.)")
+        assert_equal(repr(a[0]),
+            "np.void((1., 1.), dtype=[('f0', '<f4'), ('f1', '<f4')])")
 
     def test_floatmode(self):
         x = np.array([0.6104, 0.922, 0.457, 0.0906, 0.3733, 0.007244,

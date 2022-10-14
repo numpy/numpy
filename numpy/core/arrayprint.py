@@ -408,7 +408,7 @@ def str_format(x):
     return str(x)
 
 def _get_formatdict(data, *, precision, floatmode, suppress, sign, legacy,
-                    formatter, **kwargs):
+                    formatter, quote=False, **kwargs):
     # note: extra arguments in kwargs are ignored
 
     # wrapped in lambdas to avoid taking a code path with the wrong type of data
@@ -418,11 +418,13 @@ def _get_formatdict(data, *, precision, floatmode, suppress, sign, legacy,
         'float': lambda: FloatingFormat(
             data, precision, floatmode, suppress, sign, legacy=legacy),
         'longfloat': lambda: FloatingFormat(
-            data, precision, floatmode, suppress, sign, legacy=legacy),
+            data, precision, floatmode, suppress, sign,
+            legacy=legacy, quote=quote),
         'complexfloat': lambda: ComplexFloatingFormat(
             data, precision, floatmode, suppress, sign, legacy=legacy),
         'longcomplexfloat': lambda: ComplexFloatingFormat(
-            data, precision, floatmode, suppress, sign, legacy=legacy),
+            data, precision, floatmode, suppress, sign,
+            quote=quote, legacy=legacy),
         'datetime': lambda: DatetimeFormat(data, legacy=legacy),
         'timedelta': lambda: TimedeltaFormat(data),
         'object': lambda: _object_format,
@@ -494,15 +496,20 @@ def get_formatter(*, dtype=None, data=None, fmt=None, options=None):
                 "get_formatter: either `fmt` or `options` can be given.")
 
     if fmt is not None:
-        if fmt != "r":
+        if fmt not in "rs":
             raise TypeError(
-                    "get_formatter: only r format is currently supported.")
+                    "get_formatter: only r and s format is currently "
+                    "supported.")
 
-        options = _default_format_options.copy()
-        options.update(floatmode="unique")
+        _options = _default_format_options.copy()
+        _options.update(floatmode="unique")
+        # _get_formatdict currently expects data, so create it.
+        _data = np.array([], dtype=dtype)
+        formatdict = _get_formatdict(_data, quote=fmt == "r", **_options)
+    else:
+        formatdict = _get_formatdict(data, **options)
 
     dtypeobj = dtype.type
-    formatdict = _get_formatdict(data, **options)
 
     if dtypeobj is None:
         return formatdict["numpystr"]()
@@ -531,6 +538,8 @@ def get_formatter(*, dtype=None, data=None, fmt=None, options=None):
         return formatdict['object']()
     elif issubclass(dtypeobj, _nt.void):
         if dtype.names is not None:
+            if fmt is not None:
+                return StructuredVoidFormat._from_fmt(dtype, fmt)
             return StructuredVoidFormat.from_data(data, **options)
         elif dtype.shape != ():
             # This path can only be hit in nested calls when data is not
@@ -963,7 +972,7 @@ def _none_or_positive_arg(x, name):
 class FloatingFormat:
     """ Formatter for subtypes of np.floating """
     def __init__(self, data, precision, floatmode, suppress_small, sign=False,
-                 *, legacy=None):
+                 *, legacy=None, quote=False):
         # for backcompatibility, accept bools
         if isinstance(sign, bool):
             sign = '+' if sign else '-'
@@ -986,6 +995,7 @@ class FloatingFormat:
         self.sign = sign
         self.exp_format = False
         self.large_exponent = False
+        self._quote = quote  # only used for longdouble "r" fmt code
 
         self.fillFormat(data)
 
@@ -1010,7 +1020,7 @@ class FloatingFormat:
             self.trim = '.'
             self.exp_size = -1
             self.unique = True
-            self.min_digits = None
+            self.min_digits = 1
         elif self.exp_format:
             trim, unique = '.', True
             if self.floatmode == 'fixed' or self._legacy <= 113:
@@ -1085,7 +1095,7 @@ class FloatingFormat:
                 return ' '*(self.pad_left + self.pad_right + 1 - len(ret)) + ret
 
         if self.exp_format:
-            return dragon4_scientific(x,
+            res = dragon4_scientific(x,
                                       precision=self.precision,
                                       min_digits=self.min_digits,
                                       unique=self.unique,
@@ -1094,7 +1104,7 @@ class FloatingFormat:
                                       pad_left=self.pad_left,
                                       exp_digits=self.exp_size)
         else:
-            return dragon4_positional(x,
+            res = dragon4_positional(x,
                                       precision=self.precision,
                                       min_digits=self.min_digits,
                                       unique=self.unique,
@@ -1103,7 +1113,9 @@ class FloatingFormat:
                                       sign=self.sign == '+',
                                       pad_left=self.pad_left,
                                       pad_right=self.pad_right)
-
+        if not self._quote:
+            return res
+        return f"'{res}'"
 
 @set_module('numpy')
 def format_float_scientific(x, precision=None, unique=True, trim='k',
@@ -1303,7 +1315,7 @@ class BoolFormat:
 class ComplexFloatingFormat:
     """ Formatter for subtypes of np.complexfloating """
     def __init__(self, x, precision, floatmode, suppress_small,
-                 sign=False, *, legacy=None):
+                 sign=False, *, legacy=None, quote=False):
         # for backcompatibility, accept bools
         if isinstance(sign, bool):
             sign = '+' if sign else '-'
@@ -1322,6 +1334,8 @@ class ComplexFloatingFormat:
             sign='+', legacy=legacy
         )
 
+        self._quote = quote
+
     def __call__(self, x):
         r = self.real_format(x.real)
         i = self.imag_format(x.imag)
@@ -1330,8 +1344,9 @@ class ComplexFloatingFormat:
         sp = len(i.rstrip())
         i = i[:sp] + 'j' + i[sp:]
 
-        return r + i
-
+        if not self._quote:
+            return r + i
+        return f"'{r}{i}'"
 
 class _TimelikeFormat:
     def __init__(self, data):
@@ -1467,13 +1482,17 @@ class StructuredVoidFormat:
             return "({})".format(", ".join(str_fields))
 
 
-def _void_scalar_repr(x):
+def _void_scalar_repr(x, is_repr=True):
     """
     Implements the repr for structured-void scalars. It is called from the
     scalartypes.c.src code, and is placed here because it uses the elementwise
     formatters defined above.
     """
-    return StructuredVoidFormat.from_data(array(x), **_format_options)(x)
+    fmt = "r" if is_repr else "s"
+    val_repr = StructuredVoidFormat._from_fmt(x.dtype, fmt)(x)
+    if not is_repr:
+        return val_repr
+    return f"np.void({val_repr}, dtype={x.dtype!s})"
 
 
 _typelessdata = [int_, float_, complex_, bool_]
