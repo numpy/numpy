@@ -1973,7 +1973,7 @@ def get_cmdclass(cmdclass=None):
 
     # sdist farms its file list building out to egg_info
     if 'egg_info' in cmds:
-        _sdist = cmds['egg_info']
+        _egg_info = cmds['egg_info']
     else:
         from setuptools.command.egg_info import egg_info as _egg_info
 
