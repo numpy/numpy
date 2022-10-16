@@ -324,7 +324,7 @@ class TestRecFunctions:
         test_dtype_args = [('x', float), ('y', float)]
         test_dtype = np.dtype(test_dtype_args)
         field1 = unstructured_to_structured(a, dtype=test_dtype_args) # now
-        field2 = unstructured_to_structured(a, dtype=np.dtype(test_dtype)) # before
+        field2 = unstructured_to_structured(a, dtype=test_dtype) # before
         assert_equal(field1, field2)
 
     def test_field_assignment_by_name(self):
