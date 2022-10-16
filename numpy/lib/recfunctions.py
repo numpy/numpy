@@ -1057,8 +1057,9 @@ def unstructured_to_structured(arr, dtype=None, names=None, align=False,
     else:
         if names is not None:
             raise ValueError("don't supply both dtype and names")
+        # if dtype is the args of np.dtype, construct it
+        dtype = np.dtype(dtype)
         # sanity check of the input dtype
-        dtype = np.dtype(dtype)  # if dtype is the args of np.dtype, construct it
         fields = _get_fields_and_offsets(dtype)
         if len(fields) == 0:
             dts, counts, offsets = [], [], []
