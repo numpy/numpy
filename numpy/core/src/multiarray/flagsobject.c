@@ -109,7 +109,7 @@ PyArray_UpdateFlags(PyArrayObject *ret, int flagmask)
  * a single element).
  * We correct this, however.  When a dimension has length 1, its stride is
  * never used and thus has no effect on the  memory layout.
- * The above rules thus only apply when ignorning all size 1 dimenions.
+ * The above rules thus only apply when ignoring all size 1 dimensions.
  */
 static void
 _UpdateContiguousFlags(PyArrayObject *ap)

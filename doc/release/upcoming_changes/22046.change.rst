@@ -1,0 +1,7 @@
+``masked_invalid`` now modifies the mask in-place
+-----------------------------------------------------------------
+
+When used with ``copy=False``, `numpy.ma.masked_invalid` now modifies the
+input masked array in-place.
+This makes it now behave identical to ``masked_where`` and better matches the
+documentation.

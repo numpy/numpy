@@ -31,7 +31,7 @@
  *       considered boolean True or False).
  *
  * TODO: Aside from nailing down the above notes, it may be nice to expose
- *       these function publically.  This could allow user DTypes to provide
+ *       these function publicly.  This could allow user DTypes to provide
  *       a converter or custom converters written in C rather than Python.
  *
  * @param descr The NumPy descriptor of the field (may be byte-swapped, etc.)

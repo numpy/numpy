@@ -198,6 +198,8 @@ from ._array_like import (
     _ArrayLikeVoid_co as _ArrayLikeVoid_co,
     _ArrayLikeStr_co as _ArrayLikeStr_co,
     _ArrayLikeBytes_co as _ArrayLikeBytes_co,
+    _ArrayLikeUnknown as _ArrayLikeUnknown,
+    _UnknownType as _UnknownType,
 )
 from ._generic_alias import (
     NDArray as NDArray,

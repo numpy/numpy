@@ -1922,7 +1922,7 @@ class TestRegression:
         # Check that loads does not clobber interned strings
         s = re.sub("a(.)", "\x01\\1", "a_")
         assert_equal(s[0], "\x01")
-        data[0] = 0xbb
+        data[0] = 0x6a
         s = re.sub("a(.)", "\x01\\1", "a_")
         assert_equal(s[0], "\x01")
 
@@ -1930,7 +1930,7 @@ class TestRegression:
         for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
             data = np.array([1], dtype='b')
             data = pickle.loads(pickle.dumps(data, protocol=proto))
-            data[0] = 0xdd
+            data[0] = 0x7d
             bytestring = "\x01  ".encode('ascii')
             assert_equal(bytestring[0:1], '\x01'.encode('ascii'))
 
@@ -1945,7 +1945,7 @@ class TestRegression:
                 b"p13\ntp14\nb.")
         # This should work:
         result = pickle.loads(data, encoding='latin1')
-        assert_array_equal(result, np.array([129], dtype='b'))
+        assert_array_equal(result, np.array([129]).astype('b'))
         # Should not segfault:
         assert_raises(Exception, pickle.loads, data, encoding='koi8-r')
 

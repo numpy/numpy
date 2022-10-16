@@ -46,7 +46,7 @@ os.chdir(workdir)
 
 run(['git', 'init'])
 # ensure the working branch is called "main"
-# (`--initial-branch=main` appared to have failed on older git versions):
+# (`--initial-branch=main` appeared to have failed on older git versions):
 run(['git', 'checkout', '-b', 'main'])
 run(['git', 'remote', 'add', 'origin',  args.remote])
 run(['git', 'config', '--local', 'user.name', args.committer])

@@ -69,7 +69,9 @@ class TestIinfo:
     def test_unsigned_max(self):
         types = np.sctypes['uint']
         for T in types:
-            assert_equal(iinfo(T).max, T(-1))
+            with np.errstate(over="ignore"):
+                max_calculated = T(0) - T(1)
+            assert_equal(iinfo(T).max, max_calculated)
 
 class TestRepr:
     def test_iinfo_repr(self):

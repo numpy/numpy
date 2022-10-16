@@ -99,7 +99,7 @@ double_from_ucs4(
     }
 
     if (strip_whitespace) {
-        /* and then skip any remainig whitespace: */
+        /* and then skip any remaining whitespace: */
         while (Py_UNICODE_ISSPACE(*end)) {
             end++;
         }

@@ -134,7 +134,7 @@ def check_math_capabilities(config, ext, moredefs, mathlibs):
     def check_func(
         func_name,
         decl=False,
-        headers=["feature_detection_math.h"],
+        headers=["feature_detection_math.h", "feature_detection_cmath.h"],
     ):
         return config.check_func(
             func_name,
@@ -145,8 +145,10 @@ def check_math_capabilities(config, ext, moredefs, mathlibs):
             headers=headers,
         )
 
-    def check_funcs_once(funcs_name, headers=["feature_detection_math.h"],
-                         add_to_moredefs=True):
+    def check_funcs_once(
+            funcs_name,
+            headers=["feature_detection_math.h", "feature_detection_cmath.h"],
+            add_to_moredefs=True):
         call = dict([(f, True) for f in funcs_name])
         call_args = dict([(f, FUNC_CALL_ARGS[f]) for f in funcs_name])
         st = config.check_funcs_once(
@@ -161,7 +163,9 @@ def check_math_capabilities(config, ext, moredefs, mathlibs):
             moredefs.extend([(fname2def(f), 1) for f in funcs_name])
         return st
 
-    def check_funcs(funcs_name, headers=["feature_detection_math.h"]):
+    def check_funcs(
+            funcs_name,
+            headers=["feature_detection_math.h", "feature_detection_cmath.h"]):
         # Use check_funcs_once first, and if it does not work, test func per
         # func. Return success only if all the functions are available
         if not check_funcs_once(funcs_name, headers=headers):
@@ -1077,7 +1081,6 @@ def configuration(parent_package='',top_path=None):
     # actually the other way around, better performance and
     # after all maintainable code.
     svml_filter = (
-        'svml_z0_tanh_d_la.s', 'svml_z0_tanh_s_la.s'
     )
     if can_link_svml() and check_svml_submodule(svml_path):
         svml_objs = glob.glob(svml_path + '/**/*.s', recursive=True)

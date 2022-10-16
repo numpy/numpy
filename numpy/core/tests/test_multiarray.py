@@ -29,7 +29,7 @@ from numpy.testing import (
     assert_allclose, IS_PYPY, IS_PYSTON, HAS_REFCOUNT, assert_array_less,
     runstring, temppath, suppress_warnings, break_cycles,
     )
-from numpy.testing._private.utils import _no_tracing
+from numpy.testing._private.utils import requires_memory, _no_tracing
 from numpy.core.tests._locales import CommaDecimalPointLocale
 from numpy.lib.recfunctions import repack_fields
 
@@ -1184,7 +1184,6 @@ class TestCreation:
         expected = np.array(None).tobytes()
         expected = expected * (arr.nbytes // len(expected))
         assert arr.tobytes() == expected
-
 
 class TestStructured:
     def test_subarray_field_access(self):
@@ -4614,7 +4613,7 @@ class TestArgmax:
             ([np.nan, 0, 1, 2, 3], 0),
             ([np.nan, 0, np.nan, 2, 3], 0),
             # To hit the tail of SIMD multi-level(x4, x1) inner loops
-            # on varient SIMD widthes
+            # on variant SIMD widthes
             ([1] * (2*5-1) + [np.nan], 2*5-1),
             ([1] * (4*5-1) + [np.nan], 4*5-1),
             ([1] * (8*5-1) + [np.nan], 8*5-1),
@@ -4757,7 +4756,7 @@ class TestArgmin:
             ([np.nan, 0, 1, 2, 3], 0),
             ([np.nan, 0, np.nan, 2, 3], 0),
             # To hit the tail of SIMD multi-level(x4, x1) inner loops
-            # on varient SIMD widthes
+            # on variant SIMD widthes
             ([1] * (2*5-1) + [np.nan], 2*5-1),
             ([1] * (4*5-1) + [np.nan], 4*5-1),
             ([1] * (8*5-1) + [np.nan], 8*5-1),
@@ -5020,6 +5019,8 @@ class TestPutmask:
             for types in np.sctypes.values():
                 for T in types:
                     if T not in unchecked_types:
+                        if val < 0 and np.dtype(T).kind == "u":
+                            val = np.iinfo(T).max - 99
                         self.tst_basic(x.copy().astype(T), T, mask, val)
 
             # Also test string of a length which uses an untypical length
@@ -6719,6 +6720,15 @@ class TestDot:
             # Strides in A cols and X
             assert_dot_close(A_f_12, X_f_2, desired)
 
+    @pytest.mark.slow
+    @pytest.mark.parametrize("dtype", [np.float64, np.complex128])
+    @requires_memory(free_bytes=18e9)  # complex case needs 18GiB+
+    def test_huge_vectordot(self, dtype):
+        # Large vector multiplications are chunked with 32bit BLAS
+        # Test that the chunking does the right thing, see also gh-22262
+        data = np.ones(2**30+100, dtype=dtype)
+        res = np.dot(data, data)
+        assert res == 2**30+100
 
 
 class MatmulCommon:
@@ -7225,9 +7235,8 @@ class TestInner:
                    [2630, 2910, 3190]],
 
                   [[2198, 2542, 2886],
-                   [3230, 3574, 3918]]]],
-                dtype=dt
-            )
+                   [3230, 3574, 3918]]]]
+            ).astype(dt)
             assert_equal(np.inner(a, b), desired)
             assert_equal(np.inner(b, a).transpose(2,3,0,1), desired)
 

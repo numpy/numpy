@@ -65,7 +65,6 @@ jobs:
           name: create release notes
           command: |
             . venv/bin/activate
-            pip install towncrier
             VERSION=$(python -c "import setup; print(setup.VERSION)")
             towncrier build --version $VERSION --yes
             ./tools/ci/test_all_newsfragments_used.py

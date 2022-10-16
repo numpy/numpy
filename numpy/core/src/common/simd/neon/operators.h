@@ -246,4 +246,129 @@ NPY_FINLINE npyv_b32 npyv_notnan_f32(npyv_f32 a)
     { return vceqq_f64(a, a); }
 #endif
 
+// Test cross all vector lanes
+// any: returns true if any of the elements is not equal to zero
+// all: returns true if all elements are not equal to zero
+#if NPY_SIMD_F64
+    #define NPYV_IMPL_NEON_ANYALL(LEN)                  \
+        NPY_FINLINE bool npyv_any_b##LEN(npyv_b##LEN a) \
+        { return vmaxvq_u##LEN(a) != 0; }               \
+        NPY_FINLINE bool npyv_all_b##LEN(npyv_b##LEN a) \
+        { return vminvq_u##LEN(a) != 0; }
+    NPYV_IMPL_NEON_ANYALL(8)
+    NPYV_IMPL_NEON_ANYALL(16)
+    NPYV_IMPL_NEON_ANYALL(32)
+    #undef NPYV_IMPL_NEON_ANYALL
+
+    #define NPYV_IMPL_NEON_ANYALL(SFX, USFX, BSFX)                      \
+        NPY_FINLINE bool npyv_any_##SFX(npyv_##SFX a)                   \
+        { return npyv_any_##BSFX(npyv_reinterpret_##USFX##_##SFX(a)); } \
+        NPY_FINLINE bool npyv_all_##SFX(npyv_##SFX a)                   \
+        { return npyv_all_##BSFX(npyv_reinterpret_##USFX##_##SFX(a)); }
+    NPYV_IMPL_NEON_ANYALL(u8,  u8,  b8)
+    NPYV_IMPL_NEON_ANYALL(s8,  u8,  b8)
+    NPYV_IMPL_NEON_ANYALL(u16, u16, b16)
+    NPYV_IMPL_NEON_ANYALL(s16, u16, b16)
+    NPYV_IMPL_NEON_ANYALL(u32, u32, b32)
+    NPYV_IMPL_NEON_ANYALL(s32, u32, b32)
+    #undef NPYV_IMPL_NEON_ANYALL
+
+    NPY_FINLINE bool npyv_any_b64(npyv_b64 a)
+    { return vmaxvq_u32(vreinterpretq_u32_u64(a)) != 0; }
+    NPY_FINLINE bool npyv_all_b64(npyv_b64 a)
+    { return vminvq_u32(vreinterpretq_u32_u64(a)) != 0; }
+    #define npyv_any_u64 npyv_any_b64
+    NPY_FINLINE bool npyv_all_u64(npyv_u64 a)
+    {
+        uint32x4_t a32 = vreinterpretq_u32_u64(a);
+                   a32 = vorrq_u32(a32, vrev64q_u32(a32));
+        return vminvq_u32(a32) != 0;
+    }
+    NPY_FINLINE bool npyv_any_s64(npyv_s64 a)
+    { return npyv_any_u64(vreinterpretq_u64_s64(a)); }
+    NPY_FINLINE bool npyv_all_s64(npyv_s64 a)
+    { return npyv_all_u64(vreinterpretq_u64_s64(a)); }
+
+    #define NPYV_IMPL_NEON_ANYALL(SFX, BSFX)                                 \
+        NPY_FINLINE bool npyv_any_##SFX(npyv_##SFX a)                        \
+        { return !npyv_all_##BSFX(npyv_cmpeq_##SFX(a, npyv_zero_##SFX())); } \
+        NPY_FINLINE bool npyv_all_##SFX(npyv_##SFX a)                        \
+        { return !npyv_any_##BSFX(npyv_cmpeq_##SFX(a, npyv_zero_##SFX())); }
+    NPYV_IMPL_NEON_ANYALL(f32, b32)
+    NPYV_IMPL_NEON_ANYALL(f64, b64)
+    #undef NPYV_IMPL_NEON_ANYALL
+#else
+    #define NPYV_IMPL_NEON_ANYALL(LEN)                    \
+        NPY_FINLINE bool npyv_any_b##LEN(npyv_b##LEN a)   \
+        {                                                 \
+            int64x2_t a64 = vreinterpretq_s64_u##LEN(a);  \
+            return (                                      \
+                vgetq_lane_s64(a64, 0) |                  \
+                vgetq_lane_s64(a64, 1)                    \
+            ) != 0;                                       \
+        }                                                 \
+        NPY_FINLINE bool npyv_all_b##LEN(npyv_b##LEN a)   \
+        {                                                 \
+            int64x2_t a64 = vreinterpretq_s64_u##LEN(a);  \
+            return (                                      \
+                vgetq_lane_s64(a64, 0) &                  \
+                vgetq_lane_s64(a64, 1)                    \
+            ) == -1;                                      \
+        }
+    NPYV_IMPL_NEON_ANYALL(8)
+    NPYV_IMPL_NEON_ANYALL(16)
+    NPYV_IMPL_NEON_ANYALL(32)
+    NPYV_IMPL_NEON_ANYALL(64)
+    #undef NPYV_IMPL_NEON_ANYALL
+
+    #define NPYV_IMPL_NEON_ANYALL(SFX, USFX)              \
+        NPY_FINLINE bool npyv_any_##SFX(npyv_##SFX a)     \
+        {                                                 \
+            int64x2_t a64 = vreinterpretq_s64_##SFX(a);   \
+            return (                                      \
+                vgetq_lane_s64(a64, 0) |                  \
+                vgetq_lane_s64(a64, 1)                    \
+            ) != 0;                                       \
+        }                                                 \
+        NPY_FINLINE bool npyv_all_##SFX(npyv_##SFX a)     \
+        {                                                 \
+            npyv_##USFX tz = npyv_cmpeq_##SFX(            \
+                a, npyv_zero_##SFX()                      \
+            );                                            \
+            int64x2_t a64 = vreinterpretq_s64_##USFX(tz); \
+            return (                                      \
+                vgetq_lane_s64(a64, 0) |                  \
+                vgetq_lane_s64(a64, 1)                    \
+            ) == 0;                                       \
+        }
+    NPYV_IMPL_NEON_ANYALL(u8,  u8)
+    NPYV_IMPL_NEON_ANYALL(s8,  u8)
+    NPYV_IMPL_NEON_ANYALL(u16, u16)
+    NPYV_IMPL_NEON_ANYALL(s16, u16)
+    NPYV_IMPL_NEON_ANYALL(u32, u32)
+    NPYV_IMPL_NEON_ANYALL(s32, u32)
+    #undef NPYV_IMPL_NEON_ANYALL
+
+    NPY_FINLINE bool npyv_any_f32(npyv_f32 a)
+    {
+        uint32x4_t tz = npyv_cmpeq_f32(a, npyv_zero_f32());
+        int64x2_t a64 = vreinterpretq_s64_u32(tz);
+        return (vgetq_lane_s64(a64, 0) & vgetq_lane_s64(a64, 1)) != -1ll;
+    }
+    NPY_FINLINE bool npyv_all_f32(npyv_f32 a)
+    {
+        uint32x4_t tz = npyv_cmpeq_f32(a, npyv_zero_f32());
+        int64x2_t a64 = vreinterpretq_s64_u32(tz);
+        return (vgetq_lane_s64(a64, 0) | vgetq_lane_s64(a64, 1)) == 0;
+    }
+    NPY_FINLINE bool npyv_any_s64(npyv_s64 a)
+    { return (vgetq_lane_s64(a, 0) | vgetq_lane_s64(a, 1)) != 0; }
+    NPY_FINLINE bool npyv_all_s64(npyv_s64 a)
+    { return vgetq_lane_s64(a, 0) && vgetq_lane_s64(a, 1); }
+    NPY_FINLINE bool npyv_any_u64(npyv_u64 a)
+    { return (vgetq_lane_u64(a, 0) | vgetq_lane_u64(a, 1)) != 0; }
+    NPY_FINLINE bool npyv_all_u64(npyv_u64 a)
+    { return vgetq_lane_u64(a, 0) && vgetq_lane_u64(a, 1); }
+#endif // NPY_SIMD_F64
+
 #endif // _NPY_SIMD_NEON_OPERATORS_H

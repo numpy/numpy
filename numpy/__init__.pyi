@@ -36,6 +36,8 @@ from numpy._typing import (
     _ArrayLikeObject_co,
     _ArrayLikeStr_co,
     _ArrayLikeBytes_co,
+    _ArrayLikeUnknown,
+    _UnknownType,
 
     # DTypes
     DTypeLike,
@@ -1433,7 +1435,7 @@ _ShapeType2 = TypeVar("_ShapeType2", bound=Any)
 _NumberType = TypeVar("_NumberType", bound=number[Any])
 
 # There is currently no exhaustive way to type the buffer protocol,
-# as it is implemented exclusivelly in the C API (python/typing#593)
+# as it is implemented exclusively in the C API (python/typing#593)
 _SupportsBuffer = Union[
     bytes,
     bytearray,
@@ -1548,6 +1550,12 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
         /,
     ) -> ndarray[_ShapeType2, _DType]: ...
 
+    @overload
+    def __getitem__(self, key: (
+        NDArray[integer[Any]]
+        | NDArray[bool_]
+        | tuple[NDArray[integer[Any]] | NDArray[bool_], ...]
+    )) -> ndarray[Any, _DType_co]: ...
     @overload
     def __getitem__(self, key: SupportsIndex | tuple[SupportsIndex, ...]) -> Any: ...
     @overload
@@ -2051,6 +2059,8 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
     def __radd__(self: NDArray[Any], other: _ArrayLikeObject_co) -> Any: ...
 
     @overload
+    def __sub__(self: NDArray[_UnknownType], other: _ArrayLikeUnknown) -> NDArray[Any]: ...
+    @overload
     def __sub__(self: NDArray[bool_], other: _ArrayLikeBool_co) -> NoReturn: ...
     @overload
     def __sub__(self: _ArrayUInt_co, other: _ArrayLikeUInt_co) -> NDArray[unsignedinteger[Any]]: ...  # type: ignore[misc]
@@ -2073,6 +2083,8 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
     @overload
     def __sub__(self: NDArray[Any], other: _ArrayLikeObject_co) -> Any: ...
 
+    @overload
+    def __rsub__(self: NDArray[_UnknownType], other: _ArrayLikeUnknown) -> NDArray[Any]: ...
     @overload
     def __rsub__(self: NDArray[bool_], other: _ArrayLikeBool_co) -> NoReturn: ...
     @overload
@@ -3742,7 +3754,7 @@ class memmap(ndarray[_ShapeType, _DType_co]):
     ) -> Any: ...
     def flush(self) -> None: ...
 
-# TODO: Add a mypy plugin for managing functions whose output type is dependant
+# TODO: Add a mypy plugin for managing functions whose output type is dependent
 # on the literal value of some sort of signature (e.g. `einsum` and `vectorize`)
 class vectorize:
     pyfunc: Callable[..., Any]

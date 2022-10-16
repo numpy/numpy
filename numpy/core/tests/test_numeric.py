@@ -2824,12 +2824,11 @@ class TestLikeFuncs:
     def compare_array_value(self, dz, value, fill_value):
         if value is not None:
             if fill_value:
-                try:
-                    z = dz.dtype.type(value)
-                except OverflowError:
-                    pass
-                else:
-                    assert_(np.all(dz == z))
+                # Conversion is close to what np.full_like uses
+                # but we  may want to convert directly in the future
+                # which may result in errors (where this does not).
+                z = np.array(value).astype(dz.dtype)
+                assert_(np.all(dz == z))
             else:
                 assert_(np.all(dz == value))
 

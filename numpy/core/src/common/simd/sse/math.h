@@ -45,15 +45,27 @@ NPY_FINLINE npyv_f64 npyv_square_f64(npyv_f64 a)
 // - Only if both corresponded elements are NaN, NaN is set.
 NPY_FINLINE npyv_f32 npyv_maxp_f32(npyv_f32 a, npyv_f32 b)
 {
-    __m128 nn  = _mm_cmpord_ps(b, b);
+    __m128i nn = npyv_notnan_f32(b);
     __m128 max = _mm_max_ps(a, b);
-    return npyv_select_f32(_mm_castps_si128(nn), max, a);
+    return npyv_select_f32(nn, max, a);
 }
 NPY_FINLINE npyv_f64 npyv_maxp_f64(npyv_f64 a, npyv_f64 b)
 {
-    __m128d nn  = _mm_cmpord_pd(b, b);
+    __m128i nn  = npyv_notnan_f64(b);
     __m128d max = _mm_max_pd(a, b);
-    return npyv_select_f64(_mm_castpd_si128(nn), max, a);
+    return npyv_select_f64(nn, max, a);
+}
+NPY_FINLINE npyv_f32 npyv_maxn_f32(npyv_f32 a, npyv_f32 b)
+{
+    __m128i nn = npyv_notnan_f32(a);
+    __m128 max = _mm_max_ps(a, b);
+    return npyv_select_f32(nn, max, a);
+}
+NPY_FINLINE npyv_f64 npyv_maxn_f64(npyv_f64 a, npyv_f64 b)
+{
+    __m128i nn  = npyv_notnan_f64(a);
+    __m128d max = _mm_max_pd(a, b);
+    return npyv_select_f64(nn, max, a);
 }
 // Maximum, integer operations
 #ifdef NPY_HAVE_SSE41
@@ -98,15 +110,27 @@ NPY_FINLINE npyv_s64 npyv_max_s64(npyv_s64 a, npyv_s64 b)
 // - Only if both corresponded elements are NaN, NaN is set.
 NPY_FINLINE npyv_f32 npyv_minp_f32(npyv_f32 a, npyv_f32 b)
 {
-    __m128 nn  = _mm_cmpord_ps(b, b);
+    __m128i nn = npyv_notnan_f32(b);
     __m128 min = _mm_min_ps(a, b);
-    return npyv_select_f32(_mm_castps_si128(nn), min, a);
+    return npyv_select_f32(nn, min, a);
 }
 NPY_FINLINE npyv_f64 npyv_minp_f64(npyv_f64 a, npyv_f64 b)
 {
-    __m128d nn  = _mm_cmpord_pd(b, b);
+    __m128i nn  = npyv_notnan_f64(b);
     __m128d min = _mm_min_pd(a, b);
-    return npyv_select_f64(_mm_castpd_si128(nn), min, a);
+    return npyv_select_f64(nn, min, a);
+}
+NPY_FINLINE npyv_f32 npyv_minn_f32(npyv_f32 a, npyv_f32 b)
+{
+    __m128i nn = npyv_notnan_f32(a);
+    __m128 min = _mm_min_ps(a, b);
+    return npyv_select_f32(nn, min, a);
+}
+NPY_FINLINE npyv_f64 npyv_minn_f64(npyv_f64 a, npyv_f64 b)
+{
+    __m128i nn  = npyv_notnan_f64(a);
+    __m128d min = _mm_min_pd(a, b);
+    return npyv_select_f64(nn, min, a);
 }
 // Minimum, integer operations
 #ifdef NPY_HAVE_SSE41
@@ -142,6 +166,102 @@ NPY_FINLINE npyv_s64 npyv_min_s64(npyv_s64 a, npyv_s64 b)
 {
     return npyv_select_s64(npyv_cmplt_s64(a, b), a, b);
 }
+
+// reduce min&max for 32&64-bits
+#define NPY_IMPL_SSE_REDUCE_MINMAX(STYPE, INTRIN, VINTRIN)                                     \
+    NPY_FINLINE STYPE##32 npyv_reduce_##INTRIN##32(__m128i a)                                  \
+    {                                                                                          \
+        __m128i v64 =  npyv_##INTRIN##32(a, _mm_shuffle_epi32(a, _MM_SHUFFLE(0, 0, 3, 2)));    \
+        __m128i v32 = npyv_##INTRIN##32(v64, _mm_shuffle_epi32(v64, _MM_SHUFFLE(0, 0, 0, 1))); \
+        return (STYPE##32)_mm_cvtsi128_si32(v32);                                              \
+    }                                                                                          \
+    NPY_FINLINE STYPE##64 npyv_reduce_##INTRIN##64(__m128i a)                                  \
+    {                                                                                          \
+        __m128i v64  = npyv_##INTRIN##64(a, _mm_shuffle_epi32(a, _MM_SHUFFLE(0, 0, 3, 2)));    \
+        return (STYPE##64)npyv_extract0_u64(v64);                                              \
+    }
+
+NPY_IMPL_SSE_REDUCE_MINMAX(npy_uint, min_u, min_epu)
+NPY_IMPL_SSE_REDUCE_MINMAX(npy_int,  min_s, min_epi)
+NPY_IMPL_SSE_REDUCE_MINMAX(npy_uint, max_u, max_epu)
+NPY_IMPL_SSE_REDUCE_MINMAX(npy_int,  max_s, max_epi)
+#undef NPY_IMPL_SSE_REDUCE_MINMAX
+// reduce min&max for ps & pd
+#define NPY_IMPL_SSE_REDUCE_MINMAX(INTRIN, INF, INF64)                                          \
+    NPY_FINLINE float npyv_reduce_##INTRIN##_f32(npyv_f32 a)                                    \
+    {                                                                                           \
+        __m128 v64 =  _mm_##INTRIN##_ps(a, _mm_shuffle_ps(a, a, _MM_SHUFFLE(0, 0, 3, 2)));      \
+        __m128 v32 = _mm_##INTRIN##_ps(v64, _mm_shuffle_ps(v64, v64, _MM_SHUFFLE(0, 0, 0, 1))); \
+        return _mm_cvtss_f32(v32);                                                              \
+    }                                                                                           \
+    NPY_FINLINE double npyv_reduce_##INTRIN##_f64(npyv_f64 a)                                   \
+    {                                                                                           \
+        __m128d v64 = _mm_##INTRIN##_pd(a, _mm_shuffle_pd(a, a, _MM_SHUFFLE(0, 0, 0, 1)));      \
+        return _mm_cvtsd_f64(v64);                                                              \
+    }                                                                                           \
+    NPY_FINLINE float npyv_reduce_##INTRIN##p_f32(npyv_f32 a)                                   \
+    {                                                                                           \
+        npyv_b32 notnan = npyv_notnan_f32(a);                                                   \
+        if (NPY_UNLIKELY(!npyv_any_b32(notnan))) {                                              \
+            return _mm_cvtss_f32(a);                                                            \
+        }                                                                                       \
+        a = npyv_select_f32(notnan, a, npyv_reinterpret_f32_u32(npyv_setall_u32(INF)));         \
+        return npyv_reduce_##INTRIN##_f32(a);                                                   \
+    }                                                                                           \
+    NPY_FINLINE double npyv_reduce_##INTRIN##p_f64(npyv_f64 a)                                  \
+    {                                                                                           \
+        npyv_b64 notnan = npyv_notnan_f64(a);                                                   \
+        if (NPY_UNLIKELY(!npyv_any_b64(notnan))) {                                              \
+            return _mm_cvtsd_f64(a);                                                            \
+        }                                                                                       \
+        a = npyv_select_f64(notnan, a, npyv_reinterpret_f64_u64(npyv_setall_u64(INF64)));       \
+        return npyv_reduce_##INTRIN##_f64(a);                                                   \
+    }                                                                                           \
+    NPY_FINLINE float npyv_reduce_##INTRIN##n_f32(npyv_f32 a)                                   \
+    {                                                                                           \
+        npyv_b32 notnan = npyv_notnan_f32(a);                                                   \
+        if (NPY_UNLIKELY(!npyv_all_b32(notnan))) {                                              \
+            const union { npy_uint32 i; float f;} pnan = {0x7fc00000UL};                        \
+            return pnan.f;                                                                      \
+        }                                                                                       \
+        return npyv_reduce_##INTRIN##_f32(a);                                                   \
+    }                                                                                           \
+    NPY_FINLINE double npyv_reduce_##INTRIN##n_f64(npyv_f64 a)                                  \
+    {                                                                                           \
+        npyv_b64 notnan = npyv_notnan_f64(a);                                                   \
+        if (NPY_UNLIKELY(!npyv_all_b64(notnan))) {                                              \
+            const union { npy_uint64 i; double d;} pnan = {0x7ff8000000000000ull};              \
+            return pnan.d;                                                                      \
+        }                                                                                       \
+        return npyv_reduce_##INTRIN##_f64(a);                                                   \
+    }
+
+NPY_IMPL_SSE_REDUCE_MINMAX(min, 0x7f800000, 0x7ff0000000000000)
+NPY_IMPL_SSE_REDUCE_MINMAX(max, 0xff800000, 0xfff0000000000000)
+#undef NPY_IMPL_SSE_REDUCE_MINMAX
+
+// reduce min&max for 8&16-bits
+#define NPY_IMPL_SSE_REDUCE_MINMAX(STYPE, INTRIN)                                                    \
+    NPY_FINLINE STYPE##16 npyv_reduce_##INTRIN##16(__m128i a)                                        \
+    {                                                                                                \
+        __m128i v64 =  npyv_##INTRIN##16(a, _mm_shuffle_epi32(a, _MM_SHUFFLE(0, 0, 3, 2)));          \
+        __m128i v32 = npyv_##INTRIN##16(v64, _mm_shuffle_epi32(v64, _MM_SHUFFLE(0, 0, 0, 1)));       \
+        __m128i v16 = npyv_##INTRIN##16(v32, _mm_shufflelo_epi16(v32, _MM_SHUFFLE(0, 0, 0, 1)));     \
+        return (STYPE##16)_mm_cvtsi128_si32(v16);                                                    \
+    }                                                                                                \
+    NPY_FINLINE STYPE##8 npyv_reduce_##INTRIN##8(__m128i a)                                          \
+    {                                                                                                \
+        __m128i v64 =  npyv_##INTRIN##8(a, _mm_shuffle_epi32(a, _MM_SHUFFLE(0, 0, 3, 2)));           \
+        __m128i v32 = npyv_##INTRIN##8(v64, _mm_shuffle_epi32(v64, _MM_SHUFFLE(0, 0, 0, 1)));        \
+        __m128i v16 = npyv_##INTRIN##8(v32, _mm_shufflelo_epi16(v32, _MM_SHUFFLE(0, 0, 0, 1)));      \
+        __m128i v8 = npyv_##INTRIN##8(v16, _mm_srli_epi16(v16, 8));                                  \
+        return (STYPE##16)_mm_cvtsi128_si32(v8);                                                     \
+    }
+NPY_IMPL_SSE_REDUCE_MINMAX(npy_uint, min_u)
+NPY_IMPL_SSE_REDUCE_MINMAX(npy_int,  min_s)
+NPY_IMPL_SSE_REDUCE_MINMAX(npy_uint, max_u)
+NPY_IMPL_SSE_REDUCE_MINMAX(npy_int,  max_s)
+#undef NPY_IMPL_SSE_REDUCE_MINMAX
 
 // round to nearest integer even
 NPY_FINLINE npyv_f32 npyv_rint_f32(npyv_f32 a)

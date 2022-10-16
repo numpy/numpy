@@ -200,8 +200,8 @@ reveal_type(AR_f8.__array_wrap__(B))  # E: ndarray[Any, dtype[object_]]
 
 reveal_type(AR_V[0])  # E: Any
 reveal_type(AR_V[0, 0])  # E: Any
-reveal_type(AR_V[AR_i8])  # E: Any
-reveal_type(AR_V[AR_i8, AR_i8])  # E: Any
+reveal_type(AR_V[AR_i8])  # E: ndarray[Any, dtype[void]]
+reveal_type(AR_V[AR_i8, AR_i8])  # E: ndarray[Any, dtype[void]]
 reveal_type(AR_V[AR_i8, None])  # E: ndarray[Any, dtype[void]]
 reveal_type(AR_V[0, ...])  # E: ndarray[Any, dtype[void]]
 reveal_type(AR_V[[0]])  # E: ndarray[Any, dtype[void]]

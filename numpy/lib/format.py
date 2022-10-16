@@ -177,6 +177,8 @@ MAGIC_PREFIX = b'\x93NUMPY'
 MAGIC_LEN = len(MAGIC_PREFIX) + 2
 ARRAY_ALIGN = 64 # plausible values are powers of 2 between 16 and 4096
 BUFFER_SIZE = 2**18  # size of buffer for reading npz files in bytes
+# allow growth within the address space of a 64 bit machine along one axis
+GROWTH_AXIS_MAX_DIGITS = 21  # = len(str(8*2**64-1)) hypothetical int1 dtype
 
 # difference between version 1.0 and 2.0 is a 4 byte (I) header length
 # instead of 2 bytes (H) allowing storage of large structured arrays
@@ -186,6 +188,10 @@ _header_size_info = {
     (3, 0): ('<I', 'utf8'),
 }
 
+# Python's literal_eval is not actually safe for large inputs, since parsing
+# may become slow or even cause interpreter crashes.
+# This is an arbitrary, low limit which should make it safe in practice.
+_MAX_HEADER_SIZE = 10000
 
 def _check_version(version):
     if version not in [(1, 0), (2, 0), (3, 0), None]:
@@ -431,6 +437,15 @@ def _write_array_header(fp, d, version=None):
         header.append("'%s': %s, " % (key, repr(value)))
     header.append("}")
     header = "".join(header)
+    
+    # Add some spare space so that the array header can be modified in-place
+    # when changing the array size, e.g. when growing it by appending data at
+    # the end. 
+    shape = d['shape']
+    header += " " * ((GROWTH_AXIS_MAX_DIGITS - len(repr(
+        shape[-1 if d['fortran_order'] else 0]
+    ))) if len(shape) > 0 else 0)
+    
     if version is None:
         header = _wrap_header_guess_version(header)
     else:
@@ -465,7 +480,7 @@ def write_array_header_2_0(fp, d):
     """
     _write_array_header(fp, d, (2, 0))
 
-def read_array_header_1_0(fp):
+def read_array_header_1_0(fp, max_header_size=_MAX_HEADER_SIZE):
     """
     Read an array header from a filelike object using the 1.0 file format
     version.
@@ -487,6 +502,10 @@ def read_array_header_1_0(fp):
         contiguous before writing it out.
     dtype : dtype
         The dtype of the file's data.
+    max_header_size : int, optional
+        Maximum allowed size of the header.  Large headers may not be safe
+        to load securely and thus require explicitly passing a larger value.
+        See :py:meth:`ast.literal_eval()` for details.
 
     Raises
     ------
@@ -494,9 +513,10 @@ def read_array_header_1_0(fp):
         If the data is invalid.
 
     """
-    return _read_array_header(fp, version=(1, 0))
+    return _read_array_header(
+            fp, version=(1, 0), max_header_size=max_header_size)
 
-def read_array_header_2_0(fp):
+def read_array_header_2_0(fp, max_header_size=_MAX_HEADER_SIZE):
     """
     Read an array header from a filelike object using the 2.0 file format
     version.
@@ -509,6 +529,10 @@ def read_array_header_2_0(fp):
     ----------
     fp : filelike object
         A file object or something with a `.read()` method like a file.
+    max_header_size : int, optional
+        Maximum allowed size of the header.  Large headers may not be safe
+        to load securely and thus require explicitly passing a larger value.
+        See :py:meth:`ast.literal_eval()` for details.
 
     Returns
     -------
@@ -527,7 +551,8 @@ def read_array_header_2_0(fp):
         If the data is invalid.
 
     """
-    return _read_array_header(fp, version=(2, 0))
+    return _read_array_header(
+            fp, version=(2, 0), max_header_size=max_header_size)
 
 
 def _filter_header(s):
@@ -565,7 +590,7 @@ def _filter_header(s):
     return tokenize.untokenize(tokens)
 
 
-def _read_array_header(fp, version):
+def _read_array_header(fp, version, max_header_size=_MAX_HEADER_SIZE):
     """
     see read_array_header_1_0
     """
@@ -581,6 +606,14 @@ def _read_array_header(fp, version):
     header_length = struct.unpack(hlength_type, hlength_str)[0]
     header = _read_bytes(fp, header_length, "array header")
     header = header.decode(encoding)
+    if len(header) > max_header_size:
+        raise ValueError(
+            f"Header info length ({len(header)}) is large and may not be safe "
+            "to load securely.\n"
+            "To allow loading, adjust `max_header_size` or fully trust "
+            "the `.npy` file using `allow_pickle=True`.\n"
+            "For safety against large resource use or crashes, sandboxing "
+            "may be necessary.")
 
     # The header is a pretty-printed string representation of a literal
     # Python dictionary with trailing newlines padded to a ARRAY_ALIGN byte
@@ -694,7 +727,8 @@ def write_array(fp, array, version=None, allow_pickle=True, pickle_kwargs=None):
                 fp.write(chunk.tobytes('C'))
 
 
-def read_array(fp, allow_pickle=False, pickle_kwargs=None):
+def read_array(fp, allow_pickle=False, pickle_kwargs=None, *,
+               max_header_size=_MAX_HEADER_SIZE):
     """
     Read an array from an NPY file.
 
@@ -713,6 +747,12 @@ def read_array(fp, allow_pickle=False, pickle_kwargs=None):
         Additional keyword arguments to pass to pickle.load. These are only
         useful when loading object arrays saved on Python 2 when using
         Python 3.
+    max_header_size : int, optional
+        Maximum allowed size of the header.  Large headers may not be safe
+        to load securely and thus require explicitly passing a larger value.
+        See :py:meth:`ast.literal_eval()` for details.
+        This option is ignored when `allow_pickle` is passed.  In that case
+        the file is by definition trusted and the limit is unnecessary.
 
     Returns
     -------
@@ -726,9 +766,15 @@ def read_array(fp, allow_pickle=False, pickle_kwargs=None):
         an object array.
 
     """
+    if allow_pickle:
+        # Effectively ignore max_header_size, since `allow_pickle` indicates
+        # that the input is fully trusted.
+        max_header_size = 2**64
+
     version = read_magic(fp)
     _check_version(version)
-    shape, fortran_order, dtype = _read_array_header(fp, version)
+    shape, fortran_order, dtype = _read_array_header(
+            fp, version, max_header_size=max_header_size)
     if len(shape) == 0:
         count = 1
     else:
@@ -788,7 +834,8 @@ def read_array(fp, allow_pickle=False, pickle_kwargs=None):
 
 
 def open_memmap(filename, mode='r+', dtype=None, shape=None,
-                fortran_order=False, version=None):
+                fortran_order=False, version=None, *,
+                max_header_size=_MAX_HEADER_SIZE):
     """
     Open a .npy file as a memory-mapped array.
 
@@ -819,6 +866,10 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
         If the mode is a "write" mode, then this is the version of the file
         format used to create the file.  None means use the oldest
         supported version that is able to store the data.  Default: None
+    max_header_size : int, optional
+        Maximum allowed size of the header.  Large headers may not be safe
+        to load securely and thus require explicitly passing a larger value.
+        See :py:meth:`ast.literal_eval()` for details.
 
     Returns
     -------
@@ -866,7 +917,8 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
             version = read_magic(fp)
             _check_version(version)
 
-            shape, fortran_order, dtype = _read_array_header(fp, version)
+            shape, fortran_order, dtype = _read_array_header(
+                    fp, version, max_header_size=max_header_size)
             if dtype.hasobject:
                 msg = "Array can't be memory-mapped: Python objects in dtype."
                 raise ValueError(msg)

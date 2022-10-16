@@ -19,7 +19,7 @@
 #include "textreading/growth.h"
 
 /*
- * Minimum size to grow the allcoation by (or 25%). The 8KiB means the actual
+ * Minimum size to grow the allocation by (or 25%). The 8KiB means the actual
  * growths is within `8 KiB <= size < 16 KiB` (depending on the row size).
  */
 #define MIN_BLOCK_SIZE (1 << 13)

@@ -1,5 +1,5 @@
 F2PY supports the value attribute
-=================================
+---------------------------------
 
 The Fortran standard requires that variables declared with the ``value``
 attribute must be passed by value instead of reference. F2PY now supports this

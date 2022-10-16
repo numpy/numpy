@@ -39,11 +39,6 @@ class TestArgsort:
 
 
 class TestMinimumMaximum:
-    def test_minimum(self):
-        assert_warns(DeprecationWarning, np.ma.minimum, np.ma.array([1, 2]))
-
-    def test_maximum(self):
-        assert_warns(DeprecationWarning, np.ma.maximum, np.ma.array([1, 2]))
 
     def test_axis_default(self):
         # NumPy 1.13, 2017-05-06

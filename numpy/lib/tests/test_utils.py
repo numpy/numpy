@@ -115,6 +115,10 @@ def test_deprecate_preserve_whitespace():
     assert_('\n        Bizarre' in new_func5.__doc__)
 
 
+def test_deprecate_module():
+    assert_(old_func.__module__ == __name__)
+
+
 def test_safe_eval_nameconstant():
     # Test if safe_eval supports Python 3.4 _ast.NameConstant
     utils.safe_eval('None')

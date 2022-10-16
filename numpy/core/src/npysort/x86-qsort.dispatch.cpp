@@ -137,8 +137,8 @@ struct vector<npy_int> {
     {
         return _mm512_permutexvar_epi32(idx, zmm);
     }
-    static type_t reducemax(zmm_t v) { return npyv_reducemax_s32(v); }
-    static type_t reducemin(zmm_t v) { return npyv_reducemin_s32(v); }
+    static type_t reducemax(zmm_t v) { return npyv_reduce_max_s32(v); }
+    static type_t reducemin(zmm_t v) { return npyv_reduce_min_s32(v); }
     static zmm_t set1(type_t v) { return _mm512_set1_epi32(v); }
     template<__mmask16 mask>
     static zmm_t shuffle(zmm_t zmm)
@@ -196,8 +196,8 @@ struct vector<npy_uint> {
     {
         return _mm512_permutexvar_epi32(idx, zmm);
     }
-    static type_t reducemax(zmm_t v) { return npyv_reducemax_u32(v); }
-    static type_t reducemin(zmm_t v) { return npyv_reducemin_u32(v); }
+    static type_t reducemax(zmm_t v) { return npyv_reduce_max_u32(v); }
+    static type_t reducemin(zmm_t v) { return npyv_reduce_min_u32(v); }
     static zmm_t set1(type_t v) { return _mm512_set1_epi32(v); }
     template<__mmask16 mask>
     static zmm_t shuffle(zmm_t zmm)
@@ -255,8 +255,8 @@ struct vector<npy_float> {
     {
         return _mm512_permutexvar_ps(idx, zmm);
     }
-    static type_t reducemax(zmm_t v) { return npyv_reducemax_f32(v); }
-    static type_t reducemin(zmm_t v) { return npyv_reducemin_f32(v); }
+    static type_t reducemax(zmm_t v) { return npyv_reduce_max_f32(v); }
+    static type_t reducemin(zmm_t v) { return npyv_reduce_min_f32(v); }
     static zmm_t set1(type_t v) { return _mm512_set1_ps(v); }
     template<__mmask16 mask>
     static zmm_t shuffle(zmm_t zmm)
@@ -637,7 +637,7 @@ get_pivot(type_t *arr, const npy_intp left, const npy_intp right)
 }
 
 /*
- * Parition one ZMM register based on the pivot and returns the index of the
+ * Partition one ZMM register based on the pivot and returns the index of the
  * last element that is less than equal to the pivot.
  */
 template <typename vtype, typename type_t, typename zmm_t>
@@ -657,7 +657,7 @@ partition_vec(type_t *arr, npy_intp left, npy_intp right, const zmm_t curr_vec,
 }
 
 /*
- * Parition an array based on the pivot and returns the index of the
+ * Partition an array based on the pivot and returns the index of the
  * last element that is less than equal to the pivot.
  */
 template <typename vtype, typename type_t>
@@ -746,7 +746,7 @@ static inline void
 qsort_(type_t *arr, npy_intp left, npy_intp right, npy_int max_iters)
 {
     /*
-     * Resort to heapsort if quicksort isnt making any progress
+     * Resort to heapsort if quicksort isn't making any progress
      */
     if (max_iters <= 0) {
         heapsort_<typename vtype::tag>(arr + left, right + 1 - left);

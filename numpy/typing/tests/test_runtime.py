@@ -3,11 +3,19 @@
 from __future__ import annotations
 
 import sys
-from typing import get_type_hints, Union, NamedTuple, get_args, get_origin
+from typing import (
+    get_type_hints,
+    Union,
+    NamedTuple,
+    get_args,
+    get_origin,
+    Any,
+)
 
 import pytest
 import numpy as np
 import numpy.typing as npt
+import numpy._typing as _npt
 
 
 class TypeTup(NamedTuple):
@@ -80,3 +88,26 @@ def test_keys() -> None:
     keys = TYPES.keys()
     ref = set(npt.__all__)
     assert keys == ref
+
+
+PROTOCOLS: dict[str, tuple[type[Any], object]] = {
+    "_SupportsDType": (_npt._SupportsDType, np.int64(1)),
+    "_SupportsArray": (_npt._SupportsArray, np.arange(10)),
+    "_SupportsArrayFunc": (_npt._SupportsArrayFunc, np.arange(10)),
+    "_NestedSequence": (_npt._NestedSequence, [1]),
+}
+
+
+@pytest.mark.parametrize("cls,obj", PROTOCOLS.values(), ids=PROTOCOLS.keys())
+class TestRuntimeProtocol:
+    def test_isinstance(self, cls: type[Any], obj: object) -> None:
+        assert isinstance(obj, cls)
+        assert not isinstance(None, cls)
+
+    def test_issubclass(self, cls: type[Any], obj: object) -> None:
+        if cls is _npt._SupportsDType:
+            pytest.xfail(
+                "Protocols with non-method members don't support issubclass()"
+            )
+        assert issubclass(type(obj), cls)
+        assert not issubclass(type(None), cls)
