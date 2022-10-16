@@ -1058,6 +1058,7 @@ def unstructured_to_structured(arr, dtype=None, names=None, align=False,
         if names is not None:
             raise ValueError("don't supply both dtype and names")
         # sanity check of the input dtype
+        dtype = np.dtype(dtype)
         fields = _get_fields_and_offsets(dtype)
         if len(fields) == 0:
             dts, counts, offsets = [], [], []
