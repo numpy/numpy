@@ -9085,7 +9085,8 @@ class TestFormat:
         fmtspc = "+.4f"
 
         a = np.array([-1, 0, 1, 2], dtype="int")
-        assert_equal(format(a, fmtspc), np.array_format(a, fmtspc))
+        with assert_raises(ValueError):
+            format(a, fmtspc)
 
         a = np.array([-np.pi, np.pi],  dtype="float")
         assert_equal(format(a, fmtspc), np.array_format(a, fmtspc))
@@ -9129,7 +9130,8 @@ class TestFormat:
 
         a = np.array([1, 2, 3], dtype="timedelta64[s]")
         # it behaves as ints
-        assert_equal(format(a, fmtspc), np.array_format(a, fmtspc))
+        with assert_raises(ValueError):
+            format(a, fmtspc)
 
 from numpy.testing import IS_PYPY
 

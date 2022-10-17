@@ -1737,6 +1737,9 @@ def _array_format_implementation(a, format_spec):
 
     options = _parse_format_spec(format_spec)
 
+    if "precision" in options and issubclass(a.dtype.type, np.integer):
+        raise ValueError("Precision not allowed in integer format specifier")
+
     return array2string(a, **options)
 
 
