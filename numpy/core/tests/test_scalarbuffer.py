@@ -65,7 +65,7 @@ class TestScalarPEP3118:
     def test_scalar_buffers_readonly(self, scalar):
         x = scalar()
         with pytest.raises(BufferError, match="scalar buffer is readonly"):
-            get_buffer_info(x, ["WRITABLE"])
+            get_buffer_info(x, ["WRITEABLE"])
 
     def test_void_scalar_structured_data(self):
         dt = np.dtype([('name', np.unicode_, 16), ('grades', np.float64, (2,))])
@@ -90,7 +90,7 @@ class TestScalarPEP3118:
         # Check that we do not allow writeable buffer export (technically
         # we could allow it sometimes here...)
         with pytest.raises(BufferError, match="scalar buffer is readonly"):
-            get_buffer_info(x, ["WRITABLE"])
+            get_buffer_info(x, ["WRITEABLE"])
 
     def _as_dict(self, m):
         return dict(strides=m.strides, shape=m.shape, itemsize=m.itemsize,
@@ -117,7 +117,7 @@ class TestScalarPEP3118:
 
         # Check that we do not allow writeable buffer export
         with pytest.raises(BufferError, match="scalar buffer is readonly"):
-            get_buffer_info(dt1, ["WRITABLE"])
+            get_buffer_info(dt1, ["WRITEABLE"])
 
     @pytest.mark.parametrize('s', [
         pytest.param("\x32\x32", id="ascii"),
@@ -141,7 +141,7 @@ class TestScalarPEP3118:
 
         # Check that we do not allow writeable buffer export
         with pytest.raises(BufferError, match="scalar buffer is readonly"):
-            get_buffer_info(s, ["WRITABLE"])
+            get_buffer_info(s, ["WRITEABLE"])
 
     def test_user_scalar_fails_buffer(self):
         r = rational(1)
@@ -150,4 +150,4 @@ class TestScalarPEP3118:
 
         # Check that we do not allow writeable buffer export
         with pytest.raises(BufferError, match="scalar buffer is readonly"):
-            get_buffer_info(r, ["WRITABLE"])
+            get_buffer_info(r, ["WRITEABLE"])
