@@ -972,7 +972,7 @@ _GetItemKeys = L[
 ]
 _SetItemKeys = L[
     "A", "ALIGNED",
-    "W", "WRITABLE",
+    "W", "WRITEABLE",
     "X", "WRITEBACKIFCOPY",
 ]
 
