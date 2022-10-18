@@ -31,6 +31,9 @@ from the Python builtin types and clarify their behavior.
 The distinction between NumPy scalars and Python builtins will further become
 more important for users once :ref:`NEP 50 <NEP50>` is adopted.
 
+These changes do lead to smaller incompatible and infrastructure changes
+related to array printing.
+
 Motivation and Scope
 ====================
 
@@ -42,12 +45,13 @@ NumPy scalars types to distinguish them from the Python scalars:
 * ``np.float16``, ``np.float32``, ``np.float64``, ``np.longdouble``
 * ``np.complex64``, ``np.complex128``, ``np.clongdouble``
 * ``np.str_``, ``np.bytes_``
+* ``np.void``  (structured dtypes)
 
-Additionally, these representation will be slightly modified to align
-with the new scheme to use the ``np`` prefix consistently:
+Additionally, the representation of the remaining NumPy scalars will be
+adapted to print as ``np.`` rather than ``numpy.``:
 
 * ``np.datetime64`` and ``np.timedelta64``
-* ``np.void``
+* ``np.void``  (unstructured version)
 
 The NEP does not propose to change how these scalars print – only
 their representation (``__repr__``) will be changed.
@@ -105,32 +109,29 @@ they are working with outweighs the need for adapting printing in
 some instances.
 
 The NumPy test suite includes code such as ``decimal.Decimal(repr(scalar))``.
-This code needs to be modified to use the ```str()``.
-
-.. admonition:: TODO
-
-    If there is a lot of similar code, we may need a better solution than
-    ``str()``, since it is plausible that ``str()`` should honor
+This code needs to be modified to use the ``str()``.
 
 An exception to this are downstream libraries with documentation and
 especially documentation testing.
 Since the representation of many values will change, in many cases
-the documentation will have to be updated to use the new representation.
-This is expected to require larger documentation fixups.
+the documentation will have to be updated.
+This is expected to require larger documentation fixups in the mid-term.
 
 Further, it may be necessary to adept tools for doctest testing to
 allow approximate value checking for the new representation.
 
-.. admonition:: TODO
+Changes to ``arr.tofile()``
+---------------------------
+``arr.tofile()`` currently stores values as ``repr(arr.item())`` when in text
+mode.  This is not always ideal also since that may include a conversion to
+Python.
+One issue is that this would start saving longdouble as
+``np.longdouble('3.1')`` which is clearly not desired.  We expect that this
+method is rarely used for object arrays.  For string arrays, using the ``repr``
+also leads to storing ``"string"`` or ``b"string"`` which seems rarely desired.
 
-    While astropy's `pytest-doctestplus <https://github.com/astropy/pytest-doctestplus>`_
-    itself should not be affected by this change, if other checkers are
-    affected, these should be given a chance to release a new version
-    before NumPy goes ahead with the change.
-
-    Testing should happen before the final release to see how certain
-    large downstream libraries (SciPy, astropy, etc.) are affected.
-    These are expected to require larger changes to their documentation.
+The proposal is to change the default (back) to use ``str`` rather than
+``repr``.  If ``repr`` is desired, users will have to pass ``fmt=%r``.
 
 
 Detailed description
@@ -142,14 +143,40 @@ This NEP proposes to change the represenatation for NumPy scalars to:
 * ``np.scalar(<value>)``, i.e. ``np.float64(3.0)`` for all numerical dtypes.
 * The value for ``np.longdouble`` and ``np.clongdouble`` will be given in quotes:
   ``np.longdouble('3.0')``.  This ensures that it can always roundtrip correctly
-  and matches ``decimal.Decimal``.
-  Further, for these two the size based name such as ``float128`` will not
-  be adopted, as it is platform dependend and imprecise.
+  and matches the way that ``decimal.Decimal`` behaves.
+  For these two the size based name such as ``float128`` will not be used
+  as it is platform dependend and misleading.
 * ``np.str_("string")`` and ``np.bytes_(b"byte_string")`` for string dtypes.
+* ``np.void((3, 5), dtype=[('a', '<i8'), ('b', 'u1')])`` (similar to arrays),
+  this will be valid syntax to recreate the scalar.
+  Unlike arrays, the representation should round-trip correctly, so longdouble
+  values will be quoted and other values never be truncated.
 
 Where booleans are printed as their singletons since this is more concise.
 For strings we include the ``np.`` as ``str_`` and ``bytes_`` on their
 own may not be sufficient to indicate NumPy involvement.
+
+Affects on Masked Arrays
+------------------------
+Some other parts of NumPy may indirectly be changed here.  Masked arrays
+``fill_value`` will be adapted to only include the full scalar information
+such as ``fill_value = np.float64(1e20)`` when the dtype of the array
+mismatches.
+For longdouble (with matching dtype), it will be printed as
+``fill_value='3.1'`` similar to 
+
+Affect on records
+-----------------
+
+The ``np.record`` scalar will be aligned with ``np.void`` and print identically
+to it (except the name itself).
+
+New public API
+--------------
+
+Void scalars and the masked array ``fill_value`` require access to printing
+the scalar value as ``'3.1'`` rather than ``np.longdouble('3.1')``, or for
+strings
 
 Details about ``longdouble`` and ``clongdouble``
 ------------------------------------------------
@@ -196,15 +223,46 @@ Related Work
 A PR to only change the representation of booleans was previously
 made `here <https://github.com/numpy/numpy/pull/17592>`_.
 
+The implementation is (at the time of writing) largely finished and can be
+found `here <https://github.com/numpy/numpy/pull/22449>`_
+
 Implementation
 ==============
 
-The new representations can be implemented on the scalar types.
-Additional work may be necessary to ensure that the changes do not affect
-array representation as well.
+The new representations can be mostly implemented on the scalar types with
+the largest changes needed in the test suite.
 
-A large part of the implementation work has already been done by Ganesh
-Kathiresan in the open draft PR [2]_.
+The proposed changes for void scalars and masked ``fill_value`` makes it
+necessary to expose the scalar representation without the type.
+
+We propose introducing the semi-public API::
+
+    np.lib.arrayprint.get_formatter(*,
+            data=None, dtype=None, fmt=None, options=None)
+
+to replace the current internal ``_get_formatting_func``.  This will allow
+two things compared to the old function:
+* ``data`` may be ``None`` (if ``dtype`` is passed) allowing to not pass
+  multiple values that will be printed/formatted later.
+* ``fmt=`` will allow passing on format strings to a DType specific element
+  formatter in the future.  For now, it will allow passing ``repr``
+  (the function) to format the elements representation without type
+  information.  The implementation has to ensure that the scalars ``repr``
+  matches with this method of formatting.
+
+  The empty format string should print identically to ``str()`` (with possibly
+  extra padding when data is passed).
+
+  (This NEP does not specify how ``get_formatter()`` will interact with new
+  user DTypes, it returns a callable for formatting a single scalar or 0-D
+  array.)
+
+Making it public allows the use for ``np.record`` and masked arrays.
+Currenlty, the formatters themselves seem semi-public and using a single
+entry-point will hopefully provide a clear API for formatting NumPy values.
+
+The large part for the scalar representation changes had previously been done
+by Ganesh Kathiresan in [2]_.
 
 Alternatives
 ============
@@ -225,6 +283,19 @@ concise.  Alternatives for booleans were also discussed previously in [1]_.
 
 For the string scalars, the confusion is generally less pronounced.  It may be
 reasonable to defer changing these.
+
+``get_formatter()``
+-------------------
+When ``fmt=`` is passed, and specifically for the main use (in this NEP) to
+format to a ``repr``, it would also be possible to use a ufunc or a direct
+formatting function instead.
+
+This NEP does not preclude creating a ufunc or making a special path.
+However, NumPy array formatting commonly looks at all values to be formatted
+in order to add padding for alignment or give uniform exponential output.
+In this case ``data=`` is passed and used in preparation.  This form of
+formatting (unlike the scalar case where ``data=None`` would be desired) is
+unfortunately fundamentally incompatible with UFuncs.
 
 
 Discussion
