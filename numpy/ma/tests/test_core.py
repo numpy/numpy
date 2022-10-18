@@ -556,23 +556,23 @@ class TestMaskedArray:
         a[1,1] = np.ma.masked
         assert_equal(
             repr(a),
-            textwrap.dedent('''\
+            textwrap.dedent(f'''\
             masked_array(
               data=[[1, 2, 3],
                     [4, --, 6]],
               mask=[[False, False, False],
                     [False,  True, False]],
-              fill_value=np.int64(999999),
+              fill_value={np.array(999999)[()]!r},
               dtype=int8)''')
         )
 
         # but not it they're a row vector
         assert_equal(
             repr(a[:1]),
-            textwrap.dedent('''\
+            textwrap.dedent(f'''\
             masked_array(data=[[1, 2, 3]],
                          mask=[[False, False, False]],
-                   fill_value=np.int64(999999),
+                   fill_value={np.array(999999)[()]!r},
                         dtype=int8)''')
         )
 

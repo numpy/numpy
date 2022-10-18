@@ -634,11 +634,11 @@ class TestOperations:
 
         A = np.array([['%.3f', '%d'], ['%s', '%r']]).view(np.chararray)
         A1 = np.array([['1.000', '1'],
-                       ['1', 'np.int64(1)']]).view(np.chararray)
+                       ['1', repr(np.array(1)[()])]]).view(np.chararray)
         assert_array_equal(A1, (A % 1))
 
         A2 = np.array([['1.000', '2'],
-                       ['3', 'np.int64(4)']]).view(np.chararray)
+                       ['3', repr(np.array(4)[()])]]).view(np.chararray)
         assert_array_equal(A2, (A % [[1, 2], [3, 4]]))
 
     def test_rmod(self):
