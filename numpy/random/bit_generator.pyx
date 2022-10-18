@@ -68,12 +68,12 @@ def _int_to_uint32_array(n):
         raise ValueError("expected non-negative integer")
     if n == 0:
         arr.append(np.uint32(n))
-    if isinstance(n, np.unsignedinteger):
-        # Cannot do n & MASK32, convert to python int
-        n = int(n)
+
+    # NumPy ints may not like `n & MASK32` or ``//= 2**32` so use Python int
+    n = int(n)
     while n > 0:
         arr.append(np.uint32(n & MASK32))
-        n //= (2**32)
+        n //= 2**32
     return np.array(arr, dtype=np.uint32)
 
 def _coerce_to_uint32_array(x):
