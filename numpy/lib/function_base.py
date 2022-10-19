@@ -3648,6 +3648,10 @@ def msort(a):
     """
     Return a copy of an array sorted along the first axis.
 
+    .. deprecated:: 1.24
+
+       msort is deprecated, use ``np.sort(a, axis=0)`` instead.
+
     Parameters
     ----------
     a : array_like
