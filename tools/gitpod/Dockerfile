@@ -53,10 +53,10 @@ RUN apt-get update && \
     texlive-latex-extra \
     vim && \
     # this needs to be done after installing dirmngr
-    apt-key adv --keyserver keyserver.ubuntu.com --recv-key C99B11DEB97541F0 && \
-    apt-add-repository https://cli.github.com/packages && \
+    apt-key adv --keyserver keyserver.ubuntu.com --recv-key 23F3D4EA75716059 && \ 
+    apt-add-repository https://cli.github.com/packages && \ 
     apt-get install -yq --no-install-recommends \
-    gh && \
+    gh && \ 
     locale-gen en_US.UTF-8 && \
     apt-get clean && \
     rm -rf /var/cache/apt/* &&\

@@ -1,35 +1,35 @@
 name: Build Base Docker Image
 
 on:
-  push: 
+  push:
     branches:
       - main
     paths:
-      - 'environment.yml'
+      - "environment.yml"
 
 permissions:
   contents: read # to fetch code (actions/checkout)
 
-jobs: 
-  build:
-    name: Build base Docker image 
+jobs:
+  build_docker:
+    name: Build base Docker image
     runs-on: ubuntu-latest
     environment: numpy-dev
     if: "github.repository_owner == 'numpy' && !contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]') && !contains(github.event.head_commit.message, '[skip github]')"
     steps:
       - name: Clone repository
         uses: actions/checkout@v3
-      - name: Lint Docker 
+      - name: Lint Docker
         uses: brpaz/hadolint-action@v1.2.1
-        with: 
+        with:
           dockerfile: ./tools/gitpod/Dockerfile
       - name: Get refs
         shell: bash
         run: |
           export raw_branch=${GITHUB_REF#refs/heads/}
-          echo "::set-output name=branch::${raw_branch//\//-}"
-          echo "::set-output name=date::$(date +'%Y%m%d')"
-          echo "::set-output name=sha8::$(echo ${GITHUB_SHA} | cut -c1-8)"
+          echo "branch=${raw_branch//\//-}" >> $GITHUB_OUTPUT
+          echo "date=$(date +'%Y%m%d')" >> $GITHUB_OUTPUT
+          echo "sha8=$(echo ${GITHUB_SHA} | cut -c1-8)" >> $GITHUB_OUTPUT
         id: getrefs
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
@@ -55,6 +55,6 @@ jobs:
           cache-to: type=local,dest=/tmp/.buildx-cache
           tags: |
             numpy/numpy-dev:${{ steps.getrefs.outputs.date }}-${{ steps.getrefs.outputs.branch}}-${{ steps.getrefs.outputs.sha8 }}, numpy/numpy-dev:latest
-      - name: Image digest 
+      - name: Image digest
         # Return details of the image build: sha and shell
         run: echo ${{ steps.docker_build.outputs.digest }}
