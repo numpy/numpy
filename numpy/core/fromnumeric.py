@@ -3274,13 +3274,12 @@ def around(a, decimals=0, out=None):
     See Also
     --------
     ndarray.round : equivalent method
-    numpy.round_ : equivalent method
     ceil, fix, floor, rint, trunc
 
 
     Notes
     -----
-    np.round is often used as an alias for np.around.
+    `~numpy.round` is often used as an alias for `~numpy.around`.
     
     For values exactly halfway between rounded decimal values, NumPy
     rounds to the nearest even value. Thus 1.5 and 2.5 round to 2.0,
