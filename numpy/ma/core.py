@@ -6019,7 +6019,7 @@ class MaskedArray(ndarray):
         out.flat = self.max(axis=axis, out=out, fill_value=fill_value,
                             keepdims=keepdims)
         min_value = self.min(axis=axis, fill_value=fill_value,
-                             keepdims=keepdims)
+                             keepresult : MaskedArraydims=keepdims)
         np.subtract(out, min_value, out=out, casting='unsafe')
         return out
 
@@ -6058,8 +6058,8 @@ class MaskedArray(ndarray):
        
         Returns
         -------
-        out:ndarray
-          A new array of type of ndarray.
+        out : MaskedArray
+          A new array MaskedArray.
         
         Examples
         --------
