@@ -6037,7 +6037,37 @@ class MaskedArray(ndarray):
 
     def take(self, indices, axis=None, out=None, mode='raise'):
         """
-        """
+        Take elements from an array along an axis.
+        
+        Parameters
+        ----------
+        indices:array_like 
+               The indices of the values to extract.
+        axis:int, optional
+            The axis over which to select values.By default  a flattened 
+            input array is used.
+        out:ndarray, optional
+           If provided, the result will be placed in this array.It should be 
+           of the appropriate shape and dtype.Note that out is always buffered 
+           if mode=’raise’;use other modes for better performance.
+        mode:{‘raise’, ‘wrap’, ‘clip’}, optional
+            Specifies how out-of-bounds indices will behave.
+            raise:An error (default)
+            wrap:Wrap around
+            clip:Clip to the range
+       
+        Returns
+        -------
+        out:ndarray
+          A new array of type of ndarray.
+        
+        Examples
+        --------
+        >>> x = np.ma.array([1,2,3,4,5],mask=[1,0,0,0,0])
+        >>> y = x.take(indices=[2,3],axis=0)
+        >>> y
+        [3,4] 
+       """
         (_data, _mask) = (self._data, self._mask)
         cls = type(self)
         # Make sure the indices are not masked
