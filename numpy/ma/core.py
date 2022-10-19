@@ -6041,16 +6041,16 @@ class MaskedArray(ndarray):
         
         Parameters
         ----------
-        indices:array_like 
+        indices : array_like 
                The indices of the values to extract.
-        axis:int, optional
+        axis : int, optional
             The axis over which to select values.By default  a flattened 
             input array is used.
-        out:ndarray, optional
+        out : ndarray, optional
            If provided, the result will be placed in this array.It should be 
            of the appropriate shape and dtype.Note that out is always buffered 
            if mode=’raise’;use other modes for better performance.
-        mode:{‘raise’, ‘wrap’, ‘clip’}, optional
+        mode : {‘raise’, ‘wrap’, ‘clip’}, optional
             Specifies how out-of-bounds indices will behave.
             raise:An error (default)
             wrap:Wrap around
