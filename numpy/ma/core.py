@@ -6056,7 +6056,7 @@ class MaskedArray(ndarray):
        
         Returns
         -------
-        out : MaskedArray
+        out : masked_array
           A new  MaskedArray.
         
         Examples
