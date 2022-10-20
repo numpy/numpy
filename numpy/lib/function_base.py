@@ -3678,6 +3678,7 @@ def msort(a):
            [3, 4]])
 
     """
+    # 2022-10-20 1.24
     warnings.warn(
         "msort is deprecated, use np.sort(a, axis=0) instead",
         DeprecationWarning,
