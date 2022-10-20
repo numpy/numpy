@@ -122,6 +122,8 @@ for file in [
             set_sig(line)
 
 # Mandatory functions: if not found, fail the build
+# Some of these can still be blocklisted if the C99 implementation
+# is buggy, see numpy/core/src/common/npy_config.h
 MANDATORY_FUNCS = [
     "sin", "cos", "tan", "sinh", "cosh", "tanh", "fabs",
     "floor", "ceil", "sqrt", "log10", "log", "exp", "asin",

@@ -87,27 +87,6 @@ static const npy_uint64 MAGIC64[] = {0x5555555555555555ull, 0x3333333333333333ul
  *****************************************************************************
  */
 
-/* The double variant for these functions are never blocked */
-
-NPY_INPLACE double npy_exp(double x){
-    return exp(x);
-}
-
-NPY_INPLACE double npy_pow(double x, double y)
-{
-    return pow(x, y);
-}
-
-NPY_INPLACE double npy_sqrt(double x)
-{
-    return sqrt(x);
-}
-
-NPY_INPLACE double npy_modf(double x, double *iptr)
-{
-    return modf(x, iptr);
-}
-
 /* The following functions can be blocked, even for doubles */
 
 /* Original code by Konrad Hinsen.  */
@@ -320,9 +299,8 @@ NPY_INPLACE double npy_hypot(double x, double y)
 #endif
 
 /**begin repeat1
- * #kind = sin,cos,tan,sinh,cosh,tanh,fabs,floor,ceil,rint,trunc,log10,
- *         log,expm1,asin,acos,atan,asinh,acosh,atanh,log1p,exp2#
- * #TRIG_WORKAROUND = WORKAROUND_APPLE_TRIG_BUG*3, 0*19#
+ * #kind = sin,cos,tan#
+ * #TRIG_WORKAROUND = WORKAROUND_APPLE_TRIG_BUG*3#
  */
 NPY_INPLACE @type@ npy_@kind@@c@(@type@ x)
 {
@@ -337,33 +315,6 @@ NPY_INPLACE @type@ npy_@kind@@c@(@type@ x)
 /**end repeat1**/
 
 #undef WORKAROUND_APPLE_TRIG_BUG
-
-/* C99 mandatory */
-
-/**begin repeat1
- * #kind = fmod,copysign#
- * #KIND = FMOD,COPYSIGN#
- */
-NPY_INPLACE @type@ npy_@kind@@c@(@type@ x, @type@ y)
-{
-    return NPY__FP_SFX(@kind@)(x, y);
-}
-/**end repeat1**/
-
-NPY_INPLACE @type@ npy_ldexp@c@(@type@ x, int exp)
-{
-    return NPY__FP_SFX(ldexp)(x, exp);
-}
-
-NPY_INPLACE @type@ npy_frexp@c@(@type@ x, int* exp)
-{
-    return NPY__FP_SFX(frexp)(x, exp);
-}
-
-NPY_INPLACE @type@ npy_cbrt@c@(@type@ x)
-{
-    return NPY__FP_SFX(cbrt)(x);
-}
 
 /**end repeat**/
 

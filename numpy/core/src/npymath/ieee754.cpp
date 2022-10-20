@@ -9,18 +9,6 @@
 #include "npy_math_common.h"
 #include "npy_math_private.h"
 
-#ifndef HAVE_COPYSIGN
-double
-npy_copysign(double x, double y)
-{
-    npy_uint32 hx, hy;
-    GET_HIGH_WORD(hx, x);
-    GET_HIGH_WORD(hy, y);
-    SET_HIGH_WORD(x, (hx & 0x7fffffff) | (hy & 0x80000000));
-    return x;
-}
-#endif
-
 /*
  The below code is provided for compilers which do not yet provide C11
  compatibility (gcc 4.5 and older)
