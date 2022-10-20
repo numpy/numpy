@@ -1,0 +1,4 @@
+Deprecate ``msort``
+-------------------
+
+The ``numpy.msort`` function is deprecated. Use ``np.sort(a, axis=0)`` instead.
