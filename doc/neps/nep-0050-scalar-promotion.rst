@@ -88,19 +88,20 @@ more important than the casting change itself.
     Valid values are ``weak``, ``weak_and_warn``, and ``legacy``.  Note that
     ``weak_and_warn`` implements the optional warnings proposed in this NEP
     and is expected to be *very* noisy.
-    We recommend using it mainly to track down a *specific* change rather than
-    running it on a full test-suite or program.
+    We recommend starting using the ``weak`` option and use ``weak_and_warn``
+    mainly to understand a specific observed change in behaviour.
 
-    The following further API exists:
+    The following additional API exists:
 
     * ``np._set_promotion_state()`` and ``np._get_promotion_state()`` which is
-      equivalent to the environment variable.
-    * ``with np._no_nep50_warning():`` allows to safely suppress warnings when
-      ``weak_and_warn`` promotion is used.
+      equivalent to the environment variable.  (Not thread/context safe.)
+    * ``with np._no_nep50_warning():`` allows to suppress warnings when
+      ``weak_and_warn`` promotion is used.  (Thread and context safe.)
 
-    The main *limitations* are that proposed integer errors (for example for
-    ``np.uint8(1) + 400``) are not yet given and that integer overflow warnings
-    on many scalar operations are missing.
+    At this time overflow warnings on some scalar integer operations are still
+    missing.  Further, ``np.can_cast`` fails to give warnings in the
+    ``weak_and_warn`` mode.  Its behavior with respect to Python scalar input
+    may still be in flux (this should affect very few users).
 
 
 Schema of the new proposed promotion rules

@@ -9,7 +9,7 @@ permissions:
   contents: read # to fetch code (actions/checkout)
 
 jobs:
-  build:
+  build_gitpod:
     name: Build Gitpod Docker image
     runs-on: ubuntu-latest
     environment: numpy-dev
@@ -27,9 +27,9 @@ jobs:
         shell: bash
         run: |
           export raw_branch=${GITHUB_REF#refs/heads/}
-          echo "::set-output name=branch::${raw_branch//\//-}"
-          echo "::set-output name=date::$(date +'%Y%m%d')"
-          echo "::set-output name=sha8::$(echo ${GITHUB_SHA} | cut -c1-8)"
+          echo "branch=${raw_branch//\//-}" >> $GITHUB_OUTPUT
+          echo "date=$(date +'%Y%m%d')" >> $GITHUB_OUTPUT
+          echo "sha8=$(echo ${GITHUB_SHA} | cut -c1-8)" >> $GITHUB_OUTPUT
         id: getrefs
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1

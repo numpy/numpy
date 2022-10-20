@@ -26,10 +26,13 @@
 #include "binop_override.h"
 #include "npy_longdouble.h"
 
+#include "arraytypes.h"
 #include "array_coercion.h"
 #include "common.h"
 #include "can_cast_table.h"
 #include "umathmodule.h"
+
+#include "convert_datatype.h"
 
 
 /* TODO: Used for some functions, should possibly move these to npy_math.h */
@@ -792,7 +795,12 @@ typedef enum {
      */
     CONVERSION_SUCCESS,
     /*
-     * Other object is an unknown scalar or array-like, we (typically) use
+     * We use the normal conversion (setitem) function when coercing from
+     * Python scalars.
+     */
+    CONVERT_PYSCALAR,
+    /*
+     * Other object is an unkown scalar or array-like, we (typically) use
      * the generic path, which normally ends up in the ufunc machinery.
      */
     OTHER_IS_UNKNOWN_OBJECT,
@@ -956,7 +964,15 @@ convert_to_@name@(PyObject *value, @type@ *result, npy_bool *may_need_deferring)
             *may_need_deferring = NPY_TRUE;
         }
         if (!IS_SAFE(NPY_DOUBLE, NPY_@TYPE@)) {
-            return PROMOTION_REQUIRED;
+            if (npy_promotion_state != NPY_USE_WEAK_PROMOTION) {
+                /* Legacy promotion and weak-and-warn not handled here */
+                return PROMOTION_REQUIRED;
+            }
+            /* Weak promotion is used when self is float or complex: */
+            if (!PyTypeNum_ISFLOAT(NPY_@TYPE@) && !PyTypeNum_ISCOMPLEX(NPY_@TYPE@)) {
+                return PROMOTION_REQUIRED;
+            }
+            return CONVERT_PYSCALAR;
         }
         CONVERT_TO_RESULT(PyFloat_AS_DOUBLE(value));
         return CONVERSION_SUCCESS;
@@ -968,15 +984,23 @@ convert_to_@name@(PyObject *value, @type@ *result, npy_bool *may_need_deferring)
         }
         if (!IS_SAFE(NPY_LONG, NPY_@TYPE@)) {
             /*
-             * long -> (c)longdouble is safe, so `THER_IS_UNKNOWN_OBJECT` will
+             * long -> (c)longdouble is safe, so `OTHER_IS_UNKNOWN_OBJECT` will
              * be returned below for huge integers.
              */
-            return PROMOTION_REQUIRED;
+            if (npy_promotion_state != NPY_USE_WEAK_PROMOTION) {
+                /* Legacy promotion and weak-and-warn not handled here */
+                return PROMOTION_REQUIRED;
+            }
+            return CONVERT_PYSCALAR;
         }
         int overflow;
         long val = PyLong_AsLongAndOverflow(value, &overflow);
         if (overflow) {
-            return OTHER_IS_UNKNOWN_OBJECT;  /* handle as if arbitrary object */
+            /* handle as if "unsafe" */
+            if (npy_promotion_state != NPY_USE_WEAK_PROMOTION) {
+                return PROMOTION_REQUIRED;
+            }
+            return CONVERT_PYSCALAR;
         }
         if (error_converting(val)) {
             return CONVERSION_ERROR;  /* should not be possible */
@@ -995,7 +1019,15 @@ convert_to_@name@(PyObject *value, @type@ *result, npy_bool *may_need_deferring)
             *may_need_deferring = NPY_TRUE;
         }
         if (!IS_SAFE(NPY_CDOUBLE, NPY_@TYPE@)) {
-            return PROMOTION_REQUIRED;
+            if (npy_promotion_state != NPY_USE_WEAK_PROMOTION) {
+                /* Legacy promotion and weak-and-warn not handled here */
+                return PROMOTION_REQUIRED;
+            }
+            /* Weak promotion is used when self is float or complex: */
+            if (!PyTypeNum_ISCOMPLEX(NPY_@TYPE@)) {
+                return PROMOTION_REQUIRED;
+            }
+            return CONVERT_PYSCALAR;
         }
 #if defined(IS_CFLOAT) || defined(IS_CDOUBLE) || defined(IS_CLONGDOUBLE)
         Py_complex val = PyComplex_AsCComplex(value);
@@ -1164,12 +1196,24 @@ convert_to_@name@(PyObject *value, @type@ *result, npy_bool *may_need_deferring)
  *         (npy_half, npy_float, npy_double, npy_longdouble,
  *             npy_cfloat, npy_cdouble, npy_clongdouble)*4,
  *         (npy_half, npy_float, npy_double, npy_longdouble)*3#
+ * #oname = (byte, ubyte, short, ushort, int, uint,
+ *              long, ulong, longlong, ulonglong)*11,
+ *          double*10,
+ *          (half, float, double, longdouble,
+ *              cfloat, cdouble, clongdouble)*4,
+ *          (half, float, double, longdouble)*3#
  * #OName = (Byte, UByte, Short, UShort, Int, UInt,
  *              Long, ULong, LongLong, ULongLong)*11,
  *          Double*10,
  *          (Half, Float, Double, LongDouble,
  *              CFloat, CDouble, CLongDouble)*4,
  *          (Half, Float, Double, LongDouble)*3#
+ * #ONAME = (BYTE, UBYTE, SHORT, USHORT, INT, UINT,
+ *              LONG, ULONG, LONGLONG, ULONGLONG)*11,
+ *          DOUBLE*10,
+ *          (HALF, FLOAT, DOUBLE, LONGDOUBLE,
+ *              CFLOAT, CDOUBLE, CLONGDOUBLE)*4,
+ *          (HALF, FLOAT, DOUBLE, LONGDOUBLE)*3#
  */
 #define IS_@name@
 /* drop the "true_" from "true_divide" for floating point warnings: */
@@ -1179,13 +1223,12 @@ convert_to_@name@(PyObject *value, @type@ *result, npy_bool *may_need_deferring)
 #else
     #define OP_NAME "@oper@"
 #endif
-#undef IS_@oper@
 
 static PyObject *
 @name@_@oper@(PyObject *a, PyObject *b)
 {
     PyObject *ret;
-    @type@ arg1, arg2, other_val;
+    @otype@ arg1, arg2, other_val;
 
     /*
      * Check if this operation may be considered forward.  Note `is_forward`
@@ -1214,7 +1257,7 @@ static PyObject *
     PyObject *other = is_forward ? b : a;
 
     npy_bool may_need_deferring;
-    conversion_result res = convert_to_@name@(
+    conversion_result res = convert_to_@oname@(
             other, &other_val, &may_need_deferring);
     if (res == CONVERSION_ERROR) {
         return NULL;  /* an error occurred (should never happen) */
@@ -1255,6 +1298,11 @@ static PyObject *
              *       correctly.  (e.g. `uint8 * int8` cannot warn).
              */
             return PyGenericArrType_Type.tp_as_number->nb_@oper@(a,b);
+        case CONVERT_PYSCALAR:
+            if (@ONAME@_setitem(other, (char *)&other_val, NULL) < 0) {
+                return NULL;
+            }
+            break;
         default:
             assert(0);  /* error was checked already, impossible to reach */
             return NULL;
@@ -1291,7 +1339,7 @@ static PyObject *
 #if @twoout@
     int retstatus = @name@_ctype_@oper@(arg1, arg2, &out, &out2);
 #else
-    int retstatus = @name@_ctype_@oper@(arg1, arg2, &out);
+    int retstatus = @oname@_ctype_@oper@(arg1, arg2, &out);
 #endif
 
 #if @fperr@
@@ -1336,6 +1384,7 @@ static PyObject *
 
 
 #undef OP_NAME
+#undef IS_@oper@
 #undef IS_@name@
 
 /**end repeat**/
@@ -1358,6 +1407,10 @@ static PyObject *
  *         Long, ULong, LongLong, ULongLong,
  *         Half, Float, Double, LongDouble,
  *         CFloat, CDouble, CLongDouble#
+ * #NAME = BYTE, UBYTE, SHORT, USHORT, INT, UINT,
+ *         LONG, ULONG, LONGLONG, ULONGLONG,
+ *         HALF, FLOAT, DOUBLE, LONGDOUBLE,
+ *         CFLOAT, CDOUBLE, CLONGDOUBLE#
  *
  * #isint = 1*10,0*7#
  * #isuint = (0,1)*5,0*7#
@@ -1417,6 +1470,11 @@ static PyObject *
 #endif
         case PROMOTION_REQUIRED:
             return PyGenericArrType_Type.tp_as_number->nb_power(a, b, modulo);
+        case CONVERT_PYSCALAR:
+            if (@NAME@_setitem(other, (char *)&other_val, NULL) < 0) {
+                return NULL;
+            }
+            break;
         default:
             assert(0);  /* error was checked already, impossible to reach */
             return NULL;
@@ -1759,6 +1817,10 @@ static PyObject *
  *         Long, ULong, LongLong, ULongLong,
  *         Half, Float, Double, LongDouble,
  *         CFloat, CDouble, CLongDouble#
+ * #NAME = BYTE, UBYTE, SHORT, USHORT, INT, UINT,
+ *         LONG, ULONG, LONGLONG, ULONGLONG,
+ *         HALF, FLOAT, DOUBLE, LONGDOUBLE,
+ *         CFLOAT, CDOUBLE, CLONGDOUBLE#
  * #simp = def*10, def_half, def*3, cmplx*3#
  */
 #define IS_@name@
@@ -1791,6 +1853,11 @@ static PyObject*
 #endif
         case PROMOTION_REQUIRED:
             return PyGenericArrType_Type.tp_richcompare(self, other, cmp_op);
+        case CONVERT_PYSCALAR:
+            if (@NAME@_setitem(other, (char *)&arg2, NULL) < 0) {
+                return NULL;
+            }
+            break;
         default:
             assert(0);  /* error was checked already, impossible to reach */
             return NULL;

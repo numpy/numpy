@@ -15,16 +15,16 @@ name: Wheel builder
 
 on:
   schedule:
-  #        ┌───────────── minute (0 - 59)
-  #        │  ┌───────────── hour (0 - 23)
-  #        │  │ ┌───────────── day of the month (1 - 31)
-  #        │  │ │ ┌───────────── month (1 - 12 or JAN-DEC)
-  #        │  │ │ │ ┌───────────── day of the week (0 - 6 or SUN-SAT)
-  #        │  │ │ │ │
-  - cron: "42 1 * * 4"
+    #        ┌───────────── minute (0 - 59)
+    #        │  ┌───────────── hour (0 - 23)
+    #        │  │ ┌───────────── day of the month (1 - 31)
+    #        │  │ │ ┌───────────── month (1 - 12 or JAN-DEC)
+    #        │  │ │ │ ┌───────────── day of the week (0 - 6 or SUN-SAT)
+    #        │  │ │ │ │
+    - cron: "42 1 * * 4"
   push:
   pull_request:
-      types: [labeled, opened, synchronize, reopened]
+    types: [labeled, opened, synchronize, reopened]
   workflow_dispatch:
 
 concurrency:
@@ -52,7 +52,7 @@ jobs:
         run: |
           set -xe
           COMMIT_MSG=$(git log --no-merges -1 --oneline)
-          echo "::set-output name=message::$COMMIT_MSG"
+          echo "message=$COMMIT_MSG" >> $GITHUB_OUTPUT
           echo github.ref ${{ github.ref }}
 
   build_wheels:
@@ -74,20 +74,20 @@ jobs:
         # Github Actions doesn't support pairing matrix values together, let's improvise
         # https://github.com/github/feedback/discussions/7835#discussioncomment-1769026
         buildplat:
-        - [ubuntu-20.04, manylinux_x86_64]
-        - [macos-10.15, macosx_*]
-        - [windows-2019, win_amd64]
-        - [windows-2019, win32]
+          - [ubuntu-20.04, manylinux_x86_64]
+          - [macos-10.15, macosx_*]
+          - [windows-2019, win_amd64]
+          - [windows-2019, win32]
         # TODO: uncomment PyPy 3.9 builds once PyPy
         # re-releases a new minor version
         # NOTE: This needs a bump of cibuildwheel version, also, once that happens.
         python: ["cp38", "cp39", "cp310", "cp311", "pp38"] #, "pp39"]
         exclude:
-        # Don't build PyPy 32-bit windows
-        - buildplat: [windows-2019, win32]
-          python: "pp38"
-        - buildplat: [windows-2019, win32]
-          python: "pp39"
+          # Don't build PyPy 32-bit windows
+          - buildplat: [windows-2019, win32]
+            python: "pp38"
+          - buildplat: [windows-2019, win32]
+            python: "pp39"
     env:
       IS_32_BIT: ${{ matrix.buildplat[1] == 'win32' }}
       IS_PUSH: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') }}
@@ -106,7 +106,7 @@ jobs:
       # Used to push the built wheels
       - uses: actions/setup-python@v3
         with:
-          python-version: '3.x'
+          python-version: "3.x"
 
       - name: Configure mingw for 32-bit builds
         run: |
@@ -172,7 +172,7 @@ jobs:
       - uses: actions/setup-python@v3
         with:
           # Build sdist on lowest supported Python
-          python-version: '3.8'
+          python-version: "3.8"
       - name: Build sdist
         run: |
           python setup.py sdist

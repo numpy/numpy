@@ -305,7 +305,7 @@ static int
         else {
             /* Live in the future, outright error: */
             PyErr_Format(PyExc_OverflowError,
-                    "Python int %R too large to convert to %S", obj, descr);
+                    "Python integer %R out of bounds for %S", obj, descr);
             Py_DECREF(descr);
             return -1;
             }

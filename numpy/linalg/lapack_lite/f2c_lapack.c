@@ -61,7 +61,7 @@ integer ieeeck_(integer *ispec, real *zero, real *one)
     =========
 
     ISPEC   (input) INTEGER
-            Specifies whether to test just for infinity arithmetic
+            Specifies whether to test just for inifinity arithmetic
             or whether to test for infinity and NaN arithmetic.
             = 0: Verify infinity arithmetic only.
             = 1: Verify infinity and NaN arithmetic.
