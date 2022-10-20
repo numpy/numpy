@@ -1,0 +1,8 @@
+``nditer``/``NpyIter`` allows all allocating all operands
+---------------------------------------------------------
+The NumPy iterator available through `np.nditer` in Python
+and as ``NpyIter`` in C now supports allocating all arrays.
+
+The iterator shape defaults to ``()`` in this case.  The operands
+dtype must be provided, since a "common dtype" cannot be inferred
+from the other inputs.
