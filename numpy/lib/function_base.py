@@ -3678,6 +3678,11 @@ def msort(a):
            [3, 4]])
 
     """
+    warnings.warn(
+        "msort is deprecated, use np.sort(a, axis=0) instead",
+        DeprecationWarning,
+        stacklevel=3,
+    )
     b = array(a, subok=True, copy=True)
     b.sort(0)
     return b
