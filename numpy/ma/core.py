@@ -6052,9 +6052,7 @@ class MaskedArray(ndarray):
            if mode=’raise’;use other modes for better performance.
         mode : {‘raise’, ‘wrap’, ‘clip’}, optional
             Specifies how out-of-bounds indices will behave.
-            raise:An error (default)
-            wrap:Wrap around
-            clip:Clip to the range
+            
        
         Returns
         -------
