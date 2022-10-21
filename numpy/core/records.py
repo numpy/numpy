@@ -235,7 +235,7 @@ class record(nt.void):
             return self.__str__()
         # "Manually" print, mainly to get the dtype "right"
         repr_dtype = sb.dtype((nt.void, self.dtype))
-        formatter = _get_formatter(dtype=repr_dtype, fmt="r")
+        formatter = _get_formatter(dtype=repr_dtype, fmt=repr)
         value_repr = formatter(self)
         return f"np.record({value_repr}, dtype={repr_dtype!s})"
 

@@ -4072,7 +4072,7 @@ class MaskedArray(ndarray):
             # The dtype of the fill value should match that of the array
             # and it is unnecessary to print the full `np.int64(...)`
             fill_repr = np.core.arrayprint.get_formatter(
-                    dtype=self.fill_value.dtype, fmt="r")(self.fill_value)
+                    dtype=self.fill_value.dtype, fmt=repr)(self.fill_value)
         else:
             # Fall back to the normal repr just in case something is weird:
             fill_repr = repr(self.fill_value)

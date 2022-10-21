@@ -472,11 +472,12 @@ def get_formatter(*, dtype=None, data=None, fmt=None, options=None):
         The data to be printed.  This can be an N-D array including all
         elements to be printed.  It may also be ``None`` when ``fmt`` is
         ``"s"`` or ``"r"``
-    fmt : str or None
+    fmt : str, repr literal, or None
         A formatting string indicating the desired format style.
-        Using `None` means that array elements are being pretty-printed
-        and the printoptions should be used.
-        In this case, data may be an ndarray to be printed.
+        Using `None` means that array elements are being printed as normally
+        and the printoptions should be used.  Using ``repr`` (the Python
+        function), asks for a value representation (similar to ``repr`` on
+        the scalar, but without the need for type information).
     options: dict
         Options dictionary, if given, must be compatible with
         `np.get_printoptions()` and values not None replace the default
@@ -496,16 +497,16 @@ def get_formatter(*, dtype=None, data=None, fmt=None, options=None):
                 "get_formatter: either `fmt` or `options` can be given.")
 
     if fmt is not None:
-        if fmt not in "rs":
+        if fmt is not repr and fmt != "":
             raise TypeError(
-                    "get_formatter: only r and s format is currently "
+                    "get_formatter: only `repr` and "" format is currently "
                     "supported.")
 
         _options = _default_format_options.copy()
         _options.update(floatmode="unique")
         # _get_formatdict currently expects data, so create it.
         _data = np.array([], dtype=dtype)
-        formatdict = _get_formatdict(_data, quote=fmt == "r", **_options)
+        formatdict = _get_formatdict(_data, quote=fmt == repr, **_options)
     else:
         formatdict = _get_formatdict(data, **options)
 
@@ -995,7 +996,7 @@ class FloatingFormat:
         self.sign = sign
         self.exp_format = False
         self.large_exponent = False
-        self._quote = quote  # only used for longdouble "r" fmt code
+        self._quote = quote  # only used for longdouble `repr` fmt code
 
         self.fillFormat(data)
 
@@ -1492,7 +1493,7 @@ def _void_scalar_repr(x, is_repr=True):
     scalartypes.c.src code, and is placed here because it uses the elementwise
     formatters defined above.
     """
-    fmt = "r" if is_repr else "s"
+    fmt = repr if is_repr else ""
     val_repr = StructuredVoidFormat._from_fmt(x.dtype, fmt)(x)
     if not is_repr:
         return val_repr
