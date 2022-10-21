@@ -404,11 +404,11 @@ def repr_format(x):
 
 def str_format(x):
     if isinstance(x, (np.str_, np.bytes_)):
-        return repr(x.item())
+        return str(x.item())
     return str(x)
 
 def _get_formatdict(data, *, precision, floatmode, suppress, sign, legacy,
-                    formatter, quote=False, **kwargs):
+                    formatter, repr=False, **kwargs):
     # note: extra arguments in kwargs are ignored
 
     # wrapped in lambdas to avoid taking a code path with the wrong type of data
@@ -416,20 +416,21 @@ def _get_formatdict(data, *, precision, floatmode, suppress, sign, legacy,
         'bool': lambda: BoolFormat(data),
         'int': lambda: IntegerFormat(data),
         'float': lambda: FloatingFormat(
-            data, precision, floatmode, suppress, sign, legacy=legacy),
+            data, precision, floatmode, suppress, sign,
+            legacy=legacy, repr=repr),
         'longfloat': lambda: FloatingFormat(
             data, precision, floatmode, suppress, sign,
-            legacy=legacy, quote=quote),
+            legacy=legacy, repr=repr),
         'complexfloat': lambda: ComplexFloatingFormat(
             data, precision, floatmode, suppress, sign, legacy=legacy),
         'longcomplexfloat': lambda: ComplexFloatingFormat(
             data, precision, floatmode, suppress, sign,
-            quote=quote, legacy=legacy),
+            legacy=legacy, repr=repr),
         'datetime': lambda: DatetimeFormat(data, legacy=legacy),
         'timedelta': lambda: TimedeltaFormat(data),
         'object': lambda: _object_format,
         'void': lambda: str_format,
-        'numpystr': lambda: repr_format}
+        'numpystr': lambda: repr_format if repr else str_formt}
 
     # we need to wrap values in `formatter` in a lambda, so that the interface
     # is the same as the above values.
@@ -472,12 +473,10 @@ def get_formatter(*, dtype=None, data=None, fmt=None, options=None):
         The data to be printed.  This can be an N-D array including all
         elements to be printed.  It may also be ``None`` when ``fmt`` is
         ``"s"`` or ``"r"``
-    fmt : str, repr literal, or None
+    fmt : str, repr literal, str literal, or None
         A formatting string indicating the desired format style.
-        Using `None` means that array elements are being printed as normally
-        and the printoptions should be used.  Using ``repr`` (the Python
-        function), asks for a value representation (similar to ``repr`` on
-        the scalar, but without the need for type information).
+        Using `None` means that the options should be used for formatting
+        and is identical to the empty string.
     options: dict
         Options dictionary, if given, must be compatible with
         `np.get_printoptions()` and values not None replace the default
@@ -506,7 +505,7 @@ def get_formatter(*, dtype=None, data=None, fmt=None, options=None):
         _options.update(floatmode="unique")
         # _get_formatdict currently expects data, so create it.
         _data = np.array([], dtype=dtype)
-        formatdict = _get_formatdict(_data, quote=fmt == repr, **_options)
+        formatdict = _get_formatdict(_data, repr=fmt == repr, **_options)
     else:
         formatdict = _get_formatdict(data, **options)
 
@@ -973,7 +972,7 @@ def _none_or_positive_arg(x, name):
 class FloatingFormat:
     """ Formatter for subtypes of np.floating """
     def __init__(self, data, precision, floatmode, suppress_small, sign=False,
-                 *, legacy=None, quote=False):
+                 *, legacy=None, fmt=None):
         # for backcompatibility, accept bools
         if isinstance(sign, bool):
             sign = '+' if sign else '-'
@@ -996,7 +995,7 @@ class FloatingFormat:
         self.sign = sign
         self.exp_format = False
         self.large_exponent = False
-        self._quote = quote  # only used for longdouble `repr` fmt code
+        self._fmt = fmt
 
         self.fillFormat(data)
 
@@ -1493,7 +1492,7 @@ def _void_scalar_repr(x, is_repr=True):
     scalartypes.c.src code, and is placed here because it uses the elementwise
     formatters defined above.
     """
-    fmt = repr if is_repr else ""
+    fmt = repr if is_repr else str
     val_repr = StructuredVoidFormat._from_fmt(x.dtype, fmt)(x)
     if not is_repr:
         return val_repr
