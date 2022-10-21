@@ -3875,9 +3875,7 @@ class MaskedArray(ndarray):
         >>> type(x.compressed())
         <class 'numpy.ndarray'>
 
-        >>> x = np.ma.array(np.arange(9).reshape(3, 3), mask=[[1, 0, 0],
-                                                              [1,0,0],
-                                                              [0,0,0]])
+        >>> x = np.ma.array(np.arange(9).reshape(3, 3), mask=[[1, 0, 0],[1,0,0],[0,0,0]])
         >>> x.compressed()
         array([1, 2, 4, 5, 6, 7, 8])
 
@@ -5778,9 +5776,9 @@ class MaskedArray(ndarray):
         Examples
         --------
 
-        >>>  x = np.ma.array([1, 3, 4, 6], mask=[0, 0, 0, 1])
-        >>>  x_min= np.ma.min(x)
-        >>>  x_min 
+        >>> x =np.ma.array([1, 3, 4, 6], mask=[0, 0, 0, 1])
+        >>> x_min= np.ma.min(x)
+        >>> x_min 
         1  
 
         """
@@ -7129,7 +7127,7 @@ def putmask(a, mask, values):  # , mode='raise'):
     >>> np.putmask(x, x>2, x**2)
     >>> x
     array([[ 0,  1,  2],
-       [ 9, 16, 25]])
+           [ 9, 16, 25]])
 
 
     >>> x = np.array([[1, 2, 3],
@@ -7138,8 +7136,8 @@ def putmask(a, mask, values):  # , mode='raise'):
     >>> np.putmask(x, x>2, 4)
     >>> x
     array([[1, 2, 4],
-       [4, 2, 1],
-       [1, 2, 4]])
+        [4, 2, 1],
+        [1, 2, 4]])
 
     """
     # We can't use 'frommethod', the order of arguments is different
