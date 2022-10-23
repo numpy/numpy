@@ -1594,11 +1594,12 @@ def test_iter_allocate_output_errors():
     # Allocated output can't have buffering without delayed bufalloc
     assert_raises(ValueError, nditer, [a, None], ['buffered'],
                                             ['allocate', 'readwrite'])
-    # Must specify at least one input
-    assert_raises(ValueError, nditer, [None, None], [],
+    # Must specify dtype if there are no inputs (cannot promote existing ones;
+    # maybe this should use the 'f4' here, but it does not historically.)
+    assert_raises(TypeError, nditer, [None, None], [],
                         [['writeonly', 'allocate'],
                          ['writeonly', 'allocate']],
-                        op_dtypes=[np.dtype('f4'), np.dtype('f4')])
+                        op_dtypes=[None, np.dtype('f4')])
     # If using op_axes, must specify all the axes
     a = arange(24, dtype='i4').reshape(2, 3, 4)
     assert_raises(ValueError, nditer, [a, None], [],
@@ -1622,6 +1623,15 @@ def test_iter_allocate_output_errors():
                         [['readonly'], ['readwrite', 'allocate']],
                         op_dtypes=[None, np.dtype('f4')],
                         op_axes=[None, [0, np.newaxis, 2]])
+
+def test_all_allocated():
+    # When no output and no shape is given, `()` is used as shape.
+    i = np.nditer([None], op_dtypes=["int64"])
+    assert i.operands[0].shape == ()
+    assert i.dtypes == (np.dtype("int64"),)
+
+    i = np.nditer([None], op_dtypes=["int64"], itershape=(2, 3, 4))
+    assert i.operands[0].shape == (2, 3, 4)
 
 def test_iter_remove_axis():
     a = arange(24).reshape(2, 3, 4)

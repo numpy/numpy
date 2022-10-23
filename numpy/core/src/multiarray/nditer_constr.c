@@ -1225,22 +1225,6 @@ npyiter_prepare_operands(int nop, PyArrayObject **op_in,
         }
     }
 
-    /* If all the operands were NULL, it's an error */
-    if (op[0] == NULL) {
-        int all_null = 1;
-        for (iop = 1; iop < nop; ++iop) {
-            if (op[iop] != NULL) {
-                all_null = 0;
-                break;
-            }
-        }
-        if (all_null) {
-            PyErr_SetString(PyExc_ValueError,
-                    "At least one iterator operand must be non-NULL");
-            goto fail_nop;
-        }
-    }
-
     if (any_writemasked_ops && maskop < 0) {
         PyErr_SetString(PyExc_ValueError,
                 "An iterator operand was flagged as WRITEMASKED, "
