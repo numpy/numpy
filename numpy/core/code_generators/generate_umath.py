@@ -545,16 +545,14 @@ defdict = {
     Ufunc(2, 1, ReorderableNone,
           docstrings.get('numpy.core.umath.fmax'),
           'PyUFunc_SimpleUniformOperationTypeResolver',
-          TD('fdg', dispatch=[('loops_minmax', 'fdg')]),
-          TD(noobj),
+          TD(noobj, dispatch=[('loops_minmax', 'fdg')]),
           TD(O, f='npy_ObjectMax')
           ),
 'fmin':
     Ufunc(2, 1, ReorderableNone,
           docstrings.get('numpy.core.umath.fmin'),
           'PyUFunc_SimpleUniformOperationTypeResolver',
-          TD('fdg', dispatch=[('loops_minmax', 'fdg')]),
-          TD(noobj),
+          TD(noobj, dispatch=[('loops_minmax', 'fdg')]),
           TD(O, f='npy_ObjectMin')
           ),
 'logaddexp':
