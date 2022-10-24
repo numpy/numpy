@@ -408,7 +408,7 @@ def str_format(x):
     return str(x)
 
 def _get_formatdict(data, *, precision, floatmode, suppress, sign, legacy,
-                    formatter, fmt=None, **kwargs):
+                    formatter, fmt=None, dtype=None, **kwargs):
     # note: extra arguments in kwargs are ignored
 
     # wrapped in lambdas to avoid taking a code path with the wrong type of data
@@ -426,7 +426,7 @@ def _get_formatdict(data, *, precision, floatmode, suppress, sign, legacy,
         'longcomplexfloat': lambda: ComplexFloatingFormat(
             data, precision, floatmode, suppress, sign,
             legacy=legacy, fmt=fmt, longdouble_quoting=True),
-        'datetime': lambda: DatetimeFormat(data, legacy=legacy),
+        'datetime': lambda: DatetimeFormat(data, legacy=legacy, dtype=dtype),
         'timedelta': lambda: TimedeltaFormat(data),
         'object': lambda: _object_format,
         'void': lambda: str_format,
@@ -499,9 +499,6 @@ def get_formatter(*, dtype=None, data=None, fmt=None, options=None):
         fmt = None
 
     if fmt is not None:
-        if options is not None:
-            raise TypeError("Use of options is only supported if `fmt=None`")
-
         options = _default_format_options
 
         if fmt is not repr and fmt is not str:
@@ -509,7 +506,7 @@ def get_formatter(*, dtype=None, data=None, fmt=None, options=None):
                     "get_formatter(): only `repr`, `str`, and None (or '') "
                     "is currently supported for `fmt`.")
 
-    formatdict = _get_formatdict(data, fmt=fmt, **options)
+    formatdict = _get_formatdict(data, dtype=dtype, fmt=fmt, **options)
 
     dtypeobj = dtype.type
 
@@ -548,7 +545,8 @@ def get_formatter(*, dtype=None, data=None, fmt=None, options=None):
             # given and `arr.dtype` cannot be a subarray dtype:
             assert data is None
             return SubArrayFormat(
-                get_formatter(dtype=dtype.base, fmt=fmt, options=options))
+                get_formatter(dtype=dtype.base, fmt=fmt,
+                              options=None if fmt is not None else options))
         else:
             return formatdict['void']()
     else:
@@ -1380,16 +1378,20 @@ class ComplexFloatingFormat:
 
 class _TimelikeFormat:
     def __init__(self, data):
-        non_nat = data[~isnat(data)]
-        if len(non_nat) > 0:
-            # Max str length of non-NaT elements
-            max_str_len = max(len(self._format_non_nat(np.max(non_nat))),
-                              len(self._format_non_nat(np.min(non_nat))))
+        if data is not None:
+            non_nat = data[~isnat(data)]
+            if len(non_nat) > 0:
+                # Max str length of non-NaT elements
+                max_str_len = max(len(self._format_non_nat(np.max(non_nat))),
+                                  len(self._format_non_nat(np.min(non_nat))))
+            else:
+                max_str_len = 0
+            if len(non_nat) < data.size:
+                # data contains a NaT
+                max_str_len = max(max_str_len, 5)
         else:
             max_str_len = 0
-        if len(non_nat) < data.size:
-            # data contains a NaT
-            max_str_len = max(max_str_len, 5)
+
         self._format = '%{}s'.format(max_str_len)
         self._nat = "'NaT'".rjust(max_str_len)
 
@@ -1406,11 +1408,13 @@ class _TimelikeFormat:
 
 class DatetimeFormat(_TimelikeFormat):
     def __init__(self, x, unit=None, timezone=None, casting='same_kind',
-                 legacy=False):
+                 legacy=False, *, dtype=None):
         # Get the unit from the dtype
         if unit is None:
-            if x.dtype.kind == 'M':
-                unit = datetime_data(x.dtype)[0]
+            if dtype is None:
+                dtype = x.dtype
+            if dtype.kind == 'M':
+                unit = datetime_data(dtype)[0]
             else:
                 unit = 's'
 
