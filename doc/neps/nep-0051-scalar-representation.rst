@@ -245,17 +245,17 @@ two things compared to the old function:
 * ``data`` may be ``None`` (if ``dtype`` is passed) allowing to not pass
   multiple values that will be printed/formatted later.
 * ``fmt=`` will allow passing on format strings to a DType specific element
-  formatter in the future.  For now, it will allow passing ``repr``
-  (the function) to format the elements representation without type
-  information.  The implementation has to ensure that the scalars ``repr``
-  matches with this method of formatting.
+  formatter in the future.  For now, ``get_formatter()`` it will accept
+  ``repr`` or ``str`` (the singletons not strings) to format the elements
+  without type information (``'3.1'`` rather than ``np.longdouble('3.1')``).
+  The implementation ensures that formatting matches except for the type
+  information.
 
-  The empty format string should print identically to ``str()`` (with possibly
+  The empty format string will print identically to ``str()`` (with possibly
   extra padding when data is passed).
 
-  (This NEP does not specify how ``get_formatter()`` will interact with new
-  user DTypes, it returns a callable for formatting a single scalar or 0-D
-  array.)
+``get_formatter()`` is expected to query a user DTypes method in the future
+allowing customized formatting for all DTypes.
 
 Making it public allows the use for ``np.record`` and masked arrays.
 Currenlty, the formatters themselves seem semi-public and using a single
@@ -287,8 +287,8 @@ reasonable to defer changing these.
 ``get_formatter()``
 -------------------
 When ``fmt=`` is passed, and specifically for the main use (in this NEP) to
-format to a ``repr``, it would also be possible to use a ufunc or a direct
-formatting function instead.
+format to a ``repr`` or ``str``.
+It would also be possible to use a ufunc or a direct formatting function.
 
 This NEP does not preclude creating a ufunc or making a special path.
 However, NumPy array formatting commonly looks at all values to be formatted
@@ -297,6 +297,9 @@ In this case ``data=`` is passed and used in preparation.  This form of
 formatting (unlike the scalar case where ``data=None`` would be desired) is
 unfortunately fundamentally incompatible with UFuncs.
 
+The use of the singleton ``str`` and ``repr`` ensures that future formatting
+strings like ``f"{arr:r}"`` are not in any way limited by using ``"r"`` or
+``"s"`` instead.
 
 Discussion
 ==========
