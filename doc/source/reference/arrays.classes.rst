@@ -657,9 +657,9 @@ objects as inputs and returns an iterator that returns tuples
 providing each of the input sequence elements in the broadcasted
 result.
 
->>> for val in np.broadcast([[1,0],[2,3]],[0,1]):
+>>> for val in np.broadcast([[1, 0], [2, 3]], [0, 1]):
 ...     print(val)
-(1, 0)
-(0, 1)
-(2, 0)
-(3, 1)
+(np.int64(1), np.int64(0))
+(np.int64(0), np.int64(1))
+(np.int64(2), np.int64(0))
+(np.int64(3), np.int64(1))
