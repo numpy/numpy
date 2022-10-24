@@ -182,9 +182,6 @@ benchmarks/results
 benchmarks/html
 benchmarks/env
 benchmarks/numpy
-benchmarks/_asv_compare.conf.json
-# cythonized files
-cythonize.dat
 numpy/random/_mtrand/_mtrand.c
 numpy/random/*.c
 numpy/random/legacy/*.c
