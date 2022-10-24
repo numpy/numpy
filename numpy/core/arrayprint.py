@@ -408,7 +408,7 @@ def str_format(x):
     return str(x)
 
 def _get_formatdict(data, *, precision, floatmode, suppress, sign, legacy,
-                    formatter, repr=False, **kwargs):
+                    formatter, fmt=None, **kwargs):
     # note: extra arguments in kwargs are ignored
 
     # wrapped in lambdas to avoid taking a code path with the wrong type of data
@@ -417,15 +417,15 @@ def _get_formatdict(data, *, precision, floatmode, suppress, sign, legacy,
         'int': lambda: IntegerFormat(data),
         'float': lambda: FloatingFormat(
             data, precision, floatmode, suppress, sign,
-            legacy=legacy, repr=repr),
+            legacy=legacy, fmt=fmt),
         'longfloat': lambda: FloatingFormat(
             data, precision, floatmode, suppress, sign,
-            legacy=legacy, repr=repr),
+            legacy=legacy, fmt=fmt, longdouble_quoting=True),
         'complexfloat': lambda: ComplexFloatingFormat(
             data, precision, floatmode, suppress, sign, legacy=legacy),
         'longcomplexfloat': lambda: ComplexFloatingFormat(
             data, precision, floatmode, suppress, sign,
-            legacy=legacy, repr=repr),
+            legacy=legacy, fmt=fmt, longdouble_quoting=True),
         'datetime': lambda: DatetimeFormat(data, legacy=legacy),
         'timedelta': lambda: TimedeltaFormat(data),
         'object': lambda: _object_format,
@@ -495,19 +495,21 @@ def get_formatter(*, dtype=None, data=None, fmt=None, options=None):
         raise TypeError(
                 "get_formatter: either `fmt` or `options` can be given.")
 
-    if fmt is not None:
-        if fmt is not repr and fmt != "":
-            raise TypeError(
-                    "get_formatter: only `repr` and "" format is currently "
-                    "supported.")
+    if fmt == "":
+        fmt = None
 
-        _options = _default_format_options.copy()
-        _options.update(floatmode="unique")
-        # _get_formatdict currently expects data, so create it.
-        _data = np.array([], dtype=dtype)
-        formatdict = _get_formatdict(_data, repr=fmt == repr, **_options)
-    else:
-        formatdict = _get_formatdict(data, **options)
+    if fmt is not None:
+        if options is not None:
+            raise TypeError("Use of options is only supported if `fmt=None`")
+
+        options = _default_format_options
+
+        if fmt is not repr and fmt is not str:
+            raise TypeError(
+                    "get_formatter(): only `repr`, `str`, and None (or '') "
+                    "is currently supported for `fmt`.")
+
+    formatdict = _get_formatdict(data, fmt=fmt, **options)
 
     dtypeobj = dtype.type
 
@@ -972,7 +974,7 @@ def _none_or_positive_arg(x, name):
 class FloatingFormat:
     """ Formatter for subtypes of np.floating """
     def __init__(self, data, precision, floatmode, suppress_small, sign=False,
-                 *, legacy=None, fmt=None):
+                 *, legacy=None, fmt=None, longdouble_quoting=False):
         # for backcompatibility, accept bools
         if isinstance(sign, bool):
             sign = '+' if sign else '-'
@@ -995,11 +997,27 @@ class FloatingFormat:
         self.sign = sign
         self.exp_format = False
         self.large_exponent = False
-        self._fmt = fmt
 
-        self.fillFormat(data)
 
-    def fillFormat(self, data):
+        if fmt is repr and longdouble_quoting:
+            self._fmt = repr  # use longdouble quoting
+        elif fmt is str or fmt is repr:
+            # string and repr are identical, simply use str:
+            self._fmt = str
+        elif fmt is None:
+            self._fmt = None
+        else:
+            raise ValueError("Only `str` and `repr` format implemented.")
+
+        if self._fmt is not None:
+            # We should allow format, in which case we probably still want
+            # to left pad when data is given, right now data must be empty.
+            if data is not None:
+                raise NotImplementedError("no data supported for float `fmt`.")
+        else:
+            self.fillFormat(data)
+
+    def fillFormat(self, data):            
         # only the finite values are used to compute the number of digits
         finite_vals = data[isfinite(data)]
 
@@ -1084,6 +1102,12 @@ class FloatingFormat:
             self.pad_left = max(self.pad_left, nanlen - offset, inflen - offset)
 
     def __call__(self, x):
+        if self._fmt is repr:
+            # use `str()` for the value, but add quotes with longdouble:
+            return f"'{x[()]!s}'"
+        elif self._fmt is str:
+            return str(x[()])
+
         if not np.isfinite(x):
             with errstate(invalid='ignore'):
                 if np.isnan(x):
@@ -1113,9 +1137,7 @@ class FloatingFormat:
                                       sign=self.sign == '+',
                                       pad_left=self.pad_left,
                                       pad_right=self.pad_right)
-        if not self._quote:
-            return res
-        return f"'{res}'"
+        return res
 
 @set_module('numpy')
 def format_float_scientific(x, precision=None, unique=True, trim='k',
@@ -1291,7 +1313,7 @@ def format_float_positional(x, precision=None, unique=True,
 
 class IntegerFormat:
     def __init__(self, data):
-        if data.size > 0:
+        if data is not None and data.size > 0:
             max_str_len = max(len(str(np.max(data))),
                               len(str(np.min(data))))
         else:
@@ -1307,7 +1329,7 @@ class BoolFormat:
         # add an extra space so " True" and "False" have the same length and
         # array elements align nicely when printed, except in 0d arrays and
         # when there is no data (e.g. scalar formatting we pass nothing)
-        if data.shape == () or data.size == 0:
+        if data is None or data.shape == ():
             self.truestr = 'True'
         else:
             self.truestr = ' True'
@@ -1319,10 +1341,17 @@ class BoolFormat:
 class ComplexFloatingFormat:
     """ Formatter for subtypes of np.complexfloating """
     def __init__(self, x, precision, floatmode, suppress_small,
-                 sign=False, *, legacy=None, quote=False):
+                 sign=False, *, legacy=None,
+                 fmt=None, longdouble_quoting=False):
         # for backcompatibility, accept bools
         if isinstance(sign, bool):
             sign = '+' if sign else '-'
+
+        if fmt is repr and longdouble_quoting:
+            self._quote = True
+            fmt = str  # always use string for the float parts (no quote)
+        else:
+            self._quote = False
 
         floatmode_real = floatmode_imag = floatmode
         if legacy <= 113:
@@ -1331,14 +1360,12 @@ class ComplexFloatingFormat:
 
         self.real_format = FloatingFormat(
             x.real, precision, floatmode_real, suppress_small,
-            sign=sign, legacy=legacy
+            sign=sign, legacy=legacy, fmt=fmt, longdouble_quoting=False
         )
         self.imag_format = FloatingFormat(
             x.imag, precision, floatmode_imag, suppress_small,
-            sign='+', legacy=legacy
+            sign='+', legacy=legacy, fmt=fmt, longdouble_quoting=False
         )
-
-        self._quote = quote
 
     def __call__(self, x):
         r = self.real_format(x.real)

@@ -4068,7 +4068,9 @@ class MaskedArray(ndarray):
             prefix=indents['mask'] + 'mask=',
             suffix=',')
 
-        if self.fill_value.dtype == self.dtype:
+        if self._fill_value is None:
+            self.fill_value  # initialize fill_value
+        if self._fill_value.dtype == self.dtype:
             # The dtype of the fill value should match that of the array
             # and it is unnecessary to print the full `np.int64(...)`
             fill_repr = np.core.arrayprint.get_formatter(
