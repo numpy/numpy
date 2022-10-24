@@ -1876,7 +1876,7 @@ def masked_where(condition, a, copy=True):
     >>> ma.masked_where(a == 2, b)
     masked_array(data=['a', 'b', --, 'd'],
                  mask=[False, False,  True, False],
-           fill_value='N/A',
+           fill_value=np.str_('N/A'),
                 dtype='<U1')
 
     Effect of the `copy` argument.
@@ -3728,23 +3728,23 @@ class MaskedArray(ndarray):
         >>> for dt in [np.int32, np.int64, np.float64, np.complex128]:
         ...     np.ma.array([0, 1], dtype=dt).get_fill_value()
         ...
-        999999
-        999999
-        1e+20
-        (1e+20+0j)
+        np.int64(999999)
+        np.int64(999999)
+        np.float64(1e+20)
+        np.complex128(1e+20+0j)
 
         >>> x = np.ma.array([0, 1.], fill_value=-np.inf)
         >>> x.fill_value
-        -inf
+        np.float64(-inf)
         >>> x.fill_value = np.pi
         >>> x.fill_value
-        3.1415926535897931 # may vary
+        np.float64(3.1415926535897931)
 
         Reset to default:
 
         >>> x.fill_value = None
         >>> x.fill_value
-        1e+20
+        np.float64(1e+20)
 
         """
         if self._fill_value is None:
@@ -4074,7 +4074,7 @@ class MaskedArray(ndarray):
             # The dtype of the fill value should match that of the array
             # and it is unnecessary to print the full `np.int64(...)`
             fill_repr = np.core.arrayprint.get_formatter(
-                    dtype=self.fill_value.dtype, fmt=repr)(self.fill_value)
+                    dtype=self._fill_value.dtype, fmt=repr)(self.fill_value)
         else:
             # Fall back to the normal repr just in case something is weird:
             fill_repr = repr(self.fill_value)
@@ -6042,7 +6042,7 @@ class MaskedArray(ndarray):
         >>> y.ptp(axis=1)
         masked_array(data=[ 126,  127, -128, -127],
                      mask=False,
-               fill_value=999999,
+               fill_value=np.int64(999999),
                     dtype=int8)
 
         A work-around is to use the `view()` method to view the result as
@@ -6051,7 +6051,7 @@ class MaskedArray(ndarray):
         >>> y.ptp(axis=1).view(np.uint8)
         masked_array(data=[126, 127, 128, 129],
                      mask=False,
-               fill_value=999999,
+               fill_value=np.int64(999999),
                     dtype=uint8)
         """
         if out is None:
@@ -8417,7 +8417,7 @@ def fromflex(fxarray):
             [0, 0]],
       mask=[[False, False],
             [False, False]],
-      fill_value=999999,
+      fill_value=np.int64(999999),
       dtype=int32)
 
     """

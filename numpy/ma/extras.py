@@ -191,7 +191,7 @@ def masked_all_like(arr):
             [--, --, --]],
       mask=[[ True,  True,  True],
             [ True,  True,  True]],
-      fill_value=1e+20,
+      fill_value=np.float64(1e+20),
       dtype=float32)
 
     The dtype of the masked array matches the dtype of `arr`.

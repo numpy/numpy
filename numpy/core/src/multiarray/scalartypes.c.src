@@ -995,7 +995,8 @@ legacy_@name@_format@kind@(npy_@name@ val){
  * #Name = Float, Double, LongDouble#
  * #NAME = FLOAT, DOUBLE, LONGDOUBLE#
  * #repr_format = np.float32(%S), np.float64(%S), np.longdouble('%S')#
- * #crepr_format = np.complex64(%S), np.complex128(%S), np.clongdouble('%S')#
+ * #crepr_format = np.complex64(%S%Sj), np.complex128(%S%Sj),
+ *                 np.clongdouble('%S%Sj')#
  */
 
 /* helper function choose scientific of fractional output, based on a cutoff */
@@ -1095,17 +1096,14 @@ c@name@type_@kind@(PyObject *self)
         return NULL;
     }
 
+#ifdef IS_str
     PyObject *string = PyUnicode_FromFormat("(%S%Sj)", rstr, istr);
-    Py_DECREF(rstr);
-    Py_DECREF(istr);
-
-#ifdef IS_repr
-    if (string == NULL) {
-        return NULL;
-    }
-    Py_SETREF(string, PyUnicode_FromFormat("@crepr_format@", string));
+#else  /* IS_repr */
+    PyObject *string = PyUnicode_FromFormat("@crepr_format@", rstr, istr);
 #endif  /* IS_repr */
 
+    Py_DECREF(rstr);
+    Py_DECREF(istr);
     return string;
 }
 
