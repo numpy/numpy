@@ -950,11 +950,20 @@ class TestRandomDist:
                             [3, 6]])
         assert_array_equal(actual, desired)
 
-    def test_logseries_exceptions(self):
-        with suppress_warnings() as sup:
-            sup.record(RuntimeWarning)
-            assert_raises(ValueError, random.logseries, np.nan)
-            assert_raises(ValueError, random.logseries, [np.nan] * 10)
+    def test_logseries_zero(self):
+        assert random.logseries(0) == 1
+
+    @pytest.mark.parametrize("value", [np.nextafter(0., -1), 1., np.nan, 5.])
+    def test_logseries_exceptions(self, value):
+        with np.errstate(invalid="ignore"):
+            with pytest.raises(ValueError):
+                random.logseries(value)
+            with pytest.raises(ValueError):
+                # contiguous path:
+                random.logseries(np.array([value] * 10))
+            with pytest.raises(ValueError):
+                # non-contiguous path:
+                random.logseries(np.array([value] * 10)[::2])
 
     def test_multinomial(self):
         random.seed(self.seed)

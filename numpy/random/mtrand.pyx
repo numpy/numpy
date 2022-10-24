@@ -19,8 +19,8 @@ from ._bounded_integers cimport (_rand_bool, _rand_int32, _rand_int64,
 from ._mt19937 import MT19937 as _MT19937
 from numpy.random cimport bitgen_t
 from ._common cimport (POISSON_LAM_MAX, CONS_POSITIVE, CONS_NONE,
-            CONS_NON_NEGATIVE, CONS_BOUNDED_0_1, CONS_BOUNDED_GT_0_1, CONS_GTE_1,
-            CONS_GT_1, LEGACY_CONS_POISSON,
+            CONS_NON_NEGATIVE, CONS_BOUNDED_0_1, CONS_BOUNDED_GT_0_1,
+            CONS_BOUNDED_LT_0_1, CONS_GTE_1, CONS_GT_1, LEGACY_CONS_POISSON,
             double_fill, cont, kahan_sum, cont_broadcast_3,
             check_array_constraint, check_constraint, disc, discrete_broadcast_iii,
             validate_output_shape
@@ -3956,7 +3956,7 @@ cdef class RandomState:
         Draw samples from a logarithmic series distribution.
 
         Samples are drawn from a log series distribution with specified
-        shape parameter, 0 < ``p`` < 1.
+        shape parameter, 0 <= ``p`` < 1.
 
         .. note::
             New code should use the `~numpy.random.Generator.logseries`
@@ -3966,7 +3966,7 @@ cdef class RandomState:
         Parameters
         ----------
         p : float or array_like of floats
-            Shape parameter for the distribution.  Must be in the range (0, 1).
+            Shape parameter for the distribution.  Must be in the range [0, 1).
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
@@ -4031,7 +4031,7 @@ cdef class RandomState:
 
         """
         out = disc(&legacy_logseries, &self._bitgen, size, self.lock, 1, 0,
-                   p, 'p', CONS_BOUNDED_0_1,
+                   p, 'p', CONS_BOUNDED_LT_0_1,
                    0.0, '', CONS_NONE,
                    0.0, '', CONS_NONE)
         # Match historical output type
