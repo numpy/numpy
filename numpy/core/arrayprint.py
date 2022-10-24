@@ -998,7 +998,6 @@ class FloatingFormat:
         self.exp_format = False
         self.large_exponent = False
 
-
         if fmt is repr and longdouble_quoting:
             self._fmt = repr  # use longdouble quoting
         elif fmt is str or fmt is repr:
