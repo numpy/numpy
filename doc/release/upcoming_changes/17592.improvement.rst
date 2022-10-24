@@ -1,6 +1,0 @@
-Change in the string representation of `numpy.bool_` scalars
-------------------------------------------------------------
-To avoid ambiguity with the string representation of the builtin constants
-`True` and `False`, `numpy.bool_` scalars now have a string representation of
-``numpy.True_`` and ``numpy.False_``.
-The printing of boolean *arrays*, however, is unchanged.
