@@ -5743,6 +5743,31 @@ add_newdoc('numpy.core', 'ufunc', ('resolve_dtypes',
         Similar function to this, but returns additional information which
         give access to the core C functionality of NumPy.
 
+    Examples
+    --------
+    This API requires passing dtypes, define them for convenience:
+
+    >>> int32 = np.dtype("int32")
+    >>> float32 = np.dtype("float32")
+
+    The typical ufunc call does not pass an output dtype.  `np.add` has two
+    inputs and one output, so leave the output as ``None`` (not provided):
+
+    >>> np.add.resolve_dtypes((int32, float32, None))
+    (dtype('float64'), dtype('float64'), dtype('float64'))
+
+    The loop found uses "float64" for all operands (including the output), the
+    first input would be cast.
+
+    ``resolve_dtypes`` supports "weak" handling for Python scalars by passing
+    ``int``, ``float``, or ``complex``:
+
+    >>> np.add.resolve_dtypes((float32, float, None))
+    (dtype('float32'), dtype('float32'), dtype('float32'))
+
+    Where the Python ``float`` behaves samilar to a Python value ``0.0``
+    in a ufunc call.  (See :ref:`NEP 50 <NEP50>` for details.)
+
     """))
 
 add_newdoc('numpy.core', 'ufunc', ('_resolve_dtypes_and_context',
