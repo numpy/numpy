@@ -284,6 +284,15 @@ concise.  Alternatives for booleans were also discussed previously in [1]_.
 For the string scalars, the confusion is generally less pronounced.  It may be
 reasonable to defer changing these.
 
+Non-finite values
+-----------------
+The proposal does not allow copy pasting ``nan`` and ``inf`` values.
+They could be represented by ``np.float64('nan')`` or ``np.float64(np.nan)``
+instead.
+This is more concise and Python also uses ``nan`` and ``inf`` rather than
+allowing copy-pasting by showing it as ``float('nan')``.  Arguably, it would be
+a smaller addition in NumPy, where the will already be always printed.
+
 ``get_formatter()``
 -------------------
 When ``fmt=`` is passed, and specifically for the main use (in this NEP) to
