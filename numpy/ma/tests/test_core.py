@@ -589,14 +589,14 @@ class TestMaskedArray:
             np.set_printoptions(**oldopts)
 
     def test_0d_unicode(self):
-        u = u'caf\xe9'
+        u = 'caf\xe9'
         utype = type(u)
 
         arr_nomask = np.ma.array(u)
         arr_masked = np.ma.array(u, mask=True)
 
         assert_equal(utype(arr_nomask), u)
-        assert_equal(utype(arr_masked), u'--')
+        assert_equal(utype(arr_masked), '--')
 
     def test_pickling(self):
         # Tests pickling
@@ -5261,7 +5261,7 @@ class TestMaskedConstant:
     def test_coercion_unicode(self):
         a_u = np.zeros((), 'U10')
         a_u[()] = np.ma.masked
-        assert_equal(a_u[()], u'--')
+        assert_equal(a_u[()], '--')
 
     @pytest.mark.xfail(reason="See gh-9750")
     def test_coercion_bytes(self):

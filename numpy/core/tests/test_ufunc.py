@@ -334,7 +334,7 @@ class TestUfunc:
 
     def test_signature3(self):
         enabled, num_dims, ixs, flags, sizes = umt.test_signature(
-            2, 1, u"(i1, i12),   (J_1)->(i12, i2)")
+            2, 1, "(i1, i12),   (J_1)->(i12, i2)")
         assert_equal(enabled, 1)
         assert_equal(num_dims, (2, 1, 2))
         assert_equal(ixs, (0, 1, 2, 1, 3))
