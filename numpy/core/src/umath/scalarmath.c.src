@@ -532,9 +532,12 @@ static NPY_INLINE int
         *out = a;
         return NPY_FPE_OVERFLOW;
     }
-#endif
     *out = -a;
     return 0;
+#else  /* floats */
+    *out = -a;
+    return 0;
+#endif
 }
 /**end repeat**/
 
