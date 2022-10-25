@@ -523,9 +523,12 @@ static NPY_INLINE int
 {
 #if @uns@
     *out = -a;
+    if (a == 0) {
+        return 0;
+    }
     return NPY_FPE_OVERFLOW;
 #elif @int@
-    if(a == NPY_MIN_@NAME@){
+    if (a == NPY_MIN_@NAME@){
         *out = a;
         return NPY_FPE_OVERFLOW;
     }
