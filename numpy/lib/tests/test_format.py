@@ -537,7 +537,7 @@ def test_pickle_python2_python3():
     # Python 2 and Python 3 and vice versa
     data_dir = os.path.join(os.path.dirname(__file__), 'data')
 
-    expected = np.array([None, range, u'\u512a\u826f',
+    expected = np.array([None, range, '\u512a\u826f',
                          b'\xe4\xb8\x8d\xe8\x89\xaf'],
                         dtype=object)
 
@@ -963,7 +963,7 @@ def test_unicode_field_names(tmpdir):
         (1, 2)
     ], dtype=[
         ('int', int),
-        (u'\N{CJK UNIFIED IDEOGRAPH-6574}\N{CJK UNIFIED IDEOGRAPH-5F62}', int)
+        ('\N{CJK UNIFIED IDEOGRAPH-6574}\N{CJK UNIFIED IDEOGRAPH-5F62}', int)
     ])
     fname = os.path.join(tmpdir, "unicode.npy")
     with open(fname, 'wb') as f:

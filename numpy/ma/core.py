@@ -175,7 +175,7 @@ default_filler = {'b': True,
                   'S': b'N/A',
                   'u': 999999,
                   'V': b'???',
-                  'U': u'N/A'
+                  'U': 'N/A'
                   }
 
 # Add datetime64 and timedelta64 types

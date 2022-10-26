@@ -531,7 +531,7 @@ class TestArrayLike:
         ('fromiter', *func_args(range(3), dtype=int)),
         ('fromstring', *func_args('1,2', dtype=int, sep=',')),
         ('loadtxt', *func_args(lambda: StringIO('0 1\n2 3'))),
-        ('genfromtxt', *func_args(lambda: StringIO(u'1,2.1'),
+        ('genfromtxt', *func_args(lambda: StringIO('1,2.1'),
                                   dtype=[('int', 'i8'), ('float', 'f8')],
                                   delimiter=',')),
     ]

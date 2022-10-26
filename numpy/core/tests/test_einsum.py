@@ -596,11 +596,10 @@ class TestEinsum:
         assert_equal(np.einsum('ij...,j...->i...', a, b, optimize=True), [[[2], [2]]])
 
         # Regression test for issue #10369 (test unicode inputs with Python 2)
-        assert_equal(np.einsum(u'ij...,j...->i...', a, b), [[[2], [2]]])
+        assert_equal(np.einsum('ij...,j...->i...', a, b), [[[2], [2]]])
         assert_equal(np.einsum('...i,...i', [1, 2, 3], [2, 3, 4]), 20)
-        assert_equal(np.einsum(u'...i,...i', [1, 2, 3], [2, 3, 4]), 20)
         assert_equal(np.einsum('...i,...i', [1, 2, 3], [2, 3, 4],
-                               optimize=u'greedy'), 20)
+                               optimize='greedy'), 20)
 
         # The iterator had an issue with buffering this reduction
         a = np.ones((5, 12, 4, 2, 3), np.int64)

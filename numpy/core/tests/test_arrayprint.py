@@ -549,7 +549,7 @@ class TestPrintOptions:
         assert_equal(repr(x), "array([0., 1., 2.])")
 
     def test_0d_arrays(self):
-        assert_equal(str(np.array(u'café', '<U4')), u'café')
+        assert_equal(str(np.array('café', '<U4')), 'café')
 
         assert_equal(repr(np.array('café', '<U4')),
                      "array('café', dtype='<U4')")
@@ -931,7 +931,7 @@ class TestPrintOptions:
 
 def test_unicode_object_array():
     expected = "array(['é'], dtype=object)"
-    x = np.array([u'\xe9'], dtype=object)
+    x = np.array(['\xe9'], dtype=object)
     assert_equal(repr(x), expected)
 
 
