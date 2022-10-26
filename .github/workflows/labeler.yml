@@ -9,7 +9,7 @@ jobs:
   pr-labeler:
     permissions:
       contents: read  #  to read a configuration file
-      issues: write  #  to add labels to issues
+      pull-requests: write  #  to add labels to pull requests
 
     runs-on: ubuntu-latest
     steps:
