@@ -219,8 +219,8 @@ def get_build_overrides():
             return False
 
         # will print something like '4.2.1\n'
-        out = subprocess.run([cc, '-dumpversion'], stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE, universal_newlines=True)
+        out = subprocess.run([cc, '-dumpversion'],
+                             capture_output=True, text=True)
         # -std=c99 is default from this version on
         if _pep440.parse(out.stdout) >= _pep440.Version('5.0'):
             return False

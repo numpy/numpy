@@ -747,7 +747,7 @@ class _Distutils:
     def _dist_test_spawn(cmd, display=None):
         try:
             o = subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                        universal_newlines=True)
+                                        text=True)
             if o and re.match(_Distutils._dist_warn_regex, o):
                 _Distutils.dist_error(
                     "Flags in command", cmd ,"aren't supported by the compiler"
