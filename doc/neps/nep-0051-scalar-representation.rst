@@ -64,12 +64,12 @@ For example numbers with lower precision (e.g. ``uint8`` or ``float16``)
 should be used with care and users should be aware when they are working
 with them.  All NumPy integers can experience overflow which Python integers
 do not.
-This differences will be exacerbated when adopting :ref:`NEP 50 <NEP50>`
+These differences will be exacerbated when adopting :ref:`NEP 50 <NEP50>`
 because the lower precision NumPy scalar will be preserved more often.
-Even ``float64``, which is very similar to Python's ``float`` and inherits
+Even ``np.float64``, which is very similar to Python's ``float`` and inherits
 from it, does behave differently for example when dividing by zero.
 
-A common confusion are also the NumPy booleans.  Python programmers
+Another common source of confusion are the NumPy booleans.  Python programmers
 somtimes write ``obj is True`` and will surprised when an object that shows
 as ``True`` fails to pass the test.
 It is much easier to understand this behavior when the value is
@@ -97,7 +97,7 @@ Jupyter notebook cells will often show the type information intact.
     np.longdouble('3.0')
 
 to allow round-tripping.  Addtionally to this change, ``float128`` will
-now always be printed as ``longdouble`` since the old name gives a wrong
+now always be printed as ``longdouble`` since the old name gives a false
 impression of precision.
 
 Backward compatibility
@@ -117,13 +117,13 @@ Since the representation of many values will change, in many cases
 the documentation will have to be updated.
 This is expected to require larger documentation fixups in the mid-term.
 
-Further, it may be necessary to adept tools for doctest testing to
+It may be necessary to adopt tools for doctest testing to
 allow approximate value checking for the new representation.
 
 Changes to ``arr.tofile()``
 ---------------------------
 ``arr.tofile()`` currently stores values as ``repr(arr.item())`` when in text
-mode.  This is not always ideal also since that may include a conversion to
+mode.  This is not always ideal since that may include a conversion to
 Python.
 One issue is that this would start saving longdouble as
 ``np.longdouble('3.1')`` which is clearly not desired.  We expect that this
@@ -144,20 +144,21 @@ This NEP proposes to change the represenatation for NumPy scalars to:
 * The value for ``np.longdouble`` and ``np.clongdouble`` will be given in quotes:
   ``np.longdouble('3.0')``.  This ensures that it can always roundtrip correctly
   and matches the way that ``decimal.Decimal`` behaves.
-  For these two the size based name such as ``float128`` will not be used
-  as it is platform dependend and misleading.
+  For these two the size-based name such as ``float128`` will not be used
+  as the actual size is platform-dependent and therefore misleading.
 * ``np.str_("string")`` and ``np.bytes_(b"byte_string")`` for string dtypes.
-* ``np.void((3, 5), dtype=[('a', '<i8'), ('b', 'u1')])`` (similar to arrays),
-  this will be valid syntax to recreate the scalar.
-  Unlike arrays, the representation should round-trip correctly, so longdouble
-  values will be quoted and other values never be truncated.
+* ``np.void((3, 5), dtype=[('a', '<i8'), ('b', 'u1')])`` (similar to arrays)
+  for structured types. This will be valid syntax to recreate the scalar.
+
+Unlike arrays, the scalar representation should round-trip correctly, so
+longdouble values will be quoted and other values never be truncated.
 
 Where booleans are printed as their singletons since this is more concise.
-For strings we include the ``np.`` as ``str_`` and ``bytes_`` on their
+For strings we include the ``np.`` prefix as ``str_`` and ``bytes_`` on their
 own may not be sufficient to indicate NumPy involvement.
 
-Affects on Masked Arrays
-------------------------
+Effect on Masked Arrays
+-----------------------
 Some other parts of NumPy may indirectly be changed here.  Masked arrays
 ``fill_value`` will be adapted to only include the full scalar information
 such as ``fill_value = np.float64(1e20)`` when the dtype of the array
@@ -165,7 +166,7 @@ mismatches.
 For longdouble (with matching dtype), it will be printed as
 ``fill_value='3.1'`` similar to 
 
-Affect on records
+Effect on records
 -----------------
 
 The ``np.record`` scalar will be aligned with ``np.void`` and print identically
@@ -242,10 +243,11 @@ We propose introducing the semi-public API::
 
 to replace the current internal ``_get_formatting_func``.  This will allow
 two things compared to the old function:
+
 * ``data`` may be ``None`` (if ``dtype`` is passed) allowing to not pass
   multiple values that will be printed/formatted later.
-* ``fmt=`` will allow passing on format strings to a DType specific element
-  formatter in the future.  For now, ``get_formatter()`` it will accept
+* ``fmt=`` will allow passing on format strings to a DType-specific element
+  formatter in the future.  For now, ``get_formatter()`` will accept
   ``repr`` or ``str`` (the singletons not strings) to format the elements
   without type information (``'3.1'`` rather than ``np.longdouble('3.1')``).
   The implementation ensures that formatting matches except for the type
@@ -254,11 +256,12 @@ two things compared to the old function:
   The empty format string will print identically to ``str()`` (with possibly
   extra padding when data is passed).
 
-``get_formatter()`` is expected to query a user DTypes method in the future
+``get_formatter()`` is expected to query a user DType's method in the future
 allowing customized formatting for all DTypes.
 
-Making it public allows the use for ``np.record`` and masked arrays.
-Currenlty, the formatters themselves seem semi-public and using a single
+Making ``get_formatter`` public allows it to be used for ``np.record`` and
+masked arrays.
+Currenlty, the formatters themselves seem semi-public; using a single
 entry-point will hopefully provide a clear API for formatting NumPy values.
 
 The large part for the scalar representation changes had previously been done
@@ -267,7 +270,7 @@ by Ganesh Kathiresan in [2]_.
 Alternatives
 ============
 
-Different representation could be discussed, main alternatives are spelling
+Different representations can be considered: alternatives include spelling
 ``np.`` as ``numpy.`` or dropping the ``np.`` part from the numerical scalars.
 We believe that using ``np.`` is sufficiently clear, concise, and does allow
 copy pasting the representation.
