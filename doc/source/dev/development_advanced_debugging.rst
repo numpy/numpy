@@ -23,7 +23,7 @@ But for example memory leaks can be particularly subtle or difficult to
 narrow down.
 
 We do not expect any of these tools to be run by most contributors.
-However, you can ensure that we can track down such issues more easily easier:
+However, you can ensure that we can track down such issues more easily:
 
 * Tests should cover all code paths, including error paths.
 * Try to write short and simple tests. If you have a very complicated test
