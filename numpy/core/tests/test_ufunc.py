@@ -2738,3 +2738,26 @@ class TestLowlevelAPIAccess:
         with pytest.raises(TypeError):
             # we refuse to do this twice with the same capsule:
             np.negative._get_strided_loop(call_info_obj)
+
+    @pytest.mark.parametrize("strides", [1, (1, 2, 3), (1, "2")])
+    def test__get_strided_loop_errors_bad_strides(self, strides):
+        i4 = np.dtype("i4")
+        dt, call_info = np.negative._resolve_dtypes_and_context((i4, i4))
+
+        with pytest.raises(TypeError):
+            np.negative._get_strided_loop(call_info, fixed_strides=strides)
+
+    def test__get_strided_loop_errors_bad_call_info(self):
+        i4 = np.dtype("i4")
+        dt, call_info = np.negative._resolve_dtypes_and_context((i4, i4))
+
+        with pytest.raises(ValueError, match="PyCapsule"):
+            np.negative._get_strided_loop("not the capsule!")
+
+        with pytest.raises(TypeError, match=".*incompatible context"):
+            np.add._get_strided_loop(call_info)
+
+        np.negative._get_strided_loop(call_info)
+        with pytest.raises(TypeError):
+            # cannot call it a second time:
+            np.negative._get_strided_loop(call_info)

@@ -6636,7 +6636,7 @@ py_get_strided_loop(PyUFuncObject *ufunc,
             fixed_strides[i] = NPY_MAX_INTP;
         }
     }
-    if (PyTuple_CheckExact(fixed_strides_obj)
+    else if (PyTuple_CheckExact(fixed_strides_obj)
             && PyTuple_Size(fixed_strides_obj) == ufunc->nargs) {
         for (int i = 0; i < ufunc->nargs; i++) {
             PyObject *stride = PyTuple_GET_ITEM(fixed_strides_obj, i);
@@ -6649,7 +6649,18 @@ py_get_strided_loop(PyUFuncObject *ufunc,
             else if (stride == Py_None) {
                 fixed_strides[i] = NPY_MAX_INTP;
             }
+            else {
+                PyErr_SetString(PyExc_TypeError,
+                    "_get_strided_loop(): fixed_strides tuple must contain "
+                    "Python ints or None");
+                return NULL;
+            }
         }
+    }
+    else {
+        PyErr_SetString(PyExc_TypeError,
+            "_get_strided_loop(): fixed_strides must be a tuple or None");
+        return NULL;
     }
 
     NPY_ARRAYMETHOD_FLAGS flags;
