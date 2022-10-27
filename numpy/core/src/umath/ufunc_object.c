@@ -6370,6 +6370,7 @@ py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
      *   state (or mind us messing with it).
      */
     PyObject *result = NULL;
+    PyObject *result_dtype_tuple = NULL;
 
     PyArrayObject *dummy_arrays[NPY_MAXARGS] = {NULL};
     PyArray_DTypeMeta *DTypes[NPY_MAXARGS] = {NULL};
@@ -6527,6 +6528,9 @@ py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
     if (result == NULL || !return_context) {
         goto finish;
     }
+    /* Result will be (dtype_tuple, call_info), so move it and clear result */
+    result_dtype_tuple = result;
+    result = NULL;
 
     /* We may have to return the context: */
     ufunc_call_info *call_info;
@@ -6559,12 +6563,13 @@ py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
         context->descriptors[i] = operation_descrs[i];
     }
 
-    Py_SETREF(result, PyTuple_Pack(2, result, capsule));
+    result = PyTuple_Pack(2, result_dtype_tuple, capsule);
     Py_DECREF(capsule);
 
   finish:
     npy_promotion_state = original_promotion_state;
 
+    Py_XDECREF(result_dtype_tuple);
     for (int i = 0; i < ufunc->nargs; i++) {
         Py_XDECREF(signature[i]);
         Py_XDECREF(dummy_arrays[i]);
