@@ -6570,6 +6570,7 @@ py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
     }
 
     result = PyTuple_Pack(2, result_dtype_tuple, capsule);
+    /* cleanup and return */
     Py_DECREF(capsule);
 
   finish:

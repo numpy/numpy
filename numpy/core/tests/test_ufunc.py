@@ -2735,16 +2735,12 @@ class TestLowlevelAPIAccess:
         # We just directly called the negative inner-loop in-place:
         assert_array_equal(arr, -np.arange(10, dtype=i4))
 
-        with pytest.raises(TypeError):
-            # we refuse to do this twice with the same capsule:
-            np.negative._get_strided_loop(call_info_obj)
-
     @pytest.mark.parametrize("strides", [1, (1, 2, 3), (1, "2")])
     def test__get_strided_loop_errors_bad_strides(self, strides):
         i4 = np.dtype("i4")
         dt, call_info = np.negative._resolve_dtypes_and_context((i4, i4))
 
-        with pytest.raises(TypeError):
+        with pytest.raises(TypeError, match="fixed_strides.*tuple.*or None"):
             np.negative._get_strided_loop(call_info, fixed_strides=strides)
 
     def test__get_strided_loop_errors_bad_call_info(self):
