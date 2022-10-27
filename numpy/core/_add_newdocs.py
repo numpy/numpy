@@ -5704,14 +5704,14 @@ add_newdoc('numpy.core', 'ufunc', ('resolve_dtypes',
     .. note::
 
         This function always applies NEP 50 rules since it is not provided
-        and actual values.  The Python types ``int``, ``float``, and
+        any actual values.  The Python types ``int``, ``float``, and
         ``complex`` thus behave weak and should be passed for "untyped"
         Python input.
 
     Parameters
     ----------
     dtypes : tuple of dtypes, None, or literal int, float, complex
-        The input dtypes for each operand.  Output operands can be left
+        The input dtypes for each operand.  Output operands can be
         None, indicating that the dtype must be found.
     signature : tuple of DTypes or None, optional
         If given, enforces exact DType (classes) of the specific operand.
@@ -5816,7 +5816,7 @@ add_newdoc('numpy.core', 'ufunc', ('_get_strided_loop',
     -----
     Together with `numpy.ufunc._resolve_dtypes_and_context` this function
     gives low-level access to the NumPy ufunc loops.
-    The first function does general preparations and returns the required
+    The first function does general preparation and returns the required
     information. It returns this as a C capsule with the version specific
     name ``numpy_1.24_ufunc_call_info``.
     The NumPy 1.24 ufunc call info capsule has the following layout::

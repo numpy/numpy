@@ -6465,7 +6465,7 @@ py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
             if (i < ufunc->nin && !(reduction && i == 0)) {
                 PyErr_SetString(PyExc_TypeError,
                         "All input dtypes must be provided "
-                        "(except the first one reductions)");
+                        "(except the first one in reductions)");
                 goto finish;
             }
         }
@@ -6618,7 +6618,7 @@ py_get_strided_loop(PyUFuncObject *ufunc,
     }
     if (call_info->strided_loop != NULL) {
         PyErr_SetString(PyExc_TypeError,
-                "ufunc call info has already been filled/used!");
+                "ufunc call_info has already been filled/used!");
         return NULL;
     }
 
