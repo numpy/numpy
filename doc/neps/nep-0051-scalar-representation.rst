@@ -139,7 +139,7 @@ Detailed description
 
 This NEP proposes to change the represenatation for NumPy scalars to:
 
-* ``np.True_`` and ``np.False_`` for booleans
+* ``np.True_`` and ``np.False_`` for booleans (their singleton instances)
 * ``np.scalar(<value>)``, i.e. ``np.float64(3.0)`` for all numerical dtypes.
 * The value for ``np.longdouble`` and ``np.clongdouble`` will be given in quotes:
   ``np.longdouble('3.0')``.  This ensures that it can always roundtrip correctly
@@ -153,31 +153,33 @@ This NEP proposes to change the represenatation for NumPy scalars to:
 Unlike arrays, the scalar representation should round-trip correctly, so
 longdouble values will be quoted and other values never be truncated.
 
-Where booleans are printed as their singletons since this is more concise.
-For strings we include the ``np.`` prefix as ``str_`` and ``bytes_`` on their
-own may not be sufficient to indicate NumPy involvement.
+In some places (i.e. masked arrays, void and record scalars) we will want to
+print the representation without the type.  For example::
 
-Effect on Masked Arrays
------------------------
-Some other parts of NumPy may indirectly be changed here.  Masked arrays
+    np.void(('3.0',), dtype=[('a', 'f16')])  # longdouble
+
+should print the 3.0 with quotes (to ensure round-tripping), but not repeat
+the full ``np.longdouble('3.0')`` as the dtype includes the longdouble
+information.
+To allow this, a new semi-public ``np.core.array_print.get_formatter()`` will
+be introduced to expand the current functionality (see Implementation).
+
+Effects on Masked Arrays and Records
+------------------------------------
+Some other parts of NumPy will indirectly be changed.  Masked arrays
 ``fill_value`` will be adapted to only include the full scalar information
-such as ``fill_value = np.float64(1e20)`` when the dtype of the array
+such as ``fill_value=np.float64(1e20)`` when the dtype of the array
 mismatches.
 For longdouble (with matching dtype), it will be printed as
-``fill_value='3.1'`` similar to 
-
-Effect on records
------------------
+``fill_value='3.1'`` including the quotes which (in principle but likely not
+in practice) ensure round-tripping.
+It should be noted that for strings it is typical for the dtypes to mismatch
+in the string length.  So that strings will usually be printed as
+``np.str_("N/A")``.
 
 The ``np.record`` scalar will be aligned with ``np.void`` and print identically
-to it (except the name itself).
-
-New public API
---------------
-
-Void scalars and the masked array ``fill_value`` require access to printing
-the scalar value as ``'3.1'`` rather than ``np.longdouble('3.1')``, or for
-strings
+to it (except the name itself).  For example as:
+``np.record((3, 5), dtype=[('a', '<i8'), ('b', 'u1')])``
 
 Details about ``longdouble`` and ``clongdouble``
 ------------------------------------------------
@@ -238,7 +240,7 @@ necessary to expose the scalar representation without the type.
 
 We propose introducing the semi-public API::
 
-    np.lib.arrayprint.get_formatter(*,
+    np.core.arrayprint.get_formatter(*,
             data=None, dtype=None, fmt=None, options=None)
 
 to replace the current internal ``_get_formatting_func``.  This will allow
@@ -277,8 +279,6 @@ copy pasting the representation.
 Using only ``float64(3.0)`` without the ``np.`` prefix is more concise but
 contexts may exists where the NumPy dependency is not fully clear and the name
 could clash with other libraries.
-of ``numpy`` or ``np`` for the numerical types to give for example
-``np.float64(3.0)``.
 
 For booleans an alternative would be to use ``np.bool_(True)`` or ``bool_(True)``.
 However, NumPy boolean scalars are singletons and the proposed formatting is more
@@ -296,11 +296,13 @@ This is more concise and Python also uses ``nan`` and ``inf`` rather than
 allowing copy-pasting by showing it as ``float('nan')``.  Arguably, it would be
 a smaller addition in NumPy, where the will already be always printed.
 
-``get_formatter()``
--------------------
+Alternatives for the new ``get_formatter()``
+--------------------------------------------
 When ``fmt=`` is passed, and specifically for the main use (in this NEP) to
 format to a ``repr`` or ``str``.
-It would also be possible to use a ufunc or a direct formatting function.
+It would also be possible to use a ufunc or a direct formatting function
+rather than wrapping it into a ```get_formatter()`` which relies on
+instantiating a formatter class for the DType.
 
 This NEP does not preclude creating a ufunc or making a special path.
 However, NumPy array formatting commonly looks at all values to be formatted
