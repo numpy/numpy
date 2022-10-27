@@ -43,7 +43,7 @@ class TestF2cmapOption(TestAssumedShapeSumExample):
         self.sources.append(self.f2cmap_file.name)
         self.options = ["--f2cmap", self.f2cmap_file.name]
 
-        super().setup()
+        super().setup_method()
 
     def teardown_method(self):
         os.unlink(self.f2cmap_file.name)
