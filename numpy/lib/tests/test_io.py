@@ -689,6 +689,7 @@ class TestLoadTxt(LoadTxtBase):
         # lower chunksize for testing
         self.orig_chunk = np.lib.npyio._loadtxt_chunksize
         np.lib.npyio._loadtxt_chunksize = 1
+
     def teardown_method(self):
         np.lib.npyio._loadtxt_chunksize = self.orig_chunk
 
