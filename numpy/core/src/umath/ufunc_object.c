@@ -6544,6 +6544,12 @@ py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
     call_info->auxdata = NULL;
     call_info->context = &call_info->_full_context;
 
+    /*
+     * We create a capsule with NumPy 1.24 in the name to signal that it is
+     * prone to change in version updates (it doesn't have to).
+     * This capsule is documented in the `ufunc._resolve_dtypes_and_context`
+     * docstring.
+     */
     PyObject *capsule = PyCapsule_New(
             call_info, "numpy_1.24_ufunc_call_info", &free_ufunc_call_info);
     if (capsule == NULL) {
