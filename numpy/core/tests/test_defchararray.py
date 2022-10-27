@@ -131,7 +131,7 @@ class TestVecString:
 
 
 class TestWhitespace:
-    def setup(self):
+    def setup_method(self):
         self.A = np.array([['abc ', '123  '],
                            ['789 ', 'xyz ']]).view(np.chararray)
         self.B = np.array([['abc', '123'],
@@ -146,7 +146,7 @@ class TestWhitespace:
         assert_(not np.any(self.A != self.B))
 
 class TestChar:
-    def setup(self):
+    def setup_method(self):
         self.A = np.array('abc1', dtype='c').view(np.chararray)
 
     def test_it(self):
@@ -154,7 +154,7 @@ class TestChar:
         assert_equal(self.A.upper()[:2].tobytes(), b'AB')
 
 class TestComparisons:
-    def setup(self):
+    def setup_method(self):
         self.A = np.array([['abc', '123'],
                            ['789', 'xyz']]).view(np.chararray)
         self.B = np.array([['efg', '123  '],
@@ -187,21 +187,21 @@ class TestComparisons:
 class TestComparisonsMixed1(TestComparisons):
     """Ticket #1276"""
 
-    def setup(self):
-        TestComparisons.setup(self)
+    def setup_method(self):
+        TestComparisons.setup_method(self)
         self.B = np.array([['efg', '123  '],
                            ['051', 'tuv']], np.unicode_).view(np.chararray)
 
 class TestComparisonsMixed2(TestComparisons):
     """Ticket #1276"""
 
-    def setup(self):
-        TestComparisons.setup(self)
+    def setup_method(self):
+        TestComparisons.setup_method(self)
         self.A = np.array([['abc', '123'],
                            ['789', 'xyz']], np.unicode_).view(np.chararray)
 
 class TestInformation:
-    def setup(self):
+    def setup_method(self):
         self.A = np.array([[' abc ', ''],
                            ['12345', 'MixedCase'],
                            ['123 \t 345 \0 ', 'UPPER']]).view(np.chararray)
@@ -307,7 +307,7 @@ class TestInformation:
 
 
 class TestMethods:
-    def setup(self):
+    def setup_method(self):
         self.A = np.array([[' abc ', ''],
                            ['12345', 'MixedCase'],
                            ['123 \t 345 \0 ', 'UPPER']],
@@ -580,7 +580,7 @@ class TestMethods:
 
 
 class TestOperations:
-    def setup(self):
+    def setup_method(self):
         self.A = np.array([['abc', '123'],
                            ['789', 'xyz']]).view(np.chararray)
         self.B = np.array([['efg', '456'],

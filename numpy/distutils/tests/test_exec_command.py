@@ -94,7 +94,7 @@ def test_exec_command_stderr():
 
 
 class TestExecCommand:
-    def setup(self):
+    def setup_method(self):
         self.pyexe = get_pythonexe()
 
     def check_nt(self, **kws):
