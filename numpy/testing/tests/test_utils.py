@@ -65,7 +65,7 @@ class _GenericTest:
 
 class TestArrayEqual(_GenericTest):
 
-    def setup(self):
+    def setup_method(self):
         self._assert_func = assert_array_equal
 
     def test_generic_rank1(self):
@@ -262,7 +262,7 @@ class TestBuildErrorMessage:
 
 class TestEqual(TestArrayEqual):
 
-    def setup(self):
+    def setup_method(self):
         self._assert_func = assert_equal
 
     def test_nan_items(self):
@@ -357,7 +357,7 @@ class TestEqual(TestArrayEqual):
 
 class TestArrayAlmostEqual(_GenericTest):
 
-    def setup(self):
+    def setup_method(self):
         self._assert_func = assert_array_almost_equal
 
     def test_closeness(self):
@@ -455,7 +455,7 @@ class TestArrayAlmostEqual(_GenericTest):
 
 class TestAlmostEqual(_GenericTest):
 
-    def setup(self):
+    def setup_method(self):
         self._assert_func = assert_almost_equal
 
     def test_closeness(self):
@@ -606,7 +606,7 @@ class TestAlmostEqual(_GenericTest):
 
 class TestApproxEqual:
 
-    def setup(self):
+    def setup_method(self):
         self._assert_func = assert_approx_equal
 
     def test_simple_0d_arrays(self):
@@ -649,7 +649,7 @@ class TestApproxEqual:
 
 class TestArrayAssertLess:
 
-    def setup(self):
+    def setup_method(self):
         self._assert_func = assert_array_less
 
     def test_simple_arrays(self):
@@ -759,7 +759,7 @@ class TestArrayAssertLess:
 @pytest.mark.skip(reason="The raises decorator depends on Nose")
 class TestRaises:
 
-    def setup(self):
+    def setup_method(self):
         class MyException(Exception):
             pass
 

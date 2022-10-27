@@ -103,10 +103,10 @@ def bad_arcsinh():
 
 
 class _FilterInvalids:
-    def setup(self):
+    def setup_method(self):
         self.olderr = np.seterr(invalid='ignore')
 
-    def teardown(self):
+    def teardown_method(self):
         np.seterr(**self.olderr)
 
 

@@ -1163,7 +1163,7 @@ class TestMedian:
 
 class TestCov:
 
-    def setup(self):
+    def setup_method(self):
         self.data = array(np.random.rand(12))
 
     def test_1d_without_missing(self):
@@ -1230,7 +1230,7 @@ class TestCov:
 
 class TestCorrcoef:
 
-    def setup(self):
+    def setup_method(self):
         self.data = array(np.random.rand(12))
         self.data2 = array(np.random.rand(12))
 

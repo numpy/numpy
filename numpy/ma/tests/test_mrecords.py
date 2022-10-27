@@ -348,7 +348,7 @@ class TestMRecords:
 
 class TestView:
 
-    def setup(self):
+    def setup_method(self):
         (a, b) = (np.arange(10), np.random.rand(10))
         ndtype = [('a', float), ('b', float)]
         arr = np.array(list(zip(a, b)), dtype=ndtype)

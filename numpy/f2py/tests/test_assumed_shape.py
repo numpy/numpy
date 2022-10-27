@@ -30,7 +30,7 @@ class TestAssumedShapeSumExample(util.F2PyTest):
 
 
 class TestF2cmapOption(TestAssumedShapeSumExample):
-    def setup(self):
+    def setup_method(self):
         # Use a custom file name for .f2py_f2cmap
         self.sources = list(self.sources)
         f2cmap_src = self.sources.pop(-1)
@@ -45,5 +45,5 @@ class TestF2cmapOption(TestAssumedShapeSumExample):
 
         super().setup()
 
-    def teardown(self):
+    def teardown_method(self):
         os.unlink(self.f2cmap_file.name)

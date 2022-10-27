@@ -130,7 +130,7 @@ class DuplicateOptionInfo(_system_info):
 
 class TestSystemInfoReading:
 
-    def setup(self):
+    def setup_method(self):
         """ Create the libraries """
         # Create 2 sources and 2 libraries
         self._dir1 = mkdtemp()
@@ -172,7 +172,7 @@ class TestSystemInfoReading:
                                             self._sitecfg)
 
 
-    def teardown(self):
+    def teardown_method(self):
         # Do each removal separately
         try:
             shutil.rmtree(self._dir1)
