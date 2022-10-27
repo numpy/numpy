@@ -171,7 +171,6 @@ class TestSystemInfoReading:
         self.c_dup_options = site_and_parse(get_class('duplicate_options'),
                                             self._sitecfg)
 
-
     def teardown_method(self):
         # Do each removal separately
         try:

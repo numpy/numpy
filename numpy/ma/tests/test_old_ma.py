@@ -78,9 +78,8 @@ class TestMa:
         assert_(isMaskedArray(xm))
         assert_equal(shape(xm), s)
         assert_equal(xm.shape, s)
-        assert_equal(xm.size, reduce(lambda x, y:x * y, s))
-        assert_equal(count(xm),
-                            len(m1) - reduce(lambda x, y:x + y, m1))
+        assert_equal(xm.size, reduce(lambda x, y: x * y, s))
+        assert_equal(count(xm), len(m1) - reduce(lambda x, y: x + y, m1))
         assert_(eq(xm, xf))
         assert_(eq(filled(xm, 1.e20), xf))
         assert_(eq(x, xm))
