@@ -3169,7 +3169,6 @@ def test_warn_noclose():
 
 @pytest.mark.skipif(sys.version_info[:2] == (3, 9) and sys.platform == "win32",
                     reason="Errors with Python 3.9 on Windows")
-@pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
 @pytest.mark.parametrize(["in_dtype", "buf_dtype"],
         [("i", "O"), ("O", "i"),  # most simple cases
          ("i,O", "O,O"),  # structured partially only copying O
@@ -3177,9 +3176,14 @@ def test_warn_noclose():
          ])
 @pytest.mark.parametrize("steps", [1, 2, 3])
 def test_partial_iteration_cleanup(in_dtype, buf_dtype, steps):
-    value = 123  # relies on python cache (leak-check will still find it)
+    """
+    Checks for reference counting leaks during cleanup.  Using explicit
+    reference counts lead to occasional false positives (at least in parallel
+    test setups).  This test now should still test leaks correctly when
+    run e.g. with pytest-valgrind or pytest-leaks
+    """
+    value = 2**30 + 1  # just a random value that Python won't intern
     arr = np.full(int(np.BUFSIZE * 2.5), value).astype(in_dtype)
-    count = sys.getrefcount(value)
 
     it = np.nditer(arr, op_dtypes=[np.dtype(buf_dtype)],
             flags=["buffered", "external_loop", "refs_ok"], casting="unsafe")
@@ -3187,11 +3191,7 @@ def test_partial_iteration_cleanup(in_dtype, buf_dtype, steps):
         # The iteration finishes in 3 steps, the first two are partial
         next(it)
 
-    # Note that resetting does not free references
-    del it
-    break_cycles()
-    break_cycles()
-    assert count == sys.getrefcount(value)
+    del it  # not necessary, but we test the cleanup
 
     # Repeat the test with `iternext`
     it = np.nditer(arr, op_dtypes=[np.dtype(buf_dtype)],
@@ -3199,11 +3199,7 @@ def test_partial_iteration_cleanup(in_dtype, buf_dtype, steps):
     for step in range(steps):
         it.iternext()
 
-    del it  # should ensure cleanup
-    break_cycles()
-    break_cycles()
-    assert count == sys.getrefcount(value)
-
+    del it  # not necessary, but we test the cleanup
 
 @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
 @pytest.mark.parametrize(["in_dtype", "buf_dtype"],
