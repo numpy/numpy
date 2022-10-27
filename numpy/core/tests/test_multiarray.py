@@ -74,7 +74,7 @@ def _aligned_zeros(shape, dtype=float, order="C", align=None):
 
 
 class TestFlags:
-    def setup(self):
+    def setup_method(self):
         self.a = np.arange(10)
 
     def test_writeable(self):
@@ -275,7 +275,7 @@ class TestHash:
 
 
 class TestAttributes:
-    def setup(self):
+    def setup_method(self):
         self.one = np.arange(10)
         self.two = np.arange(20).reshape(4, 5)
         self.three = np.arange(60, dtype=np.float64).reshape(2, 5, 6)
@@ -652,7 +652,7 @@ class TestDtypedescr:
 
 
 class TestZeroRank:
-    def setup(self):
+    def setup_method(self):
         self.d = np.array(0), np.array('x', object)
 
     def test_ellipsis_subscript(self):
@@ -756,7 +756,7 @@ class TestZeroRank:
 
 
 class TestScalarIndexing:
-    def setup(self):
+    def setup_method(self):
         self.d = np.array([0, 1])[0]
 
     def test_ellipsis_subscript(self):
@@ -5701,7 +5701,7 @@ class TestFromBuffer:
             mm.close()
 
 class TestFlat:
-    def setup(self):
+    def setup_method(self):
         a0 = np.arange(20.0)
         a = a0.reshape(4, 5)
         a0.shape = (4, 5)
@@ -6025,7 +6025,7 @@ class TestStats:
 
     funcs = [_mean, _var, _std]
 
-    def setup(self):
+    def setup_method(self):
         np.random.seed(range(3))
         self.rmat = np.random.random((4, 5))
         self.cmat = self.rmat + 1j * self.rmat
@@ -6452,7 +6452,7 @@ class TestVdot:
 
 
 class TestDot:
-    def setup(self):
+    def setup_method(self):
         np.random.seed(128)
         self.A = np.random.rand(4, 2)
         self.b1 = np.random.rand(2, 1)
@@ -7243,7 +7243,7 @@ class TestInner:
 
 
 class TestChoose:
-    def setup(self):
+    def setup_method(self):
         self.x = 2*np.ones((3,), dtype=int)
         self.y = 3*np.ones((3,), dtype=int)
         self.x2 = 2*np.ones((2, 3), dtype=int)
@@ -7273,7 +7273,7 @@ class TestChoose:
 
 
 class TestRepeat:
-    def setup(self):
+    def setup_method(self):
         self.m = np.array([1, 2, 3, 4, 5, 6])
         self.m_rect = self.m.reshape((2, 3))
 

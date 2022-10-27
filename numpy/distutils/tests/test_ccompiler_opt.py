@@ -78,7 +78,7 @@ class _Test_CCompilerOpt:
     arch = None # x86_64
     cc   = None # gcc
 
-    def setup(self):
+    def setup_class(self):
         FakeCCompilerOpt.conf_nocache = True
         self._opt = None
 
@@ -780,7 +780,7 @@ def new_test(arch, cc):
         cc   = '{cc}'
         def __init__(self, methodName="runTest"):
             unittest.TestCase.__init__(self, methodName)
-            self.setup()
+            self.setup_class()
     """).format(
         class_name=arch + '_' + cc, arch=arch, cc=cc
     )

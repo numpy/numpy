@@ -359,7 +359,7 @@ class TestCommonType:
         assert_(res == 'f8')
 
 class TestMultipleFields:
-    def setup(self):
+    def setup_method(self):
         self.ary = np.array([(1, 2, 3, 4), (5, 6, 7, 8)], dtype='i4,f4,i2,c8')
 
     def _bad_call(self):

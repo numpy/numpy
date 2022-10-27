@@ -178,7 +178,7 @@ class WrappedArray(NDArrayOperatorsMixin):
 class TestSubclassing:
     # Test suite for masked subclasses of ndarray.
 
-    def setup(self):
+    def setup_method(self):
         x = np.arange(5, dtype='float')
         mx = msubarray(x, mask=[0, 1, 0, 0, 0])
         self.data = (x, mx)
@@ -417,7 +417,7 @@ def test_array_no_inheritance():
 class TestClassWrapping:
     # Test suite for classes that wrap MaskedArrays
 
-    def setup(self):
+    def setup_method(self):
         m = np.ma.masked_array([1, 3, 5], mask=[False, True, False])
         wm = WrappedArray(m)
         self.data = (m, wm)

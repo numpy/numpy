@@ -850,7 +850,7 @@ class TestDiff:
 
 class TestDelete:
 
-    def setup(self):
+    def setup_method(self):
         self.a = np.arange(5)
         self.nd_a = np.arange(5).repeat(2).reshape(1, 5, 2)
 

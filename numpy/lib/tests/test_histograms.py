@@ -11,10 +11,10 @@ import pytest
 
 class TestHistogram:
 
-    def setup(self):
+    def setup_method(self):
         pass
 
-    def teardown(self):
+    def teardown_method(self):
         pass
 
     def test_simple(self):
