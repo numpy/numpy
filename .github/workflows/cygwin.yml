@@ -27,9 +27,9 @@ jobs:
           submodules: recursive
           fetch-depth: 3000
       - name: Install Cygwin
-        uses: egor-tensin/setup-cygwin@v3
+        uses: cygwin/cygwin-install-action@v2
         with:
-          platform: x64
+          platform: x86_64
           install-dir: 'C:\tools\cygwin'
           packages: >-
             python38-devel python38-zipp python38-importlib-metadata
