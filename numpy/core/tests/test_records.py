@@ -337,7 +337,7 @@ class TestPathUsage:
 
 
 class TestRecord:
-    def setup(self):
+    def setup_method(self):
         self.data = np.rec.fromrecords([(1, 2, 3), (4, 5, 6)],
                             dtype=[("col1", "<i4"),
                                    ("col2", "<i4"),

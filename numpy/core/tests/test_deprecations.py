@@ -32,7 +32,7 @@ class _DeprecationTestCase:
     message = ''
     warning_cls = DeprecationWarning
 
-    def setup(self):
+    def setup_method(self):
         self.warn_ctx = warnings.catch_warnings(record=True)
         self.log = self.warn_ctx.__enter__()
 
@@ -46,7 +46,7 @@ class _DeprecationTestCase:
         warnings.filterwarnings("always", message=self.message,
                                 category=self.warning_cls)
 
-    def teardown(self):
+    def teardown_method(self):
         self.warn_ctx.__exit__()
 
     def assert_deprecated(self, function, num=1, ignore_others=False,
@@ -297,7 +297,7 @@ class TestDTypeAttributeIsDTypeDeprecation(_DeprecationTestCase):
 class TestTestDeprecated:
     def test_assert_deprecated(self):
         test_case_instance = _DeprecationTestCase()
-        test_case_instance.setup()
+        test_case_instance.setup_method()
         assert_raises(AssertionError,
                       test_case_instance.assert_deprecated,
                       lambda: None)
@@ -306,7 +306,7 @@ class TestTestDeprecated:
             warnings.warn("foo", category=DeprecationWarning, stacklevel=2)
 
         test_case_instance.assert_deprecated(foo)
-        test_case_instance.teardown()
+        test_case_instance.teardown_method()
 
 
 class TestNonNumericConjugate(_DeprecationTestCase):

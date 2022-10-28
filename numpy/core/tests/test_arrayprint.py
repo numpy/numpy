@@ -498,10 +498,10 @@ class TestArray2String:
 class TestPrintOptions:
     """Test getting and setting global print options."""
 
-    def setup(self):
+    def setup_method(self):
         self.oldopts = np.get_printoptions()
 
-    def teardown(self):
+    def teardown_method(self):
         np.set_printoptions(**self.oldopts)
 
     def test_basic(self):
