@@ -7,6 +7,7 @@
 
 """
 import numpy as np
+from numpy.lib.mixins import NDArrayOperatorsMixin
 from numpy.testing import assert_, assert_raises
 from numpy.ma.testutils import assert_equal
 from numpy.ma.core import (
@@ -145,6 +146,33 @@ class ComplicatedSubArray(SubArray):
             obj.info['multiplied'] = obj.info.get('multiplied', 0) + 1
 
         return obj
+
+
+class WrappedArray(NDArrayOperatorsMixin):
+    """
+    Wrapping a MaskedArray rather than subclassing to test that
+    ufunc deferrals are commutative.
+    See: https://github.com/numpy/numpy/issues/15200)
+    """
+    __array_priority__ = 20
+
+    def __init__(self, array, **attrs):
+        self._array = array
+        self.attrs = attrs
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}(\n{self._array}\n{self.attrs}\n)"
+
+    def __array__(self):
+        return np.asarray(self._array)
+
+    def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
+        if method == '__call__':
+            inputs = [arg._array if isinstance(arg, self.__class__) else arg
+                      for arg in inputs]
+            return self.__class__(ufunc(*inputs, **kwargs), **self.attrs)
+        else:
+            return NotImplemented
 
 
 class TestSubclassing:
