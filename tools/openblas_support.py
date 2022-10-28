@@ -197,7 +197,7 @@ def make_init(dirname):
     '''
     Create a _distributor_init.py file for OpenBlas
     '''
-    with open(os.path.join(dirname, '_distributor_init.py'), 'wt') as fid:
+    with open(os.path.join(dirname, '_distributor_init.py'), 'w') as fid:
         fid.write(textwrap.dedent("""
             '''
             Helper to preload windows dlls to prevent dll not found errors.

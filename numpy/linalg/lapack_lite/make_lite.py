@@ -253,7 +253,7 @@ def dumpRoutineNames(library, output_dir):
 def concatenateRoutines(routines, output_file):
     with open(output_file, 'w') as output_fo:
         for r in routines:
-            with open(r.filename, 'r') as fo:
+            with open(r.filename) as fo:
                 source = fo.read()
             output_fo.write(source)
 
@@ -296,7 +296,7 @@ def create_name_header(output_dir):
         if not fn.endswith('.f'):
             continue
 
-        with open(fn, 'r') as f:
+        with open(fn) as f:
             for line in f:
                 m = routine_re.match(line)
                 if m:
@@ -304,7 +304,7 @@ def create_name_header(output_dir):
 
     # f2c symbols
     f2c_symbols = set()
-    with open('f2c.h', 'r') as f:
+    with open('f2c.h') as f:
         for line in f:
             m = extern_re.match(line)
             if m:

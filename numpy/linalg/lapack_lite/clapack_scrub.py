@@ -297,7 +297,7 @@ def scrubSource(source, nsteps=None, verbose=False):
 if __name__ == '__main__':
     filename = sys.argv[1]
     outfilename = os.path.join(sys.argv[2], os.path.basename(filename))
-    with open(filename, 'r') as fo:
+    with open(filename) as fo:
         source = fo.read()
 
     if len(sys.argv) > 3:

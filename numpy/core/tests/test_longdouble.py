@@ -142,7 +142,7 @@ class TestFileBased:
 
     def test_fromfile_bogus(self):
         with temppath() as path:
-            with open(path, 'wt') as f:
+            with open(path, 'w') as f:
                 f.write("1. 2. 3. flop 4.\n")
 
             with assert_warns(DeprecationWarning):
@@ -153,7 +153,7 @@ class TestFileBased:
         for ctype in ["complex", "cdouble", "cfloat"]:
             # Check spacing between separator and only real component specified
             with temppath() as path:
-                with open(path, 'wt') as f:
+                with open(path, 'w') as f:
                     f.write("1, 2 ,  3  ,4\n")
 
                 res = np.fromfile(path, dtype=ctype, sep=",")
@@ -161,7 +161,7 @@ class TestFileBased:
 
             # Real component not specified
             with temppath() as path:
-                with open(path, 'wt') as f:
+                with open(path, 'w') as f:
                     f.write("1j, -2j,  3j, 4e1j\n")
 
                 res = np.fromfile(path, dtype=ctype, sep=",")
@@ -169,7 +169,7 @@ class TestFileBased:
 
             # Both components specified
             with temppath() as path:
-                with open(path, 'wt') as f:
+                with open(path, 'w') as f:
                     f.write("1+1j,2-2j, -3+3j,  -4e1+4j\n")
 
                 res = np.fromfile(path, dtype=ctype, sep=",")
@@ -177,7 +177,7 @@ class TestFileBased:
 
             # Spaces at wrong places
             with temppath() as path:
-                with open(path, 'wt') as f:
+                with open(path, 'w') as f:
                     f.write("1+2 j,3\n")
 
                 with assert_warns(DeprecationWarning):
@@ -186,7 +186,7 @@ class TestFileBased:
 
             # Spaces at wrong places
             with temppath() as path:
-                with open(path, 'wt') as f:
+                with open(path, 'w') as f:
                     f.write("1+ 2j,3\n")
 
                 with assert_warns(DeprecationWarning):
@@ -195,7 +195,7 @@ class TestFileBased:
 
             # Spaces at wrong places
             with temppath() as path:
-                with open(path, 'wt') as f:
+                with open(path, 'w') as f:
                     f.write("1 +2j,3\n")
 
                 with assert_warns(DeprecationWarning):
@@ -204,7 +204,7 @@ class TestFileBased:
 
             # Spaces at wrong places
             with temppath() as path:
-                with open(path, 'wt') as f:
+                with open(path, 'w') as f:
                     f.write("1+j\n")
 
                 with assert_warns(DeprecationWarning):
@@ -213,7 +213,7 @@ class TestFileBased:
 
             # Spaces at wrong places
             with temppath() as path:
-                with open(path, 'wt') as f:
+                with open(path, 'w') as f:
                     f.write("1+\n")
 
                 with assert_warns(DeprecationWarning):
@@ -222,7 +222,7 @@ class TestFileBased:
 
             # Spaces at wrong places
             with temppath() as path:
-                with open(path, 'wt') as f:
+                with open(path, 'w') as f:
                     f.write("1j+1\n")
 
                 with assert_warns(DeprecationWarning):
@@ -235,7 +235,7 @@ class TestFileBased:
                         reason="Need strtold_l")
     def test_fromfile(self):
         with temppath() as path:
-            with open(path, 'wt') as f:
+            with open(path, 'w') as f:
                 f.write(self.out)
             res = np.fromfile(path, dtype=np.longdouble, sep="\n")
         assert_equal(res, self.tgt)
@@ -244,7 +244,7 @@ class TestFileBased:
                         reason="Need strtold_l")
     def test_genfromtxt(self):
         with temppath() as path:
-            with open(path, 'wt') as f:
+            with open(path, 'w') as f:
                 f.write(self.out)
             res = np.genfromtxt(path, dtype=np.longdouble)
         assert_equal(res, self.tgt)
@@ -253,7 +253,7 @@ class TestFileBased:
                         reason="Need strtold_l")
     def test_loadtxt(self):
         with temppath() as path:
-            with open(path, 'wt') as f:
+            with open(path, 'w') as f:
                 f.write(self.out)
             res = np.loadtxt(path, dtype=np.longdouble)
         assert_equal(res, self.tgt)

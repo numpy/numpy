@@ -634,12 +634,12 @@ class build_ext (old_build_ext):
                 if os.path.isfile(fake_lib):
                     # Replace fake static library
                     libraries.remove(lib)
-                    with open(fake_lib, 'r') as f:
+                    with open(fake_lib) as f:
                         unlinkable_fobjects.extend(f.read().splitlines())
 
                     # Expand C objects
                     c_lib = os.path.join(libdir, lib + '.cobjects')
-                    with open(c_lib, 'r') as f:
+                    with open(c_lib) as f:
                         objects.extend(f.read().splitlines())
 
         # Wrap unlinkable objects to a linkable one
