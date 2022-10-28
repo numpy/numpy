@@ -6,9 +6,11 @@ on:
   push:
     branches:
       - main
+      - maintenance/**
   pull_request:
     branches:
       - main
+      - maintenance/**
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
