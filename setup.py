@@ -444,7 +444,7 @@ def setup_package():
             "Documentation": get_docs_url(),
             "Source Code": "https://github.com/numpy/numpy",
         },
-        license='BSD',
+        license='BSD-3-Clause',
         classifiers=[_f for _f in CLASSIFIERS.split('\n') if _f],
         platforms=["Windows", "Linux", "Solaris", "Mac OS-X", "Unix"],
         test_suite='pytest',
