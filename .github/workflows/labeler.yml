@@ -3,8 +3,14 @@ on:
   pull_request_target:
     types: [opened, synchronize, reopened, edited]
 
+permissions: {}
+
 jobs:
   pr-labeler:
+    permissions:
+      contents: read  #  to read a configuration file
+      pull-requests: write  #  to add labels to pull requests
+
     runs-on: ubuntu-latest
     steps:
     - name: Label the PR
