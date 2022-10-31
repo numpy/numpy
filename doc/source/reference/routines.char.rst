@@ -6,8 +6,14 @@ String operations
 .. module:: numpy.char
 
 The `numpy.char` module provides a set of vectorized string
-operations for arrays of type `numpy.str_` or `numpy.bytes_`.
-All of them are based on the string methods in the Python standard library.
+operations for arrays of type `numpy.str_` or `numpy.bytes_`. For example
+
+      >>> np.char.capitalize(["python", "numpy"])
+      array(['Python', 'Numpy'], dtype='<U6')
+      >>> np.char.add(["num", "doc"], ["py", "umentation"])
+      array(['numpy', 'documentation'], dtype='<U13')
+
+The methods in this module are based on the methods in :py:mod:`String`
 
 String operations
 -----------------
