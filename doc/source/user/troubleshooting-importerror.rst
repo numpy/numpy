@@ -181,5 +181,5 @@ However, while you wait for a solution, a work around
 that usually works is to upgrade the NumPy version:
 
 
-    pip install numpy --upgrade
+    ``pip install numpy --upgrade``
 
