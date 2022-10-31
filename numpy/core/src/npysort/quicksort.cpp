@@ -207,6 +207,21 @@ struct x86_dispatch<npy::float_tag> {
 #endif
 
 template <>
+struct x86_dispatch<npy::half_tag> {
+    static bool quicksort(npy_half *start, npy_intp num)
+    {
+        void (*dispfunc)(void *, npy_intp) = nullptr;
+        NPY_CPU_DISPATCH_CALL_XB(dispfunc = x86_quicksort_half);
+        if (dispfunc) {
+            (*dispfunc)(start, num);
+            return true;
+        }
+        return false;
+    }
+};
+
+
+template <>
 struct x86_dispatch<npy::short_tag> {
     static bool quicksort(npy_short *start, npy_intp num)
     {

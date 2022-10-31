@@ -592,8 +592,9 @@ NPY_FINLINE void sort_128_32bit(type_t *arr, int32_t N)
 }
 
 template <typename vtype, typename type_t>
-NPY_FINLINE type_t
-get_pivot_32bit(type_t *arr, const int64_t left, const int64_t right)
+NPY_FINLINE type_t get_pivot_32bit(type_t *arr,
+                                   const int64_t left,
+                                   const int64_t right)
 {
     // median of 16
     int64_t size = (right - left) / 16;
