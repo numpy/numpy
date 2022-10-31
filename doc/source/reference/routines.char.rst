@@ -8,8 +8,8 @@ String operations
 The `numpy.char` module provides a set of vectorized string
 operations for arrays of type `numpy.str_` or `numpy.bytes_`. For example
 
-      >>> np.char.capitalize("numpy")
-      array('Numpy', dtype='<U5')
+      >>> np.char.capitalize(["python", "numpy"])
+      array(['Python', 'Numpy'], dtype='<U6')
       >>> np.char.add(["num", "doc"], ["py", "umentation"])
       array(['numpy', 'documentation'], dtype='<U13')
 
