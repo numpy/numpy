@@ -25,6 +25,7 @@ installation with::
 DOCLINES = (__doc__ or '').split("\n")
 
 import os
+from pathlib import Path
 import sys
 import subprocess
 import textwrap
@@ -435,7 +436,8 @@ def setup_package():
         maintainer="NumPy Developers",
         maintainer_email="numpy-discussion@python.org",
         description=DOCLINES[0],
-        long_description="\n".join(DOCLINES[2:]),
+        long_description= Path("README.md").read_text(encoding="utf-8"),
+        long_description_content_type="text/markdown",
         url="https://www.numpy.org",
         author="Travis E. Oliphant et al.",
         download_url="https://pypi.python.org/pypi/numpy",

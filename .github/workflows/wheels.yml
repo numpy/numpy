@@ -184,6 +184,12 @@ jobs:
           pip install -r test_requirements.txt
           cd .. # Can't import numpy within numpy src directory
           python -c "import numpy; print(numpy.__version__); numpy.test();"
+
+      - name: Check README rendering for PyPI
+        run: |
+          python -mpip install twine
+          twine check dist/*
+
       - uses: actions/upload-artifact@v3
         with:
           name: sdist
