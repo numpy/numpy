@@ -98,7 +98,7 @@ more important than the casting change itself.
     * ``with np._no_nep50_warning():`` allows to suppress warnings when
       ``weak_and_warn`` promotion is used.  (Thread and context safe.)
 
-    At this time overflow warnings on integer power missing.
+    At this time overflow warnings on integer power are missing.
     Further, ``np.can_cast`` fails to give warnings in the
     ``weak_and_warn`` mode.  Its behavior with respect to Python scalar input
     may still be in flux (this should affect very few users).
