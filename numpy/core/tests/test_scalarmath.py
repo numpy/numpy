@@ -923,6 +923,8 @@ def test_scalar_unsigned_integer_overflow(dtype):
     with pytest.warns(RuntimeWarning, match="overflow encountered"):
         -val
 
+    zero = np.dtype(dtype).type(0)
+    -zero  # does not warn
 
 @pytest.mark.parametrize("dtype", np.typecodes["AllInteger"])
 @pytest.mark.parametrize("operation", [
