@@ -1687,7 +1687,7 @@ add_newdoc('numpy.core.multiarray', 'correlate',
 
 add_newdoc('numpy.core.multiarray', 'arange',
     """
-    arange([start,] stop[, step,], dtype=None, *, like=None)
+    arange([start,] stop[, step,], dtype=None, *, like=None, out=None)
 
     Return evenly spaced values within a given interval.
 
@@ -1731,6 +1731,12 @@ add_newdoc('numpy.core.multiarray', 'arange',
     ${ARRAY_FUNCTION_LIKE}
 
         .. versionadded:: 1.20.0
+
+    out : ndarray, optional
+        If provided, fill this array instead of returning a new one.
+        Can not be be used together with `dtype` or `like`.
+
+        .. versionadded:: 1.23.5
 
     Returns
     -------

@@ -3070,6 +3070,7 @@ array_arange(PyObject *NPY_UNUSED(ignored),
     PyObject *o_start = NULL, *o_stop = NULL, *o_step = NULL, *range=NULL;
     PyArray_Descr *typecode = NULL;
     PyObject *like = Py_None;
+    PyObject *out = Py_None;
     NPY_PREPARE_ARGPARSER;
 
     if (npy_parse_arguments("arange", args, len_args, kwnames,
@@ -3078,10 +3079,26 @@ array_arange(PyObject *NPY_UNUSED(ignored),
             "|step", NULL, &o_step,
             "|dtype", &PyArray_DescrConverter2, &typecode,
             "$like", NULL, &like,
+            "$out", NULL, &out,
             NULL, NULL, NULL) < 0) {
         Py_XDECREF(typecode);
         return NULL;
     }
+
+    if ((like != Py_None || typecode != NULL) && out != Py_None) {
+        PyErr_SetString(PyExc_TypeError,
+            "arange() only takes `out` or `like` or `dtype` as arguments, "
+            "but multiple were specified."
+        );
+        goto fail;
+    }
+
+    if(out != Py_None && PyArray_NDIM((PyArrayObject *)out) != 1) {
+        PyErr_SetString(PyExc_TypeError,
+            "arange() can only take an `out` parameter of ndim=1."
+        );
+    }
+
     if (like != Py_None) {
         PyObject *deferred = array_implement_c_array_function_creation(
                 "arange", like, NULL, NULL, args, len_args, kwnames);
@@ -3095,8 +3112,7 @@ array_arange(PyObject *NPY_UNUSED(ignored),
         if (len_args == 0){
             PyErr_SetString(PyExc_TypeError,
                 "arange() requires stop to be specified.");
-            Py_XDECREF(typecode);
-            return NULL;
+            goto fail;
         }
     }
     else if (o_start == NULL) {
@@ -3104,10 +3120,18 @@ array_arange(PyObject *NPY_UNUSED(ignored),
         o_stop = NULL;
     }
 
-    range = PyArray_ArangeObj(o_start, o_stop, o_step, typecode);
+    range = PyArray_ArangeObj(o_start, o_stop, o_step, out, typecode);
+    if(out == range) {
+        Py_INCREF(out);
+    }
+
     Py_XDECREF(typecode);
 
     return range;
+
+ fail:
+    Py_XDECREF(typecode);
+    return NULL;
 }
 
 /*NUMPY_API

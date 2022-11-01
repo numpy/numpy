@@ -381,6 +381,25 @@ class TestLinspace:
             assert_equal(linspace(0, j, j+1, dtype=int),
                          arange(j+1, dtype=int))
 
+    def test_arange_out(self):
+        for j in range(1000):
+            out = array([0] * j, dtype=int)
+            returned = arange(0, j)
+            arange(0, j, out=out)
+            assert_equal(out, returned)
+
+    def test_arange_wrong_arguments(self):
+        out = array([0, 0, 0, 0], dtype=int)
+
+        # wrong length
+        assert_raises(ValueError, arange, 0, len(out) + 1, out=out)
+        # wrong dimensionality
+        assert_raises(TypeError, arange, 0, len(out), out=out[None, ...])
+        # both dtype and out
+        assert_raises(TypeError, arange, 0, len(out), dtype=out.dtype, out=out)
+        # both like and out
+        assert_raises(TypeError, arange, 0, len(out), like=out, out=out)
+
     def test_retstep(self):
         for num in [0, 1, 2]:
             for ept in [False, True]:

@@ -363,7 +363,7 @@ is_any_numpy_datetime_or_timedelta(PyObject *obj);
  */
 NPY_NO_EXPORT PyArrayObject *
 datetime_arange(PyObject *start, PyObject *stop, PyObject *step,
-                PyArray_Descr *dtype);
+                PyObject *out, PyArray_Descr *dtype);
 
 /*
  * Examines all the objects in the given Python object by

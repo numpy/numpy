@@ -1,0 +1,6 @@
+``out=`` argument for ``np.arange``
+-----------------------------------
+
+``np.arange`` now has an ``out=`` argument allowing for an existing
+array to be specified which will be filled by the function.
+If the array is of incompatible size, a `ValueError` will be raised.

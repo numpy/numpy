@@ -3254,7 +3254,7 @@ convert_pyobjects_to_datetimes(int count,
 
 NPY_NO_EXPORT PyArrayObject *
 datetime_arange(PyObject *start, PyObject *stop, PyObject *step,
-                PyArray_Descr *dtype)
+                PyObject *out, PyArray_Descr *dtype)
 {
 
     /*
@@ -3283,6 +3283,10 @@ datetime_arange(PyObject *start, PyObject *stop, PyObject *step,
         PyErr_SetString(PyExc_ValueError,
                     "cannot use a datetime as a step in arange");
         return NULL;
+    }
+
+    if(out != Py_None) {
+        dtype = PyArray_DESCR((PyArrayObject *)out);
     }
 
     /* Check if the units of the given dtype are generic, in which
@@ -3415,7 +3419,7 @@ datetime_arange(PyObject *start, PyObject *stop, PyObject *step,
     }
 
     /* Create the dtype of the result */
-    if (dtype != NULL) {
+    if (dtype != NULL && out != Py_None) {
         Py_INCREF(dtype);
     }
     else {
@@ -3426,9 +3430,15 @@ datetime_arange(PyObject *start, PyObject *stop, PyObject *step,
     }
 
     /* Create the result array */
-    PyArrayObject *ret = (PyArrayObject *)PyArray_NewFromDescr(
+    PyArrayObject *ret = NULL;
+
+    if(out == Py_None) {
+        ret = (PyArrayObject *)PyArray_NewFromDescr(
             &PyArray_Type, dtype, 1, &length, NULL,
             NULL, 0, NULL);
+    } else {
+        ret = (PyArrayObject *)out;
+    }
 
     if (ret == NULL) {
         return NULL;

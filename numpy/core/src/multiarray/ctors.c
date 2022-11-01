@@ -3243,7 +3243,7 @@ _calc_length(PyObject *start, PyObject *stop, PyObject *step, PyObject **next, i
  * this doesn't change the references
  */
 NPY_NO_EXPORT PyObject *
-PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr *dtype)
+PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyObject *out, PyArray_Descr *dtype)
 {
     PyArrayObject *range = NULL;
     PyArray_ArrFuncs *funcs;
@@ -3253,13 +3253,17 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
     int swap;
     NPY_BEGIN_THREADS_DEF;
 
+    if(out != Py_None) {
+        dtype = PyArray_DESCR((PyArrayObject *)out);
+    }
+
     /* Datetime arange is handled specially */
     if ((dtype != NULL && (dtype->type_num == NPY_DATETIME ||
                            dtype->type_num == NPY_TIMEDELTA)) ||
             (dtype == NULL && (is_any_numpy_datetime_or_timedelta(start) ||
                               is_any_numpy_datetime_or_timedelta(stop) ||
                               is_any_numpy_datetime_or_timedelta(step)))) {
-        return (PyObject *)datetime_arange(start, stop, step, dtype);
+        return (PyObject *)datetime_arange(start, stop, step, out, dtype);
     }
 
     /* We need to replace many of these, so hold on for easier cleanup */
@@ -3343,8 +3347,22 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
         length = 0;
     }
 
+    if (out != Py_None) {
+        if (length != PyArray_DIMS((PyArrayObject *)out)[0]) {
+            PyErr_SetString(PyExc_ValueError, "`out` passed but shape "
+                "does not match required length.");
+            goto fail;
+        }
+    }
+
     Py_INCREF(native);
-    range = (PyArrayObject *)PyArray_SimpleNewFromDescr(1, &length, native);
+
+    if(out != Py_None) {
+        range = (PyArrayObject *)out;
+    } else {
+        range = (PyArrayObject *)PyArray_SimpleNewFromDescr(1, &length, native);
+    }
+
     if (range == NULL) {
         goto fail;
     }

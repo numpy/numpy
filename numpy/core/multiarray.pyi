@@ -802,6 +802,14 @@ def arange(
     *,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
+@overload
+def arange(
+    start: Any,
+    stop: Any,
+    step: Any = ...,
+    *,
+    out: _ArrayType = ...,
+) -> _ArrayType: ...
 
 def datetime_data(
     dtype: str | _DTypeLike[datetime64] | _DTypeLike[timedelta64], /,
