@@ -149,9 +149,7 @@ PyArray_CopyInitialReduceValues(
  * context     : The ArrayMethod context (with ufunc, method, and descriptors).
  * operand     : The array to be reduced.
  * out         : NULL, or the array into which to place the result.
- * wheremask   : NOT YET SUPPORTED, but this parameter is placed here
- *               so that support can be added in the future without breaking
- *               API compatibility. Pass in NULL.
+ * wheremask   : Reduction mask of valid values used for `where=`.
  * axis_flags  : Flags indicating the reduction axes of 'operand'.
  * keepdims    : If true, leaves the reduction dimensions in the result
  *               with size one.
@@ -160,7 +158,6 @@ PyArray_CopyInitialReduceValues(
  * initial     : Initial value, if NULL the default is fetched from the
  *               ArrayMethod (typically as the default from the ufunc).
  * loop        : `reduce_loop` from `ufunc_object.c`.  TODO: Refactor
- * data        : Data which is passed to the inner loop.
  * buffersize  : Buffer size for the iterator. For the default, pass in 0.
  * funcname    : The name of the reduction function, for error messages.
  * errormask   : forwarded from _get_bufsize_errmask

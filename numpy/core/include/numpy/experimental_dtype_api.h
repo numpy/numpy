@@ -342,8 +342,9 @@ typedef enum {
  * If an identity exists, should set the `NPY_METH_ITEM_IS_IDENTITY`, normally
  * the `NPY_METH_ITEM_IS_DEFAULT` should also be set, but it is distinct.
  * By default NumPy provides a "default" for `object` dtype, but does not use
- * it as an identity.
- * The `NPY_METH_IS_REORDERABLE` flag should be set if the operatio is
+ * it as an identity (this is e.g. to allows reducing even Python strings
+ * for `np.sum()` while the empty sum returns 0).
+ * The `NPY_METH_IS_REORDERABLE` flag should be set if the operation is
  * reorderable.
  *
  * NOTE: `item` can be `NULL` when a user passed a custom initial value, in

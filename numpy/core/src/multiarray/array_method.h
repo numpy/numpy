@@ -221,12 +221,12 @@ typedef struct PyArrayMethodObject_tag {
     NPY_ARRAYMETHOD_FLAGS flags;
     resolve_descriptors_function *resolve_descriptors;
     get_loop_function *get_strided_loop;
+    get_identity_function  *get_identity;
     /* Typical loop functions (contiguous ones are used in current casts) */
     PyArrayMethod_StridedLoop *strided_loop;
     PyArrayMethod_StridedLoop *contiguous_loop;
     PyArrayMethod_StridedLoop *unaligned_strided_loop;
     PyArrayMethod_StridedLoop *unaligned_contiguous_loop;
-    get_identity_function  *get_identity;
     /* Chunk only used for wrapping array method defined in umath */
     struct PyArrayMethodObject_tag *wrapped_meth;
     PyArray_DTypeMeta **wrapped_dtypes;
@@ -263,10 +263,10 @@ extern NPY_NO_EXPORT PyTypeObject PyBoundArrayMethod_Type;
 #define NPY_METH_resolve_descriptors 1
 #define NPY_METH_get_loop 2
 #define NPY_METH_strided_loop 3
-#define NPY_METH_contiguous_loop 4
-#define NPY_METH_unaligned_strided_loop 5
-#define NPY_METH_unaligned_contiguous_loop 6
-#define NPY_METH_get_identity 7
+#define NPY_METH_get_identity 4
+#define NPY_METH_contiguous_loop 5
+#define NPY_METH_unaligned_strided_loop 6
+#define NPY_METH_unaligned_contiguous_loop 7
 
 
 /*
