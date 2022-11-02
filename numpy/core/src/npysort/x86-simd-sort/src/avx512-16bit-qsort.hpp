@@ -703,7 +703,7 @@ void avx512_qsort_fp16(uint16_t *arr, int64_t arrsize)
     if (arrsize > 1) {
         int64_t nan_count = replace_nan_with_inf(arr, arrsize);
         qsort_16bit_<vector<float16>, uint16_t>(
-                arr, 0, arrsize - 1, 2 * (63 - __builtin_clzll(arrsize)));
+                arr, 0, arrsize - 1, 2 * (int64_t)log2(arrsize));
         replace_inf_with_nan(arr, arrsize, nan_count);
     }
 }
