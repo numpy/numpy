@@ -2,7 +2,7 @@
 Support code for building Python extensions on Windows.
 
     # NT stuff
-    # 1. Make sure libpython<version>.a exists for gcc.  If not, build it.
+    # 1. Make sure libpython<version>.a exists for gcc. If not, build it.
     # 2. Force windows to use gcc (we're struggling with MSVC and g77 support)
     # 3. Force windows to use g77
 
@@ -18,7 +18,7 @@ import textwrap
 import numpy.distutils.ccompiler  # noqa: F401
 from numpy.distutils import log
 # NT stuff
-# 1. Make sure libpython<version>.a exists for gcc.  If not, build it.
+# 1. Make sure libpython<version>.a exists for gcc. If not, build it.
 # 2. Force windows to use gcc (we're struggling with MSVC and g77 support)
 #    --> this is done in numpy/distutils/ccompiler.py
 # 3. Force windows to use g77
@@ -209,13 +209,13 @@ def find_python_dll():
     elif implementation == 'PyPy':
         dllname = f'libpypy{major_version}-c.dll'
     else:
-        dllname = f'Unknown platform {implementation}' 
+        dllname = f'Unknown platform {implementation}'
     print("Looking for %s" % dllname)
     for folder in lib_dirs:
         dll = os.path.join(folder, dllname)
         if os.path.exists(dll):
             return dll
- 
+
     raise ValueError("%s not found in %s" % (dllname, lib_dirs))
 
 def dump_table(dll):

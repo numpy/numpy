@@ -110,7 +110,7 @@ class TestMRecords:
                               dtype=bool))
         # Set a field to mask ........................
         mbase.c = masked
-        # Use to be mask, and now it's still mask !
+        # Use to be mask, and now it's still mask!
         assert_equal(mbase.c.mask, [1]*5)
         assert_equal(mbase.c.recordmask, [1]*5)
         assert_equal(ma.getmaskarray(mbase['c']), [1]*5)

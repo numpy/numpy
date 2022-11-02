@@ -133,8 +133,8 @@ class GnuFCompiler(FCompiler):
             opt.append("-shared")
         if sys.platform.startswith('sunos'):
             # SunOS often has dynamically loaded symbols defined in the
-            # static library libg2c.a  The linker doesn't like this.  To
-            # ignore the problem, use the -mimpure-text flag.  It isn't
+            # static library libg2c.a  The linker doesn't like this. To
+            # ignore the problem, use the -mimpure-text flag. It isn't
             # the safest thing, but seems to work. 'man gcc' says:
             # ".. Instead of using -mimpure-text, you should compile all
             #  source code with -fpic or -fPIC."
