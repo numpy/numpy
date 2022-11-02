@@ -14,12 +14,15 @@
 static void
 array_dlpack_deleter(DLManagedTensor *self)
 {
-    // Leak the pyobj if not initialized.  This can happen if we are running
-    // exit handlers that are destructing c++ objects with residual (owned)
-    // PyObjects stored in them after the Python runtime has already been
-    // terminated.
-    if (!Py_IsInitialized())
+    /*
+     * Leak the pyobj if not initialized.  This can happen if we are running
+     * exit handlers that are destructing c++ objects with residual (owned)
+     * PyObjects stored in them after the Python runtime has already been
+     * terminated.
+     */
+    if (!Py_IsInitialized()) {
         return;
+    }
 
     PyGILState_STATE state = PyGILState_Ensure();
 
