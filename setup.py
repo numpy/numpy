@@ -1,30 +1,11 @@
 #!/usr/bin/env python3
-""" NumPy is the fundamental package for array computing with Python.
-
-It provides:
-
-- a powerful N-dimensional array object
-- sophisticated (broadcasting) functions
-- tools for integrating C/C++ and Fortran code
-- useful linear algebra, Fourier transform, and random number capabilities
-- and much more
-
-Besides its obvious scientific uses, NumPy can also be used as an efficient
-multi-dimensional container of generic data. Arbitrary data-types can be
-defined. This allows NumPy to seamlessly and speedily integrate with a wide
-variety of databases.
-
-All NumPy wheels distributed on PyPI are BSD licensed.
-
-NumPy requires ``pytest`` and ``hypothesis``.  Tests can then be run after
-installation with::
-
-    python -c 'import numpy; numpy.test()'
-
 """
-DOCLINES = (__doc__ or '').split("\n")
+Numpy build options can be modified with a site.cfg file. 
+See site.cfg.example for a template and more information.
+"""
 
 import os
+from pathlib import Path
 import sys
 import subprocess
 import textwrap
@@ -434,8 +415,9 @@ def setup_package():
         name='numpy',
         maintainer="NumPy Developers",
         maintainer_email="numpy-discussion@python.org",
-        description=DOCLINES[0],
-        long_description="\n".join(DOCLINES[2:]),
+        description="Fundamental package for array computing in Python",
+        long_description=Path("README.md").read_text(encoding="utf-8"),
+        long_description_content_type="text/markdown",
         url="https://www.numpy.org",
         author="Travis E. Oliphant et al.",
         download_url="https://pypi.python.org/pypi/numpy",
