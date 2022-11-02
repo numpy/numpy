@@ -29,7 +29,7 @@ class install(old_install):
         """
         from distutils.command.install import install as distutils_install
 
-        # Explicit request for old-style install?  Just do it
+        # Explicit request for old-style install? Just do it
         if self.old_and_unmanageable or self.single_version_externally_managed:
             return distutils_install.run(self)
 

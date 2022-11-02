@@ -277,7 +277,7 @@ def dtype_to_descr(dtype):
                       "raise if saved when read. Use another form of storage.",
                       UserWarning, stacklevel=2)
     if dtype.names is not None:
-        # This is a record array. The .descr is fine.  XXX: parts of the
+        # This is a record array. The .descr is fine. XXX: parts of the
         # record array with an empty name, like padding bytes, still get
         # fiddled with. This needs to be fixed in the C implementation of
         # dtype().
@@ -437,15 +437,15 @@ def _write_array_header(fp, d, version=None):
         header.append("'%s': %s, " % (key, repr(value)))
     header.append("}")
     header = "".join(header)
-    
+
     # Add some spare space so that the array header can be modified in-place
     # when changing the array size, e.g. when growing it by appending data at
-    # the end. 
+    # the end.
     shape = d['shape']
     header += " " * ((GROWTH_AXIS_MAX_DIGITS - len(repr(
         shape[-1 if d['fortran_order'] else 0]
     ))) if len(shape) > 0 else 0)
-    
+
     if version is None:
         header = _wrap_header_guess_version(header)
     else:
@@ -953,7 +953,7 @@ def _read_bytes(fp, size, error_template="ran out of data"):
     while True:
         # io files (default in python3) return None or raise on
         # would-block, python2 file will truncate, probably nothing can be
-        # done about that.  note that regular files can't be non-blocking
+        # done about that. Note that regular files can't be non-blocking
         try:
             r = fp.read(size - len(data))
             data += r
