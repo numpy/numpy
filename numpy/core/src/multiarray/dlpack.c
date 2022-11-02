@@ -14,10 +14,24 @@
 static void
 array_dlpack_deleter(DLManagedTensor *self)
 {
+    /*
+     * Leak the pyobj if not initialized.  This can happen if we are running
+     * exit handlers that are destructing c++ objects with residual (owned)
+     * PyObjects stored in them after the Python runtime has already been
+     * terminated.
+     */
+    if (!Py_IsInitialized()) {
+        return;
+    }
+
+    PyGILState_STATE state = PyGILState_Ensure();
+
     PyArrayObject *array = (PyArrayObject *)self->manager_ctx;
     // This will also free the shape and strides as it's one allocation.
     PyMem_Free(self);
     Py_XDECREF(array);
+
+    PyGILState_Release(state);
 }
 
 /* This is exactly as mandated by dlpack */
