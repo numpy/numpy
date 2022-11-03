@@ -59,6 +59,10 @@ steps:
         $env:LDFLAGS = "-m32"
         $env:PATH = "C:\\ProgramData\\chocolatey\\lib\\mingw\\tools\\install\\mingw$(BITS)\\bin;" + $env:PATH
     }
+    Else
+    {
+        $env:LDFLAGS = "-lucrt"
+    }
     If ( Test-Path env:NPY_USE_BLAS_ILP64 ) {
         $env:OPENBLAS64_ = "openblas"
     } else {
