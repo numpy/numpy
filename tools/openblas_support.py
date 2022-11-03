@@ -13,8 +13,8 @@ from tempfile import mkstemp, gettempdir
 from urllib.request import urlopen, Request
 from urllib.error import HTTPError
 
-OPENBLAS_V = '0.3.20'
-OPENBLAS_LONG = 'v0.3.20'
+OPENBLAS_V = '0.3.21'
+OPENBLAS_LONG = 'v0.3.21'
 BASE_LOC = 'https://anaconda.org/multibuild-wheels-staging/openblas-libs'
 BASEURL = f'{BASE_LOC}/{OPENBLAS_LONG}/download'
 SUPPORTED_PLATFORMS = [
@@ -54,13 +54,10 @@ def get_ilp64():
 
 
 def get_manylinux(arch):
-    if arch in ('x86_64', 'i686'):
-        default = '2010'
-    else:
-        default = '2014'
+    default = '2014'
     ret = os.environ.get("MB_ML_VER", default)
     # XXX For PEP 600 this can be a glibc version
-    assert ret in ('1', '2010', '2014', '_2_24'), f'invalid MB_ML_VER {ret}'
+    assert ret in ('2010', '2014', '_2_24'), f'invalid MB_ML_VER {ret}'
     return ret
 
 
@@ -84,9 +81,9 @@ def download_openblas(target, plat, ilp64):
         typ = 'tar.gz'
     elif osname == 'win':
         if plat == "win-32":
-            suffix = 'win32-gcc_8_1_0.zip'
+            suffix = 'win32-gcc_8_3_0.zip'
         else:
-            suffix = 'win_amd64-gcc_8_1_0.zip'
+            suffix = 'win_amd64-gcc_10_3_0.zip'
         typ = 'zip'
 
     if not suffix:
@@ -102,11 +99,11 @@ def download_openblas(target, plat, ilp64):
     if response.status != 200:
         print(f'Could not download "{filename}"', file=sys.stderr)
         return None
-    print(f"Downloading {length} from {filename}", file=sys.stderr)
+    # print(f"Downloading {length} from {filename}", file=sys.stderr)
     data = response.read()
     # Verify hash
     key = os.path.basename(filename)
-    print("Saving to file", file=sys.stderr)
+    # print("Saving to file", file=sys.stderr)
     with open(target, 'wb') as fid:
         fid.write(data)
     return typ
@@ -235,7 +232,8 @@ def make_init(dirname):
 
 def test_setup(plats):
     '''
-    Make sure all the downloadable files exist and can be opened
+    Make sure all the downloadable files needed for wheel building
+    exist and can be opened
     '''
     def items():
         """ yields all combinations of arch, ilp64
@@ -243,19 +241,8 @@ def test_setup(plats):
         for plat in plats:
             yield plat, None
             osname, arch = plat.split("-")
-            if arch not in ('i686', 'arm64', '32'):
+            if arch not in ('i686', '32'):
                 yield plat, '64_'
-            if osname == "linux" and arch in ('i686', 'x86_64'):
-                oldval = os.environ.get('MB_ML_VER', None)
-                os.environ['MB_ML_VER'] = '1'
-                yield plat, None
-                # Once we create x86_64 and i686 manylinux2014 wheels...
-                # os.environ['MB_ML_VER'] = '2014'
-                # yield arch, None, False
-                if oldval:
-                    os.environ['MB_ML_VER'] = oldval
-                else:
-                    os.environ.pop('MB_ML_VER')
 
     errs = []
     for plat, ilp64 in items():
@@ -273,7 +260,7 @@ def test_setup(plats):
                 continue
             if not target:
                 raise RuntimeError(f'Could not setup {plat}')
-            print(target)
+            print('success with', plat, ilp64)
             if osname == 'win':
                 if not target.endswith('.a'):
                     raise RuntimeError("Not .a extracted!")
