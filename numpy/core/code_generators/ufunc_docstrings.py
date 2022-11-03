@@ -545,7 +545,7 @@ add_newdoc('numpy.core.umath', 'arctanh',
     -----
     `arctanh` is a multivalued function: for each `x` there are infinitely
     many numbers `z` such that ``tanh(z) = x``. The convention is to return
-    the `z` whose imaginary part lies in `[-pi/2, pi/2]`.
+    the `z` whose imaginary part lies in `[-1, 1]`.
 
     For real-valued input data types, `arctanh` always returns real output.
     For each value that cannot be expressed as a real number or infinity,
