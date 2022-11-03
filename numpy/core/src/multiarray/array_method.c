@@ -176,7 +176,7 @@ PyUFunc_GetIdentity(PyUFuncObject *ufunc, npy_bool *reorderable);
  */
 static int
 default_get_identity_function(PyArrayMethod_Context *context,
-        char *item, NPY_ARRAYMETHOD_IDENTITY_FLAGS *flags)
+        char *initial, NPY_ARRAYMETHOD_REDUCTION_FLAGS *flags)
 {
     *flags = 0;
 
@@ -202,7 +202,7 @@ default_get_identity_function(PyArrayMethod_Context *context,
         *flags |= NPY_METH_IS_REORDERABLE;
     }
 
-    if (item == NULL || identity_obj == Py_None) {
+    if (initial == NULL || identity_obj == Py_None) {
         /*
          * Only reorderable flag was requested (user provided initial value)
          * or there is no identity/default value to report.
@@ -212,11 +212,11 @@ default_get_identity_function(PyArrayMethod_Context *context,
     }
 
     /* Report the default value and identity unless object dtype */
-    *flags |= NPY_METH_ITEM_IS_DEFAULT;
+    *flags |= NPY_METH_INITIAL_IS_DEFAULT;
     if (context->descriptors[0]->type_num != NPY_OBJECT) {
-        *flags |= NPY_METH_ITEM_IS_IDENTITY;
+        *flags |= NPY_METH_INITIAL_IS_IDENTITY;
     }
-    int res = PyArray_Pack(context->descriptors[0], item, identity_obj);
+    int res = PyArray_Pack(context->descriptors[0], initial, identity_obj);
     Py_DECREF(identity_obj);
     return res;
 }
@@ -307,7 +307,7 @@ fill_arraymethod_from_slots(
     /* Set the defaults */
     meth->get_strided_loop = &npy_default_get_strided_loop;
     meth->resolve_descriptors = &default_resolve_descriptors;
-    meth->get_identity = &default_get_identity_function;
+    meth->get_reduction_initial = &default_get_identity_function;
 
     /* Fill in the slots passed by the user */
     /*
@@ -344,8 +344,8 @@ fill_arraymethod_from_slots(
             case NPY_METH_unaligned_contiguous_loop:
                 meth->unaligned_contiguous_loop = slot->pfunc;
                 continue;
-            case NPY_METH_get_identity:
-                meth->get_identity = slot->pfunc;
+            case NPY_METH_get_reduction_initial:
+                meth->get_reduction_initial = slot->pfunc;
                 continue;
             default:
                 break;

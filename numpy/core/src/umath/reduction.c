@@ -6,6 +6,7 @@
  *
  * See LICENSE.txt for the license.
  */
+#include "array_method.h"
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
 #define _UMATHMODULE
@@ -199,27 +200,27 @@ PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
     /*
      * Fill in default or identity value and ask if this is reorderable.
      * Note that if the initial value was provided, we pass `initial_buf=NULL`
-     * to the `get_identity` function to indicate that we only require the
-     * reorderable flag.
+     * to the `get_reduction_initial` function to indicate that we only
+     * require the reorderable flag.
      * If a `result` was passed in, it is possible that the result has a dtype
      * differing to the operation one.
      */
-    NPY_ARRAYMETHOD_IDENTITY_FLAGS identity_flags = 0;
-    char *identity_buf = NULL;
+    NPY_ARRAYMETHOD_REDUCTION_FLAGS reduction_flags = 0;
+    char *initial_buf = NULL;
     if (initial == NULL) {
         /* Always init buffer (only necessary if it holds references) */
-        identity_buf = PyMem_Calloc(1, op_dtypes[0]->elsize);
-        if (identity_buf == NULL) {
+        initial_buf = PyMem_Calloc(1, op_dtypes[0]->elsize);
+        if (initial_buf == NULL) {
             PyErr_NoMemory();
             goto fail;
         }
     }
-    if (context->method->get_identity(
-            context, identity_buf, &identity_flags) < 0) {
+    if (context->method->get_reduction_initial(
+            context, initial_buf, &reduction_flags) < 0) {
         goto fail;
     }
     /* More than one axis means multiple orders are possible */
-    if (!(identity_flags & NPY_METH_IS_REORDERABLE)
+    if (!(reduction_flags & NPY_METH_IS_REORDERABLE)
             && count_axes(PyArray_NDIM(operand), axis_flags) > 1) {
         PyErr_Format(PyExc_ValueError,
                 "reduction operation '%s' is not reorderable, "
@@ -235,7 +236,7 @@ PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
             NPY_ITER_REFS_OK |
             NPY_ITER_DELAY_BUFALLOC |
             NPY_ITER_COPY_IF_OVERLAP;
-    if (!(identity_flags & NPY_METH_IS_REORDERABLE)) {
+    if (!(reduction_flags & NPY_METH_IS_REORDERABLE)) {
         it_flags |= NPY_ITER_DONT_NEGATE_STRIDES;
     }
     op_flags[0] = NPY_ITER_READWRITE |
@@ -307,6 +308,9 @@ PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
 
     result = NpyIter_GetOperandArray(iter)[0];
     npy_bool empty_reduce = NpyIter_GetIterSize(iter) == 0;
+    if (empty_reduce) {
+        //empty_reduce = PyArray_SIZE(result) != 0;
+    }
 
     PyArrayMethod_StridedLoop *strided_loop;
     NPY_ARRAYMETHOD_FLAGS flags = 0;
@@ -333,15 +337,15 @@ PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
             goto fail;
         }
     }
-    else if (identity_buf != NULL && (  /* cannot fill for `initial=None` */
-                identity_flags & NPY_METH_ITEM_IS_IDENTITY ||
-                (empty_reduce && identity_flags & NPY_METH_ITEM_IS_DEFAULT))) {
+    else if (initial_buf != NULL && (  /* cannot fill for `initial=None` */
+                (reduction_flags & NPY_METH_INITIAL_IS_IDENTITY)
+                || (empty_reduce && reduction_flags & NPY_METH_INITIAL_IS_DEFAULT))) {
         /* Loop provided an identity or default value, assign to result. */
         int ret = raw_array_assign_scalar(
                 PyArray_NDIM(result), PyArray_DIMS(result),
                 PyArray_DESCR(result),
                 PyArray_BYTES(result), PyArray_STRIDES(result),
-                op_dtypes[0], identity_buf);
+                op_dtypes[0], initial_buf);
         if (ret < 0) {
             goto fail;
         }
@@ -424,10 +428,10 @@ PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
     }
     Py_INCREF(result);
 
-    if (identity_buf != NULL && PyDataType_REFCHK(PyArray_DESCR(result))) {
-        PyArray_Item_XDECREF(identity_buf, PyArray_DESCR(result));
+    if (initial_buf != NULL && PyDataType_REFCHK(PyArray_DESCR(result))) {
+        PyArray_Item_XDECREF(initial_buf, PyArray_DESCR(result));
     }
-    PyMem_FREE(identity_buf);
+    PyMem_FREE(initial_buf);
     NPY_AUXDATA_FREE(auxdata);
     if (!NpyIter_Deallocate(iter)) {
         Py_DECREF(result);
@@ -436,10 +440,10 @@ PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
     return result;
 
 fail:
-    if (identity_buf != NULL && PyDataType_REFCHK(op_dtypes[0])) {
-        PyArray_Item_XDECREF(identity_buf, op_dtypes[0]);
+    if (initial_buf != NULL && PyDataType_REFCHK(op_dtypes[0])) {
+        PyArray_Item_XDECREF(initial_buf, op_dtypes[0]);
     }
-    PyMem_FREE(identity_buf);
+    PyMem_FREE(initial_buf);
     NPY_AUXDATA_FREE(auxdata);
     if (iter != NULL) {
         NpyIter_Deallocate(iter);

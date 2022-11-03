@@ -105,13 +105,13 @@ typedef int (get_loop_function)(
 
 
 typedef enum {
-    /* The value can be used as a default for empty reductions */
-    NPY_METH_ITEM_IS_DEFAULT = 1 << 0,
-    /* The value represents the identity value */
-    NPY_METH_ITEM_IS_IDENTITY = 1 << 1,
+    /* The "identity" is used as result for empty reductions */
+    NPY_METH_INITIAL_IS_DEFAULT = 1 << 0,
+    /* The "identity" is used for non-empty reductions as initial value */
+    NPY_METH_INITIAL_IS_IDENTITY = 1 << 1,
     /* The operation is fully reorderable (iteration order may be optimized) */
     NPY_METH_IS_REORDERABLE = 1 << 2,
-} NPY_ARRAYMETHOD_IDENTITY_FLAGS;
+} NPY_ARRAYMETHOD_REDUCTION_FLAGS;
 
 /*
  * Query an ArrayMethod for its identity (for use with reductions) and whether
@@ -127,10 +127,9 @@ typedef enum {
  *
  * The function must return 0 on success and -1 on error (and clean up `item`).
  */
-typedef int (get_identity_function)(
-        PyArrayMethod_Context *context, char *item,
-        NPY_ARRAYMETHOD_IDENTITY_FLAGS *flags);
-
+typedef int (get_reduction_intial_function)(
+        PyArrayMethod_Context *context, char *initial,
+        NPY_ARRAYMETHOD_REDUCTION_FLAGS *flags);
 
 /*
  * The following functions are only used be the wrapping array method defined
@@ -221,7 +220,7 @@ typedef struct PyArrayMethodObject_tag {
     NPY_ARRAYMETHOD_FLAGS flags;
     resolve_descriptors_function *resolve_descriptors;
     get_loop_function *get_strided_loop;
-    get_identity_function  *get_identity;
+    get_reduction_intial_function  *get_reduction_initial;
     /* Typical loop functions (contiguous ones are used in current casts) */
     PyArrayMethod_StridedLoop *strided_loop;
     PyArrayMethod_StridedLoop *contiguous_loop;
@@ -263,7 +262,7 @@ extern NPY_NO_EXPORT PyTypeObject PyBoundArrayMethod_Type;
 #define NPY_METH_resolve_descriptors 1
 #define NPY_METH_get_loop 2
 #define NPY_METH_strided_loop 3
-#define NPY_METH_get_identity 4
+#define NPY_METH_get_reduction_initial 4
 #define NPY_METH_contiguous_loop 5
 #define NPY_METH_unaligned_strided_loop 6
 #define NPY_METH_unaligned_contiguous_loop 7

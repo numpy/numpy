@@ -185,7 +185,7 @@ wrapping_method_get_loop(
  */
 static int
 wrapping_method_get_identity_function(PyArrayMethod_Context *context,
-        char *item, NPY_ARRAYMETHOD_IDENTITY_FLAGS *flags)
+        char *item, NPY_ARRAYMETHOD_REDUCTION_FLAGS *flags)
 {
     /* Copy the context, and replace descriptors: */
     PyArrayMethod_Context orig_context = *context;
@@ -200,8 +200,8 @@ wrapping_method_get_identity_function(PyArrayMethod_Context *context,
             nin, nout, dtypes, context->descriptors, orig_descrs) < 0) {
         return -1;
     }
-    int res = context->method->wrapped_meth->get_identity(&orig_context,
-            item, flags);
+    int res = context->method->wrapped_meth->get_reduction_initial(
+            &orig_context, item, flags);
     for (int i = 0; i < nin + nout; i++) {
         Py_DECREF(orig_descrs);
     }
@@ -275,7 +275,8 @@ PyUFunc_AddWrappingLoop(PyObject *ufunc_obj,
     PyType_Slot slots[] = {
         {NPY_METH_resolve_descriptors, &wrapping_method_resolve_descriptors},
         {NPY_METH_get_loop, &wrapping_method_get_loop},
-        {NPY_METH_get_identity, &wrapping_method_get_identity_function},
+        {NPY_METH_get_reduction_initial,
+            &wrapping_method_get_identity_function},
         {0, NULL}
     };
 

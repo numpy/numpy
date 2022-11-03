@@ -322,24 +322,32 @@ typedef int (PyArrayMethod_StridedLoop)(PyArrayMethod_Context *context,
 
 
 /*
- * For reductions, NumPy sometimes requires an identity or default value.
- * The typical way of relying on a single "default" for ufuncs does not always
- * work however.  This function allows customizing the identity value as well
- * as whether the operation is "reorderable".
+ * For reductions, NumPy sometimes may use an identity or default value
+ * (which we group as the "initial" value; a user provided `initial=` is
+ * used as both).
+ * The function is after the reduction identity, but generalizes it.
+ * It further is used to indicate whether the reduction can be reordered
+ * for optimization.
+ * The value may be used for reductions which are empty, non-empty, or both
+ * to allow maximum flexibility.  A typical identity allows both.
+ * Object dtype sum has only a default 0, but no identity which allows things
+ * like `np.array(["a", "b"], dtype=object).sum()` to work.
+ * The opposite should not really happen, but allows `np.min([])` to error,
+ * when `-inf` is a valid identity (for optimization/easier processing).
  */
-#define NPY_METH_get_identity 7
+#define NPY_METH_get_reduction_initial 4
 
 typedef enum {
-    /* The value can be used as a default for empty reductions */
-    NPY_METH_ITEM_IS_DEFAULT = 1 << 0,
-    /* The value represents the identity value */
-    NPY_METH_ITEM_IS_IDENTITY = 1 << 1,
+    /* The "identity" is used as result for empty reductions */
+    NPY_METH_INITIAL_IS_DEFAULT = 1 << 0,
+    /* The "identity" is used for non-empty reductions as initial value */
+    NPY_METH_INITIAL_IS_IDENTITY = 1 << 1,
     /* The operation is fully reorderable (iteration order may be optimized) */
     NPY_METH_IS_REORDERABLE = 1 << 2,
-} NPY_ARRAYMETHOD_IDENTITY_FLAGS;
+} NPY_ARRAYMETHOD_REDUCTION_FLAGS;
 
 /*
- * If an identity exists, should set the `NPY_METH_ITEM_IS_IDENTITY`, normally
+ * If an identity exists, should set the `NPY_METH_INITIAL_IS_IDENTITY`, normally
  * the `NPY_METH_ITEM_IS_DEFAULT` should also be set, but it is distinct.
  * By default NumPy provides a "default" for `object` dtype, but does not use
  * it as an identity (this is e.g. to allows reducing even Python strings
@@ -350,9 +358,9 @@ typedef enum {
  * NOTE: `item` can be `NULL` when a user passed a custom initial value, in
  *       this case only the `reorderable` flag is valid.
  */
-typedef int (get_identity_function)(
-        PyArrayMethod_Context *context, char *item,
-        NPY_ARRAYMETHOD_IDENTITY_FLAGS *flags);
+typedef int (get_reduction_intial_function)(
+        PyArrayMethod_Context *context, char *initial,
+        NPY_ARRAYMETHOD_REDUCTION_FLAGS *flags);
 
 
 /*
