@@ -171,11 +171,11 @@ NPY_NO_EXPORT PyObject *
 PyUFunc_GetIdentity(PyUFuncObject *ufunc, npy_bool *reorderable);
 
 /*
- * The default `get_identity` attempts to look up the identity from the
- * calling ufunc.
+ * The default `get_reduction_initial` attempts to look up the identity
+ * from the calling ufunc.
  */
 static int
-default_get_identity_function(PyArrayMethod_Context *context,
+default_get_reduction_initial(PyArrayMethod_Context *context,
         char *initial, NPY_ARRAYMETHOD_REDUCTION_FLAGS *flags)
 {
     *flags = 0;
@@ -187,7 +187,7 @@ default_get_identity_function(PyArrayMethod_Context *context,
          * never get here and it is unclear that anyone else will either.
          */
         PyErr_SetString(PyExc_NotImplementedError,
-                "default `get_identity_function` requires a ufunc context; "
+                "default `get_reduction_initial` requires a ufunc context; "
                 "Please contact the NumPy developers if you have questions.");
         return -1;
     }
@@ -210,7 +210,22 @@ default_get_identity_function(PyArrayMethod_Context *context,
         Py_DECREF(identity_obj);
         return 0;
     }
-
+    if (PyTypeNum_ISUNSIGNED(context->descriptors[2]->type_num)
+            && PyLong_CheckExact(identity_obj)) {
+        /*
+         * This is a bit of a hack until we have truly loop specific
+         * identities.  Python -1 cannot be cast to unsigned so convert
+         * it to a NumPy scalar, but we use -1 for bitwise functions to
+         * signal all 1s.
+         * (A builtin identity would not overflow here, although we may
+         * unnecessary convert 0 and 1.)
+         */
+        Py_SETREF(identity_obj, PyObject_CallFunctionObjArgs(
+                     (PyObject *)&PyLongArrType_Type, identity_obj, NULL));
+        if (identity_obj == NULL) {
+            return -1;
+        }
+    }
     /* Report the default value and identity unless object dtype */
     *flags |= NPY_METH_INITIAL_IS_DEFAULT;
     if (context->descriptors[0]->type_num != NPY_OBJECT) {
@@ -307,7 +322,7 @@ fill_arraymethod_from_slots(
     /* Set the defaults */
     meth->get_strided_loop = &npy_default_get_strided_loop;
     meth->resolve_descriptors = &default_resolve_descriptors;
-    meth->get_reduction_initial = &default_get_identity_function;
+    meth->get_reduction_initial = &default_get_reduction_initial;
 
     /* Fill in the slots passed by the user */
     /*
