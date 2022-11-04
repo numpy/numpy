@@ -157,6 +157,7 @@ PUBLIC_MODULES = ['numpy.' + s for s in [
     "polynomial.polynomial",
     "random",
     "testing",
+    "testing.overrides",
     "typing",
     "typing.mypy_plugin",
     "version",

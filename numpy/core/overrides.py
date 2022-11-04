@@ -8,6 +8,8 @@ from numpy.core._multiarray_umath import (
 from numpy.compat._inspect import getargspec
 
 
+ARRAY_FUNCTIONS = set()
+
 ARRAY_FUNCTION_ENABLED = bool(
     int(os.environ.get('NUMPY_EXPERIMENTAL_ARRAY_FUNCTION', 1)))
 
@@ -207,6 +209,8 @@ def array_function_dispatch(dispatcher, module=None, verify=True,
             public_api.__module__ = module
 
         public_api._implementation = implementation
+
+        ARRAY_FUNCTIONS.add(public_api)
 
         return public_api
 
