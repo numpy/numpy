@@ -487,7 +487,7 @@ PyArray_GetDefaultDescr(PyArray_DTypeMeta *DType)
  */
 #if !defined(NO_IMPORT) && !defined(NO_IMPORT_ARRAY)
 
-#define __EXPERIMENTAL_DTYPE_VERSION 5
+#define __EXPERIMENTAL_DTYPE_VERSION 6
 
 static int
 import_experimental_dtype_api(int version)

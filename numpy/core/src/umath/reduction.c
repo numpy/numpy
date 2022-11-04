@@ -6,7 +6,6 @@
  *
  * See LICENSE.txt for the license.
  */
-#include "array_method.h"
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
 #define _UMATHMODULE
@@ -20,6 +19,7 @@
 #include "npy_pycompat.h"
 #include "array_assign.h"
 #include "array_coercion.h"
+#include "array_method.h"
 #include "ctors.h"
 
 #include "numpy/ufuncobject.h"
