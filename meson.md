@@ -2,22 +2,23 @@
 
 ### Developer build
 
-**Install build tools:** `pip install -r requirements/build.txt`
+**Install build tools:** `pip install -r build_requirements.txt`
+**Compile and install:** `./dev.py build`
 
-**Generate ninja make files:** `meson build --prefix=$PWD/build`
-
-**Compile:** `ninja -C build`
-
-**Install:** `meson install -C build`
-
-The install step copies the necessary Python files into the build dir to form a complete package.
-Do not skip this step, or the package won't work.
+This installs into the `build` directory.
 
 To use the package, add it to your PYTHONPATH:
 
 ```
 export PYTHONPATH=${PWD}/build/lib64/python3.10/site-packages
 pytest --pyargs skimage
+```
+
+Or launch testing or a shell via `dev.py`:
+
+```
+./dev.py test
+./dev.py ipython
 ```
 
 ### pip install
@@ -52,3 +53,25 @@ If that file had to import local `*.pyx` files (it does not) then the
 build dependencies would need be set to ensure that the relevant pyx
 files are copied into the build directory prior to compilation (see
 `_cython_tree` in the SciPy Meson build files).
+
+### Building on Fedora
+
+- Fedora does not distribute `openblas.pc`. Install the following file in `~/lib/pkgconfig/openblas.pc`:
+
+```
+prefix=/usr
+includedir=${prefix}/include
+libdir=${prefix}/lib64
+
+Name: openblas
+Description: OpenBLAS is an optimized BLAS library based on GotoBLAS2 1.13 BSD version
+Version: 0.3.19
+Cflags: -I${includedir}/openblas
+Libs: -L${libdir} -lopenblas
+```
+
+Then build with:
+
+```
+./dev.py build -- -Dpkg_config_path=${HOME}/lib/pkgconfig
+```
