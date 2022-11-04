@@ -319,12 +319,12 @@ PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
              * empty when the iteration is.  This may be wrong, but when it is,
              * we will not need the identity as the result is also empty.
              */
-            int res = context->method->get_reduction_initial(
+            int has_initial = context->method->get_reduction_initial(
                     context, initial_buf, empty_iteration);
-            if (res < 0) {
+            if (has_initial < 0) {
                 goto fail;
             }
-            if (!res) {
+            if (!has_initial) {
                 /* We have no initial value available, free buffer to indicate */
                 PyMem_FREE(initial_buf);
                 initial_buf = NULL;

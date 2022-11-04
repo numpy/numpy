@@ -246,8 +246,8 @@ copy_cached_initial(
         PyArrayMethod_Context *context, char *initial,
         npy_bool NPY_UNUSED(reduction_is_empty))
 {
-    memcpy(initial, context->method->initial, sizeof(context->descriptors[0]->elsize));
-    return 0;
+    memcpy(initial, context->method->initial, context->descriptors[0]->elsize);
+    return 1;
 }
 
 
@@ -279,7 +279,7 @@ get_initial_from_ufunc(
         Py_DECREF(identity_obj);
         return 0;
     }
-    if (PyTypeNum_ISUNSIGNED(context->descriptors[0]->type_num)
+    if (PyTypeNum_ISUNSIGNED(context->descriptors[1]->type_num)
             && PyLong_CheckExact(identity_obj)) {
         /*
          * This is a bit of a hack until we have truly loop specific
@@ -297,7 +297,7 @@ get_initial_from_ufunc(
     }
     else if (context->descriptors[0]->type_num == NPY_OBJECT
             && !reduction_is_empty) {
-        /* Allow `sum([object()])` to work, but use 0 when empty */
+        /* Allows `sum([object()])` to work, but use 0 when empty. */
         Py_DECREF(identity_obj);
         return 0;
     }
@@ -309,7 +309,7 @@ get_initial_from_ufunc(
     }
 
     if (PyTypeNum_ISNUMBER(context->descriptors[0]->type_num)) {
-        /* From now on, simply use the cached version */
+        /* For numbers we can cache to avoid going via Python ints */
         memcpy(context->method->initial, initial, context->descriptors[0]->elsize);
         context->method->get_reduction_initial = &copy_cached_initial;
     }
