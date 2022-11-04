@@ -104,7 +104,7 @@ jobs:
           fetch-depth: 0
 
       # Used to push the built wheels
-      - uses: actions/setup-python@v3
+      - uses: actions/setup-python@v4
         with:
           python-version: "3.x"
 
@@ -169,7 +169,7 @@ jobs:
           # https://github.com/actions/checkout/issues/338
           fetch-depth: 0
       # Used to push the built wheels
-      - uses: actions/setup-python@v3
+      - uses: actions/setup-python@v4
         with:
           # Build sdist on lowest supported Python
           python-version: "3.8"
