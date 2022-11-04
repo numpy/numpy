@@ -45,16 +45,51 @@ lapack = dependency(lapack_name)
 
 # TODO: generate version.py and __config__.py (see scipy/meson.build)
 
+cc = meson.get_compiler('c')
+
 python_sources = [
-  '__init__.py',
   '_distributor_init.py',
+  '_globals.py',
+  '__init__.cython-30.pxd',
+  '__init__.pxd',
+  '__init__.py',
+  '__init__.pyi',
+  '_pytesttester.py',
+  '_pytesttester.pyi',
+  '_version.py',
   'conftest.py',
+  'ctypeslib.py',
+  'ctypeslib.pyi',
+  'dual.py',
+  'matlib.py',
+  'setup.py',
+  'version.py'
 ]
 
-py3.install_sources(
+py.install_sources(
   python_sources,
   pure: false,
   subdir: 'numpy'
 )
+
+cython_cli = find_program('_build_utils/cythoner.py')
+
+cython_gen = generator(cython_cli,
+  arguments : ['@INPUT@', '@OUTPUT@'],
+  output : '@BASENAME@.c')
+
+cython_gen_cpp = generator(cython_cli,
+  arguments : ['@INPUT@', '@OUTPUT@', '--cplus'],
+  output : '@BASENAME@.cpp')
+
+pure_subdirs = [
+  'lib',
+  'lib/tests',
+  'lib/tests/data'
+]
+
+foreach subdir: pure_subdirs
+  install_subdir(subdir, install_dir: py.get_install_dir(pure: false) / 'numpy')
+endforeach
 
 subdir('core')
