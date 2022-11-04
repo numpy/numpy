@@ -3279,7 +3279,8 @@ def around(a, decimals=0, out=None):
 
     Notes
     -----
-    `~numpy.round` and `~np.round_` are disrecommended backwards-compatibility aliases of `~numpy.around`.
+    `~numpy.round` and `~np.round_` are disrecommended 
+    backwards-compatibility aliases of `~numpy.around`. 
     Wherever possible, neither should be used.
     
     For values exactly halfway between rounded decimal values, NumPy
@@ -3749,8 +3750,9 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
                          **kwargs)
 
 
-# Aliases of other functions. Provided unique docstrings are reference purposes only.
-# Wherever possible, avoid using them.
+# Aliases of other functions. Provided unique docstrings 
+# are reference purposes only. Wherever possible,
+# avoid using them.
 
 @array_function_dispatch(_around_dispatcher)
 def round_(a, decimals=0, out=None):
@@ -3759,7 +3761,8 @@ def round_(a, decimals=0, out=None):
 
     Notes
     --------
-    `~numpy.round_` is a disrecommended backwards-compatibility alias of `~numpy.around`.
+    `~numpy.round_` is a disrecommended backwards-compatibility
+    alias of `~numpy.around`.
 
     See Also
     --------
