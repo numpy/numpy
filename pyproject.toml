@@ -1,11 +1,63 @@
-[build-system]
-# Minimum requirements for the build system to execute.
-requires = [
-    "setuptools==59.2.0",
-    "wheel==0.37.0",
-    "Cython>=0.29.30,<3.0",
+[project]
+name = "numpy"
+
+# Using https://peps.python.org/pep-0639/
+# which is still in draft
+license = "BSD-3-Clause"
+license-files.paths = [
+    "LICENSE.txt",
+    "LICENSES_bundles.txt"
 ]
 
+description = "Fundamental package for array computing in Python"
+maintainers = [
+    {name = "NumPy Developers", email="numpy-discussion@python.org"},
+]
+requires-python = ">=3.8"
+readme = "README.md"
+classifiers = [
+    'Development Status :: 5 - Production/Stable',
+    'Intended Audience :: Science/Research',
+    'Intended Audience :: Developers',
+    'License :: OSI Approved :: BSD License',
+    'Programming Language :: C',
+    'Programming Language :: Python',
+    'Programming Language :: Python :: 3',
+    'Programming Language :: Python :: 3.8',
+    'Programming Language :: Python :: 3.9',
+    'Programming Language :: Python :: 3.10',
+    'Programming Language :: Python :: 3.11',
+    'Programming Language :: Python :: 3 :: Only',
+    'Programming Language :: Python :: Implementation :: CPython',
+    'Topic :: Software Development',
+    'Topic :: Scientific/Engineering',
+    'Typing :: Typed',
+    'Operating System :: Microsoft :: Windows',
+    'Operating System :: POSIX',
+    'Operating System :: Unix',
+    'Operating System :: MacOS',
+]
+dynamic = ["version"]
+
+[project.urls]
+homepage = "https://numpy.org"
+documentation = "https://numpy.org/doc/"
+source = "https://github.com/numpy/numpy"
+download = "https://pypi.org/project/numpy/#files"
+tracker = "https://github.com/numpy/numpy/issues"
+
+[build-system]
+build-backend = "mesonpy"
+requires = [
+    "meson-python>=0.10.0",
+    # `wheel` is needed for non-isolated builds, given that `meson-python`
+    # doesn't list it as a runtime requirement (at least in 0.10.0)
+    # See https://github.com/FFY00/meson-python/blob/main/pyproject.toml#L4
+    "wheel",
+    "setuptools",
+    "packaging",
+    "Cython>=0.29.24,<3.0"
+]
 
 [tool.towncrier]
     # Do no set this since it is hard to import numpy inside the source directory
@@ -104,3 +156,7 @@ environment = { OPENBLAS64_="openblas", OPENBLAS="", NPY_USE_BLAS_ILP64="1", CFL
 [[tool.cibuildwheel.overrides]]
 select = "*-win32"
 environment = { OPENBLAS64_="", OPENBLAS="openblas", NPY_USE_BLAS_ILP64="0", CFLAGS="-m32", LDFLAGS="-m32" }
+
+[tool.dev.py]
+package = 'numpy'
+commands = ["dev.py.build", "dev.py.test", "dev.py.shell", "dev.py.ipython", "dev.py.python"]
