@@ -48,12 +48,13 @@ lapack = dependency(lapack_name)
 cc = meson.get_compiler('c')
 
 python_sources = [
-  '_distributor_init.py',
-  '_globals.py',
   '__init__.cython-30.pxd',
   '__init__.pxd',
   '__init__.py',
   '__init__.pyi',
+  '_distributor_init.py',
+  '_globals.py',
+  '__config__.py',
   '_pytesttester.py',
   '_pytesttester.pyi',
   '_version.py',
