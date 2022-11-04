@@ -4,12 +4,6 @@ project('f2py_examples', 'c',
 
 add_languages('fortran')
 
-py_mod = import('python')
-py3 = py_mod.find_installation('python3')
-py3_dep = py3.dependency()
-message(py3.path())
-message(py3.get_install_dir())
-
 incdir_numpy = run_command(py3,
   ['-c', 'import os; os.chdir(".."); import numpy; print(numpy.get_include())'],
   check : true
@@ -27,5 +21,5 @@ py3.extension_module('fib2',
            'fib2module.c',
            incdir_f2py+'/fortranobject.c',
            include_directories: inc_np,
-           dependencies : py3_dep,
+           dependencies : py_dep,
            install : true)

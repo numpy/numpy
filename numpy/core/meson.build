@@ -6,17 +6,17 @@ cdata = configuration_data()
 # Check sizes of types
 cdata.set('SIZEOF_PY_INTPTR_T',
           cc.sizeof('Py_intptr_t',
-		    dependencies: py3_dep,
-		    prefix: '#include <Python.h>'))
+                    dependencies: py_dep,
+                    prefix: '#include <Python.h>'))
 cdata.set('SIZEOF_OFF_T',
-          cc.sizeof('off_t', dependencies: py3_dep))  # doesn't seem to need Python.h
+          cc.sizeof('off_t', dependencies: py_dep))  # doesn't seem to need Python.h
 
 # Check for complex support
 cdata.set10('HAVE_COMPLEX_H',
             cc.has_header('complex.h'))
 # TODO: NPY_USE_C99_COMPLEX and on in check_complex()
 
-if not cc.has_header('Python.h', dependencies: py3_dep)
+if not cc.has_header('Python.h', dependencies: py_dep)
   error('Cannot compile `Python.h`. Perhaps you need to install python-dev|python-devel')
 endif
 
