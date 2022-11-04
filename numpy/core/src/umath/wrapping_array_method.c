@@ -184,8 +184,9 @@ wrapping_method_get_loop(
  * We assume again that translating the descriptors is quick.
  */
 static int
-wrapping_method_get_identity_function(PyArrayMethod_Context *context,
-        char *item, NPY_ARRAYMETHOD_REDUCTION_FLAGS *flags)
+wrapping_method_get_identity_function(
+        PyArrayMethod_Context *context, char *item,
+        npy_bool reduction_is_empty)
 {
     /* Copy the context, and replace descriptors: */
     PyArrayMethod_Context orig_context = *context;
@@ -201,7 +202,7 @@ wrapping_method_get_identity_function(PyArrayMethod_Context *context,
         return -1;
     }
     int res = context->method->wrapped_meth->get_reduction_initial(
-            &orig_context, item, flags);
+            &orig_context, item, reduction_is_empty);
     for (int i = 0; i < nin + nout; i++) {
         Py_DECREF(orig_descrs);
     }

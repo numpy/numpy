@@ -13,9 +13,12 @@
 
 #include "convert_datatype.h"
 #include "array_method.h"
+#include "array_coercion.h"
 #include "dtype_transfer.h"
 #include "legacy_array_method.h"
 #include "dtypemeta.h"
+
+#include "ufunc_object.h"
 
 
 typedef struct {
@@ -233,6 +236,89 @@ get_wrapped_legacy_ufunc_loop(PyArrayMethod_Context *context,
 }
 
 
+
+/*
+ * We can shave off a bit of time by just caching the initial and this is
+ * trivial for all numeric types.  (Wrapped ufuncs never use byte-swapping.)
+ */
+static int
+copy_cached_initial(
+        PyArrayMethod_Context *context, char *initial,
+        npy_bool NPY_UNUSED(reduction_is_empty))
+{
+    memcpy(initial, context->method->initial, sizeof(context->descriptors[0]->elsize));
+    return 0;
+}
+
+
+/*
+ * The default `get_reduction_initial` attempts to look up the identity
+ * from the calling ufunc.
+ */
+static int
+get_initial_from_ufunc(
+        PyArrayMethod_Context *context, char *initial,
+        npy_bool reduction_is_empty)
+{
+    if (context->caller == NULL
+            || !PyObject_TypeCheck(context->caller, &PyUFunc_Type)) {
+        /* Impossible in NumPy 1.24;  guard in case it becomes possible. */
+        PyErr_SetString(PyExc_ValueError,
+                "getting initial failed because it can only done for legacy "
+                "ufunc loops when the ufunc is provided.");
+        return -1;
+    }
+    npy_bool reorderable;
+    PyObject *identity_obj = PyUFunc_GetIdentity(
+            (PyUFuncObject *)context->caller, &reorderable);
+    if (identity_obj == NULL) {
+        return -1;
+    }
+    if (identity_obj == Py_None) {
+        /* UFunc has no idenity (should not happen) */
+        Py_DECREF(identity_obj);
+        return 0;
+    }
+    if (PyTypeNum_ISUNSIGNED(context->descriptors[0]->type_num)
+            && PyLong_CheckExact(identity_obj)) {
+        /*
+         * This is a bit of a hack until we have truly loop specific
+         * identities.  Python -1 cannot be cast to unsigned so convert
+         * it to a NumPy scalar, but we use -1 for bitwise functions to
+         * signal all 1s.
+         * (A builtin identity would not overflow here, although we may
+         * unnecessary convert 0 and 1.)
+         */
+        Py_SETREF(identity_obj, PyObject_CallFunctionObjArgs(
+                     (PyObject *)&PyLongArrType_Type, identity_obj, NULL));
+        if (identity_obj == NULL) {
+            return -1;
+        }
+    }
+    else if (context->descriptors[0]->type_num == NPY_OBJECT
+            && !reduction_is_empty) {
+        /* Allow `sum([object()])` to work, but use 0 when empty */
+        Py_DECREF(identity_obj);
+        return 0;
+    }
+
+    int res = PyArray_Pack(context->descriptors[0], initial, identity_obj);
+    Py_DECREF(identity_obj);
+    if (res < 0) {
+        return -1;
+    }
+
+    if (PyTypeNum_ISNUMBER(context->descriptors[0]->type_num)) {
+        /* From now on, simply use the cached version */
+        memcpy(context->method->initial, initial, context->descriptors[0]->elsize);
+        context->method->get_reduction_initial = &copy_cached_initial;
+    }
+
+    /* Reduction can use the initial value */
+    return 1;
+}
+
+
 /*
  * Get the unbound ArrayMethod which wraps the instances of the ufunc.
  * Note that this function stores the result on the ufunc and then only
@@ -272,6 +358,27 @@ PyArray_NewLegacyWrappingArrayMethod(PyUFuncObject *ufunc,
         flags = _NPY_METH_FORCE_CAST_INPUTS;
     }
 
+    get_reduction_intial_function *get_reduction_intial = NULL;
+    if (ufunc->nin == 2 && ufunc->nout == 1) {
+        npy_bool reorderable = NPY_FALSE;
+        PyObject *identity_obj = PyUFunc_GetIdentity(ufunc, &reorderable);
+        if (identity_obj == NULL) {
+            return NULL;
+        }
+        /*
+         * TODO: For object, "reorderable" is needed(?), because otherwise
+         *       we disable multi-axis reductions `arr.sum(0, 1)`. But for
+         *       `arr = array([["a", "b"], ["c", "d"]], dtype="object")`
+         *       it isn't actually reorderable (order changes result).
+         */
+        if (reorderable) {
+            flags |= NPY_METH_IS_REORDERABLE;
+        }
+        if (identity_obj != Py_None) {
+            /* NOTE: We defer, just in case it fails in weird cases: */
+            get_reduction_intial = &get_initial_from_ufunc;
+        }
+    }
     for (int i = 0; i < ufunc->nin+ufunc->nout; i++) {
         if (signature[i]->singleton->flags & (
                 NPY_ITEM_REFCOUNT | NPY_ITEM_IS_POINTER | NPY_NEEDS_PYAPI)) {
@@ -282,9 +389,10 @@ PyArray_NewLegacyWrappingArrayMethod(PyUFuncObject *ufunc,
         }
     }
 
-    PyType_Slot slots[3] = {
+    PyType_Slot slots[4] = {
         {NPY_METH_get_loop, &get_wrapped_legacy_ufunc_loop},
         {NPY_METH_resolve_descriptors, &simple_legacy_resolve_descriptors},
+        {NPY_METH_get_reduction_initial, get_reduction_intial},
         {0, NULL},
     };
     if (any_output_flexible) {

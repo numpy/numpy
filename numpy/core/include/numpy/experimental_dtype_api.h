@@ -182,22 +182,28 @@ typedef struct {
  */
 typedef enum {
     /* Flag for whether the GIL is required */
-    NPY_METH_REQUIRES_PYAPI = 1 << 1,
+    NPY_METH_REQUIRES_PYAPI = 1 << 0,
     /*
      * Some functions cannot set floating point error flags, this flag
      * gives us the option (not requirement) to skip floating point error
      * setup/check. No function should set error flags and ignore them
      * since it would interfere with chaining operations (e.g. casting).
      */
-    NPY_METH_NO_FLOATINGPOINT_ERRORS = 1 << 2,
+    NPY_METH_NO_FLOATINGPOINT_ERRORS = 1 << 1,
     /* Whether the method supports unaligned access (not runtime) */
-    NPY_METH_SUPPORTS_UNALIGNED = 1 << 3,
+    NPY_METH_SUPPORTS_UNALIGNED = 1 << 2,
+    /*
+     * Used for reductions to allow reordering the operation.  At this point
+     * assume that if set, it also applies to normal operations though!
+     */
+    NPY_METH_IS_REORDERABLE = 1 << 3,
 
     /* All flags which can change at runtime */
     NPY_METH_RUNTIME_FLAGS = (
             NPY_METH_REQUIRES_PYAPI |
             NPY_METH_NO_FLOATINGPOINT_ERRORS),
 } NPY_ARRAYMETHOD_FLAGS;
+
 
 
 /*
@@ -321,46 +327,28 @@ typedef int (PyArrayMethod_StridedLoop)(PyArrayMethod_Context *context,
         NpyAuxData *transferdata);
 
 
-/*
- * For reductions, NumPy sometimes may use an identity or default value
- * (which we group as the "initial" value; a user provided `initial=` is
- * used as both).
- * The function is after the reduction identity, but generalizes it.
- * It further is used to indicate whether the reduction can be reordered
- * for optimization.
- * The value may be used for reductions which are empty, non-empty, or both
- * to allow maximum flexibility.  A typical identity allows both.
- * Object dtype sum has only a default 0, but no identity which allows things
- * like `np.array(["a", "b"], dtype=object).sum()` to work.
- * The opposite should not really happen, but allows `np.min([])` to error,
- * when `-inf` is a valid identity (for optimization/easier processing).
- */
-#define NPY_METH_get_reduction_initial 4
-
-typedef enum {
-    /* The "identity" is used as result for empty reductions */
-    NPY_METH_INITIAL_IS_DEFAULT = 1 << 0,
-    /* The "identity" is used for non-empty reductions as initial value */
-    NPY_METH_INITIAL_IS_IDENTITY = 1 << 1,
-    /* The operation is fully reorderable (iteration order may be optimized) */
-    NPY_METH_IS_REORDERABLE = 1 << 2,
-} NPY_ARRAYMETHOD_REDUCTION_FLAGS;
-
-/*
- * If an identity exists, should set the `NPY_METH_INITIAL_IS_IDENTITY`, normally
- * the `NPY_METH_ITEM_IS_DEFAULT` should also be set, but it is distinct.
- * By default NumPy provides a "default" for `object` dtype, but does not use
- * it as an identity (this is e.g. to allows reducing even Python strings
- * for `np.sum()` while the empty sum returns 0).
- * The `NPY_METH_IS_REORDERABLE` flag should be set if the operation is
- * reorderable.
+/**
+ * Query an ArrayMethod for the initial value for use in reduction.
  *
- * NOTE: `item` can be `NULL` when a user passed a custom initial value, in
- *       this case only the `reorderable` flag is valid.
+ * @param context The arraymethod context, mainly to access the descriptors.
+ * @param initial Pointer to initial data to be filled (if possible)
+ * @param reduction_is_empty Whether the reduction is empty, when it is the
+ *     default value is required, otherwise an identity value to start the
+ *     the reduction.  These might differ, examples:
+ *     - `0.0` as default for `sum([])`.  But `-0.0` would be the correct
+ *       identity as it preserves the sign for `sum([-0.0])`.
+ *     - We use no identity for object, but `0` and `1` for sum and prod.
+ *     - `-inf` or `INT_MIN` for `max` is an identity, but at least `INT_MIN`
+ *       not a good *default* when there are no items.
+ *
+ * @returns -1, 0, or 1 indicating error, no initial value, and initial being
+ *     successfully filled.  Errors must not be given where 0 is correct, NumPy
+ *     may call this even when not strictly necessary.
  */
+ #define NPY_METH_get_reduction_initial 4
 typedef int (get_reduction_intial_function)(
         PyArrayMethod_Context *context, char *initial,
-        NPY_ARRAYMETHOD_REDUCTION_FLAGS *flags);
+        npy_bool reduction_is_empty);
 
 
 /*

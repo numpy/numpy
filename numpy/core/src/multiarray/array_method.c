@@ -166,77 +166,6 @@ npy_default_get_strided_loop(
 }
 
 
-/* TODO: Declared in `ufunc_object.c`, should be included more directly */
-NPY_NO_EXPORT PyObject *
-PyUFunc_GetIdentity(PyUFuncObject *ufunc, npy_bool *reorderable);
-
-/*
- * The default `get_reduction_initial` attempts to look up the identity
- * from the calling ufunc.
- */
-static int
-default_get_reduction_initial(PyArrayMethod_Context *context,
-        char *initial, NPY_ARRAYMETHOD_REDUCTION_FLAGS *flags)
-{
-    *flags = 0;
-
-    PyUFuncObject *ufunc = (PyUFuncObject *)context->caller;
-    if (!PyObject_TypeCheck(ufunc, &PyUFunc_Type)) {
-        /*
-         * Could also just report no identity/reorderable, but NumPy would
-         * never get here and it is unclear that anyone else will either.
-         */
-        PyErr_SetString(PyExc_NotImplementedError,
-                "default `get_reduction_initial` requires a ufunc context; "
-                "Please contact the NumPy developers if you have questions.");
-        return -1;
-    }
-
-    npy_bool reorderable;
-    PyObject *identity_obj = PyUFunc_GetIdentity(ufunc, &reorderable);
-
-    if (identity_obj == NULL) {
-        return -1;
-    }
-    if (reorderable) {
-        *flags |= NPY_METH_IS_REORDERABLE;
-    }
-
-    if (initial == NULL || identity_obj == Py_None) {
-        /*
-         * Only reorderable flag was requested (user provided initial value)
-         * or there is no identity/default value to report.
-         */
-        Py_DECREF(identity_obj);
-        return 0;
-    }
-    if (PyTypeNum_ISUNSIGNED(context->descriptors[2]->type_num)
-            && PyLong_CheckExact(identity_obj)) {
-        /*
-         * This is a bit of a hack until we have truly loop specific
-         * identities.  Python -1 cannot be cast to unsigned so convert
-         * it to a NumPy scalar, but we use -1 for bitwise functions to
-         * signal all 1s.
-         * (A builtin identity would not overflow here, although we may
-         * unnecessary convert 0 and 1.)
-         */
-        Py_SETREF(identity_obj, PyObject_CallFunctionObjArgs(
-                     (PyObject *)&PyLongArrType_Type, identity_obj, NULL));
-        if (identity_obj == NULL) {
-            return -1;
-        }
-    }
-    /* Report the default value and identity unless object dtype */
-    *flags |= NPY_METH_INITIAL_IS_DEFAULT;
-    if (context->descriptors[0]->type_num != NPY_OBJECT) {
-        *flags |= NPY_METH_INITIAL_IS_IDENTITY;
-    }
-    int res = PyArray_Pack(context->descriptors[0], initial, identity_obj);
-    Py_DECREF(identity_obj);
-    return res;
-}
-
-
 /**
  * Validate that the input is usable to create a new ArrayMethod.
  *
@@ -322,7 +251,7 @@ fill_arraymethod_from_slots(
     /* Set the defaults */
     meth->get_strided_loop = &npy_default_get_strided_loop;
     meth->resolve_descriptors = &default_resolve_descriptors;
-    meth->get_reduction_initial = &default_get_reduction_initial;
+    meth->get_reduction_initial = NULL;  /* no initial/identity by default */
 
     /* Fill in the slots passed by the user */
     /*

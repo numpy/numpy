@@ -13,21 +13,21 @@ extern "C" {
 
 typedef enum {
     /* Flag for whether the GIL is required */
-    NPY_METH_REQUIRES_PYAPI = 1 << 1,
+    NPY_METH_REQUIRES_PYAPI = 1 << 0,
     /*
      * Some functions cannot set floating point error flags, this flag
      * gives us the option (not requirement) to skip floating point error
      * setup/check. No function should set error flags and ignore them
      * since it would interfere with chaining operations (e.g. casting).
      */
-    /*
-     * TODO: Change this into a positive flag?  That would make "combing"
-     *       multiple methods easier. OTOH, if we add more flags, the default
-     *       would be 0 just like it is here.
-     */
-    NPY_METH_NO_FLOATINGPOINT_ERRORS = 1 << 2,
+    NPY_METH_NO_FLOATINGPOINT_ERRORS = 1 << 1,
     /* Whether the method supports unaligned access (not runtime) */
-    NPY_METH_SUPPORTS_UNALIGNED = 1 << 3,
+    NPY_METH_SUPPORTS_UNALIGNED = 1 << 2,
+    /*
+     * Used for reductions to allow reordering the operation.  At this point
+     * assume that if set, it also applies to normal operations though!
+     */
+    NPY_METH_IS_REORDERABLE = 1 << 3,
     /*
      * Private flag for now for *logic* functions.  The logical functions
      * `logical_or` and `logical_and` can always cast the inputs to booleans
@@ -104,32 +104,27 @@ typedef int (get_loop_function)(
         NPY_ARRAYMETHOD_FLAGS *flags);
 
 
-typedef enum {
-    /* The "identity" is used as result for empty reductions */
-    NPY_METH_INITIAL_IS_DEFAULT = 1 << 0,
-    /* The "identity" is used for non-empty reductions as initial value */
-    NPY_METH_INITIAL_IS_IDENTITY = 1 << 1,
-    /* The operation is fully reorderable (iteration order may be optimized) */
-    NPY_METH_IS_REORDERABLE = 1 << 2,
-} NPY_ARRAYMETHOD_REDUCTION_FLAGS;
-
-/*
- * Query an ArrayMethod for its identity (for use with reductions) and whether
- * its operation is reorderable (commutative).  These are not always the same:
- * Matrix multiplication is non-commutative, but does have an identity.
+/**
+ * Query an ArrayMethod for the initial value for use in reduction.
  *
- * The function should fill `item` and flag whether this value may be used as
- * a default and/or identity.
- * (Normally, an identity is always a valid default.  However, NumPy makes an
- * exception for `object` dtypes to ensure type-safety of the result.)
- * If neither `NPY_METH_ITEM_IS_DEFAULT` or `NPY_METH_ITEM_IS_IDENTITY` is
- * given, the value should be left uninitialized (no cleanup will be done).
+ * @param context The arraymethod context, mainly to access the descriptors.
+ * @param initial Pointer to initial data to be filled (if possible)
+ * @param reduction_is_empty Whether the reduction is empty, when it is the
+ *     default value is required, otherwise an identity value to start the
+ *     the reduction.  These might differ, examples:
+ *     - `0.0` as default for `sum([])`.  But `-0.0` would be the correct
+ *       identity as it preserves the sign for `sum([-0.0])`.
+ *     - We use no identity for object, but `0` and `1` for sum and prod.
+ *     - `-inf` or `INT_MIN` for `max` is an identity, but at least `INT_MIN`
+ *       not a good *default* when there are no items.
  *
- * The function must return 0 on success and -1 on error (and clean up `item`).
+ * @returns -1, 0, or 1 indicating error, no initial value, and initial being
+ *     successfully filled.  Errors must not be given where 0 is correct, NumPy
+ *     may call this even when not strictly necessary.
  */
 typedef int (get_reduction_intial_function)(
         PyArrayMethod_Context *context, char *initial,
-        NPY_ARRAYMETHOD_REDUCTION_FLAGS *flags);
+        npy_bool reduction_is_empty);
 
 /*
  * The following functions are only used be the wrapping array method defined
@@ -231,6 +226,8 @@ typedef struct PyArrayMethodObject_tag {
     PyArray_DTypeMeta **wrapped_dtypes;
     translate_given_descrs_func *translate_given_descrs;
     translate_loop_descrs_func *translate_loop_descrs;
+    /* Chunk used by the legacy fallback arraymethod mainly */
+    char initial[sizeof(npy_clongdouble)];  /* initial value storage */
 } PyArrayMethodObject;
 
 
