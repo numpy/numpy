@@ -1683,7 +1683,8 @@ class TestUfunc:
         assert_raises(ValueError, np.minimum.reduce, [], initial=None)
         assert_raises(ValueError, np.add.reduce, [], initial=None)
         # Also in the somewhat special object case:
-        assert_raises(ValueError, np.add.reduce, [], initial=None, dtype=object)
+        with pytest.raises(ValueError):
+            np.add.reduce([], initial=None, dtype=object)
 
         # Check that np._NoValue gives default behavior.
         assert_equal(np.add.reduce([], initial=np._NoValue), 0)
@@ -1692,6 +1693,18 @@ class TestUfunc:
         a = np.array([10], dtype=object)
         res = np.add.reduce(a, initial=5)
         assert_equal(res, 15)
+
+    def test_empty_reduction_and_idenity(self):
+        arr = np.zeros((0, 5))
+        # OK, since the reduction itself is *not* empty, the result is
+        assert np.true_divide.reduce(arr, axis=1).shape == (0,)
+        # Not OK, the reduction itself is empty and we have no idenity
+        with pytest.raises(ValueError):
+            np.true_divide.reduce(arr, axis=0)
+        # Test that an empty reduction fails also if the result is empty
+        arr = np.zeros((0, 0, 5))
+        with pytest.raises(ValueError):
+            np.true_divide.reduce(arr, axis=1)
 
     @pytest.mark.parametrize('axis', (0, 1, None))
     @pytest.mark.parametrize('where', (np.array([False, True, True]),
