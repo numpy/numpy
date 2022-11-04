@@ -3053,7 +3053,6 @@ PyUFunc_Reduce(PyUFuncObject *ufunc,
             arr, out, wheremask, axis_flags, keepdims,
             initial, reduce_loop, buffersize, ufunc_name, errormask);
 
-  finish:
     for (int i = 0; i < 3; i++) {
         Py_DECREF(descrs[i]);
     }
