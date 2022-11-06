@@ -4,6 +4,7 @@
 #include <numpy/npy_common.h>
 
 #include <math.h>
+#include <cmath>
 
 /* By adding static inline specifiers to npy_math function definitions when
    appropriate, compiler is given the opportunity to optimize */
@@ -214,7 +215,7 @@ double npy_spacing(double x);
     #ifndef NPY_HAVE_DECL_ISNAN
         #define npy_isnan(x) ((x) != (x))
     #else
-        #define npy_isnan(x) isnan(x)
+        #define npy_isnan(x) std::isnan(x)
     #endif
 #endif
 
@@ -254,7 +255,7 @@ double npy_spacing(double x);
          : sizeof (x) == sizeof (double) ? _npy_signbit_d (x) \
          : _npy_signbit_f (x))
 #else
-    #define npy_signbit(x) signbit((x))
+    #define npy_signbit(x) std::signbit((x))
 #endif
 
 /*
