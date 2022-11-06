@@ -33,17 +33,22 @@ fi
 # Install GFortran
 if [[ $RUNNER_OS == "macOS" ]]; then
     # same version of gfortran as the openblas-libs and numpy-wheel builds
-    curl -L https://github.com/MacPython/gfortran-install/raw/master/archives/gfortran-4.9.0-Mavericks.dmg -o gfortran.dmg
+    curl -L https://github.com/fxcoudert/gfortran-for-macOS/releases/download/8.2/gfortran-8.2-Mojave.dmg -o gfortran.dmg
     GFORTRAN_SHA256=$(shasum -a 256 gfortran.dmg)
-    KNOWN_SHA256="d2d5ca5ba8332d63bbe23a07201c4a0a5d7e09ee56f0298a96775f928c3c4b30  gfortran.dmg"
+    KNOWN_SHA256="81d379231ba5671a5ef1b7832531f53be5a1c651701a61d87e1d877c4f06d369  gfortran.dmg"
+    #curl -L https://github.com/MacPython/gfortran-install/raw/master/archives/gfortran-4.9.0-Mavericks.dmg -o gfortran.dmg
+    #GFORTRAN_SHA256=$(shasum -a 256 gfortran.dmg)
+    #KNOWN_SHA256="d2d5ca5ba8332d63bbe23a07201c4a0a5d7e09ee56f0298a96775f928c3c4b30  gfortran.dmg"
     if [ "$GFORTRAN_SHA256" != "$KNOWN_SHA256" ]; then
         echo sha256 mismatch
         exit 1
     fi
 
     hdiutil attach -mountpoint /Volumes/gfortran gfortran.dmg
-    sudo installer -pkg /Volumes/gfortran/gfortran.pkg -target /
-    otool -L /usr/local/gfortran/lib/libgfortran.3.dylib
+    sudo installer -pkg /Volumes/gfortran/gfortran-8.2-Mojave.pkg -target /
+    otool -L /usr/local/gfortran/lib/libgfortran.5.dylib
+    #sudo installer -pkg /Volumes/gfortran/gfortran.pkg -target /
+    #otool -L /usr/local/gfortran/lib/libgfortran.3.dylib
 
     # arm64 stuff from gfortran_utils
     if [[ $PLATFORM == "macosx-arm64" ]]; then
