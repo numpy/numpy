@@ -306,12 +306,12 @@ void_ensure_canonical(PyArray_Descr *self)
             Py_INCREF(self);
             return self;
         }
-        PyArray_Descr *new = PyArray_DescrNew(self);
-        if (new == NULL) {
+        PyArray_Descr *_new = PyArray_DescrNew(self);
+        if (_new == NULL) {
             return NULL;
         }
-        Py_SETREF(new->subarray->base, new_base);
-        return new;
+        Py_SETREF(_new->subarray->base, new_base);
+        return _new;
     }
     else if (self->names != NULL) {
         /*
@@ -326,18 +326,18 @@ void_ensure_canonical(PyArray_Descr *self)
          */
         Py_ssize_t field_num = PyTuple_GET_SIZE(self->names);
 
-        PyArray_Descr *new = PyArray_DescrNew(self);
-        if (new == NULL) {
+        PyArray_Descr *_new = PyArray_DescrNew(self);
+        if (_new == NULL) {
             return NULL;
         }
-        Py_SETREF(new->fields, PyDict_New());
-        if (new->fields == NULL) {
-            Py_DECREF(new);
+        Py_SETREF(_new->fields, PyDict_New());
+        if (_new->fields == NULL) {
+            Py_DECREF(_new);
             return NULL;
         }
-        int aligned = PyDataType_FLAGCHK(new, NPY_ALIGNED_STRUCT);
-        new->flags = new->flags & ~NPY_FROM_FIELDS;
-        new->flags |= NPY_NEEDS_PYAPI;  /* always needed for field access */
+        int aligned = PyDataType_FLAGCHK(_new, NPY_ALIGNED_STRUCT);
+        _new->flags = _new->flags & ~NPY_FROM_FIELDS;
+        _new->flags |= NPY_NEEDS_PYAPI;  /* always needed for field access */
         int totalsize = 0;
         int maxalign = 1;
         for (Py_ssize_t i = 0; i < field_num; i++) {
@@ -348,10 +348,10 @@ void_ensure_canonical(PyArray_Descr *self)
                     (PyArray_Descr *)PyTuple_GET_ITEM(tuple, 0));
             if (field_descr == NULL) {
                 Py_DECREF(new_tuple);
-                Py_DECREF(new);
+                Py_DECREF(_new);
                 return NULL;
             }
-            new->flags |= field_descr->flags & NPY_FROM_FIELDS;
+            _new->flags |= field_descr->flags & NPY_FROM_FIELDS;
             PyTuple_SET_ITEM(new_tuple, 0, (PyObject *)field_descr);
 
             if (aligned) {
@@ -362,7 +362,7 @@ void_ensure_canonical(PyArray_Descr *self)
             PyObject *offset_obj = PyLong_FromLong(totalsize);
             if (offset_obj == NULL) {
                 Py_DECREF(new_tuple);
-                Py_DECREF(new);
+                Py_DECREF(_new);
                 return NULL;
             }
             PyTuple_SET_ITEM(new_tuple, 1, (PyObject *)offset_obj);
@@ -371,24 +371,24 @@ void_ensure_canonical(PyArray_Descr *self)
                 PyObject *title = PyTuple_GET_ITEM(tuple, 2);
                 Py_INCREF(title);
                 PyTuple_SET_ITEM(new_tuple, 2, title);
-                if (PyDict_SetItem(new->fields, title, new_tuple) < 0) {
+                if (PyDict_SetItem(_new->fields, title, new_tuple) < 0) {
                     Py_DECREF(new_tuple);
-                    Py_DECREF(new);
+                    Py_DECREF(_new);
                     return NULL;
                 }
             }
-            if (PyDict_SetItem(new->fields, name, new_tuple) < 0) {
+            if (PyDict_SetItem(_new->fields, name, new_tuple) < 0) {
                 Py_DECREF(new_tuple);
-                Py_DECREF(new);
+                Py_DECREF(_new);
                 return NULL;
             }
-            Py_DECREF(new_tuple);  /* Reference now owned by new->fields */
+            Py_DECREF(new_tuple);  /* Reference now owned by _new->fields */
             totalsize += field_descr->elsize;
         }
         totalsize = NPY_NEXT_ALIGNED_OFFSET(totalsize, maxalign);
-        new->elsize = totalsize;
-        new->alignment = maxalign;
-        return new;
+        _new->elsize = totalsize;
+        _new->alignment = maxalign;
+        return _new;
     }
     else {
         /* unstructured voids are always canonical. */

@@ -1421,8 +1421,8 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *args)
         }
 
     if (Py_TYPE(obj) == &PyCFunction_Type) {
-        PyCFunctionObject *new = (PyCFunctionObject *)obj;
-        _ADDDOC(new->m_ml->ml_doc, new->m_ml->ml_name);
+        PyCFunctionObject *_new = (PyCFunctionObject *)obj;
+        _ADDDOC(_new->m_ml->ml_doc, _new->m_ml->ml_name);
     }
     else if (PyObject_TypeCheck(obj, &PyType_Type)) {
         /*
@@ -1435,27 +1435,27 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *args)
          * If `__doc__` as stored in `tp_dict` is None, we assume this was
          * filled in by `PyType_Ready()` and should also be replaced.
          */
-        PyTypeObject *new = (PyTypeObject *)obj;
-        _ADDDOC(new->tp_doc, new->tp_name);
-        if (new->tp_dict != NULL && PyDict_CheckExact(new->tp_dict) &&
-                PyDict_GetItemString(new->tp_dict, "__doc__") == Py_None) {
+        PyTypeObject *_new = (PyTypeObject *)obj;
+        _ADDDOC(_new->tp_doc, _new->tp_name);
+        if (_new->tp_dict != NULL && PyDict_CheckExact(_new->tp_dict) &&
+                PyDict_GetItemString(_new->tp_dict, "__doc__") == Py_None) {
             /* Warning: Modifying `tp_dict` is not generally safe! */
-            if (PyDict_SetItemString(new->tp_dict, "__doc__", str) < 0) {
+            if (PyDict_SetItemString(_new->tp_dict, "__doc__", str) < 0) {
                 return NULL;
             }
         }
     }
     else if (Py_TYPE(obj) == &PyMemberDescr_Type) {
-        PyMemberDescrObject *new = (PyMemberDescrObject *)obj;
-        _ADDDOC(new->d_member->doc, new->d_member->name);
+        PyMemberDescrObject *_new = (PyMemberDescrObject *)obj;
+        _ADDDOC(_new->d_member->doc, _new->d_member->name);
     }
     else if (Py_TYPE(obj) == &PyGetSetDescr_Type) {
-        PyGetSetDescrObject *new = (PyGetSetDescrObject *)obj;
-        _ADDDOC(new->d_getset->doc, new->d_getset->name);
+        PyGetSetDescrObject *_new = (PyGetSetDescrObject *)obj;
+        _ADDDOC(_new->d_getset->doc, _new->d_getset->name);
     }
     else if (Py_TYPE(obj) == &PyMethodDescr_Type) {
-        PyMethodDescrObject *new = (PyMethodDescrObject *)obj;
-        _ADDDOC(new->d_method->ml_doc, new->d_method->ml_name);
+        PyMethodDescrObject *_new = (PyMethodDescrObject *)obj;
+        _ADDDOC(_new->d_method->ml_doc, _new->d_method->ml_name);
     }
     else {
         PyObject *doc_attr;
@@ -1614,7 +1614,7 @@ static PyObject *
 pack_bits(PyObject *input, int axis, char order)
 {
     PyArrayObject *inp;
-    PyArrayObject *new = NULL;
+    PyArrayObject *_new = NULL;
     PyArrayObject *out = NULL;
     npy_intp outdims[NPY_MAXDIMS];
     int i;
@@ -1633,26 +1633,26 @@ pack_bits(PyObject *input, int axis, char order)
         goto fail;
     }
 
-    new = (PyArrayObject *)PyArray_CheckAxis(inp, &axis, 0);
+    _new = (PyArrayObject *)PyArray_CheckAxis(inp, &axis, 0);
     Py_DECREF(inp);
-    if (new == NULL) {
+    if (_new == NULL) {
         return NULL;
     }
 
-    if (PyArray_NDIM(new) == 0) {
+    if (PyArray_NDIM(_new) == 0) {
         char *optr, *iptr;
 
         out = (PyArrayObject *)PyArray_NewFromDescr(
-                Py_TYPE(new), PyArray_DescrFromType(NPY_UBYTE),
+                Py_TYPE(_new), PyArray_DescrFromType(NPY_UBYTE),
                 0, NULL, NULL, NULL,
                 0, NULL);
         if (out == NULL) {
             goto fail;
         }
         optr = PyArray_DATA(out);
-        iptr = PyArray_DATA(new);
+        iptr = PyArray_DATA(_new);
         *optr = 0;
-        for (i = 0; i < PyArray_ITEMSIZE(new); i++) {
+        for (i = 0; i < PyArray_ITEMSIZE(_new); i++) {
             if (*iptr != 0) {
                 *optr = 1;
                 break;
@@ -1664,8 +1664,8 @@ pack_bits(PyObject *input, int axis, char order)
 
 
     /* Setup output shape */
-    for (i = 0; i < PyArray_NDIM(new); i++) {
-        outdims[i] = PyArray_DIM(new, i);
+    for (i = 0; i < PyArray_NDIM(_new); i++) {
+        outdims[i] = PyArray_DIM(_new, i);
     }
 
     /*
@@ -1676,14 +1676,14 @@ pack_bits(PyObject *input, int axis, char order)
 
     /* Create output array */
     out = (PyArrayObject *)PyArray_NewFromDescr(
-            Py_TYPE(new), PyArray_DescrFromType(NPY_UBYTE),
-            PyArray_NDIM(new), outdims, NULL, NULL,
-            PyArray_ISFORTRAN(new), NULL);
+            Py_TYPE(_new), PyArray_DescrFromType(NPY_UBYTE),
+            PyArray_NDIM(_new), outdims, NULL, NULL,
+            PyArray_ISFORTRAN(_new), NULL);
     if (out == NULL) {
         goto fail;
     }
     /* Setup iterators to iterate over all but given axis */
-    it = (PyArrayIterObject *)PyArray_IterAllButAxis((PyObject *)new, &axis);
+    it = (PyArrayIterObject *)PyArray_IterAllButAxis((PyObject *)_new, &axis);
     ot = (PyArrayIterObject *)PyArray_IterAllButAxis((PyObject *)out, &axis);
     if (it == NULL || ot == NULL) {
         Py_XDECREF(it);
@@ -1693,8 +1693,8 @@ pack_bits(PyObject *input, int axis, char order)
     const PACK_ORDER ordere = order == 'b' ? PACK_ORDER_BIG : PACK_ORDER_LITTLE;
     NPY_BEGIN_THREADS_THRESHOLDED(PyArray_DIM(out, axis));
     while (PyArray_ITER_NOTDONE(it)) {
-        pack_inner(PyArray_ITER_DATA(it), PyArray_ITEMSIZE(new),
-                   PyArray_DIM(new, axis), PyArray_STRIDE(new, axis),
+        pack_inner(PyArray_ITER_DATA(it), PyArray_ITEMSIZE(_new),
+                   PyArray_DIM(_new, axis), PyArray_STRIDE(_new, axis),
                    PyArray_ITER_DATA(ot), PyArray_DIM(out, axis),
                    PyArray_STRIDE(out, axis), ordere);
         PyArray_ITER_NEXT(it);
@@ -1706,11 +1706,11 @@ pack_bits(PyObject *input, int axis, char order)
     Py_DECREF(ot);
 
 finish:
-    Py_DECREF(new);
+    Py_DECREF(_new);
     return (PyObject *)out;
 
 fail:
-    Py_XDECREF(new);
+    Py_XDECREF(_new);
     Py_XDECREF(out);
     return NULL;
 }
@@ -1728,7 +1728,7 @@ unpack_bits(PyObject *input, int axis, PyObject *count_obj, char order)
         npy_uint64 uint64;
     } unpack_lookup_big[256];
     PyArrayObject *inp;
-    PyArrayObject *new = NULL;
+    PyArrayObject *_new = NULL;
     PyArrayObject *out = NULL;
     npy_intp outdims[NPY_MAXDIMS];
     int i;
@@ -1748,30 +1748,30 @@ unpack_bits(PyObject *input, int axis, PyObject *count_obj, char order)
         goto fail;
     }
 
-    new = (PyArrayObject *)PyArray_CheckAxis(inp, &axis, 0);
+    _new = (PyArrayObject *)PyArray_CheckAxis(inp, &axis, 0);
     Py_DECREF(inp);
-    if (new == NULL) {
+    if (_new == NULL) {
         return NULL;
     }
 
-    if (PyArray_NDIM(new) == 0) {
+    if (PyArray_NDIM(_new) == 0) {
         /* Handle 0-d array by converting it to a 1-d array */
         PyArrayObject *temp;
         PyArray_Dims newdim = {NULL, 1};
         npy_intp shape = 1;
 
         newdim.ptr = &shape;
-        temp = (PyArrayObject *)PyArray_Newshape(new, &newdim, NPY_CORDER);
-        Py_DECREF(new);
+        temp = (PyArrayObject *)PyArray_Newshape(_new, &newdim, NPY_CORDER);
+        Py_DECREF(_new);
         if (temp == NULL) {
             return NULL;
         }
-        new = temp;
+        _new = temp;
     }
 
     /* Setup output shape */
-    for (i = 0; i < PyArray_NDIM(new); i++) {
-        outdims[i] = PyArray_DIM(new, i);
+    for (i = 0; i < PyArray_NDIM(_new); i++) {
+        outdims[i] = PyArray_DIM(_new, i);
     }
 
     /* Multiply axis dimension by 8 */
@@ -1796,15 +1796,15 @@ unpack_bits(PyObject *input, int axis, PyObject *count_obj, char order)
 
     /* Create output array */
     out = (PyArrayObject *)PyArray_NewFromDescr(
-            Py_TYPE(new), PyArray_DescrFromType(NPY_UBYTE),
-            PyArray_NDIM(new), outdims, NULL, NULL,
-            PyArray_ISFORTRAN(new), NULL);
+            Py_TYPE(_new), PyArray_DescrFromType(NPY_UBYTE),
+            PyArray_NDIM(_new), outdims, NULL, NULL,
+            PyArray_ISFORTRAN(_new), NULL);
     if (out == NULL) {
         goto fail;
     }
 
     /* Setup iterators to iterate over all but given axis */
-    it = (PyArrayIterObject *)PyArray_IterAllButAxis((PyObject *)new, &axis);
+    it = (PyArrayIterObject *)PyArray_IterAllButAxis((PyObject *)_new, &axis);
     ot = (PyArrayIterObject *)PyArray_IterAllButAxis((PyObject *)out, &axis);
     if (it == NULL || ot == NULL) {
         Py_XDECREF(it);
@@ -1828,7 +1828,7 @@ unpack_bits(PyObject *input, int axis, PyObject *count_obj, char order)
         unpack_init = 1;
     }
 
-    count = PyArray_DIM(new, axis) * 8;
+    count = PyArray_DIM(_new, axis) * 8;
     if (outdims[axis] > count) {
         in_n = count / 8;
         in_tail = 0;
@@ -1840,7 +1840,7 @@ unpack_bits(PyObject *input, int axis, PyObject *count_obj, char order)
         out_pad = 0;
     }
 
-    in_stride = PyArray_STRIDE(new, axis);
+    in_stride = PyArray_STRIDE(_new, axis);
     out_stride = PyArray_STRIDE(out, axis);
 
     NPY_BEGIN_THREADS_THRESHOLDED(PyArray_Size((PyObject *)out) / 8);
@@ -1928,11 +1928,11 @@ unpack_bits(PyObject *input, int axis, PyObject *count_obj, char order)
     Py_DECREF(it);
     Py_DECREF(ot);
 
-    Py_DECREF(new);
+    Py_DECREF(_new);
     return (PyObject *)out;
 
 fail:
-    Py_XDECREF(new);
+    Py_XDECREF(_new);
     Py_XDECREF(out);
     return NULL;
 }

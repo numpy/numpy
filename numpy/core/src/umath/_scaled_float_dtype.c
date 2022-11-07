@@ -151,18 +151,18 @@ static PyArray_SFloatDescr SFloatSingleton = {{
 
 static PyArray_Descr *
 sfloat_scaled_copy(PyArray_SFloatDescr *self, double factor) {
-    PyArray_SFloatDescr *new = PyObject_New(
+    PyArray_SFloatDescr *_new = PyObject_New(
             PyArray_SFloatDescr, (PyTypeObject *)&PyArray_SFloatDType);
-    if (new == NULL) {
+    if (_new == NULL) {
         return NULL;
     }
     /* Don't copy PyObject_HEAD part */
-    memcpy((char *)new + sizeof(PyObject),
+    memcpy((char *)_new + sizeof(PyObject),
             (char *)self + sizeof(PyObject),
             sizeof(PyArray_SFloatDescr) - sizeof(PyObject));
 
-    new->scaling = new->scaling * factor;
-    return (PyArray_Descr *)new;
+    _new->scaling = _new->scaling * factor;
+    return (PyArray_Descr *)_new;
 }
 
 
@@ -691,12 +691,12 @@ promote_to_sfloat(PyUFuncObject *NPY_UNUSED(ufunc),
         PyArray_DTypeMeta *new_dtypes[3])
 {
     for (int i = 0; i < 3; i++) {
-        PyArray_DTypeMeta *new = &PyArray_SFloatDType;
+        PyArray_DTypeMeta *_new = &PyArray_SFloatDType;
         if (signature[i] != NULL) {
-            new = signature[i];
+            _new = signature[i];
         }
-        Py_INCREF(new);
-        new_dtypes[i] = new;
+        Py_INCREF(_new);
+        new_dtypes[i] = _new;
     }
     return 0;
 }

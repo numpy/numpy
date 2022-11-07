@@ -558,12 +558,12 @@ PyArray_Byteswap(PyArrayObject *self, npy_bool inplace)
         return (PyObject *)self;
     }
     else {
-        PyObject *new;
+        PyObject *_new;
         if ((ret = (PyArrayObject *)PyArray_NewCopy(self,-1)) == NULL) {
             return NULL;
         }
-        new = PyArray_Byteswap(ret, NPY_TRUE);
-        Py_DECREF(new);
+        _new = PyArray_Byteswap(ret, NPY_TRUE);
+        Py_DECREF(_new);
         return (PyObject *)ret;
     }
 }
@@ -1046,10 +1046,10 @@ array_getarray(PyArrayObject *self, PyObject *args)
 
     /* convert to PyArray_Type */
     if (!PyArray_CheckExact(self)) {
-        PyArrayObject *new;
+        PyArrayObject *_new;
 
         Py_INCREF(PyArray_DESCR(self));
-        new = (PyArrayObject *)PyArray_NewFromDescrAndBase(
+        _new = (PyArrayObject *)PyArray_NewFromDescrAndBase(
                 &PyArray_Type,
                 PyArray_DESCR(self),
                 PyArray_NDIM(self),
@@ -1060,10 +1060,10 @@ array_getarray(PyArrayObject *self, PyObject *args)
                 NULL,
                 (PyObject *)self
         );
-        if (new == NULL) {
+        if (_new == NULL) {
             return NULL;
         }
-        self = new;
+        self = _new;
     }
     else {
         Py_INCREF(self);
@@ -1611,18 +1611,18 @@ _deepcopy_call(char *iptr, char *optr, PyArray_Descr *dtype,
     }
     else if (PyDataType_HASFIELDS(dtype)) {
         PyObject *key, *value, *title = NULL;
-        PyArray_Descr *new;
+        PyArray_Descr *_new;
         int offset, res;
         Py_ssize_t pos = 0;
         while (PyDict_Next(dtype->fields, &pos, &key, &value)) {
             if (NPY_TITLE_KEY(key, value)) {
                 continue;
             }
-            if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset,
+            if (!PyArg_ParseTuple(value, "Oi|O", &_new, &offset,
                                   &title)) {
                 return -1;
             }
-            res = _deepcopy_call(iptr + offset, optr + offset, new,
+            res = _deepcopy_call(iptr + offset, optr + offset, _new,
                                  deepcopy, visit);
             if (res < 0) {
                 return -1;
@@ -2755,17 +2755,17 @@ static PyObject *
 array_newbyteorder(PyArrayObject *self, PyObject *args)
 {
     char endian = NPY_SWAP;
-    PyArray_Descr *new;
+    PyArray_Descr *_new;
 
     if (!PyArg_ParseTuple(args, "|O&:newbyteorder", PyArray_ByteorderConverter,
                           &endian)) {
         return NULL;
     }
-    new = PyArray_DescrNewByteorder(PyArray_DESCR(self), endian);
-    if (!new) {
+    _new = PyArray_DescrNewByteorder(PyArray_DESCR(self), endian);
+    if (!_new) {
         return NULL;
     }
-    return PyArray_View(self, new, NULL);
+    return PyArray_View(self, _new, NULL);
 
 }
 

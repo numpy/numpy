@@ -57,7 +57,8 @@ create_conv_funcs(
     }
 
     PyObject *key, *value;
-    Py_ssize_t pos = 0;
+    Py_ssize_t pos;
+    pos = 0;
     while (PyDict_Next(converters, &pos, &key, &value)) {
         Py_ssize_t column = PyNumber_AsSsize_t(key, PyExc_IndexError);
         if (column == -1 && PyErr_Occurred()) {
@@ -186,7 +187,8 @@ read_rows(stream *s,
     }
 
     /* Set the actual number of fields if it is already known, otherwise -1 */
-    Py_ssize_t actual_num_fields = -1;
+    Py_ssize_t actual_num_fields;
+    actual_num_fields = -1;
     if (usecols != NULL) {
         assert(homogeneous || num_field_types == num_usecols);
         actual_num_fields = num_usecols;
@@ -208,7 +210,8 @@ read_rows(stream *s,
         }
     }
 
-    Py_ssize_t row_count = 0;  /* number of rows actually processed */
+    Py_ssize_t row_count;
+    row_count = 0;  /* number of rows actually processed */
     while ((max_rows < 0 || row_count < max_rows) && ts_result == 0) {
         ts_result = tokenize(s, &ts, pconfig);
         if (ts_result < 0) {
