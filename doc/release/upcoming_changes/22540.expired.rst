@@ -1,0 +1,3 @@
+* Passing dtype instances other than the default ones to
+  ``dtype=`` or ``signature=` in ufuncs will now raise a
+  ``TypeError``.  (Initially deprecated in NumPy 1.21.)
