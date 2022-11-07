@@ -466,29 +466,29 @@ PyArray_DescrFromTypeObject(PyObject *type)
 
     /* Do special thing for VOID sub-types */
     if (PyType_IsSubtype((PyTypeObject *)type, &PyVoidArrType_Type)) {
-        PyArray_Descr *new = PyArray_DescrNewFromType(NPY_VOID);
-        if (new == NULL) {
+        PyArray_Descr *_new = PyArray_DescrNewFromType(NPY_VOID);
+        if (_new == NULL) {
             return NULL;
         }
         PyArray_Descr *conv = _arraydescr_try_convert_from_dtype_attr(type);
         if ((PyObject *)conv != Py_NotImplemented) {
             if (conv == NULL) {
-                Py_DECREF(new);
+                Py_DECREF(_new);
                 return NULL;
             }
-            new->fields = conv->fields;
-            Py_XINCREF(new->fields);
-            new->names = conv->names;
-            Py_XINCREF(new->names);
-            new->elsize = conv->elsize;
-            new->subarray = conv->subarray;
+            _new->fields = conv->fields;
+            Py_XINCREF(_new->fields);
+            _new->names = conv->names;
+            Py_XINCREF(_new->names);
+            _new->elsize = conv->elsize;
+            _new->subarray = conv->subarray;
             conv->subarray = NULL;
         }
         Py_DECREF(conv);
-        Py_XDECREF(new->typeobj);
-        new->typeobj = (PyTypeObject *)type;
+        Py_XDECREF(_new->typeobj);
+        _new->typeobj = (PyTypeObject *)type;
         Py_INCREF(type);
-        return new;
+        return _new;
     }
     return _descr_from_subtype(type);
 }

@@ -41,7 +41,7 @@ PyArray_Item_INCREF(char *data, PyArray_Descr *descr)
     }
     else if (PyDataType_HASFIELDS(descr)) {
         PyObject *key, *value, *title = NULL;
-        PyArray_Descr *new;
+        PyArray_Descr *_new;
         int offset;
         Py_ssize_t pos = 0;
 
@@ -49,11 +49,11 @@ PyArray_Item_INCREF(char *data, PyArray_Descr *descr)
             if (NPY_TITLE_KEY(key, value)) {
                 continue;
             }
-            if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset,
+            if (!PyArg_ParseTuple(value, "Oi|O", &_new, &offset,
                                   &title)) {
                 return;
             }
-            PyArray_Item_INCREF(data + offset, new);
+            PyArray_Item_INCREF(data + offset, _new);
         }
     }
     else if (PyDataType_HASSUBARRAY(descr)) {
@@ -103,7 +103,7 @@ PyArray_Item_XDECREF(char *data, PyArray_Descr *descr)
     }
     else if (PyDataType_HASFIELDS(descr)) {
             PyObject *key, *value, *title = NULL;
-            PyArray_Descr *new;
+            PyArray_Descr *_new;
             int offset;
             Py_ssize_t pos = 0;
 
@@ -111,11 +111,11 @@ PyArray_Item_XDECREF(char *data, PyArray_Descr *descr)
                 if (NPY_TITLE_KEY(key, value)) {
                     continue;
                 }
-                if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset,
+                if (!PyArg_ParseTuple(value, "Oi|O", &_new, &offset,
                                       &title)) {
                     return;
                 }
-                PyArray_Item_XDECREF(data + offset, new);
+                PyArray_Item_XDECREF(data + offset, _new);
             }
         }
     else if (PyDataType_HASSUBARRAY(descr)) {
@@ -315,7 +315,7 @@ _fillobject(char *optr, PyObject *obj, PyArray_Descr *dtype)
     }
     else if (PyDataType_HASFIELDS(dtype)) {
         PyObject *key, *value, *title = NULL;
-        PyArray_Descr *new;
+        PyArray_Descr *_new;
         int offset;
         Py_ssize_t pos = 0;
 
@@ -323,10 +323,10 @@ _fillobject(char *optr, PyObject *obj, PyArray_Descr *dtype)
             if (NPY_TITLE_KEY(key, value)) {
                 continue;
             }
-            if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset, &title)) {
+            if (!PyArg_ParseTuple(value, "Oi|O", &_new, &offset, &title)) {
                 return;
             }
-            _fillobject(optr + offset, obj, new);
+            _fillobject(optr + offset, obj, _new);
         }
     }
     else if (PyDataType_HASSUBARRAY(dtype)) {

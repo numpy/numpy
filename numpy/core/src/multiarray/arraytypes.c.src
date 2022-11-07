@@ -870,17 +870,17 @@ VOID_getitem(void *input, void *vap)
         ret = PyTuple_New(n);
         for (i = 0; i < n; i++) {
             npy_intp offset;
-            PyArray_Descr *new;
+            PyArray_Descr *_new;
             key = PyTuple_GET_ITEM(names, i);
             tup = PyDict_GetItem(descr->fields, key);
-            if (_unpack_field(tup, &new, &offset) < 0) {
+            if (_unpack_field(tup, &_new, &offset) < 0) {
                 Py_DECREF(ret);
                 return NULL;
             }
-            dummy_fields.descr = new;
+            dummy_fields.descr = _new;
             /* update alignment based on offset */
-            if ((new->alignment > 1)
-                    && ((((npy_intp)(ip+offset)) % new->alignment) != 0)) {
+            if ((_new->alignment > 1)
+                    && ((((npy_intp)(ip+offset)) % _new->alignment) != 0)) {
                 PyArray_CLEARFLAGS(dummy_arr, NPY_ARRAY_ALIGNED);
             }
             else {
@@ -960,18 +960,18 @@ _setup_field(int i, PyArray_Descr *descr, PyArrayObject *arr,
 {
     PyObject *key;
     PyObject *tup;
-    PyArray_Descr *new;
+    PyArray_Descr *_new;
     npy_intp offset;
 
     key = PyTuple_GET_ITEM(descr->names, i);
     tup = PyDict_GetItem(descr->fields, key);
-    if (_unpack_field(tup, &new, &offset) < 0) {
+    if (_unpack_field(tup, &_new, &offset) < 0) {
         return -1;
     }
 
-    ((PyArrayObject_fields *)(arr))->descr = new;
-    if ((new->alignment > 1) &&
-                ((((uintptr_t)dstdata + offset) % new->alignment) != 0)) {
+    ((PyArrayObject_fields *)(arr))->descr = _new;
+    if ((_new->alignment > 1) &&
+                ((((uintptr_t)dstdata + offset) % _new->alignment) != 0)) {
         PyArray_CLEARFLAGS(arr, NPY_ARRAY_ALIGNED);
     }
     else {
@@ -2522,23 +2522,23 @@ VOID_copyswapn (char *dst, npy_intp dstride, char *src, npy_intp sstride,
 
         while (PyDict_Next(descr->fields, &pos, &key, &value)) {
             npy_intp offset;
-            PyArray_Descr *new;
+            PyArray_Descr *_new;
             if (NPY_TITLE_KEY(key, value)) {
                 continue;
             }
-            if (_unpack_field(value, &new, &offset) < 0) {
+            if (_unpack_field(value, &_new, &offset) < 0) {
                 return;
             }
 
-            dummy_fields.descr = new;
-            new->f->copyswapn(dst+offset, dstride,
+            dummy_fields.descr = _new;
+            _new->f->copyswapn(dst+offset, dstride,
                     (src != NULL ? src+offset : NULL),
                     sstride, n, swap, dummy_arr);
         }
         return;
     }
     if (PyDataType_HASSUBARRAY(descr)) {
-        PyArray_Descr *new;
+        PyArray_Descr *_new;
         npy_intp num;
         npy_intp i;
         int subitemsize;
@@ -2559,10 +2559,10 @@ VOID_copyswapn (char *dst, npy_intp dstride, char *src, npy_intp sstride,
             return;
         }
 
-        new = descr->subarray->base;
+        _new = descr->subarray->base;
         dstptr = dst;
         srcptr = src;
-        subitemsize = new->elsize;
+        subitemsize = _new->elsize;
         if (subitemsize == 0) {
             /* There cannot be any elements, so return */
             return;
@@ -2570,11 +2570,11 @@ VOID_copyswapn (char *dst, npy_intp dstride, char *src, npy_intp sstride,
 
         PyArrayObject_fields dummy_fields = get_dummy_stack_array(arr);
         PyArrayObject *dummy_arr = (PyArrayObject *)&dummy_fields;
-        ((PyArrayObject_fields *)dummy_arr)->descr = new;
+        ((PyArrayObject_fields *)dummy_arr)->descr = _new;
 
         num = descr->elsize / subitemsize;
         for (i = 0; i < n; i++) {
-            new->f->copyswapn(dstptr, subitemsize, srcptr,
+            _new->f->copyswapn(dstptr, subitemsize, srcptr,
                     subitemsize, num, swap, dummy_arr);
             dstptr += dstride;
             if (srcptr) {
@@ -2610,22 +2610,22 @@ VOID_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
         while (PyDict_Next(descr->fields, &pos, &key, &value)) {
             npy_intp offset;
 
-            PyArray_Descr * new;
+            PyArray_Descr * _new;
             if (NPY_TITLE_KEY(key, value)) {
                 continue;
             }
-            if (_unpack_field(value, &new, &offset) < 0) {
+            if (_unpack_field(value, &_new, &offset) < 0) {
                 return;
             }
-            dummy_fields.descr = new;
-            new->f->copyswap(dst+offset,
+            dummy_fields.descr = _new;
+            _new->f->copyswap(dst+offset,
                     (src != NULL ? src+offset : NULL),
                     swap, dummy_arr);
         }
         return;
     }
     if (PyDataType_HASSUBARRAY(descr)) {
-        PyArray_Descr *new;
+        PyArray_Descr *_new;
         npy_intp num;
         int subitemsize;
         /*
@@ -2644,8 +2644,8 @@ VOID_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
             return;
         }
 
-        new = descr->subarray->base;
-        subitemsize = new->elsize;
+        _new = descr->subarray->base;
+        subitemsize = _new->elsize;
         if (subitemsize == 0) {
             /* There cannot be any elements, so return */
             return;
@@ -2653,10 +2653,10 @@ VOID_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
 
         PyArrayObject_fields dummy_fields = get_dummy_stack_array(arr);
         PyArrayObject *dummy_arr = (PyArrayObject *)&dummy_fields;
-        dummy_fields.descr = new;
+        dummy_fields.descr = _new;
 
         num = descr->elsize / subitemsize;
-        new->f->copyswapn(dst, subitemsize, src,
+        _new->f->copyswapn(dst, subitemsize, src,
                 subitemsize, num, swap, dummy_arr);
         return;
     }
@@ -2918,25 +2918,25 @@ VOID_nonzero (char *ip, PyArrayObject *ap)
 
         descr = PyArray_DESCR(ap);
         while (PyDict_Next(descr->fields, &pos, &key, &value)) {
-            PyArray_Descr * new;
+            PyArray_Descr * _new;
             npy_intp offset;
             if (NPY_TITLE_KEY(key, value)) {
                 continue;
             }
-            if (_unpack_field(value, &new, &offset) < 0) {
+            if (_unpack_field(value, &_new, &offset) < 0) {
                 PyErr_Clear();
                 continue;
             }
 
-            dummy_fields.descr = new;
-            if ((new->alignment > 1) && !__ALIGNED(ip + offset,
-                        new->alignment)) {
+            dummy_fields.descr = _new;
+            if ((_new->alignment > 1) && !__ALIGNED(ip + offset,
+                        _new->alignment)) {
                 PyArray_CLEARFLAGS(dummy_arr, NPY_ARRAY_ALIGNED);
             }
             else {
                 PyArray_ENABLEFLAGS(dummy_arr, NPY_ARRAY_ALIGNED);
             }
-            if (new->f->nonzero(ip+offset, dummy_arr)) {
+            if (_new->f->nonzero(ip+offset, dummy_arr)) {
                 nonz = NPY_TRUE;
                 break;
             }
@@ -3276,60 +3276,60 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
      */
     names = descr->names;
     for (i = 0; i < PyTuple_GET_SIZE(names); i++) {
-        PyArray_Descr *new;
+        PyArray_Descr *_new;
         npy_intp offset;
         key = PyTuple_GET_ITEM(names, i);
         tup = PyDict_GetItem(descr->fields, key);
-        if (_unpack_field(tup, &new, &offset) < 0) {
+        if (_unpack_field(tup, &_new, &offset) < 0) {
             goto finish;
         }
         /* Set the fields needed by compare or copyswap */
-        dummy_struct.descr = new;
+        dummy_struct.descr = _new;
 
         swap = PyArray_ISBYTESWAPPED(dummy);
         nip1 = ip1 + offset;
         nip2 = ip2 + offset;
-        if (swap || new->alignment > 1) {
-            if (swap || !npy_is_aligned(nip1, new->alignment)) {
+        if (swap || _new->alignment > 1) {
+            if (swap || !npy_is_aligned(nip1, _new->alignment)) {
                 /*
                  * create temporary buffer and copy,
                  * always use the current handler for internal allocations
                  */
-                nip1 = PyDataMem_UserNEW(new->elsize, mem_handler);
+                nip1 = PyDataMem_UserNEW(_new->elsize, mem_handler);
                 if (nip1 == NULL) {
                     goto finish;
                 }
-                memcpy(nip1, ip1 + offset, new->elsize);
+                memcpy(nip1, ip1 + offset, _new->elsize);
                 if (swap)
-                    new->f->copyswap(nip1, NULL, swap, dummy);
+                    _new->f->copyswap(nip1, NULL, swap, dummy);
             }
-            if (swap || !npy_is_aligned(nip2, new->alignment)) {
+            if (swap || !npy_is_aligned(nip2, _new->alignment)) {
                 /*
                  * create temporary buffer and copy,
                  * always use the current handler for internal allocations
                  */
-                nip2 = PyDataMem_UserNEW(new->elsize, mem_handler);
+                nip2 = PyDataMem_UserNEW(_new->elsize, mem_handler);
                 if (nip2 == NULL) {
                     if (nip1 != ip1 + offset) {
                         /* destroy temporary buffer */
-                        PyDataMem_UserFREE(nip1, new->elsize, mem_handler);
+                        PyDataMem_UserFREE(nip1, _new->elsize, mem_handler);
                     }
                     goto finish;
                 }
-                memcpy(nip2, ip2 + offset, new->elsize);
+                memcpy(nip2, ip2 + offset, _new->elsize);
                 if (swap)
-                    new->f->copyswap(nip2, NULL, swap, dummy);
+                    _new->f->copyswap(nip2, NULL, swap, dummy);
             }
         }
-        res = new->f->compare(nip1, nip2, dummy);
-        if (swap || new->alignment > 1) {
+        res = _new->f->compare(nip1, nip2, dummy);
+        if (swap || _new->alignment > 1) {
             if (nip1 != ip1 + offset) {
                 /* destroy temporary buffer */
-                PyDataMem_UserFREE(nip1, new->elsize, mem_handler);
+                PyDataMem_UserFREE(nip1, _new->elsize, mem_handler);
             }
             if (nip2 != ip2 + offset) {
                 /* destroy temporary buffer */
-                PyDataMem_UserFREE(nip2, new->elsize, mem_handler);
+                PyDataMem_UserFREE(nip2, _new->elsize, mem_handler);
             }
         }
         if (res != 0) {

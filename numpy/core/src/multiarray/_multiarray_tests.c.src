@@ -462,7 +462,7 @@ static int malloc_free_counts[2];
 static PyDataMem_EventHookFunc *old_hook = NULL;
 static void *old_data;
 
-static void test_hook(void *old, void *new, size_t size, void *user_data)
+static void test_hook(void *old, void *_new, size_t size, void *user_data)
 {
     int* counters = (int *) user_data;
     if (old == NULL) {

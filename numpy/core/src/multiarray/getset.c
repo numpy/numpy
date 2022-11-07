@@ -112,7 +112,7 @@ static int
 array_strides_set(PyArrayObject *self, PyObject *obj, void *NPY_UNUSED(ignored))
 {
     PyArray_Dims newstrides = {NULL, -1};
-    PyArrayObject *new;
+    PyArrayObject *_new;
     npy_intp numbytes = 0;
     npy_intp offset = 0;
     npy_intp lower_offset = 0;
@@ -134,27 +134,27 @@ array_strides_set(PyArrayObject *self, PyObject *obj, void *NPY_UNUSED(ignored))
                      " same length as shape (%d)", PyArray_NDIM(self));
         goto fail;
     }
-    new = self;
-    while(PyArray_BASE(new) && PyArray_Check(PyArray_BASE(new))) {
-        new = (PyArrayObject *)(PyArray_BASE(new));
+    _new = self;
+    while(PyArray_BASE(_new) && PyArray_Check(PyArray_BASE(_new))) {
+        _new = (PyArrayObject *)(PyArray_BASE(_new));
     }
     /*
      * Get the available memory through the buffer interface on
-     * PyArray_BASE(new) or if that fails from the current new
+     * PyArray_BASE(_new) or if that fails from the current _new
      */
-    if (PyArray_BASE(new) &&
-            PyObject_GetBuffer(PyArray_BASE(new), &view, PyBUF_SIMPLE) >= 0) {
+    if (PyArray_BASE(_new) &&
+            PyObject_GetBuffer(PyArray_BASE(_new), &view, PyBUF_SIMPLE) >= 0) {
         offset = PyArray_BYTES(self) - (char *)view.buf;
         numbytes = view.len + offset;
         PyBuffer_Release(&view);
     }
     else {
         PyErr_Clear();
-        offset_bounds_from_strides(PyArray_ITEMSIZE(new), PyArray_NDIM(new),
-                                   PyArray_DIMS(new), PyArray_STRIDES(new),
+        offset_bounds_from_strides(PyArray_ITEMSIZE(_new), PyArray_NDIM(_new),
+                                   PyArray_DIMS(_new), PyArray_STRIDES(_new),
                                    &lower_offset, &upper_offset);
 
-        offset = PyArray_BYTES(self) - (PyArray_BYTES(new) + lower_offset);
+        offset = PyArray_BYTES(self) - (PyArray_BYTES(_new) + lower_offset);
         numbytes = upper_offset - lower_offset;
     }
 
@@ -753,7 +753,7 @@ static int
 array_real_set(PyArrayObject *self, PyObject *val, void *NPY_UNUSED(ignored))
 {
     PyArrayObject *ret;
-    PyArrayObject *new;
+    PyArrayObject *_new;
     int retcode;
 
     if (val == NULL) {
@@ -771,14 +771,14 @@ array_real_set(PyArrayObject *self, PyObject *val, void *NPY_UNUSED(ignored))
         Py_INCREF(self);
         ret = self;
     }
-    new = (PyArrayObject *)PyArray_FROM_O(val);
-    if (new == NULL) {
+    _new = (PyArrayObject *)PyArray_FROM_O(val);
+    if (_new == NULL) {
         Py_DECREF(ret);
         return -1;
     }
-    retcode = PyArray_MoveInto(ret, new);
+    retcode = PyArray_MoveInto(ret, _new);
     Py_DECREF(ret);
-    Py_DECREF(new);
+    Py_DECREF(_new);
     return retcode;
 }
 
@@ -826,21 +826,21 @@ array_imag_set(PyArrayObject *self, PyObject *val, void *NPY_UNUSED(ignored))
     }
     if (PyArray_ISCOMPLEX(self)) {
         PyArrayObject *ret;
-        PyArrayObject *new;
+        PyArrayObject *_new;
         int retcode;
 
         ret = _get_part(self, 1);
         if (ret == NULL) {
             return -1;
         }
-        new = (PyArrayObject *)PyArray_FROM_O(val);
-        if (new == NULL) {
+        _new = (PyArrayObject *)PyArray_FROM_O(val);
+        if (_new == NULL) {
             Py_DECREF(ret);
             return -1;
         }
-        retcode = PyArray_MoveInto(ret, new);
+        retcode = PyArray_MoveInto(ret, _new);
         Py_DECREF(ret);
-        Py_DECREF(new);
+        Py_DECREF(_new);
         return retcode;
     }
     else {

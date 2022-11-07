@@ -1122,7 +1122,7 @@ PyArray_New(
         PyObject *obj)
 {
     PyArray_Descr *descr;
-    PyObject *new;
+    PyObject *_new;
 
     if (subtype == NULL) {
         PyErr_SetString(PyExc_ValueError,
@@ -1147,9 +1147,9 @@ PyArray_New(
         }
         descr->elsize = itemsize;
     }
-    new = PyArray_NewFromDescr(subtype, descr, nd, dims, strides,
+    _new = PyArray_NewFromDescr(subtype, descr, nd, dims, strides,
                                data, flags, obj);
-    return new;
+    return _new;
 }
 
 
@@ -2490,7 +2490,7 @@ NPY_NO_EXPORT PyObject *
 PyArray_FromArrayAttr_int(
         PyObject *op, PyArray_Descr *descr, int never_copy)
 {
-    PyObject *new;
+    PyObject *_new;
     PyObject *array_meth;
 
     array_meth = PyArray_LookupSpecial_OnInstance(op, npy_ma_str_array);
@@ -2521,23 +2521,23 @@ PyArray_FromArrayAttr_int(
         return Py_NotImplemented;
     }
     if (descr == NULL) {
-        new = PyObject_CallFunction(array_meth, NULL);
+        _new = PyObject_CallFunction(array_meth, NULL);
     }
     else {
-        new = PyObject_CallFunction(array_meth, "O", descr);
+        _new = PyObject_CallFunction(array_meth, "O", descr);
     }
     Py_DECREF(array_meth);
-    if (new == NULL) {
+    if (_new == NULL) {
         return NULL;
     }
-    if (!PyArray_Check(new)) {
+    if (!PyArray_Check(_new)) {
         PyErr_SetString(PyExc_ValueError,
                         "object __array__ method not "  \
                         "producing an array");
-        Py_DECREF(new);
+        Py_DECREF(_new);
         return NULL;
     }
-    return new;
+    return _new;
 }
 
 
@@ -2623,23 +2623,23 @@ PyArray_FromDims(int NPY_UNUSED(nd), int *NPY_UNUSED(d), int NPY_UNUSED(type))
 NPY_NO_EXPORT PyObject *
 PyArray_EnsureArray(PyObject *op)
 {
-    PyObject *new;
+    PyObject *_new;
 
     if ((op == NULL) || (PyArray_CheckExact(op))) {
-        new = op;
-        Py_XINCREF(new);
+        _new = op;
+        Py_XINCREF(_new);
     }
     else if (PyArray_Check(op)) {
-        new = PyArray_View((PyArrayObject *)op, NULL, &PyArray_Type);
+        _new = PyArray_View((PyArrayObject *)op, NULL, &PyArray_Type);
     }
     else if (PyArray_IsScalar(op, Generic)) {
-        new = PyArray_FromScalar(op, NULL);
+        _new = PyArray_FromScalar(op, NULL);
     }
     else {
-        new = PyArray_FROM_OF(op, NPY_ARRAY_ENSUREARRAY);
+        _new = PyArray_FROM_OF(op, NPY_ARRAY_ENSUREARRAY);
     }
     Py_XDECREF(op);
-    return new;
+    return _new;
 }
 
 /*NUMPY_API*/
@@ -3374,9 +3374,9 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
  finish:
     /* TODO: This swapping could be handled on the fly by the nditer */
     if (swap) {
-        PyObject *new;
-        new = PyArray_Byteswap(range, 1);
-        Py_DECREF(new);
+        PyObject *_new;
+        _new = PyArray_Byteswap(range, 1);
+        Py_DECREF(_new);
         Py_DECREF(PyArray_DESCR(range));
         /* steals the reference */
         ((PyArrayObject_fields *)range)->descr = dtype;

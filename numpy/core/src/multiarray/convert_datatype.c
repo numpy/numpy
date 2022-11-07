@@ -1709,9 +1709,9 @@ should_use_min_scalar_weak_literals(int narrs, PyArrayObject **arr) {
     for (int i = 0; i < narrs; i++) {
         if (PyArray_FLAGS(arr[i]) & NPY_ARRAY_WAS_PYTHON_INT) {
             /* A Python integer could be `u` so is effectively that: */
-            int new = dtype_kind_to_simplified_ordering('u');
-            if (new > max_scalar_kind) {
-                max_scalar_kind = new;
+            int _new = dtype_kind_to_simplified_ordering('u');
+            if (_new > max_scalar_kind) {
+                max_scalar_kind = _new;
             }
         }
         /* For the new logic, only complex or not matters: */

@@ -320,20 +320,20 @@ PyArray_ToString(PyArrayObject *self, NPY_ORDER order)
         ret = PyBytes_FromStringAndSize(PyArray_DATA(self), (Py_ssize_t) numbytes);
     }
     else {
-        PyObject *new;
+        PyObject *_new;
         if (order == NPY_FORTRANORDER) {
             /* iterators are always in C-order */
-            new = PyArray_Transpose(self, NULL);
-            if (new == NULL) {
+            _new = PyArray_Transpose(self, NULL);
+            if (_new == NULL) {
                 return NULL;
             }
         }
         else {
             Py_INCREF(self);
-            new = (PyObject *)self;
+            _new = (PyObject *)self;
         }
-        it = (PyArrayIterObject *)PyArray_IterNew(new);
-        Py_DECREF(new);
+        it = (PyArrayIterObject *)PyArray_IterNew(_new);
+        Py_DECREF(_new);
         if (it == NULL) {
             return NULL;
         }

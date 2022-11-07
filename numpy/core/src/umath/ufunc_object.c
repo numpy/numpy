@@ -4968,15 +4968,15 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
             /* Otherwise, replace the operand with a new array */
             PyArray_Descr *descr = operation_descrs[i];
             Py_INCREF(descr);
-            PyArrayObject *new = (PyArrayObject *)PyArray_NewFromDescr(
+            PyArrayObject *_new = (PyArrayObject *)PyArray_NewFromDescr(
                     &PyArray_Type, descr, 0, NULL, NULL, NULL, 0, NULL);
-            Py_SETREF(operands[i], new);
+            Py_SETREF(operands[i], _new);
             if (operands[i] == NULL) {
                 goto fail;
             }
 
             PyObject *value = PyTuple_GET_ITEM(full_args.in, i);
-            if (PyArray_SETITEM(new, PyArray_BYTES(operands[i]), value) < 0) {
+            if (PyArray_SETITEM(_new, PyArray_BYTES(operands[i]), value) < 0) {
                 goto fail;
             }
         }

@@ -389,18 +389,18 @@ stringtype_@form@(PyObject *self)
 {
     const npy_char *dptr, *ip;
     Py_ssize_t len;
-    PyObject *new;
+    PyObject *_new;
     PyObject *ret;
 
     ip = PyBytes_AS_STRING(self);
     len = PyBytes_GET_SIZE(self);
     for(dptr = ip + len - 1; len > 0 && *dptr == 0; len--, dptr--);
-    new = PyBytes_FromStringAndSize(ip, len);
-    if (new == NULL) {
+    _new = PyBytes_FromStringAndSize(ip, len);
+    if (_new == NULL) {
         return NULL;
     }
-    ret = PyBytes_Type.tp_@form@(new);
-    Py_DECREF(new);
+    ret = PyBytes_Type.tp_@form@(_new);
+    Py_DECREF(_new);
     return ret;
 }
 /**end repeat**/
@@ -418,7 +418,7 @@ unicodetype_@form@(PyObject *self)
 {
     Py_UCS4 *dptr, *ip;
     Py_ssize_t len;
-    PyObject *new;
+    PyObject *_new;
     PyObject *ret;
 
     /* PyUnicode_READY is called by PyUnicode_GetLength */
@@ -428,13 +428,13 @@ unicodetype_@form@(PyObject *self)
         return NULL;
     }
     for(dptr = ip + len - 1; len > 0 && *dptr == 0; len--, dptr--);
-    new = PyUnicode_FromKindAndData(PyUnicode_4BYTE_KIND, ip, len);
-    if (new == NULL) {
+    _new = PyUnicode_FromKindAndData(PyUnicode_4BYTE_KIND, ip, len);
+    if (_new == NULL) {
         PyMem_Free(ip);
         return NULL;
     }
-    ret = PyUnicode_Type.tp_@form@(new);
-    Py_DECREF(new);
+    ret = PyUnicode_Type.tp_@form@(_new);
+    Py_DECREF(_new);
     PyMem_Free(ip);
     return ret;
 }
@@ -1534,7 +1534,7 @@ gentype_byteswap(PyObject *self, PyObject *args, PyObject *kwds)
         /* get the data, copyswap it and pass it to a new Array scalar */
         char *data;
         PyArray_Descr *descr;
-        PyObject *new;
+        PyObject *_new;
         char *newmem;
 
         descr = PyArray_DescrFromScalar(self);
@@ -1548,10 +1548,10 @@ gentype_byteswap(PyObject *self, PyObject *args, PyObject *kwds)
         else {
             descr->f->copyswap(newmem, data, 1, NULL);
         }
-        new = PyArray_Scalar(newmem, descr, NULL);
+        _new = PyArray_Scalar(newmem, descr, NULL);
         PyObject_Free(newmem);
         Py_DECREF(descr);
-        return new;
+        return _new;
     }
 }
 
@@ -3170,7 +3170,7 @@ static PyObject *
 void_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
     PyObject *obj, *arr;
-    PyObject *new = NULL;
+    PyObject *_new = NULL;
 
     static char *kwnames[] = {"", NULL};  /* positional-only */
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "O:void", kwnames, &obj)) {
@@ -3185,13 +3185,13 @@ void_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
             (PyArray_Check(obj) &&
                      PyArray_NDIM((PyArrayObject *)obj)==0 &&
                      PyArray_ISINTEGER((PyArrayObject *)obj))) {
-        new = Py_TYPE(obj)->tp_as_number->nb_int(obj);
+        _new = Py_TYPE(obj)->tp_as_number->nb_int(obj);
     }
-    if (new && PyLong_Check(new)) {
+    if (_new && PyLong_Check(_new)) {
         PyObject *ret;
         char *destptr;
-        npy_ulonglong memu = PyLong_AsUnsignedLongLong(new);
-        Py_DECREF(new);
+        npy_ulonglong memu = PyLong_AsUnsignedLongLong(_new);
+        Py_DECREF(_new);
         if (PyErr_Occurred() || (memu > NPY_MAX_INT)) {
             PyErr_Clear();
             PyErr_Format(PyExc_OverflowError,

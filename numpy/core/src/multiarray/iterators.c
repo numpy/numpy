@@ -552,7 +552,7 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
     char *dptr;
     int size;
     PyObject *obj = NULL;
-    PyObject *new;
+    PyObject *_new;
     PyArray_CopySwapFunc *copyswap;
 
     if (ind == Py_Ellipsis) {
@@ -673,15 +673,15 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
     }
 
     Py_INCREF(indtype);
-    new = PyArray_FromAny(obj, indtype, 0, 0,
+    _new = PyArray_FromAny(obj, indtype, 0, 0,
                       NPY_ARRAY_FORCECAST | NPY_ARRAY_ALIGNED, NULL);
-    if (new == NULL) {
+    if (_new == NULL) {
         goto fail;
     }
     Py_DECREF(indtype);
     Py_DECREF(obj);
-    ret = (PyArrayObject *)iter_subscript_int(self, (PyArrayObject *)new);
-    Py_DECREF(new);
+    ret = (PyArrayObject *)iter_subscript_int(self, (PyArrayObject *)_new);
+    Py_DECREF(_new);
     return (PyObject *)ret;
 
 
@@ -928,13 +928,13 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
         }
         /* Check for integer array */
         else if (PyArray_ISINTEGER((PyArrayObject *)obj)) {
-            PyObject *new;
+            PyObject *_new;
             Py_INCREF(indtype);
-            new = PyArray_CheckFromAny(obj, indtype, 0, 0,
+            _new = PyArray_CheckFromAny(obj, indtype, 0, 0,
                            NPY_ARRAY_FORCECAST | NPY_ARRAY_BEHAVED_NS, NULL);
             Py_DECREF(obj);
-            obj = new;
-            if (new == NULL) {
+            obj = _new;
+            if (_new == NULL) {
                 goto finish;
             }
             if (iter_ass_sub_int(self, (PyArrayObject *)obj,
@@ -1047,15 +1047,15 @@ static PyMethodDef iter_methods[] = {
 static PyObject *
 iter_richcompare(PyArrayIterObject *self, PyObject *other, int cmp_op)
 {
-    PyArrayObject *new;
+    PyArrayObject *_new;
     PyObject *ret;
-    new = (PyArrayObject *)iter_array(self, NULL);
-    if (new == NULL) {
+    _new = (PyArrayObject *)iter_array(self, NULL);
+    if (_new == NULL) {
         return NULL;
     }
-    ret = array_richcompare(new, other, cmp_op);
-    PyArray_ResolveWritebackIfCopy(new);
-    Py_DECREF(new);
+    ret = array_richcompare(_new, other, cmp_op);
+    PyArray_ResolveWritebackIfCopy(_new);
+    Py_DECREF(_new);
     return ret;
 }
 

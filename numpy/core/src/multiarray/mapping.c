@@ -125,7 +125,7 @@ _get_transpose(int fancy_ndim, int consec, int ndim, int getmap, npy_intp *dims)
 NPY_NO_EXPORT void
 PyArray_MapIterSwapAxes(PyArrayMapIterObject *mit, PyArrayObject **ret, int getmap)
 {
-    PyObject *new;
+    PyObject *_new;
     PyArray_Dims permute;
     npy_intp d[NPY_MAXDIMS];
     PyArrayObject *arr;
@@ -145,19 +145,19 @@ PyArray_MapIterSwapAxes(PyArrayMapIterObject *mit, PyArrayObject **ret, int getm
         for (int i = 0; i < mit->nd-PyArray_NDIM(arr); i++) {
             permute.ptr[i] = 1;
         }
-        new = PyArray_Newshape(arr, &permute, NPY_ANYORDER);
+        _new = PyArray_Newshape(arr, &permute, NPY_ANYORDER);
         Py_DECREF(arr);
-        *ret = (PyArrayObject *)new;
-        if (new == NULL) {
+        *ret = (PyArrayObject *)_new;
+        if (_new == NULL) {
             return;
         }
     }
 
     _get_transpose(mit->nd_fancy, mit->consec, mit->nd, getmap, permute.ptr);
 
-    new = PyArray_Transpose(*ret, &permute);
+    _new = PyArray_Transpose(*ret, &permute);
     Py_DECREF(*ret);
-    *ret = (PyArrayObject *)new;
+    *ret = (PyArrayObject *)_new;
 }
 
 static NPY_INLINE void
@@ -2113,7 +2113,7 @@ static int
 _nonzero_indices(PyObject *myBool, PyArrayObject **arrays)
 {
     PyArray_Descr *typecode;
-    PyArrayObject *ba = NULL, *new = NULL;
+    PyArrayObject *ba = NULL, *_new = NULL;
     int nd, j;
     npy_intp size, i, count;
     npy_bool *ptr;
@@ -2144,16 +2144,16 @@ _nonzero_indices(PyObject *myBool, PyArrayObject **arrays)
 
     /* create count-sized index arrays for each dimension */
     for (j = 0; j < nd; j++) {
-        new = (PyArrayObject *)PyArray_NewFromDescr(
+        _new = (PyArrayObject *)PyArray_NewFromDescr(
             &PyArray_Type, PyArray_DescrFromType(NPY_INTP),
             1, &count, NULL, NULL,
             0, NULL);
-        if (new == NULL) {
+        if (_new == NULL) {
             goto fail;
         }
-        arrays[j] = new;
+        arrays[j] = _new;
 
-        dptr[j] = (npy_intp *)PyArray_DATA(new);
+        dptr[j] = (npy_intp *)PyArray_DATA(_new);
         coords[j] = 0;
         dims_m1[j] = PyArray_DIMS(ba)[j]-1;
     }

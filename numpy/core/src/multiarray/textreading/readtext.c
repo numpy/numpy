@@ -56,7 +56,8 @@ _readtext_from_stream(stream *s,
     if (num_fields < 0) {
         goto finish;
     }
-    bool homogeneous = num_fields == 1 && ft[0].descr == out_dtype;
+    bool homogeneous;
+    homogeneous = num_fields == 1 && ft[0].descr == out_dtype;
 
     if (!homogeneous && usecols != NULL && num_usecols != num_fields) {
         PyErr_Format(PyExc_TypeError,
