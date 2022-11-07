@@ -80,6 +80,7 @@ Exported symbols include:
 
 """
 import numbers
+import warnings
 
 from numpy.core.multiarray import (
         ndarray, array, dtype, datetime_data, datetime_as_string,
@@ -599,6 +600,16 @@ def find_common_type(array_types, scalar_types):
     """
     Determine common type following standard coercion rules.
 
+    .. deprecated:: NumPy 1.24
+
+        This function is deprecated, use `numpy.promote_types` or
+        `numpy.result_type` instead.  To achieve semantics for the
+        `scalar_types` argument, use `numpy.result_type` and pass the Python
+        values `0`, `0.0`, or `0j`.
+        This will give the same results in almost all cases.
+        More information and rare exception can be found in the
+        `NumPy 1.24 release notes <https://numpy.org/devdocs/release/1.24.0-notes.html>`_.
+
     Parameters
     ----------
     array_types : sequence
@@ -646,6 +657,14 @@ def find_common_type(array_types, scalar_types):
     dtype('complex128')
 
     """
+    # Deprecated 2022-11-07, NumPy 1.24
+    warnings.warn(
+            "np.find_common_type is deprecated.  Please use `np.result_type` "
+            "or `np.promote_types`.\n"
+            "See https://numpy.org/devdocs/release/1.24.0-notes.html and the "
+            "docs for more information.  (Deprecated NumPy 1.24)",
+            DeprecationWarning, stacklevel=2)
+
     array_types = [dtype(x) for x in array_types]
     scalar_types = [dtype(x) for x in scalar_types]
 
