@@ -118,11 +118,6 @@ def issubdtype(arg1: DTypeLike, arg2: DTypeLike) -> bool: ...
 
 def sctype2char(sctype: DTypeLike) -> str: ...
 
-def find_common_type(
-    array_types: Iterable[DTypeLike],
-    scalar_types: Iterable[DTypeLike],
-) -> dtype[Any]: ...
-
 cast: _typedict[_CastFunc]
 nbytes: _typedict[int]
 typecodes: _TypeCodes
