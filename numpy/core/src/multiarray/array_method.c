@@ -235,13 +235,13 @@ validate_spec(PyArrayMethod_Spec *spec)
  *
  * @param res The new PyBoundArrayMethodObject to be filled.
  * @param spec The specification list passed by the user.
- * @param private Private flag to limit certain slots to use in NumPy.
+ * @param _private Private flag to limit certain slots to use in NumPy.
  * @return -1 on error 0 on success
  */
 static int
 fill_arraymethod_from_slots(
         PyBoundArrayMethodObject *res, PyArrayMethod_Spec *spec,
-        int private)
+        int _private)
 {
     PyArrayMethodObject *meth = res->method;
 
@@ -390,13 +390,13 @@ PyArrayMethod_FromSpec(PyArrayMethod_Spec *spec)
  *        the method (such as usually needing the API, and the DTypes).
  *        Unused fields must be NULL.
  * @param slots Slots with the correct pair of IDs and (function) pointers.
- * @param private Some slots are currently considered private, if not true,
+ * @param _private Some slots are currently considered private, if not true,
  *        these will be rejected.
  *
  * @returns A new (bound) ArrayMethod object.
  */
 NPY_NO_EXPORT PyBoundArrayMethodObject *
-PyArrayMethod_FromSpec_int(PyArrayMethod_Spec *spec, int private)
+PyArrayMethod_FromSpec_int(PyArrayMethod_Spec *spec, int _private)
 {
     int nargs = spec->nin + spec->nout;
 
@@ -439,7 +439,7 @@ PyArrayMethod_FromSpec_int(PyArrayMethod_Spec *spec, int private)
     res->method->nout = spec->nout;
     res->method->flags = spec->flags;
     res->method->casting = spec->casting;
-    if (fill_arraymethod_from_slots(res, spec, private) < 0) {
+    if (fill_arraymethod_from_slots(res, spec, _private) < 0) {
         Py_DECREF(res);
         return NULL;
     }

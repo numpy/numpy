@@ -2438,14 +2438,14 @@ PyArray_AddCastingImplementation(PyBoundArrayMethodObject *meth)
  * Add a new casting implementation using a PyArrayMethod_Spec.
  *
  * @param spec
- * @param private If private, allow slots not publicly exposed.
+ * @param _private If private, allow slots not publicly exposed.
  * @return 0 on success -1 on failure
  */
 NPY_NO_EXPORT int
-PyArray_AddCastingImplementation_FromSpec(PyArrayMethod_Spec *spec, int private)
+PyArray_AddCastingImplementation_FromSpec(PyArrayMethod_Spec *spec, int _private)
 {
     /* Create a bound method, unbind and store it */
-    PyBoundArrayMethodObject *meth = PyArrayMethod_FromSpec_int(spec, private);
+    PyBoundArrayMethodObject *meth = PyArrayMethod_FromSpec_int(spec, _private);
     if (meth == NULL) {
         return -1;
     }
