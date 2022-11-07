@@ -1,0 +1,7 @@
+DLPack export raises ``BufferError``
+------------------------------------
+When an array buffer cannot be exported via DLPack a
+``BufferError`` is now always raised where previously
+``TypeError`` or ``RuntimeError`` was raised.
+This allows falling back to the buffer protocol or
+``__array_interface__`` when DLPack was tried first.
