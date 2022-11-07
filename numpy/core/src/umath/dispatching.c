@@ -667,12 +667,9 @@ legacy_promote_using_legacy_type_resolver(PyUFuncObject *ufunc,
         Py_DECREF(out_descrs[i]);
     }
     /*
-     * The PyUFunc_SimpleBinaryComparisonTypeResolver has a deprecation
-     * warning (ignoring `dtype=`) and cannot be cached.
-     * All datetime ones *should* have a warning, but currently don't,
-     * but ignore all signature passing also.  So they can also
-     * not be cached, and they mutate the signature which of course is wrong,
-     * but not doing it would confuse the code later.
+     * datetime legacy resolvers ignore the signature, which should be
+     * warn/raise (when used).  In such cases, the signature is (incorrectly)
+     * mutated, and caching is not possible.
      */
     for (int i = 0; i < nargs; i++) {
         if (signature[i] != NULL && signature[i] != operation_DTypes[i]) {
@@ -1042,13 +1039,6 @@ default_ufunc_promoter(PyUFuncObject *ufunc,
         PyArray_DTypeMeta *op_dtypes[], PyArray_DTypeMeta *signature[],
         PyArray_DTypeMeta *new_op_dtypes[])
 {
-    if (ufunc->type_resolver == &PyUFunc_SimpleBinaryComparisonTypeResolver
-            && signature[0] == NULL && signature[1] == NULL
-            && signature[2] != NULL && signature[2]->type_num != NPY_BOOL) {
-        /* bail out, this is _only_ to give future/deprecation warning! */
-        return -1;
-    }
-
     /* If nin < 2 promotion is a no-op, so it should not be registered */
     assert(ufunc->nin > 1);
     if (op_dtypes[0] == NULL) {
