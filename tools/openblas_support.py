@@ -13,8 +13,8 @@ from tempfile import mkstemp, gettempdir
 from urllib.request import urlopen, Request
 from urllib.error import HTTPError
 
-OPENBLAS_V = '0.3.20'
-OPENBLAS_LONG = 'v0.3.20'
+OPENBLAS_V = '0.3.21'
+OPENBLAS_LONG = 'v0.3.21'
 BASE_LOC = 'https://anaconda.org/multibuild-wheels-staging/openblas-libs'
 BASEURL = f'{BASE_LOC}/{OPENBLAS_LONG}/download'
 SUPPORTED_PLATFORMS = [
@@ -77,7 +77,7 @@ def download_openblas(target, plat, ilp64):
         suffix = f'manylinux{ml_ver}_{arch}.tar.gz'
         typ = 'tar.gz'
     elif plat == 'macosx-x86_64':
-        suffix = 'macosx_10_9_x86_64-gf_1becaaa.tar.gz'
+        suffix = 'macosx_10_11_x86_64-gf_dd3e148.tar.gz'
         typ = 'tar.gz'
     elif plat == 'macosx-arm64':
         suffix = 'macosx_11_0_arm64-gf_f26990f.tar.gz'
