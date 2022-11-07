@@ -1202,14 +1202,14 @@ TIMEDELTA_mq_m_divide(char **args, npy_intp const *dimensions, npy_intp const *s
             }
         }
         else {
-            struct libdivide_s64_t fast_d = libdivide_s64_gen(in2);
+            struct libdivide::libdivide_s64_t fast_d = libdivide::libdivide_s64_gen(in2);
             BINARY_LOOP_SLIDING {
                 const npy_timedelta in1 = *(npy_timedelta *)ip1;
                 if (in1 == NPY_DATETIME_NAT) {
                     *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
                 }
                 else {
-                    *((npy_timedelta *)op1) = libdivide_s64_do(in1, &fast_d);
+                    *((npy_timedelta *)op1) = libdivide::libdivide_s64_do(in1, &fast_d);
                 }
             }
         }
@@ -1321,7 +1321,7 @@ TIMEDELTA_mm_q_floor_divide(char **args, npy_intp const *dimensions, npy_intp co
             }
         }
         else {
-            struct libdivide_s64_t fast_d = libdivide_s64_gen(in2);
+            struct libdivide::libdivide_s64_t fast_d = libdivide::libdivide_s64_gen(in2);
              BINARY_LOOP_SLIDING {
                 const npy_timedelta in1 = *(npy_timedelta *)ip1;
                 if (in1 == NPY_DATETIME_NAT) {
@@ -1329,7 +1329,7 @@ TIMEDELTA_mm_q_floor_divide(char **args, npy_intp const *dimensions, npy_intp co
                     *((npy_int64 *)op1) = 0;
                 }
                 else {
-                    *((npy_int64 *)op1) = libdivide_s64_do(in1, &fast_d);
+                    *((npy_int64 *)op1) = libdivide::libdivide_s64_do(in1, &fast_d);
 
                     /* Negative quotients needs to be rounded down */
                     if (((in1 > 0) != (in2 > 0)) && (*((npy_int64 *)op1) * in2 != in1)) {
