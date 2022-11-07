@@ -2090,12 +2090,12 @@ NPY_NO_EXPORT void
     // Parenthesis around @PW@ tells clang dead code is intentional
     if (IS_BINARY_REDUCE && (@PW@)) {
         npy_intp n = dimensions[0];
-        @ftype@ * or = ((@ftype@ *)args[0]);
+        @ftype@ * _or = ((@ftype@ *)args[0]);
         @ftype@ * oi = ((@ftype@ *)args[0]) + 1;
         @ftype@ rr, ri;
 
         @TYPE@_pairwise_sum(&rr, &ri, args[1], n * 2, steps[1] / 2);
-        *or @OP@= rr;
+        *_or @OP@= rr;
         *oi @OP@= ri;
         return;
     }
