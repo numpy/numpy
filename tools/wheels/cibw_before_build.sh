@@ -45,6 +45,7 @@ if [[ $RUNNER_OS == "macOS" ]]; then
     fi
 
     hdiutil attach -mountpoint /Volumes/gfortran gfortran.dmg
+    ls  /Volumes/gfortran/
     sudo installer -pkg /Volumes/gfortran/gfortran-8.2-Mojave -target /
     otool -L /usr/local/gfortran/lib/libgfortran.5.dylib
     #sudo installer -pkg /Volumes/gfortran/gfortran.pkg -target /
