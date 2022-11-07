@@ -2639,8 +2639,8 @@ add_numeric_cast(PyArray_DTypeMeta *from, PyArray_DTypeMeta *to)
             .nin = 1,
             .nout = 1,
             .flags = NPY_METH_SUPPORTS_UNALIGNED,
-            .slots = slots,
             .dtypes = dtypes,
+            .slots = slots,
     };
 
     npy_intp from_itemsize = from->singleton->elsize;
@@ -3018,9 +3018,9 @@ PyArray_InitializeStringCasts(void)
             {0, NULL}};
     PyArrayMethod_Spec spec = {
             .name = "string_to_string_cast",
-            .casting = NPY_UNSAFE_CASTING,
             .nin = 1,
             .nout = 1,
+            .casting = NPY_UNSAFE_CASTING,
             .flags = (NPY_METH_REQUIRES_PYAPI |
                       NPY_METH_NO_FLOATINGPOINT_ERRORS |
                       NPY_METH_SUPPORTS_UNALIGNED),
@@ -3717,9 +3717,9 @@ PyArray_InitializeVoidToVoidCast(void)
             {0, NULL}};
     PyArrayMethod_Spec spec = {
             .name = "void_to_void_cast",
-            .casting = -1,  /* may not cast at all */
             .nin = 1,
             .nout = 1,
+            .casting = -1,  /* may not cast at all */
             .flags = NPY_METH_REQUIRES_PYAPI | NPY_METH_SUPPORTS_UNALIGNED,
             .dtypes = dtypes,
             .slots = slots,
@@ -3899,9 +3899,9 @@ PyArray_InitializeObjectToObjectCast(void)
             {0, NULL}};
     PyArrayMethod_Spec spec = {
             .name = "object_to_object_cast",
-            .casting = NPY_NO_CASTING,
             .nin = 1,
             .nout = 1,
+            .casting = NPY_NO_CASTING,
             .flags = NPY_METH_REQUIRES_PYAPI | NPY_METH_SUPPORTS_UNALIGNED,
             .dtypes = dtypes,
             .slots = slots,

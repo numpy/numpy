@@ -111,8 +111,8 @@ legacy_getitem_using_DType(void *data, void *arr)
  * from the user in the future and more could get defaults for compatibility.
  */
 PyArray_ArrFuncs default_funcs = {
+        .getitem = &legacy_getitem_using_DType,
         .setitem = &legacy_setitem_using_DType,
-        .getitem = &legacy_getitem_using_DType
 };
 
 
