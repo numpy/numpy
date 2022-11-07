@@ -1060,7 +1060,7 @@ get_datetime_units_factor(NPY_DATETIMEUNIT bigbase, NPY_DATETIMEUNIT littlebase)
         if (factor&0xff00000000000000ULL) {
             return 0;
         }
-        ++unit;
+        unit = unit + 1;
     }
     return factor;
 }
