@@ -32,6 +32,12 @@ steps:
   displayName: 'Install dependencies; some are optional to avoid test skips'
 
 - powershell: |
+    choco install -y rtools
+    refreshenv
+  displayName: 'Install rtools for 64-bit builds
+  condition: eq(variables['BITS'], 32)
+
+- powershell: |
     choco install -y mingw --forcex86 --force --version=7.3.0
     refreshenv
   displayName: 'Install 32-bit mingw for 32-bit builds'
@@ -61,13 +67,14 @@ steps:
     }
     Else
     {
-        $env:LDFLAGS = "-lucrt"
+        $env:PATH = "$env:RTOOLS40_HOME\\mingw64\\bin;$env:PATH"
     }
     If ( Test-Path env:NPY_USE_BLAS_ILP64 ) {
         $env:OPENBLAS64_ = "openblas"
     } else {
         $env:OPENBLAS = "openblas"
     }
+    gfortran --version
     python -c "from tools import openblas_support; openblas_support.make_init('numpy')"
     python -m pip wheel -v -v -v --no-build-isolation --no-use-pep517 --wheel-dir=dist .
 
