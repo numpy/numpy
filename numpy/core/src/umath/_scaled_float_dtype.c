@@ -31,8 +31,8 @@ typedef struct {
     double scaling;
 } PyArray_SFloatDescr;
 
-static PyArray_DTypeMeta PyArray_SFloatDType;
-static PyArray_SFloatDescr SFloatSingleton;
+extern PyArray_DTypeMeta PyArray_SFloatDType;
+extern PyArray_SFloatDescr SFloatSingleton;
 
 
 static int

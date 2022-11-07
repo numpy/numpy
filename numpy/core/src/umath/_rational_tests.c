@@ -365,7 +365,7 @@ typedef struct {
     rational r;
 } PyRational;
 
-static PyTypeObject PyRational_Type;
+extern PyTypeObject PyRational_Type;
 
 static NPY_INLINE int
 PyRational_Check(PyObject* object) {
