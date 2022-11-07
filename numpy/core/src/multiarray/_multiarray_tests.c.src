@@ -1042,7 +1042,8 @@ get_all_cast_information(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(args))
         goto fail;
     }
 
-    Py_ssize_t nclass = PySequence_Length(classes);
+    Py_ssize_t nclass;
+    nclass = PySequence_Length(classes);
     for (Py_ssize_t  i = 0; i < nclass; i++) {
         PyArray_DTypeMeta *from_dtype = (
                 (PyArray_DTypeMeta *)PySequence_Fast_GET_ITEM(classes, i));
@@ -1144,7 +1145,8 @@ identityhash_tester(PyObject *NPY_UNUSED(mod),
         goto finish;
     }
 
-    Py_ssize_t length = PySequence_Fast_GET_SIZE(sequence);
+    Py_ssize_t length;
+    length = PySequence_Fast_GET_SIZE(sequence);
     for (Py_ssize_t i = 0; i < length; i++) {
         PyObject *key_val = PySequence_Fast_GET_ITEM(sequence, i);
         if (!PyTuple_CheckExact(key_val) || PyTuple_GET_SIZE(key_val) != 2) {

@@ -213,9 +213,12 @@ PyUFunc_AddWrappingLoop(PyObject *ufunc_obj,
         goto finish;
     }
 
-    PyArrayMethodObject *wrapped_meth = NULL;
-    PyObject *loops = ufunc->_loops;
-    Py_ssize_t length = PyList_Size(loops);
+    PyArrayMethodObject *wrapped_meth;
+    wrapped_meth = NULL;
+    PyObject *loops;
+    loops = ufunc->_loops;
+    Py_ssize_t length;
+    length = PyList_Size(loops);
     for (Py_ssize_t i = 0; i < length; i++) {
         PyObject *item = PyList_GetItem(loops, i);
         PyObject *cur_DType_tuple = PyTuple_GetItem(item, 0);
@@ -240,13 +243,13 @@ PyUFunc_AddWrappingLoop(PyObject *ufunc_obj,
         goto finish;
     }
 
-    PyType_Slot slots[] = {
-        {NPY_METH_resolve_descriptors, &wrapping_method_resolve_descriptors},
-        {NPY_METH_get_loop, &wrapping_method_get_loop},
-        {0, NULL}
-    };
+    PyType_Slot slots[3];
+    slots[0] = PyType_Slot{NPY_METH_resolve_descriptors, &wrapping_method_resolve_descriptors};
+    slots[1] = PyType_Slot{NPY_METH_get_loop, &wrapping_method_get_loop};
+    slots[2] = PyType_Slot{0, NULL};
 
-    PyArrayMethod_Spec spec = {
+    PyArrayMethod_Spec spec;
+    spec = PyArrayMethod_Spec{
         .name = "wrapped-method",
         .nin = wrapped_meth->nin,
         .nout = wrapped_meth->nout,
@@ -255,7 +258,8 @@ PyUFunc_AddWrappingLoop(PyObject *ufunc_obj,
         .dtypes = new_dtypes,
         .slots = slots,
     };
-    PyBoundArrayMethodObject *bmeth = PyArrayMethod_FromSpec_int(&spec, 1);
+    PyBoundArrayMethodObject *bmeth;
+    bmeth = PyArrayMethod_FromSpec_int(&spec, 1);
     if (bmeth == NULL) {
         goto finish;
     }
@@ -285,7 +289,8 @@ PyUFunc_AddWrappingLoop(PyObject *ufunc_obj,
         goto finish;
     }
 
-    PyObject *info = PyTuple_Pack(2, new_dt_tuple, meth);
+    PyObject *info;
+    info = PyTuple_Pack(2, new_dt_tuple, meth);
     if (info == NULL) {
         goto finish;
     }

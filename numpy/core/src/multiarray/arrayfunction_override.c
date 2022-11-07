@@ -246,7 +246,8 @@ array_implement_array_function_internal(
      * arguments implement __array_function__ at all (e.g., if they are all
      * built-in types).
      */
-    int any_overrides = 0;
+    int any_overrides;
+    any_overrides = 0;
     for (int j = 0; j < num_implementing_args; j++) {
         if (!is_default_array_function(array_function_methods[j])) {
             any_overrides = 1;

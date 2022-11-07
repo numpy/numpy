@@ -1111,13 +1111,20 @@ PyArray_CastDescrToDType(PyArray_Descr *descr, PyArray_DTypeMeta *given_DType)
         Py_XDECREF(tmp);
         goto error;
     }
-    PyArray_DTypeMeta *dtypes[2] = {NPY_DTYPE(descr), given_DType};
-    PyArray_Descr *given_descrs[2] = {descr, NULL};
+    PyArray_DTypeMeta *dtypes[2];
+    dtypes[0] = NPY_DTYPE(descr);
+    dtypes[1] = given_DType;
+    PyArray_Descr *given_descrs[2];
+    given_descrs[0] = descr;
+    given_descrs[1] = NULL;
     PyArray_Descr *loop_descrs[2];
 
-    PyArrayMethodObject *meth = (PyArrayMethodObject *)tmp;
-    npy_intp view_offset = NPY_MIN_INTP;
-    NPY_CASTING casting = meth->resolve_descriptors(
+    PyArrayMethodObject *meth;
+    meth = (PyArrayMethodObject *)tmp;
+    npy_intp view_offset;
+    view_offset = NPY_MIN_INTP;
+    NPY_CASTING casting;
+    casting = meth->resolve_descriptors(
             meth, dtypes, given_descrs, loop_descrs, &view_offset);
     Py_DECREF(tmp);
     if (casting < 0) {
@@ -1177,7 +1184,8 @@ PyArray_FindConcatenationDescriptor(
      * NOTE: This code duplicates `PyArray_CastToDTypeAndPromoteDescriptors`
      *       to use arrays, copying the descriptors seems not better.
      */
-    PyArray_Descr *descr = PyArray_DESCR(arrays[0]);
+    PyArray_Descr *descr;
+    descr = PyArray_DESCR(arrays[0]);
     result = PyArray_CastDescrToDType(descr, common_dtype);
     if (result == NULL || n == 1) {
         goto finish;
@@ -3012,11 +3020,12 @@ PyArray_InitializeStringCasts(void)
 
     /* string<->string and unicode<->unicode have their own specialized casts */
     PyArray_DTypeMeta *dtypes[2];
-    PyType_Slot slots[] = {
-            {NPY_METH_get_loop, &string_to_string_get_loop},
-            {NPY_METH_resolve_descriptors, &string_to_string_resolve_descriptors},
-            {0, NULL}};
-    PyArrayMethod_Spec spec = {
+    PyType_Slot slots[3];
+    slots[0] = PyType_Slot{NPY_METH_get_loop, &string_to_string_get_loop};
+    slots[1] = PyType_Slot{NPY_METH_resolve_descriptors, &string_to_string_resolve_descriptors};
+    slots[2] = PyType_Slot{0, NULL};
+    PyArrayMethod_Spec spec;
+    spec = PyArrayMethod_Spec{
             .name = "string_to_string_cast",
             .nin = 1,
             .nout = 1,

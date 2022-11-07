@@ -2524,13 +2524,15 @@ PyUFunc_GeneralizedFunctionInternal(PyUFuncObject *ufunc,
                                     NPY_SIZEOF_INTP * nop);
 
     /* Final preparation of the arraymethod call */
-    PyArrayMethod_Context context = {
+    PyArrayMethod_Context context;
+    context = PyArrayMethod_Context{
         .caller = (PyObject *)ufunc,
         .method = ufuncimpl,
         .descriptors = operation_descrs,
     };
     PyArrayMethod_StridedLoop *strided_loop;
-    NPY_ARRAYMETHOD_FLAGS flags = 0;
+    NPY_ARRAYMETHOD_FLAGS flags;
+    flags = 0;
 
     if (ufuncimpl->get_strided_loop(&context, 1, 0, inner_strides,
             &strided_loop, &auxdata, &flags) < 0) {
@@ -3035,7 +3037,8 @@ PyUFunc_Reduce(PyUFuncObject *ufunc,
         Py_INCREF(initial);  /* match the reference count in the if above */
     }
 
-    PyArrayMethod_Context context = {
+    PyArrayMethod_Context context;
+    context = PyArrayMethod_Context{
         .caller = (PyObject *)ufunc,
         .method = ufuncimpl,
         .descriptors = descrs,
@@ -3114,7 +3117,8 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
         goto fail;
     }
 
-    PyArrayMethod_Context context = {
+    PyArrayMethod_Context context;
+    context = PyArrayMethod_Context{
         .caller = (PyObject *)ufunc,
         .method = ufuncimpl,
         .descriptors = descrs,
@@ -3230,7 +3234,8 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
     }
 
 
-    NPY_ARRAYMETHOD_FLAGS flags = 0;
+    NPY_ARRAYMETHOD_FLAGS flags;
+    flags = 0;
     if (ufuncimpl->get_strided_loop(&context,
             1, 0, fixed_strides, &strided_loop, &auxdata, &flags) < 0) {
         goto fail;
@@ -3531,7 +3536,8 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
         goto fail;
     }
 
-    PyArrayMethod_Context context = {
+    PyArrayMethod_Context context;
+    context = PyArrayMethod_Context{
         .caller = (PyObject *)ufunc,
         .method = ufuncimpl,
         .descriptors = descrs,
@@ -3651,7 +3657,8 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
     fixed_strides[0] = 0;
     fixed_strides[2] = 0;
 
-    NPY_ARRAYMETHOD_FLAGS flags = 0;
+    NPY_ARRAYMETHOD_FLAGS flags;
+    flags = 0;
     if (ufuncimpl->get_strided_loop(&context,
             1, 0, fixed_strides, &strided_loop, &auxdata, &flags) < 0) {
         goto fail;
@@ -4061,8 +4068,10 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
     }
 
     /* We now have all the information required to check for Overrides */
-    PyObject *override = NULL;
-    int errval = PyUFunc_CheckOverride(ufunc, _reduce_type[operation],
+    PyObject *override;
+    override = NULL;
+    int errval;
+    errval = PyUFunc_CheckOverride(ufunc, _reduce_type[operation],
             full_args.in, full_args.out, args, len_args, kwnames, &override);
     if (errval) {
         return NULL;
@@ -4791,11 +4800,23 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
      * We have now extracted (but not converted) the input arguments.
      * To simplify overrides, extract all other arguments (as objects only)
      */
-    PyObject *out_obj = NULL, *where_obj = NULL;
-    PyObject *axes_obj = NULL, *axis_obj = NULL;
-    PyObject *keepdims_obj = NULL, *casting_obj = NULL, *order_obj = NULL;
-    PyObject *subok_obj = NULL, *signature_obj = NULL, *sig_obj = NULL;
-    PyObject *dtype_obj = NULL, *extobj = NULL;
+    PyObject *out_obj, *where_obj;
+    out_obj = NULL;
+    where_obj = NULL;
+    PyObject *axes_obj, *axis_obj;
+    axes_obj = NULL;
+    axis_obj = NULL;
+    PyObject *keepdims_obj, *casting_obj, *order_obj;
+    keepdims_obj = NULL;
+    casting_obj = NULL;
+    order_obj = NULL;
+    PyObject *subok_obj, *signature_obj, *sig_obj;
+    subok_obj = NULL;
+    signature_obj = NULL;
+    sig_obj = NULL;
+    PyObject *dtype_obj, *extobj;
+    dtype_obj = NULL;
+    extobj = NULL;
 
     /* Skip parsing if there are no keyword arguments, nothing left to do */
     if (kwnames != NULL) {
@@ -4872,7 +4893,8 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
         method = "outer";
     }
     /* We now have all the information required to check for Overrides */
-    PyObject *override = NULL;
+    PyObject *override;
+    override = NULL;
     errval = PyUFunc_CheckOverride(ufunc, method,
             full_args.in, full_args.out,
             args, len_args, kwnames, &override);
@@ -4903,10 +4925,14 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
         goto fail;
     }
 
-    NPY_ORDER order = NPY_KEEPORDER;
-    NPY_CASTING casting = NPY_DEFAULT_ASSIGN_CASTING;
-    npy_bool subok = NPY_TRUE;
-    int keepdims = -1;  /* We need to know if it was passed */
+    NPY_ORDER order;
+    order = NPY_KEEPORDER;
+    NPY_CASTING casting;
+    casting = NPY_DEFAULT_ASSIGN_CASTING;
+    npy_bool subok;
+    subok = NPY_TRUE;
+    int keepdims;
+    keepdims = -1;  /* We need to know if it was passed */
     npy_bool force_legacy_promotion;
     npy_bool allow_legacy_promotion;
     npy_bool promoting_pyscalars;
@@ -4933,7 +4959,8 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
      * in the future.  For now, we do it here.  The type resolution step can
      * be shared between the ufunc and gufunc code.
      */
-    PyArrayMethodObject *ufuncimpl = promote_and_get_ufuncimpl(ufunc,
+    PyArrayMethodObject *ufuncimpl;
+    ufuncimpl = promote_and_get_ufuncimpl(ufunc,
             operands, signature,
             operand_DTypes, force_legacy_promotion, allow_legacy_promotion,
             promoting_pyscalars, NPY_FALSE);
@@ -5022,7 +5049,8 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
         }
     }
     /* The following steals the references to the outputs: */
-    PyObject *result = replace_with_wrapped_result_and_return(ufunc,
+    PyObject *result;
+    result = replace_with_wrapped_result_and_return(ufunc,
             full_args, subok, operands+nin);
     Py_XDECREF(full_args.in);
     Py_XDECREF(full_args.out);
@@ -5598,7 +5626,8 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
      * If the existing one is not a legacy ArrayMethod, we raise currently:
      * A new-style loop should not be replaced by an old-style one.
      */
-    int add_new_loop = 1;
+    int add_new_loop;
+    add_new_loop = 1;
     for (Py_ssize_t j = 0; j < PyList_GET_SIZE(ufunc->_loops); j++) {
         PyObject *item = PyList_GET_ITEM(ufunc->_loops, j);
         PyObject *existing_tuple = PyTuple_GET_ITEM(item, 0);
@@ -6075,8 +6104,10 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
     operands[0] = op1_array;
     operand_DTypes[0] = NPY_DTYPE(PyArray_DESCR(op1_array));
     Py_INCREF(operand_DTypes[0]);
-    int force_legacy_promotion = 0;
-    int allow_legacy_promotion = NPY_DT_is_legacy(operand_DTypes[0]);
+    int force_legacy_promotion;
+    force_legacy_promotion = 0;
+    int allow_legacy_promotion;
+    allow_legacy_promotion = NPY_DT_is_legacy(operand_DTypes[0]);
 
     if (op2_array != NULL) {
         operands[1] = op2_array;
@@ -6102,7 +6133,8 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
         nop = 2;
     }
 
-    PyArrayMethodObject *ufuncimpl = promote_and_get_ufuncimpl(ufunc,
+    PyArrayMethodObject *ufuncimpl;
+    ufuncimpl = promote_and_get_ufuncimpl(ufunc,
             operands, signature, operand_DTypes,
             force_legacy_promotion, allow_legacy_promotion,
             NPY_FALSE, NPY_FALSE);
@@ -6186,7 +6218,8 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
         goto fail;
     }
 
-    PyArrayMethod_Context context = {
+    PyArrayMethod_Context context;
+    context = PyArrayMethod_Context{
             .caller = (PyObject *)ufunc,
             .method = ufuncimpl,
             .descriptors = operation_descrs,
@@ -6194,8 +6227,10 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
 
     NPY_ARRAYMETHOD_FLAGS flags;
     /* Use contiguous strides; if there is such a loop it may be faster */
-    npy_intp strides[3] = {
-            operation_descrs[0]->elsize, operation_descrs[1]->elsize, 0};
+    npy_intp strides[3];
+    strides[0] = operation_descrs[0]->elsize;
+    strides[1] = operation_descrs[1]->elsize;
+    strides[2] = 0;
     if (nop == 3) {
         strides[2] = operation_descrs[2]->elsize;
     }
@@ -6204,7 +6239,8 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
             &strided_loop, &auxdata, &flags) < 0) {
         goto fail;
     }
-    int needs_api = (flags & NPY_METH_REQUIRES_PYAPI) != 0;
+    int needs_api;
+    needs_api = (flags & NPY_METH_REQUIRES_PYAPI) != 0;
     needs_api |= NpyIter_IterationNeedsAPI(iter_buffer);
     if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
         /* Start with the floating-point exception flags cleared */
@@ -6219,7 +6255,8 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
      * Iterate over first and second operands and call ufunc
      * for each pair of inputs
      */
-    int res = 0;
+    int res;
+    res = 0;
     for (npy_intp i = iter->size; i > 0; i--)
     {
         char *dataptr[3];

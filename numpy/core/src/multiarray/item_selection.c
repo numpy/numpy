@@ -278,10 +278,13 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
     nelem = chunk;
     itemsize = PyArray_ITEMSIZE(obj);
     chunk = chunk * itemsize;
-    char *src = PyArray_DATA(self);
-    char *dest = PyArray_DATA(obj);
+    char *src;
+    src = PyArray_DATA(self);
+    char *dest;
+    dest = PyArray_DATA(obj);
     needs_refcounting = PyDataType_REFCHK(PyArray_DESCR(self));
-    npy_intp *indices_data = (npy_intp *)PyArray_DATA(indices);
+    npy_intp *indices_data;
+    indices_data = (npy_intp *)PyArray_DATA(indices);
 
     if ((max_item == 0) && (PyArray_SIZE(obj) != 0)) {
         /* Index error, since that is the usual error for raise mode */

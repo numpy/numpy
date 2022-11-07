@@ -3224,8 +3224,11 @@ define_cast_for_descrs(
     }
 
     /* Fetch the main cast function (with updated values) */
-    PyArrayMethod_Context *context = &cast_info->context;
-    npy_intp strides[2] = {src_stride, dst_stride};
+    PyArrayMethod_Context *context;
+    context = &cast_info->context;
+    npy_intp strides[2];
+    strides[0] = src_stride;
+    strides[1] = dst_stride;
     NPY_ARRAYMETHOD_FLAGS flags;
     if (context->method->get_strided_loop(
             context, aligned, move_references, strides,
@@ -3487,15 +3490,18 @@ get_wrapped_legacy_cast_function(int aligned,
      * If we are here, use the legacy code to wrap the above cast (which
      * does not support unaligned data) into copyswapn.
      */
-    PyArray_Descr *src_wrapped_dtype = NPY_DT_CALL_ensure_canonical(src_dtype);
+    PyArray_Descr *src_wrapped_dtype;
+    src_wrapped_dtype = NPY_DT_CALL_ensure_canonical(src_dtype);
     if (src_wrapped_dtype == NULL) {
         goto fail;
     }
-    PyArray_Descr *dst_wrapped_dtype = NPY_DT_CALL_ensure_canonical(dst_dtype);
+    PyArray_Descr *dst_wrapped_dtype;
+    dst_wrapped_dtype = NPY_DT_CALL_ensure_canonical(dst_dtype);
     if (dst_wrapped_dtype == NULL) {
         goto fail;
     }
-    int res = wrap_aligned_transferfunction(
+    int res;
+    res = wrap_aligned_transferfunction(
             aligned, 1,  /* We assume wrapped is contiguous here */
             src_stride, dst_stride,
             src_dtype, dst_dtype,

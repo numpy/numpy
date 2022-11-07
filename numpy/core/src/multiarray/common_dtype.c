@@ -241,9 +241,11 @@ PyArray_PromoteDTypeSequence(
     if (result == NULL) {
         goto finish;
     }
-    PyArray_DTypeMeta *main_dtype = dtypes[0];
+    PyArray_DTypeMeta *main_dtype;
+    main_dtype = dtypes[0];
 
-    npy_intp reduce_start = 1;
+    npy_intp reduce_start;
+    reduce_start = 1;
     if (result == (PyArray_DTypeMeta *)Py_NotImplemented) {
         Py_SETREF(result, NULL);
     }
@@ -261,7 +263,8 @@ PyArray_PromoteDTypeSequence(
      * If this turns out to be a limitation, this "reduction" will have to
      * become a default version and we have to allow DTypes to override it.
      */
-    PyArray_DTypeMeta *prev = NULL;
+    PyArray_DTypeMeta *prev;
+    prev = NULL;
     for (npy_intp i = reduce_start; i < length; i++) {
         if (dtypes[i] == NULL || dtypes[i] == prev) {
             continue;

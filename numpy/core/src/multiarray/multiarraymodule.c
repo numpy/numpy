@@ -3622,7 +3622,8 @@ trimmode_converter(PyObject *obj, TrimMode *trim)
     if (!PyUnicode_Check(obj) || PyUnicode_GetLength(obj) != 1) {
         goto error;
     }
-    const char *trimstr = PyUnicode_AsUTF8AndSize(obj, NULL);
+    const char *trimstr;
+    trimstr = PyUnicode_AsUTF8AndSize(obj, NULL);
 
     if (trimstr != NULL) {
         if (trimstr[0] == 'k') {

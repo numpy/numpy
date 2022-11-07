@@ -1108,7 +1108,8 @@ PyArray_DiscoverDTypeAndShape_Recursive(
      * and to handle it recursively. That is, unless we have hit the
      * dimension limit.
      */
-    npy_bool is_sequence = PySequence_Check(obj);
+    npy_bool is_sequence;
+    is_sequence = PySequence_Check(obj);
     if (is_sequence) {
         is_sequence = PySequence_Size(obj) >= 0;
         if (NPY_UNLIKELY(!is_sequence)) {

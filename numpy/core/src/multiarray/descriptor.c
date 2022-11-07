@@ -109,7 +109,8 @@ _try_convert_from_dtype_attr(PyObject *obj)
         return NULL;
     }
 
-    PyArray_Descr *newdescr = _convert_from_any(dtypedescr, 0);
+    PyArray_Descr *newdescr;
+    newdescr = _convert_from_any(dtypedescr, 0);
     Py_DECREF(dtypedescr);
     Py_LeaveRecursiveCall();
     if (newdescr == NULL) {
@@ -342,7 +343,8 @@ _convert_from_tuple(PyObject *obj, int align)
                 goto fail;
             }
         }
-        npy_intp items = PyArray_OverflowMultiplyList(shape.ptr, shape.len);
+        npy_intp items;
+        items = PyArray_OverflowMultiplyList(shape.ptr, shape.len);
         int overflowed;
         int nbytes;
         if (items < 0 || items > NPY_MAX_INT) {
@@ -358,7 +360,8 @@ _convert_from_tuple(PyObject *obj, int align)
                             "bytes must fit into a C int.");
             goto fail;
         }
-        PyArray_Descr *newdescr = PyArray_DescrNewFromType(NPY_VOID);
+        PyArray_Descr *newdescr;
+        newdescr = PyArray_DescrNewFromType(NPY_VOID);
         if (newdescr == NULL) {
             goto fail;
         }
@@ -1092,7 +1095,8 @@ _convert_from_dict(PyObject *obj, int align)
      * If a property 'aligned' is in the dict, it overrides the align flag
      * to be True if it not already true.
      */
-    PyObject *tmp = PyMapping_GetItemString(obj, "aligned");
+    PyObject *tmp;
+    tmp = PyMapping_GetItemString(obj, "aligned");
     if (tmp == NULL) {
         PyErr_Clear();
     } else {
@@ -1110,10 +1114,14 @@ _convert_from_dict(PyObject *obj, int align)
     }
 
     /* Types with fields need the Python C API for field access */
-    char dtypeflags = NPY_NEEDS_PYAPI;
-    int totalsize = 0;
-    int maxalign = 0;
-    int has_out_of_order_fields = 0;
+    char dtypeflags;
+    dtypeflags = NPY_NEEDS_PYAPI;
+    int totalsize;
+    totalsize = 0;
+    int maxalign;
+    maxalign = 0;
+    int has_out_of_order_fields;
+    has_out_of_order_fields = 0;
     for (int i = 0; i < n; i++) {
         /* Build item to insert (descr, offset, [title])*/
         int len = 2;
@@ -1331,7 +1339,8 @@ _convert_from_dict(PyObject *obj, int align)
     }
 
     /* Add the metadata if provided */
-    PyObject *metadata = PyMapping_GetItemString(obj, "metadata");
+    PyObject *metadata;
+    metadata = PyMapping_GetItemString(obj, "metadata");
 
     if (metadata == NULL) {
         PyErr_Clear();
@@ -1608,7 +1617,8 @@ _convert_from_str(PyObject *obj, int align)
     }
 
     /* Process the endian character. '|' is replaced by '='*/
-    char endian = '=';
+    char endian;
+    endian = '=';
     switch (type[0]) {
         case '>':
         case '<':
@@ -1643,8 +1653,10 @@ _convert_from_str(PyObject *obj, int align)
         return ret;
     }
 
-    int check_num = NPY_NOTYPE + 10;
-    int elsize = 0;
+    int check_num;
+    check_num = NPY_NOTYPE + 10;
+    int elsize;
+    elsize = 0;
     /* A typecode like 'd' */
     if (len == 1) {
         /* Python byte string characters are unsigned */

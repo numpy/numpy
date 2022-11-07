@@ -594,13 +594,15 @@ raise_memory_error(int nd, npy_intp const *dims, PyArray_Descr *descr)
         goto fail;
     }
 
-    PyObject *shape = PyArray_IntTupleFromIntp(nd, dims);
+    PyObject *shape;
+    shape = PyArray_IntTupleFromIntp(nd, dims);
     if (shape == NULL) {
         goto fail;
     }
 
     /* produce an error object */
-    PyObject *exc_value = PyTuple_Pack(2, shape, (PyObject *)descr);
+    PyObject *exc_value;
+    exc_value = PyTuple_Pack(2, shape, (PyObject *)descr);
     Py_DECREF(shape);
     if (exc_value == NULL){
         goto fail;
@@ -1499,7 +1501,8 @@ setArrayFromSequence(PyArrayObject *a, PyObject *s,
     }
 
     /* Try __array__ before using s as a sequence */
-    PyObject *tmp = _array_from_array_like(s, NULL, 0, NULL, 0);
+    PyObject *tmp;
+    tmp = _array_from_array_like(s, NULL, 0, NULL, 0);
     if (tmp == NULL) {
         goto fail;
     }
@@ -2143,7 +2146,8 @@ PyArray_FromStructInterface(PyObject *input)
     }
 
     /* a tuple to hold references */
-    PyObject *refs = PyTuple_New(2);
+    PyObject *refs;
+    refs = PyTuple_New(2);
     if (!refs) {
         Py_DECREF(attr);
         return NULL;
@@ -2160,7 +2164,8 @@ PyArray_FromStructInterface(PyObject *input)
     PyTuple_SET_ITEM(refs, 1,  attr);
 
     /* create the numpy array, this call adds a reference to refs */
-    PyObject *ret = PyArray_NewFromDescrAndBase(
+    PyObject *ret;
+    ret = PyArray_NewFromDescrAndBase(
             &PyArray_Type, thetype,
             inter->nd, inter->shape, inter->strides, inter->data,
             inter->flags, NULL, refs);
@@ -3934,7 +3939,8 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, npy_intp count)
         goto done;
     }
 
-    char *item = PyArray_BYTES(ret);
+    char *item;
+    item = PyArray_BYTES(ret);
     for (i = 0; i < count || count == -1; i++, item += elsize) {
         PyObject *value = PyIter_Next(iter);
         if (value == NULL) {

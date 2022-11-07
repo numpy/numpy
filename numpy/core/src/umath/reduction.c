@@ -250,9 +250,13 @@ PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
     }
     /* Set up result array axes mapping, operand and wheremask use default */
     int result_axes[NPY_MAXDIMS];
-    int *op_axes[3] = {result_axes, NULL, NULL};
+    int *op_axes[3];
+    op_axes[0] = result_axes;
+    op_axes[1] = NULL;
+    op_axes[2] = NULL;
 
-    int curr_axis = 0;
+    int curr_axis;
+    curr_axis = 0;
     for (int i = 0; i < PyArray_NDIM(operand); i++) {
         if (axis_flags[i]) {
             if (keepdims) {
@@ -300,9 +304,11 @@ PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
     result = NpyIter_GetOperandArray(iter)[0];
 
     PyArrayMethod_StridedLoop *strided_loop;
-    NPY_ARRAYMETHOD_FLAGS flags = 0;
+    NPY_ARRAYMETHOD_FLAGS flags;
+    flags = 0;
 
-    int needs_api = (flags & NPY_METH_REQUIRES_PYAPI) != 0;
+    int needs_api;
+    needs_api = (flags & NPY_METH_REQUIRES_PYAPI) != 0;
     needs_api |= NpyIter_IterationNeedsAPI(iter);
     if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
         /* Start with the floating-point exception flags cleared */

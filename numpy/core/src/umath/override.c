@@ -307,7 +307,8 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
         goto fail;
     }
 
-    int len = (int)PyTuple_GET_SIZE(in_args);
+    int len;
+    len = (int)PyTuple_GET_SIZE(in_args);
 
     /* Call __array_ufunc__ functions in correct order */
     while (1) {

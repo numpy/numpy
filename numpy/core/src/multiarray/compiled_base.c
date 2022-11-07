@@ -1690,7 +1690,8 @@ pack_bits(PyObject *input, int axis, char order)
         Py_XDECREF(ot);
         goto fail;
     }
-    const PACK_ORDER ordere = order == 'b' ? PACK_ORDER_BIG : PACK_ORDER_LITTLE;
+    PACK_ORDER ordere;
+    ordere = order == 'b' ? PACK_ORDER_BIG : PACK_ORDER_LITTLE;
     NPY_BEGIN_THREADS_THRESHOLDED(PyArray_DIM(out, axis));
     while (PyArray_ITER_NOTDONE(it)) {
         pack_inner(PyArray_ITER_DATA(it), PyArray_ITEMSIZE(_new),

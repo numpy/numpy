@@ -1606,12 +1606,14 @@ array_subscript(PyArrayObject *self, PyObject *op)
      * Alignment information (swapping is never needed, since we buffer),
      * could also check extra_op is buffered, but it should rarely matter.
      */
-    int is_aligned = IsUintAligned(self) && IsUintAligned(mit->extra_op);
+    int is_aligned;
+    is_aligned = IsUintAligned(self) && IsUintAligned(mit->extra_op);
     /*
      * NOTE: Getting never actually casts, so we currently do not bother to do
      *       the full checks (floating point errors) here (unlike assignment).
      */
-    int meth_flags = NpyIter_GetTransferFlags(mit->outer);
+    int meth_flags;
+    meth_flags = NpyIter_GetTransferFlags(mit->outer);
     if (mit->extra_op_iter) {
         int extra_op_flags = NpyIter_GetTransferFlags(mit->extra_op_iter);
         meth_flags = PyArrayMethod_COMBINED_FLAGS(meth_flags, extra_op_flags);
@@ -2005,8 +2007,10 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
      * Alignment information (swapping is never needed, since we buffer),
      * could also check extra_op is buffered, but it should rarely matter.
      */
-    int is_aligned = IsUintAligned(self) && IsUintAligned(mit->extra_op);
-    int meth_flags = NpyIter_GetTransferFlags(mit->outer);
+    int is_aligned;
+    is_aligned = IsUintAligned(self) && IsUintAligned(mit->extra_op);
+    int meth_flags;
+    meth_flags = NpyIter_GetTransferFlags(mit->outer);
 
     if (mit->extra_op_iter) {
         int extra_op_flags = NpyIter_GetTransferFlags(mit->extra_op_iter);
@@ -3221,9 +3225,12 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
         original_extra_op = extra_op;
     }
 
-    int extra_ndim = PyArray_NDIM(original_extra_op);
-    npy_intp *extra_dims = PyArray_DIMS(original_extra_op);
-    PyObject *shape1 = convert_shape_to_string(extra_ndim, extra_dims, "");
+    int extra_ndim;
+    extra_ndim = PyArray_NDIM(original_extra_op);
+    npy_intp *extra_dims;
+    extra_dims = PyArray_DIMS(original_extra_op);
+    PyObject *shape1;
+    shape1 = convert_shape_to_string(extra_ndim, extra_dims, "");
     if (shape1 == NULL) {
         goto finish;
     }
@@ -3235,7 +3242,8 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
         transposed[i] = mit->dimensions[transposed[i]];
     }
 
-    PyObject *shape2 = convert_shape_to_string(mit->nd, transposed, "");
+    PyObject *shape2;
+    shape2 = convert_shape_to_string(mit->nd, transposed, "");
     if (shape2 == NULL) {
         Py_DECREF(shape1);
         goto finish;
