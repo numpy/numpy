@@ -1,3 +1,3 @@
-* The `dtype=` argument to comparison ufuncs is now applied
-  correctly.  This means that only `bool` and `object` are valid
-  and the `dtype=object` is enforced.
+* The ``dtype=`` argument to comparison ufuncs is now applied
+  correctly.  That means that only ``bool`` and ``object`` are valid
+  values and ``dtype=object`` is enforced.
