@@ -225,7 +225,6 @@ MyPyLong_AsUnsigned@Type@(PyObject *obj)
  *****************************************************************************
  */
 
-#define _ALIGN(type) offsetof(struct {char c; type v;}, v)
 /*
  * Disable harmless compiler warning "4116: unnamed type definition in
  * parentheses" which is caused by the _ALIGN macro.
@@ -394,7 +393,7 @@ NPY_NO_EXPORT int
         return -1;
     }
     if (ap == NULL || PyArray_ISBEHAVED(ap)) {
-        assert(npy_is_aligned(ov, _ALIGN(@type@)));
+        assert(npy_is_aligned(ov, _ALIGN<@type@>()));
         *((@type@ *)ov)=temp;
     }
     else {
@@ -4311,7 +4310,7 @@ static PyArray_Descr @from@_Descr = {
     /* elsize */
     0,
     /* alignment */
-    _ALIGN(@align@),
+    _ALIGN<@align@>(),
     /* subarray */
     NULL,
     /* fields */
@@ -4461,7 +4460,7 @@ NPY_NO_EXPORT PyArray_Descr @from@_Descr = {
     /* elsize */
     sizeof(@fromtype@),
     /* alignment */
-    _ALIGN(@fromtype@),
+    _ALIGN<@fromtype@>(),
     /* subarray */
     NULL,
     /* fields */
@@ -4782,7 +4781,7 @@ set_typeinfo(PyObject *dict)
      */
 
     s = PyArray_typeinforanged(
-        NPY_@name@LTR, NPY_@name@, NPY_BITSOF_@uname@, _ALIGN(@type@),
+        NPY_@name@LTR, NPY_@name@, NPY_BITSOF_@uname@, _ALIGN<@type@>(),
         Py_BuildValue("@cx@", @max@),
         Py_BuildValue("@cn@", @min@),
         &Py@Name@ArrType_Type
@@ -4813,7 +4812,7 @@ set_typeinfo(PyObject *dict)
      */
     s = PyArray_typeinfo(
         NPY_@name@LTR, NPY_@name@, NPY_BITSOF_@name@,
-        _ALIGN(@type@), &Py@Name@ArrType_Type
+        _ALIGN<@type@>(), &Py@Name@ArrType_Type
     );
     if (s == NULL) {
         Py_DECREF(infodict);
@@ -4830,7 +4829,7 @@ set_typeinfo(PyObject *dict)
 
     s = PyArray_typeinfo(
         NPY_OBJECTLTR, NPY_OBJECT, sizeof(PyObject *) * CHAR_BIT,
-        _ALIGN(PyObject *),
+        _ALIGN<PyObject *>(),
         &PyObjectArrType_Type
     );
     if (s == NULL) {
@@ -4844,7 +4843,7 @@ set_typeinfo(PyObject *dict)
         return -1;
     }
     s = PyArray_typeinfo(
-        NPY_STRINGLTR, NPY_STRING, 0, _ALIGN(char),
+        NPY_STRINGLTR, NPY_STRING, 0, _ALIGN<char>(),
         &PyStringArrType_Type
     );
     if (s == NULL) {
@@ -4858,7 +4857,7 @@ set_typeinfo(PyObject *dict)
         return -1;
     }
     s = PyArray_typeinfo(
-        NPY_UNICODELTR, NPY_UNICODE, 0, _ALIGN(npy_ucs4),
+        NPY_UNICODELTR, NPY_UNICODE, 0, _ALIGN<npy_ucs4>(),
         &PyUnicodeArrType_Type
     );
     if (s == NULL) {
@@ -4872,7 +4871,7 @@ set_typeinfo(PyObject *dict)
         return -1;
     }
     s = PyArray_typeinfo(
-        NPY_VOIDLTR, NPY_VOID, 0, _ALIGN(char),
+        NPY_VOIDLTR, NPY_VOID, 0, _ALIGN<char>(),
         &PyVoidArrType_Type
     );
     if (s == NULL) {
@@ -4887,7 +4886,7 @@ set_typeinfo(PyObject *dict)
     }
     s = PyArray_typeinforanged(
         NPY_DATETIMELTR, NPY_DATETIME, NPY_BITSOF_DATETIME,
-        _ALIGN(npy_datetime),
+        _ALIGN<npy_datetime>(),
         MyPyLong_FromInt64(NPY_MAX_DATETIME),
         MyPyLong_FromInt64(NPY_MIN_DATETIME),
         &PyDatetimeArrType_Type
@@ -4904,7 +4903,7 @@ set_typeinfo(PyObject *dict)
     }
     s = PyArray_typeinforanged(
         NPY_TIMEDELTALTR, NPY_TIMEDELTA, NPY_BITSOF_TIMEDELTA,
-        _ALIGN(npy_timedelta),
+        _ALIGN<npy_timedelta>(),
         MyPyLong_FromInt64(NPY_MAX_TIMEDELTA),
         MyPyLong_FromInt64(NPY_MIN_TIMEDELTA),
         &PyTimedeltaArrType_Type

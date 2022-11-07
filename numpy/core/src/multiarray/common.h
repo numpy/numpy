@@ -178,7 +178,12 @@ check_and_adjust_axis(int *axis, int ndim)
 }
 
 /* used for some alignment checks */
-#define _ALIGN(type) offsetof(struct {char c; type v;}, v)
+template <typename type>
+size_t _ALIGN()
+{
+    struct temp {char c; type v;};
+    return offsetof(temp, v);
+}
 #define _UINT_ALIGN(type) npy_uint_alignment(sizeof(type))
 /*
  * Disable harmless compiler warning "4116: unnamed type definition in
@@ -214,20 +219,20 @@ npy_uint_alignment(int itemsize)
         case 1:
             return 1;
         case 2:
-            alignment = _ALIGN(npy_uint16);
+            alignment = _ALIGN<npy_uint16>();
             break;
         case 4:
-            alignment = _ALIGN(npy_uint32);
+            alignment = _ALIGN<npy_uint32>();
             break;
         case 8:
-            alignment = _ALIGN(npy_uint64);
+            alignment = _ALIGN<npy_uint64>();
             break;
         case 16:
             /*
              * 16 byte types are copied using 2 uint64 assignments.
              * See the strided copy function in lowlevel_strided_loops.c.
              */
-            alignment = _ALIGN(npy_uint64);
+            alignment = _ALIGN<npy_uint64>();
             break;
         default:
             break;
