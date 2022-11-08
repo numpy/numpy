@@ -1007,7 +1007,7 @@ def tril_indices_from(arr, k=0):
            [ 8,  9, 10, 11],
            [12, 13, 14, 15]])
 
-    Pass the array to get the incides of the lower triangualr elements. 
+    Pass the array to get the incides of the lower triangular elements. 
 
     >>> trili = np.tril_indices_from(a)
     >>> trili
@@ -1029,7 +1029,7 @@ def tril_indices_from(arr, k=0):
 
     See Also
     --------
-    tril_indices, tril
+    tril_indices, tril, triu_indices_from
 
     Notes
     -----
@@ -1158,7 +1158,7 @@ def triu_indices_from(arr, k=0):
            [ 8,  9, 10, 11],
            [12, 13, 14, 15]])
 
-    Pass the array to get the incides of the upper triangualr elements. 
+    Pass the array to get the incides of the upper triangular elements. 
 
     >>> triui = np.triu_indices_from(a)
     >>> triui
@@ -1180,7 +1180,7 @@ def triu_indices_from(arr, k=0):
 
     See Also
     --------
-    triu_indices, triu
+    triu_indices, triu, tril_indices_from
 
     Notes
     -----
