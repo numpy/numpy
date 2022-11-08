@@ -319,7 +319,7 @@ def get_printoptions():
     set_printoptions, printoptions, set_string_function
 
     Examples
-    -------
+    --------
     >>> np.get_printoptions()
     {'edgeitems': 3,
     'threshold': 1000,
