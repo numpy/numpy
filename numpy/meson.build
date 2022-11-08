@@ -54,7 +54,6 @@ python_sources = [
   '__init__.pyi',
   '_distributor_init.py',
   '_globals.py',
-  '__config__.py',
   '_pytesttester.py',
   '_pytesttester.pyi',
   '_version.py',
@@ -92,5 +91,11 @@ pure_subdirs = [
 foreach subdir: pure_subdirs
   install_subdir(subdir, install_dir: py.get_install_dir(pure: false) / 'numpy')
 endforeach
+
+custom_target('__config__.py',
+  output: '__config__.py',
+  input: '__config__.py.in',
+  command: [py, tempita, '@INPUT@', '-o', '@OUTDIR@']
+)
 
 subdir('core')
