@@ -5,8 +5,12 @@ with either `numpy.result_type` or `numpy.promote_types`.
 Most users leave the second ``scalar_types`` argument to ``find_common_type``
 as ``[]`` in which case ``np.result_type`` and ``np.promote_types`` are both
 faster and more robust.
-When not using ``scalar_types`` the only difference is that the replacement
+When not using ``scalar_types`` the main difference is that the replacement
 intentionally converts non-native byte-order to native byte order.
+Further, ``find_common_type`` returns ``object`` dtype rather than failing
+promotion.  This leads to differences when the inputs are not all numeric.
+Importantly, this also happens for e.g. timedelta/datetime for which NumPy
+promotion rules are currently sometimes surprising.
 
 When the ``scalar_types`` argument is not ``[]`` things are more complicated.
 In most cases, using ``np.result_type`` and passing the Python values
@@ -20,5 +24,6 @@ Passing values other than 0, may lead to value-inspecting behavior
 The main possible change in behavior in this case, is when the array types
 are signed integers and scalar types are unsigned.
 
-If you are unsure about how to replace an a use of ``scalar_types``, please
-do not hesitate to open a NumPy issue.
+If you are unsure about how to replace a use of ``scalar_types`` or when
+non-numeric dtypes are likely, please do not hesitate to open a NumPy issue
+to ask for help.
