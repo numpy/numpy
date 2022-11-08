@@ -397,6 +397,14 @@ class TestHistogram:
         edges = histogram_bin_edges(arr, bins='auto', range=(0, 1))
         assert_array_equal(edges, e)
 
+    def test_big_arrays(self):
+        sample = np.zeros([100000000, 3])
+        xbins = 400
+        ybins = 400
+        zbins = np.arange(16000)
+        hist = np.histogramdd(sample=sample, bins=(xbins, ybins, zbins))
+        assert_equal(type(hist),type((1,2)))
+
 
 class TestHistogramOptimBinNums:
     """
