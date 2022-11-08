@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - meson
+  pull_request:
+    branches:
+      - meson
 
 defaults:
   run:
