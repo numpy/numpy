@@ -8,12 +8,12 @@ faster and more robust.
 When not using ``scalar_types`` the only difference is that the replacement
 intentionally converts non-native byte-order to native byte order.
 
-When the second argument is used things are more complicated.
+When the ``scalar_types`` argument is not ``[]`` things are more complicated.
 In most cases, using ``np.result_type`` and passing the Python values
 ``0``, ``0.0``, or ``0j`` has the same result as using ``int``, ``float``,
 or ``complex`` in `scalar_types`.
 
-When ``scalar_types`` is constructed, ``npy.result_type`` is the
+When ``scalar_types`` is constructed, ``np.result_type`` is the
 correct replacement and it may be passed scalar values like ``np.float32(0.0)``.
 Passing values other than 0, may lead to value-inspecting behavior
 (which ``np.find_common_type`` never used and NEP 50 may change in the future).
