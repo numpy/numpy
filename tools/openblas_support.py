@@ -153,6 +153,7 @@ def unpack_windows_zip(fname, plat):
     assert len(lib) == 1
     for f in lib:
         shutil.copy(f, os.path.join(target, 'lib', 'openblas.lib'))
+        shutil.copy(f, os.path.join(target, 'lib', 'openblas64_.lib'))
     # Copy the dll from bin to lib so system_info can pick it up
     dll = glob.glob(os.path.join(target, 'bin', '*.dll'))
     for f in dll:
