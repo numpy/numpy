@@ -970,7 +970,6 @@ def histogramdd(sample, bins=10, range=None, density=None, weights=None):
         sample = np.atleast_2d(sample).T
         N, D = sample.shape
 
-    #nbin = np.empty(D, int)
     nbin = np.empty(D, np.intp)
     edges = D*[None]
     dedges = D*[None]

@@ -403,7 +403,7 @@ class TestHistogram:
         ybins = 400
         zbins = np.arange(16000)
         hist = np.histogramdd(sample=sample, bins=(xbins, ybins, zbins))
-        assert_equal(type(hist),type((1,2)))
+        assert_equal(type(hist),type((1, 2)))
 
 
 class TestHistogramOptimBinNums:
