@@ -88,14 +88,18 @@ pure_subdirs = [
   'lib/tests/data'
 ]
 
+np_dir = py.get_install_dir(pure: false) / 'numpy'
+
 foreach subdir: pure_subdirs
-  install_subdir(subdir, install_dir: py.get_install_dir(pure: false) / 'numpy')
+  install_subdir(subdir, install_dir: np_dir)
 endforeach
 
 custom_target('__config__.py',
   output: '__config__.py',
   input: '__config__.py.in',
-  command: [py, tempita, '@INPUT@', '-o', '@OUTDIR@']
+  command: [py, tempita, '@INPUT@', '-o', '@OUTDIR@'],
+  install: true,
+  install_dir: np_dir
 )
 
 subdir('core')
