@@ -312,13 +312,11 @@ def get_printoptions():
           - formatter : dict of callables
           - sign : str
 
-        For a full description of these options, see `set_printoptions`.
-        
+        For a full description of these options, see `set_printoptions`.  
 
     See Also
     --------
     set_printoptions, printoptions, set_string_function
-
 
     Examples
     -------
