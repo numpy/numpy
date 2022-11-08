@@ -387,7 +387,7 @@ class AxisConcatenator:
                     raise ValueError("unknown special directive") from e
             elif type(item) in ScalarType:
                 scalar = True
-                newobj = array(item, ndmin=ndmin)
+                newobj = item
             else:
                 item_ndim = ndim(item)
                 newobj = array(item, copy=False, subok=True, ndmin=ndmin)
@@ -411,7 +411,8 @@ class AxisConcatenator:
         if len(result_type_objs) != 0:
             final_dtype = _nx.result_type(*result_type_objs)
             # concatenate could do cast, but that can be overriden:
-            objs = [obj.astype(final_dtype, copy=False) for obj in objs]
+            objs = [array(obj, copy=False, subok=True,
+                          ndmin=ndmin, dtype=final_dtype) for obj in objs]
 
         res = self.concatenate(tuple(objs), axis=axis)
 

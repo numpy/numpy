@@ -16,4 +16,4 @@ The first one is due to a signed integer scalar with an unsigned integer
 array, while the second is due to ``255`` not fitting into ``int8`` and
 NumPy currently inspecting values to make this work.
 (Note that the second example is expected to change in the future due to
-:ref:`NEP 50 <NEP50>`)
+:ref:`NEP 50 <NEP50>`; it will then raise an error.)
