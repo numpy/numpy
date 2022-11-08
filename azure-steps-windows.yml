@@ -34,47 +34,20 @@ steps:
 - powershell: |
     choco install -y rtools
     refreshenv
-  displayName: 'Install rtools for 64-bit builds
-  condition: eq(variables['BITS'], 32)
+  displayName: 'Install rtools
 
 - powershell: |
-    choco install -y mingw --forcex86 --force --version=7.3.0
-    refreshenv
-  displayName: 'Install 32-bit mingw for 32-bit builds'
-  condition: eq(variables['BITS'], 32)
-
-- powershell: |
-    $ErrorActionPreference = "Stop"
-    # Download and get the path to "openblas.a". We cannot copy it
-    # to $PYTHON_EXE's directory since that is on a different drive which
-    # mingw does not like. Instead copy it to a directory and set OPENBLAS,
-    # since OPENBLAS will be picked up by the openblas discovery
     $target = $(python tools/openblas_support.py)
-    mkdir openblas
-    echo "Copying $target to openblas/"
-    cp $target openblas/
+    $env:OPENBLAS = $target
   displayName: 'Download / Install OpenBLAS'
 
 # NOTE: for Windows builds it seems much more tractable to use runtests.py
 # vs. manual setup.py and then runtests.py for testing only
 
 - powershell: |
-    ls openblas
-    If ($(BITS) -eq 32) {
-        $env:CFLAGS = "-m32"
-        $env:LDFLAGS = "-m32"
-        $env:PATH = "C:\\ProgramData\\chocolatey\\lib\\mingw\\tools\\install\\mingw$(BITS)\\bin;" + $env:PATH
-    }
-    Else
-    {
-        $env:PATH = "$env:RTOOLS40_HOME\\mingw64\\bin;$env:PATH"
-    }
     If ( Test-Path env:NPY_USE_BLAS_ILP64 ) {
-        $env:OPENBLAS64_ = "openblas"
-    } else {
-        $env:OPENBLAS = "openblas"
+        $env:OPENBLAS64_ = $env:OPENBLAS
     }
-    gfortran --version
     python -c "from tools import openblas_support; openblas_support.make_init('numpy')"
     python -m pip wheel -v -v -v --no-build-isolation --no-use-pep517 --wheel-dir=dist .
 
@@ -83,7 +56,18 @@ steps:
     }
   displayName: 'Build NumPy'
 
-- script: python runtests.py -n --show-build-log --mode=$(TEST_MODE) -- -rsx --junitxml=junit/test-results.xml
+- powershell: |
+    # gfortran from rtools is needed for tests
+    If ($(BITS) -eq 32) {
+        $env:CFLAGS = "-m32"
+        $env:LDFLAGS = "-m32"
+        $env:PATH = "$env:RTOOLS40_HOME\\mingw32\\bin;$env:PATH"
+    }
+    Else
+    {
+        $env:PATH = "$env:RTOOLS40_HOME\\mingw64\\bin;$env:PATH"
+    }
+    python runtests.py -n --show-build-log --mode=$(TEST_MODE) -- -rsx --junitxml=junit/test-results.xml
   displayName: 'Run NumPy Test Suite'
 
 - task: PublishTestResults@2

@@ -130,28 +130,33 @@ def setup_openblas(plat=get_plat(), ilp64=get_ilp64()):
     if osname == 'win':
         if not typ == 'zip':
             return f'expecting to download zipfile on windows, not {typ}'
-        return unpack_windows_zip(tmp)
+        return unpack_windows_zip(tmp, plat)
     else:
         if not typ == 'tar.gz':
             return 'expecting to download tar.gz, not %s' % str(typ)
         return unpack_targz(tmp)
 
 
-def unpack_windows_zip(fname):
+def unpack_windows_zip(fname, plat):
+    unzip_base = os.path.join(gettempdir(), 'openblas')
+    if not os.path.exists(unzip_base):
+        os.mkdir(unzip_base)
     with zipfile.ZipFile(fname, 'r') as zf:
-        # Get the openblas.a file, but not openblas.dll.a nor openblas.dev.a
-        lib = [x for x in zf.namelist() if OPENBLAS_LONG in x and
-               x.endswith('a') and not x.endswith('dll.a') and
-               not x.endswith('dev.a')]
-        if not lib:
-            return 'could not find libopenblas_%s*.a ' \
-                    'in downloaded zipfile' % OPENBLAS_LONG
-        if get_ilp64() is None:
-            target = os.path.join(gettempdir(), 'openblas.a')
-        else:
-            target = os.path.join(gettempdir(), 'openblas64_.a')
-        with open(target, 'wb') as fid:
-            fid.write(zf.read(lib[0]))
+        zf.extractall(unzip_base)
+    if plat == "win-32":
+        target = os.path.join(unzip_base, "32")
+    else:
+        target = os.path.join(unzip_base, "64")
+    # Copy the lib to openblas.lib. Once we can properly use pkg-config
+    # this will not be needed
+    lib = glob.glob(os.path.join(target, 'lib', '*.lib'))
+    assert len(lib) == 1
+    for f in lib:
+        shutil.copy(f, os.path.join(target, 'lib', 'openblas.lib'))
+    # Copy the dll from bin to lib so system_info can pick it up
+    dll = glob.glob(os.path.join(target, 'bin', '*.dll'))
+    for f in dll:
+        shutil.copy(f, os.path.join(target, 'lib'))
     return target
 
 
