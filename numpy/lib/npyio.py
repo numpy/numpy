@@ -2488,6 +2488,10 @@ def recfromtxt(fname, **kwargs):
     By default, `dtype` is None, which means that the data-type of the output
     array will be determined from the data.
 
+    Examples
+    --------
+    np.recfromtxt('data.txt') 
+    
     """
     kwargs.setdefault("dtype", None)
     usemask = kwargs.get('usemask', False)
@@ -2520,6 +2524,10 @@ def recfromcsv(fname, **kwargs):
     -----
     By default, `dtype` is None, which means that the data-type of the output
     array will be determined from the data.
+
+    Examples
+    --------
+    np.recfromcsv('data.csv') 
 
     """
     # Set default kwargs for genfromtxt as relevant to csv import.
