@@ -34,7 +34,7 @@ steps:
 - powershell: |
     choco install -y rtools
     refreshenv
-  displayName: 'Install rtools
+  displayName: 'Install rtools'
 
 - powershell: |
     $target = $(python tools/openblas_support.py)
