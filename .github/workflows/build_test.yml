@@ -34,5 +34,6 @@ jobs:
       run:
         ./dev.py build
     - name: Test
-      run:
+      run: |
+        pip install pytest
         ./dev.py test
