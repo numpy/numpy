@@ -995,6 +995,38 @@ def tril_indices_from(arr, k=0):
     k : int, optional
         Diagonal offset (see `tril` for details).
 
+    Examples
+    --------
+
+    Create a 4 by 4 array.
+
+    >>> a = np.arange(16).reshape(4, 4)
+    >>> a
+    array([[ 0,  1,  2,  3],
+           [ 4,  5,  6,  7],
+           [ 8,  9, 10, 11],
+           [12, 13, 14, 15]])
+
+    Pass the array to get the incides of the lower triangualr elements. 
+
+    >>> trili = np.tril_indices_from(a)
+    >>> trili
+    (array([0, 1, 1, 2, 2, 2, 3, 3, 3, 3]), array([0, 0, 1, 0, 1, 2, 0, 1, 2, 3]))
+
+    >>> a[trili]
+    array([ 0,  4,  5,  8,  9, 10, 12, 13, 14, 15])
+
+    This is syntactic sugar for tril_indices().
+
+    >>> np.tril_indices(a.shape[0])
+    (array([0, 1, 1, 2, 2, 2, 3, 3, 3, 3]), array([0, 0, 1, 0, 1, 2, 0, 1, 2, 3]))
+
+    Positive k results in part of the upper triangular area being returned.
+
+    >>> trili1 = np.tril_indices_from(a, 1)
+    >>> a[trili1]
+    array([ 0,  1,  4,  5,  6,  8,  9, 10, 11, 12, 13, 14, 15])
+
     See Also
     --------
     tril_indices, tril
