@@ -313,24 +313,27 @@ def get_printoptions():
           - sign : str
 
         For a full description of these options, see `set_printoptions`.
-        Example
-        -------
-        >>> np.get_printoptions()
-        {'edgeitems': 3,
-        'threshold': 1000,
-        'floatmode': 'maxprec',
-        'precision': 8,
-        'suppress': False,
-        'linewidth': 75,
-        'nanstr': 'nan',
-        'infstr': 'inf',
-        'sign': '-',
-        'formatter': None,
-        'legacy': False}
+        
 
     See Also
     --------
     set_printoptions, printoptions, set_string_function
+
+
+    Examples
+    -------
+    >>> np.get_printoptions()
+    {'edgeitems': 3,
+    'threshold': 1000,
+    'floatmode': 'maxprec',
+    'precision': 8,
+    'suppress': False,
+    'linewidth': 75,
+    'nanstr': 'nan',
+    'infstr': 'inf',
+    'sign': '-',
+    'formatter': None,
+    'legacy': False}
 
     """
     opts = _format_options.copy()
