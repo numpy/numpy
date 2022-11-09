@@ -172,7 +172,7 @@ class TestRegression:
         net[2] = 0.605202
         max_net = net.max()
         test = np.where(net <= 0., max_net, net)
-        correct = np.array([ 0.60520202, 0.00458849, 0.60520202])
+        correct = np.array([0.60520202, 0.00458849, 0.60520202])
         assert_array_almost_equal(test, correct)
 
     def test_endian_recarray(self):
