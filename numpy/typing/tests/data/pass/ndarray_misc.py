@@ -17,6 +17,7 @@ import numpy as np
 class SubClass(np.ndarray):
     ...
 
+
 i4 = np.int32(1)
 A: np.ndarray[Any, np.dtype[np.int32]] = np.array([[1]], dtype=np.int32)
 B0 = np.empty((), dtype=np.int32).view(SubClass)

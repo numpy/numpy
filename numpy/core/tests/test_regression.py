@@ -2074,7 +2074,7 @@ class TestRegression:
         # get consistent results
         v = np.array(([0] * 5 + [1] * 6 + [2] * 6) * 4)
         res = np.unique(v, return_index=True)
-        tgt = (np.array([0, 1, 2]), np.array([ 0, 5, 11]))
+        tgt = (np.array([0, 1, 2]), np.array([0, 5, 11]))
         assert_equal(res, tgt)
 
     def test_unicode_alloc_dealloc_match(self):

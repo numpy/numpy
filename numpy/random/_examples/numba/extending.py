@@ -33,10 +33,12 @@ n = 10000
 def numbacall():
     return normalsj(n, state_addr)
 
+
 rg = np.random.Generator(PCG64())
 
 def numpycall():
     return rg.normal(size=n)
+
 
 # Check that the functions work
 r1 = numbacall()

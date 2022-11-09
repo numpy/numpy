@@ -23,7 +23,7 @@ def assert_startswith(a, b):
 class SubArray(np.ndarray):
     # Defines a generic np.ndarray subclass, that stores some metadata
     # in the  dictionary `info`.
-    def __new__(cls,arr, info={}):
+    def __new__(cls, arr, info={}):
         x = np.asanyarray(arr).view(cls)
         x.info = info.copy()
         return x
@@ -68,6 +68,7 @@ class MSubArray(SubArray, MaskedArray):
         _view = self.view(MaskedArray)
         _view._sharedmask = False
         return _view
+
 
 msubarray = MSubArray
 
@@ -294,14 +295,14 @@ class TestSubclassing:
         # getter should  return a ComplicatedSubArray, even for single item
         # first check we wrote ComplicatedSubArray correctly
         assertTrue(isinstance(xcsub[1], ComplicatedSubArray))
-        assertTrue(isinstance(xcsub[1,...], ComplicatedSubArray))
+        assertTrue(isinstance(xcsub[1, ...], ComplicatedSubArray))
         assertTrue(isinstance(xcsub[1:4], ComplicatedSubArray))
 
         # now that it propagates inside the MaskedArray
         assertTrue(isinstance(mxcsub[1], ComplicatedSubArray))
-        assertTrue(isinstance(mxcsub[1,...].data, ComplicatedSubArray))
+        assertTrue(isinstance(mxcsub[1, ...].data, ComplicatedSubArray))
         assertTrue(mxcsub[0] is masked)
-        assertTrue(isinstance(mxcsub[0,...].data, ComplicatedSubArray))
+        assertTrue(isinstance(mxcsub[0, ...].data, ComplicatedSubArray))
         assertTrue(isinstance(mxcsub[1:4].data, ComplicatedSubArray))
 
         # also for flattened version (which goes via MaskedIterator)
@@ -328,8 +329,8 @@ class TestSubclassing:
         xcsub = ComplicatedSubArray(x)
         mxcsub_nomask = masked_array(xcsub)
 
-        assertTrue(isinstance(mxcsub_nomask[1,...].data, ComplicatedSubArray))
-        assertTrue(isinstance(mxcsub_nomask[0,...].data, ComplicatedSubArray))
+        assertTrue(isinstance(mxcsub_nomask[1, ...].data, ComplicatedSubArray))
+        assertTrue(isinstance(mxcsub_nomask[0, ...].data, ComplicatedSubArray))
 
         assertTrue(isinstance(mxcsub_nomask[1], ComplicatedSubArray))
         assertTrue(isinstance(mxcsub_nomask[0], ComplicatedSubArray))
