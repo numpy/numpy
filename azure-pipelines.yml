@@ -158,8 +158,8 @@ stages:
     - script: |
         set -xe
         # same version of gfortran as the open-libs and numpy-wheel builds
-        local arch="x86_64"
-        local type="native"
+        arch="x86_64"
+        type="native"
         curl -L https://github.com/isuruf/gcc/releases/download/gcc-11.3.0-2/gfortran-darwin-${arch}-${type}.tar.gz -o gfortran.dmg
         GFORTRAN_SHA=$(shasum gfortran.dmg)
         KNOWN_SHA="c469a420d2d003112749dcdcbe3c684eef42127e  gfortran.dmg"
