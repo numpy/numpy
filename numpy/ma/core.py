@@ -712,6 +712,8 @@ def getdata(a, subok=True):
     """
     try:
         data = a._data
+        if not issubclass(type(data), np.ndarray):
+            data =  np.array(a, copy=False, subok=subok)
     except AttributeError:
         data = np.array(a, copy=False, subok=subok)
     if not subok:
