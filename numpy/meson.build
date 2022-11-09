@@ -68,7 +68,6 @@ python_sources = [
 
 py.install_sources(
   python_sources,
-  pure: false,
   subdir: 'numpy'
 )
 
@@ -88,7 +87,7 @@ pure_subdirs = [
   'lib/tests/data'
 ]
 
-np_dir = py.get_install_dir(pure: false) / 'numpy'
+np_dir = py.get_install_dir() / 'numpy'
 
 foreach subdir: pure_subdirs
   install_subdir(subdir, install_dir: np_dir)
