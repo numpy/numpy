@@ -10,6 +10,8 @@ jobs:
   circleci_artifacts_redirector_job:
     runs-on: ubuntu-latest
     name: Run CircleCI artifacts redirector
+    permissions:
+      pull-requests: write
     # if: github.repository == 'numpy/numpy'
     steps:
       - name: GitHub Action step
