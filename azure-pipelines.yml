@@ -113,6 +113,7 @@ stages:
             echo CFLAGS \$CFLAGS && \
             python3 -m pip install -v . && \
             python3 runtests.py -n --debug-info --mode=full -- -rsx --junitxml=junit/test-results.xml && \
+            python3 -m pip install threadpoolctl && \
             python3 tools/openblas_support.py --check_version"
       displayName: 'Run 32-bit manylinux2014 Docker Build / Tests'
     - task: PublishTestResults@2
@@ -227,7 +228,9 @@ stages:
       env:
         # gfortran installed above adds -lSystem, so this is needed to find it (gh-22043)
         LIBRARY_PATH: /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib
-    - bash: python tools/openblas_support.py --check_version
+    - bash: |
+        python -m pip install threadpoolctl
+        python tools/openblas_support.py --check_version
       displayName: 'Verify OpenBLAS version'
       condition: eq(variables['USE_OPENBLAS'], '1')
     # import doesn't work when in numpy src directory , so do a pip dev install of build lib to test

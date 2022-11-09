@@ -143,6 +143,7 @@ EOF
   fi
 
   if [ -n "$CHECK_BLAS" ]; then
+    $PYTHON -m pip install threadpoolctl 
     $PYTHON ../tools/openblas_support.py --check_version
   fi
 

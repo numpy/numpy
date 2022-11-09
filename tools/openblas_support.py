@@ -284,7 +284,6 @@ def test_setup(plats):
         raise errs[0]
 
 
-
 def test_version(expected_version=None):
     """
     Assert that expected OpenBLAS version is
