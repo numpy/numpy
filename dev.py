@@ -10,12 +10,10 @@ import runpy
 
 sys.path.remove(os.path.abspath(os.path.dirname(sys.argv[0])))
 try:
-    runpy.run_module("dev.py", run_name="__main__")
+    runpy.run_module("devpy", run_name="__main__")
 except ImportError:
-    print("Cannot import dev.py; please install it using")
+    print("Cannot import devpy; please install it using")
     print()
-    print(
-        "  pip install git+https://github.com/scientific-python/dev.py@main#egg=dev.py"
-    )
+    print("  pip install git+https://github.com/scientific-python/devpy")
     print()
     sys.exit(1)

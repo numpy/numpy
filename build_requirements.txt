@@ -1,4 +1,4 @@
 meson-python>=0.10.0
 Cython>=0.29.30,<3.0
 wheel==0.37.0
-git+https://github.com/scientific-python/dev.py@main#egg=dev.py
+git+https://github.com/scientific-python/devpy
