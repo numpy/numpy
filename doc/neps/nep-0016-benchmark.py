@@ -36,6 +36,7 @@ runner = perf.Runner()
 def t(name, statement):
     runner.timeit(name, statement, globals=globals())
 
+
 t("np.asarray([])", "np.asarray([])")
 arrobj = np.array([])
 t("np.asarray(arrobj)", "np.asarray(arrobj)")
