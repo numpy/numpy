@@ -27,7 +27,7 @@ elif [[ $RUNNER_OS == "Windows" ]]; then
     PYTHONPATH=tools python -c "import openblas_support; openblas_support.make_init('numpy')"
     target=$(python tools/openblas_support.py)
     mkdir -p openblas
-    for f in ls $target; do
+    for f in $(ls $target); do
         cp -r $f openblas
     done
     ls openblas

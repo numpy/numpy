@@ -74,10 +74,10 @@ def download_openblas(target, plat, ilp64):
         suffix = f'manylinux{ml_ver}_{arch}.tar.gz'
         typ = 'tar.gz'
     elif plat == 'macosx-x86_64':
-        suffix = 'macosx_10_9_x86_64-gf_1becaaa.tar.gz'
+        suffix = 'macosx_10_9_x86_64-gf_c469a42.tar.gz'
         typ = 'tar.gz'
     elif plat == 'macosx-arm64':
-        suffix = 'macosx_11_0_arm64-gf_f26990f.tar.gz'
+        suffix = 'macosx_11_0_arm64-gf_5272328.tar.gz'
         typ = 'tar.gz'
     elif osname == 'win':
         if plat == "win-32":
