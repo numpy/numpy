@@ -91,7 +91,7 @@ class TestRegression:
     def test_noncontiguous_fill(self):
         # Ticket #58.
         a = np.zeros((5, 3))
-        b = a[:, :2,]
+        b = a[:, :2, ]
 
         def rs():
             b.shape = (10,)
@@ -104,7 +104,7 @@ class TestRegression:
 
     def test_indexing1(self):
         # Ticket #64
-        descr = [('x', [('y', [('z', 'c16', (2,)),]),]),]
+        descr = [('x', [('y', [('z', 'c16', (2,)), ]), ]), ]
         buffer = ((([6j, 4j],),),)
         h = np.array(buffer, dtype=descr)
         h['x']['y']['z']
@@ -118,8 +118,8 @@ class TestRegression:
 
     def test_round(self):
         # Ticket #67
-        x = np.array([1+2j])
-        assert_almost_equal(x**(-1), [1/(1+2j)])
+        x = np.array([1 + 2j])
+        assert_almost_equal(x**(-1), [1 / (1 + 2j)])
 
     def test_scalar_compare(self):
         # Trac Ticket #72

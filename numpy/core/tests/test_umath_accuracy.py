@@ -51,15 +51,15 @@ class TestAccuracy:
                 with open(filepath) as fid:
                     file_without_comments = (r for r in fid if not r[0] in ('$', '#'))
                     data = np.genfromtxt(file_without_comments,
-                                         dtype=('|S39','|S39','|S39',int),
-                                         names=('type','input','output','ulperr'),
+                                         dtype=('|S39', '|S39', '|S39', int),
+                                         names=('type', 'input', 'output', 'ulperr'),
                                          delimiter=',',
                                          skip_header=1)
                     npname = path.splitext(filename)[0].split('-')[3]
                     npfunc = getattr(np, npname)
                     for datatype in np.unique(data['type']):
                         data_subset = data[data['type'] == datatype]
-                        inval  = np.array(str_to_float(data_subset['input'].astype(str), data_subset['type'].astype(str)), dtype=eval(datatype))
+                        inval = np.array(str_to_float(data_subset['input'].astype(str), data_subset['type'].astype(str)), dtype=eval(datatype))
                         outval = np.array(str_to_float(data_subset['output'].astype(str), data_subset['type'].astype(str)), dtype=eval(datatype))
                         perm = np.random.permutation(len(inval))
                         inval = inval[perm]

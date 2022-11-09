@@ -76,7 +76,7 @@ class IBMFCompiler(FCompiler):
             else:
                 xlf_cfg = '/etc/opt/ibmcmp/xlf/%s/xlf.cfg' % version
             fo, new_cfg = make_temp_file(suffix='_xlf.cfg')
-            log.info('Creating '+new_cfg)
+            log.info('Creating ' + new_cfg)
             with open(xlf_cfg, 'r') as fi:
                 crt1_match = re.compile(r'\s*crt\s*=\s*(?P<path>.*)/crt1.o').match
                 for line in fi:

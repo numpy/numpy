@@ -14,7 +14,7 @@ class EnvironmentConfig:
         conf_desc = self._conf_keys[name]
         hook, envvar, confvar, convert, append = conf_desc
         if not convert:
-            convert = lambda x : x
+            convert = lambda x: x
         print('%s.%s:' % (self._distutils_section, name))
         v = self._hook_handler(name, hook)
         print('  hook   : %s' % (convert(v),))
@@ -73,7 +73,6 @@ class EnvironmentConfig:
                 source, confvar_contents = self._conf[confvar]
                 var = convert(confvar_contents)
         return var
-
 
     def clone(self, hook_handler):
         ec = self.__class__(distutils_section=self._distutils_section,

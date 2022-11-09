@@ -81,7 +81,7 @@ pygments_style = 'sphinx'
 todo_include_todos = False
 
 
-## -- Options for HTML output ----------------------------------------------
+# -- Options for HTML output ----------------------------------------------
 #
 
 html_theme = 'pydata_sphinx_theme'
@@ -116,7 +116,6 @@ if 'sphinx.ext.pngmath' in extensions:
 
 plot_html_show_formats = False
 plot_html_show_source_link = False
-
 
 
 # -- Options for HTMLHelp output ------------------------------------------

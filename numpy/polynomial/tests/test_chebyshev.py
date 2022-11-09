@@ -325,7 +325,7 @@ class TestDerivative:
 
         # check that zeroth derivative does nothing
         for i in range(5):
-            tgt = [0]*i + [1]
+            tgt = [0] * i + [1]
             res = cheb.chebder(tgt, m=0)
             assert_equal(trim(res), trim(tgt))
 

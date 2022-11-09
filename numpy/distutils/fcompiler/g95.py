@@ -30,8 +30,10 @@ class G95FCompiler(FCompiler):
 
     def get_flags(self):
         return ['-fno-second-underscore']
+
     def get_flags_opt(self):
         return ['-O']
+        
     def get_flags_debug(self):
         return ['-g']
 

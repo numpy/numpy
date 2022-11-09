@@ -43,7 +43,8 @@ class _DTypeDict(_DTypeDictBase, total=False):
 @runtime_checkable
 class _SupportsDType(Protocol[_DType_co]):
     @property
-    def dtype(self) -> _DType_co: ...
+    def dtype(self) -> _DType_co:
+        ...
 
 
 # A subset of `npt.DTypeLike` that can be parametrized w.r.t. `np.generic`

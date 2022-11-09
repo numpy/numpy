@@ -9,7 +9,7 @@ else:
 
 class sdist(old_sdist):
 
-    def add_defaults (self):
+    def add_defaults(self):
         old_sdist.add_defaults(self)
 
         dist = self.distribution

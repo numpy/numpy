@@ -24,8 +24,10 @@ class MIPSFCompiler(FCompiler):
 
     def get_flags(self):
         return self.pic_flags + ['-n32']
+
     def get_flags_opt(self):
         return ['-O3']
+
     def get_flags_arch(self):
         opt = []
         for a in '19 20 21 22_4k 22_5k 24 25 26 27 28 30 32_5k 32_10k'.split():
@@ -33,6 +35,7 @@ class MIPSFCompiler(FCompiler):
                 opt.append('-TARG:platform=IP%s' % a)
                 break
         return opt
+
     def get_flags_arch_f77(self):
         r = None
         if cpu.is_r10000():

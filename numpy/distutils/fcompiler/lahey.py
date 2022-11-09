@@ -25,14 +25,17 @@ class LaheyFCompiler(FCompiler):
 
     def get_flags_opt(self):
         return ['-O']
+
     def get_flags_debug(self):
         return ['-g', '--chk', '--chkglobal']
+
     def get_library_dirs(self):
         opt = []
         d = os.environ.get('LAHEY')
         if d:
             opt.append(os.path.join(d, 'lib'))
         return opt
+
     def get_libraries(self):
         opt = []
         opt.extend(['fj9f6', 'fj9i6', 'fj9ipp', 'fj9e6'])
