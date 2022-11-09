@@ -284,32 +284,25 @@ def test_setup(plats):
         raise errs[0]
 
 
-def test_version(expected_version, ilp64=get_ilp64()):
+
+def test_version(expected_version=None):
     """
     Assert that expected OpenBLAS version is
-    actually available via NumPy
+    actually available via NumPy. Requires threadpoolctl
     """
     import numpy
-    import ctypes
+    import threadpoolctl
 
-    dll = ctypes.CDLL(numpy.core._multiarray_umath.__file__)
-    if ilp64 == "64_":
-        get_config = dll.openblas_get_config64_
-    else:
-        get_config = dll.openblas_get_config
-    get_config.restype = ctypes.c_char_p
-    res = get_config()
-    print('OpenBLAS get_config returned', str(res))
+    data = threadpoolctl.threadpool_info()
+    if len(data) != 1:
+        raise ValueError(f"expected single threadpool_info result, got {data}")
     if not expected_version:
         expected_version = OPENBLAS_V
-    check_str = b'OpenBLAS %s' % expected_version.encode()
-    print(check_str)
-    assert check_str in res, f'{expected_version} not found in {res}'
-    if ilp64:
-        assert b"USE64BITINT" in res
-    else:
-        assert b"USE64BITINT" not in res
-
+    if data[0]['version'] != expected_version:
+        raise ValueError(
+            f"expected OpenBLAS version {expected_version}, got {data}"
+        )
+    print("OK")
 
 if __name__ == '__main__':
     import argparse

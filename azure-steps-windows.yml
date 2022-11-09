@@ -76,6 +76,11 @@ steps:
     }
   displayName: 'Build NumPy'
 
+- script: |
+    python -m pip install threadpoolctl
+    python tools/openblas_support.py --check_version
+  displayName: 'Check OpenBLAS version"
+
 - powershell: |
     If ($(BITS) -eq 32) {
         $env:CFLAGS = "-m32"
