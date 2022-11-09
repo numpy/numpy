@@ -513,8 +513,8 @@ class TestPrintOptions:
     def test_switch_to_exp(self):
         for i, s in enumerate(SWITCH_TO_EXP):
             with printoptions(precision=i):
-                p = poly.Polynomial([1.23456789*10**-i
-                                     for i in range(i//2+3)])
+                p = poly.Polynomial([1.23456789*10 ** -i
+                                     for i in range(i // 2 + 3)])
                 assert str(p).replace('\n', ' ') == s
 
     def test_non_finite(self):

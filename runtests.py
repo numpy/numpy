@@ -336,10 +336,10 @@ def main(argv):
                                       '--cached', 'HEAD'])
                 r2 = subprocess.call(['git', 'diff-files', '--quiet'])
                 if r1 != 0 or r2 != 0:
-                    print("*"*80)
+                    print("*" * 80)
                     print("WARNING: you have uncommitted changes --- "
                           "these will NOT be benchmarked!")
-                    print("*"*80)
+                    print("*" * 80)
 
             # Fix commit ids (HEAD is local to current repo)
             out = subprocess.check_output(['git', 'rev-parse', commit_b])
@@ -373,7 +373,6 @@ def main(argv):
         tests = args.tests
     else:
         tests = None
-
 
     # Run the tests under build/test
 
@@ -622,7 +621,7 @@ def asv_substitute_config(in_config, out_config, **custom_vars):
         chash = 0
         for f in factors:
             for char in str(f):
-                chash  = ord(char) + (chash << 6) + (chash << 16) - chash
+                chash = ord(char) + (chash << 6) + (chash << 16) - chash
                 chash &= 0xFFFFFFFF
         return chash
 

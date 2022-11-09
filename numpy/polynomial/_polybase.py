@@ -365,7 +365,7 @@ class ABCPolyBase(abc.ABC):
         """
         # Get configuration for line breaks
         linewidth = np.get_printoptions().get('linewidth', 75)
-        linewidth = max(linewidth,1)
+        linewidth = max(linewidth, 1)
         out = pu.format_float(self.coef[0])
         for i, coef in enumerate(self.coef[1:]):
             out += " "

@@ -358,7 +358,7 @@ class TestDerivative:
 
 class TestVander:
     # some random values in [-1, 1)
-    x = np.random.random((3, 5))*2 - 1
+    x = np.random.random((3, 5)) * 2 - 1
 
     def test_chebvander(self):
         # check for 1d x
@@ -366,7 +366,7 @@ class TestVander:
         v = cheb.chebvander(x, 3)
         assertTrue(v.shape == (3, 4))
         for i in range(4):
-            coef = [0]*i + [1]
+            coef = [0] * i + [1]
             assert_almost_equal(v[..., i], cheb.chebval(x, coef))
 
         # check for 2d x
