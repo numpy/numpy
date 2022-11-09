@@ -1,7 +1,6 @@
 import numpy.distutils.fcompiler
 from numpy.testing import assert_
 
-
 intel_32bit_version_strings = [
     ("Intel(R) Fortran Intel(R) 32-bit Compiler Professional for applications"
      "running on Intel(R) 32, Version 11.1", '11.1'),
@@ -19,7 +18,7 @@ class TestIntelFCompilerVersions:
         fc = numpy.distutils.fcompiler.new_fcompiler(compiler='intel')
         for vs, version in intel_32bit_version_strings:
             v = fc.version_match(vs)
-            assert_(v == version)
+            assertTrue(v == version)
 
 
 class TestIntelEM64TFCompilerVersions:
@@ -27,4 +26,4 @@ class TestIntelEM64TFCompilerVersions:
         fc = numpy.distutils.fcompiler.new_fcompiler(compiler='intelem')
         for vs, version in intel_64bit_version_strings:
             v = fc.version_match(vs)
-            assert_(v == version)
+            assertTrue(v == version)

@@ -16,7 +16,7 @@ function name, setup and teardown functions and so on - see
 import collections.abc
 import warnings
 
-from .utils import SkipTest, assert_warns, HAS_REFCOUNT
+from .utils import HAS_REFCOUNT, SkipTest, assert_warns
 
 __all__ = ['slow', 'setastest', 'skipif', 'knownfailureif', 'deprecated',
            'parametrize', '_needs_refcount',]
@@ -239,6 +239,7 @@ def knownfailureif(fail_condition, msg=None):
         # Local import to avoid a hard nose dependency and only incur the
         # import time overhead at actual test-time.
         import nose
+
         from .noseclasses import KnownFailureException
 
         def knownfailer(*args, **kwargs):

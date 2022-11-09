@@ -1,11 +1,12 @@
 #cython: language_level=3
 
-from libc.stdint cimport uint32_t, uint64_t, int32_t, int64_t
+from libc.stdint cimport int32_t, int64_t, uint32_t, uint64_t
 
 import numpy as np
-cimport numpy as np
 
+cimport numpy as np
 from numpy.random cimport bitgen_t
+
 
 cdef double POISSON_LAM_MAX
 cdef double LEGACY_POISSON_LAM_MAX

@@ -1,70 +1,25 @@
 # NOTE: Numpy's mypy plugin is used for importing the correct
 # platform-specific `ctypes._SimpleCData[int]` sub-type
-from ctypes import c_int64 as _c_intp
-
+import ctypes
 import os
 import sys
-import ctypes
 from collections.abc import Iterable, Sequence
-from typing import (
-    Literal as L,
-    Any,
-    Union,
-    TypeVar,
-    Generic,
-    overload,
-    ClassVar,
-)
+from ctypes import c_int64 as _c_intp
+from typing import Any, ClassVar, Generic
+from typing import Literal as L
+from typing import TypeVar, Union, overload
 
-from numpy import (
-    ndarray,
-    dtype,
-    generic,
-    bool_,
-    byte,
-    short,
-    intc,
-    int_,
-    longlong,
-    ubyte,
-    ushort,
-    uintc,
-    uint,
-    ulonglong,
-    single,
-    double,
-    longdouble,
-    void,
-)
+from numpy import (bool_, byte, double, dtype, generic, int_, intc, longdouble,
+                   longlong, ndarray, short, single, ubyte, uint, uintc,
+                   ulonglong, ushort, void)
+from numpy._typing import (DTypeLike, NDArray,  # Arrays; Shapes; DTypes
+                           _ArrayLike, _BoolCodes, _ByteCodes, _DoubleCodes,
+                           _DTypeLike, _IntCCodes, _IntCodes, _LongDoubleCodes,
+                           _LongLongCodes, _ShapeLike, _ShortCodes,
+                           _SingleCodes, _UByteCodes, _UIntCCodes, _UIntCodes,
+                           _ULongLongCodes, _UShortCodes, _VoidDTypeLike)
 from numpy.core._internal import _ctypes
 from numpy.core.multiarray import flagsobj
-from numpy._typing import (
-    # Arrays
-    NDArray,
-    _ArrayLike,
-
-    # Shapes
-    _ShapeLike,
-
-    # DTypes
-    DTypeLike,
-    _DTypeLike,
-    _VoidDTypeLike,
-    _BoolCodes,
-    _UByteCodes,
-    _UShortCodes,
-    _UIntCCodes,
-    _UIntCodes,
-    _ULongLongCodes,
-    _ByteCodes,
-    _ShortCodes,
-    _IntCCodes,
-    _IntCodes,
-    _LongLongCodes,
-    _SingleCodes,
-    _DoubleCodes,
-    _LongDoubleCodes,
-)
 
 # TODO: Add a proper `_Shape` bound once we've got variadic typevars
 _DType = TypeVar("_DType", bound=dtype[Any])

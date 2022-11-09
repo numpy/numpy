@@ -7,30 +7,31 @@ Support code for building Python extensions on Windows.
     # 3. Force windows to use g77
 
 """
+import distutils.cygwinccompiler
 import os
 import platform
-import sys
-import subprocess
 import re
+import subprocess
+import sys
 import textwrap
+from distutils.errors import UnknownFileError
+from distutils.msvccompiler import get_build_version as get_build_msvc_version
+from distutils.unixccompiler import UnixCCompiler
 
 # Overwrite certain distutils.ccompiler functions:
 import numpy.distutils.ccompiler  # noqa: F401
 from numpy.distutils import log
+from numpy.distutils.misc_util import (get_build_architecture,
+                                       msvc_runtime_library,
+                                       msvc_runtime_major,
+                                       msvc_runtime_version)
+
 # NT stuff
 # 1. Make sure libpython<version>.a exists for gcc.  If not, build it.
 # 2. Force windows to use gcc (we're struggling with MSVC and g77 support)
 #    --> this is done in numpy/distutils/ccompiler.py
 # 3. Force windows to use g77
 
-import distutils.cygwinccompiler
-from distutils.unixccompiler import UnixCCompiler
-from distutils.msvccompiler import get_build_version as get_build_msvc_version
-from distutils.errors import UnknownFileError
-from numpy.distutils.misc_util import (msvc_runtime_library,
-                                       msvc_runtime_version,
-                                       msvc_runtime_major,
-                                       get_build_architecture)
 
 def get_msvcr_replacement():
     """Replacement for outdated version of get_msvcr from cygwinccompiler"""
@@ -149,7 +150,8 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
                           source_filenames,
                           strip_dir=0,
                           output_dir=''):
-        if output_dir is None: output_dir = ''
+        if output_dir is None:
+            output_dir = ''
         obj_names = []
         for src_name in source_filenames:
             # use normcase to make sure '.rc' is really '.rc' and not '.RC'
@@ -209,13 +211,13 @@ def find_python_dll():
     elif implementation == 'PyPy':
         dllname = f'libpypy{major_version}-c.dll'
     else:
-        dllname = f'Unknown platform {implementation}' 
+        dllname = f'Unknown platform {implementation}'
     print("Looking for %s" % dllname)
     for folder in lib_dirs:
         dll = os.path.join(folder, dllname)
         if os.path.exists(dll):
             return dll
- 
+
     raise ValueError("%s not found in %s" % (dllname, lib_dirs))
 
 def dump_table(dll):
@@ -337,7 +339,7 @@ def build_msvcr_library(debug=False):
     # Clean up symbol definitions
     os.remove(def_file)
 
-    return (not retcode)
+    return not retcode
 
 def build_import_library():
     if os.name != 'nt':
@@ -477,6 +479,7 @@ _MSVCRVER_TO_FULLVER = {}
 if sys.platform == 'win32':
     try:
         import msvcrt
+
         # I took one version in my SxS directory: no idea if it is the good
         # one, and we can't retrieve it from python
         _MSVCRVER_TO_FULLVER['80'] = "8.0.50727.42"

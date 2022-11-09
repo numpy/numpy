@@ -598,8 +598,8 @@ class _Distutils:
 
     def dist_compile(self, sources, flags, ccompiler=None, **kwargs):
         """Wrap CCompiler.compile()"""
-        assert(isinstance(sources, list))
-        assert(isinstance(flags, list))
+        assert isinstance(sources, list)
+        assert isinstance(flags, list)
         flags = kwargs.pop("extra_postargs", []) + flags
         if not ccompiler:
             ccompiler = self._ccompiler
@@ -610,7 +610,7 @@ class _Distutils:
         """Return True if 'CCompiler.compile()' able to compile
         a source file with certain flags.
         """
-        assert(isinstance(source, str))
+        assert isinstance(source, str)
         from distutils.errors import CompileError
         cc = self._ccompiler;
         bk_spawn = getattr(cc, 'spawn', None)
@@ -856,7 +856,7 @@ class _Cache:
         # TODO: don't write if the cache doesn't change
         self.dist_log("write cache to path ->", self._cache_path)
         cdict = self.__dict__.copy()
-        for attr in self.__dict__.keys():
+        for attr in self.__dict__:
             if re.match(self._cache_ignore, attr):
                 cdict.pop(attr)
 
@@ -1056,7 +1056,7 @@ class _CCompiler:
         for name, flags in compiler_flags.items():
             self.cc_flags[name] = nflags = []
             if flags:
-                assert(isinstance(flags, str))
+                assert isinstance(flags, str)
                 flags = flags.split()
                 for f in flags:
                     if self.cc_test_flags([f]):
@@ -1069,7 +1069,7 @@ class _CCompiler:
         """
         Returns True if the compiler supports 'flags'.
         """
-        assert(isinstance(flags, list))
+        assert isinstance(flags, list)
         self.dist_log("testing flags", flags)
         test_path = os.path.join(self.conf_check_path, "test_flags.c")
         test = self.dist_test(test_path, flags)
@@ -1119,7 +1119,7 @@ class _CCompiler:
         )
         ['-march=core-avx2']
         """
-        assert(isinstance(flags, list))
+        assert isinstance(flags, list)
         if self.cc_is_gcc or self.cc_is_clang or self.cc_is_icc:
             return self._cc_normalize_unix(flags)
 
@@ -1303,7 +1303,7 @@ class _Feature:
         'name': str
             feature name in uppercase.
         """
-        assert(name.isupper())
+        assert name.isupper()
         return name in self.conf_features
 
     def feature_sorted(self, names, reverse=False):
@@ -1373,7 +1373,7 @@ class _Feature:
             implies = get_implies(names)
             names = [names]
         else:
-            assert(hasattr(names, "__iter__"))
+            assert hasattr(names, "__iter__")
             implies = set()
             for n in names:
                 implies = implies.union(get_implies(n))
@@ -1580,8 +1580,8 @@ class _Feature:
         macros : list of tuples, optional
             A list of C macro definitions.
         """
-        assert(name.isupper())
-        assert(force_flags is None or isinstance(force_flags, list))
+        assert name.isupper()
+        assert force_flags is None or isinstance(force_flags, list)
 
         supported = name in self.feature_supported
         if supported:
@@ -1597,7 +1597,7 @@ class _Feature:
         """
         check if the feature can be auto-vectorized by the compiler
         """
-        assert(isinstance(name, str))
+        assert isinstance(name, str)
         d = self.feature_supported[name]
         can = d.get("autovec", None)
         if can is None:
@@ -1668,9 +1668,9 @@ class _Feature:
         #define NPY_HAVE_SSE3 1
         #include <pmmintrin.h>
         """
-        assert(feature_name.isupper())
+        assert feature_name.isupper()
         feature = self.feature_supported.get(feature_name)
-        assert(feature is not None)
+        assert feature is not None
 
         prepr = [
             "/** %s **/" % feature_name,
@@ -1937,7 +1937,7 @@ class _Parse:
 
     _parse_regex_target = re.compile(r'\s|[*,/]|([()])')
     def _parse_target_tokens(self, tokens):
-        assert(isinstance(tokens, str))
+        assert isinstance(tokens, str)
         final_targets = [] # to keep it sorted as specified
         extra_flags = []
         has_baseline = False

@@ -1,10 +1,13 @@
 import codecs
-import pytest
-import numpy as np
-from numpy.f2py.crackfortran import markinnerspaces
-from . import util
-from numpy.f2py import crackfortran
 import textwrap
+
+import pytest
+
+import numpy as np
+from numpy.f2py import crackfortran
+from numpy.f2py.crackfortran import markinnerspaces
+
+from . import util
 
 
 class TestNoSpace(util.F2PyTest):

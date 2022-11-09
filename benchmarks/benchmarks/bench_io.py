@@ -1,7 +1,8 @@
-from .common import Benchmark, get_squares
+from io import StringIO
 
 import numpy as np
-from io import StringIO
+
+from .common import Benchmark, get_squares
 
 
 class Copy(Benchmark):

@@ -1,13 +1,11 @@
 import sys
+from io import StringIO
 
 import pytest
 
 import numpy as np
-from numpy.testing import assert_, assert_equal
 from numpy.core.tests._locales import CommaDecimalPointLocale
-
-
-from io import StringIO
+from numpy.testing import assert_, assert_equal
 
 _REF = {np.inf: 'inf', -np.inf: '-inf', np.nan: 'nan'}
 
@@ -179,7 +177,7 @@ def test_scalar_format():
             assert_equal(fmat.format(val), fmat.format(valtype(val)),
                     "failed with val %s, type %s" % (val, valtype))
         except ValueError as e:
-            assert_(False,
+            assertTrue(False,
                "format raised exception (fmt='%s', val=%s, type=%s, exc='%s')" %
                             (fmat, repr(val), repr(valtype), str(e)))
 

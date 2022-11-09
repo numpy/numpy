@@ -1,62 +1,21 @@
-from typing import (
-    Any,
-    List,
-    Sequence,
-    Tuple,
-    Union,
-    Type,
-    TypeVar,
-    Protocol,
-    TypedDict,
-    runtime_checkable,
-)
+from typing import (Any, List, Protocol, Sequence, Tuple, Type, TypedDict,
+                    TypeVar, Union, runtime_checkable)
 
 import numpy as np
 
-from ._shape import _ShapeLike
+from ._char_codes import (_BoolCodes, _ByteCodes, _BytesCodes, _CDoubleCodes,
+                          _CLongDoubleCodes, _Complex64Codes, _Complex128Codes,
+                          _CSingleCodes, _DoubleCodes, _DT64Codes,
+                          _Float16Codes, _Float32Codes, _Float64Codes,
+                          _HalfCodes, _Int8Codes, _Int16Codes, _Int32Codes,
+                          _Int64Codes, _IntCCodes, _IntCodes, _IntPCodes,
+                          _LongDoubleCodes, _LongLongCodes, _ObjectCodes,
+                          _ShortCodes, _SingleCodes, _StrCodes, _TD64Codes,
+                          _UByteCodes, _UInt8Codes, _UInt16Codes, _UInt32Codes,
+                          _UInt64Codes, _UIntCCodes, _UIntCodes, _UIntPCodes,
+                          _ULongLongCodes, _UShortCodes, _VoidCodes)
 from ._generic_alias import _DType as DType
-
-from ._char_codes import (
-    _BoolCodes,
-    _UInt8Codes,
-    _UInt16Codes,
-    _UInt32Codes,
-    _UInt64Codes,
-    _Int8Codes,
-    _Int16Codes,
-    _Int32Codes,
-    _Int64Codes,
-    _Float16Codes,
-    _Float32Codes,
-    _Float64Codes,
-    _Complex64Codes,
-    _Complex128Codes,
-    _ByteCodes,
-    _ShortCodes,
-    _IntCCodes,
-    _IntPCodes,
-    _IntCodes,
-    _LongLongCodes,
-    _UByteCodes,
-    _UShortCodes,
-    _UIntCCodes,
-    _UIntPCodes,
-    _UIntCodes,
-    _ULongLongCodes,
-    _HalfCodes,
-    _SingleCodes,
-    _DoubleCodes,
-    _LongDoubleCodes,
-    _CSingleCodes,
-    _CDoubleCodes,
-    _CLongDoubleCodes,
-    _DT64Codes,
-    _TD64Codes,
-    _StrCodes,
-    _BytesCodes,
-    _VoidCodes,
-    _ObjectCodes,
-)
+from ._shape import _ShapeLike
 
 _SCT = TypeVar("_SCT", bound=np.generic)
 _DType_co = TypeVar("_DType_co", covariant=True, bound=DType[Any])

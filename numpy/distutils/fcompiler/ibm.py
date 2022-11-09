@@ -1,12 +1,12 @@
 import os
 import re
-import sys
 import subprocess
-
-from numpy.distutils.fcompiler import FCompiler
-from numpy.distutils.exec_command import find_executable
-from numpy.distutils.misc_util import make_temp_file
+import sys
 from distutils import log
+
+from numpy.distutils.exec_command import find_executable
+from numpy.distutils.fcompiler import FCompiler
+from numpy.distutils.misc_util import make_temp_file
 
 compilers = ['IBMFCompiler']
 
@@ -40,7 +40,8 @@ class IBMFCompiler(FCompiler):
                     pass
                 else:
                     m = re.search(r'xlfcmp:(?P<version>\d+([.]\d+)+)', o)
-                    if m: version = m.group('version')
+                    if m:
+                        version = m.group('version')
 
         xlf_dir = '/etc/opt/ibmcmp/xlf'
         if version is None and os.path.isdir(xlf_dir):

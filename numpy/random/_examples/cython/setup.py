@@ -4,14 +4,13 @@ Build the Cython demonstrations of low-level access to NumPy random
 
 Usage: python setup.py build_ext -i
 """
-from os.path import dirname, join, abspath
+from os.path import abspath, dirname, join
 
+from Cython.Build import cythonize
 from setuptools import setup
 from setuptools.extension import Extension
 
 import numpy as np
-from Cython.Build import cythonize
-
 
 path = dirname(__file__)
 src_dir = join(dirname(path), '..', 'src')

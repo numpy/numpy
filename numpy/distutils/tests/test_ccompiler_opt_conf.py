@@ -1,5 +1,5 @@
 import unittest
-from os import sys, path
+from os import path, sys
 
 is_standalone = __name__ == '__main__' and __package__ is None
 if is_standalone:

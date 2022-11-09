@@ -1,15 +1,15 @@
+import functools
 import os
+import re
 import sys
 import textwrap
 import types
-import re
 import warnings
-import functools
 
-from numpy.core.numerictypes import issubclass_, issubsctype, issubdtype
-from numpy.core.overrides import set_module
-from numpy.core import ndarray, ufunc, asarray
 import numpy as np
+from numpy.core import asarray, ndarray, ufunc
+from numpy.core.numerictypes import issubclass_, issubdtype, issubsctype
+from numpy.core.overrides import set_module
 
 __all__ = [
     'issubclass_', 'issubsctype', 'issubdtype', 'deprecate',
@@ -65,10 +65,11 @@ def show_runtime():
       'user_api': 'blas',
       'version': '0.3.20'}]
     """
-    from numpy.core._multiarray_umath import (
-        __cpu_features__, __cpu_baseline__, __cpu_dispatch__
-    )
     from pprint import pprint
+
+    from numpy.core._multiarray_umath import (__cpu_baseline__,
+                                              __cpu_dispatch__,
+                                              __cpu_features__)
     config_found = []
     features_found, features_not_found = [], []
     for feature in __cpu_dispatch__:
@@ -118,7 +119,7 @@ def get_include():
         d = os.path.join(os.path.dirname(numpy.__file__), 'core', 'include')
     else:
         # using installed numpy core headers
-        import numpy.core as core
+        from numpy import core
         d = os.path.join(os.path.dirname(core.__file__), 'include')
     return d
 
@@ -399,7 +400,7 @@ def who(vardict=None):
         if isinstance(vardict[name], ndarray):
             var = vardict[name]
             idv = id(var)
-            if idv in cache.keys():
+            if idv in cache:
                 namestr = name + " (%s)" % cache[idv]
                 original = 0
             else:
@@ -600,8 +601,8 @@ def info(object=None, maxwidth=76, output=None, toplevel='numpy'):
     """
     global _namedict, _dictlist
     # Local import to speed up numpy's import time.
-    import pydoc
     import inspect
+    import pydoc
 
     if (hasattr(object, '_ppimport_importer') or
            hasattr(object, '_ppimport_module')):
@@ -902,7 +903,6 @@ def _lookfor_generate_cache(module, import_modules, regenerate):
     """
     # Local import to speed up numpy's import time.
     import inspect
-
     from io import StringIO
 
     if module is None:
@@ -1130,9 +1130,9 @@ def _opt_info():
           end with `?`.
         - remained features are representing the baseline.
     """
-    from numpy.core._multiarray_umath import (
-        __cpu_features__, __cpu_baseline__, __cpu_dispatch__
-    )
+    from numpy.core._multiarray_umath import (__cpu_baseline__,
+                                              __cpu_dispatch__,
+                                              __cpu_features__)
 
     if len(__cpu_baseline__) == 0 and len(__cpu_dispatch__) == 0:
         return ''

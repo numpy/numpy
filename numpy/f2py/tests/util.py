@@ -6,22 +6,23 @@ Utility functions for
 - determining paths to tests
 
 """
-import os
-import sys
-import subprocess
-import tempfile
-import shutil
 import atexit
-import textwrap
-import re
-import pytest
 import contextlib
-import numpy
-
+import os
+import re
+import shutil
+import subprocess
+import sys
+import tempfile
+import textwrap
+from importlib import import_module
 from pathlib import Path
+
+import pytest
+
+import numpy
 from numpy.compat import asbytes, asstr
 from numpy.testing import temppath
-from importlib import import_module
 
 #
 # Maintaining a temporary module directory

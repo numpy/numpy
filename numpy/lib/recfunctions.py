@@ -6,13 +6,14 @@ matplotlib.  They have been rewritten and extended for convenience.
 
 """
 import itertools
+
 import numpy as np
-import numpy.ma as ma
+from numpy import ma
 from numpy import ndarray, recarray
-from numpy.ma import MaskedArray
-from numpy.ma.mrecords import MaskedRecords
 from numpy.core.overrides import array_function_dispatch
 from numpy.lib._iotools import _is_string_like
+from numpy.ma import MaskedArray
+from numpy.ma.mrecords import MaskedRecords
 
 _check_fill_value = np.ma.core._check_fill_value
 
@@ -407,7 +408,7 @@ def merge_arrays(seqarrays, fill_value=-1, flatten=False,
     * XXX: I just obtained these values empirically
     """
     # Only one item in the input sequence ?
-    if (len(seqarrays) == 1):
+    if len(seqarrays) == 1:
         seqarrays = np.asanyarray(seqarrays[0])
     # Do we have a single ndarray as input ?
     if isinstance(seqarrays, (ndarray, np.void)):

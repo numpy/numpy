@@ -1,26 +1,24 @@
 """ Build swig and f2py sources.
 """
+import copy
 import os
 import re
-import sys
 import shlex
-import copy
-
+import sys
 from distutils.command import build_ext
-from distutils.dep_util import newer_group, newer
-from distutils.util import get_platform
+from distutils.dep_util import newer, newer_group
 from distutils.errors import DistutilsError, DistutilsSetupError
-
+from distutils.util import get_platform
 
 # this import can't be done here, as it uses numpy stuff only available
 # after it's installed
 #import numpy.f2py
 from numpy.distutils import log
-from numpy.distutils.misc_util import (
-    fortran_ext_match, appendpath, is_string, is_sequence, get_cmd
-    )
-from numpy.distutils.from_template import process_file as process_f_file
 from numpy.distutils.conv_template import process_file as process_c_file
+from numpy.distutils.from_template import process_file as process_f_file
+from numpy.distutils.misc_util import (appendpath, fortran_ext_match, get_cmd,
+                                       is_sequence, is_string)
+
 
 def subst_vars(target, source, d):
     """Substitute any occurrence of @foo@ by d['foo'] from source file into

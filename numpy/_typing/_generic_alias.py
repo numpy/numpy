@@ -3,13 +3,7 @@ from __future__ import annotations
 import sys
 import types
 from collections.abc import Generator, Iterable, Iterator
-from typing import (
-    Any,
-    ClassVar,
-    NoReturn,
-    TypeVar,
-    TYPE_CHECKING,
-)
+from typing import TYPE_CHECKING, Any, ClassVar, NoReturn, TypeVar
 
 import numpy as np
 

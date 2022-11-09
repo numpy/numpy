@@ -1,10 +1,9 @@
+import operator
+
 import pytest
 
-import operator
 import numpy as np
-
 from numpy.testing import assert_array_equal
-
 
 COMPARISONS = [
     (operator.eq, np.equal, "=="),

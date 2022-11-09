@@ -3,8 +3,8 @@ from typing import Any, TypedDict
 from numpy import dtype as dtype
 from numpy import ndarray as ndarray
 from numpy import uint64
-from numpy.random.bit_generator import BitGenerator, SeedSequence
 from numpy._typing import _ArrayLikeInt_co
+from numpy.random.bit_generator import BitGenerator, SeedSequence
 
 class _SFC64Internal(TypedDict):
     state: ndarray[Any, dtype[uint64]]

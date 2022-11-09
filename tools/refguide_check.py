@@ -36,14 +36,14 @@ import shutil
 import sys
 import tempfile
 import warnings
-import docutils.core
 from argparse import ArgumentParser
 from contextlib import contextmanager, redirect_stderr
-from doctest import NORMALIZE_WHITESPACE, ELLIPSIS, IGNORE_EXCEPTION_DETAIL
+from doctest import ELLIPSIS, IGNORE_EXCEPTION_DETAIL, NORMALIZE_WHITESPACE
 
+import docutils.core
+import sphinx
 from docutils.parsers.rst import directives
 
-import sphinx
 import numpy as np
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'doc', 'sphinxext'))
@@ -52,7 +52,8 @@ from numpydoc.docscrape_sphinx import get_doc_object
 SKIPBLOCK = doctest.register_optionflag('SKIPBLOCK')
 
 # Enable specific Sphinx directives
-from sphinx.directives.other import SeeAlso, Only
+from sphinx.directives.other import Only, SeeAlso
+
 directives.register_directive('seealso', SeeAlso)
 directives.register_directive('only', Only)
 
@@ -757,9 +758,9 @@ class Checker(doctest.OutputChecker):
             return self._do_check(a_want, a_got)
         except Exception:
             # heterog tuple, eg (1, np.array([1., 2.]))
-           try:
+            try:
                 return all(self._do_check(w, g) for w, g in zip(a_want, a_got))
-           except (TypeError, ValueError):
+            except (TypeError, ValueError):
                 return False
 
     def _do_check(self, want, got):

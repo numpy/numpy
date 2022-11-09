@@ -1,19 +1,20 @@
 import inspect
-import sys
 import os
+import sys
 import tempfile
 from io import StringIO
 from unittest import mock
 
-import numpy as np
-from numpy.testing import (
-    assert_, assert_equal, assert_raises, assert_raises_regex)
-from numpy.core.overrides import (
-    _get_implementing_args, array_function_dispatch,
-    verify_matching_signatures, ARRAY_FUNCTION_ENABLED)
-from numpy.compat import pickle
 import pytest
 
+import numpy as np
+from numpy.compat import pickle
+from numpy.core.overrides import (ARRAY_FUNCTION_ENABLED,
+                                  _get_implementing_args,
+                                  array_function_dispatch,
+                                  verify_matching_signatures)
+from numpy.testing import (assert_, assert_equal, assert_raises,
+                           assert_raises_regex)
 
 requires_array_function = pytest.mark.skipif(
     not ARRAY_FUNCTION_ENABLED,
@@ -175,7 +176,7 @@ class TestNDArrayArrayFunction:
         result = array.__array_function__(func=dispatched_two_arg,
                                           types=(np.ndarray, Other),
                                           args=(array, other), kwargs={})
-        assert_(result is NotImplemented)
+        assertTrue(result is NotImplemented)
 
         result = array.__array_function__(func=dispatched_two_arg,
                                           types=(np.ndarray, NoOverrideSub),
@@ -216,7 +217,7 @@ class TestArrayFunctionDispatch:
         for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
             roundtripped = pickle.loads(
                     pickle.dumps(dispatched_one_arg, protocol=proto))
-            assert_(roundtripped is dispatched_one_arg)
+            assertTrue(roundtripped is dispatched_one_arg)
 
     def test_name_and_docstring(self):
         assert_equal(dispatched_one_arg.__name__, 'dispatched_one_arg')
@@ -231,11 +232,11 @@ class TestArrayFunctionDispatch:
 
         original = MyArray()
         (obj, func, types, args, kwargs) = dispatched_one_arg(original)
-        assert_(obj is original)
-        assert_(func is dispatched_one_arg)
+        assertTrue(obj is original)
+        assertTrue(func is dispatched_one_arg)
         assert_equal(set(types), {MyArray})
         # assert_equal uses the overloaded np.iscomplexobj() internally
-        assert_(args == (original,))
+        assertTrue(args == (original,))
         assert_equal(kwargs, {})
 
     def test_not_implemented(self):
@@ -348,7 +349,7 @@ class TestArrayFunctionImplementation:
             return array
 
         array = np.array(1)
-        assert_(func(array) is array)
+        assertTrue(func(array) is array)
         assert_equal(func.__module__, 'my')
 
         with assert_raises_regex(
@@ -420,7 +421,7 @@ class TestNumPyFunctions:
 
     def test_inspect_sum(self):
         signature = inspect.signature(np.sum)
-        assert_('axis' in signature.parameters)
+        assertTrue('axis' in signature.parameters)
 
     @requires_array_function
     def test_override_sum(self):

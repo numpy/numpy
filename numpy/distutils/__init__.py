@@ -23,9 +23,7 @@ import warnings
 
 # Must import local ccompiler ASAP in order to get
 # customized CCompiler.spawn effective.
-from . import ccompiler
-from . import unixccompiler
-
+from . import ccompiler, unixccompiler
 from .npy_pkg_config import *
 
 warnings.warn("\n\n"
@@ -41,11 +39,12 @@ del warnings
 
 # If numpy is installed, add distutils.test()
 try:
-    from . import __config__
     # Normally numpy is installed if the above import works, but an interrupted
     # in-place build could also have left a __config__.py.  In that case the
     # next import may still fail, so keep it inside the try block.
     from numpy._pytesttester import PytestTester
+
+    from . import __config__
     test = PytestTester(__name__)
     del PytestTester
 except ImportError:

@@ -1,10 +1,8 @@
 from typing import Any
-from numpy.lib.index_tricks import AxisConcatenator
 
-from numpy.ma.core import (
-    dot as dot,
-    mask_rowcols as mask_rowcols,
-)
+from numpy.lib.index_tricks import AxisConcatenator
+from numpy.ma.core import dot as dot
+from numpy.ma.core import mask_rowcols as mask_rowcols
 
 __all__: list[str]
 

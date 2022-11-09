@@ -1,33 +1,13 @@
 from collections.abc import Container, Iterable
-from typing import (
-    Literal as L,
-    Any,
-    overload,
-    TypeVar,
-    Protocol,
-)
+from typing import Any
+from typing import Literal as L
+from typing import Protocol, TypeVar, overload
 
-from numpy import (
-    dtype,
-    generic,
-    bool_,
-    floating,
-    float64,
-    complexfloating,
-    integer,
-)
-
-from numpy._typing import (
-    ArrayLike,
-    DTypeLike,
-    NBitBase,
-    NDArray,
-    _64Bit,
-    _SupportsDType,
-    _ScalarLike_co,
-    _ArrayLike,
-    _DTypeLikeComplex,
-)
+from numpy import (bool_, complexfloating, dtype, float64, floating, generic,
+                   integer)
+from numpy._typing import (ArrayLike, DTypeLike, NBitBase, NDArray, _64Bit,
+                           _ArrayLike, _DTypeLikeComplex, _ScalarLike_co,
+                           _SupportsDType)
 
 _T = TypeVar("_T")
 _T_co = TypeVar("_T_co", covariant=True)

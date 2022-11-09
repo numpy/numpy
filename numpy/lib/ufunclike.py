@@ -5,12 +5,12 @@ storing results in an output array.
 """
 __all__ = ['fix', 'isneginf', 'isposinf']
 
-import numpy.core.numeric as nx
-from numpy.core.overrides import (
-    array_function_dispatch, ARRAY_FUNCTION_ENABLED,
-)
-import warnings
 import functools
+import warnings
+
+import numpy.core.numeric as nx
+from numpy.core.overrides import (ARRAY_FUNCTION_ENABLED,
+                                  array_function_dispatch)
 
 
 def _deprecate_out_named_y(f):

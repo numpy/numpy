@@ -1,9 +1,14 @@
 # NOTE: Please avoid the use of numpy.testing since NPYV intrinsics
 # may be involved in their functionality.
-import pytest, math, re
 import itertools
-from numpy.core._simd import targets
+import math
+import re
+
+import pytest
+
 from numpy.core._multiarray_umath import __cpu_baseline__
+from numpy.core._simd import targets
+
 
 class _Test_Utility:
     # submodule of the desired SIMD extension, e.g. targets["AVX512F"]
@@ -1167,7 +1172,7 @@ for target_name, npyv in targets.items():
         pretty_name = pretty_name[0]
 
     skip = ""
-    skip_sfx = dict()
+    skip_sfx = []
     if not npyv:
         skip = f"target '{pretty_name}' isn't supported by current machine"
     elif not npyv.simd:

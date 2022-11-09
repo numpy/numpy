@@ -12,14 +12,14 @@ Requires the following to be on the path:
  * patch
 
 """
-import sys
 import os
 import re
-import subprocess
 import shutil
+import subprocess
+import sys
 
-import fortran
 import clapack_scrub
+import fortran
 
 try:
     from distutils.spawn import find_executable as which  # Python 2

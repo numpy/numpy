@@ -3,7 +3,6 @@ from typing import Any, TypeVar
 import numpy as np
 import numpy.typing as npt
 
-
 def func1(ar: npt.NDArray[Any], a: int) -> npt.NDArray[np.str_]:
     pass
 

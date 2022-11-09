@@ -20,10 +20,7 @@ __version__ = "$Revision: 1.3 $"[10:-1]
 f2py_version = 'See `f2py -v`'
 
 
-from .auxfuncs import (
-    applyrules, dictappend, gentitle, hasnote, outmess
-)
-
+from .auxfuncs import applyrules, dictappend, gentitle, hasnote, outmess
 
 usemodule_rules = {
     'body': """
@@ -80,7 +77,7 @@ def buildusevars(m, r):
                 varsmap[v] = revmap[v]
             else:
                 varsmap[v] = v
-    for v in varsmap.keys():
+    for v in varsmap:
         ret = dictappend(ret, buildusevar(v, varsmap[v], m['vars'], m['name']))
     return ret
 
@@ -102,7 +99,7 @@ def buildusevar(name, realname, vars, usemodulename):
     nummap = {0: 'Ro', 1: 'Ri', 2: 'Rii', 3: 'Riii', 4: 'Riv',
               5: 'Rv', 6: 'Rvi', 7: 'Rvii', 8: 'Rviii', 9: 'Rix'}
     vrd['texnamename'] = name
-    for i in nummap.keys():
+    for i in nummap:
         vrd['texnamename'] = vrd['texnamename'].replace(repr(i), nummap[i])
     if hasnote(vars[realname]):
         vrd['note'] = vars[realname]['note']

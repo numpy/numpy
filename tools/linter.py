@@ -1,7 +1,8 @@
 import os
-import sys
 import subprocess
+import sys
 from argparse import ArgumentParser
+
 from git import Repo, exc
 
 CONFIG = os.path.join(

@@ -30,13 +30,12 @@ of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of David Wolever.
 
 """
-import re
 import inspect
+import re
 import warnings
+from collections import namedtuple
 from functools import wraps
 from types import MethodType
-from collections import namedtuple
-
 from unittest import TestCase
 
 _param = namedtuple("param", "args kwargs")

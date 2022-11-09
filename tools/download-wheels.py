@@ -23,10 +23,10 @@ While in the repository root::
     $ python tools/download-wheels.py 1.19.0 -w ~/wheelhouse
 
 """
+import argparse
 import os
 import re
 import shutil
-import argparse
 
 import urllib3
 from bs4 import BeautifulSoup

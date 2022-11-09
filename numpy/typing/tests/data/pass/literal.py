@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from functools import partial
 from collections.abc import Callable
+from functools import partial
 
 import pytest  # type: ignore
+
 import numpy as np
 
 AR = np.array(0)

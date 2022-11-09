@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
 import timeit
-import numpy
 
+import numpy
 
 ###############################################################################
 #                               Global variables                              #

@@ -4,12 +4,11 @@
 """
 __all__ = ['run_main', 'compile', 'get_include']
 
-import sys
-import subprocess
 import os
+import subprocess
+import sys
 
-from . import f2py2e
-from . import diagnose
+from . import diagnose, f2py2e
 
 run_main = f2py2e.run_main
 main = f2py2e.main
@@ -75,8 +74,8 @@ def compile(source,
         :language: python
 
     """
-    import tempfile
     import shlex
+    import tempfile
 
     if source_fn is None:
         f, fname = tempfile.mkstemp(suffix=extension)

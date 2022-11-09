@@ -7,23 +7,16 @@ four private subclasses, one for each combination of
 
 """
 
-from typing import (
-    Any,
-    Generic,
-    overload,
-    TypeVar,
-    Literal,
-    SupportsIndex,
-    Protocol,
-)
+from typing import (Any, Generic, Literal, Protocol, SupportsIndex, TypeVar,
+                    overload)
 
-from numpy import ufunc, _CastingKind, _OrderKACF
+from numpy import _CastingKind, _OrderKACF, ufunc
 from numpy.typing import NDArray
 
-from ._shape import _ShapeLike
-from ._scalars import _ScalarLike_co
 from ._array_like import ArrayLike, _ArrayLikeBool_co, _ArrayLikeInt_co
 from ._dtype_like import DTypeLike
+from ._scalars import _ScalarLike_co
+from ._shape import _ShapeLike
 
 _T = TypeVar("_T")
 _2Tuple = tuple[_T, _T]

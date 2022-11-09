@@ -161,13 +161,11 @@ alternatives, is described in the
 evolved with time and this document is more current.
 
 """
-import numpy
 import warnings
-from numpy.lib.utils import safe_eval
-from numpy.compat import (
-    isfileobj, os_fspath, pickle
-    )
 
+import numpy
+from numpy.compat import isfileobj, os_fspath, pickle
+from numpy.lib.utils import safe_eval
 
 __all__ = []
 
@@ -437,15 +435,15 @@ def _write_array_header(fp, d, version=None):
         header.append("'%s': %s, " % (key, repr(value)))
     header.append("}")
     header = "".join(header)
-    
+
     # Add some spare space so that the array header can be modified in-place
     # when changing the array size, e.g. when growing it by appending data at
-    # the end. 
+    # the end.
     shape = d['shape']
     header += " " * ((GROWTH_AXIS_MAX_DIGITS - len(repr(
         shape[-1 if d['fortran_order'] else 0]
     ))) if len(shape) > 0 else 0)
-    
+
     if version is None:
         header = _wrap_header_guess_version(header)
     else:

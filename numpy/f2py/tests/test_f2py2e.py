@@ -1,11 +1,16 @@
-import textwrap, re, sys, subprocess, shlex
-from pathlib import Path
+import re
+import shlex
+import subprocess
+import sys
+import textwrap
 from collections import namedtuple
+from pathlib import Path
 
 import pytest
 
-from . import util
 from numpy.f2py.f2py2e import main as f2pycli
+
+from . import util
 
 #########################
 # CLI utils and classes #

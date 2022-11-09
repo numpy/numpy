@@ -1,12 +1,14 @@
 import asyncio
 import gc
 import os
-import pytest
-import numpy as np
+import sys
 import threading
 import warnings
-from numpy.testing import extbuild, assert_warns
-import sys
+
+import pytest
+
+import numpy as np
+from numpy.testing import assert_warns, extbuild
 
 
 @pytest.fixture

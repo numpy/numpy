@@ -1,4 +1,5 @@
 import ctypes as ct
+
 import numpy as np
 
 dtype_U: np.dtype[np.str_]

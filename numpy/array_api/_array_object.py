@@ -16,28 +16,21 @@ of ndarray.
 from __future__ import annotations
 
 import operator
-from enum import IntEnum
-from ._creation_functions import asarray
-from ._dtypes import (
-    _all_dtypes,
-    _boolean_dtypes,
-    _integer_dtypes,
-    _integer_or_boolean_dtypes,
-    _floating_dtypes,
-    _numeric_dtypes,
-    _result_type,
-    _dtype_categories,
-)
-
-from typing import TYPE_CHECKING, Optional, Tuple, Union, Any, SupportsIndex
 import types
+from enum import IntEnum
+from typing import TYPE_CHECKING, Any, Optional, SupportsIndex, Tuple, Union
+
+from ._creation_functions import asarray
+from ._dtypes import (_all_dtypes, _boolean_dtypes, _dtype_categories,
+                      _floating_dtypes, _integer_dtypes,
+                      _integer_or_boolean_dtypes, _numeric_dtypes,
+                      _result_type)
 
 if TYPE_CHECKING:
     from ._typing import Any, PyCapsule, Device, Dtype
     import numpy.typing as npt
 
 import numpy as np
-
 from numpy import array_api
 
 
@@ -367,7 +360,7 @@ class Array:
                     except TypeError:
                         pass  # handled by ndarray
                     else:
-                        if not (-side <= start <= side):
+                        if not -side <= start <= side:
                             raise IndexError(
                                 f"Slice {i} contains {start=}, but should be "
                                 f"{f_range} for an axis of size {side} "
@@ -380,7 +373,7 @@ class Array:
                     except TypeError:
                         pass  # handled by ndarray
                     else:
-                        if not (-side <= stop <= side):
+                        if not -side <= stop <= side:
                             raise IndexError(
                                 f"Slice {i} contains {stop=}, but should be "
                                 f"{f_range} for an axis of size {side} "

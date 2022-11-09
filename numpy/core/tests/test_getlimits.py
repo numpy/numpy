@@ -2,11 +2,12 @@
 
 """
 import warnings
+
 import numpy as np
+from numpy import double, half, longdouble, single
 from numpy.core import finfo, iinfo
-from numpy import half, single, double, longdouble
-from numpy.testing import assert_equal, assert_, assert_raises
 from numpy.core.getlimits import _discovered_machar, _float_ma
+from numpy.testing import assert_, assert_equal, assert_raises
 
 ##################################################
 
@@ -142,6 +143,6 @@ def test_plausible_finfo():
     # Assert that finfo returns reasonable results for all types
     for ftype in np.sctypes['float'] + np.sctypes['complex']:
         info = np.finfo(ftype)
-        assert_(info.nmant > 1)
-        assert_(info.minexp < -1)
-        assert_(info.maxexp > 1)
+        assertTrue(info.nmant > 1)
+        assertTrue(info.minexp < -1)
+        assertTrue(info.maxexp > 1)

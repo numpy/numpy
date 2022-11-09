@@ -6,14 +6,14 @@ and the Python code for the NumPy-namespace function
 import warnings
 from contextlib import nullcontext
 
-from numpy.core import multiarray as mu
-from numpy.core import umath as um
-from numpy.core.multiarray import asanyarray
-from numpy.core import numerictypes as nt
-from numpy.core import _exceptions
-from numpy.core._ufunc_config import _no_nep50_warning
 from numpy._globals import _NoValue
-from numpy.compat import pickle, os_fspath
+from numpy.compat import os_fspath, pickle
+from numpy.core import _exceptions
+from numpy.core import multiarray as mu
+from numpy.core import numerictypes as nt
+from numpy.core import umath as um
+from numpy.core._ufunc_config import _no_nep50_warning
+from numpy.core.multiarray import asanyarray
 
 # save those O(100) nanoseconds!
 umr_maximum = um.maximum.reduce
@@ -82,6 +82,7 @@ def _count_reduce_items(arr, axis, keepdims=False, where=True):
 
         # guarded to protect circular imports
         from numpy.lib.stride_tricks import broadcast_to
+
         # count True values in (potentially broadcasted) boolean mask
         items = umr_sum(broadcast_to(where, arr.shape), axis, nt.intp, None,
                         keepdims)

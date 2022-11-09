@@ -1,14 +1,13 @@
 """Test functions for 1D array set operations.
 
 """
-import numpy as np
-
-from numpy.testing import (assert_array_equal, assert_equal,
-                           assert_raises, assert_raises_regex)
-from numpy.lib.arraysetops import (
-    ediff1d, intersect1d, setxor1d, union1d, setdiff1d, unique, in1d, isin
-    )
 import pytest
+
+import numpy as np
+from numpy.lib.arraysetops import (ediff1d, in1d, intersect1d, isin, setdiff1d,
+                                   setxor1d, union1d, unique)
+from numpy.testing import (assert_array_equal, assert_equal, assert_raises,
+                           assert_raises_regex)
 
 
 class TestSetOps:

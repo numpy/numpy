@@ -1,13 +1,14 @@
-import os
-import sys
 import copy
+import os
 import platform
+import sys
+
 import pytest
 
 import numpy as np
-
-from numpy.testing import assert_, assert_equal
 from numpy.core.multiarray import typeinfo as _typeinfo
+from numpy.testing import assert_, assert_equal
+
 from . import util
 
 wrap = None
@@ -283,15 +284,15 @@ class Array:
 
         if len(dims) > 1:
             if self.intent.is_intent("c"):
-                assert (intent.flags & wrap.F2PY_INTENT_C)
+                assert intent.flags & wrap.F2PY_INTENT_C
                 assert not self.arr.flags["FORTRAN"]
                 assert self.arr.flags["CONTIGUOUS"]
-                assert (not self.arr_attr[6] & wrap.FORTRAN)
+                assert not self.arr_attr[6] & wrap.FORTRAN
             else:
-                assert (not intent.flags & wrap.F2PY_INTENT_C)
+                assert not intent.flags & wrap.F2PY_INTENT_C
                 assert self.arr.flags["FORTRAN"]
                 assert not self.arr.flags["CONTIGUOUS"]
-                assert (self.arr_attr[6] & wrap.FORTRAN)
+                assert self.arr_attr[6] & wrap.FORTRAN
 
         if obj is None:
             self.pyarr = None
@@ -315,11 +316,11 @@ class Array:
             if self.intent.is_intent("c"):
                 assert not self.pyarr.flags["FORTRAN"]
                 assert self.pyarr.flags["CONTIGUOUS"]
-                assert (not self.pyarr_attr[6] & wrap.FORTRAN)
+                assert not self.pyarr_attr[6] & wrap.FORTRAN
             else:
                 assert self.pyarr.flags["FORTRAN"]
                 assert not self.pyarr.flags["CONTIGUOUS"]
-                assert (self.pyarr_attr[6] & wrap.FORTRAN)
+                assert self.pyarr_attr[6] & wrap.FORTRAN
 
         assert self.arr_attr[1] == self.pyarr_attr[1]  # nd
         assert self.arr_attr[2] == self.pyarr_attr[2]  # dimensions
@@ -345,7 +346,7 @@ class Array:
             assert self.arr_attr[5][3] >= self.type.elsize
         else:
             assert self.arr_attr[5][3] == self.type.elsize
-            assert (self.arr_equal(self.pyarr, self.arr))
+            assert self.arr_equal(self.pyarr, self.arr)
 
         if isinstance(self.obj, np.ndarray):
             if typ.elsize == Type(obj.dtype).elsize:

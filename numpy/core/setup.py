@@ -1,19 +1,20 @@
+import copy
+import glob
 import os
+import pickle
 import sys
 import sysconfig
-import pickle
-import copy
-import warnings
 import textwrap
-import glob
+import warnings
+from distutils.dep_util import newer
 from os.path import join
+from sysconfig import get_config_var
 
+from setup_common import *  # noqa: F403
+
+from numpy.compat import npy_load_module
 from numpy.distutils import log
 from numpy.distutils.msvccompiler import lib_opts_if_msvc
-from distutils.dep_util import newer
-from sysconfig import get_config_var
-from numpy.compat import npy_load_module
-from setup_common import *  # noqa: F403
 
 # Set to True to enable relaxed strides checking. This (mostly) means
 # that `strides[dim]` is ignored if `shape[dim] == 1` when setting flags.
@@ -240,7 +241,7 @@ def check_math_capabilities(config, ext, moredefs, mathlibs):
             check_gh14787(fn)
 
     platform = sysconfig.get_platform()
-    if ("x86_64" in platform):
+    if "x86_64" in platform:
         for dec, fn in OPTIONAL_FUNCTION_ATTRIBUTES_AVX:
             if config.check_gcc_function_attribute(dec, fn):
                 moredefs.append((fname2def(fn), 1))
@@ -462,11 +463,11 @@ def visibility_define(config):
         return ''
 
 def configuration(parent_package='',top_path=None):
+    from numpy.distutils.ccompiler_opt import NPY_CXX_FLAGS
     from numpy.distutils.misc_util import (Configuration, dot_join,
                                            exec_mod_from_location)
-    from numpy.distutils.system_info import (get_info, blas_opt_info,
+    from numpy.distutils.system_info import (blas_opt_info, get_info,
                                              lapack_opt_info)
-    from numpy.distutils.ccompiler_opt import NPY_CXX_FLAGS
     from numpy.version import release as is_released
 
     config = Configuration('core', parent_package, top_path)

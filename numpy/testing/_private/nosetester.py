@@ -7,10 +7,10 @@ This module implements ``test()`` and ``bench()`` functions for NumPy modules.
 import os
 import sys
 import warnings
+
 import numpy as np
 
 from .utils import import_nose, suppress_warnings
-
 
 __all__ = ['get_package_name', 'run_module_suite', 'NoseTester',
            '_numpy_tester', 'get_package_name', 'import_nose',
@@ -290,8 +290,9 @@ class NoseTester:
         # construct list of plugins
         import nose.plugins.builtin
         from nose.plugins import EntryPointPluginManager
-        from .noseclasses import (KnownFailurePlugin, Unplugger,
-                                  FPUModeCheckPlugin)
+
+        from .noseclasses import (FPUModeCheckPlugin, KnownFailurePlugin,
+                                  Unplugger)
         plugins = [KnownFailurePlugin()]
         plugins += [p() for p in nose.plugins.builtin.plugins]
         if self.check_fpu_mode:

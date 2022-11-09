@@ -9,7 +9,8 @@ import re
 import sys
 import warnings
 
-from .multiarray import dtype, array, ndarray, promote_types
+from .multiarray import array, dtype, ndarray, promote_types
+
 try:
     import ctypes
 except ImportError:
@@ -184,7 +185,7 @@ def _commastring(astr):
         else:
             order1 = _convorder.get(order1, order1)
             order2 = _convorder.get(order2, order2)
-            if (order1 != order2):
+            if order1 != order2:
                 raise ValueError(
                     'inconsistent byte-order specification %s and %s' %
                     (order1, order2))
@@ -193,7 +194,7 @@ def _commastring(astr):
         if order in ('|', '=', _nbo):
             order = ''
         dtype = order + dtype
-        if (repeats == ''):
+        if repeats == '':
             newitem = dtype
         else:
             newitem = (dtype, ast.literal_eval(repeats))

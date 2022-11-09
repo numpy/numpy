@@ -1,6 +1,7 @@
+import numpy as np
+
 from .common import Benchmark
 
-import numpy as np
 
 class Linspace(Benchmark):
     def setup(self):
@@ -132,7 +133,7 @@ def memoize(f):
     def wrapped(*args):
         if args not in _memoized:
             _memoized[args] = f(*args)
-        
+
         return _memoized[args].copy()
 
     return f
@@ -154,7 +155,7 @@ class SortGenerator:
         arr = np.arange(size, dtype=dtype)
         np.random.shuffle(arr)
         return arr
-    
+
     @staticmethod
     @memoize
     def ordered(size, dtype):
@@ -373,4 +374,3 @@ class Where(Benchmark):
 
     def time_interleaved_ones_x8(self):
         np.where(self.rep_ones_8)
-

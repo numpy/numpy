@@ -175,6 +175,7 @@ class Ufunc:
 # String-handling utilities to avoid locale-dependence.
 
 import string
+
 UPPER_TABLE = bytes.maketrans(bytes(string.ascii_lowercase, "ascii"),
                               bytes(string.ascii_uppercase, "ascii"))
 

@@ -50,40 +50,36 @@ $Date: 2005/08/30 08:58:42 $
 Pearu Peterson
 
 """
-import os, sys
-import time
 import copy
+import os
+import sys
+import time
 from pathlib import Path
 
 # __version__.version is now the same as the NumPy version
-from . import __version__
-
-from .auxfuncs import (
-    applyrules, debugcapi, dictappend, errmess, gentitle, getargs2,
-    hascallstatement, hasexternals, hasinitvalue, hasnote,
-    hasresultnote, isarray, isarrayofstrings, ischaracter,
-    ischaracterarray, ischaracter_or_characterarray, iscomplex,
-    iscomplexarray, iscomplexfunction, iscomplexfunction_warn,
-    isdummyroutine, isexternal, isfunction, isfunction_wrap, isint1,
-    isint1array, isintent_aux, isintent_c, isintent_callback,
-    isintent_copy, isintent_hide, isintent_inout, isintent_nothide,
-    isintent_out, isintent_overwrite, islogical, islong_complex,
-    islong_double, islong_doublefunction, islong_long,
-    islong_longfunction, ismoduleroutine, isoptional, isrequired,
-    isscalar, issigned_long_longarray, isstring, isstringarray,
-    isstringfunction, issubroutine, isattr_value,
-    issubroutine_wrap, isthreadsafe, isunsigned, isunsigned_char,
-    isunsigned_chararray, isunsigned_long_long,
-    isunsigned_long_longarray, isunsigned_short, isunsigned_shortarray,
-    l_and, l_not, l_or, outmess, replace, stripcomma, requiresf90wrapper
-)
-
-from . import capi_maps
-from . import cfuncs
-from . import common_rules
-from . import use_rules
-from . import f90mod_rules
-from . import func2subr
+from . import (__version__, capi_maps, cfuncs, common_rules, f90mod_rules,
+               func2subr, use_rules)
+from .auxfuncs import (applyrules, debugcapi, dictappend, errmess, gentitle,
+                       getargs2, hascallstatement, hasexternals, hasinitvalue,
+                       hasnote, hasresultnote, isarray, isarrayofstrings,
+                       isattr_value, ischaracter,
+                       ischaracter_or_characterarray, ischaracterarray,
+                       iscomplex, iscomplexarray, iscomplexfunction,
+                       iscomplexfunction_warn, isdummyroutine, isexternal,
+                       isfunction, isfunction_wrap, isint1, isint1array,
+                       isintent_aux, isintent_c, isintent_callback,
+                       isintent_copy, isintent_hide, isintent_inout,
+                       isintent_nothide, isintent_out, isintent_overwrite,
+                       islogical, islong_complex, islong_double,
+                       islong_doublefunction, islong_long, islong_longfunction,
+                       ismoduleroutine, isoptional, isrequired, isscalar,
+                       issigned_long_longarray, isstring, isstringarray,
+                       isstringfunction, issubroutine, issubroutine_wrap,
+                       isthreadsafe, isunsigned, isunsigned_char,
+                       isunsigned_chararray, isunsigned_long_long,
+                       isunsigned_long_longarray, isunsigned_short,
+                       isunsigned_shortarray, l_and, l_not, l_or, outmess,
+                       replace, requiresf90wrapper, stripcomma)
 
 f2py_version = __version__.version
 numpy_version = __version__.version
@@ -1327,7 +1323,7 @@ def buildmodule(m, um):
     needs['typedefs'] += [cvar for cvar in capi_maps.f2cmap_mapped #
                           if cvar in typedef_need_dict.values()]
     code = {}
-    for n in needs.keys():
+    for n in needs:
         code[n] = []
         for k in needs[n]:
             c = ''

@@ -18,31 +18,13 @@ __all__ = [
 ]
 
 import sys
-from typing import (
-    Any,
-    Literal,
-    Sequence,
-    Type,
-    Union,
-    TYPE_CHECKING,
-    TypeVar,
-    Protocol,
-)
+from typing import (TYPE_CHECKING, Any, Literal, Protocol, Sequence, Type,
+                    TypeVar, Union)
+
+from numpy import (dtype, float32, float64, int8, int16, int32, int64, uint8,
+                   uint16, uint32, uint64)
 
 from ._array_object import Array
-from numpy import (
-    dtype,
-    int8,
-    int16,
-    int32,
-    int64,
-    uint8,
-    uint16,
-    uint32,
-    uint64,
-    float32,
-    float64,
-)
 
 _T_co = TypeVar("_T_co", covariant=True)
 

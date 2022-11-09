@@ -7,7 +7,6 @@ import numpy as np
 from numpy.core.overrides import array_function_dispatch
 from numpy.lib.index_tricks import ndindex
 
-
 __all__ = ['pad']
 
 
@@ -220,7 +219,7 @@ def _get_linear_ramps(padded, axis, width_pair, end_value_pair):
             end_value_pair, edge_pair, width_pair
         )
     )
-        
+
     # Reverse linear space in appropriate dimension
     right_ramp = right_ramp[_slice_at_axis(slice(None, None, -1), axis)]
 
@@ -843,7 +842,7 @@ def pad(array, pad_width, mode='constant', **kwargs):
 
     elif mode in {"reflect", "symmetric"}:
         method = kwargs.get("reflect_type", "even")
-        include_edge = True if mode == "symmetric" else False
+        include_edge = mode == "symmetric"
         for axis, (left_index, right_index) in zip(axes, pad_width):
             if array.shape[axis] == 1 and (left_index > 0 or right_index > 0):
                 # Extending singleton dimension for 'reflect' is legacy

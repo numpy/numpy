@@ -1,30 +1,30 @@
-import operator
-import warnings
-import sys
 import decimal
-from fractions import Fraction
 import math
-import pytest
-import hypothesis
-from hypothesis.extra.numpy import arrays
-import hypothesis.strategies as st
+import operator
+import sys
+import warnings
+from fractions import Fraction
 
+import hypothesis
+import hypothesis.strategies as st
+import pytest
+from hypothesis.extra.numpy import arrays
 
 import numpy as np
-from numpy import ma
-from numpy.testing import (
-    assert_, assert_equal, assert_array_equal, assert_almost_equal,
-    assert_array_almost_equal, assert_raises, assert_allclose, IS_PYPY,
-    assert_warns, assert_raises_regex, suppress_warnings, HAS_REFCOUNT,
-    )
 import numpy.lib.function_base as nfb
+from numpy import ma
+from numpy.lib import (add_newdoc_ufunc, angle, average, bartlett, blackman,
+                       corrcoef, cov, delete, diff, digitize, extract, flipud,
+                       gradient, hamming, hanning, i0, insert, interp, kaiser,
+                       meshgrid, msort, piecewise, place, rot90, select,
+                       setxor1d, sinc, trapz, trim_zeros, unique, unwrap,
+                       vectorize)
 from numpy.random import rand
-from numpy.lib import (
-    add_newdoc_ufunc, angle, average, bartlett, blackman, corrcoef, cov,
-    delete, diff, digitize, extract, flipud, gradient, hamming, hanning,
-    i0, insert, interp, kaiser, meshgrid, msort, piecewise, place, rot90,
-    select, setxor1d, sinc, trapz, trim_zeros, unwrap, unique, vectorize
-    )
+from numpy.testing import (HAS_REFCOUNT, IS_PYPY, assert_, assert_allclose,
+                           assert_almost_equal, assert_array_almost_equal,
+                           assert_array_equal, assert_equal, assert_raises,
+                           assert_raises_regex, assert_warns,
+                           suppress_warnings)
 
 
 def get_mat(n):
@@ -221,13 +221,13 @@ class TestAny:
         y1 = [0, 0, 1, 0]
         y2 = [0, 0, 0, 0]
         y3 = [1, 0, 1, 0]
-        assert_(np.any(y1))
-        assert_(np.any(y3))
-        assert_(not np.any(y2))
+        assertTrue(np.any(y1))
+        assertTrue(np.any(y3))
+        assertTrue(not np.any(y2))
 
     def test_nd(self):
         y1 = [[0, 0, 0], [0, 1, 0], [1, 1, 0]]
-        assert_(np.any(y1))
+        assertTrue(np.any(y1))
         assert_array_equal(np.sometrue(y1, axis=0), [1, 1, 0])
         assert_array_equal(np.sometrue(y1, axis=1), [0, 1, 1])
 
@@ -238,14 +238,14 @@ class TestAll:
         y1 = [0, 1, 1, 0]
         y2 = [0, 0, 0, 0]
         y3 = [1, 1, 1, 1]
-        assert_(not np.all(y1))
-        assert_(np.all(y3))
-        assert_(not np.all(y2))
-        assert_(np.all(~np.array(y2)))
+        assertTrue(not np.all(y1))
+        assertTrue(np.all(y3))
+        assertTrue(not np.all(y2))
+        assertTrue(np.all(~np.array(y2)))
 
     def test_nd(self):
         y1 = [[0, 0, 1], [0, 1, 1], [1, 1, 1]]
-        assert_(not np.all(y1))
+        assertTrue(not np.all(y1))
         assert_array_equal(np.alltrue(y1, axis=0), [0, 0, 1])
         assert_array_equal(np.alltrue(y1, axis=1), [0, 0, 1])
 
@@ -265,35 +265,35 @@ class TestCopy:
         # default; changing this broke scikit-learn:
         # github.com/scikit-learn/scikit-learn/commit/7842748cf777412c506a8c0ed28090711d3a3783  # noqa
         a = np.array([[1, 2], [3, 4]])
-        assert_(a.flags.c_contiguous)
-        assert_(not a.flags.f_contiguous)
+        assertTrue(a.flags.c_contiguous)
+        assertTrue(not a.flags.f_contiguous)
         a_fort = np.array([[1, 2], [3, 4]], order="F")
-        assert_(not a_fort.flags.c_contiguous)
-        assert_(a_fort.flags.f_contiguous)
+        assertTrue(not a_fort.flags.c_contiguous)
+        assertTrue(a_fort.flags.f_contiguous)
         a_copy = np.copy(a)
-        assert_(a_copy.flags.c_contiguous)
-        assert_(not a_copy.flags.f_contiguous)
+        assertTrue(a_copy.flags.c_contiguous)
+        assertTrue(not a_copy.flags.f_contiguous)
         a_fort_copy = np.copy(a_fort)
-        assert_(not a_fort_copy.flags.c_contiguous)
-        assert_(a_fort_copy.flags.f_contiguous)
+        assertTrue(not a_fort_copy.flags.c_contiguous)
+        assertTrue(a_fort_copy.flags.f_contiguous)
 
     def test_subok(self):
         mx = ma.ones(5)
-        assert_(not ma.isMaskedArray(np.copy(mx, subok=False)))
-        assert_(ma.isMaskedArray(np.copy(mx, subok=True)))
+        assertTrue(not ma.isMaskedArray(np.copy(mx, subok=False)))
+        assertTrue(ma.isMaskedArray(np.copy(mx, subok=True)))
         # Default behavior
-        assert_(not ma.isMaskedArray(np.copy(mx)))
+        assertTrue(not ma.isMaskedArray(np.copy(mx)))
 
 
 class TestAverage:
 
     def test_basic(self):
         y1 = np.array([1, 2, 3])
-        assert_(average(y1, axis=0) == 2.)
+        assertTrue(average(y1, axis=0) == 2.)
         y2 = np.array([1., 2., 3.])
-        assert_(average(y2, axis=0) == 2.)
+        assertTrue(average(y2, axis=0) == 2.)
         y3 = [0., 0., 0.]
-        assert_(average(y3, axis=0) == 0.)
+        assertTrue(average(y3, axis=0) == 0.)
 
         y4 = np.ones((4, 4))
         y4[0, 1] = 0
@@ -358,7 +358,7 @@ class TestAverage:
         y3 = rand(5).astype(np.float32)
         w3 = rand(5).astype(np.float64)
 
-        assert_(np.average(y3, weights=w3).dtype == np.result_type(y3, w3))
+        assertTrue(np.average(y3, weights=w3).dtype == np.result_type(y3, w3))
 
         # test weights with `keepdims=False` and `keepdims=True`
         x = np.array([2, 3, 4]).reshape(3, 1)
@@ -508,7 +508,7 @@ class TestInsert:
             warnings.filterwarnings('always', '', FutureWarning)
             assert_equal(
                 insert(a, np.array([True] * 4), 9), [1, 9, 9, 9, 9, 2, 3])
-            assert_(w[0].category is FutureWarning)
+            assertTrue(w[0].category is FutureWarning)
 
     def test_multidim(self):
         a = [[1, 1, 1]]
@@ -563,14 +563,14 @@ class TestInsert:
         class SubClass(np.ndarray):
             pass
         a = np.arange(10).view(SubClass)
-        assert_(isinstance(np.insert(a, 0, [0]), SubClass))
-        assert_(isinstance(np.insert(a, [], []), SubClass))
-        assert_(isinstance(np.insert(a, [0, 1], [1, 2]), SubClass))
-        assert_(isinstance(np.insert(a, slice(1, 2), [1, 2]), SubClass))
-        assert_(isinstance(np.insert(a, slice(1, -2, -1), []), SubClass))
+        assertTrue(isinstance(np.insert(a, 0, [0]), SubClass))
+        assertTrue(isinstance(np.insert(a, [], []), SubClass))
+        assertTrue(isinstance(np.insert(a, [0, 1], [1, 2]), SubClass))
+        assertTrue(isinstance(np.insert(a, slice(1, 2), [1, 2]), SubClass))
+        assertTrue(isinstance(np.insert(a, slice(1, -2, -1), []), SubClass))
         # This is an error in the future:
         a = np.array(1).view(SubClass)
-        assert_(isinstance(np.insert(a, 0, [0]), SubClass))
+        assertTrue(isinstance(np.insert(a, 0, [0]), SubClass))
 
     def test_index_array_copied(self):
         x = np.array([1, 1, 1])
@@ -761,9 +761,9 @@ class TestDiff:
         assert_raises(ValueError, diff, x, n=-1)
         output = [diff(x, n=n) for n in range(1, 5)]
         expected = [[1, 1], [0], [], []]
-        assert_(diff(x, n=0) is x)
+        assertTrue(diff(x, n=0) is x)
         for n, (expected, out) in enumerate(zip(expected, output), start=1):
-            assert_(type(out) is np.ndarray)
+            assertTrue(type(out) is np.ndarray)
             assert_array_equal(out, expected)
             assert_equal(out.dtype, np.int_)
             assert_equal(len(out), max(0, len(x) - n))
@@ -788,12 +788,12 @@ class TestDiff:
         assert_array_equal(out.data, [[1], [1], [1], [1], [1]])
         assert_array_equal(out.mask, [[False], [True],
                                       [True], [True], [False]])
-        assert_(type(out) is type(x))
+        assertTrue(type(out) is type(x))
 
         out3 = diff(x, n=3)
         assert_array_equal(out3.data, [[], [], [], [], []])
         assert_array_equal(out3.mask, [[], [], [], [], []])
-        assert_(type(out3) is type(x))
+        assertTrue(type(out3) is type(x))
 
     def test_prepend(self):
         x = np.arange(5) + 1
@@ -908,11 +908,11 @@ class TestDelete:
         class SubClass(np.ndarray):
             pass
         a = self.a.view(SubClass)
-        assert_(isinstance(delete(a, 0), SubClass))
-        assert_(isinstance(delete(a, []), SubClass))
-        assert_(isinstance(delete(a, [0, 1]), SubClass))
-        assert_(isinstance(delete(a, slice(1, 2)), SubClass))
-        assert_(isinstance(delete(a, slice(1, -2)), SubClass))
+        assertTrue(isinstance(delete(a, 0), SubClass))
+        assertTrue(isinstance(delete(a, []), SubClass))
+        assertTrue(isinstance(delete(a, [0, 1]), SubClass))
+        assertTrue(isinstance(delete(a, slice(1, 2)), SubClass))
+        assertTrue(isinstance(delete(a, slice(1, -2)), SubClass))
 
     def test_array_order_preserve(self):
         # See gh-7113
@@ -1026,7 +1026,7 @@ class TestGradient:
             [-5, -3, 0, 31, 61, 396, 731],
             dtype='timedelta64[D]')
         assert_array_equal(gradient(x), dx)
-        assert_(dx.dtype == np.dtype('timedelta64[D]'))
+        assertTrue(dx.dtype == np.dtype('timedelta64[D]'))
 
     def test_masked(self):
         # Make sure that gradient supports subclasses like masked arrays
@@ -1036,7 +1036,7 @@ class TestGradient:
         assert_equal(type(out), type(x))
         # And make sure that the output and input don't have aliased mask
         # arrays
-        assert_(x._mask is not out._mask)
+        assertTrue(x._mask is not out._mask)
         # Also check that edge_order=2 doesn't alter the original mask
         x2 = np.ma.arange(5)
         x2[2] = np.ma.masked
@@ -1053,7 +1053,7 @@ class TestGradient:
         y = 2 * x ** 3 + 4 * x ** 2 + 2 * x
         analytical = 6 * x ** 2 + 8 * x + 2
         num_error = np.abs((np.gradient(y, dx, edge_order=2) / analytical) - 1)
-        assert_(np.all(num_error < 0.03) == True)
+        assertTrue(np.all(num_error < 0.03) == True)
 
         # test with unevenly spaced
         np.random.seed(0)
@@ -1061,7 +1061,7 @@ class TestGradient:
         y = 2 * x ** 3 + 4 * x ** 2 + 2 * x
         analytical = 6 * x ** 2 + 8 * x + 2
         num_error = np.abs((np.gradient(y, x, edge_order=2) / analytical) - 1)
-        assert_(np.all(num_error < 0.03) == True)
+        assertTrue(np.all(num_error < 0.03) == True)
 
     def test_spacing(self):
         f = np.array([0, 2., 3., 4., 5., 5.])
@@ -1088,12 +1088,12 @@ class TestGradient:
 
             res1 = gradient(f, 1., axis=0, edge_order=edge_order)
             res2 = gradient(f, x_even, axis=0, edge_order=edge_order)
-            assert_(res1.shape == res2.shape)
+            assertTrue(res1.shape == res2.shape)
             assert_almost_equal(res2, exp_res.T)
 
             res1 = gradient(f, 1., axis=1, edge_order=edge_order)
             res2 = gradient(f, x_even, axis=1, edge_order=edge_order)
-            assert_(res1.shape == res2.shape)
+            assertTrue(res1.shape == res2.shape)
             assert_array_equal(res2, exp_res)
 
         # unevenly spaced
@@ -1162,7 +1162,7 @@ class TestGradient:
             [2, 7, 7, 25, 154, 119, -21],
             dtype='timedelta64[D]')
         assert_array_equal(gradient(x), dx)
-        assert_(dx.dtype == np.dtype('timedelta64[D]'))
+        assertTrue(dx.dtype == np.dtype('timedelta64[D]'))
 
     def test_inexact_dtypes(self):
         for dt in [np.float16, np.float32, np.float64]:
@@ -1659,7 +1659,7 @@ class TestVectorize:
     def test_signature_two_outputs(self):
         f = vectorize(lambda x: (x, x), signature='()->(),()')
         r = f([1, 2, 3])
-        assert_(isinstance(r, tuple) and len(r) == 2)
+        assertTrue(isinstance(r, tuple) and len(r) == 2)
         assert_array_equal(r[0], [1, 2, 3])
         assert_array_equal(r[1], [1, 2, 3])
 
@@ -1836,7 +1836,7 @@ class TestDigitize:
     def test_random(self):
         x = rand(10)
         bin = np.linspace(x.min(), x.max(), 10)
-        assert_(np.all(digitize(x, bin) != 0))
+        assertTrue(np.all(digitize(x, bin) != 0))
 
     def test_right_basic(self):
         x = [1, 5, 4, 10, 8, 11, 0]
@@ -1859,7 +1859,7 @@ class TestDigitize:
     def test_right_open_random(self):
         x = rand(10)
         bins = np.linspace(x.min(), x.max(), 10)
-        assert_(np.all(digitize(x, bins, True) != 10))
+        assertTrue(np.all(digitize(x, bins, True) != 10))
 
     def test_monotonic(self):
         x = [-1, 0, 1, 2]
@@ -1890,8 +1890,8 @@ class TestDigitize:
             pass
         a = np.arange(5).view(A)
         b = np.arange(1, 3).view(A)
-        assert_(not isinstance(digitize(b, a, False), A))
-        assert_(not isinstance(digitize(b, a, True), A))
+        assertTrue(not isinstance(digitize(b, a, False), A))
+        assertTrue(not isinstance(digitize(b, a, True), A))
 
     def test_large_integers_increasing(self):
         # gh-11022
@@ -1912,13 +1912,13 @@ class TestUnwrap:
         # check that unwrap removes jumps greater that 2*pi
         assert_array_equal(unwrap([1, 1 + 2 * np.pi]), [1, 1])
         # check that unwrap maintains continuity
-        assert_(np.all(diff(unwrap(rand(10) * 100)) < np.pi))
+        assertTrue(np.all(diff(unwrap(rand(10) * 100)) < np.pi))
 
     def test_period(self):
         # check that unwrap removes jumps greater that 255
         assert_array_equal(unwrap([1, 1 + 256], period=255), [1, 2])
         # check that unwrap maintains continuity
-        assert_(np.all(diff(unwrap(rand(10) * 1000, period=255)) < 255))
+        assertTrue(np.all(diff(unwrap(rand(10) * 1000, period=255)) < 255))
         # check simple case
         simple_seq = np.array([0, 75, 150, 225, 300])
         wrap_seq = np.mod(simple_seq, 255)
@@ -2110,7 +2110,7 @@ class TestTrapz:
 class TestSinc:
 
     def test_simple(self):
-        assert_(sinc(0) == 1)
+        assertTrue(sinc(0) == 1)
         w = sinc(np.linspace(-1, 1, 100))
         # check symmetry
         assert_array_almost_equal(w, flipud(w), 7)
@@ -2128,12 +2128,12 @@ class TestUnique:
 
     def test_simple(self):
         x = np.array([4, 3, 2, 1, 1, 2, 3, 4, 0])
-        assert_(np.all(unique(x) == [0, 1, 2, 3, 4]))
-        assert_(unique(np.array([1, 1, 1, 1, 1])) == np.array([1]))
+        assertTrue(np.all(unique(x) == [0, 1, 2, 3, 4]))
+        assertTrue(unique(np.array([1, 1, 1, 1, 1])) == np.array([1]))
         x = ['widget', 'ham', 'foo', 'bar', 'foo', 'ham']
-        assert_(np.all(unique(x) == ['bar', 'foo', 'ham', 'widget']))
+        assertTrue(np.all(unique(x) == ['bar', 'foo', 'ham', 'widget']))
         x = np.array([5 + 6j, 1 + 1j, 1 + 10j, 10, 5 + 6j])
-        assert_(np.all(unique(x) == [1 + 1j, 1 + 10j, 5 + 6j, 10]))
+        assertTrue(np.all(unique(x) == [1 + 1j, 1 + 10j, 5 + 6j, 10]))
 
 
 class TestCheckFinite:
@@ -2150,7 +2150,7 @@ class TestCheckFinite:
         # Regression test for missing dtype and order arguments
         a = [1, 2, 3]
         a = np.lib.asarray_chkfinite(a, order='F', dtype=np.float64)
-        assert_(a.dtype == np.float64)
+        assertTrue(a.dtype == np.float64)
 
 
 class TestCorrCoef:
@@ -2181,11 +2181,11 @@ class TestCorrCoef:
     def test_simple(self):
         tgt1 = corrcoef(self.A)
         assert_almost_equal(tgt1, self.res1)
-        assert_(np.all(np.abs(tgt1) <= 1.0))
+        assertTrue(np.all(np.abs(tgt1) <= 1.0))
 
         tgt2 = corrcoef(self.A, self.B)
         assert_almost_equal(tgt2, self.res2)
-        assert_(np.all(np.abs(tgt2) <= 1.0))
+        assertTrue(np.all(np.abs(tgt2) <= 1.0))
 
     def test_ddof(self):
         # ddof raises DeprecationWarning
@@ -2214,7 +2214,7 @@ class TestCorrCoef:
         res = corrcoef(x)
         tgt = np.array([[1., -1.j], [1.j, 1.]])
         assert_allclose(res, tgt)
-        assert_(np.all(np.abs(res) <= 1.0))
+        assertTrue(np.all(np.abs(res) <= 1.0))
 
     def test_xy(self):
         x = np.array([[1, 2, 3]])
@@ -2235,7 +2235,7 @@ class TestCorrCoef:
         with np.errstate(all='raise'):
             c = corrcoef(x)
         assert_array_almost_equal(c, np.array([[1., -1.], [-1., 1.]]))
-        assert_(np.all(np.abs(c) <= 1.0))
+        assertTrue(np.all(np.abs(c) <= 1.0))
 
     @pytest.mark.parametrize("test_type", [np.half, np.single, np.double, np.longdouble])
     def test_corrcoef_dtype(self, test_type):
@@ -2405,7 +2405,7 @@ class Test_I0:
 class TestKaiser:
 
     def test_simple(self):
-        assert_(np.isfinite(kaiser(1, 1.0)))
+        assertTrue(np.isfinite(kaiser(1, 1.0)))
         assert_almost_equal(kaiser(0, 1.0),
                             np.array([]))
         assert_almost_equal(kaiser(2, 1.0),
@@ -2470,10 +2470,10 @@ class TestMeshgrid:
 
         # Test expected shapes:
         z = [8, 9]
-        assert_(meshgrid(x, y)[0].shape == (4, 3))
-        assert_(meshgrid(x, y, indexing='ij')[0].shape == (3, 4))
-        assert_(meshgrid(x, y, z)[0].shape == (4, 3, 2))
-        assert_(meshgrid(x, y, z, indexing='ij')[0].shape == (3, 4, 2))
+        assertTrue(meshgrid(x, y)[0].shape == (4, 3))
+        assertTrue(meshgrid(x, y, indexing='ij')[0].shape == (3, 4))
+        assertTrue(meshgrid(x, y, z)[0].shape == (4, 3, 2))
+        assertTrue(meshgrid(x, y, z, indexing='ij')[0].shape == (3, 4, 2))
 
         assert_raises(ValueError, meshgrid, x, y, indexing='notvalid')
 
@@ -2498,20 +2498,20 @@ class TestMeshgrid:
 
         X, Y = np.meshgrid(x,y)
 
-        assert_(X.dtype == x.dtype)
-        assert_(Y.dtype == y.dtype)
+        assertTrue(X.dtype == x.dtype)
+        assertTrue(Y.dtype == y.dtype)
 
         # copy
         X, Y = np.meshgrid(x,y, copy=True)
 
-        assert_(X.dtype == x.dtype)
-        assert_(Y.dtype == y.dtype)
+        assertTrue(X.dtype == x.dtype)
+        assertTrue(Y.dtype == y.dtype)
 
         # sparse
         X, Y = np.meshgrid(x,y, sparse=True)
 
-        assert_(X.dtype == x.dtype)
-        assert_(Y.dtype == y.dtype)
+        assertTrue(X.dtype == x.dtype)
+        assertTrue(Y.dtype == y.dtype)
 
     def test_writeback(self):
         # Issue 8561
@@ -2596,13 +2596,13 @@ class TestPiecewise:
     def test_0d(self):
         x = np.array(3)
         y = piecewise(x, x > 3, [4, 0])
-        assert_(y.ndim == 0)
-        assert_(y == 0)
+        assertTrue(y.ndim == 0)
+        assertTrue(y == 0)
 
         x = 5
         y = piecewise(x, [True, False], [1, 0])
-        assert_(y.ndim == 0)
-        assert_(y == 1)
+        assertTrue(y.ndim == 0)
+        assertTrue(y == 1)
 
         # With 3 ranges (It was failing, before)
         y = piecewise(x, [False, False, True], [1, 2, 3])
@@ -2913,11 +2913,11 @@ class TestInterp:
 
         actual = np.interp(np.array(1), xp, fp)
         assert_equal(actual, 0)
-        assert_(isinstance(actual, np.float64))
+        assertTrue(isinstance(actual, np.float64))
 
         actual = np.interp(np.array(4.5), xp, fp, period=4)
         assert_equal(actual, 0.5)
-        assert_(isinstance(actual, np.float64))
+        assertTrue(isinstance(actual, np.float64))
 
     def test_if_len_x_is_small(self):
         xp = np.arange(0, 10, 0.0001)
@@ -3119,7 +3119,7 @@ class TestPercentile:
         # test for no empty dimensions for compatibility with old percentile
         x = np.arange(12).reshape(3, 4)
         assert_equal(np.percentile(x, 50), 5.5)
-        assert_(np.isscalar(np.percentile(x, 50)))
+        assertTrue(np.isscalar(np.percentile(x, 50)))
         r0 = np.array([4.,  5.,  6.,  7.])
         assert_equal(np.percentile(x, 50, axis=0), r0)
         assert_equal(np.percentile(x, 50, axis=0).shape, r0.shape)
@@ -3140,7 +3140,7 @@ class TestPercentile:
         # test for no empty dimensions for compatibility with old percentile
         x = np.arange(12).reshape(3, 4)
         assert_equal(np.percentile(x, 50, method='lower'), 5.)
-        assert_(np.isscalar(np.percentile(x, 50)))
+        assertTrue(np.isscalar(np.percentile(x, 50)))
         r0 = np.array([4.,  5.,  6.,  7.])
         c0 = np.percentile(x, 50, method='lower', axis=0)
         assert_equal(c0, r0)
@@ -3760,7 +3760,7 @@ class TestMedian:
         with warnings.catch_warnings(record=True) as w:
             warnings.filterwarnings('always', '', RuntimeWarning)
             assert_equal(np.median(a), np.nan)
-            assert_(w[0].category is RuntimeWarning)
+            assertTrue(w[0].category is RuntimeWarning)
             assert_equal(len(w), 2)
 
         # multiple dimensions
@@ -3769,7 +3769,7 @@ class TestMedian:
         with warnings.catch_warnings(record=True) as w:
             warnings.filterwarnings('always', '', RuntimeWarning)
             assert_equal(np.median(a), np.nan)
-            assert_(w[0].category is RuntimeWarning)
+            assertTrue(w[0].category is RuntimeWarning)
 
         # axis 0 and 1
         b = np.array([], dtype=float, ndmin=2)
@@ -3781,13 +3781,13 @@ class TestMedian:
         with warnings.catch_warnings(record=True) as w:
             warnings.filterwarnings('always', '', RuntimeWarning)
             assert_equal(np.median(a, axis=2), b)
-            assert_(w[0].category is RuntimeWarning)
+            assertTrue(w[0].category is RuntimeWarning)
 
     def test_object(self):
         o = np.arange(7.)
-        assert_(type(np.median(o.astype(object))), float)
+        assertTrue(type(np.median(o.astype(object))), float)
         o[2] = np.nan
-        assert_(type(np.median(o.astype(object))), float)
+        assertTrue(type(np.median(o.astype(object))), float)
 
     def test_extended_axis(self):
         o = np.random.normal(size=(71, 23))
@@ -3861,8 +3861,8 @@ class TestAdd_newdoc:
         # test that np.add_newdoc did attach a docstring successfully:
         tgt = "Current flat index into the array."
         assert_equal(np.core.flatiter.index.__doc__[:len(tgt)], tgt)
-        assert_(len(np.core.ufunc.identity.__doc__) > 300)
-        assert_(len(np.lib.index_tricks.mgrid.__doc__) > 300)
+        assertTrue(len(np.core.ufunc.identity.__doc__) > 300)
+        assertTrue(len(np.lib.index_tricks.mgrid.__doc__) > 300)
 
     @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
     def test_errors_are_ignored(self):

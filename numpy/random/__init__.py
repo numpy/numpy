@@ -177,16 +177,13 @@ __all__ = [
 ]
 
 # add these for module-freeze analysis (like PyInstaller)
-from . import _pickle
-from . import _common
-from . import _bounded_integers
-
+from . import _bounded_integers, _common, _pickle
 from ._generator import Generator, default_rng
-from .bit_generator import SeedSequence, BitGenerator
 from ._mt19937 import MT19937
 from ._pcg64 import PCG64, PCG64DXSM
 from ._philox import Philox
 from ._sfc64 import SFC64
+from .bit_generator import BitGenerator, SeedSequence
 from .mtrand import *
 
 __all__ += ['Generator', 'RandomState', 'SeedSequence', 'MT19937',
@@ -211,5 +208,6 @@ def __RandomState_ctor():
 
 
 from numpy._pytesttester import PytestTester
+
 test = PytestTester(__name__)
 del PytestTester

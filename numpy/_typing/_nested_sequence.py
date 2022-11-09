@@ -2,14 +2,8 @@
 
 from __future__ import annotations
 
-from typing import (
-    Any,
-    Iterator,
-    overload,
-    TypeVar,
-    Protocol,
-    runtime_checkable,
-)
+from typing import (Any, Iterator, Protocol, TypeVar, overload,
+                    runtime_checkable)
 
 __all__ = ["_NestedSequence"]
 

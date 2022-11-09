@@ -1,12 +1,11 @@
-import numpy as np
-
-from numpy.lib.histograms import histogram, histogramdd, histogram_bin_edges
-from numpy.testing import (
-    assert_, assert_equal, assert_array_equal, assert_almost_equal,
-    assert_array_almost_equal, assert_raises, assert_allclose,
-    assert_array_max_ulp, assert_raises_regex, suppress_warnings,
-    )
 import pytest
+
+import numpy as np
+from numpy.lib.histograms import histogram, histogram_bin_edges, histogramdd
+from numpy.testing import (assert_, assert_allclose, assert_almost_equal,
+                           assert_array_almost_equal, assert_array_equal,
+                           assert_array_max_ulp, assert_equal, assert_raises,
+                           assert_raises_regex, suppress_warnings)
 
 
 class TestHistogram:
@@ -105,16 +104,16 @@ class TestHistogram:
         # Check the type of the returned histogram
         a = np.arange(10) + .5
         h, b = histogram(a)
-        assert_(np.issubdtype(h.dtype, np.integer))
+        assertTrue(np.issubdtype(h.dtype, np.integer))
 
         h, b = histogram(a, density=True)
-        assert_(np.issubdtype(h.dtype, np.floating))
+        assertTrue(np.issubdtype(h.dtype, np.floating))
 
         h, b = histogram(a, weights=np.ones(10, int))
-        assert_(np.issubdtype(h.dtype, np.integer))
+        assertTrue(np.issubdtype(h.dtype, np.integer))
 
         h, b = histogram(a, weights=np.ones(10, float))
-        assert_(np.issubdtype(h.dtype, np.floating))
+        assertTrue(np.issubdtype(h.dtype, np.floating))
 
     def test_f32_rounding(self):
         # gh-4799, check that the rounding of the edges works with float32
@@ -238,8 +237,8 @@ class TestHistogram:
         left_edges = edges[:-1][mask]
         right_edges = edges[1:][mask]
         for x, left, right in zip(arr, left_edges, right_edges):
-            assert_(x >= left)
-            assert_(x < right)
+            assertTrue(x >= left)
+            assertTrue(x < right)
 
     def test_last_bin_inclusive_range(self):
         arr = np.array([0.,  0.,  0.,  1.,  2.,  3.,  3.,  4.,  5.])
@@ -600,7 +599,7 @@ class TestHistogramdd:
         # Check normalization
         ed = [[-2, 0, 2], [0, 1, 2, 3], [0, 1, 2, 3]]
         H, edges = histogramdd(x, bins=ed, density=True)
-        assert_(np.all(H == answer / 12.))
+        assertTrue(np.all(H == answer / 12.))
 
         # Check that H has the correct shape.
         H, edges = histogramdd(x, (2, 3, 4),
@@ -632,7 +631,7 @@ class TestHistogramdd:
         r = np.random.rand(10, 3)
         for b in bins:
             H, edges = histogramdd(r, b)
-            assert_(H.shape == b)
+            assertTrue(H.shape == b)
 
     def test_shape_4d(self):
         # All possible permutations for bins of different lengths in 4D.
@@ -646,7 +645,7 @@ class TestHistogramdd:
         r = np.random.rand(10, 4)
         for b in bins:
             H, edges = histogramdd(r, b)
-            assert_(H.shape == b)
+            assertTrue(H.shape == b)
 
     def test_weights(self):
         v = np.random.rand(100, 2)
@@ -678,7 +677,7 @@ class TestHistogramdd:
         assert_raises(ValueError, np.histogramdd, x, bins=[1, 0.99, 1, 1])
         assert_raises(
             ValueError, np.histogramdd, x, bins=[1, 1, 1, [1, 2, 3, -3]])
-        assert_(np.histogramdd(x, bins=[1, 1, 1, [1, 2, 3, 4]]))
+        assertTrue(np.histogramdd(x, bins=[1, 1, 1, [1, 2, 3, 4]]))
 
     def test_inf_edges(self):
         # Test using +/-inf bin edges works. See #1788.
@@ -697,23 +696,23 @@ class TestHistogramdd:
         x = [0.9999999995]
         bins = [[0., 0.5, 1.0]]
         hist, _ = histogramdd(x, bins=bins)
-        assert_(hist[0] == 0.0)
-        assert_(hist[1] == 1.)
+        assertTrue(hist[0] == 0.0)
+        assertTrue(hist[1] == 1.)
         x = [1.0]
         bins = [[0., 0.5, 1.0]]
         hist, _ = histogramdd(x, bins=bins)
-        assert_(hist[0] == 0.0)
-        assert_(hist[1] == 1.)
+        assertTrue(hist[0] == 0.0)
+        assertTrue(hist[1] == 1.)
         x = [1.0000000001]
         bins = [[0., 0.5, 1.0]]
         hist, _ = histogramdd(x, bins=bins)
-        assert_(hist[0] == 0.0)
-        assert_(hist[1] == 0.0)
+        assertTrue(hist[0] == 0.0)
+        assertTrue(hist[1] == 0.0)
         x = [1.0001]
         bins = [[0., 0.5, 1.0]]
         hist, _ = histogramdd(x, bins=bins)
-        assert_(hist[0] == 0.0)
-        assert_(hist[1] == 0.0)
+        assertTrue(hist[0] == 0.0)
+        assertTrue(hist[1] == 0.0)
 
     def test_finite_range(self):
         vals = np.random.random((100, 3))

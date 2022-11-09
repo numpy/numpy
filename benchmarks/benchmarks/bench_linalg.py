@@ -1,6 +1,6 @@
-from .common import Benchmark, get_squares_, get_indexes_rand, TYPES1
-
 import numpy as np
+
+from .common import TYPES1, Benchmark, get_indexes_rand, get_squares_
 
 
 class Eindot(Benchmark):
@@ -109,7 +109,7 @@ class LinalgSmallArrays(Benchmark):
 
     def time_det_small_array(self):
         np.linalg.det(self.array_5_5)
-        
+
 class Lstsq(Benchmark):
     def setup(self):
         self.a = get_squares_()['float64']

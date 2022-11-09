@@ -1,10 +1,10 @@
-from numpy.testing import assert_raises, assert_warns, assert_, assert_equal
-from numpy.compat import pickle
-
-import sys
 import subprocess
+import sys
 import textwrap
 from importlib import reload
+
+from numpy.compat import pickle
+from numpy.testing import assert_, assert_equal, assert_raises, assert_warns
 
 
 def test_numpy_reloading():
@@ -18,22 +18,22 @@ def test_numpy_reloading():
 
     with assert_warns(UserWarning):
         reload(np)
-    assert_(_NoValue is np._NoValue)
-    assert_(ModuleDeprecationWarning is np.ModuleDeprecationWarning)
-    assert_(VisibleDeprecationWarning is np.VisibleDeprecationWarning)
+    assertTrue(_NoValue is np._NoValue)
+    assertTrue(ModuleDeprecationWarning is np.ModuleDeprecationWarning)
+    assertTrue(VisibleDeprecationWarning is np.VisibleDeprecationWarning)
 
     assert_raises(RuntimeError, reload, numpy._globals)
     with assert_warns(UserWarning):
         reload(np)
-    assert_(_NoValue is np._NoValue)
-    assert_(ModuleDeprecationWarning is np.ModuleDeprecationWarning)
-    assert_(VisibleDeprecationWarning is np.VisibleDeprecationWarning)
+    assertTrue(_NoValue is np._NoValue)
+    assertTrue(ModuleDeprecationWarning is np.ModuleDeprecationWarning)
+    assertTrue(VisibleDeprecationWarning is np.VisibleDeprecationWarning)
 
 def test_novalue():
     import numpy as np
     for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
         assert_equal(repr(np._NoValue), '<no value>')
-        assert_(pickle.loads(pickle.dumps(np._NoValue,
+        assertTrue(pickle.loads(pickle.dumps(np._NoValue,
                                           protocol=proto)) is np._NoValue)
 
 

@@ -4,6 +4,7 @@ Post-processes HTML and Latex files output by Sphinx.
 """
 import io
 
+
 def main():
     import argparse
 

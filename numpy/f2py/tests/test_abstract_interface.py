@@ -1,7 +1,9 @@
-from pathlib import Path
 import textwrap
-from . import util
+from pathlib import Path
+
 from numpy.f2py import crackfortran
+
+from . import util
 
 
 class TestAbstractInterface(util.F2PyTest):

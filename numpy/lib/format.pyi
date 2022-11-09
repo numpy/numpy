@@ -1,4 +1,4 @@
-from typing import Any, Literal, Final
+from typing import Any, Final, Literal
 
 __all__: list[str]
 

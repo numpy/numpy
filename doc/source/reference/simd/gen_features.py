@@ -1,8 +1,10 @@
 """
 Generate CPU features tables from CCompilerOpt
 """
-from os import sys, path
+from os import path, sys
+
 from numpy.distutils.ccompiler_opt import CCompilerOpt
+
 
 class FakeCCompilerOpt(CCompilerOpt):
     # disable caching no need for it
@@ -192,5 +194,3 @@ if __name__ == '__main__':
                 title = f"On {arch_pname}::{pretty_names.get(cc, cc)}"
                 table = Features(arch, cc).table_diff(Features(arch, "gcc"))
                 fd.write(wrapper_section(title, table))
-
-

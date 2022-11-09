@@ -1,19 +1,11 @@
 from ast import AST
 from collections.abc import Callable, Mapping, Sequence
-from typing import (
-    Any,
-    overload,
-    TypeVar,
-    Protocol,
-)
+from typing import Any, Protocol, TypeVar, overload
 
-from numpy import ndarray, generic
-
-from numpy.core.numerictypes import (
-    issubclass_ as issubclass_,
-    issubdtype as issubdtype,
-    issubsctype as issubsctype,
-)
+from numpy import generic, ndarray
+from numpy.core.numerictypes import issubclass_ as issubclass_
+from numpy.core.numerictypes import issubdtype as issubdtype
+from numpy.core.numerictypes import issubsctype as issubsctype
 
 _T_contra = TypeVar("_T_contra", contravariant=True)
 _FuncType = TypeVar("_FuncType", bound=Callable[..., Any])

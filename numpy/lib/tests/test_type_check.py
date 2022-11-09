@@ -1,15 +1,14 @@
 import numpy as np
-from numpy.testing import (
-    assert_, assert_equal, assert_array_equal, assert_raises
-    )
-from numpy.lib.type_check import (
-    common_type, mintypecode, isreal, iscomplex, isposinf, isneginf,
-    nan_to_num, isrealobj, iscomplexobj, asfarray, real_if_close
-    )
+from numpy.lib.type_check import (asfarray, common_type, iscomplex,
+                                  iscomplexobj, isneginf, isposinf, isreal,
+                                  isrealobj, mintypecode, nan_to_num,
+                                  real_if_close)
+from numpy.testing import (assert_, assert_array_equal, assert_equal,
+                           assert_raises)
 
 
 def assert_all(x):
-    assert_(np.all(x), x)
+    assertTrue(np.all(x), x)
 
 
 class TestCommonType:
@@ -20,12 +19,12 @@ class TestCommonType:
         af64 = np.array([[1, 2], [3, 4]], dtype=np.float64)
         acs = np.array([[1+5j, 2+6j], [3+7j, 4+8j]], dtype=np.csingle)
         acd = np.array([[1+5j, 2+6j], [3+7j, 4+8j]], dtype=np.cdouble)
-        assert_(common_type(ai32) == np.float64)
-        assert_(common_type(af16) == np.float16)
-        assert_(common_type(af32) == np.float32)
-        assert_(common_type(af64) == np.float64)
-        assert_(common_type(acs) == np.csingle)
-        assert_(common_type(acd) == np.cdouble)
+        assertTrue(common_type(ai32) == np.float64)
+        assertTrue(common_type(af16) == np.float16)
+        assertTrue(common_type(af32) == np.float32)
+        assertTrue(common_type(af64) == np.float64)
+        assertTrue(common_type(acs) == np.csingle)
+        assertTrue(common_type(acd) == np.cdouble)
 
 
 class TestMintypecode:
@@ -81,11 +80,11 @@ class TestMintypecode:
 class TestIsscalar:
 
     def test_basic(self):
-        assert_(np.isscalar(3))
-        assert_(not np.isscalar([3]))
-        assert_(not np.isscalar((3,)))
-        assert_(np.isscalar(3j))
-        assert_(np.isscalar(4.0))
+        assertTrue(np.isscalar(3))
+        assertTrue(not np.isscalar([3]))
+        assertTrue(not np.isscalar((3,)))
+        assertTrue(np.isscalar(3j))
+        assertTrue(np.isscalar(4.0))
 
 
 class TestReal:
@@ -97,12 +96,12 @@ class TestReal:
         y = np.array(1)
         out = np.real(y)
         assert_array_equal(y, out)
-        assert_(isinstance(out, np.ndarray))
+        assertTrue(isinstance(out, np.ndarray))
 
         y = 1
         out = np.real(y)
         assert_equal(y, out)
-        assert_(not isinstance(out, np.ndarray))
+        assertTrue(not isinstance(out, np.ndarray))
 
     def test_cmplx(self):
         y = np.random.rand(10,)+1j*np.random.rand(10,)
@@ -111,12 +110,12 @@ class TestReal:
         y = np.array(1 + 1j)
         out = np.real(y)
         assert_array_equal(y.real, out)
-        assert_(isinstance(out, np.ndarray))
+        assertTrue(isinstance(out, np.ndarray))
 
         y = 1 + 1j
         out = np.real(y)
         assert_equal(1.0, out)
-        assert_(not isinstance(out, np.ndarray))
+        assertTrue(not isinstance(out, np.ndarray))
 
 
 class TestImag:
@@ -128,12 +127,12 @@ class TestImag:
         y = np.array(1)
         out = np.imag(y)
         assert_array_equal(0, out)
-        assert_(isinstance(out, np.ndarray))
+        assertTrue(isinstance(out, np.ndarray))
 
         y = 1
         out = np.imag(y)
         assert_equal(0, out)
-        assert_(not isinstance(out, np.ndarray))
+        assertTrue(not isinstance(out, np.ndarray))
 
     def test_cmplx(self):
         y = np.random.rand(10,)+1j*np.random.rand(10,)
@@ -142,12 +141,12 @@ class TestImag:
         y = np.array(1 + 1j)
         out = np.imag(y)
         assert_array_equal(y.imag, out)
-        assert_(isinstance(out, np.ndarray))
+        assertTrue(isinstance(out, np.ndarray))
 
         y = 1 + 1j
         out = np.imag(y)
         assert_equal(1.0, out)
-        assert_(not isinstance(out, np.ndarray))
+        assertTrue(not isinstance(out, np.ndarray))
 
 
 class TestIscomplex:
@@ -155,7 +154,7 @@ class TestIscomplex:
     def test_fail(self):
         z = np.array([-1, 0, 1])
         res = iscomplex(z)
-        assert_(not np.sometrue(res, axis=0))
+        assertTrue(not np.sometrue(res, axis=0))
 
     def test_pass(self):
         z = np.array([-1j, 1, 0])
@@ -180,17 +179,17 @@ class TestIscomplexobj:
 
     def test_basic(self):
         z = np.array([-1, 0, 1])
-        assert_(not iscomplexobj(z))
+        assertTrue(not iscomplexobj(z))
         z = np.array([-1j, 0, -1])
-        assert_(iscomplexobj(z))
+        assertTrue(iscomplexobj(z))
 
     def test_scalar(self):
-        assert_(not iscomplexobj(1.0))
-        assert_(iscomplexobj(1+0j))
+        assertTrue(not iscomplexobj(1.0))
+        assertTrue(iscomplexobj(1+0j))
 
     def test_list(self):
-        assert_(iscomplexobj([3, 1+0j, True]))
-        assert_(not iscomplexobj([3, 1, True]))
+        assertTrue(iscomplexobj([3, 1+0j, True]))
+        assertTrue(not iscomplexobj([3, 1, True]))
 
     def test_duck(self):
         class DummyComplexArray:
@@ -198,7 +197,7 @@ class TestIscomplexobj:
             def dtype(self):
                 return np.dtype(complex)
         dummy = DummyComplexArray()
-        assert_(iscomplexobj(dummy))
+        assertTrue(iscomplexobj(dummy))
 
     def test_pandas_duck(self):
         # This tests a custom np.dtype duck-typed class, such as used by pandas
@@ -217,7 +216,7 @@ class TestIscomplexobj:
             def dtype(self):
                 return PdDtype
         dummy = DummyPd()
-        assert_(iscomplexobj(dummy))
+        assertTrue(iscomplexobj(dummy))
 
     def test_custom_dtype_duck(self):
         class MyArray(list):
@@ -226,15 +225,15 @@ class TestIscomplexobj:
                 return complex
 
         a = MyArray([1+0j, 2+0j, 3+0j])
-        assert_(iscomplexobj(a))
+        assertTrue(iscomplexobj(a))
 
 
 class TestIsrealobj:
     def test_basic(self):
         z = np.array([-1, 0, 1])
-        assert_(isrealobj(z))
+        assertTrue(isrealobj(z))
         z = np.array([-1j, 0, -1])
-        assert_(not isrealobj(z))
+        assertTrue(not isrealobj(z))
 
 
 class TestIsnan:
@@ -332,9 +331,9 @@ class TestIsposinf:
     def test_generic(self):
         with np.errstate(divide='ignore', invalid='ignore'):
             vals = isposinf(np.array((-1., 0, 1))/0.)
-        assert_(vals[0] == 0)
-        assert_(vals[1] == 0)
-        assert_(vals[2] == 1)
+        assertTrue(vals[0] == 0)
+        assertTrue(vals[1] == 0)
+        assertTrue(vals[2] == 1)
 
 
 class TestIsneginf:
@@ -342,9 +341,9 @@ class TestIsneginf:
     def test_generic(self):
         with np.errstate(divide='ignore', invalid='ignore'):
             vals = isneginf(np.array((-1., 0, 1))/0.)
-        assert_(vals[0] == 1)
-        assert_(vals[1] == 0)
-        assert_(vals[2] == 0)
+        assertTrue(vals[0] == 1)
+        assertTrue(vals[1] == 0)
+        assertTrue(vals[2] == 0)
 
 
 class TestNanToNum:
@@ -353,13 +352,13 @@ class TestNanToNum:
         with np.errstate(divide='ignore', invalid='ignore'):
             vals = nan_to_num(np.array((-1., 0, 1))/0.)
         assert_all(vals[0] < -1e10) and assert_all(np.isfinite(vals[0]))
-        assert_(vals[1] == 0)
+        assertTrue(vals[1] == 0)
         assert_all(vals[2] > 1e10) and assert_all(np.isfinite(vals[2]))
         assert_equal(type(vals), np.ndarray)
-        
+
         # perform the same tests but with nan, posinf and neginf keywords
         with np.errstate(divide='ignore', invalid='ignore'):
-            vals = nan_to_num(np.array((-1., 0, 1))/0., 
+            vals = nan_to_num(np.array((-1., 0, 1))/0.,
                               nan=10, posinf=20, neginf=30)
         assert_equal(vals, [30, 10, 20])
         assert_all(np.isfinite(vals[[0, 2]]))
@@ -370,18 +369,18 @@ class TestNanToNum:
             vals = np.array((-1., 0, 1))/0.
         result = nan_to_num(vals, copy=False)
 
-        assert_(result is vals)
+        assertTrue(result is vals)
         assert_all(vals[0] < -1e10) and assert_all(np.isfinite(vals[0]))
-        assert_(vals[1] == 0)
+        assertTrue(vals[1] == 0)
         assert_all(vals[2] > 1e10) and assert_all(np.isfinite(vals[2]))
         assert_equal(type(vals), np.ndarray)
-        
+
         # perform the same test but in-place
         with np.errstate(divide='ignore', invalid='ignore'):
             vals = np.array((-1., 0, 1))/0.
         result = nan_to_num(vals, copy=False, nan=10, posinf=20, neginf=30)
 
-        assert_(result is vals)
+        assertTrue(result is vals)
         assert_equal(vals, [30, 10, 20])
         assert_all(np.isfinite(vals[[0, 2]]))
         assert_equal(type(vals), np.ndarray)
@@ -440,9 +439,9 @@ class TestNanToNum:
         # !! inf.  Comment out for now, and see if it
         # !! changes
         #assert_all(vals.real < -1e10) and assert_all(np.isfinite(vals))
-    
+
     def test_do_not_rewrite_previous_keyword(self):
-        # This is done to test that when, for instance, nan=np.inf then these 
+        # This is done to test that when, for instance, nan=np.inf then these
         # values are not rewritten by posinf keyword to the posinf value.
         with np.errstate(divide='ignore', invalid='ignore'):
             vals = nan_to_num(np.array((-1., 0, 1))/0., nan=np.inf, posinf=999)
@@ -470,7 +469,7 @@ class TestArrayConversion:
     def test_asfarray(self):
         a = asfarray(np.array([1, 2, 3]))
         assert_equal(a.__class__, np.ndarray)
-        assert_(np.issubdtype(a.dtype, np.floating))
+        assertTrue(np.issubdtype(a.dtype, np.floating))
 
         # previously this would infer dtypes from arrays, unlike every single
         # other numpy function

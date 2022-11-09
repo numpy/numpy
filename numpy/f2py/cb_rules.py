@@ -13,16 +13,15 @@ $Date: 2005/07/20 11:27:58 $
 Pearu Peterson
 
 """
-from . import __version__
-from .auxfuncs import (
-    applyrules, debugcapi, dictappend, errmess, getargs, hasnote, isarray,
-    iscomplex, iscomplexarray, iscomplexfunction, isfunction, isintent_c,
-    isintent_hide, isintent_in, isintent_inout, isintent_nothide,
-    isintent_out, isoptional, isrequired, isscalar, isstring,
-    isstringfunction, issubroutine, l_and, l_not, l_or, outmess, replace,
-    stripcomma, throw_error
-)
-from . import cfuncs
+from . import __version__, cfuncs
+from .auxfuncs import (applyrules, debugcapi, dictappend, errmess, getargs,
+                       hasnote, isarray, iscomplex, iscomplexarray,
+                       iscomplexfunction, isfunction, isintent_c,
+                       isintent_hide, isintent_in, isintent_inout,
+                       isintent_nothide, isintent_out, isoptional, isrequired,
+                       isscalar, isstring, isstringfunction, issubroutine,
+                       l_and, l_not, l_or, outmess, replace, stripcomma,
+                       throw_error)
 
 f2py_version = __version__.version
 
@@ -630,7 +629,7 @@ def buildcallback(rout, um):
         ar['need'] = [ar['need']]
 
     if 'need' in rd:
-        for t in cfuncs.typedefs.keys():
+        for t in cfuncs.typedefs:
             if t in rd['need']:
                 ar['need'].append(t)
 

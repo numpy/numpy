@@ -1,12 +1,13 @@
 import functools
-import warnings
 import operator
 import types
+import warnings
+
+from numpy.core import overrides
+from numpy.core.multiarray import add_docstring
 
 from . import numeric as _nx
-from .numeric import result_type, NaN, asanyarray, ndim
-from numpy.core.multiarray import add_docstring
-from numpy.core import overrides
+from .numeric import NaN, asanyarray, ndim, result_type
 
 __all__ = ['logspace', 'linspace', 'geomspace']
 

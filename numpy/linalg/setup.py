@@ -2,9 +2,10 @@ import os
 import sys
 import sysconfig
 
+
 def configuration(parent_package='', top_path=None):
-    from numpy.distutils.misc_util import Configuration
     from numpy.distutils.ccompiler_opt import NPY_CXX_FLAGS
+    from numpy.distutils.misc_util import Configuration
     from numpy.distutils.system_info import get_info, system_info
     config = Configuration('linalg', parent_package, top_path)
 

@@ -1,12 +1,13 @@
-from math import nan, inf
-import pytest
-from numpy.core import array, arange, printoptions
-import numpy.polynomial as poly
-from numpy.testing import assert_equal, assert_
-
+from decimal import Decimal
 # For testing polynomial printing with object arrays
 from fractions import Fraction
-from decimal import Decimal
+from math import inf, nan
+
+import pytest
+
+import numpy.polynomial as poly
+from numpy.core import arange, array, printoptions
+from numpy.testing import assert_, assert_equal
 
 
 class TestStrUnicodeSuperSubscripts:
@@ -190,7 +191,7 @@ class TestLinebreaking:
         p = poly.Polynomial(
                 [12345678, 12345678, 12345678, 12345678, 1, 12345678]
             )
-        assert_equal(len(str(p).split('\n')[0]), 74)
+        assert_equal(len(str(p).split('\n', maxsplit=1)[0]), 74)
         assert_equal(str(p), (
             '12345678.0 + 12345678.0 x + 12345678.0 x**2 + '
             '12345678.0 x**3 + 1.0 x**4 +\n12345678.0 x**5'
@@ -224,7 +225,7 @@ class TestLinebreaking:
         with printoptions(linewidth=lw):
             assert_equal(str(p), tgt)
             for line in str(p).split('\n'):
-                assert_(len(line) < lw)
+                assertTrue(len(line) < lw)
 
 
 def test_set_default_printoptions():
@@ -474,7 +475,7 @@ SWITCH_TO_EXP = (
 class TestPrintOptions:
     """
     Test the output is properly configured via printoptions.
-    The exponential notation is enabled automatically when the values 
+    The exponential notation is enabled automatically when the values
     are too small or too large.
     """
 
@@ -493,7 +494,7 @@ class TestPrintOptions:
             r'$x \mapsto \text{0.5} + \text{0.14285714}\,x + '
             r'\text{14285714.28571429}\,x^{2} + '
             r'\text{(1.42857143e+08)}\,x^{3}$')
-        
+
         with printoptions(precision=3):
             assert_equal(p._repr_latex_(),
                 r'$x \mapsto \text{0.5} + \text{0.143}\,x + '
@@ -502,20 +503,20 @@ class TestPrintOptions:
     def test_fixed(self):
         p = poly.Polynomial([1/2])
         assert_equal(str(p), '0.5')
-        
+
         with printoptions(floatmode='fixed'):
             assert_equal(str(p), '0.50000000')
-        
+
         with printoptions(floatmode='fixed', precision=4):
             assert_equal(str(p), '0.5000')
 
     def test_switch_to_exp(self):
         for i, s in enumerate(SWITCH_TO_EXP):
             with printoptions(precision=i):
-                p = poly.Polynomial([1.23456789*10**-i 
+                p = poly.Polynomial([1.23456789*10**-i
                                      for i in range(i//2+3)])
-                assert str(p).replace('\n', ' ') == s 
-    
+                assert str(p).replace('\n', ' ') == s
+
     def test_non_finite(self):
         p = poly.Polynomial([nan, inf])
         assert str(p) == 'nan + inf x'

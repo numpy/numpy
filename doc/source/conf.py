@@ -1,7 +1,7 @@
+import importlib
 import os
 import re
 import sys
-import importlib
 
 # Minimum version, enforced by sphinx
 needs_sphinx = '4.3'
@@ -111,6 +111,7 @@ copyright = '2008-2022, NumPy Developers'
 # other places throughout the built documents.
 #
 import numpy
+
 # The short X.Y version (including .devXXXX, rcX, b1 suffixes if present)
 version = re.sub(r'(\d+\.\d+)\.\d+(.*)', r'\1\2', numpy.__version__)
 version = re.sub(r'(\.dev\d+).*?$', r'\1', version)
@@ -370,6 +371,7 @@ plot_include_source = True
 plot_formats = [('png', 100), 'pdf']
 
 import math
+
 phi = (math.sqrt(5) + 1)/2
 
 plot_rcparams = {
@@ -394,7 +396,7 @@ plot_rcparams = {
 # -----------------------------------------------------------------------------
 
 import inspect
-from os.path import relpath, dirname
+from os.path import dirname, relpath
 
 for name in ['sphinx.ext.linkcode', 'numpydoc.linkcode']:
     try:
@@ -486,9 +488,10 @@ def linkcode_resolve(domain, info):
         return "https://github.com/numpy/numpy/blob/v%s/numpy/%s%s" % (
            numpy.__version__, fn, linespec)
 
+from pygments.lexer import bygroups, inherit
 from pygments.lexers import CLexer
-from pygments.lexer import inherit, bygroups
 from pygments.token import Comment
+
 
 class NumPyLexer(CLexer):
     name = 'NUMPYLEXER'

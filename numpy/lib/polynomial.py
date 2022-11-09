@@ -9,17 +9,15 @@ __all__ = ['poly', 'roots', 'polyint', 'polyder', 'polyadd',
 import functools
 import re
 import warnings
+
 import numpy.core.numeric as NX
-
-from numpy.core import (isscalar, abs, finfo, atleast_1d, hstack, dot, array,
-                        ones)
-from numpy.core import overrides
+from numpy.core import (abs, array, atleast_1d, dot, finfo, hstack, isscalar,
+                        ones, overrides)
 from numpy.core.overrides import set_module
-from numpy.lib.twodim_base import diag, vander
 from numpy.lib.function_base import trim_zeros
-from numpy.lib.type_check import iscomplex, real, imag, mintypecode
-from numpy.linalg import eigvals, lstsq, inv
-
+from numpy.lib.twodim_base import diag, vander
+from numpy.lib.type_check import imag, iscomplex, mintypecode, real
+from numpy.linalg import eigvals, inv, lstsq
 
 array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy')

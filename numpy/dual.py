@@ -18,7 +18,6 @@ NumPy.
 """
 import warnings
 
-
 warnings.warn('The module numpy.dual is deprecated.  Instead of using dual, '
               'use the functions directly from numpy or scipy.',
               category=DeprecationWarning,
@@ -33,11 +32,11 @@ __all__ = ['fft', 'ifft', 'fftn', 'ifftn', 'fft2', 'ifft2',
            'norm', 'inv', 'svd', 'solve', 'det', 'eig', 'eigvals',
            'eigh', 'eigvalsh', 'lstsq', 'pinv', 'cholesky', 'i0']
 
-import numpy.linalg as linpkg
-import numpy.fft as fftpkg
-from numpy.lib import i0
 import sys
 
+import numpy.fft as fftpkg
+import numpy.linalg as linpkg
+from numpy.lib import i0
 
 fft = fftpkg.fft
 ifft = fftpkg.ifft
@@ -79,5 +78,5 @@ def restore_func(name):
         sys._getframe(0).f_globals[name] = val
 
 def restore_all():
-    for name in _restore_dict.keys():
+    for name in _restore_dict:
         restore_func(name)

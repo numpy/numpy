@@ -1,6 +1,6 @@
 import datetime as dt
-from typing import Any, TypeVar
 from pathlib import Path
+from typing import Any, TypeVar
 
 import numpy as np
 import numpy.typing as npt

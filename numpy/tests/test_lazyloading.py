@@ -1,6 +1,7 @@
-import sys
 import importlib
+import sys
 from importlib.util import LazyLoader, find_spec, module_from_spec
+
 import pytest
 
 

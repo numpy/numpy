@@ -1,13 +1,12 @@
-import itertools
 import contextlib
+import itertools
 import operator
+
 import pytest
 
 import numpy as np
 import numpy.core._multiarray_tests as mt
-
-from numpy.testing import assert_raises, assert_equal
-
+from numpy.testing import assert_equal, assert_raises
 
 INT64_MAX = np.iinfo(np.int64).max
 INT64_MIN = np.iinfo(np.int64).min
@@ -77,7 +76,7 @@ def test_safe_binop():
             pyop, op = xop
             c = pyop(a, b)
 
-            if not (INT64_MIN <= c <= INT64_MAX):
+            if not INT64_MIN <= c <= INT64_MAX:
                 assert_raises(OverflowError, mt.extint_safe_binop, a, b, op)
             else:
                 d = mt.extint_safe_binop(a, b, op)
@@ -97,7 +96,7 @@ def test_to_128():
 def test_to_64():
     with exc_iter(INT128_VALUES) as it:
         for a, in it:
-            if not (INT64_MIN <= a <= INT64_MAX):
+            if not INT64_MIN <= a <= INT64_MAX:
                 assert_raises(OverflowError, mt.extint_to_64, a)
             else:
                 b = mt.extint_to_64(a)
@@ -118,7 +117,7 @@ def test_add_128():
     with exc_iter(INT128_VALUES, INT128_VALUES) as it:
         for a, b in it:
             c = a + b
-            if not (INT128_MIN <= c <= INT128_MAX):
+            if not INT128_MIN <= c <= INT128_MAX:
                 assert_raises(OverflowError, mt.extint_add_128, a, b)
             else:
                 d = mt.extint_add_128(a, b)
@@ -130,7 +129,7 @@ def test_sub_128():
     with exc_iter(INT128_VALUES, INT128_VALUES) as it:
         for a, b in it:
             c = a - b
-            if not (INT128_MIN <= c <= INT128_MAX):
+            if not INT128_MIN <= c <= INT128_MAX:
                 assert_raises(OverflowError, mt.extint_sub_128, a, b)
             else:
                 d = mt.extint_sub_128(a, b)

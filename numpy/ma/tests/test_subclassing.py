@@ -8,16 +8,16 @@
 """
 import numpy as np
 from numpy.lib.mixins import NDArrayOperatorsMixin
-from numpy.testing import assert_, assert_raises
+from numpy.ma.core import (MaskedArray, add, arange, array, asanyarray,
+                           asarray, divide, hypot, log, masked, masked_array,
+                           nomask)
 from numpy.ma.testutils import assert_equal
-from numpy.ma.core import (
-    array, arange, masked, MaskedArray, masked_array, log, add, hypot,
-    divide, asarray, asanyarray, nomask
-    )
+from numpy.testing import assert_, assert_raises
+
 # from numpy.ma.core import (
 
 def assert_startswith(a, b):
-    # produces a better error message than assert_(a.startswith(b))
+    # produces a better error message than assertTrue(a.startswith(b))
     assert_equal(a[:len(b)], b)
 
 class SubArray(np.ndarray):
@@ -189,41 +189,41 @@ class TestSubclassing:
         m = [0, 0, 1, 0, 0]
         xsub = SubArray(x)
         xmsub = masked_array(xsub, mask=m)
-        assert_(isinstance(xmsub, MaskedArray))
+        assertTrue(isinstance(xmsub, MaskedArray))
         assert_equal(xmsub._data, xsub)
-        assert_(isinstance(xmsub._data, SubArray))
+        assertTrue(isinstance(xmsub._data, SubArray))
 
     def test_maskedarray_subclassing(self):
         # Tests subclassing MaskedArray
         (x, mx) = self.data
-        assert_(isinstance(mx._data, subarray))
+        assertTrue(isinstance(mx._data, subarray))
 
     def test_masked_unary_operations(self):
         # Tests masked_unary_operation
         (x, mx) = self.data
         with np.errstate(divide='ignore'):
-            assert_(isinstance(log(mx), msubarray))
+            assertTrue(isinstance(log(mx), msubarray))
             assert_equal(log(x), np.log(x))
 
     def test_masked_binary_operations(self):
         # Tests masked_binary_operation
         (x, mx) = self.data
         # Result should be a msubarray
-        assert_(isinstance(add(mx, mx), msubarray))
-        assert_(isinstance(add(mx, x), msubarray))
+        assertTrue(isinstance(add(mx, mx), msubarray))
+        assertTrue(isinstance(add(mx, x), msubarray))
         # Result should work
         assert_equal(add(mx, x), mx+x)
-        assert_(isinstance(add(mx, mx)._data, subarray))
-        assert_(isinstance(add.outer(mx, mx), msubarray))
-        assert_(isinstance(hypot(mx, mx), msubarray))
-        assert_(isinstance(hypot(mx, x), msubarray))
+        assertTrue(isinstance(add(mx, mx)._data, subarray))
+        assertTrue(isinstance(add.outer(mx, mx), msubarray))
+        assertTrue(isinstance(hypot(mx, mx), msubarray))
+        assertTrue(isinstance(hypot(mx, x), msubarray))
 
     def test_masked_binary_operations2(self):
         # Tests domained_masked_binary_operation
         (x, mx) = self.data
         xmx = masked_array(mx.data.__array__(), mask=mx.mask)
-        assert_(isinstance(divide(mx, mx), msubarray))
-        assert_(isinstance(divide(mx, x), msubarray))
+        assertTrue(isinstance(divide(mx, mx), msubarray))
+        assertTrue(isinstance(divide(mx, x), msubarray))
         assert_equal(divide(mx, mx), divide(xmx, xmx))
 
     def test_attributepropagation(self):
@@ -232,22 +232,22 @@ class TestSubclassing:
         ym = msubarray(x)
         #
         z = (my+1)
-        assert_(isinstance(z, MaskedArray))
-        assert_(not isinstance(z, MSubArray))
-        assert_(isinstance(z._data, SubArray))
+        assertTrue(isinstance(z, MaskedArray))
+        assertTrue(not isinstance(z, MSubArray))
+        assertTrue(isinstance(z._data, SubArray))
         assert_equal(z._data.info, {})
         #
         z = (ym+1)
-        assert_(isinstance(z, MaskedArray))
-        assert_(isinstance(z, MSubArray))
-        assert_(isinstance(z._data, SubArray))
-        assert_(z._data.info['added'] > 0)
+        assertTrue(isinstance(z, MaskedArray))
+        assertTrue(isinstance(z, MSubArray))
+        assertTrue(isinstance(z._data, SubArray))
+        assertTrue(z._data.info['added'] > 0)
         # Test that inplace methods from data get used (gh-4617)
         ym += 1
-        assert_(isinstance(ym, MaskedArray))
-        assert_(isinstance(ym, MSubArray))
-        assert_(isinstance(ym._data, SubArray))
-        assert_(ym._data.info['iadded'] > 0)
+        assertTrue(isinstance(ym, MaskedArray))
+        assertTrue(isinstance(ym, MSubArray))
+        assertTrue(isinstance(ym._data, SubArray))
+        assertTrue(ym._data.info['iadded'] > 0)
         #
         ym._set_mask([1, 0, 0, 0, 1])
         assert_equal(ym._mask, [1, 0, 0, 0, 1])
@@ -256,7 +256,7 @@ class TestSubclassing:
         #
         xsub = subarray(x, info={'name':'x'})
         mxsub = masked_array(xsub)
-        assert_(hasattr(mxsub, 'info'))
+        assertTrue(hasattr(mxsub, 'info'))
         assert_equal(mxsub.info, xsub.info)
 
     def test_subclasspreservation(self):
@@ -267,22 +267,22 @@ class TestSubclassing:
         xsub = MSubArray(x, mask=m, info={'xsub':xinfo})
         #
         mxsub = masked_array(xsub, subok=False)
-        assert_(not isinstance(mxsub, MSubArray))
-        assert_(isinstance(mxsub, MaskedArray))
+        assertTrue(not isinstance(mxsub, MSubArray))
+        assertTrue(isinstance(mxsub, MaskedArray))
         assert_equal(mxsub._mask, m)
         #
         mxsub = asarray(xsub)
-        assert_(not isinstance(mxsub, MSubArray))
-        assert_(isinstance(mxsub, MaskedArray))
+        assertTrue(not isinstance(mxsub, MSubArray))
+        assertTrue(isinstance(mxsub, MaskedArray))
         assert_equal(mxsub._mask, m)
         #
         mxsub = masked_array(xsub, subok=True)
-        assert_(isinstance(mxsub, MSubArray))
+        assertTrue(isinstance(mxsub, MSubArray))
         assert_equal(mxsub.info, xsub.info)
         assert_equal(mxsub._mask, xsub._mask)
         #
         mxsub = asanyarray(xsub)
-        assert_(isinstance(mxsub, MSubArray))
+        assertTrue(isinstance(mxsub, MSubArray))
         assert_equal(mxsub.info, xsub.info)
         assert_equal(mxsub._mask, m)
 
@@ -293,21 +293,21 @@ class TestSubclassing:
         mxcsub = masked_array(xcsub, mask=[True, False, True, False, False])
         # getter should  return a ComplicatedSubArray, even for single item
         # first check we wrote ComplicatedSubArray correctly
-        assert_(isinstance(xcsub[1], ComplicatedSubArray))
-        assert_(isinstance(xcsub[1,...], ComplicatedSubArray))
-        assert_(isinstance(xcsub[1:4], ComplicatedSubArray))
+        assertTrue(isinstance(xcsub[1], ComplicatedSubArray))
+        assertTrue(isinstance(xcsub[1,...], ComplicatedSubArray))
+        assertTrue(isinstance(xcsub[1:4], ComplicatedSubArray))
 
         # now that it propagates inside the MaskedArray
-        assert_(isinstance(mxcsub[1], ComplicatedSubArray))
-        assert_(isinstance(mxcsub[1,...].data, ComplicatedSubArray))
-        assert_(mxcsub[0] is masked)
-        assert_(isinstance(mxcsub[0,...].data, ComplicatedSubArray))
-        assert_(isinstance(mxcsub[1:4].data, ComplicatedSubArray))
+        assertTrue(isinstance(mxcsub[1], ComplicatedSubArray))
+        assertTrue(isinstance(mxcsub[1,...].data, ComplicatedSubArray))
+        assertTrue(mxcsub[0] is masked)
+        assertTrue(isinstance(mxcsub[0,...].data, ComplicatedSubArray))
+        assertTrue(isinstance(mxcsub[1:4].data, ComplicatedSubArray))
 
         # also for flattened version (which goes via MaskedIterator)
-        assert_(isinstance(mxcsub.flat[1].data, ComplicatedSubArray))
-        assert_(mxcsub.flat[0] is masked)
-        assert_(isinstance(mxcsub.flat[1:4].base, ComplicatedSubArray))
+        assertTrue(isinstance(mxcsub.flat[1].data, ComplicatedSubArray))
+        assertTrue(mxcsub.flat[0] is masked)
+        assertTrue(isinstance(mxcsub.flat[1:4].base, ComplicatedSubArray))
 
         # setter should only work with ComplicatedSubArray input
         # first check we wrote ComplicatedSubArray correctly
@@ -328,11 +328,11 @@ class TestSubclassing:
         xcsub = ComplicatedSubArray(x)
         mxcsub_nomask = masked_array(xcsub)
 
-        assert_(isinstance(mxcsub_nomask[1,...].data, ComplicatedSubArray))
-        assert_(isinstance(mxcsub_nomask[0,...].data, ComplicatedSubArray))
+        assertTrue(isinstance(mxcsub_nomask[1,...].data, ComplicatedSubArray))
+        assertTrue(isinstance(mxcsub_nomask[0,...].data, ComplicatedSubArray))
 
-        assert_(isinstance(mxcsub_nomask[1], ComplicatedSubArray))
-        assert_(isinstance(mxcsub_nomask[0], ComplicatedSubArray))
+        assertTrue(isinstance(mxcsub_nomask[1], ComplicatedSubArray))
+        assertTrue(isinstance(mxcsub_nomask[0], ComplicatedSubArray))
 
     def test_subclass_repr(self):
         """test that repr uses the name of the subclass
@@ -365,11 +365,11 @@ class TestSubclassing:
         arr1 = SubMaskedArray('test', data=[1,2,3,4,5,6])
         arr2 = SubMaskedArray(data=[0,1,2,3,4,5])
         diff1 = np.subtract(arr1, arr2)
-        assert_('info' in diff1._optinfo)
-        assert_(diff1._optinfo['info'] == 'test')
+        assertTrue('info' in diff1._optinfo)
+        assertTrue(diff1._optinfo['info'] == 'test')
         diff2 = arr1 - arr2
-        assert_('info' in diff2._optinfo)
-        assert_(diff2._optinfo['info'] == 'test')
+        assertTrue('info' in diff2._optinfo)
+        assertTrue(diff2._optinfo['info'] == 'test')
 
 
 class ArrayNoInheritance:
@@ -393,7 +393,7 @@ def test_array_no_inheritance():
     # Test sharing the mask
     data_masked.mask = [True, False, False]
     assert_equal(data_masked.mask, new_array.mask)
-    assert_(new_array.sharedmask)
+    assertTrue(new_array.sharedmask)
 
     # Get the masked representation of the Quantity-like class
     new_array = np.ma.array(data_masked_units, copy=True)
@@ -402,7 +402,7 @@ def test_array_no_inheritance():
     # Test that the mask is not shared when copy=True
     data_masked.mask = [True, False, True]
     assert_equal([True, False, False], new_array.mask)
-    assert_(not new_array.sharedmask)
+    assertTrue(not new_array.sharedmask)
 
     # Get the masked representation of the Quantity-like class
     new_array = np.ma.array(data_masked_units, keep_mask=False)
@@ -410,8 +410,8 @@ def test_array_no_inheritance():
     # The change did not affect the original mask
     assert_equal(data_masked.mask, [True, False, True])
     # Test that the mask is False and not shared when keep_mask=False
-    assert_(not new_array.mask)
-    assert_(not new_array.sharedmask)
+    assertTrue(not new_array.mask)
+    assertTrue(not new_array.sharedmask)
 
 
 class TestClassWrapping:
@@ -426,25 +426,25 @@ class TestClassWrapping:
         # Tests masked_unary_operation
         (m, wm) = self.data
         with np.errstate(divide='ignore'):
-            assert_(isinstance(np.log(wm), WrappedArray))
+            assertTrue(isinstance(np.log(wm), WrappedArray))
 
     def test_masked_binary_operations(self):
         # Tests masked_binary_operation
         (m, wm) = self.data
         # Result should be a WrappedArray
-        assert_(isinstance(np.add(wm, wm), WrappedArray))
-        assert_(isinstance(np.add(m, wm), WrappedArray))
-        assert_(isinstance(np.add(wm, m), WrappedArray))
+        assertTrue(isinstance(np.add(wm, wm), WrappedArray))
+        assertTrue(isinstance(np.add(m, wm), WrappedArray))
+        assertTrue(isinstance(np.add(wm, m), WrappedArray))
         # add and '+' should call the same ufunc
         assert_equal(np.add(m, wm), m + wm)
-        assert_(isinstance(np.hypot(m, wm), WrappedArray))
-        assert_(isinstance(np.hypot(wm, m), WrappedArray))
+        assertTrue(isinstance(np.hypot(m, wm), WrappedArray))
+        assertTrue(isinstance(np.hypot(wm, m), WrappedArray))
         # Test domained binary operations
-        assert_(isinstance(np.divide(wm, m), WrappedArray))
-        assert_(isinstance(np.divide(m, wm), WrappedArray))
+        assertTrue(isinstance(np.divide(wm, m), WrappedArray))
+        assertTrue(isinstance(np.divide(m, wm), WrappedArray))
         assert_equal(np.divide(wm, m) * m, np.divide(m, m) * wm)
         # Test broadcasting
         m2 = np.stack([m, m])
-        assert_(isinstance(np.divide(wm, m2), WrappedArray))
-        assert_(isinstance(np.divide(m2, wm), WrappedArray))
+        assertTrue(isinstance(np.divide(wm, m2), WrappedArray))
+        assertTrue(isinstance(np.divide(m2, wm), WrappedArray))
         assert_equal(np.divide(m2, wm), np.divide(wm, m2))

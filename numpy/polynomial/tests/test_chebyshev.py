@@ -6,9 +6,8 @@ from functools import reduce
 import numpy as np
 import numpy.polynomial.chebyshev as cheb
 from numpy.polynomial.polynomial import polyval
-from numpy.testing import (
-    assert_almost_equal, assert_raises, assert_equal, assert_,
-    )
+from numpy.testing import (assert_, assert_almost_equal, assert_equal,
+                           assert_raises)
 
 
 def trim(x):
@@ -167,7 +166,7 @@ class TestEvaluation:
         #test shape
         z = np.ones((2, 3))
         res = cheb.chebval2d(z, z, self.c2d)
-        assert_(res.shape == (2, 3))
+        assertTrue(res.shape == (2, 3))
 
     def test_chebval3d(self):
         x1, x2, x3 = self.x
@@ -184,7 +183,7 @@ class TestEvaluation:
         #test shape
         z = np.ones((2, 3))
         res = cheb.chebval3d(z, z, z, self.c3d)
-        assert_(res.shape == (2, 3))
+        assertTrue(res.shape == (2, 3))
 
     def test_chebgrid2d(self):
         x1, x2, x3 = self.x
@@ -198,7 +197,7 @@ class TestEvaluation:
         #test shape
         z = np.ones((2, 3))
         res = cheb.chebgrid2d(z, z, self.c2d)
-        assert_(res.shape == (2, 3)*2)
+        assertTrue(res.shape == (2, 3)*2)
 
     def test_chebgrid3d(self):
         x1, x2, x3 = self.x
@@ -212,7 +211,7 @@ class TestEvaluation:
         #test shape
         z = np.ones((2, 3))
         res = cheb.chebgrid3d(z, z, z, self.c3d)
-        assert_(res.shape == (2, 3)*3)
+        assertTrue(res.shape == (2, 3)*3)
 
 
 class TestIntegral:
@@ -365,7 +364,7 @@ class TestVander:
         # check for 1d x
         x = np.arange(3)
         v = cheb.chebvander(x, 3)
-        assert_(v.shape == (3, 4))
+        assertTrue(v.shape == (3, 4))
         for i in range(4):
             coef = [0]*i + [1]
             assert_almost_equal(v[..., i], cheb.chebval(x, coef))
@@ -373,7 +372,7 @@ class TestVander:
         # check for 2d x
         x = np.array([[1, 2], [3, 4], [5, 6]])
         v = cheb.chebvander(x, 3)
-        assert_(v.shape == (3, 2, 4))
+        assertTrue(v.shape == (3, 2, 4))
         for i in range(4):
             coef = [0]*i + [1]
             assert_almost_equal(v[..., i], cheb.chebval(x, coef))
@@ -389,7 +388,7 @@ class TestVander:
 
         # check shape
         van = cheb.chebvander2d([x1], [x2], [1, 2])
-        assert_(van.shape == (1, 5, 6))
+        assertTrue(van.shape == (1, 5, 6))
 
     def test_chebvander3d(self):
         # also tests chebval3d for non-square coefficient array
@@ -402,7 +401,7 @@ class TestVander:
 
         # check shape
         van = cheb.chebvander3d([x1], [x2], [x3], [1, 2, 3])
-        assert_(van.shape == (1, 5, 24))
+        assertTrue(van.shape == (1, 5, 24))
 
 
 class TestFitting:
@@ -493,7 +492,7 @@ class TestInterpolate:
 
     def test_dimensions(self):
         for deg in range(1, 5):
-            assert_(cheb.chebinterpolate(self.f, deg).shape == (deg + 1,))
+            assertTrue(cheb.chebinterpolate(self.f, deg).shape == (deg + 1,))
 
     def test_approximation(self):
 
@@ -516,10 +515,10 @@ class TestCompanion:
     def test_dimensions(self):
         for i in range(1, 5):
             coef = [0]*i + [1]
-            assert_(cheb.chebcompanion(coef).shape == (i, i))
+            assertTrue(cheb.chebcompanion(coef).shape == (i, i))
 
     def test_linear_root(self):
-        assert_(cheb.chebcompanion([1, 2])[0, 0] == -.5)
+        assertTrue(cheb.chebcompanion([1, 2])[0, 0] == -.5)
 
 
 class TestGauss:

@@ -10,11 +10,11 @@ __all__ = ['iscomplexobj', 'isrealobj', 'imag', 'iscomplex',
            'common_type']
 
 import numpy.core.numeric as _nx
-from numpy.core.numeric import asarray, asanyarray, isnan, zeros
-from numpy.core.overrides import set_module
 from numpy.core import overrides
-from .ufunclike import isneginf, isposinf
+from numpy.core.numeric import asanyarray, asarray, isnan, zeros
+from numpy.core.overrides import set_module
 
+from .ufunclike import isneginf, isposinf
 
 array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy')

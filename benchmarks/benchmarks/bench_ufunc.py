@@ -1,7 +1,6 @@
-from .common import Benchmark, get_squares_
-
 import numpy as np
 
+from .common import Benchmark, get_squares_
 
 ufuncs = ['abs', 'absolute', 'add', 'arccos', 'arccosh', 'arcsin', 'arcsinh',
           'arctan', 'arctan2', 'arctanh', 'bitwise_and', 'bitwise_not',
@@ -58,9 +57,9 @@ class UFunc(Benchmark):
         [self.f(*arg) for arg in self.args]
 
 class UFuncSmall(Benchmark):
-    """  Benchmark for a selection of ufuncs on a small arrays and scalars 
+    """  Benchmark for a selection of ufuncs on a small arrays and scalars
 
-    Since the arrays and scalars are small, we are benchmarking the overhead 
+    Since the arrays and scalars are small, we are benchmarking the overhead
     of the numpy ufunc functionality
     """
     params = ['abs', 'sqrt', 'cos']
@@ -77,7 +76,7 @@ class UFuncSmall(Benchmark):
         self.array_int_3 = np.array([1, 2, 3])
         self.float64 = np.float64(1.1)
         self.python_float = 1.1
-        
+
     def time_ufunc_small_array(self, ufuncname):
         self.f(self.array_5)
 
@@ -92,7 +91,7 @@ class UFuncSmall(Benchmark):
 
     def time_ufunc_python_float(self, ufuncname):
         self.f(self.python_float)
-        
+
 
 class Custom(Benchmark):
     def setup(self):
@@ -302,7 +301,7 @@ class BinaryBench(Benchmark):
         self.b32 = np.random.rand(N).astype(np.float32)
         self.a64 = np.random.rand(N).astype(np.float64)
         self.b64 = np.random.rand(N).astype(np.float64)
-    
+
     def time_pow_32(self):
         np.power(self.a32, self.b32)
 

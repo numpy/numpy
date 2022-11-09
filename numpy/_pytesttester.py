@@ -27,8 +27,8 @@ This module is imported by every numpy subpackage, so lies at the top level to
 simplify circular import issues. For the same reason, it contains no numpy
 imports at module scope, instead importing numpy within function calls.
 """
-import sys
 import os
+import sys
 
 __all__ = ['PytestTester']
 
@@ -123,8 +123,9 @@ class PytestTester:
         True
 
         """
-        import pytest
         import warnings
+
+        import pytest
 
         module = sys.modules[self.module_name]
         module_path = os.path.abspath(module.__path__[0])

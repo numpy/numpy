@@ -335,17 +335,17 @@ class NameValidator:
 
         """
         # Initial checks ..............
-        if (names is None):
-            if (nbfields is None):
+        if names is None:
+            if nbfields is None:
                 return None
             names = []
         if isinstance(names, str):
             names = [names, ]
         if nbfields is not None:
             nbnames = len(names)
-            if (nbnames < nbfields):
+            if nbnames < nbfields:
                 names = list(names) + [''] * (nbfields - nbnames)
-            elif (nbnames > nbfields):
+            elif nbnames > nbfields:
                 names = names[:nbfields]
         # Set some shortcuts ...........
         deletechars = self.deletechars
@@ -354,7 +354,7 @@ class NameValidator:
         replace_space = self.replace_space
         # Initializes some variables ...
         validatednames = []
-        seen = dict()
+        seen = []
         nbempty = 0
 
         for item in names:

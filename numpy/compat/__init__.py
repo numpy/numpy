@@ -8,9 +8,8 @@ extensions, which may be included for the following reasons:
   * we may only need a small subset of the copied library/module
 
 """
-from . import _inspect
-from . import py3k
-from ._inspect import getargspec, formatargspec
+from . import _inspect, py3k
+from ._inspect import formatargspec, getargspec
 from .py3k import *
 
 __all__ = []

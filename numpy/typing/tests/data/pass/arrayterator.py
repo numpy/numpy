@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from typing import Any
+
 import numpy as np
 
 AR_i8: np.ndarray[Any, np.dtype[np.int_]] = np.arange(10)

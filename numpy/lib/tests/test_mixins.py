@@ -4,7 +4,6 @@ import operator
 import numpy as np
 from numpy.testing import assert_, assert_equal, assert_raises
 
-
 # NOTE: This class should be kept as an exact copy of the example from the
 # docstring for NDArrayOperatorsMixin.
 
@@ -135,8 +134,8 @@ class TestNDArrayOperatorsMixin:
         opt_out = OptOut()
 
         # supported operations
-        assert_(array_like + opt_out is opt_out)
-        assert_(opt_out + array_like is opt_out)
+        assertTrue(array_like + opt_out is opt_out)
+        assertTrue(opt_out + array_like is opt_out)
 
         # not supported
         with assert_raises(TypeError):
@@ -204,7 +203,7 @@ class TestNDArrayOperatorsMixin:
 
     def test_ufunc_at(self):
         array = ArrayLike(np.array([1, 2, 3, 4]))
-        assert_(np.negative.at(array, np.array([0, 1])) is None)
+        assertTrue(np.negative.at(array, np.array([0, 1])) is None)
         _assert_equal_type_and_value(array, ArrayLike([-1, -2, 3, 4]))
 
     def test_ufunc_two_outputs(self):

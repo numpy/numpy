@@ -1,7 +1,8 @@
-import pytest
-import subprocess
 import json
+import subprocess
 import sys
+
+import pytest
 
 from numpy.distutils import _shell_utils
 

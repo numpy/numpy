@@ -3,12 +3,14 @@
 """
 import code
 import platform
-import pytest
 import sys
-
 from tempfile import TemporaryFile
+
+import pytest
+
 import numpy as np
 from numpy.testing import assert_, assert_equal, assert_raises
+
 
 class TestRealScalars:
     def test_str(self):
@@ -153,7 +155,7 @@ class TestRealScalars:
                     "0.00000000000000000000000000000000000000000000140129846432"
                     "4817070923729583289916131280261941876515771757068283889791"
                     "08268586060148663818836212158203125")
-        
+
         assert_equal(fpos64(5e-324, unique=False, precision=1074),
                     "0.00000000000000000000000000000000000000000000000000000000"
                     "0000000000000000000000000000000000000000000000000000000000"
@@ -366,17 +368,17 @@ class TestRealScalars:
         a = np.float128('2')/np.float128('3')
         b = np.float128(str(a))
         assert_equal(str(a), str(b))
-        assert_(a != b)
+        assertTrue(a != b)
 
     def float32_roundtrip(self):
         # gh-9360
         x = np.float32(1024 - 2**-14)
         y = np.float32(1024 - 2**-13)
-        assert_(repr(x) != repr(y))
+        assertTrue(repr(x) != repr(y))
         assert_equal(np.float32(repr(x)), x)
         assert_equal(np.float32(repr(y)), y)
 
     def float64_vs_python(self):
         # gh-2643, gh-6136, gh-6908
         assert_equal(repr(np.float64(0.1)), repr(0.1))
-        assert_(repr(np.float64(0.20000000000000004)) != repr(0.2))
+        assertTrue(repr(np.float64(0.20000000000000004)) != repr(0.2))

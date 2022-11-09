@@ -1,14 +1,8 @@
 from collections.abc import Iterable
-from typing import Any, TypeVar, overload, SupportsIndex
+from typing import Any, SupportsIndex, TypeVar, overload
 
 from numpy import generic
-from numpy._typing import (
-    NDArray,
-    ArrayLike,
-    _ShapeLike,
-    _Shape,
-    _ArrayLike
-)
+from numpy._typing import ArrayLike, NDArray, _ArrayLike, _Shape, _ShapeLike
 
 _SCT = TypeVar("_SCT", bound=generic)
 

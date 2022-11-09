@@ -1,16 +1,17 @@
 from __future__ import annotations
 
-import sys
 import copy
-import types
 import pickle
+import sys
+import types
 import weakref
-from typing import TypeVar, Any, Union, Callable
+from typing import Any, Callable, TypeVar, Union
 
 import pytest
+from typing_extensions import Unpack
+
 import numpy as np
 from numpy._typing._generic_alias import _GenericAlias
-from typing_extensions import Unpack
 
 ScalarType = TypeVar("ScalarType", bound=np.generic, covariant=True)
 T1 = TypeVar("T1")

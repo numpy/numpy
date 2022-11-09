@@ -1,20 +1,23 @@
-import warnings
-import sys
-import os
 import itertools
-import pytest
+import os
+import sys
+import warnings
 import weakref
 
+import pytest
+
 import numpy as np
-from numpy.testing import (
-    assert_equal, assert_array_equal, assert_almost_equal,
-    assert_array_almost_equal, assert_array_less, build_err_msg, raises,
-    assert_raises, assert_warns, assert_no_warnings, assert_allclose,
-    assert_approx_equal, assert_array_almost_equal_nulp, assert_array_max_ulp,
-    clear_and_catch_warnings, suppress_warnings, assert_string_equal, assert_,
-    tempdir, temppath, assert_no_gc_cycles, HAS_REFCOUNT
-    )
 from numpy.core.overrides import ARRAY_FUNCTION_ENABLED
+from numpy.testing import (HAS_REFCOUNT, assert_, assert_allclose,
+                           assert_almost_equal, assert_approx_equal,
+                           assert_array_almost_equal,
+                           assert_array_almost_equal_nulp, assert_array_equal,
+                           assert_array_less, assert_array_max_ulp,
+                           assert_equal, assert_no_gc_cycles,
+                           assert_no_warnings, assert_raises,
+                           assert_string_equal, assert_warns, build_err_msg,
+                           clear_and_catch_warnings, raises, suppress_warnings,
+                           tempdir, temppath)
 
 
 class _GenericTest:
@@ -184,9 +187,9 @@ class TestArrayEqual(_GenericTest):
 
         a = np.array([1., 2.]).view(MyArray)
         b = np.array([2., 3.]).view(MyArray)
-        assert_(type(a == a), bool)
-        assert_(a == a)
-        assert_(a != b)
+        assertTrue(type(a == a), bool)
+        assertTrue(a == a)
+        assertTrue(a != b)
         self._test_equal(a, a)
         self._test_not_equal(a, b)
         self._test_not_equal(b, a)
@@ -913,7 +916,7 @@ class TestAssertAllclose:
         with pytest.raises(AssertionError) as exc_info:
             assert_allclose(a, b)
         msg = str(exc_info.value)
-        assert_('Mismatched elements: 1 / 4 (25%)\n'
+        assertTrue('Mismatched elements: 1 / 4 (25%)\n'
                 'Max absolute difference: 1\n'
                 'Max relative difference: 0.5' in msg)
 
@@ -946,7 +949,7 @@ class TestAssertAllclose:
         with pytest.raises(AssertionError) as exc_info:
             assert_allclose(a, b)
         msg = str(exc_info.value)
-        assert_('Max relative difference: 0.5' in msg)
+        assertTrue('Max relative difference: 0.5' in msg)
 
     def test_timedelta(self):
         # see gh-18286
@@ -1550,7 +1553,7 @@ def test_tempdir():
         fpath = os.path.join(tdir, 'tmp')
         with open(fpath, 'w'):
             pass
-    assert_(not os.path.isdir(tdir))
+    assertTrue(not os.path.isdir(tdir))
 
     raised = False
     try:
@@ -1558,15 +1561,15 @@ def test_tempdir():
             raise ValueError()
     except ValueError:
         raised = True
-    assert_(raised)
-    assert_(not os.path.isdir(tdir))
+    assertTrue(raised)
+    assertTrue(not os.path.isdir(tdir))
 
 
 def test_temppath():
     with temppath() as fpath:
         with open(fpath, 'w'):
             pass
-    assert_(not os.path.isfile(fpath))
+    assertTrue(not os.path.isfile(fpath))
 
     raised = False
     try:
@@ -1574,8 +1577,8 @@ def test_temppath():
             raise ValueError()
     except ValueError:
         raised = True
-    assert_(raised)
-    assert_(not os.path.isfile(fpath))
+    assertTrue(raised)
+    assertTrue(not os.path.isfile(fpath))
 
 
 class my_cacw(clear_and_catch_warnings):

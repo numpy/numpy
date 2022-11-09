@@ -1,29 +1,15 @@
-from typing import (
-    Literal as L,
-    overload,
-    TypeVar,
-    Any,
-)
+from typing import Any
+from typing import Literal as L
+from typing import TypeVar, overload
 
-from numpy import (
-    chararray as chararray,
-    dtype,
-    str_,
-    bytes_,
-    int_,
-    bool_,
-    object_,
-    _OrderKACF,
-)
-
-from numpy._typing import (
-    NDArray,
-    _ArrayLikeStr_co as U_co,
-    _ArrayLikeBytes_co as S_co,
-    _ArrayLikeInt_co as i_co,
-    _ArrayLikeBool_co as b_co,
-)
-
+from numpy import _OrderKACF, bool_, bytes_
+from numpy import chararray as chararray
+from numpy import dtype, int_, object_, str_
+from numpy._typing import NDArray
+from numpy._typing import _ArrayLikeBool_co as b_co
+from numpy._typing import _ArrayLikeBytes_co as S_co
+from numpy._typing import _ArrayLikeInt_co as i_co
+from numpy._typing import _ArrayLikeStr_co as U_co
 from numpy.core.multiarray import compare_chararrays as compare_chararrays
 
 _SCT = TypeVar("_SCT", str_, bytes_)

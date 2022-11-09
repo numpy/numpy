@@ -2,9 +2,9 @@
 #http://www.compaq.com/fortran/docs/
 import os
 import sys
+from distutils.errors import DistutilsPlatformError
 
 from numpy.distutils.fcompiler import FCompiler
-from distutils.errors import DistutilsPlatformError
 
 compilers = ['CompaqFCompiler']
 if os.name != 'posix' or sys.platform[:6] == 'cygwin' :

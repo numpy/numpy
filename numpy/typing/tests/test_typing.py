@@ -10,13 +10,11 @@ from collections.abc import Iterator
 from typing import IO, TYPE_CHECKING
 
 import pytest
+
 import numpy as np
 import numpy.typing as npt
-from numpy.typing.mypy_plugin import (
-    _PRECISION_DICT,
-    _EXTENDED_PRECISION_LIST,
-    _C_INTP,
-)
+from numpy.typing.mypy_plugin import (_C_INTP, _EXTENDED_PRECISION_LIST,
+                                      _PRECISION_DICT)
 
 try:
     from mypy import api

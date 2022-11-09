@@ -8,7 +8,7 @@ import pytest
 
 import numpy as np
 import numpy.core._multiarray_tests as mt
-from numpy.testing import assert_warns, IS_PYPY
+from numpy.testing import IS_PYPY, assert_warns
 
 
 class StringConverterTestCase:

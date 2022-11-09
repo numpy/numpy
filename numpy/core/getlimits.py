@@ -5,12 +5,12 @@ __all__ = ['finfo', 'iinfo']
 
 import warnings
 
-from ._machar import MachAr
-from .overrides import set_module
 from . import numeric
 from . import numerictypes as ntypes
-from .numeric import array, inf, NaN
-from .umath import log10, exp2, nextafter, isnan
+from ._machar import MachAr
+from .numeric import NaN, array, inf
+from .overrides import set_module
+from .umath import exp2, isnan, log10, nextafter
 
 
 def _fr0(a):

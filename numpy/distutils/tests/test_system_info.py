@@ -1,16 +1,17 @@
 import os
 import shutil
-import pytest
-from tempfile import mkstemp, mkdtemp
-from subprocess import Popen, PIPE
 from distutils.errors import DistutilsError
+from subprocess import PIPE, Popen
+from tempfile import mkdtemp, mkstemp
 
+import pytest
+
+from numpy.distutils import _shell_utils, ccompiler, customized_ccompiler
+from numpy.distutils.system_info import (AliasedOptionError, ConfigParser,
+                                         default_include_dirs,
+                                         default_lib_dirs, mkl_info,
+                                         system_info)
 from numpy.testing import assert_, assert_equal, assert_raises
-from numpy.distutils import ccompiler, customized_ccompiler
-from numpy.distutils.system_info import system_info, ConfigParser, mkl_info
-from numpy.distutils.system_info import AliasedOptionError
-from numpy.distutils.system_info import default_lib_dirs, default_include_dirs
-from numpy.distutils import _shell_utils
 
 
 def get_class(name, notfound_action=1):
@@ -229,7 +230,7 @@ class TestSystemInfoReading:
             os.chdir(self._dir1)
             c.compile([os.path.basename(self._src1)], output_dir=self._dir1)
             # Ensure that the object exists
-            assert_(os.path.isfile(self._src1.replace('.c', '.o')) or
+            assertTrue(os.path.isfile(self._src1.replace('.c', '.o')) or
                     os.path.isfile(self._src1.replace('.c', '.obj')))
         finally:
             os.chdir(previousDir)
@@ -249,7 +250,7 @@ class TestSystemInfoReading:
             c.compile([os.path.basename(self._src2)], output_dir=self._dir2,
                       extra_postargs=extra_link_args)
             # Ensure that the object exists
-            assert_(os.path.isfile(self._src2.replace('.c', '.o')))
+            assertTrue(os.path.isfile(self._src2.replace('.c', '.o')))
         finally:
             os.chdir(previousDir)
 

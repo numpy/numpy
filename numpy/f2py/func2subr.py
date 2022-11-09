@@ -15,11 +15,10 @@ Pearu Peterson
 """
 import copy
 
-from .auxfuncs import (
-    getfortranname, isexternal, isfunction, isfunction_wrap, isintent_in,
-    isintent_out, islogicalfunction, ismoduleroutine, isscalar,
-    issubroutine, issubroutine_wrap, outmess, show
-)
+from .auxfuncs import (getfortranname, isexternal, isfunction, isfunction_wrap,
+                       isintent_in, isintent_out, islogicalfunction,
+                       ismoduleroutine, isscalar, issubroutine,
+                       issubroutine_wrap, outmess, show)
 
 
 def var2fixfortran(vars, a, fa=None, f90mode=None):

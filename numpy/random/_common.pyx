@@ -1,13 +1,17 @@
 #!python
 #cython: wraparound=False, nonecheck=False, boundscheck=False, cdivision=True, language_level=3
 from collections import namedtuple
+
 from cpython cimport PyFloat_AsDouble
+
 import sys
+
 import numpy as np
-cimport numpy as np
-cimport numpy.math as npmath
 
 from libc.stdint cimport uintptr_t
+
+cimport numpy as np
+cimport numpy.math as npmath
 
 __all__ = ['interface']
 

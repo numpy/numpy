@@ -7,13 +7,11 @@ import collections.abc
 import contextlib
 import contextvars
 
-from .overrides import set_module
-from .umath import (
-    UFUNC_BUFSIZE_DEFAULT,
-    ERR_IGNORE, ERR_WARN, ERR_RAISE, ERR_CALL, ERR_PRINT, ERR_LOG, ERR_DEFAULT,
-    SHIFT_DIVIDEBYZERO, SHIFT_OVERFLOW, SHIFT_UNDERFLOW, SHIFT_INVALID,
-)
 from . import umath
+from .overrides import set_module
+from .umath import (ERR_CALL, ERR_DEFAULT, ERR_IGNORE, ERR_LOG, ERR_PRINT,
+                    ERR_RAISE, ERR_WARN, SHIFT_DIVIDEBYZERO, SHIFT_INVALID,
+                    SHIFT_OVERFLOW, SHIFT_UNDERFLOW, UFUNC_BUFSIZE_DEFAULT)
 
 __all__ = [
     "seterr", "geterr", "setbufsize", "getbufsize", "seterrcall", "geterrcall",

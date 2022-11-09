@@ -155,12 +155,7 @@ API
 # NOTE: The API section will be appended with additional entries
 # further down in this file
 
-from numpy._typing import (
-    ArrayLike,
-    DTypeLike,
-    NBitBase,
-    NDArray,
-)
+from numpy._typing import ArrayLike, DTypeLike, NBitBase, NDArray
 
 __all__ = ["ArrayLike", "DTypeLike", "NBitBase", "NDArray"]
 
@@ -171,5 +166,6 @@ if __doc__ is not None:
     del _docstrings
 
 from numpy._pytesttester import PytestTester
+
 test = PytestTester(__name__)
 del PytestTester

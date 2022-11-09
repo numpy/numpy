@@ -1,5 +1,6 @@
 from distutils.unixccompiler import UnixCCompiler
 
+
 class PathScaleCCompiler(UnixCCompiler):
 
     """

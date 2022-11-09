@@ -3,9 +3,8 @@
 """
 import numpy as np
 import numpy.polynomial.polyutils as pu
-from numpy.testing import (
-    assert_almost_equal, assert_raises, assert_equal, assert_,
-    )
+from numpy.testing import (assert_, assert_almost_equal, assert_equal,
+                           assert_raises)
 
 
 class TestMisc:
@@ -28,8 +27,8 @@ class TestMisc:
                 ci = np.ones(1, types[i])
                 cj = np.ones(1, types[j])
                 [resi, resj] = pu.as_series([ci, cj])
-                assert_(resi.dtype.char == resj.dtype.char)
-                assert_(resj.dtype.char == types[i])
+                assertTrue(resi.dtype.char == resj.dtype.char)
+                assertTrue(resj.dtype.char == types[i])
 
     def test_trimcoef(self):
         coef = [2, -1, 1, 0]
@@ -103,7 +102,7 @@ class TestDomain:
         dom2 = [1, 3]
         x = np.array([dom1, dom1]).view(MyNDArray)
         res = pu.mapdomain(x, dom1, dom2)
-        assert_(isinstance(res, MyNDArray))
+        assertTrue(isinstance(res, MyNDArray))
 
     def test_mapparms(self):
         # test for real values

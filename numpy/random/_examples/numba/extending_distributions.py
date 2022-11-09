@@ -27,9 +27,9 @@ move distributions.dll ../../_examples/numba/
 import os
 
 import numba as nb
-import numpy as np
 from cffi import FFI
 
+import numpy as np
 from numpy.random import PCG64
 
 ffi = FFI()

@@ -1,7 +1,10 @@
 import os
-import pytest
 import textwrap
+
+import pytest
+
 import numpy as np
+
 from . import util
 
 

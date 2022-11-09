@@ -23,20 +23,19 @@ __all__ = [
 import itertools
 import warnings
 
-from . import core as ma
-from .core import (
-    MaskedArray, MAError, add, array, asarray, concatenate, filled, count,
-    getmask, getmaskarray, make_mask_descr, masked, masked_array, mask_or,
-    nomask, ones, sort, zeros, getdata, get_masked_subclass, dot,
-    mask_rowcols
-    )
-
 import numpy as np
-from numpy import ndarray, array as nxarray
+from numpy import array as nxarray
+from numpy import ndarray
 from numpy.core.multiarray import normalize_axis_index
 from numpy.core.numeric import normalize_axis_tuple
 from numpy.lib.function_base import _ureduce
 from numpy.lib.index_tricks import AxisConcatenator
+
+from . import core as ma
+from .core import (MAError, MaskedArray, add, array, asarray, concatenate,
+                   count, dot, filled, get_masked_subclass, getdata, getmask,
+                   getmaskarray, make_mask_descr, mask_or, mask_rowcols,
+                   masked, masked_array, nomask, ones, sort, zeros)
 
 
 def issequence(seq):
@@ -361,7 +360,7 @@ diagflat = _fromnxfunction_single('diagflat')
 def flatten_inplace(seq):
     """Flatten a sequence in place."""
     k = 0
-    while (k != len(seq)):
+    while k != len(seq):
         while hasattr(seq[k], '__iter__'):
             seq[k:(k + 1)] = seq[k]
         k += 1

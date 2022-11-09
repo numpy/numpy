@@ -9,11 +9,13 @@ function-based counterpart in `../from_numeric.py`.
 from __future__ import annotations
 
 import operator
-from typing import cast, Any
+from typing import Any, cast
 
 import numpy as np
 
-class SubClass(np.ndarray): ...
+
+class SubClass(np.ndarray):
+    ...
 
 i4 = np.int32(1)
 A: np.ndarray[Any, np.dtype[np.int32]] = np.array([[1]], dtype=np.int32)

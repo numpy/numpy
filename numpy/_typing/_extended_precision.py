@@ -8,12 +8,8 @@ that they can be imported conditionally via the numpy's mypy plugin.
 from typing import TYPE_CHECKING
 
 import numpy as np
-from . import (
-    _80Bit,
-    _96Bit,
-    _128Bit,
-    _256Bit,
-)
+
+from . import _80Bit, _96Bit, _128Bit, _256Bit
 
 if TYPE_CHECKING:
     uint128 = np.unsignedinteger[_128Bit]

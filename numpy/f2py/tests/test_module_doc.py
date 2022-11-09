@@ -1,10 +1,12 @@
 import os
 import sys
-import pytest
 import textwrap
 
-from . import util
+import pytest
+
 from numpy.testing import IS_PYPY
+
+from . import util
 
 
 class TestModuleDocString(util.F2PyTest):

@@ -1,18 +1,17 @@
 #!/usr/bin/env python3
 """
-Numpy build options can be modified with a site.cfg file. 
+Numpy build options can be modified with a site.cfg file.
 See site.cfg.example for a template and more information.
 """
 
+import builtins
 import os
-from pathlib import Path
-import sys
+import re
 import subprocess
+import sys
 import textwrap
 import warnings
-import builtins
-import re
-
+from pathlib import Path
 
 # Python supported version checks. Keep right after stdlib imports to ensure we
 # get a sensible error for older Python versions
@@ -21,7 +20,6 @@ if sys.version_info[:2] < (3, 8):
 
 
 import versioneer
-
 
 # This is a bit hackish: we are setting a global variable so that the main
 # numpy __init__ can detect if it is being loaded by the setup routine, to
@@ -60,12 +58,14 @@ if sys.version_info >= (3, 12):
 if os.path.exists('MANIFEST'):
     os.remove('MANIFEST')
 
+import setuptools
+
 # We need to import setuptools here in order for it to persist in sys.modules.
 # Its presence/absence is used in subclassing setup in numpy/distutils/core.py.
 # However, we need to run the distutils version of sdist, so import that first
 # so that it is in sys.modules
 import numpy.distutils.command.sdist
-import setuptools
+
 if int(setuptools.__version__.split('.')[0]) >= 60:
     # setuptools >= 60 switches to vendored distutils by default; this
     # may break the numpy build, so make sure the stdlib version is used
@@ -80,6 +80,7 @@ if int(setuptools.__version__.split('.')[0]) >= 60:
 
 # Initialize cmdclass from versioneer
 from numpy.distutils.core import numpy_cmdclass
+
 cmdclass = versioneer.get_cmdclass(numpy_cmdclass)
 
 CLASSIFIERS = """\
@@ -187,9 +188,9 @@ def get_build_overrides():
     """
     Custom build commands to add `-std=c99` to compilation
     """
+    from numpy.compat import _pep440
     from numpy.distutils.command.build_clib import build_clib
     from numpy.distutils.command.build_ext import build_ext
-    from numpy.compat import _pep440
 
     def _needs_gcc_c99_flag(obj):
         if obj.compiler.compiler_type != 'unix':
@@ -364,7 +365,7 @@ def parse_setuppy_commands():
                     'install_lib', 'install_scripts', ):
         bad_commands[command] = "`setup.py %s` is not supported" % command
 
-    for command in bad_commands.keys():
+    for command in bad_commands:
         if command in args:
             print(textwrap.dedent(bad_commands[command]) +
                   "\nAdd `--force` to your command to use it anyway if you "

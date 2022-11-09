@@ -1,51 +1,20 @@
 from collections.abc import Sequence
-from typing import (
-    Any,
-    TypeVar,
-    Generic,
-    overload,
-    Literal,
-    SupportsIndex,
-)
+from typing import Any, Generic, Literal, SupportsIndex, TypeVar, overload
 
-from numpy import (
-    # Circumvent a naming conflict with `AxisConcatenator.matrix`
-    matrix as _Matrix,
-    ndenumerate as ndenumerate,
-    ndindex as ndindex,
-    ndarray,
-    dtype,
-    integer,
-    str_,
-    bytes_,
-    bool_,
-    int_,
-    float_,
-    complex_,
-    intp,
-    _OrderCF,
-    _ModeKind,
-)
-from numpy._typing import (
-    # Arrays
-    ArrayLike,
-    _NestedSequence,
-    _FiniteNestedSequence,
-    NDArray,
-    _ArrayLikeInt,
-
-    # DTypes
-    DTypeLike,
-    _SupportsDType,
-
-    # Shapes
-    _ShapeLike,
-)
-
-from numpy.core.multiarray import (
-    unravel_index as unravel_index,
-    ravel_multi_index as ravel_multi_index,
-)
+from numpy import (_ModeKind, _OrderCF, bool_, bytes_, complex_, dtype, float_,
+                   int_, integer, intp)
+from numpy import \
+    matrix as \
+    _Matrix  # Circumvent a naming conflict with `AxisConcatenator.matrix`
+from numpy import ndarray
+from numpy import ndenumerate as ndenumerate
+from numpy import ndindex as ndindex
+from numpy import str_
+from numpy._typing import (ArrayLike, DTypeLike,  # Arrays; DTypes; Shapes
+                           NDArray, _ArrayLikeInt, _FiniteNestedSequence,
+                           _NestedSequence, _ShapeLike, _SupportsDType)
+from numpy.core.multiarray import ravel_multi_index as ravel_multi_index
+from numpy.core.multiarray import unravel_index as unravel_index
 
 _T = TypeVar("_T")
 _DType = TypeVar("_DType", bound=dtype[Any])

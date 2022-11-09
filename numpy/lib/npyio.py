@@ -1,32 +1,29 @@
-import os
-import re
+import contextlib
 import functools
 import itertools
+import operator
+import os
+import re
 import warnings
 import weakref
-import contextlib
-import operator
-from operator import itemgetter, index as opindex, methodcaller
 from collections.abc import Mapping
+from operator import index as opindex
+from operator import itemgetter, methodcaller
 
 import numpy as np
+from numpy.compat import (asbytes, asstr, asunicode, os_fspath, os_PathLike,
+                          pickle)
+from numpy.core import overrides
+from numpy.core._multiarray_umath import _load_from_filelike
+from numpy.core.multiarray import packbits, unpackbits
+from numpy.core.overrides import set_array_function_like_doc, set_module
+
 from . import format
 from ._datasource import DataSource
-from numpy.core import overrides
-from numpy.core.multiarray import packbits, unpackbits
-from numpy.core._multiarray_umath import _load_from_filelike
-from numpy.core.overrides import set_array_function_like_doc, set_module
-from ._iotools import (
-    LineSplitter, NameValidator, StringConverter, ConverterError,
-    ConverterLockError, ConversionWarning, _is_string_like,
-    has_nested_fields, flatten_dtype, easy_dtype, _decode_line
-    )
-
-from numpy.compat import (
-    asbytes, asstr, asunicode, os_fspath, os_PathLike,
-    pickle
-    )
-
+from ._iotools import (ConversionWarning, ConverterError, ConverterLockError,
+                       LineSplitter, NameValidator, StringConverter,
+                       _decode_line, _is_string_like, easy_dtype,
+                       flatten_dtype, has_nested_fields)
 
 __all__ = [
     'savetxt', 'loadtxt', 'genfromtxt',
@@ -1161,10 +1158,10 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         while such lines are counted in `skiprows`.
 
         .. versionadded:: 1.16.0
-        
+
         .. versionchanged:: 1.23.0
-            Lines containing no data, including comment lines (e.g., lines 
-            starting with '#' or as specified via `comments`) are not counted 
+            Lines containing no data, including comment lines (e.g., lines
+            starting with '#' or as specified via `comments`) are not counted
             towards `max_rows`.
     quotechar : unicode character or None, optional
         The character used to denote the start and end of a quoted item.
@@ -2145,7 +2142,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         # We have a sequence : update on a one-to-one basis
         elif isinstance(user_filling_values, (list, tuple)):
             n = len(user_filling_values)
-            if (n <= nbcols):
+            if n <= nbcols:
                 filling_values[:n] = user_filling_values
             else:
                 filling_values = user_filling_values[:nbcols]

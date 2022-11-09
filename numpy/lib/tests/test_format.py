@@ -274,20 +274,18 @@ Test the header writing.
     "v\x00{'descr': [('x', '>i4', (2,)), ('y', '>f8', (2, 2)), ('z', '|u1')],\n 'fortran_order': False,\n 'shape': (2,)}         \n"
     "\x16\x02{'descr': [('x', '>i4', (2,)),\n           ('Info',\n            [('value', '>c16'),\n             ('y2', '>f8'),\n             ('Info2',\n              [('name', '|S2'),\n               ('value', '>c16', (2,)),\n               ('y3', '>f8', (2,)),\n               ('z3', '>u4', (2,))]),\n             ('name', '|S2'),\n             ('z2', '|b1')]),\n           ('color', '|S2'),\n           ('info', [('Name', '>U8'), ('Value', '>c16')]),\n           ('y', '>f8', (2, 2)),\n           ('z', '|u1')],\n 'fortran_order': False,\n 'shape': (2,)}      \n"
 '''
-import sys
 import os
+import sys
 import warnings
-import pytest
 from io import BytesIO
 
-import numpy as np
-from numpy.testing import (
-    assert_, assert_array_equal, assert_raises, assert_raises_regex,
-    assert_warns, IS_PYPY,
-    )
-from numpy.testing._private.utils import requires_memory
-from numpy.lib import format
+import pytest
 
+import numpy as np
+from numpy.lib import format
+from numpy.testing import (IS_PYPY, assert_, assert_array_equal, assert_raises,
+                           assert_raises_regex, assert_warns)
+from numpy.testing._private.utils import requires_memory
 
 # Generate some basic arrays to test with.
 scalars = [
@@ -430,7 +428,7 @@ def roundtrip_truncated(arr):
 
 
 def assert_equal_(o1, o2):
-    assert_(o1 == o2)
+    assertTrue(o1 == o2)
 
 
 def test_roundtrip():
@@ -554,12 +552,12 @@ def test_pickle_python2_python3():
                 data = data_f
 
             if encoding == 'latin1' and fname.startswith('py2'):
-                assert_(isinstance(data[3], str))
+                assertTrue(isinstance(data[3], str))
                 assert_array_equal(data[:-1], expected[:-1])
                 # mojibake occurs
                 assert_array_equal(data[-1].encode(encoding), expected[-1])
             else:
-                assert_(isinstance(data[3], bytes))
+                assertTrue(isinstance(data[3], bytes))
                 assert_array_equal(data, expected)
 
         if fname.startswith('py2'):
@@ -660,12 +658,12 @@ def test_version_2_0():
     with warnings.catch_warnings(record=True) as w:
         warnings.filterwarnings('always', '', UserWarning)
         format.write_array(f, d)
-        assert_(w[0].category is UserWarning)
+        assertTrue(w[0].category is UserWarning)
 
     # check alignment of data portion
     f.seek(0)
     header = f.readline()
-    assert_(len(header) % format.ARRAY_ALIGN == 0)
+    assertTrue(len(header) % format.ARRAY_ALIGN == 0)
 
     f.seek(0)
     n = format.read_array(f, max_header_size=200000)
@@ -679,8 +677,8 @@ def test_version_2_0_memmap(tmpdir):
     # requires more than 2 byte for header
     dt = [(("%d" % i) * 100, float) for i in range(500)]
     d = np.ones(1000, dtype=dt)
-    tf1 = os.path.join(tmpdir, f'version2_01.npy')
-    tf2 = os.path.join(tmpdir, f'version2_02.npy')
+    tf1 = os.path.join(tmpdir, 'version2_01.npy')
+    tf2 = os.path.join(tmpdir, 'version2_02.npy')
 
     # 1.0 requested but data cannot be saved this way
     assert_raises(ValueError, format.open_memmap, tf1, mode='w+', dtype=d.dtype,
@@ -697,7 +695,7 @@ def test_version_2_0_memmap(tmpdir):
         warnings.filterwarnings('always', '', UserWarning)
         ma = format.open_memmap(tf2, mode='w+', dtype=d.dtype,
                                 shape=d.shape, version=None)
-        assert_(w[0].category is UserWarning)
+        assertTrue(w[0].category is UserWarning)
         ma[...] = d
         ma.flush()
 
@@ -707,12 +705,12 @@ def test_version_2_0_memmap(tmpdir):
 
 @pytest.mark.parametrize("mmap_mode", ["r", None])
 def test_huge_header(tmpdir, mmap_mode):
-    f = os.path.join(tmpdir, f'large_header.npy')
+    f = os.path.join(tmpdir, 'large_header.npy')
     arr = np.array(1, dtype="i,"*10000+"i")
 
     with pytest.warns(UserWarning, match=".*format 2.0"):
         np.save(f, arr)
-    
+
     with pytest.raises(ValueError, match="Header.*large"):
         np.load(f, mmap_mode=mmap_mode)
 
@@ -726,12 +724,12 @@ def test_huge_header(tmpdir, mmap_mode):
     assert_array_equal(res, arr)
 
 def test_huge_header_npz(tmpdir):
-    f = os.path.join(tmpdir, f'large_header.npz')
+    f = os.path.join(tmpdir, 'large_header.npz')
     arr = np.array(1, dtype="i,"*10000+"i")
 
     with pytest.warns(UserWarning, match=".*format 2.0"):
         np.savez(f, arr=arr)
-    
+
     # Only getting the array from the file actually reads it
     with pytest.raises(ValueError, match="Header.*large"):
         np.load(f)["arr"]
@@ -805,11 +803,11 @@ def test_read_magic():
     version1 = format.read_magic(s1)
     version2 = format.read_magic(s2)
 
-    assert_(version1 == (1, 0))
-    assert_(version2 == (2, 0))
+    assertTrue(version1 == (1, 0))
+    assertTrue(version2 == (2, 0))
 
-    assert_(s1.tell() == format.MAGIC_LEN)
-    assert_(s2.tell() == format.MAGIC_LEN)
+    assertTrue(s1.tell() == format.MAGIC_LEN)
+    assertTrue(s2.tell() == format.MAGIC_LEN)
 
 def test_read_magic_bad_magic():
     for magic in malformed_magic:
@@ -849,8 +847,8 @@ def test_read_array_header_1_0():
     s.seek(format.MAGIC_LEN)
     shape, fortran, dtype = format.read_array_header_1_0(s)
 
-    assert_(s.tell() % format.ARRAY_ALIGN == 0)
-    assert_((shape, fortran, dtype) == ((3, 6), False, float))
+    assertTrue(s.tell() % format.ARRAY_ALIGN == 0)
+    assertTrue((shape, fortran, dtype) == ((3, 6), False, float))
 
 
 def test_read_array_header_2_0():
@@ -862,8 +860,8 @@ def test_read_array_header_2_0():
     s.seek(format.MAGIC_LEN)
     shape, fortran, dtype = format.read_array_header_2_0(s)
 
-    assert_(s.tell() % format.ARRAY_ALIGN == 0)
-    assert_((shape, fortran, dtype) == ((3, 6), False, float))
+    assertTrue(s.tell() % format.ARRAY_ALIGN == 0)
+    assertTrue((shape, fortran, dtype) == ((3, 6), False, float))
 
 
 def test_bad_header():
@@ -1020,4 +1018,3 @@ def test_metadata_dtype(dt, fail):
         assert_array_equal(arr, arr2)
         assert _has_metadata(arr.dtype)
         assert not _has_metadata(arr2.dtype)
-

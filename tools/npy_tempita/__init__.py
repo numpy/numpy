@@ -34,20 +34,22 @@ with a few changes to remove the six dependency.
 """
 import re
 import sys
+
 try:
-    from urllib.parse import quote as url_quote
-    from io import StringIO
     from html import escape as html_escape
+    from io import StringIO
+    from urllib.parse import quote as url_quote
 except ImportError:
     from urllib import quote as url_quote
     from cStringIO import StringIO
-    from cgi import escape as html_escape
+
+
 import os
 import tokenize
-from ._looper import looper
-from .compat3 import (
-    bytes, basestring_, next, is_unicode, coerce_text, iteritems)
 
+from ._looper import looper
+from .compat3 import (basestring_, bytes, coerce_text, is_unicode, iteritems,
+                      next)
 
 __all__ = ['TemplateError', 'Template', 'sub', 'HTMLTemplate',
            'sub_html', 'html', 'bunch']
@@ -311,7 +313,7 @@ class Template:
                 raise SyntaxError(
                     'invalid syntax in expression: %s' % code)
             return value
-        except:
+        except Exception:
             e_type, e_value, e_traceback = sys.exc_info()
             if getattr(e_value, 'args', None):
                 arg0 = e_value.args[0]
@@ -324,7 +326,7 @@ class Template:
         # __traceback_hide__ = True
         try:
             exec(code, self.default_namespace, ns)
-        except:
+        except Exception:
             e_type, e_value, e_traceback = sys.exc_info()
             if e_value.args:
                 e_value.args = (self._add_line_info(e_value.args[0], pos),)
@@ -346,7 +348,7 @@ class Template:
                     value = coerce_text(value)
                 if (is_unicode(value) and self.default_encoding):
                     value = value.encode(self.default_encoding)
-        except:
+        except Exception:
             e_type, e_value, e_traceback = sys.exc_info()
             e_value.args = (self._add_line_info(e_value.args[0], pos),)
             raise e_value
@@ -453,10 +455,10 @@ def html_quote(value, force=True):
     if not isinstance(value, basestring_):
         value = coerce_text(value)
     if isinstance(value, bytes):
-        value = html_escape(value.decode('latin1'), 1)
+        value = html.escape(value.decode('latin1'), 1)
         value = value.encode('latin1')
     else:
-        value = html_escape(value, 1)
+        value = html.escape(value, 1)
     return value
 
 
@@ -1140,10 +1142,11 @@ strings.
 
 
 def fill_command(args=None):
-    import sys
     import optparse
-    import pkg_resources
     import os
+    import sys
+
+    import pkg_resources
     if args is None:
         args = sys.argv[1:]
     dist = pkg_resources.get_distribution('Paste')

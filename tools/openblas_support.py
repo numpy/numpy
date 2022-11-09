@@ -2,16 +2,15 @@ import glob
 import hashlib
 import os
 import platform
-import sysconfig
-import sys
 import shutil
+import sys
+import sysconfig
 import tarfile
 import textwrap
 import zipfile
-
-from tempfile import mkstemp, gettempdir
-from urllib.request import urlopen, Request
+from tempfile import gettempdir, mkstemp
 from urllib.error import HTTPError
+from urllib.request import Request, urlopen
 
 OPENBLAS_V = '0.3.20'
 OPENBLAS_LONG = 'v0.3.20'
@@ -213,7 +212,7 @@ def make_init(dirname):
                 try:
                     from ctypes import WinDLL
                     basedir = os.path.dirname(__file__)
-                except:
+                except Exception:
                     pass
                 else:
                     libs_dir = os.path.abspath(os.path.join(basedir, '.libs'))
@@ -296,8 +295,9 @@ def test_version(expected_version, ilp64=get_ilp64()):
     Assert that expected OpenBLAS version is
     actually available via NumPy
     """
-    import numpy
     import ctypes
+
+    import numpy
 
     dll = ctypes.CDLL(numpy.core._multiarray_umath.__file__)
     if ilp64 == "64_":

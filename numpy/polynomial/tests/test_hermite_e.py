@@ -6,9 +6,8 @@ from functools import reduce
 import numpy as np
 import numpy.polynomial.hermite_e as herme
 from numpy.polynomial.polynomial import polyval
-from numpy.testing import (
-    assert_almost_equal, assert_raises, assert_equal, assert_,
-    )
+from numpy.testing import (assert_, assert_almost_equal, assert_equal,
+                           assert_raises)
 
 He0 = np.array([1])
 He1 = np.array([0, 1])
@@ -85,7 +84,7 @@ class TestArithmetic:
                 val2 = herme.hermeval(self.x, pol2)
                 pol3 = herme.hermemul(pol1, pol2)
                 val3 = herme.hermeval(self.x, pol3)
-                assert_(len(pol3) == i + j + 1, msg)
+                assertTrue(len(pol3) == i + j + 1, msg)
                 assert_almost_equal(val3, val1*val2, err_msg=msg)
 
     def test_hermediv(self):
@@ -155,7 +154,7 @@ class TestEvaluation:
         #test shape
         z = np.ones((2, 3))
         res = herme.hermeval2d(z, z, self.c2d)
-        assert_(res.shape == (2, 3))
+        assertTrue(res.shape == (2, 3))
 
     def test_hermeval3d(self):
         x1, x2, x3 = self.x
@@ -172,7 +171,7 @@ class TestEvaluation:
         #test shape
         z = np.ones((2, 3))
         res = herme.hermeval3d(z, z, z, self.c3d)
-        assert_(res.shape == (2, 3))
+        assertTrue(res.shape == (2, 3))
 
     def test_hermegrid2d(self):
         x1, x2, x3 = self.x
@@ -186,7 +185,7 @@ class TestEvaluation:
         #test shape
         z = np.ones((2, 3))
         res = herme.hermegrid2d(z, z, self.c2d)
-        assert_(res.shape == (2, 3)*2)
+        assertTrue(res.shape == (2, 3)*2)
 
     def test_hermegrid3d(self):
         x1, x2, x3 = self.x
@@ -200,7 +199,7 @@ class TestEvaluation:
         #test shape
         z = np.ones((2, 3))
         res = herme.hermegrid3d(z, z, z, self.c3d)
-        assert_(res.shape == (2, 3)*3)
+        assertTrue(res.shape == (2, 3)*3)
 
 
 class TestIntegral:
@@ -354,7 +353,7 @@ class TestVander:
         # check for 1d x
         x = np.arange(3)
         v = herme.hermevander(x, 3)
-        assert_(v.shape == (3, 4))
+        assertTrue(v.shape == (3, 4))
         for i in range(4):
             coef = [0]*i + [1]
             assert_almost_equal(v[..., i], herme.hermeval(x, coef))
@@ -362,7 +361,7 @@ class TestVander:
         # check for 2d x
         x = np.array([[1, 2], [3, 4], [5, 6]])
         v = herme.hermevander(x, 3)
-        assert_(v.shape == (3, 2, 4))
+        assertTrue(v.shape == (3, 2, 4))
         for i in range(4):
             coef = [0]*i + [1]
             assert_almost_equal(v[..., i], herme.hermeval(x, coef))
@@ -378,7 +377,7 @@ class TestVander:
 
         # check shape
         van = herme.hermevander2d([x1], [x2], [1, 2])
-        assert_(van.shape == (1, 5, 6))
+        assertTrue(van.shape == (1, 5, 6))
 
     def test_hermevander3d(self):
         # also tests hermeval3d for non-square coefficient array
@@ -391,7 +390,7 @@ class TestVander:
 
         # check shape
         van = herme.hermevander3d([x1], [x2], [x3], [1, 2, 3])
-        assert_(van.shape == (1, 5, 24))
+        assertTrue(van.shape == (1, 5, 24))
 
 
 class TestFitting:
@@ -480,10 +479,10 @@ class TestCompanion:
     def test_dimensions(self):
         for i in range(1, 5):
             coef = [0]*i + [1]
-            assert_(herme.hermecompanion(coef).shape == (i, i))
+            assertTrue(herme.hermecompanion(coef).shape == (i, i))
 
     def test_linear_root(self):
-        assert_(herme.hermecompanion([1, 2])[0, 0] == -.5)
+        assertTrue(herme.hermecompanion([1, 2])[0, 0] == -.5)
 
 
 class TestGauss:
@@ -515,7 +514,7 @@ class TestMisc:
             pol = herme.hermefromroots(roots)
             res = herme.hermeval(roots, pol)
             tgt = 0
-            assert_(len(pol) == i + 1)
+            assertTrue(len(pol) == i + 1)
             assert_almost_equal(herme.herme2poly(pol)[-1], 1)
             assert_almost_equal(res, tgt)
 

@@ -1,8 +1,7 @@
 from os.path import join
 
 from numpy.compat import isfileobj
-from numpy.testing import assert_
-from numpy.testing import tempdir
+from numpy.testing import assert_, tempdir
 
 
 def test_isfileobj():
@@ -10,10 +9,10 @@ def test_isfileobj():
         filename = join(folder, 'a.bin')
 
         with open(filename, 'wb') as f:
-            assert_(isfileobj(f))
+            assertTrue(isfileobj(f))
 
         with open(filename, 'ab') as f:
-            assert_(isfileobj(f))
+            assertTrue(isfileobj(f))
 
         with open(filename, 'rb') as f:
-            assert_(isfileobj(f))
+            assertTrue(isfileobj(f))

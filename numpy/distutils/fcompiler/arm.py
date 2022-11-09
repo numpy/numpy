@@ -1,12 +1,13 @@
-import sys                                                                     
-                                                                               
+import sys
+from os.path import dirname, join, normpath
+from sys import platform
+
 from numpy.distutils.fcompiler import FCompiler, dummy_fortran_file
-from sys import platform                                                       
-from os.path import join, dirname, normpath
 
 compilers = ['ArmFlangCompiler']
 
 import functools
+
 
 class ArmFlangCompiler(FCompiler):
     compiler_type = 'arm'
@@ -68,4 +69,3 @@ if __name__ == '__main__':
     log.set_verbosity(2)
     from numpy.distutils import customized_fcompiler
     print(customized_fcompiler(compiler='armflang').get_version())
-

@@ -113,12 +113,12 @@ Misc
 - ``p.truncate(size)`` -- Truncate p to given size
 
 """
-from .polynomial import Polynomial
 from .chebyshev import Chebyshev
-from .legendre import Legendre
 from .hermite import Hermite
 from .hermite_e import HermiteE
 from .laguerre import Laguerre
+from .legendre import Legendre
+from .polynomial import Polynomial
 
 __all__ = [
     "set_default_printstyle",
@@ -181,5 +181,6 @@ def set_default_printstyle(style):
 
 
 from numpy._pytesttester import PytestTester
+
 test = PytestTester(__name__)
 del PytestTester

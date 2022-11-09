@@ -2,11 +2,12 @@ import sys
 
 from setuptools.command.egg_info import egg_info as _egg_info
 
+
 class egg_info(_egg_info):
     def run(self):
         if 'sdist' in sys.argv:
-            import warnings
             import textwrap
+            import warnings
             msg = textwrap.dedent("""
                 `build_src` is being run, this may lead to missing
                 files in your sdist!  You want to use distutils.sdist

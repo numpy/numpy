@@ -1,5 +1,6 @@
 import os
 import sys
+
 if 'setuptools' in sys.modules:
     from setuptools.command.bdist_rpm import bdist_rpm as old_bdist_rpm
 else:

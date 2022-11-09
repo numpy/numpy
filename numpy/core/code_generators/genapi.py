@@ -6,16 +6,15 @@ See ``find_function`` for how functions should be formatted, and
 specified.
 
 """
-from numpy.distutils.conv_template import process_file as process_c_file
-
 import hashlib
 import io
 import os
 import re
 import sys
 import textwrap
-
 from os.path import join
+
+from numpy.distutils.conv_template import process_file as process_c_file
 
 __docformat__ = 'restructuredtext'
 

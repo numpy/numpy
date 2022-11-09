@@ -1,9 +1,9 @@
 # http://www.pgroup.com
 import sys
+from os.path import dirname, join, normpath
+from sys import platform
 
 from numpy.distutils.fcompiler import FCompiler
-from sys import platform
-from os.path import join, dirname, normpath
 
 compilers = ['PGroupFCompiler', 'PGroupFlangCompiler']
 
@@ -63,6 +63,7 @@ class PGroupFCompiler(FCompiler):
 
 
 import functools
+
 
 class PGroupFlangCompiler(FCompiler):
     compiler_type = 'flang'

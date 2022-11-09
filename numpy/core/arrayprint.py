@@ -25,26 +25,29 @@ __docformat__ = 'restructuredtext'
 import functools
 import numbers
 import sys
+
 try:
     from _thread import get_ident
 except ImportError:
     from _dummy_thread import get_ident
 
-import numpy as np
-from . import numerictypes as _nt
-from .umath import absolute, isinf, isfinite, isnat
-from . import multiarray
-from .multiarray import (array, dragon4_positional, dragon4_scientific,
-                         datetime_as_string, datetime_data, ndarray,
-                         set_legacy_print_mode)
-from .fromnumeric import any
-from .numeric import concatenate, asarray, errstate
-from .numerictypes import (longlong, intc, int_, float_, complex_, bool_,
-                           flexible)
-from .overrides import array_function_dispatch, set_module
+import contextlib
 import operator
 import warnings
-import contextlib
+
+import numpy as np
+
+from . import multiarray
+from . import numerictypes as _nt
+from .fromnumeric import any
+from .multiarray import (array, datetime_as_string, datetime_data,
+                         dragon4_positional, dragon4_scientific, ndarray,
+                         set_legacy_print_mode)
+from .numeric import asarray, concatenate, errstate
+from .numerictypes import (bool_, complex_, flexible, float_, int_, intc,
+                           longlong)
+from .overrides import array_function_dispatch, set_module
+from .umath import absolute, isfinite, isinf, isnat
 
 _format_options = {
     'edgeitems': 3,  # repr N leading and trailing items of each dimension
@@ -430,7 +433,7 @@ def _get_formatdict(data, *, precision, floatmode, suppress, sign, legacy,
     if formatter is not None:
         fkeys = [k for k in formatter.keys() if formatter[k] is not None]
         if 'all' in fkeys:
-            for key in formatdict.keys():
+            for key in formatdict:
                 formatdict[key] = indirect(formatter['all'])
         if 'int_kind' in fkeys:
             for key in ['int']:
@@ -443,7 +446,7 @@ def _get_formatdict(data, *, precision, floatmode, suppress, sign, legacy,
                 formatdict[key] = indirect(formatter['complex_kind'])
         if 'str_kind' in fkeys:
             formatdict['numpystr'] = indirect(formatter['str_kind'])
-        for key in formatdict.keys():
+        for key in formatdict:
             if key in fkeys:
                 formatdict[key] = indirect(formatter[key])
 
@@ -1096,7 +1099,7 @@ def format_float_scientific(x, precision=None, unique=True, trim='k',
         identify the value may be printed and rounded unbiased.
 
         -- versionadded:: 1.21.0
-        
+
     Returns
     -------
     rep : string
@@ -1181,7 +1184,7 @@ def format_float_positional(x, precision=None, unique=True,
         Minimum number of digits to print. Only has an effect if `unique=True`
         in which case additional digits past those necessary to uniquely
         identify the value may be printed, rounding the last additional digit.
-        
+
         -- versionadded:: 1.21.0
 
     Returns

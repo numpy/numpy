@@ -1,21 +1,19 @@
 import functools
-import sys
 import math
+import sys
 import warnings
 
 import numpy.core.numeric as _nx
-from numpy.core.numeric import (
-    asarray, ScalarType, array, alltrue, cumprod, arange, ndim
-)
-from numpy.core.numerictypes import find_common_type, issubdtype
-
-import numpy.matrixlib as matrixlib
-from .function_base import diff
+from numpy import matrixlib
+from numpy.core import linspace, overrides
 from numpy.core.multiarray import ravel_multi_index, unravel_index
+from numpy.core.numeric import (ScalarType, alltrue, arange, array, asarray,
+                                cumprod, ndim)
+from numpy.core.numerictypes import find_common_type, issubdtype
 from numpy.core.overrides import set_module
-from numpy.core import overrides, linspace
 from numpy.lib.stride_tricks import as_strided
 
+from .function_base import diff
 
 array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy')

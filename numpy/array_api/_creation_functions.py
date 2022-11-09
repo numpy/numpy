@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-
 from typing import TYPE_CHECKING, List, Optional, Tuple, Union
 
 if TYPE_CHECKING:
@@ -12,9 +11,10 @@ if TYPE_CHECKING:
         SupportsBufferProtocol,
     )
     from collections.abc import Sequence
-from ._dtypes import _all_dtypes
 
 import numpy as np
+
+from ._dtypes import _all_dtypes
 
 
 def _check_valid_dtype(dtype):

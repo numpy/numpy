@@ -32,10 +32,9 @@ Functions
 """
 import numpy.core.numeric as nx
 import numpy.core.numerictypes as nt
-from numpy.core.numeric import asarray, any
+from numpy.core.numeric import any, asarray
 from numpy.core.overrides import array_function_dispatch
 from numpy.lib.type_check import isreal
-
 
 __all__ = [
     'sqrt', 'log', 'log2', 'logn', 'log10', 'power', 'arccos', 'arcsin',

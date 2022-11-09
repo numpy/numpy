@@ -22,10 +22,10 @@ Functions
 """
 import functools
 import warnings
-import numpy as np
-from numpy.lib import function_base
-from numpy.core import overrides
 
+import numpy as np
+from numpy.core import overrides
+from numpy.lib import function_base
 
 array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy')

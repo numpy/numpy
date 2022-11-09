@@ -1,31 +1,15 @@
 import os
-from collections.abc import Sequence, Iterable
-from typing import (
-    Any,
-    TypeVar,
-    overload,
-    Protocol,
-)
+from collections.abc import Iterable, Sequence
+from typing import Any, Protocol, TypeVar, overload
 
-from numpy import (
-    format_parser as format_parser,
-    record as record,
-    recarray as recarray,
-    dtype,
-    generic,
-    void,
-    _ByteOrder,
-    _SupportsBuffer,
-)
-
-from numpy._typing import (
-    ArrayLike,
-    DTypeLike,
-    NDArray,
-    _ShapeLike,
-    _ArrayLikeVoid_co,
-    _NestedSequence,
-)
+from numpy import _ByteOrder, _SupportsBuffer, dtype
+from numpy import format_parser as format_parser
+from numpy import generic
+from numpy import recarray as recarray
+from numpy import record as record
+from numpy import void
+from numpy._typing import (ArrayLike, DTypeLike, NDArray, _ArrayLikeVoid_co,
+                           _NestedSequence, _ShapeLike)
 
 _SCT = TypeVar("_SCT", bound=generic)
 

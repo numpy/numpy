@@ -1,6 +1,7 @@
+from collections.abc import Sequence
+
 import numpy as np
 import numpy.typing as npt
-from collections.abc import Sequence
 
 AR_U: npt.NDArray[np.str_]
 AR_S: npt.NDArray[np.bytes_]

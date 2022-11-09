@@ -1,5 +1,11 @@
-import sys, platform, re, pytest
+import platform
+import re
+import sys
+
+import pytest
+
 from numpy.core._multiarray_umath import __cpu_features__
+
 
 def assert_features_equal(actual, desired, fname):
     __tracebackhide__ = True  # Hide traceback for py.test

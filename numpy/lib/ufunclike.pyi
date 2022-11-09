@@ -1,12 +1,8 @@
-from typing import Any, overload, TypeVar
+from typing import Any, TypeVar, overload
 
-from numpy import floating, bool_, object_, ndarray
-from numpy._typing import (
-    NDArray,
-    _FloatLike_co,
-    _ArrayLikeFloat_co,
-    _ArrayLikeObject_co,
-)
+from numpy import bool_, floating, ndarray, object_
+from numpy._typing import (NDArray, _ArrayLikeFloat_co, _ArrayLikeObject_co,
+                           _FloatLike_co)
 
 _ArrayType = TypeVar("_ArrayType", bound=ndarray[Any, Any])
 

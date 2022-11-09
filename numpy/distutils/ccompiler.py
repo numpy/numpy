@@ -1,33 +1,27 @@
 import os
 import re
-import sys
 import shlex
-import time
 import subprocess
+import sys
+# globals for parallel build management
+import threading
+import time
 from copy import copy
 from distutils import ccompiler
-from distutils.ccompiler import (
-    compiler_class, gen_lib_options, get_default_compiler, new_compiler,
-    CCompiler
-)
-from distutils.errors import (
-    DistutilsExecError, DistutilsModuleError, DistutilsPlatformError,
-    CompileError, UnknownFileError
-)
+from distutils.ccompiler import (CCompiler, compiler_class, gen_lib_options,
+                                 get_default_compiler, new_compiler)
+from distutils.errors import (CompileError, DistutilsExecError,
+                              DistutilsModuleError, DistutilsPlatformError,
+                              UnknownFileError)
 from distutils.sysconfig import customize_compiler
 from distutils.version import LooseVersion
 
 from numpy.distutils import log
-from numpy.distutils.exec_command import (
-    filepath_from_subprocess_output, forward_bytes_to_stdout
-)
-from numpy.distutils.misc_util import cyg2win32, is_sequence, mingw32, \
-                                      get_num_build_jobs, \
-                                      _commandline_dep_string, \
-                                      sanitize_cxx_flags
-
-# globals for parallel build management
-import threading
+from numpy.distutils.exec_command import (filepath_from_subprocess_output,
+                                          forward_bytes_to_stdout)
+from numpy.distutils.misc_util import (_commandline_dep_string, cyg2win32,
+                                       get_num_build_jobs, is_sequence,
+                                       mingw32, sanitize_cxx_flags)
 
 _job_semaphore = None
 _global_lock = threading.Lock()
@@ -279,8 +273,7 @@ def CCompiler_compile(self, sources, output_dir=None, macros=None,
 
     if not sources:
         return []
-    from numpy.distutils.fcompiler import (FCompiler, is_f_file,
-                                           has_f90_header)
+    from numpy.distutils.fcompiler import FCompiler, has_f90_header, is_f_file
     if isinstance(self, FCompiler):
         display = []
         for fc in ['f77', 'f90', 'fix']:
@@ -530,8 +523,8 @@ def CCompiler_customize(self, dist, need_cxx=0):
                                       'clang' in self.compiler[0]):
         self._auto_depends = True
     elif os.name == 'posix':
-        import tempfile
         import shutil
+        import tempfile
         tmpdir = tempfile.mkdtemp()
         try:
             fn = os.path.join(tmpdir, "file.c")
@@ -811,4 +804,3 @@ for _cc in ['msvc9', 'msvc', '_msvc', 'bcpp', 'cygwinc', 'emxc', 'unixc']:
     _m = sys.modules.get('distutils.' + _cc + 'compiler')
     if _m is not None:
         setattr(_m, 'gen_lib_options', gen_lib_options)
-

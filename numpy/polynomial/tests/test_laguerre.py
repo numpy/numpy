@@ -6,9 +6,8 @@ from functools import reduce
 import numpy as np
 import numpy.polynomial.laguerre as lag
 from numpy.polynomial.polynomial import polyval
-from numpy.testing import (
-    assert_almost_equal, assert_raises, assert_equal, assert_,
-    )
+from numpy.testing import (assert_, assert_almost_equal, assert_equal,
+                           assert_raises)
 
 L0 = np.array([1])/1
 L1 = np.array([1, -1])/1
@@ -82,7 +81,7 @@ class TestArithmetic:
                 val2 = lag.lagval(self.x, pol2)
                 pol3 = lag.lagmul(pol1, pol2)
                 val3 = lag.lagval(self.x, pol3)
-                assert_(len(pol3) == i + j + 1, msg)
+                assertTrue(len(pol3) == i + j + 1, msg)
                 assert_almost_equal(val3, val1*val2, err_msg=msg)
 
     def test_lagdiv(self):
@@ -102,7 +101,7 @@ class TestArithmetic:
                 msg = f"At i={i}, j={j}"
                 c = np.arange(i + 1)
                 tgt = reduce(lag.lagmul, [c]*j, np.array([1]))
-                res = lag.lagpow(c, j) 
+                res = lag.lagpow(c, j)
                 assert_equal(trim(res), trim(tgt), err_msg=msg)
 
 
@@ -152,7 +151,7 @@ class TestEvaluation:
         #test shape
         z = np.ones((2, 3))
         res = lag.lagval2d(z, z, self.c2d)
-        assert_(res.shape == (2, 3))
+        assertTrue(res.shape == (2, 3))
 
     def test_lagval3d(self):
         x1, x2, x3 = self.x
@@ -169,7 +168,7 @@ class TestEvaluation:
         #test shape
         z = np.ones((2, 3))
         res = lag.lagval3d(z, z, z, self.c3d)
-        assert_(res.shape == (2, 3))
+        assertTrue(res.shape == (2, 3))
 
     def test_laggrid2d(self):
         x1, x2, x3 = self.x
@@ -183,7 +182,7 @@ class TestEvaluation:
         #test shape
         z = np.ones((2, 3))
         res = lag.laggrid2d(z, z, self.c2d)
-        assert_(res.shape == (2, 3)*2)
+        assertTrue(res.shape == (2, 3)*2)
 
     def test_laggrid3d(self):
         x1, x2, x3 = self.x
@@ -197,7 +196,7 @@ class TestEvaluation:
         #test shape
         z = np.ones((2, 3))
         res = lag.laggrid3d(z, z, z, self.c3d)
-        assert_(res.shape == (2, 3)*3)
+        assertTrue(res.shape == (2, 3)*3)
 
 
 class TestIntegral:
@@ -350,7 +349,7 @@ class TestVander:
         # check for 1d x
         x = np.arange(3)
         v = lag.lagvander(x, 3)
-        assert_(v.shape == (3, 4))
+        assertTrue(v.shape == (3, 4))
         for i in range(4):
             coef = [0]*i + [1]
             assert_almost_equal(v[..., i], lag.lagval(x, coef))
@@ -358,7 +357,7 @@ class TestVander:
         # check for 2d x
         x = np.array([[1, 2], [3, 4], [5, 6]])
         v = lag.lagvander(x, 3)
-        assert_(v.shape == (3, 2, 4))
+        assertTrue(v.shape == (3, 2, 4))
         for i in range(4):
             coef = [0]*i + [1]
             assert_almost_equal(v[..., i], lag.lagval(x, coef))
@@ -374,7 +373,7 @@ class TestVander:
 
         # check shape
         van = lag.lagvander2d([x1], [x2], [1, 2])
-        assert_(van.shape == (1, 5, 6))
+        assertTrue(van.shape == (1, 5, 6))
 
     def test_lagvander3d(self):
         # also tests lagval3d for non-square coefficient array
@@ -387,7 +386,7 @@ class TestVander:
 
         # check shape
         van = lag.lagvander3d([x1], [x2], [x3], [1, 2, 3])
-        assert_(van.shape == (1, 5, 24))
+        assertTrue(van.shape == (1, 5, 24))
 
 
 class TestFitting:
@@ -461,10 +460,10 @@ class TestCompanion:
     def test_dimensions(self):
         for i in range(1, 5):
             coef = [0]*i + [1]
-            assert_(lag.lagcompanion(coef).shape == (i, i))
+            assertTrue(lag.lagcompanion(coef).shape == (i, i))
 
     def test_linear_root(self):
-        assert_(lag.lagcompanion([1, 2])[0, 0] == 1.5)
+        assertTrue(lag.lagcompanion([1, 2])[0, 0] == 1.5)
 
 
 class TestGauss:
@@ -496,7 +495,7 @@ class TestMisc:
             pol = lag.lagfromroots(roots)
             res = lag.lagval(roots, pol)
             tgt = 0
-            assert_(len(pol) == i + 1)
+            assertTrue(len(pol) == i + 1)
             assert_almost_equal(lag.lag2poly(pol)[-1], 1)
             assert_almost_equal(res, tgt)
 

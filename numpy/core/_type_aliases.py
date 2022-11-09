@@ -18,10 +18,9 @@ and sometimes other mappings too.
 """
 
 from numpy.compat import unicode
-from numpy.core._string_helpers import english_lower
-from numpy.core.multiarray import typeinfo, dtype
 from numpy.core._dtype import _kind_name
-
+from numpy.core._string_helpers import english_lower
+from numpy.core.multiarray import dtype, typeinfo
 
 sctypeDict = {}      # Contains all leaf-node scalar types with aliases
 allTypes = {}            # Collect the types we will add to the module

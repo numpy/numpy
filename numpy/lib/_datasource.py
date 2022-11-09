@@ -34,11 +34,10 @@ Example::
     >>> fp.close() # doctest: +SKIP
 
 """
-import os
 import io
+import os
 
 from numpy.core.overrides import set_module
-
 
 _open = open
 
@@ -404,7 +403,6 @@ class DataSource:
         #        destpath = /home/alex/
         #        upath = self.abspath(path)
         #        upath == '/home/alex/home/guido/datafile.txt'
-
         # handle case where path includes self._destpath
         splitpath = path.split(self._destpath, 2)
         if len(splitpath) > 1:
@@ -465,8 +463,8 @@ class DataSource:
 
         # We import this here because importing urllib is slow and
         # a significant fraction of numpy's total import time.
-        from urllib.request import urlopen
         from urllib.error import URLError
+        from urllib.request import urlopen
 
         # Test cached url
         upath = self.abspath(path)
@@ -478,7 +476,7 @@ class DataSource:
             try:
                 netfile = urlopen(path)
                 netfile.close()
-                del(netfile)
+                del netfile
                 return True
             except URLError:
                 return False

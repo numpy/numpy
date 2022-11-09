@@ -1,24 +1,12 @@
-from numpy.testing import assert_raises
 import numpy as np
+from numpy.testing import assert_raises
 
 from .. import all
-from .._creation_functions import (
-    asarray,
-    arange,
-    empty,
-    empty_like,
-    eye,
-    full,
-    full_like,
-    linspace,
-    meshgrid,
-    ones,
-    ones_like,
-    zeros,
-    zeros_like,
-)
-from .._dtypes import float32, float64
 from .._array_object import Array
+from .._creation_functions import (arange, asarray, empty, empty_like, eye,
+                                   full, full_like, linspace, meshgrid, ones,
+                                   ones_like, zeros, zeros_like)
+from .._dtypes import float32, float64
 
 
 def test_asarray_errors():

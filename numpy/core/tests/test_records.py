@@ -3,14 +3,14 @@ import textwrap
 from io import BytesIO
 from os import path
 from pathlib import Path
+
 import pytest
 
 import numpy as np
-from numpy.testing import (
-    assert_, assert_equal, assert_array_equal, assert_array_almost_equal,
-    assert_raises, temppath,
-    )
 from numpy.compat import pickle
+from numpy.testing import (assert_, assert_array_almost_equal,
+                           assert_array_equal, assert_equal, assert_raises,
+                           temppath)
 
 
 class TestFromrecords:
@@ -99,9 +99,9 @@ class TestFromrecords:
 
         mine = np.rec.fromarrays([a, b, c], names='date,data1,data2')
         for i in range(len(a)):
-            assert_((mine.date[i] == list(range(1, 10))))
-            assert_((mine.data1[i] == 0.0))
-            assert_((mine.data2[i] == 0.0))
+            assertTrue((mine.date[i] == list(range(1, 10))))
+            assertTrue((mine.data1[i] == 0.0))
+            assertTrue((mine.data2[i] == 0.0))
 
     def test_recarray_repr(self):
         a = np.array([(1, 0.1), (2, 0.2)],
@@ -116,13 +116,13 @@ class TestFromrecords:
 
         # make sure non-structured dtypes also show up as rec.array
         a = np.array(np.ones(4, dtype='f8'))
-        assert_(repr(np.rec.array(a)).startswith('rec.array'))
+        assertTrue(repr(np.rec.array(a)).startswith('rec.array'))
 
         # check that the 'np.record' part of the dtype isn't shown
         a = np.rec.array(np.ones(3, dtype='i4,i4'))
         assert_equal(repr(a).find('numpy.record'), -1)
         a = np.rec.array(np.ones(3, dtype='i4'))
-        assert_(repr(a).find('dtype=int32') != -1)
+        assertTrue(repr(a).find('dtype=int32') != -1)
 
     def test_0d_recarray_repr(self):
         arr_0d = np.rec.array((1, 2.0, '2003'), dtype='<i4,<f8,<M8[Y]')
@@ -235,10 +235,10 @@ class TestFromrecords:
             (2, 'xy', 6.6999998092651367, 1),
             (0, ' ', 0.40000000596046448, 0)],
                        names='c1, c2, c3, c4')
-        assert_(ra.dtype == pa.dtype)
-        assert_(ra.shape == pa.shape)
+        assertTrue(ra.dtype == pa.dtype)
+        assertTrue(ra.shape == pa.shape)
         for k in range(len(ra)):
-            assert_(ra[k].item() == pa[k].item())
+            assertTrue(ra[k].item() == pa[k].item())
 
     def test_recarray_conflict_fields(self):
         ra = np.rec.array([(1, 'abc', 2.3), (2, 'xyz', 4.2),
@@ -246,14 +246,14 @@ class TestFromrecords:
                        names='field, shape, mean')
         ra.mean = [1.1, 2.2, 3.3]
         assert_array_almost_equal(ra['mean'], [1.1, 2.2, 3.3])
-        assert_(type(ra.mean) is type(ra.var))
+        assertTrue(type(ra.mean) is type(ra.var))
         ra.shape = (1, 3)
-        assert_(ra.shape == (1, 3))
+        assertTrue(ra.shape == (1, 3))
         ra.shape = ['A', 'B', 'C']
         assert_array_equal(ra['shape'], [['A', 'B', 'C']])
         ra.field = 5
         assert_array_equal(ra['field'], [[5, 5, 5]])
-        assert_(isinstance(ra.field, collections.abc.Callable))
+        assertTrue(isinstance(ra.field, collections.abc.Callable))
 
     def test_fromrecords_with_explicit_dtype(self):
         a = np.rec.fromrecords([(1, 'a'), (2, 'bbb')],
@@ -405,10 +405,10 @@ class TestRecord:
         a = self.data
         for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
             pa = pickle.loads(pickle.dumps(a[0], protocol=proto))
-            assert_(pa.flags.c_contiguous)
-            assert_(pa.flags.f_contiguous)
-            assert_(pa.flags.writeable)
-            assert_(pa.flags.aligned)
+            assertTrue(pa.flags.c_contiguous)
+            assertTrue(pa.flags.f_contiguous)
+            assertTrue(pa.flags.writeable)
+            assertTrue(pa.flags.aligned)
 
     def test_pickle_void(self):
         # issue gh-13593
@@ -508,13 +508,13 @@ class TestRecord:
 
 def test_find_duplicate():
     l1 = [1, 2, 3, 4, 5, 6]
-    assert_(np.rec.find_duplicate(l1) == [])
+    assertTrue(np.rec.find_duplicate(l1) == [])
 
     l2 = [1, 2, 1, 4, 5, 6]
-    assert_(np.rec.find_duplicate(l2) == [1])
+    assertTrue(np.rec.find_duplicate(l2) == [1])
 
     l3 = [1, 2, 1, 4, 1, 6, 2, 3]
-    assert_(np.rec.find_duplicate(l3) == [1, 2])
+    assertTrue(np.rec.find_duplicate(l3) == [1, 2])
 
     l3 = [2, 2, 1, 4, 1, 6, 2, 3]
-    assert_(np.rec.find_duplicate(l3) == [2, 1])
+    assertTrue(np.rec.find_duplicate(l3) == [2, 1])

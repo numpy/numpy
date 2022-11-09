@@ -53,9 +53,10 @@ __all__ = ['load_library', 'ndpointer', 'c_intp', 'as_ctypes', 'as_array',
            'as_ctypes_type']
 
 import os
-from numpy import (
-    integer, ndarray, dtype as _dtype, asarray, frombuffer
-)
+
+from numpy import asarray
+from numpy import dtype as _dtype
+from numpy import frombuffer, integer, ndarray
 from numpy.core.multiarray import _flagdict, flagsobj
 
 try:
@@ -175,7 +176,7 @@ def _flags_fromnum(num):
     res = []
     for key in _flagnames:
         value = _flagdict[key]
-        if (num & value):
+        if num & value:
             res.append(key)
     return res
 

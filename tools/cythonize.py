@@ -26,11 +26,11 @@ Note: this script does not check any of the dependent C libraries; it only
 operates on the Cython .pyx files.
 """
 
+import hashlib
 import os
 import re
-import sys
-import hashlib
 import subprocess
+import sys
 
 HASH_FILE = 'cythonize.dat'
 DEFAULT_ROOT = 'numpy'

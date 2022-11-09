@@ -14,8 +14,8 @@ $Date: 2005/05/06 11:42:34 $
 Pearu Peterson
 
 """
-import sys
 import copy
+import sys
 
 from . import __version__
 
@@ -1407,7 +1407,7 @@ capi_fail:
 
 def buildcfuncs():
     from .capi_maps import c2capi_map
-    for k in c2capi_map.keys():
+    for k in c2capi_map:
         m = 'pyarr_from_p_%s1' % k
         cppmacros[
             m] = '#define %s(v) (PyArray_SimpleNewFromData(0,NULL,%s,(char *)v))' % (m, c2capi_map[k])
@@ -1457,12 +1457,12 @@ def append_needs(need, flag=1):
                 for nn in needs[need]:
                     t = append_needs(nn, 0)
                     if isinstance(t, dict):
-                        for nnn in t.keys():
+                        for nnn in t:
                             if nnn in tmp:
                                 tmp[nnn] = tmp[nnn] + t[nnn]
                             else:
                                 tmp[nnn] = t[nnn]
-            for nn in tmp.keys():
+            for nn in tmp:
                 for nnn in tmp[nn]:
                     if nnn not in outneeds[nn]:
                         outneeds[nn] = [nnn] + outneeds[nn]
@@ -1473,7 +1473,7 @@ def append_needs(need, flag=1):
                 for nn in needs[need]:
                     t = append_needs(nn, flag)
                     if isinstance(t, dict):
-                        for nnn in t.keys():
+                        for nnn in t:
                             if nnn in tmp:
                                 tmp[nnn] = t[nnn] + tmp[nnn]
                             else:
@@ -1490,7 +1490,7 @@ def append_needs(need, flag=1):
 def get_needs():
     # This function modifies the contents of the global `outneeds` dict.
     res = {}
-    for n in outneeds.keys():
+    for n in outneeds:
         out = []
         saveout = copy.copy(outneeds[n])
         while len(outneeds[n]) > 0:

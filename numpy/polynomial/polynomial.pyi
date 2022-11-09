@@ -1,6 +1,6 @@
 from typing import Any
 
-from numpy import ndarray, dtype, int_
+from numpy import dtype, int_, ndarray
 from numpy.polynomial._polybase import ABCPolyBase
 from numpy.polynomial.polyutils import trimcoef
 

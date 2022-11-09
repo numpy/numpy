@@ -61,8 +61,9 @@ else:
     __doc__ = __doc__.format(**globals())
 
 
+import glob
+import os
 import sys
-import os, glob
 
 # In case we are run from the source directory, we don't want to import the
 # project from there:
@@ -71,7 +72,7 @@ sys.path.pop(0)
 import shutil
 import subprocess
 import time
-from argparse import ArgumentParser, REMAINDER
+from argparse import REMAINDER, ArgumentParser
 
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__)))
 
@@ -194,8 +195,8 @@ def main(argv):
         sys.path.insert(0, site_dir_noarch)
         os.environ['PYTHONPATH'] = \
             os.pathsep.join((
-                site_dir, 
-                site_dir_noarch, 
+                site_dir,
+                site_dir_noarch,
                 os.environ.get('PYTHONPATH', '')
             ))
     else:
@@ -212,8 +213,8 @@ def main(argv):
     if args.python:
         # Debugging issues with warnings is much easier if you can see them
         print("Enabling display of all warnings")
-        import warnings
         import types
+        import warnings
 
         warnings.filterwarnings("always")
         if extra_argv:
@@ -237,6 +238,7 @@ def main(argv):
         print("Enabling display of all warnings and pre-importing numpy as np")
         import warnings; warnings.filterwarnings("always")
         import IPython
+
         import numpy as np
         IPython.embed(colors='neutral', user_ns={"np": np})
         sys.exit(0)
@@ -531,7 +533,7 @@ def build_project(args):
                         last_log_size = log_size
 
             ret = p.wait()
-        except:
+        except Exception:
             p.kill()
             p.wait()
             raise
@@ -582,8 +584,10 @@ def asv_clear_cache(bench_path, h_commits, env_dir="env"):
     asv_build_pattern = os.path.join(bench_path, env_dir, "*", "asv-build-cache")
     for asv_build_cache in glob.glob(asv_build_pattern, recursive=True):
         for c in h_commits:
-            try: shutil.rmtree(os.path.join(asv_build_cache, c))
-            except OSError: pass
+            try:
+                shutil.rmtree(os.path.join(asv_build_cache, c))
+            except OSError:
+                pass
 
 def asv_substitute_config(in_config, out_config, **custom_vars):
     """
@@ -661,10 +665,14 @@ LCOV_OUTPUT_FILE = os.path.join(ROOT_DIR, 'build', 'lcov.out')
 LCOV_HTML_DIR = os.path.join(ROOT_DIR, 'build', 'lcov')
 
 def lcov_generate():
-    try: os.unlink(LCOV_OUTPUT_FILE)
-    except OSError: pass
-    try: shutil.rmtree(LCOV_HTML_DIR)
-    except OSError: pass
+    try:
+        os.unlink(LCOV_OUTPUT_FILE)
+    except OSError:
+        pass
+    try:
+        shutil.rmtree(LCOV_HTML_DIR)
+    except OSError:
+        pass
 
     print("Capturing lcov info...")
     subprocess.call(['lcov', '-q', '-c',

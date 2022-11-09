@@ -15,17 +15,18 @@ else:
     from distutils.core import setup as old_setup
     have_setuptools = False
 
-import warnings
 import distutils.core
 import distutils.dist
+import warnings
 
+from numpy.distutils.command import (bdist_rpm, build, build_clib, build_ext,
+                                     build_py, build_scripts, build_src,
+                                     config, config_compiler, install,
+                                     install_clib, install_data,
+                                     install_headers, sdist)
 from numpy.distutils.extension import Extension  # noqa: F401
-from numpy.distutils.numpy_distribution import NumpyDistribution
-from numpy.distutils.command import config, config_compiler, \
-     build, build_py, build_ext, build_clib, build_src, build_scripts, \
-     sdist, install_data, install_headers, install, bdist_rpm, \
-     install_clib
 from numpy.distutils.misc_util import is_sequence, is_string
+from numpy.distutils.numpy_distribution import NumpyDistribution
 
 numpy_cmdclass = {'build':            build.build,
                   'build_src':        build_src.build_src,

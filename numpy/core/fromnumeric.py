@@ -6,12 +6,13 @@ import types
 import warnings
 
 import numpy as np
+
+from . import _methods
 from . import multiarray as mu
+from . import numerictypes as nt
 from . import overrides
 from . import umath as um
-from . import numerictypes as nt
-from .multiarray import asarray, array, asanyarray, concatenate
-from . import _methods
+from .multiarray import array, asanyarray, asarray, concatenate
 
 _dt_ = nt.sctype2char
 
@@ -2751,7 +2752,7 @@ def amax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     amax : ndarray or scalar
         Maximum of `a`. If `axis` is None, the result is a scalar value.
         If `axis` is an int, the result is an array of dimension
-        ``a.ndim - 1``. If `axis` is a tuple, the result is an array of 
+        ``a.ndim - 1``. If `axis` is a tuple, the result is an array of
         dimension ``a.ndim - len(axis)``.
 
     See Also
@@ -2877,7 +2878,7 @@ def amin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     amin : ndarray or scalar
         Minimum of `a`. If `axis` is None, the result is a scalar value.
         If `axis` is an int, the result is an array of dimension
-        ``a.ndim - 1``.  If `axis` is a tuple, the result is an array of 
+        ``a.ndim - 1``.  If `axis` is a tuple, the result is an array of
         dimension ``a.ndim - len(axis)``.
 
     See Also
@@ -3048,7 +3049,7 @@ def prod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
     array([  2.,  12.])
     >>> np.prod(a, axis=0)
     array([3., 8.])
-    
+
     Or select specific elements to include:
 
     >>> np.prod([1., np.nan, 3.], where=[True, False, True])
@@ -3280,7 +3281,7 @@ def around(a, decimals=0, out=None):
     Notes
     -----
     `~numpy.round` is often used as an alias for `~numpy.around`.
-    
+
     For values exactly halfway between rounded decimal values, NumPy
     rounds to the nearest even value. Thus 1.5 and 2.5 round to 2.0,
     -0.5 and 0.5 round to 0.0, etc.

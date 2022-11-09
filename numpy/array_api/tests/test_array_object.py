@@ -1,25 +1,17 @@
 import operator
 
-from numpy.testing import assert_raises
-import numpy as np
 import pytest
 
-from .. import ones, asarray, reshape, result_type, all, equal
+import numpy as np
+from numpy.testing import assert_raises
+
+from .. import all, asarray, equal, ones, reshape, result_type
 from .._array_object import Array
-from .._dtypes import (
-    _all_dtypes,
-    _boolean_dtypes,
-    _floating_dtypes,
-    _integer_dtypes,
-    _integer_or_boolean_dtypes,
-    _numeric_dtypes,
-    int8,
-    int16,
-    int32,
-    int64,
-    uint64,
-    bool as bool_,
-)
+from .._dtypes import (_all_dtypes, _boolean_dtypes, _floating_dtypes,
+                       _integer_dtypes, _integer_or_boolean_dtypes,
+                       _numeric_dtypes)
+from .._dtypes import bool as bool_
+from .._dtypes import int8, int16, int32, int64, uint64
 
 
 def test_validate_index():

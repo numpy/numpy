@@ -1,43 +1,21 @@
 import os
 import sys
-import zipfile
 import types
+import zipfile
+from collections.abc import (Callable, Collection, Iterable, Iterator, Mapping,
+                             Sequence)
 from re import Pattern
-from collections.abc import Collection, Mapping, Iterator, Sequence, Callable, Iterable
-from typing import (
-    Literal as L,
-    Any,
-    TypeVar,
-    Generic,
-    IO,
-    overload,
-    Protocol,
-)
+from typing import IO, Any, Generic
+from typing import Literal as L
+from typing import Protocol, TypeVar, overload
 
-from numpy import (
-    DataSource as DataSource,
-    ndarray,
-    recarray,
-    dtype,
-    generic,
-    float64,
-    void,
-    record,
-)
-
+from numpy import DataSource as DataSource
+from numpy import dtype, float64, generic, ndarray, recarray, record, void
+from numpy._typing import (ArrayLike, DTypeLike, NDArray, _DTypeLike,
+                           _SupportsArrayFunc)
+from numpy.core.multiarray import packbits as packbits
+from numpy.core.multiarray import unpackbits as unpackbits
 from numpy.ma.mrecords import MaskedRecords
-from numpy._typing import (
-    ArrayLike,
-    DTypeLike,
-    NDArray,
-    _DTypeLike,
-    _SupportsArrayFunc,
-)
-
-from numpy.core.multiarray import (
-    packbits as packbits,
-    unpackbits as unpackbits,
-)
 
 _T = TypeVar("_T")
 _T_contra = TypeVar("_T_contra", contravariant=True)

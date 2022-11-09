@@ -2021,7 +2021,7 @@ add_newdoc('numpy.core.umath', 'log',
     has a branch cut `[-inf, 0]` and is continuous from above on it. `log`
     handles the floating-point negative zero as an infinitesimal negative
     number, conforming to the C99 standard.
-    
+
     In the cases where the input has a negative real part and a very small
     negative complex part (approaching 0), the result is so close to `-pi`
     that it evaluates to exactly `-pi`.

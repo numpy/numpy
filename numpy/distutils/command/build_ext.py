@@ -3,23 +3,22 @@
 """
 import os
 import subprocess
+from distutils.command.build_ext import build_ext as old_build_ext
+from distutils.dep_util import newer_group
+from distutils.errors import (DistutilsError, DistutilsFileError,
+                              DistutilsSetupError)
+from distutils.file_util import copy_file
 from glob import glob
 
-from distutils.dep_util import newer_group
-from distutils.command.build_ext import build_ext as old_build_ext
-from distutils.errors import DistutilsFileError, DistutilsSetupError,\
-    DistutilsError
-from distutils.file_util import copy_file
-
 from numpy.distutils import log
-from numpy.distutils.exec_command import filepath_from_subprocess_output
-from numpy.distutils.system_info import combine_paths
-from numpy.distutils.misc_util import (
-    filter_sources, get_ext_source_files, get_numpy_include_dirs,
-    has_cxx_sources, has_f_sources, is_sequence
-)
+from numpy.distutils.ccompiler_opt import CCompilerOpt, new_ccompiler_opt
 from numpy.distutils.command.config_compiler import show_fortran_compilers
-from numpy.distutils.ccompiler_opt import new_ccompiler_opt, CCompilerOpt
+from numpy.distutils.exec_command import filepath_from_subprocess_output
+from numpy.distutils.misc_util import (filter_sources, get_ext_source_files,
+                                       get_numpy_include_dirs, has_cxx_sources,
+                                       has_f_sources, is_sequence)
+from numpy.distutils.system_info import combine_paths
+
 
 class build_ext (old_build_ext):
 
@@ -128,6 +127,7 @@ class build_ext (old_build_ext):
         # explicitly specify the C libraries that they use.
 
         from distutils.ccompiler import new_compiler
+
         from numpy.distutils.fcompiler import new_fcompiler
 
         compiler_type = self.compiler

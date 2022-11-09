@@ -1,6 +1,6 @@
 import re
-import sys
 import subprocess
+import sys
 
 __doc__ = """This module generates a DEF file from the symbols in
 an MSVC-compiled DLL import library.  It correctly discriminates between

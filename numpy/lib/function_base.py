@@ -1,3 +1,4 @@
+import builtins
 import collections.abc
 import functools
 import re
@@ -6,34 +7,26 @@ import warnings
 
 import numpy as np
 import numpy.core.numeric as _nx
-from numpy.core import transpose
-from numpy.core.numeric import (
-    ones, zeros_like, arange, concatenate, array, asarray, asanyarray, empty,
-    ndarray, take, dot, where, intp, integer, isscalar, absolute
-    )
-from numpy.core.umath import (
-    pi, add, arctan2, frompyfunc, cos, less_equal, sqrt, sin,
-    mod, exp, not_equal, subtract
-    )
-from numpy.core.fromnumeric import (
-    ravel, nonzero, partition, mean, any, sum
-    )
+from numpy.core import overrides, transpose
+from numpy.core.fromnumeric import any, mean, nonzero, partition, ravel, sum
+from numpy.core.function_base import add_newdoc
+from numpy.core.multiarray import (_insert, _monotonicity, add_docstring,
+                                   bincount)
+from numpy.core.multiarray import interp as compiled_interp
+from numpy.core.multiarray import interp_complex as compiled_interp_complex
+from numpy.core.multiarray import normalize_axis_index
+from numpy.core.numeric import (absolute, arange, array, asanyarray, asarray,
+                                concatenate, dot, empty, integer, intp,
+                                isscalar, ndarray, ones, take, where,
+                                zeros_like)
 from numpy.core.numerictypes import typecodes
 from numpy.core.overrides import set_module
-from numpy.core import overrides
-from numpy.core.function_base import add_newdoc
-from numpy.lib.twodim_base import diag
-from numpy.core.multiarray import (
-    _insert, add_docstring, bincount, normalize_axis_index, _monotonicity,
-    interp as compiled_interp, interp_complex as compiled_interp_complex
-    )
 from numpy.core.umath import _add_newdoc_ufunc as add_newdoc_ufunc
-
-import builtins
-
+from numpy.core.umath import (add, arctan2, cos, exp, frompyfunc, less_equal,
+                              mod, not_equal, pi, sin, sqrt, subtract)
 # needed in this module for compatibility
 from numpy.lib.histograms import histogram, histogramdd  # noqa: F401
-
+from numpy.lib.twodim_base import diag
 
 array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy')
@@ -4017,7 +4010,7 @@ def percentile(a,
     since Python uses 0-based indexing, the code subtracts another 1 from the
     index internally.
 
-    The following formula determines the virtual index ``i + g``, the location 
+    The following formula determines the virtual index ``i + g``, the location
     of the percentile in the sorted sample:
 
     .. math::
@@ -4306,7 +4299,7 @@ def quantile(a,
     since Python uses 0-based indexing, the code subtracts another 1 from the
     index internally.
 
-    The following formula determines the virtual index ``i + g``, the location 
+    The following formula determines the virtual index ``i + g``, the location
     of the quantile in the sorted sample:
 
     .. math::
@@ -4469,7 +4462,7 @@ def _quantile_is_valid(q):
     # avoid expensive reductions, relevant for arrays with < O(1000) elements
     if q.ndim == 1 and q.size < 10:
         for i in range(q.size):
-            if not (0.0 <= q[i] <= 1.0):
+            if not 0.0 <= q[i] <= 1.0:
                 return False
     else:
         if not (np.all(0 <= q) and np.all(q <= 1)):
@@ -5187,7 +5180,7 @@ def delete(arr, obj, axis=None):
             raise IndexError(
                 "index %i is out of bounds for axis %i with "
                 "size %i" % (obj, axis, N))
-        if (obj < 0):
+        if obj < 0:
             obj += N
         newshape[axis] -= 1
         new = empty(newshape, arr.dtype, arrorder)
@@ -5362,7 +5355,7 @@ def insert(arr, obj, values, axis=None):
         if index < -N or index > N:
             raise IndexError(f"index {obj} is out of bounds for axis {axis} "
                              f"with size {N}")
-        if (index < 0):
+        if index < 0:
             index += N
 
         # There are some object array corner cases here, but we cannot avoid

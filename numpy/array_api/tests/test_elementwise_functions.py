@@ -2,14 +2,10 @@ from inspect import getfullargspec
 
 from numpy.testing import assert_raises
 
-from .. import asarray, _elementwise_functions
+from .. import _elementwise_functions, asarray
+from .._dtypes import (_boolean_dtypes, _dtype_categories, _floating_dtypes,
+                       _integer_dtypes)
 from .._elementwise_functions import bitwise_left_shift, bitwise_right_shift
-from .._dtypes import (
-    _dtype_categories,
-    _boolean_dtypes,
-    _floating_dtypes,
-    _integer_dtypes,
-)
 
 
 def nargs(func):

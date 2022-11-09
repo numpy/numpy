@@ -1,6 +1,7 @@
+from typing import Any
+
 import numpy as np
 from numpy._typing import NDArray
-from typing import Any
 
 i8: np.int64
 f8: np.float64

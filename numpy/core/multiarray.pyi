@@ -1,83 +1,33 @@
 # TODO: Sort out any and all missing functions in this namespace
 
-import os
 import datetime as dt
-from collections.abc import Sequence, Callable, Iterable
-from typing import (
-    Literal as L,
-    Any,
-    overload,
-    TypeVar,
-    SupportsIndex,
-    final,
-    Final,
-    Protocol,
-    ClassVar,
-)
+import os
+from collections.abc import Callable, Iterable, Sequence
+from typing import Any, ClassVar, Final
+from typing import Literal as L
+from typing import Protocol, SupportsIndex, TypeVar, final, overload
 
-from numpy import (
-    # Re-exports
-    busdaycalendar as busdaycalendar,
-    broadcast as broadcast,
-    dtype as dtype,
-    ndarray as ndarray,
-    nditer as nditer,
-
-    # The rest
-    ufunc,
-    str_,
-    bool_,
-    uint8,
-    intp,
-    int_,
-    float64,
-    timedelta64,
-    datetime64,
-    generic,
-    unsignedinteger,
-    signedinteger,
-    floating,
-    complexfloating,
-    _OrderKACF,
-    _OrderCF,
-    _CastingKind,
-    _ModeKind,
-    _SupportsBuffer,
-    _IOProtocol,
-    _CopyMode,
-    _NDIterFlagsKind,
-    _NDIterOpFlagsKind,
-)
-
-from numpy._typing import (
-    # Shapes
-    _ShapeLike,
-
-    # DTypes
-    DTypeLike,
-    _DTypeLike,
-
-    # Arrays
-    NDArray,
-    ArrayLike,
-    _ArrayLike,
-    _SupportsArrayFunc,
-    _NestedSequence,
-    _ArrayLikeBool_co,
-    _ArrayLikeUInt_co,
-    _ArrayLikeInt_co,
-    _ArrayLikeFloat_co,
-    _ArrayLikeComplex_co,
-    _ArrayLikeTD64_co,
-    _ArrayLikeDT64_co,
-    _ArrayLikeObject_co,
-    _ArrayLikeStr_co,
-    _ArrayLikeBytes_co,
-    _ScalarLike_co,
-    _IntLike_co,
-    _FloatLike_co,
-    _TD64Like_co,
-)
+from numpy import (_CastingKind, _CopyMode, _IOProtocol, _ModeKind,
+                   _NDIterFlagsKind, _NDIterOpFlagsKind, _OrderCF, _OrderKACF,
+                   _SupportsBuffer, bool_)
+from numpy import broadcast as broadcast
+from numpy import busdaycalendar as busdaycalendar  # Re-exports; The rest
+from numpy import complexfloating, datetime64
+from numpy import dtype as dtype
+from numpy import float64, floating, generic, int_, intp
+from numpy import ndarray as ndarray
+from numpy import nditer as nditer
+from numpy import (signedinteger, str_, timedelta64, ufunc, uint8,
+                   unsignedinteger)
+from numpy._typing import (ArrayLike, DTypeLike,  # Shapes; DTypes; Arrays
+                           NDArray, _ArrayLike, _ArrayLikeBool_co,
+                           _ArrayLikeBytes_co, _ArrayLikeComplex_co,
+                           _ArrayLikeDT64_co, _ArrayLikeFloat_co,
+                           _ArrayLikeInt_co, _ArrayLikeObject_co,
+                           _ArrayLikeStr_co, _ArrayLikeTD64_co,
+                           _ArrayLikeUInt_co, _DTypeLike, _FloatLike_co,
+                           _IntLike_co, _NestedSequence, _ScalarLike_co,
+                           _ShapeLike, _SupportsArrayFunc, _TD64Like_co)
 
 _T_co = TypeVar("_T_co", covariant=True)
 _T_contra = TypeVar("_T_contra", contravariant=True)

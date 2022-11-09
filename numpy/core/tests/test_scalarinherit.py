@@ -33,22 +33,22 @@ class B1(np.float64, HasNew):
 class TestInherit:
     def test_init(self):
         x = B(1.0)
-        assert_(str(x) == '1.0')
+        assertTrue(str(x) == '1.0')
         y = C(2.0)
-        assert_(str(y) == '2.0')
+        assertTrue(str(y) == '2.0')
         z = D(3.0)
-        assert_(str(z) == '3.0')
+        assertTrue(str(z) == '3.0')
 
     def test_init2(self):
         x = B0(1.0)
-        assert_(str(x) == '1.0')
+        assertTrue(str(x) == '1.0')
         y = C0(2.0)
-        assert_(str(y) == '2.0')
+        assertTrue(str(y) == '2.0')
 
     def test_gh_15395(self):
         # HasNew is the second base, so `np.float64` should have priority
         x = B1(1.0)
-        assert_(str(x) == '1.0')
+        assertTrue(str(x) == '1.0')
 
         # previously caused RecursionError!?
         with pytest.raises(TypeError):
@@ -62,16 +62,16 @@ class TestCharacter:
         np_u = np.unicode_('abc')
         s = b'def'
         u = 'def'
-        assert_(np_s.__radd__(np_s) is NotImplemented)
-        assert_(np_s.__radd__(np_u) is NotImplemented)
-        assert_(np_s.__radd__(s) is NotImplemented)
-        assert_(np_s.__radd__(u) is NotImplemented)
-        assert_(np_u.__radd__(np_s) is NotImplemented)
-        assert_(np_u.__radd__(np_u) is NotImplemented)
-        assert_(np_u.__radd__(s) is NotImplemented)
-        assert_(np_u.__radd__(u) is NotImplemented)
-        assert_(s + np_s == b'defabc')
-        assert_(u + np_u == 'defabc')
+        assertTrue(np_s.__radd__(np_s) is NotImplemented)
+        assertTrue(np_s.__radd__(np_u) is NotImplemented)
+        assertTrue(np_s.__radd__(s) is NotImplemented)
+        assertTrue(np_s.__radd__(u) is NotImplemented)
+        assertTrue(np_u.__radd__(np_s) is NotImplemented)
+        assertTrue(np_u.__radd__(np_u) is NotImplemented)
+        assertTrue(np_u.__radd__(s) is NotImplemented)
+        assertTrue(np_u.__radd__(u) is NotImplemented)
+        assertTrue(s + np_s == b'defabc')
+        assertTrue(u + np_u == 'defabc')
 
         class MyStr(str, np.generic):
             # would segfault
@@ -94,5 +94,5 @@ class TestCharacter:
         np_u = np.unicode_('abc')
         res_s = b'abc' * 5
         res_u = 'abc' * 5
-        assert_(np_s * 5 == res_s)
-        assert_(np_u * 5 == res_u)
+        assertTrue(np_s * 5 == res_s)
+        assertTrue(np_u * 5 == res_u)

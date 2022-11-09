@@ -8,14 +8,14 @@
 import operator
 
 import numpy as np
-from numpy import ndarray, float_
-import numpy.core.umath as umath
+from numpy.core import umath
 import numpy.testing
-from numpy.testing import (
-    assert_, assert_allclose, assert_array_almost_equal_nulp,
-    assert_raises, build_err_msg
-    )
-from .core import mask_or, getmask, masked_array, nomask, masked, filled
+from numpy import float_, ndarray
+from numpy.testing import (assert_, assert_allclose,
+                           assert_array_almost_equal_nulp, assert_raises,
+                           build_err_msg)
+
+from .core import filled, getmask, mask_or, masked, masked_array, nomask
 
 __all__masked = [
     'almost', 'approx', 'assert_almost_equal', 'assert_array_almost_equal',
@@ -30,6 +30,7 @@ __all__masked = [
 # unfortunate, as some of these functions are not intended to work with
 # masked arrays. But there was no way to tell before.
 from unittest import TestCase
+
 __some__from_testing = [
     'TestCase', 'assert_', 'assert_allclose', 'assert_array_almost_equal_nulp',
     'assert_raises'
@@ -100,7 +101,7 @@ def assert_equal_records(a, b):
     assert_equal(a.dtype, b.dtype)
     for f in a.dtype.names:
         (af, bf) = (operator.getitem(a, f), operator.getitem(b, f))
-        if not (af is masked) and not (bf is masked):
+        if not af is masked and not bf is masked:
             assert_equal(operator.getitem(a, f), operator.getitem(b, f))
     return
 
@@ -129,8 +130,8 @@ def assert_equal(actual, desired, err_msg=''):
             raise AssertionError(msg)
         return
     # Case #4. arrays or equivalent
-    if ((actual is masked) and not (desired is masked)) or \
-            ((desired is masked) and not (actual is masked)):
+    if (actual is masked) and not (desired is masked) or \
+            (desired is masked) and not actual is masked:
         msg = build_err_msg([actual, desired],
                             err_msg, header='', names=('x', 'y'))
         raise ValueError(msg)
@@ -204,8 +205,8 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
     m = mask_or(getmask(x), getmask(y))
     x = masked_array(x, copy=False, mask=m, keep_mask=False, subok=False)
     y = masked_array(y, copy=False, mask=m, keep_mask=False, subok=False)
-    if ((x is masked) and not (y is masked)) or \
-            ((y is masked) and not (x is masked)):
+    if (x is masked) and not (y is masked) or \
+            (y is masked) and not x is masked:
         msg = build_err_msg([x, y], err_msg=err_msg, verbose=verbose,
                             header=header, names=('x', 'y'))
         raise ValueError(msg)
@@ -282,7 +283,7 @@ def assert_mask_equal(m1, m2, err_msg=''):
 
     """
     if m1 is nomask:
-        assert_(m2 is nomask)
+        assertTrue(m2 is nomask)
     if m2 is nomask:
-        assert_(m1 is nomask)
+        assertTrue(m1 is nomask)
     assert_array_equal(m1, m2, err_msg=err_msg)

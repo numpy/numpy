@@ -1,50 +1,19 @@
 from collections.abc import Callable, Sequence
-from typing import (
-    Any,
-    overload,
-    TypeVar,
-    Literal,
-    SupportsAbs,
-    SupportsIndex,
-    NoReturn,
-)
+from typing import (Any, Literal, NoReturn, SupportsAbs, SupportsIndex,
+                    TypeVar, overload)
+
 from typing_extensions import TypeGuard
 
-from numpy import (
-    ComplexWarning as ComplexWarning,
-    generic,
-    unsignedinteger,
-    signedinteger,
-    floating,
-    complexfloating,
-    bool_,
-    int_,
-    intp,
-    float64,
-    timedelta64,
-    object_,
-    _OrderKACF,
-    _OrderCF,
-)
-
-from numpy._typing import (
-    ArrayLike,
-    NDArray,
-    DTypeLike,
-    _ShapeLike,
-    _DTypeLike,
-    _ArrayLike,
-    _SupportsArrayFunc,
-    _ScalarLike_co,
-    _ArrayLikeBool_co,
-    _ArrayLikeUInt_co,
-    _ArrayLikeInt_co,
-    _ArrayLikeFloat_co,
-    _ArrayLikeComplex_co,
-    _ArrayLikeTD64_co,
-    _ArrayLikeObject_co,
-    _ArrayLikeUnknown,
-)
+from numpy import ComplexWarning as ComplexWarning
+from numpy import (_OrderCF, _OrderKACF, bool_, complexfloating, float64,
+                   floating, generic, int_, intp, object_, signedinteger,
+                   timedelta64, unsignedinteger)
+from numpy._typing import (ArrayLike, DTypeLike, NDArray, _ArrayLike,
+                           _ArrayLikeBool_co, _ArrayLikeComplex_co,
+                           _ArrayLikeFloat_co, _ArrayLikeInt_co,
+                           _ArrayLikeObject_co, _ArrayLikeTD64_co,
+                           _ArrayLikeUInt_co, _ArrayLikeUnknown, _DTypeLike,
+                           _ScalarLike_co, _ShapeLike, _SupportsArrayFunc)
 
 _T = TypeVar("_T")
 _SCT = TypeVar("_SCT", bound=generic)

@@ -16,10 +16,11 @@ __all__ = ['bytes', 'asbytes', 'isfileobj', 'getexception', 'strchar',
            'integer_types', 'is_pathlib_path', 'npy_load_module', 'Path',
            'pickle', 'contextlib_nullcontext', 'os_fspath', 'os_PathLike']
 
-import sys
-import os
-from pathlib import Path
 import io
+import os
+import sys
+from pathlib import Path
+
 try:
     import pickle5 as pickle
 except ImportError:
@@ -130,7 +131,7 @@ def npy_load_module(name, fn, info=None):
     # Explicitly lazy import this to avoid paying the cost
     # of importing importlib at startup
     from importlib.machinery import SourceFileLoader
-    return SourceFileLoader(name, fn).load_module()
+    return SourceFileLoader(name, fn).exec_module()
 
 
 os_fspath = os.fspath

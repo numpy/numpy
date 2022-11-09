@@ -1,8 +1,8 @@
 from typing import Any, TypedDict
 
 from numpy import dtype, ndarray, uint64
-from numpy.random.bit_generator import BitGenerator, SeedSequence
 from numpy._typing import _ArrayLikeInt_co
+from numpy.random.bit_generator import BitGenerator, SeedSequence
 
 class _PhiloxInternal(TypedDict):
     counter: ndarray[Any, dtype[uint64]]

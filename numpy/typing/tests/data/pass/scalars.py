@@ -1,7 +1,8 @@
-import sys
 import datetime as dt
+import sys
 
 import pytest
+
 import numpy as np
 
 b =  np.bool_()

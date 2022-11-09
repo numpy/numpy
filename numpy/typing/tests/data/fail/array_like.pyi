@@ -1,7 +1,6 @@
 import numpy as np
 from numpy._typing import ArrayLike
 
-
 class A:
     pass
 

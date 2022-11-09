@@ -1,33 +1,14 @@
 from collections.abc import Iterable
-from typing import (
-    Literal as L,
-    overload,
-    TypeVar,
-    Any,
-    SupportsIndex,
-    SupportsInt,
-)
+from typing import Any
+from typing import Literal as L
+from typing import SupportsIndex, SupportsInt, TypeVar, overload
 
-from numpy import (
-    generic,
-    floating,
-    complexfloating,
-    int32,
-    float64,
-    complex128,
-)
-
+from numpy import (complex128, complexfloating, float64, floating, generic,
+                   int32)
+from numpy._typing import (ArrayLike, NDArray, _ArrayLikeComplex_co,
+                           _ArrayLikeFloat_co, _ArrayLikeInt_co,
+                           _ArrayLikeObject_co, _ArrayLikeTD64_co)
 from numpy.linalg import LinAlgError as LinAlgError
-
-from numpy._typing import (
-    NDArray,
-    ArrayLike,
-    _ArrayLikeInt_co,
-    _ArrayLikeFloat_co,
-    _ArrayLikeComplex_co,
-    _ArrayLikeTD64_co,
-    _ArrayLikeObject_co,
-)
 
 _T = TypeVar("_T")
 _ArrayType = TypeVar("_ArrayType", bound=NDArray[Any])

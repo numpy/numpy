@@ -6,8 +6,8 @@ function-based counterpart in `../from_numeric.py`.
 
 """
 
-import operator
 import ctypes as ct
+import operator
 from typing import Any
 
 import numpy as np

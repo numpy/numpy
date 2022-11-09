@@ -13,20 +13,16 @@ and the masking of individual fields.
 #  first place, and then rename the invalid fields with a trailing
 #  underscore. Maybe we could just overload the parser function ?
 
-from numpy.ma import (
-    MAError, MaskedArray, masked, nomask, masked_array, getdata,
-    getmaskarray, filled
-)
-import numpy.ma as ma
 import warnings
 
 import numpy as np
-from numpy import (
-    bool_, dtype, ndarray, recarray, array as narray
-)
-from numpy.core.records import (
-    fromarrays as recfromarrays, fromrecords as recfromrecords
-)
+from numpy import ma
+from numpy import array as narray
+from numpy import bool_, dtype, ndarray, recarray
+from numpy.core.records import fromarrays as recfromarrays
+from numpy.core.records import fromrecords as recfromrecords
+from numpy.ma import (MAError, MaskedArray, filled, getdata, getmaskarray,
+                      masked, masked_array, nomask)
 
 _byteorderconv = np.core.records._byteorderconv
 
@@ -393,7 +389,7 @@ class MaskedRecords(MaskedArray):
         else:
             output = ndarray.view(self, dtype, type)
         # Update the mask, just like in MaskedArray.view
-        if (getattr(output, '_mask', nomask) is not nomask):
+        if getattr(output, '_mask', nomask) is not nomask:
             mdtype = ma.make_mask_descr(output.dtype)
             output._mask = self._mask.view(mdtype, ndarray)
             output._mask.shape = output.shape

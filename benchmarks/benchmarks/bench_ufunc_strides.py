@@ -1,6 +1,6 @@
-from .common import Benchmark
-
 import numpy as np
+
+from .common import Benchmark
 
 UNARY_UFUNCS = [obj for obj in np.core.umath.__dict__.values() if
         isinstance(obj, np.ufunc)]
@@ -25,7 +25,7 @@ class Unary(Benchmark):
         N = 100000
         self.arr_out = np.empty(stride_out*N, dtype)
         self.arr = np.random.rand(stride*N).astype(dtype)
-        if (ufuncname.__name__ == 'arccosh'):
+        if ufuncname.__name__ == 'arccosh':
             self.arr = 1.0 + self.arr
 
     def time_ufunc(self, ufuncname, stride, stride_out, dtype):

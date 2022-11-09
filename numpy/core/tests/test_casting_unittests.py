@@ -6,18 +6,17 @@ Unlike most tests in NumPy, these are closer to unit-tests rather
 than integration tests.
 """
 
-import pytest
-import textwrap
+import ctypes
 import enum
 import random
-import ctypes
+import textwrap
+
+import pytest
 
 import numpy as np
-from numpy.lib.stride_tricks import as_strided
-
-from numpy.testing import assert_array_equal
 from numpy.core._multiarray_umath import _get_castingimpl as get_castingimpl
-
+from numpy.lib.stride_tricks import as_strided
+from numpy.testing import assert_array_equal
 
 # Simple skips object, parametric and long double (unsupported by struct)
 simple_dtypes = "?bhilqBHILQefdFD"
@@ -267,8 +266,8 @@ class TestCasting:
                 for to_dt in [to_Dt(), to_Dt().newbyteorder()]:
                     casting, (from_res, to_res), view_off = (
                             cast._resolve_descriptors((from_dt, to_dt)))
-                    assert(type(from_res) == from_Dt)
-                    assert(type(to_res) == to_Dt)
+                    assert type(from_res) == from_Dt
+                    assert type(to_res) == to_Dt
                     if view_off is not None:
                         # If a view is acceptable, this is "no" casting
                         # and byte order must be matching.
@@ -284,8 +283,8 @@ class TestCasting:
                         assert casting == CAST_TABLE[from_Dt][to_Dt]
 
                     if from_Dt is to_Dt:
-                        assert(from_dt is from_res)
-                        assert(to_dt is to_res)
+                        assert from_dt is from_res
+                        assert to_dt is to_res
 
 
     @pytest.mark.filterwarnings("ignore::numpy.ComplexWarning")
@@ -816,4 +815,3 @@ class TestCasting:
         res = nonstandard_bools.astype(dtype)
         expected = [0, 1, 1]
         assert_array_equal(res, expected)
-

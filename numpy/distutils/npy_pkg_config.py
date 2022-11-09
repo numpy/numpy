@@ -1,7 +1,6 @@
-import sys
-import re
 import os
-
+import re
+import sys
 from configparser import RawConfigParser
 
 __all__ = ['FormatError', 'PkgNotFound', 'LibraryInfo', 'VariableSet',
@@ -178,7 +177,7 @@ class VariableSet:
         # Brute force: we keep interpolating until there is no '${var}' anymore
         # or until interpolated string is equal to input string
         def _interpolate(value):
-            for k in self._re.keys():
+            for k in self._re:
                 value = self._re[k].sub(self._re_sub[k], value)
             return value
         while _VAR.search(value):
@@ -375,8 +374,8 @@ def read_config(pkgname, dirs=None):
 # pkg-config simple emulator - useful for debugging, and maybe later to query
 # the system
 if __name__ == '__main__':
-    from optparse import OptionParser
     import glob
+    from optparse import OptionParser
 
     parser = OptionParser()
     parser.add_option("--cflags", dest="cflags", action="store_true",

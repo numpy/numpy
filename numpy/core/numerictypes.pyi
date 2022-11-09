@@ -1,52 +1,17 @@
 import sys
 import types
 from collections.abc import Iterable
-from typing import (
-    Literal as L,
-    Union,
-    overload,
-    Any,
-    TypeVar,
-    Protocol,
-    TypedDict,
-)
+from typing import Any
+from typing import Literal as L
+from typing import Protocol, TypedDict, TypeVar, Union, overload
 
-from numpy import (
-    ndarray,
-    dtype,
-    generic,
-    bool_,
-    ubyte,
-    ushort,
-    uintc,
-    uint,
-    ulonglong,
-    byte,
-    short,
-    intc,
-    int_,
-    longlong,
-    half,
-    single,
-    double,
-    longdouble,
-    csingle,
-    cdouble,
-    clongdouble,
-    datetime64,
-    timedelta64,
-    object_,
-    str_,
-    bytes_,
-    void,
-)
-
-from numpy.core._type_aliases import (
-    sctypeDict as sctypeDict,
-    sctypes as sctypes,
-)
-
-from numpy._typing import DTypeLike, ArrayLike, _DTypeLike
+from numpy import (bool_, byte, bytes_, cdouble, clongdouble, csingle,
+                   datetime64, double, dtype, generic, half, int_, intc,
+                   longdouble, longlong, ndarray, object_, short, single, str_,
+                   timedelta64, ubyte, uint, uintc, ulonglong, ushort, void)
+from numpy._typing import ArrayLike, DTypeLike, _DTypeLike
+from numpy.core._type_aliases import sctypeDict as sctypeDict
+from numpy.core._type_aliases import sctypes as sctypes
 
 _T = TypeVar("_T")
 _SCT = TypeVar("_SCT", bound=generic)

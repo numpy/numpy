@@ -4,32 +4,41 @@ import operator
 import warnings
 from collections.abc import Sequence
 
-from cpython.pycapsule cimport PyCapsule_IsValid, PyCapsule_GetPointer
-from cpython cimport (Py_INCREF, PyFloat_AsDouble)
-from cpython.mem cimport PyMem_Malloc, PyMem_Free
-
 cimport cython
+from cpython cimport Py_INCREF, PyFloat_AsDouble
+from cpython.mem cimport PyMem_Free, PyMem_Malloc
+from cpython.pycapsule cimport PyCapsule_GetPointer, PyCapsule_IsValid
+
 import numpy as np
+
 cimport numpy as np
+
 from numpy.core.multiarray import normalize_axis_index
 
-from .c_distributions cimport *
 from libc cimport string
 from libc.math cimport sqrt
-from libc.stdint cimport (uint8_t, uint16_t, uint32_t, uint64_t,
-                          int32_t, int64_t, INT64_MAX, SIZE_MAX)
-from ._bounded_integers cimport (_rand_bool, _rand_int32, _rand_int64,
-         _rand_int16, _rand_int8, _rand_uint64, _rand_uint32, _rand_uint16,
-         _rand_uint8, _gen_mask)
+from libc.stdint cimport (INT64_MAX, SIZE_MAX, int32_t, int64_t, uint8_t,
+                          uint16_t, uint32_t, uint64_t)
+
+from ._bounded_integers cimport (_gen_mask, _rand_bool, _rand_int8,
+                                 _rand_int16, _rand_int32, _rand_int64,
+                                 _rand_uint8, _rand_uint16, _rand_uint32,
+                                 _rand_uint64)
+from .c_distributions cimport *
+
 from ._pcg64 import PCG64
+
 from numpy.random cimport bitgen_t
-from ._common cimport (POISSON_LAM_MAX, CONS_POSITIVE, CONS_NONE,
-            CONS_NON_NEGATIVE, CONS_BOUNDED_0_1, CONS_BOUNDED_GT_0_1,
-            CONS_BOUNDED_LT_0_1, CONS_GT_1, CONS_POSITIVE_NOT_NAN, CONS_POISSON,
-            double_fill, cont, kahan_sum, cont_broadcast_3, float_fill, cont_f,
-            check_array_constraint, check_constraint, disc, discrete_broadcast_iii,
-            validate_output_shape
-        )
+
+from ._common cimport (CONS_BOUNDED_0_1, CONS_BOUNDED_GT_0_1,
+                       CONS_BOUNDED_LT_0_1, CONS_GT_1, CONS_NON_NEGATIVE,
+                       CONS_NONE, CONS_POISSON, CONS_POSITIVE,
+                       CONS_POSITIVE_NOT_NAN, POISSON_LAM_MAX,
+                       check_array_constraint, check_constraint, cont,
+                       cont_broadcast_3, cont_f, disc, discrete_broadcast_iii,
+                       double_fill, float_fill, kahan_sum,
+                       validate_output_shape)
+
 
 cdef extern from "numpy/arrayobject.h":
     int PyArray_ResolveWritebackIfCopy(np.ndarray)
@@ -223,6 +232,7 @@ cdef class Generator:
         ctor, name_tpl, state = self._bit_generator.__reduce__()
 
         from ._pickle import __generator_ctor
+
         # Requirements of __generator_ctor are (name, ctor)
         return __generator_ctor, (name_tpl[0], ctor), state
 
@@ -3718,6 +3728,7 @@ cdef class Generator:
             (u, s, vh) = svd(cov)
         elif method == 'eigh':
             from numpy.linalg import eigh
+
             # could call linalg.svd(hermitian=True), but that calculates a vh we don't need
             (s, u)  = eigh(cov)
         else:

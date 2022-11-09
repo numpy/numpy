@@ -1,7 +1,6 @@
 """Mixin classes for custom array types that don't inherit from ndarray."""
 from numpy.core import umath as um
 
-
 __all__ = ['NDArrayOperatorsMixin']
 
 

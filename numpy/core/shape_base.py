@@ -6,11 +6,10 @@ import itertools
 import operator
 import warnings
 
+from . import fromnumeric as _from_nx
 from . import numeric as _nx
 from . import overrides
 from .multiarray import array, asanyarray, normalize_axis_index
-from . import fromnumeric as _from_nx
-
 
 array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy')
@@ -215,7 +214,7 @@ def _arrays_for_stack_dispatcher(arrays, stacklevel=4):
     return arrays
 
 
-def _vhstack_dispatcher(tup, *, 
+def _vhstack_dispatcher(tup, *,
                         dtype=None, casting=None):
     return _arrays_for_stack_dispatcher(tup)
 

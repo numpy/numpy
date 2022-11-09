@@ -2,27 +2,26 @@
 Utility function to facilitate testing.
 
 """
-import os
-import sys
-import platform
-import re
+import contextlib
 import gc
 import operator
+import os
+import platform
+import pprint
+import re
+import shutil
+import sys
 import warnings
 from functools import partial, wraps
-import shutil
-import contextlib
+from io import StringIO
 from tempfile import mkdtemp, mkstemp
 from unittest.case import SkipTest
 from warnings import WarningMessage
-import pprint
 
 import numpy as np
-from numpy.core import(
-     intp, float32, empty, arange, array_repr, ndarray, isnat, array)
 import numpy.linalg.lapack_lite
-
-from io import StringIO
+from numpy.core import (arange, array, array_repr, empty, float32, intp, isnat,
+                        ndarray)
 
 __all__ = [
         'assert_equal', 'assert_almost_equal', 'assert_approx_equal',
@@ -78,7 +77,7 @@ def import_nose():
     return nose
 
 
-def assert_(val, msg=''):
+def assertTrue(val, msg=''):
     """
     Assert that works in release mode.
     Accepts callable msg to allow deferring evaluation until failure.
@@ -127,7 +126,7 @@ def gisfinite(x):
     an exception is always raised.
 
     This should be removed once this problem is solved at the Ufunc level."""
-    from numpy.core import isfinite, errstate
+    from numpy.core import errstate, isfinite
     with errstate(invalid='ignore'):
         st = isfinite(x)
         if isinstance(st, type(NotImplemented)):
@@ -146,7 +145,7 @@ def gisinf(x):
     exception is always raised.
 
     This should be removed once this problem is solved at the Ufunc level."""
-    from numpy.core import isinf, errstate
+    from numpy.core import errstate, isinf
     with errstate(invalid='ignore'):
         st = isinf(x)
         if isinstance(st, type(NotImplemented)):
@@ -342,8 +341,8 @@ def assert_equal(actual, desired, err_msg='', verbose=True):
             assert_equal(actual[k], desired[k], f'item={k!r}\n{err_msg}',
                          verbose)
         return
-    from numpy.core import ndarray, isscalar, signbit
-    from numpy.lib import iscomplexobj, real, imag
+    from numpy.core import isscalar, ndarray, signbit
+    from numpy.lib import imag, iscomplexobj, real
     if isinstance(actual, ndarray) or isinstance(desired, ndarray):
         return assert_array_equal(actual, desired, err_msg, verbose)
     msg = build_err_msg([actual, desired], err_msg, verbose=verbose)
@@ -424,7 +423,7 @@ def assert_equal(actual, desired, err_msg='', verbose=True):
 
     try:
         # Explicitly use __eq__ for comparison, gh-2552
-        if not (desired == actual):
+        if not desired == actual:
             raise AssertionError(msg)
 
     except (DeprecationWarning, FutureWarning) as e:
@@ -466,7 +465,7 @@ def print_assert_equal(test_string, actual, desired):
     __tracebackhide__ = True  # Hide traceback for py.test
     import pprint
 
-    if not (actual == desired):
+    if not actual == desired:
         msg = StringIO()
         msg.write(test_string)
         msg.write(' failed\nACTUAL: \n')
@@ -548,7 +547,7 @@ def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
     """
     __tracebackhide__ = True  # Hide traceback for py.test
     from numpy.core import ndarray
-    from numpy.lib import iscomplexobj, real, imag
+    from numpy.lib import imag, iscomplexobj, real
 
     # Handle complex numbers: separate into real/imag to handle
     # nan/inf/negative zero correctly
@@ -708,7 +707,8 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
                          precision=6, equal_nan=True, equal_inf=True,
                          *, strict=False):
     __tracebackhide__ = True  # Hide traceback for py.test
-    from numpy.core import array, array2string, isnan, inf, bool_, errstate, all, max, object_
+    from numpy.core import (all, array, array2string, bool_, errstate, inf,
+                            isnan, max, object_)
 
     x = np.asanyarray(x)
     y = np.asanyarray(y)
@@ -1063,9 +1063,9 @@ def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
 
     """
     __tracebackhide__ = True  # Hide traceback for py.test
-    from numpy.core import number, float_, result_type, array
-    from numpy.core.numerictypes import issubdtype
+    from numpy.core import array, float_, number, result_type
     from numpy.core.fromnumeric import any as npany
+    from numpy.core.numerictypes import issubdtype
 
     def compare(x, y):
         try:
@@ -1278,8 +1278,9 @@ def rundocs(filename=None, raise_on_error=True):
 
     >>> np.lib.test(doctests=True)  # doctest: +SKIP
     """
-    from numpy.distutils.misc_util import exec_mod_from_location
     import doctest
+
+    from numpy.distutils.misc_util import exec_mod_from_location
     if filename is None:
         f = sys._getframe(1)
         filename = f.f_globals['__file__']
@@ -1503,6 +1504,7 @@ def _assert_valid_refcount(op):
         return True
 
     import gc
+
     import numpy as np
 
     b = np.arange(100*100).reshape(100, 100)
@@ -1514,7 +1516,7 @@ def _assert_valid_refcount(op):
         rc = sys.getrefcount(i)
         for j in range(15):
             d = op(b, c)
-        assert_(sys.getrefcount(i) >= rc)
+        assertTrue(sys.getrefcount(i) >= rc)
     finally:
         gc.enable()
     del d  # for pyflakes
@@ -1528,7 +1530,7 @@ def assert_allclose(actual, desired, rtol=1e-7, atol=0, equal_nan=True,
 
     Given two array_like objects, check that their shapes and all elements
     are equal (but see the Notes for the special handling of a scalar). An
-    exception is raised if the shapes mismatch or any values conflict. In 
+    exception is raised if the shapes mismatch or any values conflict. In
     contrast to the standard usage in numpy, NaNs are compared like numbers,
     no assertion is raised if both objects have NaNs in the same positions.
 
@@ -1774,7 +1776,7 @@ def _integer_repr(x, vdt, comp):
     # See also
     # https://randomascii.wordpress.com/2012/02/25/comparing-floating-point-numbers-2012-edition/
     rx = x.view(vdt)
-    if not (rx.size == 1):
+    if not rx.size == 1:
         rx[rx < 0] = comp - rx[rx < 0]
     else:
         if rx < 0:
@@ -2148,8 +2150,8 @@ class suppress_warnings:
             # The FutureWarning was given once, the filtered warnings were
             # ignored. All other warnings abide outside settings (may be
             # printed/error)
-            assert_(len(log) == 1)
-            assert_(len(sup.log) == 1)  # also stored in log attribute
+            assertTrue(len(log) == 1)
+            assertTrue(len(sup.log) == 1)  # also stored in log attribute
 
     Or as a decorator::
 
@@ -2373,7 +2375,7 @@ def _assert_no_gc_cycles_context(name=None):
         yield
         return
 
-    assert_(gc.isenabled())
+    assertTrue(gc.isenabled())
     gc.disable()
     gc_debug = gc.get_debug()
     try:

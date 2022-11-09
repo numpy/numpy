@@ -1,7 +1,9 @@
 import sys
+
 have_setuptools = ('setuptools' in sys.modules)
 
 from distutils.command.install_data import install_data as old_install_data
+
 
 #data installer with improved intelligence over distutils
 #data files are copied into the project directory instead

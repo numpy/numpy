@@ -3,7 +3,6 @@ from typing import Any
 import numpy as np
 from numpy._typing import _SupportsArray
 
-
 class Index:
     def __index__(self) -> int:
         ...

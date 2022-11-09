@@ -6,11 +6,12 @@ for the various polynomial classes. It operates as a mixin, but uses the
 abc module from the stdlib, hence it is only available for Python >= 2.6.
 
 """
-import os
 import abc
 import numbers
+import os
 
 import numpy as np
+
 from . import polyutils as pu
 
 __all__ = ['ABCPolyBase']
@@ -38,7 +39,7 @@ class ABCPolyBase(abc.ABC):
         Window, see domain for its use. The default value is the
         derived class window.
     symbol : str, optional
-        Symbol used to represent the independent variable in string 
+        Symbol used to represent the independent variable in string
         representations of the polynomial expression, e.g. for printing.
         The symbol must be a valid Python identifier. Default value is 'x'.
 
@@ -364,8 +365,7 @@ class ABCPolyBase(abc.ABC):
         """
         # Get configuration for line breaks
         linewidth = np.get_printoptions().get('linewidth', 75)
-        if linewidth < 1:
-            linewidth = 1
+        linewidth = max(linewidth,1)
         out = pu.format_float(self.coef[0])
         for i, coef in enumerate(self.coef[1:]):
             out += " "
@@ -376,9 +376,9 @@ class ABCPolyBase(abc.ABC):
             # complex). In this case, represent the coefficient as-is.
             try:
                 if coef >= 0:
-                    next_term = f"+ " + pu.format_float(coef, parens=True)
+                    next_term = "+ " + pu.format_float(coef, parens=True)
                 else:
-                    next_term = f"- " + pu.format_float(-coef, parens=True)
+                    next_term = "- " + pu.format_float(-coef, parens=True)
             except TypeError:
                 next_term = f"+ {coef}"
             # Polynomial term

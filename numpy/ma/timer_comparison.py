@@ -2,11 +2,9 @@ import timeit
 from functools import reduce
 
 import numpy as np
+from numpy.core import fromnumeric
 from numpy import float_
-import numpy.core.fromnumeric as fromnumeric
-
 from numpy.testing import build_err_msg
-
 
 pi = np.pi
 
@@ -57,13 +55,13 @@ class ModuleTester:
 
         x = self.filled(self.masked_array(xf, mask=m), fill_value)
         y = self.filled(self.masked_array(yf, mask=m), fill_value)
-        if (x.dtype.char != "O"):
+        if x.dtype.char != "O":
             x = x.astype(float_)
             if isinstance(x, np.ndarray) and x.size > 1:
                 x[np.isnan(x)] = 0
             elif np.isnan(x):
                 x = 0
-        if (y.dtype.char != "O"):
+        if y.dtype.char != "O":
             y = y.astype(float_)
             if isinstance(y, np.ndarray) and y.size > 1:
                 y[np.isnan(y)] = 0
@@ -136,7 +134,7 @@ class ModuleTester:
 
         assert((xm-ym).filled(0).any())
         s = x.shape
-        assert(xm.size == reduce(lambda x, y:x*y, s))
+        assert xm.size == reduce(lambda x, y:x*y, s)
         assert(self.count(xm) == len(m1) - reduce(lambda x, y:x+y, m1))
 
         for s in [(4, 3), (6, 2)]:
@@ -186,9 +184,9 @@ class ModuleTester:
         n = [0, 0, 1, 0, 0]
         m = self.make_mask(n)
         m2 = self.make_mask(m)
-        assert(m is m2)
+        assert m is m2
         m3 = self.make_mask(m, copy=1)
-        assert(m is not m3)
+        assert m is not m3
 
     @np.errstate(all='ignore')
     def test_3(self):
@@ -382,14 +380,14 @@ class ModuleTester:
         self.assert_array_equal(2.0, self.average(ott, weights=[1., 1., 2., 1.]))
         result, wts = self.average(ott, weights=[1., 1., 2., 1.], returned=1)
         self.assert_array_equal(2.0, result)
-        assert(wts == 4.0)
+        assert wts == 4.0
         ott[:] = self.masked
-        assert(self.average(ott, axis=0) is self.masked)
+        assert self.average(ott, axis=0) is self.masked
         ott = self.array([0., 1., 2., 3.], mask=[1, 0, 0, 0])
         ott = ott.reshape(2, 2)
         ott[:, 1] = self.masked
         self.assert_array_equal(self.average(ott, axis=0), [2.0, 0.0])
-        assert(self.average(ott, axis=1)[0] is self.masked)
+        assert self.average(ott, axis=1)[0] is self.masked
         self.assert_array_equal([2., 0.], self.average(ott, axis=0))
         result, wts = self.average(ott, axis=0, returned=1)
         self.assert_array_equal(wts, [1., 0.])

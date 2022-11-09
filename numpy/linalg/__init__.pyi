@@ -1,27 +1,24 @@
-from numpy.linalg.linalg import (
-    matrix_power as matrix_power,
-    solve as solve,
-    tensorsolve as tensorsolve,
-    tensorinv as tensorinv,
-    inv as inv,
-    cholesky as cholesky,
-    eigvals as eigvals,
-    eigvalsh as eigvalsh,
-    pinv as pinv,
-    slogdet as slogdet,
-    det as det,
-    svd as svd,
-    eig as eig,
-    eigh as eigh,
-    lstsq as lstsq,
-    norm as norm,
-    qr as qr,
-    cond as cond,
-    matrix_rank as matrix_rank,
-    multi_dot as multi_dot,
-)
-
 from numpy._pytesttester import PytestTester
+from numpy.linalg.linalg import cholesky as cholesky
+from numpy.linalg.linalg import cond as cond
+from numpy.linalg.linalg import det as det
+from numpy.linalg.linalg import eig as eig
+from numpy.linalg.linalg import eigh as eigh
+from numpy.linalg.linalg import eigvals as eigvals
+from numpy.linalg.linalg import eigvalsh as eigvalsh
+from numpy.linalg.linalg import inv as inv
+from numpy.linalg.linalg import lstsq as lstsq
+from numpy.linalg.linalg import matrix_power as matrix_power
+from numpy.linalg.linalg import matrix_rank as matrix_rank
+from numpy.linalg.linalg import multi_dot as multi_dot
+from numpy.linalg.linalg import norm as norm
+from numpy.linalg.linalg import pinv as pinv
+from numpy.linalg.linalg import qr as qr
+from numpy.linalg.linalg import slogdet as slogdet
+from numpy.linalg.linalg import solve as solve
+from numpy.linalg.linalg import svd as svd
+from numpy.linalg.linalg import tensorinv as tensorinv
+from numpy.linalg.linalg import tensorsolve as tensorsolve
 
 __all__: list[str]
 __path__: list[str]

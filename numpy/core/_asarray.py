@@ -3,13 +3,9 @@ Functions in the ``as*array`` family that promote array-likes into arrays.
 
 `require` fits this category despite its name not matching this pattern.
 """
-from .overrides import (
-    array_function_dispatch,
-    set_array_function_like_doc,
-    set_module,
-)
 from .multiarray import array, asanyarray
-
+from .overrides import (array_function_dispatch, set_array_function_like_doc,
+                        set_module)
 
 __all__ = ["require"]
 

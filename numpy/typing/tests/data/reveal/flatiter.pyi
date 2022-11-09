@@ -1,4 +1,5 @@
 from typing import Any
+
 import numpy as np
 
 a: np.flatiter[np.ndarray[Any, np.dtype[np.str_]]]

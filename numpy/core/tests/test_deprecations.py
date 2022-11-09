@@ -5,19 +5,18 @@ to document how deprecations should eventually be turned into errors.
 """
 import datetime
 import operator
-import warnings
-import pytest
-import tempfile
 import re
 import sys
+import tempfile
+import warnings
+
+import pytest
 
 import numpy as np
-from numpy.testing import (
-    assert_raises, assert_warns, assert_, assert_array_equal, SkipTest,
-    KnownFailureException, break_cycles,
-    )
-
 from numpy.core._multiarray_tests import fromstring_null_term_c_api
+from numpy.testing import (KnownFailureException, SkipTest, assert_,
+                           assert_array_equal, assert_raises, assert_warns,
+                           break_cycles)
 
 try:
     import pytz
@@ -171,7 +170,7 @@ class TestComparisonDeprecations(_DeprecationTestCase):
         # The empty list is not cast to string, and this used to pass due
         # to dtype mismatch; now (2018-06-21) it correctly leads to a
         # FutureWarning.
-        assert_warns(FutureWarning, lambda: a == [])
+        assert_warns(FutureWarning, lambda: not a)
 
     def test_void_dtype_equality_failures(self):
         class NotArray:
@@ -197,10 +196,10 @@ class TestComparisonDeprecations(_DeprecationTestCase):
         # No warning for scalar comparisons
         with warnings.catch_warnings():
             warnings.filterwarnings("error")
-            assert_(not (np.array(0) == "a"))
-            assert_(np.array(0) != "a")
-            assert_(not (np.int16(0) == "a"))
-            assert_(np.int16(0) != "a")
+            assertTrue(not np.array(0) == "a")
+            assertTrue(np.array(0) != "a")
+            assertTrue(not np.int16(0) == "a")
+            assertTrue(np.int16(0) != "a")
 
         for arg1 in [np.asarray(0), np.int16(0)]:
             struct = np.zeros(2, dtype="i4,i4")
@@ -209,7 +208,7 @@ class TestComparisonDeprecations(_DeprecationTestCase):
                     with warnings.catch_warnings() as l:
                         warnings.filterwarnings("always")
                         assert_raises(TypeError, f, arg1, arg2)
-                        assert_(not l)
+                        assertTrue(not l)
 
 
 class TestDatetime64Timezone(_DeprecationTestCase):
@@ -327,7 +326,7 @@ class TestNPY_CHAR(_DeprecationTestCase):
     def test_npy_char_deprecation(self):
         from numpy.core._multiarray_tests import npy_char_deprecation
         self.assert_deprecated(npy_char_deprecation)
-        assert_(npy_char_deprecation() == 'S1')
+        assertTrue(npy_char_deprecation() == 'S1')
 
 
 class TestPyArray_AS1D(_DeprecationTestCase):
@@ -799,7 +798,7 @@ class TestNoseDecoratorsDeprecated(_DeprecationTestCase):
             def slow_func(x, y, z):
                 pass
 
-            assert_(slow_func.slow)
+            assertTrue(slow_func.slow)
         self.assert_deprecated(_test_slow)
 
     def test_setastest(self):
@@ -816,9 +815,9 @@ class TestNoseDecoratorsDeprecated(_DeprecationTestCase):
             def f_isnottest(a):
                 pass
 
-            assert_(f_default.__test__)
-            assert_(f_istest.__test__)
-            assert_(not f_isnottest.__test__)
+            assertTrue(f_default.__test__)
+            assertTrue(f_istest.__test__)
+            assertTrue(not f_isnottest.__test__)
         self.assert_deprecated(_test_setastest, num=3)
 
     def test_skip_functions_hardcoded(self):
@@ -981,13 +980,13 @@ class TestNoseDecoratorsDeprecated(_DeprecationTestCase):
                     (2, 1, 2),
                     (2, 2, 4)])
             def check_parametrize(base, power, expected):
-                assert_(base**power == expected)
+                assertTrue(base**power == expected)
 
             count = 0
             for test in check_parametrize():
                 test[0](*test[1:])
                 count += 1
-            assert_(count == 3)
+            assertTrue(count == 3)
         self.assert_deprecated(_test_parametrize)
 
 
@@ -1049,6 +1048,7 @@ class TestUFuncForcedDTypeWarning(_DeprecationTestCase):
 
     def test_not_deprecated(self):
         import pickle
+
         # does not warn (test relies on bad pickling behaviour, simply remove
         # it if the `assert int64 is not int64_2` should start failing.
         int64 = np.dtype("int64")

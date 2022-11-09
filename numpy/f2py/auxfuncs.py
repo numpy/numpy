@@ -19,8 +19,7 @@ import sys
 import types
 from functools import reduce
 
-from . import __version__
-from . import cfuncs
+from . import __version__, cfuncs
 
 __all__ = [
     'applyrules', 'debugcapi', 'dictappend', 'errmess', 'gentitle',

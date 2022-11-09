@@ -1,9 +1,11 @@
 import os
-import pytest
 import shutil
 import subprocess
 import sys
 import warnings
+
+import pytest
+
 import numpy as np
 from numpy.distutils.misc_util import exec_mod_from_location
 
@@ -32,6 +34,7 @@ except ImportError:
     cython = None
 else:
     from numpy.compat import _pep440
+
     # Cython 0.29.30 is required for Python 3.11 and there are
     # other fixes in the 0.29 series that are needed even for earlier
     # Python versions.

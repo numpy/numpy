@@ -1,19 +1,20 @@
 from __future__ import annotations
 
-from ._dtypes import _floating_dtypes, _numeric_dtypes
-from ._manipulation_functions import reshape
-from ._array_object import Array
+from typing import TYPE_CHECKING
 
 from ..core.numeric import normalize_axis_tuple
+from ._array_object import Array
+from ._dtypes import _floating_dtypes, _numeric_dtypes
+from ._manipulation_functions import reshape
 
-from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from ._typing import Literal, Optional, Sequence, Tuple, Union
 
 from typing import NamedTuple
 
-import numpy.linalg
 import numpy as np
+import numpy.linalg
+
 
 class EighResult(NamedTuple):
     eigenvalues: Array
@@ -290,11 +291,11 @@ def slogdet(x: Array, /) -> SlogdetResult:
 # To workaround this, the below is the code from np.linalg.solve except
 # only calling solve1 in the exactly 1D case.
 def _solve(a, b):
-    from ..linalg.linalg import (_makearray, _assert_stacked_2d,
-                                 _assert_stacked_square, _commonType,
-                                 isComplexType, get_linalg_error_extobj,
-                                 _raise_linalgerror_singular)
     from ..linalg import _umath_linalg
+    from ..linalg.linalg import (_assert_stacked_2d, _assert_stacked_square,
+                                 _commonType, _makearray,
+                                 _raise_linalgerror_singular,
+                                 get_linalg_error_extobj, isComplexType)
 
     a, _ = _makearray(a)
     _assert_stacked_2d(a)

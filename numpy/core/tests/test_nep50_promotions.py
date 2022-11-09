@@ -6,9 +6,9 @@ is adopted in the main test suite.  A few may be moved elsewhere.
 
 import operator
 
-import numpy as np
-
 import pytest
+
+import numpy as np
 
 
 @pytest.fixture(scope="module", autouse=True)

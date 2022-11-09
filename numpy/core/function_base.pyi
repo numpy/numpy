@@ -1,19 +1,10 @@
-from typing import (
-    Literal as L,
-    overload,
-    Any,
-    SupportsIndex,
-    TypeVar,
-)
+from typing import Any
+from typing import Literal as L
+from typing import SupportsIndex, TypeVar, overload
 
-from numpy import floating, complexfloating, generic
-from numpy._typing import (
-    NDArray,
-    DTypeLike,
-    _DTypeLike,
-    _ArrayLikeFloat_co,
-    _ArrayLikeComplex_co,
-)
+from numpy import complexfloating, floating, generic
+from numpy._typing import (DTypeLike, NDArray, _ArrayLikeComplex_co,
+                           _ArrayLikeFloat_co, _DTypeLike)
 
 _SCT = TypeVar("_SCT", bound=generic)
 

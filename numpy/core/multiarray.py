@@ -7,18 +7,17 @@ by importing from the extension module.
 """
 
 import functools
-from . import overrides
-from . import _multiarray_umath
-from ._multiarray_umath import *  # noqa: F403
+
+from . import _multiarray_umath, overrides
 # These imports are needed for backward compatibility,
 # do not change them. issue gh-15518
 # _get_ndarray_c_version is semi-public, on purpose not added to __all__
-from ._multiarray_umath import (
-    fastCopyAndTranspose, _flagdict, from_dlpack, _insert, _reconstruct,
-    _vec_string, _ARRAY_API, _monotonicity, _get_ndarray_c_version,
-    _get_madvise_hugepage, _set_madvise_hugepage,
-    _get_promotion_state, _set_promotion_state,
-    )
+from ._multiarray_umath import *  # noqa: F403
+from ._multiarray_umath import (_ARRAY_API, _flagdict, _get_madvise_hugepage,
+                                _get_ndarray_c_version, _get_promotion_state,
+                                _insert, _monotonicity, _reconstruct,
+                                _set_madvise_hugepage, _set_promotion_state,
+                                _vec_string, fastCopyAndTranspose, from_dlpack)
 
 __all__ = [
     '_ARRAY_API', 'ALLOW_THREADS', 'BUFSIZE', 'CLIP', 'DATETIMEUNITS',
@@ -1122,7 +1121,7 @@ def copyto(dst, src, casting=None, where=None):
     >>> A
     array([[4, 5, 6],
            [7, 8, 9]])
-       
+
     """
     return (dst, src, where)
 

@@ -1,26 +1,13 @@
-from types import TracebackType
 from collections.abc import Callable
-from typing import Any, Literal, TypedDict, SupportsIndex
-
 # Using a private class is by no means ideal, but it is simply a consequence
 # of a `contextlib.context` returning an instance of aforementioned class
 from contextlib import _GeneratorContextManager
+from types import TracebackType
+from typing import Any, Literal, SupportsIndex, TypedDict
 
-from numpy import (
-    ndarray,
-    generic,
-    bool_,
-    integer,
-    timedelta64,
-    datetime64,
-    floating,
-    complexfloating,
-    void,
-    str_,
-    bytes_,
-    longdouble,
-    clongdouble,
-)
+from numpy import (bool_, bytes_, clongdouble, complexfloating, datetime64,
+                   floating, generic, integer, longdouble, ndarray, str_,
+                   timedelta64, void)
 from numpy._typing import ArrayLike, _CharLike_co, _FloatLike_co
 
 _FloatMode = Literal["fixed", "unique", "maxprec", "maxprec_equal"]

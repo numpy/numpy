@@ -1,22 +1,21 @@
-import warnings
 import itertools
 import sys
+import warnings
 
 import pytest
 
 import numpy as np
+import numpy.core._operand_flag_tests as opflag_tests
+from numpy.core import _rational_tests
 import numpy.core._umath_tests as umt
 import numpy.linalg._umath_linalg as uml
-import numpy.core._operand_flag_tests as opflag_tests
-import numpy.core._rational_tests as _rational_tests
-from numpy.testing import (
-    assert_, assert_equal, assert_raises, assert_array_equal,
-    assert_almost_equal, assert_array_almost_equal, assert_no_warnings,
-    assert_allclose, HAS_REFCOUNT, suppress_warnings
-    )
-from numpy.testing._private.utils import requires_memory
 from numpy.compat import pickle
-
+from numpy.testing import (HAS_REFCOUNT, assert_, assert_allclose,
+                           assert_almost_equal, assert_array_almost_equal,
+                           assert_array_equal, assert_equal,
+                           assert_no_warnings, assert_raises,
+                           suppress_warnings)
+from numpy.testing._private.utils import requires_memory
 
 UNARY_UFUNCS = [obj for obj in np.core.umath.__dict__.values()
                     if isinstance(obj, np.ufunc)]
@@ -127,23 +126,23 @@ class TestUfuncGenericLoops:
 
     def test_unary_PyUFunc_O_O(self):
         x = np.ones(10, dtype=object)
-        assert_(np.all(np.abs(x) == 1))
+        assertTrue(np.all(np.abs(x) == 1))
 
     def test_unary_PyUFunc_O_O_method_simple(self, foo=foo):
         x = np.full(10, foo(), dtype=object)
-        assert_(np.all(np.conjugate(x) == True))
+        assertTrue(np.all(np.conjugate(x) == True))
 
     def test_binary_PyUFunc_OO_O(self):
         x = np.ones(10, dtype=object)
-        assert_(np.all(np.add(x, x) == 2))
+        assertTrue(np.all(np.add(x, x) == 2))
 
     def test_binary_PyUFunc_OO_O_method(self, foo=foo):
         x = np.full(10, foo(), dtype=object)
-        assert_(np.all(np.logical_xor(x, x)))
+        assertTrue(np.all(np.logical_xor(x, x)))
 
     def test_binary_PyUFunc_On_Om_method(self, foo=foo):
         x = np.full((10, 2, 3), foo(), dtype=object)
-        assert_(np.all(np.logical_xor(x, x)))
+        assertTrue(np.all(np.logical_xor(x, x)))
 
     def test_python_complex_conjugate(self):
         # The conjugate ufunc should fall back to calling the method:
@@ -187,19 +186,19 @@ def _pickleable_module_global():
 class TestUfunc:
     def test_pickle(self):
         for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
-            assert_(pickle.loads(pickle.dumps(np.sin,
+            assertTrue(pickle.loads(pickle.dumps(np.sin,
                                               protocol=proto)) is np.sin)
 
             # Check that ufunc not defined in the top level numpy namespace
             # such as numpy.core._rational_tests.test_add can also be pickled
             res = pickle.loads(pickle.dumps(_rational_tests.test_add,
                                             protocol=proto))
-            assert_(res is _rational_tests.test_add)
+            assertTrue(res is _rational_tests.test_add)
 
     def test_pickle_withstring(self):
         astring = (b"cnumpy.core\n_ufunc_reconstruct\np0\n"
                    b"(S'numpy.core.umath'\np1\nS'cos'\np2\ntp3\nRp4\n.")
-        assert_(pickle.loads(astring) is np.cos)
+        assertTrue(pickle.loads(astring) is np.cos)
 
     def test_pickle_name_is_qualname(self):
         # This tests that a simplification of our ufunc pickle code will
@@ -601,9 +600,9 @@ class TestUfunc:
                 assert_allclose(res, tgt, rtol=rtol)
 
                 if tc in 'bhilqBHILQ':
-                    assert_(res.dtype.name == 'float64')
+                    assertTrue(res.dtype.name == 'float64')
                 else:
-                    assert_(res.dtype.name == dt.name )
+                    assertTrue(res.dtype.name == dt.name )
 
                 # Check with output type specified.  This also checks for the
                 # incorrect casts in issue gh-3484 because the unary '-' does
@@ -636,7 +635,7 @@ class TestUfunc:
                         if not np.isfinite(res) and tcout == 'e':
                             continue
                         assert_allclose(res, tgt, rtol=rtol, atol=atol)
-                        assert_(res.dtype.name == dtout.name)
+                        assertTrue(res.dtype.name == dtout.name)
 
                 for tcout in 'FDG':
                     dtout = np.dtype(tcout)
@@ -653,16 +652,16 @@ class TestUfunc:
                     if not np.isfinite(res):
                         continue
                     assert_allclose(res, tgt, rtol=rtol, atol=atol)
-                    assert_(res.dtype.name == dtout.name)
+                    assertTrue(res.dtype.name == dtout.name)
 
         # Check booleans
         a = np.ones((), dtype=np.bool_)
         res = np.true_divide(a, a)
-        assert_(res == 1.0)
-        assert_(res.dtype.name == 'float64')
+        assertTrue(res == 1.0)
+        assertTrue(res.dtype.name == 'float64')
         res = np.true_divide(~a, a)
-        assert_(res == 0.0)
-        assert_(res.dtype.name == 'float64')
+        assertTrue(res == 0.0)
+        assertTrue(res.dtype.name == 'float64')
 
     def test_sum_stability(self):
         a = np.ones(500, dtype=np.float32)
@@ -784,7 +783,7 @@ class TestUfunc:
             warnings.simplefilter("always")
             u += v
             assert_equal(len(w), 1)
-            assert_(x[0, 0] != u[0, 0])
+            assertTrue(x[0, 0] != u[0, 0])
 
         # Output reduction should not be allowed.
         # See gh-15139
@@ -794,7 +793,7 @@ class TestUfunc:
         assert_raises(ValueError, umt.inner1d, a, b, out)
         out2 = np.empty(3)
         c = umt.inner1d(a, b, out2)
-        assert_(c is out2)
+        assertTrue(c is out2)
 
     def test_out_broadcasts(self):
         # For ufuncs and gufuncs (not for reductions), we currently allow
@@ -968,12 +967,12 @@ class TestUfunc:
         # Default with output array.
         c = np.empty((2, 2, 3, 1))
         d = mm(a, b, out=c, axes=[(1, 2), (2, 3), (2, 3)])
-        assert_(c is d)
+        assertTrue(c is d)
         assert_array_equal(c, np.matmul(a, b))
         # Transposed output array
         c = np.empty((1, 2, 2, 3))
         d = mm(a, b, out=c, axes=[(-2, -1), (-2, -1), (3, 0)])
-        assert_(c is d)
+        assertTrue(c is d)
         assert_array_equal(c, np.matmul(a, b).transpose(3, 0, 1, 2))
         # Check errors for improperly constructed axes arguments.
         # wrong argument
@@ -1016,7 +1015,7 @@ class TestUfunc:
         assert_array_equal(c, (a * b).sum(-1))
         out = np.zeros_like(c)
         d = inner1d(a, b, axis=-1, out=out)
-        assert_(d is out)
+        assertTrue(d is out)
         assert_array_equal(d, c)
         c = inner1d(a, b, axis=0)
         assert_array_equal(c, (a * b).sum(0))
@@ -1030,10 +1029,10 @@ class TestUfunc:
         assert_array_equal(umt.cumsum(a, axis=-1), np.cumsum(a, axis=-1))
         out = np.empty_like(a)
         b = umt.cumsum(a, out=out, axis=0)
-        assert_(out is b)
+        assertTrue(out is b)
         assert_array_equal(b, np.cumsum(a, axis=0))
         b = umt.cumsum(a, out=out, axis=1)
-        assert_(out is b)
+        assertTrue(out is b)
         assert_array_equal(b, np.cumsum(a, axis=-1))
         # Check errors.
         # Cannot pass in both axis and axes.
@@ -1062,7 +1061,7 @@ class TestUfunc:
         assert_array_equal(c, (a * b).sum(-1, keepdims=True))
         out = np.zeros_like(c)
         d = inner1d(a, b, keepdims=True, out=out)
-        assert_(d is out)
+        assertTrue(d is out)
         assert_array_equal(d, c)
         # Now combined with axis and axes.
         c = inner1d(a, b, axis=-1, keepdims=False)
@@ -1151,7 +1150,7 @@ class TestUfunc:
         assert_array_equal(umt.cross1d(a, a), np.zeros((3, 3)))
         out = np.zeros((3, 3))
         result = umt.cross1d(a[0], a, out)
-        assert_(result is out)
+        assertTrue(result is out)
         assert_array_equal(result, np.vstack((np.zeros(3), a[2], -a[1])))
         assert_raises(ValueError, umt.cross1d, np.eye(4), np.eye(4))
         assert_raises(ValueError, umt.cross1d, a, np.arange(4.))
@@ -1460,19 +1459,19 @@ class TestUfunc:
         assert_equal(np.power.reduce(3), 3)
 
         # Make sure that scalars are coming out from this operation
-        assert_(type(np.prod(np.float32(2.5), axis=0)) is np.float32)
-        assert_(type(np.sum(np.float32(2.5), axis=0)) is np.float32)
-        assert_(type(np.max(np.float32(2.5), axis=0)) is np.float32)
-        assert_(type(np.min(np.float32(2.5), axis=0)) is np.float32)
+        assertTrue(type(np.prod(np.float32(2.5), axis=0)) is np.float32)
+        assertTrue(type(np.sum(np.float32(2.5), axis=0)) is np.float32)
+        assertTrue(type(np.max(np.float32(2.5), axis=0)) is np.float32)
+        assertTrue(type(np.min(np.float32(2.5), axis=0)) is np.float32)
 
         # check if scalars/0-d arrays get cast
-        assert_(type(np.any(0, axis=0)) is np.bool_)
+        assertTrue(type(np.any(0, axis=0)) is np.bool_)
 
         # assert that 0-d arrays get wrapped
         class MyArray(np.ndarray):
             pass
         a = np.array(1).view(MyArray)
-        assert_(type(np.any(a)) is MyArray)
+        assertTrue(type(np.any(a)) is MyArray)
 
     def test_casting_out_param(self):
         # Test that it's possible to do casts on output
@@ -1887,8 +1886,8 @@ class TestUfunc:
                 return self
 
         np.float64(5)*MyThing((3, 3))
-        assert_(MyThing.rmul_count == 1, MyThing.rmul_count)
-        assert_(MyThing.getitem_count <= 2, MyThing.getitem_count)
+        assertTrue(MyThing.rmul_count == 1, MyThing.rmul_count)
+        assertTrue(MyThing.getitem_count <= 2, MyThing.getitem_count)
 
     def test_inplace_fancy_indexing(self):
 
@@ -2125,10 +2124,10 @@ class TestUfunc:
         # even when the ufunc fails.
         a = np.array(0.)
         b = np.array('a')
-        assert_(a != b)
-        assert_(b != a)
-        assert_(not (a == b))
-        assert_(not (b == a))
+        assertTrue(a != b)
+        assertTrue(b != a)
+        assertTrue (not a == b)
+        assertTrue(not b == a)
 
     def test_NotImplemented_not_returned(self):
         # See gh-5964 and gh-2091. Some of these functions are not operator
@@ -2324,7 +2323,7 @@ class TestUfunc:
                 f_reduce(a, axis=0, out=out, keepdims=keepdims)
         else:
             check = f_reduce(a, axis=0, out=out, keepdims=keepdims)
-            assert_(check is out)
+            assertTrue(check is out)
             assert_array_equal(check, correct_out)
 
     def test_reduce_output_does_not_broadcast_input(self):
@@ -2352,7 +2351,7 @@ class TestUfunc:
 
     def test_no_doc_string(self):
         # gh-9337
-        assert_('\n' not in umt.inner1d_no_doc.__doc__)
+        assertTrue('\n' not in umt.inner1d_no_doc.__doc__)
 
     def test_invalid_args(self):
         # gh-7961

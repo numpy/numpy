@@ -1,10 +1,15 @@
-import re, textwrap, os
-from os import sys, path
+import os
+import re
+import textwrap
 from distutils.errors import DistutilsError
+from os import path, sys
 
 is_standalone = __name__ == '__main__' and __package__ is None
 if is_standalone:
-    import unittest, contextlib, tempfile, shutil
+    import contextlib
+    import shutil
+    import tempfile
+    import unittest
     sys.path.append(path.abspath(path.join(path.dirname(__file__), "..")))
     from ccompiler_opt import CCompilerOpt
 
@@ -17,7 +22,7 @@ if is_standalone:
         finally:
             shutil.rmtree(tmpdir)
 
-    def assert_(expr, msg=''):
+    def assertTrue(expr, msg=''):
         if not expr:
             raise AssertionError(msg)
 else:
@@ -54,8 +59,8 @@ class FakeCCompilerOpt(CCompilerOpt):
         """).format(self.cc_march, self.cc_name, self.report())
 
     def dist_compile(self, sources, flags, **kwargs):
-        assert(isinstance(sources, list))
-        assert(isinstance(flags, list))
+        assert isinstance(sources, list)
+        assert isinstance(flags, list)
         if self.fake_trap_files:
             for src in sources:
                 if re.match(self.fake_trap_files, src):
@@ -167,7 +172,7 @@ class _Test_CCompilerOpt:
                     if v[-1:] not in ')}$?\\.+*':
                         regex[k] = v + '$'
             else:
-                assert(isinstance(regex, str))
+                assert isinstance(regex, str)
                 if regex[-1:] not in ')}$?\\.+*':
                     regex += '$'
         return regex
@@ -256,7 +261,7 @@ class _Test_CCompilerOpt:
         match_dict = self.arg_regex(**kwargs)
         if match_dict is None:
             return
-        assert(isinstance(match_dict, dict))
+        assert isinstance(match_dict, dict)
         _, tar_flags = self.get_targets(targets=targets, groups=groups)
 
         for match_tar, match_flags in match_dict.items():
@@ -279,10 +284,10 @@ class _Test_CCompilerOpt:
         wrong_arch = "ppc64" if self.arch != "ppc64" else "x86"
         wrong_cc   = "clang" if self.cc   != "clang" else "icc"
         opt = self.opt()
-        assert_(getattr(opt, "cc_on_" + self.arch))
-        assert_(not getattr(opt, "cc_on_" + wrong_arch))
-        assert_(getattr(opt, "cc_is_" + self.cc))
-        assert_(not getattr(opt, "cc_is_" + wrong_cc))
+        assertTrue(getattr(opt, "cc_on_" + self.arch))
+        assertTrue(not getattr(opt, "cc_on_" + wrong_arch))
+        assertTrue(getattr(opt, "cc_is_" + self.cc))
+        assertTrue(not getattr(opt, "cc_is_" + wrong_cc))
 
     def test_args_empty(self):
         for baseline, dispatch in (
@@ -295,8 +300,8 @@ class _Test_CCompilerOpt:
              "min -min + max -max -vsx + avx2 -avx2 +NONE")
         ) :
             opt = self.nopt(cpu_baseline=baseline, cpu_dispatch=dispatch)
-            assert(len(opt.cpu_baseline_names()) == 0)
-            assert(len(opt.cpu_dispatch_names()) == 0)
+            assert len(opt.cpu_baseline_names()) == 0
+            assert len(opt.cpu_dispatch_names()) == 0
 
     def test_args_validation(self):
         if self.march() == "unknown":
@@ -774,16 +779,17 @@ class _Test_CCompilerOpt:
         )
 
 def new_test(arch, cc):
-    if is_standalone: return textwrap.dedent("""\
-    class TestCCompilerOpt_{class_name}(_Test_CCompilerOpt, unittest.TestCase):
-        arch = '{arch}'
-        cc   = '{cc}'
-        def __init__(self, methodName="runTest"):
-            unittest.TestCase.__init__(self, methodName)
-            self.setup_class()
-    """).format(
-        class_name=arch + '_' + cc, arch=arch, cc=cc
-    )
+    if is_standalone:
+        return textwrap.dedent("""\
+            class TestCCompilerOpt_{class_name}(_Test_CCompilerOpt, unittest.TestCase):
+                arch = '{arch}'
+                cc   = '{cc}'
+                def __init__(self, methodName="runTest"):
+                    unittest.TestCase.__init__(self, methodName)
+                    self.setup_class()
+            """).format(
+                class_name=arch + '_' + cc, arch=arch, cc=cc
+            )
     return textwrap.dedent("""\
     class TestCCompilerOpt_{class_name}(_Test_CCompilerOpt):
         arch = '{arch}'

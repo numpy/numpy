@@ -52,6 +52,7 @@ def check_skip():
 if __name__ == '__main__':
     # Run tests outside numpy test rig
     import nose
+
     from numpy.testing.noseclasses import NumpyDoctest
     argv = ['', __file__, '--with-numpydoctest']
     nose.core.TestProgram(argv=argv, addplugins=[NumpyDoctest()])

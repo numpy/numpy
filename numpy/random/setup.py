@@ -2,8 +2,8 @@ import os
 import sys
 from os.path import join
 
-from numpy.distutils.system_info import platform_bits
 from numpy.distutils.msvccompiler import lib_opts_if_msvc
+from numpy.distutils.system_info import platform_bits
 
 
 def configuration(parent_package='', top_path=None):

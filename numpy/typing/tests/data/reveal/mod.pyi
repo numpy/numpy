@@ -1,4 +1,5 @@
 from typing import Any
+
 import numpy as np
 
 f8 = np.float64()

@@ -1,15 +1,19 @@
 import pytest
 
 import numpy as np
-import numpy.ma as ma
+from numpy import ma
+from numpy.lib.recfunctions import (append_fields, apply_along_fields,
+                                    assign_fields_by_name, drop_fields,
+                                    find_duplicates, get_fieldstructure,
+                                    join_by, merge_arrays,
+                                    recursive_fill_fields, rename_fields,
+                                    repack_fields, require_fields,
+                                    stack_arrays, structured_to_unstructured,
+                                    unstructured_to_structured)
 from numpy.ma.mrecords import MaskedRecords
 from numpy.ma.testutils import assert_equal
 from numpy.testing import assert_, assert_raises
-from numpy.lib.recfunctions import (
-    drop_fields, rename_fields, get_fieldstructure, recursive_fill_fields,
-    find_duplicates, merge_arrays, append_fields, stack_arrays, join_by,
-    repack_fields, unstructured_to_structured, structured_to_unstructured,
-    apply_along_fields, require_fields, assign_fields_by_name)
+
 get_fieldspec = np.lib.recfunctions._get_fieldspec
 get_names = np.lib.recfunctions.get_names
 get_names_flat = np.lib.recfunctions.get_names_flat
@@ -226,7 +230,7 @@ class TestRecFunctions:
 
         # make sure type is preserved
         dt = np.dtype((np.record, dt))
-        assert_(repack_fields(dt).type is np.record)
+        assertTrue(repack_fields(dt).type is np.record)
 
     def test_structured_to_unstructured(self):
         a = np.zeros(4, dtype=[('a', 'i4'), ('b', 'f4,u2'), ('c', 'f4', 2)])
@@ -263,8 +267,8 @@ class TestRecFunctions:
                      dtype=[('x', 'i4'), ('y', 'i4'), ('z', 'i4')])
         dd = structured_to_unstructured(d)
         ddd = unstructured_to_structured(dd, d.dtype)
-        assert_(dd.base is d)
-        assert_(ddd.base is d)
+        assertTrue(dd.base is d)
+        assertTrue(ddd.base is d)
 
         # including uniform fields with subarrays unpacked
         d = np.array([(1, [2,  3], [[ 4,  5], [ 6,  7]]),
@@ -273,8 +277,8 @@ class TestRecFunctions:
                             ('x2', ('i4', (2, 2)))])
         dd = structured_to_unstructured(d)
         ddd = unstructured_to_structured(dd, d.dtype)
-        assert_(dd.base is d)
-        assert_(ddd.base is d)
+        assertTrue(dd.base is d)
+        assertTrue(ddd.base is d)
 
         # test that nested fields with identical names don't break anything
         point = np.dtype([('x', int), ('y', int)])
@@ -475,7 +479,7 @@ class TestMergeArrays:
         assert_equal(test, control)
         test = merge_arrays((x, mx), usemask=True, asrecarray=True)
         assert_equal(test, control)
-        assert_(isinstance(test, MaskedRecords))
+        assertTrue(isinstance(test, MaskedRecords))
 
     def test_w_singlefield(self):
         # Test single field
@@ -581,11 +585,11 @@ class TestStackArrays:
         (_, x, _, _) = self.data
         test = stack_arrays((x,))
         assert_equal(test, x)
-        assert_(test is x)
+        assertTrue(test is x)
 
         test = stack_arrays(x)
         assert_equal(test, x)
-        assert_(test is x)
+        assertTrue(test is x)
 
     def test_unnamed_fields(self):
         # Tests combinations of arrays w/o named fields
@@ -886,7 +890,7 @@ class TestJoinBy:
     def test_padded_dtype(self):
         dt = np.dtype('i1,f4', align=True)
         dt.names = ('k', 'v')
-        assert_(len(dt.descr), 3)  # padding field is inserted
+        assertTrue(len(dt.descr), 3)  # padding field is inserted
 
         a = np.array([(1, 3), (3, 2)], dt)
         b = np.array([(1, 1), (2, 2)], dt)

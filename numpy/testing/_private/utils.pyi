@@ -1,41 +1,24 @@
+import ast
+import contextlib
 import os
 import sys
-import ast
 import types
-import warnings
 import unittest
-import contextlib
-from re import Pattern
+import warnings
 from collections.abc import Callable, Iterable, Sequence
-from typing import (
-    Literal as L,
-    Any,
-    AnyStr,
-    ClassVar,
-    NoReturn,
-    overload,
-    type_check_only,
-    TypeVar,
-    Union,
-    Final,
-    SupportsIndex,
-)
+from re import Pattern
+from typing import Any, AnyStr, ClassVar, Final
+from typing import Literal as L
+from typing import (NoReturn, SupportsIndex, TypeVar, Union, overload,
+                    type_check_only)
+from unittest.case import SkipTest as SkipTest
+
 from typing_extensions import ParamSpec
 
-from numpy import generic, dtype, number, object_, bool_, _FloatValue
-from numpy._typing import (
-    NDArray,
-    ArrayLike,
-    DTypeLike,
-    _ArrayLikeNumber_co,
-    _ArrayLikeObject_co,
-    _ArrayLikeTD64_co,
-    _ArrayLikeDT64_co,
-)
-
-from unittest.case import (
-    SkipTest as SkipTest,
-)
+from numpy import _FloatValue, bool_, dtype, generic, number, object_
+from numpy._typing import (ArrayLike, DTypeLike, NDArray, _ArrayLikeDT64_co,
+                           _ArrayLikeNumber_co, _ArrayLikeObject_co,
+                           _ArrayLikeTD64_co)
 
 _P = ParamSpec("_P")
 _T = TypeVar("_T")
@@ -132,7 +115,7 @@ IS_PYSTON: Final[bool]
 HAS_REFCOUNT: Final[bool]
 HAS_LAPACK64: Final[bool]
 
-def assert_(val: object, msg: str | Callable[[], str] = ...) -> None: ...
+def assertTrue(val: object, msg: str | Callable[[], str] = ...) -> None: ...
 
 # Contrary to runtime we can't do `os.name` checks while type checking,
 # only `sys.platform` checks
@@ -396,4 +379,5 @@ def assert_no_gc_cycles(
     **kwargs: _P.kwargs,
 ) -> None: ...
 
-def break_cycles() -> None: ...
+def break_cycles() -> None:
+    ...

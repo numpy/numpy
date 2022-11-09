@@ -1,13 +1,11 @@
 import warnings
+
 import pytest
 
 import numpy as np
-from numpy.testing import (
-    assert_, assert_equal, assert_raises, assert_warns, assert_array_equal,
-    temppath,
-    )
 from numpy.core.tests._locales import CommaDecimalPointLocale
-
+from numpy.testing import (assert_, assert_array_equal, assert_equal,
+                           assert_raises, assert_warns, temppath)
 
 LD_INFO = np.finfo(np.longdouble)
 longdouble_longer_than_double = (LD_INFO.eps < np.finfo(np.double).eps)
@@ -272,7 +270,7 @@ class TestFileBased:
 
 def test_repr_exact():
     o = 1 + LD_INFO.eps
-    assert_(repr(o) != '1')
+    assertTrue(repr(o) != '1')
 
 
 @pytest.mark.skipif(longdouble_longer_than_double, reason="BUG #2376")
@@ -280,7 +278,7 @@ def test_repr_exact():
                     reason="Need strtold_l")
 def test_format():
     o = 1 + LD_INFO.eps
-    assert_("{0:.40g}".format(o) != '1')
+    assertTrue("{0:.40g}".format(o) != '1')
 
 
 @pytest.mark.skipif(longdouble_longer_than_double, reason="BUG #2376")
@@ -288,7 +286,7 @@ def test_format():
                     reason="Need strtold_l")
 def test_percent():
     o = 1 + LD_INFO.eps
-    assert_("%.40g" % o != '1')
+    assertTrue("%.40g" % o != '1')
 
 
 @pytest.mark.skipif(longdouble_longer_than_double,
@@ -301,7 +299,7 @@ def test_array_repr():
     b = np.array([1], dtype=np.longdouble)
     if not np.all(a != b):
         raise ValueError("precision loss creating arrays")
-    assert_(repr(a) != repr(b))
+    assertTrue(repr(a) != repr(b))
 
 #
 # Locale tests: scalar types formatting should be independent of the locale

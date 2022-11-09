@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 from typing import Any
-import numpy as np
+
 import pytest
+
+import numpy as np
 
 c16 = np.complex128(1)
 f8 = np.float64(1)

@@ -1,4 +1,5 @@
 from typing import Any
+
 import numpy.typing as npt
 
 AR_Any: npt.NDArray[Any]

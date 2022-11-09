@@ -48,8 +48,8 @@ process_file(filename)
 __all__ = ['process_str', 'process_file']
 
 import os
-import sys
 import re
+import sys
 
 routine_start_re = re.compile(r'(\n|\A)((     (\$|\*))|)\s*(subroutine|function)\b', re.I)
 routine_end_re = re.compile(r'\n\s*end\s*(subroutine|function)\b.*(\n|\Z)', re.I)
@@ -138,7 +138,7 @@ def expand_sub(substr, names):
         if template_name_re.match(thelist):
             return "<%s>" % (thelist)
         name = None
-        for key in lnames.keys():    # see if list is already in dictionary
+        for key in lnames:    # see if list is already in dictionary
             if lnames[key] == thelist:
                 name = key
         if name is None:      # this list is not in the dictionary yet

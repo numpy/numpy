@@ -1,12 +1,11 @@
 import sys
 
+import pytest
+
 import numpy as np
 from numpy.core._rational_tests import rational
-import pytest
-from numpy.testing import (
-     assert_, assert_equal, assert_array_equal, assert_raises, assert_warns,
-     HAS_REFCOUNT
-    )
+from numpy.testing import (HAS_REFCOUNT, assert_, assert_array_equal,
+                           assert_equal, assert_raises, assert_warns)
 
 
 def test_array_array():
@@ -59,16 +58,16 @@ def test_array_array():
     assert_equal(np.array("1", dtype=U5), np.ones((), dtype=U5))
 
     builtins = getattr(__builtins__, '__dict__', __builtins__)
-    assert_(hasattr(builtins, 'get'))
+    assertTrue(hasattr(builtins, 'get'))
 
     # test memoryview
     dat = np.array(memoryview(b'1.0'), dtype=np.float64)
     assert_equal(dat, [49.0, 46.0, 48.0])
-    assert_(dat.dtype.type is np.float64)
+    assertTrue(dat.dtype.type is np.float64)
 
     dat = np.array(memoryview(b'1.0'))
     assert_equal(dat, [49, 46, 48])
-    assert_(dat.dtype.type is np.uint8)
+    assertTrue(dat.dtype.type is np.uint8)
 
     # test array interface
     a = np.array(100.0, dtype=np.float64)
@@ -179,23 +178,23 @@ def test_array_astype():
     assert_equal(a.T.strides, b.strides)
     b = a.astype('f4')
     assert_equal(a, b)
-    assert_(not (a is b))
+    assertTrue(not a is b)
 
     # copy=False parameter can sometimes skip a copy
     b = a.astype('f4', copy=False)
-    assert_(a is b)
+    assertTrue(a is b)
 
     # order parameter allows overriding of the memory layout,
     # forcing a copy if the layout is wrong
     b = a.astype('f4', order='F', copy=False)
     assert_equal(a, b)
-    assert_(not (a is b))
-    assert_(b.flags.f_contiguous)
+    assertTrue(not a is b)
+    assertTrue(b.flags.f_contiguous)
 
     b = a.astype('f4', order='C', copy=False)
     assert_equal(a, b)
-    assert_(a is b)
-    assert_(b.flags.c_contiguous)
+    assertTrue(a is b)
+    assertTrue(b.flags.c_contiguous)
 
     # casting parameter allows catching bad casts
     b = a.astype('c8', casting='safe')
@@ -206,7 +205,7 @@ def test_array_astype():
 
     # subok=False passes through a non-subclassed array
     b = a.astype('f4', subok=0, copy=False)
-    assert_(a is b)
+    assertTrue(a is b)
 
     class MyNDArray(np.ndarray):
         pass
@@ -215,7 +214,7 @@ def test_array_astype():
 
     # subok=True passes through a subclass
     b = a.astype('f4', subok=True, copy=False)
-    assert_(a is b)
+    assertTrue(a is b)
 
     # subok=True is default, and creates a subtype on a cast
     b = a.astype('i4', copy=False)
@@ -225,8 +224,8 @@ def test_array_astype():
     # subok=False never returns a subclass
     b = a.astype('f4', subok=False, copy=False)
     assert_equal(a, b)
-    assert_(not (a is b))
-    assert_(type(b) is not MyNDArray)
+    assertTrue(not a is b)
+    assertTrue(type(b) is not MyNDArray)
 
     # Make sure converting from string object to fixed length string
     # does not truncate.
@@ -266,7 +265,7 @@ def test_array_astype():
 
     a = np.array('a\u0140', dtype='U')
     b = np.ndarray(buffer=a, dtype='uint32', shape=2)
-    assert_(b.size == 2)
+    assertTrue(b.size == 2)
 
     a = np.array([1000], dtype='i4')
     assert_raises(TypeError, a.astype, 'S1', casting='safe')
@@ -471,18 +470,18 @@ def test_copy_order():
     c = np.arange(24).reshape(2, 1, 4, 3).swapaxes(2, 3)
 
     def check_copy_result(x, y, ccontig, fcontig, strides=False):
-        assert_(not (x is y))
+        assertTrue(not x is y)
         assert_equal(x, y)
         assert_equal(res.flags.c_contiguous, ccontig)
         assert_equal(res.flags.f_contiguous, fcontig)
 
     # Validate the initial state of a, b, and c
-    assert_(a.flags.c_contiguous)
-    assert_(not a.flags.f_contiguous)
-    assert_(not b.flags.c_contiguous)
-    assert_(b.flags.f_contiguous)
-    assert_(not c.flags.c_contiguous)
-    assert_(not c.flags.f_contiguous)
+    assertTrue(a.flags.c_contiguous)
+    assertTrue(not a.flags.f_contiguous)
+    assertTrue(not b.flags.c_contiguous)
+    assertTrue(b.flags.f_contiguous)
+    assertTrue(not c.flags.c_contiguous)
+    assertTrue(not c.flags.f_contiguous)
 
     # Copy with order='C'
     res = a.copy(order='C')
@@ -532,8 +531,8 @@ def test_contiguous_flags():
     b = np.ones((2, 2, 1, 2, 2)).swapaxes(3, 4)
 
     def check_contig(a, ccontig, fcontig):
-        assert_(a.flags.c_contiguous == ccontig)
-        assert_(a.flags.f_contiguous == fcontig)
+        assertTrue(a.flags.c_contiguous == ccontig)
+        assertTrue(a.flags.f_contiguous == fcontig)
 
     # Check if new arrays are correct:
     check_contig(a, False, False)
@@ -595,7 +594,7 @@ def test_astype_copyflag():
     # Simple tests for when a copy is necessary:
     res_false = arr.astype(np.float64, copy=False)
     assert_array_equal(res_false, arr)
-    res_if_needed = arr.astype(np.float64, 
+    res_if_needed = arr.astype(np.float64,
                                copy=np._CopyMode.IF_NEEDED)
     assert_array_equal(res_if_needed, arr)
     assert_raises(ValueError, arr.astype, np.float64,

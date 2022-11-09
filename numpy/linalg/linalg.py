@@ -18,21 +18,18 @@ import functools
 import operator
 import warnings
 
-from numpy.core import (
-    array, asarray, zeros, empty, empty_like, intc, single, double,
-    csingle, cdouble, inexact, complexfloating, newaxis, all, Inf, dot,
-    add, multiply, sqrt, sum, isfinite,
-    finfo, errstate, geterrobj, moveaxis, amin, amax, product, abs,
-    atleast_2d, intp, asanyarray, object_, matmul,
-    swapaxes, divide, count_nonzero, isnan, sign, argsort, sort,
-    reciprocal
-)
+from numpy.core import (Inf, abs, add, all, amax, amin, argsort, array,
+                        asanyarray, asarray, atleast_2d, cdouble,
+                        complexfloating, count_nonzero, csingle, divide, dot,
+                        double, empty, empty_like, errstate, finfo, geterrobj,
+                        inexact, intc, intp, isfinite, isnan, matmul, moveaxis,
+                        multiply, newaxis, object_, overrides, product,
+                        reciprocal, sign, single, sort, sqrt, sum, swapaxes,
+                        zeros)
 from numpy.core.multiarray import normalize_axis_index
 from numpy.core.overrides import set_module
-from numpy.core import overrides
-from numpy.lib.twodim_base import triu, eye
+from numpy.lib.twodim_base import eye, triu
 from numpy.linalg import _umath_linalg
-
 
 array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy.linalg')
@@ -943,7 +940,7 @@ def qr(a, mode='reduced'):
         return wrap(a)
 
     # mc is the number of columns in the resulting q
-    # matrix. If the mode is complete then it is 
+    # matrix. If the mode is complete then it is
     # same as number of rows, and if the mode is reduced,
     # then it is the minimum of number of rows and columns.
     if mode == 'complete' and m > n:

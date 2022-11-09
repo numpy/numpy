@@ -1,14 +1,15 @@
+import importlib
+import pkgutil
+import subprocess
 import sys
 import sysconfig
-import subprocess
-import pkgutil
 import types
-import importlib
 import warnings
 
-import numpy as np
-import numpy
 import pytest
+
+import numpy
+import numpy as np
 
 try:
     import ctypes
@@ -92,12 +93,12 @@ def test_dir_testing():
 
 def test_numpy_linalg():
     bad_results = check_dir(np.linalg)
-    assert bad_results == {}
+    assert not bad_results
 
 
 def test_numpy_fft():
     bad_results = check_dir(np.fft)
-    assert bad_results == {}
+    assert not bad_results
 
 
 @pytest.mark.skipif(ctypes is None,

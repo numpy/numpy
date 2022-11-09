@@ -81,10 +81,9 @@ Exported symbols include:
 """
 import numbers
 
-from numpy.core.multiarray import (
-        ndarray, array, dtype, datetime_data, datetime_as_string,
-        busday_offset, busday_count, is_busday, busdaycalendar
-        )
+from numpy.core.multiarray import (array, busday_count, busday_offset,
+                                   busdaycalendar, datetime_as_string,
+                                   datetime_data, dtype, is_busday, ndarray)
 from numpy.core.overrides import set_module
 
 # we add more at the bottom
@@ -95,28 +94,19 @@ __all__ = ['sctypeDict', 'sctypes',
            'busday_offset', 'busday_count', 'is_busday', 'busdaycalendar',
            ]
 
-# we don't need all these imports, but we need to keep them for compatibility
-# for users using np.core.numerictypes.UPPER_TABLE
-from ._string_helpers import (
-    english_lower, english_upper, english_capitalize, LOWER_TABLE, UPPER_TABLE
-)
-
-from ._type_aliases import (
-    sctypeDict,
-    allTypes,
-    bitname,
-    sctypes,
-    _concrete_types,
-    _concrete_typeinfo,
-    _bits_of,
-)
-from ._dtype import _kind_name
-
 # we don't export these for import *, but we do want them accessible
 # as numerictypes.bool, etc.
-from builtins import bool, int, float, complex, object, str, bytes
+from builtins import bool, bytes, complex, float, int, object, str
+
 from numpy.compat import long, unicode
 
+from ._dtype import _kind_name
+# we don't need all these imports, but we need to keep them for compatibility
+# for users using np.core.numerictypes.UPPER_TABLE
+from ._string_helpers import (LOWER_TABLE, UPPER_TABLE, english_capitalize,
+                              english_lower, english_upper)
+from ._type_aliases import (_bits_of, _concrete_typeinfo, _concrete_types,
+                            allTypes, bitname, sctypeDict, sctypes)
 
 # We use this later
 generic = allTypes['generic']

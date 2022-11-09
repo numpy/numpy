@@ -23,24 +23,21 @@ Released for unlimited redistribution.
 import builtins
 import inspect
 import operator
-import warnings
-import textwrap
 import re
+import textwrap
+import warnings
 from functools import reduce
 
 import numpy as np
-import numpy.core.umath as umath
 import numpy.core.numerictypes as ntypes
-from numpy.core import multiarray as mu
-from numpy import ndarray, amax, amin, iscomplexobj, bool_, _NoValue
+from numpy.core import umath
+from numpy import _NoValue, amax, amin
 from numpy import array as narray
-from numpy.lib.function_base import angle
-from numpy.compat import (
-    getargspec, formatargspec, long, unicode, bytes
-    )
-from numpy import expand_dims
+from numpy import bool_, expand_dims, iscomplexobj, ndarray
+from numpy.compat import bytes, formatargspec, getargspec, long, unicode
+from numpy.core import multiarray as mu
 from numpy.core.numeric import normalize_axis_tuple
-
+from numpy.lib.function_base import angle
 
 __all__ = [
     'MAError', 'MaskError', 'MaskType', 'MaskedArray', 'abs', 'absolute',
@@ -6734,7 +6731,7 @@ class _extrema_operation(_MaskedUFunc):
         if axis is not np._NoValue:
             kwargs = dict(axis=axis)
         else:
-            kwargs = dict()
+            kwargs = []
 
         if m is nomask:
             t = self.f.reduce(target, **kwargs)

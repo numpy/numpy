@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import numpy as np
 
+
 class SubClass(np.ndarray):
     ...
 

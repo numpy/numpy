@@ -1,4 +1,5 @@
-from distutils.unixccompiler import UnixCCompiler                              
+from distutils.unixccompiler import UnixCCompiler
+
 
 class ArmCCompiler(UnixCCompiler):
 

@@ -1,14 +1,9 @@
 from collections.abc import Sequence
-from typing import (
-    Literal as L,
-    Any,
-    SupportsIndex,
-)
+from typing import Any
+from typing import Literal as L
+from typing import SupportsIndex
 
-from numpy._typing import (
-    NDArray,
-    ArrayLike,
-)
+from numpy._typing import ArrayLike, NDArray
 
 _BinKind = L[
     "stone",

@@ -6,7 +6,6 @@ import textwrap
 
 from numpy.distutils.misc_util import mingw32
 
-
 #-------------------
 # Versioning support
 #-------------------
@@ -129,7 +128,7 @@ MANDATORY_FUNCS = [
     "floor", "ceil", "sqrt", "log10", "log", "exp", "asin",
     "acos", "atan", "fmod", 'modf', 'frexp', 'ldexp',
     "expm1", "log1p", "acosh", "asinh", "atanh",
-    "rint", "trunc", "exp2", 
+    "rint", "trunc", "exp2",
     "copysign", "nextafter", "strtoll", "strtoull", "cbrt",
     "log2", "pow", "hypot", "atan2",
     "csin", "csinh", "ccos", "ccosh", "ctan", "ctanh",

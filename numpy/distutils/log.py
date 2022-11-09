@@ -1,11 +1,11 @@
 # Colored log
 import sys
-from distutils.log import *  # noqa: F403
 from distutils.log import Log as old_Log
+from distutils.log import *  # noqa: F403
 from distutils.log import _global_log
 
-from numpy.distutils.misc_util import (red_text, default_text, cyan_text,
-        green_text, is_sequence, is_string)
+from numpy.distutils.misc_util import (cyan_text, default_text, green_text,
+                                       is_sequence, is_string, red_text)
 
 
 def _fix_args(args,flag=1):
@@ -62,7 +62,7 @@ def set_threshold(level, force=False):
     return prev_level
 
 def get_threshold():
-	return _global_log.threshold
+    return _global_log.threshold
 
 def set_verbosity(v, force=False):
     prev_level = _global_log.threshold

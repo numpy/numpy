@@ -1,5 +1,6 @@
-import sys
 import re
+import sys
+
 from numpy.distutils.fcompiler import FCompiler
 
 compilers = ['NAGFCompiler', 'NAGFORCompiler']

@@ -1,22 +1,6 @@
-from numpy.core.fromnumeric import (
-    amin,
-    amax,
-    argmin,
-    argmax,
-    sum,
-    prod,
-    cumsum,
-    cumprod,
-    mean,
-    var,
-    std
-)
-
-from numpy.lib.function_base import (
-    median,
-    percentile,
-    quantile,
-)
+from numpy.core.fromnumeric import (amax, amin, argmax, argmin, cumprod,
+                                    cumsum, mean, prod, std, sum, var)
+from numpy.lib.function_base import median, percentile, quantile
 
 __all__: list[str]
 

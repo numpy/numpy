@@ -1,7 +1,9 @@
 import os
-from distutils.core import Command
 from distutils.ccompiler import new_compiler
+from distutils.core import Command
+
 from numpy.distutils.misc_util import get_cmd
+
 
 class install_clib(Command):
     description = "Command to install installable C libraries"

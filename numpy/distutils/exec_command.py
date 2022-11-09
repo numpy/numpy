@@ -51,14 +51,15 @@ Known bugs:
 """
 __all__ = ['exec_command', 'find_executable']
 
-import os
-import sys
-import subprocess
 import locale
+import os
+import subprocess
+import sys
 import warnings
 
-from numpy.distutils.misc_util import is_sequence, make_temp_file
 from numpy.distutils import log
+from numpy.distutils.misc_util import is_sequence, make_temp_file
+
 
 def filepath_from_subprocess_output(output):
     """

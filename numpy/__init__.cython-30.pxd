@@ -7,9 +7,9 @@
 # Author: Dag Sverre Seljebotn
 #
 
-from cpython.ref cimport Py_INCREF
-from cpython.object cimport PyObject, PyTypeObject, PyObject_TypeCheck
 cimport libc.stdio as stdio
+from cpython.object cimport PyObject, PyObject_TypeCheck, PyTypeObject
+from cpython.ref cimport Py_INCREF
 
 
 cdef extern from *:

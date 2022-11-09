@@ -27,4 +27,4 @@ class TestIsFile:
     def test_isfile(self):
         """Test if all ``.pyi`` files are properly installed."""
         for file in FILES:
-            assert_(os.path.isfile(file))
+            assertTrue(os.path.isfile(file))

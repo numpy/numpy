@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-import subprocess
 import os
+import subprocess
 import sys
 from string import Template
+
 
 def main():
     doxy_gen(os.path.abspath(os.path.join('..')))
@@ -48,4 +49,3 @@ def doxy_config(root_path):
 
 if __name__ == "__main__":
     main()
-

@@ -1,5 +1,5 @@
-from numpy.testing import assert_
 import numpy.distutils.fcompiler
+from numpy.testing import assert_
 
 customizable_flags = [
     ('f77', 'F77FLAGS'),
@@ -25,7 +25,7 @@ def test_fcompiler_flags(monkeypatch):
         new_flags = getattr(flag_vars, opt)
 
         monkeypatch.delenv(envvar)
-        assert_(new_flags == [new_flag])
+        assertTrue(new_flags == [new_flag])
 
     monkeypatch.setenv('NPY_DISTUTILS_APPEND_FLAGS', '1')
 
@@ -37,7 +37,6 @@ def test_fcompiler_flags(monkeypatch):
 
         monkeypatch.delenv(envvar)
         if prev_flags is None:
-            assert_(new_flags == [new_flag])
+            assertTrue(new_flags == [new_flag])
         else:
-            assert_(new_flags == prev_flags + [new_flag])
-
+            assertTrue(new_flags == prev_flags + [new_flag])

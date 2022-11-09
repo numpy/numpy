@@ -5,6 +5,7 @@ Tests of the ._exceptions module. Primarily for exercising the __str__ methods.
 import pickle
 
 import pytest
+
 import numpy as np
 
 _ArrayMemoryError = np.core._exceptions._ArrayMemoryError

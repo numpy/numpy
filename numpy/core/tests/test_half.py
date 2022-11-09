@@ -1,19 +1,20 @@
 import platform
+
 import pytest
 
 import numpy as np
-from numpy import uint16, float16, float32, float64
-from numpy.testing import assert_, assert_equal, _OLD_PROMOTION
+from numpy import float16, float32, float64, uint16
+from numpy.testing import _OLD_PROMOTION, assert_, assert_equal
 
 
 def assert_raises_fpe(strmatch, callable, *args, **kwargs):
     try:
         callable(*args, **kwargs)
     except FloatingPointError as exc:
-        assert_(str(exc).find(strmatch) >= 0,
+        assertTrue(str(exc).find(strmatch) >= 0,
                 "Did not raise floating point %s error" % strmatch)
     else:
-        assert_(False,
+        assertTrue(False,
                 "Did not raise floating point %s error" % strmatch)
 
 class TestHalf:
@@ -174,23 +175,23 @@ class TestHalf:
             # Check comparisons of all values with NaN
             nan = float16(np.nan)
 
-            assert_(not (self.all_f16 == nan).any())
-            assert_(not (nan == self.all_f16).any())
+            assertTrue(not (self.all_f16 == nan).any())
+            assertTrue(not (nan == self.all_f16).any())
 
-            assert_((self.all_f16 != nan).all())
-            assert_((nan != self.all_f16).all())
+            assertTrue((self.all_f16 != nan).all())
+            assertTrue((nan != self.all_f16).all())
 
-            assert_(not (self.all_f16 < nan).any())
-            assert_(not (nan < self.all_f16).any())
+            assertTrue(not (self.all_f16 < nan).any())
+            assertTrue(not (nan < self.all_f16).any())
 
-            assert_(not (self.all_f16 <= nan).any())
-            assert_(not (nan <= self.all_f16).any())
+            assertTrue(not (self.all_f16 <= nan).any())
+            assertTrue(not (nan <= self.all_f16).any())
 
-            assert_(not (self.all_f16 > nan).any())
-            assert_(not (nan > self.all_f16).any())
+            assertTrue(not (self.all_f16 > nan).any())
+            assertTrue(not (nan > self.all_f16).any())
 
-            assert_(not (self.all_f16 >= nan).any())
-            assert_(not (nan >= self.all_f16).any())
+            assertTrue(not (self.all_f16 >= nan).any())
+            assertTrue(not (nan >= self.all_f16).any())
 
     def test_half_values(self):
         """Confirms a small number of known half values"""
@@ -295,10 +296,10 @@ class TestHalf:
         assert_equal(a, b)
 
         # Comparisons should work
-        assert_((a[:-1] <= a[1:]).all())
-        assert_(not (a[:-1] > a[1:]).any())
-        assert_((a[1:] >= a[:-1]).all())
-        assert_(not (a[1:] < a[:-1]).any())
+        assertTrue((a[:-1] <= a[1:]).all())
+        assertTrue(not (a[:-1] > a[1:]).any())
+        assertTrue((a[1:] >= a[:-1]).all())
+        assertTrue(not (a[1:] < a[:-1]).any())
         # All != except for +/-0
         assert_equal(np.nonzero(a[:-1] < a[1:])[0].size, a.size-2)
         assert_equal(np.nonzero(a[1:] > a[:-1])[0].size, a.size-2)
@@ -420,14 +421,14 @@ class TestHalf:
         assert_equal(np.maximum(a, b), [0, 5, 2, 4, 3])
 
         x = np.maximum(b, c)
-        assert_(np.isnan(x[3]))
+        assertTrue(np.isnan(x[3]))
         x[3] = 0
         assert_equal(x, [0, 5, 1, 0, 6])
 
         assert_equal(np.minimum(a, b), [-2, 1, 1, 4, 2])
 
         x = np.minimum(b, c)
-        assert_(np.isnan(x[3]))
+        assertTrue(np.isnan(x[3]))
         x[3] = 0
         assert_equal(x, [-2, -1, -np.inf, 0, 3])
 
@@ -557,5 +558,5 @@ class TestHalf:
         b = Dummy()
         b.__array_interface__ = a.__array_interface__
         c = np.array(b)
-        assert_(c.dtype == float16)
+        assertTrue(c.dtype == float16)
         assert_equal(a, c)

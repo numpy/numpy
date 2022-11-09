@@ -1,8 +1,9 @@
 import sys
+
 import pytest
 
 import numpy as np
-from numpy.testing import assert_array_equal, IS_PYPY
+from numpy.testing import IS_PYPY, assert_array_equal
 
 
 class TestDLPack:
@@ -100,7 +101,7 @@ class TestDLPack:
         x = np.arange(5)
         _ = x.__dlpack__()
         raise RuntimeError
-    
+
     def test_dlpack_destructor_exception(self):
         with pytest.raises(RuntimeError):
             self.dlpack_deleter_exception()

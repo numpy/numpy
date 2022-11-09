@@ -1,16 +1,17 @@
-import re
-import os
-import sys
-import warnings
-import platform
-import tempfile
-import hashlib
 import base64
+import hashlib
+import os
+import platform
+import re
 import subprocess
-from subprocess import Popen, PIPE, STDOUT
+import sys
+import tempfile
+import warnings
+from distutils.version import LooseVersion
+from subprocess import PIPE, STDOUT, Popen
+
 from numpy.distutils.exec_command import filepath_from_subprocess_output
 from numpy.distutils.fcompiler import FCompiler
-from distutils.version import LooseVersion
 
 compilers = ['GnuFCompiler', 'Gnu95FCompiler']
 
@@ -545,6 +546,7 @@ def _can_target(cmd, arch):
 
 if __name__ == '__main__':
     from distutils import log
+
     from numpy.distutils import customized_fcompiler
     log.set_verbosity(2)
 

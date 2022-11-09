@@ -1,19 +1,18 @@
 """ Modified version of build_clib that handles fortran source files.
 """
 import os
-from glob import glob
 import shutil
 from distutils.command.build_clib import build_clib as old_build_clib
-from distutils.errors import DistutilsSetupError, DistutilsError, \
-    DistutilsFileError
+from distutils.dep_util import newer_group
+from distutils.errors import (DistutilsError, DistutilsFileError,
+                              DistutilsSetupError)
+from glob import glob
 
 from numpy.distutils import log
-from distutils.dep_util import newer_group
-from numpy.distutils.misc_util import (
-    filter_sources, get_lib_source_files, get_numpy_include_dirs,
-    has_cxx_sources, has_f_sources, is_sequence
-)
 from numpy.distutils.ccompiler_opt import new_ccompiler_opt
+from numpy.distutils.misc_util import (filter_sources, get_lib_source_files,
+                                       get_numpy_include_dirs, has_cxx_sources,
+                                       has_f_sources, is_sequence)
 
 # Fix Python distutils bug sf #1718574:
 _l = old_build_clib.user_options

@@ -17,21 +17,20 @@ __all__ = ['FCompiler', 'new_fcompiler', 'show_fcompilers',
            'dummy_fortran_file']
 
 import os
-import sys
 import re
-
-from distutils.sysconfig import get_python_lib
+import sys
+from distutils.errors import (CompileError, DistutilsExecError,
+                              DistutilsModuleError, DistutilsPlatformError,
+                              LinkError)
 from distutils.fancy_getopt import FancyGetopt
-from distutils.errors import DistutilsModuleError, \
-     DistutilsExecError, CompileError, LinkError, DistutilsPlatformError
+from distutils.sysconfig import get_python_lib
 from distutils.util import split_quoted, strtobool
 
+from numpy.distutils import _shell_utils, log
 from numpy.distutils.ccompiler import CCompiler, gen_lib_options
-from numpy.distutils import log
-from numpy.distutils.misc_util import is_string, all_strings, is_sequence, \
-    make_temp_file, get_shared_lib_extension
 from numpy.distutils.exec_command import find_executable
-from numpy.distutils import _shell_utils
+from numpy.distutils.misc_util import (all_strings, get_shared_lib_extension,
+                                       is_sequence, is_string, make_temp_file)
 
 from .environment import EnvironmentConfig
 
@@ -750,7 +749,7 @@ _default_compilers = (
                'intelvem', 'intelem', 'flang')),
     ('cygwin.*', ('gnu', 'intelv', 'absoft', 'compaqv', 'intelev', 'gnu95', 'g95')),
     ('linux.*', ('arm', 'gnu95', 'intel', 'lahey', 'pg', 'nv', 'absoft', 'nag',
-                 'vast', 'compaq', 'intele', 'intelem', 'gnu', 'g95', 
+                 'vast', 'compaq', 'intele', 'intelem', 'gnu', 'g95',
                  'pathf95', 'nagfor', 'fujitsu')),
     ('darwin.*', ('gnu95', 'nag', 'nagfor', 'absoft', 'ibm', 'intel', 'gnu',
                  'g95', 'pg')),
@@ -909,6 +908,7 @@ def show_fcompilers(dist=None):
     """
     if dist is None:
         from distutils.dist import Distribution
+
         from numpy.distutils.command.config_compiler import config_fc
         dist = Distribution()
         dist.script_name = os.path.basename(sys.argv[0])
@@ -1016,9 +1016,11 @@ def get_f77flags(src):
         i = 0
         for line in f:
             i += 1
-            if i>20: break
+            if i>20:
+                break
             m = _f77flags_re.match(line)
-            if not m: continue
+            if not m:
+                continue
             fcname = m.group('fcname').strip()
             fflags = m.group('fflags').strip()
             flags[fcname] = split_quoted(fflags)

@@ -3,11 +3,10 @@
 import warnings
 
 import numpy as np
-from numpy import linalg, arange, float64, array, dot, transpose
-from numpy.testing import (
-    assert_, assert_raises, assert_equal, assert_array_equal,
-    assert_array_almost_equal, assert_array_less
-)
+from numpy import arange, array, dot, float64, linalg, transpose
+from numpy.testing import (assert_, assert_array_almost_equal,
+                           assert_array_equal, assert_array_less, assert_equal,
+                           assert_raises)
 
 
 class TestRegression:
@@ -93,15 +92,15 @@ class TestRegression:
 
         norm = linalg.norm(testvector)
         assert_array_equal(norm, [0, 1])
-        assert_(norm.dtype == np.dtype('float64'))
+        assertTrue(norm.dtype == np.dtype('float64'))
 
         norm = linalg.norm(testvector, ord=1)
         assert_array_equal(norm, [0, 1])
-        assert_(norm.dtype != np.dtype('float64'))
+        assertTrue(norm.dtype != np.dtype('float64'))
 
         norm = linalg.norm(testvector, ord=2)
         assert_array_equal(norm, [0, 1])
-        assert_(norm.dtype == np.dtype('float64'))
+        assertTrue(norm.dtype == np.dtype('float64'))
 
         assert_raises(ValueError, linalg.norm, testvector, ord='fro')
         assert_raises(ValueError, linalg.norm, testvector, ord='nuc')
@@ -119,11 +118,11 @@ class TestRegression:
 
         norm = linalg.norm(testmatrix)
         assert_array_equal(norm, [0, 1])
-        assert_(norm.dtype == np.dtype('float64'))
+        assertTrue(norm.dtype == np.dtype('float64'))
 
         norm = linalg.norm(testmatrix, ord='fro')
         assert_array_equal(norm, [0, 1])
-        assert_(norm.dtype == np.dtype('float64'))
+        assertTrue(norm.dtype == np.dtype('float64'))
 
         assert_raises(TypeError, linalg.norm, testmatrix, ord='nuc')
         assert_raises(ValueError, linalg.norm, testmatrix, ord=np.inf)

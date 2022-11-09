@@ -1,15 +1,15 @@
 """
 Test the scalar constructors, which also do type-coercion
 """
-import sys
 import fractions
 import platform
+import sys
 import types
 from typing import Any, Type
 
 import pytest
-import numpy as np
 
+import numpy as np
 from numpy.testing import assert_equal, assert_raises
 
 

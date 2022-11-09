@@ -1,12 +1,14 @@
-import numpy as np
 import os
-from os import path
 import sys
+from ctypes import POINTER, c_double, c_float, c_int, c_longlong, cast, pointer
+from os import path
+
 import pytest
-from ctypes import c_longlong, c_double, c_float, c_int, cast, pointer, POINTER
+
+import numpy as np
+from numpy.core._multiarray_umath import __cpu_features__
 from numpy.testing import assert_array_max_ulp
 from numpy.testing._private.utils import _glibc_older_than
-from numpy.core._multiarray_umath import __cpu_features__
 
 UNARY_UFUNCS = [obj for obj in np.core.umath.__dict__.values() if
         isinstance(obj, np.ufunc)]
@@ -26,7 +28,7 @@ platform_skip = pytest.mark.skipif(not runtest,
 # https://stackoverflow.com/questions/1592158/convert-hex-to-float #
 def convert(s, datatype="np.float32"):
     i = int(s, 16)                   # convert from hex to a Python int
-    if (datatype == "np.float64"):
+    if datatype == "np.float64":
         cp = pointer(c_longlong(i))           # make this into a c long long integer
         fp = cast(cp, POINTER(c_double))  # cast the int pointer to a double pointer
     else:

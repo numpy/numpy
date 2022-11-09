@@ -34,16 +34,16 @@ To enable the plugin, one must add it to their mypy `configuration file`_:
 from __future__ import annotations
 
 from collections.abc import Iterable
-from typing import Final, TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING, Callable, Final
 
 import numpy as np
 
 try:
     import mypy.types
-    from mypy.types import Type
-    from mypy.plugin import Plugin, AnalyzeTypeContext
-    from mypy.nodes import MypyFile, ImportFrom, Statement
     from mypy.build import PRI_MED
+    from mypy.nodes import ImportFrom, MypyFile, Statement
+    from mypy.plugin import AnalyzeTypeContext, Plugin
+    from mypy.types import Type
 
     _HookFunc = Callable[[AnalyzeTypeContext], Type]
     MYPY_EX: None | ModuleNotFoundError = None

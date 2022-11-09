@@ -16,15 +16,17 @@ The preferred alias for `defchararray` is `numpy.char`.
 
 """
 import functools
-from .numerictypes import (
-    string_, unicode_, integer, int_, object_, bool_, character)
-from .numeric import ndarray, compare_chararrays
-from .numeric import array as narray
+
+import numpy
+from numpy.compat import asbytes
+from numpy.core import overrides
 from numpy.core.multiarray import _vec_string
 from numpy.core.overrides import set_module
-from numpy.core import overrides
-from numpy.compat import asbytes
-import numpy
+
+from .numeric import array as narray
+from .numeric import compare_chararrays, ndarray
+from .numerictypes import (bool_, character, int_, integer, object_, string_,
+                           unicode_)
 
 __all__ = [
     'equal', 'not_equal', 'greater_equal', 'less_equal',
@@ -345,7 +347,7 @@ def multiply(a, i):
     -------
     out : ndarray
         Output array of str or unicode, depending on input types
-    
+
     Examples
     --------
     >>> a = np.array(["a", "b", "c"])
@@ -474,7 +476,7 @@ def center(a, width, fillchar=' '):
     See Also
     --------
     str.center
-    
+
     Notes
     -----
     This function is intended to work with arrays of strings.  The
@@ -997,10 +999,10 @@ def isupper(a):
     --------
     >>> str = "GHC"
     >>> np.char.isupper(str)
-    array(True)     
+    array(True)
     >>> a = np.array(["hello", "HELLO", "Hello"])
     >>> np.char.isupper(a)
-    array([False,  True, False]) 
+    array([False,  True, False])
 
     """
     return _vec_string(a, bool_, 'isupper')
@@ -1250,7 +1252,7 @@ def replace(a, old, new, count=None):
     See Also
     --------
     str.replace
-    
+
     Examples
     --------
     >>> a = np.array(["That is a mango", "Monkeys eat mangos"])
@@ -1899,7 +1901,7 @@ def isdecimal(a):
     >>> np.char.isdecimal(['12345', '4.99', '123ABC', ''])
     array([ True, False, False, False])
 
-    """ 
+    """
     if _use_unicode(a) != unicode_:
         raise TypeError("isnumeric is only available for Unicode strings and arrays")
     return _vec_string(a, bool_, 'isdecimal')
@@ -2778,10 +2780,7 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
     """
     if isinstance(obj, (bytes, str)):
         if unicode is None:
-            if isinstance(obj, str):
-                unicode = True
-            else:
-                unicode = False
+            unicode = isinstance(obj, str)
 
         if itemsize is None:
             itemsize = len(obj)
@@ -2808,10 +2807,7 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
                 itemsize //= 4
 
         if unicode is None:
-            if issubclass(obj.dtype.type, unicode_):
-                unicode = True
-            else:
-                unicode = False
+            unicode = issubclass(obj.dtype.type, unicode_)
 
         if unicode:
             dtype = unicode_

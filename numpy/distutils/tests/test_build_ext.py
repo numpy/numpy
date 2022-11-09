@@ -3,8 +3,10 @@
 import os
 import subprocess
 import sys
-from textwrap import indent, dedent
+from textwrap import dedent, indent
+
 import pytest
+
 
 @pytest.mark.slow
 def test_multi_fortran_libs_link(tmp_path):

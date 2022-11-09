@@ -14,20 +14,14 @@ $Date: 2005/05/06 08:31:19 $
 Pearu Peterson
 
 """
-import sys
 import os
 import pprint
 import re
+import sys
 from pathlib import Path
 
-from . import crackfortran
-from . import rules
-from . import cb_rules
-from . import auxfuncs
-from . import cfuncs
-from . import f90mod_rules
-from . import __version__
-from . import capi_maps
+from . import (__version__, auxfuncs, capi_maps, cb_rules, cfuncs,
+               crackfortran, f90mod_rules, rules)
 
 f2py_version = __version__.version
 numpy_version = __version__.version
@@ -474,7 +468,7 @@ def run_main(comline_list):
 
     ret = buildmodules(postlist)
 
-    for mn in ret.keys():
+    for mn in ret:
         dict_append(ret[mn], {'csrc': fobjcsrc, 'h': fobjhsrc})
     return ret
 
@@ -633,7 +627,7 @@ def run_compile():
     if num_info:
         include_dirs.extend(num_info.get('include_dirs', []))
 
-    from numpy.distutils.core import setup, Extension
+    from numpy.distutils.core import Extension, setup
     ext_args = {'name': modulename, 'sources': sources,
                 'include_dirs': include_dirs,
                 'library_dirs': library_dirs,

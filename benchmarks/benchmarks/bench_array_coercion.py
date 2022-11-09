@@ -1,6 +1,6 @@
-from .common import Benchmark
-
 import numpy as np
+
+from .common import Benchmark
 
 
 class ArrayCoercionSmall(Benchmark):
@@ -52,4 +52,3 @@ class ArrayCoercionSmall(Benchmark):
 
     def time_ascontiguousarray(self, array_like):
         np.ascontiguousarray(array_like)
-

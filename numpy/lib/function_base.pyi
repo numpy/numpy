@@ -1,62 +1,27 @@
 import sys
-from collections.abc import Sequence, Iterator, Callable, Iterable
-from typing import (
-    Literal as L,
-    Any,
-    TypeVar,
-    overload,
-    Protocol,
-    SupportsIndex,
-    SupportsInt,
-)
+from collections.abc import Callable, Iterable, Iterator, Sequence
+from typing import Any
+from typing import Literal as L
+from typing import Protocol, SupportsIndex, SupportsInt, TypeVar, overload
 
 if sys.version_info >= (3, 10):
     from typing import TypeGuard
 else:
     from typing_extensions import TypeGuard
 
-from numpy import (
-    vectorize as vectorize,
-    ufunc,
-    generic,
-    floating,
-    complexfloating,
-    intp,
-    float64,
-    complex128,
-    timedelta64,
-    datetime64,
-    object_,
-    _OrderKACF,
-)
-
-from numpy._typing import (
-    NDArray,
-    ArrayLike,
-    DTypeLike,
-    _ShapeLike,
-    _ScalarLike_co,
-    _DTypeLike,
-    _ArrayLike,
-    _ArrayLikeInt_co,
-    _ArrayLikeFloat_co,
-    _ArrayLikeComplex_co,
-    _ArrayLikeTD64_co,
-    _ArrayLikeDT64_co,
-    _ArrayLikeObject_co,
-    _FloatLike_co,
-    _ComplexLike_co,
-)
-
-from numpy.core.function_base import (
-    add_newdoc as add_newdoc,
-)
-
-from numpy.core.multiarray import (
-    add_docstring as add_docstring,
-    bincount as bincount,
-)
-
+from numpy import (_OrderKACF, complex128, complexfloating, datetime64,
+                   float64, floating, generic, intp, object_, timedelta64,
+                   ufunc)
+from numpy import vectorize as vectorize
+from numpy._typing import (ArrayLike, DTypeLike, NDArray, _ArrayLike,
+                           _ArrayLikeComplex_co, _ArrayLikeDT64_co,
+                           _ArrayLikeFloat_co, _ArrayLikeInt_co,
+                           _ArrayLikeObject_co, _ArrayLikeTD64_co,
+                           _ComplexLike_co, _DTypeLike, _FloatLike_co,
+                           _ScalarLike_co, _ShapeLike)
+from numpy.core.function_base import add_newdoc as add_newdoc
+from numpy.core.multiarray import add_docstring as add_docstring
+from numpy.core.multiarray import bincount as bincount
 from numpy.core.umath import _add_newdoc_ufunc
 
 _T = TypeVar("_T")

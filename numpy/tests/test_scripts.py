@@ -2,11 +2,13 @@
 
 Test that we can run executable scripts that have been installed with numpy.
 """
-import sys
 import os
-import pytest
-from os.path import join as pathjoin, isfile, dirname
 import subprocess
+import sys
+from os.path import dirname, isfile
+from os.path import join as pathjoin
+
+import pytest
 
 import numpy as np
 from numpy.testing import assert_equal

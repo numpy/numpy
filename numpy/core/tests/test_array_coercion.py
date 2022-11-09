@@ -10,11 +10,9 @@ import pytest
 from pytest import param
 
 import numpy as np
-from numpy.core._rational_tests import rational
 from numpy.core._multiarray_umath import _discover_array_parameters
-
-from numpy.testing import (
-    assert_array_equal, assert_warns, IS_PYPY)
+from numpy.core._rational_tests import rational
+from numpy.testing import IS_PYPY, assert_array_equal, assert_warns
 
 
 def arraylikes():
@@ -193,7 +191,7 @@ class TestScalarDiscovery:
     def test_void_special_case(self):
         # Void dtypes with structures discover tuples as elements
         arr = np.array((1, 2, 3), dtype="i,i,i")
-        assert arr.shape == ()
+        assert not arr.shape
         arr = np.array([(1, 2, 3)], dtype="i,i,i")
         assert arr.shape == (1,)
 
@@ -219,13 +217,13 @@ class TestScalarDiscovery:
 
     def test_unknown_object(self):
         arr = np.array(object())
-        assert arr.shape == ()
+        assert not arr.shape
         assert arr.dtype == np.dtype("O")
 
     @pytest.mark.parametrize("scalar", scalar_instances())
     def test_scalar(self, scalar):
         arr = np.array(scalar)
-        assert arr.shape == ()
+        assert not arr.shape
         assert arr.dtype == scalar.dtype
 
         arr = np.array([[scalar, scalar]])
@@ -301,7 +299,7 @@ class TestScalarDiscovery:
             scalar = scalar.values[0]
 
             if dtype.type == np.void:
-               if scalar.dtype.fields is not None and dtype.fields is None:
+                if scalar.dtype.fields is not None and dtype.fields is None:
                     # Here, coercion to "V6" works, but the cast fails.
                     # Since the types are identical, SETITEM takes care of
                     # this, but has different rules than the cast.

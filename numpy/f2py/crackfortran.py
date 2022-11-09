@@ -139,26 +139,25 @@ TODO:
     The above may be solved by creating appropriate preprocessor program, for example.
 
 """
-import sys
-import string
-import fileinput
-import re
-import os
-import copy
-import platform
 import codecs
+import copy
+import fileinput
+import os
+import platform
+import re
+import string
+import sys
+
 try:
     import chardet
 except ImportError:
     chardet = None
 
-from . import __version__
-
+from . import __version__, symbolic
 # The environment provided by auxfuncs.py is needed for some calls to eval.
 # As the needed functions cannot be determined by static inspection of the
 # code, it is safest to use import * pending a major refactoring of f2py.
 from .auxfuncs import *
-from . import symbolic
 
 f2py_version = __version__.version
 
@@ -456,7 +455,7 @@ def readfortrancode(ffile, dowithline=show, istop=1):
             elif strictf77:
                 if len(l) > 72:
                     l = l[:72]
-            if not (l[0] in spacedigits):
+            if not l[0] in spacedigits:
                 raise Exception('readfortrancode: Found non-(space,digit) char '
                                 'in the first column.\n\tAre you sure that '
                                 'this code is in fix form?\n\tline=%s' % repr(l))
@@ -1608,7 +1607,7 @@ def removespaces(expr):
 
 def markinnerspaces(line):
     """
-    The function replace all spaces in the input variable line which are 
+    The function replace all spaces in the input variable line which are
     surrounded with quotation marks, with the triplet "@_@".
 
     For instance, for the input "a 'b c'" the function returns "a 'b@_@c'"
@@ -1621,7 +1620,7 @@ def markinnerspaces(line):
     -------
     str
 
-    """  
+    """
     fragment = ''
     inside = False
     current_quote = None
@@ -2446,12 +2445,12 @@ def get_parameters(vars, global_params={}):
                     # Again, this will be true if even a single specifier
                     # has been replaced, see comment above.
                     is_replaced = len(v) < orig_v_len
-                    
+
             if not is_replaced:
                 if not selected_kind_re.match(v):
                     v_ = v.split('_')
                     # In case there are additive parameters
-                    if len(v_) > 1: 
+                    if len(v_) > 1:
                         v = ''.join(v_[:-1]).lower().replace(v_[-1].lower(), '')
 
             # Currently this will not work for complex numbers.
@@ -2562,7 +2561,7 @@ def analyzevars(block):
             except KeyError:
                 dep_matches[n] = re.compile(r'.*\b%s\b' % (v), re.I).match
     for n in svars:
-        if n[0] in list(attrrules.keys()):
+        if n[0] in list(attrrules):
             vars[n] = setattrspec(vars[n], attrrules[n[0]])
         if 'typespec' not in vars[n]:
             if not('attrspec' in vars[n] and 'external' in vars[n]['attrspec']):
@@ -3380,7 +3379,7 @@ def traverse(obj, visit, parents=[], result=None, *args, **kwargs):
             if new_index is not None:
                 new_result.append(new_item)
     elif isinstance(obj, dict):
-        new_result = dict()
+        new_result = []
         for key, value in obj.items():
             new_key, new_value = traverse((key, value), visit,
                                           parents=parents + [parent],

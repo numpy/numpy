@@ -173,7 +173,7 @@ Similarly for methods::
   class test_zzz:
       @pytest.mark.slow
       def test_simple(self):
-          assert_(zzz() == 'Hello from zzz')
+          assertTrue(zzz() == 'Hello from zzz')
 
 Easier setup and teardown functions / methods
 ---------------------------------------------

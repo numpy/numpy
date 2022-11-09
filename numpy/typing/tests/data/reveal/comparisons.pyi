@@ -1,6 +1,7 @@
-import numpy as np
-import fractions
 import decimal
+import fractions
+
+import numpy as np
 
 c16 = np.complex128()
 f8 = np.float64()

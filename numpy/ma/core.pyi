@@ -1,23 +1,20 @@
 from collections.abc import Callable
 from typing import Any, TypeVar
-from numpy import ndarray, dtype, float64
 
-from numpy import (
-    amax as amax,
-    amin as amin,
-    bool_ as bool_,
-    expand_dims as expand_dims,
-    diff as diff,
-    clip as clip,
-    indices as indices,
-    ones_like as ones_like,
-    squeeze as squeeze,
-    zeros_like as zeros_like,
-)
-
-from numpy.lib.function_base import (
-    angle as angle,
-)
+from numpy import amax as amax
+from numpy import amin as amin
+from numpy import bool_ as bool_
+from numpy import clip as clip
+from numpy import diff as diff
+from numpy import dtype
+from numpy import expand_dims as expand_dims
+from numpy import float64
+from numpy import indices as indices
+from numpy import ndarray
+from numpy import ones_like as ones_like
+from numpy import squeeze as squeeze
+from numpy import zeros_like as zeros_like
+from numpy.lib.function_base import angle as angle
 
 # TODO: Set the `bound` to something more suitable once we
 # have proper shape support

@@ -1,14 +1,9 @@
 from typing import Any, TypeVar, overload
 
-from numpy import generic, integer, floating, complexfloating
-from numpy._typing import (
-    NDArray,
-    ArrayLike,
-    _ShapeLike,
-    _ArrayLike,
-    _ArrayLikeFloat_co,
-    _ArrayLikeComplex_co,
-)
+from numpy import complexfloating, floating, generic, integer
+from numpy._typing import (ArrayLike, NDArray, _ArrayLike,
+                           _ArrayLikeComplex_co, _ArrayLikeFloat_co,
+                           _ShapeLike)
 
 _SCT = TypeVar("_SCT", bound=generic)
 

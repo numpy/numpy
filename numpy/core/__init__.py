@@ -6,10 +6,10 @@ are available in the main ``numpy`` namespace - use that instead.
 
 """
 
-from numpy.version import version as __version__
-
 import os
 import warnings
+
+from numpy.version import version as __version__
 
 # disables OpenBLAS affinity setting of the main thread that limits
 # python threads or processes to one core
@@ -69,42 +69,37 @@ if not (hasattr(multiarray, '_multiarray_umath') and
     raise ImportError(msg.format(path))
 
 from . import numerictypes as nt
+
 multiarray.set_typeDict(nt.sctypeDict)
-from . import numeric
-from .numeric import *
-from . import fromnumeric
-from .fromnumeric import *
+from . import _machar
 from . import defchararray as char
+from . import einsumfunc, fromnumeric, function_base, getlimits, numeric
 from . import records
 from . import records as rec
-from .records import record, recarray, format_parser
+from . import shape_base
+from ._machar import *
+from .defchararray import chararray
+from .einsumfunc import *
+from .fromnumeric import *
+from .function_base import *
+from .getlimits import *
 # Note: module name memmap is overwritten by a class with same name
 from .memmap import *
-from .defchararray import chararray
-from . import function_base
-from .function_base import *
-from . import _machar
-from ._machar import *
-from . import getlimits
-from .getlimits import *
-from . import shape_base
+from .numeric import *
+from .records import format_parser, recarray, record
 from .shape_base import *
-from . import einsumfunc
-from .einsumfunc import *
+
 del nt
 
-from .fromnumeric import amax as max, amin as min, round_ as round
-from .numeric import absolute as abs
-
+# add these for module-freeze analysis (like PyInstaller)
 # do this after everything else, to minimize the chance of this misleadingly
 # appearing in an import-time traceback
-from . import _add_newdocs
-from . import _add_newdocs_scalars
-# add these for module-freeze analysis (like PyInstaller)
-from . import _dtype_ctypes
-from . import _internal
-from . import _dtype
-from . import _methods
+from . import (_add_newdocs, _add_newdocs_scalars, _dtype, _dtype_ctypes,
+               _internal, _methods)
+from .fromnumeric import amax as max
+from .fromnumeric import amin as min
+from .fromnumeric import round_ as round
+from .numeric import absolute as abs
 
 __all__ = ['char', 'rec', 'memmap']
 __all__ += numeric.__all__
@@ -174,5 +169,6 @@ del _ufunc_reduce
 del _DType_reduce
 
 from numpy._pytesttester import PytestTester
+
 test = PytestTester(__name__)
 del PytestTester

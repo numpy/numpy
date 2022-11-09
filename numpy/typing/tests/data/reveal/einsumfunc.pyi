@@ -1,4 +1,5 @@
 from typing import Any
+
 import numpy as np
 
 AR_LIKE_b: list[bool]

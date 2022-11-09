@@ -1,5 +1,6 @@
-import numpy
 import random
+
+import numpy
 
 # Various pre-crafted datasets/variables for testing
 # !!! Must not be changed -- only appended !!!

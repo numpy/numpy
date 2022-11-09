@@ -1,8 +1,9 @@
 # Run svn log -l <some number>
 
-import re
-import numpy as np
 import os
+import re
+
+import numpy as np
 
 names = re.compile(r'r\d+\s\|\s(.*)\s\|\s200')
 

@@ -1,5 +1,6 @@
-from collections.abc import Sequence, Mapping
+from collections.abc import Mapping, Sequence
 from typing import Any
+
 from numpy import matrix as matrix
 from numpy._typing import ArrayLike, DTypeLike, NDArray
 

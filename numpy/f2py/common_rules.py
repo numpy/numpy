@@ -14,13 +14,11 @@ Pearu Peterson
 
 """
 from . import __version__
+
 f2py_version = __version__.version
 
-from .auxfuncs import (
-    hasbody, hascommon, hasnote, isintent_hide, outmess
-)
-from . import capi_maps
-from . import func2subr
+from . import capi_maps, func2subr
+from .auxfuncs import hasbody, hascommon, hasnote, isintent_hide, outmess
 from .crackfortran import rmbadname
 
 

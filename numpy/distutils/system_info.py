@@ -165,45 +165,46 @@ this distribution for specifics.
 NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
 
 """
-import sys
+import copy
+import distutils.ccompiler
 import os
 import re
-import copy
-import warnings
+import shutil
 import subprocess
+import sys
+import sysconfig
+import tempfile
 import textwrap
-
-from glob import glob
-from functools import reduce
+import warnings
 from configparser import NoOptionError
 from configparser import RawConfigParser as ConfigParser
+from distutils.dist import Distribution
+from distutils.errors import DistutilsError
+from distutils.util import get_platform
+from functools import reduce
+from glob import glob
+
+from numpy.distutils import _shell_utils
+from numpy.distutils import customized_ccompiler as _customized_ccompiler
+from numpy.distutils import log
+from numpy.distutils.command.config import config as cmd_config
+from numpy.distutils.exec_command import (filepath_from_subprocess_output,
+                                          find_executable)
+from numpy.distutils.misc_util import (get_shared_lib_extension, is_sequence,
+                                       is_string)
+
 # It seems that some people are importing ConfigParser from here so is
 # good to keep its class name. Use of RawConfigParser is needed in
 # order to be able to load path names with percent in them, like
 # `feature%2Fcool` which is common on git flow branch names.
 
-from distutils.errors import DistutilsError
-from distutils.dist import Distribution
-import sysconfig
-from numpy.distutils import log
-from distutils.util import get_platform
 
-from numpy.distutils.exec_command import (
-    find_executable, filepath_from_subprocess_output,
-    )
-from numpy.distutils.misc_util import (is_sequence, is_string,
-                                       get_shared_lib_extension)
-from numpy.distutils.command.config import config as cmd_config
-from numpy.distutils import customized_ccompiler as _customized_ccompiler
-from numpy.distutils import _shell_utils
-import distutils.ccompiler
-import tempfile
-import shutil
 
 __all__ = ['system_info']
 
 # Determine number of bits
 import platform
+
 _bits = {'32bit': 32, '64bit': 64}
 platform_bits = _bits[platform.architecture()[0]]
 
@@ -1156,7 +1157,7 @@ class fftw3_info(fftw_info):
                     'macros':[('SCIPY_FFTW3_H', None)]},
                   ]
 
-    
+
 class fftw3_armpl_info(fftw_info):
     section = 'fftw3'
     dir_env_var = 'ARMPL_DIR'
@@ -1790,7 +1791,7 @@ class lapack_opt_info(system_info):
     lapack_order = ['armpl', 'mkl', 'openblas', 'flame',
                     'accelerate', 'atlas', 'lapack']
     order_env_var_name = 'NPY_LAPACK_ORDER'
-    
+
     def _calc_info_armpl(self):
         info = get_info('lapack_armpl')
         if info:
@@ -1974,7 +1975,7 @@ class blas_opt_info(system_info):
     blas_order = ['armpl', 'mkl', 'blis', 'openblas',
                   'accelerate', 'atlas', 'blas']
     order_env_var_name = 'NPY_BLAS_ORDER'
-    
+
     def _calc_info_armpl(self):
         info = get_info('blas_armpl')
         if info:
@@ -2764,7 +2765,7 @@ class numerix_info(system_info):
 class f2py_info(system_info):
     def calc_info(self):
         try:
-            import numpy.f2py as f2py
+            from numpy import f2py
         except ImportError:
             return
         f2py_dir = os.path.join(os.path.dirname(f2py.__file__), 'src')
@@ -2894,7 +2895,7 @@ class _pkg_config_info(system_info):
         extra_compile_args = []
         version = self.get_config_output(config_exe, self.version_flag)
         if version:
-            macros.append((self.__class__.__name__.split('.')[-1].upper(),
+            macros.append((self.__class__.__name__.split('.', maxsplit=1)[-1].upper(),
                            _c_string_literal(version)))
             if self.version_macro_name:
                 macros.append((self.version_macro_name + '_%s'

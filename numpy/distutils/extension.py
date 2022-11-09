@@ -9,7 +9,6 @@ Overridden to support f2py.
 import re
 from distutils.extension import Extension as old_Extension
 
-
 cxx_ext_re = re.compile(r'.*\.(cpp|cxx|cc)\Z', re.I).match
 fortran_pyf_ext_re = re.compile(r'.*\.(f90|f95|f77|for|ftn|f|pyf)\Z', re.I).match
 

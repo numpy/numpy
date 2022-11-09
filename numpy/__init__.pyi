@@ -1,632 +1,414 @@
-import builtins
-import os
-import sys
-import mmap
-import ctypes as ct
 import array as _array
+import builtins
+import ctypes as ct
 import datetime as dt
 import enum
+import mmap
+import os
+import sys
 from abc import abstractmethod
-from types import TracebackType, MappingProxyType
-from contextlib import ContextDecorator
-from contextlib import contextmanager
+from contextlib import ContextDecorator, contextmanager
+from types import MappingProxyType, TracebackType
 
 if sys.version_info >= (3, 9):
     from types import GenericAlias
 
-from numpy._pytesttester import PytestTester
-from numpy.core._internal import _ctypes
-
-from numpy._typing import (
-    # Arrays
-    ArrayLike,
-    NDArray,
-    _SupportsArray,
-    _NestedSequence,
-    _FiniteNestedSequence,
-    _SupportsArray,
-    _ArrayLikeBool_co,
-    _ArrayLikeUInt_co,
-    _ArrayLikeInt_co,
-    _ArrayLikeFloat_co,
-    _ArrayLikeComplex_co,
-    _ArrayLikeNumber_co,
-    _ArrayLikeTD64_co,
-    _ArrayLikeDT64_co,
-    _ArrayLikeObject_co,
-    _ArrayLikeStr_co,
-    _ArrayLikeBytes_co,
-    _ArrayLikeUnknown,
-    _UnknownType,
-
-    # DTypes
-    DTypeLike,
-    _DTypeLike,
-    _SupportsDType,
-    _VoidDTypeLike,
-
-    # Shapes
-    _Shape,
-    _ShapeLike,
-
-    # Scalars
-    _CharLike_co,
-    _BoolLike_co,
-    _IntLike_co,
-    _FloatLike_co,
-    _ComplexLike_co,
-    _TD64Like_co,
-    _NumberLike_co,
-    _ScalarLike_co,
-
-    # `number` precision
-    NBitBase,
-    _256Bit,
-    _128Bit,
-    _96Bit,
-    _80Bit,
-    _64Bit,
-    _32Bit,
-    _16Bit,
-    _8Bit,
-    _NBitByte,
-    _NBitShort,
-    _NBitIntC,
-    _NBitIntP,
-    _NBitInt,
-    _NBitLongLong,
-    _NBitHalf,
-    _NBitSingle,
-    _NBitDouble,
-    _NBitLongDouble,
-
-    # Character codes
-    _BoolCodes,
-    _UInt8Codes,
-    _UInt16Codes,
-    _UInt32Codes,
-    _UInt64Codes,
-    _Int8Codes,
-    _Int16Codes,
-    _Int32Codes,
-    _Int64Codes,
-    _Float16Codes,
-    _Float32Codes,
-    _Float64Codes,
-    _Complex64Codes,
-    _Complex128Codes,
-    _ByteCodes,
-    _ShortCodes,
-    _IntCCodes,
-    _IntPCodes,
-    _IntCodes,
-    _LongLongCodes,
-    _UByteCodes,
-    _UShortCodes,
-    _UIntCCodes,
-    _UIntPCodes,
-    _UIntCodes,
-    _ULongLongCodes,
-    _HalfCodes,
-    _SingleCodes,
-    _DoubleCodes,
-    _LongDoubleCodes,
-    _CSingleCodes,
-    _CDoubleCodes,
-    _CLongDoubleCodes,
-    _DT64Codes,
-    _TD64Codes,
-    _StrCodes,
-    _BytesCodes,
-    _VoidCodes,
-    _ObjectCodes,
-
-    # Ufuncs
-    _UFunc_Nin1_Nout1,
-    _UFunc_Nin2_Nout1,
-    _UFunc_Nin1_Nout2,
-    _UFunc_Nin2_Nout2,
-    _GUFunc_Nin2_Nout1,
-)
-
-from numpy._typing._callable import (
-    _BoolOp,
-    _BoolBitOp,
-    _BoolSub,
-    _BoolTrueDiv,
-    _BoolMod,
-    _BoolDivMod,
-    _TD64Div,
-    _IntTrueDiv,
-    _UnsignedIntOp,
-    _UnsignedIntBitOp,
-    _UnsignedIntMod,
-    _UnsignedIntDivMod,
-    _SignedIntOp,
-    _SignedIntBitOp,
-    _SignedIntMod,
-    _SignedIntDivMod,
-    _FloatOp,
-    _FloatMod,
-    _FloatDivMod,
-    _ComplexOp,
-    _NumberOp,
-    _ComparisonOp,
-)
-
-# NOTE: Numpy's mypy plugin is used for removing the types unavailable
-# to the specific platform
-from numpy._typing._extended_precision import (
-    uint128 as uint128,
-    uint256 as uint256,
-    int128 as int128,
-    int256 as int256,
-    float80 as float80,
-    float96 as float96,
-    float128 as float128,
-    float256 as float256,
-    complex160 as complex160,
-    complex192 as complex192,
-    complex256 as complex256,
-    complex512 as complex512,
-)
-
-from collections.abc import (
-    Callable,
-    Container,
-    Iterable,
-    Iterator,
-    Mapping,
-    Sequence,
-    Sized,
-)
-from typing import (
-    Literal as L,
-    Any,
-    Generator,
-    Generic,
-    IO,
-    NoReturn,
-    overload,
-    SupportsComplex,
-    SupportsFloat,
-    SupportsInt,
-    TypeVar,
-    Union,
-    Protocol,
-    SupportsIndex,
-    Final,
-    final,
-    ClassVar,
-)
+from collections.abc import (Callable, Container, Iterable, Iterator, Mapping,
+                             Sequence, Sized)
+from typing import IO, Any, ClassVar, Final, Generator, Generic
+from typing import Literal as L
+from typing import (NoReturn, Protocol, SupportsComplex, SupportsFloat,
+                    SupportsIndex, SupportsInt, TypeVar, Union, final,
+                    overload)
 
 # Ensures that the stubs are picked up
-from numpy import (
-    ctypeslib as ctypeslib,
-    fft as fft,
-    lib as lib,
-    linalg as linalg,
-    ma as ma,
-    polynomial as polynomial,
-    random as random,
-    testing as testing,
-    version as version,
-)
-
+from numpy import ctypeslib as ctypeslib
+from numpy import fft as fft
+from numpy import lib as lib
+from numpy import linalg as linalg
+from numpy import ma as ma
+from numpy import polynomial as polynomial
+from numpy import random as random
+from numpy import testing as testing
+from numpy import version as version
+from numpy._pytesttester import PytestTester
+from numpy._typing import (  # Arrays; DTypes; Shapes; Scalars; `number` precision; Character codes; Ufuncs
+    ArrayLike, DTypeLike, NBitBase, NDArray, _8Bit, _16Bit, _32Bit, _64Bit,
+    _80Bit, _96Bit, _128Bit, _256Bit, _ArrayLikeBool_co, _ArrayLikeBytes_co,
+    _ArrayLikeComplex_co, _ArrayLikeDT64_co, _ArrayLikeFloat_co,
+    _ArrayLikeInt_co, _ArrayLikeNumber_co, _ArrayLikeObject_co,
+    _ArrayLikeStr_co, _ArrayLikeTD64_co, _ArrayLikeUInt_co, _ArrayLikeUnknown,
+    _BoolCodes, _BoolLike_co, _ByteCodes, _BytesCodes, _CDoubleCodes,
+    _CharLike_co, _CLongDoubleCodes, _Complex64Codes, _Complex128Codes,
+    _ComplexLike_co, _CSingleCodes, _DoubleCodes, _DT64Codes, _DTypeLike,
+    _FiniteNestedSequence, _Float16Codes, _Float32Codes, _Float64Codes,
+    _FloatLike_co, _GUFunc_Nin2_Nout1, _HalfCodes, _Int8Codes, _Int16Codes,
+    _Int32Codes, _Int64Codes, _IntCCodes, _IntCodes, _IntLike_co, _IntPCodes,
+    _LongDoubleCodes, _LongLongCodes, _NBitByte, _NBitDouble, _NBitHalf,
+    _NBitInt, _NBitIntC, _NBitIntP, _NBitLongDouble, _NBitLongLong, _NBitShort,
+    _NBitSingle, _NestedSequence, _NumberLike_co, _ObjectCodes, _ScalarLike_co,
+    _Shape, _ShapeLike, _ShortCodes, _SingleCodes, _StrCodes, _SupportsArray,
+    _SupportsDType, _TD64Codes, _TD64Like_co, _UByteCodes, _UFunc_Nin1_Nout1,
+    _UFunc_Nin1_Nout2, _UFunc_Nin2_Nout1, _UFunc_Nin2_Nout2, _UInt8Codes,
+    _UInt16Codes, _UInt32Codes, _UInt64Codes, _UIntCCodes, _UIntCodes,
+    _UIntPCodes, _ULongLongCodes, _UnknownType, _UShortCodes, _VoidCodes,
+    _VoidDTypeLike)
+from numpy._typing._callable import (_BoolBitOp, _BoolDivMod, _BoolMod,
+                                     _BoolOp, _BoolSub, _BoolTrueDiv,
+                                     _ComparisonOp, _ComplexOp, _FloatDivMod,
+                                     _FloatMod, _FloatOp, _IntTrueDiv,
+                                     _NumberOp, _SignedIntBitOp,
+                                     _SignedIntDivMod, _SignedIntMod,
+                                     _SignedIntOp, _TD64Div, _UnsignedIntBitOp,
+                                     _UnsignedIntDivMod, _UnsignedIntMod,
+                                     _UnsignedIntOp)
+# NOTE: Numpy's mypy plugin is used for removing the types unavailable
+# to the specific platform
+from numpy._typing._extended_precision import complex160 as complex160
+from numpy._typing._extended_precision import complex192 as complex192
+from numpy._typing._extended_precision import complex256 as complex256
+from numpy._typing._extended_precision import complex512 as complex512
+from numpy._typing._extended_precision import float80 as float80
+from numpy._typing._extended_precision import float96 as float96
+from numpy._typing._extended_precision import float128 as float128
+from numpy._typing._extended_precision import float256 as float256
+from numpy._typing._extended_precision import int128 as int128
+from numpy._typing._extended_precision import int256 as int256
+from numpy._typing._extended_precision import uint128 as uint128
+from numpy._typing._extended_precision import uint256 as uint256
 from numpy.core import defchararray, records
+from numpy.core._internal import _ctypes
+
 char = defchararray
 rec = records
 
-from numpy.core.function_base import (
-    linspace as linspace,
-    logspace as logspace,
-    geomspace as geomspace,
-)
-
-from numpy.core.fromnumeric import (
-    take as take,
-    reshape as reshape,
-    choose as choose,
-    repeat as repeat,
-    put as put,
-    swapaxes as swapaxes,
-    transpose as transpose,
-    partition as partition,
-    argpartition as argpartition,
-    sort as sort,
-    argsort as argsort,
-    argmax as argmax,
-    argmin as argmin,
-    searchsorted as searchsorted,
-    resize as resize,
-    squeeze as squeeze,
-    diagonal as diagonal,
-    trace as trace,
-    ravel as ravel,
-    nonzero as nonzero,
-    shape as shape,
-    compress as compress,
-    clip as clip,
-    sum as sum,
-    all as all,
-    any as any,
-    cumsum as cumsum,
-    ptp as ptp,
-    amax as amax,
-    amin as amin,
-    prod as prod,
-    cumprod as cumprod,
-    ndim as ndim,
-    size as size,
-    around as around,
-    mean as mean,
-    std as std,
-    var as var,
-)
-
-from numpy.core._asarray import (
-    require as require,
-)
-
-from numpy.core._type_aliases import (
-    sctypes as sctypes,
-    sctypeDict as sctypeDict,
-)
-
-from numpy.core._ufunc_config import (
-    seterr as seterr,
-    geterr as geterr,
-    setbufsize as setbufsize,
-    getbufsize as getbufsize,
-    seterrcall as seterrcall,
-    geterrcall as geterrcall,
-    _ErrKind,
-    _ErrFunc,
-    _ErrDictOptional,
-)
-
-from numpy.core.arrayprint import (
-    set_printoptions as set_printoptions,
-    get_printoptions as get_printoptions,
-    array2string as array2string,
-    format_float_scientific as format_float_scientific,
-    format_float_positional as format_float_positional,
-    array_repr as array_repr,
-    array_str as array_str,
-    set_string_function as set_string_function,
-    printoptions as printoptions,
-)
-
-from numpy.core.einsumfunc import (
-    einsum as einsum,
-    einsum_path as einsum_path,
-)
-
-from numpy.core.multiarray import (
-    ALLOW_THREADS as ALLOW_THREADS,
-    BUFSIZE as BUFSIZE,
-    CLIP as CLIP,
-    MAXDIMS as MAXDIMS,
-    MAY_SHARE_BOUNDS as MAY_SHARE_BOUNDS,
-    MAY_SHARE_EXACT as MAY_SHARE_EXACT,
-    RAISE as RAISE,
-    WRAP as WRAP,
-    tracemalloc_domain as tracemalloc_domain,
-    array as array,
-    empty_like as empty_like,
-    empty as empty,
-    zeros as zeros,
-    concatenate as concatenate,
-    inner as inner,
-    where as where,
-    lexsort as lexsort,
-    can_cast as can_cast,
-    min_scalar_type as min_scalar_type,
-    result_type as result_type,
-    dot as dot,
-    vdot as vdot,
-    bincount as bincount,
-    copyto as copyto,
-    putmask as putmask,
-    packbits as packbits,
-    unpackbits as unpackbits,
-    shares_memory as shares_memory,
-    may_share_memory as may_share_memory,
-    asarray as asarray,
-    asanyarray as asanyarray,
-    ascontiguousarray as ascontiguousarray,
-    asfortranarray as asfortranarray,
-    arange as arange,
-    busday_count as busday_count,
-    busday_offset as busday_offset,
-    compare_chararrays as compare_chararrays,
-    datetime_as_string as datetime_as_string,
-    datetime_data as datetime_data,
-    frombuffer as frombuffer,
-    fromfile as fromfile,
-    fromiter as fromiter,
-    is_busday as is_busday,
-    promote_types as promote_types,
-    seterrobj as seterrobj,
-    geterrobj as geterrobj,
-    fromstring as fromstring,
-    frompyfunc as frompyfunc,
-    nested_iters as nested_iters,
-    flagsobj,
-)
-
-from numpy.core.numeric import (
-    zeros_like as zeros_like,
-    ones as ones,
-    ones_like as ones_like,
-    full as full,
-    full_like as full_like,
-    count_nonzero as count_nonzero,
-    isfortran as isfortran,
-    argwhere as argwhere,
-    flatnonzero as flatnonzero,
-    correlate as correlate,
-    convolve as convolve,
-    outer as outer,
-    tensordot as tensordot,
-    roll as roll,
-    rollaxis as rollaxis,
-    moveaxis as moveaxis,
-    cross as cross,
-    indices as indices,
-    fromfunction as fromfunction,
-    isscalar as isscalar,
-    binary_repr as binary_repr,
-    base_repr as base_repr,
-    identity as identity,
-    allclose as allclose,
-    isclose as isclose,
-    array_equal as array_equal,
-    array_equiv as array_equiv,
-)
-
-from numpy.core.numerictypes import (
-    maximum_sctype as maximum_sctype,
-    issctype as issctype,
-    obj2sctype as obj2sctype,
-    issubclass_ as issubclass_,
-    issubsctype as issubsctype,
-    issubdtype as issubdtype,
-    sctype2char as sctype2char,
-    find_common_type as find_common_type,
-    nbytes as nbytes,
-    cast as cast,
-    ScalarType as ScalarType,
-    typecodes as typecodes,
-)
-
-from numpy.core.shape_base import (
-    atleast_1d as atleast_1d,
-    atleast_2d as atleast_2d,
-    atleast_3d as atleast_3d,
-    block as block,
-    hstack as hstack,
-    stack as stack,
-    vstack as vstack,
-)
-
-from numpy.lib import (
-    emath as emath,
-)
-
-from numpy.lib.arraypad import (
-    pad as pad,
-)
-
-from numpy.lib.arraysetops import (
-    ediff1d as ediff1d,
-    intersect1d as intersect1d,
-    setxor1d as setxor1d,
-    union1d as union1d,
-    setdiff1d as setdiff1d,
-    unique as unique,
-    in1d as in1d,
-    isin as isin,
-)
-
-from numpy.lib.arrayterator import (
-    Arrayterator as Arrayterator,
-)
-
-from numpy.lib.function_base import (
-    select as select,
-    piecewise as piecewise,
-    trim_zeros as trim_zeros,
-    copy as copy,
-    iterable as iterable,
-    percentile as percentile,
-    diff as diff,
-    gradient as gradient,
-    angle as angle,
-    unwrap as unwrap,
-    sort_complex as sort_complex,
-    disp as disp,
-    flip as flip,
-    rot90 as rot90,
-    extract as extract,
-    place as place,
-    asarray_chkfinite as asarray_chkfinite,
-    average as average,
-    bincount as bincount,
-    digitize as digitize,
-    cov as cov,
-    corrcoef as corrcoef,
-    msort as msort,
-    median as median,
-    sinc as sinc,
-    hamming as hamming,
-    hanning as hanning,
-    bartlett as bartlett,
-    blackman as blackman,
-    kaiser as kaiser,
-    trapz as trapz,
-    i0 as i0,
-    add_newdoc as add_newdoc,
-    add_docstring as add_docstring,
-    meshgrid as meshgrid,
-    delete as delete,
-    insert as insert,
-    append as append,
-    interp as interp,
-    add_newdoc_ufunc as add_newdoc_ufunc,
-    quantile as quantile,
-)
-
-from numpy.lib.histograms import (
-    histogram_bin_edges as histogram_bin_edges,
-    histogram as histogram,
-    histogramdd as histogramdd,
-)
-
-from numpy.lib.index_tricks import (
-    ravel_multi_index as ravel_multi_index,
-    unravel_index as unravel_index,
-    mgrid as mgrid,
-    ogrid as ogrid,
-    r_ as r_,
-    c_ as c_,
-    s_ as s_,
-    index_exp as index_exp,
-    ix_ as ix_,
-    fill_diagonal as fill_diagonal,
-    diag_indices as diag_indices,
-    diag_indices_from as diag_indices_from,
-)
-
-from numpy.lib.nanfunctions import (
-    nansum as nansum,
-    nanmax as nanmax,
-    nanmin as nanmin,
-    nanargmax as nanargmax,
-    nanargmin as nanargmin,
-    nanmean as nanmean,
-    nanmedian as nanmedian,
-    nanpercentile as nanpercentile,
-    nanvar as nanvar,
-    nanstd as nanstd,
-    nanprod as nanprod,
-    nancumsum as nancumsum,
-    nancumprod as nancumprod,
-    nanquantile as nanquantile,
-)
-
-from numpy.lib.npyio import (
-    savetxt as savetxt,
-    loadtxt as loadtxt,
-    genfromtxt as genfromtxt,
-    recfromtxt as recfromtxt,
-    recfromcsv as recfromcsv,
-    load as load,
-    save as save,
-    savez as savez,
-    savez_compressed as savez_compressed,
-    packbits as packbits,
-    unpackbits as unpackbits,
-    fromregex as fromregex,
-)
-
-from numpy.lib.polynomial import (
-    poly as poly,
-    roots as roots,
-    polyint as polyint,
-    polyder as polyder,
-    polyadd as polyadd,
-    polysub as polysub,
-    polymul as polymul,
-    polydiv as polydiv,
-    polyval as polyval,
-    polyfit as polyfit,
-)
-
-from numpy.lib.shape_base import (
-    column_stack as column_stack,
-    row_stack as row_stack,
-    dstack as dstack,
-    array_split as array_split,
-    split as split,
-    hsplit as hsplit,
-    vsplit as vsplit,
-    dsplit as dsplit,
-    apply_over_axes as apply_over_axes,
-    expand_dims as expand_dims,
-    apply_along_axis as apply_along_axis,
-    kron as kron,
-    tile as tile,
-    get_array_wrap as get_array_wrap,
-    take_along_axis as take_along_axis,
-    put_along_axis as put_along_axis,
-)
-
-from numpy.lib.stride_tricks import (
-    broadcast_to as broadcast_to,
-    broadcast_arrays as broadcast_arrays,
-    broadcast_shapes as broadcast_shapes,
-)
-
-from numpy.lib.twodim_base import (
-    diag as diag,
-    diagflat as diagflat,
-    eye as eye,
-    fliplr as fliplr,
-    flipud as flipud,
-    tri as tri,
-    triu as triu,
-    tril as tril,
-    vander as vander,
-    histogram2d as histogram2d,
-    mask_indices as mask_indices,
-    tril_indices as tril_indices,
-    tril_indices_from as tril_indices_from,
-    triu_indices as triu_indices,
-    triu_indices_from as triu_indices_from,
-)
-
-from numpy.lib.type_check import (
-    mintypecode as mintypecode,
-    asfarray as asfarray,
-    real as real,
-    imag as imag,
-    iscomplex as iscomplex,
-    isreal as isreal,
-    iscomplexobj as iscomplexobj,
-    isrealobj as isrealobj,
-    nan_to_num as nan_to_num,
-    real_if_close as real_if_close,
-    typename as typename,
-    common_type as common_type,
-)
-
-from numpy.lib.ufunclike import (
-    fix as fix,
-    isposinf as isposinf,
-    isneginf as isneginf,
-)
-
-from numpy.lib.utils import (
-    issubclass_ as issubclass_,
-    issubsctype as issubsctype,
-    issubdtype as issubdtype,
-    deprecate as deprecate,
-    deprecate_with_doc as deprecate_with_doc,
-    get_include as get_include,
-    info as info,
-    source as source,
-    who as who,
-    lookfor as lookfor,
-    byte_bounds as byte_bounds,
-    safe_eval as safe_eval,
-)
-
-from numpy.matrixlib import (
-    asmatrix as asmatrix,
-    mat as mat,
-    bmat as bmat,
-)
+from numpy.core._asarray import require as require
+from numpy.core._type_aliases import sctypeDict as sctypeDict
+from numpy.core._type_aliases import sctypes as sctypes
+from numpy.core._ufunc_config import _ErrDictOptional, _ErrFunc, _ErrKind
+from numpy.core._ufunc_config import getbufsize as getbufsize
+from numpy.core._ufunc_config import geterr as geterr
+from numpy.core._ufunc_config import geterrcall as geterrcall
+from numpy.core._ufunc_config import setbufsize as setbufsize
+from numpy.core._ufunc_config import seterr as seterr
+from numpy.core._ufunc_config import seterrcall as seterrcall
+from numpy.core.arrayprint import array2string as array2string
+from numpy.core.arrayprint import array_repr as array_repr
+from numpy.core.arrayprint import array_str as array_str
+from numpy.core.arrayprint import \
+    format_float_positional as format_float_positional
+from numpy.core.arrayprint import \
+    format_float_scientific as format_float_scientific
+from numpy.core.arrayprint import get_printoptions as get_printoptions
+from numpy.core.arrayprint import printoptions as printoptions
+from numpy.core.arrayprint import set_printoptions as set_printoptions
+from numpy.core.arrayprint import set_string_function as set_string_function
+from numpy.core.einsumfunc import einsum as einsum
+from numpy.core.einsumfunc import einsum_path as einsum_path
+from numpy.core.fromnumeric import all as all
+from numpy.core.fromnumeric import amax as amax
+from numpy.core.fromnumeric import amin as amin
+from numpy.core.fromnumeric import any as any
+from numpy.core.fromnumeric import argmax as argmax
+from numpy.core.fromnumeric import argmin as argmin
+from numpy.core.fromnumeric import argpartition as argpartition
+from numpy.core.fromnumeric import argsort as argsort
+from numpy.core.fromnumeric import around as around
+from numpy.core.fromnumeric import choose as choose
+from numpy.core.fromnumeric import clip as clip
+from numpy.core.fromnumeric import compress as compress
+from numpy.core.fromnumeric import cumprod as cumprod
+from numpy.core.fromnumeric import cumsum as cumsum
+from numpy.core.fromnumeric import diagonal as diagonal
+from numpy.core.fromnumeric import mean as mean
+from numpy.core.fromnumeric import ndim as ndim
+from numpy.core.fromnumeric import nonzero as nonzero
+from numpy.core.fromnumeric import partition as partition
+from numpy.core.fromnumeric import prod as prod
+from numpy.core.fromnumeric import ptp as ptp
+from numpy.core.fromnumeric import put as put
+from numpy.core.fromnumeric import ravel as ravel
+from numpy.core.fromnumeric import repeat as repeat
+from numpy.core.fromnumeric import reshape as reshape
+from numpy.core.fromnumeric import resize as resize
+from numpy.core.fromnumeric import searchsorted as searchsorted
+from numpy.core.fromnumeric import shape as shape
+from numpy.core.fromnumeric import size as size
+from numpy.core.fromnumeric import sort as sort
+from numpy.core.fromnumeric import squeeze as squeeze
+from numpy.core.fromnumeric import std as std
+from numpy.core.fromnumeric import sum as sum
+from numpy.core.fromnumeric import swapaxes as swapaxes
+from numpy.core.fromnumeric import take as take
+from numpy.core.fromnumeric import trace as trace
+from numpy.core.fromnumeric import transpose as transpose
+from numpy.core.fromnumeric import var as var
+from numpy.core.function_base import geomspace as geomspace
+from numpy.core.function_base import linspace as linspace
+from numpy.core.function_base import logspace as logspace
+from numpy.core.multiarray import ALLOW_THREADS as ALLOW_THREADS
+from numpy.core.multiarray import BUFSIZE as BUFSIZE
+from numpy.core.multiarray import CLIP as CLIP
+from numpy.core.multiarray import MAXDIMS as MAXDIMS
+from numpy.core.multiarray import MAY_SHARE_BOUNDS as MAY_SHARE_BOUNDS
+from numpy.core.multiarray import MAY_SHARE_EXACT as MAY_SHARE_EXACT
+from numpy.core.multiarray import RAISE as RAISE
+from numpy.core.multiarray import WRAP as WRAP
+from numpy.core.multiarray import arange as arange
+from numpy.core.multiarray import array as array
+from numpy.core.multiarray import asanyarray as asanyarray
+from numpy.core.multiarray import asarray as asarray
+from numpy.core.multiarray import ascontiguousarray as ascontiguousarray
+from numpy.core.multiarray import asfortranarray as asfortranarray
+from numpy.core.multiarray import bincount as bincount
+from numpy.core.multiarray import busday_count as busday_count
+from numpy.core.multiarray import busday_offset as busday_offset
+from numpy.core.multiarray import can_cast as can_cast
+from numpy.core.multiarray import compare_chararrays as compare_chararrays
+from numpy.core.multiarray import concatenate as concatenate
+from numpy.core.multiarray import copyto as copyto
+from numpy.core.multiarray import datetime_as_string as datetime_as_string
+from numpy.core.multiarray import datetime_data as datetime_data
+from numpy.core.multiarray import dot as dot
+from numpy.core.multiarray import empty as empty
+from numpy.core.multiarray import empty_like as empty_like
+from numpy.core.multiarray import flagsobj
+from numpy.core.multiarray import frombuffer as frombuffer
+from numpy.core.multiarray import fromfile as fromfile
+from numpy.core.multiarray import fromiter as fromiter
+from numpy.core.multiarray import frompyfunc as frompyfunc
+from numpy.core.multiarray import fromstring as fromstring
+from numpy.core.multiarray import geterrobj as geterrobj
+from numpy.core.multiarray import inner as inner
+from numpy.core.multiarray import is_busday as is_busday
+from numpy.core.multiarray import lexsort as lexsort
+from numpy.core.multiarray import may_share_memory as may_share_memory
+from numpy.core.multiarray import min_scalar_type as min_scalar_type
+from numpy.core.multiarray import nested_iters as nested_iters
+from numpy.core.multiarray import packbits as packbits
+from numpy.core.multiarray import promote_types as promote_types
+from numpy.core.multiarray import putmask as putmask
+from numpy.core.multiarray import result_type as result_type
+from numpy.core.multiarray import seterrobj as seterrobj
+from numpy.core.multiarray import shares_memory as shares_memory
+from numpy.core.multiarray import tracemalloc_domain as tracemalloc_domain
+from numpy.core.multiarray import unpackbits as unpackbits
+from numpy.core.multiarray import vdot as vdot
+from numpy.core.multiarray import where as where
+from numpy.core.multiarray import zeros as zeros
+from numpy.core.numeric import allclose as allclose
+from numpy.core.numeric import argwhere as argwhere
+from numpy.core.numeric import array_equal as array_equal
+from numpy.core.numeric import array_equiv as array_equiv
+from numpy.core.numeric import base_repr as base_repr
+from numpy.core.numeric import binary_repr as binary_repr
+from numpy.core.numeric import convolve as convolve
+from numpy.core.numeric import correlate as correlate
+from numpy.core.numeric import count_nonzero as count_nonzero
+from numpy.core.numeric import cross as cross
+from numpy.core.numeric import flatnonzero as flatnonzero
+from numpy.core.numeric import fromfunction as fromfunction
+from numpy.core.numeric import full as full
+from numpy.core.numeric import full_like as full_like
+from numpy.core.numeric import identity as identity
+from numpy.core.numeric import indices as indices
+from numpy.core.numeric import isclose as isclose
+from numpy.core.numeric import isfortran as isfortran
+from numpy.core.numeric import isscalar as isscalar
+from numpy.core.numeric import moveaxis as moveaxis
+from numpy.core.numeric import ones as ones
+from numpy.core.numeric import ones_like as ones_like
+from numpy.core.numeric import outer as outer
+from numpy.core.numeric import roll as roll
+from numpy.core.numeric import rollaxis as rollaxis
+from numpy.core.numeric import tensordot as tensordot
+from numpy.core.numeric import zeros_like as zeros_like
+from numpy.core.numerictypes import ScalarType as ScalarType
+from numpy.core.numerictypes import cast as cast
+from numpy.core.numerictypes import find_common_type as find_common_type
+from numpy.core.numerictypes import issctype as issctype
+from numpy.core.numerictypes import issubclass_ as issubclass_
+from numpy.core.numerictypes import issubdtype as issubdtype
+from numpy.core.numerictypes import issubsctype as issubsctype
+from numpy.core.numerictypes import maximum_sctype as maximum_sctype
+from numpy.core.numerictypes import nbytes as nbytes
+from numpy.core.numerictypes import obj2sctype as obj2sctype
+from numpy.core.numerictypes import sctype2char as sctype2char
+from numpy.core.numerictypes import typecodes as typecodes
+from numpy.core.shape_base import atleast_1d as atleast_1d
+from numpy.core.shape_base import atleast_2d as atleast_2d
+from numpy.core.shape_base import atleast_3d as atleast_3d
+from numpy.core.shape_base import block as block
+from numpy.core.shape_base import hstack as hstack
+from numpy.core.shape_base import stack as stack
+from numpy.core.shape_base import vstack as vstack
+from numpy.lib import emath as emath
+from numpy.lib.arraypad import pad as pad
+from numpy.lib.arraysetops import ediff1d as ediff1d
+from numpy.lib.arraysetops import in1d as in1d
+from numpy.lib.arraysetops import intersect1d as intersect1d
+from numpy.lib.arraysetops import isin as isin
+from numpy.lib.arraysetops import setdiff1d as setdiff1d
+from numpy.lib.arraysetops import setxor1d as setxor1d
+from numpy.lib.arraysetops import union1d as union1d
+from numpy.lib.arraysetops import unique as unique
+from numpy.lib.arrayterator import Arrayterator as Arrayterator
+from numpy.lib.function_base import add_docstring as add_docstring
+from numpy.lib.function_base import add_newdoc as add_newdoc
+from numpy.lib.function_base import add_newdoc_ufunc as add_newdoc_ufunc
+from numpy.lib.function_base import angle as angle
+from numpy.lib.function_base import append as append
+from numpy.lib.function_base import asarray_chkfinite as asarray_chkfinite
+from numpy.lib.function_base import average as average
+from numpy.lib.function_base import bartlett as bartlett
+from numpy.lib.function_base import bincount as bincount
+from numpy.lib.function_base import blackman as blackman
+from numpy.lib.function_base import copy as copy
+from numpy.lib.function_base import corrcoef as corrcoef
+from numpy.lib.function_base import cov as cov
+from numpy.lib.function_base import delete as delete
+from numpy.lib.function_base import diff as diff
+from numpy.lib.function_base import digitize as digitize
+from numpy.lib.function_base import disp as disp
+from numpy.lib.function_base import extract as extract
+from numpy.lib.function_base import flip as flip
+from numpy.lib.function_base import gradient as gradient
+from numpy.lib.function_base import hamming as hamming
+from numpy.lib.function_base import hanning as hanning
+from numpy.lib.function_base import i0 as i0
+from numpy.lib.function_base import insert as insert
+from numpy.lib.function_base import interp as interp
+from numpy.lib.function_base import iterable as iterable
+from numpy.lib.function_base import kaiser as kaiser
+from numpy.lib.function_base import median as median
+from numpy.lib.function_base import meshgrid as meshgrid
+from numpy.lib.function_base import msort as msort
+from numpy.lib.function_base import percentile as percentile
+from numpy.lib.function_base import piecewise as piecewise
+from numpy.lib.function_base import place as place
+from numpy.lib.function_base import quantile as quantile
+from numpy.lib.function_base import rot90 as rot90
+from numpy.lib.function_base import select as select
+from numpy.lib.function_base import sinc as sinc
+from numpy.lib.function_base import sort_complex as sort_complex
+from numpy.lib.function_base import trapz as trapz
+from numpy.lib.function_base import trim_zeros as trim_zeros
+from numpy.lib.function_base import unwrap as unwrap
+from numpy.lib.histograms import histogram as histogram
+from numpy.lib.histograms import histogram_bin_edges as histogram_bin_edges
+from numpy.lib.histograms import histogramdd as histogramdd
+from numpy.lib.index_tricks import c_ as c_
+from numpy.lib.index_tricks import diag_indices as diag_indices
+from numpy.lib.index_tricks import diag_indices_from as diag_indices_from
+from numpy.lib.index_tricks import fill_diagonal as fill_diagonal
+from numpy.lib.index_tricks import index_exp as index_exp
+from numpy.lib.index_tricks import ix_ as ix_
+from numpy.lib.index_tricks import mgrid as mgrid
+from numpy.lib.index_tricks import ogrid as ogrid
+from numpy.lib.index_tricks import r_ as r_
+from numpy.lib.index_tricks import ravel_multi_index as ravel_multi_index
+from numpy.lib.index_tricks import s_ as s_
+from numpy.lib.index_tricks import unravel_index as unravel_index
+from numpy.lib.nanfunctions import nanargmax as nanargmax
+from numpy.lib.nanfunctions import nanargmin as nanargmin
+from numpy.lib.nanfunctions import nancumprod as nancumprod
+from numpy.lib.nanfunctions import nancumsum as nancumsum
+from numpy.lib.nanfunctions import nanmax as nanmax
+from numpy.lib.nanfunctions import nanmean as nanmean
+from numpy.lib.nanfunctions import nanmedian as nanmedian
+from numpy.lib.nanfunctions import nanmin as nanmin
+from numpy.lib.nanfunctions import nanpercentile as nanpercentile
+from numpy.lib.nanfunctions import nanprod as nanprod
+from numpy.lib.nanfunctions import nanquantile as nanquantile
+from numpy.lib.nanfunctions import nanstd as nanstd
+from numpy.lib.nanfunctions import nansum as nansum
+from numpy.lib.nanfunctions import nanvar as nanvar
+from numpy.lib.npyio import fromregex as fromregex
+from numpy.lib.npyio import genfromtxt as genfromtxt
+from numpy.lib.npyio import load as load
+from numpy.lib.npyio import loadtxt as loadtxt
+from numpy.lib.npyio import packbits as packbits
+from numpy.lib.npyio import recfromcsv as recfromcsv
+from numpy.lib.npyio import recfromtxt as recfromtxt
+from numpy.lib.npyio import save as save
+from numpy.lib.npyio import savetxt as savetxt
+from numpy.lib.npyio import savez as savez
+from numpy.lib.npyio import savez_compressed as savez_compressed
+from numpy.lib.npyio import unpackbits as unpackbits
+from numpy.lib.polynomial import poly as poly
+from numpy.lib.polynomial import polyadd as polyadd
+from numpy.lib.polynomial import polyder as polyder
+from numpy.lib.polynomial import polydiv as polydiv
+from numpy.lib.polynomial import polyfit as polyfit
+from numpy.lib.polynomial import polyint as polyint
+from numpy.lib.polynomial import polymul as polymul
+from numpy.lib.polynomial import polysub as polysub
+from numpy.lib.polynomial import polyval as polyval
+from numpy.lib.polynomial import roots as roots
+from numpy.lib.shape_base import apply_along_axis as apply_along_axis
+from numpy.lib.shape_base import apply_over_axes as apply_over_axes
+from numpy.lib.shape_base import array_split as array_split
+from numpy.lib.shape_base import column_stack as column_stack
+from numpy.lib.shape_base import dsplit as dsplit
+from numpy.lib.shape_base import dstack as dstack
+from numpy.lib.shape_base import expand_dims as expand_dims
+from numpy.lib.shape_base import get_array_wrap as get_array_wrap
+from numpy.lib.shape_base import hsplit as hsplit
+from numpy.lib.shape_base import kron as kron
+from numpy.lib.shape_base import put_along_axis as put_along_axis
+from numpy.lib.shape_base import row_stack as row_stack
+from numpy.lib.shape_base import split as split
+from numpy.lib.shape_base import take_along_axis as take_along_axis
+from numpy.lib.shape_base import tile as tile
+from numpy.lib.shape_base import vsplit as vsplit
+from numpy.lib.stride_tricks import broadcast_arrays as broadcast_arrays
+from numpy.lib.stride_tricks import broadcast_shapes as broadcast_shapes
+from numpy.lib.stride_tricks import broadcast_to as broadcast_to
+from numpy.lib.twodim_base import diag as diag
+from numpy.lib.twodim_base import diagflat as diagflat
+from numpy.lib.twodim_base import eye as eye
+from numpy.lib.twodim_base import fliplr as fliplr
+from numpy.lib.twodim_base import flipud as flipud
+from numpy.lib.twodim_base import histogram2d as histogram2d
+from numpy.lib.twodim_base import mask_indices as mask_indices
+from numpy.lib.twodim_base import tri as tri
+from numpy.lib.twodim_base import tril as tril
+from numpy.lib.twodim_base import tril_indices as tril_indices
+from numpy.lib.twodim_base import tril_indices_from as tril_indices_from
+from numpy.lib.twodim_base import triu as triu
+from numpy.lib.twodim_base import triu_indices as triu_indices
+from numpy.lib.twodim_base import triu_indices_from as triu_indices_from
+from numpy.lib.twodim_base import vander as vander
+from numpy.lib.type_check import asfarray as asfarray
+from numpy.lib.type_check import common_type as common_type
+from numpy.lib.type_check import imag as imag
+from numpy.lib.type_check import iscomplex as iscomplex
+from numpy.lib.type_check import iscomplexobj as iscomplexobj
+from numpy.lib.type_check import isreal as isreal
+from numpy.lib.type_check import isrealobj as isrealobj
+from numpy.lib.type_check import mintypecode as mintypecode
+from numpy.lib.type_check import nan_to_num as nan_to_num
+from numpy.lib.type_check import real as real
+from numpy.lib.type_check import real_if_close as real_if_close
+from numpy.lib.type_check import typename as typename
+from numpy.lib.ufunclike import fix as fix
+from numpy.lib.ufunclike import isneginf as isneginf
+from numpy.lib.ufunclike import isposinf as isposinf
+from numpy.lib.utils import byte_bounds as byte_bounds
+from numpy.lib.utils import deprecate as deprecate
+from numpy.lib.utils import deprecate_with_doc as deprecate_with_doc
+from numpy.lib.utils import get_include as get_include
+from numpy.lib.utils import info as info
+from numpy.lib.utils import issubclass_ as issubclass_
+from numpy.lib.utils import issubdtype as issubdtype
+from numpy.lib.utils import issubsctype as issubsctype
+from numpy.lib.utils import lookfor as lookfor
+from numpy.lib.utils import safe_eval as safe_eval
+from numpy.lib.utils import source as source
+from numpy.lib.utils import who as who
+from numpy.matrixlib import asmatrix as asmatrix
+from numpy.matrixlib import bmat as bmat
+from numpy.matrixlib import mat as mat
 
 _AnyStr_contra = TypeVar("_AnyStr_contra", str, bytes, contravariant=True)
 

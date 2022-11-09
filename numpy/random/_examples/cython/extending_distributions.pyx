@@ -4,14 +4,18 @@
 This file shows how the to use a BitGenerator to create a distribution.
 """
 import numpy as np
-cimport numpy as np
+
 cimport cython
-from cpython.pycapsule cimport PyCapsule_IsValid, PyCapsule_GetPointer
+from cpython.pycapsule cimport PyCapsule_GetPointer, PyCapsule_IsValid
 from libc.stdint cimport uint16_t, uint64_t
+
+cimport numpy as np
 from numpy.random cimport bitgen_t
+
 from numpy.random import PCG64
-from numpy.random.c_distributions cimport (
-      random_standard_uniform_fill, random_standard_uniform_fill_f)
+
+from numpy.random.c_distributions cimport (random_standard_uniform_fill,
+                                           random_standard_uniform_fill_f)
 
 
 @cython.boundscheck(False)

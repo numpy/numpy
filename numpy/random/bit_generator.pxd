@@ -1,5 +1,7 @@
-cimport numpy as np
 from libc.stdint cimport uint32_t, uint64_t
+
+cimport numpy as np
+
 
 cdef extern from "numpy/random/bitgen.h":
     struct bitgen:

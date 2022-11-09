@@ -1,33 +1,31 @@
 import functools
 import itertools
+import numbers
 import operator
 import sys
 import warnings
-import numbers
 
 import numpy as np
-from . import multiarray
-from .multiarray import (
-    fastCopyAndTranspose, ALLOW_THREADS,
-    BUFSIZE, CLIP, MAXDIMS, MAY_SHARE_BOUNDS, MAY_SHARE_EXACT, RAISE,
-    WRAP, arange, array, asarray, asanyarray, ascontiguousarray,
-    asfortranarray, broadcast, can_cast, compare_chararrays,
-    concatenate, copyto, dot, dtype, empty,
-    empty_like, flatiter, frombuffer, from_dlpack, fromfile, fromiter,
-    fromstring, inner, lexsort, matmul, may_share_memory,
-    min_scalar_type, ndarray, nditer, nested_iters, promote_types,
-    putmask, result_type, set_numeric_ops, shares_memory, vdot, where,
-    zeros, normalize_axis_index, _get_promotion_state, _set_promotion_state)
 
-from . import overrides
-from . import umath
-from . import shape_base
+from . import multiarray, numerictypes, overrides, shape_base, umath
+from ._exceptions import AxisError, TooHardError
+from ._ufunc_config import _no_nep50_warning, errstate
+from .multiarray import (ALLOW_THREADS, BUFSIZE, CLIP, MAXDIMS,
+                         MAY_SHARE_BOUNDS, MAY_SHARE_EXACT, RAISE, WRAP,
+                         _get_promotion_state, _set_promotion_state, arange,
+                         array, asanyarray, asarray, ascontiguousarray,
+                         asfortranarray, broadcast, can_cast,
+                         compare_chararrays, concatenate, copyto, dot, dtype,
+                         empty, empty_like, fastCopyAndTranspose, flatiter,
+                         from_dlpack, frombuffer, fromfile, fromiter,
+                         fromstring, inner, lexsort, matmul, may_share_memory,
+                         min_scalar_type, ndarray, nditer, nested_iters,
+                         normalize_axis_index, promote_types, putmask,
+                         result_type, set_numeric_ops, shares_memory, vdot,
+                         where, zeros)
+from .numerictypes import bool_, complex_, float_, int_, intc, longlong
 from .overrides import set_array_function_like_doc, set_module
-from .umath import (multiply, invert, sin, PINF, NAN)
-from . import numerictypes
-from .numerictypes import longlong, intc, int_, float_, complex_, bool_
-from ._exceptions import TooHardError, AxisError
-from ._ufunc_config import errstate, _no_nep50_warning
+from .umath import NAN, PINF, invert, multiply, sin
 
 bitwise_not = invert
 ufunc = type(sin)
@@ -707,7 +705,7 @@ def correlate(a, v, mode='valid'):
     --------
     convolve : Discrete, linear convolution of two one-dimensional sequences.
     multiarray.correlate : Old, no conjugate, version of correlate.
-    scipy.signal.correlate : uses FFT which has superior performance on large arrays. 
+    scipy.signal.correlate : uses FFT which has superior performance on large arrays.
 
     Notes
     -----
@@ -721,7 +719,7 @@ def correlate(a, v, mode='valid'):
     `numpy.correlate` may perform slowly in large arrays (i.e. n = 1e5) because it does
     not use the FFT to compute the convolution; in that case, `scipy.signal.correlate` might
     be preferable.
-    
+
 
     Examples
     --------
@@ -738,7 +736,7 @@ def correlate(a, v, mode='valid'):
     array([ 0.5-0.5j,  1.0+0.j ,  1.5-1.5j,  3.0-1.j ,  0.0+0.j ])
 
     Note that you get the time reversed, complex conjugated result
-    (:math:`\overline{c_{-k}}`) when the two input sequences a and v change 
+    (:math:`\overline{c_{-k}}`) when the two input sequences a and v change
     places:
 
     >>> np.correlate([0, 1, 0.5j], [1+1j, 2, 3-1j], 'full')
@@ -842,7 +840,7 @@ def convolve(a, v, mode='full'):
 
     """
     a, v = array(a, copy=False, ndmin=1), array(v, copy=False, ndmin=1)
-    if (len(v) > len(a)):
+    if len(v) > len(a):
         a, v = v, a
     if len(a) == 0:
         raise ValueError('a cannot be empty')
@@ -1300,7 +1298,7 @@ def rollaxis(a, axis, start=0):
            +-------------------+----------------------+
            | ``arr.ndim + 1``  | raise ``AxisError``  |
            +-------------------+----------------------+
-           
+
         .. |vdots|   unicode:: U+22EE .. Vertical Ellipsis
 
     Returns
@@ -1332,7 +1330,7 @@ def rollaxis(a, axis, start=0):
     if start < 0:
         start += n
     msg = "'%s' arg requires %d <= %s < %d, but %d was passed in"
-    if not (0 <= start < n + 1):
+    if not 0 <= start < n + 1:
         raise AxisError(msg % ('start', -n, 'start', n + 1, start))
     if axis < start:
         # it's been removed
@@ -1843,11 +1841,11 @@ def fromfunction(function, shape, *, dtype=float, like=None, **kwargs):
     >>> np.fromfunction(lambda i, j: i, (2, 2), dtype=float)
     array([[0., 0.],
            [1., 1.]])
-           
-    >>> np.fromfunction(lambda i, j: j, (2, 2), dtype=float)    
+
+    >>> np.fromfunction(lambda i, j: j, (2, 2), dtype=float)
     array([[0., 1.],
            [0., 1.]])
-           
+
     >>> np.fromfunction(lambda i, j: i == j, (3, 3), dtype=int)
     array([[ True, False, False],
            [False,  True, False],
@@ -2541,16 +2539,14 @@ def extend_all(module):
             __all__.append(a)
 
 
-from .umath import *
-from .numerictypes import *
-from . import fromnumeric
-from .fromnumeric import *
-from . import arrayprint
-from .arrayprint import *
-from . import _asarray
+from . import _asarray, _ufunc_config, arrayprint, fromnumeric
 from ._asarray import *
-from . import _ufunc_config
 from ._ufunc_config import *
+from .arrayprint import *
+from .fromnumeric import *
+from .numerictypes import *
+from .umath import *
+
 extend_all(fromnumeric)
 extend_all(umath)
 extend_all(numerictypes)

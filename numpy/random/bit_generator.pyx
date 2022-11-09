@@ -32,19 +32,19 @@ SOFTWARE.
 """
 
 import abc
+import re
 import sys
 from itertools import cycle
-import re
 from secrets import randbits
-
 from threading import Lock
 
 from cpython.pycapsule cimport PyCapsule_New
 
 import numpy as np
+
 cimport numpy as np
 
-from ._common cimport (random_raw, benchmark, prepare_ctypes, prepare_cffi)
+from ._common cimport benchmark, prepare_cffi, prepare_ctypes, random_raw
 
 __all__ = ['SeedSequence', 'BitGenerator']
 

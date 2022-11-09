@@ -1,5 +1,5 @@
-from typing import Any, TypeVar, overload, Generic
 import ctypes as ct
+from typing import Any, Generic, TypeVar, overload
 
 from numpy import ndarray
 from numpy.ctypeslib import c_intp

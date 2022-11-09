@@ -3,10 +3,10 @@ import collections
 import functools
 import os
 
-from numpy.core._multiarray_umath import (
-    add_docstring, implement_array_function, _get_implementing_args)
 from numpy.compat._inspect import getargspec
-
+from numpy.core._multiarray_umath import (_get_implementing_args,
+                                          add_docstring,
+                                          implement_array_function)
 
 ARRAY_FUNCTION_ENABLED = bool(
     int(os.environ.get('NUMPY_EXPERIMENTAL_ARRAY_FUNCTION', 1)))

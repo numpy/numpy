@@ -6,25 +6,30 @@ from collections.abc import Sequence
 
 import numpy as np
 
-from cpython.pycapsule cimport PyCapsule_IsValid, PyCapsule_GetPointer
-from cpython cimport (Py_INCREF, PyFloat_AsDouble)
 cimport cython
-cimport numpy as np
-
+from cpython cimport Py_INCREF, PyFloat_AsDouble
+from cpython.pycapsule cimport PyCapsule_GetPointer, PyCapsule_IsValid
 from libc cimport string
 from libc.stdint cimport int64_t, uint64_t
-from ._bounded_integers cimport (_rand_bool, _rand_int32, _rand_int64,
-         _rand_int16, _rand_int8, _rand_uint64, _rand_uint32, _rand_uint16,
-         _rand_uint8,)
+
+cimport numpy as np
+
+from ._bounded_integers cimport (_rand_bool, _rand_int8, _rand_int16,
+                                 _rand_int32, _rand_int64, _rand_uint8,
+                                 _rand_uint16, _rand_uint32, _rand_uint64)
+
 from ._mt19937 import MT19937 as _MT19937
+
 from numpy.random cimport bitgen_t
-from ._common cimport (POISSON_LAM_MAX, CONS_POSITIVE, CONS_NONE,
-            CONS_NON_NEGATIVE, CONS_BOUNDED_0_1, CONS_BOUNDED_GT_0_1,
-            CONS_BOUNDED_LT_0_1, CONS_GTE_1, CONS_GT_1, LEGACY_CONS_POISSON,
-            double_fill, cont, kahan_sum, cont_broadcast_3,
-            check_array_constraint, check_constraint, disc, discrete_broadcast_iii,
-            validate_output_shape
-        )
+
+from ._common cimport (CONS_BOUNDED_0_1, CONS_BOUNDED_GT_0_1,
+                       CONS_BOUNDED_LT_0_1, CONS_GT_1, CONS_GTE_1,
+                       CONS_NON_NEGATIVE, CONS_NONE, CONS_POSITIVE,
+                       LEGACY_CONS_POISSON, POISSON_LAM_MAX,
+                       check_array_constraint, check_constraint, cont,
+                       cont_broadcast_3, disc, discrete_broadcast_iii,
+                       double_fill, kahan_sum, validate_output_shape)
+
 
 cdef extern from "numpy/random/distributions.h":
     struct s_binomial_t:

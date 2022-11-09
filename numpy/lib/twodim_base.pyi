@@ -1,39 +1,13 @@
 from collections.abc import Callable, Sequence
-from typing import (
-    Any,
-    overload,
-    TypeVar,
-    Union,
-)
+from typing import Any, TypeVar, Union, overload
 
-from numpy import (
-    generic,
-    number,
-    bool_,
-    timedelta64,
-    datetime64,
-    int_,
-    intp,
-    float64,
-    signedinteger,
-    floating,
-    complexfloating,
-    object_,
-    _OrderCF,
-)
-
-from numpy._typing import (
-    DTypeLike,
-    _DTypeLike,
-    ArrayLike,
-    _ArrayLike,
-    NDArray,
-    _SupportsArrayFunc,
-    _ArrayLikeInt_co,
-    _ArrayLikeFloat_co,
-    _ArrayLikeComplex_co,
-    _ArrayLikeObject_co,
-)
+from numpy import (_OrderCF, bool_, complexfloating, datetime64, float64,
+                   floating, generic, int_, intp, number, object_,
+                   signedinteger, timedelta64)
+from numpy._typing import (ArrayLike, DTypeLike, NDArray, _ArrayLike,
+                           _ArrayLikeComplex_co, _ArrayLikeFloat_co,
+                           _ArrayLikeInt_co, _ArrayLikeObject_co, _DTypeLike,
+                           _SupportsArrayFunc)
 
 _T = TypeVar("_T")
 _SCT = TypeVar("_SCT", bound=generic)

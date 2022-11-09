@@ -1,23 +1,24 @@
 # These classes implement a doctest runner plugin for nose, a "known failure"
 # error class, and a customized TestProgram for NumPy.
 
+import doctest
+import inspect
 # Because this module imports nose directly, it should not
 # be used except by nosetester.py to avoid a general NumPy
 # dependency on nose.
 import os
 import sys
-import doctest
-import inspect
 
-import numpy
 import nose
 from nose.plugins import doctests as npd
-from nose.plugins.errorclass import ErrorClass, ErrorClassPlugin
 from nose.plugins.base import Plugin
+from nose.plugins.errorclass import ErrorClass, ErrorClassPlugin
 from nose.util import src
+
+import numpy
+
 from .nosetester import get_package_name
 from .utils import KnownFailureException, KnownFailureTest
-
 
 # Some of the classes in this module begin with 'Numpy' to clearly distinguish
 # them from the plethora of very similar names from nose/unittest/doctest
@@ -69,9 +70,7 @@ class NumpyDocTestFinder(doctest.DocTestFinder):
         # doctests in extension modules.
 
         # Local shorthands
-        from inspect import (
-            isroutine, isclass, ismodule, isfunction, ismethod
-            )
+        from inspect import isclass, isfunction, ismethod, ismodule, isroutine
 
         # Look for tests in a module's contained objects.
         if ismodule(obj) and self._recurse:

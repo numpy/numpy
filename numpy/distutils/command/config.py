@@ -2,28 +2,25 @@
 # try_compile call. try_run works but is untested for most of Fortran
 # compilers (they must define linker_exe first).
 # Pearu Peterson
+import distutils
 import os
 import signal
 import subprocess
 import sys
 import textwrap
 import warnings
-
-from distutils.command.config import config as old_config
-from distutils.command.config import LANG_EXT
 from distutils import log
-from distutils.file_util import copy_file
 from distutils.ccompiler import CompileError, LinkError
-import distutils
+from distutils.command.config import LANG_EXT
+from distutils.command.config import config as old_config
+from distutils.file_util import copy_file
+
+from numpy.distutils.command.autodist import (
+    check_compiler_gcc, check_gcc_function_attribute,
+    check_gcc_function_attribute_with_intrinsics, check_gcc_variable_attribute,
+    check_gcc_version_at_least, check_inline, check_restrict)
 from numpy.distutils.exec_command import filepath_from_subprocess_output
 from numpy.distutils.mingw32ccompiler import generate_manifest
-from numpy.distutils.command.autodist import (check_gcc_function_attribute,
-                                              check_gcc_function_attribute_with_intrinsics,
-                                              check_gcc_variable_attribute,
-                                              check_gcc_version_at_least,
-                                              check_inline,
-                                              check_restrict,
-                                              check_compiler_gcc)
 
 LANG_EXT['f77'] = '.f'
 LANG_EXT['f90'] = '.f90'
@@ -134,14 +131,16 @@ class config(old_config):
                         if libname not in libraries:
                             libraries.append(libname)
             for libname in libraries:
-                if libname.startswith('msvc'): continue
+                if libname.startswith('msvc'):
+                    continue
                 fileexists = False
                 for libdir in library_dirs or []:
                     libfile = os.path.join(libdir, '%s.lib' % (libname))
                     if os.path.isfile(libfile):
                         fileexists = True
                         break
-                if fileexists: continue
+                if fileexists:
+                    continue
                 # make g77-compiled static libs available to MSVC
                 fileexists = False
                 for libdir in library_dirs:
@@ -154,7 +153,8 @@ class config(old_config):
                         self.temp_files.append(libfile2)
                         fileexists = True
                         break
-                if fileexists: continue
+                if fileexists:
+                    continue
                 log.warn('could not find library %r in directories %s' \
                          % (libname, library_dirs))
         elif self.compiler.compiler_type == 'mingw32':

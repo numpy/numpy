@@ -86,7 +86,7 @@ def run():
             if has_numpy_distutils == 1:
                 print(
                     'Importing numpy_distutils.command.build_flib ...', end=' ')
-                import numpy_distutils.command.build_flib as build_flib
+                from numpy_distutils.command import build_flib
                 print('ok')
                 print('------')
                 try:
@@ -105,10 +105,10 @@ def run():
         try:
             if has_numpy_distutils == 2:
                 print('Importing numpy.distutils.fcompiler ...', end=' ')
-                import numpy.distutils.fcompiler as fcompiler
+                from numpy.distutils import fcompiler
             else:
                 print('Importing numpy_distutils.fcompiler ...', end=' ')
-                import numpy_distutils.fcompiler as fcompiler
+                from numpy.distutils import fcompiler
             print('ok')
             print('------')
             try:

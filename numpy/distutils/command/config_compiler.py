@@ -1,4 +1,5 @@
 from distutils.core import Command
+
 from numpy.distutils import log
 
 #XXX: Linker flags
@@ -10,8 +11,9 @@ def show_fortran_compilers(_cache=None):
     elif _cache is None:
         _cache = []
     _cache.append(1)
-    from numpy.distutils.fcompiler import show_fcompilers
     import distutils.core
+
+    from numpy.distutils.fcompiler import show_fcompilers
     dist = distutils.core._setup_distribution
     show_fcompilers(dist)
 
@@ -68,16 +70,20 @@ class config_fc(Command):
             for c in cmd_list:
                 v = getattr(c, a)
                 if v is not None:
-                    if not isinstance(v, str): v = v.compiler_type
-                    if v not in l: l.append(v)
-            if not l: v1 = None
+                    if not isinstance(v, str):
+                        v = v.compiler_type
+                    if v not in l:
+                        l.append(v)
+            if not l:
+                v1 = None
             else: v1 = l[0]
             if len(l)>1:
                 log.warn('  commands have different --%s options: %s'\
                          ', using first in list as default' % (a, l))
             if v1:
                 for c in cmd_list:
-                    if getattr(c, a) is None: setattr(c, a, v1)
+                    if getattr(c, a) is None:
+                        setattr(c, a, v1)
 
     def run(self):
         # Do nothing.
@@ -109,16 +115,20 @@ class config_cc(Command):
             for c in cmd_list:
                 v = getattr(c, a)
                 if v is not None:
-                    if not isinstance(v, str): v = v.compiler_type
-                    if v not in l: l.append(v)
-            if not l: v1 = None
+                    if not isinstance(v, str):
+                        v = v.compiler_type
+                    if v not in l:
+                        l.append(v)
+            if not l:
+                v1 = None
             else: v1 = l[0]
             if len(l)>1:
                 log.warn('  commands have different --%s options: %s'\
                          ', using first in list as default' % (a, l))
             if v1:
                 for c in cmd_list:
-                    if getattr(c, a) is None: setattr(c, a, v1)
+                    if getattr(c, a) is None:
+                        setattr(c, a, v1)
         return
 
     def run(self):

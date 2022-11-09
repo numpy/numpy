@@ -1,6 +1,7 @@
 import shutil
 import subprocess
 import sys
+
 import pytest
 
 from numpy.distutils import mingw32ccompiler
@@ -30,10 +31,10 @@ def test_build_import():
                          "formats: '%s'" % supported)
     # Hide the import library to force a build
     has_import_lib, fullpath = mingw32ccompiler._check_for_import_lib()
-    if has_import_lib: 
+    if has_import_lib:
         shutil.move(fullpath, fullpath + '.bak')
 
-    try: 
+    try:
         # Whew, now we can actually test the function
         mingw32ccompiler.build_import_library()
 

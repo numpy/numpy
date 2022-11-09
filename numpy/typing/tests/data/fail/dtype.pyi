@@ -1,6 +1,5 @@
 import numpy as np
 
-
 class Test1:
     not_dtype = np.dtype(float)
 

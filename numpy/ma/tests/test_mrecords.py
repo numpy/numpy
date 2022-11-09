@@ -6,22 +6,16 @@
 
 """
 import numpy as np
-import numpy.ma as ma
+from numpy import ma
 from numpy import recarray
-from numpy.ma import masked, nomask
-from numpy.testing import temppath
-from numpy.core.records import (
-    fromrecords as recfromrecords, fromarrays as recfromarrays
-    )
-from numpy.ma.mrecords import (
-    MaskedRecords, mrecarray, fromarrays, fromtextfile, fromrecords,
-    addfield
-    )
-from numpy.ma.testutils import (
-    assert_, assert_equal,
-    assert_equal_records,
-    )
 from numpy.compat import pickle
+from numpy.core.records import fromarrays as recfromarrays
+from numpy.core.records import fromrecords as recfromrecords
+from numpy.ma import masked, nomask
+from numpy.ma.mrecords import (MaskedRecords, addfield, fromarrays,
+                               fromrecords, fromtextfile, mrecarray)
+from numpy.ma.testutils import assert_, assert_equal, assert_equal_records
+from numpy.testing import temppath
 
 
 class TestMRecords:
@@ -39,7 +33,7 @@ class TestMRecords:
         mbase = base.view(mrecarray)
         assert_equal(mbase.recordmask, base.recordmask)
         assert_equal_records(mbase._mask, base._mask)
-        assert_(isinstance(mbase._data, recarray))
+        assertTrue(isinstance(mbase._data, recarray))
         assert_equal_records(mbase._data, base._data.view(recarray))
         for field in ('a', 'b', 'c'):
             assert_equal(base[field], mbase[field])
@@ -55,7 +49,7 @@ class TestMRecords:
             assert_equal(base[field], mbase[field])
         # as elements .......
         mbase_first = mbase[0]
-        assert_(isinstance(mbase_first, mrecarray))
+        assertTrue(isinstance(mbase_first, mrecarray))
         assert_equal(mbase_first.dtype, mbase.dtype)
         assert_equal(mbase_first.tolist(), (1, 1.1, b'one'))
         # Used to be mask, now it's recordmask
@@ -63,17 +57,17 @@ class TestMRecords:
         assert_equal(mbase_first._mask.item(), (False, False, False))
         assert_equal(mbase_first['a'], mbase['a'][0])
         mbase_last = mbase[-1]
-        assert_(isinstance(mbase_last, mrecarray))
+        assertTrue(isinstance(mbase_last, mrecarray))
         assert_equal(mbase_last.dtype, mbase.dtype)
         assert_equal(mbase_last.tolist(), (None, None, None))
         # Used to be mask, now it's recordmask
         assert_equal(mbase_last.recordmask, True)
         assert_equal(mbase_last._mask.item(), (True, True, True))
         assert_equal(mbase_last['a'], mbase['a'][-1])
-        assert_((mbase_last['a'] is masked))
+        assertTrue((mbase_last['a'] is masked))
         # as slice ..........
         mbase_sl = mbase[:2]
-        assert_(isinstance(mbase_sl, mrecarray))
+        assertTrue(isinstance(mbase_sl, mrecarray))
         assert_equal(mbase_sl.dtype, mbase.dtype)
         # Used to be mask, now it's recordmask
         assert_equal(mbase_sl.recordmask, [0, 1])
@@ -268,16 +262,16 @@ class TestMRecords:
         base = self.base.copy()
         mbase = base.view(mrecarray)
         mbase.harden_mask()
-        assert_(mbase._hardmask)
+        assertTrue(mbase._hardmask)
         mbase.mask = nomask
         assert_equal_records(mbase._mask, base._mask)
         mbase.soften_mask()
-        assert_(not mbase._hardmask)
+        assertTrue(not mbase._hardmask)
         mbase.mask = nomask
         # So, the mask of a field is no longer set to nomask...
         assert_equal_records(mbase._mask,
                              ma.make_mask_none(base.shape, base.dtype))
-        assert_(ma.make_mask(mbase['b']._mask) is nomask)
+        assertTrue(ma.make_mask(mbase['b']._mask) is nomask)
         assert_equal(mbase['a']._mask, mbase['b']._mask)
 
     def test_pickling(self):
@@ -360,7 +354,7 @@ class TestView:
     def test_view_by_itself(self):
         (mrec, a, b, arr) = self.data
         test = mrec.view()
-        assert_(isinstance(test, MaskedRecords))
+        assertTrue(isinstance(test, MaskedRecords))
         assert_equal_records(test, mrec)
         assert_equal_records(test._mask, mrec._mask)
 
@@ -368,19 +362,19 @@ class TestView:
         (mrec, a, b, arr) = self.data
         ntype = (float, 2)
         test = mrec.view(ntype)
-        assert_(isinstance(test, ma.MaskedArray))
+        assertTrue(isinstance(test, ma.MaskedArray))
         assert_equal(test, np.array(list(zip(a, b)), dtype=float))
-        assert_(test[3, 1] is ma.masked)
+        assertTrue(test[3, 1] is ma.masked)
 
     def test_view_flexible_type(self):
         (mrec, a, b, arr) = self.data
         alttype = [('A', float), ('B', float)]
         test = mrec.view(alttype)
-        assert_(isinstance(test, MaskedRecords))
+        assertTrue(isinstance(test, MaskedRecords))
         assert_equal_records(test, arr.view(alttype))
-        assert_(test['B'][3] is masked)
+        assertTrue(test['B'][3] is masked)
         assert_equal(test.dtype, np.dtype(alttype))
-        assert_(test._fill_value is None)
+        assertTrue(test._fill_value is None)
 
 
 ##############################################################################
@@ -469,7 +463,7 @@ class TestMRecordsImport:
             with open(path, 'w') as f:
                 f.write(fcontent)
             mrectxt = fromtextfile(path, delimiter=',', varnames='ABCDEFG')
-        assert_(isinstance(mrectxt, MaskedRecords))
+        assertTrue(isinstance(mrectxt, MaskedRecords))
         assert_equal(mrectxt.F, [1, 1, 1, 1])
         assert_equal(mrectxt.E._mask, [1, 1, 1, 1])
         assert_equal(mrectxt.C, [1, 2, 3.e+5, -1e-10])

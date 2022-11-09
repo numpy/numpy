@@ -1,6 +1,6 @@
-from .common import Benchmark, TYPES1
-
 import numpy as np
+
+from .common import TYPES1, Benchmark
 
 
 class Take(Benchmark):
@@ -40,4 +40,3 @@ class PutMask(Benchmark):
 
     def time_sparse(self, values_is_scalar, dtype):
         np.putmask(self.arr, self.sparse_mask, self.vals)
-

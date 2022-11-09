@@ -1,31 +1,12 @@
 from collections.abc import Callable, Sequence
-from typing import TypeVar, Any, overload, SupportsIndex, Protocol
+from typing import Any, Protocol, SupportsIndex, TypeVar, overload
 
-from numpy import (
-    generic,
-    integer,
-    ufunc,
-    bool_,
-    unsignedinteger,
-    signedinteger,
-    floating,
-    complexfloating,
-    object_,
-)
-
-from numpy._typing import (
-    ArrayLike,
-    NDArray,
-    _ShapeLike,
-    _ArrayLike,
-    _ArrayLikeBool_co,
-    _ArrayLikeUInt_co,
-    _ArrayLikeInt_co,
-    _ArrayLikeFloat_co,
-    _ArrayLikeComplex_co,
-    _ArrayLikeObject_co,
-)
-
+from numpy import (bool_, complexfloating, floating, generic, integer, object_,
+                   signedinteger, ufunc, unsignedinteger)
+from numpy._typing import (ArrayLike, NDArray, _ArrayLike, _ArrayLikeBool_co,
+                           _ArrayLikeComplex_co, _ArrayLikeFloat_co,
+                           _ArrayLikeInt_co, _ArrayLikeObject_co,
+                           _ArrayLikeUInt_co, _ShapeLike)
 from numpy.core.shape_base import vstack
 
 _SCT = TypeVar("_SCT", bound=generic)

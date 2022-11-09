@@ -1,26 +1,26 @@
 """ Test functions for linalg module
 
 """
-import os
-import sys
 import itertools
-import traceback
-import textwrap
+import os
 import subprocess
+import sys
+import textwrap
+import traceback
+
 import pytest
 
 import numpy as np
-from numpy import array, single, double, csingle, cdouble, dot, identity, matmul
+from numpy import (array, asarray, atleast_2d, cdouble, csingle, dot, double,
+                   identity, inf, linalg, matmul, multiply, single)
 from numpy.core import swapaxes
-from numpy import multiply, atleast_2d, inf, asarray
-from numpy import linalg
-from numpy.linalg import matrix_power, norm, matrix_rank, multi_dot, LinAlgError
+from numpy.linalg import (LinAlgError, matrix_power, matrix_rank, multi_dot,
+                          norm)
 from numpy.linalg.linalg import _multi_dot_matrix_chain_order
-from numpy.testing import (
-    assert_, assert_equal, assert_raises, assert_array_equal,
-    assert_almost_equal, assert_allclose, suppress_warnings,
-    assert_raises_regex, HAS_LAPACK64,
-    )
+from numpy.testing import (HAS_LAPACK64, assert_, assert_allclose,
+                           assert_almost_equal, assert_array_equal,
+                           assert_equal, assert_raises, assert_raises_regex,
+                           suppress_warnings)
 
 
 def consistent_subclass(out, in_):
@@ -72,7 +72,7 @@ class LinalgCase:
         A bundle of arguments to be passed to a test case, with an identifying
         name, the operands a and b, and a set of tags to filter the tests
         """
-        assert_(isinstance(name, str))
+        assertTrue(isinstance(name, str))
         self.name = name
         self.a = a
         self.b = b
@@ -292,7 +292,7 @@ def _stride_comb_iter(x):
         xi = xi[slices]
         xi[...] = x
         xi = xi.view(x.__class__)
-        assert_(np.all(xi == x))
+        assertTrue(np.all(xi == x))
         yield xi, "stride_" + "_".join(["%+d" % j for j in repeats])
 
         # generate also zero strides if possible
@@ -458,7 +458,7 @@ class SolveCases(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
     def do(self, a, b, tags):
         x = linalg.solve(a, b)
         assert_almost_equal(b, dot_generalized(a, x))
-        assert_(consistent_subclass(x, b))
+        assertTrue(consistent_subclass(x, b))
 
 
 class TestSolve(SolveCases):
@@ -477,7 +477,7 @@ class TestSolve(SolveCases):
         expected = linalg.solve(a, b)[:, 0:0, :]
         result = linalg.solve(a[:, 0:0, 0:0], b[:, 0:0, :])
         assert_array_equal(result, expected)
-        assert_(isinstance(result, ArraySubclass))
+        assertTrue(isinstance(result, ArraySubclass))
 
         # Test errors for non-square and only b's dimension being 0
         assert_raises(linalg.LinAlgError, linalg.solve, a[:, 0:0, 0:1], b)
@@ -493,7 +493,7 @@ class TestSolve(SolveCases):
         expected = linalg.solve(a, b)[:, 0:0]
         result = linalg.solve(a[:, 0:0, 0:0], b[:, 0:0])
         assert_array_equal(result, expected)
-        assert_(isinstance(result, ArraySubclass))
+        assertTrue(isinstance(result, ArraySubclass))
 
         b = np.arange(3).reshape(1, 3)
         assert_raises(ValueError, linalg.solve, a, b)
@@ -510,13 +510,13 @@ class TestSolve(SolveCases):
         expected = linalg.solve(a, b)[:, :, 0:0]
         result = linalg.solve(a, b[:, :, 0:0])
         assert_array_equal(result, expected)
-        assert_(isinstance(result, ArraySubclass))
+        assertTrue(isinstance(result, ArraySubclass))
 
         # test both zero.
         expected = linalg.solve(a, b)[:, 0:0, 0:0]
         result = linalg.solve(a[:, 0:0, 0:0], b[:, 0:0, 0:0])
         assert_array_equal(result, expected)
-        assert_(isinstance(result, ArraySubclass))
+        assertTrue(isinstance(result, ArraySubclass))
 
 
 class InvCases(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
@@ -525,7 +525,7 @@ class InvCases(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
         a_inv = linalg.inv(a)
         assert_almost_equal(dot_generalized(a, a_inv),
                             identity_like_generalized(a))
-        assert_(consistent_subclass(a_inv, a))
+        assertTrue(consistent_subclass(a_inv, a))
 
 
 class TestInv(InvCases):
@@ -540,15 +540,15 @@ class TestInv(InvCases):
             pass
         a = np.zeros((0, 1, 1), dtype=np.int_).view(ArraySubclass)
         res = linalg.inv(a)
-        assert_(res.dtype.type is np.float64)
+        assertTrue(res.dtype.type is np.float64)
         assert_equal(a.shape, res.shape)
-        assert_(isinstance(res, ArraySubclass))
+        assertTrue(isinstance(res, ArraySubclass))
 
         a = np.zeros((0, 0), dtype=np.complex64).view(ArraySubclass)
         res = linalg.inv(a)
-        assert_(res.dtype.type is np.complex64)
+        assertTrue(res.dtype.type is np.complex64)
         assert_equal(a.shape, res.shape)
-        assert_(isinstance(res, ArraySubclass))
+        assertTrue(isinstance(res, ArraySubclass))
 
 
 class EigvalsCases(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
@@ -573,17 +573,17 @@ class TestEigvals(EigvalsCases):
             pass
         a = np.zeros((0, 1, 1), dtype=np.int_).view(ArraySubclass)
         res = linalg.eigvals(a)
-        assert_(res.dtype.type is np.float64)
+        assertTrue(res.dtype.type is np.float64)
         assert_equal((0, 1), res.shape)
         # This is just for documentation, it might make sense to change:
-        assert_(isinstance(res, np.ndarray))
+        assertTrue(isinstance(res, np.ndarray))
 
         a = np.zeros((0, 0), dtype=np.complex64).view(ArraySubclass)
         res = linalg.eigvals(a)
-        assert_(res.dtype.type is np.complex64)
+        assertTrue(res.dtype.type is np.complex64)
         assert_equal((0,), res.shape)
         # This is just for documentation, it might make sense to change:
-        assert_(isinstance(res, np.ndarray))
+        assertTrue(isinstance(res, np.ndarray))
 
 
 class EigCases(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
@@ -593,7 +593,7 @@ class EigCases(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
         assert_allclose(dot_generalized(a, evectors),
                         np.asarray(evectors) * np.asarray(evalues)[..., None, :],
                         rtol=get_rtol(evalues.dtype))
-        assert_(consistent_subclass(evectors, a))
+        assertTrue(consistent_subclass(evectors, a))
 
 
 class TestEig(EigCases):
@@ -615,21 +615,21 @@ class TestEig(EigCases):
             pass
         a = np.zeros((0, 1, 1), dtype=np.int_).view(ArraySubclass)
         res, res_v = linalg.eig(a)
-        assert_(res_v.dtype.type is np.float64)
-        assert_(res.dtype.type is np.float64)
+        assertTrue(res_v.dtype.type is np.float64)
+        assertTrue(res.dtype.type is np.float64)
         assert_equal(a.shape, res_v.shape)
         assert_equal((0, 1), res.shape)
         # This is just for documentation, it might make sense to change:
-        assert_(isinstance(a, np.ndarray))
+        assertTrue(isinstance(a, np.ndarray))
 
         a = np.zeros((0, 0), dtype=np.complex64).view(ArraySubclass)
         res, res_v = linalg.eig(a)
-        assert_(res_v.dtype.type is np.complex64)
-        assert_(res.dtype.type is np.complex64)
+        assertTrue(res_v.dtype.type is np.complex64)
+        assertTrue(res.dtype.type is np.complex64)
         assert_equal(a.shape, res_v.shape)
         assert_equal((0,), res.shape)
         # This is just for documentation, it might make sense to change:
-        assert_(isinstance(a, np.ndarray))
+        assertTrue(isinstance(a, np.ndarray))
 
 
 class SVDBaseTests:
@@ -653,8 +653,8 @@ class SVDCases(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
         assert_allclose(a, dot_generalized(np.asarray(u) * np.asarray(s)[..., None, :],
                                            np.asarray(vt)),
                         rtol=get_rtol(u.dtype))
-        assert_(consistent_subclass(u, a))
-        assert_(consistent_subclass(vt, a))
+        assertTrue(consistent_subclass(u, a))
+        assertTrue(consistent_subclass(vt, a))
 
 
 class TestSVD(SVDCases, SVDBaseTests):
@@ -688,8 +688,8 @@ class SVDHermitianCases(HermitianTestCase, HermitianGeneralizedTestCase):
         assert_almost_equal(np.matmul(u, hermitian(u)), np.broadcast_to(np.eye(u.shape[-1]), u.shape))
         assert_almost_equal(np.matmul(vt, hermitian(vt)), np.broadcast_to(np.eye(vt.shape[-1]), vt.shape))
         assert_equal(np.sort(s)[..., ::-1], s)
-        assert_(consistent_subclass(u, a))
-        assert_(consistent_subclass(vt, a))
+        assertTrue(consistent_subclass(u, a))
+        assertTrue(consistent_subclass(vt, a))
 
 
 class TestSVDHermitian(SVDHermitianCases, SVDBaseTests):
@@ -762,7 +762,7 @@ class TestCond(CondCases):
         for A, p in itertools.product(As, p_pos):
             # Inversion may not hit exact infinity, so just check the
             # number is large
-            assert_(linalg.cond(A, p) > 1e15)
+            assertTrue(linalg.cond(A, p) > 1e15)
         for A, p in itertools.product(As, p_neg):
             linalg.cond(A, p)
 
@@ -778,20 +778,20 @@ class TestCond(CondCases):
         A[0,1] = np.nan
         for p in ps:
             c = linalg.cond(A, p)
-            assert_(isinstance(c, np.float_))
-            assert_(np.isnan(c))
+            assertTrue(isinstance(c, np.float_))
+            assertTrue(np.isnan(c))
 
         A = np.ones((3, 2, 2))
         A[1,0,1] = np.nan
         for p in ps:
             c = linalg.cond(A, p)
-            assert_(np.isnan(c[1]))
+            assertTrue(np.isnan(c[1]))
             if p in p_pos:
-                assert_(c[0] > 1e15)
-                assert_(c[2] > 1e15)
+                assertTrue(c[0] > 1e15)
+                assertTrue(c[2] > 1e15)
             else:
-                assert_(not np.isnan(c[0]))
-                assert_(not np.isnan(c[2]))
+                assertTrue(not np.isnan(c[0]))
+                assertTrue(not np.isnan(c[2]))
 
     def test_stacked_singular(self):
         # Check behavior when only some of the stacked matrices are
@@ -805,8 +805,8 @@ class TestCond(CondCases):
             c = linalg.cond(A, p)
             assert_equal(c[0,0], np.inf)
             assert_equal(c[1,1], np.inf)
-            assert_(np.isfinite(c[0,1]))
-            assert_(np.isfinite(c[1,0]))
+            assertTrue(np.isfinite(c[0,1]))
+            assertTrue(np.isfinite(c[1,0]))
 
 
 class PinvCases(LinalgSquareTestCase,
@@ -819,7 +819,7 @@ class PinvCases(LinalgSquareTestCase,
         # `a @ a_ginv == I` does not hold if a is singular
         dot = dot_generalized
         assert_almost_equal(dot(dot(a, a_ginv), a), a, single_decimal=5, double_decimal=11)
-        assert_(consistent_subclass(a_ginv, a))
+        assertTrue(consistent_subclass(a_ginv, a))
 
 
 class TestPinv(PinvCases):
@@ -833,7 +833,7 @@ class PinvHermitianCases(HermitianTestCase, HermitianGeneralizedTestCase):
         # `a @ a_ginv == I` does not hold if a is singular
         dot = dot_generalized
         assert_almost_equal(dot(dot(a, a_ginv), a), a, single_decimal=5, double_decimal=11)
-        assert_(consistent_subclass(a_ginv, a))
+        assertTrue(consistent_subclass(a_ginv, a))
 
 
 class TestPinvHermitian(PinvHermitianCases):
@@ -886,20 +886,20 @@ class TestDet(DetCases):
         a = np.zeros((0, 0), dtype=np.complex64)
         res = linalg.det(a)
         assert_equal(res, 1.)
-        assert_(res.dtype.type is np.complex64)
+        assertTrue(res.dtype.type is np.complex64)
         res = linalg.slogdet(a)
         assert_equal(res, (1, 0))
-        assert_(res[0].dtype.type is np.complex64)
-        assert_(res[1].dtype.type is np.float32)
+        assertTrue(res[0].dtype.type is np.complex64)
+        assertTrue(res[1].dtype.type is np.float32)
 
         a = np.zeros((0, 0), dtype=np.float64)
         res = linalg.det(a)
         assert_equal(res, 1.)
-        assert_(res.dtype.type is np.float64)
+        assertTrue(res.dtype.type is np.float64)
         res = linalg.slogdet(a)
         assert_equal(res, (1, 0))
-        assert_(res[0].dtype.type is np.float64)
-        assert_(res[1].dtype.type is np.float64)
+        assertTrue(res[0].dtype.type is np.float64)
+        assertTrue(res[1].dtype.type is np.float64)
 
 
 class LstsqCases(LinalgSquareTestCase, LinalgNonsquareTestCase):
@@ -910,7 +910,7 @@ class LstsqCases(LinalgSquareTestCase, LinalgNonsquareTestCase):
         u, s, vt = linalg.svd(a, False)
         x, residuals, rank, sv = linalg.lstsq(a, b, rcond=-1)
         if m == 0:
-            assert_((x == 0).all())
+            assertTrue((x == 0).all())
         if m <= n:
             assert_almost_equal(b, dot(a, x))
             assert_equal(rank, m)
@@ -927,9 +927,9 @@ class LstsqCases(LinalgSquareTestCase, LinalgNonsquareTestCase):
         else:
             expect_resids = np.array([]).view(type(x))
         assert_almost_equal(residuals, expect_resids)
-        assert_(np.issubdtype(residuals.dtype, np.floating))
-        assert_(consistent_subclass(x, b))
-        assert_(consistent_subclass(residuals, b))
+        assertTrue(np.issubdtype(residuals.dtype, np.floating))
+        assertTrue(consistent_subclass(x, b))
+        assertTrue(consistent_subclass(residuals, b))
 
 
 class TestLstsq(LstsqCases):
@@ -943,13 +943,13 @@ class TestLstsq(LstsqCases):
         with suppress_warnings() as sup:
             w = sup.record(FutureWarning, "`rcond` parameter will change")
             x, residuals, rank, s = linalg.lstsq(a, b)
-            assert_(rank == 4)
+            assertTrue(rank == 4)
             x, residuals, rank, s = linalg.lstsq(a, b, rcond=-1)
-            assert_(rank == 4)
+            assertTrue(rank == 4)
             x, residuals, rank, s = linalg.lstsq(a, b, rcond=None)
-            assert_(rank == 3)
+            assertTrue(rank == 3)
             # Warning should be raised exactly once (first command)
-            assert_(len(w) == 1)
+            assertTrue(len(w) == 1)
 
     @pytest.mark.parametrize(["m", "n", "n_rhs"], [
         (4, 2, 2),
@@ -965,7 +965,7 @@ class TestLstsq(LstsqCases):
         b = np.ones((m, n_rhs))
         x, residuals, rank, s = linalg.lstsq(a, b, rcond=None)
         if m == 0:
-            assert_((x == 0).all())
+            assertTrue((x == 0).all())
         assert_equal(x.shape, (n, n_rhs))
         assert_equal(residuals.shape, ((n_rhs,) if m > n else (0,)))
         if m > n and n_rhs > 0:
@@ -1125,17 +1125,17 @@ class TestEigvalsh:
             pass
         a = np.zeros((0, 1, 1), dtype=np.int_).view(ArraySubclass)
         res = linalg.eigvalsh(a)
-        assert_(res.dtype.type is np.float64)
+        assertTrue(res.dtype.type is np.float64)
         assert_equal((0, 1), res.shape)
         # This is just for documentation, it might make sense to change:
-        assert_(isinstance(res, np.ndarray))
+        assertTrue(isinstance(res, np.ndarray))
 
         a = np.zeros((0, 0), dtype=np.complex64).view(ArraySubclass)
         res = linalg.eigvalsh(a)
-        assert_(res.dtype.type is np.float32)
+        assertTrue(res.dtype.type is np.float32)
         assert_equal((0,), res.shape)
         # This is just for documentation, it might make sense to change:
-        assert_(isinstance(res, np.ndarray))
+        assertTrue(isinstance(res, np.ndarray))
 
 
 class TestEighCases(HermitianTestCase, HermitianGeneralizedTestCase):
@@ -1202,21 +1202,21 @@ class TestEigh:
             pass
         a = np.zeros((0, 1, 1), dtype=np.int_).view(ArraySubclass)
         res, res_v = linalg.eigh(a)
-        assert_(res_v.dtype.type is np.float64)
-        assert_(res.dtype.type is np.float64)
+        assertTrue(res_v.dtype.type is np.float64)
+        assertTrue(res.dtype.type is np.float64)
         assert_equal(a.shape, res_v.shape)
         assert_equal((0, 1), res.shape)
         # This is just for documentation, it might make sense to change:
-        assert_(isinstance(a, np.ndarray))
+        assertTrue(isinstance(a, np.ndarray))
 
         a = np.zeros((0, 0), dtype=np.complex64).view(ArraySubclass)
         res, res_v = linalg.eigh(a)
-        assert_(res_v.dtype.type is np.complex64)
-        assert_(res.dtype.type is np.float32)
+        assertTrue(res_v.dtype.type is np.complex64)
+        assertTrue(res.dtype.type is np.float32)
         assert_equal(a.shape, res_v.shape)
         assert_equal((0,), res.shape)
         # This is just for documentation, it might make sense to change:
-        assert_(isinstance(a, np.ndarray))
+        assertTrue(isinstance(a, np.ndarray))
 
 
 class _TestNormBase:
@@ -1229,7 +1229,7 @@ class _TestNormBase:
             assert_equal(res.dtype, x.real.dtype)
         else:
             # For integer input, don't have to test float precision of output.
-            assert_(issubclass(res.dtype.type, np.floating))
+            assertTrue(issubclass(res.dtype.type, np.floating))
 
 
 class _TestNormGeneral(_TestNormBase):
@@ -1359,7 +1359,7 @@ class _TestNormGeneral(_TestNormBase):
         assert_allclose(np.squeeze(found), expected,
                         err_msg=allclose_err.format(None, None))
         expected_shape = (1, 1, 1)
-        assert_(found.shape == expected_shape,
+        assertTrue(found.shape == expected_shape,
                 shape_err.format(found.shape, expected_shape, None, None))
 
         # Vector norms.
@@ -1372,7 +1372,7 @@ class _TestNormGeneral(_TestNormBase):
                 expected_shape = list(A.shape)
                 expected_shape[k] = 1
                 expected_shape = tuple(expected_shape)
-                assert_(found.shape == expected_shape,
+                assertTrue(found.shape == expected_shape,
                         shape_err.format(found.shape, expected_shape, order, k))
 
         # Matrix norms.
@@ -1386,7 +1386,7 @@ class _TestNormGeneral(_TestNormBase):
                 expected_shape[k[0]] = 1
                 expected_shape[k[1]] = 1
                 expected_shape = tuple(expected_shape)
-                assert_(found.shape == expected_shape,
+                assertTrue(found.shape == expected_shape,
                         shape_err.format(found.shape, expected_shape, order, k))
 
 
@@ -1632,32 +1632,32 @@ class TestQR:
 
         # mode == 'complete'
         q, r = linalg.qr(a, mode='complete')
-        assert_(q.dtype == a_dtype)
-        assert_(r.dtype == a_dtype)
-        assert_(isinstance(q, a_type))
-        assert_(isinstance(r, a_type))
-        assert_(q.shape == (m, m))
-        assert_(r.shape == (m, n))
+        assertTrue(q.dtype == a_dtype)
+        assertTrue(r.dtype == a_dtype)
+        assertTrue(isinstance(q, a_type))
+        assertTrue(isinstance(r, a_type))
+        assertTrue(q.shape == (m, m))
+        assertTrue(r.shape == (m, n))
         assert_almost_equal(dot(q, r), a)
         assert_almost_equal(dot(q.T.conj(), q), np.eye(m))
         assert_almost_equal(np.triu(r), r)
 
         # mode == 'reduced'
         q1, r1 = linalg.qr(a, mode='reduced')
-        assert_(q1.dtype == a_dtype)
-        assert_(r1.dtype == a_dtype)
-        assert_(isinstance(q1, a_type))
-        assert_(isinstance(r1, a_type))
-        assert_(q1.shape == (m, k))
-        assert_(r1.shape == (k, n))
+        assertTrue(q1.dtype == a_dtype)
+        assertTrue(r1.dtype == a_dtype)
+        assertTrue(isinstance(q1, a_type))
+        assertTrue(isinstance(r1, a_type))
+        assertTrue(q1.shape == (m, k))
+        assertTrue(r1.shape == (k, n))
         assert_almost_equal(dot(q1, r1), a)
         assert_almost_equal(dot(q1.T.conj(), q1), np.eye(k))
         assert_almost_equal(np.triu(r1), r1)
 
         # mode == 'r'
         r2 = linalg.qr(a, mode='r')
-        assert_(r2.dtype == a_dtype)
-        assert_(isinstance(r2, a_type))
+        assertTrue(r2.dtype == a_dtype)
+        assertTrue(isinstance(r2, a_type))
         assert_almost_equal(r2, r1)
 
 
@@ -1689,16 +1689,16 @@ class TestQR:
 
         # Test double
         h, tau = linalg.qr(a, mode='raw')
-        assert_(h.dtype == np.double)
-        assert_(tau.dtype == np.double)
-        assert_(h.shape == (2, 3))
-        assert_(tau.shape == (2,))
+        assertTrue(h.dtype == np.double)
+        assertTrue(tau.dtype == np.double)
+        assertTrue(h.shape == (2, 3))
+        assertTrue(tau.shape == (2,))
 
         h, tau = linalg.qr(a.T, mode='raw')
-        assert_(h.dtype == np.double)
-        assert_(tau.dtype == np.double)
-        assert_(h.shape == (3, 2))
-        assert_(tau.shape == (2,))
+        assertTrue(h.dtype == np.double)
+        assertTrue(tau.dtype == np.double)
+        assertTrue(h.shape == (3, 2))
+        assertTrue(tau.shape == (2,))
 
     def test_mode_all_but_economic(self):
         a = self.array([[1, 2], [3, 4]])
@@ -1727,48 +1727,48 @@ class TestQR:
 
         # mode == 'complete'
         q, r = linalg.qr(a, mode='complete')
-        assert_(q.dtype == a_dtype)
-        assert_(r.dtype == a_dtype)
-        assert_(isinstance(q, a_type))
-        assert_(isinstance(r, a_type))
-        assert_(q.shape[-2:] == (m, m))
-        assert_(r.shape[-2:] == (m, n))
+        assertTrue(q.dtype == a_dtype)
+        assertTrue(r.dtype == a_dtype)
+        assertTrue(isinstance(q, a_type))
+        assertTrue(isinstance(r, a_type))
+        assertTrue(q.shape[-2:] == (m, m))
+        assertTrue(r.shape[-2:] == (m, n))
         assert_almost_equal(matmul(q, r), a)
         I_mat = np.identity(q.shape[-1])
-        stack_I_mat = np.broadcast_to(I_mat, 
+        stack_I_mat = np.broadcast_to(I_mat,
                         q.shape[:-2] + (q.shape[-1],)*2)
         assert_almost_equal(matmul(swapaxes(q, -1, -2).conj(), q), stack_I_mat)
         assert_almost_equal(np.triu(r[..., :, :]), r)
 
         # mode == 'reduced'
         q1, r1 = linalg.qr(a, mode='reduced')
-        assert_(q1.dtype == a_dtype)
-        assert_(r1.dtype == a_dtype)
-        assert_(isinstance(q1, a_type))
-        assert_(isinstance(r1, a_type))
-        assert_(q1.shape[-2:] == (m, k))
-        assert_(r1.shape[-2:] == (k, n))
+        assertTrue(q1.dtype == a_dtype)
+        assertTrue(r1.dtype == a_dtype)
+        assertTrue(isinstance(q1, a_type))
+        assertTrue(isinstance(r1, a_type))
+        assertTrue(q1.shape[-2:] == (m, k))
+        assertTrue(r1.shape[-2:] == (k, n))
         assert_almost_equal(matmul(q1, r1), a)
         I_mat = np.identity(q1.shape[-1])
-        stack_I_mat = np.broadcast_to(I_mat, 
+        stack_I_mat = np.broadcast_to(I_mat,
                         q1.shape[:-2] + (q1.shape[-1],)*2)
-        assert_almost_equal(matmul(swapaxes(q1, -1, -2).conj(), q1), 
+        assert_almost_equal(matmul(swapaxes(q1, -1, -2).conj(), q1),
                             stack_I_mat)
         assert_almost_equal(np.triu(r1[..., :, :]), r1)
 
         # mode == 'r'
         r2 = linalg.qr(a, mode='r')
-        assert_(r2.dtype == a_dtype)
-        assert_(isinstance(r2, a_type))
+        assertTrue(r2.dtype == a_dtype)
+        assertTrue(isinstance(r2, a_type))
         assert_almost_equal(r2, r1)
 
     @pytest.mark.parametrize("size", [
-        (3, 4), (4, 3), (4, 4), 
+        (3, 4), (4, 3), (4, 4),
         (3, 0), (0, 3)])
     @pytest.mark.parametrize("outer_size", [
         (2, 2), (2,), (2, 3, 4)])
     @pytest.mark.parametrize("dt", [
-        np.single, np.double, 
+        np.single, np.double,
         np.csingle, np.cdouble])
     def test_stacked_inputs(self, outer_size, size, dt):
 
@@ -1813,15 +1813,15 @@ class TestCholesky:
         a = np.zeros((0, 1, 1), dtype=np.int_).view(ArraySubclass)
         res = linalg.cholesky(a)
         assert_equal(a.shape, res.shape)
-        assert_(res.dtype.type is np.float64)
+        assertTrue(res.dtype.type is np.float64)
         # for documentation purpose:
-        assert_(isinstance(res, np.ndarray))
+        assertTrue(isinstance(res, np.ndarray))
 
         a = np.zeros((1, 0, 0), dtype=np.complex64).view(ArraySubclass)
         res = linalg.cholesky(a)
         assert_equal(a.shape, res.shape)
-        assert_(res.dtype.type is np.complex64)
-        assert_(isinstance(res, np.ndarray))
+        assertTrue(res.dtype.type is np.complex64)
+        assertTrue(isinstance(res, np.ndarray))
 
 
 def test_byteorder_check():
@@ -2180,4 +2180,4 @@ def test_blas64_geqrf_lwork_smoketest():
 
     # Should result to an integer of a reasonable size
     lwork = int(work.item())
-    assert_(2**32 < lwork < 2**42)
+    assertTrue(2**32 < lwork < 2**42)

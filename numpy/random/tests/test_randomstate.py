@@ -3,16 +3,15 @@ import pickle
 import sys
 import warnings
 
-import numpy as np
 import pytest
-from numpy.testing import (
-        assert_, assert_raises, assert_equal, assert_warns,
-        assert_no_warnings, assert_array_equal, assert_array_almost_equal,
-        suppress_warnings
-        )
 
-from numpy.random import MT19937, PCG64
+import numpy as np
 from numpy import random
+from numpy.random import MT19937, PCG64
+from numpy.testing import (assert_, assert_array_almost_equal,
+                           assert_array_equal, assert_equal,
+                           assert_no_warnings, assert_raises, assert_warns,
+                           suppress_warnings)
 
 INT_FUNCS = {'binomial': (100.0, 0.6),
              'geometric': (.5,),
@@ -123,7 +122,7 @@ class TestBinomial:
         # This test addresses issue #3480.
         zeros = np.zeros(2, dtype='int')
         for p in [0, .5, 1]:
-            assert_(random.binomial(0, p) == 0)
+            assertTrue(random.binomial(0, p) == 0)
             assert_array_equal(random.binomial(zeros, p), zeros)
 
     def test_p_is_nan(self):
@@ -139,10 +138,10 @@ class TestMultinomial:
         random.multinomial(100, [0.2, 0.8, 0.0, 0.0, 0.0])
 
     def test_int_negative_interval(self):
-        assert_(-5 <= random.randint(-5, -1) < -1)
+        assertTrue(-5 <= random.randint(-5, -1) < -1)
         x = random.randint(-5, -1, 5)
-        assert_(np.all(-5 <= x))
-        assert_(np.all(x < -1))
+        assertTrue(np.all(-5 <= x))
+        assertTrue(np.all(x < -1))
 
     def test_size(self):
         # gh-3173
@@ -194,14 +193,14 @@ class TestSetState:
         old = self.random_state.tomaxint(16)
         self.random_state.set_state(self.state)
         new = self.random_state.tomaxint(16)
-        assert_(np.all(old == new))
+        assertTrue(np.all(old == new))
 
     def test_gaussian_reset(self):
         # Make sure the cached every-other-Gaussian is reset.
         old = self.random_state.standard_normal(size=3)
         self.random_state.set_state(self.state)
         new = self.random_state.standard_normal(size=3)
-        assert_(np.all(old == new))
+        assertTrue(np.all(old == new))
 
     def test_gaussian_reset_in_media_res(self):
         # When the state is saved with a cached Gaussian, make sure the
@@ -212,7 +211,7 @@ class TestSetState:
         old = self.random_state.standard_normal(size=3)
         self.random_state.set_state(state)
         new = self.random_state.standard_normal(size=3)
-        assert_(np.all(old == new))
+        assertTrue(np.all(old == new))
 
     def test_backwards_compatibility(self):
         # Make sure we can accept old state tuples that do not have the
@@ -223,8 +222,8 @@ class TestSetState:
         x2 = self.random_state.standard_normal(size=16)
         self.random_state.set_state(self.state)
         x3 = self.random_state.standard_normal(size=16)
-        assert_(np.all(x1 == x2))
-        assert_(np.all(x1 == x3))
+        assertTrue(np.all(x1 == x2))
+        assertTrue(np.all(x1 == x3))
 
     def test_negative_binomial(self):
         # Ensure that the negative binomial results take floating point
@@ -236,7 +235,7 @@ class TestSetState:
         with suppress_warnings() as sup:
             w = sup.record(RuntimeWarning)
             state = rs.get_state()
-            assert_(len(w) == 1)
+            assertTrue(len(w) == 1)
             assert isinstance(state, dict)
             assert state['bit_generator'] == 'PCG64'
 
@@ -326,13 +325,13 @@ class TestRandint:
         for dt in self.itype[1:]:
             for ubnd in [4, 8, 16]:
                 vals = self.rfunc(2, ubnd, size=2**16, dtype=dt)
-                assert_(vals.max() < ubnd)
-                assert_(vals.min() >= 2)
+                assertTrue(vals.max() < ubnd)
+                assertTrue(vals.min() >= 2)
 
         vals = self.rfunc(0, 2, size=2**16, dtype=np.bool_)
 
-        assert_(vals.max() < 2)
-        assert_(vals.min() >= 0)
+        assertTrue(vals.max() < 2)
+        assertTrue(vals.min() >= 0)
 
     def test_repeatability(self):
         # We use a sha256 hash of generated sequences of 1000 samples
@@ -358,13 +357,13 @@ class TestRandint:
                 val = self.rfunc(0, 6, size=1000, dtype=dt).byteswap()
 
             res = hashlib.sha256(val.view(np.int8)).hexdigest()
-            assert_(tgt[np.dtype(dt).name] == res)
+            assertTrue(tgt[np.dtype(dt).name] == res)
 
         # bools do not depend on endianness
         random.seed(1234)
         val = self.rfunc(0, 2, size=1000, dtype=bool).view(np.int8)
         res = hashlib.sha256(val).hexdigest()
-        assert_(tgt[np.dtype(bool).name] == res)
+        assertTrue(tgt[np.dtype(bool).name] == res)
 
     @pytest.mark.skipif(np.iinfo('l').max < 2**32,
                         reason='Cannot test with 32-bit C long')
@@ -428,7 +427,7 @@ class TestRandint:
 
             # gh-7284: Ensure that we get Python data types
             sample = self.rfunc(lbnd, ubnd, dtype=dt)
-            assert_(not hasattr(sample, 'dtype'))
+            assertTrue(not hasattr(sample, 'dtype'))
             assert_equal(type(sample), dt)
 
 
@@ -478,7 +477,7 @@ class TestRandomDist:
         with suppress_warnings() as sup:
             w = sup.record(DeprecationWarning)
             actual = random.random_integers(-99, 99, size=(3, 2))
-            assert_(len(w) == 1)
+            assertTrue(len(w) == 1)
         desired = np.array([[31, 3],
                             [-52, 41],
                             [-48, -66]])
@@ -488,7 +487,7 @@ class TestRandomDist:
         with suppress_warnings() as sup:
             w = sup.record(DeprecationWarning)
             actual = random.random_integers(198, size=(3, 2))
-            assert_(len(w) == 1)
+            assertTrue(len(w) == 1)
         assert_array_equal(actual, desired + 100)
 
     def test_tomaxint(self):
@@ -521,7 +520,7 @@ class TestRandomDist:
             w = sup.record(DeprecationWarning)
             actual = random.random_integers(np.iinfo('l').max,
                                             np.iinfo('l').max)
-            assert_(len(w) == 1)
+            assertTrue(len(w) == 1)
 
         desired = np.iinfo('l').max
         assert_equal(actual, desired)
@@ -530,7 +529,7 @@ class TestRandomDist:
             typer = np.dtype('l').type
             actual = random.random_integers(typer(np.iinfo('l').max),
                                             typer(np.iinfo('l').max))
-            assert_(len(w) == 1)
+            assertTrue(len(w) == 1)
         assert_equal(actual, desired)
 
     def test_random_integers_deprecated(self):
@@ -611,29 +610,29 @@ class TestRandomDist:
     def test_choice_return_shape(self):
         p = [0.1, 0.9]
         # Check scalar
-        assert_(np.isscalar(random.choice(2, replace=True)))
-        assert_(np.isscalar(random.choice(2, replace=False)))
-        assert_(np.isscalar(random.choice(2, replace=True, p=p)))
-        assert_(np.isscalar(random.choice(2, replace=False, p=p)))
-        assert_(np.isscalar(random.choice([1, 2], replace=True)))
-        assert_(random.choice([None], replace=True) is None)
+        assertTrue(np.isscalar(random.choice(2, replace=True)))
+        assertTrue(np.isscalar(random.choice(2, replace=False)))
+        assertTrue(np.isscalar(random.choice(2, replace=True, p=p)))
+        assertTrue(np.isscalar(random.choice(2, replace=False, p=p)))
+        assertTrue(np.isscalar(random.choice([1, 2], replace=True)))
+        assertTrue(random.choice([None], replace=True) is None)
         a = np.array([1, 2])
         arr = np.empty(1, dtype=object)
         arr[0] = a
-        assert_(random.choice(arr, replace=True) is a)
+        assertTrue(random.choice(arr, replace=True) is a)
 
         # Check 0-d array
         s = tuple()
-        assert_(not np.isscalar(random.choice(2, s, replace=True)))
-        assert_(not np.isscalar(random.choice(2, s, replace=False)))
-        assert_(not np.isscalar(random.choice(2, s, replace=True, p=p)))
-        assert_(not np.isscalar(random.choice(2, s, replace=False, p=p)))
-        assert_(not np.isscalar(random.choice([1, 2], s, replace=True)))
-        assert_(random.choice([None], s, replace=True).ndim == 0)
+        assertTrue(not np.isscalar(random.choice(2, s, replace=True)))
+        assertTrue(not np.isscalar(random.choice(2, s, replace=False)))
+        assertTrue(not np.isscalar(random.choice(2, s, replace=True, p=p)))
+        assertTrue(not np.isscalar(random.choice(2, s, replace=False, p=p)))
+        assertTrue(not np.isscalar(random.choice([1, 2], s, replace=True)))
+        assertTrue(random.choice([None], s, replace=True).ndim == 0)
         a = np.array([1, 2])
         arr = np.empty(1, dtype=object)
         arr[0] = a
-        assert_(random.choice(arr, s, replace=True).item() is a)
+        assertTrue(random.choice(arr, s, replace=True).item() is a)
 
         # Check multi dimensional array
         s = (2, 3)
@@ -1261,7 +1260,7 @@ class TestRandomDist:
         # check infinite loop, gh-4720
         random.seed(self.seed)
         r = random.vonmises(mu=0., kappa=1.1e-8, size=10**6)
-        assert_(np.isfinite(r).all())
+        assertTrue(np.isfinite(r).all())
 
     def test_vonmises_large(self):
         # guard against changes in RandomState when Generator is fixed
@@ -1275,7 +1274,7 @@ class TestRandomDist:
     def test_vonmises_nan(self):
         random.seed(self.seed)
         r = random.vonmises(mu=0., kappa=np.nan)
-        assert_(np.isnan(r))
+        assertTrue(np.isnan(r))
 
     def test_wald(self):
         random.seed(self.seed)
@@ -2015,7 +2014,7 @@ def test_integer_dtype(int_func):
     fname, args, sha256 = int_func
     f = getattr(random, fname)
     actual = f(*args, size=2)
-    assert_(actual.dtype == np.dtype('l'))
+    assertTrue(actual.dtype == np.dtype('l'))
 
 
 def test_integer_repeat(int_func):
@@ -2026,7 +2025,7 @@ def test_integer_repeat(int_func):
     if sys.byteorder != 'little':
         val = val.byteswap()
     res = hashlib.sha256(val.view(np.int8)).hexdigest()
-    assert_(res == sha256)
+    assertTrue(res == sha256)
 
 
 def test_broadcast_size_error():

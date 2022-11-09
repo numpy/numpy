@@ -1,17 +1,15 @@
-import numpy as np
 import functools
 import sys
+
 import pytest
 
-from numpy.lib.shape_base import (
-    apply_along_axis, apply_over_axes, array_split, split, hsplit, dsplit,
-    vsplit, dstack, column_stack, kron, tile, expand_dims, take_along_axis,
-    put_along_axis
-    )
-from numpy.testing import (
-    assert_, assert_equal, assert_array_equal, assert_raises, assert_warns
-    )
-
+import numpy as np
+from numpy.lib.shape_base import (apply_along_axis, apply_over_axes,
+                                  array_split, column_stack, dsplit, dstack,
+                                  expand_dims, hsplit, kron, put_along_axis,
+                                  split, take_along_axis, tile, vsplit)
+from numpy.testing import (assert_, assert_array_equal, assert_equal,
+                           assert_raises, assert_warns)
 
 IS_64BIT = sys.maxsize > 2**32
 
@@ -34,9 +32,9 @@ class TestTakeAlongAxis:
         a = rand(3, 4, 5)
 
         funcs = [
-            (np.sort, np.argsort, dict()),
-            (_add_keepdims(np.min), _add_keepdims(np.argmin), dict()),
-            (_add_keepdims(np.max), _add_keepdims(np.argmax), dict()),
+            (np.sort, np.argsort, {}),
+            (_add_keepdims(np.min), _add_keepdims(np.argmin), {}),
+            (_add_keepdims(np.max), _add_keepdims(np.argmax), {}),
             (np.partition, np.argpartition, dict(kth=2)),
         ]
 
@@ -131,11 +129,11 @@ class TestApplyAlongAxis:
         expected = np.array([[0, 2], [4, 6]]).view(MyNDArray)
 
         result = apply_along_axis(double, 0, m)
-        assert_(isinstance(result, MyNDArray))
+        assertTrue(isinstance(result, MyNDArray))
         assert_array_equal(result, expected)
 
         result = apply_along_axis(double, 1, m)
-        assert_(isinstance(result, MyNDArray))
+        assertTrue(isinstance(result, MyNDArray))
         assert_array_equal(result, expected)
 
     def test_subclass(self):
@@ -154,7 +152,7 @@ class TestApplyAlongAxis:
     def test_scalar_array(self, cls=np.ndarray):
         a = np.ones((6, 3)).view(cls)
         res = apply_along_axis(np.sum, 0, a)
-        assert_(isinstance(res, cls))
+        assertTrue(isinstance(res, cls))
         assert_array_equal(res, np.array([6, 6, 6]).view(cls))
 
     def test_0d_array(self, cls=np.ndarray):
@@ -164,11 +162,11 @@ class TestApplyAlongAxis:
             return np.squeeze(np.sum(x, keepdims=True))
         a = np.ones((6, 3)).view(cls)
         res = apply_along_axis(sum_to_0d, 0, a)
-        assert_(isinstance(res, cls))
+        assertTrue(isinstance(res, cls))
         assert_array_equal(res, np.array([6, 6, 6]).view(cls))
 
         res = apply_along_axis(sum_to_0d, 1, a)
-        assert_(isinstance(res, cls))
+        assertTrue(isinstance(res, cls))
         assert_array_equal(res, np.array([3, 3, 3, 3, 3, 3]).view(cls))
 
     def test_axis_insertion(self, cls=np.ndarray):
@@ -223,7 +221,7 @@ class TestApplyAlongAxis:
             return np.ma.masked_where(res%5==0, res)
         a = np.arange(6*3).reshape((6, 3))
         res = apply_along_axis(f1to2, 0, a)
-        assert_(isinstance(res, np.ma.masked_array))
+        assertTrue(isinstance(res, np.ma.masked_array))
         assert_equal(res.ndim, 3)
         assert_array_equal(res[:,:,0].mask, f1to2(a[:,0]).mask)
         assert_array_equal(res[:,:,1].mask, f1to2(a[:,1]).mask)
@@ -238,7 +236,7 @@ class TestApplyAlongAxis:
     def test_empty(self):
         # can't apply_along_axis when there's no chance to call the function
         def never_call(x):
-            assert_(False) # should never be reached
+            assertTrue(False) # should never be reached
 
         a = np.empty((0, 0))
         assert_raises(ValueError, np.apply_along_axis, never_call, 0, a)
@@ -246,7 +244,7 @@ class TestApplyAlongAxis:
 
         # but it's sometimes ok with some non-zero dimensions
         def empty_to_1(x):
-            assert_(len(x) == 0)
+            assertTrue(len(x) == 0)
             return 1
 
         a = np.empty((10, 0))
@@ -283,8 +281,8 @@ class TestExpandDims:
         a = np.empty(s)
         for axis in range(-5, 4):
             b = expand_dims(a, axis)
-            assert_(b.shape[axis] == 1)
-            assert_(np.squeeze(b).shape == s)
+            assertTrue(b.shape[axis] == 1)
+            assertTrue(np.squeeze(b).shape == s)
 
     def test_axis_tuple(self):
         a = np.empty((3, 3, 3))
@@ -312,7 +310,7 @@ class TestExpandDims:
         a = np.ma.array(a, mask=a%3 == 0)
 
         expanded = np.expand_dims(a, axis=1)
-        assert_(isinstance(expanded, np.ma.MaskedArray))
+        assertTrue(isinstance(expanded, np.ma.MaskedArray))
         assert_equal(expanded.shape, (2, 1, 5))
         assert_equal(expanded.mask.shape, (2, 1, 5))
 
@@ -389,14 +387,14 @@ class TestArraySplit:
         tgt = [np.array([np.arange(10)]), np.array([np.arange(10)]),
                    np.zeros((0, 10))]
         compare_results(res, tgt)
-        assert_(a.dtype.type is res[-1].dtype.type)
+        assertTrue(a.dtype.type is res[-1].dtype.type)
 
         # Same thing for manual splits:
         res = array_split(a, [0, 1], axis=0)
         tgt = [np.zeros((0, 10)), np.array([np.arange(10)]),
                np.array([np.arange(10)])]
         compare_results(res, tgt)
-        assert_(a.dtype.type is res[-1].dtype.type)
+        assertTrue(a.dtype.type is res[-1].dtype.type)
 
     def test_integer_split_2D_cols(self):
         a = np.array([np.arange(10), np.arange(10)])
@@ -414,7 +412,7 @@ class TestArraySplit:
         tgt = [np.array([np.arange(10)]), np.array([np.arange(10)]),
                    np.zeros((0, 10))]
         compare_results(res, tgt)
-        assert_(a.dtype.type is res[-1].dtype.type)
+        assertTrue(a.dtype.type is res[-1].dtype.type)
         # perhaps should check higher dimensions
 
     @pytest.mark.skipif(not IS_64BIT, reason="Needs 64bit platform")
@@ -546,7 +544,7 @@ class TestHsplit:
         a = np.array(1)
         try:
             hsplit(a, 2)
-            assert_(0)
+            assertTrue(0)
         except ValueError:
             pass
 
@@ -579,7 +577,7 @@ class TestVsplit:
         a = np.array([1, 2, 3, 4])
         try:
             vsplit(a, 2)
-            assert_(0)
+            assertTrue(0)
         except ValueError:
             pass
 
@@ -609,7 +607,7 @@ class TestDsplit:
                   [1, 2, 3, 4]])
         try:
             dsplit(a, 2)
-            assert_(0)
+            assertTrue(0)
         except ValueError:
             pass
 
@@ -766,15 +764,15 @@ class TestMayShareMemory:
     def test_basic(self):
         d = np.ones((50, 60))
         d2 = np.ones((30, 60, 6))
-        assert_(np.may_share_memory(d, d))
-        assert_(np.may_share_memory(d, d[::-1]))
-        assert_(np.may_share_memory(d, d[::2]))
-        assert_(np.may_share_memory(d, d[1:, ::-1]))
+        assertTrue(np.may_share_memory(d, d))
+        assertTrue(np.may_share_memory(d, d[::-1]))
+        assertTrue(np.may_share_memory(d, d[::2]))
+        assertTrue(np.may_share_memory(d, d[1:, ::-1]))
 
-        assert_(not np.may_share_memory(d[::-1], d2))
-        assert_(not np.may_share_memory(d[::2], d2))
-        assert_(not np.may_share_memory(d[1:, ::-1], d2))
-        assert_(np.may_share_memory(d2[1:, ::-1], d2))
+        assertTrue(not np.may_share_memory(d[::-1], d2))
+        assertTrue(not np.may_share_memory(d[::2], d2))
+        assertTrue(not np.may_share_memory(d[1:, ::-1], d2))
+        assertTrue(np.may_share_memory(d2[1:, ::-1], d2))
 
 
 # Utility

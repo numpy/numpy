@@ -6,10 +6,9 @@ import tempfile
 
 import hypothesis
 import pytest
+
 import numpy
-
 from numpy.core._multiarray_tests import get_fpu_mode
-
 
 _old_fpu_mode = None
 _collect_results = {}
@@ -22,7 +21,7 @@ hypothesis.configuration.set_hypothesis_home_dir(
 
 # We register two custom profiles for Numpy - for details see
 # https://hypothesis.readthedocs.io/en/latest/settings.html
-# The first is designed for our own CI runs; the latter also 
+# The first is designed for our own CI runs; the latter also
 # forces determinism and is designed for use via np.test()
 hypothesis.settings.register_profile(
     name="numpy-profile", deadline=None, print_blob=True,
@@ -32,8 +31,8 @@ hypothesis.settings.register_profile(
     deadline=None, print_blob=True, database=None, derandomize=True,
     suppress_health_check=hypothesis.HealthCheck.all(),
 )
-# Note that the default profile is chosen based on the presence 
-# of pytest.ini, but can be overridden by passing the 
+# Note that the default profile is chosen based on the presence
+# of pytest.ini, but can be overridden by passing the
 # --hypothesis-profile=NAME argument to pytest.
 _pytest_ini = os.path.join(os.path.dirname(__file__), "..", "pytest.ini")
 hypothesis.settings.load_profile(

@@ -1,48 +1,16 @@
 from collections.abc import Callable
-from typing import Any, Union, overload, Literal
+from typing import Any, Literal, Union, overload
 
-from numpy import (
-    bool_,
-    dtype,
-    float32,
-    float64,
-    int8,
-    int16,
-    int32,
-    int64,
-    int_,
-    ndarray,
-    uint,
-    uint8,
-    uint16,
-    uint32,
-    uint64,
-)
+from numpy import (bool_, dtype, float32, float64, int8, int16, int32, int64,
+                   int_, ndarray, uint, uint8, uint16, uint32, uint64)
+from numpy._typing import (ArrayLike, _ArrayLikeFloat_co, _ArrayLikeInt_co,
+                           _DoubleCodes, _DTypeLikeBool, _DTypeLikeInt,
+                           _DTypeLikeUInt, _Float32Codes, _Float64Codes,
+                           _Int8Codes, _Int16Codes, _Int32Codes, _Int64Codes,
+                           _IntCodes, _ShapeLike, _SingleCodes, _SupportsDType,
+                           _UInt8Codes, _UInt16Codes, _UInt32Codes,
+                           _UInt64Codes, _UIntCodes)
 from numpy.random.bit_generator import BitGenerator
-from numpy._typing import (
-    ArrayLike,
-    _ArrayLikeFloat_co,
-    _ArrayLikeInt_co,
-    _DoubleCodes,
-    _DTypeLikeBool,
-    _DTypeLikeInt,
-    _DTypeLikeUInt,
-    _Float32Codes,
-    _Float64Codes,
-    _Int8Codes,
-    _Int16Codes,
-    _Int32Codes,
-    _Int64Codes,
-    _IntCodes,
-    _ShapeLike,
-    _SingleCodes,
-    _SupportsDType,
-    _UInt8Codes,
-    _UInt16Codes,
-    _UInt32Codes,
-    _UInt64Codes,
-    _UIntCodes,
-)
 
 _DTypeLikeFloat32 = Union[
     dtype[float32],

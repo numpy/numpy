@@ -6,9 +6,8 @@ from functools import reduce
 import numpy as np
 import numpy.polynomial.legendre as leg
 from numpy.polynomial.polynomial import polyval
-from numpy.testing import (
-    assert_almost_equal, assert_raises, assert_equal, assert_,
-    )
+from numpy.testing import (assert_, assert_almost_equal, assert_equal,
+                           assert_raises)
 
 L0 = np.array([1])
 L1 = np.array([0, 1])
@@ -86,7 +85,7 @@ class TestArithmetic:
                 val2 = leg.legval(self.x, pol2)
                 pol3 = leg.legmul(pol1, pol2)
                 val3 = leg.legval(self.x, pol3)
-                assert_(len(pol3) == i + j + 1, msg)
+                assertTrue(len(pol3) == i + j + 1, msg)
                 assert_almost_equal(val3, val1*val2, err_msg=msg)
 
     def test_legdiv(self):
@@ -106,7 +105,7 @@ class TestArithmetic:
                 msg = f"At i={i}, j={j}"
                 c = np.arange(i + 1)
                 tgt = reduce(leg.legmul, [c]*j, np.array([1]))
-                res = leg.legpow(c, j) 
+                res = leg.legpow(c, j)
                 assert_equal(trim(res), trim(tgt), err_msg=msg)
 
 
@@ -156,7 +155,7 @@ class TestEvaluation:
         #test shape
         z = np.ones((2, 3))
         res = leg.legval2d(z, z, self.c2d)
-        assert_(res.shape == (2, 3))
+        assertTrue(res.shape == (2, 3))
 
     def test_legval3d(self):
         x1, x2, x3 = self.x
@@ -173,7 +172,7 @@ class TestEvaluation:
         #test shape
         z = np.ones((2, 3))
         res = leg.legval3d(z, z, z, self.c3d)
-        assert_(res.shape == (2, 3))
+        assertTrue(res.shape == (2, 3))
 
     def test_leggrid2d(self):
         x1, x2, x3 = self.x
@@ -187,7 +186,7 @@ class TestEvaluation:
         #test shape
         z = np.ones((2, 3))
         res = leg.leggrid2d(z, z, self.c2d)
-        assert_(res.shape == (2, 3)*2)
+        assertTrue(res.shape == (2, 3)*2)
 
     def test_leggrid3d(self):
         x1, x2, x3 = self.x
@@ -201,7 +200,7 @@ class TestEvaluation:
         #test shape
         z = np.ones((2, 3))
         res = leg.leggrid3d(z, z, z, self.c3d)
-        assert_(res.shape == (2, 3)*3)
+        assertTrue(res.shape == (2, 3)*3)
 
 
 class TestIntegral:
@@ -360,7 +359,7 @@ class TestVander:
         # check for 1d x
         x = np.arange(3)
         v = leg.legvander(x, 3)
-        assert_(v.shape == (3, 4))
+        assertTrue(v.shape == (3, 4))
         for i in range(4):
             coef = [0]*i + [1]
             assert_almost_equal(v[..., i], leg.legval(x, coef))
@@ -368,7 +367,7 @@ class TestVander:
         # check for 2d x
         x = np.array([[1, 2], [3, 4], [5, 6]])
         v = leg.legvander(x, 3)
-        assert_(v.shape == (3, 2, 4))
+        assertTrue(v.shape == (3, 2, 4))
         for i in range(4):
             coef = [0]*i + [1]
             assert_almost_equal(v[..., i], leg.legval(x, coef))
@@ -384,7 +383,7 @@ class TestVander:
 
         # check shape
         van = leg.legvander2d([x1], [x2], [1, 2])
-        assert_(van.shape == (1, 5, 6))
+        assertTrue(van.shape == (1, 5, 6))
 
     def test_legvander3d(self):
         # also tests polyval3d for non-square coefficient array
@@ -397,7 +396,7 @@ class TestVander:
 
         # check shape
         van = leg.legvander3d([x1], [x2], [x3], [1, 2, 3])
-        assert_(van.shape == (1, 5, 24))
+        assertTrue(van.shape == (1, 5, 24))
 
     def test_legvander_negdeg(self):
         assert_raises(ValueError, leg.legvander, (1, 2, 3), -1)
@@ -489,10 +488,10 @@ class TestCompanion:
     def test_dimensions(self):
         for i in range(1, 5):
             coef = [0]*i + [1]
-            assert_(leg.legcompanion(coef).shape == (i, i))
+            assertTrue(leg.legcompanion(coef).shape == (i, i))
 
     def test_linear_root(self):
-        assert_(leg.legcompanion([1, 2])[0, 0] == -.5)
+        assertTrue(leg.legcompanion([1, 2])[0, 0] == -.5)
 
 
 class TestGauss:
@@ -524,7 +523,7 @@ class TestMisc:
             pol = leg.legfromroots(roots)
             res = leg.legval(roots, pol)
             tgt = 0
-            assert_(len(pol) == i + 1)
+            assertTrue(len(pol) == i + 1)
             assert_almost_equal(leg.leg2poly(pol)[-1], 1)
             assert_almost_equal(res, tgt)
 

@@ -1,8 +1,8 @@
 from collections.abc import Sequence
-from typing import TypeVar, overload, Any, SupportsIndex
+from typing import Any, SupportsIndex, TypeVar, overload
 
-from numpy import generic, _CastingKind
-from numpy._typing import ArrayLike, NDArray, _ArrayLike, DTypeLike
+from numpy import _CastingKind, generic
+from numpy._typing import ArrayLike, DTypeLike, NDArray, _ArrayLike
 
 _SCT = TypeVar("_SCT", bound=generic)
 _ArrayType = TypeVar("_ArrayType", bound=NDArray[Any])

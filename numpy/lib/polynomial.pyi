@@ -1,38 +1,16 @@
-from typing import (
-    Literal as L,
-    overload,
-    Any,
-    SupportsInt,
-    SupportsIndex,
-    TypeVar,
-    NoReturn,
-)
+from typing import Any
+from typing import Literal as L
+from typing import NoReturn, SupportsIndex, SupportsInt, TypeVar, overload
 
-from numpy import (
-    RankWarning as RankWarning,
-    poly1d as poly1d,
-    unsignedinteger,
-    signedinteger,
-    floating,
-    complexfloating,
-    bool_,
-    int32,
-    int64,
-    float64,
-    complex128,
-    object_,
-)
-
-from numpy._typing import (
-    NDArray,
-    ArrayLike,
-    _ArrayLikeBool_co,
-    _ArrayLikeUInt_co,
-    _ArrayLikeInt_co,
-    _ArrayLikeFloat_co,
-    _ArrayLikeComplex_co,
-    _ArrayLikeObject_co,
-)
+from numpy import RankWarning as RankWarning
+from numpy import (bool_, complex128, complexfloating, float64, floating,
+                   int32, int64, object_)
+from numpy import poly1d as poly1d
+from numpy import signedinteger, unsignedinteger
+from numpy._typing import (ArrayLike, NDArray, _ArrayLikeBool_co,
+                           _ArrayLikeComplex_co, _ArrayLikeFloat_co,
+                           _ArrayLikeInt_co, _ArrayLikeObject_co,
+                           _ArrayLikeUInt_co)
 
 _T = TypeVar("_T")
 

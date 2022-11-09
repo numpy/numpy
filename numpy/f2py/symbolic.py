@@ -254,11 +254,14 @@ class Expr:
             return self.data < other.data
         return NotImplemented
 
-    def __le__(self, other): return self == other or self < other
+    def __le__(self, other):
+        return self == other or self < other
 
-    def __gt__(self, other): return not (self <= other)
+    def __gt__(self, other):
+        return not self <= other
 
-    def __ge__(self, other): return not (self < other)
+    def __ge__(self, other):
+        return not self < other
 
     def __repr__(self):
         return f'{type(self).__name__}({self.op}, {self.data!r})'

@@ -1,9 +1,9 @@
-import re
 import pathlib
+import re
 from typing import IO
 
-import numpy.typing as npt
 import numpy as np
+import numpy.typing as npt
 
 str_path: str
 pathlib_path: pathlib.Path

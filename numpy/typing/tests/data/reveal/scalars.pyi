@@ -1,4 +1,5 @@
 import sys
+
 import numpy as np
 
 b: np.bool_

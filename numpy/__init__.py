@@ -106,10 +106,8 @@ Exceptions to this rule are documented.
 import sys
 import warnings
 
-from ._globals import (
-    ModuleDeprecationWarning, VisibleDeprecationWarning,
-    _NoValue, _CopyMode
-)
+from ._globals import (ModuleDeprecationWarning, VisibleDeprecationWarning,
+                       _CopyMode, _NoValue)
 
 # We first need to detect if we're being called as part of the numpy setup
 # procedure itself in a reliable manner.
@@ -136,27 +134,18 @@ else:
     __deprecated_attrs__ = {}
 
     # Allow distributors to run custom init code
-    from . import _distributor_init
+    # Deprecations introduced in NumPy 1.20.0, 2020-06-06
+    import builtins as _builtins
 
-    from . import core
+    from . import (_distributor_init, compat, core, ctypeslib, fft, lib,
+                   linalg, ma)
+    from . import matrixlib as _mat
+    from . import polynomial, random
     from .core import *
-    from . import compat
-    from . import lib
     # NOTE: to be revisited following future namespace cleanup.
     # See gh-14454 and gh-15672 for discussion.
     from .lib import *
-
-    from . import linalg
-    from . import fft
-    from . import polynomial
-    from . import random
-    from . import ctypeslib
-    from . import ma
-    from . import matrixlib as _mat
     from .matrixlib import *
-
-    # Deprecations introduced in NumPy 1.20.0, 2020-06-06
-    import builtins as _builtins
 
     _msg = (
         "`np.{n}` is a deprecated alias for the builtin `{n}`. "
@@ -220,7 +209,8 @@ else:
 
     del _msg, _specific_msg, _int_extended_msg, _type_info, _builtins
 
-    from .core import round, abs, max, min
+    from .core import abs, max, min, round
+
     # now that numpy modules are imported, can initialize limits
     core.getlimits._register_known_types()
 
@@ -303,7 +293,7 @@ else:
         # The previous way Tester was imported also had a side effect of adding
         # the full `numpy.testing` namespace
         if attr == 'testing':
-            import numpy.testing as testing
+            from numpy import testing
             return testing
         elif attr == 'Tester':
             from .testing import Tester
@@ -425,7 +415,8 @@ else:
 
 
 # get the version using versioneer
-from .version import __version__, git_revision as __git_version__
+from .version import __version__
+from .version import git_revision as __git_version__
 
 # Remove symbols imported for internal use
 del sys, warnings

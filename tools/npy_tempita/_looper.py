@@ -18,6 +18,7 @@ looper you can get a better sense of the context.  Use like::
 
 """
 import sys
+
 from .compat3 import basestring_
 
 __all__ = ['looper']

@@ -1,5 +1,6 @@
-import numpy as np
 from typing import Any
+
+import numpy as np
 
 SEED_FLOAT: float = 457.3
 SEED_ARR_FLOAT: np.ndarray[Any, np.dtype[np.float64]] = np.array([1.0, 2, 3, 4])

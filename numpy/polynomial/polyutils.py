@@ -26,12 +26,11 @@ Functions
    mapparms     parameters of the linear map between domains.
 
 """
-import operator
 import functools
+import operator
 import warnings
 
 import numpy as np
-
 from numpy.core.multiarray import dragon4_positional, dragon4_scientific
 from numpy.core.umath import absolute
 
@@ -777,7 +776,7 @@ def format_float(x, parens=False):
 
     if exp_format:
         s = dragon4_scientific(x, precision=opts['precision'],
-                               unique=unique, trim=trim, 
+                               unique=unique, trim=trim,
                                sign=opts['sign'] == '+')
         if parens:
             s = '(' + s + ')'

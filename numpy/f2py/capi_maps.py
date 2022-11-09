@@ -12,18 +12,19 @@ Pearu Peterson
 
 """
 from . import __version__
+
 f2py_version = __version__.version
 
 import copy
-import re
 import os
-from .crackfortran import markoutercomma
-from . import cb_rules
+import re
 
+from . import cb_rules
 # The environment provided by auxfuncs.py is needed for some calls to eval.
 # As the needed functions cannot be determined by static inspection of the
 # code, it is safest to use import * pending a major refactoring of f2py.
 from .auxfuncs import *
+from .crackfortran import markoutercomma
 
 __all__ = [
     'getctype', 'getstrlength', 'getarrdims', 'getpydocsign',

@@ -1,47 +1,18 @@
 import datetime as dt
 from collections.abc import Sequence
-from typing import Union, Any, overload, TypeVar, Literal, SupportsIndex
+from typing import Any, Literal, SupportsIndex, TypeVar, Union, overload
 
-from numpy import (
-    ndarray,
-    number,
-    uint64,
-    int_,
-    int64,
-    intp,
-    float16,
-    bool_,
-    floating,
-    complexfloating,
-    object_,
-    generic,
-    _OrderKACF,
-    _OrderACF,
-    _ModeKind,
-    _PartitionKind,
-    _SortKind,
-    _SortSide,
-)
-from numpy._typing import (
-    DTypeLike,
-    _DTypeLike,
-    ArrayLike,
-    _ArrayLike,
-    NDArray,
-    _ShapeLike,
-    _Shape,
-    _ArrayLikeBool_co,
-    _ArrayLikeUInt_co,
-    _ArrayLikeInt_co,
-    _ArrayLikeFloat_co,
-    _ArrayLikeComplex_co,
-    _ArrayLikeObject_co,
-    _IntLike_co,
-    _BoolLike_co,
-    _ComplexLike_co,
-    _NumberLike_co,
-    _ScalarLike_co,
-)
+from numpy import (_ModeKind, _OrderACF, _OrderKACF, _PartitionKind, _SortKind,
+                   _SortSide, bool_, complexfloating, float16, floating,
+                   generic, int64, int_, intp, ndarray, number, object_,
+                   uint64)
+from numpy._typing import (ArrayLike, DTypeLike, NDArray, _ArrayLike,
+                           _ArrayLikeBool_co, _ArrayLikeComplex_co,
+                           _ArrayLikeFloat_co, _ArrayLikeInt_co,
+                           _ArrayLikeObject_co, _ArrayLikeUInt_co,
+                           _BoolLike_co, _ComplexLike_co, _DTypeLike,
+                           _IntLike_co, _NumberLike_co, _ScalarLike_co, _Shape,
+                           _ShapeLike)
 
 _SCT = TypeVar("_SCT", bound=generic)
 _SCT_uifcO = TypeVar("_SCT_uifcO", bound=number[Any] | object_)

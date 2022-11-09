@@ -2,25 +2,13 @@ from __future__ import annotations
 
 # NOTE: Import `Sequence` from `typing` as we it is needed for a type-alias,
 # not an annotation
-from collections.abc import Collection, Callable
-from typing import Any, Sequence, Protocol, Union, TypeVar, runtime_checkable
-from numpy import (
-    ndarray,
-    dtype,
-    generic,
-    bool_,
-    unsignedinteger,
-    integer,
-    floating,
-    complexfloating,
-    number,
-    timedelta64,
-    datetime64,
-    object_,
-    void,
-    str_,
-    bytes_,
-)
+from collections.abc import Callable, Collection
+from typing import Any, Protocol, Sequence, TypeVar, Union, runtime_checkable
+
+from numpy import (bool_, bytes_, complexfloating, datetime64, dtype, floating,
+                   generic, integer, ndarray, number, object_, str_,
+                   timedelta64, unsignedinteger, void)
+
 from ._nested_sequence import _NestedSequence
 
 _T = TypeVar("_T")

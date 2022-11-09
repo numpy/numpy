@@ -10,41 +10,17 @@ See the `Mypy documentation`_ on protocols for more details.
 
 from __future__ import annotations
 
-from typing import (
-    TypeVar,
-    overload,
-    Any,
-    NoReturn,
-    Protocol,
-)
+from typing import Any, NoReturn, Protocol, TypeVar, overload
 
-from numpy import (
-    ndarray,
-    dtype,
-    generic,
-    bool_,
-    timedelta64,
-    number,
-    integer,
-    unsignedinteger,
-    signedinteger,
-    int8,
-    int_,
-    floating,
-    float64,
-    complexfloating,
-    complex128,
-)
-from ._nbit import _NBitInt, _NBitDouble
-from ._scalars import (
-    _BoolLike_co,
-    _IntLike_co,
-    _FloatLike_co,
-    _NumberLike_co,
-)
+from numpy import (bool_, complex128, complexfloating, dtype, float64,
+                   floating, generic, int8, int_, integer, ndarray, number,
+                   signedinteger, timedelta64, unsignedinteger)
+
 from . import NBitBase
 from ._generic_alias import NDArray
+from ._nbit import _NBitDouble, _NBitInt
 from ._nested_sequence import _NestedSequence
+from ._scalars import _BoolLike_co, _FloatLike_co, _IntLike_co, _NumberLike_co
 
 _T1 = TypeVar("_T1")
 _T2 = TypeVar("_T2")

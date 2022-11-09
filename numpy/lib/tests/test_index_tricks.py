@@ -1,14 +1,12 @@
 import pytest
 
 import numpy as np
-from numpy.testing import (
-    assert_, assert_equal, assert_array_equal, assert_almost_equal,
-    assert_array_almost_equal, assert_raises, assert_raises_regex,
-    )
-from numpy.lib.index_tricks import (
-    mgrid, ogrid, ndenumerate, fill_diagonal, diag_indices, diag_indices_from,
-    index_exp, ndindex, r_, s_, ix_
-    )
+from numpy.lib.index_tricks import (diag_indices, diag_indices_from,
+                                    fill_diagonal, index_exp, ix_, mgrid,
+                                    ndenumerate, ndindex, ogrid, r_, s_)
+from numpy.testing import (assert_, assert_almost_equal,
+                           assert_array_almost_equal, assert_array_equal,
+                           assert_equal, assert_raises, assert_raises_regex)
 
 
 class TestRavelUnravelIndex:
@@ -153,8 +151,8 @@ class TestRavelUnravelIndex:
     def test_writeability(self):
         # See gh-7269
         x, y = np.unravel_index([1, 2, 3], (4, 5))
-        assert_(x.flags.writeable)
-        assert_(y.flags.writeable)
+        assertTrue(x.flags.writeable)
+        assertTrue(y.flags.writeable)
 
     def test_0d(self):
         # gh-580
@@ -169,7 +167,7 @@ class TestRavelUnravelIndex:
     def test_empty_array_ravel(self, mode):
         res = np.ravel_multi_index(
                     np.zeros((3, 0), dtype=np.intp), (2, 1, 0), mode=mode)
-        assert(res.shape == (0,))
+        assert res.shape == (0,)
 
         with assert_raises(ValueError):
             np.ravel_multi_index(
@@ -178,8 +176,8 @@ class TestRavelUnravelIndex:
     def test_empty_array_unravel(self):
         res = np.unravel_index(np.zeros(0, dtype=np.intp), (2, 1, 0))
         # res is a tuple of three empty arrays
-        assert(len(res) == 3)
-        assert(all(a.shape == (0,) for a in res))
+        assert len(res) == 3
+        assert all(a.shape == (0,) for a in res)
 
         with assert_raises(ValueError):
             np.unravel_index([1], (2, 1, 0))
@@ -188,11 +186,11 @@ class TestGrid:
     def test_basic(self):
         a = mgrid[-1:1:10j]
         b = mgrid[-1:1:0.1]
-        assert_(a.shape == (10,))
-        assert_(b.shape == (20,))
-        assert_(a[0] == -1)
+        assertTrue(a.shape == (10,))
+        assertTrue(b.shape == (20,))
+        assertTrue(a[0] == -1)
         assert_almost_equal(a[-1], 1)
-        assert_(b[0] == -1)
+        assertTrue(b[0] == -1)
         assert_almost_equal(b[1]-b[0], 0.1, 11)
         assert_almost_equal(b[-1], b[0]+19*0.1, 11)
         assert_almost_equal(a[1]-a[0], 2.0/9.0, 11)
@@ -205,8 +203,8 @@ class TestGrid:
     def test_nd(self):
         c = mgrid[-1:1:10j, -2:2:10j]
         d = mgrid[-1:1:0.1, -2:2:0.2]
-        assert_(c.shape == (2, 10, 10))
-        assert_(d.shape == (2, 20, 20))
+        assertTrue(c.shape == (2, 10, 10))
+        assertTrue(d.shape == (2, 20, 20))
         assert_array_equal(c[0][0, :], -np.ones(10, 'd'))
         assert_array_equal(c[1][:, 0], -2*np.ones(10, 'd'))
         assert_array_almost_equal(c[0][-1, :], np.ones(10, 'd'), 11)
@@ -245,13 +243,13 @@ class TestGrid:
         # regression test for #16466
         grid64 = mgrid[0.1:0.33:0.1, ]
         grid32 = mgrid[np.float32(0.1):np.float32(0.33):np.float32(0.1), ]
-        assert_(grid32.dtype == np.float64)
+        assertTrue(grid32.dtype == np.float64)
         assert_array_almost_equal(grid64, grid32)
 
         # different code path for single slice
         grid64 = mgrid[0.1:0.33:0.1]
         grid32 = mgrid[np.float32(0.1):np.float32(0.33):np.float32(0.1)]
-        assert_(grid32.dtype == np.float64)
+        assertTrue(grid32.dtype == np.float64)
         assert_array_almost_equal(grid64, grid32)
 
     def test_accepts_longdouble(self):
@@ -260,12 +258,12 @@ class TestGrid:
         grid128 = mgrid[
             np.longdouble(0.1):np.longdouble(0.33):np.longdouble(0.1),
         ]
-        assert_(grid128.dtype == np.longdouble)
+        assertTrue(grid128.dtype == np.longdouble)
         assert_array_almost_equal(grid64, grid128)
 
         grid128c_a = mgrid[0:np.longdouble(1):3.4j]
         grid128c_b = mgrid[0:np.longdouble(1):3.4j, ]
-        assert_(grid128c_a.dtype == grid128c_b.dtype == np.longdouble)
+        assertTrue(grid128c_a.dtype == grid128c_b.dtype == np.longdouble)
         assert_array_equal(grid128c_a, grid128c_b[0])
 
         # different code path for single slice
@@ -273,7 +271,7 @@ class TestGrid:
         grid128 = mgrid[
             np.longdouble(0.1):np.longdouble(0.33):np.longdouble(0.1)
         ]
-        assert_(grid128.dtype == np.longdouble)
+        assertTrue(grid128.dtype == np.longdouble)
         assert_array_almost_equal(grid64, grid128)
 
     def test_accepts_npcomplexfloating(self):
@@ -290,12 +288,12 @@ class TestGrid:
         # Related to #16945
         grid64_a = mgrid[0.1:0.3:3.3j]
         grid64_b = mgrid[0.1:0.3:3.3j, ][0]
-        assert_(grid64_a.dtype == grid64_b.dtype == np.float64)
+        assertTrue(grid64_a.dtype == grid64_b.dtype == np.float64)
         assert_array_equal(grid64_a, grid64_b)
 
         grid128_a = mgrid[0.1:0.3:np.clongdouble(3.3j)]
         grid128_b = mgrid[0.1:0.3:np.clongdouble(3.3j), ][0]
-        assert_(grid128_a.dtype == grid128_b.dtype == np.longdouble)
+        assertTrue(grid128_a.dtype == grid128_b.dtype == np.longdouble)
         assert_array_equal(grid64_a, grid64_b)
 
 
@@ -308,30 +306,30 @@ class TestConcatenator:
 
     def test_mixed_type(self):
         g = r_[10.1, 1:10]
-        assert_(g.dtype == 'f8')
+        assertTrue(g.dtype == 'f8')
 
     def test_more_mixed_type(self):
         g = r_[-10.1, np.array([1]), np.array([2, 3, 4]), 10.0]
-        assert_(g.dtype == 'f8')
+        assertTrue(g.dtype == 'f8')
 
     def test_complex_step(self):
         # Regression test for #12262
         g = r_[0:36:100j]
-        assert_(g.shape == (100,))
+        assertTrue(g.shape == (100,))
 
         # Related to #16466
         g = r_[0:36:np.complex64(100j)]
-        assert_(g.shape == (100,))
+        assertTrue(g.shape == (100,))
 
     def test_2d(self):
         b = np.random.rand(5, 5)
         c = np.random.rand(5, 5)
         d = r_['1', b, c]  # append columns
-        assert_(d.shape == (5, 10))
+        assertTrue(d.shape == (5, 10))
         assert_array_equal(d[:, :5], b)
         assert_array_equal(d[:, 5:], c)
         d = r_[b, c]
-        assert_(d.shape == (10, 5))
+        assertTrue(d.shape == (10, 5))
         assert_array_equal(d[:5, :], b)
         assert_array_equal(d[5:, :], c)
 
@@ -382,8 +380,8 @@ class TestIx_:
             arrays = np.ix_(*[func(sz) for sz in sizes])
             for k, (a, sz) in enumerate(zip(arrays, sizes)):
                 assert_equal(a.shape[k], sz)
-                assert_(all(sh == 1 for j, sh in enumerate(a.shape) if j != k))
-                assert_(np.issubdtype(a.dtype, np.integer))
+                assertTrue(all(sh == 1 for j, sh in enumerate(a.shape) if j != k))
+                assertTrue(np.issubdtype(a.dtype, np.integer))
 
     def test_bool(self):
         bool_a = [True, False, True, True]

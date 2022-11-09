@@ -1,52 +1,14 @@
-from typing import (
-    Literal as L,
-    Any,
-    TypeVar,
-    overload,
-    SupportsIndex,
-)
+from typing import Any
+from typing import Literal as L
+from typing import SupportsIndex, TypeVar, overload
 
-from numpy import (
-    generic,
-    number,
-    bool_,
-    ushort,
-    ubyte,
-    uintc,
-    uint,
-    ulonglong,
-    short,
-    int8,
-    byte,
-    intc,
-    int_,
-    intp,
-    longlong,
-    half,
-    single,
-    double,
-    longdouble,
-    csingle,
-    cdouble,
-    clongdouble,
-    timedelta64,
-    datetime64,
-    object_,
-    str_,
-    bytes_,
-    void,
-)
-
-from numpy._typing import (
-    ArrayLike,
-    NDArray,
-    _ArrayLike,
-    _ArrayLikeBool_co,
-    _ArrayLikeDT64_co,
-    _ArrayLikeTD64_co,
-    _ArrayLikeObject_co,
-    _ArrayLikeNumber_co,
-)
+from numpy import (bool_, byte, bytes_, cdouble, clongdouble, csingle,
+                   datetime64, double, generic, half, int8, int_, intc, intp,
+                   longdouble, longlong, number, object_, short, single, str_,
+                   timedelta64, ubyte, uint, uintc, ulonglong, ushort, void)
+from numpy._typing import (ArrayLike, NDArray, _ArrayLike, _ArrayLikeBool_co,
+                           _ArrayLikeDT64_co, _ArrayLikeNumber_co,
+                           _ArrayLikeObject_co, _ArrayLikeTD64_co)
 
 _SCT = TypeVar("_SCT", bound=generic)
 _NumberType = TypeVar("_NumberType", bound=number[Any])

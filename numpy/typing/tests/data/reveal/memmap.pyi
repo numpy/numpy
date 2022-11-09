@@ -1,5 +1,6 @@
-import numpy as np
 from typing import Any
+
+import numpy as np
 
 memmap_obj: np.memmap[Any, np.dtype[np.str_]]
 
