@@ -1,0 +1,5 @@
+* Passing dtype instances other than the canonical (mainly native byte-order)
+  ones to ``dtype=`` or ``signature=`` in ufuncs will now raise a ``TypeError``.
+  We recommend passing the strings ``"int8"`` or scalar types ``np.int8``
+  since the byte-order, datetime/timedelta unit, etc. are never enforced.
+  (Initially deprecated in NumPy 1.21.)
