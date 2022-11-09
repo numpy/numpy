@@ -567,7 +567,7 @@ npy_divmod@c@(@type@ a, @type@ b, @type@ *modulus)
 
     /* adjust fmod result to conform to Python convention of remainder */
     if (mod) {
-        if (isless(b, 0) != isless(mod, 0)) {
+        if (isless(b, (@type@)0) != isless(mod, (@type@)0)) {
             mod += b;
             div -= 1.0@c@;
         }

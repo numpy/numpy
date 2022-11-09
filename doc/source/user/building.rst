@@ -79,6 +79,10 @@ Building NumPy requires the following software installed:
 
    For building NumPy, you'll need a recent version of Cython.
 
+5) The NumPy source code
+
+   Clone the repository following the instructions in :doc:`/dev/index`.
+
 Basic Installation
 ------------------
 

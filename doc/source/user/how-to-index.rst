@@ -1,6 +1,6 @@
 .. currentmodule:: numpy
 
-.. _how-to-index.rst:
+.. _how-to-index:
 
 *****************************************
 How to index :class:`ndarrays <.ndarray>`

@@ -61,12 +61,14 @@ is also big-endian).  However, sometimes you need to flip these around.
 
 .. warning::
 
-    Scalars currently do not include byte order information, so extracting
-    a scalar from an array will return an integer in native byte order.
-    Hence:
+    Scalars do not include byte order information, so extracting a scalar from
+    an array will return an integer in native byte order.  Hence:
 
     >>> big_end_arr[0].dtype.byteorder == little_end_u4[0].dtype.byteorder
     True
+
+    NumPy intentionally does not attempt to always preserve byte-order
+    and for example converts to native byte-order in `numpy.concatenate`.
 
 Changing byte ordering
 ======================

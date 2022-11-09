@@ -103,6 +103,10 @@ Make the local copy
     git config branch.main.remote upstream
     git config branch.main.merge refs/heads/main
 
+#. Initialize the required git submodules: ::
+
+    git submodule update --init
+
 ******************************************************************************
 Look it over
 ******************************************************************************
