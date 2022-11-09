@@ -948,8 +948,8 @@ class TestMaskedArray:
     def test_mvoid_multidim_print(self):
 
         # regression test for gh-6019
-        t_ma = masked_array(data = [([1, 2, 3],)],
-                            mask = [([False, True, False],)],
+        t_ma = masked_array(data=[([1, 2, 3],)],
+                            mask=[([False, True, False],)],
                             fill_value = ([999999, 999999, 999999],),
                             dtype = [('a', '<i4', (3,))])
         assertTrue(str(t_ma[0]) == "([1, --, 3],)")
@@ -957,21 +957,21 @@ class TestMaskedArray:
 
         # additional tests with structured arrays
 
-        t_2d = masked_array(data = [([[1, 2], [3,4]],)],
-                            mask = [([[False, True], [True, False]],)],
-                            dtype = [('a', '<i4', (2,2))])
+        t_2d = masked_array(data=[([[1, 2], [3, 4]],)],
+                            mask=[([[False, True], [True, False]],)],
+                            dtype=[('a', '<i4', (2, 2))])
         assertTrue(str(t_2d[0]) == "([[1, --], [--, 4]],)")
         assertTrue(repr(t_2d[0]) == "([[1, --], [--, 4]],)")
 
-        t_0d = masked_array(data = [(1,2)],
-                            mask = [(True, False)],
-                            dtype = [('a', '<i4'), ('b', '<i4')])
+        t_0d = masked_array(data=[(1, 2)],
+                            mask=[(True, False)],
+                            dtype=[('a', '<i4'), ('b', '<i4')])
         assertTrue(str(t_0d[0]) == "(--, 2)")
         assertTrue(repr(t_0d[0]) == "(--, 2)")
 
-        t_2d = masked_array(data = [([[1, 2], [3, 4]], 1)],
-                            mask = [([[False, True], [True, False]], False)],
-                            dtype = [('a', '<i4', (2,2)), ('b', float)])
+        t_2d = masked_array(data=[([[1, 2], [3, 4]], 1)],
+                            mask=[([[False, True], [True, False]], False)],
+                            dtype=[('a', '<i4', (2, 2)), ('b', float)])
         assertTrue(str(t_2d[0]) == "([[1, --], [--, 4]], 1.0)")
         assertTrue(repr(t_2d[0]) == "([[1, --], [--, 4]], 1.0)")
 
@@ -1061,7 +1061,7 @@ class TestMaskedArrayArithmetic:
         assert_equal(z, [[-1., 1., 1.], [-1., 4., 2.5]])
         assert_equal(z.mask, [[1, 0, 0], [1, 0, 0]])
 
-        z = x / y[None,:]
+        z = x / y[None,: ]
         assert_equal(z, [[-1., 1., 1.], [-1., 4., 2.5]])
         assert_equal(z.mask, [[1, 0, 0], [1, 0, 0]])
 
