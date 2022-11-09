@@ -1,6 +1,8 @@
 #mesondefine SIZEOF_PY_INTPTR_T
 #mesondefine SIZEOF_OFF_T
 
+#mesondefine NPY_CAN_LINK_SVML
+
 /* optional C99 functions */
 #mesondefine HAVE_ATAN2
 #mesondefine HAVE_HYPOT

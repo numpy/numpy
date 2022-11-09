@@ -2,3 +2,5 @@ option('blas', type: 'string', value: 'openblas',
         description: 'option for BLAS library switching')
 option('lapack', type: 'string', value: 'openblas',
         description: 'option for LAPACK library switching')
+option('disable-svml', type: 'boolean', value: 'false',
+        description: 'Disable building against SVML')

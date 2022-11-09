@@ -1,7 +1,18 @@
-# TODO: add a build option equivalent to NPY_DISABLE_SVML
-
 # Generate config.h
 cdata = configuration_data()
+
+fs = import ('fs')
+use_svml = (
+  host_machine.system() == 'linux' and
+  host_machine.cpu_family() == 'x86_64' and
+  not get_option('disable-svml')
+)
+if use_svml
+  cdata.set10('NPY_CAN_LINK_SVML', true)
+  if not fs.exists('src/umath/svml')
+    error('Missing the `SVML` git submodule! Run `git submodule update --init` to fix this.')
+  endif
+endif
 
 # Check sizes of types
 cdata.set('SIZEOF_PY_INTPTR_T',
