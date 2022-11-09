@@ -26,9 +26,11 @@ if [[ $RUNNER_OS == "Linux" || $RUNNER_OS == "macOS" ]] ; then
 elif [[ $RUNNER_OS == "Windows" ]]; then
     PYTHONPATH=tools python -c "import openblas_support; openblas_support.make_init('numpy')"
     target=$(python tools/openblas_support.py)
+    ls /tmp
     mkdir -p openblas
+    # bash on windows does not like cp -r $target/* openblas
     for f in $(ls $target); do
-        cp -r $f openblas
+        cp -r $target/$f openblas
     done
     ls openblas
 fi
@@ -36,9 +38,11 @@ fi
 # Install GFortran
 if [[ $RUNNER_OS == "macOS" ]]; then
     # same version of gfortran as the openblas-libs and numpy-wheel builds
-    curl -L https://github.com/MacPython/gfortran-install/raw/master/archives/gfortran-4.9.0-Mavericks.dmg -o gfortran.dmg
-    GFORTRAN_SHA256=$(shasum -a 256 gfortran.dmg)
-    KNOWN_SHA256="d2d5ca5ba8332d63bbe23a07201c4a0a5d7e09ee56f0298a96775f928c3c4b30  gfortran.dmg"
+    local arch="x86_64"
+    local type="native"
+    curl -L https://github.com/isuruf/gcc/releases/download/gcc-11.3.0-2/gfortran-darwin-${arch}-${type}.tar.gz -o gfortran.dmg
+    GFORTRAN_SHA=$(shasum  gfortran.dmg)
+    KNOWN_SHA="c469a420d2d003112749dcdcbe3c684eef42127e  gfortran.dmg"
     if [ "$GFORTRAN_SHA256" != "$KNOWN_SHA256" ]; then
         echo sha256 mismatch
         exit 1
@@ -46,7 +50,7 @@ if [[ $RUNNER_OS == "macOS" ]]; then
 
     hdiutil attach -mountpoint /Volumes/gfortran gfortran.dmg
     sudo installer -pkg /Volumes/gfortran/gfortran.pkg -target /
-    otool -L /usr/local/gfortran/lib/libgfortran.3.dylib
+    otool -L /usr/local/gfortran/lib/libgfortran.5.dylib
 
     # arm64 stuff from gfortran_utils
     if [[ $PLATFORM == "macosx-arm64" ]]; then
