@@ -151,30 +151,14 @@ stages:
         [ -n "$USE_XCODE_10" ] && /bin/bash -c "sudo xcode-select -s /Applications/Xcode_10.app/Contents/Developer"
         clang --version
       displayName: 'report clang version'
-    # NOTE: might be better if we could avoid installing
-    # two C compilers, but with homebrew looks like we're
-    # now stuck getting the full gcc toolchain instead of
-    # just pulling in gfortran
+
     - script: |
-        set -xe
-        # same version of gfortran as the open-libs and numpy-wheel builds
-        arch="x86_64"
-        type="native"
-        curl -L https://github.com/isuruf/gcc/releases/download/gcc-11.3.0-2/gfortran-darwin-${arch}-${type}.tar.gz -o gfortran.dmg
-        GFORTRAN_SHA=$(shasum gfortran.dmg)
-        KNOWN_SHA="c469a420d2d003112749dcdcbe3c684eef42127e  gfortran.dmg"
-        if [ "$GFORTRAN_SHA256" != "$KNOWN_SHA256" ]; then
-            echo sha256 mismatch
-            exit 1
+        if [[ $PLATFORM == "macosx-arm64" ]]; then
+            PLAT="arm64"
         fi
-        hdiutil attach -mountpoint /Volumes/gfortran gfortran.dmg
-        sudo installer -pkg /Volumes/gfortran/gfortran.pkg -target /
-        otool -L /usr/local/gfortran/lib/libgfortran.5.dylib
-        # Manually symlink gfortran-4.9 to plain gfortran for f2py.
-        # No longer needed after Feb 13 2020 as gfortran is already present
-        # and the attempted link errors. Keep this for future reference.
-        # ln -s /usr/local/bin/gfortran-4.9 /usr/local/bin/gfortran
-      displayName: 'make libgfortran available on mac os for openblas'
+        source tools/wheels/gfortran_utils.sh
+        install_gfortran
+      displayName: 'install gfortran'
     # use the pre-built openblas binary that most closely
     # matches our MacOS wheel builds -- currently based
     # primarily on file size / name details
