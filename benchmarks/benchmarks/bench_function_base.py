@@ -58,7 +58,7 @@ class Mean(Benchmark):
     params = [[1, 10, 100_000]]
 
     def setup(self, size):
-        self.array = np.arange(2*size).reshape(2, size)
+        self.array = np.arange(2 * size).reshape(2, size)
 
     def time_mean(self, size):
         np.mean(self.array)
@@ -130,6 +130,7 @@ class Select(Benchmark):
 
 def memoize(f):
     _memoized = {}
+
     def wrapped(*args):
         if args not in _memoized:
             _memoized[args] = f(*args)
@@ -170,7 +171,7 @@ class SortGenerator:
         """
         Returns an array that's in descending order.
         """
-        return np.arange(size-1, -1, -1, dtype=dtype)
+        return np.arange(size - 1, -1, -1, dtype=dtype)
 
     @staticmethod
     @memoize
@@ -221,7 +222,7 @@ class SortGenerator:
         area_num = int(size * frac / area_size)
         a = np.arange(size, dtype=dtype)
         for _ in range(area_num):
-            start = np.random.randint(size-area_size)
+            start = np.random.randint(size - area_size)
             end = start + area_size
             np.random.shuffle(a[start:end])
         return a
