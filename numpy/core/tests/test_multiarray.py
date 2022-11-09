@@ -1257,9 +1257,9 @@ class TestStructured:
         # The main importance is that it does not return True:
         with pytest.raises(TypeError):
             x == y
- 
+
     def test_empty_structured_array_comparison(self):
-        # Check that comparison works on empty arrays with nontrivially 
+        # Check that comparison works on empty arrays with nontrivially
         # shaped fields
         a = np.zeros(0, [('a', '<f8', (1, 1))])
         assert_equal(a, a)
@@ -2232,7 +2232,7 @@ class TestMethods:
         assert_c(a.copy('C'))
         assert_fortran(a.copy('F'))
         assert_c(a.copy('A'))
-    
+
     @pytest.mark.parametrize("dtype", ['O', np.int32, 'i,O'])
     def test__deepcopy__(self, dtype):
         # Force the entry of NULLs into array
@@ -2441,7 +2441,7 @@ class TestMethods:
         np.array([0, 1, np.nan]),
     ])
     def test_searchsorted_floats(self, a):
-        # test for floats arrays containing nans. Explicitly test 
+        # test for floats arrays containing nans. Explicitly test
         # half, single, and double precision floats to verify that
         # the NaN-handling is correct.
         msg = "Test real (%s) searchsorted with nans, side='l'" % a.dtype
@@ -2457,7 +2457,7 @@ class TestMethods:
         assert_equal(y, 2)
 
     def test_searchsorted_complex(self):
-        # test for complex arrays containing nans. 
+        # test for complex arrays containing nans.
         # The search sorted routines use the compare functions for the
         # array type, so this checks if that is consistent with the sort
         # order.
@@ -2479,7 +2479,7 @@ class TestMethods:
         a = np.array([0, 128], dtype='>i4')
         b = a.searchsorted(np.array(128, dtype='>i4'))
         assert_equal(b, 1, msg)
-        
+
     def test_searchsorted_n_elements(self):
         # Check 0 elements
         a = np.ones(0)
@@ -6730,6 +6730,18 @@ class TestDot:
         data = np.ones(2**30+100, dtype=dtype)
         res = np.dot(data, data)
         assert res == 2**30+100
+
+    def test_dtype_discovery_fails(self):
+        # See gh-14247, error checking was missing for failed dtype discovery
+        class BadObject(object):
+            def __array__(self):
+                raise TypeError("just this tiny mint leaf")
+
+        with pytest.raises(TypeError):
+            np.dot(BadObject(), BadObject())
+
+        with pytest.raises(TypeError):
+            np.dot(3.0, BadObject())
 
 
 class MatmulCommon:
