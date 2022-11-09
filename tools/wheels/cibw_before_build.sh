@@ -28,7 +28,7 @@ elif [[ $RUNNER_OS == "Windows" ]]; then
     target=$(python tools/openblas_support.py)
     mkdir -p openblas
     ls $target
-    cp -r $target\* openblas
+    cp -r $target\\* openblas
     ls openblas
 fi
 

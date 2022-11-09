@@ -79,7 +79,7 @@ steps:
 - script: |
     python -m pip install threadpoolctl
     python tools/openblas_support.py --check_version
-  displayName: 'Check OpenBLAS version"
+  displayName: 'Check OpenBLAS version'
 
 - powershell: |
     If ($(BITS) -eq 32) {
