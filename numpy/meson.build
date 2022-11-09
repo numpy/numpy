@@ -62,7 +62,7 @@ python_sources = [
   'ctypeslib.pyi',
   'dual.py',
   'matlib.py',
-  'setup.py',
+  'py.typed',
   'version.py'
 ]
 
