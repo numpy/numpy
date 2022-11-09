@@ -37,7 +37,15 @@ steps:
   displayName: 'Install rtools'
 
 - powershell: |
+    $ErrorActionPreference = "Stop"
+    # Download and get the path to "openblas". We cannot copy it
+    # to $PYTHON_EXE's directory since that is on a different drive which
+    # mingw does not like. Instead copy it to a directory and set OPENBLAS,
+    # since OPENBLAS will be picked up by the openblas discovery
     $target = $(python tools/openblas_support.py)
+    mkdir openblas
+    echo "Copying $target to openblas/"
+    cp -r $target/* openblas/
     $env:OPENBLAS = $target
   displayName: 'Download / Install OpenBLAS'
 
@@ -45,8 +53,20 @@ steps:
 # vs. manual setup.py and then runtests.py for testing only
 
 - powershell: |
+    ls openblas
+    If ($(BITS) -eq 32) {
+        $env:CFLAGS = "-m32"
+        $env:LDFLAGS = "-m32"
+        $env:PATH = "$env:RTOOLS40_HOME\\mingw32\\bin;$env:PATH"
+    }
+    Else
+    {
+        $env:PATH = "$env:RTOOLS40_HOME\\mingw64\\bin;$env:PATH"
+    }
     If ( Test-Path env:NPY_USE_BLAS_ILP64 ) {
-        $env:OPENBLAS64_ = $env:OPENBLAS
+        $env:OPENBLAS64_ = "openblas"
+    } else {
+        $env:OPENBLAS = "openblas"
     }
     python -c "from tools import openblas_support; openblas_support.make_init('numpy')"
     python -m pip wheel -v -v -v --no-build-isolation --no-use-pep517 --wheel-dir=dist .
@@ -57,7 +77,6 @@ steps:
   displayName: 'Build NumPy'
 
 - powershell: |
-    # gfortran from rtools is needed for tests
     If ($(BITS) -eq 32) {
         $env:CFLAGS = "-m32"
         $env:LDFLAGS = "-m32"

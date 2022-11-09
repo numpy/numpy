@@ -27,7 +27,8 @@ elif [[ $RUNNER_OS == "Windows" ]]; then
     PYTHONPATH=tools python -c "import openblas_support; openblas_support.make_init('numpy')"
     target=$(python tools/openblas_support.py)
     mkdir -p openblas
-    cp -r $target openblas
+    cp -r $target/* openblas
+    ls openblas
 fi
 
 # Install GFortran
