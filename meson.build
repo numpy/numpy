@@ -20,8 +20,8 @@ cpp = meson.get_compiler('cpp')
 
 # Check compiler is recent enough (see the SciPy Toolchain Roadmap for details)
 if cc.get_id() == 'gcc'
-  if not cc.version().version_compare('>=8.0')
-    error('NumPy requires GCC >= 8.0')
+  if not cc.version().version_compare('>=8.4')
+    error('NumPy requires GCC >= 8.4')
   endif
 elif cc.get_id() == 'msvc'
   if not cc.version().version_compare('>=1910')
