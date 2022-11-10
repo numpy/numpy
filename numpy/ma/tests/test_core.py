@@ -21,7 +21,7 @@ import numpy.ma.core
 import numpy.core.fromnumeric as fromnumeric
 import numpy.core.umath as umath
 from numpy.testing import (
-    assert_raises, assert_warns, suppress_warnings
+    assert_raises, assert_warns, suppress_warnings, IS_WASM
     )
 from numpy import ndarray
 from numpy.compat import asbytes
@@ -4365,6 +4365,7 @@ class TestMaskedArrayFunctions:
         assert_equal(test, ctrl)
         assert_equal(test.mask, ctrl.mask)
 
+    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     def test_where(self):
         # Test the where function
         x = np.array([1., 1., 1., -2., pi/2.0, 4., 5., -10., 10., 1., 2., 3.])

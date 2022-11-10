@@ -9,7 +9,7 @@ import numpy.core._multiarray_tests as _multiarray_tests
 from numpy import array, arange, nditer, all
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_raises,
-    HAS_REFCOUNT, suppress_warnings, break_cycles
+    IS_WASM, HAS_REFCOUNT, suppress_warnings, break_cycles
     )
 
 
@@ -2025,6 +2025,7 @@ def test_buffered_cast_error_paths():
             buf = next(it)
             buf[...] = "a"  # cannot be converted to int.
 
+@pytest.mark.skipif(IS_WASM, reason="Cannot start subprocess")
 @pytest.mark.skipif(not HAS_REFCOUNT, reason="PyPy seems to not hit this.")
 def test_buffered_cast_error_paths_unraisable():
     # The following gives an unraisable error. Pytest sometimes captures that

@@ -283,7 +283,7 @@ from io import BytesIO
 import numpy as np
 from numpy.testing import (
     assert_, assert_array_equal, assert_raises, assert_raises_regex,
-    assert_warns, IS_PYPY,
+    assert_warns, IS_PYPY, IS_WASM
     )
 from numpy.testing._private.utils import requires_memory
 from numpy.lib import format
@@ -459,6 +459,7 @@ def test_long_str():
     assert_array_equal(long_str_arr, long_str_arr2)
 
 
+@pytest.mark.skipif(IS_WASM, reason="memmap doesn't work correctly")
 @pytest.mark.slow
 def test_memmap_roundtrip(tmpdir):
     for i, arr in enumerate(basic_arrays + record_arrays):
@@ -526,6 +527,7 @@ def test_load_padded_dtype(tmpdir, dt):
     assert_array_equal(arr, arr1)
 
 
+@pytest.mark.xfail(IS_WASM, reason="Emscripten NODEFS has a buggy dup")
 def test_python2_python3_interoperability():
     fname = 'win64python2.npy'
     path = os.path.join(os.path.dirname(__file__), 'data', fname)
@@ -675,6 +677,7 @@ def test_version_2_0():
     assert_raises(ValueError, format.write_array, f, d, (1, 0))
 
 
+@pytest.mark.skipif(IS_WASM, reason="memmap doesn't work correctly")
 def test_version_2_0_memmap(tmpdir):
     # requires more than 2 byte for header
     dt = [(("%d" % i) * 100, float) for i in range(500)]

@@ -15,7 +15,7 @@ from numpy import ma
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_almost_equal,
     assert_array_almost_equal, assert_raises, assert_allclose, IS_PYPY,
-    assert_warns, assert_raises_regex, suppress_warnings, HAS_REFCOUNT,
+    assert_warns, assert_raises_regex, suppress_warnings, HAS_REFCOUNT, IS_WASM
     )
 import numpy.lib.function_base as nfb
 from numpy.random import rand
@@ -3754,6 +3754,7 @@ class TestMedian:
         b[2] = np.nan
         assert_equal(np.median(a, (0, 2)), b)
 
+    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work correctly")
     def test_empty(self):
         # mean(empty array) emits two warnings: empty slice and divide by 0
         a = np.array([], dtype=float)

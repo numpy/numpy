@@ -13,7 +13,7 @@ import numpy.core._rational_tests as _rational_tests
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_array_equal,
     assert_almost_equal, assert_array_almost_equal, assert_no_warnings,
-    assert_allclose, HAS_REFCOUNT, suppress_warnings
+    assert_allclose, HAS_REFCOUNT, suppress_warnings, IS_WASM
     )
 from numpy.testing._private.utils import requires_memory
 from numpy.compat import pickle
@@ -700,6 +700,7 @@ class TestUfunc:
         a = np.ones(500, dtype=np.float64)
         assert_almost_equal((a / 10.).sum() - a.size / 10., 0, 13)
 
+    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     def test_sum(self):
         for dt in (int, np.float16, np.float32, np.float64, np.longdouble):
             for v in (0, 1, 2, 7, 8, 9, 15, 16, 19, 127,
@@ -2538,6 +2539,7 @@ def test_ufunc_input_casterrors(bad_offset):
         np.add(arr, arr, dtype=np.intp, casting="unsafe")
 
 
+@pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
 @pytest.mark.parametrize("bad_offset", [0, int(np.BUFSIZE * 1.5)])
 def test_ufunc_input_floatingpoint_error(bad_offset):
     value = 123
@@ -2584,6 +2586,7 @@ def test_reduce_casterrors(offset):
     assert out[()] < value * offset
 
 
+@pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
 @pytest.mark.parametrize("method",
         [np.add.accumulate, np.add.reduce,
          pytest.param(lambda x: np.add.reduceat(x, [0]), id="reduceat"),
