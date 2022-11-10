@@ -35,12 +35,13 @@ elif [[ $RUNNER_OS == "Windows" ]]; then
     ls openblas
 fi
 
-# Install GFortran
 if [[ $RUNNER_OS == "macOS" ]]; then
-    # same version of gfortran as the openblas-libs and numpy-wheel builds
+    # Install same version of gfortran as the openblas-libs builds
     if [[ $PLATFORM == "macosx-arm64" ]]; then
         PLAT="arm64"
     fi
     source $PROJECT_DIR/tools/wheels/gfortran_utils.sh
     install_gfortran
+    # Try a newer version of delocate that knows about /usr/local/lib
+    pip install git+https://github.com/isuruf/delocate@search_usr_local#egg=delocate
 fi
