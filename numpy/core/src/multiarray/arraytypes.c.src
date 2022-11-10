@@ -3803,17 +3803,23 @@ BOOL_dot(char *ip1, npy_intp is1, char *ip2, npy_intp is2, char *op, npy_intp n,
     *((npy_bool *)op) = tmp;
 }
 
+/*
+ * `dot` does not make sense for times, for DATETIME it never worked.
+ *  For timedelta it does/did , but should probably also just be removed.
+ */
+#define DATETIME_dot NULL
+
 /**begin repeat
  *
  * #name = BYTE, UBYTE, SHORT, USHORT, INT, UINT,
  *         LONG, ULONG, LONGLONG, ULONGLONG,
- *         LONGDOUBLE, DATETIME, TIMEDELTA#
+ *         LONGDOUBLE, TIMEDELTA#
  * #type = npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
  *         npy_long, npy_ulong, npy_longlong, npy_ulonglong,
- *         npy_longdouble, npy_datetime, npy_timedelta#
+ *         npy_longdouble, npy_timedelta#
  * #out = npy_long, npy_ulong, npy_long, npy_ulong, npy_long, npy_ulong,
  *        npy_long, npy_ulong, npy_longlong, npy_ulonglong,
- *        npy_longdouble, npy_datetime, npy_timedelta#
+ *        npy_longdouble, npy_timedelta#
  */
 static void
 @name@_dot(char *ip1, npy_intp is1, char *ip2, npy_intp is2, char *op, npy_intp n,
