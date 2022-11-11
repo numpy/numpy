@@ -145,4 +145,59 @@ configure_file(input: 'config.h.in',
   install: false
 )
 
+python_sources = [
+  '__init__.py',
+  '__init__.pyi',
+  '_add_newdocs.py',
+  '_add_newdocs_scalars.py',
+  '_asarray.py',
+  '_asarray.pyi',
+  '_dtype.py',
+  '_dtype_ctypes.py',
+  '_exceptions.py',
+  '_internal.py',
+  '_internal.pyi',
+  '_machar.py',
+  '_methods.py',
+  '_string_helpers.py',
+  '_type_aliases.py',
+  '_type_aliases.pyi',
+  '_ufunc_config.py',
+  '_ufunc_config.pyi',
+  'arrayprint.py',
+  'arrayprint.pyi',
+  'cversions.py',
+  'defchararray.py',
+  'defchararray.pyi',
+  'einsumfunc.py',
+  'einsumfunc.pyi',
+  'fromnumeric.py',
+  'fromnumeric.pyi',
+  'function_base.py',
+  'function_base.pyi',
+  'getlimits.py',
+  'getlimits.pyi',
+  'memmap.py',
+  'memmap.pyi',
+  'multiarray.py',
+  'multiarray.pyi',
+  'numeric.py',
+  'numeric.pyi',
+  'numerictypes.py',
+  'numerictypes.pyi',
+  'overrides.py',
+  'records.py',
+  'records.pyi',
+  'shape_base.py',
+  'shape_base.pyi',
+  'umath.py',
+  'umath_tests.py',
+]
+
+py.install_sources(
+  python_sources,
+  subdir: 'numpy/core'
+)
+
 subdir('include')
+install_subdir('tests', install_dir: 'numpy/core')
