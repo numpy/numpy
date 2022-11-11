@@ -256,6 +256,21 @@ npymath_lib = static_library('npymath',
 # TODO: deal with npymath.ini.in (a pkg-config file)
 
 
+# Build multiarray_tests module
+# -----------------------------
+py.extension_module('_multiarray_tests',
+  [
+    src_file.process('src/multiarray/_multiarray_tests.c.src'),
+    'src/common/mem_overlap.c',
+    'src/common/npy_argparse.c',
+    'src/common/npy_hashtable.c',
+  ],
+  include_directories: ['include', 'src/common'],
+  link_with: npymath_lib,
+)
+
+
+
 python_sources = [
   '__init__.py',
   '__init__.pyi',
