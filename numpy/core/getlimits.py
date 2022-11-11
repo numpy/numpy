@@ -416,7 +416,7 @@ class finfo:
     nmant : int
         The number of bits in the mantissa.
         .. note::
-        finfo.nmant only shows the explicitly stored digits, which is
+        ``finfo.nmant`` only shows the explicitly stored digits, which is
         always off because floating point numbers have an implicitly
         leading 1. Because of this, finfo.nmant is due to be deprecated.
         To get the number of bits in the mantissa, use ``finfo.mant_dig``.
