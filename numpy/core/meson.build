@@ -144,3 +144,5 @@ configure_file(input: 'config.h.in',
   configuration: config_h,
   install: false
 )
+
+subdir('include')
