@@ -87,9 +87,19 @@ src_file = generator(src_file_cli,
   output : '@BASENAME@')
 
 pure_subdirs = [
+  '_pyinstaller',
+  '_typing',
+  'array_api',
+  'compat',
+  'distutils',
+  'f2py',
   'lib',
-  'lib/tests',
-  'lib/tests/data'
+  'ma',
+  'matrixlib',
+  'polynomial',
+  'testing',
+  'tests',
+  'typing',
 ]
 
 np_dir = py.get_install_dir() / 'numpy'

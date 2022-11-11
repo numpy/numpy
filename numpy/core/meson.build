@@ -220,7 +220,7 @@ configure_file(input: 'include/numpy/_numpyconfig.h.in',
   output: '_numpyconfig.h',
   configuration: config_h,
   install: true,
-  install_dir: 'include/numpy'
+  install_dir: np_dir / 'core/include/numpy'
 )
 
 # Build npymath static library
@@ -251,7 +251,7 @@ npymath_lib = static_library('npymath',
   include_directories: ['include', 'src/npymath', 'src/common'],
   dependencies: py_dep,
   install: true,
-  install_dir: 'numpy/core/lib',
+  install_dir: np_dir / 'core/lib',
 )
 # TODO: deal with npymath.ini.in (a pkg-config file)
 
@@ -311,4 +311,4 @@ py.install_sources(
 )
 
 subdir('include')
-install_subdir('tests', install_dir: 'numpy/core')
+install_subdir('tests', install_dir: np_dir / 'core')
