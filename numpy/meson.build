@@ -81,6 +81,11 @@ cython_gen_cpp = generator(cython_cli,
   arguments : ['@INPUT@', '@OUTPUT@', '--cplus'],
   output : '@BASENAME@.cpp')
 
+src_file_cli = find_program('_build_utils/process_src_template.py')
+src_file = generator(src_file_cli,
+  arguments : ['@INPUT@', '--outfile', '@OUTPUT@'],
+  output : '@BASENAME@')
+
 pure_subdirs = [
   'lib',
   'lib/tests',

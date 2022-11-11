@@ -4,6 +4,8 @@
 #   - sincos detection incorrect on NetBSD: https://github.com/mesonbuild/meson/issues/10641
 
 # Generate config.h
+# -----------------
+
 config_h = configuration_data()
 
 if not cc.has_header('Python.h', dependencies: py_dep)
@@ -144,6 +146,39 @@ configure_file(input: 'config.h.in',
   configuration: config_h,
   install: false
 )
+
+# Build npymath static library
+# ----------------------------
+
+staticlib_cflags = []
+if cc.get_id() == 'msvc'
+  # Disable voltbl section for vc142 to allow link using mingw-w64; see:
+  # https://github.com/matthew-brett/dll_investigation/issues/1#issuecomment-1100468171
+  # Needs to be added to static libraries that are shipped for reuse (i.e.,
+  # libnpymath and libnpyrandom)
+  if cc.has_argument('-d2VolatileMetadata-')
+     staticlib_cflags +=  '-d2VolatileMetadata-'
+   endif
+endif
+
+npymath_sources = [
+  src_file.process('src/npymath/ieee754.c.src'),
+  src_file.process('src/npymath/npy_math_complex.c.src'),
+  src_file.process('src/npymath/npy_math_internal.h.src'),
+  'src/npymath/_signbit.c',
+  'src/npymath/halffloat.c',
+  'src/npymath/npy_math.c',
+]
+npymath_lib = static_library('npymath',
+  npymath_sources,
+  c_args: staticlib_cflags,
+  include_directories: 'include',
+  dependencies: py_dep,
+  install: true,
+  install_dir: 'numpy/core/lib',
+)
+# TODO: deal with npymath.ini.in (a pkg-config file)
+
 
 python_sources = [
   '__init__.py',
