@@ -107,6 +107,8 @@ import sys
 import warnings
 
 from ._globals import _NoValue, _CopyMode
+from . import exceptions
+# Note that the following names are imported explicitly for backcompat:
 from .exceptions import (
     ComplexWarning, ModuleDeprecationWarning, VisibleDeprecationWarning,
     TooHardError, AxisError)
@@ -130,7 +132,7 @@ else:
         raise ImportError(msg) from e
 
     __all__ = [
-        'ModuleDeprecationWarning', 'VisibleDeprecationWarning',
+        'exceptions', 'ModuleDeprecationWarning', 'VisibleDeprecationWarning',
         'ComplexWarning', 'TooHardError', 'AxisError']
 
     # mapping of {name: (value, deprecation_msg)}

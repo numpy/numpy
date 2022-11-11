@@ -25,8 +25,9 @@ Exceptions
 .. autosummary::
    :toctree: generated/
 
-    AxisError       Given when an axis was invalid.
-    TooHardError    Error specific to `numpy.shares_memory`.
+    AxisError          Given when an axis was invalid.
+    InvalidPromotion   Given when no common dtype could be found.
+    TooHardError       Error specific to `numpy.shares_memory`.
 
 """
 
@@ -35,7 +36,7 @@ from ._utils import set_module as _set_module
 
 __all__ = [
     "ComplexWarning", "VisibleDeprecationWarning",
-    "TooHardError", "AxisError"]
+    "TooHardError", "AxisError", "InvalidPromotion"]
 
 
 # Disallow reloading this module so as to preserve the identities of the
@@ -195,3 +196,49 @@ class AxisError(ValueError, IndexError):
             if self._msg is not None:
                 msg = f"{self._msg}: {msg}"
             return msg
+
+
+class InvalidPromotion(TypeError):
+    """Multiple DTypes could not be converted to a common one.
+
+    This exception derives from ``TypeError`` and is raised whenever dtypes
+    cannot be converted to a single common one.  This can be because they
+    are of a different category/class or incompatible instances of the same
+    one (see Examples).
+
+    Notes
+    -----
+    ``InvalidPromotion`` derives from ``TypeError`` and if it occurs within
+    many functions (e.g. math functions will try to promote if they do not
+    find an implementation), it is chained with a more specific error.
+    In this case, it means that the function cannot be implemented or has no
+    implementation for the given dtype combination.
+
+    Typically promotion should be considered "invalid" between the dtypes of
+    two arrays when `arr1 == arr2` can safely return all ``False`` because the
+    dtypes are fundamentally different.
+
+    Examples
+    --------
+    Datetimes and complex numbers are incompatible classes and cannot be
+    promoted:
+
+    >>> np.result_type(np.dtype("M8", "D")
+    InvalidPromotion: The DType <class 'numpy.dtype[datetime64]'> could not be
+    promoted by <class 'numpy.dtype[complex128]'>. This means that no common
+    DType exists for the given inputs. For example they cannot be stored in a
+    single array unless the dtype is `object`. The full list of DTypes is:
+    (<class 'numpy.dtype[datetime64]'>, <class 'numpy.dtype[complex128]'>)
+
+    For example for structured dtypes, the structure can mismatch and the
+    same ``InvalidPromotion`` error is given when two structured dtypes with
+    a mismatch in their number of fields is given:
+
+    >>> dtype1 = np.dtype([("field1", np.float64), ("field2", np.int64)])
+    >>> dtype2 = np.dtype([("field1", np.float64)])
+    >>> np.promote_types(dtype1, dtype2)
+    InvalidPromotion: field names `('field1', 'field2')` and `('field1',)`
+    mismatch.
+
+    """
+    pass

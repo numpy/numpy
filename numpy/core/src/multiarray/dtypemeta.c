@@ -404,7 +404,7 @@ void_common_instance(PyArray_Descr *descr1, PyArray_Descr *descr2)
     if (descr1->subarray == NULL && descr1->names == NULL &&
             descr2->subarray == NULL && descr2->names == NULL) {
         if (descr1->elsize != descr2->elsize) {
-            PyErr_SetString(PyExc_TypeError,
+            PyErr_SetString(npy_InvalidPromotion,
                     "Invalid type promotion with void datatypes of different "
                     "lengths. Use the `np.bytes_` datatype instead to pad the "
                     "shorter value with trailing zero bytes.");
@@ -443,7 +443,7 @@ void_common_instance(PyArray_Descr *descr1, PyArray_Descr *descr2)
             return NULL;
         }
         if (!cmp) {
-            PyErr_SetString(PyExc_TypeError,
+            PyErr_SetString(npy_InvalidPromotion,
                     "invalid type promotion with subarray datatypes "
                     "(shape mismatch).");
             return NULL;
@@ -473,7 +473,7 @@ void_common_instance(PyArray_Descr *descr1, PyArray_Descr *descr2)
         return new_descr;
     }
 
-    PyErr_SetString(PyExc_TypeError,
+    PyErr_SetString(npy_InvalidPromotion,
             "invalid type promotion with structured datatype(s).");
     return NULL;
 }

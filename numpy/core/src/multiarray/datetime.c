@@ -1622,6 +1622,13 @@ compute_datetime_metadata_greatest_common_divisor(
 
     return 0;
 
+/*
+ * Note that the following errors do not use "InvalidPromotion", because they
+ * should promote (two datetimes should have a common datetime), but cannot.
+ * The promotion is thus valid, but fails.
+ * This is important, because `arr == arr` for these cannot reasonably return
+ * all ``False`` values.
+ */
 incompatible_units: {
         PyObject *umeta1 = metastr_to_unicode(meta1, 0);
         if (umeta1 == NULL) {

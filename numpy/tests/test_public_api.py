@@ -361,6 +361,7 @@ SKIP_LIST_2 = [
     'numpy.matlib.char',
     'numpy.matlib.rec',
     'numpy.matlib.emath',
+    'numpy.matlib.exceptions',
     'numpy.matlib.math',
     'numpy.matlib.linalg',
     'numpy.matlib.fft',
