@@ -95,8 +95,8 @@
 
 /* #mesondefine NPY_RESTRICT restrict   in C99, remove? */
 #mesondefine NPY_CAN_LINK_SVML
-/* #mesondefine NPY_RELAXED_STRIDES_DEBUG */
-/* #mesondefine HAVE_LDOUBLE_XXX */
+#mesondefine NPY_RELAXED_STRIDES_DEBUG
+#mesondefine HAVE_LDOUBLE_INTEL_EXTENDED_16_BYTES_LE
 
 #ifndef __cplusplus
 /* #undef inline */

@@ -25,17 +25,46 @@ if use_svml
   endif
 endif
 
-# Check sizes of types
-config_h.set('SIZEOF_PY_INTPTR_T',
+# Check sizes of types. Note, some of these landed in config.h before, but were
+# unused. So clean that up and only define the NPY_SIZEOF flavors rather than
+# the SIZEOF ones
+types_to_check = [
+  ['NPY_SIZEOF_SHORT', 'short'],
+  ['NPY_SIZEOF_INT', 'int'],
+  ['NPY_SIZEOF_LONG', 'long'],
+  ['NPY_SIZEOF_LONGLONG', 'long long'],
+  ['NPY_SIZEOF_FLOAT', 'float'],
+  ['NPY_SIZEOF_DOUBLE', 'double'],
+  ['NPY_SIZEOF_LONGDOUBLE', 'long double'],
+]
+foreach symbol_type: types_to_check
+  config_h.set(symbol_type[0], cc.sizeof(symbol_type[1]))
+endforeach
+config_h.set('NPY_SIZEOF_OFF_T', cc.sizeof('off_t', prefix: '#include <sys/types.h>'))
+config_h.set('NPY_SIZEOF_PY_INTPTR_T',
   cc.sizeof('Py_intptr_t', dependencies: py_dep, prefix: '#include <Python.h>'))
-config_h.set('SIZEOF_OFF_T',
-  cc.sizeof('off_t', prefix: '#include <sys/types.h>'))
-config_h.set('SIZEOF_PY_LONG_LONG',
+config_h.set('NPY_SIZEOF_PY_LONG_LONG',
   cc.sizeof('PY_LONG_LONG', dependencies: py_dep, prefix: '#include <Python.h>'))
 
 # Check for complex support
-config_h.set10('HAVE_COMPLEX_H', cc.has_header('complex.h'))
-# TODO: NPY_USE_C99_COMPLEX and on in check_complex()
+if cc.has_header('complex.h')
+  config_h.set10('HAVE_COMPLEX_H', true)
+  config_h.set10('NPY_USE_C99_COMPLEX', true)
+  complex_types_to_check = [
+    ['NPY_HAVE_COMPLEX_FLOAT', 'NPY_SIZEOF_COMPLEX_FLOAT', 'complex float', 'float'],
+    ['NPY_HAVE_COMPLEX_DOUBLE', 'NPY_SIZEOF_COMPLEX_DOUBLE', 'complex double', 'double'],
+    ['NPY_HAVE_COMPLEX_LONG_DOUBLE', 'NPY_SIZEOF_COMPLEX_LONGDOUBLE', 'complex long double', 'long double'],
+  ]
+  foreach symbol_type: complex_types_to_check
+    if cc.has_type(symbol_type[2], prefix: '#include <complex.h>')
+      config_h.set10(symbol_type[0], true)
+      # Determine size of NumPy's own, struct-based, complex types. Binary
+      # compatibility with C99 complex types is checked at build time in `npy_common.h`.
+      ftype = symbol_type[3]
+      config_h.set(symbol_type[1], cc.sizeof(f'struct {@ftype@ __x; @ftype@ __y;}'))
+    endif
+  endforeach
+endif
 
 # Mandatory functions: if not found, fail the build
 # Some of these can still be blocklisted if the C99 implementation
@@ -57,9 +86,6 @@ foreach func: mandatory_funcs
   endif
 endforeach
 
-C99_COMPLEX_TYPES = [
-  'complex double', 'complex float', 'complex long double'
-]
 c99_complex_funcs = [
   'cabs', 'cacos', 'cacosh', 'carg', 'casin', 'casinh', 'catan',
   'catanh', 'cexp', 'clog', 'cpow', 'csqrt'
@@ -70,6 +96,13 @@ foreach func: c99_complex_funcs
   config_h.set10('HAVE_' + func.to_upper(), cc.has_function(func))
   config_h.set10('HAVE_' + func_single.to_upper(), cc.has_function(func_single))
   config_h.set10('HAVE_' + func_longdouble.to_upper(), cc.has_function(func_longdouble))
+endforeach
+
+# We require C99 so these should always be found at build time. But for
+# libnpymath as a C99 compat layer, these may still be relevant.
+c99_macros = ['isfinite', 'isinf', 'isnan', 'signbit']
+foreach macro: c99_macros
+  config_h.set10('NPY_HAVE_DECL_' + macro.to_upper(), cc.has_function(macro))
 endforeach
 
 inc_curdir = include_directories('.')
@@ -111,9 +144,13 @@ config_h.set10('HAVE_STRTOLD_L', result)
 
 # Other optional functions
 config_h.set10('HAVE_BACKTRACE',
-  cc.has_function('backtrace', prefix: '#include <execinfo.h>'))
+  cc.has_function('backtrace', prefix: '#include <execinfo.h>')
+)
 config_h.set10('HAVE_MADVISE',
-  cc.has_function('madvise', prefix: '#include <sys/mman.h>'))
+  cc.has_function('madvise', include_directories: inc_curdir,
+    prefix: '#include "feature_detection_misc.h"'
+  )
+)
 
 # SSE headers only enabled automatically on amd64/x32 builds
 optional_headers = [
@@ -138,13 +175,52 @@ has_optimize_attribute = cc.has_function_attribute('optimize')  # FIXME
 #config_h.set10('HAVE_ATTRIBUTE_OPTIMIZE_UNROLL_LOOPS', has_optimize_attribute)
 
 #TODO: __builtin_* (see setup_common.py)
-#TODO: long double representation (see setup_common.py)
+
+# FIXME: long double representation detection (see setup_common.py)
+#        add the regular x86-64 define (this is a hack to get further in the
+#        build without dealing with this thing right now)
+config_h.set10('HAVE_LDOUBLE_INTEL_EXTENDED_16_BYTES_LE', true)
+
+config_h.set10('NPY_HAVE_ENDIAN_H', cc.has_header('endian.h'))
+config_h.set10('NPY_HAVE_SYS_ENDIAN_H', cc.has_header('sys/endian.h'))
+if is_windows
+  config_h.set10('NPY_NO_SIGNAL', true)
+endif
+# Command-line switch; distutils build checked for `NPY_NOSMP` env var instead
+# TODO: document this (search for NPY_NOSMP in C API docs)
+config_h.set10('NPY_NO_SMP', get_option('disable-threading'))
+
+# Use bogus stride debug aid to flush out bugs where users use strides of
+# dimensions with length 1 to index a full contiguous array.
+config_h.set10('NPY_RELAXED_STRIDES_DEBUG', get_option('relaxed-strides-debug'))
+
+# Check whether we can use inttypes (C99) formats
+if cc.has_header_symbol('inttypes.h', 'PRIdPTR')
+  config_h.set10('NPY_USE_C99_FORMATS', true)
+endif
+
+visibility_hidden = ''
+if cc.has_function_attribute('visibility:hidden')
+  visibility_hidden = '__attribute__((visibility("hidden")))'
+endif
+config_h.set('NPY_VISIBILITY_HIDDEN', visibility_hidden)
+
+# TODO: implement version checks and update docs on this - see setup_common.py
+config_h.set('NPY_ABI_VERSION', '0x00000009')
+config_h.set('NPY_API_VERSION', '0x00000010')
 
 
 configure_file(input: 'config.h.in',
   output: 'config.h',
   configuration: config_h,
   install: false
+)
+
+configure_file(input: 'include/numpy/_numpyconfig.h.in',
+  output: '_numpyconfig.h',
+  configuration: config_h,
+  install: true,
+  install_dir: 'include/numpy'
 )
 
 # Build npymath static library
@@ -172,7 +248,7 @@ npymath_sources = [
 npymath_lib = static_library('npymath',
   npymath_sources,
   c_args: staticlib_cflags,
-  include_directories: 'include',
+  include_directories: ['include', 'src/npymath', 'src/common'],
   dependencies: py_dep,
   install: true,
   install_dir: 'numpy/core/lib',

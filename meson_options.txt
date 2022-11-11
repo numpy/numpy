@@ -4,3 +4,7 @@ option('lapack', type: 'string', value: 'openblas',
         description: 'option for LAPACK library switching')
 option('disable-svml', type: 'boolean', value: 'false',
         description: 'Disable building against SVML')
+option('disable-threading', type: 'boolean', value: 'false',
+        description: 'Disable threading support in NumPy (see `NPY_ALLOW_THREADS` docs)')
+option('relaxed-strides-debug', type: 'boolean', value: 'false',
+        description: 'Enable relaxed strides debug mode (see `NPY_RELAXED_STRIDES_DEBUG` docs)')
