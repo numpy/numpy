@@ -1123,7 +1123,7 @@ class TestWrap:
         assert_array_equal(a, b)
     
     def test_check_03(self):
-        a = np.pad([1, 2, 3], (1,4), 'wrap')
+        a = np.pad([1, 2, 3], (1, 4), 'wrap')
         b = np.array([3, 1, 2, 3, 1, 2, 3, 1])
         assert_array_equal(a, b)
 
