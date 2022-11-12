@@ -109,6 +109,7 @@ pure_subdirs = [
 ]
 
 np_dir = py.get_install_dir() / 'numpy'
+inc_np = include_directories('core/include')
 
 foreach subdir: pure_subdirs
   install_subdir(subdir, install_dir: np_dir)
@@ -123,3 +124,4 @@ custom_target('__config__.py',
 )
 
 subdir('core')
+subdir('fft')
