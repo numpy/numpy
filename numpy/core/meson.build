@@ -163,8 +163,9 @@ optional_headers = [
   'sys/mman.h',   # madvise
 ]
 foreach header: optional_headers
-  cdata.set10('HAVE_' + header.to_upper().replace('.', '_').replace('/', '_'),
-	cc.has_header(header))
+  if cc.has_header(header)
+    cdata.set10('HAVE_' + header.to_upper().replace('.', '_').replace('/', '_'), true)
+  endif
 endforeach
 
 # Optional compiler attributes
