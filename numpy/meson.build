@@ -40,8 +40,14 @@ endif
 if lapack_name == 'openblas'
   lapack_name = ['openblas', 'OpenBLAS']
 endif
-blas = dependency(blas_name)
-lapack = dependency(lapack_name)
+blas = dependency(blas_name, required: false)
+lapack = dependency(lapack_name, required: false)
+
+# BLAS and LAPACK are optional dependencies for NumPy. We can only use a BLAS
+# which provides a CBLAS interface.
+# TODO: add ILP64 support
+have_blas = blas.found() # TODO: and blas.has_cblas()
+
 
 # TODO: generate version.py and __config__.py (see scipy/meson.build)
 

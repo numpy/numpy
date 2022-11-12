@@ -210,13 +210,15 @@ cdata.set('NPY_ABI_VERSION', '0x00000009')
 cdata.set('NPY_API_VERSION', '0x00000010')
 
 
-configure_file(input: 'config.h.in',
+config_h = configure_file(
+  input: 'config.h.in',
   output: 'config.h',
   configuration: cdata,
   install: false
 )
 
-configure_file(input: 'include/numpy/_numpyconfig.h.in',
+_numpyconfig_h = configure_file(
+  input: 'include/numpy/_numpyconfig.h.in',
   output: '_numpyconfig.h',
   configuration: cdata,
   install: true,
@@ -260,23 +262,42 @@ npymath_lib = static_library('npymath',
 
 # Generate NumPy C API sources
 # ----------------------------
-#api_gen_cli = find_program('code_generators/generate_numpy_api.py')
-#api_gen = generator(api_gen_cli,
-  #arguments : ['@INPUT@', '@OUTDIR@'],
-  #output : ['__@BASENAME@_api.c', '__@BASENAME@_api.h', '@BASENAME@_api.txt'],
-#)
-#src_numpy_api = api_gen.process('multiarray')  # generate_numpy_api
+
+# This is a single C file. It needs to be built before _multiarray_umath starts
+# building, but we can't add it to the sources of that extension (this C file
+# doesn't compile, it's only included in another r file. Hence use the slightly
+# hacky --ignore argument to the next custom_target().
+src_umath_api_c = custom_target('__umath_generated',
+  output : '__umath_generated.c',
+  input : 'code_generators/generate_umath.py',
+  command: [py, '@INPUT@', '-o', '@OUTPUT@'],
+)
+
+src_umath_doc_h = custom_target('_umath_doc_generated',
+  output : '_umath_doc_generated.h',
+  input : 'code_generators/generate_umath_doc.py',
+  command: [py, '@INPUT@', '-o', '@OUTPUT@'],
+)
 
 src_numpy_api = custom_target('__multiarray_api',
   output : ['__multiarray_api.c', '__multiarray_api.h', 'multiarray_api.txt'],
   input : 'code_generators/generate_numpy_api.py',
+  command: [py, '@INPUT@', '-o', '@OUTDIR@', '--ignore', src_umath_api_c],
+  install: true,  # NOTE: setup.py build installs all, but just need .h?
+  install_dir: np_dir / 'core/include/numpy'
+)
+
+src_ufunc_api = custom_target('__ufunc_api',
+  output : ['__ufunc_api.c', '__ufunc_api.h', 'ufunc_api.txt'],
+  input : 'code_generators/generate_ufunc_api.py',
   command: [py, '@INPUT@', '-o', '@OUTDIR@'],
   install: true,  # NOTE: setup.py build installs all, but just need .h?
   install_dir: np_dir / 'core/include/numpy'
 )
-#src_ufunc_api = api_gen.process('ufunc')  # generate_ufunc_api
-# __umath_generated.c
-# __umath_doc_generated.h
+
+
+# Set common build flags for C and C++ code
+# -----------------------------------------
 
 # TODO: change to "feature" option in meson_options.txt? See
 # https://mesonbuild.com/Build-options.html#build-options
@@ -301,6 +322,13 @@ else
   ]
 endif
 
+# Same as NPY_CXX_FLAGS (TODO: extend for what ccompiler_opt adds)
+cpp_args_common = c_args_common + [
+  '-D__STDC_VERSION__=0',  # for compatibility with C headers
+  '-fno-exceptions',  # no exception support
+  '-fno-rtti',  # no runtime type information
+]
+
 # Build multiarray_tests module
 # -----------------------------
 templ_common_h = src_file.process('src/common/templ_common.h.src')
@@ -317,6 +345,170 @@ py.extension_module('_multiarray_tests',
   ],
   c_args: c_args_common,
   include_directories: ['include', 'src/common', 'src/multiarray', 'src/npymath'],
+  link_with: npymath_lib,
+  install: true,
+  subdir: 'numpy/core',
+)
+
+# Build _multiarray_umath module
+# ------------------------------
+src_multiarray_umath_common = [
+  'src/common/array_assign.c',
+  'src/common/mem_overlap.c',
+  'src/common/npy_argparse.c',
+  'src/common/npy_hashtable.c',
+  'src/common/npy_longdouble.c',
+  'src/common/ucsnarrow.c',
+  'src/common/ufunc_override.c',
+  'src/common/numpyos.c',
+  'src/common/npy_cpu_features.c',
+  templ_common_h,
+]
+if have_blas
+  src_multiarray_umath_common += [
+    'src/common/cblasfuncs.c',
+    'src/common/python_xerbla.c',
+  ]
+endif
+
+src_multiarray = [
+  'src/multiarray/abstractdtypes.c',
+  'src/multiarray/alloc.c',
+  src_file.process('src/multiarray/argfunc.dispatch.c.src'),
+  'src/multiarray/arrayobject.c',
+  src_file.process('src/multiarray/arraytypes.h.src'),
+  'src/multiarray/array_coercion.c',
+  'src/multiarray/array_method.c',
+  'src/multiarray/array_assign_scalar.c',
+  'src/multiarray/array_assign_array.c',
+  'src/multiarray/arrayfunction_override.c',
+  src_file.process('src/multiarray/arraytypes.c.src'),
+  'src/multiarray/buffer.c',
+  'src/multiarray/calculation.c',
+  'src/multiarray/compiled_base.c',
+  'src/multiarray/common.c',
+  'src/multiarray/common_dtype.c',
+  'src/multiarray/convert.c',
+  'src/multiarray/convert_datatype.c',
+  'src/multiarray/conversion_utils.c',
+  'src/multiarray/ctors.c',
+  'src/multiarray/datetime.c',
+  'src/multiarray/datetime_strings.c',
+  'src/multiarray/datetime_busday.c',
+  'src/multiarray/datetime_busdaycal.c',
+  'src/multiarray/descriptor.c',
+  'src/multiarray/dlpack.c',
+  'src/multiarray/dtypemeta.c',
+  'src/multiarray/dragon4.c',
+  'src/multiarray/dtype_transfer.c',
+  src_file.process('src/multiarray/einsum.c.src'),
+  src_file.process('src/multiarray/einsum_sumprod.c.src'),
+  'src/multiarray/experimental_public_dtype_api.c',
+  'src/multiarray/flagsobject.c',
+  'src/multiarray/getset.c',
+  'src/multiarray/hashdescr.c',
+  'src/multiarray/item_selection.c',
+  'src/multiarray/iterators.c',
+  'src/multiarray/legacy_dtype_implementation.c',
+  src_file.process('src/multiarray/lowlevel_strided_loops.c.src'),
+  'src/multiarray/mapping.c',
+  'src/multiarray/methods.c',
+  'src/multiarray/multiarraymodule.c',
+  'src/multiarray/nditer_api.c',
+  'src/multiarray/nditer_constr.c',
+  'src/multiarray/nditer_pywrap.c',
+  src_file.process('src/multiarray/nditer_templ.c.src'),
+  'src/multiarray/number.c',
+  'src/multiarray/refcount.c',
+  src_file.process('src/multiarray/scalartypes.c.src'),
+  'src/multiarray/sequence.c',
+  'src/multiarray/shape.c',
+  'src/multiarray/scalarapi.c',
+  'src/multiarray/strfuncs.c',
+  'src/multiarray/temp_elide.c',
+  'src/multiarray/typeinfo.c',
+  'src/multiarray/usertypes.c',
+  'src/multiarray/vdot.c',
+  src_file.process('src/common/npy_sort.h.src'),
+  'src/npysort/x86-qsort.dispatch.cpp',
+  'src/npysort/quicksort.cpp',
+  'src/npysort/mergesort.cpp',
+  'src/npysort/timsort.cpp',
+  'src/npysort/heapsort.cpp',
+  'src/npysort/radixsort.cpp',
+  'src/common/npy_partition.h',
+  'src/npysort/selection.cpp',
+  'src/common/npy_binsearch.h',
+  'src/npysort/binsearch.cpp',
+  'src/multiarray/textreading/conversions.c',
+  'src/multiarray/textreading/field_types.c',
+  'src/multiarray/textreading/growth.c',
+  'src/multiarray/textreading/readtext.c',
+  'src/multiarray/textreading/rows.c',
+  'src/multiarray/textreading/stream_pyobject.c',
+  'src/multiarray/textreading/str_to_int.c',
+  'src/multiarray/textreading/tokenize.cpp',
+]
+
+src_umath = [
+  src_file.process('src/umath/funcs.inc.src'),
+  src_file.process('src/umath/loops.h.src'),
+  src_file.process('src/umath/loops_utils.h.src'),
+  src_file.process('src/umath/loops.c.src'),
+  src_file.process('src/umath/loops_arithm_fp.dispatch.c.src'),
+  src_file.process('src/umath/loops_arithmetic.dispatch.c.src'),
+  src_file.process('src/umath/loops_comparison.dispatch.c.src'),
+  src_file.process('src/umath/loops_exponent_log.dispatch.c.src'),
+  src_file.process('src/umath/loops_hyperbolic.dispatch.c.src'),
+  src_file.process('src/umath/loops_minmax.dispatch.c.src'),
+  src_file.process('src/umath/loops_modulo.dispatch.c.src'),
+  src_file.process('src/umath/loops_trigonometric.dispatch.c.src'),
+  src_file.process('src/umath/loops_umath_fp.dispatch.c.src'),
+  src_file.process('src/umath/loops_unary_fp.dispatch.c.src'),
+  src_file.process('src/umath/matmul.c.src'),
+  src_file.process('src/umath/matmul.h.src'),
+  src_file.process('src/umath/simd.inc.src'),
+  'src/umath/ufunc_type_resolution.c',
+  'src/umath/clip.cpp',
+  'src/umath/clip.h',
+  'src/umath/dispatching.c',
+  'src/umath/extobj.c',
+  'src/umath/legacy_array_method.c',
+  'src/umath/override.c',
+  'src/umath/reduction.c',
+  src_file.process('src/umath/scalarmath.c.src'),
+  'src/umath/ufunc_object.c',
+  'src/umath/umathmodule.c',
+  'src/umath/string_ufuncs.cpp',
+  'src/umath/wrapping_array_method.c',
+  # For testing. Eventually, should use public API and be separate:
+  'src/umath/_scaled_float_dtype.c',
+]
+
+# TODO: add SVML sources
+
+py.extension_module('_multiarray_umath',
+  [
+    config_h,
+    _numpyconfig_h,
+    src_multiarray,
+    src_multiarray_umath_common,
+    src_umath,
+    src_ufunc_api[1],  # __ufunc_api.h
+    src_numpy_api[1],  # __multiarray_api.h
+    src_umath_doc_h,
+    npy_math_internal_h,
+  ],
+  c_args: c_args_common,
+  cpp_args: cpp_args_common,
+  include_directories: [
+    'include',
+    'src/common',
+    'src/multiarray',
+    'src/npymath',
+    'src/umath',
+  ],
+  dependencies: [py_dep, blas],
   link_with: npymath_lib,
   install: true,
   subdir: 'numpy/core',
