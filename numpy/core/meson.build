@@ -318,6 +318,8 @@ py.extension_module('_multiarray_tests',
   c_args: c_args_common,
   include_directories: ['include', 'src/common', 'src/multiarray', 'src/npymath'],
   link_with: npymath_lib,
+  install: true,
+  subdir: 'numpy/core',
 )
 
 
