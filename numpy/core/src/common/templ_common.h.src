@@ -4,6 +4,7 @@
 /* utility functions that profit from templates */
 
 #include "numpy/npy_common.h"
+#include <assert.h>
 
 /**begin repeat
  *  #name = int, uint, long, ulong,
@@ -57,8 +58,8 @@ npy_mul_sizes_with_overflow (npy_intp * r, npy_intp a, npy_intp b)
 #ifdef HAVE___BUILTIN_MUL_OVERFLOW
     return __builtin_mul_overflow(a, b, r);
 #else
-
-    assert(a >= 0 && b >= 0, "this function only supports non-negative numbers");
+    /* this function only supports non-negative numbers */
+    assert(a >= 0 && b >= 0);
     const npy_intp half_sz = ((npy_intp)1 << ((sizeof(a) * 8 - 1 ) / 2));
 
     *r = a * b;
