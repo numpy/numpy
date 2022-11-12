@@ -1123,8 +1123,18 @@ class TestWrap:
         assert_array_equal(a, b)
     
     def test_check_03(self):
-        a = np.pad([1, 2, 3], (1, 4), 'wrap')
-        b = np.array([3, 1, 2, 3, 1, 2, 3, 1])
+        a = np.arange(9, dtype=float).reshape(3, 3)
+        a = np.pad(a, [(2, 4), (1, 1)], mode='wrap')
+        b = np.array([
+            [5, 3, 4, 5, 3],
+            [8, 6, 7, 8, 6],
+            [2, 0, 1, 2, 0],
+            [5, 3, 4, 5, 3],
+            [8, 6, 7, 8, 6],
+            [2, 0, 1, 2, 0],
+            [5, 3, 4, 5, 3],
+            [8, 6, 7, 8, 6],
+            [2, 0, 1, 2, 0]])
         assert_array_equal(a, b)
 
     def test_pad_with_zero(self):
