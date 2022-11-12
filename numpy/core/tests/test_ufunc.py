@@ -3,6 +3,7 @@ import itertools
 import sys
 
 import pytest
+from pytest import param
 
 import numpy as np
 import numpy.core._umath_tests as umt
@@ -476,6 +477,34 @@ class TestUfunc:
         # we do support the types already:
         float_dtype = type(np.dtype(np.float64))
         np.add(3, 4, signature=(float_dtype, float_dtype, None))
+
+    @pytest.mark.parametrize("get_kwarg", [
+            lambda dt: dict(dtype=x),
+            lambda dt: dict(signature=(x, None, None))])
+    def test_signature_dtype_instances_allowed(self, get_kwarg):
+        # We allow certain dtype instances when there is a clear singleton
+        # and the given one is equivalent; mainly for backcompat.
+        int64 = np.dtype("int64")
+        int64_2 = pickle.loads(pickle.dumps(int64))
+        # Relies on pickling behavior, if assert fails just remove test...
+        assert int64 is not int64_2
+
+        assert np.add(1, 2, **get_kwarg(int64_2)).dtype == int64
+        td = np.timedelta(2, "s")
+        assert np.add(td, td, **get_kwarg("m8")).dtype == "m8[s]"
+
+    @pytest.mark.parametrize("get_kwarg", [
+            param(lambda x: dict(dtype=x), id="dtype"),
+            param(lambda x: dict(signature=(x, None, None)), id="signature")])
+    def test_signature_dtype_instances_allowed(self, get_kwarg):
+        msg = "The `dtype` and `signature` arguments to ufuncs"
+
+        with pytest.raises(TypeError, match=msg):
+            np.add(3, 5, **get_kwarg(np.dtype("int64").newbyteorder()))
+        with pytest.raises(TypeError, match=msg):
+            np.add(3, 5, **get_kwarg(np.dtype("m8[ns]")))
+        with pytest.raises(TypeError, match=msg):
+            np.add(3, 5, **get_kwarg("m8[ns]"))
 
     @pytest.mark.parametrize("casting", ["unsafe", "same_kind", "safe"])
     def test_partial_signature_mismatch(self, casting):

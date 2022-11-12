@@ -232,7 +232,9 @@ class MGridClass(nd_grid):
     --------
     lib.index_tricks.nd_grid : class of `ogrid` and `mgrid` objects
     ogrid : like mgrid but returns open (not fleshed out) mesh grids
+    meshgrid: return coordinate matrices from coordinate vectors
     r_ : array concatenator
+    :ref:`how-to-partition`
 
     Examples
     --------
@@ -283,7 +285,9 @@ class OGridClass(nd_grid):
     --------
     np.lib.index_tricks.nd_grid : class of `ogrid` and `mgrid` objects
     mgrid : like `ogrid` but returns dense (or fleshed out) mesh grids
+    meshgrid: return coordinate matrices from coordinate vectors
     r_ : array concatenator
+    :ref:`how-to-partition`
 
     Examples
     --------

@@ -1000,31 +1000,6 @@ class TestSingleElementSignature(_DeprecationTestCase):
         self.assert_deprecated(lambda: np.add(1, 2, sig=(np.dtype("l"),)))
 
 
-class TestComparisonBadDType(_DeprecationTestCase):
-    # Deprecated 2021-04-01, NumPy 1.21
-    message = r"using `dtype=` in comparisons is only useful for"
-
-    def test_deprecated(self):
-        self.assert_deprecated(lambda: np.equal(1, 1, dtype=np.int64))
-        # Not an error only for the transition
-        self.assert_deprecated(lambda: np.equal(1, 1, sig=(None, None, "l")))
-
-    def test_not_deprecated(self):
-        np.equal(True, False, dtype=bool)
-        np.equal(3, 5, dtype=bool, casting="unsafe")
-        np.equal([None], [4], dtype=object)
-
-class TestComparisonBadObjectDType(_DeprecationTestCase):
-    # Deprecated 2021-04-01, NumPy 1.21  (different branch of the above one)
-    message = r"using `dtype=object` \(or equivalent signature\) will"
-    warning_cls = FutureWarning
-
-    def test_deprecated(self):
-        self.assert_deprecated(lambda: np.equal(1, 1, dtype=object))
-        self.assert_deprecated(
-                lambda: np.equal(1, 1, sig=(None, None, object)))
-
-
 class TestCtypesGetter(_DeprecationTestCase):
     # Deprecated 2021-05-18, Numpy 1.21.0
     warning_cls = DeprecationWarning
@@ -1042,39 +1017,6 @@ class TestCtypesGetter(_DeprecationTestCase):
     )
     def test_not_deprecated(self, name: str) -> None:
         self.assert_not_deprecated(lambda: getattr(self.ctypes, name))
-
-
-class TestUFuncForcedDTypeWarning(_DeprecationTestCase):
-    message = "The `dtype` and `signature` arguments to ufuncs only select the"
-
-    def test_not_deprecated(self):
-        import pickle
-        # does not warn (test relies on bad pickling behaviour, simply remove
-        # it if the `assert int64 is not int64_2` should start failing.
-        int64 = np.dtype("int64")
-        int64_2 = pickle.loads(pickle.dumps(int64))
-        assert int64 is not int64_2
-        self.assert_not_deprecated(lambda: np.add(3, 4, dtype=int64_2))
-
-    def test_deprecation(self):
-        int64 = np.dtype("int64")
-        self.assert_deprecated(lambda: np.add(3, 5, dtype=int64.newbyteorder()))
-        self.assert_deprecated(lambda: np.add(3, 5, dtype="m8[ns]"))
-
-    def test_behaviour(self):
-        int64 = np.dtype("int64")
-        arr = np.arange(10, dtype="m8[s]")
-
-        with pytest.warns(DeprecationWarning, match=self.message):
-            np.add(3, 5, dtype=int64.newbyteorder())
-        with pytest.warns(DeprecationWarning, match=self.message):
-            np.add(3, 5, dtype="m8[ns]")  # previously used the "ns"
-        with pytest.warns(DeprecationWarning, match=self.message):
-            np.add(arr, arr, dtype="m8[ns]")  # never preserved the "ns"
-        with pytest.warns(DeprecationWarning, match=self.message):
-            np.maximum(arr, arr, dtype="m8[ns]")  # previously used the "ns"
-        with pytest.warns(DeprecationWarning, match=self.message):
-            np.maximum.reduce(arr, dtype="m8[ns]")  # never preserved the "ns"
 
 
 PARTITION_DICT = {

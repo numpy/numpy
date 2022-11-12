@@ -3,8 +3,6 @@ NumPy core libraries
 
 .. sectionauthor:: David Cournapeau
 
-.. versionadded:: 1.3.0
-
 Starting from numpy 1.3.0, we are working on separating the pure C,
 "computational" code from the python dependent code. The goal is twofolds:
 making the code cleaner, and enabling code reuse by other extensions outside
@@ -16,10 +14,19 @@ NumPy core math library
 The numpy core math library ('npymath') is a first step in this direction. This
 library contains most math-related C99 functionality, which can be used on
 platforms where C99 is not well supported. The core math functions have the
-same API as the C99 ones, except for the npy_* prefix.
+same API as the C99 ones, except for the ``npy_*`` prefix.
 
-The available functions are defined in <numpy/npy_math.h> - please refer to this header when
-in doubt.
+The available functions are defined in ``<numpy/npy_math.h>`` - please refer to
+this header when in doubt.
+
+.. note::
+
+   An effort is underway to make ``npymath`` smaller (since C99 compatibility
+   of compilers has improved over time) and more easily vendorable or usable as
+   a header-only dependency. That will avoid problems with shipping a static
+   library built with a compiler which may not match the compiler used by a
+   downstream package or end user. See
+   `gh-20880 <https://github.com/numpy/numpy/issues/20880>`__ for details.
 
 Floating point classification
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -74,8 +81,6 @@ Floating point classification
     This is a function equivalent to C99 copysign: return x with the same sign
     as y. Works for any value, including inf and nan. Single and extended
     precisions are available with suffix f and l.
-
-    .. versionadded:: 1.4.0
 
 Useful math constants
 ~~~~~~~~~~~~~~~~~~~~~
@@ -140,8 +145,6 @@ Those can be useful for precise floating point comparison.
     floating point value from x in the direction of y. Single and extended
     precisions are available with suffix f and l.
 
-    .. versionadded:: 1.4.0
-
 .. c:function:: double npy_spacing(double x)
 
     This is a function equivalent to Fortran intrinsic. Return distance between
@@ -149,31 +152,21 @@ Those can be useful for precise floating point comparison.
     eps. spacing of nan and +/- inf return nan. Single and extended precisions
     are available with suffix f and l.
 
-    .. versionadded:: 1.4.0
-
 .. c:function:: void npy_set_floatstatus_divbyzero()
 
     Set the divide by zero floating point exception
-
-    .. versionadded:: 1.6.0
 
 .. c:function:: void npy_set_floatstatus_overflow()
 
     Set the overflow floating point exception
 
-    .. versionadded:: 1.6.0
-
 .. c:function:: void npy_set_floatstatus_underflow()
 
     Set the underflow floating point exception
 
-    .. versionadded:: 1.6.0
-
 .. c:function:: void npy_set_floatstatus_invalid()
 
     Set the invalid floating point exception
-
-    .. versionadded:: 1.6.0
 
 .. c:function:: int npy_get_floatstatus()
 
@@ -187,8 +180,6 @@ Those can be useful for precise floating point comparison.
     Note that :c:func:`npy_get_floatstatus_barrier` is preferable as it prevents
     aggressive compiler optimizations reordering the call relative to
     the code setting the status, which could lead to incorrect results.
-
-    .. versionadded:: 1.9.0
 
 .. c:function:: int npy_get_floatstatus_barrier(char*)
 
@@ -214,8 +205,6 @@ Those can be useful for precise floating point comparison.
     prevents aggressive compiler optimizations reordering the call relative to
     the code setting the status, which could lead to incorrect results.
 
-    .. versionadded:: 1.9.0
-
 .. c:function:: int npy_clear_floatstatus_barrier(char*)
 
     Clears the floating point status. A pointer to a local variable is passed in to
@@ -227,11 +216,10 @@ Those can be useful for precise floating point comparison.
 Complex functions
 ~~~~~~~~~~~~~~~~~
 
-.. versionadded:: 1.4.0
-
 C99-like complex functions have been added. Those can be used if you wish to
 implement portable C extensions. Since we still support platforms without C99
-complex type, you need to restrict to C90-compatible syntax, e.g.:
+complex type (most importantly Windows, where MSVC doesn't support C99 complex
+types as of Nov 2022), you need to restrict to C90-compatible syntax, e.g.:
 
 .. code-block:: c
 
@@ -241,13 +229,31 @@ complex type, you need to restrict to C90-compatible syntax, e.g.:
 
         b = npy_log(a);
 
+.. _linking-npymath:
+
 Linking against the core math library in an extension
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. versionadded:: 1.4.0
+To use the core math library that NumPy ships as a static library in your own
+Python extension, you need to add the npymath compile and link options to your
+extension. The exact steps to take will depend on the build system you are using.
+The generic steps to take are:
 
-To use the core math library in your own extension, you need to add the npymath
-compile and link options to your extension in your setup.py:
+1. Add the numpy include directory (= the value of ``np.get_include()``) to
+   your include directories,
+2. The ``npymath`` static library resides in the ``lib`` directory right next
+   to numpy's include directory (i.e., ``pathlib.Path(np.get_include()) / '..'
+   / 'lib'``). Add that to your library search directories,
+3. Link with ``libnpymath`` and ``libm``.
+
+.. note::
+
+   Keep in mind that when you are cross compiling, you must use the ``numpy``
+   for the platform you are building for, not the native one for the build
+   machine. Otherwise you pick up a static library built for the wrong
+   architecture.
+
+When you build with ``numpy.distutils`` (deprecated), then use this in your ``setup.py``:
 
         .. hidden in a comment so as to be included in refguide but not rendered documentation
                 >>> import numpy.distutils.misc_util
@@ -258,15 +264,37 @@ compile and link options to your extension in your setup.py:
         >>> info = get_info('npymath')
         >>> _ = config.add_extension('foo', sources=['foo.c'], extra_info=info)
 
-In other words, the usage of info is exactly the same as when using blas_info
-and co.
+In other words, the usage of ``info`` is exactly the same as when using
+``blas_info`` and co.
+
+When you are building with `Meson <https://mesonbuild.com>`__, use::
+
+    # Note that this will get easier in the future, when Meson has
+    # support for numpy built in; most of this can then be replaced
+    # by `dependency('numpy')`.
+    incdir_numpy = run_command(py3,
+      [
+        '-c',
+        'import os; os.chdir(".."); import numpy; print(numpy.get_include())'
+      ],
+      check: true
+    ).stdout().strip()
+
+    inc_np = include_directories(incdir_numpy)
+
+    cc = meson.get_compiler('c')
+    npymath_path = incdir_numpy / '..' / 'lib'
+    npymath_lib = cc.find_library('npymath', dirs: npymath_path)
+
+    py3.extension_module('module_name',
+      ...
+      include_directories: inc_np,
+      dependencies: [npymath_lib],
 
 Half-precision functions
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. versionadded:: 1.6.0
-
-The header file <numpy/halffloat.h> provides functions to work with
+The header file ``<numpy/halffloat.h>`` provides functions to work with
 IEEE 754-2008 16-bit floating point values. While this format is
 not typically used for numerical computations, it is useful for
 storing values which require floating point but do not need much precision.
@@ -281,7 +309,7 @@ between the different signed zeros, you will get -0.0 != 0.0
 (0x8000 != 0x0000), which is incorrect.
 
 For these reasons, NumPy provides an API to work with npy_half values
-accessible by including <numpy/halffloat.h> and linking to 'npymath'.
+accessible by including ``<numpy/halffloat.h>`` and linking to ``npymath``.
 For functions that are not provided directly, such as the arithmetic
 operations, the preferred method is to convert to float
 or double and back again, as in the following example.

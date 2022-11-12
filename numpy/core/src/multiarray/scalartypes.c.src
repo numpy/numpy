@@ -1753,11 +1753,13 @@ gentype_reduce(PyObject *self, PyObject *NPY_UNUSED(args))
 
     mod = PyImport_ImportModule("numpy.core._multiarray_umath");
     if (mod == NULL) {
+        Py_DECREF(ret);
         return NULL;
     }
     obj = PyObject_GetAttrString(mod, "scalar");
     Py_DECREF(mod);
     if (obj == NULL) {
+        Py_DECREF(ret);
         return NULL;
     }
     PyTuple_SET_ITEM(ret, 0, obj);
@@ -1766,6 +1768,7 @@ gentype_reduce(PyObject *self, PyObject *NPY_UNUSED(args))
         PyObject *val = PyArrayScalar_VAL(self, Object);
         PyObject *tup = Py_BuildValue("NO", obj, val);
         if (tup == NULL) {
+            Py_DECREF(ret);
             return NULL;
         }
         PyTuple_SET_ITEM(ret, 1, tup);
@@ -1774,11 +1777,13 @@ gentype_reduce(PyObject *self, PyObject *NPY_UNUSED(args))
         /* a structured dtype with an object in a field */
         PyArrayObject *arr = (PyArrayObject *)PyArray_FromScalar(self, NULL);
         if (arr == NULL) {
+            Py_DECREF(ret);
             return NULL;
         }
         /* Use the whole array which handles sturctured void correctly */
         PyObject *tup = Py_BuildValue("NN", obj, arr);
         if (tup == NULL) {
+            Py_DECREF(ret);
             return NULL;
         }
         PyTuple_SET_ITEM(ret, 1, tup);

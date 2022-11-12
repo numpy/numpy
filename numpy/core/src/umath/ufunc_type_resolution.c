@@ -382,53 +382,9 @@ PyUFunc_SimpleBinaryComparisonTypeResolver(PyUFuncObject *ufunc,
         }
     }
     else {
-        PyArray_Descr *descr;
-        /*
-         * DEPRECATED 2021-03, NumPy 1.20
-         *
-         * If the type tuple was originally a single element (probably),
-         * issue a deprecation warning, but otherwise accept it.  Since the
-         * result dtype is always boolean, this is not actually valid unless it
-         * is `object` (but if there is an object input we already deferred).
-         *
-         * TODO: Once this deprecation is gone, the special case for
-         *       `PyUFunc_SimpleBinaryComparisonTypeResolver` in dispatching.c
-         *       can be removed.
-         */
-        if (PyTuple_Check(type_tup) && PyTuple_GET_SIZE(type_tup) == 3 &&
-                PyTuple_GET_ITEM(type_tup, 0) == Py_None &&
-                PyTuple_GET_ITEM(type_tup, 1) == Py_None &&
-                PyArray_DescrCheck(PyTuple_GET_ITEM(type_tup, 2))) {
-            descr = (PyArray_Descr *)PyTuple_GET_ITEM(type_tup, 2);
-            if (descr->type_num == NPY_OBJECT) {
-                if (DEPRECATE_FUTUREWARNING(
-                        "using `dtype=object` (or equivalent signature) will "
-                        "return object arrays in the future also when the "
-                        "inputs do not already have `object` dtype.") < 0) {
-                    return -1;
-                }
-            }
-            else if (descr->type_num != NPY_BOOL) {
-                if (DEPRECATE(
-                        "using `dtype=` in comparisons is only useful for "
-                        "`dtype=object` (and will do nothing for bool). "
-                        "This operation will fail in the future.") < 0) {
-                    return -1;
-                }
-            }
-        }
-        else {
-            /* Usually a failure, but let the default version handle it */
-            return PyUFunc_DefaultTypeResolver(ufunc, casting,
-                    operands, type_tup, out_dtypes);
-        }
-
-        out_dtypes[0] = NPY_DT_CALL_ensure_canonical(descr);
-        if (out_dtypes[0] == NULL) {
-            return -1;
-        }
-        out_dtypes[1] = out_dtypes[0];
-        Py_INCREF(out_dtypes[1]);
+        /* Usually a failure, but let the default version handle it */
+        return PyUFunc_DefaultTypeResolver(ufunc, casting,
+                operands, type_tup, out_dtypes);
     }
 
     /* Output type is always boolean */

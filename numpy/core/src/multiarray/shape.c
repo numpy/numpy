@@ -211,7 +211,7 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
     int flags;
 
     if (order == NPY_ANYORDER) {
-        order = PyArray_ISFORTRAN(self);
+        order = PyArray_ISFORTRAN(self) ? NPY_FORTRANORDER : NPY_CORDER;
     }
     else if (order == NPY_KEEPORDER) {
         PyErr_SetString(PyExc_ValueError,
