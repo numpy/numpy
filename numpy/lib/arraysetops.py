@@ -963,3 +963,15 @@ def setdiff1d(ar1, ar2, assume_unique=False):
         ar1 = unique(ar1)
         ar2 = unique(ar2)
     return ar1[in1d(ar1, ar2, assume_unique=True, invert=True)]
+
+def unique_not_sorted(arr):
+
+    '''
+    Motivated by the answer to this post https://stackoverflow.com/a/15637512
+    Function to return the unique array but not sorted
+    '''
+
+    arr = np.asarray(arr)
+    _, _indices = unique(ar=arr, return_index=True)
+
+    return arr[np.sort(np.asarray(_indices))]
