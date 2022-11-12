@@ -3,13 +3,11 @@
 
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
-#include <dlpack/dlpack.h>
 
+#include "dlpack/dlpack.h"
 #include "numpy/arrayobject.h"
-#include "common/npy_argparse.h"
-
-#include "common/dlpack/dlpack.h"
-#include "common/npy_dlpack.h"
+#include "npy_argparse.h"
+#include "npy_dlpack.h"
 
 static void
 array_dlpack_deleter(DLManagedTensor *self)
