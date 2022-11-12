@@ -15,7 +15,7 @@ exception, so it should hopefully not get unnoticed).
 """
 
 import os
-import importlib
+import importlib.util
 
 
 def get_StealRef():

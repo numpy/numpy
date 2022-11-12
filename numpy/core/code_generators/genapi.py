@@ -12,7 +12,7 @@ import os
 import re
 import sys
 import textwrap
-import importlib
+import importlib.util
 
 from os.path import join
 
