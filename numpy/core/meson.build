@@ -6,7 +6,7 @@
 # Generate config.h
 # -----------------
 
-config_h = configuration_data()
+cdata = configuration_data()
 
 if not cc.has_header('Python.h', dependencies: py_dep)
   error('Cannot compile `Python.h`. Perhaps you need to install python-dev|python-devel')
@@ -19,7 +19,7 @@ use_svml = (
   not get_option('disable-svml')
 )
 if use_svml
-  config_h.set10('NPY_CAN_LINK_SVML', true)
+  cdata.set10('NPY_CAN_LINK_SVML', true)
   if not fs.exists('src/umath/svml')
     error('Missing the `SVML` git submodule! Run `git submodule update --init` to fix this.')
   endif
@@ -38,18 +38,18 @@ types_to_check = [
   ['NPY_SIZEOF_LONGDOUBLE', 'long double'],
 ]
 foreach symbol_type: types_to_check
-  config_h.set(symbol_type[0], cc.sizeof(symbol_type[1]))
+  cdata.set(symbol_type[0], cc.sizeof(symbol_type[1]))
 endforeach
-config_h.set('NPY_SIZEOF_OFF_T', cc.sizeof('off_t', prefix: '#include <sys/types.h>'))
-config_h.set('NPY_SIZEOF_PY_INTPTR_T',
+cdata.set('NPY_SIZEOF_OFF_T', cc.sizeof('off_t', prefix: '#include <sys/types.h>'))
+cdata.set('NPY_SIZEOF_PY_INTPTR_T',
   cc.sizeof('Py_intptr_t', dependencies: py_dep, prefix: '#include <Python.h>'))
-config_h.set('NPY_SIZEOF_PY_LONG_LONG',
+cdata.set('NPY_SIZEOF_PY_LONG_LONG',
   cc.sizeof('PY_LONG_LONG', dependencies: py_dep, prefix: '#include <Python.h>'))
 
 # Check for complex support
 if cc.has_header('complex.h')
-  config_h.set10('HAVE_COMPLEX_H', true)
-  config_h.set10('NPY_USE_C99_COMPLEX', true)
+  cdata.set10('HAVE_COMPLEX_H', true)
+  cdata.set10('NPY_USE_C99_COMPLEX', true)
   complex_types_to_check = [
     ['NPY_HAVE_COMPLEX_FLOAT', 'NPY_SIZEOF_COMPLEX_FLOAT', 'complex float', 'float'],
     ['NPY_HAVE_COMPLEX_DOUBLE', 'NPY_SIZEOF_COMPLEX_DOUBLE', 'complex double', 'double'],
@@ -57,11 +57,11 @@ if cc.has_header('complex.h')
   ]
   foreach symbol_type: complex_types_to_check
     if cc.has_type(symbol_type[2], prefix: '#include <complex.h>')
-      config_h.set10(symbol_type[0], true)
+      cdata.set10(symbol_type[0], true)
       # Determine size of NumPy's own, struct-based, complex types. Binary
       # compatibility with C99 complex types is checked at build time in `npy_common.h`.
       ftype = symbol_type[3]
-      config_h.set(symbol_type[1], cc.sizeof(f'struct {@ftype@ __x; @ftype@ __y;}'))
+      cdata.set(symbol_type[1], cc.sizeof(f'struct {@ftype@ __x; @ftype@ __y;}'))
     endif
   endforeach
 endif
@@ -93,16 +93,16 @@ c99_complex_funcs = [
 foreach func: c99_complex_funcs
   func_single = func + 'f'
   func_longdouble = func + 'l'
-  config_h.set10('HAVE_' + func.to_upper(), cc.has_function(func))
-  config_h.set10('HAVE_' + func_single.to_upper(), cc.has_function(func_single))
-  config_h.set10('HAVE_' + func_longdouble.to_upper(), cc.has_function(func_longdouble))
+  cdata.set10('HAVE_' + func.to_upper(), cc.has_function(func))
+  cdata.set10('HAVE_' + func_single.to_upper(), cc.has_function(func_single))
+  cdata.set10('HAVE_' + func_longdouble.to_upper(), cc.has_function(func_longdouble))
 endforeach
 
 # We require C99 so these should always be found at build time. But for
 # libnpymath as a C99 compat layer, these may still be relevant.
 c99_macros = ['isfinite', 'isinf', 'isnan', 'signbit']
 foreach macro: c99_macros
-  config_h.set10('NPY_HAVE_DECL_' + macro.to_upper(), cc.has_function(macro))
+  cdata.set10('NPY_HAVE_DECL_' + macro.to_upper(), cc.has_function(macro))
 endforeach
 
 inc_curdir = include_directories('.')
@@ -115,7 +115,7 @@ foreach filefunc_maybe: optional_file_funcs
   if (filefunc_maybe == 'fallocate' or
       not cc.has_header_symbol('Python.h', config_value, dependencies: py_dep)
      )
-      config_h.set10(config_value,
+      cdata.set10(config_value,
         cc.has_function(filefunc_maybe,
           include_directories: inc_curdir,
           prefix: '#include "feature_detection_stdio.h"'
@@ -140,13 +140,13 @@ if not result
     #include "feature_detection_locale.h"
   ''')
 endif
-config_h.set10('HAVE_STRTOLD_L', result)
+cdata.set10('HAVE_STRTOLD_L', result)
 
 # Other optional functions
-config_h.set10('HAVE_BACKTRACE',
+cdata.set10('HAVE_BACKTRACE',
   cc.has_function('backtrace', prefix: '#include <execinfo.h>')
 )
-config_h.set10('HAVE_MADVISE',
+cdata.set10('HAVE_MADVISE',
   cc.has_function('madvise', include_directories: inc_curdir,
     prefix: '#include "feature_detection_misc.h"'
   )
@@ -163,62 +163,62 @@ optional_headers = [
   'sys/mman.h',   # madvise
 ]
 foreach header: optional_headers
-  config_h.set10('HAVE_' + header.to_upper().replace('.', '_').replace('/', '_'),
+  cdata.set10('HAVE_' + header.to_upper().replace('.', '_').replace('/', '_'),
 	cc.has_header(header))
 endforeach
 
 # Optional compiler attributes
-config_h.set10('HAVE_ATTRIBUTE_NONNULL', cc.has_function_attribute('nonnull'))
+cdata.set10('HAVE_ATTRIBUTE_NONNULL', cc.has_function_attribute('nonnull'))
 # Is this actually defined in distutils build?
 has_optimize_attribute = cc.has_function_attribute('optimize')  # FIXME
-#config_h.set10('HAVE_ATTRIBUTE_OPTIMIZE_OPT_3', has_optimize_attribute)
-#config_h.set10('HAVE_ATTRIBUTE_OPTIMIZE_UNROLL_LOOPS', has_optimize_attribute)
+#cdata.set10('HAVE_ATTRIBUTE_OPTIMIZE_OPT_3', has_optimize_attribute)
+#cdata.set10('HAVE_ATTRIBUTE_OPTIMIZE_UNROLL_LOOPS', has_optimize_attribute)
 
 #TODO: __builtin_* (see setup_common.py)
 
 # FIXME: long double representation detection (see setup_common.py)
 #        add the regular x86-64 define (this is a hack to get further in the
 #        build without dealing with this thing right now)
-config_h.set10('HAVE_LDOUBLE_INTEL_EXTENDED_16_BYTES_LE', true)
+cdata.set10('HAVE_LDOUBLE_INTEL_EXTENDED_16_BYTES_LE', true)
 
-config_h.set10('NPY_HAVE_ENDIAN_H', cc.has_header('endian.h'))
-config_h.set10('NPY_HAVE_SYS_ENDIAN_H', cc.has_header('sys/endian.h'))
+cdata.set10('NPY_HAVE_ENDIAN_H', cc.has_header('endian.h'))
+cdata.set10('NPY_HAVE_SYS_ENDIAN_H', cc.has_header('sys/endian.h'))
 if is_windows
-  config_h.set10('NPY_NO_SIGNAL', true)
+  cdata.set10('NPY_NO_SIGNAL', true)
 endif
 # Command-line switch; distutils build checked for `NPY_NOSMP` env var instead
 # TODO: document this (search for NPY_NOSMP in C API docs)
-config_h.set10('NPY_NO_SMP', get_option('disable-threading'))
+cdata.set10('NPY_NO_SMP', get_option('disable-threading'))
 
 # Use bogus stride debug aid to flush out bugs where users use strides of
 # dimensions with length 1 to index a full contiguous array.
-config_h.set10('NPY_RELAXED_STRIDES_DEBUG', get_option('relaxed-strides-debug'))
+cdata.set10('NPY_RELAXED_STRIDES_DEBUG', get_option('relaxed-strides-debug'))
 
 # Check whether we can use inttypes (C99) formats
 if cc.has_header_symbol('inttypes.h', 'PRIdPTR')
-  config_h.set10('NPY_USE_C99_FORMATS', true)
+  cdata.set10('NPY_USE_C99_FORMATS', true)
 endif
 
 visibility_hidden = ''
 if cc.has_function_attribute('visibility:hidden')
   visibility_hidden = '__attribute__((visibility("hidden")))'
 endif
-config_h.set('NPY_VISIBILITY_HIDDEN', visibility_hidden)
+cdata.set('NPY_VISIBILITY_HIDDEN', visibility_hidden)
 
 # TODO: implement version checks and update docs on this - see setup_common.py
-config_h.set('NPY_ABI_VERSION', '0x00000009')
-config_h.set('NPY_API_VERSION', '0x00000010')
+cdata.set('NPY_ABI_VERSION', '0x00000009')
+cdata.set('NPY_API_VERSION', '0x00000010')
 
 
 configure_file(input: 'config.h.in',
   output: 'config.h',
-  configuration: config_h,
+  configuration: cdata,
   install: false
 )
 
 configure_file(input: 'include/numpy/_numpyconfig.h.in',
   output: '_numpyconfig.h',
-  configuration: config_h,
+  configuration: cdata,
   install: true,
   install_dir: np_dir / 'core/include/numpy'
 )
