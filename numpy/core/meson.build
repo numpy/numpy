@@ -237,10 +237,12 @@ if cc.get_id() == 'msvc'
    endif
 endif
 
+npy_math_internal_h = src_file.process('src/npymath/npy_math_internal.h.src')
+
 npymath_sources = [
   src_file.process('src/npymath/ieee754.c.src'),
   src_file.process('src/npymath/npy_math_complex.c.src'),
-  src_file.process('src/npymath/npy_math_internal.h.src'),
+  npy_math_internal_h,
   'src/npymath/_signbit.c',
   'src/npymath/halffloat.c',
   'src/npymath/npy_math.c',
@@ -256,16 +258,65 @@ npymath_lib = static_library('npymath',
 # TODO: deal with npymath.ini.in (a pkg-config file)
 
 
+# Generate NumPy C API sources
+# ----------------------------
+#api_gen_cli = find_program('code_generators/generate_numpy_api.py')
+#api_gen = generator(api_gen_cli,
+  #arguments : ['@INPUT@', '@OUTDIR@'],
+  #output : ['__@BASENAME@_api.c', '__@BASENAME@_api.h', '@BASENAME@_api.txt'],
+#)
+#src_numpy_api = api_gen.process('multiarray')  # generate_numpy_api
+
+src_numpy_api = custom_target('__multiarray_api',
+  output : ['__multiarray_api.c', '__multiarray_api.h', 'multiarray_api.txt'],
+  input : 'code_generators/generate_numpy_api.py',
+  command: [py, '@INPUT@', '-o', '@OUTDIR@'],
+  install: true,  # NOTE: setup.py build installs all, but just need .h?
+  install_dir: np_dir / 'core/include/numpy'
+)
+#src_ufunc_api = api_gen.process('ufunc')  # generate_ufunc_api
+# __umath_generated.c
+# __umath_doc_generated.h
+
+# TODO: change to "feature" option in meson_options.txt? See
+# https://mesonbuild.com/Build-options.html#build-options
+disable_simd_optimizations = []
+if get_option('disable-simd-optimizations')
+  disable_simd_optimizations = '-DNPY_DISABLE_OPTIMIZATION'
+endif
+
+# Common build flags
+c_args_common = [
+  '-DNPY_INTERNAL_BUILD',
+  '-DHAVE_NPY_CONFIG_H',
+  disable_simd_optimizations,
+]
+if host_machine.system() == 'aix' or host_machine.system() == 'AIX'
+  c_args_common += '-D_LARGE_FILES'
+else
+  c_args_common += [
+    '-D_FILE_OFFSET_BITS=64',
+    '-D_LARGEFILE_SOURCE=1',
+    '-D_LARGEFILE64_SOURCE=1',
+  ]
+endif
+
 # Build multiarray_tests module
 # -----------------------------
+templ_common_h = src_file.process('src/common/templ_common.h.src')
+
 py.extension_module('_multiarray_tests',
   [
     src_file.process('src/multiarray/_multiarray_tests.c.src'),
     'src/common/mem_overlap.c',
     'src/common/npy_argparse.c',
     'src/common/npy_hashtable.c',
+    src_numpy_api[1],  # __multiarray_api.h
+    npy_math_internal_h,
+    templ_common_h,
   ],
-  include_directories: ['include', 'src/common'],
+  c_args: c_args_common,
+  include_directories: ['include', 'src/common', 'src/multiarray', 'src/npymath'],
   link_with: npymath_lib,
 )
 
