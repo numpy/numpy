@@ -32,6 +32,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install -r build_requirements.txt
+        pip install -r test_requirements.txt
         sudo apt-get install -y libopenblas-serial-dev
     - name: Build
       run:
