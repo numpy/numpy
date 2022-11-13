@@ -1140,14 +1140,13 @@ class TestWrap:
         b = np.pad(a, (0, 12), mode="wrap")
         assert_array_equal(np.r_[a, a, a, a][:-3], b)
     
-    def test_repeated_wrapping_with_mod(self):
+    def test_repeated_wrapping_multiple_origin(self):
         """
-        Check wrapping on each side individually if the wrapped area is longer
-        than the original array.
-        Assert that 'wrapmod' pads only with multiples of the original area.
+        Assert that 'wrap' pads only with multiples of the original area if
+        the pad width is larger than the original array.
         """
         a = np.arange(4).reshape(2, 2)
-        a = np.pad(a, [(1, 3), (3, 1)], mode='wrapmod')
+        a = np.pad(a, [(1, 3), (3, 1)], mode='wrap')
         b = np.array(
             [[3, 2, 3, 2, 3, 2],
              [1, 0, 1, 0, 1, 0],
