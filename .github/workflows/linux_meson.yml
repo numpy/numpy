@@ -1,4 +1,4 @@
-name: Build_with_Meson
+name: Test Meson build (Linux)
 
 on:
   push:
