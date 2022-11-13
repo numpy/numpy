@@ -1,0 +1,112 @@
+@@ -380,7 +380,6 @@ L20:
+     static logical nota, notb;
+     static complex temp;
+     static logical conja, conjb;
+-    static integer ncola;
+     extern logical lsame_(char *, char *);
+     static integer nrowa, nrowb;
+     extern /* Subroutine */ int xerbla_(char *, integer *);
+@@ -514,7 +513,7 @@ L20:
+        Set  NOTA  and  NOTB  as  true if  A  and  B  respectively are not
+        conjugated or transposed, set  CONJA and CONJB  as true if  A  and
+        B  respectively are to be  transposed but  not conjugated  and set
+-       NROWA, NCOLA and  NROWB  as the number of rows and  columns  of  A
++       NROWA and  NROWB  as the number of rows and  columns  of  A
+        and the number of rows of  B  respectively.
+ */
+ 
+@@ -536,10 +535,8 @@ L20:
+     conjb = lsame_(transb, "C");
+     if (nota) {
+ 	nrowa = *m;
+-	ncola = *k;
+     } else {
+ 	nrowa = *k;
+-	ncola = *m;
+     }
+     if (notb) {
+ 	nrowb = *k;
+@@ -6850,7 +6847,6 @@ L60:
+     static integer i__, j, l, info;
+     static logical nota, notb;
+     static doublereal temp;
+-    static integer ncola;
+     extern logical lsame_(char *, char *);
+     static integer nrowa, nrowb;
+     extern /* Subroutine */ int xerbla_(char *, integer *);
+@@ -6982,7 +6978,7 @@ L60:
+ 
+ 
+        Set  NOTA  and  NOTB  as  true if  A  and  B  respectively are not
+-       transposed and set  NROWA, NCOLA and  NROWB  as the number of rows
++       transposed and set  NROWA and  NROWB  as the number of rows
+        and  columns of  A  and the  number of  rows  of  B  respectively.
+ */
+ 
+@@ -7002,10 +6998,8 @@ L60:
+     notb = lsame_(transb, "N");
+     if (nota) {
+ 	nrowa = *m;
+-	ncola = *k;
+     } else {
+ 	nrowa = *k;
+-	ncola = *m;
+     }
+     if (notb) {
+ 	nrowb = *k;
+@@ -11454,7 +11448,6 @@ L60:
+     static integer i__, j, l, info;
+     static logical nota, notb;
+     static real temp;
+-    static integer ncola;
+     extern logical lsame_(char *, char *);
+     static integer nrowa, nrowb;
+     extern /* Subroutine */ int xerbla_(char *, integer *);
+@@ -11586,7 +11579,7 @@ L60:
+ 
+ 
+        Set  NOTA  and  NOTB  as  true if  A  and  B  respectively are not
+-       transposed and set  NROWA, NCOLA and  NROWB  as the number of rows
++       transposed and set  NROWA and  NROWB  as the number of rows
+        and  columns of  A  and the  number of  rows  of  B  respectively.
+ */
+ 
+@@ -11606,10 +11599,8 @@ L60:
+     notb = lsame_(transb, "N");
+     if (nota) {
+ 	nrowa = *m;
+-	ncola = *k;
+     } else {
+ 	nrowa = *k;
+-	ncola = *m;
+     }
+     if (notb) {
+ 	nrowb = *k;
+@@ -15667,7 +15658,6 @@ L20:
+     static logical nota, notb;
+     static doublecomplex temp;
+     static logical conja, conjb;
+-    static integer ncola;
+     extern logical lsame_(char *, char *);
+     static integer nrowa, nrowb;
+     extern /* Subroutine */ int xerbla_(char *, integer *);
+@@ -15801,7 +15791,7 @@ L20:
+        Set  NOTA  and  NOTB  as  true if  A  and  B  respectively are not
+        conjugated or transposed, set  CONJA and CONJB  as true if  A  and
+        B  respectively are to be  transposed but  not conjugated  and set
+-       NROWA, NCOLA and  NROWB  as the number of rows and  columns  of  A
++       NROWA and  NROWB  as the number of rows and  columns  of  A
+        and the number of rows of  B  respectively.
+ */
+ 
+@@ -15823,10 +15813,8 @@ L20:
+     conjb = lsame_(transb, "C");
+     if (nota) {
+ 	nrowa = *m;
+-	ncola = *k;
+     } else {
+ 	nrowa = *k;
+-	ncola = *m;
+     }
+     if (notb) {
+ 	nrowb = *k;
