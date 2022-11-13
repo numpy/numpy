@@ -539,13 +539,30 @@ py.extension_module('_multiarray_umath',
     'src/npymath',
     'src/umath',
   ],
-  dependencies: [py_dep, blas],
+  dependencies: blas,
   link_with: npymath_lib,
   install: true,
   subdir: 'numpy/core',
 )
 
+# Build SIMD module
+# -----------------
 
+py.extension_module('_simd',
+  [
+    'src/common/npy_cpu_features.c',
+    'src/_simd/_simd.c',
+    src_file.process('src/_simd/_simd_inc.h.src'),
+    src_file.process('src/_simd/_simd_data.inc.src'),
+    src_file.process('src/_simd/_simd.dispatch.c.src'),
+  ],
+  c_args: c_args_common,
+  #include_directories: ['src/multiarray', 'src/npymath'],
+  include_directories: ['src/_simd'],
+  dependencies: np_core_dep,
+  install: true,
+  subdir: 'numpy/core',
+)
 
 python_sources = [
   '__init__.py',
