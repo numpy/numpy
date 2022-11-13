@@ -27,14 +27,19 @@ _cython_tree_random = [
   fs.copyfile('bit_generator.pxd'),
   fs.copyfile('c_distributions.pxd'),
 ]
-
 # Need to use `custom_target` because we need to install this .pxd file
-custom_target('_bounded_integer_pxd',
+_cython_tree_random += custom_target('_bounded_integer_pxd',
   output: '_bounded_integers.pxd',
   input: '_bounded_integers.pxd.in',
   command: [tempita_cli, '@INPUT@', '-o', '@OUTPUT@'],
   install: true,
   install_dir: np_dir / 'random'
+)
+
+_bounded_integers_pyx = custom_target('_bounded_integer_pyx',
+  output: '_bounded_integers.pyx',
+  input: '_bounded_integers.pyx.in',
+  command: [tempita_cli, '@INPUT@', '-o', '@OUTPUT@'],
 )
 
 c_args_random = [
@@ -47,20 +52,18 @@ endif
 
 # name, sources, extra link libs, extra c_args
 random_pyx_sources = [
-  ['_generator', '_generator.pyx', [], npymath_lib],
-  ['_bounded_integers', [
-      tempita.process('_bounded_integers.pyx.in'),
-      tempita.process('_bounded_integers.pxd.in')
-    ], [], npymath_lib,
-  ],
+  ['_bounded_integers', _bounded_integers_pyx, [], npymath_lib],
   ['_common', '_common.pyx', [], []],
-  ['bit_generator', 'bit_generator.pyx', [], []],
+  ['_mt19937', ['_mt19937.pyx', 'src/mt19937/mt19937.c', 'src/mt19937/mt19937-jump.c'], [], []],
   ['_philox', ['_philox.pyx', 'src/philox/philox.c'], [], []],
   ['_pcg64', ['_pcg64.pyx', 'src/pcg64/pcg64.c'], ['-U__GNUC_GNU_INLINE__'], []],
   ['_sfc64', ['_sfc64.pyx', 'src/sfc64/sfc64.c'], [], []],
-  ['_mt19937', ['_mt19937.pyx', 'src/mt19937/mt19937.c', 'src/mt19937/mt19937-jump.c'], [], []],
+  ['bit_generator', 'bit_generator.pyx', [], []],
+  # The `fs.copyfile` usage here is needed because these two .pyx files import
+  # from _bounded_integers,and its pxd file is only present in the build directory
+  ['_generator', fs.copyfile('_generator.pyx'), [], npymath_lib],
   ['mtrand', [
-      'mtrand.pyx',
+      fs.copyfile('mtrand.pyx'),
       'src/distributions/distributions.c',
       'src/legacy/legacy-distributions.c'
     ], ['-DNPY_RANDOM_LEGACY=1'], npymath_lib,
