@@ -1,6 +1,6 @@
 project(
   'NumPy',
-  'c', 'cpp',
+  'c', 'cpp', 'cython',
   # Note that the git commit hash cannot be added dynamically here
   # It is dynamically added upon import by versioneer
   # See `numpy/__init__.py`
@@ -51,10 +51,6 @@ version_link_args = ['-Wl,--version-script=' + _linker_script]
 if not cc.links('', name: '-Wl,--version-script', args: ['-shared', version_link_args])
   version_link_args = []
 endif
-
-cython = find_program('cython')
-tempita = files('numpy/_build_utils/tempita.py')
-copier = find_program(['cp', 'numpy/_build_utils/copyfiles.py'])
 
 # https://mesonbuild.com/Python-module.html
 py_mod = import('python')

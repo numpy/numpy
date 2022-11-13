@@ -12,7 +12,6 @@ if not cc.has_header('Python.h', dependencies: py_dep)
   error('Cannot compile `Python.h`. Perhaps you need to install python-dev|python-devel')
 endif
 
-fs = import ('fs')
 use_svml = (
   host_machine.system() == 'linux' and
   host_machine.cpu_family() == 'x86_64' and
@@ -312,16 +311,8 @@ c_args_common = [
   '-DNPY_INTERNAL_BUILD',
   '-DHAVE_NPY_CONFIG_H',
   disable_simd_optimizations,
+  cflags_large_file_support,
 ]
-if host_machine.system() == 'aix' or host_machine.system() == 'AIX'
-  c_args_common += '-D_LARGE_FILES'
-else
-  c_args_common += [
-    '-D_FILE_OFFSET_BITS=64',
-    '-D_LARGEFILE_SOURCE=1',
-    '-D_LARGEFILE64_SOURCE=1',
-  ]
-endif
 
 # Same as NPY_CXX_FLAGS (TODO: extend for what ccompiler_opt adds)
 cpp_args_common = c_args_common + [

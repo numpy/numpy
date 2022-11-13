@@ -21,6 +21,20 @@ if is_windows
   endif
 endif
 
+# Enable UNIX large file support on 32-bit systems (64 bit off_t,
+# lseek -> lseek64, etc.)
+cflags_large_file_support = []
+if host_machine.system() == 'aix'
+  cflags_large_file_support += '-D_LARGE_FILES'
+else
+  cflags_large_file_support += [
+    '-D_FILE_OFFSET_BITS=64',
+    '-D_LARGEFILE_SOURCE=1',
+    '-D_LARGEFILE64_SOURCE=1',
+  ]
+endif
+
+
 # TODO: 64-bit BLAS and LAPACK
 #
 # Note that this works as long as BLAS and LAPACK are detected properly via
@@ -52,6 +66,13 @@ have_lapack = lapack.found()
 
 # TODO: generate version.py and __config__.py (see scipy/meson.build)
 
+# Copy the main __init__.py|pxd files to the build dir (needed for Cython)
+fs = import('fs')
+__init__py = fs.copyfile('__init__.py')
+__init__pxd = fs.copyfile('__init__.pxd')
+__init__pxd30 = fs.copyfile('__init__.cython-30.pxd')
+_cython_tree = [__init__py, __init__pxd, __init__pxd30]
+
 cc = meson.get_compiler('c')
 
 python_sources = [
@@ -78,20 +99,17 @@ py.install_sources(
   subdir: 'numpy'
 )
 
-cython_cli = find_program('_build_utils/cythoner.py')
-
-cython_gen = generator(cython_cli,
-  arguments : ['@INPUT@', '@OUTPUT@'],
-  output : '@BASENAME@.c')
-
-cython_gen_cpp = generator(cython_cli,
-  arguments : ['@INPUT@', '@OUTPUT@', '--cplus'],
-  output : '@BASENAME@.cpp')
-
 src_file_cli = find_program('_build_utils/process_src_template.py')
 src_file = generator(src_file_cli,
   arguments : ['@INPUT@', '--outfile', '@OUTPUT@'],
-  output : '@BASENAME@')
+  output : '@BASENAME@'
+)
+
+tempita_cli = find_program('_build_utils/tempita.py')
+tempita = generator(tempita_cli,
+  arguments : ['@INPUT@', '--outfile', '@OUTPUT@'],
+  output : '@BASENAME@'
+)
 
 pure_subdirs = [
   '_pyinstaller',
@@ -118,7 +136,7 @@ endforeach
 custom_target('__config__.py',
   output: '__config__.py',
   input: '__config__.py.in',
-  command: [py, tempita, '@INPUT@', '-o', '@OUTDIR@'],
+  command: [tempita_cli, '@INPUT@', '-o', '@OUTPUT@'],
   install: true,
   install_dir: np_dir
 )
@@ -141,3 +159,4 @@ np_core_dep = declare_dependency(
 
 subdir('fft')
 subdir('linalg')
+subdir('random')
