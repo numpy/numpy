@@ -4,13 +4,9 @@ if host_machine.system() == 'aix' or host_machine.system() == 'AIX'
 endif
 
 py.extension_module('_pocketfft_internal',
-  [
-    '_pocketfft.c',
-    _numpyconfig_h,
-    src_numpy_api[1],  # __multiarray_api.h
-  ],
+  '_pocketfft.c',
   c_args: largefile_define,
-  include_directories: [inc_np, '../core', '../core/src/common'],
+  dependencies: np_core_dep,
   install: true,
   subdir: 'numpy/fft',
 )

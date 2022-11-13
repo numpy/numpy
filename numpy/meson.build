@@ -47,6 +47,7 @@ lapack = dependency(lapack_name, required: false)
 # which provides a CBLAS interface.
 # TODO: add ILP64 support
 have_blas = blas.found() # TODO: and blas.has_cblas()
+have_lapack = lapack.found()
 
 
 # TODO: generate version.py and __config__.py (see scipy/meson.build)
@@ -109,7 +110,6 @@ pure_subdirs = [
 ]
 
 np_dir = py.get_install_dir() / 'numpy'
-inc_np = include_directories('core/include')
 
 foreach subdir: pure_subdirs
   install_subdir(subdir, install_dir: np_dir)
@@ -124,4 +124,20 @@ custom_target('__config__.py',
 )
 
 subdir('core')
+
+# Other submodules depend on generated headers and include directories from
+# core, wrap those up into a reusable dependency:
+np_core_dep = declare_dependency(
+  sources: [
+    _numpyconfig_h,
+    src_numpy_api[1],  # __multiarray_api.h
+  ],
+  include_directories: [
+    'core',
+    'core/include',
+    'core/src/common',
+  ]
+)
+
 subdir('fft')
+subdir('linalg')
