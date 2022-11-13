@@ -1,0 +1,8 @@
+``np.pad`` with ``mode=wrap`` now returns expected results
+----------------------------------------------------------
+
+Codes based on earlier version of ``pad`` with ``wrap`` will 
+break when padding size is larger than initial array.
+
+``np.pad`` with ``mode=wrap`` now always fills the space with 
+strict loops of original data, as expected.

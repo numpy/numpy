@@ -1,5 +1,0 @@
-``np.pad`` with ``mode=wrap`` now returns expected results
-----------------------------------------------------------
-
-``np.pad`` with ``mode=wrap`` now always fills padding with 
-strict loops of original data.
