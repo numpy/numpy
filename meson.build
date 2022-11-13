@@ -12,7 +12,8 @@ project(
     'c_std=c99',
     'cpp_std=c++11',
     'blas=openblas',
-    'lapack=openblas'
+    'lapack=openblas',
+    'pkgconfig.relocatable=true',
   ],
 )
 
@@ -34,8 +35,10 @@ endif
 # We need -lm for all C code (assuming it uses math functions, which is safe to
 # assume for numpy).
 m_dep = cc.find_library('m', required : false)
+mlib_linkflag = ''
 if m_dep.found()
-  add_project_link_arguments('-lm', language : 'c')
+  mlib_linkflag = '-lm'
+  add_project_link_arguments(mlib_linkflag, language : 'c')
 endif
 
 # https://mesonbuild.com/Python-module.html

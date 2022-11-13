@@ -261,8 +261,49 @@ npymath_lib = static_library('npymath',
   install: true,
   install_dir: np_dir / 'core/lib',
 )
-# TODO: deal with npymath.ini.in (a pkg-config file)
 
+dir_separator = '/'
+if build_machine.system() == 'windows'
+  dir_separator = '\\'
+endif
+configure_file(
+  input: 'npymath.ini.in',
+  output: 'npymath.ini',
+  configuration: configuration_data({
+    'pkgname' : 'numpy.core',
+    'sep' : dir_separator,
+  }),
+  install: true,
+  install_dir: np_dir / 'core/lib/npy-pkg-config'
+)
+configure_file(
+  input: 'mlib.ini.in',
+  output: 'mlib.ini',
+  configuration: configuration_data({
+    'posix_mathlib' : mlib_linkflag,
+    'msvc_mathlib' : 'm.lib',
+  }),
+  install: true,
+  install_dir: np_dir / 'core/lib/npy-pkg-config'
+)
+
+if false
+  # This doesn't quite work (yet), it assumes we'll install headers under
+  # include/, and trying to add the correct path with `extra_cflags` runs into
+  # not being able to get a path relative to the prefix.
+  # Note that installing numpy headers under include/ would be a good idea, but
+  # that needs work (and may run into trouble with wheels perhaps, not quite
+  # clear if they allow this).
+  pkg = import('pkgconfig')
+  pkg.generate(npymath_lib,
+    name: 'npymath',
+    description: 'Portable, core math library implementing C99 standard',
+    url: 'https://github.com/numpy/numpy',
+    requires: 'numpy',
+    install_dir: np_dir / 'core/lib/npy-pkg-config',
+    extra_cflags: '-I${includedir}' + np_dir / 'core' / 'include',
+  )
+endif
 
 # Generate NumPy C API sources
 # ----------------------------
