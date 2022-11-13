@@ -117,6 +117,7 @@ pure_subdirs = [
   'array_api',
   'compat',
   'distutils',
+  'doc',
   'f2py',
   'lib',
   'ma',
@@ -142,21 +143,6 @@ custom_target('__config__.py',
 )
 
 subdir('core')
-
-# Other submodules depend on generated headers and include directories from
-# core, wrap those up into a reusable dependency:
-np_core_dep = declare_dependency(
-  sources: [
-    _numpyconfig_h,
-    src_numpy_api[1],  # __multiarray_api.h
-  ],
-  include_directories: [
-    'core',
-    'core/include',
-    'core/src/common',
-  ]
-)
-
 subdir('fft')
 subdir('linalg')
 subdir('random')

@@ -356,6 +356,7 @@ py.extension_module('_multiarray_tests',
   include_directories: ['src/multiarray', 'src/npymath'],
   dependencies: np_core_dep,
   link_with: npymath_lib,
+  gnu_symbol_visibility: 'default',
   install: true,
   subdir: 'numpy/core',
 )
