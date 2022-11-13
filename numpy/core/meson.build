@@ -239,7 +239,11 @@ if cc.get_id() == 'msvc'
    endif
 endif
 
-npy_math_internal_h = src_file.process('src/npymath/npy_math_internal.h.src')
+npy_math_internal_h = custom_target(
+  output: 'npy_math_internal.h',
+  input: 'src/npymath/npy_math_internal.h.src',
+  command: [src_file_cli, '@INPUT@', '-o', '@OUTPUT@'],
+)
 
 npymath_sources = [
   src_file.process('src/npymath/ieee754.c.src'),
@@ -321,26 +325,61 @@ cpp_args_common = c_args_common + [
   '-fno-rtti',  # no runtime type information
 ]
 
+# Other submodules depend on generated headers and include directories from
+# core, wrap those up into a reusable dependency. Also useful for some test
+# modules in this build file.
+np_core_dep = declare_dependency(
+  sources: [
+    _numpyconfig_h,
+    npy_math_internal_h,
+    src_numpy_api[1],  # __multiarray_api.h
+  ],
+  include_directories: [
+    '.',
+    'include',
+    'src/common',
+  ]
+)
+
+
 # Build multiarray_tests module
 # -----------------------------
-templ_common_h = src_file.process('src/common/templ_common.h.src')
-
 py.extension_module('_multiarray_tests',
   [
     src_file.process('src/multiarray/_multiarray_tests.c.src'),
     'src/common/mem_overlap.c',
     'src/common/npy_argparse.c',
     'src/common/npy_hashtable.c',
-    src_numpy_api[1],  # __multiarray_api.h
-    npy_math_internal_h,
-    templ_common_h,
+    src_file.process('src/common/templ_common.h.src')
   ],
   c_args: c_args_common,
-  include_directories: ['include', 'src/common', 'src/multiarray', 'src/npymath'],
+  include_directories: ['src/multiarray', 'src/npymath'],
+  dependencies: np_core_dep,
   link_with: npymath_lib,
   install: true,
   subdir: 'numpy/core',
 )
+
+test_modules_src = [
+  ['_umath_tests', [
+      src_file.process('src/umath/_umath_tests.c.src'),
+      'src/umath/_umath_tests.dispatch.c',
+      'src/common/npy_cpu_features.c',
+    ]],
+  ['_rational_tests', 'src/umath/_rational_tests.c'],
+  ['_struct_ufunc_tests', 'src/umath/_struct_ufunc_tests.c'],
+  ['_operand_flag_tests', 'src/umath/_operand_flag_tests.c'],
+]
+foreach gen: test_modules_src
+  py.extension_module(gen[0],
+    gen[1],
+    c_args: c_args_common,
+    include_directories: ['src/multiarray', 'src/npymath'],
+    dependencies: np_core_dep,
+    install: true,
+    subdir: 'numpy/core',
+  )
+endforeach
 
 # Build _multiarray_umath module
 # ------------------------------
@@ -354,7 +393,7 @@ src_multiarray_umath_common = [
   'src/common/ufunc_override.c',
   'src/common/numpyos.c',
   'src/common/npy_cpu_features.c',
-  templ_common_h,
+  src_file.process('src/common/templ_common.h.src')
 ]
 if have_blas
   src_multiarray_umath_common += [
