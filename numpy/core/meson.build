@@ -97,6 +97,9 @@ foreach func: c99_complex_funcs
   cdata.set10('HAVE_' + func_longdouble.to_upper(), cc.has_function(func_longdouble))
 endforeach
 
+# FIXME: HAVE_* defines aren't 1/0, they are mostly used without checking the value,
+# and should not be defined at all rather than 0 if the check says something isn't present.
+
 # We require C99 so these should always be found at build time. But for
 # libnpymath as a C99 compat layer, these may still be relevant.
 c99_macros = ['isfinite', 'isinf', 'isnan', 'signbit']
@@ -181,8 +184,12 @@ has_optimize_attribute = cc.has_function_attribute('optimize')  # FIXME
 #        build without dealing with this thing right now)
 cdata.set10('HAVE_LDOUBLE_INTEL_EXTENDED_16_BYTES_LE', true)
 
-cdata.set10('NPY_HAVE_ENDIAN_H', cc.has_header('endian.h'))
-cdata.set10('NPY_HAVE_SYS_ENDIAN_H', cc.has_header('sys/endian.h'))
+if cc.has_header('endian.h')
+  cdata.set10('NPY_HAVE_ENDIAN_H', true)
+endif
+if cc.has_header('sys/endian.h')
+  cdata.set10('NPY_HAVE_SYS_ENDIAN_H', true)
+endif
 if is_windows
   cdata.set10('NPY_NO_SIGNAL', true)
 endif
