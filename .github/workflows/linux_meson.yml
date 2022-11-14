@@ -36,6 +36,9 @@ jobs:
     - name: Build
       run:
         ./dev.py build
+    - name: Check dependencies
+      run:
+        ninja -C build -t missingdeps
     - name: Test
       run: |
         pip install pytest hypothesis typing_extensions
