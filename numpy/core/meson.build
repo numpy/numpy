@@ -381,6 +381,7 @@ np_core_dep = declare_dependency(
     _numpyconfig_h,
     npy_math_internal_h,
     src_numpy_api[1],  # __multiarray_api.h
+    src_ufunc_api[1],  # __ufunc_api.h
   ],
   include_directories: [
     '.',

@@ -36,7 +36,7 @@ jobs:
     - name: Build
       run:
         ./dev.py build
-    - name: Check dependencies
+    - name: Check build-internal dependencies
       run:
         ninja -C build -t missingdeps
     - name: Test
