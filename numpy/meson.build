@@ -73,10 +73,9 @@ have_blas = blas.found() # TODO: and blas.has_cblas()
 have_lapack = lapack.found()
 
 
-# TODO: generate version.py and __config__.py (see scipy/meson.build)
+# TODO: generate __config__.py (see scipy/meson.build)
 
 # Copy the main __init__.py|pxd files to the build dir (needed for Cython)
-fs = import('fs')
 __init__py = fs.copyfile('__init__.py')
 __init__pxd = fs.copyfile('__init__.pxd')
 __init__pxd30 = fs.copyfile('__init__.cython-30.pxd')

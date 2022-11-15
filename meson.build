@@ -17,6 +17,8 @@ project(
   ],
 )
 
+fs = import('fs')
+
 cc = meson.get_compiler('c')
 cpp = meson.get_compiler('cpp')
 
@@ -39,6 +41,24 @@ py_dep = py.dependency()
 
 if not cc.has_header('Python.h', dependencies: py_dep)
   error('Cannot compile `Python.h`. Perhaps you need to install python-dev|python-devel')
+endif
+
+# Generate version number. Note that this will not (yet) update the version
+# number seen by pip or reflected in wheel filenames. See
+# https://github.com/mesonbuild/meson-python/issues/159 for that.
+versioneer = files('generate_version.py')
+if fs.exists('_version_meson.py')
+    py.install_sources('_version_meson.py', subdir: 'numpy')
+else
+    custom_target('write_version_file',
+        output: '_version_meson.py',
+        command: [py, versioneer, '-o', '@OUTPUT@'],
+        build_by_default: true,
+        build_always_stale: true,
+        install: true,
+        install_dir: py.get_install_dir() / 'numpy'
+    )
+    meson.add_dist_script(py, versioneer, '-o', '_version_meson.py')
 endif
 
 subdir('numpy')
