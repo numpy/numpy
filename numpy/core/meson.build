@@ -3,10 +3,61 @@
 # Potential issues to address or keep track of:
 #   - sincos detection incorrect on NetBSD: https://github.com/mesonbuild/meson/issues/10641
 
+# Versioning support
+#-------------------
+#
+# How to change C_API_VERSION ?
+#   - increase C_API_VERSION value
+#   - record the hash for the new C API with the cversions.py script
+#   and add the hash to cversions.txt
+# The hash values are used to remind developers when the C API number was not
+# updated - generates a MismatchCAPIWarning warning which is turned into an
+# exception for released version.
+
+# Binary compatibility version number. This number is increased whenever the
+# C-API is changed such that binary compatibility is broken, i.e. whenever a
+# recompile of extension modules is needed.
+C_ABI_VERSION = '0x01000009'
+
+# Minor API version.  This number is increased whenever a change is made to the
+# C-API -- whether it breaks binary compatibility or not.  Some changes, such
+# as adding a function pointer to the end of the function table, can be made
+# without breaking binary compatibility.  In this case, only the C_API_VERSION
+# (*not* C_ABI_VERSION) would be increased.  Whenever binary compatibility is
+# broken, both C_API_VERSION and C_ABI_VERSION should be increased.
+#
+# The version needs to be kept in sync with that in cversions.txt.
+#
+# 0x00000008 - 1.7.x
+# 0x00000009 - 1.8.x
+# 0x00000009 - 1.9.x
+# 0x0000000a - 1.10.x
+# 0x0000000a - 1.11.x
+# 0x0000000a - 1.12.x
+# 0x0000000b - 1.13.x
+# 0x0000000c - 1.14.x
+# 0x0000000c - 1.15.x
+# 0x0000000d - 1.16.x
+# 0x0000000d - 1.19.x
+# 0x0000000e - 1.20.x
+# 0x0000000e - 1.21.x
+# 0x0000000f - 1.22.x
+# 0x00000010 - 1.23.x
+# 0x00000010 - 1.24.x
+C_API_VERSION = '0x00000010'
+
+# Check whether we have a mismatch between the set C API VERSION and the
+# actual C API VERSION. Will raise a MismatchCAPIError if so.
+run_command('code_generators/verify_c_api_version.py', '--api-version', C_API_VERSION, check: true)
+
+
 # Generate config.h and _numpyconfig.h
 # ------------------------------------
 
 cdata = configuration_data()
+
+cdata.set('NPY_ABI_VERSION', C_ABI_VERSION)
+cdata.set('NPY_API_VERSION', C_API_VERSION)
 
 use_svml = (
   host_machine.system() == 'linux' and
@@ -207,10 +258,6 @@ if cc.has_function_attribute('visibility:hidden')
   visibility_hidden = '__attribute__((visibility("hidden")))'
 endif
 cdata.set('NPY_VISIBILITY_HIDDEN', visibility_hidden)
-
-# TODO: implement version checks and update docs on this - see setup_common.py
-cdata.set('NPY_ABI_VERSION', '0x00000009')
-cdata.set('NPY_API_VERSION', '0x00000010')
 
 
 config_h = configure_file(
