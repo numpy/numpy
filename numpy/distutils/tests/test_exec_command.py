@@ -1,10 +1,12 @@
 import os
+import pytest
 import sys
 from tempfile import TemporaryFile
 
 from numpy.distutils import exec_command
 from numpy.distutils.exec_command import get_pythonexe
-from numpy.testing import tempdir, assert_, assert_warns
+from numpy.testing import tempdir, assert_, assert_warns, IS_WASM
+
 
 # In python 3 stdout, stderr are text (unicode compliant) devices, so to
 # emulate them import StringIO from the io module.
@@ -93,6 +95,7 @@ def test_exec_command_stderr():
                         exec_command.exec_command("cd '.'")
 
 
+@pytest.mark.skipif(IS_WASM, reason="Cannot start subprocess")
 class TestExecCommand:
     def setup_method(self):
         self.pyexe = get_pythonexe()

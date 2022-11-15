@@ -1,9 +1,12 @@
 from pathlib import Path
+import pytest
 import textwrap
 from . import util
 from numpy.f2py import crackfortran
+from numpy.testing import IS_WASM
 
 
+@pytest.mark.skipif(IS_WASM, reason="Cannot start subprocess")
 class TestAbstractInterface(util.F2PyTest):
     sources = [util.getpath("tests", "src", "abstract_interface", "foo.f90")]
 

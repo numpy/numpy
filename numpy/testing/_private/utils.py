@@ -34,7 +34,7 @@ __all__ = [
         'assert_array_max_ulp', 'assert_warns', 'assert_no_warnings',
         'assert_allclose', 'IgnoreException', 'clear_and_catch_warnings',
         'SkipTest', 'KnownFailureException', 'temppath', 'tempdir', 'IS_PYPY',
-        'HAS_REFCOUNT', 'suppress_warnings', 'assert_array_compare',
+        'HAS_REFCOUNT', "IS_WASM", 'suppress_warnings', 'assert_array_compare',
         'assert_no_gc_cycles', 'break_cycles', 'HAS_LAPACK64', 'IS_PYSTON',
         '_OLD_PROMOTION'
         ]
@@ -48,6 +48,7 @@ class KnownFailureException(Exception):
 KnownFailureTest = KnownFailureException  # backwards compat
 verbose = 0
 
+IS_WASM = platform.machine() in ["wasm32", "wasm64"]
 IS_PYPY = sys.implementation.name == 'pypy'
 IS_PYSTON = hasattr(sys, "pyston_version_info")
 HAS_REFCOUNT = getattr(sys, 'getrefcount', None) is not None and not IS_PYSTON

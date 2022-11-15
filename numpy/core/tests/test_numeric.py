@@ -12,7 +12,7 @@ from numpy.random import rand, randint, randn
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_raises_regex,
     assert_array_equal, assert_almost_equal, assert_array_almost_equal,
-    assert_warns, assert_array_max_ulp, HAS_REFCOUNT
+    assert_warns, assert_array_max_ulp, HAS_REFCOUNT, IS_WASM
     )
 from numpy.core._rational_tests import rational
 
@@ -556,6 +556,7 @@ class TestSeterr:
             np.seterr(**old)
             assert_(np.geterr() == old)
 
+    @pytest.mark.skipif(IS_WASM, reason="no wasm fp exception support")
     @pytest.mark.skipif(platform.machine() == "armv5tel", reason="See gh-413.")
     def test_divide_err(self):
         with np.errstate(divide='raise'):
@@ -565,6 +566,7 @@ class TestSeterr:
             np.seterr(divide='ignore')
             np.array([1.]) / np.array([0.])
 
+    @pytest.mark.skipif(IS_WASM, reason="no wasm fp exception support")
     def test_errobj(self):
         olderrobj = np.geterrobj()
         self.called = 0
@@ -638,6 +640,7 @@ class TestFloatExceptions:
         self.assert_raises_fpe(fpeerr, flop, sc1[()], sc2[()])
 
     # Test for all real and complex float types
+    @pytest.mark.skipif(IS_WASM, reason="no wasm fp exception support")
     @pytest.mark.parametrize("typecode", np.typecodes["AllFloat"])
     def test_floating_exceptions(self, typecode):
         # Test basic arithmetic function errors
@@ -697,6 +700,7 @@ class TestFloatExceptions:
             self.assert_raises_fpe(invalid,
                                    lambda a, b: a*b, ftype(0), ftype(np.inf))
 
+    @pytest.mark.skipif(IS_WASM, reason="no wasm fp exception support")
     def test_warnings(self):
         # test warning code path
         with warnings.catch_warnings(record=True) as w:
@@ -1584,6 +1588,7 @@ class TestNonzero:
         a = np.array([[ThrowsAfter(15)]]*10)
         assert_raises(ValueError, np.nonzero, a)
 
+    @pytest.mark.skipif(IS_WASM, reason="wasm doesn't have threads")
     def test_structured_threadsafety(self):
         # Nonzero (and some other functions) should be threadsafe for
         # structured datatypes, see gh-15387. This test can behave randomly.
