@@ -32,18 +32,13 @@ elif cc.get_id() == 'msvc'
   endif
 endif
 
-# We need -lm for all C code (assuming it uses math functions, which is safe to
-# assume for numpy).
-m_dep = cc.find_library('m', required : false)
-mlib_linkflag = ''
-if m_dep.found()
-  mlib_linkflag = '-lm'
-  add_project_link_arguments(mlib_linkflag, language : 'c')
-endif
-
 # https://mesonbuild.com/Python-module.html
 py_mod = import('python')
 py = py_mod.find_installation(pure: false)
 py_dep = py.dependency()
+
+if not cc.has_header('Python.h', dependencies: py_dep)
+  error('Cannot compile `Python.h`. Perhaps you need to install python-dev|python-devel')
+endif
 
 subdir('numpy')

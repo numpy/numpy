@@ -1,3 +1,12 @@
+# We need -lm for all C code (assuming it uses math functions, which is safe to
+# assume for numpy).
+m_dep = cc.find_library('m', required : false)
+mlib_linkflag = ''
+if m_dep.found()
+  mlib_linkflag = '-lm'
+  add_project_link_arguments(mlib_linkflag, language : 'c')
+endif
+
 # Platform detection
 is_windows = host_machine.system() == 'windows'
 is_mingw = is_windows and cc.get_id() == 'gcc'

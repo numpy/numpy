@@ -3,14 +3,10 @@
 # Potential issues to address or keep track of:
 #   - sincos detection incorrect on NetBSD: https://github.com/mesonbuild/meson/issues/10641
 
-# Generate config.h
-# -----------------
+# Generate config.h and _numpyconfig.h
+# ------------------------------------
 
 cdata = configuration_data()
-
-if not cc.has_header('Python.h', dependencies: py_dep)
-  error('Cannot compile `Python.h`. Perhaps you need to install python-dev|python-devel')
-endif
 
 use_svml = (
   host_machine.system() == 'linux' and
