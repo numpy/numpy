@@ -9,6 +9,13 @@ on:
       - main
       - maintenance/**
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read # to fetch code (actions/checkout)
+
 jobs:
   build-wasm-emscripten:
     runs-on: ubuntu-latest
