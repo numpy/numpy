@@ -53,6 +53,19 @@ run_command('code_generators/verify_c_api_version.py', '--api-version', C_API_VE
 
 # Generate config.h and _numpyconfig.h
 # ------------------------------------
+#
+# There are two generated headers:
+#   - config.h: a private header, which is not installed and used only at
+#               build time, mostly to determine whether or not optional
+#               headers, compiler attributes, etc. are available
+#   - _numpyconfig.h: a header with public `NPY_` symbols which get made
+#                     available via numpyconfig.h
+#
+# Note that `HAVE_*` symbols indicate the presence or absence of a checked
+# property of the build environment. When available, these symbols get defined
+# to `1`; when not available they must not be defined at all. This is
+# important, because code in NumPy typically does not check the value but only
+# whether the symbol is defined. So `#define HAVE_SOMETHING 0` is wrong.
 
 cdata = configuration_data()
 
@@ -139,19 +152,24 @@ c99_complex_funcs = [
 foreach func: c99_complex_funcs
   func_single = func + 'f'
   func_longdouble = func + 'l'
-  cdata.set10('HAVE_' + func.to_upper(), cc.has_function(func))
-  cdata.set10('HAVE_' + func_single.to_upper(), cc.has_function(func_single))
-  cdata.set10('HAVE_' + func_longdouble.to_upper(), cc.has_function(func_longdouble))
+  if cc.has_function(func)
+    cdata.set10('HAVE_' + func.to_upper(), true)
+  endif
+  if cc.has_function(func_single)
+    cdata.set10('HAVE_' + func_single.to_upper(), true)
+  endif
+  if cc.has_function(func_longdouble)
+    cdata.set10('HAVE_' + func_longdouble.to_upper(), true)
+  endif
 endforeach
-
-# FIXME: HAVE_* defines aren't 1/0, they are mostly used without checking the value,
-# and should not be defined at all rather than 0 if the check says something isn't present.
 
 # We require C99 so these should always be found at build time. But for
 # libnpymath as a C99 compat layer, these may still be relevant.
 c99_macros = ['isfinite', 'isinf', 'isnan', 'signbit']
 foreach macro: c99_macros
-  cdata.set10('NPY_HAVE_DECL_' + macro.to_upper(), cc.has_function(macro))
+  if cc.has_function(macro)
+    cdata.set10('NPY_HAVE_DECL_' + macro.to_upper(), true)
+  endif
 endforeach
 
 inc_curdir = include_directories('.')
@@ -163,24 +181,24 @@ foreach filefunc_maybe: optional_file_funcs
   # for the common functions we test. Hence we skip those checks.
   if (filefunc_maybe == 'fallocate' or
       not cc.has_header_symbol('Python.h', config_value, dependencies: py_dep)
-     )
-      cdata.set10(config_value,
-        cc.has_function(filefunc_maybe,
-          include_directories: inc_curdir,
-          prefix: '#include "feature_detection_stdio.h"'
-        )
+    )
+    if cc.has_function(filefunc_maybe,
+                       include_directories: inc_curdir,
+                       prefix: '#include "feature_detection_stdio.h"'
       )
+      cdata.set10(config_value, true)
+    endif
   endif
 endforeach
 
 # Optional locale function
-result = cc.has_function('strtold_l', include_directories: inc_curdir,
+have_strtold_l = cc.has_function('strtold_l', include_directories: inc_curdir,
   prefix:'''
   #include <stdlib.h>
   #include <xlocale.h>
   #include "feature_detection_locale.h"
 ''')
-if not result
+if not have_strtold_l
   # Retry with locale.h, seems to vary across Linux distros
   result = cc.has_function('strtold_l', include_directories: inc_curdir,
     prefix:'''
@@ -189,17 +207,19 @@ if not result
     #include "feature_detection_locale.h"
   ''')
 endif
-cdata.set10('HAVE_STRTOLD_L', result)
+if have_strtold_l
+  cdata.set10('HAVE_STRTOLD_L', true)
+endif
 
 # Other optional functions
-cdata.set10('HAVE_BACKTRACE',
-  cc.has_function('backtrace', prefix: '#include <execinfo.h>')
-)
-cdata.set10('HAVE_MADVISE',
-  cc.has_function('madvise', include_directories: inc_curdir,
+if cc.has_function('backtrace', prefix: '#include <execinfo.h>')
+  cdata.set10('HAVE_BACKTRACE', true)
+endif
+if cc.has_function('madvise', include_directories: inc_curdir,
     prefix: '#include "feature_detection_misc.h"'
   )
-)
+  cdata.set10('HAVE_MADVISE', true)
+endif
 
 # SSE headers only enabled automatically on amd64/x32 builds
 optional_headers = [
@@ -218,7 +238,9 @@ foreach header: optional_headers
 endforeach
 
 # Optional compiler attributes
-cdata.set10('HAVE_ATTRIBUTE_NONNULL', cc.has_function_attribute('nonnull'))
+if cc.has_function_attribute('nonnull')
+  cdata.set10('HAVE_ATTRIBUTE_NONNULL', true)
+endif
 # Is this actually defined in distutils build?
 has_optimize_attribute = cc.has_function_attribute('optimize')  # FIXME
 #cdata.set10('HAVE_ATTRIBUTE_OPTIMIZE_OPT_3', has_optimize_attribute)
