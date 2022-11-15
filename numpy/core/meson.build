@@ -609,7 +609,61 @@ src_umath = [
   'src/umath/_scaled_float_dtype.c',
 ]
 
-# TODO: add SVML sources
+# SVML object files. If functionality is migrated to universal intrinsics and
+# the object files are no longer needed, comment out the relevant object files
+# here (add a comment on where the new implementation lives).
+# Note that this migration is desirable; we then get the performance benefits
+# for all platforms rather than only for AVX512 on 64-bit Linux, and may be
+# able to avoid the accuracy regressions in SVML.
+svml_objects = []
+if use_svml
+  svml_objects += [
+    'src/umath/svml/linux/avx512/svml_z0_acos_d_la.s',
+    'src/umath/svml/linux/avx512/svml_z0_acos_s_la.s',
+    'src/umath/svml/linux/avx512/svml_z0_acosh_d_la.s',
+    'src/umath/svml/linux/avx512/svml_z0_acosh_s_la.s',
+    'src/umath/svml/linux/avx512/svml_z0_asin_d_la.s',
+    'src/umath/svml/linux/avx512/svml_z0_asin_s_la.s',
+    'src/umath/svml/linux/avx512/svml_z0_asinh_d_la.s',
+    'src/umath/svml/linux/avx512/svml_z0_asinh_s_la.s',
+    'src/umath/svml/linux/avx512/svml_z0_atan2_d_la.s',
+    'src/umath/svml/linux/avx512/svml_z0_atan2_s_la.s',
+    'src/umath/svml/linux/avx512/svml_z0_atan_d_la.s',
+    'src/umath/svml/linux/avx512/svml_z0_atan_s_la.s',
+    'src/umath/svml/linux/avx512/svml_z0_atanh_d_la.s',
+    'src/umath/svml/linux/avx512/svml_z0_atanh_s_la.s',
+    'src/umath/svml/linux/avx512/svml_z0_cbrt_d_la.s',
+    'src/umath/svml/linux/avx512/svml_z0_cbrt_s_la.s',
+    'src/umath/svml/linux/avx512/svml_z0_cos_d_la.s',
+    'src/umath/svml/linux/avx512/svml_z0_cos_s_la.s',
+    'src/umath/svml/linux/avx512/svml_z0_cosh_d_la.s',
+    'src/umath/svml/linux/avx512/svml_z0_cosh_s_la.s',
+    'src/umath/svml/linux/avx512/svml_z0_exp2_d_la.s',
+    'src/umath/svml/linux/avx512/svml_z0_exp2_s_la.s',
+    'src/umath/svml/linux/avx512/svml_z0_exp_d_la.s',
+    'src/umath/svml/linux/avx512/svml_z0_exp_s_la.s',
+    'src/umath/svml/linux/avx512/svml_z0_expm1_d_la.s',
+    'src/umath/svml/linux/avx512/svml_z0_expm1_s_la.s',
+    'src/umath/svml/linux/avx512/svml_z0_log10_d_la.s',
+    'src/umath/svml/linux/avx512/svml_z0_log10_s_la.s',
+    'src/umath/svml/linux/avx512/svml_z0_log1p_d_la.s',
+    'src/umath/svml/linux/avx512/svml_z0_log1p_s_la.s',
+    'src/umath/svml/linux/avx512/svml_z0_log2_d_la.s',
+    'src/umath/svml/linux/avx512/svml_z0_log2_s_la.s',
+    'src/umath/svml/linux/avx512/svml_z0_log_d_la.s',
+    'src/umath/svml/linux/avx512/svml_z0_log_s_la.s',
+    'src/umath/svml/linux/avx512/svml_z0_pow_d_la.s',
+    'src/umath/svml/linux/avx512/svml_z0_pow_s_la.s',
+    'src/umath/svml/linux/avx512/svml_z0_sin_d_la.s',
+    'src/umath/svml/linux/avx512/svml_z0_sin_s_la.s',
+    'src/umath/svml/linux/avx512/svml_z0_sinh_d_la.s',
+    'src/umath/svml/linux/avx512/svml_z0_sinh_s_la.s',
+    'src/umath/svml/linux/avx512/svml_z0_tan_d_la.s',
+    'src/umath/svml/linux/avx512/svml_z0_tan_s_la.s',
+    'src/umath/svml/linux/avx512/svml_z0_tanh_d_la.s',
+    'src/umath/svml/linux/avx512/svml_z0_tanh_s_la.s',
+  ]
+endif
 
 py.extension_module('_multiarray_umath',
   [
@@ -623,6 +677,7 @@ py.extension_module('_multiarray_umath',
     src_umath_doc_h,
     npy_math_internal_h,
   ],
+  objects: svml_objects,
   c_args: c_args_common,
   cpp_args: cpp_args_common,
   include_directories: [
