@@ -633,10 +633,9 @@ src_umath = [
 
 # SVML object files. If functionality is migrated to universal intrinsics and
 # the object files are no longer needed, comment out the relevant object files
-# here (add a comment on where the new implementation lives).
-# Note that this migration is desirable; we then get the performance benefits
-# for all platforms rather than only for AVX512 on 64-bit Linux, and may be
-# able to avoid the accuracy regressions in SVML.
+# here. Note that this migration is desirable; we then get the performance
+# benefits for all platforms rather than only for AVX512 on 64-bit Linux, and
+# may be able to avoid the accuracy regressions in SVML.
 svml_objects = []
 if use_svml
   svml_objects += [
@@ -682,7 +681,7 @@ if use_svml
     'src/umath/svml/linux/avx512/svml_z0_sinh_s_la.s',
     'src/umath/svml/linux/avx512/svml_z0_tan_d_la.s',
     'src/umath/svml/linux/avx512/svml_z0_tan_s_la.s',
-    'src/umath/svml/linux/avx512/svml_z0_tanh_d_la.s',
+    # 'src/umath/svml/linux/avx512/svml_z0_tanh_d_la.s',
     'src/umath/svml/linux/avx512/svml_z0_tanh_s_la.s',
   ]
 endif
