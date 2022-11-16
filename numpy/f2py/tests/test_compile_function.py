@@ -68,23 +68,7 @@ def test_f2py_init_compile(extra_args):
         # check for sensible result of Fortran function; that means
         # we can import the module name in Python and retrieve the
         # result of the sum operation
-        if sys.platform == 'darwin':
-            print("xxxxxxxxxxxxxxxxxxxxxxxxxxx")
-            import subprocess
-            print(moddir, modname)
-            try:
-                print("----- ls moddir -----------")
-                subprocess.run(["ls", moddir])
-                print("----- ls /usr/local/lib/ -----------")
-                subprocess.run(["ls", "/usr/local/lib"])
-                print("yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy")
-                subprocess.run(["otool", "-L", moddir + '/' + modname + '.cpython-38-darwin.so'])
-                print("yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy")
-                return_check = import_module(modname)
-            finally:
-                print("xxxxxxxxxxxxxxxxxxxxxxxxxxx")
-        else:
-            return_check = import_module(modname)
+        return_check = import_module(modname)
         calc_result = return_check.foo()
         assert calc_result == 15
         # Removal from sys.modules, is not as such necessary. Even with
