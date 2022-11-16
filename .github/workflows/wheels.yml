@@ -108,21 +108,13 @@ jobs:
         with:
           python-version: "3.x"
 
-      - name: install-rtools
+      - name: setup rtools for 32-bit
         run: |
-          # Already installed
-          # choco install rtools --no-progress
-          if ($IS_32_BIT -eq "true") {
-            echo "PLAT=i686" >> $env:GITHUB_ENV
-            echo "MSYSTEM=MINGW32" >> $env:GITHUB_ENV
-            echo "PATH=$env:RTOOLS40_HOME\mingw32\bin;$env:PATH" >> $env:GITHUB_ENV
-          } else {
-            echo "PLAT=x86_64" >> $env:GITHUB_ENV
-            echo "MSYSTEM=UCRT64" >> $env:GITHUB_ENV
-            echo "PATH=$env:RTOOLS40_HOME\mingw64\bin;$env:PATH" >> $env:GITHUB_ENV
-          }
+          echo "PLAT=i686" >> $env:GITHUB_ENV
+          echo "MSYSTEM=MINGW32" >> $env:GITHUB_ENV
+          echo "PATH=$env:RTOOLS40_HOME\mingw32\bin;$env:PATH" >> $env:GITHUB_ENV
           gfortran --version
-        if: ${{ matrix.buildplat[0] == 'windows-2019' }}
+        if: ${{ matrix.buildplat[1] == 'win32' }}
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.9.0

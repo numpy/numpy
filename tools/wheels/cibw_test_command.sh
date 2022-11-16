@@ -12,7 +12,14 @@ if [[ $RUNNER_OS == "Windows" ]]; then
     PY_DIR=$(python -c "import sys; print(sys.prefix)")
     mkdir $PY_DIR/libs
 fi
-
+if [[ $RUNNER_OS == "macOS" ]]; then
+    # Install same version of gfortran as the openblas-libs builds
+    if [[ $PLATFORM == "macosx-arm64" ]]; then
+        PLAT="arm64"
+    fi
+    source $PROJECT_DIR/tools/wheels/gfortran_utils.sh
+    install_gfortran
+fi
 # Set available memory value to avoid OOM problems on aarch64.
 # See gh-22418.
 export NPY_AVAILABLE_MEM="4 GB"
