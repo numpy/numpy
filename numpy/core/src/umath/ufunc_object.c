@@ -2093,7 +2093,7 @@ _get_coredim_sizes(PyUFuncObject *ufunc, PyArrayObject **op,
  *       constructing one each time
  */
 NPY_NO_EXPORT PyObject *
-PyUFunc_GetIdentity(PyUFuncObject *ufunc, npy_bool *reorderable)
+PyUFunc_GetDefaultIdentity(PyUFuncObject *ufunc, npy_bool *reorderable)
 {
     switch(ufunc->identity) {
     case PyUFunc_One:
@@ -6974,7 +6974,7 @@ static PyObject *
 ufunc_get_identity(PyUFuncObject *ufunc, void *NPY_UNUSED(ignored))
 {
     npy_bool reorderable;
-    return PyUFunc_GetIdentity(ufunc, &reorderable);
+    return PyUFunc_GetDefaultIdentity(ufunc, &reorderable);
 }
 
 static PyObject *

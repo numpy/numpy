@@ -274,7 +274,7 @@ get_initial_from_ufunc(
         return -1;
     }
     npy_bool reorderable;
-    PyObject *identity_obj = PyUFunc_GetIdentity(
+    PyObject *identity_obj = PyUFunc_GetDefaultIdentity(
             (PyUFuncObject *)context->caller, &reorderable);
     if (identity_obj == NULL) {
         return -1;
@@ -366,7 +366,8 @@ PyArray_NewLegacyWrappingArrayMethod(PyUFuncObject *ufunc,
     get_reduction_intial_function *get_reduction_intial = NULL;
     if (ufunc->nin == 2 && ufunc->nout == 1) {
         npy_bool reorderable = NPY_FALSE;
-        PyObject *identity_obj = PyUFunc_GetIdentity(ufunc, &reorderable);
+        PyObject *identity_obj = PyUFunc_GetDefaultIdentity(
+                ufunc, &reorderable);
         if (identity_obj == NULL) {
             return NULL;
         }

@@ -13,7 +13,7 @@ NPY_NO_EXPORT const char*
 ufunc_get_name_cstr(PyUFuncObject *ufunc);
 
 NPY_NO_EXPORT PyObject *
-PyUFunc_GetIdentity(PyUFuncObject *ufunc, npy_bool *reorderable);
+PyUFunc_GetDefaultIdentity(PyUFuncObject *ufunc, npy_bool *reorderable);
 
 /* strings from umathmodule.c that are interned on umath import */
 NPY_VISIBILITY_HIDDEN extern PyObject *npy_um_str_array_ufunc;
