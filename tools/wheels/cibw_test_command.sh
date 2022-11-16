@@ -23,7 +23,12 @@ fi
 # Set available memory value to avoid OOM problems on aarch64.
 # See gh-22418.
 export NPY_AVAILABLE_MEM="4 GB"
-python -c "import sys; import numpy; sys.exit(not numpy.test('full'))"
-
+if [[ $(python -c "import sys; print(sys.implementation.name)") == "pypy" ]]; then
+  # make PyPy more verbose, try to catc a segfault in
+  # numpy/lib/tests/test_function_base.py
+  python -c "import sys; import numpy; sys.exit(not numpy.test(label='full', verbose=2))"
+else
+  python -c "import sys; import numpy; sys.exit(not numpy.test(label='full'))"
+fi
 python $PROJECT_DIR/tools/wheels/check_license.py
 python $PROJECT_DIR/tools/openblas_support.py --check_version

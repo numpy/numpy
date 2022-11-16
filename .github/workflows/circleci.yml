@@ -2,6 +2,8 @@
 #
 # if: github.repository == 'numpy/numpy'
 
+name: CircleCI artifact redirector
+
 permissions:
   contents: read # to fetch code (actions/checkout)
 
