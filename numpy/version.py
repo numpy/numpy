@@ -10,7 +10,6 @@ try:
     from ._version_meson import get_versions
     _built_with_meson = True
 except ImportError:
-    asldkfj
     from ._version import get_versions
 
 vinfo: dict[str, str] = get_versions()
