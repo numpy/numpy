@@ -4089,8 +4089,8 @@ PyArray_InitializeDatetimeCasts()
         .nout = 1,
         .casting = NPY_UNSAFE_CASTING,
         .flags = NPY_METH_SUPPORTS_UNALIGNED,
-        .slots = slots,
         .dtypes = dtypes,
+        .slots = slots,
     };
     slots[0].slot = NPY_METH_resolve_descriptors;
     slots[0].pfunc = &time_to_time_resolve_descriptors;

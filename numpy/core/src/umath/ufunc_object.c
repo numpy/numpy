@@ -6511,6 +6511,7 @@ NPY_NO_EXPORT PyTypeObject PyUFunc_Type = {
     .tp_name = "numpy.ufunc",
     .tp_basicsize = sizeof(PyUFuncObject),
     .tp_dealloc = (destructor)ufunc_dealloc,
+    .tp_vectorcall_offset = offsetof(PyUFuncObject, vectorcall),
     .tp_repr = (reprfunc)ufunc_repr,
     .tp_call = &PyVectorcall_Call,
     .tp_str = (reprfunc)ufunc_repr,
@@ -6520,7 +6521,6 @@ NPY_NO_EXPORT PyTypeObject PyUFunc_Type = {
     .tp_traverse = (traverseproc)ufunc_traverse,
     .tp_methods = ufunc_methods,
     .tp_getset = ufunc_getset,
-    .tp_vectorcall_offset = offsetof(PyUFuncObject, vectorcall),
 };
 
 /* End of code for ufunc objects */

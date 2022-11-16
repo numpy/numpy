@@ -3593,8 +3593,8 @@ NPY_NO_EXPORT PyArray_DTypeMeta PyArrayDescr_TypeFull = {
         .tp_getset = arraydescr_getsets,
         .tp_new = arraydescr_new,
     },},
-    .type_num = -1,
-    .flags = NPY_DT_ABSTRACT,
     .singleton = NULL,
+    .type_num = -1,
     .scalar_type = NULL,
+    .flags = NPY_DT_ABSTRACT,
 };

@@ -482,8 +482,8 @@ NPY_NO_EXPORT PyTypeObject PyArrayMethod_Type = {
     PyVarObject_HEAD_INIT(NULL, 0)
     .tp_name = "numpy._ArrayMethod",
     .tp_basicsize = sizeof(PyArrayMethodObject),
-    .tp_flags = Py_TPFLAGS_DEFAULT,
     .tp_dealloc = arraymethod_dealloc,
+    .tp_flags = Py_TPFLAGS_DEFAULT,
 };
 
 
@@ -951,9 +951,9 @@ NPY_NO_EXPORT PyTypeObject PyBoundArrayMethod_Type = {
     PyVarObject_HEAD_INIT(NULL, 0)
     .tp_name = "numpy._BoundArrayMethod",
     .tp_basicsize = sizeof(PyBoundArrayMethodObject),
-    .tp_flags = Py_TPFLAGS_DEFAULT,
-    .tp_repr = (reprfunc)boundarraymethod_repr,
     .tp_dealloc = boundarraymethod_dealloc,
+    .tp_repr = (reprfunc)boundarraymethod_repr,
+    .tp_flags = Py_TPFLAGS_DEFAULT,
     .tp_methods = boundarraymethod_methods,
     .tp_getset = boundarraymethods_getters,
 };

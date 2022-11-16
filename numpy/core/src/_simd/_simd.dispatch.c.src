@@ -789,12 +789,12 @@ NPY_CPU_DISPATCH_CURFX(simd_create_module)(void)
 {
     static struct PyModuleDef defs = {
         .m_base = PyModuleDef_HEAD_INIT,
-        .m_size = -1,
     #ifdef NPY__CPU_TARGET_CURRENT
         .m_name = "numpy.core._simd." NPY_TOSTRING(NPY__CPU_TARGET_CURRENT),
     #else
         .m_name = "numpy.core._simd.baseline",
     #endif
+        .m_size = -1,
     #if NPY_SIMD
         .m_methods = simd__intrinsics_methods
     #else
