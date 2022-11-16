@@ -234,6 +234,8 @@ def vstack(tup, *, dtype=None, casting="same_kind"):
     and r/g/b channels (third axis). The functions `concatenate`, `stack` and
     `block` provide more general stacking and concatenation operations.
 
+    ``np.row_stack`` is an alias for `vstack`. They are the same function.
+
     Parameters
     ----------
     tup : sequence of ndarrays
