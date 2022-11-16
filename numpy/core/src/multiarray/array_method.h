@@ -108,7 +108,6 @@ typedef int (get_loop_function)(
  * Query an ArrayMethod for the initial value for use in reduction.
  *
  * @param context The arraymethod context, mainly to access the descriptors.
- * @param initial Pointer to initial data to be filled (if possible)
  * @param reduction_is_empty Whether the reduction is empty, when it is the
  *     default value is required, otherwise an identity value to start the
  *     the reduction.  These might differ, examples:
@@ -117,14 +116,15 @@ typedef int (get_loop_function)(
  *     - We use no identity for object, but `0` and `1` for sum and prod.
  *     - `-inf` or `INT_MIN` for `max` is an identity, but at least `INT_MIN`
  *       not a good *default* when there are no items.
+ * @param initial Pointer to initial data to be filled (if possible)
  *
  * @returns -1, 0, or 1 indicating error, no initial value, and initial being
  *     successfully filled.  Errors must not be given where 0 is correct, NumPy
  *     may call this even when not strictly necessary.
  */
 typedef int (get_reduction_intial_function)(
-        PyArrayMethod_Context *context, char *initial,
-        npy_bool reduction_is_empty);
+        PyArrayMethod_Context *context, npy_bool reduction_is_empty,
+        char *initial);
 
 /*
  * The following functions are only used be the wrapping array method defined

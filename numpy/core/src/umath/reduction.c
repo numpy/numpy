@@ -320,7 +320,7 @@ PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
              * we will not need the identity as the result is also empty.
              */
             int has_initial = context->method->get_reduction_initial(
-                    context, initial_buf, empty_iteration);
+                    context, empty_iteration, initial_buf);
             if (has_initial < 0) {
                 goto fail;
             }

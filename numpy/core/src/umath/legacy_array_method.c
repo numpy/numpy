@@ -243,8 +243,8 @@ get_wrapped_legacy_ufunc_loop(PyArrayMethod_Context *context,
  */
 static int
 copy_cached_initial(
-        PyArrayMethod_Context *context, char *initial,
-        npy_bool NPY_UNUSED(reduction_is_empty))
+        PyArrayMethod_Context *context, npy_bool NPY_UNUSED(reduction_is_empty),
+        char *initial)
 {
     memcpy(initial, context->method->initial, context->descriptors[0]->elsize);
     return 1;
@@ -253,12 +253,17 @@ copy_cached_initial(
 
 /*
  * The default `get_reduction_initial` attempts to look up the identity
- * from the calling ufunc.
+ * from the calling ufunc.  This might fail, so we only call it when necessary.
+ *
+ * For our numbers, we can easily cache it, so do so after the first call
+ * by overriding the function with `copy_cache_initial`.  This path is not
+ * publically available.  That could be added, and for a custom initial getter
+ * it will usually be static/compile time data anyway.
  */
 static int
 get_initial_from_ufunc(
-        PyArrayMethod_Context *context, char *initial,
-        npy_bool reduction_is_empty)
+        PyArrayMethod_Context *context, npy_bool reduction_is_empty,
+        char *initial)
 {
     if (context->caller == NULL
             || !PyObject_TypeCheck(context->caller, &PyUFunc_Type)) {
@@ -375,7 +380,6 @@ PyArray_NewLegacyWrappingArrayMethod(PyUFuncObject *ufunc,
             flags |= NPY_METH_IS_REORDERABLE;
         }
         if (identity_obj != Py_None) {
-            /* NOTE: We defer, just in case it fails in weird cases: */
             get_reduction_intial = &get_initial_from_ufunc;
         }
     }

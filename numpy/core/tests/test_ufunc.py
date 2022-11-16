@@ -1658,9 +1658,10 @@ class TestUfunc:
         # For an object loop, the default value 0 with type int is used:
         assert type(np.add.reduce([], dtype=object)) is int
         out = np.array(None, dtype=object)
-        # When the loop is float but `out` is object this does not happen:
+        # When the loop is float64 but `out` is object this does not happen,
+        # the result is float64 cast to object (which gives Python `float`).
         np.add.reduce([], out=out, dtype=np.float64)
-        assert type(out[()]) is not int
+        assert type(out[()]) is float
 
     def test_initial_reduction(self):
         # np.minimum.reduce is an identityless reduction
@@ -1701,10 +1702,15 @@ class TestUfunc:
         # Not OK, the reduction itself is empty and we have no idenity
         with pytest.raises(ValueError):
             np.true_divide.reduce(arr, axis=0)
+
         # Test that an empty reduction fails also if the result is empty
         arr = np.zeros((0, 0, 5))
         with pytest.raises(ValueError):
             np.true_divide.reduce(arr, axis=1)
+
+        # Division reduction makes sense with `initial=1` (empty or not):
+        res = np.true_divide.reduce(arr, axis=1, initial=1)
+        assert_array_equal(res, np.ones((0, 5)))
 
     @pytest.mark.parametrize('axis', (0, 1, None))
     @pytest.mark.parametrize('where', (np.array([False, True, True]),
@@ -2644,7 +2650,8 @@ def test_reduce_casterrors(offset):
     with pytest.raises(ValueError, match="invalid literal"):
         # This is an unsafe cast, but we currently always allow that.
         # Note that the double loop is picked, but the cast fails.
-        # `initial=None` disables the use of an identity here.
+        # `initial=None` disables the use of an identity here to test failures
+        # while copying the first values path (not used when identity exists).
         np.add.reduce(arr, dtype=np.intp, out=out, initial=None)
     assert count == sys.getrefcount(value)
     # If an error occurred during casting, the operation is done at most until
@@ -2652,6 +2659,15 @@ def test_reduce_casterrors(offset):
     # if the error happened immediately.
     # This does not define behaviour, the output is invalid and thus undefined
     assert out[()] < value * offset
+
+
+def test_object_reduce_cleanup_on_failure():
+    # Test cleanup, including of the initial value (manually provided or not)
+    with pytest.raises(TypeError):
+        np.add.reduce([1, 2, None], initial=4)
+
+    with pytest.raises(TypeError):
+        np.add.reduce([1, 2, None])
 
 
 @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
