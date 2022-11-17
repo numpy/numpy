@@ -328,9 +328,11 @@ nc_log@c@(@ctype@ *x, @ctype@ *r)
 static void
 nc_log1p@c@(@ctype@ *x, @ctype@ *r)
 {
-    @ftype@ l = npy_hypot@c@(x->real + 1,x->imag);
-    r->imag = npy_atan2@c@(x->imag, x->real + 1);
-    r->real = npy_log@c@(l);
+    @ftype@ xx = x->real;
+    @ftype@ yy = x->imag;
+    @ftype@ z = xx * (2 + xx) + yy * yy;
+    r->imag = npy_atan2@c@(yy, xx + 1);
+    r->real = 0.5 * npy_log1p@c@(z);
     return;
 }
 
