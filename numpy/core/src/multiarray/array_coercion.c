@@ -552,8 +552,8 @@ PyArray_Pack(PyArray_Descr *descr, char *item, PyObject *value)
 
 static int
 update_shape(int curr_ndim, int *max_ndim,
-             npy_intp out_shape[NPY_MAXDIMS], int new_ndim,
-             const npy_intp new_shape[NPY_MAXDIMS], npy_bool sequence,
+             npy_intp out_shape[], int new_ndim,
+             const npy_intp new_shape[], npy_bool sequence,
              enum _dtype_discovery_flags *flags)
 {
     int success = 0;  /* unsuccessful if array is ragged */
