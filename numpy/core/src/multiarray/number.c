@@ -355,6 +355,9 @@ array_inplace_matrix_multiply(PyArrayObject *m1, PyObject *m2)
     int m1_ndim;
     int m2_ndim;
 
+    INPLACE_GIVE_UP_IF_NEEDED(m1, m2_array,
+            nb_inplace_matrix_multiply, array_inplace_matrix_multiply);
+
     /* Explicitly raise a ValueError when the output would
      * otherwise be broadcasted to `m1`. Three conditions must be met:
      *   * `m1.ndim in [1, 2]`
@@ -368,12 +371,12 @@ array_inplace_matrix_multiply(PyArrayObject *m1, PyObject *m2)
             && (PyArray_DIMS(m1)[m1_ndim - 1] == PyArray_DIMS(m2_array)[0])) {
         PyErr_Format(PyExc_ValueError,
                 "output parameter has the wrong number of dimensions: "
-                "Found %d but expected %d", m1_ndim - 1, m1_ndim);
+                "Found %d but expected %d.  Certain broadcasts may be "
+                "accepted for `np.matmul(a, b, out=a)`.",
+                m1_ndim - 1, m1_ndim);
         return NULL;
     }
 
-    INPLACE_GIVE_UP_IF_NEEDED(m1, m2_array,
-            nb_inplace_matrix_multiply, array_inplace_matrix_multiply);
     return PyArray_GenericInplaceBinaryFunction(m1, (PyObject *)m2_array, n_ops.matmul);
 }
 
