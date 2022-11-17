@@ -192,14 +192,11 @@ jobs:
 
   full:
     needs: [smoke_test]
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     env:
       USE_WHEEL: 1
       RUN_FULL_TESTS: 1
-      # The coverage option fails with internal compiler error
-      # in coverage.c with Ubunto 20.04. That problem is fixed
-      # in 22.04, but there are other, new errors.
-      #RUN_COVERAGE: 1
+      RUN_COVERAGE: 1
       INSTALL_PICKLE5: 1
     steps:
     - uses: actions/checkout@v3
