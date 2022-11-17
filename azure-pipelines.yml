@@ -113,6 +113,7 @@ stages:
             echo CFLAGS \$CFLAGS && \
             python3 -m pip install -v . && \
             python3 runtests.py -n --debug-info --mode=full -- -rsx --junitxml=junit/test-results.xml && \
+            python3 -m pip install threadpoolctl && \
             python3 tools/openblas_support.py --check_version"
       displayName: 'Run 32-bit manylinux2014 Docker Build / Tests'
     - task: PublishTestResults@2
@@ -150,28 +151,14 @@ stages:
         [ -n "$USE_XCODE_10" ] && /bin/bash -c "sudo xcode-select -s /Applications/Xcode_10.app/Contents/Developer"
         clang --version
       displayName: 'report clang version'
-    # NOTE: might be better if we could avoid installing
-    # two C compilers, but with homebrew looks like we're
-    # now stuck getting the full gcc toolchain instead of
-    # just pulling in gfortran
+
     - script: |
-        set -xe
-        # same version of gfortran as the open-libs and numpy-wheel builds
-        curl -L https://github.com/MacPython/gfortran-install/raw/master/archives/gfortran-4.9.0-Mavericks.dmg -o gfortran.dmg
-        GFORTRAN_SHA256=$(shasum -a 256 gfortran.dmg)
-        KNOWN_SHA256="d2d5ca5ba8332d63bbe23a07201c4a0a5d7e09ee56f0298a96775f928c3c4b30  gfortran.dmg"
-        if [ "$GFORTRAN_SHA256" != "$KNOWN_SHA256" ]; then
-            echo sha256 mismatch
-            exit 1
+        if [[ $PLATFORM == "macosx-arm64" ]]; then
+            PLAT="arm64"
         fi
-        hdiutil attach -mountpoint /Volumes/gfortran gfortran.dmg
-        sudo installer -pkg /Volumes/gfortran/gfortran.pkg -target /
-        otool -L /usr/local/gfortran/lib/libgfortran.3.dylib
-        # Manually symlink gfortran-4.9 to plain gfortran for f2py.
-        # No longer needed after Feb 13 2020 as gfortran is already present
-        # and the attempted link errors. Keep this for future reference.
-        # ln -s /usr/local/bin/gfortran-4.9 /usr/local/bin/gfortran
-      displayName: 'make libgfortran available on mac os for openblas'
+        source tools/wheels/gfortran_utils.sh
+        install_gfortran
+      displayName: 'install gfortran'
     # use the pre-built openblas binary that most closely
     # matches our MacOS wheel builds -- currently based
     # primarily on file size / name details
@@ -227,7 +214,9 @@ stages:
       env:
         # gfortran installed above adds -lSystem, so this is needed to find it (gh-22043)
         LIBRARY_PATH: /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib
-    - bash: python tools/openblas_support.py --check_version
+    - bash: |
+        python -m pip install threadpoolctl
+        python tools/openblas_support.py --check_version
       displayName: 'Verify OpenBLAS version'
       condition: eq(variables['USE_OPENBLAS'], '1')
     # import doesn't work when in numpy src directory , so do a pip dev install of build lib to test

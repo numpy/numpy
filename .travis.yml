@@ -32,7 +32,7 @@ jobs:
       env:
        # use OpenBLAS build, not system ATLAS
        - DOWNLOAD_OPENBLAS=1
-       - NPY_USE_BLAS_ILP64=1
+       # - NPY_USE_BLAS_ILP64=1   # the openblas build fails
        - ATLAS=None
        # VSX4 still not supported by ubuntu/gcc-11
        - EXPECT_CPU_FEATURES="VSX VSX2 VSX3"

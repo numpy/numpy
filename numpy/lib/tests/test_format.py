@@ -923,6 +923,7 @@ def test_large_file_support(tmpdir):
     assert_array_equal(r, d)
 
 
+@pytest.mark.skipif(IS_PYPY, reason="flaky on PyPy")
 @pytest.mark.skipif(np.dtype(np.intp).itemsize < 8,
                     reason="test requires 64-bit system")
 @pytest.mark.slow
