@@ -47,14 +47,14 @@ Exported symbols include:
      |   |   |     byte
      |   |   |     short
      |   |   |     intc
-     |   |   |     intp            int0
+     |   |   |     intp
      |   |   |     int_
      |   |   |     longlong
      |   |   \\-> unsignedinteger  (uintxx)     (kind=u)
      |   |         ubyte
      |   |         ushort
      |   |         uintc
-     |   |         uintp           uint0
+     |   |         uintp
      |   |         uint_
      |   |         ulonglong
      |   +-> inexact

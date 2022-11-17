@@ -443,8 +443,9 @@ class TestSctypeDict:
         # alias for np.int_, but np.long is not supported for historical
         # reasons (gh-21063)
         assert_(np.sctypeDict['ulong'] is np.uint)
-        assert_(not hasattr(np, 'ulong'))
-
+        with pytest.warns(FutureWarning):
+            # We will probably allow this in the future:
+            assert not hasattr(np, 'ulong')
 
 class TestBitName:
     def test_abstract(self):
