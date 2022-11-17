@@ -7,6 +7,10 @@
 #include "npy_config.h"
 #include "numpy/arrayobject.h"
 
+#if defined HAVE_BACKTRACE
+#include <execinfo.h>
+#endif
+
 #define NPY_NUMBER_MAX(a, b) ((a) > (b) ? (a) : (b))
 #define ARRAY_SIZE(a) (sizeof(a)/sizeof(a[0]))
 
