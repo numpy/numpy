@@ -262,9 +262,9 @@ else:
             # And future warnings for those that will change, but also give
             # the AttributeError
             warnings.warn(
-                "In the future the attribute `%s` will be defined as the "
+                f"In the future `np.{attr}` will be defined as the "
                 "corresponding NumPy scalar.  (This may have returned Python "
-                "scalars in past versions.", FutureWarning)
+                "scalars in past versions.", FutureWarning, stacklevel=2)
 
         # Importing Tester requires importing all of UnitTest which is not a
         # cheap import Since it is mainly used in test suits, we lazy import it
