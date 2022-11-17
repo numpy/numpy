@@ -248,10 +248,30 @@ has_optimize_attribute = cc.has_function_attribute('optimize')  # FIXME
 
 #TODO: __builtin_* (see setup_common.py)
 
-# FIXME: long double representation detection (see setup_common.py)
-#        add the regular x86-64 define (this is a hack to get further in the
-#        build without dealing with this thing right now)
-cdata.set10('HAVE_LDOUBLE_INTEL_EXTENDED_16_BYTES_LE', true)
+# long double representation detection (see setup_common.py)
+# TODO: this is still incomplete, and different from how it's done in the
+# numpy.distutils based build, see https://github.com/mesonbuild/meson/issues/11068
+longdouble_size = cc.sizeof('long double')
+endianness = host_machine.endian()
+if longdouble_size == 8
+  if endianness == 'little'
+    longdouble_format = 'IEEE_DOUBLE_LE'
+  else
+    longdouble_format = 'IEEE_DOUBLE_BE'
+  endif
+elif longdouble_size == 12
+  error('This should not be possible, 12 bits of "content" should still result in sizeof() being 16. Please report this error!'
+  )
+elif longdouble_size == 16
+  if endianness == 'little'
+    longdouble_format = 'INTEL_EXTENDED_16_BYTES_LE'
+  else
+    error('No idea what this is ....')
+  endif
+else
+  error('Unknown long double size: ' + londouble_size)
+endif
+cdata.set10('HAVE_LDOUBLE_' + longdouble_format, true)
 
 if cc.has_header('endian.h')
   cdata.set10('NPY_HAVE_ENDIAN_H', true)
