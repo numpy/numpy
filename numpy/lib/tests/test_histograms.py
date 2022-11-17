@@ -6,6 +6,7 @@ from numpy.testing import (
     assert_array_almost_equal, assert_raises, assert_allclose,
     assert_array_max_ulp, assert_raises_regex, suppress_warnings,
     )
+from numpy.testing._private.utils import requires_memory
 import pytest
 
 
@@ -397,7 +398,7 @@ class TestHistogram:
         edges = histogram_bin_edges(arr, bins='auto', range=(0, 1))
         assert_array_equal(edges, e)
 
-    @requires_memory
+    @requires_memory(free_bytes=100000000 * 3)
     @pytest.mark.slow
     def test_big_arrays(self):
         sample = np.zeros([100000000, 3])
