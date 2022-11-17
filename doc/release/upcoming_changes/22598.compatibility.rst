@@ -1,0 +1,5 @@
+NumPy builds are no longer tested on GCC-6
+------------------------------------------
+Ubuntu 18.04 is deprecated for GitHub actions and GCC-6 is not available on
+Ubuntu 20.04, so builds using that compiler are no longer tested. We still test
+builds using GCC-7 and GCC-8.
