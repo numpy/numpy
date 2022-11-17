@@ -74,7 +74,7 @@ stages:
   - job: Lint
     condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
     pool:
-      vmImage: 'ubuntu-18.04'
+      vmImage: 'ubuntu-20.04'
     steps:
     - task: UsePythonVersion@0
       inputs:
