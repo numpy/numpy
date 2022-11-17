@@ -1,0 +1,4 @@
+* The deprecation for the aliases ``np.object``, ``np.bool``, ``np.float``,
+  ``np.complex``, ``np.str``, and ``np.int`` is expired (introduces NumPy 1.20).
+  Some of these will now give a FutureWarning in addition to raising an error
+  since they will be mapped to the NumPy scalars in the future.
