@@ -200,7 +200,7 @@ have_strtold_l = cc.has_function('strtold_l', include_directories: inc_curdir,
 ''')
 if not have_strtold_l
   # Retry with locale.h, seems to vary across Linux distros
-  result = cc.has_function('strtold_l', include_directories: inc_curdir,
+  have_strtold_l = cc.has_function('strtold_l', include_directories: inc_curdir,
     prefix:'''
     #include <stdlib.h>
     #include <locale.h>
@@ -209,6 +209,15 @@ if not have_strtold_l
 endif
 if have_strtold_l
   cdata.set10('HAVE_STRTOLD_L', true)
+else
+  # FIXME: this is wrong! the HAVE_ define should not exist, or it'll be
+  # interpreted as the function being available (true/false does nothing, see
+  # note on HAVE_ defines higher up). This is necessary though in order to make
+  # the Linux CI job pass. So either the check is wrong somehow, or this
+  # function is not available in CI. For the latter there is a fallback path,
+  # but that is broken because we don't have the exact long double
+  # representation checks.
+  cdata.set10('HAVE_STRTOLD_L', false)
 endif
 
 # Other optional functions
@@ -252,9 +261,8 @@ has_optimize_attribute = cc.has_function_attribute('optimize')  # FIXME
 # TODO: this is still incomplete, and different from how it's done in the
 # numpy.distutils based build, see https://github.com/mesonbuild/meson/issues/11068
 longdouble_size = cc.sizeof('long double')
-endianness = host_machine.endian()
 if longdouble_size == 8
-  if endianness == 'little'
+  if host_machine.endian() == 'little'
     longdouble_format = 'IEEE_DOUBLE_LE'
   else
     longdouble_format = 'IEEE_DOUBLE_BE'
@@ -263,7 +271,9 @@ elif longdouble_size == 12
   error('This should not be possible, 12 bits of "content" should still result in sizeof() being 16. Please report this error!'
   )
 elif longdouble_size == 16
-  if endianness == 'little'
+  if host_machine.endian() == 'little'
+    # FIXME: this varies, there's multiple formats here! Not yet implemented.
+    #        TBD how we deal with the mess of old long double formats.
     longdouble_format = 'INTEL_EXTENDED_16_BYTES_LE'
   else
     error('No idea what this is ....')

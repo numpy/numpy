@@ -96,7 +96,16 @@
 /* #mesondefine NPY_RESTRICT restrict   in C99, remove? */
 #mesondefine NPY_CAN_LINK_SVML
 #mesondefine NPY_RELAXED_STRIDES_DEBUG
+
 #mesondefine HAVE_LDOUBLE_INTEL_EXTENDED_16_BYTES_LE
+#mesondefine HAVE_LDOUBLE_INTEL_EXTENDED_12_BYTES_LE
+#mesondefine HAVE_LDOUBLE_MOTOROLA_EXTENDED_12_BYTES_BE
+#mesondefine HAVE_LDOUBLE_IEEE_DOUBLE_LE
+#mesondefine HAVE_LDOUBLE_IEEE_DOUBLE_BE
+#mesondefine HAVE_LDOUBLE_IEEE_QUAD_LE
+#mesondefine HAVE_LDOUBLE_IEEE_QUAD_BE
+#mesondefine HAVE_LDOUBLE_IBM_DOUBLE_DOUBLE_LE
+#mesondefine HAVE_LDOUBLE_IBM_DOUBLE_DOUBLE_BE
 
 #ifndef __cplusplus
 /* #undef inline */
