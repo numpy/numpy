@@ -15,7 +15,9 @@ fi
 if [[ $RUNNER_OS == "macOS"  && $RUNNER_ARCH == "X64" ]]; then
     # Not clear why this is needed but it seems on x86_64 this is not the default
     # and without it f2py tests fail
-    export DYLD_LIBRARY_PATH=/usr/local/lib
+    export DYLD_LIBRARY_PATH="$DYLD_LIBRARY_PATH:/usr/local/lib"
+    # Needed so gcc (not clang) can find system libraries like libm (-lm)
+    export LIBRARY_PATH="$LIBRARY_PATH:/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib"
 fi
 # Set available memory value to avoid OOM problems on aarch64.
 # See gh-22418.
