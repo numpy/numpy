@@ -1815,13 +1815,23 @@ class TestLog1pComplex:
         # these numbers are obtained from wolfram alpha
         assert_almost_equal(ncu.log1p(1e-18 + 0.1j), 0.00497517 + 0.0996687j)
         assert_almost_equal(ncu.log1p(0.1 + 1e-18j), 0.0953102 + 9.09091e-19j)
+        assert_almost_equal(ncu.log1p(0.5 + 0j), 0.40546510810816 + 0j)
+        assert_almost_equal(ncu.log1p(0.0 + 0.5j), 0.11157177565710 + 0.46364760900081j)
+    
+    def test_extreme(self):
+        # these numbers are obtained from WarrenWeckesser and double checked with wolfram alpha
+        assert_almost_equal(ncu.log1p(-1 + 1e250j), 575.6462732485114 + 1.5707963267948966j)
+        assert_almost_equal(ncu.log1p(1e250 + 1j), 575.6462732485114 + 1e-250j)
+        assert_almost_equal(ncu.log1p(1e250 + 1e250j), 575.9928468387914 + 0.7853981633974483j)
+        assert_almost_equal(ncu.log1p(1e-250 + 1e250j), 575.6462732485114 + 1.5707963267948966j)
+        assert_almost_equal(ncu.log1p(1e-250 + 2e-250j), 1e-250 + 2e-250j)
+        assert_almost_equal(ncu.log1p(1e250 + 1e-250j), 575.6462732485114 + 0.0j)
 
     def test_special(self):
         with np.errstate(invalid="ignore", divide="ignore"):
             assert_equal(ncu.log1p(np.nan + 1j), np.nan + np.nan * 1j)
             assert_equal(ncu.log1p(np.inf + 1j), np.inf + 0j)
             assert_equal(ncu.log1p(-np.inf + 1j), np.inf + np.pi * 1j)
-            assert_equal(ncu.log1p(np.inf * 1j), np.nan + np.nan * 1j)
             assert_equal(ncu.log1p(-1 + 0j), -np.inf + 0j)
 
 class TestExpm1:
