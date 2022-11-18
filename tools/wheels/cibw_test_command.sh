@@ -6,8 +6,7 @@ PROJECT_DIR="$1"
 
 python -m pip install threadpoolctl
 python -c "import numpy; numpy.show_config()"
-# temporarily disable this check that fails in macos-x86_64 cpython3.8
-# python $PROJECT_DIR/tools/openblas_support.py --check_version
+python $PROJECT_DIR/tools/openblas_support.py --check_version
 if [[ $RUNNER_OS == "Windows" ]]; then
     # GH 20391
     PY_DIR=$(python -c "import sys; print(sys.prefix)")
