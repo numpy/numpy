@@ -197,7 +197,7 @@ stages:
     - script: python -m pip install matplotlib
       displayName: 'Install matplotlib before refguide run'
 
-    - script: python runtests.py -g --refguide-chck
+    - script: python runtests.py -g --refguide-check
       displayName: 'Run Refguide Check'
       condition: eq(variables['USE_OPENBLAS'], '1')
 
