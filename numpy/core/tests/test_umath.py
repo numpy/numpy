@@ -1811,10 +1811,13 @@ class TestLog1p:
 class TestLog1pComplex:
     def test_log1p_complex(self):
         assert_almost_equal(ncu.log1p(0.2 + 0.3j), ncu.log(1.2 + 0.3j))
-        assert_almost_equal(ncu.log1p(1e-19 + 1e-18j), 1e-19 + 1e-18j)
+        assert_almost_equal(ncu.log1p(1e-19 + 1e-18j), 1e-19 + 1e-18j,
+                            decimal=23)
         # these numbers are obtained from wolfram alpha
         assert_almost_equal(ncu.log1p(1e-18 + 0.1j), 0.00497517 + 0.0996687j)
-        assert_almost_equal(ncu.log1p(0.1 + 1e-18j), 0.0953102 + 9.09091e-19j)
+        assert_almost_equal(ncu.log1p(0.1 + 1e-18j).real, 0.0953102)
+        assert_almost_equal(ncu.log1p(0.1 + 1e-18j).imag, 9.0909091e-19,
+                            decimal=23)
         assert_almost_equal(ncu.log1p(0.5 + 0j), 0.40546510810816 + 0j)
         assert_almost_equal(ncu.log1p(0.0 + 0.5j), 0.111571776 + 0.463647609j)
     
@@ -1823,14 +1826,16 @@ class TestLog1pComplex:
         # and double checked with wolfram alpha
         assert_almost_equal(ncu.log1p(-1 + 1e250j),
                             575.6462732485114 + 1.5707963267948966j)
-        assert_almost_equal(ncu.log1p(1e250 + 1j),
-                            575.6462732485114 + 1e-250j)
+        assert_almost_equal(ncu.log1p(1e250 + 1j).real,
+                            575.6462732485114)
+        assert_almost_equal(ncu.log1p(1e250 + 1j).imag,
+                            1e-250, decimal=255)
         assert_almost_equal(ncu.log1p(1e250 + 1e250j),
                             575.9928468387914 + 0.7853981633974483j)
         assert_almost_equal(ncu.log1p(1e-250 + 1e250j),
                             575.6462732485114 + 1.5707963267948966j)
         assert_almost_equal(ncu.log1p(1e-250 + 2e-250j),
-                            1e-250 + 2e-250j)
+                            1e-250 + 2e-250j, decimal=255)
         assert_almost_equal(ncu.log1p(1e250 + 1e-250j),
                             575.6462732485114 + 0.0j)
 
