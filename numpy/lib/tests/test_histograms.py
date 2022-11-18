@@ -6,6 +6,7 @@ from numpy.testing import (
     assert_array_almost_equal, assert_raises, assert_allclose,
     assert_array_max_ulp, assert_raises_regex, suppress_warnings,
     )
+from numpy.testing._private.utils import requires_memory
 import pytest
 
 
@@ -396,6 +397,16 @@ class TestHistogram:
         hist, e = histogram(arr, bins='auto', range=(0, 1))
         edges = histogram_bin_edges(arr, bins='auto', range=(0, 1))
         assert_array_equal(edges, e)
+
+    @requires_memory(free_bytes=1e10)
+    @pytest.mark.slow
+    def test_big_arrays(self):
+        sample = np.zeros([100000000, 3])
+        xbins = 400
+        ybins = 400
+        zbins = np.arange(16000)
+        hist = np.histogramdd(sample=sample, bins=(xbins, ybins, zbins))
+        assert_equal(type(hist), type((1, 2)))
 
 
 class TestHistogramOptimBinNums:
