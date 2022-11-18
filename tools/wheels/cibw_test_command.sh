@@ -8,8 +8,9 @@ python -m pip install threadpoolctl
 python -c "import numpy; numpy.show_config()"
 which python
 python -c"import sys, pprint; pprint.pprint(sys.path)"
-echo PATH=$PATH
-python -c"from threadpoolctl import ThreadpoolController as TC; tc = TC(); libc = tc._get_libc()); print(libc, libc._dyld_imagecount())"
+echo $PATH
+python -c "from ctypes.util import find_library; print('find_library', find_library('c'))"
+python -c "from threadpoolctl import ThreadpoolController as TC; tc = TC(); libc = tc._get_libc(); print(libc, libc._dyld_imagecount())"
 python $PROJECT_DIR/tools/openblas_support.py --check_version
 
 if [[ $RUNNER_OS == "Windows" ]]; then
