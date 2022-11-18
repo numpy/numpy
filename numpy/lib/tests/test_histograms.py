@@ -398,7 +398,7 @@ class TestHistogram:
         edges = histogram_bin_edges(arr, bins='auto', range=(0, 1))
         assert_array_equal(edges, e)
 
-    @requires_memory(free_bytes=100000000 * 3)
+    @requires_memory(free_bytes=1e10)
     @pytest.mark.slow
     def test_big_arrays(self):
         sample = np.zeros([100000000, 3])
