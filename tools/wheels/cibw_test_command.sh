@@ -6,6 +6,8 @@ PROJECT_DIR="$1"
 
 python -m pip install threadpoolctl
 python -c "import numpy; numpy.show_config()"
+which python
+python -c"import sys, pprint; pprint.pprint(sys.path)"
 python $PROJECT_DIR/tools/openblas_support.py --check_version
 if [[ $RUNNER_OS == "Windows" ]]; then
     # GH 20391
