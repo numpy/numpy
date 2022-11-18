@@ -36,8 +36,6 @@ elif [[ $RUNNER_OS == "Windows" ]]; then
 fi
 
 if [[ $RUNNER_OS == "macOS" ]]; then
-    # Make sure this is no lower than the one in MacPython/openblaslibs
-    export MACOSX_DEPLOYMENT_TARGET=10.9
     # Install same version of gfortran as the openblas-libs builds
     if [[ $PLATFORM == "macosx-arm64" ]]; then
         PLAT="arm64"

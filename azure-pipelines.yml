@@ -191,8 +191,6 @@ stages:
         LAPACK: None
         ATLAS: None
         CC: /usr/bin/clang
-        # Make sure this is no lower than the one in MacPython/openblaslibs
-        MACOSX_DEPLOYMENT_TARGET: 10.9
 
     # wait until after dev build of NumPy to pip
     # install matplotlib to avoid pip install of older numpy
