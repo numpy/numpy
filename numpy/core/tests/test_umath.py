@@ -1839,6 +1839,7 @@ class TestLog1pComplex:
             assert_equal(ncu.log1p(np.nan + 1j), np.nan + np.nan * 1j)
             assert_equal(ncu.log1p(np.inf + 1j), np.inf + 0j)
             assert_equal(ncu.log1p(-np.inf + 1j), np.inf + np.pi * 1j)
+            assert_equal(ncu.log1p(complex(0, np.inf)), np.inf + np.pi * 0.5j)
             assert_equal(ncu.log1p(-1 + 0j), -np.inf + 0j)
 
 class TestExpm1:
