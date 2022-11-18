@@ -1814,7 +1814,7 @@ class TestLog1pComplex:
         assert_array_almost_equal_nulp(
             ncu.log1p(1e-19 + 1e-18j), 1e-19 + 1e-18j)
         # these numbers are obtained from wolfram alpha
-        assert_almost_equal(ncu.log1p(1e-18 + 0.1j),0.00497517 + 0.0996687j)
+        assert_almost_equal(ncu.log1p(1e-18 + 0.1j), 0.00497517 + 0.0996687j)
         assert_almost_equal(ncu.log1p(0.1 + 1e-18j).real, 0.0953102)
         assert_array_almost_equal_nulp(
             ncu.log1p(0.1 + 1e-18j).imag, 9.090909090909090909e-19)
