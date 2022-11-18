@@ -6,8 +6,8 @@ import re
 import warnings
 import functools
 
+from .._utils import set_module
 from numpy.core.numerictypes import issubclass_, issubsctype, issubdtype
-from numpy.core.overrides import set_module
 from numpy.core import ndarray, ufunc, asarray
 import numpy as np
 

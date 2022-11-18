@@ -1,9 +1,9 @@
 from contextlib import nullcontext
 
 import numpy as np
+from .._utils import set_module
 from .numeric import uint8, ndarray, dtype
 from numpy.compat import os_fspath, is_pathlib_path
-from numpy.core.overrides import set_module
 
 __all__ = ['memmap']
 
