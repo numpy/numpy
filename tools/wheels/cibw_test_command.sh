@@ -10,7 +10,7 @@ which python
 python -c"import sys, pprint; pprint.pprint(sys.path)"
 echo $PATH
 python -c "from ctypes.util import find_library; print('find_library', find_library('c'))"
-python -c "from threadpoolctl import ThreadpoolController as TC; tc = TC(); libc = tc._get_libc(); print(libc, libc._dyld_imagecount())"
+python -c "from threadpoolctl import ThreadpoolController as TC; tc = TC(); libc = tc._get_libc(); print(libc, getattr(libc, '_dyld_imagecount', lambda: None)())"
 python $PROJECT_DIR/tools/openblas_support.py --check_version
 
 if [[ $RUNNER_OS == "Windows" ]]; then
