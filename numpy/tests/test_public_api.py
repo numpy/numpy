@@ -137,6 +137,7 @@ PUBLIC_MODULES = ['numpy.' + s for s in [
     "doc",
     "doc.constants",
     "doc.ufuncs",
+    "exceptions",
     "f2py",
     "fft",
     "lib",

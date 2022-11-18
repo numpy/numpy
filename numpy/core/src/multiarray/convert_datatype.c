@@ -384,18 +384,14 @@ PyArray_GetCastFunc(PyArray_Descr *descr, int type_num)
             !PyTypeNum_ISCOMPLEX(type_num) &&
             PyTypeNum_ISNUMBER(type_num) &&
             !PyTypeNum_ISBOOL(type_num)) {
-        PyObject *cls = NULL, *obj = NULL;
-        int ret;
-        obj = PyImport_ImportModule("numpy.core");
-
-        if (obj) {
-            cls = PyObject_GetAttrString(obj, "ComplexWarning");
-            Py_DECREF(obj);
+        static PyObject *cls = NULL;
+        npy_cache_import("numpy.exceptions", "ComplexWarning", &cls);
+        if (cls == NULL) {
+            return NULL;
         }
-        ret = PyErr_WarnEx(cls,
+        int ret = PyErr_WarnEx(cls,
                 "Casting complex values to real discards "
                 "the imaginary part", 1);
-        Py_XDECREF(cls);
         if (ret < 0) {
             return NULL;
         }
@@ -2613,7 +2609,7 @@ complex_to_noncomplex_get_loop(
 {
     static PyObject *cls = NULL;
     int ret;
-    npy_cache_import("numpy.core", "ComplexWarning", &cls);
+    npy_cache_import("numpy.exceptions", "ComplexWarning", &cls);
     if (cls == NULL) {
         return -1;
     }
