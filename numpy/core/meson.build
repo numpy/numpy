@@ -255,7 +255,66 @@ has_optimize_attribute = cc.has_function_attribute('optimize')  # FIXME
 #cdata.set10('HAVE_ATTRIBUTE_OPTIMIZE_OPT_3', has_optimize_attribute)
 #cdata.set10('HAVE_ATTRIBUTE_OPTIMIZE_UNROLL_LOOPS', has_optimize_attribute)
 
-#TODO: __builtin_* (see setup_common.py)
+# Optional GCC compiler builtins and their call arguments.
+# If given, a required header and definition name (HAVE_ prepended)
+# Call arguments are required as the compiler will do strict signature checking
+optional_intrinsics = [
+  ['__builtin_isnan', '5.', [], []],
+  ['__builtin_isinf', '5.', [], []],
+  ['__builtin_isfinite', '5.', [], []],
+  ['__builtin_bswap32', '5u', [], []],
+  ['__builtin_bswap64', '5u', [], []],
+  ['__builtin_expect', '5, 0', [], []],
+  ['__builtin_mul_overflow', '5, 5, (int*)5', [], []],
+]
+if host_machine.cpu_family() in ['x86', 'x86_64']
+ optional_intrinsics += [
+    # MMX only needed for icc, but some clang's don't have it
+    ['_m_from_int64', '0', ['emmintrin.h'], []],
+    ['_mm_load_ps', '(float*)0', ['xmmintrin.h'], []],  # SSE
+    ['_mm_prefetch', '(float*)0, _MM_HINT_NTA', ['xmmintrin.h'], []],  # SSE
+    ['_mm_load_pd', '(double*)0', ['emmintrin.h'], []],  # SSE2
+    ['__builtin_prefetch', '(float*)0, 0, 3', [], []],
+    # Check that the linker can handle AVX
+    ['__asm__ volatile', '"vpand %xmm1, %xmm2, %xmm3"', ['stdio.h'], ['HAVE_LINK_AVX']],
+    ['__asm__ volatile', '"vpand %ymm1, %ymm2, %ymm3"', ['stdio.h'], ['HAVE_LINK_AVX2']],
+    ['__asm__ volatile', '"vpaddd %zmm1, %zmm2, %zmm3"', ['stdio.h'], ['HAVE_LINK_AVX512F']],
+    ['__asm__ volatile',
+     '"vfpclasspd $0x40, %zmm15, %k6\\n vmovdqu8 %xmm0, %xmm1\\n vpbroadcastmb2q %k0, %xmm0"',
+     ['stdio.h'], ['HAVE_LINK_AVX512_SKX']
+    ],
+    ['__asm__ volatile', '"xgetbv"', ['stdio.h'], ['HAVE_XGETBV']],
+  ]
+endif
+foreach intrin: optional_intrinsics
+  func = intrin[0]
+  func_args = intrin[1]
+  header = intrin[2]
+  define = intrin[3]
+  code = ''
+  if header.length() == 1
+    header_name = header[0]
+    code += f'#include <@header_name@>'
+  endif
+  code += f'''
+    #ifdef _MSC_VER
+    #pragma function(@func@)
+    #endif
+    int main(void) {
+      @func@(@func_args@);
+      return 0;
+    };
+    '''
+  if define.length() == 1
+    define_name = define[0]
+  else
+    define_name = 'HAVE_' + func.to_upper()
+  endif
+  if cc.links(code)
+    cdata.set10(define_name, true)
+  endif
+endforeach
+
 
 # long double representation detection (see setup_common.py)
 # TODO: this is still incomplete, and different from how it's done in the
