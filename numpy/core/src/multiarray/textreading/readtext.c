@@ -2,6 +2,7 @@
 #include <stdbool.h>
 
 #define PY_SSIZE_T_CLEAN
+struct timespec;
 #include <Python.h>
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION

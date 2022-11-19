@@ -2,6 +2,7 @@
 #define NUMPY_CORE_INCLUDE_NUMPY_NPY_COMMON_H_
 
 /* need Python.h for npy_intp, npy_uintp */
+struct timespec;
 #include <Python.h>
 
 /* numpconfig.h is auto-generated */

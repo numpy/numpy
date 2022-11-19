@@ -3,6 +3,7 @@
 #define NUMPY_CORE_SRC_MULTIARRAY_TEXTREADING_STREAM_PYOBJECT_H_
 
 #define PY_SSIZE_T_CLEAN
+struct timespec;
 #include <Python.h>
 
 #include "textreading/stream.h"
