@@ -247,13 +247,28 @@ foreach header: optional_headers
 endforeach
 
 # Optional compiler attributes
-if cc.has_function_attribute('nonnull')
-  cdata.set10('HAVE_ATTRIBUTE_NONNULL', true)
+# TODO: this doesn't work with cc.has_function_attribute, see
+#       https://github.com/mesonbuild/meson/issues/10732
+optional_function_attributes = [
+  ['optimize("unroll-loops")', 'OPTIMIZE_UNROLL_LOOPS'],
+  ['optimize("O3")', 'OPTIMIZE_OPT_3'],
+  ['optimize("O2")', 'OPTIMIZE_OPT_2'],
+  ['optimize("nonnull (1)")', 'NONNULL'],
+  ]
+if host_machine.cpu_family() in ['x86', 'x86_64']
+  optional_function_attributes += [
+    ['target("avx")', 'TARGET_AVX'],
+    ['target("avx2")', 'TARGET_AVX2'],
+    ['target("avx512f")', 'TARGET_AVX512F'],
+    ['target("avx512f,avx512dq,avx512bw,avx512vl,avx512cd")', 'TARGET_AVX512_SKX'],
+  ]
+  # TODO: add the _WITH_INTRINSICS_AVX list
 endif
-# Is this actually defined in distutils build?
-has_optimize_attribute = cc.has_function_attribute('optimize')  # FIXME
-#cdata.set10('HAVE_ATTRIBUTE_OPTIMIZE_OPT_3', has_optimize_attribute)
-#cdata.set10('HAVE_ATTRIBUTE_OPTIMIZE_UNROLL_LOOPS', has_optimize_attribute)
+#foreach attr: optional_function_attributes
+#  if cc.has_function_attribute(attr[0])
+#    cdata.set10('HAVE_ATTRIBUTE_' + attr[1], true)
+#  endif
+#endforeach
 
 # Optional GCC compiler builtins and their call arguments.
 # If given, a required header and definition name (HAVE_ prepended)
@@ -314,7 +329,6 @@ foreach intrin: optional_intrinsics
     cdata.set10(define_name, true)
   endif
 endforeach
-
 
 # long double representation detection (see setup_common.py)
 # TODO: this is still incomplete, and different from how it's done in the
