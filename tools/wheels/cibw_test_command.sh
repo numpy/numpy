@@ -6,25 +6,22 @@ PROJECT_DIR="$1"
 
 python -m pip install threadpoolctl
 python -c "import numpy; numpy.show_config()"
-which python
-python -c"import sys, pprint; pprint.pprint(sys.path)"
-echo $PATH
-python -c "from ctypes.util import find_library; print('find_library', find_library('c'))"
-python -c "from threadpoolctl import ThreadpoolController as TC; tc = TC(); libc = tc._get_libc(); print(libc, getattr(libc, '_dyld_imagecount', lambda: None)())"
-python $PROJECT_DIR/tools/openblas_support.py --check_version
-
 if [[ $RUNNER_OS == "Windows" ]]; then
     # GH 20391
     PY_DIR=$(python -c "import sys; print(sys.prefix)")
     mkdir $PY_DIR/libs
 fi
 if [[ $RUNNER_OS == "macOS"  && $RUNNER_ARCH == "X64" ]]; then
-    # Not clear why this is needed but it seems on x86_64 this is not the default
-    # and without it f2py tests fail
-    export DYLD_LIBRARY_PATH="$DYLD_LIBRARY_PATH:/usr/local/lib"
-    # Needed so gfortran (not clang) can find system libraries like libm (-lm)
-    # in f2py tests
-    export LIBRARY_PATH="$LIBRARY_PATH:/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib"
+  # Not clear why this is needed but it seems on x86_64 this is not the default
+  # and without it f2py tests fail
+  export DYLD_LIBRARY_PATH="$DYLD_LIBRARY_PATH:/usr/local/lib"
+  # Needed so gfortran (not clang) can find system libraries like libm (-lm)
+  # in f2py tests
+  export LIBRARY_PATH="$LIBRARY_PATH:/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib"
+else
+  # For some reason the macos-x86_64 runner does not work with threadpoolctl
+  # Skip this check there
+  python $PROJECT_DIR/tools/openblas_support.py --check_version
 fi
 # Set available memory value to avoid OOM problems on aarch64.
 # See gh-22418.
