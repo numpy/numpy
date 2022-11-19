@@ -287,7 +287,7 @@ NPY_NO_EXPORT int
 tokenize(stream *s, tokenizer_state *ts, parser_config *const config)
 {
     assert(ts->fields_size >= 2);
-    assert(ts->field_buffer_length >= 2*sizeof(Py_UCS4));
+    assert(ts->field_buffer_length >= 2*(ssize_t)sizeof(Py_UCS4));
 
     int finished_reading_file = 0;
 
