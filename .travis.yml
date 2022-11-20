@@ -60,7 +60,7 @@ jobs:
       env:
         - CIBW_BUILD: cp38-manylinux_aarch64
         - EXPECT_CPU_FEATURES: "NEON NEON_FP16 NEON_VFPV4 ASIMD ASIMDHP ASIMDDP ASIMDFHM"
-      install: python3 -m pip install cibuildwheel==2.11.2
+      install: python3 -m pip install cibuildwheel==2.9.0
       script: |
         cibuildwheel --output-dir wheelhouse
         source ./tools/wheels/upload_wheels.sh

@@ -181,6 +181,7 @@ stages:
       displayName: 'Install dependencies; some are optional to avoid test skips'
     - script: /bin/bash -c "! vulture . --min-confidence 100 --exclude doc/,numpy/distutils/ | grep 'unreachable'"
       displayName: 'Check for unreachable code paths in Python modules'
+
     # prefer usage of clang over gcc proper
     # to match likely scenario on many user mac machines
     - script: python setup.py build -j 4 build_src --verbose-cfg install
@@ -190,22 +191,16 @@ stages:
         LAPACK: None
         ATLAS: None
         CC: /usr/bin/clang
-      condition: eq(variables['USE_OPENBLAS'], '1')
-    - script: python setup.py build -j 4 build_ext --inplace install
-      displayName: 'Build NumPy without OpenBLAS and new casting'
-      env:
-        BLAS: None
-        LAPACK: None
-        ATLAS: None
-        CC: /usr/bin/clang
-      condition: eq(variables['USE_OPENBLAS'], '0')
+
     # wait until after dev build of NumPy to pip
     # install matplotlib to avoid pip install of older numpy
     - script: python -m pip install matplotlib
       displayName: 'Install matplotlib before refguide run'
+
     - script: python runtests.py -g --refguide-check
       displayName: 'Run Refguide Check'
       condition: eq(variables['USE_OPENBLAS'], '1')
+
     - script: |
         echo LIBRARY_PATH ${LIBRARY_PATH}
         python runtests.py -n --mode=full -- -rsx --junitxml=junit/test-results.xml
@@ -214,11 +209,13 @@ stages:
       env:
         # gfortran installed above adds -lSystem, so this is needed to find it (gh-22043)
         LIBRARY_PATH: /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib
+
     - bash: |
         python -m pip install threadpoolctl
         python tools/openblas_support.py --check_version
       displayName: 'Verify OpenBLAS version'
       condition: eq(variables['USE_OPENBLAS'], '1')
+
     # import doesn't work when in numpy src directory , so do a pip dev install of build lib to test
     - script: |
         #!/bin/bash -v
@@ -231,6 +228,7 @@ stages:
         if [ $check_output_code == 1 ] && [ $check_message == 0 ]; then exit 0; else exit 1;fi
       displayName: "Check if numpy import fails with accelerate"
       condition: eq(variables['USE_OPENBLAS'], '0')
+
     - task: PublishTestResults@2
       condition: succeededOrFailed()
       inputs:
