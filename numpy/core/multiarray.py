@@ -345,7 +345,7 @@ def inner(a, b):
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.where)
 def where(condition, x=None, y=None):
     """
-    where(condition, [x, y], /)
+    where(condition, x=None, y=None)
 
     Return elements chosen from `x` or `y` depending on `condition`.
 
