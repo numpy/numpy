@@ -159,7 +159,7 @@ else:
     _msg = (
         "`np.{n}` is a deprecated alias for `{an}`.  (Deprecated NumPy 1.24)")
 
-    # Some of these are awkard (since `np.str` may be preferable in the long
+    # Some of these are awkward (since `np.str` may be preferable in the long
     # term), but overall the names ending in 0 seem undesireable
     _type_info = [
         ("bool8", bool_, "np.bool_"),
@@ -173,8 +173,10 @@ else:
             "`object` can be used instead.  (Deprecated NumPy 1.24)")]
 
     # Some of these could be defined right away, but most were aliases to
-    # the Python objects before.  When defined, these should possibly not
-    # be added to `__all__` to avoid import with `from numpy import *`.
+    # the Python objects and only removed in NumPy 1.24.  Defining them should
+    # probably wait for NumPy 1.26 or 2.0.
+    # When defined, these should possibly not be added to `__all__` to avoid
+    # import with `from numpy import *`.
     __future_scalars__ = {"bool", "long", "ulong", "str", "bytes", "object"}
 
     __deprecated_attrs__.update({
