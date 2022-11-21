@@ -61,8 +61,9 @@ GTAGS
 
 # Python files #
 ################
-# setup.py working directory
+# meson build/installation directories
 build
+build-install
 # sphinx build directory
 _build
 # setup.py dist directory
