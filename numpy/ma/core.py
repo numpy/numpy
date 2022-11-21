@@ -2085,9 +2085,7 @@ def masked_equal(x, value, copy=True):
     equal to `value`. The fill_value of the returned MaskedArray
     is set to `value`.
 
-    This function is a shortcut to ``masked_where``, with
-    `condition` = (x == value).  For floating point arrays,
-    consider using ``masked_values(x, value)``.
+    For floating point arrays, consider using ``masked_values(x, value)``.
 
     See Also
     --------
