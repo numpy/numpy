@@ -3245,8 +3245,8 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
     PyArrayObject *range;
     PyArray_ArrFuncs *funcs;
     PyObject *next = NULL;
-    npy_intp length;
     PyArray_Descr *native = NULL;
+    npy_intp length;
     int swap;
     NPY_BEGIN_THREADS_DEF;
 
@@ -3259,6 +3259,12 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
         return (PyObject *)datetime_arange(start, stop, step, dtype);
     }
 
+    /* We need to replace many of these, so hold on for easier cleanup */
+    Py_XINCREF(start);
+    Py_XINCREF(stop);
+    Py_XINCREF(step);
+    Py_XINCREF(dtype);
+
     if (!dtype) {
         PyArray_Descr *deftype;
         PyArray_Descr *newtype;
@@ -3268,14 +3274,14 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
         newtype = PyArray_DescrFromObject(start, deftype);
         Py_DECREF(deftype);
         if (newtype == NULL) {
-            return NULL;
+            goto fail;
         }
         deftype = newtype;
         if (stop && stop != Py_None) {
             newtype = PyArray_DescrFromObject(stop, deftype);
             Py_DECREF(deftype);
             if (newtype == NULL) {
-                return NULL;
+                goto fail;
             }
             deftype = newtype;
         }
@@ -3283,14 +3289,11 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
             newtype = PyArray_DescrFromObject(step, deftype);
             Py_DECREF(deftype);
             if (newtype == NULL) {
-                return NULL;
+                goto fail;
             }
             deftype = newtype;
         }
         dtype = deftype;
-    }
-    else {
-        Py_INCREF(dtype);
     }
 
     /*
@@ -3320,23 +3323,17 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
     }
 
     if (!step || step == Py_None) {
-        step = PyLong_FromLong(1);
+        Py_XSETREF(step, PyLong_FromLong(1));
         if (step == NULL) {
             goto fail;
         }
     }
-    else {
-        Py_INCREF(step);
-    }
     if (!stop || stop == Py_None) {
-        stop = start;
+        Py_XSETREF(stop, start);
         start = PyLong_FromLong(0);
         if (start == NULL) {
             goto fail;
         }
-    }
-    else {
-        Py_INCREF(start);
     }
 
     /* calculate the length and next = start + step*/
@@ -3403,14 +3400,16 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
     Py_DECREF(dtype);
     Py_DECREF(native);
     Py_DECREF(start);
+    Py_DECREF(stop);
     Py_DECREF(step);
     Py_XDECREF(next);
     return (PyObject *)range;
 
  fail:
-    Py_DECREF(dtype);
+    Py_XDECREF(dtype);
     Py_XDECREF(native);
     Py_XDECREF(start);
+    Py_XDECREF(stop);
     Py_XDECREF(step);
     Py_XDECREF(next);
     return NULL;
