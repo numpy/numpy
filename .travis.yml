@@ -62,7 +62,7 @@ jobs:
         - EXPECT_CPU_FEATURES: "NEON NEON_FP16 NEON_VFPV4 ASIMD ASIMDHP ASIMDDP ASIMDFHM"
       install: python3 -m pip install cibuildwheel==2.11.2
       script: |
-        travis_wait cibuildwheel --output-dir wheelhouse
+        cibuildwheel --output-dir wheelhouse
         source ./tools/wheels/upload_wheels.sh
         set_travis_vars
         set_upload_vars
@@ -110,4 +110,4 @@ before_install:
   - ./tools/travis-before-install.sh
 
 script:
-  - ./tools/travis-test.sh
+  - travis_wait 30 ./tools/travis-test.sh
