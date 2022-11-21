@@ -3305,7 +3305,7 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
 
     funcs = native->f;
     if (!funcs->fill) {
-        /* This effectively forbits subarray types as well... */
+        /* This effectively forbids subarray types as well... */
         PyErr_Format(PyExc_TypeError,
                 "arange() not supported for inputs with DType %S.",
                 Py_TYPE(dtype));
