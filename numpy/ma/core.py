@@ -2081,9 +2081,11 @@ def masked_equal(x, value, copy=True):
     """
     Mask an array where equal to a given value.
 
-    This function is a shortcut to ``masked_where``, with
-    `condition` = (x == value).  For floating point arrays,
-    consider using ``masked_values(x, value)``.
+    Return a MaskedArray, masked where the data in array `x` are
+    equal to `value`. The fill_value of the returned MaskedArray
+    is set to `value`.
+
+    For floating point arrays, consider using ``masked_values(x, value)``.
 
     See Also
     --------
@@ -2303,25 +2305,17 @@ def masked_values(x, value, rtol=1e-5, atol=1e-8, copy=True, shrink=True):
 
     Note that `mask` is set to ``nomask`` if possible.
 
-    >>> ma.masked_values(x, 1.5)
+    >>> ma.masked_values(x, 2.1)
     masked_array(data=[1. , 1.1, 2. , 1.1, 3. ],
                  mask=False,
-           fill_value=1.5)
+           fill_value=2.1)
 
-    For integers, the fill value will be different in general to the
-    result of ``masked_equal``.
+    Unlike `masked_equal`, `masked_values` can perform approximate equalities. 
 
-    >>> x = np.arange(5)
-    >>> x
-    array([0, 1, 2, 3, 4])
-    >>> ma.masked_values(x, 2)
-    masked_array(data=[0, 1, --, 3, 4],
+    >>> ma.masked_values(x, 2.1, atol=1e-1)
+    masked_array(data=[1.0, 1.1, --, 1.1, 3.0],
                  mask=[False, False,  True, False, False],
-           fill_value=2)
-    >>> ma.masked_equal(x, 2)
-    masked_array(data=[0, 1, --, 3, 4],
-                 mask=[False, False,  True, False, False],
-           fill_value=2)
+           fill_value=2.1)
 
     """
     xnew = filled(x, value)
