@@ -9367,6 +9367,19 @@ class TestArange:
         assert res_le.dtype == "<i4"
         assert_array_equal(res_le, res_be)
 
+    @pytest.mark.parametrize("which", [0, 1, 2])
+    def test_error_paths_and_promotion(self, which):
+        args = [0, 1, 2]  # start, stop, and step
+        args[which] = np.float64(2.)  # should ensure float64 output
+
+        assert np.arange(*args).dtype == np.float64
+
+        # Cover stranger error path, test only to achieve code coverage!
+        args[which] = [None, []]
+        with pytest.raises(ValueError):
+            # Fails discovering start dtype
+            np.arange(*args)
+
 
 class TestArrayFinalize:
     """ Tests __array_finalize__ """

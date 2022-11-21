@@ -3266,34 +3266,24 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
     Py_XINCREF(dtype);
 
     if (!dtype) {
-        PyArray_Descr *deftype;
-        PyArray_Descr *newtype;
-
         /* intentionally made to be at least NPY_LONG */
-        deftype = PyArray_DescrFromType(NPY_LONG);
-        newtype = PyArray_DescrFromObject(start, deftype);
-        Py_DECREF(deftype);
-        if (newtype == NULL) {
+        dtype = PyArray_DescrFromType(NPY_LONG);
+        Py_SETREF(dtype, PyArray_DescrFromObject(start, dtype));
+        if (dtype == NULL) {
             goto fail;
         }
-        deftype = newtype;
         if (stop && stop != Py_None) {
-            newtype = PyArray_DescrFromObject(stop, deftype);
-            Py_DECREF(deftype);
-            if (newtype == NULL) {
+            Py_SETREF(dtype, PyArray_DescrFromObject(stop, dtype));
+            if (dtype == NULL) {
                 goto fail;
             }
-            deftype = newtype;
         }
         if (step && step != Py_None) {
-            newtype = PyArray_DescrFromObject(step, deftype);
-            Py_DECREF(deftype);
-            if (newtype == NULL) {
+            Py_SETREF(dtype, PyArray_DescrFromObject(step, dtype));
+            if (dtype == NULL) {
                 goto fail;
             }
-            deftype = newtype;
         }
-        dtype = deftype;
     }
 
     /*
