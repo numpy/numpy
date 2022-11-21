@@ -240,8 +240,8 @@ add_newdoc_for_scalar_type('void', [],
        be returned.
     dtype : dtype, optional
         If provided the dtype of the new scalar.  This dtype must
-        be "void" dtype (i.e. a structured or unstructured
-        void).
+        be "void" dtype (i.e. a structured or unstructured void,
+        see also :ref:`defining-structured-types`).
 
        ..versionadded:: 1.24
 
@@ -251,12 +251,12 @@ add_newdoc_for_scalar_type('void', [],
     arbitrary byte data and structured dtypes, the void constructor
     has three calling conventions:
 
-    1. ``np.void(5)`` creates a ``dtype="V5"`` scalar filled with
+    1. ``np.void(5)`` creates a ``dtype="V5"`` scalar filled with five
        ``\0`` bytes.  The 5 can be a Python or NumPy integer.
-    2. ``np.void(b"bytes-like")`` creates a void scalar from
-        the byte string.  The dtype is chosen based on its length.
+    2. ``np.void(b"bytes-like")`` creates a void scalar from the byte string.
+       The dtype itemsize will match the byte string length, here ``"V10"``.
     3. When a ``dtype=`` is passed the call is rougly the same as an
-       array creation.  However a void scalar is returned when possible.
+       array creation.  However, a void scalar rather than array is returned.
 
     Please see the examples which show all three different conventions.
 
