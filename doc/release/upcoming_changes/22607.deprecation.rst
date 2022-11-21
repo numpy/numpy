@@ -1,0 +1,5 @@
+``np.str0`` and similar are now deprecated
+------------------------------------------
+The scalar type aliases ending in a 0 bit size: ``np.object0``, ``np.str0``,
+``np.bytes0``, ``np.void0``, ``np.int0``, ``np.uint0`` as well as ``np.bool8``
+are now deprecated and will eventually be removed.

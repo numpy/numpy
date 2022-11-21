@@ -2744,8 +2744,6 @@ class bool_(generic):
     __gt__: _ComparisonOp[_NumberLike_co, _ArrayLikeNumber_co]
     __ge__: _ComparisonOp[_NumberLike_co, _ArrayLikeNumber_co]
 
-bool8 = bool_
-
 class object_(generic):
     def __init__(self, value: object = ..., /) -> None: ...
     @property
@@ -2757,8 +2755,6 @@ class object_(generic):
     def __int__(self) -> int: ...
     def __float__(self) -> float: ...
     def __complex__(self) -> complex: ...
-
-object0 = object_
 
 # The `datetime64` constructors requires an object with the three attributes below,
 # and thus supports datetime duck typing
@@ -2882,7 +2878,6 @@ byte = signedinteger[_NBitByte]
 short = signedinteger[_NBitShort]
 intc = signedinteger[_NBitIntC]
 intp = signedinteger[_NBitIntP]
-int0 = signedinteger[_NBitIntP]
 int_ = signedinteger[_NBitInt]
 longlong = signedinteger[_NBitLongLong]
 
@@ -2964,7 +2959,6 @@ ubyte = unsignedinteger[_NBitByte]
 ushort = unsignedinteger[_NBitShort]
 uintc = unsignedinteger[_NBitIntC]
 uintp = unsignedinteger[_NBitIntP]
-uint0 = unsignedinteger[_NBitIntP]
 uint = unsignedinteger[_NBitInt]
 ulonglong = unsignedinteger[_NBitLongLong]
 
@@ -3089,8 +3083,6 @@ class void(flexible):
         value: ArrayLike,
     ) -> None: ...
 
-void0 = void
-
 class character(flexible):  # type: ignore
     def __int__(self) -> int: ...
     def __float__(self) -> float: ...
@@ -3111,7 +3103,6 @@ class bytes_(character, bytes):
     def tolist(self) -> bytes: ...
 
 string_ = bytes_
-bytes0 = bytes_
 
 class str_(character, str):
     @overload
@@ -3126,7 +3117,6 @@ class str_(character, str):
     def tolist(self) -> str: ...
 
 unicode_ = str_
-str0 = str_
 
 #
 # Constants
