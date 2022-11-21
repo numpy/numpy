@@ -231,6 +231,7 @@ from numpy.lib.utils import (
     lookfor as lookfor,
     byte_bounds as byte_bounds,
     safe_eval as safe_eval,
+    show_runtime as show_runtime,
 )
 
 from numpy.core.multiarray import (

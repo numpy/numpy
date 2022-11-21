@@ -25,7 +25,7 @@ from numpy.testing import (
     assert_warns, assert_, assert_raises_regex, assert_raises,
     assert_allclose, assert_array_equal, temppath, tempdir, IS_PYPY,
     HAS_REFCOUNT, suppress_warnings, assert_no_gc_cycles, assert_no_warnings,
-    break_cycles
+    break_cycles, IS_WASM
     )
 from numpy.testing._private.utils import requires_memory
 
@@ -243,6 +243,7 @@ class TestSavezLoad(RoundtripTest):
         assert_equal(a, l.f.file_a)
         assert_equal(b, l.f.file_b)
 
+    @pytest.mark.skipif(IS_WASM, reason="Cannot start thread")
     def test_savez_filename_clashes(self):
         # Test that issue #852 is fixed
         # and savez functions in multithreaded environment
@@ -2539,6 +2540,7 @@ class TestPathUsage:
                 break_cycles()
                 break_cycles()
 
+    @pytest.mark.xfail(IS_WASM, reason="memmap doesn't work correctly")
     def test_save_load_memmap_readwrite(self):
         # Test that pathlib.Path instances can be written mem-mapped.
         with temppath(suffix='.npy') as path:

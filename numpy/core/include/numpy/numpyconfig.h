@@ -3,51 +3,6 @@
 
 #include "_numpyconfig.h"
 
-/*
- * On Mac OS X, because there is only one configuration stage for all the archs
- * in universal builds, any macro which depends on the arch needs to be
- * hardcoded
- */
-#ifdef __APPLE__
-    #undef NPY_SIZEOF_LONG
-    #undef NPY_SIZEOF_PY_INTPTR_T
-
-    #ifdef __LP64__
-        #define NPY_SIZEOF_LONG         8
-        #define NPY_SIZEOF_PY_INTPTR_T  8
-    #else
-        #define NPY_SIZEOF_LONG         4
-        #define NPY_SIZEOF_PY_INTPTR_T  4
-    #endif
-
-    #undef NPY_SIZEOF_LONGDOUBLE
-    #undef NPY_SIZEOF_COMPLEX_LONGDOUBLE
-    #ifdef HAVE_LDOUBLE_IEEE_DOUBLE_LE
-      #undef HAVE_LDOUBLE_IEEE_DOUBLE_LE
-    #endif
-    #ifdef HAVE_LDOUBLE_INTEL_EXTENDED_16_BYTES_LE
-      #undef HAVE_LDOUBLE_INTEL_EXTENDED_16_BYTES_LE
-    #endif
-
-    #if defined(__arm64__)
-        #define NPY_SIZEOF_LONGDOUBLE         8
-        #define NPY_SIZEOF_COMPLEX_LONGDOUBLE 16
-        #define HAVE_LDOUBLE_IEEE_DOUBLE_LE 1
-    #elif defined(__x86_64)
-        #define NPY_SIZEOF_LONGDOUBLE         16
-        #define NPY_SIZEOF_COMPLEX_LONGDOUBLE 32
-        #define HAVE_LDOUBLE_INTEL_EXTENDED_16_BYTES_LE 1
-    #elif defined (__i386)
-        #define NPY_SIZEOF_LONGDOUBLE         12
-        #define NPY_SIZEOF_COMPLEX_LONGDOUBLE 24
-    #elif defined(__ppc__) || defined (__ppc64__)
-        #define NPY_SIZEOF_LONGDOUBLE         16
-        #define NPY_SIZEOF_COMPLEX_LONGDOUBLE 32
-    #else
-        #error "unknown architecture"
-    #endif
-#endif
-
 /**
  * To help with the NPY_NO_DEPRECATED_API macro, we include API version
  * numbers for specific versions of NumPy. To exclude all API that was

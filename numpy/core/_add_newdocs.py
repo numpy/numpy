@@ -5694,6 +5694,165 @@ add_newdoc('numpy.core', 'ufunc', ('at',
 
     """))
 
+add_newdoc('numpy.core', 'ufunc', ('resolve_dtypes',
+    """
+    resolve_dtypes(dtypes, *, signature=None, casting=None, reduction=False)
+
+    Find the dtypes NumPy will use for the operation.  Both input and
+    output dtypes are returned and may differ from those provided.
+
+    .. note::
+
+        This function always applies NEP 50 rules since it is not provided
+        any actual values.  The Python types ``int``, ``float``, and
+        ``complex`` thus behave weak and should be passed for "untyped"
+        Python input.
+
+    Parameters
+    ----------
+    dtypes : tuple of dtypes, None, or literal int, float, complex
+        The input dtypes for each operand.  Output operands can be
+        None, indicating that the dtype must be found.
+    signature : tuple of DTypes or None, optional
+        If given, enforces exact DType (classes) of the specific operand.
+        The ufunc ``dtype`` argument is equivalent to passing a tuple with
+        only output dtypes set.
+    casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
+        The casting mode when casting is necessary.  This is identical to
+        the ufunc call casting modes.
+    reduction : boolean
+        If given, the resolution assumes a reduce operation is happening
+        which slightly changes the promotion and type resolution rules.
+        `dtypes` is usually something like ``(None, np.dtype("i2"), None)``
+        for reductions (first input is also the output).
+
+        .. note::
+
+            The default casting mode is "same_kind", however, as of
+            NumPy 1.24, NumPy uses "unsafe" for reductions.
+
+    Returns
+    -------
+    dtypes : tuple of dtypes
+        The dtypes which NumPy would use for the calculation.  Note that
+        dtypes may not match the passed in ones (casting is necessary).
+
+    See Also
+    --------
+    numpy.ufunc._resolve_dtypes_and_context :
+        Similar function to this, but returns additional information which
+        give access to the core C functionality of NumPy.
+
+    Examples
+    --------
+    This API requires passing dtypes, define them for convenience:
+
+    >>> int32 = np.dtype("int32")
+    >>> float32 = np.dtype("float32")
+
+    The typical ufunc call does not pass an output dtype.  `np.add` has two
+    inputs and one output, so leave the output as ``None`` (not provided):
+
+    >>> np.add.resolve_dtypes((int32, float32, None))
+    (dtype('float64'), dtype('float64'), dtype('float64'))
+
+    The loop found uses "float64" for all operands (including the output), the
+    first input would be cast.
+
+    ``resolve_dtypes`` supports "weak" handling for Python scalars by passing
+    ``int``, ``float``, or ``complex``:
+
+    >>> np.add.resolve_dtypes((float32, float, None))
+    (dtype('float32'), dtype('float32'), dtype('float32'))
+
+    Where the Python ``float`` behaves samilar to a Python value ``0.0``
+    in a ufunc call.  (See :ref:`NEP 50 <NEP50>` for details.)
+
+    """))
+
+add_newdoc('numpy.core', 'ufunc', ('_resolve_dtypes_and_context',
+    """
+    _resolve_dtypes_and_context(dtypes, *, signature=None, casting=None, reduction=False)
+
+    See `numpy.ufunc.resolve_dtypes` for parameter information.  This
+    function is considered *unstable*.  You may use it, but the returned
+    information is NumPy version specific and expected to change.
+    Large API/ABI changes are not expected, but a new NumPy version is
+    expected to require updating code using this functionality.
+
+    This function is designed to be used in conjunction with
+    `numpy.ufunc._get_strided_loop`.  The calls are split to mirror the C API
+    and allow future improvements.
+
+    Returns
+    -------
+    dtypes : tuple of dtypes
+    call_info :
+        PyCapsule with all necessary information to get access to low level
+        C calls.  See `numpy.ufunc._get_strided_loop` for more information.
+
+    """))
+
+add_newdoc('numpy.core', 'ufunc', ('_get_strided_loop',
+    """
+    _get_strided_loop(call_info, /, *, fixed_strides=None)
+
+    This function fills in the ``call_info`` capsule to include all
+    information necessary to call the low-level strided loop from NumPy.
+
+    See notes for more information.
+
+    Parameters
+    ----------
+    call_info : PyCapsule
+        The PyCapsule returned by `numpy.ufunc._resolve_dtypes_and_context`.
+    fixed_strides : tuple of int or None, optional
+        A tuple with fixed byte strides of all input arrays.  NumPy may use
+        this information to find specialized loops, so any call must follow
+        the given stride.  Use ``None`` to indicate that the stride is not
+        known (or not fixed) for all calls.
+
+    Notes
+    -----
+    Together with `numpy.ufunc._resolve_dtypes_and_context` this function
+    gives low-level access to the NumPy ufunc loops.
+    The first function does general preparation and returns the required
+    information. It returns this as a C capsule with the version specific
+    name ``numpy_1.24_ufunc_call_info``.
+    The NumPy 1.24 ufunc call info capsule has the following layout::
+
+        typedef struct {
+            PyArrayMethod_StridedLoop *strided_loop;
+            PyArrayMethod_Context *context;
+            NpyAuxData *auxdata;
+
+            /* Flag information (expected to change) */
+            npy_bool requires_pyapi;  /* GIL is required by loop */
+
+            /* Loop doesn't set FPE flags; if not set check FPE flags */
+            npy_bool no_floatingpoint_errors;
+        } ufunc_call_info;
+
+    Note that the first call only fills in the ``context``.  The call to
+    ``_get_strided_loop`` fills in all other data.
+    Please see the ``numpy/experimental_dtype_api.h`` header for exact
+    call information; the main thing to note is that the new-style loops
+    return 0 on success, -1 on failure.  They are passed context as new
+    first input and ``auxdata`` as (replaced) last.
+
+    Only the ``strided_loop``signature is considered guaranteed stable
+    for NumPy bug-fix releases.  All other API is tied to the experimental
+    API versioning.
+
+    The reason for the split call is that cast information is required to
+    decide what the fixed-strides will be.
+
+    NumPy ties the lifetime of the ``auxdata`` information to the capsule.
+
+    """))
+
+
+
 ##############################################################################
 #
 # Documentation for dtype attributes and methods

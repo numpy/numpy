@@ -12,7 +12,7 @@ from numpy.testing import (
         assert_, assert_equal, IS_PYPY, assert_almost_equal,
         assert_array_equal, assert_array_almost_equal, assert_raises,
         assert_raises_regex, assert_warns, suppress_warnings,
-        _assert_valid_refcount, HAS_REFCOUNT, IS_PYSTON
+        _assert_valid_refcount, HAS_REFCOUNT, IS_PYSTON, IS_WASM
         )
 from numpy.testing._private.utils import _no_tracing, requires_memory
 from numpy.compat import asbytes, asunicode, pickle
@@ -326,6 +326,7 @@ class TestRegression:
         assert_raises(ValueError, bfa)
         assert_raises(ValueError, bfb)
 
+    @pytest.mark.xfail(IS_WASM, reason="not sure why")
     @pytest.mark.parametrize("index",
             [np.ones(10, dtype=bool), np.arange(10)],
             ids=["boolean-arr-index", "integer-arr-index"])

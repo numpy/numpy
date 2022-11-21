@@ -537,11 +537,12 @@ def pad(array, pad_width, mode='constant', **kwargs):
         The array to pad.
     pad_width : {sequence, array_like, int}
         Number of values padded to the edges of each axis.
-        ((before_1, after_1), ... (before_N, after_N)) unique pad widths
+        ``((before_1, after_1), ... (before_N, after_N))`` unique pad widths
         for each axis.
-        ((before, after),) yields same before and after pad for each axis.
-        (pad,) or int is a shortcut for before = after = pad width for all
-        axes.
+        ``(before, after)`` or ``((before, after),)`` yields same before
+        and after pad for each axis.
+        ``(pad,)`` or ``int`` is a shortcut for before = after = pad width
+        for all axes.
     mode : str or function, optional
         One of the following string values or a user supplied function.
 
@@ -586,14 +587,14 @@ def pad(array, pad_width, mode='constant', **kwargs):
         Used in 'maximum', 'mean', 'median', and 'minimum'.  Number of
         values at edge of each axis used to calculate the statistic value.
 
-        ((before_1, after_1), ... (before_N, after_N)) unique statistic
+        ``((before_1, after_1), ... (before_N, after_N))`` unique statistic
         lengths for each axis.
 
-        ((before, after),) yields same before and after statistic lengths
-        for each axis.
+        ``(before, after)`` or ``((before, after),)`` yields same before
+        and after statistic lengths for each axis.
 
-        (stat_length,) or int is a shortcut for before = after = statistic
-        length for all axes.
+        ``(stat_length,)`` or ``int`` is a shortcut for
+        ``before = after = statistic`` length for all axes.
 
         Default is ``None``, to use the entire axis.
     constant_values : sequence or scalar, optional
@@ -603,11 +604,11 @@ def pad(array, pad_width, mode='constant', **kwargs):
         ``((before_1, after_1), ... (before_N, after_N))`` unique pad constants
         for each axis.
 
-        ``((before, after),)`` yields same before and after constants for each
-        axis.
+        ``(before, after)`` or ``((before, after),)`` yields same before
+        and after constants for each axis.
 
-        ``(constant,)`` or ``constant`` is a shortcut for ``before = after = constant`` for
-        all axes.
+        ``(constant,)`` or ``constant`` is a shortcut for
+        ``before = after = constant`` for all axes.
 
         Default is 0.
     end_values : sequence or scalar, optional
@@ -617,11 +618,11 @@ def pad(array, pad_width, mode='constant', **kwargs):
         ``((before_1, after_1), ... (before_N, after_N))`` unique end values
         for each axis.
 
-        ``((before, after),)`` yields same before and after end values for each
-        axis.
+        ``(before, after)`` or ``((before, after),)`` yields same before
+        and after end values for each axis.
 
-        ``(constant,)`` or ``constant`` is a shortcut for ``before = after = constant`` for
-        all axes.
+        ``(constant,)`` or ``constant`` is a shortcut for
+        ``before = after = constant`` for all axes.
 
         Default is 0.
     reflect_type : {'even', 'odd'}, optional

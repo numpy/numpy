@@ -583,25 +583,6 @@ class TestNonExactMatchDeprecation(_DeprecationTestCase):
         self.assert_deprecated(lambda: np.searchsorted(arr[0], 4, side='Random'))
 
 
-class TestDeprecatedGlobals(_DeprecationTestCase):
-    # 2020-06-06
-    def test_type_aliases(self):
-        # from builtins
-        self.assert_deprecated(lambda: np.bool(True))
-        self.assert_deprecated(lambda: np.int(1))
-        self.assert_deprecated(lambda: np.float(1))
-        self.assert_deprecated(lambda: np.complex(1))
-        self.assert_deprecated(lambda: np.object())
-        self.assert_deprecated(lambda: np.str('abc'))
-
-        # from np.compat
-        self.assert_deprecated(lambda: np.long(1))
-        self.assert_deprecated(lambda: np.unicode('abc'))
-
-        # from np.core.numerictypes
-        self.assert_deprecated(lambda: np.typeDict)
-
-
 class TestMatrixInOuter(_DeprecationTestCase):
     # 2020-05-13 NumPy 1.20.0
     message = (r"add.outer\(\) was passed a numpy matrix as "
@@ -1046,9 +1027,6 @@ class TestMachAr(_DeprecationTestCase):
     # Deprecated 2021-10-19, NumPy 1.22
     warning_cls = DeprecationWarning
 
-    def test_deprecated(self):
-        self.assert_deprecated(lambda: np.MachAr)
-
     def test_deprecated_module(self):
         self.assert_deprecated(lambda: getattr(np.core, "machar"))
 
@@ -1172,3 +1150,29 @@ class TestPyIntConversion(_DeprecationTestCase):
                         lambda: creation_func(info.max + 1, dtype))
             except OverflowError:
                 pass  # OverflowErrors always happened also before and are OK.
+
+
+class TestDeprecatedGlobals(_DeprecationTestCase):
+    # Deprecated 2022-11-17, NumPy 1.24
+    def test_type_aliases(self):
+        # from builtins
+        self.assert_deprecated(lambda: np.bool8)
+        self.assert_deprecated(lambda: np.int0)
+        self.assert_deprecated(lambda: np.uint0)
+        self.assert_deprecated(lambda: np.bytes0)
+        self.assert_deprecated(lambda: np.str0)
+        self.assert_deprecated(lambda: np.object0)
+
+
+@pytest.mark.parametrize("name",
+        ["bool", "long", "ulong", "str", "bytes", "object"])
+def test_future_scalar_attributes(name):
+    # FutureWarning added 2022-11-17, NumPy 1.24,
+    assert name not in dir(np)  # we may want to not add them
+    with pytest.warns(FutureWarning,
+            match=f"In the future .*{name}"):
+        assert not hasattr(np, name)
+
+    # Unfortunately, they are currently still valid via `np.dtype()`
+    np.dtype(name)
+    name in np.sctypeDict

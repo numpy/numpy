@@ -893,12 +893,12 @@ NPY_NO_EXPORT PyTypeObject PyArrayDTypeMeta_Type = {
     /* Types are garbage collected (see dtypemeta_is_gc documentation) */
     .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,
     .tp_doc = "Preliminary NumPy API: The Type of NumPy DTypes (metaclass)",
-    .tp_getset = dtypemeta_getset,
+    .tp_traverse = (traverseproc)dtypemeta_traverse,
     .tp_members = dtypemeta_members,
+    .tp_getset = dtypemeta_getset,
     .tp_base = NULL,  /* set to PyType_Type at import time */
-    .tp_alloc = dtypemeta_alloc,
     .tp_init = (initproc)dtypemeta_init,
+    .tp_alloc = dtypemeta_alloc,
     .tp_new = dtypemeta_new,
     .tp_is_gc = dtypemeta_is_gc,
-    .tp_traverse = (traverseproc)dtypemeta_traverse,
 };

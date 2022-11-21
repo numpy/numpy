@@ -1,3 +1,5 @@
+.. _advanced_debugging:
+
 ========================
 Advanced debugging tools
 ========================
@@ -39,12 +41,33 @@ and means you do not have to worry about making reference counting errors,
 which can be intimidating.
 
 
-Python debug build for finding memory leaks
-===========================================
+Python debug build
+==================
 
-Debug builds of Python are easily available for example on ``debian`` systems,
-and can be used on all platforms.
-Running a test or terminal is usually as easy as::
+Debug builds of Python are easily available for example via the system package
+manager on Linux systems, but are also available on other platforms, possibly in
+a less convenient format. If you cannot easily install a debug build of Python
+from a system package manager, you can build one yourself using `pyenv
+<https://github.com/pyenv/pyenv>`_. For example, to install and globally
+activate a debug build of Python 3.10.8, one would do::
+
+    pyenv install -g 3.10.8
+    pyenv global 3.10.8
+
+Note that ``pyenv install`` builds Python from source, so you must ensure that
+Python's dependencies are installed before building, see the pyenv documentation
+for platform-specific installation instructions. You can use ``pip`` to install
+Python dependencies you may need for your debugging session. If there is no
+debug wheel available on `pypi,` you will need to build the dependencies from
+source and ensure that your dependencies are also compiled as debug builds.
+
+Often debug builds of Python name the Python executable ``pythond`` instead of
+``python``. To check if you have a debug build of Python installed, you can run
+e.g. ``pythond -m sysconfig`` to get the build configuration for the Python
+executable. A debug build will be built with debug compiler options in
+``CFLAGS`` (e.g. ``-g -Og``).
+
+Running the Numpy tests or an interactive terminal is usually as easy as::
 
     python3.8d runtests.py
     # or
@@ -62,6 +85,8 @@ A Python debug build will help:
 
     sys.gettotalrefcount()
     sys.getallocatedblocks()
+
+- Python debug builds allow easier debugging with gdb and other C debuggers.
 
 
 Use together with ``pytest``

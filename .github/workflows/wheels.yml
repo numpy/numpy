@@ -1,0 +1,212 @@
+# Workflow to build and test wheels.
+# To work on the wheel building infrastructure on a fork, comment out:
+#
+# if: github.repository == 'numpy/numpy'
+#
+# in the get_commit_message job. Be sure to include [wheel build] in your commit
+# message to trigger the build. All files related to wheel building are located
+# at tools/wheels/
+# Alternatively, you can add labels to the pull request in order to trigger wheel
+# builds.
+# The labels that trigger builds are:
+# 36 - Build(for changes to the building process,
+# 14 - Release(ensure wheels build before release)
+name: Wheel builder
+
+on:
+  schedule:
+    #        ┌───────────── minute (0 - 59)
+    #        │  ┌───────────── hour (0 - 23)
+    #        │  │ ┌───────────── day of the month (1 - 31)
+    #        │  │ │ ┌───────────── month (1 - 12 or JAN-DEC)
+    #        │  │ │ │ ┌───────────── day of the week (0 - 6 or SUN-SAT)
+    #        │  │ │ │ │
+    - cron: "42 1 * * 4"
+  push:
+  pull_request:
+    types: [labeled, opened, synchronize, reopened]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read # to fetch code (actions/checkout)
+
+jobs:
+  get_commit_message:
+    name: Get commit message
+    runs-on: ubuntu-latest
+    if: github.repository == 'numpy/numpy'
+    outputs:
+      message: ${{ steps.commit_message.outputs.message }}
+    steps:
+      - name: Checkout numpy
+        uses: actions/checkout@v3
+        # Gets the correct commit message for pull request
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Get commit message
+        id: commit_message
+        run: |
+          set -xe
+          COMMIT_MSG=$(git log --no-merges -1 --oneline)
+          echo "message=$COMMIT_MSG" >> $GITHUB_OUTPUT
+          echo github.ref ${{ github.ref }}
+
+  build_wheels:
+    name: Build wheel for ${{ matrix.python }}-${{ matrix.buildplat[1] }}
+    needs: get_commit_message
+    if: >-
+      contains(needs.get_commit_message.outputs.message, '[wheel build]') ||
+      github.event_name == 'schedule' ||
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'pull_request' &&
+      (contains(github.event.pull_request.labels.*.name, '36 - Build') ||
+      contains(github.event.pull_request.labels.*.name, '14 - Release'))) ||
+      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') && ( ! endsWith(github.ref, 'dev0')))
+    runs-on: ${{ matrix.buildplat[0] }}
+    strategy:
+      # Ensure that a wheel builder finishes even if another fails
+      fail-fast: false
+      matrix:
+        # Github Actions doesn't support pairing matrix values together, let's improvise
+        # https://github.com/github/feedback/discussions/7835#discussioncomment-1769026
+        buildplat:
+          - [ubuntu-20.04, manylinux_x86_64]
+          - [macos-12, macosx_*]
+          - [windows-2019, win_amd64]
+          - [windows-2019, win32]
+        # TODO: uncomment PyPy 3.9 builds once PyPy
+        # re-releases a new minor version
+        # NOTE: This needs a bump of cibuildwheel version, also, once that happens.
+        python: ["cp38", "cp39", "cp310", "cp311", "pp38"] #, "pp39"]
+        exclude:
+          # Don't build PyPy 32-bit windows
+          - buildplat: [windows-2019, win32]
+            python: "pp38"
+          - buildplat: [windows-2019, win32]
+            python: "pp39"
+    env:
+      IS_32_BIT: ${{ matrix.buildplat[1] == 'win32' }}
+      IS_PUSH: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') }}
+      IS_SCHEDULE_DISPATCH: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
+    steps:
+      - name: Checkout numpy
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+          # versioneer.py requires the latest tag to be reachable. Here we
+          # fetch the complete history to get access to the tags.
+          # A shallow clone can work when the following issue is resolved:
+          # https://github.com/actions/checkout/issues/338
+          fetch-depth: 0
+
+      # Used to push the built wheels
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.x"
+
+      - name: setup rtools for 32-bit
+        run: |
+          echo "PLAT=i686" >> $env:GITHUB_ENV
+          echo "MSYSTEM=MINGW32" >> $env:GITHUB_ENV
+          echo "PATH=$env:RTOOLS40_HOME\mingw32\bin;$env:PATH" >> $env:GITHUB_ENV
+          gfortran --version
+        if: ${{ matrix.buildplat[1] == 'win32' }}
+
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v2.11.2
+        env:
+          CIBW_BUILD: ${{ matrix.python }}-${{ matrix.buildplat[1] }}
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.python }}-${{ startsWith(matrix.buildplat[1], 'macosx') && 'macosx' || matrix.buildplat[1] }}
+          path: ./wheelhouse/*.whl
+
+      - name: Upload wheels
+        if: success()
+        shell: bash
+        env:
+          NUMPY_STAGING_UPLOAD_TOKEN: ${{ secrets.NUMPY_STAGING_UPLOAD_TOKEN }}
+          NUMPY_NIGHTLY_UPLOAD_TOKEN: ${{ secrets.NUMPY_NIGHTLY_UPLOAD_TOKEN }}
+        run: |
+          source tools/wheels/upload_wheels.sh
+          set_upload_vars
+          # trigger an upload to
+          # https://anaconda.org/scipy-wheels-nightly/numpy
+          # for cron jobs or "Run workflow" (restricted to main branch).
+          # Tags will upload to
+          # https://anaconda.org/multibuild-wheels-staging/numpy
+          # The tokens were originally generated at anaconda.org
+          upload_wheels
+  build_sdist:
+    name: Build sdist
+    needs: get_commit_message
+    if: >-
+      contains(needs.get_commit_message.outputs.message, '[wheel build]') ||
+      github.event_name == 'schedule' ||
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'pull_request' &&
+      (contains(github.event.pull_request.labels.*.name, '36 - Build') ||
+      contains(github.event.pull_request.labels.*.name, '14 - Release'))) ||
+      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') && ( ! endsWith(github.ref, 'dev0')))
+    runs-on: ubuntu-latest
+    env:
+      IS_PUSH: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') }}
+      IS_SCHEDULE_DISPATCH: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
+    steps:
+      - name: Checkout numpy
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+          # versioneer.py requires the latest tag to be reachable. Here we
+          # fetch the complete history to get access to the tags.
+          # A shallow clone can work when the following issue is resolved:
+          # https://github.com/actions/checkout/issues/338
+          fetch-depth: 0
+      # Used to push the built wheels
+      - uses: actions/setup-python@v4
+        with:
+          # Build sdist on lowest supported Python
+          python-version: "3.8"
+      - name: Build sdist
+        run: |
+          python setup.py sdist
+      - name: Test the sdist
+        run: |
+          # TODO: Don't run test suite, and instead build wheels from sdist
+          # Depends on pypa/cibuildwheel#1020
+          python -m pip install dist/*.gz
+          pip install -r test_requirements.txt
+          cd .. # Can't import numpy within numpy src directory
+          python -c "import numpy; print(numpy.__version__); numpy.test();"
+
+      - name: Check README rendering for PyPI
+        run: |
+          python -mpip install twine
+          twine check dist/*
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: sdist
+          path: ./dist/*
+
+      - name: Upload sdist
+        if: success()
+        shell: bash
+        env:
+          NUMPY_STAGING_UPLOAD_TOKEN: ${{ secrets.NUMPY_STAGING_UPLOAD_TOKEN }}
+          NUMPY_NIGHTLY_UPLOAD_TOKEN: ${{ secrets.NUMPY_NIGHTLY_UPLOAD_TOKEN }}
+        run: |
+          source tools/wheels/upload_wheels.sh
+          set_upload_vars
+          # trigger an upload to
+          # https://anaconda.org/scipy-wheels-nightly/numpy
+          # for cron jobs or "Run workflow" (restricted to main branch).
+          # Tags will upload to
+          # https://anaconda.org/multibuild-wheels-staging/numpy
+          # The tokens were originally generated at anaconda.org
+          upload_wheels

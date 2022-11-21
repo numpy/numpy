@@ -17,7 +17,7 @@ from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_raises_regex,
     assert_array_equal, assert_almost_equal, assert_array_almost_equal,
     assert_array_max_ulp, assert_allclose, assert_no_warnings, suppress_warnings,
-    _gen_alignment_data, assert_array_almost_equal_nulp
+    _gen_alignment_data, assert_array_almost_equal_nulp, IS_WASM
     )
 from numpy.testing._private.utils import _glibc_older_than
 
@@ -377,6 +377,7 @@ class TestDivision:
         assert_equal(x // 100, [0, 0, 0, 1, -1, -1, -1, -1, -2])
         assert_equal(x % 100, [5, 10, 90, 0, 95, 90, 10, 0, 80])
 
+    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     @pytest.mark.parametrize("dtype,ex_val", itertools.product(
         np.sctypes['int'] + np.sctypes['uint'], (
             (
@@ -462,6 +463,7 @@ class TestDivision:
 
             np.array([], dtype=dtype) // 0
 
+    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     @pytest.mark.parametrize("dtype,ex_val", itertools.product(
         np.sctypes['int'] + np.sctypes['uint'], (
             "np.array([fo.max, 1, 2, 1, 1, 2, 3], dtype=dtype)",
@@ -523,6 +525,8 @@ class TestDivision:
             quotient_array = np.array([quotient]*5)
             assert all(dividend_array // divisor == quotient_array), msg
         else:
+            if IS_WASM:
+                pytest.skip("fp errors don't work in wasm")
             with np.errstate(divide='raise', invalid='raise'):
                 with pytest.raises(FloatingPointError):
                     dividend // divisor
@@ -569,6 +573,7 @@ class TestDivision:
         assert_equal(np.signbit(x//1), 0)
         assert_equal(np.signbit((-x)//1), 1)
 
+    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     @pytest.mark.parametrize('dtype', np.typecodes['Float'])
     def test_floor_division_errors(self, dtype):
         fnan = np.array(np.nan, dtype=dtype)
@@ -683,6 +688,7 @@ class TestRemainder:
                     else:
                         assert_(b > rem >= 0, msg)
 
+    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     @pytest.mark.xfail(sys.platform.startswith("darwin"),
             reason="MacOS seems to not give the correct 'invalid' warning for "
                    "`fmod`.  Hopefully, others always do.")
@@ -709,6 +715,7 @@ class TestRemainder:
             # inf / 0 does not set any flags, only the modulo creates a NaN
             np.divmod(finf, fzero)
 
+    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     @pytest.mark.xfail(sys.platform.startswith("darwin"),
            reason="MacOS seems to not give the correct 'invalid' warning for "
                   "`fmod`.  Hopefully, others always do.")
@@ -730,6 +737,7 @@ class TestRemainder:
             fn(fone, fnan)
             fn(fnan, fone)
 
+    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     def test_float_remainder_overflow(self):
         a = np.finfo(np.float64).tiny
         with np.errstate(over='ignore', invalid='ignore'):
@@ -851,6 +859,7 @@ class TestDivisionIntegerOverflowsAndDivideByZero:
             helper_lambdas['min-zero'], helper_lambdas['neg_min-zero'])
     }
 
+    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     @pytest.mark.parametrize("dtype", np.typecodes["Integer"])
     def test_signed_division_overflow(self, dtype):
         to_check = interesting_binop_operands(np.iinfo(dtype).min, -1, dtype)
@@ -877,6 +886,7 @@ class TestDivisionIntegerOverflowsAndDivideByZero:
             assert extractor(res1) == np.iinfo(op1.dtype).min
             assert extractor(res2) == 0
 
+    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     @pytest.mark.parametrize("dtype", np.typecodes["AllInteger"])
     def test_divide_by_zero(self, dtype):
         # Note that the return value cannot be well defined here, but NumPy
@@ -896,6 +906,7 @@ class TestDivisionIntegerOverflowsAndDivideByZero:
             assert extractor(res1) == 0
             assert extractor(res2) == 0
 
+    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     @pytest.mark.parametrize("dividend_dtype",
             np.sctypes['int'])
     @pytest.mark.parametrize("divisor_dtype",
@@ -1147,6 +1158,7 @@ class TestLog2:
         v = np.log2(2.**i)
         assert_equal(v, float(i), err_msg='at exponent %d' % i)
 
+    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     def test_log2_special(self):
         assert_equal(np.log2(1.), 0.)
         assert_equal(np.log2(np.inf), np.inf)
@@ -1305,6 +1317,7 @@ class TestSpecialFloats:
             assert_raises(FloatingPointError, np.exp, np.float64(-1000.))
             assert_raises(FloatingPointError, np.exp, np.float64(-1E19))
 
+    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     def test_log_values(self):
         with np.errstate(all='ignore'):
             x = [np.nan, np.nan, np.inf, np.nan, -np.inf, np.nan]
@@ -1354,6 +1367,7 @@ class TestSpecialFloats:
             a = np.array(1e9, dtype='float32')
             np.log(a)
 
+    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     def test_sincos_values(self):
         with np.errstate(all='ignore'):
             x = [np.nan, np.nan, np.nan, np.nan]
@@ -1394,6 +1408,7 @@ class TestSpecialFloats:
             yf = np.array(y, dtype=dt)
             assert_equal(np.abs(yf), xf)
 
+    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     def test_square_values(self):
         x = [np.nan,  np.nan, np.inf, np.inf]
         y = [np.nan, -np.nan, np.inf, -np.inf]
@@ -1411,6 +1426,7 @@ class TestSpecialFloats:
             assert_raises(FloatingPointError, np.square,
                           np.array(1E200, dtype='d'))
 
+    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     def test_reciprocal_values(self):
         with np.errstate(all='ignore'):
             x = [np.nan,  np.nan, 0.0, -0.0, np.inf, -np.inf]
@@ -1425,6 +1441,7 @@ class TestSpecialFloats:
                 assert_raises(FloatingPointError, np.reciprocal,
                               np.array(-0.0, dtype=dt))
 
+    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     def test_tan(self):
         with np.errstate(all='ignore'):
             in_ = [np.nan, -np.nan, 0.0, -0.0, np.inf, -np.inf]
@@ -1441,6 +1458,7 @@ class TestSpecialFloats:
                 assert_raises(FloatingPointError, np.tan,
                               np.array(-np.inf, dtype=dt))
 
+    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     def test_arcsincos(self):
         with np.errstate(all='ignore'):
             in_ = [np.nan, -np.nan, np.inf, -np.inf]
@@ -1467,6 +1485,7 @@ class TestSpecialFloats:
                 out_arr = np.array(out, dtype=dt)
                 assert_equal(np.arctan(in_arr), out_arr)
 
+    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     def test_sinh(self):
         in_ = [np.nan, -np.nan, np.inf, -np.inf]
         out = [np.nan, np.nan, np.inf, -np.inf]
@@ -1483,6 +1502,7 @@ class TestSpecialFloats:
             assert_raises(FloatingPointError, np.sinh,
                           np.array(1200.0, dtype='d'))
 
+    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     def test_cosh(self):
         in_ = [np.nan, -np.nan, np.inf, -np.inf]
         out = [np.nan, np.nan, np.inf, np.inf]
@@ -1515,6 +1535,7 @@ class TestSpecialFloats:
             out_arr = np.array(out, dtype=dt)
             assert_equal(np.arcsinh(in_arr), out_arr)
 
+    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     def test_arccosh(self):
         with np.errstate(all='ignore'):
             in_ = [np.nan, -np.nan, np.inf, -np.inf, 1.0, 0.0]
@@ -1530,6 +1551,7 @@ class TestSpecialFloats:
                     assert_raises(FloatingPointError, np.arccosh,
                                   np.array(value, dtype=dt))
 
+    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     def test_arctanh(self):
         with np.errstate(all='ignore'):
             in_ = [np.nan, -np.nan, np.inf, -np.inf, 1.0, -1.0, 2.0]
@@ -1565,6 +1587,7 @@ class TestSpecialFloats:
                     assert_raises(FloatingPointError, np.exp2,
                                   np.array(value, dtype=dt))
 
+    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     def test_expm1(self):
         with np.errstate(all='ignore'):
             in_ = [np.nan, -np.nan, np.inf, -np.inf]
@@ -3701,6 +3724,7 @@ class TestComplexFunctions:
             assert_almost_equal(fz.real, fr, err_msg='real part %s' % f)
             assert_almost_equal(fz.imag, 0., err_msg='imag part %s' % f)
 
+    @pytest.mark.xfail(IS_WASM, reason="doesn't work")
     def test_precisions_consistent(self):
         z = 1 + 1j
         for f in self.funcs:
@@ -3710,6 +3734,7 @@ class TestComplexFunctions:
             assert_almost_equal(fcf, fcd, decimal=6, err_msg='fch-fcd %s' % f)
             assert_almost_equal(fcl, fcd, decimal=15, err_msg='fch-fcl %s' % f)
 
+    @pytest.mark.xfail(IS_WASM, reason="doesn't work")
     def test_branch_cuts(self):
         # check branch cuts and continuity on them
         _check_branch_cut(np.log,   -0.5, 1j, 1, -1, True)
@@ -3735,6 +3760,7 @@ class TestComplexFunctions:
         _check_branch_cut(np.arccosh, [0-2j, 2j, 2], [1,  1,  1j], 1, 1)
         _check_branch_cut(np.arctanh, [0-2j, 2j, 0], [1,  1,  1j], 1, 1)
 
+    @pytest.mark.xfail(IS_WASM, reason="doesn't work")
     def test_branch_cuts_complex64(self):
         # check branch cuts and continuity on them
         _check_branch_cut(np.log,   -0.5, 1j, 1, -1, True, np.complex64)
@@ -3779,6 +3805,7 @@ class TestComplexFunctions:
                 b = cfunc(p)
                 assert_(abs(a - b) < atol, "%s %s: %s; cmath: %s" % (fname, p, a, b))
 
+    @pytest.mark.xfail(IS_WASM, reason="doesn't work")
     @pytest.mark.parametrize('dtype', [np.complex64, np.complex_, np.longcomplex])
     def test_loss_of_precision(self, dtype):
         """Check loss of precision in complex arc* functions"""

@@ -42,6 +42,7 @@ from numpy._typing import (
     # DTypes
     DTypeLike,
     _DTypeLike,
+    _DTypeLikeVoid,
     _SupportsDType,
     _VoidDTypeLike,
 
@@ -620,6 +621,7 @@ from numpy.lib.utils import (
     lookfor as lookfor,
     byte_bounds as byte_bounds,
     safe_eval as safe_eval,
+    show_runtime as show_runtime,
 )
 
 from numpy.matrixlib import (
@@ -2743,8 +2745,6 @@ class bool_(generic):
     __gt__: _ComparisonOp[_NumberLike_co, _ArrayLikeNumber_co]
     __ge__: _ComparisonOp[_NumberLike_co, _ArrayLikeNumber_co]
 
-bool8 = bool_
-
 class object_(generic):
     def __init__(self, value: object = ..., /) -> None: ...
     @property
@@ -2756,8 +2756,6 @@ class object_(generic):
     def __int__(self) -> int: ...
     def __float__(self) -> float: ...
     def __complex__(self) -> complex: ...
-
-object0 = object_
 
 # The `datetime64` constructors requires an object with the three attributes below,
 # and thus supports datetime duck typing
@@ -2881,7 +2879,6 @@ byte = signedinteger[_NBitByte]
 short = signedinteger[_NBitShort]
 intc = signedinteger[_NBitIntC]
 intp = signedinteger[_NBitIntP]
-int0 = signedinteger[_NBitIntP]
 int_ = signedinteger[_NBitInt]
 longlong = signedinteger[_NBitLongLong]
 
@@ -2963,7 +2960,6 @@ ubyte = unsignedinteger[_NBitByte]
 ushort = unsignedinteger[_NBitShort]
 uintc = unsignedinteger[_NBitIntC]
 uintp = unsignedinteger[_NBitIntP]
-uint0 = unsignedinteger[_NBitIntP]
 uint = unsignedinteger[_NBitInt]
 ulonglong = unsignedinteger[_NBitLongLong]
 
@@ -3070,7 +3066,10 @@ class flexible(generic): ...  # type: ignore
 # depending on whether or not it's used as an opaque bytes sequence
 # or a structure
 class void(flexible):
-    def __init__(self, value: _IntLike_co | bytes, /) -> None: ...
+    @overload
+    def __init__(self, value: _IntLike_co | bytes, /, dtype : None = ...) -> None: ...
+    @overload
+    def __init__(self, value: Any, /, dtype: _DTypeLikeVoid) -> None: ...
     @property
     def real(self: _ArraySelf) -> _ArraySelf: ...
     @property
@@ -3087,8 +3086,6 @@ class void(flexible):
         key: str | list[str] | SupportsIndex,
         value: ArrayLike,
     ) -> None: ...
-
-void0 = void
 
 class character(flexible):  # type: ignore
     def __int__(self) -> int: ...
@@ -3110,7 +3107,6 @@ class bytes_(character, bytes):
     def tolist(self) -> bytes: ...
 
 string_ = bytes_
-bytes0 = bytes_
 
 class str_(character, str):
     @overload
@@ -3125,7 +3121,6 @@ class str_(character, str):
     def tolist(self) -> str: ...
 
 unicode_ = str_
-str0 = str_
 
 #
 # Constants
