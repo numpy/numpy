@@ -9,6 +9,7 @@ import functools
 import ctypes
 import os
 import gc
+import re
 import weakref
 import pytest
 from contextlib import contextmanager
@@ -9323,6 +9324,61 @@ class TestArange:
         assert len(keyword_zerotostop) == 3
         assert len(keyword_start_stop) == 6
         assert_array_equal(keyword_stop, keyword_zerotostop)
+
+    def test_arange_booleans(self):
+        # Arange makes some sense for booleans and works up to length 2.
+        # But it is weird since `arange(2, 4, dtype=bool)` works.
+        # Arguably, much or all of this could be deprecated/removed.
+        res = np.arange(False, dtype=bool)
+        assert_array_equal(res, np.array([], dtype="bool"))
+
+        res = np.arange(True, dtype="bool")
+        assert_array_equal(res, [False])
+
+        res = np.arange(2, dtype="bool")
+        assert_array_equal(res, [False, True])
+
+        # This case is especially weird, but drops out without special case:
+        res = np.arange(6, 8, dtype="bool")
+        assert_array_equal(res, [True, True])
+
+        with pytest.raises(TypeError):
+            np.arange(3, dtype="bool")
+
+    @pytest.mark.parametrize("dtype", ["S3", "U", "5i"])
+    def test_rejects_bad_dtypes(self, dtype):
+        dtype = np.dtype(dtype)
+        DType_name = re.escape(str(type(dtype)))
+        with pytest.raises(TypeError,
+                match=rf"arange\(\) not supported for inputs .* {DType_name}"):
+            np.arange(2, dtype=dtype)
+
+    def test_rejects_strings(self):
+        # Explicitly test error for strings which may call "b" - "a":
+        DType_name = re.escape(str(type(np.array("a").dtype)))
+        with pytest.raises(TypeError,
+                match=rf"arange\(\) not supported for inputs .* {DType_name}"):
+            np.arange("a", "b")
+
+    def test_byteswapped(self):
+        res_be = np.arange(1, 1000, dtype=">i4")
+        res_le = np.arange(1, 1000, dtype="<i4")
+        assert res_be.dtype == ">i4"
+        assert res_le.dtype == "<i4"
+        assert_array_equal(res_le, res_be)
+
+    @pytest.mark.parametrize("which", [0, 1, 2])
+    def test_error_paths_and_promotion(self, which):
+        args = [0, 1, 2]  # start, stop, and step
+        args[which] = np.float64(2.)  # should ensure float64 output
+
+        assert np.arange(*args).dtype == np.float64
+
+        # Cover stranger error path, test only to achieve code coverage!
+        args[which] = [None, []]
+        with pytest.raises(ValueError):
+            # Fails discovering start dtype
+            np.arange(*args)
 
 
 class TestArrayFinalize:

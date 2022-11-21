@@ -3922,7 +3922,18 @@ OBJECT_dot(char *ip1, npy_intp is1, char *ip2, npy_intp is2, char *op, npy_intp 
  */
 
 
-#define BOOL_fill NULL
+/* Boolean fill never works, but define it so that it works up to length 2 */
+static int
+BOOL_fill(PyObject **buffer, npy_intp length, void *NPY_UNUSED(ignored))
+{
+    NPY_ALLOW_C_API_DEF;
+    NPY_ALLOW_C_API;
+    PyErr_SetString(PyExc_TypeError,
+            "arange() is only supported for booleans when the result has at "
+            "most length 2.");
+    NPY_DISABLE_C_API;
+    return -1;
+}
 
 /* this requires buffer to be filled with objects or NULL */
 static int

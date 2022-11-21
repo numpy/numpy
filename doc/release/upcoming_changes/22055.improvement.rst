@@ -1,0 +1,12 @@
+arange() now explicitly fails with dtype=str
+---------------------------------------------
+Previously, the ``np.arange(n, dtype=str)`` function worked for ``n=1`` and
+``n=2``, but would raise a non-specific exception message for other values of
+n.
+Now, it raises a `TypeError` informing that ``arange`` does not support
+string dtypes::
+
+    >>> np.arange(2, dtype=str)
+    Traceback (most recent call last)
+       ...
+    TypeError: arange() not supported for inputs with DType <class 'numpy.dtype[str_]'>.
