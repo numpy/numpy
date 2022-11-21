@@ -3321,13 +3321,19 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
 
     if (!step || step == Py_None) {
         step = PyLong_FromLong(1);
+        if (step == NULL) {
+            goto fail;
+        }
     }
     else {
-        Py_XINCREF(step);
+        Py_INCREF(step);
     }
     if (!stop || stop == Py_None) {
         stop = start;
         start = PyLong_FromLong(0);
+        if (start == NULL) {
+            goto fail;
+        }
     }
     else {
         Py_INCREF(start);
@@ -3398,7 +3404,7 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
     Py_DECREF(native);
     Py_DECREF(start);
     Py_DECREF(step);
-    Py_DECREF(next);
+    Py_XDECREF(next);
     return (PyObject *)range;
 
  fail:
