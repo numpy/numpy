@@ -3,7 +3,7 @@ name = "numpy"
 
 # Using https://peps.python.org/pep-0639/
 # which is still in draft
-license = "BSD-3-Clause"
+license = {text = "BSD-3-Clause"}
 license-files.paths = [
     "LICENSE.txt",
     "LICENSES_bundles.txt"
