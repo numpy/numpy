@@ -12,7 +12,7 @@ jobs:
       # therefore a new base image chose instead to guarantee to
       # have a newer version >= 1.8.10 to avoid warnings
       # that related to the default behaviors or non-exist config options
-      - image: cimg/base:2021.05
+      - image: cimg/python:3.9
 
     working_directory: ~/repo
 
@@ -47,9 +47,10 @@ jobs:
           name: create virtual environment, install dependencies
           command: |
             sudo apt-get update
-            sudo apt-get install -y python3.8 python3.8-dev python3-venv graphviz texlive-fonts-recommended texlive-latex-recommended \
+            #sudo apt-get install -y python3.9 python3.9-dev python3-venv graphviz texlive-fonts-recommended texlive-latex-recommended \
+            sudo apt-get install -y graphviz texlive-fonts-recommended texlive-latex-recommended \
               texlive-latex-extra latexmk texlive-xetex doxygen
-            python3.8 -m venv venv
+            python3.9 -m venv venv
             . venv/bin/activate
 
       - run:

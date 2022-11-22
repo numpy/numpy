@@ -49,14 +49,16 @@ stages:
             if ! `gcc 2>/dev/null`; then
                 sudo apt install gcc
             fi
-            sudo apt install python3
-            sudo apt install python3-dev
+            sudo add-apt-repository ppa:deadsnakes/ppa -y
+            sudo apt install python3.9
+            sudo apt install python3.9-dev
+            sudo apt install python3.9-distutils
             # python3 has no setuptools, so install one to get us going
-            python3 -m pip install --user --upgrade pip 'setuptools<49.2.0'
-            python3 -m pip install --user -r test_requirements.txt
+            python3.9 -m pip install --user --upgrade pip 'setuptools<49.2.0'
+            python3.9 -m pip install --user -r test_requirements.txt
       displayName: 'install python/requirements'
     - script: |
-            python3 runtests.py --show-build-log --cpu-baseline=native --cpu-dispatch=none \
+            python3.9 runtests.py --show-build-log --cpu-baseline=native --cpu-dispatch=none \
             --debug-info --mode=full -- -rsx --junitxml=junit/test-results.xml
       displayName: 'Run native baseline Build / Tests'
     - task: PublishTestResults@2
@@ -78,7 +80,7 @@ stages:
     steps:
     - task: UsePythonVersion@0
       inputs:
-        versionSpec: '3.8'
+        versionSpec: '3.9'
         addToPath: true
         architecture: 'x64'
     - script: >-
@@ -91,7 +93,7 @@ stages:
       displayName: 'Run Lint Checks'
       failOnStderr: true
 
-  - job: Linux_Python_38_32bit_full_with_asserts
+  - job: Linux_Python_39_32bit_full_with_asserts
     pool:
       vmImage: 'ubuntu-20.04'
     steps:
@@ -104,7 +106,7 @@ stages:
             /bin/bash -xc " \
             git config --global --add safe.directory /numpy && \
             cd /numpy && \
-            /opt/python/cp38-cp38/bin/python -mvenv venv && \
+            /opt/python/cp39-cp39/bin/python -mvenv venv && \
             source venv/bin/activate && \
             target=\$(python3 tools/openblas_support.py) && \
             cp -r \$target/lib/* /usr/lib && \
@@ -121,7 +123,7 @@ stages:
       inputs:
         testResultsFiles: '**/test-*.xml'
         failTaskOnFailedTests: true
-        testRunTitle: 'Publish test results for Python 3.8-32 bit full Linux'
+        testRunTitle: 'Publish test results for Python 3.9-32 bit full Linux'
 
 
   - job: macOS
@@ -130,11 +132,11 @@ stages:
     strategy:
       maxParallel: 3
       matrix:
-          Python38:
-            PYTHON_VERSION: '3.8'
+          Python39:
+            PYTHON_VERSION: '3.9'
             USE_OPENBLAS: '1'
-          Python38-ILP64:
-            PYTHON_VERSION: '3.8'
+          Python39-ILP64:
+            PYTHON_VERSION: '3.9'
             NPY_USE_BLAS_ILP64: '1'
             USE_OPENBLAS: '1'
     steps:
@@ -234,7 +236,7 @@ stages:
       inputs:
         testResultsFiles: '**/test-*.xml'
         failTaskOnFailedTests: true
-        testRunTitle: 'Publish test results for Python 3.8 64-bit full Mac OS'
+        testRunTitle: 'Publish test results for Python 3.9 64-bit full Mac OS'
 
 
   - job: Windows
@@ -243,16 +245,6 @@ stages:
     strategy:
       maxParallel: 6
       matrix:
-          Python38-32bit-fast:
-            PYTHON_VERSION: '3.8'
-            PYTHON_ARCH: 'x86'
-            TEST_MODE: fast
-            BITS: 32
-          Python38-64bit-full:
-            PYTHON_VERSION: '3.8'
-            PYTHON_ARCH: 'x64'
-            TEST_MODE: full
-            BITS: 64
           Python39-32bit-fast:
             PYTHON_VERSION: '3.9'
             PYTHON_ARCH: 'x86'
@@ -263,7 +255,31 @@ stages:
             PYTHON_ARCH: 'x64'
             TEST_MODE: full
             BITS: 64
+          Python310-32bit-fast:
+            PYTHON_VERSION: '3.10'
+            PYTHON_ARCH: 'x86'
+            TEST_MODE: fast
+            BITS: 32
+          Python310-64bit-full:
+            PYTHON_VERSION: '3.10'
+            PYTHON_ARCH: 'x64'
+            TEST_MODE: full
+            BITS: 64
             NPY_USE_BLAS_ILP64: '1'
+          Python311-32bit-fast:
+            PYTHON_VERSION: '3.11'
+            PYTHON_ARCH: 'x86'
+            TEST_MODE: fast
+            BITS: 32
+          Python311-64bit-full:
+            PYTHON_VERSION: '3.11'
+            PYTHON_ARCH: 'x64'
+            TEST_MODE: full
+            BITS: 64
+            NPY_USE_BLAS_ILP64: '1'
+
+          # Not sure how the PyPy version is set here
+          # It is set in azure-steps-windows.ym
           PyPy38-64bit-fast:
             PYTHON_VERSION: 'PyPy'
             PYTHON_ARCH: 'x64'
