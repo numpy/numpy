@@ -1,6 +1,20 @@
 from ._utils import set_module as _set_module
 
-__all__ = ["ComplexWarning", "TooHardError", "AxisError"]
+__all__ = [
+    "ComplexWarning", "ModuleDeprecationWarning", "VisibleDeprecationWarning",
+    "TooHardError", "AxisError"]
+
+
+# Disallow reloading this module so as to preserve the identities of the
+# classes defined here.
+if '_is_loaded' in globals():
+    raise RuntimeError('Reloading numpy._globals is not allowed')
+_is_loaded = True
+
+
+# TODO: One day, we should remove the _set_module here before removing them
+#       fully.  Not doing it now, just to allow unpickling to work on older
+#       versions for a bit.  (Module exists since NumPy 1.25.)
 
 
 @_set_module('numpy')
@@ -14,6 +28,29 @@ class ComplexWarning(RuntimeWarning):
     """
     pass
 
+
+
+@_set_module("numpy")
+class ModuleDeprecationWarning(DeprecationWarning):
+    """Module deprecation warning.
+
+    The nose tester turns ordinary Deprecation warnings into test failures.
+    That makes it hard to deprecate whole modules, because they get
+    imported by default. So this is a special Deprecation warning that the
+    nose tester will let pass without making tests fail.
+
+    """
+
+
+@_set_module("numpy")
+class VisibleDeprecationWarning(UserWarning):
+    """Visible deprecation warning.
+
+    By default, python will not show deprecation warnings, so this class
+    can be used when a very visible warning is helpful, for example because
+    the usage is most likely a user bug.
+
+    """
 
 
 # Exception used in shares_memory()

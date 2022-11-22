@@ -19,10 +19,7 @@ import enum
 
 from ._utils import set_module as _set_module
 
-__all__ = [
-    'ModuleDeprecationWarning', 'VisibleDeprecationWarning',
-    '_NoValue', '_CopyMode'
-    ]
+__all__ = ['_NoValue', '_CopyMode']
 
 
 # Disallow reloading this module so as to preserve the identities of the
@@ -30,29 +27,6 @@ __all__ = [
 if '_is_loaded' in globals():
     raise RuntimeError('Reloading numpy._globals is not allowed')
 _is_loaded = True
-
-
-@_set_module("numpy")
-class ModuleDeprecationWarning(DeprecationWarning):
-    """Module deprecation warning.
-
-    The nose tester turns ordinary Deprecation warnings into test failures.
-    That makes it hard to deprecate whole modules, because they get
-    imported by default. So this is a special Deprecation warning that the
-    nose tester will let pass without making tests fail.
-
-    """
-
-
-@_set_module("numpy")
-class VisibleDeprecationWarning(UserWarning):
-    """Visible deprecation warning.
-
-    By default, python will not show deprecation warnings, so this class
-    can be used when a very visible warning is helpful, for example because
-    the usage is most likely a user bug.
-
-    """
 
 
 class _NoValueType:
