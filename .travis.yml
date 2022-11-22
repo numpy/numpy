@@ -58,20 +58,6 @@ jobs:
       arch: arm64
       virt: vm
       env:
-        - CIBW_BUILD: cp38-manylinux_aarch64
-        - EXPECT_CPU_FEATURES: "NEON NEON_FP16 NEON_VFPV4 ASIMD ASIMDHP ASIMDDP ASIMDFHM"
-      install: python3 -m pip install cibuildwheel==2.11.2
-      script: |
-        cibuildwheel --output-dir wheelhouse
-        source ./tools/wheels/upload_wheels.sh
-        set_travis_vars
-        set_upload_vars
-        upload_wheels # Will be skipped if not a push/tag/scheduled build
-    - python: "3.8"
-      os: linux
-      arch: arm64
-      virt: vm
-      env:
         - CIBW_BUILD: cp39-manylinux_aarch64
       install: python3 -m pip install cibuildwheel==2.11.2
       script: |
@@ -110,4 +96,4 @@ before_install:
   - ./tools/travis-before-install.sh
 
 script:
-  - travis_wait 30 ./tools/travis-test.sh
+  - ./tools/travis-test.sh
