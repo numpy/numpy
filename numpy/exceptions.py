@@ -5,9 +5,9 @@ Exceptions and Warnings (:mod:`numpy.exceptions`)
 General exceptions used by NumPy.  Note that some exceptions may be module
 specific, such as linear algebra errors.
 
-.. versionadded:: NumPy 1.24
+.. versionadded:: NumPy 1.25
 
-    The exceptions module is new in NumPy 1.24.  Older exceptions remain
+    The exceptions module is new in NumPy 1.25.  Older exceptions remain
     available through the main NumPy namespace for compatibility.
 
 .. currentmodule:: numpy.exceptions
@@ -47,7 +47,7 @@ _is_loaded = True
 
 # TODO: One day, we should remove the _set_module here before removing them
 #       fully.  Not doing it now, just to allow unpickling to work on older
-#       versions for a bit.  (Module exists since NumPy 1.24.)
+#       versions for a bit.  (Module exists since NumPy 1.25.)
 #       This then also means that the typing stubs should be moved!
 
 
