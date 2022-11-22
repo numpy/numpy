@@ -57,9 +57,8 @@ cirrus_wheels_upload_task:
     platform: linux
 
 #  env:
-#    # created as SCIPY_STAGING_UPLOAD_TOKEN_CIRRUS and SCIPY_NIGHTLY_UPLOAD_TOKEN_CIRRUS
-#    SCIPY_STAGING_UPLOAD_TOKEN: ENCRYPTED[]
-#    SCIPY_NIGHTLY_UPLOAD_TOKEN: ENCRYPTED[]
+#    NUMPY_STAGING_UPLOAD_TOKEN: ENCRYPTED[]
+#    NUMPY_NIGHTLY_UPLOAD_TOKEN: ENCRYPTED[]
 
   upload_script: |
     apt-get install -y python3-venv python-is-python3 curl
@@ -71,13 +70,10 @@ cirrus_wheels_upload_task:
       export IS_SCHEDULE_DISPATCH="true"
     fi
 
-    # If it's a push event to a maintenance branch, and the commit message contains
-    # '[wheel build]' then upload to staging
-    COMMIT_MSG=$(git log --no-merges -1)
-    if [[ "$COMMIT_MSG" == *"[wheel build]"* ]] && [[ $CIRRUS_BRANCH == maintenance* ]]; then
-          export IS_PUSH="true"
+    if [[ "$CIRRUS_TAG" == "v*" ]]; then
+      export IS_PUSH="true"    
     fi
-    
+
     # The name of the zip file is derived from the `wheels_artifact` line.
     # If you change the artifact line to `myfile_artifact` then it would be
     # called myfile.zip
@@ -86,3 +82,6 @@ cirrus_wheels_upload_task:
     unzip wheels.zip
     
     # TODO upload wheels  
+    source ./tools/wheels/upload_wheels.sh
+    set_upload_vars
+    upload_wheels # Will be skipped if not a push/tag/scheduled build
