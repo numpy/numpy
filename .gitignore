@@ -64,6 +64,8 @@ GTAGS
 # meson build/installation directories
 build
 build-install
+# meson python output
+.mesonpy-native-file.ini
 # sphinx build directory
 _build
 # setup.py dist directory
