@@ -1,4 +1,0 @@
-``np.void`` now has a ``dtype`` argument
-----------------------------------------
-NumPy now allows constructing structured void scalars directly by
-passing the ``dtype`` argument to ``np.void``.
