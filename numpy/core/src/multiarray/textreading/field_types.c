@@ -35,18 +35,18 @@ static set_from_ucs4_function *
 get_from_ucs4_function(PyArray_Descr *descr)
 {
     if (descr->type_num == NPY_BOOL) {
-        return &to_bool;
+        return &npy_to_bool;
     }
     else if (PyDataType_ISSIGNED(descr)) {
         switch (descr->elsize) {
             case 1:
-                return &to_int8;
+                return &npy_to_int8;
             case 2:
-                return &to_int16;
+                return &npy_to_int16;
             case 4:
-                return &to_int32;
+                return &npy_to_int32;
             case 8:
-                return &to_int64;
+                return &npy_to_int64;
             default:
                 assert(0);
         }
@@ -54,36 +54,36 @@ get_from_ucs4_function(PyArray_Descr *descr)
     else if (PyDataType_ISUNSIGNED(descr)) {
         switch (descr->elsize) {
             case 1:
-                return &to_uint8;
+                return &npy_to_uint8;
             case 2:
-                return &to_uint16;
+                return &npy_to_uint16;
             case 4:
-                return &to_uint32;
+                return &npy_to_uint32;
             case 8:
-                return &to_uint64;
+                return &npy_to_uint64;
             default:
                 assert(0);
         }
     }
     else if (descr->type_num == NPY_FLOAT) {
-        return &to_float;
+        return &npy_to_float;
     }
     else if (descr->type_num == NPY_DOUBLE) {
-        return &to_double;
+        return &npy_to_double;
     }
     else if (descr->type_num == NPY_CFLOAT) {
-        return &to_cfloat;
+        return &npy_to_cfloat;
     }
     else if (descr->type_num == NPY_CDOUBLE) {
-        return &to_cdouble;
+        return &npy_to_cdouble;
     }
     else if (descr->type_num == NPY_STRING) {
-        return &to_string;
+        return &npy_to_string;
     }
     else if (descr->type_num == NPY_UNICODE) {
-        return &to_unicode;
+        return &npy_to_unicode;
     }
-    return &to_generic;
+    return &npy_to_generic;
 }
 
 
