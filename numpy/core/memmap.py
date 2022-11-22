@@ -75,7 +75,7 @@ class memmap(ndarray):
         the file, even if ``filename`` is a file pointer ``fp`` and
         ``fp.tell() != 0``.
     shape : tuple, optional
-        The desired shape of the array. If ``mode == 'r'`` and the number
+        The desired shape of the array. If ``mode == 'r'`` and ``mode == 'w'`` and the number
         of remaining bytes after `offset` is not a multiple of the byte-size
         of `dtype`, you must specify `shape`. By default, the returned array
         will be 1-D with the number of elements determined by file size
