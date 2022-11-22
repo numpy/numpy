@@ -15,6 +15,7 @@ _is_loaded = True
 # TODO: One day, we should remove the _set_module here before removing them
 #       fully.  Not doing it now, just to allow unpickling to work on older
 #       versions for a bit.  (Module exists since NumPy 1.25.)
+#       This then also means that the typing stubs should be moved!
 
 
 @_set_module('numpy')
