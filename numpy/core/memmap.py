@@ -64,7 +64,7 @@ class memmap(ndarray):
         |      | changes are not saved to disk.  The file on disk is         |
         |      | read-only.                                                  |
         +------+-------------------------------------------------------------+
-
+        if the file is opened in  `mode == 'r'`` and ``mode == 'w'`` you must specify the shape.
         Default is 'r+'.
     offset : int, optional
         In the file, array data starts at this offset. Since `offset` is
