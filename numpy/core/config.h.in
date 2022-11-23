@@ -96,7 +96,6 @@
 #mesondefine HAVE_CPOWL
 #mesondefine HAVE_CSQRTL
 
-/* #mesondefine NPY_RESTRICT restrict   in C99, remove? */
 #mesondefine NPY_CAN_LINK_SVML
 #mesondefine NPY_RELAXED_STRIDES_DEBUG
 
