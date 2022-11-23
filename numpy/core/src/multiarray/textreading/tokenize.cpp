@@ -284,7 +284,7 @@ tokenizer_core(tokenizer_state *ts, parser_config *const config)
  * unicode flavors UCS1, UCS2, and UCS4 as a worthwhile optimization.
  */
 NPY_NO_EXPORT int
-tokenize(stream *s, tokenizer_state *ts, parser_config *const config)
+npy_tokenize(stream *s, tokenizer_state *ts, parser_config *const config)
 {
     assert(ts->fields_size >= 2);
     assert(ts->field_buffer_length >= 2*(ssize_t)sizeof(Py_UCS4));
@@ -402,7 +402,7 @@ tokenize(stream *s, tokenizer_state *ts, parser_config *const config)
 
 
 NPY_NO_EXPORT void
-tokenizer_clear(tokenizer_state *ts)
+npy_tokenizer_clear(tokenizer_state *ts)
 {
     PyMem_FREE(ts->field_buffer);
     ts->field_buffer = nullptr;
@@ -420,7 +420,7 @@ tokenizer_clear(tokenizer_state *ts)
  * tokenizing.
  */
 NPY_NO_EXPORT int
-tokenizer_init(tokenizer_state *ts, parser_config *config)
+npy_tokenizer_init(tokenizer_state *ts, parser_config *config)
 {
     /* State and buf_state could be moved into tokenize if we go by row */
     ts->buf_state = BUFFER_MAY_CONTAIN_NEWLINE;

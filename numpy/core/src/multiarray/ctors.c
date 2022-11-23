@@ -3244,9 +3244,9 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
 {
     PyArrayObject *range;
     PyArray_ArrFuncs *funcs;
-    PyObject *next, *err;
-    npy_intp length;
+    PyObject *next = NULL;
     PyArray_Descr *native = NULL;
+    npy_intp length;
     int swap;
     NPY_BEGIN_THREADS_DEF;
 
@@ -3259,69 +3259,31 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
         return (PyObject *)datetime_arange(start, stop, step, dtype);
     }
 
-    if (!dtype) {
-        PyArray_Descr *deftype;
-        PyArray_Descr *newtype;
+    /* We need to replace many of these, so hold on for easier cleanup */
+    Py_XINCREF(start);
+    Py_XINCREF(stop);
+    Py_XINCREF(step);
+    Py_XINCREF(dtype);
 
+    if (!dtype) {
         /* intentionally made to be at least NPY_LONG */
-        deftype = PyArray_DescrFromType(NPY_LONG);
-        newtype = PyArray_DescrFromObject(start, deftype);
-        Py_DECREF(deftype);
-        if (newtype == NULL) {
-            return NULL;
+        dtype = PyArray_DescrFromType(NPY_LONG);
+        Py_SETREF(dtype, PyArray_DescrFromObject(start, dtype));
+        if (dtype == NULL) {
+            goto fail;
         }
-        deftype = newtype;
         if (stop && stop != Py_None) {
-            newtype = PyArray_DescrFromObject(stop, deftype);
-            Py_DECREF(deftype);
-            if (newtype == NULL) {
-                return NULL;
+            Py_SETREF(dtype, PyArray_DescrFromObject(stop, dtype));
+            if (dtype == NULL) {
+                goto fail;
             }
-            deftype = newtype;
         }
         if (step && step != Py_None) {
-            newtype = PyArray_DescrFromObject(step, deftype);
-            Py_DECREF(deftype);
-            if (newtype == NULL) {
-                return NULL;
+            Py_SETREF(dtype, PyArray_DescrFromObject(step, dtype));
+            if (dtype == NULL) {
+                goto fail;
             }
-            deftype = newtype;
         }
-        dtype = deftype;
-    }
-    else {
-        Py_INCREF(dtype);
-    }
-    if (!step || step == Py_None) {
-        step = PyLong_FromLong(1);
-    }
-    else {
-        Py_XINCREF(step);
-    }
-    if (!stop || stop == Py_None) {
-        stop = start;
-        start = PyLong_FromLong(0);
-    }
-    else {
-        Py_INCREF(start);
-    }
-    /* calculate the length and next = start + step*/
-    length = _calc_length(start, stop, step, &next,
-                          PyTypeNum_ISCOMPLEX(dtype->type_num));
-    err = PyErr_Occurred();
-    if (err) {
-        Py_DECREF(dtype);
-        if (err && PyErr_GivenExceptionMatches(err, PyExc_OverflowError)) {
-            PyErr_SetString(PyExc_ValueError, "Maximum allowed size exceeded");
-        }
-        goto fail;
-    }
-    if (length <= 0) {
-        length = 0;
-        range = (PyArrayObject *)PyArray_SimpleNewFromDescr(1, &length, dtype);
-        Py_DECREF(step);
-        Py_DECREF(start);
-        return (PyObject *)range;
     }
 
     /*
@@ -3330,23 +3292,67 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
      */
     if (!PyArray_ISNBO(dtype->byteorder)) {
         native = PyArray_DescrNewByteorder(dtype, NPY_NATBYTE);
+        if (native == NULL) {
+            goto fail;
+        }
         swap = 1;
     }
     else {
+        Py_INCREF(dtype);
         native = dtype;
         swap = 0;
     }
 
+    funcs = native->f;
+    if (!funcs->fill) {
+        /* This effectively forbids subarray types as well... */
+        PyErr_Format(PyExc_TypeError,
+                "arange() not supported for inputs with DType %S.",
+                Py_TYPE(dtype));
+        goto fail;
+    }
+
+    if (!step || step == Py_None) {
+        Py_XSETREF(step, PyLong_FromLong(1));
+        if (step == NULL) {
+            goto fail;
+        }
+    }
+    if (!stop || stop == Py_None) {
+        Py_XSETREF(stop, start);
+        start = PyLong_FromLong(0);
+        if (start == NULL) {
+            goto fail;
+        }
+    }
+
+    /* calculate the length and next = start + step*/
+    length = _calc_length(start, stop, step, &next,
+                          PyTypeNum_ISCOMPLEX(dtype->type_num));
+    PyObject *err = PyErr_Occurred();
+    if (err) {
+        if (PyErr_GivenExceptionMatches(err, PyExc_OverflowError)) {
+            PyErr_SetString(PyExc_ValueError, "Maximum allowed size exceeded");
+        }
+        goto fail;
+    }
+    if (length <= 0) {
+        length = 0;
+    }
+
+    Py_INCREF(native);
     range = (PyArrayObject *)PyArray_SimpleNewFromDescr(1, &length, native);
     if (range == NULL) {
         goto fail;
     }
 
+    if (length == 0) {
+        goto finish;
+    }
     /*
      * place start in the buffer and the next value in the second position
      * if length > 2, then call the inner loop, otherwise stop
      */
-    funcs = PyArray_DESCR(range)->f;
     if (funcs->setitem(start, PyArray_DATA(range), range) < 0) {
         goto fail;
     }
@@ -3360,11 +3366,7 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
     if (length == 2) {
         goto finish;
     }
-    if (!funcs->fill) {
-        PyErr_SetString(PyExc_ValueError, "no fill-function for data-type.");
-        Py_DECREF(range);
-        goto fail;
-    }
+
     NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(range));
     funcs->fill(PyArray_DATA(range), length, range);
     NPY_END_THREADS;
@@ -3376,19 +3378,29 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
     if (swap) {
         PyObject *new;
         new = PyArray_Byteswap(range, 1);
+        if (new == NULL) {
+            goto fail;
+        }
         Py_DECREF(new);
+        /* Replace dtype after swapping in-place above: */
         Py_DECREF(PyArray_DESCR(range));
-        /* steals the reference */
+        Py_INCREF(dtype);
         ((PyArrayObject_fields *)range)->descr = dtype;
     }
+    Py_DECREF(dtype);
+    Py_DECREF(native);
     Py_DECREF(start);
+    Py_DECREF(stop);
     Py_DECREF(step);
-    Py_DECREF(next);
+    Py_XDECREF(next);
     return (PyObject *)range;
 
  fail:
-    Py_DECREF(start);
-    Py_DECREF(step);
+    Py_XDECREF(dtype);
+    Py_XDECREF(native);
+    Py_XDECREF(start);
+    Py_XDECREF(stop);
+    Py_XDECREF(step);
     Py_XDECREF(next);
     return NULL;
 }

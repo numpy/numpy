@@ -10,47 +10,47 @@
 #include "textreading/parser_config.h"
 
 NPY_NO_EXPORT int
-to_bool(PyArray_Descr *descr,
+npy_to_bool(PyArray_Descr *descr,
         const Py_UCS4 *str, const Py_UCS4 *end, char *dataptr,
         parser_config *pconfig);
 
 NPY_NO_EXPORT int
-to_float(PyArray_Descr *descr,
+npy_to_float(PyArray_Descr *descr,
         const Py_UCS4 *str, const Py_UCS4 *end, char *dataptr,
         parser_config *pconfig);
 
 NPY_NO_EXPORT int
-to_double(PyArray_Descr *descr,
+npy_to_double(PyArray_Descr *descr,
         const Py_UCS4 *str, const Py_UCS4 *end, char *dataptr,
         parser_config *pconfig);
 
 NPY_NO_EXPORT int
-to_cfloat(PyArray_Descr *descr,
+npy_to_cfloat(PyArray_Descr *descr,
         const Py_UCS4 *str, const Py_UCS4 *end, char *dataptr,
         parser_config *pconfig);
 
 NPY_NO_EXPORT int
-to_cdouble(PyArray_Descr *descr,
+npy_to_cdouble(PyArray_Descr *descr,
         const Py_UCS4 *str, const Py_UCS4 *end, char *dataptr,
         parser_config *pconfig);
 
 NPY_NO_EXPORT int
-to_string(PyArray_Descr *descr,
+npy_to_string(PyArray_Descr *descr,
         const Py_UCS4 *str, const Py_UCS4 *end, char *dataptr,
         parser_config *unused);
 
 NPY_NO_EXPORT int
-to_unicode(PyArray_Descr *descr,
+npy_to_unicode(PyArray_Descr *descr,
         const Py_UCS4 *str, const Py_UCS4 *end, char *dataptr,
         parser_config *unused);
 
 NPY_NO_EXPORT int
-to_generic_with_converter(PyArray_Descr *descr,
+npy_to_generic_with_converter(PyArray_Descr *descr,
         const Py_UCS4 *str, const Py_UCS4 *end, char *dataptr,
         parser_config *unused, PyObject *func);
 
 NPY_NO_EXPORT int
-to_generic(PyArray_Descr *descr,
+npy_to_generic(PyArray_Descr *descr,
         const Py_UCS4 *str, const Py_UCS4 *end, char *dataptr,
         parser_config *pconfig);
 

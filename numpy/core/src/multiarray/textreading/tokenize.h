@@ -70,14 +70,14 @@ typedef struct {
 
 
 NPY_NO_EXPORT void
-tokenizer_clear(tokenizer_state *ts);
+npy_tokenizer_clear(tokenizer_state *ts);
 
 
 NPY_NO_EXPORT int
-tokenizer_init(tokenizer_state *ts, parser_config *config);
+npy_tokenizer_init(tokenizer_state *ts, parser_config *config);
 
 NPY_NO_EXPORT int
-tokenize(stream *s, tokenizer_state *ts, parser_config *const config);
+npy_tokenize(stream *s, tokenizer_state *ts, parser_config *const config);
 
 #ifdef __cplusplus
 }
