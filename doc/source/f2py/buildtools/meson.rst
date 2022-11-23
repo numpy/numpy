@@ -28,8 +28,7 @@ build system like ``meson``. We will acquire this by:
 Now, consider the following ``meson.build`` file for the ``fib`` and ``scalar``
 examples from :ref:`f2py-getting-started` section:
 
-.. literalinclude:: ./../code/meson.build
-    :language: meson
+.. literalinclude:: ../code/meson.build
 
 At this point the build will complete, but the import will fail:
 
@@ -93,8 +92,7 @@ for reasons discussed in :ref:`f2py-bldsys`.
 However, we can augment our workflow in a straightforward to take into account
 files for which the outputs are known when the build system is set up.
 
-.. literalinclude:: ./../code/meson_upd.build
-    :language: meson
+.. literalinclude:: ../code/meson_upd.build
 
 This can be compiled and run as before.
 

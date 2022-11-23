@@ -1,6 +1,8 @@
+#!/usr/bin/env python3
 import os
-import genapi
+import argparse
 
+import genapi
 from genapi import \
         TypeApi, GlobalVarApi, FunctionApi, BoolValuesApi
 
@@ -242,3 +244,29 @@ def do_generate_api(targets, sources):
     genapi.write_file(doc_file, s)
 
     return targets
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-o",
+        "--outdir",
+        type=str,
+        help="Path to the output directory"
+    )
+    parser.add_argument(
+        "-i",
+        "--ignore",
+        type=str,
+        help="An ignored input - may be useful to add a "
+             "dependency between custom targets"
+    )
+    args = parser.parse_args()
+
+    outdir_abs = os.path.join(os.getcwd(), args.outdir)
+
+    generate_api(outdir_abs)
+
+
+if __name__ == "__main__":
+    main()
