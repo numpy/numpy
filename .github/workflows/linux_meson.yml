@@ -14,7 +14,6 @@ defaults:
 
 env:
   PYTHON_VERSION: 3.11
-  INSTALLDIR: "build-install"
 
 permissions:
   contents: read # to fetch code (actions/checkout)
@@ -42,7 +41,7 @@ jobs:
         ninja -C build -t missingdeps
     - name: Check installed test and stub files
       run:
-        python tools/check_installed_files.py ${{ env.INSTALLDIR }}
+        python tools/check_installed_files.py build-install/usr/lib/python3.11/site-packages/numpy/
     - name: Test
       run: |
         pip install pytest hypothesis typing_extensions
