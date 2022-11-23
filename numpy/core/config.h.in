@@ -12,6 +12,8 @@
 /* Optional headers */
 #mesondefine HAVE_XLOCALE_H
 #mesondefine HAVE_DLFCN_H
+#mesondefine HAVE_EXECINFO_H
+#mesondefine HAVE_LIBUNWIND_H
 #mesondefine HAVE_SYS_MMAN_H
 #mesondefine HAVE_XMMINTRIN_H
 #mesondefine HAVE_EMMINTRIN_H

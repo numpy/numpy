@@ -221,14 +221,18 @@ else
 endif
 
 # Other optional functions
-if cc.has_function('backtrace', prefix: '#include <execinfo.h>')
-  cdata.set10('HAVE_BACKTRACE', true)
-endif
-if cc.has_function('madvise', include_directories: inc_curdir,
-    prefix: '#include "feature_detection_misc.h"'
-  )
-  cdata.set10('HAVE_MADVISE', true)
-endif
+optional_misc_funcs = [
+  'backtrace',
+  'madvise',
+]
+foreach func: optional_misc_funcs
+  if cc.has_function(func,
+      include_directories: inc_curdir,
+      prefix: '#include "feature_detection_misc.h"'
+    )
+    cdata.set10('HAVE_' + func.to_upper(), true)
+  endif
+endforeach
 
 # SSE headers only enabled automatically on amd64/x32 builds
 optional_headers = [
@@ -238,6 +242,8 @@ optional_headers = [
   'features.h',   # for glibc version linux
   'xlocale.h',    # see GH#8367
   'dlfcn.h',      # dladdr
+  'execinfo.h',   # backtrace
+  'libunwind.h',  # backtrace for LLVM/Clang using libunwind
   'sys/mman.h',   # madvise
 ]
 foreach header: optional_headers
