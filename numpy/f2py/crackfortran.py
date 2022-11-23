@@ -614,7 +614,8 @@ groupends = (r'end|endprogram|endblockdata|endmodule|endpythonmodule|'
              r'endinterface|endsubroutine|endfunction')
 endpattern = re.compile(
     beforethisafter % ('', groupends, groupends, '.*'), re.I), 'end'
-endifs = r'end\s*(if|do|where|select|while|forall|associate|block|' + \
+# block, the Fortran 2008 construct needs special handling in the rest of the file
+endifs = r'end\s*(if|do|where|select|while|forall|associate|' + \
          r'critical|enum|team)'
 endifpattern = re.compile(
     beforethisafter % (r'[\w]*?', endifs, endifs, '.*'), re.I), 'endif'
