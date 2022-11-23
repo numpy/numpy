@@ -42,7 +42,7 @@ jobs:
         ninja -C build -t missingdeps
     - name: Check installed test and stub files
       run:
-        python check_installed_files.py ${{ env.INSTALLDIR }}
+        python tools/check_installed_files.py ${{ env.INSTALLDIR }}
     - name: Test
       run: |
         pip install pytest hypothesis typing_extensions
