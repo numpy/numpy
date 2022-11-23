@@ -79,7 +79,7 @@ class memmap(ndarray):
         of remaining bytes after `offset` is not a multiple of the byte-size
         of `dtype`, you must specify `shape`. By default, the returned array
         will be 1-D with the number of elements determined by file size
-        and data-type.
+        and data-type. If ``mode == 'w+'`` then shape must also be specified.
     order : {'C', 'F'}, optional
         Specify the order of the ndarray memory layout:
         :term:`row-major`, C-style or :term:`column-major`,
@@ -220,7 +220,7 @@ class memmap(ndarray):
                 ) from None
 
         if mode == 'w+' and shape is None:
-            raise ValueError("shape must be given")
+            raise ValueError("shape must be given if mode == 'w+'")
 
         if hasattr(filename, 'read'):
             f_ctx = nullcontext(filename)
