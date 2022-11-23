@@ -64,7 +64,7 @@ class memmap(ndarray):
         |      | changes are not saved to disk.  The file on disk is         |
         |      | read-only.                                                  |
         +------+-------------------------------------------------------------+
-        if the file is opened in  `mode == 'r'`` and ``mode == 'w'`` you must specify the shape.
+        if the file is opened in  `mode == 'r'`` and ``mode == 'w+'`` you must specify the shape.
         Default is 'r+'.
     offset : int, optional
         In the file, array data starts at this offset. Since `offset` is
@@ -75,11 +75,11 @@ class memmap(ndarray):
         the file, even if ``filename`` is a file pointer ``fp`` and
         ``fp.tell() != 0``.
     shape : tuple, optional
-        The desired shape of the array. If ``mode == 'r'`` and ``mode == 'w'`` and the number
+        The desired shape of the array. If ``mode == 'r'``  and the number
         of remaining bytes after `offset` is not a multiple of the byte-size
         of `dtype`, you must specify `shape`. By default, the returned array
         will be 1-D with the number of elements determined by file size
-        and data-type.
+        and data-type.If``mode == 'w+'`` you must specify `shape`.
     order : {'C', 'F'}, optional
         Specify the order of the ndarray memory layout:
         :term:`row-major`, C-style or :term:`column-major`,
