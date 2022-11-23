@@ -172,6 +172,31 @@ foreach macro: c99_macros
   endif
 endforeach
 
+# variable attributes tested via "int %s a" % attribute
+optional_variable_attributes = [
+  ['__thread', 'HAVE__THREAD'],
+  ['__declspec(thread)', 'HAVE___DECLSPEC_THREAD_']
+]
+foreach optional_attr: optional_variable_attributes
+  attr = optional_attr[0]
+  code = f'''
+    #pragma GCC diagnostic error "-Wattributes"
+    #pragma clang diagnostic error "-Wattributes"
+
+    int @attr@ foo;
+  '''
+  code += '''
+    int
+    main()
+    {
+      return 0;
+    }
+  '''
+  if cc.compiles(code)
+    cdata.set10(optional_attr[1], true)
+  endif
+endforeach
+
 inc_curdir = include_directories('.')
 optional_file_funcs = ['fallocate', 'ftello', 'fseeko']
 foreach filefunc_maybe: optional_file_funcs
