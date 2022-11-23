@@ -59,6 +59,7 @@ class memmap(ndarray):
         | 'r+' | Open existing file for reading and writing.                 |
         +------+-------------------------------------------------------------+
         | 'w+' | Create or overwrite existing file for reading and writing.  |
+        |      | If ``mode == 'w+'`` then shape must also be specified.      |
         +------+-------------------------------------------------------------+
         | 'c'  | Copy-on-write: assignments affect data in memory, but       |
         |      | changes are not saved to disk.  The file on disk is         |
@@ -79,7 +80,7 @@ class memmap(ndarray):
         of remaining bytes after `offset` is not a multiple of the byte-size
         of `dtype`, you must specify `shape`. By default, the returned array
         will be 1-D with the number of elements determined by file size
-        and data-type. If ``mode == 'w+'`` then shape must also be specified.
+        and data-type. 
     order : {'C', 'F'}, optional
         Specify the order of the ndarray memory layout:
         :term:`row-major`, C-style or :term:`column-major`,
