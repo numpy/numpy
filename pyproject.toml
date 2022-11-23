@@ -1,3 +1,16 @@
+[build-system]
+build-backend = "mesonpy"
+requires = [
+    "meson-python>=0.10.0",
+    # `wheel` is needed for non-isolated builds, given that `meson-python`
+    # doesn't list it as a runtime requirement (at least in 0.11.0) - it's
+    # likely to be removed as a dependency in 0.12.0.
+    # See https://github.com/mesonbuild/meson-python/blob/main/pyproject.toml#L4
+    "wheel",
+    "setuptools",
+    "Cython>=0.29.30,<3.0"
+]
+
 [project]
 name = "numpy"
 
@@ -45,19 +58,6 @@ documentation = "https://numpy.org/doc/"
 source = "https://github.com/numpy/numpy"
 download = "https://pypi.org/project/numpy/#files"
 tracker = "https://github.com/numpy/numpy/issues"
-
-[build-system]
-build-backend = "mesonpy"
-requires = [
-    "meson-python>=0.10.0",
-    # `wheel` is needed for non-isolated builds, given that `meson-python`
-    # doesn't list it as a runtime requirement (at least in 0.10.0)
-    # See https://github.com/FFY00/meson-python/blob/main/pyproject.toml#L4
-    "wheel",
-    "setuptools",
-    "packaging",
-    "Cython>=0.29.24,<3.0"
-]
 
 [tool.towncrier]
     # Do no set this since it is hard to import numpy inside the source directory
