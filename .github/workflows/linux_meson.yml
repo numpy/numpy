@@ -14,6 +14,7 @@ defaults:
 
 env:
   PYTHON_VERSION: 3.11
+  INSTALLDIR: "build-install"
 
 permissions:
   contents: read # to fetch code (actions/checkout)
@@ -39,6 +40,9 @@ jobs:
     - name: Check build-internal dependencies
       run:
         ninja -C build -t missingdeps
+    - name: Check installed test and stub files
+      run:
+        python check_installed_files.py ${{ env.INSTALLDIR }}
     - name: Test
       run: |
         pip install pytest hypothesis typing_extensions
