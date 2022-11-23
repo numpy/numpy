@@ -169,6 +169,10 @@ c99_macros = ['isfinite', 'isinf', 'isnan', 'signbit']
 foreach macro: c99_macros
   if cc.has_function(macro)
     cdata.set10('NPY_HAVE_DECL_' + macro.to_upper(), true)
+    if not cc.has_header_symbol('Python.h', macro, dependencies: py_dep)
+      # Add in config.h as well, except if it will clash with Python's config.h content
+      cdata.set10('HAVE_DECL_' + macro.to_upper(), true)
+    endif
   endif
 endforeach
 

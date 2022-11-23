@@ -52,7 +52,9 @@
 #mesondefine HAVE_ATTRIBUTE_TARGET_AVX512F_WITH_INTRINSICS
 #mesondefine HAVE_ATTRIBUTE_TARGET_AVX512_SKX_WITH_INTRINSICS
 
-/* in C99, remove? */
+#mesondefine HAVE_DECL_ISNAN
+#mesondefine HAVE_DECL_ISINF
+#mesondefine HAVE_DECL_ISFINITE
 #mesondefine HAVE_DECL_SIGNBIT
 
 /* C99 complex support and complex.h are not universal */
