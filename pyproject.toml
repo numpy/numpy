@@ -159,4 +159,7 @@ environment = { OPENBLAS64_="", OPENBLAS="openblas", NPY_USE_BLAS_ILP64="0", CFL
 
 [tool.devpy]
 package = 'numpy'
-commands = ["devpy.build", "devpy.test", "devpy.shell", "devpy.ipython", "devpy.python"]
+
+[tool.devpy.commands]
+"Build" = ["devpy.build", "devpy.test"]
+"Environments" = ["devpy.shell", "devpy.ipython", "devpy.python"]
