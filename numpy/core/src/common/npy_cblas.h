@@ -66,7 +66,7 @@ enum CBLAS_SIDE {CblasLeft=141, CblasRight=142};
  * Convert NumPy stride to BLAS stride. Returns 0 if conversion cannot be done
  * (BLAS won't handle negative or zero strides the way we want).
  */
-static NPY_INLINE CBLAS_INT
+static inline CBLAS_INT
 blas_stride(npy_intp stride, unsigned itemsize)
 {
     /*

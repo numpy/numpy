@@ -394,7 +394,7 @@ PyArray_ResolveWritebackIfCopy(PyArrayObject * self)
    to stderr and clear the error
 */
 
-static NPY_INLINE void
+static inline void
 WARN_IN_DEALLOC(PyObject* warning, const char * msg) {
     if (PyErr_WarnEx(warning, msg, 1) < 0) {
         PyObject * s;

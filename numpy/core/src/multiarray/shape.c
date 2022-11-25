@@ -787,7 +787,7 @@ PyArray_CreateSortedStridePerm(int ndim, npy_intp const *strides,
                                     &_npy_stride_sort_item_comparator);
 }
 
-static NPY_INLINE npy_intp
+static inline npy_intp
 s_intp_abs(npy_intp x)
 {
     return (x < 0) ? -x : x;

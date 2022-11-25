@@ -8,7 +8,7 @@
 /* By adding static inline specifiers to npy_math function definitions when
    appropriate, compiler is given the opportunity to optimize */
 #if NPY_INLINE_MATH
-#define NPY_INPLACE NPY_INLINE static
+#define NPY_INPLACE static inline
 #else
 #define NPY_INPLACE
 #endif
@@ -24,25 +24,25 @@ extern "C" {
  *
  * XXX: I should test whether INFINITY and NAN are available on the platform
  */
-NPY_INLINE static float __npy_inff(void)
+static inline float __npy_inff(void)
 {
     const union { npy_uint32 __i; float __f;} __bint = {0x7f800000UL};
     return __bint.__f;
 }
 
-NPY_INLINE static float __npy_nanf(void)
+static inline float __npy_nanf(void)
 {
     const union { npy_uint32 __i; float __f;} __bint = {0x7fc00000UL};
     return __bint.__f;
 }
 
-NPY_INLINE static float __npy_pzerof(void)
+static inline float __npy_pzerof(void)
 {
     const union { npy_uint32 __i; float __f;} __bint = {0x00000000UL};
     return __bint.__f;
 }
 
-NPY_INLINE static float __npy_nzerof(void)
+static inline float __npy_nzerof(void)
 {
     const union { npy_uint32 __i; float __f;} __bint = {0x80000000UL};
     return __bint.__f;
@@ -399,17 +399,17 @@ NPY_INPLACE npy_longdouble npy_heavisidel(npy_longdouble x, npy_longdouble h0);
                                              \
     return z1.z;
 
-static NPY_INLINE npy_cdouble npy_cpack(double x, double y)
+static inline npy_cdouble npy_cpack(double x, double y)
 {
     __NPY_CPACK_IMP(x, y, double, npy_cdouble);
 }
 
-static NPY_INLINE npy_cfloat npy_cpackf(float x, float y)
+static inline npy_cfloat npy_cpackf(float x, float y)
 {
     __NPY_CPACK_IMP(x, y, float, npy_cfloat);
 }
 
-static NPY_INLINE npy_clongdouble npy_cpackl(npy_longdouble x, npy_longdouble y)
+static inline npy_clongdouble npy_cpackl(npy_longdouble x, npy_longdouble y)
 {
     __NPY_CPACK_IMP(x, y, npy_longdouble, npy_clongdouble);
 }
@@ -431,32 +431,32 @@ static NPY_INLINE npy_clongdouble npy_cpackl(npy_longdouble x, npy_longdouble y)
                                                     \
     return __z_repr.a[index];
 
-static NPY_INLINE double npy_creal(npy_cdouble z)
+static inline double npy_creal(npy_cdouble z)
 {
     __NPY_CEXTRACT_IMP(z, 0, double, npy_cdouble);
 }
 
-static NPY_INLINE double npy_cimag(npy_cdouble z)
+static inline double npy_cimag(npy_cdouble z)
 {
     __NPY_CEXTRACT_IMP(z, 1, double, npy_cdouble);
 }
 
-static NPY_INLINE float npy_crealf(npy_cfloat z)
+static inline float npy_crealf(npy_cfloat z)
 {
     __NPY_CEXTRACT_IMP(z, 0, float, npy_cfloat);
 }
 
-static NPY_INLINE float npy_cimagf(npy_cfloat z)
+static inline float npy_cimagf(npy_cfloat z)
 {
     __NPY_CEXTRACT_IMP(z, 1, float, npy_cfloat);
 }
 
-static NPY_INLINE npy_longdouble npy_creall(npy_clongdouble z)
+static inline npy_longdouble npy_creall(npy_clongdouble z)
 {
     __NPY_CEXTRACT_IMP(z, 0, npy_longdouble, npy_clongdouble);
 }
 
-static NPY_INLINE npy_longdouble npy_cimagl(npy_clongdouble z)
+static inline npy_longdouble npy_cimagl(npy_clongdouble z)
 {
     __NPY_CEXTRACT_IMP(z, 1, npy_longdouble, npy_clongdouble);
 }

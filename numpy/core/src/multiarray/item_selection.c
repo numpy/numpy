@@ -30,7 +30,7 @@
 #include "array_coercion.h"
 #include "simd/simd.h"
 
-static NPY_GCC_OPT_3 NPY_INLINE int
+static NPY_GCC_OPT_3 inline int
 npy_fasttake_impl(
         char *dest, char *src, const npy_intp *indices,
         npy_intp n, npy_intp m, npy_intp max_item,
@@ -492,7 +492,7 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
 }
 
 
-static NPY_GCC_OPT_3 NPY_INLINE void
+static NPY_GCC_OPT_3 inline void
 npy_fastputmask_impl(
         char *dest, char *src, const npy_bool *mask_data,
         npy_intp ni, npy_intp nv, npy_intp chunk)
@@ -2113,7 +2113,7 @@ PyArray_Compress(PyArrayObject *self, PyObject *condition, int axis,
  * even though it uses 64 bit types its faster than the bytewise sum on 32 bit
  * but a 32 bit type version would make it even faster on these platforms
  */
-static NPY_INLINE npy_intp
+static inline npy_intp
 count_nonzero_bytes_384(const npy_uint64 * w)
 {
     const npy_uint64 w1 = w[0];
@@ -2209,7 +2209,7 @@ count_zero_bytes_u16(const npy_uint8 **d, const npy_uint8 *end, npy_uint16 max_c
  *                          !!
  *                     (2*16-1)*16
 */
-static NPY_INLINE NPY_GCC_OPT_3 npy_intp
+static inline NPY_GCC_OPT_3 npy_intp
 count_nonzero_u8(const char *data, npy_intp bstride, npy_uintp len)
 {
     npy_intp count = 0;
@@ -2245,7 +2245,7 @@ count_nonzero_u8(const char *data, npy_intp bstride, npy_uintp len)
     return count;
 }
 
-static NPY_INLINE NPY_GCC_OPT_3 npy_intp
+static inline NPY_GCC_OPT_3 npy_intp
 count_nonzero_u16(const char *data, npy_intp bstride, npy_uintp len)
 {
     npy_intp count = 0;
@@ -2277,7 +2277,7 @@ count_nonzero_u16(const char *data, npy_intp bstride, npy_uintp len)
     return count;
 }
 
-static NPY_INLINE NPY_GCC_OPT_3 npy_intp
+static inline NPY_GCC_OPT_3 npy_intp
 count_nonzero_u32(const char *data, npy_intp bstride, npy_uintp len)
 {
     npy_intp count = 0;
@@ -2307,7 +2307,7 @@ count_nonzero_u32(const char *data, npy_intp bstride, npy_uintp len)
     return count;
 }
 
-static NPY_INLINE NPY_GCC_OPT_3 npy_intp
+static inline NPY_GCC_OPT_3 npy_intp
 count_nonzero_u64(const char *data, npy_intp bstride, npy_uintp len)
 {
     npy_intp count = 0;

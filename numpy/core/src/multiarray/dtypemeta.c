@@ -73,7 +73,7 @@ dtypemeta_init(PyTypeObject *NPY_UNUSED(type),
  * @param self
  * @return nonzero if the object is garbage collected
  */
-static NPY_INLINE int
+static inline int
 dtypemeta_is_gc(PyObject *dtype_class)
 {
     return PyType_Type.tp_is_gc(dtype_class);
