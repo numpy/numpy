@@ -10,18 +10,18 @@ in ``numpy.core``.
 
 
 def set_module(module):
-     """Private decorator for overriding __module__ on a function or class.
+    """Private decorator for overriding __module__ on a function or class.
 
-     Example usage::
+    Example usage::
 
-         @set_module('numpy')
-         def example():
-             pass
+        @set_module('numpy')
+        def example():
+            pass
 
-         assert example.__module__ == 'numpy'
-     """
-     def decorator(func):
-         if module is not None:
-             func.__module__ = module
-         return func
-     return decorator
+        assert example.__module__ == 'numpy'
+    """
+    def decorator(func):
+        if module is not None:
+            func.__module__ = module
+        return func
+    return decorator
