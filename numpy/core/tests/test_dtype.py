@@ -126,6 +126,15 @@ class TestBuiltin:
         with assert_raises(TypeError):
             np.dtype(dtype)
 
+    def test_remaining_dtypes_with_bad_bytesize(self):
+        # These should probably deprecated as well, the np.<name> aliases were
+        assert np.dtype("int0") is np.dtype("intp")
+        assert np.dtype("uint0") is np.dtype("uintp")
+        assert np.dtype("bool8") is np.dtype("bool")
+        assert np.dtype("bytes0") is np.dtype("bytes")
+        assert np.dtype("str0") is np.dtype("str")
+        assert np.dtype("object0") is np.dtype("object")
+
     @pytest.mark.parametrize(
         'value',
         ['m8', 'M8', 'datetime64', 'timedelta64',
