@@ -447,7 +447,7 @@ unicodetype_@form@(PyObject *self)
  *
  * Largely copied from _Py_strhex_impl in CPython implementation
  */
-static NPY_INLINE PyObject *
+static inline PyObject *
 _void_to_hex(const char* argbuf, const Py_ssize_t arglen,
              const char *schars, const char *bprefix, const char *echars)
 {
@@ -3318,7 +3318,7 @@ long_arrtype_hash(PyObject *obj)
  * #Char = ,U#
  * #Word = ,Unsigned#
  */
-static NPY_INLINE npy_hash_t
+static inline npy_hash_t
 @char@longlong_arrtype_hash(PyObject *obj)
 {
     PyObject * l = PyLong_From@Word@LongLong(

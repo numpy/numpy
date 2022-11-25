@@ -61,11 +61,11 @@
  */
 
 #if defined HAVE_ATTRIBUTE_TARGET_AVX512F_WITH_INTRINSICS && defined NPY_HAVE_SSE2_INTRINSICS
-static NPY_INLINE NPY_GCC_TARGET_AVX512F void
+static inline NPY_GCC_TARGET_AVX512F void
 AVX512F_@func@_@TYPE@(@type@*, @type@*, const npy_intp n, const npy_intp stride);
 #endif
 
-static NPY_INLINE int
+static inline int
 run_unary_avx512f_@func@_@TYPE@(char **args, const npy_intp *dimensions, const npy_intp *steps)
 {
 #if defined HAVE_ATTRIBUTE_TARGET_AVX512F_WITH_INTRINSICS && defined NPY_HAVE_SSE2_INTRINSICS
@@ -99,11 +99,11 @@ run_unary_avx512f_@func@_@TYPE@(char **args, const npy_intp *dimensions, const n
  */
 
 #if defined HAVE_ATTRIBUTE_TARGET_AVX512_SKX_WITH_INTRINSICS && defined NPY_HAVE_SSE2_INTRINSICS && @EXISTS@
-static NPY_INLINE NPY_GCC_TARGET_AVX512_SKX void
+static inline NPY_GCC_TARGET_AVX512_SKX void
 AVX512_SKX_@func@_@TYPE@(npy_bool*, @type@*, const npy_intp n, const npy_intp stride);
 #endif
 
-static NPY_INLINE int
+static inline int
 run_@func@_avx512_skx_@TYPE@(char **args, npy_intp const *dimensions, npy_intp const *steps)
 {
 #if defined HAVE_ATTRIBUTE_TARGET_AVX512_SKX_WITH_INTRINSICS && defined NPY_HAVE_SSE2_INTRINSICS && @EXISTS@
@@ -144,7 +144,7 @@ sse2_@func@_@TYPE@(@type@ *, @type@ *, const npy_intp n);
 
 #endif
 
-static NPY_INLINE int
+static inline int
 run_@name@_simd_@func@_@TYPE@(char **args, npy_intp const *dimensions, npy_intp const *steps)
 {
 #if @vector@ && defined NPY_HAVE_SSE2_INTRINSICS
@@ -169,7 +169,7 @@ sse2_@kind@_@TYPE@(npy_bool * op, @type@ * ip1, npy_intp n);
 
 #endif
 
-static NPY_INLINE int
+static inline int
 run_@kind@_simd_@TYPE@(char **args, npy_intp const *dimensions, npy_intp const *steps)
 {
 #if @vector@ && defined NPY_HAVE_SSE2_INTRINSICS
@@ -205,7 +205,7 @@ static void
 sse2_reduce_@kind@_BOOL(npy_bool * op, npy_bool * ip, npy_intp n);
 #endif
 
-static NPY_INLINE int
+static inline int
 run_binary_simd_@kind@_BOOL(char **args, npy_intp const *dimensions, npy_intp const *steps)
 {
 #if defined NPY_HAVE_SSE2_INTRINSICS
@@ -220,7 +220,7 @@ run_binary_simd_@kind@_BOOL(char **args, npy_intp const *dimensions, npy_intp co
 }
 
 
-static NPY_INLINE int
+static inline int
 run_reduce_simd_@kind@_BOOL(char **args, npy_intp const *dimensions, npy_intp const *steps)
 {
 #if defined NPY_HAVE_SSE2_INTRINSICS
@@ -245,7 +245,7 @@ static void
 sse2_@kind@_BOOL(npy_bool *, npy_bool *, const npy_intp n);
 #endif
 
-static NPY_INLINE int
+static inline int
 run_unary_simd_@kind@_BOOL(char **args, npy_intp const *dimensions, npy_intp const *steps)
 {
 #if defined NPY_HAVE_SSE2_INTRINSICS
@@ -875,7 +875,7 @@ NPY_FINLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ @vtype@d
  */
 
 #if defined HAVE_ATTRIBUTE_TARGET_AVX512_SKX_WITH_INTRINSICS && defined NPY_HAVE_SSE2_INTRINSICS
-static NPY_INLINE NPY_GCC_TARGET_AVX512_SKX void
+static inline NPY_GCC_TARGET_AVX512_SKX void
 AVX512_SKX_@func@_@TYPE@(npy_bool* op, @type@* ip, const npy_intp array_size, const npy_intp steps)
 {
     const npy_intp stride_ip = steps/(npy_intp)sizeof(@type@);
@@ -954,7 +954,7 @@ AVX512_SKX_@func@_@TYPE@(npy_bool* op, @type@* ip, const npy_intp array_size, co
  */
 
 #if defined HAVE_ATTRIBUTE_TARGET_AVX512F_WITH_INTRINSICS && defined NPY_HAVE_SSE2_INTRINSICS
-static NPY_GCC_OPT_3 NPY_INLINE NPY_GCC_TARGET_AVX512F void
+static NPY_GCC_OPT_3 inline NPY_GCC_TARGET_AVX512F void
 AVX512F_@func@_@TYPE@(@type@ * op,
                       @type@ * ip,
                       const npy_intp array_size,
@@ -1001,7 +1001,7 @@ AVX512F_@func@_@TYPE@(@type@ * op,
 /**end repeat1**/
 
 #if defined HAVE_ATTRIBUTE_TARGET_AVX512F_WITH_INTRINSICS && defined NPY_HAVE_SSE2_INTRINSICS
-static NPY_GCC_OPT_3 NPY_INLINE NPY_GCC_TARGET_AVX512F void
+static NPY_GCC_OPT_3 inline NPY_GCC_TARGET_AVX512F void
 AVX512F_absolute_@TYPE@(@type@ * op,
                         @type@ * ip,
                         const npy_intp array_size,

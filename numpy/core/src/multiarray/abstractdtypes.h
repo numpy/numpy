@@ -30,7 +30,7 @@ initialize_and_map_pytypes_to_dtypes(void);
  *        replaced with the abstract DType.
  * @return 0 if the `obj` was not a python scalar, and 1 if it was.
  */
-static NPY_INLINE int
+static inline int
 npy_mark_tmp_array_if_pyscalar(
         PyObject *obj, PyArrayObject *arr, PyArray_DTypeMeta **dtype)
 {

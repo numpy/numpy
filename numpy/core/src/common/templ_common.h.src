@@ -25,7 +25,7 @@
  * that is not checked. Could use absolute values and adjust the sign if that
  * functionality was desired.
  */
-static NPY_INLINE int
+static inline int
 npy_mul_with_overflow_@name@(@type@ * r, @type@ a, @type@ b)
 {
 #ifdef HAVE___BUILTIN_MUL_OVERFLOW
@@ -52,7 +52,7 @@ npy_mul_with_overflow_@name@(@type@ * r, @type@ a, @type@ b)
 }
 /**end repeat**/
 
-static NPY_INLINE int
+static inline int
 npy_mul_sizes_with_overflow (npy_intp * r, npy_intp a, npy_intp b)
 {
 #ifdef HAVE___BUILTIN_MUL_OVERFLOW

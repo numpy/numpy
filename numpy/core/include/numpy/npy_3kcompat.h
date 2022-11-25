@@ -36,7 +36,7 @@ extern "C" {
  * included here because it is missing from the PyPy API. It completes the PyLong_As*
  * group of functions and can be useful in replacing PyInt_Check.
  */
-static NPY_INLINE int
+static inline int
 Npy__PyLong_AsInt(PyObject *obj)
 {
     int overflow;
@@ -56,7 +56,7 @@ Npy__PyLong_AsInt(PyObject *obj)
 
 #if defined(NPY_PY3K)
 /* Return True only if the long fits in a C long */
-static NPY_INLINE int PyInt_Check(PyObject *op) {
+static inline int PyInt_Check(PyObject *op) {
     int overflow = 0;
     if (!PyLong_Check(op)) {
         return 0;
@@ -98,32 +98,6 @@ static NPY_INLINE int PyInt_Check(PyObject *op) {
 
 
 #define Npy_EnterRecursiveCall(x) Py_EnterRecursiveCall(x)
-
-/* Py_SETREF was added in 3.5.2, and only if Py_LIMITED_API is absent */
-#if PY_VERSION_HEX < 0x03050200
-    #define Py_SETREF(op, op2)                      \
-        do {                                        \
-            PyObject *_py_tmp = (PyObject *)(op);   \
-            (op) = (op2);                           \
-            Py_DECREF(_py_tmp);                     \
-        } while (0)
-#endif
-
-/* introduced in https://github.com/python/cpython/commit/a24107b04c1277e3c1105f98aff5bfa3a98b33a0 */
-#if PY_VERSION_HEX < 0x030800A3
-    static NPY_INLINE PyObject *
-    _PyDict_GetItemStringWithError(PyObject *v, const char *key)
-    {
-        PyObject *kv, *rv;
-        kv = PyUnicode_FromString(key);
-        if (kv == NULL) {
-            return NULL;
-        }
-        rv = PyDict_GetItemWithError(v, kv);
-        Py_DECREF(kv);
-        return rv;
-    }
-#endif
 
 /*
  * PyString -> PyBytes
@@ -194,14 +168,14 @@ static NPY_INLINE int PyInt_Check(PyObject *op) {
 #endif /* NPY_PY3K */
 
 
-static NPY_INLINE void
+static inline void
 PyUnicode_ConcatAndDel(PyObject **left, PyObject *right)
 {
     Py_SETREF(*left, PyUnicode_Concat(*left, right));
     Py_DECREF(right);
 }
 
-static NPY_INLINE void
+static inline void
 PyUnicode_Concat2(PyObject **left, PyObject *right)
 {
     Py_SETREF(*left, PyUnicode_Concat(*left, right));
@@ -214,7 +188,7 @@ PyUnicode_Concat2(PyObject **left, PyObject *right)
 /*
  * Get a FILE* handle to the file represented by the Python object
  */
-static NPY_INLINE FILE*
+static inline FILE*
 npy_PyFile_Dup2(PyObject *file, char *mode, npy_off_t *orig_pos)
 {
     int fd, fd2, unbuf;
@@ -330,7 +304,7 @@ npy_PyFile_Dup2(PyObject *file, char *mode, npy_off_t *orig_pos)
 /*
  * Close the dup-ed file handle, and seek the Python one to the current position
  */
-static NPY_INLINE int
+static inline int
 npy_PyFile_DupClose2(PyObject *file, FILE* handle, npy_off_t orig_pos)
 {
     int fd, unbuf;
@@ -397,7 +371,7 @@ npy_PyFile_DupClose2(PyObject *file, FILE* handle, npy_off_t orig_pos)
     return 0;
 }
 
-static NPY_INLINE int
+static inline int
 npy_PyFile_Check(PyObject *file)
 {
     int fd;
@@ -415,7 +389,7 @@ npy_PyFile_Check(PyObject *file)
     return 1;
 }
 
-static NPY_INLINE PyObject*
+static inline PyObject*
 npy_PyFile_OpenFile(PyObject *filename, const char *mode)
 {
     PyObject *open;
@@ -426,7 +400,7 @@ npy_PyFile_OpenFile(PyObject *filename, const char *mode)
     return PyObject_CallFunction(open, "Os", filename, mode);
 }
 
-static NPY_INLINE int
+static inline int
 npy_PyFile_CloseFile(PyObject *file)
 {
     PyObject *ret;
@@ -442,7 +416,7 @@ npy_PyFile_CloseFile(PyObject *file)
 
 /* This is a copy of _PyErr_ChainExceptions
  */
-static NPY_INLINE void
+static inline void
 npy_PyErr_ChainExceptions(PyObject *exc, PyObject *val, PyObject *tb)
 {
     if (exc == NULL)
@@ -474,7 +448,7 @@ npy_PyErr_ChainExceptions(PyObject *exc, PyObject *val, PyObject *tb)
  *  - a minimal implementation for python 2
  *  - __cause__ used instead of __context__
  */
-static NPY_INLINE void
+static inline void
 npy_PyErr_ChainExceptionsCause(PyObject *exc, PyObject *val, PyObject *tb)
 {
     if (exc == NULL)
@@ -505,7 +479,7 @@ npy_PyErr_ChainExceptionsCause(PyObject *exc, PyObject *val, PyObject *tb)
  * PyObject_Cmp
  */
 #if defined(NPY_PY3K)
-static NPY_INLINE int
+static inline int
 PyObject_Cmp(PyObject *i1, PyObject *i2, int *cmp)
 {
     int v;
@@ -545,7 +519,7 @@ PyObject_Cmp(PyObject *i1, PyObject *i2, int *cmp)
  * The main job here is to get rid of the improved error handling
  * of PyCapsules. It's a shame...
  */
-static NPY_INLINE PyObject *
+static inline PyObject *
 NpyCapsule_FromVoidPtr(void *ptr, void (*dtor)(PyObject *))
 {
     PyObject *ret = PyCapsule_New(ptr, NULL, dtor);
@@ -555,7 +529,7 @@ NpyCapsule_FromVoidPtr(void *ptr, void (*dtor)(PyObject *))
     return ret;
 }
 
-static NPY_INLINE PyObject *
+static inline PyObject *
 NpyCapsule_FromVoidPtrAndDesc(void *ptr, void* context, void (*dtor)(PyObject *))
 {
     PyObject *ret = NpyCapsule_FromVoidPtr(ptr, dtor);
@@ -567,7 +541,7 @@ NpyCapsule_FromVoidPtrAndDesc(void *ptr, void* context, void (*dtor)(PyObject *)
     return ret;
 }
 
-static NPY_INLINE void *
+static inline void *
 NpyCapsule_AsVoidPtr(PyObject *obj)
 {
     void *ret = PyCapsule_GetPointer(obj, NULL);
@@ -577,13 +551,13 @@ NpyCapsule_AsVoidPtr(PyObject *obj)
     return ret;
 }
 
-static NPY_INLINE void *
+static inline void *
 NpyCapsule_GetDesc(PyObject *obj)
 {
     return PyCapsule_GetContext(obj);
 }
 
-static NPY_INLINE int
+static inline int
 NpyCapsule_Check(PyObject *ptr)
 {
     return PyCapsule_CheckExact(ptr);

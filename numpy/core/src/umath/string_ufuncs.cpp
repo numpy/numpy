@@ -16,7 +16,7 @@
 
 
 template <typename character>
-static NPY_INLINE int
+static inline int
 character_cmp(character a, character b)
 {
     if (a == b) {
@@ -37,7 +37,7 @@ character_cmp(character a, character b)
  * is always padded with zeros).
  */
 template <bool rstrip, typename character>
-static NPY_INLINE int
+static inline int
 string_cmp(int len1, const character *str1, int len2, const character *str2)
 {
     if (rstrip) {

@@ -152,7 +152,7 @@ extern "C" {
                                             (k)*PyArray_STRIDES(obj)[2] + \
                                             (l)*PyArray_STRIDES(obj)[3]))
 
-static NPY_INLINE void
+static inline void
 PyArray_DiscardWritebackIfCopy(PyArrayObject *arr)
 {
     PyArrayObject_fields *fa = (PyArrayObject_fields *)arr;
@@ -214,7 +214,7 @@ PyArray_DiscardWritebackIfCopy(PyArrayObject *arr)
    dict).
 */
 
-static NPY_INLINE int
+static inline int
 NPY_TITLE_KEY_check(PyObject *key, PyObject *value)
 {
     PyObject *title;

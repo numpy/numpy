@@ -247,7 +247,7 @@ unsigned long rk_random(rk_state *state) {
 /*
  * Returns an unsigned 64 bit random integer.
  */
-NPY_INLINE static npy_uint64 rk_uint64(rk_state *state) {
+static inline npy_uint64 rk_uint64(rk_state *state) {
   npy_uint64 upper = (npy_uint64)rk_random(state) << 32;
   npy_uint64 lower = (npy_uint64)rk_random(state);
   return upper | lower;
@@ -256,7 +256,7 @@ NPY_INLINE static npy_uint64 rk_uint64(rk_state *state) {
 /*
  * Returns an unsigned 32 bit random integer.
  */
-NPY_INLINE static npy_uint32 rk_uint32(rk_state *state) {
+static inline npy_uint32 rk_uint32(rk_state *state) {
   return (npy_uint32)rk_random(state);
 }
 

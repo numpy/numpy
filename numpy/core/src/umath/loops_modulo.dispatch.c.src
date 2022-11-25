@@ -171,7 +171,7 @@ vsx4_divisor_@sfx@(const npyv_@sfx@ vscalar)
  * #func = fmod, remainder, divmod#
  * #id = 0, 1, 2#
  */
-static NPY_INLINE void
+static inline void
 vsx4_simd_@func@_contig_@sfx@(char **args, npy_intp len)
 {
     npyv_lanetype_@sfx@ *src1 = (npyv_lanetype_@sfx@ *) args[0];
@@ -239,7 +239,7 @@ vsx4_simd_@func@_contig_@sfx@(char **args, npy_intp len)
     npyv_cleanup();
 }
 
-static NPY_INLINE void
+static inline void
 vsx4_simd_@func@_by_scalar_contig_@sfx@(char **args, npy_intp len)
 {
     npyv_lanetype_@sfx@ *src1  = (npyv_lanetype_@sfx@ *) args[0];
@@ -292,7 +292,7 @@ vsx4_simd_@func@_by_scalar_contig_@sfx@(char **args, npy_intp len)
  * #func = fmod, remainder, divmod#
  * #id = 0, 1, 2#
  */
-static NPY_INLINE void
+static inline void
 vsx4_simd_@func@_contig_@sfx@(char **args, npy_intp len)
 {
     npyv_lanetype_@sfx@ *src1 = (npyv_lanetype_@sfx@ *) args[0];
@@ -410,7 +410,7 @@ vsx4_simd_@func@_contig_@sfx@(char **args, npy_intp len)
     npyv_cleanup();
 }
 
-static NPY_INLINE void
+static inline void
 vsx4_simd_@func@_by_scalar_contig_@sfx@(char **args, npy_intp len)
 {
     npyv_lanetype_@sfx@ *src1  = (npyv_lanetype_@sfx@ *) args[0];
