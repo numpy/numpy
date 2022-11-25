@@ -1,8 +1,8 @@
-#include <stdio.h>
-#include <stdbool.h>
-
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
+
+#include <stdio.h>
+#include <stdbool.h>
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
