@@ -1,5 +1,5 @@
 """
-This is a module for defining helpers which do not depend on the
+This is a module for defining private helpers which do not depend on the
 rest of NumPy.
 
 Everything in here must be self-contained so that it can be

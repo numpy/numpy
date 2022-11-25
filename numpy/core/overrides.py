@@ -4,9 +4,9 @@ import functools
 import os
 
 from .._utils import set_module
+from .._utils._inspect import getargspec
 from numpy.core._multiarray_umath import (
     add_docstring, implement_array_function, _get_implementing_args)
-from numpy.compat._inspect import getargspec
 
 
 ARRAY_FUNCTION_ENABLED = bool(

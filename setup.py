@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Numpy build options can be modified with a site.cfg file. 
+Numpy build options can be modified with a site.cfg file.
 See site.cfg.example for a template and more information.
 """
 
@@ -189,7 +189,7 @@ def get_build_overrides():
     """
     from numpy.distutils.command.build_clib import build_clib
     from numpy.distutils.command.build_ext import build_ext
-    from numpy.compat import _pep440
+    from numpy._utils import _pep440
 
     def _needs_gcc_c99_flag(obj):
         if obj.compiler.compiler_type != 'unix':
@@ -226,7 +226,7 @@ def get_build_overrides():
 
 def generate_cython():
     # Check Cython version
-    from numpy.compat import _pep440
+    from numpy._utils import _pep440
     try:
         # try the cython in the installed python first (somewhat related to
         # scipy/scipy#2397)
