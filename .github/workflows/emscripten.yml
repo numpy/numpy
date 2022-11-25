@@ -18,7 +18,7 @@ permissions:
 
 jobs:
   build-wasm-emscripten:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     if: github.repository == 'numpy/numpy'
     env:
       PYODIDE_VERSION: 0.22.0a3
@@ -26,7 +26,7 @@ jobs:
       # The appropriate versions can be found in the Pyodide repodata.json
       # "info" field, or in Makefile.envs:
       # https://github.com/pyodide/pyodide/blob/main/Makefile.envs#L2
-      PYTHON_VERSION: 3.10.2
+      PYTHON_VERSION: 3.10.7
       EMSCRIPTEN_VERSION: 3.1.24
       NODE_VERSION: 18
     steps:
