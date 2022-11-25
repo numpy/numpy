@@ -23,8 +23,6 @@ if is_pure_conda:
 # Submodules PyInstaller cannot detect (probably because they are only imported
 # by extension modules, which PyInstaller cannot read).
 hiddenimports = ['numpy.core._dtype_ctypes']
-if is_conda:
-    hiddenimports.append("six")
 
 # Remove testing and building code and packages that are referenced throughout
 # NumPy but are not really dependencies.
