@@ -1826,16 +1826,12 @@ _parse_axes_arg(PyUFuncObject *ufunc, int op_core_num_dims[], PyObject *axes,
         op_axes_tuple = PyList_GET_ITEM(axes, iop);
         if (PyTuple_Check(op_axes_tuple)) {
             if (PyTuple_Size(op_axes_tuple) != op_ncore) {
-                if (op_ncore == 1) {
-                    PyErr_Format(PyExc_ValueError,
-                                 "axes item %d should be a tuple with a "
-                                 "single element, or an integer", iop);
-                }
-                else {
-                    PyErr_Format(PyExc_ValueError,
-                                 "axes item %d should be a tuple with %d "
-                                 "elements", iop, op_ncore);
-                }
+                /* must have been a tuple with too many entries. */
+                PyErr_Format(PyExc_ValueError,
+                        "%s: operand %d has %d core dimensions, "
+                        "but %zd dimensions are specified by axes tuple.",
+                        ufunc_get_name_cstr(ufunc), iop, op_ncore,
+                        PyTuple_Size(op_axes_tuple));
                 return -1;
             }
             Py_INCREF(op_axes_tuple);
@@ -1847,8 +1843,10 @@ _parse_axes_arg(PyUFuncObject *ufunc, int op_core_num_dims[], PyObject *axes,
             }
         }
         else {
-            PyErr_Format(PyExc_TypeError, "axes item %d should be a tuple",
-                         iop);
+            PyErr_Format(PyExc_TypeError,
+                    "%s: operand %d has %d core dimensions, "
+                    "but the axes item is not tuple.",
+                    ufunc_get_name_cstr(ufunc), iop, op_ncore);
             return -1;
         }
         /*
