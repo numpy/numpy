@@ -444,7 +444,7 @@ NPY_NO_EXPORT void
 {
     UNARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
-        *((@type@ *)op1) = npy_popcount@c@(in1);
+        *((npy_ubyte *)op1) = npy_popcount@c@(in1);
     }
 }
 
