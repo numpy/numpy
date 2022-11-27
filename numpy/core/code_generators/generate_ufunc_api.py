@@ -1,9 +1,9 @@
 import os
+import argparse
+
 import genapi
-
-import numpy_api
-
 from genapi import TypeApi, FunctionApi
+import numpy_api
 
 h_template = r"""
 #ifdef _UMATHMODULE
@@ -191,3 +191,22 @@ NumPy Ufunc C-API
     genapi.write_file(doc_file, s)
 
     return targets
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-o",
+        "--outdir",
+        type=str,
+        help="Path to the output directory"
+    )
+    args = parser.parse_args()
+
+    outdir_abs = os.path.join(os.getcwd(), args.outdir)
+
+    generate_api(outdir_abs)
+
+
+if __name__ == "__main__":
+    main()
