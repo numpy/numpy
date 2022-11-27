@@ -776,7 +776,11 @@ def configuration(parent_package='',top_path=None):
                        # join('src', 'npymath', 'ieee754.cpp'),
                        join('src', 'npymath', 'ieee754.c.src'),
                        join('src', 'npymath', 'npy_math_complex.c.src'),
-                       join('src', 'npymath', 'halffloat.c')
+                       join('src', 'npymath', 'halffloat.c'),
+                       # Remove this once scipy macos arm64 build correctly
+                       # links to the arm64 npymath library,
+                       # see gh-22673
+                       join('src', 'npymath', 'arm64_exports.c'),
                        ]
 
     config.add_installed_library('npymath',
