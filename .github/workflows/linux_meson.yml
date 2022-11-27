@@ -3,12 +3,7 @@ name: Test Meson build (Linux)
 on:
   push:
     branches:
-      - main
-      - maintenance/**
-  pull_request:
-    branches:
-      - main
-      - maintenance/**
+      - meson
 
 defaults:
   run:
