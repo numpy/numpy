@@ -10,7 +10,7 @@ project(
   default_options: [
     'buildtype=debugoptimized',
     'c_std=c99',
-    'cpp_std=c++11',
+    'cpp_std=c++14',
     'blas=openblas',
     'lapack=openblas',
     'pkgconfig.relocatable=true',
@@ -28,8 +28,8 @@ if cc.get_id() == 'gcc'
     error('NumPy requires GCC >= 8.4')
   endif
 elif cc.get_id() == 'msvc'
-  if not cc.version().version_compare('>=1910')
-    error('NumPy requires at least vc141 (default with Visual Studio 2017) ' + \
+  if not cc.version().version_compare('>=19.20')
+    error('NumPy requires at least vc142 (default with Visual Studio 2019) ' + \
           'when building with MSVC')
   endif
 endif

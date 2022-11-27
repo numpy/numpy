@@ -52,7 +52,11 @@ def check_api_version(apiversion):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--api-version", type=str, help="C API version to verify (as a hex string)")
+    parser.add_argument(
+        "--api-version",
+        type=str,
+        help="C API version to verify (as a hex string)"
+    )
     args = parser.parse_args()
 
     check_api_version(int(args.api_version, base=16))

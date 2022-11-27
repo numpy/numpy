@@ -30,7 +30,7 @@ static void **PyUFunc_API=NULL;
 
 %s
 
-static NPY_INLINE int
+static inline int
 _import_umath(void)
 {
   PyObject *numpy = PyImport_ImportModule("numpy.core._multiarray_umath");
@@ -195,7 +195,12 @@ NumPy Ufunc C-API
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-o", "--outdir", type=str, help="Path to the output directory")
+    parser.add_argument(
+        "-o",
+        "--outdir",
+        type=str,
+        help="Path to the output directory"
+    )
     args = parser.parse_args()
 
     outdir_abs = os.path.join(os.getcwd(), args.outdir)

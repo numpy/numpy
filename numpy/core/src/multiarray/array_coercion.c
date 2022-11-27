@@ -209,7 +209,7 @@ _PyArray_MapPyTypeToDType(
  * @param pytype Python Type to look up
  * @return DType, None if it is a known non-scalar, or NULL if an unknown object.
  */
-static NPY_INLINE PyArray_DTypeMeta *
+static inline PyArray_DTypeMeta *
 npy_discover_dtype_from_pytype(PyTypeObject *pytype)
 {
     PyObject *DType;
@@ -262,7 +262,7 @@ PyArray_DiscoverDTypeFromScalarType(PyTypeObject *pytype)
  *        it can/wants to handle the (possible) scalar value.
  * @return New reference to either a DType class, Py_None, or NULL on error.
  */
-static NPY_INLINE PyArray_DTypeMeta *
+static inline PyArray_DTypeMeta *
 discover_dtype_from_pyobject(
         PyObject *obj, enum _dtype_discovery_flags *flags,
         PyArray_DTypeMeta *fixed_DType)
@@ -346,7 +346,7 @@ discover_dtype_from_pyobject(
  * @param obj The Python scalar object. At the time of calling this function
  *        it must be known that `obj` should represent a scalar.
  */
-static NPY_INLINE PyArray_Descr *
+static inline PyArray_Descr *
 find_scalar_descriptor(
         PyArray_DTypeMeta *fixed_DType, PyArray_DTypeMeta *DType,
         PyObject *obj)
@@ -611,7 +611,7 @@ static coercion_cache_obj *_coercion_cache_cache[COERCION_CACHE_CACHE_SIZE];
 /*
  * Steals a reference to the object.
  */
-static NPY_INLINE int
+static inline int
 npy_new_coercion_cache(
         PyObject *converted_obj, PyObject *arr_or_sequence, npy_bool sequence,
         coercion_cache_obj ***next_ptr, int ndim)
@@ -681,7 +681,7 @@ npy_free_coercion_cache(coercion_cache_obj *next) {
  * @param flags dtype discover flags to signal failed promotion.
  * @return -1 on error, 0 on success.
  */
-static NPY_INLINE int
+static inline int
 handle_promotion(PyArray_Descr **out_descr, PyArray_Descr *descr,
         PyArray_DTypeMeta *fixed_DType, enum _dtype_discovery_flags *flags)
 {
@@ -726,7 +726,7 @@ handle_promotion(PyArray_Descr **out_descr, PyArray_Descr *descr,
  *
  * @return 0 on success -1 on error
  */
-static NPY_INLINE int
+static inline int
 handle_scalar(
         PyObject *obj, int curr_dims, int *max_dims,
         PyArray_Descr **out_descr, npy_intp *out_shape,

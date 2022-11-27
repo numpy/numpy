@@ -1,6 +1,7 @@
-# Don't use the deprecated NumPy C API. Define this to a fixed version instead of
-# NPY_API_VERSION in order not to break compilation for released SciPy versions
-# when NumPy introduces a new deprecation. Use in setup.py::
+# Don't use the deprecated NumPy C API. Define this to a fixed version
+# instead of NPY_API_VERSION in order not to break compilation for
+# released SciPy versions when NumPy introduces a new deprecation. Use
+# in setup.py::
 #
 #   config.add_extension('_name', sources=['source_fname'], **numpy_nodepr_api)
 #

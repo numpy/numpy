@@ -1,14 +1,15 @@
 [build-system]
-build-backend = "mesonpy"
+# Uncomment this line in order to build with Meson by default
+#build-backend = "mesonpy"
 requires = [
-    "meson-python>=0.10.0",
+    # setuptools, wheel and Cython are needed for the setup.py based build
+    "setuptools==59.2.0",
     # `wheel` is needed for non-isolated builds, given that `meson-python`
     # doesn't list it as a runtime requirement (at least in 0.11.0) - it's
-    # likely to be removed as a dependency in 0.12.0.
-    # See https://github.com/mesonbuild/meson-python/blob/main/pyproject.toml#L4
-    "wheel",
-    "setuptools",
-    "Cython>=0.29.30,<3.0"
+    # likely to be removed as a dependency in meson-python 0.12.0.
+    "wheel==0.37.0",
+    "Cython>=0.29.30,<3.0",
+    "meson-python>=0.10.0",
 ]
 
 [project]

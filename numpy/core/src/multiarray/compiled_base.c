@@ -378,7 +378,7 @@ arr_insert(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
 #ifdef __INTEL_COMPILER
 #pragma intel optimization_level 0
 #endif
-static NPY_INLINE npy_intp
+static inline npy_intp
 _linear_search(const npy_double key, const npy_double *arr, const npy_intp len, const npy_intp i0)
 {
     npy_intp i;
@@ -1491,7 +1491,7 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *args)
  * byte array. Truth values are determined as usual: 0 is false, everything
  * else is true.
  */
-static NPY_GCC_OPT_3 NPY_INLINE void
+static NPY_GCC_OPT_3 inline void
 pack_inner(const char *inptr,
            npy_intp element_size,   /* in bytes */
            npy_intp n_in,

@@ -1,5 +1,5 @@
 """
-Script for checking if all the test and .pyi files are installed after building.
+Check if all the test and .pyi files are installed after building.
 
 Examples::
 
@@ -37,15 +37,19 @@ changed_installed_path = {
 def main(install_dir):
     INSTALLED_DIR = os.path.join(ROOT_DIR, install_dir)
     if not os.path.exists(INSTALLED_DIR):
-        raise ValueError(f"Provided install dir {INSTALLED_DIR} does not exist")
+        raise ValueError(
+            f"Provided install dir {INSTALLED_DIR} does not exist"
+        )
 
     numpy_test_files = get_files(NUMPY_DIR, kind='test')
     installed_test_files = get_files(INSTALLED_DIR, kind='test')
 
     # Check test files detected in repo are installed
     for test_file in numpy_test_files.keys():
-        if not test_file in installed_test_files.keys():
-            raise Exception("%s is not installed" % numpy_test_files[test_file])
+        if test_file not in installed_test_files.keys():
+            raise Exception(
+                "%s is not installed" % numpy_test_files[test_file]
+            )
 
     print("----------- All the test files were installed --------------")
 

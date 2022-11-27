@@ -42,7 +42,7 @@ typedef struct {
  *
  * NOTE: Steals a reference to `str` (although usually returns it unmodified).
  */
-static NPY_INLINE PyObject *
+static inline PyObject *
 process_stringlike(PyObject *str, const char *encoding)
 {
     if (PyBytes_Check(str)) {
@@ -64,7 +64,7 @@ process_stringlike(PyObject *str, const char *encoding)
 }
 
 
-static NPY_INLINE void
+static inline void
 buffer_info_from_unicode(PyObject *str, char **start, char **end, int *kind)
 {
     Py_ssize_t length = PyUnicode_GET_LENGTH(str);

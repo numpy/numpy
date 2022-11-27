@@ -3010,7 +3010,7 @@ _strided_to_strided_multistep_cast(
  * Initialize most of a cast-info structure, this step does not fetch the
  * transferfunction and transferdata.
  */
-static NPY_INLINE int
+static inline int
 init_cast_info(
         NPY_cast_info *cast_info, NPY_CASTING *casting, npy_intp *view_offset,
         PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype, int main_step)

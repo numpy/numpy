@@ -1227,7 +1227,12 @@ def make_code(funcdict, filename):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-o", "--outfile", type=str, help="Path to the output directory")
+    parser.add_argument(
+        "-o",
+        "--outfile",
+        type=str,
+        help="Path to the output directory"
+    )
     args = parser.parse_args()
 
     # used to insert the name of this file into the generated file

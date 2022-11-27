@@ -47,7 +47,7 @@ npy_to_bool(PyArray_Descr *NPY_UNUSED(descr),
  *        (used by the complex parser).
  * @param result Output stored as double value.
  */
-static NPY_INLINE int
+static inline int
 double_from_ucs4(
         const Py_UCS4 *str, const Py_UCS4 *end,
         bool strip_whitespace, double *result, const Py_UCS4 **p_end)

@@ -31,8 +31,17 @@ def process_tempita(fromfile, outfile=None):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("infile", type=str, help="Path to the input file")
-    parser.add_argument("-o", "--outfile", type=str, help="Path to the output file")
+    parser.add_argument(
+        "infile",
+        type=str,
+        help="Path to the input file"
+    )
+    parser.add_argument(
+        "-o",
+        "--outfile",
+        type=str,
+        help="Path to the output file"
+    )
     parser.add_argument(
         "-i",
         "--ignore",

@@ -15,17 +15,17 @@ if is_windows
   # For mingw-w64, link statically against the UCRT.
   gcc_link_args = ['-lucrt', '-static']
   if is_mingw
-    add_global_link_arguments(gcc_link_args, language: ['c', 'cpp'])
+    add_project_link_arguments(gcc_link_args, language: ['c', 'cpp'])
     # Force gcc to float64 long doubles for compatibility with MSVC
     # builds, for C only.
-    add_global_arguments('-mlong-double-64', language: 'c')
+    add_project_arguments('-mlong-double-64', language: 'c')
     # Make fprintf("%zd") work (see https://github.com/rgommers/scipy/issues/118)
-    add_global_arguments('-D__USE_MINGW_ANSI_STDIO=1', language: ['c', 'cpp'])
+    add_project_arguments('-D__USE_MINGW_ANSI_STDIO=1', language: ['c', 'cpp'])
     # Manual add of MS_WIN64 macro when not using MSVC.
     # https://bugs.python.org/issue28267
-    #TODO: bitness = run_command('_build_utils/gcc_build_bitness.py').stdout().strip()
+    bitness = run_command('_build_utils/gcc_build_bitness.py').stdout().strip()
     if bitness == '64'
-      add_global_arguments('-DMS_WIN64', language: ['c', 'cpp', 'fortran'])
+      add_project_arguments('-DMS_WIN64', language: ['c', 'cpp'])
     endif
   endif
 endif
@@ -80,8 +80,6 @@ __init__py = fs.copyfile('__init__.py')
 __init__pxd = fs.copyfile('__init__.pxd')
 __init__pxd30 = fs.copyfile('__init__.cython-30.pxd')
 _cython_tree = [__init__py, __init__pxd, __init__pxd30]
-
-cc = meson.get_compiler('c')
 
 python_sources = [
   '__init__.cython-30.pxd',

@@ -33,7 +33,12 @@ def write_code(target):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-o", "--outfile", type=str, help="Path to the output directory")
+    parser.add_argument(
+        "-o",
+        "--outfile",
+        type=str,
+        help="Path to the output directory"
+    )
     args = parser.parse_args()
 
     outfile = os.path.join(os.getcwd(), args.outfile)

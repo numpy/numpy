@@ -248,8 +248,16 @@ def do_generate_api(targets, sources):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-o", "--outdir", type=str, help="Path to the output directory")
-    parser.add_argument( "-i", "--ignore", type=str,
+    parser.add_argument(
+        "-o",
+        "--outdir",
+        type=str,
+        help="Path to the output directory"
+    )
+    parser.add_argument(
+        "-i",
+        "--ignore",
+        type=str,
         help="An ignored input - may be useful to add a "
              "dependency between custom targets"
     )

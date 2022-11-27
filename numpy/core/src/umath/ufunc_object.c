@@ -1392,7 +1392,7 @@ try_trivial_single_output_loop(PyArrayMethod_Context *context,
  * or pass in the full cast information.  But this can special case
  * the logical functions and prints a better error message.
  */
-static NPY_INLINE int
+static inline int
 validate_casting(PyArrayMethodObject *method, PyUFuncObject *ufunc,
         PyArrayObject *ops[], PyArray_Descr *descriptors[],
         NPY_CASTING casting)
@@ -5375,7 +5375,7 @@ cmp_arg_types(int *arg1, int *arg2, int n)
  * This frees the linked-list structure when the CObject
  * is destroyed (removed from the internal dictionary)
 */
-static NPY_INLINE void
+static inline void
 _free_loop1d_list(PyUFunc_Loop1d *data)
 {
     int i;
@@ -5916,7 +5916,7 @@ ufunc_reduceat(PyUFuncObject *ufunc,
 }
 
 /* Helper for ufunc_at, below */
-static NPY_INLINE PyArrayObject *
+static inline PyArrayObject *
 new_array_op(PyArrayObject *op_array, char *data)
 {
     npy_intp dims[1] = {1};

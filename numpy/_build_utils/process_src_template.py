@@ -6,10 +6,15 @@ import importlib.util
 
 
 def get_processor():
-    # Convoluted because we can't import from numpy.distutils (numpy is not yet built)
-    conv_template_path = os.path.join(os.path.dirname(__file__),
-                                      '..', 'distutils', 'conv_template.py')
-    spec = importlib.util.spec_from_file_location('conv_template', conv_template_path)
+    # Convoluted because we can't import from numpy.distutils
+    # (numpy is not yet built)
+    conv_template_path = os.path.join(
+        os.path.dirname(__file__),
+        '..', 'distutils', 'conv_template.py'
+    )
+    spec = importlib.util.spec_from_file_location(
+        'conv_template', conv_template_path
+    )
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod.process_file
@@ -18,8 +23,9 @@ def get_processor():
 def process_and_write_file(fromfile, outfile):
     """Process tempita templated file and write out the result.
 
-    The template file is expected to end in `.src` (e.g., `.c.src` or `.h.src`):
-    E.g. processing `npy_somefile.c.src` generates `npy_somefile.c`.
+    The template file is expected to end in `.src`
+    (e.g., `.c.src` or `.h.src`).
+    Processing `npy_somefile.c.src` generates `npy_somefile.c`.
 
     """
     process_file = get_processor()
@@ -30,8 +36,17 @@ def process_and_write_file(fromfile, outfile):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("infile", type=str, help="Path to the input file")
-    parser.add_argument("-o", "--outfile", type=str, help="Path to the output file")
+    parser.add_argument(
+        "infile",
+        type=str,
+        help="Path to the input file"
+    )
+    parser.add_argument(
+        "-o",
+        "--outfile",
+        type=str,
+        help="Path to the output file"
+    )
     parser.add_argument(
         "-i",
         "--ignore",

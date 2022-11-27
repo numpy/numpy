@@ -45,7 +45,8 @@ NPY_DISABLE_SVML = (os.environ.get('NPY_DISABLE_SVML', "0") == "1")
 # in time is only in build. -- Charles Harris, 2013-03-30
 
 class CallOnceOnly:
-    # NOTE: we don't need any of this in the Meson build, it takes care of caching
+    # NOTE: we don't need any of this in the Meson build,
+    # it takes care of caching
     def __init__(self):
         self._check_types = None
         self._check_ieee_macros = None
@@ -178,7 +179,8 @@ def check_math_capabilities(config, ext, moredefs, mathlibs):
         else:
             return 1
 
-    # NOTE: not needed in Meson build, we set the minimum compiler version to 8.4 to avoid this bug
+    # NOTE: not needed in Meson build, we set the minimum
+    #       compiler version to 8.4 to avoid this bug
     # GH-14787: Work around GCC<8.4 bug when compiling with AVX512
     # support on Windows-based platforms
     def check_gh14787(fn):
@@ -429,7 +431,8 @@ def check_types(config_cmd, ext, build_dir):
 
     return private_defines, public_defines
 
-# NOTE: this isn't needed in the Meson build, and we won't support a MATHLIB env var
+# NOTE: this isn't needed in the Meson build,
+#       and we won't support a MATHLIB env var
 def check_mathlib(config_cmd):
     # Testing the C math library
     mathlibs = []
