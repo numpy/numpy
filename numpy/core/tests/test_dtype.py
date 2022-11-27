@@ -127,7 +127,7 @@ class TestBuiltin:
             np.dtype(dtype)
 
     def test_remaining_dtypes_with_bad_bytesize(self):
-        # These should probably deprecated as well, the np.<name> aliases were
+        # The np.<name> aliases were deprecated, these probably should be too 
         assert np.dtype("int0") is np.dtype("intp")
         assert np.dtype("uint0") is np.dtype("uintp")
         assert np.dtype("bool8") is np.dtype("bool")
