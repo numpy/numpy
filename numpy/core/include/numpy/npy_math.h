@@ -195,6 +195,7 @@ NPY_INPLACE double npy_atan2(double x, double y);
 #define npy_sqrt sqrt
 #define npy_pow pow
 #define npy_modf modf
+#define npy_nextafter nextafter
 
 #if defined(__arm64__) && defined(__APPLE__)
 /* due to a build problem with scipy, export these as functions */
@@ -206,11 +207,11 @@ NPY_INPLACE double npy_log1p(double x);
 #define npy_copysign copysign
 #define npy_log1p log1p
 #endif
-double npy_nextafter(double x, double y);
+
 double npy_spacing(double x);
 
 /*
- * IEEE 754 fpu handling. Those are guaranteed to be macros
+ * IEEE 754 fpu handling
  */
 
 /* use builtins to avoid function calls in tight loops
@@ -218,11 +219,7 @@ double npy_spacing(double x);
 #ifdef HAVE___BUILTIN_ISNAN
     #define npy_isnan(x) __builtin_isnan(x)
 #else
-    #ifndef NPY_HAVE_DECL_ISNAN
-        #define npy_isnan(x) ((x) != (x))
-    #else
-        #define npy_isnan(x) isnan(x)
-    #endif
+    #define npy_isnan(x) isnan(x)
 #endif
 
 
@@ -230,39 +227,17 @@ double npy_spacing(double x);
 #ifdef HAVE___BUILTIN_ISFINITE
     #define npy_isfinite(x) __builtin_isfinite(x)
 #else
-    #ifndef NPY_HAVE_DECL_ISFINITE
-        #ifdef _MSC_VER
-            #define npy_isfinite(x) _finite((x))
-        #else
-            #define npy_isfinite(x) !npy_isnan((x) + (-x))
-        #endif
-    #else
-        #define npy_isfinite(x) isfinite((x))
-    #endif
+    #define npy_isfinite(x) isfinite((x))
 #endif
 
 /* only available if npy_config.h is available (= numpys own build) */
 #ifdef HAVE___BUILTIN_ISINF
     #define npy_isinf(x) __builtin_isinf(x)
 #else
-    #ifndef NPY_HAVE_DECL_ISINF
-        #define npy_isinf(x) (!npy_isfinite(x) && !npy_isnan(x))
-    #else
-        #define npy_isinf(x) isinf((x))
-    #endif
+    #define npy_isinf(x) isinf((x))
 #endif
 
-#ifndef NPY_HAVE_DECL_SIGNBIT
-    int _npy_signbit_f(float x);
-    int _npy_signbit_d(double x);
-    int _npy_signbit_ld(long double x);
-    #define npy_signbit(x) \
-        (sizeof (x) == sizeof (long double) ? _npy_signbit_ld (x) \
-         : sizeof (x) == sizeof (double) ? _npy_signbit_d (x) \
-         : _npy_signbit_f (x))
-#else
-    #define npy_signbit(x) signbit((x))
-#endif
+#define npy_signbit(x) signbit((x))
 
 /*
  * float C99 math funcs that need fixups or are blocklist-able
@@ -305,8 +280,8 @@ NPY_INPLACE float npy_modff(float x, float* y);
 #define npy_frexpf frexpf
 #define npy_ldexpf ldexpf
 #define npy_copysignf copysignf
+#define npy_nextafterf nextafterf
 
-float npy_nextafterf(float x, float y);
 float npy_spacingf(float x);
 
 /*
@@ -349,8 +324,8 @@ NPY_INPLACE npy_longdouble npy_modfl(npy_longdouble x, npy_longdouble* y);
 #define npy_frexpl frexpl
 #define npy_ldexpl ldexpl
 #define npy_copysignl copysignl
+#define npy_nextafterl nextafterl
 
-npy_longdouble npy_nextafterl(npy_longdouble x, npy_longdouble y);
 npy_longdouble npy_spacingl(npy_longdouble x);
 
 /*

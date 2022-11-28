@@ -459,7 +459,6 @@ npymath_sources = [
   src_file.process('src/npymath/ieee754.c.src'),
   src_file.process('src/npymath/npy_math_complex.c.src'),
   npy_math_internal_h,
-  'src/npymath/_signbit.c',
   'src/npymath/halffloat.c',
   'src/npymath/npy_math.c',
 ]

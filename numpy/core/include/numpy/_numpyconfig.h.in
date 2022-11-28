@@ -14,10 +14,6 @@
 #mesondefine NPY_SIZEOF_PY_LONG_LONG
 #mesondefine NPY_SIZEOF_LONGLONG
 
-#mesondefine NPY_HAVE_DECL_ISNAN
-#mesondefine NPY_HAVE_DECL_ISINF
-#mesondefine NPY_HAVE_DECL_ISFINITE
-#mesondefine NPY_HAVE_DECL_SIGNBIT
 #mesondefine NPY_USE_C99_COMPLEX
 #mesondefine NPY_HAVE_COMPLEX_DOUBLE
 #mesondefine NPY_HAVE_COMPLEX_FLOAT
