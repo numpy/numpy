@@ -11,13 +11,13 @@ build_and_store_wheels: &BUILD_AND_STORE_WHEELS
 # Build linux_aarch64 natively
 ######################################################################
 
-cirrus_wheels_linux_aarch64_task:
+linux_aarch64_task:
   compute_engine_instance:
     image_project: cirrus-images
     image: family/docker-builder-arm64
     architecture: arm64
     platform: linux
-    cpu: 4
+    cpu: 2
     memory: 8G
   matrix:
     # build in a matrix because building and testing all four wheels in a
@@ -46,17 +46,18 @@ cirrus_wheels_linux_aarch64_task:
 # Upload all wheels
 ######################################################################
 
-cirrus_wheels_upload_task:
+wheels_upload_task:
   # Artifacts don't seem to be persistent from task to task.
   # Rather than upload wheels at the end of each cibuildwheel run we do a
   # final upload here. This is because a run may be on different OS for
   # which bash, etc, may not be present.
   depends_on:
-    - cirrus_wheels_linux_aarch64
+    - linux_aarch64
   compute_engine_instance:
     image_project: cirrus-images
     image: family/docker-builder
     platform: linux
+    cpu: 1
 
   env:
     NUMPY_STAGING_UPLOAD_TOKEN: ENCRYPTED[!5a69522ae0c2af9edb2bc1cdfeaca6292fb3666d9ecd82dca0615921834a6ce3b702352835d8bde4ea2a9ed5ef8424ac!]
@@ -84,5 +85,6 @@ cirrus_wheels_upload_task:
     unzip wheels.zip
     
     source ./tools/wheels/upload_wheels.sh
+    set_travis_vars
     set_upload_vars
     upload_wheels # Will be skipped if not a push/tag/scheduled build
