@@ -4,9 +4,11 @@ set_travis_vars() {
     echo CIRRUS_TASK_NAME is "$CIRRUS_TASK_NAME"
     echo "TRAVIS_TAG is $TRAVIS_TAG"
     echo "CIRRUS_TAG is $CIRRUS_TAG"
+    echo "CIRRUS_API_CREATED is $CIRRUS_API_CREATED"
+    echo "CIRRUS_PR is $CIRRUS_PR"
     if [[ "$TRAVIS_EVENT_TYPE" == "push" && "$TRAVIS_TAG" == v* ]]; then
       IS_PUSH="true"
-    elif [[ "$CIRRUS_TASK_NAME" == "push" && "$CIRRUS_TAG" == v* ]]; then
+    elif [[ "$CIRRUS_PR" == "" && "$CIRRUS_TAG" == v* ]]; then
       IS_PUSH="true"
     else
       IS_PUSH="false"
