@@ -300,15 +300,7 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
         if (TO_SIMD_SFX(npyv_loadable_stride)(istride) &&
             TO_SIMD_SFX(npyv_storable_stride)(ostride))
         {
-            if (istride == 1 && ostride == 1) {
-                // contiguous input and output
-                // should've already been handled above already
-                TO_SIMD_SFX(simd_unary_cc_@intrin@)(
-                    (STYPE*)ip, (STYPE*)op, len
-                );
-                goto clear;
-            }
-            else if (istride == 1 && ostride != 1) {
+            if (istride == 1 && ostride != 1) {
                 // contiguous input, non-contiguous output
                 TO_SIMD_SFX(simd_unary_cn_@intrin@)(
                     (STYPE*)ip, (STYPE*)op, ostride, len
