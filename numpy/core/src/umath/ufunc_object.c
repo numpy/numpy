@@ -1782,6 +1782,8 @@ _check_keepdims_support(PyUFuncObject *ufunc) {
 static int
 _parse_axes_arg(PyUFuncObject *ufunc, int op_core_num_dims[], PyObject *axes,
                 PyArrayObject **op, int broadcast_ndim, int **remap_axis) {
+    static PyObject *AxisError_cls = NULL;
+
     int nin = ufunc->nin;
     int nop = ufunc->nargs;
     int iop, list_size;
@@ -1827,7 +1829,12 @@ _parse_axes_arg(PyUFuncObject *ufunc, int op_core_num_dims[], PyObject *axes,
         if (PyTuple_Check(op_axes_tuple)) {
             if (PyTuple_Size(op_axes_tuple) != op_ncore) {
                 /* must have been a tuple with too many entries. */
-                PyErr_Format(PyExc_ValueError,
+                npy_cache_import(
+                        "numpy.core._exceptions", "AxisError", &AxisError_cls);
+                if (AxisError_cls == NULL) {
+                    return -1;
+                }
+                PyErr_Format(AxisError_cls,
                         "%s: operand %d has %d core dimensions, "
                         "but %zd dimensions are specified by axes tuple.",
                         ufunc_get_name_cstr(ufunc), iop, op_ncore,
@@ -1843,7 +1850,12 @@ _parse_axes_arg(PyUFuncObject *ufunc, int op_core_num_dims[], PyObject *axes,
             }
         }
         else {
-            PyErr_Format(PyExc_TypeError,
+            npy_cache_import(
+                    "numpy.core._exceptions", "AxisError", &AxisError_cls);
+            if (AxisError_cls == NULL) {
+                return -1;
+            }
+            PyErr_Format(AxisError_cls,
                     "%s: operand %d has %d core dimensions, "
                     "but the axes item is not tuple.",
                     ufunc_get_name_cstr(ufunc), iop, op_ncore);
