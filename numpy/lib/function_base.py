@@ -4819,12 +4819,12 @@ def trapz(y, x=None, dx=1.0, axis=-1):
     >>> np.trapz([1,2,3], dx=2)
     8.0
 
-    Numerical integration of a simple function on a finite interval:
+    Numerical integration of a simple function on an interval:
     
-    >>> x=np.linspace(0,1)
-    >>> y=x**2
-    >>> abs( np.trapz(y, x) - 1/3 ) < 1e-3
-    True
+    >>> x = np.linspace(0, 1)
+    >>> y = x**2
+    >>> np.trapz(y, x)
+    0.33340274885464394
 
     Using a decreasing `x` corresponds to integrating in reverse:
 
