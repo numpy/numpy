@@ -17,6 +17,7 @@
 #include "nditer_impl.h"
 #include "templ_common.h"
 #include "ctors.h"
+#include "refcount.h"
 
 /* Internal helper functions private to this file */
 static npy_intp
@@ -2626,21 +2627,11 @@ npyiter_clear_buffers(NpyIter *iter)
         return;
     }
 
-    if (!(NIT_ITFLAGS(iter) & NPY_ITFLAG_NEEDSAPI)) {
-        /* Buffers do not require clearing, but should not be copied back */
-        NBF_SIZE(bufferdata) = 0;
-        return;
-    }
-
     /*
-     * The iterator may be using a dtype with references, which always
-     * requires the API. In that case, further cleanup may be necessary.
-     *
-     * TODO: At this time, we assume that a dtype having references
-     *       implies the need to hold the GIL at all times. In theory
-     *       we could broaden this definition for a new
-     *       `PyArray_Item_XDECREF` API and the assumption may become
-     *       incorrect.
+     * The iterator may be using a dtype with references (as of writing this
+     * means Python objects, but does not need to stay that way).
+     * In that case, further cleanup may be necessary and we clear buffers
+     * explicitly.
      */
     PyObject *type, *value, *traceback;
     PyErr_Fetch(&type,  &value, &traceback);
@@ -2650,13 +2641,6 @@ npyiter_clear_buffers(NpyIter *iter)
     PyArray_Descr **dtypes = NIT_DTYPES(iter);
     npyiter_opitflags *op_itflags = NIT_OPITFLAGS(iter);
     for (int iop = 0; iop < nop; ++iop, ++buffers) {
-        /*
-         * We may want to find a better way to do this, on the other hand,
-         * this cleanup seems rare and fairly special.  A dtype using
-         * references (right now only us) must always keep the buffer in
-         * a well defined state (either NULL or owning the reference).
-         * Only we implement cleanup
-         */
         if (!PyDataType_REFCHK(dtypes[iop]) ||
                 !(op_itflags[iop]&NPY_OP_ITFLAG_USINGBUFFER)) {
             continue;
@@ -2665,15 +2649,11 @@ npyiter_clear_buffers(NpyIter *iter)
             continue;
         }
         int itemsize = dtypes[iop]->elsize;
-        for (npy_intp i = 0; i < NBF_SIZE(bufferdata); i++) {
-            /*
-             * See above comment, if this API is expanded the GIL assumption
-             * could become incorrect.
-             */
-            PyArray_Item_XDECREF(*buffers + (itemsize * i), dtypes[iop]);
+        if (PyArray_ClearData(
+                dtypes[iop], *buffers, itemsize, NBF_SIZE(bufferdata), 1) < 0) {
+            /* This should never fail; if it does write it out */
+            PyErr_WriteUnraisable(NULL);
         }
-        /* Clear out the buffer just to be sure */
-        memset(*buffers, 0, NBF_SIZE(bufferdata) * itemsize);
     }
     /* Signal that the buffers are empty */
     NBF_SIZE(bufferdata) = 0;

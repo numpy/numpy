@@ -56,6 +56,7 @@ maintainer email:  oliphant.travis@ieee.org
 #include "alloc.h"
 #include "mem_overlap.h"
 #include "numpyos.h"
+#include "refcount.h"
 #include "strfuncs.h"
 
 #include "binop_override.h"
@@ -452,9 +453,9 @@ array_dealloc(PyArrayObject *self)
     }
 
     if ((fa->flags & NPY_ARRAY_OWNDATA) && fa->data) {
-        /* Free internal references if an Object array */
-        if (PyDataType_FLAGCHK(fa->descr, NPY_ITEM_REFCOUNT)) {
-            PyArray_XDECREF(self);
+        /* Free any internal references by clearing the buffer */
+        if (PyDataType_REFCHK(fa->descr)) {
+            PyArray_ClearArray(self);
         }
         if (fa->mem_handler == NULL) {
             char *env = getenv("NUMPY_WARN_IF_NO_MEM_POLICY");

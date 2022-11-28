@@ -2642,7 +2642,7 @@ PyArray_Nonzero(PyArrayObject *self)
                 }
             }
             /*
-             * Fallback to a branchless strategy to avoid branch misprediction 
+             * Fallback to a branchless strategy to avoid branch misprediction
              * stalls that are very expensive on most modern processors.
              */
             else {
