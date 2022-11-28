@@ -312,10 +312,6 @@ static npy_longdouble _nextl(npy_longdouble x, int p)
 }
 /**end repeat**/
 
-/*
- * Decorate all the math functions which are available on the current platform
- */
-
 int npy_clear_floatstatus() {
     char x=0;
     return npy_clear_floatstatus_barrier(&x);
