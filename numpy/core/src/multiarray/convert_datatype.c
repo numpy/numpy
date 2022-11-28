@@ -152,7 +152,7 @@ PyArray_GetCastingImpl(PyArray_DTypeMeta *from, PyArray_DTypeMeta *to)
 {
     PyObject *res;
     if (from == to) {
-        res = NPY_DT_SLOTS(from)->within_dtype_castingimpl;
+        res = (PyObject *)NPY_DT_SLOTS(from)->within_dtype_castingimpl;
     }
     else {
         res = PyDict_GetItemWithError(NPY_DT_SLOTS(from)->castingimpls, (PyObject *)to);
@@ -2414,8 +2414,7 @@ PyArray_AddCastingImplementation(PyBoundArrayMethodObject *meth)
             return -1;
         }
         Py_INCREF(meth->method);
-        NPY_DT_SLOTS(meth->dtypes[0])->within_dtype_castingimpl = (
-                (PyObject *)meth->method);
+        NPY_DT_SLOTS(meth->dtypes[0])->within_dtype_castingimpl = meth->method;
 
         return 0;
     }
@@ -3912,6 +3911,61 @@ PyArray_InitializeObjectToObjectCast(void)
 }
 
 
+static int
+PyArray_InitClearFunctions(void)
+{
+    /*
+     * Initial clearing of objects:
+     */
+    PyArray_DTypeMeta *Object = PyArray_DTypeFromTypeNum(NPY_OBJECT);
+    Py_DECREF(Object);  /* use borrowed */
+    PyArray_DTypeMeta *Void = PyArray_DTypeFromTypeNum(NPY_VOID);
+    Py_DECREF(Void);  /* use borrowed */
+
+    PyArray_DTypeMeta *dtypes[1] = {Object};
+    PyType_Slot slots[] = {
+        {NPY_METH_resolve_descriptors, NULL},  /* must not be used */
+        {NPY_METH_unaligned_strided_loop, &npy_clear_object_strided_loop},
+        {0, NULL}};
+
+    PyArrayMethod_Spec spec = {
+        .name = "object_clear",
+        .nin = 0,
+        .nout = 1,
+        .casting = NPY_NO_CASTING,
+        .flags = NPY_METH_REQUIRES_PYAPI | NPY_METH_SUPPORTS_UNALIGNED,
+        .dtypes = dtypes,
+        .slots = slots,
+    };
+
+    PyBoundArrayMethodObject *bmeth = PyArrayMethod_FromSpec_int(&spec, 1);
+    if (bmeth == NULL) {
+        return -1;
+    }
+    Py_INCREF(bmeth->method);
+    NPY_DT_SLOTS(Object)->clearimpl = bmeth->method;
+    Py_DECREF(bmeth);
+
+    /*
+     * Initialize clearing of structured DTypes.
+     */
+    spec.name = "void_clear";
+    dtypes[0] = Void;
+    slots[1].slot = NPY_METH_get_loop;
+    slots[1].pfunc = &npy_get_clear_void_and_legacy_user_dtype_loop;
+
+    bmeth = PyArrayMethod_FromSpec_int(&spec, 1);
+    if (bmeth == NULL) {
+        return -1;
+    }
+    Py_INCREF(bmeth->method);
+    NPY_DT_SLOTS(Void)->clearimpl = bmeth->method;
+    Py_DECREF(bmeth);
+    return 0;
+}
+
+
+
 NPY_NO_EXPORT int
 PyArray_InitializeCasts()
 {
@@ -3929,6 +3983,9 @@ PyArray_InitializeCasts()
     }
     /* Datetime casts are defined in datetime.c */
     if (PyArray_InitializeDatetimeCasts() < 0) {
+        return -1;
+    }
+    if (PyArray_InitClearFunctions() < 0) {
         return -1;
     }
     return 0;

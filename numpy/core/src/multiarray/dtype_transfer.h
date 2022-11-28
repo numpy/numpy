@@ -146,6 +146,20 @@ object_to_any_get_loop(
         NpyAuxData **out_transferdata,
         NPY_ARRAYMETHOD_FLAGS *flags);
 
+NPY_NO_EXPORT int
+npy_clear_object_strided_loop(
+        PyArrayMethod_Context *NPY_UNUSED(context),
+        char *const *args, const npy_intp *dimensions,
+        const npy_intp *strides, NpyAuxData *NPY_UNUSED(auxdata));
+
+NPY_NO_EXPORT int
+npy_get_clear_void_and_legacy_user_dtype_loop(
+        PyArrayMethod_Context *context,
+        int aligned, int NPY_UNUSED(move_references),
+        const npy_intp *strides,
+        PyArrayMethod_StridedLoop **out_loop,
+        NpyAuxData **out_transferdata,
+        NPY_ARRAYMETHOD_FLAGS *flags);
 
 NPY_NO_EXPORT int
 wrap_aligned_transferfunction(

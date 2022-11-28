@@ -344,28 +344,29 @@ fill_arraymethod_from_slots(
     }
 
     /* Check whether the provided loops make sense. */
-    if (meth->strided_loop == NULL) {
+    if ((meth->unaligned_strided_loop == NULL) !=
+            !(meth->flags & NPY_METH_SUPPORTS_UNALIGNED)) {
         PyErr_Format(PyExc_TypeError,
-                "Must provide a strided inner loop function. (method: %s)",
+                "Must provide unaligned strided inner loop for method to "
+                "indicate unaligned support (method: %s)",
                 spec->name);
         return -1;
+    }
+    /* Fill in the blanks: */
+    if (meth->unaligned_contiguous_loop == NULL) {
+        meth->unaligned_contiguous_loop = meth->unaligned_strided_loop;
+    }
+    if (meth->strided_loop == NULL) {
+        meth->strided_loop = meth->unaligned_strided_loop;
     }
     if (meth->contiguous_loop == NULL) {
         meth->contiguous_loop = meth->strided_loop;
     }
-    if (meth->unaligned_contiguous_loop != NULL &&
-            meth->unaligned_strided_loop == NULL) {
+
+    if (meth->strided_loop == NULL) {
         PyErr_Format(PyExc_TypeError,
-                "Must provide unaligned strided inner loop when providing "
-                "a contiguous version. (method: %s)", spec->name);
-        return -1;
-    }
-    if ((meth->unaligned_strided_loop == NULL) !=
-            !(meth->flags & NPY_METH_SUPPORTS_UNALIGNED)) {
-        PyErr_Format(PyExc_TypeError,
-                "Must provide unaligned strided inner loop when casting spec "
-                "has the NPY_METH_SUPPORTS_UNALIGNED flag. "
-                "(method: %s)", spec->name);
+                "Must provide a strided inner loop function. (method: %s)",
+                spec->name);
         return -1;
     }
 
