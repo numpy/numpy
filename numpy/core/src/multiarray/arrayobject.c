@@ -56,6 +56,7 @@ maintainer email:  oliphant.travis@ieee.org
 #include "alloc.h"
 #include "mem_overlap.h"
 #include "numpyos.h"
+#include "refcount.h"
 #include "strfuncs.h"
 
 #include "binop_override.h"
@@ -452,10 +453,6 @@ array_dealloc(PyArrayObject *self)
     }
 
     if ((fa->flags & NPY_ARRAY_OWNDATA) && fa->data) {
-        /* Free internal references if an Object array */
-        if (PyDataType_FLAGCHK(fa->descr, NPY_ITEM_REFCOUNT)) {
-            PyArray_XDECREF(self);
-        }
         if (fa->mem_handler == NULL) {
             char *env = getenv("NUMPY_WARN_IF_NO_MEM_POLICY");
             if ((env != NULL) && (strncmp(env, "1", 1) == 0)) {
@@ -464,10 +461,25 @@ array_dealloc(PyArrayObject *self)
                     "set a base owning the data (e.g. a PyCapsule).";
                 WARN_IN_DEALLOC(PyExc_RuntimeWarning, msg);
             }
+            /* Use old style decref, just in case of strange things */
+            if (PyDataType_FLAGCHK(fa->descr, NPY_ITEM_REFCOUNT)) {
+                PyArray_XDECREF(self);
+            }
             // Guess at malloc/free ???
             free(fa->data);
         }
         else {
+            /* Free internal references */
+            if (PyDataType_FLAGCHK(fa->descr, NPY_ITEM_REFCOUNT)) {
+                npy_intp itemsize = PyArray_ITEMSIZE(self);
+                npy_intp size = PyArray_SIZE(self);
+                int aligned = fa->flags & NPY_ARRAY_ALIGNED;
+                if (PyArray_ClearData(
+                        fa->descr, fa->data, itemsize, size, aligned) < 0) {
+                    PyErr_WriteUnraisable(NULL);
+                }
+            }
+            /* And actual data */
             size_t nbytes = PyArray_NBYTES(self);
             if (nbytes == 0) {
                 nbytes = 1;

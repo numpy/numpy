@@ -2690,7 +2690,7 @@ npy_clear_object_strided_loop(
     while (N > 0) {
         /* Release the reference in src and set it to NULL */
         NPY_DT_DBG_REFTRACE("dec src ref (null dst)", src_ref);
-        memcpy(&src_ref, src, sizeof(src_ref));
+        memcpy(&src_ref, src, sizeof(PyObject *));
         Py_XDECREF(src_ref);
         memset(src, 0, sizeof(PyObject *));
 

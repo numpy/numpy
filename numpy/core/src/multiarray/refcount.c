@@ -2,6 +2,10 @@
  * This module corresponds to the `Special functions for NPY_OBJECT`
  * section in the numpy reference for C-API.
  */
+#include "array_method.h"
+#include "dtype_transfer.h"
+#include "lowlevel_strided_loops.h"
+#include "pyerrors.h"
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
 
@@ -19,6 +23,38 @@
 
 static void
 _fillobject(char *optr, PyObject *obj, PyArray_Descr *dtype);
+
+
+/*
+ * Helper function to clear a strided memory (normally or always contiguous)
+ * from all Python (or other) references.  The function does nothing if the
+ * array dtype does not indicate holding references.
+ *
+ * It is safe to call this function more than once, failing here is usually
+ * critical (during cleanup) and should be set up to minimize the risk or
+ * avoid it fully.
+ */
+NPY_NO_EXPORT int
+PyArray_ClearData(
+        PyArray_Descr *descr, char *data,
+        npy_intp stride, npy_intp size, int aligned)
+{
+    if (!PyDataType_REFCHK(descr)) {
+        return 0;
+    }
+
+    NPY_cast_info cast_info;
+    NPY_ARRAYMETHOD_FLAGS flags;
+    if (PyArray_GetDTypeTransferFunction(
+            aligned, stride, 0, descr, NULL, 1, &cast_info, &flags) < 0) {
+        return -1;
+    }
+
+    int res = cast_info.func(
+            &cast_info.context, &data, &size, &stride, cast_info.auxdata);
+    NPY_cast_info_xfree(&cast_info);
+    return res;
+}
 
 
 /*NUMPY_API
@@ -204,6 +240,10 @@ PyArray_INCREF(PyArrayObject *mp)
 /*NUMPY_API
   Decrement all internal references for object arrays.
   (or arrays with object fields)
+
+  The use of this function is strongly discouraged, within NumPy
+  use PyArray_Clear, which DECREF's and sets everything to NULL and can
+  work with any dtype.
 */
 NPY_NO_EXPORT int
 PyArray_XDECREF(PyArrayObject *mp)

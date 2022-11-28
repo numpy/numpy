@@ -8,6 +8,11 @@ NPY_NO_EXPORT void
 PyArray_Item_XDECREF(char *data, PyArray_Descr *descr);
 
 NPY_NO_EXPORT int
+PyArray_ClearData(
+        PyArray_Descr *descr, char *data,
+        npy_intp stride, npy_intp size, int aligned);
+
+NPY_NO_EXPORT int
 PyArray_INCREF(PyArrayObject *mp);
 
 NPY_NO_EXPORT int
