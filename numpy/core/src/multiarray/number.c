@@ -351,6 +351,12 @@ array_matrix_multiply(PyObject *m1, PyObject *m2)
 static PyObject *
 array_inplace_matrix_multiply(PyArrayObject *self, PyObject *other)
 {
+    static PyObject *AxisError_cls = NULL;
+    npy_cache_import("numpy.exceptions", "AxisError", &AxisError_cls);
+    if (AxisError_cls == NULL) {
+        return NULL;
+    }
+
     INPLACE_GIVE_UP_IF_NEEDED(self, other,
             nb_inplace_matrix_multiply, array_inplace_matrix_multiply);
 
@@ -393,7 +399,21 @@ array_inplace_matrix_multiply(PyArrayObject *self, PyObject *other)
     }
     PyObject *res = PyObject_Call(n_ops.matmul, args, kwargs);
     Py_DECREF(args);
-    assert(res == (PyObject *)self);
+
+    if (res == NULL) {
+        /*
+         * AxisError should indicate that the axes argument didn't work out
+         * which should mean the second operand not being 2 dimensional.
+         */
+        if (PyErr_ExceptionMatches(AxisError_cls)) {
+            PyErr_SetString(PyExc_ValueError,
+                "inplace matrix multiplication requires the first operand to "
+                "have at least one and the second at least two dimensions.");
+        }
+    }
+    else {
+        assert(res == (PyObject *)self);
+    }
     return res;
 }
 
