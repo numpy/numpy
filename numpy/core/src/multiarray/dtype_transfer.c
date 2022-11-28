@@ -79,11 +79,9 @@ _safe_print(PyObject *obj)
  * Returns NPY_SUCCEED or NPY_FAIL.
  */
 static int
-get_decref_transfer_function(int aligned,
-                            npy_intp src_stride,
-                            PyArray_Descr *src_dtype,
-                            NPY_cast_info *cast_info,
-                            int *out_needs_api);
+get_clear_function(
+        int aligned, npy_intp src_stride, PyArray_Descr *src_dtype,
+        NPY_cast_info *cast_info, NPY_ARRAYMETHOD_FLAGS *flags);
 
 
 /*************************** COPY REFERENCES *******************************/
@@ -268,15 +266,15 @@ any_to_object_get_loop(
     NPY_cast_info_init(&data->decref_src);
 
     if (move_references && PyDataType_REFCHK(context->descriptors[0])) {
-        int needs_api;
-        if (get_decref_transfer_function(
+        NPY_ARRAYMETHOD_FLAGS clear_flags;
+        if (get_clear_function(
                 aligned, strides[0], context->descriptors[0],
-                &data->decref_src,
-                &needs_api) == NPY_FAIL)  {
+                &data->decref_src, &clear_flags) < 0)  {
             NPY_AUXDATA_FREE(*out_transferdata);
             *out_transferdata = NULL;
             return -1;
         }
+        *flags = PyArrayMethod_COMBINED_FLAGS(*flags, clear_flags);
     }
     return 0;
 }
@@ -1542,15 +1540,14 @@ get_one_to_n_transfer_function(int aligned,
 
     /* If the src object will need a DECREF, set src_dtype */
     if (move_references && PyDataType_REFCHK(src_dtype)) {
-        *out_flags |= NPY_METH_REQUIRES_PYAPI;
-        if (get_decref_transfer_function(aligned,
-                            src_stride,
-                            src_dtype,
-                            &data->decref_src,
-                            NULL) != NPY_SUCCEED) {
+        NPY_ARRAYMETHOD_FLAGS clear_flags;
+        if (get_clear_function(
+                aligned, src_stride, src_dtype,
+                &data->decref_src, &clear_flags) < 0) {
             NPY_AUXDATA_FREE((NpyAuxData *)data);
             return NPY_FAIL;
         }
+        *out_flags = PyArrayMethod_COMBINED_FLAGS(*out_flags, clear_flags);
     }
 
     if (data->decref_src.func == NULL) {
@@ -2345,15 +2342,15 @@ get_fields_transfer_function(int NPY_UNUSED(aligned),
          * input, the second one (normally output) just does not matter here.
          */
         if (move_references && PyDataType_REFCHK(src_dtype)) {
-            *out_flags |= NPY_METH_REQUIRES_PYAPI;
-            if (get_decref_transfer_function(0,
-                                    src_stride,
-                                    src_dtype,
-                                    &data->fields[field_count].info,
-                                    NULL) != NPY_SUCCEED) {
+            NPY_ARRAYMETHOD_FLAGS clear_flags;
+            if (get_clear_function(
+                    0, src_stride, src_dtype,
+                    &data->fields[field_count].info,
+                    &clear_flags) < 0) {
                 NPY_AUXDATA_FREE((NpyAuxData *)data);
                 return NPY_FAIL;
             }
+            *out_flags = PyArrayMethod_COMBINED_FLAGS(*out_flags, clear_flags);
             data->fields[field_count].src_offset = 0;
             data->fields[field_count].dst_offset = 0;
             data->field_count = field_count;
@@ -2474,12 +2471,12 @@ get_fields_transfer_function(int NPY_UNUSED(aligned),
 }
 
 static int
-get_decref_fields_transfer_function(int NPY_UNUSED(aligned),
+get_clear_fields_transfer_function(int NPY_UNUSED(aligned),
                             npy_intp src_stride,
                             PyArray_Descr *src_dtype,
                             PyArrayMethod_StridedLoop **out_stransfer,
                             NpyAuxData **out_transferdata,
-                            int *out_needs_api)
+                            NPY_ARRAYMETHOD_FLAGS *flags)
 {
     PyObject *names, *key, *tup, *title;
     PyArray_Descr *src_fld_dtype;
@@ -2513,17 +2510,14 @@ get_decref_fields_transfer_function(int NPY_UNUSED(aligned),
             return NPY_FAIL;
         }
         if (PyDataType_REFCHK(src_fld_dtype)) {
-            if (out_needs_api) {
-                *out_needs_api = 1;
-            }
-            if (get_decref_transfer_function(0,
-                                    src_stride,
-                                    src_fld_dtype,
-                                    &field->info,
-                                    out_needs_api) != NPY_SUCCEED) {
+            NPY_ARRAYMETHOD_FLAGS clear_flags;
+            if (get_clear_function(
+                    0, src_stride, src_fld_dtype,
+                    &field->info, &clear_flags) < 0) {
                 NPY_AUXDATA_FREE((NpyAuxData *)data);
                 return NPY_FAIL;
             }
+            *flags = PyArrayMethod_COMBINED_FLAGS(*flags, clear_flags);
             field->src_offset = src_offset;
             data->field_count++;
             field++;
@@ -2586,7 +2580,7 @@ _masked_wrapper_transfer_data_clone(NpyAuxData *data)
 }
 
 static int
-_strided_masked_wrapper_decref_transfer_function(
+_strided_masked_wrapper_clear_function(
         PyArrayMethod_Context *NPY_UNUSED(context), char *const *args,
         const npy_intp *dimensions, const npy_intp *strides,
         npy_bool *mask, npy_intp mask_stride,
@@ -2682,8 +2676,8 @@ _dec_src_ref_nop(
     return 0;
 }
 
-static int
-_strided_to_null_dec_src_ref_reference(
+NPY_NO_EXPORT int
+npy_clear_object_strided_loop(
         PyArrayMethod_Context *NPY_UNUSED(context),
         char *const *args, const npy_intp *dimensions,
         const npy_intp *strides, NpyAuxData *NPY_UNUSED(auxdata))
@@ -2707,100 +2701,105 @@ _strided_to_null_dec_src_ref_reference(
 }
 
 
-/*
- * Get a function to decref.  Currently, this uses a cast info slot, which
- * means that the second (destination) descriptor is always set to NULL
- * and generally does not have to be passed.
- * Since we do not currently have an `ArrayMethod` representing this, the
- * method is also set to NULL.
- *
- * TODO: this function should probably be moved onto the DType eventually,
- *       which would allow for user DTypes to include dynamic allocated
- *       memory or Python objects.
- */
-static int
-get_decref_transfer_function(int aligned,
-                            npy_intp src_stride,
-                            PyArray_Descr *src_dtype,
-                            NPY_cast_info *cast_info,
-                            int *out_needs_api)
+NPY_NO_EXPORT int
+npy_get_clear_void_and_legacy_user_dtype_loop(
+        PyArrayMethod_Context *context,
+        int aligned, int NPY_UNUSED(move_references),
+        const npy_intp *strides,
+        PyArrayMethod_StridedLoop **out_loop,
+        NpyAuxData **out_transferdata,
+        NPY_ARRAYMETHOD_FLAGS *flags)
 {
-    NPY_cast_info_init(cast_info);
+    PyArray_Descr *dtype = context->descriptors[0];
 
-    /* If there are no references, it's a nop */
-    if (!PyDataType_REFCHK(src_dtype)) {
-        cast_info->func = &_dec_src_ref_nop;
-        cast_info->auxdata = NULL;
-        goto finalize;
+    /* If there are no references, it's a nop (path should not be hit?) */
+    if (!PyDataType_REFCHK(dtype)) {
+        *out_loop = &_dec_src_ref_nop;
+        *out_transferdata = NULL;
+        return 0;
     }
-    /* If it's a single reference, it's one decref */
-    else if (src_dtype->type_num == NPY_OBJECT) {
-        if (out_needs_api) {
-            *out_needs_api = 1;
-        }
 
-        cast_info->func = &_strided_to_null_dec_src_ref_reference;
-        cast_info->auxdata = NULL;
-        goto finalize;
-    }
-    /* If there are subarrays, need to wrap it */
-    else if (PyDataType_HASSUBARRAY(src_dtype)) {
+    if (PyDataType_HASSUBARRAY(dtype)) {
         PyArray_Dims src_shape = {NULL, -1};
         npy_intp src_size;
 
-        if (out_needs_api) {
-            *out_needs_api = 1;
-        }
-
-        if (!(PyArray_IntpConverter(src_dtype->subarray->shape,
+        if (!(PyArray_IntpConverter(dtype->subarray->shape,
                                             &src_shape))) {
             PyErr_SetString(PyExc_ValueError,
                     "invalid subarray shape");
-            return NPY_FAIL;
+            return -1;
         }
         src_size = PyArray_MultiplyList(src_shape.ptr, src_shape.len);
         npy_free_cache_dim_obj(src_shape);
 
-        NPY_ARRAYMETHOD_FLAGS ignored_flags;
         if (get_n_to_n_transfer_function(aligned,
-                src_stride, 0,
-                src_dtype->subarray->base, NULL, 1, src_size,
-                &cast_info->func, &cast_info->auxdata,
-                &ignored_flags) != NPY_SUCCEED) {
-            return NPY_FAIL;
+                strides[0], 0,
+                dtype->subarray->base, NULL, 1, src_size,
+                out_loop, out_transferdata,
+                flags) != NPY_SUCCEED) {
+            return -1;
         }
 
-        goto finalize;
+        return 0;
     }
     /* If there are fields, need to do each field */
-    else if (PyDataType_HASFIELDS(src_dtype)) {
-        if (out_needs_api) {
-            *out_needs_api = 1;
+    else if (PyDataType_HASFIELDS(dtype)) {
+        if (get_clear_fields_transfer_function(
+                aligned, strides[0], dtype,
+                out_loop, out_transferdata, flags) < 0) {
+            return -1;
         }
-
-        if (get_decref_fields_transfer_function(aligned,
-                            src_stride, src_dtype,
-                            &cast_info->func, &cast_info->auxdata,
-                            out_needs_api) < 0) {
-            return NPY_FAIL;
-        }
-        goto finalize;
+        return 0;
     }
-    else {
+
+    PyErr_Format(PyExc_RuntimeError,
+            "Internal error, tried to fetch decref function for the "
+            "user dtype '%s' without fields or subarray (legacy support).",
+            dtype);
+    return -1;
+}
+
+
+/*
+ * Get a strided loop used for clearing.  This looks up the `clearimpl`
+ * slot on the DType.
+ * The function will error when `clearimpl` is not defined.  Note that
+ * old-style user-dtypes use the "void" version (m)
+ */
+static int
+get_clear_function(
+        int aligned, npy_intp stride,
+        PyArray_Descr *dtype, NPY_cast_info *cast_info,
+        NPY_ARRAYMETHOD_FLAGS *flags)
+{
+    NPY_cast_info_init(cast_info);
+
+    PyArrayMethodObject *clearimpl = NPY_DT_SLOTS(NPY_DTYPE(dtype))->clearimpl;
+    if (clearimpl == NULL) {
         PyErr_Format(PyExc_RuntimeError,
                 "Internal error, tried to fetch decref function for the "
-                "unsupported DType '%S'.", src_dtype);
-        return NPY_FAIL;
+                "unsupported DType '%S'.", dtype);
+        return -1;
     }
 
-  finalize:
     /* Make sure all important fields are either set or cleared */
-    Py_INCREF(src_dtype);
-    cast_info->descriptors[0] = src_dtype;
+    Py_INCREF(dtype);
+    cast_info->descriptors[0] = dtype;
     cast_info->descriptors[1] = NULL;
-    cast_info->context.method = NULL;
+    Py_INCREF(clearimpl);
+    cast_info->context.method = clearimpl;
     cast_info->context.caller = NULL;
-    return NPY_SUCCEED;
+
+    if (clearimpl->get_strided_loop(
+            &cast_info->context, aligned, 0, &stride,
+            &cast_info->func, &cast_info->auxdata, flags) < 0) {
+        Py_CLEAR(cast_info->descriptors[0]);
+        Py_CLEAR(cast_info->context.method);
+        NPY_cast_info_xfree(cast_info);
+        return -1;
+    }
+
+    return 0;
 }
 
 
@@ -3292,18 +3291,12 @@ PyArray_GetDTypeTransferFunction(int aligned,
      */
     if (dst_dtype == NULL) {
         assert(move_references);
-        int needs_api = 0;
-        int res = get_decref_transfer_function(aligned,
-                                src_dtype->elsize,
-                                src_dtype,
-                                cast_info,
-                                &needs_api);
-        /* decref'ing never creates floating point errors, so just ignore it */
-        *out_flags = PyArrayMethod_MINIMAL_FLAGS;
-        if (needs_api) {
-            *out_flags |= NPY_METH_REQUIRES_PYAPI;
+        int res = get_clear_function(
+                aligned, src_dtype->elsize, src_dtype, cast_info, out_flags);
+        if (res < 0) {
+            return NPY_FAIL;
         }
-        return res;
+        return NPY_SUCCEED;
     }
 
     if (define_cast_for_descrs(aligned,
@@ -3563,17 +3556,16 @@ PyArray_GetMaskedDTypeTransferFunction(int aligned,
 
     /* If the src object will need a DECREF, get a function to handle that */
     if (move_references && PyDataType_REFCHK(src_dtype)) {
-        *out_flags |= NPY_METH_REQUIRES_PYAPI;
-        if (get_decref_transfer_function(aligned,
-                            src_stride,
-                            src_dtype,
-                            &data->decref_src,
-                            NULL) != NPY_SUCCEED) {
+        NPY_ARRAYMETHOD_FLAGS clear_flags;
+        if (get_clear_function(
+                aligned, src_stride, src_dtype,
+                &data->decref_src, &clear_flags) < 0) {
             NPY_AUXDATA_FREE((NpyAuxData *)data);
             return NPY_FAIL;
         }
+        *out_flags = PyArrayMethod_COMBINED_FLAGS(*out_flags, clear_flags);
         cast_info->func = (PyArrayMethod_StridedLoop *)
-                &_strided_masked_wrapper_decref_transfer_function;
+                &_strided_masked_wrapper_clear_function;
     }
     else {
         NPY_cast_info_init(&data->decref_src);

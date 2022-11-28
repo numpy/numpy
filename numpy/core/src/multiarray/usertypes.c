@@ -20,6 +20,7 @@ maintainer email:  oliphant.travis@ieee.org
   Space Science Telescope Institute
   (J. Todd Miller, Perry Greenfield, Rick White)
 */
+#include "numpy/ndarraytypes.h"
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
 
@@ -223,6 +224,8 @@ PyArray_RegisterDataType(PyArray_Descr *descr)
         PyErr_SetString(PyExc_ValueError, "missing typeobject");
         return -1;
     }
+
+    int use_void_clearimpl = 0;
     if (descr->flags & (NPY_ITEM_IS_POINTER | NPY_ITEM_REFCOUNT)) {
         /*
          * User dtype can't actually do reference counting, however, there
@@ -231,6 +234,8 @@ PyArray_RegisterDataType(PyArray_Descr *descr)
          * so we have to support this. But such a structure must be constant
          * (i.e. fixed at registration time, this is the case for `xpress`).
          */
+        use_void_clearimpl = 1;
+
         if (descr->names == NULL || descr->fields == NULL ||
             !PyDict_CheckExact(descr->fields)) {
             PyErr_Format(PyExc_ValueError,
@@ -263,6 +268,13 @@ PyArray_RegisterDataType(PyArray_Descr *descr)
         descr->type_num = -1;
         NPY_NUMUSERTYPES--;
         return -1;
+    }
+    if (use_void_clearimpl) {
+        /* See comment where use_void_clearimpl is set... */
+        PyArray_DTypeMeta *Void = PyArray_DTypeFromTypeNum(NPY_VOID);
+        NPY_DT_SLOTS(NPY_DTYPE(descr))->clearimpl = (
+                NPY_DT_SLOTS(Void)->clearimpl);
+        Py_DECREF(Void);
     }
 
     return typenum;

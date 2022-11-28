@@ -1,6 +1,8 @@
 #ifndef NUMPY_CORE_SRC_MULTIARRAY_DTYPEMETA_H_
 #define NUMPY_CORE_SRC_MULTIARRAY_DTYPEMETA_H_
 
+#include "array_method.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -58,7 +60,13 @@ typedef struct {
      * The casting implementation (ArrayMethod) to convert between two
      * instances of this DType, stored explicitly for fast access:
      */
-    PyObject *within_dtype_castingimpl;
+    PyArrayMethodObject *within_dtype_castingimpl;
+    /*
+     * Implementation which clears a dtype or NULL.  If not given, setting
+     * HASREF on the dtype is invalid.  We only use the loop getting, not
+     * any resolution.
+     */
+    PyArrayMethodObject *clearimpl;
     /*
      * Dictionary of ArrayMethods representing most possible casts
      * (structured and object are exceptions).
