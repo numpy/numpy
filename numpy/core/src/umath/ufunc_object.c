@@ -1850,6 +1850,14 @@ _parse_axes_arg(PyUFuncObject *ufunc, int op_core_num_dims[], PyObject *axes,
             }
         }
         else {
+            /* If input is not an integer tell user that a tuple is needed */
+            if (error_converting(PyArray_PyIntAsInt(op_axes_tuple))) {
+                PyErr_Format(PyExc_TypeError,
+                        "%s: axes item %d should be a tuple.",
+                        ufunc_get_name_cstr(ufunc), iop);
+                return -1;
+            }
+            /* If it is a single integer, inform user that more are needed */
             npy_cache_import(
                     "numpy.core._exceptions", "AxisError", &AxisError_cls);
             if (AxisError_cls == NULL) {
@@ -1857,7 +1865,7 @@ _parse_axes_arg(PyUFuncObject *ufunc, int op_core_num_dims[], PyObject *axes,
             }
             PyErr_Format(AxisError_cls,
                     "%s: operand %d has %d core dimensions, "
-                    "but the axes item is not tuple.",
+                    "but the axes item is a single integer.",
                     ufunc_get_name_cstr(ufunc), iop, op_ncore);
             return -1;
         }
