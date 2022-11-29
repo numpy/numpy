@@ -20,6 +20,7 @@ def configuration(parent_package='',top_path=None):
     config.add_subpackage('testing')
     config.add_subpackage('typing')
     config.add_subpackage('_typing')
+    config.add_subpackage('_utils')
     config.add_data_dir('doc')
     config.add_data_files('py.typed')
     config.add_data_files('*.pyi')

@@ -17,7 +17,9 @@ motivated this module.
 """
 import enum
 
-__ALL__ = [
+from ._utils import set_module as _set_module
+
+__all__ = [
     'ModuleDeprecationWarning', 'VisibleDeprecationWarning',
     '_NoValue', '_CopyMode'
     ]
@@ -30,6 +32,7 @@ if '_is_loaded' in globals():
 _is_loaded = True
 
 
+@_set_module("numpy")
 class ModuleDeprecationWarning(DeprecationWarning):
     """Module deprecation warning.
 
@@ -41,9 +44,7 @@ class ModuleDeprecationWarning(DeprecationWarning):
     """
 
 
-ModuleDeprecationWarning.__module__ = 'numpy'
-
-
+@_set_module("numpy")
 class VisibleDeprecationWarning(UserWarning):
     """Visible deprecation warning.
 
@@ -52,9 +53,6 @@ class VisibleDeprecationWarning(UserWarning):
     the usage is most likely a user bug.
 
     """
-
-
-VisibleDeprecationWarning.__module__ = 'numpy'
 
 
 class _NoValueType:
@@ -90,6 +88,7 @@ class _NoValueType:
 _NoValue = _NoValueType()
 
 
+@_set_module("numpy")
 class _CopyMode(enum.Enum):
     """
     An enumeration for the copy modes supported
@@ -120,6 +119,3 @@ class _CopyMode(enum.Enum):
             return False
 
         raise ValueError(f"{self} is neither True nor False.")
-
-
-_CopyMode.__module__ = 'numpy'

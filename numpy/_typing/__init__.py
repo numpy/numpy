@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from numpy import ufunc
-from numpy.core.overrides import set_module
+from .. import ufunc
+from .._utils import set_module
 from typing import TYPE_CHECKING, final
 
 

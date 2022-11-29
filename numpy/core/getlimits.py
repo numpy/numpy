@@ -5,8 +5,8 @@ __all__ = ['finfo', 'iinfo']
 
 import warnings
 
+from .._utils import set_module
 from ._machar import MachAr
-from .overrides import set_module
 from . import numeric
 from . import numerictypes as ntypes
 from .numeric import array, inf, NaN

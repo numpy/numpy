@@ -3,9 +3,10 @@ __all__ = ['matrix', 'bmat', 'mat', 'asmatrix']
 import sys
 import warnings
 import ast
+
+from .._utils import set_module
 import numpy.core.numeric as N
 from numpy.core.numeric import concatenate, isscalar
-from numpy.core.overrides import set_module
 # While not in __all__, matrix_power used to be defined here, so we import
 # it for backward compatibility.
 from numpy.linalg import matrix_power

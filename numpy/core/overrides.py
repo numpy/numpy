@@ -3,9 +3,10 @@ import collections
 import functools
 import os
 
+from .._utils import set_module
+from .._utils._inspect import getargspec
 from numpy.core._multiarray_umath import (
     add_docstring, implement_array_function, _get_implementing_args)
-from numpy.compat._inspect import getargspec
 
 
 ARRAY_FUNCTIONS = set()
@@ -107,24 +108,6 @@ def verify_matching_signatures(implementation, dispatcher):
         if dispatcher_spec.defaults != (None,) * len(dispatcher_spec.defaults):
             raise RuntimeError('dispatcher functions can only use None for '
                                'default argument values')
-
-
-def set_module(module):
-    """Decorator for overriding __module__ on a function or class.
-
-    Example usage::
-
-        @set_module('numpy')
-        def example():
-            pass
-
-        assert example.__module__ == 'numpy'
-    """
-    def decorator(func):
-        if module is not None:
-            func.__module__ = module
-        return func
-    return decorator
 
 
 def array_function_dispatch(dispatcher, module=None, verify=True,
