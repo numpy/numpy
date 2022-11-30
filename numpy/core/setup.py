@@ -469,7 +469,7 @@ def configuration(parent_package='',top_path=None):
 
             # Signal check
             if is_npy_no_signal():
-                moredefs.append('__NPY_PRIVATE_NO_SIGNAL')
+                moredefs.append('NPY_NO_SIGNAL')
 
             # Windows checks
             if sys.platform == 'win32' or os.name == 'nt':
