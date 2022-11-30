@@ -6197,7 +6197,7 @@ class TestStats:
     def test_mean_axis_error(self):
         # Ensure that AxisError is raised instead of IndexError when axis is
         # out of bounds, see gh-15817.
-        with assert_raises(np.core._exceptions.AxisError):
+        with assert_raises(np.exceptions.AxisError):
             np.arange(10).mean(axis=2)
 
     def test_mean_where(self):
@@ -6281,7 +6281,7 @@ class TestStats:
     def test_var_axis_error(self):
         # Ensure that AxisError is raised instead of IndexError when axis is
         # out of bounds, see gh-15817.
-        with assert_raises(np.core._exceptions.AxisError):
+        with assert_raises(np.exceptions.AxisError):
             np.arange(10).var(axis=2)
 
     def test_var_where(self):

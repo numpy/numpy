@@ -95,6 +95,8 @@ python_sources = [
   'ctypeslib.py',
   'ctypeslib.pyi',
   'dual.py',
+  'exceptions.py',
+  'exceptions.pyi',
   'matlib.py',
   'py.typed',
   'version.py'
