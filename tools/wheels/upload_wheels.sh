@@ -7,7 +7,7 @@ set_travis_vars() {
     else
       IS_PUSH="false"
     fi
-    if [[ "$TRAVIS_EVENT_TYPE" == "cron"  || -v CIRRUS_CRON ]]; then
+    if [[ "$TRAVIS_EVENT_TYPE" == "cron" ]]; then
       IS_SCHEDULE_DISPATCH="true"
     else
       IS_SCHEDULE_DISPATCH="false"
@@ -34,7 +34,7 @@ set_upload_vars() {
 upload_wheels() {
     echo ${PWD}
     if [[ ${ANACONDA_UPLOAD} == true ]]; then
-        if [ -z ${TOKEN} ]; then
+        if [[ -z ${TOKEN} ]]; then
             echo no token set, not uploading
         else
             python -m pip install \
