@@ -69,13 +69,16 @@ wheels_upload_task:
     export IS_PUSH="false"
 
     # cron job
-    if [[ "$CIRRUS_CRON" == "nightly" ]]; then
+    if [[ "$CIRRUS_CRON" == "weekly" ]]; then
       export IS_SCHEDULE_DISPATCH="true"
     fi
 
     if [[ "$CIRRUS_TAG" == "v*" ]]; then
       export IS_PUSH="true"    
     fi
+    if [[ "$CIRRUS_BUILD_SOURCE" == "api" && "$CIRRUS_COMMIT_MESSAGE" == "API build for null" ]]; then      export IS_SCHEDULE_DISPATCH="true"
+    fi
+
 
     # The name of the zip file is derived from the `wheels_artifact` line.
     # If you change the artifact line to `myfile_artifact` then it would be
@@ -85,6 +88,6 @@ wheels_upload_task:
     unzip wheels.zip
     
     source ./tools/wheels/upload_wheels.sh
-    set_travis_vars
+    # set_travis_vars
     set_upload_vars
     upload_wheels # Will be skipped if not a push/tag/scheduled build
