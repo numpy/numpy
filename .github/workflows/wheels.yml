@@ -78,7 +78,8 @@ jobs:
           - [macos-12, macosx_*]
           - [windows-2019, win_amd64]
           - [windows-2019, win32]
-        python: ["cp38", "cp39", "cp310", "cp311", "pp38", "pp39"]
+        # pp39.v7.3.10 is needed, but cibuildwheel has pp3.9.v7.3.9
+        python: ["cp38", "cp39", "cp310", "cp311", "pp38"] #, "pp39"]
         exclude:
           # Don't build PyPy 32-bit windows
           - buildplat: [windows-2019, win32]
