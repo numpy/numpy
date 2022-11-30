@@ -4100,7 +4100,7 @@ _vec_string(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUSED(kw
     return 0;
 }
 
-#ifndef __NPY_PRIVATE_NO_SIGNAL
+#ifndef NPY_NO_SIGNAL
 
 static NPY_TLS int sigint_buf_init = 0;
 static NPY_TLS NPY_SIGJMP_BUF _NPY_SIGINT_BUF;

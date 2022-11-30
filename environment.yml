@@ -15,8 +15,9 @@ dependencies:
   - setuptools=59.2.0
   - meson >= 0.64.0
   - ninja
-  - pkg-config  # note: not available on Windows, comment out this line
+  - pkg-config
   - meson-python
+  - pip   # so you can use pip to install devpy
   # For testing
   - pytest
   - pytest-cov
