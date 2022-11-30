@@ -8,7 +8,7 @@ PyArray_ClearBuffer(
         npy_intp stride, npy_intp size, int aligned);
 
 NPY_NO_EXPORT int
-PyArray_ClearArray(PyArrayOBject *arr);
+PyArray_ClearArray(PyArrayObject *arr);
 
 /*
  * The following functions worke directly on object or structured dtypes.

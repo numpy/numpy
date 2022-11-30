@@ -20,7 +20,6 @@ maintainer email:  oliphant.travis@ieee.org
   Space Science Telescope Institute
   (J. Todd Miller, Perry Greenfield, Rick White)
 */
-#include "numpy/ndarraytypes.h"
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
 

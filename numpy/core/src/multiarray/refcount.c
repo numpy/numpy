@@ -13,6 +13,8 @@
 #include "numpy/arrayscalars.h"
 #include "iterators.h"
 #include "refcount.h"
+#include "dtype_transfer.h"
+#include "lowlevel_strided_loops.h"
 
 #include "npy_config.h"
 
@@ -63,7 +65,7 @@ PyArray_ClearBuffer(
 NPY_NO_EXPORT int
 PyArray_ClearArray(PyArrayObject *arr)
 {
-    assert(PyArray_FLAGS(arr) & NPY_OWNDATA);
+    assert(PyArray_FLAGS(arr) & NPY_ARRAY_OWNDATA);
 
     PyArray_Descr *descr = PyArray_DESCR(arr);
     if (!PyDataType_REFCHK(descr)) {
