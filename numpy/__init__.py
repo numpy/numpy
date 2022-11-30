@@ -112,6 +112,9 @@ from .exceptions import (
     ComplexWarning, ModuleDeprecationWarning, VisibleDeprecationWarning,
     TooHardError, AxisError)
 
+# Allow distributors to run custom init code before importing numpy.core
+from . import _distributor_init
+
 # We first need to detect if we're being called as part of the numpy setup
 # procedure itself in a reliable manner.
 try:
@@ -136,9 +139,6 @@ else:
 
     # mapping of {name: (value, deprecation_msg)}
     __deprecated_attrs__ = {}
-
-    # Allow distributors to run custom init code
-    from . import _distributor_init
 
     from . import core
     from .core import *
