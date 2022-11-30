@@ -2,6 +2,7 @@
 #define NUMPY_CORE_SRC_MULTIARRAY_DTYPEMETA_H_
 
 #include "array_method.h"
+#include "dtype_traversal.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -38,7 +39,7 @@ typedef struct {
      * HASREF on the dtype is invalid.  We only use the loop getting, not
      * any resolution.
      */
-    PyArrayMethodObject *clearimpl;
+    get_simple_loop_function *get_clear_loop;
     /*
      * Dictionary of ArrayMethods representing most possible casts
      * (structured and object are exceptions).

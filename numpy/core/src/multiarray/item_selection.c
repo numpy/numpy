@@ -988,25 +988,7 @@ _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
         char *bufptr = it->dataptr;
 
         if (needcopy) {
-            if (hasrefs) {
-                /*
-                 * For dtype's with objects, copyswapn Py_XINCREF's src
-                 * and Py_XDECREF's dst. This would crash if called on
-                 * an uninitialized buffer, or leak a reference to each
-                 * object if initialized.
-                 *
-                 * So, first do the copy with no refcounting...
-                 */
-                _unaligned_strided_byte_copy(buffer, elsize,
-                                             it->dataptr, astride, N, elsize);
-                /* ...then swap in-place if needed */
-                if (swap) {
-                    copyswapn(buffer, elsize, NULL, 0, N, swap, op);
-                }
-            }
-            else {
-                copyswapn(buffer, elsize, it->dataptr, astride, N, swap, op);
-            }
+            copyswapn(buffer, elsize, it->dataptr, astride, N, swap, op);
             bufptr = buffer;
         }
         /*
@@ -1153,26 +1135,7 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
         npy_intp *iptr, i;
 
         if (needcopy) {
-            if (hasrefs) {
-                /*
-                 * For dtype's with objects, copyswapn Py_XINCREF's src
-                 * and Py_XDECREF's dst. This would crash if called on
-                 * an uninitialized valbuffer, or leak a reference to
-                 * each object item if initialized.
-                 *
-                 * So, first do the copy with no refcounting...
-                 */
-                 _unaligned_strided_byte_copy(valbuffer, elsize,
-                                              it->dataptr, astride, N, elsize);
-                /* ...then swap in-place if needed */
-                if (swap) {
-                    copyswapn(valbuffer, elsize, NULL, 0, N, swap, op);
-                }
-            }
-            else {
-                copyswapn(valbuffer, elsize,
-                          it->dataptr, astride, N, swap, op);
-            }
+            copyswapn(valbuffer, elsize, it->dataptr, astride, N, swap, op);
             valptr = valbuffer;
         }
 

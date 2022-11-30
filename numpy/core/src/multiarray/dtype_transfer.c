@@ -73,16 +73,6 @@ _safe_print(PyObject *obj)
 }
 #endif
 
-/*
- * Returns a transfer function which DECREFs any references in src_type.
- *
- * Returns NPY_SUCCEED or NPY_FAIL.
- */
-static int
-get_clear_function(
-        int aligned, npy_intp src_stride, PyArray_Descr *src_dtype,
-        NPY_cast_info *cast_info, NPY_ARRAYMETHOD_FLAGS *flags);
-
 
 /*************************** COPY REFERENCES *******************************/
 
@@ -2470,66 +2460,6 @@ get_fields_transfer_function(int NPY_UNUSED(aligned),
     return NPY_SUCCEED;
 }
 
-static int
-get_clear_fields_transfer_function(int NPY_UNUSED(aligned),
-                            npy_intp src_stride,
-                            PyArray_Descr *src_dtype,
-                            PyArrayMethod_StridedLoop **out_stransfer,
-                            NpyAuxData **out_transferdata,
-                            NPY_ARRAYMETHOD_FLAGS *flags)
-{
-    PyObject *names, *key, *tup, *title;
-    PyArray_Descr *src_fld_dtype;
-    npy_int i, structsize;
-    Py_ssize_t field_count;
-    int src_offset;
-
-    names = src_dtype->names;
-    field_count = PyTuple_GET_SIZE(src_dtype->names);
-
-    /* Over-allocating here: less fields may be used */
-    structsize = sizeof(_field_transfer_data) +
-                    field_count * sizeof(_single_field_transfer);
-    /* Allocate the data and populate it */
-    _field_transfer_data *data = PyMem_Malloc(structsize);
-    if (data == NULL) {
-        PyErr_NoMemory();
-        return NPY_FAIL;
-    }
-    data->base.free = &_field_transfer_data_free;
-    data->base.clone = &_field_transfer_data_clone;
-    data->field_count = 0;
-
-    _single_field_transfer *field = data->fields;
-    for (i = 0; i < field_count; ++i) {
-        key = PyTuple_GET_ITEM(names, i);
-        tup = PyDict_GetItem(src_dtype->fields, key);
-        if (!PyArg_ParseTuple(tup, "Oi|O", &src_fld_dtype,
-                                                &src_offset, &title)) {
-            NPY_AUXDATA_FREE((NpyAuxData *)data);
-            return NPY_FAIL;
-        }
-        if (PyDataType_REFCHK(src_fld_dtype)) {
-            NPY_ARRAYMETHOD_FLAGS clear_flags;
-            if (get_clear_function(
-                    0, src_stride, src_fld_dtype,
-                    &field->info, &clear_flags) < 0) {
-                NPY_AUXDATA_FREE((NpyAuxData *)data);
-                return NPY_FAIL;
-            }
-            *flags = PyArrayMethod_COMBINED_FLAGS(*flags, clear_flags);
-            field->src_offset = src_offset;
-            data->field_count++;
-            field++;
-        }
-    }
-
-    *out_stransfer = &_strided_to_strided_field_transfer;
-    *out_transferdata = (NpyAuxData *)data;
-
-    return NPY_SUCCEED;
-}
-
 
 /************************* MASKED TRANSFER WRAPPER *************************/
 
@@ -2664,99 +2594,16 @@ _strided_masked_wrapper_transfer_function(
 }
 
 
-/*************************** CLEAR SRC *******************************/
 
+/* A no-op function (currently only used for cleanup purposes really) */
 static int
-_dec_src_ref_nop(
+_cast_no_op(
         PyArrayMethod_Context *NPY_UNUSED(context),
         char *const *NPY_UNUSED(args), const npy_intp *NPY_UNUSED(dimensions),
         const npy_intp *NPY_UNUSED(strides), NpyAuxData *NPY_UNUSED(auxdata))
 {
-    /* NOP */
+    /* Do nothing */
     return 0;
-}
-
-NPY_NO_EXPORT int
-npy_clear_object_strided_loop(
-        PyArrayMethod_Context *NPY_UNUSED(context),
-        char *const *args, const npy_intp *dimensions,
-        const npy_intp *strides, NpyAuxData *NPY_UNUSED(auxdata))
-{
-    char *src = args[0];
-    npy_intp N = dimensions[0];
-    npy_intp stride = strides[0];
-
-    PyObject *src_ref = NULL;
-    while (N > 0) {
-        /* Release the reference in src and set it to NULL */
-        NPY_DT_DBG_REFTRACE("dec src ref (null dst)", src_ref);
-        memcpy(&src_ref, src, sizeof(PyObject *));
-        Py_XDECREF(src_ref);
-        memset(src, 0, sizeof(PyObject *));
-
-        src += stride;
-        --N;
-    }
-    return 0;
-}
-
-
-NPY_NO_EXPORT int
-npy_get_clear_void_and_legacy_user_dtype_loop(
-        PyArrayMethod_Context *context,
-        int aligned, int NPY_UNUSED(move_references),
-        const npy_intp *strides,
-        PyArrayMethod_StridedLoop **out_loop,
-        NpyAuxData **out_transferdata,
-        NPY_ARRAYMETHOD_FLAGS *flags)
-{
-    PyArray_Descr *dtype = context->descriptors[0];
-
-    /* If there are no references, it's a nop (path should not be hit?) */
-    if (!PyDataType_REFCHK(dtype)) {
-        *out_loop = &_dec_src_ref_nop;
-        *out_transferdata = NULL;
-        return 0;
-    }
-
-    if (PyDataType_HASSUBARRAY(dtype)) {
-        PyArray_Dims src_shape = {NULL, -1};
-        npy_intp src_size;
-
-        if (!(PyArray_IntpConverter(dtype->subarray->shape,
-                                            &src_shape))) {
-            PyErr_SetString(PyExc_ValueError,
-                    "invalid subarray shape");
-            return -1;
-        }
-        src_size = PyArray_MultiplyList(src_shape.ptr, src_shape.len);
-        npy_free_cache_dim_obj(src_shape);
-
-        if (get_n_to_n_transfer_function(aligned,
-                strides[0], 0,
-                dtype->subarray->base, NULL, 1, src_size,
-                out_loop, out_transferdata,
-                flags) != NPY_SUCCEED) {
-            return -1;
-        }
-
-        return 0;
-    }
-    /* If there are fields, need to do each field */
-    else if (PyDataType_HASFIELDS(dtype)) {
-        if (get_clear_fields_transfer_function(
-                aligned, strides[0], dtype,
-                out_loop, out_transferdata, flags) < 0) {
-            return -1;
-        }
-        return 0;
-    }
-
-    PyErr_Format(PyExc_RuntimeError,
-            "Internal error, tried to fetch decref function for the "
-            "user dtype '%s' without fields or subarray (legacy support).",
-            dtype);
-    return -1;
 }
 
 
@@ -3082,7 +2929,7 @@ _clear_cast_info_after_get_loop_failure(NPY_cast_info *cast_info)
     /* As public API we could choose to clear auxdata != NULL */
     assert(cast_info->auxdata == NULL);
     /* Set func to be non-null so that `NPY_cats_info_xfree` does not skip */
-    cast_info->func = &_dec_src_ref_nop;
+    cast_info->func = &_cast_no_op;
     NPY_cast_info_xfree(cast_info);
 }
 
@@ -3163,7 +3010,7 @@ define_cast_for_descrs(
         /* Prepare the actual cast (if necessary): */
         if (from_view_offset == 0 && !must_wrap) {
             /* This step is not necessary and can be skipped */
-            castdata.from.func = &_dec_src_ref_nop;  /* avoid NULL */
+            castdata.from.func = &_cast_no_op;  /* avoid NULL */
             NPY_cast_info_xfree(&castdata.from);
         }
         else {
@@ -3202,7 +3049,7 @@ define_cast_for_descrs(
         /* Prepare the actual cast (if necessary): */
         if (to_view_offset == 0 && !must_wrap) {
             /* This step is not necessary and can be skipped. */
-            castdata.to.func = &_dec_src_ref_nop;  /* avoid NULL */
+            castdata.to.func = &_cast_no_op;  /* avoid NULL */
             NPY_cast_info_xfree(&castdata.to);
         }
         else {
