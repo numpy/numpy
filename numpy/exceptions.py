@@ -62,8 +62,6 @@ class ComplexWarning(RuntimeWarning):
     """
     pass
 
-
-
 @_set_module("numpy")
 class ModuleDeprecationWarning(DeprecationWarning):
     """Module deprecation warning.
