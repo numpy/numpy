@@ -1830,7 +1830,7 @@ _parse_axes_arg(PyUFuncObject *ufunc, int op_core_num_dims[], PyObject *axes,
             if (PyTuple_Size(op_axes_tuple) != op_ncore) {
                 /* must have been a tuple with too many entries. */
                 npy_cache_import(
-                        "numpy.core._exceptions", "AxisError", &AxisError_cls);
+                        "numpy.exceptions", "AxisError", &AxisError_cls);
                 if (AxisError_cls == NULL) {
                     return -1;
                 }
@@ -1858,8 +1858,7 @@ _parse_axes_arg(PyUFuncObject *ufunc, int op_core_num_dims[], PyObject *axes,
                 return -1;
             }
             /* If it is a single integer, inform user that more are needed */
-            npy_cache_import(
-                    "numpy.core._exceptions", "AxisError", &AxisError_cls);
+            npy_cache_import("numpy.exceptions", "AxisError", &AxisError_cls);
             if (AxisError_cls == NULL) {
                 return -1;
             }
