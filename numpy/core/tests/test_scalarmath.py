@@ -4,7 +4,7 @@ import warnings
 import itertools
 import operator
 import platform
-from numpy.compat import _pep440
+from numpy._utils import _pep440
 import pytest
 from hypothesis import given, settings
 from hypothesis.strategies import sampled_from

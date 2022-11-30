@@ -3,6 +3,7 @@ import re
 import struct
 import sys
 import textwrap
+import argparse
 
 Zero = "PyLong_FromLong(0)"
 One = "PyLong_FromLong(1)"
@@ -1224,8 +1225,29 @@ def make_code(funcdict, filename):
     return code
 
 
-if __name__ == "__main__":
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-o",
+        "--outfile",
+        type=str,
+        help="Path to the output directory"
+    )
+    args = parser.parse_args()
+
+    # used to insert the name of this file into the generated file
     filename = __file__
     code = make_code(defdict, filename)
-    with open('__umath_generated.c', 'w') as fid:
-        fid.write(code)
+
+    if not args.outfile:
+        # This is the distutils-based build
+        outfile = '__umath_generated.c'
+    else:
+        outfile = os.path.join(os.getcwd(), args.outfile)
+
+    with open(outfile, 'w') as f:
+        f.write(code)
+
+
+if __name__ == "__main__":
+    main()

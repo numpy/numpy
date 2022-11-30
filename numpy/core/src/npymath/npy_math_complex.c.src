@@ -72,7 +72,7 @@ static const @ctype@ c_1@c@ = {1.0@C@, 0.0};
  * These are necessary because we do not count on using a
  * C99 compiler.
  *=========================================================*/
-static NPY_INLINE
+static inline
 @ctype@
 cmul@c@(@ctype@ a, @ctype@ b)
 {
@@ -84,7 +84,7 @@ cmul@c@(@ctype@ a, @ctype@ b)
     return npy_cpack@c@(ar*br - ai*bi, ar*bi + ai*br);
 }
 
-static NPY_INLINE
+static inline
 @ctype@
 cdiv@c@(@ctype@ a, @ctype@ b)
 {
@@ -573,7 +573,7 @@ npy_cpow@c@ (@ctype@ a, @ctype@ b)
  * Function f(a, b, hypot_a_b) = (hypot(a, b) - b) / 2.
  * Pass hypot(a, b) as the third argument.
  */
-static NPY_INLINE @type@
+static inline @type@
 _f@c@(@type@ a, @type@ b, @type@ hypot_a_b)
 {
     if (b < 0) {
@@ -595,7 +595,7 @@ _f@c@(@type@ a, @type@ b, @type@ hypot_a_b)
  * If returning sqrt_A2my2 has potential to result in an underflow, it is
  * rescaled, and new_y is similarly rescaled.
  */
-static NPY_INLINE void
+static inline void
 _do_hard_work@c@(@type@ x, @type@ y, @type@ *rx,
     npy_int *B_is_usable, @type@ *B, @type@ *sqrt_A2my2, @type@ *new_y)
 {
@@ -739,7 +739,7 @@ _do_hard_work@c@(@type@ x, @type@ y, @type@ *rx,
 /*
  * Optimized version of clog() for |z| finite and larger than ~RECIP_EPSILON.
  */
-static NPY_INLINE void
+static inline void
 _clog_for_large_values@c@(@type@ x, @type@ y,
     @type@ *rr, @type@ *ri)
 {
@@ -1040,7 +1040,7 @@ npy_casinh@c@(@ctype@ z)
  * Assumes y is non-negative.
  * Assumes fabs(x) >= DBL_EPSILON.
  */
-static NPY_INLINE @type@
+static inline @type@
 _sum_squares@c@(@type@ x, @type@ y)
 {
 #if @precision@ == 1
@@ -1077,7 +1077,7 @@ const npy_longdouble SQRT_MIN = 1.8336038675548471656e-2466l;
 #if @precision@ == 1
 #define BIAS (FLT_MAX_EXP - 1)
 #define CUTOFF (FLT_MANT_DIG / 2 + 1)
-static NPY_INLINE npy_float
+static inline npy_float
 _real_part_reciprocalf(npy_float x, npy_float y)
 {
     npy_float scale;
@@ -1110,7 +1110,7 @@ _real_part_reciprocalf(npy_float x, npy_float y)
 #define BIAS (DBL_MAX_EXP - 1)
 /*  more guard digits are useful iff there is extra precision. */
 #define CUTOFF (DBL_MANT_DIG / 2 + 1)  /* just half or 1 guard digit */
-static NPY_INLINE npy_double
+static inline npy_double
 _real_part_reciprocal(npy_double x, npy_double y)
 {
     npy_double scale;
@@ -1152,7 +1152,7 @@ _real_part_reciprocal(npy_double x, npy_double y)
 
 #define BIAS (LDBL_MAX_EXP - 1)
 #define CUTOFF (LDBL_MANT_DIG / 2 + 1)
-static NPY_INLINE npy_longdouble
+static inline npy_longdouble
 _real_part_reciprocall(npy_longdouble x,
     npy_longdouble y)
 {
@@ -1185,7 +1185,7 @@ _real_part_reciprocall(npy_longdouble x,
 
 #else
 
-static NPY_INLINE npy_longdouble
+static inline npy_longdouble
 _real_part_reciprocall(npy_longdouble x,
     npy_longdouble y)
 {

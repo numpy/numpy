@@ -131,6 +131,7 @@
 #endif
 #endif
 
+/* `NPY_INLINE` kept for backwards compatibility; use `inline` instead */
 #if defined(_MSC_VER) && !defined(__clang__)
     #define NPY_INLINE __inline
 /* clang included here to handle clang-cl on Windows */
@@ -147,7 +148,7 @@
 #ifdef _MSC_VER
     #define NPY_FINLINE static __forceinline
 #elif defined(__GNUC__)
-    #define NPY_FINLINE static NPY_INLINE __attribute__((always_inline))
+    #define NPY_FINLINE static inline __attribute__((always_inline))
 #else
     #define NPY_FINLINE static
 #endif

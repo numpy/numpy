@@ -99,7 +99,7 @@ default_resolve_descriptors(
 }
 
 
-NPY_INLINE static int
+static inline int
 is_contiguous(
         npy_intp const *strides, PyArray_Descr *const *descriptors, int nargs)
 {

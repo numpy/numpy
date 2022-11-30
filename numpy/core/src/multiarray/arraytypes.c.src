@@ -55,7 +55,7 @@
  * This is especially important for nonzero and copyswap, which may run with
  * the GIL released.
  */
-static NPY_INLINE PyArrayObject_fields
+static inline PyArrayObject_fields
 get_dummy_stack_array(PyArrayObject *orig)
 {
     PyArrayObject_fields new_fields;
@@ -68,7 +68,7 @@ get_dummy_stack_array(PyArrayObject *orig)
 
 
 /* check for sequences, but ignore the types numpy considers scalars */
-static NPY_INLINE npy_bool
+static inline npy_bool
 PySequence_NoString_Check(PyObject *op) {
     return
         PySequence_Check(op) &&
@@ -525,7 +525,7 @@ NPY_NO_EXPORT int
 
 /**end repeat**/
 
-static NPY_INLINE npy_longdouble
+static inline npy_longdouble
 string_to_long_double(PyObject*op)
 {
     char *s;
@@ -2152,7 +2152,7 @@ static int
  */
 
 
-static NPY_INLINE void
+static inline void
 _basic_copyn(void *dst, npy_intp dstride, void *src, npy_intp sstride,
              npy_intp n, int elsize) {
     if (src == NULL) {
@@ -2167,7 +2167,7 @@ _basic_copyn(void *dst, npy_intp dstride, void *src, npy_intp sstride,
     }
 }
 
-static NPY_INLINE void
+static inline void
 _basic_copy(void *dst, void *src, int elsize) {
     if (src == NULL) {
         return;

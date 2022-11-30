@@ -13,7 +13,7 @@
 #include "common.h"
 
 
-static NPY_INLINE PyArray_Descr *
+static inline PyArray_Descr *
 int_default_descriptor(PyArray_DTypeMeta* NPY_UNUSED(cls))
 {
     return PyArray_DescrFromType(NPY_LONG);
@@ -51,7 +51,7 @@ discover_descriptor_from_pyint(
 }
 
 
-static NPY_INLINE PyArray_Descr *
+static inline PyArray_Descr *
 float_default_descriptor(PyArray_DTypeMeta* NPY_UNUSED(cls))
 {
     return PyArray_DescrFromType(NPY_DOUBLE);
@@ -66,7 +66,7 @@ discover_descriptor_from_pyfloat(
     return PyArray_DescrFromType(NPY_DOUBLE);
 }
 
-static NPY_INLINE PyArray_Descr *
+static inline PyArray_Descr *
 complex_default_descriptor(PyArray_DTypeMeta* NPY_UNUSED(cls))
 {
     return PyArray_DescrFromType(NPY_CDOUBLE);

@@ -58,7 +58,7 @@
 
 
 /* forward declaration */
-static NPY_INLINE PyObject *
+static inline PyObject *
 promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
         PyArrayObject *const ops[],
         PyArray_DTypeMeta *signature[],
@@ -725,7 +725,7 @@ add_and_return_legacy_wrapping_ufunc_loop(PyUFuncObject *ufunc,
  * If value-based promotion is necessary, this is handled ahead of time by
  * `promote_and_get_ufuncimpl`.
  */
-static NPY_INLINE PyObject *
+static inline PyObject *
 promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
         PyArrayObject *const ops[],
         PyArray_DTypeMeta *signature[],
