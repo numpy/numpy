@@ -120,6 +120,7 @@ tempita = generator(tempita_cli,
 pure_subdirs = [
   '_pyinstaller',
   '_typing',
+  '_utils',
   'array_api',
   'compat',
   'distutils',
