@@ -3,6 +3,7 @@ import sys
 import math
 import warnings
 
+from .._utils import set_module
 import numpy.core.numeric as _nx
 from numpy.core.numeric import (
     asarray, ScalarType, array, alltrue, cumprod, arange, ndim
@@ -12,7 +13,6 @@ from numpy.core.numerictypes import find_common_type, issubdtype
 import numpy.matrixlib as matrixlib
 from .function_base import diff
 from numpy.core.multiarray import ravel_multi_index, unravel_index
-from numpy.core.overrides import set_module
 from numpy.core import overrides, linspace
 from numpy.lib.stride_tricks import as_strided
 

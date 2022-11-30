@@ -149,7 +149,7 @@ check_and_adjust_axis_msg(int *axis, int ndim, PyObject *msg_prefix)
         static PyObject *AxisError_cls = NULL;
         PyObject *exc;
 
-        npy_cache_import("numpy.core._exceptions", "AxisError", &AxisError_cls);
+        npy_cache_import("numpy.exceptions", "AxisError", &AxisError_cls);
         if (AxisError_cls == NULL) {
             return -1;
         }

@@ -95,6 +95,8 @@ python_sources = [
   'ctypeslib.py',
   'ctypeslib.pyi',
   'dual.py',
+  'exceptions.py',
+  'exceptions.pyi',
   'matlib.py',
   'py.typed',
   'version.py'
@@ -120,6 +122,7 @@ tempita = generator(tempita_cli,
 pure_subdirs = [
   '_pyinstaller',
   '_typing',
+  '_utils',
   'array_api',
   'compat',
   'distutils',

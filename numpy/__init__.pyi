@@ -204,6 +204,7 @@ from typing import (
 # Ensures that the stubs are picked up
 from numpy import (
     ctypeslib as ctypeslib,
+    exceptions as exceptions,
     fft as fft,
     lib as lib,
     linalg as linalg,

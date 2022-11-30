@@ -1,5 +1,6 @@
 [build-system]
-# Uncomment this line in order to build with Meson by default
+# Uncomment this line, the `meson-python` requires line, and the [project] and
+# [project.urls] tables below in order to build with Meson by default
 build-backend = "mesonpy"
 requires = [
     # setuptools, wheel and Cython are needed for the setup.py based build

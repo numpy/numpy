@@ -106,10 +106,10 @@ Exceptions to this rule are documented.
 import sys
 import warnings
 
-from ._globals import (
-    ModuleDeprecationWarning, VisibleDeprecationWarning,
-    _NoValue, _CopyMode
-)
+from ._globals import _NoValue, _CopyMode
+from .exceptions import (
+    ComplexWarning, ModuleDeprecationWarning, VisibleDeprecationWarning,
+    TooHardError, AxisError)
 
 # We first need to detect if we're being called as part of the numpy setup
 # procedure itself in a reliable manner.
@@ -129,8 +129,9 @@ else:
         your python interpreter from there."""
         raise ImportError(msg) from e
 
-    __all__ = ['ModuleDeprecationWarning',
-               'VisibleDeprecationWarning']
+    __all__ = [
+        'ModuleDeprecationWarning', 'VisibleDeprecationWarning',
+        'ComplexWarning', 'TooHardError', 'AxisError']
 
     # mapping of {name: (value, deprecation_msg)}
     __deprecated_attrs__ = {}

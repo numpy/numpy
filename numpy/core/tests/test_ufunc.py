@@ -972,10 +972,10 @@ class TestUfunc:
         assert_raises(TypeError, inner1d, a, b, axes=[None, 1])
         # cannot pass an index unless there is only one dimension
         # (output is wrong in this case)
-        assert_raises(TypeError, inner1d, a, b, axes=[-1, -1, -1])
+        assert_raises(np.AxisError, inner1d, a, b, axes=[-1, -1, -1])
         # or pass in generally the wrong number of axes
-        assert_raises(ValueError, inner1d, a, b, axes=[-1, -1, (-1,)])
-        assert_raises(ValueError, inner1d, a, b, axes=[-1, (-2, -1), ()])
+        assert_raises(np.AxisError, inner1d, a, b, axes=[-1, -1, (-1,)])
+        assert_raises(np.AxisError, inner1d, a, b, axes=[-1, (-2, -1), ()])
         # axes need to have same length.
         assert_raises(ValueError, inner1d, a, b, axes=[0, 1])
 
@@ -1015,14 +1015,16 @@ class TestUfunc:
         # list needs to have right length
         assert_raises(ValueError, mm, a, b, axes=[])
         assert_raises(ValueError, mm, a, b, axes=[(-2, -1)])
-        # list should contain tuples for multiple axes
-        assert_raises(TypeError, mm, a, b, axes=[-1, -1, -1])
-        assert_raises(TypeError, mm, a, b, axes=[(-2, -1), (-2, -1), -1])
+        # list should not contain None, or lists
+        assert_raises(TypeError, mm, a, b, axes=[None, None, None])
         assert_raises(TypeError,
                       mm, a, b, axes=[[-2, -1], [-2, -1], [-2, -1]])
         assert_raises(TypeError,
                       mm, a, b, axes=[(-2, -1), (-2, -1), [-2, -1]])
         assert_raises(TypeError, mm, a, b, axes=[(-2, -1), (-2, -1), None])
+        # single integers are AxisErrors if more are required
+        assert_raises(np.AxisError, mm, a, b, axes=[-1, -1, -1])
+        assert_raises(np.AxisError, mm, a, b, axes=[(-2, -1), (-2, -1), -1])
         # tuples should not have duplicated values
         assert_raises(ValueError, mm, a, b, axes=[(-2, -1), (-2, -1), (-2, -2)])
         # arrays should have enough axes.

@@ -60,14 +60,6 @@ class CallOnceOnly:
             out = copy.deepcopy(pickle.loads(self._check_types))
         return out
 
-    def check_ieee_macros(self, *a, **kw):
-        if self._check_ieee_macros is None:
-            out = check_ieee_macros(*a, **kw)
-            self._check_ieee_macros = pickle.dumps(out)
-        else:
-            out = copy.deepcopy(pickle.loads(self._check_ieee_macros))
-        return out
-
     def check_complex(self, *a, **kw):
         if self._check_complex is None:
             out = check_complex(*a, **kw)
@@ -293,43 +285,6 @@ def check_complex(config, mathlibs):
 
     return priv, pub
 
-def check_ieee_macros(config):
-    priv = []
-    pub = []
-
-    macros = []
-
-    def _add_decl(f):
-        priv.append(fname2def("decl_%s" % f))
-        pub.append('NPY_%s' % fname2def("decl_%s" % f))
-
-    # XXX: hack to circumvent cpp pollution from python: python put its
-    # config.h in the public namespace, so we have a clash for the common
-    # functions we test. We remove every function tested by python's
-    # autoconf, hoping their own test are correct
-    _macros = ["isnan", "isinf", "signbit", "isfinite"]
-    for f in _macros:
-        py_symbol = fname2def("decl_%s" % f)
-        already_declared = config.check_decl(py_symbol,
-                headers=["Python.h", "math.h"])
-        if already_declared:
-            if config.check_macro_true(py_symbol,
-                    headers=["Python.h", "math.h"]):
-                pub.append('NPY_%s' % fname2def("decl_%s" % f))
-        else:
-            macros.append(f)
-    # Normally, isnan and isinf are macro (C99), but some platforms only have
-    # func, or both func and macro version. Check for macro only, and define
-    # replacement ones if not found.
-    # Note: including Python.h is necessary because it modifies some math.h
-    # definitions
-    for f in macros:
-        st = config.check_decl(f, headers=["Python.h", "math.h"])
-        if st:
-            _add_decl(f)
-
-    return priv, pub
-
 def check_types(config_cmd, ext, build_dir):
     private_defines = []
     public_defines = []
@@ -510,12 +465,11 @@ def configuration(parent_package='',top_path=None):
             moredefs.append(('MATHLIB', ','.join(mathlibs)))
 
             check_math_capabilities(config_cmd, ext, moredefs, mathlibs)
-            moredefs.extend(cocache.check_ieee_macros(config_cmd)[0])
             moredefs.extend(cocache.check_complex(config_cmd, mathlibs)[0])
 
             # Signal check
             if is_npy_no_signal():
-                moredefs.append('__NPY_PRIVATE_NO_SIGNAL')
+                moredefs.append('NPY_NO_SIGNAL')
 
             # Windows checks
             if sys.platform == 'win32' or os.name == 'nt':
@@ -629,7 +583,6 @@ def configuration(parent_package='',top_path=None):
                 moredefs.append(('NPY_NO_SMP', 0))
 
             mathlibs = check_mathlib(config_cmd)
-            moredefs.extend(cocache.check_ieee_macros(config_cmd)[1])
             moredefs.extend(cocache.check_complex(config_cmd, mathlibs)[1])
 
             if NPY_RELAXED_STRIDES_DEBUG:
@@ -710,8 +663,7 @@ def configuration(parent_package='',top_path=None):
 
     config.numpy_include_dirs.extend(config.paths('include'))
 
-    deps = [join('src', 'npymath', '_signbit.c'),
-            join('include', 'numpy', '*object.h'),
+    deps = [join('include', 'numpy', '*object.h'),
             join(codegen_dir, 'genapi.py'),
             ]
 
@@ -776,7 +728,11 @@ def configuration(parent_package='',top_path=None):
                        # join('src', 'npymath', 'ieee754.cpp'),
                        join('src', 'npymath', 'ieee754.c.src'),
                        join('src', 'npymath', 'npy_math_complex.c.src'),
-                       join('src', 'npymath', 'halffloat.c')
+                       join('src', 'npymath', 'halffloat.c'),
+                       # Remove this once scipy macos arm64 build correctly
+                       # links to the arm64 npymath library,
+                       # see gh-22673
+                       join('src', 'npymath', 'arm64_exports.c'),
                        ]
 
     config.add_installed_library('npymath',
