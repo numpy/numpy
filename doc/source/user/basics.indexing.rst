@@ -294,10 +294,6 @@ basic slicing that returns a :term:`view`).
    the former will trigger advanced indexing. Be sure to understand
    why this occurs.
 
-   Also recognize that ``x[[1, 2, 3]]`` will trigger advanced indexing,
-   whereas due to the deprecated Numeric compatibility mentioned above,
-   ``x[[1, 2, slice(None)]]`` will trigger basic slicing.
-
 Integer array indexing
 ~~~~~~~~~~~~~~~~~~~~~~
 
