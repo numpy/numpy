@@ -4821,7 +4821,7 @@ def trapz(y, x=None, dx=1.0, axis=-1):
 
     Numerical integration of a simple function on an interval:
     
-    >>> x = np.linspace(0, 1)
+    >>> x = np.linspace(0, 1, num=50)
     >>> y = x**2
     >>> np.trapz(y, x)
     0.33340274885464394
