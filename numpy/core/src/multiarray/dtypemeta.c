@@ -617,6 +617,12 @@ string_unicode_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
 static PyArray_DTypeMeta *
 datetime_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
 {
+    /*
+     * Timedelta/datetime shouldn't actuall promote at all.  That they
+     * currently do means that we need additional hacks in the comparison
+     * type resolver.  For comparisons we have to make sure we reject it
+     * nicely in order to return an array of True/False values.
+     */
     if (cls->type_num == NPY_DATETIME && other->type_num == NPY_TIMEDELTA) {
         /*
          * TODO: We actually currently do allow promotion here. This is

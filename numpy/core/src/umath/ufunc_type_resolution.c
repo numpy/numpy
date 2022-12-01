@@ -358,13 +358,24 @@ PyUFunc_SimpleBinaryComparisonTypeResolver(PyUFuncObject *ufunc,
     }
 
     if (type_tup == NULL) {
+        if (PyArray_ISDATETIME(operands[0])
+                && PyArray_ISDATETIME(operands[1])
+                && type_num1 != type_num2) {
+            /*
+             * Reject mixed datetime and timedelta explictly, this was always
+             * implicitly rejected because casting fails (except with
+             * `casting="unsafe"` admittedly).
+             * This is required to ensure that `==` and `!=` can correctly
+             * detect that they should return a result array of False/True.
+             */
+            return raise_binary_type_reso_error(ufunc, operands);
+        }
         /*
-         * DEPRECATED NumPy 1.20, 2020-12.
-         * This check is required to avoid the FutureWarning that
-         * ResultType will give for number->string promotions.
+         * This check is required to avoid a potential FutureWarning that
+         * ResultType would give for number->string promotions.
          * (We never supported flexible dtypes here.)
          */
-        if (!PyArray_ISFLEXIBLE(operands[0]) &&
+        else if (!PyArray_ISFLEXIBLE(operands[0]) &&
                 !PyArray_ISFLEXIBLE(operands[1])) {
             out_dtypes[0] = PyArray_ResultType(2, operands, 0, NULL);
             if (out_dtypes[0] == NULL) {

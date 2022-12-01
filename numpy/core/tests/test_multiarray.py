@@ -9518,6 +9518,34 @@ def test_equal_subclass_no_override(op, dt1, dt2):
     assert MyArr.called_wrap == 2
 
 
+@pytest.mark.parametrize(["dt1", "dt2"], [
+        ("M8[ns]", "d"),
+        # Note: timedelta currently promotes (and always did) :(
+        #       so it does not line in here.
+        ("M8[s]", "m8[s]"),
+        ("S5", "U5"),
+        # Structured/void dtypes have explicit paths not tested here.
+])
+def test_no_loop_gives_all_true_or_false(dt1, dt2):
+    # Make sure they broadcast to test result shape, use random values, since
+    # the actual value should be ignored
+    arr1 = np.random.randint(5, size=100).astype(dt1)
+    arr2 = np.random.randint(5, size=99)[:, None].astype(dt2)
+
+    res = arr1 == arr2
+    assert res.shape == (99, 100)
+    assert res.dtype == bool
+    assert not res.any()
+
+    res = arr1 != arr2
+    assert res.shape == (99, 100)
+    assert res.dtype == bool
+    assert res.all()
+
+    with pytest.raises(np.core._exceptions._UFuncNoLoopError):
+        arr1 > arr2
+
+
 @pytest.mark.parametrize(
     ["fun", "npfun"],
     [
