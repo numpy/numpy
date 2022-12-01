@@ -2,11 +2,15 @@
 Contributors
 ============
 
-A total of 174 people contributed to this release.  People with a "+" by their
+A total of 175 people contributed to this release.  People with a "+" by their
 names contributed a patch for the first time.
 
 * @DWesl
+* @amagicmuffin +
+* @dg3192 +
 * @h-vetinari
+* @juztamau5 +
+* @swagatip +
 * Aaron Meurer
 * Aayush Agrawal +
 * Adam Knapp +
@@ -14,7 +18,7 @@ names contributed a patch for the first time.
 * Al-Baraa El-Hag
 * Alban Desmaison +
 * Ales Crocaro +
-* Alex +
+* Alex Low +
 * Alexander Grund +
 * Alexander Kanavin +
 * Andras Deak
@@ -62,6 +66,7 @@ names contributed a patch for the first time.
 * Jake Close +
 * Jarrod Millman
 * Jason Thai
+* JessePires +
 * Jessé Pires +
 * Jhonatan Cunha +
 * Jingxuan He +
@@ -101,7 +106,6 @@ names contributed a patch for the first time.
 * Mike Toews
 * Miki Watanabe +
 * Miles Cranmer +
-* MilesCranmer +
 * Monika Kubek +
 * Muhammad Jarir Kanji +
 * Mukulika Pahari
@@ -111,13 +115,14 @@ names contributed a patch for the first time.
 * Navpreet Singh +
 * Noritada Kobayashi +
 * Oleksiy Kononenko +
-* Omar +
+* Omar Ali +
 * Pal Barta +
 * Pamphile Roy
 * Patrick Hoefler +
 * Pearu Peterson
 * Pedro Nacht +
 * Petar Mlinarić +
+* Peter Hawkins
 * Pey Lian Lim
 * Pieter Eendebak
 * Pradipta Ghosh
@@ -154,6 +159,7 @@ names contributed a patch for the first time.
 * Shreyas Joshi +
 * Sicheng Zeng +
 * Simran Makandar +
+* Shuangchi He +
 * Srimukh Sripada +
 * Stefan van der Walt
 * Stefanie Molin +
@@ -171,19 +177,14 @@ names contributed a patch for the first time.
 * William Stein +
 * XinRu Lin +
 * Yin Li +
-* Yulv-git +
 * Yunika Bajracharya +
 * Zachary Blackwood +
-* amagicmuffin +
-* dg3192 +
-* juztamau5 +
-* swagatip +
 * 渡邉 美希 +
 
 Pull requests merged
 ====================
 
-A total of 420 pull requests were merged for this release.
+A total of 430 pull requests were merged for this release.
 
 * `#12065 <https://github.com/numpy/numpy/pull/12065>`__: API: Optimize np.isin and np.in1d for integer arrays and add...
 * `#15782 <https://github.com/numpy/numpy/pull/15782>`__: ENH: complete the 'vars' list of a module
@@ -605,3 +606,13 @@ A total of 420 pull requests were merged for this release.
 * `#22634 <https://github.com/numpy/numpy/pull/22634>`__: CI: Increase travis timeout to 20 minutes.
 * `#22636 <https://github.com/numpy/numpy/pull/22636>`__: CI: Increase travis timeout to 30 minutes (2).
 * `#22639 <https://github.com/numpy/numpy/pull/22639>`__: DOC: Remove traces of interrupt handling utilities
+* `#22662 <https://github.com/numpy/numpy/pull/22662>`__: rel: prepare for the numpy 1.24.0rc1 release.
+* `#22665 <https://github.com/numpy/numpy/pull/22665>`__: MAINT: Fix 1.24.0 release note markup.
+* `#22697 <https://github.com/numpy/numpy/pull/22697>`__: MAINT: Rename symbols in textreading/ that may clash when statically...
+* `#22698 <https://github.com/numpy/numpy/pull/22698>`__: MAINT: check user-defined dtype has an ensure_canonical implementation
+* `#22699 <https://github.com/numpy/numpy/pull/22699>`__: BUG: Ensure string aliases "int0", etc. remain valid for now
+* `#22700 <https://github.com/numpy/numpy/pull/22700>`__: BLD: revert function() -> #define for 3 npymath functions
+* `#22702 <https://github.com/numpy/numpy/pull/22702>`__: MAINT: pin ubuntu and python for emscripten
+* `#22716 <https://github.com/numpy/numpy/pull/22716>`__: BLD, CI: Use cirrus for building aarch64 wheels
+* `#22717 <https://github.com/numpy/numpy/pull/22717>`__: TST: Skip when numba/numpy compat issues cause SystemError
+* `#22719 <https://github.com/numpy/numpy/pull/22719>`__: CI: Make benchmark asv run quick to only check that benchmarks...

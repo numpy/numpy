@@ -8,11 +8,14 @@
 # This file is up-to-date if the command git log --format="%aN <%aE>" | sort -u
 # gives no duplicates.
 
+@amagicmuffin <2014wcheng@gmail.com>
 @8bitmp3 <19637339+8bitmp3@users.noreply.github.com>
+@dg3192 <113710955+dg3192@users.noreply.github.com>
 @DWesl <22566757+DWesl@users.noreply.github.com>
 @Endolith <endolith@gmail.com>
 @GalaxySnail <ylc991@163.com>
 @Illviljan <14371165+Illviljan@users.noreply.github.com>
+@juztamau5 <juztamau5@gmail.com>
 @LSchroefl <65246829+LSchroefl@users.noreply.github.com>
 @Lbogula <bogulala7@gmail.com>
 @Lisa <34400837+lyzlisa@users.noreply.github.com>
@@ -59,6 +62,7 @@ Alex Griffing <argriffi@ncsu.edu>
 Alex Griffing <argriffi@ncsu.edu> <argriffing@gmail.com>
 Alex Griffing <argriffi@ncsu.edu> <argriffing@users.noreply.github.com>
 Alex Henrie <alexhenrie24@gmail.com> <alex.henrie@utah.edu>
+Alex Low <aleksandrosansan@gmail.com>
 Alex Rogozhnikov <iamfullofspam@gmail.com> <arogozhnikov@users.noreply.github.com>
 Alex Thomas <alexthomas93@users.noreply.github.com>
 Alexander Belopolsky <abalkin@enlnt.com>
@@ -392,6 +396,7 @@ Michael Schnaitter <schnaitterm@knights.ucf.edu> <schnaitterm@users.noreply.gith
 Michael Seifert <michaelseifert04@yahoo.de>
 Michel Fruchart <michel.fruchart@ens-lyon.org> <fruchart@users.noreply.github.com>
 Mike Toews <mwtoews@gmail.com>
+Miles Cranmer <miles.cranmer@gmail.com>
 Mircea Akos Bruma <bruma.mircea.a@gmail.com>
 Mircea Akos Bruma <bruma.mircea.a@gmail.com> <akos@debian-gnu-linux-vm.localdomain>
 Mitchell Faas <Faas.Mitchell@gmail.com> <35742861+Mitchell-Faas@users.noreply.github.com>
@@ -410,6 +415,7 @@ Nick Minkyu Lee <mknicklee@protonmail.com> fivemok <9394929+fivemok@users.norepl
 Oliver Eberle <oliver_eberle@web.de>
 Oleksiy Kononenko <Oleksiy.S.Kononenko@gmail.com>
 Oleksiy Kononenko <Oleksiy.S.Kononenko@gmail.com> <35204136+oleksiyskononenko@users.noreply.github.com>
+Omar Ali <Omarh90@gmail.com>
 Omid Rajaei <rajaei.net@gmail.com>
 Omid Rajaei <rajaei.net@gmail.com> <89868505+rajaeinet@users.noreply.github.com>
 Ondřej Čertík <ondrej.certik@gmail.com>
@@ -478,6 +484,7 @@ Sebastian Berg <sebastian@sipsolutions.net>
 Sebastian Schleehauf <slepton@posteo.de>
 Serge Guelton <serge.guelton@telecom-bretagne.eu>
 Sergei Vorfolomeev <svorfolomeev@vmssoftware.com> <39548292+vorfol@users.noreply.github.com>
+Shuangchi He <yulvchi@qq.com>
 Shubham Gupta <mastershubham@gmail.com>
 Shubham Gupta <mastershubham@gmail.com> <63910248+shubham11941140@users.noreply.github.com>
 Shekhar Prasad Rajak <shekharrajak@live.com>
