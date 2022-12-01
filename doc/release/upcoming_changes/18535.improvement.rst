@@ -4,5 +4,4 @@ Fix power of complex zero
 for complex numbers.  Note that the value is only defined when
 the real part of the exponent is larger than zero.
 Previously, NaN was returned unless the imaginary part was strictly
-zero.  Now a zero value is returned, with the sign bit
-set.  The return value is either ``0+0j`` or ``0-0j``.
+zero.  The return value is either ``0+0j`` or ``0-0j``.
