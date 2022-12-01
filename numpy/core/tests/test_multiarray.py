@@ -9494,16 +9494,28 @@ def test_equal_override():
 
 
 @pytest.mark.parametrize("op", [operator.eq, operator.ne])
-@ptest.mark.parametrize("dtype", ["i,i", "M8", "d"])
-def test_equal_subclass_no_override(op, dtype):
+@pytest.mark.parametrize(["dt1", "dt2"], [
+        ([("f", "i")], [("f", "i")]),  # structured comparison (successfull)
+        ("M8", "d"),  # impossible comparison: result is all True or False
+        ("d", "d"),  # valid comparison
+        ])
+def test_equal_subclass_no_override(op, dt1, dt2):
+    # Test how the three different possible code-paths deal with subclasses
+
     class MyArr(np.ndarray):
-        pass
+        called_wrap = 0
 
-    numpy_arr = np.arange(5)
-    my_arr = np.zeros(5, dtype=dtype).view(MyArr)
+        def __array_wrap__(self, new):
+            type(self).called_wrap += 1
+            return super().__array_wrap__(new)
 
-    assert op(arr1, arr2).type is MyArry
-    assert op(arr2, arr2).type is MyArry
+    numpy_arr = np.zeros(5, dtype=dt1)
+    my_arr = np.zeros(5, dtype=dt2).view(MyArr)
+
+    assert type(op(numpy_arr, my_arr)) is MyArr
+    assert type(op(my_arr, numpy_arr)) is MyArr
+    # We expect 2 calls (more if there were more fields):
+    assert MyArr.called_wrap == 2
 
 
 @pytest.mark.parametrize(
