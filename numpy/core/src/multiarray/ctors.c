@@ -1766,7 +1766,8 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
     }
 
     if (cache == NULL && newtype != NULL &&
-            PyDataType_ISSIGNED(newtype) && PyArray_IsScalar(op, Generic)) {
+            PyDataType_ISSIGNED(dtype) &&
+            PyArray_IsScalar(op, Generic)) {
         assert(ndim == 0);
         /*
          * This is an (possible) inconsistency where:
@@ -3242,7 +3243,7 @@ _calc_length(PyObject *start, PyObject *stop, PyObject *step, PyObject **next, i
 NPY_NO_EXPORT PyObject *
 PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr *dtype)
 {
-    PyArrayObject *range;
+    PyArrayObject *range = NULL;
     PyArray_ArrFuncs *funcs;
     PyObject *next = NULL;
     PyArray_Descr *native = NULL;
@@ -3402,6 +3403,7 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
     Py_XDECREF(stop);
     Py_XDECREF(step);
     Py_XDECREF(next);
+    Py_XDECREF(range);
     return NULL;
 }
 

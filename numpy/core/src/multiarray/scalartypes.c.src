@@ -3239,6 +3239,9 @@ void_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     if (descr == NULL) {
         /* Use the "size-less" void dtype to discover the size. */
         descr = PyArray_DescrNewFromType(NPY_VOID);
+        if (descr == NULL) {
+            return NULL;
+        }
     }
     else if (descr->type_num != NPY_VOID || PyDataType_HASSUBARRAY(descr)) {
         /* we reject subarrays, since subarray scalars do not exist. */
@@ -3246,10 +3249,8 @@ void_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
                 "void: descr must be a `void` dtype that is not "
                 "a subarray dtype (structured or unstructured). "
                 "Got '%.100R'.", descr);
+        Py_DECREF(descr);
         return NULL;
-    }
-    else {
-        Py_INCREF(descr);
     }
 
     arr = PyArray_FromAny(obj, descr, 0, 0, NPY_ARRAY_FORCECAST, NULL);
