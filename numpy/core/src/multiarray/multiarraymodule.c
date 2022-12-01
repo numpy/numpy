@@ -4829,7 +4829,9 @@ initialize_static_globals(void)
     if (npy_InvalidPromotion == NULL) {
         return -1;
     }
-    if (!PyType_IsSubtype(npy_InvalidPromotion, PyExc_TypeError)) {
+    if (!PyType_Check(npy_InvalidPromotion) ||
+            !PyType_IsSubtype((PyTypeObject *)npy_InvalidPromotion,
+                              (PyTypeObject *)PyExc_TypeError)) {
         PyErr_SetString(PyExc_SystemError,
                 "InvalidPromotion must be a TypeError");
         Py_CLEAR(npy_InvalidPromotion);
@@ -4843,7 +4845,9 @@ initialize_static_globals(void)
     if (npy_UFuncNoLoopError == NULL) {
         return -1;
     }
-    if (!PyType_IsSubtype(npy_UFuncNoLoopError, PyExc_TypeError)) {
+    if (!PyType_Check(npy_UFuncNoLoopError) ||
+            !PyType_IsSubtype((PyTypeObject *)npy_UFuncNoLoopError,
+                              (PyTypeObject *)PyExc_TypeError)) {
         PyErr_SetString(PyExc_SystemError,
                 "_UFuncNoLoopError must be a TypeError");
         Py_CLEAR(npy_UFuncNoLoopError);
