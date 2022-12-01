@@ -4829,30 +4829,11 @@ initialize_static_globals(void)
     if (npy_InvalidPromotion == NULL) {
         return -1;
     }
-    if (!PyType_Check(npy_InvalidPromotion) ||
-            !PyType_IsSubtype((PyTypeObject *)npy_InvalidPromotion,
-                              (PyTypeObject *)PyExc_TypeError)) {
-        PyErr_SetString(PyExc_SystemError,
-                "InvalidPromotion must be a TypeError");
-        Py_CLEAR(npy_InvalidPromotion);
-        return -1;
-    }
 
     assert(npy_UFuncNoLoopError == NULL);
     npy_cache_import(
             "numpy.core._exceptions", "_UFuncNoLoopError",
             &npy_UFuncNoLoopError);
-    if (npy_UFuncNoLoopError == NULL) {
-        return -1;
-    }
-    if (!PyType_Check(npy_UFuncNoLoopError) ||
-            !PyType_IsSubtype((PyTypeObject *)npy_UFuncNoLoopError,
-                              (PyTypeObject *)PyExc_TypeError)) {
-        PyErr_SetString(PyExc_SystemError,
-                "_UFuncNoLoopError must be a TypeError");
-        Py_CLEAR(npy_UFuncNoLoopError);
-        return -1;
-    }
 
     return 0;
 }
