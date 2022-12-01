@@ -15,6 +15,7 @@ extern NPY_NO_EXPORT npy_intp REQUIRED_STR_LEN[];
 extern NPY_NO_EXPORT int npy_promotion_state;
 extern NPY_NO_EXPORT PyObject *NO_NEP50_WARNING_CTX;
 extern NPY_NO_EXPORT PyObject *npy_InvalidPromotion;
+extern NPY_NO_EXPORT PyObject *npy_UFuncNoLoopError;
 
 NPY_NO_EXPORT int
 npy_give_promotion_warnings(void);

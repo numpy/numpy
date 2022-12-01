@@ -4836,6 +4836,20 @@ initialize_static_globals(void)
         return -1;
     }
 
+    assert(npy_UFuncNoLoopError == NULL);
+    npy_cache_import(
+            "numpy.core._exceptions", "_UFuncNoLoopError",
+            &npy_UFuncNoLoopError);
+    if (npy_UFuncNoLoopError == NULL) {
+        return -1;
+    }
+    if (!PyType_IsSubtype(npy_UFuncNoLoopError, PyExc_TypeError)) {
+        PyErr_SetString(PyExc_SystemError,
+                "_UFuncNoLoopError must be a TypeError");
+        Py_CLEAR(npy_UFuncNoLoopError);
+        return -1;
+    }
+
     return 0;
 }
 
