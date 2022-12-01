@@ -209,6 +209,12 @@ PyArrayInitDTypeMeta_FromSpec(
         return -1;
     }
 
+    if (NPY_DT_SLOTS(DType)->ensure_canonical == NULL) {
+        PyErr_SetString(PyExc_RuntimeError,
+                        "A DType must provide an ensure_canonical implementation.");
+        return -1;
+    }
+
     /*
      * Now that the spec is read we can check that all required functions were
      * defined by the user.
