@@ -4819,7 +4819,7 @@ def trapz(y, x=None, dx=1.0, axis=-1):
     >>> np.trapz([1,2,3], dx=2)
     8.0
 
-    Estimate the integral :math:`\int)^1 x^2 = 1/3`:
+    Estimate the integral :math:`\int_0^1 x^2 = 1/3`:
     
     >>> x = np.linspace(0, 1, num=50)
     >>> y = x**2
