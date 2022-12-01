@@ -2972,6 +2972,14 @@ class TestPercentile:
         o = np.ones((1,))
         np.percentile(d, 5, None, o, False, 'linear')
 
+    def test_complex(self):
+        arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype=np.dtype('complex256'))
+        assert_raises(ValueError, np.percentile, arr_c, 0.5)
+        arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype=np.dtype('complex128'))
+        assert_raises(ValueError, np.percentile, arr_c, 0.5)
+        arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype=np.dtype('complex64'))
+        assert_raises(ValueError, np.percentile, arr_c, 0.5)
+
     def test_2D(self):
         x = np.array([[1, 1, 1],
                       [1, 1, 1],
@@ -2980,7 +2988,7 @@ class TestPercentile:
                       [1, 1, 1]])
         assert_array_equal(np.percentile(x, 50, axis=0), [1, 1, 1])
 
-    @pytest.mark.parametrize("dtype", np.typecodes["AllFloat"])
+    @pytest.mark.parametrize("dtype", np.typecodes["Float"])
     def test_linear_nan_1D(self, dtype):
         # METHOD 1 of H&F
         arr = np.asarray([15.0, np.NAN, 35.0, 40.0, 50.0], dtype=dtype)
@@ -2997,9 +3005,6 @@ class TestPercentile:
                            (np.float32, np.float32),
                            (np.float64, np.float64),
                            (np.longdouble, np.longdouble),
-                           (np.complex64, np.complex64),
-                           (np.complex128, np.complex128),
-                           (np.clongdouble, np.clongdouble),
                            (np.dtype("O"), np.float64)]
 
     @pytest.mark.parametrize(["input_dtype", "expected_dtype"], H_F_TYPE_CODES)
@@ -3039,7 +3044,7 @@ class TestPercentile:
             np.testing.assert_equal(np.asarray(actual).dtype,
                                     np.dtype(expected_dtype))
 
-    TYPE_CODES = np.typecodes["AllInteger"] + np.typecodes["AllFloat"] + "O"
+    TYPE_CODES = np.typecodes["AllInteger"] + np.typecodes["Float"] + "O"
 
     @pytest.mark.parametrize("dtype", TYPE_CODES)
     def test_lower_higher(self, dtype):
@@ -3048,7 +3053,7 @@ class TestPercentile:
         assert_equal(np.percentile(np.arange(10, dtype=dtype), 50,
                                    method='higher'), 5)
 
-    @pytest.mark.parametrize("dtype", TYPE_CODES)
+    @pytest.mark.parametrize("dtype", np.typecodes["Float"])
     def test_midpoint(self, dtype):
         assert_equal(np.percentile(np.arange(10, dtype=dtype), 51,
                                    method='midpoint'), 4.5)
@@ -3059,7 +3064,7 @@ class TestPercentile:
         assert_equal(np.percentile(np.arange(11, dtype=dtype), 50,
                                    method='midpoint'), 5)
 
-    @pytest.mark.parametrize("dtype", TYPE_CODES)
+    @pytest.mark.parametrize("dtype", np.typecodes["Float"])
     def test_nearest(self, dtype):
         assert_equal(np.percentile(np.arange(10, dtype=dtype), 51,
                                    method='nearest'), 5)
@@ -3489,6 +3494,15 @@ class TestQuantile:
         # repeat with integral input but fractional quantile
         x = np.arange(8)
         assert_equal(np.quantile(x, Fraction(1, 2)), Fraction(7, 2))
+
+    def test_complex(self):
+        #See gh-22652
+        arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype=np.dtype('complex256'))
+        assert_raises(ValueError, np.quantile, arr_c, 0.5)
+        arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype=np.dtype('complex128'))
+        assert_raises(ValueError, np.quantile, arr_c, 0.5)
+        arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype=np.dtype('complex64'))
+        assert_raises(ValueError, np.quantile, arr_c, 0.5)
 
     def test_no_p_overwrite(self):
         # this is worth retesting, because quantile does not make a copy
