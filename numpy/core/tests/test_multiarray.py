@@ -9493,6 +9493,19 @@ def test_equal_override():
         assert_equal(array != my_always_equal, 'ne')
 
 
+@pytest.mark.parametrize("op", [operator.eq, operator.ne])
+@ptest.mark.parametrize("dtype", ["i,i", "M8", "d"])
+def test_equal_subclass_no_override(op, dtype):
+    class MyArr(np.ndarray):
+        pass
+
+    numpy_arr = np.arange(5)
+    my_arr = np.zeros(5, dtype=dtype).view(MyArr)
+
+    assert op(arr1, arr2).type is MyArry
+    assert op(arr2, arr2).type is MyArry
+
+
 @pytest.mark.parametrize(
     ["fun", "npfun"],
     [

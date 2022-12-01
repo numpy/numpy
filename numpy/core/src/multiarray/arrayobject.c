@@ -984,6 +984,16 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
      * we are inside == and !=, then returning an array of True or False
      * makes sense (following Python behavior for `==` and `!=`).
      * Effectively: Both *dtypes* told us that they cannot be compared.
+     *
+     * In theory, the error could be raised from within an object loop, the
+     * solution to that could be pushing this into the ufunc (where we can
+     * distinguish the two easily).  In practice, it seems like it should not
+     * but a huge problem:  The ufunc loop will itself call `==` which should
+     * probably never raise a UFuncNoLoopError.
+     *
+     * TODO: If/once we correctly push structured comparisons into the ufunc
+     *       we could consider pushing this into the ufunc itself as a
+     *       fallback loop (which ignores the input arrays).
      */
     if (result == NULL
             && (cmp_op == Py_EQ || cmp_op == Py_NE)
@@ -1012,10 +1022,8 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
         /*
          * Unfortunately, this path doesn't do the full __array_ufunc__
          * machinery to help out subclasses...
-         * We know that self is the correct subclass (otherwise we would have
-         * deferred).
          */
-        /* Hack warning, use NpyIter to allocate result: */
+        /* Hack warning: using NpyIter to allocate result. */
         PyArrayObject *ops[3] = {self, array_other, NULL};
         npy_uint32 flags = NPY_ITER_ZEROSIZE_OK | NPY_ITER_REFS_OK;
         npy_uint32 op_flags[3] = {
@@ -1042,10 +1050,21 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
             return NULL;
         }
 
-        /* The array is guaranteed to be contiguous, so fill it with 0 or 1 */
+        /*
+         * The array is guaranteed to be newly allocated and thus contiguous,
+         * so simply fill it with 0 or 1.
+         */
         memset(PyArray_BYTES(res), cmp_op == Py_EQ ? 0 : 1, PyArray_NBYTES(res));
 
-        // TODO: Need to wrap (or similar) for subclasses.
+        /* Ensure basic subclass support by wrapping: */
+        if (!PyArray_CheckExact(self)) {
+            /*
+             * If other is also a subclass (with higher priority) we would
+             * already have deferred.  So use `self` for wrapping.  If users
+             * need more, they need to override `==` and `!=`.
+             */
+            Py_SETREF(res, PyArray_SubclassWrap(self, res));
+        }
         return (PyObject *)res;
     }
     return result;
