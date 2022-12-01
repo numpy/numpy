@@ -411,9 +411,7 @@ array_inplace_matrix_multiply(PyArrayObject *self, PyObject *other)
                 "have at least one and the second at least two dimensions.");
         }
     }
-    else {
-        assert(res == (PyObject *)self);
-    }
+
     return res;
 }
 
