@@ -128,10 +128,7 @@ class TestRegression:
         assert_(a[1] == 'auto')
         assert_(a[0] != 'auto')
         b = np.linspace(0, 10, 11)
-        # This should return true for now, but will eventually raise an error:
-        with suppress_warnings() as sup:
-            sup.filter(FutureWarning)
-            assert_(b != 'auto')
+        assert_array_equal(b != 'auto', np.ones(11, dtype=bool))
         assert_(b[0] != 'auto')
 
     def test_unicode_swapping(self):
