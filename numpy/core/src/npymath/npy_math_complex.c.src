@@ -448,7 +448,7 @@ npy_cpow@c@ (@ctype@ a, @ctype@ b)
     /*
      * Checking if in a^b, if b is zero.
      * If a is not zero then by definition of logarithm a^0 is 1.
-     * If a is also zero then as per IEEE 754 0^0 is best defined as 1.
+     * If a is also zero then 0^0 is best defined as 1.
      */
     if (br == 0. && bi == 0.) {
         return npy_cpack@c@(1., 0.);
