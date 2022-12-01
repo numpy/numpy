@@ -1271,6 +1271,13 @@ class TestStructured:
         a = np.zeros((1, 0, 1), [('a', '<f8', (1, 1))])
         assert_equal(a, a)
 
+    @pytest.mark.parametrize("op", [operator.eq, operator.ne])
+    def test_structured_array_comparison_bad_broadcasts(self, op):
+        a = np.zeros(3, dtype='i,i')
+        b = np.array([], dtype="i,i")
+        with pytest.raises(ValueError):
+            op(a, b)
+
     def test_structured_comparisons_with_promotion(self):
         # Check that structured arrays can be compared so long as their
         # dtypes promote fine:
@@ -9542,8 +9549,53 @@ def test_no_loop_gives_all_true_or_false(dt1, dt2):
     assert res.dtype == bool
     assert res.all()
 
+    # incompatible shapes raise though
+    arr2 = np.random.randint(5, size=99).astype(dt2)
+    with pytest.raises(ValueError):
+        arr1 == arr2
+
+    with pytest.raises(ValueError):
+        arr1 != arr2
+
+    # Basic test with another operation:
     with pytest.raises(np.core._exceptions._UFuncNoLoopError):
         arr1 > arr2
+
+
+@pytest.mark.parametrize("op", [
+        operator.eq, operator.ne, operator.le, operator.lt, operator.ge,
+        operator.gt])
+def test_comparisons_forwards_error(op):
+    class NotArray:
+        def __array__(self):
+            raise TypeError("run you fools")
+
+    with pytest.raises(TypeError, match="run you fools"):
+        op(np.arange(2), NotArray())
+
+    with pytest.raises(TypeError, match="run you fools"):
+        op(NotArray(), np.arange(2))
+
+
+def test_richcompare_scalar_boolean_singleton_return():
+    # These are currently guaranteed to be the boolean singletons, but maybe
+    # returning NumPy booleans would also be OK:
+    assert (np.array(0) == "a") is False
+    assert (np.array(0) != "a") is True
+    assert (np.int16(0) == "a") is False
+    assert (np.int16(0) != "a") is True
+
+
+@pytest.mark.parametrize("op", [
+        operator.eq, operator.ne, operator.le, operator.lt, operator.ge,
+        operator.gt])
+def test_ragged_comparison_fails(op):
+    # This needs to convert the internal array to True/False, which fails:
+    a = np.array([1, np.array([1, 2, 3])], dtype=object)
+    b = np.array([1, np.array([1, 2, 3])], dtype=object)
+
+    with pytest.raises(ValueError, match="The truth value.*ambiguous"):
+        op(a, b)
 
 
 @pytest.mark.parametrize(
