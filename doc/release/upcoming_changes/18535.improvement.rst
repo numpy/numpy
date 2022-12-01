@@ -1,6 +1,6 @@
 Fix power of complex zero
 -------------------------
-``np.power`` now returns a IEEE 754-compliant result for ``0^{non-zero}``
+``np.power`` now returns a different result for ``0^{non-zero}``
 for complex numbers.  Note that the value is only defined when
 the real part of the exponent is larger than zero.
 Previously, NaN was returned unless the imaginary part was strictly
