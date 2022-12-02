@@ -443,29 +443,43 @@ npy_cpow@c@ (@ctype@ a, @ctype@ b)
     @type@ bi = npy_cimag@c@(b);
     @ctype@ r;
 
+    /*
+     * Checking if in a^b, if b is zero.
+     * If a is not zero then by definition of logarithm a^0 is 1.
+     * If a is also zero then 0^0 is best defined as 1.
+     */
     if (br == 0. && bi == 0.) {
         return npy_cpack@c@(1., 0.);
     }
-    if (ar == 0. && ai == 0.) {
-        if (br > 0 && bi == 0) {
-            return npy_cpack@c@(0., 0.);
-        }
-        else {
-            volatile @type@ tmp = NPY_INFINITY@C@;
-            /*
-             * NB: there are four complex zeros; c0 = (+-0, +-0), so that
-             * unlike for reals, c0**p, with `p` negative is in general
-             * ill-defined.
-             *
-             *     c0**z with z complex is also ill-defined.
-             */
-            r = npy_cpack@c@(NPY_NAN@C@, NPY_NAN@C@);
-
-            /* Raise invalid */
-            tmp -= NPY_INFINITY@C@;
-            ar = tmp;
-            return r;
-        }
+    /* case 0^b
+     * If a is a complex zero (ai=ar=0), then the result depends 
+     * upon values of br and bi. The result is either:
+     * 0 (in magnitude), undefined or 1.
+     * The later case is for br=bi=0 and independent of ar and ai
+     * but is handled above).
+     */
+    else if (ar == 0. && ai == 0.) {
+        /* 
+         * If the real part of b is positive (br>0) then this is
+         * the zero complex with positive sign on both the
+         * real and imaginary part.
+         */
+         if (br > 0) {
+             return npy_cpack@c@(0., 0.);
+         }
+        /* else we are in the case where the
+         * real part of b is negative (br<0).
+         * Here we should return a complex nan
+         * and raise FloatingPointError: invalid value...
+         */
+         
+         /* Raise invalid value by calling inf - inf*/
+          volatile @type@ tmp = NPY_INFINITY@C@;
+          tmp -= NPY_INFINITY@C@;
+          ar = tmp;
+          
+          r = npy_cpack@c@(NPY_NAN@C@, NPY_NAN@C@);
+          return r;
     }
     if (bi == 0 && (n=(npy_intp)br) == br) {
         if (n == 1) {

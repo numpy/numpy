@@ -1069,6 +1069,32 @@ class TestPower:
                 assert_complex_equal(np.power(zero, -p), cnan)
             assert_complex_equal(np.power(zero, -1+0.2j), cnan)
 
+    # Testing 0^{Non-zero} issue 18378
+    def test_zero_power_nonzero(self):
+        zero = np.array([0.0+0.0j])
+        cnan = np.array([complex(np.nan, np.nan)])
+
+        def assert_complex_equal(x, y):
+            assert_array_equal(x.real, y.real)
+            assert_array_equal(x.imag, y.imag)
+
+        #Complex powers with positive real part will not generate a warning
+        assert_complex_equal(np.power(zero, 1+4j), zero)
+        assert_complex_equal(np.power(zero, 2-3j), zero)
+        #Testing zero values when real part is greater than zero
+        assert_complex_equal(np.power(zero, 1+1j), zero)
+        assert_complex_equal(np.power(zero, 1+0j), zero)
+        assert_complex_equal(np.power(zero, 1-1j), zero)
+        #Complex powers will negative real part or 0 (provided imaginary 
+        # part is not zero) will generate a NAN and hence a RUNTIME warning
+        with pytest.warns(expected_warning=RuntimeWarning) as r:
+            assert_complex_equal(np.power(zero, -1+1j), cnan)
+            assert_complex_equal(np.power(zero, -2-3j), cnan)
+            assert_complex_equal(np.power(zero, -7+0j), cnan)
+            assert_complex_equal(np.power(zero, 0+1j), cnan)
+            assert_complex_equal(np.power(zero, 0-1j), cnan)
+        assert len(r) == 5
+
     def test_fast_power(self):
         x = np.array([1, 2, 3], np.int16)
         res = x**2.0
