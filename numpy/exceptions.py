@@ -208,10 +208,10 @@ class DTypePromotionError(TypeError):
 
     Notes
     -----
-    ``DTypePromotionError`` derives from ``TypeError``.  Many functions will
-    use promotion to find the correct result and implementation.
-    For these functions the error will be chained with a more specific error
-    indicating that no implementation was found for the input dtypes.
+    Many functions will use promotion to find the correct result and
+    implementation.  For these functions the error will typically be chained
+    with a more specific error indicating that no implementation was found
+    for the input dtypes.
 
     Typically promotion should be considered "invalid" between the dtypes of
     two arrays when `arr1 == arr2` can safely return all ``False`` because the
@@ -223,14 +223,14 @@ class DTypePromotionError(TypeError):
     promoted:
 
     >>> np.result_type(np.dtype("M8[s]"), np.complex128)
-    DTypePromotionError: The DType <class 'numpy.dtype[datetime64]'> could not be
-    promoted by <class 'numpy.dtype[complex128]'>. This means that no common
+    DTypePromotionError: The DType <class 'numpy.dtype[datetime64]'> could not
+    be promoted by <class 'numpy.dtype[complex128]'>. This means that no common
     DType exists for the given inputs. For example they cannot be stored in a
     single array unless the dtype is `object`. The full list of DTypes is:
     (<class 'numpy.dtype[datetime64]'>, <class 'numpy.dtype[complex128]'>)
 
     For example for structured dtypes, the structure can mismatch and the
-    same ``DTypePromotionError`` error is given when two structured dtypes with
+    same ``DTypePromotionError`` is given when two structured dtypes with
     a mismatch in their number of fields is given:
 
     >>> dtype1 = np.dtype([("field1", np.float64), ("field2", np.int64)])
