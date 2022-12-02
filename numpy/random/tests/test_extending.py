@@ -23,7 +23,8 @@ try:
         # numba issue gh-4733
         warnings.filterwarnings('always', '', DeprecationWarning)
         import numba
-except ImportError:
+except (ImportError, SystemError):
+    # Certain numpy/numba versions trigger a SystemError due to a numba bug
     numba = None
 
 try:
