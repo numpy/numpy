@@ -26,7 +26,7 @@ Exceptions
    :toctree: generated/
 
     AxisError          Given when an axis was invalid.
-    InvalidPromotion   Given when no common dtype could be found.
+    DTypePromotionError   Given when no common dtype could be found.
     TooHardError       Error specific to `numpy.shares_memory`.
 
 """
@@ -36,7 +36,7 @@ from ._utils import set_module as _set_module
 
 __all__ = [
     "ComplexWarning", "VisibleDeprecationWarning",
-    "TooHardError", "AxisError", "InvalidPromotion"]
+    "TooHardError", "AxisError", "DTypePromotionError"]
 
 
 # Disallow reloading this module so as to preserve the identities of the
@@ -198,7 +198,7 @@ class AxisError(ValueError, IndexError):
             return msg
 
 
-class InvalidPromotion(TypeError):
+class DTypePromotionError(TypeError):
     """Multiple DTypes could not be converted to a common one.
 
     This exception derives from ``TypeError`` and is raised whenever dtypes
@@ -208,7 +208,7 @@ class InvalidPromotion(TypeError):
 
     Notes
     -----
-    ``InvalidPromotion`` derives from ``TypeError``.  Many functions will
+    ``DTypePromotionError`` derives from ``TypeError``.  Many functions will
     use promotion to find the correct result and implementation.
     For these functions the error will be chained with a more specific error
     indicating that no implementation was found for the input dtypes.
@@ -223,20 +223,20 @@ class InvalidPromotion(TypeError):
     promoted:
 
     >>> np.result_type(np.dtype("M8[s]"), np.complex128)
-    InvalidPromotion: The DType <class 'numpy.dtype[datetime64]'> could not be
+    DTypePromotionError: The DType <class 'numpy.dtype[datetime64]'> could not be
     promoted by <class 'numpy.dtype[complex128]'>. This means that no common
     DType exists for the given inputs. For example they cannot be stored in a
     single array unless the dtype is `object`. The full list of DTypes is:
     (<class 'numpy.dtype[datetime64]'>, <class 'numpy.dtype[complex128]'>)
 
     For example for structured dtypes, the structure can mismatch and the
-    same ``InvalidPromotion`` error is given when two structured dtypes with
+    same ``DTypePromotionError`` error is given when two structured dtypes with
     a mismatch in their number of fields is given:
 
     >>> dtype1 = np.dtype([("field1", np.float64), ("field2", np.int64)])
     >>> dtype2 = np.dtype([("field1", np.float64)])
     >>> np.promote_types(dtype1, dtype2)
-    InvalidPromotion: field names `('field1', 'field2')` and `('field1',)`
+    DTypePromotionError: field names `('field1', 'field2')` and `('field1',)`
     mismatch.
 
     """

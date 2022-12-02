@@ -1623,7 +1623,7 @@ compute_datetime_metadata_greatest_common_divisor(
     return 0;
 
     /*
-     * The following errors do not currently use "InvalidPromotion".  This
+     * The following errors do not currently use "DTypePromotionError".  This
      * could be replaced (changing the OverflowError, though) with an explicit
      * promotion error.
      * This makes sense if we `arr_dt1 == arr_dt2` can reasonably return

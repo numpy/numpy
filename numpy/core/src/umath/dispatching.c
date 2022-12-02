@@ -1028,11 +1028,11 @@ promote_and_get_ufuncimpl(PyUFuncObject *ufunc,
         raise_no_loop_found_error(ufunc, (PyObject **)op_dtypes);
     }
     /*
-     * Otherwise an error occurred, but if the error was InvalidPromotion
-     * then we chain it, because InvalidPromotion effectively means that there
+     * Otherwise an error occurred, but if the error was DTypePromotionError
+     * then we chain it, because DTypePromotionError effectively means that there
      * is no loop available.  (We failed finding a loop by using promotion.)
      */
-    else if (PyErr_ExceptionMatches(npy_InvalidPromotion)) {
+    else if (PyErr_ExceptionMatches(npy_DTypePromotionError)) {
         PyObject *err_type = NULL, *err_value = NULL, *err_traceback = NULL;
         PyErr_Fetch(&err_type, &err_value, &err_traceback);
         raise_no_loop_found_error(ufunc, (PyObject **)op_dtypes);

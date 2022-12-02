@@ -4823,10 +4823,11 @@ intern_strings(void)
 static int
 initialize_static_globals(void)
 {
-    assert(npy_InvalidPromotion == NULL);
+    assert(npy_DTypePromotionError == NULL);
     npy_cache_import(
-            "numpy.exceptions", "InvalidPromotion", &npy_InvalidPromotion);
-    if (npy_InvalidPromotion == NULL) {
+            "numpy.exceptions", "DTypePromotionError",
+            &npy_DTypePromotionError);
+    if (npy_DTypePromotionError == NULL) {
         return -1;
     }
 

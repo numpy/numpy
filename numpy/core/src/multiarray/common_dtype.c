@@ -62,7 +62,7 @@ PyArray_CommonDType(PyArray_DTypeMeta *dtype1, PyArray_DTypeMeta *dtype2)
     }
     if (common_dtype == (PyArray_DTypeMeta *)Py_NotImplemented) {
         Py_DECREF(Py_NotImplemented);
-        PyErr_Format(npy_InvalidPromotion,
+        PyErr_Format(npy_DTypePromotionError,
                 "The DTypes %S and %S do not have a common DType. "
                 "For example they cannot be stored in a single array unless "
                 "the dtype is `object`.", dtype1, dtype2);
@@ -289,7 +289,7 @@ PyArray_PromoteDTypeSequence(
                 Py_INCREF(dtypes_in[l]);
                 PyTuple_SET_ITEM(dtypes_in_tuple, l, (PyObject *)dtypes_in[l]);
             }
-            PyErr_Format(npy_InvalidPromotion,
+            PyErr_Format(npy_DTypePromotionError,
                     "The DType %S could not be promoted by %S. This means that "
                     "no common DType exists for the given inputs. "
                     "For example they cannot be stored in a single array unless "
