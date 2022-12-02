@@ -267,21 +267,6 @@ npy_ObjectClip(PyObject *arr, PyObject *min, PyObject *max) {
     return o;
 }
 
-static PyObject *
-npy_ObjectPopCount(PyObject *obj) {
-    PyObject *result = NULL;
-
-    /* Try to use inbuilt popcount if available */
-    static PyObject *builtin_popcount_func = NULL;
-    builtin_popcount_func = PyObject_GetAttrString(obj, "bit_count");
-
-    if (builtin_popcount_func != NULL) {
-        result = PyObject_CallFunction(builtin_popcount_func, NULL);
-    }
-
-    return result;
-}
-
 /*
  *****************************************************************************
  **                           COMPLEX FUNCTIONS                             **
