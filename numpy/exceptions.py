@@ -208,11 +208,10 @@ class InvalidPromotion(TypeError):
 
     Notes
     -----
-    ``InvalidPromotion`` derives from ``TypeError`` and if it occurs within
-    many functions (e.g. math functions will try to promote if they do not
-    find an implementation), it is chained with a more specific error.
-    In this case, it means that the function cannot be implemented or has no
-    implementation for the given dtype combination.
+    ``InvalidPromotion`` derives from ``TypeError``.  Many functions will
+    use promotion to find the correct result and implementation.
+    For these functions the error will be chained with a more specific error
+    indicating that no implementation was found for the input dtypes.
 
     Typically promotion should be considered "invalid" between the dtypes of
     two arrays when `arr1 == arr2` can safely return all ``False`` because the
@@ -223,7 +222,7 @@ class InvalidPromotion(TypeError):
     Datetimes and complex numbers are incompatible classes and cannot be
     promoted:
 
-    >>> np.result_type(np.dtype("M8", "D")
+    >>> np.result_type(np.dtype("M8[s]"), np.complex128)
     InvalidPromotion: The DType <class 'numpy.dtype[datetime64]'> could not be
     promoted by <class 'numpy.dtype[complex128]'>. This means that no common
     DType exists for the given inputs. For example they cannot be stored in a

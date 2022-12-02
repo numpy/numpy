@@ -1298,7 +1298,10 @@ class TestStructured:
         assert_equal(a == b, [False, True])
         assert_equal(a != b, [True, False])
 
-    def test_void_comparison_failures(self):
+    @pytest.mark.parametrize("op", [
+            operator.eq, lambda x, y: operator.eq(y, x),
+            operator.ne, lambda x, y: operator.ne(y, x)])
+    def test_void_comparison_failures(self, op):
         # In principle, one could decide to return an array of False for some
         # if comparisons are impossible.  But right now we return TypeError
         # when "void" dtype are involved.
@@ -1306,18 +1309,18 @@ class TestStructured:
         y = np.zeros(3)
         # Cannot compare non-structured to structured:
         with pytest.raises(TypeError):
-            x == y
+            op(x, y)
 
         # Added title prevents promotion, but casts are OK:
         y = np.zeros(3, dtype=[(('title', 'a'), 'i1')])
         assert np.can_cast(y.dtype, x.dtype)
         with pytest.raises(TypeError):
-            x == y
+            op(x, y)
 
         x = np.zeros(3, dtype="V7")
         y = np.zeros(3, dtype="V8")
         with pytest.raises(TypeError):
-            x == y
+            op(x, y)
 
     def test_casting(self):
         # Check that casting a structured array to change its byte order
@@ -9527,8 +9530,9 @@ def test_equal_subclass_no_override(op, dt1, dt2):
 
 @pytest.mark.parametrize(["dt1", "dt2"], [
         ("M8[ns]", "d"),
-        # Note: timedelta currently promotes (and always did) :(
-        #       so it does not line in here.
+        ("M8[s]", "l"),
+        ("m8[ns]", "d"),
+        # Missing: ("m8[ns]", "l") as timedelta currently promotes ints
         ("M8[s]", "m8[s]"),
         ("S5", "U5"),
         # Structured/void dtypes have explicit paths not tested here.
@@ -9537,7 +9541,7 @@ def test_no_loop_gives_all_true_or_false(dt1, dt2):
     # Make sure they broadcast to test result shape, use random values, since
     # the actual value should be ignored
     arr1 = np.random.randint(5, size=100).astype(dt1)
-    arr2 = np.random.randint(5, size=99)[:, None].astype(dt2)
+    arr2 = np.random.randint(5, size=99)[:, np.newaxis].astype(dt2)
 
     res = arr1 == arr2
     assert res.shape == (99, 100)

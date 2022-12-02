@@ -1622,13 +1622,15 @@ compute_datetime_metadata_greatest_common_divisor(
 
     return 0;
 
-/*
- * Note that the following errors do not use "InvalidPromotion", because they
- * should promote (two datetimes should have a common datetime), but cannot.
- * The promotion is thus valid, but fails.
- * This is important, because `arr == arr` for these cannot reasonably return
- * all ``False`` values.
- */
+    /*
+     * The following errors do not currently use "InvalidPromotion".  This
+     * could be replaced (changing the OverflowError, though) with an explicit
+     * promotion error.
+     * This makes sense if we `arr_dt1 == arr_dt2` can reasonably return
+     * an array of all `False` (i.e. values cannot possible compare equal).
+     * (`==` relies on this around 2022-12. This reliance could be pushed into
+     * the `np.equal`/`np.not_equal` ufuncs, but the rule of thumb seems good)
+     */
 incompatible_units: {
         PyObject *umeta1 = metastr_to_unicode(meta1, 0);
         if (umeta1 == NULL) {
