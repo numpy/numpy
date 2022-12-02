@@ -1,0 +1,11 @@
+``==`` and ``!=`` warnings finalized
+------------------------------------
+The ``==`` and ``!=`` operators on arrays now always:
+
+* raise errors that occur during comparisons
+* return an array of all ``True`` or all ``False`` when values are
+  fundamentally not comparable (e.g. have different dtypes).
+
+For a long time these gave ``DeprecationWarning`` or ``FutureWarning``.
+This mimics the Python behavior of returning ``False`` and ``True``
+when comparing incompatible types like ``"a" == 1`` and ``"a" != 1``.

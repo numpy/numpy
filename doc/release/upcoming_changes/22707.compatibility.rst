@@ -1,0 +1,4 @@
+* When comparing datetimes and timedelta using ``np.equal`` or ``np.not_equal``
+  numpy previously allows the comparison with ``casting="unsafe"``.
+  This operation now fails (before the casting check), ``dtype=`` can restore
+  the old behavior, but we do not recommend it.
