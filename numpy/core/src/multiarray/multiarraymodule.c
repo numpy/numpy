@@ -4835,6 +4835,9 @@ initialize_static_globals(void)
     npy_cache_import(
             "numpy.core._exceptions", "_UFuncNoLoopError",
             &npy_UFuncNoLoopError);
+    if (npy_UFuncNoLoopError == NULL) {
+        return -1;
+    }
 
     return 0;
 }
