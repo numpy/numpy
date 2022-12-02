@@ -1214,12 +1214,9 @@ def nanmedian(a, axis=None, out=None, overwrite_input=False, keepdims=np._NoValu
     if a.size == 0:
         return np.nanmean(a, axis, out=out, keepdims=keepdims)
 
-    r, k = function_base._ureduce(a, func=_nanmedian, axis=axis, out=out,
+    return function_base._ureduce(a, func=_nanmedian, keepdims=keepdims,
+                                  axis=axis, out=out,
                                   overwrite_input=overwrite_input)
-    if keepdims and keepdims is not np._NoValue:
-        return r.reshape(k)
-    else:
-        return r
 
 
 def _nanpercentile_dispatcher(
@@ -1556,17 +1553,14 @@ def _nanquantile_unchecked(
     # so deal them upfront
     if a.size == 0:
         return np.nanmean(a, axis, out=out, keepdims=keepdims)
-    r, k = function_base._ureduce(a,
+    return function_base._ureduce(a,
                                   func=_nanquantile_ureduce_func,
                                   q=q,
+                                  keepdims=keepdims,
                                   axis=axis,
                                   out=out,
                                   overwrite_input=overwrite_input,
                                   method=method)
-    if keepdims and keepdims is not np._NoValue:
-        return r.reshape(q.shape + k)
-    else:
-        return r
 
 
 def _nanquantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
