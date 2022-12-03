@@ -214,6 +214,8 @@ class TestMaskedArray:
         assert_(np.may_share_memory(x.mask, y.mask))
         y = array([1, 2, 3], mask=x._mask, copy=True)
         assert_(not np.may_share_memory(x.mask, y.mask))
+        x = array([1, 2, 3], mask=None)
+        assert_equal(x._mask, [False, False, False])
 
     def test_masked_singleton_array_creation_warns(self):
         # The first works, but should not (ideally), there may be no way
