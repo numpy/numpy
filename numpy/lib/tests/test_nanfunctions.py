@@ -403,9 +403,9 @@ class TestNanFunctions_NumberTypes:
     )
     def test_nanfunc_q(self, mat, dtype, nanfunc, func):
         mat = mat.astype(dtype)
-        if mat.dtype in [np.csingle, np.cdouble, np.clongdouble]:
-            assert_raises(ValueError, func, mat, q=1)
-            assert_raises(ValueError, nanfunc, mat, q=1)
+        if mat.dtype.kind == "c":
+            assert_raises(TypeError, func, mat, q=1)
+            assert_raises(TypeError, nanfunc, mat, q=1)
 
         else:
             tgt = func(mat, q=1)
@@ -1008,11 +1008,11 @@ class TestNanFunctions_Percentile:
 
     def test_complex(self):
         arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype=np.dtype('complex256'))
-        assert_raises(ValueError, np.nanpercentile, arr_c, 0.5)
+        assert_raises(TypeError, np.nanpercentile, arr_c, 0.5)
         arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype=np.dtype('complex128'))
-        assert_raises(ValueError, np.nanpercentile, arr_c, 0.5)
+        assert_raises(TypeError, np.nanpercentile, arr_c, 0.5)
         arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype=np.dtype('complex64'))
-        assert_raises(ValueError, np.nanpercentile, arr_c, 0.5)
+        assert_raises(TypeError, np.nanpercentile, arr_c, 0.5)
 
     def test_result_values(self):
         tgt = [np.percentile(d, 28) for d in _rdat]
@@ -1120,11 +1120,11 @@ class TestNanFunctions_Quantile:
 
     def test_complex(self):
         arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype=np.dtype('complex256'))
-        assert_raises(ValueError, np.nanquantile, arr_c, 0.5)
+        assert_raises(TypeError, np.nanquantile, arr_c, 0.5)
         arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype=np.dtype('complex128'))
-        assert_raises(ValueError, np.nanquantile, arr_c, 0.5)
+        assert_raises(TypeError, np.nanquantile, arr_c, 0.5)
         arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype=np.dtype('complex64'))
-        assert_raises(ValueError, np.nanquantile, arr_c, 0.5)
+        assert_raises(TypeError, np.nanquantile, arr_c, 0.5)
 
     def test_no_p_overwrite(self):
         # this is worth retesting, because quantile does not make a copy

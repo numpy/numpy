@@ -4182,8 +4182,8 @@ def percentile(a,
             method, interpolation, "percentile")
 
     a = np.asanyarray(a)
-    if a.dtype in [np.csingle, np.cdouble, np.clongdouble]:
-        raise ValueError("a must be an array of real numbers")
+    if a.dtype.kind == "c":
+        raise TypeError("a must be an array of real numbers")
 
     q = np.true_divide(q, 100)
     q = asanyarray(q)  # undo any decay that the ufunc performed (see gh-13105)
@@ -4443,8 +4443,8 @@ def quantile(a,
             method, interpolation, "quantile")
 
     a = np.asanyarray(a)
-    if a.dtype in [np.csingle, np.cdouble, np.clongdouble]:
-        raise ValueError("a must be an array of real numbers")
+    if a.dtype.kind == "c":
+        raise TypeError("a must be an array of real numbers")
 
     q = np.asanyarray(q)
     if not _quantile_is_valid(q):

@@ -2974,11 +2974,11 @@ class TestPercentile:
 
     def test_complex(self):
         arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype=np.dtype('complex256'))
-        assert_raises(ValueError, np.percentile, arr_c, 0.5)
+        assert_raises(TypeError, np.percentile, arr_c, 0.5)
         arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype=np.dtype('complex128'))
-        assert_raises(ValueError, np.percentile, arr_c, 0.5)
+        assert_raises(TypeError, np.percentile, arr_c, 0.5)
         arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype=np.dtype('complex64'))
-        assert_raises(ValueError, np.percentile, arr_c, 0.5)
+        assert_raises(TypeError, np.percentile, arr_c, 0.5)
 
     def test_2D(self):
         x = np.array([[1, 1, 1],
@@ -3498,11 +3498,11 @@ class TestQuantile:
     def test_complex(self):
         #See gh-22652
         arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype=np.dtype('complex256'))
-        assert_raises(ValueError, np.quantile, arr_c, 0.5)
+        assert_raises(TypeError, np.quantile, arr_c, 0.5)
         arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype=np.dtype('complex128'))
-        assert_raises(ValueError, np.quantile, arr_c, 0.5)
+        assert_raises(TypeError, np.quantile, arr_c, 0.5)
         arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype=np.dtype('complex64'))
-        assert_raises(ValueError, np.quantile, arr_c, 0.5)
+        assert_raises(TypeError, np.quantile, arr_c, 0.5)
 
     def test_no_p_overwrite(self):
         # this is worth retesting, because quantile does not make a copy
