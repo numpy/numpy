@@ -1623,13 +1623,10 @@ compute_datetime_metadata_greatest_common_divisor(
     return 0;
 
     /*
-     * The following errors do not currently use "DTypePromotionError".  This
-     * could be replaced (changing the OverflowError, though) with an explicit
-     * promotion error.
-     * This makes sense if we `arr_dt1 == arr_dt2` can reasonably return
-     * an array of all `False` (i.e. values cannot possible compare equal).
-     * (`==` relies on this around 2022-12. This reliance could be pushed into
-     * the `np.equal`/`np.not_equal` ufuncs, but the rule of thumb seems good)
+     * We do not use `DTypePromotionError` below.  The reason this is that a
+     * `DTypePromotionError` indicates that `arr_dt1 != arr_dt2` for
+     * all values, but this is wrong for "0".  This could be changed but
+     * for now we consider them errors that occur _while_ promoting.
      */
 incompatible_units: {
         PyObject *umeta1 = metastr_to_unicode(meta1, 0);
