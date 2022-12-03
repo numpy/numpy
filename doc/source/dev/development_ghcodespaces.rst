@@ -51,17 +51,9 @@ Quick workspace tour
 You can develop code in a codespace using your choice of tool:
 
 * `a command shell, via an SSH connection initiated using GitHub CLI.`_
-
-.. _https://docs.github.com/en/authentication/connecting-to-github-with-ssh
 * `one of the JetBrains IDEs, via the JetBrains Gateway.`_
-
-.. _https://docs.github.com/en/codespaces/developing-in-codespaces/using-github-codespaces-in-your-jetbrains-ide
 * `the Visual Studio Code desktop application.`_
-
-.. _https://docs.github.com/en/codespaces/developing-in-codespaces/using-github-codespaces-in-visual-studio-code
 * `a browser-based version of Visual Studio Code.`_
-
-.. _https://docs.github.com/en/codespaces/developing-in-codespaces/developing-in-a-codespace
 
 In this quickstart, we will be using the VSCode desktop application as the editor. If you have not used it before, see the Getting started `VSCode docs`_ to familiarize yourself with this tool.
 
@@ -131,4 +123,14 @@ rebuild the docs with ``make html`` and use Live Serve as described in option 1.
 FAQs and troubleshooting
 -------------------------
 TO DO
+
+.. _GitHub Codespaces: https://github.com/features/codespaces
+.. _NumPy repository on GitHub: https://github.com/NumPy/NumPy
+.. _create your own fork: https://help.github.com/en/articles/fork-a-repo
+.. _VSCode docs: https://code.visualstudio.com/docs/getstarted/tips-and-tricks
+.. _command shell, via an SSH connection initiated using GitHub CLI: https://docs.github.com/en/authentication/connecting-to-github-with-ssh
+.. _one of the JetBrains IDEs, via the JetBrains Gateway: https://docs.github.com/en/codespaces/developing-in-codespaces/using-github-codespaces-in-your-jetbrains-ide
+.. _the Visual Studio Code desktop application: https://docs.github.com/en/codespaces/developing-in-codespaces/using-github-codespaces-in-visual-studio-code
+.. _a browser-based version of Visual Studio Code:
+https://docs.github.com/en/codespaces/developing-in-codespaces/developing-in-a-codespace
 
