@@ -3053,7 +3053,7 @@ class TestPercentile:
         assert_equal(np.percentile(np.arange(10, dtype=dtype), 50,
                                    method='higher'), 5)
 
-    @pytest.mark.parametrize("dtype", np.typecodes["Float"])
+    @pytest.mark.parametrize("dtype", TYPE_CODES)
     def test_midpoint(self, dtype):
         assert_equal(np.percentile(np.arange(10, dtype=dtype), 51,
                                    method='midpoint'), 4.5)
