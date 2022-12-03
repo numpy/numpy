@@ -42,7 +42,7 @@ Starting GitHub Codespaces
 
 You can create a codespace from the green "Code" button on the repository home page, or click this |open| button
 
-.. |open| image:: https://github.com/codespaces/badge.svg
+.. |open| image:: https://github.com/codespaces/badge.svg_
 .. _open: https://github.com/codespaces/new?hide_repo_select=true&ref=main&repo=908607
 
 Quick workspace tour
@@ -50,12 +50,14 @@ Quick workspace tour
 
 You can develop code in a codespace using your choice of tool:
 
-* `a command shell, via an SSH connection initiated using GitHub CLI.`_
-* `one of the JetBrains IDEs, via the JetBrains Gateway.`_
-* `the Visual Studio Code desktop application.`_
-* `a browser-based version of Visual Studio Code.`_
+* a command shell, via an SSH connection initiated using GitHub CLI._
+* one of the JetBrains IDEs, via the JetBrains Gateway._
+* the Visual Studio Code desktop application._
+* a browser-based version of Visual Studio Code._
 
-In this quickstart, we will be using the VSCode desktop application as the editor. If you have not used it before, see the Getting started `VSCode docs`_ to familiarize yourself with this tool.
+In this quickstart, we will be using the VSCode desktop application as the editor. 
+If you have not used it before, see the Getting started `VSCode docs`_ to familiarize
+yourself with this tool.
 
 Your workspace will look similar to the image below:
 
@@ -142,5 +144,4 @@ changes that you have made to your project.
 .. _command shell, via an SSH connection initiated using GitHub CLI: https://docs.github.com/en/authentication/connecting-to-github-with-ssh
 .. _one of the JetBrains IDEs, via the JetBrains Gateway: https://docs.github.com/en/codespaces/developing-in-codespaces/using-github-codespaces-in-your-jetbrains-ide
 .. _the Visual Studio Code desktop application: https://docs.github.com/en/codespaces/developing-in-codespaces/using-github-codespaces-in-visual-studio-code
-.. _a browser-based version of Visual Studio Code:
-https://docs.github.com/en/codespaces/developing-in-codespaces/developing-in-a-codespace
+.. _a browser-based version of Visual Studio Code: https://docs.github.com/en/codespaces/developing-in-codespaces/developing-in-a-codespace
