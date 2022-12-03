@@ -2836,9 +2836,6 @@ class MaskedArray(ndarray):
         # Type of the mask
         mdtype = make_mask_descr(_data.dtype)
         
-        if mask is None:
-            mask = False
-
         if mask is nomask:
             # Case 1. : no mask in input.
             # Erase the current mask ?
@@ -2873,6 +2870,11 @@ class MaskedArray(ndarray):
         else:
             # Case 2. : With a mask in input.
             # If mask is boolean, create an array of True or False
+            
+            # If mask is None, cast it to False
+                    if mask is None:
+                        mask = False
+
             if mask is True and mdtype == MaskType:
                 mask = np.ones(_data.shape, dtype=mdtype)
             elif mask is False and mdtype == MaskType:
@@ -2920,6 +2922,7 @@ class MaskedArray(ndarray):
                     else:
                         _data._mask = np.logical_or(mask, _data._mask)
                     _data._sharedmask = False
+        
         # Update fill_value.
         if fill_value is None:
             fill_value = getattr(data, '_fill_value', None)
