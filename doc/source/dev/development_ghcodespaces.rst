@@ -13,7 +13,10 @@ This section of the documentation will guide you through:
 
 GitHub Codespaces
 -----------------
-`GitHub Codespaces`_  is  
+`GitHub Codespaces`_ is a service that provides cloud based development environments
+so that you don't have to install anything on your local machine or worry about configuration.
+
+.. _https://github.com/features/codespaces
 
 TO DO
 
