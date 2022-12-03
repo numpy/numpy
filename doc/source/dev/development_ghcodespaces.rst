@@ -54,7 +54,9 @@ Quick workspace tour
 --------------------
 You can develop code in a codespace using your choice of tool:
 
-* a command shell, via an SSH connection initiated using GitHub CLI.
+* `a command shell, via an SSH connection initiated using GitHub CLI.`_
+
+.. _https://docs.github.com/en/authentication/connecting-to-github-with-ssh
 * one of the JetBrains IDEs, via the JetBrains Gateway.
 * the Visual Studio Code desktop application.
 * a browser-based version of Visual Studio Code.
