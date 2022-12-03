@@ -17,6 +17,14 @@ class MA(Benchmark):
     def time_masked_array_l100_t100(self):
         np.ma.masked_array(self.l100, self.t100)
 
+class MACreation(Benchmark):
+    param_names = ['data', 'mask']
+    params = [[10, 100, 1000],
+              [True, False, None]]
+
+    def time_ma_creations(self, data, mask):
+        np.ma.array(data=np.zeros(int(data)), mask=mask)
+
 
 class Indexing(Benchmark):
     param_names = ['masked', 'ndim', 'size']
