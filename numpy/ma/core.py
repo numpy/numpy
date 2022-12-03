@@ -2835,6 +2835,9 @@ class MaskedArray(ndarray):
         # Process mask.
         # Type of the mask
         mdtype = make_mask_descr(_data.dtype)
+        
+        if mask is None:
+            mask = False
 
         if mask is nomask:
             # Case 1. : no mask in input.
