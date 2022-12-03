@@ -63,7 +63,9 @@ You can develop code in a codespace using your choice of tool:
 * `the Visual Studio Code desktop application.`_
 
 .. _https://docs.github.com/en/codespaces/developing-in-codespaces/using-github-codespaces-in-visual-studio-code
-* a browser-based version of Visual Studio Code.
+* `a browser-based version of Visual Studio Code.`_
+
+.. _https://docs.github.com/en/codespaces/developing-in-codespaces/developing-in-a-codespace
 
 In this quickstart, we will be using the VSCode desktop application as the editor. If you have not used it before, see the Getting started `VSCode docs`_ to familiarize yourself with this tool.
 
