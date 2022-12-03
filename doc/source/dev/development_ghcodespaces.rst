@@ -57,7 +57,9 @@ You can develop code in a codespace using your choice of tool:
 * `a command shell, via an SSH connection initiated using GitHub CLI.`_
 
 .. _https://docs.github.com/en/authentication/connecting-to-github-with-ssh
-* one of the JetBrains IDEs, via the JetBrains Gateway.
+* `one of the JetBrains IDEs, via the JetBrains Gateway.`_
+
+.. _https://docs.github.com/en/codespaces/developing-in-codespaces/using-github-codespaces-in-your-jetbrains-ide
 * the Visual Studio Code desktop application.
 * a browser-based version of Visual Studio Code.
 
