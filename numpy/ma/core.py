@@ -2872,8 +2872,8 @@ class MaskedArray(ndarray):
             # If mask is boolean, create an array of True or False
             
             # If mask is None, cast it to False
-                    if mask is None:
-                        mask = False
+            if mask is None:
+                mask = False
 
             if mask is True and mdtype == MaskType:
                 mask = np.ones(_data.shape, dtype=mdtype)
