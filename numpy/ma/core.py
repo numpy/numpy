@@ -2871,7 +2871,8 @@ class MaskedArray(ndarray):
             # Case 2. : With a mask in input.
             # If mask is boolean, create an array of True or False
             
-            # If mask is None, cast it to False
+            # if users pass `mask=None` be forgiving here and cast it False
+            # for speed; although the default is `mask=nomask` and can differ.
             if mask is None:
                 mask = False
 
