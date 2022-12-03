@@ -13,16 +13,13 @@ This section of the documentation will guide you through:
 
 GitHub Codespaces
 -----------------
+
 `GitHub Codespaces`_ is a service that provides cloud based development environments
 so that you don't have to install anything on your local machine or worry about configuration.
 
-.. _https://github.com/features/codespaces
-
-TO DO
-
-
 What is a codespace?
 --------------------
+
 A codespace is an instance of Codespaces - and thus a development environment that is hosted in the cloud.
 Each codespace runs on a virtual machine hosted by GitHub. You can choose 
 the type of machine you want to use, depending on the resources you need. Various 
@@ -31,27 +28,26 @@ and 32 GB of storage.
 You can connect to a codespace from your browser, from Visual Studio Code, from 
 the JetBrains Gateway application, or by using GitHub CLI.
 
-
 Forking the NumPy repository
 ----------------------------
-The best way to work on NumPy as a contributor is by making a fork of the 
+The best way to work on the NumPy codebase as a contributor is by making a fork of the 
 repository first.
 
 #. Browse to the `NumPy repository on GitHub`_ and `create your own fork`_.
 #. Browse to your fork. Your fork will have a URL like 
-   https://github.com/inessapawson/NumPy, except with your GitHub username in place of ``inessapawson``.
-   
-   
+   https://github.com/inessapawson/numpy, except with your GitHub username in place of ``inessapawson``.
+     
 Starting GitHub Codespaces
 --------------------------
+
 You can create a codespace from the green "Code" button on the repository home page, or click this |open| button
 
 .. |open| image:: https://github.com/codespaces/badge.svg
 .. _open: https://github.com/codespaces/new?hide_repo_select=true&ref=main&repo=908607
 
-
 Quick workspace tour
 --------------------
+
 You can develop code in a codespace using your choice of tool:
 
 * `a command shell, via an SSH connection initiated using GitHub CLI.`_
@@ -71,20 +67,16 @@ In this quickstart, we will be using the VSCode desktop application as the edito
 
 Your workspace will look similar to the image below:
 
-TO DO
-
-
 Development workflow with GitHub Codespaces
---------------------------------
+-------------------------------------------
+
 The  :ref:`development-workflow` section of this documentation contains 
 information regarding the NumPy development workflow. Make sure to check this 
-before working on your contributions.
-
-TO DO
-
+before you start working on your contributions.
 
 Rendering the NumPy documentation
 ---------------------------------
+
 You can find the detailed documentation on how the rendering of the documentation with 
 Sphinx works in the :ref:`howto-build-docs` section.
 
@@ -135,7 +127,6 @@ uses the rst extension with docutils.
 
 To see the final output with the ``html`` theme, you need to 
 rebuild the docs with ``make html`` and use Live Serve as described in option 1.
-
 
 FAQs and troubleshooting
 -------------------------
