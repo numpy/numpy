@@ -20,7 +20,7 @@ TO DO
 
 What is a codespace?
 --------------------
-A codespace is a development environment that is hosted in the cloud.
+A codespace is an instance of Codespaces - and thus a development environment that is hosted in the cloud.
 Each codespace runs on a virtual machine hosted by GitHub. You can choose 
 the type of machine you want to use, depending on the resources you need. Various 
 types of machine are available, starting with a 2-core processor, 4 GB of RAM, 
