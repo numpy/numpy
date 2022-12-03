@@ -47,7 +47,9 @@ def asstr(s):
     return str(s)
 
 def isfileobj(f):
-    return isinstance(f, (io.FileIO, io.BufferedReader, io.BufferedWriter))
+    import zipfile
+    return isinstance(f, (zipfile._ZipWriteFile, io.FileIO,
+                          io.BufferedReader, io.BufferedWriter))
 
 def open_latin1(filename, mode='r'):
     return open(filename, mode=mode, encoding='iso-8859-1')
