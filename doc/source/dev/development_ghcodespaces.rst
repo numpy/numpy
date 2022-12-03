@@ -122,7 +122,18 @@ rebuild the docs with ``make html`` and use Live Serve as described in option 1.
 
 FAQs and troubleshooting
 -------------------------
-TO DO
+
+**How long does my codespace stay active if I'm not using it?**
+If you leave your codespace running without interaction, or if you exit your 
+codespace without explicitly stopping it, by default the codespace will timeout 
+after 30 minutes of inactivity. You can customize the duration of the timeout period 
+for new codespaces that you create.
+
+**Can I come back to a previous codespace?**
+The lifecycle of a codespace begins when you create a codespace and ends 
+when you delete it. You can disconnect and reconnect to an active codespace without 
+affecting its running processes. You may stop and restart a codespace without losing 
+changes that you have made to your project.
 
 .. _GitHub Codespaces: https://github.com/features/codespaces
 .. _NumPy repository on GitHub: https://github.com/NumPy/NumPy
@@ -133,4 +144,3 @@ TO DO
 .. _the Visual Studio Code desktop application: https://docs.github.com/en/codespaces/developing-in-codespaces/using-github-codespaces-in-visual-studio-code
 .. _a browser-based version of Visual Studio Code:
 https://docs.github.com/en/codespaces/developing-in-codespaces/developing-in-a-codespace
-
