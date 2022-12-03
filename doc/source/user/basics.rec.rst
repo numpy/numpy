@@ -7,6 +7,8 @@ Structured arrays
 Introduction
 ============
 
+Going to add new features
+
 Structured arrays are ndarrays whose datatype is a composition of simpler
 datatypes organized as a sequence of named :term:`fields <field>`. For example,
 ::
