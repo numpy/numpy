@@ -1001,7 +1001,7 @@ class TestMaskedArray:
         with pytest.raises(NotImplementedError, match=exc_text) as e_info:
             np.save('abc', mx1)
 
-        with pytest.raises(NotImplementError, match=exc_text) as e_info:
+        with pytest.raises(NotImplementedError, match=exc_text) as e_info:
             np.savez('abc', mx1)
 
 
