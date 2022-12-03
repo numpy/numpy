@@ -182,13 +182,26 @@ def geterr():
 @set_module('numpy')
 def setbufsize(size):
     """
-    Set the size of the buffer used in ufuncs.
+    Set the size of the buffer used in :ref:`ufuncs`.
 
     Parameters
     ----------
     size : int
-        Size of buffer.
+        Size of buffer. Must be a multiple of 16.
 
+    Returns
+    -------
+    setbufsize : int
+        Original size of ufunc buffer in bytes.
+
+    Examples
+    --------
+    >>> np.getbufsize()
+    8192
+    >>> np.setbufsize(4096)
+    8192
+    >>> np.getbufsize()
+    4096
     """
     if size > 10e6:
         raise ValueError("Buffer size, %s, is too big." % size)
@@ -207,13 +220,17 @@ def setbufsize(size):
 @set_module('numpy')
 def getbufsize():
     """
-    Return the size of the buffer used in ufuncs.
+    Return the size of the buffer used in :ref:`ufuncs`.
 
     Returns
     -------
     getbufsize : int
         Size of ufunc buffer in bytes.
-
+    
+    Examples
+    --------
+    >>> np.getbufsize()
+    8192
     """
     return umath.geterrobj()[0]
 
