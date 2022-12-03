@@ -60,7 +60,9 @@ You can develop code in a codespace using your choice of tool:
 * `one of the JetBrains IDEs, via the JetBrains Gateway.`_
 
 .. _https://docs.github.com/en/codespaces/developing-in-codespaces/using-github-codespaces-in-your-jetbrains-ide
-* the Visual Studio Code desktop application.
+* `the Visual Studio Code desktop application.`_
+
+.. _https://docs.github.com/en/codespaces/developing-in-codespaces/using-github-codespaces-in-visual-studio-code
 * a browser-based version of Visual Studio Code.
 
 In this quickstart, we will be using the VSCode desktop application as the editor. If you have not used it before, see the Getting started `VSCode docs`_ to familiarize yourself with this tool.
