@@ -44,7 +44,10 @@ repository first.
    
 Starting GitHub Codespaces
 --------------------------
-TO DO
+You can create a codespace from the green "Code" button on the repository home page, or click this |open| button
+
+.. |open| image:: https://github.com/codespaces/badge.svg
+.. _open: https://github.com/codespaces/new?hide_repo_select=true&ref=main&repo=908607
 
 
 Quick workspace tour
