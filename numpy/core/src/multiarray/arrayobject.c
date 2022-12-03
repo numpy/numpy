@@ -992,8 +992,10 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
      * probably never raise a UFuncNoLoopError.
      *
      * TODO: If/once we correctly push structured comparisons into the ufunc
-     *       we could consider pushing this into the ufunc itself as a
+     *       we could consider pushing this path into the ufunc itself as a
      *       fallback loop (which ignores the input arrays).
+     *       This would have the advantage that subclasses implemementing
+     *       `__array_ufunc__` do not explicitly need `__eq__` and `__ne__`.
      */
     if (result == NULL
             && (cmp_op == Py_EQ || cmp_op == Py_NE)
@@ -1019,11 +1021,8 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
             Py_DECREF(array_other);
             Py_RETURN_NOTIMPLEMENTED;
         }
-        /*
-         * Unfortunately, this path doesn't do the full __array_ufunc__
-         * machinery to help out subclasses...
-         */
-        /* Hack warning: using NpyIter to allocate result. */
+
+        /* Hack warning: using NpyIter to allocate broadcasted result. */
         PyArrayObject *ops[3] = {self, array_other, NULL};
         npy_uint32 flags = NPY_ITER_ZEROSIZE_OK | NPY_ITER_REFS_OK;
         npy_uint32 op_flags[3] = {
