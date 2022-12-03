@@ -58,7 +58,7 @@ npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, npyiter_opitflags *op_itf
                     char **op_dataptr,
                     const npy_uint32 *op_flags, int **op_axes,
                     npy_intp const *itershape);
-static NPY_INLINE int
+static inline int
 npyiter_get_op_axis(int axis, npy_bool *reduction_axis);
 static void
 npyiter_replace_axisdata(
@@ -1445,7 +1445,7 @@ npyiter_check_reduce_ok_and_set_flags(
  * @param reduction_axis Output 1 if a reduction axis, otherwise 0.
  * @returns The normalized axis (without reduce axis flag).
  */
-static NPY_INLINE int
+static inline int
 npyiter_get_op_axis(int axis, npy_bool *reduction_axis) {
     npy_bool forced_broadcast = axis >= NPY_ITER_REDUCTION_AXIS(-1);
 
@@ -2249,7 +2249,7 @@ npyiter_reverse_axis_ordering(NpyIter *iter)
     NIT_ITFLAGS(iter) &= ~NPY_ITFLAG_IDENTPERM;
 }
 
-static NPY_INLINE npy_intp
+static inline npy_intp
 intp_abs(npy_intp x)
 {
     return (x < 0) ? -x : x;

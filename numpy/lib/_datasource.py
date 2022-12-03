@@ -37,7 +37,7 @@ Example::
 import os
 import io
 
-from numpy.core.overrides import set_module
+from .._utils import set_module
 
 
 _open = open

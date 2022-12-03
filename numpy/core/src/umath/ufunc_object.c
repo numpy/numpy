@@ -1392,7 +1392,7 @@ try_trivial_single_output_loop(PyArrayMethod_Context *context,
  * or pass in the full cast information.  But this can special case
  * the logical functions and prints a better error message.
  */
-static NPY_INLINE int
+static inline int
 validate_casting(PyArrayMethodObject *method, PyUFuncObject *ufunc,
         PyArrayObject *ops[], PyArray_Descr *descriptors[],
         NPY_CASTING casting)
@@ -1782,6 +1782,8 @@ _check_keepdims_support(PyUFuncObject *ufunc) {
 static int
 _parse_axes_arg(PyUFuncObject *ufunc, int op_core_num_dims[], PyObject *axes,
                 PyArrayObject **op, int broadcast_ndim, int **remap_axis) {
+    static PyObject *AxisError_cls = NULL;
+
     int nin = ufunc->nin;
     int nop = ufunc->nargs;
     int iop, list_size;
@@ -1826,16 +1828,17 @@ _parse_axes_arg(PyUFuncObject *ufunc, int op_core_num_dims[], PyObject *axes,
         op_axes_tuple = PyList_GET_ITEM(axes, iop);
         if (PyTuple_Check(op_axes_tuple)) {
             if (PyTuple_Size(op_axes_tuple) != op_ncore) {
-                if (op_ncore == 1) {
-                    PyErr_Format(PyExc_ValueError,
-                                 "axes item %d should be a tuple with a "
-                                 "single element, or an integer", iop);
+                /* must have been a tuple with too many entries. */
+                npy_cache_import(
+                        "numpy.exceptions", "AxisError", &AxisError_cls);
+                if (AxisError_cls == NULL) {
+                    return -1;
                 }
-                else {
-                    PyErr_Format(PyExc_ValueError,
-                                 "axes item %d should be a tuple with %d "
-                                 "elements", iop, op_ncore);
-                }
+                PyErr_Format(AxisError_cls,
+                        "%s: operand %d has %d core dimensions, "
+                        "but %zd dimensions are specified by axes tuple.",
+                        ufunc_get_name_cstr(ufunc), iop, op_ncore,
+                        PyTuple_Size(op_axes_tuple));
                 return -1;
             }
             Py_INCREF(op_axes_tuple);
@@ -1847,8 +1850,22 @@ _parse_axes_arg(PyUFuncObject *ufunc, int op_core_num_dims[], PyObject *axes,
             }
         }
         else {
-            PyErr_Format(PyExc_TypeError, "axes item %d should be a tuple",
-                         iop);
+            /* If input is not an integer tell user that a tuple is needed */
+            if (error_converting(PyArray_PyIntAsInt(op_axes_tuple))) {
+                PyErr_Format(PyExc_TypeError,
+                        "%s: axes item %d should be a tuple.",
+                        ufunc_get_name_cstr(ufunc), iop);
+                return -1;
+            }
+            /* If it is a single integer, inform user that more are needed */
+            npy_cache_import("numpy.exceptions", "AxisError", &AxisError_cls);
+            if (AxisError_cls == NULL) {
+                return -1;
+            }
+            PyErr_Format(AxisError_cls,
+                    "%s: operand %d has %d core dimensions, "
+                    "but the axes item is a single integer.",
+                    ufunc_get_name_cstr(ufunc), iop, op_ncore);
             return -1;
         }
         /*
@@ -5375,7 +5392,7 @@ cmp_arg_types(int *arg1, int *arg2, int n)
  * This frees the linked-list structure when the CObject
  * is destroyed (removed from the internal dictionary)
 */
-static NPY_INLINE void
+static inline void
 _free_loop1d_list(PyUFunc_Loop1d *data)
 {
     int i;
@@ -5916,7 +5933,7 @@ ufunc_reduceat(PyUFuncObject *ufunc,
 }
 
 /* Helper for ufunc_at, below */
-static NPY_INLINE PyArrayObject *
+static inline PyArrayObject *
 new_array_op(PyArrayObject *op_array, char *data)
 {
     npy_intp dims[1] = {1};

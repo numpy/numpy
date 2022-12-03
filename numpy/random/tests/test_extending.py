@@ -23,7 +23,8 @@ try:
         # numba issue gh-4733
         warnings.filterwarnings('always', '', DeprecationWarning)
         import numba
-except ImportError:
+except (ImportError, SystemError):
+    # Certain numpy/numba versions trigger a SystemError due to a numba bug
     numba = None
 
 try:
@@ -32,7 +33,7 @@ try:
 except ImportError:
     cython = None
 else:
-    from numpy.compat import _pep440
+    from numpy._utils import _pep440
     # Cython 0.29.30 is required for Python 3.11 and there are
     # other fixes in the 0.29 series that are needed even for earlier
     # Python versions.

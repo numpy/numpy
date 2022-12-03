@@ -5,8 +5,8 @@ __all__ = ['finfo', 'iinfo']
 
 import warnings
 
+from .._utils import set_module
 from ._machar import MachAr
-from .overrides import set_module
 from . import numeric
 from . import numerictypes as ntypes
 from .numeric import array, inf, NaN
@@ -352,6 +352,9 @@ def _get_machar(ftype):
 
 def _discovered_machar(ftype):
     """ Create MachAr instance with found information on float types
+
+    TODO: MachAr should be retired completely ideally.  We currently only
+          ever use it system with broken longdouble (valgrind, WSL).
     """
     params = _MACHAR_PARAMS[ftype]
     return MachAr(lambda v: array([v], ftype),
@@ -387,11 +390,6 @@ class finfo:
     iexp : int
         The number of bits in the exponent portion of the floating point
         representation.
-    machar : MachAr
-        The object which calculated these parameters and holds more
-        detailed information.
-
-        .. deprecated:: 1.22
     machep : int
         The exponent that yields `eps`.
     max : floating point number of the appropriate type
@@ -432,7 +430,6 @@ class finfo:
 
     See Also
     --------
-    MachAr : The implementation of the tests that produce this information.
     iinfo : The equivalent for integer data types.
     spacing : The distance between a value and the nearest adjacent number
     nextafter : The next floating point value after x1 towards x2
@@ -594,20 +591,6 @@ class finfo:
             double-double.
         """
         return self.smallest_normal
-
-    @property
-    def machar(self):
-        """The object which calculated these parameters and holds more
-        detailed information.
-
-        .. deprecated:: 1.22
-        """
-        # Deprecated 2021-10-27, NumPy 1.22
-        warnings.warn(
-            "`finfo.machar` is deprecated (NumPy 1.22)",
-            DeprecationWarning, stacklevel=2,
-        )
-        return self._machar
 
 
 @set_module('numpy')

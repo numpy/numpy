@@ -57,7 +57,7 @@
  *  #name = byte, short, int, long, longlong#
  *  #type = npy_byte, npy_short, npy_int, npy_long, npy_longlong#
  */
-static NPY_INLINE int
+static inline int
 @name@_ctype_add(@type@ a, @type@ b, @type@ *out) {
     *out = a + b;
     if ((*out^a) >= 0 || (*out^b) >= 0) {
@@ -66,7 +66,7 @@ static NPY_INLINE int
     return NPY_FPE_OVERFLOW;
 }
 
-static NPY_INLINE int
+static inline int
 @name@_ctype_subtract(@type@ a, @type@ b, @type@ *out) {
     *out = a - b;
     if ((*out^a) >= 0 || (*out^~b) >= 0) {
@@ -80,7 +80,7 @@ static NPY_INLINE int
  *  #name = ubyte, ushort, uint, ulong, ulonglong#
  *  #type = npy_ubyte, npy_ushort, npy_uint, npy_ulong, npy_ulonglong#
  */
-static NPY_INLINE int
+static inline int
 @name@_ctype_add(@type@ a, @type@ b, @type@ *out) {
     *out = a + b;
     if (*out >= a && *out >= b) {
@@ -89,7 +89,7 @@ static NPY_INLINE int
     return NPY_FPE_OVERFLOW;
 }
 
-static NPY_INLINE int
+static inline int
 @name@_ctype_subtract(@type@ a, @type@ b, @type@ *out) {
     *out = a - b;
     if (a >= b) {
@@ -118,7 +118,7 @@ static NPY_INLINE int
  * #neg = (1,0)*4#
  */
 #if NPY_SIZEOF_@SIZE@ > NPY_SIZEOF_@SIZENAME@
-static NPY_INLINE int
+static inline int
 @name@_ctype_multiply(@type@ a, @type@ b, @type@ *out) {
     @big@ temp;
     temp = ((@big@) a) * ((@big@) b);
@@ -144,7 +144,7 @@ static NPY_INLINE int
  * #SIZE = INT*2, LONG*2, LONGLONG*2#
  */
 #if NPY_SIZEOF_LONGLONG == NPY_SIZEOF_@SIZE@
-static NPY_INLINE int
+static inline int
 @name@_ctype_multiply(@type@ a, @type@ b, @type@ *out) {
     if (npy_mul_with_overflow_@name@(out, a, b)) {
         return NPY_FPE_OVERFLOW;
@@ -171,7 +171,7 @@ static NPY_INLINE int
     #define DIVIDEBYZERO_CHECK (b == 0)
 #endif
 
-static NPY_INLINE int
+static inline int
 @name@_ctype_divide(@type@ a, @type@ b, @type@ *out) {
     if (b == 0) {
         *out = 0;
@@ -200,7 +200,7 @@ static NPY_INLINE int
 
 #define @name@_ctype_floor_divide @name@_ctype_divide
 
-static NPY_INLINE int
+static inline int
 @name@_ctype_remainder(@type@ a, @type@ b, @type@ *out) {
     if (DIVIDEBYZERO_CHECK) {
         *out = 0;
@@ -232,7 +232,7 @@ static NPY_INLINE int
  *         ulong, longlong, ulonglong#
  */
 
-static NPY_INLINE int
+static inline int
 @name@_ctype_true_divide(npy_@name@ a, npy_@name@ b, npy_double *out)
 {
     *out = (npy_double)a / (npy_double)b;
@@ -251,7 +251,7 @@ static NPY_INLINE int
  * #upc = BYTE, UBYTE, SHORT, USHORT, INT, UINT,
  *        LONG, ULONG, LONGLONG, ULONGLONG#
  */
-static NPY_INLINE int
+static inline int
 @name@_ctype_power(@type@ a, @type@ b, @type@ *out) {
     @type@ tmp;
 
@@ -292,7 +292,7 @@ static NPY_INLINE int
  * #op = &, ^, |#
  */
 
-static NPY_INLINE int
+static inline int
 @name@_ctype_@oper@(@type@ arg1, @type@ arg2, @type@ *out)
 {
     *out = arg1 @op@ arg2;
@@ -301,14 +301,14 @@ static NPY_INLINE int
 
 /**end repeat1**/
 
-static NPY_INLINE int
+static inline int
 @name@_ctype_lshift(@type@ arg1, @type@ arg2, @type@ *out)
 {
     *out = npy_lshift@suffix@(arg1, arg2);
     return 0;
 }
 
-static NPY_INLINE int
+static inline int
 @name@_ctype_rshift(@type@ arg1, @type@ arg2, @type@ *out)
 {
     *out = npy_rshift@suffix@(arg1, arg2);
@@ -328,7 +328,7 @@ static NPY_INLINE int
  * #oper = add, subtract, multiply, divide#
  */
 
-static NPY_INLINE int
+static inline int
 @name@_ctype_@oper@(@type@ a, @type@ b, @type@ *out)
 {
     *out = a @OP@ b;
@@ -340,21 +340,21 @@ static NPY_INLINE int
 #define @name@_ctype_true_divide @name@_ctype_divide
 
 
-static NPY_INLINE int
+static inline int
 @name@_ctype_floor_divide(@type@ a, @type@ b, @type@ *out) {
     *out = npy_floor_divide@c@(a, b);
     return 0;
 }
 
 
-static NPY_INLINE int
+static inline int
 @name@_ctype_remainder(@type@ a, @type@ b, @type@ *out) {
     *out = npy_remainder@c@(a, b);
     return 0;
 }
 
 
-static NPY_INLINE int
+static inline int
 @name@_ctype_divmod(@type@ a, @type@ b, @type@ *out1, @type@ *out2) {
     *out1 = npy_divmod@c@(a, b, out2);
     return 0;
@@ -368,7 +368,7 @@ static NPY_INLINE int
  * #oper = add, subtract, multiply, divide#
  */
 
-static NPY_INLINE int
+static inline int
 half_ctype_@oper@(npy_half a, npy_half b, npy_half *out)
 {
     float res = npy_half_to_float(a) @OP@ npy_half_to_float(b);
@@ -380,7 +380,7 @@ half_ctype_@oper@(npy_half a, npy_half b, npy_half *out)
 #define half_ctype_true_divide half_ctype_divide
 
 
-static NPY_INLINE int
+static inline int
 half_ctype_floor_divide(npy_half a, npy_half b, npy_half *out)
 {
     npy_half mod;
@@ -396,7 +396,7 @@ half_ctype_floor_divide(npy_half a, npy_half b, npy_half *out)
 }
 
 
-static NPY_INLINE int
+static inline int
 half_ctype_remainder(npy_half a, npy_half b, npy_half *out)
 {
     npy_half_divmod(a, b, out);
@@ -404,7 +404,7 @@ half_ctype_remainder(npy_half a, npy_half b, npy_half *out)
 }
 
 
-static NPY_INLINE int
+static inline int
 half_ctype_divmod(npy_half a, npy_half b, npy_half *out1, npy_half *out2)
 {
     *out1 = npy_half_divmod(a, b, out2);
@@ -419,7 +419,7 @@ half_ctype_divmod(npy_half a, npy_half b, npy_half *out1, npy_half *out2)
  * #rtype = npy_float, npy_double, npy_longdouble#
  * #c = f,,l#
  */
-static NPY_INLINE int
+static inline int
 @name@_ctype_add(@type@ a, @type@ b, @type@ *out)
 {
     out->real = a.real + b.real;
@@ -427,7 +427,7 @@ static NPY_INLINE int
     return 0;
 }
 
-static NPY_INLINE int
+static inline int
 @name@_ctype_subtract(@type@ a, @type@ b, @type@ *out)
 {
     out->real = a.real - b.real;
@@ -440,7 +440,7 @@ static NPY_INLINE int
  * TODO: Mark as  to work around FPEs not being issues on clang 12.
  *       This should be removed when possible.
  */
-static NPY_INLINE int
+static inline int
 @name@_ctype_multiply( @type@ a, @type@ b, @type@ *out)
 {
     out->real = a.real * b.real - a.imag * b.imag;
@@ -449,7 +449,7 @@ static NPY_INLINE int
 }
 
 /* Use the ufunc loop directly to avoid duplicating the complicated logic */
-static NPY_INLINE int
+static inline int
 @name@_ctype_divide(@type@ a, @type@ b, @type@ *out)
 {
     char *args[3] = {(char *)&a, (char *)&b, (char *)out};
@@ -470,7 +470,7 @@ static NPY_INLINE int
  *         longlong, ulonglong#
  */
 
-static NPY_INLINE int
+static inline int
 @name@_ctype_divmod(npy_@name@ a, npy_@name@ b, npy_@name@ *out, npy_@name@ *out2)
 {
     int res = @name@_ctype_floor_divide(a, b, out);
@@ -487,7 +487,7 @@ static NPY_INLINE int
  * #c = f,,l#
  */
 
-static NPY_INLINE int
+static inline int
 @name@_ctype_power(@type@ a, @type@ b, @type@ *out)
 {
     *out = npy_pow@c@(a, b);
@@ -495,7 +495,7 @@ static NPY_INLINE int
 }
 
 /**end repeat**/
-static NPY_INLINE int
+static inline int
 half_ctype_power(npy_half a, npy_half b, npy_half *out)
 {
     const npy_float af = npy_half_to_float(a);
@@ -518,7 +518,7 @@ half_ctype_power(npy_half a, npy_half b, npy_half *out)
  * #uns = (0,1)*5,0*3#
  * #int = 1*10,0*3#
  */
-static NPY_INLINE int
+static inline int
 @name@_ctype_negative(@type@ a, @type@ *out)
 {
 #if @uns@
@@ -541,7 +541,7 @@ static NPY_INLINE int
 }
 /**end repeat**/
 
-static NPY_INLINE int
+static inline int
 half_ctype_negative(npy_half a, npy_half *out)
 {
     *out = a^0x8000u;
@@ -553,7 +553,7 @@ half_ctype_negative(npy_half a, npy_half *out)
  * #name = cfloat, cdouble, clongdouble#
  * #type = npy_cfloat, npy_cdouble, npy_clongdouble#
  */
-static NPY_INLINE int
+static inline int
 @name@_ctype_negative(@type@ a, @type@ *out)
 {
     out->real = -a.real;
@@ -570,7 +570,7 @@ static NPY_INLINE int
  *         npy_long, npy_ulong, npy_longlong, npy_ulonglong,
  *         npy_half, npy_float, npy_double, npy_longdouble#
  */
-static NPY_INLINE int
+static inline int
 @name@_ctype_positive(@type@ a, @type@ *out)
 {
     *out = a;
@@ -583,7 +583,7 @@ static NPY_INLINE int
  * #type = npy_cfloat, npy_cdouble, npy_clongdouble#
  * #c = f,,l#
  */
-static NPY_INLINE int
+static inline int
 @name@_ctype_positive(@type@ a, @type@ *out)
 {
     out->real = a.real;
@@ -591,7 +591,7 @@ static NPY_INLINE int
     return 0;
 }
 
-static NPY_INLINE int
+static inline int
 @name@_ctype_power(@type@ a, @type@ b, @type@ *out)
 {
     *out = npy_cpow@c@(a, b);
@@ -614,7 +614,7 @@ static NPY_INLINE int
  * #type = npy_byte, npy_short, npy_int, npy_long, npy_longlong#
  * #NAME = BYTE, SHORT, INT, LONG, LONGLONG#
  */
-static NPY_INLINE int
+static inline int
 @name@_ctype_absolute(@type@ a, @type@ *out)
 {
     if (a == NPY_MIN_@NAME@) {
@@ -631,7 +631,7 @@ static NPY_INLINE int
  * #type = npy_float, npy_double, npy_longdouble#
  * #c = f,,l#
  */
-static NPY_INLINE int
+static inline int
 @name@_ctype_absolute(@type@ a, @type@ *out)
 {
     *out = npy_fabs@c@(a);
@@ -639,7 +639,7 @@ static NPY_INLINE int
 }
 /**end repeat**/
 
-static NPY_INLINE int
+static inline int
 half_ctype_absolute(npy_half a, npy_half *out)
 {
     *out = a&0x7fffu;
@@ -652,7 +652,7 @@ half_ctype_absolute(npy_half a, npy_half *out)
  * #rtype = npy_float, npy_double, npy_longdouble#
  * #c = f,,l#
  */
-static NPY_INLINE int
+static inline int
 @name@_ctype_absolute(@type@ a, @rtype@ *out)
 {
     *out = npy_cabs@c@(a);
@@ -665,7 +665,7 @@ static NPY_INLINE int
  *         ulong, longlong, ulonglong#
  */
 
-static NPY_INLINE int
+static inline int
 @name@_ctype_invert(npy_@name@ a, npy_@name@ *out)
 {
     *out = ~a;
@@ -929,7 +929,7 @@ typedef enum {
  * @result The result value indicating what we did with `value` or what type
  *         of object it is (see `conversion_result`).
  */
-static NPY_INLINE conversion_result
+static inline conversion_result
 convert_to_@name@(PyObject *value, @type@ *result, npy_bool *may_need_deferring)
 {
     PyArray_Descr *descr;
@@ -1549,7 +1549,7 @@ static PyObject *
  *
  */
 
-/* 
+/*
  * Complex numbers do not support remainder so we manually make sure that the
  * operation is not defined.  This is/was especially important for longdoubles
  * due to their tendency to recurse for some operations, see gh-18548.
@@ -1711,7 +1711,7 @@ static int
 emit_complexwarning(void)
 {
     static PyObject *cls = NULL;
-    npy_cache_import("numpy.core", "ComplexWarning", &cls);
+    npy_cache_import("numpy.exceptions", "ComplexWarning", &cls);
     if (cls == NULL) {
         return -1;
     }

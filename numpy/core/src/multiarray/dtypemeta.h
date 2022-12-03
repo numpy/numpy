@@ -111,7 +111,7 @@ typedef struct {
  * (Error checking is not required for DescrFromType, assuming that the
  * type is valid.)
  */
-static NPY_INLINE PyArray_DTypeMeta *
+static inline PyArray_DTypeMeta *
 PyArray_DTypeFromTypeNum(int typenum)
 {
     PyArray_Descr *descr = PyArray_DescrFromType(typenum);

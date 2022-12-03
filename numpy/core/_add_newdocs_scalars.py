@@ -225,16 +225,52 @@ add_newdoc_for_scalar_type('bytes_', ['string_'],
 
 add_newdoc_for_scalar_type('void', [],
     r"""
-    Either an opaque sequence of bytes, or a structure.
+    np.void(length_or_data, /, dtype=None)
 
+    Create a new structured or unstructured void scalar.
+
+    Parameters
+    ----------
+    length_or_data : int, array-like, bytes-like, object
+       One of multiple meanings (see notes).  The length or
+       bytes data of an unstructured void.  Or alternatively,
+       the data to be stored in the new scalar when `dtype`
+       is provided.
+       This can be an array-like, in which case an array may
+       be returned.
+    dtype : dtype, optional
+        If provided the dtype of the new scalar.  This dtype must
+        be "void" dtype (i.e. a structured or unstructured void,
+        see also :ref:`defining-structured-types`).
+
+       ..versionadded:: 1.24
+
+    Notes
+    -----
+    For historical reasons and because void scalars can represent both
+    arbitrary byte data and structured dtypes, the void constructor
+    has three calling conventions:
+
+    1. ``np.void(5)`` creates a ``dtype="V5"`` scalar filled with five
+       ``\0`` bytes.  The 5 can be a Python or NumPy integer.
+    2. ``np.void(b"bytes-like")`` creates a void scalar from the byte string.
+       The dtype itemsize will match the byte string length, here ``"V10"``.
+    3. When a ``dtype=`` is passed the call is rougly the same as an
+       array creation.  However, a void scalar rather than array is returned.
+
+    Please see the examples which show all three different conventions.
+
+    Examples
+    --------
+    >>> np.void(5)
+    void(b'\x00\x00\x00\x00\x00')
     >>> np.void(b'abcd')
     void(b'\x61\x62\x63\x64')
+    >>> np.void((5, 3.2, "eggs"), dtype="i,d,S5")
+    (5, 3.2, b'eggs')  # looks like a tuple, but is `np.void`
+    >>> np.void(3, dtype=[('x', np.int8), ('y', np.int8)])
+    (3, 3)  # looks like a tuple, but is `np.void`
 
-    Structured `void` scalars can only be constructed via extraction from :ref:`structured_arrays`:
-
-    >>> arr = np.array((1, 2), dtype=[('x', np.int8), ('y', np.int8)])
-    >>> arr[()]
-    (1, 2)  # looks like a tuple, but is `np.void`
     """)
 
 add_newdoc_for_scalar_type('datetime64', [],

@@ -198,7 +198,7 @@ RAND_INT_TYPE random_binomial_inversion(bitgen_t *bitgen_state,
                                         double p,
                                         binomial_t *binomial);
 double random_loggam(double x);
-static NPY_INLINE double next_double(bitgen_t *bitgen_state) {
+static inline double next_double(bitgen_t *bitgen_state) {
     return bitgen_state->next_double(bitgen_state->state);
 }
 

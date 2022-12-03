@@ -308,7 +308,7 @@ static void simd_binary_scalar2_@kind@_b8(char **args, npy_intp len)
  * #OP = ==, !=, <, <=#
  */
 #if !((@eq@ || @neq@) && @signed@)
-static NPY_INLINE void
+static inline void
 run_binary_simd_@kind@_@sfx@(char **args, npy_intp const *dimensions, npy_intp const *steps)
 {
 #if @VECTOR@

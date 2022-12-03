@@ -26,7 +26,7 @@ which may be of interest for those using this C API. In many instances,
 testing out ideas by creating the iterator in Python is a good idea
 before writing the C iteration code.
 
-Simple Iteration Example
+Iteration Example
 ------------------------
 
 The best way to become familiar with the iterator is to look at its
@@ -115,10 +115,10 @@ number of non-zero elements in an array.
         return nonzero_count;
     }
 
-Simple Multi-Iteration Example
+Multi-Iteration Example
 ------------------------------
 
-Here is a simple copy function using the iterator.  The ``order`` parameter
+Here is a copy function using the iterator.  The ``order`` parameter
 is used to control the memory layout of the allocated result, typically
 :c:data:`NPY_KEEPORDER` is desired.
 

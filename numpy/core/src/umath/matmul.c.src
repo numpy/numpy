@@ -45,7 +45,7 @@
  * 3. The slower (first) axis stride, in unit steps, must be larger than
  *    the faster axis dimension
  */
-static NPY_INLINE npy_bool
+static inline npy_bool
 is_blasable2d(npy_intp byte_stride1, npy_intp byte_stride2,
               npy_intp d1, npy_intp d2,  npy_intp itemsize)
 {

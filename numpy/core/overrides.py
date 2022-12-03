@@ -3,10 +3,13 @@ import collections
 import functools
 import os
 
+from .._utils import set_module
+from .._utils._inspect import getargspec
 from numpy.core._multiarray_umath import (
     add_docstring, implement_array_function, _get_implementing_args)
-from numpy.compat._inspect import getargspec
 
+
+ARRAY_FUNCTIONS = set()
 
 ARRAY_FUNCTION_ENABLED = bool(
     int(os.environ.get('NUMPY_EXPERIMENTAL_ARRAY_FUNCTION', 1)))
@@ -107,24 +110,6 @@ def verify_matching_signatures(implementation, dispatcher):
                                'default argument values')
 
 
-def set_module(module):
-    """Decorator for overriding __module__ on a function or class.
-
-    Example usage::
-
-        @set_module('numpy')
-        def example():
-            pass
-
-        assert example.__module__ == 'numpy'
-    """
-    def decorator(func):
-        if module is not None:
-            func.__module__ = module
-        return func
-    return decorator
-
-
 def array_function_dispatch(dispatcher, module=None, verify=True,
                             docs_from_dispatcher=False):
     """Decorator for adding dispatch with the __array_function__ protocol.
@@ -207,6 +192,8 @@ def array_function_dispatch(dispatcher, module=None, verify=True,
             public_api.__module__ = module
 
         public_api._implementation = implementation
+
+        ARRAY_FUNCTIONS.add(public_api)
 
         return public_api
 

@@ -4,6 +4,7 @@ import re
 import sys
 import warnings
 
+from .._utils import set_module
 import numpy as np
 import numpy.core.numeric as _nx
 from numpy.core import transpose
@@ -19,7 +20,6 @@ from numpy.core.fromnumeric import (
     ravel, nonzero, partition, mean, any, sum
     )
 from numpy.core.numerictypes import typecodes
-from numpy.core.overrides import set_module
 from numpy.core import overrides
 from numpy.core.function_base import add_newdoc
 from numpy.lib.twodim_base import diag
@@ -4017,7 +4017,7 @@ def percentile(a,
     since Python uses 0-based indexing, the code subtracts another 1 from the
     index internally.
 
-    The following formula determines the virtual index ``i + g``, the location 
+    The following formula determines the virtual index ``i + g``, the location
     of the percentile in the sorted sample:
 
     .. math::
@@ -4306,7 +4306,7 @@ def quantile(a,
     since Python uses 0-based indexing, the code subtracts another 1 from the
     index internally.
 
-    The following formula determines the virtual index ``i + g``, the location 
+    The following formula determines the virtual index ``i + g``, the location
     of the quantile in the sorted sample:
 
     .. math::

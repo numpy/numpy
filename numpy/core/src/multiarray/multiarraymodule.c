@@ -1622,7 +1622,7 @@ _prepend_ones(PyArrayObject *arr, int nd, int ndmin, NPY_ORDER order)
                  ((order) == NPY_CORDER && PyArray_IS_C_CONTIGUOUS(op)) || \
                  ((order) == NPY_FORTRANORDER && PyArray_IS_F_CONTIGUOUS(op)))
 
-static NPY_INLINE PyObject *
+static inline PyObject *
 _array_fromobject_generic(
         PyObject *op, PyArray_Descr *type, _PyArray_CopyMode copy, NPY_ORDER order,
         npy_bool subok, int ndmin)
@@ -4100,7 +4100,7 @@ _vec_string(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUSED(kw
     return 0;
 }
 
-#ifndef __NPY_PRIVATE_NO_SIGNAL
+#ifndef NPY_NO_SIGNAL
 
 static NPY_TLS int sigint_buf_init = 0;
 static NPY_TLS NPY_SIGJMP_BUF _NPY_SIGINT_BUF;
@@ -4162,7 +4162,6 @@ array_shares_memory_impl(PyObject *args, PyObject *kwds, Py_ssize_t default_max_
     static char *kwlist[] = {"self", "other", "max_work", NULL};
 
     mem_overlap_t result;
-    static PyObject *too_hard_cls = NULL;
     Py_ssize_t max_work;
     NPY_BEGIN_THREADS_DEF;
 
@@ -4242,8 +4241,8 @@ array_shares_memory_impl(PyObject *args, PyObject *kwds, Py_ssize_t default_max_
     }
     else if (result == MEM_OVERLAP_TOO_HARD) {
         if (raise_exceptions) {
-            npy_cache_import("numpy.core._exceptions", "TooHardError",
-                             &too_hard_cls);
+            static PyObject *too_hard_cls = NULL;
+            npy_cache_import("numpy.exceptions", "TooHardError", &too_hard_cls);
             if (too_hard_cls) {
                 PyErr_SetString(too_hard_cls, "Exceeded max_work");
             }

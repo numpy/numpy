@@ -392,7 +392,7 @@ typedef PyArray_Descr *__get_default_descr(
 #define _PyArray_GetDefaultDescr \
     ((__get_default_descr *)(__experimental_dtype_api_table[6]))
 
-static NPY_INLINE PyArray_Descr *
+static inline PyArray_Descr *
 PyArray_GetDefaultDescr(PyArray_DTypeMeta *DType)
 {
     if (DType->singleton != NULL) {

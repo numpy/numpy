@@ -14,7 +14,7 @@ try:
 except ImportError:
     cython = None
 else:
-    from numpy.compat import _pep440
+    from numpy._utils import _pep440
 
     # Cython 0.29.30 is required for Python 3.11 and there are
     # other fixes in the 0.29 series that are needed even for earlier

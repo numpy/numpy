@@ -9,9 +9,6 @@ set_travis_vars() {
     fi
     if [[ "$TRAVIS_EVENT_TYPE" == "cron" ]]; then
       IS_SCHEDULE_DISPATCH="true"
-    elif [[ "$TRAVIS_EVENT_TYPE" == "api" ]]; then
-      # Manual CI run, so upload
-      IS_SCHEDULE_DISPATCH="true"
     else
       IS_SCHEDULE_DISPATCH="false"
     fi
@@ -37,7 +34,7 @@ set_upload_vars() {
 upload_wheels() {
     echo ${PWD}
     if [[ ${ANACONDA_UPLOAD} == true ]]; then
-        if [ -z ${TOKEN} ]; then
+        if [[ -z ${TOKEN} ]]; then
             echo no token set, not uploading
         else
             python -m pip install \
