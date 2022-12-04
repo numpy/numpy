@@ -196,10 +196,9 @@ def setbufsize(size):
 
     Examples
     --------
-    >>> np.getbufsize()
-    8192
-    >>> np.setbufsize(4096)
-    8192
+    >>> original_size = np.getbufsize()
+    >>> np.setbufsize(4096) == original_size
+    True
     >>> np.getbufsize()
     4096
     """
@@ -229,8 +228,8 @@ def getbufsize():
     
     Examples
     --------
-    >>> np.getbufsize()
-    8192
+    >>> np.getbufsize()  # doctest: +SKIP
+    8192  # may vary
     """
     return umath.geterrobj()[0]
 
