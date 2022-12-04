@@ -997,7 +997,7 @@ class TestMaskedArray:
 
         # make sure save and savez return exception for masked arrays
         mx1 = masked_array([1.], mask=[True])
-        exc_text = 'MaskedArray.tofile() not implemented yet.'
+        exc_text = r'MaskedArray\.tofile\(\) not implemented yet.'
         with pytest.raises(NotImplementedError, match=exc_text) as e_info:
             np.save('abc', mx1)
 
