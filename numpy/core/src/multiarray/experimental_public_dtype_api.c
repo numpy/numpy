@@ -258,6 +258,14 @@ PyArrayInitDTypeMeta_FromSpec(
     /*
      * And now, register all the casts that are currently defined!
      */
+    if (spec->casts == NULL) {
+        PyErr_SetString(
+            PyExc_RuntimeError,
+            "DType must at least provide a function to cast (or just copy) "
+            "between its own instances!");
+        return -1;
+    }
+
     PyArrayMethod_Spec **next_meth_spec = spec->casts;
     while (1) {
         PyArrayMethod_Spec *meth_spec = *next_meth_spec;
