@@ -3929,12 +3929,16 @@ PyArray_InitClearFunctions(void)
         {NPY_METH_unaligned_strided_loop, &npy_clear_object_strided_loop},
         {0, NULL}};
 
+    NPY_ARRAYMETHOD_FLAGS flags = (
+        NPY_METH_SUPPORTS_UNALIGNED | NPY_METH_REQUIRES_PYAPI |
+        NPY_METH_NO_FLOATINGPOINT_ERRORS);
+
     PyArrayMethod_Spec spec = {
         .name = "object_clear",
         .nin = 0,
         .nout = 1,
         .casting = NPY_NO_CASTING,
-        .flags = NPY_METH_REQUIRES_PYAPI | NPY_METH_SUPPORTS_UNALIGNED,
+        .flags = flags,
         .dtypes = dtypes,
         .slots = slots,
     };

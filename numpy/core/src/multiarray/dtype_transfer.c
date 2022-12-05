@@ -2501,6 +2501,7 @@ get_clear_fields_transfer_function(int NPY_UNUSED(aligned),
     data->field_count = 0;
 
     _single_field_transfer *field = data->fields;
+    *flags = PyArrayMethod_MINIMAL_FLAGS;
     for (i = 0; i < field_count; ++i) {
         key = PyTuple_GET_ITEM(names, i);
         tup = PyDict_GetItem(src_dtype->fields, key);
