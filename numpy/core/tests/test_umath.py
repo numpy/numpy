@@ -1069,8 +1069,9 @@ class TestPower:
                 assert_complex_equal(np.power(zero, -p), cnan)
             assert_complex_equal(np.power(zero, -1+0.2j), cnan)
 
-    # Testing 0^{Non-zero} issue 18378
+    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     def test_zero_power_nonzero(self):
+        # Testing 0^{Non-zero} issue 18378
         zero = np.array([0.0+0.0j])
         cnan = np.array([complex(np.nan, np.nan)])
 
