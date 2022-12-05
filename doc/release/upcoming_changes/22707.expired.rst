@@ -6,7 +6,7 @@ The ``==`` and ``!=`` operators on arrays now always:
   have incompatible shapes (``np.array([1, 2]) == np.array([1, 2, 3])``).
 * return an array of all ``True`` or all ``False`` when values are
   fundamentally not comparable (e.g. have different dtypes).  An example
-  is ``np.array(["a"]) == np.array([1])`.
+  is ``np.array(["a"]) == np.array([1])``.
 
 This mimics the Python behavior of returning ``False`` and ``True``
 when comparing incompatible types like ``"a" == 1`` and ``"a" != 1``.
