@@ -1622,6 +1622,12 @@ compute_datetime_metadata_greatest_common_divisor(
 
     return 0;
 
+    /*
+     * We do not use `DTypePromotionError` below.  The reason this is that a
+     * `DTypePromotionError` indicates that `arr_dt1 != arr_dt2` for
+     * all values, but this is wrong for "0".  This could be changed but
+     * for now we consider them errors that occur _while_ promoting.
+     */
 incompatible_units: {
         PyObject *umeta1 = metastr_to_unicode(meta1, 0);
         if (umeta1 == NULL) {

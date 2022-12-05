@@ -4811,6 +4811,38 @@ intern_strings(void)
     return 0;
 }
 
+
+/*
+ * Initializes global constants.  At some points these need to be cleaned
+ * up, and sometimes we also import them where they are needed.  But for
+ * some things, adding an `npy_cache_import` everywhere seems inconvenient.
+ *
+ * These globals should not need the C-layer at all and will be imported
+ * before anything on the C-side is initialized.
+ */
+static int
+initialize_static_globals(void)
+{
+    assert(npy_DTypePromotionError == NULL);
+    npy_cache_import(
+            "numpy.exceptions", "DTypePromotionError",
+            &npy_DTypePromotionError);
+    if (npy_DTypePromotionError == NULL) {
+        return -1;
+    }
+
+    assert(npy_UFuncNoLoopError == NULL);
+    npy_cache_import(
+            "numpy.core._exceptions", "_UFuncNoLoopError",
+            &npy_UFuncNoLoopError);
+    if (npy_UFuncNoLoopError == NULL) {
+        return -1;
+    }
+
+    return 0;
+}
+
+
 static struct PyModuleDef moduledef = {
         PyModuleDef_HEAD_INIT,
         "_multiarray_umath",
@@ -4858,6 +4890,14 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
     /* Add some symbolic constants to the module */
     d = PyModule_GetDict(m);
     if (!d) {
+        goto err;
+    }
+
+    if (intern_strings() < 0) {
+        goto err;
+    }
+
+    if (initialize_static_globals() < 0) {
         goto err;
     }
 
@@ -5030,10 +5070,6 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
 
     /* Create the typeinfo types */
     if (typeinfo_init_structsequences(d) < 0) {
-        goto err;
-    }
-
-    if (intern_strings() < 0) {
         goto err;
     }
 

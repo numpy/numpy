@@ -50,6 +50,9 @@ NPY_NO_EXPORT npy_intp REQUIRED_STR_LEN[] = {0, 3, 5, 10, 10, 20, 20, 20, 20};
  */
 NPY_NO_EXPORT int npy_promotion_state = NPY_USE_LEGACY_PROMOTION;
 NPY_NO_EXPORT PyObject *NO_NEP50_WARNING_CTX = NULL;
+NPY_NO_EXPORT PyObject *npy_DTypePromotionError = NULL;
+NPY_NO_EXPORT PyObject *npy_UFuncNoLoopError = NULL;
+
 
 static PyObject *
 PyArray_GetGenericToVoidCastingImpl(void);

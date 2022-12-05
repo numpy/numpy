@@ -1271,6 +1271,13 @@ class TestStructured:
         a = np.zeros((1, 0, 1), [('a', '<f8', (1, 1))])
         assert_equal(a, a)
 
+    @pytest.mark.parametrize("op", [operator.eq, operator.ne])
+    def test_structured_array_comparison_bad_broadcasts(self, op):
+        a = np.zeros(3, dtype='i,i')
+        b = np.array([], dtype="i,i")
+        with pytest.raises(ValueError):
+            op(a, b)
+
     def test_structured_comparisons_with_promotion(self):
         # Check that structured arrays can be compared so long as their
         # dtypes promote fine:
@@ -1291,7 +1298,10 @@ class TestStructured:
         assert_equal(a == b, [False, True])
         assert_equal(a != b, [True, False])
 
-    def test_void_comparison_failures(self):
+    @pytest.mark.parametrize("op", [
+            operator.eq, lambda x, y: operator.eq(y, x),
+            operator.ne, lambda x, y: operator.ne(y, x)])
+    def test_void_comparison_failures(self, op):
         # In principle, one could decide to return an array of False for some
         # if comparisons are impossible.  But right now we return TypeError
         # when "void" dtype are involved.
@@ -1299,18 +1309,18 @@ class TestStructured:
         y = np.zeros(3)
         # Cannot compare non-structured to structured:
         with pytest.raises(TypeError):
-            x == y
+            op(x, y)
 
         # Added title prevents promotion, but casts are OK:
         y = np.zeros(3, dtype=[(('title', 'a'), 'i1')])
         assert np.can_cast(y.dtype, x.dtype)
         with pytest.raises(TypeError):
-            x == y
+            op(x, y)
 
         x = np.zeros(3, dtype="V7")
         y = np.zeros(3, dtype="V8")
         with pytest.raises(TypeError):
-            x == y
+            op(x, y)
 
     def test_casting(self):
         # Check that casting a structured array to change its byte order
@@ -9491,6 +9501,105 @@ def test_equal_override():
         assert_equal(array == my_always_equal, 'eq')
         assert_equal(my_always_equal != array, 'ne')
         assert_equal(array != my_always_equal, 'ne')
+
+
+@pytest.mark.parametrize("op", [operator.eq, operator.ne])
+@pytest.mark.parametrize(["dt1", "dt2"], [
+        ([("f", "i")], [("f", "i")]),  # structured comparison (successfull)
+        ("M8", "d"),  # impossible comparison: result is all True or False
+        ("d", "d"),  # valid comparison
+        ])
+def test_equal_subclass_no_override(op, dt1, dt2):
+    # Test how the three different possible code-paths deal with subclasses
+
+    class MyArr(np.ndarray):
+        called_wrap = 0
+
+        def __array_wrap__(self, new):
+            type(self).called_wrap += 1
+            return super().__array_wrap__(new)
+
+    numpy_arr = np.zeros(5, dtype=dt1)
+    my_arr = np.zeros(5, dtype=dt2).view(MyArr)
+
+    assert type(op(numpy_arr, my_arr)) is MyArr
+    assert type(op(my_arr, numpy_arr)) is MyArr
+    # We expect 2 calls (more if there were more fields):
+    assert MyArr.called_wrap == 2
+
+
+@pytest.mark.parametrize(["dt1", "dt2"], [
+        ("M8[ns]", "d"),
+        ("M8[s]", "l"),
+        ("m8[ns]", "d"),
+        # Missing: ("m8[ns]", "l") as timedelta currently promotes ints
+        ("M8[s]", "m8[s]"),
+        ("S5", "U5"),
+        # Structured/void dtypes have explicit paths not tested here.
+])
+def test_no_loop_gives_all_true_or_false(dt1, dt2):
+    # Make sure they broadcast to test result shape, use random values, since
+    # the actual value should be ignored
+    arr1 = np.random.randint(5, size=100).astype(dt1)
+    arr2 = np.random.randint(5, size=99)[:, np.newaxis].astype(dt2)
+
+    res = arr1 == arr2
+    assert res.shape == (99, 100)
+    assert res.dtype == bool
+    assert not res.any()
+
+    res = arr1 != arr2
+    assert res.shape == (99, 100)
+    assert res.dtype == bool
+    assert res.all()
+
+    # incompatible shapes raise though
+    arr2 = np.random.randint(5, size=99).astype(dt2)
+    with pytest.raises(ValueError):
+        arr1 == arr2
+
+    with pytest.raises(ValueError):
+        arr1 != arr2
+
+    # Basic test with another operation:
+    with pytest.raises(np.core._exceptions._UFuncNoLoopError):
+        arr1 > arr2
+
+
+@pytest.mark.parametrize("op", [
+        operator.eq, operator.ne, operator.le, operator.lt, operator.ge,
+        operator.gt])
+def test_comparisons_forwards_error(op):
+    class NotArray:
+        def __array__(self):
+            raise TypeError("run you fools")
+
+    with pytest.raises(TypeError, match="run you fools"):
+        op(np.arange(2), NotArray())
+
+    with pytest.raises(TypeError, match="run you fools"):
+        op(NotArray(), np.arange(2))
+
+
+def test_richcompare_scalar_boolean_singleton_return():
+    # These are currently guaranteed to be the boolean singletons, but maybe
+    # returning NumPy booleans would also be OK:
+    assert (np.array(0) == "a") is False
+    assert (np.array(0) != "a") is True
+    assert (np.int16(0) == "a") is False
+    assert (np.int16(0) != "a") is True
+
+
+@pytest.mark.parametrize("op", [
+        operator.eq, operator.ne, operator.le, operator.lt, operator.ge,
+        operator.gt])
+def test_ragged_comparison_fails(op):
+    # This needs to convert the internal array to True/False, which fails:
+    a = np.array([1, np.array([1, 2, 3])], dtype=object)
+    b = np.array([1, np.array([1, 2, 3])], dtype=object)
+
+    with pytest.raises(ValueError, match="The truth value.*ambiguous"):
+        op(a, b)
 
 
 @pytest.mark.parametrize(
