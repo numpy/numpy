@@ -974,8 +974,8 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
     }
 
     /*
-     * At this point we are locked into comparing (both are arrays) or
-     * something we would have tried to convert.
+     * At this point `self` can take control of the operation by converting
+     * `other` to an array (it would have a chance to take control).
      * If we are not in `==` and `!=`, this is an error and we hope that
      * the existing error makes sense and derives from `TypeError` (which
      * python would raise for `NotImplemented`) when it should.
