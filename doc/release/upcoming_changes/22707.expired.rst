@@ -8,6 +8,6 @@ The ``==`` and ``!=`` operators on arrays now always:
   fundamentally not comparable (e.g. have different dtypes).  An example
   is ``np.array(["a"]) == np.array([1])`.
 
-For a long time these gave ``DeprecationWarning`` or ``FutureWarning``.
 This mimics the Python behavior of returning ``False`` and ``True``
 when comparing incompatible types like ``"a" == 1`` and ``"a" != 1``.
+For a long time these gave ``DeprecationWarning`` or ``FutureWarning``.
