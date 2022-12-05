@@ -798,18 +798,18 @@ add_newdoc('numpy.core.multiarray', 'array',
     ----------
     object : array_like
         An array, any object exposing the array interface, an object whose
-        __array__ method returns an array, or any (nested) sequence.
+        ``__array__`` method returns an array, or any (nested) sequence.
         If object is a scalar, a 0-dimensional array containing object is
         returned.
     dtype : data-type, optional
-        The desired data-type for the array.  If not given, then the type will
-        be determined as the minimum type required to hold the objects in the
-        sequence.
+        The desired data-type for the array. If not given, NumPy will try to use
+        a default ``dtype`` that can represent the values (by applying promotion
+        rules when necessary.)
     copy : bool, optional
         If true (default), then the object is copied.  Otherwise, a copy will
-        only be made if __array__ returns a copy, if obj is a nested sequence,
-        or if a copy is needed to satisfy any of the other requirements
-        (`dtype`, `order`, etc.).
+        only be made if ``__array__`` returns a copy, if obj is a nested
+        sequence, or if a copy is needed to satisfy any of the other
+        requirements (``dtype``, ``order``, etc.).
     order : {'K', 'A', 'C', 'F'}, optional
         Specify the memory layout of the array. If object is not an array, the
         newly created array will be in C order (row major) unless 'F' is
@@ -858,7 +858,7 @@ add_newdoc('numpy.core.multiarray', 'array',
 
     Notes
     -----
-    When order is 'A' and `object` is an array in neither 'C' nor 'F' order,
+    When order is 'A' and ``object`` is an array in neither 'C' nor 'F' order,
     and a copy is forced by a change in dtype, then the order of the result is
     not necessarily 'C' as expected. This is likely a bug.
 
