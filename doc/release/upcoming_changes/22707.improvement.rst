@@ -1,9 +1,8 @@
 New ``DTypePromotionError``
 ---------------------------
 NumPy now has a new ``DTypePromotionError`` which is used when two
-dtypes cannot be promoted to a common one, for example raised by::
+dtypes cannot be promoted to a common one, for example::
 
     np.result_type("M8[s]", np.complex128)
 
-Errors that occur while trying to find the correct promotion may raise a
-different error.
+raises this new exception.
