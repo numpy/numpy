@@ -2704,24 +2704,24 @@ class TestBitwiseUFuncs:
     def test_popcount(self, input_dtype_obj, bitsize):
         input_dtype = input_dtype_obj.type
 
-        # bit_count is only in-built in 3.10+
+        # bitwise_count is only in-built in 3.10+
         if sys.version_info < (3, 10) and input_dtype == np.object_:
             pytest.skip()
 
         for i in range(1, bitsize):
             num = 2**i - 1
-            msg = f"bit_count for {num}"
-            assert i == np.bit_count(input_dtype(num)), msg
+            msg = f"bitwise_count for {num}"
+            assert i == np.bitwise_count(input_dtype(num)), msg
             if np.issubdtype(
                 input_dtype, np.signedinteger) or input_dtype == np.object_:
-                assert i == np.bit_count(input_dtype(-num)), msg
+                assert i == np.bitwise_count(input_dtype(-num)), msg
 
         a = np.array([2**i-1 for i in range(1, bitsize)], dtype=input_dtype)
-        bit_count_a = np.bit_count(a)
+        bitwise_count_a = np.bitwise_count(a)
         expected = np.arange(1, bitsize, dtype=input_dtype)
 
-        msg = f"array bit_count for {input_dtype}"
-        assert all(bit_count_a == expected), msg
+        msg = f"array bitwise_count for {input_dtype}"
+        assert all(bitwise_count_a == expected), msg
 
 
 class TestInt:

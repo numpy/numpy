@@ -4215,7 +4215,7 @@ add_newdoc('numpy.core.umath', 'lcm',
 
     """)
 
-add_newdoc('numpy.core.umath', 'bit_count',
+add_newdoc('numpy.core.umath', 'bitwise_count',
     """
     Computes the number of 1-bits in the absolute value of ``x``.
     Analogous to the builtin `int.bit_count` or ``popcount`` in C++.
@@ -4241,10 +4241,10 @@ add_newdoc('numpy.core.umath', 'bit_count',
 
     Examples
     --------
-    >>> np.bit_count(1023)
+    >>> np.bitwise_count(1023)
     10
     >>> a = np.array([2**i - 1 for i in range(16)])
-    >>> np.bit_count(a)
+    >>> np.bitwise_count(a)
     array([ 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15],
           dtype=uint8)
 

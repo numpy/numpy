@@ -182,4 +182,4 @@ Miscellaneous
 
    interp
 
-   bit_count
+   bitwise_count

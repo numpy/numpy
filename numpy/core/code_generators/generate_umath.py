@@ -1122,9 +1122,9 @@ defdict = {
           TD(ints),
           TD('O', f='npy_ObjectLCM'),
           ),
-'bit_count':
+'bitwise_count':
     Ufunc(1, 1, None,
-          docstrings.get('numpy.core.umath.bit_count'),
+          docstrings.get('numpy.core.umath.bitwise_count'),
           None,
           TD(ints, out='B'),
           TD(P, f='bit_count'),

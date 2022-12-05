@@ -2467,7 +2467,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType, _DType_co]):
     def __dlpack__(self: NDArray[number[Any]], *, stream: None = ...) -> _PyCapsule: ...
     def __dlpack_device__(self) -> tuple[int, L[0]]: ...
 
-    def bit_count(
+    def bitwise_count(
         self,
         out: None | NDArray[Any] = ...,
         *,
@@ -2625,7 +2625,7 @@ class generic(_ArrayOrScalarCommon):
         self: _ScalarType, *shape: SupportsIndex, order: _OrderACF = ...
     ) -> NDArray[_ScalarType]: ...
 
-    def bit_count(
+    def bitwise_count(
         self,
         out: None | NDArray[Any] = ...,
         *,
@@ -3159,8 +3159,8 @@ arcsinh: _UFunc_Nin1_Nout1[L['arcsinh'], L[8], None]
 arctan2: _UFunc_Nin2_Nout1[L['arctan2'], L[5], None]
 arctan: _UFunc_Nin1_Nout1[L['arctan'], L[8], None]
 arctanh: _UFunc_Nin1_Nout1[L['arctanh'], L[8], None]
-bit_count: _UFunc_Nin1_Nout1[L['bit_count'], L[11], None]
 bitwise_and: _UFunc_Nin2_Nout1[L['bitwise_and'], L[12], L[-1]]
+bitwise_count: _UFunc_Nin1_Nout1[L['bitwise_count'], L[11], None]
 bitwise_not: _UFunc_Nin1_Nout1[L['invert'], L[12], None]
 bitwise_or: _UFunc_Nin2_Nout1[L['bitwise_or'], L[12], L[0]]
 bitwise_xor: _UFunc_Nin2_Nout1[L['bitwise_xor'], L[12], L[0]]

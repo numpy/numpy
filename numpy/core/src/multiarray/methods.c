@@ -364,9 +364,9 @@ array_min(PyArrayObject *self,
 }
 
 static PyObject *
-array_bit_count(PyArrayObject *self, PyObject *args, PyObject *kwds)
+array_bitwise_count(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-    NPY_FORWARD_NDARRAY_METHOD("_bit_count");
+    NPY_FORWARD_NDARRAY_METHOD("_bitwise_count");
 }
 
 static PyObject *
@@ -3020,8 +3020,8 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
     {"__dlpack_device__",
         (PyCFunction)array_dlpack_device,
         METH_NOARGS, NULL},
-    {"bit_count",
-        (PyCFunction)array_bit_count,
+    {"bitwise_count",
+        (PyCFunction)array_bitwise_count,
         METH_VARARGS | METH_KEYWORDS, NULL},
     {NULL, NULL, 0, NULL}           /* sentinel */
 };
