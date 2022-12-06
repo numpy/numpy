@@ -146,14 +146,14 @@ class AxisError(ValueError, IndexError):
     >>> np.cumsum(array_1d, axis=1)
     Traceback (most recent call last):
       ...
-    numpy.AxisError: axis 1 is out of bounds for array of dimension 1
+    numpy.exceptions.AxisError: axis 1 is out of bounds for array of dimension 1
 
     Negative axes are preserved:
 
     >>> np.cumsum(array_1d, axis=-2)
     Traceback (most recent call last):
       ...
-    numpy.AxisError: axis -2 is out of bounds for array of dimension 1
+    numpy.exceptions.AxisError: axis -2 is out of bounds for array of dimension 1
 
     The class constructor generally takes the axis and arrays'
     dimensionality as arguments:
