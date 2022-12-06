@@ -3,6 +3,7 @@ import pytest
 import inspect
 
 import numpy as np
+from numpy.core.numeric import normalize_axis_tuple
 from numpy.lib.nanfunctions import _nan_mask, _replace_nan
 from numpy.testing import (
     assert_, assert_equal, assert_almost_equal, assert_raises,
@@ -807,6 +808,33 @@ class TestNanFunctions_Median:
             res = np.nanmedian(d, axis=(0, 1, 3), keepdims=True)
             assert_equal(res.shape, (1, 1, 7, 1))
 
+    @pytest.mark.parametrize(
+        argnames='axis',
+        argvalues=[
+            None,
+            1,
+            (1, ),
+            (0, 1),
+            (-3, -1),
+        ]
+    )
+    def test_keepdims_out(self, axis):
+        d = np.ones((3, 5, 7, 11))
+        # Randomly set some elements to NaN:
+        w = np.random.random((4, 200)) * np.array(d.shape)[:, None]
+        w = w.astype(np.intp)
+        d[tuple(w)] = np.nan
+        if axis is None:
+            shape_out = (1,) * d.ndim
+        else:
+            axis_norm = normalize_axis_tuple(axis, d.ndim)
+            shape_out = tuple(
+                1 if i in axis_norm else d.shape[i] for i in range(d.ndim))
+        out = np.empty(shape_out)
+        result = np.nanmedian(d, axis=axis, keepdims=True, out=out)
+        assert result is out
+        assert_equal(result.shape, shape_out)
+
     def test_out(self):
         mat = np.random.rand(3, 3)
         nan_mat = np.insert(mat, [0, 2], np.nan, axis=1)
@@ -981,6 +1009,36 @@ class TestNanFunctions_Percentile:
             assert_equal(res.shape, (1, 1, 1, 1))
             res = np.nanpercentile(d, 90, axis=(0, 1, 3), keepdims=True)
             assert_equal(res.shape, (1, 1, 7, 1))
+
+    @pytest.mark.parametrize('q', [7, [1, 7]])
+    @pytest.mark.parametrize(
+        argnames='axis',
+        argvalues=[
+            None,
+            1,
+            (1,),
+            (0, 1),
+            (-3, -1),
+        ]
+    )
+    def test_keepdims_out(self, q, axis):
+        d = np.ones((3, 5, 7, 11))
+        # Randomly set some elements to NaN:
+        w = np.random.random((4, 200)) * np.array(d.shape)[:, None]
+        w = w.astype(np.intp)
+        d[tuple(w)] = np.nan
+        if axis is None:
+            shape_out = (1,) * d.ndim
+        else:
+            axis_norm = normalize_axis_tuple(axis, d.ndim)
+            shape_out = tuple(
+                1 if i in axis_norm else d.shape[i] for i in range(d.ndim))
+        shape_out = np.shape(q) + shape_out
+
+        out = np.empty(shape_out)
+        result = np.nanpercentile(d, q, axis=axis, keepdims=True, out=out)
+        assert result is out
+        assert_equal(result.shape, shape_out)
 
     def test_out(self):
         mat = np.random.rand(3, 3)

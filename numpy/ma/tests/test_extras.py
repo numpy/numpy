@@ -12,6 +12,7 @@ import itertools
 import pytest
 
 import numpy as np
+from numpy.core.numeric import normalize_axis_tuple
 from numpy.testing import (
     assert_warns, suppress_warnings
     )
@@ -988,6 +989,34 @@ class TestMedian:
             assert_equal(r, e)
             assert_(r is out)
             assert_(type(r) is MaskedArray)
+
+    @pytest.mark.parametrize(
+        argnames='axis',
+        argvalues=[
+            None,
+            1,
+            (1, ),
+            (0, 1),
+            (-3, -1),
+        ]
+    )
+    def test_keepdims_out(self, axis):
+        mask = np.zeros((3, 5, 7, 11), dtype=bool)
+        # Randomly set some elements to True:
+        w = np.random.random((4, 200)) * np.array(mask.shape)[:, None]
+        w = w.astype(np.intp)
+        mask[tuple(w)] = np.nan
+        d = masked_array(np.ones(mask.shape), mask=mask)
+        if axis is None:
+            shape_out = (1,) * d.ndim
+        else:
+            axis_norm = normalize_axis_tuple(axis, d.ndim)
+            shape_out = tuple(
+                1 if i in axis_norm else d.shape[i] for i in range(d.ndim))
+        out = masked_array(np.empty(shape_out))
+        result = median(d, axis=axis, keepdims=True, out=out)
+        assert result is out
+        assert_equal(result.shape, shape_out)
 
     def test_single_non_masked_value_on_axis(self):
         data = [[1., 0.],
