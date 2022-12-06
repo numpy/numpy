@@ -1434,7 +1434,7 @@ def diff(a, n=1, axis=-1, prepend=np._NoValue, append=np._NoValue):
         combined.append(append)
 
     if len(combined) > 1:
-        a = np.concatenate(combined, axis)
+        a = np.ma.concatenate(combined, axis)
 
     slice1 = [slice(None)] * nd
     slice2 = [slice(None)] * nd
