@@ -287,14 +287,16 @@ NPY_FINLINE npyv_f64 npyv_rint_f64(npyv_f64 a)
 #else
     const npyv_f64 szero = _mm_set1_pd(-0.0);
     const npyv_f64 two_power_52 = _mm_set1_pd(0x10000000000000);
-    npyv_f64 sign_two52 = _mm_or_pd(two_power_52, _mm_and_pd(a, szero));
+    npyv_f64 abs_a = npyv_abs_f64(a);
     // round by add magic number 2^52
-    npyv_f64 round = _mm_sub_pd(_mm_add_pd(a, sign_two52), sign_two52);
-    // respect signed zero, e.g. -0.5 -> -0.0
-    return _mm_or_pd(round, _mm_and_pd(a, szero));
+    // assuming that MXCSR register is set to rounding
+    npyv_f64 abs_round = _mm_sub_pd(_mm_add_pd(two_power_52, abs_a), two_power_52);
+    // copysign
+    npyv_f64 round = _mm_or_pd(abs_round, _mm_and_pd(a, szero));
+    // a if a >= 2^52
+    return npyv_select_f64(npyv_cmpge_f64(abs_a, two_power_52), a, round);
 #endif
 }
-
 // ceil
 #ifdef NPY_HAVE_SSE41
     #define npyv_ceil_f32 _mm_ceil_ps
@@ -316,10 +318,7 @@ NPY_FINLINE npyv_f64 npyv_rint_f64(npyv_f64 a)
     {
         const npyv_f64 szero = _mm_set1_pd(-0.0);
         const npyv_f64 one = _mm_set1_pd(1.0);
-        const npyv_f64 two_power_52 = _mm_set1_pd(0x10000000000000);
-        npyv_f64 sign_two52 = _mm_or_pd(two_power_52, _mm_and_pd(a, szero));
-        // round by add magic number 2^52
-        npyv_f64 round = _mm_sub_pd(_mm_add_pd(a, sign_two52), sign_two52);
+        npyv_f64 round = npyv_rint_f64(a);
         npyv_f64 ceil = _mm_add_pd(round, _mm_and_pd(_mm_cmplt_pd(round, a), one));
         // respect signed zero, e.g. -0.5 -> -0.0
         return _mm_or_pd(ceil, _mm_and_pd(a, szero));
@@ -350,7 +349,9 @@ NPY_FINLINE npyv_f64 npyv_rint_f64(npyv_f64 a)
         // round by add magic number 2^52
         npyv_f64 abs_round = _mm_sub_pd(_mm_add_pd(abs_a, two_power_52), two_power_52);
         npyv_f64 subtrahend = _mm_and_pd(_mm_cmpgt_pd(abs_round, abs_a), one);
-        return _mm_or_pd(_mm_sub_pd(abs_round, subtrahend), _mm_and_pd(a, szero));
+        npyv_f64 trunc = _mm_or_pd(_mm_sub_pd(abs_round, subtrahend), _mm_and_pd(a, szero));
+        // a if a >= 2^52
+        return npyv_select_f64(npyv_cmpge_f64(abs_a, two_power_52), a, trunc);
     }
 #endif
 
