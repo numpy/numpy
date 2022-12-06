@@ -437,7 +437,7 @@ def _set_wrap_both(padded, axis, width_pair, original_period):
         # First slice chunk from right side of the non-pad area.
         # Use min(period, right_pad) to ensure that chunk is not larger than
         # pad area.
-        slice_start = - right_pad - period
+        slice_start = -right_pad - period
         slice_end = slice_start + min(period, right_pad)
         left_slice = _slice_at_axis(slice(slice_start, slice_end), axis)
         left_chunk = padded[left_slice]
