@@ -280,7 +280,6 @@ PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "lib.utils",
     "linalg.lapack_lite",
     "linalg.linalg",
-    "ma.bench",
     "ma.core",
     "ma.testutils",
     "ma.timer_comparison",
