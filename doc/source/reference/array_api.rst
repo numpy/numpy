@@ -234,6 +234,12 @@ independently of values or shapes.
        promoted.
      - **Breaking**
      - Example: ``a = np.array(1, dtype=np.int8); a += np.array(1, dtype=np.int16)``. The spec explicitly disallows this.
+   * - In-place operators are disallowed when the right-hand side operand
+       cannot broadcast to the shape of the left-hand side operand.
+     - **Strictness**
+     - This so-called "reverse broadcasting" should not be allowed. Example:
+       ``a = np.empty((2, 3, 4)); a += np.empty((3, 4))`` should error. See
+       https://github.com/numpy/numpy/issues/10404.
    * - ``int`` promotion for operators is only specified for integers within
        the bounds of the dtype.
      - **Strictness**
