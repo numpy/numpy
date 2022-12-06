@@ -437,6 +437,16 @@ class _SIMD_FP(_Test_Utility):
                 _round = intrin(data)
                 assert _round == data_round
 
+        # test large numbers
+        for i in (
+            1.1529215045988576e+18, 4.6116860183954304e+18,
+            5.902958103546122e+20, 2.3611832414184488e+21
+        ):
+            x = self.setall(i)
+            y = intrin(x)
+            data_round = [func(n) for n in x]
+            assert y == data_round
+
         # signed zero
         if intrin_name == "floor":
             data_szero = (-0.0,)
