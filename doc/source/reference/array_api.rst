@@ -152,10 +152,9 @@ Keyword Argument Renames
 
 The following functions have keyword arguments that have been renamed. The
 functionality of the keyword argument is identical unless otherwise stated.
-Each new keyword argument is not already present on the given function in
-``numpy``, so the changes are **compatible**. Renamed keyword arguments with
-the same semantic definition may be considered either **compatible** or
-**breaking**, depending on how the change is implemented.
+Renamed keyword arguments with the same semantic definition may be considered
+either **compatible** or **breaking**, depending on how the change is
+implemented.
 
 Note, this page does not list function keyword arguments that are in the main
 ``numpy`` namespace but not in the array API. Such keyword arguments are
