@@ -601,14 +601,6 @@ NPY_NO_EXPORT NPY_GCC_OPT_3 @ATTR@ void
 
 #if @CHK@
 NPY_NO_EXPORT NPY_GCC_OPT_3 @ATTR@ void
-@TYPE@_negative@isa@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
-{
-    UNARY_LOOP_FAST(@type@, @type@, *out = -in);
-}
-#endif
-
-#if @CHK@
-NPY_NO_EXPORT NPY_GCC_OPT_3 @ATTR@ void
 @TYPE@_logical_not@isa@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
     UNARY_LOOP_FAST(@type@, npy_bool, *out = !in);
@@ -1542,17 +1534,6 @@ NPY_NO_EXPORT void
     UNARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
         *((@type@ *)op1) = in1;
-    }
-}
-
-NPY_NO_EXPORT void
-@TYPE@_negative(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
-{
-    if (!run_unary_simd_negative_@TYPE@(args, dimensions, steps)) {
-        UNARY_LOOP {
-            const @type@ in1 = *(@type@ *)ip1;
-            *((@type@ *)op1) = -in1;
-        }
     }
 }
 
