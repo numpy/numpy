@@ -1,5 +1,5 @@
-``np.pad`` with ``mode=wrap`` now returns expected results
-----------------------------------------------------------
+``np.pad`` with ``mode=wrap`` pads with strict multiples of original data
+-------------------------------------------------------------------------
 
 Codes based on earlier version of ``pad`` with ``wrap`` will 
 break when padding size is larger than initial array.
