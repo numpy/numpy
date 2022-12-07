@@ -1657,7 +1657,7 @@ array_deepcopy(PyArrayObject *self, PyObject *args)
 {
     PyArrayObject *copied_array;
     PyObject *visit;
-    NpyIter *iter;
+    NpyIter *iter = NULL;
     NpyIter_IterNextFunc *iternext;
     char *data;
     char **dataptr;
@@ -1673,63 +1673,72 @@ array_deepcopy(PyArrayObject *self, PyObject *args)
     if (copied_array == NULL) {
         return NULL;
     }
-    if (PyDataType_REFCHK(PyArray_DESCR(self))) {
-        copy = PyImport_ImportModule("copy");
-        if (copy == NULL) {
-            Py_DECREF(copied_array);
-            return NULL;
-        }
-        deepcopy = PyObject_GetAttrString(copy, "deepcopy");
-        Py_DECREF(copy);
-        if (deepcopy == NULL) {
-            Py_DECREF(copied_array);
-            return NULL;
-        }
-        iter = NpyIter_New(copied_array,
-                           NPY_ITER_READWRITE |
-                           NPY_ITER_EXTERNAL_LOOP |
-                           NPY_ITER_REFS_OK |
-                           NPY_ITER_ZEROSIZE_OK,
-                           NPY_KEEPORDER, NPY_NO_CASTING,
-                           NULL);
-        if (iter == NULL) {
-            Py_DECREF(deepcopy);
-            Py_DECREF(copied_array);
-            return NULL;
-        }
-        if (NpyIter_GetIterSize(iter) != 0) {
-            iternext = NpyIter_GetIterNext(iter, NULL);
-            if (iternext == NULL) {
-                NpyIter_Deallocate(iter);
-                Py_DECREF(deepcopy);
-                Py_DECREF(copied_array);
-                return NULL;
-            }
 
-            dataptr = NpyIter_GetDataPtrArray(iter);
-            strideptr = NpyIter_GetInnerStrideArray(iter);
-            innersizeptr = NpyIter_GetInnerLoopSizePtr(iter);
-
-            do {
-                data = *dataptr;
-                stride = *strideptr;
-                count = *innersizeptr;
-                while (count--) {
-                    deepcopy_res = _deepcopy_call(data, data, PyArray_DESCR(copied_array),
-                                                  deepcopy, visit);
-                    if (deepcopy_res == -1) {
-                        return NULL;
-                    }
-
-                    data += stride;
-                }
-            } while (iternext(iter));
-        }
-        NpyIter_Deallocate(iter);
-        Py_DECREF(deepcopy);
+    if (!PyDataType_REFCHK(PyArray_DESCR(self))) {
+        return (PyObject *)copied_array;
     }
-    return (PyObject*) copied_array;
+
+    /* If the array contains objects, need to deepcopy them as well */
+    copy = PyImport_ImportModule("copy");
+    if (copy == NULL) {
+        Py_DECREF(copied_array);
+        return NULL;
+    }
+    deepcopy = PyObject_GetAttrString(copy, "deepcopy");
+    Py_DECREF(copy);
+    if (deepcopy == NULL) {
+        goto error;
+    }
+    iter = NpyIter_New(copied_array,
+                        NPY_ITER_READWRITE |
+                        NPY_ITER_EXTERNAL_LOOP |
+                        NPY_ITER_REFS_OK |
+                        NPY_ITER_ZEROSIZE_OK,
+                        NPY_KEEPORDER, NPY_NO_CASTING,
+                        NULL);
+    if (iter == NULL) {
+        goto error;
+    }
+    if (NpyIter_GetIterSize(iter) != 0) {
+        iternext = NpyIter_GetIterNext(iter, NULL);
+        if (iternext == NULL) {
+            goto error;
+        }
+
+        dataptr = NpyIter_GetDataPtrArray(iter);
+        strideptr = NpyIter_GetInnerStrideArray(iter);
+        innersizeptr = NpyIter_GetInnerLoopSizePtr(iter);
+
+        do {
+            data = *dataptr;
+            stride = *strideptr;
+            count = *innersizeptr;
+            while (count--) {
+                deepcopy_res = _deepcopy_call(data, data, PyArray_DESCR(copied_array),
+                                                deepcopy, visit);
+                if (deepcopy_res == -1) {
+                    goto error;
+                }
+
+                data += stride;
+            }
+        } while (iternext(iter));
+    }
+
+    Py_DECREF(deepcopy);
+    if (!NpyIter_Deallocate(iter)) {
+        Py_DECREF(copied_array);
+        return NULL;
+    }
+    return (PyObject *)copied_array;
+
+  error:
+    Py_DECREF(deepcopy);
+    Py_DECREF(copied_array);
+    NpyIter_Deallocate(iter);
+    return NULL;
 }
+
 
 /* Convert Array to flat list (using getitem) */
 static PyObject *
