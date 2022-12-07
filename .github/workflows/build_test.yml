@@ -130,6 +130,21 @@ jobs:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
 
+  with_baseline_only:
+    needs: [smoke_test]
+    runs-on: ubuntu-latest
+    env:
+      CPU_DISPATCH: "none"
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    - uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    - uses: ./.github/actions
+
   without_avx512:
     needs: [smoke_test]
     runs-on: ubuntu-latest
