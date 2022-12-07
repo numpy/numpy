@@ -1868,7 +1868,7 @@ class TestMaskedArrayArithmetic:
         assert_equal(test.mask, control.mask)
         assert_equal(a.mask, [0, 0, 0, 0, 1])
 
-    def test_diff_with_prepend():
+    def test_diff_with_prepend(self):
         # GH 22465
         a = np.ma.masked_equal([[2, -1, 10], [5, 2, -1]], value=2)
 
@@ -1876,7 +1876,7 @@ class TestMaskedArrayArithmetic:
         b = np.ma.diff(a, prepend=prep, axis=0)
         assert b.mask.any()
 
-    def test_diff_with_append():
+    def test_diff_with_append(self):
         # GH 22465
         a = np.ma.masked_equal([[2, -1, 10], [5, 2, -1]], value=2)
 
