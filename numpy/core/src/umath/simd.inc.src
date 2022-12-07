@@ -82,48 +82,6 @@ run_unary_avx512f_@func@_@TYPE@(char **args, const npy_intp *dimensions, const n
 /**end repeat1**/
 /**end repeat**/
 
-/*
- *****************************************************************************
- **                           FLOAT DISPATCHERS
- *****************************************************************************
- */
-
-/**begin repeat
- * Float types
- *  #type = npy_float, npy_double, npy_longdouble#
- *  #TYPE = FLOAT, DOUBLE, LONGDOUBLE#
- *  #vector = 1, 1, 0#
- *  #VECTOR = NPY_SIMD, NPY_SIMD_F64, 0 #
- */
-
-/**begin repeat1
- * #func = negative#
- * #check = IS_BLOCKABLE_UNARY#
- * #name = unary#
- */
-
-#if @vector@ && defined NPY_HAVE_SSE2_INTRINSICS
-
-/* prototypes */
-static void
-sse2_@func@_@TYPE@(@type@ *, @type@ *, const npy_intp n);
-
-#endif
-
-static inline int
-run_@name@_simd_@func@_@TYPE@(char **args, npy_intp const *dimensions, npy_intp const *steps)
-{
-#if @vector@ && defined NPY_HAVE_SSE2_INTRINSICS
-    if (@check@(sizeof(@type@), VECTOR_SIZE_BYTES)) {
-        sse2_@func@_@TYPE@((@type@*)args[1], (@type@*)args[0], dimensions[0]);
-        return 1;
-    }
-#endif
-    return 0;
-}
-/**end repeat1**/
-/**end repeat**/
-
 #ifdef NPY_HAVE_SSE2_INTRINSICS
 
 /*
