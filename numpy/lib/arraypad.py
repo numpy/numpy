@@ -378,7 +378,7 @@ def _set_reflect_both(padded, axis, width_pair, method, include_edge=False):
     return left_pad, right_pad
 
 
-def _set_wrap_both(padded, axis, width_pair):
+def _set_wrap_both(padded, axis, width_pair, original_period):
     """
     Pad `axis` of `arr` with wrapped values.
 
@@ -391,6 +391,8 @@ def _set_wrap_both(padded, axis, width_pair):
     width_pair : (int, int)
         Pair of widths that mark the pad area on both sides in the given
         dimension.
+    original_period : int
+        Original length of data on `axis` of `arr`.
 
     Returns
     -------
@@ -400,6 +402,9 @@ def _set_wrap_both(padded, axis, width_pair):
     """
     left_pad, right_pad = width_pair
     period = padded.shape[axis] - right_pad - left_pad
+    # Avoid wrapping with only a subset of the original area by ensuring period
+    # can only be a multiple of the original area's length.
+    period = period // original_period * original_period
 
     # If the current dimension of `arr` doesn't contain enough valid values
     # (not part of the undefined pad area) we need to pad multiple times.
@@ -410,14 +415,12 @@ def _set_wrap_both(padded, axis, width_pair):
 
     if left_pad > 0:
         # Pad with wrapped values on left side
-        # First slice chunk from right side of the non-pad area.
+        # First slice chunk from left side of the non-pad area.
         # Use min(period, left_pad) to ensure that chunk is not larger than
-        # pad area
-        right_slice = _slice_at_axis(
-            slice(-right_pad - min(period, left_pad),
-                  -right_pad if right_pad != 0 else None),
-            axis
-        )
+        # pad area.
+        slice_end = left_pad + period
+        slice_start = slice_end - min(period, left_pad)
+        right_slice = _slice_at_axis(slice(slice_start, slice_end), axis)
         right_chunk = padded[right_slice]
 
         if left_pad > period:
@@ -431,11 +434,12 @@ def _set_wrap_both(padded, axis, width_pair):
 
     if right_pad > 0:
         # Pad with wrapped values on right side
-        # First slice chunk from left side of the non-pad area.
+        # First slice chunk from right side of the non-pad area.
         # Use min(period, right_pad) to ensure that chunk is not larger than
-        # pad area
-        left_slice = _slice_at_axis(
-            slice(left_pad, left_pad + min(period, right_pad),), axis)
+        # pad area.
+        slice_start = -right_pad - period
+        slice_end = slice_start + min(period, right_pad)
+        left_slice = _slice_at_axis(slice(slice_start, slice_end), axis)
         left_chunk = padded[left_slice]
 
         if right_pad > period:
@@ -867,11 +871,12 @@ def pad(array, pad_width, mode='constant', **kwargs):
     elif mode == "wrap":
         for axis, (left_index, right_index) in zip(axes, pad_width):
             roi = _view_roi(padded, original_area_slice, axis)
+            original_period = padded.shape[axis] - right_index - left_index
             while left_index > 0 or right_index > 0:
                 # Iteratively pad until dimension is filled with wrapped
                 # values. This is necessary if the pad area is larger than
                 # the length of the original values in the current dimension.
                 left_index, right_index = _set_wrap_both(
-                    roi, axis, (left_index, right_index))
+                    roi, axis, (left_index, right_index), original_period)
 
     return padded
