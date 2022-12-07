@@ -732,12 +732,8 @@ def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
         else:
             return m
 
-    r, k = _ureduce(a, func=_median, axis=axis, out=out,
+    return _ureduce(a, func=_median, keepdims=keepdims, axis=axis, out=out,
                     overwrite_input=overwrite_input)
-    if keepdims:
-        return r.reshape(k)
-    else:
-        return r
 
 
 def _median(a, axis=None, out=None, overwrite_input=False):
