@@ -4812,11 +4812,14 @@ def trapz(y, x=None, dx=1.0, axis=-1):
 
     Examples
     --------
-    Use the trapezoidal rule on evenly spaced points with different syntax for
-    the point spacing:
+    Use the trapezoidal rule on evenly spaced points:
 
     >>> np.trapz([1, 2, 3])
     4.0
+
+    The spacing between sample points can be selected by either the
+    ``x`` or ``dx`` arguments:
+
     >>> np.trapz([1, 2, 3], x=[4, 6, 8])
     8.0
     >>> np.trapz([1, 2, 3], dx=2)
@@ -4828,7 +4831,7 @@ def trapz(y, x=None, dx=1.0, axis=-1):
     -8.0
 
     More generally ``x`` is used to integrate along a parametric curve. We can
-    stimate the integral :math:`\int_0^1 x^2 = 1/3` using:
+    estimate the integral :math:`\int_0^1 x^2 = 1/3` using:
 
     >>> x = np.linspace(0, 1, num=50)
     >>> y = x**2
