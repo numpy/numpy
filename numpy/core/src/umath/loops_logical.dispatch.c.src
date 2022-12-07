@@ -17,11 +17,6 @@
 #include "fast_loop_macros.h"
 
 /*******************************************************************************
- ** Extra SIMD intrinsics
- ******************************************************************************/
-
-
-/*******************************************************************************
  ** Defining the SIMD kernels
  ******************************************************************************/
 
@@ -89,25 +84,10 @@ simd_binary_@kind@_BOOL(npy_bool * op, npy_bool * ip1, npy_bool * ip2, npy_intp 
 static void
 simd_reduce_@kind@_BOOL(npy_bool * op, npy_bool * ip, npy_intp len)
 {
-    /* There's two separate implementations here to accomodate better
-     * performance on Intel SSE2 and Arm NEON.  SSE2 does not have
-     * a horizontal min/max and the scalar version is slower than 
-     * what was previously in simd.inc.src.
-     * 1. Both use min/max vertical reduction
-     * 2. For horizontal reduction:
-     *    a. NEON / ASIMD uses min/max with an early exit clause.
-     *    b. SSE2 uses previous implementation (cmpeq/tobits) tweaked a bit.
-     */
-
     #define UNROLL 8
 
     const int vstep = npyv_nlanes_u8;
     const int wstep = vstep * UNROLL;
-
-    #if !defined(USE_NPYV_REDUCE_MINMAX)
-    const npyv_u8 zero = npyv_zero_u8();
-    #endif
-
 
     // Unrolled vectors loop
     for (; len >= wstep; len -= wstep, ip += wstep) {
@@ -133,54 +113,21 @@ simd_reduce_@kind@_BOOL(npy_bool * op, npy_bool * ip, npy_intp len)
 
         npyv_u8 mv = npyv_@reduce@_u8(m0123, m4567);
 
-#if defined(USE_NPYV_REDUCE_MINMAX)
         npy_uint8 r = npyv_reduce_@reduce@_u8(mv);
         if(r @scalar_cmp@ 0){
             *op = !@and@;
             return;
         }
-#else
-        mv = npyv_cvt_u8_b8(npyv_cmpeq_u8(mv, zero));
-        npy_uint64 zmask = npyv_tobits_b8(npyv_cvt_b8_u8(mv));
-    #if @and@
-        if(zmask != 0){
-            *op = 0;
-            return;
-        }
-    #else
-        if(zmask != 0xffff){
-            *op = 1;
-            return;
-        }
-    #endif
-#endif
     }
 
     // Single vectors loop
     for (; len >= vstep; len -= vstep, ip += vstep) {
         npyv_u8 v0 = npyv_load_u8(ip);
-#if defined(USE_NPYV_REDUCE_MINMAX)
         npy_uint8 r = npyv_reduce_@reduce@_u8(v0);
         if(r @scalar_cmp@ 0){
             *op = !@and@;
             return;
         }
-#else
-        // cmpeq(v, zero): 0x00 --> 0xff, non-zero --> 0x00
-        v0 = npyv_cvt_u8_b8(npyv_cmpeq_u8(v0, zero));
-        npy_uint64 zmask = npyv_tobits_b8(npyv_cvt_b8_u8(v0));
-    #if @and@
-        if(zmask != 0){
-            *op = 0;
-            return;
-        }
-    #else
-        if(zmask != 0xffff){
-            *op = 1;
-            return;
-        }
-    #endif
-#endif
     }
 
     // Scalar loop to finish off
@@ -264,7 +211,6 @@ run_unary_simd_@kind@_BOOL(char **args, npy_intp const *dimensions, npy_intp con
 
 #undef npyv_reduce_min_u8
 #undef npyv_reduce_max_u8
-#undef USE_NPYV_REDUCE_MINMAX
 
 #endif // NPY_SIMD
 
