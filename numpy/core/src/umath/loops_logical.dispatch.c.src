@@ -194,19 +194,6 @@ simd_@kind@_BOOL(npy_bool * op, npy_bool * ip, npy_intp len)
         *op = (*ip @op@ 0);
     }
 }
-
-static NPY_INLINE int
-run_unary_simd_@kind@_BOOL(char **args, npy_intp const *dimensions, npy_intp const *steps)
-{
-#if NPY_SIMD
-    if (sizeof(npy_bool) == 1 &&
-            IS_BLOCKABLE_UNARY(sizeof(npy_bool), NPY_SIMD_WIDTH)) {
-        simd_@kind@_BOOL((npy_bool*)args[1], (npy_bool*)args[0], dimensions[0]);
-        return 1;
-    }
-#endif
-    return 0;
-}
 /**end repeat**/
 
 #undef npyv_reduce_min_u8
@@ -250,6 +237,24 @@ run_reduce_simd_@kind@_BOOL(char **args, npy_intp const *dimensions, npy_intp co
     return 0;
 }
 /**end repeat**/
+
+/**begin repeat
+ * #kind = logical_not, absolute#
+ */
+static NPY_INLINE int
+run_unary_simd_@kind@_BOOL(char **args, npy_intp const *dimensions, npy_intp const *steps)
+{
+#if NPY_SIMD
+    if (sizeof(npy_bool) == 1 &&
+            IS_BLOCKABLE_UNARY(sizeof(npy_bool), NPY_SIMD_WIDTH)) {
+        simd_@kind@_BOOL((npy_bool*)args[1], (npy_bool*)args[0], dimensions[0]);
+        return 1;
+    }
+#endif
+    return 0;
+}
+/**end repeat**/
+
 
 /**begin repeat
  * #kind = logical_and, logical_or#
