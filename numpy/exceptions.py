@@ -35,7 +35,7 @@ Exceptions
 from ._utils import set_module as _set_module
 
 __all__ = [
-    "ComplexWarning", "VisibleDeprecationWarning",
+    "ComplexWarning", "VisibleDeprecationWarning", "ModuleDeprecationWarning",
     "TooHardError", "AxisError", "DTypePromotionError"]
 
 
@@ -52,7 +52,6 @@ _is_loaded = True
 #       This then also means that the typing stubs should be moved!
 
 
-@_set_module('numpy')
 class ComplexWarning(RuntimeWarning):
     """
     The warning raised when casting a complex dtype to a real dtype.
@@ -63,7 +62,7 @@ class ComplexWarning(RuntimeWarning):
     """
     pass
 
-@_set_module("numpy")
+
 class ModuleDeprecationWarning(DeprecationWarning):
     """Module deprecation warning.
 
@@ -80,7 +79,6 @@ class ModuleDeprecationWarning(DeprecationWarning):
     """
 
 
-@_set_module("numpy")
 class VisibleDeprecationWarning(UserWarning):
     """Visible deprecation warning.
 
@@ -92,7 +90,6 @@ class VisibleDeprecationWarning(UserWarning):
 
 
 # Exception used in shares_memory()
-@_set_module('numpy')
 class TooHardError(RuntimeError):
     """max_work was exceeded.
 
@@ -106,7 +103,6 @@ class TooHardError(RuntimeError):
     pass
 
 
-@_set_module('numpy')
 class AxisError(ValueError, IndexError):
     """Axis supplied was invalid.
 
@@ -150,14 +146,14 @@ class AxisError(ValueError, IndexError):
     >>> np.cumsum(array_1d, axis=1)
     Traceback (most recent call last):
       ...
-    numpy.AxisError: axis 1 is out of bounds for array of dimension 1
+    numpy.exceptions.AxisError: axis 1 is out of bounds for array of dimension 1
 
     Negative axes are preserved:
 
     >>> np.cumsum(array_1d, axis=-2)
     Traceback (most recent call last):
       ...
-    numpy.AxisError: axis -2 is out of bounds for array of dimension 1
+    numpy.exceptions.AxisError: axis -2 is out of bounds for array of dimension 1
 
     The class constructor generally takes the axis and arrays'
     dimensionality as arguments:
