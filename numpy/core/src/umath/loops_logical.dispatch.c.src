@@ -43,6 +43,7 @@ NPY_FINLINE npyv_u8 byte_to_true(npyv_u8 v)
  * #intrin = and, or#
  * #reduce = min, max#
  * #scalar_cmp = ==, !=#
+ * #anyall = all, any#
  */
 static void
 simd_binary_@kind@_BOOL(npy_bool * op, npy_bool * ip1, npy_bool * ip2, npy_intp len)
@@ -113,8 +114,7 @@ simd_reduce_@kind@_BOOL(npy_bool * op, npy_bool * ip, npy_intp len)
 
         npyv_u8 mv = npyv_@reduce@_u8(m0123, m4567);
 
-        npy_uint8 r = npyv_reduce_@reduce@_u8(mv);
-        if(r @scalar_cmp@ 0){
+        if(npyv_@anyall@_u8(mv) @scalar_cmp@ 0){
             *op = !@and@;
             return;
         }
@@ -123,8 +123,7 @@ simd_reduce_@kind@_BOOL(npy_bool * op, npy_bool * ip, npy_intp len)
     // Single vectors loop
     for (; len >= vstep; len -= vstep, ip += vstep) {
         npyv_u8 v0 = npyv_load_u8(ip);
-        npy_uint8 r = npyv_reduce_@reduce@_u8(v0);
-        if(r @scalar_cmp@ 0){
+        if(npyv_@anyall@_u8(v0) @scalar_cmp@ 0){
             *op = !@and@;
             return;
         }
@@ -195,9 +194,6 @@ simd_@kind@_BOOL(npy_bool * op, npy_bool * ip, npy_intp len)
     }
 }
 /**end repeat**/
-
-#undef npyv_reduce_min_u8
-#undef npyv_reduce_max_u8
 
 #endif // NPY_SIMD
 
