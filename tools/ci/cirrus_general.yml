@@ -73,7 +73,7 @@ wheels_upload_task:
       export IS_SCHEDULE_DISPATCH="true"
     fi
 
-    if [[ "$CIRRUS_TAG" == "v*" ]]; then
+    if [[ "$CIRRUS_TAG" == v* ]]; then
       export IS_PUSH="true"    
     fi
     if [[ "$CIRRUS_BUILD_SOURCE" == "api" && "$CIRRUS_COMMIT_MESSAGE" == "API build for null" ]]; then      export IS_SCHEDULE_DISPATCH="true"
