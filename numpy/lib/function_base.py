@@ -4017,7 +4017,7 @@ def percentile(a,
     since Python uses 0-based indexing, the code subtracts another 1 from the
     index internally.
 
-    The following formula determines the virtual index ``i + g``, the location 
+    The following formula determines the virtual index ``i + g``, the location
     of the percentile in the sorted sample:
 
     .. math::
@@ -4306,7 +4306,7 @@ def quantile(a,
     since Python uses 0-based indexing, the code subtracts another 1 from the
     index internally.
 
-    The following formula determines the virtual index ``i + g``, the location 
+    The following formula determines the virtual index ``i + g``, the location
     of the quantile in the sorted sample:
 
     .. math::
@@ -4812,32 +4812,38 @@ def trapz(y, x=None, dx=1.0, axis=-1):
 
     Examples
     --------
-    >>> np.trapz([1,2,3])
+    Use the trapezoidal rule on evenly spaced points with different syntax for
+    the point spacing:
+
+    >>> np.trapz([1, 2, 3])
     4.0
-    >>> np.trapz([1,2,3], x=[4,6,8])
+    >>> np.trapz([1, 2, 3], x=[4, 6, 8])
     8.0
-    >>> np.trapz([1,2,3], dx=2)
+    >>> np.trapz([1, 2, 3], dx=2)
     8.0
 
-    Estimate the integral :math:`\int_0^1 x^2 = 1/3`:
-    
+    Using a decreasing ``x`` corresponds to integrating in reverse:
+
+    >>> np.trapz([1, 2, 3], x=[8, 6, 4])
+    -8.0
+
+    More generally ``x`` is used to integrate along a parametric curve. We can
+    stimate the integral :math:`\int_0^1 x^2 = 1/3` using:
+
     >>> x = np.linspace(0, 1, num=50)
     >>> y = x**2
     >>> np.trapz(y, x)
     0.33340274885464394
 
-    Using a decreasing `x` corresponds to integrating in reverse:
-
-    >>> np.trapz([1,2,3], x=[8,6,4])
-    -8.0
-
-    More generally `x` is used to integrate along a parametric curve.
-    This finds the area of a circle, noting we repeat the sample which closes
+    Or estimate the area of a circle, noting we repeat the sample which closes
     the curve:
 
     >>> theta = np.linspace(0, 2 * np.pi, num=1000, endpoint=True)
     >>> np.trapz(np.cos(theta), x=np.sin(theta))
     3.141571941375841
+
+    ``np.trapz`` can be applied along a specified axis to do multiple
+    computations in one call:
 
     >>> a = np.arange(6).reshape(2, 3)
     >>> a
