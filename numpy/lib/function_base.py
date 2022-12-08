@@ -4836,25 +4836,41 @@ def trapz(y, x=None, dx=1.0, axis=-1):
 
     Examples
     --------
-    >>> np.trapz([1,2,3])
+    Use the trapezoidal rule on evenly spaced points:
+
+    >>> np.trapz([1, 2, 3])
     4.0
-    >>> np.trapz([1,2,3], x=[4,6,8])
+
+    The spacing between sample points can be selected by either the
+    ``x`` or ``dx`` arguments:
+
+    >>> np.trapz([1, 2, 3], x=[4, 6, 8])
     8.0
-    >>> np.trapz([1,2,3], dx=2)
+    >>> np.trapz([1, 2, 3], dx=2)
     8.0
 
-    Using a decreasing `x` corresponds to integrating in reverse:
+    Using a decreasing ``x`` corresponds to integrating in reverse:
 
-    >>> np.trapz([1,2,3], x=[8,6,4])
+    >>> np.trapz([1, 2, 3], x=[8, 6, 4])
     -8.0
 
-    More generally `x` is used to integrate along a parametric curve.
-    This finds the area of a circle, noting we repeat the sample which closes
+    More generally ``x`` is used to integrate along a parametric curve. We can
+    estimate the integral :math:`\int_0^1 x^2 = 1/3` using:
+
+    >>> x = np.linspace(0, 1, num=50)
+    >>> y = x**2
+    >>> np.trapz(y, x)
+    0.33340274885464394
+
+    Or estimate the area of a circle, noting we repeat the sample which closes
     the curve:
 
     >>> theta = np.linspace(0, 2 * np.pi, num=1000, endpoint=True)
     >>> np.trapz(np.cos(theta), x=np.sin(theta))
     3.141571941375841
+
+    ``np.trapz`` can be applied along a specified axis to do multiple
+    computations in one call:
 
     >>> a = np.arange(6).reshape(2, 3)
     >>> a
