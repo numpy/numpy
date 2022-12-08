@@ -2973,11 +2973,11 @@ class TestPercentile:
         np.percentile(d, 5, None, o, False, 'linear')
 
     def test_complex(self):
-        arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype=np.dtype('G'))
+        arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype='G')
         assert_raises(TypeError, np.percentile, arr_c, 0.5)
-        arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype=np.dtype('D'))
+        arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype='D')
         assert_raises(TypeError, np.percentile, arr_c, 0.5)
-        arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype=np.dtype('F'))
+        arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype='F')
         assert_raises(TypeError, np.percentile, arr_c, 0.5)
 
     def test_2D(self):
@@ -3497,11 +3497,11 @@ class TestQuantile:
 
     def test_complex(self):
         #See gh-22652
-        arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype=np.dtype('G'))
+        arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype='G')
         assert_raises(TypeError, np.quantile, arr_c, 0.5)
-        arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype=np.dtype('D'))
+        arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype='D')
         assert_raises(TypeError, np.quantile, arr_c, 0.5)
-        arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype=np.dtype('F'))
+        arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype='F')
         assert_raises(TypeError, np.quantile, arr_c, 0.5)
 
     def test_no_p_overwrite(self):
