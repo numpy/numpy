@@ -20,6 +20,7 @@
 #include "common.h"
 #include "ctors.h"
 #include "convert_datatype.h"
+#include "dtypemeta.h"
 #include "shape.h"
 #include "npy_buffer.h"
 #include "lowlevel_strided_loops.h"
@@ -664,7 +665,8 @@ PyArray_NewFromDescr_int(
     /* Check datatype element size */
     nbytes = descr->elsize;
     if (PyDataType_ISUNSIZED(descr)) {
-        if (!PyDataType_ISFLEXIBLE(descr)) {
+        if (!PyDataType_ISFLEXIBLE(descr) &&
+            NPY_DT_is_legacy(NPY_DTYPE(descr))) {
             PyErr_SetString(PyExc_TypeError, "Empty data-type");
             Py_DECREF(descr);
             return NULL;
