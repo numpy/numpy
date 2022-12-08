@@ -3064,7 +3064,7 @@ class TestPercentile:
         assert_equal(np.percentile(np.arange(11, dtype=dtype), 50,
                                    method='midpoint'), 5)
 
-    @pytest.mark.parametrize("dtype", np.typecodes["Float"])
+    @pytest.mark.parametrize("dtype", TYPE_CODES)
     def test_nearest(self, dtype):
         assert_equal(np.percentile(np.arange(10, dtype=dtype), 51,
                                    method='nearest'), 5)
@@ -3497,11 +3497,11 @@ class TestQuantile:
 
     def test_complex(self):
         #See gh-22652
-        arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype=np.dtype('complex256'))
+        arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype=np.dtype('G'))
         assert_raises(TypeError, np.quantile, arr_c, 0.5)
-        arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype=np.dtype('complex128'))
+        arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype=np.dtype('D'))
         assert_raises(TypeError, np.quantile, arr_c, 0.5)
-        arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype=np.dtype('complex64'))
+        arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype=np.dtype('F'))
         assert_raises(TypeError, np.quantile, arr_c, 0.5)
 
     def test_no_p_overwrite(self):
