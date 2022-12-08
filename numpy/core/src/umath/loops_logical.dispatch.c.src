@@ -35,6 +35,16 @@ NPY_FINLINE npyv_u8 byte_to_true(npyv_u8 v)
     // tmp is filled with 0xff/0x00, negate and mask to boolean true
     return npyv_andc_u8(truemask, tmp);
 }
+/*
+ * convert mask vector (0xff/0x00) to boolean true.  similar to byte_to_true(),
+ * but we've already got a mask and can skip negation.
+ */
+NPY_FINLINE npyv_u8 mask_to_true(npyv_b8 v)
+{
+    const npyv_u8 truemask = npyv_setall_u8(1 == 1);
+    return npyv_and_u8(truemask, npyv_cvt_u8_b8(v));
+}
+
 
 /**begin repeat
  * #kind = logical_and, logical_or#
@@ -165,12 +175,11 @@ simd_@kind@_BOOL(npy_bool * op, npy_bool * ip, npy_intp len)
         #if UNROLL > @unroll@
         npyv_u8 v@unroll@ = npyv_load_u8(ip + vstep * @unroll@);
 #if @not@
-        npyv_u8 r@unroll@ = npyv_cvt_u8_b8(npyv_cmpeq_u8(v@unroll@, zero));
+        npyv_u8 r@unroll@ = mask_to_true(npyv_cmpeq_u8(v@unroll@, zero));
 #else
-        // abs is kind of pointless but maybe its used for byte_to_true below
-        npyv_u8 r@unroll@ = v@unroll@;
+        npyv_u8 r@unroll@ = byte_to_true(v@unroll@);
 #endif
-        npyv_store_u8(op + vstep * @unroll@, byte_to_true(r@unroll@));
+        npyv_store_u8(op + vstep * @unroll@, r@unroll@);
         #endif
         /**end repeat1**/
     }
@@ -180,12 +189,11 @@ simd_@kind@_BOOL(npy_bool * op, npy_bool * ip, npy_intp len)
     for (; len >= vstep; len -= vstep, ip += vstep, op += vstep) {
         npyv_u8 v = npyv_load_u8(ip);
 #if @not@
-        npyv_u8 r = npyv_cvt_u8_b8(npyv_cmpeq_u8(v, zero));
+        npyv_u8 r = mask_to_true(npyv_cmpeq_u8(v, zero));
 #else
-        // abs is kind of pointless but maybe its used for byte_to_true below
-        npyv_u8 r = v;
+        npyv_u8 r = byte_to_true(v);
 #endif
-        npyv_store_u8(op, byte_to_true(r));
+        npyv_store_u8(op, r);
     }
 
     // Scalar loop to finish off
