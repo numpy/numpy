@@ -1373,6 +1373,9 @@ def nanpercentile(
             method, interpolation, "nanpercentile")
 
     a = np.asanyarray(a)
+    if a.dtype.kind == "c":
+        raise TypeError("a must be an array of real numbers")
+
     q = np.true_divide(q, 100.0)
     # undo any decay that the ufunc performed (see gh-13105)
     q = np.asanyarray(q)
@@ -1527,11 +1530,15 @@ def nanquantile(
        The American Statistician, 50(4), pp. 361-365, 1996
 
     """
+
     if interpolation is not None:
         method = function_base._check_interpolation_as_method(
             method, interpolation, "nanquantile")
 
     a = np.asanyarray(a)
+    if a.dtype.kind == "c":
+        raise TypeError("a must be an array of real numbers")
+
     q = np.asanyarray(q)
     if not function_base._quantile_is_valid(q):
         raise ValueError("Quantiles must be in the range [0, 1]")

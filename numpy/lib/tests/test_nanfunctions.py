@@ -404,14 +404,20 @@ class TestNanFunctions_NumberTypes:
     )
     def test_nanfunc_q(self, mat, dtype, nanfunc, func):
         mat = mat.astype(dtype)
-        tgt = func(mat, q=1)
-        out = nanfunc(mat, q=1)
+        if mat.dtype.kind == "c":
+            assert_raises(TypeError, func, mat, q=1)
+            assert_raises(TypeError, nanfunc, mat, q=1)
 
-        assert_almost_equal(out, tgt)
-        if dtype == "O":
-            assert type(out) is type(tgt)
         else:
-            assert out.dtype == tgt.dtype
+            tgt = func(mat, q=1)
+            out = nanfunc(mat, q=1)
+
+            assert_almost_equal(out, tgt)
+
+            if dtype == "O":
+                assert type(out) is type(tgt)
+            else:
+                assert out.dtype == tgt.dtype
 
     @pytest.mark.parametrize(
         "nanfunc,func",
@@ -1058,6 +1064,14 @@ class TestNanFunctions_Percentile:
         assert_almost_equal(res, resout)
         assert_almost_equal(res, tgt)
 
+    def test_complex(self):
+        arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype='G')
+        assert_raises(TypeError, np.nanpercentile, arr_c, 0.5)
+        arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype='D')
+        assert_raises(TypeError, np.nanpercentile, arr_c, 0.5)
+        arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype='F')
+        assert_raises(TypeError, np.nanpercentile, arr_c, 0.5)
+
     def test_result_values(self):
         tgt = [np.percentile(d, 28) for d in _rdat]
         res = np.nanpercentile(_ndat, 28, axis=1)
@@ -1068,7 +1082,7 @@ class TestNanFunctions_Percentile:
         assert_almost_equal(res, tgt)
 
     @pytest.mark.parametrize("axis", [None, 0, 1])
-    @pytest.mark.parametrize("dtype", np.typecodes["AllFloat"])
+    @pytest.mark.parametrize("dtype", np.typecodes["Float"])
     @pytest.mark.parametrize("array", [
         np.array(np.nan),
         np.full((3, 3), np.nan),
@@ -1162,6 +1176,14 @@ class TestNanFunctions_Quantile:
         assert_equal(np.nanquantile(x, 1), 3.5)
         assert_equal(np.nanquantile(x, 0.5), 1.75)
 
+    def test_complex(self):
+        arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype='G')
+        assert_raises(TypeError, np.nanquantile, arr_c, 0.5)
+        arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype='D')
+        assert_raises(TypeError, np.nanquantile, arr_c, 0.5)
+        arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype='F')
+        assert_raises(TypeError, np.nanquantile, arr_c, 0.5)
+
     def test_no_p_overwrite(self):
         # this is worth retesting, because quantile does not make a copy
         p0 = np.array([0, 0.75, 0.25, 0.5, 1.0])
@@ -1175,7 +1197,7 @@ class TestNanFunctions_Quantile:
         assert_array_equal(p, p0)
 
     @pytest.mark.parametrize("axis", [None, 0, 1])
-    @pytest.mark.parametrize("dtype", np.typecodes["AllFloat"])
+    @pytest.mark.parametrize("dtype", np.typecodes["Float"])
     @pytest.mark.parametrize("array", [
         np.array(np.nan),
         np.full((3, 3), np.nan),

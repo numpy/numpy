@@ -3934,7 +3934,7 @@ def percentile(a,
 
     Parameters
     ----------
-    a : array_like
+    a : array_like of real numbers
         Input array or object that can be converted to an array.
     q : array_like of float
         Percentile or sequence of percentiles to compute, which must be between
@@ -4198,6 +4198,11 @@ def percentile(a,
     if interpolation is not None:
         method = _check_interpolation_as_method(
             method, interpolation, "percentile")
+
+    a = np.asanyarray(a)
+    if a.dtype.kind == "c":
+        raise TypeError("a must be an array of real numbers")
+
     q = np.true_divide(q, 100)
     q = asanyarray(q)  # undo any decay that the ufunc performed (see gh-13105)
     if not _quantile_is_valid(q):
@@ -4228,7 +4233,7 @@ def quantile(a,
 
     Parameters
     ----------
-    a : array_like
+    a : array_like of real numbers
         Input array or object that can be converted to an array.
     q : array_like of float
         Quantile or sequence of quantiles to compute, which must be between
@@ -4454,6 +4459,10 @@ def quantile(a,
     if interpolation is not None:
         method = _check_interpolation_as_method(
             method, interpolation, "quantile")
+
+    a = np.asanyarray(a)
+    if a.dtype.kind == "c":
+        raise TypeError("a must be an array of real numbers")
 
     q = np.asanyarray(q)
     if not _quantile_is_valid(q):
