@@ -14,22 +14,24 @@ This section of the documentation will guide you through:
 GitHub Codespaces
 -----------------
 
-`GitHub Codespaces`_ is a service that provides cloud based development environments
-so that you don't have to install anything on your local machine or worry about configuration.
+`GitHub Codespaces`_ is a service that provides cloud based 
+development environments so that you don't have to install anything
+on your local machine or worry about configuration.
 
 What is a codespace?
 --------------------
 
-A codespace is an instance of Codespaces - and thus a development environment that is hosted in the cloud.
-Each codespace runs on a virtual machine hosted by GitHub. You can choose 
-the type of machine you want to use, depending on the resources you need. Various 
-types of machine are available, starting with a 2-core processor, 4 GB of RAM, 
-and 32 GB of storage.
-You can connect to a codespace from your browser, from Visual Studio Code, from 
-the JetBrains Gateway application, or by using GitHub CLI.
+A codespace is an instance of Codespaces - and thus a development 
+environment that is hosted in the cloud. Each codespace runs on a virtual 
+machine hosted by GitHub. You can choose the type of machine you want to use, 
+depending on the resources you need. Various types of machine are available, 
+starting with a 2-core processor, 4 GB of RAM, and 32 GB of storage.
+You can connect to a codespace from your browser, from Visual Studio Code, 
+from the JetBrains Gateway application, or by using GitHub CLI.
 
 Forking the NumPy repository
 ----------------------------
+
 The best way to work on the NumPy codebase as a contributor is by making a fork of the 
 repository first.
 
@@ -37,15 +39,13 @@ repository first.
 #. Browse to your fork. Your fork will have a URL like 
    https://github.com/inessapawson/numpy, except with your GitHub username in place of ``inessapawson``.
      
-Starting GitHub Codespaces
+Starting GitHub Codespaces - draft
 --------------------------
 
-You can create a codespace from the green "Code" button on the repository home page, or click this |open| button
+You can create a codespace from the green "Code" button (image to be added)
+on the repository home page, or click on this `open (image to be added)`_ button
 
-.. |open| image:: https://github.com/codespaces/badge.svg_
-.. _open: https://github.com/codespaces/new?hide_repo_select=true&ref=main&repo=908607
-
-Quick workspace tour
+Quick workspace tour - draft
 --------------------
 
 You can develop code in a codespace using your choice of tool:
@@ -68,7 +68,7 @@ The  :ref:`development-workflow` section of this documentation contains
 information regarding the NumPy development workflow. Make sure to check this 
 before you start working on your contributions.
 
-Rendering the NumPy documentation
+Rendering the NumPy documentation - draft
 ---------------------------------
 
 You can find the detailed documentation on how the rendering of the documentation with 
@@ -77,50 +77,6 @@ Sphinx works in the :ref:`howto-build-docs` section.
 The documentation is pre-built during your codespace initialization. So once 
 this task is completed, you have two main options to render the documentation 
 in GitHub Codespaces.
-
-Option 1: Using Liveserve
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-#. View the documentation in ``NumPy/doc/build/html``. You can start with 
-   ``index.html`` and browse, or you can jump straight to the file you're 
-   interested in.
-#. To see the rendered version of a page, you can right-click on the ``.html`` 
-   file and click on **Open with Live Serve**. Alternatively, you can open the 
-   file in the editor and click on the **Go live** button on the status bar.
-
-    .. image:: 
-        :alt: 
-
-#. A simple browser will open to the right-hand side of the editor. We recommend 
-   closing it and click on the **Open in browser** button in the pop-up.
-#. To stop the server click on the **Port: 5500** button on the status bar.
-
-Option 2: Using the rst extension
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-A quick and easy way to see live changes in a ``.rst`` file as you work on it 
-uses the rst extension with docutils.
-
-.. note:: This will generate a simple live preview of the document without the 
-    ``html`` theme, and some backlinks might not be added correctly. But it is an 
-    easy and lightweight way to get instant feedback on your work.
-
-#. Open any of the source documentation files located in ``doc/source`` in the 
-   editor.
-#. Open VSCode Command Palette with :kbd:`Cmd-Shift-P` in Mac or 
-   :kbd:`Ctrl-Shift-P` in Linux and Windows. Start typing "restructured" 
-   and choose either "Open preview" or "Open preview to the Side".
-
-    .. image:: 
-        :alt: 
-
-#. As you work on the document, you will see a live rendering of it on the editor.
-
-    .. image:: 
-        :alt: 
-
-To see the final output with the ``html`` theme, you need to 
-rebuild the docs with ``make html`` and use Live Serve as described in option 1.
 
 FAQs and troubleshooting
 -------------------------
@@ -140,6 +96,7 @@ changes that you have made to your project.
 .. _GitHub Codespaces: https://github.com/features/codespaces
 .. _NumPy repository on GitHub: https://github.com/NumPy/NumPy
 .. _create your own fork: https://help.github.com/en/articles/fork-a-repo
+.. _open: https://github.com/codespaces/new?hide_repo_select=true&ref=main&repo=908607
 .. _VSCode docs: https://code.visualstudio.com/docs/getstarted/tips-and-tricks
 .. _command shell, via an SSH connection initiated using GitHub CLI: https://docs.github.com/en/authentication/connecting-to-github-with-ssh
 .. _one of the JetBrains IDEs, via the JetBrains Gateway: https://docs.github.com/en/codespaces/developing-in-codespaces/using-github-codespaces-in-your-jetbrains-ide
