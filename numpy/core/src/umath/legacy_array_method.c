@@ -91,7 +91,10 @@ generic_wrapped_legacy_loop(PyArrayMethod_Context *NPY_UNUSED(context),
     return 0;
 }
 
-
+int
+is_generic_wrapped_legacy_loop(PyArrayMethod_StridedLoop *strided_loop) {
+    return strided_loop == generic_wrapped_legacy_loop;
+}
 /*
  * Signal that the old type-resolution function must be used to resolve
  * the descriptors (mainly/only used for datetimes due to the unit).

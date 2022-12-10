@@ -5943,6 +5943,9 @@ new_array_op(PyArrayObject *op_array, char *data)
     return (PyArrayObject *)r;
 }
 
+int is_generic_wrapped_legacy_loop(PyArrayMethod_StridedLoop *strided_loop);
+
+
 /*
  * Call ufunc only on selected array items and store result in first operand.
  * For add ufunc, method call is equivalent to op1[idx] += op2 with no
@@ -6216,6 +6219,21 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
     if (ufuncimpl->get_strided_loop(&context, 1, 0, strides,
             &strided_loop, &auxdata, &flags) < 0) {
         goto fail;
+    }
+    /* only user-defined dtypes will use a non-generic_wrapped_legacy loop */
+    if (is_generic_wrapped_legacy_loop(strided_loop)) {
+        int fast_path = 1;
+        for (int i=0; i<3; i++) {
+            if (operation_descrs[i] && !PyDataType_ISNUMBER(operation_descrs[i])) {
+                fast_path = 0;
+            }
+        }
+        if (fast_path) {
+            fprintf(stdout, "can use ufunc_at fastpath\n");
+        } else {
+            fprintf(stdout, "cannot use ufunc_at fastpath\n");
+        }
+        fflush(stdout);
     }
     int needs_api = (flags & NPY_METH_REQUIRES_PYAPI) != 0;
     needs_api |= NpyIter_IterationNeedsAPI(iter_buffer);
