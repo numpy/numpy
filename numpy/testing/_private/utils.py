@@ -1794,6 +1794,9 @@ def integer_repr(x):
         return _integer_repr(x, np.int32, np.int32(-2**31))
     elif x.dtype == np.float64:
         return _integer_repr(x, np.int64, np.int64(-2**63))
+    elif x.dtype == np.longdouble:
+        bits = np.finfo(np.longdouble).bits
+        return _integer_repr(x, np.longdouble, np.longdouble(-2**(bits - 1)))
     else:
         raise ValueError(f'Unsupported dtype {x.dtype}')
 

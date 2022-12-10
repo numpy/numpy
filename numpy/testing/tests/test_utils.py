@@ -970,6 +970,14 @@ class TestAssertAllclose:
 
 class TestArrayAlmostEqualNulp:
 
+    def test_gh_21520(self):
+        x0 = np.longdouble(1.0)
+        x1 = np.nextafter(x0, np.longdouble(2.0))
+        x2 = np.nextafter(x1, np.longdouble(2.0))
+        with pytest.raises(AssertionError, match="1 ULP"):
+            assert_array_almost_equal_nulp(x0, x2)
+
+
     def test_float64_pass(self):
         # The number of units of least precision
         # In this case, use a few places above the lowest level (ie nulp=1)
