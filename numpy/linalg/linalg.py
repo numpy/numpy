@@ -12,7 +12,7 @@ zgetrf, dpotrf, zpotrf, dgeqrf, zgeqrf, zungqr, dorgqr.
 __all__ = ['matrix_power', 'solve', 'tensorsolve', 'tensorinv', 'inv',
            'cholesky', 'eigvals', 'eigvalsh', 'pinv', 'slogdet', 'det',
            'svd', 'eig', 'eigh', 'lstsq', 'norm', 'qr', 'cond', 'matrix_rank',
-           'LinAlgError', 'multi_dot']
+           'LinAlgError', 'multi_dot', 'matrix_transpose']
 
 import functools
 import operator
@@ -199,12 +199,16 @@ def _is_empty_2d(arr):
     return arr.size == 0 and product(arr.shape[-2:]) == 0
 
 
-def transpose(a):
+def _matrix_transpose_dispatcher(a):
+    return (a,)
+
+@array_function_dispatch(_matrix_transpose_dispatcher)
+def matrix_transpose(a):
     """
     Transpose each matrix in a stack of matrices.
 
     Unlike np.transpose, this only swaps the last two axes, rather than all of
-    them
+    them. The input array must have a least 2 dimensions.
 
     Parameters
     ----------
@@ -213,7 +217,24 @@ def transpose(a):
     Returns
     -------
     aT : (...,N,M) ndarray
+
+    See Also
+    --------
+    numpy.transpose
+
+    Examples
+    --------
+    >>> a = np.array([
+    ... [[1, 2], [3, 4]],
+    ... [[-1, -2], [-3, -4]]])
+    >>> np.linalg.matrix_transpose(a)
+    array([[[ 1,  3],
+            [ 2,  4]],
+           [[-1, -3],
+            [-2, -4]]])
     """
+    if a.ndim < 2:
+        raise ValueError("matrix_transpose: Input must have a least 2 dimensions")
     return swapaxes(a, -1, -2)
 
 # Linear equations
@@ -933,7 +954,7 @@ def qr(a, mode='reduced'):
         return wrap(r)
 
     if mode == 'raw':
-        q = transpose(a)
+        q = matrix_transpose(a)
         q = q.astype(result_t, copy=False)
         tau = tau.astype(result_t, copy=False)
         return wrap(q), tau
@@ -1613,7 +1634,7 @@ def svd(a, full_matrices=True, compute_uv=True, hermitian=False):
             s = _nx.take_along_axis(s, sidx, axis=-1)
             u = _nx.take_along_axis(u, sidx[..., None, :], axis=-1)
             # singular values are unsigned, move the sign into v
-            vt = transpose(u * sgn[..., None, :]).conjugate()
+            vt = matrix_transpose(u * sgn[..., None, :]).conjugate()
             return wrap(u), s, wrap(vt)
         else:
             s = eigvalsh(a)
@@ -1988,7 +2009,7 @@ def pinv(a, rcond=1e-15, hermitian=False):
     s = divide(1, s, where=large, out=s)
     s[~large] = 0
 
-    res = matmul(transpose(vt), multiply(s[..., newaxis], transpose(u)))
+    res = matmul(matrix_transpose(vt), multiply(s[..., newaxis], matrix_transpose(u)))
     return wrap(res)
 
 

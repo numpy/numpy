@@ -14,7 +14,10 @@ from numpy import array, single, double, csingle, cdouble, dot, identity, matmul
 from numpy.core import swapaxes
 from numpy import multiply, atleast_2d, inf, asarray
 from numpy import linalg
-from numpy.linalg import matrix_power, norm, matrix_rank, multi_dot, LinAlgError
+from numpy.linalg import (
+    matrix_power, norm, matrix_rank, multi_dot, LinAlgError,
+    matrix_transpose
+    )
 from numpy.linalg.linalg import _multi_dot_matrix_chain_order
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_array_equal,
@@ -1619,6 +1622,28 @@ def test_reduced_rank():
         assert_equal(matrix_rank(X), 8)
 
 
+class TestMatrixTranspose:
+    def test_error(self):
+        assert_raises(ValueError, matrix_transpose, array(1))
+        assert_raises(ValueError, matrix_transpose, array([1, 2]))
+
+    def test_matrix_transpose(self):
+        a = np.array([[1, 2], [3, 4]])
+        aT = np.array([[1, 3], [2, 4]])
+        assert_array_equal(matrix_transpose(a), aT)
+        assert_array_equal(matrix_transpose(aT), a)
+
+        a = np.array([[[1, 2], [3, 4]]])
+        aT = np.array([[[1, 3], [2, 4]]])
+        assert_array_equal(matrix_transpose(a), aT)
+        assert_array_equal(matrix_transpose(aT), a)
+
+        a = np.array([[[1, 2], [3, 4]], [[-1, -2], [-3, -4]]])
+        aT = np.array([[[1, 3], [2, 4]], [[-1, -3], [-2, -4]]])
+        assert_array_equal(matrix_transpose(a), aT)
+        assert_array_equal(matrix_transpose(aT), a)
+
+
 class TestQR:
     # Define the array class here, so run this on matrices elsewhere.
     array = np.array
@@ -1736,7 +1761,7 @@ class TestQR:
         assert_(r.shape[-2:] == (m, n))
         assert_almost_equal(matmul(q, r), a)
         I_mat = np.identity(q.shape[-1])
-        stack_I_mat = np.broadcast_to(I_mat, 
+        stack_I_mat = np.broadcast_to(I_mat,
                         q.shape[:-2] + (q.shape[-1],)*2)
         assert_almost_equal(matmul(swapaxes(q, -1, -2).conj(), q), stack_I_mat)
         assert_almost_equal(np.triu(r[..., :, :]), r)
@@ -1751,9 +1776,9 @@ class TestQR:
         assert_(r1.shape[-2:] == (k, n))
         assert_almost_equal(matmul(q1, r1), a)
         I_mat = np.identity(q1.shape[-1])
-        stack_I_mat = np.broadcast_to(I_mat, 
+        stack_I_mat = np.broadcast_to(I_mat,
                         q1.shape[:-2] + (q1.shape[-1],)*2)
-        assert_almost_equal(matmul(swapaxes(q1, -1, -2).conj(), q1), 
+        assert_almost_equal(matmul(swapaxes(q1, -1, -2).conj(), q1),
                             stack_I_mat)
         assert_almost_equal(np.triu(r1[..., :, :]), r1)
 
@@ -1764,12 +1789,12 @@ class TestQR:
         assert_almost_equal(r2, r1)
 
     @pytest.mark.parametrize("size", [
-        (3, 4), (4, 3), (4, 4), 
+        (3, 4), (4, 3), (4, 4),
         (3, 0), (0, 3)])
     @pytest.mark.parametrize("outer_size", [
         (2, 2), (2,), (2, 3, 4)])
     @pytest.mark.parametrize("dt", [
-        np.single, np.double, 
+        np.single, np.double,
         np.csingle, np.cdouble])
     def test_stacked_inputs(self, outer_size, size, dt):
 
