@@ -47,9 +47,17 @@ integers with negative values such as ``np.uint8(-1)`` giving
 
 Note that conversion between NumPy integers is unaffected, so that
 ``np.array(-1).astype(np.uint8)`` continues to work and use C integer overflow
-logic.
+logic.  For negative values, it will also work to view the array:
+``np.array(-1, dtype=np.int8).view(np.uint8)``.
+In some cases, using ``np.iinfo(np.uint8).max`` or ``val % 2**8`` may also
+work well.
 
-(`gh-22393 <https://github.com/numpy/numpy/pull/22393>`__)
+In rare cases input data may mix both negative values and very large unsigned
+values (i.e. ``-1`` and ``2**63``).  There it is unfortunately necessary
+to use ``%`` on the Python value or use signed or unsigned conversion
+depending on whether negative values are expected.
+
+(`gh-22385 <https://github.com/numpy/numpy/pull/22385>`__)
 
 Deprecate ``msort``
 -------------------
