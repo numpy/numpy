@@ -4230,14 +4230,17 @@ add_newdoc('numpy.core.umath', 'bitwise_count',
     -------
     y : ndarray
         The corresponding number of 1-bits in the input.
+        Returns uint8 for all integer types
         $OUT_SCALAR_1
 
     References
     ----------
-    .. [1] https://stackoverflow.com/a/109025/5671364
+    .. [1] https://graphics.stanford.edu/~seander/bithacks.html#CountBitsSetParallel
 
     .. [2] Wikipedia, "Hamming weight",
            https://en.wikipedia.org/wiki/Hamming_weight
+
+    .. [3] http://aggregate.ee.engr.uky.edu/MAGIC/#Population%20Count%20(Ones%20Count)
 
     Examples
     --------

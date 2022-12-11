@@ -1,10 +1,9 @@
-`np.bitwise_count` to compute the number of 1-bits in an integer
-----------------------------------------------------------------
+`np.bitwise_count` to compute the number of 1-bits in an integer array
+----------------------------------------------------------------------
 
 This new function counts the number of 1-bits in a number.
-These work on all the numpy integer types, as well as the
-builtin arbitrary-precision `Decimal` and `long` types.
-Internally, this function calls `np.bit_count`
+`np.bitwise_count` works on all the numpy integer types and
+integer-like objects.
 
 .. code-block:: python
 
