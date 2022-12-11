@@ -2701,12 +2701,12 @@ class TestBitwiseUFuncs:
 
     @pytest.mark.parametrize("input_dtype_obj, bitsize",
             zip(bitwise_types, bitwise_bits))
-    def test_popcount(self, input_dtype_obj, bitsize):
+    def test_bitwise_count(self, input_dtype_obj, bitsize):
         input_dtype = input_dtype_obj.type
 
         # bitwise_count is only in-built in 3.10+
         if sys.version_info < (3, 10) and input_dtype == np.object_:
-            pytest.skip()
+            pytest.skip("Required Python >=3.10")
 
         for i in range(1, bitsize):
             num = 2**i - 1
