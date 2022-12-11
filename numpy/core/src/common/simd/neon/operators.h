@@ -248,7 +248,7 @@ NPY_FINLINE npyv_b32 npyv_cmpgtq_f32(npyv_f32 a, npyv_f32 b)
 {
     npyv_f32 max = vmaxq_f32(a, b);
     npyv_b32 nnan = vceqq_f32(max, max);
-    return vandq_u32(nnan, vceqq_f32(max, b));
+    return vbicq_u32(nnan, vceqq_f32(max, b));
 }
 #define npyv_cmpleq_f32(A, B) npyv_cmpgeq_f32(B, A)
 #define npyv_cmpltq_f32(A, B) npyv_cmpgtq_f32(B, A)

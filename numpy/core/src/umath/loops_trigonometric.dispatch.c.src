@@ -124,7 +124,7 @@ simd_sincos_f32(const float *src, npy_intp ssrc, float *dst, npy_intp sdst,
         } else {
             x_in = npyv_loadn_tillz_f32(src, ssrc, len);
         }
-        npyv_b32 simd_mask = npyv_cmple_f32(npyv_abs_f32(x_in), max_cody);
+        npyv_b32 simd_mask = npyv_cmpleq_f32(npyv_abs_f32(x_in), max_cody);
         npy_uint64 simd_maski = npyv_tobits_b32(simd_mask);
         /*
          * For elements outside of this range, Cody-Waite's range reduction
