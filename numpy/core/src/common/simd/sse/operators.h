@@ -277,6 +277,38 @@ NPY_FINLINE __m128i npyv_shr_s64(__m128i a, int c)
 #define npyv_cmpge_f32(a, b)  _mm_castps_si128(_mm_cmpge_ps(a, b))
 #define npyv_cmpge_f64(a, b)  _mm_castpd_si128(_mm_cmpge_pd(a, b))
 
+// ordered comparison guarantees non-signaling
+// don't raise FP invalid exception if one of the sources containing qnan.
+NPY_FINLINE npyv_b32 npyv_cmpgtq_f32(npyv_f32 a, npyv_f32 b)
+{
+    __m128 nan_mask = _mm_cmpunord_ps(a, b);
+    __m128 cmp_mask = _mm_cmpgt_ps(_mm_xor_ps(nan_mask, a), _mm_xor_ps(nan_mask, b));
+    return _mm_castps_si128(_mm_andnot_ps(nan_mask, cmp_mask));
+}
+NPY_FINLINE npyv_b64 npyv_cmpgtq_f64(npyv_f64 a, npyv_f64 b)
+{
+    __m128d nan_mask = _mm_cmpunord_pd(a, b);
+    __m128d cmp_mask = _mm_cmpgt_pd(_mm_xor_pd(nan_mask, a), _mm_xor_pd(nan_mask, b));
+    return _mm_castpd_si128(_mm_andnot_pd(nan_mask, cmp_mask));
+}
+NPY_FINLINE npyv_b32 npyv_cmpgeq_f32(npyv_f32 a, npyv_f32 b)
+{
+    __m128 nan_mask = _mm_cmpunord_ps(a, b);
+    __m128 cmp_mask = _mm_cmpge_ps(_mm_xor_ps(nan_mask, a), _mm_xor_ps(nan_mask, b));
+    return _mm_castps_si128(_mm_andnot_ps(nan_mask, cmp_mask));
+}
+NPY_FINLINE npyv_b64 npyv_cmpgeq_f64(npyv_f64 a, npyv_f64 b)
+{
+    __m128d nan_mask = _mm_cmpunord_pd(a, b);
+    __m128d cmp_mask = _mm_cmpge_pd(_mm_xor_pd(nan_mask, a), _mm_xor_pd(nan_mask, b));
+    return _mm_castpd_si128(_mm_andnot_pd(nan_mask, cmp_mask));
+}
+
+#define npyv_cmpltq_f32(A, B) npyv_cmpgtq_f32(B, A)
+#define npyv_cmpltq_f64(A, B) npyv_cmpgtq_f64(B, A)
+#define npyv_cmpleq_f32(A, B) npyv_cmpgeq_f32(B, A)
+#define npyv_cmpleq_f64(A, B) npyv_cmpgeq_f64(B, A)
+
 // check special cases
 NPY_FINLINE npyv_b32 npyv_notnan_f32(npyv_f32 a)
 { return _mm_castps_si128(_mm_cmpord_ps(a, a)); }

@@ -331,6 +331,16 @@
 #define npyv_cmpgt_f64(A, B)  _mm512_cmp_pd_mask(A, B, _CMP_GT_OQ)
 #define npyv_cmpge_f32(A, B)  _mm512_cmp_ps_mask(A, B, _CMP_GE_OQ)
 #define npyv_cmpge_f64(A, B)  _mm512_cmp_pd_mask(A, B, _CMP_GE_OQ)
+// ordered non-signaling comparison
+// don't raise FP invalid exception if one of the sources containing qnan.
+#define npyv_cmpgeq_f32 npyv_cmpge_f32
+#define npyv_cmpgeq_f64 npyv_cmpge_f64
+#define npyv_cmpgtq_f32 npyv_cmpgt_f32
+#define npyv_cmpgtq_f64 npyv_cmpgt_f64
+#define npyv_cmpleq_f32 npyv_cmple_f32
+#define npyv_cmpleq_f64 npyv_cmple_f64
+#define npyv_cmpltq_f32 npyv_cmplt_f32
+#define npyv_cmpltq_f64 npyv_cmplt_f64
 
 // check special cases
 NPY_FINLINE npyv_b32 npyv_notnan_f32(npyv_f32 a)
