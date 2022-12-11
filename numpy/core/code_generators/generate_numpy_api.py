@@ -29,11 +29,15 @@ extern NPY_NO_EXPORT PyBoolScalarObject _PyArrayScalar_BoolValues[2];
 #define PyArray_API PY_ARRAY_UNIQUE_SYMBOL
 #endif
 
+#ifndef PY_ARRAY_ATTRIBUTE
+#define PY_ARRAY_ATTRIBUTE
+#endif
+
 #if defined(NO_IMPORT) || defined(NO_IMPORT_ARRAY)
-extern void **PyArray_API;
+extern PY_ARRAY_ATTRIBUTE void **PyArray_API;
 #else
 #if defined(PY_ARRAY_UNIQUE_SYMBOL)
-void **PyArray_API;
+PY_ARRAY_ATTRIBUTE void **PyArray_API;
 #else
 static void **PyArray_API=NULL;
 #endif
