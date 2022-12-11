@@ -281,14 +281,14 @@ Numpy provides some utilities to aid testing of custom array containers that
 implement the ``__array_ufunc__`` and ``__array_function__`` protocols in the
 ``numpy.testing.overrides`` namespace.
 
-To check if a Numpy function can be overriden via ``__array_ufunc__``, you can
+To check if a Numpy function can be overridden via ``__array_ufunc__``, you can
 use :func:`~numpy.testing.overrides.allows_array_ufunc_override`:
 
 >>> from np.testing.overrides import allows_array_ufunc_override
 >>> allows_array_ufunc_override(np.add)
 True
 
-Similarly, you can check if a function can be overriden via
+Similarly, you can check if a function can be overridden via
 ``__array_function__`` using
 :func:`~numpy.testing.overrides.allows_array_function_override`.
 
