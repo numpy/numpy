@@ -5966,11 +5966,6 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
     PyArrayObject *op2_array = NULL;
     PyArrayMapIterObject *iter = NULL;
     PyArrayIterObject *iter2 = NULL;
-    PyArrayObject *operands[3] = {NULL, NULL, NULL};
-    PyArrayObject *array_operands[3] = {NULL, NULL, NULL};
-
-    PyArray_DTypeMeta *signature[3] = {NULL, NULL, NULL};
-    PyArray_DTypeMeta *operand_DTypes[3] = {NULL, NULL, NULL};
     PyArray_Descr *operation_descrs[3] = {NULL, NULL, NULL};
 
     int nop;
@@ -5978,13 +5973,6 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
     /* override vars */
     int errval;
     PyObject *override = NULL;
-
-    NpyIter *iter_buffer;
-    NpyIter_IterNextFunc *iternext;
-    npy_uint32 op_flags[NPY_MAXARGS];
-    int buffersize;
-    int errormask = 0;
-    char * err_msg = NULL;
 
     PyArrayMethod_StridedLoop *strided_loop;
     NpyAuxData *auxdata = NULL;
@@ -6046,7 +6034,10 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
         }
     }
 
-    /* Create map iterator */
+    /* 
+     * Create a map iterator (there is no multi-mapiter, so we need at least 2
+     * iterators: one for the mapping, and another for the second operand)
+     */
     iter = (PyArrayMapIterObject *)PyArray_MapIterArrayCopyIfOverlap(
         op1_array, idx, 1, op2_array);
     if (iter == NULL) {
@@ -6054,7 +6045,7 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
     }
     op1_array = iter->array;  /* May be updateifcopied on overlap */
 
-    if (op2 != NULL) {
+    if (op2_array != NULL) {
         /*
          * May need to swap axes so that second operand is
          * iterated over correctly
@@ -6081,126 +6072,75 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
         }
     }
 
-    /*
-     * Create dtypes array for either one or two input operands.
-     * Compare to the logic in `convert_ufunc_arguments`.
-     * TODO: It may be good to review some of this behaviour, since the
-     *       operand array is special (it is written to) similar to reductions.
-     *       Using unsafe-casting as done here, is likely not desirable.
-     */
-    operands[0] = op1_array;
-    operand_DTypes[0] = NPY_DTYPE(PyArray_DESCR(op1_array));
-    Py_INCREF(operand_DTypes[0]);
-    int force_legacy_promotion = 0;
-    int allow_legacy_promotion = NPY_DT_is_legacy(operand_DTypes[0]);
+    PyArrayMethodObject *ufuncimpl = NULL;
 
-    if (op2_array != NULL) {
-        operands[1] = op2_array;
-        operand_DTypes[1] = NPY_DTYPE(PyArray_DESCR(op2_array));
-        Py_INCREF(operand_DTypes[1]);
-        allow_legacy_promotion &= NPY_DT_is_legacy(operand_DTypes[1]);
-        operands[2] = operands[0];
-        operand_DTypes[2] = operand_DTypes[0];
-        Py_INCREF(operand_DTypes[2]);
+    {
+        PyArrayObject *tmp_operands[3] = {NULL, NULL, NULL};
+        PyArray_DTypeMeta *signature[3] = {NULL, NULL, NULL};
+        PyArray_DTypeMeta *operand_DTypes[3] = {NULL, NULL, NULL};
+        /*
+         * Create dtypes array for either one or two input operands.
+         * Compare to the logic in `convert_ufunc_arguments`.
+         * TODO: It may be good to review some of this behaviour, since the
+         *       operand array is special (it is written to) similar to reductions.
+         *       Using unsafe-casting as done here, is likely not desirable.
+         */
+        tmp_operands[0] = op1_array;
+        operand_DTypes[0] = NPY_DTYPE(PyArray_DESCR(op1_array));
+        Py_INCREF(operand_DTypes[0]);
+        int force_legacy_promotion = 0;
+        int allow_legacy_promotion = NPY_DT_is_legacy(operand_DTypes[0]);
 
-        nop = 3;
-        if (allow_legacy_promotion && ((PyArray_NDIM(op1_array) == 0)
-                                       != (PyArray_NDIM(op2_array) == 0))) {
-                /* both are legacy and only one is 0-D: force legacy */
-                force_legacy_promotion = should_use_min_scalar(2, operands, 0, NULL);
+        if (op2_array != NULL) {
+            tmp_operands[1] = op2_array;
+            operand_DTypes[1] = NPY_DTYPE(PyArray_DESCR(op2_array));
+            Py_INCREF(operand_DTypes[1]);
+            allow_legacy_promotion &= NPY_DT_is_legacy(operand_DTypes[1]);
+            tmp_operands[2] = tmp_operands[0];
+            operand_DTypes[2] = operand_DTypes[0];
+            Py_INCREF(operand_DTypes[2]);
+
+            nop = 3;
+            if (allow_legacy_promotion && ((PyArray_NDIM(op1_array) == 0)
+                                           != (PyArray_NDIM(op2_array) == 0))) {
+                    /* both are legacy and only one is 0-D: force legacy */
+                    force_legacy_promotion = should_use_min_scalar(2, tmp_operands, 0, NULL);
+                }
+        }
+        else {
+            tmp_operands[1] = tmp_operands[0];
+            operand_DTypes[1] = operand_DTypes[0];
+            Py_INCREF(operand_DTypes[1]);
+            tmp_operands[2] = NULL;
+            nop = 2;
+        }
+
+        ufuncimpl = promote_and_get_ufuncimpl(ufunc, tmp_operands, signature,
+                        operand_DTypes, force_legacy_promotion,
+                        allow_legacy_promotion, NPY_FALSE, NPY_FALSE);
+        if (ufuncimpl == NULL) {
+            for (int i = 0; i < 3; i++) {
+                Py_XDECREF(signature[i]);
+                Py_XDECREF(operand_DTypes[i]);
             }
-    }
-    else {
-        operands[1] = operands[0];
-        operand_DTypes[1] = operand_DTypes[0];
-        Py_INCREF(operand_DTypes[1]);
-        operands[2] = NULL;
-        nop = 2;
-    }
+            goto fail;
+        }
 
-    PyArrayMethodObject *ufuncimpl = promote_and_get_ufuncimpl(ufunc,
-            operands, signature, operand_DTypes,
-            force_legacy_promotion, allow_legacy_promotion,
-            NPY_FALSE, NPY_FALSE);
-    if (ufuncimpl == NULL) {
-        goto fail;
-    }
-
-    /* Find the correct descriptors for the operation */
-    if (resolve_descriptors(nop, ufunc, ufuncimpl,
-            operands, operation_descrs, signature, NPY_UNSAFE_CASTING) < 0) {
-        goto fail;
+        /* Find the correct operation_descrs for the operation */
+        int resolve_result = resolve_descriptors(nop, ufunc, ufuncimpl,
+                tmp_operands, operation_descrs, signature, NPY_UNSAFE_CASTING);
+        for (int i = 0; i < 3; i++) {
+            Py_XDECREF(signature[i]);
+            Py_XDECREF(operand_DTypes[i]);
+        }
+        if (resolve_result < 0) {
+            goto fail;
+        }
     }
 
     Py_INCREF(PyArray_DESCR(op1_array));
-    array_operands[0] = new_array_op(op1_array, iter->dataptr);
-    if (iter2 != NULL) {
-        Py_INCREF(PyArray_DESCR(op2_array));
-        array_operands[1] = new_array_op(op2_array, PyArray_ITER_DATA(iter2));
-        Py_INCREF(PyArray_DESCR(op1_array));
-        array_operands[2] = new_array_op(op1_array, iter->dataptr);
-    }
-    else {
-        Py_INCREF(PyArray_DESCR(op1_array));
-        array_operands[1] = new_array_op(op1_array, iter->dataptr);
-        array_operands[2] = NULL;
-    }
 
-    /* Set up the flags */
-    op_flags[0] = NPY_ITER_READONLY|
-                  NPY_ITER_ALIGNED;
-
-    if (iter2 != NULL) {
-        op_flags[1] = NPY_ITER_READONLY|
-                      NPY_ITER_ALIGNED;
-        op_flags[2] = NPY_ITER_WRITEONLY|
-                      NPY_ITER_ALIGNED|
-                      NPY_ITER_ALLOCATE|
-                      NPY_ITER_NO_BROADCAST|
-                      NPY_ITER_NO_SUBTYPE;
-    }
-    else {
-        op_flags[1] = NPY_ITER_WRITEONLY|
-                      NPY_ITER_ALIGNED|
-                      NPY_ITER_ALLOCATE|
-                      NPY_ITER_NO_BROADCAST|
-                      NPY_ITER_NO_SUBTYPE;
-    }
-
-    if (_get_bufsize_errmask(NULL, ufunc->name, &buffersize, &errormask) < 0) {
-        goto fail;
-    }
-
-    /*
-     * Create NpyIter object to "iterate" over single element of each input
-     * operand. This is an easy way to reuse the NpyIter logic for dealing
-     * with certain cases like casting operands to correct dtype. On each
-     * iteration over the MapIterArray object created above, we'll take the
-     * current data pointers from that and reset this NpyIter object using
-     * those data pointers, and then trigger a buffer copy. The buffer data
-     * pointers from the NpyIter object will then be passed to the inner loop
-     * function.
-     */
-    iter_buffer = NpyIter_AdvancedNew(nop, array_operands,
-                        NPY_ITER_EXTERNAL_LOOP|
-                        NPY_ITER_REFS_OK|
-                        NPY_ITER_ZEROSIZE_OK|
-                        NPY_ITER_BUFFERED|
-                        NPY_ITER_GROWINNER|
-                        NPY_ITER_DELAY_BUFALLOC,
-                        NPY_KEEPORDER, NPY_UNSAFE_CASTING,
-                        op_flags, operation_descrs,
-                        -1, NULL, NULL, buffersize);
-
-    if (iter_buffer == NULL) {
-        goto fail;
-    }
-
-    iternext = NpyIter_GetIterNext(iter_buffer, NULL);
-    if (iternext == NULL) {
-        NpyIter_Deallocate(iter_buffer);
-        goto fail;
-    }
+    /* iter_buffer = NpyIter_AdvancedNew was here */
 
     PyArrayMethod_Context context = {
             .caller = (PyObject *)ufunc,
@@ -6208,7 +6148,6 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
             .descriptors = operation_descrs,
     };
 
-    NPY_ARRAYMETHOD_FLAGS flags;
     /* Use contiguous strides; if there is such a loop it may be faster */
     npy_intp strides[3] = {
             operation_descrs[0]->elsize, operation_descrs[1]->elsize, 0};
@@ -6216,109 +6155,204 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
         strides[2] = operation_descrs[2]->elsize;
     }
 
+    NPY_ARRAYMETHOD_FLAGS flags;
     if (ufuncimpl->get_strided_loop(&context, 1, 0, strides,
             &strided_loop, &auxdata, &flags) < 0) {
         goto fail;
     }
-    /* only user-defined dtypes will use a non-generic_wrapped_legacy loop */
+    int fast_path = 1;
     if (is_generic_wrapped_legacy_loop(strided_loop)) {
-        int fast_path = 1;
+        /*
+         * only user-defined dtypes will use a non-generic_wrapped_legacy loop
+         * so this path is very common
+         */
         for (int i=0; i<3; i++) {
             if (operation_descrs[i] && !PyDataType_ISNUMBER(operation_descrs[i])) {
                 fast_path = 0;
             }
         }
-        if (fast_path) {
-            fprintf(stdout, "can use ufunc_at fastpath\n");
-        } else {
-            fprintf(stdout, "cannot use ufunc_at fastpath\n");
+        if (!PyArray_ISALIGNED(op1_array)) {
+                fast_path = 0;
         }
-        fflush(stdout);
+        if (!PyArray_ISALIGNED(op1_array)) {
+                fast_path = 0;
+        }
     }
-    int needs_api = (flags & NPY_METH_REQUIRES_PYAPI) != 0;
-    needs_api |= NpyIter_IterationNeedsAPI(iter_buffer);
-    if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
-        /* Start with the floating-point exception flags cleared */
-        npy_clear_floatstatus_barrier((char*)&iter);
-    }
-
-    if (!needs_api) {
-        NPY_BEGIN_THREADS;
-    }
-
-    /*
-     * Iterate over first and second operands and call ufunc
-     * for each pair of inputs
-     */
     int res = 0;
-    for (npy_intp i = iter->size; i > 0; i--)
-    {
-        char *dataptr[3];
-        char **buffer_dataptr;
-        /* one element at a time, no stride required but read by innerloop */
-        npy_intp count = 1;
+    if (fast_path) {
+        fprintf(stdout, "can use ufunc_at fastpath\n");
+        fflush(stdout);
+        // res = ufunc_at__fast_iter(iter, iter2);
+    } else {
+        fprintf(stdout, "cannot use ufunc_at fastpath\n");
+        fflush(stdout);
+        // res = ufunc_at__slow_iter(iter, iter2);
+    }
 
-        /*
-         * Set up data pointers for either one or two input operands.
-         * The output data pointer points to the first operand data.
-         */
-        dataptr[0] = iter->dataptr;
+    {
+        NpyIter *iter_buffer = NULL;
+        PyArrayObject *array_operands[3] = {NULL, NULL, NULL};
+        array_operands[0] = new_array_op(op1_array, iter->dataptr);
+        int buffersize;
+        int errormask = 0;
+        NpyIter_IterNextFunc *iternext;
+        char * err_msg = NULL;
+
+        if (_get_bufsize_errmask(NULL, ufunc->name, &buffersize, &errormask) < 0) {
+            goto fail;
+        }
         if (iter2 != NULL) {
-            dataptr[1] = PyArray_ITER_DATA(iter2);
-            dataptr[2] = iter->dataptr;
+            Py_INCREF(PyArray_DESCR(op2_array));
+            array_operands[1] = new_array_op(op2_array, PyArray_ITER_DATA(iter2));
+            Py_INCREF(PyArray_DESCR(op1_array));
+            array_operands[2] = new_array_op(op1_array, iter->dataptr);
         }
         else {
-            dataptr[1] = iter->dataptr;
-            dataptr[2] = NULL;
+            Py_INCREF(PyArray_DESCR(op1_array));
+            array_operands[1] = new_array_op(op1_array, iter->dataptr);
+            array_operands[2] = NULL;
+        }
+        /* Set up the flags */
+        npy_uint32 op_flags[3];
+        op_flags[0] = NPY_ITER_READONLY|
+                      NPY_ITER_ALIGNED;
+
+        if (iter2 != NULL) {
+            op_flags[1] = NPY_ITER_READONLY|
+                          NPY_ITER_ALIGNED;
+            op_flags[2] = NPY_ITER_WRITEONLY|
+                          NPY_ITER_ALIGNED|
+                          NPY_ITER_ALLOCATE|
+                          NPY_ITER_NO_BROADCAST|
+                          NPY_ITER_NO_SUBTYPE;
+        }
+        else {
+            op_flags[1] = NPY_ITER_WRITEONLY|
+                          NPY_ITER_ALIGNED|
+                          NPY_ITER_ALLOCATE|
+                          NPY_ITER_NO_BROADCAST|
+                          NPY_ITER_NO_SUBTYPE;
+        }
+        /*
+         * Create NpyIter object to "iterate" over single element of each input
+         * operand. This is an easy way to reuse the NpyIter logic for dealing
+         * with certain cases like casting operands to correct dtype. On each
+         * iteration over the MapIterArray object created above, we'll take the
+         * current data pointers from that and reset this NpyIter object using
+         * those data pointers, and then trigger a buffer copy. The buffer data
+         * pointers from the NpyIter object will then be passed to the inner loop
+         * function.
+         */
+        iter_buffer = NpyIter_AdvancedNew(nop, array_operands,
+                            NPY_ITER_EXTERNAL_LOOP|
+                            NPY_ITER_REFS_OK|
+                            NPY_ITER_ZEROSIZE_OK|
+                            NPY_ITER_BUFFERED|
+                            NPY_ITER_GROWINNER|
+                            NPY_ITER_DELAY_BUFALLOC,
+                            NPY_KEEPORDER, NPY_UNSAFE_CASTING,
+                            op_flags, operation_descrs,
+                            -1, NULL, NULL, buffersize);
+
+        if (iter_buffer == NULL) {
+            for (int i = 0; i < 3; i++) {
+                Py_XDECREF(array_operands[i]);
+            }
+            goto fail;
         }
 
-        /* Reset NpyIter data pointers which will trigger a buffer copy */
-        NpyIter_ResetBasePointers(iter_buffer, dataptr, &err_msg);
-        if (err_msg) {
-            res = -1;
-            break;
+        iternext = NpyIter_GetIterNext(iter_buffer, NULL);
+        if (iternext == NULL) {
+            NpyIter_Deallocate(iter_buffer);
+            for (int i = 0; i < 3; i++) {
+                Py_XDECREF(array_operands[i]);
+            }
+            goto fail;
         }
 
-        buffer_dataptr = NpyIter_GetDataPtrArray(iter_buffer);
+        int needs_api = (flags & NPY_METH_REQUIRES_PYAPI) != 0;
+        needs_api |= NpyIter_IterationNeedsAPI(iter_buffer);
+        if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
+            /* Start with the floating-point exception flags cleared */
+            npy_clear_floatstatus_barrier((char*)&iter);
+        }
 
-        res = strided_loop(&context, buffer_dataptr, &count, strides, auxdata);
-        if (res != 0) {
-            break;
+        if (!needs_api) {
+            NPY_BEGIN_THREADS;
         }
 
         /*
-         * Call to iternext triggers copy from buffer back to output array
-         * after innerloop puts result in buffer.
+         * Iterate over first and second operands and call ufunc
+         * for each pair of inputs
          */
-        iternext(iter_buffer);
+        for (npy_intp i = iter->size; i > 0; i--)
+        {
+            char *dataptr[3];
+            char **buffer_dataptr;
+            /* one element at a time, no stride required but read by innerloop */
+            npy_intp count = 1;
 
-        PyArray_MapIterNext(iter);
-        if (iter2 != NULL) {
-            PyArray_ITER_NEXT(iter2);
+            /*
+             * Set up data pointers for either one or two input operands.
+             * The output data pointer points to the first operand data.
+             */
+            dataptr[0] = iter->dataptr;
+            if (iter2 != NULL) {
+                dataptr[1] = PyArray_ITER_DATA(iter2);
+                dataptr[2] = iter->dataptr;
+            }
+            else {
+                dataptr[1] = iter->dataptr;
+                dataptr[2] = NULL;
+            }
+
+            /* Reset NpyIter data pointers which will trigger a buffer copy */
+            NpyIter_ResetBasePointers(iter_buffer, dataptr, &err_msg);
+            if (err_msg) {
+                res = -1;
+                break;
+            }
+
+            buffer_dataptr = NpyIter_GetDataPtrArray(iter_buffer);
+
+            res = strided_loop(&context, buffer_dataptr, &count, strides, auxdata);
+            if (res != 0) {
+                break;
+            }
+
+            /*
+             * Call to iternext triggers copy from buffer back to output array
+             * after innerloop puts result in buffer.
+             */
+            iternext(iter_buffer);
+
+            PyArray_MapIterNext(iter);
+            if (iter2 != NULL) {
+                PyArray_ITER_NEXT(iter2);
+            }
+        }
+
+        NPY_END_THREADS;
+
+        if (res != 0 && err_msg) {
+            PyErr_SetString(PyExc_ValueError, err_msg);
+        }
+        if (res == 0 && !(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
+            /* NOTE: We could check float errors even when `res < 0` */
+            res = _check_ufunc_fperr(errormask, NULL, "at");
+        }
+        NpyIter_Deallocate(iter_buffer);
+        for (int i = 0; i < 3; i++) {
+            Py_XDECREF(array_operands[i]);
         }
     }
-
-    NPY_END_THREADS;
-
-    if (res != 0 && err_msg) {
-        PyErr_SetString(PyExc_ValueError, err_msg);
-    }
-    if (res == 0 && !(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
-        /* NOTE: We could check float errors even when `res < 0` */
-        res = _check_ufunc_fperr(errormask, NULL, "at");
-    }
-
     NPY_AUXDATA_FREE(auxdata);
-    NpyIter_Deallocate(iter_buffer);
 
     Py_XDECREF(op2_array);
     Py_XDECREF(iter);
     Py_XDECREF(iter2);
     for (int i = 0; i < nop; i++) {
-        Py_DECREF(signature[i]);
-        Py_XDECREF(operand_DTypes[i]);
         Py_XDECREF(operation_descrs[i]);
-        Py_XDECREF(array_operands[i]);
     }
 
     /*
@@ -6342,10 +6376,7 @@ fail:
     Py_XDECREF(iter);
     Py_XDECREF(iter2);
     for (int i = 0; i < 3; i++) {
-        Py_XDECREF(signature[i]);
-        Py_XDECREF(operand_DTypes[i]);
         Py_XDECREF(operation_descrs[i]);
-        Py_XDECREF(array_operands[i]);
     }
     NPY_AUXDATA_FREE(auxdata);
 
