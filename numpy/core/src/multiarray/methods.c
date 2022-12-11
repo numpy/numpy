@@ -364,12 +364,6 @@ array_min(PyArrayObject *self,
 }
 
 static PyObject *
-array_bitwise_count(PyArrayObject *self, PyObject *args, PyObject *kwds)
-{
-    NPY_FORWARD_NDARRAY_METHOD("_bitwise_count");
-}
-
-static PyObject *
 array_swapaxes(PyArrayObject *self, PyObject *args)
 {
     int axis1, axis2;
@@ -3017,11 +3011,9 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
     {"__dlpack__",
         (PyCFunction)array_dlpack,
         METH_FASTCALL | METH_KEYWORDS, NULL},
+
     {"__dlpack_device__",
         (PyCFunction)array_dlpack_device,
         METH_NOARGS, NULL},
-    {"bitwise_count",
-        (PyCFunction)array_bitwise_count,
-        METH_VARARGS | METH_KEYWORDS, NULL},
     {NULL, NULL, 0, NULL}           /* sentinel */
 };
