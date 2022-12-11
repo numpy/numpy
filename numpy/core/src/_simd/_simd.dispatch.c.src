@@ -333,6 +333,13 @@ SIMD_IMPL_INTRIN_1(not_@sfx@, v@sfx@, v@sfx@)
  */
 SIMD_IMPL_INTRIN_2(@intrin@_@sfx@, v@bsfx@, v@sfx@, v@sfx@)
 /**end repeat1**/
+#if @fp_only@
+/**begin repeat1
+ * #intrin = cmpgtq, cmpgeq, cmpltq, cmpleq#
+ */
+SIMD_IMPL_INTRIN_2(@intrin@_@sfx@, v@bsfx@, v@sfx@, v@sfx@)
+/**end repeat1**/
+#endif
 
 #if @bitw8b_sup@
 SIMD_IMPL_INTRIN_2(andc_@sfx@, v@sfx@, v@sfx@, v@sfx@)
@@ -610,6 +617,14 @@ SIMD_INTRIN_DEF(@intrin@_@sfx@)
  */
 SIMD_INTRIN_DEF(@intrin@_@sfx@)
 /**end repeat1**/
+
+#if @fp_only@
+/**begin repeat1
+ * #intrin = cmpgtq, cmpgeq, cmpltq, cmpleq#
+ */
+SIMD_INTRIN_DEF(@intrin@_@sfx@)
+/**end repeat1**/
+#endif
 
 #if @bitw8b_sup@
 SIMD_INTRIN_DEF(andc_@sfx@)
