@@ -4,7 +4,7 @@ import warnings
 import itertools
 import operator
 import platform
-from numpy.compat import _pep440
+from numpy._utils import _pep440
 import pytest
 from hypothesis import given, settings
 from hypothesis.strategies import sampled_from
@@ -923,6 +923,8 @@ def test_scalar_unsigned_integer_overflow(dtype):
     with pytest.warns(RuntimeWarning, match="overflow encountered"):
         -val
 
+    zero = np.dtype(dtype).type(0)
+    -zero  # does not warn
 
 @pytest.mark.parametrize("dtype", np.typecodes["AllInteger"])
 @pytest.mark.parametrize("operation", [

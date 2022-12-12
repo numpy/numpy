@@ -1,30 +1,11 @@
 #!/usr/bin/env python3
-""" NumPy is the fundamental package for array computing with Python.
-
-It provides:
-
-- a powerful N-dimensional array object
-- sophisticated (broadcasting) functions
-- tools for integrating C/C++ and Fortran code
-- useful linear algebra, Fourier transform, and random number capabilities
-- and much more
-
-Besides its obvious scientific uses, NumPy can also be used as an efficient
-multi-dimensional container of generic data. Arbitrary data-types can be
-defined. This allows NumPy to seamlessly and speedily integrate with a wide
-variety of databases.
-
-All NumPy wheels distributed on PyPI are BSD licensed.
-
-NumPy requires ``pytest`` and ``hypothesis``.  Tests can then be run after
-installation with::
-
-    python -c 'import numpy; numpy.test()'
-
 """
-DOCLINES = (__doc__ or '').split("\n")
+Numpy build options can be modified with a site.cfg file.
+See site.cfg.example for a template and more information.
+"""
 
 import os
+from pathlib import Path
 import sys
 import subprocess
 import textwrap
@@ -208,7 +189,7 @@ def get_build_overrides():
     """
     from numpy.distutils.command.build_clib import build_clib
     from numpy.distutils.command.build_ext import build_ext
-    from numpy.compat import _pep440
+    from numpy._utils import _pep440
 
     def _needs_gcc_c99_flag(obj):
         if obj.compiler.compiler_type != 'unix':
@@ -219,8 +200,8 @@ def get_build_overrides():
             return False
 
         # will print something like '4.2.1\n'
-        out = subprocess.run([cc, '-dumpversion'], stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE, universal_newlines=True)
+        out = subprocess.run([cc, '-dumpversion'],
+                             capture_output=True, text=True)
         # -std=c99 is default from this version on
         if _pep440.parse(out.stdout) >= _pep440.Version('5.0'):
             return False
@@ -245,7 +226,7 @@ def get_build_overrides():
 
 def generate_cython():
     # Check Cython version
-    from numpy.compat import _pep440
+    from numpy._utils import _pep440
     try:
         # try the cython in the installed python first (somewhat related to
         # scipy/scipy#2397)
@@ -434,8 +415,9 @@ def setup_package():
         name='numpy',
         maintainer="NumPy Developers",
         maintainer_email="numpy-discussion@python.org",
-        description=DOCLINES[0],
-        long_description="\n".join(DOCLINES[2:]),
+        description="Fundamental package for array computing in Python",
+        long_description=Path("README.md").read_text(encoding="utf-8"),
+        long_description_content_type="text/markdown",
         url="https://www.numpy.org",
         author="Travis E. Oliphant et al.",
         download_url="https://pypi.python.org/pypi/numpy",
@@ -444,7 +426,7 @@ def setup_package():
             "Documentation": get_docs_url(),
             "Source Code": "https://github.com/numpy/numpy",
         },
-        license='BSD',
+        license='BSD-3-Clause',
         classifiers=[_f for _f in CLASSIFIERS.split('\n') if _f],
         platforms=["Windows", "Linux", "Solaris", "Mac OS-X", "Unix"],
         test_suite='pytest',
@@ -481,6 +463,9 @@ def setup_package():
     else:
         #from numpy.distutils.core import setup
         from setuptools import setup
+        # workaround for broken --no-build-isolation with newer setuptools,
+        # see gh-21288
+        metadata["packages"] = []
 
     try:
         setup(**metadata)

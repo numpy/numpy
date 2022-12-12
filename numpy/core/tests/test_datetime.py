@@ -4,6 +4,7 @@ import numpy as np
 import datetime
 import pytest
 from numpy.testing import (
+    IS_WASM,
     assert_, assert_equal, assert_raises, assert_warns, suppress_warnings,
     assert_raises_regex, assert_array_equal,
     )
@@ -1294,6 +1295,7 @@ class TestDateTime:
     def test_timedelta_floor_divide(self, op1, op2, exp):
         assert_equal(op1 // op2, exp)
 
+    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     @pytest.mark.parametrize("op1, op2", [
         # div by 0
         (np.timedelta64(10, 'us'),
@@ -1368,6 +1370,7 @@ class TestDateTime:
         expected = (op1 // op2, op1 % op2)
         assert_equal(divmod(op1, op2), expected)
 
+    @pytest.mark.skipif(IS_WASM, reason="does not work in wasm")
     @pytest.mark.parametrize("op1, op2", [
         # reuse cases from floordiv
         # div by 0
@@ -1993,6 +1996,7 @@ class TestDateTime:
         with assert_raises_regex(TypeError, "common metadata divisor"):
             val1 % val2
 
+    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     def test_timedelta_modulus_div_by_zero(self):
         with assert_warns(RuntimeWarning):
             actual = np.timedelta64(10, 's') % np.timedelta64(0, 's')

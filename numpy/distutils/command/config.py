@@ -46,7 +46,7 @@ class config(old_config):
             # XXX: hack to circumvent a python 2.6 bug with msvc9compiler:
             # initialize call query_vcvarsall, which throws an IOError, and
             # causes an error along the way without much information. We try to
-            # catch it here, hoping it is early enough, and print an helpful
+            # catch it here, hoping it is early enough, and print a helpful
             # message instead of Error: None.
             if not self.compiler.initialized:
                 try:
@@ -56,8 +56,7 @@ class config(old_config):
                         Could not initialize compiler instance: do you have Visual Studio
                         installed?  If you are trying to build with MinGW, please use "python setup.py
                         build -c mingw32" instead.  If you have Visual Studio installed, check it is
-                        correctly installed, and the right version (VS 2008 for python 2.6, 2.7 and 3.2,
-                        VS 2010 for >= 3.3).
+                        correctly installed, and the right version (VS 2015 as of this writing).
 
                         Original exception was: %s, and the Compiler class was %s
                         ============================================================================""") \

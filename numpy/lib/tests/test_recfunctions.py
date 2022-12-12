@@ -20,7 +20,7 @@ zip_dtype = np.lib.recfunctions._zip_dtype
 class TestRecFunctions:
     # Misc tests
 
-    def setup(self):
+    def setup_method(self):
         x = np.array([1, 2, ])
         y = np.array([10, 20, 30])
         z = np.array([('A', 1.), ('B', 2.)],
@@ -381,7 +381,7 @@ class TestRecursiveFillFields:
 class TestMergeArrays:
     # Test merge_arrays
 
-    def setup(self):
+    def setup_method(self):
         x = np.array([1, 2, ])
         y = np.array([10, 20, 30])
         z = np.array(
@@ -514,7 +514,7 @@ class TestMergeArrays:
 class TestAppendFields:
     # Test append_fields
 
-    def setup(self):
+    def setup_method(self):
         x = np.array([1, 2, ])
         y = np.array([10, 20, 30])
         z = np.array(
@@ -567,7 +567,7 @@ class TestAppendFields:
 
 class TestStackArrays:
     # Test stack_arrays
-    def setup(self):
+    def setup_method(self):
         x = np.array([1, 2, ])
         y = np.array([10, 20, 30])
         z = np.array(
@@ -737,7 +737,7 @@ class TestStackArrays:
 
 
 class TestJoinBy:
-    def setup(self):
+    def setup_method(self):
         self.a = np.array(list(zip(np.arange(10), np.arange(50, 60),
                                    np.arange(100, 110))),
                           dtype=[('a', int), ('b', int), ('c', int)])
@@ -902,7 +902,7 @@ class TestJoinBy:
 
 class TestJoinBy2:
     @classmethod
-    def setup(cls):
+    def setup_method(cls):
         cls.a = np.array(list(zip(np.arange(10), np.arange(50, 60),
                                   np.arange(100, 110))),
                          dtype=[('a', int), ('b', int), ('c', int)])
@@ -971,7 +971,7 @@ class TestAppendFieldsObj:
     """
     # https://github.com/numpy/numpy/issues/2346
 
-    def setup(self):
+    def setup_method(self):
         from datetime import date
         self.data = dict(obj=date(2000, 1, 1))
 

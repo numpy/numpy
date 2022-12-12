@@ -6,16 +6,34 @@ See ``find_function`` for how functions should be formatted, and
 specified.
 
 """
-from numpy.distutils.conv_template import process_file as process_c_file
-
 import hashlib
 import io
 import os
 import re
 import sys
 import textwrap
+import importlib.util
 
 from os.path import join
+
+
+def get_processor():
+    # Convoluted because we can't import from numpy.distutils
+    # (numpy is not yet built)
+    conv_template_path = os.path.join(
+        os.path.dirname(__file__),
+        '..', '..', 'distutils', 'conv_template.py'
+    )
+    spec = importlib.util.spec_from_file_location(
+        'conv_template', conv_template_path
+    )
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod.process_file
+
+
+process_c_file = get_processor()
+
 
 __docformat__ = 'restructuredtext'
 

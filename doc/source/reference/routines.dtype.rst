@@ -30,7 +30,6 @@ Data type information
 
    finfo
    iinfo
-   MachAr
 
 Data type testing
 -----------------

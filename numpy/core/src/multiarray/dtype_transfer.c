@@ -2951,9 +2951,11 @@ _strided_to_strided_multistep_cast(
 
         if (castdata->from.func != NULL) {
             npy_intp out_stride = castdata->from.descriptors[1]->elsize;
+            char *const data[2] = {src, castdata->from_buffer};
+            npy_intp strides[2] = {src_stride, out_stride};
             if (castdata->from.func(&castdata->from.context,
-                    (char *[2]){src, castdata->from_buffer}, &block_size,
-                    (npy_intp [2]){src_stride, out_stride},
+                    data, &block_size,
+                    strides,
                     castdata->from.auxdata) != 0) {
                 /* TODO: Internal buffer may require cleanup on error. */
                 return -1;
@@ -2975,18 +2977,22 @@ _strided_to_strided_multistep_cast(
             main_dst_stride = dst_stride;
         }
 
+        char *const data[2] = {main_src, main_dst};
+        npy_intp strides[2] = {main_src_stride, main_dst_stride};
         if (castdata->main.func(&castdata->main.context,
-                (char *[2]){main_src, main_dst}, &block_size,
-                (npy_intp [2]){main_src_stride, main_dst_stride},
+                data, &block_size,
+                strides,
                 castdata->main.auxdata) != 0) {
             /* TODO: Internal buffer may require cleanup on error. */
             return -1;
         }
 
         if (castdata->to.func != NULL) {
+            char *const data[2] = {main_dst, dst};
+            npy_intp strides[2] = {main_dst_stride, dst_stride};
             if (castdata->to.func(&castdata->to.context,
-                    (char *[2]){main_dst, dst}, &block_size,
-                    (npy_intp [2]){main_dst_stride, dst_stride},
+                    data, &block_size,
+                    strides,
                     castdata->to.auxdata) != 0) {
                 return -1;
             }
@@ -3004,7 +3010,7 @@ _strided_to_strided_multistep_cast(
  * Initialize most of a cast-info structure, this step does not fetch the
  * transferfunction and transferdata.
  */
-static NPY_INLINE int
+static inline int
 init_cast_info(
         NPY_cast_info *cast_info, NPY_CASTING *casting, npy_intp *view_offset,
         PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype, int main_step)

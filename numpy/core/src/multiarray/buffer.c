@@ -136,7 +136,7 @@ fail:
  * AND, the descr element size is a multiple of the alignment,
  * AND, the array data is positioned to alignment granularity.
  */
-static NPY_INLINE int
+static inline int
 _is_natively_aligned_at(PyArray_Descr *descr,
                         PyArrayObject *arr, Py_ssize_t offset)
 {
@@ -591,7 +591,7 @@ _buffer_info_cmp(_buffer_info_t *a, _buffer_info_t *b)
  * a useful error message instead of crashing hard if a C-subclass uses
  * the same field.
  */
-static NPY_INLINE void *
+static inline void *
 buffer_info_tag(void *buffer_info)
 {
     if (buffer_info == NULL) {
@@ -603,7 +603,7 @@ buffer_info_tag(void *buffer_info)
 }
 
 
-static NPY_INLINE int
+static inline int
 _buffer_info_untag(
         void *tagged_buffer_info, _buffer_info_t **buffer_info, PyObject *obj)
 {

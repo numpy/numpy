@@ -9,18 +9,6 @@
 #include "npy_math_common.h"
 #include "npy_math_private.h"
 
-#ifndef HAVE_COPYSIGN
-double
-npy_copysign(double x, double y)
-{
-    npy_uint32 hx, hy;
-    GET_HIGH_WORD(hx, x);
-    GET_HIGH_WORD(hy, y);
-    SET_HIGH_WORD(x, (hx & 0x7fffffff) | (hy & 0x80000000));
-    return x;
-}
-#endif
-
 /*
  The below code is provided for compilers which do not yet provide C11
  compatibility (gcc 4.5 and older)
@@ -29,21 +17,6 @@ npy_copysign(double x, double y)
 #define LDBL_TRUE_MIN __LDBL_DENORM_MIN__
 #endif
 
-#if !defined(HAVE_DECL_SIGNBIT)
-#include "_signbit.c"
-
-int
-_npy_signbit_f(float x)
-{
-    return _npy_signbit_d((double)x);
-}
-
-int
-_npy_signbit_ld(long double x)
-{
-    return _npy_signbit_d((double)x);
-}
-#endif
 
 /*
  * FIXME: There is a lot of redundancy between _next* and npy_nextafter*.
@@ -398,28 +371,6 @@ npy_spacingl(npy_longdouble x)
 {
     return _npy_spacing(x);
 }
-}
-
-/*
- * Decorate all the math functions which are available on the current platform
- */
-
-extern "C" float
-npy_nextafterf(float x, float y)
-{
-    return nextafterf(x, y);
-}
-
-extern "C" double
-npy_nextafter(double x, double y)
-{
-    return nextafter(x, y);
-}
-
-extern "C" npy_longdouble
-npy_nextafterl(npy_longdouble x, npy_longdouble y)
-{
-    return nextafterl(x, y);
 }
 
 extern "C" int

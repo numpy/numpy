@@ -297,10 +297,10 @@ PyArray_NewLegacyWrappingArrayMethod(PyUFuncObject *ufunc,
         .name = method_name,
         .nin = ufunc->nin,
         .nout = ufunc->nout,
-        .dtypes = signature,
-        .flags = flags,
-        .slots = slots,
         .casting = NPY_NO_CASTING,
+        .flags = flags,
+        .dtypes = signature,
+        .slots = slots,
     };
 
     PyBoundArrayMethodObject *bound_res = PyArrayMethod_FromSpec_int(&spec, 1);

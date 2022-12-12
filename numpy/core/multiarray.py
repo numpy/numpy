@@ -1122,7 +1122,7 @@ def copyto(dst, src, casting=None, where=None):
     >>> A
     array([[4, 5, 6],
            [7, 8, 9]])
-       
+
     """
     return (dst, src, where)
 
@@ -1345,7 +1345,7 @@ def shares_memory(a, b, max_work=None):
 
     Raises
     ------
-    numpy.TooHardError
+    numpy.exceptions.TooHardError
         Exceeded max_work.
 
     Returns
@@ -1379,7 +1379,7 @@ def shares_memory(a, b, max_work=None):
     >>> np.shares_memory(x1, x2, max_work=1000)
     Traceback (most recent call last):
     ...
-    numpy.TooHardError: Exceeded max_work
+    numpy.exceptions.TooHardError: Exceeded max_work
 
     Running ``np.shares_memory(x1, x2)`` without `max_work` set takes
     around 1 minute for this case. It is possible to find problems

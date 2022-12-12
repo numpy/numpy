@@ -55,7 +55,7 @@
  * This is especially important for nonzero and copyswap, which may run with
  * the GIL released.
  */
-static NPY_INLINE PyArrayObject_fields
+static inline PyArrayObject_fields
 get_dummy_stack_array(PyArrayObject *orig)
 {
     PyArrayObject_fields new_fields;
@@ -68,7 +68,7 @@ get_dummy_stack_array(PyArrayObject *orig)
 
 
 /* check for sequences, but ignore the types numpy considers scalars */
-static NPY_INLINE npy_bool
+static inline npy_bool
 PySequence_NoString_Check(PyObject *op) {
     return
         PySequence_Check(op) &&
@@ -525,7 +525,7 @@ NPY_NO_EXPORT int
 
 /**end repeat**/
 
-static NPY_INLINE npy_longdouble
+static inline npy_longdouble
 string_to_long_double(PyObject*op)
 {
     char *s;
@@ -2152,7 +2152,7 @@ static int
  */
 
 
-static NPY_INLINE void
+static inline void
 _basic_copyn(void *dst, npy_intp dstride, void *src, npy_intp sstride,
              npy_intp n, int elsize) {
     if (src == NULL) {
@@ -2167,7 +2167,7 @@ _basic_copyn(void *dst, npy_intp dstride, void *src, npy_intp sstride,
     }
 }
 
-static NPY_INLINE void
+static inline void
 _basic_copy(void *dst, void *src, int elsize) {
     if (src == NULL) {
         return;
@@ -3803,17 +3803,23 @@ BOOL_dot(char *ip1, npy_intp is1, char *ip2, npy_intp is2, char *op, npy_intp n,
     *((npy_bool *)op) = tmp;
 }
 
+/*
+ * `dot` does not make sense for times, for DATETIME it never worked.
+ *  For timedelta it does/did , but should probably also just be removed.
+ */
+#define DATETIME_dot NULL
+
 /**begin repeat
  *
  * #name = BYTE, UBYTE, SHORT, USHORT, INT, UINT,
  *         LONG, ULONG, LONGLONG, ULONGLONG,
- *         LONGDOUBLE, DATETIME, TIMEDELTA#
+ *         LONGDOUBLE, TIMEDELTA#
  * #type = npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
  *         npy_long, npy_ulong, npy_longlong, npy_ulonglong,
- *         npy_longdouble, npy_datetime, npy_timedelta#
+ *         npy_longdouble, npy_timedelta#
  * #out = npy_long, npy_ulong, npy_long, npy_ulong, npy_long, npy_ulong,
  *        npy_long, npy_ulong, npy_longlong, npy_ulonglong,
- *        npy_longdouble, npy_datetime, npy_timedelta#
+ *        npy_longdouble, npy_timedelta#
  */
 static void
 @name@_dot(char *ip1, npy_intp is1, char *ip2, npy_intp is2, char *op, npy_intp n,
@@ -3916,7 +3922,18 @@ OBJECT_dot(char *ip1, npy_intp is1, char *ip2, npy_intp is2, char *op, npy_intp 
  */
 
 
-#define BOOL_fill NULL
+/* Boolean fill never works, but define it so that it works up to length 2 */
+static int
+BOOL_fill(PyObject **buffer, npy_intp length, void *NPY_UNUSED(ignored))
+{
+    NPY_ALLOW_C_API_DEF;
+    NPY_ALLOW_C_API;
+    PyErr_SetString(PyExc_TypeError,
+            "arange() is only supported for booleans when the result has at "
+            "most length 2.");
+    NPY_DISABLE_C_API;
+    return -1;
+}
 
 /* this requires buffer to be filled with objects or NULL */
 static int

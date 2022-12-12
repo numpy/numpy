@@ -451,7 +451,7 @@ simd_binary_scalar2_@kind@_@TYPE@(@type@ * op, @type@ * ip1, @type@ * ip2, npy_i
  * Arithmetic
  * # kind = add, subtract, multiply, divide#
  */
-static NPY_INLINE int
+static inline int
 run_binary_simd_@kind@_@TYPE@(char **args, npy_intp const *dimensions, npy_intp const *steps)
 {
 #if @vector@ && defined NPY_HAVE_SSE2
@@ -659,7 +659,7 @@ avx512_cmul_@vsub@(@vtype@ x1, @vtype@ x2)
  *  #vectorf = _mm512_add, _mm512_sub, avx512_cmul#
  */
 #if defined AVX512F_NOMSVC
-static NPY_INLINE void
+static inline void
 AVX512F_@func@_@TYPE@(char **args, const npy_intp *dimensions, const npy_intp *steps)
 {
     const npy_intp array_size = dimensions[0];
@@ -701,7 +701,7 @@ AVX512F_@func@_@TYPE@(char **args, const npy_intp *dimensions, const npy_intp *s
 /**begin repeat1
  *  #func = add, subtract, multiply#
  */
-static NPY_INLINE int
+static inline int
 run_binary_avx512f_@func@_@TYPE@(char **args, const npy_intp *dimensions, const npy_intp *steps)
 {
 #if defined AVX512F_NOMSVC

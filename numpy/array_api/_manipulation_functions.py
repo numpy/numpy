@@ -52,6 +52,7 @@ def permute_dims(x: Array, /, axes: Tuple[int, ...]) -> Array:
     return Array._new(np.transpose(x._array, axes))
 
 
+# Note: the optional argument is called 'shape', not 'newshape'
 def reshape(x: Array, /, shape: Tuple[int, ...]) -> Array:
     """
     Array API compatible wrapper for :py:func:`np.reshape <numpy.reshape>`.

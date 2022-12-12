@@ -31,13 +31,13 @@ npy_alloc_cache_dim(npy_uintp sz);
 NPY_NO_EXPORT void
 npy_free_cache_dim(void * p, npy_uintp sd);
 
-static NPY_INLINE void
+static inline void
 npy_free_cache_dim_obj(PyArray_Dims dims)
 {
     npy_free_cache_dim(dims.ptr, dims.len);
 }
 
-static NPY_INLINE void
+static inline void
 npy_free_cache_dim_array(PyArrayObject * arr)
 {
     npy_free_cache_dim(PyArray_DIMS(arr), PyArray_NDIM(arr));

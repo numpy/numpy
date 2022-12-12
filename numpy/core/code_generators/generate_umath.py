@@ -3,6 +3,7 @@ import re
 import struct
 import sys
 import textwrap
+import argparse
 
 Zero = "PyLong_FromLong(0)"
 One = "PyLong_FromLong(1)"
@@ -425,7 +426,7 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.negative'),
           'PyUFunc_NegativeTypeResolver',
-          TD(ints+flts+timedeltaonly, simd=[('avx2', ints)]),
+          TD(ints+flts+timedeltaonly, dispatch=[('loops_unary', ints+'fdg')]),
           TD(cmplx, f='neg'),
           TD(O, f='PyNumber_Negative'),
           ),
@@ -545,16 +546,14 @@ defdict = {
     Ufunc(2, 1, ReorderableNone,
           docstrings.get('numpy.core.umath.fmax'),
           'PyUFunc_SimpleUniformOperationTypeResolver',
-          TD('fdg', dispatch=[('loops_minmax', 'fdg')]),
-          TD(noobj),
+          TD(noobj, dispatch=[('loops_minmax', 'fdg')]),
           TD(O, f='npy_ObjectMax')
           ),
 'fmin':
     Ufunc(2, 1, ReorderableNone,
           docstrings.get('numpy.core.umath.fmin'),
           'PyUFunc_SimpleUniformOperationTypeResolver',
-          TD('fdg', dispatch=[('loops_minmax', 'fdg')]),
-          TD(noobj),
+          TD(noobj, dispatch=[('loops_minmax', 'fdg')]),
           TD(O, f='npy_ObjectMin')
           ),
 'logaddexp':
@@ -1226,8 +1225,29 @@ def make_code(funcdict, filename):
     return code
 
 
-if __name__ == "__main__":
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-o",
+        "--outfile",
+        type=str,
+        help="Path to the output directory"
+    )
+    args = parser.parse_args()
+
+    # used to insert the name of this file into the generated file
     filename = __file__
     code = make_code(defdict, filename)
-    with open('__umath_generated.c', 'w') as fid:
-        fid.write(code)
+
+    if not args.outfile:
+        # This is the distutils-based build
+        outfile = '__umath_generated.c'
+    else:
+        outfile = os.path.join(os.getcwd(), args.outfile)
+
+    with open(outfile, 'w') as f:
+        f.write(code)
+
+
+if __name__ == "__main__":
+    main()

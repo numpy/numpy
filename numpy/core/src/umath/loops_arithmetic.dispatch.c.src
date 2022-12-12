@@ -42,7 +42,7 @@
  * #sfx    = s8, s16, s32, s64#
  * #len    = 8,  16,  32,  64#
  */
-static NPY_INLINE void
+static inline void
 simd_divide_by_scalar_contig_@sfx@(char **args, npy_intp len)
 {
     npyv_lanetype_@sfx@ *src   = (npyv_lanetype_@sfx@ *) args[0];
@@ -108,7 +108,7 @@ simd_divide_by_scalar_contig_@sfx@(char **args, npy_intp len)
  * #sfx    = u8, u16, u32, u64#
  * #len    = 8,  16,  32,  64#
  */
-static NPY_INLINE void
+static inline void
 simd_divide_by_scalar_contig_@sfx@(char **args, npy_intp len)
 {
     npyv_lanetype_@sfx@ *src   = (npyv_lanetype_@sfx@ *) args[0];
@@ -207,7 +207,7 @@ vsx4_div_@t@16(npyv_@t@16 a, npyv_@t@16 b)
  * #sfx = u8, u16, u32, u64#
  * #len = 8,  16,  32,  64#
  */
-static NPY_INLINE void
+static inline void
 vsx4_simd_divide_contig_@sfx@(char **args, npy_intp len)
 {
     npyv_lanetype_@sfx@ *src1 = (npyv_lanetype_@sfx@ *) args[0];
@@ -246,7 +246,7 @@ vsx4_simd_divide_contig_@sfx@(char **args, npy_intp len)
  * #sfx = s8, s16, s32, s64#
  * #len = 8,  16,  32,  64#
  */
-static NPY_INLINE void
+static inline void
 vsx4_simd_divide_contig_@sfx@(char **args, npy_intp len)
 {
     npyv_lanetype_@sfx@ *src1 = (npyv_lanetype_@sfx@ *) args[0];

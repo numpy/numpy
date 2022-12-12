@@ -20,7 +20,7 @@ import numpy
 
 from pathlib import Path
 from numpy.compat import asbytes, asstr
-from numpy.testing import temppath
+from numpy.testing import temppath, IS_WASM
 from importlib import import_module
 
 #
@@ -187,6 +187,9 @@ def _get_compiler_status():
         return _compiler_status
 
     _compiler_status = (False, False, False)
+    if IS_WASM:
+        # Can't run compiler from inside WASM.
+        return _compiler_status
 
     # XXX: this is really ugly. But I don't know how to invoke Distutils
     #      in a safer way...
@@ -340,7 +343,7 @@ class F2PyTest:
         cls = type(self)
         return f'_{cls.__module__.rsplit(".",1)[-1]}_{cls.__name__}_ext_module'
 
-    def setup(self):
+    def setup_method(self):
         if sys.platform == "win32":
             pytest.skip("Fails with MinGW64 Gfortran (Issue #9673)")
 

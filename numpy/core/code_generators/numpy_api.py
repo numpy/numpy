@@ -13,7 +13,23 @@ When adding a function, make sure to use the next integer not used as an index
 exception, so it should hopefully not get unnoticed).
 
 """
-from code_generators.genapi import StealRef
+
+import os
+import importlib.util
+
+
+def get_StealRef():
+    # Convoluted because we can't import from numpy.distutils
+    # (numpy is not yet built)
+    genapi_py = os.path.join(os.path.dirname(__file__), 'genapi.py')
+    spec = importlib.util.spec_from_file_location('conv_template', genapi_py)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod.StealRef
+
+
+StealRef = get_StealRef()
+#from code_generators.genapi import StealRef
 
 # index, type
 multiarray_global_vars = {

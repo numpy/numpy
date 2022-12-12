@@ -3,7 +3,7 @@ import pytest
 
 import numpy as np
 from numpy import uint16, float16, float32, float64
-from numpy.testing import assert_, assert_equal, _OLD_PROMOTION
+from numpy.testing import assert_, assert_equal, _OLD_PROMOTION, IS_WASM
 
 
 def assert_raises_fpe(strmatch, callable, *args, **kwargs):
@@ -17,7 +17,7 @@ def assert_raises_fpe(strmatch, callable, *args, **kwargs):
                 "Did not raise floating point %s error" % strmatch)
 
 class TestHalf:
-    def setup(self):
+    def setup_method(self):
         # An array of all possible float16 values
         self.all_f16 = np.arange(0x10000, dtype=uint16)
         self.all_f16.dtype = float16
@@ -483,6 +483,8 @@ class TestHalf:
 
     @pytest.mark.skipif(platform.machine() == "armv5tel",
                         reason="See gh-413.")
+    @pytest.mark.skipif(IS_WASM,
+                        reason="fp exceptions don't work in wasm.")
     def test_half_fpe(self):
         with np.errstate(all='raise'):
             sx16 = np.array((1e-4,), dtype=float16)

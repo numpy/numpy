@@ -7,14 +7,13 @@ Author: Pearu Peterson, September 2003
 """
 __all__ = ['MachAr']
 
-from numpy.core.fromnumeric import any
-from numpy.core._ufunc_config import errstate
-from numpy.core.overrides import set_module
+from .fromnumeric import any
+from ._ufunc_config import errstate
+from .._utils import set_module
 
 # Need to speed this up...especially for longfloat
 
 # Deprecated 2021-10-20, NumPy 1.22
-@set_module('numpy')
 class MachAr:
     """
     Diagnosing machine parameters.

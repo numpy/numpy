@@ -175,7 +175,7 @@ default_filler = {'b': True,
                   'S': b'N/A',
                   'u': 999999,
                   'V': b'???',
-                  'U': u'N/A'
+                  'U': 'N/A'
                   }
 
 # Add datetime64 and timedelta64 types
@@ -2081,9 +2081,11 @@ def masked_equal(x, value, copy=True):
     """
     Mask an array where equal to a given value.
 
-    This function is a shortcut to ``masked_where``, with
-    `condition` = (x == value).  For floating point arrays,
-    consider using ``masked_values(x, value)``.
+    Return a MaskedArray, masked where the data in array `x` are
+    equal to `value`. The fill_value of the returned MaskedArray
+    is set to `value`.
+
+    For floating point arrays, consider using ``masked_values(x, value)``.
 
     See Also
     --------
@@ -2303,25 +2305,17 @@ def masked_values(x, value, rtol=1e-5, atol=1e-8, copy=True, shrink=True):
 
     Note that `mask` is set to ``nomask`` if possible.
 
-    >>> ma.masked_values(x, 1.5)
+    >>> ma.masked_values(x, 2.1)
     masked_array(data=[1. , 1.1, 2. , 1.1, 3. ],
                  mask=False,
-           fill_value=1.5)
+           fill_value=2.1)
 
-    For integers, the fill value will be different in general to the
-    result of ``masked_equal``.
+    Unlike `masked_equal`, `masked_values` can perform approximate equalities. 
 
-    >>> x = np.arange(5)
-    >>> x
-    array([0, 1, 2, 3, 4])
-    >>> ma.masked_values(x, 2)
-    masked_array(data=[0, 1, --, 3, 4],
+    >>> ma.masked_values(x, 2.1, atol=1e-1)
+    masked_array(data=[1.0, 1.1, --, 1.1, 3.0],
                  mask=[False, False,  True, False, False],
-           fill_value=2)
-    >>> ma.masked_equal(x, 2)
-    masked_array(data=[0, 1, --, 3, 4],
-                 mask=[False, False,  True, False, False],
-           fill_value=2)
+           fill_value=2.1)
 
     """
     xnew = filled(x, value)
@@ -2841,7 +2835,6 @@ class MaskedArray(ndarray):
         # Process mask.
         # Type of the mask
         mdtype = make_mask_descr(_data.dtype)
-
         if mask is nomask:
             # Case 1. : no mask in input.
             # Erase the current mask ?
@@ -2876,6 +2869,12 @@ class MaskedArray(ndarray):
         else:
             # Case 2. : With a mask in input.
             # If mask is boolean, create an array of True or False
+            
+            # if users pass `mask=None` be forgiving here and cast it False
+            # for speed; although the default is `mask=nomask` and can differ.
+            if mask is None:
+                mask = False
+
             if mask is True and mdtype == MaskType:
                 mask = np.ones(_data.shape, dtype=mdtype)
             elif mask is False and mdtype == MaskType:
@@ -2923,6 +2922,7 @@ class MaskedArray(ndarray):
                     else:
                         _data._mask = np.logical_or(mask, _data._mask)
                     _data._sharedmask = False
+        
         # Update fill_value.
         if fill_value is None:
             fill_value = getattr(data, '_fill_value', None)
@@ -6899,6 +6899,32 @@ def power(a, b, third=None):
     -----
     The *out* argument to `numpy.power` is not supported, `third` has to be
     None.
+
+    Examples
+    --------
+    >>> import numpy.ma as ma
+    >>> x = [11.2, -3.973, 0.801, -1.41]
+    >>> mask = [0, 0, 0, 1]
+    >>> masked_x = ma.masked_array(x, mask)
+    >>> masked_x
+    masked_array(data=[11.2, -3.973, 0.801, --],
+             mask=[False, False, False,  True],
+       fill_value=1e+20)
+    >>> ma.power(masked_x, 2)
+    masked_array(data=[125.43999999999998, 15.784728999999999,
+                   0.6416010000000001, --],
+             mask=[False, False, False,  True],
+       fill_value=1e+20)
+    >>> y = [-0.5, 2, 0, 17]
+    >>> masked_y = ma.masked_array(y, mask)
+    >>> masked_y
+    masked_array(data=[-0.5, 2.0, 0.0, --],
+             mask=[False, False, False,  True],
+       fill_value=1e+20)
+    >>> ma.power(masked_x, masked_y)
+    masked_array(data=[0.29880715233359845, 15.784728999999999, 1.0, --],
+             mask=[False, False, False,  True],
+       fill_value=1e+20)
 
     """
     if third is not None:

@@ -9,9 +9,9 @@ __all__ = ['iscomplexobj', 'isrealobj', 'imag', 'iscomplex',
            'typename', 'asfarray', 'mintypecode',
            'common_type']
 
+from .._utils import set_module
 import numpy.core.numeric as _nx
 from numpy.core.numeric import asarray, asanyarray, isnan, zeros
-from numpy.core.overrides import set_module
 from numpy.core import overrides
 from .ufunclike import isneginf, isposinf
 

@@ -447,7 +447,7 @@ unicodetype_@form@(PyObject *self)
  *
  * Largely copied from _Py_strhex_impl in CPython implementation
  */
-static NPY_INLINE PyObject *
+static inline PyObject *
 _void_to_hex(const char* argbuf, const Py_ssize_t arglen,
              const char *schars, const char *bprefix, const char *echars)
 {
@@ -1753,11 +1753,13 @@ gentype_reduce(PyObject *self, PyObject *NPY_UNUSED(args))
 
     mod = PyImport_ImportModule("numpy.core._multiarray_umath");
     if (mod == NULL) {
+        Py_DECREF(ret);
         return NULL;
     }
     obj = PyObject_GetAttrString(mod, "scalar");
     Py_DECREF(mod);
     if (obj == NULL) {
+        Py_DECREF(ret);
         return NULL;
     }
     PyTuple_SET_ITEM(ret, 0, obj);
@@ -1766,6 +1768,7 @@ gentype_reduce(PyObject *self, PyObject *NPY_UNUSED(args))
         PyObject *val = PyArrayScalar_VAL(self, Object);
         PyObject *tup = Py_BuildValue("NO", obj, val);
         if (tup == NULL) {
+            Py_DECREF(ret);
             return NULL;
         }
         PyTuple_SET_ITEM(ret, 1, tup);
@@ -1774,11 +1777,13 @@ gentype_reduce(PyObject *self, PyObject *NPY_UNUSED(args))
         /* a structured dtype with an object in a field */
         PyArrayObject *arr = (PyArrayObject *)PyArray_FromScalar(self, NULL);
         if (arr == NULL) {
+            Py_DECREF(ret);
             return NULL;
         }
         /* Use the whole array which handles sturctured void correctly */
         PyObject *tup = Py_BuildValue("NN", obj, arr);
         if (tup == NULL) {
+            Py_DECREF(ret);
             return NULL;
         }
         PyTuple_SET_ITEM(ret, 1, tup);
@@ -3170,28 +3175,33 @@ static PyObject *
 void_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
     PyObject *obj, *arr;
-    PyObject *new = NULL;
+    PyArray_Descr *descr = NULL;
 
-    static char *kwnames[] = {"", NULL};  /* positional-only */
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O:void", kwnames, &obj)) {
+    static char *kwnames[] = {"", "dtype", NULL};
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O&:void", kwnames,
+            &obj, &PyArray_DescrConverter2, &descr)) {
         return NULL;
     }
     /*
      * For a VOID scalar first see if obj is an integer or long
      * and create new memory of that size (filled with 0) for the scalar
      */
-    if (PyLong_Check(obj) ||
+    if (descr == NULL && (
+            PyLong_Check(obj) ||
             PyArray_IsScalar(obj, Integer) ||
             (PyArray_Check(obj) &&
                      PyArray_NDIM((PyArrayObject *)obj)==0 &&
-                     PyArray_ISINTEGER((PyArrayObject *)obj))) {
-        new = Py_TYPE(obj)->tp_as_number->nb_int(obj);
-    }
-    if (new && PyLong_Check(new)) {
+                     PyArray_ISINTEGER((PyArrayObject *)obj)))) {
+
+        PyObject *length = Py_TYPE(obj)->tp_as_number->nb_int(obj);
+        if (length == NULL) {
+            return NULL;
+        }
+
         PyObject *ret;
         char *destptr;
-        npy_ulonglong memu = PyLong_AsUnsignedLongLong(new);
-        Py_DECREF(new);
+        npy_ulonglong memu = PyLong_AsUnsignedLongLong(length);
+        Py_DECREF(length);
         if (PyErr_Occurred() || (memu > NPY_MAX_INT)) {
             PyErr_Clear();
             PyErr_Format(PyExc_OverflowError,
@@ -3226,7 +3236,24 @@ void_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
         return ret;
     }
 
-    arr = PyArray_FROM_OTF(obj, NPY_VOID, NPY_ARRAY_FORCECAST);
+    if (descr == NULL) {
+        /* Use the "size-less" void dtype to discover the size. */
+        descr = PyArray_DescrNewFromType(NPY_VOID);
+        if (descr == NULL) {
+            return NULL;
+        }
+    }
+    else if (descr->type_num != NPY_VOID || PyDataType_HASSUBARRAY(descr)) {
+        /* we reject subarrays, since subarray scalars do not exist. */
+        PyErr_Format(PyExc_TypeError,
+                "void: descr must be a `void` dtype that is not "
+                "a subarray dtype (structured or unstructured). "
+                "Got '%.100R'.", descr);
+        Py_DECREF(descr);
+        return NULL;
+    }
+
+    arr = PyArray_FromAny(obj, descr, 0, 0, NPY_ARRAY_FORCECAST, NULL);
     return PyArray_Return((PyArrayObject *)arr);
 }
 
@@ -3292,7 +3319,7 @@ long_arrtype_hash(PyObject *obj)
  * #Char = ,U#
  * #Word = ,Unsigned#
  */
-static NPY_INLINE npy_hash_t
+static inline npy_hash_t
 @char@longlong_arrtype_hash(PyObject *obj)
 {
     PyObject * l = PyLong_From@Word@LongLong(
@@ -3563,7 +3590,6 @@ NPY_NO_EXPORT PyTypeObject PyObjectArrType_Type = {
     PyVarObject_HEAD_INIT(NULL, 0)
     .tp_name = "numpy.object_",
     .tp_basicsize = sizeof(PyObjectScalarObject),
-    .tp_alloc = object_arrtype_alloc,
     .tp_dealloc = (destructor)object_arrtype_dealloc,
     .tp_as_sequence = &object_arrtype_as_sequence,
     .tp_as_mapping = &object_arrtype_as_mapping,
@@ -3571,6 +3597,7 @@ NPY_NO_EXPORT PyTypeObject PyObjectArrType_Type = {
     .tp_getattro = (getattrofunc)object_arrtype_getattro,
     .tp_setattro = (setattrofunc)object_arrtype_setattro,
     .tp_as_buffer = &object_arrtype_as_buffer,
+    .tp_alloc = object_arrtype_alloc,
 };
 
 static PyObject *

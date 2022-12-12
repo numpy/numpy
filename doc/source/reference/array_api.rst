@@ -152,8 +152,9 @@ Keyword Argument Renames
 
 The following functions have keyword arguments that have been renamed. The
 functionality of the keyword argument is identical unless otherwise stated.
-Each new keyword argument is not already present on the given function in
-``numpy``, so the changes are **compatible**.
+Renamed keyword arguments with the same semantic definition may be considered
+either **compatible** or **breaking**, depending on how the change is
+implemented.
 
 Note, this page does not list function keyword arguments that are in the main
 ``numpy`` namespace but not in the array API. Such keyword arguments are
@@ -189,7 +190,11 @@ functions to include additional keyword arguments from those required.
      - ``correction``
      - ``ddof``
      -
-
+   * - ``reshape``
+     - ``shape``
+     - ``newshape``
+     - The argument may be passed as a positional or keyword argument for both
+       NumPy and the array API.
 
 .. _array_api-type-promotion-differences:
 
@@ -228,6 +233,12 @@ independently of values or shapes.
        promoted.
      - **Breaking**
      - Example: ``a = np.array(1, dtype=np.int8); a += np.array(1, dtype=np.int16)``. The spec explicitly disallows this.
+   * - In-place operators are disallowed when the right-hand side operand
+       cannot broadcast to the shape of the left-hand side operand.
+     - **Strictness**
+     - This so-called "reverse broadcasting" should not be allowed. Example:
+       ``a = np.empty((2, 3, 4)); a += np.empty((3, 4))`` should error. See
+       https://github.com/numpy/numpy/issues/10404.
    * - ``int`` promotion for operators is only specified for integers within
        the bounds of the dtype.
      - **Strictness**

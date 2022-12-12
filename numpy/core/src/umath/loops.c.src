@@ -571,7 +571,6 @@ NPY_NO_EXPORT void
 
 /**begin repeat1
  * #isa = , _avx2#
- * #ISA = , AVX2#
  * #CHK = 1, defined(HAVE_ATTRIBUTE_TARGET_AVX2)#
  * #ATTR = , NPY_GCC_TARGET_AVX2#
  */
@@ -597,14 +596,6 @@ NPY_NO_EXPORT NPY_GCC_OPT_3 @ATTR@ void
 @TYPE@_conjugate@isa@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
     UNARY_LOOP_FAST(@type@, @type@, *out = in);
-}
-#endif
-
-#if @CHK@
-NPY_NO_EXPORT NPY_GCC_OPT_3 @ATTR@ void
-@TYPE@_negative@isa@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
-{
-    UNARY_LOOP_FAST(@type@, @type@, *out = -in);
 }
 #endif
 
@@ -658,6 +649,7 @@ NPY_NO_EXPORT NPY_GCC_OPT_3 @ATTR@ void
 #define INT_left_shift_needs_clear_floatstatus
 #define UINT_left_shift_needs_clear_floatstatus
 
+#if @CHK@
 NPY_NO_EXPORT NPY_GCC_OPT_3 void
 @TYPE@_left_shift@isa@(char **args, npy_intp const *dimensions, npy_intp const *steps,
                   void *NPY_UNUSED(func))
@@ -670,10 +662,12 @@ NPY_NO_EXPORT NPY_GCC_OPT_3 void
     npy_clear_floatstatus_barrier((char*)dimensions);
 #endif
 }
+#endif
 
 #undef INT_left_shift_needs_clear_floatstatus
 #undef UINT_left_shift_needs_clear_floatstatus
 
+#if @CHK@
 NPY_NO_EXPORT
 #ifndef NPY_DO_NOT_OPTIMIZE_@TYPE@_right_shift
 NPY_GCC_OPT_3
@@ -684,7 +678,7 @@ void
 {
     BINARY_LOOP_FAST(@type@, @type@, *out = npy_rshift@c@(in1, in2));
 }
-
+#endif
 
 /**begin repeat2
  * #kind = logical_and, logical_or#
@@ -1448,7 +1442,10 @@ NPY_NO_EXPORT void
 /**begin repeat2
  * #ISA  = , _avx512_skx#
  * #isa  = simd, avx512_skx#
+ * #CHK  = 1, defined(HAVE_ATTRIBUTE_TARGET_AVX512_SKX)#
  **/
+
+#if @CHK@
 NPY_NO_EXPORT void
 @TYPE@_@kind@@ISA@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
 {
@@ -1460,6 +1457,7 @@ NPY_NO_EXPORT void
     }
     npy_clear_floatstatus_barrier((char*)dimensions);
 }
+#endif
 /**end repeat2**/
 /**end repeat1**/
 
@@ -1536,17 +1534,6 @@ NPY_NO_EXPORT void
     UNARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
         *((@type@ *)op1) = in1;
-    }
-}
-
-NPY_NO_EXPORT void
-@TYPE@_negative(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
-{
-    if (!run_unary_simd_negative_@TYPE@(args, dimensions, steps)) {
-        UNARY_LOOP {
-            const @type@ in1 = *(@type@ *)ip1;
-            *((@type@ *)op1) = -in1;
-        }
     }
 }
 
@@ -2289,7 +2276,7 @@ NPY_NO_EXPORT void
     }
 }
 
-#if @SIMD@
+#if @SIMD@ && defined(HAVE_ATTRIBUTE_TARGET_AVX512F)
 /**begin repeat1
  * arithmetic
  * #kind = conjugate, square, absolute#

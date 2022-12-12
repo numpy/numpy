@@ -73,7 +73,7 @@ dtypemeta_init(PyTypeObject *NPY_UNUSED(type),
  * @param self
  * @return nonzero if the object is garbage collected
  */
-static NPY_INLINE int
+static inline int
 dtypemeta_is_gc(PyObject *dtype_class)
 {
     return PyType_Type.tp_is_gc(dtype_class);
@@ -404,7 +404,7 @@ void_common_instance(PyArray_Descr *descr1, PyArray_Descr *descr2)
     if (descr1->subarray == NULL && descr1->names == NULL &&
             descr2->subarray == NULL && descr2->names == NULL) {
         if (descr1->elsize != descr2->elsize) {
-            PyErr_SetString(PyExc_TypeError,
+            PyErr_SetString(npy_DTypePromotionError,
                     "Invalid type promotion with void datatypes of different "
                     "lengths. Use the `np.bytes_` datatype instead to pad the "
                     "shorter value with trailing zero bytes.");
@@ -443,7 +443,7 @@ void_common_instance(PyArray_Descr *descr1, PyArray_Descr *descr2)
             return NULL;
         }
         if (!cmp) {
-            PyErr_SetString(PyExc_TypeError,
+            PyErr_SetString(npy_DTypePromotionError,
                     "invalid type promotion with subarray datatypes "
                     "(shape mismatch).");
             return NULL;
@@ -473,7 +473,7 @@ void_common_instance(PyArray_Descr *descr1, PyArray_Descr *descr2)
         return new_descr;
     }
 
-    PyErr_SetString(PyExc_TypeError,
+    PyErr_SetString(npy_DTypePromotionError,
             "invalid type promotion with structured datatype(s).");
     return NULL;
 }
@@ -617,6 +617,12 @@ string_unicode_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
 static PyArray_DTypeMeta *
 datetime_common_dtype(PyArray_DTypeMeta *cls, PyArray_DTypeMeta *other)
 {
+    /*
+     * Timedelta/datetime shouldn't actuall promote at all.  That they
+     * currently do means that we need additional hacks in the comparison
+     * type resolver.  For comparisons we have to make sure we reject it
+     * nicely in order to return an array of True/False values.
+     */
     if (cls->type_num == NPY_DATETIME && other->type_num == NPY_TIMEDELTA) {
         /*
          * TODO: We actually currently do allow promotion here. This is
@@ -893,12 +899,12 @@ NPY_NO_EXPORT PyTypeObject PyArrayDTypeMeta_Type = {
     /* Types are garbage collected (see dtypemeta_is_gc documentation) */
     .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,
     .tp_doc = "Preliminary NumPy API: The Type of NumPy DTypes (metaclass)",
-    .tp_getset = dtypemeta_getset,
+    .tp_traverse = (traverseproc)dtypemeta_traverse,
     .tp_members = dtypemeta_members,
+    .tp_getset = dtypemeta_getset,
     .tp_base = NULL,  /* set to PyType_Type at import time */
-    .tp_alloc = dtypemeta_alloc,
     .tp_init = (initproc)dtypemeta_init,
+    .tp_alloc = dtypemeta_alloc,
     .tp_new = dtypemeta_new,
     .tp_is_gc = dtypemeta_is_gc,
-    .tp_traverse = (traverseproc)dtypemeta_traverse,
 };

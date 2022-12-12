@@ -17,10 +17,9 @@ motivated this module.
 """
 import enum
 
-__ALL__ = [
-    'ModuleDeprecationWarning', 'VisibleDeprecationWarning',
-    '_NoValue', '_CopyMode'
-    ]
+from ._utils import set_module as _set_module
+
+__all__ = ['_NoValue', '_CopyMode']
 
 
 # Disallow reloading this module so as to preserve the identities of the
@@ -28,33 +27,6 @@ __ALL__ = [
 if '_is_loaded' in globals():
     raise RuntimeError('Reloading numpy._globals is not allowed')
 _is_loaded = True
-
-
-class ModuleDeprecationWarning(DeprecationWarning):
-    """Module deprecation warning.
-
-    The nose tester turns ordinary Deprecation warnings into test failures.
-    That makes it hard to deprecate whole modules, because they get
-    imported by default. So this is a special Deprecation warning that the
-    nose tester will let pass without making tests fail.
-
-    """
-
-
-ModuleDeprecationWarning.__module__ = 'numpy'
-
-
-class VisibleDeprecationWarning(UserWarning):
-    """Visible deprecation warning.
-
-    By default, python will not show deprecation warnings, so this class
-    can be used when a very visible warning is helpful, for example because
-    the usage is most likely a user bug.
-
-    """
-
-
-VisibleDeprecationWarning.__module__ = 'numpy'
 
 
 class _NoValueType:
@@ -83,10 +55,6 @@ class _NoValueType:
             cls.__instance = super().__new__(cls)
         return cls.__instance
 
-    # needed for python 2 to preserve identity through a pickle
-    def __reduce__(self):
-        return (self.__class__, ())
-
     def __repr__(self):
         return "<no value>"
 
@@ -94,6 +62,7 @@ class _NoValueType:
 _NoValue = _NoValueType()
 
 
+@_set_module("numpy")
 class _CopyMode(enum.Enum):
     """
     An enumeration for the copy modes supported
@@ -124,6 +93,3 @@ class _CopyMode(enum.Enum):
             return False
 
         raise ValueError(f"{self} is neither True nor False.")
-
-
-_CopyMode.__module__ = 'numpy'

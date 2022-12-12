@@ -126,6 +126,15 @@ class TestBuiltin:
         with assert_raises(TypeError):
             np.dtype(dtype)
 
+    def test_remaining_dtypes_with_bad_bytesize(self):
+        # The np.<name> aliases were deprecated, these probably should be too 
+        assert np.dtype("int0") is np.dtype("intp")
+        assert np.dtype("uint0") is np.dtype("uintp")
+        assert np.dtype("bool8") is np.dtype("bool")
+        assert np.dtype("bytes0") is np.dtype("bytes")
+        assert np.dtype("str0") is np.dtype("str")
+        assert np.dtype("object0") is np.dtype("object")
+
     @pytest.mark.parametrize(
         'value',
         ['m8', 'M8', 'datetime64', 'timedelta64',
@@ -1451,7 +1460,7 @@ def test_dtypes_are_true():
 def test_invalid_dtype_string():
     # test for gh-10440
     assert_raises(TypeError, np.dtype, 'f8,i8,[f8,i8]')
-    assert_raises(TypeError, np.dtype, u'Fl\xfcgel')
+    assert_raises(TypeError, np.dtype, 'Fl\xfcgel')
 
 
 def test_keyword_argument():

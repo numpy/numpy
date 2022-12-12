@@ -25,7 +25,7 @@ from ._pcg64 import PCG64
 from numpy.random cimport bitgen_t
 from ._common cimport (POISSON_LAM_MAX, CONS_POSITIVE, CONS_NONE,
             CONS_NON_NEGATIVE, CONS_BOUNDED_0_1, CONS_BOUNDED_GT_0_1,
-            CONS_GT_1, CONS_POSITIVE_NOT_NAN, CONS_POISSON,
+            CONS_BOUNDED_LT_0_1, CONS_GT_1, CONS_POSITIVE_NOT_NAN, CONS_POISSON,
             double_fill, cont, kahan_sum, cont_broadcast_3, float_fill, cont_f,
             check_array_constraint, check_constraint, disc, discrete_broadcast_iii,
             validate_output_shape
@@ -379,6 +379,22 @@ cdef class Generator:
         -------
         out : ndarray or scalar
             Drawn samples from the parameterized exponential distribution.
+
+        Examples
+        --------
+        A real world example: Assume a company has 10000 customer support 
+        agents and the average time between customer calls is 4 minutes.
+
+        >>> n = 10000
+        >>> time_between_calls = np.random.default_rng().exponential(scale=4, size=n)
+
+        What is the probability that a customer will call in the next 
+        4 to 5 minutes? 
+        
+        >>> x = ((time_between_calls < 5).sum())/n 
+        >>> y = ((time_between_calls < 4).sum())/n
+        >>> x-y
+        0.08 # may vary
 
         References
         ----------
@@ -3447,12 +3463,12 @@ cdef class Generator:
         Draw samples from a logarithmic series distribution.
 
         Samples are drawn from a log series distribution with specified
-        shape parameter, 0 < ``p`` < 1.
+        shape parameter, 0 <= ``p`` < 1.
 
         Parameters
         ----------
         p : float or array_like of floats
-            Shape parameter for the distribution.  Must be in the range (0, 1).
+            Shape parameter for the distribution.  Must be in the range [0, 1).
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
@@ -3516,7 +3532,7 @@ cdef class Generator:
 
         """
         return disc(&random_logseries, &self._bitgen, size, self.lock, 1, 0,
-                 p, 'p', CONS_BOUNDED_0_1,
+                 p, 'p', CONS_BOUNDED_LT_0_1,
                  0.0, '', CONS_NONE,
                  0.0, '', CONS_NONE)
 
@@ -4745,7 +4761,7 @@ cdef class Generator:
         >>> rng.permutation("abc")
         Traceback (most recent call last):
             ...
-        numpy.AxisError: axis 0 is out of bounds for array of dimension 0
+        numpy.exceptions.AxisError: axis 0 is out of bounds for array of dimension 0
 
         >>> arr = np.arange(9).reshape((3, 3))
         >>> rng.permutation(arr, axis=1)

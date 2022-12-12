@@ -27,7 +27,7 @@
  */
 #define MAX_STEP_SIZE 2097152
 
-static NPY_INLINE npy_uintp
+static inline npy_uintp
 abs_ptrdiff(char *a, char *b)
 {
     return (a > b) ? (a - b) : (b - a);

@@ -35,7 +35,7 @@ jobs:
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@v3
+    - uses: actions/setup-python@v4
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - name: Install linter requirements
@@ -55,7 +55,7 @@ jobs:
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@v3
+    - uses: actions/setup-python@v4
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
@@ -73,15 +73,15 @@ jobs:
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@v3
+    - uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
     - uses: ./.github/actions
 
   old_gcc:
     needs: [smoke_test]
-    # provides GCC 6, 7, 8
-    runs-on: ubuntu-18.04
+    # provides GCC  7, 8
+    runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v3
       with:
@@ -99,14 +99,7 @@ jobs:
         pythonx -m pip install --upgrade pip setuptools wheel
         pythonx -m pip install -r test_requirements.txt
     - name: Install Compilers
-      run: sudo apt install g++-6 g++-7 g++-8 -y
-    - name: Build gcc-6
-      run: |
-        export CC=/usr/bin/gcc-6
-        export CXX=/usr/bin/g++-6
-        pythonx setup.py install --user
-    - name: Runtests gcc-6
-      run: pythonx runtests.py -n
+      run: sudo apt install g++-7 g++-8 -y
     - name: Build gcc-7
       run: |
         export CC=/usr/bin/gcc-7
@@ -132,7 +125,22 @@ jobs:
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@v3
+    - uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    - uses: ./.github/actions
+
+  with_baseline_only:
+    needs: [smoke_test]
+    runs-on: ubuntu-latest
+    env:
+      CPU_DISPATCH: "none"
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    - uses: actions/setup-python@v4
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
@@ -147,7 +155,7 @@ jobs:
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@v3
+    - uses: actions/setup-python@v4
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
@@ -162,7 +170,7 @@ jobs:
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@v3
+    - uses: actions/setup-python@v4
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
@@ -177,7 +185,7 @@ jobs:
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@v3
+    - uses: actions/setup-python@v4
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
@@ -192,14 +200,14 @@ jobs:
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@v3
+    - uses: actions/setup-python@v4
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
 
   full:
     needs: [smoke_test]
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-22.04
     env:
       USE_WHEEL: 1
       RUN_FULL_TESTS: 1
@@ -210,7 +218,7 @@ jobs:
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@v3
+    - uses: actions/setup-python@v4
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
@@ -231,7 +239,7 @@ jobs:
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@v3
+    - uses: actions/setup-python@v4
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
@@ -248,7 +256,7 @@ jobs:
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@v3
+    - uses: actions/setup-python@v4
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
@@ -263,7 +271,7 @@ jobs:
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@v3
+    - uses: actions/setup-python@v4
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
@@ -278,7 +286,7 @@ jobs:
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@v3
+    - uses: actions/setup-python@v4
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
@@ -296,7 +304,7 @@ jobs:
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@v3
+    - uses: actions/setup-python@v4
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
@@ -309,7 +317,7 @@ jobs:
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@v3
+    - uses: actions/setup-python@v4
       with:
         python-version: pypy-3.8-v7.3.9
     - uses: ./.github/actions
@@ -324,7 +332,7 @@ jobs:
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@v3
+    - uses: actions/setup-python@v4
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - uses: ./.github/actions
@@ -393,7 +401,7 @@ jobs:
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@v3
+    - uses: actions/setup-python@v4
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - name: Install Intel SDE

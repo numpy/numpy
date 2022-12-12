@@ -1,1 +1,0 @@
-* Support for cygwin < 3.3 has been removed.

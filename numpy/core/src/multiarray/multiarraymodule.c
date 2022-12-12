@@ -899,11 +899,15 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
     int i;
     PyObject* ret = NULL;
 
-    typenum = PyArray_ObjectType(op1, 0);
-    if (typenum == NPY_NOTYPE && PyErr_Occurred()) {
+    typenum = PyArray_ObjectType(op1, NPY_NOTYPE);
+    if (typenum == NPY_NOTYPE) {
         return NULL;
     }
     typenum = PyArray_ObjectType(op2, typenum);
+    if (typenum == NPY_NOTYPE) {
+        return NULL;
+    }
+
     typec = PyArray_DescrFromType(typenum);
     if (typec == NULL) {
         if (!PyErr_Occurred()) {
@@ -991,11 +995,15 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
     PyArray_Descr *typec = NULL;
     NPY_BEGIN_THREADS_DEF;
 
-    typenum = PyArray_ObjectType(op1, 0);
-    if (typenum == NPY_NOTYPE && PyErr_Occurred()) {
+    typenum = PyArray_ObjectType(op1, NPY_NOTYPE);
+    if (typenum == NPY_NOTYPE) {
         return NULL;
     }
     typenum = PyArray_ObjectType(op2, typenum);
+    if (typenum == NPY_NOTYPE) {
+        return NULL;
+    }
+
     typec = PyArray_DescrFromType(typenum);
     if (typec == NULL) {
         if (!PyErr_Occurred()) {
@@ -1373,8 +1381,14 @@ PyArray_Correlate2(PyObject *op1, PyObject *op2, int mode)
     int inverted;
     int st;
 
-    typenum = PyArray_ObjectType(op1, 0);
+    typenum = PyArray_ObjectType(op1, NPY_NOTYPE);
+    if (typenum == NPY_NOTYPE) {
+        return NULL;
+    }
     typenum = PyArray_ObjectType(op2, typenum);
+    if (typenum == NPY_NOTYPE) {
+        return NULL;
+    }
 
     typec = PyArray_DescrFromType(typenum);
     Py_INCREF(typec);
@@ -1440,8 +1454,14 @@ PyArray_Correlate(PyObject *op1, PyObject *op2, int mode)
     int unused;
     PyArray_Descr *typec;
 
-    typenum = PyArray_ObjectType(op1, 0);
+    typenum = PyArray_ObjectType(op1, NPY_NOTYPE);
+    if (typenum == NPY_NOTYPE) {
+        return NULL;
+    }
     typenum = PyArray_ObjectType(op2, typenum);
+    if (typenum == NPY_NOTYPE) {
+        return NULL;
+    }
 
     typec = PyArray_DescrFromType(typenum);
     Py_INCREF(typec);
@@ -1602,7 +1622,7 @@ _prepend_ones(PyArrayObject *arr, int nd, int ndmin, NPY_ORDER order)
                  ((order) == NPY_CORDER && PyArray_IS_C_CONTIGUOUS(op)) || \
                  ((order) == NPY_FORTRANORDER && PyArray_IS_F_CONTIGUOUS(op)))
 
-static NPY_INLINE PyObject *
+static inline PyObject *
 _array_fromobject_generic(
         PyObject *op, PyArray_Descr *type, _PyArray_CopyMode copy, NPY_ORDER order,
         npy_bool subok, int ndmin)
@@ -2541,8 +2561,14 @@ array_vdot(PyObject *NPY_UNUSED(dummy), PyObject *args)
      * Conjugating dot product using the BLAS for vectors.
      * Flattens both op1 and op2 before dotting.
      */
-    typenum = PyArray_ObjectType(op1, 0);
+    typenum = PyArray_ObjectType(op1, NPY_NOTYPE);
+    if (typenum == NPY_NOTYPE) {
+        return NULL;
+    }
     typenum = PyArray_ObjectType(op2, typenum);
+    if (typenum == NPY_NOTYPE) {
+        return NULL;
+    }
 
     type = PyArray_DescrFromType(typenum);
     Py_INCREF(type);
@@ -4074,7 +4100,7 @@ _vec_string(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUSED(kw
     return 0;
 }
 
-#ifndef __NPY_PRIVATE_NO_SIGNAL
+#ifndef NPY_NO_SIGNAL
 
 static NPY_TLS int sigint_buf_init = 0;
 static NPY_TLS NPY_SIGJMP_BUF _NPY_SIGINT_BUF;
@@ -4136,7 +4162,6 @@ array_shares_memory_impl(PyObject *args, PyObject *kwds, Py_ssize_t default_max_
     static char *kwlist[] = {"self", "other", "max_work", NULL};
 
     mem_overlap_t result;
-    static PyObject *too_hard_cls = NULL;
     Py_ssize_t max_work;
     NPY_BEGIN_THREADS_DEF;
 
@@ -4216,8 +4241,8 @@ array_shares_memory_impl(PyObject *args, PyObject *kwds, Py_ssize_t default_max_
     }
     else if (result == MEM_OVERLAP_TOO_HARD) {
         if (raise_exceptions) {
-            npy_cache_import("numpy.core._exceptions", "TooHardError",
-                             &too_hard_cls);
+            static PyObject *too_hard_cls = NULL;
+            npy_cache_import("numpy.exceptions", "TooHardError", &too_hard_cls);
             if (too_hard_cls) {
                 PyErr_SetString(too_hard_cls, "Exceeded max_work");
             }
@@ -4786,6 +4811,38 @@ intern_strings(void)
     return 0;
 }
 
+
+/*
+ * Initializes global constants.  At some points these need to be cleaned
+ * up, and sometimes we also import them where they are needed.  But for
+ * some things, adding an `npy_cache_import` everywhere seems inconvenient.
+ *
+ * These globals should not need the C-layer at all and will be imported
+ * before anything on the C-side is initialized.
+ */
+static int
+initialize_static_globals(void)
+{
+    assert(npy_DTypePromotionError == NULL);
+    npy_cache_import(
+            "numpy.exceptions", "DTypePromotionError",
+            &npy_DTypePromotionError);
+    if (npy_DTypePromotionError == NULL) {
+        return -1;
+    }
+
+    assert(npy_UFuncNoLoopError == NULL);
+    npy_cache_import(
+            "numpy.core._exceptions", "_UFuncNoLoopError",
+            &npy_UFuncNoLoopError);
+    if (npy_UFuncNoLoopError == NULL) {
+        return -1;
+    }
+
+    return 0;
+}
+
+
 static struct PyModuleDef moduledef = {
         PyModuleDef_HEAD_INIT,
         "_multiarray_umath",
@@ -4833,6 +4890,14 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
     /* Add some symbolic constants to the module */
     d = PyModule_GetDict(m);
     if (!d) {
+        goto err;
+    }
+
+    if (intern_strings() < 0) {
+        goto err;
+    }
+
+    if (initialize_static_globals() < 0) {
         goto err;
     }
 
@@ -5005,10 +5070,6 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
 
     /* Create the typeinfo types */
     if (typeinfo_init_structsequences(d) < 0) {
-        goto err;
-    }
-
-    if (intern_strings() < 0) {
         goto err;
     }
 

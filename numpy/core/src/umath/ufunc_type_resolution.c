@@ -358,13 +358,24 @@ PyUFunc_SimpleBinaryComparisonTypeResolver(PyUFuncObject *ufunc,
     }
 
     if (type_tup == NULL) {
+        if (PyArray_ISDATETIME(operands[0])
+                && PyArray_ISDATETIME(operands[1])
+                && type_num1 != type_num2) {
+            /*
+             * Reject mixed datetime and timedelta explictly, this was always
+             * implicitly rejected because casting fails (except with
+             * `casting="unsafe"` admittedly).
+             * This is required to ensure that `==` and `!=` can correctly
+             * detect that they should return a result array of False/True.
+             */
+            return raise_binary_type_reso_error(ufunc, operands);
+        }
         /*
-         * DEPRECATED NumPy 1.20, 2020-12.
-         * This check is required to avoid the FutureWarning that
-         * ResultType will give for number->string promotions.
+         * This check is required to avoid a potential FutureWarning that
+         * ResultType would give for number->string promotions.
          * (We never supported flexible dtypes here.)
          */
-        if (!PyArray_ISFLEXIBLE(operands[0]) &&
+        else if (!PyArray_ISFLEXIBLE(operands[0]) &&
                 !PyArray_ISFLEXIBLE(operands[1])) {
             out_dtypes[0] = PyArray_ResultType(2, operands, 0, NULL);
             if (out_dtypes[0] == NULL) {
@@ -382,53 +393,9 @@ PyUFunc_SimpleBinaryComparisonTypeResolver(PyUFuncObject *ufunc,
         }
     }
     else {
-        PyArray_Descr *descr;
-        /*
-         * DEPRECATED 2021-03, NumPy 1.20
-         *
-         * If the type tuple was originally a single element (probably),
-         * issue a deprecation warning, but otherwise accept it.  Since the
-         * result dtype is always boolean, this is not actually valid unless it
-         * is `object` (but if there is an object input we already deferred).
-         *
-         * TODO: Once this deprecation is gone, the special case for
-         *       `PyUFunc_SimpleBinaryComparisonTypeResolver` in dispatching.c
-         *       can be removed.
-         */
-        if (PyTuple_Check(type_tup) && PyTuple_GET_SIZE(type_tup) == 3 &&
-                PyTuple_GET_ITEM(type_tup, 0) == Py_None &&
-                PyTuple_GET_ITEM(type_tup, 1) == Py_None &&
-                PyArray_DescrCheck(PyTuple_GET_ITEM(type_tup, 2))) {
-            descr = (PyArray_Descr *)PyTuple_GET_ITEM(type_tup, 2);
-            if (descr->type_num == NPY_OBJECT) {
-                if (DEPRECATE_FUTUREWARNING(
-                        "using `dtype=object` (or equivalent signature) will "
-                        "return object arrays in the future also when the "
-                        "inputs do not already have `object` dtype.") < 0) {
-                    return -1;
-                }
-            }
-            else if (descr->type_num != NPY_BOOL) {
-                if (DEPRECATE(
-                        "using `dtype=` in comparisons is only useful for "
-                        "`dtype=object` (and will do nothing for bool). "
-                        "This operation will fail in the future.") < 0) {
-                    return -1;
-                }
-            }
-        }
-        else {
-            /* Usually a failure, but let the default version handle it */
-            return PyUFunc_DefaultTypeResolver(ufunc, casting,
-                    operands, type_tup, out_dtypes);
-        }
-
-        out_dtypes[0] = NPY_DT_CALL_ensure_canonical(descr);
-        if (out_dtypes[0] == NULL) {
-            return -1;
-        }
-        out_dtypes[1] = out_dtypes[0];
-        Py_INCREF(out_dtypes[1]);
+        /* Usually a failure, but let the default version handle it */
+        return PyUFunc_DefaultTypeResolver(ufunc, casting,
+                operands, type_tup, out_dtypes);
     }
 
     /* Output type is always boolean */
@@ -694,7 +661,7 @@ PyUFunc_IsNaTTypeResolver(PyUFuncObject *ufunc,
 {
     if (!PyTypeNum_ISDATETIME(PyArray_DESCR(operands[0])->type_num)) {
         PyErr_SetString(PyExc_TypeError,
-                "ufunc 'isnat' is only defined for datetime and timedelta.");
+                "ufunc 'isnat' is only defined for np.datetime64 and np.timedelta64.");
         return -1;
     }
 

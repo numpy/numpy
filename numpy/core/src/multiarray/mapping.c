@@ -160,7 +160,7 @@ PyArray_MapIterSwapAxes(PyArrayMapIterObject *mit, PyArrayObject **ret, int getm
     *ret = (PyArrayObject *)new;
 }
 
-static NPY_INLINE void
+static inline void
 multi_DECREF(PyObject **objects, npy_intp n)
 {
     npy_intp i;
@@ -176,7 +176,7 @@ multi_DECREF(PyObject **objects, npy_intp n)
  * Useful if a tuple is being iterated over multiple times, or for a code path
  * that doesn't always want the overhead of allocating a tuple.
  */
-static NPY_INLINE npy_intp
+static inline npy_intp
 unpack_tuple(PyTupleObject *index, PyObject **result, npy_intp result_n)
 {
     npy_intp n, i;
@@ -194,7 +194,7 @@ unpack_tuple(PyTupleObject *index, PyObject **result, npy_intp result_n)
 }
 
 /* Unpack a single scalar index, taking a new reference to match unpack_tuple */
-static NPY_INLINE npy_intp
+static inline npy_intp
 unpack_scalar(PyObject *index, PyObject **result, npy_intp NPY_UNUSED(result_n))
 {
     Py_INCREF(index);

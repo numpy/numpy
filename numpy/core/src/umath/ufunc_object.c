@@ -52,6 +52,7 @@
 
 #include "arrayobject.h"
 #include "common.h"
+#include "ctors.h"
 #include "dtypemeta.h"
 #include "numpyos.h"
 #include "dispatching.h"
@@ -1391,7 +1392,7 @@ try_trivial_single_output_loop(PyArrayMethod_Context *context,
  * or pass in the full cast information.  But this can special case
  * the logical functions and prints a better error message.
  */
-static NPY_INLINE int
+static inline int
 validate_casting(PyArrayMethodObject *method, PyUFuncObject *ufunc,
         PyArrayObject *ops[], PyArray_Descr *descriptors[],
         NPY_CASTING casting)
@@ -1781,6 +1782,8 @@ _check_keepdims_support(PyUFuncObject *ufunc) {
 static int
 _parse_axes_arg(PyUFuncObject *ufunc, int op_core_num_dims[], PyObject *axes,
                 PyArrayObject **op, int broadcast_ndim, int **remap_axis) {
+    static PyObject *AxisError_cls = NULL;
+
     int nin = ufunc->nin;
     int nop = ufunc->nargs;
     int iop, list_size;
@@ -1825,16 +1828,17 @@ _parse_axes_arg(PyUFuncObject *ufunc, int op_core_num_dims[], PyObject *axes,
         op_axes_tuple = PyList_GET_ITEM(axes, iop);
         if (PyTuple_Check(op_axes_tuple)) {
             if (PyTuple_Size(op_axes_tuple) != op_ncore) {
-                if (op_ncore == 1) {
-                    PyErr_Format(PyExc_ValueError,
-                                 "axes item %d should be a tuple with a "
-                                 "single element, or an integer", iop);
+                /* must have been a tuple with too many entries. */
+                npy_cache_import(
+                        "numpy.exceptions", "AxisError", &AxisError_cls);
+                if (AxisError_cls == NULL) {
+                    return -1;
                 }
-                else {
-                    PyErr_Format(PyExc_ValueError,
-                                 "axes item %d should be a tuple with %d "
-                                 "elements", iop, op_ncore);
-                }
+                PyErr_Format(AxisError_cls,
+                        "%s: operand %d has %d core dimensions, "
+                        "but %zd dimensions are specified by axes tuple.",
+                        ufunc_get_name_cstr(ufunc), iop, op_ncore,
+                        PyTuple_Size(op_axes_tuple));
                 return -1;
             }
             Py_INCREF(op_axes_tuple);
@@ -1846,8 +1850,22 @@ _parse_axes_arg(PyUFuncObject *ufunc, int op_core_num_dims[], PyObject *axes,
             }
         }
         else {
-            PyErr_Format(PyExc_TypeError, "axes item %d should be a tuple",
-                         iop);
+            /* If input is not an integer tell user that a tuple is needed */
+            if (error_converting(PyArray_PyIntAsInt(op_axes_tuple))) {
+                PyErr_Format(PyExc_TypeError,
+                        "%s: axes item %d should be a tuple.",
+                        ufunc_get_name_cstr(ufunc), iop);
+                return -1;
+            }
+            /* If it is a single integer, inform user that more are needed */
+            npy_cache_import("numpy.exceptions", "AxisError", &AxisError_cls);
+            if (AxisError_cls == NULL) {
+                return -1;
+            }
+            PyErr_Format(AxisError_cls,
+                    "%s: operand %d has %d core dimensions, "
+                    "but the axes item is a single integer.",
+                    ufunc_get_name_cstr(ufunc), iop, op_ncore);
             return -1;
         }
         /*
@@ -2739,8 +2757,41 @@ reducelike_promote_and_resolve(PyUFuncObject *ufunc,
         PyArrayObject *arr, PyArrayObject *out,
         PyArray_DTypeMeta *signature[3],
         npy_bool enforce_uniform_args, PyArray_Descr *out_descrs[3],
-        char *method)
+        NPY_CASTING casting, char *method)
 {
+     /*
+      * If no dtype is specified and out is not specified, we override the
+      * integer and bool dtype used for add and multiply.
+      *
+      * TODO: The following should be handled by a promoter!
+      */
+    if (signature[0] == NULL && out == NULL) {
+        /*
+         * For integer types --- make sure at least a long
+         * is used for add and multiply reduction to avoid overflow
+         */
+        int typenum = PyArray_TYPE(arr);
+        if ((PyTypeNum_ISBOOL(typenum) || PyTypeNum_ISINTEGER(typenum))
+                && ((strcmp(ufunc->name, "add") == 0)
+                    || (strcmp(ufunc->name, "multiply") == 0))) {
+            if (PyTypeNum_ISBOOL(typenum)) {
+                typenum = NPY_LONG;
+            }
+            else if ((size_t)PyArray_DESCR(arr)->elsize < sizeof(long)) {
+                if (PyTypeNum_ISUNSIGNED(typenum)) {
+                    typenum = NPY_ULONG;
+                }
+                else {
+                    typenum = NPY_LONG;
+                }
+            }
+            signature[0] = PyArray_DTypeFromTypeNum(typenum);
+        }
+    }
+    assert(signature[2] == NULL);  /* we always fill it here */
+    Py_XINCREF(signature[0]);
+    signature[2] = signature[0];
+
     /*
      * Note that the `ops` is not really correct.  But legacy resolution
      * cannot quite handle the correct ops (e.g. a NULL first item if `out`
@@ -2802,7 +2853,7 @@ reducelike_promote_and_resolve(PyUFuncObject *ufunc,
      * (although this should possibly happen through a deprecation)
      */
     if (resolve_descriptors(3, ufunc, ufuncimpl,
-            ops, out_descrs, signature, NPY_UNSAFE_CASTING) < 0) {
+            ops, out_descrs, signature, casting) < 0) {
         return NULL;
     }
 
@@ -2825,8 +2876,7 @@ reducelike_promote_and_resolve(PyUFuncObject *ufunc,
         goto fail;
     }
     /* TODO: This really should _not_ be unsafe casting (same above)! */
-    if (validate_casting(ufuncimpl,
-            ufunc, ops, out_descrs, NPY_UNSAFE_CASTING) < 0) {
+    if (validate_casting(ufuncimpl, ufunc, ops, out_descrs, casting) < 0) {
         goto fail;
     }
 
@@ -2834,7 +2884,7 @@ reducelike_promote_and_resolve(PyUFuncObject *ufunc,
 
   fail:
     for (int i = 0; i < 3; ++i) {
-        Py_DECREF(out_descrs[i]);
+        Py_CLEAR(out_descrs[i]);
     }
     return NULL;
 }
@@ -2989,7 +3039,7 @@ PyUFunc_Reduce(PyUFuncObject *ufunc,
      */
     PyArray_Descr *descrs[3];
     PyArrayMethodObject *ufuncimpl = reducelike_promote_and_resolve(ufunc,
-            arr, out, signature, NPY_FALSE, descrs, "reduce");
+            arr, out, signature, NPY_FALSE, descrs, NPY_UNSAFE_CASTING, "reduce");
     if (ufuncimpl == NULL) {
         return NULL;
     }
@@ -3094,7 +3144,8 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
 
     PyArray_Descr *descrs[3];
     PyArrayMethodObject *ufuncimpl = reducelike_promote_and_resolve(ufunc,
-            arr, out, signature, NPY_TRUE, descrs, "accumulate");
+            arr, out, signature, NPY_TRUE, descrs, NPY_UNSAFE_CASTING,
+            "accumulate");
     if (ufuncimpl == NULL) {
         return NULL;
     }
@@ -3511,7 +3562,8 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
 
     PyArray_Descr *descrs[3];
     PyArrayMethodObject *ufuncimpl = reducelike_promote_and_resolve(ufunc,
-            arr, out, signature, NPY_TRUE, descrs, "reduceat");
+            arr, out, signature, NPY_TRUE, descrs, NPY_UNSAFE_CASTING,
+            "reduceat");
     if (ufuncimpl == NULL) {
         return NULL;
     }
@@ -4169,38 +4221,6 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
         }
     }
 
-     /*
-      * If no dtype is specified and out is not specified, we override the
-      * integer and bool dtype used for add and multiply.
-      *
-      * TODO: The following should be handled by a promoter!
-      */
-    if (signature[0] == NULL && out == NULL) {
-        /*
-         * For integer types --- make sure at least a long
-         * is used for add and multiply reduction to avoid overflow
-         */
-        int typenum = PyArray_TYPE(mp);
-        if ((PyTypeNum_ISBOOL(typenum) || PyTypeNum_ISINTEGER(typenum))
-                && ((strcmp(ufunc->name, "add") == 0)
-                    || (strcmp(ufunc->name, "multiply") == 0))) {
-            if (PyTypeNum_ISBOOL(typenum)) {
-                typenum = NPY_LONG;
-            }
-            else if ((size_t)PyArray_DESCR(mp)->elsize < sizeof(long)) {
-                if (PyTypeNum_ISUNSIGNED(typenum)) {
-                    typenum = NPY_ULONG;
-                }
-                else {
-                    typenum = NPY_LONG;
-                }
-            }
-            signature[0] = PyArray_DTypeFromTypeNum(typenum);
-        }
-    }
-    Py_XINCREF(signature[0]);
-    signature[2] = signature[0];
-
     switch(operation) {
     case UFUNC_REDUCE:
         ret = PyUFunc_Reduce(ufunc,
@@ -4361,23 +4381,16 @@ _get_dtype(PyObject *dtype_obj) {
         }
         else if (NPY_UNLIKELY(out->singleton != descr)) {
             /* This does not warn about `metadata`, but units is important. */
-            if (!PyArray_EquivTypes(out->singleton, descr)) {
-                /* Deprecated NumPy 1.21.2 (was an accidental error in 1.21) */
-                if (DEPRECATE(
+            if (out->singleton == NULL
+                    || !PyArray_EquivTypes(out->singleton, descr)) {
+                PyErr_SetString(PyExc_TypeError,
                         "The `dtype` and `signature` arguments to "
                         "ufuncs only select the general DType and not details "
-                        "such as the byte order or time unit (with rare "
-                        "exceptions see release notes).  To avoid this warning "
-                        "please use the scalar types `np.float64`, or string "
-                        "notation.\n"
-                        "In rare cases where the time unit was preserved, "
-                        "either cast the inputs or provide an output array. "
-                        "In the future NumPy may transition to allow providing "
-                        "`dtype=` to denote the outputs `dtype` as well. "
-                        "(Deprecated NumPy 1.21)") < 0) {
-                    Py_DECREF(descr);
-                    return NULL;
-                }
+                        "such as the byte order or time unit. "
+                        "You can avoid this error by using the scalar types "
+                        "`np.float64` or the dtype string notation.");
+                Py_DECREF(descr);
+                return NULL;
             }
         }
         Py_INCREF(out);
@@ -5379,7 +5392,7 @@ cmp_arg_types(int *arg1, int *arg2, int n)
  * This frees the linked-list structure when the CObject
  * is destroyed (removed from the internal dictionary)
 */
-static NPY_INLINE void
+static inline void
 _free_loop1d_list(PyUFunc_Loop1d *data)
 {
     int i;
@@ -5920,7 +5933,7 @@ ufunc_reduceat(PyUFuncObject *ufunc,
 }
 
 /* Helper for ufunc_at, below */
-static NPY_INLINE PyArrayObject *
+static inline PyArrayObject *
 new_array_op(PyArrayObject *op_array, char *data)
 {
     npy_intp dims[1] = {1};
@@ -6322,6 +6335,406 @@ fail:
 }
 
 
+typedef struct {
+    PyArrayMethod_StridedLoop *strided_loop;
+    PyArrayMethod_Context *context;
+    NpyAuxData *auxdata;
+    /* Should move to flags, but lets keep it bools for now: */
+    npy_bool requires_pyapi;
+    npy_bool no_floatingpoint_errors;
+    PyArrayMethod_Context _full_context;
+    PyArray_Descr *_descrs[];
+} ufunc_call_info;
+
+
+void
+free_ufunc_call_info(PyObject *self)
+{
+    ufunc_call_info *call_info = PyCapsule_GetPointer(
+            self, "numpy_1.24_ufunc_call_info");
+
+    PyArrayMethod_Context *context = call_info->context;
+
+    int nargs = context->method->nin + context->method->nout;
+    for (int i = 0; i < nargs; i++) {
+        Py_DECREF(context->descriptors[i]);
+    }
+    Py_DECREF(context->caller);
+    Py_DECREF(context->method);
+    NPY_AUXDATA_FREE(call_info->auxdata);
+
+    PyObject_Free(call_info);
+}
+
+
+/*
+ * Python entry-point to ufunc promotion and dtype/descr resolution.
+ *
+ * This function does most of the work required to execute ufunc without
+ * actually executing it.
+ * This can be very useful for downstream libraries that reimplement NumPy
+ * functionality, such as Numba or Dask.
+ */
+static PyObject *
+py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
+{
+    NPY_PREPARE_ARGPARSER;
+
+    PyObject *descrs_tuple;
+    PyObject *signature_obj = NULL;
+    NPY_CASTING casting = NPY_DEFAULT_ASSIGN_CASTING;
+    npy_bool reduction = NPY_FALSE;
+
+    if (npy_parse_arguments("resolve_dtypes", args, len_args, kwnames,
+            "", NULL, &descrs_tuple,
+            "$signature", NULL, &signature_obj,
+            "$casting", &PyArray_CastingConverter, &casting,
+            "$reduction", &PyArray_BoolConverter, &reduction,
+            NULL, NULL, NULL) < 0) {
+        return NULL;
+    }
+
+    if (reduction && (ufunc->nin != 2 || ufunc->nout != 1)) {
+        PyErr_SetString(PyExc_ValueError,
+                "ufunc is not compatible with reduction operations.");
+        return NULL;
+    }
+
+    /*
+     * Legacy type resolvers expect NumPy arrays as input.  Until NEP 50 is
+     * adopted, it is most convenient to ensure that we have an "array" object
+     * before calling the type promotion.  Eventually, this hack may be moved
+     * into the legacy type resolution code itself (probably after NumPy stops
+     * using legacy type resolution itself for the most part).
+     *
+     * We make the pretty safe assumptions here that:
+     * - Nobody will actually do anything with the array objects besides
+     *   checking the descriptor or calling CanCast.
+     * - No type resolver will cause weird paths that mess with our promotion
+     *   state (or mind us messing with it).
+     */
+    PyObject *result = NULL;
+    PyObject *result_dtype_tuple = NULL;
+
+    PyArrayObject *dummy_arrays[NPY_MAXARGS] = {NULL};
+    PyArray_DTypeMeta *DTypes[NPY_MAXARGS] = {NULL};
+    PyArray_DTypeMeta *signature[NPY_MAXARGS] = {NULL};
+    PyArray_Descr *operation_descrs[NPY_MAXARGS] = {NULL};
+
+    /* This entry-point to promotion lives in the NEP 50 future: */
+    int original_promotion_state = npy_promotion_state;
+    npy_promotion_state = NPY_USE_WEAK_PROMOTION;
+
+    npy_bool promoting_pyscalars = NPY_FALSE;
+    npy_bool allow_legacy_promotion = NPY_TRUE;
+
+    if (_get_fixed_signature(ufunc, NULL, signature_obj, signature) < 0) {
+        goto finish;
+    }
+
+    if (!PyTuple_CheckExact(descrs_tuple)
+            || PyTuple_Size(descrs_tuple) != ufunc->nargs)  {
+        PyErr_SetString(PyExc_TypeError,
+                "resolve_dtypes: The dtypes must be a tuple of "
+                "`ufunc.nargs` length.");
+        goto finish;
+    }
+    for (int i=0; i < ufunc->nargs; i++) {
+        /*
+         * We create dummy arrays for now.  It should be OK to make this
+         * truly "dummy" (not even proper objects), but that is a hack better
+         * left for the legacy_type_resolution wrapper when NEP 50 is done.
+         */
+        PyObject *descr_obj = PyTuple_GET_ITEM(descrs_tuple, i);
+        PyArray_Descr *descr;
+
+        if (PyArray_DescrCheck(descr_obj)) {
+            descr = (PyArray_Descr *)descr_obj;
+            Py_INCREF(descr);
+            dummy_arrays[i] = (PyArrayObject *)PyArray_NewFromDescr_int(
+                    &PyArray_Type, descr, 0, NULL, NULL, NULL,
+                    0, NULL, NULL, 0, 1);
+            if (dummy_arrays[i] == NULL) {
+                goto finish;
+            }
+            if (PyArray_DESCR(dummy_arrays[i]) != descr) {
+                PyErr_SetString(PyExc_NotImplementedError,
+                    "dtype was replaced during array creation, the dtype is "
+                    "unsupported currently (a subarray dtype?).");
+                goto finish;
+            }
+            DTypes[i] = NPY_DTYPE(descr);
+            Py_INCREF(DTypes[i]);
+            if (!NPY_DT_is_legacy(DTypes[i])) {
+                allow_legacy_promotion = NPY_FALSE;
+            }
+        }
+         /* Explicitly allow int, float, and complex for the "weak" types. */
+        else if (descr_obj == (PyObject *)&PyLong_Type) {
+            descr = PyArray_DescrFromType(NPY_LONG);
+            Py_INCREF(descr);
+            dummy_arrays[i] = (PyArrayObject *)PyArray_Empty(0, NULL, descr, 0);
+            if (dummy_arrays[i] == NULL) {
+                goto finish;
+            }
+            PyArray_ENABLEFLAGS(dummy_arrays[i], NPY_ARRAY_WAS_PYTHON_INT);
+            Py_INCREF(&PyArray_PyIntAbstractDType);
+            DTypes[i] = &PyArray_PyIntAbstractDType;
+            promoting_pyscalars = NPY_TRUE;
+        }
+        else if (descr_obj == (PyObject *)&PyFloat_Type) {
+            descr = PyArray_DescrFromType(NPY_DOUBLE);
+            Py_INCREF(descr);
+            dummy_arrays[i] = (PyArrayObject *)PyArray_Empty(0, NULL, descr, 0);
+            if (dummy_arrays[i] == NULL) {
+                goto finish;
+            }
+            PyArray_ENABLEFLAGS(dummy_arrays[i], NPY_ARRAY_WAS_PYTHON_FLOAT);
+            Py_INCREF(&PyArray_PyFloatAbstractDType);
+            DTypes[i] = &PyArray_PyFloatAbstractDType;
+            promoting_pyscalars = NPY_TRUE;
+        }
+        else if (descr_obj == (PyObject *)&PyComplex_Type) {
+            descr = PyArray_DescrFromType(NPY_CDOUBLE);
+            Py_INCREF(descr);
+            dummy_arrays[i] = (PyArrayObject *)PyArray_Empty(0, NULL, descr, 0);
+            if (dummy_arrays[i] == NULL) {
+                goto finish;
+            }
+            PyArray_ENABLEFLAGS(dummy_arrays[i], NPY_ARRAY_WAS_PYTHON_COMPLEX);
+            Py_INCREF(&PyArray_PyComplexAbstractDType);
+            DTypes[i] = &PyArray_PyComplexAbstractDType;
+            promoting_pyscalars = NPY_TRUE;
+        }
+        else if (descr_obj == Py_None) {
+            if (i < ufunc->nin && !(reduction && i == 0)) {
+                PyErr_SetString(PyExc_TypeError,
+                        "All input dtypes must be provided "
+                        "(except the first one in reductions)");
+                goto finish;
+            }
+        }
+        else {
+            PyErr_SetString(PyExc_TypeError,
+                    "Provided dtype must be a valid NumPy dtype, "
+                    "int, float, complex, or None.");
+            goto finish;
+        }
+    }
+
+    PyArrayMethodObject *ufuncimpl;
+    if (!reduction) {
+        ufuncimpl = promote_and_get_ufuncimpl(ufunc,
+                dummy_arrays, signature, DTypes, NPY_FALSE,
+                allow_legacy_promotion, promoting_pyscalars, NPY_FALSE);
+        if (ufuncimpl == NULL) {
+            goto finish;
+        }
+
+        /* Find the correct descriptors for the operation */
+        if (resolve_descriptors(ufunc->nargs, ufunc, ufuncimpl,
+                dummy_arrays, operation_descrs, signature, casting) < 0) {
+            goto finish;
+        }
+
+        if (validate_casting(
+                ufuncimpl, ufunc, dummy_arrays, operation_descrs, casting) < 0) {
+            goto finish;
+        }
+    }
+    else {  /* reduction */
+        if (signature[2] != NULL) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Reduction signature must end with None, instead pass "
+                    "the first DType in the signature.");
+            goto finish;
+        }
+
+        if (dummy_arrays[2] != NULL) {
+            PyErr_SetString(PyExc_TypeError,
+                    "Output dtype must not be passed for reductions, "
+                    "pass the first input instead.");
+            goto finish;
+        }
+
+        ufuncimpl = reducelike_promote_and_resolve(ufunc,
+                dummy_arrays[1], dummy_arrays[0], signature, NPY_FALSE,
+                operation_descrs, casting, "resolve_dtypes");
+
+        if (ufuncimpl == NULL) {
+            goto finish;
+        }
+    }
+
+    result = PyArray_TupleFromItems(
+            ufunc->nargs, (PyObject **)operation_descrs, 0);
+
+    if (result == NULL || !return_context) {
+        goto finish;
+    }
+    /* Result will be (dtype_tuple, call_info), so move it and clear result */
+    result_dtype_tuple = result;
+    result = NULL;
+
+    /* We may have to return the context: */
+    ufunc_call_info *call_info;
+    call_info = PyObject_Malloc(sizeof(ufunc_call_info)
+                              + ufunc->nargs * sizeof(PyArray_Descr *));
+    if (call_info == NULL) {
+        PyErr_NoMemory();
+        goto finish;
+    }
+    call_info->strided_loop = NULL;
+    call_info->auxdata = NULL;
+    call_info->context = &call_info->_full_context;
+
+    /*
+     * We create a capsule with NumPy 1.24 in the name to signal that it is
+     * prone to change in version updates (it doesn't have to).
+     * This capsule is documented in the `ufunc._resolve_dtypes_and_context`
+     * docstring.
+     */
+    PyObject *capsule = PyCapsule_New(
+            call_info, "numpy_1.24_ufunc_call_info", &free_ufunc_call_info);
+    if (capsule == NULL) {
+        PyObject_Free(call_info);
+        goto finish;
+    }
+
+    PyArrayMethod_Context *context = call_info->context;
+
+    Py_INCREF(ufunc);
+    context->caller = (PyObject *)ufunc;
+    Py_INCREF(ufuncimpl);
+    context->method = ufuncimpl;
+    context->descriptors = call_info->_descrs;
+    for (int i=0; i < ufunc->nargs; i++) {
+        Py_INCREF(operation_descrs[i]);
+        context->descriptors[i] = operation_descrs[i];
+    }
+
+    result = PyTuple_Pack(2, result_dtype_tuple, capsule);
+    /* cleanup and return */
+    Py_DECREF(capsule);
+
+  finish:
+    npy_promotion_state = original_promotion_state;
+
+    Py_XDECREF(result_dtype_tuple);
+    for (int i = 0; i < ufunc->nargs; i++) {
+        Py_XDECREF(signature[i]);
+        Py_XDECREF(dummy_arrays[i]);
+        Py_XDECREF(operation_descrs[i]);
+        Py_XDECREF(DTypes[i]);
+    }
+
+    return result;
+}
+
+
+static PyObject *
+py_resolve_dtypes(PyUFuncObject *ufunc,
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
+{
+    return py_resolve_dtypes_generic(ufunc, NPY_FALSE, args, len_args, kwnames);
+}
+
+
+static PyObject *
+py_resolve_dtypes_and_context(PyUFuncObject *ufunc,
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
+{
+    return py_resolve_dtypes_generic(ufunc, NPY_TRUE, args, len_args, kwnames);
+}
+
+
+static PyObject *
+py_get_strided_loop(PyUFuncObject *ufunc,
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
+{
+    NPY_PREPARE_ARGPARSER;
+
+    PyObject *call_info_obj;
+    PyObject *fixed_strides_obj = Py_None;
+    npy_intp fixed_strides[NPY_MAXARGS];
+
+    if (npy_parse_arguments("_get_strided_loop", args, len_args, kwnames,
+            "", NULL, &call_info_obj,
+            "$fixed_strides", NULL, &fixed_strides_obj,
+            NULL, NULL, NULL) < 0) {
+        return NULL;
+    }
+
+    ufunc_call_info *call_info = PyCapsule_GetPointer(
+                call_info_obj, "numpy_1.24_ufunc_call_info");
+    if (call_info == NULL) {
+        /* Cannot have a context with NULL inside... */
+        assert(PyErr_Occurred());
+        return NULL;
+    }
+    if (call_info->strided_loop != NULL) {
+        PyErr_SetString(PyExc_TypeError,
+                "ufunc call_info has already been filled/used!");
+        return NULL;
+    }
+
+    if (call_info->context->caller != (PyObject *)ufunc) {
+        PyErr_SetString(PyExc_TypeError,
+                "calling get_strided_loop with incompatible context");
+        return NULL;
+    }
+
+    /*
+     * Strict conversion of fixed_strides, None, or tuple of int or None.
+     */
+    if (fixed_strides_obj == Py_None) {
+        for (int i = 0; i < ufunc->nargs; i++) {
+            fixed_strides[i] = NPY_MAX_INTP;
+        }
+    }
+    else if (PyTuple_CheckExact(fixed_strides_obj)
+            && PyTuple_Size(fixed_strides_obj) == ufunc->nargs) {
+        for (int i = 0; i < ufunc->nargs; i++) {
+            PyObject *stride = PyTuple_GET_ITEM(fixed_strides_obj, i);
+            if (PyLong_CheckExact(stride)) {
+                fixed_strides[i] = PyLong_AsSsize_t(stride);
+                if (error_converting(fixed_strides[i])) {
+                    return NULL;
+                }
+            }
+            else if (stride == Py_None) {
+                fixed_strides[i] = NPY_MAX_INTP;
+            }
+            else {
+                PyErr_SetString(PyExc_TypeError,
+                    "_get_strided_loop(): fixed_strides tuple must contain "
+                    "Python ints or None");
+                return NULL;
+            }
+        }
+    }
+    else {
+        PyErr_SetString(PyExc_TypeError,
+            "_get_strided_loop(): fixed_strides must be a tuple or None");
+        return NULL;
+    }
+
+    NPY_ARRAYMETHOD_FLAGS flags;
+    if (call_info->context->method->get_strided_loop(call_info->context,
+            1, 0, fixed_strides, &call_info->strided_loop, &call_info->auxdata,
+            &flags) < 0) {
+        return NULL;
+    }
+
+    call_info->requires_pyapi = flags & NPY_METH_REQUIRES_PYAPI;
+    call_info->no_floatingpoint_errors = (
+            flags & NPY_METH_NO_FLOATINGPOINT_ERRORS);
+
+    Py_RETURN_NONE;
+}
+
+
 static struct PyMethodDef ufunc_methods[] = {
     {"reduce",
         (PyCFunction)ufunc_reduce,
@@ -6338,6 +6751,21 @@ static struct PyMethodDef ufunc_methods[] = {
     {"at",
         (PyCFunction)ufunc_at,
         METH_VARARGS, NULL},
+    /* Lower level methods: */
+    {"resolve_dtypes",
+        (PyCFunction)py_resolve_dtypes,
+        METH_FASTCALL | METH_KEYWORDS, NULL},
+    /*
+     * The following two functions are public API, but underscored since they
+     * are C-user specific and allow direct access to the core of ufunc loops.
+     * (See their documentation for API stability.)
+     */
+    {"_resolve_dtypes_and_context",
+        (PyCFunction)py_resolve_dtypes_and_context,
+        METH_FASTCALL | METH_KEYWORDS, NULL},
+    {"_get_strided_loop",
+        (PyCFunction)py_get_strided_loop,
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {NULL, NULL, 0, NULL}           /* sentinel */
 };
 
@@ -6518,6 +6946,7 @@ NPY_NO_EXPORT PyTypeObject PyUFunc_Type = {
     .tp_name = "numpy.ufunc",
     .tp_basicsize = sizeof(PyUFuncObject),
     .tp_dealloc = (destructor)ufunc_dealloc,
+    .tp_vectorcall_offset = offsetof(PyUFuncObject, vectorcall),
     .tp_repr = (reprfunc)ufunc_repr,
     .tp_call = &PyVectorcall_Call,
     .tp_str = (reprfunc)ufunc_repr,
@@ -6527,7 +6956,6 @@ NPY_NO_EXPORT PyTypeObject PyUFunc_Type = {
     .tp_traverse = (traverseproc)ufunc_traverse,
     .tp_methods = ufunc_methods,
     .tp_getset = ufunc_getset,
-    .tp_vectorcall_offset = offsetof(PyUFuncObject, vectorcall),
 };
 
 /* End of code for ufunc objects */
