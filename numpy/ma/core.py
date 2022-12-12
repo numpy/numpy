@@ -5383,7 +5383,10 @@ class MaskedArray(ndarray):
 
         >>> u8_arr = np.array([1, 0], dtype=np.uint8)
         >>> np.ma.diff(u8_arr)
-        array([255], dtype=uint8)
+        masked_array(data=[255],
+                mask=False,
+            fill_value=999999,
+                dtype=uint8)
         >>> u8_arr[1,...] - u8_arr[0,...]
         255
 
@@ -5392,7 +5395,10 @@ class MaskedArray(ndarray):
 
         >>> i16_arr = u8_arr.astype(np.int16)
         >>> np.ma.diff(i16_arr)
-        array([-1], dtype=int16)
+        masked_array(data=[-1],
+                mask=False,
+            fill_value=999999,
+                dtype=int16)
 
         Examples
         --------
@@ -5422,14 +5428,16 @@ class MaskedArray(ndarray):
             fill_value=1)
 
         """
-        arrays = [self]
+        combined = []
         if prepend is not np._NoValue:
             prepend = np.ma.asanyarray(prepend)
             if prepend.ndim == 0:
                 shape = list(a.shape)
                 shape[axis] = 1
                 prepend = np.broadcast_to(prepend, tuple(shape))
-            arrays.insert(0, prepend)
+            combined.append(prepend)
+
+        combined.append(self)
 
         if append is not np._NoValue:
             append = np.ma.asanyarray(append)
@@ -5437,9 +5445,12 @@ class MaskedArray(ndarray):
                 shape = list(a.shape)
                 shape[axis] = 1
                 append = np.broadcast_to(append, tuple(shape))
-            arrays.append(append)
+            combined.append(append)
 
-        a = np.ma.concatenate(arrays, axis)
+        if len(combined) > 1:
+            a = np.ma.concatenate(combined, axis)
+        else:
+            a = self
 
         # GH 22465 np.diff without prepend/append preserves the mask 
         return np.diff(a, n, axis)
