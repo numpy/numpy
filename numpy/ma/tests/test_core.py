@@ -4091,6 +4091,33 @@ class TestMaskedArrayMathMethods:
                          mask=np.zeros((10000, 10000)))
         assert_equal(a.mean(), 65535.0)
 
+    def test_diff_with_prepend(self):
+        # GH 22465
+        x = np.array([1, 2, 2, 3, 4, 2, 1, 1])
+
+        a = np.ma.masked_equal(x[3:], value=2)
+        a_prep = np.ma.masked_equal(x[:3], value=2)
+        diff1 = np.ma.diff(a, prepend=a_prep, axis=0)
+
+        b = np.ma.masked_equal(x, value=2)
+        diff2 = np.ma.diff(b, axis=0)
+
+        assert_(np.ma.allequal(diff1, diff2))
+
+    def test_diff_with_append(self):
+        # GH 22465
+        x = np.array([1, 2, 2, 3, 4, 2, 1, 1])
+
+        a = np.ma.masked_equal(x[:3], value=2)
+        a_app = np.ma.masked_equal(x[3:], value=2)
+        diff1 = np.ma.diff(a, append=a_app, axis=0)
+
+        b = np.ma.masked_equal(x, value=2)
+        diff2 = np.ma.diff(b, axis=0)
+
+        assert_(np.ma.allequal(diff1, diff2))
+
+
 class TestMaskedArrayMathMethodsComplex:
     # Test class for miscellaneous MaskedArrays methods.
     def setup_method(self):
