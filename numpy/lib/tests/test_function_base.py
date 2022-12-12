@@ -3543,6 +3543,12 @@ class TestQuantile:
         assert np.isscalar(actual)
         assert_equal(np.quantile(a, 0.5), np.nan)
 
+    def test_casting(self):
+        #See gh-22766
+        qs_arr = np.array([0.0, 0.5, 1.0])
+        q_out = np.zeros(3, dtype=int)
+        y = np.quantile(np.arange(4, dtype=float), qs_arr, q_out)
+        assert_array_equal(y, [1, 1, 3])
 
 class TestLerp:
     @hypothesis.given(t0=st.floats(allow_nan=False, allow_infinity=False,
