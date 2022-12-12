@@ -4185,7 +4185,8 @@ def percentile(a,
             xlabel='Percentile',
             ylabel='Estimated percentile value',
             yticks=a)
-        ax.legend()
+        ax.legend(bbox_to_anchor=(1.03, 1))
+        plt.tight_layout()
         plt.show()
 
     References
