@@ -1,18 +1,23 @@
-// For format details, see https://aka.ms/devcontainer.json.
+// For format details, see https://aka.ms/devcontainer.json
 {
-	// Use 'postCreateCommand' to run commands after the container is created.
+	// Conda requires lots of memory to resolve our environment
+	"hostRequirements": {
+		"memory": "8gb"
+	},
+
+	// Use 'postCreateCommand' to run commands after the container is created
 	"postCreateCommand": "conda env create -f environment.yml",
 
-	// Features to add to the dev container. More info: https://containers.dev/features.
+	// Features to add to the dev container. More info: https://containers.dev/features
 	"features": {
 		"ghcr.io/devcontainers/features/rust:1": {
 			"version": "latest"
 		}
 	},
 	
-	// Configure tool-specific properties.
+	// Configure tool-specific properties
 	"customizations": {
-		// Configure properties specific to VS Code.
+		// Configure properties specific to VS Code
 		"vscode": {
 			"extensions": [
 				"ms-python.python"
