@@ -492,7 +492,7 @@ cdef class BitGenerator():
         `~numpy.random.SeedSequence` to derive the initial `BitGenerator` state.
         One may also pass in a `SeedSequence` instance.
         
-        note: all entropy not None must be non-negative
+        note: all seed not None must be non-negative
 
     Attributes
     ----------
