@@ -1395,8 +1395,13 @@ PyArray_DiscoverDTypeAndShape(
  * @return 1 if this is not a concrete dtype instance 0 otherwise
  */
 static int
-descr_is_legacy_parametric_instance(PyArray_Descr *descr)
+descr_is_legacy_parametric_instance(PyArray_Descr *descr,
+                                    PyArray_DTypeMeta *DType)
 {
+    if (!NPY_DT_is_legacy(DType)) {
+        return 0;
+    }
+
     if (PyDataType_ISUNSIZED(descr)) {
         return 1;
     }
@@ -1440,7 +1445,8 @@ PyArray_ExtractDTypeAndDescriptor(PyObject *dtype,
                     (PyTypeObject *)&PyArrayDTypeMeta_Type)) {
             *out_DType = NPY_DTYPE(dtype);
             Py_INCREF(*out_DType);
-            if (!descr_is_legacy_parametric_instance((PyArray_Descr *)dtype)) {
+            if (!descr_is_legacy_parametric_instance((PyArray_Descr *)dtype,
+                                                     *out_DType)) {
                 *out_descr = (PyArray_Descr *)dtype;
                 Py_INCREF(*out_descr);
             }
