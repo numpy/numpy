@@ -32,8 +32,6 @@ Exceptions
 """
 
 
-from ._utils import set_module as _set_module
-
 __all__ = [
     "ComplexWarning", "VisibleDeprecationWarning", "ModuleDeprecationWarning",
     "TooHardError", "AxisError", "DTypePromotionError"]
@@ -44,12 +42,6 @@ __all__ = [
 if '_is_loaded' in globals():
     raise RuntimeError('Reloading numpy._globals is not allowed')
 _is_loaded = True
-
-
-# TODO: One day, we should remove the _set_module here before removing them
-#       fully.  Not doing it now, just to allow unpickling to work on older
-#       versions for a bit.  (Module exists since NumPy 1.25.)
-#       This then also means that the typing stubs should be moved!
 
 
 class ComplexWarning(RuntimeWarning):

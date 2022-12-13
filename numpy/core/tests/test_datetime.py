@@ -1003,12 +1003,11 @@ class TestDateTime:
                      casting='unsafe'))
 
         # Shouldn't be able to compare datetime and timedelta
-        # TODO: Changing to 'same_kind' or 'safe' casting in the ufuncs by
-        #       default is needed to properly catch this kind of thing...
         a = np.array('2012-12-21', dtype='M8[D]')
         b = np.array(3, dtype='m8[D]')
-        #assert_raises(TypeError, np.less, a, b)
-        assert_raises(TypeError, np.less, a, b, casting='same_kind')
+        assert_raises(TypeError, np.less, a, b)
+        # not even if "unsafe"
+        assert_raises(TypeError, np.less, a, b, casting='unsafe')
 
     def test_datetime_like(self):
         a = np.array([3], dtype='m8[4D]')
