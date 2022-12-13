@@ -3178,6 +3178,8 @@ the C-API is needed then some additional steps must be taken.
 
 .. c:macro:: PY_ARRAY_UNIQUE_SYMBOL
 
+.. c:macro:: PY_ARRAY_ATTRIBUTE
+
 .. c:macro:: NO_IMPORT_ARRAY
 
     Using these #defines you can use the C-API in multiple files for a
@@ -3213,19 +3215,31 @@ the C-API is needed then some additional steps must be taken.
     header file as long as you make sure that NO_IMPORT_ARRAY is
     #defined before #including that file.
 
-    Internally, these #defines work as follows:
+    If the single extension module not only consists of multiple
+    compilation units, but also spans multiple binaries, instead of
+    invoking ``import_array`` in every binary, you can leverage the
+    ``PY_ARRAY_ATTRIBUTE`` macro. Internally, the C-API is actually
+    an array of function pointers. This array is created (and pointed 
+    to by the global variable ``PyArray_API``) by ``import_array``.
+    These #defines work as follows:
 
         * If neither is defined, the C-API is declared to be
           ``static void**``, so it is only visible within the
           compilation unit that #includes numpy/arrayobject.h.
         * If :c:macro:`PY_ARRAY_UNIQUE_SYMBOL` is #defined, but
           :c:macro:`NO_IMPORT_ARRAY` is not, the C-API is declared to
-          be ``void**``, so that it will also be visible to other
-          compilation units.
+          be ``PY_ARRAY_ATTRIBUTE void**``, so that it will also be
+          visible to other compilation units if ``PY_ARRAY_ATTRIBUTE``
+          is not defined. It is also visible to other binaries
+          if ``PY_ARRAY_ATTRIBUTE`` is defined as ``__declspec(dllexport)``
+          or ``__attribute__((visibility("default")))``.
         * If :c:macro:`NO_IMPORT_ARRAY` is #defined, regardless of
           whether :c:macro:`PY_ARRAY_UNIQUE_SYMBOL` is, the C-API is
-          declared to be ``extern void**``, so it is expected to
-          be defined in another compilation unit.
+          declared to be ``extern PY_ARRAY_ATTRIBUTE void**``, so it is
+          expected to be defined in another compilation unit of the same
+          binary if ``PY_ARRAY_ATTRIBUTE`` is not defined. Or it is imported
+          from another binary if ``PY_ARRAY_ATTRIBUTE`` is defined as
+          ``__declspec(dllimport)`` or ``__attribute__((visibility("default")))``.
         * Whenever :c:macro:`PY_ARRAY_UNIQUE_SYMBOL` is #defined, it
           also changes the name of the variable holding the C-API, which
           defaults to ``PyArray_API``, to whatever the macro is

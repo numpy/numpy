@@ -482,28 +482,20 @@ Importing the API
 
 .. c:macro:: PY_UFUNC_UNIQUE_SYMBOL
 
+.. c:macro:: PY_UFUNC_ATTRIBUTE
+
 .. c:macro:: NO_IMPORT_UFUNC
 
 .. c:function:: void import_ufunc(void)
 
-    These are the constants and functions for accessing the ufunc
+    These are the macros and functions for accessing the ufunc
     C-API from extension modules in precisely the same way as the
     array C-API can be accessed. The ``import_ufunc`` () function must
     always be called (in the initialization subroutine of the
-    extension module). If your extension module is in one file then
-    that is all that is required. The other two constants are useful
-    if your extension module makes use of multiple files. In that
-    case, define :c:data:`PY_UFUNC_UNIQUE_SYMBOL` to something unique to
-    your code and then in source files that do not contain the module
-    initialization function but still need access to the UFUNC API,
-    define :c:data:`PY_UFUNC_UNIQUE_SYMBOL` to the same name used previously
-    and also define :c:data:`NO_IMPORT_UFUNC`.
+    extension module).
 
-    The C-API is actually an array of function pointers. This array is
-    created (and pointed to by a global variable) by import_ufunc. The
-    global variable is either statically defined or allowed to be seen
-    by other files depending on the state of
-    :c:data:`PY_UFUNC_UNIQUE_SYMBOL` and :c:data:`NO_IMPORT_UFUNC`.
+    To understand how these macros work together, please refer to
+    :c:func:`import_array`.
 
 .. index::
    pair: ufunc; C-API
