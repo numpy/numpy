@@ -376,7 +376,7 @@ PyUFunc_SimpleBinaryComparisonTypeResolver(PyUFuncObject *ufunc,
          * ResultType would give for number->string promotions.
          * (We never supported flexible dtypes here.)
          */
-        else if (!PyArray_ISFLEXIBLE(operands[0]) &&
+        if (!PyArray_ISFLEXIBLE(operands[0]) &&
                 !PyArray_ISFLEXIBLE(operands[1])) {
             out_dtypes[0] = PyArray_ResultType(2, operands, 0, NULL);
             if (out_dtypes[0] == NULL) {
