@@ -1,0 +1,25 @@
+Timedelta and Datetime promote strictly now
+-------------------------------------------
+NumPy datetimes and timedelta now do not promote anymore
+with each other or e.g. integer types.
+This means that certain calls like `np.result_type` will fail
+when mixing invalid promotions::
+
+    # Both of these now fail:
+    np.result_type("m8[ns]", "int64")  # previously -> m8[ns]
+    np.result_type("M8[ns]", "m8[s]")  # previously -> M8[ns]
+
+Further, if included e.g. in a call to ``np.array()`` NumPy
+may now fall back to ``object`` dtype:
+
+    >>> np.array([np.timedelta64(123, "s"), -123])
+    array([numpy.timedelta64(123,'s'), -123], dtype=object)
+
+which previously returned a timedelta array.  In practice the
+main change is mixing timedelta and numerical/boolean values.
+While add/subtract remains supported, comparisons silently
+change the result:
+
+    np.timedelta64(0, "s") == 0
+
+will now return ``False``.
