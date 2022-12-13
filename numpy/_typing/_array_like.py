@@ -123,6 +123,11 @@ _ArrayLikeTD64_co = _DualArrayLike[
     dtype[Union[bool_, integer[Any], timedelta64]],
     Union[bool, int],
 ]
+_ArrayLikeTD64_comp_co = Union[
+    _SupportsArray["dtype[timedelta64]"],
+    _NestedSequence[_SupportsArray["dtype[timedelta64]"]],
+]
+
 _ArrayLikeDT64_co = Union[
     _SupportsArray[dtype[datetime64]],
     _NestedSequence[_SupportsArray[dtype[datetime64]]],
