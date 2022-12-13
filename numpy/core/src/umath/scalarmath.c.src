@@ -1004,7 +1004,7 @@ convert_to_@name@(PyObject *value, @type@ *result, npy_bool *may_need_deferring)
         if (overflow) {
             /* handle as if "unsafe" */
             if (npy_promotion_state != NPY_USE_WEAK_PROMOTION) {
-                return PROMOTION_REQUIRED;
+                return OTHER_IS_UNKNOWN_OBJECT;
             }
             return CONVERT_PYSCALAR;
         }
