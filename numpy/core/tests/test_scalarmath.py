@@ -860,27 +860,29 @@ def test_operator_scalars(op, type1, type2):
 
 
 @pytest.mark.parametrize("op", reasonable_operators_for_scalars)
-def test_longdouble_inf_loop(op):
+@pytest.mark.parametrize("val", [None, 2**64])
+def test_longdouble_inf_loop(op, val):
+    # Note: The 2**64 value will pass once NEP 50 is adopted.
     try:
-        op(np.longdouble(3), None)
+        op(np.longdouble(3), val)
     except TypeError:
         pass
     try:
-        op(None, np.longdouble(3))
+        op(val, np.longdouble(3))
     except TypeError:
         pass
 
 
 @pytest.mark.parametrize("op", reasonable_operators_for_scalars)
-def test_clongdouble_inf_loop(op):
-    if op in {operator.mod} and False:
-        pytest.xfail("The modulo operator is known to be broken")
+@pytest.mark.parametrize("val", [None, 2**64])
+def test_clongdouble_inf_loop(op, val):
+    # Note: The 2**64 value will pass once NEP 50 is adopted.
     try:
-        op(np.clongdouble(3), None)
+        op(np.clongdouble(3), val)
     except TypeError:
         pass
     try:
-        op(None, np.longdouble(3))
+        op(val, np.longdouble(3))
     except TypeError:
         pass
 
