@@ -2100,7 +2100,7 @@ def slogdet(a):
     >>> sign, logabsdet = np.linalg.slogdet(a)
     >>> (sign, logabsdet)
     (array([-1., -1., -1.]), array([ 0.69314718,  1.09861229,  2.07944154]))
-    >>> sign * np.exp(logdet)
+    >>> sign * np.exp(logabsdet)
     array([-2., -3., -8.])
 
     This routine succeeds where ordinary `det` does not:
