@@ -3547,8 +3547,8 @@ class TestQuantile:
         #See gh-22766
         qs_arr = np.array([0.0, 0.5, 1.0])
         q_out = np.zeros(3, dtype=int)
-        y = np.quantile(np.arange(4, dtype=float), qs_arr, q_out)
-        assert_array_equal(y, [1, 1, 3])
+        y = np.quantile(np.arange(4, dtype=float), qs_arr, out=q_out)
+        assert_array_equal(y, [0, 1, 3])
 
 class TestLerp:
     @hypothesis.given(t0=st.floats(allow_nan=False, allow_infinity=False,
