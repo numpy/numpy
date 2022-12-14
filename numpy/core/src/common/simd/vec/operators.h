@@ -266,50 +266,6 @@ NPY_FINLINE npyv_f64 npyv_not_f64(npyv_f64 a)
 #endif
 #define npyv_cmple_f64(A, B) npyv_cmpge_f64(B, A)
 
-// ordered comparison guarantees non-signaling
-// don't raise FP invalid exception if one of the sources containing qnan.
-#if NPY_SIMD_F32
-NPY_FINLINE npyv_b32 npyv_cmpgeq_f32(npyv_f32 a, npyv_f32 b)
-{
-#ifdef NPY_HAVE_VSX
-    return vec_vcmpgefp(a, b);
-#else
-    return vec_cmpge(a, b);
-#endif
-}
-NPY_FINLINE npyv_b32 npyv_cmpgtq_f32(npyv_f32 a, npyv_f32 b)
-{
-#ifdef NPY_HAVE_VSX
-    return vec_vcmpgtfp(a, b);
-#else
-    return vec_cmpgt(a, b);
-#endif
-}
-#define npyv_cmpleq_f32(A, B) npyv_cmpgeq_f32(B, A)
-#define npyv_cmpltq_f32(A, B) npyv_cmpgtq_f32(B, A)
-#endif // NPY_SIMD_F32
-
-NPY_FINLINE npyv_b64 npyv_cmpgeq_f64(npyv_f64 a, npyv_f64 b)
-{
-#ifdef NPY_HAVE_VSX
-    return vec_cmpeq(vec_max(a, b), a);
-#else
-    return vec_cmpge(a, b);
-#endif
-}
-NPY_FINLINE npyv_b64 npyv_cmpgtq_f64(npyv_f64 a, npyv_f64 b)
-{
-#ifdef NPY_HAVE_VSX
-    npyv_f64 max = vec_max(a, b);
-    npyv_b64 nnan = vec_cmpeq(max, max);
-    return vec_andc(max, vec_cmpeq(max, b));
-#else
-    return vec_cmpgt(a, b);
-#endif
-}
-#define npyv_cmpleq_f64(A, B) npyv_cmpgeq_f64(B, A)
-#define npyv_cmpltq_f64(A, B) npyv_cmpgtq_f64(B, A)
-
 // check special cases
 #if NPY_SIMD_F32
     NPY_FINLINE npyv_b32 npyv_notnan_f32(npyv_f32 a)

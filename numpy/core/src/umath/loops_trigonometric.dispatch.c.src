@@ -124,7 +124,12 @@ simd_sincos_f32(const float *src, npy_intp ssrc, float *dst, npy_intp sdst,
         } else {
             x_in = npyv_loadn_tillz_f32(src, ssrc, len);
         }
-        npyv_b32 simd_mask = npyv_cmpleq_f32(npyv_abs_f32(x_in), max_cody);
+        npyv_b32 nnan_mask = npyv_notnan_f32(x_in);
+    #if NPY_SIMD_CMPSIGNAL
+        // Eliminate NaN to avoid FP invalid exception
+        x_in = npyv_and_f32(x_in, npyv_reinterpret_f32_u32(npyv_cvt_u32_b32(nnan_mask)));
+    #endif
+        npyv_b32 simd_mask = npyv_cmple_f32(npyv_abs_f32(x_in), max_cody);
         npy_uint64 simd_maski = npyv_tobits_b32(simd_mask);
         /*
          * For elements outside of this range, Cody-Waite's range reduction
@@ -132,7 +137,6 @@ simd_sincos_f32(const float *src, npy_intp ssrc, float *dst, npy_intp sdst,
          * these numbers
          */
         if (simd_maski != 0) {
-            npyv_b32 nnan_mask = npyv_notnan_f32(x_in);
             npyv_f32 x = npyv_select_f32(npyv_and_b32(nnan_mask, simd_mask), x_in, zerosf);
 
             npyv_f32 quadrant = npyv_mul_f32(x, two_over_pi);
