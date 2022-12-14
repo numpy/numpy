@@ -393,6 +393,9 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
             PyArray_BYTES(arr), PyArray_STRIDES(arr),
             descr, value);
 
+    if (PyDataType_REFCHK(descr)) {
+        PyArray_Item_XDECREF(value, descr);
+    }
     PyMem_FREE(value_buffer_heap);
     return retcode;
 }
