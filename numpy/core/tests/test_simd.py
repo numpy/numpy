@@ -579,28 +579,11 @@ class _SIMD_FP(_Test_Utility):
             intrin(v)
             assert check_floatstatus(invalid=True) == False
 
-    @pytest.mark.parametrize("intrin_name", [
-        "cmpltq", "cmpleq", "cmpgtq", "cmpgeq"
-    ])
-    def test_binary_invalid_fpexception(self, intrin_name):
-        intrin = getattr(self, intrin_name)
-        for d in [float("nan"), float("inf"), -float("inf")]:
-            a = self.setall(d)
-            b = self.setall(1.0)
-            clear_floatstatus()
-            intrin(a, b)
-            intrin(b, a)
-            assert check_floatstatus(invalid=True) == False
-
     @pytest.mark.parametrize('py_comp,np_comp', [
         (operator.lt, "cmplt"),
         (operator.le, "cmple"),
         (operator.gt, "cmpgt"),
         (operator.ge, "cmpge"),
-        (operator.lt, "cmpltq"),
-        (operator.le, "cmpleq"),
-        (operator.gt, "cmpgtq"),
-        (operator.ge, "cmpgeq"),
         (operator.eq, "cmpeq"),
         (operator.ne, "cmpneq")
     ])
@@ -923,21 +906,14 @@ class _SIMD_ALL(_Test_Utility):
         rev64 = self.rev64(self.load(range(self.nlanes)))
         assert rev64 == data_rev64
 
-    @pytest.mark.parametrize('func, intrin, sup_sfx', [
-        (operator.lt, "cmplt", []),
-        (operator.le, "cmple", []),
-        (operator.gt, "cmpgt", []),
-        (operator.ge, "cmpge", []),
-        (operator.eq, "cmpeq", []),
-        (operator.ne, "cmpneq", ("f32", "f64")),
-        (operator.lt, "cmpltq", ("f32", "f64")),
-        (operator.le, "cmpleq", ("f32", "f64")),
-        (operator.gt, "cmpgtq", ("f32", "f64")),
-        (operator.ge, "cmpgeq", ("f32", "f64"))
+    @pytest.mark.parametrize('func, intrin', [
+        (operator.lt, "cmplt"),
+        (operator.le, "cmple"),
+        (operator.gt, "cmpgt"),
+        (operator.ge, "cmpge"),
+        (operator.eq, "cmpeq")
     ])
-    def test_operators_comparison(self, func, intrin, sup_sfx):
-        if sup_sfx and self.sfx not in sup_sfx:
-            return
+    def test_operators_comparison(self, func, intrin):
         if self._is_fp():
             data_a = self._data()
         else:

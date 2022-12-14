@@ -82,6 +82,9 @@ typedef double     npyv_lanetype_f64;
     #define NPY_SIMD_FMA3 0
     /// 1 if the enabled SIMD extension is running on big-endian mode otherwise 0.
     #define NPY_SIMD_BIGENDIAN 0
+    /// 1 if the supported comparison intrinsics(lt, le, gt, ge)
+    /// raises FP invalid exception for quite NaNs.
+    #define NPY_SIMD_CMPSIGNAL 0
 #endif
 
 // enable emulated mask operations for all SIMD extension except for AVX512

@@ -238,35 +238,6 @@
 #define npyv_cmple_f32(A, B) npyv_cmpge_f32(B, A)
 #define npyv_cmple_f64(A, B) npyv_cmpge_f64(B, A)
 
-// ordered comparison guarantees non-signaling
-// don't raise FP invalid exception if one of the sources containing qnan.
-NPY_FINLINE npyv_b32 npyv_cmpgeq_f32(npyv_f32 a, npyv_f32 b)
-{
-    return vceqq_f32(vmaxq_f32(a, b), a);
-}
-NPY_FINLINE npyv_b32 npyv_cmpgtq_f32(npyv_f32 a, npyv_f32 b)
-{
-    npyv_f32 max = vmaxq_f32(a, b);
-    npyv_b32 nnan = vceqq_f32(max, max);
-    return vbicq_u32(nnan, vceqq_f32(max, b));
-}
-#define npyv_cmpleq_f32(A, B) npyv_cmpgeq_f32(B, A)
-#define npyv_cmpltq_f32(A, B) npyv_cmpgtq_f32(B, A)
-#if NPY_SIMD_F64
-NPY_FINLINE npyv_b64 npyv_cmpgeq_f64(npyv_f64 a, npyv_f64 b)
-{
-    return vceqq_f64(vmaxq_f64(a, b), a);
-}
-NPY_FINLINE npyv_b64 npyv_cmpgtq_f64(npyv_f64 a, npyv_f64 b)
-{
-    npyv_f64 max = vmaxq_f64(a, b);
-    npyv_b64 nnan = vceqq_f64(max, max);
-    return vbicq_u64(nnan, vceqq_f64(max, b));
-}
-#define npyv_cmpleq_f64(A, B) npyv_cmpgeq_f64(B, A)
-#define npyv_cmpltq_f64(A, B) npyv_cmpgtq_f64(B, A)
-#endif
-
 // check special cases
 NPY_FINLINE npyv_b32 npyv_notnan_f32(npyv_f32 a)
 { return vceqq_f32(a, a); }
