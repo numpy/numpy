@@ -568,6 +568,16 @@ class _SIMD_FP(_Test_Utility):
         nnan = self.notnan(self.setall(self._nan()))
         assert nnan == [0]*self.nlanes
 
+    @pytest.mark.parametrize("intrin_name", [
+        "rint", "trunc", "ceil", "floor"
+    ])
+    def test_unary_invalid_fpexception(self, intrin_name):
+        intrin = getattr(self, intrin_name)
+        for d in [float("nan"), float("inf"), -float("inf")]:
+            v = self.setall(d)
+            clear_floatstatus()
+            intrin(v)
+            assert check_floatstatus(invalid=True) == False
 
     @pytest.mark.parametrize("intrin_name", [
         "cmpltq", "cmpleq", "cmpgtq", "cmpgeq"
