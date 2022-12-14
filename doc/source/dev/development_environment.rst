@@ -27,6 +27,10 @@ of this chapter we assume that you have set up your git repo as described in
 Testing builds
 --------------
 
+Before running the tests, first install the test dependencies::
+
+    $ python -m pip install -r test_requirements.txt
+
 To build the development version of NumPy and run tests, spawn
 interactive shells with the Python import paths properly set up etc.,
 do one of::
