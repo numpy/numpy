@@ -74,9 +74,6 @@ _try_convert_from_ctypes_type(PyTypeObject *type)
     return (PyArray_Descr *)res;
 }
 
-static PyArray_Descr *
-_convert_from_any(PyObject *obj, int align);
-
 /*
  * This function creates a dtype object when the object has a "dtype" attribute,
  * and it can be converted to a dtype object.
