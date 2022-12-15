@@ -746,6 +746,7 @@ src_umath = [
   src_file.process('src/umath/loops_comparison.dispatch.c.src'),
   src_file.process('src/umath/loops_exponent_log.dispatch.c.src'),
   src_file.process('src/umath/loops_hyperbolic.dispatch.c.src'),
+  src_file.process('src/umath/loops_logical.dispatch.c.src'),
   src_file.process('src/umath/loops_minmax.dispatch.c.src'),
   src_file.process('src/umath/loops_modulo.dispatch.c.src'),
   src_file.process('src/umath/loops_trigonometric.dispatch.c.src'),

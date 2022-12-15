@@ -10,23 +10,28 @@
     #define NPY_NO_EXPORT NPY_VISIBILITY_HIDDEN
 #endif
 
-#define BOOL_invert BOOL_logical_not
-#define BOOL_add BOOL_logical_or
-#define BOOL_bitwise_and BOOL_logical_and
-#define BOOL_bitwise_or BOOL_logical_or
-#define BOOL_logical_xor BOOL_not_equal
-#define BOOL_bitwise_xor BOOL_logical_xor
-#define BOOL_multiply BOOL_logical_and
-#define BOOL_maximum BOOL_logical_or
-#define BOOL_minimum BOOL_logical_and
-#define BOOL_fmax BOOL_maximum
-#define BOOL_fmin BOOL_minimum
-
 /*
  *****************************************************************************
  **                             BOOLEAN LOOPS                               **
  *****************************************************************************
  */
+
+/*
+ * Following functions are defined by umath generator
+ * to enable runtime dispatching without the need
+ * to redefine them within dsipatch-able sources.
+ */
+// #define BOOL_invert BOOL_logical_not
+// #define BOOL_add BOOL_logical_or
+// #define BOOL_bitwise_and BOOL_logical_and
+// #define BOOL_bitwise_or BOOL_logical_or
+// #define BOOL_logical_xor BOOL_not_equal
+// #define BOOL_bitwise_xor BOOL_logical_xor
+// #define BOOL_multiply BOOL_logical_and
+// #define BOOL_maximum BOOL_logical_or
+// #define BOOL_minimum BOOL_logical_and
+// #define BOOL_fmax BOOL_maximum
+// #define BOOL_fmin BOOL_minimum
 
 #ifndef NPY_DISABLE_OPTIMIZATION
     #include "loops_comparison.dispatch.h"
@@ -39,11 +44,15 @@ NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void BOOL_@kind@,
     (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func)))
 /**end repeat**/
 
+#ifndef NPY_DISABLE_OPTIMIZATION
+    #include "loops_logical.dispatch.h"
+#endif
+
 /**begin repeat
- * #kind = logical_and, logical_or, absolute, logical_not#
- **/
-NPY_NO_EXPORT void
-BOOL_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
+ * #kind = logical_and, logical_or, logical_not, absolute#
+ */
+ NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void BOOL_@kind@,
+   (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data)))
 /**end repeat**/
 
 NPY_NO_EXPORT void
@@ -203,7 +212,7 @@ NPY_NO_EXPORT void
 
 /**end repeat**/
 
- 
+
 #ifndef NPY_DISABLE_OPTIMIZATION
     #include "loops_unary.dispatch.h"
 #endif
