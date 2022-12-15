@@ -189,8 +189,8 @@ Built-in Python types
     ================  ===============
 
     Note that ``str`` corresponds to UCS4 encoded unicode strings, while
-    ``string`` is an alias to ``bytes_``. The name `np.unicode_` is also
-    available as an alias to `np.str_`, see :ref:`Note on string
+    ``string`` is an alias to ``bytes_``. The name ``np.unicode_`` is also
+    available as an alias to ``np.str_``, see :ref:`Note on string
     types<string-dtype-note>`.
 
     .. admonition:: Example
