@@ -537,7 +537,7 @@ src_umath_doc_h = custom_target('_umath_doc_generated',
 )
 
 src_numpy_api = custom_target('__multiarray_api',
-  output : ['__multiarray_api.c', '__multiarray_api.h', 'multiarray_api.txt'],
+  output : ['__multiarray_api.c', '__multiarray_api.h'],
   input : 'code_generators/generate_numpy_api.py',
   command: [py, '@INPUT@', '-o', '@OUTDIR@', '--ignore', src_umath_api_c],
   install: true,  # NOTE: setup.py build installs all, but just need .h?
@@ -545,7 +545,7 @@ src_numpy_api = custom_target('__multiarray_api',
 )
 
 src_ufunc_api = custom_target('__ufunc_api',
-  output : ['__ufunc_api.c', '__ufunc_api.h', 'ufunc_api.txt'],
+  output : ['__ufunc_api.c', '__ufunc_api.h'],
   input : 'code_generators/generate_ufunc_api.py',
   command: [py, '@INPUT@', '-o', '@OUTDIR@'],
   install: true,  # NOTE: setup.py build installs all, but just need .h?
