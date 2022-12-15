@@ -13,6 +13,7 @@
 #include "numpy/npy_math.h"
 #include "numpy/halffloat.h"
 #include "lowlevel_strided_loops.h"
+#include "loops_utils.h"
 
 #include "npy_pycompat.h"
 
@@ -43,14 +44,6 @@
 
 /** Provides the various *_LOOP macros */
 #include "fast_loop_macros.h"
-
-/*
- * include vectorized functions and dispatchers
- * this file is safe to include also for generic builds
- * platform specific instructions are either masked via the proprocessor or
- * runtime detected
- */
-#include "simd.inc"
 
 /******************************************************************************
  **                          GENERIC FLOAT LOOPS                             **
@@ -2116,6 +2109,8 @@ NPY_NO_EXPORT void
 }
 /**end repeat1**/
 
+#if !@SIMD@
+// CFLOAT & CDOUBLE defined by 'loops_arithm_fp.dispatch.c.src'
 NPY_NO_EXPORT void
 @TYPE@_square(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
 {
@@ -2126,6 +2121,7 @@ NPY_NO_EXPORT void
         ((@ftype@ *)op1)[1] = in1r*in1i + in1i*in1r;
     }
 }
+#endif
 
 NPY_NO_EXPORT void
 @TYPE@_reciprocal(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
@@ -2156,6 +2152,8 @@ NPY_NO_EXPORT void
     }
 }
 
+#if !@SIMD@
+// CFLOAT & CDOUBLE defined by 'loops_arithm_fp.dispatch.c.src'
 NPY_NO_EXPORT void
 @TYPE@_conjugate(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func)) {
     UNARY_LOOP {
@@ -2175,20 +2173,6 @@ NPY_NO_EXPORT void
         *((@ftype@ *)op1) = npy_hypot@c@(in1r, in1i);
     }
 }
-
-#if @SIMD@ && defined(HAVE_ATTRIBUTE_TARGET_AVX512F)
-/**begin repeat1
- * arithmetic
- * #kind = conjugate, square, absolute#
- */
-NPY_NO_EXPORT void
-@TYPE@_@kind@_avx512f(char **args, const npy_intp *dimensions, const npy_intp *steps, void *func)
-{
-    if (!run_unary_avx512f_@kind@_@TYPE@(args, dimensions, steps)) {
-        @TYPE@_@kind@(args, dimensions, steps, func);
-    }
-}
-/**end repeat1**/
 #endif
 
 NPY_NO_EXPORT void

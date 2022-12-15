@@ -540,7 +540,7 @@ NPY_NO_EXPORT void
  * #TYPE = CFLOAT, CDOUBLE#
  */
 /**begin repeat1
- * #kind = add, subtract, multiply#
+ * #kind = add, subtract, multiply, conjugate, absolute, square#
  */
 NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void @TYPE@_@kind@,
    (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data)))
@@ -609,19 +609,14 @@ C@TYPE@_reciprocal(char **args, npy_intp const *dimensions, npy_intp const *step
 NPY_NO_EXPORT void
 C@TYPE@__ones_like(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data));
 
-/**begin repeat1
- * #isa = , _avx512f#
- */
+NPY_NO_EXPORT void
+C@TYPE@_conjugate(char **args, const npy_intp *dimensions, const npy_intp *steps, void *NPY_UNUSED(func));
 
 NPY_NO_EXPORT void
-C@TYPE@_conjugate@isa@(char **args, const npy_intp *dimensions, const npy_intp *steps, void *NPY_UNUSED(func));
+C@TYPE@_absolute(char **args, const npy_intp *dimensions, const npy_intp *steps, void *NPY_UNUSED(func));
 
 NPY_NO_EXPORT void
-C@TYPE@_absolute@isa@(char **args, const npy_intp *dimensions, const npy_intp *steps, void *NPY_UNUSED(func));
-
-NPY_NO_EXPORT void
-C@TYPE@_square@isa@(char **args, const npy_intp *dimensions, const npy_intp *steps, void *NPY_UNUSED(data));
-/**end repeat1**/
+C@TYPE@_square(char **args, const npy_intp *dimensions, const npy_intp *steps, void *NPY_UNUSED(data));
 
 NPY_NO_EXPORT void
 C@TYPE@__arg(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));

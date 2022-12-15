@@ -761,7 +761,6 @@ src_umath = [
   src_file.process('src/umath/loops_unary_fp_le.dispatch.c.src'),
   src_file.process('src/umath/matmul.c.src'),
   src_file.process('src/umath/matmul.h.src'),
-  src_file.process('src/umath/simd.inc.src'),
   'src/umath/ufunc_type_resolution.c',
   'src/umath/clip.cpp',
   'src/umath/clip.h',
