@@ -264,7 +264,7 @@ Array-protocol type strings (see :ref:`arrays.interface`)
    .. admonition:: Note on string types
 
     For backward compatibility with existing code originally written to support
-    Python 2 ``S`` and ``a`` typestrings are zero-terminated bytes and
+    Python 2, ``S`` and ``a`` typestrings are zero-terminated bytes and
     `numpy.string_` continues to alias `numpy.bytes_`. For unicode strings,
     use ``U``, `numpy.str_`, or `numpy.unicode_`.  For signed bytes that do not
     need zero-termination ``b`` or ``i1`` can be used.
