@@ -66,14 +66,16 @@ endif
 blas = dependency(blas_name, required: false)
 lapack = dependency(lapack_name, required: false)
 
+dependency_map = {
+  'BLAS': blas,
+  'LAPACK': lapack,
+}
+
 # BLAS and LAPACK are optional dependencies for NumPy. We can only use a BLAS
 # which provides a CBLAS interface.
 # TODO: add ILP64 support
 have_blas = blas.found() # TODO: and blas.has_cblas()
 have_lapack = lapack.found()
-
-
-# TODO: generate __config__.py (see scipy/meson.build)
 
 # Copy the main __init__.py|pxd files to the build dir (needed for Cython)
 __init__py = fs.copyfile('__init__.py')
@@ -143,12 +145,45 @@ foreach subdir: pure_subdirs
   install_subdir(subdir, install_dir: np_dir)
 endforeach
 
-custom_target('__config__.py',
-  output: '__config__.py',
+cc = meson.get_compiler('c')
+cpp = meson.get_compiler('cpp')
+compilers = {'C': cc, 'CPP': cpp}
+
+conf_data = configuration_data()
+
+# Set compiler information
+foreach name, compiler : compilers
+  conf_data.set(name + '_COMP', compiler.get_id())
+  conf_data.set(name + '_COMP_LINKER_ID', compiler.get_linker_id())
+  conf_data.set(name + '_COMP_VERSION', compiler.version())
+  conf_data.set(name + '_COMP_CMD_ARRAY', compiler.cmd_array())
+endforeach
+
+# Host CPU and system information
+conf_data.set('HOST_CPU', host_machine.cpu())
+conf_data.set('HOST_CPU_FAMILY', host_machine.cpu_family())
+conf_data.set('HOST_CPU_ENDIAN', host_machine.endian())
+conf_data.set('HOST_CPU_SYSTEM', host_machine.system())
+
+# Python information
+conf_data.set('PYTHON_PATH', py.path())
+
+# Dependencies information
+foreach name, dep : dependency_map
+  conf_data.set(name + '_NAME', dep.name())
+  conf_data.set(name + '_FOUND', dep.found())
+  conf_data.set(name + '_VERSION', dep.version())
+  conf_data.set(name + '_INCLUDEDIR', dep.get_variable('includedir'))
+  conf_data.set(name + '_LIBDIR', dep.get_variable('libdir'))
+  conf_data.set(name + '_OPENBLAS_CONFIG', dep.get_variable('openblas_config'))
+  conf_data.set(name + '_PCFILEDIR', dep.get_variable('pcfiledir'))
+endforeach
+
+configure_file(
   input: '__config__.py.in',
-  command: [tempita_cli, '@INPUT@', '-o', '@OUTPUT@'],
-  install: true,
-  install_dir: np_dir
+  output: '__config__.py',
+  configuration : conf_data,
+  install_dir: np_dir,
 )
 
 subdir('core')
