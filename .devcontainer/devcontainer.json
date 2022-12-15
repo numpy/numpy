@@ -6,13 +6,10 @@
 	},
 
 	// Use 'postCreateCommand' to run commands after the container is created
-	"postCreateCommand": "conda env create -f environment.yml",
+	"postCreateCommand": "./.devcontainer/setup.sh",
 
 	// Features to add to the dev container. More info: https://containers.dev/features
 	"features": {
-		"ghcr.io/devcontainers/features/rust:1": {
-			"version": "latest"
-		}
 	},
 	
 	// Configure tool-specific properties
@@ -23,7 +20,6 @@
 				"ms-python.python"
 			],
 			"settings": {
-				"python.defaultInterpreterPath": "/opt/conda/envs/numpy-dev/bin/python"
 			}
 		}
 	}
