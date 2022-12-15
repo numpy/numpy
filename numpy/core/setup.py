@@ -630,11 +630,11 @@ def configuration(parent_package='',top_path=None):
             try:
                 m = __import__(module_name)
                 log.info('executing %s', script)
-                h_file, c_file, doc_file = m.generate_api(os.path.join(build_dir, header_dir))
+                h_file, c_file = m.generate_api(os.path.join(build_dir, header_dir))
             finally:
                 del sys.path[0]
             config.add_data_files((header_dir, h_file),
-                                  (header_dir, doc_file))
+                                 )
             return (h_file,)
         return generate_api
 

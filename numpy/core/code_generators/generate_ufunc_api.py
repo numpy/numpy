@@ -122,8 +122,7 @@ def generate_api(output_dir, force=False):
 
     h_file = os.path.join(output_dir, '__%s.h' % basename)
     c_file = os.path.join(output_dir, '__%s.c' % basename)
-    d_file = os.path.join(output_dir, '%s.txt' % basename)
-    targets = (h_file, c_file, d_file)
+    targets = (h_file, c_file)
 
     sources = ['ufunc_api_order.txt']
 
@@ -137,7 +136,6 @@ def generate_api(output_dir, force=False):
 def do_generate_api(targets, sources):
     header_file = targets[0]
     c_file = targets[1]
-    doc_file = targets[2]
 
     ufunc_api_index = genapi.merge_api_dicts((
             numpy_api.ufunc_funcs_api,
@@ -178,17 +176,6 @@ def do_generate_api(targets, sources):
     # Write to c-code
     s = c_template % ',\n'.join(init_list)
     genapi.write_file(c_file, s)
-
-    # Write to documentation
-    s = '''
-=================
-NumPy Ufunc C-API
-=================
-'''
-    for func in ufunc_api_list:
-        s += func.to_ReST()
-        s += '\n\n'
-    genapi.write_file(doc_file, s)
 
     return targets
 

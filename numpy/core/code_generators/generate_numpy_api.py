@@ -141,19 +141,12 @@ void *PyArray_API[] = {
 };
 """
 
-c_api_header = """
-===========
-NumPy C-API
-===========
-"""
-
 def generate_api(output_dir, force=False):
     basename = 'multiarray_api'
 
     h_file = os.path.join(output_dir, '__%s.h' % basename)
     c_file = os.path.join(output_dir, '__%s.c' % basename)
-    d_file = os.path.join(output_dir, '%s.txt' % basename)
-    targets = (h_file, c_file, d_file)
+    targets = (h_file, c_file)
 
     sources = numpy_api.multiarray_api
 
@@ -167,7 +160,6 @@ def generate_api(output_dir, force=False):
 def do_generate_api(targets, sources):
     header_file = targets[0]
     c_file = targets[1]
-    doc_file = targets[2]
 
     global_vars = sources[0]
     scalar_bool_values = sources[1]
@@ -235,13 +227,6 @@ def do_generate_api(targets, sources):
     # Write to c-code
     s = c_template % ',\n'.join(init_list)
     genapi.write_file(c_file, s)
-
-    # write to documentation
-    s = c_api_header
-    for func in numpyapi_list:
-        s += func.to_ReST()
-        s += '\n\n'
-    genapi.write_file(doc_file, s)
 
     return targets
 
