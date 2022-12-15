@@ -5,22 +5,17 @@
 		"memory": "8gb"
 	},
 
-	// Use 'postCreateCommand' to run commands after the container is created
-	"postCreateCommand": "./.devcontainer/setup.sh",
+	// More info about Features: https://containers.dev/features
+	"image": "mcr.microsoft.com/devcontainers/universal:2",
+	"features": {},
 
-	// Features to add to the dev container. More info: https://containers.dev/features
-	"features": {
-	},
-	
-	// Configure tool-specific properties
+	"postCreateCommand": "./.devcontainer/setup.sh",
 	"customizations": {
-		// Configure properties specific to VS Code
 		"vscode": {
 			"extensions": [
 				"ms-python.python"
 			],
-			"settings": {
-			}
+			"settings": {}
 		}
 	}
 }
