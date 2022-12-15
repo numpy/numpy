@@ -16,6 +16,8 @@ release. Highlights are
 
 See below for the details,
 
+This release supports Python versions 3.8-3.11.
+
 
 Deprecations
 ============
@@ -95,7 +97,7 @@ Expired deprecations
 
   (`gh-22139 <https://github.com/numpy/numpy/pull/22139>`__)
 
-* Support for cygwin < 3.3 has been removed.
+* Support for Cygwin < 3.3 has been removed.
 
   (`gh-22159 <https://github.com/numpy/numpy/pull/22159>`__)
 
