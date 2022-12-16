@@ -145,9 +145,11 @@ foreach subdir: pure_subdirs
   install_subdir(subdir, install_dir: np_dir)
 endforeach
 
-cc = meson.get_compiler('c')
-cpp = meson.get_compiler('cpp')
-compilers = {'C': cc, 'CPP': cpp}
+compilers = {
+  'C': cc,
+  'CPP': cpp,
+  'CYTHON': meson.get_compiler('cython')
+}
 
 conf_data = configuration_data()
 

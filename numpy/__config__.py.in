@@ -6,6 +6,12 @@ def show():
             'C_COMP_VERSION': '@C_COMP_VERSION@',
             'C_COMP_CMD_ARRAY': '@C_COMP_CMD_ARRAY@',
         },
+        'CYTHON Compiler': {
+            'CYTHON_COMP': '@CYTHON_COMP@',
+            'CYTHON_COMP_LINKER_ID': '@CYTHON_COMP_LINKER_ID@',
+            'CYTHON_COMP_VERSION': '@CYTHON_COMP_VERSION@',
+            'CYTHON_COMP_CMD_ARRAY': '@CYTHON_COMP_CMD_ARRAY@',
+        },
         'CPP Compiler': {
             'CPP_COMP': '@CPP_COMP@',
             'CPP_COMP_LINKER_ID': '@CPP_COMP_LINKER_ID@',
