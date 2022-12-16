@@ -23,6 +23,7 @@ def show():
                 'BLAS_NAME': '@BLAS_NAME@',
                 'BLAS_FOUND': '@BLAS_FOUND@',
                 'BLAS_VERSION': '@BLAS_VERSION@',
+                'BLAS_TYPE_NAME': '@BLAS_TYPE_NAME@',
                 'BLAS_INCLUDEDIR': '@BLAS_INCLUDEDIR@',
                 'BLAS_LIBDIR': '@BLAS_LIBDIR@',
                 'BLAS_OPENBLAS_CONFIG': '@BLAS_OPENBLAS_CONFIG@',
@@ -32,6 +33,7 @@ def show():
                 'LAPACK_NAME': '@LAPACK_NAME@',
                 'LAPACK_FOUND': '@LAPACK_FOUND@',
                 'LAPACK_VERSION': '@LAPACK_VERSION@',
+                'LAPACK_TYPE_NAME': '@LAPACK_TYPE_NAME@',
                 'LAPACK_INCLUDEDIR': '@LAPACK_INCLUDEDIR@',
                 'LAPACK_LIBDIR': '@LAPACK_LIBDIR@',
                 'LAPACK_OPENBLAS_CONFIG': '@LAPACK_OPENBLAS_CONFIG@',
@@ -40,5 +42,5 @@ def show():
         },
         'Python Information': {
             'PYTHON_PATH': '@PYTHON_PATH@',
+            'PYTHON_VERSION': '@PYTHON_VERSION@',
         },
-    }
