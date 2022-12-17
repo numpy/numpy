@@ -42,6 +42,5 @@ if [[ $RUNNER_OS == "macOS" ]]; then
     fi
     source $PROJECT_DIR/tools/wheels/gfortran_utils.sh
     install_gfortran
-    # Try a newer version of delocate that knows about /usr/local/lib
-    pip install git+https://github.com/isuruf/delocate@search_usr_local#egg=delocate
+    pip install delocate==0.10.4
 fi
