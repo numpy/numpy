@@ -2,7 +2,7 @@
 Contributors
 ============
 
-A total of 175 people contributed to this release.  People with a "+" by their
+A total of 177 people contributed to this release.  People with a "+" by their
 names contributed a patch for the first time.
 
 * @DWesl
@@ -22,6 +22,7 @@ names contributed a patch for the first time.
 * Alexander Grund +
 * Alexander Kanavin +
 * Andras Deak
+* Andrew Nelson
 * Angéllica Araujo +
 * Anselm Hahn +
 * Ari Cooper Davis +
@@ -139,6 +140,7 @@ names contributed a patch for the first time.
 * Rohit Davas +
 * Rohit Goswami
 * Ross Barnowski
+* Roy Smart +
 * Ruth Comer +
 * Sabiha Tahsin Soha +
 * Sachin Krishnan T V +
@@ -184,7 +186,7 @@ names contributed a patch for the first time.
 Pull requests merged
 ====================
 
-A total of 430 pull requests were merged for this release.
+A total of 444 pull requests were merged for this release.
 
 * `#12065 <https://github.com/numpy/numpy/pull/12065>`__: API: Optimize np.isin and np.in1d for integer arrays and add...
 * `#15782 <https://github.com/numpy/numpy/pull/15782>`__: ENH: complete the 'vars' list of a module
@@ -616,3 +618,17 @@ A total of 430 pull requests were merged for this release.
 * `#22716 <https://github.com/numpy/numpy/pull/22716>`__: BLD, CI: Use cirrus for building aarch64 wheels
 * `#22717 <https://github.com/numpy/numpy/pull/22717>`__: TST: Skip when numba/numpy compat issues cause SystemError
 * `#22719 <https://github.com/numpy/numpy/pull/22719>`__: CI: Make benchmark asv run quick to only check that benchmarks...
+* `#22729 <https://github.com/numpy/numpy/pull/22729>`__: REL: Prepare for the NumPy 1.24.0rc2 release.
+* `#22743 <https://github.com/numpy/numpy/pull/22743>`__: DOC: Fix release note link to out-of-bounds integer deprecation
+* `#22746 <https://github.com/numpy/numpy/pull/22746>`__: BUG: Fix some valgrind errors (and probably harmless warnings)
+* `#22748 <https://github.com/numpy/numpy/pull/22748>`__: BUG: ``keepdims=True`` is ignored if ``out`` is not ``None``...
+* `#22749 <https://github.com/numpy/numpy/pull/22749>`__: MAINT: check if PyArrayDTypeMeta_Spec->casts is set
+* `#22757 <https://github.com/numpy/numpy/pull/22757>`__: CI: fix CIRRUS_TAG check when tagging. Closes #22730.
+* `#22758 <https://github.com/numpy/numpy/pull/22758>`__: DOC: Some updates to the array_api compat document (#22747)
+* `#22759 <https://github.com/numpy/numpy/pull/22759>`__: BUG, SIMD: Fix rounding large numbers >= 2^52 on SSE2
+* `#22760 <https://github.com/numpy/numpy/pull/22760>`__: CI, SIMD: Add workflow to test default baseline features only
+* `#22761 <https://github.com/numpy/numpy/pull/22761>`__: BUG: Fix deepcopy cleanup on error
+* `#22793 <https://github.com/numpy/numpy/pull/22793>`__: BUG: Fix infinite recursion in longdouble/large integer scalar...
+* `#22795 <https://github.com/numpy/numpy/pull/22795>`__: BUG: Ensure arguments to ``npy_floatstatus_..._barrier()`` can...
+* `#22805 <https://github.com/numpy/numpy/pull/22805>`__: REV: revert change to ``numpyconfig.h`` for sizeof(type) hardcoding...
+* `#22815 <https://github.com/numpy/numpy/pull/22815>`__: BLD: use newer version of delocate
