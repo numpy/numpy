@@ -6456,7 +6456,6 @@ py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
          /* Explicitly allow int, float, and complex for the "weak" types. */
         else if (descr_obj == (PyObject *)&PyLong_Type) {
             descr = PyArray_DescrFromType(NPY_LONG);
-            Py_INCREF(descr);
             dummy_arrays[i] = (PyArrayObject *)PyArray_Empty(0, NULL, descr, 0);
             if (dummy_arrays[i] == NULL) {
                 goto finish;
@@ -6468,7 +6467,6 @@ py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
         }
         else if (descr_obj == (PyObject *)&PyFloat_Type) {
             descr = PyArray_DescrFromType(NPY_DOUBLE);
-            Py_INCREF(descr);
             dummy_arrays[i] = (PyArrayObject *)PyArray_Empty(0, NULL, descr, 0);
             if (dummy_arrays[i] == NULL) {
                 goto finish;
@@ -6480,7 +6478,6 @@ py_resolve_dtypes_generic(PyUFuncObject *ufunc, npy_bool return_context,
         }
         else if (descr_obj == (PyObject *)&PyComplex_Type) {
             descr = PyArray_DescrFromType(NPY_CDOUBLE);
-            Py_INCREF(descr);
             dummy_arrays[i] = (PyArrayObject *)PyArray_Empty(0, NULL, descr, 0);
             if (dummy_arrays[i] == NULL) {
                 goto finish;
