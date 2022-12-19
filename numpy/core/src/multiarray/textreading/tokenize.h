@@ -46,8 +46,9 @@ typedef struct {
     char *pos;
     char *end;
     /*
-     * Space to copy words into.  The buffer must always be at least two NUL
-     * entries longer (8 bytes) than the actual word (including initially).
+     * Space to copy words into.  Due to `add_field` not growing the buffer
+     * but writing a \0 termination, the buffer must always be two larger
+     * (add_field can be called twice if a row ends in a delimiter: "123,").
      * The first byte beyond the current word is always NUL'ed on write, the
      * second byte is there to allow easy appending of an additional empty
      * word at the end (this word is also NUL terminated).
