@@ -2310,7 +2310,7 @@ def masked_values(x, value, rtol=1e-5, atol=1e-8, copy=True, shrink=True):
                  mask=False,
            fill_value=2.1)
 
-    Unlike `masked_equal`, `masked_values` can perform approximate equalities. 
+    Unlike `masked_equal`, `masked_values` can perform approximate equalities.
 
     >>> ma.masked_values(x, 2.1, atol=1e-1)
     masked_array(data=[1.0, 1.1, --, 1.1, 3.0],
@@ -2356,8 +2356,8 @@ def masked_invalid(a, copy=True):
            fill_value=1e+20)
 
     """
-
-    return masked_where(~(np.isfinite(getdata(a))), a, copy=copy)
+    a = np.array(a, copy=False, subok=True)
+    return masked_where(~(np.isfinite(a)), a, copy=copy)
 
 ###############################################################################
 #                            Printing options                                 #
@@ -2869,7 +2869,7 @@ class MaskedArray(ndarray):
         else:
             # Case 2. : With a mask in input.
             # If mask is boolean, create an array of True or False
-            
+
             # if users pass `mask=None` be forgiving here and cast it False
             # for speed; although the default is `mask=nomask` and can differ.
             if mask is None:
@@ -2922,7 +2922,7 @@ class MaskedArray(ndarray):
                     else:
                         _data._mask = np.logical_or(mask, _data._mask)
                     _data._sharedmask = False
-        
+
         # Update fill_value.
         if fill_value is None:
             fill_value = getattr(data, '_fill_value', None)
