@@ -1,0 +1,16 @@
+.. currentmodule:: numpy
+
+==========================
+NumPy 1.24.1 Release Notes
+==========================
+NumPy 1.24.1 is a maintenance release that fixes bugs discovered after the
+1.24.1 release and keeps the build infrastructure current. The Python versions
+supported by this release are 3.8-3.11.
+
+Contributors
+============
+
+
+Pull requests merged
+====================
+
