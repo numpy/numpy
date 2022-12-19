@@ -80,7 +80,7 @@ wheels_upload_task:
 
     # only upload wheels to staging if it's a tag beginning with 'v' and you're
     # on a maintenance branch
-    if [[ "$CIRRUS_TAG" == v* ]] && [[ "$CIRRUS_BRANCH" == maintenance* ]]; then
+    if [[ "$CIRRUS_TAG" == v* ]] && [[ $CIRRUS_TAG != *"dev0"* ]]; then
       export IS_PUSH="true"
     fi
 
