@@ -351,6 +351,8 @@ def test_all_modules_are_expected():
 SKIP_LIST_2 = [
     'numpy.math',
     'numpy.distutils.log.sys',
+    'numpy.distutils.log.logging',
+    'numpy.distutils.log.warnings',
     'numpy.doc.constants.re',
     'numpy.doc.constants.textwrap',
     'numpy.lib.emath',
