@@ -4505,6 +4505,20 @@ class TestMaskedArrayFunctions:
                            match="not supported for the input types"):
             np.ma.masked_invalid(a)
 
+    def test_masked_invalid_pandas(self):
+        # getdata() used to be bad for pandas series due to its _data
+        # attribute.  This test is a regression test mainly and may be
+        # removed if getdata() is adjusted.
+        class Series():
+            _data = "nonsense"
+
+            def __array__(self):
+                return np.array([5, np.nan, np.inf])
+
+        arr = np.ma.masked_invalid(Series())
+        assert_array_equal(arr._data, np.array(Series()))
+        assert_array_equal(arr._mask, [False, True, True])
+
     def test_choose(self):
         # Test choose
         choices = [[0, 1, 2, 3], [10, 11, 12, 13],
