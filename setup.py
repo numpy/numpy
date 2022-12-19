@@ -463,6 +463,9 @@ def setup_package():
     else:
         #from numpy.distutils.core import setup
         from setuptools import setup
+        # workaround for broken --no-build-isolation with newer setuptools,
+        # see gh-21288
+        metadata["packages"] = []
 
     try:
         setup(**metadata)
