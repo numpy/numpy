@@ -51,13 +51,17 @@ def _use_unicode(*args):
     Helper function for determining the output type of some string
     operations.
 
-    For an operation on two ndarrays, if at least one is unicode, the
-    result should be unicode.
+    For an operation on two ndarrays, if at least one is a dtype with a
+    scalar that subclasses str or bytes, the result should be that
+    dtype. Otherwise, if at least one is unicode, the result should be
+    unicode.
     """
     for x in args:
-        if (isinstance(x, str) or
-                issubclass(numpy.asarray(x).dtype.type, unicode_)):
+        scalar_type = numpy.asarray(x).dtype.type
+        if (isinstance(x, str) or issubclass(scalar_type, unicode_)):
             return unicode_
+        elif (issubclass(scalar_type, (str, bytes))):
+            return x.dtype
     return string_
 
 def _to_string_or_unicode_array(result):

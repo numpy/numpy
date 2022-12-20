@@ -262,7 +262,24 @@ _convert_from_tuple(PyObject *obj, int align)
     /*
      * We get here if _try_convert_from_inherit_tuple failed without crashing
      */
-    if (PyDataType_ISUNSIZED(type)) {
+    if (NPY_DT_is_user_defined(type)) {
+        /* interpret next item as a typesize */
+        PyObject* itemsize = PyTuple_GET_ITEM(obj, 1);
+
+        PyArray_DTypeMeta* DType = NPY_DTYPE(type);
+
+        PyObject *res = PyObject_CallFunctionObjArgs(
+            (PyObject *)DType, itemsize, NULL);
+
+        Py_DECREF(type);
+
+        if (res == NULL) {
+            return NULL;
+        }
+
+        return (PyArray_Descr *)res;
+    }
+    else if (PyDataType_ISUNSIZED(type)) {
         /* interpret next item as a typesize */
         int itemsize = PyArray_PyIntAsInt(PyTuple_GET_ITEM(obj,1));
 
@@ -1449,6 +1466,23 @@ _convert_from_type(PyObject *obj) {
             return ret;
         }
         Py_DECREF(ret);
+
+        /*
+         * Handle scalars associated with NEP-42 dtypes
+         */
+
+        if (PyObject_HasAttrString((PyObject *) typ,
+                                   "__associated_array_dtype__")) {
+            PyObject * array_dtype = PyObject_GetAttrString(
+                (PyObject *)typ, "__associated_array_dtype__");
+
+            if (array_dtype != NULL) {
+                ret = ((PyArray_DTypeMeta *)array_dtype)->singleton;
+                Py_INCREF(ret);
+                Py_DECREF(array_dtype);
+                return ret;
+            }
+        }
 
         /*
          * All other classes are treated as object. This can be convenient
