@@ -12,6 +12,7 @@
     #define NPY_SIMD_FMA3 0  // fast emulated
 #endif
 #define NPY_SIMD_BIGENDIAN 0
+#define NPY_SIMD_CMPSIGNAL 1
 
 typedef __m128i npyv_u8;
 typedef __m128i npyv_s8;
