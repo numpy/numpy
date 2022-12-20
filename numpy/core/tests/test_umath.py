@@ -284,16 +284,16 @@ class TestComparisons:
         b_lst = b.tolist()
 
         # (Binary) Comparison (x1=array, x2=array)
-        comp_b = np_comp(a, b)
-        comp_b_list = [py_comp(x, y) for x, y in zip(a_lst, b_lst)]
+        comp_b = np_comp(a, b).view(np.uint8)
+        comp_b_list = [int(py_comp(x, y)) for x, y in zip(a_lst, b_lst)]
 
         # (Scalar1) Comparison (x1=scalar, x2=array)
-        comp_s1 = np_comp(np_scalar, b)
-        comp_s1_list = [py_comp(scalar, x) for x in b_lst]
+        comp_s1 = np_comp(np_scalar, b).view(np.uint8)
+        comp_s1_list = [int(py_comp(scalar, x)) for x in b_lst]
 
         # (Scalar2) Comparison (x1=array, x2=scalar)
-        comp_s2 = np_comp(a, np_scalar)
-        comp_s2_list = [py_comp(x, scalar) for x in a_lst]
+        comp_s2 = np_comp(a, np_scalar).view(np.uint8)
+        comp_s2_list = [int(py_comp(x, scalar)) for x in a_lst]
 
         # Sequence: Binary, Scalar1 and Scalar2
         assert_(comp_b.tolist() == comp_b_list,
