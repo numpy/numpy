@@ -2356,8 +2356,8 @@ def masked_invalid(a, copy=True):
            fill_value=1e+20)
 
     """
-
-    return masked_where(~(np.isfinite(getdata(a))), a, copy=copy)
+    a = np.array(a, copy=False, subok=True)
+    return masked_where(~(np.isfinite(a)), a, copy=copy)
 
 ###############################################################################
 #                            Printing options                                 #
