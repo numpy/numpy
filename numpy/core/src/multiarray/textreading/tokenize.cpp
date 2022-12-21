@@ -45,7 +45,8 @@ copy_to_field_buffer(tokenizer_state *ts,
         const UCS *chunk_start, const UCS *chunk_end)
 {
     npy_intp chunk_length = chunk_end - chunk_start;
-    npy_intp size = chunk_length + ts->field_buffer_pos + 2;
+    /* Space for length +1 termination, +2 additional padding for add_field */
+    npy_intp size = chunk_length + ts->field_buffer_pos + 3;
 
     if (NPY_UNLIKELY(ts->field_buffer_length < size)) {
         npy_intp alloc_size = grow_size_and_multiply(&size, 32, sizeof(Py_UCS4));
@@ -104,6 +105,7 @@ add_field(tokenizer_state *ts)
     ts->num_fields += 1;
     /* Ensure this (currently empty) word is NUL terminated. */
     ts->field_buffer[ts->field_buffer_pos] = '\0';
+    assert(ts->field_buffer_length > ts->field_buffer_pos);
     return 0;
 }
 
