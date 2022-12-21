@@ -2881,7 +2881,7 @@ add_other_to_and_from_string_cast(
         .name = "legacy_cast_to_string",
         .nin = 1,
         .nout = 1,
-        .flags = NPY_METH_REQUIRES_PYAPI,
+        .flags = NPY_METH_REQUIRES_PYAPI | NPY_METH_NO_FLOATINGPOINT_ERRORS,
         .dtypes = dtypes,
         .slots = slots,
     };

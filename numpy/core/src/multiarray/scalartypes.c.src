@@ -896,15 +896,21 @@ static PyObject *
 @name@type_@kind@_either(npy_@name@ val, TrimMode trim_pos, TrimMode trim_sci,
                          npy_bool sign)
 {
-    npy_@name@ absval;
 
     if (npy_legacy_print_mode <= 113) {
         return legacy_@name@_format@kind@(val);
     }
 
-    absval = val < 0 ? -val : val;
+    int use_positional;
+    if (npy_isnan(val) || val == 0) {
+         use_positional = 1;
+    }
+    else {
+        npy_@name@ absval = val < 0 ? -val : val;
+        use_positional = absval < 1.e16L && absval >= 1.e-4L;
+    }
 
-    if (absval == 0 || (absval < 1.e16L && absval >= 1.e-4L) ) {
+    if (use_positional) {
         return format_@name@(val, 0, -1, sign, trim_pos, -1, -1, -1);
     }
     return format_@name@(val, 1, -1, sign, trim_sci, -1, -1, -1);
