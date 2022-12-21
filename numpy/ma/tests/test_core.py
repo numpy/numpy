@@ -4519,6 +4519,18 @@ class TestMaskedArrayFunctions:
         assert_array_equal(arr._data, np.array(Series()))
         assert_array_equal(arr._mask, [False, True, True])
 
+    @pytest.mark.parametrize("copy", [True, False])
+    def test_masked_invalid_full_mask(self, copy):
+        # Matplotlib relied on masked_invalid always returning a full mask
+        # (Also astropy projects, but were ok with it gh-22720 and gh-22842)
+        a = np.ma.array([1, 2, 3, 4])
+        assert a._mask is nomask
+        res = np.ma.masked_invalid(a, copy=copy)
+        assert res.mask is not nomask
+        # mask of a should not be mutated
+        assert a.mask is nomask
+        assert np.may_share_memory(a._data, res._data) != copy
+
     def test_choose(self):
         # Test choose
         choices = [[0, 1, 2, 3], [10, 11, 12, 13],
