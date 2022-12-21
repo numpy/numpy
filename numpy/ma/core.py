@@ -2357,7 +2357,12 @@ def masked_invalid(a, copy=True):
 
     """
     a = np.array(a, copy=False, subok=True)
-    return masked_where(~(np.isfinite(a)), a, copy=copy)
+    res = masked_where(~(np.isfinite(a)), a, copy=copy)
+    # masked_invalid previously never returned nomask as a mask and doing so
+    # threw off matplotlib (gh-22842).  So use shrink=False:
+    if res._mask is nomask:
+        res._mask = make_mask_none(res.shape, res.dtype)
+    return res
 
 ###############################################################################
 #                            Printing options                                 #
