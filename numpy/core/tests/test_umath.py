@@ -31,6 +31,13 @@ UFUNCS_UNARY_FP = [
     uf for uf in UFUNCS_UNARY if 'f->f' in uf.types
 ]
 
+UFUNCS_BINARY = [
+    uf for uf in UFUNCS if uf.nin == 2
+]
+UFUNCS_BINARY_ACC = [
+    uf for uf in UFUNCS_BINARY if hasattr(uf, "accumulate") and uf.nout == 1
+]
+
 def interesting_binop_operands(val1, val2, dtype):
     """
     Helper to create "interesting" operands to cover common code paths:
@@ -4329,6 +4336,7 @@ def test_rint_big_int():
     # Rint should not change the value
     assert_equal(val, np.rint(val))
 
+
 @pytest.mark.parametrize('ftype', [np.float32, np.float64])
 def test_memoverlap_accumulate(ftype):
     # Reproduces bug https://github.com/numpy/numpy/issues/15597
@@ -4337,6 +4345,38 @@ def test_memoverlap_accumulate(ftype):
     out_min = np.array([0.61, 0.60, 0.60, 0.41, 0.19], dtype=ftype)
     assert_equal(np.maximum.accumulate(arr), out_max)
     assert_equal(np.minimum.accumulate(arr), out_min)
+
+@pytest.mark.parametrize("ufunc, dtype", [
+    (ufunc, t[0])
+    for ufunc in UFUNCS_BINARY_ACC
+    for t in ufunc.types
+    if t[-1] == '?' and t[0] not in 'DFGMmO'
+])
+def test_memoverlap_accumulate_cmp(ufunc, dtype):
+    if ufunc.signature:
+        pytest.skip('For generic signatures only')
+    for size in (2, 8, 32, 64, 128, 256):
+        arr = np.array([0, 1, 1]*size, dtype=dtype)
+        acc = ufunc.accumulate(arr, dtype='?')
+        acc_u8 = acc.view(np.uint8)
+        exp = np.array(list(itertools.accumulate(arr, ufunc)), dtype=np.uint8)
+        assert_equal(exp, acc_u8)
+
+@pytest.mark.parametrize("ufunc, dtype", [
+    (ufunc, t[0])
+    for ufunc in UFUNCS_BINARY_ACC
+    for t in ufunc.types
+    if t[0] == t[1] and t[0] == t[-1] and t[0] not in 'DFGMmO?'
+])
+def test_memoverlap_accumulate_symmetric(ufunc, dtype):
+    if ufunc.signature:
+        pytest.skip('For generic signatures only')
+    with np.errstate(all='ignore'):
+        for size in (2, 8, 32, 64, 128, 256):
+            arr = np.array([0, 1, 2]*size).astype(dtype)
+            acc = ufunc.accumulate(arr, dtype=dtype)
+            exp = np.array(list(itertools.accumulate(arr, ufunc)), dtype=dtype)
+            assert_equal(exp, acc)
 
 def test_signaling_nan_exceptions():
     with assert_no_warnings():
