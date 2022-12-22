@@ -378,19 +378,6 @@ abs_ptrdiff(char *a, char *b)
 
 #undef abs_ptrdiff
 
-#define IS_BLOCKABLE_BINARY_BOOL(esize, vsize) \
-    (steps[0] == (esize) && steps[0] == steps[1] && steps[2] == (1) && \
-     npy_is_aligned(args[1], (esize)) && \
-     npy_is_aligned(args[0], (esize)))
-
-#define IS_BLOCKABLE_BINARY_SCALAR1_BOOL(esize, vsize) \
-    (steps[0] == 0 && steps[1] == (esize) && steps[2] == (1) && \
-     npy_is_aligned(args[1], (esize)))
-
-#define IS_BLOCKABLE_BINARY_SCALAR2_BOOL(esize, vsize) \
-    (steps[0] == (esize) && steps[1] == 0 && steps[2] == (1) && \
-     npy_is_aligned(args[0], (esize)))
-
 /* align var to alignment */
 #define LOOP_BLOCK_ALIGN_VAR(var, type, alignment)\
     npy_intp i, peel = npy_aligned_block_offset(var, sizeof(type),\
