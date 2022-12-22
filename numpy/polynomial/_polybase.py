@@ -499,7 +499,7 @@ class ABCPolyBase(abc.ABC):
         ret['coef'] = self.coef.copy()
         ret['domain'] = self.domain.copy()
         ret['window'] = self.window.copy()
-        ret['symbol'] = self.symbol.copy()
+        ret['symbol'] = self.symbol
         return ret
 
     def __setstate__(self, dict):
