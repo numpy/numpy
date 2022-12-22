@@ -312,19 +312,23 @@ static inline void
 run_binary_simd_@kind@_@sfx@(char **args, npy_intp const *dimensions, npy_intp const *steps)
 {
 #if @VECTOR@
-    /* argument one scalar */
-    if (IS_BLOCKABLE_BINARY_SCALAR1_BOOL(sizeof(@type@), NPY_SIMD_WIDTH)) {
-        simd_binary_scalar1_@kind@_@sfx@(args, dimensions[0]);
-        return;
-    }
-    /* argument two scalar */
-    else if (IS_BLOCKABLE_BINARY_SCALAR2_BOOL(sizeof(@type@), NPY_SIMD_WIDTH)) {
-        simd_binary_scalar2_@kind@_@sfx@(args, dimensions[0]);
-        return;
-    }
-    else if (IS_BLOCKABLE_BINARY_BOOL(sizeof(@type@), NPY_SIMD_WIDTH)) {
-        simd_binary_@kind@_@sfx@(args, dimensions[0]);
-        return;
+    if (!is_mem_overlap(args[0], steps[0], args[2], steps[2], dimensions[0]) &&
+        !is_mem_overlap(args[1], steps[1], args[2], steps[2], dimensions[0])
+    ) {
+        /* argument one scalar */
+        if (IS_BINARY_CONT_S1(@type@, npy_bool)) {
+            simd_binary_scalar1_@kind@_@sfx@(args, dimensions[0]);
+            return;
+        }
+        /* argument two scalar */
+        else if (IS_BINARY_CONT_S2(@type@, npy_bool)) {
+            simd_binary_scalar2_@kind@_@sfx@(args, dimensions[0]);
+            return;
+        }
+        else if (IS_BINARY_CONT(@type@, npy_bool)) {
+            simd_binary_@kind@_@sfx@(args, dimensions[0]);
+            return;
+        }
     }
 #endif
 
