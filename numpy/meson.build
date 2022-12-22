@@ -151,6 +151,15 @@ compilers = {
   'CYTHON': meson.get_compiler('cython')
 }
 
+machines = {
+  'HOST': host_machine,
+  'BUILD': build_machine,
+}
+
+if meson.is_cross_build()
+  machines += { 'TARGET': target_machine }
+endif
+
 conf_data = configuration_data()
 
 # Set compiler information
@@ -162,10 +171,12 @@ foreach name, compiler : compilers
 endforeach
 
 # Host CPU and system information
-conf_data.set('HOST_CPU', host_machine.cpu())
-conf_data.set('HOST_CPU_FAMILY', host_machine.cpu_family())
-conf_data.set('HOST_CPU_ENDIAN', host_machine.endian())
-conf_data.set('HOST_CPU_SYSTEM', host_machine.system())
+foreach name, machine : machines
+  conf_data.set(name + '_CPU', machine.cpu())
+  conf_data.set(name + '_CPU_FAMILY', machine.cpu_family())
+  conf_data.set(name + '_CPU_ENDIAN', machine.endian())
+  conf_data.set(name + '_CPU_SYSTEM', machine.system())
+endforeach
 
 # Python information
 conf_data.set('PYTHON_PATH', py.path())

@@ -22,62 +22,78 @@ def _cleanup(d):
 
 CONFIG = _cleanup(
     {
-        "C Compiler": {
-            "C_COMP": "@C_COMP@",
-            "C_COMP_LINKER_ID": "@C_COMP_LINKER_ID@",
-            "C_COMP_VERSION": "@C_COMP_VERSION@",
-            "C_COMP_CMD_ARRAY": "@C_COMP_CMD_ARRAY@",
+        "Compilers": {
+            "c": {
+                "name": "@C_COMP@",
+                "linker": "@C_COMP_LINKER_ID@",
+                "version": "@C_COMP_VERSION@",
+                "commands": "@C_COMP_CMD_ARRAY@",
+            },
+            "cython": {
+                "name": "@CYTHON_COMP@",
+                "linker": "@CYTHON_COMP_LINKER_ID@",
+                "version": "@CYTHON_COMP_VERSION@",
+                "commands": "@CYTHON_COMP_CMD_ARRAY@",
+            },
+            "c++": {
+                "name": "@CPP_COMP@",
+                "linker": "@CPP_COMP_LINKER_ID@",
+                "version": "@CPP_COMP_VERSION@",
+                "commands": "@CPP_COMP_CMD_ARRAY@",
+            },
         },
-        "CYTHON Compiler": {
-            "CYTHON_COMP": "@CYTHON_COMP@",
-            "CYTHON_COMP_LINKER_ID": "@CYTHON_COMP_LINKER_ID@",
-            "CYTHON_COMP_VERSION": "@CYTHON_COMP_VERSION@",
-            "CYTHON_COMP_CMD_ARRAY": "@CYTHON_COMP_CMD_ARRAY@",
-        },
-        "CPP Compiler": {
-            "CPP_COMP": "@CPP_COMP@",
-            "CPP_COMP_LINKER_ID": "@CPP_COMP_LINKER_ID@",
-            "CPP_COMP_VERSION": "@CPP_COMP_VERSION@",
-            "CPP_COMP_CMD_ARRAY": "@CPP_COMP_CMD_ARRAY@",
-        },
-        "Host Information": {
-            "HOST_CPU": "@HOST_CPU@",
-            "HOST_CPU_FAMILY": "@HOST_CPU_FAMILY@",
-            "HOST_CPU_ENDIAN": "@HOST_CPU_ENDIAN@",
-            "HOST_CPU_SYSTEM": "@HOST_CPU_SYSTEM@",
+        "Machine Information": {
+            "host": {
+                "cpu": "@HOST_CPU@",
+                "family": "@HOST_CPU_FAMILY@",
+                "endian": "@HOST_CPU_ENDIAN@",
+                "system": "@HOST_CPU_SYSTEM@",
+            },
+            "build": {
+                "cpu": "@BUILD_CPU@",
+                "family": "@BUILD_CPU_FAMILY@",
+                "endian": "@BUILD_CPU_ENDIAN@",
+                "system": "@BUILD_CPU_SYSTEM@",
+            },
+            "target": {
+                "cpu": "@TARGET_CPU@",
+                "family": "@TARGET_CPU_FAMILY@",
+                "endian": "@TARGET_CPU_ENDIAN@",
+                "system": "@TARGET_CPU_SYSTEM@",
+            },
         },
         "Build Dependencies": {
-            "BLAS": {
-                "BLAS_NAME": "@BLAS_NAME@",
-                "BLAS_FOUND": "@BLAS_FOUND@",
-                "BLAS_VERSION": "@BLAS_VERSION@",
-                "BLAS_TYPE_NAME": "@BLAS_TYPE_NAME@",
-                "BLAS_INCLUDEDIR": "@BLAS_INCLUDEDIR@",
-                "BLAS_LIBDIR": "@BLAS_LIBDIR@",
-                "BLAS_OPENBLAS_CONFIG": "@BLAS_OPENBLAS_CONFIG@",
-                "BLAS_PCFILEDIR": "@BLAS_PCFILEDIR@",
+            "blas": {
+                "name": "@BLAS_NAME@",
+                "found": "@BLAS_FOUND@",
+                "version": "@BLAS_VERSION@",
+                "type name": "@BLAS_TYPE_NAME@",
+                "includedir": "@BLAS_INCLUDEDIR@",
+                "libdir": "@BLAS_LIBDIR@",
+                "openblas config": "@BLAS_OPENBLAS_CONFIG@",
+                "pc file directory": "@BLAS_PCFILEDIR@",
             },
-            "LAPACK": {
-                "LAPACK_NAME": "@LAPACK_NAME@",
-                "LAPACK_FOUND": "@LAPACK_FOUND@",
-                "LAPACK_VERSION": "@LAPACK_VERSION@",
-                "LAPACK_TYPE_NAME": "@LAPACK_TYPE_NAME@",
-                "LAPACK_INCLUDEDIR": "@LAPACK_INCLUDEDIR@",
-                "LAPACK_LIBDIR": "@LAPACK_LIBDIR@",
-                "LAPACK_OPENBLAS_CONFIG": "@LAPACK_OPENBLAS_CONFIG@",
-                "LAPACK_PCFILEDIR": "@LAPACK_PCFILEDIR@",
+            "lapack": {
+                "name": "@LAPACK_NAME@",
+                "found": "@LAPACK_FOUND@",
+                "version": "@LAPACK_VERSION@",
+                "type_name": "@LAPACK_TYPE_NAME@",
+                "includedir": "@LAPACK_INCLUDEDIR@",
+                "libdir": "@LAPACK_LIBDIR@",
+                "openblas_config": "@LAPACK_OPENBLAS_CONFIG@",
+                "pc file directory": "@LAPACK_PCFILEDIR@",
             },
         },
         "Python Information": {
-            "PYTHON_PATH": "@PYTHON_PATH@",
-            "PYTHON_VERSION": "@PYTHON_VERSION@",
+            "path": "@PYTHON_PATH@",
+            "version": "@PYTHON_VERSION@",
         },
         "SIMD Extensions": {
-            "SIMD_EXTENSIONS_BASELINE": __cpu_baseline__,
-            "SIMD_EXTENSIONS_FOUND": [
+            "baseline": __cpu_baseline__,
+            "found": [
                 feature for feature in __cpu_dispatch__ if __cpu_features__[feature]
             ],
-            "SIMD_EXTENSIONS_NOT_FOUND": [
+            "not found": [
                 feature for feature in __cpu_dispatch__ if not __cpu_features__[feature]
             ],
         },
