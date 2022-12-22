@@ -818,6 +818,7 @@ class TestNanFunctions_Median:
             (-3, -1),
         ]
     )
+    @pytest.mark.filterwarnings("ignore:All-NaN slice:RuntimeWarning")
     def test_keepdims_out(self, axis):
         d = np.ones((3, 5, 7, 11))
         # Randomly set some elements to NaN:
@@ -1021,6 +1022,7 @@ class TestNanFunctions_Percentile:
             (-3, -1),
         ]
     )
+    @pytest.mark.filterwarnings("ignore:All-NaN slice:RuntimeWarning")
     def test_keepdims_out(self, q, axis):
         d = np.ones((3, 5, 7, 11))
         # Randomly set some elements to NaN:
