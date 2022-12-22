@@ -5,6 +5,7 @@ import types
 import re
 import warnings
 import functools
+import platform
 
 from .._utils import set_module
 from numpy.core.numerictypes import issubclass_, issubsctype, issubdtype
@@ -24,6 +25,8 @@ def show_runtime():
     including available intrinsic support and BLAS/LAPACK library
     in use
 
+    .. versionadded:: 1.24.0
+
     See Also
     --------
     show_config : Show libraries in the system on which NumPy was built.
@@ -31,45 +34,20 @@ def show_runtime():
     Notes
     -----
     1. Information is derived with the help of `threadpoolctl <https://pypi.org/project/threadpoolctl/>`_
-       library.
+       library if available.
     2. SIMD related information is derived from ``__cpu_features__``,
        ``__cpu_baseline__`` and ``__cpu_dispatch__``
 
-    Examples
-    --------
-    >>> import numpy as np
-    >>> np.show_runtime()
-    [{'simd_extensions': {'baseline': ['SSE', 'SSE2', 'SSE3'],
-                          'found': ['SSSE3',
-                                    'SSE41',
-                                    'POPCNT',
-                                    'SSE42',
-                                    'AVX',
-                                    'F16C',
-                                    'FMA3',
-                                    'AVX2'],
-                          'not_found': ['AVX512F',
-                                        'AVX512CD',
-                                        'AVX512_KNL',
-                                        'AVX512_KNM',
-                                        'AVX512_SKX',
-                                        'AVX512_CLX',
-                                        'AVX512_CNL',
-                                        'AVX512_ICL']}},
-     {'architecture': 'Zen',
-      'filepath': '/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.20.so',
-      'internal_api': 'openblas',
-      'num_threads': 12,
-      'prefix': 'libopenblas',
-      'threading_layer': 'pthreads',
-      'user_api': 'blas',
-      'version': '0.3.20'}]
     """
     from numpy.core._multiarray_umath import (
         __cpu_features__, __cpu_baseline__, __cpu_dispatch__
     )
     from pprint import pprint
-    config_found = []
+    config_found = [{
+        "numpy_version": np.__version__,
+        "python": sys.version,
+        "uname": platform.uname(),
+        }]
     features_found, features_not_found = [], []
     for feature in __cpu_dispatch__:
         if __cpu_features__[feature]:
