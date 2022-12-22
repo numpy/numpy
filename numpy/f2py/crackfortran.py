@@ -314,9 +314,8 @@ def openhook(filename, mode):
     not available, the function detects only UTF encodings, otherwise,
     ASCII encoding is used as fallback.
     """
-    bytes = min(32, os.path.getsize(filename))
     with open(filename, 'rb') as f:
-        raw = f.read(bytes)
+        raw = f.read()
     if raw.startswith(codecs.BOM_UTF8):
         encoding = 'UTF-8-SIG'
     elif raw.startswith((codecs.BOM_UTF32_LE, codecs.BOM_UTF32_BE)):
