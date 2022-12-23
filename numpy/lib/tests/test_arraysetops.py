@@ -414,6 +414,30 @@ class TestSetOps:
         with pytest.raises(ValueError):
             in1d(a, b, kind="table")
 
+    @pytest.mark.parametrize(
+        "dtype1,dtype2",
+        [
+            (np.int8, np.int16),
+            (np.int16, np.int8),
+            (np.uint8, np.uint16),
+            (np.uint16, np.uint8),
+            (np.uint8, np.int16),
+            (np.int16, np.uint8),
+        ]
+    )
+    def test_in1d_mixed_dtype(self, dtype1, dtype2):
+        """Test that in1d works as expected for mixed dtype input."""
+        is_dtype2_signed = np.issubdtype(dtype2, np.signedinteger)
+        ar1 = np.array([0, 0, 1, 1], dtype=dtype1)
+
+        if is_dtype2_signed:
+            ar2 = np.array([-128, 0, 127], dtype=dtype2)
+        else:
+            ar2 = np.array([127, 0, 255], dtype=dtype2)
+
+        expected = np.array([True, True, False, False])
+        assert_array_equal(in1d(ar1, ar2), expected)
+
     @pytest.mark.parametrize("kind", [None, "sort", "table"])
     def test_in1d_mixed_boolean(self, kind):
         """Test that in1d works as expected for bool/int input."""
