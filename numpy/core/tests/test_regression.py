@@ -2553,3 +2553,14 @@ class TestRegression:
                 f"Unexpected types order of ufunc in {operation}"
                 f"for {order}. Possible fix: Use signed before unsigned"
                 "in generate_umath.py")
+
+    def test_nonbool_logical(self):
+        # gh-22845
+        # create two arrays with bit patterns that do not overlap.
+        # needs to be large enough to test both SIMD and scalar paths
+        size = 100
+        a = np.frombuffer(b'\x01' * size, dtype=np.bool_)
+        b = np.frombuffer(b'\x80' * size, dtype=np.bool_)
+        expected = np.ones(size, dtype=np.bool_)
+        assert_array_equal(np.logical_and(a, b), expected)
+
