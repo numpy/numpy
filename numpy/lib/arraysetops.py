@@ -643,14 +643,21 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
         if ar2.dtype == bool:
             ar2 = ar2.astype(np.uint8)
 
+        ar1_min = np.min(ar1)
+        ar1_max = np.max(ar1)
         ar2_min = np.min(ar2)
         ar2_max = np.max(ar2)
 
         ar2_range = int(ar2_max) - int(ar2_min)
 
         # Constraints on whether we can actually use the table method:
-        range_safe_from_overflow = ar2_range < np.iinfo(ar2.dtype).max
+        #  1. Assert memory usage is not too large
         below_memory_constraint = ar2_range <= 6 * (ar1.size + ar2.size)
+        #  2. Check overflows for (ar2 - ar2_min); dtype=ar2.dtype
+        range_safe_from_overflow = ar2_range < np.iinfo(ar2.dtype).max
+        #  3. Check overflows for (ar1 - ar2_min); dtype=ar1.dtype
+        range_safe_from_overflow &= ar1_max - ar2_min < np.iinfo(ar1.dtype).max
+        range_safe_from_overflow &= ar1_min - ar2_min > np.iinfo(ar1.dtype).min
 
         # Optimal performance is for approximately
         # log10(size) > (log10(range) - 2.27) / 0.927.
@@ -687,7 +694,7 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
         elif kind == 'table':  # not range_safe_from_overflow
             raise RuntimeError(
                 "You have specified kind='table', "
-                "but the range of values in `ar2` exceeds the "
+                "but the range of values in `ar2` or `ar1` exceed the "
                 "maximum integer of the datatype. "
                 "Please set `kind` to None or 'sort'."
             )
