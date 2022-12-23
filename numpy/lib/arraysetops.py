@@ -657,9 +657,15 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
         if ar1.size > 0:
             ar1_min = np.min(ar1)
             ar1_max = np.max(ar1)
+
+            # After masking, the range of ar1 is guaranteed to be
+            # within the range of ar2:
+            ar1_upper = min(int(ar1_max), int(ar2_max))
+            ar1_lower = max(int(ar1_min), int(ar2_min))
+
             range_safe_from_overflow &= all((
-                int(ar1_max) - int(ar2_min) <= np.iinfo(ar1.dtype).max,
-                int(ar1_min) - int(ar2_min) >= np.iinfo(ar1.dtype).min
+                ar1_upper - int(ar2_min) <= np.iinfo(ar1.dtype).max,
+                ar1_lower - int(ar2_min) >= np.iinfo(ar1.dtype).min
             ))
 
         # Optimal performance is for approximately
