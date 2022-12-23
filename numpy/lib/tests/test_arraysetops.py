@@ -443,8 +443,8 @@ class TestSetOps:
         """Test that in1d works as expected for bool/int input."""
         for dtype in np.typecodes["AllInteger"]:
             a = np.array([True, False, False], dtype=bool)
-            b = np.array([1, 1, 1, 1], dtype=dtype)
-            expected = np.array([True, False, False], dtype=bool)
+            b = np.array([0, 0, 0, 0], dtype=dtype)
+            expected = np.array([False, True, True], dtype=bool)
             assert_array_equal(in1d(a, b, kind=kind), expected)
 
             a, b = b, a
