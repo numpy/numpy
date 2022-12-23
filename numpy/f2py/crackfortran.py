@@ -314,6 +314,9 @@ def openhook(filename, mode):
     not available, the function detects only UTF encodings, otherwise,
     ASCII encoding is used as fallback.
     """
+    # Reads in the entire file, shouldn't be a bottleneck
+    # Correctly handles comments or late stage unicode characters
+    # gh-22871
     with open(filename, 'rb') as f:
         raw = f.read()
     if raw.startswith(codecs.BOM_UTF8):
