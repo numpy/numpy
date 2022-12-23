@@ -193,6 +193,8 @@ def rot90(m, k=1, axes=(0, 1)):
     ``rot90(m, k=1, axes=(1,0))`` is equivalent to
     ``rot90(m, k=-1, axes=(0,1))``
 
+    ``rot90(m, k=1, axes=(0,1))`` will rotate the array by 90 degrees in the counter-clockwise direction
+
     Examples
     --------
     >>> m = np.array([[1,2],[3,4]], int)
