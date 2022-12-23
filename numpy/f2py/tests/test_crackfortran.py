@@ -1,3 +1,4 @@
+import importlib
 import codecs
 import pytest
 import numpy as np
@@ -267,3 +268,13 @@ class TestFortranReader(util.F2PyTest):
                      """)
         mod = crackfortran.crackfortran([str(f_path)])
         assert mod[0]['name'] == 'foo'
+
+class TestUnicodeComment(util.F2PyTest):
+    sources = [util.getpath("tests", "src", "crackfortran", "unicode_comment.f90")]
+
+    @pytest.mark.skipif(
+        (importlib.util.find_spec("chardet") is None),
+        reason="test requires chardet which is not installed",
+    )
+    def test_encoding_comment(self):
+        self.module.foo(3)
