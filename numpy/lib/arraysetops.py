@@ -656,8 +656,10 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
         #  2. Check overflows for (ar2 - ar2_min); dtype=ar2.dtype
         range_safe_from_overflow = ar2_range < np.iinfo(ar2.dtype).max
         #  3. Check overflows for (ar1 - ar2_min); dtype=ar1.dtype
-        range_safe_from_overflow &= int(ar1_max) - int(ar2_min) < np.iinfo(ar1.dtype).max
-        range_safe_from_overflow &= int(ar1_min) - int(ar2_min) > np.iinfo(ar1.dtype).min
+        range_safe_from_overflow &= all((
+            int(ar1_max) - int(ar2_min) < np.iinfo(ar1.dtype).max,
+            int(ar1_min) - int(ar2_min) > np.iinfo(ar1.dtype).min
+        ))
 
         # Optimal performance is for approximately
         # log10(size) > (log10(range) - 2.27) / 0.927.
