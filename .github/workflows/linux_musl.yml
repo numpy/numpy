@@ -60,4 +60,4 @@ jobs:
         # calculate version information. Note that this doesn't work when
         # actions/checkout is used for the cloning.
         python setup.py version
-        python runtests.py --show-build-log --cpu-baseline=native --debug-info --mode=full -- -rsx -v
+        python runtests.py --show-build-log --cpu-baseline=native --debug-info --mode=full -- -rsfx -v
