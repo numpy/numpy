@@ -162,6 +162,9 @@ def rot90(m, k=1, axes=(0, 1)):
 
     Rotation direction is from the first towards the second axis.
 
+    This means for a 2D array with the default k and axes, the 
+    rotation will be counterclockwise.
+
     Parameters
     ----------
     m : array_like
@@ -192,9 +195,6 @@ def rot90(m, k=1, axes=(0, 1)):
 
     ``rot90(m, k=1, axes=(1,0))`` is equivalent to
     ``rot90(m, k=-1, axes=(0,1))``
-
-    ``rot90(m, k=1, axes=(0,1))`` will rotate the array by 90 degrees in the
-    counter-clockwise direction
 
     Examples
     --------
