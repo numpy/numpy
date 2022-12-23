@@ -16,7 +16,9 @@ from ._private.nosetester import (
     )
 from . import overrides
 
-__all__ = _private.utils.__all__ + ['TestCase', 'run_module_suite']
+__all__ = (
+    _private.utils.__all__ + ['TestCase', 'run_module_suite', 'overrides']
+)
 
 from numpy._pytesttester import PytestTester
 test = PytestTester(__name__)
