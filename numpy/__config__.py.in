@@ -8,6 +8,7 @@ from numpy.core._multiarray_umath import (
 )
 
 __all__ = ["show"]
+_built_with_meson = True
 
 
 class DisplayModes(Enum):
