@@ -170,7 +170,7 @@ foreach name, compiler : compilers
   conf_data.set(name + '_COMP_CMD_ARRAY', compiler.cmd_array())
 endforeach
 
-# Host CPU and system information
+# Machines CPU and system information
 foreach name, machine : machines
   conf_data.set(name + '_CPU', machine.cpu())
   conf_data.set(name + '_CPU_FAMILY', machine.cpu_family())

@@ -21,7 +21,9 @@ def _cleanup(d):
     This ensures we remove values that Meson could not provide to CONFIG
     """
     if type(d) is dict:
-        return dict((k, _cleanup(v)) for k, v in d.items() if v and _cleanup(v))
+        return dict(
+            (k, _cleanup(v)) for k, v in d.items() if v and _cleanup(v)
+        )
     else:
         return d
 
@@ -97,20 +99,30 @@ CONFIG = _cleanup(
         "SIMD Extensions": {
             "baseline": __cpu_baseline__,
             "found": [
-                feature for feature in __cpu_dispatch__ if __cpu_features__[feature]
+                feature
+                for feature in __cpu_dispatch__
+                if __cpu_features__[feature]
             ],
             "not found": [
-                feature for feature in __cpu_dispatch__ if not __cpu_features__[feature]
+                feature
+                for feature in __cpu_dispatch__
+                if not __cpu_features__[feature]
             ],
         },
     }
 )
 
 
+def _check_pyyaml():
+    import yaml
+
+    return yaml
+
+
 def show(mode="print"):
     if mode == DisplayModes.print.value:
         try:  # Non-standard library, check import
-            import yaml
+            yaml = _check_pyyaml()
 
             print(yaml.dump(CONFIG))
         except ModuleNotFoundError:
@@ -122,4 +134,6 @@ def show(mode="print"):
     elif mode == DisplayModes.json.value:
         return CONFIG
     else:
-        raise
+        raise AttributeError(
+            f"Invalid `mode`, use one of: {', '.join([e.value for e in DisplayModes])}"
+        )
