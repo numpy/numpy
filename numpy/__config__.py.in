@@ -11,8 +11,8 @@ __all__ = ["show"]
 
 
 class DisplayModes(Enum):
-    print = "print"
-    json = "json"
+    stdout = "stdout"
+    dicts = "dicts"
 
 
 def _cleanup(d):
@@ -75,20 +75,20 @@ CONFIG = _cleanup(
                 "name": "@BLAS_NAME@",
                 "found": "@BLAS_FOUND@",
                 "version": "@BLAS_VERSION@",
-                "type name": "@BLAS_TYPE_NAME@",
-                "includedir": "@BLAS_INCLUDEDIR@",
-                "libdir": "@BLAS_LIBDIR@",
-                "openblas config": "@BLAS_OPENBLAS_CONFIG@",
+                "detection method": "@BLAS_TYPE_NAME@",
+                "include directory": "@BLAS_INCLUDEDIR@",
+                "lib directory": "@BLAS_LIBDIR@",
+                "openblas configuration": "@BLAS_OPENBLAS_CONFIG@",
                 "pc file directory": "@BLAS_PCFILEDIR@",
             },
             "lapack": {
                 "name": "@LAPACK_NAME@",
                 "found": "@LAPACK_FOUND@",
                 "version": "@LAPACK_VERSION@",
-                "type_name": "@LAPACK_TYPE_NAME@",
-                "includedir": "@LAPACK_INCLUDEDIR@",
-                "libdir": "@LAPACK_LIBDIR@",
-                "openblas_config": "@LAPACK_OPENBLAS_CONFIG@",
+                "detection method": "@LAPACK_TYPE_NAME@",
+                "include directory": "@LAPACK_INCLUDEDIR@",
+                "lib directory": "@LAPACK_LIBDIR@",
+                "openblas configuration": "@LAPACK_OPENBLAS_CONFIG@",
                 "pc file directory": "@LAPACK_PCFILEDIR@",
             },
         },
@@ -119,8 +119,8 @@ def _check_pyyaml():
     return yaml
 
 
-def show(mode="print"):
-    if mode == DisplayModes.print.value:
+def show(mode=DisplayModes.stdout.value):
+    if mode == DisplayModes.stdout.value:
         try:  # Non-standard library, check import
             yaml = _check_pyyaml()
 
@@ -131,7 +131,7 @@ def show(mode="print"):
 
             warnings.warn("Install `pyyaml` for better output", stacklevel=1)
             print(json.dumps(CONFIG, indent=2))
-    elif mode == DisplayModes.json.value:
+    elif mode == DisplayModes.dicts.value:
         return CONFIG
     else:
         raise AttributeError(
