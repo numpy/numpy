@@ -1,5 +1,6 @@
 import importlib
 import codecs
+import unicodedata
 import pytest
 import numpy as np
 from numpy.f2py.crackfortran import markinnerspaces
@@ -258,11 +259,8 @@ class TestFortranReader(util.F2PyTest):
     def test_input_encoding(self, tmp_path, encoding):
         # gh-635
         f_path = tmp_path / f"input_with_{encoding}_encoding.f90"
-        # explicit BOM is required for UTF8
-        bom = {'utf-8': codecs.BOM_UTF8}.get(encoding, b'')
         with f_path.open('w', encoding=encoding) as ff:
-            ff.write(bom.decode(encoding) +
-                     """
+            ff.write("""
                      subroutine foo()
                      end subroutine foo
                      """)
