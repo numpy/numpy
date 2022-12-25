@@ -290,16 +290,6 @@ def undo_rmbadname(names):
     return [undo_rmbadname1(_m) for _m in names]
 
 
-def getextension(name):
-    i = name.rfind('.')
-    if i == -1:
-        return ''
-    if '\\' in name[i:]:
-        return ''
-    if '/' in name[i:]:
-        return ''
-    return name[i + 1:]
-
 is_f_file = re.compile(r'.*\.(for|ftn|f77|f)\Z', re.I).match
 _has_f_header = re.compile(r'-\*-\s*fortran\s*-\*-', re.I).search
 _has_f90_header = re.compile(r'-\*-\s*f90\s*-\*-', re.I).search
