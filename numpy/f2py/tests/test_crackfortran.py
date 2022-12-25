@@ -273,8 +273,8 @@ class TestUnicodeComment(util.F2PyTest):
     sources = [util.getpath("tests", "src", "crackfortran", "unicode_comment.f90")]
 
     @pytest.mark.skipif(
-        (importlib.util.find_spec("chardet") is None),
-        reason="test requires chardet which is not installed",
+        (importlib.util.find_spec("charset_normalizer") is None),
+        reason="test requires charset_normalizer which is not installed",
     )
     def test_encoding_comment(self):
         self.module.foo(3)
