@@ -23,6 +23,7 @@ import numpy.core.umath as umath
 from numpy.testing import (
     assert_raises, assert_warns, suppress_warnings, IS_WASM
     )
+from numpy.testing._private.utils import requires_memory
 from numpy import ndarray
 from numpy.compat import asbytes
 from numpy.ma.testutils import (
@@ -4084,6 +4085,7 @@ class TestMaskedArrayMathMethods:
         assert_equal(a.max(-1), [3, 6])
         assert_equal(a.max(1), [3, 6])
 
+    @requires_memory(free_bytes=2 * 10000 * 1000 * 2)
     def test_mean_overflow(self):
         # Test overflow in masked arrays
         # gh-20272
