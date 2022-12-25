@@ -78,12 +78,11 @@ To benchmark or visualize only releases on different machines locally, the tags 
     # Get commits for tags
     # delete tag_commits.txt before re-runs
     for gtag in $(git tag --list --sort taggerdate | grep "^v"); do
-    git log $gtag --oneline -n1 --decorate=no | awk -v gtg="$gtag" '{print $1, gtg;}' >> tag_commits.txt
+    git log $gtag --oneline -n1 --decorate=no | awk '{print $1;}' >> tag_commits.txt
     done
-    # Take last 20
-    for commitLine in $(tail --lines=20 tag_commits.txt); do
-    asv run $(echo $commitLine | awk '{print $1}')^!
-    done
+    # Use the last 20
+    tail --lines=20 tag_commits.txt > 20_vers.txt
+    asv run HASHFILE:20_vers.txt
     # Publish and view
     asv publish
     asv preview
