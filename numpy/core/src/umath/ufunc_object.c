@@ -5945,6 +5945,179 @@ new_array_op(PyArrayObject *op_array, char *data)
 
 int is_generic_wrapped_legacy_loop(PyArrayMethod_StridedLoop *strided_loop);
 
+static int
+ufunc_at__slow_iter(PyUFuncObject *ufunc, NPY_ARRAYMETHOD_FLAGS flags,
+                    PyArrayMapIterObject *iter, PyArrayIterObject *iter2,
+                    PyArrayObject *op1_array, PyArrayObject *op2_array,
+                    PyArray_Descr *operation_descrs[3],
+                    PyArrayMethod_StridedLoop *strided_loop,
+                    PyArrayMethod_Context *context,
+                    npy_intp strides[3],
+                    NpyAuxData *auxdata
+                    )
+{
+    NpyIter *iter_buffer = NULL;
+    PyArrayObject *array_operands[3] = {NULL, NULL, NULL};
+    int buffersize;
+    int errormask = 0;
+    int res = 0;
+    int nop = 0;
+    NpyIter_IterNextFunc *iternext;
+    char * err_msg = NULL;
+    NPY_BEGIN_THREADS_DEF;
+
+    if (_get_bufsize_errmask(NULL, ufunc->name, &buffersize, &errormask) < 0) {
+        return -1;
+    }
+    array_operands[0] = new_array_op(op1_array, iter->dataptr);
+    if (iter2 != NULL) {
+        Py_INCREF(PyArray_DESCR(op2_array));
+        array_operands[1] = new_array_op(op2_array, PyArray_ITER_DATA(iter2));
+        Py_INCREF(PyArray_DESCR(op1_array));
+        array_operands[2] = new_array_op(op1_array, iter->dataptr);
+        nop = 3;
+    }
+    else {
+        Py_INCREF(PyArray_DESCR(op1_array));
+        array_operands[1] = new_array_op(op1_array, iter->dataptr);
+        array_operands[2] = NULL;
+        nop = 2;
+    }
+    /* Set up the flags */
+    npy_uint32 op_flags[3];
+    op_flags[0] = NPY_ITER_READONLY|
+                  NPY_ITER_ALIGNED;
+
+    if (iter2 != NULL) {
+        op_flags[1] = NPY_ITER_READONLY|
+                      NPY_ITER_ALIGNED;
+        op_flags[2] = NPY_ITER_WRITEONLY|
+                      NPY_ITER_ALIGNED|
+                      NPY_ITER_ALLOCATE|
+                      NPY_ITER_NO_BROADCAST|
+                      NPY_ITER_NO_SUBTYPE;
+    }
+    else {
+        op_flags[1] = NPY_ITER_WRITEONLY|
+                      NPY_ITER_ALIGNED|
+                      NPY_ITER_ALLOCATE|
+                      NPY_ITER_NO_BROADCAST|
+                      NPY_ITER_NO_SUBTYPE;
+    }
+    /*
+     * Create NpyIter object to "iterate" over single element of each input
+     * operand. This is an easy way to reuse the NpyIter logic for dealing
+     * with certain cases like casting operands to correct dtype. On each
+     * iteration over the MapIterArray object created above, we'll take the
+     * current data pointers from that and reset this NpyIter object using
+     * those data pointers, and then trigger a buffer copy. The buffer data
+     * pointers from the NpyIter object will then be passed to the inner loop
+     * function.
+     */
+    iter_buffer = NpyIter_AdvancedNew(nop, array_operands,
+                        NPY_ITER_EXTERNAL_LOOP|
+                        NPY_ITER_REFS_OK|
+                        NPY_ITER_ZEROSIZE_OK|
+                        NPY_ITER_BUFFERED|
+                        NPY_ITER_GROWINNER|
+                        NPY_ITER_DELAY_BUFALLOC,
+                        NPY_KEEPORDER, NPY_UNSAFE_CASTING,
+                        op_flags, operation_descrs,
+                        -1, NULL, NULL, buffersize);
+
+    if (iter_buffer == NULL) {
+        for (int i = 0; i < 3; i++) {
+            Py_XDECREF(array_operands[i]);
+        }
+        return -1;
+    }
+
+    iternext = NpyIter_GetIterNext(iter_buffer, NULL);
+    if (iternext == NULL) {
+        NpyIter_Deallocate(iter_buffer);
+        for (int i = 0; i < 3; i++) {
+            Py_XDECREF(array_operands[i]);
+        }
+        return -1;
+    }
+
+    int needs_api = (flags & NPY_METH_REQUIRES_PYAPI) != 0;
+    needs_api |= NpyIter_IterationNeedsAPI(iter_buffer);
+    if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
+        /* Start with the floating-point exception flags cleared */
+        npy_clear_floatstatus_barrier((char*)&iter);
+    }
+
+    if (!needs_api) {
+        NPY_BEGIN_THREADS;
+    }
+
+    /*
+     * Iterate over first and second operands and call ufunc
+     * for each pair of inputs
+     */
+    for (npy_intp i = iter->size; i > 0; i--)
+    {
+        char *dataptr[3];
+        char **buffer_dataptr;
+        /* one element at a time, no stride required but read by innerloop */
+        npy_intp count = 1;
+
+        /*
+         * Set up data pointers for either one or two input operands.
+         * The output data pointer points to the first operand data.
+         */
+        dataptr[0] = iter->dataptr;
+        if (iter2 != NULL) {
+            dataptr[1] = PyArray_ITER_DATA(iter2);
+            dataptr[2] = iter->dataptr;
+        }
+        else {
+            dataptr[1] = iter->dataptr;
+            dataptr[2] = NULL;
+        }
+
+        /* Reset NpyIter data pointers which will trigger a buffer copy */
+        NpyIter_ResetBasePointers(iter_buffer, dataptr, &err_msg);
+        if (err_msg) {
+            res = -1;
+            break;
+        }
+
+        buffer_dataptr = NpyIter_GetDataPtrArray(iter_buffer);
+
+        res = strided_loop(context, buffer_dataptr, &count, strides, auxdata);
+        if (res != 0) {
+            break;
+        }
+
+        /*
+         * Call to iternext triggers copy from buffer back to output array
+         * after innerloop puts result in buffer.
+         */
+        iternext(iter_buffer);
+
+        PyArray_MapIterNext(iter);
+        if (iter2 != NULL) {
+            PyArray_ITER_NEXT(iter2);
+        }
+    }
+
+    NPY_END_THREADS;
+
+    if (res != 0 && err_msg) {
+        PyErr_SetString(PyExc_ValueError, err_msg);
+    }
+    if (res == 0 && !(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
+        /* NOTE: We could check float errors even when `res < 0` */
+        res = _check_ufunc_fperr(errormask, NULL, "at");
+    }
+    NpyIter_Deallocate(iter_buffer);
+    for (int i = 0; i < 3; i++) {
+        Py_XDECREF(array_operands[i]);
+        }
+    return res;
+}
 
 /*
  * Call ufunc only on selected array items and store result in first operand.
@@ -5973,11 +6146,10 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
     /* override vars */
     int errval;
     PyObject *override = NULL;
+    int res = -1;   /* start with fail condition so "goto fail" will error */
 
     PyArrayMethod_StridedLoop *strided_loop;
     NpyAuxData *auxdata = NULL;
-
-    NPY_BEGIN_THREADS_DEF;
 
     if (ufunc->core_enabled) {
         PyErr_Format(PyExc_TypeError,
@@ -6026,7 +6198,11 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
     op1_array = (PyArrayObject *)op1;
 
     /* Create second operand from number array if needed. */
-    if (op2 != NULL) {
+    if (op2 == NULL) {
+        nop = 2;
+    }
+    else {
+        nop = 3;
         op2_array = (PyArrayObject *)PyArray_FromAny(op2, NULL,
                                 0, 0, 0, NULL);
         if (op2_array == NULL) {
@@ -6178,174 +6354,20 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
                 fast_path = 0;
         }
     }
-    int res = 0;
     if (fast_path) {
         fprintf(stdout, "can use ufunc_at fastpath\n");
         fflush(stdout);
         // res = ufunc_at__fast_iter(iter, iter2);
+        res = ufunc_at__slow_iter(ufunc, flags, iter, iter2, op1_array, op2_array,
+                                  operation_descrs, strided_loop, &context, strides, auxdata);
     } else {
         fprintf(stdout, "cannot use ufunc_at fastpath\n");
         fflush(stdout);
-        // res = ufunc_at__slow_iter(iter, iter2);
+        res = ufunc_at__slow_iter(ufunc, flags, iter, iter2, op1_array, op2_array,
+                                  operation_descrs, strided_loop, &context, strides, auxdata);
     }
 
-    {
-        NpyIter *iter_buffer = NULL;
-        PyArrayObject *array_operands[3] = {NULL, NULL, NULL};
-        array_operands[0] = new_array_op(op1_array, iter->dataptr);
-        int buffersize;
-        int errormask = 0;
-        NpyIter_IterNextFunc *iternext;
-        char * err_msg = NULL;
-
-        if (_get_bufsize_errmask(NULL, ufunc->name, &buffersize, &errormask) < 0) {
-            goto fail;
-        }
-        if (iter2 != NULL) {
-            Py_INCREF(PyArray_DESCR(op2_array));
-            array_operands[1] = new_array_op(op2_array, PyArray_ITER_DATA(iter2));
-            Py_INCREF(PyArray_DESCR(op1_array));
-            array_operands[2] = new_array_op(op1_array, iter->dataptr);
-        }
-        else {
-            Py_INCREF(PyArray_DESCR(op1_array));
-            array_operands[1] = new_array_op(op1_array, iter->dataptr);
-            array_operands[2] = NULL;
-        }
-        /* Set up the flags */
-        npy_uint32 op_flags[3];
-        op_flags[0] = NPY_ITER_READONLY|
-                      NPY_ITER_ALIGNED;
-
-        if (iter2 != NULL) {
-            op_flags[1] = NPY_ITER_READONLY|
-                          NPY_ITER_ALIGNED;
-            op_flags[2] = NPY_ITER_WRITEONLY|
-                          NPY_ITER_ALIGNED|
-                          NPY_ITER_ALLOCATE|
-                          NPY_ITER_NO_BROADCAST|
-                          NPY_ITER_NO_SUBTYPE;
-        }
-        else {
-            op_flags[1] = NPY_ITER_WRITEONLY|
-                          NPY_ITER_ALIGNED|
-                          NPY_ITER_ALLOCATE|
-                          NPY_ITER_NO_BROADCAST|
-                          NPY_ITER_NO_SUBTYPE;
-        }
-        /*
-         * Create NpyIter object to "iterate" over single element of each input
-         * operand. This is an easy way to reuse the NpyIter logic for dealing
-         * with certain cases like casting operands to correct dtype. On each
-         * iteration over the MapIterArray object created above, we'll take the
-         * current data pointers from that and reset this NpyIter object using
-         * those data pointers, and then trigger a buffer copy. The buffer data
-         * pointers from the NpyIter object will then be passed to the inner loop
-         * function.
-         */
-        iter_buffer = NpyIter_AdvancedNew(nop, array_operands,
-                            NPY_ITER_EXTERNAL_LOOP|
-                            NPY_ITER_REFS_OK|
-                            NPY_ITER_ZEROSIZE_OK|
-                            NPY_ITER_BUFFERED|
-                            NPY_ITER_GROWINNER|
-                            NPY_ITER_DELAY_BUFALLOC,
-                            NPY_KEEPORDER, NPY_UNSAFE_CASTING,
-                            op_flags, operation_descrs,
-                            -1, NULL, NULL, buffersize);
-
-        if (iter_buffer == NULL) {
-            for (int i = 0; i < 3; i++) {
-                Py_XDECREF(array_operands[i]);
-            }
-            goto fail;
-        }
-
-        iternext = NpyIter_GetIterNext(iter_buffer, NULL);
-        if (iternext == NULL) {
-            NpyIter_Deallocate(iter_buffer);
-            for (int i = 0; i < 3; i++) {
-                Py_XDECREF(array_operands[i]);
-            }
-            goto fail;
-        }
-
-        int needs_api = (flags & NPY_METH_REQUIRES_PYAPI) != 0;
-        needs_api |= NpyIter_IterationNeedsAPI(iter_buffer);
-        if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
-            /* Start with the floating-point exception flags cleared */
-            npy_clear_floatstatus_barrier((char*)&iter);
-        }
-
-        if (!needs_api) {
-            NPY_BEGIN_THREADS;
-        }
-
-        /*
-         * Iterate over first and second operands and call ufunc
-         * for each pair of inputs
-         */
-        for (npy_intp i = iter->size; i > 0; i--)
-        {
-            char *dataptr[3];
-            char **buffer_dataptr;
-            /* one element at a time, no stride required but read by innerloop */
-            npy_intp count = 1;
-
-            /*
-             * Set up data pointers for either one or two input operands.
-             * The output data pointer points to the first operand data.
-             */
-            dataptr[0] = iter->dataptr;
-            if (iter2 != NULL) {
-                dataptr[1] = PyArray_ITER_DATA(iter2);
-                dataptr[2] = iter->dataptr;
-            }
-            else {
-                dataptr[1] = iter->dataptr;
-                dataptr[2] = NULL;
-            }
-
-            /* Reset NpyIter data pointers which will trigger a buffer copy */
-            NpyIter_ResetBasePointers(iter_buffer, dataptr, &err_msg);
-            if (err_msg) {
-                res = -1;
-                break;
-            }
-
-            buffer_dataptr = NpyIter_GetDataPtrArray(iter_buffer);
-
-            res = strided_loop(&context, buffer_dataptr, &count, strides, auxdata);
-            if (res != 0) {
-                break;
-            }
-
-            /*
-             * Call to iternext triggers copy from buffer back to output array
-             * after innerloop puts result in buffer.
-             */
-            iternext(iter_buffer);
-
-            PyArray_MapIterNext(iter);
-            if (iter2 != NULL) {
-                PyArray_ITER_NEXT(iter2);
-            }
-        }
-
-        NPY_END_THREADS;
-
-        if (res != 0 && err_msg) {
-            PyErr_SetString(PyExc_ValueError, err_msg);
-        }
-        if (res == 0 && !(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
-            /* NOTE: We could check float errors even when `res < 0` */
-            res = _check_ufunc_fperr(errormask, NULL, "at");
-        }
-        NpyIter_Deallocate(iter_buffer);
-        for (int i = 0; i < 3; i++) {
-            Py_XDECREF(array_operands[i]);
-        }
-    }
+fail:
     NPY_AUXDATA_FREE(auxdata);
 
     Py_XDECREF(op2_array);
@@ -6361,26 +6383,15 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
      * (e.g. `power` released the GIL but manually set an Exception).
      */
     if (res != 0 || PyErr_Occurred()) {
+        /* iter_buffer has already been deallocated, don't use NpyIter_Dealloc */
+        if (op1_array != (PyArrayObject*)op1) {
+            PyArray_DiscardWritebackIfCopy(op1_array);
+        }
         return NULL;
     }
     else {
         Py_RETURN_NONE;
     }
-
-fail:
-    /* iter_buffer has already been deallocated, don't use NpyIter_Dealloc */
-    if (op1_array != (PyArrayObject*)op1) {
-        PyArray_DiscardWritebackIfCopy(op1_array);
-    }
-    Py_XDECREF(op2_array);
-    Py_XDECREF(iter);
-    Py_XDECREF(iter2);
-    for (int i = 0; i < 3; i++) {
-        Py_XDECREF(operation_descrs[i]);
-    }
-    NPY_AUXDATA_FREE(auxdata);
-
-    return NULL;
 }
 
 
