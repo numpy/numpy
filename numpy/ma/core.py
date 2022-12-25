@@ -7348,6 +7348,9 @@ def diff(a, /, n=1, axis=-1, prepend=np._NoValue, append=np._NoValue):
     the given axis, higher differences are calculated by using `diff`
     recursively.
     Preserves the input mask.
+
+    .. versionadded:: 1.25.0
+
     Parameters
     ----------
     a : array_like
@@ -7364,7 +7367,7 @@ def diff(a, /, n=1, axis=-1, prepend=np._NoValue, append=np._NoValue):
         arrays with length 1 in the direction of axis and the shape
         of the input array in along all other axes.  Otherwise the
         dimension and shape must match `a` except along axis.
-        .. versionadded:: 1.16.0
+
     Returns
     -------
     diff : MaskedArray
@@ -7374,33 +7377,34 @@ def diff(a, /, n=1, axis=-1, prepend=np._NoValue, append=np._NoValue):
         between any two elements of `a`. This is the same as the type of
         `a` in most cases. A notable exception is `datetime64`, which
         results in a `timedelta64` output array.
+
     See Also
     --------
     numpy.diff : Equivalent function in the top-level NumPy module.
+
     Notes
     -----
     Type is preserved for boolean arrays, so the result will contain
     `False` when consecutive elements are the same and `True` when they
     differ.
+
     For unsigned integer arrays, the results will also be unsigned. This
     should not be surprising, as the result is consistent with
     calculating the difference directly:
+
     >>> u8_arr = np.array([1, 0], dtype=np.uint8)
     >>> np.ma.diff(u8_arr)
-    masked_array(data=[255],
-            mask=False,
-        fill_value=999999,
-            dtype=uint8)
+    array([255], dtype=uint8)
     >>> u8_arr[1,...] - u8_arr[0,...]
     255
+
     If this is not desirable, then the array should be cast to a larger
     integer type first:
+
     >>> i16_arr = u8_arr.astype(np.int16)
     >>> np.ma.diff(i16_arr)
-    masked_array(data=[-1],
-            mask=False,
-        fill_value=999999,
-            dtype=int16)
+    array([-1], dtype=int16)
+
     Examples
     --------
     >>> a = np.array([1, 2, 3, 4, 7, 0, 2, 3])
@@ -7409,10 +7413,12 @@ def diff(a, /, n=1, axis=-1, prepend=np._NoValue, append=np._NoValue):
     masked_array(data=[--, 1, 1, 3, --, --, 1],
             mask=[ True, False, False, False,  True,  True, False],
         fill_value=999999)
+
     >>> np.ma.diff(x, n=2)
     masked_array(data=[--, 0, 2, --, --, --],
                 mask=[ True, False, False,  True,  True,  True],
         fill_value=999999)
+
     >>> a = np.array([[1, 3, 1, 5, 10], [0, 1, 5, 6, 8]])
     >>> x = np.ma.masked_equal(a, value=1)
     >>> np.ma.diff(x)
@@ -7422,10 +7428,12 @@ def diff(a, /, n=1, axis=-1, prepend=np._NoValue, append=np._NoValue):
         mask=[[ True,  True,  True, False],
                 [ True,  True, False, False]],
         fill_value=1)
+
     >>> np.ma.diff(x, axis=0)
     masked_array(data=[[--, --, --, 1, -2]],
             mask=[[ True,  True,  True, False, False]],
         fill_value=1)
+
     """
     combined = []
     if prepend is not np._NoValue:
