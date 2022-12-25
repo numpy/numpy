@@ -43,4 +43,3 @@ dependencies:
   # Used in some tests
   - cffi
   - pytz
-  - chardet
