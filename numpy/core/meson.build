@@ -147,7 +147,11 @@ endforeach
 
 c99_complex_funcs = [
   'cabs', 'cacos', 'cacosh', 'carg', 'casin', 'casinh', 'catan',
-  'catanh', 'cexp', 'clog', 'cpow', 'csqrt'
+  'catanh', 'cexp', 'clog', 'cpow', 'csqrt',
+  # The long double variants (like csinl)  should be mandatory on C11,
+  # but are missing in FreeBSD. Issue gh-22850
+  'csin', 'csinh', 'ccos', 'ccosh', 'ctan', 'ctanh',
+
 ]
 foreach func: c99_complex_funcs
   func_single = func + 'f'

@@ -132,7 +132,6 @@ MANDATORY_FUNCS = [
     "rint", "trunc", "exp2",
     "copysign", "nextafter", "strtoll", "strtoull", "cbrt",
     "log2", "pow", "hypot", "atan2",
-    "csin", "csinh", "ccos", "ccosh", "ctan", "ctanh",
     "creal", "cimag", "conj"
 ]
 
@@ -154,6 +153,9 @@ C99_COMPLEX_TYPES = [
 C99_COMPLEX_FUNCS = [
     "cabs", "cacos", "cacosh", "carg", "casin", "casinh", "catan",
     "catanh", "cexp", "clog", "cpow", "csqrt",
+    # The long double variants (like csinl)  should be mandatory on C11,
+    # but are missing in FreeBSD. Issue gh-22850
+    "csin", "csinh", "ccos", "ccosh", "ctan", "ctanh",
     ]
 
 OPTIONAL_HEADERS = [
