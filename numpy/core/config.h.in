@@ -90,6 +90,25 @@
 #mesondefine HAVE_CLOGL
 #mesondefine HAVE_CPOWL
 #mesondefine HAVE_CSQRTL
+/* FreeBSD */
+#mesondefine HAVE_CSINF
+#mesondefine HAVE_CSINHF
+#mesondefine HAVE_CCOSF
+#mesondefine HAVE_CCOSHF
+#mesondefine HAVE_CTANF
+#mesondefine HAVE_CTANHF
+#mesondefine HAVE_CSIN
+#mesondefine HAVE_CSINH
+#mesondefine HAVE_CCOS
+#mesondefine HAVE_CCOSH
+#mesondefine HAVE_CTAN
+#mesondefine HAVE_CTANH
+#mesondefine HAVE_CSINL
+#mesondefine HAVE_CSINHL
+#mesondefine HAVE_CCOSL
+#mesondefine HAVE_CCOSHL
+#mesondefine HAVE_CTANL
+#mesondefine HAVE_CTANHL
 
 #mesondefine NPY_CAN_LINK_SVML
 #mesondefine NPY_RELAXED_STRIDES_DEBUG
