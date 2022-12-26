@@ -148,9 +148,9 @@ import copy
 import platform
 import codecs
 try:
-    import chardet
+    import charset_normalizer
 except ImportError:
-    chardet = None
+    charset_normalizer = None
 
 from . import __version__
 
@@ -309,26 +309,31 @@ _free_f90_start = re.compile(r'[^c*]\s*[^\s\d\t]', re.I).match
 def openhook(filename, mode):
     """Ensures that filename is opened with correct encoding parameter.
 
-    This function uses chardet package, when available, for
-    determining the encoding of the file to be opened. When chardet is
-    not available, the function detects only UTF encodings, otherwise,
-    ASCII encoding is used as fallback.
+    This function uses charset_normalizer package, when available, for
+    determining the encoding of the file to be opened. When charset_normalizer
+    is not available, the function detects only UTF encodings, otherwise, ASCII
+    encoding is used as fallback.
     """
-    bytes = min(32, os.path.getsize(filename))
-    with open(filename, 'rb') as f:
-        raw = f.read(bytes)
-    if raw.startswith(codecs.BOM_UTF8):
-        encoding = 'UTF-8-SIG'
-    elif raw.startswith((codecs.BOM_UTF32_LE, codecs.BOM_UTF32_BE)):
-        encoding = 'UTF-32'
-    elif raw.startswith((codecs.BOM_LE, codecs.BOM_BE)):
-        encoding = 'UTF-16'
+    # Reads in the entire file. Robust detection of encoding.
+    # Correctly handles comments or late stage unicode characters
+    # gh-22871
+    if charset_normalizer is not None:
+        encoding = charset_normalizer.from_path(filename).best().encoding
     else:
-        if chardet is not None:
-            encoding = chardet.detect(raw)['encoding']
-        else:
-            # hint: install chardet to ensure correct encoding handling
-            encoding = 'ascii'
+        # hint: install charset_normalizer for correct encoding handling
+        # No need to read the whole file for trying with startswith
+        nbytes = min(32, os.path.getsize(filename))
+        with open(filename, 'rb') as fhandle:
+            raw = fhandle.read(nbytes)
+            if raw.startswith(codecs.BOM_UTF8):
+                encoding = 'UTF-8-SIG'
+            elif raw.startswith((codecs.BOM_UTF32_LE, codecs.BOM_UTF32_BE)):
+                encoding = 'UTF-32'
+            elif raw.startswith((codecs.BOM_LE, codecs.BOM_BE)):
+                encoding = 'UTF-16'
+            else:
+                # Fallback, without charset_normalizer
+                encoding = 'ascii'
     return open(filename, mode, encoding=encoding)
 
 
@@ -394,7 +399,7 @@ def readfortrancode(ffile, dowithline=show, istop=1):
         except UnicodeDecodeError as msg:
             raise Exception(
                 f'readfortrancode: reading {fin.filename()}#{fin.lineno()}'
-                f' failed with\n{msg}.\nIt is likely that installing chardet'
+                f' failed with\n{msg}.\nIt is likely that installing charset_normalizer'
                 ' package will help f2py determine the input file encoding'
                 ' correctly.')
         if not l:
