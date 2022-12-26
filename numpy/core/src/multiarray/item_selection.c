@@ -212,6 +212,21 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
         goto fail;
     }
 
+    if (PyArray_ISBOOL(indices)){
+        if(PyArray_NDIM(indices) > 1){
+            goto fail;
+        }
+        /*
+         * The following is pseudocode(not too familiar with C-Python API yet)
+         * count = 0
+         * trueIndices = []
+         * for i in range(len(indices)):
+         *     if indices[i] == True:
+         *         trueIndices.append(i)
+         * from here, is it possible to use PyArr_NewFromDescr() on trueIndices and make indices == trueIndices?  
+        */
+    }
+
     n = m = chunk = 1;
     nd = PyArray_NDIM(self) + PyArray_NDIM(indices) - 1;
     for (i = 0; i < nd; i++) {
