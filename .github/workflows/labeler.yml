@@ -7,7 +7,7 @@ permissions: {}
    contents: write  # to add labels
 
 jobs:
-  label_pull_request by the PR label:
+  label_pull_request:
     runs-on: ubuntu-latest
     steps:
     - name: Label the PR
@@ -15,4 +15,4 @@ jobs:
       continue-on-error: true
       with:
         repo-token: "${{ secrets.GITHUB_TOKEN }}"
-      if: github.repository == 'numpy/numpy'
+      # if: github.repository == 'numpy/numpy'
