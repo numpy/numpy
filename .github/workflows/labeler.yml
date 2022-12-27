@@ -1,18 +1,18 @@
 name: "Pull Request Labeler"
 on:
   pull_request_target:
-    types: [created]
+    types: [opened]
 
-permissions: {}
-   contents: write  # to add labels
+permissions:
+   pull-requests: write  # to add labels
 
 jobs:
-  label_pull_request by the PR label:
+  pr-labeler:
     runs-on: ubuntu-latest
     steps:
     - name: Label the PR
       uses: gerrymanoim/pr-prefix-labeler@v3
       continue-on-error: true
-      with:
-        repo-token: "${{ secrets.GITHUB_TOKEN }}"
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       if: github.repository == 'numpy/numpy'
