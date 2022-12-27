@@ -5944,15 +5944,15 @@ new_array_op(PyArrayObject *op_array, char *data)
 }
 
 int is_generic_wrapped_legacy_loop(PyArrayMethod_StridedLoop *strided_loop);
+PyUFuncGenericFunction get_inner_loop(void * auxdata);
+int get_pyerr_check(void * auxdata);
 
 static int
 ufunc_at__fast_iter(PyUFuncObject *ufunc, NPY_ARRAYMETHOD_FLAGS flags,
                     PyArrayMapIterObject *iter, PyArrayIterObject *iter2,
                     PyArrayObject *op1_array, PyArrayObject *op2_array,
-                    PyArrayMethod_StridedLoop *strided_loop,
-                    PyArrayMethod_Context *context,
-                    npy_intp strides[3],
-                    NpyAuxData *auxdata
+                    PyUFuncGenericFunction loop, int pyerr_check,
+                    npy_intp strides[3]
                     )
 {
     int buffersize;
@@ -5998,8 +5998,9 @@ ufunc_at__fast_iter(PyUFuncObject *ufunc, NPY_ARRAYMETHOD_FLAGS flags,
             dataptr[2] = NULL;
         }
 
-        res = strided_loop(context, dataptr, &count, strides, auxdata);
-        if (res != 0) {
+        loop(dataptr, &count, strides, NULL);
+        if (pyerr_check && PyErr_Occurred()) {
+            res = -1;
             break;
         }
 
@@ -6435,8 +6436,10 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
         }
     }
     if (fast_path) {
-        res = ufunc_at__fast_iter(ufunc, flags, iter, iter2, op1_array, op2_array,
-                                  strided_loop, &context, strides, auxdata);
+        PyUFuncGenericFunction loop = get_inner_loop(auxdata);
+        
+        res = ufunc_at__fast_iter(ufunc, flags, iter, iter2, op1_array,
+                                  op2_array, loop, get_pyerr_check(auxdata), strides);
     } else {
         res = ufunc_at__slow_iter(ufunc, flags, iter, iter2, op1_array, op2_array,
                                   operation_descrs, strided_loop, &context, strides, auxdata);
