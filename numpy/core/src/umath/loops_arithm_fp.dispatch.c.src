@@ -537,7 +537,7 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
         *((@type@ *)iop1) = io1;
 #endif
     }
-    else if (!run_binary_simd_@kind@_@TYPE@(args, dimensions, steps)) {
+    else if (dimensions[0] < 4 || !run_binary_simd_@kind@_@TYPE@(args, dimensions, steps)) {
         BINARY_LOOP {
             const @type@ in1 = *(@type@ *)ip1;
             const @type@ in2 = *(@type@ *)ip2;
