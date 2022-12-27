@@ -15,6 +15,7 @@ from numpy.testing import (
     tempdir, temppath, assert_no_gc_cycles, HAS_REFCOUNT
     )
 from numpy.core.overrides import ARRAY_FUNCTION_ENABLED
+import pytest
 
 
 class _GenericTest:
@@ -970,13 +971,17 @@ class TestAssertAllclose:
 
 class TestArrayAlmostEqualNulp:
 
-    def test_gh_21520(self):
-        x0 = np.longdouble(1.0)
-        x1 = np.nextafter(x0, np.longdouble(2.0))
-        x2 = np.nextafter(x1, np.longdouble(2.0))
+    @pytest.mark.parametrize("val", [
+        1.0, 2**60, 2**60 + 1,
+        2**80,
+        ])
+    def test_gh_21520(self, val):
+        x0 = np.longdouble(val)
+        x1 = np.nextafter(x0, np.inf)
+        x2 = np.nextafter(x1, np.inf)
         with pytest.raises(AssertionError, match="1 ULP"):
             assert_array_almost_equal_nulp(x0, x2)
-
+        assert_array_almost_equal_nulp(x0, x2, 2)
 
     def test_float64_pass(self):
         # The number of units of least precision
