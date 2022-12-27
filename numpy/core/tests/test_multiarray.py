@@ -4721,23 +4721,23 @@ class TestArgmax:
 
         a = np.array([1, 2**7 - 1, -2**7], dtype=np.int8)
         assert_equal(np.argmax(a), 1)
-        a.repeat(129)
-        assert_equal(np.argmax(a), 1)
+        a = a.repeat(129)
+        assert_equal(np.argmax(a), 129)
 
         a = np.array([1, 2**15 - 1, -2**15], dtype=np.int16)
         assert_equal(np.argmax(a), 1)
-        a.repeat(129)
-        assert_equal(np.argmax(a), 1)
+        a = a.repeat(129)
+        assert_equal(np.argmax(a), 129)
 
         a = np.array([1, 2**31 - 1, -2**31], dtype=np.int32)
         assert_equal(np.argmax(a), 1)
-        a.repeat(129)
-        assert_equal(np.argmax(a), 1)
+        a = a.repeat(129)
+        assert_equal(np.argmax(a), 129)
 
         a = np.array([1, 2**63 - 1, -2**63], dtype=np.int64)
         assert_equal(np.argmax(a), 1)
-        a.repeat(129)
-        assert_equal(np.argmax(a), 1)
+        a = a.repeat(129)
+        assert_equal(np.argmax(a), 129)
 
 class TestArgmin:
     usg_data = [
@@ -4863,23 +4863,23 @@ class TestArgmin:
 
         a = np.array([1, -2**7, -2**7 + 1, 2**7 - 1], dtype=np.int8)
         assert_equal(np.argmin(a), 1)
-        a.repeat(129)
-        assert_equal(np.argmin(a), 1)
+        a = a.repeat(129)
+        assert_equal(np.argmin(a), 129)
 
         a = np.array([1, -2**15, -2**15 + 1, 2**15 - 1], dtype=np.int16)
         assert_equal(np.argmin(a), 1)
-        a.repeat(129)
-        assert_equal(np.argmin(a), 1)
+        a = a.repeat(129)
+        assert_equal(np.argmin(a), 129)
 
         a = np.array([1, -2**31, -2**31 + 1, 2**31 - 1], dtype=np.int32)
         assert_equal(np.argmin(a), 1)
-        a.repeat(129)
-        assert_equal(np.argmin(a), 1)
+        a = a.repeat(129)
+        assert_equal(np.argmin(a), 129)
 
         a = np.array([1, -2**63, -2**63 + 1, 2**63 - 1], dtype=np.int64)
         assert_equal(np.argmin(a), 1)
-        a.repeat(129)
-        assert_equal(np.argmin(a), 1)
+        a = a.repeat(129)
+        assert_equal(np.argmin(a), 129)
 
 class TestMinMax:
 
