@@ -1,0 +1,13 @@
+Fujitsu C/C++ compiler is now supported
+----------------------------------------------
+Support for Fujitsu compiler has been added.
+To build with Fujitsu compiler, run:
+
+    python setup.py build -c fujitsu
+
+
+SSL2 is now supported
+-----------------------------------
+Support for SSL2 has been added. SSL2 is a library that provides OpenBLAS compatible GEMM functions.
+To enable SSL2, it need to edit site.cfg and build with Fujitsu compiler.
+See site.cfg.example.

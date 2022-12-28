@@ -37,7 +37,7 @@ __all__ = [
         'SkipTest', 'KnownFailureException', 'temppath', 'tempdir', 'IS_PYPY',
         'HAS_REFCOUNT', "IS_WASM", 'suppress_warnings', 'assert_array_compare',
         'assert_no_gc_cycles', 'break_cycles', 'HAS_LAPACK64', 'IS_PYSTON',
-        '_OLD_PROMOTION', 'IS_MUSL'
+        '_OLD_PROMOTION', 'IS_MUSL', '_SUPPORTS_SVE'
         ]
 
 
@@ -1297,6 +1297,22 @@ def rundocs(filename=None, raise_on_error=True):
         raise AssertionError("Some doctests failed:\n%s" % "\n".join(msg))
 
 
+def check_support_sve():
+    """
+    gh-22982
+    """
+    
+    import subprocess
+    cmd = 'lscpu'
+    try:
+        return "sve" in (subprocess.Popen(cmd, stdout=subprocess.PIPE,
+                            shell=True).communicate()[0]).decode('utf-8')
+    except OSError:
+        return False
+
+
+_SUPPORTS_SVE = check_support_sve()
+
 #
 # assert_raises and assert_raises_regex are taken from unittest.
 #
@@ -2548,3 +2564,4 @@ def _get_glibc_version():
 
 _glibcver = _get_glibc_version()
 _glibc_older_than = lambda x: (_glibcver != '0.0' and _glibcver < x)
+
