@@ -15,7 +15,8 @@ from numpy.testing import (
     tempdir, temppath, assert_no_gc_cycles, HAS_REFCOUNT
     )
 from numpy.core.overrides import ARRAY_FUNCTION_ENABLED
-import pytest
+from hypothesis import given, example, assume
+from hypothesis.extra import numpy as hynp
 
 
 class _GenericTest:
@@ -971,11 +972,21 @@ class TestAssertAllclose:
 
 class TestArrayAlmostEqualNulp:
 
-    @pytest.mark.parametrize("val", [
-        1.0, 2**60, 2**60 + 1,
-        2**80,
-        ])
+    @given(hynp.arrays(dtype=np.longdouble,
+                       shape=(1,)))
+    @example(1.0)
+    @example(2**60)
+    @example(2**60 + 1)
+    @example(2**80)
     def test_gh_21520(self, val):
+        # TODO: for np.nan and np.inf, maybe we
+        # should try to emulate the errors produced
+        # with the np.float64 type?
+        try:
+            assume(not np.isnan(val))
+            assume(not np.isinf(val))
+        except TypeError:
+            pass
         x0 = np.longdouble(val)
         x1 = np.nextafter(x0, np.inf)
         x2 = np.nextafter(x1, np.inf)
