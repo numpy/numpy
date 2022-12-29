@@ -889,16 +889,17 @@ def vdot(a, b):
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.bincount)
-def bincount(x, weights=None, minlength=None):
+def bincount(x, weights=None, minlength=None, initial=None, out=None):
     """
-    bincount(x, /, weights=None, minlength=0)
+    bincount(x, /, weights=None, minlength=0, initial=None, out=None)
 
     Count number of occurrences of each value in array of non-negative ints.
 
     The number of bins (of size 1) is one larger than the largest value in
     `x`. If `minlength` is specified, there will be at least this number
     of bins in the output array (though it will be longer if necessary,
-    depending on the contents of `x`).
+    depending on the contents of `x`). If `out` is specified, its size must
+    be large enough to contain all of the bins.
     Each bin gives the number of occurrences of its index value in `x`.
     If `weights` is specified the input array is weighted by it, i.e. if a
     value ``n`` is found at position ``i``, ``out[n] += weight[i]`` instead
@@ -912,6 +913,13 @@ def bincount(x, weights=None, minlength=None):
         Weights, array of the same shape as `x`.
     minlength : int, optional
         A minimum number of bins for the output array.
+    initial: ndarray, 1 dimension, optional
+        Array of initial values for each bin. It must have the same shape and
+        buffer length as the expected output
+    out: ndarray, 1 dimenion, optional
+        Alternative output array in which to place the result. It must have the
+        same shape and buffer length as the expected output but the type will
+        be cast when safe.
 
         .. versionadded:: 1.6.0
 
@@ -919,15 +927,18 @@ def bincount(x, weights=None, minlength=None):
     -------
     out : ndarray of ints
         The result of binning the input array.
-        The length of `out` is equal to ``np.amax(x)+1``.
+        The length of `out` is equal to ``max(minlength, np.amax(x)+1)``.
 
     Raises
     ------
     ValueError
         If the input is not 1-dimensional, or contains elements with negative
-        values, or if `minlength` is negative.
+        values, or if `minlength` is negative, or initial or out do not have
+        sufficient sizes, or initial and out have different sizes.
     TypeError
-        If the type of the input is float or complex.
+        If the type of the input is float or complex, or `minlength` cannot be
+        converted to int, or `initial` or `out` cannot be safely converted to 
+        the expected type.
 
     See Also
     --------

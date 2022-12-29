@@ -14,9 +14,11 @@
 #include "alloc.h"
 #include "ctors.h"
 #include "common.h"
+#include "convert.h"
 #include "simd/simd.h"
 
 #include <string.h>
+#include <stdio.h>
 
 typedef enum {
     PACK_ORDER_LITTLE = 0,
@@ -74,75 +76,206 @@ check_array_monotonic(const double *a, npy_intp lena)
     }
 }
 
-/* Find the minimum and maximum of an integer array */
+/* Find the minimum and maximum of an intp strided array */
 static void
-minmax(const npy_intp *data, npy_intp data_len, npy_intp *mn, npy_intp *mx)
+minmax(const char *data, npy_intp len, npy_intp stride, npy_intp *mn,
+        npy_intp *mx)
 {
-    npy_intp min = *data;
-    npy_intp max = *data;
-
-    while (--data_len) {
-        const npy_intp val = *(++data);
-        if (val < min) {
-            min = val;
+    *mn = *(npy_intp *)data;
+    *mx = *(npy_intp *)data;
+    data += stride;
+    while (--len) {
+        const npy_intp val = *(npy_intp *)data;
+        if (val < *mn) {
+            *mn = val;
         }
-        else if (val > max) {
-            max = val;
+        else if (val > *mx) {
+            *mx = val;
+        }
+        data += stride;
+    }
+}
+
+/* Converts an array-like object into a behaved array of the right type. */
+static PyArrayObject*
+_array_from_object(PyObject *object, enum NPY_TYPES type, int extra_flags)
+{
+    int flags = NPY_ARRAY_ALIGNED | NPY_ARRAY_NOTSWAPPED;
+    PyArray_Descr *dtype = PyArray_DescrFromType(type);
+    return (PyArrayObject *)PyArray_CheckFromAny(object, dtype, 1, 1,
+                                                flags | extra_flags, NULL);
+}
+
+/* Initializes and checks the 'out' array used by bincount. */
+static PyArrayObject*
+_build_bincount_out_arr(PyObject *out_obj, enum NPY_TYPES out_type,
+        PyObject *initial_obj, npy_intp minlength,
+        npy_intp *list_max)
+{
+    PyArrayObject *out_arr = NULL;
+    PyArrayObject *initial_arr = NULL;
+    npy_intp out_len = 0, initial_len = 0;
+    const int out_flags = NPY_ARRAY_WRITEABLE | NPY_ARRAY_WRITEBACKIFCOPY;
+    const npy_intp out_required_len = list_max == NULL ? 0 : *list_max + 1;
+
+    /* If specified, get the initial and out arrays. Check their lengths */
+    if (out_obj != NULL) {
+        out_arr = _array_from_object(out_obj, out_type, out_flags);
+        if (out_arr == NULL) {
+            goto fail;
+        }
+        out_len = PyArray_DIM(out_arr, 0);
+    }
+    if (initial_obj != NULL) {
+        initial_arr = _array_from_object(initial_obj, out_type, 0);
+        if (initial_arr == NULL) {
+            goto fail;
+        }
+        initial_len = PyArray_DIM(initial_arr, 0);
+        if (minlength > initial_len) {
+            PyErr_SetString(PyExc_ValueError,
+                            "'minlength' cannot be larger than the size of 'initial'");
+            goto fail;
         }
     }
 
-    *mn = min;
-    *mx = max;
+    /* Check that initial and out have same lengths */
+    if (out_obj != NULL && initial_obj != NULL && out_len != initial_len) {
+        PyErr_SetString(PyExc_ValueError,
+                        "'out' and 'initial' must have the same size");
+        goto fail;
+    }
+
+    /* Create the output array if not specified by user */
+    if (out_obj == NULL) {
+        if (initial_arr != NULL) {
+            out_len = initial_len;
+        }
+        else {
+            out_len = out_required_len > minlength ? out_required_len 
+                                                   : minlength;
+        }
+        out_arr = (PyArrayObject *)PyArray_EMPTY(1, &out_len, out_type, 0);
+        if (out_arr == NULL) {
+            goto fail;
+        }
+    }
+
+    /* Check that the output array satisfies its size requirements */
+    if (minlength > out_len) {
+        PyErr_SetString(PyExc_ValueError,
+                        "'minlength' cannot be larger than the size of 'out'");
+        goto fail;
+    }
+    if (out_required_len > out_len) {
+        PyErr_SetString(PyExc_ValueError,
+                        "'out' is too small to count the max item in 'list'");
+        goto fail;
+    }
+
+    /* Set the output array's initial values */
+    if (initial_arr != NULL) {
+        if (initial_arr != out_arr && 
+                PyArray_CopyInto(out_arr, initial_arr) != 0) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Failed to copy 'initial' values into 'out'");
+            goto fail;
+        }
+    }
+    else {
+        PyArray_AssignZero(out_arr, NULL);
+    }
+
+    Py_XDECREF(initial_arr);
+    return out_arr;
+
+fail:
+    Py_XDECREF(initial_arr);
+    if (out_arr) {
+        PyArray_ResolveWritebackIfCopy(out_arr);
+    }
+    Py_XDECREF(out_arr);
+    return NULL;
 }
 
 /*
  * arr_bincount is registered as bincount.
  *
- * bincount accepts one, two or three arguments. The first is an array of
- * non-negative integers The second, if present, is an array of weights,
- * which must be promotable to double. Call these arguments list and
+ * bincount accepts one, two, three, four, or five arguments. The first is an
+ * array of non-negative integers The second, if present, is an array of 
+ * weights, which must be promotable to double. Call these arguments list and
  * weight. Both must be one-dimensional with len(weight) == len(list). If
  * weight is not present then bincount(list)[i] is the number of occurrences
  * of i in list.  If weight is present then bincount(self,list, weight)[i]
  * is the sum of all weight[j] where list [j] == i.  Self is not used.
  * The third argument, if present, is a minimum length desired for the
- * output array.
+ * output array. The fourth argument, if present, is an array of initial
+ * values that are used to initialize the output array. The fifth argument,
+ * if present, is an alternative output array. The caller must ensure that
+ * it is large enough to contain the expected output.
  */
 NPY_NO_EXPORT PyObject *
 arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
 {
-    PyObject *list = NULL, *weight = Py_None, *mlength = NULL;
-    PyArrayObject *lst = NULL, *ans = NULL, *wts = NULL;
-    npy_intp *numbers, *ians, len, mx, mn, ans_size;
+    PyObject *list_obj = NULL;
+    PyObject *weights_obj = Py_None;
+    PyObject *minlength_obj = NULL;
+    PyObject *initial_obj = NULL;
+    PyObject *out_obj = NULL;
+    PyArrayObject *list_arr = NULL;
+    PyArrayObject *weights_arr = NULL;
     npy_intp minlength = 0;
+    PyArrayObject *out_arr = NULL;
+    npy_intp list_len, list_stride, list_min, list_max;
+    npy_intp weights_stride = 0;
+    npy_intp out_stride;
     npy_intp i;
-    double *weights , *dans;
-    static char *kwlist[] = {"list", "weights", "minlength", NULL};
+    const char *list_ptr = NULL;
+    const char *weights_ptr = NULL;
+    char *out_ptr = NULL;
+    static char *kwlist[] = {"list", "weights", "minlength", "initial", "out", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OO:bincount",
-                kwlist, &list, &weight, &mlength)) {
-            goto fail;
-    }
-
-    lst = (PyArrayObject *)PyArray_ContiguousFromAny(list, NPY_INTP, 1, 1);
-    if (lst == NULL) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OOOO:bincount",
+            kwlist, &list_obj, &weights_obj, &minlength_obj, &initial_obj,
+            &out_obj)) {
         goto fail;
     }
-    len = PyArray_SIZE(lst);
+
+    list_arr = _array_from_object(list_obj, NPY_INTP, 0);    
+    if (list_arr == NULL) {
+        goto fail;
+    }
+    list_len = PyArray_DIM(list_arr, 0);
+    list_stride = PyArray_STRIDE(list_arr, 0);
+    list_ptr = PyArray_DATA(list_arr);
+
+    if (weights_obj != Py_None) {
+        weights_arr = _array_from_object(weights_obj, NPY_DOUBLE, 0);
+        if (weights_arr == NULL) {
+            goto fail;
+        }
+        if (PyArray_DIM(weights_arr, 0) != list_len) {
+            PyErr_SetString(PyExc_ValueError,
+                            "list and weights do not have the same length");
+            goto fail;
+        }
+        weights_stride = PyArray_STRIDE(weights_arr, 0);
+        weights_ptr = PyArray_DATA(weights_arr);
+    }
 
     /*
      * This if/else if can be removed by changing the argspec to O|On above,
      * once we retire the deprecation
      */
-    if (mlength == Py_None) {
+    if (minlength_obj == Py_None) {
         /* NumPy 1.14, 2017-06-01 */
         if (DEPRECATE("0 should be passed as minlength instead of None; "
                       "this will error in future.") < 0) {
             goto fail;
         }
     }
-    else if (mlength != NULL) {
-        minlength = PyArray_PyIntAsIntp(mlength);
+    else if (minlength_obj != NULL) {
+        minlength = PyArray_PyIntAsIntp(minlength_obj);
         if (error_converting(minlength)) {
             goto fail;
         }
@@ -150,76 +283,70 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
 
     if (minlength < 0) {
         PyErr_SetString(PyExc_ValueError,
-                        "'minlength' must not be negative");
+                "'minlength' must not be negative");
         goto fail;
     }
 
-    /* handle empty list */
-    if (len == 0) {
-        ans = (PyArrayObject *)PyArray_ZEROS(1, &minlength, NPY_INTP, 0);
-        if (ans == NULL){
+    enum NPY_TYPES out_type = weights_obj == Py_None ? NPY_INTP 
+                                                     : NPY_DOUBLE; 
+    if (list_len == 0) {
+        out_arr = _build_bincount_out_arr(out_obj, out_type, initial_obj,
+                minlength, NULL);
+        if (out_arr == NULL) {
             goto fail;
         }
-        Py_DECREF(lst);
-        return (PyObject *)ans;
+        out_obj = (PyObject *)out_arr;
+        goto success;
     }
 
-    numbers = (npy_intp *)PyArray_DATA(lst);
-    minmax(numbers, len, &mn, &mx);
-    if (mn < 0) {
+    minmax(list_ptr, list_len, list_stride, &list_min, &list_max);
+    if (list_min < 0) {
         PyErr_SetString(PyExc_ValueError,
                 "'list' argument must have no negative elements");
         goto fail;
     }
-    ans_size = mx + 1;
-    if (mlength != Py_None) {
-        if (ans_size < minlength) {
-            ans_size = minlength;
-        }
+
+    out_arr = _build_bincount_out_arr(out_obj, out_type, initial_obj,
+            minlength, &list_max);
+    if (out_arr == NULL) {
+        goto fail;
     }
-    if (weight == Py_None) {
-        ans = (PyArrayObject *)PyArray_ZEROS(1, &ans_size, NPY_INTP, 0);
-        if (ans == NULL) {
-            goto fail;
+    out_obj = (PyObject *)out_arr;
+    out_stride = PyArray_STRIDE(out_arr, 0);
+    out_ptr = PyArray_DATA(out_arr);
+
+    if (weights_arr == NULL) {
+        for (i = 0; i < list_len; i++) {
+            const npy_intp index = *(npy_intp *)list_ptr;
+            *(npy_intp *)(out_ptr + index * out_stride) += 1;
+            list_ptr += list_stride;
         }
-        ians = (npy_intp *)PyArray_DATA(ans);
-        NPY_BEGIN_ALLOW_THREADS;
-        for (i = 0; i < len; i++)
-            ians[numbers[i]] += 1;
-        NPY_END_ALLOW_THREADS;
-        Py_DECREF(lst);
     }
     else {
-        wts = (PyArrayObject *)PyArray_ContiguousFromAny(
-                                                weight, NPY_DOUBLE, 1, 1);
-        if (wts == NULL) {
-            goto fail;
+        for (i = 0; i < list_len; i++) {
+            const npy_intp index = *(npy_intp *)list_ptr;
+            const npy_double weight = *(npy_double *)weights_ptr;
+            *(npy_double *)(out_ptr + index * out_stride) += weight;
+            list_ptr += list_stride;
+            weights_ptr += weights_stride;
         }
-        weights = (double *)PyArray_DATA(wts);
-        if (PyArray_SIZE(wts) != len) {
-            PyErr_SetString(PyExc_ValueError,
-                    "The weights and list don't have the same length.");
-            goto fail;
-        }
-        ans = (PyArrayObject *)PyArray_ZEROS(1, &ans_size, NPY_DOUBLE, 0);
-        if (ans == NULL) {
-            goto fail;
-        }
-        dans = (double *)PyArray_DATA(ans);
-        NPY_BEGIN_ALLOW_THREADS;
-        for (i = 0; i < len; i++) {
-            dans[numbers[i]] += weights[i];
-        }
-        NPY_END_ALLOW_THREADS;
-        Py_DECREF(lst);
-        Py_DECREF(wts);
     }
-    return (PyObject *)ans;
+
+success:
+    Py_XDECREF(list_arr);
+    Py_XDECREF(weights_arr);
+    Py_INCREF(out_obj);
+    PyArray_ResolveWritebackIfCopy(out_arr);
+    Py_XDECREF(out_arr);
+    return out_obj;
 
 fail:
-    Py_XDECREF(lst);
-    Py_XDECREF(wts);
-    Py_XDECREF(ans);
+    Py_XDECREF(list_arr);
+    Py_XDECREF(weights_arr);
+    if (out_arr) {
+        PyArray_ResolveWritebackIfCopy(out_arr);
+    }    
+    Py_XDECREF(out_arr);
     return NULL;
 }
 

@@ -2656,6 +2656,10 @@ class TestBincount:
         y = np.bincount(np.array([1, 5, 2, 4, 1]))
         assert_array_equal(y, np.array([0, 2, 1, 0, 1, 1]))
 
+    def test_simple_strided(self):
+        y = np.bincount(np.array([1, 5, 2, 4, 1])[::2])
+        assert_array_equal(y, np.array([0, 2, 1]))
+
     def test_simple_weight(self):
         x = np.arange(4)
         w = np.array([0.2, 0.3, 0.5, 0.1])
@@ -2688,6 +2692,63 @@ class TestBincount:
         w = np.array([0.2, 0.3, 0.5, 0.1, 0.2])
         y = np.bincount(x, w, 8)
         assert_array_equal(y, np.array([0, 0.2, 0.5, 0, 0.5, 0.1, 0, 0]))
+    
+    def test_with_out(self):
+        x = np.array([1, 5, 2, 4, 1])
+        out = np.ones(6, dtype=int)
+        y = np.bincount(x, out=out)
+        assert_array_equal(out, np.array([0, 2, 1, 0, 1, 1]))
+
+    def test_with_minlength_and_out(self):
+        x = np.array([1, 5, 2, 4, 1])
+        out = np.zeros(6, dtype=int)
+        np.bincount(x, minlength=2, out=out)
+        assert_array_equal(out, np.array([0, 2, 1, 0, 1, 1]))
+
+    def test_with_weights_and_out(self):
+        x = np.arange(4)
+        w = np.array([0.2, 0.3, 0.5, 0.1])
+        out = np.empty(4)
+        np.bincount(x, w, out=out)
+        assert_array_equal(out, w)
+
+    def test_with_initial(self):
+        x = np.array([1, 5, 2, 4, 1])
+        initial = np.ones(6, dtype=int)
+        y = np.bincount(x, initial=initial)
+        assert_array_equal(y, np.array([0, 2, 1, 0, 1, 1]) + 1)
+
+    def test_with_strided_initial(self):
+        x = np.array([1, 5, 2, 4, 1])
+        initial = np.ones(12, dtype=int)
+        y = np.bincount(x, initial=initial[::-2])
+        assert_array_equal(y, np.array([0, 2, 1, 0, 1, 1]) + 1)
+
+    def test_with_minlength_and_initial(self):
+        x = np.array([1, 5, 2, 4, 1])
+        initial = np.ones(6, dtype=int)
+        y = np.bincount(x, minlength=3, initial=initial)
+        assert_array_equal(y, np.array([0, 2, 1, 0, 1, 1]) + 1)
+
+    def test_with_initial_and_out(self):
+        x = np.array([1, 5, 2, 4, 1])
+        out = np.empty(6, dtype=int)
+        initial = np.ones(6, dtype=int)
+        np.bincount(x, initial=initial, out=out)
+        assert_array_equal(out, np.array([0, 2, 1, 0, 1, 1]) + 1)
+
+    def test_with_initial_and_out2(self):
+        x = np.array([1, 5, 2, 4, 1])
+        out = np.zeros(6, dtype=int)
+        initial = np.ones(6, dtype=int)
+        np.bincount(x, initial=initial, out=out)
+        assert_array_equal(out, np.array([0, 2, 1, 0, 1, 1]) + 1)
+
+    def test_with_initial_equal_to_out(self):
+        x = np.array([1, 5, 2, 4, 1])
+        out = np.ones(6, dtype=int)
+        y = np.bincount(x, initial=out, out=out)
+        assert_array_equal(out, np.array([0, 2, 1, 0, 1, 1]) + 1)
 
     def test_empty(self):
         x = np.array([], dtype=int)
@@ -2698,6 +2759,49 @@ class TestBincount:
         x = np.array([], dtype=int)
         y = np.bincount(x, minlength=5)
         assert_array_equal(y, np.zeros(5, dtype=int))
+
+    def test_empty_with_initial(self):
+        x = np.array([], dtype=int)
+        initial = np.ones(6, dtype=int)
+        y = np.bincount(x, initial=initial)
+        assert_array_equal(y, initial)
+
+    def test_empty_with_initial_and_out(self):
+        x = np.array([], dtype=int)
+        out = np.empty(5, dtype=int)
+        initial = np.arange(5, dtype=int)
+        np.bincount(x, out=out, initial=initial)
+        assert_array_equal(out, initial)
+
+    def test_empty_with_weights_initial_and_out(self):
+        x = np.array([], dtype=int)
+        weights = np.array([])
+        out = np.empty(5, dtype=float)
+        initial = np.arange(5, dtype=float)
+        np.bincount(x, weights=weights, out=out, initial=initial)
+        assert_array_equal(out, initial)
+
+    def test_empty_with_minlength_and_out(self):
+        x = np.array([], dtype=int)
+        out = np.empty(5, dtype=int)
+        np.bincount(x, minlength=4, out=out)
+        assert_array_equal(out, np.zeros(5, dtype=int))
+
+    def test_with_negative_element(self):
+        x = np.array([1, 2, 4, -1, 5, 1], dtype=int)
+        assert_raises_regex(ValueError,
+                            "must have no negative elements",
+                            lambda: np.bincount(x))
+
+    def test_with_incorrect_weights(self):
+        x = np.array([], dtype=int)
+        assert_raises_regex(ValueError,
+                            "list and weights do not have the same",
+                            lambda: np.bincount(x, weights=[1]))
+        x = np.arange(5)
+        assert_raises_regex(ValueError,
+                            "list and weights do not have the same",
+                            lambda: np.bincount(x, weights=[1, 2]))
 
     def test_with_incorrect_minlength(self):
         x = np.array([], dtype=int)
@@ -2715,6 +2819,28 @@ class TestBincount:
         assert_raises_regex(ValueError,
                             "must not be negative",
                             lambda: np.bincount(x, minlength=-1))
+
+        out = np.zeros(5, dtype=int)
+        assert_raises_regex(ValueError,
+                            "cannot be larger than the size of 'out'",
+                            lambda: np.bincount(x, minlength=10, out=out))
+
+        initial = np.zeros(5, dtype=int)
+        assert_raises_regex(ValueError,
+                            "cannot be larger than the size of 'initial'",
+                            lambda: np.bincount(x, minlength=10, 
+                                                initial=initial))
+
+    def test_with_incorrect_types(self):
+        x = np.array([], dtype=int)
+        out = np.empty(6, dtype=float)
+        assert_raises_regex(TypeError,
+                            "Cannot cast",
+                            lambda: np.bincount(x, out=out))
+        initial = np.empty(6, dtype=float)
+        assert_raises_regex(TypeError,
+                            "Cannot cast",
+                            lambda: np.bincount(x, initial=initial))
 
     @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
     def test_dtype_reference_leaks(self):
