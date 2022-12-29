@@ -514,6 +514,7 @@ run_binary_simd_@kind@_@TYPE@(char **args, npy_intp const *dimensions, npy_intp 
  *  #TYPE = FLOAT, DOUBLE#
  *  #c = f, #
  *  #C = F, #
+ *  #count = 4,2#
  */
 /**begin repeat1
  * Arithmetic
@@ -537,7 +538,7 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
         *((@type@ *)iop1) = io1;
 #endif
     }
-    else if (dimensions[0] < 2 || !run_binary_simd_@kind@_@TYPE@(args, dimensions, steps)) {
+    else if (dimensions[0] < @count@ || !run_binary_simd_@kind@_@TYPE@(args, dimensions, steps)) {
         BINARY_LOOP {
             const @type@ in1 = *(@type@ *)ip1;
             const @type@ in2 = *(@type@ *)ip2;
