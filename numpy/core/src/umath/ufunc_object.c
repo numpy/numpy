@@ -6466,7 +6466,7 @@ fail:
      */
     if (res != 0 || PyErr_Occurred()) {
         /* iter_buffer has already been deallocated, don't use NpyIter_Dealloc */
-        if (op1_array != (PyArrayObject*)op1) {
+        if (PyArray_FLAGS(op1_array) & NPY_ARRAY_WRITEBACKIFCOPY) {
             PyArray_DiscardWritebackIfCopy(op1_array);
         }
         return NULL;
