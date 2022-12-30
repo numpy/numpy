@@ -161,8 +161,7 @@ def rot90(m, k=1, axes=(0, 1)):
     Rotate an array by 90 degrees in the plane specified by axes.
 
     Rotation direction is from the first towards the second axis.
-
-    This means for a 2D array with the default k and axes, the 
+    This means for a 2D array with the default `k` and `axes`, the
     rotation will be counterclockwise.
 
     Parameters
