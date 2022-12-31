@@ -22,9 +22,6 @@ By default, `asv` ships with support for anaconda and virtualenv::
     pip install asv
     pip install virtualenv
 
-After contributing new benchmarks, you should test them locally
-before submitting a pull request.
-
 To run all benchmarks, navigate to the root NumPy directory at
 the command line and execute::
 
@@ -87,7 +84,9 @@ To benchmark or visualize only releases on different machines locally, the tags 
     asv publish
     asv preview
 
-Note that this can still be a significant time commitment. Do not open pull requests to the main repository with these results.
+For details on contributing these, see the `benchmark results repository`_.
+
+.. _benchmark results repository: https://github.com/HaoZeke/asv-numpy
 
 Writing benchmarks
 ------------------
