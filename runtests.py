@@ -194,8 +194,8 @@ def main(argv):
         sys.path.insert(0, site_dir_noarch)
         os.environ['PYTHONPATH'] = \
             os.pathsep.join((
-                site_dir, 
-                site_dir_noarch, 
+                site_dir,
+                site_dir_noarch,
                 os.environ.get('PYTHONPATH', '')
             ))
     else:
@@ -691,7 +691,7 @@ def check_lint(lint_args):
         from tools.linter import DiffLinter
     except ModuleNotFoundError as e:
         print(f"Error: {e.msg}. "
-              "Install using linter_requirements.txt.")
+              "Install using tools_requirements.txt.")
         sys.exit(1)
 
     uncommitted = lint_args == "uncommitted"

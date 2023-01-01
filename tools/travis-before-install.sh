@@ -59,3 +59,5 @@ fi
 
 
 if [ -n "$USE_ASV" ]; then pip install asv; fi
+
+pip install -r tools_requirements.txt

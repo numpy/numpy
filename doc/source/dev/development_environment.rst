@@ -213,7 +213,7 @@ Lint checks can be performed on newly added lines of Python code.
 
 Install all dependent packages using pip::
 
-    $ python -m pip install -r linter_requirements.txt
+    $ python -m pip install -r tools_requirements.txt
 
 To run lint checks before committing new code, run::
 
