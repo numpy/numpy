@@ -462,7 +462,8 @@ defdict = {
           'PyUFunc_AbsoluteTypeResolver',
           TD(bints+flts+timedeltaonly, dispatch=[('loops_unary_fp', 'fd'),
                                                  ('loops_logical', '?')]),
-          TD(cmplx, dispatch=[('loops_arithm_fp', 'FD')], out=('f', 'd', 'g')),
+          TD(cmplx, dispatch=[('loops_unary_complex', 'FD')],
+             out=('f', 'd', 'g')),
           TD(O, f='PyNumber_Absolute'),
           ),
 '_arg':

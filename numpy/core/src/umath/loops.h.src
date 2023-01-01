@@ -540,7 +540,21 @@ NPY_NO_EXPORT void
  * #TYPE = CFLOAT, CDOUBLE#
  */
 /**begin repeat1
- * #kind = add, subtract, multiply, conjugate, absolute, square#
+ * #kind = add, subtract, multiply, conjugate, square#
+ */
+NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void @TYPE@_@kind@,
+   (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data)))
+/**end repeat1**/
+/**end repeat**/
+
+#ifndef NPY_DISABLE_OPTIMIZATION
+    #include "loops_unary_complex.dispatch.h"
+#endif
+/**begin repeat
+ * #TYPE = CFLOAT, CDOUBLE#
+ */
+/**begin repeat1
+ * #kind = absolute#
  */
 NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void @TYPE@_@kind@,
    (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data)))
