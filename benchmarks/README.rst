@@ -22,6 +22,9 @@ By default, `asv` ships with support for anaconda and virtualenv::
     pip install asv
     pip install virtualenv
 
+After contributing new benchmarks, you should test them locally before
+submitting a pull request.
+
 To run all benchmarks, navigate to the root NumPy directory at
 the command line and execute::
 
@@ -32,6 +35,14 @@ test suite. This builds NumPy and runs  all available benchmarks
 defined in ``benchmarks/``. (Note: this could take a while. Each
 benchmark is run multiple times to measure the distribution in
 execution times.)
+
+For **testing** benchmarks locally, it may be better to run these without
+replications::
+
+    cd benchmarks/
+    asv run -n -e --python=same -q -b $REGEXP
+
+Where the regular expression used to match benchmarks is stored in ``$REGEXP``.
 
 To run benchmarks from a particular benchmark module, such as
 ``bench_core.py``, simply append the filename without the extension::
