@@ -223,7 +223,8 @@ tokenizer_core(tokenizer_state *ts, parser_config *const config)
             }
             else {
                 /* continue parsing as if unquoted */
-                ts->state = TOKENIZE_UNQUOTED;
+                /* Set to TOKENIZE_UNQUOTED or TOKENIZE_UNQUOTED_WHITESPACE */
+                ts->state = ts->unquoted_state;
             }
             break;
 
