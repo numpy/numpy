@@ -1110,3 +1110,4 @@ def test_future_scalar_attributes(name):
     # Unfortunately, they are currently still valid via `np.dtype()`
     np.dtype(name)
     name in np.sctypeDict
+
