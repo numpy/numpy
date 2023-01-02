@@ -468,13 +468,13 @@ check_is_convertible_to_scalar(PyArrayObject *v)
 
     /* Remove this if-else block when the deprecation expires */
     if (PyArray_SIZE(v) == 1) {
-        /* Numpy 1.24.0, 2022-07-16 */
+        /* Numpy 1.25.0, 2023-01-02 */
         if (DEPRECATE(
                 "Conversion of an array with ndim > 0 to a scalar "
                 "is deprecated, and will error in future. "
                 "Ensure you extract a single element from your array "
                 "before performing this operation. "
-                "(Deprecated NumPy 1.24.)") < 0) {
+                "(Deprecated NumPy 1.25.)") < 0) {
             return -1;
         }
         return 0;
