@@ -3,10 +3,11 @@ This file is separate from ``_add_newdocs.py`` so that it can be mocked out by
 our sphinx ``conf.py`` during doc builds, where we want to avoid showing
 platform-dependent information.
 """
+import sys
+import os
 from numpy.core import dtype
 from numpy.core import numerictypes as _numerictypes
 from numpy.core.function_base import add_newdoc
-import platform
 
 ##############################################################################
 #
@@ -50,6 +51,21 @@ possible_aliases = numeric_type_aliases([
     ])
 
 
+def _get_platform_and_machine():
+    try:
+        system, _, _, _, machine = os.uname()
+    except AttributeError:
+        system = sys.platform
+        if system == 'win32':
+            machine = os.environ.get('PROCESSOR_ARCHITEW6432', '') \
+                    or os.environ.get('PROCESSOR_ARCHITECTURE', '')
+        else:
+            machine = 'unknown'
+    return system, machine
+
+
+_system, _machine = _get_platform_and_machine()
+_doc_alias_string = f":Alias on this platform ({_system} {_machine}):"
 
 
 def add_newdoc_for_scalar_type(obj, fixed_aliases, doc):
@@ -57,17 +73,22 @@ def add_newdoc_for_scalar_type(obj, fixed_aliases, doc):
     o = getattr(_numerictypes, obj)
 
     character_code = dtype(o).char
-    canonical_name_doc = "" if obj == o.__name__ else ":Canonical name: `numpy.{}`\n    ".format(obj)
-    alias_doc = ''.join(":Alias: `numpy.{}`\n    ".format(alias) for alias in fixed_aliases)
-    alias_doc += ''.join(":Alias on this platform ({} {}): `numpy.{}`: {}.\n    ".format(platform.system(), platform.machine(), alias, doc)
+    canonical_name_doc = "" if obj == o.__name__ else \
+                        f":Canonical name: `numpy.{obj}`\n    "
+    if fixed_aliases:
+        alias_doc = ''.join(f":Alias: `numpy.{alias}`\n    "
+                            for alias in fixed_aliases)
+    else:
+        alias_doc = ''
+    alias_doc += ''.join(f"{_doc_alias_string} `numpy.{alias}`: {doc}.\n    "
                          for (alias_type, alias, doc) in possible_aliases if alias_type is o)
-    docstring = """
-    {doc}
+
+    docstring = f"""
+    {doc.strip()}
 
     :Character code: ``'{character_code}'``
     {canonical_name_doc}{alias_doc}
-    """.format(doc=doc.strip(), character_code=character_code,
-               canonical_name_doc=canonical_name_doc, alias_doc=alias_doc)
+    """
 
     add_newdoc('numpy.core.numerictypes', obj, docstring)
 
@@ -204,16 +225,52 @@ add_newdoc_for_scalar_type('bytes_', ['string_'],
 
 add_newdoc_for_scalar_type('void', [],
     r"""
-    Either an opaque sequence of bytes, or a structure.
+    np.void(length_or_data, /, dtype=None)
 
+    Create a new structured or unstructured void scalar.
+
+    Parameters
+    ----------
+    length_or_data : int, array-like, bytes-like, object
+       One of multiple meanings (see notes).  The length or
+       bytes data of an unstructured void.  Or alternatively,
+       the data to be stored in the new scalar when `dtype`
+       is provided.
+       This can be an array-like, in which case an array may
+       be returned.
+    dtype : dtype, optional
+        If provided the dtype of the new scalar.  This dtype must
+        be "void" dtype (i.e. a structured or unstructured void,
+        see also :ref:`defining-structured-types`).
+
+       ..versionadded:: 1.24
+
+    Notes
+    -----
+    For historical reasons and because void scalars can represent both
+    arbitrary byte data and structured dtypes, the void constructor
+    has three calling conventions:
+
+    1. ``np.void(5)`` creates a ``dtype="V5"`` scalar filled with five
+       ``\0`` bytes.  The 5 can be a Python or NumPy integer.
+    2. ``np.void(b"bytes-like")`` creates a void scalar from the byte string.
+       The dtype itemsize will match the byte string length, here ``"V10"``.
+    3. When a ``dtype=`` is passed the call is rougly the same as an
+       array creation.  However, a void scalar rather than array is returned.
+
+    Please see the examples which show all three different conventions.
+
+    Examples
+    --------
+    >>> np.void(5)
+    void(b'\x00\x00\x00\x00\x00')
     >>> np.void(b'abcd')
     void(b'\x61\x62\x63\x64')
+    >>> np.void((5, 3.2, "eggs"), dtype="i,d,S5")
+    (5, 3.2, b'eggs')  # looks like a tuple, but is `np.void`
+    >>> np.void(3, dtype=[('x', np.int8), ('y', np.int8)])
+    (3, 3)  # looks like a tuple, but is `np.void`
 
-    Structured `void` scalars can only be constructed via extraction from :ref:`structured_arrays`:
-
-    >>> arr = np.array((1, 2), dtype=[('x', np.int8), ('y', np.int8)])
-    >>> arr[()]
-    (1, 2)  # looks like a tuple, but is `np.void`
     """)
 
 add_newdoc_for_scalar_type('datetime64', [],

@@ -157,7 +157,7 @@ str_to_uint64(
 
 #define DECLARE_TO_INT_PROTOTYPE(intw)                                  \
     NPY_NO_EXPORT int                                                   \
-    to_##intw(PyArray_Descr *descr,                                     \
+    npy_to_##intw(PyArray_Descr *descr,                                     \
             const Py_UCS4 *str, const Py_UCS4 *end, char *dataptr,      \
             parser_config *pconfig);
 

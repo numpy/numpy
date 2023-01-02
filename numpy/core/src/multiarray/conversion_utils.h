@@ -52,7 +52,7 @@ NPY_NO_EXPORT int
 PyArray_TypestrConvert(int itemsize, int gentype);
 
 
-static NPY_INLINE PyObject *
+static inline PyObject *
 PyArray_PyIntFromIntp(npy_intp const value)
 {
 #if NPY_SIZEOF_INTP <= NPY_SIZEOF_LONG

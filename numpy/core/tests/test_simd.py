@@ -2,8 +2,23 @@
 # may be involved in their functionality.
 import pytest, math, re
 import itertools
-from numpy.core._simd import targets
+import operator
+from numpy.core._simd import targets, clear_floatstatus, get_floatstatus
 from numpy.core._multiarray_umath import __cpu_baseline__
+
+def check_floatstatus(divbyzero=False, overflow=False,
+                      underflow=False, invalid=False,
+                      all=False):
+    #define NPY_FPE_DIVIDEBYZERO  1
+    #define NPY_FPE_OVERFLOW      2
+    #define NPY_FPE_UNDERFLOW     4
+    #define NPY_FPE_INVALID       8
+    err = get_floatstatus()
+    ret = (all or divbyzero) and (err & 1) != 0
+    ret |= (all or overflow) and (err & 2) != 0
+    ret |= (all or underflow) and (err & 4) != 0
+    ret |= (all or invalid) and (err & 8) != 0
+    return ret
 
 class _Test_Utility:
     # submodule of the desired SIMD extension, e.g. targets["AVX512F"]
@@ -105,10 +120,12 @@ class _SIMD_BOOL(_Test_Utility):
     """
     To test all boolean vector types at once
     """
+    def _nlanes(self):
+        return getattr(self.npyv, "nlanes_u" + self.sfx[1:])
+
     def _data(self, start=None, count=None, reverse=False):
-        nlanes = getattr(self.npyv, "nlanes_u" + self.sfx[1:])
         true_mask = self._true_mask()
-        rng = range(nlanes)
+        rng = range(self._nlanes())
         if reverse:
             rng = reversed(rng)
         return [true_mask if x % 2 else 0 for x in rng]
@@ -202,6 +219,26 @@ class _SIMD_BOOL(_Test_Utility):
                                vdata,  vdata,  vdata,  vdata)
         assert vpack == spack
 
+    @pytest.mark.parametrize("intrin", ["any", "all"])
+    @pytest.mark.parametrize("data", (
+        [-1, 0],
+        [0, -1],
+        [-1],
+        [0]
+    ))
+    def test_operators_crosstest(self, intrin, data):
+        """
+        Test intrinsics:
+            npyv_any_##SFX
+            npyv_all_##SFX
+        """
+        data_a = self._load_b(data * self._nlanes())
+        func = eval(intrin)
+        intrin = getattr(self, intrin)
+        desired = func(data_a)
+        simd = intrin(data_a)
+        assert not not simd == desired
+
 class _SIMD_INT(_Test_Utility):
     """
     To test all integer vector types at once
@@ -267,6 +304,18 @@ class _SIMD_INT(_Test_Utility):
         data_min = [min(a, b) for a, b in zip(data_a, data_b)]
         simd_min = self.min(vdata_a, vdata_b)
         assert simd_min == data_min
+
+    @pytest.mark.parametrize("start", [-100, -10000, 0, 100, 10000])
+    def test_reduce_max_min(self, start):
+        """
+        Test intrinsics:
+            npyv_reduce_max_##sfx
+            npyv_reduce_min_##sfx
+        """
+        vdata_a = self.load(self._data(start))
+        assert self.reduce_max(vdata_a) == max(vdata_a)
+        assert self.reduce_min(vdata_a) == min(vdata_a)
+
 
 class _SIMD_FP32(_Test_Utility):
     """
@@ -403,6 +452,16 @@ class _SIMD_FP(_Test_Utility):
                 _round = intrin(data)
                 assert _round == data_round
 
+        # test large numbers
+        for i in (
+            1.1529215045988576e+18, 4.6116860183954304e+18,
+            5.902958103546122e+20, 2.3611832414184488e+21
+        ):
+            x = self.setall(i)
+            y = intrin(x)
+            data_round = [func(n) for n in x]
+            assert y == data_round
+
         # signed zero
         if intrin_name == "floor":
             data_szero = (-0.0,)
@@ -414,67 +473,77 @@ class _SIMD_FP(_Test_Utility):
             data_round = self._to_unsigned(self.setall(-0.0))
             assert _round == data_round
 
-    def test_max(self):
+    @pytest.mark.parametrize("intrin", [
+        "max", "maxp", "maxn", "min", "minp", "minn"
+    ])
+    def test_max_min(self, intrin):
         """
         Test intrinsics:
-            npyv_max_##SFX
-            npyv_maxp_##SFX
+            npyv_max_##sfx
+            npyv_maxp_##sfx
+            npyv_maxn_##sfx
+            npyv_min_##sfx
+            npyv_minp_##sfx
+            npyv_minn_##sfx
+            npyv_reduce_max_##sfx
+            npyv_reduce_maxp_##sfx
+            npyv_reduce_maxn_##sfx
+            npyv_reduce_min_##sfx
+            npyv_reduce_minp_##sfx
+            npyv_reduce_minn_##sfx
         """
-        data_a = self._data()
-        data_b = self._data(self.nlanes)
-        vdata_a, vdata_b = self.load(data_a), self.load(data_b)
-        data_max = [max(a, b) for a, b in zip(data_a, data_b)]
-        _max = self.max(vdata_a, vdata_b)
-        assert _max == data_max
-        maxp = self.maxp(vdata_a, vdata_b)
-        assert maxp == data_max
-        # test IEEE standards
         pinf, ninf, nan = self._pinfinity(), self._ninfinity(), self._nan()
-        max_cases = ((nan, nan, nan), (nan, 10, 10), (10, nan, 10),
-                     (pinf, pinf, pinf), (pinf, 10, pinf), (10, pinf, pinf),
-                     (ninf, ninf, ninf), (ninf, 10, 10), (10, ninf, 10),
-                     (10, 0, 10), (10, -10, 10))
-        for case_operand1, case_operand2, desired in max_cases:
-            data_max = [desired]*self.nlanes
-            vdata_a = self.setall(case_operand1)
-            vdata_b = self.setall(case_operand2)
-            maxp = self.maxp(vdata_a, vdata_b)
-            assert maxp == pytest.approx(data_max, nan_ok=True)
-            if nan in (case_operand1, case_operand2, desired):
-                continue
-            _max = self.max(vdata_a, vdata_b)
-            assert _max == data_max
+        chk_nan = {"xp": 1, "np": 1, "nn": 2, "xn": 2}.get(intrin[-2:], 0)
+        func = eval(intrin[:3])
+        reduce_intrin = getattr(self, "reduce_" + intrin)
+        intrin = getattr(self, intrin)
+        hf_nlanes = self.nlanes//2
 
-    def test_min(self):
-        """
-        Test intrinsics:
-            npyv_min_##SFX
-            npyv_minp_##SFX
-        """
-        data_a = self._data()
-        data_b = self._data(self.nlanes)
-        vdata_a, vdata_b = self.load(data_a), self.load(data_b)
-        data_min = [min(a, b) for a, b in zip(data_a, data_b)]
-        _min = self.min(vdata_a, vdata_b)
-        assert _min == data_min
-        minp = self.minp(vdata_a, vdata_b)
-        assert minp == data_min
-        # test IEEE standards
-        pinf, ninf, nan = self._pinfinity(), self._ninfinity(), self._nan()
-        min_cases = ((nan, nan, nan), (nan, 10, 10), (10, nan, 10),
-                     (pinf, pinf, pinf), (pinf, 10, 10), (10, pinf, 10),
-                     (ninf, ninf, ninf), (ninf, 10, ninf), (10, ninf, ninf),
-                     (10, 0, 0), (10, -10, -10))
-        for case_operand1, case_operand2, desired in min_cases:
-            data_min = [desired]*self.nlanes
-            vdata_a = self.setall(case_operand1)
-            vdata_b = self.setall(case_operand2)
-            minp = self.minp(vdata_a, vdata_b)
-            assert minp == pytest.approx(data_min, nan_ok=True)
-            if nan in (case_operand1, case_operand2, desired):
-                continue
-            _min = self.min(vdata_a, vdata_b)
-            assert _min == data_min
+        cases = (
+            ([0.0, -0.0], [-0.0, 0.0]),
+            ([10, -10],  [10, -10]),
+            ([pinf, 10], [10, ninf]),
+            ([10, pinf], [ninf, 10]),
+            ([10, -10], [10, -10]),
+            ([-10, 10], [-10, 10])
+        )
+        for op1, op2 in cases:
+            vdata_a = self.load(op1*hf_nlanes)
+            vdata_b = self.load(op2*hf_nlanes)
+            data = func(vdata_a, vdata_b)
+            simd = intrin(vdata_a, vdata_b)
+            assert simd == data
+            data = func(vdata_a)
+            simd = reduce_intrin(vdata_a)
+            assert simd == data
+
+        if not chk_nan:
+            return
+        if chk_nan == 1:
+            test_nan = lambda a, b: (
+                b if math.isnan(a) else a if math.isnan(b) else b
+            )
+        else:
+            test_nan = lambda a, b: (
+                nan if math.isnan(a) or math.isnan(b) else b
+            )
+        cases = (
+            (nan, 10),
+            (10, nan),
+            (nan, pinf),
+            (pinf, nan),
+            (nan, nan)
+        )
+        for op1, op2 in cases:
+            vdata_ab = self.load([op1, op2]*hf_nlanes)
+            data = test_nan(op1, op2)
+            simd = reduce_intrin(vdata_ab)
+            assert simd == pytest.approx(data, nan_ok=True)
+            vdata_a = self.setall(op1)
+            vdata_b = self.setall(op2)
+            data = [data] * self.nlanes
+            simd = intrin(vdata_a, vdata_b)
+            assert simd == pytest.approx(data, nan_ok=True)
 
     def test_reciprocal(self):
         pinf, ninf, nan = self._pinfinity(), self._ninfinity(), self._nan()
@@ -499,7 +568,16 @@ class _SIMD_FP(_Test_Utility):
         nnan = self.notnan(self.setall(self._nan()))
         assert nnan == [0]*self.nlanes
 
-    import operator
+    @pytest.mark.parametrize("intrin_name", [
+        "rint", "trunc", "ceil", "floor"
+    ])
+    def test_unary_invalid_fpexception(self, intrin_name):
+        intrin = getattr(self, intrin_name)
+        for d in [float("nan"), float("inf"), -float("inf")]:
+            v = self.setall(d)
+            clear_floatstatus()
+            intrin(v)
+            assert check_floatstatus(invalid=True) == False
 
     @pytest.mark.parametrize('py_comp,np_comp', [
         (operator.lt, "cmplt"),
@@ -517,7 +595,8 @@ class _SIMD_FP(_Test_Utility):
             return [lane == mask_true for lane in vector]
 
         intrin = getattr(self, np_comp)
-        cmp_cases = ((0, nan), (nan, 0), (nan, nan), (pinf, nan), (ninf, nan))
+        cmp_cases = ((0, nan), (nan, 0), (nan, nan), (pinf, nan),
+                     (ninf, nan), (-0.0, +0.0))
         for case_operand1, case_operand2 in cmp_cases:
             data_a = [case_operand1]*self.nlanes
             data_b = [case_operand2]*self.nlanes
@@ -526,6 +605,30 @@ class _SIMD_FP(_Test_Utility):
             vcmp = to_bool(intrin(vdata_a, vdata_b))
             data_cmp = [py_comp(a, b) for a, b in zip(data_a, data_b)]
             assert vcmp == data_cmp
+
+    @pytest.mark.parametrize("intrin", ["any", "all"])
+    @pytest.mark.parametrize("data", (
+        [float("nan"), 0],
+        [0, float("nan")],
+        [float("nan"), 1],
+        [1, float("nan")],
+        [float("nan"), float("nan")],
+        [0.0, -0.0],
+        [-0.0, 0.0],
+        [1.0, -0.0]
+    ))
+    def test_operators_crosstest(self, intrin, data):
+        """
+        Test intrinsics:
+            npyv_any_##SFX
+            npyv_all_##SFX
+        """
+        data_a = self.load(data * self.nlanes)
+        func = eval(intrin)
+        intrin = getattr(self, intrin)
+        desired = func(data_a)
+        simd = intrin(data_a)
+        assert not not simd == desired
 
 class _SIMD_ALL(_Test_Utility):
     """
@@ -759,6 +862,9 @@ class _SIMD_ALL(_Test_Utility):
         select_b = self.select(self.cmpneq(self.zero(), self.zero()), vdata_a, vdata_b)
         assert select_b == data_b
 
+        # test extract elements
+        assert self.extract0(vdata_b) == vdata_b[0]
+
         # cleanup intrinsic is only used with AVX for
         # zeroing registers to avoid the AVX-SSE transition penalty,
         # so nothing to test here
@@ -800,41 +906,29 @@ class _SIMD_ALL(_Test_Utility):
         rev64 = self.rev64(self.load(range(self.nlanes)))
         assert rev64 == data_rev64
 
-    def test_operators_comparison(self):
+    @pytest.mark.parametrize('func, intrin', [
+        (operator.lt, "cmplt"),
+        (operator.le, "cmple"),
+        (operator.gt, "cmpgt"),
+        (operator.ge, "cmpge"),
+        (operator.eq, "cmpeq")
+    ])
+    def test_operators_comparison(self, func, intrin):
         if self._is_fp():
             data_a = self._data()
         else:
             data_a = self._data(self._int_max() - self.nlanes)
         data_b = self._data(self._int_min(), reverse=True)
         vdata_a, vdata_b = self.load(data_a), self.load(data_b)
+        intrin = getattr(self, intrin)
 
         mask_true = self._true_mask()
         def to_bool(vector):
             return [lane == mask_true for lane in vector]
-        # equal
-        data_eq = [a == b for a, b in zip(data_a, data_b)]
-        cmpeq = to_bool(self.cmpeq(vdata_a, vdata_b))
-        assert cmpeq == data_eq
-        # not equal
-        data_neq = [a != b for a, b in zip(data_a, data_b)]
-        cmpneq = to_bool(self.cmpneq(vdata_a, vdata_b))
-        assert cmpneq == data_neq
-        # greater than
-        data_gt = [a > b for a, b in zip(data_a, data_b)]
-        cmpgt = to_bool(self.cmpgt(vdata_a, vdata_b))
-        assert cmpgt == data_gt
-        # greater than and equal
-        data_ge = [a >= b for a, b in zip(data_a, data_b)]
-        cmpge = to_bool(self.cmpge(vdata_a, vdata_b))
-        assert cmpge == data_ge
-        # less than
-        data_lt  = [a < b for a, b in zip(data_a, data_b)]
-        cmplt = to_bool(self.cmplt(vdata_a, vdata_b))
-        assert cmplt == data_lt
-        # less than and equal
-        data_le  = [a <= b for a, b in zip(data_a, data_b)]
-        cmple = to_bool(self.cmple(vdata_a, vdata_b))
-        assert cmple == data_le
+
+        data_cmp = [func(a, b) for a, b in zip(data_a, data_b)]
+        cmp = to_bool(intrin(vdata_a, vdata_b))
+        assert cmp == data_cmp
 
     def test_operators_logical(self):
         if self._is_fp():
@@ -873,6 +967,30 @@ class _SIMD_ALL(_Test_Utility):
         data_andc = [a & ~b for a, b in zip(data_cast_a, data_cast_b)]
         vandc = cast(getattr(self, "andc")(vdata_a, vdata_b))
         assert vandc == data_andc
+
+    @pytest.mark.parametrize("intrin", ["any", "all"])
+    @pytest.mark.parametrize("data", (
+        [1, 2, 3, 4],
+        [-1, -2, -3, -4],
+        [0, 1, 2, 3, 4],
+        [0x7f, 0x7fff, 0x7fffffff, 0x7fffffffffffffff],
+        [0, -1, -2, -3, 4],
+        [0],
+        [1],
+        [-1]
+    ))
+    def test_operators_crosstest(self, intrin, data):
+        """
+        Test intrinsics:
+            npyv_any_##SFX
+            npyv_all_##SFX
+        """
+        data_a = self.load(data * self.nlanes)
+        func = eval(intrin)
+        intrin = getattr(self, intrin)
+        desired = func(data_a)
+        simd = intrin(data_a)
+        assert not not simd == desired
 
     def test_conversion_boolean(self):
         bsfx = "b" + self.sfx[1:]

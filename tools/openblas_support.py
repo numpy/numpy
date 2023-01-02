@@ -13,8 +13,8 @@ from tempfile import mkstemp, gettempdir
 from urllib.request import urlopen, Request
 from urllib.error import HTTPError
 
-OPENBLAS_V = '0.3.20'
-OPENBLAS_LONG = 'v0.3.20'
+OPENBLAS_V = '0.3.21'
+OPENBLAS_LONG = 'v0.3.21'
 BASE_LOC = 'https://anaconda.org/multibuild-wheels-staging/openblas-libs'
 BASEURL = f'{BASE_LOC}/{OPENBLAS_LONG}/download'
 SUPPORTED_PLATFORMS = [
@@ -54,13 +54,10 @@ def get_ilp64():
 
 
 def get_manylinux(arch):
-    if arch in ('x86_64', 'i686'):
-        default = '2010'
-    else:
-        default = '2014'
+    default = '2014'
     ret = os.environ.get("MB_ML_VER", default)
     # XXX For PEP 600 this can be a glibc version
-    assert ret in ('1', '2010', '2014', '_2_24'), f'invalid MB_ML_VER {ret}'
+    assert ret in ('2010', '2014', '_2_24'), f'invalid MB_ML_VER {ret}'
     return ret
 
 
@@ -77,16 +74,16 @@ def download_openblas(target, plat, ilp64):
         suffix = f'manylinux{ml_ver}_{arch}.tar.gz'
         typ = 'tar.gz'
     elif plat == 'macosx-x86_64':
-        suffix = 'macosx_10_9_x86_64-gf_1becaaa.tar.gz'
+        suffix = 'macosx_10_9_x86_64-gf_c469a42.tar.gz'
         typ = 'tar.gz'
     elif plat == 'macosx-arm64':
-        suffix = 'macosx_11_0_arm64-gf_f26990f.tar.gz'
+        suffix = 'macosx_11_0_arm64-gf_5272328.tar.gz'
         typ = 'tar.gz'
     elif osname == 'win':
         if plat == "win-32":
-            suffix = 'win32-gcc_8_1_0.zip'
+            suffix = 'win32-gcc_8_3_0.zip'
         else:
-            suffix = 'win_amd64-gcc_8_1_0.zip'
+            suffix = 'win_amd64-gcc_10_3_0.zip'
         typ = 'zip'
 
     if not suffix:
@@ -102,11 +99,11 @@ def download_openblas(target, plat, ilp64):
     if response.status != 200:
         print(f'Could not download "{filename}"', file=sys.stderr)
         return None
-    print(f"Downloading {length} from {filename}", file=sys.stderr)
+    # print(f"Downloading {length} from {filename}", file=sys.stderr)
     data = response.read()
     # Verify hash
     key = os.path.basename(filename)
-    print("Saving to file", file=sys.stderr)
+    # print("Saving to file", file=sys.stderr)
     with open(target, 'wb') as fid:
         fid.write(data)
     return typ
@@ -133,28 +130,34 @@ def setup_openblas(plat=get_plat(), ilp64=get_ilp64()):
     if osname == 'win':
         if not typ == 'zip':
             return f'expecting to download zipfile on windows, not {typ}'
-        return unpack_windows_zip(tmp)
+        return unpack_windows_zip(tmp, plat)
     else:
         if not typ == 'tar.gz':
             return 'expecting to download tar.gz, not %s' % str(typ)
         return unpack_targz(tmp)
 
 
-def unpack_windows_zip(fname):
+def unpack_windows_zip(fname, plat):
+    unzip_base = os.path.join(gettempdir(), 'openblas')
+    if not os.path.exists(unzip_base):
+        os.mkdir(unzip_base)
     with zipfile.ZipFile(fname, 'r') as zf:
-        # Get the openblas.a file, but not openblas.dll.a nor openblas.dev.a
-        lib = [x for x in zf.namelist() if OPENBLAS_LONG in x and
-               x.endswith('a') and not x.endswith('dll.a') and
-               not x.endswith('dev.a')]
-        if not lib:
-            return 'could not find libopenblas_%s*.a ' \
-                    'in downloaded zipfile' % OPENBLAS_LONG
-        if get_ilp64() is None:
-            target = os.path.join(gettempdir(), 'openblas.a')
-        else:
-            target = os.path.join(gettempdir(), 'openblas64_.a')
-        with open(target, 'wb') as fid:
-            fid.write(zf.read(lib[0]))
+        zf.extractall(unzip_base)
+    if plat == "win-32":
+        target = os.path.join(unzip_base, "32")
+    else:
+        target = os.path.join(unzip_base, "64")
+    # Copy the lib to openblas.lib. Once we can properly use pkg-config
+    # this will not be needed
+    lib = glob.glob(os.path.join(target, 'lib', '*.lib'))
+    assert len(lib) == 1
+    for f in lib:
+        shutil.copy(f, os.path.join(target, 'lib', 'openblas.lib'))
+        shutil.copy(f, os.path.join(target, 'lib', 'openblas64_.lib'))
+    # Copy the dll from bin to lib so system_info can pick it up
+    dll = glob.glob(os.path.join(target, 'bin', '*.dll'))
+    for f in dll:
+        shutil.copy(f, os.path.join(target, 'lib'))
     return target
 
 
@@ -235,7 +238,8 @@ def make_init(dirname):
 
 def test_setup(plats):
     '''
-    Make sure all the downloadable files exist and can be opened
+    Make sure all the downloadable files needed for wheel building
+    exist and can be opened
     '''
     def items():
         """ yields all combinations of arch, ilp64
@@ -243,19 +247,8 @@ def test_setup(plats):
         for plat in plats:
             yield plat, None
             osname, arch = plat.split("-")
-            if arch not in ('i686', 'arm64', '32'):
+            if arch not in ('i686', '32'):
                 yield plat, '64_'
-            if osname == "linux" and arch in ('i686', 'x86_64'):
-                oldval = os.environ.get('MB_ML_VER', None)
-                os.environ['MB_ML_VER'] = '1'
-                yield plat, None
-                # Once we create x86_64 and i686 manylinux2014 wheels...
-                # os.environ['MB_ML_VER'] = '2014'
-                # yield arch, None, False
-                if oldval:
-                    os.environ['MB_ML_VER'] = oldval
-                else:
-                    os.environ.pop('MB_ML_VER')
 
     errs = []
     for plat, ilp64 in items():
@@ -273,7 +266,7 @@ def test_setup(plats):
                 continue
             if not target:
                 raise RuntimeError(f'Could not setup {plat}')
-            print(target)
+            print('success with', plat, ilp64)
             if osname == 'win':
                 if not target.endswith('.a'):
                     raise RuntimeError("Not .a extracted!")
@@ -291,32 +284,24 @@ def test_setup(plats):
         raise errs[0]
 
 
-def test_version(expected_version, ilp64=get_ilp64()):
+def test_version(expected_version=None):
     """
     Assert that expected OpenBLAS version is
-    actually available via NumPy
+    actually available via NumPy. Requires threadpoolctl
     """
     import numpy
-    import ctypes
+    import threadpoolctl
 
-    dll = ctypes.CDLL(numpy.core._multiarray_umath.__file__)
-    if ilp64 == "64_":
-        get_config = dll.openblas_get_config64_
-    else:
-        get_config = dll.openblas_get_config
-    get_config.restype = ctypes.c_char_p
-    res = get_config()
-    print('OpenBLAS get_config returned', str(res))
+    data = threadpoolctl.threadpool_info()
+    if len(data) != 1:
+        raise ValueError(f"expected single threadpool_info result, got {data}")
     if not expected_version:
         expected_version = OPENBLAS_V
-    check_str = b'OpenBLAS %s' % expected_version.encode()
-    print(check_str)
-    assert check_str in res, f'{expected_version} not found in {res}'
-    if ilp64:
-        assert b"USE64BITINT" in res
-    else:
-        assert b"USE64BITINT" not in res
-
+    if data[0]['version'] != expected_version:
+        raise ValueError(
+            f"expected OpenBLAS version {expected_version}, got {data}"
+        )
+    print("OK")
 
 if __name__ == '__main__':
     import argparse

@@ -1,0 +1,21 @@
+// For format details, see https://aka.ms/devcontainer.json
+{
+	// Conda requires lots of memory to resolve our environment
+	"hostRequirements": {
+		"memory": "8gb"
+	},
+
+	// More info about Features: https://containers.dev/features
+	"image": "mcr.microsoft.com/devcontainers/universal:2",
+	"features": {},
+
+	"postCreateCommand": "./.devcontainer/setup.sh",
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"ms-python.python"
+			],
+			"settings": {}
+		}
+	}
+}

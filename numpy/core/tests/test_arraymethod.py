@@ -3,9 +3,11 @@ This file tests the generic aspects of ArrayMethod.  At the time of writing
 this is private API, but when added, public API may be added here.
 """
 
+from __future__ import annotations
+
 import sys
 import types
-from typing import Any, Type
+from typing import Any
 
 import pytest
 
@@ -63,28 +65,25 @@ class TestSimpleStridedCall:
 
 
 @pytest.mark.skipif(sys.version_info < (3, 9), reason="Requires python 3.9")
+@pytest.mark.parametrize(
+    "cls", [np.ndarray, np.recarray, np.chararray, np.matrix, np.memmap]
+)
 class TestClassGetItem:
-    @pytest.mark.parametrize(
-        "cls", [np.ndarray, np.recarray, np.chararray, np.matrix, np.memmap]
-    )
-    def test_class_getitem(self, cls: Type[np.ndarray]) -> None:
+    def test_class_getitem(self, cls: type[np.ndarray]) -> None:
         """Test `ndarray.__class_getitem__`."""
         alias = cls[Any, Any]
         assert isinstance(alias, types.GenericAlias)
         assert alias.__origin__ is cls
 
     @pytest.mark.parametrize("arg_len", range(4))
-    def test_subscript_tuple(self, arg_len: int) -> None:
+    def test_subscript_tup(self, cls: type[np.ndarray], arg_len: int) -> None:
         arg_tup = (Any,) * arg_len
-        if arg_len == 2:
-            assert np.ndarray[arg_tup]
+        if arg_len in (1, 2):
+            assert cls[arg_tup]
         else:
-            with pytest.raises(TypeError):
-                np.ndarray[arg_tup]
-
-    def test_subscript_scalar(self) -> None:
-        with pytest.raises(TypeError):
-            np.ndarray[Any]
+            match = f"Too {'few' if arg_len == 0 else 'many'} arguments"
+            with pytest.raises(TypeError, match=match):
+                cls[arg_tup]
 
 
 @pytest.mark.skipif(sys.version_info >= (3, 9), reason="Requires python 3.8")

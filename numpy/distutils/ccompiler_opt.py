@@ -747,7 +747,7 @@ class _Distutils:
     def _dist_test_spawn(cmd, display=None):
         try:
             o = subprocess.check_output(cmd, stderr=subprocess.STDOUT,
-                                        universal_newlines=True)
+                                        text=True)
             if o and re.match(_Distutils._dist_warn_regex, o):
                 _Distutils.dist_error(
                     "Flags in command", cmd ,"aren't supported by the compiler"
@@ -959,8 +959,12 @@ class _CCompiler:
         detect_arch = (
             ("cc_on_x64",      ".*(x|x86_|amd)64.*", ""),
             ("cc_on_x86",      ".*(win32|x86|i386|i686).*", ""),
-            ("cc_on_ppc64le",  ".*(powerpc|ppc)64(el|le).*", ""),
-            ("cc_on_ppc64",    ".*(powerpc|ppc)64.*", ""),
+            ("cc_on_ppc64le",  ".*(powerpc|ppc)64(el|le).*|.*powerpc.*",
+                                          "defined(__powerpc64__) && "
+                                          "defined(__LITTLE_ENDIAN__)"),
+            ("cc_on_ppc64",    ".*(powerpc|ppc).*|.*powerpc.*",
+                                          "defined(__powerpc64__) && "
+                                          "defined(__BIG_ENDIAN__)"),
             ("cc_on_aarch64",  ".*(aarch64|arm64).*", ""),
             ("cc_on_armhf",    ".*arm.*", "defined(__ARM_ARCH_7__) || "
                                           "defined(__ARM_ARCH_7A__)"),

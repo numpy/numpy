@@ -178,30 +178,33 @@ Similarly for methods::
 Easier setup and teardown functions / methods
 ---------------------------------------------
 
-Testing looks for module-level or class-level setup and teardown functions by
-name; thus::
+Testing looks for module-level or class method-level setup and teardown
+functions by name; thus::
 
-  def setup():
+  def setup_module():
       """Module-level setup"""
       print('doing setup')
 
-  def teardown():
+  def teardown_module():
       """Module-level teardown"""
       print('doing teardown')
 
 
   class TestMe:
-      def setup():
+      def setup_method(self):
           """Class-level setup"""
           print('doing setup')
 
-      def teardown():
+      def teardown_method():
           """Class-level teardown"""
           print('doing teardown')
 
 
 Setup and teardown functions to functions and methods are known as "fixtures",
-and their use is not encouraged.
+and they should be used sparingly.
+``pytest`` supports more general fixture at various scopes which may be used
+automatically via special arguments.  For example,  the special argument name
+``tmpdir`` is used in test to create a temporary directory.
 
 Parametric tests
 ----------------

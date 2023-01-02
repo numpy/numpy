@@ -686,10 +686,17 @@ def CCompiler_cxx_compiler(self):
     cxx.compiler_cxx = cxx.compiler_cxx
     cxx.compiler_so = [cxx.compiler_cxx[0]] + \
                       sanitize_cxx_flags(cxx.compiler_so[1:])
-    if sys.platform.startswith('aix') and 'ld_so_aix' in cxx.linker_so[0]:
+    if (sys.platform.startswith(('aix', 'os400')) and
+            'ld_so_aix' in cxx.linker_so[0]):
         # AIX needs the ld_so_aix script included with Python
         cxx.linker_so = [cxx.linker_so[0], cxx.compiler_cxx[0]] \
                         + cxx.linker_so[2:]
+    if sys.platform.startswith('os400'):
+        #This is required by i 7.4 and prievous for PRId64 in printf() call.
+        cxx.compiler_so.append('-D__STDC_FORMAT_MACROS')
+        #This a bug of gcc10.3, which failed to handle the TLS init.
+        cxx.compiler_so.append('-fno-extern-tls-init')
+        cxx.linker_so.append('-fno-extern-tls-init')
     else:
         cxx.linker_so = [cxx.compiler_cxx[0]] + cxx.linker_so[1:]
     return cxx

@@ -2,46 +2,35 @@
 #define NUMPY_CORE_SRC_COMMON_NPY_CONFIG_H_
 
 #include "config.h"
-#include "npy_cpu_features.h"
-#include "npy_cpu_dispatch.h"
 #include "numpy/numpyconfig.h"
-#include "numpy/npy_cpu.h"
+#include "numpy/utils.h"
 #include "numpy/npy_os.h"
 
 /* blocklist */
 
-/* Disable broken Sun Workshop Pro math functions */
-#ifdef __SUNPRO_C
-
-#undef HAVE_ATAN2
-#undef HAVE_ATAN2F
-#undef HAVE_ATAN2L
-
-#endif
-
 /* Disable broken functions on z/OS */
 #if defined (__MVS__)
 
-#undef HAVE_POWF
-#undef HAVE_EXPF
+#define NPY_BLOCK_POWF
+#define NPY_BLOCK_EXPF
 #undef HAVE___THREAD
 
 #endif
 
 /* Disable broken MS math functions */
-#if (defined(_MSC_VER) && (_MSC_VER < 1900)) || defined(__MINGW32_VERSION)
+#if defined(__MINGW32_VERSION)
 
-#undef HAVE_ATAN2
-#undef HAVE_ATAN2F
-#undef HAVE_ATAN2L
+#define NPY_BLOCK_ATAN2
+#define NPY_BLOCK_ATAN2F
+#define NPY_BLOCK_ATAN2L
 
-#undef HAVE_HYPOT
-#undef HAVE_HYPOTF
-#undef HAVE_HYPOTL
+#define NPY_BLOCK_HYPOT
+#define NPY_BLOCK_HYPOTF
+#define NPY_BLOCK_HYPOTL
 
 #endif
 
-#if defined(_MSC_VER) && (_MSC_VER >= 1900)
+#if defined(_MSC_VER)
 
 #undef HAVE_CASIN
 #undef HAVE_CASINF
@@ -71,29 +60,29 @@
 #endif
 
 /* MSVC _hypot messes with fp precision mode on 32-bit, see gh-9567 */
-#if defined(_MSC_VER) && (_MSC_VER >= 1900) && !defined(_WIN64)
+#if defined(_MSC_VER) && !defined(_WIN64)
 
 #undef HAVE_CABS
 #undef HAVE_CABSF
 #undef HAVE_CABSL
 
-#undef HAVE_HYPOT
-#undef HAVE_HYPOTF
-#undef HAVE_HYPOTL
+#define NPY_BLOCK_HYPOT
+#define NPY_BLOCK_HYPOTF
+#define NPY_BLOCK_HYPOTL
 
 #endif
 
 
 /* Intel C for Windows uses POW for 64 bits longdouble*/
 #if defined(_MSC_VER) && defined(__INTEL_COMPILER)
-#if defined(HAVE_POWL) && (NPY_SIZEOF_LONGDOUBLE == 8)
-#undef HAVE_POWL
+#if NPY_SIZEOF_LONGDOUBLE == 8
+#define NPY_BLOCK_POWL
 #endif
 #endif /* defined(_MSC_VER) && defined(__INTEL_COMPILER) */
 
 /* powl gives zero division warning on OS X, see gh-8307 */
-#if defined(HAVE_POWL) && defined(NPY_OS_DARWIN)
-#undef HAVE_POWL
+#if defined(NPY_OS_DARWIN)
+#define NPY_BLOCK_POWL
 #endif
 
 #ifdef __CYGWIN__
@@ -130,7 +119,7 @@
 #undef HAVE_CACOS
 
 /* log2(exp2(i)) off by a few eps */
-#undef HAVE_LOG2
+#define NPY_BLOCK_LOG2
 
 /* np.power(..., dtype=np.complex256) doesn't report overflow */
 #undef HAVE_CPOWL
@@ -138,18 +127,8 @@
 
 #include <cygwin/version.h>
 #if CYGWIN_VERSION_DLL_MAJOR < 3003
-/* https://cygwin.com/pipermail/cygwin-announce/2021-October/010268.html */
-/* Builtin abs reports overflow */
-#undef HAVE_CABSL
-#undef HAVE_HYPOTL
-#endif
-
-#if CYGWIN_VERSION_DLL_MAJOR < 3002
-/* https://cygwin.com/pipermail/cygwin-announce/2021-March/009987.html */
-/* Segfault */
-#undef HAVE_MODFL
-/* sqrt(-inf) returns -inf instead of -nan */
-#undef HAVE_SQRTL
+// rather than blocklist cabsl, hypotl, modfl, sqrtl, error out
+#error cygwin < 3.3 not supported, please update
 #endif
 #endif
 

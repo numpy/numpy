@@ -104,8 +104,7 @@ def compile(source,
              '-c',
              'import numpy.f2py as f2py2e;f2py2e.main()'] + args
         try:
-            cp = subprocess.run(c, stdout=subprocess.PIPE,
-                                   stderr=subprocess.PIPE)
+            cp = subprocess.run(c, capture_output=True)
         except OSError:
             # preserve historic status code used by exec_command()
             cp = subprocess.CompletedProcess(c, 127, stdout=b'', stderr=b'')

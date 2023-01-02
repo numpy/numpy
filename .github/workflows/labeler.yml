@@ -1,7 +1,10 @@
 name: "Pull Request Labeler"
 on:
   pull_request_target:
-    types: [opened, synchronize, reopened, edited]
+    types: [opened]
+
+permissions:
+   pull-requests: write  # to add labels
 
 jobs:
   pr-labeler:
@@ -9,5 +12,7 @@ jobs:
     steps:
     - name: Label the PR
       uses: gerrymanoim/pr-prefix-labeler@v3
+      continue-on-error: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      if: github.repository == 'numpy/numpy'

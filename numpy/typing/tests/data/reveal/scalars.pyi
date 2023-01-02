@@ -35,7 +35,6 @@ reveal_type(c8.real)  # E: {float32}
 reveal_type(c16.imag)  # E: {float64}
 
 reveal_type(np.unicode_('foo'))  # E: str_
-reveal_type(np.str0('foo'))  # E: str_
 
 reveal_type(V[0])  # E: Any
 reveal_type(V["field1"])  # E: Any
@@ -44,18 +43,12 @@ V[0] = 5
 
 # Aliases
 reveal_type(np.unicode_())  # E: str_
-reveal_type(np.str0())  # E: str_
-reveal_type(np.bool8())  # E: bool_
-reveal_type(np.bytes0())  # E: bytes_
 reveal_type(np.string_())  # E: bytes_
-reveal_type(np.object0())  # E: object_
-reveal_type(np.void0(0))  # E: void
 
 reveal_type(np.byte())  # E: {byte}
 reveal_type(np.short())  # E: {short}
 reveal_type(np.intc())  # E: {intc}
 reveal_type(np.intp())  # E: {intp}
-reveal_type(np.int0())  # E: {intp}
 reveal_type(np.int_())  # E: {int_}
 reveal_type(np.longlong())  # E: {longlong}
 
@@ -63,7 +56,6 @@ reveal_type(np.ubyte())  # E: {ubyte}
 reveal_type(np.ushort())  # E: {ushort}
 reveal_type(np.uintc())  # E: {uintc}
 reveal_type(np.uintp())  # E: {uintp}
-reveal_type(np.uint0())  # E: {uintp}
 reveal_type(np.uint())  # E: {uint}
 reveal_type(np.ulonglong())  # E: {ulonglong}
 

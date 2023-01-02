@@ -19,7 +19,7 @@ as classic Flang requires a custom LLVM and compilation from sources.
 
 	**As of November 2021**
 
-	As of 29-01-2022, `PGI compiler toolchains`_ have been superceeded by the Nvidia
+	As of 29-01-2022, `PGI compiler toolchains`_ have been superseded by the Nvidia
   	HPC SDK, with no `native Windows support`_.
 
 However, 

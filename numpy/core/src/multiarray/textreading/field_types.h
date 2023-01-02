@@ -2,6 +2,9 @@
 #ifndef NUMPY_CORE_SRC_MULTIARRAY_TEXTREADING_FIELD_TYPES_H_
 #define NUMPY_CORE_SRC_MULTIARRAY_TEXTREADING_FIELD_TYPES_H_
 
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+
 #include <stdint.h>
 #include <stdbool.h>
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
@@ -31,7 +34,7 @@
  *       considered boolean True or False).
  *
  * TODO: Aside from nailing down the above notes, it may be nice to expose
- *       these function publically.  This could allow user DTypes to provide
+ *       these function publicly.  This could allow user DTypes to provide
  *       a converter or custom converters written in C rather than Python.
  *
  * @param descr The NumPy descriptor of the field (may be byte-swapped, etc.)

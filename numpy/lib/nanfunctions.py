@@ -1214,12 +1214,9 @@ def nanmedian(a, axis=None, out=None, overwrite_input=False, keepdims=np._NoValu
     if a.size == 0:
         return np.nanmean(a, axis, out=out, keepdims=keepdims)
 
-    r, k = function_base._ureduce(a, func=_nanmedian, axis=axis, out=out,
+    return function_base._ureduce(a, func=_nanmedian, keepdims=keepdims,
+                                  axis=axis, out=out,
                                   overwrite_input=overwrite_input)
-    if keepdims and keepdims is not np._NoValue:
-        return r.reshape(k)
-    else:
-        return r
 
 
 def _nanpercentile_dispatcher(
@@ -1285,7 +1282,7 @@ def nanpercentile(
         8. 'median_unbiased'
         9. 'normal_unbiased'
 
-        The first three methods are discontiuous.  NumPy further defines the
+        The first three methods are discontinuous.  NumPy further defines the
         following discontinuous variations of the default 'linear' (7.) option:
 
         * 'lower'
@@ -1376,6 +1373,9 @@ def nanpercentile(
             method, interpolation, "nanpercentile")
 
     a = np.asanyarray(a)
+    if a.dtype.kind == "c":
+        raise TypeError("a must be an array of real numbers")
+
     q = np.true_divide(q, 100.0)
     # undo any decay that the ufunc performed (see gh-13105)
     q = np.asanyarray(q)
@@ -1445,7 +1445,7 @@ def nanquantile(
         8. 'median_unbiased'
         9. 'normal_unbiased'
 
-        The first three methods are discontiuous.  NumPy further defines the
+        The first three methods are discontinuous.  NumPy further defines the
         following discontinuous variations of the default 'linear' (7.) option:
 
         * 'lower'
@@ -1530,11 +1530,15 @@ def nanquantile(
        The American Statistician, 50(4), pp. 361-365, 1996
 
     """
+
     if interpolation is not None:
         method = function_base._check_interpolation_as_method(
             method, interpolation, "nanquantile")
 
     a = np.asanyarray(a)
+    if a.dtype.kind == "c":
+        raise TypeError("a must be an array of real numbers")
+
     q = np.asanyarray(q)
     if not function_base._quantile_is_valid(q):
         raise ValueError("Quantiles must be in the range [0, 1]")
@@ -1556,17 +1560,14 @@ def _nanquantile_unchecked(
     # so deal them upfront
     if a.size == 0:
         return np.nanmean(a, axis, out=out, keepdims=keepdims)
-    r, k = function_base._ureduce(a,
+    return function_base._ureduce(a,
                                   func=_nanquantile_ureduce_func,
                                   q=q,
+                                  keepdims=keepdims,
                                   axis=axis,
                                   out=out,
                                   overwrite_input=overwrite_input,
                                   method=method)
-    if keepdims and keepdims is not np._NoValue:
-        return r.reshape(q.shape + k)
-    else:
-        return r
 
 
 def _nanquantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,

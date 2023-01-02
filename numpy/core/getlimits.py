@@ -5,8 +5,8 @@ __all__ = ['finfo', 'iinfo']
 
 import warnings
 
+from .._utils import set_module
 from ._machar import MachAr
-from .overrides import set_module
 from . import numeric
 from . import numerictypes as ntypes
 from .numeric import array, inf, NaN
@@ -352,6 +352,9 @@ def _get_machar(ftype):
 
 def _discovered_machar(ftype):
     """ Create MachAr instance with found information on float types
+
+    TODO: MachAr should be retired completely ideally.  We currently only
+          ever use it system with broken longdouble (valgrind, WSL).
     """
     params = _MACHAR_PARAMS[ftype]
     return MachAr(lambda v: array([v], ftype),
@@ -372,6 +375,10 @@ class finfo:
     ----------
     bits : int
         The number of bits occupied by the type.
+    dtype : dtype
+        Returns the dtype for which `finfo` returns information. For complex
+        input, the returned dtype is the associated ``float*`` dtype for its
+        real and complex components.
     eps : float
         The difference between 1.0 and the next smallest representable float
         larger than 1.0. For example, for 64-bit binary floats in the IEEE-754
@@ -383,11 +390,6 @@ class finfo:
     iexp : int
         The number of bits in the exponent portion of the floating point
         representation.
-    machar : MachAr
-        The object which calculated these parameters and holds more
-        detailed information.
-
-        .. deprecated:: 1.22
     machep : int
         The exponent that yields `eps`.
     max : floating point number of the appropriate type
@@ -423,11 +425,11 @@ class finfo:
     Parameters
     ----------
     dtype : float, dtype, or instance
-        Kind of floating point data-type about which to get information.
+        Kind of floating point or complex floating point
+        data-type about which to get information.
 
     See Also
     --------
-    MachAr : The implementation of the tests that produce this information.
     iinfo : The equivalent for integer data types.
     spacing : The distance between a value and the nearest adjacent number
     nextafter : The next floating point value after x1 towards x2
@@ -445,12 +447,25 @@ class finfo:
     fill the gap between 0 and ``smallest_normal``. However, subnormal numbers
     may have significantly reduced precision [2]_.
 
+    This function can also be used for complex data types as well. If used,
+    the output will be the same as the corresponding real float type
+    (e.g. numpy.finfo(numpy.csingle) is the same as numpy.finfo(numpy.single)).
+    However, the output is true for the real and imaginary components.
+
     References
     ----------
     .. [1] IEEE Standard for Floating-Point Arithmetic, IEEE Std 754-2008,
            pp.1-70, 2008, http://www.doi.org/10.1109/IEEESTD.2008.4610935
     .. [2] Wikipedia, "Denormal Numbers",
            https://en.wikipedia.org/wiki/Denormal_number
+
+    Examples
+    --------
+    >>> np.finfo(np.float64).dtype
+    dtype('float64')
+    >>> np.finfo(np.complex64).dtype
+    dtype('float32')
+
     """
 
     _finfo_cache = {}
@@ -577,20 +592,6 @@ class finfo:
         """
         return self.smallest_normal
 
-    @property
-    def machar(self):
-        """The object which calculated these parameters and holds more
-        detailed information.
-
-        .. deprecated:: 1.22
-        """
-        # Deprecated 2021-10-27, NumPy 1.22
-        warnings.warn(
-            "`finfo.machar` is deprecated (NumPy 1.22)",
-            DeprecationWarning, stacklevel=2,
-        )
-        return self._machar
-
 
 @set_module('numpy')
 class iinfo:
@@ -603,6 +604,8 @@ class iinfo:
     ----------
     bits : int
         The number of bits occupied by the type.
+    dtype : dtype
+        Returns the dtype for which `iinfo` returns information.
     min : int
         The smallest integer expressible by the type.
     max : int

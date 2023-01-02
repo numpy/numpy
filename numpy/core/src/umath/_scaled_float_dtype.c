@@ -125,9 +125,9 @@ sfloat_setitem(PyObject *obj, char *data, PyArrayObject *arr)
 
 /* Special DType methods and the descr->f slot storage */
 NPY_DType_Slots sfloat_slots = {
-    .default_descr = &sfloat_default_descr,
     .discover_descr_from_pyobject = &sfloat_discover_from_pyobject,
     .is_known_scalar_type = &sfloat_is_known_scalar_type,
+    .default_descr = &sfloat_default_descr,
     .common_dtype = &sfloat_common_dtype,
     .common_instance = &sfloat_common_instance,
     .f = {
@@ -136,14 +136,13 @@ NPY_DType_Slots sfloat_slots = {
     }
 };
 
-
 static PyArray_SFloatDescr SFloatSingleton = {{
-        .elsize = sizeof(double),
-        .alignment = _ALIGN(double),
+        .byteorder = '|',  /* do not bother with byte-swapping... */
         .flags = NPY_USE_GETITEM|NPY_USE_SETITEM,
         .type_num = -1,
+        .elsize = sizeof(double),
+        .alignment = _ALIGN(double),
         .f = &sfloat_slots.f,
-        .byteorder = '|',  /* do not bother with byte-swapping... */
     },
     .scaling = 1,
 };
@@ -233,11 +232,11 @@ sfloat_repr(PyArray_SFloatDescr *self)
 static PyArray_DTypeMeta PyArray_SFloatDType = {{{
         PyVarObject_HEAD_INIT(NULL, 0)
         .tp_name = "numpy._ScaledFloatTestDType",
-        .tp_methods = sfloat_methods,
-        .tp_new = sfloat_new,
+        .tp_basicsize = sizeof(PyArray_SFloatDescr),
         .tp_repr = (reprfunc)sfloat_repr,
         .tp_str = (reprfunc)sfloat_repr,
-        .tp_basicsize = sizeof(PyArray_SFloatDescr),
+        .tp_methods = sfloat_methods,
+        .tp_new = sfloat_new,
     }},
     .type_num = -1,
     .scalar_type = NULL,
@@ -448,11 +447,11 @@ init_casts(void)
         .name = "sfloat_to_sfloat_cast",
         .nin = 1,
         .nout = 1,
+        /* minimal guaranteed casting */
+        .casting = NPY_SAME_KIND_CASTING,
         .flags = NPY_METH_SUPPORTS_UNALIGNED,
         .dtypes = dtypes,
         .slots = slots,
-        /* minimal guaranteed casting */
-        .casting = NPY_SAME_KIND_CASTING,
     };
 
     slots[0].slot = NPY_METH_resolve_descriptors;

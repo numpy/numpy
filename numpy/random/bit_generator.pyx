@@ -68,12 +68,12 @@ def _int_to_uint32_array(n):
         raise ValueError("expected non-negative integer")
     if n == 0:
         arr.append(np.uint32(n))
-    if isinstance(n, np.unsignedinteger):
-        # Cannot do n & MASK32, convert to python int
-        n = int(n)
+
+    # NumPy ints may not like `n & MASK32` or ``//= 2**32` so use Python int
+    n = int(n)
     while n > 0:
         arr.append(np.uint32(n & MASK32))
-        n //= (2**32)
+        n //= 2**32
     return np.array(arr, dtype=np.uint32)
 
 def _coerce_to_uint32_array(x):
@@ -261,8 +261,10 @@ cdef class SeedSequence():
     entropy : {None, int, sequence[int]}, optional
         The entropy for creating a `SeedSequence`.
     spawn_key : {(), sequence[int]}, optional
-        A third source of entropy, used internally when calling
-        `SeedSequence.spawn`
+        An additional source of entropy based on the position of this
+        `SeedSequence` in the tree of such objects created with the
+        `SeedSequence.spawn` method. Typically, only `SeedSequence.spawn` will
+        set this, and users will not.
     pool_size : {int}, optional
         Size of the pooled entropy to store. Default is 4 to give a 128-bit
         entropy pool. 8 (for 256 bits) is another reasonable choice if working

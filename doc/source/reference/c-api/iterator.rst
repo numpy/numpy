@@ -26,7 +26,7 @@ which may be of interest for those using this C API. In many instances,
 testing out ideas by creating the iterator in Python is a good idea
 before writing the C iteration code.
 
-Simple Iteration Example
+Iteration Example
 ------------------------
 
 The best way to become familiar with the iterator is to look at its
@@ -115,10 +115,10 @@ number of non-zero elements in an array.
         return nonzero_count;
     }
 
-Simple Multi-Iteration Example
+Multi-Iteration Example
 ------------------------------
 
-Here is a simple copy function using the iterator.  The ``order`` parameter
+Here is a copy function using the iterator.  The ``order`` parameter
 is used to control the memory layout of the allocated result, typically
 :c:data:`NPY_KEEPORDER` is desired.
 
@@ -201,6 +201,66 @@ is used to control the memory layout of the allocated result, typically
 
         return ret;
     }
+
+
+Multi Index Tracking Example
+----------------------------
+
+This example shows you how to work with the :c:data:`NPY_ITER_MULTI_INDEX` flag. For simplicity, we assume the argument is a two-dimensional array.
+
+.. code-block:: c
+
+   int PrintMultiIndex(PyArrayObject *arr) {
+       NpyIter *iter;
+       NpyIter_IterNextFunc *iternext;
+       npy_intp multi_index[2];
+
+       iter = NpyIter_New(
+           arr, NPY_ITER_READONLY | NPY_ITER_MULTI_INDEX | NPY_ITER_REFS_OK,
+           NPY_KEEPORDER, NPY_NO_CASTING, NULL);
+       if (iter == NULL) {
+           return -1;
+       }
+       if (NpyIter_GetNDim(iter) != 2) {
+           NpyIter_Deallocate(iter);
+           PyErr_SetString(PyExc_ValueError, "Array must be 2-D");
+           return -1;
+       }
+       if (NpyIter_GetIterSize(iter) != 0) {
+           iternext = NpyIter_GetIterNext(iter, NULL);
+           if (iternext == NULL) {
+               NpyIter_Deallocate(iter);
+               return -1;
+           }
+           NpyIter_GetMultiIndexFunc *get_multi_index =
+               NpyIter_GetGetMultiIndex(iter, NULL);
+           if (get_multi_index == NULL) {
+               NpyIter_Deallocate(iter);
+               return -1;
+           }
+
+           do {
+               get_multi_index(iter, multi_index);
+               printf("multi_index is [%" NPY_INTP_FMT ", %" NPY_INTP_FMT "]\n",
+                      multi_index[0], multi_index[1]);
+           } while (iternext(iter));
+       }
+       if (!NpyIter_Deallocate(iter)) {
+           return -1;
+       }
+       return 0;
+   }
+
+When called with a 2x3 array, the above example prints:
+
+.. code-block:: sh
+
+   multi_index is [0, 0]
+   multi_index is [0, 1]
+   multi_index is [0, 2]
+   multi_index is [1, 0]
+   multi_index is [1, 1]
+   multi_index is [1, 2]
 
 
 Iterator Data Types

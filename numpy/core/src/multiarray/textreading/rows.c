@@ -19,7 +19,7 @@
 #include "textreading/growth.h"
 
 /*
- * Minimum size to grow the allcoation by (or 25%). The 8KiB means the actual
+ * Minimum size to grow the allocation by (or 25%). The 8KiB means the actual
  * growths is within `8 KiB <= size < 16 KiB` (depending on the row size).
  */
 #define MIN_BLOCK_SIZE (1 << 13)
@@ -181,7 +181,7 @@ read_rows(stream *s,
 
     int ts_result = 0;
     tokenizer_state ts;
-    if (tokenizer_init(&ts, pconfig) < 0) {
+    if (npy_tokenizer_init(&ts, pconfig) < 0) {
         goto error;
     }
 
@@ -198,7 +198,7 @@ read_rows(stream *s,
 
     for (Py_ssize_t i = 0; i < skiplines; i++) {
         ts.state = TOKENIZE_GOTO_LINE_END;
-        ts_result = tokenize(s, &ts, pconfig);
+        ts_result = npy_tokenize(s, &ts, pconfig);
         if (ts_result < 0) {
             goto error;
         }
@@ -210,7 +210,7 @@ read_rows(stream *s,
 
     Py_ssize_t row_count = 0;  /* number of rows actually processed */
     while ((max_rows < 0 || row_count < max_rows) && ts_result == 0) {
-        ts_result = tokenize(s, &ts, pconfig);
+        ts_result = npy_tokenize(s, &ts, pconfig);
         if (ts_result < 0) {
             goto error;
         }
@@ -402,7 +402,7 @@ read_rows(stream *s,
                         str, end, item_ptr, pconfig);
             }
             else {
-                parser_res = to_generic_with_converter(field_types[f].descr,
+                parser_res = npy_to_generic_with_converter(field_types[f].descr,
                         str, end, item_ptr, pconfig, conv_funcs[i]);
             }
 
@@ -431,7 +431,7 @@ read_rows(stream *s,
         data_ptr += row_size;
     }
 
-    tokenizer_clear(&ts);
+    npy_tokenizer_clear(&ts);
     if (conv_funcs != NULL) {
         for (Py_ssize_t i = 0; i < actual_num_fields; i++) {
             Py_XDECREF(conv_funcs[i]);
@@ -485,7 +485,7 @@ read_rows(stream *s,
         }
         PyMem_FREE(conv_funcs);
     }
-    tokenizer_clear(&ts);
+    npy_tokenizer_clear(&ts);
     Py_XDECREF(data_array);
     return NULL;
 }

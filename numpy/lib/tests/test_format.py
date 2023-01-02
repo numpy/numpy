@@ -283,7 +283,7 @@ from io import BytesIO
 import numpy as np
 from numpy.testing import (
     assert_, assert_array_equal, assert_raises, assert_raises_regex,
-    assert_warns, IS_PYPY,
+    assert_warns, IS_PYPY, IS_WASM
     )
 from numpy.testing._private.utils import requires_memory
 from numpy.lib import format
@@ -459,6 +459,8 @@ def test_long_str():
     assert_array_equal(long_str_arr, long_str_arr2)
 
 
+@pytest.mark.skipif(IS_WASM, reason="memmap doesn't work correctly")
+@pytest.mark.slow
 def test_memmap_roundtrip(tmpdir):
     for i, arr in enumerate(basic_arrays + record_arrays):
         if arr.dtype.hasobject:
@@ -525,6 +527,7 @@ def test_load_padded_dtype(tmpdir, dt):
     assert_array_equal(arr, arr1)
 
 
+@pytest.mark.xfail(IS_WASM, reason="Emscripten NODEFS has a buggy dup")
 def test_python2_python3_interoperability():
     fname = 'win64python2.npy'
     path = os.path.join(os.path.dirname(__file__), 'data', fname)
@@ -536,7 +539,7 @@ def test_pickle_python2_python3():
     # Python 2 and Python 3 and vice versa
     data_dir = os.path.join(os.path.dirname(__file__), 'data')
 
-    expected = np.array([None, range, u'\u512a\u826f',
+    expected = np.array([None, range, '\u512a\u826f',
                          b'\xe4\xb8\x8d\xe8\x89\xaf'],
                         dtype=object)
 
@@ -667,13 +670,14 @@ def test_version_2_0():
     assert_(len(header) % format.ARRAY_ALIGN == 0)
 
     f.seek(0)
-    n = format.read_array(f)
+    n = format.read_array(f, max_header_size=200000)
     assert_array_equal(d, n)
 
     # 1.0 requested but data cannot be saved this way
     assert_raises(ValueError, format.write_array, f, d, (1, 0))
 
 
+@pytest.mark.skipif(IS_WASM, reason="memmap doesn't work correctly")
 def test_version_2_0_memmap(tmpdir):
     # requires more than 2 byte for header
     dt = [(("%d" % i) * 100, float) for i in range(500)]
@@ -689,7 +693,7 @@ def test_version_2_0_memmap(tmpdir):
                             shape=d.shape, version=(2, 0))
     ma[...] = d
     ma.flush()
-    ma = format.open_memmap(tf1, mode='r')
+    ma = format.open_memmap(tf1, mode='r', max_header_size=200000)
     assert_array_equal(ma, d)
 
     with warnings.catch_warnings(record=True) as w:
@@ -700,9 +704,49 @@ def test_version_2_0_memmap(tmpdir):
         ma[...] = d
         ma.flush()
 
-    ma = format.open_memmap(tf2, mode='r')
+    ma = format.open_memmap(tf2, mode='r', max_header_size=200000)
+
     assert_array_equal(ma, d)
 
+@pytest.mark.parametrize("mmap_mode", ["r", None])
+def test_huge_header(tmpdir, mmap_mode):
+    f = os.path.join(tmpdir, f'large_header.npy')
+    arr = np.array(1, dtype="i,"*10000+"i")
+
+    with pytest.warns(UserWarning, match=".*format 2.0"):
+        np.save(f, arr)
+    
+    with pytest.raises(ValueError, match="Header.*large"):
+        np.load(f, mmap_mode=mmap_mode)
+
+    with pytest.raises(ValueError, match="Header.*large"):
+        np.load(f, mmap_mode=mmap_mode, max_header_size=20000)
+
+    res = np.load(f, mmap_mode=mmap_mode, allow_pickle=True)
+    assert_array_equal(res, arr)
+
+    res = np.load(f, mmap_mode=mmap_mode, max_header_size=180000)
+    assert_array_equal(res, arr)
+
+def test_huge_header_npz(tmpdir):
+    f = os.path.join(tmpdir, f'large_header.npz')
+    arr = np.array(1, dtype="i,"*10000+"i")
+
+    with pytest.warns(UserWarning, match=".*format 2.0"):
+        np.savez(f, arr=arr)
+    
+    # Only getting the array from the file actually reads it
+    with pytest.raises(ValueError, match="Header.*large"):
+        np.load(f)["arr"]
+
+    with pytest.raises(ValueError, match="Header.*large"):
+        np.load(f, max_header_size=20000)["arr"]
+
+    res = np.load(f, allow_pickle=True)["arr"]
+    assert_array_equal(res, arr)
+
+    res = np.load(f, max_header_size=180000)["arr"]
+    assert_array_equal(res, arr)
 
 def test_write_version():
     f = BytesIO()
@@ -791,11 +835,11 @@ def test_bad_magic_args():
 
 def test_large_header():
     s = BytesIO()
-    d = {'a': 1, 'b': 2}
+    d = {'shape': tuple(), 'fortran_order': False, 'descr': '<i8'}
     format.write_array_header_1_0(s, d)
 
     s = BytesIO()
-    d = {'a': 1, 'b': 2, 'c': 'x'*256*256}
+    d['descr'] = [('x'*256*256, '<i8')]
     assert_raises(ValueError, format.write_array_header_1_0, s, d)
 
 
@@ -837,10 +881,12 @@ def test_bad_header():
     assert_raises(ValueError, format.read_array_header_1_0, s)
 
     # headers without the exact keys required should fail
-    d = {"shape": (1, 2),
-         "descr": "x"}
-    s = BytesIO()
-    format.write_array_header_1_0(s, d)
+    # d = {"shape": (1, 2),
+    #      "descr": "x"}
+    s = BytesIO(
+        b"\x93NUMPY\x01\x006\x00{'descr': 'x', 'shape': (1, 2), }" +
+        b"                    \n"
+    )
     assert_raises(ValueError, format.read_array_header_1_0, s)
 
     d = {"shape": (1, 2),
@@ -877,6 +923,7 @@ def test_large_file_support(tmpdir):
     assert_array_equal(r, d)
 
 
+@pytest.mark.skipif(IS_PYPY, reason="flaky on PyPy")
 @pytest.mark.skipif(np.dtype(np.intp).itemsize < 8,
                     reason="test requires 64-bit system")
 @pytest.mark.slow
@@ -920,7 +967,7 @@ def test_unicode_field_names(tmpdir):
         (1, 2)
     ], dtype=[
         ('int', int),
-        (u'\N{CJK UNIFIED IDEOGRAPH-6574}\N{CJK UNIFIED IDEOGRAPH-5F62}', int)
+        ('\N{CJK UNIFIED IDEOGRAPH-6574}\N{CJK UNIFIED IDEOGRAPH-5F62}', int)
     ])
     fname = os.path.join(tmpdir, "unicode.npy")
     with open(fname, 'wb') as f:
@@ -934,6 +981,19 @@ def test_unicode_field_names(tmpdir):
         with assert_warns(UserWarning):
             format.write_array(f, arr, version=None)
 
+def test_header_growth_axis():
+    for is_fortran_array, dtype_space, expected_header_length in [
+        [False, 22, 128], [False, 23, 192], [True, 23, 128], [True, 24, 192]
+    ]:
+        for size in [10**i for i in range(format.GROWTH_AXIS_MAX_DIGITS)]:
+            fp = BytesIO()
+            format.write_array_header_1_0(fp, {
+                'shape': (2, size) if is_fortran_array else (size, 2),
+                'fortran_order': is_fortran_array,
+                'descr': np.dtype([(' '*dtype_space, int)])
+            })
+
+            assert len(fp.getvalue()) == expected_header_length
 
 @pytest.mark.parametrize('dt, fail', [
     (np.dtype({'names': ['a', 'b'], 'formats':  [float, np.dtype('S3',

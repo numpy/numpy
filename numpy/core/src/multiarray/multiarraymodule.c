@@ -436,7 +436,7 @@ PyArray_ConcatenateArrays(int narrays, PyArrayObject **arrays, int axis,
             /* Validate that the rest of the dimensions match */
             else if (shape[idim] != arr_shape[idim]) {
                 PyErr_Format(PyExc_ValueError,
-                             "all the input array dimensions for the "
+                             "all the input array dimensions except for the "
                              "concatenation axis must match exactly, but "
                              "along dimension %d, the array at index %d has "
                              "size %d and the array at index %d has size %d",
@@ -899,11 +899,15 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
     int i;
     PyObject* ret = NULL;
 
-    typenum = PyArray_ObjectType(op1, 0);
-    if (typenum == NPY_NOTYPE && PyErr_Occurred()) {
+    typenum = PyArray_ObjectType(op1, NPY_NOTYPE);
+    if (typenum == NPY_NOTYPE) {
         return NULL;
     }
     typenum = PyArray_ObjectType(op2, typenum);
+    if (typenum == NPY_NOTYPE) {
+        return NULL;
+    }
+
     typec = PyArray_DescrFromType(typenum);
     if (typec == NULL) {
         if (!PyErr_Occurred()) {
@@ -991,11 +995,15 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
     PyArray_Descr *typec = NULL;
     NPY_BEGIN_THREADS_DEF;
 
-    typenum = PyArray_ObjectType(op1, 0);
-    if (typenum == NPY_NOTYPE && PyErr_Occurred()) {
+    typenum = PyArray_ObjectType(op1, NPY_NOTYPE);
+    if (typenum == NPY_NOTYPE) {
         return NULL;
     }
     typenum = PyArray_ObjectType(op2, typenum);
+    if (typenum == NPY_NOTYPE) {
+        return NULL;
+    }
+
     typec = PyArray_DescrFromType(typenum);
     if (typec == NULL) {
         if (!PyErr_Occurred()) {
@@ -1139,6 +1147,15 @@ fail:
 NPY_NO_EXPORT PyObject *
 PyArray_CopyAndTranspose(PyObject *op)
 {
+    /* DEPRECATED 2022-09-30, NumPy 1.24 - see gh-22313 */
+    if (DEPRECATE(
+            "fastCopyAndTranspose and the underlying C function "
+            "PyArray_CopyAndTranspose have been deprecated.\n\n"
+            "Use the transpose method followed by a C-order copy instead, "
+            "e.g. ``arr.T.copy()``") < 0) {
+        return NULL;
+    }
+
     PyArrayObject *arr, *tmp, *ret;
     int i;
     npy_intp new_axes_values[NPY_MAXDIMS];
@@ -1364,8 +1381,14 @@ PyArray_Correlate2(PyObject *op1, PyObject *op2, int mode)
     int inverted;
     int st;
 
-    typenum = PyArray_ObjectType(op1, 0);
+    typenum = PyArray_ObjectType(op1, NPY_NOTYPE);
+    if (typenum == NPY_NOTYPE) {
+        return NULL;
+    }
     typenum = PyArray_ObjectType(op2, typenum);
+    if (typenum == NPY_NOTYPE) {
+        return NULL;
+    }
 
     typec = PyArray_DescrFromType(typenum);
     Py_INCREF(typec);
@@ -1431,8 +1454,14 @@ PyArray_Correlate(PyObject *op1, PyObject *op2, int mode)
     int unused;
     PyArray_Descr *typec;
 
-    typenum = PyArray_ObjectType(op1, 0);
+    typenum = PyArray_ObjectType(op1, NPY_NOTYPE);
+    if (typenum == NPY_NOTYPE) {
+        return NULL;
+    }
     typenum = PyArray_ObjectType(op2, typenum);
+    if (typenum == NPY_NOTYPE) {
+        return NULL;
+    }
 
     typec = PyArray_DescrFromType(typenum);
     Py_INCREF(typec);
@@ -1593,7 +1622,7 @@ _prepend_ones(PyArrayObject *arr, int nd, int ndmin, NPY_ORDER order)
                  ((order) == NPY_CORDER && PyArray_IS_C_CONTIGUOUS(op)) || \
                  ((order) == NPY_FORTRANORDER && PyArray_IS_F_CONTIGUOUS(op)))
 
-static NPY_INLINE PyObject *
+static inline PyObject *
 _array_fromobject_generic(
         PyObject *op, PyArray_Descr *type, _PyArray_CopyMode copy, NPY_ORDER order,
         npy_bool subok, int ndmin)
@@ -1627,12 +1656,31 @@ _array_fromobject_generic(
                 goto finish;
             }
         }
-        /* One more chance */
+        /* One more chance for faster exit if user specified the dtype. */
         oldtype = PyArray_DESCR(oparr);
         if (PyArray_EquivTypes(oldtype, type)) {
             if (copy != NPY_COPY_ALWAYS && STRIDING_OK(oparr, order)) {
-                Py_INCREF(op);
-                ret = oparr;
+                if (oldtype == type) {
+                    Py_INCREF(op);
+                    ret = oparr;
+                }
+                else {
+                    /* Create a new PyArrayObject from the caller's
+                     * PyArray_Descr. Use the reference `op` as the base
+                     * object. */
+                    Py_INCREF(type);
+                    ret = (PyArrayObject *)PyArray_NewFromDescrAndBase(
+                            Py_TYPE(op),
+                            type,
+                            PyArray_NDIM(oparr),
+                            PyArray_DIMS(oparr),
+                            PyArray_STRIDES(oparr),
+                            PyArray_DATA(oparr),
+                            PyArray_FLAGS(oparr),
+                            op,
+                            op
+                            );
+                }
                 goto finish;
             }
             else {
@@ -1706,7 +1754,7 @@ array_array(PyObject *NPY_UNUSED(ignored),
     int ndmin = 0;
     PyArray_Descr *type = NULL;
     NPY_ORDER order = NPY_KEEPORDER;
-    PyObject *like = NULL;
+    PyObject *like = Py_None;
     NPY_PREPARE_ARGPARSER;
 
     if (len_args != 1 || (kwnames != NULL)) {
@@ -1722,7 +1770,7 @@ array_array(PyObject *NPY_UNUSED(ignored),
             Py_XDECREF(type);
             return NULL;
         }
-        if (like != NULL) {
+        if (like != Py_None) {
             PyObject *deferred = array_implement_c_array_function_creation(
                     "array", like, NULL, NULL, args, len_args, kwnames);
             if (deferred != Py_NotImplemented) {
@@ -1749,7 +1797,7 @@ array_asarray(PyObject *NPY_UNUSED(ignored),
     PyObject *op;
     PyArray_Descr *type = NULL;
     NPY_ORDER order = NPY_KEEPORDER;
-    PyObject *like = NULL;
+    PyObject *like = Py_None;
     NPY_PREPARE_ARGPARSER;
 
     if (len_args != 1 || (kwnames != NULL)) {
@@ -1762,7 +1810,7 @@ array_asarray(PyObject *NPY_UNUSED(ignored),
             Py_XDECREF(type);
             return NULL;
         }
-        if (like != NULL) {
+        if (like != Py_None) {
             PyObject *deferred = array_implement_c_array_function_creation(
                     "asarray", like, NULL, NULL, args, len_args, kwnames);
             if (deferred != Py_NotImplemented) {
@@ -1788,7 +1836,7 @@ array_asanyarray(PyObject *NPY_UNUSED(ignored),
     PyObject *op;
     PyArray_Descr *type = NULL;
     NPY_ORDER order = NPY_KEEPORDER;
-    PyObject *like = NULL;
+    PyObject *like = Py_None;
     NPY_PREPARE_ARGPARSER;
 
     if (len_args != 1 || (kwnames != NULL)) {
@@ -1801,7 +1849,7 @@ array_asanyarray(PyObject *NPY_UNUSED(ignored),
             Py_XDECREF(type);
             return NULL;
         }
-        if (like != NULL) {
+        if (like != Py_None) {
             PyObject *deferred = array_implement_c_array_function_creation(
                     "asanyarray", like, NULL, NULL, args, len_args, kwnames);
             if (deferred != Py_NotImplemented) {
@@ -1827,7 +1875,7 @@ array_ascontiguousarray(PyObject *NPY_UNUSED(ignored),
 {
     PyObject *op;
     PyArray_Descr *type = NULL;
-    PyObject *like = NULL;
+    PyObject *like = Py_None;
     NPY_PREPARE_ARGPARSER;
 
     if (len_args != 1 || (kwnames != NULL)) {
@@ -1839,7 +1887,7 @@ array_ascontiguousarray(PyObject *NPY_UNUSED(ignored),
             Py_XDECREF(type);
             return NULL;
         }
-        if (like != NULL) {
+        if (like != Py_None) {
             PyObject *deferred = array_implement_c_array_function_creation(
                     "ascontiguousarray", like, NULL, NULL, args, len_args, kwnames);
             if (deferred != Py_NotImplemented) {
@@ -1865,7 +1913,7 @@ array_asfortranarray(PyObject *NPY_UNUSED(ignored),
 {
     PyObject *op;
     PyArray_Descr *type = NULL;
-    PyObject *like = NULL;
+    PyObject *like = Py_None;
     NPY_PREPARE_ARGPARSER;
 
     if (len_args != 1 || (kwnames != NULL)) {
@@ -1877,7 +1925,7 @@ array_asfortranarray(PyObject *NPY_UNUSED(ignored),
             Py_XDECREF(type);
             return NULL;
         }
-        if (like != NULL) {
+        if (like != Py_None) {
             PyObject *deferred = array_implement_c_array_function_creation(
                     "asfortranarray", like, NULL, NULL, args, len_args, kwnames);
             if (deferred != Py_NotImplemented) {
@@ -1950,7 +1998,7 @@ array_empty(PyObject *NPY_UNUSED(ignored),
     NPY_ORDER order = NPY_CORDER;
     npy_bool is_f_order;
     PyArrayObject *ret = NULL;
-    PyObject *like = NULL;
+    PyObject *like = Py_None;
     NPY_PREPARE_ARGPARSER;
 
     if (npy_parse_arguments("empty", args, len_args, kwnames,
@@ -1962,7 +2010,7 @@ array_empty(PyObject *NPY_UNUSED(ignored),
         goto fail;
     }
 
-    if (like != NULL) {
+    if (like != Py_None) {
         PyObject *deferred = array_implement_c_array_function_creation(
                 "empty", like, NULL, NULL, args, len_args, kwnames);
         if (deferred != Py_NotImplemented) {
@@ -2152,7 +2200,7 @@ array_zeros(PyObject *NPY_UNUSED(ignored),
     NPY_ORDER order = NPY_CORDER;
     npy_bool is_f_order = NPY_FALSE;
     PyArrayObject *ret = NULL;
-    PyObject *like = NULL;
+    PyObject *like = Py_None;
     NPY_PREPARE_ARGPARSER;
 
     if (npy_parse_arguments("zeros", args, len_args, kwnames,
@@ -2165,7 +2213,7 @@ array_zeros(PyObject *NPY_UNUSED(ignored),
     }
 
 
-    if (like != NULL) {
+    if (like != Py_None) {
         PyObject *deferred = array_implement_c_array_function_creation(
                 "zeros", like, NULL, NULL, args, len_args, kwnames);
         if (deferred != Py_NotImplemented) {
@@ -2228,7 +2276,7 @@ array_fromstring(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds
     char *sep = NULL;
     Py_ssize_t s;
     static char *kwlist[] = {"string", "dtype", "count", "sep", "like", NULL};
-    PyObject *like = NULL;
+    PyObject *like = Py_None;
     PyArray_Descr *descr = NULL;
 
     if (!PyArg_ParseTupleAndKeywords(args, keywds,
@@ -2237,7 +2285,7 @@ array_fromstring(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds
         Py_XDECREF(descr);
         return NULL;
     }
-    if (like != NULL) {
+    if (like != Py_None) {
         PyObject *deferred = array_implement_c_array_function_creation(
                 "fromstring", like, args, keywds, NULL, 0, NULL);
         if (deferred != Py_NotImplemented) {
@@ -2269,7 +2317,7 @@ array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
     char *sep = "";
     Py_ssize_t nin = -1;
     static char *kwlist[] = {"file", "dtype", "count", "sep", "offset", "like", NULL};
-    PyObject *like = NULL;
+    PyObject *like = Py_None;
     PyArray_Descr *type = NULL;
     int own;
     npy_off_t orig_pos = 0, offset = 0;
@@ -2282,7 +2330,7 @@ array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
         return NULL;
     }
 
-    if (like != NULL) {
+    if (like != Py_None) {
         PyObject *deferred = array_implement_c_array_function_creation(
                 "fromfile", like, args, keywds, NULL, 0, NULL);
         if (deferred != Py_NotImplemented) {
@@ -2359,7 +2407,7 @@ array_fromiter(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
     PyObject *iter;
     Py_ssize_t nin = -1;
     static char *kwlist[] = {"iter", "dtype", "count", "like", NULL};
-    PyObject *like = NULL;
+    PyObject *like = Py_None;
     PyArray_Descr *descr = NULL;
 
     if (!PyArg_ParseTupleAndKeywords(args, keywds,
@@ -2368,7 +2416,7 @@ array_fromiter(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
         Py_XDECREF(descr);
         return NULL;
     }
-    if (like != NULL) {
+    if (like != Py_None) {
         PyObject *deferred = array_implement_c_array_function_creation(
                 "fromiter", like, args, keywds, NULL, 0, NULL);
         if (deferred != Py_NotImplemented) {
@@ -2386,7 +2434,7 @@ array_frombuffer(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds
     PyObject *obj = NULL;
     Py_ssize_t nin = -1, offset = 0;
     static char *kwlist[] = {"buffer", "dtype", "count", "offset", "like", NULL};
-    PyObject *like = NULL;
+    PyObject *like = Py_None;
     PyArray_Descr *type = NULL;
 
     if (!PyArg_ParseTupleAndKeywords(args, keywds,
@@ -2396,7 +2444,7 @@ array_frombuffer(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds
         return NULL;
     }
 
-    if (like != NULL) {
+    if (like != Py_None) {
         PyObject *deferred = array_implement_c_array_function_creation(
                 "frombuffer", like, args, keywds, NULL, 0, NULL);
         if (deferred != Py_NotImplemented) {
@@ -2513,8 +2561,14 @@ array_vdot(PyObject *NPY_UNUSED(dummy), PyObject *args)
      * Conjugating dot product using the BLAS for vectors.
      * Flattens both op1 and op2 before dotting.
      */
-    typenum = PyArray_ObjectType(op1, 0);
+    typenum = PyArray_ObjectType(op1, NPY_NOTYPE);
+    if (typenum == NPY_NOTYPE) {
+        return NULL;
+    }
     typenum = PyArray_ObjectType(op2, typenum);
+    if (typenum == NPY_NOTYPE) {
+        return NULL;
+    }
 
     type = PyArray_DescrFromType(typenum);
     Py_INCREF(type);
@@ -2967,7 +3021,7 @@ array_fastCopyAndTranspose(PyObject *NPY_UNUSED(dummy), PyObject *args)
 {
     PyObject *a0;
 
-    if (!PyArg_ParseTuple(args, "O:_fastCopyAndTranspose", &a0)) {
+    if (!PyArg_ParseTuple(args, "O:fastCopyAndTranspose", &a0)) {
         return NULL;
     }
     return PyArray_Return((PyArrayObject *)PyArray_CopyAndTranspose(a0));
@@ -3015,7 +3069,7 @@ array_arange(PyObject *NPY_UNUSED(ignored),
 {
     PyObject *o_start = NULL, *o_stop = NULL, *o_step = NULL, *range=NULL;
     PyArray_Descr *typecode = NULL;
-    PyObject *like = NULL;
+    PyObject *like = Py_None;
     NPY_PREPARE_ARGPARSER;
 
     if (npy_parse_arguments("arange", args, len_args, kwnames,
@@ -3028,7 +3082,7 @@ array_arange(PyObject *NPY_UNUSED(ignored),
         Py_XDECREF(typecode);
         return NULL;
     }
-    if (like != NULL) {
+    if (like != Py_None) {
         PyObject *deferred = array_implement_c_array_function_creation(
                 "arange", like, NULL, NULL, args, len_args, kwnames);
         if (deferred != Py_NotImplemented) {
@@ -4046,7 +4100,7 @@ _vec_string(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUSED(kw
     return 0;
 }
 
-#ifndef __NPY_PRIVATE_NO_SIGNAL
+#ifndef NPY_NO_SIGNAL
 
 static NPY_TLS int sigint_buf_init = 0;
 static NPY_TLS NPY_SIGJMP_BUF _NPY_SIGINT_BUF;
@@ -4108,7 +4162,6 @@ array_shares_memory_impl(PyObject *args, PyObject *kwds, Py_ssize_t default_max_
     static char *kwlist[] = {"self", "other", "max_work", NULL};
 
     mem_overlap_t result;
-    static PyObject *too_hard_cls = NULL;
     Py_ssize_t max_work;
     NPY_BEGIN_THREADS_DEF;
 
@@ -4188,8 +4241,8 @@ array_shares_memory_impl(PyObject *args, PyObject *kwds, Py_ssize_t default_max_
     }
     else if (result == MEM_OVERLAP_TOO_HARD) {
         if (raise_exceptions) {
-            npy_cache_import("numpy.core._exceptions", "TooHardError",
-                             &too_hard_cls);
+            static PyObject *too_hard_cls = NULL;
+            npy_cache_import("numpy.exceptions", "TooHardError", &too_hard_cls);
             if (too_hard_cls) {
                 PyErr_SetString(too_hard_cls, "Exceeded max_work");
             }
@@ -4377,7 +4430,7 @@ static struct PyMethodDef array_module_methods[] = {
     {"c_einsum",
         (PyCFunction)array_einsum,
         METH_VARARGS|METH_KEYWORDS, NULL},
-    {"_fastCopyAndTranspose",
+    {"fastCopyAndTranspose",
         (PyCFunction)array_fastCopyAndTranspose,
         METH_VARARGS, NULL},
     {"correlate",
@@ -4758,6 +4811,38 @@ intern_strings(void)
     return 0;
 }
 
+
+/*
+ * Initializes global constants.  At some points these need to be cleaned
+ * up, and sometimes we also import them where they are needed.  But for
+ * some things, adding an `npy_cache_import` everywhere seems inconvenient.
+ *
+ * These globals should not need the C-layer at all and will be imported
+ * before anything on the C-side is initialized.
+ */
+static int
+initialize_static_globals(void)
+{
+    assert(npy_DTypePromotionError == NULL);
+    npy_cache_import(
+            "numpy.exceptions", "DTypePromotionError",
+            &npy_DTypePromotionError);
+    if (npy_DTypePromotionError == NULL) {
+        return -1;
+    }
+
+    assert(npy_UFuncNoLoopError == NULL);
+    npy_cache_import(
+            "numpy.core._exceptions", "_UFuncNoLoopError",
+            &npy_UFuncNoLoopError);
+    if (npy_UFuncNoLoopError == NULL) {
+        return -1;
+    }
+
+    return 0;
+}
+
+
 static struct PyModuleDef moduledef = {
         PyModuleDef_HEAD_INIT,
         "_multiarray_umath",
@@ -4805,6 +4890,14 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
     /* Add some symbolic constants to the module */
     d = PyModule_GetDict(m);
     if (!d) {
+        goto err;
+    }
+
+    if (intern_strings() < 0) {
+        goto err;
+    }
+
+    if (initialize_static_globals() < 0) {
         goto err;
     }
 
@@ -4977,10 +5070,6 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
 
     /* Create the typeinfo types */
     if (typeinfo_init_structsequences(d) < 0) {
-        goto err;
-    }
-
-    if (intern_strings() < 0) {
         goto err;
     }
 

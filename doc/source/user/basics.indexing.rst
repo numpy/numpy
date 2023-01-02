@@ -208,7 +208,7 @@ concepts to remember include:
 
 - You may use slicing to set values in the array, but (unlike lists) you
   can never grow the array. The size of the value to be set in
-  ``x[obj] = value`` must be (broadcastable) to the same shape as
+  ``x[obj] = value`` must be (broadcastable to) the same shape as
   ``x[obj]``.
 
 - A slicing tuple can always be constructed as *obj*
@@ -293,10 +293,6 @@ basic slicing that returns a :term:`view`).
    equivalent to ``x[1, 2, 3]`` which will trigger basic selection while
    the former will trigger advanced indexing. Be sure to understand
    why this occurs.
-
-   Also recognize that ``x[[1, 2, 3]]`` will trigger advanced indexing,
-   whereas due to the deprecated Numeric compatibility mentioned above,
-   ``x[[1, 2, slice(None)]]`` will trigger basic slicing.
 
 Integer array indexing
 ~~~~~~~~~~~~~~~~~~~~~~

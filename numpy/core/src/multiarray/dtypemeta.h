@@ -51,7 +51,6 @@ typedef struct {
     ensure_canonical_function *ensure_canonical;
     /*
      * Currently only used for experimental user DTypes.
-     * Typing as `void *` until NumPy itself uses these (directly).
      */
     setitemfunction *setitem;
     getitemfunction *getitem;
@@ -105,13 +104,14 @@ typedef struct {
 #define NPY_DT_CALL_setitem(descr, value, data_ptr)  \
     NPY_DT_SLOTS(NPY_DTYPE(descr))->setitem(descr, value, data_ptr)
 
+
 /*
  * This function will hopefully be phased out or replaced, but was convenient
  * for incremental implementation of new DTypes based on DTypeMeta.
  * (Error checking is not required for DescrFromType, assuming that the
  * type is valid.)
  */
-static NPY_INLINE PyArray_DTypeMeta *
+static inline PyArray_DTypeMeta *
 PyArray_DTypeFromTypeNum(int typenum)
 {
     PyArray_Descr *descr = PyArray_DescrFromType(typenum);

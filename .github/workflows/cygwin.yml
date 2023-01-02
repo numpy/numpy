@@ -6,13 +6,18 @@ on:
   push:
     branches:
       - main
+      - maintenance/**
   pull_request:
     branches:
       - main
+      - maintenance/**
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
+
+permissions:
+  contents: read # to fetch code (actions/checkout)
 
 jobs:
   cygwin_build_test:
@@ -22,11 +27,11 @@ jobs:
       - uses: actions/checkout@v3
         with:
           submodules: recursive
-          fetch-depth: 3000
+          fetch-depth: 0
       - name: Install Cygwin
-        uses: egor-tensin/setup-cygwin@v3
+        uses: cygwin/cygwin-install-action@v2
         with:
-          platform: x64
+          platform: x86_64
           install-dir: 'C:\tools\cygwin'
           packages: >-
             python38-devel python38-zipp python38-importlib-metadata
@@ -42,11 +47,9 @@ jobs:
         run: |
           command bash
           bash -c "uname -svrmo"
-      - name: Update with Cygwin git
-        # fetch-depth=0 above should make this short.
+      - name: Tell Cygwin's git about this repository.
         run: |
           dash -c "which git; /usr/bin/git config --system --add safe.directory /cygdrive/d/a/numpy/numpy"
-          dash -c "which git; /usr/bin/git fetch --all -p"
       - name: Verify python version
         # Make sure it's the Cygwin one, not a Windows one
         run: |

@@ -4,7 +4,7 @@ import warnings
 import itertools
 import operator
 import platform
-from numpy.compat import _pep440
+from numpy._utils import _pep440
 import pytest
 from hypothesis import given, settings
 from hypothesis.strategies import sampled_from
@@ -442,7 +442,8 @@ class TestConversion:
 
     def test_iinfo_long_values(self):
         for code in 'bBhH':
-            res = np.array(np.iinfo(code).max + 1, dtype=code)
+            with pytest.warns(DeprecationWarning):
+                res = np.array(np.iinfo(code).max + 1, dtype=code)
             tgt = np.iinfo(code).min
             assert_(res == tgt)
 
@@ -767,7 +768,7 @@ class TestBitShifts:
         nbits = dt.itemsize * 8
         for val in [5, -5]:
             for shift in [nbits, nbits + 4]:
-                val_scl = dt.type(val)
+                val_scl = np.array(val).astype(dt)[()]
                 shift_scl = dt.type(shift)
                 res_scl = op(val_scl, shift_scl)
                 if val_scl < 0 and op is operator.rshift:
@@ -777,7 +778,7 @@ class TestBitShifts:
                     assert_equal(res_scl, 0)
 
                 # Result on scalars should be the same as on arrays
-                val_arr = np.array([val]*32, dtype=dt)
+                val_arr = np.array([val_scl]*32, dtype=dt)
                 shift_arr = np.array([shift]*32, dtype=dt)
                 res_arr = op(val_arr, shift_arr)
                 assert_equal(res_arr, res_scl)
@@ -804,7 +805,7 @@ class TestHash:
             assert hash(val) == hash(numpy_val)
 
         if hash(float(np.nan)) != hash(float(np.nan)):
-            # If Python distinguises different NaNs we do so too (gh-18833)
+            # If Python distinguishes different NaNs we do so too (gh-18833)
             assert hash(scalar(np.nan)) != hash(scalar(np.nan))
 
     @pytest.mark.parametrize("type_code", np.typecodes['Complex'])
@@ -859,27 +860,29 @@ def test_operator_scalars(op, type1, type2):
 
 
 @pytest.mark.parametrize("op", reasonable_operators_for_scalars)
-def test_longdouble_inf_loop(op):
+@pytest.mark.parametrize("val", [None, 2**64])
+def test_longdouble_inf_loop(op, val):
+    # Note: The 2**64 value will pass once NEP 50 is adopted.
     try:
-        op(np.longdouble(3), None)
+        op(np.longdouble(3), val)
     except TypeError:
         pass
     try:
-        op(None, np.longdouble(3))
+        op(val, np.longdouble(3))
     except TypeError:
         pass
 
 
 @pytest.mark.parametrize("op", reasonable_operators_for_scalars)
-def test_clongdouble_inf_loop(op):
-    if op in {operator.mod} and False:
-        pytest.xfail("The modulo operator is known to be broken")
+@pytest.mark.parametrize("val", [None, 2**64])
+def test_clongdouble_inf_loop(op, val):
+    # Note: The 2**64 value will pass once NEP 50 is adopted.
     try:
-        op(np.clongdouble(3), None)
+        op(np.clongdouble(3), val)
     except TypeError:
         pass
     try:
-        op(None, np.longdouble(3))
+        op(val, np.longdouble(3))
     except TypeError:
         pass
 
@@ -922,6 +925,8 @@ def test_scalar_unsigned_integer_overflow(dtype):
     with pytest.warns(RuntimeWarning, match="overflow encountered"):
         -val
 
+    zero = np.dtype(dtype).type(0)
+    -zero  # does not warn
 
 @pytest.mark.parametrize("dtype", np.typecodes["AllInteger"])
 @pytest.mark.parametrize("operation", [

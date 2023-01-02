@@ -8,7 +8,7 @@ import numbers
 import numpy as np
 from . import multiarray
 from .multiarray import (
-    _fastCopyAndTranspose as fastCopyAndTranspose, ALLOW_THREADS,
+    fastCopyAndTranspose, ALLOW_THREADS,
     BUFSIZE, CLIP, MAXDIMS, MAY_SHARE_BOUNDS, MAY_SHARE_EXACT, RAISE,
     WRAP, arange, array, asarray, asanyarray, ascontiguousarray,
     asfortranarray, broadcast, can_cast, compare_chararrays,
@@ -26,7 +26,7 @@ from .overrides import set_array_function_like_doc, set_module
 from .umath import (multiply, invert, sin, PINF, NAN)
 from . import numerictypes
 from .numerictypes import longlong, intc, int_, float_, complex_, bool_
-from ._exceptions import TooHardError, AxisError
+from ..exceptions import ComplexWarning, TooHardError, AxisError
 from ._ufunc_config import errstate, _no_nep50_warning
 
 bitwise_not = invert
@@ -52,22 +52,9 @@ __all__ = [
     'identity', 'allclose', 'compare_chararrays', 'putmask',
     'flatnonzero', 'Inf', 'inf', 'infty', 'Infinity', 'nan', 'NaN',
     'False_', 'True_', 'bitwise_not', 'CLIP', 'RAISE', 'WRAP', 'MAXDIMS',
-    'BUFSIZE', 'ALLOW_THREADS', 'ComplexWarning', 'full', 'full_like',
+    'BUFSIZE', 'ALLOW_THREADS', 'full', 'full_like',
     'matmul', 'shares_memory', 'may_share_memory', 'MAY_SHARE_BOUNDS',
-    'MAY_SHARE_EXACT', 'TooHardError', 'AxisError',
-    '_get_promotion_state', '_set_promotion_state']
-
-
-@set_module('numpy')
-class ComplexWarning(RuntimeWarning):
-    """
-    The warning raised when casting a complex dtype to a real dtype.
-
-    As implemented, casting a complex number to a real discards its imaginary
-    part, but this behavior may not be what the user actually wants.
-
-    """
-    pass
+    'MAY_SHARE_EXACT', '_get_promotion_state', '_set_promotion_state']
 
 
 def _zeros_like_dispatcher(a, dtype=None, order=None, subok=None, shape=None):
@@ -707,7 +694,7 @@ def correlate(a, v, mode='valid'):
     --------
     convolve : Discrete, linear convolution of two one-dimensional sequences.
     multiarray.correlate : Old, no conjugate, version of correlate.
-    scipy.signal.correlate : uses FFT which has superior performance on large arrays. 
+    scipy.signal.correlate : uses FFT which has superior performance on large arrays.
 
     Notes
     -----
@@ -721,7 +708,7 @@ def correlate(a, v, mode='valid'):
     `numpy.correlate` may perform slowly in large arrays (i.e. n = 1e5) because it does
     not use the FFT to compute the convolution; in that case, `scipy.signal.correlate` might
     be preferable.
-    
+
 
     Examples
     --------
@@ -738,7 +725,7 @@ def correlate(a, v, mode='valid'):
     array([ 0.5-0.5j,  1.0+0.j ,  1.5-1.5j,  3.0-1.j ,  0.0+0.j ])
 
     Note that you get the time reversed, complex conjugated result
-    (:math:`\overline{c_{-k}}`) when the two input sequences a and v change 
+    (:math:`\overline{c_{-k}}`) when the two input sequences a and v change
     places:
 
     >>> np.correlate([0, 1, 0.5j], [1+1j, 2, 3-1j], 'full')
@@ -1300,7 +1287,7 @@ def rollaxis(a, axis, start=0):
            +-------------------+----------------------+
            | ``arr.ndim + 1``  | raise ``AxisError``  |
            +-------------------+----------------------+
-           
+
         .. |vdots|   unicode:: U+22EE .. Vertical Ellipsis
 
     Returns
@@ -1836,18 +1823,18 @@ def fromfunction(function, shape, *, dtype=float, like=None, **kwargs):
 
     Notes
     -----
-    Keywords other than `dtype` are passed to `function`.
+    Keywords other than `dtype` and `like` are passed to `function`.
 
     Examples
     --------
     >>> np.fromfunction(lambda i, j: i, (2, 2), dtype=float)
     array([[0., 0.],
            [1., 1.]])
-           
-    >>> np.fromfunction(lambda i, j: j, (2, 2), dtype=float)    
+
+    >>> np.fromfunction(lambda i, j: j, (2, 2), dtype=float)
     array([[0., 1.],
            [0., 1.]])
-           
+
     >>> np.fromfunction(lambda i, j: i == j, (3, 3), dtype=int)
     array([[ True, False, False],
            [False,  True, False],

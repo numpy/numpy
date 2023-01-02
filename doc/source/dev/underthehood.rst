@@ -1,7 +1,7 @@
 .. _underthehood:
 
 ===========================================
-Under-the-hood Documentation for developers
+Under-the-hood documentation for developers
 ===========================================
 
 These documents are intended as a low-level look into NumPy; focused
@@ -13,3 +13,7 @@ towards developers.
    internals
    internals.code-explanations
    alignment
+   ../user/byteswapping
+   ../user/basics.dispatch
+   ../user/basics.subclassing
+

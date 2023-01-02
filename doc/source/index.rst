@@ -34,76 +34,84 @@ fast operations on arrays, including mathematical, logical, shape manipulation,
 sorting, selecting, I/O, discrete Fourier transforms, basic linear algebra,
 basic statistical operations, random simulation and much more.
 
-.. panels::
-    :card: + intro-card text-center
-    :column: col-lg-6 col-md-6 col-sm-6 col-xs-12 d-flex
 
-    ---
-    :img-top: ../source/_static/index-images/getting_started.svg
 
-    Getting Started
-    ^^^^^^^^^^^^^^^
+.. grid:: 2
 
-    New to NumPy? Check out the Absolute Beginner's Guide. It contains an
-    introduction to NumPy's main concepts and links to additional tutorials.
+    .. grid-item-card::
+        :img-top: ../source/_static/index-images/getting_started.svg
 
-    +++
+        Getting Started
+        ^^^^^^^^^^^^^^^
 
-    .. link-button:: user/absolute_beginners
-        :type: ref
-        :text: To the absolute beginner's guide
-        :classes: btn-block btn-secondary stretched-link
-    
-    ---
-    :img-top: ../source/_static/index-images/user_guide.svg
+        New to NumPy? Check out the Absolute Beginner's Guide. It contains an
+        introduction to NumPy's main concepts and links to additional tutorials.
 
-    User Guide
-    ^^^^^^^^^^
+        +++
 
-    The user guide provides in-depth information on the
-    key concepts of NumPy with useful background information and explanation.
+        .. button-ref:: user/absolute_beginners
+            :expand:
+            :color: secondary
+            :click-parent:
 
-    +++
+            To the absolute beginner's guide
 
-    .. link-button:: user
-        :type: ref
-        :text: To the user guide
-        :classes: btn-block btn-secondary stretched-link
+    .. grid-item-card::
+        :img-top: ../source/_static/index-images/user_guide.svg
 
-    ---
-    :img-top: ../source/_static/index-images/api.svg
+        User Guide
+        ^^^^^^^^^^
 
-    API Reference
-    ^^^^^^^^^^^^^
+        The user guide provides in-depth information on the
+        key concepts of NumPy with useful background information and explanation.
 
-    The reference guide contains a detailed description of the functions,
-    modules, and objects included in NumPy. The reference describes how the
-    methods work and which parameters can be used. It assumes that you have an
-    understanding of the key concepts.
+        +++
 
-    +++
+        .. button-ref:: user
+            :expand:
+            :color: secondary
+            :click-parent:
 
-    .. link-button:: reference
-        :type: ref
-        :text: To the reference guide
-        :classes: btn-block btn-secondary stretched-link
+            To the user guide
 
-    ---
-    :img-top: ../source/_static/index-images/contributor.svg
+    .. grid-item-card::
+        :img-top: ../source/_static/index-images/api.svg
 
-    Contributor's Guide
-    ^^^^^^^^^^^^^^^^^^^
+        API Reference
+        ^^^^^^^^^^^^^
 
-    Want to add to the codebase? Can help add translation or a flowchart to the
-    documentation? The contributing guidelines will guide you through the
-    process of improving NumPy.
+        The reference guide contains a detailed description of the functions,
+        modules, and objects included in NumPy. The reference describes how the
+        methods work and which parameters can be used. It assumes that you have an
+        understanding of the key concepts.
 
-    +++
+        +++
 
-    .. link-button:: devindex
-        :type: ref
-        :text: To the contributor's guide
-        :classes: btn-block btn-secondary stretched-link
+        .. button-ref:: reference
+            :expand:
+            :color: secondary
+            :click-parent:
+
+            To the reference guide
+
+    .. grid-item-card::
+        :img-top: ../source/_static/index-images/contributor.svg
+
+        Contributor's Guide
+        ^^^^^^^^^^^^^^^^^^^
+
+        Want to add to the codebase? Can help add translation or a flowchart to the
+        documentation? The contributing guidelines will guide you through the
+        process of improving NumPy.
+
+        +++
+
+        .. button-ref:: devindex
+            :expand:
+            :color: secondary
+            :click-parent:
+
+            To the contributor's guide
 
 .. This is not really the index page, that is found in
    _templates/indexcontent.html The toctree content here will be added to the

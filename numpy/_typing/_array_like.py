@@ -3,7 +3,7 @@ from __future__ import annotations
 # NOTE: Import `Sequence` from `typing` as we it is needed for a type-alias,
 # not an annotation
 from collections.abc import Collection, Callable
-from typing import Any, Sequence, Protocol, Union, TypeVar
+from typing import Any, Sequence, Protocol, Union, TypeVar, runtime_checkable
 from numpy import (
     ndarray,
     dtype,
@@ -33,10 +33,12 @@ _DType_co = TypeVar("_DType_co", covariant=True, bound="dtype[Any]")
 # array.
 # Concrete implementations of the protocol are responsible for adding
 # any and all remaining overloads
+@runtime_checkable
 class _SupportsArray(Protocol[_DType_co]):
     def __array__(self) -> ndarray[Any, _DType_co]: ...
 
 
+@runtime_checkable
 class _SupportsArrayFunc(Protocol):
     """A protocol class representing `~class.__array_function__`."""
     def __array_function__(
@@ -140,4 +142,17 @@ _ArrayLikeBytes_co = _DualArrayLike[
 _ArrayLikeInt = _DualArrayLike[
     "dtype[integer[Any]]",
     int,
+]
+
+# Extra ArrayLike type so that pyright can deal with NDArray[Any]
+# Used as the first overload, should only match NDArray[Any],
+# not any actual types.
+# https://github.com/numpy/numpy/pull/22193
+class _UnknownType:
+    ...
+
+
+_ArrayLikeUnknown = _DualArrayLike[
+    "dtype[_UnknownType]",
+    _UnknownType,
 ]

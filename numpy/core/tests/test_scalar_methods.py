@@ -97,9 +97,8 @@ class TestAsIntegerRatio:
             n, d = f.as_integer_ratio()
 
             try:
-                # workaround for gh-9968
-                nf = np.longdouble(str(n))
-                df = np.longdouble(str(d))
+                nf = np.longdouble(n)
+                df = np.longdouble(d)
             except (OverflowError, RuntimeWarning):
                 # the values may not fit in any float type
                 pytest.skip("longdouble too small on this platform")
@@ -152,6 +151,16 @@ class TestClassGetItem:
         alias = np.complexfloating[Any, Any]
         assert isinstance(alias, types.GenericAlias)
         assert alias.__origin__ is np.complexfloating
+
+    @pytest.mark.parametrize("arg_len", range(4))
+    def test_abc_complexfloating_subscript_tuple(self, arg_len: int) -> None:
+        arg_tup = (Any,) * arg_len
+        if arg_len in (1, 2):
+            assert np.complexfloating[arg_tup]
+        else:
+            match = f"Too {'few' if arg_len == 0 else 'many'} arguments"
+            with pytest.raises(TypeError, match=match):
+                np.complexfloating[arg_tup]
 
     @pytest.mark.parametrize("cls", [np.generic, np.flexible, np.character])
     def test_abc_non_numeric(self, cls: Type[np.generic]) -> None:

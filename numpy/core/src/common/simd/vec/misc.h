@@ -83,6 +83,20 @@
 #endif
 #define npyv_select_f64 npyv_select_u8
 
+// extract the first vector's lane
+#define npyv_extract0_u8(A) ((npy_uint8)vec_extract(A, 0))
+#define npyv_extract0_s8(A) ((npy_int8)vec_extract(A, 0))
+#define npyv_extract0_u16(A) ((npy_uint16)vec_extract(A, 0))
+#define npyv_extract0_s16(A) ((npy_int16)vec_extract(A, 0))
+#define npyv_extract0_u32(A) ((npy_uint32)vec_extract(A, 0))
+#define npyv_extract0_s32(A) ((npy_int32)vec_extract(A, 0))
+#define npyv_extract0_u64(A) ((npy_uint64)vec_extract(A, 0))
+#define npyv_extract0_s64(A) ((npy_int64)vec_extract(A, 0))
+#if NPY_SIMD_F32
+    #define npyv_extract0_f32(A) vec_extract(A, 0)
+#endif
+#define npyv_extract0_f64(A) vec_extract(A, 0)
+
 // Reinterpret
 #define npyv_reinterpret_u8_u8(X) X
 #define npyv_reinterpret_u8_s8(X) ((npyv_u8)X)

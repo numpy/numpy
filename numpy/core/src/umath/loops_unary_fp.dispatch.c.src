@@ -301,7 +301,7 @@ no_unroll:
 #endif // @VCHK@
     for (; len > 0; --len, src += src_step, dst += dst_step) {
     #if @VCHK@
-        // to guarantee the same precsion and fp/domain errors for both scalars and vectors
+        // to guarantee the same precision and fp/domain errors for both scalars and vectors
         simd_@TYPE@_@kind@_CONTIG_CONTIG(src, 0, dst, 0, 1);
     #else
         const npyv_lanetype_@sfx@ src0 = *(npyv_lanetype_@sfx@*)src;

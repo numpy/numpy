@@ -1,6 +1,9 @@
 # To enable this workflow on a fork, comment out:
 #
 # if: github.repository == 'numpy/numpy'
+
+name: CircleCI artifact redirector
+
 on: [status]
 jobs:
   circleci_artifacts_redirector_job:

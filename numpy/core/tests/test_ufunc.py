@@ -1,8 +1,10 @@
 import warnings
 import itertools
 import sys
+import ctypes as ct
 
 import pytest
+from pytest import param
 
 import numpy as np
 import numpy.core._umath_tests as umt
@@ -12,7 +14,7 @@ import numpy.core._rational_tests as _rational_tests
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_array_equal,
     assert_almost_equal, assert_array_almost_equal, assert_no_warnings,
-    assert_allclose, HAS_REFCOUNT, suppress_warnings
+    assert_allclose, HAS_REFCOUNT, suppress_warnings, IS_WASM
     )
 from numpy.testing._private.utils import requires_memory
 from numpy.compat import pickle
@@ -334,7 +336,7 @@ class TestUfunc:
 
     def test_signature3(self):
         enabled, num_dims, ixs, flags, sizes = umt.test_signature(
-            2, 1, u"(i1, i12),   (J_1)->(i12, i2)")
+            2, 1, "(i1, i12),   (J_1)->(i12, i2)")
         assert_equal(enabled, 1)
         assert_equal(num_dims, (2, 1, 2))
         assert_equal(ixs, (0, 1, 2, 1, 3))
@@ -477,6 +479,34 @@ class TestUfunc:
         float_dtype = type(np.dtype(np.float64))
         np.add(3, 4, signature=(float_dtype, float_dtype, None))
 
+    @pytest.mark.parametrize("get_kwarg", [
+            lambda dt: dict(dtype=x),
+            lambda dt: dict(signature=(x, None, None))])
+    def test_signature_dtype_instances_allowed(self, get_kwarg):
+        # We allow certain dtype instances when there is a clear singleton
+        # and the given one is equivalent; mainly for backcompat.
+        int64 = np.dtype("int64")
+        int64_2 = pickle.loads(pickle.dumps(int64))
+        # Relies on pickling behavior, if assert fails just remove test...
+        assert int64 is not int64_2
+
+        assert np.add(1, 2, **get_kwarg(int64_2)).dtype == int64
+        td = np.timedelta(2, "s")
+        assert np.add(td, td, **get_kwarg("m8")).dtype == "m8[s]"
+
+    @pytest.mark.parametrize("get_kwarg", [
+            param(lambda x: dict(dtype=x), id="dtype"),
+            param(lambda x: dict(signature=(x, None, None)), id="signature")])
+    def test_signature_dtype_instances_allowed(self, get_kwarg):
+        msg = "The `dtype` and `signature` arguments to ufuncs"
+
+        with pytest.raises(TypeError, match=msg):
+            np.add(3, 5, **get_kwarg(np.dtype("int64").newbyteorder()))
+        with pytest.raises(TypeError, match=msg):
+            np.add(3, 5, **get_kwarg(np.dtype("m8[ns]")))
+        with pytest.raises(TypeError, match=msg):
+            np.add(3, 5, **get_kwarg("m8[ns]"))
+
     @pytest.mark.parametrize("casting", ["unsafe", "same_kind", "safe"])
     def test_partial_signature_mismatch(self, casting):
         # If the second argument matches already, no need to specify it:
@@ -491,6 +521,15 @@ class TestUfunc:
             np.ldexp(1., np.uint64(3), dtype="d")
         with pytest.raises(TypeError):
             np.ldexp(1., np.uint64(3), signature=(None, None, "d"))
+
+    def test_partial_signature_mismatch_with_cache(self):
+        with pytest.raises(TypeError):
+            np.add(np.float16(1), np.uint64(2), sig=("e", "d", None))
+        # Ensure e,d->None is in the dispatching cache (double loop)
+        np.add(np.float16(1), np.float64(2))
+        # The error must still be raised:
+        with pytest.raises(TypeError):
+            np.add(np.float16(1), np.uint64(2), sig=("e", "d", None))
 
     def test_use_output_signature_for_all_arguments(self):
         # Test that providing only `dtype=` or `signature=(None, None, dtype)`
@@ -662,6 +701,7 @@ class TestUfunc:
         a = np.ones(500, dtype=np.float64)
         assert_almost_equal((a / 10.).sum() - a.size / 10., 0, 13)
 
+    @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     def test_sum(self):
         for dt in (int, np.float16, np.float32, np.float64, np.longdouble):
             for v in (0, 1, 2, 7, 8, 9, 15, 16, 19, 127,
@@ -932,10 +972,10 @@ class TestUfunc:
         assert_raises(TypeError, inner1d, a, b, axes=[None, 1])
         # cannot pass an index unless there is only one dimension
         # (output is wrong in this case)
-        assert_raises(TypeError, inner1d, a, b, axes=[-1, -1, -1])
+        assert_raises(np.AxisError, inner1d, a, b, axes=[-1, -1, -1])
         # or pass in generally the wrong number of axes
-        assert_raises(ValueError, inner1d, a, b, axes=[-1, -1, (-1,)])
-        assert_raises(ValueError, inner1d, a, b, axes=[-1, (-2, -1), ()])
+        assert_raises(np.AxisError, inner1d, a, b, axes=[-1, -1, (-1,)])
+        assert_raises(np.AxisError, inner1d, a, b, axes=[-1, (-2, -1), ()])
         # axes need to have same length.
         assert_raises(ValueError, inner1d, a, b, axes=[0, 1])
 
@@ -975,14 +1015,16 @@ class TestUfunc:
         # list needs to have right length
         assert_raises(ValueError, mm, a, b, axes=[])
         assert_raises(ValueError, mm, a, b, axes=[(-2, -1)])
-        # list should contain tuples for multiple axes
-        assert_raises(TypeError, mm, a, b, axes=[-1, -1, -1])
-        assert_raises(TypeError, mm, a, b, axes=[(-2, -1), (-2, -1), -1])
+        # list should not contain None, or lists
+        assert_raises(TypeError, mm, a, b, axes=[None, None, None])
         assert_raises(TypeError,
                       mm, a, b, axes=[[-2, -1], [-2, -1], [-2, -1]])
         assert_raises(TypeError,
                       mm, a, b, axes=[(-2, -1), (-2, -1), [-2, -1]])
         assert_raises(TypeError, mm, a, b, axes=[(-2, -1), (-2, -1), None])
+        # single integers are AxisErrors if more are required
+        assert_raises(np.AxisError, mm, a, b, axes=[-1, -1, -1])
+        assert_raises(np.AxisError, mm, a, b, axes=[(-2, -1), (-2, -1), -1])
         # tuples should not have duplicated values
         assert_raises(ValueError, mm, a, b, axes=[(-2, -1), (-2, -1), (-2, -2)])
         # arrays should have enough axes.
@@ -2500,6 +2542,7 @@ def test_ufunc_input_casterrors(bad_offset):
         np.add(arr, arr, dtype=np.intp, casting="unsafe")
 
 
+@pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
 @pytest.mark.parametrize("bad_offset", [0, int(np.BUFSIZE * 1.5)])
 def test_ufunc_input_floatingpoint_error(bad_offset):
     value = 123
@@ -2546,6 +2589,7 @@ def test_reduce_casterrors(offset):
     assert out[()] < value * offset
 
 
+@pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
 @pytest.mark.parametrize("method",
         [np.add.accumulate, np.add.reduce,
          pytest.param(lambda x: np.add.reduceat(x, [0]), id="reduceat"),
@@ -2615,3 +2659,135 @@ def test_addition_reduce_negative_zero(dtype, use_initial):
             # `sum([])` should probably be 0.0 and not -0.0 like `sum([-0.0])`
             assert not np.signbit(res.real)
             assert not np.signbit(res.imag)
+
+class TestLowlevelAPIAccess:
+    def test_resolve_dtypes_basic(self):
+        # Basic test for dtype resolution:
+        i4 = np.dtype("i4")
+        f4 = np.dtype("f4")
+        f8 = np.dtype("f8")
+
+        r = np.add.resolve_dtypes((i4, f4, None))
+        assert r == (f8, f8, f8)
+
+        # Signature uses the same logic to parse as ufunc (less strict)
+        # the following is "same-kind" casting so works:
+        r = np.add.resolve_dtypes((
+                i4, i4, None), signature=(None, None, "f4"))
+        assert r == (f4, f4, f4)
+
+        # Check NEP 50 "weak" promotion also:
+        r = np.add.resolve_dtypes((f4, int, None))
+        assert r == (f4, f4, f4)
+
+        with pytest.raises(TypeError):
+            np.add.resolve_dtypes((i4, f4, None), casting="no")
+
+    def test_weird_dtypes(self):
+        S0 = np.dtype("S0")
+        # S0 is often converted by NumPy to S1, but not here:
+        r = np.equal.resolve_dtypes((S0, S0, None))
+        assert r == (S0, S0, np.dtype(bool))
+
+        # Subarray dtypes are weird and only really exist nested, they need
+        # the shift to full NEP 50 to be implemented nicely:
+        dts = np.dtype("10i")
+        with pytest.raises(NotImplementedError):
+            np.equal.resolve_dtypes((dts, dts, None))
+
+    def test_resolve_dtypes_reduction(self):
+        i4 = np.dtype("i4")
+        with pytest.raises(NotImplementedError):
+            np.add.resolve_dtypes((i4, i4, i4), reduction=True)
+
+    @pytest.mark.parametrize("dtypes", [
+            (np.dtype("i"), np.dtype("i")),
+            (None, np.dtype("i"), np.dtype("f")),
+            (np.dtype("i"), None, np.dtype("f")),
+            ("i4", "i4", None)])
+    def test_resolve_dtypes_errors(self, dtypes):
+        with pytest.raises(TypeError):
+            np.add.resolve_dtypes(dtypes)
+
+    def test_resolve_dtypes_reduction(self):
+        i2 = np.dtype("i2")
+        long_ = np.dtype("long")
+        # Check special addition resolution:
+        res = np.add.resolve_dtypes((None, i2, None), reduction=True)
+        assert res == (long_, long_, long_)
+
+    def test_resolve_dtypes_reduction_errors(self):
+        i2 = np.dtype("i2")
+
+        with pytest.raises(TypeError):
+            np.add.resolve_dtypes((None, i2, i2))
+
+        with pytest.raises(TypeError):
+            np.add.signature((None, None, "i4"))
+
+    @pytest.mark.skipif(not hasattr(ct, "pythonapi"),
+            reason="`ctypes.pythonapi` required for capsule unpacking.")
+    def test_loop_access(self):
+        # This is a basic test for the full strided loop access
+        data_t = ct.ARRAY(ct.c_char_p, 2)
+        dim_t = ct.ARRAY(ct.c_ssize_t, 1)
+        strides_t = ct.ARRAY(ct.c_ssize_t, 2)
+        strided_loop_t = ct.CFUNCTYPE(
+                ct.c_int, ct.c_void_p, data_t, dim_t, strides_t, ct.c_void_p)
+
+        class call_info_t(ct.Structure):
+            _fields_ = [
+                ("strided_loop", strided_loop_t),
+                ("context", ct.c_void_p),
+                ("auxdata", ct.c_void_p),
+                ("requires_pyapi", ct.c_byte),
+                ("no_floatingpoint_errors", ct.c_byte),
+            ]
+
+        i4 = np.dtype("i4")
+        dt, call_info_obj = np.negative._resolve_dtypes_and_context((i4, i4))
+        assert dt == (i4, i4)  # can be used without casting
+
+        # Fill in the rest of the information:
+        np.negative._get_strided_loop(call_info_obj)
+
+        ct.pythonapi.PyCapsule_GetPointer.restype = ct.c_void_p
+        call_info = ct.pythonapi.PyCapsule_GetPointer(
+                ct.py_object(call_info_obj),
+                ct.c_char_p(b"numpy_1.24_ufunc_call_info"))
+
+        call_info = ct.cast(call_info, ct.POINTER(call_info_t)).contents
+
+        arr = np.arange(10, dtype=i4)
+        call_info.strided_loop(
+                call_info.context,
+                data_t(arr.ctypes.data, arr.ctypes.data),
+                arr.ctypes.shape,  # is a C-array with 10 here
+                strides_t(arr.ctypes.strides[0], arr.ctypes.strides[0]),
+                call_info.auxdata)
+
+        # We just directly called the negative inner-loop in-place:
+        assert_array_equal(arr, -np.arange(10, dtype=i4))
+
+    @pytest.mark.parametrize("strides", [1, (1, 2, 3), (1, "2")])
+    def test__get_strided_loop_errors_bad_strides(self, strides):
+        i4 = np.dtype("i4")
+        dt, call_info = np.negative._resolve_dtypes_and_context((i4, i4))
+
+        with pytest.raises(TypeError, match="fixed_strides.*tuple.*or None"):
+            np.negative._get_strided_loop(call_info, fixed_strides=strides)
+
+    def test__get_strided_loop_errors_bad_call_info(self):
+        i4 = np.dtype("i4")
+        dt, call_info = np.negative._resolve_dtypes_and_context((i4, i4))
+
+        with pytest.raises(ValueError, match="PyCapsule"):
+            np.negative._get_strided_loop("not the capsule!")
+
+        with pytest.raises(TypeError, match=".*incompatible context"):
+            np.add._get_strided_loop(call_info)
+
+        np.negative._get_strided_loop(call_info)
+        with pytest.raises(TypeError):
+            # cannot call it a second time:
+            np.negative._get_strided_loop(call_info)

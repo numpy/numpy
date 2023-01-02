@@ -1463,12 +1463,12 @@ typedef struct {
  */
 
 /* General: those work for any mode */
-static NPY_INLINE int
+static inline int
 PyArrayNeighborhoodIter_Reset(PyArrayNeighborhoodIterObject* iter);
-static NPY_INLINE int
+static inline int
 PyArrayNeighborhoodIter_Next(PyArrayNeighborhoodIterObject* iter);
 #if 0
-static NPY_INLINE int
+static inline int
 PyArrayNeighborhoodIter_Next2D(PyArrayNeighborhoodIterObject* iter);
 #endif
 
@@ -1514,85 +1514,85 @@ PyArrayNeighborhoodIter_Next2D(PyArrayNeighborhoodIterObject* iter);
  * ABI compatibility.
  */
 
-static NPY_INLINE int
+static inline int
 PyArray_NDIM(const PyArrayObject *arr)
 {
     return ((PyArrayObject_fields *)arr)->nd;
 }
 
-static NPY_INLINE void *
+static inline void *
 PyArray_DATA(PyArrayObject *arr)
 {
     return ((PyArrayObject_fields *)arr)->data;
 }
 
-static NPY_INLINE char *
+static inline char *
 PyArray_BYTES(PyArrayObject *arr)
 {
     return ((PyArrayObject_fields *)arr)->data;
 }
 
-static NPY_INLINE npy_intp *
+static inline npy_intp *
 PyArray_DIMS(PyArrayObject *arr)
 {
     return ((PyArrayObject_fields *)arr)->dimensions;
 }
 
-static NPY_INLINE npy_intp *
+static inline npy_intp *
 PyArray_STRIDES(PyArrayObject *arr)
 {
     return ((PyArrayObject_fields *)arr)->strides;
 }
 
-static NPY_INLINE npy_intp
+static inline npy_intp
 PyArray_DIM(const PyArrayObject *arr, int idim)
 {
     return ((PyArrayObject_fields *)arr)->dimensions[idim];
 }
 
-static NPY_INLINE npy_intp
+static inline npy_intp
 PyArray_STRIDE(const PyArrayObject *arr, int istride)
 {
     return ((PyArrayObject_fields *)arr)->strides[istride];
 }
 
-static NPY_INLINE NPY_RETURNS_BORROWED_REF PyObject *
+static inline NPY_RETURNS_BORROWED_REF PyObject *
 PyArray_BASE(PyArrayObject *arr)
 {
     return ((PyArrayObject_fields *)arr)->base;
 }
 
-static NPY_INLINE NPY_RETURNS_BORROWED_REF PyArray_Descr *
+static inline NPY_RETURNS_BORROWED_REF PyArray_Descr *
 PyArray_DESCR(PyArrayObject *arr)
 {
     return ((PyArrayObject_fields *)arr)->descr;
 }
 
-static NPY_INLINE int
+static inline int
 PyArray_FLAGS(const PyArrayObject *arr)
 {
     return ((PyArrayObject_fields *)arr)->flags;
 }
 
-static NPY_INLINE npy_intp
+static inline npy_intp
 PyArray_ITEMSIZE(const PyArrayObject *arr)
 {
     return ((PyArrayObject_fields *)arr)->descr->elsize;
 }
 
-static NPY_INLINE int
+static inline int
 PyArray_TYPE(const PyArrayObject *arr)
 {
     return ((PyArrayObject_fields *)arr)->descr->type_num;
 }
 
-static NPY_INLINE int
+static inline int
 PyArray_CHKFLAGS(const PyArrayObject *arr, int flags)
 {
     return (PyArray_FLAGS(arr) & flags) == flags;
 }
 
-static NPY_INLINE PyObject *
+static inline PyObject *
 PyArray_GETITEM(const PyArrayObject *arr, const char *itemptr)
 {
     return ((PyArrayObject_fields *)arr)->descr->f->getitem(
@@ -1604,7 +1604,7 @@ PyArray_GETITEM(const PyArrayObject *arr, const char *itemptr)
  * and of a type understood by the arrays dtype.
  * Use `PyArray_Pack` if the value may be of a different dtype.
  */
-static NPY_INLINE int
+static inline int
 PyArray_SETITEM(PyArrayObject *arr, char *itemptr, PyObject *v)
 {
     return ((PyArrayObject_fields *)arr)->descr->f->setitem(v, itemptr, arr);
@@ -1639,13 +1639,13 @@ PyArray_SETITEM(PyArrayObject *arr, char *itemptr, PyObject *v)
                                      (PyArrayObject *)(obj))
 #endif
 
-static NPY_INLINE PyArray_Descr *
+static inline PyArray_Descr *
 PyArray_DTYPE(PyArrayObject *arr)
 {
     return ((PyArrayObject_fields *)arr)->descr;
 }
 
-static NPY_INLINE npy_intp *
+static inline npy_intp *
 PyArray_SHAPE(PyArrayObject *arr)
 {
     return ((PyArrayObject_fields *)arr)->dimensions;
@@ -1655,7 +1655,7 @@ PyArray_SHAPE(PyArrayObject *arr)
  * Enables the specified array flags. Does no checking,
  * assumes you know what you're doing.
  */
-static NPY_INLINE void
+static inline void
 PyArray_ENABLEFLAGS(PyArrayObject *arr, int flags)
 {
     ((PyArrayObject_fields *)arr)->flags |= flags;
@@ -1665,13 +1665,13 @@ PyArray_ENABLEFLAGS(PyArrayObject *arr, int flags)
  * Clears the specified array flags. Does no checking,
  * assumes you know what you're doing.
  */
-static NPY_INLINE void
+static inline void
 PyArray_CLEARFLAGS(PyArrayObject *arr, int flags)
 {
     ((PyArrayObject_fields *)arr)->flags &= ~flags;
 }
 
-static NPY_INLINE NPY_RETURNS_BORROWED_REF PyObject *
+static inline NPY_RETURNS_BORROWED_REF PyObject *
 PyArray_HANDLER(PyArrayObject *arr)
 {
     return ((PyArrayObject_fields *)arr)->mem_handler;
@@ -1878,7 +1878,7 @@ typedef void (PyDataMem_EventHookFunc)(void *inp, void *outp, size_t size,
     /*
      * The Structures defined in this block are currently considered
      * private API and may change without warning!
-     * Part of this (at least the size) is exepcted to be public API without
+     * Part of this (at least the size) is expected to be public API without
      * further modifications.
      */
     /* TODO: Make this definition public in the API, as soon as its settled */

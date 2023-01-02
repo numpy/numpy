@@ -5,6 +5,7 @@ import sys
 import pytest
 
 import numpy as np
+from numpy.testing import IS_WASM
 
 # This import is copied from random.tests.test_extending
 try:
@@ -13,7 +14,7 @@ try:
 except ImportError:
     cython = None
 else:
-    from numpy.compat import _pep440
+    from numpy._utils import _pep440
 
     # Cython 0.29.30 is required for Python 3.11 and there are
     # other fixes in the 0.29 series that are needed even for earlier
@@ -30,6 +31,8 @@ pytestmark = pytest.mark.skipif(cython is None, reason="requires cython")
 @pytest.fixture
 def install_temp(request, tmp_path):
     # Based in part on test_cython from random.tests.test_extending
+    if IS_WASM:
+        pytest.skip("No subprocess")
 
     here = os.path.dirname(__file__)
     ext_dir = os.path.join(here, "examples", "cython")

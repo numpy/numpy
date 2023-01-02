@@ -75,14 +75,15 @@ from .numeric import *
 from . import fromnumeric
 from .fromnumeric import *
 from . import defchararray as char
+from . import records
 from . import records as rec
 from .records import record, recarray, format_parser
+# Note: module name memmap is overwritten by a class with same name
 from .memmap import *
 from .defchararray import chararray
 from . import function_base
 from .function_base import *
 from . import _machar
-from ._machar import *
 from . import getlimits
 from .getlimits import *
 from . import shape_base
@@ -151,13 +152,13 @@ def _DType_reduce(DType):
 
 
 def __getattr__(name):
-    # Deprecated 2021-10-20, NumPy 1.22
-    if name == "machar":
+    # Deprecated 2022-11-22, NumPy 1.25.
+    if name == "MachAr":
         warnings.warn(
-            "The `np.core.machar` module is deprecated (NumPy 1.22)",
+            "The `np.core.MachAr` is considered private API (NumPy 1.24)",
             DeprecationWarning, stacklevel=2,
         )
-        return _machar
+        return _machar.MachAr
     raise AttributeError(f"Module {__name__!r} has no attribute {name!r}")
 
 

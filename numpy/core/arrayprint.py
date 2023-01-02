@@ -1394,10 +1394,6 @@ def _void_scalar_repr(x):
 
 
 _typelessdata = [int_, float_, complex_, bool_]
-if issubclass(intc, int):
-    _typelessdata.append(intc)
-if issubclass(longlong, int):
-    _typelessdata.append(longlong)
 
 
 def dtype_is_implied(dtype):

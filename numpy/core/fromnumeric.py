@@ -678,10 +678,11 @@ def partition(a, kth, axis=-1, kind='introselect', order=None):
     Return a partitioned copy of an array.
 
     Creates a copy of the array with its elements rearranged in such a
-    way that the value of the element in k-th position is in the
-    position it would be in a sorted array. All elements smaller than
-    the k-th element are moved before this element and all equal or
-    greater are moved behind it. The ordering of the elements in the two
+    way that the value of the element in k-th position is in the position
+    the value would be in a sorted array.  In the partitioned array, all
+    elements before the k-th element are less than or equal to that
+    element, and all the elements after the k-th element are greater than
+    or equal to that element.  The ordering of the elements in the two
     partitions is undefined.
 
     .. versionadded:: 1.8.0
@@ -749,13 +750,30 @@ def partition(a, kth, axis=-1, kind='introselect', order=None):
 
     Examples
     --------
-    >>> a = np.array([3, 4, 2, 1])
-    >>> np.partition(a, 3)
-    array([2, 1, 3, 4])
+    >>> a = np.array([7, 1, 7, 7, 1, 5, 7, 2, 3, 2, 6, 2, 3, 0])
+    >>> p = np.partition(a, 4)
+    >>> p
+    array([0, 1, 2, 1, 2, 5, 2, 3, 3, 6, 7, 7, 7, 7])
 
-    >>> np.partition(a, (1, 3))
-    array([1, 2, 3, 4])
+    ``p[4]`` is 2;  all elements in ``p[:4]`` are less than or equal
+    to ``p[4]``, and all elements in ``p[5:]`` are greater than or
+    equal to ``p[4]``.  The partition is::
 
+        [0, 1, 2, 1], [2], [5, 2, 3, 3, 6, 7, 7, 7, 7]
+
+    The next example shows the use of multiple values passed to `kth`.
+
+    >>> p2 = np.partition(a, (4, 8))
+    >>> p2
+    array([0, 1, 2, 1, 2, 3, 3, 2, 5, 6, 7, 7, 7, 7])
+
+    ``p2[4]`` is 2  and ``p2[8]`` is 5.  All elements in ``p2[:4]``
+    are less than or equal to ``p2[4]``, all elements in ``p2[5:8]``
+    are greater than or equal to ``p2[4]`` and less than or equal to
+    ``p2[8]``, and all elements in ``p2[9:]`` are greater than or
+    equal to ``p2[8]``.  The partition is::
+
+        [0, 1, 2, 1], [2], [3, 3, 2], [5], [6, 7, 7, 7, 7]
     """
     if axis is None:
         # flatten returns (1, N) for np.matrix, so always use the last axis
@@ -788,7 +806,7 @@ def argpartition(a, kth, axis=-1, kind='introselect', order=None):
     kth : int or sequence of ints
         Element index to partition by. The k-th element will be in its
         final sorted position and all smaller elements will be moved
-        before it and all larger elements behind it. The order all
+        before it and all larger elements behind it. The order of all
         elements in the partitions is undefined. If provided with a
         sequence of k-th it will partition all of them into their sorted
         position at once.
@@ -2629,9 +2647,9 @@ def ptp(a, axis=None, out=None, keepdims=np._NoValue):
 
     Returns
     -------
-    ptp : ndarray
-        A new array holding the result, unless `out` was
-        specified, in which case a reference to `out` is returned.
+    ptp : ndarray or scalar
+        The range of a given array - `scalar` if array is one-dimensional
+        or a new array holding the result along the given axis
 
     Examples
     --------
@@ -2732,8 +2750,9 @@ def amax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     -------
     amax : ndarray or scalar
         Maximum of `a`. If `axis` is None, the result is a scalar value.
-        If `axis` is given, the result is an array of dimension
-        ``a.ndim - 1``.
+        If `axis` is an int, the result is an array of dimension
+        ``a.ndim - 1``. If `axis` is a tuple, the result is an array of 
+        dimension ``a.ndim - len(axis)``.
 
     See Also
     --------
@@ -2857,8 +2876,9 @@ def amin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     -------
     amin : ndarray or scalar
         Minimum of `a`. If `axis` is None, the result is a scalar value.
-        If `axis` is given, the result is an array of dimension
-        ``a.ndim - 1``.
+        If `axis` is an int, the result is an array of dimension
+        ``a.ndim - 1``.  If `axis` is a tuple, the result is an array of 
+        dimension ``a.ndim - len(axis)``.
 
     See Also
     --------
@@ -3018,14 +3038,17 @@ def prod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
 
     Even when the input array is two-dimensional:
 
-    >>> np.prod([[1.,2.],[3.,4.]])
+    >>> a = np.array([[1., 2.], [3., 4.]])
+    >>> np.prod(a)
     24.0
 
     But we can also specify the axis over which to multiply:
 
-    >>> np.prod([[1.,2.],[3.,4.]], axis=1)
+    >>> np.prod(a, axis=1)
     array([  2.,  12.])
-
+    >>> np.prod(a, axis=0)
+    array([3., 8.])
+    
     Or select specific elements to include:
 
     >>> np.prod([1., np.nan, 3.], where=[True, False, True])
@@ -3251,12 +3274,13 @@ def around(a, decimals=0, out=None):
     See Also
     --------
     ndarray.round : equivalent method
-
     ceil, fix, floor, rint, trunc
 
 
     Notes
     -----
+    `~numpy.round` is often used as an alias for `~numpy.around`.
+    
     For values exactly halfway between rounded decimal values, NumPy
     rounds to the nearest even value. Thus 1.5 and 2.5 round to 2.0,
     -0.5 and 0.5 round to 0.0, etc.

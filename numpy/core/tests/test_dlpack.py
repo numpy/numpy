@@ -26,7 +26,7 @@ class TestDLPack:
         y = np.zeros((5,), dtype=dt)
         z = y['int']
 
-        with pytest.raises(RuntimeError):
+        with pytest.raises(BufferError):
             np.from_dlpack(z)
 
     @pytest.mark.skipif(IS_PYPY, reason="PyPy can't get refcounts.")
@@ -53,14 +53,14 @@ class TestDLPack:
     def test_invalid_dtype(self):
         x = np.asarray(np.datetime64('2021-05-27'))
 
-        with pytest.raises(TypeError):
+        with pytest.raises(BufferError):
             np.from_dlpack(x)
 
     def test_invalid_byte_swapping(self):
         dt = np.dtype('=i8').newbyteorder()
         x = np.arange(5, dtype=dt)
 
-        with pytest.raises(TypeError):
+        with pytest.raises(BufferError):
             np.from_dlpack(x)
 
     def test_non_contiguous(self):
@@ -100,7 +100,7 @@ class TestDLPack:
         x = np.arange(5)
         _ = x.__dlpack__()
         raise RuntimeError
-    
+
     def test_dlpack_destructor_exception(self):
         with pytest.raises(RuntimeError):
             self.dlpack_deleter_exception()
@@ -108,7 +108,7 @@ class TestDLPack:
     def test_readonly(self):
         x = np.arange(5)
         x.flags.writeable = False
-        with pytest.raises(TypeError):
+        with pytest.raises(BufferError):
             x.__dlpack__()
 
     def test_ndim0(self):

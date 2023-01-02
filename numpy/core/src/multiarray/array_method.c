@@ -99,7 +99,7 @@ default_resolve_descriptors(
 }
 
 
-NPY_INLINE static int
+static inline int
 is_contiguous(
         npy_intp const *strides, PyArray_Descr *const *descriptors, int nargs)
 {
@@ -353,8 +353,9 @@ fill_arraymethod_from_slots(
     if ((meth->unaligned_strided_loop == NULL) !=
             !(meth->flags & NPY_METH_SUPPORTS_UNALIGNED)) {
         PyErr_Format(PyExc_TypeError,
-                "Must provide unaligned strided inner loop when providing "
-                "a contiguous version. (method: %s)", spec->name);
+                "Must provide unaligned strided inner loop when casting spec "
+                "has the NPY_METH_SUPPORTS_UNALIGNED flag. "
+                "(method: %s)", spec->name);
         return -1;
     }
 
@@ -482,8 +483,8 @@ NPY_NO_EXPORT PyTypeObject PyArrayMethod_Type = {
     PyVarObject_HEAD_INIT(NULL, 0)
     .tp_name = "numpy._ArrayMethod",
     .tp_basicsize = sizeof(PyArrayMethodObject),
-    .tp_flags = Py_TPFLAGS_DEFAULT,
     .tp_dealloc = arraymethod_dealloc,
+    .tp_flags = Py_TPFLAGS_DEFAULT,
 };
 
 
@@ -951,9 +952,9 @@ NPY_NO_EXPORT PyTypeObject PyBoundArrayMethod_Type = {
     PyVarObject_HEAD_INIT(NULL, 0)
     .tp_name = "numpy._BoundArrayMethod",
     .tp_basicsize = sizeof(PyBoundArrayMethodObject),
-    .tp_flags = Py_TPFLAGS_DEFAULT,
-    .tp_repr = (reprfunc)boundarraymethod_repr,
     .tp_dealloc = boundarraymethod_dealloc,
+    .tp_repr = (reprfunc)boundarraymethod_repr,
+    .tp_flags = Py_TPFLAGS_DEFAULT,
     .tp_methods = boundarraymethod_methods,
     .tp_getset = boundarraymethods_getters,
 };

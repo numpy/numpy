@@ -18,17 +18,17 @@ import functools
 import operator
 import warnings
 
+from .._utils import set_module
 from numpy.core import (
     array, asarray, zeros, empty, empty_like, intc, single, double,
     csingle, cdouble, inexact, complexfloating, newaxis, all, Inf, dot,
-    add, multiply, sqrt, fastCopyAndTranspose, sum, isfinite,
+    add, multiply, sqrt, sum, isfinite,
     finfo, errstate, geterrobj, moveaxis, amin, amax, product, abs,
     atleast_2d, intp, asanyarray, object_, matmul,
     swapaxes, divide, count_nonzero, isnan, sign, argsort, sort,
     reciprocal
 )
 from numpy.core.multiarray import normalize_axis_index
-from numpy.core.overrides import set_module
 from numpy.core import overrides
 from numpy.lib.twodim_base import triu, eye
 from numpy.linalg import _umath_linalg
@@ -158,10 +158,6 @@ def _commonType(*arrays):
     return t, result_type
 
 
-# _fastCopyAndTranpose assumes the input is 2D (as all the calls in here are).
-
-_fastCT = fastCopyAndTranspose
-
 def _to_native_byte_order(*arrays):
     ret = []
     for arr in arrays:
@@ -174,16 +170,6 @@ def _to_native_byte_order(*arrays):
     else:
         return ret
 
-def _fastCopyAndTranspose(type, *arrays):
-    cast_arrays = ()
-    for a in arrays:
-        if a.dtype.type is not type:
-            a = a.astype(type)
-        cast_arrays = cast_arrays + (_fastCT(a),)
-    if len(cast_arrays) == 1:
-        return cast_arrays[0]
-    else:
-        return cast_arrays
 
 def _assert_2d(*arrays):
     for a in arrays:
@@ -243,7 +229,7 @@ def tensorsolve(a, b, axes=None):
 
     It is assumed that all indices of `x` are summed over in the product,
     together with the rightmost indices of `a`, as is done in, for example,
-    ``tensordot(a, x, axes=b.ndim)``.
+    ``tensordot(a, x, axes=x.ndim)``.
 
     Parameters
     ----------
@@ -957,7 +943,7 @@ def qr(a, mode='reduced'):
         return wrap(a)
 
     # mc is the number of columns in the resulting q
-    # matrix. If the mode is complete then it is 
+    # matrix. If the mode is complete then it is
     # same as number of rows, and if the mode is reduced,
     # then it is the minimum of number of rows and columns.
     if mode == 'complete' and m > n:
@@ -1172,7 +1158,7 @@ def eigvalsh(a, UPLO='L'):
 
 def _convertarray(a):
     t, result_t = _commonType(a)
-    a = _fastCT(a.astype(t))
+    a = a.astype(t).T.copy()
     return a, t, result_t
 
 
@@ -1631,7 +1617,6 @@ def svd(a, full_matrices=True, compute_uv=True, hermitian=False):
             return wrap(u), s, wrap(vt)
         else:
             s = eigvalsh(a)
-            s = s[..., ::-1]
             s = abs(s)
             return sort(s)[..., ::-1]
 

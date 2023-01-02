@@ -305,7 +305,7 @@ PyArray_ToString(PyArrayObject *self, NPY_ORDER order)
     PyArrayIterObject *it;
 
     if (order == NPY_ANYORDER)
-        order = PyArray_ISFORTRAN(self);
+        order = PyArray_ISFORTRAN(self) ? NPY_FORTRANORDER : NPY_CORDER;
 
     /*        if (PyArray_TYPE(self) == NPY_OBJECT) {
               PyErr_SetString(PyExc_ValueError, "a string for the data" \
@@ -393,6 +393,9 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
             PyArray_BYTES(arr), PyArray_STRIDES(arr),
             descr, value);
 
+    if (PyDataType_REFCHK(descr)) {
+        PyArray_Item_XDECREF(value, descr);
+    }
     PyMem_FREE(value_buffer_heap);
     return retcode;
 }

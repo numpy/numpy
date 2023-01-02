@@ -47,7 +47,8 @@ np.uint16(A())  # E: incompatible type
 np.uint32(A())  # E: incompatible type
 np.uint64(A())  # E: incompatible type
 
-np.void("test")  # E: incompatible type
+np.void("test")  # E: No overload variant
+np.void("test", dtype=None)  # E: No overload variant
 
 np.generic(1)  # E: Cannot instantiate abstract class
 np.number(1)  # E: Cannot instantiate abstract class
@@ -62,15 +63,13 @@ np.uint64(value=0)  # E: Unexpected keyword argument
 np.complex128(value=0.0j)  # E: Unexpected keyword argument
 np.str_(value='bob')  # E: No overload variant
 np.bytes_(value=b'test')  # E: No overload variant
-np.void(value=b'test')  # E: Unexpected keyword argument
+np.void(value=b'test')  # E: No overload variant
 np.bool_(value=True)  # E: Unexpected keyword argument
 np.datetime64(value="2019")  # E: No overload variant
 np.timedelta64(value=0)  # E: Unexpected keyword argument
 
 np.bytes_(b"hello", encoding='utf-8')  # E: No overload variant
 np.str_("hello", encoding='utf-8')  # E: No overload variant
-
-complex(np.bytes_("1"))  # E: No overload variant
 
 f8.item(1)  # E: incompatible type
 f8.item((0, 1))  # E: incompatible type

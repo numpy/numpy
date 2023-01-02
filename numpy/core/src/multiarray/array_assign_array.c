@@ -130,7 +130,7 @@ raw_array_assign_array(int ndim, npy_intp const *shape,
     }
 
     if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
-        npy_clear_floatstatus_barrier(src_data);
+        npy_clear_floatstatus_barrier((char*)&src_data);
     }
     if (!(flags & NPY_METH_REQUIRES_PYAPI)) {
         NPY_BEGIN_THREADS;
@@ -153,7 +153,7 @@ raw_array_assign_array(int ndim, npy_intp const *shape,
     NPY_cast_info_xfree(&cast_info);
 
     if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
-        int fpes = npy_get_floatstatus_barrier(src_data);
+        int fpes = npy_get_floatstatus_barrier((char*)&src_data);
         if (fpes && PyUFunc_GiveFloatingpointErrors("cast", fpes) < 0) {
             return -1;
         }

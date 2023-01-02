@@ -187,12 +187,15 @@ reveal_type(np.atleast_2d(A))  # E: ndarray[Any, dtype[{float64}]]
 reveal_type(np.atleast_3d(A))  # E: ndarray[Any, dtype[{float64}]]
 
 reveal_type(np.vstack([A, A]))  # E: ndarray[Any, Any]
+reveal_type(np.vstack([A, A], dtype=np.float64))  # E: ndarray[Any, dtype[{float64}]]
 reveal_type(np.vstack([A, C]))  # E: ndarray[Any, dtype[Any]]
 reveal_type(np.vstack([C, C]))  # E: ndarray[Any, dtype[Any]]
 
 reveal_type(np.hstack([A, A]))  # E: ndarray[Any, Any]
+reveal_type(np.hstack([A, A], dtype=np.float64))  # E: ndarray[Any, dtype[{float64}]]
 
 reveal_type(np.stack([A, A]))  # E: Any
+reveal_type(np.stack([A, A], dtype=np.float64))  # E: ndarray[Any, dtype[{float64}]]
 reveal_type(np.stack([A, C]))  # E: ndarray[Any, dtype[Any]]
 reveal_type(np.stack([C, C]))  # E: ndarray[Any, dtype[Any]]
 reveal_type(np.stack([A, A], axis=0))  # E: Any

@@ -13,17 +13,21 @@ dependencies:
   - openblas
   - nomkl
   - setuptools=59.2.0
+  - meson >= 0.64.0
+  - ninja
+  - pkg-config  # note: not available on Windows, comment out this line
+  - meson-python
   # For testing
   - pytest
   - pytest-cov
   - pytest-xdist
   - hypothesis
   # For type annotations
-  - mypy=0.950
+  - mypy=0.981
   - typing_extensions>=4.2.0
   # For building docs
   - sphinx>=4.5.0
-  - sphinx-panels
+  - sphinx-design
   - numpydoc=1.4.0
   - ipython
   - scipy

@@ -74,9 +74,6 @@ _try_convert_from_ctypes_type(PyTypeObject *type)
     return (PyArray_Descr *)res;
 }
 
-static PyArray_Descr *
-_convert_from_any(PyObject *obj, int align);
-
 /*
  * This function creates a dtype object when the object has a "dtype" attribute,
  * and it can be converted to a dtype object.
@@ -3593,8 +3590,8 @@ NPY_NO_EXPORT PyArray_DTypeMeta PyArrayDescr_TypeFull = {
         .tp_getset = arraydescr_getsets,
         .tp_new = arraydescr_new,
     },},
-    .type_num = -1,
-    .flags = NPY_DT_ABSTRACT,
     .singleton = NULL,
+    .type_num = -1,
     .scalar_type = NULL,
+    .flags = NPY_DT_ABSTRACT,
 };

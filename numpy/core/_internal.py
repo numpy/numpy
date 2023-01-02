@@ -7,16 +7,16 @@ Some things are more easily handled Python.
 import ast
 import re
 import sys
-import platform
 import warnings
 
+from ..exceptions import DTypePromotionError
 from .multiarray import dtype, array, ndarray, promote_types
 try:
     import ctypes
 except ImportError:
     ctypes = None
 
-IS_PYPY = platform.python_implementation() == 'PyPy'
+IS_PYPY = sys.implementation.name == 'pypy'
 
 if sys.byteorder == 'little':
     _nbo = '<'
@@ -455,7 +455,8 @@ def _promote_fields(dt1, dt2):
     """
     # Both must be structured and have the same names in the same order
     if (dt1.names is None or dt2.names is None) or dt1.names != dt2.names:
-        raise TypeError("invalid type promotion")
+        raise DTypePromotionError(
+                f"field names `{dt1.names}` and `{dt2.names}` mismatch.")
 
     # if both are identical, we can (maybe!) just return the same dtype.
     identical = dt1 is dt2
@@ -468,7 +469,8 @@ def _promote_fields(dt1, dt2):
 
         # Check that the titles match (if given):
         if field1[2:] != field2[2:]:
-            raise TypeError("invalid type promotion")
+            raise DTypePromotionError(
+                    f"field titles of field '{name}' mismatch")
         if len(field1) == 2:
             new_fields.append((name, new_descr))
         else:

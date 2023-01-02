@@ -40,7 +40,6 @@ Rounding
    :toctree: generated/
 
    around
-   round_
    rint
    fix
    floor
