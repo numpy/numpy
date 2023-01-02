@@ -43,7 +43,8 @@ replications::
     export REGEXP="bench.*Ufunc"
     asv run --dry-run --show-stderr --python=same --quick -b $REGEXP
 
-Where the regular expression used to match benchmarks is stored in ``$REGEXP``, and `--quick` is used to avoid repititions.
+Where the regular expression used to match benchmarks is stored in ``$REGEXP``,
+and `--quick` is used to avoid repetitions.
 
 To run benchmarks from a particular benchmark module, such as
 ``bench_core.py``, simply append the filename without the extension::
