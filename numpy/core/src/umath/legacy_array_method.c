@@ -95,19 +95,6 @@ int
 is_generic_wrapped_legacy_loop(PyArrayMethod_StridedLoop *strided_loop) {
     return strided_loop == generic_wrapped_legacy_loop;
 }
-
-PyUFuncGenericFunction
-get_inner_loop(void * auxdata) {
-    legacy_array_method_auxdata *ldata = (legacy_array_method_auxdata *)auxdata;
-    return ldata->loop;
-}    
-
-int
-get_pyerr_check(void * auxdata) {
-    legacy_array_method_auxdata *ldata = (legacy_array_method_auxdata *)auxdata;
-    return ldata->pyerr_check;
-}    
-
 /*
  * Signal that the old type-resolution function must be used to resolve
  * the descriptors (mainly/only used for datetimes due to the unit).
