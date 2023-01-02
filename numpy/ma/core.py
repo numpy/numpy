@@ -3163,7 +3163,8 @@ class MaskedArray(ndarray):
         # Determine what class types we are compatible with and return
         # NotImplemented if we don't know how to handle them
         for arg in args:
-            if not isinstance(arg, ndarray) and hasattr(arg, "__array_ufunc__"):
+            if (not isinstance(arg, ndarray)
+                    and hasattr(arg, "__array_ufunc__")):
                 # we want to defer to other implementations, unless it is an
                 # ndarray which MaskedArray will handle here instead
                 return NotImplemented
@@ -4180,20 +4181,6 @@ class MaskedArray(ndarray):
             for k in keys
         )
         return prefix + result + ')'
-
-    def _delegate_binop(self, other):
-        # This emulates the logic in
-        #     private/binop_override.h:forward_binop_should_defer
-        if isinstance(other, type(self)):
-            return False
-        array_ufunc = getattr(other, "__array_ufunc__", False)
-        if array_ufunc is False:
-            other_priority = getattr(other, "__array_priority__", -1000000)
-            return self.__array_priority__ < other_priority
-        else:
-            # If array_ufunc is not None, it will be called inside the ufunc;
-            # None explicitly tells us to not call the ufunc, i.e., defer.
-            return array_ufunc is None
 
     def _comparison(self, other, compare):
         """Compare self with other using operator.eq or operator.ne.
