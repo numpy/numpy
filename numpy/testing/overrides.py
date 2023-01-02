@@ -21,6 +21,7 @@ def get_overridable_numpy_ufuncs():
     """
     ufuncs = {obj for obj in _umath.__dict__.values()
               if isinstance(obj, _ufunc)}
+    return ufuncs
     
 
 def allows_array_ufunc_override(func):
