@@ -40,9 +40,10 @@ For **testing** benchmarks locally, it may be better to run these without
 replications::
 
     cd benchmarks/
-    asv run -n -e --python=same -q -b $REGEXP
+    export REGEXP="bench.*Ufunc"
+    asv run --dry-run --show-stderr --python=same --quick -b $REGEXP
 
-Where the regular expression used to match benchmarks is stored in ``$REGEXP``.
+Where the regular expression used to match benchmarks is stored in ``$REGEXP``, and `--quick` is used to avoid repititions.
 
 To run benchmarks from a particular benchmark module, such as
 ``bench_core.py``, simply append the filename without the extension::
