@@ -2121,13 +2121,16 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
         if w.shape[0] != y.shape[0]:
             raise TypeError("expected w and y to have the same length")
         m = mask_or(m, getmask(w))
+        w = w.view(np.ndarray)
 
     if m is not nomask:
         not_m = ~m
         if w is not None:
             w = w[not_m]
-        return np.polyfit(x[not_m], y[not_m], deg, rcond, full, w, cov)
-    else:
-        return np.polyfit(x, y, deg, rcond, full, w, cov)
+        x = x[not_m]
+        y = y[not_m]
+    x = x.view(np.ndarray)
+    y = y.view(np.ndarray)
+    return np.polyfit(x, y, deg, rcond, full, w, cov)
 
 polyfit.__doc__ = ma.doc_note(np.polyfit.__doc__, polyfit.__doc__)

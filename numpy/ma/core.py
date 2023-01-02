@@ -3122,6 +3122,46 @@ class MaskedArray(ndarray):
 
         return result
 
+    def __array_function__(self, function, types, args, kwargs):
+        """
+        Wrap numpy functions that have a masked implementation.
+
+        Parameters
+        ----------
+        function : callable
+            Numpy function being called
+        types : iterable of classes
+            Classes that provide an ``__array_function__`` override. Can
+            in principle be used to interact with other classes. Below,
+            mostly passed on to `~numpy.ndarray`, which can only interact
+            with subclasses.
+        args : tuple
+            Positional arguments provided in the function call.
+        kwargs : dict
+            Keyword arguments provided in the function call.
+        """
+        ma_func = np.ma.__dict__.get(function.__name__, function)
+        # Known incompatible functions
+        #   copy: np.copy() has subok semantics, which we can't pass through
+        #   unique: using ma.view(ndarray) internally doesn't work
+        incompatible_functions = {"copy", "unique"}
+        # The masked functions know how to work with ndarray and
+        # MaskedArrays, but can't guarantee anything about other types
+        handled_types = {np.ndarray, MaskedArray}
+        # _convert2ma functions simply guarantee that a MaskedArray
+        # is returned, which is important when the function is called as
+        # ``np.ma.function(arr)``, but not necessary when we get there
+        # through the ``np.function(marr)`` path. This prevents infinite
+        # recursion of this implementation calling the ndarray method.
+        if (ma_func is function
+                or function.__name__ in incompatible_functions
+                or not all([t in handled_types for t in types])
+                or isinstance(ma_func, _convert2ma)):
+            # We don't have a Masked-compatible version of the function,
+            # so just default to the super() ndarray version
+            return super().__array_function__(function, types, args, kwargs)
+        return ma_func(*args, **kwargs)
+
     def view(self, dtype=None, type=None, fill_value=None):
         """
         Return a view of the MaskedArray data.
@@ -7251,7 +7291,7 @@ def diag(v, k=0):
            fill_value=1e+20)
 
     """
-    output = np.diag(v, k).view(MaskedArray)
+    output = np.diag(v.view(np.ndarray), k).view(MaskedArray)
     if getmask(v) is not nomask:
         output._mask = np.diag(v._mask, k)
     return output
@@ -7487,7 +7527,8 @@ def resize(x, new_shape):
     m = getmask(x)
     if m is not nomask:
         m = np.resize(m, new_shape)
-    result = np.resize(x, new_shape).view(get_masked_subclass(x))
+    result = np.resize(x.view(np.ndarray),
+                       new_shape).view(get_masked_subclass(x))
     if result.ndim:
         result._mask = m
     return result
@@ -7795,7 +7836,7 @@ def choose(indices, choices, out=None, mode='raise'):
         "Returns the filled array, or True if masked."
         if x is masked:
             return True
-        return filled(x)
+        return filled(x).view(np.ndarray)
 
     def nmask(x):
         "Returns the mask, True if ``masked``, False if ``nomask``."
@@ -7808,11 +7849,14 @@ def choose(indices, choices, out=None, mode='raise'):
     masks = [nmask(x) for x in choices]
     data = [fmask(x) for x in choices]
     # Construct the mask
-    outputmask = np.choose(c, masks, mode=mode)
+    outputmask = np.choose(c.view(np.ndarray), masks, mode=mode)
     outputmask = make_mask(mask_or(outputmask, getmask(indices)),
                            copy=False, shrink=True)
     # Get the choices.
-    d = np.choose(c, data, mode=mode, out=out).view(MaskedArray)
+    outview = out.view(np.ndarray) if isinstance(out, MaskedArray) else out
+
+    d = np.choose(c.view(np.ndarray), data,
+                  mode=mode, out=outview).view(MaskedArray)
     if out is not None:
         if isinstance(out, MaskedArray):
             out.__setmask__(outputmask)
@@ -7868,9 +7912,9 @@ def round_(a, decimals=0, out=None):
         fill_value=1e+20)
     """
     if out is None:
-        return np.round_(a, decimals, out)
+        return np.round(a, decimals, out)
     else:
-        np.round_(getdata(a), decimals, out)
+        np.round(getdata(a), decimals, out)
         if hasattr(out, '_mask'):
             out._mask = getmask(a)
         return out
