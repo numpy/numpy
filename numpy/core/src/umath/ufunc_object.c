@@ -6415,29 +6415,23 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
         goto fail;
     }
     int fast_path = 1;
-    for (int i=0; i<3; i++) {
-        /* over-cautious? Only use built-in numeric dtypes */
-        if (operation_descrs[i] && !PyDataType_ISNUMBER(operation_descrs[i])) {
+    /* check no casting, alignment */
+    if (PyArray_DESCR(op1_array) != operation_descrs[0]) {
+            fast_path = 0;
+    }
+    if (!PyArray_ISALIGNED(op1_array)) {
+            fast_path = 0;
+    }
+    if (nop >2) {
+        if  (PyArray_DESCR(op2_array) != operation_descrs[1]) {
             fast_path = 0;
         }
-    }
-    if (fast_path == 1) {
-        /* check no casting, alignment */
-        if (PyArray_DESCR(op1_array) != operation_descrs[0]) {
-                fast_path = 0;
-        }
-        if (!PyArray_ISALIGNED(op1_array)) {
-                fast_path = 0;
-        }
-        if (nop >2 && PyArray_DESCR(op2_array) != operation_descrs[1]) {
-                fast_path = 0;
-        }
-        if (nop > 2 && !PyArray_ISALIGNED(op2_array)) {
+        if (!PyArray_ISALIGNED(op2_array)) {
                 fast_path = 0;
         }
     }
     if (fast_path == 1) {
-        res = ufunc_at__fast_iter(ufunc, flags, iter, iter2, op1_array, op2_array,
+    res = ufunc_at__fast_iter(ufunc, flags, iter, iter2, op1_array, op2_array,
                                   strided_loop, &context, strides, auxdata);
     } else {
         res = ufunc_at__slow_iter(ufunc, flags, iter, iter2, op1_array, op2_array,
