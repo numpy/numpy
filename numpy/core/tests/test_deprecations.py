@@ -1176,3 +1176,18 @@ def test_future_scalar_attributes(name):
     # Unfortunately, they are currently still valid via `np.dtype()`
     np.dtype(name)
     name in np.sctypeDict
+
+
+# Ignore the above future attribute warning for this test.
+@pytest.mark.filterwarnings("ignore:In the future:FutureWarning")
+class TestRemovedGlobals:
+    # Removed 2023-01-12, NumPy 1.24.0
+    # Not a deprecation, but the large error was added to aid those who missed
+    # the previous deprecation, and should be removed similarly to one
+    # (or faster).
+    @pytest.mark.parametrize("name",
+            ["object", "bool", "float", "complex", "str", "int"])
+    def test_attributeerror_includes_info(self, name):
+        msg = f".*\n`np.{name}` was a deprecated alias for the builtin"
+        with pytest.raises(AttributeError, match=msg):
+            getattr(np, name)
