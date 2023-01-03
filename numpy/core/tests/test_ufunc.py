@@ -2034,7 +2034,6 @@ class TestUfunc:
               [121, 222, 323],
               [124, 225, 326]]])
 
-
     def test_ufunc_at_0D(self):
         a = np.array(0)
         np.add.at(a, (), 1)
