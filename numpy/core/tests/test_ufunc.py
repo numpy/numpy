@@ -1923,12 +1923,33 @@ class TestUfunc:
         assert_(MyThing.rmul_count == 1, MyThing.rmul_count)
         assert_(MyThing.getitem_count <= 2, MyThing.getitem_count)
 
-    def test_inplace_fancy_indexing(self):
+    @pytest.mark.parametrize("a", (
+                             np.arange(10, dtype=int),
+                             np.arange(10, dtype=_rational_tests.rational),
+                             ))
+    def test_ufunc_at(self, a):
 
-        a = np.arange(10)
-        np.add.at(a, [2, 5, 2], 1)
-        assert_equal(a, [0, 1, 4, 3, 4, 6, 6, 7, 8, 9])
+        aa = a.copy()
+        np.add.at(aa, [2, 5, 2], 1)
+        assert_equal(aa, [0, 1, 4, 3, 4, 6, 6, 7, 8, 9])
 
+        with pytest.raises(ValueError):
+            # missing second operand
+            np.add.at(aa, [2, 5, 3])
+
+        aa = a.copy()
+        np.negative.at(aa, [2, 5, 3])
+        assert_equal(aa, [0, 1, -2, -3, 4, -5, 6, 7, 8, 9])
+
+        with pytest.raises(ValueError):
+            # extraneous second operand 
+            np.negative.at(a, [2, 5, 3], [1, 2, 3])
+
+        with pytest.raises(ValueError):
+            # second operand cannot be converted to an array
+            np.add.at(a, [2, 5, 3], [[1, 2], 1])
+
+        # reset a
         a = np.arange(10)
         b = np.array([100, 100, 100])
         np.add.at(a, [2, 5, 2], b)
@@ -2074,6 +2095,23 @@ class TestUfunc:
 
         a = np.array([[[1, 2], [3, 4]]])
         assert_raises(TypeError, np.linalg._umath_linalg.det.at, a, [0])
+
+    def test_at_no_loop_for_op(self):
+        # str dtype does not have a ufunc loop for np.add
+        arr = np.ones(10, dtype=str)
+        with pytest.raises(np.core._exceptions._UFuncNoLoopError):
+            np.add.at(arr, [0, 1], [0, 1])
+
+    def test_at_output_casting(self):
+        arr = np.array([-1])
+        np.equal.at(arr, [0], [0])
+        assert arr[0] == 0 
+
+    def test_at_broadcast_failure(self):
+        arr = np.arange(5)
+        with pytest.raises(ValueError):
+            np.add.at(arr, [0, 1], [1, 2, 3])
+
 
     def test_reduce_arguments(self):
         f = np.add.reduce
