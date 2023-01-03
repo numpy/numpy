@@ -9,7 +9,7 @@ import io
 import re
 import pytest
 from pathlib import Path
-from tempfile import NamedTemporaryFile
+from tempfile import NamedTemporaryFile, mkstemp
 from io import BytesIO, StringIO
 from datetime import datetime
 import locale
@@ -2718,6 +2718,88 @@ def test_npzfile_dict():
         assert_(f in ['x', 'y'])
 
     assert_('x' in z.keys())
+
+
+def test_npzfile_append():
+    x = np.zeros((3, 3))
+    y = np.zeros((3, 3))
+
+    # file-like object
+    with temppath(prefix="numpy_test_npzfile_append_", suffix=".npz") as tmp:
+        np.savez(tmp, x=x)
+        np.savez(tmp, y=y, append=True)
+        l = np.load(tmp)
+        assert_('x' in l.keys())
+        assert_('y' in l.keys())
+        assert_equal(x, l['x'])
+        assert_equal(y, l['y'])
+
+    with temppath(prefix="numpy_test_npzfile_append_", suffix=".npz") as tmp:
+        np.savez(tmp, x=x, append=True)
+        np.savez(tmp, y=y, append=True)
+        l = np.load(tmp)
+        assert_('x' in l.keys())
+        assert_('y' in l.keys())
+        assert_equal(x, l['x'])
+        assert_equal(y, l['y'])
+
+    with temppath(prefix="numpy_test_npzfile_append_", suffix=".npz") as tmp:
+        np.savez(tmp, x=x)
+        assert_raises(ValueError, np.savez, tmp, x=x, append=True)
+
+    # path-like object
+    tmp = BytesIO()
+    np.savez(tmp, x=x)
+    np.savez(tmp, y=y, append=True)
+    tmp.seek(0)
+    l = np.load(tmp)
+    assert_('x' in l.keys())
+    assert_('y' in l.keys())
+    assert_equal(x, l['x'])
+    assert_equal(y, l['y'])
+
+    tmp = BytesIO()
+    np.savez(tmp, x=x, append=True)
+    np.savez(tmp, y=y, append=True)
+    tmp.seek(0)
+    l = np.load(tmp)
+    assert_('x' in l.keys())
+    assert_('y' in l.keys())
+    assert_equal(x, l['x'])
+    assert_equal(y, l['y'])
+
+    tmp = BytesIO()
+    np.savez(tmp, x=x)
+    assert_raises(ValueError, np.savez, tmp, x=x, append=True)
+
+    # filename
+    fd, tmp = mkstemp(prefix="numpy_test_npzfile_append_", suffix=".npz")
+    os.close(fd)
+    np.savez(tmp, x=x)
+    np.savez(tmp, y=y, append=True)
+    l = np.load(tmp)
+    assert_('x' in l.keys())
+    assert_('y' in l.keys())
+    assert_equal(x, l['x'])
+    assert_equal(y, l['y'])
+    os.remove(tmp)
+
+    fd, tmp = mkstemp(prefix="numpy_test_npzfile_append_", suffix=".npz")
+    os.close(fd)
+    np.savez(tmp, x=x, append=True)
+    np.savez(tmp, y=y, append=True)
+    l = np.load(tmp)
+    assert_('x' in l.keys())
+    assert_('y' in l.keys())
+    assert_equal(x, l['x'])
+    assert_equal(y, l['y'])
+    os.remove(tmp)
+
+    fd, tmp = mkstemp(prefix="numpy_test_npzfile_append_", suffix=".npz")
+    os.close(fd)
+    np.savez(tmp, x=x)
+    assert_raises(ValueError, np.savez, tmp, x=x, append=True)
+    os.remove(tmp)
 
 
 @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")

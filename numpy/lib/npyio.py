@@ -523,13 +523,13 @@ def save(file, arr, allow_pickle=True, fix_imports=True):
                            pickle_kwargs=dict(fix_imports=fix_imports))
 
 
-def _savez_dispatcher(file, *args, **kwds):
+def _savez_dispatcher(file, *args, append=None, **kwds):
     yield from args
     yield from kwds.values()
 
 
 @array_function_dispatch(_savez_dispatcher)
-def savez(file, *args, **kwds):
+def savez(file, *args, append=False, **kwds):
     """Save several arrays into a single file in uncompressed ``.npz`` format.
 
     Provide arrays as keyword arguments to store them under the
@@ -549,6 +549,11 @@ def savez(file, *args, **kwds):
         Arrays to save to the file. Please use keyword arguments (see
         `kwds` below) to assign names to arrays.  Arrays specified as
         args will be named "arr_0", "arr_1", and so on.
+    append : bool, optional
+        If file exists, it will not be replaced but the arrays will be appended
+        to the existing file. It raises a ValueError if array already exists in
+        the file.
+        Default: False
     kwds : Keyword arguments, optional
         Arrays to save to the file. Each array will be saved to the
         output file with its corresponding keyword name.
@@ -612,16 +617,16 @@ def savez(file, *args, **kwds):
     array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 
     """
-    _savez(file, args, kwds, False)
+    _savez(file, args, kwds, False, append=append)
 
 
-def _savez_compressed_dispatcher(file, *args, **kwds):
+def _savez_compressed_dispatcher(file, *args, append=None, **kwds):
     yield from args
     yield from kwds.values()
 
 
 @array_function_dispatch(_savez_compressed_dispatcher)
-def savez_compressed(file, *args, **kwds):
+def savez_compressed(file, *args, append=False, **kwds):
     """
     Save several arrays into a single file in compressed ``.npz`` format.
 
@@ -642,6 +647,11 @@ def savez_compressed(file, *args, **kwds):
         Arrays to save to the file. Please use keyword arguments (see
         `kwds` below) to assign names to arrays.  Arrays specified as
         args will be named "arr_0", "arr_1", and so on.
+    append : bool, optional
+        If file exists, it will not be replaced but the arrays will be appended
+        to the existing file. It raises a ValueError if array already exists in
+        the file.
+        Default: False
     kwds : Keyword arguments, optional
         Arrays to save to the file. Each array will be saved to the
         output file with its corresponding keyword name.
@@ -683,10 +693,11 @@ def savez_compressed(file, *args, **kwds):
     True
 
     """
-    _savez(file, args, kwds, True)
+    _savez(file, args, kwds, True, append=append)
 
 
-def _savez(file, args, kwds, compress, allow_pickle=True, pickle_kwargs=None):
+def _savez(file, args, kwds, compress, append=False,
+           allow_pickle=True, pickle_kwargs=None):
     # Import is postponed to here since zipfile depends on gzip, an optional
     # component of the so-called standard library.
     import zipfile
@@ -709,10 +720,19 @@ def _savez(file, args, kwds, compress, allow_pickle=True, pickle_kwargs=None):
     else:
         compression = zipfile.ZIP_STORED
 
-    zipf = zipfile_factory(file, mode="w", compression=compression)
+    if append:
+        mode = "a"
+    else:
+        mode = "w"
+
+    zipf = zipfile_factory(file, mode=mode, compression=compression)
+    inzipf = zipf.namelist()
 
     for key, val in namedict.items():
         fname = key + '.npy'
+        if fname in inzipf:
+            zipf.close()
+            raise ValueError("Array name already in npz-file: %s" % key)
         val = np.asanyarray(val)
         # always force zip64, gh-10776
         with zipf.open(fname, 'w', force_zip64=True) as fid:
