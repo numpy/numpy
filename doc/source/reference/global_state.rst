@@ -49,6 +49,11 @@ is to use madvise on Kernels 4.6 and newer. These kernels presumably
 experience a large speedup with hugepage support.
 This flag is checked at import time.
 
+SIMD feature selection
+----------------------
+
+Setting ``NPY_DISABLE_CPU_FEATURES`` will exclude simd features at runtime.
+See :ref:`runtime-simd-dispatch`.
 
 Interoperability-Related Options
 ================================
