@@ -5943,8 +5943,6 @@ new_array_op(PyArrayObject *op_array, char *data)
     return (PyArrayObject *)r;
 }
 
-int is_generic_wrapped_legacy_loop(PyArrayMethod_StridedLoop *strided_loop);
-
 static int
 ufunc_at__fast_iter(PyUFuncObject *ufunc, NPY_ARRAYMETHOD_FLAGS flags,
                     PyArrayMapIterObject *iter, PyArrayIterObject *iter2,
@@ -5958,7 +5956,6 @@ ufunc_at__fast_iter(PyUFuncObject *ufunc, NPY_ARRAYMETHOD_FLAGS flags,
     int buffersize;
     int errormask = 0;
     int res = 0;
-    char * err_msg = NULL;
     NPY_BEGIN_THREADS_DEF;
 
     if (_get_bufsize_errmask(NULL, ufunc->name, &buffersize, &errormask) < 0) {
@@ -6011,9 +6008,6 @@ ufunc_at__fast_iter(PyUFuncObject *ufunc, NPY_ARRAYMETHOD_FLAGS flags,
 
     NPY_END_THREADS;
 
-    if (res != 0 && err_msg) {
-        PyErr_SetString(PyExc_ValueError, err_msg);
-    }
     if (res == 0 && !(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
         /* NOTE: We could check float errors even when `res < 0` */
         res = _check_ufunc_fperr(errormask, NULL, "at");
