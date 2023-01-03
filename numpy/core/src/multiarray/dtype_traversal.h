@@ -33,7 +33,8 @@ typedef int (simple_loop_function)(
 
 /* Simplified get_loop function specific to dtype traversal */
 typedef int (get_simple_loop_function)(
-        void *traverse_context, int aligned, npy_intp fixed_stride,
+        void *traverse_context, PyArray_Descr *descr,
+        int aligned, npy_intp fixed_stride,
         simple_loop_function **out_loop, NpyAuxData **out_auxdata,
         NPY_ARRAYMETHOD_FLAGS *flags);
 
@@ -64,8 +65,18 @@ typedef struct {
 
 
 static inline void
-NPY_traverse_info_free(NPY_traverse_info *traverse_info)
+NPY_traverse_info_init(NPY_traverse_info *cast_info)
 {
+    cast_info->func = NULL;  /* mark as uninitialized. */
+}
+
+
+static inline void
+NPY_traverse_info_xfree(NPY_traverse_info *traverse_info)
+{
+    if (traverse_info->func == NULL) {
+        return;
+    }
     traverse_info->func = NULL;
     NPY_AUXDATA_FREE(traverse_info->auxdata);
     Py_DECREF(traverse_info->descr);
@@ -89,6 +100,12 @@ NPY_traverse_info_copy(
 
     return 0;
 }
+
+
+NPY_NO_EXPORT int
+PyArray_GetClearFunction(
+        int aligned, npy_intp stride, PyArray_Descr *dtype,
+        NPY_traverse_info *clear_info, NPY_ARRAYMETHOD_FLAGS *flags);
 
 
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_DTYPE_TRAVERSAL_H_ */

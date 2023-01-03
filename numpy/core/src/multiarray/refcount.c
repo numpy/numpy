@@ -3,7 +3,7 @@
  * section in the numpy reference for C-API.
  */
 #include "array_method.h"
-#include "dtype_transfer.h"
+#include "dtype_traversal.h"
 #include "lowlevel_strided_loops.h"
 #include "pyerrors.h"
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
@@ -43,16 +43,16 @@ PyArray_ClearData(
         return 0;
     }
 
-    NPY_cast_info cast_info;
+    NPY_traverse_info clear_info;
     NPY_ARRAYMETHOD_FLAGS flags;
-    if (PyArray_GetDTypeTransferFunction(
-            aligned, stride, 0, descr, NULL, 1, &cast_info, &flags) < 0) {
+    if (PyArray_GetClearFunction(
+            aligned, stride, descr, &clear_info, &flags) < 0) {
         return -1;
     }
 
-    int res = cast_info.func(
-            &cast_info.context, &data, &size, &stride, cast_info.auxdata);
-    NPY_cast_info_xfree(&cast_info);
+    int res = clear_info.func(
+            NULL, clear_info.descr, data, size, stride, clear_info.auxdata);
+    NPY_traverse_info_xfree(&clear_info);
     return res;
 }
 

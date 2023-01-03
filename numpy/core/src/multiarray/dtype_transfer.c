@@ -32,6 +32,7 @@
 
 #include "shape.h"
 #include "dtype_transfer.h"
+#include "dtype_traversal.h"
 #include "alloc.h"
 #include "dtypemeta.h"
 #include "array_method.h"
@@ -147,7 +148,7 @@ typedef struct {
     NpyAuxData base;
     PyArray_GetItemFunc *getitem;
     PyArrayObject_fields arr_fields;
-    NPY_cast_info decref_src;
+    NPY_traverse_info decref_src;
 } _any_to_object_auxdata;
 
 
@@ -157,7 +158,7 @@ _any_to_object_auxdata_free(NpyAuxData *auxdata)
     _any_to_object_auxdata *data = (_any_to_object_auxdata *)auxdata;
 
     Py_DECREF(data->arr_fields.descr);
-    NPY_cast_info_xfree(&data->decref_src);
+    NPY_traverse_info_xfree(&data->decref_src);
     PyMem_Free(data);
 }
 
@@ -175,7 +176,7 @@ _any_to_object_auxdata_clone(NpyAuxData *auxdata)
     Py_INCREF(res->arr_fields.descr);
 
     if (data->decref_src.func != NULL) {
-        if (NPY_cast_info_copy(&res->decref_src, &data->decref_src) < 0) {
+        if (NPY_traverse_info_copy(&res->decref_src, &data->decref_src) < 0) {
             NPY_AUXDATA_FREE((NpyAuxData *)res);
             return NULL;
         }
@@ -216,8 +217,8 @@ _strided_to_strided_any_to_object(
     }
     if (data->decref_src.func != NULL) {
         /* If necessary, clear the input buffer (`move_references`) */
-        if (data->decref_src.func(&data->decref_src.context,
-                &orig_src, &N, &src_stride, data->decref_src.auxdata) < 0) {
+        if (data->decref_src.func(NULL, data->decref_src.descr,
+                orig_src, N, src_stride, data->decref_src.auxdata) < 0) {
             return -1;
         }
     }
@@ -253,11 +254,11 @@ any_to_object_get_loop(
     data->arr_fields.nd = 0;
 
     data->getitem = context->descriptors[0]->f->getitem;
-    NPY_cast_info_init(&data->decref_src);
+    NPY_traverse_info_init(&data->decref_src);
 
     if (move_references && PyDataType_REFCHK(context->descriptors[0])) {
         NPY_ARRAYMETHOD_FLAGS clear_flags;
-        if (get_clear_function(
+        if (PyArray_GetClearFunction(
                 aligned, strides[0], context->descriptors[0],
                 &data->decref_src, &clear_flags) < 0)  {
             NPY_AUXDATA_FREE(*out_transferdata);
@@ -1381,7 +1382,7 @@ typedef struct {
     npy_intp N;
     NPY_cast_info wrapped;
     /* If finish->func is non-NULL the source needs a decref */
-    NPY_cast_info decref_src;
+    NPY_traverse_info decref_src;
 } _one_to_n_data;
 
 /* transfer data free function */
@@ -1389,7 +1390,7 @@ static void _one_to_n_data_free(NpyAuxData *data)
 {
     _one_to_n_data *d = (_one_to_n_data *)data;
     NPY_cast_info_xfree(&d->wrapped);
-    NPY_cast_info_xfree(&d->decref_src);
+    NPY_traverse_info_xfree(&d->decref_src);
     PyMem_Free(data);
 }
 
@@ -1408,7 +1409,7 @@ static NpyAuxData *_one_to_n_data_clone(NpyAuxData *data)
     newdata->base.clone = &_one_to_n_data_clone;
     newdata->N = d->N;
     /* Initialize in case of error, or if it is unused */
-    NPY_cast_info_init(&newdata->decref_src);
+    NPY_traverse_info_init(&newdata->decref_src);
 
     if (NPY_cast_info_copy(&newdata->wrapped, &d->wrapped) < 0) {
         _one_to_n_data_free((NpyAuxData *)newdata);
@@ -1418,7 +1419,7 @@ static NpyAuxData *_one_to_n_data_clone(NpyAuxData *data)
         return (NpyAuxData *)newdata;
     }
 
-    if (NPY_cast_info_copy(&newdata->decref_src, &d->decref_src) < 0) {
+    if (NPY_traverse_info_copy(&newdata->decref_src, &d->decref_src) < 0) {
         _one_to_n_data_free((NpyAuxData *)newdata);
         return NULL;
     }
@@ -1478,8 +1479,8 @@ _strided_to_strided_one_to_n_with_finish(
             return -1;
         }
 
-        if (d->decref_src.func(&d->decref_src.context,
-                &src, &one_item, &zero_stride, d->decref_src.auxdata) < 0) {
+        if (d->decref_src.func(NULL, d->decref_src.descr,
+                src, one_item, zero_stride, d->decref_src.auxdata) < 0) {
             return -1;
         }
 
@@ -1510,7 +1511,7 @@ get_one_to_n_transfer_function(int aligned,
     data->base.free = &_one_to_n_data_free;
     data->base.clone = &_one_to_n_data_clone;
     data->N = N;
-    NPY_cast_info_init(&data->decref_src);  /* In case of error */
+    NPY_traverse_info_init(&data->decref_src);  /* In case of error */
 
     /*
      * move_references is set to 0, handled in the wrapping transfer fn,
@@ -1531,7 +1532,7 @@ get_one_to_n_transfer_function(int aligned,
     /* If the src object will need a DECREF, set src_dtype */
     if (move_references && PyDataType_REFCHK(src_dtype)) {
         NPY_ARRAYMETHOD_FLAGS clear_flags;
-        if (get_clear_function(
+        if (PyArray_GetClearFunction(
                 aligned, src_stride, src_dtype,
                 &data->decref_src, &clear_flags) < 0) {
             NPY_AUXDATA_FREE((NpyAuxData *)data);
@@ -1728,8 +1729,8 @@ typedef struct {
 typedef struct {
     NpyAuxData base;
     NPY_cast_info wrapped;
-    NPY_cast_info decref_src;
-    NPY_cast_info decref_dst;  /* The use-case should probably be deprecated */
+    NPY_traverse_info decref_src;
+    NPY_traverse_info decref_dst;  /* The use-case should probably be deprecated */
     npy_intp src_N, dst_N;
     /* This gets a run-length encoded representation of the transfer */
     npy_intp run_count;
@@ -1742,8 +1743,8 @@ static void _subarray_broadcast_data_free(NpyAuxData *data)
 {
     _subarray_broadcast_data *d = (_subarray_broadcast_data *)data;
     NPY_cast_info_xfree(&d->wrapped);
-    NPY_cast_info_xfree(&d->decref_src);
-    NPY_cast_info_xfree(&d->decref_dst);
+    NPY_traverse_info_xfree(&d->decref_src);
+    NPY_traverse_info_xfree(&d->decref_dst);
     PyMem_Free(data);
 }
 
@@ -1767,21 +1768,21 @@ static NpyAuxData *_subarray_broadcast_data_clone(NpyAuxData *data)
     newdata->run_count = d->run_count;
     memcpy(newdata->offsetruns, d->offsetruns, offsetruns_size);
 
-    NPY_cast_info_init(&newdata->decref_src);
-    NPY_cast_info_init(&newdata->decref_dst);
+    NPY_traverse_info_init(&newdata->decref_src);
+    NPY_traverse_info_init(&newdata->decref_dst);
 
     if (NPY_cast_info_copy(&newdata->wrapped, &d->wrapped) < 0) {
         _subarray_broadcast_data_free((NpyAuxData *)newdata);
         return NULL;
     }
     if (d->decref_src.func != NULL) {
-        if (NPY_cast_info_copy(&newdata->decref_src, &d->decref_src) < 0) {
+        if (NPY_traverse_info_copy(&newdata->decref_src, &d->decref_src) < 0) {
             _subarray_broadcast_data_free((NpyAuxData *) newdata);
             return NULL;
         }
     }
     if (d->decref_dst.func != NULL) {
-        if (NPY_cast_info_copy(&newdata->decref_dst, &d->decref_dst) < 0) {
+        if (NPY_traverse_info_copy(&newdata->decref_dst, &d->decref_dst) < 0) {
             _subarray_broadcast_data_free((NpyAuxData *) newdata);
             return NULL;
         }
@@ -1870,8 +1871,8 @@ _strided_to_strided_subarray_broadcast_withrefs(
             }
             else {
                 if (d->decref_dst.func != NULL) {
-                    if (d->decref_dst.func(&d->decref_dst.context,
-                            &dst_ptr, &count, &dst_subitemsize,
+                    if (d->decref_dst.func(NULL, d->decref_dst.descr,
+                            dst_ptr, count, dst_subitemsize,
                             d->decref_dst.auxdata) < 0) {
                         return -1;
                     }
@@ -1882,8 +1883,8 @@ _strided_to_strided_subarray_broadcast_withrefs(
         }
 
         if (d->decref_src.func != NULL) {
-            if (d->decref_src.func(&d->decref_src.context,
-                    &src, &d->src_N, &src_subitemsize,
+            if (d->decref_src.func(NULL, d->decref_src.descr,
+                    src, d->src_N, src_subitemsize,
                     d->decref_src.auxdata) < 0) {
                 return -1;
             }
@@ -1926,8 +1927,8 @@ get_subarray_broadcast_transfer_function(int aligned,
     data->src_N = src_size;
     data->dst_N = dst_size;
 
-    NPY_cast_info_init(&data->decref_src);
-    NPY_cast_info_init(&data->decref_dst);
+    NPY_traverse_info_init(&data->decref_src);
+    NPY_traverse_info_init(&data->decref_dst);
 
     /*
      * move_references is set to 0, handled in the wrapping transfer fn,
@@ -1946,12 +1947,9 @@ get_subarray_broadcast_transfer_function(int aligned,
 
     /* If the src object will need a DECREF */
     if (move_references && PyDataType_REFCHK(src_dtype)) {
-        if (PyArray_GetDTypeTransferFunction(aligned,
-                        src_dtype->elsize, 0,
-                        src_dtype, NULL,
-                        1,
-                        &data->decref_src,
-                        out_flags) != NPY_SUCCEED) {
+        if (PyArray_GetClearFunction(aligned,
+                        src_dtype->elsize, src_dtype,
+                        &data->decref_src, out_flags) != NPY_SUCCEED) {
             NPY_AUXDATA_FREE((NpyAuxData *)data);
             return NPY_FAIL;
         }
@@ -1959,12 +1957,9 @@ get_subarray_broadcast_transfer_function(int aligned,
 
     /* If the dst object needs a DECREF to set it to NULL */
     if (PyDataType_REFCHK(dst_dtype)) {
-        if (PyArray_GetDTypeTransferFunction(aligned,
-                        dst_dtype->elsize, 0,
-                        dst_dtype, NULL,
-                        1,
-                        &data->decref_dst,
-                        out_flags) != NPY_SUCCEED) {
+        if (PyArray_GetClearFunction(aligned,
+                        dst_dtype->elsize, dst_dtype,
+                        &data->decref_dst, out_flags) != NPY_SUCCEED) {
             NPY_AUXDATA_FREE((NpyAuxData *)data);
             return NPY_FAIL;
         }
@@ -2169,6 +2164,7 @@ typedef struct {
 typedef struct {
     NpyAuxData base;
     npy_intp field_count;
+    NPY_traverse_info decref_func;
     _single_field_transfer fields[];
 } _field_transfer_data;
 
@@ -2333,7 +2329,7 @@ get_fields_transfer_function(int NPY_UNUSED(aligned),
          */
         if (move_references && PyDataType_REFCHK(src_dtype)) {
             NPY_ARRAYMETHOD_FLAGS clear_flags;
-            if (get_clear_function(
+            if (PyArray_GetClearFunction(
                     0, src_stride, src_dtype,
                     &data->fields[field_count].info,
                     &clear_flags) < 0) {
@@ -2468,7 +2464,7 @@ typedef struct {
     /* The transfer function being wrapped (could likely be stored directly) */
     NPY_cast_info wrapped;
     /* The src decref function if necessary */
-    NPY_cast_info decref_src;
+    NPY_traverse_info decref_src;
 } _masked_wrapper_transfer_data;
 
 /* transfer data free function */
@@ -2477,7 +2473,7 @@ _masked_wrapper_transfer_data_free(NpyAuxData *data)
 {
     _masked_wrapper_transfer_data *d = (_masked_wrapper_transfer_data *)data;
     NPY_cast_info_xfree(&d->wrapped);
-    NPY_cast_info_xfree(&d->decref_src);
+    NPY_traverse_info_xfree(&d->decref_src);
     PyMem_Free(data);
 }
 
@@ -2500,7 +2496,7 @@ _masked_wrapper_transfer_data_clone(NpyAuxData *data)
         return NULL;
     }
     if (d->decref_src.func != NULL) {
-        if (NPY_cast_info_copy(&newdata->decref_src, &d->decref_src) < 0) {
+        if (NPY_traverse_info_copy(&newdata->decref_src, &d->decref_src) < 0) {
             NPY_AUXDATA_FREE((NpyAuxData *)newdata);
             return NULL;
         }
@@ -2527,8 +2523,8 @@ _strided_masked_wrapper_clear_function(
         /* Skip masked values, still calling decref for move_references */
         mask = (npy_bool*)npy_memchr((char *)mask, 0, mask_stride, N,
                                      &subloopsize, 1);
-        if (d->decref_src.func(&d->decref_src.context,
-                &src, &subloopsize, &src_stride, d->decref_src.auxdata) < 0) {
+        if (d->decref_src.func(NULL, d->decref_src.descr,
+                src, subloopsize, src_stride, d->decref_src.auxdata) < 0) {
             return -1;
         }
         dst += subloopsize * dst_stride;
@@ -2603,49 +2599,6 @@ _cast_no_op(
         const npy_intp *NPY_UNUSED(strides), NpyAuxData *NPY_UNUSED(auxdata))
 {
     /* Do nothing */
-    return 0;
-}
-
-
-/*
- * Get a strided loop used for clearing.  This looks up the `clearimpl`
- * slot on the DType.
- * The function will error when `clearimpl` is not defined.  Note that
- * old-style user-dtypes use the "void" version (m)
- */
-static int
-get_clear_function(
-        int aligned, npy_intp stride,
-        PyArray_Descr *dtype, NPY_cast_info *cast_info,
-        NPY_ARRAYMETHOD_FLAGS *flags)
-{
-    NPY_cast_info_init(cast_info);
-
-    PyArrayMethodObject *clearimpl = NPY_DT_SLOTS(NPY_DTYPE(dtype))->clearimpl;
-    if (clearimpl == NULL) {
-        PyErr_Format(PyExc_RuntimeError,
-                "Internal error, tried to fetch decref function for the "
-                "unsupported DType '%S'.", dtype);
-        return -1;
-    }
-
-    /* Make sure all important fields are either set or cleared */
-    Py_INCREF(dtype);
-    cast_info->descriptors[0] = dtype;
-    cast_info->descriptors[1] = NULL;
-    Py_INCREF(clearimpl);
-    cast_info->context.method = clearimpl;
-    cast_info->context.caller = NULL;
-
-    if (clearimpl->get_strided_loop(
-            &cast_info->context, aligned, 0, &stride,
-            &cast_info->func, &cast_info->auxdata, flags) < 0) {
-        Py_CLEAR(cast_info->descriptors[0]);
-        Py_CLEAR(cast_info->context.method);
-        NPY_cast_info_xfree(cast_info);
-        return -1;
-    }
-
     return 0;
 }
 
@@ -2935,8 +2888,7 @@ _clear_cast_info_after_get_loop_failure(NPY_cast_info *cast_info)
 
 
 /*
- * Helper for PyArray_GetDTypeTransferFunction, which fetches a single
- * transfer function from the each casting implementation (ArrayMethod).
+ * Fetches a transfer function from the casting implementation (ArrayMethod).
  * May set the transfer function to NULL when the cast can be achieved using
  * a view.
  * TODO: Expand the view functionality for general offsets, not just 0:
@@ -2958,14 +2910,16 @@ _clear_cast_info_after_get_loop_failure(NPY_cast_info *cast_info)
  *
  * Returns -1 on failure, 0 on success
  */
-static int
-define_cast_for_descrs(
+NPY_NO_EXPORT int
+PyArray_GetDTypeTransferFunction(
         int aligned,
         npy_intp src_stride, npy_intp dst_stride,
         PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
         int move_references,
         NPY_cast_info *cast_info, NPY_ARRAYMETHOD_FLAGS *out_flags)
 {
+    assert(dst_dtype != NULL);  /* Was previously used for decref */
+
     /* Storage for all cast info in case multi-step casting is necessary */
     _multistep_castdata castdata;
     /* Initialize funcs to NULL to simplify cleanup on error. */
@@ -3114,46 +3068,6 @@ define_cast_for_descrs(
     NPY_cast_info_xfree(&castdata.from);
     NPY_cast_info_xfree(&castdata.to);
     return -1;
-}
-
-
-NPY_NO_EXPORT int
-PyArray_GetDTypeTransferFunction(int aligned,
-                            npy_intp src_stride, npy_intp dst_stride,
-                            PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
-                            int move_references,
-                            NPY_cast_info *cast_info,
-                            NPY_ARRAYMETHOD_FLAGS *out_flags)
-{
-    assert(src_dtype != NULL);
-
-    /*
-     * If one of the dtypes is NULL, we give back either a src decref
-     * function or a dst setzero function
-     *
-     * TODO: Eventually, we may wish to support user dtype with references
-     *       (including and beyond bare `PyObject *` this may require extending
-     *       the ArrayMethod API and those paths should likely be split out
-     *       from this function.)
-     */
-    if (dst_dtype == NULL) {
-        assert(move_references);
-        int res = get_clear_function(
-                aligned, src_dtype->elsize, src_dtype, cast_info, out_flags);
-        if (res < 0) {
-            return NPY_FAIL;
-        }
-        return NPY_SUCCEED;
-    }
-
-    if (define_cast_for_descrs(aligned,
-            src_stride, dst_stride,
-            src_dtype, dst_dtype, move_references,
-            cast_info, out_flags) < 0) {
-        return NPY_FAIL;
-    }
-
-    return NPY_SUCCEED;
 }
 
 
@@ -3404,7 +3318,7 @@ PyArray_GetMaskedDTypeTransferFunction(int aligned,
     /* If the src object will need a DECREF, get a function to handle that */
     if (move_references && PyDataType_REFCHK(src_dtype)) {
         NPY_ARRAYMETHOD_FLAGS clear_flags;
-        if (get_clear_function(
+        if (PyArray_GetClearFunction(
                 aligned, src_stride, src_dtype,
                 &data->decref_src, &clear_flags) < 0) {
             NPY_AUXDATA_FREE((NpyAuxData *)data);
@@ -3415,7 +3329,7 @@ PyArray_GetMaskedDTypeTransferFunction(int aligned,
                 &_strided_masked_wrapper_clear_function;
     }
     else {
-        NPY_cast_info_init(&data->decref_src);
+        NPY_traverse_info_init(&data->decref_src);
         cast_info->func = (PyArrayMethod_StridedLoop *)
                 &_strided_masked_wrapper_transfer_function;
     }
