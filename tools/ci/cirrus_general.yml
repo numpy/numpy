@@ -24,10 +24,8 @@ linux_aarch64_task:
     # single task takes longer than 60 mins (the default time limit for a
     # cirrus-ci task).
     - env:
-        CIBW_BUILD: cp38-*
-        EXPECT_CPU_FEATURES: NEON NEON_FP16 NEON_VFPV4 ASIMD ASIMDHP ASIMDDP ASIMDFHM
-    - env:
         CIBW_BUILD: cp39-*
+        EXPECT_CPU_FEATURES: NEON NEON_FP16 NEON_VFPV4 ASIMD ASIMDHP ASIMDDP ASIMDFHM
     - env:
         CIBW_BUILD: cp310-*
     - env:

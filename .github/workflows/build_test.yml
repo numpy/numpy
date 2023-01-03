@@ -16,7 +16,7 @@ defaults:
 
 env:
   DOWNLOAD_OPENBLAS: 1
-  PYTHON_VERSION: 3.8
+  PYTHON_VERSION: 3.9
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
@@ -88,14 +88,14 @@ jobs:
         submodules: recursive
         fetch-depth: 0
     # comes with python3.6
-    - name: Install Python3.8
+    - name: Install Python3.9
       run: |
         sudo apt update
         # for add-apt-repository
         sudo apt install software-properties-common -y
         sudo add-apt-repository ppa:deadsnakes/ppa -y
-        sudo apt install python3.8-dev -y
-        sudo ln -s /usr/bin/python3.8 /usr/bin/pythonx
+        sudo apt install python3.9-dev -y
+        sudo ln -s /usr/bin/python3.9 /usr/bin/pythonx
         pythonx -m pip install --upgrade pip setuptools wheel
         pythonx -m pip install -r test_requirements.txt
     - name: Install Compilers
