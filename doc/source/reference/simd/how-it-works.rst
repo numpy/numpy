@@ -1,6 +1,6 @@
-**********************************
-How does the CPU dispatcher work?
-**********************************
+**********************************************
+How does the CPU dispatcher work (build time)?
+**********************************************
 
 NumPy dispatcher is based on multi-source compiling, which means taking
 a certain source and compiling it multiple times with different compiler
@@ -347,3 +347,21 @@ through ``--cpu-dispatch``, but it can also represent other options such as:
           // #include "hello2.dispatch.h"
           // DISPATCH_CALL_HIGH(another_function, ("the highest interest"))
       }
+
+
+.. _runtime-simd-dispatch::
+
+**********************************************
+How does the CPU dispatcher work (run time)?
+**********************************************
+
+Importing NumPy triggers a scan of the available CPU features from the set
+of dispatchable features. This can be further restricted by setting the
+environment variable ``NPY_DISABLE_CPU_FEATURES`` to a comma-, tab-, or
+space-separated list of features to disable. This will raise an error if
+parsing fails or if the feature was not enabled. For instance, on ``x86_64``
+this will disable ``AVX2`` and ``FMA3``::
+
+    NPY_DISABLE_CPU_FEATURES="AVX2,FMA3"
+
+If the feature is not available, a warning will be emitted.
