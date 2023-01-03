@@ -43,6 +43,8 @@ get_clear_function(
         NPY_ARRAYMETHOD_FLAGS *flags)
 {
     NPY_traverse_info_init(clear_info);
+    /* not that cleanup code bothers to check e.g. for floating point flags */
+    *flags = PyArrayMethod_MINIMAL_FLAGS;
 
     get_simple_loop_function *get_clear = NPY_DT_SLOTS(NPY_DTYPE(dtype))->get_clear_loop;
     if (get_clear == NULL) {
@@ -113,6 +115,7 @@ npy_get_clear_object_strided_loop(
         simple_loop_function **out_loop, NpyAuxData **out_auxdata,
         NPY_ARRAYMETHOD_FLAGS *flags)
 {
+    *flags = NPY_METH_REQUIRES_PYAPI|NPY_METH_NO_FLOATINGPOINT_ERRORS;
     *out_loop = &clear_object_strided_loop;
     return 0;
 }
@@ -348,7 +351,7 @@ traverse_subarray_func(
     while (N--) {
         if (func(traverse_context, sub_descr, data,
                  sub_N, sub_stride, sub_auxdata) < 0) {
-        return -1;
+            return -1;
         }
         data += stride;
     }

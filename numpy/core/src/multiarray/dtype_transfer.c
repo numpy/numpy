@@ -1949,7 +1949,7 @@ get_subarray_broadcast_transfer_function(int aligned,
     if (move_references && PyDataType_REFCHK(src_dtype)) {
         if (PyArray_GetClearFunction(aligned,
                         src_dtype->elsize, src_dtype,
-                        &data->decref_src, out_flags) != NPY_SUCCEED) {
+                        &data->decref_src, out_flags) < 0) {
             NPY_AUXDATA_FREE((NpyAuxData *)data);
             return NPY_FAIL;
         }
@@ -1959,7 +1959,7 @@ get_subarray_broadcast_transfer_function(int aligned,
     if (PyDataType_REFCHK(dst_dtype)) {
         if (PyArray_GetClearFunction(aligned,
                         dst_dtype->elsize, dst_dtype,
-                        &data->decref_dst, out_flags) != NPY_SUCCEED) {
+                        &data->decref_dst, out_flags) < 0) {
             NPY_AUXDATA_FREE((NpyAuxData *)data);
             return NPY_FAIL;
         }

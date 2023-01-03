@@ -1946,8 +1946,7 @@ npyiter_copy_from_buffers(NpyIter *iter)
          * only copy back when this flag is on.
          */
         if ((transferinfo[iop].write.func != NULL) &&
-               (op_itflags[iop]&(NPY_OP_ITFLAG_WRITE|NPY_OP_ITFLAG_USINGBUFFER))
-                        == (NPY_OP_ITFLAG_WRITE|NPY_OP_ITFLAG_USINGBUFFER)) {
+               (op_itflags[iop]&NPY_OP_ITFLAG_USINGBUFFER)) {
             npy_intp op_transfersize;
 
             npy_intp src_stride, *dst_strides, *dst_coords, *dst_shape;
@@ -2060,27 +2059,18 @@ npyiter_copy_from_buffers(NpyIter *iter)
          * The flag USINGBUFFER is set when the buffer was used, so
          * only decrement refs when this flag is on.
          */
-        else if (transferinfo[iop].write.func != NULL &&
-                       (op_itflags[iop]&NPY_OP_ITFLAG_USINGBUFFER) != 0) {
-            NPY_IT_DBG_PRINT1("Iterator: Freeing refs and zeroing buffer "
-                                "of operand %d\n", (int)iop);
-            /* Decrement refs */
+        else if (transferinfo[iop].clear.func != NULL &&
+                    (op_itflags[iop]&NPY_OP_ITFLAG_USINGBUFFER)) {
+            NPY_IT_DBG_PRINT1(
+                    "Iterator: clearing refs of operand %d\n", (int)iop);
             npy_intp buf_stride = dtypes[iop]->elsize;
-            if (transferinfo[iop].write.func(
-                    &transferinfo[iop].write.context,
-                    &buffer, &transfersize, &buf_stride,
-                    transferinfo[iop].write.auxdata) < 0) {
+            if (transferinfo[iop].clear.func(
+                    NULL, transferinfo[iop].clear.descr, buffer, transfersize,
+                    buf_stride, transferinfo[iop].clear.auxdata) < 0) {
                 /* Since this should only decrement, it should never error */
                 assert(0);
                 return -1;
             }
-            /*
-             * Zero out the memory for safety.  For instance,
-             * if during iteration some Python code copied an
-             * array pointing into the buffer, it will get None
-             * values for its references after this.
-             */
-            memset(buffer, 0, dtypes[iop]->elsize*transfersize);
         }
     }
 
@@ -2638,19 +2628,22 @@ npyiter_clear_buffers(NpyIter *iter)
 
     /* Cleanup any buffers with references */
     char **buffers = NBF_BUFFERS(bufferdata);
+
+    NpyIter_TransferInfo *transferinfo = NBF_TRANSFERINFO(bufferdata);
     PyArray_Descr **dtypes = NIT_DTYPES(iter);
     npyiter_opitflags *op_itflags = NIT_OPITFLAGS(iter);
     for (int iop = 0; iop < nop; ++iop, ++buffers) {
-        if (!PyDataType_REFCHK(dtypes[iop]) ||
-                !(op_itflags[iop]&NPY_OP_ITFLAG_USINGBUFFER)) {
+        if (transferinfo[iop].clear.func == NULL ||
+                 !(op_itflags[iop]&NPY_OP_ITFLAG_USINGBUFFER)) {
             continue;
         }
         if (*buffers == 0) {
             continue;
         }
         int itemsize = dtypes[iop]->elsize;
-        if (PyArray_ClearBuffer(
-                dtypes[iop], *buffers, itemsize, NBF_SIZE(bufferdata), 1) < 0) {
+        if (transferinfo[iop].clear.func(NULL,
+                dtypes[iop], *buffers, NBF_SIZE(bufferdata), itemsize,
+                transferinfo[iop].clear.auxdata) < 0) {
             /* This should never fail; if it does write it out */
             PyErr_WriteUnraisable(NULL);
         }

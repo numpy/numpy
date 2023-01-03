@@ -76,6 +76,11 @@ static inline int
 NPY_traverse_info_copy(
         NPY_traverse_info *traverse_info, NPY_traverse_info *original)
 {
+    traverse_info->func = NULL;
+    if (original->func == NULL) {
+        /* Allow copying also of unused clear info */
+        return 0;
+    }
     traverse_info->auxdata = NULL;
     if (original->auxdata != NULL) {
         traverse_info->auxdata = NPY_AUXDATA_CLONE(original->auxdata);
