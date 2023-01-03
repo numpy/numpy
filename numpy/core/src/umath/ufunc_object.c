@@ -6323,7 +6323,6 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
         if ((iter2 = (PyArrayIterObject *)\
              PyArray_BroadcastToShape((PyObject *)op2_array,
                                         iter->dimensions, iter->nd))==NULL) {
-            /* only on memory allocation failures */
             goto fail;
         }
     }
@@ -6417,17 +6416,21 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
     int fast_path = 1;
     /* check no casting, alignment */
     if (PyArray_DESCR(op1_array) != operation_descrs[0]) {
-            fast_path = 0;
+        fast_path = 0;
+    }
+    if (PyArray_DESCR(op1_array) != operation_descrs[nop - 1]) {
+        /* output casting */
+        fast_path = 0;
     }
     if (!PyArray_ISALIGNED(op1_array)) {
-            fast_path = 0;
+        fast_path = 0;
     }
     if (nop >2) {
         if  (PyArray_DESCR(op2_array) != operation_descrs[1]) {
             fast_path = 0;
         }
         if (!PyArray_ISALIGNED(op2_array)) {
-                fast_path = 0;
+            fast_path = 0;
         }
     }
     if (fast_path == 1) {
