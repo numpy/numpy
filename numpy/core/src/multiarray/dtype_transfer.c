@@ -2164,7 +2164,7 @@ typedef struct {
 typedef struct {
     NpyAuxData base;
     npy_intp field_count;
-    NPY_traverse_info decref_func;
+    NPY_traverse_info decref_src;
     _single_field_transfer fields[];
 } _field_transfer_data;
 
@@ -2173,6 +2173,7 @@ typedef struct {
 static void _field_transfer_data_free(NpyAuxData *data)
 {
     _field_transfer_data *d = (_field_transfer_data *)data;
+    NPY_traverse_info_xfree(&d->decref_src);
 
     for (npy_intp i = 0; i < d->field_count; ++i) {
         NPY_cast_info_xfree(&d->fields[i].info);
@@ -2196,6 +2197,10 @@ static NpyAuxData *_field_transfer_data_clone(NpyAuxData *data)
     }
     newdata->base = d->base;
     newdata->field_count = 0;
+    if (NPY_traverse_info_copy(&newdata->decref_src, &d->decref_src) < 0) {
+        PyMem_Free(newdata);
+        return NULL;
+    }
 
     /* Copy all the fields transfer data */
     for (npy_intp i = 0; i < field_count; ++i) {
@@ -2237,6 +2242,11 @@ _strided_to_strided_field_transfer(
                     return -1;
                 }
             }
+            if (d->decref_src.func != NULL && d->decref_src.func(
+                    NULL, d->decref_src.descr, src, blocksize, src_stride,
+                    d->decref_src.auxdata) < 0) {
+                return -1;
+            }
             N -= NPY_LOWLEVEL_BUFFER_BLOCKSIZE;
             src += NPY_LOWLEVEL_BUFFER_BLOCKSIZE*src_stride;
             dst += NPY_LOWLEVEL_BUFFER_BLOCKSIZE*dst_stride;
@@ -2249,6 +2259,11 @@ _strided_to_strided_field_transfer(
                         fargs, &N, strides, field.info.auxdata) < 0) {
                     return -1;
                 }
+            }
+            if (d->decref_src.func != NULL && d->decref_src.func(
+                    NULL, d->decref_src.descr, src, blocksize, src_stride,
+                    d->decref_src.auxdata) < 0) {
+                return -1;
             }
             return 0;
         }
@@ -2296,6 +2311,7 @@ get_fields_transfer_function(int NPY_UNUSED(aligned),
         data->base.free = &_field_transfer_data_free;
         data->base.clone = &_field_transfer_data_clone;
         data->field_count = 0;
+        NPY_traverse_info_init(&data->decref_src);
 
         *out_flags = PyArrayMethod_MINIMAL_FLAGS;
         for (i = 0; i < field_count; ++i) {
@@ -2323,23 +2339,17 @@ get_fields_transfer_function(int NPY_UNUSED(aligned),
         }
 
         /*
-         * If references should be decrefd in src, add another transfer
-         * function to do that. Since a decref function only uses a single
-         * input, the second one (normally output) just does not matter here.
+         * If references should be decrefd in src, add a clear function.
          */
         if (move_references && PyDataType_REFCHK(src_dtype)) {
             NPY_ARRAYMETHOD_FLAGS clear_flags;
             if (PyArray_GetClearFunction(
-                    0, src_stride, src_dtype,
-                    &data->fields[field_count].info,
+                    0, src_stride, src_dtype, &data->decref_src,
                     &clear_flags) < 0) {
                 NPY_AUXDATA_FREE((NpyAuxData *)data);
                 return NPY_FAIL;
             }
             *out_flags = PyArrayMethod_COMBINED_FLAGS(*out_flags, clear_flags);
-            data->fields[field_count].src_offset = 0;
-            data->fields[field_count].dst_offset = 0;
-            data->field_count = field_count;
         }
 
         *out_stransfer = &_strided_to_strided_field_transfer;
@@ -2367,6 +2377,7 @@ get_fields_transfer_function(int NPY_UNUSED(aligned),
         }
         data->base.free = &_field_transfer_data_free;
         data->base.clone = &_field_transfer_data_clone;
+        NPY_traverse_info_init(&data->decref_src);
 
         key = PyTuple_GET_ITEM(src_dtype->names, 0);
         tup = PyDict_GetItem(src_dtype->fields, key);
@@ -2415,6 +2426,7 @@ get_fields_transfer_function(int NPY_UNUSED(aligned),
     data->base.free = &_field_transfer_data_free;
     data->base.clone = &_field_transfer_data_clone;
     data->field_count = 0;
+    NPY_traverse_info_init(&data->decref_src);
 
     *out_flags = PyArrayMethod_MINIMAL_FLAGS;
     /* set up the transfer function for each field */
@@ -2888,7 +2900,8 @@ _clear_cast_info_after_get_loop_failure(NPY_cast_info *cast_info)
 
 
 /*
- * Fetches a transfer function from the casting implementation (ArrayMethod).
+ * Helper for PyArray_GetDTypeTransferFunction, which fetches a single
+ * transfer function from the each casting implementation (ArrayMethod)
  * May set the transfer function to NULL when the cast can be achieved using
  * a view.
  * TODO: Expand the view functionality for general offsets, not just 0:
@@ -2910,8 +2923,8 @@ _clear_cast_info_after_get_loop_failure(NPY_cast_info *cast_info)
  *
  * Returns -1 on failure, 0 on success
  */
-NPY_NO_EXPORT int
-PyArray_GetDTypeTransferFunction(
+static int
+define_cast_for_descrs(
         int aligned,
         npy_intp src_stride, npy_intp dst_stride,
         PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
@@ -3068,6 +3081,24 @@ PyArray_GetDTypeTransferFunction(
     NPY_cast_info_xfree(&castdata.from);
     NPY_cast_info_xfree(&castdata.to);
     return -1;
+}
+
+
+PyArray_GetDTypeTransferFunction(int aligned,
+                            npy_intp src_stride, npy_intp dst_stride,
+                            PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
+                            int move_references,
+                            NPY_cast_info *cast_info,
+                            NPY_ARRAYMETHOD_FLAGS *out_flags)
+{
+    if (define_cast_for_descrs(aligned,
+            src_stride, dst_stride,
+            src_dtype, dst_dtype, move_references,
+            cast_info, out_flags) < 0) {
+        return NPY_FAIL;
+    }
+
+    return NPY_SUCCEED;
 }
 
 

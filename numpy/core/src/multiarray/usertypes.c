@@ -42,6 +42,7 @@ maintainer email:  oliphant.travis@ieee.org
 #include "scalartypes.h"
 #include "array_method.h"
 #include "convert_datatype.h"
+#include "dtype_traversal.h"
 #include "legacy_dtype_implementation.h"
 
 
@@ -272,8 +273,8 @@ PyArray_RegisterDataType(PyArray_Descr *descr)
     if (use_void_clearimpl) {
         /* See comment where use_void_clearimpl is set... */
         PyArray_DTypeMeta *Void = PyArray_DTypeFromTypeNum(NPY_VOID);
-        NPY_DT_SLOTS(NPY_DTYPE(descr))->clearimpl = (
-                NPY_DT_SLOTS(Void)->clearimpl);
+        NPY_DT_SLOTS(NPY_DTYPE(descr))->get_clear_loop = (
+                &npy_get_clear_void_and_legacy_user_dtype_loop);
         Py_DECREF(Void);
     }
 

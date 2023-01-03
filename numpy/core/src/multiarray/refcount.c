@@ -35,7 +35,7 @@ _fillobject(char *optr, PyObject *obj, PyArray_Descr *dtype);
  * avoid it fully.
  */
 NPY_NO_EXPORT int
-PyArray_ClearData(
+PyArray_ClearBuffer(
         PyArray_Descr *descr, char *data,
         npy_intp stride, npy_intp size, int aligned)
 {
@@ -54,6 +54,62 @@ PyArray_ClearData(
             NULL, clear_info.descr, data, size, stride, clear_info.auxdata);
     NPY_traverse_info_xfree(&clear_info);
     return res;
+}
+
+
+/*
+ * Helper function to clear whole array.  It seems plausible that we should
+ * be able to get away with assuming the the array is contiguous.
+ *
+ * Must only be called on arrays which own their data (and asserts this).
+ */
+ NPY_NO_EXPORT int
+ PyArray_ClearArray(PyArrayObject *arr)
+ {
+    assert(PyArray_FLAGS(arr) & NPY_ARRAY_OWNDATA);
+
+    PyArray_Descr *descr = PyArray_DESCR(arr);
+    if (!PyDataType_REFCHK(descr)) {
+        return 0;
+    }
+    /*
+     * The contiguous path should cover practically all important cases since
+     * it is difficult to create a non-contiguous array which owns its memory
+     * and only arrays which own their memory should clear it.
+     */
+    int aligned = PyArray_ISALIGNED(arr);
+    if (PyArray_ISCONTIGUOUS(arr)) {
+        return PyArray_ClearBuffer(
+                descr, PyArray_BYTES(arr), descr->elsize,
+                PyArray_SIZE(arr), aligned);
+    }
+    int idim, ndim;
+    npy_intp shape_it[NPY_MAXDIMS], strides_it[NPY_MAXDIMS];
+    npy_intp coord[NPY_MAXDIMS];
+    char *data_it;
+    if (PyArray_PrepareOneRawArrayIter(
+                    PyArray_NDIM(arr), PyArray_DIMS(arr),
+                    PyArray_BYTES(arr), PyArray_STRIDES(arr),
+                    &ndim, shape_it, &data_it, strides_it) < 0) {
+        return -1;
+    }
+    npy_intp inner_stride = strides_it[0];
+    npy_intp inner_shape = shape_it[0];
+    NPY_traverse_info clear_info;
+    NPY_ARRAYMETHOD_FLAGS flags;
+    if (PyArray_GetClearFunction(
+            aligned, inner_stride, descr, &clear_info, &flags) < 0) {
+        return -1;
+    }
+    NPY_RAW_ITER_START(idim, ndim, coord, shape_it) {
+        /* Process the innermost dimension */
+        if (clear_info.func(NULL, clear_info.descr,
+                data_it, inner_shape, inner_stride, clear_info.auxdata) < 0) {
+            return -1;
+        }
+    } NPY_RAW_ITER_ONE_NEXT(idim, ndim, coord,
+                            shape_it, data_it, strides_it);
+    return 0;
 }
 
 

@@ -10,12 +10,24 @@
  * protocols (although traversal needs additional arguments.
  */
 
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#define _MULTIARRAYMODULE
+#define _UMATHMODULE
 
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+#include <structmember.h>
+
+#include "numpy/ndarraytypes.h"
+#include "numpy/arrayobject.h"
+
+#include "alloc.h"
+#include "array_method.h"
 #include "dtypemeta.h"
 
 #include "dtype_traversal.h"
-#include "pyerrors.h"
-#include <stdint.h>
+
+
 /* Same as in dtype_transfer.c */
 #define NPY_LOWLEVEL_BUFFER_BLOCKSIZE  128
 
@@ -80,11 +92,11 @@ clear_object_strided_loop(
         char *data, npy_intp size, npy_intp stride,
         NpyAuxData *NPY_UNUSED(auxdata))
 {
-    PyObject *alignd_copy = NULL;
+    PyObject *aligned_copy = NULL;
     while (size > 0) {
         /* Release the reference in src and set it to NULL */
-        memcpy(&alignd_copy, data, sizeof(PyObject *));
-        Py_XDECREF(alignd_copy);
+        memcpy(&aligned_copy, data, sizeof(PyObject *));
+        Py_XDECREF(aligned_copy);
         memset(data, 0, sizeof(PyObject *));
 
         data += stride;
@@ -96,9 +108,9 @@ clear_object_strided_loop(
 
 NPY_NO_EXPORT int
 npy_get_clear_object_strided_loop(
-        void *NPY_UNUSED(traverse_context), int NPY_UNUSED(aligned),
-        npy_intp NPY_UNUSED(fixed_stride),
-        simple_loop_function **out_loop, NpyAuxData **out_transferdata,
+        void *NPY_UNUSED(traverse_context), PyArray_Descr *NPY_UNUSED(descr),
+        int NPY_UNUSED(aligned), npy_intp NPY_UNUSED(fixed_stride),
+        simple_loop_function **out_loop, NpyAuxData **out_auxdata,
         NPY_ARRAYMETHOD_FLAGS *flags)
 {
     *out_loop = &clear_object_strided_loop;
@@ -201,15 +213,15 @@ traverse_fields_function(
                     return -1;
                 }
             }
-            N -= NPY_LOWLEVEL_BUFFER_BLOCKSIZE;
-            data += NPY_LOWLEVEL_BUFFER_BLOCKSIZE * stride;
+            N -= blocksize;
+            data += blocksize * stride;
         }
         else {
             for (i = 0; i < field_count; ++i) {
                 single_field_clear_data field = d->fields[i];
                 if (field.info.func(traverse_context,
                         field.info.descr, data + field.src_offset,
-                        blocksize, stride, field.info.auxdata) < 0) {
+                        N, stride, field.info.auxdata) < 0) {
                     return -1;
                 }
             }
@@ -221,8 +233,8 @@ traverse_fields_function(
 
 static int
 get_clear_fields_transfer_function(
-        void *traverse_context, int NPY_UNUSED(aligned),
-        PyArray_Descr *dtype, npy_intp stride, simple_loop_function **out_func,
+        void *traverse_context, PyArray_Descr *dtype, int NPY_UNUSED(aligned),
+        npy_intp stride, simple_loop_function **out_func,
         NpyAuxData **out_auxdata, NPY_ARRAYMETHOD_FLAGS *flags)
 {
     PyObject *names, *key, *tup, *title;
@@ -240,7 +252,7 @@ get_clear_fields_transfer_function(
     fields_clear_data *data = PyMem_Malloc(structsize);
     if (data == NULL) {
         PyErr_NoMemory();
-        return NPY_FAIL;
+        return -1;
     }
     data->base.free = &fields_clear_data_free;
     data->base.clone = &fields_clear_data_clone;
@@ -254,7 +266,7 @@ get_clear_fields_transfer_function(
         tup = PyDict_GetItem(dtype->fields, key);
         if (!PyArg_ParseTuple(tup, "Oi|O", &fld_dtype, &offset, &title)) {
             NPY_AUXDATA_FREE((NpyAuxData *)data);
-            return NPY_FAIL;
+            return -1;
         }
         if (PyDataType_REFCHK(fld_dtype)) {
             NPY_ARRAYMETHOD_FLAGS clear_flags;
@@ -262,7 +274,7 @@ get_clear_fields_transfer_function(
                     traverse_context, fld_dtype, 0,
                     stride, &field->info, &clear_flags) < 0) {
                 NPY_AUXDATA_FREE((NpyAuxData *)data);
-                return NPY_FAIL;
+                return -1;
             }
             *flags = PyArrayMethod_COMBINED_FLAGS(*flags, clear_flags);
             field->src_offset = offset;
@@ -274,9 +286,8 @@ get_clear_fields_transfer_function(
     *out_func = &traverse_fields_function;
     *out_auxdata = (NpyAuxData *)data;
 
-    return NPY_SUCCEED;
+    return 0;
 }
-
 
 
 typedef struct {
@@ -308,6 +319,7 @@ subarray_clear_data_clone(NpyAuxData *data)
     if (newdata == NULL) {
         return NULL;
     }
+    newdata->base = d->base;
     newdata->count = d->count;
 
     if (NPY_traverse_info_copy(&newdata->info, &d->info) < 0) {
@@ -346,7 +358,7 @@ traverse_subarray_func(
 
 static int
 get_subarray_clear_func(
-        void *traverse_context, int aligned, PyArray_Descr *dtype,
+        void *traverse_context, PyArray_Descr *dtype, int aligned,
         npy_intp size, npy_intp stride, simple_loop_function **out_func,
         NpyAuxData **out_auxdata, NPY_ARRAYMETHOD_FLAGS *flags)
 {
@@ -385,7 +397,7 @@ clear_no_op(
 
 NPY_NO_EXPORT int
 npy_get_clear_void_and_legacy_user_dtype_loop(
-        void *traverse_context, int aligned, PyArray_Descr *dtype,
+        void *traverse_context, PyArray_Descr *dtype, int aligned,
         npy_intp stride, simple_loop_function **out_func,
         NpyAuxData **out_auxdata, NPY_ARRAYMETHOD_FLAGS *flags)
 {
@@ -396,8 +408,6 @@ npy_get_clear_void_and_legacy_user_dtype_loop(
      */
     if (!PyDataType_REFCHK(dtype)) {
         *out_func = &clear_no_op;
-        *out_auxdata = NULL;
-        assert(0);
         return 0;
     }
 
@@ -414,8 +424,8 @@ npy_get_clear_void_and_legacy_user_dtype_loop(
         npy_free_cache_dim_obj(shape);
 
         if (get_subarray_clear_func(
-                traverse_context, aligned, dtype->subarray->base, size, stride,
-                out_func, out_auxdata, flags) != NPY_SUCCEED) {
+                traverse_context, dtype->subarray->base, aligned, size, stride,
+                out_func, out_auxdata, flags) < 0) {
             return -1;
         }
 
@@ -424,7 +434,7 @@ npy_get_clear_void_and_legacy_user_dtype_loop(
     /* If there are fields, need to do each field */
     else if (PyDataType_HASFIELDS(dtype)) {
         if (get_clear_fields_transfer_function(
-                traverse_context, aligned, dtype, stride,
+                traverse_context, dtype, aligned, stride,
                 out_func, out_auxdata, flags) < 0) {
             return -1;
         }

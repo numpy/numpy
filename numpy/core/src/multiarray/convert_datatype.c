@@ -31,6 +31,7 @@
 #include "array_method.h"
 #include "usertypes.h"
 #include "dtype_transfer.h"
+#include "dtype_traversal.h"
 #include "arrayobject.h"
 
 

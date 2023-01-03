@@ -2649,7 +2649,7 @@ npyiter_clear_buffers(NpyIter *iter)
             continue;
         }
         int itemsize = dtypes[iop]->elsize;
-        if (PyArray_ClearData(
+        if (PyArray_ClearBuffer(
                 dtypes[iop], *buffers, itemsize, NBF_SIZE(bufferdata), 1) < 0) {
             /* This should never fail; if it does write it out */
             PyErr_WriteUnraisable(NULL);
