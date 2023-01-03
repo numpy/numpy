@@ -53,7 +53,7 @@ SIMD feature selection
 ----------------------
 
 Setting ``NPY_DISABLE_CPU_FEATURES`` will exclude simd features at runtime.
-See `runtime-simd-dispatch`.
+See :ref:`runtime-simd-dispatch`.
 
 Interoperability-Related Options
 ================================
