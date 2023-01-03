@@ -1927,7 +1927,7 @@ class TestUfunc:
                              np.arange(10, dtype=int),
                              np.arange(10, dtype=_rational_tests.rational),
                              ))
-    def test_ufunc_at(self, a):
+    def test_ufunc_at_basic(self, a):
 
         aa = a.copy()
         np.add.at(aa, [2, 5, 2], 1)
@@ -1941,6 +1941,11 @@ class TestUfunc:
         np.negative.at(aa, [2, 5, 3])
         assert_equal(aa, [0, 1, -2, -3, 4, -5, 6, 7, 8, 9])
 
+        aa = a.copy()
+        b = np.array([100, 100, 100])
+        np.add.at(aa, [2, 5, 2], b)
+        assert_equal(aa, [0, 1, 202, 3, 4, 105, 6, 7, 8, 9])
+
         with pytest.raises(ValueError):
             # extraneous second operand 
             np.negative.at(a, [2, 5, 3], [1, 2, 3])
@@ -1949,12 +1954,7 @@ class TestUfunc:
             # second operand cannot be converted to an array
             np.add.at(a, [2, 5, 3], [[1, 2], 1])
 
-        # reset a
-        a = np.arange(10)
-        b = np.array([100, 100, 100])
-        np.add.at(a, [2, 5, 2], b)
-        assert_equal(a, [0, 1, 202, 3, 4, 105, 6, 7, 8, 9])
-
+    def test_ufunc_at_multiD(self):
         a = np.arange(9).reshape(3, 3)
         b = np.array([[100, 100, 100], [200, 200, 200], [300, 300, 300]])
         np.add.at(a, (slice(None), [1, 2, 1]), b)
@@ -2034,11 +2034,8 @@ class TestUfunc:
               [121, 222, 323],
               [124, 225, 326]]])
 
-        a = np.arange(10)
-        np.negative.at(a, [2, 5, 2])
-        assert_equal(a, [0, 1, 2, 3, 4, -5, 6, 7, 8, 9])
 
-        # Test 0-dim array
+    def test_ufunc_at_0D(self):
         a = np.array(0)
         np.add.at(a, (), 1)
         assert_equal(a, 1)
@@ -2046,11 +2043,13 @@ class TestUfunc:
         assert_raises(IndexError, np.add.at, a, 0, 1)
         assert_raises(IndexError, np.add.at, a, [], 1)
 
+    def test_ufunc_at_dtypes(self):
         # Test mixed dtypes
         a = np.arange(10)
         np.power.at(a, [1, 2, 3, 2], 3.5)
         assert_equal(a, np.array([0, 1, 4414, 46, 4, 5, 6, 7, 8, 9]))
 
+    def test_ufunc_at_boolean(self):
         # Test boolean indexing and boolean ufuncs
         a = np.arange(10)
         index = a % 2 == 0
@@ -2062,6 +2061,7 @@ class TestUfunc:
         np.invert.at(a, [2, 5, 2])
         assert_equal(a, [0, 1, 2, 3, 4, 5 ^ 0xffffffff, 6, 7, 8, 9])
 
+    def test_ufunc_at_advanced(self):
         # Test empty subspace
         orig = np.arange(4)
         a = orig[:, None][:, 0:0]
@@ -2085,7 +2085,7 @@ class TestUfunc:
         # Test maximum
         a = np.array([1, 2, 3])
         np.maximum.at(a, [0], 0)
-        assert_equal(np.array([1, 2, 3]), a)
+        assert_equal(a, np.array([1, 2, 3]))
 
     def test_at_not_none_signature(self):
         # Test ufuncs with non-trivial signature raise a TypeError
