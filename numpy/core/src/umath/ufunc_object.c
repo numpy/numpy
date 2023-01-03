@@ -6411,16 +6411,14 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
         goto fail;
     }
     int fast_path = 1;
-    if (is_generic_wrapped_legacy_loop(strided_loop)) {
-        /*
-         * only user-defined dtypes will use a non-generic_wrapped_legacy loop
-         * so this path is very common
-         */
-        for (int i=0; i<3; i++) {
-            if (operation_descrs[i] && !PyDataType_ISNUMBER(operation_descrs[i])) {
-                fast_path = 0;
-            }
+    for (int i=0; i<3; i++) {
+        /* over-cautious? Only use built-in numeric dtypes */
+        if (operation_descrs[i] && !PyDataType_ISNUMBER(operation_descrs[i])) {
+            fast_path = 0;
         }
+    }
+    if (fast_path == 1) {
+        /* check no casting, alignment */
         if (PyArray_DESCR(op1_array) != operation_descrs[0]) {
                 fast_path = 0;
         }
@@ -6434,11 +6432,7 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
                 fast_path = 0;
         }
     }
-    else {
-        /* Not a known loop function */
-        fast_path = 0;
-    }
-    if (fast_path) {
+    if (fast_path == 1) {
         res = ufunc_at__fast_iter(ufunc, flags, iter, iter2, op1_array, op2_array,
                                   strided_loop, &context, strides, auxdata);
     } else {
