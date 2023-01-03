@@ -6096,6 +6096,7 @@ ufunc_at__slow_iter(PyUFuncObject *ufunc, NPY_ARRAYMETHOD_FLAGS flags,
                         -1, NULL, NULL, buffersize);
 
     if (iter_buffer == NULL) {
+        /* will fail only on memory allocation errors */
         for (int i = 0; i < 3; i++) {
             Py_XDECREF(array_operands[i]);
         }
@@ -6104,6 +6105,7 @@ ufunc_at__slow_iter(PyUFuncObject *ufunc, NPY_ARRAYMETHOD_FLAGS flags,
 
     iternext = NpyIter_GetIterNext(iter_buffer, NULL);
     if (iternext == NULL) {
+        /* can not really happen, iter_buffer creation is tightly controlled */
         NpyIter_Deallocate(iter_buffer);
         for (int i = 0; i < 3; i++) {
             Py_XDECREF(array_operands[i]);
@@ -6185,7 +6187,7 @@ ufunc_at__slow_iter(PyUFuncObject *ufunc, NPY_ARRAYMETHOD_FLAGS flags,
     NpyIter_Deallocate(iter_buffer);
     for (int i = 0; i < 3; i++) {
         Py_XDECREF(array_operands[i]);
-        }
+    }
     return res;
 }
 
@@ -6249,6 +6251,12 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
                         "second operand needed for ufunc");
         return NULL;
     }
+
+    if (ufunc->nin == 1 && op2 != NULL) {
+        PyErr_SetString(PyExc_ValueError,
+                        "second operand provided when ufunc is unary");
+        return NULL;
+    }
     errval = PyUFunc_CheckOverride(ufunc, "at",
             args, NULL, NULL, 0, NULL, &override);
 
@@ -6299,6 +6307,7 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
         if ((iter->subspace != NULL) && (iter->consec)) {
             PyArray_MapIterSwapAxes(iter, &op2_array, 0);
             if (op2_array == NULL) {
+                /* only on memory allocation failure */
                 goto fail;
             }
         }
@@ -6314,6 +6323,7 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
         if ((iter2 = (PyArrayIterObject *)\
              PyArray_BroadcastToShape((PyObject *)op2_array,
                                         iter->dimensions, iter->nd))==NULL) {
+            /* only on memory allocation failures */
             goto fail;
         }
     }
@@ -6321,6 +6331,8 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
     PyArrayMethodObject *ufuncimpl = NULL;
 
     {
+        /* Do all the dtype handling and find the correct ufuncimpl */
+
         PyArrayObject *tmp_operands[3] = {NULL, NULL, NULL};
         PyArray_DTypeMeta *signature[3] = {NULL, NULL, NULL};
         PyArray_DTypeMeta *operand_DTypes[3] = {NULL, NULL, NULL};
@@ -6346,7 +6358,6 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
             operand_DTypes[2] = operand_DTypes[0];
             Py_INCREF(operand_DTypes[2]);
 
-            nop = 3;
             if (allow_legacy_promotion && ((PyArray_NDIM(op1_array) == 0)
                                            != (PyArray_NDIM(op2_array) == 0))) {
                     /* both are legacy and only one is 0-D: force legacy */
@@ -6358,7 +6369,6 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
             operand_DTypes[1] = operand_DTypes[0];
             Py_INCREF(operand_DTypes[1]);
             tmp_operands[2] = NULL;
-            nop = 2;
         }
 
         ufuncimpl = promote_and_get_ufuncimpl(ufunc, tmp_operands, signature,
