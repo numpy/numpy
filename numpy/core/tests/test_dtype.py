@@ -195,6 +195,21 @@ class TestBuiltin:
         # This is an safe cast (not equiv) due to the different names:
         assert np.can_cast(x, y, casting="safe")
 
+    @pytest.mark.parametrize(
+        ["type_char", "char_size", "scalar_type"],
+        [["U", 4, np.str_],
+         ["S", 1, np.bytes_]])
+    def test_create_string_dtypes_directly(
+            self, type_char, char_size, scalar_type):
+        dtype_class = type(np.dtype(type_char))
+
+        dtype = dtype_class(8)
+        assert dtype.type is scalar_type
+        assert dtype.itemsize == 8*char_size
+
+        with pytest.raises(TypeError):
+            dtype_class(8, foobar=False)
+
 
 class TestRecord:
     def test_equivalent_record(self):
