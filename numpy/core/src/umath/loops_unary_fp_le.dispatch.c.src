@@ -6,6 +6,25 @@
  **/
 
 /**
+ * Force use SSE only on x86, even if AVX2 or AVX512F are enabled
+ * through the baseline, since scatter(AVX512F) and gather very costly
+ * to handle non-contiguous memory access comparing with SSE for
+ * such small operations that this file covers.
+ */
+#define NPY_SIMD_FORCE_128
+#define _UMATHMODULE
+#define _MULTIARRAYMODULE
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#include <float.h>
+#include "numpy/npy_math.h"
+#include "simd/simd.h"
+#include "loops_utils.h"
+#include "loops.h"
+#include "lowlevel_strided_loops.h"
+// Provides the various *_LOOP macros
+#include "fast_loop_macros.h"
+
+/**
  * This code should really be merged into loops_unary_fp.dispatch.c.src
  * However there is an issue with enabling the code here for VX and VXE
  * as the shifts don't behave as expected.
@@ -25,26 +44,6 @@
     #define NPY_SIMD_F32 0
     #define NPY_SIMD_F64 0
 #endif
-
-/**
- * Force use SSE only on x86, even if AVX2 or AVX512F are enabled
- * through the baseline, since scatter(AVX512F) and gather very costly
- * to handle non-contiguous memory access comparing with SSE for
- * such small operations that this file covers.
- */
-#define NPY_SIMD_FORCE_128
-#define _UMATHMODULE
-#define _MULTIARRAYMODULE
-#define NPY_NO_DEPRECATED_API NPY_API_VERSION
-#include <float.h>
-#include "numpy/npy_math.h"
-#include "simd/simd.h"
-#include "loops_utils.h"
-#include "loops.h"
-#include "lowlevel_strided_loops.h"
-// Provides the various *_LOOP macros
-#include "fast_loop_macros.h"
-
 
 /*******************************************************************************
  ** extra SIMD intrinsics
