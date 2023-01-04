@@ -207,6 +207,17 @@ class TestBuiltin:
         assert dtype.type is scalar_type
         assert dtype.itemsize == 8*char_size
 
+    def test_create_invalid_string_errors(self):
+        one_too_big = np.iinfo(np.intc).max + 1
+        with pytest.raises(TypeError):
+            type(np.dtype("U"))(one_too_big // 4)
+
+        with pytest.raises(TypeError):
+            type(np.dtype("U"))(one_too_big)
+
+        with pytest.raises(TypeError):
+            type(np.dtype("U"))(-1)
+
 
 class TestRecord:
     def test_equivalent_record(self):

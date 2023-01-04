@@ -136,15 +136,17 @@ string_unicode_new(PyArray_DTypeMeta *self, PyObject *args, PyObject *kwargs)
         return NULL;
     }
 
+    if (size < 0) {
+        PyErr_Format(PyExc_TypeError,
+                     "Strings cannot have a negative size but a size of "
+                     "%"NPY_INTP_FMT" was given", size);
+        return NULL;
+    }
+
     PyArray_Descr *res = PyArray_DescrNewFromType(self->type_num);
 
     if (res == NULL) {
         return NULL;
-    }
-
-    if (size > NPY_MAX_INT) {
-        PyErr_SetString(PyExc_TypeError,
-                        "Strings too large to store inside array.");
     }
 
     if (self->type_num == NPY_UNICODE) {
@@ -153,7 +155,14 @@ string_unicode_new(PyArray_DTypeMeta *self, PyObject *args, PyObject *kwargs)
             PyErr_SetString(
                 PyExc_TypeError,
                 "Strings too large to store inside array.");
+            return NULL;
         }
+    }
+
+    if (size > NPY_MAX_INT) {
+        PyErr_SetString(PyExc_TypeError,
+                        "Strings too large to store inside array.");
+        return NULL;
     }
 
     res->elsize = (int)size;
