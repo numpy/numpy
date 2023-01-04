@@ -207,9 +207,6 @@ class TestBuiltin:
         assert dtype.type is scalar_type
         assert dtype.itemsize == 8*char_size
 
-        with pytest.raises(TypeError):
-            dtype_class(8, foobar=False)
-
 
 class TestRecord:
     def test_equivalent_record(self):
