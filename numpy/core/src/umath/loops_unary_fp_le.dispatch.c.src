@@ -78,9 +78,9 @@
 NPY_FINLINE npyv_u32
 npyv_isnan_f32(npyv_f32 v)
 {
-    const npyv_u32 truemask = npyv_setall_u32(1==1);
-    return npyv_andc_u8(npyv_reinterpret_u8_u32(truemask),
-                        npyv_reinterpret_u8_u32(npyv_cvt_u32_b32(npyv_notnan_f32(v))));
+    const npyv_u8 truemask = npyv_reinterpret_u8_u32(npyv_setall_u32(1==1));
+    npyv_u8 notnan = npyv_reinterpret_u8_u32(npyv_cvt_u32_b32(npyv_notnan_f32(v)));
+    return npyv_reinterpret_u32_u8(npyv_andc_u8(truemask, notnan));
 }
 NPY_FINLINE npyv_u8
 npyv_pack_isnan_f32(npyv_f32 v0, npyv_f32 v1, npyv_f32 v2, npyv_f32 v3)
@@ -99,9 +99,9 @@ npyv_pack_isnan_f32(npyv_f32 v0, npyv_f32 v1, npyv_f32 v2, npyv_f32 v3)
 NPY_FINLINE npyv_u64
 npyv_isnan_f64(npyv_f64 v)
 {
-    const npyv_u64 truemask = npyv_setall_u64(1==1);
-    return npyv_andc_u8(npyv_reinterpret_u8_u64(truemask),
-                        npyv_reinterpret_u8_u64(npyv_cvt_u64_b64(npyv_notnan_f64(v))));
+    const npyv_u8 truemask = npyv_reinterpret_u8_u64(npyv_setall_u64(1==1));
+    npyv_u8 notnan = npyv_reinterpret_u8_u64(npyv_cvt_u64_b64(npyv_notnan_f64(v)));
+    return npyv_reinterpret_u64_u8(npyv_andc_u8(truemask, notnan));
 }
 NPY_FINLINE npyv_u8
 npyv_pack_isnan_f64(npyv_f64 v0, npyv_f64 v1, npyv_f64 v2, npyv_f64 v3,
@@ -212,9 +212,9 @@ npyv_notfinite_f32(npyv_f32 v)
 NPY_FINLINE npyv_u32
 npyv_isfinite_f32(npyv_f32 v)
 {
-    const npyv_u32 truemask = npyv_setall_u32(1==1);
-    return npyv_andc_u8(npyv_reinterpret_u8_u32(truemask),
-                        npyv_reinterpret_u8_u32(npyv_cvt_u32_b32(npyv_notfinite_f32(v))));
+    const npyv_u8 truemask = npyv_reinterpret_u8_u32(npyv_setall_u32(1==1));
+    npyv_u8 notfinite = npyv_reinterpret_u8_u32(npyv_cvt_u32_b32(npyv_notfinite_f32(v)));
+    return npyv_reinterpret_u32_u8(npyv_andc_u8(truemask, notfinite));
 }
 NPY_FINLINE npyv_u8
 npyv_pack_isfinite_f32(npyv_f32 v0, npyv_f32 v1, npyv_f32 v2, npyv_f32 v3)
@@ -263,9 +263,9 @@ npyv_notfinite_f64(npyv_f64 v)
 NPY_FINLINE npyv_u64
 npyv_isfinite_f64(npyv_f64 v)
 {
-    const npyv_u64 truemask = npyv_setall_u64(1==1);
-    return npyv_andc_u8(npyv_reinterpret_u8_u64(truemask),
-                        npyv_reinterpret_u8_u64(npyv_cvt_u64_b64(npyv_notfinite_f64(v))));
+    const npyv_u8 truemask = npyv_reinterpret_u8_u64(npyv_setall_u64(1==1));
+    npyv_u8 notfinite = npyv_reinterpret_u8_u64(npyv_cvt_u64_b64(npyv_notfinite_f64(v)));
+    return npyv_reinterpret_u64_u8(npyv_andc_u8(truemask, notfinite));
 }
 NPY_FINLINE npyv_u8
 npyv_pack_isfinite_f64(npyv_f64 v0, npyv_f64 v1, npyv_f64 v2, npyv_f64 v3,
@@ -345,7 +345,7 @@ npyv_pack_signbit_f32(npyv_f32 v0, npyv_f32 v1, npyv_f32 v2, npyv_f32 v3)
         npyv_cvt_b32_u32(npyv_signbit_f32(v2)),
         npyv_cvt_b32_u32(npyv_signbit_f32(v3))
     );
-    return signbit;
+    return npyv_cvt_u8_b8(signbit);
 #endif
 }
 #endif // NPY_SIMD_F32
@@ -386,7 +386,7 @@ npyv_pack_signbit_f64(npyv_f64 v0, npyv_f64 v1, npyv_f64 v2, npyv_f64 v3,
         npyv_cvt_b64_u64(npyv_signbit_f64(v6)),
         npyv_cvt_b64_u64(npyv_signbit_f64(v7))
     );
-    return signbit;
+    return npyv_cvt_u8_b8(signbit);
 #endif
 }
 #endif // NPY_SIMD_F64
