@@ -7349,8 +7349,6 @@ def diff(a, /, n=1, axis=-1, prepend=np._NoValue, append=np._NoValue):
     recursively.
     Preserves the input mask.
 
-    .. versionadded:: 1.25.0
-
     Parameters
     ----------
     a : array_like
