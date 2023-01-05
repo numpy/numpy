@@ -248,7 +248,6 @@ latex_documents = [
 #latex_use_parts = False
 
 latex_elements = {
-    'fontenc': r'\usepackage[LGR,T1]{fontenc}'
 }
 
 # Additional stuff for the LaTeX preamble.
