@@ -7,7 +7,7 @@
  * Python object DECREF/dealloc followed by NULL'ing the data
  * (to support double clearing on errors).
  * However, memory initialization and traverse follows similar
- * protocols (although traversal needs additional arguments.
+ * protocols (although traversal needs additional arguments).
  */
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
@@ -46,7 +46,7 @@ get_clear_function(
     /* not that cleanup code bothers to check e.g. for floating point flags */
     *flags = PyArrayMethod_MINIMAL_FLAGS;
 
-    get_simple_loop_function *get_clear = NPY_DT_SLOTS(NPY_DTYPE(dtype))->get_clear_loop;
+    get_traverse_loop_function *get_clear = NPY_DT_SLOTS(NPY_DTYPE(dtype))->get_clear_loop;
     if (get_clear == NULL) {
         PyErr_Format(PyExc_RuntimeError,
                 "Internal error, tried to fetch decref/clear function for the "
@@ -112,7 +112,7 @@ NPY_NO_EXPORT int
 npy_get_clear_object_strided_loop(
         void *NPY_UNUSED(traverse_context), PyArray_Descr *NPY_UNUSED(descr),
         int NPY_UNUSED(aligned), npy_intp NPY_UNUSED(fixed_stride),
-        simple_loop_function **out_loop, NpyAuxData **out_auxdata,
+        traverse_loop_function **out_loop, NpyAuxData **out_auxdata,
         NPY_ARRAYMETHOD_FLAGS *flags)
 {
     *flags = NPY_METH_REQUIRES_PYAPI|NPY_METH_NO_FLOATINGPOINT_ERRORS;
@@ -237,7 +237,7 @@ traverse_fields_function(
 static int
 get_clear_fields_transfer_function(
         void *traverse_context, PyArray_Descr *dtype, int NPY_UNUSED(aligned),
-        npy_intp stride, simple_loop_function **out_func,
+        npy_intp stride, traverse_loop_function **out_func,
         NpyAuxData **out_auxdata, NPY_ARRAYMETHOD_FLAGS *flags)
 {
     PyObject *names, *key, *tup, *title;
@@ -342,7 +342,7 @@ traverse_subarray_func(
 {
     subarray_clear_data *subarr_data = (subarray_clear_data *)auxdata;
 
-    simple_loop_function *func = subarr_data->info.func;
+    traverse_loop_function *func = subarr_data->info.func;
     PyArray_Descr *sub_descr = subarr_data->info.descr;
     npy_intp sub_N = subarr_data->count;
     NpyAuxData *sub_auxdata = subarr_data->info.auxdata;
@@ -362,7 +362,7 @@ traverse_subarray_func(
 static int
 get_subarray_clear_func(
         void *traverse_context, PyArray_Descr *dtype, int aligned,
-        npy_intp size, npy_intp stride, simple_loop_function **out_func,
+        npy_intp size, npy_intp stride, traverse_loop_function **out_func,
         NpyAuxData **out_auxdata, NPY_ARRAYMETHOD_FLAGS *flags)
 {
     subarray_clear_data *auxdata = PyMem_Malloc(sizeof(subarray_clear_data));
@@ -401,7 +401,7 @@ clear_no_op(
 NPY_NO_EXPORT int
 npy_get_clear_void_and_legacy_user_dtype_loop(
         void *traverse_context, PyArray_Descr *dtype, int aligned,
-        npy_intp stride, simple_loop_function **out_func,
+        npy_intp stride, traverse_loop_function **out_func,
         NpyAuxData **out_auxdata, NPY_ARRAYMETHOD_FLAGS *flags)
 {
     /*

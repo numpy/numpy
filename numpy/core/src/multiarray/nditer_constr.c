@@ -3216,7 +3216,6 @@ npyiter_allocate_transfer_functions(NpyIter *iter)
                         (flags & NPY_OP_ITFLAG_ALIGNED) != 0,
                         op_dtype[iop]->elsize, op_dtype[iop],
                         &transferinfo[iop].clear, &nc_flags) < 0) {
-                    printf("ahhhhh!\n");
                     goto fail;
                 }
                 cflags = PyArrayMethod_COMBINED_FLAGS(cflags, nc_flags);

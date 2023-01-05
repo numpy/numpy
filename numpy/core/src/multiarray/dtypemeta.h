@@ -36,10 +36,10 @@ typedef struct {
     PyArrayMethodObject *within_dtype_castingimpl;
     /*
      * Implementation which clears a dtype or NULL.  If not given, setting
-     * HASREF on the dtype is invalid.  We only use the loop getting, not
-     * any resolution.
+     * NPY_ITEM_REFCOUNT on the dtype is invalid.  Note that NPY_ITEM_REFCOUNT
+     * may inidicate references that are not Python objects.
      */
-    get_simple_loop_function *get_clear_loop;
+    get_traverse_loop_function *get_clear_loop;
     /*
      * Dictionary of ArrayMethods representing most possible casts
      * (structured and object are exceptions).
