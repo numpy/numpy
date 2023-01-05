@@ -4061,15 +4061,13 @@ _vec_string(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUSED(kw
         method = PyObject_GetAttr((PyObject *)&PyUnicode_Type, method_name);
     }
     else if (NPY_DT_is_user_defined(PyArray_DESCR(char_array))) {
-        PyArray_DTypeMeta* DType = NPY_DTYPE(PyArray_DESCR(char_array));
-        PyTypeObject* scalar_type = DType->scalar_type;
-        PyObject* allowed_scalar_types = PyTuple_Pack(2, (PyObject*)&PyBytes_Type, (PyObject*)&PyUnicode_Type);
-        int is_sub = PyObject_IsSubclass(
-            (PyObject*)scalar_type, allowed_scalar_types);
-        Py_DECREF(allowed_scalar_types);
+        PyTypeObject* scalar_type = NPY_DTYPE(PyArray_DESCR(char_array))->scalar_type;;
+        int is_sub = (PyObject_IsSubType(scalar_type, &PyBytes_Type) ||
+                      PyObject_IsSubType(scalar_type, &PyUnicode_Type));
         if (is_sub == 1) {
             method = PyObject_GetAttr((PyObject*)scalar_type, method_name);
-        } else {
+        } else
+        {
             PyErr_SetString(PyExc_TypeError,
                 "string operations are only allowed for dtypes with a "
                 "scalar type that subclasses str or bytes.");

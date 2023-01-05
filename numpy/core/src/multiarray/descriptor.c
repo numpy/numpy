@@ -1468,23 +1468,6 @@ _convert_from_type(PyObject *obj) {
         Py_DECREF(ret);
 
         /*
-         * Handle scalars associated with NEP-42 dtypes
-         */
-
-        if (PyObject_HasAttrString((PyObject *) typ,
-                                   "__associated_array_dtype__")) {
-            PyObject * array_dtype = PyObject_GetAttrString(
-                (PyObject *)typ, "__associated_array_dtype__");
-
-            if (array_dtype != NULL) {
-                ret = ((PyArray_DTypeMeta *)array_dtype)->singleton;
-                Py_INCREF(ret);
-                Py_DECREF(array_dtype);
-                return ret;
-            }
-        }
-
-        /*
          * All other classes are treated as object. This can be convenient
          * to convey an intention of using it for a specific python type
          * and possibly allow converting to a new type-specific dtype in the future. It may make sense to

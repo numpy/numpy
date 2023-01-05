@@ -375,7 +375,7 @@ def multiply(a, i):
         raise ValueError("Can only multiply by integers")
     out_size = _get_num_chars(a_arr) * max(int(i_arr.max()), 0)
     return _vec_string(
-        a_arr, (a_arr.dtype.type, out_size), '__mul__', (i_arr,))
+        a_arr, type(a_arr.dtype)(out_size), '__mul__', (i_arr,))
 
 
 def _mod_dispatcher(a, values):
@@ -503,7 +503,7 @@ def center(a, width, fillchar=' '):
     if numpy.issubdtype(a_arr.dtype, numpy.string_):
         fillchar = asbytes(fillchar)
     return _vec_string(
-        a_arr, (a_arr.dtype.type, size), 'center', (width_arr, fillchar))
+        a_arr, type(a_arr.dtype)(size), 'center', (width_arr, fillchar))
 
 
 def _count_dispatcher(a, sub, start=None, end=None):
@@ -1088,7 +1088,7 @@ def ljust(a, width, fillchar=' '):
     if numpy.issubdtype(a_arr.dtype, numpy.string_):
         fillchar = asbytes(fillchar)
     return _vec_string(
-        a_arr, (a_arr.dtype.type, size), 'ljust', (width_arr, fillchar))
+        a_arr, type(a_arr.dtype)(size), 'ljust', (width_arr, fillchar))
 
 
 @array_function_dispatch(_unary_op_dispatcher)
@@ -1367,7 +1367,7 @@ def rjust(a, width, fillchar=' '):
     if numpy.issubdtype(a_arr.dtype, numpy.string_):
         fillchar = asbytes(fillchar)
     return _vec_string(
-        a_arr, (a_arr.dtype.type, size), 'rjust', (width_arr, fillchar))
+        a_arr, type(a_arr.dtype)(size), 'rjust', (width_arr, fillchar))
 
 
 @array_function_dispatch(_partition_dispatcher)
@@ -1833,7 +1833,7 @@ def zfill(a, width):
     width_arr = numpy.asarray(width)
     size = int(numpy.max(width_arr.flat))
     return _vec_string(
-        a_arr, (a_arr.dtype.type, size), 'zfill', (width_arr,))
+        a_arr, type(a_arr.dtype)(size), 'zfill', (width_arr,))
 
 
 @array_function_dispatch(_unary_op_dispatcher)
