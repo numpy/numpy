@@ -86,12 +86,11 @@ NPY_FINLINE npyv_u8
 npyv_pack_isnan_f32(npyv_f32 v0, npyv_f32 v1, npyv_f32 v2, npyv_f32 v3)
 {
     const npyv_u8 truemask = npyv_setall_u8(1==1);
-    npyv_b8 notnan = npyv_pack_b8_b32(
-        npyv_notnan_f32(v0),
-        npyv_notnan_f32(v1),
-        npyv_notnan_f32(v2),
-        npyv_notnan_f32(v3)
-    );
+    npyv_b32 b0 = npyv_notnan_f32(v0);
+    npyv_b32 b1 = npyv_notnan_f32(v1);
+    npyv_b32 b2 = npyv_notnan_f32(v2);
+    npyv_b32 b3 = npyv_notnan_f32(v3);
+    npyv_b8 notnan = npyv_pack_b8_b32(b0, b1, b2, b3);
     return npyv_andc_u8(truemask, npyv_cvt_u8_b8(notnan));
 }
 #endif
@@ -108,18 +107,16 @@ npyv_pack_isnan_f64(npyv_f64 v0, npyv_f64 v1, npyv_f64 v2, npyv_f64 v3,
                     npyv_f64 v4, npyv_f64 v5, npyv_f64 v6, npyv_f64 v7)
 {
     const npyv_u8 truemask = npyv_setall_u8(1==1);
-    npyv_b8 notnan = npyv_pack_b8_b64(
-        npyv_notnan_f64(v0),
-        npyv_notnan_f64(v1),
-        npyv_notnan_f64(v2),
-        npyv_notnan_f64(v3),
-        npyv_notnan_f64(v4),
-        npyv_notnan_f64(v5),
-        npyv_notnan_f64(v6),
-        npyv_notnan_f64(v7)
-    );
+    npyv_b64 b0 = npyv_notnan_f64(v0);
+    npyv_b64 b1 = npyv_notnan_f64(v1);
+    npyv_b64 b2 = npyv_notnan_f64(v2);
+    npyv_b64 b3 = npyv_notnan_f64(v3);
+    npyv_b64 b4 = npyv_notnan_f64(v4);
+    npyv_b64 b5 = npyv_notnan_f64(v5);
+    npyv_b64 b6 = npyv_notnan_f64(v6);
+    npyv_b64 b7 = npyv_notnan_f64(v7);
+    npyv_b8 notnan = npyv_pack_b8_b64(b0, b1, b2, b3, b4, b5, b6, b7);
     return npyv_andc_u8(truemask, npyv_cvt_u8_b8(notnan));
-
 }
 #endif
 
@@ -148,12 +145,11 @@ NPY_FINLINE npyv_u8
 npyv_pack_isinf_f32(npyv_f32 v0, npyv_f32 v1, npyv_f32 v2, npyv_f32 v3)
 {
     const npyv_u8 truemask = npyv_setall_u8(1==1);
-    npyv_b8 isinf = npyv_pack_b8_b32(
-        _npyv_isinf_f32(v0),
-        _npyv_isinf_f32(v1),
-        _npyv_isinf_f32(v2),
-        _npyv_isinf_f32(v3)
-    );
+    npyv_b32 b0 = _npyv_isinf_f32(v0);
+    npyv_b32 b1 = _npyv_isinf_f32(v1);
+    npyv_b32 b2 = _npyv_isinf_f32(v2);
+    npyv_b32 b3 = _npyv_isinf_f32(v3);
+    npyv_b8 isinf = npyv_pack_b8_b32(b0, b1, b2, b3);
     return npyv_and_u8(truemask, npyv_cvt_u8_b8(isinf));
 }
 #endif // NPY_SIMD_F32
@@ -183,16 +179,15 @@ npyv_pack_isinf_f64(npyv_f64 v0, npyv_f64 v1, npyv_f64 v2, npyv_f64 v3,
                     npyv_f64 v4, npyv_f64 v5, npyv_f64 v6, npyv_f64 v7)
 {
     const npyv_u8 truemask = npyv_setall_u8(1==1);
-    npyv_b8 isinf = npyv_pack_b8_b64(
-        _npyv_isinf_f64(v0),
-        _npyv_isinf_f64(v1),
-        _npyv_isinf_f64(v2),
-        _npyv_isinf_f64(v3),
-        _npyv_isinf_f64(v4),
-        _npyv_isinf_f64(v5),
-        _npyv_isinf_f64(v6),
-        _npyv_isinf_f64(v7)
-    );
+    npyv_b64 b0 = _npyv_isinf_f64(v0);
+    npyv_b64 b1 = _npyv_isinf_f64(v1);
+    npyv_b64 b2 = _npyv_isinf_f64(v2);
+    npyv_b64 b3 = _npyv_isinf_f64(v3);
+    npyv_b64 b4 = _npyv_isinf_f64(v4);
+    npyv_b64 b5 = _npyv_isinf_f64(v5);
+    npyv_b64 b6 = _npyv_isinf_f64(v6);
+    npyv_b64 b7 = _npyv_isinf_f64(v7);
+    npyv_b8 isinf = npyv_pack_b8_b64(b0, b1, b2, b3, b4, b5, b6, b7);
     return npyv_and_u8(truemask, npyv_cvt_u8_b8(isinf));
 }
 #endif // NPY_SIMD_F64
@@ -239,12 +234,11 @@ npyv_pack_isfinite_f32(npyv_f32 v0, npyv_f32 v1, npyv_f32 v2, npyv_f32 v3)
     return r;
 #else
     const npyv_u8 truemask = npyv_setall_u8(1==1);
-    npyv_b8 notfinite = npyv_pack_b8_b32(
-        npyv_notfinite_f32(v0),
-        npyv_notfinite_f32(v1),
-        npyv_notfinite_f32(v2),
-        npyv_notfinite_f32(v3)
-    );
+    npyv_b32 b0 = npyv_notfinite_f32(v0);
+    npyv_b32 b1 = npyv_notfinite_f32(v1);
+    npyv_b32 b2 = npyv_notfinite_f32(v2);
+    npyv_b32 b3 = npyv_notfinite_f32(v3);
+    npyv_b8 notfinite = npyv_pack_b8_b32(b0, b1, b2, b3);
     return npyv_andc_u8(truemask, npyv_cvt_u8_b8(notfinite));
 #endif
 }
@@ -301,16 +295,15 @@ npyv_pack_isfinite_f64(npyv_f64 v0, npyv_f64 v1, npyv_f64 v2, npyv_f64 v3,
     return r;
 #else
     const npyv_u8 truemask = npyv_setall_u8(1==1);
-    npyv_b8 notfinite = npyv_pack_b8_b64(
-        npyv_notfinite_f64(v0),
-        npyv_notfinite_f64(v1),
-        npyv_notfinite_f64(v2),
-        npyv_notfinite_f64(v3),
-        npyv_notfinite_f64(v4),
-        npyv_notfinite_f64(v5),
-        npyv_notfinite_f64(v6),
-        npyv_notfinite_f64(v7)
-    );
+    npyv_b64 b0 = npyv_notfinite_f64(v0);
+    npyv_b64 b1 = npyv_notfinite_f64(v1);
+    npyv_b64 b2 = npyv_notfinite_f64(v2);
+    npyv_b64 b3 = npyv_notfinite_f64(v3);
+    npyv_b64 b4 = npyv_notfinite_f64(v4);
+    npyv_b64 b5 = npyv_notfinite_f64(v5);
+    npyv_b64 b6 = npyv_notfinite_f64(v6);
+    npyv_b64 b7 = npyv_notfinite_f64(v7);
+    npyv_b8 notfinite = npyv_pack_b8_b64(b0, b1, b2, b3, b4, b5, b6, b7);
     return npyv_andc_u8(truemask, npyv_cvt_u8_b8(notfinite));
 #endif
 }
@@ -339,12 +332,11 @@ npyv_pack_signbit_f32(npyv_f32 v0, npyv_f32 v1, npyv_f32 v2, npyv_f32 v3)
             r = vshrq_n_u8(r, 7);
     return r;
 #else
-    npyv_b8 signbit = npyv_pack_b8_b32(
-        npyv_cvt_b32_u32(npyv_signbit_f32(v0)),
-        npyv_cvt_b32_u32(npyv_signbit_f32(v1)),
-        npyv_cvt_b32_u32(npyv_signbit_f32(v2)),
-        npyv_cvt_b32_u32(npyv_signbit_f32(v3))
-    );
+    npyv_b32 b0 = npyv_cvt_b32_u32(npyv_signbit_f32(v0));
+    npyv_b32 b1 = npyv_cvt_b32_u32(npyv_signbit_f32(v1));
+    npyv_b32 b2 = npyv_cvt_b32_u32(npyv_signbit_f32(v2));
+    npyv_b32 b3 = npyv_cvt_b32_u32(npyv_signbit_f32(v3));
+    npyv_b8 signbit = npyv_pack_b8_b32(b0, b1, b2, b3);
     return npyv_cvt_u8_b8(signbit);
 #endif
 }
@@ -376,16 +368,15 @@ npyv_pack_signbit_f64(npyv_f64 v0, npyv_f64 v1, npyv_f64 v2, npyv_f64 v3,
             r = vshrq_n_u8(r, 7);
     return r;
 #else
-    npyv_b8 signbit = npyv_pack_b8_b64(
-        npyv_cvt_b64_u64(npyv_signbit_f64(v0)),
-        npyv_cvt_b64_u64(npyv_signbit_f64(v1)),
-        npyv_cvt_b64_u64(npyv_signbit_f64(v2)),
-        npyv_cvt_b64_u64(npyv_signbit_f64(v3)),
-        npyv_cvt_b64_u64(npyv_signbit_f64(v4)),
-        npyv_cvt_b64_u64(npyv_signbit_f64(v5)),
-        npyv_cvt_b64_u64(npyv_signbit_f64(v6)),
-        npyv_cvt_b64_u64(npyv_signbit_f64(v7))
-    );
+    npyv_b64 b0 = npyv_cvt_b64_u64(npyv_signbit_f64(v0));
+    npyv_b64 b1 = npyv_cvt_b64_u64(npyv_signbit_f64(v1));
+    npyv_b64 b2 = npyv_cvt_b64_u64(npyv_signbit_f64(v2));
+    npyv_b64 b3 = npyv_cvt_b64_u64(npyv_signbit_f64(v3));
+    npyv_b64 b4 = npyv_cvt_b64_u64(npyv_signbit_f64(v4));
+    npyv_b64 b5 = npyv_cvt_b64_u64(npyv_signbit_f64(v5));
+    npyv_b64 b6 = npyv_cvt_b64_u64(npyv_signbit_f64(v6));
+    npyv_b64 b7 = npyv_cvt_b64_u64(npyv_signbit_f64(v7));
+    npyv_b8 signbit = npyv_pack_b8_b64(b0, b1, b2, b3, b4, b5, b6, b7);
     return npyv_cvt_u8_b8(signbit);
 #endif
 }
