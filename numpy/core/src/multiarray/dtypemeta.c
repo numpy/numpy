@@ -18,6 +18,8 @@
 #include "scalartypes.h"
 #include "convert_datatype.h"
 #include "usertypes.h"
+#include "conversion_utils.h"
+#include "templ_common.h"
 
 #include <assert.h>
 
@@ -122,6 +124,50 @@ legacy_dtype_default_new(PyArray_DTypeMeta *self,
     return (PyObject *)self->singleton;
 }
 
+static PyObject *
+string_unicode_new(PyArray_DTypeMeta *self, PyObject *args, PyObject *kwargs)
+{
+    npy_intp size;
+
+    static char *kwlist[] = {"", NULL};
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O&", kwlist,
+                                     PyArray_IntpFromPyIntConverter, &size)) {
+        return NULL;
+    }
+
+    if (size < 0) {
+        PyErr_Format(PyExc_ValueError,
+                     "Strings cannot have a negative size but a size of "
+                     "%"NPY_INTP_FMT" was given", size);
+        return NULL;
+    }
+
+    PyArray_Descr *res = PyArray_DescrNewFromType(self->type_num);
+
+    if (res == NULL) {
+        return NULL;
+    }
+
+    if (self->type_num == NPY_UNICODE) {
+        // unicode strings are 4 bytes per character
+        if (npy_mul_sizes_with_overflow(&size, size, 4)) {
+            PyErr_SetString(
+                PyExc_TypeError,
+                "Strings too large to store inside array.");
+            return NULL;
+        }
+    }
+
+    if (size > NPY_MAX_INT) {
+        PyErr_SetString(PyExc_TypeError,
+                        "Strings too large to store inside array.");
+        return NULL;
+    }
+
+    res->elsize = (int)size;
+    return (PyObject *)res;
+}
 
 static PyArray_Descr *
 nonparametric_discover_descr_from_pyobject(
@@ -151,7 +197,7 @@ string_discover_descr_from_pyobject(
         }
         if (itemsize > NPY_MAX_INT) {
             PyErr_SetString(PyExc_TypeError,
-                    "string to large to store inside array.");
+                    "string too large to store inside array.");
         }
         PyArray_Descr *res = PyArray_DescrNewFromType(cls->type_num);
         if (res == NULL) {
@@ -849,6 +895,7 @@ dtypemeta_wrap_legacy_descriptor(PyArray_Descr *descr)
                     string_discover_descr_from_pyobject);
             dt_slots->common_dtype = string_unicode_common_dtype;
             dt_slots->common_instance = string_unicode_common_instance;
+            ((PyTypeObject*)dtype_class)->tp_new = (newfunc)string_unicode_new;
         }
     }
 
