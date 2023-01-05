@@ -256,14 +256,12 @@ latex_elements['preamble'] = r'''
 % header.  This is default with Sphinx 5.0.0+, so no need for
 % the old hack then.
 % Unfortunately sphinx.sty 5.0.0 did not bump its version date
-% hence some complications here:  we first check if Sphinx is
-% at 4.0.0+ so sphinxpackagefootnote.sty exists then check
-% the latter date which was bumped to 2022/02/12 at Sphinx 5.0.0.
+% so we check rather sphinxpackagefootnote.sty (which exists
+% since Sphinx 4.0.0).
 \makeatletter
-\if1\@ifpackagelater{sphinx}{2021/01/27}% later = at least
-    {\@ifpackagelater{sphinxpackagefootnote}{2022/02/12}01}%
-    {1}%
-% this until next \fi gets executed if and only if Sphinx < 5.0.0
+\@ifpackagelater{sphinxpackagefootnote}{2022/02/12}
+    {}% Sphinx >= 5.0.0, nothing to do
+    {%
 \usepackage{expdlist}
 \let\latexdescription=\description
 \def\description{\latexdescription{}{} \breaklabel}
@@ -279,7 +277,7 @@ latex_elements['preamble'] = r'''
         \def\leavevmode{\def\leavevmode{\unhbox\voidb@x}}%
     }%
 }
-\fi  % sphinx < 5.0.0
+    }% Sphinx < 5.0.0 (and assumed >= 4.0.0)
 \makeatother
 
 % Make Examples/etc section headers smaller and more compact
