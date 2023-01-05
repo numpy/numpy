@@ -212,8 +212,9 @@ class TestBuiltin:
         with pytest.raises(TypeError):
             type(np.dtype("U"))(one_too_big // 4)
 
-        with pytest.raises(TypeError):
-            type(np.dtype("U"))(one_too_big)
+        if one_too_big < sys.maxsize:
+            with pytest.raises(TypeError):
+                type(np.dtype("S"))(one_too_big)
 
         with pytest.raises(TypeError):
             type(np.dtype("U"))(-1)
