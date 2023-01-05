@@ -478,6 +478,10 @@ class TestPrintOptions:
     are too small or too large.
     """
 
+    @pytest.fixture(scope='class', autouse=True)
+    def use_ascii(self):
+        poly.set_default_printstyle('ascii')
+
     def test_str(self):
         p = poly.Polynomial([1/2, 1/7, 1/7*10**8, 1/7*10**9])
         assert_equal(str(p), '0.5 + 0.14285714 x + 14285714.28571429 x**2 '
