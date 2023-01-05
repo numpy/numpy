@@ -279,7 +279,7 @@ latex_elements['preamble'] = r'''
         \def\leavevmode{\def\leavevmode{\unhbox\voidb@x}}%
     }%
 }
-\fi
+\fi  % sphinx < 5.0.0
 \makeatother
 
 % Make Examples/etc section headers smaller and more compact
