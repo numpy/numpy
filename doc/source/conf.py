@@ -253,19 +253,25 @@ latex_elements = {
 # Additional stuff for the LaTeX preamble.
 latex_elements['preamble'] = r'''
 % In the parameters section, place a newline after the Parameters
-% header
-\usepackage{xcolor}
+% header.  This is default with Sphinx 5.0.0+, so no need for
+% the old hack then.
+% Unfortunately sphinx.sty 5.0.0 did not bump its version date
+% hence some complications here:  we first check if Sphinx is
+% at 4.0.0+ so sphinxpackagefootnote.sty exists then check
+% the latter date which was bumped to 2022/02/12 at Sphinx 5.0.0.
+\makeatletter
+\if1\@ifpackagelater{sphinx}{2021/01/27}% later = at least
+    {\@ifpackagelater{sphinxpackagefootnote}{2022/02/12}01}%
+    {1}%
+% this until next \fi gets executed if and only if Sphinx < 5.0.0
 \usepackage{expdlist}
 \let\latexdescription=\description
 \def\description{\latexdescription{}{} \breaklabel}
 % but expdlist old LaTeX package requires fixes:
 % 1) remove extra space
 \usepackage{etoolbox}
-\makeatletter
 \patchcmd\@item{{\@breaklabel} }{{\@breaklabel}}{}{}
-\makeatother
 % 2) fix bug in expdlist's way of breaking the line after long item label
-\makeatletter
 \def\breaklabel{%
     \def\@breaklabel{%
         \leavevmode\par
@@ -273,6 +279,7 @@ latex_elements['preamble'] = r'''
         \def\leavevmode{\def\leavevmode{\unhbox\voidb@x}}%
     }%
 }
+\fi
 \makeatother
 
 % Make Examples/etc section headers smaller and more compact
