@@ -212,11 +212,15 @@ class TestBuiltin:
         with pytest.raises(TypeError):
             type(np.dtype("U"))(one_too_big // 4)
 
+        with pytest.raises(TypeError):
+            # Code coverage for very large numbers:
+            type(np.dtype("U"))(np.iinfo(np.intp).max // 4 + 1)
+
         if one_too_big < sys.maxsize:
             with pytest.raises(TypeError):
                 type(np.dtype("S"))(one_too_big)
 
-        with pytest.raises(TypeError):
+        with pytest.raises(ValueError):
             type(np.dtype("U"))(-1)
 
 

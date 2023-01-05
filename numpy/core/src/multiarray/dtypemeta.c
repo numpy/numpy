@@ -137,7 +137,7 @@ string_unicode_new(PyArray_DTypeMeta *self, PyObject *args, PyObject *kwargs)
     }
 
     if (size < 0) {
-        PyErr_Format(PyExc_TypeError,
+        PyErr_Format(PyExc_ValueError,
                      "Strings cannot have a negative size but a size of "
                      "%"NPY_INTP_FMT" was given", size);
         return NULL;
