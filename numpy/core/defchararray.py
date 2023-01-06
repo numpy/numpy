@@ -76,15 +76,16 @@ def _is_unicode(arr):
     return False
 
 
-def _to_string_or_unicode_array(result, output_dtype_class=None):
+def _to_string_or_unicode_array(result, output_dtype_like=None):
     """
     Helper function to cast a result back into an array
     with the appropriate dtype if an object array must be used
     as an intermediary.
     """
     ret = numpy.asarray(result.tolist())
-    if output_dtype_class is not None:
-        return ret.astype(output_dtype_class(_get_num_chars(ret)))
+    dtype = getattr(output_dtype_like, 'dtype', None)
+    if dtype is not None:
+        return ret.astype(type(dtype)(_get_num_chars(ret)))
     return ret
 
 
@@ -424,7 +425,7 @@ def mod(a, values):
 
     """
     return _to_string_or_unicode_array(
-        _vec_string(a, object_, '__mod__', (values,)), type(a.dtype))
+        _vec_string(a, object_, '__mod__', (values,)), a)
 
 
 @array_function_dispatch(_unary_op_dispatcher)
@@ -744,9 +745,7 @@ def expandtabs(a, tabsize=8):
 
     """
     return _to_string_or_unicode_array(
-        _vec_string(a, object_, 'expandtabs', (tabsize,)),
-        type(a.dtype)
-    )
+        _vec_string(a, object_, 'expandtabs', (tabsize,)), a)
 
 
 @array_function_dispatch(_count_dispatcher)
@@ -1066,7 +1065,7 @@ def join(sep, seq):
 
     """
     return _to_string_or_unicode_array(
-        _vec_string(sep, object_, 'join', (seq,)), type(seq.dtype))
+        _vec_string(sep, object_, 'join', (seq,)), seq)
 
 
 
@@ -1241,7 +1240,7 @@ def partition(a, sep):
 
     """
     return _to_string_or_unicode_array(
-        _vec_string(a, object_, 'partition', (sep,)), type(a.dtype))
+        _vec_string(a, object_, 'partition', (sep,)), a)
 
 
 def _replace_dispatcher(a, old, new, count=None):
@@ -1286,10 +1285,7 @@ def replace(a, old, new, count=None):
     array(['The dwash was fresh', 'Thwas was it'], dtype='<U19')
     """
     return _to_string_or_unicode_array(
-        _vec_string(
-            a, object_, 'replace', [old, new] + _clean_args(count)),
-        type(a.dtype)
-    )
+        _vec_string(a, object_, 'replace', [old, new] + _clean_args(count)), a)
 
 
 @array_function_dispatch(_count_dispatcher)
@@ -1424,7 +1420,7 @@ def rpartition(a, sep):
 
     """
     return _to_string_or_unicode_array(
-        _vec_string(a, object_, 'rpartition', (sep,)), type(a.dtype))
+        _vec_string(a, object_, 'rpartition', (sep,)), a)
 
 
 def _split_dispatcher(a, sep=None, maxsplit=None):
