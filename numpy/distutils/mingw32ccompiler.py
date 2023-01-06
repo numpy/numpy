@@ -440,6 +440,7 @@ def _build_import_library_x86():
     from numpy.distutils import lib2def
 
     def_name = "python%d%d.def" % tuple(sys.version_info[:2])
+    os.makedirs(os.path.join(sys.prefix, 'libs'), exist_ok=True)
     def_file = os.path.join(sys.prefix, 'libs', def_name)
     nm_output = lib2def.getnm(
             lib2def.DEFAULT_NM + [lib_file], shell=False)
