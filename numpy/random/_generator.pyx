@@ -3629,9 +3629,9 @@ cdef class Generator:
 
         This function internally uses linear algebra routines, and thus results
         may not be identical (even up to precision) across architectures, OSes,
-        or even builds. For example, this is likely if `cov` has multiple equal
-        singular values and `method` is `'svd'` (default). In this case,
-        `method = 'cholesky'` may be more robust.
+        or even builds. For example, this is likely if ``cov`` has multiple equal
+        singular values and ``method`` is ``'svd'`` (default). In this case,
+        ``method='cholesky'`` may be more robust.
 
         References
         ----------
