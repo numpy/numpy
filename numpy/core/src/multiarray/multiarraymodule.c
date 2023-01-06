@@ -3785,6 +3785,29 @@ format_longfloat(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
                               TrimMode_LeaveOneZero, -1, -1);
 }
 
+/* returns 1 if array is a user-defined string dtype, 0 for a user-defined
+ * non-string dtype, and -1 for a non-string builtin dtype
+*/
+static int _is_user_defined_string_array(PyArrayObject* array)
+{
+    if (NPY_DT_is_user_defined(PyArray_DESCR(array)))
+    {
+        PyTypeObject* scalar_type = NPY_DTYPE(PyArray_DESCR(array))->scalar_type;
+        if (PyType_IsSubtype(scalar_type, &PyBytes_Type) ||
+            PyType_IsSubtype(scalar_type, &PyUnicode_Type))
+        {
+            return 1;
+        }
+        else
+        {
+            return 0;
+        }
+    }
+    else {
+        return -1;
+    }
+}
+
 
 /*
  * The only purpose of this function is that it allows the "rstrip".
@@ -3855,12 +3878,32 @@ compare_chararrays(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
         Py_DECREF(newarr);
         return NULL;
     }
-    if (PyArray_ISSTRING(newarr) && PyArray_ISSTRING(newoth)) {
+    int is_user_string_newarr = _is_user_defined_string_array(newarr);
+    int is_user_string_newoth = _is_user_defined_string_array(newoth);
+    if ((PyArray_ISSTRING(newarr) || (is_user_string_newarr == 1)) &&
+        (PyArray_ISSTRING(newoth) || (is_user_string_newoth == 1)))
+    {
         res = _umath_strings_richcompare(newarr, newoth, cmp_op, rstrip != 0);
     }
     else {
-        PyErr_SetString(PyExc_TypeError,
-                "comparison of non-string arrays");
+        if ((is_user_string_newarr == -1) || (is_user_string_newoth == -1))
+        {
+            PyErr_SetString(PyExc_TypeError,
+                    "comparison of non-string arrays");
+            Py_DECREF(newarr);
+            Py_DECREF(newoth);
+            return NULL;
+        }
+        else if ((is_user_string_newarr == 0) || (is_user_string_newoth == 0))
+        {
+            PyErr_SetString(
+                PyExc_TypeError,
+                "string comparisons are only allowed for dtypes with a "
+                "scalar type that are subtypes of str or bytes.");
+            Py_DECREF(newarr);
+            Py_DECREF(newoth);
+            return NULL;
+        }
     }
     Py_DECREF(newarr);
     Py_DECREF(newoth);
@@ -4060,25 +4103,28 @@ _vec_string(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUSED(kw
     else if (PyArray_TYPE(char_array) == NPY_UNICODE) {
         method = PyObject_GetAttr((PyObject *)&PyUnicode_Type, method_name);
     }
-    else if (NPY_DT_is_user_defined(PyArray_DESCR(char_array))) {
-        PyTypeObject* scalar_type = NPY_DTYPE(PyArray_DESCR(char_array))->scalar_type;;
-        int is_sub = (PyObject_IsSubType(scalar_type, &PyBytes_Type) ||
-                      PyObject_IsSubType(scalar_type, &PyUnicode_Type));
-        if (is_sub == 1) {
+    else {
+        int is_string = _is_user_defined_string_array(char_array);
+        if (is_string == 1) {
+            PyTypeObject* scalar_type =
+                NPY_DTYPE(PyArray_DESCR(char_array))->scalar_type;
             method = PyObject_GetAttr((PyObject*)scalar_type, method_name);
-        } else
-        {
-            PyErr_SetString(PyExc_TypeError,
+        }
+        else if (is_string == 0) {
+            Py_DECREF(type);
+            PyErr_SetString(
+                PyExc_TypeError,
                 "string operations are only allowed for dtypes with a "
-                "scalar type that subclasses str or bytes.");
+                "scalar type that are subtypes of str or bytes.");
             goto err;
         }
-    }
-    else {
-        PyErr_SetString(PyExc_TypeError,
+        else
+        {
+            Py_DECREF(type);
+            PyErr_SetString(PyExc_TypeError,
                 "string operation on non-string array");
-        Py_DECREF(type);
-        goto err;
+            goto err;
+        }
     }
     if (method == NULL) {
         Py_DECREF(type);

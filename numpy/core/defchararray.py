@@ -64,12 +64,29 @@ def _use_unicode(*args):
             return x.dtype
     return string_
 
-def _to_string_or_unicode_array(result):
+
+def _is_unicode(arr):
+    """Returns True if arr is a string or a string array with a dtype that
+    represents a unicode string, otherwise returns False.
+
     """
-    Helper function to cast a result back into a string or unicode array
-    if an object array must be used as an intermediary.
+    scalar_type = numpy.asarray(arr).dtype.type
+    if isinstance(arr, str) or issubclass(scalar_type, (unicode_, str)):
+        return True
+    return False
+
+
+def _to_string_or_unicode_array(result, output_dtype_class=None):
     """
-    return numpy.asarray(result.tolist())
+    Helper function to cast a result back into an array
+    with the appropriate dtype if an object array must be used
+    as an intermediary.
+    """
+    ret = numpy.asarray(result.tolist())
+    if output_dtype_class is not None:
+        return ret.astype(output_dtype_class(_get_num_chars(ret)))
+    return ret
+
 
 def _clean_args(*args):
     """
@@ -407,7 +424,7 @@ def mod(a, values):
 
     """
     return _to_string_or_unicode_array(
-        _vec_string(a, object_, '__mod__', (values,)))
+        _vec_string(a, object_, '__mod__', (values,)), type(a.dtype))
 
 
 @array_function_dispatch(_unary_op_dispatcher)
@@ -727,7 +744,9 @@ def expandtabs(a, tabsize=8):
 
     """
     return _to_string_or_unicode_array(
-        _vec_string(a, object_, 'expandtabs', (tabsize,)))
+        _vec_string(a, object_, 'expandtabs', (tabsize,)),
+        type(a.dtype)
+    )
 
 
 @array_function_dispatch(_count_dispatcher)
@@ -1047,7 +1066,7 @@ def join(sep, seq):
 
     """
     return _to_string_or_unicode_array(
-        _vec_string(sep, object_, 'join', (seq,)))
+        _vec_string(sep, object_, 'join', (seq,)), type(seq.dtype))
 
 
 
@@ -1222,7 +1241,7 @@ def partition(a, sep):
 
     """
     return _to_string_or_unicode_array(
-        _vec_string(a, object_, 'partition', (sep,)))
+        _vec_string(a, object_, 'partition', (sep,)), type(a.dtype))
 
 
 def _replace_dispatcher(a, old, new, count=None):
@@ -1268,7 +1287,9 @@ def replace(a, old, new, count=None):
     """
     return _to_string_or_unicode_array(
         _vec_string(
-            a, object_, 'replace', [old, new] + _clean_args(count)))
+            a, object_, 'replace', [old, new] + _clean_args(count)),
+        type(a.dtype)
+    )
 
 
 @array_function_dispatch(_count_dispatcher)
@@ -1403,7 +1424,7 @@ def rpartition(a, sep):
 
     """
     return _to_string_or_unicode_array(
-        _vec_string(a, object_, 'rpartition', (sep,)))
+        _vec_string(a, object_, 'rpartition', (sep,)), type(a.dtype))
 
 
 def _split_dispatcher(a, sep=None, maxsplit=None):
@@ -1868,7 +1889,7 @@ def isnumeric(a):
     array([ True, False, False, False, False])
 
     """
-    if _use_unicode(a) != unicode_:
+    if not _is_unicode(a):
         raise TypeError("isnumeric is only available for Unicode strings and arrays")
     return _vec_string(a, bool_, 'isnumeric')
 
@@ -1905,7 +1926,7 @@ def isdecimal(a):
     array([ True, False, False, False])
 
     """ 
-    if _use_unicode(a) != unicode_:
+    if not _is_unicode(a):
         raise TypeError("isnumeric is only available for Unicode strings and arrays")
     return _vec_string(a, bool_, 'isdecimal')
 
