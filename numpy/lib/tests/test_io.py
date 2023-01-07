@@ -7,9 +7,10 @@ import time
 import warnings
 import io
 import re
+import zipfile
 import pytest
 from pathlib import Path
-from tempfile import NamedTemporaryFile, mkstemp
+from tempfile import NamedTemporaryFile
 from io import BytesIO, StringIO
 from datetime import datetime
 import locale
@@ -2723,83 +2724,138 @@ def test_npzfile_dict():
 def test_npzfile_append():
     x = np.zeros((3, 3))
     y = np.zeros((3, 3))
-
-    # file-like object
-    with temppath(prefix="numpy_test_npzfile_append_", suffix=".npz") as tmp:
-        np.savez(tmp, x=x)
-        np.savez(tmp, y=y, append=True)
-        l = np.load(tmp)
-        assert_('x' in l.keys())
-        assert_('y' in l.keys())
-        assert_equal(x, l['x'])
-        assert_equal(y, l['y'])
-
-    with temppath(prefix="numpy_test_npzfile_append_", suffix=".npz") as tmp:
-        np.savez(tmp, x=x, append=True)
-        np.savez(tmp, y=y, append=True)
-        l = np.load(tmp)
-        assert_('x' in l.keys())
-        assert_('y' in l.keys())
-        assert_equal(x, l['x'])
-        assert_equal(y, l['y'])
-
-    with temppath(prefix="numpy_test_npzfile_append_", suffix=".npz") as tmp:
-        np.savez(tmp, x=x)
-        assert_raises(ValueError, np.savez, tmp, x=x, append=True)
-
-    # path-like object
-    tmp = BytesIO()
-    np.savez(tmp, x=x)
-    np.savez(tmp, y=y, append=True)
-    tmp.seek(0)
-    l = np.load(tmp)
-    assert_('x' in l.keys())
-    assert_('y' in l.keys())
-    assert_equal(x, l['x'])
-    assert_equal(y, l['y'])
-
-    tmp = BytesIO()
-    np.savez(tmp, x=x, append=True)
-    np.savez(tmp, y=y, append=True)
-    tmp.seek(0)
-    l = np.load(tmp)
-    assert_('x' in l.keys())
-    assert_('y' in l.keys())
-    assert_equal(x, l['x'])
-    assert_equal(y, l['y'])
-
-    tmp = BytesIO()
-    np.savez(tmp, x=x)
-    assert_raises(ValueError, np.savez, tmp, x=x, append=True)
+    savez_list = [np.savez, np.savez_compressed]
 
     # filename
-    fd, tmp = mkstemp(prefix="numpy_test_npzfile_append_", suffix=".npz")
-    os.close(fd)
-    np.savez(tmp, x=x)
-    np.savez(tmp, y=y, append=True)
-    l = np.load(tmp)
-    assert_('x' in l.keys())
-    assert_('y' in l.keys())
-    assert_equal(x, l['x'])
-    assert_equal(y, l['y'])
-    os.remove(tmp)
 
-    fd, tmp = mkstemp(prefix="numpy_test_npzfile_append_", suffix=".npz")
-    os.close(fd)
-    np.savez(tmp, x=x, append=True)
-    np.savez(tmp, y=y, append=True)
-    l = np.load(tmp)
-    assert_('x' in l.keys())
-    assert_('y' in l.keys())
-    assert_equal(x, l['x'])
-    assert_equal(y, l['y'])
-    os.remove(tmp)
+    for savez in savez_list:
+        with temppath(prefix="numpy_test_npzfile_append_", suffix=".npz") as tmp:
+            savez(tmp, x=x)
+            savez(tmp, y=y, append=True)
+            l = np.load(tmp)
+            assert_('x' in l.keys())
+            assert_('y' in l.keys())
+            assert_equal(x, l['x'])
+            assert_equal(y, l['y'])
 
-    fd, tmp = mkstemp(prefix="numpy_test_npzfile_append_", suffix=".npz")
-    os.close(fd)
-    np.savez(tmp, x=x)
-    assert_raises(ValueError, np.savez, tmp, x=x, append=True)
-    os.remove(tmp)
+    # append during file creation
+    for savez in savez_list:
+        with temppath(prefix="numpy_test_npzfile_append_", suffix=".npz") as tmp:
+            savez(tmp, x=x, append=True)
+            savez(tmp, y=y, append=True)
+            l = np.load(tmp)
+            assert_('x' in l.keys())
+            assert_('y' in l.keys())
+            assert_equal(x, l['x'])
+            assert_equal(y, l['y'])
+
+    # error because same array
+    for savez in savez_list:
+        with temppath(prefix="numpy_test_npzfile_append_", suffix=".npz") as tmp:
+            savez(tmp, x=x)
+            assert_raises(ValueError, savez, tmp, x=x, append=True)
+
+    # path-like object
+
+    for savez in savez_list:
+        tmp = BytesIO()
+        savez(tmp, x=x)
+        savez(tmp, y=y, append=True)
+        tmp.seek(0)
+        l = np.load(tmp)
+        assert_('x' in l.keys())
+        assert_('y' in l.keys())
+        assert_equal(x, l['x'])
+        assert_equal(y, l['y'])
+
+    # append during file creation
+    for savez in savez_list:
+        tmp = BytesIO()
+        savez(tmp, x=x, append=True)
+        savez(tmp, y=y, append=True)
+        tmp.seek(0)
+        l = np.load(tmp)
+        assert_('x' in l.keys())
+        assert_('y' in l.keys())
+        assert_equal(x, l['x'])
+        assert_equal(y, l['y'])
+
+    # error because same array
+    for savez in savez_list:
+        tmp = BytesIO()
+        savez(tmp, x=x)
+        assert_raises(ValueError, savez, tmp, x=x, append=True)
+
+
+def test_npzfile_update():
+    x = np.zeros((3, 3))
+    y = np.zeros((3, 3))
+    xnew = np.zeros((6, 6))
+    savez_list = [np.savez, np.savez_compressed]
+
+    # path-like object
+
+    for savez in savez_list:
+        tmp = BytesIO()
+        savez(tmp, x=x)
+        assert_raises(ValueError, savez, tmp, x=x, update=True)
+
+    # filename
+
+    for savez in savez_list:
+        with temppath(prefix="numpy_test_npzfile_update_", suffix=".npz") as tmp:
+            savez(tmp, x=x)
+            l = np.load(tmp)
+            assert_('x' in l.keys())
+            assert_equal(x, l['x'])
+            savez(tmp, x=xnew, y=y, update=True)
+            l = np.load(tmp)
+            assert_('x' in l.keys())
+            assert_('y' in l.keys())
+            assert_equal(xnew, l['x'])
+            assert_equal(y, l['y'])
+
+    # update during file creation
+    for savez in savez_list:
+        with temppath(prefix="numpy_test_npzfile_update_", suffix=".npz") as tmp:
+            savez(tmp, x=x, update=True)
+            l = np.load(tmp)
+            assert_('x' in l.keys())
+            assert_equal(x, l['x'])
+            savez(tmp, x=xnew, y=y, update=True)
+            l = np.load(tmp)
+            assert_('x' in l.keys())
+            assert_('y' in l.keys())
+            assert_equal(xnew, l['x'])
+            assert_equal(y, l['y'])
+
+    # update but only append
+    for savez in savez_list:
+        with temppath(prefix="numpy_test_npzfile_update_", suffix=".npz") as tmp:
+            savez(tmp, x=x)
+            l = np.load(tmp)
+            assert_('x' in l.keys())
+            assert_equal(x, l['x'])
+            savez(tmp, y=y, update=True)
+            l = np.load(tmp)
+            assert_('x' in l.keys())
+            assert_('y' in l.keys())
+            assert_equal(x, l['x'])
+            assert_equal(y, l['y'])
+
+    # update and append keyword
+    for savez in savez_list:
+        with temppath(prefix="numpy_test_npzfile_update_", suffix=".npz") as tmp:
+            savez(tmp, x=x)
+            l = np.load(tmp)
+            assert_('x' in l.keys())
+            assert_equal(x, l['x'])
+            savez(tmp, x=xnew, y=y, update=True, append=True)
+            l = np.load(tmp)
+            assert_('x' in l.keys())
+            assert_('y' in l.keys())
+            assert_equal(xnew, l['x'])
+            assert_equal(y, l['y'])
 
 
 @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")

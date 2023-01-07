@@ -523,13 +523,13 @@ def save(file, arr, allow_pickle=True, fix_imports=True):
                            pickle_kwargs=dict(fix_imports=fix_imports))
 
 
-def _savez_dispatcher(file, *args, append=None, **kwds):
+def _savez_dispatcher(file, *args, append=None, update=None, **kwds):
     yield from args
     yield from kwds.values()
 
 
 @array_function_dispatch(_savez_dispatcher)
-def savez(file, *args, append=False, **kwds):
+def savez(file, *args, append=False, update=False, **kwds):
     """Save several arrays into a single file in uncompressed ``.npz`` format.
 
     Provide arrays as keyword arguments to store them under the
@@ -553,6 +553,14 @@ def savez(file, *args, append=False, **kwds):
         If file exists, it will not be replaced but the arrays will be appended
         to the existing file. It raises a ValueError if array already exists in
         the file.
+        Default: False
+    update : bool, optional
+        Arrays in an existing file will be updated with the new arrays. New
+        arrays will be appended to the file.
+        Technically there is no way to update existing data in a zip file. A
+        new file will be created and will replace the old file. The `update`
+        option is hence only possible if a filename is given as `file` and is
+        not possible for file-like objects.
         Default: False
     kwds : Keyword arguments, optional
         Arrays to save to the file. Each array will be saved to the
@@ -585,8 +593,8 @@ def savez(file, *args, append=False, **kwds):
     ``/`` or contain ``.``.
 
     When naming variables with keyword arguments, it is not possible to name a
-    variable ``file``, as this would cause the ``file`` argument to be defined
-    twice in the call to ``savez``.
+    variable ``file``, ``append``, or ``update`` as this would cause the
+    arguments with these names to be defined twice in the call to ``savez``.
 
     Examples
     --------
@@ -598,7 +606,7 @@ def savez(file, *args, append=False, **kwds):
     Using `savez` with \\*args, the arrays are saved with default names.
 
     >>> np.savez(outfile, x, y)
-    >>> _ = outfile.seek(0) # Only needed here to simulate closing & reopening file
+    >>> _ = outfile.seek(0)  # Only needed here to simulate closing & reopening file
     >>> npzfile = np.load(outfile)
     >>> npzfile.files
     ['arr_0', 'arr_1']
@@ -617,16 +625,16 @@ def savez(file, *args, append=False, **kwds):
     array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 
     """
-    _savez(file, args, kwds, False, append=append)
+    _savez(file, args, kwds, False, append=append, update=update)
 
 
-def _savez_compressed_dispatcher(file, *args, append=None, **kwds):
+def _savez_compressed_dispatcher(file, *args, append=None, update=None, **kwds):
     yield from args
     yield from kwds.values()
 
 
 @array_function_dispatch(_savez_compressed_dispatcher)
-def savez_compressed(file, *args, append=False, **kwds):
+def savez_compressed(file, *args, append=False, update=False, **kwds):
     """
     Save several arrays into a single file in compressed ``.npz`` format.
 
@@ -652,6 +660,14 @@ def savez_compressed(file, *args, append=False, **kwds):
         to the existing file. It raises a ValueError if array already exists in
         the file.
         Default: False
+    update : bool, optional
+        Arrays in an existing file will be updated with the new arrays. New
+        arrays will be appended to the file.
+        Technically there is no way to update existing data in a zip file. A
+        new file will be created and will replace the old file. The `update`
+        option is hence only possible if a filename is given as `file` and is
+        not possible for file-like objects (raises ValueError).
+        Default: False
     kwds : Keyword arguments, optional
         Arrays to save to the file. Each array will be saved to the
         output file with its corresponding keyword name.
@@ -675,44 +691,81 @@ def savez_compressed(file, *args, append=False, **kwds):
     in ``.npy`` format. For a description of the ``.npy`` format, see
     :py:mod:`numpy.lib.format`.
 
-
     When opening the saved ``.npz`` file with `load` a `NpzFile` object is
     returned. This is a dictionary-like object which can be queried for
     its list of arrays (with the ``.files`` attribute), and for the arrays
     themselves.
 
+    Keys passed in `kwds` are used as filenames inside the ZIP archive.
+    Therefore, keys should be valid filenames; e.g., avoid keys that begin with
+    ``/`` or contain ``.``.
+
+    When naming variables with keyword arguments, it is not possible to name a
+    variable ``file``, ``append``, or ``update`` as this would cause the
+    arguments with these names to be defined twice in the call to ``savez``.
+
     Examples
     --------
-    >>> test_array = np.random.rand(3, 2)
-    >>> test_vector = np.random.rand(4)
-    >>> np.savez_compressed('/tmp/123', a=test_array, b=test_vector)
-    >>> loaded = np.load('/tmp/123.npz')
-    >>> print(np.array_equal(test_array, loaded['a']))
-    True
-    >>> print(np.array_equal(test_vector, loaded['b']))
-    True
+    >>> from tempfile import TemporaryFile
+    >>> outfile = TemporaryFile()
+    >>> x = np.arange(10)
+    >>> y = np.sin(x)
+
+    Using `savez_compressed` with \\*args, the arrays are saved with default names.
+
+    >>> np.savez_compressed(outfile, x, y)
+    >>> _ = outfile.seek(0)  # Only needed here to simulate closing & reopening file
+    >>> npzfile = np.load(outfile)
+    >>> npzfile.files
+    ['arr_0', 'arr_1']
+    >>> npzfile['arr_0']
+    array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+
+    Using `savez_compressed` with \\**kwds, the arrays are saved with the keyword names.
+
+    >>> outfile = TemporaryFile()
+    >>> np.savez_compressed(outfile, x=x, y=y)
+    >>> _ = outfile.seek(0)
+    >>> npzfile = np.load(outfile)
+    >>> sorted(npzfile.files)
+    ['x', 'y']
+    >>> npzfile['x']
+    array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 
     """
-    _savez(file, args, kwds, True, append=append)
+    _savez(file, args, kwds, True, append=append, update=update)
 
 
-def _savez(file, args, kwds, compress, append=False,
+def _savez(file, args, kwds, compress, append=False, update=False,
            allow_pickle=True, pickle_kwargs=None):
     # Import is postponed to here since zipfile depends on gzip, an optional
     # component of the so-called standard library.
     import zipfile
+    import tempfile
+    import shutil
 
     if not hasattr(file, 'write'):
         file = os_fspath(file)
         if not file.endswith('.npz'):
             file = file + '.npz'
+        if append or update:
+            if not os.path.exists(file):
+                append = False
+                update = False
+            else:
+                if not zipfile.is_zipfile(file):
+                    append = False
+                    update = False
+    else:
+        if update:
+            raise ValueError("Update not possible for file-like objects")
 
     namedict = kwds
     for i, val in enumerate(args):
         key = 'arr_%d' % i
         if key in namedict.keys():
-            raise ValueError(
-                "Cannot use un-named variables and keyword %s" % key)
+            raise ValueError("Cannot use un-named variables and keyword %s" %
+                             key)
         namedict[key] = val
 
     if compress:
@@ -720,27 +773,61 @@ def _savez(file, args, kwds, compress, append=False,
     else:
         compression = zipfile.ZIP_STORED
 
-    if append:
-        mode = "a"
+    if update:
+        # memmap original file
+        zipfo = load(file, mmap_mode='r')
+
+        # open temporary file
+        dtemp = tempfile.mkdtemp()
+        ftemp = os.path.join(dtemp, 'new.npz')
+        zipf = zipfile_factory(ftemp, mode="w", compression=compression)
+
+        # write arrays of original file without new arrays
+        for key in zipfo.keys():
+            if key not in namedict.keys():
+                fname = key + '.npy'
+                with zipf.open(fname, 'w', force_zip64=True) as fid:
+                    format.write_array(fid, zipfo[key],
+                                       allow_pickle=allow_pickle,
+                                       pickle_kwargs=pickle_kwargs)
+
+        # write new arrays
+        for key, val in namedict.items():
+            fname = key + '.npy'
+            val = np.asanyarray(val)
+            with zipf.open(fname, 'w', force_zip64=True) as fid:
+                format.write_array(fid, val,
+                                   allow_pickle=allow_pickle,
+                                   pickle_kwargs=pickle_kwargs)
+
+        # close and move temporary file back to original file
+        zipfo.close()
+        zipf.close()
+        shutil.move(ftemp, file)
+        shutil.rmtree(dtemp)
     else:
-        mode = "w"
+        if append:
+            mode = "a"
+        else:
+            mode = "w"
 
-    zipf = zipfile_factory(file, mode=mode, compression=compression)
-    inzipf = zipf.namelist()
+        zipf = zipfile_factory(file, mode=mode, compression=compression)
+        inzipf = zipf.namelist()  # empty in case of new file
 
-    for key, val in namedict.items():
-        fname = key + '.npy'
-        if fname in inzipf:
-            zipf.close()
-            raise ValueError("Array name already in npz-file: %s" % key)
-        val = np.asanyarray(val)
-        # always force zip64, gh-10776
-        with zipf.open(fname, 'w', force_zip64=True) as fid:
-            format.write_array(fid, val,
-                               allow_pickle=allow_pickle,
-                               pickle_kwargs=pickle_kwargs)
+        for key, val in namedict.items():
+            fname = key + '.npy'
+            if fname in inzipf:
+                zipf.close()
+                raise ValueError("Array name already in npz-file: %s."
+                                 " Use update keyword." % key)
+            val = np.asanyarray(val)
+            # always force zip64, gh-10776
+            with zipf.open(fname, 'w', force_zip64=True) as fid:
+                format.write_array(fid, val,
+                                   allow_pickle=allow_pickle,
+                                   pickle_kwargs=pickle_kwargs)
 
-    zipf.close()
+        zipf.close()
 
 
 def _ensure_ndmin_ndarray_check_param(ndmin):
