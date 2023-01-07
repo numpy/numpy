@@ -323,6 +323,13 @@ class TestRegression:
         assert_raises(ValueError, bfa)
         assert_raises(ValueError, bfb)
 
+    def test_fill_readonly(self):
+        # Ticket #22922
+        with pytest.raises(ValueError):
+            a = np.zeros(11)
+            a.setflags(write=False)
+            a.fill(0)
+
     @pytest.mark.xfail(IS_WASM, reason="not sure why")
     @pytest.mark.parametrize("index",
             [np.ones(10, dtype=bool), np.arange(10)],
