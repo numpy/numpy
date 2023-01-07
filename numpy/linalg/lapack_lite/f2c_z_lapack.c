@@ -9826,7 +9826,7 @@ L80:
 
           The first stage consists of deflating the size of the problem
           when there are multiple eigenvalues or if there is a zero in
-          the Z vector.  For each such occurence the dimension of the
+          the Z vector.  For each such occurrence the dimension of the
           secular equation problem is reduced by one.  This stage is
           performed by the routine DLAED2.
 
@@ -14582,7 +14582,7 @@ L60:
 		}
 
 /*
-                ==== Use up to NS of the smallest magnatiude
+                ==== Use up to NS of the smallest magnitude
                 .    shifts.  If there aren't NS shifts available,
                 .    then use them all, possibly dropping one to
                 .    make the number of shifts even. ====
@@ -16718,7 +16718,7 @@ L60:
 		}
 
 /*
-                ==== Use up to NS of the smallest magnatiude
+                ==== Use up to NS of the smallest magnitude
                 .    shifts.  If there aren't NS shifts available,
                 .    then use them all, possibly dropping one to
                 .    make the number of shifts even. ====
