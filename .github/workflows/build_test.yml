@@ -65,7 +65,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11-dev"]
+        python-version: ["3.9", "3.10", "3.11-dev", "pypy3.9-v7.3.11"]
     env:
       EXPECT_CPU_FEATURES: "SSE SSE2 SSE3 SSSE3 SSE41 POPCNT SSE42 AVX F16C FMA3 AVX2 AVX512F AVX512CD AVX512_KNL AVX512_KNM AVX512_SKX AVX512_CLX AVX512_CNL AVX512_ICL"
     steps:
@@ -307,19 +307,6 @@ jobs:
     - uses: actions/setup-python@v4
       with:
         python-version: ${{ env.PYTHON_VERSION }}
-    - uses: ./.github/actions
-
-  pypy38:
-    needs: [smoke_test]
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-      with:
-        submodules: recursive
-        fetch-depth: 0
-    - uses: actions/setup-python@v4
-      with:
-        python-version: pypy-3.8-v7.3.9
     - uses: ./.github/actions
 
   sdist:
