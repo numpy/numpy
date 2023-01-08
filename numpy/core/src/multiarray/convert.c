@@ -370,7 +370,6 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
      *
      * (The longlong here should help with alignment.)
      */
-
     npy_longlong value_buffer_stack[4] = {0};
     char *value_buffer_heap = NULL;
     char *value = (char *)value_buffer_stack;
