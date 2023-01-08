@@ -278,10 +278,8 @@ stages:
             BITS: 64
             NPY_USE_BLAS_ILP64: '1'
 
-          # Not sure how the PyPy version is set here
-          # It is set in azure-steps-windows.ym
-          PyPy38-64bit-fast:
-            PYTHON_VERSION: 'PyPy'
+          PyPy39-64bit-fast:
+            PYTHON_VERSION: 'pypy3.9'
             PYTHON_ARCH: 'x64'
             TEST_MODE: fast
             BITS: 64
