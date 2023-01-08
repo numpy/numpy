@@ -137,6 +137,15 @@ _npy_free_cache(void * p, npy_uintp nelem, npy_uint msz,
             return;
         }
     }
+
+#ifdef NPY_OS_LINUX
+    if (NPY_UNLIKELY(nelem >= ((1u << 22u))) && _madvise_hugepage) {
+        npy_uintp offset = 4096u - (npy_uintp)p % (4096u);
+        npy_uintp length = nelem - offset;
+        madvise((void *)((npy_uintp)p + offset), length, MADV_NOHUGEPAGE);
+    }
+#endif
+
     dealloc(p);
 }
 
