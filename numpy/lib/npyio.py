@@ -593,8 +593,11 @@ def savez(file, *args, append=False, update=False, **kwds):
     ``/`` or contain ``.``.
 
     When naming variables with keyword arguments, it is not possible to name a
-    variable ``file``, ``append``, or ``update`` as this would cause the
-    arguments with these names to be defined twice in the call to ``savez``.
+    variable ``file`` as this would cause the argument ``file`` to be defined
+    twice in the call to ``savez``.
+    The same would be true for ``append`` and ``update``. However, ``savez``
+    checks if ``append`` and ``update`` are boolean scalars and if not, they
+    are saved as arrays in ``file``.
 
     Examples
     --------
@@ -606,7 +609,7 @@ def savez(file, *args, append=False, update=False, **kwds):
     Using `savez` with \\*args, the arrays are saved with default names.
 
     >>> np.savez(outfile, x, y)
-    >>> _ = outfile.seek(0)  # Only needed here to simulate closing & reopening file
+    >>> _ = outfile.seek(0)  # Only needed to simulate closing & reopening file
     >>> npzfile = np.load(outfile)
     >>> npzfile.files
     ['arr_0', 'arr_1']
@@ -628,7 +631,8 @@ def savez(file, *args, append=False, update=False, **kwds):
     _savez(file, args, kwds, False, append=append, update=update)
 
 
-def _savez_compressed_dispatcher(file, *args, append=None, update=None, **kwds):
+def _savez_compressed_dispatcher(file, *args, append=None, update=None,
+                                 **kwds):
     yield from args
     yield from kwds.values()
 
@@ -701,8 +705,11 @@ def savez_compressed(file, *args, append=False, update=False, **kwds):
     ``/`` or contain ``.``.
 
     When naming variables with keyword arguments, it is not possible to name a
-    variable ``file``, ``append``, or ``update`` as this would cause the
-    arguments with these names to be defined twice in the call to ``savez``.
+    variable ``file`` as this would cause the argument ``file`` to be defined
+    twice in the call to ``savez_compressed``.
+    The same would be true for ``append`` and ``update``. However,
+    ``savez_compressed`` checks if ``append`` and ``update`` are boolean
+    scalars and if not, they are saved as arrays in ``file``.
 
     Examples
     --------
@@ -711,17 +718,19 @@ def savez_compressed(file, *args, append=False, update=False, **kwds):
     >>> x = np.arange(10)
     >>> y = np.sin(x)
 
-    Using `savez_compressed` with \\*args, the arrays are saved with default names.
+    Using `savez_compressed` with \\*args, the arrays are saved with default
+    names.
 
     >>> np.savez_compressed(outfile, x, y)
-    >>> _ = outfile.seek(0)  # Only needed here to simulate closing & reopening file
+    >>> _ = outfile.seek(0)  # Only needed to simulate closing & reopening file
     >>> npzfile = np.load(outfile)
     >>> npzfile.files
     ['arr_0', 'arr_1']
     >>> npzfile['arr_0']
     array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 
-    Using `savez_compressed` with \\**kwds, the arrays are saved with the keyword names.
+    Using `savez_compressed` with \\**kwds, the arrays are saved with the
+    keyword names.
 
     >>> outfile = TemporaryFile()
     >>> np.savez_compressed(outfile, x=x, y=y)
@@ -744,23 +753,17 @@ def _savez(file, args, kwds, compress, append=False, update=False,
     import tempfile
     import shutil
 
-    if not hasattr(file, 'write'):
-        file = os_fspath(file)
-        if not file.endswith('.npz'):
-            file = file + '.npz'
-        if append or update:
-            if not os.path.exists(file):
-                append = False
-                update = False
-            else:
-                if not zipfile.is_zipfile(file):
-                    append = False
-                    update = False
-    else:
-        if update:
-            raise ValueError("Update not possible for file-like objects")
-
     namedict = kwds
+    if isinstance(append, bool):
+        iappend = append
+    else:
+        namedict['append'] = append
+        iappend = False
+    if isinstance(update, bool):
+        iupdate = update
+    else:
+        namedict['update'] = update
+        iupdate = False
     for i, val in enumerate(args):
         key = 'arr_%d' % i
         if key in namedict.keys():
@@ -768,12 +771,28 @@ def _savez(file, args, kwds, compress, append=False, update=False,
                              key)
         namedict[key] = val
 
+    if not hasattr(file, 'write'):
+        file = os_fspath(file)
+        if not file.endswith('.npz'):
+            file = file + '.npz'
+        if iappend or iupdate:
+            if not os.path.exists(file):
+                iappend = False
+                iupdate = False
+            else:
+                if not zipfile.is_zipfile(file):
+                    iappend = False
+                    iupdate = False
+    else:
+        if iupdate:
+            raise ValueError("Update not possible for file-like objects")
+
     if compress:
         compression = zipfile.ZIP_DEFLATED
     else:
         compression = zipfile.ZIP_STORED
 
-    if update:
+    if iupdate:
         # memmap original file
         zipfo = load(file, mmap_mode='r')
 
@@ -806,7 +825,7 @@ def _savez(file, args, kwds, compress, append=False, update=False,
         shutil.move(ftemp, file)
         shutil.rmtree(dtemp)
     else:
-        if append:
+        if iappend:
             mode = "a"
         else:
             mode = "w"
