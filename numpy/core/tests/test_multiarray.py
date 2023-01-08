@@ -403,6 +403,13 @@ class TestAttributes:
         assert_array_equal(x['a'], [3.5, 3.5])
         assert_array_equal(x['b'], [-2, -2])
 
+    def test_fill_readonly(self):
+        # gh-22922
+        a = np.zeros(11)
+        a.setflags(write=False)
+        with pytest.raises(ValueError, match=".*read-only"):
+            a.fill(0)
+
 
 class TestArrayConstruction:
     def test_array(self):
