@@ -407,7 +407,7 @@ class TestAttributes:
         # gh-22922
         a = np.zeros(11)
         a.setflags(write=False)
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match=".*read-only"):
             a.fill(0)
 
 
