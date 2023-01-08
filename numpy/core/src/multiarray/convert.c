@@ -359,6 +359,11 @@ PyArray_ToString(PyArrayObject *self, NPY_ORDER order)
 NPY_NO_EXPORT int
 PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
 {
+
+    if (PyArray_FailUnlessWriteable(arr, "assignment destination") < 0) {
+        return -1;
+    }
+
     /*
      * If we knew that the output array has at least one element, we would
      * not actually need a helping buffer, we always null it, just in case.
@@ -366,9 +371,6 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
      * (The longlong here should help with alignment.)
      */
 
-    if (PyArray_FailUnlessWriteable(arr, "assignment destination") < 0) {
-        return -1;
-    }
     npy_longlong value_buffer_stack[4] = {0};
     char *value_buffer_heap = NULL;
     char *value = (char *)value_buffer_stack;
