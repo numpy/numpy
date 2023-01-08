@@ -64,12 +64,7 @@ CONFIG = _cleanup(
                 "endian": "@BUILD_CPU_ENDIAN@",
                 "system": "@BUILD_CPU_SYSTEM@",
             },
-            "target": {
-                "cpu": "@TARGET_CPU@",
-                "family": "@TARGET_CPU_FAMILY@",
-                "endian": "@TARGET_CPU_ENDIAN@",
-                "system": "@TARGET_CPU_SYSTEM@",
-            },
+            "cross-compiled": "@CROSS_COMPILED@",
         },
         "Build Dependencies": {
             "blas": {

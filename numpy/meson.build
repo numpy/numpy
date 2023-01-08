@@ -156,10 +156,6 @@ machines = {
   'BUILD': build_machine,
 }
 
-if meson.is_cross_build()
-  machines += { 'TARGET': target_machine }
-endif
-
 conf_data = configuration_data()
 
 # Set compiler information
@@ -178,8 +174,10 @@ foreach name, machine : machines
   conf_data.set(name + '_CPU_SYSTEM', machine.system())
 endforeach
 
+conf_data.set('CROSS_COMPILED', meson.is_cross_build())
+
 # Python information
-conf_data.set('PYTHON_PATH', py.path())
+conf_data.set('PYTHON_PATH', py.full_path())
 conf_data.set('PYTHON_VERSION', py.language_version())
 
 # Dependencies information
