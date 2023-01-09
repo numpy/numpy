@@ -3,8 +3,8 @@
 Building from source
 ====================
 
-Building locally on your machine gives you
-more granular control. If you are a MacOS or Linux user familiar with using the
+Building locally on your machine gives you complete control over build options.
+If you are a MacOS or Linux user familiar with using the
 command line, you can continue with building NumPy locally by following the
 instructions below.
 
