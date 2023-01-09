@@ -155,6 +155,40 @@ else:
     from . import matrixlib as _mat
     from .matrixlib import *
 
+    # Deprecations introduced in NumPy 1.20.0, 2020-06-06
+    import builtins as _builtins
+
+    _msg = (
+        "module 'numpy' has no attribute '{n}'.\n"
+        "`np.{n}` was a deprecated alias for the builtin `{n}`. "
+        "To avoid this error in existing code, use `{n}` by itself. "
+        "Doing this will not modify any behavior and is safe. {extended_msg}\n"
+        "The aliases was originally deprecated in NumPy 1.20; for more "
+        "details and guidance see the original release note at:\n"
+        "    https://numpy.org/devdocs/release/1.20.0-notes.html#deprecations")
+
+    _specific_msg = (
+        "If you specifically wanted the numpy scalar type, use `np.{}` here.")
+
+    _int_extended_msg = (
+        "When replacing `np.{}`, you may wish to use e.g. `np.int64` "
+        "or `np.int32` to specify the precision. If you wish to review "
+        "your current use, check the release note link for "
+        "additional information.")
+
+    _type_info = [
+        ("object", ""),  # The NumPy scalar only exists by name.
+        ("bool", _specific_msg.format("bool_")),
+        ("float", _specific_msg.format("float64")),
+        ("complex", _specific_msg.format("complex128")),
+        ("str", _specific_msg.format("str_")),
+        ("int", _int_extended_msg.format("int"))]
+
+    __former_attrs__ = {
+         n: _msg.format(n=n, extended_msg=extended_msg)
+         for n, extended_msg in _type_info
+     }
+
     # Future warning introduced in NumPy 1.24.0, 2022-11-17
     _msg = (
         "`np.{n}` is a deprecated alias for `{an}`.  (Deprecated NumPy 1.24)")
@@ -265,8 +299,10 @@ else:
             # the AttributeError
             warnings.warn(
                 f"In the future `np.{attr}` will be defined as the "
-                "corresponding NumPy scalar.  (This may have returned Python "
-                "scalars in past versions.", FutureWarning, stacklevel=2)
+                "corresponding NumPy scalar.", FutureWarning, stacklevel=2)
+
+        if attr in __former_attrs__:
+            raise AttributeError(__former_attrs__[attr])
 
         # Importing Tester requires importing all of UnitTest which is not a
         # cheap import Since it is mainly used in test suits, we lazy import it
