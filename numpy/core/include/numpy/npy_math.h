@@ -184,29 +184,23 @@ NPY_INPLACE double npy_atan2(double x, double y);
 #define npy_fmod fmod
 #define npy_floor floor
 #define npy_expm1 expm1
+#define npy_log1p log1p
 #define npy_acosh acosh
+#define npy_asinh asinh
 #define npy_atanh atanh
 #define npy_rint rint
 #define npy_trunc trunc
 #define npy_exp2 exp2
 #define npy_frexp frexp
 #define npy_ldexp ldexp
+#define npy_copysign copysign
 #define npy_exp exp
 #define npy_sqrt sqrt
 #define npy_pow pow
 #define npy_modf modf
 
-#if defined(__arm64__) && defined(__APPLE__)
-/* due to a build problem with scipy, export these as functions */
-NPY_INPLACE double npy_asinh(double x);
-NPY_INPLACE double npy_copysign(double y, double x);
-NPY_INPLACE double npy_log1p(double x);
-#else
-#define npy_asinh asinh
-#define npy_copysign copysign
-#define npy_log1p log1p
-#endif
 double npy_nextafter(double x, double y);
+
 double npy_spacing(double x);
 
 /*
