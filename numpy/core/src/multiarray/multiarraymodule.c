@@ -3791,16 +3791,13 @@ format_longfloat(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
  */
 static int _is_user_defined_string_array(PyArrayObject* array)
 {
-    if (NPY_DT_is_user_defined(PyArray_DESCR(array)))
-    {
+    if (NPY_DT_is_user_defined(PyArray_DESCR(array))) {
         PyTypeObject* scalar_type = NPY_DTYPE(PyArray_DESCR(array))->scalar_type;
         if (PyType_IsSubtype(scalar_type, &PyBytes_Type) ||
-            PyType_IsSubtype(scalar_type, &PyUnicode_Type))
-        {
+            PyType_IsSubtype(scalar_type, &PyUnicode_Type)) {
             return 1;
         }
-        else
-        {
+        else {
             PyErr_SetString(
                 PyExc_TypeError,
                 "string comparisons are only allowed for dtypes with a "
@@ -3808,8 +3805,7 @@ static int _is_user_defined_string_array(PyArrayObject* array)
             return 0;
         }
     }
-    else
-    {
+    else {
         PyErr_SetString(
             PyExc_TypeError,
             "string operation on non-string array");
@@ -4101,8 +4097,7 @@ _vec_string(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUSED(kw
                 NPY_DTYPE(PyArray_DESCR(char_array))->scalar_type;
             method = PyObject_GetAttr((PyObject*)scalar_type, method_name);
         }
-        else
-        {
+        else {
             Py_DECREF(type);
             goto err;
         }
