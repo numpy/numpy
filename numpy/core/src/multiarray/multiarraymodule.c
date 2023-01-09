@@ -3878,32 +3878,14 @@ compare_chararrays(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
         Py_DECREF(newarr);
         return NULL;
     }
-    int is_user_string_newarr = _is_user_defined_string_array(newarr);
-    int is_user_string_newoth = _is_user_defined_string_array(newoth);
-    if ((PyArray_ISSTRING(newarr) || (is_user_string_newarr == 1)) &&
-        (PyArray_ISSTRING(newoth) || (is_user_string_newoth == 1)))
-    {
+    if ((PyArray_ISSTRING(newarr) &&  (PyArray_ISSTRING(newoth)) {
         res = _umath_strings_richcompare(newarr, newoth, cmp_op, rstrip != 0);
     }
     else {
-        if ((is_user_string_newarr == -1) || (is_user_string_newoth == -1))
-        {
-            PyErr_SetString(PyExc_TypeError,
-                    "comparison of non-string arrays");
-            Py_DECREF(newarr);
-            Py_DECREF(newoth);
-            return NULL;
-        }
-        else if ((is_user_string_newarr == 0) || (is_user_string_newoth == 0))
-        {
-            PyErr_SetString(
-                PyExc_TypeError,
-                "string comparisons are only allowed for dtypes with a "
-                "scalar type that are subtypes of str or bytes.");
-            Py_DECREF(newarr);
-            Py_DECREF(newoth);
-            return NULL;
-        }
+        PyErr_SetString(
+            PyExc_TypeError,
+            "comparison of non-string arrays");
+        return NULL;
     }
     Py_DECREF(newarr);
     Py_DECREF(newoth);
