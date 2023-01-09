@@ -1303,6 +1303,14 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     array([('alpha, #42', 10.), ('beta, #64',  2.)],
           dtype=[('label', '<U12'), ('value', '<f8')])
 
+    Quoted fields can be separated by multiple whitespace characters:
+
+    >>> s = StringIO('"alpha, #42"       10.0\n"beta, #64" 2.0\n')
+    >>> dtype = np.dtype([("label", "U12"), ("value", float)])
+    >>> np.loadtxt(s, dtype=dtype, delimiter=None, quotechar='"')
+    array([('alpha, #42', 10.), ('beta, #64',  2.)],
+          dtype=[('label', '<U12'), ('value', '<f8')])
+
     Two consecutive quote characters within a quoted field are treated as a
     single escaped character:
 
