@@ -57,8 +57,10 @@ def _use_unicode(*args):
     unicode.
     """
     for x in args:
+        if isinstance(x, str):
+            return numpy.dtype(unicode_)
         scalar_type = numpy.asarray(x).dtype.type
-        if (isinstance(x, str) or issubclass(scalar_type, unicode_)):
+        if isinstance(scalar_type, unicode_):
             return numpy.dtype(unicode_)
         elif (issubclass(scalar_type, (str, bytes))):
             return x.dtype
@@ -70,8 +72,8 @@ def _is_unicode(arr):
     represents a unicode string, otherwise returns False.
 
     """
-    scalar_type = numpy.asarray(arr).dtype.type
-    if isinstance(arr, str) or issubclass(scalar_type, (unicode_, str)):
+    if (isinstance(arr, str) or
+            issubclass(numpy.asarray(arr).dtype.type, (unicode_, str))):
         return True
     return False
 
@@ -85,7 +87,7 @@ def _to_string_or_unicode_array(result, output_dtype_like=None):
     ret = numpy.asarray(result.tolist())
     dtype = getattr(output_dtype_like, 'dtype', None)
     if dtype is not None:
-        return ret.astype(type(dtype)(_get_num_chars(ret)))
+        return ret.astype(type(dtype)(_get_num_chars(ret)), copy=False)
     return ret
 
 
@@ -1923,7 +1925,7 @@ def isdecimal(a):
 
     """ 
     if not _is_unicode(a):
-        raise TypeError("isnumeric is only available for Unicode strings and arrays")
+        raise TypeError("isdecimal is only available for Unicode strings and arrays")
     return _vec_string(a, bool_, 'isdecimal')
 
 
