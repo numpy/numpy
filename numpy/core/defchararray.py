@@ -59,10 +59,10 @@ def _use_unicode(*args):
     for x in args:
         scalar_type = numpy.asarray(x).dtype.type
         if (isinstance(x, str) or issubclass(scalar_type, unicode_)):
-            return unicode_
+            return numpy.dtype(unicode_)
         elif (issubclass(scalar_type, (str, bytes))):
             return x.dtype
-    return string_
+    return numpy.dtype(string_)
 
 
 def _is_unicode(arr):
@@ -342,7 +342,7 @@ def add(x1, x2):
     arr2 = numpy.asarray(x2)
     out_size = _get_num_chars(arr1) + _get_num_chars(arr2)
     dtype = _use_unicode(arr1, arr2)
-    return _vec_string(arr1, (dtype, out_size), '__add__', (arr2,))
+    return _vec_string(arr1, type(dtype)(out_size), '__add__', (arr2,))
 
 
 def _multiply_dispatcher(a, i):

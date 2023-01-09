@@ -262,24 +262,7 @@ _convert_from_tuple(PyObject *obj, int align)
     /*
      * We get here if _try_convert_from_inherit_tuple failed without crashing
      */
-    if (NPY_DT_is_user_defined(type)) {
-        /* interpret next item as a typesize */
-        PyObject* itemsize = PyTuple_GET_ITEM(obj, 1);
-
-        PyArray_DTypeMeta* DType = NPY_DTYPE(type);
-
-        PyObject *res = PyObject_CallFunctionObjArgs(
-            (PyObject *)DType, itemsize, NULL);
-
-        Py_DECREF(type);
-
-        if (res == NULL) {
-            return NULL;
-        }
-
-        return (PyArray_Descr *)res;
-    }
-    else if (PyDataType_ISUNSIZED(type)) {
+    if (PyDataType_ISUNSIZED(type)) {
         /* interpret next item as a typesize */
         int itemsize = PyArray_PyIntAsInt(PyTuple_GET_ITEM(obj,1));
 
