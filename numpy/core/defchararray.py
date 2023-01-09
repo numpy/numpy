@@ -1925,7 +1925,8 @@ def isdecimal(a):
 
     """ 
     if not _is_unicode(a):
-        raise TypeError("isdecimal is only available for Unicode strings and arrays")
+        raise TypeError(
+            "isdecimal is only available for Unicode strings and arrays")
     return _vec_string(a, bool_, 'isdecimal')
 
 
