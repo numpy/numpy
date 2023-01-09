@@ -111,7 +111,7 @@ jobs:
       - name: setup rtools for 32-bit
         run: |
           echo "PLAT=i686" >> $env:GITHUB_ENV
-          echo "MSYSTEM=MINGW32" >> $env:GITHUB_ENV
+          #echo "MSYSTEM=MINGW32" >> $env:GITHUB_ENV
           echo "PATH=$env:RTOOLS40_HOME\mingw32\bin;$env:PATH" >> $env:GITHUB_ENV
           gfortran --version
         if: ${{ matrix.buildplat[1] == 'win32' }}
