@@ -260,7 +260,7 @@ cdef class SeedSequence():
     ----------
     entropy : {None, int, sequence[int]}, optional
         The entropy for creating a `SeedSequence`.
-        note: all integer values must be non-negative.
+        All integer values must be non-negative.
     spawn_key : {(), sequence[int]}, optional
         An additional source of entropy based on the position of this
         `SeedSequence` in the tree of such objects created with the
@@ -491,8 +491,7 @@ cdef class BitGenerator():
         ``array_like[ints]`` is passed, then it will be passed to
         `~numpy.random.SeedSequence` to derive the initial `BitGenerator` state.
         One may also pass in a `SeedSequence` instance.
-        
-        note: all integer values must be non-negative.
+        All integer values must be non-negative.
 
     Attributes
     ----------
