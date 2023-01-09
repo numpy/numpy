@@ -199,6 +199,8 @@ NPY_INPLACE double npy_atan2(double x, double y);
 #define npy_pow pow
 #define npy_modf modf
 
+double npy_nextafter(double x, double y);
+
 double npy_spacing(double x);
 
 /*
