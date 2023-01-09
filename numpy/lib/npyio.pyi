@@ -127,6 +127,18 @@ def savez_compressed(
     **kwds: ArrayLike,
 ) -> None: ...
 
+def updatez(
+    file: str,
+    *args: ArrayLike,
+    **kwds: ArrayLike,
+) -> None: ...
+
+def updatez_compressed(
+    file: str,
+    *args: ArrayLike,
+    **kwds: ArrayLike,
+) -> None: ...
+
 # File-like objects only have to implement `__iter__` and,
 # optionally, `encoding`
 @overload

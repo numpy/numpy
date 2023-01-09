@@ -133,6 +133,8 @@ from numpy.lib.npyio import (
     save as save,
     savez as savez,
     savez_compressed as savez_compressed,
+    updatez as updatez,
+    updatez_compressed as updatez_compressed,
     packbits as packbits,
     unpackbits as unpackbits,
     fromregex as fromregex,
