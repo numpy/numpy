@@ -90,6 +90,41 @@ class TypeDescription:
         assert len(self.out) == nout
         self.astype = self.astype_dict.get(self.type, None)
 
+
+def _check_order(types1, types2):
+    dtype_order = allP + "O"
+    for t1, t2 in zip(types1, types2):
+        # We have no opinion on object or time ordering for now:
+        if t1 in "OP" or t2 in "OP":
+            return True
+        if t1 in "mM" or t2 in "mM":
+            return True
+
+        t1i = dtype_order.index(t1)
+        t2i = dtype_order.index(t2)
+        if t1i < t2i:
+            return
+        if t2i > t1i:
+            break
+
+    raise TypeError(
+            f"Input dtypes are unsorted or duplicate: {types1} and {types2}")
+
+
+def check_td_order(tds):
+    # A quick check for whether the signatures make sense, it happened too
+    # often that SIMD additions added loops that do not even make some sense.
+    # TODO: This should likely be a test and it would be nice if it rejected
+    #       duplicate entries as well (but we have many as of writing this).
+    signatures = [t.in_+t.out for t in tds]
+
+    for prev_i, sign in enumerate(signatures[1:]):
+        if sign in signatures[:prev_i+1]:
+            continue  # allow duplicates...
+        
+        _check_order(signatures[prev_i], sign)
+
+
 _fdata_map = dict(
     e='npy_%sf',
     f='npy_%sf',
@@ -172,6 +207,9 @@ class Ufunc:
             self.type_descriptions.extend(td)
         for td in self.type_descriptions:
             td.finish_signature(self.nin, self.nout)
+
+        check_td_order(self.type_descriptions)
+
 
 # String-handling utilities to avoid locale-dependence.
 
@@ -719,18 +757,20 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.cos'),
           None,
+          TD('e', dispatch=[('loops_umath_fp', 'e')]),
           TD('f', dispatch=[('loops_trigonometric', 'f')]),
-          TD('ed', dispatch=[('loops_umath_fp', 'ed')]),
-          TD('fdg' + cmplx, f='cos'),
+          TD('d', dispatch=[('loops_umath_fp', 'd')]),
+          TD('g' + cmplx, f='cos'),
           TD(P, f='cos'),
           ),
 'sin':
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.sin'),
           None,
+          TD('e', dispatch=[('loops_umath_fp', 'e')]),
           TD('f', dispatch=[('loops_trigonometric', 'f')]),
-          TD('ed', dispatch=[('loops_umath_fp', 'ed')]),
-          TD('fdg' + cmplx, f='sin'),
+          TD('d', dispatch=[('loops_umath_fp', 'd')]),
+          TD('g' + cmplx, f='sin'),
           TD(P, f='sin'),
           ),
 'tan':
@@ -888,8 +928,9 @@ defdict = {
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.arctan2'),
           None,
+          TD('e', f='atan2', astype={'e': 'f'}),
           TD('fd', dispatch=[('loops_umath_fp', 'fd')]),
-          TD(flts, f='atan2', astype={'e': 'f'}),
+          TD('g', f='atan2', astype={'e': 'f'}),
           TD(P, f='arctan2'),
           ),
 'remainder':
