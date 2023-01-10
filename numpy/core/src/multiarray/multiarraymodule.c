@@ -3785,6 +3785,34 @@ format_longfloat(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
                               TrimMode_LeaveOneZero, -1, -1);
 }
 
+/*
+ * returns 1 if array is a user-defined string dtype, sets an error and
+ * returns 0 otherwise
+ */
+static int _is_user_defined_string_array(PyArrayObject* array)
+{
+    if (NPY_DT_is_user_defined(PyArray_DESCR(array))) {
+        PyTypeObject* scalar_type = NPY_DTYPE(PyArray_DESCR(array))->scalar_type;
+        if (PyType_IsSubtype(scalar_type, &PyBytes_Type) ||
+            PyType_IsSubtype(scalar_type, &PyUnicode_Type)) {
+            return 1;
+        }
+        else {
+            PyErr_SetString(
+                PyExc_TypeError,
+                "string comparisons are only allowed for dtypes with a "
+                "scalar type that is a subtype of str or bytes.");
+            return 0;
+        }
+    }
+    else {
+        PyErr_SetString(
+            PyExc_TypeError,
+            "string operation on non-string array");
+        return 0;
+    }
+}
+
 
 /*
  * The only purpose of this function is that it allows the "rstrip".
@@ -3861,6 +3889,9 @@ compare_chararrays(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
     else {
         PyErr_SetString(PyExc_TypeError,
                 "comparison of non-string arrays");
+        Py_DECREF(newarr);
+        Py_DECREF(newoth);
+        return NULL;
     }
     Py_DECREF(newarr);
     Py_DECREF(newoth);
@@ -4061,10 +4092,15 @@ _vec_string(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUSED(kw
         method = PyObject_GetAttr((PyObject *)&PyUnicode_Type, method_name);
     }
     else {
-        PyErr_SetString(PyExc_TypeError,
-                "string operation on non-string array");
-        Py_DECREF(type);
-        goto err;
+        if (_is_user_defined_string_array(char_array)) {
+            PyTypeObject* scalar_type =
+                NPY_DTYPE(PyArray_DESCR(char_array))->scalar_type;
+            method = PyObject_GetAttr((PyObject*)scalar_type, method_name);
+        }
+        else {
+            Py_DECREF(type);
+            goto err;
+        }
     }
     if (method == NULL) {
         Py_DECREF(type);

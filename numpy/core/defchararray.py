@@ -46,26 +46,29 @@ array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy.char')
 
 
-def _use_unicode(*args):
-    """
-    Helper function for determining the output type of some string
-    operations.
+def _is_unicode(arr):
+    """Returns True if arr is a string or a string array with a dtype that
+    represents a unicode string, otherwise returns False.
 
-    For an operation on two ndarrays, if at least one is unicode, the
-    result should be unicode.
     """
-    for x in args:
-        if (isinstance(x, str) or
-                issubclass(numpy.asarray(x).dtype.type, unicode_)):
-            return unicode_
-    return string_
+    if (isinstance(arr, str) or
+            issubclass(numpy.asarray(arr).dtype.type, str)):
+        return True
+    return False
 
-def _to_string_or_unicode_array(result):
+
+def _to_string_or_unicode_array(result, output_dtype_like=None):
     """
-    Helper function to cast a result back into a string or unicode array
-    if an object array must be used as an intermediary.
+    Helper function to cast a result back into an array
+    with the appropriate dtype if an object array must be used
+    as an intermediary.
     """
-    return numpy.asarray(result.tolist())
+    ret = numpy.asarray(result.tolist())
+    dtype = getattr(output_dtype_like, 'dtype', None)
+    if dtype is not None:
+        return ret.astype(type(dtype)(_get_num_chars(ret)), copy=False)
+    return ret
+
 
 def _clean_args(*args):
     """
@@ -319,9 +322,19 @@ def add(x1, x2):
     arr1 = numpy.asarray(x1)
     arr2 = numpy.asarray(x2)
     out_size = _get_num_chars(arr1) + _get_num_chars(arr2)
-    dtype = _use_unicode(arr1, arr2)
-    return _vec_string(arr1, (dtype, out_size), '__add__', (arr2,))
 
+    if type(arr1.dtype) != type(arr2.dtype):
+        # Enforce this for now.  The solution to it will be implement add
+        # as a ufunc.  It never worked right on Python 3: bytes + unicode gave
+        # nonsense unicode + bytes errored, and unicode + object used the
+        # object dtype itemsize as num chars (worked on short strings).
+        # bytes + void worked but promoting void->bytes is dubious also.
+        raise TypeError(
+            "np.char.add() requires both arrays of the same dtype kind, but "
+            f"got dtypes: '{arr1.dtype}' and '{arr2.dtype}' (the few cases "
+            "where this used to work often lead to incorrect results).")
+
+    return _vec_string(arr1, type(arr1.dtype)(out_size), '__add__', (arr2,))
 
 def _multiply_dispatcher(a, i):
     return (a,)
@@ -371,7 +384,7 @@ def multiply(a, i):
         raise ValueError("Can only multiply by integers")
     out_size = _get_num_chars(a_arr) * max(int(i_arr.max()), 0)
     return _vec_string(
-        a_arr, (a_arr.dtype.type, out_size), '__mul__', (i_arr,))
+        a_arr, type(a_arr.dtype)(out_size), '__mul__', (i_arr,))
 
 
 def _mod_dispatcher(a, values):
@@ -403,7 +416,7 @@ def mod(a, values):
 
     """
     return _to_string_or_unicode_array(
-        _vec_string(a, object_, '__mod__', (values,)))
+        _vec_string(a, object_, '__mod__', (values,)), a)
 
 
 @array_function_dispatch(_unary_op_dispatcher)
@@ -499,7 +512,7 @@ def center(a, width, fillchar=' '):
     if numpy.issubdtype(a_arr.dtype, numpy.string_):
         fillchar = asbytes(fillchar)
     return _vec_string(
-        a_arr, (a_arr.dtype.type, size), 'center', (width_arr, fillchar))
+        a_arr, type(a_arr.dtype)(size), 'center', (width_arr, fillchar))
 
 
 def _count_dispatcher(a, sub, start=None, end=None):
@@ -723,7 +736,7 @@ def expandtabs(a, tabsize=8):
 
     """
     return _to_string_or_unicode_array(
-        _vec_string(a, object_, 'expandtabs', (tabsize,)))
+        _vec_string(a, object_, 'expandtabs', (tabsize,)), a)
 
 
 @array_function_dispatch(_count_dispatcher)
@@ -1043,7 +1056,7 @@ def join(sep, seq):
 
     """
     return _to_string_or_unicode_array(
-        _vec_string(sep, object_, 'join', (seq,)))
+        _vec_string(sep, object_, 'join', (seq,)), seq)
 
 
 
@@ -1084,7 +1097,7 @@ def ljust(a, width, fillchar=' '):
     if numpy.issubdtype(a_arr.dtype, numpy.string_):
         fillchar = asbytes(fillchar)
     return _vec_string(
-        a_arr, (a_arr.dtype.type, size), 'ljust', (width_arr, fillchar))
+        a_arr, type(a_arr.dtype)(size), 'ljust', (width_arr, fillchar))
 
 
 @array_function_dispatch(_unary_op_dispatcher)
@@ -1218,7 +1231,7 @@ def partition(a, sep):
 
     """
     return _to_string_or_unicode_array(
-        _vec_string(a, object_, 'partition', (sep,)))
+        _vec_string(a, object_, 'partition', (sep,)), a)
 
 
 def _replace_dispatcher(a, old, new, count=None):
@@ -1263,8 +1276,7 @@ def replace(a, old, new, count=None):
     array(['The dwash was fresh', 'Thwas was it'], dtype='<U19')
     """
     return _to_string_or_unicode_array(
-        _vec_string(
-            a, object_, 'replace', [old, new] + _clean_args(count)))
+        _vec_string(a, object_, 'replace', [old, new] + _clean_args(count)), a)
 
 
 @array_function_dispatch(_count_dispatcher)
@@ -1363,7 +1375,7 @@ def rjust(a, width, fillchar=' '):
     if numpy.issubdtype(a_arr.dtype, numpy.string_):
         fillchar = asbytes(fillchar)
     return _vec_string(
-        a_arr, (a_arr.dtype.type, size), 'rjust', (width_arr, fillchar))
+        a_arr, type(a_arr.dtype)(size), 'rjust', (width_arr, fillchar))
 
 
 @array_function_dispatch(_partition_dispatcher)
@@ -1399,7 +1411,7 @@ def rpartition(a, sep):
 
     """
     return _to_string_or_unicode_array(
-        _vec_string(a, object_, 'rpartition', (sep,)))
+        _vec_string(a, object_, 'rpartition', (sep,)), a)
 
 
 def _split_dispatcher(a, sep=None, maxsplit=None):
@@ -1829,7 +1841,7 @@ def zfill(a, width):
     width_arr = numpy.asarray(width)
     size = int(numpy.max(width_arr.flat))
     return _vec_string(
-        a_arr, (a_arr.dtype.type, size), 'zfill', (width_arr,))
+        a_arr, type(a_arr.dtype)(size), 'zfill', (width_arr,))
 
 
 @array_function_dispatch(_unary_op_dispatcher)
@@ -1864,7 +1876,7 @@ def isnumeric(a):
     array([ True, False, False, False, False])
 
     """
-    if _use_unicode(a) != unicode_:
+    if not _is_unicode(a):
         raise TypeError("isnumeric is only available for Unicode strings and arrays")
     return _vec_string(a, bool_, 'isnumeric')
 
@@ -1901,8 +1913,9 @@ def isdecimal(a):
     array([ True, False, False, False])
 
     """ 
-    if _use_unicode(a) != unicode_:
-        raise TypeError("isnumeric is only available for Unicode strings and arrays")
+    if not _is_unicode(a):
+        raise TypeError(
+            "isdecimal is only available for Unicode strings and arrays")
     return _vec_string(a, bool_, 'isdecimal')
 
 
