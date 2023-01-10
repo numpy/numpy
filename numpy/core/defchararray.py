@@ -46,34 +46,13 @@ array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy.char')
 
 
-def _use_unicode(*args):
-    """
-    Helper function for determining the output type of some string
-    operations.
-
-    For an operation on two ndarrays, if at least one is a dtype with a
-    scalar that subclasses str or bytes, the result should be that
-    dtype. Otherwise, if at least one is unicode, the result should be
-    unicode.
-    """
-    for x in args:
-        if isinstance(x, str):
-            return numpy.dtype(unicode_)
-        scalar_type = numpy.asarray(x).dtype.type
-        if isinstance(scalar_type, unicode_):
-            return numpy.dtype(unicode_)
-        elif (issubclass(scalar_type, (str, bytes))):
-            return x.dtype
-    return numpy.dtype(string_)
-
-
 def _is_unicode(arr):
     """Returns True if arr is a string or a string array with a dtype that
     represents a unicode string, otherwise returns False.
 
     """
     if (isinstance(arr, str) or
-            issubclass(numpy.asarray(arr).dtype.type, (unicode_, str))):
+            issubclass(numpy.asarray(arr).dtype.type, str)):
         return True
     return False
 
@@ -343,9 +322,19 @@ def add(x1, x2):
     arr1 = numpy.asarray(x1)
     arr2 = numpy.asarray(x2)
     out_size = _get_num_chars(arr1) + _get_num_chars(arr2)
-    dtype = _use_unicode(arr1, arr2)
-    return _vec_string(arr1, type(dtype)(out_size), '__add__', (arr2,))
 
+    if type(arr1.dtype) != type(arr2.dtype):
+        # Enforce this for now.  The solution to it will be implement add
+        # as a ufunc.  It never worked right on Python 3: bytes + unicode gave
+        # nonsense unicode + bytes errored, and unicode + object used the
+        # object dtype itemsize as num chars (worked on short strings).
+        # bytes + void worked but promoting void->bytes is dubious also.
+        raise TypeError(
+            "np.char.add() requires both arrays of the same dtype kind, but "
+            f"got dtypes: '{arr1.dtype}' and '{arr2.dtype}' (the few cases "
+            "where this used to work often lead to incorrect results).")
+
+    return _vec_string(arr1, type(arr1.dtype)(out_size), '__add__', (arr2,))
 
 def _multiply_dispatcher(a, i):
     return (a,)
