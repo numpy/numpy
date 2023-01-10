@@ -3971,6 +3971,14 @@ class TestComplexFunctions:
             check(func, pts, 1j)
             check(func, pts, 1+1j)
 
+    @np.errstate(all="ignore")
+    def test_promotion_corner_cases(self):
+        for func in self.funcs:
+            assert func(np.float16(1)).dtype == np.float16
+            # Integer to low precision float promotion is a dubious choice:
+            assert func(np.uint8(1)).dtype == np.float16
+            assert func(np.int16(1)).dtype == np.float32
+
 
 class TestAttributes:
     def test_attributes(self):
