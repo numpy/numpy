@@ -509,8 +509,8 @@ cdef extern from "numpy/arrayobject.h":
     # more than is probably needed until it can be checked further.
     int PyArray_SetNumericOps (object) except -1
     object PyArray_GetNumericOps ()
-    int PyArray_INCREF (ndarray)
-    int PyArray_XDECREF (ndarray)
+    int PyArray_INCREF (ndarray) except *  # uses PyArray_Item_INCREF...
+    int PyArray_XDECREF (ndarray) except *  # uses PyArray_Item_DECREF...
     void PyArray_SetStringFunction (object, int)
     dtype PyArray_DescrFromType (int)
     object PyArray_TypeObjectFromType (int)
@@ -571,7 +571,7 @@ cdef extern from "numpy/arrayobject.h":
     int PyArray_PyIntAsInt (object) except? -1
     npy_intp PyArray_PyIntAsIntp (object)
     int PyArray_Broadcast (broadcast) except -1
-    void PyArray_FillObjectArray (ndarray, object)
+    void PyArray_FillObjectArray (ndarray, object) except *
     int PyArray_FillWithScalar (ndarray, object) except -1
     npy_bool PyArray_CheckStrides (int, int, npy_intp, npy_intp, npy_intp *, npy_intp *)
     dtype PyArray_DescrNewByteorder (dtype, char)
@@ -588,8 +588,8 @@ cdef extern from "numpy/arrayobject.h":
     #int PyArray_CompareUCS4 (npy_ucs4 *, npy_ucs4 *, register size_t)
     int PyArray_RemoveSmallest (broadcast) except -1
     int PyArray_ElementStrides (object)
-    void PyArray_Item_INCREF (char *, dtype)
-    void PyArray_Item_XDECREF (char *, dtype)
+    void PyArray_Item_INCREF (char *, dtype) except *
+    void PyArray_Item_XDECREF (char *, dtype) except *
     object PyArray_FieldNames (object)
     object PyArray_Transpose (ndarray, PyArray_Dims *)
     object PyArray_TakeFrom (ndarray, object, int, ndarray, NPY_CLIPMODE)
