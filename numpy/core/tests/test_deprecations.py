@@ -310,12 +310,6 @@ class TestGeneratorSum(_DeprecationTestCase):
         self.assert_deprecated(np.sum, args=((i for i in range(5)),))
 
 
-class TestPositiveOnNonNumerical(_DeprecationTestCase):
-    # 2018-06-28, 1.16.0
-    def test_positive_on_non_number(self):
-        self.assert_deprecated(operator.pos, args=(np.array('foo'),))
-
-
 class TestFromstring(_DeprecationTestCase):
     # 2017-10-19, 1.14
     def test_fromstring(self):
