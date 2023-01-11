@@ -714,7 +714,7 @@ def result_type(*arrays_and_dtypes):
     the data types are combined with :func:`promote_types`
     to produce the return value.
 
-    Otherwise, `min_scalar_type` is called on each array, and
+    Otherwise, `min_scalar_type` is called on each scalar, and
     the resulting data types are all combined with :func:`promote_types`
     to produce the return value.
 
