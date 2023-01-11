@@ -307,10 +307,10 @@ typedef NPY_CASTING (resolve_descriptors_function)(
  *
  * NOTE: As of now, NumPy will NOT use unaligned loops in ufuncs!
  */
-#define NPY_METH_strided_loop 3
-#define NPY_METH_contiguous_loop 4
-#define NPY_METH_unaligned_strided_loop 5
-#define NPY_METH_unaligned_contiguous_loop 6
+#define NPY_METH_strided_loop 4
+#define NPY_METH_contiguous_loop 5
+#define NPY_METH_unaligned_strided_loop 6
+#define NPY_METH_unaligned_contiguous_loop 7
 
 
 typedef struct {
@@ -331,12 +331,12 @@ typedef int (PyArrayMethod_StridedLoop)(PyArrayMethod_Context *context,
  * Query an ArrayMethod for the initial value for use in reduction.
  *
  * @param context The arraymethod context, mainly to access the descriptors.
- * @param reduction_is_empty Whether the reduction is empty, when it is the
- *     default value is required, otherwise an identity value to start the
- *     the reduction.  These might differ, examples:
- *     - `0.0` as default for `sum([])`.  But `-0.0` would be the correct
- *       identity as it preserves the sign for `sum([-0.0])`.
- *     - We use no identity for object, but `0` and `1` for sum and prod.
+ * @param reduction_is_empty Whether the reduction is empty. When it is, the
+ *     default value for the identity might differ, for example:
+ *     - `0.0` is the default for `sum([])`.  But `-0.0` is the correct
+ *       identity otherwise as it preserves the sign for `sum([-0.0])`.
+ *     - We use no identity for object, but return the default of `0` and `1`
+         for the empty `sum([], dtype=object)` and `prod([], dtype=object)`.
  *     - `-inf` or `INT_MIN` for `max` is an identity, but at least `INT_MIN`
  *       not a good *default* when there are no items.
  * @param initial Pointer to initial data to be filled (if possible)
@@ -345,8 +345,8 @@ typedef int (PyArrayMethod_StridedLoop)(PyArrayMethod_Context *context,
  *     successfully filled.  Errors must not be given where 0 is correct, NumPy
  *     may call this even when not strictly necessary.
  */
- #define NPY_METH_get_reduction_initial 4
-typedef int (get_reduction_intial_function)(
+#define NPY_METH_get_reduction_initial 3
+typedef int (get_reduction_initial_function)(
         PyArrayMethod_Context *context, npy_bool reduction_is_empty,
         char *initial);
 
