@@ -623,13 +623,27 @@ def _read_array_header(fp, version, max_header_size=_MAX_HEADER_SIZE):
     #   "descr" : dtype.descr
     # Versions (2, 0) and (1, 0) could have been created by a Python 2
     # implementation before header filtering was implemented.
-    if version <= (2, 0):
-        header = _filter_header(header)
+    #
+    # For performance reasons, we try without _filter_header first though
     try:
         d = safe_eval(header)
     except SyntaxError as e:
-        msg = "Cannot parse header: {!r}"
-        raise ValueError(msg.format(header)) from e
+        if version <= (2, 0):
+            header = _filter_header(header)
+            try:
+                d = safe_eval(header)
+            except SyntaxError as e2:
+                msg = "Cannot parse header: {!r}"
+                raise ValueError(msg.format(header)) from e2
+            else:
+                warnings.warn(
+                    "Reading `.npy` or `.npz` file required additional "
+                    "header parsing as it was created on Python 2. Save the "
+                    "file again to speed up loading and avoid this warning.",
+                    UserWarning, stacklevel=2)
+        else:
+            msg = "Cannot parse header: {!r}"
+            raise ValueError(msg.format(header)) from e
     if not isinstance(d, dict):
         msg = "Header is not a dictionary: {!r}"
         raise ValueError(msg.format(d))
