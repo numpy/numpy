@@ -244,6 +244,14 @@ def test_converters_negative_indices_with_usecols():
                      usecols=[0, -1], converters={-1: (lambda x: -1)})
     assert_array_equal(res, [[0, -1], [0, -1]])
 
+
+def test_ragged_error():
+    rows = ["1,2,3", "1,2,3", "4,3,2,1"]
+    with pytest.raises(ValueError,
+            match="the number of columns changed from 3 to 4 at row 3"):
+        np.loadtxt(rows, delimiter=",")
+
+
 def test_ragged_usecols():
     # usecols, and negative ones, work even with varying number of columns.
     txt = StringIO("0,0,XXX\n0,XXX,0,XXX\n0,XXX,XXX,0,XXX\n")
@@ -553,7 +561,8 @@ def test_quote_support_default():
     txt = StringIO('"lat,long", 45, 30\n')
     dtype = np.dtype([('f0', 'U24'), ('f1', np.float64), ('f2', np.float64)])
 
-    with pytest.raises(ValueError, match="the number of columns changed"):
+    with pytest.raises(ValueError,
+            match="the dtype passed requires 3 columns but 4 were"):
         np.loadtxt(txt, dtype=dtype, delimiter=",")
 
     # Enable quoting support with non-None value for quotechar param
