@@ -1,23 +1,27 @@
-# Python CircleCI 2.0 configuration file
+# Python CircleCI 2.1 configuration file
 #
-# Check https://circleci.com/docs/2.0/language-python/ for more details
+# Check https://circleci.com/docs/2.1/language-python/ for more details
 #
-version: 2
+version: 2.1
+
+# Aliases to reuse
+_defaults: &defaults
+  docker:
+    # CircleCI maintains a library of pre-built images
+    # documented at https://circleci.com/docs/2.1/circleci-images/
+    # circleci/python3.8 images come with old versions of Doxygen(1.6.x),
+    # therefore a new base image chose instead to guarantee to
+    # have a newer version >= 1.8.10 to avoid warnings
+    # that related to the default behaviors or non-exist config options
+    - image: cimg/python:3.9
+  working_directory: ~/repo
+
+
 jobs:
   build:
-    docker:
-      # CircleCI maintains a library of pre-built images
-      # documented at https://circleci.com/docs/2.0/circleci-images/
-      # circleci/python3.8 images come with old versions of Doxygen(1.6.x),
-      # therefore a new base image chose instead to guarantee to
-      # have a newer version >= 1.8.10 to avoid warnings
-      # that related to the default behaviors or non-exist config options
-      - image: cimg/python:3.9
-
-    working_directory: ~/repo
-
+    <<: *defaults
     steps:
-      - checkout:
+      - checkout
 
       - run:
           name: Check-skip
@@ -83,31 +87,34 @@ jobs:
             . venv/bin/activate
             cd doc
             # Don't use -q, show warning summary"
-            SPHINXOPTS="-j4 -n" make -e html || echo "ignoring errors for now, see gh-13114"
-
-      - run:
-          name: build devdocs
-          no_output_timeout: 30m
-          command: |
-            . venv/bin/activate
-            cd doc
-            make clean
-            SPHINXOPTS="-j4 -q" make -e html
+            SPHINXOPTS="-j2 -n" make -e html || echo "ignoring errors for now, see gh-13114"
 
       - run:
           name: build neps
           command: |
             . venv/bin/activate
             cd doc/neps
-            SPHINXOPTS="-j4 -q" make -e html
+            SPHINXOPTS="-j2 -q" make -e html
 
       - store_artifacts:
           path: doc/build/html/
 
-
       - store_artifacts:
           path: doc/neps/_build/html/
      #      destination: neps
+
+      - persist_to_workspace:
+          root: ~/repo
+          paths:
+            - doc/build/html
+            - doc/neps/_build
+            - tools/ci/push_docs_to_repo.py
+
+  deploy:
+    <<: *defaults
+    steps:
+      - attach_workspace:
+          at: ~/
 
       - add_ssh_keys:
           fingerprints:
@@ -116,18 +123,14 @@ jobs:
       -  run:
           name: deploy devdocs
           command: |
-            if [ "${CIRCLE_BRANCH}" == "main" ]; then
-              touch doc/build/html/.nojekyll
+            touch doc/build/html/.nojekyll
 
-              ./tools/ci/push_docs_to_repo.py doc/build/html \
-                  git@github.com:numpy/devdocs.git \
-                  --committer "numpy-circleci-bot" \
-                  --email "numpy-circleci-bot@nomail" \
-                  --message "Docs build of $CIRCLE_SHA1" \
-                  --force
-            else
-              echo "Not on the main branch; skipping deployment"
-            fi
+            ./tools/ci/push_docs_to_repo.py doc/build/html \
+                git@github.com:numpy/devdocs.git \
+                --committer "numpy-circleci-bot" \
+                --email "numpy-circleci-bot@nomail" \
+                --message "Docs build of $CIRCLE_SHA1" \
+                --force
 
       - add_ssh_keys:
           fingerprints:
@@ -136,7 +139,7 @@ jobs:
       - run:
           name: select SSH key for neps repo
           command: |
-            cat <<\EOF > ~/.ssh/config
+            cat \<<\EOF > ~/.ssh/config
             Host github.com
               IdentitiesOnly yes
               IdentityFile /home/circleci/.ssh/id_rsa_df8bfb342d387d49fc1be8444fbd2c0e
@@ -145,15 +148,23 @@ jobs:
       -  run:
           name: deploy neps
           command: |
-            if [ "${CIRCLE_BRANCH}" == "main" ]; then
-              touch doc/neps/_build/html/.nojekyll
+            touch doc/neps/_build/html/.nojekyll
 
-              ./tools/ci/push_docs_to_repo.py doc/neps/_build/html \
-                  git@github.com:numpy/neps.git \
-                  --committer "numpy-circleci-bot" \
-                  --email "numpy-circleci-bot@nomail" \
-                  --message "Docs build of $CIRCLE_SHA1" \
-                  --force
-            else
-              echo "Not on the main branch; skipping deployment"
-            fi
+            ./tools/ci/push_docs_to_repo.py doc/neps/_build/html \
+                git@github.com:numpy/neps.git \
+                --committer "numpy-circleci-bot" \
+                --email "numpy-circleci-bot@nomail" \
+                --message "Docs build of $CIRCLE_SHA1" \
+                --force
+
+workflows:
+  version: 2
+  default:
+    jobs:
+      - build
+      - deploy:
+          requires:
+            - build
+          filters:
+            branches:
+              only: main
