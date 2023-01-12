@@ -90,15 +90,6 @@ jobs:
             SPHINXOPTS="-j2 -n" make -e html || echo "ignoring errors for now, see gh-13114"
 
       - run:
-          name: build devdocs
-          no_output_timeout: 30m
-          command: |
-            . venv/bin/activate
-            cd doc
-            make clean
-            SPHINXOPTS="-j2 -q" make -e html
-
-      - run:
           name: build neps
           command: |
             . venv/bin/activate
