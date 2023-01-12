@@ -87,7 +87,7 @@ jobs:
             . venv/bin/activate
             cd doc
             # Don't use -q, show warning summary"
-            SPHINXOPTS="-j4 -n" make -e html || echo "ignoring errors for now, see gh-13114"
+            SPHINXOPTS="-j2 -n" make -e html || echo "ignoring errors for now, see gh-13114"
 
       - run:
           name: build devdocs
@@ -96,14 +96,14 @@ jobs:
             . venv/bin/activate
             cd doc
             make clean
-            SPHINXOPTS="-j4 -q" make -e html
+            SPHINXOPTS="-j2 -q" make -e html
 
       - run:
           name: build neps
           command: |
             . venv/bin/activate
             cd doc/neps
-            SPHINXOPTS="-j4 -q" make -e html
+            SPHINXOPTS="-j2 -q" make -e html
 
       - store_artifacts:
           path: doc/build/html/
@@ -113,7 +113,7 @@ jobs:
      #      destination: neps
 
       - persist_to_workspace:
-          root: ~/
+          root: ~/repo
           paths:
             - doc/build/html
             - doc/neps/_build
