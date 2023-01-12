@@ -114,7 +114,7 @@ jobs:
     <<: *defaults
     steps:
       - attach_workspace:
-          at: ~/
+          at: ~/repo
 
       - add_ssh_keys:
           fingerprints:
