@@ -640,7 +640,7 @@ def _read_array_header(fp, version, max_header_size=_MAX_HEADER_SIZE):
                     "Reading `.npy` or `.npz` file required additional "
                     "header parsing as it was created on Python 2. Save the "
                     "file again to speed up loading and avoid this warning.",
-                    UserWarning, stacklevel=2)
+                    UserWarning, stacklevel=4)
         else:
             msg = "Cannot parse header: {!r}"
             raise ValueError(msg.format(header)) from e
