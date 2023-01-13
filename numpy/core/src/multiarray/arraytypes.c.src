@@ -225,7 +225,13 @@ MyPyLong_AsUnsigned@Type@(PyObject *obj)
  *****************************************************************************
  */
 
+#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L)
+#include <stdalign.h>
+#define _ALIGN(type) _Alignof(type)
+#else
 #define _ALIGN(type) offsetof(struct {char c; type v;}, v)
+#endif
+
 /*
  * Disable harmless compiler warning "4116: unnamed type definition in
  * parentheses" which is caused by the _ALIGN macro.

@@ -178,7 +178,13 @@ check_and_adjust_axis(int *axis, int ndim)
 }
 
 /* used for some alignment checks */
+#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L)
+#include <stdalign.h>
+#define _ALIGN(type) _Alignof(type)
+#else
 #define _ALIGN(type) offsetof(struct {char c; type v;}, v)
+#endif
+
 #define _UINT_ALIGN(type) npy_uint_alignment(sizeof(type))
 /*
  * Disable harmless compiler warning "4116: unnamed type definition in
