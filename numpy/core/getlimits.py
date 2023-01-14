@@ -471,6 +471,9 @@ class finfo:
     _finfo_cache = {}
 
     def __new__(cls, dtype):
+        if dtype is None:
+            raise ValueError("Invalid data type.")
+
         try:
             dtype = numeric.dtype(dtype)
         except TypeError:
