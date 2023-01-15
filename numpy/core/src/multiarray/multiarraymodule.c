@@ -2046,10 +2046,9 @@ fail:
 }
 
 static PyObject *
-array_empty_like(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
+array_empty_like(PyObject *NPY_UNUSED(ignored),
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
-
-    static char *kwlist[] = {"prototype", "dtype", "order", "subok", "shape", NULL};
     PyArrayObject *prototype = NULL;
     PyArray_Descr *dtype = NULL;
     NPY_ORDER order = NPY_KEEPORDER;
@@ -2058,12 +2057,15 @@ array_empty_like(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
     /* -1 is a special value meaning "not specified" */
     PyArray_Dims shape = {NULL, -1};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&O&iO&:empty_like", kwlist,
-                &PyArray_Converter, &prototype,
-                &PyArray_DescrConverter2, &dtype,
-                &PyArray_OrderConverter, &order,
-                &subok,
-                &PyArray_OptionalIntpConverter, &shape)) {
+    NPY_PREPARE_ARGPARSER;
+
+    if (npy_parse_arguments("empty_like", args, len_args, kwnames,
+            "prototype", &PyArray_Converter, &prototype,
+            "|dtype", &PyArray_DescrConverter2, &dtype,
+            "|order", &PyArray_OrderConverter, &order,
+            "|subok", &PyArray_PythonPyIntFromInt, &subok,
+            "|shape", &PyArray_OptionalIntpConverter, &shape,
+            NULL, NULL, NULL) < 0) {
         goto fail;
     }
     /* steals the reference to dtype if it's not NULL */
@@ -2521,14 +2523,18 @@ array_innerproduct(PyObject *NPY_UNUSED(dummy), PyObject *args)
 }
 
 static PyObject *
-array_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject* kwds)
+array_matrixproduct(PyObject *NPY_UNUSED(dummy),
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     PyObject *v, *a, *o = NULL;
     PyArrayObject *ret;
-    static char* kwlist[] = {"a", "b", "out", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|O:matrixproduct",
-                                     kwlist, &a, &v, &o)) {
+    NPY_PREPARE_ARGPARSER;
+    if (npy_parse_arguments("dot", args, len_args, kwnames,
+            "a", NULL, &a,
+            "b", NULL, &v,
+            "|out", NULL, &o,
+            NULL, NULL, NULL) < 0) {
         return NULL;
     }
     if (o != NULL) {
@@ -3461,8 +3467,8 @@ array_lexsort(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
 }
 
 static PyObject *
-array_can_cast_safely(PyObject *NPY_UNUSED(self), PyObject *args,
-        PyObject *kwds)
+array_can_cast_safely(PyObject *NPY_UNUSED(self),
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     PyObject *from_obj = NULL;
     PyArray_Descr *d1 = NULL;
@@ -3470,12 +3476,13 @@ array_can_cast_safely(PyObject *NPY_UNUSED(self), PyObject *args,
     int ret;
     PyObject *retobj = NULL;
     NPY_CASTING casting = NPY_SAFE_CASTING;
-    static char *kwlist[] = {"from_", "to", "casting", NULL};
 
-    if(!PyArg_ParseTupleAndKeywords(args, kwds, "OO&|O&:can_cast", kwlist,
-                &from_obj,
-                PyArray_DescrConverter2, &d2,
-                PyArray_CastingConverter, &casting)) {
+    NPY_PREPARE_ARGPARSER;
+    if (npy_parse_arguments("can_cast", args, len_args, kwnames,
+            "from_", NULL, &from_obj,
+            "to", &PyArray_DescrConverter2, &d2,
+            "|casting", &PyArray_CastingConverter, &casting,
+            NULL, NULL, NULL) < 0) {
         goto finish;
     }
     if (d2 == NULL) {
@@ -4438,7 +4445,7 @@ static struct PyMethodDef array_module_methods[] = {
         METH_FASTCALL | METH_KEYWORDS, NULL},
     {"empty_like",
         (PyCFunction)array_empty_like,
-        METH_VARARGS|METH_KEYWORDS, NULL},
+        METH_FASTCALL|METH_KEYWORDS, NULL},
     {"scalar",
         (PyCFunction)array_scalar,
         METH_VARARGS|METH_KEYWORDS, NULL},
@@ -4465,7 +4472,7 @@ static struct PyMethodDef array_module_methods[] = {
         METH_VARARGS, NULL},
     {"dot",
         (PyCFunction)array_matrixproduct,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"vdot",
         (PyCFunction)array_vdot,
         METH_VARARGS | METH_KEYWORDS, NULL},
@@ -4489,7 +4496,7 @@ static struct PyMethodDef array_module_methods[] = {
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"can_cast",
         (PyCFunction)array_can_cast_safely,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"promote_types",
         (PyCFunction)array_promote_types,
         METH_VARARGS, NULL},
