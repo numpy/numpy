@@ -7098,10 +7098,12 @@ def diag(v, k=0):
 
     Examples
     --------
+    
+    Create an array with negative values masked:
+
     >>> import numpy as np
     >>> x = np.array([[11.2, -3.973, 18], [0.801, -1.41, 12], [7, 33, -12]])
-    >>> mask = [row < 0 for row in x]
-    >>> masked_x = np.ma.masked_array(x, mask)
+    >>> masked_x = np.ma.masked_array(x, mask=x < 0)
     >>> masked_x
     masked_array(
       data=[[11.2, --, 18.0],
@@ -7111,10 +7113,16 @@ def diag(v, k=0):
             [False,  True, False],
             [False, False,  True]],
       fill_value=1e+20)
+
+    Isolate the main diagonal from the masked array:
+
     >>> ma.diag(masked_x)
     masked_array(data=[11.2, --, --],
                  mask=[False,  True,  True],
            fill_value=1e+20)
+
+    Isolate the first diagonal below the main diagonal:
+
     >>> ma.diag(masked_x, -1)
     masked_array(data=[0.801, 33.0],
                  mask=[False, False],
