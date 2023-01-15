@@ -1,4 +1,4 @@
-from .common import Benchmark, get_squares_
+from .common import Benchmark, get_squares_, TYPES1
 
 import numpy as np
 
@@ -19,6 +19,31 @@ ufuncs = ['abs', 'absolute', 'add', 'arccos', 'arccosh', 'arcsin', 'arcsinh',
           'rint', 'round', 'sign', 'signbit', 'sin', 'sinh', 'spacing', 'sqrt',
           'square', 'subtract', 'tan', 'tanh', 'true_divide', 'trunc']
 
+meth_0arg = ['__abs__', '__dlpack__', '__dlpack_device__',
+             '__neg__', '__pos__']
+
+# Array arguments
+meth_1arg_arr = ['__add__', '__eq__', '__ge__', '__gt__',
+                 '__matmul__', '__le__', '__lt__', '__mul__',
+                 '__ne__', '__pow__', '__sub__', '__truediv__']
+
+# Index arguments
+meth_1arg_ind = ['__getitem__']
+
+# Valid for 0d arrays
+meth_0d = ['__bool__', '__complex__', '__float__']
+
+# Valid for size-1 arrays
+meth_1d = ['__int__']
+
+# type_only
+meth_int_scalar = ['__index__', '__lshift__', '__rshift__']
+meth_int_bool = ['__invert__', '__xor__']
+meth_int_only = ['__and__', '__or__']
+meth_no_complex = ['__mod__', '__floordiv__']
+
+# Special
+meth_special = ['__setitem__']
 
 for name in dir(np):
     if isinstance(getattr(np, name, None), np.ufunc) and name not in ufuncs:
@@ -56,20 +81,34 @@ class UFunc(Benchmark):
     def setup(self, ufuncname):
         np.seterr(all='ignore')
         try:
-            self.f = getattr(np, ufuncname)
+            self.ufn = getattr(np, ufuncname)
         except AttributeError:
             raise NotImplementedError()
         self.args = []
-        for t, a in get_squares_().items():
-            arg = (a,) * self.f.nin
+        for _, aarg in get_squares_().items():
+            arg = (aarg,) * self.ufn.nin
             try:
-                self.f(*arg)
+                self.ufn(*arg)
             except TypeError:
                 continue
             self.args.append(arg)
 
     def time_ufunc_types(self, ufuncname):
-        [self.f(*arg) for arg in self.args]
+        [self.ufn(*arg) for arg in self.args]
+
+class MethodsV1(Benchmark):
+    params = [meth_1arg_arr, TYPES1]
+    param_names = ['methods', 'npdtypes']
+    timeout = 10
+
+    def setup(self, methname, npdtypes):
+        values = get_squares_()
+        self.xarg_one = values.get(npdtypes)[0]
+        self.xarg_two = values.get(npdtypes)[1]
+
+    def time_ndarray_meth(self, methname, npdtypes):
+        meth = getattr(self.xarg_one, methname)
+        meth(self.xarg_two)
 
 class UFuncSmall(Benchmark):
     """  Benchmark for a selection of ufuncs on a small arrays and scalars 
