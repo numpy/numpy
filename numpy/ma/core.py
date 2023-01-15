@@ -7439,7 +7439,9 @@ def diff(a, /, n=1, axis=-1, prepend=np._NoValue, append=np._NoValue):
         raise ValueError("order must be non-negative but got " + repr(n))
 
     if a.ndim == 0:
-        raise ValueError("diff requires input that is at least one dimensional")
+        raise ValueError(
+            "diff requires input that is at least one dimensional"
+            )
 
     combined = []
     if prepend is not np._NoValue:
