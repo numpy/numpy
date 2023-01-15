@@ -531,7 +531,8 @@ def test_load_padded_dtype(tmpdir, dt):
 def test_python2_python3_interoperability():
     fname = 'win64python2.npy'
     path = os.path.join(os.path.dirname(__file__), 'data', fname)
-    data = np.load(path)
+    with pytest.warns(UserWarning, match="Reading.*this warning\\."):
+        data = np.load(path)
     assert_array_equal(data, np.ones(2))
 
 def test_pickle_python2_python3():
