@@ -2475,7 +2475,9 @@ As of NumPy 1.6.0, these array iterators are superseded by
 the new array iterator, :c:type:`NpyIter`.
 
 An array iterator is a simple way to access the elements of an
-N-dimensional array quickly and efficiently.
+N-dimensional array quickly and efficiently. Section `2
+<iterator.html>`__ provides more description and examples of
+this useful approach to looping over an array.
 
 .. c:function:: PyObject* PyArray_IterNew(PyObject* arr)
 
