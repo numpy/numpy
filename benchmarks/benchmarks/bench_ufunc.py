@@ -14,9 +14,9 @@ ufuncs = ['abs', 'absolute', 'add', 'arccos', 'arccosh', 'arcsin', 'arcsinh',
           'less_equal', 'log', 'log10', 'log1p', 'log2', 'logaddexp',
           'logaddexp2', 'logical_and', 'logical_not', 'logical_or',
           'logical_xor', 'matmul', 'maximum', 'minimum', 'mod', 'modf', 'multiply',
-          'negative', 'nextafter', 'not_equal', 'positive', 'power',
-          'rad2deg', 'radians', 'reciprocal', 'remainder', 'right_shift',
-          'rint', 'sign', 'signbit', 'sin', 'sinh', 'spacing', 'sqrt',
+          'negative', 'nextafter', 'not_equal', 'positive', 'power', 'rad2deg',
+          'radians', 'real', 'reciprocal', 'remainder', 'right_shift',
+          'rint', 'round', 'sign', 'signbit', 'sin', 'sinh', 'spacing', 'sqrt',
           'square', 'subtract', 'tan', 'tanh', 'true_divide', 'trunc']
 
 
