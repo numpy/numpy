@@ -2251,12 +2251,15 @@ fail:
 }
 
 static PyObject *
-array_count_nonzero(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
+array_count_nonzero(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_t len_args)
 {
     PyArrayObject *array;
     npy_intp count;
 
-    if (!PyArg_ParseTuple(args, "O&:count_nonzero", PyArray_Converter, &array)) {
+    NPY_PREPARE_ARGPARSER;
+    if (npy_parse_arguments("count_nonzero", args, len_args, NULL,
+            "array", PyArray_Converter, &array,
+            NULL, NULL, NULL) < 0) {
         return NULL;
     }
 
@@ -4448,7 +4451,7 @@ static struct PyMethodDef array_module_methods[] = {
         METH_FASTCALL | METH_KEYWORDS, NULL},
     {"count_nonzero",
         (PyCFunction)array_count_nonzero,
-        METH_VARARGS|METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"empty",
         (PyCFunction)array_empty,
         METH_FASTCALL | METH_KEYWORDS, NULL},
