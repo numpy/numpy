@@ -2512,13 +2512,18 @@ array_concatenate(PyObject *NPY_UNUSED(dummy),
 }
 
 static PyObject *
-array_innerproduct(PyObject *NPY_UNUSED(dummy), PyObject *args)
+array_innerproduct(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t len_args)
 {
     PyObject *b0, *a0;
 
-    if (!PyArg_ParseTuple(args, "OO:innerproduct", &a0, &b0)) {
-        return NULL;
+    NPY_PREPARE_ARGPARSER;
+    if (npy_parse_arguments("innerproduct", args, len_args, NULL,
+            "a", NULL, &a0,
+            "b", NULL, &b0,
+            NULL, NULL, NULL) < 0) {
+    return NULL;
     }
+
     return PyArray_Return((PyArrayObject *)PyArray_InnerProduct(a0, b0));
 }
 
@@ -4473,7 +4478,7 @@ static struct PyMethodDef array_module_methods[] = {
         METH_FASTCALL|METH_KEYWORDS, NULL},
     {"inner",
         (PyCFunction)array_innerproduct,
-        METH_VARARGS, NULL},
+        METH_FASTCALL, NULL},
     {"dot",
         (PyCFunction)array_matrixproduct,
         METH_FASTCALL | METH_KEYWORDS, NULL},
