@@ -4117,6 +4117,16 @@ class TestMaskedArrayMathMethods:
 
         assert_(np.ma.allequal(diff1, diff2))
 
+    def test_diff_with_dim_0(self):
+        with pytest.raises(ValueError, match="diff requires input that is at least one dimensional"):
+            np.ma.diff(np.array(1))
+
+    def test_diff_with_n_0(self):
+        a = np.ma.masked_equal([1, 2, 2, 3, 4, 2, 1, 1], value=2)
+        diff = np.ma.diff(a, n=0, axis=0)
+
+        assert_(np.ma.allequal(a, diff))
+
 
 class TestMaskedArrayMathMethodsComplex:
     # Test class for miscellaneous MaskedArrays methods.

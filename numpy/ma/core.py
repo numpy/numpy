@@ -7433,6 +7433,14 @@ def diff(a, /, n=1, axis=-1, prepend=np._NoValue, append=np._NoValue):
         fill_value=1)
 
     """
+    if n == 0:
+        return a
+    if n < 0:
+        raise ValueError("order must be non-negative but got " + repr(n))
+
+    if a.ndim == 0:
+        raise ValueError("diff requires input that is at least one dimensional")
+
     combined = []
     if prepend is not np._NoValue:
         prepend = np.ma.asanyarray(prepend)
