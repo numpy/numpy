@@ -2552,7 +2552,7 @@ array_matrixproduct(PyObject *NPY_UNUSED(dummy),
 
 
 static PyObject *
-array_vdot(PyObject *NPY_UNUSED(dummy), PyObject *args)
+array_vdot(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t len_args)
 {
     int typenum;
     char *ip1, *ip2, *op;
@@ -2565,7 +2565,11 @@ array_vdot(PyObject *NPY_UNUSED(dummy), PyObject *args)
     PyArray_DotFunc *vdot;
     NPY_BEGIN_THREADS_DEF;
 
-    if (!PyArg_ParseTuple(args, "OO:vdot", &op1, &op2)) {
+    NPY_PREPARE_ARGPARSER;
+    if (npy_parse_arguments("vdot", args, len_args, NULL,
+            "a", NULL, &op1,
+            "b", NULL, &op2,
+            NULL, NULL, NULL) < 0) {
         return NULL;
     }
 
@@ -4475,7 +4479,7 @@ static struct PyMethodDef array_module_methods[] = {
         METH_FASTCALL | METH_KEYWORDS, NULL},
     {"vdot",
         (PyCFunction)array_vdot,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS, NULL},
     {"c_einsum",
         (PyCFunction)array_einsum,
         METH_VARARGS|METH_KEYWORDS, NULL},
