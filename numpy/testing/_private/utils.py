@@ -899,6 +899,8 @@ def assert_array_equal(x, y, err_msg='', verbose=True, *, strict=False):
         type of the array_like objects does not match. The special
         handling for scalars mentioned in the Notes section is disabled.
 
+        .. versionadded:: 1.24.0
+
     Raises
     ------
     AssertionError
