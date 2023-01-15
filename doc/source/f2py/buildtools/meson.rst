@@ -23,7 +23,7 @@ build system like ``meson``. We will acquire this by:
 
 .. code-block:: bash
 
-    python -n numpy.f2py fib1.f -m fib2
+    python -m numpy.f2py fib1.f -m fib2
 
 Now, consider the following ``meson.build`` file for the ``fib`` and ``scalar``
 examples from :ref:`f2py-getting-started` section:
@@ -57,7 +57,7 @@ to lowercase the original Fortran file with say:
 .. code-block:: bash
 
    tr "[:upper:]" "[:lower:]" < fib1.f > fib1.f
-   python -n numpy.f2py fib1.f -m fib2
+   python -m numpy.f2py fib1.f -m fib2
    meson --wipe builddir
    meson compile -C builddir
    cd builddir
@@ -68,7 +68,7 @@ possible. The easiest way to solve this is to let ``f2py`` deal with it:
 
 .. code-block:: bash
 
-   python -n numpy.f2py fib1.f -m fib2 --lower
+   python -m numpy.f2py fib1.f -m fib2 --lower
    meson --wipe builddir
    meson compile -C builddir
    cd builddir
