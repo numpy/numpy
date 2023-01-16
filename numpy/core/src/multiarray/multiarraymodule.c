@@ -2258,7 +2258,7 @@ array_count_nonzero(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_
 
     NPY_PREPARE_ARGPARSER;
     if (npy_parse_arguments("count_nonzero", args, len_args, NULL,
-            "array", PyArray_Converter, &array,
+            "a", PyArray_Converter, &array,
             NULL, NULL, NULL) < 0) {
         return NULL;
     }
@@ -2521,8 +2521,8 @@ array_innerproduct(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_
 
     NPY_PREPARE_ARGPARSER;
     if (npy_parse_arguments("innerproduct", args, len_args, NULL,
-            "a", NULL, &a0,
-            "b", NULL, &b0,
+            "", NULL, &a0,
+            "", NULL, &b0,
             NULL, NULL, NULL) < 0) {
     return NULL;
     }
