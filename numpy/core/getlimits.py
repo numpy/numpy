@@ -472,7 +472,12 @@ class finfo:
 
     def __new__(cls, dtype):
         if dtype is None:
-            raise ValueError("Invalid data type.")
+            warnings.warn(
+                "dtype cannot be None. This behavior "
+                "will raise an error in the future.",
+                DeprecationWarning,
+                stacklevel=2
+            )
 
         try:
             dtype = numeric.dtype(dtype)
