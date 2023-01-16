@@ -189,6 +189,7 @@ def ones(shape, dtype=None, order='C', *, like=None):
     multiarray.copyto(a, 1, casting='unsafe')
     return a
 
+
 _ones_with_like = array_function_dispatch()(ones)
 
 
@@ -316,7 +317,8 @@ def full(shape, fill_value, dtype=None, order='C', *, like=None):
 
     """
     if like is not None:
-        return _full_with_like(like, shape, fill_value, dtype=dtype, order=order)
+        return _full_with_like(
+                like, shape, fill_value, dtype=dtype, order=order)
 
     if dtype is None:
         fill_value = asarray(fill_value)
@@ -1834,7 +1836,8 @@ def fromfunction(function, shape, *, dtype=float, like=None, **kwargs):
 
     """
     if like is not None:
-        return _fromfunction_with_like(like, function, shape, dtype=dtype, **kwargs)
+        return _fromfunction_with_like(
+                like, function, shape, dtype=dtype, **kwargs)
 
     args = indices(shape, dtype=dtype)
     return function(*args, **kwargs)
