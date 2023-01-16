@@ -7116,14 +7116,14 @@ def diag(v, k=0):
 
     Isolate the main diagonal from the masked array:
 
-    >>> ma.diag(masked_x)
+    >>> np.ma.diag(masked_x)
     masked_array(data=[11.2, --, --],
                  mask=[False,  True,  True],
            fill_value=1e+20)
 
     Isolate the first diagonal below the main diagonal:
 
-    >>> ma.diag(masked_x, -1)
+    >>> np.ma.diag(masked_x, -1)
     masked_array(data=[0.801, 33.0],
                  mask=[False, False],
            fill_value=1e+20)
